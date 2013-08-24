@@ -1,11 +1,10 @@
 package com.chiorichan.server;
 
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import jline.Terminal;
@@ -19,13 +18,13 @@ import com.caucho.resin.ResinEmbed;
 import com.caucho.resin.WebAppEmbed;
 import com.chiorichan.ChatColor;
 import com.chiorichan.ConsoleLogManager;
-import com.chiorichan.LoggerOutputStream;
 import com.chiorichan.Main;
 import com.chiorichan.ThreadCommandReader;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.command.ConsoleCommandSender;
 import com.chiorichan.command.RemoteConsoleCommandSender;
 import com.chiorichan.command.ServerCommand;
+import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.user.UserList;
 import com.chiorichan.util.ServerShutdownThread;
 import com.chiorichan.util.Versioning;
@@ -38,11 +37,10 @@ public class Server
 	public ConsoleReader reader;
 	public Terminal terminal;
 	public ChatColor[] colors = ChatColor.values();
-	public Boolean isRunning = true;
+	public Boolean isRunning = false;
 	public UserList userList;
 	
-	public String serverIp;
-	public PropertyManager propertyManager;
+	public String serverIp = "";
 	public OptionSet options;
 	public Main server;
 	public ConsoleCommandSender console;
@@ -56,22 +54,18 @@ public class Server
 	private final static ResinEmbed primaryResin = new ResinEmbed();
 	
 	public Thread primaryThread = Thread.currentThread();
-	
-	public void setOptions(OptionSet options)
-	{
-		this.options = options;
-	}
+	public ServerThread serverThread = new ServerThread();
 	
 	public Server()
 	{
 		
 	}
 	
-	public void init()
+	public void init( YamlConfiguration configuration )
 	{
 		try
 		{
-			long startTime = System.nanoTime();
+			long startTime = System.currentTimeMillis();
 			
 			try
 			{
@@ -94,41 +88,36 @@ public class Server
 				}
 			}
 			
-			if ( true )
-				return;
-
 			reader.setPrompt( "?> " );
 			terminal = reader.getTerminal();
 			
-			/*
 			ThreadCommandReader threadcommandreader = new ThreadCommandReader( this );
 			
 			threadcommandreader.setDaemon( true );
 			threadcommandreader.start();
 			
-			System.setOut( new PrintStream( new LoggerOutputStream( log, Level.INFO ), true ) );
-			System.setErr( new PrintStream( new LoggerOutputStream( log, Level.SEVERE ), true ) );
+			//System.setOut( new PrintStream( new LoggerOutputStream( log, Level.INFO ), true ) );
+			//System.setErr( new PrintStream( new LoggerOutputStream( log, Level.SEVERE ), true ) );
 			
 			Runtime.getRuntime().addShutdownHook( new ServerShutdownThread( this ) );
 			
 			getLogger().info( "Starting Chiori Web Server " + Versioning.getVersion() );
-			
-			/*
 			
 			if ( Runtime.getRuntime().maxMemory() / 1024L / 1024L < 512L )
 			{
 				getLogger().warning( "To start the server with more ram, launch it as \"java -Xmx1024M -Xms1024M -jar chiori_server.jar\"" );
 			}
 			
-			getLogger().info( "Loading properties" );
-			propertyManager = new PropertyManager( options, this.getLogger() );
+			getLogger().info( "Loading server configuration" );
 			
-			if ( getServerIp().length() > 0 )
+			serverIp = configuration.getString( "server.ip", "" );
+			
+			if ( serverIp.length() > 0 )
 			{
-				setIp( getServerIp() );
+				setIp( serverIp );
 			}
 			
-			setPort( propertyManager.getInt( "server-port", 8080 ) );
+			setPort( configuration.getInt( "server.port", 8080 ) );
 			
 			ServiceBean service = new ServiceBean();
 			
@@ -137,7 +126,7 @@ public class Server
 			primaryResin.setServerHeader( "Chiori Web Server Version " + server.getVersion() );
 			primaryResin.setServerId( "applebloom" );
 			
-			String root = Main.getConfig().getString( "general.webroot", "webroot" );
+			String root = configuration.getString( "general.webroot", "webroot" );
 			
 			if ( !root.startsWith( "/" ) )
 				root = Main.class.getProtectionDomain().getCodeSource().getLocation().getPath() + root;
@@ -155,7 +144,7 @@ public class Server
 			
 			primaryResin.setDevelopmentMode( true );
 			
-			this.getLogger().info( "Starting Server on " + ( this.getServerIp().length() == 0 ? "*" : this.getServerIp() ) + ":" + propertyManager.getInt( "server-port", 8080 ) );
+			this.getLogger().info( "Starting Server on " + ( this.getServerIp().length() == 0 ? "*" : this.getServerIp() ) + ":" + configuration.getInt( "server.port", 8080 ) );
 			
 			try
 			{
@@ -181,26 +170,25 @@ public class Server
 			
 			userList = new UserList( this );
 			
-			this.getLogger().info( "Done (" + ( System.nanoTime() - startTime ) + ")! For help, type \"help\" or \"?\"" );
-			if ( this.propertyManager.getBoolean( "enable-query", false ) )
+			if ( configuration.getBoolean( "server.enable-query", false ) )
 			{
 				this.getLogger().info( "Starting GS4 status listener" );
 				// this.remoteStatusListener = new RemoteStatusListener( this );
 			}
 			
-			if ( propertyManager.getBoolean( "enable-rcon", false ) )
+			if ( configuration.getBoolean( "server.enable-rcon", false ) )
 			{
 				getLogger().info( "Starting remote control listener" );
 				// remoteControlListener = new RemoteControlListener( this );
 				// remoteConsole = new ChioriRemoteConsoleCommandSender();
 			}
 			
-			isRunning = true;
-			primaryResin.join();
+			this.getLogger().info( "Done (" + ( System.currentTimeMillis() - startTime ) + "ms)! For help, type \"help\" or \"?\"" );
 			
-			*/
+			isRunning = true;
+			serverThread.start();
 		}
-		catch ( Exception e )
+		catch ( Throwable e )
 		{
 			e.printStackTrace();
 		}
@@ -240,11 +228,6 @@ public class Server
 	 * 
 	 * public void sendMessage( String[] messages ) { for ( String message : messages ) { sendMessage( message ); } }
 	 */
-	
-	public PropertyManager getPropertyManager()
-	{
-		return propertyManager;
-	}
 	
 	public void issueCommand( String s, CommandSender commandSender )
 	{
@@ -292,5 +275,10 @@ public class Server
 	{
 		// TODO Auto-generated method stub
 		
+	}
+
+	public void setOptions( OptionSet options )
+	{
+		this.options = options;
 	}
 }

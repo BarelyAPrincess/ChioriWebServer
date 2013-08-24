@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -65,7 +64,6 @@ import com.chiorichan.scheduler.ChioriScheduler;
 import com.chiorichan.scheduler.ChioriWorker;
 import com.chiorichan.scheduler.IChioriScheduler;
 import com.chiorichan.serialization.ConfigurationSerialization;
-import com.chiorichan.server.PropertyManager;
 import com.chiorichan.server.Server;
 import com.chiorichan.updater.AutoUpdater;
 import com.chiorichan.updater.ChioriDLUpdaterService;
@@ -78,11 +76,12 @@ import com.chiorichan.util.Versioning;
 import com.chiorichan.util.permissions.DefaultPermissions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.MapMaker;
+import com.sun.org.apache.xerces.internal.impl.PropertyManager;
 
 public class Main implements PluginMessageRecipient
 {
-	public static final String BROADCAST_CHANNEL_ADMINISTRATIVE = "bukkit.broadcast.admin";
-	public static final String BROADCAST_CHANNEL_USERS = "bukkit.broadcast.user";
+	public static final String BROADCAST_CHANNEL_ADMINISTRATIVE = "chiori.broadcast.admin";
+	public static final String BROADCAST_CHANNEL_USERS = "chiori.broadcast.user";
 	
 	public static boolean useJline = true;
 	public static boolean useConsole = true;
@@ -127,12 +126,11 @@ public class Main implements PluginMessageRecipient
 	
 	public Main(OptionSet options)
 	{
-		console.setOptions( options );
-		console.init();
-		
 		resourceLoader = ResourceLoader.buildLoader( Main.class.getProtectionDomain().getCodeSource().getLocation().getPath() );
 		
 		instance = this;
+		
+		console.setOptions( options );
 		
 		if ( !Main.useConsole )
 		{
@@ -162,6 +160,7 @@ public class Main implements PluginMessageRecipient
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
 		webroot = configuration.getString( "settings.webroot" );
 		serverVersion = Versioning.getVersion();
+		config = configuration;
 		
 		updater = new AutoUpdater( new ChioriDLUpdaterService( configuration.getString( "auto-updater.host" ) ), getLogger(), configuration.getString( "auto-updater.preferred-channel" ) );
 		updater.setEnabled( configuration.getBoolean( "auto-updater.enabled" ) );
@@ -169,6 +168,8 @@ public class Main implements PluginMessageRecipient
 		updater.getOnBroken().addAll( configuration.getStringList( "auto-updater.on-broken" ) );
 		updater.getOnUpdate().addAll( configuration.getStringList( "auto-updater.on-update" ) );
 		updater.check( serverVersion );
+		
+		console.init( configuration );
 		
 		loadPlugins();
 		enablePlugins( PluginLoadOrder.STARTUP );
@@ -546,22 +547,22 @@ public class Main implements PluginMessageRecipient
 	// NOTE: Temporary calls through to server.properies until its replaced
 	private String getConfigString( String variable, String defaultValue )
 	{
-		return this.console.getPropertyManager().getString( variable, defaultValue );
+		return configuration.getString( variable, defaultValue );
 	}
 	
 	private int getConfigInt( String variable, int defaultValue )
 	{
-		return this.console.getPropertyManager().getInt( variable, defaultValue );
+		return configuration.getInt( variable, defaultValue );
 	}
 	
 	private boolean getConfigBoolean( String variable, boolean defaultValue )
 	{
-		return this.console.getPropertyManager().getBoolean( variable, defaultValue );
+		return configuration.getBoolean( variable, defaultValue );
 	}
 	
 	public String getUpdateFolder()
 	{
-		return this.configuration.getString( "settings.update-folder", "update" );
+		return configuration.getString( "settings.update-folder", "update" );
 	}
 	
 	public File getUpdateFolderFile()
@@ -643,9 +644,6 @@ public class Main implements PluginMessageRecipient
 	public void reload()
 	{
 		configuration = YamlConfiguration.loadConfiguration( getConfigFile() );
-		PropertyManager config = new PropertyManager( console.options, console.getLogger() );
-		
-		console.propertyManager = config;
 		
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
 		console.autosavePeriod = configuration.getInt( "ticks-per.autosave" );
@@ -920,7 +918,7 @@ public class Main implements PluginMessageRecipient
 	public void setWhitelist( boolean value )
 	{
 		userList.hasWhitelist = value;
-		console.getPropertyManager().a( "white-list", value );
+		configuration.set( "settings.whitelist", value );
 	}
 	
 	public Set<User> getWhitelistedUsers()
