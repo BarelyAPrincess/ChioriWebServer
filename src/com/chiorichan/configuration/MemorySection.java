@@ -352,7 +352,7 @@ public class MemorySection implements ConfigurationSection
 	public int getInt( String path, int def )
 	{
 		Object val = get( path, def );
-		return ( val instanceof Number ) ? toInt( val ) : def;
+		return ( val instanceof Integer ) ? toInt( val ) : def;
 	}
 
 	public boolean isInt( String path )
@@ -962,24 +962,32 @@ public class MemorySection implements ConfigurationSection
 	
 	private int toInt( Object val )
 	{
+		if ( val instanceof Integer )
+			return (int) val;
+		
 		try
 		{
 			return Integer.parseInt( (String) val );
 		}
 		catch ( Exception e )
 		{
+			e.printStackTrace();
 			return 0;
 		}
 	}
 	
 	private double toDouble( Object def )
 	{
+		if ( def instanceof Double )
+			return (double) def;
+		
 		try
 		{
 			return Double.parseDouble( (String) def );
 		}
 		catch ( Exception e )
 		{
+			e.printStackTrace();
 			return 0;
 		}
 	}

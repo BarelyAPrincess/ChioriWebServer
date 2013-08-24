@@ -217,11 +217,11 @@ public class YamlConfiguration extends FileConfiguration
 		{}
 		catch ( IOException ex )
 		{
-			Main.getLogger().log( Level.SEVERE, "Cannot load " + file, ex );
+			Main.getInstance().getLogger().log( Level.SEVERE, "Cannot load " + file, ex );
 		}
 		catch ( InvalidConfigurationException ex )
 		{
-			Main.getLogger().log( Level.SEVERE, "Cannot load " + file, ex );
+			Main.getInstance().getLogger().log( Level.SEVERE, "Cannot load " + file, ex );
 		}
 		
 		return config;
@@ -251,11 +251,11 @@ public class YamlConfiguration extends FileConfiguration
 		}
 		catch ( IOException ex )
 		{
-			Main.getLogger().log( Level.SEVERE, "Cannot load configuration from stream", ex );
+			Main.getInstance().getLogger().log( Level.SEVERE, "Cannot load configuration from stream", ex );
 		}
 		catch ( InvalidConfigurationException ex )
 		{
-			Main.getLogger().log( Level.SEVERE, "Cannot load configuration from stream", ex );
+			Main.getInstance().getLogger().log( Level.SEVERE, "Cannot load configuration from stream", ex );
 		}
 		
 		return config;
