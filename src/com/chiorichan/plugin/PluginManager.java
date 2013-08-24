@@ -1,6 +1,7 @@
 package com.chiorichan.plugin;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.Set;
 
 import com.chiorichan.event.Event;
@@ -8,6 +9,7 @@ import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
 import com.chiorichan.permissions.Permissible;
 import com.chiorichan.permissions.Permission;
+import com.chiorichan.plugin.java.JavaPlugin;
 
 /**
  * Handles all plugin management from the Server
@@ -88,6 +90,8 @@ public interface PluginManager
 	 * @return A list of all plugins loaded
 	 */
 	public Plugin[] loadPlugins( File directory );
+	
+	public void loadInternalPlugin( InputStream descriptionFile );
 	
 	/**
 	 * Disables all the loaded plugins

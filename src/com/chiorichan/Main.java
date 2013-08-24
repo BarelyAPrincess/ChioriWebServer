@@ -348,6 +348,8 @@ public class Main implements PluginMessageRecipient
 		{
 			pluginFolder.mkdir();
 		}
+		
+		pluginManager.loadInternalPlugin( FrameworkPlugin.class.getResourceAsStream("framework.yml" ) );
 	}
 	
 	public void enablePlugins( PluginLoadOrder type )

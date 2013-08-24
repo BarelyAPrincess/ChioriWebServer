@@ -1,6 +1,7 @@
 package com.chiorichan.plugin;
 
 import java.io.File;
+import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -31,7 +32,6 @@ import com.chiorichan.event.Listener;
 import com.chiorichan.permissions.Permissible;
 import com.chiorichan.permissions.Permission;
 import com.chiorichan.permissions.PermissionDefault;
-import com.chiorichan.server.Server;
 import com.chiorichan.util.FileUtil;
 import com.google.common.collect.ImmutableSet;
 
@@ -51,6 +51,7 @@ public final class SimplePluginManager implements PluginManager
 	private final Map<String, Map<Permissible, Boolean>> permSubs = new HashMap<String, Map<Permissible, Boolean>>();
 	private final Map<Boolean, Map<Permissible, Boolean>> defSubs = new HashMap<Boolean, Map<Permissible, Boolean>>();
 	private boolean useTimings = false;
+	private Set<String> loadedPlugins = new HashSet<String>();
 	
 	public SimplePluginManager(Main instance, SimpleCommandMap commandMap)
 	{
@@ -130,7 +131,6 @@ public final class SimplePluginManager implements PluginManager
 		}
 		
 		Map<String, File> plugins = new HashMap<String, File>();
-		Set<String> loadedPlugins = new HashSet<String>();
 		Map<String, Collection<String>> dependencies = new HashMap<String, Collection<String>>();
 		Map<String, Collection<String>> softDependencies = new HashMap<String, Collection<String>>();
 		
@@ -332,6 +332,146 @@ public final class SimplePluginManager implements PluginManager
 		}
 		
 		return result.toArray( new Plugin[result.size()] );
+	}
+	
+	/**
+	 * Loads the plugins contained within the specified directory
+	 * 
+	 * @param directory
+	 *           Directory to check for plugins
+	 * @return A list of all plugins loaded
+	 */
+	public void loadInternalPlugin( InputStream descriptionFile )
+	{
+		Map<String, Collection<String>> dependencies = new HashMap<String, Collection<String>>();
+		Map<String, Collection<String>> softDependencies = new HashMap<String, Collection<String>>();
+		
+		PluginDescriptionFile description = null;
+		try
+		{
+			description = new PluginDescriptionFile( descriptionFile );
+		}
+		catch ( InvalidDescriptionException ex )
+		{
+			server.getLogger().log( Level.SEVERE, "Could not load internal plugin description file", ex );
+			return;
+		}
+		
+		Collection<String> softDependencySet = description.getSoftDepend();
+		if ( softDependencySet != null )
+		{
+			if ( softDependencies.containsKey( description.getName() ) )
+			{
+				// Duplicates do not matter, they will be removed together if applicable
+				softDependencies.get( description.getName() ).addAll( softDependencySet );
+			}
+			else
+			{
+				softDependencies.put( description.getName(), new LinkedList<String>( softDependencySet ) );
+			}
+		}
+		
+		Collection<String> dependencySet = description.getDepend();
+		if ( dependencySet != null )
+		{
+			dependencies.put( description.getName(), new LinkedList<String>( dependencySet ) );
+		}
+		
+		Collection<String> loadBeforeSet = description.getLoadBefore();
+		if ( loadBeforeSet != null )
+		{
+			for ( String loadBeforeTarget : loadBeforeSet )
+			{
+				if ( softDependencies.containsKey( loadBeforeTarget ) )
+				{
+					softDependencies.get( loadBeforeTarget ).add( description.getName() );
+				}
+				else
+				{
+					// softDependencies is never iterated, so 'ghost' plugins aren't an issue
+					Collection<String> shortSoftDependency = new LinkedList<String>();
+					shortSoftDependency.add( description.getName() );
+					softDependencies.put( loadBeforeTarget, shortSoftDependency );
+				}
+			}
+		}
+		
+		boolean missingDependency = true;
+		
+		String plugin = description.getName();
+		
+		if ( dependencies.containsKey( plugin ) )
+		{
+			Iterator<String> dependencyIterator = dependencies.get( plugin ).iterator();
+			
+			while ( dependencyIterator.hasNext() )
+			{
+				String dependency = dependencyIterator.next();
+				
+				// Dependency loaded
+				if ( loadedPlugins.contains( dependency ) )
+				{
+					dependencyIterator.remove();
+					
+					// We have a dependency not found
+				}
+				else
+				{
+					missingDependency = false;
+					softDependencies.remove( plugin );
+					dependencies.remove( plugin );
+					
+					server.getLogger().log( Level.SEVERE, "Could not load plugin '" + plugin + "'", new UnknownDependencyException( dependency ) );
+					break;
+				}
+			}
+			
+			if ( dependencies.containsKey( plugin ) && dependencies.get( plugin ).isEmpty() )
+			{
+				dependencies.remove( plugin );
+			}
+		}
+		
+		if ( softDependencies.containsKey( plugin ) )
+		{
+			if ( softDependencies.get( plugin ).isEmpty() )
+			{
+				softDependencies.remove( plugin );
+			}
+		}
+		
+		if ( !( dependencies.containsKey( plugin ) || softDependencies.containsKey( plugin ) ) )
+		{
+			// We're clear to load, no more soft or hard dependencies left
+			missingDependency = false;
+			
+			loadedPlugins.add( plugin );
+		}
+		
+		if ( missingDependency )
+		{
+			softDependencies.clear();
+			dependencies.clear();
+			
+			server.getLogger().log( Level.SEVERE, "Could not load plugin '" + plugin + "': a required had not been loaded!" );
+		}
+		
+		PluginLoader loader = fileAssociations.values().iterator().next();
+		
+		try
+		{
+			Plugin result = loader.loadPlugin( description );
+			
+			if ( result != null )
+			{
+				plugins.add( result );
+				lookupNames.put( result.getDescription().getName(), result );
+			}
+		}
+		catch ( Exception e )
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	/**

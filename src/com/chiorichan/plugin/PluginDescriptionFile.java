@@ -1,5 +1,8 @@
 package com.chiorichan.plugin;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.Writer;
@@ -10,6 +13,11 @@ import java.util.Map;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 
+import com.chiorichan.command.Command;
+import com.chiorichan.command.CommandExecutor;
+import com.chiorichan.command.CommandSender;
+import com.chiorichan.command.PluginCommand;
+import com.chiorichan.command.TabCompleter;
 import com.chiorichan.permissions.Permissible;
 import com.chiorichan.permissions.Permission;
 import com.chiorichan.permissions.PermissionDefault;
@@ -195,6 +203,11 @@ public final class PluginDescriptionFile
 	private List<Permission> permissions = null;
 	private Map<?, ?> lazyPermissions = null;
 	private PermissionDefault defaultPerm = PermissionDefault.OP;
+
+	public PluginDescriptionFile(final File file) throws InvalidDescriptionException, FileNotFoundException
+	{
+		loadMap( asMap( yaml.load( new FileInputStream( file ) ) ) );
+	}
 	
 	public PluginDescriptionFile(final InputStream stream) throws InvalidDescriptionException
 	{

@@ -27,6 +27,8 @@ public interface PluginLoader
 	 */
 	public Plugin loadPlugin( File file ) throws InvalidPluginException, UnknownDependencyException;
 	
+	public Plugin loadPlugin( PluginDescriptionFile description ) throws InvalidPluginException;
+	
 	/**
 	 * Loads a PluginDescriptionFile from the specified file
 	 * 

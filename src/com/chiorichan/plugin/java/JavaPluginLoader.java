@@ -183,6 +183,48 @@ public class JavaPluginLoader implements PluginLoader
 		return result;
 	}
 	
+	public Plugin loadPlugin( PluginDescriptionFile description ) throws InvalidPluginException
+	{
+		PluginClassLoader loader = null;
+		JavaPlugin result = null;
+		
+		File dataFolder = new File( (File) Main.getServer().options.valueOf( "plugins" ), description.getName() );
+		
+		try
+		{
+			if ( description.getClassLoaderOf() != null )
+			{
+				loader = loaders0.get( description.getClassLoaderOf() );
+				//loader.addURL( urls[0] );
+			}
+			else
+			{
+				loader = new PluginClassLoader( this, new URL[0], getClass().getClassLoader(), null );
+			}
+			
+			Class<?> jarClass = Class.forName( description.getMain(), true, loader );
+			Class<? extends JavaPlugin> plugin = jarClass.asSubclass( JavaPlugin.class );
+			
+			Constructor<? extends JavaPlugin> constructor = plugin.getConstructor();
+			
+			result = constructor.newInstance();
+			
+			result.initialize( this, server, description, dataFolder, null, loader );
+		}
+		catch ( InvocationTargetException ex )
+		{
+			throw new InvalidPluginException( ex.getCause() );
+		}
+		catch ( Throwable ex )
+		{
+			throw new InvalidPluginException( ex );
+		}
+		
+		loaders0.put( description.getName(), loader );
+		
+		return result;
+	}
+	
 	/**
 	 * @deprecated Relic method from PluginLoader that didn't get purged
 	 */
