@@ -9,7 +9,6 @@ import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
 import com.chiorichan.permissions.Permissible;
 import com.chiorichan.permissions.Permission;
-import com.chiorichan.plugin.java.JavaPlugin;
 
 /**
  * Handles all plugin management from the Server
@@ -21,9 +20,9 @@ public interface PluginManager
 	 * Registers the specified plugin loader
 	 * 
 	 * @param loader
-	 *           Class name of the PluginLoader to register
+	 *           Class name of the Plugin to register
 	 * @throws IllegalArgumentException
-	 *            Thrown when the given Class is not a valid PluginLoader
+	 *            Thrown when the given Class is not a valid Plugin
 	 */
 	public void registerInterface( Class<? extends PluginLoader> loader ) throws IllegalArgumentException;
 	
@@ -186,7 +185,9 @@ public interface PluginManager
 	 *           Name of the permission
 	 * @return Permission, or null if none
 	 */
-	public Permission getPermission( String name );
+	public Permission getPermission2( String name );
+	
+	public String getPermission( String name );
 	
 	/**
 	 * Adds a {@link Permission} to this plugin manager.

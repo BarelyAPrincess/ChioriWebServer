@@ -2,8 +2,10 @@ package com.chiorichan.user;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 import com.chiorichan.Main;
+import com.chiorichan.permissions.PermissionAttachmentInfo;
 import com.chiorichan.plugin.Plugin;
 import com.chiorichan.serialization.ConfigurationSerializable;
 
@@ -113,6 +115,12 @@ public class User implements ConfigurationSerializable
 	{
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	public Set<PermissionAttachmentInfo> getEffectivePermissions()
+	{
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 }

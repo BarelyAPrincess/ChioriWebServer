@@ -22,7 +22,6 @@ import com.chiorichan.plugin.PluginBase;
 import com.chiorichan.plugin.PluginDescriptionFile;
 import com.chiorichan.plugin.PluginLoader;
 import com.chiorichan.plugin.PluginLogger;
-import com.chiorichan.server.Server;
 
 /**
  * Represents a Java plugin

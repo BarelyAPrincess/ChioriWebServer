@@ -1,10 +1,10 @@
 package com.chiorichan.server;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import jline.Terminal;
@@ -25,6 +25,7 @@ import com.chiorichan.command.ConsoleCommandSender;
 import com.chiorichan.command.RemoteConsoleCommandSender;
 import com.chiorichan.command.ServerCommand;
 import com.chiorichan.file.YamlConfiguration;
+import com.chiorichan.framework.IFramework;
 import com.chiorichan.user.UserList;
 import com.chiorichan.util.ServerShutdownThread;
 import com.chiorichan.util.Versioning;
@@ -119,26 +120,22 @@ public class Server
 			
 			setPort( configuration.getInt( "server.port", 8080 ) );
 			
-			ServiceBean service = new ServiceBean();
+			//ServiceBean service = new ServiceBean();
 			
-			primaryResin.addBean( new BeanEmbed( service, "framework" ) );
+			//primaryResin.addBean( new BeanEmbed( service, "framework" ) );
 			
-			primaryResin.setServerHeader( "Chiori Web Server Version " + server.getVersion() );
-			primaryResin.setServerId( "applebloom" );
+			primaryResin.setServerHeader( "Chiori Web Server Version " + Main.getVersion() );
+			primaryResin.setServerId( Main.getConfig().getString( "server.id", "applebloom" ) );
 			
-			String root = configuration.getString( "general.webroot", "webroot" );
+			File root = new File( configuration.getString( "settings.webroot", "webroot" ) );
 			
-			if ( !root.startsWith( "/" ) )
-				root = Main.class.getProtectionDomain().getCodeSource().getLocation().getPath() + root;
+			if ( !root.exists() )
+				root.mkdirs();
 			
-			WebAppEmbed webapp = new WebAppEmbed( "/fw/", Main.class.getProtectionDomain().getCodeSource().getLocation().getPath() + "fw" );
+			// TODO: Make it so the fw folder is an internal protected folder
+			WebAppEmbed webapp = new WebAppEmbed( "/", root.getAbsolutePath() );
 			
-			primaryResin.addWebApp( webapp );
-			
-			webapp = new WebAppEmbed( "/", root );
-			
-			webapp.addFilterMapping( new FilterMappingEmbed( "Framework", "/*", "com.chiorichan.server.Framework" ) );
-			// webapp.addFilterMapping( new FilterMappingEmbed( "Framework", "*", "com.chiorichan.server.Framework" ) );
+			webapp.addFilterMapping( new FilterMappingEmbed( "DefaultFilter", "/*", "com.chiorichan.server.DefaultFilter" ) );
 			
 			primaryResin.addWebApp( webapp );
 			
@@ -280,5 +277,10 @@ public class Server
 	public void setOptions( OptionSet options )
 	{
 		this.options = options;
+	}
+
+	public void registerBean( IFramework bean, String name )
+	{
+		primaryResin.addBean( new BeanEmbed( bean, name ) );
 	}
 }

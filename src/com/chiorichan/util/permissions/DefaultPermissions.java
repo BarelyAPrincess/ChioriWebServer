@@ -30,7 +30,7 @@ public final class DefaultPermissions
 		}
 		catch ( IllegalArgumentException ex )
 		{
-			result = Main.getPluginManager().getPermission( perm.getName() );
+			result = Main.getPluginManager().getPermission2( perm.getName() );
 		}
 		
 		if ( withLegacy )

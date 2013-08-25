@@ -11,6 +11,8 @@ import com.chiorichan.plugin.PluginManager;
  */
 public abstract class Event
 {
+	private static final HandlerList handlers = new HandlerList();
+	
 	private String name;
 	private final boolean async;
 	
@@ -48,7 +50,15 @@ public abstract class Event
 		return name;
 	}
 	
-	public abstract HandlerList getHandlers();
+	public HandlerList getHandlers()
+	{
+		return handlers;
+	}
+	
+	public static HandlerList getHandlerList()
+	{
+		return handlers;
+	}
 	
 	/**
 	 * Any custom event that should not by synchronized with other events must use the specific constructor. These are

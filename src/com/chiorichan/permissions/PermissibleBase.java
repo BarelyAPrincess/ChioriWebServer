@@ -92,7 +92,7 @@ public class PermissibleBase implements Permissible
 		}
 		else
 		{
-			Permission perm = Main.getPluginManager().getPermission( name );
+			Permission perm = Main.getPluginManager().getPermission2( name );
 			
 			if ( perm != null )
 			{
@@ -229,7 +229,7 @@ public class PermissibleBase implements Permissible
 		
 		for ( String name : keys )
 		{
-			Permission perm = Main.getPluginManager().getPermission( name );
+			Permission perm = Main.getPluginManager().getPermission2( name );
 			boolean value = children.get( name ) ^ invert;
 			String lname = name.toLowerCase();
 			

@@ -183,7 +183,7 @@ import com.google.common.collect.ImmutableMap;
  * 
  * </blockquote>
  */
-public final class PluginDescriptionFile
+public class PluginDescriptionFile
 {
 	private static final Yaml yaml = new Yaml( new SafeConstructor() );
 	private String name = null;

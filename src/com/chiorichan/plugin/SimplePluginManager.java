@@ -456,6 +456,8 @@ public final class SimplePluginManager implements PluginManager
 			server.getLogger().log( Level.SEVERE, "Could not load plugin '" + plugin + "': a required had not been loaded!" );
 		}
 		
+		// We attempt to get the loader JavaPluginLoader so we can use the method loadPlugin( descriptionFile ), This
+		// might need to change.
 		PluginLoader loader = fileAssociations.values().iterator().next();
 		
 		try
@@ -836,12 +838,21 @@ public final class SimplePluginManager implements PluginManager
 			}
 			else
 			{
-				throw new IllegalPluginAccessException( "Unable to find handler list for event " + clazz.getName() );
+				Main.getLogger().warning( "Unable to find handler list for event " + clazz.getName() );
+				return Event.class;
+				
+				// throw new IllegalPluginAccessException( "Unable to find handler list for event " + clazz.getName() );
 			}
 		}
 	}
 	
-	public Permission getPermission( String name )
+	public String getPermission( String name )
+	{
+		return getPermission2( name ).getName();
+	}
+	
+	@Override
+	public Permission getPermission2( String name )
 	{
 		return permissions.get( name.toLowerCase() );
 	}

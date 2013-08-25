@@ -46,6 +46,7 @@ import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.conversations.Conversable;
 import com.chiorichan.event.user.UserChatTabCompleteEvent;
 import com.chiorichan.file.YamlConfiguration;
+import com.chiorichan.framework.PluginMain;
 import com.chiorichan.help.HelpMap;
 import com.chiorichan.help.SimpleHelpMap;
 import com.chiorichan.permissions.Permissible;
@@ -76,7 +77,6 @@ import com.chiorichan.util.Versioning;
 import com.chiorichan.util.permissions.DefaultPermissions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.MapMaker;
-import com.sun.org.apache.xerces.internal.impl.PropertyManager;
 
 public class Main implements PluginMessageRecipient
 {
@@ -106,8 +106,6 @@ public class Main implements PluginMessageRecipient
 	private WarningState warningState = WarningState.DEFAULT;
 	private final BooleanWrapper online = new BooleanWrapper();
 	
-	// private static File fileConfig = new File(
-	// Main.class.getProtectionDomain().getCodeSource().getLocation().getPath() + "server.yml" );
 	private static YamlConfiguration config;
 	private static Server server;
 	private static ResourceLoader resourceLoader;
@@ -349,7 +347,7 @@ public class Main implements PluginMessageRecipient
 			pluginFolder.mkdir();
 		}
 		
-		pluginManager.loadInternalPlugin( FrameworkPlugin.class.getResourceAsStream("framework.yml" ) );
+		pluginManager.loadInternalPlugin( PluginMain.class.getResourceAsStream("framework.yml" ) );
 	}
 	
 	public void enablePlugins( PluginLoadOrder type )
@@ -765,7 +763,7 @@ public class Main implements PluginMessageRecipient
 		return console;
 	}
 	
-	public Logger getLogger()
+	public static Logger getLogger()
 	{
 		return console.getLogger().getLogger();
 	}
