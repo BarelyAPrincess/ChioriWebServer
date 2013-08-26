@@ -46,6 +46,7 @@ import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.conversations.Conversable;
 import com.chiorichan.event.user.UserChatTabCompleteEvent;
 import com.chiorichan.file.YamlConfiguration;
+import com.chiorichan.framework.Framework;
 import com.chiorichan.framework.PluginMain;
 import com.chiorichan.help.HelpMap;
 import com.chiorichan.help.SimpleHelpMap;
@@ -87,7 +88,7 @@ public class Main implements PluginMessageRecipient
 	public static boolean useConsole = true;
 	
 	private final static String serverName = "ChioriWebServer";
-	private String webroot = "";
+	public static String webroot = "";
 	private static String serverVersion = "";
 	private final String version = Versioning.getVersion();
 	private final ServicesManager servicesManager = new SimpleServicesManager();
@@ -167,10 +168,13 @@ public class Main implements PluginMessageRecipient
 		updater.getOnUpdate().addAll( configuration.getStringList( "auto-updater.on-update" ) );
 		updater.check( serverVersion );
 		
-		console.init( configuration );
-		
 		loadPlugins();
 		enablePlugins( PluginLoadOrder.STARTUP );
+		
+		console.init( configuration );
+		
+		Framework.initalizeFramework();
+		
 		enablePlugins( PluginLoadOrder.POSTWORLD ); // Temp until there is a better solution for POSTWORLD
 	}
 	
@@ -755,7 +759,7 @@ public class Main implements PluginMessageRecipient
 	
 	public String toString()
 	{
-		return "ChioriWebServer{" + "serverName=" + serverName + ",serverVersion=" + getVersion() + '}';
+		return "ChioriWebServer{" + "serverName=" + serverName + ",serverVersion=" + getVersion() + ",frameworkVersion=" + Versioning.getFrameworkVersion() + "}";
 	}
 	
 	public static Server getServer()

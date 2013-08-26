@@ -1,24 +1,30 @@
 package com.chiorichan.server;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.OutputStream;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.chiorichan.Main;
-import com.chiorichan.event.server.RequestEvent;
-import com.chiorichan.event.server.ServerVars;
+import com.caucho.quercus.QuercusContext;
+import com.caucho.quercus.QuercusRequestAdapter;
+import com.caucho.vfs.FilePath;
+import com.caucho.vfs.Path;
+import com.caucho.vfs.Vfs;
+import com.caucho.vfs.WriteStream;
+import com.chiorichan.framework.Framework;
 
 public class DefaultFilter implements Filter
 {
+	protected QuercusContext _quercus;
+	protected ServletContext _servletContext;
 	
 	@Override
 	public void destroy()
@@ -32,66 +38,33 @@ public class DefaultFilter implements Filter
 		HttpServletRequest request = (HttpServletRequest) request0;
 		HttpServletResponse response = (HttpServletResponse) response0;
 		
-		Map<ServerVars, Object> _server = new HashMap<ServerVars, Object>();
+		Framework fw = new Framework( request, response, chain, getQuercus(), _servletContext );
 		
-		_server.put( ServerVars.DOCUMENT_ROOT, Main.getConfig().getString( "settings.webroot", "webroot" ) );
-		_server.put( ServerVars.HTTP_ACCEPT, request.getHeader( "Accept" ) );
-		_server.put( ServerVars.HTTP_USER_AGENT, request.getHeader( "User-Agent" ) );
-		_server.put( ServerVars.HTTP_CONNECTION, request.getHeader( "Connection" ) );
-		_server.put( ServerVars.HTTP_HOST, request.getHeader( "Host" ) );
-		_server.put( ServerVars.HTTP_ACCEPT_ENCODING, request.getHeader( "Accept-Encoding" ) );
-		_server.put( ServerVars.HTTP_ACCEPT_LANGUAGE, request.getHeader( "Accept-Language" ) );
-		_server.put( ServerVars.REMOTE_HOST, request.getRemoteHost() );
-		_server.put( ServerVars.REMOTE_ADDR, request.getRemoteAddr() );
-		_server.put( ServerVars.REMOTE_PORT, request.getRemotePort() );
-		_server.put( ServerVars.REQUEST_TIME, System.currentTimeMillis() );
-		_server.put( ServerVars.REQUEST_URI, request.getRequestURI() );
-		_server.put( ServerVars.CONTENT_LENGTH, request.getContentLength() );
-		_server.put( ServerVars.AUTH_TYPE, request.getAuthType() );
-		_server.put( ServerVars.SERVER_NAME, request.getServerName() );
-		_server.put( ServerVars.SERVER_PORT, request.getServerPort() );
-		_server.put( ServerVars.HTTPS, request.isSecure() );
-		_server.put( ServerVars.SESSION, request.getSession() );
-		_server.put( ServerVars.SERVER_SOFTWARE, "Chiori Web Server" );
-		_server.put( ServerVars.SERVER_ADMIN, Main.getConfig().getString( "server.admin", "webmaster@" + request.getServerName() ) );
-		_server.put( ServerVars.SERVER_ID, Main.getConfig().getString( "server.id", "applebloom" ) );
-		_server.put( ServerVars.SERVER_SIGNATURE, "Chiori Web Server Version " + Main.getVersion() );
-		
-		RequestEvent event = new RequestEvent( _server );
-		
-		Main.getPluginManager().callEvent( event );
-		
-		if ( event.isCancelled() )
+		fw.init();
+	}
+	
+	protected QuercusContext getQuercus()
+	{
+		if ( _quercus == null )
 		{
-			Main.getLogger().warning( "Navigation was cancelled by a plugin for ip '" + request.getRemoteAddr() + "' '" + request.getHeader( "Host" ) + request.getRequestURI() + "'" );
+			_quercus = new QuercusContext();
 			
-			int status = event.getStatus();
-			String reason = event.getReason();
+			Path pwd = new FilePath( _servletContext.getRealPath( "/" ) );
+			Path webInfDir = new FilePath( _servletContext.getRealPath( "/WEB-INF" ) );
 			
-			if ( status < 400 && status > 599 )
-			{
-				status = 502;
-				reason = "Navigation Cancelled by Internal Event";
-			}
+			_quercus.setPwd( pwd );
+			_quercus.setWebInfDir( webInfDir );
 			
-			response.sendError( status, reason );
+			_quercus.init();
+			_quercus.start();
 		}
 		
-		// Request is considered successful pass this point!
-		
-		boolean requestRewritten = false;
-		
-		String newUrl = "/fw/framework.php?page=../test.php";
-		request.getRequestDispatcher( newUrl ).forward( request, response );
-		
-		//if ( requestRewritten )
-			//chain.doFilter( request, response );
+		return _quercus;
 	}
 	
 	@Override
-	public void init( FilterConfig arg0 ) throws ServletException
+	public void init( FilterConfig config ) throws ServletException
 	{
-		
+		_servletContext = config.getServletContext();
 	}
-	
 }

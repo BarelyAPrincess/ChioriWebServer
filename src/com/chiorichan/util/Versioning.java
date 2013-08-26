@@ -36,4 +36,14 @@ public class Versioning
 		
 		return result;
 	}
+
+	public static String getFrameworkVersion()
+	{
+		return "5.1.0825 (Scootaloo)";
+	}
+	
+	public static String getFrameworkCopyright()
+	{
+		return "Copyright © 2013 Apple Bloom Company";
+	}
 }

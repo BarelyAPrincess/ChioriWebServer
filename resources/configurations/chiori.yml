@@ -1,18 +1,39 @@
 server:
-    ip: ''
-    port: 8080
+  ip: ''
+  port: 8080
+  admin: chiorigreene@gmail.com
+  id: applebloom
 settings:
-    permissions-file: permissions.yml
-    update-folder: update
-    ping-packet-limit: 100
-    plugin-profiling: false
-    query-plugins: true
-    deprecated-verbose: default
-    shutdown-message: Server Shutdown
+  permissions-file: permissions.yml
+  update-folder: update
+  ping-packet-limit: 100
+  plugin-profiling: false
+  query-plugins: true
+  deprecated-verbose: default
+  shutdown-message: Server Shutdown
+  whitelist: false
+  webroot: webroot
 auto-updater:
-    enabled: true
-    on-broken: [warn-console, warn-ops]
-    on-update: [warn-console, warn-ops]
-    preferred-channel: rb
-    host: dl.chiorichan.com
-    suggest-channels: true
+  enabled: true
+  on-broken:
+  - warn-console
+  - warn-ops
+  on-update:
+  - warn-console
+  - warn-ops
+  preferred-channel: rb
+  host: dl.chiorichan.com
+  suggest-channels: true
+framework:
+  database:
+    database: chiorifw
+    type: mysql
+    host: localhost
+    port: 3306
+    username: fwuser
+    password: fwpass
+  sites:
+    defaultTitle: Unnamed Chiori Framework Site
+  users:
+    operators:
+    - ChioriGreene

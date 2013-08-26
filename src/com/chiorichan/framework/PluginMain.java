@@ -13,7 +13,7 @@ public class PluginMain extends JavaPlugin implements Listener
 	{
 		Main.getPluginManager().registerEvents( this, this );
 		
-		Main.getServer().registerBean( new Framework(), "framework" );
+		//Main.getServer().registerBean( null, "framework" );
 	}
 	
 	public void onDisable()

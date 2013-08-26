@@ -32,7 +32,8 @@ public enum ServerVars
 	AUTH_PW( 27 ),
 	AUTH_TYPE( 28 ),
 	CONTENT_LENGTH( 29 ),
-	SESSION( 30 );
+	SESSION( 30 ),
+	PHP_SELF( 31 );
 	
 	private final int id;
 	

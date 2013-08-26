@@ -25,7 +25,6 @@ import com.chiorichan.command.ConsoleCommandSender;
 import com.chiorichan.command.RemoteConsoleCommandSender;
 import com.chiorichan.command.ServerCommand;
 import com.chiorichan.file.YamlConfiguration;
-import com.chiorichan.framework.IFramework;
 import com.chiorichan.user.UserList;
 import com.chiorichan.util.ServerShutdownThread;
 import com.chiorichan.util.Versioning;
@@ -279,7 +278,7 @@ public class Server
 		this.options = options;
 	}
 
-	public void registerBean( IFramework bean, String name )
+	public void registerBean( Class bean, String name )
 	{
 		primaryResin.addBean( new BeanEmbed( bean, name ) );
 	}
