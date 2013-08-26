@@ -13,7 +13,7 @@ public class Versioning
 	public static String getVersion()
 	{
 		if ( true )
-			return "1.2.0821 (Rainbow Dash)";
+			return "1.0";
 		
 		String result = "Unknown-Version";
 		
@@ -39,7 +39,7 @@ public class Versioning
 
 	public static String getFrameworkVersion()
 	{
-		return "5.1.0825 (Scootaloo)";
+		return "5.2.0826 (Lunar Dream)";
 	}
 	
 	public static String getFrameworkCopyright()

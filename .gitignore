@@ -4,3 +4,12 @@
 *.jar
 *.war
 *.ear
+/bin
+/.classpath
+/.project
+/.settings
+/chiori.yml
+/help.yml
+/permissions.yml
+/resin-data
+/webroot

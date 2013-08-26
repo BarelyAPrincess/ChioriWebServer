@@ -1,4 +1,0 @@
-ChioriWebServer
-===============
-
-Chiori Web Server
