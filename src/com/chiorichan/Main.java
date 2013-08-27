@@ -47,7 +47,6 @@ import com.chiorichan.conversations.Conversable;
 import com.chiorichan.event.user.UserChatTabCompleteEvent;
 import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.framework.Framework;
-import com.chiorichan.framework.PluginMain;
 import com.chiorichan.help.HelpMap;
 import com.chiorichan.help.SimpleHelpMap;
 import com.chiorichan.permissions.Permissible;
@@ -58,6 +57,7 @@ import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.ServicesManager;
 import com.chiorichan.plugin.SimplePluginManager;
 import com.chiorichan.plugin.SimpleServicesManager;
+import com.chiorichan.plugin.Template;
 import com.chiorichan.plugin.java.JavaPluginLoader;
 import com.chiorichan.plugin.messaging.Messenger;
 import com.chiorichan.plugin.messaging.PluginMessageRecipient;
@@ -351,7 +351,7 @@ public class Main implements PluginMessageRecipient
 			pluginFolder.mkdir();
 		}
 		
-		pluginManager.loadInternalPlugin( PluginMain.class.getResourceAsStream("framework.yml" ) );
+		pluginManager.loadInternalPlugin( Template.class.getResourceAsStream("template.yml" ) );
 	}
 	
 	public void enablePlugins( PluginLoadOrder type )

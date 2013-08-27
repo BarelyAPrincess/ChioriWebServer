@@ -1,7 +1,7 @@
 name: Chiori Framework
 author: Chiori Greene
-main: com.chiorichan.framework.PluginMain
-version: '1.0.0506 (Apple Bloom)'
+main: com.chiorichan.plugin.Template
+version: '1.0'
 depends: []
 
 commands:

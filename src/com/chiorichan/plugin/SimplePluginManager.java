@@ -1027,4 +1027,20 @@ public final class SimplePluginManager implements PluginManager
 	{
 		useTimings = use;
 	}
+	
+	public Plugin getPluginbyName( String pluginPath )
+	{
+		try
+		{
+			for ( Plugin plugin1 : Main.getPluginManager().getPlugins() )
+				if ( plugin1.getClass().toString().equals( pluginPath ) )
+					return plugin1;
+		}
+		catch ( Exception e )
+		{
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
 }

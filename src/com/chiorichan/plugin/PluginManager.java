@@ -323,4 +323,6 @@ public interface PluginManager
 	 * @return True if event timings are to be used
 	 */
 	public boolean useTimings();
+	
+	public Plugin getPluginbyName( String pluginPath );
 }

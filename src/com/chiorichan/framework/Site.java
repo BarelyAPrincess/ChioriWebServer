@@ -1,33 +1,183 @@
 package com.chiorichan.framework;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.InputStream;
+import java.net.ConnectException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import org.json.JSONObject;
 
 import com.chiorichan.Main;
+import com.chiorichan.database.SqlConnector;
+import com.chiorichan.file.YamlConfiguration;
+import com.google.gson.Gson;
 
 public class Site
 {
-	public String siteId, title, domain, metatags, aliases, protectedFiles;
+	public String siteId, title, domain;
+	Map<String, String> subdomains, aliases;
+	Set<String> metatags, protectedFiles;
+	YamlConfiguration config;
+	SqlConnector sql;
 	
-	public Site( ResultSet rs ) throws SQLException
+	//NOTE TO SELF: Sets do not contain duplicates while Lists can
+	
+	public Site(ResultSet rs) throws SQLException
 	{
+		Main.getLogger().info( "Loading site '" + siteId + "' with title '" + title + "' from Framework Database." );
+		
 		siteId = rs.getString( "siteID" );
 		title = rs.getString( "title" );
 		domain = rs.getString( "domain" );
-		protectedFiles = rs.getString( "protected" );
-		metatags = rs.getString( "metatags" );
-		aliases = rs.getString( "aliases" );
 		
-		Main.getLogger().info( "Loading site '" + siteId + "' with title '" + title + "' from Framework Database." );
+		// Convert from hashmap to JSON
+		// new JSONObject( HashMap );
+		
+		Gson gson = new Gson();
+		try
+		{
+			protectedFiles = gson.fromJson( new JSONObject( rs.getString( "protected" ) ).toString(), HashSet.class );
+		}
+		catch ( Exception e )
+		{
+			Main.getLogger().warning( "MALFORMED JSON EXPRESSION for 'protected' field for site '" + siteId + "'" );
+		}
+		
+		try
+		{
+			metatags = gson.fromJson( new JSONObject( rs.getString( "metatags" ) ).toString(), HashSet.class );
+		}
+		catch ( Exception e )
+		{
+			Main.getLogger().warning( "MALFORMED JSON EXPRESSION for 'metatags' field for site '" + siteId + "'" );
+		}
+		
+		try
+		{
+			aliases = gson.fromJson( new JSONObject( rs.getString( "aliases" ) ).toString(), HashMap.class );
+		}
+		catch ( Exception e )
+		{
+			Main.getLogger().warning( "MALFORMED JSON EXPRESSION for 'aliases' field for site '" + siteId + "'" );
+		}
+		
+		try
+		{
+			subdomains = gson.fromJson( new JSONObject( rs.getString( "subdomains" ) ).toString(), HashMap.class );
+		}
+		catch ( Exception e )
+		{
+			Main.getLogger().warning( "MALFORMED JSON EXPRESSION for 'subdomains' field for site '" + siteId + "'" );
+		}
+		
+		try
+		{
+			String yaml = rs.getString( "configYaml" );
+			InputStream is = new ByteArrayInputStream( yaml.getBytes() );
+			config = YamlConfiguration.loadConfiguration( is );
+		}
+		catch ( Exception e )
+		{
+			Main.getLogger().warning( "MALFORMED YAML EXPRESSION for 'configYaml' field for site '" + siteId + "'" );
+		}
+		
+		if ( config != null && config.getConfigurationSection( "database" ) != null )
+		{
+			//String type = config.getString("database.type");
+			String host = config.getString("database.host");
+			String port = config.getString("database.port");
+			String database = config.getString("database.database");
+			String username = config.getString("database.username");
+			String password = config.getString("database.password");
+			
+			sql = new SqlConnector();
+			
+			try
+			{
+				sql.init( database, username, password, host, port );
+			}
+			catch ( ConnectException | ClassNotFoundException e )
+			{
+				e.printStackTrace();
+				return;
+			}
+			finally
+			{
+				Main.getLogger().info( "Successfully connected to site database for site " + siteId );
+			}
+		}
 	}
 	
-	public Site( String id, String title0, String domain0 )
+	public YamlConfiguration getYaml()
+	{
+		return config;
+	}
+	
+	public Set<String> getMetatags()
+	{
+		if ( metatags == null )
+			return new HashSet<String>();
+		
+		return metatags;
+	}
+	
+	public Map<String, String> getAliases()
+	{
+		return aliases;
+	}
+	
+	public Site(String id, String title0, String domain0)
 	{
 		siteId = id;
 		title = title0;
 		domain = domain0;
-		protectedFiles = "";
-		metatags = "";
-		aliases = "";
+		protectedFiles = new HashSet<String>();
+		metatags = new HashSet<String>();
+		aliases = new HashMap<String, String>();
+		subdomains = new HashMap<String, String>();
 	}
+
+	public boolean protectCheck( String file )
+	{
+		if ( protectedFiles == null )
+			return false;
+		
+		return protectedFiles.contains( file );
+	}
+	
+	public File getAbsoluteRoot( String subdomain )
+	{
+		File target = new File( Main.webroot, getWebRoot( subdomain ) );
+		
+		if ( target.isFile() )
+			target.delete();
+		
+		if ( !target.exists() )
+			target.mkdirs();
+		
+		return target;
+	}
+	
+	public String getWebRoot( String subdomain )
+	{
+		String target = "/" + siteId;
+		
+		if ( subdomain != null && !subdomain.isEmpty() )
+		{
+			String sub = subdomains.get( subdomain );
+			
+			if ( sub != null )
+				target = "/" + siteId + "/" + sub;
+		}
+		
+		return target;
+	}
+	
+	// TODO: Add methods to add protected files, metatags and aliases to site and save
 }

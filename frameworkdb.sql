@@ -30,7 +30,9 @@ CREATE TABLE `sites` (
   `siteID` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `title` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'Unnamed Chiori Framework Site',
   `domain` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `subdomains` text COLLATE utf8_unicode_ci NOT NULL,
   `protected` text COLLATE utf8_unicode_ci NOT NULL,
   `metatags` text COLLATE utf8_unicode_ci NOT NULL,
   `aliases` text COLLATE utf8_unicode_ci NOT NULL,
+  `configYaml` text COLLATE utf8_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
