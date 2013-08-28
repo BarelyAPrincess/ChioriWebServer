@@ -5,7 +5,7 @@ import java.util.List;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.ChatColor;
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.command.Command;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.user.User;
@@ -32,7 +32,7 @@ public class KickCommand extends VanillaCommand
 			return false;
 		}
 		
-		User user = Main.getInstance().getUserExact( args[0] );
+		User user = Loader.getInstance().getUserExact( args[0] );
 		
 		if ( user != null )
 		{

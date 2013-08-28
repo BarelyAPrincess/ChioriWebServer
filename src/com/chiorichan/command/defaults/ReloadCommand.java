@@ -3,7 +3,7 @@ package com.chiorichan.command.defaults;
 import java.util.Arrays;
 
 import com.chiorichan.ChatColor;
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.command.Command;
 import com.chiorichan.command.CommandSender;
 
@@ -24,7 +24,7 @@ public class ReloadCommand extends ChioriCommand
 		if ( !testPermission( sender ) )
 			return true;
 		
-		Main.getInstance().reload();
+		Loader.getInstance().reload();
 		Command.broadcastCommandMessage( sender, ChatColor.GREEN + "Reload complete." );
 		
 		return true;

@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.command.Command;
 import com.chiorichan.command.PluginCommandYamlParser;
 import com.chiorichan.command.SimpleCommandMap;
@@ -40,7 +40,7 @@ import com.google.common.collect.ImmutableSet;
  */
 public final class SimplePluginManager implements PluginManager
 {
-	private final Main server;
+	private final Loader server;
 	private final Map<Pattern, PluginLoader> fileAssociations = new HashMap<Pattern, PluginLoader>();
 	private final List<Plugin> plugins = new ArrayList<Plugin>();
 	private final Map<String, Plugin> lookupNames = new HashMap<String, Plugin>();
@@ -53,7 +53,7 @@ public final class SimplePluginManager implements PluginManager
 	private boolean useTimings = false;
 	private Set<String> loadedPlugins = new HashSet<String>();
 	
-	public SimplePluginManager(Main instance, SimpleCommandMap commandMap)
+	public SimplePluginManager(Loader instance, SimpleCommandMap commandMap)
 	{
 		server = instance;
 		this.commandMap = commandMap;
@@ -80,7 +80,7 @@ public final class SimplePluginManager implements PluginManager
 			
 			try
 			{
-				constructor = loader.getConstructor( Main.class );
+				constructor = loader.getConstructor( Loader.class );
 				instance = constructor.newInstance( server );
 			}
 			catch ( NoSuchMethodException ex )
@@ -838,7 +838,7 @@ public final class SimplePluginManager implements PluginManager
 			}
 			else
 			{
-				Main.getLogger().warning( "Unable to find handler list for event " + clazz.getName() );
+				Loader.getLogger().warning( "Unable to find handler list for event " + clazz.getName() );
 				return Event.class;
 				
 				// throw new IllegalPluginAccessException( "Unable to find handler list for event " + clazz.getName() );
@@ -1032,7 +1032,7 @@ public final class SimplePluginManager implements PluginManager
 	{
 		try
 		{
-			for ( Plugin plugin1 : Main.getPluginManager().getPlugins() )
+			for ( Plugin plugin1 : Loader.getPluginManager().getPlugins() )
 				if ( plugin1.getClass().toString().equals( pluginPath ) )
 					return plugin1;
 		}

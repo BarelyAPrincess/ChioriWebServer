@@ -6,7 +6,7 @@ import java.util.List;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.ChatColor;
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.command.Command;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.user.User;
@@ -34,7 +34,7 @@ public class DeopCommand extends VanillaCommand
 			return false;
 		}
 		
-		User user = Main.getInstance().getOfflineUser( args[0] );
+		User user = Loader.getInstance().getOfflineUser( args[0] );
 		user.setOp( false );
 		
 		if ( user instanceof User )
@@ -56,7 +56,7 @@ public class DeopCommand extends VanillaCommand
 		if ( args.length == 1 )
 		{
 			List<String> completions = new ArrayList<String>();
-			for ( User user : Main.getInstance().getOfflineUsers() )
+			for ( User user : Loader.getInstance().getOfflineUsers() )
 			{
 				String UserName = user.getName();
 				if ( user.isOp() && StringUtil.startsWithIgnoreCase( UserName, args[0] ) )

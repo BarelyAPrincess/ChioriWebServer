@@ -1,6 +1,6 @@
 package com.chiorichan.scheduler;
 
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.plugin.Plugin;
 
 /**
@@ -18,7 +18,7 @@ public abstract class ChioriRunnable implements Runnable
 	 */
 	public synchronized void cancel() throws IllegalStateException
 	{
-		Main.getScheduler().cancelTask( getTaskId() );
+		Loader.getScheduler().cancelTask( getTaskId() );
 	}
 	
 	/**
@@ -36,7 +36,7 @@ public abstract class ChioriRunnable implements Runnable
 	public synchronized IChioriTask runTask( Plugin plugin ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
-		return setupId( Main.getScheduler().runTask( plugin, this ) );
+		return setupId( Loader.getScheduler().runTask( plugin, this ) );
 	}
 	
 	/**
@@ -57,7 +57,7 @@ public abstract class ChioriRunnable implements Runnable
 	public synchronized IChioriTask runTaskAsynchronously( Plugin plugin ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
-		return setupId( Main.getScheduler().runTaskAsynchronously( plugin, this ) );
+		return setupId( Loader.getScheduler().runTaskAsynchronously( plugin, this ) );
 	}
 	
 	/**
@@ -77,7 +77,7 @@ public abstract class ChioriRunnable implements Runnable
 	public synchronized IChioriTask runTaskLater( Plugin plugin, long delay ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
-		return setupId( Main.getScheduler().runTaskLater( plugin, this, delay ) );
+		return setupId( Loader.getScheduler().runTaskLater( plugin, this, delay ) );
 	}
 	
 	/**
@@ -100,7 +100,7 @@ public abstract class ChioriRunnable implements Runnable
 	public synchronized IChioriTask runTaskLaterAsynchronously( Plugin plugin, long delay ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
-		return setupId( Main.getScheduler().runTaskLaterAsynchronously( plugin, this, delay ) );
+		return setupId( Loader.getScheduler().runTaskLaterAsynchronously( plugin, this, delay ) );
 	}
 	
 	/**
@@ -122,7 +122,7 @@ public abstract class ChioriRunnable implements Runnable
 	public synchronized IChioriTask runTaskTimer( Plugin plugin, long delay, long period ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
-		return setupId( Main.getScheduler().runTaskTimer( plugin, this, delay, period ) );
+		return setupId( Loader.getScheduler().runTaskTimer( plugin, this, delay, period ) );
 	}
 	
 	/**
@@ -148,7 +148,7 @@ public abstract class ChioriRunnable implements Runnable
 	public synchronized IChioriTask runTaskTimerAsynchronously( Plugin plugin, long delay, long period ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
-		return setupId( Main.getScheduler().runTaskTimerAsynchronously( plugin, this, delay, period ) );
+		return setupId( Loader.getScheduler().runTaskTimerAsynchronously( plugin, this, delay, period ) );
 	}
 	
 	/**

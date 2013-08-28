@@ -6,18 +6,18 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 
 public class Versioning
 {
 	public static String getVersion()
 	{
 		if ( true )
-			return "1.0";
+			return "5.2.0826 (Lunar Dream)";
 		
 		String result = "Unknown-Version";
 		
-		InputStream stream = Main.class.getClassLoader().getResourceAsStream( "META-INF/maven/org.bukkit/bukkit/pom.properties" );
+		InputStream stream = Loader.class.getClassLoader().getResourceAsStream( "META-INF/maven/org.bukkit/bukkit/pom.properties" );
 		Properties properties = new Properties();
 		
 		if ( stream != null )
@@ -36,14 +36,14 @@ public class Versioning
 		
 		return result;
 	}
-
-	public static String getFrameworkVersion()
-	{
-		return "5.2.0826 (Lunar Dream)";
-	}
 	
-	public static String getFrameworkCopyright()
+	public static String getCopyright()
 	{
 		return "Copyright © 2013 Apple Bloom Company";
+	}
+
+	public static String getProduct()
+	{
+		return "Chiori Web Server (implementing Chiori Framework)";
 	}
 }

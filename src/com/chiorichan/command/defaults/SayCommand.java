@@ -5,7 +5,7 @@ import java.util.List;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.ChatColor;
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.user.User;
 import com.google.common.collect.ImmutableList;
@@ -44,10 +44,10 @@ public class SayCommand extends VanillaCommand
 		
 		if ( sender instanceof User )
 		{
-			Main.getInstance().getLogger().info( "[" + sender.getName() + "] " + message );
+			Loader.getInstance().getLogger().info( "[" + sender.getName() + "] " + message );
 		}
 		
-		Main.getInstance().broadcastMessage( ChatColor.LIGHT_PURPLE + "[Server] " + message );
+		Loader.getInstance().broadcastMessage( ChatColor.LIGHT_PURPLE + "[Server] " + message );
 		
 		return true;
 	}

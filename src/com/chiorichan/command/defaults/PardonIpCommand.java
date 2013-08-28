@@ -6,7 +6,7 @@ import java.util.List;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.ChatColor;
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.command.Command;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.util.StringUtil;
@@ -35,7 +35,7 @@ public class PardonIpCommand extends VanillaCommand
 		
 		if ( BanIpCommand.ipValidity.matcher( args[0] ).matches() )
 		{
-			Main.getInstance().unbanIP( args[0] );
+			Loader.getInstance().unbanIP( args[0] );
 			Command.broadcastCommandMessage( sender, "Pardoned ip " + args[0] );
 		}
 		else
@@ -55,7 +55,7 @@ public class PardonIpCommand extends VanillaCommand
 		
 		if ( args.length == 1 )
 		{
-			return StringUtil.copyPartialMatches( args[0], Main.getInstance().getIPBans(), new ArrayList<String>() );
+			return StringUtil.copyPartialMatches( args[0], Loader.getInstance().getIPBans(), new ArrayList<String>() );
 		}
 		return ImmutableList.of();
 	}

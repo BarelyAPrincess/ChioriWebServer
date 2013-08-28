@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.command.defaults.BanCommand;
 import com.chiorichan.command.defaults.BanIpCommand;
 import com.chiorichan.command.defaults.BanListCommand;
@@ -37,7 +37,6 @@ import com.chiorichan.command.defaults.TellCommand;
 import com.chiorichan.command.defaults.VanillaCommand;
 import com.chiorichan.command.defaults.VersionCommand;
 import com.chiorichan.command.defaults.WhitelistCommand;
-import com.chiorichan.server.Server;
 import com.chiorichan.util.StringUtil;
 
 public class SimpleCommandMap implements CommandMap
@@ -45,7 +44,7 @@ public class SimpleCommandMap implements CommandMap
 	private static final Pattern PATTERN_ON_SPACE = Pattern.compile( " ", Pattern.LITERAL );
 	protected final Map<String, Command> knownCommands = new HashMap<String, Command>();
 	protected final Set<String> aliases = new HashSet<String>();
-	private final Main server;
+	private final Loader server;
 	protected static final Set<VanillaCommand> fallbackCommands = new HashSet<VanillaCommand>();
 	
 	static
@@ -66,13 +65,13 @@ public class SimpleCommandMap implements CommandMap
 		fallbackCommands.add( new BanListCommand() );
 	}
 	
-	public SimpleCommandMap(final Main server)
+	public SimpleCommandMap(final Loader server)
 	{
 		this.server = server;
 		setDefaultCommands( server );
 	}
 	
-	private void setDefaultCommands( final Main server )
+	private void setDefaultCommands( final Loader server )
 	{
 		register( "bukkit", new SaveCommand() );
 		register( "bukkit", new SaveOnCommand() );

@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.command.Command;
 import com.chiorichan.command.CommandExecutor;
 import com.chiorichan.command.MultipleCommandAlias;
@@ -30,11 +30,11 @@ public class SimpleHelpMap implements HelpMap
 	private HelpTopic defaultTopic;
 	private final Map<String, HelpTopic> helpTopics;
 	private final Map<Class, HelpTopicFactory<Command>> topicFactoryMap;
-	private final Main server;
+	private final Loader server;
 	private HelpYamlReader yaml;
 	
 	@SuppressWarnings( "unchecked" )
-	public SimpleHelpMap(Main server)
+	public SimpleHelpMap(Loader server)
 	{
 		this.helpTopics = new TreeMap<String, HelpTopic>( HelpTopicComparator.topicNameComparatorInstance() );
 		this.topicFactoryMap = new HashMap<Class, HelpTopicFactory<Command>>();

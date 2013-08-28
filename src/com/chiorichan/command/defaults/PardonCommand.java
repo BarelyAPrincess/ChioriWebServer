@@ -6,7 +6,7 @@ import java.util.List;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.ChatColor;
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.command.Command;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.user.User;
@@ -34,7 +34,7 @@ public class PardonCommand extends VanillaCommand
 			return false;
 		}
 		
-		Main.getInstance().getOfflineUser( args[0] ).setBanned( false );
+		Loader.getInstance().getOfflineUser( args[0] ).setBanned( false );
 		Command.broadcastCommandMessage( sender, "Pardoned " + args[0] );
 		return true;
 	}
@@ -49,7 +49,7 @@ public class PardonCommand extends VanillaCommand
 		if ( args.length == 1 )
 		{
 			List<String> completions = new ArrayList<String>();
-			for ( User user : Main.getInstance().getBannedUsers() )
+			for ( User user : Loader.getInstance().getBannedUsers() )
 			{
 				String name = user.getName();
 				if ( StringUtil.startsWithIgnoreCase( name, args[0] ) )

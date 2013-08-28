@@ -23,7 +23,6 @@ import com.chiorichan.framework.Framework;
 
 public class DefaultFilter implements Filter
 {
-	protected QuercusContext _quercus;
 	protected ServletContext _servletContext;
 	
 	@Override
@@ -38,28 +37,9 @@ public class DefaultFilter implements Filter
 		HttpServletRequest request = (HttpServletRequest) request0;
 		HttpServletResponse response = (HttpServletResponse) response0;
 		
-		Framework fw = new Framework( request, response, chain, getQuercus(), _servletContext );
+		Framework fw = new Framework( request, response, chain, _servletContext );
 		
 		fw.init();
-	}
-	
-	protected QuercusContext getQuercus()
-	{
-		if ( _quercus == null )
-		{
-			_quercus = new QuercusContext();
-			
-			Path pwd = new FilePath( _servletContext.getRealPath( "/" ) );
-			Path webInfDir = new FilePath( _servletContext.getRealPath( "/WEB-INF" ) );
-			
-			_quercus.setPwd( pwd );
-			_quercus.setWebInfDir( webInfDir );
-			
-			_quercus.init();
-			_quercus.start();
-		}
-		
-		return _quercus;
 	}
 	
 	@Override

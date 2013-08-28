@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.ChatColor;
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.command.Command;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.user.User;
@@ -42,7 +42,7 @@ public class BanIpCommand extends VanillaCommand
 		}
 		else
 		{
-			User User = Main.getInstance().getUser( args[0] );
+			User User = Loader.getInstance().getUser( args[0] );
 			
 			if ( User == null )
 			{
@@ -59,7 +59,7 @@ public class BanIpCommand extends VanillaCommand
 	private void processIPBan( String ip, CommandSender sender )
 	{
 		// TODO: Kick on ban
-		Main.getInstance().banIP( ip );
+		Loader.getInstance().banIP( ip );
 		
 		Command.broadcastCommandMessage( sender, "Banned IP Address " + ip );
 	}

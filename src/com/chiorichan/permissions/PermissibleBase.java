@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.plugin.Plugin;
 
 /**
@@ -92,7 +92,7 @@ public class PermissibleBase implements Permissible
 		}
 		else
 		{
-			Permission perm = Main.getPluginManager().getPermission2( name );
+			Permission perm = Loader.getPluginManager().getPermission2( name );
 			
 			if ( perm != null )
 			{
@@ -191,14 +191,14 @@ public class PermissibleBase implements Permissible
 	public void recalculatePermissions()
 	{
 		clearPermissions();
-		Set<Permission> defaults = Main.getPluginManager().getDefaultPermissions( isOp() );
-		Main.getPluginManager().subscribeToDefaultPerms( isOp(), parent );
+		Set<Permission> defaults = Loader.getPluginManager().getDefaultPermissions( isOp() );
+		Loader.getPluginManager().subscribeToDefaultPerms( isOp(), parent );
 		
 		for ( Permission perm : defaults )
 		{
 			String name = perm.getName().toLowerCase();
 			permissions.put( name, new PermissionAttachmentInfo( parent, name, null, true ) );
-			Main.getPluginManager().subscribeToPermission( name, parent );
+			Loader.getPluginManager().subscribeToPermission( name, parent );
 			calculateChildPermissions( perm.getChildren(), false, null );
 		}
 		
@@ -214,11 +214,11 @@ public class PermissibleBase implements Permissible
 		
 		for ( String name : perms )
 		{
-			Main.getPluginManager().unsubscribeFromPermission( name, parent );
+			Loader.getPluginManager().unsubscribeFromPermission( name, parent );
 		}
 		
-		Main.getPluginManager().unsubscribeFromDefaultPerms( false, parent );
-		Main.getPluginManager().unsubscribeFromDefaultPerms( true, parent );
+		Loader.getPluginManager().unsubscribeFromDefaultPerms( false, parent );
+		Loader.getPluginManager().unsubscribeFromDefaultPerms( true, parent );
 		
 		permissions.clear();
 	}
@@ -229,12 +229,12 @@ public class PermissibleBase implements Permissible
 		
 		for ( String name : keys )
 		{
-			Permission perm = Main.getPluginManager().getPermission2( name );
+			Permission perm = Loader.getPluginManager().getPermission2( name );
 			boolean value = children.get( name ) ^ invert;
 			String lname = name.toLowerCase();
 			
 			permissions.put( lname, new PermissionAttachmentInfo( parent, lname, attachment, value ) );
-			Main.getPluginManager().subscribeToPermission( name, parent );
+			Loader.getPluginManager().subscribeToPermission( name, parent );
 			
 			if ( perm != null )
 			{
@@ -281,9 +281,9 @@ public class PermissibleBase implements Permissible
 		
 		PermissionAttachment result = addAttachment( plugin );
 		
-		if ( Main.getScheduler().scheduleSyncDelayedTask( plugin, new RemoveAttachmentRunnable( result ), ticks ) == -1 )
+		if ( Loader.getScheduler().scheduleSyncDelayedTask( plugin, new RemoveAttachmentRunnable( result ), ticks ) == -1 )
 		{
-			Main.getInstance().getLogger().log( Level.WARNING, "Could not add PermissionAttachment to " + parent + " for plugin " + plugin.getDescription().getFullName() + ": Scheduler returned -1" );
+			Loader.getInstance().getLogger().log( Level.WARNING, "Could not add PermissionAttachment to " + parent + " for plugin " + plugin.getDescription().getFullName() + ": Scheduler returned -1" );
 			result.remove();
 			return null;
 		}

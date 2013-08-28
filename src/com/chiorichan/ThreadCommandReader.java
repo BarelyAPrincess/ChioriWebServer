@@ -2,32 +2,30 @@ package com.chiorichan;
 
 import java.io.IOException;
 
-import com.chiorichan.server.Server;
-
 public class ThreadCommandReader extends Thread
 {
-	public Server server;
+	public Console console;
 	
-	public ThreadCommandReader(Server ic)
+	public ThreadCommandReader(Console ic)
 	{
-		server = ic;
+		console = ic;
 	}
 	
 	public void run()
 	{
-		if ( !Main.useConsole )
+		if ( !console.useConsole )
 		{
 			return;
 		}
 		
-		jline.console.ConsoleReader bufferedreader = server.reader;
+		jline.console.ConsoleReader bufferedreader = console.reader;
 		String s;
 		
 		try
 		{
-			while ( server.isRunning() )
+			while ( console.isRunning() )
 			{
-				if ( Main.useJline )
+				if ( console.useJline )
 				{
 					s = bufferedreader.readLine( ">", null );
 				}
@@ -37,7 +35,7 @@ public class ThreadCommandReader extends Thread
 				}
 				if ( s != null )
 				{
-					server.issueCommand( s, null );
+					console.issueCommand( s, null );
 				}
 			}
 		}

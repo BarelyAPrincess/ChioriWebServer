@@ -10,7 +10,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -28,12 +27,17 @@ import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 
 import org.apache.commons.lang3.Validate;
-import org.fusesource.jansi.Ansi;
-import org.fusesource.jansi.Ansi.Attribute;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.error.MarkedYAMLException;
 
+import sun.net.dns.ResolverConfiguration.Options;
+
+import com.caucho.resin.BeanEmbed;
+import com.caucho.resin.FilterMappingEmbed;
+import com.caucho.resin.HttpEmbed;
+import com.caucho.resin.ResinEmbed;
+import com.caucho.resin.WebAppEmbed;
 import com.chiorichan.Warning.WarningState;
 import com.chiorichan.command.Command;
 import com.chiorichan.command.CommandException;
@@ -66,136 +70,57 @@ import com.chiorichan.scheduler.ChioriScheduler;
 import com.chiorichan.scheduler.ChioriWorker;
 import com.chiorichan.scheduler.IChioriScheduler;
 import com.chiorichan.serialization.ConfigurationSerialization;
-import com.chiorichan.server.Server;
+import com.chiorichan.server.ServerThread;
 import com.chiorichan.updater.AutoUpdater;
 import com.chiorichan.updater.ChioriDLUpdaterService;
 import com.chiorichan.user.BanEntry;
 import com.chiorichan.user.User;
 import com.chiorichan.user.UserList;
 import com.chiorichan.util.FileUtil;
+import com.chiorichan.util.ServerShutdownThread;
 import com.chiorichan.util.StringUtil;
 import com.chiorichan.util.Versioning;
 import com.chiorichan.util.permissions.DefaultPermissions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.MapMaker;
 
-public class Main implements PluginMessageRecipient
+public class Loader implements PluginMessageRecipient
 {
 	public static final String BROADCAST_CHANNEL_ADMINISTRATIVE = "chiori.broadcast.admin";
 	public static final String BROADCAST_CHANNEL_USERS = "chiori.broadcast.user";
 	
-	public static boolean useJline = true;
-	public static boolean useConsole = true;
+	private final AutoUpdater updater;
+	private final Yaml yaml = new Yaml( new SafeConstructor() );
+	private static YamlConfiguration configuration;
+	private static Loader instance;
+	private static OptionSet options;
 	
-	private final static String serverName = "ChioriWebServer";
 	public static String webroot = "";
-	private static String serverVersion = "";
-	private final String version = Versioning.getVersion();
+	private static String version = Versioning.getVersion();
+	private static String product = Versioning.getProduct();
+	private WarningState warningState = WarningState.DEFAULT;
+	private final SimpleCommandMap commandMap = new SimpleCommandMap( this );
+	private final PluginManager pluginManager = new SimplePluginManager( this, commandMap );
+	protected static Console console = new Console();
+	protected UserList userList = new UserList( this );
+	
 	private final ServicesManager servicesManager = new SimpleServicesManager();
 	private final static IChioriScheduler scheduler = new ChioriScheduler();
-	private final SimpleCommandMap commandMap = new SimpleCommandMap( this );;
 	private final SimpleHelpMap helpMap = new SimpleHelpMap( this );
 	private final StandardMessenger messenger = new StandardMessenger();
-	private final PluginManager pluginManager = new SimplePluginManager( this, commandMap );
-	protected static Server console = new Server();
-	protected UserList userList = new UserList( console );
-	private YamlConfiguration configuration;
-	private final Yaml yaml = new Yaml( new SafeConstructor() );
-	private final Map<String, User> offlineUsers = new MapMaker().softValues().makeMap();
-	private final AutoUpdater updater;
-	private File container;
-	private WarningState warningState = WarningState.DEFAULT;
-	private final BooleanWrapper online = new BooleanWrapper();
+	private final ResinEmbed server = new ResinEmbed();
+	public Boolean isRunning = false;
 	
-	private static YamlConfiguration config;
-	private static Server server;
-	private static ResourceLoader resourceLoader;
-	private static Main instance;
-	public static Map<ChatColor, String> replacements = new EnumMap<ChatColor, String>( ChatColor.class );
-	
-	private final class BooleanWrapper
-	{
-		private boolean value = true;
-	}
+	public java.util.Queue<Runnable> processQueue = new java.util.concurrent.ConcurrentLinkedQueue<Runnable>();
 	
 	static
 	{
 		ConfigurationSerialization.registerClass( User.class );
 	}
 	
-	public Main(OptionSet options)
-	{
-		resourceLoader = ResourceLoader.buildLoader( Main.class.getProtectionDomain().getCodeSource().getLocation().getPath() );
-		
-		instance = this;
-		
-		console.setOptions( options );
-		
-		if ( !Main.useConsole )
-		{
-			getLogger().info( "Console input is disabled due to --noconsole command argument" );
-		}
-		
-		if ( getConfigFile() == null )
-			crashApp( "We had problems loading the configuration file! Did you define the --chiori-settings argument?" );
-		
-		try
-		{
-			configuration = YamlConfiguration.loadConfiguration( getConfigFile() );
-		}
-		catch ( Exception e )
-		{
-			e.printStackTrace();
-			
-			FileUtil.copy( new File( getClass().getClassLoader().getResource( "configurations/chiori.yml" ).toString() ), getConfigFile() );
-			configuration = YamlConfiguration.loadConfiguration( getConfigFile() );
-		}
-		
-		configuration.options().copyDefaults( true );
-		configuration.setDefaults( YamlConfiguration.loadConfiguration( getClass().getClassLoader().getResourceAsStream( "configurations/chiori.yml" ) ) );
-		saveConfig();
-		( (SimplePluginManager) pluginManager ).useTimings( configuration.getBoolean( "settings.plugin-profiling" ) );
-		console.autosavePeriod = configuration.getInt( "seconds-per.autosave" );
-		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
-		webroot = configuration.getString( "settings.webroot" );
-		serverVersion = Versioning.getVersion();
-		config = configuration;
-		
-		updater = new AutoUpdater( new ChioriDLUpdaterService( configuration.getString( "auto-updater.host" ) ), getLogger(), configuration.getString( "auto-updater.preferred-channel" ) );
-		updater.setEnabled( configuration.getBoolean( "auto-updater.enabled" ) );
-		updater.setSuggestChannels( configuration.getBoolean( "auto-updater.suggest-channels" ) );
-		updater.getOnBroken().addAll( configuration.getStringList( "auto-updater.on-broken" ) );
-		updater.getOnUpdate().addAll( configuration.getStringList( "auto-updater.on-update" ) );
-		updater.check( serverVersion );
-		
-		loadPlugins();
-		enablePlugins( PluginLoadOrder.STARTUP );
-		
-		console.init( configuration );
-		
-		Framework.initalizeFramework();
-		
-		enablePlugins( PluginLoadOrder.POSTWORLD ); // Temp until there is a better solution for POSTWORLD
-	}
-	
-	private void crashApp( String string )
-	{
-		getLogger().severe( string );
-		System.exit( 1 );
-	}
-
-	public static YamlConfiguration getConfig()
-	{
-		return config;
-	}
-	
 	public static void main( String... args ) throws Exception
 	{
 		try
 		{
-			Thread.setDefaultUncaughtExceptionHandler( new ExceptionHandler() );
-			
-			// Todo: Installation script
 			OptionParser parser = new OptionParser()
 			{
 				{
@@ -241,7 +166,7 @@ public class Main implements PluginMessageRecipient
 			}
 			catch ( joptsimple.OptionException ex )
 			{
-				Logger.getLogger( Main.class.getName() ).log( Level.SEVERE, ex.getLocalizedMessage() );
+				Logger.getLogger( Loader.class.getName() ).log( Level.SEVERE, ex.getLocalizedMessage() );
 			}
 			
 			if ( ( options == null ) || ( options.has( "?" ) ) )
@@ -252,82 +177,197 @@ public class Main implements PluginMessageRecipient
 				}
 				catch ( IOException ex )
 				{
-					Logger.getLogger( Main.class.getName() ).log( Level.SEVERE, null, ex );
+					Logger.getLogger( Loader.class.getName() ).log( Level.SEVERE, null, ex );
 				}
 			}
 			else if ( options.has( "v" ) )
 			{
-				System.out.println( Server.class.getPackage().getImplementationVersion() );
+				System.out.println( version );
 			}
 			else
 			{
-				try
-				{
-					replacements.put( ChatColor.BLACK, Ansi.ansi().fg( Ansi.Color.BLACK ).boldOff().toString() );
-					replacements.put( ChatColor.DARK_BLUE, Ansi.ansi().fg( Ansi.Color.BLUE ).boldOff().toString() );
-					replacements.put( ChatColor.DARK_GREEN, Ansi.ansi().fg( Ansi.Color.GREEN ).boldOff().toString() );
-					replacements.put( ChatColor.DARK_AQUA, Ansi.ansi().fg( Ansi.Color.CYAN ).boldOff().toString() );
-					replacements.put( ChatColor.DARK_RED, Ansi.ansi().fg( Ansi.Color.RED ).boldOff().toString() );
-					replacements.put( ChatColor.DARK_PURPLE, Ansi.ansi().fg( Ansi.Color.MAGENTA ).boldOff().toString() );
-					replacements.put( ChatColor.GOLD, Ansi.ansi().fg( Ansi.Color.YELLOW ).boldOff().toString() );
-					replacements.put( ChatColor.GRAY, Ansi.ansi().fg( Ansi.Color.WHITE ).boldOff().toString() );
-					replacements.put( ChatColor.DARK_GRAY, Ansi.ansi().fg( Ansi.Color.BLACK ).bold().toString() );
-					replacements.put( ChatColor.BLUE, Ansi.ansi().fg( Ansi.Color.BLUE ).bold().toString() );
-					replacements.put( ChatColor.GREEN, Ansi.ansi().fg( Ansi.Color.GREEN ).bold().toString() );
-					replacements.put( ChatColor.AQUA, Ansi.ansi().fg( Ansi.Color.CYAN ).bold().toString() );
-					replacements.put( ChatColor.RED, Ansi.ansi().fg( Ansi.Color.RED ).bold().toString() );
-					replacements.put( ChatColor.LIGHT_PURPLE, Ansi.ansi().fg( Ansi.Color.MAGENTA ).bold().toString() );
-					replacements.put( ChatColor.YELLOW, Ansi.ansi().fg( Ansi.Color.YELLOW ).bold().toString() );
-					replacements.put( ChatColor.WHITE, Ansi.ansi().fg( Ansi.Color.WHITE ).bold().toString() );
-					replacements.put( ChatColor.MAGIC, Ansi.ansi().a( Attribute.BLINK_SLOW ).toString() );
-					replacements.put( ChatColor.BOLD, Ansi.ansi().a( Attribute.UNDERLINE_DOUBLE ).toString() );
-					replacements.put( ChatColor.STRIKETHROUGH, Ansi.ansi().a( Attribute.STRIKETHROUGH_ON ).toString() );
-					replacements.put( ChatColor.UNDERLINE, Ansi.ansi().a( Attribute.UNDERLINE ).toString() );
-					replacements.put( ChatColor.ITALIC, Ansi.ansi().a( Attribute.ITALIC ).toString() );
-					replacements.put( ChatColor.RESET, Ansi.ansi().a( Attribute.RESET ).fg( Ansi.Color.DEFAULT ).toString() );
-					
-					// This trick bypasses Maven Shade's clever rewriting of our getProperty call when using String literals
-					String jline_UnsupportedTerminal = new String( new char[] { 'j', 'l', 'i', 'n', 'e', '.', 'U', 'n', 's', 'u', 'p', 'p', 'o', 'r', 't', 'e', 'd', 'T', 'e', 'r', 'm', 'i', 'n', 'a', 'l' } );
-					String jline_terminal = new String( new char[] { 'j', 'l', 'i', 'n', 'e', '.', 't', 'e', 'r', 'm', 'i', 'n', 'a', 'l' } );
-					
-					useJline = !( jline_UnsupportedTerminal ).equals( System.getProperty( jline_terminal ) );
-					
-					if ( options.has( "nojline" ) )
-					{
-						System.setProperty( "user.language", "en" );
-						useJline = false;
-					}
-					
-					if ( !useJline )
-					{
-						// This ensures the terminal literal will always match the jline implementation
-						System.setProperty( jline.TerminalFactory.JLINE_TERMINAL, jline.UnsupportedTerminal.class.getName() );
-					}
-					
-					if ( options.has( "noconsole" ) )
-					{
-						useConsole = false;
-					}
-					
-					new Main( options );
-				}
-				catch ( Throwable t )
-				{
-					t.printStackTrace();
-				}
+				new Loader( options );
 			}
 		}
 		catch ( Exception e )
-		{	
-			
+		{
+			e.printStackTrace();
 		}
+	}
+	
+	public Loader(OptionSet options0)
+	{
+		instance = this;
+		options = options0;
+		
+		if ( getConfigFile() == null )
+			getConsole().panic( "We had problems loading the configuration file! Did you define the --chiori-settings argument?" );
+		
+		try
+		{
+			configuration = YamlConfiguration.loadConfiguration( getConfigFile() );
+		}
+		catch ( Exception e )
+		{
+			e.printStackTrace();
+			
+			FileUtil.copy( new File( getClass().getClassLoader().getResource( "com/chiorichan/chiori.yml" ).toString() ), getConfigFile() );
+			configuration = YamlConfiguration.loadConfiguration( getConfigFile() );
+		}
+		
+		configuration.options().copyDefaults( true );
+		configuration.setDefaults( YamlConfiguration.loadConfiguration( getClass().getClassLoader().getResourceAsStream( "com/chiorichan/chiori.yml" ) ) );
+		saveConfig();
+		
+		( (SimplePluginManager) pluginManager ).useTimings( configuration.getBoolean( "settings.plugin-profiling" ) );
+		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
+		webroot = configuration.getString( "settings.webroot" );
+		
+		updater = new AutoUpdater( new ChioriDLUpdaterService( configuration.getString( "auto-updater.host" ) ), getLogger(), configuration.getString( "auto-updater.preferred-channel" ) );
+		updater.setEnabled( configuration.getBoolean( "auto-updater.enabled" ) );
+		updater.setSuggestChannels( configuration.getBoolean( "auto-updater.suggest-channels" ) );
+		updater.getOnBroken().addAll( configuration.getStringList( "auto-updater.on-broken" ) );
+		updater.getOnUpdate().addAll( configuration.getStringList( "auto-updater.on-update" ) );
+		updater.check( version );
+		
+		//console.init();
+		
+		Framework.initalizeFramework();
+		
+		loadPlugins();
+		enablePlugins( PluginLoadOrder.STARTUP );
+		
+		initServer();
+		
+		enablePlugins( PluginLoadOrder.POSTSERVER );
+	}
+	
+	private void initServer()
+	{
+		try
+		{
+			ServerThread serverThread = new ServerThread();
+			
+			long startTime = System.currentTimeMillis();
+			
+			Runtime.getRuntime().addShutdownHook( new ServerShutdownThread( this ) );
+			
+			getConsole().info( "Starting " + product + " " + version );
+			
+			if ( Runtime.getRuntime().maxMemory() / 1024L / 1024L < 512L )
+			{
+				getConsole().warning( "To start the server with more ram, launch it as \"java -Xmx1024M -Xms1024M -jar chiori_server.jar\"" );
+			}
+			
+			String serverIp = configuration.getString( "server.ip", "" );
+			
+			if ( serverIp.length() > 0 )
+			{
+				setIp( serverIp );
+			}
+			
+			setPort( configuration.getInt( "server.port", 8080 ) );
+			
+			server.setServerHeader( product + " " + version );
+			server.setServerId( Loader.getConfig().getString( "server.id", "chiori" ) );
+			
+			File root = new File( webroot );
+			
+			if ( !root.exists() )
+				root.mkdirs();
+			
+			WebAppEmbed webapp = new WebAppEmbed( "/", root.getAbsolutePath() );
+			
+			webapp.addFilterMapping( new FilterMappingEmbed( "DefaultFilter", "/*", "com.chiorichan.server.DefaultFilter" ) );
+			
+			server.addWebApp( webapp );
+			
+			getConsole().info( "Starting Server on " + ( serverIp.length() == 0 ? "*" : serverIp ) + ":" + configuration.getInt( "server.port", 8080 ) );
+			
+			try
+			{
+				server.start();
+			}
+			catch ( NullPointerException e )
+			{
+				getConsole().severe( "There was a problem with starting Resin Embedded. Check logs and try again.", e );
+				System.exit( 1 );
+			}
+			catch ( Throwable e )
+			{
+				if ( configuration.getInt( "server.port", 8080 ) != 8080 )
+				{
+					getConsole().warning( "There was a problem starting the Web Server, Trying to start on the alternate port of 8080!", e );
+					
+					try
+					{
+						setPort( 8080 );
+						server.start();
+					}
+					catch ( Exception ee )
+					{
+						getConsole().severe( "There was even a problem starting the alternate port of 8080, Goodbye!", ee );
+						ee.printStackTrace();
+						System.exit( 1 );
+					}
+				}
+				else
+				{
+					getConsole().severe( "There was a problem starting the Web Server due to the port being in use, Goodbye!" );
+					System.exit( 1 );
+				}
+			}
+			
+			if ( configuration.getBoolean( "server.enable-query", false ) )
+			{
+				getConsole().info( "Starting GS4 status listener" );
+				// this.remoteStatusListener = new RemoteStatusListener( this );
+			}
+			
+			if ( configuration.getBoolean( "server.enable-rcon", false ) )
+			{
+				getConsole().info( "Starting remote control listener" );
+				// remoteControlListener = new RemoteControlListener( this );
+				// remoteConsole = new ChioriRemoteConsoleCommandSender();
+			}
+			
+			getConsole().info( "Done (" + ( System.currentTimeMillis() - startTime ) + "ms)! For help, type \"help\" or \"?\"" );
+			
+			isRunning = true;
+			serverThread.start();
+		}
+		catch ( Throwable e )
+		{
+			getConsole().panic( e );
+		}
+	}
+	
+	public void setIp( String ip )
+	{
+		// TODO: Bind server to listening IP Address. Is this possible?
+	}
+	
+	public void setPort( int port )
+	{
+		if ( !isRunning )
+		{
+			HttpEmbed http = new HttpEmbed( port );
+			HttpEmbed[] http2 = new HttpEmbed[1];
+			http2[0] = http;
+			server.setPorts( http2 );
+		}
+	}
+	
+	public static YamlConfiguration getConfig()
+	{
+		return configuration;
 	}
 	
 	public void loadPlugins()
 	{
 		pluginManager.registerInterface( JavaPluginLoader.class );
 		
-		File pluginFolder = (File) console.options.valueOf( "plugins" );
+		File pluginFolder = (File) options.valueOf( "plugins" );
 		
 		if ( pluginFolder.exists() )
 		{
@@ -342,7 +382,7 @@ public class Main implements PluginMessageRecipient
 				}
 				catch ( Throwable ex )
 				{
-					Logger.getLogger( Server.class.getName() ).log( Level.SEVERE, ex.getMessage() + " initializing " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
+					getConsole().log( Level.SEVERE, ex.getMessage() + " initializing " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 				}
 			}
 		}
@@ -351,7 +391,7 @@ public class Main implements PluginMessageRecipient
 			pluginFolder.mkdir();
 		}
 		
-		pluginManager.loadInternalPlugin( Template.class.getResourceAsStream("template.yml" ) );
+		pluginManager.loadInternalPlugin( Template.class.getResourceAsStream( "template.yml" ) );
 	}
 	
 	public void enablePlugins( PluginLoadOrder type )
@@ -372,7 +412,7 @@ public class Main implements PluginMessageRecipient
 			}
 		}
 		
-		if ( type == PluginLoadOrder.POSTWORLD )
+		if ( type == PluginLoadOrder.POSTSERVER )
 		{
 			commandMap.registerServerAliases();
 			loadCustomPermissions();
@@ -408,18 +448,8 @@ public class Main implements PluginMessageRecipient
 		}
 		catch ( Throwable ex )
 		{
-			Logger.getLogger( Server.class.getName() ).log( Level.SEVERE, ex.getMessage() + " loading " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
+			getConsole().log( Level.SEVERE, ex.getMessage() + " loading " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 		}
-	}
-	
-	public static String getName()
-	{
-		return serverName;
-	}
-	
-	public static String getVersion()
-	{
-		return serverVersion;
 	}
 	
 	@SuppressWarnings( "unchecked" )
@@ -516,8 +546,6 @@ public class Main implements PluginMessageRecipient
 		return userList.getMaxUsers();
 	}
 	
-	// NOTE: These are dependent on the corrisponding call in Server
-	// so if that changes this will need to as well
 	public int getPort()
 	{
 		return this.getConfigInt( "server-port", 80 );
@@ -548,7 +576,6 @@ public class Main implements PluginMessageRecipient
 		return this.getConfigBoolean( "white-list", false );
 	}
 	
-	// NOTE: Temporary calls through to server.properies until its replaced
 	private String getConfigString( String variable, String defaultValue )
 	{
 		return configuration.getString( variable, defaultValue );
@@ -571,15 +598,15 @@ public class Main implements PluginMessageRecipient
 	
 	public File getUpdateFolderFile()
 	{
-		return new File( (File) console.options.valueOf( "plugins" ), this.configuration.getString( "settings.update-folder", "update" ) );
+		return new File( (File) options.valueOf( "plugins" ), this.configuration.getString( "settings.update-folder", "update" ) );
 	}
 	
 	public static PluginManager getPluginManager()
 	{
-		return Main.getInstance().pluginManager;
+		return Loader.getInstance().pluginManager;
 	}
 	
-	public static Main getInstance()
+	public static Loader getInstance()
 	{
 		return instance;
 	}
@@ -599,7 +626,6 @@ public class Main implements PluginMessageRecipient
 		return userList;
 	}
 	
-	// NOTE: Should only be called from DedicatedServer.ah()
 	public boolean dispatchServerCommand( CommandSender sender, ServerCommand serverCommand )
 	{
 		if ( sender instanceof Conversable )
@@ -645,12 +671,11 @@ public class Main implements PluginMessageRecipient
 		return false;
 	}
 	
+	// TOOD: Reload might need some checking over.
 	public void reload()
 	{
 		configuration = YamlConfiguration.loadConfiguration( getConfigFile() );
-		
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
-		console.autosavePeriod = configuration.getInt( "ticks-per.autosave" );
 		
 		userList.getIPBans().load();
 		userList.getNameBans().load();
@@ -685,7 +710,7 @@ public class Main implements PluginMessageRecipient
 		}
 		loadPlugins();
 		enablePlugins( PluginLoadOrder.STARTUP );
-		enablePlugins( PluginLoadOrder.POSTWORLD );
+		enablePlugins( PluginLoadOrder.POSTSERVER );
 	}
 	
 	@SuppressWarnings( { "unchecked", "finally" } )
@@ -759,17 +784,7 @@ public class Main implements PluginMessageRecipient
 	
 	public String toString()
 	{
-		return "ChioriWebServer{" + "serverName=" + serverName + ",serverVersion=" + getVersion() + ",frameworkVersion=" + Versioning.getFrameworkVersion() + "}";
-	}
-	
-	public static Server getServer()
-	{
-		return console;
-	}
-	
-	public static Logger getLogger()
-	{
-		return console.getLogger().getLogger();
+		return product + "{" + "serverVersion=" + version + "}";
 	}
 	
 	public ConsoleReader getReader()
@@ -828,9 +843,9 @@ public class Main implements PluginMessageRecipient
 		return configuration.getString( "settings.shutdown-message" );
 	}
 	
-	public void shutdown()
+	public static void shutdown()
 	{
-		console.safeShutdown();
+		// TODO: Shutdown
 	}
 	
 	public int broadcast( String message, String permission )
@@ -860,30 +875,9 @@ public class Main implements PluginMessageRecipient
 	{
 		Validate.notNull( name, "Name cannot be null" );
 		
-		User result = getUserExact( name );
-		String lname = name.toLowerCase();
+		// TOOD: Fix Me
 		
-		if ( result == null )
-		{
-			result = offlineUsers.get( lname );
-			
-			if ( result == null )
-			{
-				if ( search )
-				{	
-					
-				}
-				
-				result = new User();
-				offlineUsers.put( lname, result );
-			}
-		}
-		else
-		{
-			offlineUsers.remove( lname );
-		}
-		
-		return result;
+		return null;
 	}
 	
 	@SuppressWarnings( "unchecked" )
@@ -960,22 +954,14 @@ public class Main implements PluginMessageRecipient
 	
 	public ConsoleCommandSender getConsoleSender()
 	{
-		return console.console;
+		return console.getConsoleSender();
 	}
 	
 	public User[] getOfflineUsers()
 	{
-		// WorldNBTStorage storage = (WorldNBTStorage) console.worlds.get( 0 ).getDataManager();
-		// String[] files = storage.getUserDir().list( new DatFileFilter() );
-		Set<User> Users = new HashSet<User>();
+		// TODO: Fix ME
 		
-		// for ( String file : files )
-		// {
-		// Users.add( getOfflineUser( file.substring( 0, file.length() - 4 ), false ) );
-		// }
-		Users.addAll( Arrays.asList( getOnlineUsers() ) );
-		
-		return Users.toArray( new User[Users.size()] );
+		return null;
 	}
 	
 	public Messenger getMessenger()
@@ -1032,7 +1018,7 @@ public class Main implements PluginMessageRecipient
 	
 	public boolean isPrimaryThread()
 	{
-		return Thread.currentThread().equals( console.primaryThread );
+		return true;
 	}
 	
 	public WarningState getWarningState()
@@ -1102,11 +1088,6 @@ public class Main implements PluginMessageRecipient
 		return completions;
 	}
 	
-	public static void setServer( Server server )
-	{
-		Main.server = server;
-	}
-	
 	public static Color parseColor( String color )
 	{
 		Pattern c = Pattern.compile( "rgb *\\( *([0-9]+), *([0-9]+), *([0-9]+) *\\)" );
@@ -1138,14 +1119,9 @@ public class Main implements PluginMessageRecipient
 		return null;
 	}
 	
-	public static ResourceLoader getResourceLoader()
-	{
-		return resourceLoader;
-	}
-	
 	private File getConfigFile()
 	{
-		return (File) console.options.valueOf( "chiori-settings" );
+		return (File) options.valueOf( "chiori-settings" );
 	}
 	
 	private void saveConfig()
@@ -1156,7 +1132,52 @@ public class Main implements PluginMessageRecipient
 		}
 		catch ( IOException ex )
 		{
-			Logger.getLogger( Main.class.getName() ).log( Level.SEVERE, "Could not save " + getConfigFile(), ex );
+			Logger.getLogger( Loader.class.getName() ).log( Level.SEVERE, "Could not save " + getConfigFile(), ex );
 		}
+	}
+	
+	public static Console getConsole()
+	{
+		return console;
+	}
+	
+	public static Logger getLogger()
+	{
+		return console.getLogger();
+	}
+	
+	public static String getName()
+	{
+		return product;
+	}
+	
+	public static String getVersion()
+	{
+		return version;
+	}
+	
+	public ResinEmbed getResinServer()
+	{
+		return server;
+	}
+	
+	public void registerBean( Class bean, String name )
+	{
+		server.addBean( new BeanEmbed( bean, name ) );
+	}
+	
+	public boolean isRunning()
+	{
+		return isRunning;
+	}
+	
+	public static OptionSet getOptions()
+	{
+		return options;
+	}
+
+	public UserList getUserList()
+	{
+		return userList;
 	}
 }

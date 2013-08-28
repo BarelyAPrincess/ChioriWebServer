@@ -1,6 +1,6 @@
 package com.chiorichan.command;
 
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.permissions.Permissible;
 
 public interface CommandSender extends Permissible
@@ -27,7 +27,7 @@ public interface CommandSender extends Permissible
 	 * 
 	 * @return Server instance
 	 */
-	public Main getServer();
+	public Loader getServer();
 	
 	/**
 	 * Gets the name of this command sender

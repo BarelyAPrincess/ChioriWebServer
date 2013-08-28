@@ -14,7 +14,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.ChatPaginator;
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.command.ConsoleCommandSender;
 import com.chiorichan.help.HelpMap;
@@ -82,7 +82,7 @@ public class HelpCommand extends VanillaCommand
 			pageWidth = ChatPaginator.GUARANTEED_NO_WRAP_CHAT_PAGE_WIDTH;
 		}
 		
-		HelpMap helpMap = Main.getInstance().getHelpMap();
+		HelpMap helpMap = Loader.getInstance().getHelpMap();
 		HelpTopic topic = helpMap.getHelpTopic( command );
 		
 		if ( topic == null )
@@ -147,7 +147,7 @@ public class HelpCommand extends VanillaCommand
 		{
 			List<String> matchedTopics = new ArrayList<String>();
 			String searchString = args[0];
-			for ( HelpTopic topic : Main.getInstance().getHelpMap().getHelpTopics() )
+			for ( HelpTopic topic : Loader.getInstance().getHelpMap().getHelpTopics() )
 			{
 				String trimmedTopic = topic.getName().startsWith( "/" ) ? topic.getName().substring( 1 ) : topic.getName();
 				
@@ -171,7 +171,7 @@ public class HelpCommand extends VanillaCommand
 			searchString = searchString.substring( 1 );
 		}
 		
-		for ( HelpTopic topic : Main.getInstance().getHelpMap().getHelpTopics() )
+		for ( HelpTopic topic : Loader.getInstance().getHelpMap().getHelpTopics() )
 		{
 			String trimmedTopic = topic.getName().startsWith( "/" ) ? topic.getName().substring( 1 ) : topic.getName();
 			

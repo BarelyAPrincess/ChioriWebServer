@@ -7,7 +7,7 @@ import java.util.List;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.ChatColor;
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.plugin.Plugin;
 import com.chiorichan.plugin.PluginDescriptionFile;
@@ -34,7 +34,7 @@ public class VersionCommand extends ChioriCommand
 		
 		if ( args.length == 0 )
 		{
-			sender.sendMessage( "This server is running " + Main.getName() + " version " + Main.getVersion() );
+			sender.sendMessage( "This server is running " + Loader.getName() + " version " + Loader.getVersion() );
 		}
 		else
 		{
@@ -51,7 +51,7 @@ public class VersionCommand extends ChioriCommand
 			}
 			
 			String pluginName = name.toString();
-			Plugin exactPlugin = Main.getPluginManager().getPlugin( pluginName );
+			Plugin exactPlugin = Loader.getPluginManager().getPlugin( pluginName );
 			if ( exactPlugin != null )
 			{
 				describeToSender( exactPlugin, sender );
@@ -60,7 +60,7 @@ public class VersionCommand extends ChioriCommand
 			
 			boolean found = false;
 			pluginName = pluginName.toLowerCase();
-			for ( Plugin plugin : Main.getPluginManager().getPlugins() )
+			for ( Plugin plugin : Loader.getPluginManager().getPlugins() )
 			{
 				if ( plugin.getName().toLowerCase().contains( pluginName ) )
 				{
@@ -145,7 +145,7 @@ public class VersionCommand extends ChioriCommand
 		{
 			List<String> completions = new ArrayList<String>();
 			String toComplete = args[0].toLowerCase();
-			for ( Plugin plugin : Main.getPluginManager().getPlugins() )
+			for ( Plugin plugin : Loader.getPluginManager().getPlugins() )
 			{
 				if ( StringUtil.startsWithIgnoreCase( plugin.getName(), toComplete ) )
 				{

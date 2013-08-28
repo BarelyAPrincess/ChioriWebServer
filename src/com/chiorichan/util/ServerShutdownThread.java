@@ -1,14 +1,14 @@
 package com.chiorichan.util;
 
-import com.chiorichan.server.Server;
+import com.chiorichan.Loader;
 
 public class ServerShutdownThread extends Thread
 {
-	private final Server server;
+	private final Loader server;
 	
-	public ServerShutdownThread(Server server)
+	public ServerShutdownThread(Loader loader)
 	{
-		this.server = server;
+		this.server = loader;
 	}
 	
 	@Override
@@ -26,7 +26,7 @@ public class ServerShutdownThread extends Thread
 		{
 			try
 			{
-				server.reader.getTerminal().restore();
+				Loader.getConsole().getReader().getTerminal().restore();
 			}
 			catch ( Exception e )
 			{}

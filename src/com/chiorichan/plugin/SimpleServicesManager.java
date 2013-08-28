@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.event.server.ServiceRegisterEvent;
 import com.chiorichan.event.server.ServiceUnregisterEvent;
 import com.google.common.collect.ImmutableList;
@@ -66,7 +66,7 @@ public class SimpleServicesManager implements ServicesManager
 			}
 			
 		}
-		Main.getPluginManager().callEvent( new ServiceRegisterEvent( registeredProvider ) );
+		Loader.getPluginManager().callEvent( new ServiceRegisterEvent( registeredProvider ) );
 	}
 	
 	/**
@@ -120,7 +120,7 @@ public class SimpleServicesManager implements ServicesManager
 		}
 		for ( ServiceUnregisterEvent event : unregisteredEvents )
 		{
-			Main.getPluginManager().callEvent( event );
+			Loader.getPluginManager().callEvent( event );
 		}
 	}
 	
@@ -184,7 +184,7 @@ public class SimpleServicesManager implements ServicesManager
 		}
 		for ( ServiceUnregisterEvent event : unregisteredEvents )
 		{
-			Main.getPluginManager().callEvent( event );
+			Loader.getPluginManager().callEvent( event );
 		}
 	}
 	
@@ -239,7 +239,7 @@ public class SimpleServicesManager implements ServicesManager
 		}
 		for ( ServiceUnregisterEvent event : unregisteredEvents )
 		{
-			Main.getPluginManager().callEvent( event );
+			Loader.getPluginManager().callEvent( event );
 		}
 	}
 	

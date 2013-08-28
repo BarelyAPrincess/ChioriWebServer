@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.user.User;
 import com.chiorichan.util.StringUtil;
@@ -31,7 +31,7 @@ public class BanListCommand extends VanillaCommand
 		
 		// TODO: ips support
 		StringBuilder message = new StringBuilder();
-		User[] banlist = Main.getInstance().getBannedUsers().toArray( new User[0] );
+		User[] banlist = Loader.getInstance().getBannedUsers().toArray( new User[0] );
 		
 		for ( int x = 0; x < banlist.length; x++ )
 		{

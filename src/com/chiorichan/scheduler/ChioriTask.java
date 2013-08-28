@@ -1,6 +1,6 @@
 package com.chiorichan.scheduler;
 
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.plugin.Plugin;
 import com.chiorichan.util.UnhandledException;
 
@@ -97,7 +97,7 @@ class ChioriTask implements IChioriTask, Runnable
 	
 	public void cancel()
 	{
-		Main.getScheduler().cancelTask( id );
+		Loader.getScheduler().cancelTask( id );
 	}
 	
 	/**

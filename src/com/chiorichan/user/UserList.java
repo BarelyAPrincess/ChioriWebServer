@@ -1,20 +1,29 @@
 package com.chiorichan.user;
 
-import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import javax.servlet.http.Cookie;
+
+import org.apache.commons.codec.digest.DigestUtils;
+
+import com.chiorichan.Loader;
+import com.chiorichan.database.SqlConnector;
+import com.chiorichan.framework.Framework;
+import com.chiorichan.framework.Site;
 import com.chiorichan.server.PendingConnection;
-import com.chiorichan.server.Server;
 
 public class UserList
 {
 	private static final SimpleDateFormat d = new SimpleDateFormat( "yyyy-MM-dd \'at\' HH:mm:ss z" );
-	private final Server server;
+	private Loader server;
+	private Site site;
 	public final List Users = new java.util.concurrent.CopyOnWriteArrayList();
 	private final BanList banByName = new BanList();// = new BanList( new File( "banned-Users.txt" ) );
 	private final BanList banByIP = new BanList();// = new BanList( new File( "banned-ips.txt" ) );
@@ -26,9 +35,20 @@ public class UserList
 	private boolean m;
 	private int n;
 	
-	public UserList(Server server)
+	public UserList(Loader server0)
 	{
-		this.server = server;
+		this();
+		server = server0;
+	}
+	
+	public UserList(Site site0)
+	{
+		this();
+		site = site0;
+	}
+	
+	public UserList()
+	{
 		banByName.setEnabled( false );
 		banByIP.setEnabled( false );
 		maxUsers = 50;
@@ -38,66 +58,38 @@ public class UserList
 	{
 		return null;
 		/*
-		User entity = new user( server, server.getWorldServer( 0 ), s, server.O() ? new DemoUserInteractManager( server.getWorldServer( 0 ) ) : new UserInteractManager( server.getWorldServer( 0 ) ) );
-		User User = entity.getBukkitEntity();
-		UserLoginEvent event = new UserLoginEvent( User, hostname, pendingconnection.getSocket().getInetAddress() );
-		
-		SocketAddress socketaddress = pendingconnection.networkManager.getSocketAddress();
-		
-		if ( banByName.isBanned( s ) )
-		{
-			BanEntry banentry = (BanEntry) banByName.getEntries().get( s );
-			String s1 = "You are banned from this server!\nReason: " + banentry.getReason();
-			
-			if ( banentry.getExpires() != null )
-			{
-				s1 = s1 + "\nYour ban will be removed on " + d.format( banentry.getExpires() );
-			}
-			
-			event.disallow( UserLoginEvent.Result.KICK_BANNED, s1 );
-		}
-		else if ( !isWhitelisted( s ) )
-		{
-			event.disallow( UserLoginEvent.Result.KICK_WHITELIST, "You are not white-listed on this server!" );
-		}
-		else
-		{
-			String s2 = socketaddress.toString();
-			
-			s2 = s2.substring( s2.indexOf( "/" ) + 1 );
-			s2 = s2.substring( 0, s2.indexOf( ":" ) );
-			if ( banByIP.isBanned( s2 ) )
-			{
-				BanEntry banentry1 = (BanEntry) banByIP.getEntries().get( s2 );
-				String s3 = "Your IP address is banned from this server!\nReason: " + banentry1.getReason();
-				
-				if ( banentry1.getExpires() != null )
-				{
-					s3 = s3 + "\nYour ban will be removed on " + d.format( banentry1.getExpires() );
-				}
-				
-				event.disallow( UserLoginEvent.Result.KICK_BANNED, s3 );
-			}
-			else if ( Users.size() >= maxUsers )
-			{
-				event.disallow( UserLoginEvent.Result.KICK_FULL, "The server is full!" );
-			}
-			else
-			{
-				event.disallow( UserLoginEvent.Result.ALLOWED, s2 );
-			}
-		}
-		
-		cserver.getPluginManager().callEvent( event );
-		if ( event.getResult() != UserLoginEvent.Result.ALLOWED )
-		{
-			pendingconnection.disconnect( event.getKickMessage() );
-			return null;
-		}
-		
-		return entity;
-		// CraftBukkit end
+		 * User entity = new user( server, server.getWorldServer( 0 ), s, server.O() ? new DemoUserInteractManager(
+		 * server.getWorldServer( 0 ) ) : new UserInteractManager( server.getWorldServer( 0 ) ) ); User User =
+		 * entity.getBukkitEntity(); UserLoginEvent event = new UserLoginEvent( User, hostname,
+		 * pendingconnection.getSocket().getInetAddress() );
 		 * 
+		 * SocketAddress socketaddress = pendingconnection.networkManager.getSocketAddress();
+		 * 
+		 * if ( banByName.isBanned( s ) ) { BanEntry banentry = (BanEntry) banByName.getEntries().get( s ); String s1 =
+		 * "You are banned from this server!\nReason: " + banentry.getReason();
+		 * 
+		 * if ( banentry.getExpires() != null ) { s1 = s1 + "\nYour ban will be removed on " + d.format(
+		 * banentry.getExpires() ); }
+		 * 
+		 * event.disallow( UserLoginEvent.Result.KICK_BANNED, s1 ); } else if ( !isWhitelisted( s ) ) { event.disallow(
+		 * UserLoginEvent.Result.KICK_WHITELIST, "You are not white-listed on this server!" ); } else { String s2 =
+		 * socketaddress.toString();
+		 * 
+		 * s2 = s2.substring( s2.indexOf( "/" ) + 1 ); s2 = s2.substring( 0, s2.indexOf( ":" ) ); if ( banByIP.isBanned(
+		 * s2 ) ) { BanEntry banentry1 = (BanEntry) banByIP.getEntries().get( s2 ); String s3 =
+		 * "Your IP address is banned from this server!\nReason: " + banentry1.getReason();
+		 * 
+		 * if ( banentry1.getExpires() != null ) { s3 = s3 + "\nYour ban will be removed on " + d.format(
+		 * banentry1.getExpires() ); }
+		 * 
+		 * event.disallow( UserLoginEvent.Result.KICK_BANNED, s3 ); } else if ( Users.size() >= maxUsers ) {
+		 * event.disallow( UserLoginEvent.Result.KICK_FULL, "The server is full!" ); } else { event.disallow(
+		 * UserLoginEvent.Result.ALLOWED, s2 ); } }
+		 * 
+		 * cserver.getPluginManager().callEvent( event ); if ( event.getResult() != UserLoginEvent.Result.ALLOWED ) {
+		 * pendingconnection.disconnect( event.getKickMessage() ); return null; }
+		 * 
+		 * return entity; // CraftBukkit end
 		 */
 	}
 	
@@ -150,7 +142,7 @@ public class UserList
 	{
 		operators.add( s.toLowerCase() );
 		
-		User user = server.server.getUser( s );
+		User user = server.getUser( s );
 		if ( user != null )
 		{
 			user.recalculatePermissions();
@@ -161,7 +153,7 @@ public class UserList
 	{
 		operators.remove( s.toLowerCase() );
 		
-		User user = server.server.getUser( s );
+		User user = server.getUser( s );
 		if ( user != null )
 		{
 			user.recalculatePermissions();
@@ -269,7 +261,7 @@ public class UserList
 		return arraylist;
 	}
 	
-	public Server getServer()
+	public Loader getServer()
 	{
 		return server;
 	}
@@ -278,12 +270,41 @@ public class UserList
 	{
 		while ( !Users.isEmpty() )
 		{
-			( (User) Users.get( 0 ) ).kick( server.server.getShutdownMessage() );
+			( (User) Users.get( 0 ) ).kick( server.getShutdownMessage() );
 		}
 	}
 	
 	public void sendMessage( String msg )
 	{
-		server.sendMessage( msg );
+		server.getConsole().sendMessage( msg );
+	}
+
+	public User validateUser( Framework fw, String username, String password )
+	{
+		SqlConnector sql = ( site != null ) ? site.getDatabase() : Framework.getDatabase();
+		
+		User user = new User( sql, username, password );
+		
+		if ( !user.valid )
+			return user;
+		
+		sql.queryUpdate( "UPDATE `users` SET `lastlogin` = '" + System.currentTimeMillis() + "', `numloginfail` = '0' WHERE `userID` = '" + user.getUserId() + "'" );
+		
+		fw.getRequest().getSession().setAttribute( "user", user.getUserId() );
+		fw.getRequest().getSession().setAttribute( "pass", new String( DigestUtils.md5( user.getPassword() ) ) );
+		
+		Cookie cookie = new Cookie( "ChioriSessionId", fw.getRequest().getSession().getId() );
+		
+		Object o = fw.getRequest().getAttribute( "remember" );
+		boolean remember = ( o == null ) ? false : (boolean) o;
+		
+		if ( remember )
+			cookie.setMaxAge( 5 * 365* 24 * 60 * 60 );
+		else
+			cookie.setMaxAge( 604800 );
+		
+		fw.getResponse().addCookie( cookie );
+		
+		return user;
 	}
 }

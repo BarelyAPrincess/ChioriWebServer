@@ -2,7 +2,7 @@ package com.chiorichan.util.permissions;
 
 import java.util.Map;
 
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.permissions.Permission;
 import com.chiorichan.permissions.PermissionDefault;
 
@@ -26,11 +26,11 @@ public final class DefaultPermissions
 		
 		try
 		{
-			Main.getPluginManager().addPermission( perm );
+			Loader.getPluginManager().addPermission( perm );
 		}
 		catch ( IllegalArgumentException ex )
 		{
-			result = Main.getPluginManager().getPermission2( perm.getName() );
+			result = Loader.getPluginManager().getPermission2( perm.getName() );
 		}
 		
 		if ( withLegacy )

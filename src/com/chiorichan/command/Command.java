@@ -8,10 +8,9 @@ import java.util.Set;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.ChatColor;
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.permissions.Permissible;
 import com.chiorichan.plugin.PluginDescriptionFile;
-import com.chiorichan.server.Server;
 import com.chiorichan.user.User;
 import com.chiorichan.util.StringUtil;
 import com.google.common.collect.ImmutableList;
@@ -394,7 +393,7 @@ public abstract class Command
 	{
 		String result = source.getName() + ": " + message;
 		
-		Set<Permissible> users = Main.getPluginManager().getPermissionSubscriptions( Main.BROADCAST_CHANNEL_ADMINISTRATIVE );
+		Set<Permissible> users = Loader.getPluginManager().getPermissionSubscriptions( Loader.BROADCAST_CHANNEL_ADMINISTRATIVE );
 		String colored = ChatColor.GRAY + "" + ChatColor.ITALIC + "[" + result + "]";
 		
 		if ( sendToSource && !( source instanceof ConsoleCommandSender ) )

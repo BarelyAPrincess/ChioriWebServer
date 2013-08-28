@@ -6,7 +6,6 @@ server:
 settings:
   permissions-file: permissions.yml
   update-folder: update
-  ping-packet-limit: 100
   plugin-profiling: false
   query-plugins: true
   deprecated-verbose: default

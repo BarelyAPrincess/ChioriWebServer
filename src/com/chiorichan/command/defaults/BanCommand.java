@@ -5,7 +5,7 @@ import java.util.List;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.ChatColor;
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.command.Command;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.user.User;
@@ -33,9 +33,9 @@ public class BanCommand extends VanillaCommand
 		}
 		
 		// TODO: Ban Reason support
-		Main.getInstance().getOfflineUser( args[0] ).setBanned( true );
+		Loader.getInstance().getOfflineUser( args[0] ).setBanned( true );
 		
-		User User = Main.getInstance().getUser( args[0] );
+		User User = Loader.getInstance().getUser( args[0] );
 		if ( User != null )
 		{
 			User.kick( "Banned by admin." );

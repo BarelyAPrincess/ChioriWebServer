@@ -13,9 +13,10 @@ import java.util.Set;
 
 import org.json.JSONObject;
 
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.file.YamlConfiguration;
+import com.chiorichan.user.UserList;
 import com.google.gson.Gson;
 
 public class Site
@@ -23,6 +24,7 @@ public class Site
 	public String siteId, title, domain;
 	Map<String, String> subdomains, aliases;
 	Set<String> metatags, protectedFiles;
+	UserList userList = null;
 	YamlConfiguration config;
 	SqlConnector sql;
 	
@@ -30,7 +32,7 @@ public class Site
 	
 	public Site(ResultSet rs) throws SQLException
 	{
-		Main.getLogger().info( "Loading site '" + siteId + "' with title '" + title + "' from Framework Database." );
+		Loader.getLogger().info( "Loading site '" + siteId + "' with title '" + title + "' from Framework Database." );
 		
 		siteId = rs.getString( "siteID" );
 		title = rs.getString( "title" );
@@ -46,7 +48,7 @@ public class Site
 		}
 		catch ( Exception e )
 		{
-			Main.getLogger().warning( "MALFORMED JSON EXPRESSION for 'protected' field for site '" + siteId + "'" );
+			Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'protected' field for site '" + siteId + "'" );
 		}
 		
 		try
@@ -55,7 +57,7 @@ public class Site
 		}
 		catch ( Exception e )
 		{
-			Main.getLogger().warning( "MALFORMED JSON EXPRESSION for 'metatags' field for site '" + siteId + "'" );
+			Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'metatags' field for site '" + siteId + "'" );
 		}
 		
 		try
@@ -64,7 +66,7 @@ public class Site
 		}
 		catch ( Exception e )
 		{
-			Main.getLogger().warning( "MALFORMED JSON EXPRESSION for 'aliases' field for site '" + siteId + "'" );
+			Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'aliases' field for site '" + siteId + "'" );
 		}
 		
 		try
@@ -73,7 +75,7 @@ public class Site
 		}
 		catch ( Exception e )
 		{
-			Main.getLogger().warning( "MALFORMED JSON EXPRESSION for 'subdomains' field for site '" + siteId + "'" );
+			Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'subdomains' field for site '" + siteId + "'" );
 		}
 		
 		try
@@ -84,7 +86,7 @@ public class Site
 		}
 		catch ( Exception e )
 		{
-			Main.getLogger().warning( "MALFORMED YAML EXPRESSION for 'configYaml' field for site '" + siteId + "'" );
+			Loader.getLogger().warning( "MALFORMED YAML EXPRESSION for 'configYaml' field for site '" + siteId + "'" );
 		}
 		
 		if ( config != null && config.getConfigurationSection( "database" ) != null )
@@ -109,9 +111,24 @@ public class Site
 			}
 			finally
 			{
-				Main.getLogger().info( "Successfully connected to site database for site " + siteId );
+				Loader.getLogger().info( "Successfully connected to site database for site " + siteId );
+				
+				initalizeUserList();
 			}
 		}
+	}
+	
+	private void initalizeUserList()
+	{
+		userList = new UserList( this );
+		
+		
+		
+	}
+	
+	public UserList getUserList()
+	{
+		return userList;
 	}
 	
 	public YamlConfiguration getYaml()
@@ -153,7 +170,7 @@ public class Site
 	
 	public File getAbsoluteRoot( String subdomain )
 	{
-		File target = new File( Main.webroot, getWebRoot( subdomain ) );
+		File target = new File( Loader.webroot, getWebRoot( subdomain ) );
 		
 		if ( target.isFile() )
 			target.delete();
@@ -168,7 +185,7 @@ public class Site
 	{
 		String target = "/" + siteId;
 		
-		if ( subdomain != null && !subdomain.isEmpty() )
+		if ( subdomains != null && subdomain != null && !subdomain.isEmpty() )
 		{
 			String sub = subdomains.get( subdomain );
 			
@@ -177,6 +194,11 @@ public class Site
 		}
 		
 		return target;
+	}
+
+	public SqlConnector getDatabase()
+	{
+		return sql;
 	}
 	
 	// TODO: Add methods to add protected files, metatags and aliases to site and save

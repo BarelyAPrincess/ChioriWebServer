@@ -3,7 +3,7 @@ package com.chiorichan.command.defaults;
 import java.util.Arrays;
 
 import com.chiorichan.ChatColor;
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.plugin.Plugin;
 
@@ -31,7 +31,7 @@ public class PluginsCommand extends ChioriCommand
 	private String getPluginList()
 	{
 		StringBuilder pluginList = new StringBuilder();
-		Plugin[] plugins = Main.getInstance().getPluginManager().getPlugins();
+		Plugin[] plugins = Loader.getInstance().getPluginManager().getPlugins();
 		
 		for ( Plugin plugin : plugins )
 		{

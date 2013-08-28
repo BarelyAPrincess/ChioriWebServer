@@ -7,7 +7,7 @@ import java.util.List;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.ChatColor;
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.command.Command;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.user.User;
@@ -35,7 +35,7 @@ public class OpCommand extends VanillaCommand
 			return false;
 		}
 		
-		User user = Main.getInstance().getOfflineUser( args[0] );
+		User user = Loader.getInstance().getOfflineUser( args[0] );
 		user.setOp( true );
 		
 		Command.broadcastCommandMessage( sender, "Opped " + args[0] );

@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.command.Command;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.command.PluginCommand;
@@ -31,7 +31,7 @@ public abstract class JavaPlugin extends PluginBase
 	private boolean isEnabled = false;
 	private boolean initialized = false;
 	private PluginLoader loader = null;
-	private Main server = null;
+	private Loader server = null;
 	private File file = null;
 	private PluginDescriptionFile description = null;
 	private File dataFolder = null;
@@ -70,7 +70,7 @@ public abstract class JavaPlugin extends PluginBase
 	 * 
 	 * @return Server running this plugin
 	 */
-	public final Main getServer()
+	public final Loader getServer()
 	{
 		return server;
 	}
@@ -272,7 +272,7 @@ public abstract class JavaPlugin extends PluginBase
 	 * @param classLoader
 	 *           ClassLoader which holds this plugin
 	 */
-	protected final void initialize( PluginLoader loader, Main server, PluginDescriptionFile description, File dataFolder, File file, ClassLoader classLoader )
+	protected final void initialize( PluginLoader loader, Loader server, PluginDescriptionFile description, File dataFolder, File file, ClassLoader classLoader )
 	{
 		if ( !initialized )
 		{

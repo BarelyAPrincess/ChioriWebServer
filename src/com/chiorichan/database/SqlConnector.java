@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.mysql.jdbc.exceptions.jdbc4.CommunicationsException;
 import com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException;
 
@@ -59,14 +59,14 @@ public class SqlConnector
 		
 		con = DriverManager.getConnection( "jdbc:mysql://" + host + ":" + port + "/" + db, user, pass );
 		
-		Main.getLogger().info( "We succesully connected to the sql database using 'jdbc:mysql://" + host + ":" + port + "/" + db + "'." );
+		Loader.getLogger().info( "We succesully connected to the sql database using 'jdbc:mysql://" + host + ":" + port + "/" + db + "'." );
 	}
 	
 	public HashMap<String, Object> selectOne( String table, List<String> keys, List<? extends Object> values )
 	{
 		if ( isNull( keys ) || isNull( values ) )
 		{
-			Main.getLogger().warning( "[DB ERROR] Either keys array or values array equals null!\n" );
+			Loader.getLogger().warning( "[DB ERROR] Either keys array or values array equals null!\n" );
 			return null;
 		}
 		
@@ -197,7 +197,7 @@ public class SqlConnector
 			e.printStackTrace();
 		}
 		
-		Main.getLogger().fine( "Update Query: \"" + query + "\" which affected " + cnt + " row(s)." );
+		Loader.getLogger().fine( "Update Query: \"" + query + "\" which affected " + cnt + " row(s)." );
 		return cnt;
 	}
 	

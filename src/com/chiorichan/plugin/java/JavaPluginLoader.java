@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.Validate;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.Warning;
 import com.chiorichan.Warning.WarningState;
 import com.chiorichan.event.Event;
@@ -51,7 +51,7 @@ import com.google.common.collect.ImmutableList;
  */
 public class JavaPluginLoader implements PluginLoader
 {
-	final Main server;
+	final Loader server;
 	final boolean extended = this.getClass() != JavaPluginLoader.class;
 	boolean warn;
 	
@@ -63,7 +63,7 @@ public class JavaPluginLoader implements PluginLoader
 	 * This class was not meant to be extended
 	 */
 	@Deprecated
-	public JavaPluginLoader(Main instance)
+	public JavaPluginLoader(Loader instance)
 	{
 		Validate.notNull( instance, "Server cannot be null" );
 		server = instance;
@@ -188,7 +188,7 @@ public class JavaPluginLoader implements PluginLoader
 		PluginClassLoader loader = null;
 		JavaPlugin result = null;
 		
-		File dataFolder = new File( (File) Main.getServer().options.valueOf( "plugins" ), description.getName() );
+		File dataFolder = new File( (File) Loader.getOptions().valueOf( "plugins" ), description.getName() );
 		
 		try
 		{

@@ -9,7 +9,7 @@ import java.util.logging.Level;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.plugin.PluginManager;
 
 /**
@@ -169,7 +169,7 @@ public class Permission
 	 */
 	public Set<Permissible> getPermissibles()
 	{
-		return Main.getPluginManager().getPermissionSubscriptions( name );
+		return Loader.getPluginManager().getPermissionSubscriptions( name );
 	}
 	
 	/**
@@ -181,7 +181,7 @@ public class Permission
 	{
 		Set<Permissible> perms = getPermissibles();
 		
-		Main.getPluginManager().recalculatePermissionDefaults( this );
+		Loader.getPluginManager().recalculatePermissionDefaults( this );
 		
 		for ( Permissible p : perms )
 		{
@@ -202,7 +202,7 @@ public class Permission
 	 */
 	public Permission addParent( String name, boolean value )
 	{
-		PluginManager pm = Main.getPluginManager();
+		PluginManager pm = Loader.getPluginManager();
 		String lname = name.toLowerCase();
 		
 		Permission perm = pm.getPermission2( lname );
@@ -259,7 +259,7 @@ public class Permission
 			}
 			catch ( Throwable ex )
 			{
-				Main.getInstance().getLogger().log( Level.SEVERE, String.format( error, entry.getKey() ), ex );
+				Loader.getInstance().getLogger().log( Level.SEVERE, String.format( error, entry.getKey() ), ex );
 			}
 		}
 		

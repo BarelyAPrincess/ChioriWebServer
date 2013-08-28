@@ -6,7 +6,7 @@ import java.util.List;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.ChatColor;
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.command.Command;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.user.User;
@@ -38,7 +38,7 @@ public class WhitelistCommand extends VanillaCommand
 				if ( badPerm( sender, "reload" ) )
 					return true;
 				
-				Main.getInstance().reloadWhitelist();
+				Loader.getInstance().reloadWhitelist();
 				Command.broadcastCommandMessage( sender, "Reloaded white-list from file" );
 				return true;
 			}
@@ -47,7 +47,7 @@ public class WhitelistCommand extends VanillaCommand
 				if ( badPerm( sender, "enable" ) )
 					return true;
 				
-				Main.getInstance().setWhitelist( true );
+				Loader.getInstance().setWhitelist( true );
 				Command.broadcastCommandMessage( sender, "Turned on white-listing" );
 				return true;
 			}
@@ -56,7 +56,7 @@ public class WhitelistCommand extends VanillaCommand
 				if ( badPerm( sender, "disable" ) )
 					return true;
 				
-				Main.getInstance().setWhitelist( false );
+				Loader.getInstance().setWhitelist( false );
 				Command.broadcastCommandMessage( sender, "Turned off white-listing" );
 				return true;
 			}
@@ -67,7 +67,7 @@ public class WhitelistCommand extends VanillaCommand
 				
 				StringBuilder result = new StringBuilder();
 				
-				for ( User User : Main.getInstance().getWhitelistedUsers() )
+				for ( User User : Loader.getInstance().getWhitelistedUsers() )
 				{
 					if ( result.length() > 0 )
 					{
@@ -88,7 +88,7 @@ public class WhitelistCommand extends VanillaCommand
 				if ( badPerm( sender, "add" ) )
 					return true;
 				
-				Main.getInstance().getOfflineUser( args[1] ).setWhitelisted( true );
+				Loader.getInstance().getOfflineUser( args[1] ).setWhitelisted( true );
 				
 				Command.broadcastCommandMessage( sender, "Added " + args[1] + " to white-list" );
 				return true;
@@ -98,7 +98,7 @@ public class WhitelistCommand extends VanillaCommand
 				if ( badPerm( sender, "remove" ) )
 					return true;
 				
-				Main.getInstance().getOfflineUser( args[1] ).setWhitelisted( false );
+				Loader.getInstance().getOfflineUser( args[1] ).setWhitelisted( false );
 				
 				Command.broadcastCommandMessage( sender, "Removed " + args[1] + " from white-list" );
 				return true;
@@ -136,7 +136,7 @@ public class WhitelistCommand extends VanillaCommand
 			if ( args[0].equalsIgnoreCase( "add" ) )
 			{
 				List<String> completions = new ArrayList<String>();
-				for ( User User : Main.getInstance().getOfflineUsers() )
+				for ( User User : Loader.getInstance().getOfflineUsers() )
 				{
 					String name = User.getName();
 					if ( StringUtil.startsWithIgnoreCase( name, args[1] ) && !User.isWhitelisted() )
@@ -149,7 +149,7 @@ public class WhitelistCommand extends VanillaCommand
 			else if ( args[0].equalsIgnoreCase( "remove" ) )
 			{
 				List<String> completions = new ArrayList<String>();
-				for ( User User : Main.getInstance().getWhitelistedUsers() )
+				for ( User User : Loader.getInstance().getWhitelistedUsers() )
 				{
 					String name = User.getName();
 					if ( StringUtil.startsWithIgnoreCase( name, args[1] ) )

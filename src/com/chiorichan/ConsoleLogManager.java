@@ -7,12 +7,9 @@ import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.chiorichan.server.Server;
-import com.google.common.base.Strings;
-
 public class ConsoleLogManager
 {
-	public final Logger a;
+	public static Logger a;
 	public static Logger global = Logger.getLogger( "" );
 	
 	public ConsoleLogManager(String s)
@@ -24,8 +21,8 @@ public class ConsoleLogManager
 	{
 		ConsoleLogFormatter consolelogformatter = new ConsoleLogFormatter( false );
 		
-		Server server = Main.getServer();
-		ConsoleHandler consolehandler = new TerminalConsoleHandler( server.reader );
+		Console console = Loader.getConsole();
+		ConsoleHandler consolehandler = new TerminalConsoleHandler( console.reader );
 		
 		consolehandler.setFormatter( consolelogformatter );
 		a.addHandler( consolehandler );
@@ -35,12 +32,12 @@ public class ConsoleLogManager
 			global.removeHandler( handler );
 		}
 		
-		consolehandler.setFormatter( new ShortConsoleLogFormatter( server ) );
+		consolehandler.setFormatter( new ShortConsoleLogFormatter( console ) );
 		global.addHandler( consolehandler );
 		
 		try
 		{
-			String pattern = (String) server.options.valueOf( "log-pattern" );
+			String pattern = (String) Loader.getOptions().valueOf( "log-pattern" );
 			
 			String tmpDir = System.getProperty( "java.io.tmpdir" );
 			String homeDir = System.getProperty( "user.home" );
@@ -105,9 +102,9 @@ public class ConsoleLogManager
 				parent.mkdirs();
 			}
 			
-			int limit = 0;// (Integer) server.options.valueOf( "log-limit" );
-			int count = 0;// (Integer) server.options.valueOf( "log-count" );
-			boolean append = true;// (Boolean) server.options.valueOf( "log-append" );
+			int limit = 0;// (Integer) console.options.valueOf( "log-limit" );
+			int count = 0;// (Integer) console.options.valueOf( "log-count" );
+			boolean append = true;// (Boolean) console.options.valueOf( "log-append" );
 			FileHandler filehandler = new FileHandler( pattern, limit, count, append );
 			
 			// filehandler.setFormatter( consolelogformatter );

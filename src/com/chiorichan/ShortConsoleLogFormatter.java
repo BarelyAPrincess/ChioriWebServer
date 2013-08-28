@@ -6,13 +6,11 @@ import java.text.SimpleDateFormat;
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 
-import com.chiorichan.server.Server;
-
 public class ShortConsoleLogFormatter extends Formatter
 {
 	private final SimpleDateFormat date;
 	
-	public ShortConsoleLogFormatter(Server server)
+	public ShortConsoleLogFormatter(Console console)
 	{
 		SimpleDateFormat date = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" );
 		

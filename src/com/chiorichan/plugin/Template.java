@@ -12,8 +12,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.caucho.quercus.QuercusErrorException;
 import com.caucho.quercus.parser.QuercusParseException;
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
@@ -30,7 +31,7 @@ public class Template extends JavaPlugin implements Listener
 	
 	public void onEnable()
 	{
-		Main.getPluginManager().registerEvents( this, this );
+		Loader.getPluginManager().registerEvents( this, this );
 		
 		// Main.getServer().registerBean( null, "framework" );
 	}
@@ -78,11 +79,11 @@ public class Template extends JavaPlugin implements Listener
 		
 		if ( !file.exists() )
 		{
-			Main.getLogger().info( "Could not find the file " + file.getAbsolutePath() );
+			Loader.getLogger().info( "Could not find the file " + file.getAbsolutePath() );
 			return "";
 		}
 		
-		Main.getLogger().info( "Retriving File: " + file.getAbsolutePath() );
+		Loader.getLogger().info( "Retriving File: " + file.getAbsolutePath() );
 		
 		FileInputStream is;
 		try
@@ -119,6 +120,9 @@ public class Template extends JavaPlugin implements Listener
 	
 	public String applyAlias( String source, Map<String, String> aliases )
 	{
+		if ( aliases == null || aliases.size() < 1 )
+			return source;
+		
 		for ( Entry<String, String> entry : aliases.entrySet() )
 		{
 			source = source.replace( "%" + entry.getKey() + "%", entry.getValue() );
@@ -135,9 +139,10 @@ public class Template extends JavaPlugin implements Listener
 		{
 			source = event.executeCode( source );
 		}
-		catch ( QuercusParseException | IOException e )
+		catch ( QuercusParseException | QuercusErrorException | IOException e )
 		{
 			// TODO: Better this catch
+			source = e.getMessage();
 			e.printStackTrace();
 		}
 		
@@ -145,7 +150,7 @@ public class Template extends JavaPlugin implements Listener
 	}
 	
 	@EventHandler( priority = EventPriority.LOWEST )
-	public void onPreRenderEvent( RenderEvent event )
+	public void onRenderEvent( RenderEvent event )
 	{
 		Site site = event.getSite();
 		String theme = event.theme;
@@ -168,7 +173,7 @@ public class Template extends JavaPlugin implements Listener
 			title = pageTitleOverride;
 		
 		if ( site.title == null )
-			site.title = Main.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Chiori Framework Site" );
+			site.title = Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Chiori Framework Site" );
 		
 		if ( title == null || title.isEmpty() )
 			ob.append( "<title>" + site.title + "</title>\n" );

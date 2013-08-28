@@ -13,7 +13,7 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.error.YAMLException;
 import org.yaml.snakeyaml.representer.Representer;
 
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.configuration.Configuration;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.configuration.InvalidConfigurationException;
@@ -217,11 +217,11 @@ public class YamlConfiguration extends FileConfiguration
 		{}
 		catch ( IOException ex )
 		{
-			Main.getInstance().getLogger().log( Level.SEVERE, "Cannot load " + file, ex );
+			Loader.getInstance().getLogger().log( Level.SEVERE, "Cannot load " + file, ex );
 		}
 		catch ( InvalidConfigurationException ex )
 		{
-			Main.getInstance().getLogger().log( Level.SEVERE, "Cannot load " + file, ex );
+			Loader.getInstance().getLogger().log( Level.SEVERE, "Cannot load " + file, ex );
 		}
 		
 		return config;
@@ -251,11 +251,11 @@ public class YamlConfiguration extends FileConfiguration
 		}
 		catch ( IOException ex )
 		{
-			Main.getInstance().getLogger().log( Level.SEVERE, "Cannot load configuration from stream", ex );
+			Loader.getInstance().getLogger().log( Level.SEVERE, "Cannot load configuration from stream", ex );
 		}
 		catch ( InvalidConfigurationException ex )
 		{
-			Main.getInstance().getLogger().log( Level.SEVERE, "Cannot load configuration from stream", ex );
+			Loader.getInstance().getLogger().log( Level.SEVERE, "Cannot load configuration from stream", ex );
 		}
 		
 		return config;

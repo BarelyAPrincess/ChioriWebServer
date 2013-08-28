@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.logging.Logger;
 
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.command.TabExecutor;
 import com.chiorichan.file.FileConfiguration;
 
@@ -90,7 +90,7 @@ public interface Plugin extends TabExecutor
 	 * 
 	 * @return Server running this plugin
 	 */
-	public Main getServer();
+	public Loader getServer();
 	
 	/**
 	 * Returns a value indicating whether or not this plugin is currently enabled

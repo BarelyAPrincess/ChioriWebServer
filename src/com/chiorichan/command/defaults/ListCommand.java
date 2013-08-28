@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.user.User;
 import com.google.common.collect.ImmutableList;
@@ -27,7 +27,7 @@ public class ListCommand extends VanillaCommand
 		
 		StringBuilder online = new StringBuilder();
 		
-		User[] users = Main.getInstance().getOnlineUsers();
+		User[] users = Loader.getInstance().getOnlineUsers();
 		
 		for ( User user : users )
 		{
@@ -43,7 +43,7 @@ public class ListCommand extends VanillaCommand
 			online.append( user.getDisplayName() );
 		}
 		
-		sender.sendMessage( "There are " + users.length + "/" + Main.getInstance().getMaxUsers() + " users online:\n" + online.toString() );
+		sender.sendMessage( "There are " + users.length + "/" + Loader.getInstance().getMaxUsers() + " users online:\n" + online.toString() );
 		
 		return true;
 	}

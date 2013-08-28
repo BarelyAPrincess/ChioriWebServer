@@ -13,7 +13,7 @@ import com.caucho.quercus.env.Env;
 import com.caucho.quercus.env.LargeStringBuilderValue;
 import com.caucho.quercus.env.StringValue;
 import com.caucho.quercus.parser.QuercusParseException;
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 
 public class FrameworkServer
 {
@@ -67,7 +67,7 @@ public class FrameworkServer
 		}
 	}
 	
-	public String executeCode( String source ) throws IOException, QuercusParseException
+	public String executeCode( String source ) throws IOException, QuercusParseException, QuercusErrorException
 	{
 		StringValue sv = new LargeStringBuilderValue();
 		sv.append( "?> " + source );
@@ -115,11 +115,11 @@ public class FrameworkServer
 		
 		if ( !file.exists() )
 		{
-			Main.getLogger().info( "Could not find the file " + file.getAbsolutePath() );
+			Loader.getLogger().info( "Could not find the file " + file.getAbsolutePath() );
 			return "";
 		}
 		
-		Main.getLogger().info( "Retriving File: " + file.getAbsolutePath() );
+		Loader.getLogger().info( "Retriving File: " + file.getAbsolutePath() );
 		
 		FileInputStream is;
 		try
@@ -152,5 +152,43 @@ public class FrameworkServer
 		}
 		
 		return sb.toString();
+	}
+	
+	public void panic( int i, String string )
+	{
+		try
+		{
+			if ( !fw.getResponse().isCommitted() )
+				fw.getResponse().sendError( i, string );
+		}
+		catch ( IOException e )
+		{
+			e.printStackTrace();
+		}
+	}
+
+	public void dummyRedirect( String string )
+	{
+		try
+		{
+			if ( !fw.getResponse().isCommitted() )
+			{
+				fw.getResponse().sendRedirect( fw.getResponse().encodeRedirectURL( string ).toString() );
+				return;
+			}
+		}
+		catch ( IOException e )
+		{
+			e.printStackTrace();
+		}
+		
+		try
+		{
+			fw.getResponse().getWriter().println( "<script>window.location = '" + string + "';</script>" );
+		}
+		catch ( IOException e )
+		{
+			e.printStackTrace();
+		}
 	}
 }

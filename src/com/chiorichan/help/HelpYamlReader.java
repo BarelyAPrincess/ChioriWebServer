@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.logging.Level;
 
 import com.chiorichan.ChatColor;
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.file.YamlConfiguration;
 
@@ -19,14 +19,14 @@ public class HelpYamlReader
 	
 	private YamlConfiguration helpYaml;
 	private final char ALT_COLOR_CODE = '&';
-	private final Main server;
+	private final Loader server;
 	
-	public HelpYamlReader(Main server)
+	public HelpYamlReader(Loader server)
 	{
 		this.server = server;
 		
 		File helpYamlFile = new File( "help.yml" );
-		YamlConfiguration defaultConfig = YamlConfiguration.loadConfiguration( getClass().getClassLoader().getResourceAsStream( "configurations/help.yml" ) );
+		YamlConfiguration defaultConfig = YamlConfiguration.loadConfiguration( getClass().getClassLoader().getResourceAsStream( "com/chiorichan/help.yml" ) );
 		
 		try
 		{

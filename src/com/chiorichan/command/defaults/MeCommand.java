@@ -1,7 +1,7 @@
 package com.chiorichan.command.defaults;
 
 import com.chiorichan.ChatColor;
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.command.CommandSender;
 
 public class MeCommand extends VanillaCommand
@@ -34,7 +34,7 @@ public class MeCommand extends VanillaCommand
 			message.append( arg );
 		}
 		
-		Main.getInstance().broadcastMessage( "* " + message.toString() );
+		Loader.getInstance().broadcastMessage( "* " + message.toString() );
 		
 		return true;
 	}

@@ -1,7 +1,7 @@
 package com.chiorichan.command.defaults;
 
 import com.chiorichan.ChatColor;
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.user.User;
 
@@ -26,7 +26,7 @@ public class TellCommand extends VanillaCommand
 			return false;
 		}
 		
-		User user = Main.getInstance().getUserExact( args[0] );
+		User user = Loader.getInstance().getUserExact( args[0] );
 		
 		// If a user is hidden from the sender pretend they are offline
 		if ( user == null || ( sender instanceof User && !( (User) sender ).canSee( user ) ) )

@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.logging.Level;
 
@@ -32,12 +33,11 @@ import com.caucho.quercus.env.LargeStringBuilderValue;
 import com.caucho.quercus.env.QuercusValueException;
 import com.caucho.quercus.env.StringValue;
 import com.caucho.quercus.page.QuercusPage;
-import com.caucho.quercus.parser.QuercusParseException;
 import com.caucho.vfs.FilePath;
 import com.caucho.vfs.Path;
 import com.caucho.vfs.Vfs;
 import com.caucho.vfs.WriteStream;
-import com.chiorichan.Main;
+import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.event.server.RenderEvent;
 import com.chiorichan.event.server.RequestEvent;
@@ -50,14 +50,18 @@ public class Framework
 	protected static SqlConnector sql = new SqlConnector();
 	protected static SiteManager _sites = new SiteManager( sql );
 	
+	protected Map<String, String> rewriteGlobals = new HashMap<String, String>();
+	
 	protected HttpServletRequest request;
 	protected HttpServletResponse response;
 	protected FilterChain chain;
-	protected QuercusContext quercus;
+	protected QuercusContext _quercus;
 	protected ServletContext _servletContext;
 	
 	protected FrameworkServer _server;
 	protected FrameworkConfigurationManager _config;
+	protected FrameworkDatabaseEngine _db;
+	protected FrameworkUserService _usr;
 	
 	protected Env env = null;
 	protected ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -65,12 +69,11 @@ public class Framework
 	protected String siteId, siteTitle, siteDomain, siteSubDomain, requestId;
 	protected Site currentSite;
 	
-	public Framework(HttpServletRequest request0, HttpServletResponse response0, FilterChain chain0, QuercusContext quercus0, ServletContext servletContext)
+	public Framework(HttpServletRequest request0, HttpServletResponse response0, FilterChain chain0, ServletContext servletContext)
 	{
 		request = request0;
 		response = response0;
 		chain = chain0;
-		quercus = quercus0;
 		_servletContext = servletContext;
 	}
 	
@@ -105,7 +108,7 @@ public class Framework
 			uri = uri.substring( 1 );
 		
 		if ( domain.equalsIgnoreCase( "localhost" ) || domain.equalsIgnoreCase( "127.0.0.1" ) | domain.equalsIgnoreCase( request.getLocalAddr() ) )
-			domain = "web.applebloom.co"; // domain = "";
+			domain = "accounts.applebloom.co"; // domain = "";
 			
 		if ( domain.split( "\\." ).length > 2 )
 		{
@@ -118,7 +121,7 @@ public class Framework
 		
 		// TODO: Generate a blank site and save it based on the information known
 		if ( currentSite == null )
-			currentSite = new Site( "default", Main.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Chiori Framework Site" ), domain );
+			currentSite = new Site( "default", Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Chiori Framework Site" ), domain );
 		
 		siteDomain = domain;
 		siteSubDomain = site;
@@ -127,7 +130,7 @@ public class Framework
 		
 		Map<ServerVars, Object> _server = new HashMap<ServerVars, Object>();
 		// _server.put( ServerVars.PHP_SELF, requestFile.getPath() );
-		_server.put( ServerVars.DOCUMENT_ROOT, Main.getConfig().getString( "settings.webroot", "webroot" ) );
+		_server.put( ServerVars.DOCUMENT_ROOT, Loader.getConfig().getString( "settings.webroot", "webroot" ) );
 		_server.put( ServerVars.HTTP_ACCEPT, request.getHeader( "Accept" ) );
 		_server.put( ServerVars.HTTP_USER_AGENT, request.getHeader( "User-Agent" ) );
 		_server.put( ServerVars.HTTP_CONNECTION, request.getHeader( "Connection" ) );
@@ -146,16 +149,16 @@ public class Framework
 		_server.put( ServerVars.HTTPS, request.isSecure() );
 		_server.put( ServerVars.SESSION, request.getSession() );
 		_server.put( ServerVars.SERVER_SOFTWARE, "Chiori Web Server" );
-		_server.put( ServerVars.SERVER_ADMIN, Main.getConfig().getString( "server.admin", "webmaster@" + request.getServerName() ) );
-		_server.put( ServerVars.SERVER_ID, Main.getConfig().getString( "server.id", "applebloom" ) );
-		_server.put( ServerVars.SERVER_SIGNATURE, "Chiori Web Server Version " + Main.getVersion() );
+		_server.put( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "webmaster@" + request.getServerName() ) );
+		_server.put( ServerVars.SERVER_ID, Loader.getConfig().getString( "server.id", "applebloom" ) );
+		_server.put( ServerVars.SERVER_SIGNATURE, "Chiori Web Server Version " + Loader.getVersion() );
 		
 		RequestEvent event = new RequestEvent( _server );
-		Main.getPluginManager().callEvent( event );
+		Loader.getPluginManager().callEvent( event );
 		
 		if ( event.isCancelled() )
 		{
-			Main.getLogger().warning( "Navigation was cancelled by a plugin for ip '" + request.getRemoteAddr() + "' '" + request.getHeader( "Host" ) + request.getRequestURI() + "'" );
+			Loader.getLogger().warning( "Navigation was cancelled by a plugin for ip '" + request.getRemoteAddr() + "' '" + request.getHeader( "Host" ) + request.getRequestURI() + "'" );
 			
 			int status = event.getStatus();
 			String reason = event.getReason();
@@ -172,13 +175,26 @@ public class Framework
 		
 		if ( !rewriteVirtual( siteDomain, siteSubDomain, uri ) )
 		{
-			String target = currentSite.getWebRoot( siteSubDomain ) + "/" + uri;
+			File siteRoot = new File( Loader.webroot, currentSite.siteId );
 			
-			Main.getLogger().info( "Forwarding request to the site (" + currentSite.siteId + ") webroot at '" + target + "'" );
+			if ( !siteRoot.exists() )
+				siteRoot.mkdirs();
 			
-			request.getRequestDispatcher( target ).forward( request, response );
+			if ( uri.isEmpty() )
+				uri = "/";
 			
-			// chain.doFilter( request, response );
+			File dest = new File( siteRoot, uri );
+			
+			if ( uri.endsWith( ".php" ) || uri.endsWith( ".php5" ) || ( dest.isDirectory() && new File( dest, "index.php" ).exists() ) )
+			{
+				this.loadPage( "", "", "", uri, "", "-1" );
+			}
+			else
+			{
+				String target = currentSite.getWebRoot( siteSubDomain ) + "/" + uri;
+				Loader.getLogger().info( "Forwarding request to the site (" + currentSite.siteId + ") webroot at '" + target + "'" );
+				request.getRequestDispatcher( target ).forward( request, response );
+			}
 		}
 	}
 	
@@ -193,7 +209,8 @@ public class Framework
 	{
 		try
 		{
-			ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE (site = '' OR site = '" + subdomain + "') AND domain = '" + domain + "' UNION SELECT * FROM `pages` WHERE (site = '' OR site = '" + subdomain + "') AND domain = '';" );
+			// TODO: Fix the select issue with black subdomains. It's not suppose to be 1111 but it is to prevent the redirect loop.
+			ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE (site = '" + subdomain + "' OR site = '1111') AND domain = '" + domain + "' UNION SELECT * FROM `pages` WHERE (site = '" + subdomain + "' OR site = '1111') AND domain = '';" );
 			
 			if ( sql.getRowCount( rs ) > 0 )
 			{
@@ -220,7 +237,7 @@ public class Framework
 					{
 						try
 						{
-							Main.getLogger().fine( prop + " --> " + props[i] + " == " + uris[i] );
+							Loader.getLogger().fine( prop + " --> " + props[i] + " == " + uris[i] );
 							
 							if ( props[i].matches( "\\[([a-zA-Z0-9]+)=\\]" ) )
 							{
@@ -229,23 +246,23 @@ public class Framework
 								String key = props[i].replaceAll( "[\\[\\]=]", "" );
 								String value = uris[i];
 								
-								// TODO: Tell framework to set these values.
+								rewriteGlobals.put( key, value );
 								
 								// PREP MATCH
 								
-								Main.getLogger().fine( "Found a PREG match to " + rs.getString( "page" ) );
+								Loader.getLogger().fine( "Found a PREG match to " + rs.getString( "page" ) );
 							}
 							else if ( props[i].equals( uris[i] ) )
 							{
 								weight = replaceAt( weight, i, "A" );
 								
-								Main.getLogger().fine( "Found a match to " + rs.getString( "page" ) );
+								Loader.getLogger().fine( "Found a match to " + rs.getString( "page" ) );
 								// MATCH
 							}
 							else
 							{
 								whole_match = false;
-								Main.getLogger().fine( "Found no match to " + rs.getString( "page" ) );
+								Loader.getLogger().fine( "Found no match to " + rs.getString( "page" ) );
 								break;
 								// NO MATCH
 							}
@@ -282,7 +299,7 @@ public class Framework
 				{
 					HashMap<String, Object> data = (HashMap) candy.values().toArray()[0];
 					
-					Main.getLogger().info( "Rewriting page request to " + data );
+					Loader.getLogger().info( "Rewriting page request to " + data );
 					
 					try
 					{
@@ -296,12 +313,12 @@ public class Framework
 					return true;
 				}
 				
-				Main.getLogger().warning( "Failed to find a page redirect for Framework Rewrite... '" + subdomain + "." + domain + "' '" + uri + "'" );
+				Loader.getLogger().warning( "Failed to find a page redirect for Framework Rewrite... '" + subdomain + "." + domain + "' '" + uri + "'" );
 				return false;
 			}
 			else
 			{
-				Main.getLogger().warning( "Failed to find a page redirect for Framework Rewrite... '" + subdomain + "." + domain + "' '" + uri + "'" );
+				Loader.getLogger().warning( "Failed to find a page redirect for Framework Rewrite... '" + subdomain + "." + domain + "' '" + uri + "'" );
 				return false;
 			}
 		}
@@ -313,55 +330,70 @@ public class Framework
 		return true;
 	}
 	
-	private void loadPage( String theme, String view, String title, String file, String html, String reqlevel ) throws IOException
+	private void executeCodeSimple( Env env, String code )
 	{
-		quercus.setServletContext( _servletContext );
+		StringValue sv = new LargeStringBuilderValue();
+		sv.append( "?>" + code );
+		
+		try
+		{
+			env.evalCode( sv );
+		}
+		catch ( Exception e )
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	private void loadPage( String theme, String view, String title, String file, String html, String reqPerm ) throws IOException
+	{
+		QuercusContext quercus = getQuercus();
 		
 		WriteStream ws = null;
+		env = null;
 		
 		try
 		{
 			if ( currentSite == null )
 				return;
 			
-			//boolean authorized = true; // Set according to the results of checking the reqlevel.
-			
-			Path requestPath = null;
+			boolean authorized = getUserService().initalize( reqPerm );
 			
 			if ( html.isEmpty() && file.isEmpty() )
 			{
-				response.sendError( 500 );
+				response.sendError( 500, "There was a problem handling your request. Try again later." );
 				return;
 			}
 			
 			File requestFile = null;
-			if ( html.isEmpty() && !file.isEmpty() )
+			if ( !file.isEmpty() )
 			{
 				if ( file.startsWith( "/" ) )
 					file = file.substring( 1 );
 				
 				if ( currentSite.protectCheck( file ) )
 				{
-					Main.getLogger().warning( "Loading of page '" + file + "' is not allowed since its hard protected in the site configs." );
+					Loader.getLogger().warning( "Loading of page '" + file + "' is not allowed since its hard protected in the site configs." );
 					response.sendError( 401, "Loading of this page is not allowed since its hard protected in the site configs." );
 					return;
 				}
 				
-				if ( Main.webroot.isEmpty() )
-					Main.webroot = "webroot";
+				if ( Loader.webroot.isEmpty() )
+					Loader.webroot = "webroot";
 				
-				File siteRoot = new File( Main.webroot, currentSite.siteId );
+				File siteRoot = new File( Loader.webroot, currentSite.siteId );
 				
 				if ( !siteRoot.exists() )
 					siteRoot.mkdirs();
 				
-				Main.getLogger().info( "Requesting file: " + new File( siteRoot, file ).getAbsolutePath() );
-				
 				requestFile = new File( siteRoot, file );
+				
+				Loader.getLogger().info( "Requesting file: " + requestFile.getAbsolutePath() );
 				
 				if ( !requestFile.exists() )
 				{
-					response.sendError( 500 );
+					Loader.getLogger().warning( "Could not load file '" + requestFile.getAbsolutePath() + "'" );
+					response.sendError( 404 );
 					return;
 				}
 				
@@ -377,114 +409,125 @@ public class Framework
 					}
 					else
 					{
-						response.sendError( 500 );
+						response.sendError( 500, "There was a problem finding the index page." );
 						return;
 					}
 				}
 				
 				if ( !requestFile.exists() )
 				{
-					Main.getLogger().warning( "Could not load file '" + requestFile.getAbsolutePath() + "'" );
+					Loader.getLogger().warning( "Could not load file '" + requestFile.getAbsolutePath() + "'" );
 					response.sendError( HttpServletResponse.SC_NOT_FOUND );
 					return;
 				}
 			}
 			
-			try
+			if ( authorized )
 			{
-				Path path = new FilePath( requestFile.getAbsolutePath() );
-				QuercusPage page = ( requestFile != null ) ? quercus.parse( path ) : null;
-				
-				ws = Vfs.openWrite( out );
-				ws.setDisableCloseSource( true );
-				ws.setNewlineString( "\n" );
-				
-				env = quercus.createEnv( page, ws, request, response );
-				env.setPwd( ( requestPath == null ) ? new FilePath( new File( Main.webroot ).getAbsolutePath() ) : requestPath.getParent() );
-				
-				env.start();
-				
-				env.setGlobalValue( "chiori", env.wrapJava( this ) );
-				
-				String source = "<?php function getFramework(){return $GLOBALS[\"chiori\"];} ?>";
-				
-				if ( !html.isEmpty() )
-					source += html;
-				
-				StringValue sv = new LargeStringBuilderValue();
-				sv.append( "?> " + source );
-				
 				try
 				{
-					env.evalCode( sv );
+					QuercusPage page = null;
+					Path requestPath = null;
+					if ( ( requestFile != null ) )
+					{
+						requestPath = new FilePath( requestFile.getAbsolutePath() );
+						page = quercus.parse( requestPath );
+					}
+					
+					ws = Vfs.openWrite( out );
+					ws.setDisableCloseSource( true );
+					ws.setNewlineString( "\n" );
+					
+					env = quercus.createEnv( page, ws, request, response );
+					env.setPwd( ( requestPath == null ) ? new FilePath( new File( Loader.webroot ).getAbsolutePath() ) : requestPath.getParent() );
+					
+					env.start();
+					
+					env.setGlobalValue( "chiori", env.wrapJava( this ) );
+					
+					executeCodeSimple( env, "<?php function getFramework(){return $GLOBALS[\"chiori\"];} ?>" );
+					
+					executeCodeSimple( env, "<?php $_SERVER[\"DOCUMENT_ROOT\"] = \"" + new File( Loader.getConfig().getString( "webroot", "webroot" ), currentSite.getWebRoot( siteSubDomain ) ).getAbsolutePath() + "\"; ?>" );
+					
+					if ( rewriteGlobals != null && rewriteGlobals.size() > 0 )
+					{
+						for ( Entry<String, String> entry : rewriteGlobals.entrySet() )
+						{
+							executeCodeSimple( env, "<?php $_REQUEST[" + entry.getKey() + "] = \"" + entry.getValue() + "\"; $_POST[" + entry.getKey() + "] = \"" + entry.getValue() + "\"; $_GET[" + entry.getKey() + "] = \"" + entry.getValue() + "\"; $GLOBAL[" + entry.getKey() + "] = \"" + entry.getValue() + "\"; ?>" );
+						}
+					}
+					
+					if ( !html.isEmpty() )
+						executeCodeSimple( env, html );
+					
+					if ( requestFile != null )
+						env.executeTop();
+					
+					ws.flush();
+					String source = new String( out.toByteArray() );
+					out.reset();
+					
+					RenderEvent event = new RenderEvent( this, source );
+					
+					event.theme = theme;
+					event.view = view;
+					event.title = title;
+					
+					Loader.getPluginManager().callEvent( event );
+					
+					if ( event.sourceChanged() )
+						source = event.getSource();
+					
+					response.getOutputStream().write( source.getBytes() );
 				}
-				catch ( IOException | QuercusParseException e )
+				catch ( QuercusExitException e )
+				{
+					throw e;
+				}
+				catch ( QuercusErrorException e )
+				{
+					throw e;
+				}
+				catch ( QuercusLineRuntimeException e )
+				{
+					Loader.getLogger().log( Level.FINE, e.toString(), e );
+					response.sendError( 500, e.getMessage() );
+				}
+				catch ( QuercusValueException e )
+				{
+					Loader.getLogger().log( Level.FINE, e.toString(), e );
+					response.sendError( 500, e.getMessage() );
+				}
+				catch ( Throwable e )
 				{
 					e.printStackTrace();
+					
+					if ( !response.isCommitted() )
+						e.printStackTrace( ws.getPrintWriter() );
+					
+					response.sendError( 500 );
 				}
-				
-				if ( requestFile != null )
-					env.executeTop();
-				
-				ws.flush();
-				source = new String( out.toByteArray() );
-				out.reset();
-				
-				RenderEvent event = new RenderEvent( this, source );
-				
-				event.theme = theme;
-				event.view = view;
-				event.title = title;
-				
-				Main.getPluginManager().callEvent( event );
-				
-				if ( event.sourceChanged() )
-					source = event.getSource();
-				
-				response.getOutputStream().write( source.getBytes() );
 			}
-			catch ( QuercusExitException e )
+			else
 			{
-				throw e;
-			}
-			catch ( QuercusErrorException e )
-			{
-				throw e;
-			}
-			catch ( QuercusLineRuntimeException e )
-			{
-				Main.getLogger().log( Level.FINE, e.toString(), e );
-				response.sendError( 500, e.getMessage() );
-			}
-			catch ( QuercusValueException e )
-			{
-				Main.getLogger().log( Level.FINE, e.toString(), e );
-				response.sendError( 500, e.getMessage() );
-			}
-			catch ( Throwable e )
-			{
-				e.printStackTrace();
-				
-				if ( !response.isCommitted() )
-					e.printStackTrace( ws.getPrintWriter() );
-				
-				response.sendError( 500 );
+				getServer().panic( 401, "You did not pass the required permission to view this page." );
+				return;
 			}
 		}
 		catch ( QuercusDieException e )
 		{
 			// normal exit
-			Main.getLogger().log( Level.FINE, e.toString(), e );
+			Loader.getLogger().log( Level.FINE, e.toString(), e );
 		}
 		catch ( QuercusExitException e )
 		{
 			// normal exit
-			Main.getLogger().log( Level.FINE, e.toString(), e );
+			Loader.getLogger().log( Level.FINE, e.toString(), e );
 		}
 		catch ( QuercusErrorException e )
 		{
 			// error exit
-			Main.getLogger().log( Level.FINE, e.toString(), e );
+			Loader.getLogger().log( Level.FINE, e.toString(), e );
 			response.sendError( 500, e.getMessage() );
 		}
 		catch ( Exception e )
@@ -503,7 +546,7 @@ public class Framework
 	
 	public static void initalizeFramework()
 	{
-		YamlConfiguration config = Main.getConfig();
+		YamlConfiguration config = Loader.getConfig();
 		
 		switch ( config.getString( "framework-database.type", "mysql" ) )
 		{
@@ -521,29 +564,28 @@ public class Framework
 				catch ( SQLException e )
 				{
 					e.printStackTrace();
-					Main.getLogger().severe( e.getMessage() );
+					Loader.getLogger().severe( e.getMessage() );
 					System.exit( 1 );
 				}
 				catch ( ClassNotFoundException e )
 				{
-					Main.getLogger().severe( "We could not locate the 'com.mysql.jdbc.Driver' library regardless that its suppose to be included. If your running from source code be sure to have this library in your build path." );
+					Loader.getLogger().severe( "We could not locate the 'com.mysql.jdbc.Driver' library regardless that its suppose to be included. If your running from source code be sure to have this library in your build path." );
 					System.exit( 1 );
 				}
 				catch ( ConnectException e )
 				{
 					e.printStackTrace();
-					Main.getLogger().severe( "We had a problem connecting to the database host '" + host + "'" );
+					Loader.getLogger().severe( "We had a problem connecting to the database host '" + host + "'" );
 					System.exit( 1 );
 				}
 				
 				break;
 			default:
-				Main.getLogger().severe( "The Framework Database can not be anything other then mySql at the moment. Please change 'framework-database.type' to 'mysql' in 'chiori.yml'" );
+				Loader.getLogger().severe( "The Framework Database can not be anything other then mySql at the moment. Please change 'framework-database.type' to 'mysql' in 'chiori.yml'" );
 				System.exit( 1 );
 		}
 		
 		_sites.loadSites();
-		
 	}
 	
 	protected Path getPath( HttpServletRequest req )
@@ -588,7 +630,23 @@ public class Framework
 	
 	protected QuercusContext getQuercus()
 	{
-		return quercus;
+		if ( _quercus == null )
+		{
+			_quercus = new QuercusContext();
+			
+			_quercus.setServletContext( _servletContext );
+			
+			Path pwd = new FilePath( _servletContext.getRealPath( "/" ) );
+			Path webInfDir = new FilePath( _servletContext.getRealPath( "/WEB-INF" ) );
+			
+			_quercus.setPwd( pwd );
+			_quercus.setWebInfDir( webInfDir );
+			
+			_quercus.init();
+			_quercus.start();
+		}
+		
+		return _quercus;
 	}
 	
 	public FrameworkServer getServer()
@@ -601,7 +659,7 @@ public class Framework
 	
 	public PluginManager getPluginManager()
 	{
-		return Main.getPluginManager();
+		return Loader.getPluginManager();
 	}
 	
 	public FrameworkConfigurationManager getConfigurationManager()
@@ -610,6 +668,22 @@ public class Framework
 			_config = new FrameworkConfigurationManager( request, response, chain, requestId, currentSite );
 		
 		return _config;
+	}
+	
+	public FrameworkDatabaseEngine getDatabaseEngine()
+	{
+		if ( _db == null )
+			_db = new FrameworkDatabaseEngine( this );
+		
+		return _db;
+	}
+	
+	public FrameworkUserService getUserService()
+	{
+		if ( _usr == null )
+			_usr = new FrameworkUserService( this );
+		
+		return _usr;
 	}
 	
 	public Site getCurrentSite()
@@ -639,21 +713,26 @@ public class Framework
 	
 	public String getProduct()
 	{
-		return "Chiori Web Server (implementing Chiori Framework)";
+		return "Chiori Web Server (implementing Chiori Framework API)";
 	}
 	
 	public String getVersion()
 	{
-		return Main.getVersion();
+		return Loader.getVersion();
 	}
-
+	
 	public Env getEnv()
 	{
 		return env;
 	}
-
+	
 	public ByteArrayOutputStream getOutputStream()
 	{
 		return out;
+	}
+	
+	public static SqlConnector getDatabase()
+	{
+		return sql;
 	}
 }
