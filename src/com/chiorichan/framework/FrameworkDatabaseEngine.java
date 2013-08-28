@@ -27,6 +27,21 @@ public class FrameworkDatabaseEngine
 		fw = fw0;
 	}
 	
+	public Map<String, Object> selectOne( String table, Object where )
+	{
+		Map<String, Object> result = select( table, where );
+		
+		if ( result == null || result.size() < 1 )
+			return null;
+		
+		Object o = result.values().toArray()[0];
+		
+		if ( o instanceof Map )
+			return (Map<String, Object>) o;
+		
+		return null;
+	}
+	
 	public Map<String, Object> select( String table, Object where )
 	{
 		return select( table, where, null );
@@ -102,10 +117,10 @@ public class FrameworkDatabaseEngine
 		
 		Map<String, Object> options;
 		
-		if ( options0 == null || !(options0 instanceof ArrayValueImpl) )
+		if ( options0 == null || !( options0 instanceof ArrayValueImpl ) )
 			options = new HashMap<String, Object>();
 		else
-			options = ((ArrayValueImpl) options0).toJavaMap( fw.getEnv(), HashMap.class );
+			options = ( (ArrayValueImpl) options0 ).toJavaMap( fw.getEnv(), HashMap.class );
 		
 		if ( !options.containsKey( "limit" ) )
 			options.put( "limit", 0 );

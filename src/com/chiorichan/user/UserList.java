@@ -2,11 +2,9 @@ package com.chiorichan.user;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.http.Cookie;
@@ -290,20 +288,16 @@ public class UserList
 		
 		sql.queryUpdate( "UPDATE `users` SET `lastlogin` = '" + System.currentTimeMillis() + "', `numloginfail` = '0' WHERE `userID` = '" + user.getUserId() + "'" );
 		
-		fw.getRequest().getSession().setAttribute( "user", user.getUserId() );
-		fw.getRequest().getSession().setAttribute( "pass", new String( DigestUtils.md5( user.getPassword() ) ) );
-		
-		Cookie cookie = new Cookie( "ChioriSessionId", fw.getRequest().getSession().getId() );
+		fw.getServer().setSessionString( "user", user.getUserId() );
+		fw.getServer().setSessionString( "pass", new String( DigestUtils.md5( user.getPassword() ) ) );
 		
 		Object o = fw.getRequest().getAttribute( "remember" );
 		boolean remember = ( o == null ) ? false : (boolean) o;
 		
 		if ( remember )
-			cookie.setMaxAge( 5 * 365* 24 * 60 * 60 );
+			fw.getServer().setCookieExpiry( 5 * 365* 24 * 60 * 60 );
 		else
-			cookie.setMaxAge( 604800 );
-		
-		fw.getResponse().addCookie( cookie );
+			fw.getServer().setCookieExpiry( 604800 );
 		
 		return user;
 	}

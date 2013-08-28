@@ -1,12 +1,15 @@
 package com.chiorichan.framework;
 
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.caucho.quercus.QuercusErrorException;
+import com.caucho.quercus.parser.QuercusParseException;
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.user.User;
@@ -23,17 +26,43 @@ public class FrameworkUserService
 	
 	public boolean getUserState()
 	{
-		return false;
+		return ( currentUser != null );
 	}
 	
 	public String getString( String key )
 	{
-		return "";
+		return getString( key, "" );
+	}
+	
+	public String getString( String key, String def )
+	{
+		if ( currentUser == null )
+			return def;
+		
+		String op = def;
+		
+		switch ( key )
+		{
+			case "displayname":
+				op = currentUser.getDisplayName();
+				break;
+			case "displaylevel":
+				op = currentUser.getDisplayLevel();
+				break;
+			case "email":
+				op = currentUser.getEmail();
+				break;
+		}
+		
+		return op;
 	}
 	
 	public boolean hasPermission( String key )
 	{
-		return false;
+		if ( !getUserState() )
+			return false;
+		
+		return GetPermission( key, currentUser.getUserId() );
 	}
 	
 	public boolean initalize( String reqLevel )
@@ -43,11 +72,13 @@ public class FrameworkUserService
 		
 		HttpServletRequest req = fw.getRequest();
 		
-		String username = req.getParameter( "user" );
-		String password = req.getParameter( "pass" );
-		String target = req.getParameter( "target" );
+		String username = fw.getServer().getRequest( "user" );
+		String password = fw.getServer().getRequest( "pass" );
+		String target = fw.getServer().getRequest( "target" );
 		
-		if ( req.getParameter( "logout" ) != null && !req.getParameter( "logout" ).isEmpty() )
+		Loader.getConsole().info( username + " - " + password + " - " + req.getQueryString() );
+		
+		if ( !fw.getServer().getRequest( "logout" ).isEmpty() )
 		{
 			logout();
 			
@@ -88,19 +119,21 @@ public class FrameworkUserService
 		}
 		else
 		{
-			username = (String) fw.getRequest().getSession().getAttribute( "User" );
-			password = (String) fw.getRequest().getSession().getAttribute( "Pass" );
+			username = fw.getServer().getSessionString( "user", "" );
+			password = fw.getServer().getSessionString( "pass", "" );
 			
 			User user = fw.getCurrentSite().getUserList().validateUser( fw, username, password );
+			
+			Loader.getConsole().info( "User: " + user );
 			
 			if ( user != null && user.isValid() )
 			{
 				currentUser = user;
 				
-				String loginPost = ( target.isEmpty() ) ? fw.getCurrentSite().getYaml().getString( "scripts.login-post", "/panel" ) : target;
+				String loginPost = ( target == null || target.isEmpty() ) ? fw.getCurrentSite().getYaml().getString( "scripts.login-post", "/panel" ) : target;
 				
 				Loader.getConsole().info( "Login Success: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\", Display Level \"" + user.getDisplayLevel() + "\"" );
-				fw.getServer().dummyRedirect( loginPost );
+				// fw.getServer().dummyRedirect( loginPost );
 			}
 			else
 			{
@@ -156,16 +189,14 @@ public class FrameworkUserService
 		
 		if ( currentUser != null && ( idenifier == null || idenifier.isEmpty() ) )
 		{
-			idenifier = currentUser.getUserName();
+			idenifier = currentUser.getUserId();
 			userLevel = currentUser.getUserLevel();
 		}
 		
-		if ( idenifier == null || idenifier.isEmpty() )
-			return false;
-		
 		if ( userLevel == null || userLevel.isEmpty() )
 		{
-			Map<String, Object> result = sql.selectOne( "users", "username", idenifier );
+			Map<String, Object> result = sql.selectOne( "users", "userId", idenifier );
+			
 			if ( result == null )
 				return false;
 			
@@ -177,9 +208,7 @@ public class FrameworkUserService
 		if ( perm == null )
 			return false;
 		
-		List<String> permList = Arrays.asList( ( (String) perm.get( "permissions" ) ).split( "|" ) );
-		
-		// String title = (String) perm.get( "title" );
+		List<String> permList = Arrays.asList( ( (String) perm.get( "permissions" ) ).split( "[|]" ) );
 		
 		if ( permList.contains( "ROOT" ) )
 			return true;
@@ -219,6 +248,8 @@ public class FrameworkUserService
 					}
 				}
 			}
+			
+			Loader.getConsole().info( "Getting Permission: " + permName + " for " + idenifier + " with result " + granted );
 			
 			if ( granted )
 				return true; // Return true if one of the requested permission names exists in users allowed permissions

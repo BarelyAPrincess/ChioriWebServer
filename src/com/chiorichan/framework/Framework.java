@@ -192,7 +192,7 @@ public class Framework
 			else
 			{
 				String target = currentSite.getWebRoot( siteSubDomain ) + "/" + uri;
-				Loader.getLogger().info( "Forwarding request to the site (" + currentSite.siteId + ") webroot at '" + target + "'" );
+				Loader.getLogger().fine( "Forwarding request to the site (" + currentSite.siteId + ") webroot at '" + target + "'" );
 				request.getRequestDispatcher( target ).forward( request, response );
 			}
 		}
@@ -209,7 +209,8 @@ public class Framework
 	{
 		try
 		{
-			// TODO: Fix the select issue with black subdomains. It's not suppose to be 1111 but it is to prevent the redirect loop.
+			// TODO: Fix the select issue with black subdomains. It's not suppose to be 1111 but it is to prevent the
+			// redirect loop.
 			ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE (site = '" + subdomain + "' OR site = '1111') AND domain = '" + domain + "' UNION SELECT * FROM `pages` WHERE (site = '" + subdomain + "' OR site = '1111') AND domain = '';" );
 			
 			if ( sql.getRowCount( rs ) > 0 )
@@ -313,12 +314,12 @@ public class Framework
 					return true;
 				}
 				
-				Loader.getLogger().warning( "Failed to find a page redirect for Framework Rewrite... '" + subdomain + "." + domain + "' '" + uri + "'" );
+				Loader.getLogger().fine( "Failed to find a page redirect for Framework Rewrite... '" + subdomain + "." + domain + "' '" + uri + "'" );
 				return false;
 			}
 			else
 			{
-				Loader.getLogger().warning( "Failed to find a page redirect for Framework Rewrite... '" + subdomain + "." + domain + "' '" + uri + "'" );
+				Loader.getLogger().fine( "Failed to find a page redirect for Framework Rewrite... '" + subdomain + "." + domain + "' '" + uri + "'" );
 				return false;
 			}
 		}
@@ -345,7 +346,9 @@ public class Framework
 		}
 	}
 	
-	private void loadPage( String theme, String view, String title, String file, String html, String reqPerm ) throws IOException
+	
+	// TODO: Create a loadPage for framework use
+	public void loadPage( String theme, String view, String title, String file, String html, String reqPerm ) throws IOException
 	{
 		QuercusContext quercus = getQuercus();
 		
@@ -356,8 +359,6 @@ public class Framework
 		{
 			if ( currentSite == null )
 				return;
-			
-			boolean authorized = getUserService().initalize( reqPerm );
 			
 			if ( html.isEmpty() && file.isEmpty() )
 			{
@@ -422,40 +423,49 @@ public class Framework
 				}
 			}
 			
-			if ( authorized )
+			try
 			{
-				try
+				QuercusPage page = null;
+				Path requestPath = null;
+				if ( ( requestFile != null ) )
 				{
-					QuercusPage page = null;
-					Path requestPath = null;
-					if ( ( requestFile != null ) )
+					requestPath = new FilePath( requestFile.getAbsolutePath() );
+					page = quercus.parse( requestPath );
+				}
+				
+				ws = Vfs.openWrite( out );
+				ws.setDisableCloseSource( true );
+				ws.setNewlineString( "\n" );
+				
+				env = quercus.createEnv( page, ws, request, response );
+				env.setPwd( ( requestPath == null ) ? new FilePath( new File( Loader.webroot ).getAbsolutePath() ) : requestPath.getParent() );
+				
+				env.start();
+				
+				env.setGlobalValue( "chiori", env.wrapJava( this ) );
+				
+				executeCodeSimple( env, "<?php function getFramework(){return $GLOBALS[\"chiori\"];} ?>" );
+				
+				executeCodeSimple( env, "<?php $_SERVER[\"DOCUMENT_ROOT\"] = \"" + new File( Loader.getConfig().getString( "webroot", "webroot" ), currentSite.getWebRoot( siteSubDomain ) ).getAbsolutePath() + "\"; ?>" );
+				
+				if ( rewriteGlobals != null && rewriteGlobals.size() > 0 )
+				{
+					for ( Entry<String, String> entry : rewriteGlobals.entrySet() )
 					{
-						requestPath = new FilePath( requestFile.getAbsolutePath() );
-						page = quercus.parse( requestPath );
+						StringValue sv = new LargeStringBuilderValue();
+						sv.append( "?>" + entry.getValue() );
+						env.setGlobalValue( entry.getKey(), sv );
+						executeCodeSimple( env, "<?php $_REQUEST[" + entry.getKey() + "] = \"" + entry.getValue() + "\"; $_POST[" + entry.getKey() + "] = \"" + entry.getValue() + "\"; $_GET[" + entry.getKey() + "] = \"" + entry.getValue() + "\"; ?>" );
 					}
-					
-					ws = Vfs.openWrite( out );
-					ws.setDisableCloseSource( true );
-					ws.setNewlineString( "\n" );
-					
-					env = quercus.createEnv( page, ws, request, response );
-					env.setPwd( ( requestPath == null ) ? new FilePath( new File( Loader.webroot ).getAbsolutePath() ) : requestPath.getParent() );
-					
-					env.start();
-					
-					env.setGlobalValue( "chiori", env.wrapJava( this ) );
-					
-					executeCodeSimple( env, "<?php function getFramework(){return $GLOBALS[\"chiori\"];} ?>" );
-					
-					executeCodeSimple( env, "<?php $_SERVER[\"DOCUMENT_ROOT\"] = \"" + new File( Loader.getConfig().getString( "webroot", "webroot" ), currentSite.getWebRoot( siteSubDomain ) ).getAbsolutePath() + "\"; ?>" );
-					
-					if ( rewriteGlobals != null && rewriteGlobals.size() > 0 )
-					{
-						for ( Entry<String, String> entry : rewriteGlobals.entrySet() )
-						{
-							executeCodeSimple( env, "<?php $_REQUEST[" + entry.getKey() + "] = \"" + entry.getValue() + "\"; $_POST[" + entry.getKey() + "] = \"" + entry.getValue() + "\"; $_GET[" + entry.getKey() + "] = \"" + entry.getValue() + "\"; $GLOBAL[" + entry.getKey() + "] = \"" + entry.getValue() + "\"; ?>" );
-						}
-					}
+				}
+				
+				getServer().initSession();
+				
+				//getServer().setSessionString( "user", "Chiori Greene" );
+				//getServer().setSessionString( "pass", "2ia3trCG" );
+				
+				if ( getUserService().initalize( reqPerm ) )
+				{
 					
 					if ( !html.isEmpty() )
 						executeCodeSimple( env, html );
@@ -463,55 +473,52 @@ public class Framework
 					if ( requestFile != null )
 						env.executeTop();
 					
-					ws.flush();
-					String source = new String( out.toByteArray() );
-					out.reset();
-					
-					RenderEvent event = new RenderEvent( this, source );
-					
-					event.theme = theme;
-					event.view = view;
-					event.title = title;
-					
-					Loader.getPluginManager().callEvent( event );
-					
-					if ( event.sourceChanged() )
-						source = event.getSource();
-					
-					response.getOutputStream().write( source.getBytes() );
 				}
-				catch ( QuercusExitException e )
-				{
-					throw e;
-				}
-				catch ( QuercusErrorException e )
-				{
-					throw e;
-				}
-				catch ( QuercusLineRuntimeException e )
-				{
-					Loader.getLogger().log( Level.FINE, e.toString(), e );
-					response.sendError( 500, e.getMessage() );
-				}
-				catch ( QuercusValueException e )
-				{
-					Loader.getLogger().log( Level.FINE, e.toString(), e );
-					response.sendError( 500, e.getMessage() );
-				}
-				catch ( Throwable e )
-				{
-					e.printStackTrace();
-					
-					if ( !response.isCommitted() )
-						e.printStackTrace( ws.getPrintWriter() );
-					
-					response.sendError( 500 );
-				}
+				
+				env.flush();
+				ws.flush();
+				String source = new String( out.toByteArray() );
+				out.reset();
+				
+				RenderEvent event = new RenderEvent( this, source );
+				
+				event.theme = theme;
+				event.view = view;
+				event.title = title;
+				
+				Loader.getPluginManager().callEvent( event );
+				
+				if ( event.sourceChanged() )
+					source = event.getSource();
+				
+				response.getOutputStream().write( source.getBytes() );
 			}
-			else
+			catch ( QuercusExitException e )
 			{
-				getServer().panic( 401, "You did not pass the required permission to view this page." );
-				return;
+				throw e;
+			}
+			catch ( QuercusErrorException e )
+			{
+				throw e;
+			}
+			catch ( QuercusLineRuntimeException e )
+			{
+				Loader.getLogger().log( Level.FINE, e.toString(), e );
+				response.sendError( 500, e.getMessage() );
+			}
+			catch ( QuercusValueException e )
+			{
+				Loader.getLogger().log( Level.FINE, e.toString(), e );
+				response.sendError( 500, e.getMessage() );
+			}
+			catch ( Throwable e )
+			{
+				e.printStackTrace();
+				
+				if ( !response.isCommitted() )
+					e.printStackTrace( ws.getPrintWriter() );
+				
+				response.sendError( 500 );
 			}
 		}
 		catch ( QuercusDieException e )

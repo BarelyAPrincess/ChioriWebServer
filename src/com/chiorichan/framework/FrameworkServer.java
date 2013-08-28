@@ -7,6 +7,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import com.caucho.quercus.QuercusErrorException;
 import com.caucho.quercus.env.Env;
@@ -53,6 +55,63 @@ public class FrameworkServer
 		}
 	}
 	
+	public String fileReader( String file )
+	{
+		if ( file == null || file.isEmpty() )
+			return "";
+		
+		FileInputStream is;
+		try
+		{
+			is = new FileInputStream( file );
+		}
+		catch ( FileNotFoundException e )
+		{
+			return "";
+		}
+		
+		StringBuilder sb = new StringBuilder();
+		String result = "";
+		
+		try
+		{
+			BufferedReader br = new BufferedReader( new InputStreamReader( is, "UTF-8" ) );
+			
+			String l;
+			while ( ( l = br.readLine() ) != null )
+			{
+				sb.append( l );
+				sb.append( '\n' );
+			}
+			
+			is.close();
+			
+			result = executeCode( sb.toString() );
+		}
+		catch ( IOException e )
+		{
+			e.printStackTrace();
+			return "";
+		}
+		
+		applyAlias( result, fw.getCurrentSite().getAliases() );
+		
+		return result;
+	}
+	
+	public String applyAlias( String source, Map<String, String> aliases )
+	{
+		if ( aliases == null || aliases.size() < 1 )
+			return source;
+		
+		for ( Entry<String, String> entry : aliases.entrySet() )
+		{
+			source = source.replace( "%" + entry.getKey() + "%", entry.getValue() );
+		}
+		
+		return source;
+	}
+	
 	public String includePackage( String pack )
 	{
 		try
@@ -81,7 +140,7 @@ public class FrameworkServer
 		source = new String( out.toByteArray() );
 		out.reset();
 		
-		return source;
+		return source.trim();
 	}
 	
 	public File getTemplateRoot( Site site )
@@ -159,7 +218,8 @@ public class FrameworkServer
 		try
 		{
 			if ( !fw.getResponse().isCommitted() )
-				fw.getResponse().sendError( i, string );
+				executeCode( "<h1>" + string + "</h1>" );
+				//fw.getResponse().sendError( i, string );
 		}
 		catch ( IOException e )
 		{
@@ -187,6 +247,124 @@ public class FrameworkServer
 			fw.getResponse().getWriter().println( "<script>window.location = '" + string + "';</script>" );
 		}
 		catch ( IOException e )
+		{
+			e.printStackTrace();
+		}
+	}
+
+	public void initSession()
+	{
+		
+		fw.getEnv().setIni( "session.cookie_domain", ".applebloom.co" );
+		
+		try
+		{
+			executeCode( "<? session_set_cookie_params( null, \"/\", \"." + fw.siteDomain + "\" ) ?>" );
+			executeCode( "<? session_name( \"ChioriSessionId\" ); ?>" );
+			executeCode( "<? session_start(); ?>" );
+		}
+		catch ( QuercusErrorException | QuercusParseException | IOException e )
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public String getRequest( String key )
+	{
+		return getRequest( key, "" );
+	}
+	
+	public String getRequest( String key, String def )
+	{
+		try
+		{
+			String val = executeCode( "<? echo $_REQUEST[\"" + key + "\"]; ?>" );
+			
+			if ( val == null || val.isEmpty() )
+				return def;
+			
+			return val.trim();
+		}
+		catch ( QuercusErrorException | QuercusParseException | IOException e )
+		{
+			e.printStackTrace();
+			return "";
+		}
+	}
+	
+	public String getSessionString ( String key )
+	{
+		return getSessionString( key, "" );
+	}
+	
+	public String getSessionString ( String key, String def )
+	{
+		// fw.getRequest().getSession().getAttribute( key );
+		
+		try
+		{
+			String val = executeCode( "<?echo$_SESSION[\"" + key + "\"];?>" );
+			
+			if ( val == null || val.isEmpty() )
+				return def;
+			
+			return val;
+		}
+		catch ( QuercusErrorException | QuercusParseException | IOException e )
+		{
+			e.printStackTrace();
+			return "";
+		}
+	}
+	
+	public boolean setSessionString ( String key )
+	{
+		return setSessionString( key, "" );
+	}
+	
+	public boolean setSessionString ( String key, String value )
+	{
+		if ( value == null )
+			value = "";
+		
+		//fw.getRequest().getSession().setAttribute( key, value );
+		
+		try
+		{
+			executeCode( "<? $_SESSION[\"" + key + "\"] = \"" + value + "\"; ?>" );
+			return true;
+		}
+		catch ( QuercusErrorException | QuercusParseException | IOException e )
+		{
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
+	public void setCookieExpiry ( int valid )
+	{
+		if ( valid < 1 )
+			valid = 604800;
+		
+		fw.getRequest().getSession().setMaxInactiveInterval( valid );
+		
+		try
+		{
+			executeCode( "<? session_set_cookie_params( time() + " + valid + ", \"/\", \"." + fw.siteDomain + "\" ); if ( isset( $_COOKIE[ \"ChioriSessionId\" ] ) ) setcookie( \"ChioriSessionId\", $_COOKIE[ \"ChioriSessionId\" ], time() + " + valid + ", \"/\", \"." + fw.siteDomain + "\" ); ?>" );
+		}
+		catch ( QuercusErrorException | QuercusParseException | IOException e )
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public void destroySession ()
+	{
+		try
+		{
+			executeCode( "<? session_destroy(); ?>" );
+		}
+		catch ( QuercusErrorException | QuercusParseException | IOException e )
 		{
 			e.printStackTrace();
 		}

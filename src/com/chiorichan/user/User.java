@@ -20,7 +20,7 @@ public class User implements ConfigurationSerializable
 	public Loader server;
 	public boolean valid = false;
 	public String userId = "", displayLevel = "", displayName = "",
-			userLevel = "", password = "", lastMsg = "", username = "";
+			userLevel = "", password = "", lastMsg = "", username = "", email = "";
 	
 	public static Map<String, String> reasons = new HashMap<String, String>();
 	
@@ -62,7 +62,7 @@ public class User implements ConfigurationSerializable
 			
 			// TODO: Site config additional login fields.
 			
-			ResultSet rs = sql.query( "SELECT * FROM `users` WHERE `username` = '" + username + "' AND (`password` = '" + password + "' OR `password` = '" + DigestUtils.md5( password ) + "');" );
+			ResultSet rs = sql.query( "SELECT * FROM `users` WHERE (`username` = '" + username + "' OR `userID` = '" + username + "') AND (`password` = '" + password + "' OR `password` = '" + DigestUtils.md5( password ) + "');" );
 			
 			if ( rs == null || sql.getRowCount( rs ) < 1 )
 			{
@@ -88,6 +88,7 @@ public class User implements ConfigurationSerializable
 			lastMsg = reasons.get( "successLogin" );
 			userLevel = rs.getString( "userlevel" );
 			userId = rs.getString( "userID" );
+			email = rs.getString( "email" );
 			
 			Map<String, Object> level = sql.selectOne( "accounts_access", "accessID", rs.getString( "userlevel" ) );
 			
@@ -188,7 +189,7 @@ public class User implements ConfigurationSerializable
 		return ( userLevel.equals( "0" ) );
 	}
 	
-	public Object getDisplayName()
+	public String getDisplayName()
 	{
 		return displayName;
 	}
@@ -255,5 +256,10 @@ public class User implements ConfigurationSerializable
 	public String toString()
 	{
 		return "User{user=" + username + ",pass=" + password + ",userId=" + userId + ",level=" + userLevel + ",valid=" + valid + ",lastMsg=" + lastMsg + "}";
+	}
+
+	public String getEmail()
+	{
+		return email;
 	}
 }

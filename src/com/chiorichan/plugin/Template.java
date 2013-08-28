@@ -157,6 +157,9 @@ public class Template extends JavaPlugin implements Listener
 		String view = event.view;
 		String title = event.title;
 		
+		if ( theme.isEmpty() && view.isEmpty() )
+			return;
+		
 		File root = getTemplateRoot( site );
 		
 		if ( theme.isEmpty() )
@@ -170,7 +173,10 @@ public class Template extends JavaPlugin implements Listener
 		ob.append( "<meta charset=\"utf-8\">\n" );
 		
 		if ( pageTitleOverride != null )
+		{
 			title = pageTitleOverride;
+			pageTitleOverride = "";
+		}
 		
 		if ( site.title == null )
 			site.title = Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Chiori Framework Site" );

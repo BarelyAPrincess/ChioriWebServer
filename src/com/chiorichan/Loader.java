@@ -31,13 +31,13 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.error.MarkedYAMLException;
 
-import sun.net.dns.ResolverConfiguration.Options;
-
 import com.caucho.resin.BeanEmbed;
 import com.caucho.resin.FilterMappingEmbed;
 import com.caucho.resin.HttpEmbed;
 import com.caucho.resin.ResinEmbed;
 import com.caucho.resin.WebAppEmbed;
+import com.caucho.server.session.SessionManager;
+import com.caucho.server.webapp.WebApp;
 import com.chiorichan.Warning.WarningState;
 import com.chiorichan.command.Command;
 import com.chiorichan.command.CommandException;
