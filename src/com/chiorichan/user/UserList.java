@@ -7,8 +7,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import javax.servlet.http.Cookie;
-
 import org.apache.commons.codec.digest.DigestUtils;
 
 import com.chiorichan.Loader;
@@ -276,7 +274,7 @@ public class UserList
 	{
 		server.getConsole().sendMessage( msg );
 	}
-
+	
 	public User validateUser( Framework fw, String username, String password )
 	{
 		SqlConnector sql = ( site != null ) ? site.getDatabase() : Framework.getDatabase();
@@ -288,16 +286,19 @@ public class UserList
 		
 		sql.queryUpdate( "UPDATE `users` SET `lastlogin` = '" + System.currentTimeMillis() + "', `numloginfail` = '0' WHERE `userID` = '" + user.getUserId() + "'" );
 		
-		fw.getServer().setSessionString( "user", user.getUserId() );
-		fw.getServer().setSessionString( "pass", new String( DigestUtils.md5( user.getPassword() ) ) );
+		if ( !fw.getUserService().isSessionStringSet( "user" ) )
+			fw.getUserService().setSessionString( "user", user.getUserId() );
+		
+		if ( !fw.getUserService().isSessionStringSet( "pass" ) )
+			fw.getUserService().setSessionString( "pass", DigestUtils.md5Hex( user.getPassword() ) );
 		
 		Object o = fw.getRequest().getAttribute( "remember" );
 		boolean remember = ( o == null ) ? false : (boolean) o;
 		
 		if ( remember )
-			fw.getServer().setCookieExpiry( 5 * 365* 24 * 60 * 60 );
+			fw.getUserService().setCookieExpiry( 5 * 365 * 24 * 60 * 60 );
 		else
-			fw.getServer().setCookieExpiry( 604800 );
+			fw.getUserService().setCookieExpiry( 604800 );
 		
 		return user;
 	}

@@ -251,23 +251,6 @@ public class FrameworkServer
 			e.printStackTrace();
 		}
 	}
-
-	public void initSession()
-	{
-		
-		fw.getEnv().setIni( "session.cookie_domain", ".applebloom.co" );
-		
-		try
-		{
-			executeCode( "<? session_set_cookie_params( null, \"/\", \"." + fw.siteDomain + "\" ) ?>" );
-			executeCode( "<? session_name( \"ChioriSessionId\" ); ?>" );
-			executeCode( "<? session_start(); ?>" );
-		}
-		catch ( QuercusErrorException | QuercusParseException | IOException e )
-		{
-			e.printStackTrace();
-		}
-	}
 	
 	public String getRequest( String key )
 	{
@@ -292,81 +275,45 @@ public class FrameworkServer
 		}
 	}
 	
+	@Deprecated
+	public void initSession()
+	{
+		
+	}
+	
+	@Deprecated
 	public String getSessionString ( String key )
 	{
-		return getSessionString( key, "" );
+		return fw.getUserService().getSessionString( key );
 	}
 	
+	@Deprecated
 	public String getSessionString ( String key, String def )
 	{
-		// fw.getRequest().getSession().getAttribute( key );
-		
-		try
-		{
-			String val = executeCode( "<?echo$_SESSION[\"" + key + "\"];?>" );
-			
-			if ( val == null || val.isEmpty() )
-				return def;
-			
-			return val;
-		}
-		catch ( QuercusErrorException | QuercusParseException | IOException e )
-		{
-			e.printStackTrace();
-			return "";
-		}
+		return fw.getUserService().getSessionString( key, def );
 	}
 	
+	@Deprecated
 	public boolean setSessionString ( String key )
 	{
-		return setSessionString( key, "" );
+		return fw.getUserService().setSessionString( key );
 	}
 	
+	@Deprecated
 	public boolean setSessionString ( String key, String value )
 	{
-		if ( value == null )
-			value = "";
-		
-		//fw.getRequest().getSession().setAttribute( key, value );
-		
-		try
-		{
-			executeCode( "<? $_SESSION[\"" + key + "\"] = \"" + value + "\"; ?>" );
-			return true;
-		}
-		catch ( QuercusErrorException | QuercusParseException | IOException e )
-		{
-			e.printStackTrace();
-			return false;
-		}
+		return fw.getUserService().setSessionString( key, value );
 	}
 	
+	@Deprecated
 	public void setCookieExpiry ( int valid )
 	{
-		if ( valid < 1 )
-			valid = 604800;
-		
-		fw.getRequest().getSession().setMaxInactiveInterval( valid );
-		
-		try
-		{
-			executeCode( "<? session_set_cookie_params( time() + " + valid + ", \"/\", \"." + fw.siteDomain + "\" ); if ( isset( $_COOKIE[ \"ChioriSessionId\" ] ) ) setcookie( \"ChioriSessionId\", $_COOKIE[ \"ChioriSessionId\" ], time() + " + valid + ", \"/\", \"." + fw.siteDomain + "\" ); ?>" );
-		}
-		catch ( QuercusErrorException | QuercusParseException | IOException e )
-		{
-			e.printStackTrace();
-		}
+		fw.getUserService().setCookieExpiry( valid );
 	}
 	
+	@Deprecated
 	public void destroySession ()
 	{
-		try
-		{
-			executeCode( "<? session_destroy(); ?>" );
-		}
-		catch ( QuercusErrorException | QuercusParseException | IOException e )
-		{
-			e.printStackTrace();
-		}
+		fw.getUserService().destroySession();
 	}
 }

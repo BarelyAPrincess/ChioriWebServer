@@ -1,15 +1,11 @@
 package com.chiorichan.framework;
 
-import java.io.IOException;
 import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.caucho.quercus.QuercusErrorException;
-import com.caucho.quercus.parser.QuercusParseException;
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.user.User;
@@ -18,10 +14,12 @@ public class FrameworkUserService
 {
 	protected Framework fw;
 	protected User currentUser = null;
+	protected Session _sess;
 	
 	public FrameworkUserService(Framework fw0)
 	{
 		fw = fw0;
+		_sess = new Session( fw0 );
 	}
 	
 	public boolean getUserState()
@@ -76,8 +74,6 @@ public class FrameworkUserService
 		String password = fw.getServer().getRequest( "pass" );
 		String target = fw.getServer().getRequest( "target" );
 		
-		Loader.getConsole().info( username + " - " + password + " - " + req.getQueryString() );
-		
 		if ( !fw.getServer().getRequest( "logout" ).isEmpty() )
 		{
 			logout();
@@ -90,11 +86,11 @@ public class FrameworkUserService
 			fw.getServer().dummyRedirect( target );
 		}
 		
-		if ( username != null && password != null && !username.isEmpty() && !password.isEmpty() )
+		if ( !username.isEmpty() && !password.isEmpty() )
 		{
 			User user = fw.getCurrentSite().getUserList().validateUser( fw, username, password );
 			
-			Loader.getConsole().info( "User: " + user );
+			Loader.getLogger().info( "User: " + user );
 			
 			if ( user != null && user.isValid() )
 			{
@@ -102,7 +98,7 @@ public class FrameworkUserService
 				
 				String loginPost = ( target.isEmpty() ) ? fw.getCurrentSite().getYaml().getString( "scripts.login-post", "/panel" ) : target;
 				
-				Loader.getConsole().info( "Login Success: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\", Display Level \"" + user.getDisplayLevel() + "\"" );
+				Loader.getLogger().info( "Login Success: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\", Display Level \"" + user.getDisplayLevel() + "\"" );
 				fw.getServer().dummyRedirect( loginPost );
 			}
 			else if ( user == null )
@@ -113,18 +109,18 @@ public class FrameworkUserService
 			{
 				String loginForm = fw.getCurrentSite().getYaml().getString( "scripts.login-form", "/login" );
 				
-				Loader.getConsole().warning( "Login Failed: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\", Display Level \"" + user.getDisplayLevel() + "\"" );
+				Loader.getLogger().warning( "Login Failed: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\", Display Level \"" + user.getDisplayLevel() + "\"" );
 				fw.getServer().dummyRedirect( loginForm + "?msg=" + user.getLastError() + "&target=" + target );
 			}
 		}
 		else
 		{
-			username = fw.getServer().getSessionString( "user", "" );
-			password = fw.getServer().getSessionString( "pass", "" );
+			username = fw.getUserService().getSessionString( "user" );
+			password = fw.getUserService().getSessionString( "pass" );
 			
 			User user = fw.getCurrentSite().getUserList().validateUser( fw, username, password );
 			
-			Loader.getConsole().info( "User: " + user );
+			Loader.getLogger().info( "User: " + user );
 			
 			if ( user != null && user.isValid() )
 			{
@@ -132,12 +128,12 @@ public class FrameworkUserService
 				
 				String loginPost = ( target == null || target.isEmpty() ) ? fw.getCurrentSite().getYaml().getString( "scripts.login-post", "/panel" ) : target;
 				
-				Loader.getConsole().info( "Login Success: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\", Display Level \"" + user.getDisplayLevel() + "\"" );
+				Loader.getLogger().info( "Login Success: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\", Display Level \"" + user.getDisplayLevel() + "\"" );
 				// fw.getServer().dummyRedirect( loginPost );
 			}
 			else
 			{
-				Loader.getConsole().warning( "Login Status: No Valid Login Present" );
+				Loader.getLogger().warning( "Login Status: No Valid Login Present" );
 			}
 			
 			// -1 = Allow All | 0 = Operator
@@ -165,8 +161,8 @@ public class FrameworkUserService
 	
 	private void logout()
 	{
-		fw.getRequest().getSession().invalidate();
-		Loader.getConsole().info( "User Logout" );
+		fw.getUserService().destroySession();
+		Loader.getLogger().info( "User Logout" );
 	}
 	
 	public boolean GetPermission( String permName, String idenifier )
@@ -249,7 +245,7 @@ public class FrameworkUserService
 				}
 			}
 			
-			Loader.getConsole().info( "Getting Permission: " + permName + " for " + idenifier + " with result " + granted );
+			Loader.getLogger().info( "Getting Permission: " + permName + " for " + idenifier + " with result " + granted );
 			
 			if ( granted )
 				return true; // Return true if one of the requested permission names exists in users allowed permissions
@@ -262,5 +258,55 @@ public class FrameworkUserService
 	public User getCurrentUser()
 	{
 		return currentUser;
+	}
+	
+	public String getSessionString( String key )
+	{
+		return getSessionString( key, "" );
+	}
+	
+	public String getSessionString( String key, String def )
+	{
+		String val = _sess.getArgument( key );
+		
+		if ( val == null || val.isEmpty() )
+			return def;
+		
+		return val;
+	}
+	
+	public boolean setSessionString( String key )
+	{
+		return setSessionString( key, "" );
+	}
+	
+	public boolean setSessionString( String key, String value )
+	{
+		if ( value == null )
+			value = "";
+		
+		_sess.setArgument( key, value );
+		
+		return true;
+	}
+	
+	public void setCookieExpiry( int valid )
+	{
+		_sess.setCookieExpiry( valid );
+	}
+	
+	public void destroySession()
+	{
+		_sess.destroy();
+	}
+	
+	public void saveSession()
+	{
+		_sess.saveSession( fw );
+	}
+	
+	public boolean isSessionStringSet( String key )
+	{
+		return _sess.isSet( key );
 	}
 }

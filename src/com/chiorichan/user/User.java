@@ -1,9 +1,11 @@
 package com.chiorichan.user;
 
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.ResultSet;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -11,11 +13,11 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
+import com.chiorichan.framework.Session;
 import com.chiorichan.permissions.PermissionAttachmentInfo;
 import com.chiorichan.plugin.Plugin;
-import com.chiorichan.serialization.ConfigurationSerializable;
 
-public class User implements ConfigurationSerializable
+public class User extends Session
 {
 	public Loader server;
 	public boolean valid = false;
@@ -62,11 +64,12 @@ public class User implements ConfigurationSerializable
 			
 			// TODO: Site config additional login fields.
 			
-			ResultSet rs = sql.query( "SELECT * FROM `users` WHERE (`username` = '" + username + "' OR `userID` = '" + username + "') AND (`password` = '" + password + "' OR `password` = '" + DigestUtils.md5( password ) + "');" );
+			ResultSet rs = sql.query( "SELECT * FROM `users` WHERE (`username` = '" + username + "' OR `userID` = '" + username + "') AND (`password` = '" + password + "' OR `password` = '" + DigestUtils.md5Hex( password ) + "' OR md5(`password`) = '" + password + "');" );
 			
 			if ( rs == null || sql.getRowCount( rs ) < 1 )
 			{
 				// TODO: Auth Event
+				invalidate( "incorrectLogin" );
 				return;
 			}
 			
@@ -135,12 +138,6 @@ public class User implements ConfigurationSerializable
 	public void recalculatePermissions()
 	{
 		
-	}
-	
-	@Override
-	public Map<String, Object> serialize()
-	{
-		return null;
 	}
 	
 	public void sendPluginMessage( Plugin source, String channel, byte[] message )

@@ -114,7 +114,7 @@ public class Loader implements PluginMessageRecipient
 	
 	static
 	{
-		ConfigurationSerialization.registerClass( User.class );
+		//ConfigurationSerialization.registerClass( User.class );
 	}
 	
 	public static void main( String... args ) throws Exception

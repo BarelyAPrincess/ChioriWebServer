@@ -2,7 +2,9 @@ package com.chiorichan.framework;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
@@ -69,6 +71,11 @@ public class FrameworkConfigurationManager
 		return site.sql;
 	}
 	
+	public boolean settingCompare( String setting )
+	{
+		return settingCompare( Arrays.asList( setting ) );
+	}
+	
 	/**
 	 * Does a setting compare based on a string if No expected mean is interped as a boolean of true. ex.
 	 * USER_BETA_TESTER&USER_RANK=USER|USER_RANK=ADMIN
@@ -76,10 +83,56 @@ public class FrameworkConfigurationManager
 	 * @param String
 	 *           settingString
 	 */
-	public boolean settingCompare( String setting )
+	public boolean settingCompare( List<String> settings )
 	{
-		// TODO!!!
+		for ( String setting : settings )
+		{
+			boolean granted = false;
+			for ( String key : setting.split( "[&]" ) )
+			{
+				String value;
+				
+				if ( key.indexOf( "=" ) < 0 )
+					value = "1";
+				else
+				{
+					value = key.substring( key.indexOf( "=" ) );
+					key = key.substring( 0, key.indexOf( "=" ) );
+				}
+				
+				if ( key.startsWith( "!" ) )
+				{
+					if ( get( key.substring( 1 ) ).equals( value ) )
+					{
+						granted = false;
+						break;
+					}
+					else
+						granted = true;
+				}
+				else
+				{
+					if ( get( key ).equals( value ) )
+					{
+						granted = false;
+						break;
+					}
+					else
+						granted = true;
+				}
+				
+			}
+			
+			if ( granted )
+				return true;
+		}
+		
 		return false;
+	}
+	
+	public String get( String key )
+	{
+		return get( key, null, null );
 	}
 	
 	public String get( String key, String idenifier )

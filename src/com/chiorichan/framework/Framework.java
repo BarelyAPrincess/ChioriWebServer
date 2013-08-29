@@ -346,7 +346,6 @@ public class Framework
 		}
 	}
 	
-	
 	// TODO: Create a loadPage for framework use
 	public void loadPage( String theme, String view, String title, String file, String html, String reqPerm ) throws IOException
 	{
@@ -459,10 +458,7 @@ public class Framework
 					}
 				}
 				
-				getServer().initSession();
-				
-				//getServer().setSessionString( "user", "Chiori Greene" );
-				//getServer().setSessionString( "pass", "2ia3trCG" );
+				getUserService();
 				
 				if ( getUserService().initalize( reqPerm ) )
 				{
@@ -471,8 +467,33 @@ public class Framework
 						executeCodeSimple( env, html );
 					
 					if ( requestFile != null )
-						env.executeTop();
-					
+						try
+						{
+							env.executeTop();
+						}
+						catch ( QuercusExitException e )
+						{
+							throw e;
+						}
+						catch ( QuercusErrorException e )
+						{
+							throw e;
+						}
+						catch ( QuercusLineRuntimeException e )
+						{
+							Loader.getLogger().log( Level.FINE, e.toString(), e );
+							response.sendError( 500, e.getMessage() );
+						}
+						catch ( QuercusValueException e )
+						{
+							Loader.getLogger().log( Level.FINE, e.toString(), e );
+							response.sendError( 500, e.getMessage() );
+						}
+						catch ( Throwable e )
+						{
+							e.printStackTrace();
+							response.sendError( 500 );
+						}
 				}
 				
 				env.flush();
@@ -492,6 +513,8 @@ public class Framework
 					source = event.getSource();
 				
 				response.getOutputStream().write( source.getBytes() );
+				
+				getUserService().saveSession();
 			}
 			catch ( QuercusExitException e )
 			{
