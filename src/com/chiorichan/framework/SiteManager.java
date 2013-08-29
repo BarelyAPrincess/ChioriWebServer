@@ -28,7 +28,10 @@ public class SiteManager
 			{
 				do
 				{
-					siteMap.put( rs.getString( "siteID" ), new Site( rs ) );
+					if ( rs.getString( "siteID" ).equals( "framework" ) )
+						siteMap.put( "framework", new FrameworkSite( rs ) );
+					else
+						siteMap.put( rs.getString( "siteID" ), new Site( rs ) );
 				}
 				while ( rs.next() );
 			}

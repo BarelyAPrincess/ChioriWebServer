@@ -62,7 +62,7 @@ public class SqlConnector
 		Loader.getLogger().info( "We succesully connected to the sql database using 'jdbc:mysql://" + host + ":" + port + "/" + db + "'." );
 	}
 	
-	public HashMap<String, Object> selectOne( String table, List<String> keys, List<? extends Object> values )
+	public HashMap<String, Object> selectOne( String table, List<String> keys, List<? extends Object> values ) throws SQLException
 	{
 		if ( isNull( keys ) || isNull( values ) )
 		{
@@ -201,7 +201,7 @@ public class SqlConnector
 		return cnt;
 	}
 	
-	public ResultSet query( String query )
+	public ResultSet query( String query ) throws SQLException
 	{
 		try
 		{
@@ -221,10 +221,6 @@ public class SqlConnector
 		{
 			if ( reconnect() )
 				return query( query );
-		}
-		catch ( Exception e )
-		{
-			e.printStackTrace();
 		}
 		
 		return null;
@@ -295,7 +291,7 @@ public class SqlConnector
 		return ( cnt > 0 );
 	}
 	
-	public HashMap<String, Object> selectOne( String table, String key, String val )
+	public HashMap<String, Object> selectOne( String table, String key, String val ) throws SQLException
 	{
 		return selectOne( table, Arrays.asList( key ), Arrays.asList( val ) );
 	}

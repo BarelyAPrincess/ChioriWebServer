@@ -29,11 +29,19 @@ public class Session
 		
 		if ( cookie != null )
 		{
-			ResultSet rs = sql.query( "SELECT * FROM `sessions` WHERE `sessid` = '" + cookie.getValue() + "'" );
+			ResultSet rs = null;
+			try
+			{
+				rs = sql.query( "SELECT * FROM `sessions` WHERE `sessid` = '" + cookie.getValue() + "'" );
+			}
+			catch ( SQLException e1 )
+			{
+				e1.printStackTrace();
+			}
 			
 			sessId = cookie.getValue();
 			
-			if ( sql.getRowCount( rs ) < 1 )
+			if ( rs == null || sql.getRowCount( rs ) < 1 )
 				cookie = null;
 			else
 			{
@@ -72,7 +80,7 @@ public class Session
 			sql.queryUpdate( "INSERT INTO `sessions` (`sessid`, `expires`, `data`)VALUES('" + fw.getRequestId() + "', '" + expires + "', '" + dataJson + "');" );
 		}
 		
-		Loader.getConsole().info( "InitSessions: " + this );
+		Loader.getLogger().info( "InitSessions: " + this );
 	}
 	
 	public void saveSession(Framework fw)

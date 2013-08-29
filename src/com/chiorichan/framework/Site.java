@@ -118,6 +118,11 @@ public class Site
 		}
 	}
 	
+	protected Site()
+	{
+		
+	}
+	
 	private void initalizeUserList()
 	{
 		userList = new UserList( this );

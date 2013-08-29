@@ -1,14 +1,22 @@
 package com.chiorichan.framework;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.user.User;
+import com.google.gson.Gson;
 
 public class FrameworkUserService
 {
@@ -55,7 +63,7 @@ public class FrameworkUserService
 		return op;
 	}
 	
-	public boolean hasPermission( String key )
+	public boolean hasPermission( String key ) throws SQLException
 	{
 		if ( !getUserState() )
 			return false;
@@ -63,7 +71,7 @@ public class FrameworkUserService
 		return GetPermission( key, currentUser.getUserId() );
 	}
 	
-	public boolean initalize( String reqLevel )
+	public boolean initalize( String reqLevel ) throws SQLException
 	{
 		if ( fw.getCurrentSite().getUserList() == null )
 			return true;
@@ -118,36 +126,46 @@ public class FrameworkUserService
 			username = fw.getUserService().getSessionString( "user" );
 			password = fw.getUserService().getSessionString( "pass" );
 			
-			User user = fw.getCurrentSite().getUserList().validateUser( fw, username, password );
-			
-			Loader.getLogger().info( "User: " + user );
-			
-			if ( user != null && user.isValid() )
+			if ( !username.isEmpty() && !password.isEmpty() )
 			{
-				currentUser = user;
+				User user = fw.getCurrentSite().getUserList().validateUser( fw, username, password );
 				
-				String loginPost = ( target == null || target.isEmpty() ) ? fw.getCurrentSite().getYaml().getString( "scripts.login-post", "/panel" ) : target;
+				if ( user != null && user.isValid() )
+				{
+					currentUser = user;
+					
+					String loginPost = ( target == null || target.isEmpty() ) ? fw.getCurrentSite().getYaml().getString( "scripts.login-post", "/panel" ) : target;
+					
+					Loader.getLogger().info( "Login Success: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\", Display Level \"" + user.getDisplayLevel() + "\"" );
+					// fw.getServer().dummyRedirect( loginPost );
+				}
+				else
+				{
+					Loader.getLogger().warning( "Login Status: No Valid Login Present" );
+				}
 				
-				Loader.getLogger().info( "Login Success: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\", Display Level \"" + user.getDisplayLevel() + "\"" );
-				// fw.getServer().dummyRedirect( loginPost );
+				// -1 = Allow All | 0 = Operator
+				if ( !reqLevel.equals( "-1" ) )
+				{
+					if ( !GetPermission( "", user.getUserId() ) && reqLevel.equals( "0" ) ) // Root Check
+					{
+						fw.getServer().panic( 401, "This page is limited to Operators only!" );
+					}
+					else if ( GetPermission( reqLevel, user.getUserId() ) && user.getUserLevel() != "0" )
+					{
+						fw.getServer().panic( 401, "This page is limited to members with access to the \"" + reqLevel + "\" permission or better." );
+					}
+					else if ( !user.isValid() )
+					{
+						String loginForm = fw.getCurrentSite().getYaml().getString( "scripts.login-form", "/login" );
+						fw.getServer().dummyRedirect( loginForm + "?msg=You must be logged in to view that page!&target=" + fw.getRequest().getRequestURI() );
+						return false;
+					}
+				}
 			}
 			else
 			{
-				Loader.getLogger().warning( "Login Status: No Valid Login Present" );
-			}
-			
-			// -1 = Allow All | 0 = Operator
-			if ( !reqLevel.equals( "-1" ) )
-			{
-				if ( !GetPermission( "", user.getUserId() ) && reqLevel.equals( "0" ) ) // Root Check
-				{
-					fw.getServer().panic( 401, "This page is limited to Operators only!" );
-				}
-				else if ( GetPermission( reqLevel, user.getUserId() ) && user.getUserLevel() != "0" )
-				{
-					fw.getServer().panic( 401, "This page is limited to members with access to the \"" + reqLevel + "\" permission or better." );
-				}
-				else if ( !user.isValid() )
+				if ( !reqLevel.equals( "-1" ) )
 				{
 					String loginForm = fw.getCurrentSite().getYaml().getString( "scripts.login-form", "/login" );
 					fw.getServer().dummyRedirect( loginForm + "?msg=You must be logged in to view that page!&target=" + fw.getRequest().getRequestURI() );
@@ -165,7 +183,17 @@ public class FrameworkUserService
 		Loader.getLogger().info( "User Logout" );
 	}
 	
-	public boolean GetPermission( String permName, String idenifier )
+	public boolean GetPermission( String permName ) throws SQLException
+	{
+		return GetPermission( Arrays.asList( permName ), null );
+	}
+	
+	public boolean GetPermission( List<String> permName ) throws SQLException
+	{
+		return GetPermission( permName, null );
+	}
+	
+	public boolean GetPermission( String permName, String idenifier ) throws SQLException
 	{
 		return GetPermission( Arrays.asList( permName ), idenifier );
 	}
@@ -174,7 +202,7 @@ public class FrameworkUserService
 	 * This function checks the users permission level againts the permissions table for if the requested permission is
 	 * allowed by Current User.
 	 */
-	public boolean GetPermission( List<String> permName, String idenifier )
+	public boolean GetPermission( List<String> permName, String idenifier ) throws SQLException
 	{
 		SqlConnector sql = fw.getCurrentSite().sql;
 		
@@ -255,6 +283,30 @@ public class FrameworkUserService
 		return false;
 	}
 	
+	public void CheckPermision() throws SQLException
+	{
+		CheckPermision( "" );
+	}
+	
+	/*
+	 * This function gives scripts easy access to the GetPermission function without the extra requirments. Recommended
+	 * uses would be checking if page load is allowed by user.
+	 */
+	public boolean CheckPermision( String perm_name ) throws SQLException
+	{
+		if ( perm_name == null )
+			perm_name = "";
+		
+		if ( !GetPermission( perm_name ) )
+		{
+			// XXX: Intent is to give the user an error page if they don't have permission.
+			fw.generateError( 401, "This page is limited to members with access to the \"" + perm_name + "\" permission or better. If access is required please contact us or see your account holder for help." );
+			return false;
+		}
+		
+		return true;
+	}
+	
 	public User getCurrentUser()
 	{
 		return currentUser;
@@ -308,5 +360,179 @@ public class FrameworkUserService
 	public boolean isSessionStringSet( String key )
 	{
 		return _sess.isSet( key );
+	}
+	
+	public Map<String, Map<String, Object>> getMyLocations( boolean returnOne, boolean returnString, String whereAlt )
+	{
+		SqlConnector sql = fw.getCurrentSite().getDatabase();
+		List<String> where = new ArrayList<String>();
+		Map<String, Map<String, Object>> result = new HashMap<String, Map<String, Object>>();
+		String sqlWhere = "";
+		JSONObject json;
+		
+		if ( whereAlt == null )
+			whereAlt = "";
+		
+		if ( currentUser == null )
+			return result;
+		
+		try
+		{
+			if ( !GetPermission( "ADMIN" ) )
+			{
+				ResultSet rs = sql.query( "SELECT * FROM `accounts` WHERE `maintainers` like '%" + currentUser.getUserId() + "%';" );
+				if ( sql.getRowCount( rs ) > 0 )
+				{
+					do
+					{
+						where.add( "`acctID` = '" + rs.getString( "acctID" ) + "'" );
+					}
+					while ( rs.next() );
+				}
+				
+				rs = sql.query( "SELECT * FROM `locations` WHERE `maintainers` like '%" + currentUser.getUserId() + "%';" );
+				if ( sql.getRowCount( rs ) > 0 )
+				{
+					do
+					{
+						where.add( "`locID` = '" + rs.getString( "locID" ) + "'" );
+					}
+					while ( rs.next() );
+				}
+				
+				if ( GetPermission( "STORE" ) )
+					where.add( "`locID` = '" + getCurrentUser().getUserId() + "'" );
+				
+				if ( where.isEmpty() )
+					return result;
+				
+				StringBuilder sb = new StringBuilder();
+				for ( String s : where )
+				{
+					sb.append( " OR " + s );
+				}
+				
+				sqlWhere = sb.toString().substring( 4 );
+			}
+			
+			if ( !whereAlt.isEmpty() )
+			{
+				sqlWhere = sqlWhere + " AND " + whereAlt;
+			}
+			
+			if ( !sqlWhere.isEmpty() )
+				sqlWhere = " WHERE " + sqlWhere;
+			
+			ResultSet rs = sql.query( "SELECT * FROM `locations`" + sqlWhere + ";" );
+			
+			if ( sql.getRowCount( rs ) < 1 )
+				return result;
+			
+			json = FrameworkDatabaseEngine.convert( rs );
+		}
+		catch ( Exception e )
+		{
+			e.printStackTrace();
+			return result;
+		}
+		
+		result = new Gson().fromJson( json.toString(), Map.class );
+		
+		if ( returnOne || returnString )
+		{
+			Map<String, Object> one = result.get( 0 );
+			result = new HashMap<String, Map<String, Object>>();
+			result.put( "0", one );
+			return result;
+		}
+		else
+		{
+			return result;
+		}
+	}
+	
+	public Map<String, Map<String, Object>> getMyLocations( boolean returnOne, boolean returnString )
+	{
+		return getMyLocations( returnOne, returnString, null );
+	}
+	
+	public Map<String, Map<String, Object>> getMyLocations( boolean returnOne )
+	{
+		return getMyLocations( returnOne, false, null );
+	}
+	
+	public Map<String, Map<String, Object>> getMyLocations()
+	{
+		return getMyLocations( false, false, null );
+	}
+	
+	public Map<String, Map<String, Object>> getMyAccounts( boolean returnOne, boolean returnString, String whereAlt )
+	{
+		SqlConnector sql = fw.getCurrentSite().getDatabase();
+		List<String> where = new ArrayList<String>();
+		Map<String, Map<String, Object>> result = new HashMap<String, Map<String, Object>>();
+		String sqlWhere = "";
+		JSONObject json;
+		
+		if ( whereAlt == null )
+			whereAlt = "";
+		
+		if ( currentUser == null )
+			return result;
+		
+		try
+		{
+			if ( !GetPermission( "ADMIN" ) )
+				sqlWhere = "`maintainers` like '%" + currentUser.getUserId() + "%'";
+			
+			if ( !whereAlt.isEmpty() )
+			{
+				sqlWhere = sqlWhere + " AND " + whereAlt;
+			}
+			
+			if ( !sqlWhere.isEmpty() )
+				sqlWhere = " WHERE " + sqlWhere;
+			
+			ResultSet rs = sql.query( "SELECT * FROM `accounts`" + sqlWhere + ";" );
+			
+			if ( sql.getRowCount( rs ) < 1 )
+				return result;
+			
+			json = FrameworkDatabaseEngine.convert( rs );
+		}
+		catch ( Exception e )
+		{
+			e.printStackTrace();
+			return result;
+		}
+		
+		result = new Gson().fromJson( json.toString(), Map.class );
+		
+		if ( returnOne || returnString )
+		{
+			Map<String, Object> one = result.get( 0 );
+			result = new HashMap<String, Map<String, Object>>();
+			result.put( "0", one );
+			return result;
+		}
+		else
+		{
+			return result;
+		}
+	}
+	
+	public Map<String, Map<String, Object>> getMyAccounts( boolean returnOne, boolean returnString )
+	{
+		return getMyAccounts( returnOne, returnString, null );
+	}
+	
+	public Map<String, Map<String, Object>> getMyAccounts( boolean returnOne )
+	{
+		return getMyAccounts( returnOne, false, null );
+	}
+	
+	public Map<String, Map<String, Object>> getMyAccounts()
+	{
+		return getMyAccounts( false, false, null );
 	}
 }

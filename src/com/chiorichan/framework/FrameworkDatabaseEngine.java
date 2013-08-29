@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,7 @@ public class FrameworkDatabaseEngine
 		fw = fw0;
 	}
 	
-	public Map<String, Object> selectOne( String table, Object where )
+	public Map<String, Object> selectOne( String table, Object where ) throws SQLException
 	{
 		Map<String, Object> result = select( table, where );
 		
@@ -42,12 +43,17 @@ public class FrameworkDatabaseEngine
 		return null;
 	}
 	
-	public Map<String, Object> select( String table, Object where )
+	public Map<String, Object> select( String table ) throws SQLException
+	{
+		return select( table, null, null );
+	}
+	
+	public Map<String, Object> select( String table, Object where ) throws SQLException
 	{
 		return select( table, where, null );
 	}
 	
-	public Map<String, Object> select( String table, Object where, ArrayValueImpl options0 )
+	public Map<String, Object> select( String table, Object where, ArrayValueImpl options0 ) throws SQLException
 	{
 		String subWhere = "";
 		SqlConnector sql = fw.getCurrentSite().sql;
@@ -112,7 +118,7 @@ public class FrameworkDatabaseEngine
 		}
 		else
 		{
-			return null;
+			whr = "";
 		}
 		
 		Map<String, Object> options;
@@ -265,5 +271,36 @@ public class FrameworkDatabaseEngine
 		while ( rs.next() );
 		
 		return json;
+	}
+	
+	@Deprecated
+	public String array2Where ( List<String> where)
+	{
+		return array2Where( where, "AND", null );
+	}
+	
+	@Deprecated
+	public String array2Where ( List<String> where, String limiter)
+	{
+		return array2Where( where, limiter, null );
+	}
+	
+	@Deprecated
+	public String array2Where ( List<String> where, String limiter, String prepend)
+	{
+		if ( prepend == null )
+			prepend = "";
+		
+		if ( limiter == null || limiter.isEmpty() )
+			limiter = "AND";
+		
+		StringBuilder sb = new StringBuilder();
+		
+		for ( String s : where )
+		{
+			sb.append( " " + limiter + " " + s );
+		}
+		
+		return prepend + sb.toString().substring( limiter.length() + 2 );
 	}
 }

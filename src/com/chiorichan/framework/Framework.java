@@ -62,9 +62,13 @@ public class Framework
 	protected FrameworkConfigurationManager _config;
 	protected FrameworkDatabaseEngine _db;
 	protected FrameworkUserService _usr;
+	protected FrameworkFunctions _fun;
 	
 	protected Env env = null;
 	protected ByteArrayOutputStream out = new ByteArrayOutputStream();
+	protected boolean continueNormally = true;
+	protected String alternateOutput = "An Unknown Error Has Risen!";
+	protected int httpStatus = 200;
 	
 	protected String siteId, siteTitle, siteDomain, siteSubDomain, requestId;
 	protected Site currentSite;
@@ -75,27 +79,6 @@ public class Framework
 		response = response0;
 		chain = chain0;
 		_servletContext = servletContext;
-	}
-	
-	public void generateError( int errNo, String reason )
-	{
-		// TODO: Generate error temp from framework resources. ie. Templates
-		/*
-		 * $this->server->Error("&4" . $e->getMessage()); $GLOBALS["lasterr"] = $e; //$GLOBALS["stackTrace"] =
-		 * $e->stackTrace();
-		 * 
-		 * $plugin = $this->createPlugin( "com.chiorichan.plugin.Template" ); $plugin->loadPage (
-		 * "com.chiorichan.themes.error", "", "", "/panic.php" );
-		 */
-		
-		try
-		{
-			response.sendError( errNo, reason );
-		}
-		catch ( Exception e )
-		{
-			e.printStackTrace();
-		}
 	}
 	
 	public void init() throws IOException, ServletException
@@ -125,6 +108,9 @@ public class Framework
 		
 		siteDomain = domain;
 		siteSubDomain = site;
+		
+		// TODO: Fix this so requests are limited within the same domain level but will be overridable by the site config.
+		response.addHeader( "Access-Control-Allow-Origin", "*" );
 		
 		requestId = DigestUtils.md5Hex( request.getSession().getId() + request.getRemoteAddr() + uri );
 		
@@ -445,7 +431,7 @@ public class Framework
 				
 				executeCodeSimple( env, "<?php function getFramework(){return $GLOBALS[\"chiori\"];} ?>" );
 				
-				executeCodeSimple( env, "<?php $_SERVER[\"DOCUMENT_ROOT\"] = \"" + new File( Loader.getConfig().getString( "webroot", "webroot" ), currentSite.getWebRoot( siteSubDomain ) ).getAbsolutePath() + "\"; ?>" );
+				executeCodeSimple( env, "<?php $_SERVER[\"DOCUMENT_ROOT\"] = \"" + new File( Loader.getConfig().getString( "settings.webroot", "webroot" ), currentSite.getWebRoot( siteSubDomain ) ).getAbsolutePath() + "\"; ?>" );
 				
 				if ( rewriteGlobals != null && rewriteGlobals.size() > 0 )
 				{
@@ -458,11 +444,8 @@ public class Framework
 					}
 				}
 				
-				getUserService();
-				
 				if ( getUserService().initalize( reqPerm ) )
 				{
-					
 					if ( !html.isEmpty() )
 						executeCodeSimple( env, html );
 					
@@ -479,27 +462,36 @@ public class Framework
 						{
 							throw e;
 						}
-						catch ( QuercusLineRuntimeException e )
-						{
-							Loader.getLogger().log( Level.FINE, e.toString(), e );
-							response.sendError( 500, e.getMessage() );
-						}
-						catch ( QuercusValueException e )
-						{
-							Loader.getLogger().log( Level.FINE, e.toString(), e );
-							response.sendError( 500, e.getMessage() );
-						}
 						catch ( Throwable e )
 						{
-							e.printStackTrace();
-							response.sendError( 500 );
+							// XXX: Also catch Quercus Exceptions
+							generateError( e );
 						}
 				}
 				
-				env.flush();
-				ws.flush();
-				String source = new String( out.toByteArray() );
-				out.reset();
+				String source;
+				if ( continueNormally )
+				{
+					env.flush();
+					ws.flush();
+					source = new String( out.toByteArray() );
+					out.reset();
+				}
+				else
+				{
+					currentSite = _sites.getSiteById( "framework" );
+					
+					if ( currentSite instanceof FrameworkSite )
+						((FrameworkSite) currentSite).setDatabase( sql );
+					
+					source = alternateOutput;
+					theme = "com.chiorichan.themes.error";
+					view = "";
+					
+					env.flush();
+					ws.flush();
+					out.reset();
+				}
 				
 				RenderEvent event = new RenderEvent( this, source );
 				
@@ -716,6 +708,14 @@ public class Framework
 		return _usr;
 	}
 	
+	public FrameworkFunctions getFunctions()
+	{
+		if ( _fun == null )
+			_fun = new FrameworkFunctions( this );
+		
+		return _fun;
+	}
+	
 	public Site getCurrentSite()
 	{
 		return currentSite;
@@ -764,5 +764,46 @@ public class Framework
 	public static SqlConnector getDatabase()
 	{
 		return sql;
+	}
+	
+	public void echo( String string )
+	{
+		executeCodeSimple( env, string );
+	}
+	
+	public void generateError( String errStr )
+	{
+		generateError( 500, errStr );
+	}
+	
+	public void generateError( Throwable t )
+	{
+		StringValue sv = new LargeStringBuilderValue();
+		
+		for ( StackTraceElement s : t.getStackTrace() )
+		{
+			sv.append( s + "\n" );
+		}
+		
+		env.setGlobalValue( "stackTrace", sv );
+		
+		Loader.getLogger().warning( t.getMessage() );
+		
+		generateError( 500, t.getMessage() );
+	}
+	
+	public void generateError( int errNo, String reason )
+	{
+		continueNormally = false;
+		
+		StringBuilder op = new StringBuilder();
+		
+		response.setStatus( errNo );
+		
+		op.append( "<h1>" + getServer().getStatusDescription( errNo ) + "</h1>\n" );
+		op.append( "<p class=\"warning show\">" + reason + "</p>\n" );
+		
+		alternateOutput = op.toString();
+		httpStatus = errNo;
 	}
 }
