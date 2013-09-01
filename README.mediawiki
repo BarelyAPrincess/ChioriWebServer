@@ -69,14 +69,69 @@ Bug Fixes.
 Introduced Hooks which are like event listeners. Bug Fixes.
 ===Subversion 2 (Lunar Dream)===
 ====Build 0825====
-First attempts to framework to Chiori Web Server.
+First attempts to port framework to the Chiori Web Server.
 ====Build 0829====
 Major issues resolved. About 60%-70% of framework ported, 20% discarded (to be replaced).
 
 =Installation=
 ==Configuration==
-By default the server configuration will be located in the file "chiori.yml" in the root folder of the running jar. This file will generate on first use.
-About the config coming soon!
+The server configuration will be located in the file "chiori.yml" in the root folder of the running jar and is in the standard format of YAML. This file will generate on first use.
+
+===About YAML===
+YAML(tm) is an international collaboration to make a data serialization language which is both human readable and computationally powerful. The founding members of YAML are Ingy döt Net (author of the Perl module Data::Denter), Clark Evans, and Oren Ben-Kiki. YAML emerged from the union of two efforts. The first was Ingy döt Net's need for a serialization format for Inline, this resulted in his Data::Denter module. The second, was the joint work of Oren Ben-Kiki Clark Evans on simplifying XML within the sml-dev group. YAML was first publicized with a <?xmlhack?> article on 12 May 2001. Oren and Clark's vision for YAML was very similar to Ingy's Data::Denter, and vice versa, thus a few days later they teamed up and YAML was born. For more information: http://www.yaml.org/start.html
+
+===chiori.yaml===
+Most of these config keys are under development
+* server.port: 80
+The port to start the server on. If port is taken it will attempt to use port 8080.
+* server.ip: null
+The IP to bind the server to. Currently not working since there seems to be no option to bind Resin to a specific IP.
+* server.admin: chiorigreene@gmail.com
+This is the administrator e-mail address for the web server. Future plans to send exceptions and alerts to this address.
+* server.id: chiori
+This is the server id that is passed to the Resin Server.
+* settings.permissions-file: permissions.yml
+This is the file used to store built-in permissions. These permissions can be extended and controled via plugins.
+* settings.update-folder: update
+This is the folder used for both server and plugin automatic updates.
+* settings.plugin-profiling: false
+Future Use
+* settings.query-plugins: true
+Future Use
+* settings.shutdown-message: Server Shutdown
+This is the message sent to devices and users that have active connections
+* settings.whitelist: false
+This tells the server if its using a whitelisted user system. Perfect for multiple servers that share the same user table.
+* settings.webroot: webroot
+Defines the directory used to store web page data. Plans to futher config this per site for home directories.
+* settings.ping-packet-limit: 100
+Defines the max number of connections per minute. Perfect for DDOS prevention.
+* auto-updater.enabled: true
+Is the server allowed to automaticly update it's self. Might want to disable this if you plan to run a custom build.
+* auto-updater.on-broken
+Who to warn if the server or plugins detect that they are running broken builds.
+* auto-updater.on-update
+Who to tell if an update is ready.
+* auto-updater.perferred-channel: stable
+What channel of builds do you prefer. stable, beta, alpha, nightly
+* auto-updater.host: dl.chiorichan.com
+What host address do we check and download updates from
+* framework.database.database: chiorifw
+Framework Database Name
+* framework.database.type: mysql
+What driver to use. Currently only supports mysql.
+* framework.database.host: localhost
+Where to find the database server. Be sure to allow the host if not running locally.
+* framework.database.port: 3306
+Database port number.
+* framework.database.username:
+Database Username
+* framework.database.password:
+Database Password
+* framework.sites.defaultTitle: Unnamed Chiori Framework Site
+What title to use for unknown domain requests.
+* framework.users.operators
+Server Operators. Gives defined users limitless access with all perms.
 
 ==File Placement==
 On first use all you need is the jar release file "chiori_server.jar" in a folder that writable by the user that will run the program. All required folders and files will be created on first use.
