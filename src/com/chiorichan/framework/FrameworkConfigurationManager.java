@@ -10,30 +10,26 @@ import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import com.chiorichan.database.SqlConnector;
+import com.google.gson.Gson;
 
 public class FrameworkConfigurationManager
 {
-	protected HttpServletRequest request;
-	protected HttpServletResponse response;
-	protected FilterChain chain;
-	protected String requestId;
-	protected Site site;
+	protected Framework fw;
 	
-	public FrameworkConfigurationManager(HttpServletRequest request0, HttpServletResponse response0, FilterChain chain0, String requestId0, Site site0)
+	public FrameworkConfigurationManager( Framework fw0 )
 	{
-		request = request0;
-		response = response0;
-		chain = chain0;
-		requestId = requestId0;
-		site = site0;
+		fw = fw0;
 	}
 	
 	public Object getConfig( String key )
 	{
 		try
 		{
-			return site.getYaml().get( key );
+			return fw.getCurrentSite().getYaml().get( key );
 		}
 		catch ( Exception e )
 		{
@@ -43,35 +39,35 @@ public class FrameworkConfigurationManager
 	
 	public boolean keyExists( String key )
 	{
-		return ( site.getYaml().get( key ) != null );
+		return ( fw.getCurrentSite().getYaml().get( key ) != null );
 	}
 	
 	public String getString( String key )
 	{
-		return site.getYaml().getString( key );
+		return fw.getCurrentSite().getYaml().getString( key );
 	}
 	
 	public List<?> getArray( String key )
 	{
-		return site.getYaml().getList( key );
+		return fw.getCurrentSite().getYaml().getList( key );
 	}
 	
 	public boolean getBoolean( String key )
 	{
-		return site.getYaml().getBoolean( key );
+		return fw.getCurrentSite().getYaml().getBoolean( key );
 	}
 	
 	public int getInt( String key )
 	{
-		return site.getYaml().getInt( key );
+		return fw.getCurrentSite().getYaml().getInt( key );
 	}
 	
 	public SqlConnector getDatabase()
 	{
-		return site.sql;
+		return fw.getCurrentSite().sql;
 	}
 	
-	public boolean settingCompare( String setting )
+	public boolean settingCompare( String setting ) throws JSONException
 	{
 		return settingCompare( Arrays.asList( setting ) );
 	}
@@ -82,8 +78,9 @@ public class FrameworkConfigurationManager
 	 * 
 	 * @param String
 	 *           settingString
+	 * @throws JSONException 
 	 */
-	public boolean settingCompare( List<String> settings )
+	public boolean settingCompare( List<String> settings ) throws JSONException
 	{
 		for ( String setting : settings )
 		{
@@ -130,21 +127,29 @@ public class FrameworkConfigurationManager
 		return false;
 	}
 	
-	public String get( String key )
+	public Object get( String key ) throws JSONException
 	{
 		return get( key, null, null );
 	}
 	
-	public String get( String key, String idenifier )
+	public Object get( String key, String idenifier ) throws JSONException
 	{
 		return get( key, idenifier, null );
 	}
 	
-	public String get( String key, String idenifier, String defaultValue )
+	public Object get( String key, String idenifier, String defaultValue ) throws JSONException
 	{
+		return get( key, idenifier, defaultValue, false );
+	}
+	
+	public Object get( String key, String idenifier, String defaultValue, boolean returnRow ) throws JSONException
+	{
+		if ( defaultValue == null )
+			defaultValue = "";
+		
 		try
 		{
-			SqlConnector sql = site.sql;
+			SqlConnector sql = fw.getCurrentSite().sql;
 			
 			if ( idenifier == null || idenifier == "-1" )
 			{
@@ -160,11 +165,19 @@ public class FrameworkConfigurationManager
 			
 			if ( customRs == null || sql.getRowCount( customRs ) < 1 )
 			{
-				return defaultRs.getString( "value" );
+				if ( !returnRow )
+					return defaultRs.getString( "value" );
+				
+				JSONObject json = fw.getDatabaseEngine().convert( defaultRs );
+				return new Gson().fromJson( json.toString(), Map.class );
 			}
 			else
 			{
-				return customRs.getString( "value" );
+				if ( !returnRow )
+					return customRs.getString( "value" );
+				
+				JSONObject json = fw.getDatabaseEngine().convert( customRs );
+				return new Gson().fromJson( json.toString(), Map.class );
 			}
 		}
 		catch ( SQLException e )
@@ -181,7 +194,7 @@ public class FrameworkConfigurationManager
 	{
 		try
 		{
-			SqlConnector sql = site.sql;
+			SqlConnector sql = fw.getCurrentSite().sql;
 			
 			if ( idenifier == null || idenifier == "-1" )
 			{

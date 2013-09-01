@@ -135,8 +135,10 @@ public class Session
 		cookie.setMaxAge( valid );
 	}
 	
+	// TODO: Fix ME
 	public void destroy()
 	{
+		expires = 0;
 		setCookieExpiry( 0 );
 	}
 	

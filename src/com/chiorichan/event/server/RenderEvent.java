@@ -37,6 +37,11 @@ public class RenderEvent extends ServerEvent
 		return fw.getRequestId();
 	}
 	
+	public Framework getFramework()
+	{
+		return fw;
+	}
+	
 	public String getSource()
 	{
 		return pageSource;

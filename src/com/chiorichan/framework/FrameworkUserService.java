@@ -76,13 +76,11 @@ public class FrameworkUserService
 		if ( fw.getCurrentSite().getUserList() == null )
 			return true;
 		
-		HttpServletRequest req = fw.getRequest();
-		
 		String username = fw.getServer().getRequest( "user" );
 		String password = fw.getServer().getRequest( "pass" );
 		String target = fw.getServer().getRequest( "target" );
 		
-		if ( !fw.getServer().getRequest( "logout" ).isEmpty() )
+		if ( fw.getServer().getRequest( "logout", "", true ) != null )
 		{
 			logout();
 			
@@ -179,7 +177,8 @@ public class FrameworkUserService
 	
 	private void logout()
 	{
-		fw.getUserService().destroySession();
+		_sess.setArgument( "user", null );
+		_sess.setArgument( "pass", null );
 		Loader.getLogger().info( "User Logout" );
 	}
 	

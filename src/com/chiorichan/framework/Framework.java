@@ -1,8 +1,12 @@
 package com.chiorichan.framework;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.ConnectException;
 import java.sql.ResultSet;
@@ -173,7 +177,7 @@ public class Framework
 			
 			if ( uri.endsWith( ".php" ) || uri.endsWith( ".php5" ) || ( dest.isDirectory() && new File( dest, "index.php" ).exists() ) )
 			{
-				this.loadPage( "", "", "", uri, "", "-1" );
+				this.loadPageInternal( "", "", "", uri, "", "-1" );
 			}
 			else
 			{
@@ -290,7 +294,7 @@ public class Framework
 					
 					try
 					{
-						loadPage( (String) data.get( "theme" ), (String) data.get( "view" ), (String) data.get( "title" ), (String) data.get( "file" ), (String) data.get( "html" ), (String) data.get( "reqlevel" ) );
+						loadPageInternal( (String) data.get( "theme" ), (String) data.get( "view" ), (String) data.get( "title" ), (String) data.get( "file" ), (String) data.get( "html" ), (String) data.get( "reqlevel" ) );
 					}
 					catch ( IOException e )
 					{
@@ -333,7 +337,7 @@ public class Framework
 	}
 	
 	// TODO: Create a loadPage for framework use
-	public void loadPage( String theme, String view, String title, String file, String html, String reqPerm ) throws IOException
+	protected void loadPageInternal( String theme, String view, String title, String file, String html, String reqPerm ) throws IOException
 	{
 		QuercusContext quercus = getQuercus();
 		
@@ -466,6 +470,7 @@ public class Framework
 						{
 							// XXX: Also catch Quercus Exceptions
 							generateError( e );
+							e.printStackTrace();
 						}
 				}
 				
@@ -482,7 +487,7 @@ public class Framework
 					currentSite = _sites.getSiteById( "framework" );
 					
 					if ( currentSite instanceof FrameworkSite )
-						((FrameworkSite) currentSite).setDatabase( sql );
+						( (FrameworkSite) currentSite ).setDatabase( sql );
 					
 					source = alternateOutput;
 					theme = "com.chiorichan.themes.error";
@@ -533,7 +538,8 @@ public class Framework
 				if ( !response.isCommitted() )
 					e.printStackTrace( ws.getPrintWriter() );
 				
-				response.sendError( 500 );
+				if ( !response.isCommitted() )
+					response.sendError( 500 );
 			}
 		}
 		catch ( QuercusDieException e )
@@ -566,6 +572,99 @@ public class Framework
 		}
 	}
 	
+	public String loadPage( String theme, String view, String title, String file, String html, String reqPerm ) throws IOException
+	{
+		if ( html == null )
+			html = "";
+		
+		if ( file == null )
+			file = "";
+		
+		// TODO: Check reqlevel
+		
+		String source = html;
+		
+		if ( !file.isEmpty() )
+		{
+			if ( file.startsWith( "/" ) )
+				file = file.substring( 1 );
+			
+			if ( currentSite.protectCheck( file ) )
+				throw new IOException( "Loading of this page is not allowed since its hard protected in the site configs." );
+			
+			File requestFile = new File( currentSite.getWebRoot( siteSubDomain ), file );
+			
+			Loader.getLogger().info( "Requesting file: " + requestFile.getAbsolutePath() );
+			
+			if ( !requestFile.exists() )
+				throw new IOException( "Could not load file '" + requestFile.getAbsolutePath() + "'" );
+			
+			if ( requestFile.isDirectory() )
+				if ( new File( requestFile, "index.php" ).exists() )
+					requestFile = new File( requestFile, "index.php" );
+				else if ( new File( requestFile, "index.html" ).exists() )
+					requestFile = new File( requestFile, "index.html" );
+				else
+					throw new IOException( "There was a problem finding the index page." );
+			
+			if ( !requestFile.exists() )
+			{
+				throw new IOException( "Could not load file '" + requestFile.getAbsolutePath() + "'" );
+			}
+			
+			source = getFileContents( requestFile.getAbsolutePath() );
+			source = getServer().executeCode( source );
+		}
+		
+		RenderEvent event = new RenderEvent( this, source );
+		
+		event.theme = theme;
+		event.view = view;
+		event.title = title;
+		
+		Loader.getPluginManager().callEvent( event );
+		
+		if ( event.sourceChanged() )
+			source = event.getSource();
+		
+		return source;
+	}
+	
+	private String getFileContents( String path )
+	{
+		FileInputStream is;
+		try
+		{
+			is = new FileInputStream( path );
+		}
+		catch ( FileNotFoundException e )
+		{
+			return "";
+		}
+		
+		StringBuilder sb = new StringBuilder();
+		
+		try
+		{
+			BufferedReader br = new BufferedReader( new InputStreamReader( is, "UTF-8" ) );
+			
+			String l;
+			while ( ( l = br.readLine() ) != null )
+			{
+				sb.append( l );
+				sb.append( '\n' );
+			}
+			
+			is.close();
+		}
+		catch ( IOException e )
+		{
+			e.printStackTrace();
+		}
+		
+		return sb.toString();
+	}
+
 	public static void initalizeFramework()
 	{
 		YamlConfiguration config = Loader.getConfig();
@@ -687,7 +786,7 @@ public class Framework
 	public FrameworkConfigurationManager getConfigurationManager()
 	{
 		if ( _config == null )
-			_config = new FrameworkConfigurationManager( request, response, chain, requestId, currentSite );
+			_config = new FrameworkConfigurationManager( this );
 		
 		return _config;
 	}

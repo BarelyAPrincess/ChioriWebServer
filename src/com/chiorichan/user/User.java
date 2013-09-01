@@ -1,8 +1,5 @@
 package com.chiorichan.user;
 
-import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.sql.ResultSet;
 import java.util.Collection;
 import java.util.HashMap;
@@ -13,6 +10,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
+import com.chiorichan.event.user.UserLoginEvent;
+import com.chiorichan.event.user.UserLoginEvent.Result;
 import com.chiorichan.framework.Session;
 import com.chiorichan.permissions.PermissionAttachmentInfo;
 import com.chiorichan.plugin.Plugin;
@@ -64,12 +63,38 @@ public class User extends Session
 			
 			// TODO: Site config additional login fields.
 			
-			ResultSet rs = sql.query( "SELECT * FROM `users` WHERE (`username` = '" + username + "' OR `userID` = '" + username + "') AND (`password` = '" + password + "' OR `password` = '" + DigestUtils.md5Hex( password ) + "' OR md5(`password`) = '" + password + "');" );
+			UserLoginEvent event = new UserLoginEvent( this );
+			
+			Loader.getPluginManager().callEvent( event );
+			
+			String additionalUserFields = "";
+			for ( String s : event.getAdditionalUserFields() )
+			{
+				additionalUserFields += " OR `" + s + "` = '" + username + "'";
+			}
+			
+			ResultSet rs = sql.query( "SELECT * FROM `users` WHERE (`username` = '" + username + "' OR `userID` = '" + username + "'" + additionalUserFields + ") AND (`password` = '" + password + "' OR `password` = '" + DigestUtils.md5Hex( password ) + "' OR md5(`password`) = '" + password + "');" );
 			
 			if ( rs == null || sql.getRowCount( rs ) < 1 )
+				event.setResult( Result.DENIED );
+			else
+				event.setResult( Result.ALLOWED );
+			
+			Loader.getPluginManager().callEvent( event );
+			
+			if ( event.getResult() != Result.ALLOWED )
 			{
-				// TODO: Auth Event
-				invalidate( "incorrectLogin" );
+				// TODO: Add returned messages for the other results.
+				// TODO: Add whitelist and banned user check.
+				
+				if ( event.getKickMessage().isEmpty() )
+					invalidate( "incorrectLogin" );
+				else
+				{
+					valid = false;
+					lastMsg = event.getKickMessage();
+				}
+				
 				return;
 			}
 			

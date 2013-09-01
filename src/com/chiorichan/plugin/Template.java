@@ -20,6 +20,7 @@ import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
 import com.chiorichan.event.server.RenderEvent;
 import com.chiorichan.event.server.RequestEvent;
+import com.chiorichan.event.user.UserLoginEvent;
 import com.chiorichan.framework.Site;
 import com.chiorichan.plugin.java.JavaPlugin;
 
@@ -133,13 +134,12 @@ public class Template extends JavaPlugin implements Listener
 	
 	public String doInclude( File root, String pack, RenderEvent event )
 	{
-		String source = getPackageSource( root, pack );
-		
+		String source;
 		try
 		{
-			source = event.executeCode( source );
+			source = event.getFramework().getServer().includePackage( pack, true );
 		}
-		catch ( QuercusParseException | QuercusErrorException | IOException e )
+		catch ( QuercusParseException | QuercusErrorException e )
 		{
 			// TODO: Better this catch
 			source = e.getMessage();
@@ -147,6 +147,13 @@ public class Template extends JavaPlugin implements Listener
 		}
 		
 		return applyAlias( source, event.getSite().getAliases() );
+	}
+	
+	@EventHandler( priority = EventPriority.LOWEST )
+	public void onUserLoginEvent( UserLoginEvent event )
+	{
+		event.addAdditionalUserFields( "phone" );
+		event.addAdditionalUserFields( "email" );
 	}
 	
 	@EventHandler( priority = EventPriority.LOWEST )

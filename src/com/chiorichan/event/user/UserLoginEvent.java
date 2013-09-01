@@ -1,6 +1,7 @@
 package com.chiorichan.event.user;
 
-import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.chiorichan.event.HandlerList;
 import com.chiorichan.user.User;
@@ -11,74 +12,24 @@ import com.chiorichan.user.User;
 public class UserLoginEvent extends UserEvent
 {
 	private static final HandlerList handlers = new HandlerList();
-	private final InetAddress address;
-	private final String hostname;
-	private Result result = Result.ALLOWED;
+	private Result result = Result.PRELOGIN;
 	private String message = "";
+	private List<String> additionalUserFields = new ArrayList<String>();
 	
-	/**
-	 * @deprecated Address should be provided in other constructor
-	 */
-	@Deprecated
-	public UserLoginEvent(final User User)
+	public UserLoginEvent(User user)
 	{
-		this( User, "", null );
+		super( user );
 	}
 	
-	/**
-	 * @deprecated Address should be provided in other constructor
-	 */
-	@Deprecated
-	public UserLoginEvent(final User User, final String hostname)
+	public void addAdditionalUserFields( String field )
 	{
-		this( User, hostname, null );
+		if ( result == Result.PRELOGIN )
+			additionalUserFields.add( field );
 	}
 	
-	/**
-	 * This constructor defaults message to an empty string, and result to ALLOWED
-	 * 
-	 * @param User
-	 *           The {@link User} for this event
-	 * @param hostname
-	 *           The hostname that was used to connect to the server
-	 * @param address
-	 *           The address the User used to connect, provided for timing issues
-	 */
-	public UserLoginEvent(final User User, final String hostname, final InetAddress address)
+	public List<String> getAdditionalUserFields()
 	{
-		super( User );
-		this.hostname = hostname;
-		this.address = address;
-	}
-	
-	/**
-	 * @deprecated Address and hostname should be provided in other constructor
-	 */
-	@Deprecated
-	public UserLoginEvent(final User User, final Result result, final String message)
-	{
-		this( User, "", null, result, message );
-	}
-	
-	/**
-	 * This constructor pre-configures the event with a result and message
-	 * 
-	 * @param User
-	 *           The {@link User} for this event
-	 * @param hostname
-	 *           The hostname that was used to connect to the server
-	 * @param address
-	 *           The address the User used to connect, provided for timing issues
-	 * @param result
-	 *           The result status for this event
-	 * @param message
-	 *           The message to be displayed if result denies login
-	 */
-	public UserLoginEvent(final User User, String hostname, final InetAddress address, final Result result, final String message)
-	{
-		this( User, hostname, address );
-		this.result = result;
-		this.message = message;
+		return additionalUserFields;
 	}
 	
 	/**
@@ -124,16 +75,6 @@ public class UserLoginEvent extends UserEvent
 	}
 	
 	/**
-	 * Gets the hostname that the User used to connect to the server, or blank if unknown
-	 * 
-	 * @return The hostname
-	 */
-	public String getHostname()
-	{
-		return hostname;
-	}
-	
-	/**
 	 * Allows the User to log in
 	 */
 	public void allow()
@@ -156,17 +97,6 @@ public class UserLoginEvent extends UserEvent
 		this.message = message;
 	}
 	
-	/**
-	 * Gets the {@link InetAddress} for the User associated with this event. This method is provided as a workaround
-	 * for User.getAddress() returning null during UserLoginEvent.
-	 * 
-	 * @return The address for this User. For legacy compatibility, this may be null.
-	 */
-	public InetAddress getAddress()
-	{
-		return address;
-	}
-	
 	@Override
 	public HandlerList getHandlers()
 	{
@@ -183,7 +113,10 @@ public class UserLoginEvent extends UserEvent
 	 */
 	public enum Result
 	{
-		
+		/**
+		 * The user access check has yet to pass
+		 */
+		PRELOGIN,
 		/**
 		 * The User is allowed to log in
 		 */
@@ -203,6 +136,10 @@ public class UserLoginEvent extends UserEvent
 		/**
 		 * The User is not allowed to log in, for reasons undefined
 		 */
-		KICK_OTHER
+		KICK_OTHER,
+		/**
+		 * The User had incorrect incorrect login
+		 */
+		DENIED
 	}
 }

@@ -1,7 +1,6 @@
 package com.chiorichan.framework;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -9,12 +8,16 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.Map.Entry;
 
 import com.caucho.quercus.QuercusErrorException;
+import com.caucho.quercus.env.ConstStringValue;
 import com.caucho.quercus.env.Env;
 import com.caucho.quercus.env.LargeStringBuilderValue;
 import com.caucho.quercus.env.StringValue;
+import com.caucho.quercus.env.Value;
+import com.caucho.quercus.env.Var;
 import com.caucho.quercus.parser.QuercusParseException;
 import com.chiorichan.Loader;
 
@@ -61,6 +64,8 @@ public class FrameworkServer
 		if ( file == null || file.isEmpty() )
 			return "";
 		
+		Loader.getLogger().info( "Reading file: " + file );
+		
 		FileInputStream is;
 		try
 		{
@@ -68,6 +73,7 @@ public class FrameworkServer
 		}
 		catch ( FileNotFoundException e )
 		{
+			e.printStackTrace();
 			return "";
 		}
 		
@@ -81,8 +87,7 @@ public class FrameworkServer
 			String l;
 			while ( ( l = br.readLine() ) != null )
 			{
-				sb.append( l );
-				sb.append( '\n' );
+				sb.append( l + "\n" );
 			}
 			
 			is.close();
@@ -115,10 +120,44 @@ public class FrameworkServer
 	
 	public String includePackage( String pack )
 	{
+		return includePackage( pack, false );
+	}
+	
+	public String includePackage( String pack, boolean rtn )
+	{
+		Env env = fw.getEnv();
+		byte[] saved = new byte[0];
+		
 		try
 		{
+			if ( rtn )
+			{
+				env.flush();
+				env.getOut().flush();
+				saved = fw.getOutputStream().toByteArray();
+				fw.getOutputStream().reset();
+			}
+			
 			File root = getTemplateRoot( fw.getCurrentSite() );
-			return executeCode( getPackageSource( root, pack ) );
+			// return executeCode( getPackageSource( root, pack ) );
+			
+			StringValue sv = new LargeStringBuilderValue();
+			sv.append( getPackage( root, pack ) );
+			
+			if ( !sv.toString().isEmpty() )
+				fw.getEnv().include( sv );
+			
+			if ( rtn )
+			{
+				env.flush();
+				env.getOut().flush();
+				String source = new String( fw.getOutputStream().toByteArray() );
+				fw.getOutputStream().reset();
+				fw.getOutputStream().write( saved );
+				return source.trim();
+			}
+			
+			return "";
 		}
 		catch ( QuercusErrorException | QuercusParseException | IOException e )
 		{
@@ -129,18 +168,22 @@ public class FrameworkServer
 	
 	public String executeCode( String source ) throws IOException, QuercusParseException, QuercusErrorException
 	{
+		Env env = fw.getEnv();
+		env.flush();
+		env.getOut().flush();
+		byte[] saved = fw.getOutputStream().toByteArray();
+		fw.getOutputStream().reset();
+		
 		StringValue sv = new LargeStringBuilderValue();
 		sv.append( "?> " + source );
 		
-		Env env = fw.getEnv();
-		ByteArrayOutputStream out = fw.getOutputStream();
-		
 		env.evalCode( sv );
 		
+		env.flush();
 		env.getOut().flush();
-		source = new String( out.toByteArray() );
-		out.reset();
-		
+		source = new String( fw.getOutputStream().toByteArray() );
+		fw.getOutputStream().reset();
+		fw.getOutputStream().write( saved );
 		return source.trim();
 	}
 	
@@ -156,6 +199,30 @@ public class FrameworkServer
 			templateRoot.mkdirs();
 		
 		return templateRoot;
+	}
+	
+	public String getPackage( File root, String pack )
+	{
+		if ( pack == null || pack.isEmpty() )
+			return "";
+		
+		pack = pack.replace( ".", System.getProperty( "file.separator" ) );
+		
+		File file = new File( root, pack + ".php" );
+		
+		if ( !file.exists() )
+			file = new File( root, pack + ".inc.php" );
+		
+		if ( !file.exists() )
+			file = new File( root, pack );
+		
+		if ( !file.exists() )
+		{
+			Loader.getLogger().info( "Could not find the file " + file.getAbsolutePath() );
+			return "";
+		}
+		
+		return file.getAbsolutePath();
 	}
 	
 	public String getPackageSource( File root, String pack )
@@ -260,20 +327,30 @@ public class FrameworkServer
 	
 	public String getRequest( String key, String def )
 	{
-		try
-		{
-			String val = executeCode( "<? echo $_REQUEST[\"" + key + "\"]; ?>" );
-			
-			if ( val == null || val.isEmpty() )
-				return def;
-			
-			return val.trim();
-		}
-		catch ( QuercusErrorException | QuercusParseException | IOException e )
-		{
-			e.printStackTrace();
-			return "";
-		}
+		return getRequest( key, "", false );
+	}
+	
+	public Map<String, String> getRequestMap()
+	{
+		Value v = fw.getEnv().getGlobalValue( "_REQUEST" );
+		return (Map<String, String>) v.toJavaMap( fw.env, Map.class );
+	}
+	
+	/*
+	 * boolean rtnNull - Return null if not set.
+	 */
+	public String getRequest( String key, String def, boolean rtnNull )
+	{
+		Map<String, String> request = getRequestMap();
+		String val = request.get( key );
+		
+		if ( val == null && rtnNull )
+			return null;
+		
+		if ( val == null || val.isEmpty() )
+			return def;
+		
+		return val.trim();
 	}
 	
 	@Deprecated

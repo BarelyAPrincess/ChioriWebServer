@@ -4,13 +4,12 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -121,17 +120,17 @@ public class FrameworkDatabaseEngine
 			whr = "";
 		}
 		
-		Map<String, Object> options;
+		Map<String, String> options;
 		
 		if ( options0 == null || !( options0 instanceof ArrayValueImpl ) )
-			options = new HashMap<String, Object>();
+			options = new HashMap<String, String>();
 		else
 			options = ( (ArrayValueImpl) options0 ).toJavaMap( fw.getEnv(), HashMap.class );
 		
-		if ( !options.containsKey( "limit" ) )
-			options.put( "limit", 0 );
-		if ( !options.containsKey( "offSet" ) )
-			options.put( "offSet", 0 );
+		if ( !options.containsKey( "limit" ) || !(options.get( "limit" ) instanceof String) )
+			options.put( "limit", "0" );
+		if ( !options.containsKey( "offSet" ) || !(options.get( "offSet" ) instanceof String) )
+			options.put( "offSet", "0" );
 		if ( !options.containsKey( "orderBy" ) )
 			options.put( "orderBy", "" );
 		if ( !options.containsKey( "groupBy" ) )
@@ -139,7 +138,7 @@ public class FrameworkDatabaseEngine
 		if ( !options.containsKey( "fields" ) )
 			options.put( "fields", "*" );
 		
-		String limit = ( (int) options.get( "limit" ) > 0 ) ? " LIMIT " + ( (int) options.get( "offSet" ) ) + ", " + ( (int) options.get( "limit" ) ) : "";
+		String limit = ( Integer.parseInt( options.get( "limit" ) ) > 0 ) ? " LIMIT " + Integer.parseInt( options.get( "offSet" ) ) + ", " + Integer.parseInt( options.get( "limit" ) ) : "";
 		String orderby = ( (String) options.get( "orderBy" ) ) == "" ? "" : " ORDER BY " + ( (String) options.get( "orderBy" ) );
 		String groupby = ( (String) options.get( "groupBy" ) ) == "" ? "" : " GROUP BY " + ( (String) options.get( "groupBy" ) );
 		
@@ -164,8 +163,6 @@ public class FrameworkDatabaseEngine
 			return new HashMap<String, Object>();
 		}
 		
-		List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
-		
 		JSONObject json;
 		try
 		{
@@ -189,7 +186,7 @@ public class FrameworkDatabaseEngine
 		
 		Loader.getLogger().fine( "Making SELECT query \"" + query + "\" which returned " + sql.getRowCount( rs ) + " row(s)." );
 		
-		return new Gson().fromJson( json.toString(), Map.class );
+		return new Gson().fromJson( json.toString(), TreeMap.class );
 	}
 	
 	public static JSONObject convert( ResultSet rs ) throws SQLException, JSONException
@@ -212,6 +209,14 @@ public class FrameworkDatabaseEngine
 					obj.put( column_name, rs.getArray( column_name ) );
 				}
 				else if ( rsmd.getColumnType( i ) == java.sql.Types.BIGINT )
+				{
+					obj.put( column_name, rs.getInt( column_name ) );
+				}
+				else if ( rsmd.getColumnType( i ) == java.sql.Types.TINYINT )
+				{
+					obj.put( column_name, rs.getInt( column_name ) );
+				}
+				else if ( rsmd.getColumnType( i ) == java.sql.Types.BIT ) // Sometimes tinyints are read as being bits
 				{
 					obj.put( column_name, rs.getInt( column_name ) );
 				}
@@ -243,10 +248,6 @@ public class FrameworkDatabaseEngine
 				{
 					obj.put( column_name, rs.getString( column_name ) );
 				}
-				else if ( rsmd.getColumnType( i ) == java.sql.Types.TINYINT )
-				{
-					obj.put( column_name, rs.getInt( column_name ) );
-				}
 				else if ( rsmd.getColumnType( i ) == java.sql.Types.SMALLINT )
 				{
 					obj.put( column_name, rs.getInt( column_name ) );
@@ -274,19 +275,19 @@ public class FrameworkDatabaseEngine
 	}
 	
 	@Deprecated
-	public String array2Where ( List<String> where)
+	public String array2Where( List<String> where )
 	{
 		return array2Where( where, "AND", null );
 	}
 	
 	@Deprecated
-	public String array2Where ( List<String> where, String limiter)
+	public String array2Where( List<String> where, String limiter )
 	{
 		return array2Where( where, limiter, null );
 	}
 	
 	@Deprecated
-	public String array2Where ( List<String> where, String limiter, String prepend)
+	public String array2Where( List<String> where, String limiter, String prepend )
 	{
 		if ( prepend == null )
 			prepend = "";

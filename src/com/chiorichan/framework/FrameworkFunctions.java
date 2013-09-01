@@ -1,13 +1,16 @@
 package com.chiorichan.framework;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.json.JSONObject;
 
+import com.caucho.quercus.env.ArrayValueImpl;
 import com.chiorichan.Loader;
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
@@ -133,22 +136,22 @@ public class FrameworkFunctions
 		return "{" + guid + "}";
 	}
 	
-	public String createTable( List<Map<String, String>> tableArray )
+	public String createTable( Map<String, Object> tableData )
 	{
-		return createTable( tableArray, null, "" );
+		return createTable( tableData, null, "" );
 	}
 	
-	public String createTable( List<Map<String, String>> tableArray, List<String> headerArray )
+	public String createTable( Map<String, Object> tableData, List<String> headerArray )
 	{
-		return createTable( tableArray, headerArray, "" );
+		return createTable( tableData, headerArray, "" );
 	}
 	
-	public String createTable( List<Map<String, String>> tableArray, List<String> headerArray, String tableId )
+	public String createTable( Map<String, Object> tableData, List<String> headerArray, String tableId )
 	{
 		if ( tableId == null )
 			tableId = "";
 		
-		if ( tableArray == null )
+		if ( tableData == null )
 			return "";
 		
 		StringBuilder sb = new StringBuilder();
@@ -166,38 +169,52 @@ public class FrameworkFunctions
 		}
 		
 		int colLength = 1;
-		for ( Map<String, String> row : tableArray )
+		for ( Object row : tableData.values() )
 		{
-			colLength = Math.max( row.size(), colLength );
+			Map<String, String> map;
+			
+			if ( row instanceof ArrayValueImpl )
+			{
+				map = ( (ArrayValueImpl) row ).toJavaMap( fw.getEnv(), HashMap.class );
+				
+				colLength = Math.max( map.size(), colLength );
+			}
 		}
 		
-		for ( Map<String, String> row : tableArray )
+		for ( Object row : tableData.values() )
 		{
-			String clss = ( x % 2 == 0 ) ? "evenrowcolor" : "oddrowcolor";
-			sb.append( "<tr id=\"" + row.get( "rowId" ) + "\" rel=\"" + row.get( "metaData" ) + "\" class=\"" + clss + "\">\n" );
+			Map<String, String> map;
 			
-			row.remove( "rowId" );
-			row.remove( "metaData" );
-			
-			if ( row.size() == 1 )
+			if ( row instanceof ArrayValueImpl )
 			{
-				sb.append( "<td style=\"text-align: center; font-weight: bold;\" class=\"" + clss + "\" colspan=\"" + colLength + "\">" + row + "</td>\n" );
-			}
-			else
-			{
-				int cc = 0;
-				for ( String col : row.values() )
+				map = ( (ArrayValueImpl) row ).toJavaMap( fw.getEnv(), HashMap.class );
+				
+				String clss = ( x % 2 == 0 ) ? "evenrowcolor" : "oddrowcolor";
+				sb.append( "<tr id=\"" + map.get( "rowId" ) + "\" rel=\"" + map.get( "metaData" ) + "\" class=\"" + clss + "\">\n" );
+				
+				map.remove( "rowId" );
+				map.remove( "metaData" );
+				
+				if ( map.size() == 1 )
 				{
-					if ( col != null )
+					sb.append( "<td style=\"text-align: center; font-weight: bold;\" class=\"" + clss + "\" colspan=\"" + colLength + "\">" + map + "</td>\n" );
+				}
+				else
+				{
+					int cc = 0;
+					for ( String col : map.values() )
 					{
-						String subclass = ( col.isEmpty() ) ? " emptyCol" : "";
-						sb.append( "<td id=\"col_" + cc + "\" class=\"" + subclass + "\">" + col + "</td>\n" );
-						cc++;
+						if ( col != null )
+						{
+							String subclass = ( col.isEmpty() ) ? " emptyCol" : "";
+							sb.append( "<td id=\"col_" + cc + "\" class=\"" + subclass + "\">" + col + "</td>\n" );
+							cc++;
+						}
 					}
 				}
+				sb.append( "</tr>\n" );
+				x++;
 			}
-			sb.append( "</tr>\n" );
-			x++;
 		}
 		sb.append( "</table>\n" );
 		

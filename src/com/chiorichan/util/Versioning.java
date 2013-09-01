@@ -13,7 +13,7 @@ public class Versioning
 	public static String getVersion()
 	{
 		if ( true )
-			return "5.2.0826 (Lunar Dream)";
+			return "5.2.0829 (Lunar Dream)";
 		
 		String result = "Unknown-Version";
 		
