@@ -100,7 +100,7 @@ public class Template extends JavaPlugin implements Listener
 		
 		try
 		{
-			BufferedReader br = new BufferedReader( new InputStreamReader( is, "UTF-8" ) );
+			BufferedReader br = new BufferedReader( new InputStreamReader( is, "ISO-8859-1" ) );
 			
 			String l;
 			while ( ( l = br.readLine() ) != null )

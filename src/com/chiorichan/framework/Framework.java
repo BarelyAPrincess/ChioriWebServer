@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -67,6 +68,7 @@ public class Framework
 	protected FrameworkDatabaseEngine _db;
 	protected FrameworkUserService _usr;
 	protected FrameworkFunctions _fun;
+	protected FrameworkImageUtils _img;
 	
 	protected Env env = null;
 	protected ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -90,6 +92,9 @@ public class Framework
 		String uri = request.getRequestURI();
 		String domain = request.getServerName();
 		String site = "";
+		
+		request.setCharacterEncoding( "ISO-8859-1" );
+		response.setCharacterEncoding( "ISO-8859-1" );
 		
 		if ( uri.startsWith( "/" ) )
 			uri = uri.substring( 1 );
@@ -479,7 +484,8 @@ public class Framework
 				{
 					env.flush();
 					ws.flush();
-					source = new String( out.toByteArray() );
+					
+					source = new String( out.toByteArray(), "ISO-8859-1" );
 					out.reset();
 				}
 				else
@@ -509,7 +515,8 @@ public class Framework
 				if ( event.sourceChanged() )
 					source = event.getSource();
 				
-				response.getOutputStream().write( source.getBytes() );
+				response.setContentLength( source.getBytes("ISO-8859-1").length );
+				response.getOutputStream().write( source.getBytes( "ISO-8859-1" ) );
 				
 				getUserService().saveSession();
 			}
@@ -646,7 +653,7 @@ public class Framework
 		
 		try
 		{
-			BufferedReader br = new BufferedReader( new InputStreamReader( is, "UTF-8" ) );
+			BufferedReader br = new BufferedReader( new InputStreamReader( is, "ISO-8859-1" ) );
 			
 			String l;
 			while ( ( l = br.readLine() ) != null )
@@ -813,6 +820,14 @@ public class Framework
 			_fun = new FrameworkFunctions( this );
 		
 		return _fun;
+	}
+	
+	public FrameworkImageUtils getImageUtils()
+	{
+		if ( _img == null )
+			_img = new FrameworkImageUtils( this );
+		
+		return _img;
 	}
 	
 	public Site getCurrentSite()

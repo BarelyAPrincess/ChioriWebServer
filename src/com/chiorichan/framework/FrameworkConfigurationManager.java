@@ -5,14 +5,13 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
-import javax.servlet.FilterChain;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import org.apache.commons.lang3.ArrayUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
 import com.google.gson.Gson;
 
@@ -100,24 +99,23 @@ public class FrameworkConfigurationManager
 				if ( key.startsWith( "!" ) )
 				{
 					if ( get( key.substring( 1 ) ).equals( value ) )
+						granted = true;
+					else
 					{
 						granted = false;
 						break;
 					}
-					else
-						granted = true;
 				}
 				else
 				{
 					if ( get( key ).equals( value ) )
+						granted = true;
+					else
 					{
 						granted = false;
 						break;
 					}
-					else
-						granted = true;
 				}
-				
 			}
 			
 			if ( granted )
@@ -129,12 +127,12 @@ public class FrameworkConfigurationManager
 	
 	public Object get( String key ) throws JSONException
 	{
-		return get( key, null, null );
+		return get( key, null, null, false );
 	}
 	
 	public Object get( String key, String idenifier ) throws JSONException
 	{
-		return get( key, idenifier, null );
+		return get( key, idenifier, null, false );
 	}
 	
 	public Object get( String key, String idenifier, String defaultValue ) throws JSONException
@@ -153,7 +151,7 @@ public class FrameworkConfigurationManager
 			
 			if ( idenifier == null || idenifier == "-1" )
 			{
-				// TODO: Set idenifier to the logged in userId
+				idenifier = ( fw.getUserService().getUserState() ) ? fw.getUserService().getCurrentUser().getUserId() : "";
 			}
 			
 			ResultSet defaultRs = sql.query( "SELECT * FROM `settings_default` WHERE `key` = '" + key + "';" );
@@ -163,21 +161,29 @@ public class FrameworkConfigurationManager
 			
 			ResultSet customRs = sql.query( "SELECT * FROM `settings_custom` WHERE `key` = '" + key + "' AND `owner` = '" + idenifier + "';" );
 			
+			JSONObject json = SqlConnector.convert( defaultRs );
+			Map<String, Object> defop = (Map<String, Object>) new Gson().fromJson( json.toString(), TreeMap.class ).get( "0" );
+			
 			if ( customRs == null || sql.getRowCount( customRs ) < 1 )
 			{
+				defaultRs.first();
+				
 				if ( !returnRow )
 					return defaultRs.getString( "value" );
 				
-				JSONObject json = fw.getDatabaseEngine().convert( defaultRs );
-				return new Gson().fromJson( json.toString(), Map.class );
+				return defop;
 			}
 			else
 			{
 				if ( !returnRow )
 					return customRs.getString( "value" );
 				
-				JSONObject json = fw.getDatabaseEngine().convert( customRs );
-				return new Gson().fromJson( json.toString(), Map.class );
+				json = SqlConnector.convert( customRs );
+				Map<String, Object> op = (Map<String, Object>) new Gson().fromJson( json.toString(), TreeMap.class ).get( "0" );
+				
+				defop.putAll( op );
+				
+				return defop;
 			}
 		}
 		catch ( SQLException e )

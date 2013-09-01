@@ -127,9 +127,9 @@ public class FrameworkDatabaseEngine
 		else
 			options = ( (ArrayValueImpl) options0 ).toJavaMap( fw.getEnv(), HashMap.class );
 		
-		if ( !options.containsKey( "limit" ) || !(options.get( "limit" ) instanceof String) )
+		if ( !options.containsKey( "limit" ) || !( options.get( "limit" ) instanceof String ) )
 			options.put( "limit", "0" );
-		if ( !options.containsKey( "offSet" ) || !(options.get( "offSet" ) instanceof String) )
+		if ( !options.containsKey( "offSet" ) || !( options.get( "offSet" ) instanceof String ) )
 			options.put( "offSet", "0" );
 		if ( !options.containsKey( "orderBy" ) )
 			options.put( "orderBy", "" );
@@ -166,7 +166,7 @@ public class FrameworkDatabaseEngine
 		JSONObject json;
 		try
 		{
-			json = convert( rs );
+			json = SqlConnector.convert( rs );
 		}
 		catch ( SQLException | JSONException e )
 		{
@@ -187,91 +187,6 @@ public class FrameworkDatabaseEngine
 		Loader.getLogger().fine( "Making SELECT query \"" + query + "\" which returned " + sql.getRowCount( rs ) + " row(s)." );
 		
 		return new Gson().fromJson( json.toString(), TreeMap.class );
-	}
-	
-	public static JSONObject convert( ResultSet rs ) throws SQLException, JSONException
-	{
-		JSONObject json = new JSONObject();
-		ResultSetMetaData rsmd = rs.getMetaData();
-		int x = 0;
-		
-		do
-		{
-			int numColumns = rsmd.getColumnCount();
-			JSONObject obj = new JSONObject();
-			
-			for ( int i = 1; i < numColumns + 1; i++ )
-			{
-				String column_name = rsmd.getColumnName( i );
-				
-				if ( rsmd.getColumnType( i ) == java.sql.Types.ARRAY )
-				{
-					obj.put( column_name, rs.getArray( column_name ) );
-				}
-				else if ( rsmd.getColumnType( i ) == java.sql.Types.BIGINT )
-				{
-					obj.put( column_name, rs.getInt( column_name ) );
-				}
-				else if ( rsmd.getColumnType( i ) == java.sql.Types.TINYINT )
-				{
-					obj.put( column_name, rs.getInt( column_name ) );
-				}
-				else if ( rsmd.getColumnType( i ) == java.sql.Types.BIT ) // Sometimes tinyints are read as being bits
-				{
-					obj.put( column_name, rs.getInt( column_name ) );
-				}
-				else if ( rsmd.getColumnType( i ) == java.sql.Types.BOOLEAN )
-				{
-					obj.put( column_name, rs.getBoolean( column_name ) );
-				}
-				else if ( rsmd.getColumnType( i ) == java.sql.Types.BLOB )
-				{
-					obj.put( column_name, rs.getBlob( column_name ) );
-				}
-				else if ( rsmd.getColumnType( i ) == java.sql.Types.DOUBLE )
-				{
-					obj.put( column_name, rs.getDouble( column_name ) );
-				}
-				else if ( rsmd.getColumnType( i ) == java.sql.Types.FLOAT )
-				{
-					obj.put( column_name, rs.getFloat( column_name ) );
-				}
-				else if ( rsmd.getColumnType( i ) == java.sql.Types.INTEGER )
-				{
-					obj.put( column_name, rs.getInt( column_name ) );
-				}
-				else if ( rsmd.getColumnType( i ) == java.sql.Types.NVARCHAR )
-				{
-					obj.put( column_name, rs.getNString( column_name ) );
-				}
-				else if ( rsmd.getColumnType( i ) == java.sql.Types.VARCHAR )
-				{
-					obj.put( column_name, rs.getString( column_name ) );
-				}
-				else if ( rsmd.getColumnType( i ) == java.sql.Types.SMALLINT )
-				{
-					obj.put( column_name, rs.getInt( column_name ) );
-				}
-				else if ( rsmd.getColumnType( i ) == java.sql.Types.DATE )
-				{
-					obj.put( column_name, rs.getDate( column_name ) );
-				}
-				else if ( rsmd.getColumnType( i ) == java.sql.Types.TIMESTAMP )
-				{
-					obj.put( column_name, rs.getTimestamp( column_name ) );
-				}
-				else
-				{
-					obj.put( column_name, rs.getObject( column_name ) );
-				}
-			}
-			
-			json.put( "" + x, obj );
-			x++;
-		}
-		while ( rs.next() );
-		
-		return json;
 	}
 	
 	@Deprecated
@@ -303,5 +218,185 @@ public class FrameworkDatabaseEngine
 		}
 		
 		return prepend + sb.toString().substring( limiter.length() + 2 );
+	}
+	
+	/**
+	 * Checks Query String for Attempted SQL Injection by Checking for Certain Commands After the First 6 Characters.
+	 * Warning: This Check Will Return True (or Positive) if You Check A Query That Inserts an Image.
+	 */
+	public boolean SQLInjectionDetection( String query )
+	{
+		query = query.toUpperCase();
+		boolean safe = false;
+		
+		String[] unSafeWords = new String[] { "SELECT", "UPDATE", "DELETE", "INSERT", "UNION", "--" };
+		
+		String splice = query.substring( 0, 6 );
+		
+		for ( String word : unSafeWords )
+		{
+			if ( splice.equals( word ) )
+			{
+				safe = true;
+			}
+		}
+		
+		if ( !safe )
+			return false;
+		// GetFramework()->getServer()->Panic(400, "SQL Injection Detected! Notify administrators ASAP. Debug \"" .
+		// $QueryString . "\".");
+		
+		splice = query.substring( 6 );
+		for ( String word : unSafeWords )
+		{
+			if ( splice.contains( word ) )
+			{
+				safe = false;
+			}
+		}
+		
+		return safe;
+		// GetFramework()->getServer()->Panic(400, "SQL Injection Detected! Notify administrators ASAP. Debug \"" .
+		// $QueryString . "\".");
+	}
+	
+	public boolean update( String table, ArrayValueImpl data )
+	{
+		return update( table, data, "", 1, false );
+	}
+	
+	public boolean update( String table, ArrayValueImpl data, Object where )
+	{
+		return update( table, data, where, 1, false );
+	}
+	
+	public boolean update( String table, ArrayValueImpl data, Object where, int lmt )
+	{
+		return update( table, data, where, lmt, false );
+	}
+	
+	public boolean update( String table, ArrayValueImpl data, Object where, int lmt, boolean disableInjectionCheck )
+	{
+		String subWhere = "";
+		SqlConnector sql = fw.getCurrentSite().sql;
+		
+		if ( sql == null )
+			return false;
+		
+		String whr = "";
+		
+		if ( where instanceof String )
+		{
+			whr = ( (String) where );
+		}
+		else if ( where instanceof ArrayValueImpl )
+		{
+			Map<String, Object> whereMap = ( (ArrayValueImpl) where ).toJavaMap( fw.getEnv(), HashMap.class );
+			
+			String tmp = "", opr = "", opr2 = "";
+			
+			for ( Entry<String, Object> entry : whereMap.entrySet() )
+			{
+				if ( entry.getValue() instanceof Map )
+				{
+					opr = "AND";
+					if ( entry.getKey().indexOf( "|" ) >= 0 )
+						opr = "OR";
+					if ( entry.getKey().indexOf( "&" ) >= 0 )
+						opr = "AND";
+					
+					String tmp2 = "";
+					Map<String, Object> val = (Map<String, Object>) entry.getValue();
+					
+					for ( Entry<String, Object> entry2 : val.entrySet() )
+					{
+						opr2 = "AND";
+						if ( entry.getKey().indexOf( "|" ) >= 0 )
+							opr = "OR";
+						if ( entry.getKey().indexOf( "&" ) >= 0 )
+							opr = "AND";
+						
+						String key = entry2.getKey().replace( "|", "" ).replace( "&", "" );
+						tmp2 = "`" + key + "` = '" + entry2.getValue() + "'";
+						tmp += ( tmp.isEmpty() ) ? tmp2 : subWhere + " " + opr + " " + tmp2;
+					}
+					
+					whr = ( whr.isEmpty() ) ? "(" + tmp + ")" : whr + " " + opr + " (" + tmp + ")";
+				}
+				else
+				{
+					opr = "AND";
+					if ( entry.getKey().indexOf( "|" ) >= 0 )
+						opr = "OR";
+					if ( entry.getKey().indexOf( "&" ) >= 0 )
+						opr = "AND";
+					
+					String key = entry.getKey().replace( "|", "" ).replace( "&", "" );
+					
+					tmp = "`" + key + "` = '" + entry.getValue() + "'";
+					whr = ( whr.isEmpty() ) ? tmp : whr + " " + opr + " " + tmp;
+				}
+			}
+		}
+		else
+		{
+			whr = "";
+		}
+		
+		String limit = ( lmt > 0 ) ? " LIMIT " + lmt : "";
+		where = ( whr.isEmpty() ) ? "" : " WHERE " + whr;
+		
+		String set = "";
+		
+		Map<String, Object> dada = data.toJavaMap( fw.getEnv(), Map.class );
+		
+		for ( Entry e : dada.entrySet() )
+			set += ", `" + e.getKey() + "` = '" + e.getValue() + "'";
+		
+		if ( set.length() > 2 )
+			set = set.substring( 2 );
+		
+		String query = "UPDATE " + table + " SET " + set + where + limit + ";";
+		
+		if ( !disableInjectionCheck )
+			SQLInjectionDetection( query );
+		
+		int result = sql.queryUpdate( query );
+		
+		if ( result > 0 )
+		{
+			Loader.getLogger().info( "Making UPDATE query \"" + query + "\" which affected " + result + " rows." );
+			return true;
+		}
+		else
+		{
+			Loader.getLogger().info( "Making UPDATE query \"" + query + "\" which had no affect on the database." );
+			return false;
+		}
+	}
+	
+	public boolean delete( String table, ArrayValueImpl where )
+	{
+		return delete( table, where, 1 );
+	}
+	
+	public boolean delete( String table, ArrayValueImpl where, int limit )
+	{
+		return false;
+	}
+	
+	public boolean insert(String table, ArrayValueImpl data)
+	{
+		return insert(table, data, false);
+	}
+	
+	public boolean insert( String table, ArrayValueImpl data, boolean disableInjectionCheck )
+	{
+		return false;
+	}
+	
+	public String escape( String str )
+	{
+		return str;
 	}
 }

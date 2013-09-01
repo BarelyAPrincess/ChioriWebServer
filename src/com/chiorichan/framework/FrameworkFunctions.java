@@ -1,14 +1,17 @@
 package com.chiorichan.framework;
 
-import java.util.ArrayList;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.json.JSONObject;
 
 import com.caucho.quercus.env.ArrayValueImpl;
 import com.chiorichan.Loader;
@@ -66,15 +69,17 @@ public class FrameworkFunctions
 		return rtn;
 	}
 	
-	public Map<String, Object> cleanArray( Map<String, Object> arr, List<String> allowedKeys )
+	public Map<String, Object> cleanArray( ArrayValueImpl arr, List<String> allowedKeys )
 	{
-		for ( String key : arr.keySet() )
+		Map<String, Object> newObj = arr.toJavaMap( fw.getEnv(), Map.class );
+		
+		for ( String k : newObj.keySet() )
 		{
-			if ( !allowedKeys.contains( key ) )
-				arr.remove( key );
+			if ( !allowedKeys.contains( k ) )
+				newObj.remove( k );
 		}
 		
-		return arr;
+		return newObj;
 	}
 	
 	public String formatPhone( String phone )
@@ -92,27 +97,27 @@ public class FrameworkFunctions
 		}
 	}
 	
-	public String createUUID()
+	public String createUUID() throws UnsupportedEncodingException
 	{
 		return createUUID( "" );
 	}
 	
-	public String createUUID( String seed )
+	public String createUUID( String seed ) throws UnsupportedEncodingException
 	{
 		return DigestUtils.md5Hex( createGUID( seed ) );
 	}
 	
-	public String createGUID()
+	public String createGUID() throws UnsupportedEncodingException
 	{
 		return createGUID( "" );
 	}
 	
-	public String createGUID( String seed )
+	public String createGUID( String seed ) throws UnsupportedEncodingException
 	{
 		if ( seed == null )
 			seed = "";
 		
-		byte[] bytes = ArrayUtils.addAll( seed.getBytes(), fw.getRequestId().getBytes() );
+		byte[] bytes = ArrayUtils.addAll( seed.getBytes( "ISO-8859-1" ), fw.getRequestId().getBytes( "ISO-8859-1" ) );
 		byte[] bytesScrambled = new byte[0];
 		
 		for ( byte b : bytes )
@@ -138,15 +143,15 @@ public class FrameworkFunctions
 	
 	public String createTable( Map<String, Object> tableData )
 	{
-		return createTable( tableData, null, "" );
+		return createTable( tableData, null, "", false );
 	}
 	
 	public String createTable( Map<String, Object> tableData, List<String> headerArray )
 	{
-		return createTable( tableData, headerArray, "" );
+		return createTable( tableData, headerArray, "", false );
 	}
 	
-	public String createTable( Map<String, Object> tableData, List<String> headerArray, String tableId )
+	public String createTable( Map<String, Object> tableData, List<String> headerArray, String tableId, boolean returnString )
 	{
 		if ( tableId == null )
 			tableId = "";
@@ -183,7 +188,7 @@ public class FrameworkFunctions
 		
 		for ( Object row : tableData.values() )
 		{
-			Map<String, String> map;
+			Map<String, Object> map;
 			
 			if ( row instanceof ArrayValueImpl )
 			{
@@ -202,11 +207,11 @@ public class FrameworkFunctions
 				else
 				{
 					int cc = 0;
-					for ( String col : map.values() )
+					for ( Object col : map.values() )
 					{
 						if ( col != null )
 						{
-							String subclass = ( col.isEmpty() ) ? " emptyCol" : "";
+							String subclass = ( col instanceof String && ( (String) col ).isEmpty() ) ? " emptyCol" : "";
 							sb.append( "<td id=\"col_" + cc + "\" class=\"" + subclass + "\">" + col + "</td>\n" );
 							cc++;
 						}
@@ -218,6 +223,17 @@ public class FrameworkFunctions
 		}
 		sb.append( "</table>\n" );
 		
-		return sb.toString();
+		if ( returnString )
+			return sb.toString();
+		
+		try
+		{
+			fw.getServer().includeCode( sb.toString() );
+		}
+		catch ( IOException e )
+		{
+			e.printStackTrace();
+		}
+		return "";
 	}
 }

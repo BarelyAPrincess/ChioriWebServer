@@ -81,7 +81,7 @@ public class Site
 		try
 		{
 			String yaml = rs.getString( "configYaml" );
-			InputStream is = new ByteArrayInputStream( yaml.getBytes() );
+			InputStream is = new ByteArrayInputStream( yaml.getBytes( "ISO-8859-1" ) );
 			config = YamlConfiguration.loadConfiguration( is );
 		}
 		catch ( Exception e )

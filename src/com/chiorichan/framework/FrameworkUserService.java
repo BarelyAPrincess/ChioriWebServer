@@ -45,22 +45,7 @@ public class FrameworkUserService
 		if ( currentUser == null )
 			return def;
 		
-		String op = def;
-		
-		switch ( key )
-		{
-			case "displayname":
-				op = currentUser.getDisplayName();
-				break;
-			case "displaylevel":
-				op = currentUser.getDisplayLevel();
-				break;
-			case "email":
-				op = currentUser.getEmail();
-				break;
-		}
-		
-		return op;
+		return currentUser.getString( key, def );
 	}
 	
 	public boolean hasPermission( String key ) throws SQLException
@@ -427,7 +412,7 @@ public class FrameworkUserService
 			if ( sql.getRowCount( rs ) < 1 )
 				return result;
 			
-			json = FrameworkDatabaseEngine.convert( rs );
+			json = SqlConnector.convert( rs );
 		}
 		catch ( Exception e )
 		{
@@ -497,7 +482,7 @@ public class FrameworkUserService
 			if ( sql.getRowCount( rs ) < 1 )
 				return result;
 			
-			json = FrameworkDatabaseEngine.convert( rs );
+			json = SqlConnector.convert( rs );
 		}
 		catch ( Exception e )
 		{

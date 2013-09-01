@@ -11,6 +11,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import com.chiorichan.Loader;
 import com.mysql.jdbc.exceptions.jdbc4.CommunicationsException;
 import com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException;
@@ -294,5 +297,90 @@ public class SqlConnector
 	public HashMap<String, Object> selectOne( String table, String key, String val ) throws SQLException
 	{
 		return selectOne( table, Arrays.asList( key ), Arrays.asList( val ) );
+	}
+	
+	public static JSONObject convert( ResultSet rs ) throws SQLException, JSONException
+	{
+		JSONObject json = new JSONObject();
+		ResultSetMetaData rsmd = rs.getMetaData();
+		int x = 0;
+		
+		do
+		{
+			int numColumns = rsmd.getColumnCount();
+			JSONObject obj = new JSONObject();
+			
+			for ( int i = 1; i < numColumns + 1; i++ )
+			{
+				String column_name = rsmd.getColumnName( i );
+				
+				if ( rsmd.getColumnType( i ) == java.sql.Types.ARRAY )
+				{
+					obj.put( column_name, rs.getArray( column_name ) );
+				}
+				else if ( rsmd.getColumnType( i ) == java.sql.Types.BIGINT )
+				{
+					obj.put( column_name, rs.getInt( column_name ) );
+				}
+				else if ( rsmd.getColumnType( i ) == java.sql.Types.TINYINT )
+				{
+					obj.put( column_name, rs.getInt( column_name ) );
+				}
+				else if ( rsmd.getColumnType( i ) == java.sql.Types.BIT ) // Sometimes tinyints are read as being bits
+				{
+					obj.put( column_name, rs.getInt( column_name ) );
+				}
+				else if ( rsmd.getColumnType( i ) == java.sql.Types.BOOLEAN )
+				{
+					obj.put( column_name, rs.getBoolean( column_name ) );
+				}
+				else if ( rsmd.getColumnType( i ) == java.sql.Types.BLOB )
+				{
+					obj.put( column_name, rs.getBlob( column_name ) );
+				}
+				else if ( rsmd.getColumnType( i ) == java.sql.Types.DOUBLE )
+				{
+					obj.put( column_name, rs.getDouble( column_name ) );
+				}
+				else if ( rsmd.getColumnType( i ) == java.sql.Types.FLOAT )
+				{
+					obj.put( column_name, rs.getFloat( column_name ) );
+				}
+				else if ( rsmd.getColumnType( i ) == java.sql.Types.INTEGER )
+				{
+					obj.put( column_name, rs.getInt( column_name ) );
+				}
+				else if ( rsmd.getColumnType( i ) == java.sql.Types.NVARCHAR )
+				{
+					obj.put( column_name, rs.getNString( column_name ) );
+				}
+				else if ( rsmd.getColumnType( i ) == java.sql.Types.VARCHAR )
+				{
+					obj.put( column_name, rs.getString( column_name ) );
+				}
+				else if ( rsmd.getColumnType( i ) == java.sql.Types.SMALLINT )
+				{
+					obj.put( column_name, rs.getInt( column_name ) );
+				}
+				else if ( rsmd.getColumnType( i ) == java.sql.Types.DATE )
+				{
+					obj.put( column_name, rs.getDate( column_name ) );
+				}
+				else if ( rsmd.getColumnType( i ) == java.sql.Types.TIMESTAMP )
+				{
+					obj.put( column_name, rs.getTimestamp( column_name ) );
+				}
+				else
+				{
+					obj.put( column_name, rs.getObject( column_name ) );
+				}
+			}
+			
+			json.put( "" + x, obj );
+			x++;
+		}
+		while ( rs.next() );
+		
+		return json;
 	}
 }

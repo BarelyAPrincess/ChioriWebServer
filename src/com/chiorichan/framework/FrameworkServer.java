@@ -82,7 +82,7 @@ public class FrameworkServer
 		
 		try
 		{
-			BufferedReader br = new BufferedReader( new InputStreamReader( is, "UTF-8" ) );
+			BufferedReader br = new BufferedReader( new InputStreamReader( is, "ISO-8859-1" ) );
 			
 			String l;
 			while ( ( l = br.readLine() ) != null )
@@ -151,7 +151,7 @@ public class FrameworkServer
 			{
 				env.flush();
 				env.getOut().flush();
-				String source = new String( fw.getOutputStream().toByteArray() );
+				String source = new String( fw.getOutputStream().toByteArray(), "ISO-8859-1" );
 				fw.getOutputStream().reset();
 				fw.getOutputStream().write( saved );
 				return source.trim();
@@ -181,10 +181,18 @@ public class FrameworkServer
 		
 		env.flush();
 		env.getOut().flush();
-		source = new String( fw.getOutputStream().toByteArray() );
+		source = new String( fw.getOutputStream().toByteArray(), "ISO-8859-1" );
 		fw.getOutputStream().reset();
 		fw.getOutputStream().write( saved );
 		return source.trim();
+	}
+	
+	public void includeCode( String string ) throws IOException
+	{
+		StringValue sv = new LargeStringBuilderValue();
+		sv.append( "?> " + string );
+		
+		fw.getEnv().evalCode( sv );
 	}
 	
 	public File getTemplateRoot( Site site )
@@ -262,7 +270,7 @@ public class FrameworkServer
 		
 		try
 		{
-			BufferedReader br = new BufferedReader( new InputStreamReader( is, "UTF-8" ) );
+			BufferedReader br = new BufferedReader( new InputStreamReader( is, "ISO-8859-1" ) );
 			
 			String l;
 			while ( ( l = br.readLine() ) != null )
