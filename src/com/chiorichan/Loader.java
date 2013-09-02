@@ -17,6 +17,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -36,8 +38,6 @@ import com.caucho.resin.FilterMappingEmbed;
 import com.caucho.resin.HttpEmbed;
 import com.caucho.resin.ResinEmbed;
 import com.caucho.resin.WebAppEmbed;
-import com.caucho.server.session.SessionManager;
-import com.caucho.server.webapp.WebApp;
 import com.chiorichan.Warning.WarningState;
 import com.chiorichan.command.Command;
 import com.chiorichan.command.CommandException;
@@ -68,8 +68,6 @@ import com.chiorichan.plugin.messaging.PluginMessageRecipient;
 import com.chiorichan.plugin.messaging.StandardMessenger;
 import com.chiorichan.scheduler.ChioriScheduler;
 import com.chiorichan.scheduler.ChioriWorker;
-import com.chiorichan.scheduler.IChioriScheduler;
-import com.chiorichan.serialization.ConfigurationSerialization;
 import com.chiorichan.server.ServerThread;
 import com.chiorichan.updater.AutoUpdater;
 import com.chiorichan.updater.ChioriDLUpdaterService;
@@ -104,17 +102,19 @@ public class Loader implements PluginMessageRecipient
 	protected UserList userList = new UserList( this );
 	
 	private final ServicesManager servicesManager = new SimpleServicesManager();
-	private final static IChioriScheduler scheduler = new ChioriScheduler();
+	private final static ChioriScheduler scheduler = new ChioriScheduler();
 	private final SimpleHelpMap helpMap = new SimpleHelpMap( this );
 	private final StandardMessenger messenger = new StandardMessenger();
 	private final ResinEmbed server = new ResinEmbed();
 	public Boolean isRunning = false;
 	
+	private static Timer timer1 = new Timer();
+	
 	public java.util.Queue<Runnable> processQueue = new java.util.concurrent.ConcurrentLinkedQueue<Runnable>();
 	
 	static
 	{
-		//ConfigurationSerialization.registerClass( User.class );
+		// ConfigurationSerialization.registerClass( User.class );
 	}
 	
 	public static void main( String... args ) throws Exception
@@ -230,7 +230,7 @@ public class Loader implements PluginMessageRecipient
 		updater.getOnUpdate().addAll( configuration.getStringList( "auto-updater.on-update" ) );
 		updater.check( version );
 		
-		//console.init();
+		// console.init();
 		
 		Framework.initalizeFramework();
 		
@@ -240,6 +240,16 @@ public class Loader implements PluginMessageRecipient
 		initServer();
 		
 		enablePlugins( PluginLoadOrder.POSTSERVER );
+		
+		getLogger().info( "Starting the Task Scheduler!" );
+		timer1.scheduleAtFixedRate( new TimerTask()
+		{
+			@Override
+			public void run()
+			{
+				Loader.getScheduler().mainThreadHeartbeat( (int) ( System.currentTimeMillis() / 50 ) );
+			}
+		}, 50L, 50L );
 	}
 	
 	private void initServer()
@@ -611,7 +621,7 @@ public class Loader implements PluginMessageRecipient
 		return instance;
 	}
 	
-	public static IChioriScheduler getScheduler()
+	public static ChioriScheduler getScheduler()
 	{
 		return scheduler;
 	}
@@ -1175,9 +1185,14 @@ public class Loader implements PluginMessageRecipient
 	{
 		return options;
 	}
-
+	
 	public UserList getUserList()
 	{
 		return userList;
+	}
+
+	public static int getEpoch()
+	{
+		return (int) ( System.currentTimeMillis() / 1000 );
 	}
 }

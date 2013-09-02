@@ -120,7 +120,7 @@ public class User extends Session
 			
 			if ( rs.getInt( "numloginfail" ) > 5 )
 			{
-				if ( rs.getInt( "lastloginfail" ) > ( System.currentTimeMillis() - 1800 ) )
+				if ( rs.getInt( "lastloginfail" ) > ( Loader.getEpoch() - 1800 ) )
 				{
 					invalidate( "underAttackPleaseWait" );
 					return;
@@ -151,7 +151,7 @@ public class User extends Session
 			displayName = ( rs.getString( "fname" ).isEmpty() ) ? rs.getString( "name" ) : rs.getString( "fname" ) + " " + rs.getString( "name" );
 			displayLevel = (String) level.get( "title" );
 			
-			sql.queryUpdate( "UPDATE `users` SET `lastactive` = '" + System.currentTimeMillis() + "' WHERE `userID` = '" + getUserId() + "'" );
+			sql.queryUpdate( "UPDATE `users` SET `lastactive` = '" + Loader.getEpoch() + "' WHERE `userID` = '" + getUserId() + "'" );
 		}
 		catch ( Throwable t )
 		{	

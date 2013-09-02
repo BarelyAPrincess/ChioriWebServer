@@ -1030,8 +1030,6 @@ public final class SimplePluginManager implements PluginManager
 	
 	public Plugin getPluginbyName( String pluginPath )
 	{
-		Loader.getConsole().info( pluginPath );
-		
 		try
 		{
 			for ( Plugin plugin1 : Loader.getPluginManager().getPlugins() )

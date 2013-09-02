@@ -2,10 +2,10 @@ package com.chiorichan.framework;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -79,12 +79,24 @@ public class Framework
 	protected String siteId, siteTitle, siteDomain, siteSubDomain, requestId;
 	protected Site currentSite;
 	
+	protected static Map<Long, Framework> fwList = new HashMap<Long, Framework>();
+	
 	public Framework(HttpServletRequest request0, HttpServletResponse response0, FilterChain chain0, ServletContext servletContext)
 	{
 		request = request0;
 		response = response0;
 		chain = chain0;
 		_servletContext = servletContext;
+		
+		fwList.put( Thread.currentThread().getId(), this );
+	}
+	
+	public static Framework getFramework()
+	{
+		if ( fwList.containsKey( Thread.currentThread().getId() ) )
+			return fwList.get( Thread.currentThread().getId() );
+		
+		return null;
 	}
 	
 	public void init() throws IOException, ServletException
@@ -135,7 +147,7 @@ public class Framework
 		_server.put( ServerVars.REMOTE_HOST, request.getRemoteHost() );
 		_server.put( ServerVars.REMOTE_ADDR, request.getRemoteAddr() );
 		_server.put( ServerVars.REMOTE_PORT, request.getRemotePort() );
-		_server.put( ServerVars.REQUEST_TIME, System.currentTimeMillis() );
+		_server.put( ServerVars.REQUEST_TIME, Loader.getEpoch() );
 		_server.put( ServerVars.REQUEST_URI, request.getRequestURI() );
 		_server.put( ServerVars.CONTENT_LENGTH, request.getContentLength() );
 		_server.put( ServerVars.AUTH_TYPE, request.getAuthType() );
@@ -548,6 +560,10 @@ public class Framework
 				if ( !response.isCommitted() )
 					response.sendError( 500 );
 			}
+			finally
+			{
+				fwList.remove( Thread.currentThread().getId() );
+			}
 		}
 		catch ( QuercusDieException e )
 		{
@@ -576,6 +592,8 @@ public class Framework
 			
 			if ( ws != null && env != null && env.getDuplex() == null )
 				ws.close();
+			
+			fwList.remove( Thread.currentThread().getId() );
 		}
 	}
 	
@@ -671,7 +689,12 @@ public class Framework
 		
 		return sb.toString();
 	}
-
+	
+	public static SiteManager getSiteManager()
+	{
+		return _sites;
+	}
+	
 	public static void initalizeFramework()
 	{
 		YamlConfiguration config = Loader.getConfig();
