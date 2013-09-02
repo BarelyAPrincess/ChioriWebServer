@@ -1,7 +1,6 @@
 *.class
 
 # Package Files #
-*.jar
 *.war
 *.ear
 /bin
@@ -13,4 +12,4 @@
 /permissions.yml
 /resin-data
 /webroot
-/lib
+/lib/META-INF
