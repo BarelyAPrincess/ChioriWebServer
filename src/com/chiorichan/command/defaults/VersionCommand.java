@@ -22,7 +22,7 @@ public class VersionCommand extends ChioriCommand
 		
 		this.description = "Gets the version of this server including any plugins in use";
 		this.usageMessage = "/version [plugin name]";
-		this.setPermission( "Main.command.version" );
+		this.setPermission( "chiori.command.version" );
 		this.setAliases( Arrays.asList( "ver", "about" ) );
 	}
 	
@@ -132,28 +132,5 @@ public class VersionCommand extends ChioriCommand
 		}
 		
 		return result.toString();
-	}
-	
-	@Override
-	public List<String> tabComplete( CommandSender sender, String alias, String[] args )
-	{
-		Validate.notNull( sender, "Sender cannot be null" );
-		Validate.notNull( args, "Arguments cannot be null" );
-		Validate.notNull( alias, "Alias cannot be null" );
-		
-		if ( args.length == 1 )
-		{
-			List<String> completions = new ArrayList<String>();
-			String toComplete = args[0].toLowerCase();
-			for ( Plugin plugin : Loader.getPluginManager().getPlugins() )
-			{
-				if ( StringUtil.startsWithIgnoreCase( plugin.getName(), toComplete ) )
-				{
-					completions.add( plugin.getName() );
-				}
-			}
-			return completions;
-		}
-		return ImmutableList.of();
 	}
 }

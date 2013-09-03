@@ -19,7 +19,7 @@ public class PardonIpCommand extends VanillaCommand
 		super( "pardon-ip" );
 		this.description = "Allows the specified IP address to use this server";
 		this.usageMessage = "/pardon-ip <address>";
-		this.setPermission( "bukkit.command.unban.ip" );
+		this.setPermission( "chiori.command.unban.ip" );
 	}
 	
 	@Override
@@ -44,19 +44,5 @@ public class PardonIpCommand extends VanillaCommand
 		}
 		
 		return true;
-	}
-	
-	@Override
-	public List<String> tabComplete( CommandSender sender, String alias, String[] args ) throws IllegalArgumentException
-	{
-		Validate.notNull( sender, "Sender cannot be null" );
-		Validate.notNull( args, "Arguments cannot be null" );
-		Validate.notNull( alias, "Alias cannot be null" );
-		
-		if ( args.length == 1 )
-		{
-			return StringUtil.copyPartialMatches( args[0], Loader.getInstance().getIPBans(), new ArrayList<String>() );
-		}
-		return ImmutableList.of();
 	}
 }

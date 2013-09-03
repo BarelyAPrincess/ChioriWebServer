@@ -20,7 +20,7 @@ public class PardonCommand extends VanillaCommand
 		super( "pardon" );
 		this.description = "Allows the specified user to use this server";
 		this.usageMessage = "/pardon <user>";
-		this.setPermission( "bukkit.command.unban.user" );
+		this.setPermission( "chiori.command.unban.user" );
 	}
 	
 	@Override
@@ -37,28 +37,5 @@ public class PardonCommand extends VanillaCommand
 		Loader.getInstance().getOfflineUser( args[0] ).setBanned( false );
 		Command.broadcastCommandMessage( sender, "Pardoned " + args[0] );
 		return true;
-	}
-	
-	@Override
-	public List<String> tabComplete( CommandSender sender, String alias, String[] args ) throws IllegalArgumentException
-	{
-		Validate.notNull( sender, "Sender cannot be null" );
-		Validate.notNull( args, "Arguments cannot be null" );
-		Validate.notNull( alias, "Alias cannot be null" );
-		
-		if ( args.length == 1 )
-		{
-			List<String> completions = new ArrayList<String>();
-			for ( User user : Loader.getInstance().getBannedUsers() )
-			{
-				String name = user.getName();
-				if ( StringUtil.startsWithIgnoreCase( name, args[0] ) )
-				{
-					completions.add( name );
-				}
-			}
-			return completions;
-		}
-		return ImmutableList.of();
 	}
 }

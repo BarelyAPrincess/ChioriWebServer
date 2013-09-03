@@ -18,7 +18,7 @@ public class StopCommand extends VanillaCommand
 		super( "stop" );
 		this.description = "Stops the server with optional reason";
 		this.usageMessage = "/stop [reason]";
-		this.setPermission( "Main.command.stop" );
+		this.setPermission( "chiori.command.stop" );
 	}
 	
 	@Override
@@ -40,15 +40,5 @@ public class StopCommand extends VanillaCommand
 		}
 		
 		return true;
-	}
-	
-	@Override
-	public List<String> tabComplete( CommandSender sender, String alias, String[] args ) throws IllegalArgumentException
-	{
-		Validate.notNull( sender, "Sender cannot be null" );
-		Validate.notNull( args, "Arguments cannot be null" );
-		Validate.notNull( alias, "Alias cannot be null" );
-		
-		return ImmutableList.of();
 	}
 }

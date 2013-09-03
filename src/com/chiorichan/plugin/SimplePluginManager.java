@@ -23,8 +23,8 @@ import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.Loader;
 import com.chiorichan.command.Command;
+import com.chiorichan.command.CommandMap;
 import com.chiorichan.command.PluginCommandYamlParser;
-import com.chiorichan.command.SimpleCommandMap;
 import com.chiorichan.event.Event;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.HandlerList;
@@ -45,7 +45,7 @@ public final class SimplePluginManager implements PluginManager
 	private final List<Plugin> plugins = new ArrayList<Plugin>();
 	private final Map<String, Plugin> lookupNames = new HashMap<String, Plugin>();
 	private static File updateDirectory = null;
-	private final SimpleCommandMap commandMap;
+	private final CommandMap commandMap;
 	private final Map<String, Permission> permissions = new HashMap<String, Permission>();
 	private final Map<Boolean, Set<Permission>> defaultPerms = new LinkedHashMap<Boolean, Set<Permission>>();
 	private final Map<String, Map<Permissible, Boolean>> permSubs = new HashMap<String, Map<Permissible, Boolean>>();
@@ -53,7 +53,7 @@ public final class SimplePluginManager implements PluginManager
 	private boolean useTimings = false;
 	private Set<String> loadedPlugins = new HashSet<String>();
 	
-	public SimplePluginManager(Loader instance, SimpleCommandMap commandMap)
+	public SimplePluginManager(Loader instance, CommandMap commandMap)
 	{
 		server = instance;
 		this.commandMap = commandMap;
@@ -157,7 +157,7 @@ public final class SimplePluginManager implements PluginManager
 			}
 			catch ( InvalidDescriptionException ex )
 			{
-				server.getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", ex );
+				Loader.getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", ex );
 				continue;
 			}
 			
@@ -235,7 +235,7 @@ public final class SimplePluginManager implements PluginManager
 							softDependencies.remove( plugin );
 							dependencies.remove( plugin );
 							
-							server.getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", new UnknownDependencyException( dependency ) );
+							Loader.getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", new UnknownDependencyException( dependency ) );
 							break;
 						}
 					}
@@ -280,7 +280,7 @@ public final class SimplePluginManager implements PluginManager
 					}
 					catch ( InvalidPluginException ex )
 					{
-						server.getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", ex );
+						Loader.getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", ex );
 					}
 				}
 			}
@@ -310,7 +310,7 @@ public final class SimplePluginManager implements PluginManager
 						}
 						catch ( InvalidPluginException ex )
 						{
-							server.getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", ex );
+							Loader.getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", ex );
 						}
 					}
 				}
@@ -325,7 +325,7 @@ public final class SimplePluginManager implements PluginManager
 					{
 						File file = failedPluginIterator.next();
 						failedPluginIterator.remove();
-						server.getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "': circular dependency detected" );
+						Loader.getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "': circular dependency detected" );
 					}
 				}
 			}
@@ -353,7 +353,7 @@ public final class SimplePluginManager implements PluginManager
 		}
 		catch ( InvalidDescriptionException ex )
 		{
-			server.getLogger().log( Level.SEVERE, "Could not load internal plugin description file", ex );
+			Loader.getLogger().log( Level.SEVERE, "Could not load internal plugin description file", ex );
 			return;
 		}
 		
@@ -421,7 +421,7 @@ public final class SimplePluginManager implements PluginManager
 					softDependencies.remove( plugin );
 					dependencies.remove( plugin );
 					
-					server.getLogger().log( Level.SEVERE, "Could not load plugin '" + plugin + "'", new UnknownDependencyException( dependency ) );
+					Loader.getLogger().log( Level.SEVERE, "Could not load plugin '" + plugin + "'", new UnknownDependencyException( dependency ) );
 					break;
 				}
 			}
@@ -453,7 +453,7 @@ public final class SimplePluginManager implements PluginManager
 			softDependencies.clear();
 			dependencies.clear();
 			
-			server.getLogger().log( Level.SEVERE, "Could not load plugin '" + plugin + "': a required had not been loaded!" );
+			Loader.getLogger().log( Level.SEVERE, "Could not load plugin '" + plugin + "': a required had not been loaded!" );
 		}
 		
 		// We attempt to get the loader JavaPluginLoader so we can use the method loadPlugin( descriptionFile ), This
@@ -605,7 +605,7 @@ public final class SimplePluginManager implements PluginManager
 			}
 			catch ( Throwable ex )
 			{
-				server.getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while enabling " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
+				Loader.getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while enabling " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 			}
 			
 			HandlerList.bakeAll();
@@ -631,16 +631,16 @@ public final class SimplePluginManager implements PluginManager
 			}
 			catch ( Throwable ex )
 			{
-				server.getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while disabling " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
+				Loader.getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while disabling " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 			}
 			
 			try
 			{
-				server.getScheduler().cancelTasks( plugin );
+				Loader.getScheduler().cancelTasks( plugin );
 			}
 			catch ( Throwable ex )
 			{
-				server.getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while cancelling tasks for " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
+				Loader.getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while cancelling tasks for " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 			}
 			
 			try
@@ -649,7 +649,7 @@ public final class SimplePluginManager implements PluginManager
 			}
 			catch ( Throwable ex )
 			{
-				server.getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while unregistering services for " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
+				Loader.getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while unregistering services for " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 			}
 			
 			try
@@ -658,7 +658,7 @@ public final class SimplePluginManager implements PluginManager
 			}
 			catch ( Throwable ex )
 			{
-				server.getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while unregistering events for " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
+				Loader.getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while unregistering events for " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 			}
 			
 			try
@@ -668,7 +668,7 @@ public final class SimplePluginManager implements PluginManager
 			}
 			catch ( Throwable ex )
 			{
-				server.getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while unregistering plugin channels for " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
+				Loader.getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while unregistering plugin channels for " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 			}
 		}
 	}
@@ -742,12 +742,12 @@ public final class SimplePluginManager implements PluginManager
 				{
 					plugin.setNaggable( false );
 					
-					server.getLogger().log( Level.SEVERE, String.format( "Nag author(s): '%s' of '%s' about the following: %s", plugin.getDescription().getAuthors(), plugin.getDescription().getFullName(), ex.getMessage() ) );
+					Loader.getLogger().log( Level.SEVERE, String.format( "Nag author(s): '%s' of '%s' about the following: %s", plugin.getDescription().getAuthors(), plugin.getDescription().getFullName(), ex.getMessage() ) );
 				}
 			}
 			catch ( Throwable ex )
 			{
-				server.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getPlugin().getDescription().getFullName(), ex );
+				Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getPlugin().getDescription().getFullName(), ex );
 			}
 		}
 	}

@@ -20,7 +20,7 @@ public class BanListCommand extends VanillaCommand
 		super( "banlist" );
 		this.description = "View all Users banned from this server";
 		this.usageMessage = "/banlist [ips|Users]";
-		this.setPermission( "bukkit.command.ban.list" );
+		this.setPermission( "chiori.command.ban.list" );
 	}
 	
 	@Override
@@ -52,19 +52,5 @@ public class BanListCommand extends VanillaCommand
 		sender.sendMessage( "There are " + banlist.length + " total banned Users:" );
 		sender.sendMessage( message.toString() );
 		return true;
-	}
-	
-	@Override
-	public List<String> tabComplete( CommandSender sender, String alias, String[] args )
-	{
-		Validate.notNull( sender, "Sender cannot be null" );
-		Validate.notNull( args, "Arguments cannot be null" );
-		Validate.notNull( alias, "Alias cannot be null" );
-		
-		if ( args.length == 1 )
-		{
-			return StringUtil.copyPartialMatches( args[0], BANLIST_TYPES, new ArrayList<String>( BANLIST_TYPES.size() ) );
-		}
-		return ImmutableList.of();
 	}
 }

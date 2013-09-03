@@ -15,7 +15,7 @@ public class SaveOnCommand extends VanillaCommand
 		super( "save-on" );
 		this.description = "Enables server autosaving";
 		this.usageMessage = "/save-on";
-		this.setPermission( "bukkit.command.save.enable" );
+		this.setPermission( "chiori.command.save.enable" );
 	}
 	
 	@Override
@@ -31,15 +31,5 @@ public class SaveOnCommand extends VanillaCommand
 		
 		Command.broadcastCommandMessage( sender, "Enabled level saving.." );
 		return true;
-	}
-	
-	@Override
-	public List<String> tabComplete( CommandSender sender, String alias, String[] args ) throws IllegalArgumentException
-	{
-		Validate.notNull( sender, "Sender cannot be null" );
-		Validate.notNull( args, "Arguments cannot be null" );
-		Validate.notNull( alias, "Alias cannot be null" );
-		
-		return ImmutableList.of();
 	}
 }

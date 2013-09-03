@@ -1,92 +1,300 @@
 package com.chiorichan.command;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
 
-public interface CommandMap
+import com.chiorichan.Loader;
+import com.chiorichan.command.defaults.BanCommand;
+import com.chiorichan.command.defaults.BanIpCommand;
+import com.chiorichan.command.defaults.BanListCommand;
+import com.chiorichan.command.defaults.DeopCommand;
+import com.chiorichan.command.defaults.KickCommand;
+import com.chiorichan.command.defaults.ListCommand;
+import com.chiorichan.command.defaults.MeCommand;
+import com.chiorichan.command.defaults.OpCommand;
+import com.chiorichan.command.defaults.PardonCommand;
+import com.chiorichan.command.defaults.PardonIpCommand;
+import com.chiorichan.command.defaults.PluginsCommand;
+import com.chiorichan.command.defaults.ReloadCommand;
+import com.chiorichan.command.defaults.SaveCommand;
+import com.chiorichan.command.defaults.SaveOffCommand;
+import com.chiorichan.command.defaults.SaveOnCommand;
+import com.chiorichan.command.defaults.SayCommand;
+import com.chiorichan.command.defaults.StopCommand;
+import com.chiorichan.command.defaults.TellCommand;
+import com.chiorichan.command.defaults.VanillaCommand;
+import com.chiorichan.command.defaults.VersionCommand;
+import com.chiorichan.command.defaults.WhitelistCommand;
+
+public class CommandMap
 {
+	private static final Pattern PATTERN_ON_SPACE = Pattern.compile( " ", Pattern.LITERAL );
+	protected final Map<String, Command> knownCommands = new HashMap<String, Command>();
+	protected final Set<String> aliases = new HashSet<String>();
+	protected static final Set<VanillaCommand> fallbackCommands = new HashSet<VanillaCommand>();
+	
+	static
+	{
+		fallbackCommands.add( new ListCommand() );
+		fallbackCommands.add( new OpCommand() );
+		fallbackCommands.add( new DeopCommand() );
+		fallbackCommands.add( new BanIpCommand() );
+		fallbackCommands.add( new PardonIpCommand() );
+		fallbackCommands.add( new BanCommand() );
+		fallbackCommands.add( new PardonCommand() );
+		fallbackCommands.add( new KickCommand() );
+		fallbackCommands.add( new SayCommand() );
+		fallbackCommands.add( new WhitelistCommand() );
+		fallbackCommands.add( new TellCommand() );
+		fallbackCommands.add( new MeCommand() );
+		fallbackCommands.add( new BanListCommand() );
+	}
+	
+	public CommandMap()
+	{
+		setDefaultCommands();
+	}
+	
+	private void setDefaultCommands()
+	{
+		register( "chiori", new SaveCommand() );
+		register( "chiori", new SaveOnCommand() );
+		register( "chiori", new SaveOffCommand() );
+		register( "chiori", new StopCommand() );
+		register( "chiori", new VersionCommand( "version" ) );
+		register( "chiori", new ReloadCommand( "reload" ) );
+		register( "chiori", new PluginsCommand( "plugins" ) );
+	}
 	
 	/**
-	 * Registers all the commands belonging to a certain plugin. Caller can use:- command.getName() to determine the
-	 * label registered for this command command.getAliases() to determine the aliases which where registered
-	 * 
-	 * @param fallbackPrefix
-	 *           a prefix which is prepended to each command with a ':' one or more times to make the command unique
-	 * @param commands
-	 *           a list of commands to register
+	 * {@inheritDoc}
 	 */
-	public void registerAll( String fallbackPrefix, List<Command> commands );
+	public void registerAll( String fallbackPrefix, List<Command> commands )
+	{
+		if ( commands != null )
+		{
+			for ( Command c : commands )
+			{
+				register( fallbackPrefix, c );
+			}
+		}
+	}
 	
 	/**
-	 * Registers a command. Returns true on success; false if name is already taken and fallback had to be used. Caller
-	 * can use:- command.getName() to determine the label registered for this command command.getAliases() to determine
-	 * the aliases which where registered
+	 * {@inheritDoc}
+	 */
+	public boolean register( String fallbackPrefix, Command command )
+	{
+		return register( command.getName(), fallbackPrefix, command );
+	}
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	public boolean register( String label, String fallbackPrefix, Command command )
+	{
+		boolean registeredPassedLabel = register( label, fallbackPrefix, command, false );
+		
+		Iterator<String> iterator = command.getAliases().iterator();
+		while ( iterator.hasNext() )
+		{
+			if ( !register( iterator.next(), fallbackPrefix, command, true ) )
+			{
+				iterator.remove();
+			}
+		}
+		
+		// Register to us so further updates of the commands label and aliases are postponed until its reregistered
+		command.register( this );
+		
+		return registeredPassedLabel;
+	}
+	
+	/**
+	 * Registers a command with the given name is possible, otherwise uses fallbackPrefix to create a unique name if its
+	 * not an alias
 	 * 
 	 * @param label
-	 *           the label of the command, without the '/'-prefix.
+	 *           the name of the command, without the '/'-prefix.
 	 * @param fallbackPrefix
 	 *           a prefix which is prepended to the command with a ':' one or more times to make the command unique
 	 * @param command
 	 *           the command to register
-	 * @return true if command was registered with the passed in label, false otherwise, which indicates the
-	 *         fallbackPrefix was used one or more times
+	 * @return true if command was registered with the passed in label, false otherwise. If isAlias was true a return of
+	 *         false indicates no command was registerd If isAlias was false a return of false indicates the
+	 *         fallbackPrefix was used one or more times to create a unique name for the command
 	 */
-	public boolean register( String label, String fallbackPrefix, Command command );
+	private synchronized boolean register( String label, String fallbackPrefix, Command command, boolean isAlias )
+	{
+		String lowerLabel = label.trim().toLowerCase();
+		
+		if ( isAlias && knownCommands.containsKey( lowerLabel ) )
+		{
+			// Request is for an alias and it conflicts with a existing command or previous alias ignore it
+			// Note: This will mean it gets removed from the commands list of active aliases
+			return false;
+		}
+		
+		String lowerPrefix = fallbackPrefix.trim().toLowerCase();
+		boolean registerdPassedLabel = true;
+		
+		// If the command exists but is an alias we overwrite it, otherwise we rename it based on the fallbackPrefix
+		while ( knownCommands.containsKey( lowerLabel ) && !aliases.contains( lowerLabel ) )
+		{
+			lowerLabel = lowerPrefix + ":" + lowerLabel;
+			registerdPassedLabel = false;
+		}
+		
+		if ( isAlias )
+		{
+			aliases.add( lowerLabel );
+		}
+		else
+		{
+			// Ensure lowerLabel isn't listed as a alias anymore and update the commands registered name
+			aliases.remove( lowerLabel );
+			command.setLabel( lowerLabel );
+		}
+		knownCommands.put( lowerLabel, command );
+		
+		return registerdPassedLabel;
+	}
+	
+	protected Command getFallback( String label )
+	{
+		for ( VanillaCommand cmd : fallbackCommands )
+		{
+			if ( cmd.matches( label ) )
+			{
+				return cmd;
+			}
+		}
+		
+		return null;
+	}
+	
+	public Set<VanillaCommand> getFallbackCommands()
+	{
+		return Collections.unmodifiableSet( fallbackCommands );
+	}
 	
 	/**
-	 * Registers a command. Returns true on success; false if name is already taken and fallback had to be used. Caller
-	 * can use:- command.getName() to determine the label registered for this command command.getAliases() to determine
-	 * the aliases which where registered
-	 * 
-	 * @param fallbackPrefix
-	 *           a prefix which is prepended to the command with a ':' one or more times to make the command unique
-	 * @param command
-	 *           the command to register, from which label is determined from the command name
-	 * @return true if command was registered with the passed in label, false otherwise, which indicates the
-	 *         fallbackPrefix was used one or more times
+	 * {@inheritDoc}
 	 */
-	public boolean register( String fallbackPrefix, Command command );
+	public boolean dispatch( CommandSender sender, String commandLine ) throws CommandException
+	{
+		String[] args = PATTERN_ON_SPACE.split( commandLine );
+		
+		if ( args.length == 0 )
+		{
+			return false;
+		}
+		
+		String sentCommandLabel = args[0].toLowerCase();
+		Command target = getCommand( sentCommandLabel );
+		
+		if ( target == null )
+		{
+			return false;
+		}
+		
+		try
+		{
+			// Note: we don't return the result of target.execute as thats success / failure, we return handled (true) or
+			// not handled (false)
+			target.execute( sender, sentCommandLabel, Arrays.copyOfRange( args, 1, args.length ) );
+		}
+		catch ( CommandException ex )
+		{
+			throw ex;
+		}
+		catch ( Throwable ex )
+		{
+			throw new CommandException( "Unhandled exception executing '" + commandLine + "' in " + target, ex );
+		}
+		
+		// return true as command was handled
+		return true;
+	}
 	
-	/**
-	 * Looks for the requested command and executes it if found.
-	 * 
-	 * @param sender
-	 *           The command's sender
-	 * @param cmdLine
-	 *           command + arguments. Example: "/test abc 123"
-	 * @return returns false if no target is found, true otherwise.
-	 * @throws CommandException
-	 *            Thrown when the executor for the given command fails with an unhandled exception
-	 */
-	public boolean dispatch( CommandSender sender, String cmdLine ) throws CommandException;
+	public synchronized void clearCommands()
+	{
+		for ( Map.Entry<String, Command> entry : knownCommands.entrySet() )
+		{
+			entry.getValue().unregister( this );
+		}
+		knownCommands.clear();
+		aliases.clear();
+		setDefaultCommands();
+	}
 	
-	/**
-	 * Clears all registered commands.
-	 */
-	public void clearCommands();
+	public Command getCommand( String name )
+	{
+		Command target = knownCommands.get( name.toLowerCase() );
+		if ( target == null )
+		{
+			target = getFallback( name );
+		}
+		return target;
+	}
 	
-	/**
-	 * Gets the command registered to the specified name
-	 * 
-	 * @param name
-	 *           Name of the command to retrieve
-	 * @return Command with the specified name or null if a command with that label doesn't exist
-	 */
-	public Command getCommand( String name );
+	public Collection<Command> getCommands()
+	{
+		return knownCommands.values();
+	}
 	
-	/**
-	 * Looks for the requested command and executes an appropriate tab-completer if found. This method will also
-	 * tab-complete partial commands.
-	 * 
-	 * @param sender
-	 *           The command's sender.
-	 * @param cmdLine
-	 *           The entire command string to tab-complete, excluding initial slash.
-	 * @return a list of possible tab-completions. This list may be immutable. Will be null if no matching command of
-	 *         which sender has permission.
-	 * @throws CommandException
-	 *            Thrown when the tab-completer for the given command fails with an unhandled exception
-	 * @throws IllegalArgumentException
-	 *            if either sender or cmdLine are null
-	 */
-	public List<String> tabComplete( CommandSender sender, String cmdLine ) throws IllegalArgumentException;
+	public void registerServerAliases()
+	{
+		Map<String, String[]> values = Loader.getInstance().getCommandAliases();
+		
+		for ( String alias : values.keySet() )
+		{
+			String[] targetNames = values.get( alias );
+			List<Command> targets = new ArrayList<Command>();
+			StringBuilder bad = new StringBuilder();
+			
+			for ( String name : targetNames )
+			{
+				Command command = getCommand( name );
+				
+				if ( command == null )
+				{
+					if ( bad.length() > 0 )
+					{
+						bad.append( ", " );
+					}
+					bad.append( name );
+				}
+				else
+				{
+					targets.add( command );
+				}
+			}
+			
+			// We register these as commands so they have absolute priority.
+			
+			if ( targets.size() > 0 )
+			{
+				knownCommands.put( alias.toLowerCase(), new MultipleCommandAlias( alias.toLowerCase(), targets.toArray( new Command[0] ) ) );
+			}
+			else
+			{
+				knownCommands.remove( alias.toLowerCase() );
+			}
+			
+			if ( bad.length() > 0 )
+			{
+				Loader.getLogger().warning( "The following command(s) could not be aliased under '" + alias + "' because they do not exist: " + bad );
+			}
+		}
+	}
 }

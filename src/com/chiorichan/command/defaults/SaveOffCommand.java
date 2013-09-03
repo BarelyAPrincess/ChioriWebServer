@@ -16,7 +16,7 @@ public class SaveOffCommand extends VanillaCommand
 		super( "save-off" );
 		this.description = "Disables server autosaving";
 		this.usageMessage = "/save-off";
-		this.setPermission( "Main.command.save.disable" );
+		this.setPermission( "chiori.command.save.disable" );
 	}
 	
 	@Override
@@ -32,15 +32,5 @@ public class SaveOffCommand extends VanillaCommand
 		
 		Command.broadcastCommandMessage( sender, "Disabled level saving.." );
 		return true;
-	}
-	
-	@Override
-	public List<String> tabComplete( CommandSender sender, String alias, String[] args ) throws IllegalArgumentException
-	{
-		Validate.notNull( sender, "Sender cannot be null" );
-		Validate.notNull( args, "Arguments cannot be null" );
-		Validate.notNull( alias, "Alias cannot be null" );
-		
-		return ImmutableList.of();
 	}
 }

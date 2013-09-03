@@ -22,7 +22,7 @@ public class WhitelistCommand extends VanillaCommand
 		super( "whitelist" );
 		this.description = "Manages the list of Users allowed to use this server";
 		this.usageMessage = "/whitelist (add|remove) <User>\n/whitelist (on|off|list|reload)";
-		this.setPermission( "bukkit.command.whitelist.reload;bukkit.command.whitelist.enable;bukkit.command.whitelist.disable;bukkit.command.whitelist.list;bukkit.command.whitelist.add;bukkit.command.whitelist.remove" );
+		this.setPermission( "chiori.command.whitelist.reload;chiori.command.whitelist.enable;chiori.command.whitelist.disable;chiori.command.whitelist.list;chiori.command.whitelist.add;chiori.command.whitelist.remove" );
 	}
 	
 	@Override
@@ -118,48 +118,5 @@ public class WhitelistCommand extends VanillaCommand
 		}
 		
 		return false;
-	}
-	
-	@Override
-	public List<String> tabComplete( CommandSender sender, String alias, String[] args )
-	{
-		Validate.notNull( sender, "Sender cannot be null" );
-		Validate.notNull( args, "Arguments cannot be null" );
-		Validate.notNull( alias, "Alias cannot be null" );
-		
-		if ( args.length == 1 )
-		{
-			return StringUtil.copyPartialMatches( args[0], WHITELIST_SUBCOMMANDS, new ArrayList<String>( WHITELIST_SUBCOMMANDS.size() ) );
-		}
-		else if ( args.length == 2 )
-		{
-			if ( args[0].equalsIgnoreCase( "add" ) )
-			{
-				List<String> completions = new ArrayList<String>();
-				for ( User User : Loader.getInstance().getOfflineUsers() )
-				{
-					String name = User.getName();
-					if ( StringUtil.startsWithIgnoreCase( name, args[1] ) && !User.isWhitelisted() )
-					{
-						completions.add( name );
-					}
-				}
-				return completions;
-			}
-			else if ( args[0].equalsIgnoreCase( "remove" ) )
-			{
-				List<String> completions = new ArrayList<String>();
-				for ( User User : Loader.getInstance().getWhitelistedUsers() )
-				{
-					String name = User.getName();
-					if ( StringUtil.startsWithIgnoreCase( name, args[1] ) )
-					{
-						completions.add( name );
-					}
-				}
-				return completions;
-			}
-		}
-		return ImmutableList.of();
 	}
 }

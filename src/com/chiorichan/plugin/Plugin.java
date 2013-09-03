@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.util.logging.Logger;
 
 import com.chiorichan.Loader;
-import com.chiorichan.command.TabExecutor;
+import com.chiorichan.command.CommandExecutor;
 import com.chiorichan.file.FileConfiguration;
 
 /**
@@ -13,7 +13,7 @@ import com.chiorichan.file.FileConfiguration;
  * <p>
  * The use of {@link PluginBase} is recommended for actual Implementation
  */
-public interface Plugin extends TabExecutor
+public interface Plugin extends CommandExecutor
 {
 	/**
 	 * Returns the folder that the plugin data's files are located in. The folder may not yet exist.

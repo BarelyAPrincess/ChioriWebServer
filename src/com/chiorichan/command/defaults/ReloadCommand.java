@@ -14,7 +14,7 @@ public class ReloadCommand extends ChioriCommand
 		super( name );
 		this.description = "Reloads the server configuration and plugins";
 		this.usageMessage = "/reload";
-		this.setPermission( "Main.command.reload" );
+		this.setPermission( "chiori.command.reload" );
 		this.setAliases( Arrays.asList( "rl" ) );
 	}
 	

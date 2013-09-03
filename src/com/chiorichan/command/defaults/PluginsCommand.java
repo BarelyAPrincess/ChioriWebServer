@@ -14,7 +14,7 @@ public class PluginsCommand extends ChioriCommand
 		super( name );
 		this.description = "Gets a list of plugins running on the server";
 		this.usageMessage = "/plugins";
-		this.setPermission( "bukkit.command.plugins" );
+		this.setPermission( "chiori.command.plugins" );
 		this.setAliases( Arrays.asList( "pl" ) );
 	}
 	

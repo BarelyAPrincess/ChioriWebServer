@@ -21,7 +21,7 @@ public class BanIpCommand extends VanillaCommand
 		super( "ban-ip" );
 		this.description = "Prevents the specified IP address from using this server";
 		this.usageMessage = "/ban-ip <address|User> [reason ...]";
-		this.setPermission( "bukkit.command.ban.ip" );
+		this.setPermission( "chiori.command.ban.ip" );
 	}
 	
 	@Override
@@ -62,19 +62,5 @@ public class BanIpCommand extends VanillaCommand
 		Loader.getInstance().banIP( ip );
 		
 		Command.broadcastCommandMessage( sender, "Banned IP Address " + ip );
-	}
-	
-	@Override
-	public List<String> tabComplete( CommandSender sender, String alias, String[] args ) throws IllegalArgumentException
-	{
-		Validate.notNull( sender, "Sender cannot be null" );
-		Validate.notNull( args, "Arguments cannot be null" );
-		Validate.notNull( alias, "Alias cannot be null" );
-		
-		if ( args.length == 1 )
-		{
-			return super.tabComplete( sender, alias, args );
-		}
-		return ImmutableList.of();
 	}
 }

@@ -18,7 +18,7 @@ public class KickCommand extends VanillaCommand
 		super( "kick" );
 		this.description = "Removes the specified user from the server";
 		this.usageMessage = "/kick <user> [reason ...]";
-		this.setPermission( "bukkit.command.kick" );
+		this.setPermission( "chiori.command.kick" );
 	}
 	
 	@Override
@@ -52,19 +52,5 @@ public class KickCommand extends VanillaCommand
 		}
 		
 		return true;
-	}
-	
-	@Override
-	public List<String> tabComplete( CommandSender sender, String alias, String[] args ) throws IllegalArgumentException
-	{
-		Validate.notNull( sender, "Sender cannot be null" );
-		Validate.notNull( args, "Arguments cannot be null" );
-		Validate.notNull( alias, "Alias cannot be null" );
-		
-		if ( args.length >= 1 )
-		{
-			return super.tabComplete( sender, alias, args );
-		}
-		return ImmutableList.of();
 	}
 }

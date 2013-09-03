@@ -2,7 +2,6 @@ package com.chiorichan.framework;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -18,9 +17,9 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.logging.Level;
 
-import javax.servlet.FilterChain;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -59,7 +58,6 @@ public class Framework
 	
 	protected HttpServletRequest request;
 	protected HttpServletResponse response;
-	protected FilterChain chain;
 	protected QuercusContext _quercus;
 	protected ServletContext _servletContext;
 	
@@ -81,11 +79,10 @@ public class Framework
 	
 	protected static Map<Long, Framework> fwList = new HashMap<Long, Framework>();
 	
-	public Framework(HttpServletRequest request0, HttpServletResponse response0, FilterChain chain0, ServletContext servletContext)
+	public Framework(HttpServletRequest request0, HttpServletResponse response0, ServletContext servletContext)
 	{
 		request = request0;
 		response = response0;
-		chain = chain0;
 		_servletContext = servletContext;
 		
 		fwList.put( Thread.currentThread().getId(), this );
@@ -182,7 +179,7 @@ public class Framework
 		
 		if ( !rewriteVirtual( siteDomain, siteSubDomain, uri ) )
 		{
-			File siteRoot = new File( Loader.webroot, currentSite.siteId );
+			File siteRoot = new File( Loader.webroot, currentSite.getWebRoot( siteSubDomain ) );
 			
 			if ( !siteRoot.exists() )
 				siteRoot.mkdirs();
@@ -192,15 +189,61 @@ public class Framework
 			
 			File dest = new File( siteRoot, uri );
 			
-			if ( uri.endsWith( ".php" ) || uri.endsWith( ".php5" ) || ( dest.isDirectory() && new File( dest, "index.php" ).exists() ) )
+			if ( uri.endsWith( ".php" ) || uri.endsWith( ".php5" ) || ( dest.isDirectory() && new File( dest, "index.php" ).exists() ) || ( dest.isDirectory() && new File( dest, "index.php5" ).exists() ) )
 			{
 				this.loadPageInternal( "", "", "", uri, "", "-1" );
 			}
 			else
 			{
-				String target = currentSite.getWebRoot( siteSubDomain ) + "/" + uri;
-				Loader.getLogger().fine( "Forwarding request to the site (" + currentSite.siteId + ") webroot at '" + target + "'" );
-				request.getRequestDispatcher( target ).forward( request, response );
+				if ( dest.isDirectory() )
+				{
+					if ( new File( dest, "index.html" ).exists() )
+						uri = uri + "/index.html";
+					else if ( new File( dest, "index.htm" ).exists() )
+						uri = uri + "/index.htm";
+					else
+						response.sendError( 403, "Directory Listing is Denied on this Server!" );
+				}
+				
+				dest = new File( siteRoot, uri );
+				
+				String target = dest.getAbsolutePath();
+				Loader.getLogger().fine( "Requesting file (" + currentSite.siteId + ") '" + target + "'" );
+				
+				FileInputStream is;
+				try
+				{
+					is = new FileInputStream( target );
+				}
+				catch ( FileNotFoundException e )
+				{
+					// e.printStackTrace();
+					response.sendError( 404 );
+					return;
+				}
+				
+				try
+				{
+					ServletOutputStream buffer = response.getOutputStream();
+					
+					int nRead;
+					byte[] data = new byte[16384];
+					
+					while ( ( nRead = is.read( data, 0, data.length ) ) != -1 )
+					{
+						buffer.write( data, 0, nRead );
+					}
+					
+					buffer.flush();
+					
+					is.close();
+				}
+				catch ( IOException e )
+				{
+					e.printStackTrace();
+					response.sendError( 500, e.getMessage() );
+					return;
+				}
 			}
 		}
 	}
@@ -527,7 +570,7 @@ public class Framework
 				if ( event.sourceChanged() )
 					source = event.getSource();
 				
-				response.setContentLength( source.getBytes("ISO-8859-1").length );
+				response.setContentLength( source.getBytes( "ISO-8859-1" ).length );
 				response.getOutputStream().write( source.getBytes( "ISO-8859-1" ) );
 				
 				getUserService().saveSession();
@@ -554,7 +597,7 @@ public class Framework
 			{
 				e.printStackTrace();
 				
-				if ( !response.isCommitted() )
+				if ( !response.isCommitted() && ws != null )
 					e.printStackTrace( ws.getPrintWriter() );
 				
 				if ( !response.isCommitted() )
@@ -871,11 +914,6 @@ public class Framework
 	public HttpServletRequest getRequest()
 	{
 		return request;
-	}
-	
-	public FilterChain getChain()
-	{
-		return chain;
 	}
 	
 	public String getProduct()

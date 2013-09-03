@@ -20,7 +20,7 @@ public class DeopCommand extends VanillaCommand
 		super( "deop" );
 		this.description = "Takes the specified User's operator status";
 		this.usageMessage = "/deop <User>";
-		this.setPermission( "bukkit.command.op.take" );
+		this.setPermission( "chiori.command.op.take" );
 	}
 	
 	@Override
@@ -44,28 +44,5 @@ public class DeopCommand extends VanillaCommand
 		
 		Command.broadcastCommandMessage( sender, "De-opped " + args[0] );
 		return true;
-	}
-	
-	@Override
-	public List<String> tabComplete( CommandSender sender, String alias, String[] args ) throws IllegalArgumentException
-	{
-		Validate.notNull( sender, "Sender cannot be null" );
-		Validate.notNull( args, "Arguments cannot be null" );
-		Validate.notNull( alias, "Alias cannot be null" );
-		
-		if ( args.length == 1 )
-		{
-			List<String> completions = new ArrayList<String>();
-			for ( User user : Loader.getInstance().getOfflineUsers() )
-			{
-				String UserName = user.getName();
-				if ( user.isOp() && StringUtil.startsWithIgnoreCase( UserName, args[0] ) )
-				{
-					completions.add( UserName );
-				}
-			}
-			return completions;
-		}
-		return ImmutableList.of();
 	}
 }

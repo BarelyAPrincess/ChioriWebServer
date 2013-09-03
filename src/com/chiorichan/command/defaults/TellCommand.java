@@ -12,7 +12,7 @@ public class TellCommand extends VanillaCommand
 		super( "tell" );
 		this.description = "Sends a private message to the given user";
 		this.usageMessage = "/tell <user> <message>";
-		this.setPermission( "bukkit.command.tell" );
+		this.setPermission( "chiori.command.tell" );
 	}
 	
 	@Override

@@ -13,6 +13,8 @@ import java.util.TreeMap;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import vnet.java.util.MySQLUtils;
+
 import com.caucho.quercus.env.ArrayValueImpl;
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
@@ -382,17 +384,132 @@ public class FrameworkDatabaseEngine
 	
 	public boolean delete( String table, ArrayValueImpl where, int limit )
 	{
-		return false;
+		String whr = "";
+		Map<String, Object> whereMap = where.toJavaMap( fw.getEnv(), HashMap.class );
+		
+		String tmp = "", opr = "", opr2 = "";
+		
+		for ( Entry<String, Object> entry : whereMap.entrySet() )
+		{
+			if ( entry.getValue() instanceof Map )
+			{
+				opr = "AND";
+				if ( entry.getKey().indexOf( "|" ) >= 0 )
+					opr = "OR";
+				if ( entry.getKey().indexOf( "&" ) >= 0 )
+					opr = "AND";
+				
+				String tmp2 = "";
+				Map<String, Object> val = (Map<String, Object>) entry.getValue();
+				
+				for ( Entry<String, Object> entry2 : val.entrySet() )
+				{
+					opr2 = "AND";
+					if ( entry.getKey().indexOf( "|" ) >= 0 )
+						opr = "OR";
+					if ( entry.getKey().indexOf( "&" ) >= 0 )
+						opr = "AND";
+					
+					String key = entry2.getKey().replace( "|", "" ).replace( "&", "" );
+					tmp2 = "`" + key + "` = '" + entry2.getValue() + "'";
+					tmp += ( tmp.isEmpty() ) ? tmp2 : opr + " " + tmp2;
+				}
+				
+				whr = ( whr.isEmpty() ) ? "(" + tmp + ")" : whr + " " + opr + " (" + tmp + ")";
+			}
+			else
+			{
+				opr = "AND";
+				if ( entry.getKey().indexOf( "|" ) >= 0 )
+					opr = "OR";
+				if ( entry.getKey().indexOf( "&" ) >= 0 )
+					opr = "AND";
+				
+				String key = entry.getKey().replace( "|", "" ).replace( "&", "" );
+				
+				tmp = "`" + key + "` = '" + entry.getValue() + "'";
+				whr = ( whr.isEmpty() ) ? tmp : whr + " " + opr + " " + tmp;
+			}
+		}
+		
+		return delete( table, whr, limit );
 	}
 	
-	public boolean insert(String table, ArrayValueImpl data)
+	public boolean delete( String table, String where )
 	{
-		return insert(table, data, false);
+		return delete( table, where, 1 );
+	}
+	
+	public boolean delete( String table, String where, int limit )
+	{
+		SqlConnector sql = fw.getCurrentSite().sql;
+		
+		String lmt = "";
+		if ( limit > 0 )
+			lmt = " LIMIT 1";
+		
+		int i = sql.queryUpdate( "DELETE FROM `" + table + "` WHERE " + where + lmt + ";" );
+		
+		Loader.getLogger().info( "Deleting from table " + table + " where " + where + " " + i );
+		
+		return true;
+	}
+	
+	public boolean insert( String table, ArrayValueImpl data )
+	{
+		return insert( table, data, false );
 	}
 	
 	public boolean insert( String table, ArrayValueImpl data, boolean disableInjectionCheck )
 	{
-		return false;
+		SqlConnector sql = fw.getCurrentSite().sql;
+		
+		Map<String, String> whereMap = data.toJavaMap( fw.getEnv(), HashMap.class );
+		
+		String keys = "";
+		String values = "";
+		
+		for ( Entry<String, String> e : whereMap.entrySet() )
+		{
+			String key = MySQLUtils.escape( e.getKey() );
+			String value = MySQLUtils.escape( e.getValue() );
+			
+			if ( keys.isEmpty() )
+			{
+				keys = "`" + key + "`";
+			}
+			else
+			{
+				keys += ", `" + key + "`";
+			}
+			
+			if ( values.isEmpty() )
+			{
+				values = "'" + value + "'";
+			}
+			else
+			{
+				values += ", '" + value + "'";
+			}
+		}
+		
+		String query = "INSERT INTO " + table + " (" + keys + ")VALUES(" + values + ");";
+		
+		if ( !disableInjectionCheck && query.length() < 255 )
+			SQLInjectionDetection( query );
+		
+		int result = sql.queryUpdate( query );
+		
+		if ( result > 0 )
+		{
+			Loader.getLogger().info( "Making INSERT query \"" + query + "\" which affected " + result + " rows." );
+			return true;
+		}
+		else
+		{
+			Loader.getLogger().info( "Making INSERT query \"" + query + "\" which had no affect on the database" );
+			return false;
+		}
 	}
 	
 	public String escape( String str )

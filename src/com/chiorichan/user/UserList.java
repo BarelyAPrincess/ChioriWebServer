@@ -13,7 +13,6 @@ import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.framework.Framework;
 import com.chiorichan.framework.Site;
-import com.chiorichan.server.PendingConnection;
 
 public class UserList
 {
@@ -50,7 +49,7 @@ public class UserList
 		maxUsers = 50;
 	}
 	
-	public User attemptLogin( PendingConnection pc, String s, String hostname )
+	public User attemptLogin( String s, String hostname )
 	{
 		return null;
 		/*

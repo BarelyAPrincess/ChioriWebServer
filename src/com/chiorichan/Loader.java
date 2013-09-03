@@ -9,9 +9,7 @@ import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -34,25 +32,21 @@ import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.error.MarkedYAMLException;
 
 import com.caucho.resin.BeanEmbed;
-import com.caucho.resin.FilterMappingEmbed;
 import com.caucho.resin.HttpEmbed;
 import com.caucho.resin.ResinEmbed;
+import com.caucho.resin.ServletMappingEmbed;
 import com.caucho.resin.WebAppEmbed;
 import com.chiorichan.Warning.WarningState;
 import com.chiorichan.command.Command;
-import com.chiorichan.command.CommandException;
+import com.chiorichan.command.CommandMap;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.command.ConsoleCommandSender;
 import com.chiorichan.command.PluginCommand;
 import com.chiorichan.command.ServerCommand;
-import com.chiorichan.command.SimpleCommandMap;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.conversations.Conversable;
-import com.chiorichan.event.user.UserChatTabCompleteEvent;
 import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.framework.Framework;
-import com.chiorichan.help.HelpMap;
-import com.chiorichan.help.SimpleHelpMap;
 import com.chiorichan.permissions.Permissible;
 import com.chiorichan.permissions.Permission;
 import com.chiorichan.plugin.Plugin;
@@ -76,7 +70,6 @@ import com.chiorichan.user.User;
 import com.chiorichan.user.UserList;
 import com.chiorichan.util.FileUtil;
 import com.chiorichan.util.ServerShutdownThread;
-import com.chiorichan.util.StringUtil;
 import com.chiorichan.util.Versioning;
 import com.chiorichan.util.permissions.DefaultPermissions;
 import com.google.common.collect.ImmutableList;
@@ -96,15 +89,14 @@ public class Loader implements PluginMessageRecipient
 	private static String version = Versioning.getVersion();
 	private static String product = Versioning.getProduct();
 	private WarningState warningState = WarningState.DEFAULT;
-	private final SimpleCommandMap commandMap = new SimpleCommandMap( this );
+	private final CommandMap commandMap = new CommandMap();
 	private final PluginManager pluginManager = new SimplePluginManager( this, commandMap );
+	private final StandardMessenger messenger = new StandardMessenger();
 	protected static Console console = new Console();
 	protected UserList userList = new UserList( this );
 	
 	private final ServicesManager servicesManager = new SimpleServicesManager();
 	private final static ChioriScheduler scheduler = new ChioriScheduler();
-	private final SimpleHelpMap helpMap = new SimpleHelpMap( this );
-	private final StandardMessenger messenger = new StandardMessenger();
 	private final ResinEmbed server = new ResinEmbed();
 	public Boolean isRunning = false;
 	
@@ -288,7 +280,7 @@ public class Loader implements PluginMessageRecipient
 			
 			WebAppEmbed webapp = new WebAppEmbed( "/", root.getAbsolutePath() );
 			
-			webapp.addFilterMapping( new FilterMappingEmbed( "DefaultFilter", "/*", "com.chiorichan.server.DefaultFilter" ) );
+			webapp.addServletMapping( new ServletMappingEmbed( "DefaultServlet", "/*", "com.chiorichan.server.DefaultServlet" ) );
 			
 			server.addWebApp( webapp );
 			
@@ -362,9 +354,7 @@ public class Loader implements PluginMessageRecipient
 		if ( !isRunning )
 		{
 			HttpEmbed http = new HttpEmbed( port );
-			HttpEmbed[] http2 = new HttpEmbed[1];
-			http2[0] = http;
-			server.setPorts( http2 );
+			server.addPort( http );
 		}
 	}
 	
@@ -406,12 +396,6 @@ public class Loader implements PluginMessageRecipient
 	
 	public void enablePlugins( PluginLoadOrder type )
 	{
-		if ( type == PluginLoadOrder.STARTUP )
-		{
-			helpMap.clear();
-			helpMap.initializeGeneralTopics();
-		}
-		
 		Plugin[] plugins = pluginManager.getPlugins();
 		
 		for ( Plugin plugin : plugins )
@@ -427,7 +411,6 @@ public class Loader implements PluginMessageRecipient
 			commandMap.registerServerAliases();
 			loadCustomPermissions();
 			DefaultPermissions.registerCorePermissions();
-			helpMap.initializeCommands();
 		}
 	}
 	
@@ -1016,12 +999,7 @@ public class Loader implements PluginMessageRecipient
 		}
 	}
 	
-	public HelpMap getHelpMap()
-	{
-		return helpMap;
-	}
-	
-	public SimpleCommandMap getCommandMap()
+	public CommandMap getCommandMap()
 	{
 		return commandMap;
 	}
@@ -1034,68 +1012,6 @@ public class Loader implements PluginMessageRecipient
 	public WarningState getWarningState()
 	{
 		return warningState;
-	}
-	
-	public List<String> tabComplete( CommandSender user, String message )
-	{
-		if ( !( user instanceof User ) )
-		{
-			return ImmutableList.of();
-		}
-		
-		if ( message.startsWith( "/" ) )
-		{
-			return tabCompleteCommand( user, message );
-		}
-		else
-		{
-			return tabCompleteChat( (User) user, message );
-		}
-	}
-	
-	public List<String> tabCompleteCommand( CommandSender user, String message )
-	{
-		List<String> completions = null;
-		try
-		{
-			completions = getCommandMap().tabComplete( user, message.substring( 1 ) );
-		}
-		catch ( CommandException ex )
-		{
-			user.sendMessage( ChatColor.RED + "An internal error occurred while attempting to tab-complete this command" );
-			getLogger().log( Level.SEVERE, "Exception when " + user.getName() + " attempted to tab complete " + message, ex );
-		}
-		
-		return completions == null ? ImmutableList.<String> of() : completions;
-	}
-	
-	public List<String> tabCompleteChat( User User, String message )
-	{
-		User[] Users = getOnlineUsers();
-		List<String> completions = new ArrayList<String>();
-		UserChatTabCompleteEvent event = new UserChatTabCompleteEvent( User, message, completions );
-		String token = event.getLastToken();
-		for ( User p : Users )
-		{
-			if ( StringUtil.startsWithIgnoreCase( p.getName(), token ) )
-			{
-				completions.add( p.getName() );
-			}
-		}
-		pluginManager.callEvent( event );
-		
-		Iterator<?> it = completions.iterator();
-		while ( it.hasNext() )
-		{
-			Object current = it.next();
-			if ( !( current instanceof String ) )
-			{
-				// Sanity
-				it.remove();
-			}
-		}
-		Collections.sort( completions, String.CASE_INSENSITIVE_ORDER );
-		return completions;
 	}
 	
 	public static Color parseColor( String color )

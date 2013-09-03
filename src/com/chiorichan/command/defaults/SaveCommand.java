@@ -16,7 +16,7 @@ public class SaveCommand extends VanillaCommand
 		super( "save-all" );
 		this.description = "Saves the server to disk";
 		this.usageMessage = "/save-all";
-		this.setPermission( "bukkit.command.save.perform" );
+		this.setPermission( "chiori.command.save.perform" );
 	}
 	
 	@Override
@@ -37,15 +37,5 @@ public class SaveCommand extends VanillaCommand
 		Command.broadcastCommandMessage( sender, "Save complete." );
 		
 		return true;
-	}
-	
-	@Override
-	public List<String> tabComplete( CommandSender sender, String alias, String[] args ) throws IllegalArgumentException
-	{
-		Validate.notNull( sender, "Sender cannot be null" );
-		Validate.notNull( args, "Arguments cannot be null" );
-		Validate.notNull( alias, "Alias cannot be null" );
-		
-		return ImmutableList.of();
 	}
 }

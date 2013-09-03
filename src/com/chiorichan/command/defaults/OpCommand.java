@@ -21,7 +21,7 @@ public class OpCommand extends VanillaCommand
 		super( "op" );
 		this.description = "Gives the specified user operator status";
 		this.usageMessage = "/op <user>";
-		this.setPermission( "bukkit.command.op.give" );
+		this.setPermission( "chiori.command.op.give" );
 	}
 	
 	@Override
@@ -40,47 +40,5 @@ public class OpCommand extends VanillaCommand
 		
 		Command.broadcastCommandMessage( sender, "Opped " + args[0] );
 		return true;
-	}
-	
-	@Override
-	public List<String> tabComplete( CommandSender sender, String alias, String[] args ) throws IllegalArgumentException
-	{
-		Validate.notNull( sender, "Sender cannot be null" );
-		Validate.notNull( args, "Arguments cannot be null" );
-		Validate.notNull( alias, "Alias cannot be null" );
-		
-		if ( args.length == 1 )
-		{
-			if ( !( sender instanceof User ) )
-			{
-				return ImmutableList.of();
-			}
-			
-			String lastWord = args[0];
-			if ( lastWord.length() == 0 )
-			{
-				return ImmutableList.of();
-			}
-			
-			User senderUser = (User) sender;
-			
-			ArrayList<String> matchedUsers = new ArrayList<String>();
-			for ( User user : sender.getServer().getOnlineUsers() )
-			{
-				String name = user.getName();
-				if ( !senderUser.canSee( user ) || user.isOp() )
-				{
-					continue;
-				}
-				if ( StringUtil.startsWithIgnoreCase( name, lastWord ) )
-				{
-					matchedUsers.add( name );
-				}
-			}
-			
-			Collections.sort( matchedUsers, String.CASE_INSENSITIVE_ORDER );
-			return matchedUsers;
-		}
-		return ImmutableList.of();
 	}
 }

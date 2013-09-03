@@ -11,7 +11,7 @@ public class MeCommand extends VanillaCommand
 		super( "me" );
 		this.description = "Performs the specified action in chat";
 		this.usageMessage = "/me <action>";
-		this.setPermission( "bukkit.command.me" );
+		this.setPermission( "chiori.command.me" );
 	}
 	
 	@Override

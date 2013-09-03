@@ -61,57 +61,6 @@ public abstract class Command
 	public abstract boolean execute( CommandSender sender, String commandLabel, String[] args );
 	
 	/**
-	 * @deprecated This method is not supported and returns null
-	 */
-	@Deprecated
-	public List<String> tabComplete( CommandSender sender, String[] args )
-	{
-		return null;
-	}
-	
-	/**
-	 * Executed on tab completion for this command, returning a list of options the User can tab through.
-	 * 
-	 * @param sender
-	 *           Source object which is executing this command
-	 * @param alias
-	 *           the alias being used
-	 * @param args
-	 *           All arguments passed to the command, split via ' '
-	 * @return a list of tab-completions for the specified arguments. This will never be null. List may be immutable.
-	 * @throws IllegalArgumentException
-	 *            if sender, alias, or args is null
-	 */
-	public List<String> tabComplete( CommandSender sender, String alias, String[] args ) throws IllegalArgumentException
-	{
-		Validate.notNull( sender, "Sender cannot be null" );
-		Validate.notNull( args, "Arguments cannot be null" );
-		Validate.notNull( alias, "Alias cannot be null" );
-		
-		if ( !( sender instanceof User ) || args.length == 0 )
-		{
-			return ImmutableList.of();
-		}
-		
-		String lastWord = args[args.length - 1];
-		
-		User senderUser = (User) sender;
-		
-		ArrayList<String> matchedUsers = new ArrayList<String>();
-		for ( User User : sender.getServer().getOnlineUsers() )
-		{
-			String name = User.getName();
-			if ( StringUtil.startsWithIgnoreCase( name, lastWord ) )
-			{
-				matchedUsers.add( name );
-			}
-		}
-		
-		Collections.sort( matchedUsers, String.CASE_INSENSITIVE_ORDER );
-		return matchedUsers;
-	}
-	
-	/**
 	 * Returns the name of this command
 	 * 
 	 * @return Name of this command

@@ -18,7 +18,7 @@ public class BanCommand extends VanillaCommand
 		super( "ban" );
 		this.description = "Prevents the specified User from using this server";
 		this.usageMessage = "/ban <User> [reason ...]";
-		this.setPermission( "bukkit.command.ban.User" );
+		this.setPermission( "chiori.command.ban.User" );
 	}
 	
 	@Override
@@ -43,19 +43,5 @@ public class BanCommand extends VanillaCommand
 		
 		Command.broadcastCommandMessage( sender, "Banned User " + args[0] );
 		return true;
-	}
-	
-	@Override
-	public List<String> tabComplete( CommandSender sender, String alias, String[] args ) throws IllegalArgumentException
-	{
-		Validate.notNull( sender, "Sender cannot be null" );
-		Validate.notNull( args, "Arguments cannot be null" );
-		Validate.notNull( alias, "Alias cannot be null" );
-		
-		if ( args.length >= 1 )
-		{
-			return super.tabComplete( sender, alias, args );
-		}
-		return ImmutableList.of();
 	}
 }

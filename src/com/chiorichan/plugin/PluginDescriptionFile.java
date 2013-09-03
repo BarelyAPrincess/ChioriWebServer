@@ -17,7 +17,6 @@ import com.chiorichan.command.Command;
 import com.chiorichan.command.CommandExecutor;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.command.PluginCommand;
-import com.chiorichan.command.TabCompleter;
 import com.chiorichan.permissions.Permissible;
 import com.chiorichan.permissions.Permission;
 import com.chiorichan.permissions.PermissionDefault;

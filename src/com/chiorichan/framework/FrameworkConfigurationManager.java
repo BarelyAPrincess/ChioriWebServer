@@ -163,6 +163,7 @@ public class FrameworkConfigurationManager
 			
 			JSONObject json = SqlConnector.convert( defaultRs );
 			Map<String, Object> defop = (Map<String, Object>) new Gson().fromJson( json.toString(), TreeMap.class ).get( "0" );
+			defop.put( "default", defop.get( "value" ) );
 			
 			if ( customRs == null || sql.getRowCount( customRs ) < 1 )
 			{

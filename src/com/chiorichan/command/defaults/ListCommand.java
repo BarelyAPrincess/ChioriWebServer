@@ -16,7 +16,7 @@ public class ListCommand extends VanillaCommand
 		super( "list" );
 		this.description = "Lists all online users";
 		this.usageMessage = "/list";
-		this.setPermission( "bukkit.command.list" );
+		this.setPermission( "chiori.command.list" );
 	}
 	
 	@Override
@@ -46,15 +46,5 @@ public class ListCommand extends VanillaCommand
 		sender.sendMessage( "There are " + users.length + "/" + Loader.getInstance().getMaxUsers() + " users online:\n" + online.toString() );
 		
 		return true;
-	}
-	
-	@Override
-	public List<String> tabComplete( CommandSender sender, String alias, String[] args ) throws IllegalArgumentException
-	{
-		Validate.notNull( sender, "Sender cannot be null" );
-		Validate.notNull( args, "Arguments cannot be null" );
-		Validate.notNull( alias, "Alias cannot be null" );
-		
-		return ImmutableList.of();
 	}
 }

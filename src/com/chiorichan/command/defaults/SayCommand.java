@@ -17,7 +17,7 @@ public class SayCommand extends VanillaCommand
 		super( "say" );
 		this.description = "Broadcasts the given message as the console";
 		this.usageMessage = "/say <message>";
-		this.setPermission( "bukkit.command.say" );
+		this.setPermission( "chiori.command.say" );
 	}
 	
 	@Override
@@ -50,18 +50,5 @@ public class SayCommand extends VanillaCommand
 		Loader.getInstance().broadcastMessage( ChatColor.LIGHT_PURPLE + "[Server] " + message );
 		
 		return true;
-	}
-	
-	@Override
-	public List<String> tabComplete( CommandSender sender, String alias, String[] args ) throws IllegalArgumentException
-	{
-		Validate.notNull( sender, "Sender cannot be null" );
-		Validate.notNull( args, "Arguments cannot be null" );
-		
-		if ( args.length >= 1 )
-		{
-			return super.tabComplete( sender, alias, args );
-		}
-		return ImmutableList.of();
 	}
 }

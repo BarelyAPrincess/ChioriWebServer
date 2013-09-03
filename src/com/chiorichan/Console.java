@@ -2,7 +2,6 @@ package com.chiorichan;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -16,8 +15,6 @@ import joptsimple.OptionSet;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.Ansi.Attribute;
 
-import sun.net.dns.ResolverConfiguration.Options;
-
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.command.ConsoleCommandSender;
 import com.chiorichan.command.RemoteConsoleCommandSender;
@@ -28,7 +25,7 @@ public class Console
 {
 	public static Logger log = Logger.getLogger( "ChioriWebServer" );
 	
-	private final List commandList = Collections.synchronizedList( new ArrayList() );
+	private final List<ServerCommand> commandList = new ArrayList<ServerCommand>();
 	public ConsoleCommandSender console;
 	public RemoteConsoleCommandSender remoteConsole;
 	
