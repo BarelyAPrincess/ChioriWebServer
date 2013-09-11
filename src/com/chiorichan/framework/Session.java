@@ -2,7 +2,7 @@ package com.chiorichan.framework;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.servlet.http.Cookie;
@@ -15,7 +15,7 @@ import com.google.gson.JsonSyntaxException;
 
 public class Session
 {
-	private Map<String, String> data = new HashMap<String, String>();
+	private Map<String, String> data = new LinkedHashMap<String, String>();
 	private int expires = 0;
 	private String sessId = "", sessionName = "ChioriSessionId";
 	private Cookie cookie;

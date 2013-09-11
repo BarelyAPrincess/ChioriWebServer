@@ -1,5 +1,6 @@
 package com.chiorichan.database;
 
+import java.io.UnsupportedEncodingException;
 import java.net.ConnectException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -8,13 +9,13 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import com.chiorichan.Loader;
+import java.sql.Blob;
 import com.mysql.jdbc.exceptions.jdbc4.CommunicationsException;
 import com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException;
 
@@ -65,7 +66,7 @@ public class SqlConnector
 		Loader.getLogger().info( "We succesully connected to the sql database using 'jdbc:mysql://" + host + ":" + port + "/" + db + "'." );
 	}
 	
-	public HashMap<String, Object> selectOne( String table, List<String> keys, List<? extends Object> values ) throws SQLException
+	public LinkedHashMap<String, Object> selectOne( String table, List<String> keys, List<? extends Object> values ) throws SQLException
 	{
 		if ( isNull( keys ) || isNull( values ) )
 		{
@@ -79,7 +80,7 @@ public class SqlConnector
 			return null;
 		}
 		
-		HashMap<String, Object> result = new HashMap<String, Object>();
+		LinkedHashMap<String, Object> result = new LinkedHashMap<String, Object>();
 		
 		String where = "";
 		
@@ -294,93 +295,121 @@ public class SqlConnector
 		return ( cnt > 0 );
 	}
 	
-	public HashMap<String, Object> selectOne( String table, String key, String val ) throws SQLException
+	public LinkedHashMap<String, Object> selectOne( String table, String key, String val ) throws SQLException
 	{
 		return selectOne( table, Arrays.asList( key ), Arrays.asList( val ) );
 	}
 	
-	public static JSONObject convert( ResultSet rs ) throws SQLException, JSONException
+	public static LinkedHashMap<String, Object> convert( ResultSet rs ) throws SQLException, JSONException
 	{
-		JSONObject json = new JSONObject();
-		ResultSetMetaData rsmd = rs.getMetaData();
+		LinkedHashMap<String, Object> result = new LinkedHashMap<String, Object>();
 		int x = 0;
+		
+		rs.first();
 		
 		do
 		{
-			int numColumns = rsmd.getColumnCount();
-			JSONObject obj = new JSONObject();
-			
-			for ( int i = 1; i < numColumns + 1; i++ )
-			{
-				String column_name = rsmd.getColumnName( i );
-				
-				if ( rsmd.getColumnType( i ) == java.sql.Types.ARRAY )
-				{
-					obj.put( column_name, rs.getArray( column_name ) );
-				}
-				else if ( rsmd.getColumnType( i ) == java.sql.Types.BIGINT )
-				{
-					obj.put( column_name, rs.getInt( column_name ) );
-				}
-				else if ( rsmd.getColumnType( i ) == java.sql.Types.TINYINT )
-				{
-					obj.put( column_name, rs.getInt( column_name ) );
-				}
-				else if ( rsmd.getColumnType( i ) == java.sql.Types.BIT ) // Sometimes tinyints are read as being bits
-				{
-					obj.put( column_name, rs.getInt( column_name ) );
-				}
-				else if ( rsmd.getColumnType( i ) == java.sql.Types.BOOLEAN )
-				{
-					obj.put( column_name, rs.getBoolean( column_name ) );
-				}
-				else if ( rsmd.getColumnType( i ) == java.sql.Types.BLOB )
-				{
-					obj.put( column_name, rs.getBlob( column_name ) );
-				}
-				else if ( rsmd.getColumnType( i ) == java.sql.Types.DOUBLE )
-				{
-					obj.put( column_name, rs.getDouble( column_name ) );
-				}
-				else if ( rsmd.getColumnType( i ) == java.sql.Types.FLOAT )
-				{
-					obj.put( column_name, rs.getFloat( column_name ) );
-				}
-				else if ( rsmd.getColumnType( i ) == java.sql.Types.INTEGER )
-				{
-					obj.put( column_name, rs.getInt( column_name ) );
-				}
-				else if ( rsmd.getColumnType( i ) == java.sql.Types.NVARCHAR )
-				{
-					obj.put( column_name, rs.getNString( column_name ) );
-				}
-				else if ( rsmd.getColumnType( i ) == java.sql.Types.VARCHAR )
-				{
-					obj.put( column_name, rs.getString( column_name ) );
-				}
-				else if ( rsmd.getColumnType( i ) == java.sql.Types.SMALLINT )
-				{
-					obj.put( column_name, rs.getInt( column_name ) );
-				}
-				else if ( rsmd.getColumnType( i ) == java.sql.Types.DATE )
-				{
-					obj.put( column_name, rs.getDate( column_name ) );
-				}
-				else if ( rsmd.getColumnType( i ) == java.sql.Types.TIMESTAMP )
-				{
-					obj.put( column_name, rs.getTimestamp( column_name ) );
-				}
-				else
-				{
-					obj.put( column_name, rs.getObject( column_name ) );
-				}
-			}
-			
-			json.put( "" + x, obj );
+			result.put( "" + x, convertRow( rs ) );
 			x++;
 		}
 		while ( rs.next() );
 		
-		return json;
+		return result;
 	}
+	
+	public static LinkedHashMap<String, Object> convertRow( ResultSet rs ) throws SQLException, JSONException
+	{
+		LinkedHashMap<String, Object> result = new LinkedHashMap<String, Object>();
+		ResultSetMetaData rsmd = rs.getMetaData();
+		
+		int numColumns = rsmd.getColumnCount();
+		
+		for ( int i = 1; i < numColumns + 1; i++ )
+		{
+			String column_name = rsmd.getColumnName( i );
+			
+			//Loader.getLogger().info( "Column: " + column_name + " <-> " + rsmd.getColumnTypeName( i ) );
+			
+			if ( rsmd.getColumnType( i ) == java.sql.Types.ARRAY )
+			{
+				result.put( column_name, rs.getArray( column_name ) );
+			}
+			else if ( rsmd.getColumnType( i ) == java.sql.Types.BIGINT )
+			{
+				result.put( column_name, rs.getInt( column_name ) );
+			}
+			else if ( rsmd.getColumnType( i ) == java.sql.Types.TINYINT )
+			{
+				result.put( column_name, rs.getInt( column_name ) );
+			}
+			else if ( rsmd.getColumnType( i ) == java.sql.Types.BIT ) // Sometimes tinyints are read as bits
+			{
+				result.put( column_name, rs.getInt( column_name ) );
+			}
+			else if ( rsmd.getColumnType( i ) == java.sql.Types.BOOLEAN )
+			{
+				result.put( column_name, rs.getBoolean( column_name ) );
+			}
+			else if ( rsmd.getColumnTypeName( i ) == "BLOB" || rsmd.getColumnTypeName( i ) == "LONGBLOB" )
+			{
+				//result.put( column_name, rs.getBytes( column_name ) );
+				
+				// XXX: Had to convert the blob to a string since Quercus converts a blob to className.
+				Blob blob = rs.getBlob( column_name );
+				//byte[] bytes = blob.getBytes( 1L, (int) blob.length() );
+				
+				byte[] bytes = rs.getBytes( column_name );
+				
+				try
+				{
+					result.put( column_name, new String( bytes, "ISO-8859-1" ) );
+				}
+				catch ( UnsupportedEncodingException e )
+				{
+					e.printStackTrace();
+				}
+			}
+			else if ( rsmd.getColumnType( i ) == java.sql.Types.DOUBLE )
+			{
+				result.put( column_name, rs.getDouble( column_name ) );
+			}
+			else if ( rsmd.getColumnType( i ) == java.sql.Types.FLOAT )
+			{
+				result.put( column_name, rs.getFloat( column_name ) );
+			}
+			else if ( rsmd.getColumnTypeName( i ) == "INT" )
+			{
+				result.put( column_name, rs.getInt( column_name ) );
+			}
+			else if ( rsmd.getColumnType( i ) == java.sql.Types.NVARCHAR )
+			{
+				result.put( column_name, rs.getNString( column_name ) );
+			}
+			else if ( rsmd.getColumnTypeName( i ) == "VARCHAR" )
+			{
+				result.put( column_name, rs.getString( column_name ) );
+			}
+			else if ( rsmd.getColumnType( i ) == java.sql.Types.SMALLINT )
+			{
+				result.put( column_name, rs.getInt( column_name ) );
+			}
+			else if ( rsmd.getColumnType( i ) == java.sql.Types.DATE )
+			{
+				result.put( column_name, rs.getDate( column_name ) );
+			}
+			else if ( rsmd.getColumnType( i ) == java.sql.Types.TIMESTAMP )
+			{
+				result.put( column_name, rs.getTimestamp( column_name ) );
+			}
+			else
+			{
+				result.put( column_name, rs.getObject( column_name ) );
+			}
+		}
+		
+		//Loader.getLogger().info( result.toString() );
+		
+		return result;
+	}
+	
 }

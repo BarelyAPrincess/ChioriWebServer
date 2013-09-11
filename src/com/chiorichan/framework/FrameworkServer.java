@@ -6,7 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.Map.Entry;
@@ -28,6 +28,11 @@ public class FrameworkServer
 	public FrameworkServer(Framework fw0)
 	{
 		fw = fw0;
+	}
+
+	public void sendRedirect( String target )
+	{
+		sendRedirect( target, 307, true );
 	}
 	
 	public void sendRedirect( String target, int httpStatus )
@@ -447,7 +452,7 @@ public class FrameworkServer
 	
 	public String getStatusDescription( int errNo )
 	{
-		Map<Integer, String> statusCodes = new HashMap<Integer, String>();
+		Map<Integer, String> statusCodes = new LinkedHashMap<Integer, String>();
 		
 		statusCodes.put( 202, "Accepted" );
 		statusCodes.put( 208, "Already Reported" );

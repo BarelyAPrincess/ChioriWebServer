@@ -2,7 +2,7 @@ package com.chiorichan.framework;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.chiorichan.database.SqlConnector;
@@ -10,7 +10,7 @@ import com.chiorichan.database.SqlConnector;
 public class SiteManager
 {
 	SqlConnector sql;
-	Map<String, Site> siteMap = new HashMap<String, Site>();
+	Map<String, Site> siteMap = new LinkedHashMap<String, Site>();
 	
 	public SiteManager ( SqlConnector sql0 )
 	{

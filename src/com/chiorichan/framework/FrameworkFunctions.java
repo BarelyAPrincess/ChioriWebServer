@@ -2,23 +2,30 @@ package com.chiorichan.framework;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
+
+import javax.ws.rs.core.MediaType;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.ArrayUtils;
 
 import com.caucho.quercus.env.ArrayValueImpl;
 import com.chiorichan.Loader;
+import com.chiorichan.util.ObjectUtil;
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
 import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
+import com.sun.jersey.multipart.FormDataMultiPart;
 
 public class FrameworkFunctions
 {
@@ -61,29 +68,32 @@ public class FrameworkFunctions
 			allowedChars = ArrayUtils.addAll( allowedChars, new String[] { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z" } );
 		
 		String rtn = "";
-		for ( String s : allowedChars )
+		for ( int i = 0; i < length; i++ )
 		{
-			rtn += allowedChars[new Random().nextInt( rtn.length() - 1 )];
+			rtn += allowedChars[new Random().nextInt( allowedChars.length )];
 		}
 		
 		return rtn;
 	}
 	
-	public Map<String, Object> cleanArray( ArrayValueImpl arr, List<String> allowedKeys )
+	public ArrayValueImpl cleanArray( LinkedHashMap<String, Object> oldObj, List<String> allowedKeys )
 	{
-		Map<String, Object> newObj = arr.toJavaMap( fw.getEnv(), Map.class );
+		ArrayValueImpl newArray = new ArrayValueImpl();
 		
-		for ( String k : newObj.keySet() )
-		{
-			if ( !allowedKeys.contains( k ) )
-				newObj.remove( k );
-		}
+		for ( Entry<String, Object> e : oldObj.entrySet() )
+			if ( allowedKeys.contains( e.getKey() ) )
+				ObjectUtil.ArrayValueCast( newArray, e.getKey(), e.getValue() );
 		
-		return newObj;
+		return newArray;
 	}
 	
 	public String formatPhone( String phone )
 	{
+		if ( phone == null || phone.isEmpty() )
+			return "";
+		
+		phone = phone.replaceAll( "[ -()\\.]", "" );
+		
 		PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
 		try
 		{
@@ -151,6 +161,11 @@ public class FrameworkFunctions
 		return createTable( tableData, headerArray, "", false );
 	}
 	
+	public String createTable( Map<String, Object> tableData, List<String> headerArray, String tableId )
+	{
+		return createTable( tableData, headerArray, tableId, false );
+	}
+	
 	public String createTable( Map<String, Object> tableData, List<String> headerArray, String tableId, boolean returnString )
 	{
 		if ( tableId == null )
@@ -173,14 +188,14 @@ public class FrameworkFunctions
 			sb.append( "</tr>\n" );
 		}
 		
-		int colLength = 1;
+		int colLength = headerArray.size();
 		for ( Object row : tableData.values() )
 		{
 			Map<String, String> map;
 			
 			if ( row instanceof ArrayValueImpl )
 			{
-				map = ( (ArrayValueImpl) row ).toJavaMap( fw.getEnv(), HashMap.class );
+				map = ( (ArrayValueImpl) row ).toJavaMap( fw.getEnv(), LinkedHashMap.class );
 				
 				colLength = Math.max( map.size(), colLength );
 			}
@@ -190,11 +205,13 @@ public class FrameworkFunctions
 		{
 			Map<String, Object> map;
 			
+			String clss = ( x % 2 == 0 ) ? "evenrowcolor" : "oddrowcolor";
+			x++;
+			
 			if ( row instanceof ArrayValueImpl )
 			{
-				map = ( (ArrayValueImpl) row ).toJavaMap( fw.getEnv(), HashMap.class );
+				map = ( (ArrayValueImpl) row ).toJavaMap( fw.getEnv(), LinkedHashMap.class );
 				
-				String clss = ( x % 2 == 0 ) ? "evenrowcolor" : "oddrowcolor";
 				sb.append( "<tr id=\"" + map.get( "rowId" ) + "\" rel=\"" + map.get( "metaData" ) + "\" class=\"" + clss + "\">\n" );
 				
 				map.remove( "rowId" );
@@ -218,7 +235,14 @@ public class FrameworkFunctions
 					}
 				}
 				sb.append( "</tr>\n" );
-				x++;
+			}
+			else if ( row instanceof String )
+			{
+				sb.append( "<tr><td class=\"" + clss + "\" colspan=\"" + colLength + "\"><b><center>" + ( (String) row ) + "</b></center></td></tr>\n" );
+			}
+			else
+			{
+				sb.append( "<tr><td class=\"" + clss + "\" colspan=\"" + colLength + "\"><b><center>" + row.toString() + "</b></center></td></tr>\n" );
 			}
 		}
 		sb.append( "</table>\n" );
@@ -235,5 +259,44 @@ public class FrameworkFunctions
 			e.printStackTrace();
 		}
 		return "";
+	}
+	
+	public static ClientResponse CreateMailingList( String apiKey )
+	{
+		Client client = Client.create();
+		client.addFilter( new HTTPBasicAuthFilter( "api", apiKey ) );
+		WebResource webResource = client.resource( "https://api.mailgun.net/v2/lists" );
+		MultivaluedMapImpl formData = new MultivaluedMapImpl();
+		formData.add( "address", "dev@samples.mailgun.org" );
+		formData.add( "description", "Mailgun developers list" );
+		return webResource.type( MediaType.APPLICATION_FORM_URLENCODED ).post( ClientResponse.class, formData );
+		
+	}
+	
+	public static ClientResponse AddListMember( String apiKey )
+	{
+		Client client = Client.create();
+		client.addFilter( new HTTPBasicAuthFilter( "api", apiKey ) );
+		WebResource webResource = client.resource( "https://api.mailgun.net/v2/lists/" + "dev@samples.mailgun.org/members" );
+		MultivaluedMapImpl formData = new MultivaluedMapImpl();
+		formData.add( "address", "bar@example.com" );
+		formData.add( "subscribed", true );
+		formData.add( "name", "Bob Bar" );
+		formData.add( "description", "Developer" );
+		formData.add( "vars", "{\"age\": 26}" );
+		return webResource.type( MediaType.APPLICATION_FORM_URLENCODED ).post( ClientResponse.class, formData );
+	}
+	
+	public static ClientResponse fireMailgun( String apiKey, String from, String to, String subject, String html, String url )
+	{
+		Client client = Client.create();
+		client.addFilter( new HTTPBasicAuthFilter( "api", apiKey ) );
+		WebResource webResource = client.resource( url );
+		FormDataMultiPart form = new FormDataMultiPart();
+		form.field( "from", from );
+		form.field( "to", to );
+		form.field( "subject", subject );
+		form.field( "html", html );
+		return webResource.type( MediaType.MULTIPART_FORM_DATA_TYPE ).post( ClientResponse.class, form );
 	}
 }

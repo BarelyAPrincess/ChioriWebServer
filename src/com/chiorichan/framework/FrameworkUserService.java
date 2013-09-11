@@ -4,19 +4,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
-
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.user.User;
-import com.google.gson.Gson;
 
 public class FrameworkUserService
 {
@@ -346,11 +342,11 @@ public class FrameworkUserService
 		return _sess.isSet( key );
 	}
 	
-	public Map<String, Map<String, Object>> getMyLocations( boolean returnOne, boolean returnString, String whereAlt )
+	public LinkedHashMap<String, Object> getMyLocations( boolean returnOne, boolean returnString, String whereAlt )
 	{
 		SqlConnector sql = fw.getCurrentSite().getDatabase();
 		List<String> where = new ArrayList<String>();
-		Map<String, Map<String, Object>> result = new HashMap<String, Map<String, Object>>();
+		LinkedHashMap<String, Object> result = new LinkedHashMap<String, Object>();
 		String sqlWhere = "";
 		JSONObject json;
 		
@@ -412,7 +408,7 @@ public class FrameworkUserService
 			if ( sql.getRowCount( rs ) < 1 )
 				return result;
 			
-			json = SqlConnector.convert( rs );
+			result = SqlConnector.convert( rs );
 		}
 		catch ( Exception e )
 		{
@@ -420,14 +416,19 @@ public class FrameworkUserService
 			return result;
 		}
 		
-		result = new Gson().fromJson( json.toString(), Map.class );
-		
 		if ( returnOne || returnString )
 		{
-			Map<String, Object> one = result.get( 0 );
-			result = new HashMap<String, Map<String, Object>>();
-			result.put( "0", one );
-			return result;
+			Object o = result.get( 0 );
+			
+			if ( o instanceof LinkedHashMap )
+			{
+				LinkedHashMap<String, Object> one = (LinkedHashMap<String, Object>) o;
+				return one;
+			}
+			else
+			{
+				return new LinkedHashMap<String, Object>();
+			}
 		}
 		else
 		{
@@ -435,26 +436,26 @@ public class FrameworkUserService
 		}
 	}
 	
-	public Map<String, Map<String, Object>> getMyLocations( boolean returnOne, boolean returnString )
+	public Map<String, Object> getMyLocations( boolean returnOne, boolean returnString )
 	{
 		return getMyLocations( returnOne, returnString, null );
 	}
 	
-	public Map<String, Map<String, Object>> getMyLocations( boolean returnOne )
+	public Map<String, Object> getMyLocations( boolean returnOne )
 	{
 		return getMyLocations( returnOne, false, null );
 	}
 	
-	public Map<String, Map<String, Object>> getMyLocations()
+	public Map<String, Object> getMyLocations()
 	{
 		return getMyLocations( false, false, null );
 	}
 	
-	public Map<String, Map<String, Object>> getMyAccounts( boolean returnOne, boolean returnString, String whereAlt )
+	public LinkedHashMap<String, Object> getMyAccounts( boolean returnOne, boolean returnString, String whereAlt )
 	{
 		SqlConnector sql = fw.getCurrentSite().getDatabase();
 		List<String> where = new ArrayList<String>();
-		Map<String, Map<String, Object>> result = new HashMap<String, Map<String, Object>>();
+		LinkedHashMap<String, Object> result = new LinkedHashMap<String, Object>();
 		String sqlWhere = "";
 		JSONObject json;
 		
@@ -482,7 +483,7 @@ public class FrameworkUserService
 			if ( sql.getRowCount( rs ) < 1 )
 				return result;
 			
-			json = SqlConnector.convert( rs );
+			result = SqlConnector.convert( rs );
 		}
 		catch ( Exception e )
 		{
@@ -490,14 +491,19 @@ public class FrameworkUserService
 			return result;
 		}
 		
-		result = new Gson().fromJson( json.toString(), Map.class );
-		
 		if ( returnOne || returnString )
 		{
-			Map<String, Object> one = result.get( 0 );
-			result = new HashMap<String, Map<String, Object>>();
-			result.put( "0", one );
-			return result;
+			Object o = result.get( 0 );
+			
+			if ( o instanceof LinkedHashMap )
+			{
+				LinkedHashMap<String, Object> one = (LinkedHashMap<String, Object>) o;
+				return one;
+			}
+			else
+			{
+				return new LinkedHashMap<String, Object>();
+			}
 		}
 		else
 		{
@@ -505,17 +511,17 @@ public class FrameworkUserService
 		}
 	}
 	
-	public Map<String, Map<String, Object>> getMyAccounts( boolean returnOne, boolean returnString )
+	public LinkedHashMap<String, Object> getMyAccounts( boolean returnOne, boolean returnString )
 	{
 		return getMyAccounts( returnOne, returnString, null );
 	}
 	
-	public Map<String, Map<String, Object>> getMyAccounts( boolean returnOne )
+	public LinkedHashMap<String, Object> getMyAccounts( boolean returnOne )
 	{
 		return getMyAccounts( returnOne, false, null );
 	}
 	
-	public Map<String, Map<String, Object>> getMyAccounts()
+	public LinkedHashMap<String, Object> getMyAccounts()
 	{
 		return getMyAccounts( false, false, null );
 	}

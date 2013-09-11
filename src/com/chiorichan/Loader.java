@@ -6,6 +6,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -215,6 +219,36 @@ public class Loader implements PluginMessageRecipient
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
 		webroot = configuration.getString( "settings.webroot" );
 		
+		/*
+		// Load Libraries
+		File lib = new File( "lib" );
+		
+		if ( lib.isFile() )
+			lib.delete();
+		
+		if ( !lib.exists() )
+			lib.mkdirs();
+		
+		File[] files = lib.listFiles();
+		
+		for ( File f : files )
+		{
+			if ( f.isFile() )
+			{
+				getLogger().info( "Attmpting to load library " + f.getName() );
+				
+				try
+				{
+					FWClassLoader loader = new FWClassLoader( f.toURI().toURL() );
+				}
+				catch ( MalformedURLException e )
+				{
+					e.printStackTrace();
+				}
+			}
+		}
+		*/
+		
 		updater = new AutoUpdater( new ChioriDLUpdaterService( configuration.getString( "auto-updater.host" ) ), getLogger(), configuration.getString( "auto-updater.preferred-channel" ) );
 		updater.setEnabled( configuration.getBoolean( "auto-updater.enabled" ) );
 		updater.setSuggestChannels( configuration.getBoolean( "auto-updater.suggest-channels" ) );
@@ -242,6 +276,15 @@ public class Loader implements PluginMessageRecipient
 				Loader.getScheduler().mainThreadHeartbeat( (int) ( System.currentTimeMillis() / 50 ) );
 			}
 		}, 50L, 50L );
+	}
+	
+	private class FWClassLoader extends URLClassLoader
+	{
+		public FWClassLoader(URL url)
+		{
+			super( new URL[0], Loader.class.getClassLoader() );
+			this.addURL( url );
+		}
 	}
 	
 	private void initServer()
@@ -1106,7 +1149,7 @@ public class Loader implements PluginMessageRecipient
 	{
 		return userList;
 	}
-
+	
 	public static int getEpoch()
 	{
 		return (int) ( System.currentTimeMillis() / 1000 );

@@ -1,24 +1,20 @@
 package com.chiorichan.framework;
 
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.TreeMap;
 
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import vnet.java.util.MySQLUtils;
 
 import com.caucho.quercus.env.ArrayValueImpl;
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
-import com.google.gson.Gson;
+import com.chiorichan.util.ObjectUtil;
 
 public class FrameworkDatabaseEngine
 {
@@ -29,32 +25,27 @@ public class FrameworkDatabaseEngine
 		fw = fw0;
 	}
 	
-	public Map<String, Object> selectOne( String table, Object where ) throws SQLException
+	public LinkedHashMap<String, Object> selectOne( String table, Object where ) throws SQLException
 	{
-		Map<String, Object> result = select( table, where );
+		LinkedHashMap<String, Object> result = select( table, where );
 		
 		if ( result == null || result.size() < 1 )
 			return null;
 		
-		Object o = result.values().toArray()[0];
-		
-		if ( o instanceof Map )
-			return (Map<String, Object>) o;
-		
-		return null;
+		return (LinkedHashMap<String, Object>) result.get( "0" );
 	}
 	
-	public Map<String, Object> select( String table ) throws SQLException
+	public LinkedHashMap<String, Object> select( String table ) throws SQLException
 	{
 		return select( table, null, null );
 	}
 	
-	public Map<String, Object> select( String table, Object where ) throws SQLException
+	public LinkedHashMap<String, Object> select( String table, Object where ) throws SQLException
 	{
 		return select( table, where, null );
 	}
 	
-	public Map<String, Object> select( String table, Object where, ArrayValueImpl options0 ) throws SQLException
+	public LinkedHashMap<String, Object> select( String table, Object where, ArrayValueImpl options0 ) throws SQLException
 	{
 		String subWhere = "";
 		SqlConnector sql = fw.getCurrentSite().sql;
@@ -70,7 +61,7 @@ public class FrameworkDatabaseEngine
 		}
 		else if ( where instanceof ArrayValueImpl )
 		{
-			Map<String, Object> whereMap = ( (ArrayValueImpl) where ).toJavaMap( fw.getEnv(), HashMap.class );
+			Map<String, Object> whereMap = ( (ArrayValueImpl) where ).toJavaMap( fw.getEnv(), LinkedHashMap.class );
 			
 			String tmp = "", opr = "", opr2 = "";
 			
@@ -125,9 +116,9 @@ public class FrameworkDatabaseEngine
 		Map<String, String> options;
 		
 		if ( options0 == null || !( options0 instanceof ArrayValueImpl ) )
-			options = new HashMap<String, String>();
+			options = new LinkedHashMap<String, String>();
 		else
-			options = ( (ArrayValueImpl) options0 ).toJavaMap( fw.getEnv(), HashMap.class );
+			options = ( (ArrayValueImpl) options0 ).toJavaMap( fw.getEnv(), LinkedHashMap.class );
 		
 		if ( !options.containsKey( "limit" ) || !( options.get( "limit" ) instanceof String ) )
 			options.put( "limit", "0" );
@@ -148,8 +139,8 @@ public class FrameworkDatabaseEngine
 		
 		String query = "SELECT " + ( (String) options.get( "fields" ) ) + " FROM `" + table + "`" + where + groupby + orderby + limit + ";";
 		
-		// TODO: SQL Injection Detection Port to Java
-		// $this->SQLInjectionDetection($query);
+		// TODO: Act on result!
+		SQLInjectionDetection( query );
 		
 		ResultSet rs = sql.query( query );
 		
@@ -162,33 +153,22 @@ public class FrameworkDatabaseEngine
 		if ( sql.getRowCount( rs ) < 1 )
 		{
 			Loader.getLogger().warning( "Making SELECT query \"" + query + "\" which returned no results." );
-			return new HashMap<String, Object>();
+			return new LinkedHashMap<String, Object>();
 		}
 		
-		JSONObject json;
+		LinkedHashMap<String, Object> result = new LinkedHashMap<String, Object>();
 		try
 		{
-			json = SqlConnector.convert( rs );
+			result = SqlConnector.convert( rs );
 		}
-		catch ( SQLException | JSONException e )
+		catch ( JSONException e )
 		{
 			e.printStackTrace();
-			return null;
 		}
 		
-		/*
-		 * do { Map<String, Object> row = new HashMap<String, Object>();
-		 * 
-		 * rs.
-		 * 
-		 * result.add( row ); } while ( rs.next() );
-		 * 
-		 * $result = array(); foreach($out as $row) { $result[] = $row; }
-		 */
+		Loader.getLogger().info( "Making SELECT query \"" + query + "\" which returned " + sql.getRowCount( rs ) + " row(s)." );
 		
-		Loader.getLogger().fine( "Making SELECT query \"" + query + "\" which returned " + sql.getRowCount( rs ) + " row(s)." );
-		
-		return new Gson().fromJson( json.toString(), TreeMap.class );
+		return result;
 	}
 	
 	@Deprecated
@@ -293,7 +273,7 @@ public class FrameworkDatabaseEngine
 		}
 		else if ( where instanceof ArrayValueImpl )
 		{
-			Map<String, Object> whereMap = ( (ArrayValueImpl) where ).toJavaMap( fw.getEnv(), HashMap.class );
+			Map<String, Object> whereMap = ( (ArrayValueImpl) where ).toJavaMap( fw.getEnv(), LinkedHashMap.class );
 			
 			String tmp = "", opr = "", opr2 = "";
 			
@@ -385,7 +365,7 @@ public class FrameworkDatabaseEngine
 	public boolean delete( String table, ArrayValueImpl where, int limit )
 	{
 		String whr = "";
-		Map<String, Object> whereMap = where.toJavaMap( fw.getEnv(), HashMap.class );
+		Map<String, Object> whereMap = where.toJavaMap( fw.getEnv(), LinkedHashMap.class );
 		
 		String tmp = "", opr = "", opr2 = "";
 		
@@ -464,15 +444,24 @@ public class FrameworkDatabaseEngine
 	{
 		SqlConnector sql = fw.getCurrentSite().sql;
 		
-		Map<String, String> whereMap = data.toJavaMap( fw.getEnv(), HashMap.class );
+		Map<String, Object> whereMap = data.toJavaMap( fw.getEnv(), LinkedHashMap.class );
 		
 		String keys = "";
 		String values = "";
 		
-		for ( Entry<String, String> e : whereMap.entrySet() )
+		for ( Entry<String, Object> e : whereMap.entrySet() )
 		{
-			String key = MySQLUtils.escape( e.getKey() );
-			String value = MySQLUtils.escape( e.getValue() );
+			String key = escape( e.getKey() );
+			
+			String value;
+			try
+			{
+				value = escape( (String) e.getValue() );
+			}
+			catch ( Exception ee )
+			{
+				value = ObjectUtil.castToString( e.getValue() );
+			}
 			
 			if ( keys.isEmpty() )
 			{
@@ -514,6 +503,6 @@ public class FrameworkDatabaseEngine
 	
 	public String escape( String str )
 	{
-		return str;
+		return MySQLUtils.escape( str );
 	}
 }

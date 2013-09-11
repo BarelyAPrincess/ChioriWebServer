@@ -5,15 +5,10 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.json.JSONException;
-import org.json.JSONObject;
 
-import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
-import com.google.gson.Gson;
 
 public class FrameworkConfigurationManager
 {
@@ -161,8 +156,7 @@ public class FrameworkConfigurationManager
 			
 			ResultSet customRs = sql.query( "SELECT * FROM `settings_custom` WHERE `key` = '" + key + "' AND `owner` = '" + idenifier + "';" );
 			
-			JSONObject json = SqlConnector.convert( defaultRs );
-			Map<String, Object> defop = (Map<String, Object>) new Gson().fromJson( json.toString(), TreeMap.class ).get( "0" );
+			Map<String, Object> defop = SqlConnector.convertRow( defaultRs );
 			defop.put( "default", defop.get( "value" ) );
 			
 			if ( customRs == null || sql.getRowCount( customRs ) < 1 )
@@ -179,8 +173,7 @@ public class FrameworkConfigurationManager
 				if ( !returnRow )
 					return customRs.getString( "value" );
 				
-				json = SqlConnector.convert( customRs );
-				Map<String, Object> op = (Map<String, Object>) new Gson().fromJson( json.toString(), TreeMap.class ).get( "0" );
+				Map<String, Object> op = SqlConnector.convertRow( customRs );
 				
 				defop.putAll( op );
 				

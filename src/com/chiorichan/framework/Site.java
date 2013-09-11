@@ -6,7 +6,7 @@ import java.io.InputStream;
 import java.net.ConnectException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -39,7 +39,7 @@ public class Site
 		domain = rs.getString( "domain" );
 		
 		// Convert from hashmap to JSON
-		// new JSONObject( HashMap );
+		// new JSONObject( LinkedHashMap );
 		
 		Gson gson = new Gson();
 		try
@@ -62,7 +62,7 @@ public class Site
 		
 		try
 		{
-			aliases = gson.fromJson( new JSONObject( rs.getString( "aliases" ) ).toString(), HashMap.class );
+			aliases = gson.fromJson( new JSONObject( rs.getString( "aliases" ) ).toString(), LinkedHashMap.class );
 		}
 		catch ( Exception e )
 		{
@@ -71,7 +71,7 @@ public class Site
 		
 		try
 		{
-			subdomains = gson.fromJson( new JSONObject( rs.getString( "subdomains" ) ).toString(), HashMap.class );
+			subdomains = gson.fromJson( new JSONObject( rs.getString( "subdomains" ) ).toString(), LinkedHashMap.class );
 		}
 		catch ( Exception e )
 		{
@@ -161,8 +161,8 @@ public class Site
 		domain = domain0;
 		protectedFiles = new HashSet<String>();
 		metatags = new HashSet<String>();
-		aliases = new HashMap<String, String>();
-		subdomains = new HashMap<String, String>();
+		aliases = new LinkedHashMap<String, String>();
+		subdomains = new LinkedHashMap<String, String>();
 	}
 
 	public boolean protectCheck( String file )

@@ -1,16 +1,14 @@
 package com.chiorichan.user;
 
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeMap;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
@@ -19,7 +17,7 @@ import com.chiorichan.event.user.UserLoginEvent.Result;
 import com.chiorichan.framework.Session;
 import com.chiorichan.permissions.PermissionAttachmentInfo;
 import com.chiorichan.plugin.Plugin;
-import com.google.gson.Gson;
+import com.chiorichan.util.ObjectUtil;
 
 public class User extends Session
 {
@@ -28,9 +26,9 @@ public class User extends Session
 	public String userId = "", displayLevel = "", displayName = "",
 			userLevel = "", password = "", lastMsg = "", username = "", email = "";
 	
-	private Map<String, String> sqlMap = new HashMap<String, String>();
+	private LinkedHashMap<String, String> sqlMap = new LinkedHashMap<String, String>();
 	
-	public static Map<String, String> reasons = new HashMap<String, String>();
+	public static LinkedHashMap<String, String> reasons = new LinkedHashMap<String, String>();
 	
 	static
 	{
@@ -105,17 +103,21 @@ public class User extends Session
 				return;
 			}
 			
-			JSONObject json = new JSONObject();
+			LinkedHashMap<String, Object> sqlCast = new LinkedHashMap<String, Object>();
 			try
 			{
-				json = SqlConnector.convert( rs );
+				sqlCast = SqlConnector.convertRow( rs );
 			}
-			catch ( SQLException | JSONException e )
+			catch ( JSONException e )
 			{
 				e.printStackTrace();
 			}
 			
-			sqlMap = (Map<String, String>) new Gson().fromJson( json.toString(), TreeMap.class ).get( "0" );
+			sqlMap.clear();
+			
+			for ( Entry<String, Object> e : sqlCast.entrySet() )
+				sqlMap.put( (String) e.getKey(), ObjectUtil.castToString( e.getValue() ) );
+			
 			rs.first();
 			
 			if ( rs.getInt( "numloginfail" ) > 5 )
