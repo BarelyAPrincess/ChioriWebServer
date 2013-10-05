@@ -19,7 +19,7 @@ public class CodeParsingException extends Exception
 	{
 		super();
 		
-		message = e.getMessage();
+		message = Framework.escapeHTML( e.getMessage() );
 		
 		Pattern p = Pattern.compile( "line ([0-9]+), column ([0-9]+).*? in (.*)" );
 		Matcher m = p.matcher( e.getMessage() );

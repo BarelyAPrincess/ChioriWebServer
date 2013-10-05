@@ -40,7 +40,7 @@ public class Framework
 	protected static SqlConnector sql = new SqlConnector();
 	protected static SiteManager _sites = new SiteManager( sql );
 	
-	protected Map<String, String> rewriteGlobals = new HashMap<String, String>();
+	protected Map<String, String> rewriteVars = new HashMap<String, String>();
 	
 	protected HttpServletRequest request;
 	protected HttpServletResponse response;
@@ -283,7 +283,7 @@ public class Framework
 								String key = props[i].replaceAll( "[\\[\\]=]", "" );
 								String value = uris[i];
 								
-								rewriteGlobals.put( key, value );
+								rewriteVars.put( key, value );
 								
 								// PREP MATCH
 								
@@ -452,14 +452,6 @@ public class Framework
 				}
 			}
 			
-			/*
-			 * if ( rewriteGlobals != null && rewriteGlobals.size() > 0 ) { for ( Entry<String, String> entry :
-			 * rewriteGlobals.entrySet() ) { StringValue sv = new LargeStringBuilderValue(); sv.append( "?>" +
-			 * entry.getValue() ); env.setGlobalValue( entry.getKey(), sv ); executeCodeSimple( env, "<?php $_REQUEST[" +
-			 * entry.getKey() + "] = \"" + entry.getValue() + "\"; $_POST[" + entry.getKey() + "] = \"" + entry.getValue()
-			 * + "\"; $_GET[" + entry.getKey() + "] = \"" + entry.getValue() + "\"; ?>" ); } }
-			 */
-			
 			env = new Enviro( this );
 			
 			serverVars.put( ServerVars.DOCUMENT_ROOT, new File( Loader.getConfig().getString( "settings.webroot", "webroot" ), currentSite.getWebRoot( siteSubDomain ) ).getAbsolutePath() );
@@ -468,18 +460,14 @@ public class Framework
 			
 			for ( Entry<ServerVars, Object> en : serverVars.entrySet() )
 			{
-				$server.put( en.getKey().getName(), en.getValue() );
+				$server.put( en.getKey().getName().toLowerCase(), en.getValue() );
 			}
 			
 			env.set( "$_SERVER", $server );
 			
-			/*
-			 * Map<String, Object> $request = new HashMap<String, Object>();
-			 * 
-			 * for ( Entry<String, String[]> e : request.getParameterMap().entrySet() ) { $request.a }
-			 */
-			
 			env.set( "$_REQUEST", request.getParameterMap() );
+			
+			env.set( "$_REWRITE", rewriteVars );
 			
 			if ( getUserService().initalize( reqPerm ) )
 			{
@@ -530,6 +518,24 @@ public class Framework
 		{
 			fwList.remove( Thread.currentThread().getId() );
 		}
+	}
+	
+	public String getRequestVar( String key )
+	{
+		return request.getParameter( key );
+	}
+	
+	public String getRewriteVar( String key )
+	{
+		return getRewriteVar( key, null );
+	}
+	
+	public String getRewriteVar( String key, String def )
+	{
+		if ( rewriteVars.containsKey( key ) )
+			return rewriteVars.get( key );
+		
+		return def;
 	}
 	
 	public static String escapeHTML( String l )
@@ -652,7 +658,7 @@ public class Framework
 			sb.append( "		<div class=\"trace-file\">\n" );
 			sb.append( "			<div class=\"plus\">+</div>\n" );
 			sb.append( "			<div class=\"minus\">–</div>\n" );
-			sb.append( "			" + file + ": <strong>" + e.getClassName() + e.getMethodName() + "</strong>\n" );
+			sb.append( "			" + file + ": <strong>" + e.getClassName() + "." + e.getMethodName() + "</strong>\n" );
 			sb.append( "		</div>\n" );
 			sb.append( "		<div class=\"code\">\n" );
 			sb.append( "			<pre>Sorry, Code previews are not currently available.</pre>\n" );
@@ -984,6 +990,11 @@ public class Framework
 		Loader.getLogger().warning( t.getMessage() );
 		
 		generateError( 500, t.getMessage() );
+	}
+	
+	public void setStatus( int status )
+	{
+		response.setStatus( status );
 	}
 	
 	public void generateError( int errNo, String reason )

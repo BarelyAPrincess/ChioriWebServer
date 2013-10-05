@@ -2,7 +2,19 @@ date ( String format )
 {
 	try
 	{
-		return new SimpleDateFormat(format).format(new Date());
+		return new SimpleDateFormat(format).format( new Date() );
+	}
+	catch ( Exception e )
+	{
+		return "Exception Thrown for Method `date`: " + e.getMessage();
+	}
+}
+
+date ( String format, String data )
+{
+	try
+	{
+		return new SimpleDateFormat(format).format( new Date( Long.parseLong( data ) * 1000 ) );
 	}
 	catch ( Exception e )
 	{

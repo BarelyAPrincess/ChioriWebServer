@@ -1,0 +1,4 @@
+include( String file )
+{
+	print ( getFramework().getServer().fileReader( file ) );
+}
