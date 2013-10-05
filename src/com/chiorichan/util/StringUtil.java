@@ -1,5 +1,7 @@
 package com.chiorichan.util;
 
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.util.Collection;
 
 import org.apache.commons.lang3.Validate;
@@ -64,5 +66,34 @@ public class StringUtil
 			return false;
 		}
 		return string.substring( 0, prefix.length() ).equalsIgnoreCase( prefix );
+	}
+	
+	public static byte[] stringToBytesASCII( String str )
+	{
+		byte[] b = new byte[str.length()];
+		for ( int i = 0; i < b.length; i++ )
+		{
+			b[i] = (byte) str.charAt( i );
+		}
+		return b;
+	}
+	
+	public static byte[] stringToBytesUTF( String str )
+	{
+		byte[] b = new byte[str.length() << 1];
+		for ( int i = 0; i < str.length(); i++ )
+		{
+			char strChar = str.charAt( i );
+			int bpos = i << 1;
+			b[bpos] = (byte) ( ( strChar & 0xFF00 ) >> 8 );
+			b[bpos + 1] = (byte) ( strChar & 0x00FF );
+		}
+		return b;
+	}
+	
+	public static String bytesToStringUTFNIO( byte[] bytes )
+	{
+		CharBuffer cBuffer = ByteBuffer.wrap( bytes ).asCharBuffer();
+		return cBuffer.toString();
 	}
 }

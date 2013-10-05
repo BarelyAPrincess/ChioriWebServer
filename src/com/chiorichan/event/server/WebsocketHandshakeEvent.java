@@ -1,20 +1,20 @@
 package com.chiorichan.event.server;
 
-import javax.servlet.http.HttpServletRequest;
+import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 
-import com.caucho.websocket.WebSocketListener;
 import com.chiorichan.event.Cancellable;
+import com.chiorichan.websocket.WSListener;
 
 public class WebsocketHandshakeEvent extends ServerEvent implements Cancellable
 {
-	WebSocketListener listener = null;;
-	HttpServletRequest request;
+	WSListener listener = null;;
+	ServletUpgradeRequest request;
 	String protocal;
 	private boolean cancelled = false;
 	
-	public WebsocketHandshakeEvent(HttpServletRequest request0)
+	public WebsocketHandshakeEvent(ServletUpgradeRequest request2)
 	{
-		request = request0;
+		request = request2;
 	}
 	
 	public void setProtocal( String p )
@@ -27,17 +27,17 @@ public class WebsocketHandshakeEvent extends ServerEvent implements Cancellable
 		return protocal;
 	}
 	
-	public HttpServletRequest getRequest()
+	public ServletUpgradeRequest getRequest()
 	{
 		return request;
 	}
 	
-	public WebSocketListener getListener()
+	public WSListener getListener()
 	{
 		return listener;
 	}
 	
-	public void setListener( WebSocketListener listener0 )
+	public void setListener( WSListener listener0 )
 	{
 		listener = listener0;
 	}

@@ -22,11 +22,9 @@ public class FrameworkImageUtils
 		out.flush();
 		out.close();
 		
-		fw.getEnv().flush();
-		fw.getEnv().getOriginalOut().flush();
+		ByteArrayOutputStream ob = fw.getEnv().getOutputStream();
 		
-		byte[] b = out.toByteArray();
-		
-		fw.getEnv().getOriginalOut().write( b );
+		ob.write( out.toByteArray() );
+		ob.flush();
 	}
 }

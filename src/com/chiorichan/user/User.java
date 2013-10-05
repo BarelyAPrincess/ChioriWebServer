@@ -153,6 +153,9 @@ public class User extends Session
 			displayName = ( rs.getString( "fname" ).isEmpty() ) ? rs.getString( "name" ) : rs.getString( "fname" ) + " " + rs.getString( "name" );
 			displayLevel = (String) level.get( "title" );
 			
+			sqlMap.put( "displayname", displayName );
+			sqlMap.put( "displaylevel", displayLevel );
+			
 			sql.queryUpdate( "UPDATE `users` SET `lastactive` = '" + Loader.getEpoch() + "' WHERE `userID` = '" + getUserId() + "'" );
 		}
 		catch ( Throwable t )

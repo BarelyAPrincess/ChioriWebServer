@@ -13,12 +13,11 @@ import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.caucho.json.JsonInput;
-import com.caucho.json.ser.JsonDeserializer;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 
@@ -139,20 +138,6 @@ public class ChioriDLUpdaterService
 			{
 				throw new JsonParseException( "Date is not formatted correctly", ex );
 			}
-		}
-
-		@Override
-		public Object read( JsonInput arg0 ) throws IOException
-		{
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public void readField( JsonInput arg0, Object arg1, String arg2 ) throws IOException
-		{
-			// TODO Auto-generated method stub
-			
 		}
 	}
 }

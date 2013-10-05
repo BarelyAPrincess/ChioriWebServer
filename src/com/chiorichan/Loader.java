@@ -6,10 +6,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,15 +27,17 @@ import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 
 import org.apache.commons.lang3.Validate;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.HandlerList;
+import org.eclipse.jetty.server.session.SessionHandler;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.servlet.ServletMapping;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.error.MarkedYAMLException;
 
-import com.caucho.resin.BeanEmbed;
-import com.caucho.resin.HttpEmbed;
-import com.caucho.resin.ResinEmbed;
-import com.caucho.resin.ServletMappingEmbed;
-import com.caucho.resin.WebAppEmbed;
 import com.chiorichan.Warning.WarningState;
 import com.chiorichan.command.Command;
 import com.chiorichan.command.CommandMap;
@@ -66,6 +64,7 @@ import com.chiorichan.plugin.messaging.PluginMessageRecipient;
 import com.chiorichan.plugin.messaging.StandardMessenger;
 import com.chiorichan.scheduler.ChioriScheduler;
 import com.chiorichan.scheduler.ChioriWorker;
+import com.chiorichan.server.DefaultServlet;
 import com.chiorichan.server.ServerThread;
 import com.chiorichan.updater.AutoUpdater;
 import com.chiorichan.updater.ChioriDLUpdaterService;
@@ -76,6 +75,7 @@ import com.chiorichan.util.FileUtil;
 import com.chiorichan.util.ServerShutdownThread;
 import com.chiorichan.util.Versioning;
 import com.chiorichan.util.permissions.DefaultPermissions;
+import com.chiorichan.websocket.WebsocketServlet;
 import com.google.common.collect.ImmutableList;
 
 public class Loader implements PluginMessageRecipient
@@ -101,8 +101,14 @@ public class Loader implements PluginMessageRecipient
 	
 	private final ServicesManager servicesManager = new SimpleServicesManager();
 	private final static ChioriScheduler scheduler = new ChioriScheduler();
-	private final ResinEmbed server = new ResinEmbed();
+	private Server server = new Server();
 	public Boolean isRunning = false;
+	
+	private final HandlerList mainHandler = new HandlerList();
+	private ServletHandler servletHandler = new ServletHandler();
+	private int port = 8080;
+	private final List<ServletHolder> holders = new ArrayList<ServletHolder>();
+	private final List<ServletMapping> mappings = new ArrayList<ServletMapping>();
 	
 	private static Timer timer1 = new Timer();
 	
@@ -219,36 +225,6 @@ public class Loader implements PluginMessageRecipient
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
 		webroot = configuration.getString( "settings.webroot" );
 		
-		/*
-		// Load Libraries
-		File lib = new File( "lib" );
-		
-		if ( lib.isFile() )
-			lib.delete();
-		
-		if ( !lib.exists() )
-			lib.mkdirs();
-		
-		File[] files = lib.listFiles();
-		
-		for ( File f : files )
-		{
-			if ( f.isFile() )
-			{
-				getLogger().info( "Attmpting to load library " + f.getName() );
-				
-				try
-				{
-					FWClassLoader loader = new FWClassLoader( f.toURI().toURL() );
-				}
-				catch ( MalformedURLException e )
-				{
-					e.printStackTrace();
-				}
-			}
-		}
-		*/
-		
 		updater = new AutoUpdater( new ChioriDLUpdaterService( configuration.getString( "auto-updater.host" ) ), getLogger(), configuration.getString( "auto-updater.preferred-channel" ) );
 		updater.setEnabled( configuration.getBoolean( "auto-updater.enabled" ) );
 		updater.setSuggestChannels( configuration.getBoolean( "auto-updater.suggest-channels" ) );
@@ -278,13 +254,16 @@ public class Loader implements PluginMessageRecipient
 		}, 50L, 50L );
 	}
 	
-	private class FWClassLoader extends URLClassLoader
+	private void registerServlet( Class servlet, String path )
 	{
-		public FWClassLoader(URL url)
-		{
-			super( new URL[0], Loader.class.getClassLoader() );
-			this.addURL( url );
-		}
+		ServletHolder holder = new ServletHolder();
+		holder.setName( servlet.getName() );
+		holder.setClassName( servlet.getName() );
+		holders.add( holder );
+		ServletMapping mapping = new ServletMapping();
+		mapping.setPathSpec( path );
+		mapping.setServletName( servlet.getName() );
+		mappings.add( mapping );
 	}
 	
 	private void initServer()
@@ -308,59 +287,64 @@ public class Loader implements PluginMessageRecipient
 			
 			if ( serverIp.length() > 0 )
 			{
-				setIp( serverIp );
+				// setIp( serverIp );
 			}
 			
-			setPort( configuration.getInt( "server.port", 8080 ) );
-			
-			server.setServerHeader( product + " " + version );
-			server.setServerId( Loader.getConfig().getString( "server.id", "chiori" ) );
+			server = new Server( configuration.getInt( "server.port", 8080 ) );
 			
 			File root = new File( webroot );
 			
 			if ( !root.exists() )
 				root.mkdirs();
 			
-			WebAppEmbed webapp = new WebAppEmbed( "/", root.getAbsolutePath() );
+			// ResourceHandler resourceHandler = new ResourceHandler();
+			// resourceHandler.setDirectoriesListed( true );
+			// resourceHandler.setWelcomeFiles( new String[] { "index.htm", "index.html", "index.php" } );
+			// resourceHandler.setResourceBase( webroot );
+			// resourceHandler.setStylesheet( "/css/default.css" );
 			
-			webapp.addServletMapping( new ServletMappingEmbed( "DefaultServlet", "/*", "com.chiorichan.server.DefaultServlet" ) );
+			// mainHandler.addHandler( resourceHandler );
 			
-			server.addWebApp( webapp );
+			ServletContextHandler context = new ServletContextHandler( ServletContextHandler.SESSIONS );
+			context.setContextPath( "/" );
+			server.setHandler( context );
+			
+			context.addServlet( new ServletHolder( new WebsocketServlet() ), "/" );
+			context.addServlet( new ServletHolder( new DefaultServlet() ), "/" );
+			
+			SessionHandler sh = new SessionHandler();
+			
+			context.setHandler( sh );
+			
+			///mainHandler.addHandler( servletHandler );
+			// server.setHandler( mainHandler );
+			
+			///sh.setHandler( mainHandler );
+			
+			//server.setHandler( sh );
+			
+			//registerServlet( WebsocketServlet.class, "/" );
+			//registerServlet( DefaultServlet.class, "/" );
+			
+			// server.setServerHeader( product + " " + version );
+			// server.setServerId( Loader.getConfig().getString( "server.id", "chiori" ) );
 			
 			getConsole().info( "Starting Server on " + ( serverIp.length() == 0 ? "*" : serverIp ) + ":" + configuration.getInt( "server.port", 8080 ) );
 			
 			try
 			{
+				servletHandler.setServlets( holders.toArray( new ServletHolder[0] ) );
+				servletHandler.setServletMappings( mappings.toArray( new ServletMapping[0] ) );
 				server.start();
 			}
 			catch ( NullPointerException e )
 			{
-				getConsole().severe( "There was a problem with starting Resin Embedded. Check logs and try again.", e );
+				getConsole().severe( "There was a problem with starting Jetty Embedded. Check logs and try again.", e );
 				System.exit( 1 );
 			}
 			catch ( Throwable e )
 			{
-				if ( configuration.getInt( "server.port", 8080 ) != 8080 )
-				{
-					getConsole().warning( "There was a problem starting the Web Server, Trying to start on the alternate port of 8080!", e );
-					
-					try
-					{
-						setPort( 8080 );
-						server.start();
-					}
-					catch ( Exception ee )
-					{
-						getConsole().severe( "There was even a problem starting the alternate port of 8080, Goodbye!", ee );
-						ee.printStackTrace();
-						System.exit( 1 );
-					}
-				}
-				else
-				{
-					getConsole().severe( "There was a problem starting the Web Server due to the port being in use, Goodbye!" );
-					System.exit( 1 );
-				}
+				getLogger().severe( "There was a problem starting Jetty Embedded on port: " + port + "!" );
 			}
 			
 			if ( configuration.getBoolean( "server.enable-query", false ) )
@@ -384,20 +368,6 @@ public class Loader implements PluginMessageRecipient
 		catch ( Throwable e )
 		{
 			getConsole().panic( e );
-		}
-	}
-	
-	public void setIp( String ip )
-	{
-		// TODO: Bind server to listening IP Address. Is this possible?
-	}
-	
-	public void setPort( int port )
-	{
-		if ( !isRunning )
-		{
-			HttpEmbed http = new HttpEmbed( port );
-			server.addPort( http );
 		}
 	}
 	
@@ -1125,14 +1095,14 @@ public class Loader implements PluginMessageRecipient
 		return version;
 	}
 	
-	public ResinEmbed getResinServer()
+	public Server getServer()
 	{
 		return server;
 	}
 	
 	public void registerBean( Class bean, String name )
 	{
-		server.addBean( new BeanEmbed( bean, name ) );
+		// server.addBean( new BeanEmbed( bean, name ) );
 	}
 	
 	public boolean isRunning()

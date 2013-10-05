@@ -1,0 +1,9 @@
+dirname( File path )
+{
+	return path.getParent();
+}
+
+dirname( String path )
+{
+	return new File(path).getParent();
+}

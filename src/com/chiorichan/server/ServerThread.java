@@ -12,6 +12,14 @@ public class ServerThread extends Thread
 	@Override
 	public void run()
 	{
-		Loader.getInstance().getResinServer().join();
+		try
+		{
+			Loader.getInstance().getServer().join();
+		}
+		catch ( InterruptedException e )
+		{
+			Loader.getLogger().severe( e.getMessage() );
+			e.printStackTrace();
+		}
 	}
 }

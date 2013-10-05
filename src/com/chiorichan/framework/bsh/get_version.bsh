@@ -1,0 +1,4 @@
+get_version()
+{
+	return getFramework().getProduct() + " " + getFramework().getVersion();
+}

@@ -1,0 +1,11 @@
+date ( String format )
+{
+	try
+	{
+		return new SimpleDateFormat(format).format(new Date());
+	}
+	catch ( Exception e )
+	{
+		return "Exception Thrown for Method `date`: " + e.getMessage();
+	}
+}

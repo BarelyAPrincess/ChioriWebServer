@@ -13,9 +13,9 @@ import javax.ws.rs.core.MediaType;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.ArrayUtils;
 
-import com.caucho.quercus.env.ArrayValueImpl;
+import bsh.EvalError;
+
 import com.chiorichan.Loader;
-import com.chiorichan.util.ObjectUtil;
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
@@ -76,13 +76,13 @@ public class FrameworkFunctions
 		return rtn;
 	}
 	
-	public ArrayValueImpl cleanArray( LinkedHashMap<String, Object> oldObj, List<String> allowedKeys )
+	public Map<String, Object> cleanArray( LinkedHashMap<String, Object> oldObj, List<String> allowedKeys )
 	{
-		ArrayValueImpl newArray = new ArrayValueImpl();
+		Map<String, Object> newArray = new LinkedHashMap<String, Object>();
 		
 		for ( Entry<String, Object> e : oldObj.entrySet() )
 			if ( allowedKeys.contains( e.getKey() ) )
-				ObjectUtil.ArrayValueCast( newArray, e.getKey(), e.getValue() );
+				newArray.put( e.getKey(), e.getValue() );
 		
 		return newArray;
 	}
@@ -193,11 +193,9 @@ public class FrameworkFunctions
 		{
 			Map<String, String> map;
 			
-			if ( row instanceof ArrayValueImpl )
+			if ( row instanceof Map )
 			{
-				map = ( (ArrayValueImpl) row ).toJavaMap( fw.getEnv(), LinkedHashMap.class );
-				
-				colLength = Math.max( map.size(), colLength );
+				colLength = Math.max( ( (Map) row ).size(), colLength );
 			}
 		}
 		
@@ -208,9 +206,9 @@ public class FrameworkFunctions
 			String clss = ( x % 2 == 0 ) ? "evenrowcolor" : "oddrowcolor";
 			x++;
 			
-			if ( row instanceof ArrayValueImpl )
+			if ( row instanceof Map )
 			{
-				map = ( (ArrayValueImpl) row ).toJavaMap( fw.getEnv(), LinkedHashMap.class );
+				map = (Map<String, Object>) row;
 				
 				sb.append( "<tr id=\"" + map.get( "rowId" ) + "\" rel=\"" + map.get( "metaData" ) + "\" class=\"" + clss + "\">\n" );
 				
@@ -254,7 +252,7 @@ public class FrameworkFunctions
 		{
 			fw.getServer().includeCode( sb.toString() );
 		}
-		catch ( IOException e )
+		catch ( IOException | EvalError | CodeParsingException e )
 		{
 			e.printStackTrace();
 		}

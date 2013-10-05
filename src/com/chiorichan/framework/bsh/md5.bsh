@@ -1,0 +1,4 @@
+md5( String str )
+{
+	return MD5.digest( str ).substring(4);
+}

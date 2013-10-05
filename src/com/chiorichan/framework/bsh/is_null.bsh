@@ -1,0 +1,4 @@
+is_null( obj )
+{
+	return ( obj == null );
+}

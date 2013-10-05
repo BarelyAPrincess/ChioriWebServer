@@ -1,0 +1,4 @@
+count( Map nmap )
+{
+	return nmap.size();
+}

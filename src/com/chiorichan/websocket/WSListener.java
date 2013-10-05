@@ -1,54 +1,44 @@
 package com.chiorichan.websocket;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.Reader;
+import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketError;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketFrame;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
+import org.eclipse.jetty.websocket.api.extensions.Frame;
 
-import com.caucho.websocket.AbstractWebSocketListener;
-import com.caucho.websocket.WebSocketContext;
-
-public class WSListener extends AbstractWebSocketListener
+public abstract class WSListener
 {
-	@Override
-	public void onReadText( WebSocketContext context, Reader is ) throws IOException
+	@OnWebSocketMessage
+	public void onText( Session session, String message )
 	{
-		PrintWriter out = context.startTextMessage();
-		
-		int ch;
-		
-		while ( ( ch = is.read() ) >= 0 )
+		if ( session.isOpen() )
 		{
-			out.print( (char) ch );
+			session.getRemote().sendStringByFuture( "This is an empty response message. You should never see this message over a websocket connection." );
 		}
-		
-		out.close();
-		is.close();
 	}
 	
-	public void onStart( WebSocketContext context ) throws IOException
-	{
-		PrintWriter w = context.startTextMessage();
-		w.print( "Hello World!" );
-		w.close();
-	}
-	
-	public void onReadBinary( WebSocketContext context, InputStream is ) throws IOException
+	@OnWebSocketClose
+	public void onClose( Session session, int closeCode, String closeReason )
 	{
 		
 	}
 	
-	public void onClose( WebSocketContext context ) throws IOException
+	@OnWebSocketError
+	public void onError( Session session, Throwable exception )
 	{
 		
 	}
 	
-	public void onDisconnect( WebSocketContext context ) throws IOException
+	@OnWebSocketConnect
+	public void onConnect( Session session )
 	{
 		
 	}
 	
-	public void onTimeout( WebSocketContext context ) throws IOException
+	@OnWebSocketFrame
+	public void onFrame( Session session, Frame frame )
 	{
 		
 	}

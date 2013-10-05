@@ -1,26 +1,9 @@
 package com.chiorichan.util;
 
-import java.util.Map;
-import java.util.Map.Entry;
-
-import com.caucho.quercus.env.ArrayValue;
-import com.caucho.quercus.env.ArrayValueImpl;
-import com.caucho.quercus.env.LargeStringBuilderValue;
-import com.caucho.quercus.env.StringValue;
 import com.chiorichan.Loader;
 
 public class ObjectUtil
 {
-	public static ArrayValue castToArrayValue( Map<String, Object> array )
-	{
-		ArrayValueImpl newArray = new ArrayValueImpl();
-		
-		for ( Entry<String, Object> e : array.entrySet() )
-			ArrayValueCast( newArray, e.getKey(), e.getValue() );
-		
-		return newArray;
-	}
-	
 	public static String castToString( Object value )
 	{
 		switch ( value.getClass().getName() )
@@ -41,6 +24,7 @@ public class ObjectUtil
 		}
 	}
 	
+	/*
 	public static void ArrayValueCast( ArrayValue array, String key, Object obj )
 	{
 		switch ( obj.getClass().getName() )
@@ -77,4 +61,5 @@ public class ObjectUtil
 				}
 		}
 	}
+	*/
 }

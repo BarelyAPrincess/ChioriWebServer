@@ -130,12 +130,22 @@ public class FrameworkConfigurationManager
 		return get( key, idenifier, null, false );
 	}
 	
-	public Object get( String key, String idenifier, String defaultValue ) throws JSONException
+	public Object get( String key, String idenifier, boolean defaultValue ) throws JSONException
 	{
 		return get( key, idenifier, defaultValue, false );
 	}
 	
-	public Object get( String key, String idenifier, String defaultValue, boolean returnRow ) throws JSONException
+	public Object get( String key, String idenifier, Object defaultValue ) throws JSONException
+	{
+		return get( key, idenifier, defaultValue, false );
+	}
+	
+	public Object get( String key, String idenifier, boolean defaultValue, boolean returnRow ) throws JSONException
+	{
+		return get( key, idenifier, defaultValue, returnRow );
+	}
+	
+	public Object get( String key, String idenifier, Object defaultValue, boolean returnRow ) throws JSONException
 	{
 		if ( defaultValue == null )
 			defaultValue = "";

@@ -11,7 +11,6 @@ import org.json.JSONException;
 
 import vnet.java.util.MySQLUtils;
 
-import com.caucho.quercus.env.ArrayValueImpl;
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.util.ObjectUtil;
@@ -45,7 +44,7 @@ public class FrameworkDatabaseEngine
 		return select( table, where, null );
 	}
 	
-	public LinkedHashMap<String, Object> select( String table, Object where, ArrayValueImpl options0 ) throws SQLException
+	public LinkedHashMap<String, Object> select( String table, Object where, Map<String, Object> options0 ) throws SQLException
 	{
 		String subWhere = "";
 		SqlConnector sql = fw.getCurrentSite().sql;
@@ -56,12 +55,12 @@ public class FrameworkDatabaseEngine
 		String whr = "";
 		
 		if ( where instanceof String )
-		{
+		{	
 			whr = ( (String) where );
 		}
-		else if ( where instanceof ArrayValueImpl )
+		else if ( where instanceof Map )
 		{
-			Map<String, Object> whereMap = ( (ArrayValueImpl) where ).toJavaMap( fw.getEnv(), LinkedHashMap.class );
+			Map<String, Object> whereMap = (Map<String, Object>) where;
 			
 			String tmp = "", opr = "", opr2 = "";
 			
@@ -115,10 +114,7 @@ public class FrameworkDatabaseEngine
 		
 		Map<String, String> options;
 		
-		if ( options0 == null || !( options0 instanceof ArrayValueImpl ) )
-			options = new LinkedHashMap<String, String>();
-		else
-			options = ( (ArrayValueImpl) options0 ).toJavaMap( fw.getEnv(), LinkedHashMap.class );
+		options = (Map<String, String>) ( ( options0 == null ) ? new LinkedHashMap<String, String>() : options0 );
 		
 		if ( !options.containsKey( "limit" ) || !( options.get( "limit" ) instanceof String ) )
 			options.put( "limit", "0" );
@@ -242,22 +238,22 @@ public class FrameworkDatabaseEngine
 		// $QueryString . "\".");
 	}
 	
-	public boolean update( String table, ArrayValueImpl data )
+	public boolean update( String table, Map<String, Object> data )
 	{
 		return update( table, data, "", 1, false );
 	}
 	
-	public boolean update( String table, ArrayValueImpl data, Object where )
+	public boolean update( String table, Map<String, Object> data, Object where )
 	{
 		return update( table, data, where, 1, false );
 	}
 	
-	public boolean update( String table, ArrayValueImpl data, Object where, int lmt )
+	public boolean update( String table, Map<String, Object> data, Object where, int lmt )
 	{
 		return update( table, data, where, lmt, false );
 	}
 	
-	public boolean update( String table, ArrayValueImpl data, Object where, int lmt, boolean disableInjectionCheck )
+	public boolean update( String table, Map<String, Object> data, Object where, int lmt, boolean disableInjectionCheck )
 	{
 		String subWhere = "";
 		SqlConnector sql = fw.getCurrentSite().sql;
@@ -271,9 +267,9 @@ public class FrameworkDatabaseEngine
 		{
 			whr = ( (String) where );
 		}
-		else if ( where instanceof ArrayValueImpl )
+		else if ( where instanceof Map )
 		{
-			Map<String, Object> whereMap = ( (ArrayValueImpl) where ).toJavaMap( fw.getEnv(), LinkedHashMap.class );
+			Map<String, Object> whereMap = (Map<String, Object>) where;
 			
 			String tmp = "", opr = "", opr2 = "";
 			
@@ -330,9 +326,7 @@ public class FrameworkDatabaseEngine
 		
 		String set = "";
 		
-		Map<String, Object> dada = data.toJavaMap( fw.getEnv(), Map.class );
-		
-		for ( Entry e : dada.entrySet() )
+		for ( Entry<String, Object> e : data.entrySet() )
 			set += ", `" + e.getKey() + "` = '" + e.getValue() + "'";
 		
 		if ( set.length() > 2 )
@@ -357,19 +351,18 @@ public class FrameworkDatabaseEngine
 		}
 	}
 	
-	public boolean delete( String table, ArrayValueImpl where )
+	public boolean delete( String table, Map<String, Object> where )
 	{
 		return delete( table, where, 1 );
 	}
 	
-	public boolean delete( String table, ArrayValueImpl where, int limit )
+	public boolean delete( String table, Map<String, Object> where, int limit )
 	{
 		String whr = "";
-		Map<String, Object> whereMap = where.toJavaMap( fw.getEnv(), LinkedHashMap.class );
 		
 		String tmp = "", opr = "", opr2 = "";
 		
-		for ( Entry<String, Object> entry : whereMap.entrySet() )
+		for ( Entry<String, Object> entry : where.entrySet() )
 		{
 			if ( entry.getValue() instanceof Map )
 			{
@@ -435,21 +428,19 @@ public class FrameworkDatabaseEngine
 		return true;
 	}
 	
-	public boolean insert( String table, ArrayValueImpl data )
+	public boolean insert( String table, Map<String, Object> data )
 	{
 		return insert( table, data, false );
 	}
 	
-	public boolean insert( String table, ArrayValueImpl data, boolean disableInjectionCheck )
+	public boolean insert( String table, Map<String, Object> where, boolean disableInjectionCheck )
 	{
 		SqlConnector sql = fw.getCurrentSite().sql;
-		
-		Map<String, Object> whereMap = data.toJavaMap( fw.getEnv(), LinkedHashMap.class );
 		
 		String keys = "";
 		String values = "";
 		
-		for ( Entry<String, Object> e : whereMap.entrySet() )
+		for ( Entry<String, Object> e : where.entrySet() )
 		{
 			String key = escape( e.getKey() );
 			

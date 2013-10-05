@@ -1,14 +1,12 @@
 package com.chiorichan.event.server;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
-import com.caucho.quercus.env.Env;
-import com.caucho.quercus.env.LargeStringBuilderValue;
-import com.caucho.quercus.env.StringValue;
-import com.caucho.quercus.parser.QuercusParseException;
+import bsh.EvalError;
+
+import com.chiorichan.framework.CodeParsingException;
 import com.chiorichan.framework.Framework;
 import com.chiorichan.framework.Site;
 
@@ -57,7 +55,7 @@ public class RenderEvent extends ServerEvent
 		return !DigestUtils.md5( pageSource ).equals( pageHash );
 	}
 	
-	public String executeCode( String source ) throws IOException, QuercusParseException
+	public String executeCode( String source ) throws IOException, EvalError, CodeParsingException
 	{
 		return fw.getServer().executeCode( source );
 	}

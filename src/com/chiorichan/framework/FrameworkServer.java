@@ -8,18 +8,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.Map.Entry;
 
-import com.caucho.quercus.QuercusErrorException;
-import com.caucho.quercus.env.ConstStringValue;
-import com.caucho.quercus.env.Env;
-import com.caucho.quercus.env.LargeStringBuilderValue;
-import com.caucho.quercus.env.StringValue;
-import com.caucho.quercus.env.Value;
-import com.caucho.quercus.env.Var;
-import com.caucho.quercus.parser.QuercusParseException;
+import bsh.EvalError;
+
 import com.chiorichan.Loader;
+import com.chiorichan.event.server.ServerVars;
 
 public class FrameworkServer
 {
@@ -99,7 +93,7 @@ public class FrameworkServer
 			
 			result = executeCode( sb.toString() );
 		}
-		catch ( IOException e )
+		catch ( IOException | EvalError | CodeParsingException e )
 		{
 			e.printStackTrace();
 			return "";
@@ -130,74 +124,55 @@ public class FrameworkServer
 	
 	public String includePackage( String pack, boolean rtn )
 	{
-		Env env = fw.getEnv();
-		byte[] saved = new byte[0];
-		
+		Enviro env = fw.getEnv();
+
 		try
 		{
 			if ( rtn )
 			{
-				env.flush();
-				env.getOut().flush();
-				saved = fw.getOutputStream().toByteArray();
-				fw.getOutputStream().reset();
+				env.startOutputBuffer();
 			}
 			
 			File root = getTemplateRoot( fw.getCurrentSite() );
-			// return executeCode( getPackageSource( root, pack ) );
 			
-			StringValue sv = new LargeStringBuilderValue();
-			sv.append( getPackage( root, pack ) );
+			String code = getPackage( root, pack );
 			
-			if ( !sv.toString().isEmpty() )
-				fw.getEnv().include( sv );
+			if ( !code.isEmpty() )
+				env.evalFile( code );
 			
 			if ( rtn )
 			{
-				env.flush();
-				env.getOut().flush();
-				String source = new String( fw.getOutputStream().toByteArray(), "ISO-8859-1" );
-				fw.getOutputStream().reset();
-				fw.getOutputStream().write( saved );
-				return source.trim();
+				return env.flushOutputBuffer();
 			}
 			
 			return "";
 		}
-		catch ( QuercusErrorException | QuercusParseException | IOException e )
+		catch ( EvalError | IOException | CodeParsingException e )
 		{
 			e.printStackTrace();
 			return e.getMessage();
 		}
 	}
 	
-	public String executeCode( String source ) throws IOException, QuercusParseException, QuercusErrorException
+	public String executeCode( String source ) throws IOException, EvalError, CodeParsingException
 	{
-		Env env = fw.getEnv();
-		env.flush();
-		env.getOut().flush();
-		byte[] saved = fw.getOutputStream().toByteArray();
-		fw.getOutputStream().reset();
+		Enviro env = fw.getEnv();
+
+		env.startOutputBuffer();
 		
-		StringValue sv = new LargeStringBuilderValue();
-		sv.append( "?> " + source );
+		File root = getTemplateRoot( fw.getCurrentSite() );
+		// return executeCode( getPackageSource( root, pack ) );
 		
-		env.evalCode( sv );
+		if ( !source.isEmpty() )
+			env.evalCode( source );
 		
-		env.flush();
-		env.getOut().flush();
-		source = new String( fw.getOutputStream().toByteArray(), "ISO-8859-1" );
-		fw.getOutputStream().reset();
-		fw.getOutputStream().write( saved );
-		return source.trim();
+		return env.flushOutputBuffer();
 	}
 	
-	public void includeCode( String string ) throws IOException
+	public void includeCode( String source ) throws IOException, EvalError, CodeParsingException
 	{
-		StringValue sv = new LargeStringBuilderValue();
-		sv.append( "?> " + string );
-		
-		fw.getEnv().evalCode( sv );
+		if ( !source.isEmpty() )
+			fw.getEnv().evalCode( source );
 	}
 	
 	public File getTemplateRoot( Site site )
@@ -302,7 +277,7 @@ public class FrameworkServer
 				executeCode( "<h1>" + string + "</h1>" );
 			// fw.getResponse().sendError( i, string );
 		}
-		catch ( IOException e )
+		catch ( IOException | EvalError | CodeParsingException e )
 		{
 			e.printStackTrace();
 		}
@@ -343,19 +318,13 @@ public class FrameworkServer
 		return getRequest( key, "", false );
 	}
 	
-	public Map<String, String> getRequestMap()
-	{
-		Value v = fw.getEnv().getGlobalValue( "_REQUEST" );
-		return (Map<String, String>) v.toJavaMap( fw.env, Map.class );
-	}
-	
 	/*
 	 * boolean rtnNull - Return null if not set.
 	 */
 	public String getRequest( String key, String def, boolean rtnNull )
 	{
-		Map<String, String> request = getRequestMap();
-		String val = request.get( key );
+		Map<ServerVars, Object> request = fw.getServerVars();
+		String val = (String) request.get( ServerVars.parse(key) );
 		
 		if ( val == null && rtnNull )
 			return null;

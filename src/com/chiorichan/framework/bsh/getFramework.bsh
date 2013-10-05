@@ -1,0 +1,4 @@
+getFramework()
+{
+	return chiori;
+}

@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.caucho.quercus.QuercusErrorException;
-import com.caucho.quercus.parser.QuercusParseException;
+import bsh.EvalError;
+
 import com.chiorichan.Loader;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
@@ -134,18 +134,7 @@ public class Template extends JavaPlugin implements Listener
 	
 	public String doInclude( File root, String pack, RenderEvent event )
 	{
-		String source;
-		try
-		{
-			source = event.getFramework().getServer().includePackage( pack, true );
-		}
-		catch ( QuercusParseException | QuercusErrorException e )
-		{
-			// TODO: Better this catch
-			source = e.getMessage();
-			e.printStackTrace();
-		}
-		
+		String source = event.getFramework().getServer().includePackage( pack, true );
 		return applyAlias( source, event.getSite().getAliases() );
 	}
 	
@@ -262,7 +251,7 @@ public class Template extends JavaPlugin implements Listener
 		
 		String pack = "";
 		for ( String s : lst )
-		{	
+		{
 			pack += "." + s;
 		}
 		

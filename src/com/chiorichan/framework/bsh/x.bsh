@@ -1,0 +1,4 @@
+x( str )
+{
+	print( str );
+}
