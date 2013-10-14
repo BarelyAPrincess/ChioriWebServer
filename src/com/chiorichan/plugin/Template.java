@@ -12,8 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import bsh.EvalError;
-
 import com.chiorichan.Loader;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
@@ -33,8 +31,6 @@ public class Template extends JavaPlugin implements Listener
 	public void onEnable()
 	{
 		Loader.getPluginManager().registerEvents( this, this );
-		
-		// Main.getServer().registerBean( null, "framework" );
 	}
 	
 	public void onDisable()
@@ -74,6 +70,15 @@ public class Template extends JavaPlugin implements Listener
 		
 		if ( !file.exists() )
 			file = new File( root, pack + ".inc.php" );
+		
+		if ( !file.exists() )
+			file = new File( root, pack + ".chi" );
+		
+		if ( !file.exists() )
+			file = new File( root, pack + ".inc.groovy" );
+		
+		if ( !file.exists() )
+			file = new File( root, pack + ".groovy" );
 		
 		if ( !file.exists() )
 			file = new File( root, pack );
@@ -134,7 +139,10 @@ public class Template extends JavaPlugin implements Listener
 	
 	public String doInclude( File root, String pack, RenderEvent event )
 	{
-		String source = event.getFramework().getServer().includePackage( pack, true );
+		String source = event.getFramework().getServer().includePackage( pack );
+		
+		//System.out.println( "Source Length: " + source.length() + " <--> " + pack );
+		
 		return applyAlias( source, event.getSite().getAliases() );
 	}
 	

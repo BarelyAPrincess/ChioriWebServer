@@ -1,4 +1,0 @@
-interator ( Map nmap )
-{
-	return nmap.values().toArray();
-}

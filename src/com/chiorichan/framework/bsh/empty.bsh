@@ -1,4 +1,0 @@
-empty( String str )
-{
-	return str == null || str == "null" || str.isEmpty() || str == false;
-}

@@ -1,4 +1,0 @@
-var_dump( Object o )
-{
-	print ( getFramework().varDump( o ) );
-}

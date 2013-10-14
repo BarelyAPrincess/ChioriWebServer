@@ -10,8 +10,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import bsh.EvalError;
-
 import com.chiorichan.Loader;
 import com.chiorichan.event.server.ServerVars;
 
@@ -23,7 +21,7 @@ public class FrameworkServer
 	{
 		fw = fw0;
 	}
-
+	
 	public void sendRedirect( String target )
 	{
 		sendRedirect( target, 307, true );
@@ -93,7 +91,7 @@ public class FrameworkServer
 			
 			result = executeCode( sb.toString() );
 		}
-		catch ( IOException | EvalError | CodeParsingException e )
+		catch ( IOException | CodeParsingException e )
 		{
 			e.printStackTrace();
 			return "";
@@ -119,60 +117,46 @@ public class FrameworkServer
 	
 	public String includePackage( String pack )
 	{
-		return includePackage( pack, false );
-	}
-	
-	public String includePackage( String pack, boolean rtn )
-	{
-		Enviro env = fw.getEnv();
-
+		Evaling eval = fw.getEnv().newEval();
+		
 		try
 		{
-			if ( rtn )
-			{
-				env.startOutputBuffer();
-			}
-			
 			File root = getTemplateRoot( fw.getCurrentSite() );
 			
-			String code = getPackage( root, pack );
+			String file = getPackage( root, pack );
 			
-			if ( !code.isEmpty() )
-				env.evalFile( code );
+			//System.out.println( "File: " + file );
 			
-			if ( rtn )
-			{
-				return env.flushOutputBuffer();
-			}
+			if ( !file.isEmpty() )
+				eval.evalFile( file );
 			
-			return "";
+			return eval.reset();
 		}
-		catch ( EvalError | IOException | CodeParsingException e )
+		catch ( CodeParsingException | IOException e )
 		{
 			e.printStackTrace();
 			return e.getMessage();
 		}
 	}
 	
-	public String executeCode( String source ) throws IOException, EvalError, CodeParsingException
+	public String executeCode( String source ) throws IOException, CodeParsingException
 	{
-		Enviro env = fw.getEnv();
-
-		env.startOutputBuffer();
-		
-		File root = getTemplateRoot( fw.getCurrentSite() );
-		// return executeCode( getPackageSource( root, pack ) );
+		Evaling eval = fw.getEnv().newEval();
 		
 		if ( !source.isEmpty() )
-			env.evalCode( source );
+			eval.evalCode( source );
 		
-		return env.flushOutputBuffer();
+		return eval.reset();
 	}
 	
-	public void includeCode( String source ) throws IOException, EvalError, CodeParsingException
+	public String includeCode( String source ) throws IOException, CodeParsingException
 	{
+		Evaling eval = fw.getEnv().newEval();
+		
 		if ( !source.isEmpty() )
-			fw.getEnv().evalCode( source );
+			eval.evalCode( source );
+		
+		return eval.reset();
 	}
 	
 	public File getTemplateRoot( Site site )
@@ -200,6 +184,15 @@ public class FrameworkServer
 		
 		if ( !file.exists() )
 			file = new File( root, pack + ".inc.php" );
+		
+		if ( !file.exists() )
+			file = new File( root, pack + ".groovy" );
+		
+		if ( !file.exists() )
+			file = new File( root, pack + ".inc.groovy" );
+		
+		if ( !file.exists() )
+			file = new File( root, pack + ".chi" );
 		
 		if ( !file.exists() )
 			file = new File( root, pack );
@@ -277,7 +270,7 @@ public class FrameworkServer
 				executeCode( "<h1>" + string + "</h1>" );
 			// fw.getResponse().sendError( i, string );
 		}
-		catch ( IOException | EvalError | CodeParsingException e )
+		catch ( IOException | CodeParsingException e )
 		{
 			e.printStackTrace();
 		}
@@ -324,7 +317,7 @@ public class FrameworkServer
 	public String getRequest( String key, String def, boolean rtnNull )
 	{
 		Map<ServerVars, Object> request = fw.getServerVars();
-		String val = (String) request.get( ServerVars.parse(key) );
+		String val = (String) request.get( ServerVars.parse( key ) );
 		
 		if ( val == null && rtnNull )
 			return null;

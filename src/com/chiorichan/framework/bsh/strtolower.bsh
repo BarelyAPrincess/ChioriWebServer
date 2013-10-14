@@ -1,4 +1,0 @@
-strtolower( String str )
-{
-	return str.toLowerCase();
-}

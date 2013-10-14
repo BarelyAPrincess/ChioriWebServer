@@ -13,8 +13,6 @@ import javax.ws.rs.core.MediaType;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.ArrayUtils;
 
-import bsh.EvalError;
-
 import com.chiorichan.Loader;
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
@@ -252,7 +250,7 @@ public class FrameworkFunctions
 		{
 			fw.getServer().includeCode( sb.toString() );
 		}
-		catch ( IOException | EvalError | CodeParsingException e )
+		catch ( IOException | CodeParsingException e )
 		{
 			e.printStackTrace();
 		}

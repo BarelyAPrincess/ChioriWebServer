@@ -4,8 +4,6 @@ import java.io.IOException;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
-import bsh.EvalError;
-
 import com.chiorichan.framework.CodeParsingException;
 import com.chiorichan.framework.Framework;
 import com.chiorichan.framework.Site;
@@ -55,7 +53,7 @@ public class RenderEvent extends ServerEvent
 		return !DigestUtils.md5( pageSource ).equals( pageHash );
 	}
 	
-	public String executeCode( String source ) throws IOException, EvalError, CodeParsingException
+	public String executeCode( String source ) throws IOException, CodeParsingException
 	{
 		return fw.getServer().executeCode( source );
 	}

@@ -1,5 +1,8 @@
 package com.chiorichan.framework;
 
+import groovy.lang.Binding;
+import groovy.util.GroovyScriptEngine;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -14,7 +17,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
-import java.util.logging.Level;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -24,8 +26,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
-
-import bsh.EvalError;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
@@ -65,6 +65,9 @@ public class Framework
 	protected Site currentSite;
 	
 	protected static Map<Long, Framework> fwList = new HashMap<Long, Framework>();
+	
+	// TODO: TEMP
+	public Evaling eval;
 	
 	public Framework(HttpServletRequest request0, HttpServletResponse response0, ServletContext servletContext)
 	{
@@ -319,6 +322,8 @@ public class Framework
 					
 					if ( whole_match )
 					{
+						data.put( "site", rs.getString( "site" ) );
+						data.put( "domain", rs.getString( "domain" ) );
 						data.put( "page", rs.getString( "page" ) );
 						data.put( "title", rs.getString( "title" ) );
 						data.put( "reqlevel", rs.getString( "reqlevel" ) );
@@ -365,19 +370,6 @@ public class Framework
 		}
 		
 		return true;
-	}
-	
-	// Suppose to execute HTML code technically.
-	private void executeCodeSimple( Enviro env, String code )
-	{
-		try
-		{
-			env.evalCode( code );
-		}
-		catch ( IOException | EvalError | CodeParsingException e )
-		{
-			e.printStackTrace();
-		}
 	}
 	
 	protected void loadPageInternal( String theme, String view, String title, String file, String html, String reqPerm ) throws IOException
@@ -453,6 +445,7 @@ public class Framework
 			}
 			
 			env = new Enviro( this );
+			eval = env.newEval();
 			
 			serverVars.put( ServerVars.DOCUMENT_ROOT, new File( Loader.getConfig().getString( "settings.webroot", "webroot" ), currentSite.getWebRoot( siteSubDomain ) ).getAbsolutePath() );
 			
@@ -463,25 +456,30 @@ public class Framework
 				$server.put( en.getKey().getName().toLowerCase(), en.getValue() );
 			}
 			
-			env.set( "$_SERVER", $server );
+			env.set( "_SERVER", $server );
 			
-			env.set( "$_REQUEST", request.getParameterMap() );
+			TreeMap request0 = new TreeMap<String, String>();
 			
-			env.set( "$_REWRITE", rewriteVars );
+			for ( Entry<String, String[]> e : request.getParameterMap().entrySet() )
+				request0.put( e.getKey(), e.getValue()[0] );
+			
+			env.set( "_REQUEST", request0 );
+			
+			env.set( "_REWRITE", rewriteVars );
 			
 			if ( getUserService().initalize( reqPerm ) )
 			{
 				if ( !html.isEmpty() )
-					env.evalCode( html );
+					eval.evalCode( html );
 				
 				if ( requestFile != null )
-					env.evalFile( requestFile );
+					eval.evalFile( requestFile );
 			}
 			
 			String source;
 			if ( continueNormally )
 			{
-				source = env.flush();
+				source = eval.reset();
 			}
 			else
 			{
@@ -552,11 +550,12 @@ public class Framework
 	{
 		StringBuilder sb = new StringBuilder();
 		
+		if ( code.isEmpty() )
+			return "";
+		
 		int cLine = 0;
 		for ( String l : code.split( "\n" ) )
 		{
-			l = escapeHTML( l ) + "\n";
-			
 			cLine++;
 			
 			if ( cLine > line - 5 && cLine < line + 5 )
@@ -565,16 +564,19 @@ public class Framework
 				{
 					if ( col > -1 )
 					{
-						col++;
+						if ( col - 1 > -1 )
+							col--;
 						
-						l = l.substring( 0, col ) + "<span style=\"background-color: red; font-weight: bolder;\">" + l.substring( col, col + 1 ) + "</span>" + l.substring( col + 1 );
+						l = escapeHTML( l.substring( 0, col ) ) + "<span style=\"background-color: red; font-weight: bolder;\">" + l.substring( col, col + 1 ) + "</span>" + escapeHTML( l.substring( col + 1 ) );
 					}
+					else
+						l = escapeHTML( l );
 					
 					sb.append( "<span class=\"error\"><span class=\"ln error-ln\">" + cLine + "</span> " + l + "</span>" );
 				}
 				else
 				{
-					sb.append( "<span class=\"ln\">" + cLine + "</span> " + l );
+					sb.append( "<span class=\"ln\">" + cLine + "</span> " + escapeHTML( l ) + "\n" );
 				}
 			}
 		}
@@ -582,9 +584,9 @@ public class Framework
 		return sb.toString().substring( 0, sb.toString().length() - 1 );
 	}
 	
-	public String codeSample( String code, int line )
+	public String codeSample( String file, int line )
 	{
-		return codeSample( code, line, -1 );
+		return codeSample( file, line, -1 );
 	}
 	
 	public String codeSample( String file, int line, int col )
@@ -675,8 +677,7 @@ public class Framework
 	
 	public String errorPage( Throwable t )
 	{
-		// t.printStackTrace();
-		// Loader.getLogger().log( Level.SEVERE, "", t );
+		//TODO: Make this whole thing better. Optional fancy error pages.
 		
 		if ( !response.isCommitted() )
 		{
@@ -701,12 +702,12 @@ public class Framework
 				// String page = ? "/panic.php" : "/notfound.php";
 				return loadPage( "com.chiorichan.themes.error", "", "Critical Server Exception", "/panic.php", "", "-1" );
 			}
-			catch ( EvalError | IOException | CodeParsingException e1 )
+			catch ( Exception e1 )
 			{
-				e1.printStackTrace();
+				//e1.printStackTrace();
 				try
 				{
-					response.sendError( 500, "Critical Server Exception: " + e1.getMessage() );
+					response.sendError( 500, "Critical Server Exception while loading the Framework Fancy Error Page: " + e1.getMessage() );
 				}
 				catch ( IOException e )
 				{
@@ -718,7 +719,7 @@ public class Framework
 		return t.getMessage();
 	}
 	
-	public String loadPage( String theme, String view, String title, String file, String html, String reqPerm ) throws IOException, EvalError, CodeParsingException
+	public String loadPage( String theme, String view, String title, String file, String html, String reqPerm ) throws IOException, CodeParsingException
 	{
 		if ( html == null )
 			html = "";
@@ -980,12 +981,7 @@ public class Framework
 			sb.append( s + "\n" );
 		}
 		
-		try
-		{
-			env.set( "stackTrace", sb.toString() );
-		}
-		catch ( EvalError e )
-		{}
+		env.set( "stackTrace", sb.toString() );
 		
 		Loader.getLogger().warning( t.getMessage() );
 		

@@ -1,6 +1,5 @@
 package com.chiorichan.framework;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import net.glxn.qrgen.QRCode;
@@ -15,16 +14,8 @@ public class FrameworkImageUtils
 		fw = fw0;
 	}
 	
-	public void QRPNG( String code ) throws IOException
+	public byte[] QRPNG( String code ) throws IOException
 	{
-		ByteArrayOutputStream out = QRCode.from( code ).withSize( 200, 200 ).setMargin( 1 ).to( ImageType.PNG ).stream();
-		
-		out.flush();
-		out.close();
-		
-		ByteArrayOutputStream ob = fw.getEnv().getOutputStream();
-		
-		ob.write( out.toByteArray() );
-		ob.flush();
+		return QRCode.from( code ).withSize( 200, 200 ).setMargin( 1 ).to( ImageType.PNG ).stream().toByteArray();
 	}
 }

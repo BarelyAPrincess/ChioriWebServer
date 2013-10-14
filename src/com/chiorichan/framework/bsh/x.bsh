@@ -1,4 +1,0 @@
-x( str )
-{
-	print( str );
-}

@@ -1,4 +1,0 @@
-echo( str )
-{
-	print( str );
-}

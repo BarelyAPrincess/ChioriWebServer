@@ -1,9 +1,0 @@
-file_exists( File file )
-{
-	return file.exists();
-}
-
-file_exists( String file )
-{
-	return new File(file).exists();
-}

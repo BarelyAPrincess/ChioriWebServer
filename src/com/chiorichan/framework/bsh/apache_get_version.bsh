@@ -1,4 +1,0 @@
-apache_get_version()
-{
-	return "THIS IS NOT APACHE YOU DUMMY!!!";
-}
