@@ -13,7 +13,7 @@ public class Versioning
 	public static String getVersion()
 	{
 		if ( true )
-			return "6.0.1004 (Sonic Dash)";
+			return "6.1.1013 (Sonic Dash)";
 		
 		String result = "Unknown-Version";
 		

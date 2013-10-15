@@ -125,7 +125,7 @@ public class FrameworkServer
 			
 			String file = getPackage( root, pack );
 			
-			//System.out.println( "File: " + file );
+			// System.out.println( "File: " + file );
 			
 			if ( !file.isEmpty() )
 				eval.evalFile( file );
@@ -264,24 +264,22 @@ public class FrameworkServer
 	
 	public void panic( int i, String string )
 	{
-		try
-		{
-			if ( !fw.getResponse().isCommitted() )
-				executeCode( "<h1>" + string + "</h1>" );
-			// fw.getResponse().sendError( i, string );
-		}
-		catch ( IOException | CodeParsingException e )
-		{
-			e.printStackTrace();
-		}
+		if ( !fw.getResponse().isCommitted() )
+			fw.generateError( i, string );
 	}
 	
 	public void dummyRedirect( String string )
+	{
+		dummyRedirect( string, 307 );
+	}
+	
+	public void dummyRedirect( String string, int reasonCode )
 	{
 		try
 		{
 			if ( !fw.getResponse().isCommitted() )
 			{
+				fw.getResponse().setStatus( reasonCode );
 				fw.getResponse().sendRedirect( fw.getResponse().encodeRedirectURL( string ).toString() );
 				return;
 			}
@@ -315,6 +313,29 @@ public class FrameworkServer
 	 * boolean rtnNull - Return null if not set.
 	 */
 	public String getRequest( String key, String def, boolean rtnNull )
+	{
+		String val = fw.getArguments().get( key );
+		
+		if ( val == null && rtnNull )
+			return null;
+		
+		if ( val == null || val.isEmpty() )
+			return def;
+		
+		return val.trim();
+	}
+	
+	public String getServerVar( String key )
+	{
+		return getServerVar( key, "" );
+	}
+	
+	public String getServerVar( String key, String def )
+	{
+		return getServerVar( key, "", false );
+	}
+	
+	public String getServerVar( String key, String def, boolean rtnNull )
 	{
 		Map<ServerVars, Object> request = fw.getServerVars();
 		String val = (String) request.get( ServerVars.parse( key ) );

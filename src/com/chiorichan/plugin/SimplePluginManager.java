@@ -26,6 +26,7 @@ import com.chiorichan.command.Command;
 import com.chiorichan.command.CommandMap;
 import com.chiorichan.command.PluginCommandYamlParser;
 import com.chiorichan.event.Event;
+import com.chiorichan.event.EventException;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.HandlerList;
 import com.chiorichan.event.Listener;
@@ -697,6 +698,44 @@ public final class SimplePluginManager implements PluginManager
 	 */
 	public void callEvent( Event event )
 	{
+		try
+		{
+			if ( event.isAsynchronous() )
+			{
+				if ( Thread.holdsLock( this ) )
+				{
+					throw new IllegalStateException( event.getEventName() + " cannot be triggered asynchronously from inside synchronized code." );
+				}
+				if ( server.isPrimaryThread() )
+				{
+					throw new IllegalStateException( event.getEventName() + " cannot be triggered asynchronously from primary server thread." );
+				}
+				fireEvent( event );
+			}
+			else
+			{
+				synchronized ( this )
+				{
+					fireEvent( event );
+				}
+			}
+		}
+		catch ( EventException ex )
+		{	
+			
+		}
+	}
+	
+	/**
+	 * Calls an event with the given details.<br>
+	 * This method only synchronizes when the event is not asynchronous.
+	 * 
+	 * @param event
+	 *           Event details
+	 * @throws EventException
+	 */
+	public void callEventWithException( Event event ) throws EventException
+	{
 		if ( event.isAsynchronous() )
 		{
 			if ( Thread.holdsLock( this ) )
@@ -718,7 +757,7 @@ public final class SimplePluginManager implements PluginManager
 		}
 	}
 	
-	private void fireEvent( Event event )
+	private void fireEvent( Event event ) throws EventException
 	{
 		HandlerList handlers = event.getHandlers();
 		RegisteredListener[] listeners = handlers.getRegisteredListeners();
@@ -744,6 +783,11 @@ public final class SimplePluginManager implements PluginManager
 					
 					Loader.getLogger().log( Level.SEVERE, String.format( "Nag author(s): '%s' of '%s' about the following: %s", plugin.getDescription().getAuthors(), plugin.getDescription().getFullName(), ex.getMessage() ) );
 				}
+			}
+			catch ( EventException ex )
+			{
+				Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getPlugin().getDescription().getFullName() + "\nEvent Exception Reason: " + ex.getCause().getMessage() );
+				throw ex;
 			}
 			catch ( Throwable ex )
 			{

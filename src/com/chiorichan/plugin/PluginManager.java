@@ -5,8 +5,10 @@ import java.io.InputStream;
 import java.util.Set;
 
 import com.chiorichan.event.Event;
+import com.chiorichan.event.EventException;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
+import com.chiorichan.event.server.RenderEvent;
 import com.chiorichan.permissions.Permissible;
 import com.chiorichan.permissions.Permission;
 
@@ -111,6 +113,7 @@ public interface PluginManager
 	 *            Thrown when an asynchronous event is fired from synchronous code.<br>
 	 *            <i>Note: This is best-effort basis, and should not be used to test synchronized state. This is an
 	 *            indicator for flawed flow logic.</i>
+	 * @throws EventException 
 	 */
 	public void callEvent( Event event ) throws IllegalStateException;
 	
@@ -325,4 +328,6 @@ public interface PluginManager
 	public boolean useTimings();
 	
 	public Plugin getPluginbyName( String pluginPath );
+
+	public void callEventWithException( Event event ) throws EventException;
 }

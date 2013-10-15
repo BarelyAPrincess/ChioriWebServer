@@ -14,8 +14,8 @@ public class FrameworkImageUtils
 		fw = fw0;
 	}
 	
-	public byte[] QRPNG( String code ) throws IOException
+	public String QRPNG( String code ) throws IOException
 	{
-		return QRCode.from( code ).withSize( 200, 200 ).setMargin( 1 ).to( ImageType.PNG ).stream().toByteArray();
+		return new String(QRCode.from( code ).withSize( 200, 200 ).setMargin( 1 ).to( ImageType.PNG ).stream().toByteArray(), "ISO-8859-1");
 	}
 }

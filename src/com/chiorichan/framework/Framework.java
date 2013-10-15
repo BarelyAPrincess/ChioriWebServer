@@ -1,8 +1,5 @@
 package com.chiorichan.framework;
 
-import groovy.lang.Binding;
-import groovy.util.GroovyScriptEngine;
-
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -29,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
+import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.RenderEvent;
 import com.chiorichan.event.server.RequestEvent;
 import com.chiorichan.event.server.ServerVars;
@@ -39,8 +37,6 @@ public class Framework
 {
 	protected static SqlConnector sql = new SqlConnector();
 	protected static SiteManager _sites = new SiteManager( sql );
-	
-	protected Map<String, String> rewriteVars = new HashMap<String, String>();
 	
 	protected HttpServletRequest request;
 	protected HttpServletResponse response;
@@ -59,7 +55,9 @@ public class Framework
 	protected String alternateOutput = "An Unknown Error Has Risen!";
 	protected int httpStatus = 200;
 	
-	Map<ServerVars, Object> serverVars = new HashMap<ServerVars, Object>();
+	protected Map<String, String> rewriteVars = new HashMap<String, String>();
+	protected Map<ServerVars, Object> serverVars = new HashMap<ServerVars, Object>();
+	protected Map<String, String> argumentVars = new TreeMap<String, String>();
 	
 	protected String siteId, siteTitle, siteDomain, siteSubDomain, requestId;
 	protected Site currentSite;
@@ -121,6 +119,9 @@ public class Framework
 		response.addHeader( "Access-Control-Allow-Origin", "*" );
 		
 		requestId = DigestUtils.md5Hex( request.getSession( true ).getId() + request.getRemoteAddr() + uri );
+		
+		for ( Entry<String, String[]> e : request.getParameterMap().entrySet() )
+			argumentVars.put( e.getKey(), e.getValue()[0] );
 		
 		// serverVars.put( ServerVars.PHP_SELF, requestFile.getPath() );
 		serverVars.put( ServerVars.DOCUMENT_ROOT, Loader.getConfig().getString( "settings.webroot", "webroot" ) );
@@ -421,9 +422,9 @@ public class Framework
 				
 				if ( requestFile.isDirectory() )
 				{
-					if ( new File( requestFile, "index.php" ).exists() )
+					if ( new File( requestFile, "index.groovy" ).exists() )
 					{
-						requestFile = new File( requestFile, "index.php" );
+						requestFile = new File( requestFile, "index.groovy" );
 					}
 					else if ( new File( requestFile, "index.html" ).exists() )
 					{
@@ -458,12 +459,7 @@ public class Framework
 			
 			env.set( "_SERVER", $server );
 			
-			TreeMap request0 = new TreeMap<String, String>();
-			
-			for ( Entry<String, String[]> e : request.getParameterMap().entrySet() )
-				request0.put( e.getKey(), e.getValue()[0] );
-			
-			env.set( "_REQUEST", request0 );
+			env.set( "_REQUEST", argumentVars );
 			
 			env.set( "_REWRITE", rewriteVars );
 			
@@ -499,14 +495,19 @@ public class Framework
 			event.view = view;
 			event.title = title;
 			
-			Loader.getPluginManager().callEvent( event );
-			
-			if ( event.sourceChanged() )
-				source = event.getSource();
-			
-			response.getWriter().write( source );
-			
-			getUserService().saveSession();
+			try
+			{
+				Loader.getPluginManager().callEventWithException( event );
+				
+				if ( event.sourceChanged() )
+					source = event.getSource();
+				
+				response.getWriter().write( source );
+			}
+			catch ( EventException ex )
+			{
+				response.getWriter().write( errorPage( ex.getCause() ) );
+			}
 		}
 		catch ( Throwable e )
 		{
@@ -514,7 +515,10 @@ public class Framework
 		}
 		finally
 		{
+			getUserService().saveSession();
+			
 			fwList.remove( Thread.currentThread().getId() );
+			eval = null;
 		}
 	}
 	
@@ -548,40 +552,52 @@ public class Framework
 	
 	public String codeSampleEval( String code, int line, int col )
 	{
-		StringBuilder sb = new StringBuilder();
-		
-		if ( code.isEmpty() )
-			return "";
-		
-		int cLine = 0;
-		for ( String l : code.split( "\n" ) )
+		try
 		{
-			cLine++;
+			StringBuilder sb = new StringBuilder();
 			
-			if ( cLine > line - 5 && cLine < line + 5 )
+			if ( code.isEmpty() )
+				return "";
+			
+			int cLine = 0;
+			for ( String l : code.split( "\n" ) )
 			{
-				if ( cLine == line )
+				cLine++;
+				
+				if ( cLine > line - 5 && cLine < line + 5 )
 				{
-					if ( col > -1 )
+					if ( cLine == line )
 					{
-						if ( col - 1 > -1 )
-							col--;
-						
-						l = escapeHTML( l.substring( 0, col ) ) + "<span style=\"background-color: red; font-weight: bolder;\">" + l.substring( col, col + 1 ) + "</span>" + escapeHTML( l.substring( col + 1 ) );
+						if ( l.length() >= col )
+						{
+							if ( col > -1 )
+							{
+								if ( col - 1 > -1 )
+									col--;
+								
+								l = escapeHTML( l.substring( 0, col ) ) + "<span style=\"background-color: red; font-weight: bolder;\">" + l.substring( col, col + 1 ) + "</span>" + escapeHTML( l.substring( col + 1 ) );
+							}
+							else
+								l = escapeHTML( l );
+							
+							sb.append( "<span class=\"error\"><span class=\"ln error-ln\">" + cLine + "</span> " + l + "</span>" );
+						}
+						else
+							sb.append( "<span class=\"ln\">" + cLine + "</span> " + escapeHTML( l ) + "\n" ); // XXX: Fix It. Why does this happen?
 					}
 					else
-						l = escapeHTML( l );
-					
-					sb.append( "<span class=\"error\"><span class=\"ln error-ln\">" + cLine + "</span> " + l + "</span>" );
-				}
-				else
-				{
-					sb.append( "<span class=\"ln\">" + cLine + "</span> " + escapeHTML( l ) + "\n" );
+					{
+						sb.append( "<span class=\"ln\">" + cLine + "</span> " + escapeHTML( l ) + "\n" );
+					}
 				}
 			}
+			
+			return sb.toString().substring( 0, sb.toString().length() - 1 );
 		}
-		
-		return sb.toString().substring( 0, sb.toString().length() - 1 );
+		catch ( Exception e )
+		{
+			return "Am exception was thrown while preparing code preview: " + e.getMessage();
+		}
 	}
 	
 	public String codeSample( String file, int line )
@@ -677,7 +693,7 @@ public class Framework
 	
 	public String errorPage( Throwable t )
 	{
-		//TODO: Make this whole thing better. Optional fancy error pages.
+		// TODO: Make this whole thing better. Optional fancy error pages.
 		
 		if ( !response.isCommitted() )
 		{
@@ -704,7 +720,7 @@ public class Framework
 			}
 			catch ( Exception e1 )
 			{
-				//e1.printStackTrace();
+				e1.printStackTrace();
 				try
 				{
 					response.sendError( 500, "Critical Server Exception while loading the Framework Fancy Error Page: " + e1.getMessage() );
@@ -1011,6 +1027,11 @@ public class Framework
 	public Map<ServerVars, Object> getServerVars()
 	{
 		return serverVars;
+	}
+	
+	public Map<String, String> getArguments()
+	{
+		return argumentVars;
 	}
 	
 	public Object[] interator( Map<String, Object> nmap )

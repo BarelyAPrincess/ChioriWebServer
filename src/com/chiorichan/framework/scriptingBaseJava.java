@@ -6,9 +6,12 @@ import java.io.File;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.jetty.util.security.Credential.MD5;
+
+import com.chiorichan.Loader;
 
 abstract public class scriptingBaseJava extends Script
 {
@@ -27,6 +30,26 @@ abstract public class scriptingBaseJava extends Script
 		return maps.size();
 	}
 	
+	int count( List<Object> list )
+	{
+		return list.size();
+	}
+	
+	int count( String var )
+	{
+		return var.length();
+	}
+	
+	boolean empty( List<Object> list )
+	{
+		return ( list == null || list.size() < 1 );
+	}
+	
+	boolean empty( Map<Object, Object> maps )
+	{
+		return ( maps == null || maps.size() < 1 );
+	}
+	
 	boolean empty( String var )
 	{
 		if ( var == null )
@@ -40,12 +63,20 @@ abstract public class scriptingBaseJava extends Script
 	
 	String date( String format )
 	{
-		return new SimpleDateFormat( format ).format( new Date() );
+		return date( format, null );
 	}
 	
 	String date( String format, String data )
 	{
-		return new SimpleDateFormat( format ).format( new Date( Long.parseLong( data ) * 1000 ) );
+		Date date = ( data == null || data.isEmpty() ) ? new Date() : new Date( Long.parseLong( data ) * 1000 ) ;
+		
+		if ( format.equals( "U" ) )
+			return Loader.getEpoch() + "";
+		
+		if ( format == null || format.isEmpty() )
+			format = "MMM d YYYY";
+		
+		return new SimpleDateFormat( format ).format( date );
 	}
 	
 	String md5( String str )
@@ -69,8 +100,28 @@ abstract public class scriptingBaseJava extends Script
 		return haystack.indexOf( needle );
 	}
 	
+	String money_format( String amt )
+	{
+		if ( amt == "" )
+			return "$0.00";
+		
+		return money_format( Integer.parseInt( amt ) );
+	}
+	
+	String money_format( Integer amt )
+	{
+		if ( amt == 0 )
+			return "$0.00";
+		
+		DecimalFormat df = new DecimalFormat( "$###,###,###.00" );
+		return df.format( amt );
+	}
+	
 	String money_format( Double amt )
 	{
+		if ( amt == 0 )
+			return "$0.00";
+		
 		DecimalFormat df = new DecimalFormat( "$###,###,###.00" );
 		return df.format( amt );
 	}

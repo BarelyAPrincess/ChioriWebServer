@@ -1,12 +1,12 @@
 package com.chiorichan.framework;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.LinkedHashMap;
 
 import javax.ws.rs.core.MediaType;
 
@@ -74,7 +74,7 @@ public class FrameworkFunctions
 		return rtn;
 	}
 	
-	public Map<String, Object> cleanArray( LinkedHashMap<String, Object> oldObj, List<String> allowedKeys )
+	public Map<String, Object> cleanArray( Map<String, Object> oldObj, List<String> allowedKeys )
 	{
 		Map<String, Object> newArray = new LinkedHashMap<String, Object>();
 		
@@ -148,23 +148,42 @@ public class FrameworkFunctions
 		
 		return "{" + guid + "}";
 	}
+
+	public String createTable( List<Object> tableData )
+	{
+		return createTable( tableData, null, "" );
+	}
+	
+	public String createTable( List<Object> tableData, List<String> headerArray )
+	{
+		return createTable( tableData, headerArray, "" );
+	}
+	
+	public String createTable( List<Object> tableData, List<String> headerArray, String tableId )
+	{
+		Map<String, Object> newData = new LinkedHashMap<String, Object>();
+		
+		Integer x = 0;
+		for ( Object o : tableData )
+		{
+			newData.put( x.toString(), o );
+			x++;
+		}
+		
+		return createTable( newData, headerArray, tableId );
+	}
 	
 	public String createTable( Map<String, Object> tableData )
 	{
-		return createTable( tableData, null, "", false );
+		return createTable( tableData, null, "" );
 	}
 	
 	public String createTable( Map<String, Object> tableData, List<String> headerArray )
 	{
-		return createTable( tableData, headerArray, "", false );
+		return createTable( tableData, headerArray, "" );
 	}
 	
 	public String createTable( Map<String, Object> tableData, List<String> headerArray, String tableId )
-	{
-		return createTable( tableData, headerArray, tableId, false );
-	}
-	
-	public String createTable( Map<String, Object> tableData, List<String> headerArray, String tableId, boolean returnString )
 	{
 		if ( tableId == null )
 			tableId = "";
@@ -199,14 +218,24 @@ public class FrameworkFunctions
 		
 		for ( Object row : tableData.values() )
 		{
-			Map<String, Object> map;
-			
 			String clss = ( x % 2 == 0 ) ? "evenrowcolor" : "oddrowcolor";
 			x++;
 			
-			if ( row instanceof Map )
+			if ( row instanceof Map || row instanceof List )
 			{
-				map = (Map<String, Object>) row;
+				Map<String, Object> map = new LinkedHashMap<String, Object>();
+				
+				if ( row instanceof Map )
+					map = (Map<String, Object>) row;
+				else
+				{
+					int y = 0;
+					for ( Object o : (List<Object>) row )
+					{
+						map.put( y + "", o );
+						y++;
+					}
+				}
 				
 				sb.append( "<tr id=\"" + map.get( "rowId" ) + "\" rel=\"" + map.get( "metaData" ) + "\" class=\"" + clss + "\">\n" );
 				
@@ -243,18 +272,7 @@ public class FrameworkFunctions
 		}
 		sb.append( "</table>\n" );
 		
-		if ( returnString )
-			return sb.toString();
-		
-		try
-		{
-			fw.getServer().includeCode( sb.toString() );
-		}
-		catch ( IOException | CodeParsingException e )
-		{
-			e.printStackTrace();
-		}
-		return "";
+		return sb.toString();
 	}
 	
 	public static ClientResponse CreateMailingList( String apiKey )
