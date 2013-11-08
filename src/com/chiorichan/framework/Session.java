@@ -22,6 +22,9 @@ public class Session
 	
 	public Session(Framework fw)
 	{
+		// Exception being thrown near this line is a sign that the server might need to reboot. (ie. The site)
+		// TODO: Reload site yaml on exception.
+		
 		sessionName = fw.getCurrentSite().getYaml().getString( "sessions.cookie-name", "ChioriSessionId" );
 		SqlConnector sql = fw.getDatabase();
 		

@@ -280,7 +280,7 @@ public class Loader implements PluginMessageRecipient
 			
 			if ( Runtime.getRuntime().maxMemory() / 1024L / 1024L < 512L )
 			{
-				getConsole().warning( "To start the server with more ram, launch it as \"java -Xmx1024M -Xms1024M -jar chiori_server.jar\"" );
+				getConsole().warning( "To start the server with more ram, launch it as \"java -Xmx1024M -Xms1024M -jar server.jar\"" );
 			}
 			
 			String serverIp = configuration.getString( "server.ip", "" );

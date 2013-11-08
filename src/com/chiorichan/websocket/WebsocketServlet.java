@@ -27,6 +27,8 @@ public class WebsocketServlet extends WebSocketServlet
 		@Override
 		public Object createWebSocket( UpgradeRequest request, UpgradeResponse response )
 		{
+			System.out.println( "New websocket request!" );
+			
 			WebsocketHandshakeEvent wshe = new WebsocketHandshakeEvent( (ServletUpgradeRequest) request );
 			
 			WSListener webSocket = null;

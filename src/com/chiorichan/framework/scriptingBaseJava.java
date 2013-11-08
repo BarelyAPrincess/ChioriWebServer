@@ -15,6 +15,11 @@ import com.chiorichan.Loader;
 
 abstract public class scriptingBaseJava extends Script
 {
+	String trim( String str )
+	{
+		return str.trim();
+	}
+	
 	String strtoupper( String str )
 	{
 		return str.toUpperCase();
@@ -68,7 +73,17 @@ abstract public class scriptingBaseJava extends Script
 	
 	String date( String format, String data )
 	{
-		Date date = ( data == null || data.isEmpty() ) ? new Date() : new Date( Long.parseLong( data ) * 1000 ) ;
+		Date date = new Date();
+		
+		if ( data != null && !data.isEmpty() )
+		{
+			data = data.trim();
+			
+			if ( data.length() > 10 )
+				data = data.substring( 0, 10 );
+			
+			date = new Date( Long.parseLong( data ) * 1000 ) ;
+		}
 		
 		if ( format.equals( "U" ) )
 			return Loader.getEpoch() + "";
