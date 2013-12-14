@@ -32,11 +32,11 @@ public class Site
 	
 	public Site(ResultSet rs) throws SQLException
 	{
-		Loader.getLogger().info( "Loading site '" + siteId + "' with title '" + title + "' from Framework Database." );
-		
 		siteId = rs.getString( "siteID" );
 		title = rs.getString( "title" );
 		domain = rs.getString( "domain" );
+		
+		Loader.getLogger().info( "Loading site '" + siteId + "' with title '" + title + "' from Framework Database." );
 		
 		// Convert from hashmap to JSON
 		// new JSONObject( LinkedHashMap );
@@ -87,6 +87,7 @@ public class Site
 		catch ( Exception e )
 		{
 			Loader.getLogger().warning( "MALFORMED YAML EXPRESSION for 'configYaml' field for site '" + siteId + "'" );
+			config = new YamlConfiguration();
 		}
 		
 		if ( config != null && config.getConfigurationSection( "database" ) != null )

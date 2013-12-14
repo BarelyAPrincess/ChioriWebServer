@@ -76,6 +76,12 @@ Major issues resolved. About 60%-70% of framework ported, 20% discarded (to be r
 ===Subversion 0 (Sonic Dash)===
 ====Build 1004====
 Switched from Resin to Jetty. Removed Quercus and replaced it with our own Java/PHP hybrid language using the BeanShell libraries
+===Subversion 1 (Sonic Dash)===
+====Build 1012====
+Switched from BeanShell to GroovyShell. Now you can write your web script in uncompiled Java with the joys of Groovy.
+===Subversion 2 (Sonic Doom)===
+====Build 1212====
+Some framework instance/memory handling rewrites. Possiblely broken build.
 
 =Installation=
 ==Configuration==

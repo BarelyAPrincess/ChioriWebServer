@@ -10,7 +10,11 @@ public enum PluginLoadOrder
 	 */
 	STARTUP,
 	/**
-	 * Indicates that the plugin will be loaded after the first/default world was created
+	 * Indicates that the plugin will be loaded after the server was started
 	 */
-	POSTSERVER
+	POSTSERVER,
+	/**
+	 * Inidicates that the plugin will be loaded after the framework was initalized
+	 */
+	POSTFRAMEWORK
 }

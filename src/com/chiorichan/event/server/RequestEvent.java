@@ -2,22 +2,19 @@ package com.chiorichan.event.server;
 
 import java.util.Map;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-
 import com.chiorichan.event.Cancellable;
+import com.chiorichan.framework.Framework;
 
 public class RequestEvent extends ServerEvent implements Cancellable
 {
 	private int statusNo = 200;
 	private String reason;
-	private Map<ServerVars, Object> _server;
+	private Framework _fw;
 	private boolean cancelled = false;
 	
-	public RequestEvent( Map<ServerVars, Object> _server0 )
+	public RequestEvent( Framework _fw0 )
 	{
-		_server = _server0;
+		_fw = _fw0;
 	}
 	
 	public void clearError()
@@ -47,6 +44,7 @@ public class RequestEvent extends ServerEvent implements Cancellable
 		return statusNo;
 	}
 	
+	/*
 	public Long getServerLong( ServerVars serverVar )
 	{
 		try
@@ -82,10 +80,11 @@ public class RequestEvent extends ServerEvent implements Cancellable
 			return "";
 		}
 	}
+	*/
 	
-	public Map<ServerVars, Object> getServerVars()
+	public Framework getFramework()
 	{
-		return _server;
+		return _fw;
 	}
 
 	@Override

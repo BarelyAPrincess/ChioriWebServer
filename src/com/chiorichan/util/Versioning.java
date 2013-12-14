@@ -13,7 +13,7 @@ public class Versioning
 	public static String getVersion()
 	{
 		if ( true )
-			return "6.1.1013 (Sonic Dash)";
+			return "6.2.1212 (Sonic Doom)";
 		
 		String result = "Unknown-Version";
 		
@@ -30,7 +30,7 @@ public class Versioning
 			}
 			catch ( IOException ex )
 			{
-				Logger.getLogger( Versioning.class.getName() ).log( Level.SEVERE, "Could not get Bukkit version!", ex );
+				Logger.getLogger( Versioning.class.getName() ).log( Level.SEVERE, "Could not get version!", ex );
 			}
 		}
 		

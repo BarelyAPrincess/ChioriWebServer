@@ -66,6 +66,11 @@ abstract public class scriptingBaseJava extends Script
 		return false;
 	}
 	
+	String time()
+	{
+		return date( "U" );
+	}
+	
 	String date( String format )
 	{
 		return date( format, null );

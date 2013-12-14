@@ -7,7 +7,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.ConnectException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -16,28 +15,20 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.RenderEvent;
-import com.chiorichan.event.server.RequestEvent;
 import com.chiorichan.event.server.ServerVars;
-import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.plugin.PluginManager;
 
 public class Framework
 {
-	protected static SqlConnector sql = new SqlConnector();
-	protected static SiteManager _sites = new SiteManager( sql );
-	
 	protected HttpServletRequest request;
 	protected HttpServletResponse response;
 	protected ServletContext _servletContext;
@@ -62,10 +53,14 @@ public class Framework
 	protected String siteId, siteTitle, siteDomain, siteSubDomain, requestId;
 	protected Site currentSite;
 	
-	protected static Map<Long, Framework> fwList = new HashMap<Long, Framework>();
-	
-	// TODO: TEMP
 	public Evaling eval;
+	
+	protected String uid;
+	
+	public String getUid()
+	{
+		return uid;
+	}
 	
 	public Framework(HttpServletRequest request0, HttpServletResponse response0, ServletContext servletContext)
 	{
@@ -73,56 +68,19 @@ public class Framework
 		response = response0;
 		_servletContext = servletContext;
 		
-		fwList.put( Thread.currentThread().getId(), this );
+		uid = request0.getSession( true ).getId();
+		env = new Enviro( this );
+		
+		loadVars();
 	}
 	
-	public static Framework getFramework()
+	public Framework(HttpServletRequest request, HttpServletResponse response)
 	{
-		if ( fwList.containsKey( Thread.currentThread().getId() ) )
-			return fwList.get( Thread.currentThread().getId() );
-		
-		return null;
+		this( request, response, request.getServletContext() );
 	}
 	
-	public void init() throws IOException, ServletException
+	public void loadVars()
 	{
-		String uri = request.getRequestURI();
-		String domain = request.getServerName();
-		String site = "";
-		
-		request.setCharacterEncoding( "ISO-8859-1" );
-		response.setCharacterEncoding( "ISO-8859-1" );
-		
-		if ( uri.startsWith( "/" ) )
-			uri = uri.substring( 1 );
-		
-		if ( domain.equalsIgnoreCase( "localhost" ) || domain.equalsIgnoreCase( "127.0.0.1" ) | domain.equalsIgnoreCase( request.getLocalAddr() ) )
-			domain = "web.applebloom.co"; // domain = "";
-			
-		if ( domain.split( "\\." ).length > 2 )
-		{
-			String[] r = domain.split( "\\.", 2 );
-			site = r[0];
-			domain = r[1];
-		}
-		
-		currentSite = _sites.getSiteByDomain( domain );
-		
-		// TODO: Generate a blank site and save it based on the information known
-		if ( currentSite == null )
-			currentSite = new Site( "default", Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Chiori Framework Site" ), domain );
-		
-		siteDomain = domain;
-		siteSubDomain = site;
-		
-		// TODO: Fix this so requests are limited within the same domain level but will be overridable by the site config.
-		response.addHeader( "Access-Control-Allow-Origin", "*" );
-		
-		requestId = DigestUtils.md5Hex( request.getSession( true ).getId() + request.getRemoteAddr() + uri );
-		
-		for ( Entry<String, String[]> e : request.getParameterMap().entrySet() )
-			argumentVars.put( e.getKey(), e.getValue()[0] );
-		
 		// serverVars.put( ServerVars.PHP_SELF, requestFile.getPath() );
 		serverVars.put( ServerVars.DOCUMENT_ROOT, Loader.getConfig().getString( "settings.webroot", "webroot" ) );
 		serverVars.put( ServerVars.HTTP_ACCEPT, request.getHeader( "Accept" ) );
@@ -146,96 +104,6 @@ public class Framework
 		serverVars.put( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "webmaster@" + request.getServerName() ) );
 		serverVars.put( ServerVars.SERVER_ID, Loader.getConfig().getString( "server.id", "applebloom" ) );
 		serverVars.put( ServerVars.SERVER_SIGNATURE, "Chiori Web Server Version " + Loader.getVersion() );
-		
-		RequestEvent event = new RequestEvent( serverVars );
-		Loader.getPluginManager().callEvent( event );
-		
-		if ( event.isCancelled() )
-		{
-			Loader.getLogger().warning( "Navigation was cancelled by a plugin for ip '" + request.getRemoteAddr() + "' '" + request.getHeader( "Host" ) + request.getRequestURI() + "'" );
-			
-			int status = event.getStatus();
-			String reason = event.getReason();
-			
-			if ( status < 400 && status > 599 )
-			{
-				status = 502;
-				reason = "Navigation Cancelled by Internal Event";
-			}
-			
-			response.sendError( status, reason );
-			return;
-		}
-		
-		if ( !rewriteVirtual( siteDomain, siteSubDomain, uri ) )
-		{
-			File siteRoot = new File( Loader.webroot, currentSite.getWebRoot( siteSubDomain ) );
-			
-			if ( !siteRoot.exists() )
-				siteRoot.mkdirs();
-			
-			if ( uri.isEmpty() )
-				uri = "/";
-			
-			File dest = new File( siteRoot, uri );
-			
-			if ( uri.endsWith( ".php" ) || uri.endsWith( ".php5" ) || ( dest.isDirectory() && new File( dest, "index.php" ).exists() ) || ( dest.isDirectory() && new File( dest, "index.php5" ).exists() ) )
-			{
-				this.loadPageInternal( "", "", "", uri, "", "-1" );
-			}
-			else
-			{
-				if ( dest.isDirectory() )
-				{
-					if ( new File( dest, "index.html" ).exists() )
-						uri = uri + "/index.html";
-					else if ( new File( dest, "index.htm" ).exists() )
-						uri = uri + "/index.htm";
-					else
-						response.sendError( 403, "Directory Listing is Denied on this Server!" );
-				}
-				
-				dest = new File( siteRoot, uri );
-				
-				String target = dest.getAbsolutePath();
-				Loader.getLogger().fine( "Requesting file (" + currentSite.siteId + ") '" + target + "'" );
-				
-				FileInputStream is;
-				try
-				{
-					is = new FileInputStream( target );
-				}
-				catch ( FileNotFoundException e )
-				{
-					// e.printStackTrace();
-					response.sendError( 404 );
-					return;
-				}
-				
-				try
-				{
-					ServletOutputStream buffer = response.getOutputStream();
-					
-					int nRead;
-					byte[] data = new byte[16384];
-					
-					while ( ( nRead = is.read( data, 0, data.length ) ) != -1 )
-					{
-						buffer.write( data, 0, nRead );
-					}
-					
-					buffer.flush();
-					
-					is.close();
-				}
-				catch ( IOException e )
-				{
-					e.printStackTrace();
-					response.sendError( 500, e.getMessage() );
-					return;
-				}
-			}
-		}
 	}
 	
 	public String replaceAt( String par, int at, String rep )
@@ -247,6 +115,8 @@ public class Framework
 	
 	public boolean rewriteVirtual( String domain, String subdomain, String uri )
 	{
+		SqlConnector sql = Loader.getFrameworkManagement().sql;
+		
 		try
 		{
 			// TODO: Fix the select issue with blank subdomains. It's not suppose to be 1111 but it is to prevent the
@@ -375,8 +245,6 @@ public class Framework
 	
 	protected void loadPageInternal( String theme, String view, String title, String file, String html, String reqPerm ) throws IOException
 	{
-		env = null;
-		
 		try
 		{
 			if ( currentSite == null )
@@ -445,7 +313,6 @@ public class Framework
 				}
 			}
 			
-			env = new Enviro( this );
 			eval = env.newEval();
 			
 			serverVars.put( ServerVars.DOCUMENT_ROOT, new File( Loader.getConfig().getString( "settings.webroot", "webroot" ), currentSite.getWebRoot( siteSubDomain ) ).getAbsolutePath() );
@@ -468,8 +335,12 @@ public class Framework
 				if ( !html.isEmpty() )
 					eval.evalCode( html );
 				
+				//eval.evalCode( "tmp = \"123\"; println tmp;" );
+				
 				if ( requestFile != null )
 					eval.evalFile( requestFile );
+				
+				eval.evalCode( "println tmp;" );
 			}
 			
 			String source;
@@ -479,10 +350,10 @@ public class Framework
 			}
 			else
 			{
-				currentSite = _sites.getSiteById( "framework" );
+				currentSite = Loader.getFrameworkManagement().getSiteManager().getSiteById( "framework" );
 				
 				if ( currentSite instanceof FrameworkSite )
-					( (FrameworkSite) currentSite ).setDatabase( sql );
+					( (FrameworkSite) currentSite ).setDatabase( Loader.getFrameworkManagement().sql );
 				
 				source = alternateOutput;
 				theme = "com.chiorichan.themes.error";
@@ -506,19 +377,18 @@ public class Framework
 			}
 			catch ( EventException ex )
 			{
+				ex.printStackTrace();
 				response.getWriter().write( errorPage( ex.getCause() ) );
 			}
 		}
 		catch ( Throwable e )
 		{
+			e.printStackTrace();
 			response.getWriter().write( errorPage( e ) );
 		}
 		finally
 		{
 			getUserService().saveSession();
-			
-			fwList.remove( Thread.currentThread().getId() );
-			eval = null;
 		}
 	}
 	
@@ -583,7 +453,9 @@ public class Framework
 							sb.append( "<span class=\"error\"><span class=\"ln error-ln\">" + cLine + "</span> " + l + "</span>" );
 						}
 						else
-							sb.append( "<span class=\"ln\">" + cLine + "</span> " + escapeHTML( l ) + "\n" ); // XXX: Fix It. Why does this happen?
+							sb.append( "<span class=\"ln\">" + cLine + "</span> " + escapeHTML( l ) + "\n" ); // XXX: Fix It.
+																																			// Why does
+																																			// this happen?
 					}
 					else
 					{
@@ -697,10 +569,10 @@ public class Framework
 		
 		if ( !response.isCommitted() )
 		{
-			currentSite = _sites.getSiteById( "framework" );
+			currentSite = Loader.getFrameworkManagement().getSiteManager().getSiteById( "framework" );
 			
 			if ( currentSite instanceof FrameworkSite )
-				( (FrameworkSite) currentSite ).setDatabase( sql );
+				( (FrameworkSite) currentSite ).setDatabase( Loader.getFrameworkManagement().sql );
 			
 			try
 			{
@@ -836,55 +708,6 @@ public class Framework
 		return sb.toString();
 	}
 	
-	public static SiteManager getSiteManager()
-	{
-		return _sites;
-	}
-	
-	public static void initalizeFramework()
-	{
-		YamlConfiguration config = Loader.getConfig();
-		
-		switch ( config.getString( "framework-database.type", "mysql" ) )
-		{
-			case "mysql":
-				String host = config.getString( "framework.database.host", "localhost" );
-				String port = config.getString( "framework.database.port", "3306" );
-				String database = config.getString( "framework.database.database", "chiorifw" );
-				String username = config.getString( "framework.database.user", "fwuser" );
-				String password = config.getString( "framework.database.pass", "fwpass" );
-				
-				try
-				{
-					sql.init( database, username, password, host, port );
-				}
-				catch ( SQLException e )
-				{
-					e.printStackTrace();
-					Loader.getLogger().severe( e.getMessage() );
-					System.exit( 1 );
-				}
-				catch ( ClassNotFoundException e )
-				{
-					Loader.getLogger().severe( "We could not locate the 'com.mysql.jdbc.Driver' library regardless that its suppose to be included. If your running from source code be sure to have this library in your build path." );
-					System.exit( 1 );
-				}
-				catch ( ConnectException e )
-				{
-					e.printStackTrace();
-					Loader.getLogger().severe( "We had a problem connecting to the database host '" + host + "'" );
-					System.exit( 1 );
-				}
-				
-				break;
-			default:
-				Loader.getLogger().severe( "The Framework Database can not be anything other then mySql at the moment. Please change 'framework-database.type' to 'mysql' in 'chiori.yml'" );
-				System.exit( 1 );
-		}
-		
-		_sites.loadSites();
-	}
-	
 	public FrameworkServer getServer()
 	{
 		if ( _server == null )
@@ -980,7 +803,12 @@ public class Framework
 	
 	public static SqlConnector getDatabase()
 	{
-		return sql;
+		return Loader.getFrameworkManagement().sql;
+	}
+	
+	public FrameworkManagement getFrameworkManagement()
+	{
+		return Loader.getFrameworkManagement();
 	}
 	
 	public void generateError( String errStr )
@@ -1034,8 +862,15 @@ public class Framework
 		return argumentVars;
 	}
 	
-	public Object[] interator( Map<String, Object> nmap )
+	protected boolean _stale;
+	
+	/**
+	 * Returns true if this framework was used in a http request prior to the current one
+	 * 
+	 * @return boolean
+	 */
+	public boolean isStaleFramework()
 	{
-		return nmap.values().toArray();
+		return _stale;
 	}
 }

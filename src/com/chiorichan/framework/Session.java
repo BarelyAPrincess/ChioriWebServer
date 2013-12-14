@@ -7,6 +7,9 @@ import java.util.Map;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.codec.digest.DigestUtils;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
@@ -22,13 +25,18 @@ public class Session
 	
 	public Session(Framework fw)
 	{
+		this( fw.getCurrentSite(), fw.getRequest(), fw.getResponse() );
+	}
+	
+	public Session( Site site, HttpServletRequest request, HttpServletResponse response )
+	{
 		// Exception being thrown near this line is a sign that the server might need to reboot. (ie. The site)
 		// TODO: Reload site yaml on exception.
 		
-		sessionName = fw.getCurrentSite().getYaml().getString( "sessions.cookie-name", "ChioriSessionId" );
-		SqlConnector sql = fw.getDatabase();
+		sessionName = site.getYaml().getString( "sessions.cookie-name", "ChioriSessionId" );
+		SqlConnector sql = Framework.getDatabase();
 		
-		cookie = getCookie( fw.getRequest(), sessionName );
+		cookie = getCookie( request, sessionName );
 		
 		if ( cookie != null )
 		{
@@ -63,24 +71,24 @@ public class Session
 		
 		if ( cookie == null )
 		{
-			int defaultLife = fw.getCurrentSite().getYaml().getInt( "sessions.default-life", 604800 );
+			int defaultLife = site.getYaml().getInt( "sessions.default-life", 604800 );
 			
-			cookie = new Cookie( sessionName, fw.getRequestId() );
+			sessId = request.getSession( true ).getId();
 			
-			sessId = fw.getRequestId();
+			cookie = new Cookie( sessionName, sessId );
 			
 			cookie.setMaxAge( defaultLife );
-			cookie.setDomain( "." + fw.siteDomain );
+			cookie.setDomain( "." + site.domain );
 			cookie.setPath( "/" );
 			
-			fw.getResponse().addCookie( cookie );
+			response.addCookie( cookie );
 			
-			data.put( "ipAddr", fw.getRequest().getRemoteAddr() );
+			data.put( "ipAddr", request.getRemoteAddr() );
 			String dataJson = new Gson().toJson( data );
 			
 			expires = (int) (System.currentTimeMillis() / 1000) + defaultLife;
 			
-			sql.queryUpdate( "INSERT INTO `sessions` (`sessid`, `expires`, `data`)VALUES('" + fw.getRequestId() + "', '" + expires + "', '" + dataJson + "');" );
+			sql.queryUpdate( "INSERT INTO `sessions` (`sessid`, `expires`, `data`)VALUES('" + sessId + "', '" + expires + "', '" + dataJson + "');" );
 		}
 		
 		Loader.getLogger().info( "InitSessions: " + this );
@@ -88,7 +96,7 @@ public class Session
 	
 	public void saveSession(Framework fw)
 	{
-		SqlConnector sql = fw.getDatabase();
+		SqlConnector sql = Framework.getDatabase();
 		
 		data.put( "ipAddr", fw.getRequest().getRemoteAddr() );
 		String dataJson = new Gson().toJson( data );
@@ -143,6 +151,11 @@ public class Session
 	{
 		expires = 0;
 		setCookieExpiry( 0 );
+	}
+	
+	public String getId()
+	{
+		return sessId;
 	}
 	
 	// TODO: Future add of setDomain, setCookieName

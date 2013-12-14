@@ -27,7 +27,11 @@ import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 
 import org.apache.commons.lang3.Validate;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -49,6 +53,7 @@ import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.conversations.Conversable;
 import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.framework.Framework;
+import com.chiorichan.framework.FrameworkManagement;
 import com.chiorichan.permissions.Permissible;
 import com.chiorichan.permissions.Permission;
 import com.chiorichan.plugin.Plugin;
@@ -99,6 +104,8 @@ public class Loader implements PluginMessageRecipient
 	protected static Console console = new Console();
 	protected UserList userList = new UserList( this );
 	
+	protected FrameworkManagement fwm;
+	
 	private final ServicesManager servicesManager = new SimpleServicesManager();
 	private final static ChioriScheduler scheduler = new ChioriScheduler();
 	private Server server = new Server();
@@ -128,7 +135,7 @@ public class Loader implements PluginMessageRecipient
 				{
 					acceptsAll( Arrays.asList( "?", "help" ), "Show the help" );
 					
-					acceptsAll( Arrays.asList( "c", "config" ), "Properties file to use" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "server.properties" ) ).describedAs( "Properties file" );
+					acceptsAll( Arrays.asList( "c", "config" ), "Configuration file to use" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "server.properties" ) ).describedAs( "Properties file" );
 					
 					acceptsAll( Arrays.asList( "P", "plugins" ), "Plugin directory to use" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "plugins" ) ).describedAs( "Plugin directory" );
 					
@@ -234,14 +241,16 @@ public class Loader implements PluginMessageRecipient
 		
 		// console.init();
 		
-		Framework.initalizeFramework();
-		
 		loadPlugins();
 		enablePlugins( PluginLoadOrder.STARTUP );
 		
 		initServer();
 		
 		enablePlugins( PluginLoadOrder.POSTSERVER );
+		
+		fwm = new FrameworkManagement();
+		
+		enablePlugins( PluginLoadOrder.POSTFRAMEWORK );
 		
 		getLogger().info( "Starting the Task Scheduler!" );
 		timer1.scheduleAtFixedRate( new TimerTask()
@@ -283,14 +292,37 @@ public class Loader implements PluginMessageRecipient
 				getConsole().warning( "To start the server with more ram, launch it as \"java -Xmx1024M -Xms1024M -jar server.jar\"" );
 			}
 			
+			server = new Server();
+			
+			// TODO: Make these options configurable
+			HttpConfiguration httpConf = new HttpConfiguration();
+			httpConf.setOutputBufferSize( 32768 );
+			httpConf.setRequestHeaderSize( 8192 );
+			
+			/*
+			 * TODO: Add SSL support ONEDAY! SEE
+			 * http://git.eclipse.org/c/jetty/org.eclipse.jetty.project.git/tree/examples/
+			 * embedded/src/main/java/org/eclipse/jetty/embedded/ManyConnectors.java FOR REFERENCE
+			 * 
+			 * http_config.setSecureScheme("https"); http_config.setSecurePort(443); SslContextFactory sslContextFactory =
+			 * new SslContextFactory(); sslContextFactory.setKeyStorePath(jetty_home + "/etc/keystore");
+			 * sslContextFactory.setKeyStorePassword("OBF:1vny1zlo1x8e1vnw1vn61x8g1zlu1vn4");
+			 * sslContextFactory.setKeyManagerPassword("OBF:1u2u1wml1z7s1z7a1wnl1u2g"); HttpConfiguration https_config =
+			 * new HttpConfiguration(http_config); https_config.addCustomizer(new SecureRequestCustomizer());
+			 * ServerConnector https = new ServerConnector(server, new SslConnectionFactory(sslContextFactory,"http/1.1"),
+			 * new HttpConnectionFactory(https_config)); https.setPort(8443); https.setIdleTimeout(500000);
+			 */
+			
+			ServerConnector http = new ServerConnector( server, new HttpConnectionFactory( httpConf ) );
+			
 			String serverIp = configuration.getString( "server.ip", "" );
 			
 			if ( serverIp.length() > 0 )
-			{
-				// setIp( serverIp );
-			}
+				http.setHost( serverIp );
 			
-			server = new Server( configuration.getInt( "server.port", 8080 ) );
+			http.setPort( configuration.getInt( "server.port", 8080 ) );
+			// http.setIdleTimeout( 30000 );
+			// http.setName( "admin" );
 			
 			File root = new File( webroot );
 			
@@ -316,15 +348,18 @@ public class Loader implements PluginMessageRecipient
 			
 			context.setHandler( sh );
 			
-			///mainHandler.addHandler( servletHandler );
+			// TODO: It needs to be determined what to do with Jetty Sessions since the framework has its own builtin system
+			sh.getSessionManager().getSessionCookieConfig().setName( "SESSID" );
+			
+			// /mainHandler.addHandler( servletHandler );
 			// server.setHandler( mainHandler );
 			
-			///sh.setHandler( mainHandler );
+			// /sh.setHandler( mainHandler );
 			
-			//server.setHandler( sh );
+			// server.setHandler( sh );
 			
-			//registerServlet( WebsocketServlet.class, "/" );
-			//registerServlet( DefaultServlet.class, "/" );
+			// registerServlet( WebsocketServlet.class, "/" );
+			// registerServlet( DefaultServlet.class, "/" );
 			
 			// server.setServerHeader( product + " " + version );
 			// server.setServerId( Loader.getConfig().getString( "server.id", "chiori" ) );
@@ -335,6 +370,7 @@ public class Loader implements PluginMessageRecipient
 			{
 				servletHandler.setServlets( holders.toArray( new ServletHolder[0] ) );
 				servletHandler.setServletMappings( mappings.toArray( new ServletMapping[0] ) );
+				server.setConnectors( new Connector[] { http } );
 				server.start();
 			}
 			catch ( NullPointerException e )
@@ -1123,5 +1159,10 @@ public class Loader implements PluginMessageRecipient
 	public static int getEpoch()
 	{
 		return (int) ( System.currentTimeMillis() / 1000 );
+	}
+
+	public static FrameworkManagement getFrameworkManagement()
+	{
+		return getInstance().fwm;
 	}
 }

@@ -23,6 +23,17 @@ abstract class scriptingBaseGroovy extends scriptingBaseJava
 		println ( getFramework().getServer().fileReader( file ) );
 	}
 	
+	String getVersion()
+	{
+		return getFramework().getVersion();
+	}
+	
+	String getProduct()
+	{
+		return getFramework().getProduct();
+	}
+	
+	@Deprecated
 	String get_version()
 	{
 		return getFramework().getProduct() + " " + getFramework().getVersion();

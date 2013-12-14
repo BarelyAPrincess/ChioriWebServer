@@ -8,7 +8,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.chiorichan.Loader;
-import com.chiorichan.framework.Framework;
 
 public class DefaultServlet extends HttpServlet
 {
@@ -17,7 +16,6 @@ public class DefaultServlet extends HttpServlet
 	@Override
 	public void service( HttpServletRequest request, HttpServletResponse response ) throws IOException, ServletException
 	{
-		Framework fw = new Framework( request, response, request.getServletContext() );
-		fw.init();
+		Loader.getFrameworkManagement().handleRequest( request, response );
 	}
 }
