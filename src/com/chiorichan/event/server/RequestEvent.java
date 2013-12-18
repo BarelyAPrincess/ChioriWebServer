@@ -1,20 +1,18 @@
 package com.chiorichan.event.server;
 
-import java.util.Map;
-
 import com.chiorichan.event.Cancellable;
-import com.chiorichan.framework.Framework;
+import com.chiorichan.http.HttpRequest;
 
 public class RequestEvent extends ServerEvent implements Cancellable
 {
 	private int statusNo = 200;
 	private String reason;
-	private Framework _fw;
+	private HttpRequest _request;
 	private boolean cancelled = false;
 	
-	public RequestEvent( Framework _fw0 )
+	public RequestEvent( HttpRequest request )
 	{
-		_fw = _fw0;
+		_request = request;
 	}
 	
 	public void clearError()
@@ -82,9 +80,9 @@ public class RequestEvent extends ServerEvent implements Cancellable
 	}
 	*/
 	
-	public Framework getFramework()
+	public HttpRequest getFramework()
 	{
-		return _fw;
+		return _request;
 	}
 
 	@Override

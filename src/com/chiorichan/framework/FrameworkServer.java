@@ -13,6 +13,9 @@ import java.util.Map.Entry;
 import com.chiorichan.Loader;
 import com.chiorichan.event.server.ServerVars;
 
+/**
+ * TODO: Merge this class into the SERVER
+ */
 public class FrameworkServer
 {
 	protected Framework fw;
@@ -36,17 +39,8 @@ public class FrameworkServer
 	{
 		if ( autoRedirect )
 		{
-			try
-			{
-				fw.getResponse().setHeader( "HTTP/1.1", httpStatus + "" );
-				fw.getResponse().sendRedirect( target );
-				
-				// request.getRequestDispatcher( target ).forward( request, response );
-			}
-			catch ( IOException e )
-			{
-				e.printStackTrace();
-			}
+			fw.getResponse().setStatus( httpStatus );
+			fw.getResponse().sendRedirect( target );
 		}
 		else
 		{
@@ -273,25 +267,18 @@ public class FrameworkServer
 		dummyRedirect( string, 307 );
 	}
 	
-	public void dummyRedirect( String string, int reasonCode )
+	public void dummyRedirect( String var1, int reasonCode )
 	{
-		try
+		if ( !fw.getResponse().isCommitted() )
 		{
-			if ( !fw.getResponse().isCommitted() )
-			{
-				fw.getResponse().setStatus( reasonCode );
-				fw.getResponse().sendRedirect( fw.getResponse().encodeRedirectURL( string ).toString() );
-				return;
-			}
-		}
-		catch ( IOException e )
-		{
-			e.printStackTrace();
+			fw.getResponse().setStatus( reasonCode );
+			fw.getResponse().sendRedirect( var1 );
+			return;
 		}
 		
 		try
 		{
-			fw.getResponse().getWriter().println( "<script>window.location = '" + string + "';</script>" );
+			fw.getResponse().println( "<script>window.location = '" + var1 + "';</script>" );
 		}
 		catch ( IOException e )
 		{

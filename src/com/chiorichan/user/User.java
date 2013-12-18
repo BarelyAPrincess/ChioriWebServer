@@ -14,12 +14,11 @@ import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.event.user.UserLoginEvent;
 import com.chiorichan.event.user.UserLoginEvent.Result;
-import com.chiorichan.framework.Session;
 import com.chiorichan.permissions.PermissionAttachmentInfo;
 import com.chiorichan.plugin.Plugin;
 import com.chiorichan.util.ObjectUtil;
 
-public class User extends Session
+public class User
 {
 	public Loader server;
 	public boolean valid = false;

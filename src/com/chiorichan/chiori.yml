@@ -2,7 +2,7 @@ server:
   ip: ''
   port: 8080
   admin: chiorigreene@gmail.com
-  id: applebloom
+  allowDirectoryListing: false
 settings:
   permissions-file: permissions.yml
   update-folder: update

@@ -39,7 +39,7 @@ public class Versioning
 	
 	public static String getCopyright()
 	{
-		return "Copyright © 2013 Apple Bloom Company";
+		return "Copyright © 2014 Apple Bloom Company";
 	}
 
 	public static String getProduct()

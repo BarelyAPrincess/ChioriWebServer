@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.net.InetSocketAddress;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,17 +28,6 @@ import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 
 import org.apache.commons.lang3.Validate;
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.HttpConfiguration;
-import org.eclipse.jetty.server.HttpConnectionFactory;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.handler.HandlerList;
-import org.eclipse.jetty.server.session.SessionHandler;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.servlet.ServletMapping;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.error.MarkedYAMLException;
@@ -52,8 +42,8 @@ import com.chiorichan.command.ServerCommand;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.conversations.Conversable;
 import com.chiorichan.file.YamlConfiguration;
-import com.chiorichan.framework.Framework;
-import com.chiorichan.framework.FrameworkManagement;
+import com.chiorichan.http.PersistenceManager;
+import com.chiorichan.http.WebHandler;
 import com.chiorichan.permissions.Permissible;
 import com.chiorichan.permissions.Permission;
 import com.chiorichan.plugin.Plugin;
@@ -69,8 +59,6 @@ import com.chiorichan.plugin.messaging.PluginMessageRecipient;
 import com.chiorichan.plugin.messaging.StandardMessenger;
 import com.chiorichan.scheduler.ChioriScheduler;
 import com.chiorichan.scheduler.ChioriWorker;
-import com.chiorichan.server.DefaultServlet;
-import com.chiorichan.server.ServerThread;
 import com.chiorichan.updater.AutoUpdater;
 import com.chiorichan.updater.ChioriDLUpdaterService;
 import com.chiorichan.user.BanEntry;
@@ -80,8 +68,8 @@ import com.chiorichan.util.FileUtil;
 import com.chiorichan.util.ServerShutdownThread;
 import com.chiorichan.util.Versioning;
 import com.chiorichan.util.permissions.DefaultPermissions;
-import com.chiorichan.websocket.WebsocketServlet;
 import com.google.common.collect.ImmutableList;
+import com.sun.net.httpserver.HttpServer;
 
 public class Loader implements PluginMessageRecipient
 {
@@ -104,20 +92,15 @@ public class Loader implements PluginMessageRecipient
 	protected static Console console = new Console();
 	protected UserList userList = new UserList( this );
 	
-	protected FrameworkManagement fwm;
+	protected PersistenceManager persistence;
 	
 	private final ServicesManager servicesManager = new SimpleServicesManager();
 	private final static ChioriScheduler scheduler = new ChioriScheduler();
-	private Server server = new Server();
+	private HttpServer server;
 	public Boolean isRunning = false;
-	
-	private final HandlerList mainHandler = new HandlerList();
-	private ServletHandler servletHandler = new ServletHandler();
 	private int port = 8080;
-	private final List<ServletHolder> holders = new ArrayList<ServletHolder>();
-	private final List<ServletMapping> mappings = new ArrayList<ServletMapping>();
 	
-	private static Timer timer1 = new Timer();
+	private static Timer timer1 = new Timer( "server-heartbeat", true );
 	
 	public java.util.Queue<Runnable> processQueue = new java.util.concurrent.ConcurrentLinkedQueue<Runnable>();
 	
@@ -206,6 +189,8 @@ public class Loader implements PluginMessageRecipient
 	
 	public Loader(OptionSet options0)
 	{
+		long startTime = System.currentTimeMillis();
+		
 		instance = this;
 		options = options0;
 		
@@ -248,7 +233,7 @@ public class Loader implements PluginMessageRecipient
 		
 		enablePlugins( PluginLoadOrder.POSTSERVER );
 		
-		fwm = new FrameworkManagement();
+		persistence = new PersistenceManager();
 		
 		enablePlugins( PluginLoadOrder.POSTFRAMEWORK );
 		
@@ -259,30 +244,20 @@ public class Loader implements PluginMessageRecipient
 			public void run()
 			{
 				Loader.getScheduler().mainThreadHeartbeat( (int) ( System.currentTimeMillis() / 50 ) );
+				//server.mainThreadHeartbeat( (int) ( System.currentTimeMillis() / 50 ) );
 			}
 		}, 50L, 50L );
-	}
-	
-	private void registerServlet( Class servlet, String path )
-	{
-		ServletHolder holder = new ServletHolder();
-		holder.setName( servlet.getName() );
-		holder.setClassName( servlet.getName() );
-		holders.add( holder );
-		ServletMapping mapping = new ServletMapping();
-		mapping.setPathSpec( path );
-		mapping.setServletName( servlet.getName() );
-		mappings.add( mapping );
+		
+		getLogger().info( "Starting the Session Garbage Collector!" );
+		PersistenceManager.scheduleGarbageCollector();
+		
+		getConsole().info( "Done (" + ( System.currentTimeMillis() - startTime ) + "ms)! For help, type \"help\" or \"?\"" );
 	}
 	
 	private void initServer()
 	{
 		try
 		{
-			ServerThread serverThread = new ServerThread();
-			
-			long startTime = System.currentTimeMillis();
-			
 			Runtime.getRuntime().addShutdownHook( new ServerShutdownThread( this ) );
 			
 			getConsole().info( "Starting " + product + " " + version );
@@ -292,17 +267,22 @@ public class Loader implements PluginMessageRecipient
 				getConsole().warning( "To start the server with more ram, launch it as \"java -Xmx1024M -Xms1024M -jar server.jar\"" );
 			}
 			
-			server = new Server();
+			InetSocketAddress socket;
+			String serverIp = configuration.getString( "server.ip", "" );
+			int serverPort = configuration.getInt( "server.port", 8080 );
 			
-			// TODO: Make these options configurable
-			HttpConfiguration httpConf = new HttpConfiguration();
-			httpConf.setOutputBufferSize( 32768 );
-			httpConf.setRequestHeaderSize( 8192 );
+			if ( serverIp.isEmpty() )
+				socket = new InetSocketAddress( serverPort );
+			else
+				socket = new InetSocketAddress( serverIp, serverPort );
+			
+			server = HttpServer.create( socket, 0 );
+			
+			server.setExecutor( null );
+			server.createContext( "/", new WebHandler() );
 			
 			/*
-			 * TODO: Add SSL support ONEDAY! SEE
-			 * http://git.eclipse.org/c/jetty/org.eclipse.jetty.project.git/tree/examples/
-			 * embedded/src/main/java/org/eclipse/jetty/embedded/ManyConnectors.java FOR REFERENCE
+			 * TODO: Add SSL support ONEDAY!
 			 * 
 			 * http_config.setSecureScheme("https"); http_config.setSecurePort(443); SslContextFactory sslContextFactory =
 			 * new SslContextFactory(); sslContextFactory.setKeyStorePath(jetty_home + "/etc/keystore");
@@ -313,74 +293,25 @@ public class Loader implements PluginMessageRecipient
 			 * new HttpConnectionFactory(https_config)); https.setPort(8443); https.setIdleTimeout(500000);
 			 */
 			
-			ServerConnector http = new ServerConnector( server, new HttpConnectionFactory( httpConf ) );
-			
-			String serverIp = configuration.getString( "server.ip", "" );
-			
-			if ( serverIp.length() > 0 )
-				http.setHost( serverIp );
-			
-			http.setPort( configuration.getInt( "server.port", 8080 ) );
-			// http.setIdleTimeout( 30000 );
-			// http.setName( "admin" );
-			
 			File root = new File( webroot );
 			
 			if ( !root.exists() )
 				root.mkdirs();
 			
-			// ResourceHandler resourceHandler = new ResourceHandler();
-			// resourceHandler.setDirectoriesListed( true );
-			// resourceHandler.setWelcomeFiles( new String[] { "index.htm", "index.html", "index.php" } );
-			// resourceHandler.setResourceBase( webroot );
-			// resourceHandler.setStylesheet( "/css/default.css" );
-			
-			// mainHandler.addHandler( resourceHandler );
-			
-			ServletContextHandler context = new ServletContextHandler( ServletContextHandler.SESSIONS );
-			context.setContextPath( "/" );
-			server.setHandler( context );
-			
-			context.addServlet( new ServletHolder( new WebsocketServlet() ), "/" );
-			context.addServlet( new ServletHolder( new DefaultServlet() ), "/" );
-			
-			SessionHandler sh = new SessionHandler();
-			
-			context.setHandler( sh );
-			
-			// TODO: It needs to be determined what to do with Jetty Sessions since the framework has its own builtin system
-			sh.getSessionManager().getSessionCookieConfig().setName( "SESSID" );
-			
-			// /mainHandler.addHandler( servletHandler );
-			// server.setHandler( mainHandler );
-			
-			// /sh.setHandler( mainHandler );
-			
-			// server.setHandler( sh );
-			
-			// registerServlet( WebsocketServlet.class, "/" );
-			// registerServlet( DefaultServlet.class, "/" );
-			
-			// server.setServerHeader( product + " " + version );
-			// server.setServerId( Loader.getConfig().getString( "server.id", "chiori" ) );
-			
-			getConsole().info( "Starting Server on " + ( serverIp.length() == 0 ? "*" : serverIp ) + ":" + configuration.getInt( "server.port", 8080 ) );
+			getConsole().info( "Starting Server on " + ( serverIp.length() == 0 ? "*" : serverIp ) + ":" + serverPort );
 			
 			try
 			{
-				servletHandler.setServlets( holders.toArray( new ServletHolder[0] ) );
-				servletHandler.setServletMappings( mappings.toArray( new ServletMapping[0] ) );
-				server.setConnectors( new Connector[] { http } );
 				server.start();
 			}
 			catch ( NullPointerException e )
 			{
-				getConsole().severe( "There was a problem with starting Jetty Embedded. Check logs and try again.", e );
+				getConsole().severe( "There was a problem starting the Web Server. Check logs and try again.", e );
 				System.exit( 1 );
 			}
 			catch ( Throwable e )
 			{
-				getLogger().severe( "There was a problem starting Jetty Embedded on port: " + port + "!" );
+				getLogger().severe( "There was a problem starting The Web Server on port: " + port + "!" );
 			}
 			
 			if ( configuration.getBoolean( "server.enable-query", false ) )
@@ -396,10 +327,7 @@ public class Loader implements PluginMessageRecipient
 				// remoteConsole = new ChioriRemoteConsoleCommandSender();
 			}
 			
-			getConsole().info( "Done (" + ( System.currentTimeMillis() - startTime ) + "ms)! For help, type \"help\" or \"?\"" );
-			
 			isRunning = true;
-			serverThread.start();
 		}
 		catch ( Throwable e )
 		{
@@ -1131,7 +1059,7 @@ public class Loader implements PluginMessageRecipient
 		return version;
 	}
 	
-	public Server getServer()
+	public HttpServer getServer()
 	{
 		return server;
 	}
@@ -1160,9 +1088,9 @@ public class Loader implements PluginMessageRecipient
 	{
 		return (int) ( System.currentTimeMillis() / 1000 );
 	}
-
-	public static FrameworkManagement getFrameworkManagement()
+	
+	public static PersistenceManager getPersistenceManager()
 	{
-		return getInstance().fwm;
+		return getInstance().persistence;
 	}
 }

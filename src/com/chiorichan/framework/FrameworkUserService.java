@@ -8,23 +8,26 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.mail.Session;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
+import com.chiorichan.http.PersistentSession;
 import com.chiorichan.user.User;
 
 public class FrameworkUserService
 {
 	protected Framework fw;
 	protected User currentUser = null;
-	protected Session _sess;
+	protected PersistentSession _sess;
 	
 	public FrameworkUserService(Framework fw0)
 	{
 		fw = fw0;
-		_sess = new Session( fw0 );
+		_sess = fw0.getSession();
 	}
 	
 	public boolean getUserState()
@@ -130,7 +133,7 @@ public class FrameworkUserService
 					else if ( !user.isValid() )
 					{
 						String loginForm = fw.getCurrentSite().getYaml().getString( "scripts.login-form", "/login" );
-						fw.getServer().dummyRedirect( loginForm + "?msg=You must be logged in to view that page!&target=" + fw.getRequest().getRequestURI() );
+						fw.getServer().dummyRedirect( loginForm + "?msg=You must be logged in to view that page!&target=" + fw.getRequest().getURI() );
 						return false;
 					}
 				}
@@ -140,7 +143,7 @@ public class FrameworkUserService
 				if ( !reqLevel.equals( "-1" ) )
 				{
 					String loginForm = fw.getCurrentSite().getYaml().getString( "scripts.login-form", "/login" );
-					fw.getServer().dummyRedirect( loginForm + "?msg=You must be logged in to view that page!&target=" + fw.getRequest().getRequestURI() );
+					fw.getServer().dummyRedirect( loginForm + "?msg=You must be logged in to view that page!&target=" + fw.getRequest().getURI() );
 					return false;
 				}
 			}
@@ -342,7 +345,7 @@ public class FrameworkUserService
 	
 	public void saveSession()
 	{
-		_sess.saveSession( fw );
+		_sess.saveSession();
 	}
 	
 	public boolean isSessionStringSet( String key )

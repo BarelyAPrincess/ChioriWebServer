@@ -1,9 +1,13 @@
 package com.chiorichan.util;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.Validate;
 
 public class StringUtil
@@ -95,5 +99,10 @@ public class StringUtil
 	{
 		CharBuffer cBuffer = ByteBuffer.wrap( bytes ).asCharBuffer();
 		return cBuffer.toString();
+	}
+	
+	public static String md5( String str )
+	{
+		return DigestUtils.md5Hex( str );
 	}
 }

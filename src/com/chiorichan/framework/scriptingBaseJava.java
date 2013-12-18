@@ -3,15 +3,17 @@ package com.chiorichan.framework;
 import groovy.lang.Script;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.jetty.util.security.Credential.MD5;
-
 import com.chiorichan.Loader;
+import com.chiorichan.util.StringUtil;
 
 abstract public class scriptingBaseJava extends Script
 {
@@ -87,7 +89,7 @@ abstract public class scriptingBaseJava extends Script
 			if ( data.length() > 10 )
 				data = data.substring( 0, 10 );
 			
-			date = new Date( Long.parseLong( data ) * 1000 ) ;
+			date = new Date( Long.parseLong( data ) * 1000 );
 		}
 		
 		if ( format.equals( "U" ) )
@@ -101,7 +103,7 @@ abstract public class scriptingBaseJava extends Script
 	
 	String md5( String str )
 	{
-		return MD5.digest( str ).substring( 4 );
+		return StringUtil.md5( str );
 	}
 	
 	Integer strpos( String haystack, String needle )
@@ -165,10 +167,10 @@ abstract public class scriptingBaseJava extends Script
 	{
 		return path.getParent();
 	}
-
+	
 	String dirname( String path )
 	{
-		return new File(path).getParent();
+		return new File( path ).getParent();
 	}
 	
 	String apache_get_version()

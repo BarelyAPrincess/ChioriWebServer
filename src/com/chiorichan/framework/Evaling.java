@@ -101,14 +101,16 @@ public class Evaling
 	
 	public void evalCode( String code ) throws CompilationFailedException
 	{
-		shell.evaluate( code );
+		if ( !code.isEmpty() )
+			shell.evaluate( code );
 	}
 	
 	public void evalCode( String code, boolean throwException ) throws CodeParsingException, UnsupportedEncodingException, IOException
 	{
 		try
 		{
-			shell.evaluate( code );
+			if ( !code.isEmpty() )
+				shell.evaluate( code );
 		}
 		catch ( CompilationFailedException e )
 		{

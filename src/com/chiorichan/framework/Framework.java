@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -25,13 +24,17 @@ import com.chiorichan.database.SqlConnector;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.RenderEvent;
 import com.chiorichan.event.server.ServerVars;
+import com.chiorichan.http.HttpRequest;
+import com.chiorichan.http.HttpResponse;
+import com.chiorichan.http.PersistenceManager;
+import com.chiorichan.http.PersistentSession;
 import com.chiorichan.plugin.PluginManager;
+import com.chiorichan.util.Versioning;
 
 public class Framework
 {
-	protected HttpServletRequest request;
-	protected HttpServletResponse response;
-	protected ServletContext _servletContext;
+	protected HttpRequest request;
+	protected HttpResponse response;
 	
 	protected FrameworkServer _server;
 	protected FrameworkConfigurationManager _config;
@@ -62,23 +65,19 @@ public class Framework
 		return uid;
 	}
 	
-	public Framework(HttpServletRequest request0, HttpServletResponse response0, ServletContext servletContext)
+	public Framework(HttpRequest _request, HttpResponse _response)
 	{
-		request = request0;
-		response = response0;
-		_servletContext = servletContext;
+		request = _request;
+		response = _response;
 		
-		uid = request0.getSession( true ).getId();
+		uid = request.getSession().getId();
+		
+		argumentVars = _request.getQueryMap();
+		
 		env = new Enviro( this );
-		
 		loadVars();
 	}
-	
-	public Framework(HttpServletRequest request, HttpServletResponse response)
-	{
-		this( request, response, request.getServletContext() );
-	}
-	
+
 	public void loadVars()
 	{
 		// serverVars.put( ServerVars.PHP_SELF, requestFile.getPath() );
@@ -93,17 +92,17 @@ public class Framework
 		serverVars.put( ServerVars.REMOTE_ADDR, request.getRemoteAddr() );
 		serverVars.put( ServerVars.REMOTE_PORT, request.getRemotePort() );
 		serverVars.put( ServerVars.REQUEST_TIME, Loader.getEpoch() );
-		serverVars.put( ServerVars.REQUEST_URI, request.getRequestURI() );
+		serverVars.put( ServerVars.REQUEST_URI, request.getURI() );
 		serverVars.put( ServerVars.CONTENT_LENGTH, request.getContentLength() );
 		serverVars.put( ServerVars.AUTH_TYPE, request.getAuthType() );
 		serverVars.put( ServerVars.SERVER_NAME, request.getServerName() );
 		serverVars.put( ServerVars.SERVER_PORT, request.getServerPort() );
 		serverVars.put( ServerVars.HTTPS, request.isSecure() );
 		serverVars.put( ServerVars.SESSION, request.getSession() );
-		serverVars.put( ServerVars.SERVER_SOFTWARE, "Chiori Web Server" );
+		serverVars.put( ServerVars.SERVER_SOFTWARE, Versioning.getProduct() );
 		serverVars.put( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "webmaster@" + request.getServerName() ) );
 		serverVars.put( ServerVars.SERVER_ID, Loader.getConfig().getString( "server.id", "applebloom" ) );
-		serverVars.put( ServerVars.SERVER_SIGNATURE, "Chiori Web Server Version " + Loader.getVersion() );
+		serverVars.put( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Loader.getVersion() );
 	}
 	
 	public String replaceAt( String par, int at, String rep )
@@ -115,7 +114,7 @@ public class Framework
 	
 	public boolean rewriteVirtual( String domain, String subdomain, String uri )
 	{
-		SqlConnector sql = Loader.getFrameworkManagement().sql;
+		SqlConnector sql = Loader.getPersistenceManager().getSql();
 		
 		try
 		{
@@ -243,7 +242,7 @@ public class Framework
 		return true;
 	}
 	
-	protected void loadPageInternal( String theme, String view, String title, String file, String html, String reqPerm ) throws IOException
+	public void loadPageInternal( String theme, String view, String title, String file, String html, String reqPerm ) throws IOException
 	{
 		try
 		{
@@ -335,12 +334,8 @@ public class Framework
 				if ( !html.isEmpty() )
 					eval.evalCode( html );
 				
-				//eval.evalCode( "tmp = \"123\"; println tmp;" );
-				
 				if ( requestFile != null )
 					eval.evalFile( requestFile );
-				
-				eval.evalCode( "println tmp;" );
 			}
 			
 			String source;
@@ -350,10 +345,10 @@ public class Framework
 			}
 			else
 			{
-				currentSite = Loader.getFrameworkManagement().getSiteManager().getSiteById( "framework" );
+				currentSite = Loader.getPersistenceManager().getSiteManager().getSiteById( "framework" );
 				
 				if ( currentSite instanceof FrameworkSite )
-					( (FrameworkSite) currentSite ).setDatabase( Loader.getFrameworkManagement().sql );
+					( (FrameworkSite) currentSite ).setDatabase( Loader.getPersistenceManager().getSql() );
 				
 				source = alternateOutput;
 				theme = "com.chiorichan.themes.error";
@@ -373,18 +368,18 @@ public class Framework
 				if ( event.sourceChanged() )
 					source = event.getSource();
 				
-				response.getWriter().write( source );
+				response.getOutput().write( source.getBytes() );
 			}
 			catch ( EventException ex )
 			{
 				ex.printStackTrace();
-				response.getWriter().write( errorPage( ex.getCause() ) );
+				response.getOutput().write( errorPage( ex.getCause() ).getBytes() );
 			}
 		}
 		catch ( Throwable e )
 		{
 			e.printStackTrace();
-			response.getWriter().write( errorPage( e ) );
+			response.getOutput().write( errorPage( e ).getBytes() );
 		}
 		finally
 		{
@@ -569,10 +564,10 @@ public class Framework
 		
 		if ( !response.isCommitted() )
 		{
-			currentSite = Loader.getFrameworkManagement().getSiteManager().getSiteById( "framework" );
+			currentSite = Loader.getPersistenceManager().getSiteManager().getSiteById( "framework" );
 			
 			if ( currentSite instanceof FrameworkSite )
-				( (FrameworkSite) currentSite ).setDatabase( Loader.getFrameworkManagement().sql );
+				( (FrameworkSite) currentSite ).setDatabase( Loader.getPersistenceManager().getSql() );
 			
 			try
 			{
@@ -593,14 +588,7 @@ public class Framework
 			catch ( Exception e1 )
 			{
 				e1.printStackTrace();
-				try
-				{
-					response.sendError( 500, "Critical Server Exception while loading the Framework Fancy Error Page: " + e1.getMessage() );
-				}
-				catch ( IOException e )
-				{
-					return e.getMessage();
-				}
+				response.sendError( 500, "Critical Server Exception while loading the Framework Fancy Error Page: " + e1.getMessage() );
 			}
 		}
 		
@@ -771,12 +759,12 @@ public class Framework
 		return requestId;
 	}
 	
-	public HttpServletResponse getResponse()
+	public HttpResponse getResponse()
 	{
 		return response;
 	}
 	
-	public HttpServletRequest getRequest()
+	public HttpRequest getRequest()
 	{
 		return request;
 	}
@@ -803,12 +791,12 @@ public class Framework
 	
 	public static SqlConnector getDatabase()
 	{
-		return Loader.getFrameworkManagement().sql;
+		return Loader.getPersistenceManager().getSql();
 	}
 	
-	public FrameworkManagement getFrameworkManagement()
+	public PersistenceManager getPersistenceManager()
 	{
-		return Loader.getFrameworkManagement();
+		return Loader.getPersistenceManager();
 	}
 	
 	public void generateError( String errStr )
@@ -861,16 +849,14 @@ public class Framework
 	{
 		return argumentVars;
 	}
-	
-	protected boolean _stale;
-	
-	/**
-	 * Returns true if this framework was used in a http request prior to the current one
-	 * 
-	 * @return boolean
-	 */
-	public boolean isStaleFramework()
+
+	public PersistentSession getSession()
 	{
-		return _stale;
+		return request.getSession();
+	}
+
+	public void setSite( Site site )
+	{
+		currentSite = site;
 	}
 }
