@@ -1,5 +1,6 @@
 package com.chiorichan.util;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -7,43 +8,38 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.chiorichan.Loader;
+import com.chiorichan.file.YamlConfiguration;
 
 public class Versioning
 {
+	private static YamlConfiguration metadata = null;
+	
+	public static void loadMetaData()
+	{
+		metadata = YamlConfiguration.loadConfiguration( Loader.class.getClassLoader().getResourceAsStream( "com/chiorichan/metadata.yml" ) );
+	}
+	
 	public static String getVersion()
 	{
-		if ( true )
-			return "6.2.1212 (Sonic Doom)";
+		if ( metadata == null )
+			loadMetaData();
 		
-		String result = "Unknown-Version";
-		
-		InputStream stream = Loader.class.getClassLoader().getResourceAsStream( "META-INF/maven/org.bukkit/bukkit/pom.properties" );
-		Properties properties = new Properties();
-		
-		if ( stream != null )
-		{
-			try
-			{
-				properties.load( stream );
-				
-				result = properties.getProperty( "version" );
-			}
-			catch ( IOException ex )
-			{
-				Logger.getLogger( Versioning.class.getName() ).log( Level.SEVERE, "Could not get version!", ex );
-			}
-		}
-		
-		return result;
+		return metadata.getString( "meta.version", "Unknown-Version" );
 	}
 	
 	public static String getCopyright()
 	{
-		return "Copyright © 2014 Apple Bloom Company";
+		if ( metadata == null )
+			loadMetaData();
+		
+		return metadata.getString( "meta.copyright", "Copyright © 2014 Chiori-chan" );
 	}
 
 	public static String getProduct()
 	{
-		return "Chiori Web Server (implementing Chiori Framework)";
+		if ( metadata == null )
+			loadMetaData();
+		
+		return metadata.getString( "meta.product", "Chiori Web Server" );
 	}
 }

@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
+import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,6 +45,8 @@ import com.chiorichan.conversations.Conversable;
 import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.http.PersistenceManager;
 import com.chiorichan.http.WebHandler;
+import com.chiorichan.net.Packet.CommandPacket;
+import com.chiorichan.net.Packet.PacketManager;
 import com.chiorichan.permissions.Permissible;
 import com.chiorichan.permissions.Permission;
 import com.chiorichan.plugin.Plugin;
@@ -68,6 +71,7 @@ import com.chiorichan.util.FileUtil;
 import com.chiorichan.util.ServerShutdownThread;
 import com.chiorichan.util.Versioning;
 import com.chiorichan.util.permissions.DefaultPermissions;
+import com.esotericsoftware.kryonet.Server;
 import com.google.common.collect.ImmutableList;
 import com.sun.net.httpserver.HttpServer;
 
@@ -96,7 +100,8 @@ public class Loader implements PluginMessageRecipient
 	
 	private final ServicesManager servicesManager = new SimpleServicesManager();
 	private final static ChioriScheduler scheduler = new ChioriScheduler();
-	private HttpServer server;
+	private static HttpServer httpServer;
+	private static Server tcpServer;
 	public Boolean isRunning = false;
 	private int port = 8080;
 	
@@ -122,9 +127,17 @@ public class Loader implements PluginMessageRecipient
 					
 					acceptsAll( Arrays.asList( "P", "plugins" ), "Plugin directory to use" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "plugins" ) ).describedAs( "Plugin directory" );
 					
-					acceptsAll( Arrays.asList( "h", "host", "server-ip" ), "Host to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
+					acceptsAll( Arrays.asList( "h", "web-ip" ), "Host for Web to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
 					
-					acceptsAll( Arrays.asList( "p", "port", "server-port" ), "Port to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
+					acceptsAll( Arrays.asList( "p", "web-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
+					
+					acceptsAll( Arrays.asList( "h", "tcp-ip" ), "Host for Web to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
+					
+					acceptsAll( Arrays.asList( "p", "tcp-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
+					
+					acceptsAll( Arrays.asList( "p", "web-disable" ), "Disable the internal Web Server" );
+					
+					acceptsAll( Arrays.asList( "p", "tcp-disable" ), "Disable the internal TCP Server" );
 					
 					acceptsAll( Arrays.asList( "s", "size", "max-users" ), "Maximum amount of users" ).withRequiredArg().ofType( Integer.class ).describedAs( "Server size" );
 					
@@ -140,7 +153,7 @@ public class Loader implements PluginMessageRecipient
 					
 					acceptsAll( Arrays.asList( "log-strip-color" ), "Strips color codes from log file" );
 					
-					acceptsAll( Arrays.asList( "b", "chiori-settings" ), "File for chiori settings" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "chiori.yml" ) ).describedAs( "Yml file" );
+					acceptsAll( Arrays.asList( "b", "settings" ), "File for chiori settings" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "chiori.yml" ) ).describedAs( "Yml file" );
 					
 					acceptsAll( Arrays.asList( "nojline" ), "Disables jline and emulates the vanilla console" );
 					
@@ -191,11 +204,19 @@ public class Loader implements PluginMessageRecipient
 	{
 		long startTime = System.currentTimeMillis();
 		
+		// Does this work
+		Runtime.getRuntime().addShutdownHook( new ServerShutdownThread( this ) );
+		
+		getConsole().info( "Starting " + product + " " + version );
+		
+		if ( Runtime.getRuntime().maxMemory() / 1024L / 1024L < 512L )
+			getConsole().warning( "To start the server with more ram, launch it as \"java -Xmx1024M -Xms1024M -jar server.jar\"" );
+		
 		instance = this;
 		options = options0;
 		
 		if ( getConfigFile() == null )
-			getConsole().panic( "We had problems loading the configuration file! Did you define the --chiori-settings argument?" );
+			getConsole().panic( "We had problems loading the configuration file! Did you define the --settings argument?" );
 		
 		try
 		{
@@ -203,10 +224,13 @@ public class Loader implements PluginMessageRecipient
 		}
 		catch ( Exception e )
 		{
-			e.printStackTrace();
-			
-			FileUtil.copy( new File( getClass().getClassLoader().getResource( "com/chiorichan/chiori.yml" ).toString() ), getConfigFile() );
-			configuration = YamlConfiguration.loadConfiguration( getConfigFile() );
+			try
+			{
+				FileUtil.copy( new File( getClass().getClassLoader().getResource( "com/chiorichan/chiori.yml" ).toURI() ), getConfigFile() );
+				configuration = YamlConfiguration.loadConfiguration( getConfigFile() );
+			}
+			catch ( URISyntaxException e1 )
+			{}
 		}
 		
 		configuration.options().copyDefaults( true );
@@ -224,12 +248,21 @@ public class Loader implements PluginMessageRecipient
 		updater.getOnUpdate().addAll( configuration.getStringList( "auto-updater.on-update" ) );
 		updater.check( version );
 		
-		// console.init();
+		console.init();
+		
+		File root = new File( webroot );
+		
+		if ( !root.exists() )
+			root.mkdirs();
 		
 		loadPlugins();
 		enablePlugins( PluginLoadOrder.STARTUP );
 		
-		initServer();
+		if ( !options.has( "tcp-disable" ) && configuration.getBoolean( "server.enableTcpServer", true ) )
+			initTcpServer();
+		
+		if ( !options.has( "web-disable" ) && configuration.getBoolean( "server.enableWebServer", true ) )
+			initWebServer();
 		
 		enablePlugins( PluginLoadOrder.POSTSERVER );
 		
@@ -244,7 +277,7 @@ public class Loader implements PluginMessageRecipient
 			public void run()
 			{
 				Loader.getScheduler().mainThreadHeartbeat( (int) ( System.currentTimeMillis() / 50 ) );
-				//server.mainThreadHeartbeat( (int) ( System.currentTimeMillis() / 50 ) );
+				// server.mainThreadHeartbeat( (int) ( System.currentTimeMillis() / 50 ) );
 			}
 		}, 50L, 50L );
 		
@@ -254,55 +287,65 @@ public class Loader implements PluginMessageRecipient
 		getConsole().info( "Done (" + ( System.currentTimeMillis() - startTime ) + "ms)! For help, type \"help\" or \"?\"" );
 	}
 	
-	private void initServer()
+	private void initTcpServer()
 	{
 		try
 		{
-			Runtime.getRuntime().addShutdownHook( new ServerShutdownThread( this ) );
-			
-			getConsole().info( "Starting " + product + " " + version );
-			
-			if ( Runtime.getRuntime().maxMemory() / 1024L / 1024L < 512L )
-			{
-				getConsole().warning( "To start the server with more ram, launch it as \"java -Xmx1024M -Xms1024M -jar server.jar\"" );
-			}
-			
 			InetSocketAddress socket;
-			String serverIp = configuration.getString( "server.ip", "" );
-			int serverPort = configuration.getInt( "server.port", 8080 );
+			String serverIp = configuration.getString( "server.tcpHost", "" );
+			int serverPort = configuration.getInt( "server.tcpPort", 80 );
+			
+			// If there was no tcp host specified then attempt to use the same one as the http server.
+			if ( serverIp.isEmpty() )
+				serverIp = configuration.getString( "server.httpHost", "" );
 			
 			if ( serverIp.isEmpty() )
 				socket = new InetSocketAddress( serverPort );
 			else
 				socket = new InetSocketAddress( serverIp, serverPort );
 			
-			server = HttpServer.create( socket, 0 );
+			tcpServer = new Server();
 			
-			server.setExecutor( null );
-			server.createContext( "/", new WebHandler() );
+			getConsole().info( "Starting Tcp Server on " + ( serverIp.length() == 0 ? "*" : serverIp ) + ":" + serverPort );
 			
-			/*
-			 * TODO: Add SSL support ONEDAY!
-			 * 
-			 * http_config.setSecureScheme("https"); http_config.setSecurePort(443); SslContextFactory sslContextFactory =
-			 * new SslContextFactory(); sslContextFactory.setKeyStorePath(jetty_home + "/etc/keystore");
-			 * sslContextFactory.setKeyStorePassword("OBF:1vny1zlo1x8e1vnw1vn61x8g1zlu1vn4");
-			 * sslContextFactory.setKeyManagerPassword("OBF:1u2u1wml1z7s1z7a1wnl1u2g"); HttpConfiguration https_config =
-			 * new HttpConfiguration(http_config); https_config.addCustomizer(new SecureRequestCustomizer());
-			 * ServerConnector https = new ServerConnector(server, new SslConnectionFactory(sslContextFactory,"http/1.1"),
-			 * new HttpConnectionFactory(https_config)); https.setPort(8443); https.setIdleTimeout(500000);
-			 */
+			tcpServer.start();
+			tcpServer.bind( socket, null );
 			
-			File root = new File( webroot );
+			tcpServer.addListener( new PacketManager() );
 			
-			if ( !root.exists() )
-				root.mkdirs();
+			PacketManager.registerPacket( CommandPacket.class );
+		}
+		catch ( Exception e )
+		{	
 			
-			getConsole().info( "Starting Server on " + ( serverIp.length() == 0 ? "*" : serverIp ) + ":" + serverPort );
+		}
+	}
+	
+	private void initWebServer()
+	{
+		try
+		{
+			InetSocketAddress socket;
+			String serverIp = configuration.getString( "server.httpHost", "" );
+			int serverPort = configuration.getInt( "server.httpPort", 80 );
+			
+			if ( serverIp.isEmpty() )
+				socket = new InetSocketAddress( serverPort );
+			else
+				socket = new InetSocketAddress( serverIp, serverPort );
+			
+			httpServer = HttpServer.create( socket, 0 );
+			
+			httpServer.setExecutor( null );
+			httpServer.createContext( "/", new WebHandler() );
+			
+			// TODO: Add SSL support ONEDAY!
+			
+			getConsole().info( "Starting Web Server on " + ( serverIp.length() == 0 ? "*" : serverIp ) + ":" + serverPort );
 			
 			try
 			{
-				server.start();
+				httpServer.start();
 			}
 			catch ( NullPointerException e )
 			{
@@ -312,19 +355,6 @@ public class Loader implements PluginMessageRecipient
 			catch ( Throwable e )
 			{
 				getLogger().severe( "There was a problem starting The Web Server on port: " + port + "!" );
-			}
-			
-			if ( configuration.getBoolean( "server.enable-query", false ) )
-			{
-				getConsole().info( "Starting GS4 status listener" );
-				// this.remoteStatusListener = new RemoteStatusListener( this );
-			}
-			
-			if ( configuration.getBoolean( "server.enable-rcon", false ) )
-			{
-				getConsole().info( "Starting remote control listener" );
-				// remoteControlListener = new RemoteControlListener( this );
-				// remoteConsole = new ChioriRemoteConsoleCommandSender();
 			}
 			
 			isRunning = true;
@@ -1024,7 +1054,7 @@ public class Loader implements PluginMessageRecipient
 	
 	private File getConfigFile()
 	{
-		return (File) options.valueOf( "chiori-settings" );
+		return (File) options.valueOf( "settings" );
 	}
 	
 	private void saveConfig()
@@ -1059,14 +1089,14 @@ public class Loader implements PluginMessageRecipient
 		return version;
 	}
 	
-	public HttpServer getServer()
+	public static Server getTcpServer()
 	{
-		return server;
+		return tcpServer;
 	}
 	
-	public void registerBean( Class bean, String name )
+	public static HttpServer getWebServer()
 	{
-		// server.addBean( new BeanEmbed( bean, name ) );
+		return httpServer;
 	}
 	
 	public boolean isRunning()

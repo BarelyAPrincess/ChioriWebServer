@@ -19,11 +19,12 @@ import com.chiorichan.command.CommandSender;
 import com.chiorichan.command.ConsoleCommandSender;
 import com.chiorichan.command.RemoteConsoleCommandSender;
 import com.chiorichan.command.ServerCommand;
+import com.chiorichan.util.Versioning;
 import com.google.common.base.Strings;
 
 public class Console
 {
-	public static Logger log = Logger.getLogger( "ChioriWebServer" );
+	public static Logger log = Logger.getLogger( "" );
 	
 	private final List<ServerCommand> commandList = new ArrayList<ServerCommand>();
 	public ConsoleCommandSender console;
@@ -120,7 +121,7 @@ public class Console
 			
 			threadcommandreader.setDaemon( true );
 			threadcommandreader.start();
-			new ConsoleLogManager( "ChioriWebServer" ).init();
+			new ConsoleLogManager( "" ).init();
 			
 			System.setOut( new PrintStream( new LoggerOutputStream( log, Level.INFO ), true ) );
 			System.setErr( new PrintStream( new LoggerOutputStream( log, Level.SEVERE ), true ) );
@@ -140,7 +141,11 @@ public class Console
 	
 	public void issueCommand( String s, CommandSender commandSender )
 	{
+		// Handle issued command from console.
+		
 		commandList.add( new ServerCommand( s, commandSender ) );
+		
+		issueCommand( s );
 	}
 	
 	public void issueCommand( String cmd )
@@ -154,6 +159,11 @@ public class Console
 			sendMessage( "&4Server is now Shutting Down!!!" );
 			// reader.getTerminal().restore();
 			System.exit( 0 );
+		}
+		else if ( cmd.equals( "about" ) )
+		{
+			sendMessage( "&2" + Versioning.getProduct() + " " + Versioning.getVersion() );
+			sendMessage( "&2" + Versioning.getCopyright() );
 		}
 		else if ( cmd.equals( "ping" ) )
 		{

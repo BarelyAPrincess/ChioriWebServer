@@ -1,8 +1,14 @@
 server:
-  ip: ''
-  port: 8080
+  httpHost: ''
+  httpPort: 80
+  httpsPort: 443
+  tcpHost: ''
+  tcpPort: 1024
   admin: chiorigreene@gmail.com
   allowDirectoryListing: false
+  enableWebServer: true
+  enableTcpServer: true
+  allowQuery: false
 settings:
   permissions-file: permissions.yml
   update-folder: update

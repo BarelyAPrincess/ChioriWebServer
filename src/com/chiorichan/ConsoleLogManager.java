@@ -102,12 +102,12 @@ public class ConsoleLogManager
 				parent.mkdirs();
 			}
 			
-			int limit = 0;// (Integer) console.options.valueOf( "log-limit" );
-			int count = 0;// (Integer) console.options.valueOf( "log-count" );
-			boolean append = true;// (Boolean) console.options.valueOf( "log-append" );
+			int limit = (Integer) Loader.getOptions().valueOf( "log-limit" );
+			int count = (Integer) Loader.getOptions().valueOf( "log-count" );
+			boolean append = (Boolean) Loader.getOptions().valueOf( "log-append" );
 			FileHandler filehandler = new FileHandler( pattern, limit, count, append );
 			
-			// filehandler.setFormatter( consolelogformatter );
+			filehandler.setFormatter( consolelogformatter );
 			a.addHandler( filehandler );
 			global.addHandler( filehandler );
 		}
