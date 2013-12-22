@@ -151,46 +151,43 @@ public class ConsoleLogManager
 	{
 		a.log( Level.SEVERE, s, throwable );
 	}
-
-	public void log( Level severe, String string, IOException ex )
+	
+	public void log( Level severe, String string )
+	{
+		a.log( severe, string );
+	}
+	
+	public void log( Level severe, String string, Throwable ex )
 	{
 		a.log( severe, string, ex );
 	}
 	
-	/*
-	public void log( Level l, String client, String msg )
+	public void panic( Throwable e )
 	{
-		if ( client.length() < 15 )
-		{
-			client = client + Strings.repeat( " ", 15 - client.length() );
-		}
-		
-		//printHeader();
-		
-		log( l, "&5" + client + " &a" + msg );
+		severe( e.getMessage(), e );
+		System.exit( 1 );
+	}
+
+	public void fine( String var1 )
+	{
+		a.fine( var1 );
 	}
 	
-	public void log( Level l, String msg )
-	{
-		if ( terminal.isAnsiSupported() )
-		{
-			msg = ChatColor.translateAlternateColorCodes( '&', msg ) + ChatColor.RESET;
-			
-			String result = ChatColor.translateAlternateColorCodes( '&', msg );
-			for ( ChatColor color : colors )
-			{
-				if ( replacements.containsKey( color ) )
-				{
-					msg = msg.replaceAll( "(?i)" + color.toString(), replacements.get( color ) );
-				}
-				else
-				{
-					msg = msg.replaceAll( "(?i)" + color.toString(), "" );
-				}
-			}
-		}
-		
-		log.log( l, msg );
-	}
-	*/
+	/*
+	 * public void log( Level l, String client, String msg ) { if ( client.length() < 15 ) { client = client +
+	 * Strings.repeat( " ", 15 - client.length() ); }
+	 * 
+	 * //printHeader();
+	 * 
+	 * log( l, "&5" + client + " &a" + msg ); }
+	 * 
+	 * public void log( Level l, String msg ) { if ( terminal.isAnsiSupported() ) { msg =
+	 * ChatColor.translateAlternateColorCodes( '&', msg ) + ChatColor.RESET;
+	 * 
+	 * String result = ChatColor.translateAlternateColorCodes( '&', msg ); for ( ChatColor color : colors ) { if (
+	 * replacements.containsKey( color ) ) { msg = msg.replaceAll( "(?i)" + color.toString(), replacements.get( color )
+	 * ); } else { msg = msg.replaceAll( "(?i)" + color.toString(), "" ); } } }
+	 * 
+	 * log.log( l, msg ); }
+	 */
 }

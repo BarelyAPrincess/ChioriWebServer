@@ -27,12 +27,13 @@ public class ThreadCommandReader extends Thread
 			{
 				if ( console.useJline )
 				{
-					s = bufferedreader.readLine( ">", null );
+					s = bufferedreader.readLine( "?>", null );
 				}
 				else
 				{
 					s = bufferedreader.readLine();
 				}
+				
 				if ( s != null )
 				{
 					console.issueCommand( s, null );

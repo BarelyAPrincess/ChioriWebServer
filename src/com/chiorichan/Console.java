@@ -2,6 +2,7 @@ package com.chiorichan;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -19,14 +20,18 @@ import com.chiorichan.command.CommandSender;
 import com.chiorichan.command.ConsoleCommandSender;
 import com.chiorichan.command.RemoteConsoleCommandSender;
 import com.chiorichan.command.ServerCommand;
+import com.chiorichan.event.server.ServerCommandEvent;
+import com.chiorichan.http.PersistenceManager;
+import com.chiorichan.util.ServerShutdownThread;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Strings;
 
-public class Console
+public class Console implements Runnable
 {
 	public static Logger log = Logger.getLogger( "" );
+	private ConsoleLogManager logManager;
 	
-	private final List<ServerCommand> commandList = new ArrayList<ServerCommand>();
+	private final List<ServerCommand> commandList = Collections.synchronizedList( new ArrayList<ServerCommand>() );
 	public ConsoleCommandSender console;
 	public RemoteConsoleCommandSender remoteConsole;
 	
@@ -37,115 +42,206 @@ public class Console
 	public Boolean isRunning = true;
 	private OptionSet options;
 	
+	public static int currentTick = (int) ( System.currentTimeMillis() / 50 );
+	public Thread primaryThread;
+	
 	public boolean useJline = true;
 	public boolean useConsole = true;
 	
+	public Loader loader;
+	
 	private int lineCount = 999;
 	
-	public void init()
+	public void init(Loader _loader, OptionSet _options)
 	{
-		options = Loader.getOptions();
+		loader = _loader;
+		options = _options;
+		
+		Runtime.getRuntime().addShutdownHook( new ServerShutdownThread( loader ) );
+		
+		replacements.put( ChatColor.BLACK, Ansi.ansi().fg( Ansi.Color.BLACK ).boldOff().toString() );
+		replacements.put( ChatColor.DARK_BLUE, Ansi.ansi().fg( Ansi.Color.BLUE ).boldOff().toString() );
+		replacements.put( ChatColor.DARK_GREEN, Ansi.ansi().fg( Ansi.Color.GREEN ).boldOff().toString() );
+		replacements.put( ChatColor.DARK_AQUA, Ansi.ansi().fg( Ansi.Color.CYAN ).boldOff().toString() );
+		replacements.put( ChatColor.DARK_RED, Ansi.ansi().fg( Ansi.Color.RED ).boldOff().toString() );
+		replacements.put( ChatColor.DARK_PURPLE, Ansi.ansi().fg( Ansi.Color.MAGENTA ).boldOff().toString() );
+		replacements.put( ChatColor.GOLD, Ansi.ansi().fg( Ansi.Color.YELLOW ).boldOff().toString() );
+		replacements.put( ChatColor.GRAY, Ansi.ansi().fg( Ansi.Color.WHITE ).boldOff().toString() );
+		replacements.put( ChatColor.DARK_GRAY, Ansi.ansi().fg( Ansi.Color.BLACK ).bold().toString() );
+		replacements.put( ChatColor.BLUE, Ansi.ansi().fg( Ansi.Color.BLUE ).bold().toString() );
+		replacements.put( ChatColor.GREEN, Ansi.ansi().fg( Ansi.Color.GREEN ).bold().toString() );
+		replacements.put( ChatColor.AQUA, Ansi.ansi().fg( Ansi.Color.CYAN ).bold().toString() );
+		replacements.put( ChatColor.RED, Ansi.ansi().fg( Ansi.Color.RED ).bold().toString() );
+		replacements.put( ChatColor.LIGHT_PURPLE, Ansi.ansi().fg( Ansi.Color.MAGENTA ).bold().toString() );
+		replacements.put( ChatColor.YELLOW, Ansi.ansi().fg( Ansi.Color.YELLOW ).bold().toString() );
+		replacements.put( ChatColor.WHITE, Ansi.ansi().fg( Ansi.Color.WHITE ).bold().toString() );
+		replacements.put( ChatColor.MAGIC, Ansi.ansi().a( Attribute.BLINK_SLOW ).toString() );
+		replacements.put( ChatColor.BOLD, Ansi.ansi().a( Attribute.UNDERLINE_DOUBLE ).toString() );
+		replacements.put( ChatColor.STRIKETHROUGH, Ansi.ansi().a( Attribute.STRIKETHROUGH_ON ).toString() );
+		replacements.put( ChatColor.UNDERLINE, Ansi.ansi().a( Attribute.UNDERLINE ).toString() );
+		replacements.put( ChatColor.ITALIC, Ansi.ansi().a( Attribute.ITALIC ).toString() );
+		replacements.put( ChatColor.RESET, Ansi.ansi().a( Attribute.RESET ).fg( Ansi.Color.DEFAULT ).toString() );
+		
+		String jline_UnsupportedTerminal = new String( new char[] { 'j', 'l', 'i', 'n', 'e', '.', 'U', 'n', 's', 'u', 'p', 'p', 'o', 'r', 't', 'e', 'd', 'T', 'e', 'r', 'm', 'i', 'n', 'a', 'l' } );
+		String jline_terminal = new String( new char[] { 'j', 'l', 'i', 'n', 'e', '.', 't', 'e', 'r', 'm', 'i', 'n', 'a', 'l' } );
+		
+		useJline = !( jline_UnsupportedTerminal ).equals( System.getProperty( jline_terminal ) );
+		
+		if ( options.has( "nojline" ) )
+		{
+			System.setProperty( "user.language", "en" );
+			useJline = false;
+		}
+		
+		if ( !useJline )
+		{
+			System.setProperty( jline.TerminalFactory.JLINE_TERMINAL, jline.UnsupportedTerminal.class.getName() );
+		}
+		
+		if ( options.has( "noconsole" ) )
+		{
+			info( "Console input is disabled due to --noconsole command argument" );
+			useConsole = false;
+		}
 		
 		try
 		{
-			replacements.put( ChatColor.BLACK, Ansi.ansi().fg( Ansi.Color.BLACK ).boldOff().toString() );
-			replacements.put( ChatColor.DARK_BLUE, Ansi.ansi().fg( Ansi.Color.BLUE ).boldOff().toString() );
-			replacements.put( ChatColor.DARK_GREEN, Ansi.ansi().fg( Ansi.Color.GREEN ).boldOff().toString() );
-			replacements.put( ChatColor.DARK_AQUA, Ansi.ansi().fg( Ansi.Color.CYAN ).boldOff().toString() );
-			replacements.put( ChatColor.DARK_RED, Ansi.ansi().fg( Ansi.Color.RED ).boldOff().toString() );
-			replacements.put( ChatColor.DARK_PURPLE, Ansi.ansi().fg( Ansi.Color.MAGENTA ).boldOff().toString() );
-			replacements.put( ChatColor.GOLD, Ansi.ansi().fg( Ansi.Color.YELLOW ).boldOff().toString() );
-			replacements.put( ChatColor.GRAY, Ansi.ansi().fg( Ansi.Color.WHITE ).boldOff().toString() );
-			replacements.put( ChatColor.DARK_GRAY, Ansi.ansi().fg( Ansi.Color.BLACK ).bold().toString() );
-			replacements.put( ChatColor.BLUE, Ansi.ansi().fg( Ansi.Color.BLUE ).bold().toString() );
-			replacements.put( ChatColor.GREEN, Ansi.ansi().fg( Ansi.Color.GREEN ).bold().toString() );
-			replacements.put( ChatColor.AQUA, Ansi.ansi().fg( Ansi.Color.CYAN ).bold().toString() );
-			replacements.put( ChatColor.RED, Ansi.ansi().fg( Ansi.Color.RED ).bold().toString() );
-			replacements.put( ChatColor.LIGHT_PURPLE, Ansi.ansi().fg( Ansi.Color.MAGENTA ).bold().toString() );
-			replacements.put( ChatColor.YELLOW, Ansi.ansi().fg( Ansi.Color.YELLOW ).bold().toString() );
-			replacements.put( ChatColor.WHITE, Ansi.ansi().fg( Ansi.Color.WHITE ).bold().toString() );
-			replacements.put( ChatColor.MAGIC, Ansi.ansi().a( Attribute.BLINK_SLOW ).toString() );
-			replacements.put( ChatColor.BOLD, Ansi.ansi().a( Attribute.UNDERLINE_DOUBLE ).toString() );
-			replacements.put( ChatColor.STRIKETHROUGH, Ansi.ansi().a( Attribute.STRIKETHROUGH_ON ).toString() );
-			replacements.put( ChatColor.UNDERLINE, Ansi.ansi().a( Attribute.UNDERLINE ).toString() );
-			replacements.put( ChatColor.ITALIC, Ansi.ansi().a( Attribute.ITALIC ).toString() );
-			replacements.put( ChatColor.RESET, Ansi.ansi().a( Attribute.RESET ).fg( Ansi.Color.DEFAULT ).toString() );
-			
-			String jline_UnsupportedTerminal = new String( new char[] { 'j', 'l', 'i', 'n', 'e', '.', 'U', 'n', 's', 'u', 'p', 'p', 'o', 'r', 't', 'e', 'd', 'T', 'e', 'r', 'm', 'i', 'n', 'a', 'l' } );
-			String jline_terminal = new String( new char[] { 'j', 'l', 'i', 'n', 'e', '.', 't', 'e', 'r', 'm', 'i', 'n', 'a', 'l' } );
-			
-			useJline = !( jline_UnsupportedTerminal ).equals( System.getProperty( jline_terminal ) );
-			
-			if ( options.has( "nojline" ) )
-			{
-				System.setProperty( "user.language", "en" );
-				useJline = false;
-			}
-			
-			if ( !useJline )
-			{
-				System.setProperty( jline.TerminalFactory.JLINE_TERMINAL, jline.UnsupportedTerminal.class.getName() );
-			}
-			
-			if ( options.has( "noconsole" ) )
-			{
-				info( "Console input is disabled due to --noconsole command argument" );
-				useConsole = false;
-			}
-			
+			reader = new ConsoleReader( System.in, System.out );
+			reader.setExpandEvents( false ); // Avoid parsing exceptions for uncommonly used event designators
+		}
+		catch ( Exception e )
+		{
 			try
 			{
-				this.reader = new ConsoleReader( System.in, System.out );
-				this.reader.setExpandEvents( false ); // Avoid parsing exceptions for uncommonly used event designators
+				// Try again with jline disabled for Windows users without C++ 2008 Redistributable
+				System.setProperty( "jline.terminal", "jline.UnsupportedTerminal" );
+				System.setProperty( "user.language", "en" );
+				reader = new ConsoleReader( System.in, System.out );
+				reader.setExpandEvents( false );
 			}
-			catch ( Exception e )
+			catch ( java.io.IOException ex )
+			{
+				// Logger.getLogger( MinecraftServer.class.getName() ).log( Level.SEVERE, null, ex );
+			}
+		}
+		
+		reader.setPrompt( "?> " );
+		terminal = reader.getTerminal();
+		
+		ThreadCommandReader threadcommandreader = new ThreadCommandReader( this );
+		
+		threadcommandreader.setDaemon( true );
+		threadcommandreader.start();
+		logManager = new ConsoleLogManager( "" );
+		logManager.init();
+		
+		System.setOut( new PrintStream( new LoggerOutputStream( log, Level.INFO ), true ) );
+		System.setErr( new PrintStream( new LoggerOutputStream( log, Level.SEVERE ), true ) );
+		
+		info( ChatColor.RED + "Finsihed initalizing the server console.\n" );
+		
+		primaryThread = new Thread( this, "Server thread" );
+	}
+	
+	@Override
+	public void run()
+	{
+		try
+		{
+			long i = System.currentTimeMillis();
+			
+			boolean P;
+			long Q = 0;
+			
+			for ( long j = 0L; isRunning; P = true )
+			{
+				long k = System.currentTimeMillis();
+				long l = k - i;
+				
+				if ( l > 2000L && i - Q >= 15000L )
+				{
+					if ( loader.getWarnOnOverload() )
+						getLogger().warning( "Can\'t keep up! Did the system time change, or is the server overloaded?" );
+					l = 2000L;
+					Q = i;
+				}
+				
+				if ( l < 0L )
+				{
+					getLogger().warning( "Time ran backwards! Did the system time change?" );
+					l = 0L;
+				}
+				
+				j += l;
+				i = k;
+				while ( j > 50L )
+				{
+					currentTick = (int) ( System.currentTimeMillis() / 50 );
+					j -= 50L;
+					loopTick( currentTick );
+				}
+				
+				Thread.sleep( 1L );
+			}
+		}
+		catch ( Throwable throwable )
+		{
+			throwable.printStackTrace( );
+			// Crash report generate here
+		}
+		finally
+		{
+			try
+			{
+				loader.stop();
+			}
+			catch ( Throwable throwable1 )
+			{
+				throwable1.printStackTrace();
+			}
+			finally
 			{
 				try
 				{
-					// Try again with jline disabled for Windows users without C++ 2008 Redistributable
-					System.setProperty( "jline.terminal", "jline.UnsupportedTerminal" );
-					System.setProperty( "user.language", "en" );
-					this.reader = new ConsoleReader( System.in, System.out );
-					this.reader.setExpandEvents( false );
+					reader.getTerminal().restore();
 				}
-				catch ( java.io.IOException ex )
-				{
-					// Logger.getLogger( MinecraftServer.class.getName() ).log( Level.SEVERE, null, ex );
-				}
+				catch ( Exception e )
+				{}
 			}
-			
-			reader.setPrompt( "?> " );
-			terminal = reader.getTerminal();
-			
-			ThreadCommandReader threadcommandreader = new ThreadCommandReader( this );
-			
-			threadcommandreader.setDaemon( true );
-			threadcommandreader.start();
-			new ConsoleLogManager( "" ).init();
-			
-			System.setOut( new PrintStream( new LoggerOutputStream( log, Level.INFO ), true ) );
-			System.setErr( new PrintStream( new LoggerOutputStream( log, Level.SEVERE ), true ) );
-			
-			sendMessage( ChatColor.RED + "Finsihed initalizing the server console.\n" );
-		}
-		catch ( Throwable t )
-		{
-			t.printStackTrace();
 		}
 	}
 	
-	public Logger getLogger()
+	private void loopTick( int tick )
 	{
-		return log;
+		Loader.getScheduler().mainThreadHeartbeat( tick );
+		PersistenceManager.mainThreadHeartbeat( tick );
+	}
+	
+	public ConsoleLogManager getLogger()
+	{
+		return logManager;
 	}
 	
 	public void issueCommand( String s, CommandSender commandSender )
 	{
-		// Handle issued command from console.
-		
 		commandList.add( new ServerCommand( s, commandSender ) );
-		
-		issueCommand( s );
+	}
+	
+	public void handleCommands()
+	{
+		while ( !commandList.isEmpty() )
+		{
+			ServerCommand servercommand = (ServerCommand) commandList.remove( 0 );
+			
+			// CraftBukkit start - ServerCommand for preprocessing
+			ServerCommandEvent event = new ServerCommandEvent( console, servercommand.command );
+			Loader.getPluginManager().callEvent( event );
+			servercommand = new ServerCommand( event.getCommand(), servercommand.sender );
+			
+			// getCommandHandler().a(servercommand.source, servercommand.command); // Called in dispatchServerCommand
+			Loader.getInstance().dispatchServerCommand( console, servercommand );
+			// CraftBukkit end
+		}
 	}
 	
 	public void issueCommand( String cmd )
@@ -156,22 +252,22 @@ public class Console
 		
 		if ( cmd.equalsIgnoreCase( "quit" ) || cmd.equalsIgnoreCase( "exit" ) || cmd.equalsIgnoreCase( "stop" ) )
 		{
-			sendMessage( "&4Server is now Shutting Down!!!" );
+			info( ChatColor.RED + "Server is now Shutting Down!!!" );
 			// reader.getTerminal().restore();
 			System.exit( 0 );
 		}
 		else if ( cmd.equals( "about" ) )
 		{
-			sendMessage( "&2" + Versioning.getProduct() + " " + Versioning.getVersion() );
-			sendMessage( "&2" + Versioning.getCopyright() );
+			info( Versioning.getProduct() + " " + Versioning.getVersion() );
+			info( Versioning.getCopyright() );
 		}
 		else if ( cmd.equals( "ping" ) )
 		{
-			sendMessage( "&4PONG!" );
+			info( ChatColor.RED + "PONG!" );
 		}
 		else
 		{
-			sendMessage( "&4Unknown Command or Keyword, Please Try Again. :D :D :D" );
+			info( ChatColor.RED + "Unknown Command or Keyword" );
 		}
 	}
 	
@@ -188,32 +284,37 @@ public class Console
 	
 	public void debug( String msg )
 	{
-		log( Level.FINE, msg );
+		log( Level.FINE, ChatColor.GRAY + msg );
 	}
 	
 	public void info( String msg )
 	{
-		log( Level.INFO, msg );
+		log( Level.INFO, ChatColor.WHITE + msg );
+	}
+	
+	public void highlight( String msg )
+	{
+		log( Level.INFO, ChatColor.AQUA + msg );
 	}
 	
 	public void warning( String msg, Throwable t )
 	{
-		log( Level.WARNING, msg );
+		log( Level.WARNING, ChatColor.YELLOW + msg );
 	}
 	
 	public void warning( String msg )
 	{
-		log( Level.WARNING, msg );
+		log( Level.WARNING, ChatColor.YELLOW + msg );
 	}
 	
 	public void severe( String msg, Throwable t )
 	{
-		log( Level.SEVERE, msg );
+		log( Level.SEVERE, ChatColor.RED + msg );
 	}
 	
 	public void severe( String msg )
 	{
-		log( Level.SEVERE, msg );
+		log( Level.SEVERE, ChatColor.RED + msg );
 	}
 	
 	public void log( Level l, String client, String msg )
@@ -256,6 +357,7 @@ public class Console
 		log.log( l, msg );
 	}
 	
+	@Deprecated
 	public void sendMessage( String message )
 	{
 		if ( terminal.isAnsiSupported() )
@@ -280,11 +382,13 @@ public class Console
 		}
 	}
 	
+	@Deprecated
 	public void sendRawMessage( String message )
 	{
 		log( Level.ALL, ChatColor.stripColor( message ) );
 	}
 	
+	@Deprecated
 	public void sendMessage( String[] messages )
 	{
 		for ( String message : messages )
@@ -318,5 +422,10 @@ public class Console
 	public boolean isRunning()
 	{
 		return isRunning;
+	}
+	
+	public boolean isPrimaryThread()
+	{
+		return Thread.currentThread().equals( primaryThread );
 	}
 }

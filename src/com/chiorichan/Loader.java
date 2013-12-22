@@ -93,7 +93,7 @@ public class Loader implements PluginMessageRecipient
 	private final CommandMap commandMap = new CommandMap();
 	private final PluginManager pluginManager = new SimplePluginManager( this, commandMap );
 	private final StandardMessenger messenger = new StandardMessenger();
-	protected static Console console = new Console();
+	protected final static Console console = new Console();
 	protected UserList userList = new UserList( this );
 	
 	protected PersistenceManager persistence;
@@ -104,8 +104,6 @@ public class Loader implements PluginMessageRecipient
 	private static Server tcpServer;
 	public Boolean isRunning = false;
 	private int port = 8080;
-	
-	private static Timer timer1 = new Timer( "server-heartbeat", true );
 	
 	public java.util.Queue<Runnable> processQueue = new java.util.concurrent.ConcurrentLinkedQueue<Runnable>();
 	
@@ -204,16 +202,15 @@ public class Loader implements PluginMessageRecipient
 	{
 		long startTime = System.currentTimeMillis();
 		
-		// Does this work
-		Runtime.getRuntime().addShutdownHook( new ServerShutdownThread( this ) );
+		console.init( this, options );
+		
+		instance = this;
+		options = options0;
 		
 		getConsole().info( "Starting " + product + " " + version );
 		
 		if ( Runtime.getRuntime().maxMemory() / 1024L / 1024L < 512L )
 			getConsole().warning( "To start the server with more ram, launch it as \"java -Xmx1024M -Xms1024M -jar server.jar\"" );
-		
-		instance = this;
-		options = options0;
 		
 		if ( getConfigFile() == null )
 			getConsole().panic( "We had problems loading the configuration file! Did you define the --settings argument?" );
@@ -241,14 +238,12 @@ public class Loader implements PluginMessageRecipient
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
 		webroot = configuration.getString( "settings.webroot" );
 		
-		updater = new AutoUpdater( new ChioriDLUpdaterService( configuration.getString( "auto-updater.host" ) ), getLogger(), configuration.getString( "auto-updater.preferred-channel" ) );
+		updater = new AutoUpdater( new ChioriDLUpdaterService( configuration.getString( "auto-updater.host" ) ), getLogger().getLogger(), configuration.getString( "auto-updater.preferred-channel" ) );
 		updater.setEnabled( configuration.getBoolean( "auto-updater.enabled" ) );
 		updater.setSuggestChannels( configuration.getBoolean( "auto-updater.suggest-channels" ) );
 		updater.getOnBroken().addAll( configuration.getStringList( "auto-updater.on-broken" ) );
 		updater.getOnUpdate().addAll( configuration.getStringList( "auto-updater.on-update" ) );
 		updater.check( version );
-		
-		console.init();
 		
 		File root = new File( webroot );
 		
@@ -270,24 +265,12 @@ public class Loader implements PluginMessageRecipient
 		
 		enablePlugins( PluginLoadOrder.POSTFRAMEWORK );
 		
-		getLogger().info( "Starting the Task Scheduler!" );
-		timer1.scheduleAtFixedRate( new TimerTask()
-		{
-			@Override
-			public void run()
-			{
-				Loader.getScheduler().mainThreadHeartbeat( (int) ( System.currentTimeMillis() / 50 ) );
-				// server.mainThreadHeartbeat( (int) ( System.currentTimeMillis() / 50 ) );
-			}
-		}, 50L, 50L );
-		
-		getLogger().info( "Starting the Session Garbage Collector!" );
-		PersistenceManager.scheduleGarbageCollector();
+		console.primaryThread.start();
 		
 		getConsole().info( "Done (" + ( System.currentTimeMillis() - startTime ) + "ms)! For help, type \"help\" or \"?\"" );
 	}
 	
-	private void initTcpServer()
+	private boolean initTcpServer()
 	{
 		try
 		{
@@ -315,13 +298,18 @@ public class Loader implements PluginMessageRecipient
 			
 			PacketManager.registerPacket( CommandPacket.class );
 		}
-		catch ( Exception e )
-		{	
-			
+		catch ( IOException ioexception )
+		{
+			getLogger().warning( "**** FAILED TO BIND TCP SERVER TO PORT!" );
+			getLogger().warning( "The exception was: {0}", new Object[] { ioexception.toString() } );
+			getLogger().warning( "Perhaps a server is already running on that port?" );
+			return false;
 		}
+		
+		return true;
 	}
 	
-	private void initWebServer()
+	private boolean initWebServer()
 	{
 		try
 		{
@@ -354,15 +342,19 @@ public class Loader implements PluginMessageRecipient
 			}
 			catch ( Throwable e )
 			{
-				getLogger().severe( "There was a problem starting The Web Server on port: " + port + "!" );
+				getLogger().warning( "**** FAILED TO BIND WEB SERVER TO PORT!" );
+				getLogger().warning( "The exception was: {0}", new Object[] { e.toString() } );
+				getLogger().warning( "Perhaps a server is already running on that port?" );
 			}
 			
 			isRunning = true;
 		}
 		catch ( Throwable e )
 		{
-			getConsole().panic( e );
+			getLogger().panic( e );
 		}
+		
+		return isRunning;
 	}
 	
 	public static YamlConfiguration getConfig()
@@ -1071,10 +1063,10 @@ public class Loader implements PluginMessageRecipient
 	
 	public static Console getConsole()
 	{
-		return console;
+		return instance.console;
 	}
 	
-	public static Logger getLogger()
+	public static ConsoleLogManager getLogger()
 	{
 		return console.getLogger();
 	}
@@ -1122,5 +1114,17 @@ public class Loader implements PluginMessageRecipient
 	public static PersistenceManager getPersistenceManager()
 	{
 		return getInstance().persistence;
+	}
+	
+	public boolean getWarnOnOverload()
+	{
+		return this.configuration.getBoolean( "settings.warn-on-overload" );
+	}
+
+	public void stop()
+	{
+		httpServer.stop( 1 );
+		tcpServer.stop();
+		System.exit( 1 );
 	}
 }

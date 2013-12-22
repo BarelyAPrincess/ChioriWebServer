@@ -8,6 +8,7 @@
 /.project
 /.settings
 /chiori.yml
+/server.log
 /help.yml
 /permissions.yml
 /resin-data

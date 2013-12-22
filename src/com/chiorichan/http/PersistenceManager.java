@@ -43,27 +43,32 @@ public class PersistenceManager
 				{
 					sql.init( database, username, password, host, port );
 				}
+				catch ( ConnectException e )
+				{
+					//e.printStackTrace();
+					Loader.getConsole().severe( "We had a problem connecting to database '" + host + "'. Reason: " + e.getMessage() );
+					System.exit( 1 );
+				}
 				catch ( SQLException e )
 				{
-					e.printStackTrace();
-					Loader.getLogger().severe( e.getMessage() );
+					//e.printStackTrace();
+					
+					if ( e.getCause() instanceof ConnectException )
+						Loader.getConsole().severe( "We had a problem connecting to database '" + host + "'. Reason: " + e.getMessage() );
+					else
+						Loader.getConsole().severe( e.getMessage() );
+					
 					System.exit( 1 );
 				}
 				catch ( ClassNotFoundException e )
 				{
-					Loader.getLogger().severe( "We could not locate the 'com.mysql.jdbc.Driver' library regardless that its suppose to be included. If your running from source code be sure to have this library in your build path." );
-					System.exit( 1 );
-				}
-				catch ( ConnectException e )
-				{
-					e.printStackTrace();
-					Loader.getLogger().severe( "We had a problem connecting to the database host '" + host + "'" );
+					Loader.getConsole().severe( "We could not locate the 'com.mysql.jdbc.Driver' library regardless that its suppose to be included. If your running from source code be sure to have this library in your build path." );
 					System.exit( 1 );
 				}
 				
 				break;
 			default:
-				Loader.getLogger().severe( "The Framework Database can not be anything other then mySql at the moment. Please change 'framework-database.type' to 'mysql' in 'chiori.yml'" );
+				Loader.getConsole().severe( "The Framework Database can not be anything other then mySql at the moment. Please change 'framework-database.type' to 'mysql' in 'chiori.yml'" );
 				System.exit( 1 );
 		}
 		
@@ -92,22 +97,15 @@ public class PersistenceManager
 		return sess;
 	}
 	
-	public static void scheduleGarbageCollector()
+	public static void mainThreadHeartbeat( long tick )
 	{
-		timer1.scheduleAtFixedRate( new TimerTask()
-		{
-			@Override
-			public void run()
-			{
-				for ( PersistentSession var1 : sessionList )
+		for ( PersistentSession var1 : sessionList )
 				{
 					if ( var1.getTimeout() > 0 && var1.getTimeout() < ( System.currentTimeMillis() / 1000 ) )
 					{	
 						sessionList.remove( var1 ); // This should allow this session to get picked up by the Java Garbage Collector once it's released by other classes.
 					}
 				}
-			}
-		}, 50L, 50L );
 	}
 	
 	public SiteManager getSiteManager()

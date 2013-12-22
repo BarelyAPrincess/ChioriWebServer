@@ -14,7 +14,7 @@ public class PacketManager extends Listener
 	
 	public static void registerPacket( Class<? extends Packet> var1 )
 	{
-		Loader.getTcpServer().getKryo().register( CommandPacket.class );
+		Loader.getTcpServer().getKryo().register( var1 );
 		packets.put( var1.getClass().getName(), var1 );
 	}
 	

@@ -56,7 +56,7 @@ final class ConsoleLogFormatter extends Formatter
 			stringbuilder.append( " [" ).append( level.getLocalizedName() ).append( "] " );
 		}
 		
-		stringbuilder.append( formatMessage( logrecord ) ); // CraftBukkit
+		stringbuilder.append( formatMessage( logrecord ) );
 		stringbuilder.append( '\n' );
 		Throwable throwable = logrecord.getThrown();
 		

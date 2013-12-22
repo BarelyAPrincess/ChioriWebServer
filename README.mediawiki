@@ -1,6 +1,8 @@
 =About=
-'''Chiori Web Server''' is a Resin Embedded Wrapper Server utilizing a Plugin system based on CraftBukkit.
+'''Chiori Web Server''' is a Web Server and TCP Server allowing for both dynamic content and TCP clients like Android or Standalone.
 The web server also implements a Java port of Chiori Framework (PHP), which utilized component based structure.
+For more power in your website, files ending with .groovy are ran though a groovy shell, Which has access to the entire Server and Framework API.
+Need more power? Then try out the Plugin system that is based on CraftBukkit (A Minecraft Game Server).
 The idea was to give you the power to create amazing websites with less time and resources without reinventing the wheel.
 
 =Included Framework=
@@ -8,9 +10,16 @@ The development of Chiori Framework in the PHP form will be discontinued but it'
 this Java Web Server. Porting the framework to Java ment faster load times and less server lag.
 
 =To Do=
-* Finish porting the framework
 * Introduce an Administration Panel for the Framework.
+* Make a library that can give standalone and android apps easy access to the TCP abilities of this server.
+* Add other database types like SQLite.
+* Possiblely switch to a Maven Dependency system.
+* Write API Documentation. (You can use Bukkit Docs for plugin writings if needed)
+* Add clustering abilities.
+* Add better error handling.
 * Create a Sandbox Mode.
+* Need Beta Testers!
+* Start a plugin repository
 
 =Version History=
 For the reasons of preservation, I will keep the version history for the PHP Framework here
@@ -92,16 +101,28 @@ YAML(tm) is an international collaboration to make a data serialization language
 
 ===chiori.yaml===
 Most of these config keys are under development
-* server.port: 80
-The port to start the server on. If port is taken it will attempt to use port 8080.
-* server.ip: null
-The IP to bind the server to. Currently not working since there seems to be no option to bind Resin to a specific IP.
+* server.httpHost: null
+The HOST to bind the web server to.
+* server.httpPort: 8080
+The port to start the web server on.
+* server.httpsPort: 443
+The port to start the SSL web server on. (Future Use)
+* server.tcpHost: null
+The HOST to bind the TCP server to.
+* server.tcpPort: 1024
+The port to start the TCP server on.
 * server.admin: chiorigreene@gmail.com
 This is the administrator e-mail address for the web server. Future plans to send exceptions and alerts to this address.
-* server.id: chiori
-This is the server id that is passed to the Resin Server.
+* server.allowDirectoryListing: false
+If the web browser requests a directory and there is no index file should I like the directory contents?
+* server.enableWebServer: true
+Should the web server start? Useful is you plan on this being strictly a Tcp Server.
+* server.enableTcpServer: true
+Should the tcp server start? Useful is you plan on this being strictly a Web Server.
+* server.allowQuery: false
+Should this server respond to anonymous requests for stats like Software, User Counts, User Inquiries?
 * settings.permissions-file: permissions.yml
-This is the file used to store built-in permissions. These permissions can be extended and controled via plugins.
+This is the file used to store built-in permissions. These permissions can be extended and controlled via plugins.
 * settings.update-folder: update
 This is the folder used for both server and plugin automatic updates.
 * settings.plugin-profiling: false
@@ -111,7 +132,7 @@ Future Use
 * settings.shutdown-message: Server Shutdown
 This is the message sent to devices and users that have active connections
 * settings.whitelist: false
-This tells the server if its using a whitelisted user system. Perfect for multiple servers that share the same user table.
+This tells the server if its using a whitelisted user system. Perfect for multiple servers that share the same user table. Whitelisted users are stored in the whitelist.txt file.
 * settings.webroot: webroot
 Defines the directory used to store web page data. Plans to futher config this per site for home directories.
 * settings.ping-packet-limit: 100
@@ -141,7 +162,7 @@ Database Password
 * framework.sites.defaultTitle: Unnamed Chiori Framework Site
 What title to use for unknown domain requests.
 * framework.users.operators
-Server Operators. Gives defined users limitless access with all perms.
+Server Operators. Gives defined users limitless access with all permissions.
 
 ==File Placement==
 On first use all you need is the jar release file "chiori_server.jar" in a folder that writable by the user that will run the program. All required folders and files will be created on first use.
