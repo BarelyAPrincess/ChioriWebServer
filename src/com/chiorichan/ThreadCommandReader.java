@@ -36,7 +36,7 @@ public class ThreadCommandReader extends Thread
 				
 				if ( s != null )
 				{
-					console.issueCommand( s, null );
+					console.issueCommand( s, console );
 				}
 			}
 		}

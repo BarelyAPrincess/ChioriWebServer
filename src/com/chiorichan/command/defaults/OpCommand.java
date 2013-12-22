@@ -36,9 +36,24 @@ public class OpCommand extends VanillaCommand
 		}
 		
 		User user = Loader.getInstance().getOfflineUser( args[0] );
-		user.setOp( true );
 		
-		Command.broadcastCommandMessage( sender, "Opped " + args[0] );
+		if ( args[0].equals( "[console]" ) )
+		{
+			Loader.getConsole().setOp( true );
+			Command.broadcastCommandMessage( sender, "Opped the Console User" );
+			return true;
+		}
+		
+		if ( user != null )
+		{
+			user.setOp( true );
+			Command.broadcastCommandMessage( sender, "Opped " + args[0] );
+		}
+		else
+		{
+			Command.broadcastCommandMessage( sender, "There was a problem oping " + args[0] );
+		}
+		
 		return true;
 	}
 }

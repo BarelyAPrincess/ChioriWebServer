@@ -2,17 +2,17 @@ package com.chiorichan.command.defaults;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
+import com.chiorichan.command.Command;
 import com.chiorichan.command.CommandSender;
-import com.chiorichan.user.User;
 
-public class SayCommand extends VanillaCommand
+public class EchoCommand extends VanillaCommand
 {
-	public SayCommand()
+	public EchoCommand()
 	{
-		super( "say" );
-		this.description = "Broadcasts the given message as the console";
-		this.usageMessage = "/say <message>";
-		this.setPermission( "chiori.command.say" );
+		super( "echo" );
+		this.description = "Repeats the given message to the user";
+		this.usageMessage = "/echo <message>";
+		this.setPermission( "chiori.command.echo" );
 	}
 	
 	@Override
@@ -37,13 +37,8 @@ public class SayCommand extends VanillaCommand
 			}
 		}
 		
-		if ( sender instanceof User )
-		{
-			Loader.getLogger().info( "[" + sender.getName() + "] " + message );
-		}
-		
-		Loader.getInstance().broadcastMessage( ChatColor.LIGHT_PURPLE + "[Server] " + message );
-		
+		sender.sendMessage( message.toString() );
+
 		return true;
 	}
 }

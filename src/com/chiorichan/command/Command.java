@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 
 import org.apache.commons.lang3.Validate;
 
@@ -356,11 +357,7 @@ public abstract class Command
 			{
 				CommandSender target = (CommandSender) user;
 				
-				if ( target instanceof ConsoleCommandSender )
-				{
-					target.sendMessage( result );
-				}
-				else if ( target != source )
+				if ( target != source )
 				{
 					target.sendMessage( colored );
 				}

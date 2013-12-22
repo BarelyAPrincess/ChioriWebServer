@@ -17,8 +17,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -68,7 +66,6 @@ import com.chiorichan.user.BanEntry;
 import com.chiorichan.user.User;
 import com.chiorichan.user.UserList;
 import com.chiorichan.util.FileUtil;
-import com.chiorichan.util.ServerShutdownThread;
 import com.chiorichan.util.Versioning;
 import com.chiorichan.util.permissions.DefaultPermissions;
 import com.esotericsoftware.kryonet.Server;
@@ -202,18 +199,18 @@ public class Loader implements PluginMessageRecipient
 	{
 		long startTime = System.currentTimeMillis();
 		
-		console.init( this, options );
-		
 		instance = this;
 		options = options0;
 		
-		getConsole().info( "Starting " + product + " " + version );
+		console.init( this, options );
+		
+		getLogger().info( "Starting " + product + " " + version );
 		
 		if ( Runtime.getRuntime().maxMemory() / 1024L / 1024L < 512L )
-			getConsole().warning( "To start the server with more ram, launch it as \"java -Xmx1024M -Xms1024M -jar server.jar\"" );
+			getLogger().warning( "To start the server with more ram, launch it as \"java -Xmx1024M -Xms1024M -jar server.jar\"" );
 		
 		if ( getConfigFile() == null )
-			getConsole().panic( "We had problems loading the configuration file! Did you define the --settings argument?" );
+			getLogger().panic( "We had problems loading the configuration file! Did you define the --settings argument?" );
 		
 		try
 		{
@@ -267,7 +264,7 @@ public class Loader implements PluginMessageRecipient
 		
 		console.primaryThread.start();
 		
-		getConsole().info( "Done (" + ( System.currentTimeMillis() - startTime ) + "ms)! For help, type \"help\" or \"?\"" );
+		getLogger().info( "Done (" + ( System.currentTimeMillis() - startTime ) + "ms)! For help, type \"help\" or \"?\"" );
 	}
 	
 	private boolean initTcpServer()
@@ -289,7 +286,7 @@ public class Loader implements PluginMessageRecipient
 			
 			tcpServer = new Server();
 			
-			getConsole().info( "Starting Tcp Server on " + ( serverIp.length() == 0 ? "*" : serverIp ) + ":" + serverPort );
+			getLogger().info( "Starting Tcp Server on " + ( serverIp.length() == 0 ? "*" : serverIp ) + ":" + serverPort );
 			
 			tcpServer.start();
 			tcpServer.bind( socket, null );
@@ -329,7 +326,7 @@ public class Loader implements PluginMessageRecipient
 			
 			// TODO: Add SSL support ONEDAY!
 			
-			getConsole().info( "Starting Web Server on " + ( serverIp.length() == 0 ? "*" : serverIp ) + ":" + serverPort );
+			getLogger().info( "Starting Web Server on " + ( serverIp.length() == 0 ? "*" : serverIp ) + ":" + serverPort );
 			
 			try
 			{
@@ -337,7 +334,7 @@ public class Loader implements PluginMessageRecipient
 			}
 			catch ( NullPointerException e )
 			{
-				getConsole().severe( "There was a problem starting the Web Server. Check logs and try again.", e );
+				getLogger().severe( "There was a problem starting the Web Server. Check logs and try again.", e );
 				System.exit( 1 );
 			}
 			catch ( Throwable e )
@@ -381,7 +378,7 @@ public class Loader implements PluginMessageRecipient
 				}
 				catch ( Throwable ex )
 				{
-					getConsole().log( Level.SEVERE, ex.getMessage() + " initializing " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
+					getLogger().log( Level.SEVERE, ex.getMessage() + " initializing " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 				}
 			}
 		}
@@ -440,7 +437,7 @@ public class Loader implements PluginMessageRecipient
 		}
 		catch ( Throwable ex )
 		{
-			getConsole().log( Level.SEVERE, ex.getMessage() + " loading " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
+			getLogger().log( Level.SEVERE, ex.getMessage() + " loading " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 		}
 	}
 	
@@ -835,9 +832,24 @@ public class Loader implements PluginMessageRecipient
 		return configuration.getString( "settings.shutdown-message" );
 	}
 	
+	public static void stop()
+	{
+		Loader.getConsole().isRunning = false;
+	}
+	
 	public static void shutdown()
 	{
 		// TODO: Shutdown
+		
+		getConsole().primaryThread.interrupt();
+		
+		instance.pluginManager.clearPlugins();
+		instance.commandMap.clearCommands();
+		
+		httpServer.stop( 0 );
+		tcpServer.stop();
+		
+		System.exit( 1 );
 	}
 	
 	public int broadcast( String message, String permission )
@@ -946,7 +958,7 @@ public class Loader implements PluginMessageRecipient
 	
 	public ConsoleCommandSender getConsoleSender()
 	{
-		return console.getConsoleSender();
+		return console;
 	}
 	
 	public User[] getOfflineUsers()
@@ -1119,12 +1131,5 @@ public class Loader implements PluginMessageRecipient
 	public boolean getWarnOnOverload()
 	{
 		return this.configuration.getBoolean( "settings.warn-on-overload" );
-	}
-
-	public void stop()
-	{
-		httpServer.stop( 1 );
-		tcpServer.stop();
-		System.exit( 1 );
 	}
 }

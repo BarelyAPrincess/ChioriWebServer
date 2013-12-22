@@ -2,19 +2,53 @@ package com.chiorichan;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.fusesource.jansi.Ansi;
+import org.fusesource.jansi.Ansi.Attribute;
+
+import com.google.common.base.Strings;
 
 public class ConsoleLogManager
 {
 	public static Logger a;
 	public static Logger global = Logger.getLogger( "" );
 	
+	private int lineCount = 999;
+	public Map<ChatColor, String> replacements = new EnumMap<ChatColor, String>( ChatColor.class );
+	public ChatColor[] colors = ChatColor.values();
+	
 	public ConsoleLogManager(String s)
 	{
 		a = Logger.getLogger( s );
+		
+		replacements.put( ChatColor.BLACK, Ansi.ansi().fg( Ansi.Color.BLACK ).boldOff().toString() );
+		replacements.put( ChatColor.DARK_BLUE, Ansi.ansi().fg( Ansi.Color.BLUE ).boldOff().toString() );
+		replacements.put( ChatColor.DARK_GREEN, Ansi.ansi().fg( Ansi.Color.GREEN ).boldOff().toString() );
+		replacements.put( ChatColor.DARK_AQUA, Ansi.ansi().fg( Ansi.Color.CYAN ).boldOff().toString() );
+		replacements.put( ChatColor.DARK_RED, Ansi.ansi().fg( Ansi.Color.RED ).boldOff().toString() );
+		replacements.put( ChatColor.DARK_PURPLE, Ansi.ansi().fg( Ansi.Color.MAGENTA ).boldOff().toString() );
+		replacements.put( ChatColor.GOLD, Ansi.ansi().fg( Ansi.Color.YELLOW ).boldOff().toString() );
+		replacements.put( ChatColor.GRAY, Ansi.ansi().fg( Ansi.Color.WHITE ).boldOff().toString() );
+		replacements.put( ChatColor.DARK_GRAY, Ansi.ansi().fg( Ansi.Color.BLACK ).bold().toString() );
+		replacements.put( ChatColor.BLUE, Ansi.ansi().fg( Ansi.Color.BLUE ).bold().toString() );
+		replacements.put( ChatColor.GREEN, Ansi.ansi().fg( Ansi.Color.GREEN ).bold().toString() );
+		replacements.put( ChatColor.AQUA, Ansi.ansi().fg( Ansi.Color.CYAN ).bold().toString() );
+		replacements.put( ChatColor.RED, Ansi.ansi().fg( Ansi.Color.RED ).bold().toString() );
+		replacements.put( ChatColor.LIGHT_PURPLE, Ansi.ansi().fg( Ansi.Color.MAGENTA ).bold().toString() );
+		replacements.put( ChatColor.YELLOW, Ansi.ansi().fg( Ansi.Color.YELLOW ).bold().toString() );
+		replacements.put( ChatColor.WHITE, Ansi.ansi().fg( Ansi.Color.WHITE ).bold().toString() );
+		replacements.put( ChatColor.MAGIC, Ansi.ansi().a( Attribute.BLINK_SLOW ).toString() );
+		replacements.put( ChatColor.BOLD, Ansi.ansi().a( Attribute.UNDERLINE_DOUBLE ).toString() );
+		replacements.put( ChatColor.STRIKETHROUGH, Ansi.ansi().a( Attribute.STRIKETHROUGH_ON ).toString() );
+		replacements.put( ChatColor.UNDERLINE, Ansi.ansi().a( Attribute.UNDERLINE ).toString() );
+		replacements.put( ChatColor.ITALIC, Ansi.ansi().a( Attribute.ITALIC ).toString() );
+		replacements.put( ChatColor.RESET, Ansi.ansi().a( Attribute.RESET ).fg( Ansi.Color.DEFAULT ).toString() );
 	}
 	
 	public void init()
@@ -122,44 +156,39 @@ public class ConsoleLogManager
 		return a;
 	}
 	
+	public void highlight( String msg )
+	{
+		log( Level.INFO, ChatColor.AQUA + msg );
+	}
+	
 	public void info( String s )
 	{
-		a.log( Level.INFO, s );
+		log( Level.INFO, ChatColor.WHITE + s );
 	}
 	
 	public void warning( String s )
 	{
-		a.log( Level.WARNING, s );
+		log( Level.WARNING, ChatColor.GOLD + s );
 	}
 	
 	public void warning( String s, Object... aobject )
 	{
-		a.log( Level.WARNING, s, aobject );
+		a.log( Level.WARNING, ChatColor.GOLD + handleAltColors( s ), aobject );
 	}
 	
 	public void warning( String s, Throwable throwable )
 	{
-		a.log( Level.WARNING, s, throwable );
+		log( Level.WARNING, ChatColor.GOLD + s, throwable );
 	}
 	
 	public void severe( String s )
 	{
-		a.log( Level.SEVERE, s );
+		log( Level.SEVERE, ChatColor.RED + s );
 	}
 	
 	public void severe( String s, Throwable throwable )
 	{
-		a.log( Level.SEVERE, s, throwable );
-	}
-	
-	public void log( Level severe, String string )
-	{
-		a.log( severe, string );
-	}
-	
-	public void log( Level severe, String string, Throwable ex )
-	{
-		a.log( severe, string, ex );
+		log( Level.SEVERE, ChatColor.RED + s, throwable );
 	}
 	
 	public void panic( Throwable e )
@@ -167,27 +196,81 @@ public class ConsoleLogManager
 		severe( e.getMessage(), e );
 		System.exit( 1 );
 	}
-
-	public void fine( String var1 )
+	
+	public void panic( String var1 )
 	{
-		a.fine( var1 );
+		severe( var1 );
+		System.exit( 1 );
 	}
 	
-	/*
-	 * public void log( Level l, String client, String msg ) { if ( client.length() < 15 ) { client = client +
-	 * Strings.repeat( " ", 15 - client.length() ); }
-	 * 
-	 * //printHeader();
-	 * 
-	 * log( l, "&5" + client + " &a" + msg ); }
-	 * 
-	 * public void log( Level l, String msg ) { if ( terminal.isAnsiSupported() ) { msg =
-	 * ChatColor.translateAlternateColorCodes( '&', msg ) + ChatColor.RESET;
-	 * 
-	 * String result = ChatColor.translateAlternateColorCodes( '&', msg ); for ( ChatColor color : colors ) { if (
-	 * replacements.containsKey( color ) ) { msg = msg.replaceAll( "(?i)" + color.toString(), replacements.get( color )
-	 * ); } else { msg = msg.replaceAll( "(?i)" + color.toString(), "" ); } } }
-	 * 
-	 * log.log( l, msg ); }
-	 */
+	public void fine( String var1 )
+	{
+		log( Level.FINE, var1 );
+	}
+	
+	public void finer( String var1 )
+	{
+		log( Level.FINER, var1 );
+	}
+	
+	public void finest( String var1 )
+	{
+		log( Level.FINEST, var1 );
+	}
+	
+	private void printHeader()
+	{
+		if ( lineCount > 40 )
+		{
+			lineCount = 0;
+			log( Level.FINE, ChatColor.GOLD + "<CLIENT ID>     <MESSAGE>" );
+		}
+		
+		lineCount++;
+	}
+	
+	public void log( Level l, String client, String msg )
+	{
+		if ( client.length() < 15 )
+		{
+			client = client + Strings.repeat( " ", 15 - client.length() );
+		}
+		
+		printHeader();
+		
+		log( l, ChatColor.LIGHT_PURPLE + client + " " + ChatColor.AQUA + msg );
+	}
+	
+	public String handleAltColors( String var1 )
+	{
+		if ( Loader.getConsole().AnsiSupported() )
+		{
+			var1 = ChatColor.translateAlternateColorCodes( '&', var1 ) + ChatColor.RESET;
+			
+			String result = ChatColor.translateAlternateColorCodes( '&', var1 );
+			for ( ChatColor color : colors )
+			{
+				if ( replacements.containsKey( color ) )
+				{
+					var1 = var1.replaceAll( "(?i)" + color.toString(), replacements.get( color ) );
+				}
+				else
+				{
+					var1 = var1.replaceAll( "(?i)" + color.toString(), "" );
+				}
+			}
+		}
+		
+		return var1;
+	}
+	
+	public void log( Level l, String msg, Throwable t )
+	{
+		a.log( l, handleAltColors( msg ), t );
+	}
+	
+	public void log( Level l, String msg )
+	{
+		a.log( l, handleAltColors( msg ) );
+	}
 }

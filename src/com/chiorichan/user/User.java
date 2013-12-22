@@ -8,17 +8,21 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.jboss.logging.Logger;
 import org.json.JSONException;
 
 import com.chiorichan.Loader;
+import com.chiorichan.command.CommandSender;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.event.user.UserLoginEvent;
 import com.chiorichan.event.user.UserLoginEvent.Result;
+import com.chiorichan.permissions.Permission;
+import com.chiorichan.permissions.PermissionAttachment;
 import com.chiorichan.permissions.PermissionAttachmentInfo;
 import com.chiorichan.plugin.Plugin;
 import com.chiorichan.util.ObjectUtil;
 
-public class User
+public class User implements CommandSender
 {
 	public Loader server;
 	public boolean valid = false;
@@ -320,5 +324,69 @@ public class User
 			return def;
 		
 		return sqlMap.get( key );
+	}
+
+	@Override
+	public boolean isPermissionSet( String name )
+	{
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean isPermissionSet( Permission perm )
+	{
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean hasPermission( Permission perm )
+	{
+		Loader.getLogger().info( "User was checked for permission: " + perm );
+		
+		return true;
+	}
+
+	@Override
+	public PermissionAttachment addAttachment( Plugin plugin, String name, boolean value )
+	{
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public PermissionAttachment addAttachment( Plugin plugin )
+	{
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public PermissionAttachment addAttachment( Plugin plugin, String name, boolean value, int ticks )
+	{
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public PermissionAttachment addAttachment( Plugin plugin, int ticks )
+	{
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void removeAttachment( PermissionAttachment attachment )
+	{
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void sendMessage( String[] messages )
+	{
+		// TODO Auto-generated method stub
+		
 	}
 }

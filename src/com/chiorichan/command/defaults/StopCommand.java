@@ -1,5 +1,6 @@
 package com.chiorichan.command.defaults;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -19,6 +20,8 @@ public class StopCommand extends VanillaCommand
 		this.description = "Stops the server with optional reason";
 		this.usageMessage = "/stop [reason]";
 		this.setPermission( "chiori.command.stop" );
+		
+		this.setAliases( Arrays.asList( "exit", "quit" ) );
 	}
 	
 	@Override
@@ -28,16 +31,17 @@ public class StopCommand extends VanillaCommand
 			return true;
 		
 		Command.broadcastCommandMessage( sender, "Stopping the server.." );
-		Loader.shutdown();
 		
 		String reason = this.createString( args, 0 );
-		if ( StringUtils.isNotEmpty( reason ) )
+		if ( !reason.isEmpty() )
 		{
 			for ( User User : Loader.getInstance().getOnlineUsers() )
 			{
 				User.kick( reason );
 			}
 		}
+		
+		Loader.stop();
 		
 		return true;
 	}

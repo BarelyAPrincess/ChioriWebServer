@@ -46,7 +46,7 @@ public class PersistenceManager
 				catch ( ConnectException e )
 				{
 					//e.printStackTrace();
-					Loader.getConsole().severe( "We had a problem connecting to database '" + host + "'. Reason: " + e.getMessage() );
+					Loader.getLogger().severe( "We had a problem connecting to database '" + host + "'. Reason: " + e.getMessage() );
 					System.exit( 1 );
 				}
 				catch ( SQLException e )
@@ -54,21 +54,21 @@ public class PersistenceManager
 					//e.printStackTrace();
 					
 					if ( e.getCause() instanceof ConnectException )
-						Loader.getConsole().severe( "We had a problem connecting to database '" + host + "'. Reason: " + e.getMessage() );
+						Loader.getLogger().severe( "We had a problem connecting to database '" + host + "'. Reason: " + e.getMessage() );
 					else
-						Loader.getConsole().severe( e.getMessage() );
+						Loader.getLogger().severe( e.getMessage() );
 					
 					System.exit( 1 );
 				}
 				catch ( ClassNotFoundException e )
 				{
-					Loader.getConsole().severe( "We could not locate the 'com.mysql.jdbc.Driver' library regardless that its suppose to be included. If your running from source code be sure to have this library in your build path." );
+					Loader.getLogger().severe( "We could not locate the 'com.mysql.jdbc.Driver' library regardless that its suppose to be included. If your running from source code be sure to have this library in your build path." );
 					System.exit( 1 );
 				}
 				
 				break;
 			default:
-				Loader.getConsole().severe( "The Framework Database can not be anything other then mySql at the moment. Please change 'framework-database.type' to 'mysql' in 'chiori.yml'" );
+				Loader.getLogger().severe( "The Framework Database can not be anything other then mySql at the moment. Please change 'framework-database.type' to 'mysql' in 'chiori.yml'" );
 				System.exit( 1 );
 		}
 		

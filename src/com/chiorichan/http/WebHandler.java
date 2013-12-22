@@ -172,7 +172,7 @@ public class WebHandler implements HttpHandler
 		catch ( IOException e )
 		{
 			if ( e.getMessage().equals( "Broken pipe" ) )
-				Loader.getConsole().warning( "Broken Pipe: The browser closed the connection before data could be written to it.", e );
+				Loader.getLogger().warning( "Broken Pipe: The browser closed the connection before data could be written to it.", e );
 			else
 				e.printStackTrace();
 		}
