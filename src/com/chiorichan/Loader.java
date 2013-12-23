@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.net.URISyntaxException;
@@ -30,6 +31,8 @@ import org.apache.commons.lang3.Validate;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.error.MarkedYAMLException;
+
+import sun.misc.IOUtils;
 
 import com.chiorichan.Warning.WarningState;
 import com.chiorichan.command.Command;
@@ -69,6 +72,7 @@ import com.chiorichan.util.FileUtil;
 import com.chiorichan.util.Versioning;
 import com.chiorichan.util.permissions.DefaultPermissions;
 import com.esotericsoftware.kryonet.Server;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.sun.net.httpserver.HttpServer;
 
@@ -204,7 +208,21 @@ public class Loader implements PluginMessageRecipient
 		
 		console.init( this, options );
 		
-		getLogger().info( "Starting " + product + " " + version );
+		try
+		{
+			InputStream is = Loader.class.getClassLoader().getResourceAsStream( "com/chiorichan/banner.txt" );
+			String[] banner = new String( IOUtils.readFully( is, is.available(), true ) ).split( "\\n" );
+			
+			int len = banner[0].length();
+			
+			for ( String l : banner )
+				Loader.getConsole().sendMessage( ChatColor.NEGATIVE + "" + ChatColor.GOLD + l );
+			
+			getLogger().info( ChatColor.NEGATIVE + "" + ChatColor.GOLD + "Starting " + Versioning.getProduct() + " " + Versioning.getVersion() + Strings.repeat( " ", len - ( "Starting " + Versioning.getProduct() + " " + Versioning.getVersion() ).length() ) );
+			getLogger().info( ChatColor.NEGATIVE + "" + ChatColor.GOLD + Versioning.getCopyright() + Strings.repeat( " ", len - Versioning.getCopyright().length() ) );
+		}
+		catch ( Exception e )
+		{}
 		
 		if ( Runtime.getRuntime().maxMemory() / 1024L / 1024L < 512L )
 			getLogger().warning( "To start the server with more ram, launch it as \"java -Xmx1024M -Xms1024M -jar server.jar\"" );

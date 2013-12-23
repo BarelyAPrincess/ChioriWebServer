@@ -11,7 +11,7 @@ import com.chiorichan.plugin.PluginManager;
  */
 public abstract class Event
 {
-	private static final HandlerList handlers = new HandlerList();
+	protected static final HandlerList handlers = new HandlerList();
 	
 	private String name;
 	private final boolean async;

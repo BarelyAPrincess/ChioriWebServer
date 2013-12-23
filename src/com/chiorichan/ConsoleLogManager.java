@@ -44,10 +44,12 @@ public class ConsoleLogManager
 		replacements.put( ChatColor.YELLOW, Ansi.ansi().fg( Ansi.Color.YELLOW ).bold().toString() );
 		replacements.put( ChatColor.WHITE, Ansi.ansi().fg( Ansi.Color.WHITE ).bold().toString() );
 		replacements.put( ChatColor.MAGIC, Ansi.ansi().a( Attribute.BLINK_SLOW ).toString() );
-		replacements.put( ChatColor.BOLD, Ansi.ansi().a( Attribute.UNDERLINE_DOUBLE ).toString() );
+		replacements.put( ChatColor.BOLD, Ansi.ansi().a( Attribute.INTENSITY_BOLD ).toString() );
 		replacements.put( ChatColor.STRIKETHROUGH, Ansi.ansi().a( Attribute.STRIKETHROUGH_ON ).toString() );
 		replacements.put( ChatColor.UNDERLINE, Ansi.ansi().a( Attribute.UNDERLINE ).toString() );
 		replacements.put( ChatColor.ITALIC, Ansi.ansi().a( Attribute.ITALIC ).toString() );
+		replacements.put( ChatColor.FAINT, Ansi.ansi().a( Attribute.INTENSITY_FAINT ).toString() );
+		replacements.put( ChatColor.NEGATIVE, Ansi.ansi().a( Attribute.NEGATIVE_ON ).toString() );
 		replacements.put( ChatColor.RESET, Ansi.ansi().a( Attribute.RESET ).fg( Ansi.Color.DEFAULT ).toString() );
 	}
 	
@@ -272,5 +274,23 @@ public class ConsoleLogManager
 	public void log( Level l, String msg )
 	{
 		a.log( l, handleAltColors( msg ) );
+	}
+	
+	public String[] multilineColorRepeater( String var1 )
+	{
+		return multilineColorRepeater( var1.split( "\\n" ) );
+	}
+	
+	public String[] multilineColorRepeater( String[] var1 )
+	{
+		String color = ChatColor.getLastColors( var1[0] );
+		StringBuilder sb = new StringBuilder();
+		
+		for ( int l = 0; l < var1.length; l++ )
+		{
+			var1[l] = color + var1[l];
+		}
+		
+		return var1;
 	}
 }

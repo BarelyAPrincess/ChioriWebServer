@@ -44,7 +44,8 @@ public class Site
 		Gson gson = new Gson();
 		try
 		{
-			protectedFiles = gson.fromJson( new JSONObject( rs.getString( "protected" ) ).toString(), HashSet.class );
+			if ( !rs.getString( "protected" ).isEmpty() )
+				protectedFiles = gson.fromJson( new JSONObject( rs.getString( "protected" ) ).toString(), HashSet.class );
 		}
 		catch ( Exception e )
 		{
@@ -53,7 +54,8 @@ public class Site
 		
 		try
 		{
-			metatags = gson.fromJson( new JSONObject( rs.getString( "metatags" ) ).toString(), HashSet.class );
+			if ( !rs.getString( "metatags" ).isEmpty() )
+				metatags = gson.fromJson( new JSONObject( rs.getString( "metatags" ) ).toString(), HashSet.class );
 		}
 		catch ( Exception e )
 		{
@@ -62,7 +64,8 @@ public class Site
 		
 		try
 		{
-			aliases = gson.fromJson( new JSONObject( rs.getString( "aliases" ) ).toString(), LinkedHashMap.class );
+			if ( !rs.getString( "aliases" ).isEmpty() )
+				aliases = gson.fromJson( new JSONObject( rs.getString( "aliases" ) ).toString(), LinkedHashMap.class );
 		}
 		catch ( Exception e )
 		{
@@ -71,7 +74,8 @@ public class Site
 		
 		try
 		{
-			subdomains = gson.fromJson( new JSONObject( rs.getString( "subdomains" ) ).toString(), LinkedHashMap.class );
+			if ( !rs.getString( "subdomains" ).isEmpty() )
+				subdomains = gson.fromJson( new JSONObject( rs.getString( "subdomains" ) ).toString(), LinkedHashMap.class );
 		}
 		catch ( Exception e )
 		{

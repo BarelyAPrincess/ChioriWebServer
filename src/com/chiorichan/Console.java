@@ -120,7 +120,7 @@ public class Console implements ConsoleCommandSender, Runnable
 		System.setOut( new PrintStream( new LoggerOutputStream( getLogger().getLogger(), Level.INFO ), true ) );
 		System.setErr( new PrintStream( new LoggerOutputStream( getLogger().getLogger(), Level.SEVERE ), true ) );
 		
-		getLogger().info( ChatColor.RED + "Finsihed initalizing the server console." );
+		getLogger().info( ChatColor.RED + "Finished initalizing the server console." );
 		
 		primaryThread = new Thread( this, "Server thread" );
 	}

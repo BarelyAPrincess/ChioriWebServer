@@ -98,7 +98,11 @@ public enum ChatColor
 	/**
 	 * Resets all previous chat colors or formats.
 	 */
-	RESET( 'r', 0x15 );
+	RESET( 'r', 0x15 ),
+	
+	FAINT( 'z', 0x16 ),
+	
+	NEGATIVE( 'x', 0x17 );
 	
 	/**
 	 * The special character which prefixes all chat colour codes. Use this if you need to dynamically convert colour

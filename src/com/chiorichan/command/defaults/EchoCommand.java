@@ -1,5 +1,15 @@
 package com.chiorichan.command.defaults;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URISyntaxException;
+
+import org.fusesource.jansi.Ansi;
+import org.fusesource.jansi.Ansi.Attribute;
+
+import sun.misc.IOUtils;
+
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.command.Command;
@@ -38,7 +48,7 @@ public class EchoCommand extends VanillaCommand
 		}
 		
 		sender.sendMessage( message.toString() );
-
+		
 		return true;
 	}
 }
