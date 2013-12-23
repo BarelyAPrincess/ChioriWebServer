@@ -47,13 +47,13 @@ public class HttpResponse
 		
 		try
 		{
-			println("<h1>" + var1 + " - " + var2 + "</h1>");
+			println( "<h1>" + var1 + " - " + var2 + "</h1>" );
 			
 			if ( var3 != null && !var3.isEmpty() )
 				println( "<p>" + var3 + "</p>" );
 			
-			println("<hr>");
-			println("<small>" + Versioning.getProduct() + "<br />Version " + Versioning.getVersion() + "<br />" + Versioning.getCopyright() + "</small>");
+			println( "<hr>" );
+			println( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + "<br />" + Versioning.getCopyright() + "</small>" );
 			
 			sendResponse();
 		}
@@ -62,29 +62,29 @@ public class HttpResponse
 			e.printStackTrace();
 		}
 	}
-
+	
 	public ByteArrayOutputStream getOutput()
 	{
 		return output;
 	}
-
+	
 	public boolean isCommitted()
 	{
 		// TODO Auto-generated method stub
 		return false;
 	}
-
+	
 	public void setStatus( int _status )
 	{
 		httpStatus = _status;
 	}
-
+	
 	public void sendRedirect( String target )
 	{
 		// TODO Auto-generated method stub
 		
 	}
-
+	
 	public void print( String var1 ) throws IOException
 	{
 		output.write( var1.getBytes() );
@@ -92,7 +92,7 @@ public class HttpResponse
 	
 	public void println( String var1 ) throws IOException
 	{
-		output.write( (var1 + "\n").getBytes() );
+		output.write( ( var1 + "\n" ).getBytes() );
 	}
 	
 	public void setContentType( String type )
@@ -109,6 +109,14 @@ public class HttpResponse
 		
 		Headers h = http.getResponseHeaders();
 		
+		for ( Candy c : request.getCandies() )
+		{
+			if ( c.needsUpdating() )
+				h.add( "Set-Cookie", c.toHeaderValue() );
+		}
+		
+		request.getSession().saveSession();
+		
 		if ( h.get( "Server" ) == null )
 			h.add( "Server", Versioning.getProduct() + " Version " + Loader.getVersion() );
 		
@@ -120,6 +128,7 @@ public class HttpResponse
 		OutputStream os = http.getResponseBody();
 		os.write( output.toByteArray() );
 		output.close();
-		os.close(); // This terminates the HttpExchange and frees the resources. We should not do anything past this point.
+		os.close(); // This terminates the HttpExchange and frees the resources. We should not do anything past this
+						// point.
 	}
 }

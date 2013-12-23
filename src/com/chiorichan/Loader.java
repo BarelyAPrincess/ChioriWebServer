@@ -88,8 +88,6 @@ public class Loader implements PluginMessageRecipient
 	private static OptionSet options;
 	
 	public static String webroot = "";
-	private static String version = Versioning.getVersion();
-	private static String product = Versioning.getProduct();
 	private WarningState warningState = WarningState.DEFAULT;
 	private final CommandMap commandMap = new CommandMap();
 	private final PluginManager pluginManager = new SimplePluginManager( this, commandMap );
@@ -186,7 +184,7 @@ public class Loader implements PluginMessageRecipient
 			}
 			else if ( options.has( "v" ) )
 			{
-				System.out.println( version );
+				System.out.println( Versioning.getVersion() );
 			}
 			else
 			{
@@ -208,21 +206,7 @@ public class Loader implements PluginMessageRecipient
 		
 		console.init( this, options );
 		
-		try
-		{
-			InputStream is = Loader.class.getClassLoader().getResourceAsStream( "com/chiorichan/banner.txt" );
-			String[] banner = new String( IOUtils.readFully( is, is.available(), true ) ).split( "\\n" );
-			
-			int len = banner[0].length();
-			
-			for ( String l : banner )
-				Loader.getConsole().sendMessage( ChatColor.NEGATIVE + "" + ChatColor.GOLD + l );
-			
-			getLogger().info( ChatColor.NEGATIVE + "" + ChatColor.GOLD + "Starting " + Versioning.getProduct() + " " + Versioning.getVersion() + Strings.repeat( " ", len - ( "Starting " + Versioning.getProduct() + " " + Versioning.getVersion() ).length() ) );
-			getLogger().info( ChatColor.NEGATIVE + "" + ChatColor.GOLD + Versioning.getCopyright() + Strings.repeat( " ", len - Versioning.getCopyright().length() ) );
-		}
-		catch ( Exception e )
-		{}
+		showBanner();
 		
 		if ( Runtime.getRuntime().maxMemory() / 1024L / 1024L < 512L )
 			getLogger().warning( "To start the server with more ram, launch it as \"java -Xmx1024M -Xms1024M -jar server.jar\"" );
@@ -258,7 +242,7 @@ public class Loader implements PluginMessageRecipient
 		updater.setSuggestChannels( configuration.getBoolean( "auto-updater.suggest-channels" ) );
 		updater.getOnBroken().addAll( configuration.getStringList( "auto-updater.on-broken" ) );
 		updater.getOnUpdate().addAll( configuration.getStringList( "auto-updater.on-update" ) );
-		updater.check( version );
+		updater.check( Versioning.getVersion() );
 		
 		File root = new File( webroot );
 		
@@ -270,9 +254,13 @@ public class Loader implements PluginMessageRecipient
 		
 		if ( !options.has( "tcp-disable" ) && configuration.getBoolean( "server.enableTcpServer", true ) )
 			initTcpServer();
+		else
+			getLogger().warning( "The integrated tcp server has been disabled per the configuration. Change server.enableTcpServer to true to reenable it." );
 		
 		if ( !options.has( "web-disable" ) && configuration.getBoolean( "server.enableWebServer", true ) )
 			initWebServer();
+		else
+			getLogger().warning( "The integrated web server has been disabled per the configuration. Change server.enableWebServer to true to reenable it." );
 		
 		enablePlugins( PluginLoadOrder.POSTSERVER );
 		
@@ -282,9 +270,28 @@ public class Loader implements PluginMessageRecipient
 		
 		console.primaryThread.start();
 		
-		getLogger().info( "Done (" + ( System.currentTimeMillis() - startTime ) + "ms)! For help, type \"help\" or \"?\"" );
+		getLogger().info( ChatColor.DARK_AQUA + "" + ChatColor.NEGATIVE + "Done (" + ( System.currentTimeMillis() - startTime ) + "ms)! For help, type \"help\" or \"?\"" );
 	}
 	
+	private static void showBanner()
+	{
+		try
+		{
+			InputStream is = Loader.class.getClassLoader().getResourceAsStream( "com/chiorichan/banner.txt" );
+			String[] banner = new String( IOUtils.readFully( is, is.available(), true ) ).split( "\\n" );
+			
+			int len = banner[0].length();
+			
+			for ( String l : banner )
+				Loader.getConsole().sendMessage( ChatColor.GOLD + l );
+			
+			getLogger().info( ChatColor.NEGATIVE + "" + ChatColor.GOLD + "Starting " + Versioning.getProduct() + " " + Versioning.getVersion() );
+			getLogger().info( ChatColor.NEGATIVE + "" + ChatColor.GOLD + Versioning.getCopyright() );
+		}
+		catch ( Exception e )
+		{}
+	}
+
 	private boolean initTcpServer()
 	{
 		try
@@ -791,7 +798,7 @@ public class Loader implements PluginMessageRecipient
 	
 	public String toString()
 	{
-		return product + "{" + "serverVersion=" + version + "}";
+		return Versioning.getProduct() + " " + Versioning.getVersion();
 	}
 	
 	public ConsoleReader getReader()
@@ -1103,12 +1110,12 @@ public class Loader implements PluginMessageRecipient
 	
 	public static String getName()
 	{
-		return product;
+		return Versioning.getProduct();
 	}
 	
 	public static String getVersion()
 	{
-		return version;
+		return Versioning.getVersion();
 	}
 	
 	public static Server getTcpServer()

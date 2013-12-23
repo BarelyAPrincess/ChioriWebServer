@@ -18,6 +18,7 @@ import com.chiorichan.command.defaults.BanIpCommand;
 import com.chiorichan.command.defaults.BanListCommand;
 import com.chiorichan.command.defaults.DeopCommand;
 import com.chiorichan.command.defaults.EchoCommand;
+import com.chiorichan.command.defaults.HelpCommand;
 import com.chiorichan.command.defaults.KickCommand;
 import com.chiorichan.command.defaults.ListCommand;
 import com.chiorichan.command.defaults.MeCommand;
@@ -55,6 +56,7 @@ public class CommandMap
 		fallbackCommands.add( new PardonCommand() );
 		fallbackCommands.add( new KickCommand() );
 		fallbackCommands.add( new SayCommand() );
+		fallbackCommands.add( new HelpCommand() );
 		fallbackCommands.add( new WhitelistCommand() );
 		fallbackCommands.add( new TellCommand() );
 		fallbackCommands.add( new MeCommand() );

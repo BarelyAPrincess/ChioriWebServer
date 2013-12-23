@@ -1,9 +1,8 @@
 =About=
-'''Chiori Web Server''' is a Web Server and TCP Server allowing for both dynamic content and TCP clients like Android or Standalone.
-The web server also implements a Java port of Chiori Framework (PHP), which utilized component based structure.
-For more power in your website, files ending with .groovy are ran though a groovy shell, Which has access to the entire Server and Framework API.
+'''Chiori Web Server''' is a HTTP/TCP Server allowing for both dynamic content and clients like Android or Standalone Apps.
+To give your websites more power, files ending with .groovy are ran though a groovy shell, Which has access to the entire Server API.
 Need more power? Then try out the Plugin system that is based on CraftBukkit (A Minecraft Game Server).
-The idea was to give you the power to create amazing websites with less time and resources without reinventing the wheel.
+The idea was to give you the ability to create amazing websites using the power of Java while taking less time and resources.
 
 =Included Framework=
 The development of Chiori Framework in the PHP form will be discontinued but it's evolution will continue from with
@@ -91,6 +90,8 @@ Switched from BeanShell to GroovyShell. Now you can write your web script in unc
 ===Subversion 2 (Sonic Doom)===
 ====Build 1212====
 Some framework instance/memory handling rewrites. Possiblely broken build.
+====Build 1222====
+Fixes to the log and console systems. Switched from Jetty to HttpServer (A builtin class of the JRE). Also implemented the TCP server side of the Chiori Web Server for use with Android and Standalone Apps.
 
 =Installation=
 ==Configuration==

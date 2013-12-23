@@ -6,8 +6,8 @@ import java.io.InputStream;
 import java.net.ConnectException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.LinkedHashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -109,9 +109,13 @@ public class Site
 			{
 				sql.init( database, username, password, host, port );
 			}
-			catch ( ConnectException | ClassNotFoundException e )
+			catch ( SQLException e )
 			{
-				e.printStackTrace();
+				if ( e.getCause() instanceof ConnectException )
+					Loader.getLogger().severe( "We had a problem connecting to database '" + database + "'. Reason: " + e.getCause().getMessage() );
+				else
+					Loader.getLogger().severe( e.getMessage() );
+				
 				return;
 			}
 			finally

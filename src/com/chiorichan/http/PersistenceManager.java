@@ -13,7 +13,7 @@ import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.framework.SiteManager;
 
 /**
- * Persistence manager handles when a session needs to be purged from the memory.
+ * Persistence manager handles sessions kept in memory. It also manages when to unload the session to free memeory.
  * 
  * @author Chiori Greene
  * @copyright Greenetree LLC 2014
@@ -30,8 +30,36 @@ public class PersistenceManager
 	{
 		YamlConfiguration config = Loader.getConfig();
 		
+		try
+		{
+			Class.forName( "com.mysql.jdbc.Driver" );
+		}
+		catch ( ClassNotFoundException e )
+		{
+			Loader.getLogger().severe( "We could not locate the 'com.mysql.jdbc.Driver' library regardless that its suppose to be included. If your running from source code be sure to have this library in your build path." );
+			Loader.stop();
+		}
+		
 		switch ( config.getString( "framework-database.type", "mysql" ) )
 		{
+			case "sqlite":
+				String filename = config.getString( "framework.database.dbfile", "framework.db" );
+				
+				try
+				{
+					sql.init( filename );
+				}
+				catch ( SQLException e )
+				{
+					if ( e.getCause() instanceof ConnectException )
+						Loader.getLogger().severe( "We had a problem connecting to database '" + filename + "'. Reason: " + e.getCause().getMessage() );
+					else
+						Loader.getLogger().severe( e.getMessage() );
+					
+					Loader.stop();
+				}
+				
+				break;
 			case "mysql":
 				String host = config.getString( "framework.database.host", "localhost" );
 				String port = config.getString( "framework.database.port", "3306" );
@@ -43,33 +71,22 @@ public class PersistenceManager
 				{
 					sql.init( database, username, password, host, port );
 				}
-				catch ( ConnectException e )
-				{
-					//e.printStackTrace();
-					Loader.getLogger().severe( "We had a problem connecting to database '" + host + "'. Reason: " + e.getMessage() );
-					System.exit( 1 );
-				}
 				catch ( SQLException e )
 				{
 					//e.printStackTrace();
 					
 					if ( e.getCause() instanceof ConnectException )
-						Loader.getLogger().severe( "We had a problem connecting to database '" + host + "'. Reason: " + e.getMessage() );
+						Loader.getLogger().severe( "We had a problem connecting to database '" + host + "'. Reason: " + e.getCause().getMessage() );
 					else
 						Loader.getLogger().severe( e.getMessage() );
 					
-					System.exit( 1 );
-				}
-				catch ( ClassNotFoundException e )
-				{
-					Loader.getLogger().severe( "We could not locate the 'com.mysql.jdbc.Driver' library regardless that its suppose to be included. If your running from source code be sure to have this library in your build path." );
-					System.exit( 1 );
+					Loader.stop();
 				}
 				
 				break;
 			default:
-				Loader.getLogger().severe( "The Framework Database can not be anything other then mySql at the moment. Please change 'framework-database.type' to 'mysql' in 'chiori.yml'" );
-				System.exit( 1 );
+				Loader.getLogger().severe( "The Framework Database can not be anything other then mySql or sqLite at the moment. Please change 'framework-database.type' to 'mysql' or 'sqLite' in 'chiori.yml'" );
+				Loader.stop();
 		}
 		
 		_sites.loadSites();

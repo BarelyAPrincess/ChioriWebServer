@@ -15,7 +15,9 @@ import java.util.List;
 import org.json.JSONException;
 
 import com.chiorichan.Loader;
+
 import java.sql.Blob;
+
 import com.mysql.jdbc.exceptions.jdbc4.CommunicationsException;
 import com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException;
 
@@ -45,7 +47,48 @@ public class SqlConnector
 		init( db, user, pass, host, port );
 	}
 	
-	public void init( String db, String user, String pass, String host, String port ) throws SQLException, ClassNotFoundException, ConnectException
+	public SqlConnector(String filename) throws SQLException, ClassNotFoundException
+	{
+		init( filename );
+	}
+	
+	/**
+	 * Initializes a sqLite connection.
+	 * 
+	 * @param filename
+	 * @throws SQLException
+	 * @throws ClassNotFoundException
+	 */
+	public void init( String filename ) throws SQLException
+	{
+		try
+		{
+			Class.forName( "com.mysql.jdbc.Driver" );
+		}
+		catch ( ClassNotFoundException e )
+		{
+			Loader.getLogger().severe( "We could not locate the 'com.mysql.jdbc.Driver' library regardless that its suppose to be included. If your running from source code be sure to have this library in your build path." );
+			System.exit( 1 );
+		}
+		
+		con = DriverManager.getConnection( "jdbc:sqlite:" + filename );
+		
+		Loader.getLogger().info( "We succesully connected to the sqLite database using 'jdbc:sqlite:" + filename + "'" );
+	}
+	
+	/**
+	 * Initializes a mySQL connection.
+	 * 
+	 * @param db
+	 * @param user
+	 * @param pass
+	 * @param host
+	 * @param port
+	 * @throws SQLException
+	 * @throws ClassNotFoundException
+	 * @throws ConnectException
+	 */
+	public void init( String db, String user, String pass, String host, String port ) throws SQLException
 	{
 		if ( host == null )
 			host = "localhost";
@@ -53,7 +96,15 @@ public class SqlConnector
 		if ( port == null )
 			port = "3306";
 		
-		Class.forName( "com.mysql.jdbc.Driver" );
+		try
+		{
+			Class.forName( "com.mysql.jdbc.Driver" );
+		}
+		catch ( ClassNotFoundException e )
+		{
+			Loader.getLogger().severe( "We could not locate the 'com.mysql.jdbc.Driver' library regardless that its suppose to be included. If your running from source code be sure to have this library in your build path." );
+			System.exit( 1 );
+		}
 		
 		saved_db = db;
 		saved_user = user;
@@ -328,7 +379,7 @@ public class SqlConnector
 		{
 			String column_name = rsmd.getColumnName( i );
 			
-			//Loader.getLogger().info( "Column: " + column_name + " <-> " + rsmd.getColumnTypeName( i ) );
+			// Loader.getLogger().info( "Column: " + column_name + " <-> " + rsmd.getColumnTypeName( i ) );
 			
 			if ( rsmd.getColumnType( i ) == java.sql.Types.ARRAY )
 			{
@@ -352,11 +403,11 @@ public class SqlConnector
 			}
 			else if ( rsmd.getColumnTypeName( i ) == "BLOB" || rsmd.getColumnTypeName( i ) == "LONGBLOB" )
 			{
-				//result.put( column_name, rs.getBytes( column_name ) );
+				// result.put( column_name, rs.getBytes( column_name ) );
 				
 				// XXX: Had to convert the blob to a string since Quercus converts a blob to className.
 				Blob blob = rs.getBlob( column_name );
-				//byte[] bytes = blob.getBytes( 1L, (int) blob.length() );
+				// byte[] bytes = blob.getBytes( 1L, (int) blob.length() );
 				
 				byte[] bytes = rs.getBytes( column_name );
 				
@@ -407,7 +458,7 @@ public class SqlConnector
 			}
 		}
 		
-		//Loader.getLogger().info( result.toString() );
+		// Loader.getLogger().info( result.toString() );
 		
 		return result;
 	}

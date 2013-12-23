@@ -109,7 +109,10 @@ public class WebHandler implements HttpHandler
 							// TODO: Implement Directory Listings
 						}
 						else
+						{
 							response.sendError( 403, "Directory Listing is Denied on this Server!" );
+							return;
+						}
 					}
 					else
 					{
@@ -156,16 +159,6 @@ public class WebHandler implements HttpHandler
 					}
 				}
 			}
-			
-			Headers h = t.getResponseHeaders();
-			
-			for ( Candy c : request.getCandies() )
-			{
-				if ( c.needsUpdating() )
-					h.add( "Set-Cookie", c.toHeaderValue() );
-			}
-			
-			request.getSession().saveSession();
 			
 			response.sendResponse();
 		}
