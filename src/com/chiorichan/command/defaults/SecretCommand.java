@@ -24,7 +24,17 @@ public class SecretCommand extends VanillaCommand
 			return true;
 		if ( args.length == 0 )
 		{
-			sender.sendMessage( ChatColor.RED + description );
+			String[] var1 = new String[] { "It needs to be about 20% cooler", "I baked you a pie!", "GlaDOS will be pleased! :)", "Time and Relative Dimension in Space, Thats me. I'm the TARDIS!", "DERP! :|", "Shouldn't you be getting back to work?", "Daring Doo?", "I'm Hungry", "Have you seen to Doctor? He promised me a ride in his TARDIS.", "Do you suppose Mary Poppins was a Time Lord?", "Hey Buddy...... BOO!", "Everything\'s going to plan. No, really, that was supposed to happen.", "Uh... Did I do that?", "Oops.", "Why did you do that?", "I feel sad now :(", "My bad.", "I\'m sorry, Dave.", "I let you down. Sorry :(", "On the bright side, I bought you a teddy bear!", "Daisy, daisy...", "Oh - I know what I did wrong!", "Hay, that tickles! Hehehe!", "I blame Steve Jobs.", "Hi, I'm C++ and I'm problematic!", "Don\'t be sad. I\'ll do better next time, I promise!", "Don\'t be sad, have a hug! <3", "I just don\'t know what went wrong :(", "Shall we play a game?", "Quite honestly, I wouldn\'t worry myself about that.", "Sorry :(", "Surprise! Haha. Well, this is awkward.", "Would you like a cupcake?", "Hi. I\'m Windows, and I\'m a crashaholic.", "Ooh. Shiny.", "This doesn\'t make any sense!", "Are you trying to break it? :(", "Don\'t do that.", "Ouch. That hurt :(", "You\'re mean.", "This is a token for 1 free hug: [~~HUG~~]", "There are four lights!" };
+			
+			try
+			{
+				sender.sendMessage( ChatColor.NEGATIVE + "" + ChatColor.DARK_AQUA + var1[(int) ( System.nanoTime() % (long) var1.length )] );
+			}
+			catch ( Throwable throwable )
+			{
+				sender.sendMessage( ChatColor.NEGATIVE + "" + ChatColor.DARK_AQUA + "Witty comment unavailable :(" );
+			}
+			
 			return false;
 		}
 		

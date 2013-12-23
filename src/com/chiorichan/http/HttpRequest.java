@@ -127,7 +127,16 @@ public class HttpRequest
 	
 	public String getRemoteAddr()
 	{
-		return http.getRemoteAddress().getAddress().toString();
+		// This is a checker that makes it possible for our server to get the correct remote IP even if using it with CloudFlare.
+		// https://support.cloudflare.com/hc/en-us/articles/200170786-Why-do-my-server-logs-show-CloudFlare-s-IPs-using-CloudFlare-
+		if ( http.getRequestHeaders().containsKey( "CF-Connecting-IP" ) )
+		{
+			return http.getRequestHeaders().get( "CF-Connecting-IP" ).get( 0 );
+		}
+		else
+		{
+			return http.getRemoteAddress().getAddress().getHostAddress();
+		}
 	}
 	
 	public int getRemotePort()

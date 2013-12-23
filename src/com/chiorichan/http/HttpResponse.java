@@ -59,7 +59,10 @@ public class HttpResponse
 		}
 		catch ( IOException e )
 		{
-			e.printStackTrace();
+			if ( e.getMessage().equals( "Broken pipe" ) )
+				Loader.getLogger().severe( "Broken Pipe: The browser closed the connection before data could be written to it." );
+			else
+				e.printStackTrace();
 		}
 	}
 	
@@ -81,8 +84,7 @@ public class HttpResponse
 	
 	public void sendRedirect( String target )
 	{
-		// TODO Auto-generated method stub
-		
+		request.getOriginal().getResponseHeaders().add( "Location", target );
 	}
 	
 	public void print( String var1 ) throws IOException

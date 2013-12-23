@@ -11,7 +11,6 @@ import com.chiorichan.Loader;
 import com.chiorichan.event.server.RequestEvent;
 import com.chiorichan.framework.Framework;
 import com.chiorichan.framework.Site;
-import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
@@ -132,7 +131,8 @@ public class WebHandler implements HttpHandler
 							return;
 						}
 						
-						response.setContentType( URLConnection.guessContentTypeFromName( dest.getName() ) );
+						Loader.getLogger().fine( "Detected file to be of " + ContentTypes.getContentType( dest ) + " type." );
+						response.setContentType( ContentTypes.getContentType( dest ) );
 						
 						try
 						{
