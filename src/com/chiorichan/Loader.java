@@ -285,7 +285,7 @@ public class Loader implements PluginMessageRecipient
 			for ( String l : banner )
 				Loader.getConsole().sendMessage( ChatColor.GOLD + l );
 			
-			getLogger().info( ChatColor.NEGATIVE + "" + ChatColor.GOLD + "Starting " + Versioning.getProduct() + " " + Versioning.getVersion() );
+			getLogger().info( ChatColor.NEGATIVE + "" + ChatColor.GOLD + "Starting " + Versioning.getProduct() + " Version " + Versioning.getVersion() );
 			getLogger().info( ChatColor.NEGATIVE + "" + ChatColor.GOLD + Versioning.getCopyright() );
 		}
 		catch ( Exception e )
