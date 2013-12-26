@@ -9,7 +9,6 @@ import java.util.Map;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
-import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.framework.Framework;
@@ -135,7 +134,7 @@ public class PersistentSession
 			
 			expires = (int) ( System.currentTimeMillis() / 1000 ) + defaultLife;
 			
-			sql.queryUpdate( "INSERT INTO `sessions` (`sessid`, `expires`, `data`)VALUES('" + candyName + "', '" + expires + "', '" + dataJson + "');" );
+			sql.queryUpdate( "INSERT INTO `sessions` (`sessid`, `expires`, `data`)VALUES('" + candyId + "', '" + expires + "', '" + dataJson + "');" );
 		}
 		
 		Loader.getLogger().info( "Session Initalized: " + this );

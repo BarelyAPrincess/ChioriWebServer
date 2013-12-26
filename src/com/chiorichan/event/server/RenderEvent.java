@@ -25,12 +25,12 @@ public class RenderEvent extends ServerEvent
 	
 	public Site getSite()
 	{
-		return fw.getCurrentSite();
+		return fw.getRequest().getSite();
 	}
 	
 	public String getRequestId()
 	{
-		return fw.getRequestId();
+		return fw.getUid();
 	}
 	
 	public Framework getFramework()

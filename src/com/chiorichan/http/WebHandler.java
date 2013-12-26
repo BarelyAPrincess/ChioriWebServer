@@ -44,9 +44,10 @@ public class WebHandler implements HttpHandler
 			if ( currentSite == null )
 				currentSite = new Site( "default", Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Chiori Framework Site" ), domain );
 			
+			currentSite.setSubDomain( site );
 			request.setSite( currentSite );
 			
-			request.setHeader( "Access-Control-Allow-Origin", currentSite.getYaml().getString( "web.allowed-origin", "*" ) );
+			request.initSession();
 			
 			HttpResponse response = request.getResponse();
 			
@@ -73,7 +74,6 @@ public class WebHandler implements HttpHandler
 			
 			// Handle page output from here
 			Framework fw = request.getFramework();
-			fw.setSite( currentSite );
 			
 			if ( !fw.rewriteVirtual( domain, site, uri ) )
 			{
@@ -166,7 +166,7 @@ public class WebHandler implements HttpHandler
 			
 			response.sendResponse();
 		}
-		catch ( IOException e )
+		catch ( Exception e )
 		{
 			if ( e.getMessage().equals( "Broken pipe" ) )
 				Loader.getLogger().warning( "Broken Pipe: The browser closed the connection before data could be written to it.", e );

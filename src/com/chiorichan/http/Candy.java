@@ -1,9 +1,12 @@
 package com.chiorichan.http;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public class Candy
 {
 	private String key, value, path = "/", domain = "";
-	private long epoch;
+	private long epoch = 0;
 	
 	/*
 	 * Tells the response writer if it needs to set this candy in the response headers.
@@ -14,8 +17,6 @@ public class Candy
 	{
 		key = _key;
 		value = _value;
-		
-		epoch = System.currentTimeMillis();
 	}
 	
 	public boolean compareTo( Candy var1 )
@@ -70,7 +71,7 @@ public class Candy
 	public void setMaxAge( long defaultLife )
 	{
 		needsUpdating = true;
-		epoch = System.currentTimeMillis() + defaultLife;
+		epoch = (System.currentTimeMillis() / 1000) + defaultLife;
 	}
 	
 	public void setDomain( String _domain )
@@ -92,10 +93,20 @@ public class Candy
 	
 	protected String toHeaderValue()
 	{
-		// h.add( "Set-Cookie", "lastVisit=99999999; Expires=Wed, 09 Jun 2021 10:18:14 GMT" );
+		String additional = "";
 		
-		// TODO: Add expires, path, domain
+		if ( epoch > 0 )
+		{
+			SimpleDateFormat dateFormat = new SimpleDateFormat("EE, dd-MMM-yyyy HH:mm:ss zz");
+			additional += "expires=" + dateFormat.format( new Date( epoch * 1000 ) ) + "; ";
+		}
 		
-		return key + "=" + value + "; ";
+		if ( !path.isEmpty() )
+			additional += "path=" + path + "; ";
+		
+		if ( !domain.isEmpty() )
+			additional += "domain=" + domain + "; ";
+		
+		return key + "=" + value + "; " + additional;
 	}
 }

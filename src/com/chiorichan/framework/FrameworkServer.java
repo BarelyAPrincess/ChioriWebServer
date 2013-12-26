@@ -91,7 +91,7 @@ public class FrameworkServer
 			return "";
 		}
 		
-		applyAlias( result, fw.getCurrentSite().getAliases() );
+		applyAlias( result, fw.getRequest().getSite().getAliases() );
 		
 		return result;
 	}
@@ -115,7 +115,7 @@ public class FrameworkServer
 		
 		try
 		{
-			File root = getTemplateRoot( fw.getCurrentSite() );
+			File root = getTemplateRoot( fw.getRequest().getSite() );
 			
 			String file = getPackage( root, pack );
 			

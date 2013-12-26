@@ -215,5 +215,20 @@ public class Site
 		return sql;
 	}
 	
+	public String subDomain = "";
+
+	public void setSubDomain( String var1 )
+	{
+		if ( var1 == null )
+			var1 = "";
+		
+		subDomain = var1;
+	}
+
+	public String getSubDomain()
+	{
+		return subDomain;
+	}
+	
 	// TODO: Add methods to add protected files, metatags and aliases to site and save
 }

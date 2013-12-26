@@ -53,9 +53,6 @@ public class Framework
 	protected Map<ServerVars, Object> serverVars = new HashMap<ServerVars, Object>();
 	protected Map<String, String> argumentVars = new TreeMap<String, String>();
 	
-	protected String siteId, siteTitle, siteDomain, siteSubDomain, requestId;
-	protected Site currentSite;
-	
 	public Evaling eval;
 	
 	protected String uid;
@@ -77,32 +74,39 @@ public class Framework
 		env = new Enviro( this );
 		loadVars();
 	}
-
+	
 	public void loadVars()
 	{
-		// serverVars.put( ServerVars.PHP_SELF, requestFile.getPath() );
-		serverVars.put( ServerVars.DOCUMENT_ROOT, Loader.getConfig().getString( "settings.webroot", "webroot" ) );
-		serverVars.put( ServerVars.HTTP_ACCEPT, request.getHeader( "Accept" ) );
-		serverVars.put( ServerVars.HTTP_USER_AGENT, request.getHeader( "User-Agent" ) );
-		serverVars.put( ServerVars.HTTP_CONNECTION, request.getHeader( "Connection" ) );
-		serverVars.put( ServerVars.HTTP_HOST, request.getHeader( "Host" ) );
-		serverVars.put( ServerVars.HTTP_ACCEPT_ENCODING, request.getHeader( "Accept-Encoding" ) );
-		serverVars.put( ServerVars.HTTP_ACCEPT_LANGUAGE, request.getHeader( "Accept-Language" ) );
-		serverVars.put( ServerVars.REMOTE_HOST, request.getRemoteHost() );
-		serverVars.put( ServerVars.REMOTE_ADDR, request.getRemoteAddr() );
-		serverVars.put( ServerVars.REMOTE_PORT, request.getRemotePort() );
-		serverVars.put( ServerVars.REQUEST_TIME, Loader.getEpoch() );
-		serverVars.put( ServerVars.REQUEST_URI, request.getURI() );
-		serverVars.put( ServerVars.CONTENT_LENGTH, request.getContentLength() );
-		serverVars.put( ServerVars.AUTH_TYPE, request.getAuthType() );
-		serverVars.put( ServerVars.SERVER_NAME, request.getServerName() );
-		serverVars.put( ServerVars.SERVER_PORT, request.getServerPort() );
-		serverVars.put( ServerVars.HTTPS, request.isSecure() );
-		serverVars.put( ServerVars.SESSION, request.getSession() );
-		serverVars.put( ServerVars.SERVER_SOFTWARE, Versioning.getProduct() );
-		serverVars.put( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "webmaster@" + request.getServerName() ) );
-		serverVars.put( ServerVars.SERVER_ID, Loader.getConfig().getString( "server.id", "applebloom" ) );
-		serverVars.put( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Loader.getVersion() );
+		try
+		{
+			// serverVars.put( ServerVars.PHP_SELF, requestFile.getPath() );
+			serverVars.put( ServerVars.DOCUMENT_ROOT, Loader.getConfig().getString( "settings.webroot", "webroot" ) );
+			serverVars.put( ServerVars.HTTP_ACCEPT, request.getHeader( "Accept" ) );
+			serverVars.put( ServerVars.HTTP_USER_AGENT, request.getHeader( "User-Agent" ) );
+			serverVars.put( ServerVars.HTTP_CONNECTION, request.getHeader( "Connection" ) );
+			serverVars.put( ServerVars.HTTP_HOST, request.getHeader( "Host" ) );
+			serverVars.put( ServerVars.HTTP_ACCEPT_ENCODING, request.getHeader( "Accept-Encoding" ) );
+			serverVars.put( ServerVars.HTTP_ACCEPT_LANGUAGE, request.getHeader( "Accept-Language" ) );
+			serverVars.put( ServerVars.REMOTE_HOST, request.getRemoteHost() );
+			serverVars.put( ServerVars.REMOTE_ADDR, request.getRemoteAddr() );
+			serverVars.put( ServerVars.REMOTE_PORT, request.getRemotePort() );
+			serverVars.put( ServerVars.REQUEST_TIME, Loader.getEpoch() );
+			serverVars.put( ServerVars.REQUEST_URI, request.getURI() );
+			serverVars.put( ServerVars.CONTENT_LENGTH, request.getContentLength() );
+			serverVars.put( ServerVars.AUTH_TYPE, request.getAuthType() );
+			serverVars.put( ServerVars.SERVER_NAME, request.getServerName() );
+			serverVars.put( ServerVars.SERVER_PORT, request.getServerPort() );
+			serverVars.put( ServerVars.HTTPS, request.isSecure() );
+			serverVars.put( ServerVars.SESSION, request.getSession() );
+			serverVars.put( ServerVars.SERVER_SOFTWARE, Versioning.getProduct() );
+			serverVars.put( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "webmaster@" + request.getServerName() ) );
+			serverVars.put( ServerVars.SERVER_ID, Loader.getConfig().getString( "server.id", "applebloom" ) );
+			serverVars.put( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Loader.getVersion() );
+		}
+		catch ( Exception e )
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	public String replaceAt( String par, int at, String rep )
@@ -246,6 +250,8 @@ public class Framework
 	{
 		try
 		{
+			Site currentSite = request.getSite();
+			
 			if ( currentSite == null )
 				return;
 			
@@ -314,7 +320,7 @@ public class Framework
 			
 			eval = env.newEval();
 			
-			serverVars.put( ServerVars.DOCUMENT_ROOT, new File( Loader.getConfig().getString( "settings.webroot", "webroot" ), currentSite.getWebRoot( siteSubDomain ) ).getAbsolutePath() );
+			serverVars.put( ServerVars.DOCUMENT_ROOT, new File( Loader.getConfig().getString( "settings.webroot", "webroot" ), currentSite.getWebRoot( currentSite.getSubDomain() ) ).getAbsolutePath() );
 			
 			Map<String, Object> $server = new HashMap<String, Object>();
 			
@@ -560,7 +566,7 @@ public class Framework
 		
 		if ( !response.isCommitted() )
 		{
-			currentSite = Loader.getPersistenceManager().getSiteManager().getSiteById( "framework" );
+			Site currentSite = Loader.getPersistenceManager().getSiteManager().getSiteById( "framework" );
 			
 			if ( currentSite instanceof FrameworkSite )
 				( (FrameworkSite) currentSite ).setDatabase( Loader.getPersistenceManager().getSql() );
@@ -602,6 +608,7 @@ public class Framework
 		// TODO: Check reqlevel
 		
 		String source = html;
+		Site currentSite = request.getSite();
 		
 		if ( !file.isEmpty() )
 		{
@@ -745,16 +752,6 @@ public class Framework
 		return _img;
 	}
 	
-	public Site getCurrentSite()
-	{
-		return currentSite;
-	}
-	
-	public String getRequestId()
-	{
-		return requestId;
-	}
-	
 	public HttpResponse getResponse()
 	{
 		return response;
@@ -845,22 +842,17 @@ public class Framework
 	{
 		return argumentVars;
 	}
-
+	
 	public PersistentSession getSession()
 	{
 		return request.getSession();
 	}
-
-	public void setSite( Site site )
-	{
-		currentSite = site;
-	}
-
+	
 	public void setRequest( HttpRequest var1 )
 	{
 		request = var1;
 	}
-
+	
 	public void setResponse( HttpResponse var1 )
 	{
 		response = var1;

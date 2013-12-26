@@ -50,7 +50,7 @@ public class FrameworkUserService
 	
 	public boolean initalize( String reqLevel ) throws SQLException
 	{
-		if ( fw.getCurrentSite().getUserList() == null )
+		if ( fw.getRequest().getSite().getUserList() == null )
 			return true;
 		
 		String username = fw.getServer().getRequest( "user" );
@@ -63,7 +63,7 @@ public class FrameworkUserService
 			
 			if ( target.isEmpty() )
 			{
-				target = fw.getCurrentSite().getYaml().getString( "scripts.login-form", "/login" );
+				target = fw.getRequest().getSite().getYaml().getString( "scripts.login-form", "/login" );
 			}
 			
 			fw.getServer().dummyRedirect( target );
@@ -71,7 +71,7 @@ public class FrameworkUserService
 		
 		if ( !username.isEmpty() && !password.isEmpty() )
 		{
-			User user = fw.getCurrentSite().getUserList().validateUser( fw, username, password );
+			User user = fw.getRequest().getSite().getUserList().validateUser( fw, username, password );
 			
 			Loader.getLogger().info( "User: " + user );
 			
@@ -79,7 +79,7 @@ public class FrameworkUserService
 			{
 				currentUser = user;
 				
-				String loginPost = ( target.isEmpty() ) ? fw.getCurrentSite().getYaml().getString( "scripts.login-post", "/panel" ) : target;
+				String loginPost = ( target.isEmpty() ) ? fw.getRequest().getSite().getYaml().getString( "scripts.login-post", "/panel" ) : target;
 				
 				Loader.getLogger().info( "Login Success: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\", Display Level \"" + user.getDisplayLevel() + "\"" );
 				fw.getServer().dummyRedirect( loginPost );
@@ -90,7 +90,7 @@ public class FrameworkUserService
 			}
 			else
 			{
-				String loginForm = fw.getCurrentSite().getYaml().getString( "scripts.login-form", "/login" );
+				String loginForm = fw.getRequest().getSite().getYaml().getString( "scripts.login-form", "/login" );
 				
 				Loader.getLogger().warning( "Login Failed: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\", Display Level \"" + user.getDisplayLevel() + "\"" );
 				fw.getServer().dummyRedirect( loginForm + "?msg=" + user.getLastError() + "&target=" + target );
@@ -103,13 +103,13 @@ public class FrameworkUserService
 			
 			if ( !username.isEmpty() && !password.isEmpty() )
 			{
-				User user = fw.getCurrentSite().getUserList().validateUser( fw, username, password );
+				User user = fw.getRequest().getSite().getUserList().validateUser( fw, username, password );
 				
 				if ( user != null && user.isValid() )
 				{
 					currentUser = user;
 					
-					String loginPost = ( target == null || target.isEmpty() ) ? fw.getCurrentSite().getYaml().getString( "scripts.login-post", "/panel" ) : target;
+					String loginPost = ( target == null || target.isEmpty() ) ? fw.getRequest().getSite().getYaml().getString( "scripts.login-post", "/panel" ) : target;
 					
 					Loader.getLogger().info( "Login Success: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\", Display Level \"" + user.getDisplayLevel() + "\"" );
 					// fw.getServer().dummyRedirect( loginPost );
@@ -132,7 +132,7 @@ public class FrameworkUserService
 					}
 					else if ( !user.isValid() )
 					{
-						String loginForm = fw.getCurrentSite().getYaml().getString( "scripts.login-form", "/login" );
+						String loginForm = fw.getRequest().getSite().getYaml().getString( "scripts.login-form", "/login" );
 						fw.getServer().dummyRedirect( loginForm + "?msg=You must be logged in to view that page!&target=" + fw.getRequest().getURI() );
 						return false;
 					}
@@ -142,7 +142,7 @@ public class FrameworkUserService
 			{
 				if ( !reqLevel.equals( "-1" ) )
 				{
-					String loginForm = fw.getCurrentSite().getYaml().getString( "scripts.login-form", "/login" );
+					String loginForm = fw.getRequest().getSite().getYaml().getString( "scripts.login-form", "/login" );
 					fw.getServer().dummyRedirect( loginForm + "?msg=You must be logged in to view that page!&target=" + fw.getRequest().getURI() );
 					return false;
 				}
@@ -190,7 +190,7 @@ public class FrameworkUserService
 	{
 		try
 		{
-			SqlConnector sql = fw.getCurrentSite().sql;
+			SqlConnector sql = fw.getRequest().getSite().sql;
 			
 			if ( permName == null || permName.isEmpty() )
 				permName = Arrays.asList( "ROOT" );
@@ -355,7 +355,7 @@ public class FrameworkUserService
 	
 	public LinkedHashMap<String, Object> getMyLocations( boolean returnOne, boolean returnString, String whereAlt )
 	{
-		SqlConnector sql = fw.getCurrentSite().getDatabase();
+		SqlConnector sql = fw.getRequest().getSite().getDatabase();
 		List<String> where = new ArrayList<String>();
 		LinkedHashMap<String, Object> result = new LinkedHashMap<String, Object>();
 		String sqlWhere = "";
@@ -464,7 +464,7 @@ public class FrameworkUserService
 	
 	public LinkedHashMap<String, Object> getMyAccounts( boolean returnOne, boolean returnString, String whereAlt )
 	{
-		SqlConnector sql = fw.getCurrentSite().getDatabase();
+		SqlConnector sql = fw.getRequest().getSite().getDatabase();
 		List<String> where = new ArrayList<String>();
 		LinkedHashMap<String, Object> result = new LinkedHashMap<String, Object>();
 		String sqlWhere = "";
@@ -647,7 +647,7 @@ public class FrameworkUserService
 		
 		try
 		{
-			SqlConnector sql = fw.getCurrentSite().sql;
+			SqlConnector sql = fw.getRequest().getSite().sql;
 			
 			if ( idenifier == null || idenifier == "-1" )
 			{
@@ -699,7 +699,7 @@ public class FrameworkUserService
 	{
 		try
 		{
-			SqlConnector sql = fw.getCurrentSite().sql;
+			SqlConnector sql = fw.getRequest().getSite().sql;
 			
 			if ( idenifier == null || idenifier == "-1" )
 			{

@@ -17,7 +17,7 @@ public class FrameworkConfigurationManager
 	{
 		try
 		{
-			return fw.getCurrentSite().getYaml().get( key );
+			return fw.getRequest().getSite().getYaml().get( key );
 		}
 		catch ( Exception e )
 		{
@@ -27,31 +27,31 @@ public class FrameworkConfigurationManager
 	
 	public boolean keyExists( String key )
 	{
-		return ( fw.getCurrentSite().getYaml().get( key ) != null );
+		return ( fw.getRequest().getSite().getYaml().get( key ) != null );
 	}
 	
 	public String getString( String key )
 	{
-		return fw.getCurrentSite().getYaml().getString( key );
+		return fw.getRequest().getSite().getYaml().getString( key );
 	}
 	
 	public List<?> getArray( String key )
 	{
-		return fw.getCurrentSite().getYaml().getList( key );
+		return fw.getRequest().getSite().getYaml().getList( key );
 	}
 	
 	public boolean getBoolean( String key )
 	{
-		return fw.getCurrentSite().getYaml().getBoolean( key );
+		return fw.getRequest().getSite().getYaml().getBoolean( key );
 	}
 	
 	public int getInt( String key )
 	{
-		return fw.getCurrentSite().getYaml().getInt( key );
+		return fw.getRequest().getSite().getYaml().getInt( key );
 	}
 	
 	public SqlConnector getDatabase()
 	{
-		return fw.getCurrentSite().sql;
+		return fw.getRequest().getSite().sql;
 	}
 }

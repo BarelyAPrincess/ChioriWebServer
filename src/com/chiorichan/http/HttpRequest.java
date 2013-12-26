@@ -15,7 +15,7 @@ import com.sun.net.httpserver.HttpExchange;
 public class HttpRequest
 {
 	private HttpExchange http;
-	private PersistentSession sess;
+	private PersistentSession sess = null;
 	private HttpResponse response;
 	private Map<String, String> queryMap;
 	
@@ -25,9 +25,12 @@ public class HttpRequest
 		
 		queryMap = queryToMap( http.getRequestURI().getQuery() );
 		
-		sess = Loader.getPersistenceManager().find( this );
-		
 		response = new HttpResponse( this );
+	}
+	
+	protected void initSession()
+	{
+		sess = Loader.getPersistenceManager().find( this );
 	}
 	
 	protected Map<String, String> queryToMap( String query )
@@ -64,7 +67,7 @@ public class HttpRequest
 	
 	public Collection<Candy> getCandies()
 	{
-		return sess.candies.values();
+		return getSession().candies.values();
 	}
 	
 	public Headers getHeaders()
@@ -74,11 +77,14 @@ public class HttpRequest
 	
 	public Framework getFramework()
 	{
-		return sess.getFramework();
+		return getSession().getFramework();
 	}
 	
 	public PersistentSession getSession()
 	{
+		if ( sess == null )
+			Loader.getLogger().severe( "The Session is NULL! This usually happens because initSession() was not called at the proper time." );
+		
 		return sess;
 	}
 	
@@ -117,7 +123,14 @@ public class HttpRequest
 	
 	public String getHeader( String key )
 	{
-		return http.getRequestHeaders().get( key ).get( 0 );
+		try
+		{
+			return http.getRequestHeaders().get( key ).get( 0 );
+		}
+		catch ( NullPointerException | IndexOutOfBoundsException e )
+		{
+			return "";
+		}
 	}
 	
 	public String getRemoteHost()
@@ -127,7 +140,8 @@ public class HttpRequest
 	
 	public String getRemoteAddr()
 	{
-		// This is a checker that makes it possible for our server to get the correct remote IP even if using it with CloudFlare.
+		// This is a checker that makes it possible for our server to get the correct remote IP even if using it with
+		// CloudFlare.
 		// https://support.cloudflare.com/hc/en-us/articles/200170786-Why-do-my-server-logs-show-CloudFlare-s-IPs-using-CloudFlare-
 		if ( http.getRequestHeaders().containsKey( "CF-Connecting-IP" ) )
 		{

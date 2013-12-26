@@ -1,12 +1,5 @@
 package com.chiorichan.util;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import com.chiorichan.Loader;
 import com.chiorichan.file.YamlConfiguration;
 

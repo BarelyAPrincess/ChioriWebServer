@@ -4,8 +4,6 @@ import java.net.ConnectException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
@@ -118,6 +116,8 @@ public class PersistenceManager
 	
 	public static void mainThreadHeartbeat( long tick )
 	{
+		// TODO: Cleanup the session database tables of unused sessions.
+		
 		synchronized ( sessionList )
 		{
 			for ( PersistentSession var1 : sessionList )

@@ -3,6 +3,8 @@ package com.chiorichan.http;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.List;
+import java.util.Map.Entry;
 
 import com.chiorichan.Loader;
 import com.chiorichan.util.Versioning;
@@ -111,13 +113,13 @@ public class HttpResponse
 		
 		Headers h = http.getResponseHeaders();
 		
+		request.getSession().saveSession();
+		
 		for ( Candy c : request.getCandies() )
 		{
 			if ( c.needsUpdating() )
 				h.add( "Set-Cookie", c.toHeaderValue() );
 		}
-		
-		request.getSession().saveSession();
 		
 		if ( h.get( "Server" ) == null )
 			h.add( "Server", Versioning.getProduct() + " Version " + Loader.getVersion() );
@@ -125,12 +127,22 @@ public class HttpResponse
 		if ( h.get( "Content-Type" ) == null )
 			h.add( "Content-Type", httpContentType );
 		
+		h.add( "Access-Control-Allow-Origin", request.getSite().getYaml().getString( "web.allowed-origin", "*" ) );
+		
+		for ( Entry<String, List<String>> e : http.getResponseHeaders().entrySet() )
+		{
+			Loader.getLogger().info( e.getKey() + ": " + e.getValue().get( 0 ) );
+		}
+		
 		http.sendResponseHeaders( httpStatus, output.size() );
 		
-		OutputStream os = http.getResponseBody();
-		os.write( output.toByteArray() );
-		output.close();
-		os.close(); // This terminates the HttpExchange and frees the resources. We should not do anything past this
-						// point.
+		if ( !http.getRequestMethod().equalsIgnoreCase( "HEAD" ) ) // Fixes an issue with requests coming from CURL with
+																						// --head argument.
+		{
+			OutputStream os = http.getResponseBody();
+			os.write( output.toByteArray() );
+			output.close();
+			os.close(); // This terminates the HttpExchange and frees the resources.
+		}
 	}
 }

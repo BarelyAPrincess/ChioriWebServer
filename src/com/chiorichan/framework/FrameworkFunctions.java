@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
-import java.util.LinkedHashMap;
 
 import javax.ws.rs.core.MediaType;
 
@@ -125,7 +124,7 @@ public class FrameworkFunctions
 		if ( seed == null )
 			seed = "";
 		
-		byte[] bytes = ArrayUtils.addAll( seed.getBytes( "ISO-8859-1" ), fw.getRequestId().getBytes( "ISO-8859-1" ) );
+		byte[] bytes = ArrayUtils.addAll( seed.getBytes( "ISO-8859-1" ), fw.getUid().getBytes( "ISO-8859-1" ) );
 		byte[] bytesScrambled = new byte[0];
 		
 		for ( byte b : bytes )

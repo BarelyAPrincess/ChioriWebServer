@@ -47,7 +47,7 @@ public class FrameworkDatabaseEngine
 	public LinkedHashMap<String, Object> select( String table, Object where, Map<String, Object> options0 ) throws SQLException
 	{
 		String subWhere = "";
-		SqlConnector sql = fw.getCurrentSite().sql;
+		SqlConnector sql = fw.getRequest().getSite().sql;
 		
 		if ( sql == null )
 			return null;
@@ -256,7 +256,7 @@ public class FrameworkDatabaseEngine
 	public boolean update( String table, Map<String, Object> data, Object where, int lmt, boolean disableInjectionCheck )
 	{
 		String subWhere = "";
-		SqlConnector sql = fw.getCurrentSite().sql;
+		SqlConnector sql = fw.getRequest().getSite().sql;
 		
 		if ( sql == null )
 			return false;
@@ -415,7 +415,7 @@ public class FrameworkDatabaseEngine
 	
 	public boolean delete( String table, String where, int limit )
 	{
-		SqlConnector sql = fw.getCurrentSite().sql;
+		SqlConnector sql = fw.getRequest().getSite().sql;
 		
 		String lmt = "";
 		if ( limit > 0 )
@@ -435,7 +435,7 @@ public class FrameworkDatabaseEngine
 	
 	public boolean insert( String table, Map<String, Object> where, boolean disableInjectionCheck )
 	{
-		SqlConnector sql = fw.getCurrentSite().sql;
+		SqlConnector sql = fw.getRequest().getSite().sql;
 		
 		String keys = "";
 		String values = "";
