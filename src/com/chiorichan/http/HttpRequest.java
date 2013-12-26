@@ -1,10 +1,12 @@
 package com.chiorichan.http;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+
+import org.apache.poi.util.IOUtils;
 
 import com.chiorichan.Loader;
 import com.chiorichan.framework.Framework;
@@ -17,13 +19,28 @@ public class HttpRequest
 	private HttpExchange http;
 	private PersistentSession sess = null;
 	private HttpResponse response;
-	private Map<String, String> queryMap;
+	private Map<String, String> getMap, postMap;
 	
 	protected HttpRequest(HttpExchange _http)
 	{
 		http = _http;
 		
-		queryMap = queryToMap( http.getRequestURI().getQuery() );
+		getMap = queryToMap( http.getRequestURI().getQuery() );
+		
+		try
+		{
+			if ( http.getRequestBody().available() > 0 )
+			{
+				byte[] queryBytes = new byte[http.getRequestBody().available()];
+				IOUtils.readFully( http.getRequestBody(), queryBytes );
+				
+				postMap = queryToMap( new String( queryBytes ) );
+			}
+		}
+		catch ( IOException e )
+		{
+			Loader.getLogger().severe( "There was a severe error reading the POST query.", e );
+		}
 		
 		response = new HttpResponse( this );
 	}
@@ -55,14 +72,30 @@ public class HttpRequest
 		return result;
 	}
 	
-	public Map<String, String> getQueryMap()
-	{
-		return queryMap;
-	}
-	
 	public String getArgument( String key )
 	{
-		return ( queryMap.containsKey( key ) ) ? queryMap.get( key ) : "";
+		return getArgument( key, "" );
+	}
+	
+	public String getArgument( String key, String def )
+	{
+		return getArgument( key, "", false );
+	}
+	
+	public String getArgument( String key, String def, boolean rtnNull )
+	{
+		String val = getMap.get( key );
+		
+		if ( val == null )
+			val = postMap.get( key );
+		
+		if ( val == null && rtnNull )
+			return null;
+		
+		if ( val == null || val.isEmpty() )
+			return def;
+		
+		return val.trim();
 	}
 	
 	public Collection<Candy> getCandies()
@@ -93,9 +126,9 @@ public class HttpRequest
 		return response;
 	}
 	
-	public URI getURI()
+	public String getURI()
 	{
-		return http.getRequestURI();
+		return http.getRequestURI().getPath();
 	}
 	
 	public String getDomain()
@@ -195,7 +228,6 @@ public class HttpRequest
 	
 	public String getParameter( String key )
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
 	
@@ -221,11 +253,40 @@ public class HttpRequest
 	
 	public void setHeader( String key, String value )
 	{
-		http.getResponseHeaders().add( key, value );
+		http.getResponseHeaders().set( key, value );
 	}
 	
 	protected HttpExchange getOriginal()
 	{
 		return http;
+	}
+	
+	public Map<String, String> getRequestMap()
+	{
+		Map<String, String> requestMap = new HashMap<String, String>();
+		
+		if ( getMap != null )
+			requestMap.putAll( getMap );
+		
+		if ( postMap != null )
+			requestMap.putAll( postMap );
+		
+		return requestMap;
+	}
+	
+	public Map<String, String> getPostMap()
+	{
+		if ( postMap == null )
+			postMap = new HashMap<String, String>();
+		
+		return postMap;
+	}
+	
+	public Map<String, String> getGetMap()
+	{
+		if ( getMap == null )
+			getMap = new HashMap<String, String>();
+		
+		return getMap;
 	}
 }

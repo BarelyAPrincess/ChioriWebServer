@@ -86,7 +86,7 @@ public class HttpResponse
 	
 	public void sendRedirect( String target )
 	{
-		request.getOriginal().getResponseHeaders().add( "Location", target );
+		request.getOriginal().getResponseHeaders().set( "Location", target );
 	}
 	
 	public void print( String var1 ) throws IOException
@@ -129,15 +129,10 @@ public class HttpResponse
 		
 		h.add( "Access-Control-Allow-Origin", request.getSite().getYaml().getString( "web.allowed-origin", "*" ) );
 		
-		for ( Entry<String, List<String>> e : http.getResponseHeaders().entrySet() )
-		{
-			Loader.getLogger().info( e.getKey() + ": " + e.getValue().get( 0 ) );
-		}
-		
 		http.sendResponseHeaders( httpStatus, output.size() );
 		
-		if ( !http.getRequestMethod().equalsIgnoreCase( "HEAD" ) ) // Fixes an issue with requests coming from CURL with
-																						// --head argument.
+		// Fixes an issue with requests coming from CURL with --head argument.
+		if ( !http.getRequestMethod().equalsIgnoreCase( "HEAD" ) )
 		{
 			OutputStream os = http.getResponseBody();
 			os.write( output.toByteArray() );

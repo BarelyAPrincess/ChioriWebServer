@@ -142,13 +142,13 @@ public class FrameworkDatabaseEngine
 		
 		if ( rs == null )
 		{
-			Loader.getLogger().warning( "Making SELECT query \"" + query + "\" which returned an error." );
+			Loader.getLogger().fine( "Making SELECT query \"" + query + "\" which returned an error." );
 			return null;
 		}
 		
 		if ( sql.getRowCount( rs ) < 1 )
 		{
-			Loader.getLogger().warning( "Making SELECT query \"" + query + "\" which returned no results." );
+			Loader.getLogger().fine( "Making SELECT query \"" + query + "\" which returned no results." );
 			return new LinkedHashMap<String, Object>();
 		}
 		
@@ -162,7 +162,7 @@ public class FrameworkDatabaseEngine
 			e.printStackTrace();
 		}
 		
-		Loader.getLogger().info( "Making SELECT query \"" + query + "\" which returned " + sql.getRowCount( rs ) + " row(s)." );
+		Loader.getLogger().fine( "Making SELECT query \"" + query + "\" which returned " + sql.getRowCount( rs ) + " row(s)." );
 		
 		return result;
 	}
@@ -341,12 +341,12 @@ public class FrameworkDatabaseEngine
 		
 		if ( result > 0 )
 		{
-			Loader.getLogger().info( "Making UPDATE query \"" + query + "\" which affected " + result + " rows." );
+			Loader.getLogger().fine( "Making UPDATE query \"" + query + "\" which affected " + result + " rows." );
 			return true;
 		}
 		else
 		{
-			Loader.getLogger().info( "Making UPDATE query \"" + query + "\" which had no affect on the database." );
+			Loader.getLogger().fine( "Making UPDATE query \"" + query + "\" which had no affect on the database." );
 			return false;
 		}
 	}
@@ -423,7 +423,7 @@ public class FrameworkDatabaseEngine
 		
 		int i = sql.queryUpdate( "DELETE FROM `" + table + "` WHERE " + where + lmt + ";" );
 		
-		Loader.getLogger().info( "Deleting from table " + table + " where " + where + " " + i );
+		Loader.getLogger().fine( "Deleting from table " + table + " where " + where + " " + i );
 		
 		return true;
 	}
@@ -482,12 +482,12 @@ public class FrameworkDatabaseEngine
 		
 		if ( result > 0 )
 		{
-			Loader.getLogger().info( "Making INSERT query \"" + query + "\" which affected " + result + " rows." );
+			Loader.getLogger().fine( "Making INSERT query \"" + query + "\" which affected " + result + " rows." );
 			return true;
 		}
 		else
 		{
-			Loader.getLogger().info( "Making INSERT query \"" + query + "\" which had no affect on the database" );
+			Loader.getLogger().fine( "Making INSERT query \"" + query + "\" which had no affect on the database" );
 			return false;
 		}
 	}

@@ -7,6 +7,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URLConnection;
 
+import org.apache.poi.util.IOUtils;
+
 import com.chiorichan.Loader;
 import com.chiorichan.event.server.RequestEvent;
 import com.chiorichan.framework.Framework;
@@ -22,7 +24,7 @@ public class WebHandler implements HttpHandler
 		{
 			HttpRequest request = new HttpRequest( t );
 			
-			String uri = request.getURI().getPath();
+			String uri = request.getURI();
 			String domain = request.getDomain();
 			String site = "";
 			

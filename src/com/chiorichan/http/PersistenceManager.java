@@ -82,7 +82,7 @@ public class PersistenceManager
 				
 				break;
 			default:
-				Loader.getLogger().severe( "The Framework Database can not be anything other then mySql or sqLite at the moment. Please change 'framework-database.type' to 'mysql' or 'sqLite' in 'chiori.yml'" );
+				Loader.getLogger().severe( "The Framework Database can not support anything other then mySql or sqLite at the moment. Please change 'framework-database.type' to 'mysql' or 'sqLite' in 'chiori.yml'" );
 				Loader.stop();
 		}
 		
@@ -124,6 +124,8 @@ public class PersistenceManager
 			{
 				if ( var1.getTimeout() > 0 && var1.getTimeout() < ( System.currentTimeMillis() / 1000 ) )
 				{
+					Loader.getLogger().info( "&4Unloaded expired session: " + var1.getId() );
+					
 					sessionList.remove( var1 ); // This should allow this session to get picked up by the Java Garbage
 															// Collector once it's released by other classes.
 				}

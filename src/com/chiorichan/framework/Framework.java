@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
@@ -51,7 +50,6 @@ public class Framework
 	
 	protected Map<String, String> rewriteVars = new HashMap<String, String>();
 	protected Map<ServerVars, Object> serverVars = new HashMap<ServerVars, Object>();
-	protected Map<String, String> argumentVars = new TreeMap<String, String>();
 	
 	public Evaling eval;
 	
@@ -68,8 +66,6 @@ public class Framework
 		response = _response;
 		
 		uid = request.getSession().getId();
-		
-		argumentVars = _request.getQueryMap();
 		
 		env = new Enviro( this );
 		loadVars();
@@ -330,9 +326,9 @@ public class Framework
 			}
 			
 			env.set( "_SERVER", $server );
-			
-			env.set( "_REQUEST", argumentVars );
-			
+			env.set( "_REQUEST", request.getRequestMap() );
+			env.set( "_POST", request.getPostMap() );
+			env.set( "_GET", request.getGetMap() );
 			env.set( "_REWRITE", rewriteVars );
 			
 			if ( getUserService().initalize( reqPerm ) )
@@ -836,11 +832,6 @@ public class Framework
 	public Map<ServerVars, Object> getServerVars()
 	{
 		return serverVars;
-	}
-	
-	public Map<String, String> getArguments()
-	{
-		return argumentVars;
 	}
 	
 	public PersistentSession getSession()

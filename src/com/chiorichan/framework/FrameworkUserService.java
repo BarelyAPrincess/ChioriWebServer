@@ -8,8 +8,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.mail.Session;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -53,20 +51,21 @@ public class FrameworkUserService
 		if ( fw.getRequest().getSite().getUserList() == null )
 			return true;
 		
-		String username = fw.getServer().getRequest( "user" );
-		String password = fw.getServer().getRequest( "pass" );
-		String target = fw.getServer().getRequest( "target" );
+		String username = fw.getRequest().getArgument( "user" );
+		String password = fw.getRequest().getArgument( "pass" );
+		String target = fw.getRequest().getArgument( "target" );
 		
-		if ( fw.getServer().getRequest( "logout", "", true ) != null )
+		if ( fw.getRequest().getArgument( "logout", "", true ) != null )
 		{
 			logout();
 			
 			if ( target.isEmpty() )
-			{
 				target = fw.getRequest().getSite().getYaml().getString( "scripts.login-form", "/login" );
-			}
 			
-			fw.getServer().dummyRedirect( target );
+			Loader.getLogger().debug( target );
+			
+			fw.getServer().dummyRedirect( target + "?ok=You have been successfully logged out. Please come again!" );
+			return false;
 		}
 		
 		if ( !username.isEmpty() && !password.isEmpty() )
