@@ -27,7 +27,7 @@ public class FrameworkServer
 	
 	public void sendRedirect( String target )
 	{
-		sendRedirect( target, 307, true );
+		sendRedirect( target, 302, true );
 	}
 	
 	public void sendRedirect( String target, int httpStatus )
@@ -264,11 +264,13 @@ public class FrameworkServer
 	
 	public void dummyRedirect( String string )
 	{
-		dummyRedirect( string, 307 );
+		dummyRedirect( string, 302 );
 	}
 	
 	public void dummyRedirect( String var1, int reasonCode )
 	{
+		Loader.getLogger().info( "The server is sending a page redirect (" + reasonCode + "): " + var1 );
+		
 		if ( !fw.getResponse().isCommitted() )
 		{
 			fw.getResponse().setStatus( reasonCode );
@@ -286,30 +288,22 @@ public class FrameworkServer
 		}
 	}
 	
+	@Deprecated
 	public String getRequest( String key )
 	{
 		return getRequest( key, "" );
 	}
 	
+	@Deprecated
 	public String getRequest( String key, String def )
 	{
 		return getRequest( key, "", false );
 	}
 	
-	/*
-	 * boolean rtnNull - Return null if not set.
-	 */
+	@Deprecated
 	public String getRequest( String key, String def, boolean rtnNull )
 	{
-		String val = fw.getArguments().get( key );
-		
-		if ( val == null && rtnNull )
-			return null;
-		
-		if ( val == null || val.isEmpty() )
-			return def;
-		
-		return val.trim();
+		return fw.getRequest().getArgument( key, def, rtnNull );
 	}
 	
 	public String getServerVar( String key )
