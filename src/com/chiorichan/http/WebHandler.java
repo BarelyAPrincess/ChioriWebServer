@@ -89,10 +89,14 @@ public class WebHandler implements HttpHandler
 				
 				if ( uri.endsWith( ".groovy" ) || uri.endsWith( ".chi" ) || ( dest.isDirectory() && new File( dest, "index.groovy" ).exists() ) || ( dest.isDirectory() && new File( dest, "index.chi" ).exists() ) )
 				{
+					Loader.getLogger().info( "Requesting uri (" + currentSite.siteId + ") '" + uri + "'" );
+					
 					fw.loadPageInternal( "", "", "", uri, "", "-1" );
 				}
 				else
 				{
+					Loader.getLogger().info( "Requesting uri (" + currentSite.siteId + ") '" + uri + " from " + dest.getAbsolutePath() + "'" );
+					
 					if ( dest.isDirectory() )
 					{
 						if ( new File( dest, "index.html" ).exists() )
@@ -106,6 +110,9 @@ public class WebHandler implements HttpHandler
 						else if ( Loader.getConfig().getBoolean( "server.allowDirectoryListing" ) )
 						{
 							// TODO: Implement Directory Listings
+							
+							response.sendError( 403, "Sorry, Directory Listing has not been implemented on this Server!" );
+							return;
 						}
 						else
 						{
@@ -113,49 +120,46 @@ public class WebHandler implements HttpHandler
 							return;
 						}
 					}
-					else
+					
+					dest = new File( siteRoot, uri );
+					
+					String target = dest.getAbsolutePath();
+					
+					FileInputStream is;
+					try
 					{
-						dest = new File( siteRoot, uri );
+						is = new FileInputStream( target );
+					}
+					catch ( FileNotFoundException e )
+					{
+						response.sendError( 404 );
+						return;
+					}
+					
+					Loader.getLogger().fine( "Detected file to be of " + ContentTypes.getContentType( dest ) + " type." );
+					response.setContentType( ContentTypes.getContentType( dest ) );
+					
+					try
+					{
+						ByteArrayOutputStream buffer = response.getOutput();
 						
-						String target = dest.getAbsolutePath();
-						Loader.getLogger().info( "Requesting file (" + currentSite.siteId + ") '" + target + "'" );
+						int nRead;
+						byte[] data = new byte[16384];
 						
-						FileInputStream is;
-						try
+						while ( ( nRead = is.read( data, 0, data.length ) ) != -1 )
 						{
-							is = new FileInputStream( target );
-						}
-						catch ( FileNotFoundException e )
-						{
-							response.sendError( 404 );
-							return;
+							buffer.write( data, 0, nRead );
 						}
 						
-						Loader.getLogger().fine( "Detected file to be of " + ContentTypes.getContentType( dest ) + " type." );
-						response.setContentType( ContentTypes.getContentType( dest ) );
+						buffer.flush();
 						
-						try
-						{
-							ByteArrayOutputStream buffer = response.getOutput();
-							
-							int nRead;
-							byte[] data = new byte[16384];
-							
-							while ( ( nRead = is.read( data, 0, data.length ) ) != -1 )
-							{
-								buffer.write( data, 0, nRead );
-							}
-							
-							buffer.flush();
-							
-							is.close();
-						}
-						catch ( IOException e )
-						{
-							e.printStackTrace();
-							response.sendError( 500, e.getMessage() );
-							return;
-						}
+						is.close();
+					}
+					catch ( IOException e )
+					{
+						e.printStackTrace();
+						response.sendError( 500, e.getMessage() );
+						return;
 					}
 				}
 			}

@@ -19,7 +19,7 @@ public class ContentTypes
 	static
 	{
 		types.put( "css", "text/css" );
-		types.put( "htm", "text/htm" );
+		types.put( "htm", "text/html" );
 		types.put( "html", "text/html" );
 		types.put( "gif", "image/gif" );
 		types.put( "jpeg", "image/jpeg" );

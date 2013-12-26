@@ -9,6 +9,7 @@ import java.util.Map;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
+import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.framework.Framework;
@@ -17,8 +18,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
 /**
- * This class is used to carry data that is to be persistent from request to request.
- * If you need to sync data across requests then we recommend using Session Vars for Security. 
+ * This class is used to carry data that is to be persistent from request to request. If you need to sync data across
+ * requests then we recommend using Session Vars for Security.
  * 
  * @author Chiori Greene
  * @copyright Greenetree LLC
@@ -45,6 +46,11 @@ public class PersistentSession
 	{
 		if ( framework == null )
 			framework = new Framework( request, request.getResponse() );
+		else
+		{
+			framework.setRequest( request );
+			framework.setResponse( request.getResponse() );
+		}
 		
 		return framework;
 	}
@@ -159,7 +165,7 @@ public class PersistentSession
 	public boolean matchClient( HttpRequest request )
 	{
 		Map<String, Candy> requestCandys = pullCandies( request );
-		return ( requestCandys.containsKey( candyName ) && requestCandys.get( candyName ).equals( getCandy( candyName ) ) );
+		return ( requestCandys.containsKey( candyName ) && getCandy( candyName ).compareTo( requestCandys.get( candyName ) ) );
 	}
 	
 	/**
@@ -267,8 +273,8 @@ public class PersistentSession
 	}
 	
 	/**
-	 * This method is only to be used to make this session unremovable from memory by the session garbage collector.
-	 * Be sure that you rearm the timeout at some point to prevent build ups in memory.
+	 * This method is only to be used to make this session unremovable from memory by the session garbage collector. Be
+	 * sure that you rearm the timeout at some point to prevent build ups in memory.
 	 */
 	public void infiniTimeout()
 	{

@@ -24,7 +24,6 @@ public class PersistenceManager
 	protected SiteManager _sites = new SiteManager( sql );
 	
 	static protected List<PersistentSession> sessionList = new ArrayList<PersistentSession>();
-	private static Timer timer1 = new Timer();
 	
 	public PersistenceManager()
 	{
@@ -73,7 +72,7 @@ public class PersistenceManager
 				}
 				catch ( SQLException e )
 				{
-					//e.printStackTrace();
+					// e.printStackTrace();
 					
 					if ( e.getCause() instanceof ConnectException )
 						Loader.getLogger().severe( "We had a problem connecting to database '" + host + "'. Reason: " + e.getCause().getMessage() );
@@ -96,19 +95,22 @@ public class PersistenceManager
 	{
 		PersistentSession sess = null;
 		
-		for ( PersistentSession s : sessionList )
+		synchronized ( sessionList )
 		{
-			if ( s.matchClient( request ) )
+			for ( PersistentSession s : sessionList )
 			{
-				sess = s;
-				sess.setRequest( request, true );
+				if ( s.matchClient( request ) )
+				{
+					sess = s;
+					sess.setRequest( request, true );
+				}
 			}
-		}
-		
-		if ( sess == null )
-		{
-			sess = new PersistentSession( request );
-			sessionList.add( sess );
+			
+			if ( sess == null )
+			{
+				sess = new PersistentSession( request );
+				sessionList.add( sess );
+			}
 		}
 		
 		return sess;
@@ -116,13 +118,17 @@ public class PersistenceManager
 	
 	public static void mainThreadHeartbeat( long tick )
 	{
-		for ( PersistentSession var1 : sessionList )
+		synchronized ( sessionList )
+		{
+			for ( PersistentSession var1 : sessionList )
+			{
+				if ( var1.getTimeout() > 0 && var1.getTimeout() < ( System.currentTimeMillis() / 1000 ) )
 				{
-					if ( var1.getTimeout() > 0 && var1.getTimeout() < ( System.currentTimeMillis() / 1000 ) )
-					{	
-						sessionList.remove( var1 ); // This should allow this session to get picked up by the Java Garbage Collector once it's released by other classes.
-					}
+					sessionList.remove( var1 ); // This should allow this session to get picked up by the Java Garbage
+															// Collector once it's released by other classes.
 				}
+			}
+		}
 	}
 	
 	public SiteManager getSiteManager()

@@ -381,10 +381,6 @@ public class Framework
 			e.printStackTrace();
 			response.getOutput().write( errorPage( e ).getBytes() );
 		}
-		finally
-		{
-			getUserService().saveSession();
-		}
 	}
 	
 	public String getRequestVar( String key )
@@ -858,5 +854,15 @@ public class Framework
 	public void setSite( Site site )
 	{
 		currentSite = site;
+	}
+
+	public void setRequest( HttpRequest var1 )
+	{
+		request = var1;
+	}
+
+	public void setResponse( HttpResponse var1 )
+	{
+		response = var1;
 	}
 }

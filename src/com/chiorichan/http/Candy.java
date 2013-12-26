@@ -18,6 +18,31 @@ public class Candy
 		epoch = System.currentTimeMillis();
 	}
 	
+	public boolean compareTo( Candy var1 )
+	{
+		return compareTo( var1, false );
+	}
+	
+	public boolean compareTo( Candy var1, boolean compareKey )
+	{
+		if ( var1 == null )
+			return false;
+		
+		if ( var1.getValue().equals( getValue() ) )
+		{
+			if ( compareKey )
+			{
+				return var1.getKey().equals( getKey() );
+			}
+			else
+			{
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
 	public String getValue()
 	{
 		return value;
