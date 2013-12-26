@@ -240,4 +240,10 @@ public class ConsoleLogManager
 		
 		return var1;
 	}
+	
+	public void debug( String... var1 )
+	{
+		for ( String var2 : var1 )
+			info( ChatColor.NEGATIVE + "" + ChatColor.YELLOW + " >>>>   " + var1 + "   <<<< " );
+	}
 }

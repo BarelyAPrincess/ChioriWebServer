@@ -113,7 +113,7 @@ public class ConsoleLogFormatter extends Formatter
 		StringBuilder builder = new StringBuilder();
 		Throwable ex = record.getThrown();
 		
-		builder.append( ChatColor.GRAY + "" + ChatColor.FAINT );
+		builder.append( ChatColor.RESET + "" + ChatColor.GRAY );
 		builder.append( date.format( record.getMillis() ) );
 		
 		if ( debugMode )
@@ -135,7 +135,7 @@ public class ConsoleLogFormatter extends Formatter
 		builder.append( " [" );
 		builder.append( getLevelColor( record.getLevel() ) );
 		builder.append( record.getLevel().getLocalizedName().toUpperCase() );
-		builder.append( ChatColor.GRAY + "" + ChatColor.FAINT );
+		builder.append( ChatColor.GRAY );
 		builder.append( "] " );
 		builder.append( ChatColor.WHITE );
 		builder.append( formatMessage( record ) );
