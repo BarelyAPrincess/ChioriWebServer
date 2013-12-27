@@ -76,17 +76,17 @@ public class Framework
 		try
 		{
 			// serverVars.put( ServerVars.PHP_SELF, requestFile.getPath() );
-			serverVars.put( ServerVars.DOCUMENT_ROOT, Loader.getConfig().getString( "settings.webroot", "webroot" ) );
+			serverVars.put( ServerVars.DOCUMENT_ROOT, Loader.getConfig().getString( "settings.webroot", "webroot" ) + request.getSite().getWebRoot( null ) );
 			serverVars.put( ServerVars.HTTP_ACCEPT, request.getHeader( "Accept" ) );
-			serverVars.put( ServerVars.HTTP_USER_AGENT, request.getHeader( "User-Agent" ) );
+			serverVars.put( ServerVars.HTTP_USER_AGENT, request.getUserAgent() );
 			serverVars.put( ServerVars.HTTP_CONNECTION, request.getHeader( "Connection" ) );
-			serverVars.put( ServerVars.HTTP_HOST, request.getHeader( "Host" ) );
+			serverVars.put( ServerVars.HTTP_HOST, request.getLocalHost() );
 			serverVars.put( ServerVars.HTTP_ACCEPT_ENCODING, request.getHeader( "Accept-Encoding" ) );
 			serverVars.put( ServerVars.HTTP_ACCEPT_LANGUAGE, request.getHeader( "Accept-Language" ) );
 			serverVars.put( ServerVars.REMOTE_HOST, request.getRemoteHost() );
 			serverVars.put( ServerVars.REMOTE_ADDR, request.getRemoteAddr() );
 			serverVars.put( ServerVars.REMOTE_PORT, request.getRemotePort() );
-			serverVars.put( ServerVars.REQUEST_TIME, Loader.getEpoch() );
+			serverVars.put( ServerVars.REQUEST_TIME, request.getRequestTime() );
 			serverVars.put( ServerVars.REQUEST_URI, request.getURI() );
 			serverVars.put( ServerVars.CONTENT_LENGTH, request.getContentLength() );
 			serverVars.put( ServerVars.AUTH_TYPE, request.getAuthType() );
@@ -95,9 +95,8 @@ public class Framework
 			serverVars.put( ServerVars.HTTPS, request.isSecure() );
 			serverVars.put( ServerVars.SESSION, request.getSession() );
 			serverVars.put( ServerVars.SERVER_SOFTWARE, Versioning.getProduct() );
-			serverVars.put( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "webmaster@" + request.getServerName() ) );
-			serverVars.put( ServerVars.SERVER_ID, Loader.getConfig().getString( "server.id", "applebloom" ) );
-			serverVars.put( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Loader.getVersion() );
+			serverVars.put( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "webmaster@" + request.getDomain() ) );
+			serverVars.put( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Versioning.getVersion() );
 		}
 		catch ( Exception e )
 		{
@@ -340,6 +339,9 @@ public class Framework
 					eval.evalFile( requestFile );
 			}
 			
+			String source = eval.reset();
+			
+			/*
 			String source;
 			if ( continueNormally )
 			{
@@ -356,6 +358,7 @@ public class Framework
 				theme = "com.chiorichan.themes.error";
 				view = "";
 			}
+			*/
 			
 			RenderEvent event = new RenderEvent( this, source );
 			
@@ -816,6 +819,8 @@ public class Framework
 	
 	public void generateError( int errNo, String reason )
 	{
+		Loader.getLogger().warning( "Generating Error (" + errNo + "): " + reason );
+		
 		continueNormally = false;
 		
 		StringBuilder op = new StringBuilder();

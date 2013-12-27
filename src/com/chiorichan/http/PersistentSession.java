@@ -26,8 +26,8 @@ import com.google.gson.JsonSyntaxException;
 public class PersistentSession
 {
 	protected Map<String, String> data = new LinkedHashMap<String, String>();
-	protected long expires = 0, defaultLife = 86400000; // 1 Day!
-	protected long timeout = 0, requestCnt = 0, defaultTimeout = 10000; // 10 minutes
+	protected int expires = 0, defaultLife = 86400000; // 1 Day!
+	protected int timeout = 0, requestCnt = 0, defaultTimeout = 10000; // 10 minutes
 	protected String candyId = "", candyName = "candyId";
 	protected Candy sessionCandy;
 	
@@ -132,7 +132,7 @@ public class PersistentSession
 			data.put( "ipAddr", request.getRemoteAddr() );
 			String dataJson = new Gson().toJson( data );
 			
-			expires = (int) ( System.currentTimeMillis() / 1000 ) + defaultLife;
+			expires = Loader.getEpoch() + defaultLife;
 			
 			sql.queryUpdate( "INSERT INTO `sessions` (`sessid`, `expires`, `data`)VALUES('" + candyId + "', '" + expires + "', '" + dataJson + "');" );
 		}
@@ -257,16 +257,16 @@ public class PersistentSession
 	
 	public void rearmTimeout()
 	{
-		// TODO: Extend timeout even longer if a user is active.
+		// TODO: Extend timeout even longer if a user is logged in.
 		
 		// Grant the timeout an additional 2 minutes per request
 		if ( requestCnt < 6 )
 			requestCnt++;
 		
-		timeout = ( System.currentTimeMillis() / 1000 ) + defaultTimeout + ( requestCnt * 120000 );
+		timeout = Loader.getEpoch() + defaultTimeout + ( requestCnt * 120000 );
 	}
 	
-	public long getTimeout()
+	public int getTimeout()
 	{
 		return timeout;
 	}
@@ -280,5 +280,5 @@ public class PersistentSession
 		timeout = 0;
 	}
 	
-	// TODO: Future add of setDomain, setCookieName
+	// TODO: Future add of setDomain, setCookieName, setSecure (http verses https)
 }

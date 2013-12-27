@@ -3,10 +3,12 @@ package com.chiorichan.http;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import com.chiorichan.Loader;
+
 public class Candy
 {
 	private String key, value, path = "/", domain = "";
-	private long epoch = 0;
+	private int epoch = 0;
 	
 	/*
 	 * Tells the response writer if it needs to set this candy in the response headers.
@@ -58,7 +60,7 @@ public class Candy
 	 * Sets an explicit expiration time using an epoch.
 	 * @param _epoch
 	 */
-	public void setExpiration( long _epoch )
+	public void setExpiration( int _epoch )
 	{
 		needsUpdating = true;
 		epoch = _epoch;
@@ -68,10 +70,10 @@ public class Candy
 	 * Sets an explicit expiration time using the current epoch + timeSpecified
 	 * @param defaultLife
 	 */
-	public void setMaxAge( long defaultLife )
+	public void setMaxAge( int defaultLife )
 	{
 		needsUpdating = true;
-		epoch = (System.currentTimeMillis() / 1000) + defaultLife;
+		epoch = Loader.getEpoch() + defaultLife;
 	}
 	
 	public void setDomain( String _domain )

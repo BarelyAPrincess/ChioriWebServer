@@ -37,7 +37,7 @@ public class Evaling
 	
 	public String flush() throws UnsupportedEncodingException
 	{
-		return new String( bs.toByteArray(), "UTF-8" );
+		return new String( bs.toByteArray() );
 	}
 	
 	public String reset() throws UnsupportedEncodingException
@@ -48,6 +48,11 @@ public class Evaling
 		// System.out.println( "Output Flush: " + bsOut.length() );
 		
 		return bsOut;
+	}
+	
+	public byte[] flushToBytes()
+	{
+		return bs.toByteArray();
 	}
 	
 	public void evalFile( String absolutePath ) throws IOException, CodeParsingException

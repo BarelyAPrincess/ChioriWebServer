@@ -20,10 +20,13 @@ public class HttpRequest
 	private PersistentSession sess = null;
 	private HttpResponse response;
 	private Map<String, String> getMap, postMap;
+	private int requestTime = 0;
 	
 	protected HttpRequest(HttpExchange _http)
 	{
 		http = _http;
+		
+		requestTime = Loader.getEpoch();
 		
 		getMap = queryToMap( http.getRequestURI().getQuery() );
 		
@@ -195,6 +198,7 @@ public class HttpRequest
 	{
 		try
 		{
+			http.getRequestBody().reset();
 			return http.getRequestBody().available();
 		}
 		catch ( IOException e )
@@ -288,5 +292,20 @@ public class HttpRequest
 			getMap = new HashMap<String, String>();
 		
 		return getMap;
+	}
+
+	public int getRequestTime()
+	{
+		return requestTime;
+	}
+
+	public String getLocalHost()
+	{
+		return getHeader( "Host" );
+	}
+
+	public String getUserAgent()
+	{
+		return getHeader( "User-Agent" );
 	}
 }
