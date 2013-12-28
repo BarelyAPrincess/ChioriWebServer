@@ -29,7 +29,6 @@ import com.chiorichan.permissions.Permission;
 import com.chiorichan.permissions.PermissionAttachment;
 import com.chiorichan.permissions.PermissionAttachmentInfo;
 import com.chiorichan.plugin.Plugin;
-import com.chiorichan.util.ServerShutdownThread;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Strings;
 

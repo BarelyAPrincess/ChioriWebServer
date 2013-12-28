@@ -9,6 +9,7 @@ import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.framework.SiteManager;
+import com.chiorichan.util.Common;
 
 /**
  * Persistence manager handles sessions kept in memory. It also manages when to unload the session to free memeory.
@@ -122,7 +123,7 @@ public class PersistenceManager
 		{
 			for ( PersistentSession var1 : sessionList )
 			{
-				if ( var1.getTimeout() > 0 && var1.getTimeout() < Loader.getEpoch() )
+				if ( var1.getTimeout() > 0 && var1.getTimeout() < Common.getEpoch() )
 				{
 					Loader.getLogger().info( "&4Unloaded expired session: " + var1.getId() );
 					

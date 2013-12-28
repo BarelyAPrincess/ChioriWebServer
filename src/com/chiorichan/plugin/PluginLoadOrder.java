@@ -6,7 +6,13 @@ package com.chiorichan.plugin;
 public enum PluginLoadOrder
 {
 	/**
+	 * Indicates the the server has just begun loading procedures
+	 * NOT A RECOMMENDED PLUGIN LOAD ORDER
+	 */
+	INITIALIZATION,
+	/**
 	 * Indicates that the plugin will be loaded at startup
+	 * It is recommended to register your plugin tcp packets at this point.
 	 */
 	STARTUP,
 	/**
@@ -14,7 +20,12 @@ public enum PluginLoadOrder
 	 */
 	POSTSERVER,
 	/**
-	 * Inidicates that the plugin will be loaded after the framework was initalized
+	 * Indicates that the plugin will be loaded after the framework was initialized
 	 */
-	POSTFRAMEWORK
+	POSTFRAMEWORK,
+	/**
+	 * Indicates that the server has completed all required startup procedures.
+	 * NOT A RECOMMENDED PLUGIN LOAD ORDER
+	 */
+	RUNNING
 }

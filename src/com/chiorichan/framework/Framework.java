@@ -208,7 +208,8 @@ public class Framework
 				
 				if ( candy.size() > 0 )
 				{
-					HashMap<String, Object> data = (HashMap) candy.values().toArray()[0];
+					@SuppressWarnings( "unchecked" )
+					HashMap<String, Object> data = (HashMap<String, Object>) candy.values().toArray()[0];
 					
 					Loader.getLogger().info( "Rewriting page request to " + data );
 					

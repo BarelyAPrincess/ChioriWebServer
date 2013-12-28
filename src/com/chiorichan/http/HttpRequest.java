@@ -4,13 +4,13 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.apache.poi.util.IOUtils;
 
 import com.chiorichan.Loader;
 import com.chiorichan.framework.Framework;
 import com.chiorichan.framework.Site;
+import com.chiorichan.util.Common;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
@@ -26,7 +26,7 @@ public class HttpRequest
 	{
 		http = _http;
 		
-		requestTime = Loader.getEpoch();
+		requestTime = Common.getEpoch();
 		
 		getMap = queryToMap( http.getRequestURI().getQuery() );
 		

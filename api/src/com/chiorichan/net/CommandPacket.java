@@ -1,6 +1,4 @@
-package com.chiorichan.net.Packet;
-
-import com.esotericsoftware.kryonet.Connection;
+package com.chiorichan.net;
 
 public class CommandPacket extends Packet
 {
@@ -23,11 +21,5 @@ public class CommandPacket extends Packet
 	public String getKeyword()
 	{
 		return key;
-	}
-
-	@Override
-	public void received( Connection var1 )
-	{
-		
 	}
 }

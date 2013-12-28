@@ -18,6 +18,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -46,8 +47,7 @@ import com.chiorichan.conversations.Conversable;
 import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.http.PersistenceManager;
 import com.chiorichan.http.WebHandler;
-import com.chiorichan.net.Packet.CommandPacket;
-import com.chiorichan.net.Packet.PacketManager;
+import com.chiorichan.net.PacketListener;
 import com.chiorichan.permissions.Permissible;
 import com.chiorichan.permissions.Permission;
 import com.chiorichan.plugin.Plugin;
@@ -71,8 +71,8 @@ import com.chiorichan.user.UserList;
 import com.chiorichan.util.FileUtil;
 import com.chiorichan.util.Versioning;
 import com.chiorichan.util.permissions.DefaultPermissions;
+import com.esotericsoftware.kryonet.Listener.ThreadedListener;
 import com.esotericsoftware.kryonet.Server;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.sun.net.httpserver.HttpServer;
 
@@ -102,9 +102,9 @@ public class Loader implements PluginMessageRecipient
 	private static HttpServer httpServer;
 	private static Server tcpServer;
 	public Boolean isRunning = false;
-	private int port = 8080;
+	private PluginLoadOrder currentState = PluginLoadOrder.INITIALIZATION;
 	
-	public java.util.Queue<Runnable> processQueue = new java.util.concurrent.ConcurrentLinkedQueue<Runnable>();
+	// public java.util.Queue<Runnable> processQueue = new java.util.concurrent.ConcurrentLinkedQueue<Runnable>();
 	
 	static
 	{
@@ -237,6 +237,9 @@ public class Loader implements PluginMessageRecipient
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
 		webroot = configuration.getString( "settings.webroot" );
 		
+		loadPlugins();
+		enablePlugins( PluginLoadOrder.INITIALIZATION );
+		
 		updater = new AutoUpdater( new ChioriDLUpdaterService( configuration.getString( "auto-updater.host" ) ), getLogger().getLogger(), configuration.getString( "auto-updater.preferred-channel" ) );
 		updater.setEnabled( configuration.getBoolean( "auto-updater.enabled" ) );
 		updater.setSuggestChannels( configuration.getBoolean( "auto-updater.suggest-channels" ) );
@@ -249,7 +252,6 @@ public class Loader implements PluginMessageRecipient
 		if ( !root.exists() )
 			root.mkdirs();
 		
-		loadPlugins();
 		enablePlugins( PluginLoadOrder.STARTUP );
 		
 		if ( !options.has( "tcp-disable" ) && configuration.getBoolean( "server.enableTcpServer", true ) )
@@ -271,6 +273,8 @@ public class Loader implements PluginMessageRecipient
 		console.primaryThread.start();
 		
 		getLogger().info( ChatColor.DARK_AQUA + "" + ChatColor.NEGATIVE + "Done (" + ( System.currentTimeMillis() - startTime ) + "ms)! For help, type \"help\" or \"?\"" );
+		
+		enablePlugins( PluginLoadOrder.RUNNING );
 	}
 	
 	private static void showBanner()
@@ -291,7 +295,7 @@ public class Loader implements PluginMessageRecipient
 		catch ( Exception e )
 		{}
 	}
-
+	
 	private boolean initTcpServer()
 	{
 		try
@@ -316,9 +320,7 @@ public class Loader implements PluginMessageRecipient
 			tcpServer.start();
 			tcpServer.bind( socket, null );
 			
-			tcpServer.addListener( new PacketManager() );
-			
-			PacketManager.registerPacket( CommandPacket.class );
+			tcpServer.addListener( new ThreadedListener( new PacketListener( tcpServer.getKryo() ), Executors.newFixedThreadPool( 3 ) ) );
 		}
 		catch ( IOException ioexception )
 		{
@@ -417,6 +419,8 @@ public class Loader implements PluginMessageRecipient
 	
 	public void enablePlugins( PluginLoadOrder type )
 	{
+		currentState = type;
+		
 		Plugin[] plugins = pluginManager.getPlugins();
 		
 		for ( Plugin plugin : plugins )
@@ -1143,11 +1147,6 @@ public class Loader implements PluginMessageRecipient
 		return userList;
 	}
 	
-	public static int getEpoch()
-	{
-		return (int) ( System.currentTimeMillis() / 1000 );
-	}
-	
 	public static PersistenceManager getPersistenceManager()
 	{
 		return getInstance().persistence;
@@ -1156,5 +1155,10 @@ public class Loader implements PluginMessageRecipient
 	public boolean getWarnOnOverload()
 	{
 		return this.configuration.getBoolean( "settings.warn-on-overload" );
+	}
+	
+	public PluginLoadOrder getCurrentLoadState()
+	{
+		return currentState;
 	}
 }

@@ -8,7 +8,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.jboss.logging.Logger;
 import org.json.JSONException;
 
 import com.chiorichan.Loader;
@@ -20,6 +19,7 @@ import com.chiorichan.permissions.Permission;
 import com.chiorichan.permissions.PermissionAttachment;
 import com.chiorichan.permissions.PermissionAttachmentInfo;
 import com.chiorichan.plugin.Plugin;
+import com.chiorichan.util.Common;
 import com.chiorichan.util.ObjectUtil;
 
 public class User implements CommandSender
@@ -27,7 +27,8 @@ public class User implements CommandSender
 	public Loader server;
 	public boolean valid = false;
 	public String userId = "", displayLevel = "", displayName = "",
-			userLevel = "", password = "", lastMsg = "", username = "", email = "";
+			userLevel = "", password = "", lastMsg = "", username = "",
+			email = "";
 	
 	private LinkedHashMap<String, String> sqlMap = new LinkedHashMap<String, String>();
 	
@@ -125,7 +126,7 @@ public class User implements CommandSender
 			
 			if ( rs.getInt( "numloginfail" ) > 5 )
 			{
-				if ( rs.getInt( "lastloginfail" ) > ( Loader.getEpoch() - 1800 ) )
+				if ( rs.getInt( "lastloginfail" ) > ( Common.getEpoch() - 1800 ) )
 				{
 					invalidate( "underAttackPleaseWait" );
 					return;
@@ -159,10 +160,10 @@ public class User implements CommandSender
 			sqlMap.put( "displayname", displayName );
 			sqlMap.put( "displaylevel", displayLevel );
 			
-			sql.queryUpdate( "UPDATE `users` SET `lastactive` = '" + Loader.getEpoch() + "' WHERE `userID` = '" + getUserId() + "'" );
+			sql.queryUpdate( "UPDATE `users` SET `lastactive` = '" + Common.getEpoch() + "' WHERE `userID` = '" + getUserId() + "'" );
 		}
 		catch ( Throwable t )
-		{	
+		{
 			t.printStackTrace();
 			invalidate( "unknownError" );
 		}
@@ -307,12 +308,12 @@ public class User implements CommandSender
 	{
 		return "User{user=" + username + ",pass=" + password + ",userId=" + userId + ",level=" + userLevel + ",valid=" + valid + ",lastMsg=" + lastMsg + "}";
 	}
-
+	
 	public String getEmail()
 	{
 		return email;
 	}
-
+	
 	public String getString( String key )
 	{
 		return getString( key, "" );
@@ -325,21 +326,21 @@ public class User implements CommandSender
 		
 		return sqlMap.get( key );
 	}
-
+	
 	@Override
 	public boolean isPermissionSet( String name )
 	{
 		// TODO Auto-generated method stub
 		return false;
 	}
-
+	
 	@Override
 	public boolean isPermissionSet( Permission perm )
 	{
 		// TODO Auto-generated method stub
 		return false;
 	}
-
+	
 	@Override
 	public boolean hasPermission( Permission perm )
 	{
@@ -347,42 +348,42 @@ public class User implements CommandSender
 		
 		return true;
 	}
-
+	
 	@Override
 	public PermissionAttachment addAttachment( Plugin plugin, String name, boolean value )
 	{
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
 	@Override
 	public PermissionAttachment addAttachment( Plugin plugin )
 	{
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
 	@Override
 	public PermissionAttachment addAttachment( Plugin plugin, String name, boolean value, int ticks )
 	{
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
 	@Override
 	public PermissionAttachment addAttachment( Plugin plugin, int ticks )
 	{
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
 	@Override
 	public void removeAttachment( PermissionAttachment attachment )
 	{
 		// TODO Auto-generated method stub
 		
 	}
-
+	
 	@Override
 	public void sendMessage( String[] messages )
 	{

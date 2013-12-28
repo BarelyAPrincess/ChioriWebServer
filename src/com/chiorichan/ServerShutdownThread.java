@@ -1,6 +1,5 @@
-package com.chiorichan.util;
+package com.chiorichan;
 
-import com.chiorichan.Loader;
 
 public class ServerShutdownThread extends Thread
 {

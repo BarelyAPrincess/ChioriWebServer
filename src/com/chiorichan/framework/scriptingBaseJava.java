@@ -3,16 +3,13 @@ package com.chiorichan.framework;
 import groovy.lang.Script;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import com.chiorichan.Loader;
+import com.chiorichan.util.Common;
 import com.chiorichan.util.StringUtil;
 
 abstract public class scriptingBaseJava extends Script
@@ -93,7 +90,7 @@ abstract public class scriptingBaseJava extends Script
 		}
 		
 		if ( format.equals( "U" ) )
-			return Loader.getEpoch() + "";
+			return Common.getEpoch() + "";
 		
 		if ( format == null || format.isEmpty() )
 			format = "MMM d YYYY";

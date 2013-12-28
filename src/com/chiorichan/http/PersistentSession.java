@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletRequest;
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.framework.Framework;
+import com.chiorichan.util.Common;
 import com.chiorichan.util.StringUtil;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -132,7 +133,7 @@ public class PersistentSession
 			data.put( "ipAddr", request.getRemoteAddr() );
 			String dataJson = new Gson().toJson( data );
 			
-			expires = Loader.getEpoch() + defaultLife;
+			expires = Common.getEpoch() + defaultLife;
 			
 			sql.queryUpdate( "INSERT INTO `sessions` (`sessid`, `expires`, `data`)VALUES('" + candyId + "', '" + expires + "', '" + dataJson + "');" );
 		}
@@ -263,7 +264,7 @@ public class PersistentSession
 		if ( requestCnt < 6 )
 			requestCnt++;
 		
-		timeout = Loader.getEpoch() + defaultTimeout + ( requestCnt * 120000 );
+		timeout = Common.getEpoch() + defaultTimeout + ( requestCnt * 120000 );
 	}
 	
 	public int getTimeout()

@@ -3,7 +3,7 @@ package com.chiorichan.http;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import com.chiorichan.Loader;
+import com.chiorichan.util.Common;
 
 public class Candy
 {
@@ -58,6 +58,7 @@ public class Candy
 	
 	/**
 	 * Sets an explicit expiration time using an epoch.
+	 * 
 	 * @param _epoch
 	 */
 	public void setExpiration( int _epoch )
@@ -68,12 +69,13 @@ public class Candy
 	
 	/**
 	 * Sets an explicit expiration time using the current epoch + timeSpecified
+	 * 
 	 * @param defaultLife
 	 */
 	public void setMaxAge( int defaultLife )
 	{
 		needsUpdating = true;
-		epoch = Loader.getEpoch() + defaultLife;
+		epoch = Common.getEpoch() + defaultLife;
 	}
 	
 	public void setDomain( String _domain )
@@ -99,7 +101,7 @@ public class Candy
 		
 		if ( epoch > 0 )
 		{
-			SimpleDateFormat dateFormat = new SimpleDateFormat("EE, dd-MMM-yyyy HH:mm:ss zz");
+			SimpleDateFormat dateFormat = new SimpleDateFormat( "EE, dd-MMM-yyyy HH:mm:ss zz" );
 			additional += "expires=" + dateFormat.format( new Date( epoch * 1000 ) ) + "; ";
 		}
 		
