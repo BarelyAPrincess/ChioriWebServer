@@ -20,78 +20,15 @@ this Java Web Server. Porting the framework to Java ment faster load times and l
 * Need Beta Testers!
 * Start a plugin repository
 
-=Version History=
-For the reasons of preservation, I will keep the version history for the PHP Framework here
-but any version 5.2 and up will be the Java Port
-==Version 1.0==
-Original Framework concept first using object oriented programming.
-Each page would call framework in the beginning and end of each file
-which was later determined to be resource intensive and more work then desired.
-==Version 2.0==
-First version introducing a loader that would be started using mod_rewrite.
-This version also introduced built-in WebDav support, Feature later removed
-due to the issue of maintaining the buggy code.
-==Version 3==
-===Subversion 1===
-First introduction of experimental administration panel.
-Panel removed in later versions but there are plans to introduce it.
-===Subversion 2===
-Limited Version, Used as an experimental version to Version 4.0.
-==Version 4==
-===Subversion 1 (Betarain)===
-====Build 0101====
-Fourth time completely rewriting source code from scratch.
-Version 3 or prior modules not supported in this version.
-====Build 0309====
-Nothing more then bug fixes.
-===Subversion 2 (Betadroid)===
-====Build 0319====
-First introduction release of component based system.
-Changed some function names to be more compliment with personal coding standards.
-Rewrote the Database Component to use the new PDO instead of the previous mysql commands.
-This change allows multiple db connections, file based db using SQLite and other db types like oracle.
-Also added a second level of containers called "Views" which allow for even less theme code.
-====Build 0326====
-Many more bug fixes. Finished porting 98% of the user module code to a component.
-====Build 0606====
-Finished porting 99% of all outdated modules and code. Fixed many more bugs.
-===Subversion 3 (Sentry)===
-====Build 0712====
-First build safe for lite production use. Also improved local file loader,
-Framework will load the index file of a requested folder if it exists.
-Some core framework panel code was added to possibly introduce the
-framework panel again but later decided to scrap the idea and wait till later release.
-===Subversion 4 (Rainbow Dash)===
-====Build 0901====
-First version to appear on the GitHub. Made some bug fixes.
-==Version 5==
-===Subversion 0 (Fluttershy)===
-====Build 1106====
-Again more code rewrites to make the framework more streamlined and easier to debug.
-====Build 1111====
-Inported some old code which broke the framework. Fixed in next push.
-====Build 1115/1116====
-Bug Fixes.
-===Subversion 1 (Scootaloo)===
-====Build 0106/0107====
-Introduced Hooks which are like event listeners. Bug Fixes.
-===Subversion 2 (Lunar Dream)===
-====Build 0825====
-First attempts to port framework to the Chiori Web Server.
-====Build 0829====
-Major issues resolved. About 60%-70% of framework ported, 20% discarded (to be replaced).
-==Version 6==
-===Subversion 0 (Sonic Dash)===
-====Build 1004====
-Switched from Resin to Jetty. Removed Quercus and replaced it with our own Java/PHP hybrid language using the BeanShell libraries
-===Subversion 1 (Sonic Dash)===
-====Build 1012====
-Switched from BeanShell to GroovyShell. Now you can write your web script in uncompiled Java with the joys of Groovy.
-===Subversion 2 (Sonic Doom)===
-====Build 1212====
-Some framework instance/memory handling rewrites. Possiblely broken build.
-====Build 1222====
-Fixes to the log and console systems. Switched from Jetty to HttpServer (A builtin class of the JRE). Also implemented the TCP server side of the Chiori Web Server for use with Android and Standalone Apps.
+=Repository Directory Structure=
+==Server==
+Sources for the Chiori Web Server.
+==API==
+Sources required to develop a TCP Client on Android and Stand Alone.
+==Examples==
+Contains example code for Plugins, Scripts and Clients.
+==Lib==
+Libraries for both the Server and Client.
 
 =Installation=
 ==Configuration==
@@ -185,6 +122,81 @@ We are more then happy to take a look just keep these rules in mind?
 * Please respect the original purpose of our framework and not change any of this (There might be exceptions here depending on what your changes are.).
 * Be respectful of any of us that you have communication with.
 * It's encouraged to distribute your Plugin as open source.
+
+=Version History=
+For the reasons of preservation, I will keep the version history for the PHP Framework here
+but any version 5.2 and up will be the Java Port
+==Version 1.0==
+Original Framework concept first using object oriented programming.
+Each page would call framework in the beginning and end of each file
+which was later determined to be resource intensive and more work then desired.
+==Version 2.0==
+First version introducing a loader that would be started using mod_rewrite.
+This version also introduced built-in WebDav support, Feature later removed
+due to the issue of maintaining the buggy code.
+==Version 3==
+===Subversion 1===
+First introduction of experimental administration panel.
+Panel removed in later versions but there are plans to introduce it.
+===Subversion 2===
+Limited Version, Used as an experimental version to Version 4.0.
+==Version 4==
+===Subversion 1 (Betarain)===
+====Build 0101====
+Fourth time completely rewriting source code from scratch.
+Version 3 or prior modules not supported in this version.
+====Build 0309====
+Nothing more then bug fixes.
+===Subversion 2 (Betadroid)===
+====Build 0319====
+First introduction release of component based system.
+Changed some function names to be more compliment with personal coding standards.
+Rewrote the Database Component to use the new PDO instead of the previous mysql commands.
+This change allows multiple db connections, file based db using SQLite and other db types like oracle.
+Also added a second level of containers called "Views" which allow for even less theme code.
+====Build 0326====
+Many more bug fixes. Finished porting 98% of the user module code to a component.
+====Build 0606====
+Finished porting 99% of all outdated modules and code. Fixed many more bugs.
+===Subversion 3 (Sentry)===
+====Build 0712====
+First build safe for lite production use. Also improved local file loader,
+Framework will load the index file of a requested folder if it exists.
+Some core framework panel code was added to possibly introduce the
+framework panel again but later decided to scrap the idea and wait till later release.
+===Subversion 4 (Rainbow Dash)===
+====Build 0901====
+First version to appear on the GitHub. Made some bug fixes.
+==Version 5==
+===Subversion 0 (Fluttershy)===
+====Build 1106====
+Again more code rewrites to make the framework more streamlined and easier to debug.
+====Build 1111====
+Inported some old code which broke the framework. Fixed in next push.
+====Build 1115/1116====
+Bug Fixes.
+===Subversion 1 (Scootaloo)===
+====Build 0106/0107====
+Introduced Hooks which are like event listeners. Bug Fixes.
+===Subversion 2 (Lunar Dream)===
+====Build 0825====
+First attempts to port framework to the Chiori Web Server.
+====Build 0829====
+Major issues resolved. About 60%-70% of framework ported, 20% discarded (to be replaced).
+==Version 6==
+===Subversion 0 (Sonic Dash)===
+====Build 1004====
+Switched from Resin to Jetty. Removed Quercus and replaced it with our own Java/PHP hybrid language using the BeanShell libraries
+===Subversion 1 (Sonic Dash)===
+====Build 1012====
+Switched from BeanShell to GroovyShell. Now you can write your web script in uncompiled Java with the joys of Groovy.
+===Subversion 2 (Sonic Doom)===
+====Build 1212====
+Some framework instance/memory handling rewrites. Possiblely broken build.
+====Build 1222====
+Fixes to the log and console systems. Switched from Jetty to HttpServer (A builtin class of the JRE). Also implemented the TCP server side of the Chiori Web Server for use with Android and Standalone Apps.
+====Build 1227====
+Made structure layout changes to implement a TCP API and better support future changes. 
 
 =License=
 Chiori Web Server is licensed under the Mozila Public License Version 2.0.
