@@ -13,9 +13,12 @@ public final class TcpClient extends PacketManager
 	/**
 	 * Attempts to make a connection with the specified server.
 	 * 
-	 * @param Remote Address
-	 * @param Remote Port
-	 * @param Class<? extends TcpConnection> - This class must contain a no parameter constructor.
+	 * @param Remote
+	 *           Address
+	 * @param Remote
+	 *           Port
+	 * @param Class
+	 *           <? extends TcpConnection> - This class must contain a no parameter constructor.
 	 * @throws IOException
 	 */
 	public TcpClient(InetAddress addr, int port, final Class<? extends TcpConnection> receiver) throws IOException
@@ -28,11 +31,16 @@ public final class TcpClient extends PacketManager
 				{
 					return receiver.newInstance();
 				}
-				catch ( InstantiationException | IllegalAccessException e )
+				catch ( InstantiationException e )
 				{
 					e.printStackTrace();
-					return null;
 				}
+				catch ( IllegalAccessException e )
+				{
+					e.printStackTrace();
+				}
+				
+				return null;
 			}
 		};
 		
@@ -66,7 +74,7 @@ public final class TcpClient extends PacketManager
 		TcpConnection var1 = (TcpConnection) var0;
 		
 		if ( var2 instanceof BasePacket )
-		{	
+		{
 			// Handle packet for auth methods
 		}
 		else if ( var2 instanceof Packet )

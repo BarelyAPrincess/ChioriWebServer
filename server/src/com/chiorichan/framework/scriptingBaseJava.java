@@ -5,10 +5,12 @@ import groovy.lang.Script;
 import java.io.File;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import com.chiorichan.Loader;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.StringUtil;
 
@@ -94,6 +96,37 @@ abstract public class scriptingBaseJava extends Script
 		
 		if ( format == null || format.isEmpty() )
 			format = "MMM d YYYY";
+		
+		if ( format.contains( "x" ) )
+		{
+			Calendar var1 = Calendar.getInstance();
+			var1.setTime( date );
+			int day = var1.get( Calendar.DAY_OF_MONTH );
+			String suffix = "";
+			
+			if ( day >= 11 && day <= 13 )
+			{
+				suffix = "'th'";
+			}
+			else
+				switch ( day % 10 )
+				{
+					case 1:
+						suffix = "'st'";
+						break;
+					case 2:
+						suffix = "'nd'";
+						break;
+					case 3:
+						suffix = "'rd'";
+						break;
+					default:
+						suffix = "'th'";
+						break;
+				}
+			
+			format = format.replaceAll( "x", suffix );
+		}
 		
 		return new SimpleDateFormat( format ).format( date );
 	}

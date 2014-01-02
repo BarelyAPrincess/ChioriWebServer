@@ -102,7 +102,7 @@ public class Candy
 		if ( epoch > 0 )
 		{
 			SimpleDateFormat dateFormat = new SimpleDateFormat( "EE, dd-MMM-yyyy HH:mm:ss zz" );
-			additional += "expires=" + dateFormat.format( new Date( epoch * 1000 ) ) + "; ";
+			additional += "expires=" + dateFormat.format( new Date( (long) epoch * 1000 ) ) + "; ";
 		}
 		
 		if ( !path.isEmpty() )

@@ -1078,8 +1078,6 @@ public final class SimplePluginManager implements PluginManager
 		{
 			for ( Plugin plugin1 : Loader.getPluginManager().getPlugins() )
 			{
-				Loader.getLogger().info( plugin1.toString() );
-				
 				if ( plugin1.getClass().toString().substring( 6 ).equals( pluginPath ) || plugin1.getClass().getName().equals( pluginPath ) )
 					return plugin1;
 			}

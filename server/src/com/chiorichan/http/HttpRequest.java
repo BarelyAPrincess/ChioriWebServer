@@ -1,9 +1,13 @@
 package com.chiorichan.http;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.poi.util.IOUtils;
 
@@ -28,10 +32,10 @@ public class HttpRequest
 		
 		requestTime = Common.getEpoch();
 		
-		getMap = queryToMap( http.getRequestURI().getQuery() );
-		
 		try
 		{
+			getMap = queryToMap( http.getRequestURI().getQuery() );
+			
 			if ( http.getRequestBody().available() > 0 )
 			{
 				byte[] queryBytes = new byte[http.getRequestBody().available()];
@@ -46,6 +50,11 @@ public class HttpRequest
 		}
 		
 		response = new HttpResponse( this );
+		
+		for ( Entry<String,List<String>> h : http.getRequestHeaders().entrySet() )
+		{
+			Loader.getLogger().debug( h.getKey() + " = " + h.getValue().get( 0 ) );
+		}
 	}
 	
 	protected void initSession()
@@ -53,7 +62,7 @@ public class HttpRequest
 		sess = Loader.getPersistenceManager().find( this );
 	}
 	
-	protected Map<String, String> queryToMap( String query )
+	protected Map<String, String> queryToMap( String query ) throws UnsupportedEncodingException
 	{
 		Map<String, String> result = new HashMap<String, String>();
 		
@@ -65,11 +74,11 @@ public class HttpRequest
 			String pair[] = param.split( "=" );
 			if ( pair.length > 1 )
 			{
-				result.put( pair[0], pair[1] );
+				result.put( URLDecoder.decode( pair[0], "ISO-8859-1" ), URLDecoder.decode( pair[1], "ISO-8859-1" ) );
 			}
 			else
 			{
-				result.put( pair[0], "" );
+				result.put( URLDecoder.decode( pair[0], "ISO-8859-1" ), "" );
 			}
 		}
 		return result;
@@ -167,6 +176,11 @@ public class HttpRequest
 		{
 			return "";
 		}
+	}
+	
+	public boolean isAjaxRequest()
+	{
+		return ( getHeader("X-Requested-With") == "XMLHttpRequest" );
 	}
 	
 	public String getRemoteHost()
@@ -293,17 +307,17 @@ public class HttpRequest
 		
 		return getMap;
 	}
-
+	
 	public int getRequestTime()
 	{
 		return requestTime;
 	}
-
+	
 	public String getLocalHost()
 	{
 		return getHeader( "Host" );
 	}
-
+	
 	public String getUserAgent()
 	{
 		return getHeader( "User-Agent" );

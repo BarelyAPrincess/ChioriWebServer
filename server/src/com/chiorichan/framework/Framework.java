@@ -83,6 +83,7 @@ public class Framework
 			serverVars.put( ServerVars.HTTP_HOST, request.getLocalHost() );
 			serverVars.put( ServerVars.HTTP_ACCEPT_ENCODING, request.getHeader( "Accept-Encoding" ) );
 			serverVars.put( ServerVars.HTTP_ACCEPT_LANGUAGE, request.getHeader( "Accept-Language" ) );
+			serverVars.put( ServerVars.HTTP_X_REQUESTED_WITH, request.getHeader( "X-Requested-With" ) );
 			serverVars.put( ServerVars.REMOTE_HOST, request.getRemoteHost() );
 			serverVars.put( ServerVars.REMOTE_ADDR, request.getRemoteAddr() );
 			serverVars.put( ServerVars.REMOTE_PORT, request.getRemotePort() );

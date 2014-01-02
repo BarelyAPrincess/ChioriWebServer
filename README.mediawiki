@@ -10,15 +10,14 @@ this Java Web Server. Porting the framework to Java ment faster load times and l
 
 =To Do=
 * Introduce an Administration Panel for the Framework.
-* Make a library that can give standalone and android apps easy access to the TCP abilities of this server.
-* Add other database types like SQLite.
 * Possiblely switch to a Maven Dependency system.
-* Write API Documentation. (You can use Bukkit Docs for plugin writings if needed)
 * Add clustering abilities.
 * Add better error handling.
 * Create a Sandbox Mode.
 * Need Beta Testers!
 * Start a plugin repository
+* Write Plugin API Documentation. (You can use Bukkit Docs for plugin writings if needed)
+* Start writing Change Logs and Javadocs. 
 
 =Repository Directory Structure=
 ==Server==
@@ -196,7 +195,21 @@ Some framework instance/memory handling rewrites. Possiblely broken build.
 ====Build 1222====
 Fixes to the log and console systems. Switched from Jetty to HttpServer (A builtin class of the JRE). Also implemented the TCP server side of the Chiori Web Server for use with Android and Standalone Apps.
 ====Build 1227====
-Made structure layout changes to implement a TCP API and better support future changes. 
+Made structure layout changes to implement a TCP API and better support future changes.
+
+=Coding=
+* We attempt to make our code as easily readable as possible. 
+* No spaces; use tabs. (As much as people don't like TABS, We do.)
+* No trailing whitespaces.
+* Brackets should always be on a new line.
+* No 80 column limit or 'weird' midstatement newlines.
+
+=Pull Request Conventions=
+* The number of commits in a pull request should be kept to a minimum (squish them into one most of the time - use common sense!).
+* No merges should be included in pull requests unless the pull request's purpose is a merge.
+* Pull requests should be tested (does it compile? AND does it work?) before submission.
+* Any major additions should have documentation ready and provided if applicable (this is usually the case).
+* Most pull requests should be accompanied by a corresponding GitHub ticket so we can associate commits with GitHub issues (this is primarily for changelog generation).
 
 =License=
 Chiori Web Server is licensed under the Mozila Public License Version 2.0.

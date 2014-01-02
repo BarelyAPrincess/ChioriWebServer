@@ -26,6 +26,8 @@ public class Enviro
 	public void setFramework( Framework fw )
 	{
 		binding.setVariable( "chiori", fw );
+		binding.setVariable( "request", fw.getRequest() );
+		binding.setVariable( "response", fw.getResponse() );
 	}
 	
 	public void set( String name, Object value )
