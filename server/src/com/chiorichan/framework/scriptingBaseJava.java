@@ -4,13 +4,14 @@ import groovy.lang.Script;
 
 import java.io.File;
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import com.chiorichan.Loader;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.StringUtil;
 
@@ -42,6 +43,11 @@ abstract public class scriptingBaseJava extends Script
 	}
 	
 	int count( String var )
+	{
+		return var.length();
+	}
+	
+	int strlen( String var )
 	{
 		return var.length();
 	}
@@ -152,6 +158,11 @@ abstract public class scriptingBaseJava extends Script
 		return haystack.indexOf( needle );
 	}
 	
+	String str_replace( String needle, String replacement, String haystack )
+	{
+		return haystack.replaceAll( needle, replacement );
+	}
+	
 	String money_format( String amt )
 	{
 		if ( amt == "" )
@@ -176,6 +187,20 @@ abstract public class scriptingBaseJava extends Script
 		
 		DecimalFormat df = new DecimalFormat( "$###,###,###.00" );
 		return df.format( amt );
+	}
+	
+	@Deprecated
+	public boolean is_numeric( String str )
+	{
+		return isNumeric( str );
+	}
+	
+	public boolean isNumeric(String str)
+	{
+	  NumberFormat formatter = NumberFormat.getInstance();
+	  ParsePosition pos = new ParsePosition(0);
+	  formatter.parse(str, pos);
+	  return str.length() == pos.getIndex();
 	}
 	
 	boolean is_null( Object obj )

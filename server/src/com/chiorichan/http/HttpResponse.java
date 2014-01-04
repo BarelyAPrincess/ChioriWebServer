@@ -3,10 +3,10 @@ package com.chiorichan.http;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.List;
-import java.util.Map.Entry;
 
 import com.chiorichan.Loader;
+import com.chiorichan.event.http.ErrorEvent;
+import com.chiorichan.event.server.RequestEvent;
 import com.chiorichan.util.Versioning;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
@@ -39,7 +39,8 @@ public class HttpResponse
 			var1 = 500;
 		
 		if ( var2 == null )
-			var2 = request.getFramework().getServer().getStatusDescription( var1 );
+			var2 = HttpCode.msg( var1 );
+		// var2 = request.getFramework().getServer().getStatusDescription( var1 );
 		
 		Loader.getLogger().severe( "HttpError: " + var1 + " - " + var2 );
 		
@@ -57,6 +58,10 @@ public class HttpResponse
 			println( "<hr>" );
 			println( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + "<br />" + Versioning.getCopyright() + "</small>" );
 			
+			// Trigger an internal Error Event to notify plugins of a possible problem.
+			ErrorEvent event = new ErrorEvent( request, var1, var2 );
+			Loader.getPluginManager().callEvent( event );
+			
 			sendResponse();
 		}
 		catch ( IOException e )
@@ -66,6 +71,14 @@ public class HttpResponse
 			else
 				e.printStackTrace();
 		}
+	}
+	
+	/**
+	 * Clears the output buffer of all content
+	 */
+	public void resetOutput()
+	{
+		output.reset();
 	}
 	
 	public ByteArrayOutputStream getOutput()
@@ -86,7 +99,28 @@ public class HttpResponse
 	
 	public void sendRedirect( String target )
 	{
-		request.getOriginal().getResponseHeaders().set( "Location", target );
+		sendRedirect( target, 302, true );
+	}
+	
+	public void sendRedirect( String target, int httpStatus )
+	{
+		sendRedirect( target, httpStatus, true );
+	}
+	
+	// autoRedirect argument needs to be working before this method is made public
+	private void sendRedirect( String target, int httpStatus, boolean autoRedirect )
+	{
+		if ( autoRedirect )
+		{
+			setStatus( httpStatus );
+			request.getOriginal().getResponseHeaders().set( "Location", target );
+		}
+		else
+		{
+			// TODO: Send client a redirection page.
+			// "The Request URL has been relocated to: " . $StrURL .
+			// "<br />Please change any bookmarks to reference this new location."
+		}
 	}
 	
 	public void print( String var1 ) throws IOException

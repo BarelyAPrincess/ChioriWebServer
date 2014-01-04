@@ -2,6 +2,8 @@ package com.chiorichan.framework
 
 import com.chiorichan.http.HttpRequest
 import com.chiorichan.http.HttpResponse
+import com.chiorichan.http.PersistentSession
+import com.chiorichan.util.Versioning
 
 abstract class scriptingBaseGroovy extends scriptingBaseJava
 {
@@ -18,6 +20,11 @@ abstract class scriptingBaseGroovy extends scriptingBaseJava
 	HttpResponse getResponse()
 	{
 		return response;
+	}
+	
+	PersistentSession getSession()
+	{
+		return request.getSession();
 	}
 	
 	//TODO: Make better and add support for other object types

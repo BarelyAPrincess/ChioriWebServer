@@ -140,7 +140,7 @@ public class Template extends JavaPlugin implements Listener
 	
 	public String doInclude( File root, String pack, RenderEvent event )
 	{
-		String source = event.getFramework().getServer().includePackage( pack );
+		String source = event.getFramework().getFramework().getServer().includePackage( pack );
 		
 		//System.out.println( "Source Length: " + source.length() + " <--> " + pack );
 		

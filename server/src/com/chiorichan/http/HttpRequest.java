@@ -5,9 +5,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.apache.poi.util.IOUtils;
 
@@ -47,13 +45,6 @@ public class HttpRequest
 		catch ( IOException e )
 		{
 			Loader.getLogger().severe( "There was a severe error reading the POST query.", e );
-		}
-		
-		response = new HttpResponse( this );
-		
-		for ( Entry<String,List<String>> h : http.getRequestHeaders().entrySet() )
-		{
-			Loader.getLogger().debug( h.getKey() + " = " + h.getValue().get( 0 ) );
 		}
 	}
 	
@@ -133,7 +124,7 @@ public class HttpRequest
 		return sess;
 	}
 	
-	protected HttpResponse getResponse()
+	public HttpResponse getResponse()
 	{
 		return response;
 	}
@@ -178,6 +169,9 @@ public class HttpRequest
 		}
 	}
 	
+	/**
+	 * Not a guaranteed method to determined if a request was made with AJAX since this header is not always set.
+	 */
 	public boolean isAjaxRequest()
 	{
 		return ( getHeader("X-Requested-With") == "XMLHttpRequest" );

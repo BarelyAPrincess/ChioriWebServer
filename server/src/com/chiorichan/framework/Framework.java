@@ -38,7 +38,6 @@ public class Framework
 	protected FrameworkServer _server;
 	protected FrameworkConfigurationManager _config;
 	protected FrameworkDatabaseEngine _db;
-	protected FrameworkUserService _usr;
 	protected FrameworkFunctions _fun;
 	protected FrameworkImageUtils _img;
 	
@@ -47,9 +46,6 @@ public class Framework
 	protected boolean continueNormally = true;
 	protected String alternateOutput = "An Unknown Error Has Risen!";
 	protected int httpStatus = 200;
-	
-	protected Map<String, String> rewriteVars = new HashMap<String, String>();
-	protected Map<ServerVars, Object> serverVars = new HashMap<ServerVars, Object>();
 	
 	public Evaling eval;
 	
@@ -68,345 +64,84 @@ public class Framework
 		uid = request.getSession().getId();
 		
 		env = new Enviro( this );
-		loadVars();
 	}
 	
-	public void loadVars()
-	{
-		try
-		{
-			// serverVars.put( ServerVars.PHP_SELF, requestFile.getPath() );
-			serverVars.put( ServerVars.DOCUMENT_ROOT, Loader.getConfig().getString( "settings.webroot", "webroot" ) + request.getSite().getWebRoot( null ) );
-			serverVars.put( ServerVars.HTTP_ACCEPT, request.getHeader( "Accept" ) );
-			serverVars.put( ServerVars.HTTP_USER_AGENT, request.getUserAgent() );
-			serverVars.put( ServerVars.HTTP_CONNECTION, request.getHeader( "Connection" ) );
-			serverVars.put( ServerVars.HTTP_HOST, request.getLocalHost() );
-			serverVars.put( ServerVars.HTTP_ACCEPT_ENCODING, request.getHeader( "Accept-Encoding" ) );
-			serverVars.put( ServerVars.HTTP_ACCEPT_LANGUAGE, request.getHeader( "Accept-Language" ) );
-			serverVars.put( ServerVars.HTTP_X_REQUESTED_WITH, request.getHeader( "X-Requested-With" ) );
-			serverVars.put( ServerVars.REMOTE_HOST, request.getRemoteHost() );
-			serverVars.put( ServerVars.REMOTE_ADDR, request.getRemoteAddr() );
-			serverVars.put( ServerVars.REMOTE_PORT, request.getRemotePort() );
-			serverVars.put( ServerVars.REQUEST_TIME, request.getRequestTime() );
-			serverVars.put( ServerVars.REQUEST_URI, request.getURI() );
-			serverVars.put( ServerVars.CONTENT_LENGTH, request.getContentLength() );
-			serverVars.put( ServerVars.AUTH_TYPE, request.getAuthType() );
-			serverVars.put( ServerVars.SERVER_NAME, request.getServerName() );
-			serverVars.put( ServerVars.SERVER_PORT, request.getServerPort() );
-			serverVars.put( ServerVars.HTTPS, request.isSecure() );
-			serverVars.put( ServerVars.SESSION, request.getSession() );
-			serverVars.put( ServerVars.SERVER_SOFTWARE, Versioning.getProduct() );
-			serverVars.put( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "webmaster@" + request.getDomain() ) );
-			serverVars.put( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Versioning.getVersion() );
-		}
-		catch ( Exception e )
-		{
-			e.printStackTrace();
-		}
-	}
-	
-	public String replaceAt( String par, int at, String rep )
-	{
-		StringBuilder sb = new StringBuilder( par );
-		sb.setCharAt( at, rep.toCharArray()[0] );
-		return sb.toString();
-	}
-	
-	public boolean rewriteVirtual( String domain, String subdomain, String uri )
-	{
-		SqlConnector sql = Loader.getPersistenceManager().getSql();
-		
-		try
-		{
-			// TODO: Fix the select issue with blank subdomains. It's not suppose to be 1111 but it is to prevent the
-			// redirect loop.
-			ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE (site = '" + subdomain + "' OR site = '1111') AND domain = '" + domain + "' UNION SELECT * FROM `pages` WHERE (site = '" + subdomain + "' OR site = '1111') AND domain = '';" );
-			
-			if ( sql.getRowCount( rs ) > 0 )
-			{
-				Map<String, HashMap<String, Object>> candy = new TreeMap<String, HashMap<String, Object>>();
-				
-				do
-				{
-					HashMap<String, Object> data = new HashMap<String, Object>();
-					
-					String prop = rs.getString( "page" );
-					
-					if ( prop.startsWith( "/" ) )
-						prop = prop.substring( 1 );
-					
-					data.put( "page", prop );
-					
-					String[] props = prop.split( "[.//]" );
-					String[] uris = uri.split( "[.//]" );
-					
-					String weight = StringUtils.repeat( "?", Math.max( props.length, uris.length ) );
-					
-					boolean whole_match = true;
-					for ( int i = 0; i < Math.max( props.length, uris.length ); i++ )
-					{
-						try
-						{
-							Loader.getLogger().fine( prop + " --> " + props[i] + " == " + uris[i] );
-							
-							if ( props[i].matches( "\\[([a-zA-Z0-9]+)=\\]" ) )
-							{
-								weight = replaceAt( weight, i, "Z" );
-								
-								String key = props[i].replaceAll( "[\\[\\]=]", "" );
-								String value = uris[i];
-								
-								rewriteVars.put( key, value );
-								
-								// PREP MATCH
-								
-								Loader.getLogger().fine( "Found a PREG match to " + rs.getString( "page" ) );
-							}
-							else if ( props[i].equals( uris[i] ) )
-							{
-								weight = replaceAt( weight, i, "A" );
-								
-								Loader.getLogger().fine( "Found a match to " + rs.getString( "page" ) );
-								// MATCH
-							}
-							else
-							{
-								whole_match = false;
-								Loader.getLogger().fine( "Found no match to " + rs.getString( "page" ) );
-								break;
-								// NO MATCH
-							}
-						}
-						catch ( ArrayIndexOutOfBoundsException e )
-						{
-							whole_match = false;
-							break;
-						}
-						catch ( Exception e )
-						{
-							e.printStackTrace();
-							whole_match = false;
-							break;
-						}
-					}
-					
-					if ( whole_match )
-					{
-						data.put( "site", rs.getString( "site" ) );
-						data.put( "domain", rs.getString( "domain" ) );
-						data.put( "page", rs.getString( "page" ) );
-						data.put( "title", rs.getString( "title" ) );
-						data.put( "reqlevel", rs.getString( "reqlevel" ) );
-						data.put( "theme", rs.getString( "theme" ) );
-						data.put( "view", rs.getString( "view" ) );
-						data.put( "html", rs.getString( "html" ) );
-						data.put( "file", rs.getString( "file" ) );
-						
-						candy.put( weight, data );
-					}
-				}
-				while ( rs.next() );
-				
-				if ( candy.size() > 0 )
-				{
-					@SuppressWarnings( "unchecked" )
-					HashMap<String, Object> data = (HashMap<String, Object>) candy.values().toArray()[0];
-					
-					Loader.getLogger().info( "Rewriting page request to " + data );
-					
-					try
-					{
-						loadPageInternal( (String) data.get( "theme" ), (String) data.get( "view" ), (String) data.get( "title" ), (String) data.get( "file" ), (String) data.get( "html" ), (String) data.get( "reqlevel" ) );
-					}
-					catch ( IOException e )
-					{
-						e.printStackTrace();
-					}
-					
-					return true;
-				}
-				
-				Loader.getLogger().fine( "Failed to find a page redirect for Framework Rewrite... '" + subdomain + "." + domain + "' '" + uri + "'" );
-				return false;
-			}
-			else
-			{
-				Loader.getLogger().fine( "Failed to find a page redirect for Framework Rewrite... '" + subdomain + "." + domain + "' '" + uri + "'" );
-				return false;
-			}
-		}
-		catch ( SQLException e )
-		{
-			e.printStackTrace(); // TODO: Better this catch
-		}
-		
-		return true;
-	}
-	
-	public void loadPageInternal( String theme, String view, String title, String file, String html, String reqPerm ) throws IOException
-	{
-		try
-		{
-			Site currentSite = request.getSite();
-			
-			if ( currentSite == null )
-				return;
-			
-			if ( html.isEmpty() && file.isEmpty() )
-			{
-				response.sendError( 500, "There was a problem handling your request. Try again later." );
-				return;
-			}
-			
-			File requestFile = null;
-			if ( !file.isEmpty() )
-			{
-				if ( file.startsWith( "/" ) )
-					file = file.substring( 1 );
-				
-				if ( currentSite.protectCheck( file ) )
-				{
-					Loader.getLogger().warning( "Loading of page '" + file + "' is not allowed since its hard protected in the site configs." );
-					response.sendError( 401, "Loading of this page is not allowed since its hard protected in the site configs." );
-					return;
-				}
-				
-				if ( Loader.webroot.isEmpty() )
-					Loader.webroot = "webroot";
-				
-				File siteRoot = new File( Loader.webroot, currentSite.siteId );
-				
-				if ( !siteRoot.exists() )
-					siteRoot.mkdirs();
-				
-				requestFile = new File( siteRoot, file );
-				
-				Loader.getLogger().info( "Requesting file: " + requestFile.getAbsolutePath() );
-				
-				if ( !requestFile.exists() )
-				{
-					Loader.getLogger().warning( "Could not load file '" + requestFile.getAbsolutePath() + "'" );
-					response.sendError( 404 );
-					return;
-				}
-				
-				if ( requestFile.isDirectory() )
-				{
-					if ( new File( requestFile, "index.groovy" ).exists() )
-					{
-						requestFile = new File( requestFile, "index.groovy" );
-					}
-					else if ( new File( requestFile, "index.html" ).exists() )
-					{
-						requestFile = new File( requestFile, "index.html" );
-					}
-					else
-					{
-						response.sendError( 500, "There was a problem finding the index page." );
-						return;
-					}
-				}
-				
-				if ( !requestFile.exists() )
-				{
-					Loader.getLogger().warning( "Could not load file '" + requestFile.getAbsolutePath() + "'" );
-					response.sendError( HttpServletResponse.SC_NOT_FOUND );
-					return;
-				}
-			}
-			
-			eval = env.newEval();
-			
-			serverVars.put( ServerVars.DOCUMENT_ROOT, new File( Loader.getConfig().getString( "settings.webroot", "webroot" ), currentSite.getWebRoot( currentSite.getSubDomain() ) ).getAbsolutePath() );
-			
-			Map<String, Object> $server = new HashMap<String, Object>();
-			
-			for ( Entry<ServerVars, Object> en : serverVars.entrySet() )
-			{
-				$server.put( en.getKey().getName().toLowerCase(), en.getValue() );
-			}
-			
-			env.set( "_SERVER", $server );
-			env.set( "_REQUEST", request.getRequestMap() );
-			env.set( "_POST", request.getPostMap() );
-			env.set( "_GET", request.getGetMap() );
-			env.set( "_REWRITE", rewriteVars );
-			
-			if ( getUserService().initalize( reqPerm ) )
-			{
-				if ( !html.isEmpty() )
-					eval.evalCode( html );
-				
-				if ( requestFile != null )
-					eval.evalFile( requestFile );
-			}
-			
-			String source = eval.reset();
-			
-			/*
-			String source;
-			if ( continueNormally )
-			{
-				source = eval.reset();
-			}
-			else
-			{
-				currentSite = Loader.getPersistenceManager().getSiteManager().getSiteById( "framework" );
-				
-				if ( currentSite instanceof FrameworkSite )
-					( (FrameworkSite) currentSite ).setDatabase( Loader.getPersistenceManager().getSql() );
-				
-				source = alternateOutput;
-				theme = "com.chiorichan.themes.error";
-				view = "";
-			}
-			*/
-			
-			RenderEvent event = new RenderEvent( this, source );
-			
-			event.theme = theme;
-			event.view = view;
-			event.title = title;
-			
-			try
-			{
-				Loader.getPluginManager().callEventWithException( event );
-				
-				if ( event.sourceChanged() )
-					source = event.getSource();
-				
-				response.getOutput().write( source.getBytes() );
-			}
-			catch ( EventException ex )
-			{
-				ex.printStackTrace();
-				response.getOutput().write( errorPage( ex.getCause() ).getBytes() );
-			}
-		}
-		catch ( Throwable e )
-		{
-			e.printStackTrace();
-			response.getOutput().write( errorPage( e ).getBytes() );
-		}
-	}
-	
-	public String getRequestVar( String key )
-	{
-		return request.getParameter( key );
-	}
-	
-	public String getRewriteVar( String key )
-	{
-		return getRewriteVar( key, null );
-	}
-	
-	public String getRewriteVar( String key, String def )
-	{
-		if ( rewriteVars.containsKey( key ) )
-			return rewriteVars.get( key );
-		
-		return def;
-	}
+	/*
+	 * public void loadPageInternal( String theme, String view, String title, String file, String html, String reqPerm )
+	 * throws IOException { try { Site currentSite = request.getSite();
+	 * 
+	 * if ( currentSite == null ) return;
+	 * 
+	 * if ( html.isEmpty() && file.isEmpty() ) { response.sendError( 500,
+	 * "There was a problem handling your request. Try again later." ); return; }
+	 * 
+	 * File requestFile = null; if ( !file.isEmpty() ) { if ( file.startsWith( "/" ) ) file = file.substring( 1 );
+	 * 
+	 * if ( currentSite.protectCheck( file ) ) { Loader.getLogger().warning( "Loading of page '" + file +
+	 * "' is not allowed since its hard protected in the site configs." ); response.sendError( 401,
+	 * "Loading of this page is not allowed since its hard protected in the site configs." ); return; }
+	 * 
+	 * if ( Loader.webroot.isEmpty() ) Loader.webroot = "webroot";
+	 * 
+	 * File siteRoot = new File( Loader.webroot, currentSite.siteId );
+	 * 
+	 * if ( !siteRoot.exists() ) siteRoot.mkdirs();
+	 * 
+	 * requestFile = new File( siteRoot, file );
+	 * 
+	 * Loader.getLogger().info( "Requesting file: " + requestFile.getAbsolutePath() );
+	 * 
+	 * if ( !requestFile.exists() ) { Loader.getLogger().warning( "Could not load file '" + requestFile.getAbsolutePath()
+	 * + "'" ); response.sendError( 404 ); return; }
+	 * 
+	 * if ( requestFile.isDirectory() ) { if ( new File( requestFile, "index.groovy" ).exists() ) { requestFile = new
+	 * File( requestFile, "index.groovy" ); } else if ( new File( requestFile, "index.html" ).exists() ) { requestFile =
+	 * new File( requestFile, "index.html" ); } else { response.sendError( 500,
+	 * "There was a problem finding the index page." ); return; } }
+	 * 
+	 * if ( !requestFile.exists() ) { Loader.getLogger().warning( "Could not load file '" + requestFile.getAbsolutePath()
+	 * + "'" ); response.sendError( HttpServletResponse.SC_NOT_FOUND ); return; } }
+	 * 
+	 * eval = env.newEval();
+	 * 
+	 * serverVars.put( ServerVars.DOCUMENT_ROOT, new File( Loader.getConfig().getString( "settings.webroot", "webroot" ),
+	 * currentSite.getWebRoot( currentSite.getSubDomain() ) ).getAbsolutePath() );
+	 * 
+	 * Map<String, Object> $server = new HashMap<String, Object>();
+	 * 
+	 * for ( Entry<ServerVars, Object> en : serverVars.entrySet() ) { $server.put( en.getKey().getName().toLowerCase(),
+	 * en.getValue() ); }
+	 * 
+	 * env.set( "_SERVER", $server ); env.set( "_REQUEST", request.getRequestMap() ); env.set( "_POST",
+	 * request.getPostMap() ); env.set( "_GET", request.getGetMap() ); env.set( "_REWRITE", rewriteVars );
+	 * 
+	 * if ( getUserService().initalize( reqPerm ) ) { if ( !html.isEmpty() ) eval.evalCode( html );
+	 * 
+	 * if ( requestFile != null ) eval.evalFile( requestFile ); }
+	 * 
+	 * String source = eval.reset();
+	 * 
+	 * /* String source; if ( continueNormally ) { source = eval.reset(); } else { currentSite =
+	 * Loader.getPersistenceManager().getSiteManager().getSiteById( "framework" );
+	 * 
+	 * if ( currentSite instanceof FrameworkSite ) ( (FrameworkSite) currentSite ).setDatabase(
+	 * Loader.getPersistenceManager().getSql() );
+	 * 
+	 * source = alternateOutput; theme = "com.chiorichan.themes.error"; view = ""; }
+	 * 
+	 * 
+	 * RenderEvent event = new RenderEvent( this, source );
+	 * 
+	 * event.theme = theme; event.view = view; event.title = title;
+	 * 
+	 * try { Loader.getPluginManager().callEventWithException( event );
+	 * 
+	 * if ( event.sourceChanged() ) source = event.getSource();
+	 * 
+	 * response.getOutput().write( source.getBytes() ); } catch ( EventException ex ) { ex.printStackTrace();
+	 * response.getOutput().write( errorPage( ex.getCause() ).getBytes() ); } } catch ( Throwable e ) {
+	 * e.printStackTrace(); response.getOutput().write( errorPage( e ).getBytes() ); } }
+	 */
 	
 	public static String escapeHTML( String l )
 	{
@@ -651,6 +386,7 @@ public class Framework
 			source = getServer().executeCode( source );
 		}
 		
+		/*
 		RenderEvent event = new RenderEvent( this, source );
 		
 		event.theme = theme;
@@ -661,6 +397,7 @@ public class Framework
 		
 		if ( event.sourceChanged() )
 			source = event.getSource();
+			*/
 		
 		return source;
 	}
@@ -727,14 +464,6 @@ public class Framework
 			_db = new FrameworkDatabaseEngine( this );
 		
 		return _db;
-	}
-	
-	public FrameworkUserService getUserService()
-	{
-		if ( _usr == null )
-			_usr = new FrameworkUserService( this );
-		
-		return _usr;
 	}
 	
 	public FrameworkFunctions getFunctions()
@@ -834,11 +563,6 @@ public class Framework
 		
 		alternateOutput = op.toString();
 		httpStatus = errNo;
-	}
-	
-	public Map<ServerVars, Object> getServerVars()
-	{
-		return serverVars;
 	}
 	
 	public PersistentSession getSession()

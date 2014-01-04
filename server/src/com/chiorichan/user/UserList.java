@@ -11,8 +11,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
-import com.chiorichan.framework.Framework;
 import com.chiorichan.framework.Site;
+import com.chiorichan.http.PersistentSession;
 
 public class UserList
 {
@@ -47,45 +47,6 @@ public class UserList
 		banByName.setEnabled( false );
 		banByIP.setEnabled( false );
 		maxUsers = 50;
-	}
-	
-	public User attemptLogin( String s, String hostname )
-	{
-		return null;
-		/*
-		 * User entity = new user( server, server.getWorldServer( 0 ), s, server.O() ? new DemoUserInteractManager(
-		 * server.getWorldServer( 0 ) ) : new UserInteractManager( server.getWorldServer( 0 ) ) ); User User =
-		 * entity.getBukkitEntity(); UserLoginEvent event = new UserLoginEvent( User, hostname,
-		 * pendingconnection.getSocket().getInetAddress() );
-		 * 
-		 * SocketAddress socketaddress = pendingconnection.networkManager.getSocketAddress();
-		 * 
-		 * if ( banByName.isBanned( s ) ) { BanEntry banentry = (BanEntry) banByName.getEntries().get( s ); String s1 =
-		 * "You are banned from this server!\nReason: " + banentry.getReason();
-		 * 
-		 * if ( banentry.getExpires() != null ) { s1 = s1 + "\nYour ban will be removed on " + d.format(
-		 * banentry.getExpires() ); }
-		 * 
-		 * event.disallow( UserLoginEvent.Result.KICK_BANNED, s1 ); } else if ( !isWhitelisted( s ) ) { event.disallow(
-		 * UserLoginEvent.Result.KICK_WHITELIST, "You are not white-listed on this server!" ); } else { String s2 =
-		 * socketaddress.toString();
-		 * 
-		 * s2 = s2.substring( s2.indexOf( "/" ) + 1 ); s2 = s2.substring( 0, s2.indexOf( ":" ) ); if ( banByIP.isBanned(
-		 * s2 ) ) { BanEntry banentry1 = (BanEntry) banByIP.getEntries().get( s2 ); String s3 =
-		 * "Your IP address is banned from this server!\nReason: " + banentry1.getReason();
-		 * 
-		 * if ( banentry1.getExpires() != null ) { s3 = s3 + "\nYour ban will be removed on " + d.format(
-		 * banentry1.getExpires() ); }
-		 * 
-		 * event.disallow( UserLoginEvent.Result.KICK_BANNED, s3 ); } else if ( Users.size() >= maxUsers ) {
-		 * event.disallow( UserLoginEvent.Result.KICK_FULL, "The server is full!" ); } else { event.disallow(
-		 * UserLoginEvent.Result.ALLOWED, s2 ); } }
-		 * 
-		 * cserver.getPluginManager().callEvent( event ); if ( event.getResult() != UserLoginEvent.Result.ALLOWED ) {
-		 * pendingconnection.disconnect( event.getKickMessage() ); return null; }
-		 * 
-		 * return entity; // CraftBukkit end
-		 */
 	}
 	
 	public User processLogin( User usr )
@@ -274,9 +235,9 @@ public class UserList
 		server.getConsole().sendMessage( msg );
 	}
 	
-	public User validateUser( Framework fw, String username, String password )
+	public User attemptLogin( PersistentSession sess, String username, String password )
 	{
-		SqlConnector sql = ( site != null ) ? site.getDatabase() : Framework.getDatabase();
+		SqlConnector sql = ( site != null ) ? site.getDatabase() : Loader.getPersistenceManager().getSql();
 		
 		User user = new User( sql, username, password );
 		
@@ -285,19 +246,19 @@ public class UserList
 		
 		sql.queryUpdate( "UPDATE `users` SET `lastlogin` = '" + System.currentTimeMillis() + "', `numloginfail` = '0' WHERE `userID` = '" + user.getUserId() + "'" );
 		
-		if ( !fw.getUserService().isSessionStringSet( "user" ) )
-			fw.getUserService().setSessionString( "user", user.getUserId() );
+		if ( !sess.isSet( "user" ) )
+			sess.setArgument( "user", user.getUserId() );
 		
-		if ( !fw.getUserService().isSessionStringSet( "pass" ) )
-			fw.getUserService().setSessionString( "pass", DigestUtils.md5Hex( user.getPassword() ) );
+		if ( !sess.isSet( "pass" ) )
+			sess.setArgument( "pass", DigestUtils.md5Hex( user.getPassword() ) );
 		
-		Object o = fw.getRequest().getAttribute( "remember" );
+		Object o = sess.getRequest().getAttribute( "remember" );
 		boolean remember = ( o == null ) ? false : (boolean) o;
 		
 		if ( remember )
-			fw.getUserService().setCookieExpiry( 5 * 365 * 24 * 60 * 60 );
+			sess.setCookieExpiry( 5 * 365 * 24 * 60 * 60 );
 		else
-			fw.getUserService().setCookieExpiry( 604800 );
+			sess.setCookieExpiry( 604800 );
 		
 		return user;
 	}

@@ -7,20 +7,21 @@ import org.apache.commons.codec.digest.DigestUtils;
 import com.chiorichan.framework.CodeParsingException;
 import com.chiorichan.framework.Framework;
 import com.chiorichan.framework.Site;
+import com.chiorichan.http.PersistentSession;
 
 public class RenderEvent extends ServerEvent
 {
 	private String pageSource, pageHash;
-	private Framework fw;
+	private PersistentSession fw;
 	
 	// Temporary until we can figure out how to allow templates to register their own extra fields
 	public String theme, view, title;
 	
-	public RenderEvent(Framework fw0, String source)
+	public RenderEvent(PersistentSession sess, String source)
 	{
 		pageSource = source;
 		pageHash = DigestUtils.md5Hex( source );
-		fw = fw0;
+		fw = sess;
 	}
 	
 	public Site getSite()
@@ -30,10 +31,10 @@ public class RenderEvent extends ServerEvent
 	
 	public String getRequestId()
 	{
-		return fw.getUid();
+		return fw.getId();
 	}
 	
-	public Framework getFramework()
+	public PersistentSession getFramework()
 	{
 		return fw;
 	}
@@ -55,6 +56,6 @@ public class RenderEvent extends ServerEvent
 	
 	public String executeCode( String source ) throws IOException, CodeParsingException
 	{
-		return fw.getServer().executeCode( source );
+		return fw.getFramework().getServer().executeCode( source );
 	}
 }

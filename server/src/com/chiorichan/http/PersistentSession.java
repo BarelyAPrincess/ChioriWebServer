@@ -1,7 +1,11 @@
 package com.chiorichan.http;
 
+import groovy.lang.Binding;
+
+import java.io.File;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,9 +13,12 @@ import java.util.Map;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
+import org.json.JSONException;
+
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.framework.Framework;
+import com.chiorichan.user.User;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.StringUtil;
 import com.google.gson.Gson;
@@ -31,6 +38,8 @@ public class PersistentSession
 	protected int timeout = 0, requestCnt = 0, defaultTimeout = 10000; // 10 minutes
 	protected String candyId = "", candyName = "candyId";
 	protected Candy sessionCandy;
+	protected Binding binding = new Binding();
+	protected User currentUser = null;
 	
 	protected Map<String, Candy> candies = new LinkedHashMap<String, Candy>();
 	protected Framework framework = null;
@@ -51,6 +60,8 @@ public class PersistentSession
 			framework.setRequest( request );
 			framework.setResponse( request.getResponse() );
 		}
+		
+		binding.setVariable( "chiori", framework );
 		
 		return framework;
 	}
@@ -78,6 +89,135 @@ public class PersistentSession
 		sessionCandy = candies.get( candyName );
 		
 		initSession();
+		
+		binding.setVariable( "chiori", null );
+		binding.setVariable( "request", request );
+		binding.setVariable( "request.getResponse()", request.getResponse() );
+		binding.setVariable( "__FILE__", new File( "" ) );
+		
+		handleUserProtocols();
+	}
+	
+	protected void handleUserProtocols()
+	{
+		String username = request.getArgument( "user" );
+		String password = request.getArgument( "pass" );
+		String target = request.getArgument( "target" );
+		
+		if ( request.getArgument( "logout", "", true ) != null )
+		{
+			logoutUser();
+			
+			if ( target.isEmpty() )
+				target = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
+			
+			Loader.getLogger().debug( target );
+			
+			request.getResponse().sendRedirect( target + "?ok=You have been successfully logged out. Please come again!" );
+			return;
+		}
+		
+		if ( !username.isEmpty() && !password.isEmpty() )
+		{
+			User user = request.getSite().getUserList().attemptLogin( this, username, password );
+			
+			Loader.getLogger().info( "User: " + user );
+			
+			if ( user != null && user.isValid() )
+			{
+				currentUser = user;
+				
+				String loginPost = ( target.isEmpty() ) ? request.getSite().getYaml().getString( "scripts.login-post", "/panel" ) : target;
+				
+				Loader.getLogger().info( "Login Success: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\", Display Level \"" + user.getDisplayLevel() + "\"" );
+				request.getResponse().sendRedirect( loginPost );
+			}
+			else if ( user == null )
+			{
+				return;
+			}
+			else
+			{
+				String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
+				
+				Loader.getLogger().warning( "Login Failed: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\", Display Level \"" + user.getDisplayLevel() + "\"" );
+				request.getResponse().sendRedirect( loginForm + "?msg=" + user.getLastError() + "&target=" + target );
+			}
+		}
+		else if ( currentUser == null )
+		{
+			username = getArgument( "user" );
+			password = getArgument( "pass" );
+			
+			if ( !username.isEmpty() && !password.isEmpty() )
+			{
+				User user = request.getSite().getUserList().attemptLogin( this, username, password );
+				
+				if ( user != null && user.isValid() )
+				{
+					currentUser = user;
+					
+					String loginPost = ( target == null || target.isEmpty() ) ? request.getSite().getYaml().getString( "scripts.login-post", "/panel" ) : target;
+					
+					Loader.getLogger().info( "Login Success: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\", Display Level \"" + user.getDisplayLevel() + "\"" );
+					// _sess.getServer().dummyRedirect( loginPost );
+				}
+				else
+				{
+					Loader.getLogger().warning( "Login Status: No Valid Login Present" );
+				}
+			}
+			else
+				currentUser = null;
+		}
+		else
+		{
+			// Recheck validity of user login since possibly we are reusing a session.
+		}
+	}
+	
+	public ReqFailureReason doReqCheck( String reqLevel )
+	{
+		// -1 = Allow All | 0 = Operator
+		if ( !reqLevel.equals( "-1" ) )
+		{
+			if ( currentUser == null || !currentUser.isValid() )
+			{
+				return ReqFailureReason.NO_USER;
+			}
+			else if ( reqLevel.equals( "0" ) && !currentUser.hasPermission( "" ) ) // Root Check
+			{
+				return ReqFailureReason.OP_ONLY;
+			}
+			else if ( currentUser.hasPermission( reqLevel ) && !currentUser.getUserLevel().equals( "0" ) )
+			{
+				ReqFailureReason result = ReqFailureReason.NO_ACCESS;
+				result.setReason( "This page is limited to users with access to the \"" + reqLevel + "\" permission or better." );
+				return result;
+			}
+		}
+		
+		return ReqFailureReason.ACCEPTED;
+	}
+	
+	public void setGlobal( String key, Object val )
+	{
+		binding.setVariable( key, val );
+	}
+	
+	public Object getGlobal( String key )
+	{
+		return binding.getVariable( key );
+	}
+	
+	public Map<String, Object> getGlobals()
+	{
+		return binding.getVariables();
+	}
+	
+	protected Binding getBinding()
+	{
+		return binding;
 	}
 	
 	protected void initSession()
@@ -282,4 +422,242 @@ public class PersistentSession
 	}
 	
 	// TODO: Future add of setDomain, setCookieName, setSecure (http verses https)
+	
+	public boolean getUserState()
+	{
+		return ( currentUser != null );
+	}
+	
+	public User getCurrentUser()
+	{
+		return currentUser;
+	}
+	
+	/**
+	 * Logout the current logged in user.
+	 */
+	public void logoutUser()
+	{
+		setArgument( "user", null );
+		setArgument( "pass", null );
+		currentUser = null;
+		Loader.getLogger().info( "User Logout" );
+	}
+	
+	public boolean settingCompare( String settings )
+	{
+		return compareSetting( Arrays.asList( settings ) );
+	}
+	
+	/**
+	 * Does a setting compare based on a string if No expected mean is interped as a boolean of true. ex.
+	 * USER_BETA_TESTER&USER_RANK=USER|USER_RANK=ADMIN
+	 * 
+	 * @param String
+	 *           settingString
+	 * @throws JSONException
+	 */
+	public boolean compareSetting( List<String> settings )
+	{
+		for ( String setting : settings )
+		{
+			boolean granted = false;
+			for ( String key : setting.split( "[&]" ) )
+			{
+				String value;
+				
+				if ( key.indexOf( "=" ) < 0 )
+					value = "1";
+				else
+				{
+					value = key.substring( key.indexOf( "=" ) );
+					key = key.substring( 0, key.indexOf( "=" ) );
+				}
+				
+				if ( key.startsWith( "!" ) )
+				{
+					if ( getSetting( key.substring( 1 ) ).equals( value ) )
+						granted = true;
+					else
+					{
+						granted = false;
+						break;
+					}
+				}
+				else
+				{
+					if ( getSetting( key ).equals( value ) )
+						granted = true;
+					else
+					{
+						granted = false;
+						break;
+					}
+				}
+			}
+			
+			if ( granted )
+				return true;
+		}
+		
+		return false;
+	}
+	
+	public boolean getSettingBool( String key )
+	{
+		Object result = getSetting( key );
+		
+		if ( result instanceof Boolean )
+			return ( (Boolean) result );
+		
+		if ( result instanceof Integer && ( (Integer) result ) == 1 )
+			return true;
+		
+		if ( result instanceof Long && ( (Long) result ) == 1 )
+			return true;
+		
+		if ( result instanceof String && ( (String) result ).equals( "1" ) )
+			return true;
+		
+		return false;
+	}
+	
+	public Object getSetting( String key )
+	{
+		return getSetting( key, null, null, false );
+	}
+	
+	public Object getSetting( String key, String idenifier )
+	{
+		return getSetting( key, idenifier, null, false );
+	}
+	
+	public Object getSetting( String key, String idenifier, boolean defaultValue )
+	{
+		return getSetting( key, idenifier, defaultValue, false );
+	}
+	
+	public Object getSetting( String key, String idenifier, Object defaultValue )
+	{
+		return getSetting( key, idenifier, defaultValue, false );
+	}
+	
+	public Object getSetting( String key, String idenifier, boolean defaultValue, boolean returnRow )
+	{
+		return getSetting( key, idenifier, defaultValue, returnRow );
+	}
+	
+	public Object getSetting( String key, String idenifier, Object defaultValue, boolean returnRow )
+	{
+		if ( defaultValue == null )
+			defaultValue = "";
+		
+		try
+		{
+			SqlConnector sql = request.getSite().getDatabase();
+			
+			if ( idenifier == null || idenifier == "-1" )
+			{
+				idenifier = ( getUserState() ) ? getCurrentUser().getUserId() : "";
+			}
+			
+			ResultSet defaultRs = sql.query( "SELECT * FROM `settings_default` WHERE `key` = '" + key + "';" );
+			
+			if ( defaultRs == null || sql.getRowCount( defaultRs ) < 1 )
+				return defaultValue;
+			
+			ResultSet customRs = sql.query( "SELECT * FROM `settings_custom` WHERE `key` = '" + key + "' AND `owner` = '" + idenifier + "';" );
+			
+			Map<String, Object> defop = SqlConnector.convertRow( defaultRs );
+			defop.put( "default", defop.get( "value" ) );
+			
+			if ( customRs == null || sql.getRowCount( customRs ) < 1 )
+			{
+				defaultRs.first();
+				
+				if ( !returnRow )
+					return defaultRs.getString( "value" );
+				
+				return defop;
+			}
+			else
+			{
+				if ( !returnRow )
+					return customRs.getString( "value" );
+				
+				Map<String, Object> op = SqlConnector.convertRow( customRs );
+				
+				defop.putAll( op );
+				
+				return defop;
+			}
+		}
+		catch ( SQLException | JSONException e )
+		{
+			e.printStackTrace();
+			return defaultValue;
+		}
+	}
+	
+	/*
+	 * Empty value deletes resets setting to default.
+	 */
+	public boolean setSetting( String key, String value, String idenifier )
+	{
+		try
+		{
+			SqlConnector sql = request.getSite().getDatabase();
+			
+			if ( idenifier == null || idenifier == "-1" )
+			{
+				// TODO: Set idenifier to the logged in userId
+				
+				// if ( key.startsWith( "TEXT" ) || key.startsWith( "LOCATION" ) )
+				// TODO: Set to the first location user is allowed to use
+				// else if ( key.startsWith( "ACCOUNT" ) )
+				
+				// else
+				idenifier = "";
+			}
+			
+			ResultSet defaultRs = sql.query( "SELECT * FROM `settings_default` WHERE `key` = '" + key + "';" );
+			
+			if ( defaultRs == null || sql.getRowCount( defaultRs ) < 1 )
+				return false;
+			
+			if ( value.isEmpty() || defaultRs.getString( "value" ).equals( value ) )
+			{
+				sql.queryUpdate( "DELETE FROM `settings_custom` WHERE `key` = '" + key + "' AND `owner` = '" + idenifier + "'" );
+				return true;
+			}
+			
+			ResultSet customRs = sql.query( "SELECT * FROM `settings_custom` WHERE `key` = '" + key + "' AND `owner` = '" + idenifier + "' LIMIT 1;" );
+			
+			if ( customRs == null || sql.getRowCount( customRs ) < 1 )
+			{
+				sql.queryUpdate( "UPDATE `settings_custom` SET `value` = '" + value + "' WHERE `key` = '" + key + "' AND `owner` = '" + idenifier + "';" );
+			}
+			else
+			{
+				sql.queryUpdate( "INSERT INTO `settings_custom` (`key`, `value`, `owner`)VALUES('" + key + "', '" + value + "', '" + idenifier + "');" );
+			}
+			
+			return true;
+		}
+		catch ( SQLException e )
+		{
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
+	public HttpRequest getRequest()
+	{
+		return request;
+	}
+	
+	public HttpResponse getResponse()
+	{
+		return request.getResponse();
+	}
 }

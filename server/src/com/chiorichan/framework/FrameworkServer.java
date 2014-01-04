@@ -6,16 +6,12 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import com.chiorichan.Loader;
-import com.chiorichan.event.server.ServerVars;
+import com.chiorichan.http.HttpCode;
 
-/**
- * TODO: Merge this class into the SERVER
- */
 public class FrameworkServer
 {
 	protected Framework fw;
@@ -23,31 +19,6 @@ public class FrameworkServer
 	public FrameworkServer(Framework fw0)
 	{
 		fw = fw0;
-	}
-	
-	public void sendRedirect( String target )
-	{
-		sendRedirect( target, 302, true );
-	}
-	
-	public void sendRedirect( String target, int httpStatus )
-	{
-		sendRedirect( target, httpStatus, true );
-	}
-	
-	public void sendRedirect( String target, int httpStatus, boolean autoRedirect )
-	{
-		if ( autoRedirect )
-		{
-			fw.getResponse().setStatus( httpStatus );
-			fw.getResponse().sendRedirect( target );
-		}
-		else
-		{
-			// TODO: Send client a redirection page.
-			// "The Request URL has been relocated to: " . $StrURL .
-			// "<br />Please change any bookmarks to reference this new location."
-		}
 	}
 	
 	public String fileReader( String file )
@@ -256,17 +227,26 @@ public class FrameworkServer
 		return sb.toString();
 	}
 	
+	@Deprecated
 	public void panic( int i, String string )
 	{
 		if ( !fw.getResponse().isCommitted() )
 			fw.generateError( i, string );
 	}
 	
+	/**
+	 * @deprecated Use getRequest().sendRedirect() instead.
+	 */
+	@Deprecated
 	public void dummyRedirect( String string )
 	{
 		dummyRedirect( string, 302 );
 	}
 	
+	/**
+	 * @deprecated Use getRequest().sendRedirect() instead.
+	 */
+	@Deprecated
 	public void dummyRedirect( String var1, int reasonCode )
 	{
 		Loader.getLogger().info( "The server is sending a page redirect (" + reasonCode + "): " + var1 );
@@ -304,30 +284,6 @@ public class FrameworkServer
 	public String getRequest( String key, String def, boolean rtnNull )
 	{
 		return fw.getRequest().getArgument( key, def, rtnNull );
-	}
-	
-	public String getServerVar( String key )
-	{
-		return getServerVar( key, "" );
-	}
-	
-	public String getServerVar( String key, String def )
-	{
-		return getServerVar( key, "", false );
-	}
-	
-	public String getServerVar( String key, String def, boolean rtnNull )
-	{
-		Map<ServerVars, Object> request = fw.getServerVars();
-		String val = (String) request.get( ServerVars.parse( key ) );
-		
-		if ( val == null && rtnNull )
-			return null;
-		
-		if ( val == null || val.isEmpty() )
-			return def;
-		
-		return val.trim();
 	}
 	
 	@Deprecated
@@ -372,110 +328,12 @@ public class FrameworkServer
 		Loader.getLogger().fine( msg );
 	}
 	
+	/**
+	 * @deprecated Use HttpCode.msg( errNo ) instead
+	 */
 	@Deprecated
-	public void initSession()
-	{
-		
-	}
-	
-	@Deprecated
-	public String getSessionString( String key )
-	{
-		return fw.getUserService().getSessionString( key );
-	}
-	
-	@Deprecated
-	public String getSessionString( String key, String def )
-	{
-		return fw.getUserService().getSessionString( key, def );
-	}
-	
-	@Deprecated
-	public boolean setSessionString( String key )
-	{
-		return fw.getUserService().setSessionString( key );
-	}
-	
-	@Deprecated
-	public boolean setSessionString( String key, String value )
-	{
-		return fw.getUserService().setSessionString( key, value );
-	}
-	
-	@Deprecated
-	public void setCookieExpiry( int valid )
-	{
-		fw.getUserService().setCookieExpiry( valid );
-	}
-	
-	@Deprecated
-	public void destroySession()
-	{
-		fw.getUserService().destroySession();
-	}
-	
 	public String getStatusDescription( int errNo )
 	{
-		Map<Integer, String> statusCodes = new LinkedHashMap<Integer, String>();
-		
-		statusCodes.put( 202, "Accepted" );
-		statusCodes.put( 208, "Already Reported" );
-		statusCodes.put( 502, "Bad Gateway" );
-		statusCodes.put( 400, "Bad Request" );
-		statusCodes.put( 409, "Conflict" );
-		statusCodes.put( 100, "Continue" );
-		statusCodes.put( 201, "Created" );
-		statusCodes.put( 421, "Destination Locked" );
-		statusCodes.put( 417, "Expectation Failed" );
-		statusCodes.put( 424, "Failed Dependency" );
-		statusCodes.put( 403, "Forbidden" );
-		statusCodes.put( 302, "Found" );
-		statusCodes.put( 504, "Gateway Timeout" );
-		statusCodes.put( 410, "Gone" );
-		statusCodes.put( 505, "HTTP Version Not Supported" );
-		statusCodes.put( 226, "IM Used" );
-		statusCodes.put( 419, "Insufficient Space on Resource" );
-		statusCodes.put( 507, "Insufficient Storage" );
-		statusCodes.put( 500, "Internal Server Error" );
-		statusCodes.put( 411, "Length Required" );
-		statusCodes.put( 423, "Locked" );
-		statusCodes.put( 508, "Loop Detected" );
-		statusCodes.put( 420, "Method Failure" );
-		statusCodes.put( 405, "Method Not Allowed" );
-		statusCodes.put( 301, "Moved Permanently" );
-		statusCodes.put( 302, "Moved Temporarily" );
-		statusCodes.put( 207, "Multi-Status" );
-		statusCodes.put( 300, "Multiple Choices" );
-		statusCodes.put( 204, "No Content" );
-		statusCodes.put( 203, "Non-Authoritative Information" );
-		statusCodes.put( 406, "Not Acceptable" );
-		statusCodes.put( 510, "Not Extended" );
-		statusCodes.put( 404, "Not Found" );
-		statusCodes.put( 501, "Not Implemented" );
-		statusCodes.put( 304, "Not Modified" );
-		statusCodes.put( 200, "OK" );
-		statusCodes.put( 206, "Partial Content" );
-		statusCodes.put( 402, "Payment Required" );
-		statusCodes.put( 412, "Precondition failed" );
-		statusCodes.put( 102, "Processing" );
-		statusCodes.put( 407, "Proxy Authentication Required" );
-		statusCodes.put( 413, "Request Entity Too Large" );
-		statusCodes.put( 408, "Request Timeout" );
-		statusCodes.put( 414, "Request-URI Too Long" );
-		statusCodes.put( 416, "Requested Range Not Satisfiable" );
-		statusCodes.put( 205, "Reset Content" );
-		statusCodes.put( 303, "See Other" );
-		statusCodes.put( 503, "Service Unavailable." );
-		statusCodes.put( 101, "Switching Protocols" );
-		statusCodes.put( 307, "Temporary Redirect" );
-		statusCodes.put( 401, "Unauthorized" );
-		statusCodes.put( 422, "Unprocessable Entity" );
-		statusCodes.put( 415, "Unsupported Media Type" );
-		statusCodes.put( 426, "Upgrade Required" );
-		statusCodes.put( 305, "Use Proxy" );
-		statusCodes.put( 506, "Variant Also Negotiates" );
-		statusCodes.put( 418, "I'm a Madman With A Blue Box!" );
-		
-		return statusCodes.get( errNo );
+		return HttpCode.msg( errNo );
 	}
 }

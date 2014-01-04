@@ -403,12 +403,6 @@ public class SqlConnector
 			}
 			else if ( rsmd.getColumnTypeName( i ) == "BLOB" || rsmd.getColumnTypeName( i ) == "LONGBLOB" )
 			{
-				// result.put( column_name, rs.getBytes( column_name ) );
-				
-				// XXX: Had to convert the blob to a string since Quercus converts a blob to className.
-				Blob blob = rs.getBlob( column_name );
-				// byte[] bytes = blob.getBytes( 1L, (int) blob.length() );
-				
 				byte[] bytes = rs.getBytes( column_name );
 				
 				try
