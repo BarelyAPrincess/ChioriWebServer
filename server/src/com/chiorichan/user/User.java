@@ -202,31 +202,31 @@ public class User implements CommandSender
 	
 	public void sendPluginMessage( Plugin source, String channel, byte[] message )
 	{
-		// TODO Auto-generated method stub
+
 		
 	}
 	
 	public Collection<? extends String> getListeningPluginChannels()
 	{
-		// TODO Auto-generated method stub
+
 		return null;
 	}
 	
 	public void sendMessage( String string )
 	{
-		// TODO Auto-generated method stub
+
 		
 	}
 	
 	public void setBanned( boolean b )
 	{
-		// TODO Auto-generated method stub
+
 		
 	}
 	
 	public String getAddress()
 	{
-		// TODO Auto-generated method stub
+
 		return null;
 	}
 	
@@ -247,25 +247,25 @@ public class User implements CommandSender
 	
 	public boolean canSee( User user )
 	{
-		// TODO Auto-generated method stub
+
 		return false;
 	}
 	
 	public void setWhitelisted( boolean b )
 	{
-		// TODO Auto-generated method stub
+
 		
 	}
 	
 	public boolean isWhitelisted()
 	{
-		// TODO Auto-generated method stub
+
 		return false;
 	}
 	
 	public Set<PermissionAttachmentInfo> getEffectivePermissions()
 	{
-		// TODO Auto-generated method stub
+
 		return null;
 	}
 	
@@ -330,14 +330,12 @@ public class User implements CommandSender
 	@Override
 	public boolean isPermissionSet( String name )
 	{
-		// TODO Auto-generated method stub
 		return false;
 	}
 	
 	@Override
 	public boolean isPermissionSet( Permission perm )
 	{
-		// TODO Auto-generated method stub
 		return false;
 	}
 	
@@ -352,42 +350,36 @@ public class User implements CommandSender
 	@Override
 	public PermissionAttachment addAttachment( Plugin plugin, String name, boolean value )
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
 	
 	@Override
 	public PermissionAttachment addAttachment( Plugin plugin )
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
 	
 	@Override
 	public PermissionAttachment addAttachment( Plugin plugin, String name, boolean value, int ticks )
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
 	
 	@Override
 	public PermissionAttachment addAttachment( Plugin plugin, int ticks )
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
 	
 	@Override
 	public void removeAttachment( PermissionAttachment attachment )
 	{
-		// TODO Auto-generated method stub
 		
 	}
 	
 	@Override
 	public void sendMessage( String[] messages )
 	{
-		// TODO Auto-generated method stub
 		
 	}
 	

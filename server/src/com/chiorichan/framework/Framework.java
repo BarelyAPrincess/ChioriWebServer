@@ -7,27 +7,17 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeMap;
-
-import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
-import com.chiorichan.event.EventException;
-import com.chiorichan.event.server.RenderEvent;
-import com.chiorichan.event.server.ServerVars;
 import com.chiorichan.http.HttpRequest;
 import com.chiorichan.http.HttpResponse;
 import com.chiorichan.http.PersistenceManager;
 import com.chiorichan.http.PersistentSession;
 import com.chiorichan.plugin.PluginManager;
+import com.chiorichan.user.UserList;
 import com.chiorichan.util.Versioning;
 
 public class Framework
@@ -482,6 +472,12 @@ public class Framework
 		return _img;
 	}
 	
+	@Deprecated
+	public UserList getUserService()
+	{
+		return request.getSite().getUserList();
+	}
+	
 	public HttpResponse getResponse()
 	{
 		return response;
@@ -494,12 +490,17 @@ public class Framework
 	
 	public String getProduct()
 	{
-		return "Chiori Web Server (implementing Chiori Framework API)";
+		return Versioning.getProduct();
 	}
 	
 	public String getVersion()
 	{
-		return Loader.getVersion();
+		return Versioning.getVersion();
+	}
+	
+	public String getCopyright()
+	{
+		return Versioning.getCopyright();
 	}
 	
 	public Enviro getEnv()

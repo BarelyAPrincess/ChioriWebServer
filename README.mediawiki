@@ -1,23 +1,24 @@
 =About=
-'''Chiori Web Server''' is a HTTP/TCP Server allowing for both dynamic content and clients like Android or Standalone Apps.
-To give your websites more power, files ending with .groovy are ran though a groovy shell, Which has access to the entire Server API.
+'''Chiori Web Server''' is a HTTP/TCP Server allowing for both dynamic content on Browsers and clients like Android and/or Standalone Apps.
+To give your websites more power, files ending with .groovy or .chi are ran though a groovy shell, Which has access to the entire Server API.
 Need more power? Then try out the Plugin system that is based on CraftBukkit (A Minecraft Game Server).
 The idea was to give you the ability to create amazing websites using the power of Java while taking less time and resources.
 
 =Included Framework=
 The development of Chiori Framework in the PHP form will be discontinued but it's evolution will continue from with
-this Java Web Server. Porting the framework to Java ment faster load times and less server lag.
+this Java Web Server. Porting the framework to Java meant faster load times and less server lag.
 
 =To Do=
-* Introduce an Administration Panel for the Framework.
-* Possiblely switch to a Maven Dependency system.
+* Implement a Server Administration Web Interface.
+* Switch to a Maven Dependency system (Low Priority).
 * Add clustering abilities.
-* Add better error handling.
+* Add better error handling and syntax debugging.
 * Create a Sandbox Mode.
 * Need Beta Testers!
-* Start a plugin repository
-* Write Plugin API Documentation. (You can use Bukkit Docs for plugin writings if needed)
-* Start writing Change Logs and Javadocs. 
+* Start a Plugin repository
+* Write Plugin API Documentation. (You can use Bukkit Plugin API JavaDocs for the time being)
+* Start writing Change Logs and Javadocs.
+* Allow curtain events to be thrown on site Groovy files not just Plugins. ie. [siteroot]/com/chiorichan/events/UserLogginEvent.groovy or NotFoundEvent.groovy
 
 =Repository Directory Structure=
 ==Server==
@@ -31,7 +32,7 @@ Libraries for both the Server and Client.
 
 =Installation=
 ==Configuration==
-The server configuration will be located in the file "chiori.yml" in the root folder of the running jar and is in the standard format of YAML. This file will generate on first use.
+The server configuration will be located in the file "chiori.yml" in the root folder of the running jar (Will generate with default values on first run) and is in the standard format of YAML. It is important to note the binding to ports below 1024 on linux (for example port 80, like most web servers run on) will require access to privileged ports.
 
 ===About YAML===
 YAML(tm) is an international collaboration to make a data serialization language which is both human readable and computationally powerful. The founding members of YAML are Ingy döt Net (author of the Perl module Data::Denter), Clark Evans, and Oren Ben-Kiki. YAML emerged from the union of two efforts. The first was Ingy döt Net's need for a serialization format for Inline, this resulted in his Data::Denter module. The second, was the joint work of Oren Ben-Kiki Clark Evans on simplifying XML within the sml-dev group. YAML was first publicized with a <?xmlhack?> article on 12 May 2001. Oren and Clark's vision for YAML was very similar to Ingy's Data::Denter, and vice versa, thus a few days later they teamed up and YAML was born. For more information: http://www.yaml.org/start.html
@@ -42,14 +43,14 @@ Most of these config keys are under development
 The HOST to bind the web server to.
 * server.httpPort: 8080
 The port to start the web server on.
-* server.httpsPort: 443
+* server.httpsPort: 4443
 The port to start the SSL web server on. (Future Use)
 * server.tcpHost: null
 The HOST to bind the TCP server to.
 * server.tcpPort: 1024
 The port to start the TCP server on.
 * server.admin: chiorigreene@gmail.com
-This is the administrator e-mail address for the web server. Future plans to send exceptions and alerts to this address.
+This is the administrator e-mail address for the web server. Future plans to send exceptions and alerts to specified address.
 * server.allowDirectoryListing: false
 If the web browser requests a directory and there is no index file should I like the directory contents?
 * server.enableWebServer: true
@@ -84,6 +85,8 @@ Who to tell if an update is ready.
 What channel of builds do you prefer. stable, beta, alpha, nightly
 * auto-updater.host: dl.chiorichan.com
 What host address do we check and download updates from
+* framework.enabled: true
+Allows you to disable the Groovy Shell execution of web files. Files with extension .groovy or .chi will not be interpreted as normal but plugins will still be able to manipulate requests.
 * framework.database.database: chiorifw
 Framework Database Name
 * framework.database.type: mysql
@@ -101,26 +104,33 @@ What title to use for unknown domain requests.
 * framework.users.operators
 Server Operators. Gives defined users limitless access with all permissions.
 
+===Run as a Service===
+We have plans to release instructions (or possibly an auto installer if it's not too much trouble) on how to install this web server as a service for Linux. Being fans of Linux, Not expecting very many Windows users and Simply not have the time, There is nothing planned for Windows Services. As much as we try to make our product cross-platform compatible it will most likely not happen. If anyone is up to the task of making something for both Windows, Mac and/or Linux then please be our guest.
+
 ==File Placement==
-On first use all you need is the jar release file "chiori_server.jar" in a folder that writable by the user that will run the program. All required folders and files will be created on first use.
+As long as the release jar "chiori_server.jar" file is in a folder that is writable, All required folders and files will be created on first use.
 
 == Database Configuration ==
-At the moment, Regardless if your website will be using a database under this framework or not,
-The framework will still need a database to keep track of curtain configuration.
-We plan to get the SQLite (Flat File) support working very soon which will replace this requirement.
+At the moment, Regardless if your website will be using a mysql database under this server or not,
+The server and framework will still need a mysql database to keep track of curtain configuration.
+We plan to support storing these configurations in SQLite (Flat File) format very soon which will remove this requirement but it's likely this will not be fully supported until we roll out our Framework Administration Module since manipulation of this data is required by the user.
 
-Create a database using the sql file (frameworkdb.sql) included in the repository or release then set the credentials within the "chiori.yml" config file.
+To get started, create a sql database using the sql file (frameworkdb.sql) included in the repository or release then set the credentials within the "chiori.yml" config file.
+
+== Sites ==
+Sites are the equivalent of the VirtualHosts on Apache Web Server -- YES, Chiori Web Server has been virtual host compatible from day one. More information on this will be coming soon.
 
 =Plugins=
 Because this web server has a Plugin System based on Bukkit (A Minecraft Game Server) you can develop Plugins the same way they are done for Bukkit.
-The biggest differences is the API has different class nodes (which if you are using an IDE like Eclipse will resolve automaticly) and Not all the same events exist (ie. How do you implement a BlockBreakEvent in a web server?).
+The only major differences is the API has different package nodes (which if you are using an IDE like Eclipse should resolve automatically) and NOT all the same events exist (ie. How do you implement a BlockBreakEvent on a web server?).
 You can find a nice beginners tutorial at https://forums.bukkit.org/threads/basic-bukkit-plugin-tutorial.1339/. At the moment the Web Server Plugin system is based on CraftBukkit implmenting Minecraft 1.6 API. There are currently no plans to closely follow the changes that Bukkit will make to there Plugin API but this might change.
 
-Have a plugin you made with our Plugin API that you would like us to help distribute?
+Have a plugin you made with our Plugin API that you would like us to help distribute or directly implement into the base code?
 We are more then happy to take a look just keep these rules in mind?
 * Please respect the original purpose of our framework and not change any of this (There might be exceptions here depending on what your changes are.).
-* Be respectful of any of us that you have communication with.
-* It's encouraged to distribute your Plugin as open source.
+* Be respectful by not feeling sore if we turn down your requests.
+* We try to respond to all inquiries but sometimes things are over looked. So again, Don't feel hurt and try sending a reminder in a weeks time or so.
+* It's encouraged to distribute your Plugin as open source -- Only applies to stand alone plugins. Distribution by our base code will require open source disclosure.
 
 =Version History=
 For the reasons of preservation, I will keep the version history for the PHP Framework here

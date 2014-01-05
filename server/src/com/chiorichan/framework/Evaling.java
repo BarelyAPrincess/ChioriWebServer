@@ -15,6 +15,8 @@ import java.io.UnsupportedEncodingException;
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.codehaus.groovy.control.CompilerConfiguration;
 
+import com.chiorichan.Loader;
+
 public class Evaling
 {
 	ByteArrayOutputStream bs = new ByteArrayOutputStream();
@@ -37,15 +39,13 @@ public class Evaling
 	
 	public String flush() throws UnsupportedEncodingException
 	{
-		return new String( bs.toByteArray() );
+		return new String( bs.toByteArray(), "ISO-8859-1" );
 	}
 	
 	public String reset() throws UnsupportedEncodingException
 	{
 		String bsOut = flush();
 		bs.reset();
-		
-		// System.out.println( "Output Flush: " + bsOut.length() );
 		
 		return bsOut;
 	}
@@ -61,6 +61,11 @@ public class Evaling
 			return;
 		
 		evalFile( new File( absolutePath ) );
+	}
+	
+	public void write( byte[] bytesToWrite ) throws IOException
+	{
+		bs.write( bytesToWrite );
 	}
 	
 	public void evalFile( File file ) throws IOException, CodeParsingException
@@ -89,6 +94,11 @@ public class Evaling
 			
 			throw new CodeParsingException( e, sb.toString() );
 		}
+	}
+	
+	public void evalFileVirtual( byte[] code, String fileName ) throws CodeParsingException
+	{
+		evalFileVirtual( new String( code ), fileName );
 	}
 	
 	public void evalFileVirtual( String code, String fileName ) throws CodeParsingException

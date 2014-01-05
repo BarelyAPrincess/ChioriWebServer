@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.chiorichan.Console;
 import com.chiorichan.Loader;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
@@ -140,7 +139,7 @@ public class Template extends JavaPlugin implements Listener
 	
 	public String doInclude( File root, String pack, RenderEvent event )
 	{
-		String source = event.getFramework().getFramework().getServer().includePackage( pack );
+		String source = event.getSession().getFramework().getServer().includePackage( pack );
 		
 		//System.out.println( "Source Length: " + source.length() + " <--> " + pack );
 		
@@ -158,9 +157,17 @@ public class Template extends JavaPlugin implements Listener
 	public void onRenderEvent( RenderEvent event )
 	{
 		Site site = event.getSite();
-		String theme = event.theme;
-		String view = event.view;
-		String title = event.title;
+		Map<String, String> fwVals = event.getPageData();
+		
+		String theme = fwVals.get( "theme" );
+		String view = fwVals.get( "view" );
+		String title = fwVals.get( "title" );
+		
+		if ( theme == null )
+			theme = "";
+		
+		if ( view == null )
+			view = "";
 		
 		if ( theme.isEmpty() && view.isEmpty() )
 			return;

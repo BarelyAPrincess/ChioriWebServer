@@ -17,6 +17,7 @@ import org.json.JSONException;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
+import com.chiorichan.framework.Evaling;
 import com.chiorichan.framework.Framework;
 import com.chiorichan.user.User;
 import com.chiorichan.util.Common;
@@ -25,8 +26,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
 /**
- * This class is used to carry data that is to be persistent from request to request. If you need to sync data across
- * requests then we recommend using Session Vars for Security.
+ * This class is used to carry data that is to be persistent from request to request.
+ * If you need to sync data across requests then we recommend using Session Vars for Security.
  * 
  * @author Chiori Greene
  * @copyright Greenetree LLC
@@ -39,6 +40,7 @@ public class PersistentSession
 	protected String candyId = "", candyName = "candyId";
 	protected Candy sessionCandy;
 	protected Binding binding = new Binding();
+	protected Evaling eval;
 	protected User currentUser = null;
 	
 	protected Map<String, Candy> candies = new LinkedHashMap<String, Candy>();
@@ -92,7 +94,7 @@ public class PersistentSession
 		
 		binding.setVariable( "chiori", null );
 		binding.setVariable( "request", request );
-		binding.setVariable( "request.getResponse()", request.getResponse() );
+		binding.setVariable( "response", request.getResponse() );
 		binding.setVariable( "__FILE__", new File( "" ) );
 		
 		handleUserProtocols();
@@ -179,7 +181,7 @@ public class PersistentSession
 	public ReqFailureReason doReqCheck( String reqLevel )
 	{
 		// -1 = Allow All | 0 = Operator
-		if ( !reqLevel.equals( "-1" ) )
+		if ( reqLevel != null && !reqLevel.equals( "-1" ) )
 		{
 			if ( currentUser == null || !currentUser.isValid() )
 			{
@@ -376,6 +378,9 @@ public class PersistentSession
 	
 	public String getArgument( String key )
 	{
+		if ( !data.containsKey( key ) )
+			return "";
+		
 		return data.get( key );
 	}
 	
@@ -659,5 +664,19 @@ public class PersistentSession
 	public HttpResponse getResponse()
 	{
 		return request.getResponse();
+	}
+	
+	public Evaling getEvaling()
+	{
+		if ( eval == null )
+			eval = new Evaling( binding );
+		
+		return eval;
+	}
+
+	public void releaseResources()
+	{
+		request = null;
+		eval = null;
 	}
 }

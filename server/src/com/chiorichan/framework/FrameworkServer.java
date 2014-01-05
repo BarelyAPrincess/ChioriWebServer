@@ -82,15 +82,13 @@ public class FrameworkServer
 	
 	public String includePackage( String pack )
 	{
-		Evaling eval = fw.getEnv().newEval();
-		
 		try
 		{
+			Evaling eval = fw.getSession().getEvaling();
+			
 			File root = getTemplateRoot( fw.getRequest().getSite() );
 			
 			String file = getPackage( root, pack );
-			
-			// System.out.println( "File: " + file );
 			
 			if ( !file.isEmpty() )
 				eval.evalFile( file );

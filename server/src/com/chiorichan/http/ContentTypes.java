@@ -21,6 +21,8 @@ public class ContentTypes
 		types.put( "css", "text/css" );
 		types.put( "htm", "text/html" );
 		types.put( "html", "text/html" );
+		types.put( "groovy", "text/html" );
+		types.put( "chi", "text/html" );
 		types.put( "gif", "image/gif" );
 		types.put( "jpeg", "image/jpeg" );
 		types.put( "jpg", "image/jpeg" );

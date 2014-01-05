@@ -27,8 +27,9 @@ public class HttpRequest
 	protected HttpRequest(HttpExchange _http)
 	{
 		http = _http;
-		
 		requestTime = Common.getEpoch();
+		
+		response = new HttpResponse( this );
 		
 		try
 		{
@@ -89,7 +90,7 @@ public class HttpRequest
 	{
 		String val = getMap.get( key );
 		
-		if ( val == null )
+		if ( val == null && postMap != null )
 			val = postMap.get( key );
 		
 		if ( val == null && rtnNull )

@@ -34,13 +34,15 @@ public class WebHandler implements HttpHandler
 {
 	protected Map<String, String> rewriteVars = new HashMap<String, String>();
 	protected Map<ServerVars, Object> serverVars = new HashMap<ServerVars, Object>();
+	protected File siteRoot = new File( Loader.webroot );
 	
 	public void handle( HttpExchange t ) throws IOException
 	{
+		HttpRequest request = new HttpRequest( t );
+		HttpResponse response = request.getResponse();
+		
 		try
 		{
-			HttpRequest request = new HttpRequest( t );
-			
 			String uri = request.getURI();
 			String domain = request.getDomain();
 			String site = "";
@@ -63,14 +65,20 @@ public class WebHandler implements HttpHandler
 			if ( currentSite == null )
 				currentSite = new Site( "default", Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Chiori Framework Site" ), domain );
 			
+			siteRoot = new File( Loader.webroot, currentSite.getWebRoot( site ) );
+			
+			if ( !siteRoot.exists() )
+				siteRoot.mkdirs();
+			
+			if ( uri.isEmpty() )
+				uri = "/";
+			
 			currentSite.setSubDomain( site );
 			request.setSite( currentSite );
 			
 			request.initSession();
 			
 			initServerVars( request );
-			
-			HttpResponse response = request.getResponse();
 			
 			RequestEvent event = new RequestEvent( request );
 			
@@ -93,31 +101,21 @@ public class WebHandler implements HttpHandler
 				return;
 			}
 			
-			// NOTE: Check if framework is disabled in config. Disabling the framework is like making this just a simple
-			// web server.
 			Map<String, String> result = null;
 			
+			// NOTE: Check if framework is disabled in config.
 			if ( Loader.getConfig().getBoolean( "framework.enabled" ) )
 				result = rewriteVirtual( domain, site, uri );
 			
 			if ( result == null )
 			{
-				File siteRoot = new File( Loader.webroot, currentSite.getWebRoot( site ) );
-				
-				if ( !siteRoot.exists() )
-					siteRoot.mkdirs();
-				
-				if ( uri.isEmpty() )
-					uri = "/";
-				
 				File dest = new File( siteRoot, uri );
 				
 				Loader.getLogger().info( "Requesting uri (" + currentSite.siteId + ") '" + uri + " from " + dest.getAbsolutePath() + "'" );
 				
 				if ( dest.isDirectory() )
 				{
-					// Scan for any file named index. This makes it possible for an image to act as an index page for a
-					// directory.
+					// Scan for any file named index. This makes it possible for an image to act as an index page for a directory.
 					FileFilter fileFilter = new WildcardFileFilter( "index.*" );
 					File[] files = dest.listFiles( fileFilter );
 					
@@ -192,10 +190,12 @@ public class WebHandler implements HttpHandler
 		}
 		catch ( Exception e )
 		{
-			if ( e.getMessage().equals( "Broken pipe" ) )
-				Loader.getLogger().warning( "Broken Pipe: The browser closed the connection before data could be written to it.", e );
-			else
-				e.printStackTrace();
+			// if ( e.getMessage().equals( "Broken pipe" ) )
+			// Loader.getLogger().warning(
+			// "Broken Pipe: The browser closed the connection before data could be written to it.", e );
+			// else
+			e.printStackTrace();
+			response.sendError( 500, null, e.getMessage() );
 		}
 	}
 	
@@ -226,9 +226,6 @@ public class WebHandler implements HttpHandler
 		File requestFile = null;
 		if ( !file.isEmpty() )
 		{
-			if ( file.startsWith( "/" ) )
-				file = file.substring( 1 );
-			
 			if ( currentSite.protectCheck( file ) )
 			{
 				Loader.getLogger().warning( "Loading of page '" + file + "' is not allowed since its hard protected in the site configs." );
@@ -239,7 +236,7 @@ public class WebHandler implements HttpHandler
 			// We expect the the provided file is an absolute file path.
 			requestFile = new File( file );
 			
-			Loader.getLogger().info( "Requesting file: " + requestFile.getAbsolutePath() );
+			Loader.getLogger().fine( "Requesting file: " + requestFile.getAbsolutePath() );
 			
 			if ( !requestFile.exists() || requestFile.isDirectory() )
 			{
@@ -251,7 +248,7 @@ public class WebHandler implements HttpHandler
 			request.getSession().getBinding().setVariable( "__FILE__", requestFile );
 		}
 		
-		Evaling eval = new Evaling( sess.getBinding() );
+		Evaling eval = sess.getEvaling();
 		
 		serverVars.put( ServerVars.DOCUMENT_ROOT, new File( Loader.getConfig().getString( "settings.webroot", "webroot" ), currentSite.getWebRoot( currentSite.getSubDomain() ) ).getAbsolutePath() );
 		
@@ -268,6 +265,11 @@ public class WebHandler implements HttpHandler
 		sess.setGlobal( "_GET", request.getGetMap() );
 		sess.setGlobal( "_REWRITE", rewriteVars );
 		
+		FileInterpreter fi = new FileInterpreter( requestFile );
+		
+		if ( fi.get( "reglevel" ) != null )
+			pageData.put( "reglevel", fi.get( "reglevel" ) );
+		
 		ReqFailureReason result = sess.doReqCheck( pageData.get( "reqLevel" ) );
 		
 		if ( result == ReqFailureReason.ACCEPTED )
@@ -278,12 +280,14 @@ public class WebHandler implements HttpHandler
 			if ( requestFile != null )
 				try
 				{
-					eval.evalFile( requestFile );
+					if ( fi.getOverrides().get("shell").equals("groovy") )
+						eval.evalFileVirtual( fi.getContent(), requestFile.getAbsolutePath() );
+					else
+						eval.write( fi.getContent() );
 				}
 				catch ( CodeParsingException e )
 				{
 					e.printStackTrace();
-					
 					// TODO: Generate proper exception page
 				}
 		}
@@ -301,22 +305,31 @@ public class WebHandler implements HttpHandler
 		}
 		
 		String source = eval.reset();
-		
 		/*
 		 * String source; if ( continueNormally ) { source = eval.reset(); } else { currentSite =
 		 * Loader.getPersistenceManager().getSiteManager().getSiteById( "framework" );
-		 * 
 		 * if ( currentSite instanceof FrameworkSite ) ( (FrameworkSite) currentSite ).setDatabase(
 		 * Loader.getPersistenceManager().getSql() );
-		 * 
 		 * source = alternateOutput; theme = "com.chiorichan.themes.error"; view = ""; }
 		 */
 		
-		RenderEvent event = new RenderEvent( sess, source );
+		if ( fi.get( "title" ) != null )
+			pageData.put( "title", fi.get( "title" ) );
 		
-		event.theme = pageData.get( "theme" );
-		event.view = pageData.get( "view" );
-		event.title = pageData.get( "title" );
+		if ( fi.get( "reqlevel" ) != null )
+			pageData.put( "reqlevel", fi.get( "reqlevel" ) );
+		
+		if ( fi.get( "theme" ) != null )
+			pageData.put( "theme", fi.get( "theme" ) );
+		
+		if ( fi.get( "view" ) != null )
+			pageData.put( "view", fi.get( "view" ) );
+		
+		for ( Entry<String, String> kv : fi.getOverrides().entrySet() )
+			if ( !kv.getKey().equals( "title" ) && !kv.getKey().equals( "reqlevel" ) && !kv.getKey().equals( "reqlevel" ) && !kv.getKey().equals( "theme" ) && !kv.getKey().equals( "view" ) )
+				pageData.put( kv.getKey(), kv.getValue() );
+
+		RenderEvent event = new RenderEvent( sess, source, pageData );
 		
 		try
 		{
@@ -325,7 +338,7 @@ public class WebHandler implements HttpHandler
 			if ( event.sourceChanged() )
 				source = event.getSource();
 			
-			response.getOutput().write( source.getBytes() );
+			response.getOutput().write( source.getBytes( "ISO-8859-1" ) );
 		}
 		catch ( EventException ex )
 		{
@@ -338,24 +351,17 @@ public class WebHandler implements HttpHandler
 		/*
 		 * FileInputStream is; try { is = new FileInputStream( target ); } catch ( FileNotFoundException e ) {
 		 * response.sendError( 404 ); return; }
-		 * 
-		 * 
 		 * try { ByteArrayOutputStream buffer = response.getOutput();
-		 * 
 		 * int nRead; byte[] data = new byte[16384];
-		 * 
 		 * while ( ( nRead = is.read( data, 0, data.length ) ) != -1 ) { buffer.write( data, 0, nRead ); }
-		 * 
 		 * buffer.flush();
-		 * 
 		 * is.close(); } catch ( IOException e ) { e.printStackTrace(); response.sendError( 500, e.getMessage() ); return;
 		 * }
 		 */
 		
 		if ( requestFile != null )
 		{
-			Loader.getLogger().info( "Detected file to be of " + ContentTypes.getContentType( requestFile.getAbsoluteFile() ) + " type." );
-			response.setContentType( ContentTypes.getContentType( requestFile.getAbsoluteFile() ) );
+			response.setContentType( fi.getContentType() );
 		}
 		else
 		{
@@ -363,6 +369,7 @@ public class WebHandler implements HttpHandler
 		}
 		
 		response.sendResponse();
+		sess.releaseResources();
 		return true;
 	}
 	
@@ -377,9 +384,6 @@ public class WebHandler implements HttpHandler
 	 */
 	public Map<String, String> rewriteVirtual( String domain, String subdomain, String uri )
 	{
-		// TODO: Format database columns
-		
-		// Get server sql database
 		SqlConnector sql = Loader.getPersistenceManager().getSql();
 		
 		try
@@ -400,6 +404,9 @@ public class WebHandler implements HttpHandler
 					
 					if ( prop.startsWith( "/" ) )
 						prop = prop.substring( 1 );
+					
+					if ( uri.startsWith( "/" ) )
+						uri = uri.substring( 1 );
 					
 					data.put( "page", prop );
 					
@@ -466,7 +473,6 @@ public class WebHandler implements HttpHandler
 						 * rs.getString( "file" ) );
 						 */
 						
-						LinkedHashMap<String, Object> result = new LinkedHashMap<String, Object>();
 						ResultSetMetaData rsmd = rs.getMetaData();
 						
 						int numColumns = rsmd.getColumnCount();
@@ -475,6 +481,12 @@ public class WebHandler implements HttpHandler
 						{
 							String column_name = rsmd.getColumnName( i );
 							data.put( column_name, rs.getString( column_name ) );
+						}
+						
+						if ( data.get( "file" ) != null && !data.get( "file" ).isEmpty() )
+						{
+							File dest = new File( siteRoot, data.get( "file" ) );
+							data.put( "file", dest.getAbsolutePath() );
 						}
 						
 						rewrite.put( weight, data );
