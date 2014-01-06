@@ -2,14 +2,11 @@ package com.chiorichan.http;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -248,8 +245,6 @@ public class WebHandler implements HttpHandler
 			request.getSession().getBinding().setVariable( "__FILE__", requestFile );
 		}
 		
-		Evaling eval = sess.getEvaling();
-		
 		serverVars.put( ServerVars.DOCUMENT_ROOT, new File( Loader.getConfig().getString( "settings.webroot", "webroot" ), currentSite.getWebRoot( currentSite.getSubDomain() ) ).getAbsolutePath() );
 		
 		Map<String, Object> server = new HashMap<String, Object>();
@@ -258,6 +253,8 @@ public class WebHandler implements HttpHandler
 		{
 			server.put( en.getKey().getName().toLowerCase(), en.getValue() );
 		}
+		
+		Evaling eval = sess.getEvaling();
 		
 		sess.setGlobal( "_SERVER", server );
 		sess.setGlobal( "_REQUEST", request.getRequestMap() );
@@ -335,7 +332,7 @@ public class WebHandler implements HttpHandler
 		{
 			Loader.getPluginManager().callEventWithException( event );
 			
-			if ( event.sourceChanged() )
+			if ( event.sourceChanged() && !pageData.get( "shell" ).equals( "null" ) )
 				source = event.getSource();
 			
 			response.getOutput().write( source.getBytes( "ISO-8859-1" ) );

@@ -1,5 +1,9 @@
 package com.chiorichan.framework;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -9,10 +13,15 @@ import java.util.Random;
 
 import javax.ws.rs.core.MediaType;
 
+import net.glxn.qrgen.QRCode;
+import net.glxn.qrgen.image.ImageType;
+
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import com.chiorichan.Loader;
+import com.chiorichan.http.PersistentSession;
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
@@ -24,13 +33,138 @@ import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import com.sun.jersey.multipart.FormDataMultiPart;
 
-public class FrameworkFunctions
+public class HttpUtilsWrapper
 {
-	protected Framework fw;
+	PersistentSession sess;
 	
-	public FrameworkFunctions(Framework fw0)
+	public HttpUtilsWrapper(PersistentSession _sess)
 	{
-		fw = fw0;
+		sess = _sess;
+	}
+	
+	public String QRPNG( String code ) throws IOException
+	{
+		return new String( QRCode.from( code ).withSize( 200, 200 ).setMargin( 1 ).to( ImageType.PNG ).stream().toByteArray(), "ISO-8859-1" );
+	}
+	
+	protected String findPackagePath( String pack )
+	{
+		if ( pack == null || pack.isEmpty() )
+			return "";
+		
+		pack = pack.replace( ".", System.getProperty( "file.separator" ) );
+		File root = sess.getRequest().getSite().getResourceRoot();
+		
+		File file = new File( root, pack + ".php" );
+		
+		if ( !file.exists() )
+			file = new File( root, pack + ".inc.php" );
+		
+		if ( !file.exists() )
+			file = new File( root, pack + ".groovy" );
+		
+		if ( !file.exists() )
+			file = new File( root, pack + ".inc.groovy" );
+		
+		if ( !file.exists() )
+			file = new File( root, pack + ".chi" );
+		
+		if ( !file.exists() )
+			file = new File( root, pack );
+		
+		// TODO: Needs improvement to make sure it's all set properly.
+		root = Loader.getPersistenceManager().getSiteManager().getSiteById( "framework" ).getResourceRoot();
+		
+		if ( !file.exists() )
+			file = new File( root, pack + ".php" );
+		
+		if ( !file.exists() )
+			file = new File( root, pack + ".inc.php" );
+		
+		if ( !file.exists() )
+			file = new File( root, pack + ".groovy" );
+		
+		if ( !file.exists() )
+			file = new File( root, pack + ".inc.groovy" );
+		
+		if ( !file.exists() )
+			file = new File( root, pack + ".chi" );
+		
+		if ( !file.exists() )
+			file = new File( root, pack );
+		
+		if ( !file.exists() )
+		{
+			Loader.getLogger().warning( "Could not find the package " + file.getAbsolutePath() + " file" );
+			return "";
+		}
+		
+		return file.getAbsolutePath();
+	}
+	
+	public String readPackage( String pack ) throws IOException
+	{
+		File file = new File( findPackagePath( pack ) );
+		
+		if ( !file.exists() )
+			return "";
+		
+		String source = fileToString( file );
+		
+		sess.getRequest().getSite().applyAlias( source );
+		
+		return source;
+	}
+	
+	public String evalPackage( String pack ) throws IOException, CodeParsingException
+	{
+		File file = new File( findPackagePath( pack ) );
+		
+		if ( !file.exists() )
+			return "";
+		
+		String source = fileToString( file );
+		
+		sess.getRequest().getSite().applyAlias( source );
+		
+		return evalGroovy( source, file.getAbsolutePath() );
+	}
+	
+	public String evalFile( String absoluteFile ) throws IOException, CodeParsingException
+	{
+		Evaling eval = sess.getEvaling();
+		eval.evalFile( absoluteFile );
+		return eval.reset();
+	}
+	
+	public String evalFile( File file ) throws IOException, CodeParsingException
+	{
+		Evaling eval = sess.getEvaling();
+		eval.evalFile( file );
+		return eval.reset();
+	}
+	
+	public String evalGroovy( String source ) throws IOException, CodeParsingException
+	{
+		return evalGroovy( source, "" );
+	}
+	
+	public String evalGroovy( String source, String filePath ) throws IOException, CodeParsingException
+	{
+		Evaling eval = sess.getEvaling();
+		
+		if ( filePath != null )
+			Loader.getLogger().info( "Attempting to evaluate source for file '" + filePath + "'" );
+		
+		if ( !source.isEmpty() )
+		{
+			if ( filePath == null || filePath.isEmpty() )
+				eval.evalCode( source, true );
+			else
+				eval.evalFileVirtual( source, filePath );
+		}
+		
+		return eval.reset();
 	}
 	
 	public String randomNum()
@@ -124,7 +258,7 @@ public class FrameworkFunctions
 		if ( seed == null )
 			seed = "";
 		
-		byte[] bytes = ArrayUtils.addAll( seed.getBytes( "ISO-8859-1" ), fw.getUid().getBytes( "ISO-8859-1" ) );
+		byte[] bytes = ArrayUtils.addAll( seed.getBytes( "ISO-8859-1" ), sess.getId().getBytes( "ISO-8859-1" ) );
 		byte[] bytesScrambled = new byte[0];
 		
 		for ( byte b : bytes )
@@ -147,7 +281,7 @@ public class FrameworkFunctions
 		
 		return "{" + guid + "}";
 	}
-
+	
 	public String createTable( List<Object> tableData )
 	{
 		return createTable( tableData, null, "" );
@@ -274,6 +408,7 @@ public class FrameworkFunctions
 		return sb.toString();
 	}
 	
+	@Deprecated
 	public static ClientResponse CreateMailingList( String apiKey )
 	{
 		Client client = Client.create();
@@ -286,6 +421,7 @@ public class FrameworkFunctions
 		
 	}
 	
+	@Deprecated
 	public static ClientResponse AddListMember( String apiKey )
 	{
 		Client client = Client.create();
@@ -300,6 +436,7 @@ public class FrameworkFunctions
 		return webResource.type( MediaType.APPLICATION_FORM_URLENCODED ).post( ClientResponse.class, formData );
 	}
 	
+	@Deprecated
 	public static ClientResponse fireMailgun( String apiKey, String from, String to, String subject, String html, String url )
 	{
 		Client client = Client.create();
@@ -311,5 +448,52 @@ public class FrameworkFunctions
 		form.field( "subject", subject );
 		form.field( "html", html );
 		return webResource.type( MediaType.MULTIPART_FORM_DATA_TYPE ).post( ClientResponse.class, form );
+	}
+	
+	public static String escapeHTML( String l )
+	{
+		return StringUtils.replaceEach( l, new String[] { "&", "\"", "<", ">" }, new String[] { "&amp;", "&quot;", "&lt;", "&gt;" } );
+	}
+	
+	public byte[] fileToByteArray( String path ) throws IOException
+	{
+		FileInputStream is = new FileInputStream( path );
+		
+		ByteArrayOutputStream bs = new ByteArrayOutputStream();
+		
+		int nRead;
+		byte[] data = new byte[16384];
+		
+		while ( ( nRead = is.read( data, 0, data.length ) ) != -1 )
+		{
+			bs.write( data, 0, nRead );
+		}
+		
+		bs.flush();
+		is.close();
+		
+		return bs.toByteArray();
+	}
+	
+	public byte[] fileToByteArray( File path ) throws IOException
+	{
+		return fileToByteArray( path.getAbsolutePath() );
+	}
+	
+	public String fileToString( String path ) throws IOException
+	{
+		try
+		{
+			return new String( fileToByteArray( path ), "ISO-8859-1" );
+		}
+		catch ( UnsupportedEncodingException e )
+		{
+			return "";
+		}
+	}
+	
+	public String fileToString( File path ) throws IOException
+	{
+		return fileToString( path.getAbsolutePath() );
 	}
 }

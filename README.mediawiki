@@ -209,6 +209,10 @@ Made structure layout changes to implement a TCP API and better support future c
 ===Subversion 3 (Flutter Bat)===
 ====Build 0104====
 Heavy code rewrites to move much code from the actual Framework into the new Request, Response and Session classes. All in preperation of a cleaner and much improved API. Expect this version to be broken until testing is performed.
+====Build 0105====
+Rebuilt the way page rendering is handled and implemented Override Annotations. This wacky creation lets you override or set any varible like theme, view, title from within any file no matter if it was redirected by the framework or interpeted directly from file.
+====Build 0106====
+As of this version, The framework was offical absorbed into the server as a whole. Scripts made for prior versions will most likely no longer work.
 
 =Coding=
 * We attempt to make our code as easily readable as possible. 

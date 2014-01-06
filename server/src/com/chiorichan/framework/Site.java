@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.json.JSONObject;
@@ -228,6 +229,36 @@ public class Site
 	public String getSubDomain()
 	{
 		return subDomain;
+	}
+	
+	public File getResourceRoot()
+	{
+		File root = getAbsoluteRoot( null );
+		root = new File( root.getAbsolutePath() + ".template" );
+		
+		if ( root.isFile() || !root.exists() )
+		{
+			root = new File( root.getAbsolutePath() + ".resource" );
+			
+			if ( root.isFile() )
+				root.delete();
+				
+			if ( !root.exists() )
+				root.mkdirs();
+		}
+		
+		return root;
+	}
+	
+	public String applyAlias( String source )
+	{
+		if ( aliases == null || aliases.size() < 1 )
+			return source;
+		
+		for ( Entry<String, String> entry : aliases.entrySet() )
+			source = source.replace( "%" + entry.getKey() + "%", entry.getValue() );
+		
+		return source;
 	}
 	
 	// TODO: Add methods to add protected files, metatags and aliases to site and save

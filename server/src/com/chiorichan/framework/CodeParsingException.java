@@ -21,7 +21,7 @@ public class CodeParsingException extends Exception
 	{
 		super();
 		
-		message = Framework.escapeHTML( e.getMessage() );
+		message = HttpUtilsWrapper.escapeHTML( e.getMessage() );
 		
 		Pattern p = Pattern.compile( "startup failed: (.*):.*line ([0-9]+), column ([0-9]+).*?" );
 		Matcher m = p.matcher( e.getMessage() );

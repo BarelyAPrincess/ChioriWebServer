@@ -9,6 +9,9 @@ abstract class scriptingBaseGroovy extends scriptingBaseJava
 {
 	Framework getFramework()
 	{
+		if ( chiori == null )
+			chiori = request.getFramework();
+		
 		return chiori;
 	}
 	

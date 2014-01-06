@@ -6,35 +6,40 @@ import java.io.OutputStream;
 
 import com.chiorichan.Loader;
 import com.chiorichan.event.http.ErrorEvent;
-import com.chiorichan.event.server.RequestEvent;
 import com.chiorichan.util.Versioning;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
+// NOTE: Change to consider, Have headers sent before data can be written to the output stream.
+// This will allow for quicker responses but might make it harder for spontaneous header changes.
 public class HttpResponse
 {
 	protected HttpRequest request;
 	protected ByteArrayOutputStream output = new ByteArrayOutputStream();
 	protected int httpStatus = 200;
 	protected String httpContentType = "text/html";
+	protected HttpResponseStage stage = HttpResponseStage.READING;
 	
 	protected HttpResponse(HttpRequest _request)
 	{
 		request = _request;
 	}
 	
-	public void sendError( int var1 )
+	public void sendError( int var1 ) throws IOException
 	{
 		sendError( var1, null );
 	}
 	
-	public void sendError( int var1, String var2 )
+	public void sendError( int var1, String var2 ) throws IOException
 	{
 		sendError( var1, var2, null );
 	}
 	
-	public void sendError( int var1, String var2, String var3 )
+	public void sendError( int var1, String var2, String var3 ) throws IOException
 	{
+		if ( stage == HttpResponseStage.CLOSED )
+			throw new IllegalStateException( "You can't access setter methods within this HttpResponse because the connection has been closed." );
+		
 		if ( var1 < 1 )
 			var1 = 500;
 		
@@ -48,29 +53,19 @@ public class HttpResponse
 		
 		output.reset();
 		
-		try
-		{
-			println( "<h1>" + var1 + " - " + var2 + "</h1>" );
-			
-			if ( var3 != null && !var3.isEmpty() )
-				println( "<p>" + var3 + "</p>" );
-			
-			println( "<hr>" );
-			println( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + "<br />" + Versioning.getCopyright() + "</small>" );
-			
-			// Trigger an internal Error Event to notify plugins of a possible problem.
-			ErrorEvent event = new ErrorEvent( request, var1, var2 );
-			Loader.getPluginManager().callEvent( event );
-			
-			sendResponse();
-		}
-		catch ( IOException e )
-		{
-			if ( e.getMessage().equals( "Broken pipe" ) )
-				Loader.getLogger().severe( "Broken Pipe: The browser closed the connection before data could be written to it." );
-			else
-				e.printStackTrace();
-		}
+		println( "<h1>" + var1 + " - " + var2 + "</h1>" );
+		
+		if ( var3 != null && !var3.isEmpty() )
+			println( "<p>" + var3 + "</p>" );
+		
+		println( "<hr>" );
+		println( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + "<br />" + Versioning.getCopyright() + "</small>" );
+		
+		// Trigger an internal Error Event to notify plugins of a possible problem.
+		ErrorEvent event = new ErrorEvent( request, var1, var2 );
+		Loader.getPluginManager().callEvent( event );
+		
+		sendResponse();
 	}
 	
 	/**
@@ -86,14 +81,19 @@ public class HttpResponse
 		return output;
 	}
 	
+	/**
+	 * DEPRECATED???
+	 */
 	public boolean isCommitted()
 	{
-		// TODO Auto-generated method stub
 		return false;
 	}
 	
 	public void setStatus( int _status )
 	{
+		if ( stage == HttpResponseStage.CLOSED )
+			throw new IllegalStateException( "You can't access setter methods within this HttpResponse because the connection has been closed." );
+		
 		httpStatus = _status;
 	}
 	
@@ -110,6 +110,9 @@ public class HttpResponse
 	// autoRedirect argument needs to be working before this method is made public
 	private void sendRedirect( String target, int httpStatus, boolean autoRedirect )
 	{
+		if ( stage == HttpResponseStage.CLOSED )
+			throw new IllegalStateException( "You can't access setter methods within this HttpResponse because the connection has been closed." );
+		
 		if ( autoRedirect )
 		{
 			setStatus( httpStatus );
@@ -120,16 +123,27 @@ public class HttpResponse
 			// TODO: Send client a redirection page.
 			// "The Request URL has been relocated to: " . $StrURL .
 			// "<br />Please change any bookmarks to reference this new location."
+			
+			try
+			{
+				println( "<script>window.location = '" + target + "';</script>" );
+			}
+			catch ( IOException e )
+			{
+				e.printStackTrace();
+			}
 		}
 	}
 	
 	public void print( String var1 ) throws IOException
 	{
+		stage = HttpResponseStage.WRITTING;
 		output.write( var1.getBytes() );
 	}
 	
 	public void println( String var1 ) throws IOException
 	{
+		stage = HttpResponseStage.WRITTING;
 		output.write( ( var1 + "\n" ).getBytes() );
 	}
 	
@@ -143,6 +157,8 @@ public class HttpResponse
 	
 	public void sendResponse() throws IOException
 	{
+		stage = HttpResponseStage.WRITTEN;
+		
 		HttpExchange http = request.getOriginal();
 		
 		Headers h = http.getResponseHeaders();
@@ -173,5 +189,7 @@ public class HttpResponse
 			output.close();
 			os.close(); // This terminates the HttpExchange and frees the resources.
 		}
+		
+		stage = HttpResponseStage.CLOSED;
 	}
 }

@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.chiorichan.Loader;
 
@@ -14,6 +15,18 @@ class FileInterpreter
 	Map<String, String> fwOverrides = new HashMap<String, String>();
 	ByteArrayOutputStream bs = new ByteArrayOutputStream();
 	File cachedFile;
+	
+	public String toString()
+	{
+		String overrides = "";
+		
+		for( Entry<String, String> o : fwOverrides.entrySet() )
+		{
+			overrides += "," + o.getKey() + "=" + o.getValue();
+		}
+		
+		return "FileInterpreter{content=" + bs.size() + " bytes,file=" + cachedFile.getAbsolutePath() + ",overrides={" + overrides.substring( 1 ) + "}}";
+	}
 	
 	public FileInterpreter(File file) throws IOException
 	{
@@ -52,6 +65,7 @@ class FileInterpreter
 		String[] scanner = new String( bs.toByteArray() ).split( "\\n" );
 		
 		int inx = 0;
+		int ln = 0;
 		for ( String l : scanner )
 		{
 			if ( l.trim().startsWith( "@" ) )
@@ -80,6 +94,7 @@ class FileInterpreter
 			}
 			
 			inx += l.length() + 1;
+			ln++;
 		}
 		
 		ByteArrayOutputStream finished = new ByteArrayOutputStream();
@@ -92,6 +107,9 @@ class FileInterpreter
 			if ( h > inx )
 				finished.write( b );
 		}
+		
+		for ( int lnn = 0; lnn < ln; lnn++ )
+			finished.write( "\n".getBytes( "ISO-8859-1" ) );
 		
 		bs = finished;
 		
@@ -114,7 +132,7 @@ class FileInterpreter
 	{
 		return bs.toByteArray();
 	}
-
+	
 	public String get( String key )
 	{
 		return fwOverrides.get( key );

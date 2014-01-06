@@ -1,4 +1,4 @@
-package com.chiorichan.framework;
+package com.chiorichan.database;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -12,16 +12,18 @@ import org.json.JSONException;
 import vnet.java.util.MySQLUtils;
 
 import com.chiorichan.Loader;
-import com.chiorichan.database.SqlConnector;
 import com.chiorichan.util.ObjectUtil;
 
-public class FrameworkDatabaseEngine
+/**
+ * Allows you to promote a SqlConnector as to provide a simple set of methods that make it easier to program inside Groovy Scripts.
+ * 
+ * @author Chiori Greene
+ */
+public class DatabaseEngine extends SqlConnector
 {
-	protected Framework fw;
-	
-	public FrameworkDatabaseEngine(Framework fw0)
+	public DatabaseEngine(SqlConnector _sql)
 	{
-		fw = fw0;
+		con = _sql.con;
 	}
 	
 	public LinkedHashMap<String, Object> selectOne( String table, Object where ) throws SQLException
@@ -47,15 +49,11 @@ public class FrameworkDatabaseEngine
 	public LinkedHashMap<String, Object> select( String table, Object where, Map<String, Object> options0 ) throws SQLException
 	{
 		String subWhere = "";
-		SqlConnector sql = fw.getRequest().getSite().sql;
-		
-		if ( sql == null )
-			return null;
 		
 		String whr = "";
 		
 		if ( where instanceof String )
-		{	
+		{
 			whr = ( (String) where );
 		}
 		else if ( where instanceof Map )
@@ -138,7 +136,7 @@ public class FrameworkDatabaseEngine
 		// TODO: Act on result!
 		SQLInjectionDetection( query );
 		
-		ResultSet rs = sql.query( query );
+		ResultSet rs = query( query );
 		
 		if ( rs == null )
 		{
@@ -146,7 +144,7 @@ public class FrameworkDatabaseEngine
 			return null;
 		}
 		
-		if ( sql.getRowCount( rs ) < 1 )
+		if ( getRowCount( rs ) < 1 )
 		{
 			Loader.getLogger().fine( "Making SELECT query \"" + query + "\" which returned no results." );
 			return new LinkedHashMap<String, Object>();
@@ -162,7 +160,7 @@ public class FrameworkDatabaseEngine
 			e.printStackTrace();
 		}
 		
-		Loader.getLogger().fine( "Making SELECT query \"" + query + "\" which returned " + sql.getRowCount( rs ) + " row(s)." );
+		Loader.getLogger().fine( "Making SELECT query \"" + query + "\" which returned " + getRowCount( rs ) + " row(s)." );
 		
 		return result;
 	}
@@ -256,10 +254,6 @@ public class FrameworkDatabaseEngine
 	public boolean update( String table, Map<String, Object> data, Object where, int lmt, boolean disableInjectionCheck )
 	{
 		String subWhere = "";
-		SqlConnector sql = fw.getRequest().getSite().sql;
-		
-		if ( sql == null )
-			return false;
 		
 		String whr = "";
 		
@@ -337,7 +331,7 @@ public class FrameworkDatabaseEngine
 		if ( !disableInjectionCheck )
 			SQLInjectionDetection( query );
 		
-		int result = sql.queryUpdate( query );
+		int result = queryUpdate( query );
 		
 		if ( result > 0 )
 		{
@@ -415,13 +409,11 @@ public class FrameworkDatabaseEngine
 	
 	public boolean delete( String table, String where, int limit )
 	{
-		SqlConnector sql = fw.getRequest().getSite().sql;
-		
 		String lmt = "";
 		if ( limit > 0 )
 			lmt = " LIMIT 1";
 		
-		int i = sql.queryUpdate( "DELETE FROM `" + table + "` WHERE " + where + lmt + ";" );
+		int i = queryUpdate( "DELETE FROM `" + table + "` WHERE " + where + lmt + ";" );
 		
 		Loader.getLogger().fine( "Deleting from table " + table + " where " + where + " " + i );
 		
@@ -435,8 +427,6 @@ public class FrameworkDatabaseEngine
 	
 	public boolean insert( String table, Map<String, Object> where, boolean disableInjectionCheck )
 	{
-		SqlConnector sql = fw.getRequest().getSite().sql;
-		
 		String keys = "";
 		String values = "";
 		
@@ -478,7 +468,7 @@ public class FrameworkDatabaseEngine
 		if ( !disableInjectionCheck && query.length() < 255 )
 			SQLInjectionDetection( query );
 		
-		int result = sql.queryUpdate( query );
+		int result = queryUpdate( query );
 		
 		if ( result > 0 )
 		{

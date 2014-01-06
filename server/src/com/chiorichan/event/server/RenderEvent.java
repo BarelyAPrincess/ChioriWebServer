@@ -1,11 +1,10 @@
 package com.chiorichan.event.server;
 
-import java.io.IOException;
 import java.util.Map;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
-import com.chiorichan.framework.CodeParsingException;
+import com.chiorichan.framework.Framework;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.HttpRequest;
 import com.chiorichan.http.HttpResponse;
@@ -69,10 +68,9 @@ public class RenderEvent extends ServerEvent
 	{
 		return !DigestUtils.md5( pageSource ).equals( pageHash );
 	}
-	
-	@Deprecated
-	public String executeCode( String source ) throws IOException, CodeParsingException
+
+	public Framework getFramework()
 	{
-		return sess.getFramework().getServer().executeCode( source );
+		return sess.getFramework();
 	}
 }

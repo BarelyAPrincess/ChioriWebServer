@@ -10,7 +10,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import com.chiorichan.Loader;
 import com.chiorichan.event.EventHandler;
@@ -19,6 +18,7 @@ import com.chiorichan.event.Listener;
 import com.chiorichan.event.server.RenderEvent;
 import com.chiorichan.event.server.RequestEvent;
 import com.chiorichan.event.user.UserLoginEvent;
+import com.chiorichan.framework.CodeParsingException;
 import com.chiorichan.framework.Site;
 import com.chiorichan.plugin.java.JavaPlugin;
 
@@ -43,20 +43,6 @@ public class Template extends JavaPlugin implements Listener
 	{
 		// event.setStatus( 418, "I'm a teapot!" );
 		// event.setCancelled( true );
-	}
-	
-	public File getTemplateRoot( Site site )
-	{
-		File templateRoot = site.getAbsoluteRoot( null );
-		templateRoot = new File( templateRoot.getAbsolutePath() + ".template" );
-		
-		if ( templateRoot.isFile() )
-			templateRoot.delete();
-		
-		if ( !templateRoot.exists() )
-			templateRoot.mkdirs();
-		
-		return templateRoot;
 	}
 	
 	public String getPackageSource( File root, String pack )
@@ -124,28 +110,6 @@ public class Template extends JavaPlugin implements Listener
 		return sb.toString();
 	}
 	
-	public String applyAlias( String source, Map<String, String> aliases )
-	{
-		if ( aliases == null || aliases.size() < 1 )
-			return source;
-		
-		for ( Entry<String, String> entry : aliases.entrySet() )
-		{
-			source = source.replace( "%" + entry.getKey() + "%", entry.getValue() );
-		}
-		
-		return source;
-	}
-	
-	public String doInclude( File root, String pack, RenderEvent event )
-	{
-		String source = event.getSession().getFramework().getServer().includePackage( pack );
-		
-		//System.out.println( "Source Length: " + source.length() + " <--> " + pack );
-		
-		return applyAlias( source, event.getSite().getAliases() );
-	}
-	
 	@EventHandler( priority = EventPriority.LOWEST )
 	public void onUserLoginEvent( UserLoginEvent event )
 	{
@@ -159,6 +123,9 @@ public class Template extends JavaPlugin implements Listener
 		Site site = event.getSite();
 		Map<String, String> fwVals = event.getPageData();
 		
+		if ( fwVals.get( "themeless" ) != null && fwVals.get( "themeless" ).equals( "true" ) )
+			return;
+		
 		String theme = fwVals.get( "theme" );
 		String view = fwVals.get( "view" );
 		String title = fwVals.get( "title" );
@@ -171,8 +138,6 @@ public class Template extends JavaPlugin implements Listener
 		
 		if ( theme.isEmpty() && view.isEmpty() )
 			return;
-		
-		File root = getTemplateRoot( site );
 		
 		if ( theme.isEmpty() )
 			theme = "com.chiorichan.themes.default";
@@ -202,14 +167,14 @@ public class Template extends JavaPlugin implements Listener
 			ob.append( tag + "\n" );
 		
 		// Allow pages to disable the inclusion of common header
-		ob.append( doInclude( root, domainToPackage( site.domain ) + ".includes.common", event ) + "\n" );
-		ob.append( doInclude( root, domainToPackage( site.domain ) + ".includes." + getPackageName( theme ), event ) + "\n" );
+		ob.append( doInclude( domainToPackage( site.domain ) + ".includes.common", event ) + "\n" );
+		ob.append( doInclude( domainToPackage( site.domain ) + ".includes." + getPackageName( theme ), event ) + "\n" );
 		
 		ob.append( "</head>\n" );
 		ob.append( "<body>\n" );
 		
-		String pageData = ( theme.isEmpty() ) ? pageMark : doInclude( root, theme, event );
-		String viewData = ( view.isEmpty() ) ? pageMark : doInclude( root, view, event );
+		String pageData = ( theme.isEmpty() ) ? pageMark : doInclude( theme, event );
+		String viewData = ( view.isEmpty() ) ? pageMark : doInclude( view, event );
 		
 		if ( pageData.indexOf( pageMark ) < 0 )
 			pageData = pageData + viewData;
@@ -226,9 +191,23 @@ public class Template extends JavaPlugin implements Listener
 		ob.append( "</body>\n" );
 		ob.append( "</html>\n" );
 		
-		event.setSource( ob.toString() );
+		event.setSource( event.getSite().applyAlias( ob.toString() ) );
 	}
 	
+	private String doInclude( String pack, RenderEvent event )
+	{
+		try
+		{
+			return event.getFramework().getHttpUtils().evalPackage( pack );
+		}
+		catch ( IOException | CodeParsingException e )
+		{
+			e.printStackTrace();
+		}
+		
+		return "";
+	}
+
 	// This is going to cause trouble *sigh*
 	public void setTitleOverride( String title )
 	{

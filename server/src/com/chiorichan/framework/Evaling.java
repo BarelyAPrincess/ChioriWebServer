@@ -27,9 +27,14 @@ public class Evaling
 		CompilerConfiguration configuration = new CompilerConfiguration();
 		configuration.setScriptBaseClass( scriptingBaseGroovy.class.getName() );
 		
-		shell = new GroovyShell( Enviro.class.getClassLoader(), binding, configuration );
+		shell = new GroovyShell( Loader.class.getClassLoader(), binding, configuration );
 		
 		shell.setProperty( "out", new PrintStream( bs ) );
+	}
+	
+	public void setVariable( String key, Object val )
+	{
+		shell.setVariable( key, val );
 	}
 	
 	public void setFileName( String fileName )

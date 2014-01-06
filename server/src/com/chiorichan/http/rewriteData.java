@@ -1,4 +1,4 @@
-package com.chiorichan.framework;
+package com.chiorichan.http;
 
 public class rewriteData
 {
