@@ -30,7 +30,6 @@ auto-updater:
   host: dl.chiorichan.com
   suggest-channels: true
 framework:
-  enabled: true
   database:
     database: chiorifw
     type: mysql

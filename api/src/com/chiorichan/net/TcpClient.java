@@ -3,12 +3,17 @@ package com.chiorichan.net;
 import java.io.IOException;
 import java.net.InetAddress;
 
+import com.chiorichan.net.packet.PingPacket;
+import com.chiorichan.util.Common;
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Connection;
+import com.esotericsoftware.kryonet.FrameworkMessage.KeepAlive;
 
 public final class TcpClient extends PacketManager
 {
 	protected Client client;
+	protected ConnectionReceiver receiver;
+	protected String lastPingId;
 	
 	/**
 	 * Attempts to make a connection with the specified server.
@@ -21,34 +26,27 @@ public final class TcpClient extends PacketManager
 	 *           <? extends TcpConnection> - This class must contain a no parameter constructor.
 	 * @throws IOException
 	 */
-	public TcpClient(InetAddress addr, int port, final Class<? extends TcpConnection> receiver) throws IOException
+	public TcpClient(InetAddress addr, int port, ConnectionReceiver _receiver) throws IOException
 	{
-		client = new Client()
-		{
-			protected Connection newConnection()
-			{
-				try
-				{
-					return receiver.newInstance();
-				}
-				catch ( InstantiationException e )
-				{
-					e.printStackTrace();
-				}
-				catch ( IllegalAccessException e )
-				{
-					e.printStackTrace();
-				}
-				
-				return null;
-			}
-		};
+		this( _receiver );
+		attemptConnection( addr, port );
+	}
+	
+	public TcpClient(ConnectionReceiver _receiver) throws IOException
+	{
+		receiver = _receiver;
+		
+		client = new Client();
+		client.getKryo().setAsmEnabled( true );
+		client.start();
 		
 		registerApiPackets( client.getKryo() );
-		
+	}
+	
+	public void attemptConnection( InetAddress addr, int port ) throws IOException
+	{
 		client.addListener( this );
-		
-		client.connect( 60, addr, port );
+		client.connect( 1000, addr, port );
 	}
 	
 	/**
@@ -68,43 +66,83 @@ public final class TcpClient extends PacketManager
 		client.getKryo().register( var1 );
 	}
 	
-	@Override
-	public void received( Connection var0, Object var2 )
+	public void sendPing()
 	{
-		TcpConnection var1 = (TcpConnection) var0;
-		
-		if ( var2 instanceof BasePacket )
+		lastPingId = Common.md5( System.currentTimeMillis() + client.getRemoteAddressTCP().getAddress().toString() );
+		sendPacket( new PingPacket( lastPingId ) );
+	}
+	
+	@Override
+	public void received( Connection var0, Object var1 )
+	{
+		if ( var1 instanceof BasePacket )
 		{
 			// Handle packet for auth methods
 		}
-		else if ( var2 instanceof Packet )
+		else if ( var1 instanceof Packet )
 		{
-			var1.onReceived( (Packet) var2 );
+			if ( var1 instanceof PingPacket )
+			{
+				PingPacket ping = (PingPacket) var1;
+				
+				if ( ping.isReply )
+				{
+					if ( lastPingId.equals( ping.id ) )
+					{
+						long localDelay = System.currentTimeMillis() - ping.created;
+						long outDelay = ping.received - ping.created;
+						long inDelay = ping.received - System.currentTimeMillis();
+						
+						System.out.println( "Network Latency Report: Round Trip " + localDelay + ", Outbound Trip " + outDelay + ", Inbound Trip " + inDelay );
+					}
+				}
+				else
+				{
+					ping.isReply = true;
+					ping.received = System.currentTimeMillis();
+					sendPacket( ping );
+				}
+			}
+			
+			( (Packet) var1 ).received( var0 );
+			if ( !receiver.onReceived( this, (Packet) var1 ) )
+				System.err.println( "There was a problem processing the received packet. Try checking the logs." );
+		}
+		else if ( var1 instanceof KeepAlive )
+		{
+			
 		}
 		else
 		{
-			System.err.println( "We received an incoming packet from the server but we can't process it because it was not an instance of Packet" );
+			System.err.println( "We received an incoming packet from the remote client but we can't process it because it was not an instance of Packet" );
 		}
 	}
 	
 	@Override
 	public void connected( Connection var0 )
 	{
-		TcpConnection var1 = (TcpConnection) var0;
-		var1.onConnect();
+		receiver.onConnect( this );
 	}
 	
 	@Override
 	public void disconnected( Connection var0 )
 	{
-		TcpConnection var1 = (TcpConnection) var0;
-		var1.onDisconnect();
+		receiver.onDisconnect( this );
 	}
 	
 	@Override
 	public void idle( Connection var0 )
 	{
-		TcpConnection var1 = (TcpConnection) var0;
-		var1.onIdle();
+		receiver.onIdle( this );
+	}
+	
+	public boolean isConnected()
+	{
+		return client.isConnected();
+	}
+	
+	public void disconnect()
+	{
+		client.close();
 	}
 }

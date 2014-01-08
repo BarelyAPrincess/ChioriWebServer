@@ -23,10 +23,12 @@ public class HttpRequest
 	private HttpResponse response;
 	private Map<String, String> getMap, postMap;
 	private int requestTime = 0;
+	private WebHandler handler;
 	
-	protected HttpRequest(HttpExchange _http)
+	protected HttpRequest(HttpExchange _http, WebHandler _handler)
 	{
 		http = _http;
+		handler = _handler;
 		requestTime = Common.getEpoch();
 		
 		response = new HttpResponse( this );

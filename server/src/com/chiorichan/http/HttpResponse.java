@@ -3,6 +3,8 @@ package com.chiorichan.http;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.chiorichan.Loader;
 import com.chiorichan.event.http.ErrorEvent;
@@ -19,10 +21,21 @@ public class HttpResponse
 	protected int httpStatus = 200;
 	protected String httpContentType = "text/html";
 	protected HttpResponseStage stage = HttpResponseStage.READING;
+	protected Map<String, String> pageDataOverrides = new HashMap<String, String>(); 
 	
 	protected HttpResponse(HttpRequest _request)
 	{
 		request = _request;
+	}
+	
+	public void mergeOverrides( Map<String, String> overrides )
+	{
+		pageDataOverrides.putAll( overrides );
+	}
+	
+	public void setOverride( String key, String val )
+	{
+		pageDataOverrides.put( key, val );
 	}
 	
 	public void sendError( int var1 ) throws IOException

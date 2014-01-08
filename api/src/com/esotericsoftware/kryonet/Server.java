@@ -92,6 +92,8 @@ public class Server implements EndPoint {
 	}
 
 	public Server (int writeBufferSize, int objectBufferSize, Serialization serialization) {
+		//set( LEVEL_TRACE );
+		
 		this.writeBufferSize = writeBufferSize;
 		this.objectBufferSize = objectBufferSize;
 

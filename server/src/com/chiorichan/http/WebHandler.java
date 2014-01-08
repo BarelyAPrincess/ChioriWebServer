@@ -35,7 +35,7 @@ public class WebHandler implements HttpHandler
 	
 	public void handle( HttpExchange t ) throws IOException
 	{
-		HttpRequest request = new HttpRequest( t );
+		HttpRequest request = new HttpRequest( t, this );
 		HttpResponse response = request.getResponse();
 		
 		try
@@ -100,9 +100,7 @@ public class WebHandler implements HttpHandler
 			
 			Map<String, String> result = null;
 			
-			// NOTE: Check if framework is disabled in config.
-			if ( Loader.getConfig().getBoolean( "framework.enabled" ) )
-				result = rewriteVirtual( domain, site, uri );
+			result = rewriteVirtual( domain, site, uri );
 			
 			if ( result == null )
 			{
@@ -264,8 +262,21 @@ public class WebHandler implements HttpHandler
 		
 		FileInterpreter fi = new FileInterpreter( requestFile );
 		
-		if ( fi.get( "reglevel" ) != null )
-			pageData.put( "reglevel", fi.get( "reglevel" ) );
+		if ( fi.get( "title" ) != null )
+			pageData.put( "title", fi.get( "title" ) );
+		
+		if ( fi.get( "reqlevel" ) != null )
+			pageData.put( "reqlevel", fi.get( "reqlevel" ) );
+		
+		if ( fi.get( "theme" ) != null )
+			pageData.put( "theme", fi.get( "theme" ) );
+		
+		if ( fi.get( "view" ) != null )
+			pageData.put( "view", fi.get( "view" ) );
+		
+		for ( Entry<String, String> kv : fi.getOverrides().entrySet() )
+			if ( !kv.getKey().equals( "title" ) && !kv.getKey().equals( "reqlevel" ) && !kv.getKey().equals( "reqlevel" ) && !kv.getKey().equals( "theme" ) && !kv.getKey().equals( "view" ) )
+				pageData.put( kv.getKey(), kv.getValue() );
 		
 		ReqFailureReason result = sess.doReqCheck( pageData.get( "reqLevel" ) );
 		
@@ -301,6 +312,14 @@ public class WebHandler implements HttpHandler
 			response.sendError( 401, result.getReason() );
 		}
 		
+		// TODO: Possible themeing of error pages.
+		if ( response.stage == HttpResponseStage.CLOSED )
+			return true;
+		
+		// Allows scripts to directly override page data. For example: Themes, Views, Titles
+		for ( Entry<String, String> kv : response.pageDataOverrides.entrySet() )
+				pageData.put( kv.getKey(), kv.getValue() );
+		
 		String source = eval.reset();
 		/*
 		 * String source; if ( continueNormally ) { source = eval.reset(); } else { currentSite =
@@ -309,22 +328,6 @@ public class WebHandler implements HttpHandler
 		 * Loader.getPersistenceManager().getSql() );
 		 * source = alternateOutput; theme = "com.chiorichan.themes.error"; view = ""; }
 		 */
-		
-		if ( fi.get( "title" ) != null )
-			pageData.put( "title", fi.get( "title" ) );
-		
-		if ( fi.get( "reqlevel" ) != null )
-			pageData.put( "reqlevel", fi.get( "reqlevel" ) );
-		
-		if ( fi.get( "theme" ) != null )
-			pageData.put( "theme", fi.get( "theme" ) );
-		
-		if ( fi.get( "view" ) != null )
-			pageData.put( "view", fi.get( "view" ) );
-		
-		for ( Entry<String, String> kv : fi.getOverrides().entrySet() )
-			if ( !kv.getKey().equals( "title" ) && !kv.getKey().equals( "reqlevel" ) && !kv.getKey().equals( "reqlevel" ) && !kv.getKey().equals( "theme" ) && !kv.getKey().equals( "view" ) )
-				pageData.put( kv.getKey(), kv.getValue() );
 
 		RenderEvent event = new RenderEvent( sess, source, pageData );
 		

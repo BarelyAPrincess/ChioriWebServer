@@ -78,7 +78,8 @@ public class PersistentSession
 		
 		rearmTimeout();
 		
-		candyName = request.getSite().getYaml().getString( "sessions.cookie-name", candyName );
+		if ( request.getSite().getYaml() != null )
+			candyName = request.getSite().getYaml().getString( "sessions.cookie-name", candyName );
 		
 		candies = pullCandies( _request );
 		sessionCandy = candies.get( candyName );
@@ -255,7 +256,7 @@ public class PersistentSession
 		
 		if ( sessionCandy == null )
 		{
-			int defaultLife = request.getSite().getYaml().getInt( "sessions.default-life", 604800 );
+			int defaultLife = (request.getSite().getYaml() != null) ? request.getSite().getYaml().getInt( "sessions.default-life", 604800 ) : 604800;
 			
 			if ( candyId == null || candyId.isEmpty() )
 				candyId = StringUtil.md5( request.getURI().toString() + System.currentTimeMillis() );

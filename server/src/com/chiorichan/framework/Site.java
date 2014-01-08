@@ -148,6 +148,9 @@ public class Site
 	
 	public YamlConfiguration getYaml()
 	{
+		if ( config == null )
+			config = new YamlConfiguration();
+		
 		return config;
 	}
 	
