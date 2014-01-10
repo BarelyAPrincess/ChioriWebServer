@@ -8,6 +8,7 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 import java.nio.channels.SocketChannel;
 
+import com.chiorichan.util.Common;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryonet.FrameworkMessage.Ping;
 
@@ -308,5 +309,10 @@ public class Connection {
 	void setConnected (boolean isConnected) {
 		this.isConnected = isConnected;
 		if (isConnected && name == null) name = "Connection " + id;
+	}
+	
+	public String getUUID()
+	{
+		return Common.md5(getRemoteAddressTCP().getAddress().getHostAddress() + getRemoteAddressTCP().getPort() + getID());
 	}
 }

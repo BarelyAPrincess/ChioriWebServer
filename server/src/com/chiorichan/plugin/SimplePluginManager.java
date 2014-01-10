@@ -164,6 +164,8 @@ public final class SimplePluginManager implements PluginManager
 			
 			plugins.put( description.getName(), file );
 			
+			// TODO: Make it so packets can be registered with the TCP Network from the plugin.yml file
+			
 			Collection<String> softDependencySet = description.getSoftDepend();
 			if ( softDependencySet != null )
 			{
@@ -807,7 +809,6 @@ public final class SimplePluginManager implements PluginManager
 		{
 			getEventListeners( getRegistrationClass( entry.getKey() ) ).registerAll( entry.getValue() );
 		}
-		
 	}
 	
 	public void registerEvent( Class<? extends Event> event, Listener listener, EventPriority priority, EventExecutor executor, Plugin plugin )

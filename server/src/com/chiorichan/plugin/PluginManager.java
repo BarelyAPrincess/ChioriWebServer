@@ -8,7 +8,6 @@ import com.chiorichan.event.Event;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
-import com.chiorichan.event.server.RenderEvent;
 import com.chiorichan.permissions.Permissible;
 import com.chiorichan.permissions.Permission;
 

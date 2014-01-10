@@ -47,6 +47,7 @@ import com.chiorichan.conversations.Conversable;
 import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.http.PersistenceManager;
 import com.chiorichan.http.WebHandler;
+import com.chiorichan.net.Packet;
 import com.chiorichan.net.PacketListener;
 import com.chiorichan.permissions.Permissible;
 import com.chiorichan.permissions.Permission;
@@ -331,6 +332,17 @@ public class Loader implements PluginMessageRecipient
 		}
 		
 		return true;
+	}
+	
+	public static boolean registerPacket( Class<? extends Packet> packet )
+	{
+		if ( tcpServer != null )
+		{
+			tcpServer.getKryo().register( packet );
+			return true;
+		}
+		else
+			return false;
 	}
 	
 	private boolean initWebServer()
@@ -1030,11 +1042,11 @@ public class Loader implements PluginMessageRecipient
 		{
 			if ( ( updater.getCurrent().isBroken() ) && ( updater.getOnBroken().contains( AutoUpdater.WARN_OPERATORS ) ) )
 			{
-				User.sendMessage( ChatColor.DARK_RED + "The version of CraftBukkit that this server is running is known to be broken. Please consider updating to the latest version at dl.bukkit.org." );
+				User.sendMessage( ChatColor.DARK_RED + "The version of Chiori Web Server that this server is running is known to be broken. Please consider updating to the latest version at dl.bukkit.org." );
 			}
 			else if ( ( updater.isUpdateAvailable() ) && ( updater.getOnUpdate().contains( AutoUpdater.WARN_OPERATORS ) ) )
 			{
-				User.sendMessage( ChatColor.DARK_PURPLE + "The version of CraftBukkit that this server is running is out of date. Please consider updating to the latest version at dl.bukkit.org." );
+				User.sendMessage( ChatColor.DARK_PURPLE + "The version of Chiori Web Server that this server is running is out of date. Please consider updating to the latest version at dl.bukkit.org." );
 			}
 		}
 	}

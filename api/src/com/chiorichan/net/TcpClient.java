@@ -68,8 +68,10 @@ public final class TcpClient extends PacketManager
 	
 	public void sendPing()
 	{
-		lastPingId = Common.md5( System.currentTimeMillis() + client.getRemoteAddressTCP().getAddress().toString() );
-		sendPacket( new PingPacket( lastPingId ) );
+		//lastPingId = Common.md5( System.currentTimeMillis() + client.getRemoteAddressTCP().getAddress().toString() );
+		//sendPacket( new PingPacket( lastPingId ) );
+		
+		client.updateReturnTripTime();
 	}
 	
 	@Override
@@ -109,7 +111,7 @@ public final class TcpClient extends PacketManager
 				System.err.println( "There was a problem processing the received packet. Try checking the logs." );
 		}
 		else if ( var1 instanceof KeepAlive )
-		{
+		{	
 			
 		}
 		else

@@ -2,9 +2,9 @@ package com.chiorichan.net;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
+import com.chiorichan.event.net.IncomingPacketEvent;
 import com.chiorichan.net.packet.CommandPacket;
 import com.chiorichan.net.packet.PingPacket;
-import com.chiorichan.util.Common;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.FrameworkMessage.KeepAlive;
@@ -14,11 +14,12 @@ public class PacketListener extends PacketManager
 	protected String lastPingId = "";
 	
 	/*
-	public void sendPing()
-	{
-		lastPingId = Common.md5( System.currentTimeMillis() + "" );
-		Loader.getTcpServer().send.sendPacket( new PingPacket( lastPingId, System.currentTimeMillis() ) );
-	}*/
+	 * public void sendPing()
+	 * {
+	 * lastPingId = Common.md5( System.currentTimeMillis() + "" );
+	 * Loader.getTcpServer().send.sendPacket( new PingPacket( lastPingId, System.currentTimeMillis() ) );
+	 * }
+	 */
 	
 	public PacketListener(Kryo kryo)
 	{
@@ -34,6 +35,10 @@ public class PacketListener extends PacketManager
 		}
 		else if ( var2 instanceof Packet )
 		{
+			Loader.getLogger().debug( "Got packet '" + var2 + "' from client at '" + var1.getRemoteAddressTCP().getAddress().getHostAddress() + "'" );
+			
+			boolean handled = true;
+			
 			( (Packet) var2 ).received( var1 );
 			
 			if ( var2 instanceof PingPacket )
@@ -68,6 +73,13 @@ public class PacketListener extends PacketManager
 						var1.sendTCP( new CommandPacket( "PONG", System.currentTimeMillis() ) );
 				}
 			}
+			else
+			{
+				handled = false;
+			}
+			
+			IncomingPacketEvent event = new IncomingPacketEvent( var1, (Packet) var2, handled );
+			Loader.getPluginManager().callEvent( event );
 		}
 		else if ( var2 instanceof KeepAlive )
 		{	

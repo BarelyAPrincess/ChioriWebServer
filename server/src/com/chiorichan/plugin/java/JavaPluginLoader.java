@@ -71,7 +71,7 @@ public class JavaPluginLoader implements PluginLoader
 		if ( extended && warn )
 		{
 			warn = false;
-			instance.getLogger().log( Level.WARNING, "JavaPluginLoader not intended to be extended by " + getClass() + ", and may be final in a future version of Bukkit" );
+			instance.getLogger().log( Level.WARNING, "JavaPluginLoader not intended to be extended by " + getClass() + ", and may be final in a future version of this Server" );
 		}
 	}
 	

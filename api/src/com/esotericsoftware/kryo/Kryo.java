@@ -356,6 +356,7 @@ public class Kryo {
 	 * Because the ID assigned is affected by the IDs registered before it, the order classes are registered is important when
 	 * using this method. The order must be the same at deserialization as it was for serialization. */
 	public Registration register (Class type) {
+		//System.out.println( ">>>>>> Packet Registration: " + type.getName()  );
 		Registration registration = classResolver.getRegistration(type);
 		if (registration != null) return registration;
 		return register(type, getDefaultSerializer(type));
