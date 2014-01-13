@@ -73,9 +73,9 @@ abstract public class scriptingBaseJava extends Script
 		return false;
 	}
 	
-	String time()
+	int time()
 	{
-		return date( "U" );
+		return Common.getEpoch();
 	}
 	
 	String date( String format )

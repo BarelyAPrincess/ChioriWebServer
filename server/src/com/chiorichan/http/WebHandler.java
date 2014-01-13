@@ -13,6 +13,7 @@ import java.util.TreeMap;
 
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
@@ -190,7 +191,8 @@ public class WebHandler implements HttpHandler
 			// "Broken Pipe: The browser closed the connection before data could be written to it.", e );
 			// else
 			e.printStackTrace();
-			response.sendError( 500, null, e.getMessage() );
+			response.sendError( 500, null, "<pre>" + ExceptionUtils.getStackTrace( e ) + "</pre>" );
+			request.getSession().getEvaling().reset(); // XXX There is a bug with the buffer not clearing on exception. This should be a decent fix.
 		}
 	}
 	
@@ -288,7 +290,7 @@ public class WebHandler implements HttpHandler
 			if ( requestFile != null )
 				try
 				{
-					if ( fi.getOverrides().get("shell").equals("groovy") )
+					if ( fi.getOverrides().get( "shell" ).equals( "groovy" ) )
 						eval.evalFileVirtual( fi.getContent(), requestFile.getAbsolutePath() );
 					else
 						eval.write( fi.getContent() );
@@ -296,6 +298,8 @@ public class WebHandler implements HttpHandler
 				catch ( CodeParsingException e )
 				{
 					e.printStackTrace();
+					response.sendError( 500, null, "<pre>" + ExceptionUtils.getStackTrace( e ) + "</pre>" );
+					return true;
 					// TODO: Generate proper exception page
 				}
 		}
@@ -318,7 +322,7 @@ public class WebHandler implements HttpHandler
 		
 		// Allows scripts to directly override page data. For example: Themes, Views, Titles
 		for ( Entry<String, String> kv : response.pageDataOverrides.entrySet() )
-				pageData.put( kv.getKey(), kv.getValue() );
+			pageData.put( kv.getKey(), kv.getValue() );
 		
 		String source = eval.reset();
 		/*
@@ -328,7 +332,7 @@ public class WebHandler implements HttpHandler
 		 * Loader.getPersistenceManager().getSql() );
 		 * source = alternateOutput; theme = "com.chiorichan.themes.error"; view = ""; }
 		 */
-
+		
 		RenderEvent event = new RenderEvent( sess, source, pageData );
 		
 		try

@@ -4,7 +4,7 @@ import com.chiorichan.event.Cancellable;
 import com.chiorichan.net.Packet;
 import com.esotericsoftware.kryonet.Connection;
 
-public class IncomingPacketEvent extends NetEvent implements Cancellable
+public class TCPIncomingEvent extends NetEvent implements Cancellable
 {
 	private boolean handled = false;
 	private boolean cancelled = false;
@@ -33,7 +33,7 @@ public class IncomingPacketEvent extends NetEvent implements Cancellable
 		handled = handle;
 	}
 	
-	public IncomingPacketEvent( Connection _connection, Packet packet, boolean handle )
+	public TCPIncomingEvent( Connection _connection, Packet packet, boolean handle )
 	{
 		connection = _connection;
 		attachedPacket = packet;

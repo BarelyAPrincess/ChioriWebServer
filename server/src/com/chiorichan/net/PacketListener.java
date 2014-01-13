@@ -2,7 +2,10 @@ package com.chiorichan.net;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
-import com.chiorichan.event.net.IncomingPacketEvent;
+import com.chiorichan.event.net.TCPConnectedEvent;
+import com.chiorichan.event.net.TCPDisconnectedEvent;
+import com.chiorichan.event.net.TCPIdleEvent;
+import com.chiorichan.event.net.TCPIncomingEvent;
 import com.chiorichan.net.packet.CommandPacket;
 import com.chiorichan.net.packet.PingPacket;
 import com.esotericsoftware.kryo.Kryo;
@@ -79,15 +82,15 @@ public class PacketListener extends PacketManager
 				handled = false;
 			}
 			
-			IncomingPacketEvent event = new IncomingPacketEvent( var1, (Packet) var2, handled );
+			TCPIncomingEvent event = new TCPIncomingEvent( var1, (Packet) var2, handled );
 			Loader.getPluginManager().callEvent( event );
 		}
 		else if ( var2 instanceof KeepAlive )
-		{	
+		{
 			// KryoNet KeepAlive Packet
 		}
 		else if ( var2 instanceof Ping )
-		{	
+		{
 			// KryoNet Ping Packet
 		}
 		else
@@ -97,20 +100,26 @@ public class PacketListener extends PacketManager
 	}
 	
 	@Override
-	public void connected( Connection var0 )
+	public void connected( Connection var1 )
 	{
-		
+		TCPConnectedEvent event = new TCPConnectedEvent( var1 );
+		Loader.getPluginManager().callEvent( event );
+		if ( event.isCancelled() )
+		{
+			Loader.getLogger().info( ChatColor.YELLOW + "Connection from " + var1.getRemoteAddressTCP().getAddress().getHostAddress() + " was disconnected because it was concelled by the TCPConnectedEvent!" );
+			var1.close();
+		}
 	}
 	
 	@Override
-	public void disconnected( Connection var0 )
+	public void disconnected( Connection var1 )
 	{
-		
+		Loader.getPluginManager().callEvent( new TCPDisconnectedEvent( var1 ) );
 	}
 	
 	@Override
-	public void idle( Connection var0 )
+	public void idle( Connection var1 )
 	{
-		
+		Loader.getPluginManager().callEvent( new TCPIdleEvent( var1 ) );
 	}
 }

@@ -21,7 +21,7 @@ public class HttpResponse
 	protected int httpStatus = 200;
 	protected String httpContentType = "text/html";
 	protected HttpResponseStage stage = HttpResponseStage.READING;
-	protected Map<String, String> pageDataOverrides = new HashMap<String, String>(); 
+	protected Map<String, String> pageDataOverrides = new HashMap<String, String>();
 	
 	protected HttpResponse(HttpRequest _request)
 	{
@@ -160,13 +160,13 @@ public class HttpResponse
 	public void print( String var1 ) throws IOException
 	{
 		stage = HttpResponseStage.WRITTING;
-		output.write( var1.getBytes() );
+		output.write( var1.getBytes( "ISO-8859-1" ) );
 	}
 	
 	public void println( String var1 ) throws IOException
 	{
 		stage = HttpResponseStage.WRITTING;
-		output.write( ( var1 + "\n" ).getBytes() );
+		output.write( ( var1 + "\n" ).getBytes( "ISO-8859-1" ) );
 	}
 	
 	public void setContentType( String type )
@@ -196,7 +196,7 @@ public class HttpResponse
 		if ( h.get( "Server" ) == null )
 			h.add( "Server", Versioning.getProduct() + " Version " + Loader.getVersion() );
 		
-		if ( h.get( "Content-Type" ) == null )
+		if ( h.get( "Content-Type" ) != null )
 			h.add( "Content-Type", httpContentType );
 		
 		h.add( "Access-Control-Allow-Origin", request.getSite().getYaml().getString( "web.allowed-origin", "*" ) );

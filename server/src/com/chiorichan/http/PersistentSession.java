@@ -91,8 +91,6 @@ public class PersistentSession
 		binding.setVariable( "request", request );
 		binding.setVariable( "response", request.getResponse() );
 		binding.setVariable( "__FILE__", new File( "" ) );
-		
-		handleUserProtocols();
 	}
 	
 	protected void handleUserProtocols()

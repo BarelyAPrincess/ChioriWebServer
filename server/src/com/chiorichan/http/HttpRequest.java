@@ -54,6 +54,7 @@ public class HttpRequest
 	protected void initSession()
 	{
 		sess = Loader.getPersistenceManager().find( this );
+		sess.handleUserProtocols();
 	}
 	
 	protected Map<String, String> queryToMap( String query ) throws UnsupportedEncodingException
