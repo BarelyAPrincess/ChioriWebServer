@@ -1,10 +1,7 @@
 package com.chiorichan.util;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 
 import org.apache.commons.codec.digest.DigestUtils;

@@ -8,6 +8,7 @@ import com.chiorichan.net.packet.PingPacket;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.FrameworkMessage.KeepAlive;
+import com.esotericsoftware.kryonet.FrameworkMessage.Ping;
 
 public class PacketListener extends PacketManager
 {
@@ -35,7 +36,7 @@ public class PacketListener extends PacketManager
 		}
 		else if ( var2 instanceof Packet )
 		{
-			Loader.getLogger().debug( "Got packet '" + var2 + "' from client at '" + var1.getRemoteAddressTCP().getAddress().getHostAddress() + "'" );
+			Loader.getLogger().info( "&5Got packet '" + var2 + "' from client at '" + var1.getRemoteAddressTCP().getAddress().getHostAddress() + "'" );
 			
 			boolean handled = true;
 			
@@ -83,11 +84,15 @@ public class PacketListener extends PacketManager
 		}
 		else if ( var2 instanceof KeepAlive )
 		{	
-			
+			// KryoNet KeepAlive Packet
+		}
+		else if ( var2 instanceof Ping )
+		{	
+			// KryoNet Ping Packet
 		}
 		else
 		{
-			Loader.getLogger().severe( "We received an incoming packet from the server but we can't process it because it was not an instance of Packet" );
+			Loader.getLogger().severe( "We received an incoming packet from the server but we can't process it because it was not an instance of Packet. (" + var2.getClass() + ")" );
 		}
 	}
 	
