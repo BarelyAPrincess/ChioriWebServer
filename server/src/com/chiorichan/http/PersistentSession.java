@@ -3,6 +3,7 @@ package com.chiorichan.http;
 import groovy.lang.Binding;
 
 import java.io.File;
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedHashMap;

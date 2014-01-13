@@ -146,6 +146,15 @@ public class HttpResponse
 				e.printStackTrace();
 			}
 		}
+		
+		try
+		{
+			sendResponse();
+		}
+		catch ( IOException e )
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	public void print( String var1 ) throws IOException

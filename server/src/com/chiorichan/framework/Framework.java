@@ -3,7 +3,6 @@ package com.chiorichan.framework;
 import com.chiorichan.ConsoleLogManager;
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
-import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.http.HttpCode;
 import com.chiorichan.http.HttpRequest;
 import com.chiorichan.http.HttpResponse;

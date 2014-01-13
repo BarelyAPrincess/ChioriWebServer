@@ -278,7 +278,7 @@ public class WebHandler implements HttpHandler
 			if ( !kv.getKey().equals( "title" ) && !kv.getKey().equals( "reqlevel" ) && !kv.getKey().equals( "reqlevel" ) && !kv.getKey().equals( "theme" ) && !kv.getKey().equals( "view" ) )
 				pageData.put( kv.getKey(), kv.getValue() );
 		
-		ReqFailureReason result = sess.doReqCheck( pageData.get( "reqLevel" ) );
+		ReqFailureReason result = sess.doReqCheck( pageData.get( "reqlevel" ) );
 		
 		if ( result == ReqFailureReason.ACCEPTED )
 		{
@@ -303,7 +303,7 @@ public class WebHandler implements HttpHandler
 		{
 			String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
 			Loader.getLogger().warning( "Requester of page '" + file + "' has been redirected to the login page." );
-			response.sendRedirect( loginForm + "?msg=" + result + "&target=" + request.getURI() );
+			response.sendRedirect( loginForm + "?msg=" + result.getReason() + "&target=" + request.getURI() );
 			// TODO: Come up with a better way to handle the URI used in the target. ie. Params are lost.
 			return true;
 		}
@@ -312,7 +312,7 @@ public class WebHandler implements HttpHandler
 			response.sendError( 401, result.getReason() );
 		}
 		
-		// TODO: Possible themeing of error pages.
+		// TODO: Possible theme'ing of error pages.
 		if ( response.stage == HttpResponseStage.CLOSED )
 			return true;
 		
