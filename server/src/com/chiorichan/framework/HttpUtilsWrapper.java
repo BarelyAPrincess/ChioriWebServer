@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.UUID;
 
 import javax.ws.rs.core.MediaType;
 
@@ -272,14 +273,7 @@ public class HttpUtilsWrapper
 			bytesScrambled = ArrayUtils.addAll( bytesScrambled, tbyte );
 		}
 		
-		String hash = new String( bytesScrambled );
-		String guid = hash.substring( 0, 8 );
-		guid += "-" + hash.substring( 8, 4 );
-		guid += "-" + hash.substring( 12, 4 );
-		guid += "-" + hash.substring( 16, 4 );
-		guid += "-" + hash.substring( 20, 12 );
-		
-		return "{" + guid + "}";
+		return "{" + UUID.nameUUIDFromBytes( bytesScrambled ).toString() + "}";
 	}
 	
 	public String createTable( List<Object> tableData )

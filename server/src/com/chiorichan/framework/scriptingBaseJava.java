@@ -3,6 +3,9 @@ package com.chiorichan.framework;
 import groovy.lang.Script;
 
 import java.io.File;
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParsePosition;
@@ -78,12 +81,22 @@ abstract public class scriptingBaseJava extends Script
 		return Common.getEpoch();
 	}
 	
+	String date()
+	{
+		return date("");
+	}
+	
 	String date( String format )
 	{
 		return date( format, null );
 	}
 	
 	String date( String format, String data )
+	{
+		return date( format, data, null );
+	}
+	
+	String date( String format, String data, String def )
 	{
 		Date date = new Date();
 		
@@ -94,14 +107,24 @@ abstract public class scriptingBaseJava extends Script
 			if ( data.length() > 10 )
 				data = data.substring( 0, 10 );
 			
-			date = new Date( Long.parseLong( data ) * 1000 );
+			try
+			{
+				date = new Date( Long.parseLong( data ) * 1000 );
+			}
+			catch ( NumberFormatException e )
+			{
+				if ( def != null )
+					return def;
+			}
 		}
-		
-		if ( format.equals( "U" ) )
-			return Common.getEpoch() + "";
 		
 		if ( format == null || format.isEmpty() )
 			format = "MMM dx YYYY";
+		
+		if ( format.contains( "U" ) )
+		{
+			format = format.replaceAll( "U", Common.getEpoch() + "" );
+		}
 		
 		if ( format.contains( "x" ) )
 		{
@@ -195,12 +218,12 @@ abstract public class scriptingBaseJava extends Script
 		return isNumeric( str );
 	}
 	
-	public boolean isNumeric(String str)
+	public boolean isNumeric( String str )
 	{
-	  NumberFormat formatter = NumberFormat.getInstance();
-	  ParsePosition pos = new ParsePosition(0);
-	  formatter.parse(str, pos);
-	  return str.length() == pos.getIndex();
+		NumberFormat formatter = NumberFormat.getInstance();
+		ParsePosition pos = new ParsePosition( 0 );
+		formatter.parse( str, pos );
+		return str.length() == pos.getIndex();
 	}
 	
 	boolean is_null( Object obj )
@@ -226,6 +249,11 @@ abstract public class scriptingBaseJava extends Script
 	String dirname( String path )
 	{
 		return new File( path ).getParent();
+	}
+	
+	BigDecimal round( BigDecimal amt, int dec )
+	{
+		return amt.round( new MathContext(dec, RoundingMode.HALF_DOWN ) );
 	}
 	
 	String apache_get_version()
