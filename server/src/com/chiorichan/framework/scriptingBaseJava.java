@@ -101,7 +101,7 @@ abstract public class scriptingBaseJava extends Script
 			return Common.getEpoch() + "";
 		
 		if ( format == null || format.isEmpty() )
-			format = "MMM d YYYY";
+			format = "MMM dx YYYY";
 		
 		if ( format.contains( "x" ) )
 		{

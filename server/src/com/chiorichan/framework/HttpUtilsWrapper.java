@@ -377,7 +377,7 @@ public class HttpUtilsWrapper
 				
 				if ( map.size() == 1 )
 				{
-					sb.append( "<td style=\"text-align: center; font-weight: bold;\" class=\"" + clss + "\" colspan=\"" + colLength + "\">" + map + "</td>\n" );
+					sb.append( "<td style=\"text-align: center; font-weight: bold;\" class=\"\" colspan=\"" + colLength + "\">" + map.get( 0 ) + "</td>\n" );
 				}
 				else
 				{

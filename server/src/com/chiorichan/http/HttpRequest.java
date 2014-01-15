@@ -178,7 +178,7 @@ public class HttpRequest
 	 */
 	public boolean isAjaxRequest()
 	{
-		return ( getHeader("X-Requested-With") == "XMLHttpRequest" );
+		return ( getHeader("X-requested-with").equals( "XMLHttpRequest" ) );
 	}
 	
 	public String getRemoteHost()
