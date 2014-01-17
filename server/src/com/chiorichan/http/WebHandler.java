@@ -76,6 +76,9 @@ public class WebHandler implements HttpHandler
 			
 			request.initSession();
 			
+			if ( request.getResponse().stage == HttpResponseStage.CLOSED )
+				return;
+			
 			initServerVars( request );
 			
 			RequestEvent event = new RequestEvent( request );

@@ -1,9 +1,15 @@
 package com.chiorichan.user;
 
+import java.io.File;
 import java.util.Map;
 
 public class BanList
 {
+
+	public BanList(File file)
+	{
+		// TODO Auto-generated constructor stub
+	}
 
 	public void setEnabled( boolean b )
 	{

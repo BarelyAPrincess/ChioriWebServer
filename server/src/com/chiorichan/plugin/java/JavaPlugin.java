@@ -12,13 +12,12 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.chiorichan.Console;
 import com.chiorichan.Loader;
 import com.chiorichan.command.Command;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.command.PluginCommand;
-import com.chiorichan.file.FileConfiguration;
-import com.chiorichan.file.YamlConfiguration;
+import com.chiorichan.configuration.file.FileConfiguration;
+import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.plugin.PluginBase;
 import com.chiorichan.plugin.PluginDescriptionFile;
 import com.chiorichan.plugin.PluginLoader;
@@ -333,8 +332,7 @@ public abstract class JavaPlugin extends PluginBase
 	}
 	
 	/**
-	 * Gets the command with the given name, specific to this plugin. Commands need to be registered in the
-	 * {@link PluginDescriptionFile#getCommands() PluginDescriptionFile} to exist at runtime.
+	 * Gets the command with the given name, specific to this plugin. Commands need to be registered in the {@link PluginDescriptionFile#getCommands() PluginDescriptionFile} to exist at runtime.
 	 * 
 	 * @param name
 	 *           name or alias of the command
@@ -391,5 +389,10 @@ public abstract class JavaPlugin extends PluginBase
 	public String toString()
 	{
 		return description.getFullName();
+	}
+	
+	public Loader getInstance()
+	{
+		return Loader.getInstance();
 	}
 }

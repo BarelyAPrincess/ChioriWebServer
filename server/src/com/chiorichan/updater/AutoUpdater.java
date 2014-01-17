@@ -101,7 +101,7 @@ public class AutoUpdater
 					if ( ( current.isBroken() ) && ( onBroken.contains( WARN_CONSOLE ) ) )
 					{
 						log.severe( "----- Chiori Auto Updater -----" );
-						log.severe( "Your version of ChioriWebServer is known to be broken. It is strongly advised that you update to a more recent version ASAP." );
+						log.severe( "Your version of Chiori Web Server is known to be broken. It is strongly advised that you update to a more recent version ASAP." );
 						log.severe( "Known issues with your version:" );
 						
 						for ( String line : current.getBrokenReason().split( "\n" ) )
@@ -117,7 +117,7 @@ public class AutoUpdater
 					else if ( onUpdate.contains( WARN_CONSOLE ) )
 					{
 						log.warning( "----- Chiori Auto Updater -----" );
-						log.warning( "Your version of CraftChiori is out of date. Version " + latest.getVersion() + " (build #" + latest.getBuildNumber() + ") was released on " + latest.getCreated() + "." );
+						log.warning( "Your version of Chiori Web Server is out of date. Version " + latest.getVersion() + " (build #" + latest.getBuildNumber() + ") was released on " + latest.getCreated() + "." );
 						log.warning( "Details: " + latest.getHtmlUrl() );
 						log.warning( "Download: " + latest.getFile().getUrl() );
 						log.warning( "----- ------------------- -----" );
@@ -126,7 +126,7 @@ public class AutoUpdater
 				else if ( ( current != null ) && ( current.isBroken() ) && ( onBroken.contains( WARN_CONSOLE ) ) )
 				{
 					log.severe( "----- Chiori Auto Updater -----" );
-					log.severe( "Your version of CraftChiori is known to be broken. It is strongly advised that you update to a more recent version ASAP." );
+					log.severe( "Your version of Chiori Web Server is known to be broken. It is strongly advised that you update to a more recent version ASAP." );
 					log.severe( "Known issues with your version:" );
 					
 					for ( String line : current.getBrokenReason().split( "\n" ) )
@@ -144,10 +144,10 @@ public class AutoUpdater
 					if ( ( prefChan != null ) && ( current.getChannel().getPriority() < prefChan.getPriority() ) )
 					{
 						log.info( "----- Chiori Auto Updater -----" );
-						log.info( "It appears that you're running a " + current.getChannel().getName() + ", when you've specified in Chiori.yml that you prefer to run " + prefChan.getName() + "s." );
-						log.info( "If you would like to be kept informed about new " + current.getChannel().getName() + " releases, it is recommended that you change 'preferred-channel' in your Chiori.yml to '" + current.getChannel().getSlug() + "'." );
+						log.info( "It appears that you're running a " + current.getChannel().getName() + ", when you've specified in chiori.yml that you prefer to run " + prefChan.getName() + "s." );
+						log.info( "If you would like to be kept informed about new " + current.getChannel().getName() + " releases, it is recommended that you change 'preferred-channel' in your chiori.yml to '" + current.getChannel().getSlug() + "'." );
 						log.info( "With that set, you will be told whenever a new version is available for download, so that you can always keep up to date and secure with the latest fixes." );
-						log.info( "If you would like to disable this warning, simply set 'suggest-channels' to false in Chiori.yml." );
+						log.info( "If you would like to disable this warning, simply set 'suggest-channels' to false in chiori.yml." );
 						log.info( "----- ------------------- -----" );
 					}
 				}

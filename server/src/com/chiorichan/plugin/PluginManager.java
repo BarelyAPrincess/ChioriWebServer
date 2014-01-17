@@ -187,9 +187,7 @@ public interface PluginManager
 	 *           Name of the permission
 	 * @return Permission, or null if none
 	 */
-	public Permission getPermission2( String name );
-	
-	public String getPermission( String name );
+	public Permission getPermission( String name );
 	
 	/**
 	 * Adds a {@link Permission} to this plugin manager.

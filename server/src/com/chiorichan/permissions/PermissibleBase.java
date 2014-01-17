@@ -92,7 +92,7 @@ public class PermissibleBase implements Permissible
 		}
 		else
 		{
-			Permission perm = Loader.getPluginManager().getPermission2( name );
+			Permission perm = Loader.getPluginManager().getPermission( name );
 			
 			if ( perm != null )
 			{
@@ -229,7 +229,7 @@ public class PermissibleBase implements Permissible
 		
 		for ( String name : keys )
 		{
-			Permission perm = Loader.getPluginManager().getPermission2( name );
+			Permission perm = Loader.getPluginManager().getPermission( name );
 			boolean value = children.get( name ) ^ invert;
 			String lname = name.toLowerCase();
 			
@@ -283,7 +283,7 @@ public class PermissibleBase implements Permissible
 		
 		if ( Loader.getScheduler().scheduleSyncDelayedTask( plugin, new RemoveAttachmentRunnable( result ), ticks ) == -1 )
 		{
-			Loader.getInstance().getLogger().log( Level.WARNING, "Could not add PermissionAttachment to " + parent + " for plugin " + plugin.getDescription().getFullName() + ": Scheduler returned -1" );
+			Loader.getLogger().log( Level.WARNING, "Could not add PermissionAttachment to " + parent + " for plugin " + plugin.getDescription().getFullName() + ": Scheduler returned -1" );
 			result.remove();
 			return null;
 		}

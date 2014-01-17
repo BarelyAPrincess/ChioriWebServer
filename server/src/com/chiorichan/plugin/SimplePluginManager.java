@@ -891,13 +891,8 @@ public final class SimplePluginManager implements PluginManager
 		}
 	}
 	
-	public String getPermission( String name )
-	{
-		return getPermission2( name ).getName();
-	}
-	
 	@Override
-	public Permission getPermission2( String name )
+	public Permission getPermission( String name )
 	{
 		return permissions.get( name.toLowerCase() );
 	}

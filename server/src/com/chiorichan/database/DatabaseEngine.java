@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.json.JSONException;
 
 import vnet.java.util.MySQLUtils;
@@ -110,24 +111,28 @@ public class DatabaseEngine extends SqlConnector
 			whr = "";
 		}
 		
-		Map<String, String> options;
+		Map<String, String> options = new LinkedHashMap<String, String>();
 		
-		options = (Map<String, String>) ( ( options0 == null ) ? new LinkedHashMap<String, String>() : options0 );
+		if ( options0 != null )
+			for ( Entry<String, Object> o : options0.entrySet() )
+			{
+				options.put( o.getKey().toLowerCase(), ObjectUtil.castToString( o.getValue() ) );
+			}
 		
 		if ( !options.containsKey( "limit" ) || !( options.get( "limit" ) instanceof String ) )
 			options.put( "limit", "0" );
-		if ( !options.containsKey( "offSet" ) || !( options.get( "offSet" ) instanceof String ) )
-			options.put( "offSet", "0" );
-		if ( !options.containsKey( "orderBy" ) )
-			options.put( "orderBy", "" );
-		if ( !options.containsKey( "groupBy" ) )
-			options.put( "groupBy", "" );
+		if ( !options.containsKey( "offset" ) || !( options.get( "offset" ) instanceof String ) )
+			options.put( "offset", "0" );
+		if ( !options.containsKey( "orderby" ) )
+			options.put( "orderby", "" );
+		if ( !options.containsKey( "groupby" ) )
+			options.put( "groupby", "" );
 		if ( !options.containsKey( "fields" ) )
 			options.put( "fields", "*" );
 		
-		String limit = ( Integer.parseInt( options.get( "limit" ) ) > 0 ) ? " LIMIT " + Integer.parseInt( options.get( "offSet" ) ) + ", " + Integer.parseInt( options.get( "limit" ) ) : "";
-		String orderby = ( (String) options.get( "orderBy" ) ) == "" ? "" : " ORDER BY " + ( (String) options.get( "orderBy" ) );
-		String groupby = ( (String) options.get( "groupBy" ) ) == "" ? "" : " GROUP BY " + ( (String) options.get( "groupBy" ) );
+		String limit = ( Integer.parseInt( options.get( "limit" ) ) > 0 ) ? " LIMIT " + Integer.parseInt( options.get( "offset" ) ) + ", " + Integer.parseInt( options.get( "limit" ) ) : "";
+		String orderby = ( (String) options.get( "orderby" ) ) == "" ? "" : " ORDER BY " + ( (String) options.get( "orderby" ) );
+		String groupby = ( (String) options.get( "groupby" ) ) == "" ? "" : " GROUP BY " + ( (String) options.get( "groupby" ) );
 		
 		where = ( whr.isEmpty() ) ? "" : " WHERE " + whr;
 		

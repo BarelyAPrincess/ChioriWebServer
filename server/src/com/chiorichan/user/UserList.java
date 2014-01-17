@@ -1,9 +1,11 @@
 package com.chiorichan.user;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -19,11 +21,11 @@ public class UserList
 	private static final SimpleDateFormat d = new SimpleDateFormat( "yyyy-MM-dd \'at\' HH:mm:ss z" );
 	private Loader server;
 	private Site site;
-	public final List Users = new java.util.concurrent.CopyOnWriteArrayList();
-	private final BanList banByName = new BanList();// = new BanList( new File( "banned-Users.txt" ) );
-	private final BanList banByIP = new BanList();// = new BanList( new File( "banned-ips.txt" ) );
+	public final List<User> users = new java.util.concurrent.CopyOnWriteArrayList<User>();
+	private final BanList banByName = new BanList( new File( "banned-users.txt" ) );
+	private final BanList banByIP = new BanList( new File( "banned-ips.txt" ) );
 	private Set operators = new HashSet();
-	private Set whitelist = new java.util.LinkedHashSet();
+	private Set whitelist = new LinkedHashSet();
 	public boolean hasWhitelist;
 	protected int maxUsers;
 	protected int c;
@@ -56,9 +58,9 @@ public class UserList
 		
 		User user;
 		
-		for ( int i = 0; i < Users.size(); ++i )
+		for ( int i = 0; i < users.size(); ++i )
 		{
-			user = (User) Users.get( i );
+			user = (User) users.get( i );
 			if ( user.getName().equalsIgnoreCase( s ) )
 			{
 				arraylist.add( user );
@@ -129,7 +131,7 @@ public class UserList
 	
 	public User getUser( String s )
 	{
-		Iterator iterator = Users.iterator();
+		Iterator iterator = users.iterator();
 		
 		User user;
 		
@@ -149,9 +151,9 @@ public class UserList
 	
 	public void saveUsers()
 	{
-		for ( int i = 0; i < Users.size(); ++i )
+		for ( int i = 0; i < users.size(); ++i )
 		{
-			( (User) Users.get( i ) ).save();
+			( (User) users.get( i ) ).save();
 		}
 	}
 	
@@ -181,7 +183,7 @@ public class UserList
 	
 	public int getUserCount()
 	{
-		return Users.size();
+		return users.size();
 	}
 	
 	public int getMaxUsers()
@@ -202,7 +204,7 @@ public class UserList
 	public List searchUsers( String s )
 	{
 		ArrayList arraylist = new ArrayList();
-		Iterator iterator = Users.iterator();
+		Iterator iterator = users.iterator();
 		
 		while ( iterator.hasNext() )
 		{
@@ -224,9 +226,9 @@ public class UserList
 	
 	public void serverShutdown()
 	{
-		while ( !Users.isEmpty() )
+		while ( !users.isEmpty() )
 		{
-			( (User) Users.get( 0 ) ).kick( server.getShutdownMessage() );
+			( (User) users.get( 0 ) ).kick( server.getShutdownMessage() );
 		}
 	}
 	

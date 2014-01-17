@@ -19,6 +19,8 @@ import com.chiorichan.command.CommandSender;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.event.user.UserLoginEvent;
 import com.chiorichan.event.user.UserLoginEvent.Result;
+import com.chiorichan.framework.Site;
+import com.chiorichan.permissions.PermissibleBase;
 import com.chiorichan.permissions.Permission;
 import com.chiorichan.permissions.PermissionAttachment;
 import com.chiorichan.permissions.PermissionAttachmentInfo;
@@ -34,6 +36,9 @@ public class User implements CommandSender
 	public String userId = "", displayLevel = "", displayName = "",
 			userLevel = "", password = "", lastMsg = "", username = "",
 			email = "";
+	
+	protected final PermissibleBase perm = new PermissibleBase( this );
+	private boolean op;
 	
 	private LinkedHashMap<String, String> sqlMap = new LinkedHashMap<String, String>();
 	
@@ -195,49 +200,31 @@ public class User implements CommandSender
 		
 	}
 	
-	public void recalculatePermissions()
-	{
-		
-	}
-	
 	public void sendPluginMessage( Plugin source, String channel, byte[] message )
 	{
-
 		
 	}
 	
 	public Collection<? extends String> getListeningPluginChannels()
 	{
-
+		
 		return null;
 	}
 	
 	public void sendMessage( String string )
 	{
-
 		
 	}
 	
 	public void setBanned( boolean b )
 	{
-
 		
 	}
 	
 	public String getAddress()
 	{
-
-		return null;
-	}
-	
-	public void setOp( boolean b )
-	{
 		
-	}
-	
-	public boolean isOp()
-	{
-		return ( userLevel.equals( "0" ) );
+		return null;
 	}
 	
 	public String getDisplayName()
@@ -247,26 +234,19 @@ public class User implements CommandSender
 	
 	public boolean canSee( User user )
 	{
-
+		
 		return false;
 	}
 	
 	public void setWhitelisted( boolean b )
 	{
-
 		
 	}
 	
 	public boolean isWhitelisted()
 	{
-
+		
 		return false;
-	}
-	
-	public Set<PermissionAttachmentInfo> getEffectivePermissions()
-	{
-
-		return null;
 	}
 	
 	public boolean isValid()
@@ -328,66 +308,9 @@ public class User implements CommandSender
 	}
 	
 	@Override
-	public boolean isPermissionSet( String name )
-	{
-		return false;
-	}
-	
-	@Override
-	public boolean isPermissionSet( Permission perm )
-	{
-		return false;
-	}
-	
-	@Override
-	public boolean hasPermission( Permission perm )
-	{
-		Loader.getLogger().info( "User was checked for permission: " + perm );
-		
-		return true;
-	}
-	
-	@Override
-	public PermissionAttachment addAttachment( Plugin plugin, String name, boolean value )
-	{
-		return null;
-	}
-	
-	@Override
-	public PermissionAttachment addAttachment( Plugin plugin )
-	{
-		return null;
-	}
-	
-	@Override
-	public PermissionAttachment addAttachment( Plugin plugin, String name, boolean value, int ticks )
-	{
-		return null;
-	}
-	
-	@Override
-	public PermissionAttachment addAttachment( Plugin plugin, int ticks )
-	{
-		return null;
-	}
-	
-	@Override
-	public void removeAttachment( PermissionAttachment attachment )
-	{
-		
-	}
-	
-	@Override
 	public void sendMessage( String[] messages )
 	{
 		
-	}
-	
-	// TODO: Permissions system needs revamping to make it more like Bukkit Permissions
-	// broadcastChannelAdministrative
-	public boolean hasPermission( String permName )
-	{
-		return hasPermission( Arrays.asList( permName ) );
 	}
 	
 	/**
@@ -476,18 +399,14 @@ public class User implements CommandSender
 	
 	/*
 	 * public void checkPermision() throws SQLException { checkPermision( "" ); }
-	 * 
 	 * /* This function gives scripts easy access to the hasPermission function without the extra requirments.
 	 * Recommended uses would be checking if page load is allowed by user.
-	 * 
 	 * TODO: Implement this method elsewhere. public boolean checkPermision( String perm_name ) throws SQLException { if
 	 * ( perm_name == null ) perm_name = "";
-	 * 
 	 * if ( !hasPermission( perm_name ) ) { // XXX: Intent is to give the user an error page if they don't have
 	 * permission. _sess.generateError( 401, "This page is limited to members with access to the \"" + perm_name +
 	 * "\" permission or better. If access is required please contact us or see your account holder for help." ); return
 	 * false; }
-	 * 
 	 * return true; }
 	 */
 	
@@ -665,5 +584,85 @@ public class User implements CommandSender
 	public LinkedHashMap<String, Object> getMyAccounts()
 	{
 		return getMyAccounts( false, false, null );
+	}
+	
+	/**
+	 * Get the site this user is associated with ?? HOW TO DO THIS
+	 * TODO Make this work like it should
+	 */
+	public Site getSite()
+	{
+		return Loader.getPersistenceManager().getSiteManager().getSiteById( "applebloom" );
+	}
+	
+	public boolean isPermissionSet( String name )
+	{
+		return perm.isPermissionSet( name );
+	}
+	
+	public boolean isPermissionSet( Permission perm )
+	{
+		return this.perm.isPermissionSet( perm );
+	}
+	
+	public boolean hasPermission( String name )
+	{
+		return perm.hasPermission( name );
+	}
+	
+	public boolean hasPermission( Permission perm )
+	{
+		return this.perm.hasPermission( perm );
+	}
+	
+	public PermissionAttachment addAttachment( Plugin plugin, String name, boolean value )
+	{
+		return perm.addAttachment( plugin, name, value );
+	}
+	
+	public PermissionAttachment addAttachment( Plugin plugin )
+	{
+		return perm.addAttachment( plugin );
+	}
+	
+	public PermissionAttachment addAttachment( Plugin plugin, String name, boolean value, int ticks )
+	{
+		return perm.addAttachment( plugin, name, value, ticks );
+	}
+	
+	public PermissionAttachment addAttachment( Plugin plugin, int ticks )
+	{
+		return perm.addAttachment( plugin, ticks );
+	}
+	
+	public void removeAttachment( PermissionAttachment attachment )
+	{
+		perm.removeAttachment( attachment );
+	}
+	
+	public void recalculatePermissions()
+	{
+		perm.recalculatePermissions();
+	}
+	
+	public void setOp( boolean value )
+	{
+		op = value;
+		perm.recalculatePermissions();
+	}
+	
+	public boolean isOp()
+	{
+		return op;
+	}
+	
+	public Set<PermissionAttachmentInfo> getEffectivePermissions()
+	{
+		return perm.getEffectivePermissions();
+	}
+	
+	public void disconnect( String reason )
+	{
+		perm.clearPermissions();
 	}
 }

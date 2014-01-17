@@ -4,10 +4,9 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.logging.Logger;
 
-import com.chiorichan.Console;
 import com.chiorichan.Loader;
 import com.chiorichan.command.CommandExecutor;
-import com.chiorichan.file.FileConfiguration;
+import com.chiorichan.configuration.file.FileConfiguration;
 
 /**
  * Represents a Plugin

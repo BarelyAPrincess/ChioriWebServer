@@ -263,6 +263,11 @@ public class Site
 		
 		return source;
 	}
+
+	public String getName()
+	{
+		return siteId;
+	}
 	
 	// TODO: Add methods to add protected files, metatags and aliases to site and save
 }

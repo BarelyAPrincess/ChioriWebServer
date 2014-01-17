@@ -45,6 +45,7 @@ import com.chiorichan.command.ServerCommand;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.conversations.Conversable;
 import com.chiorichan.file.YamlConfiguration;
+import com.chiorichan.framework.Site;
 import com.chiorichan.http.PersistenceManager;
 import com.chiorichan.http.WebHandler;
 import com.chiorichan.net.Packet;
@@ -485,7 +486,7 @@ public class Loader implements PluginMessageRecipient
 	@SuppressWarnings( "unchecked" )
 	public User[] getOnlineUsers()
 	{
-		List<User> online = userList.Users;
+		List<User> online = userList.users;
 		User[] Users = new User[online.size()];
 		
 		for ( int i = 0; i < Users.length; i++ )
@@ -1172,5 +1173,15 @@ public class Loader implements PluginMessageRecipient
 	public PluginLoadOrder getCurrentLoadState()
 	{
 		return currentState;
+	}
+
+	public List<Site> getSites()
+	{
+		return getPersistenceManager().getSiteManager().getSites();
+	}
+
+	public Site getSite( String siteName )
+	{
+		return getPersistenceManager().getSiteManager().getSiteById( siteName );
 	}
 }

@@ -2,7 +2,9 @@ package com.chiorichan.framework;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.chiorichan.database.SqlConnector;
@@ -12,12 +14,12 @@ public class SiteManager
 	SqlConnector sql;
 	Map<String, Site> siteMap = new LinkedHashMap<String, Site>();
 	
-	public SiteManager ( SqlConnector sql0 )
+	public SiteManager(SqlConnector sql0)
 	{
 		sql = sql0;
 	}
 	
-	public void loadSites ()
+	public void loadSites()
 	{
 		try
 		{
@@ -60,5 +62,10 @@ public class SiteManager
 		}
 		
 		return null;
+	}
+	
+	public List<Site> getSites()
+	{
+		return new ArrayList<Site>( siteMap.values() );
 	}
 }

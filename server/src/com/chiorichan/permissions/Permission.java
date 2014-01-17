@@ -205,7 +205,7 @@ public class Permission
 		PluginManager pm = Loader.getPluginManager();
 		String lname = name.toLowerCase();
 		
-		Permission perm = pm.getPermission2( lname );
+		Permission perm = pm.getPermission( lname );
 		
 		if ( perm == null )
 		{
