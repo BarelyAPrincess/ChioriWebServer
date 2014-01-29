@@ -607,7 +607,10 @@ public class User implements CommandSender
 	
 	public boolean hasPermission( String name )
 	{
-		return perm.hasPermission( name );
+		Loader.getLogger().debug( getName() + " was checked for permission " + name );
+		return hasPermission( Arrays.asList( name ) );
+		
+		//return perm.hasPermission( name );
 	}
 	
 	public boolean hasPermission( Permission perm )

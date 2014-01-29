@@ -4,6 +4,7 @@ import com.chiorichan.http.HttpRequest
 import com.chiorichan.http.HttpResponse
 import com.chiorichan.http.PersistentSession
 import com.chiorichan.util.Versioning
+import com.google.common.base.Joiner
 
 abstract class scriptingBaseGroovy extends scriptingBaseJava
 {
@@ -13,6 +14,11 @@ abstract class scriptingBaseGroovy extends scriptingBaseJava
 			chiori = request.getFramework();
 		
 		return chiori;
+	}
+	
+	void var_dump ( Object obj )
+	{
+		println var_export( obj )
 	}
 	
 	HttpRequest getRequest()
@@ -28,12 +34,6 @@ abstract class scriptingBaseGroovy extends scriptingBaseJava
 	PersistentSession getSession()
 	{
 		return request.getSession();
-	}
-	
-	//TODO: Make better and add support for other object types
-	void var_dump( String var )
-	{
-		println var
 	}
 	
 	void echo( String var )

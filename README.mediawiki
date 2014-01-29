@@ -21,14 +21,16 @@ this Java Web Server. Porting the framework to Java meant faster load times and 
 * Allow curtain events to be thrown on site Groovy files not just Plugins. ie. [siteroot]/com/chiorichan/events/UserLogginEvent.groovy or NotFoundEvent.groovy
 
 =Repository Directory Structure=
-==Server==
+==server==
 Sources for the Chiori Web Server.
-==API==
+==api==
 Sources required to develop a TCP Client on Android and Stand Alone.
-==Examples==
-Contains example code for Plugins, Scripts and Clients.
-==Lib==
+==examples==
+Contains example code for plugins, scripts and clients.
+==lib==
 Libraries for both the Server and Client.
+==plugins==
+Contains some basic starter plugins like PermissionsEx (Ported from Bukkit) and EmailPlugin.
 
 =Installation=
 ==Configuration==

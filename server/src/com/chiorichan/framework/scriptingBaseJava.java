@@ -15,11 +15,36 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import com.chiorichan.Loader;
+import com.chiorichan.plugin.Plugin;
+import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.util.Common;
+import com.chiorichan.util.ObjectUtil;
 import com.chiorichan.util.StringUtil;
+import com.google.common.base.Joiner;
+import com.google.common.base.Joiner.MapJoiner;
 
 abstract public class scriptingBaseJava extends Script
 {
+	@SuppressWarnings( "unchecked" )
+	String var_export( Object var )
+	{
+		if ( var instanceof List )
+			return var_export( (List<Object>) var );
+		
+		return ObjectUtil.castToString( var );
+	}
+	
+	String var_export( List<Object> lst )
+	{
+		return Joiner.on( "," ).skipNulls().join( lst );
+	}
+	
+	String var_export( Map<Object, Object> map )
+	{
+		return Joiner.on( "," ).withKeyValueSeparator( "=" ).join( map );
+	}
+	
 	String trim( String str )
 	{
 		return str.trim();
@@ -48,6 +73,11 @@ abstract public class scriptingBaseJava extends Script
 	int count( String var )
 	{
 		return var.length();
+	}
+	
+	int count( String[] var )
+	{
+		return var.length;
 	}
 	
 	int strlen( String var )
@@ -83,7 +113,7 @@ abstract public class scriptingBaseJava extends Script
 	
 	String date()
 	{
-		return date("");
+		return date( "" );
 	}
 	
 	String date( String format )
@@ -123,7 +153,7 @@ abstract public class scriptingBaseJava extends Script
 		
 		if ( format.contains( "U" ) )
 		{
-			format = format.replaceAll( "U", Common.getEpoch() + "" );
+			format = format.replaceAll( "U", ( date.getTime() / 1000 ) + "" );
 		}
 		
 		if ( format.contains( "x" ) )
@@ -203,6 +233,11 @@ abstract public class scriptingBaseJava extends Script
 		return df.format( amt );
 	}
 	
+	String[] explode( String limiter, String data )
+	{
+		return data.split( "\\" + limiter );
+	}
+	
 	String money_format( Double amt )
 	{
 		if ( amt == 0 )
@@ -210,12 +245,6 @@ abstract public class scriptingBaseJava extends Script
 		
 		DecimalFormat df = new DecimalFormat( "$###,###,###.00" );
 		return df.format( amt );
-	}
-	
-	@Deprecated
-	public boolean is_numeric( String str )
-	{
-		return isNumeric( str );
 	}
 	
 	public boolean isNumeric( String str )
@@ -253,7 +282,17 @@ abstract public class scriptingBaseJava extends Script
 	
 	BigDecimal round( BigDecimal amt, int dec )
 	{
-		return amt.round( new MathContext(dec, RoundingMode.HALF_DOWN ) );
+		return amt.round( new MathContext( dec, RoundingMode.HALF_DOWN ) );
+	}
+	
+	PluginManager getPluginManager()
+	{
+		return Loader.getPluginManager();
+	}
+	
+	Plugin getPluginByName( String search )
+	{
+		return Loader.getPluginManager().getPluginbyName( search );
 	}
 	
 	String apache_get_version()

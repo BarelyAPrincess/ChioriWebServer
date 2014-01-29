@@ -1,0 +1,5 @@
+name: EmailPlugin
+author: Chiori Greene
+main: com.chiorichan.plugins.EmailPlugin
+version: '1.0'
+depends: []
