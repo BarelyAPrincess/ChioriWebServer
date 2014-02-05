@@ -2,6 +2,7 @@ package com.chiorichan.user.builtin;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 
 import org.json.JSONException;
 
@@ -11,22 +12,28 @@ import com.chiorichan.user.LoginException;
 import com.chiorichan.user.User;
 import com.chiorichan.user.UserMetaData;
 import com.chiorichan.util.Common;
+import com.google.common.collect.Lists;
 
 public class SqlAdapter implements UserLookupAdapter
 {
 	SqlConnector sql;
 	String table;
-	String[] userFields;
+	List<String> userFields;
 	
 	// site.getYaml().getList( "logins.additionalFields" )
 	
 	public SqlAdapter(SqlConnector _sql, String _table, String... _userFields) throws SQLException
 	{
+		this( _sql, _table, Lists.newArrayList( _userFields ) );
+	}
+	
+	public SqlAdapter(SqlConnector _sql, String _table, List<String> _userFields)
+	{
 		sql = _sql;
 		table = _table;
 		userFields = _userFields;
 	}
-	
+
 	@Override
 	public boolean isAdapterValid( Site site )
 	{
@@ -103,7 +110,7 @@ public class SqlAdapter implements UserLookupAdapter
 		if ( !meta.getString( "actnum" ).equals( "0" ) )
 			throw new LoginException( LoginException.ExceptionReasons.accountNotActivated );
 	}
-
+	
 	@Override
 	public void postLoginCheck( User user ) throws LoginException
 	{
@@ -114,6 +121,6 @@ public class SqlAdapter implements UserLookupAdapter
 	public void failedLoginUpdate( User user )
 	{
 		// TODO Update use as top reflect this failure.
-		//sql.queryUpdate( "UPDATE `users` SET `lastactive` = '" + Common.getEpoch() + "', `lastloginfail` = 0, `numloginfail` = 0 WHERE `userID` = '" + user.getUserId() + "'" );
+		// sql.queryUpdate( "UPDATE `users` SET `lastactive` = '" + Common.getEpoch() + "', `lastloginfail` = 0, `numloginfail` = 0 WHERE `userID` = '" + user.getUserId() + "'" );
 	}
 }

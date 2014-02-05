@@ -19,6 +19,7 @@ import com.chiorichan.database.SqlConnector;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.SiteLoadEvent;
 import com.chiorichan.file.YamlConfiguration;
+import com.chiorichan.user.builtin.SqlAdapter;
 import com.chiorichan.user.builtin.UserLookupAdapter;
 import com.google.gson.Gson;
 
@@ -35,20 +36,11 @@ public class Site
 	{
 		try
 		{
-			SiteLoadEvent event = new SiteLoadEvent();
-			Loader.getPluginManager().callEventWithException( event );
-			
-			if ( event.isCancelled() )
-				throw new SiteException( "Site loading was cancelled by an internal event." );
-			
 			siteId = rs.getString( "siteID" );
 			title = rs.getString( "title" );
 			domain = rs.getString( "domain" );
 			
 			Loader.getLogger().info( "Loading site '" + siteId + "' with title '" + title + "' from Framework Database." );
-			
-			// Convert from hashmap to JSON
-			// new JSONObject( LinkedHashMap );
 			
 			Gson gson = new Gson();
 			try
@@ -129,9 +121,36 @@ public class Site
 				}
 				finally
 				{
-					Loader.getLogger().info( "Successfully connected to site database for site " + siteId );
+					Loader.getLogger().info( "Successfully connected to site database for site `" + siteId + "`" );
 				}
 			}
+			
+			SiteLoadEvent event = new SiteLoadEvent( this );
+			
+			if ( config != null )
+			{
+				UserLookupAdapter adapter = null;
+				
+				switch ( config.getString( "users.adapter", "builtin" ) )
+				{
+					case "sql":
+						adapter = new SqlAdapter( sql, config.getString( "users.table", "users" ), config.getStringList( "users.user-fields" ) );
+						break;
+					case "file":
+						// TODO Develop the file backend users system
+						break;
+					default:
+						adapter = Loader.getUserManager().getBuiltinAdapter();
+						break;
+				}
+				
+				event.setUserLookupAdapter( adapter );
+			}
+			
+			Loader.getPluginManager().callEventWithException( event );
+			
+			if ( event.isCancelled() )
+				throw new SiteException( "Site loading was cancelled by an internal event." );
 			
 			userLookupAdapter = event.getUserLookupAdapter();
 		}

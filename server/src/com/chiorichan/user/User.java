@@ -521,4 +521,9 @@ public class User implements CommandSender
 		// TODO Return the last IP Address this user connected from.
 		return null;
 	}
+
+	public boolean isBanned()
+	{
+		return false;
+	}
 }

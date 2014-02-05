@@ -1,13 +1,13 @@
 package com.chiorichan.user;
 
 import java.io.File;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -17,7 +17,8 @@ import com.chiorichan.event.user.UserLoginEvent;
 import com.chiorichan.event.user.UserLoginEvent.Result;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.PersistentSession;
-import com.chiorichan.util.Common;
+import com.chiorichan.user.builtin.SqlAdapter;
+import com.chiorichan.user.builtin.UserLookupAdapter;
 
 public class UserManager
 {
@@ -222,7 +223,11 @@ public class UserManager
 			UserLoginEvent event = new UserLoginEvent( user );
 			Loader.getPluginManager().callEvent( event );
 			
-			// TODO: Add whitelist and banned user check.
+			if ( !user.isWhitelisted() )
+				throw new LoginException( LoginException.ExceptionReasons.notWhiteListed );
+			
+			if ( user.isBanned() )
+				throw new LoginException( LoginException.ExceptionReasons.banned );
 			
 			if ( event.getResult() != Result.ALLOWED && event.getResult() != Result.PRELOGIN )
 				if ( event.getKickMessage().isEmpty() )
@@ -276,5 +281,13 @@ public class UserManager
 			site.getUserLookupAdapter().failedLoginUpdate( user );
 			throw l.setUser( user );
 		}
+	}
+	
+	/**
+	 * Builtin User Lookup Adapter
+	 */
+	public UserLookupAdapter getBuiltinAdapter() throws SQLException
+	{
+		return new SqlAdapter( Loader.getPersistenceManager().getSql(), "users" );
 	}
 }
