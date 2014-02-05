@@ -86,8 +86,6 @@ public class PersistenceManager
 				Loader.getLogger().severe( "The Framework Database can not support anything other then mySql or sqLite at the moment. Please change 'framework-database.type' to 'mysql' or 'sqLite' in 'chiori.yml'" );
 				Loader.stop();
 		}
-		
-		_sites.loadSites();
 	}
 	
 	protected PersistentSession find( HttpRequest request )

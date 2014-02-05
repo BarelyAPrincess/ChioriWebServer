@@ -12,6 +12,7 @@ import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
+import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.event.user.UserLoginEvent;
 import com.chiorichan.event.user.UserLoginEvent.Result;
@@ -238,21 +239,22 @@ public class UserManager
 			site.getUserLookupAdapter().preLoginCheck( user );
 			
 			List<User> arraylist = new ArrayList<User>();
+			User usera;
 			
 			for ( int i = 0; i < users.size(); ++i )
 			{
-				user = (User) users.get( i );
-				if ( user.getUserId().equalsIgnoreCase( user.getUserId() ) )
+				usera = (User) users.get( i );
+				if ( usera.getUserId().equalsIgnoreCase( usera.getUserId() ) )
 				{
-					arraylist.add( user );
+					arraylist.add( usera );
 				}
 			}
 			
 			Iterator<User> iterator = arraylist.iterator();
 			while ( iterator.hasNext() )
 			{
-				user = (User) iterator.next();
-				user.kick( "You logged in from another location." );
+				usera = (User) iterator.next();
+				usera.kick( "You logged in from another location." );
 				// TODO Make this message customizable from configs.
 			}
 			
@@ -273,6 +275,7 @@ public class UserManager
 			else
 				sess.setCookieExpiry( 604800 );
 			
+			user.setHandler( sess );
 			users.add( user );
 			return user;
 		}

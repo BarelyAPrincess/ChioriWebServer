@@ -284,41 +284,49 @@ public class WebHandler implements HttpHandler
 			if ( !kv.getKey().equals( "title" ) && !kv.getKey().equals( "reqlevel" ) && !kv.getKey().equals( "reqlevel" ) && !kv.getKey().equals( "theme" ) && !kv.getKey().equals( "view" ) )
 				pageData.put( kv.getKey(), kv.getValue() );
 		
-		ReqFailureReason result = sess.doReqCheck( pageData.get( "reqlevel" ) );
+		String req = pageData.get( "reqlevel" );
 		
-		if ( result == ReqFailureReason.ACCEPTED )
+		if ( !req.equals( "-1" ) )
 		{
-			if ( !html.isEmpty() )
-				eval.evalCode( html );
-			
-			if ( requestFile != null )
-				try
-				{
-					if ( fi.getOverrides().get( "shell" ).equals( "groovy" ) )
-						eval.evalFileVirtual( fi.getContent(), requestFile.getAbsolutePath() );
-					else
-						eval.write( fi.getContent() );
-				}
-				catch ( CodeParsingException e )
-				{
-					e.printStackTrace();
-					response.sendError( 500, null, "<pre>" + ExceptionUtils.getStackTrace( e ) + "</pre>" );
-					return true;
-					// TODO: Generate proper exception page
-				}
+			if ( sess.getCurrentUser() == null )
+			{
+				String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
+				Loader.getLogger().warning( "Requester of page '" + file + "' has been redirected to the login page." );
+				response.sendRedirect( loginForm + "?msg=You must be logged in to view that page!&target=" + request.getURI() );
+				// TODO: Come up with a better way to handle the URI used in the target. ie. Params are lost.
+				return true;
+			}
+			else if ( sess.getCurrentUser().hasPermission( req ) )
+			{
+				// Permitted to continue!!!
+			}
+			else
+			{
+				if ( req.equals( "0" ) )
+					response.sendError( 401, "This page is limited to Operators only!" );
+				
+				response.sendError( 401, "This page is limited to users with access to the \"" + req + "\" permission." );
+			}
 		}
-		else if ( result == ReqFailureReason.NO_USER )
-		{
-			String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
-			Loader.getLogger().warning( "Requester of page '" + file + "' has been redirected to the login page." );
-			response.sendRedirect( loginForm + "?msg=" + result.getReason() + "&target=" + request.getURI() );
-			// TODO: Come up with a better way to handle the URI used in the target. ie. Params are lost.
-			return true;
-		}
-		else
-		{
-			response.sendError( 401, result.getReason() );
-		}
+		
+		if ( !html.isEmpty() )
+			eval.evalCode( html );
+		
+		if ( requestFile != null )
+			try
+			{
+				if ( fi.getOverrides().get( "shell" ).equals( "groovy" ) )
+					eval.evalFileVirtual( fi.getContent(), requestFile.getAbsolutePath() );
+				else
+					eval.write( fi.getContent() );
+			}
+			catch ( CodeParsingException e )
+			{
+				e.printStackTrace();
+				response.sendError( 500, null, "<pre>" + ExceptionUtils.getStackTrace( e ) + "</pre>" );
+				return true;
+				// TODO: Generate proper exception page
+			}
 		
 		// TODO: Possible theme'ing of error pages.
 		if ( response.stage == HttpResponseStage.CLOSED )

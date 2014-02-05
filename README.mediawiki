@@ -215,6 +215,9 @@ Heavy code rewrites to move much code from the actual Framework into the new Req
 Rebuilt the way page rendering is handled and implemented Override Annotations. This wacky creation lets you override or set any varible like theme, view, title from within any file no matter if it was redirected by the framework or interpeted directly from file.
 ====Build 0106====
 As of this version, The framework was offical absorbed into the server as a whole. Scripts made for prior versions will most likely no longer work.
+===Subversion 4 (Rarity Falls)===
+====Build 0204====
+A whole new system for both users and permissions was implemented. If you want to start using the new permissions system you will need to use the PermissionsEx plugin.
 
 =Coding=
 * We attempt to make our code as easily readable as possible. 

@@ -9,12 +9,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.framework.Evaling;
 import com.chiorichan.framework.Framework;
+import com.chiorichan.framework.Site;
 import com.chiorichan.user.LoginException;
 import com.chiorichan.user.User;
+import com.chiorichan.user.UserHandler;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.StringUtil;
 import com.google.gson.Gson;
@@ -27,7 +30,7 @@ import com.google.gson.JsonSyntaxException;
  * @author Chiori Greene
  * @copyright Greenetree LLC
  */
-public class PersistentSession
+public class PersistentSession implements UserHandler
 {
 	protected Map<String, String> data = new LinkedHashMap<String, String>();
 	protected int expires = 0, defaultLife = 86400000; // 1 Day!
@@ -118,7 +121,7 @@ public class PersistentSession
 				
 				String loginPost = ( target.isEmpty() ) ? request.getSite().getYaml().getString( "scripts.login-post", "/panel" ) : target;
 				
-				Loader.getLogger().info( "Login Success: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\"" );
+				Loader.getLogger().info( ChatColor.GREEN + "Login Success: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\"" );
 				request.getResponse().sendRedirect( loginPost );
 			}
 			catch ( LoginException l )
@@ -126,7 +129,7 @@ public class PersistentSession
 				String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
 				
 				if ( l.getUser() != null )
-					Loader.getLogger().warning( "Login Failed: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + l.getUser().getUserId() + "\", Display Name \"" + l.getUser().getDisplayName() + "\"" );
+					Loader.getLogger().warning( "Login Failed: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + l.getUser().getUserId() + "\", Display Name \"" + l.getUser().getDisplayName() + "\", Reason \"" + l.getMessage() + "\"" );
 				
 				request.getResponse().sendRedirect( loginForm + "?msg=" + l.getMessage() + "&target=" + target );
 			}
@@ -146,12 +149,12 @@ public class PersistentSession
 					
 					String loginPost = ( target == null || target.isEmpty() ) ? request.getSite().getYaml().getString( "scripts.login-post", "/panel" ) : target;
 					
-					Loader.getLogger().info( "Login Success: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\", Display Level \"" + user.getDisplayLevel() + "\"" );
+					Loader.getLogger().info( ChatColor.GREEN + "Login Success: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\"" );
 					// _sess.getServer().dummyRedirect( loginPost );
 				}
 				catch ( LoginException l )
 				{	
-					Loader.getLogger().warning( "Login Status: No Valid Login Present" );
+					Loader.getLogger().warning( ChatColor.GREEN + "Login Status: No Valid Login Present" );
 				}
 			}
 			else
@@ -160,35 +163,9 @@ public class PersistentSession
 		else
 		{
 			// Recheck validity of user login since possibly we are reusing a session.
+			
+			Loader.getLogger().info( ChatColor.GREEN + "Current Login: Username \"" + currentUser.getName() + "\", Password \"" + currentUser.getMetaData().getPassword() + "\", UserId \"" + currentUser.getUserId() + "\", Display Name \"" + currentUser.getDisplayName() + "\"" );
 		}
-	}
-	
-	/**
-	 * Performs a permission check against the currently logged in user but with a much more detailed result.
-	 */
-	@Deprecated
-	public ReqFailureReason doReqCheck( String reqLevel )
-	{
-		// -1 = Allow All | 0 = Operator
-		if ( reqLevel != null && !reqLevel.equals( "-1" ) )
-		{
-			if ( currentUser == null || !currentUser.isValid() )
-			{
-				return ReqFailureReason.NO_USER;
-			}
-			else if ( reqLevel.equals( "0" ) && !currentUser.hasPermission( "" ) ) // Root Check
-			{
-				return ReqFailureReason.OP_ONLY;
-			}
-			else if ( currentUser.hasPermission( reqLevel ) && !currentUser.getUserLevel().equals( "0" ) )
-			{
-				ReqFailureReason result = ReqFailureReason.NO_ACCESS;
-				result.setReason( "This page is limited to users with access to the \"" + reqLevel + "\" permission or better." );
-				return result;
-			}
-		}
-		
-		return ReqFailureReason.ACCEPTED;
 	}
 	
 	public void setGlobal( String key, Object val )
@@ -450,5 +427,23 @@ public class PersistentSession
 	public void releaseResources()
 	{
 		request = null;
+	}
+
+	@Override
+	public void kick( String kickMessage )
+	{
+		// Invalidate this session.
+	}
+
+	@Override
+	public void sendMessage( String[] messages )
+	{
+		// q this message to be sent to the user. Probably not possible with this class
+	}
+
+	@Override
+	public Site getSite()
+	{
+		return getRequest().getSite();
 	}
 }

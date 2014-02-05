@@ -3,6 +3,7 @@ package com.chiorichan.user;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.chiorichan.util.ObjectUtil;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 
@@ -37,17 +38,27 @@ public class UserMetaData
 	
 	public String getString( String key )
 	{
-		return (String) metaData.get( key );
+		return ObjectUtil.castToString( metaData.get( key ) );
 	}
 	
 	public Integer getInteger( String key )
 	{
-		return (Integer) metaData.get( key );
+		Object obj = metaData.get( key );
+		
+		if ( obj instanceof String )
+			return Integer.parseInt( (String) obj );
+		else
+			return (Integer) obj;
 	}
 	
 	public Boolean getBoolean( String key )
 	{
-		return (Boolean) metaData.get( key );
+		Object obj = metaData.get( key );
+		
+		if ( obj instanceof String )
+			return Boolean.parseBoolean( (String) obj );
+		else
+			return (Boolean) obj;
 	}
 	
 	public void setAll( LinkedHashMap<String, Object> data )
@@ -59,7 +70,7 @@ public class UserMetaData
 	{
 		return Joiner.on( "," ).withKeyValueSeparator( "=" ).join( metaData );
 	}
-
+	
 	public boolean containsKey( String key )
 	{
 		return metaData.containsKey( key );

@@ -123,6 +123,8 @@ public class HttpResponse
 	// autoRedirect argument needs to be working before this method is made public
 	private void sendRedirect( String target, int httpStatus, boolean autoRedirect )
 	{
+		Loader.getLogger().info( "Sending page redirect to `" + target + "`" );
+		
 		if ( stage == HttpResponseStage.CLOSED )
 			throw new IllegalStateException( "You can't access setter methods within this HttpResponse because the connection has been closed." );
 		

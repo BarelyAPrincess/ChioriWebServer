@@ -11,10 +11,12 @@ import java.util.Set;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.json.JSONObject;
 
+import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.framework.Site;
+import com.chiorichan.http.PersistentSession;
 import com.chiorichan.permissions.PermissibleBase;
 import com.chiorichan.permissions.Permission;
 import com.chiorichan.permissions.PermissionAttachment;
@@ -24,17 +26,13 @@ import com.chiorichan.user.builtin.UserLookupAdapter;
 
 public class User implements CommandSender
 {
-	SqlConnector sql;
 	public Loader server;
-	// public String userId = "", displayLevel = "", displayName = "",
-	// userLevel = "", password = "", lastMsg = "", username = "",
-	// email = "";
 	
 	protected final PermissibleBase perm = new PermissibleBase( this );
 	protected UserMetaData metaData = new UserMetaData();
 	protected String username;
 	protected boolean op, loggedIn = false;
-	protected UserHandler handler;
+	protected UserHandler handler; // Set this handler for the last login
 	
 	public User(String user, UserLookupAdapter adapter) throws LoginException
 	{
@@ -47,7 +45,7 @@ public class User implements CommandSender
 		metaData = adapter.loadUser( user );
 		metaData.set( "username", user );
 		username = user;
-		op = Loader.getConfig().getList( "framework.users.operators" ).contains( user );
+		op = Loader.getConfig().getStringList( "framework.users.operators" ).contains( user );
 	}
 	
 	public UserMetaData getMetaData()
@@ -78,14 +76,15 @@ public class User implements CommandSender
 	
 	public String getName()
 	{
-		return username;
+		return metaData.getUsername();
 	}
 	
 	// TODO: Que kick message in a buffer that is sent to user if they attempt to visit a page using a session user.
 	public void kick( String kickMessage )
 	{
 		loggedIn = false;
-		handler.kick( kickMessage );
+		if ( handler != null )
+			handler.kick( kickMessage );
 	}
 	
 	public void save()
@@ -116,7 +115,6 @@ public class User implements CommandSender
 	
 	public boolean canSee( User user )
 	{
-		
 		return false;
 	}
 	
@@ -127,19 +125,19 @@ public class User implements CommandSender
 	
 	public boolean isWhitelisted()
 	{
-		
-		return false;
-	}
-	
-	@Deprecated
-	public boolean isValid()
-	{
+		// TODO Check the whitelist
 		return true;
 	}
 	
 	public String getUserId()
 	{
-		return metaData.getString( "userId" );
+		String uid = metaData.getString( "userId" );
+		
+		// temp
+		if ( uid == null )
+			uid = metaData.getString( "userID" );
+		
+		return uid;
 	}
 	
 	@Deprecated
@@ -269,13 +267,14 @@ public class User implements CommandSender
 		LinkedHashMap<String, Object> result = new LinkedHashMap<String, Object>();
 		String sqlWhere = "";
 		JSONObject json;
+		SqlConnector sql = getSite().getDatabase();
 		
 		if ( whereAlt == null )
 			whereAlt = "";
 		
 		try
 		{
-			if ( !hasPermission( "ADMIN" ) )
+			if ( !hasPermission( "applebloom.admin" ) )
 			{
 				ResultSet rs = sql.query( "SELECT * FROM `accounts` WHERE `maintainers` like '%" + getUserId() + "%';" );
 				if ( sql.getRowCount( rs ) > 0 )
@@ -374,13 +373,14 @@ public class User implements CommandSender
 		LinkedHashMap<String, Object> result = new LinkedHashMap<String, Object>();
 		String sqlWhere = "";
 		JSONObject json;
+		SqlConnector sql = getSite().getDatabase();
 		
 		if ( whereAlt == null )
 			whereAlt = "";
 		
 		try
 		{
-			if ( !hasPermission( "ADMIN" ) )
+			if ( !hasPermission( "applebloom.admin" ) )
 				sqlWhere = "`maintainers` like '%" + getUserId() + "%'";
 			
 			if ( !whereAlt.isEmpty() )
@@ -454,10 +454,19 @@ public class User implements CommandSender
 		return this.perm.isPermissionSet( perm );
 	}
 	
-	public boolean hasPermission( String name )
+	public boolean hasPermission( String req )
 	{
-		Loader.getLogger().debug( getName() + " was checked for permission " + name );
-		return perm.hasPermission( name );
+		Loader.getLogger().info( ChatColor.GREEN + "Checking `" + getUserId() + "` for permission `" + req + "` with result `" + perm.hasPermission( req ) + "`" );
+		
+		// Everyone
+		if ( req.equals( "-1" ) )
+			return true;
+		
+		// OP Only
+		if ( req.equals( "0" ) )
+			return isOp();
+		
+		return perm.hasPermission( req );
 	}
 	
 	public boolean hasPermission( Permission perm )
@@ -525,5 +534,10 @@ public class User implements CommandSender
 	public boolean isBanned()
 	{
 		return false;
+	}
+
+	public void setHandler( PersistentSession sess )
+	{
+		handler = sess;
 	}
 }

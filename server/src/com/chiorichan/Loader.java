@@ -95,7 +95,7 @@ public class Loader implements PluginMessageRecipient
 	private final PluginManager pluginManager = new SimplePluginManager( this, commandMap );
 	private final StandardMessenger messenger = new StandardMessenger();
 	protected final static Console console = new Console();
-	protected UserManager userManager = new UserManager( this );
+	protected UserManager userManager;
 	
 	protected PersistenceManager persistence;
 	
@@ -268,7 +268,11 @@ public class Loader implements PluginMessageRecipient
 		
 		enablePlugins( PluginLoadOrder.POSTSERVER );
 		
+		getLogger().info( "Initalizing the User Manager..." );
+		userManager = new UserManager( this );
+		
 		persistence = new PersistenceManager();
+		persistence.getSiteManager().loadSites();
 		
 		enablePlugins( PluginLoadOrder.POSTFRAMEWORK );
 		

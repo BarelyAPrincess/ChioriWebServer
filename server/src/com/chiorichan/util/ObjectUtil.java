@@ -6,6 +6,9 @@ public class ObjectUtil
 {
 	public static String castToString( Object value )
 	{
+		if ( value == null )
+			return null;
+		
 		switch ( value.getClass().getName() )
 		{
 			case "java.lang.Long":
