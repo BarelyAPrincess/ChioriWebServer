@@ -2,187 +2,78 @@ package com.chiorichan.user;
 
 import java.sql.ResultSet;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.chiorichan.Loader;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.database.SqlConnector;
-import com.chiorichan.event.user.UserLoginEvent;
-import com.chiorichan.event.user.UserLoginEvent.Result;
 import com.chiorichan.framework.Site;
 import com.chiorichan.permissions.PermissibleBase;
 import com.chiorichan.permissions.Permission;
 import com.chiorichan.permissions.PermissionAttachment;
 import com.chiorichan.permissions.PermissionAttachmentInfo;
 import com.chiorichan.plugin.Plugin;
-import com.chiorichan.util.Common;
-import com.chiorichan.util.ObjectUtil;
+import com.chiorichan.user.builtin.UserLookupAdapter;
 
 public class User implements CommandSender
 {
 	SqlConnector sql;
 	public Loader server;
-	public boolean valid = false;
-	public String userId = "", displayLevel = "", displayName = "",
-			userLevel = "", password = "", lastMsg = "", username = "",
-			email = "";
+	// public String userId = "", displayLevel = "", displayName = "",
+	// userLevel = "", password = "", lastMsg = "", username = "",
+	// email = "";
 	
 	protected final PermissibleBase perm = new PermissibleBase( this );
-	private boolean op;
+	protected UserMetaData metaData = new UserMetaData();
+	protected String username;
+	protected boolean op, loggedIn = false;
+	protected UserHandler handler;
 	
-	private LinkedHashMap<String, String> sqlMap = new LinkedHashMap<String, String>();
-	
-	public static LinkedHashMap<String, String> reasons = new LinkedHashMap<String, String>();
-	
-	static
+	public User(String user, UserLookupAdapter adapter) throws LoginException
 	{
-		reasons.put( "accountNotActivated", "Account is not activated." );
-		reasons.put( "underAttackPleaseWait", "Max fail login tries reached. Account locked for 30 minutes." );
-		reasons.put( "emptyUsername", "The specified username was empty. Please try again." );
-		reasons.put( "emptyPassword", "The specified password was empty. Please try again." );
-		reasons.put( "incorrectLogin", "Username and Password provided did not match any users on file." );
-		reasons.put( "successLogin", "Your login has been successfully authenticated." );
-		reasons.put( "unknownError", "Your login has failed due to an unknown internal error, Please try again." );
-		reasons.put( "permissionsError", "Fatal error was detected with your user permissions. Please notify an administrator ASAP." );
+		if ( user.isEmpty() )
+			throw new LoginException( LoginException.ExceptionReasons.emptyUsername );
+		
+		if ( adapter == null )
+			throw new LoginException( LoginException.ExceptionReasons.unknownError );
+		
+		metaData = adapter.loadUser( user );
+		metaData.set( "username", user );
+		username = user;
+		op = Loader.getConfig().getList( "framework.users.operators" ).contains( user );
 	}
 	
-	public void invalidate( String key )
+	public UserMetaData getMetaData()
 	{
-		valid = false;
-		lastMsg = ( reasons.containsKey( key ) ) ? reasons.get( key ) : reasons.get( "unknownError" );
+		return metaData;
 	}
 	
-	public User(SqlConnector sql, String username, String password)
+	public boolean validatePassword( String _password )
 	{
-		try
-		{
-			this.sql = sql;
-			this.username = username;
-			this.password = password;
-			
-			valid = true;
-			
-			if ( username == null || username.isEmpty() )
-				invalidate( "emptyUsername" );
-			
-			if ( password == null || password.isEmpty() )
-				invalidate( "emptyPassword" );
-			
-			if ( valid == false )
-				return;
-			
-			// TODO: Site config additional login fields.
-			
-			UserLoginEvent event = new UserLoginEvent( this );
-			
-			Loader.getPluginManager().callEvent( event );
-			
-			String additionalUserFields = "";
-			for ( String s : event.getAdditionalUserFields() )
-			{
-				additionalUserFields += " OR `" + s + "` = '" + username + "'";
-			}
-			
-			ResultSet rs = sql.query( "SELECT * FROM `users` WHERE (`username` = '" + username + "' OR `userID` = '" + username + "'" + additionalUserFields + ") AND (`password` = '" + password + "' OR `password` = '" + DigestUtils.md5Hex( password ) + "' OR md5(`password`) = '" + password + "');" );
-			
-			if ( rs == null || sql.getRowCount( rs ) < 1 )
-				event.setResult( Result.DENIED );
-			else
-				event.setResult( Result.ALLOWED );
-			
-			Loader.getPluginManager().callEvent( event );
-			
-			if ( event.getResult() != Result.ALLOWED )
-			{
-				// TODO: Add returned messages for the other results.
-				// TODO: Add whitelist and banned user check.
-				
-				if ( event.getKickMessage().isEmpty() )
-					invalidate( "incorrectLogin" );
-				else
-				{
-					valid = false;
-					lastMsg = event.getKickMessage();
-				}
-				
-				return;
-			}
-			
-			LinkedHashMap<String, Object> sqlCast = new LinkedHashMap<String, Object>();
-			try
-			{
-				sqlCast = SqlConnector.convertRow( rs );
-			}
-			catch ( JSONException e )
-			{
-				e.printStackTrace();
-			}
-			
-			sqlMap.clear();
-			
-			for ( Entry<String, Object> e : sqlCast.entrySet() )
-				sqlMap.put( (String) e.getKey(), ObjectUtil.castToString( e.getValue() ) );
-			
-			rs.first();
-			
-			if ( rs.getInt( "numloginfail" ) > 5 )
-			{
-				if ( rs.getInt( "lastloginfail" ) > ( Common.getEpoch() - 1800 ) )
-				{
-					invalidate( "underAttackPleaseWait" );
-					return;
-				}
-			}
-			
-			if ( !rs.getString( "actnum" ).equals( "0" ) )
-			{
-				invalidate( "accountNotActivated" );
-				return;
-			}
-			
-			lastMsg = reasons.get( "successLogin" );
-			userLevel = rs.getString( "userlevel" );
-			userId = rs.getString( "userID" );
-			email = rs.getString( "email" );
-			
-			Map<String, Object> level = sql.selectOne( "accounts_access", "accessID", rs.getString( "userlevel" ) );
-			
-			if ( level == null )
-			{
-				invalidate( "permissionError" );
-				return;
-			}
-			
-			valid = true;
-			
-			displayName = ( rs.getString( "fname" ).isEmpty() ) ? rs.getString( "name" ) : rs.getString( "fname" ) + " " + rs.getString( "name" );
-			displayLevel = (String) level.get( "title" );
-			
-			sqlMap.put( "displayname", displayName );
-			sqlMap.put( "displaylevel", displayLevel );
-			
-			sql.queryUpdate( "UPDATE `users` SET `lastactive` = '" + Common.getEpoch() + "' WHERE `userID` = '" + getUserId() + "'" );
-		}
-		catch ( Throwable t )
-		{
-			t.printStackTrace();
-			invalidate( "unknownError" );
-		}
+		String password = metaData.getPassword();
+		return ( password.equals( _password ) || password.equals( DigestUtils.md5Hex( _password ) ) || DigestUtils.md5Hex( password ).equals( _password ) );
 	}
 	
-	public Loader getServer()
+	protected String getPassword()
 	{
-		return server;
+		return metaData.getPassword();
+	}
+	
+	public boolean isLoggedIn()
+	{
+		return loggedIn;
+	}
+	
+	public String getDisplayName()
+	{
+		return metaData.getString( "displayName" );
 	}
 	
 	public String getName()
@@ -190,9 +81,11 @@ public class User implements CommandSender
 		return username;
 	}
 	
+	// TODO: Que kick message in a buffer that is sent to user if they attempt to visit a page using a session user.
 	public void kick( String kickMessage )
 	{
-		
+		loggedIn = false;
+		handler.kick( kickMessage );
 	}
 	
 	public void save()
@@ -221,17 +114,6 @@ public class User implements CommandSender
 		
 	}
 	
-	public String getAddress()
-	{
-		
-		return null;
-	}
-	
-	public String getDisplayName()
-	{
-		return displayName;
-	}
-	
 	public boolean canSee( User user )
 	{
 		
@@ -249,49 +131,32 @@ public class User implements CommandSender
 		return false;
 	}
 	
+	@Deprecated
 	public boolean isValid()
 	{
-		return valid;
+		return true;
 	}
 	
 	public String getUserId()
 	{
-		return userId;
+		return metaData.getString( "userId" );
 	}
 	
+	@Deprecated
 	public String getUserLevel()
 	{
-		return userLevel;
+		return "-1";
 	}
 	
+	@Deprecated
 	public String getDisplayLevel()
 	{
-		return displayLevel;
-	}
-	
-	public String getLastError()
-	{
-		return lastMsg;
-	}
-	
-	public String getUserName()
-	{
-		return username;
-	}
-	
-	public String getPassword()
-	{
-		return password;
+		return "Deprecated";
 	}
 	
 	public String toString()
 	{
-		return "User{user=" + username + ",pass=" + password + ",userId=" + userId + ",level=" + userLevel + ",valid=" + valid + ",lastMsg=" + lastMsg + "}";
-	}
-	
-	public String getEmail()
-	{
-		return email;
+		return "User{" + metaData.toString() + "}";
 	}
 	
 	public String getString( String key )
@@ -301,101 +166,89 @@ public class User implements CommandSender
 	
 	public String getString( String key, String def )
 	{
-		if ( !sqlMap.containsKey( key ) )
+		if ( !metaData.containsKey( key ) )
 			return def;
 		
-		return sqlMap.get( key );
+		return metaData.getString( key );
 	}
 	
 	@Override
 	public void sendMessage( String[] messages )
 	{
-		
+		handler.sendMessage( messages );
 	}
 	
 	/**
 	 * This function checks the users permission level against the permissions table for if the requested permission is
 	 * allowed by Current User.
 	 */
-	public boolean hasPermission( List<String> permName )
-	{
-		try
-		{
-			if ( permName == null || permName.isEmpty() )
-				permName = Arrays.asList( "ROOT" );
-			
-			String idenifier = getUserId();
-			
-			if ( userLevel == null || userLevel.isEmpty() )
-			{
-				Map<String, Object> result = sql.selectOne( "users", "userId", idenifier );
-				
-				if ( result == null )
-					return false;
-				
-				userLevel = (String) result.get( "userlevel" );
-			}
-			
-			Map<String, Object> perm = sql.selectOne( "accounts_access", "accessID", userLevel );
-			
-			if ( perm == null )
-				return false;
-			
-			List<String> permList = Arrays.asList( ( (String) perm.get( "permissions" ) ).split( "[|]" ) );
-			
-			if ( permList.contains( "ROOT" ) )
-				return true;
-			
-			if ( permList.contains( "ADMIN" ) )
-				return true;
-			
-			for ( String p : permName )
-			{
-				boolean granted = false;
-				String[] pS = p.split( "&" );
-				
-				for ( String pP : pS )
-				{
-					if ( pP.startsWith( "!" ) )
-					{
-						if ( permList.contains( pP.substring( 1 ) ) )
-						{
-							granted = false;
-							break;
-						}
-						else
-						{
-							granted = true;
-						}
-					}
-					else
-					{
-						if ( permList.contains( pP ) )
-						{
-							granted = true;
-						}
-						else
-						{
-							granted = false;
-							break;
-						}
-					}
-				}
-				
-				Loader.getLogger().info( "Getting Permission: " + permName + " for " + idenifier + " with result " + granted );
-				
-				if ( granted )
-					return true; // Return true if one of the requested permission names exists in users allowed permissions
-										// list.
-			}
-		}
-		catch ( Exception ex )
-		{
-			ex.printStackTrace();
-		}
-		
-		return false;
-	}
+	/*
+	 * public boolean hasPermission( List<String> permName )
+	 * {
+	 * try
+	 * {
+	 * if ( permName == null || permName.isEmpty() )
+	 * permName = Arrays.asList( "ROOT" );
+	 * String idenifier = getUserId();
+	 * if ( userLevel == null || userLevel.isEmpty() )
+	 * {
+	 * Map<String, Object> result = sql.selectOne( "users", "userId", idenifier );
+	 * if ( result == null )
+	 * return false;
+	 * userLevel = (String) result.get( "userlevel" );
+	 * }
+	 * Map<String, Object> perm = sql.selectOne( "accounts_access", "accessID", userLevel );
+	 * if ( perm == null )
+	 * return false;
+	 * List<String> permList = Arrays.asList( ( (String) perm.get( "permissions" ) ).split( "[|]" ) );
+	 * if ( permList.contains( "ROOT" ) )
+	 * return true;
+	 * if ( permList.contains( "ADMIN" ) )
+	 * return true;
+	 * for ( String p : permName )
+	 * {
+	 * boolean granted = false;
+	 * String[] pS = p.split( "&" );
+	 * for ( String pP : pS )
+	 * {
+	 * if ( pP.startsWith( "!" ) )
+	 * {
+	 * if ( permList.contains( pP.substring( 1 ) ) )
+	 * {
+	 * granted = false;
+	 * break;
+	 * }
+	 * else
+	 * {
+	 * granted = true;
+	 * }
+	 * }
+	 * else
+	 * {
+	 * if ( permList.contains( pP ) )
+	 * {
+	 * granted = true;
+	 * }
+	 * else
+	 * {
+	 * granted = false;
+	 * break;
+	 * }
+	 * }
+	 * }
+	 * Loader.getLogger().info( "Getting Permission: " + permName + " for " + idenifier + " with result " + granted );
+	 * if ( granted )
+	 * return true; // Return true if one of the requested permission names exists in users allowed permissions
+	 * // list.
+	 * }
+	 * }
+	 * catch ( Exception ex )
+	 * {
+	 * ex.printStackTrace();
+	 * }
+	 * return false;
+	 * }
+	 */
 	
 	/*
 	 * public void checkPermision() throws SQLException { checkPermision( "" ); }
@@ -586,13 +439,9 @@ public class User implements CommandSender
 		return getMyAccounts( false, false, null );
 	}
 	
-	/**
-	 * Get the site this user is associated with ?? HOW TO DO THIS
-	 * TODO Make this work like it should
-	 */
 	public Site getSite()
 	{
-		return Loader.getPersistenceManager().getSiteManager().getSiteById( "applebloom" );
+		return handler.getSite();
 	}
 	
 	public boolean isPermissionSet( String name )
@@ -608,9 +457,7 @@ public class User implements CommandSender
 	public boolean hasPermission( String name )
 	{
 		Loader.getLogger().debug( getName() + " was checked for permission " + name );
-		return hasPermission( Arrays.asList( name ) );
-		
-		//return perm.hasPermission( name );
+		return perm.hasPermission( name );
 	}
 	
 	public boolean hasPermission( Permission perm )
@@ -667,5 +514,11 @@ public class User implements CommandSender
 	public void disconnect( String reason )
 	{
 		perm.clearPermissions();
+	}
+
+	public String getAddress()
+	{
+		// TODO Return the last IP Address this user connected from.
+		return null;
 	}
 }

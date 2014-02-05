@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
 
+import com.chiorichan.Loader;
 import com.chiorichan.Warning;
 import com.chiorichan.event.Cancellable;
 import com.chiorichan.event.HandlerList;
@@ -35,7 +36,7 @@ public class UserChatEvent extends UserEvent implements Cancellable
 		super( User );
 		this.message = message;
 		this.format = "<%1$s> %2$s";
-		this.recipients = new HashSet<User>( Arrays.asList( User.getServer().getOnlineUsers() ) );
+		this.recipients = new HashSet<User>( Arrays.asList( Loader.getInstance().getOnlineUsers() ) );
 	}
 	
 	public UserChatEvent(final User User, final String message, final String format, final Set<User> recipients)

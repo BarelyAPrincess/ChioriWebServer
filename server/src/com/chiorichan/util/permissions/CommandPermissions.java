@@ -5,7 +5,7 @@ import com.chiorichan.permissions.PermissionDefault;
 
 public final class CommandPermissions
 {
-	private static final String ROOT = "bukkit.command";
+	private static final String ROOT = "chiori.command";
 	private static final String PREFIX = ROOT + ".";
 	
 	private CommandPermissions()

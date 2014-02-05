@@ -69,7 +69,7 @@ import com.chiorichan.updater.AutoUpdater;
 import com.chiorichan.updater.ChioriDLUpdaterService;
 import com.chiorichan.user.BanEntry;
 import com.chiorichan.user.User;
-import com.chiorichan.user.UserList;
+import com.chiorichan.user.UserManager;
 import com.chiorichan.util.FileUtil;
 import com.chiorichan.util.Versioning;
 import com.chiorichan.util.permissions.DefaultPermissions;
@@ -95,7 +95,7 @@ public class Loader implements PluginMessageRecipient
 	private final PluginManager pluginManager = new SimplePluginManager( this, commandMap );
 	private final StandardMessenger messenger = new StandardMessenger();
 	protected final static Console console = new Console();
-	protected UserList userList = new UserList( this );
+	protected UserManager userManager = new UserManager( this );
 	
 	protected PersistenceManager persistence;
 	
@@ -486,7 +486,7 @@ public class Loader implements PluginMessageRecipient
 	@SuppressWarnings( "unchecked" )
 	public User[] getOnlineUsers()
 	{
-		List<User> online = userList.users;
+		List<User> online = userManager.users;
 		User[] Users = new User[online.size()];
 		
 		for ( int i = 0; i < Users.length; i++ )
@@ -574,7 +574,7 @@ public class Loader implements PluginMessageRecipient
 	
 	public int getMaxUsers()
 	{
-		return userList.getMaxUsers();
+		return userManager.getMaxUsers();
 	}
 	
 	public int getPort()
@@ -652,9 +652,9 @@ public class Loader implements PluginMessageRecipient
 		return servicesManager;
 	}
 	
-	public UserList getHandle()
+	public UserManager getHandle()
 	{
-		return userList;
+		return userManager;
 	}
 	
 	public boolean dispatchServerCommand( CommandSender sender, ServerCommand serverCommand )
@@ -708,8 +708,8 @@ public class Loader implements PluginMessageRecipient
 		configuration = YamlConfiguration.loadConfiguration( getConfigFile() );
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
 		
-		userList.getIPBans().load();
-		userList.getNameBans().load();
+		userManager.getIPBans().load();
+		userManager.getNameBans().load();
 		
 		pluginManager.clearPlugins();
 		commandMap.clearCommands();
@@ -839,7 +839,7 @@ public class Loader implements PluginMessageRecipient
 	
 	public void saveUsers()
 	{
-		userList.saveUsers();
+		userManager.saveUsers();
 	}
 	
 	public Map<String, String[]> getCommandAliases()
@@ -929,7 +929,7 @@ public class Loader implements PluginMessageRecipient
 	@SuppressWarnings( "unchecked" )
 	public Set<String> getIPBans()
 	{
-		return userList.getIPBans().getEntries().keySet();
+		return userManager.getIPBans().getEntries().keySet();
 	}
 	
 	public void banIP( String address )
@@ -937,21 +937,21 @@ public class Loader implements PluginMessageRecipient
 		Validate.notNull( address, "Address cannot be null." );
 		
 		BanEntry entry = new BanEntry( address );
-		userList.getIPBans().add( entry );
-		userList.getIPBans().save();
+		userManager.getIPBans().add( entry );
+		userManager.getIPBans().save();
 	}
 	
 	public void unbanIP( String address )
 	{
-		userList.getIPBans().remove( address );
-		userList.getIPBans().save();
+		userManager.getIPBans().remove( address );
+		userManager.getIPBans().save();
 	}
 	
 	public Set<User> getBannedUsers()
 	{
 		Set<User> result = new HashSet<User>();
 		
-		for ( Object name : userList.getNameBans().getEntries().keySet() )
+		for ( Object name : userManager.getNameBans().getEntries().keySet() )
 		{
 			result.add( getOfflineUser( (String) name ) );
 		}
@@ -961,7 +961,7 @@ public class Loader implements PluginMessageRecipient
 	
 	public void setWhitelist( boolean value )
 	{
-		userList.hasWhitelist = value;
+		userManager.hasWhitelist = value;
 		configuration.set( "settings.whitelist", value );
 	}
 	
@@ -969,7 +969,7 @@ public class Loader implements PluginMessageRecipient
 	{
 		Set<User> result = new LinkedHashSet<User>();
 		
-		for ( Object name : userList.getWhitelisted() )
+		for ( Object name : userManager.getWhitelisted() )
 		{
 			if ( ( (String) name ).length() == 0 || ( (String) name ).startsWith( "#" ) )
 			{
@@ -985,7 +985,7 @@ public class Loader implements PluginMessageRecipient
 	{
 		Set<User> result = new HashSet<User>();
 		
-		for ( Object name : userList.getOPs() )
+		for ( Object name : userManager.getOPs() )
 		{
 			result.add( getOfflineUser( (String) name ) );
 		}
@@ -995,7 +995,7 @@ public class Loader implements PluginMessageRecipient
 	
 	public void reloadWhitelist()
 	{
-		userList.reloadWhitelist();
+		userManager.reloadWhitelist();
 	}
 	
 	public ConsoleCommandSender getConsoleSender()
@@ -1037,7 +1037,7 @@ public class Loader implements PluginMessageRecipient
 		return result;
 	}
 	
-	public void onUserJoin( User User )
+	public void onUserLogin( User User )
 	{
 		if ( ( updater.isEnabled() ) && ( updater.getCurrent() != null ) && ( User.hasPermission( BROADCAST_CHANNEL_ADMINISTRATIVE ) ) )
 		{
@@ -1155,9 +1155,9 @@ public class Loader implements PluginMessageRecipient
 		return options;
 	}
 	
-	public UserList getUserList()
+	public static UserManager getUserManager()
 	{
-		return userList;
+		return instance.userManager;
 	}
 	
 	public static PersistenceManager getPersistenceManager()
@@ -1174,12 +1174,12 @@ public class Loader implements PluginMessageRecipient
 	{
 		return currentState;
 	}
-
+	
 	public List<Site> getSites()
 	{
 		return getPersistenceManager().getSiteManager().getSites();
 	}
-
+	
 	public Site getSite( String siteName )
 	{
 		return getPersistenceManager().getSiteManager().getSiteById( siteName );

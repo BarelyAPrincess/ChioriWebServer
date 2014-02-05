@@ -16,8 +16,10 @@ import org.json.JSONObject;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
+import com.chiorichan.event.EventException;
+import com.chiorichan.event.server.SiteLoadEvent;
 import com.chiorichan.file.YamlConfiguration;
-import com.chiorichan.user.UserList;
+import com.chiorichan.user.builtin.UserLookupAdapter;
 import com.google.gson.Gson;
 
 public class Site
@@ -25,125 +27,118 @@ public class Site
 	public String siteId, title, domain;
 	Map<String, String> subdomains, aliases;
 	Set<String> metatags, protectedFiles;
-	UserList userList = null;
 	YamlConfiguration config;
 	SqlConnector sql;
+	UserLookupAdapter userLookupAdapter = null;
 	
-	//NOTE TO SELF: Sets do not contain duplicates while Lists can
-	
-	public Site(ResultSet rs) throws SQLException
+	public Site(ResultSet rs) throws SiteException
 	{
-		siteId = rs.getString( "siteID" );
-		title = rs.getString( "title" );
-		domain = rs.getString( "domain" );
-		
-		Loader.getLogger().info( "Loading site '" + siteId + "' with title '" + title + "' from Framework Database." );
-		
-		// Convert from hashmap to JSON
-		// new JSONObject( LinkedHashMap );
-		
-		Gson gson = new Gson();
 		try
 		{
-			if ( !rs.getString( "protected" ).isEmpty() )
-				protectedFiles = gson.fromJson( new JSONObject( rs.getString( "protected" ) ).toString(), HashSet.class );
-		}
-		catch ( Exception e )
-		{
-			Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'protected' field for site '" + siteId + "'" );
-		}
-		
-		try
-		{
-			if ( !rs.getString( "metatags" ).isEmpty() )
-				metatags = gson.fromJson( new JSONObject( rs.getString( "metatags" ) ).toString(), HashSet.class );
-		}
-		catch ( Exception e )
-		{
-			Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'metatags' field for site '" + siteId + "'" );
-		}
-		
-		try
-		{
-			if ( !rs.getString( "aliases" ).isEmpty() )
-				aliases = gson.fromJson( new JSONObject( rs.getString( "aliases" ) ).toString(), LinkedHashMap.class );
-		}
-		catch ( Exception e )
-		{
-			Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'aliases' field for site '" + siteId + "'" );
-		}
-		
-		try
-		{
-			if ( !rs.getString( "subdomains" ).isEmpty() )
-				subdomains = gson.fromJson( new JSONObject( rs.getString( "subdomains" ) ).toString(), LinkedHashMap.class );
-		}
-		catch ( Exception e )
-		{
-			Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'subdomains' field for site '" + siteId + "'" );
-		}
-		
-		try
-		{
-			String yaml = rs.getString( "configYaml" );
-			InputStream is = new ByteArrayInputStream( yaml.getBytes( "ISO-8859-1" ) );
-			config = YamlConfiguration.loadConfiguration( is );
-		}
-		catch ( Exception e )
-		{
-			Loader.getLogger().warning( "MALFORMED YAML EXPRESSION for 'configYaml' field for site '" + siteId + "'" );
-			config = new YamlConfiguration();
-		}
-		
-		if ( config != null && config.getConfigurationSection( "database" ) != null )
-		{
-			//String type = config.getString("database.type");
-			String host = config.getString("database.host");
-			String port = config.getString("database.port");
-			String database = config.getString("database.database");
-			String username = config.getString("database.username");
-			String password = config.getString("database.password");
+			SiteLoadEvent event = new SiteLoadEvent();
+			Loader.getPluginManager().callEventWithException( event );
 			
-			sql = new SqlConnector();
+			if ( event.isCancelled() )
+				throw new SiteException( "Site loading was cancelled by an internal event." );
+			
+			siteId = rs.getString( "siteID" );
+			title = rs.getString( "title" );
+			domain = rs.getString( "domain" );
+			
+			Loader.getLogger().info( "Loading site '" + siteId + "' with title '" + title + "' from Framework Database." );
+			
+			// Convert from hashmap to JSON
+			// new JSONObject( LinkedHashMap );
+			
+			Gson gson = new Gson();
+			try
+			{
+				if ( !rs.getString( "protected" ).isEmpty() )
+					protectedFiles = gson.fromJson( new JSONObject( rs.getString( "protected" ) ).toString(), HashSet.class );
+			}
+			catch ( Exception e )
+			{
+				Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'protected' field for site '" + siteId + "'" );
+			}
 			
 			try
 			{
-				sql.init( database, username, password, host, port );
+				if ( !rs.getString( "metatags" ).isEmpty() )
+					metatags = gson.fromJson( new JSONObject( rs.getString( "metatags" ) ).toString(), HashSet.class );
 			}
-			catch ( SQLException e )
+			catch ( Exception e )
 			{
-				if ( e.getCause() instanceof ConnectException )
-					Loader.getLogger().severe( "We had a problem connecting to database '" + database + "'. Reason: " + e.getCause().getMessage() );
-				else
-					Loader.getLogger().severe( e.getMessage() );
-				
-				return;
+				Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'metatags' field for site '" + siteId + "'" );
 			}
-			finally
+			
+			try
 			{
-				Loader.getLogger().info( "Successfully connected to site database for site " + siteId );
-				
-				initalizeUserList();
+				if ( !rs.getString( "aliases" ).isEmpty() )
+					aliases = gson.fromJson( new JSONObject( rs.getString( "aliases" ) ).toString(), LinkedHashMap.class );
 			}
+			catch ( Exception e )
+			{
+				Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'aliases' field for site '" + siteId + "'" );
+			}
+			
+			try
+			{
+				if ( !rs.getString( "subdomains" ).isEmpty() )
+					subdomains = gson.fromJson( new JSONObject( rs.getString( "subdomains" ) ).toString(), LinkedHashMap.class );
+			}
+			catch ( Exception e )
+			{
+				Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'subdomains' field for site '" + siteId + "'" );
+			}
+			
+			try
+			{
+				String yaml = rs.getString( "configYaml" );
+				InputStream is = new ByteArrayInputStream( yaml.getBytes( "ISO-8859-1" ) );
+				config = YamlConfiguration.loadConfiguration( is );
+			}
+			catch ( Exception e )
+			{
+				Loader.getLogger().warning( "MALFORMED YAML EXPRESSION for 'configYaml' field for site '" + siteId + "'" );
+				config = new YamlConfiguration();
+			}
+			
+			if ( config != null && config.getConfigurationSection( "database" ) != null )
+			{
+				// String type = config.getString("database.type");
+				String host = config.getString( "database.host" );
+				String port = config.getString( "database.port" );
+				String database = config.getString( "database.database" );
+				String username = config.getString( "database.username" );
+				String password = config.getString( "database.password" );
+				
+				sql = new SqlConnector();
+				
+				try
+				{
+					sql.init( database, username, password, host, port );
+				}
+				catch ( SQLException e )
+				{
+					if ( e.getCause() instanceof ConnectException )
+						Loader.getLogger().severe( "We had a problem connecting to database '" + database + "'. Reason: " + e.getCause().getMessage() );
+					else
+						Loader.getLogger().severe( e.getMessage() );
+					
+					return;
+				}
+				finally
+				{
+					Loader.getLogger().info( "Successfully connected to site database for site " + siteId );
+				}
+			}
+			
+			userLookupAdapter = event.getUserLookupAdapter();
 		}
-	}
-	
-	protected Site()
-	{
-		
-	}
-	
-	private void initalizeUserList()
-	{
-		userList = new UserList( this );
-		
-		
-		
-	}
-	
-	public UserList getUserList()
-	{
-		return userList;
+		catch ( SQLException | EventException e )
+		{
+			throw new SiteException( e );
+		}
 	}
 	
 	public YamlConfiguration getYaml()
@@ -177,7 +172,7 @@ public class Site
 		aliases = new LinkedHashMap<String, String>();
 		subdomains = new LinkedHashMap<String, String>();
 	}
-
+	
 	public boolean protectCheck( String file )
 	{
 		if ( protectedFiles == null )
@@ -213,14 +208,14 @@ public class Site
 		
 		return target;
 	}
-
+	
 	public SqlConnector getDatabase()
 	{
 		return sql;
 	}
 	
 	public String subDomain = "";
-
+	
 	public void setSubDomain( String var1 )
 	{
 		if ( var1 == null )
@@ -228,7 +223,7 @@ public class Site
 		
 		subDomain = var1;
 	}
-
+	
 	public String getSubDomain()
 	{
 		return subDomain;
@@ -245,7 +240,7 @@ public class Site
 			
 			if ( root.isFile() )
 				root.delete();
-				
+			
 			if ( !root.exists() )
 				root.mkdirs();
 		}
@@ -263,10 +258,15 @@ public class Site
 		
 		return source;
 	}
-
+	
 	public String getName()
 	{
 		return siteId;
+	}
+	
+	public UserLookupAdapter getUserLookupAdapter()
+	{
+		return userLookupAdapter;
 	}
 	
 	// TODO: Add methods to add protected files, metatags and aliases to site and save

@@ -9,6 +9,7 @@ server:
   enableWebServer: true
   enableTcpServer: true
   allowQuery: false
+  maxLogins: -1
 settings:
   permissions-file: permissions.yml
   update-folder: update

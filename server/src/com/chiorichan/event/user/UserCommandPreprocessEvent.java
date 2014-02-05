@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
 
+import com.chiorichan.Loader;
 import com.chiorichan.event.Cancellable;
 import com.chiorichan.event.HandlerList;
 import com.chiorichan.user.User;
@@ -22,16 +23,16 @@ public class UserCommandPreprocessEvent extends UserEvent implements Cancellable
 	private String format = "<%1$s> %2$s";
 	private final Set<User> recipients;
 	
-	public UserCommandPreprocessEvent(final User User, final String message)
+	public UserCommandPreprocessEvent(final User user, final String message)
 	{
-		super( User );
-		this.recipients = new HashSet<User>( Arrays.asList( User.getServer().getOnlineUsers() ) );
+		super( user );
+		this.recipients = new HashSet<User>( Arrays.asList( Loader.getInstance().getOnlineUsers() ) );
 		this.message = message;
 	}
 	
-	public UserCommandPreprocessEvent(final User User, final String message, final Set<User> recipients)
+	public UserCommandPreprocessEvent(final User user, final String message, final Set<User> recipients)
 	{
-		super( User );
+		super( user );
 		this.recipients = recipients;
 		this.message = message;
 	}

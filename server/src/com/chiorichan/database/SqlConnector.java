@@ -15,9 +15,7 @@ import java.util.List;
 import org.json.JSONException;
 
 import com.chiorichan.Loader;
-
-import java.sql.Blob;
-
+import com.google.common.collect.Lists;
 import com.mysql.jdbc.exceptions.jdbc4.CommunicationsException;
 import com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException;
 
@@ -457,4 +455,45 @@ public class SqlConnector
 		return result;
 	}
 	
+	public ResultSetMetaData getTableMetaData( String table ) throws SQLException
+	{
+		ResultSet rs = query( "SELECT * FROM " + table );
+		return rs.getMetaData();
+	}
+	
+	public List<String> getTableFieldNames( String table ) throws SQLException
+	{
+		List<String> rtn = Lists.newArrayList();
+		
+		ResultSet rs = query( "SELECT * FROM " + table );
+		
+		ResultSetMetaData rsmd = rs.getMetaData();
+		
+		int numColumns = rsmd.getColumnCount();
+		
+		for ( int i = 1; i < numColumns + 1; i++ )
+		{	
+			rtn.add( rsmd.getColumnName( i ) );
+		}
+		
+		return rtn;
+	}
+	
+	public List<String> getTableFieldTypes( String table ) throws SQLException
+	{
+		List<String> rtn = Lists.newArrayList();
+		
+		ResultSet rs = query( "SELECT * FROM " + table );
+		
+		ResultSetMetaData rsmd = rs.getMetaData();
+		
+		int numColumns = rsmd.getColumnCount();
+		
+		for ( int i = 1; i < numColumns + 1; i++ )
+		{	
+			rtn.add( rsmd.getColumnTypeName( i ) );
+		}
+		
+		return rtn;
+	}
 }

@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
 
 public class SiteManager
@@ -31,14 +32,14 @@ public class SiteManager
 				do
 				{
 					if ( rs.getString( "siteID" ).equals( "framework" ) )
-						siteMap.put( "framework", new FrameworkSite( rs ) );
+						siteMap.put( "framework", new FrameworkSite( rs ).setDatabase( Loader.getPersistenceManager().getSql() ) );
 					else
 						siteMap.put( rs.getString( "siteID" ), new Site( rs ) );
 				}
 				while ( rs.next() );
 			}
 		}
-		catch ( SQLException e )
+		catch ( SQLException | SiteException e )
 		{
 			// TODO: Better this error catch. Also make some way for a new table to be created if not exist.
 			e.printStackTrace();

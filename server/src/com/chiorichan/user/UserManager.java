@@ -7,75 +7,40 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
 import com.chiorichan.Loader;
-import com.chiorichan.database.SqlConnector;
+import com.chiorichan.event.user.UserLoginEvent;
+import com.chiorichan.event.user.UserLoginEvent.Result;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.PersistentSession;
+import com.chiorichan.util.Common;
 
-public class UserList
+public class UserManager
 {
 	private static final SimpleDateFormat d = new SimpleDateFormat( "yyyy-MM-dd \'at\' HH:mm:ss z" );
 	private Loader server;
-	private Site site;
 	public final List<User> users = new java.util.concurrent.CopyOnWriteArrayList<User>();
 	private final BanList banByName = new BanList( new File( "banned-users.txt" ) );
 	private final BanList banByIP = new BanList( new File( "banned-ips.txt" ) );
-	private Set operators = new HashSet();
-	private Set whitelist = new LinkedHashSet();
+	private Set<String> operators = new HashSet<String>();
+	private Set<String> whitelist = new LinkedHashSet<String>();
 	public boolean hasWhitelist;
 	protected int maxUsers;
 	protected int c;
 	private boolean m;
 	private int n;
 	
-	public UserList(Loader server0)
-	{
-		this();
-		server = server0;
-	}
-	
-	public UserList(Site site0)
-	{
-		this();
-		site = site0;
-	}
-	
-	public UserList()
+	public UserManager(Loader server0)
 	{
 		banByName.setEnabled( false );
 		banByIP.setEnabled( false );
-		maxUsers = 50;
-	}
-	
-	public User processLogin( User usr )
-	{
-		String s = usr.getName();
-		ArrayList arraylist = new ArrayList();
+		maxUsers = Loader.getConfig().getInt( "server.maxLogins", -1 );
 		
-		User user;
-		
-		for ( int i = 0; i < users.size(); ++i )
-		{
-			user = (User) users.get( i );
-			if ( user.getName().equalsIgnoreCase( s ) )
-			{
-				arraylist.add( user );
-			}
-		}
-		
-		Iterator iterator = arraylist.iterator();
-		
-		while ( iterator.hasNext() )
-		{
-			user = (User) iterator.next();
-			user.kick( "You logged in from another location" );
-		}
-		
-		return usr;
+		server = server0;
 	}
 	
 	public void tick()
@@ -234,34 +199,82 @@ public class UserList
 	
 	public void sendMessage( String msg )
 	{
-		server.getConsole().sendMessage( msg );
+		Loader.getConsole().sendMessage( msg );
 	}
 	
-	public User attemptLogin( PersistentSession sess, String username, String password )
+	public User attemptLogin( PersistentSession sess, String username, String password ) throws LoginException
 	{
-		SqlConnector sql = ( site != null ) ? site.getDatabase() : Loader.getPersistenceManager().getSql();
+		Site site = sess.getRequest().getSite();
 		
-		User user = new User( sql, username, password );
+		if ( username == null || username.isEmpty() )
+			throw new LoginException( LoginException.ExceptionReasons.emptyUsername );
 		
-		if ( !user.valid )
+		User user = new User( username, site.getUserLookupAdapter() );
+		
+		try
+		{
+			if ( password == null || password.isEmpty() )
+				throw new LoginException( LoginException.ExceptionReasons.emptyPassword );
+			
+			if ( !user.validatePassword( password ) )
+				throw new LoginException( LoginException.ExceptionReasons.incorrectLogin );
+			
+			UserLoginEvent event = new UserLoginEvent( user );
+			Loader.getPluginManager().callEvent( event );
+			
+			// TODO: Add whitelist and banned user check.
+			
+			if ( event.getResult() != Result.ALLOWED && event.getResult() != Result.PRELOGIN )
+				if ( event.getKickMessage().isEmpty() )
+					throw new LoginException( LoginException.ExceptionReasons.incorrectLogin );
+				else
+					throw new LoginException( LoginException.customExceptionReason( event.getKickMessage() ) );
+			
+			site.getUserLookupAdapter().preLoginCheck( user );
+			
+			List<User> arraylist = new ArrayList<User>();
+			
+			for ( int i = 0; i < users.size(); ++i )
+			{
+				user = (User) users.get( i );
+				if ( user.getUserId().equalsIgnoreCase( user.getUserId() ) )
+				{
+					arraylist.add( user );
+				}
+			}
+			
+			Iterator<User> iterator = arraylist.iterator();
+			while ( iterator.hasNext() )
+			{
+				user = (User) iterator.next();
+				user.kick( "You logged in from another location." );
+				// TODO Make this message customizable from configs.
+			}
+			
+			if ( !sess.isSet( "user" ) )
+				sess.setArgument( "user", user.getUserId() );
+			
+			if ( !sess.isSet( "pass" ) )
+				sess.setArgument( "pass", DigestUtils.md5Hex( user.getPassword() ) );
+			
+			site.getUserLookupAdapter().postLoginCheck( user );
+			Loader.getInstance().onUserLogin( user );
+			
+			Object o = sess.getRequest().getAttribute( "remember" );
+			boolean remember = ( o == null ) ? false : (boolean) o;
+			
+			if ( remember )
+				sess.setCookieExpiry( 5 * 365 * 24 * 60 * 60 );
+			else
+				sess.setCookieExpiry( 604800 );
+			
+			users.add( user );
 			return user;
-		
-		sql.queryUpdate( "UPDATE `users` SET `lastlogin` = '" + System.currentTimeMillis() + "', `numloginfail` = '0' WHERE `userID` = '" + user.getUserId() + "'" );
-		
-		if ( !sess.isSet( "user" ) )
-			sess.setArgument( "user", user.getUserId() );
-		
-		if ( !sess.isSet( "pass" ) )
-			sess.setArgument( "pass", DigestUtils.md5Hex( user.getPassword() ) );
-		
-		Object o = sess.getRequest().getAttribute( "remember" );
-		boolean remember = ( o == null ) ? false : (boolean) o;
-		
-		if ( remember )
-			sess.setCookieExpiry( 5 * 365 * 24 * 60 * 60 );
-		else
-			sess.setCookieExpiry( 604800 );
-		
-		return user;
+		}
+		catch ( LoginException l )
+		{
+			site.getUserLookupAdapter().failedLoginUpdate( user );
+			throw l.setUser( user );
+		}
 	}
 }

@@ -7,13 +7,15 @@ import com.chiorichan.database.SqlConnector;
 
 public class FrameworkSite extends Site
 {
-	public FrameworkSite(ResultSet rs) throws SQLException
+	public FrameworkSite(ResultSet rs) throws SiteException
 	{
 		super( rs );
 	}
 	
-	void setDatabase( SqlConnector sql )
+	Site setDatabase( SqlConnector sql )
 	{
 		this.sql = sql;
+		
+		return this;
 	}
 }

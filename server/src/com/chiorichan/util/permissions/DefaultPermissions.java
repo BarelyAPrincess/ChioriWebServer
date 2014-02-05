@@ -8,8 +8,8 @@ import com.chiorichan.permissions.PermissionDefault;
 
 public final class DefaultPermissions
 {
-	private static final String ROOT = "craftbukkit";
-	private static final String LEGACY_PREFIX = "craft";
+	private static final String ROOT = "chiori";
+	private static final String LEGACY_PREFIX = "chiori";
 	
 	private DefaultPermissions()
 	{

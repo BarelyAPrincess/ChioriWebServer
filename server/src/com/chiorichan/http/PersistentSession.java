@@ -3,7 +3,6 @@ package com.chiorichan.http;
 import groovy.lang.Binding;
 
 import java.io.File;
-import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedHashMap;
@@ -12,12 +11,9 @@ import java.util.Map;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
-import com.chiorichan.framework.ConfigurationManagerWrapper;
 import com.chiorichan.framework.Evaling;
 import com.chiorichan.framework.Framework;
-import com.chiorichan.framework.HttpUtilsWrapper;
-import com.chiorichan.framework.ServerUtilsWrapper;
-import com.chiorichan.framework.UserServiceWrapper;
+import com.chiorichan.user.LoginException;
 import com.chiorichan.user.User;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.StringUtil;
@@ -108,35 +104,31 @@ public class PersistentSession
 			
 			Loader.getLogger().debug( target );
 			
-			request.getResponse().sendRedirect( target + "?ok=You have been successfully logged out. Please come again!" );
+			request.getResponse().sendRedirect( target + "?ok=You have been successfully logged out." );
 			return;
 		}
 		
 		if ( !username.isEmpty() && !password.isEmpty() )
 		{
-			User user = request.getSite().getUserList().attemptLogin( this, username, password );
-			
-			Loader.getLogger().info( "User: " + user );
-			
-			if ( user != null && user.isValid() )
+			try
 			{
+				User user = Loader.getUserManager().attemptLogin( this, username, password );
+				
 				currentUser = user;
 				
 				String loginPost = ( target.isEmpty() ) ? request.getSite().getYaml().getString( "scripts.login-post", "/panel" ) : target;
 				
-				Loader.getLogger().info( "Login Success: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\", Display Level \"" + user.getDisplayLevel() + "\"" );
+				Loader.getLogger().info( "Login Success: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\"" );
 				request.getResponse().sendRedirect( loginPost );
 			}
-			else if ( user == null )
-			{
-				return;
-			}
-			else
+			catch ( LoginException l )
 			{
 				String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
 				
-				Loader.getLogger().warning( "Login Failed: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\", Display Level \"" + user.getDisplayLevel() + "\"" );
-				request.getResponse().sendRedirect( loginForm + "?msg=" + user.getLastError() + "&target=" + target );
+				if ( l.getUser() != null )
+					Loader.getLogger().warning( "Login Failed: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + l.getUser().getUserId() + "\", Display Name \"" + l.getUser().getDisplayName() + "\"" );
+				
+				request.getResponse().sendRedirect( loginForm + "?msg=" + l.getMessage() + "&target=" + target );
 			}
 		}
 		else if ( currentUser == null )
@@ -146,10 +138,10 @@ public class PersistentSession
 			
 			if ( !username.isEmpty() && !password.isEmpty() )
 			{
-				User user = request.getSite().getUserList().attemptLogin( this, username, password );
-				
-				if ( user != null && user.isValid() )
+				try
 				{
+					User user = Loader.getUserManager().attemptLogin( this, username, password );
+					
 					currentUser = user;
 					
 					String loginPost = ( target == null || target.isEmpty() ) ? request.getSite().getYaml().getString( "scripts.login-post", "/panel" ) : target;
@@ -157,8 +149,8 @@ public class PersistentSession
 					Loader.getLogger().info( "Login Success: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\", Display Level \"" + user.getDisplayLevel() + "\"" );
 					// _sess.getServer().dummyRedirect( loginPost );
 				}
-				else
-				{
+				catch ( LoginException l )
+				{	
 					Loader.getLogger().warning( "Login Status: No Valid Login Present" );
 				}
 			}
@@ -174,6 +166,7 @@ public class PersistentSession
 	/**
 	 * Performs a permission check against the currently logged in user but with a much more detailed result.
 	 */
+	@Deprecated
 	public ReqFailureReason doReqCheck( String reqLevel )
 	{
 		// -1 = Allow All | 0 = Operator
@@ -255,7 +248,7 @@ public class PersistentSession
 		
 		if ( sessionCandy == null )
 		{
-			int defaultLife = (request.getSite().getYaml() != null) ? request.getSite().getYaml().getInt( "sessions.default-life", 604800 ) : 604800;
+			int defaultLife = ( request.getSite().getYaml() != null ) ? request.getSite().getYaml().getInt( "sessions.default-life", 604800 ) : 604800;
 			
 			if ( candyId == null || candyId.isEmpty() )
 				candyId = StringUtil.md5( request.getURI().toString() + System.currentTimeMillis() );

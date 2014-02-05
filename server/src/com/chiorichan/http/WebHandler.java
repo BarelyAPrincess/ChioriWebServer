@@ -258,6 +258,7 @@ public class WebHandler implements HttpHandler
 		}
 		
 		Evaling eval = sess.getEvaling();
+		eval.reset(); // Reset eval so any left over output from any previous requests does not leak into this request.
 		
 		sess.setGlobal( "_SERVER", server );
 		sess.setGlobal( "_REQUEST", request.getRequestMap() );
