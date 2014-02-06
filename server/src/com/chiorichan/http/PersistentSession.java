@@ -44,6 +44,7 @@ public class PersistentSession implements UserHandler
 	protected Map<String, Candy> candies = new LinkedHashMap<String, Candy>();
 	protected Framework framework = null;
 	protected HttpRequest request;
+	protected Site failoverSite;
 	protected Boolean stale = false;
 	
 	/**
@@ -75,6 +76,8 @@ public class PersistentSession implements UserHandler
 	{
 		request = _request;
 		stale = _stale;
+		
+		failoverSite = request.getSite();
 		
 		rearmTimeout();
 		
@@ -166,6 +169,9 @@ public class PersistentSession implements UserHandler
 			
 			Loader.getLogger().info( ChatColor.GREEN + "Current Login: Username \"" + currentUser.getName() + "\", Password \"" + currentUser.getMetaData().getPassword() + "\", UserId \"" + currentUser.getUserId() + "\", Display Name \"" + currentUser.getDisplayName() + "\"" );
 		}
+		
+		if ( currentUser != null )
+			currentUser.setHandler( this );
 	}
 	
 	public void setGlobal( String key, Object val )
@@ -444,6 +450,9 @@ public class PersistentSession implements UserHandler
 	@Override
 	public Site getSite()
 	{
-		return getRequest().getSite();
+		if ( getRequest() == null )
+			return failoverSite;
+		else
+			return getRequest().getSite();
 	}
 }

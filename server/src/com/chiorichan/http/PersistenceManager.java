@@ -121,6 +121,8 @@ public class PersistenceManager
 		{
 			for ( PersistentSession var1 : sessionList )
 			{
+				//Loader.getLogger().debug( "" + var1 );
+				
 				if ( var1.getTimeout() > 0 && var1.getTimeout() < Common.getEpoch() )
 				{
 					Loader.getLogger().info( "&4Unloaded expired session: " + var1.getId() );

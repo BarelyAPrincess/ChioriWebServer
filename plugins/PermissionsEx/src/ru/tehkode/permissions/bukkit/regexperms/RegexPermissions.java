@@ -31,8 +31,14 @@ public class RegexPermissions
 		injectAllPermissibles();
 	}
 	
-	//new PermissibleInjector.ClassPresencePermissibleInjector( "net.glowstone.entity.GlowHumanEntity", "permissions", true ), new PermissibleInjector.ClassPresencePermissibleInjector( "org.getspout.server.entity.SpoutHumanEntity", "permissions", true ), new PermissibleInjector.ClassNameRegexPermissibleInjector( "org.getspout.spout.user.SpoutCraftUser", "perm", false, "org\\.getspout\\.spout\\.user\\.SpoutCraftUser" ), new PermissibleInjector.ClassPresencePermissibleInjector( getCBClassName( "entity.CraftHumanEntity" ), "perm", true ),
-	protected static final PermissibleInjector[] injectors = new PermissibleInjector[] {};
+	/*
+	 * new PermissibleInjector.ClassPresencePermissibleInjector( "net.glowstone.entity.GlowHumanEntity", "permissions", true );
+	 * new PermissibleInjector.ClassPresencePermissibleInjector( "org.getspout.server.entity.SpoutHumanEntity", "permissions", true );
+	 * new PermissibleInjector.ClassNameRegexPermissibleInjector( "org.getspout.spout.user.SpoutCraftUser", "perm", false, "org\\.getspout\\.spout\\.user\\.SpoutCraftUser" );
+	 * new PermissibleInjector.ClassPresencePermissibleInjector( getCBClassName( "entity.CraftHumanEntity" ), "perm", true );
+	 */
+	
+	protected static final PermissibleInjector[] injectors = new PermissibleInjector[] { new PermissibleInjector.ClassPresencePermissibleInjector( "com.chiorichan.user.User", "perm", true ) };
 	
 	public void onDisable()
 	{

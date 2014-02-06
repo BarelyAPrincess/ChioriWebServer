@@ -296,11 +296,7 @@ public class WebHandler implements HttpHandler
 				// TODO: Come up with a better way to handle the URI used in the target. ie. Params are lost.
 				return true;
 			}
-			else if ( sess.getCurrentUser().hasPermission( req ) )
-			{
-				// Permitted to continue!!!
-			}
-			else
+			else if ( !sess.getCurrentUser().hasPermission( req ) )
 			{
 				if ( req.equals( "0" ) )
 					response.sendError( 401, "This page is limited to Operators only!" );

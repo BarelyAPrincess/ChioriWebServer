@@ -6,6 +6,7 @@ import com.chiorichan.ChatColor;
 import com.chiorichan.ConsoleLogFormatter;
 import com.chiorichan.Loader;
 import com.chiorichan.command.CommandSender;
+import com.chiorichan.user.User;
 
 public class SecretCommand extends VanillaCommand
 {
@@ -40,6 +41,13 @@ public class SecretCommand extends VanillaCommand
 		
 		switch ( args[0].toLowerCase() )
 		{
+			case "users":
+				for (User u : Loader.getInstance().getOnlineUsers())
+					Loader.getLogger().debug( "Logged in user: " + u + " -> " + u.hasPermission( "applebloom.admin" ) );
+				break;
+			case "sessions":
+				
+				break;
 			case "logdebugon":
 				Handler[] var1 = Loader.getLogger().getLogger().getHandlers();
 				

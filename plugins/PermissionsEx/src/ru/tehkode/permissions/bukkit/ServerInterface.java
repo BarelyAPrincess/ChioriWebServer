@@ -7,25 +7,25 @@ import com.chiorichan.Loader;
  */
 public class ServerInterface
 {
-	private static final String CRAFTBUKKIT_PREFIX = "org.bukkit.craftbukkit";
+	private static final String CRAFTBUKKIT_PREFIX = "com.chiorichan";
 	private static final String VERSION;
 	
 	static
 	{
 		Class serverClass = Loader.getInstance().getClass();
-		if ( !serverClass.getSimpleName().equals( "CraftServer" ) )
+		if ( !serverClass.getSimpleName().equals( "Loader" ) )
 		{
 			VERSION = null;
 		}
-		else if ( serverClass.getName().equals( "org.bukkit.craftbukkit.CraftServer" ) )
+		else if ( serverClass.getName().equals( "com.chiorichan.Loader" ) )
 		{
 			VERSION = ".";
 		}
 		else
 		{
 			String name = serverClass.getName();
-			name = name.substring( "org.bukkit.craftbukkit".length() );
-			name = name.substring( 0, name.length() - "CraftServer".length() );
+			name = name.substring( "com.chiorichan".length() );
+			name = name.substring( 0, name.length() - "Loader".length() );
 			VERSION = name;
 		}
 	}
