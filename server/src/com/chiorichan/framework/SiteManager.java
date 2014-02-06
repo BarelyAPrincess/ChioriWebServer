@@ -69,4 +69,9 @@ public class SiteManager
 	{
 		return new ArrayList<Site>( siteMap.values() );
 	}
+
+	public Site getFrameworkSite()
+	{
+		return getSiteById( "framework" );
+	}
 }

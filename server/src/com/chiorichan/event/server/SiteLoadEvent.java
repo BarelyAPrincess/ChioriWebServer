@@ -6,23 +6,12 @@ import com.chiorichan.user.builtin.UserLookupAdapter;
 
 public class SiteLoadEvent extends ServerEvent implements Cancellable
 {
-	UserLookupAdapter userLookupAdapter = null;
 	Site site;
 	boolean cancelled;
 	
 	public SiteLoadEvent(Site _site)
 	{
 		site = _site;
-	}
-
-	public void setUserLookupAdapter( UserLookupAdapter adapter )
-	{
-		userLookupAdapter = adapter;
-	}
-	
-	public UserLookupAdapter getUserLookupAdapter()
-	{
-		return userLookupAdapter;
 	}
 	
 	public Site getSite()

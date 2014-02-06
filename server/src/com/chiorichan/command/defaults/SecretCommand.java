@@ -6,6 +6,8 @@ import com.chiorichan.ChatColor;
 import com.chiorichan.ConsoleLogFormatter;
 import com.chiorichan.Loader;
 import com.chiorichan.command.CommandSender;
+import com.chiorichan.framework.Site;
+import com.chiorichan.http.PersistentSession;
 import com.chiorichan.user.User;
 
 public class SecretCommand extends VanillaCommand
@@ -42,11 +44,16 @@ public class SecretCommand extends VanillaCommand
 		switch ( args[0].toLowerCase() )
 		{
 			case "users":
-				for (User u : Loader.getInstance().getOnlineUsers())
+				for ( User u : Loader.getInstance().getOnlineUsers() )
 					Loader.getLogger().debug( "Logged in user: " + u + " -> " + u.hasPermission( "applebloom.admin" ) );
 				break;
 			case "sessions":
-				
+				for ( PersistentSession s : Loader.getPersistenceManager().getSessions() )
+					Loader.getLogger().debug( "Loaded session: " + s );
+				break;
+			case "sites":
+				for ( Site s : Loader.getPersistenceManager().getSiteManager().getSites() )
+					Loader.getLogger().debug( "Loaded site: " + s );
 				break;
 			case "logdebugon":
 				Handler[] var1 = Loader.getLogger().getLogger().getHandlers();

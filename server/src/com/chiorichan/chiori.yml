@@ -10,6 +10,7 @@ server:
   enableTcpServer: true
   allowQuery: false
   maxLogins: -1
+  sessionLimit: 6
 settings:
   permissions-file: permissions.yml
   update-folder: update
@@ -30,6 +31,13 @@ auto-updater:
   preferred-channel: rb
   host: dl.chiorichan.com
   suggest-channels: true
+users:
+  lookupAdapter:
+    type: default
+    table: ''
+    fields: {}
+  operators:
+  - ChioriGreene
 framework:
   database:
     database: chiorifw
@@ -40,6 +48,3 @@ framework:
     password: fwpass
   sites:
     defaultTitle: Unnamed Chiori Framework Site
-  users:
-    operators:
-    - ChioriGreene

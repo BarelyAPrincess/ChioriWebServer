@@ -1,7 +1,6 @@
 package com.chiorichan.user;
 
 import java.io.File;
-import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -12,7 +11,6 @@ import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
-import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.event.user.UserLoginEvent;
 import com.chiorichan.event.user.UserLoginEvent.Result;
@@ -25,6 +23,7 @@ public class UserManager
 {
 	private static final SimpleDateFormat d = new SimpleDateFormat( "yyyy-MM-dd \'at\' HH:mm:ss z" );
 	private Loader server;
+	private UserLookupAdapter userLookupAdapter;
 	public final List<User> users = new java.util.concurrent.CopyOnWriteArrayList<User>();
 	private final BanList banByName = new BanList( new File( "banned-users.txt" ) );
 	private final BanList banByIP = new BanList( new File( "banned-ips.txt" ) );
@@ -43,6 +42,27 @@ public class UserManager
 		maxUsers = Loader.getConfig().getInt( "server.maxLogins", -1 );
 		
 		server = server0;
+		
+		try
+		{
+			switch ( Loader.getConfig().getString( "users.lookupAdapter.type", "default" ) )
+			{
+				case "sql":
+					userLookupAdapter = new SqlAdapter( Loader.getPersistenceManager().getSql(), Loader.getConfig().getString( "users.lookupAdapter.table", "users" ), Loader.getConfig().getStringList( "users.lookupAdapter.fields" ) );
+					break;
+				// case "file":
+				// TODO Develop the file backend lookup adapter
+				// break;
+				default:
+					userLookupAdapter = new SqlAdapter( Loader.getPersistenceManager().getSql(), "users" );
+					break;
+			}
+		}
+		catch ( LookupAdapterException e )
+		{
+			Loader.getLogger().severe( "There was a severe error encoutered when attempting to create the User Lookup Adapter." );
+			Loader.getLogger().panic( e.getMessage() );
+		}
 	}
 	
 	public void tick()
@@ -204,6 +224,25 @@ public class UserManager
 		Loader.getConsole().sendMessage( msg );
 	}
 	
+	public User loadUser( String username ) throws LoginException
+	{
+		User user = null;
+		
+		for ( User u : users )
+		{
+			if ( userLookupAdapter.matchUser( u, username ) )
+				user = u;
+		}
+		
+		if ( user == null )
+		{
+			user = new User( username, userLookupAdapter );
+			users.add( user );
+		}
+		
+		return user;
+	}
+	
 	public User attemptLogin( PersistentSession sess, String username, String password ) throws LoginException
 	{
 		Site site = sess.getRequest().getSite();
@@ -211,7 +250,8 @@ public class UserManager
 		if ( username == null || username.isEmpty() )
 			throw new LoginException( LoginException.ExceptionReasons.emptyUsername );
 		
-		User user = new User( username, site.getUserLookupAdapter() );
+		User user = loadUser( username );
+		user.putHandler( sess );
 		
 		try
 		{
@@ -230,13 +270,13 @@ public class UserManager
 			if ( user.isBanned() )
 				throw new LoginException( LoginException.ExceptionReasons.banned );
 			
-			if ( event.getResult() != Result.ALLOWED && event.getResult() != Result.PRELOGIN )
+			if ( event.getResult() != Result.ALLOWED )
 				if ( event.getKickMessage().isEmpty() )
 					throw new LoginException( LoginException.ExceptionReasons.incorrectLogin );
 				else
 					throw new LoginException( LoginException.customExceptionReason( event.getKickMessage() ) );
 			
-			site.getUserLookupAdapter().preLoginCheck( user );
+			userLookupAdapter.preLoginCheck( user );
 			
 			List<User> arraylist = new ArrayList<User>();
 			User usera;
@@ -264,7 +304,7 @@ public class UserManager
 			if ( !sess.isSet( "pass" ) )
 				sess.setArgument( "pass", DigestUtils.md5Hex( user.getPassword() ) );
 			
-			site.getUserLookupAdapter().postLoginCheck( user );
+			userLookupAdapter.postLoginCheck( user );
 			Loader.getInstance().onUserLogin( user );
 			
 			Object o = sess.getRequest().getAttribute( "remember" );
@@ -275,22 +315,12 @@ public class UserManager
 			else
 				sess.setCookieExpiry( 604800 );
 			
-			user.setHandler( sess );
-			users.add( user );
 			return user;
 		}
 		catch ( LoginException l )
 		{
-			site.getUserLookupAdapter().failedLoginUpdate( user );
+			userLookupAdapter.failedLoginUpdate( user );
 			throw l.setUser( user );
 		}
-	}
-	
-	/**
-	 * Builtin User Lookup Adapter
-	 */
-	public UserLookupAdapter getBuiltinAdapter() throws SQLException
-	{
-		return new SqlAdapter( Loader.getPersistenceManager().getSql(), "users" );
 	}
 }

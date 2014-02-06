@@ -1,8 +1,5 @@
 package com.chiorichan.event.user;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.chiorichan.event.HandlerList;
 import com.chiorichan.user.User;
 
@@ -12,24 +9,12 @@ import com.chiorichan.user.User;
 public class UserLoginEvent extends UserEvent
 {
 	private static final HandlerList handlers = new HandlerList();
-	private Result result = Result.PRELOGIN;
+	private Result result = Result.ALLOWED;
 	private String message = "";
-	private List<String> additionalUserFields = new ArrayList<String>();
 	
 	public UserLoginEvent(User user)
 	{
 		super( user );
-	}
-	
-	public void addAdditionalUserFields( String field )
-	{
-		if ( result == Result.PRELOGIN )
-			additionalUserFields.add( field );
-	}
-	
-	public List<String> getAdditionalUserFields()
-	{
-		return additionalUserFields;
 	}
 	
 	/**
@@ -113,10 +98,6 @@ public class UserLoginEvent extends UserEvent
 	 */
 	public enum Result
 	{
-		/**
-		 * The user access check has yet to pass
-		 */
-		PRELOGIN,
 		/**
 		 * The User is allowed to log in
 		 */

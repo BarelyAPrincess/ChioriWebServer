@@ -111,13 +111,6 @@ public class Template extends JavaPlugin implements Listener
 	}
 	
 	@EventHandler( priority = EventPriority.LOWEST )
-	public void onUserLoginEvent( UserLoginEvent event )
-	{
-		event.addAdditionalUserFields( "phone" );
-		event.addAdditionalUserFields( "email" );
-	}
-	
-	@EventHandler( priority = EventPriority.LOWEST )
 	public void onRenderEvent( RenderEvent event )
 	{
 		Site site = event.getSite();

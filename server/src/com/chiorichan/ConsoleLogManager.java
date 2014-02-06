@@ -172,7 +172,7 @@ public class ConsoleLogManager
 	public void panic( String var1 )
 	{
 		severe( var1 );
-		System.exit( 1 );
+		Loader.stop();
 	}
 	
 	public void fine( String var1 )

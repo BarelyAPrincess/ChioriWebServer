@@ -1,15 +1,18 @@
 package com.chiorichan.http;
 
 import java.net.ConnectException;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.framework.SiteManager;
 import com.chiorichan.util.Common;
+import com.google.common.collect.Maps;
 
 /**
  * Persistence manager handles sessions kept in memory. It also manages when to unload the session to free memeory.
@@ -83,8 +86,31 @@ public class PersistenceManager
 				
 				break;
 			default:
-				Loader.getLogger().severe( "The Framework Database can not support anything other then mySql or sqLite at the moment. Please change 'framework-database.type' to 'mysql' or 'sqLite' in 'chiori.yml'" );
-				Loader.stop();
+				Loader.getLogger().panic( "The Framework Database can not support anything other then mySql or sqLite at the moment. Please change 'framework-database.type' to 'mysql' or 'sqLite' in 'chiori.yml'" );
+		}
+	}
+	
+	public void loadSessions()
+	{
+		synchronized ( sessionList )
+		{
+			sessionList.clear();
+			
+			try
+			{
+				ResultSet rs = sql.query( "SELECT * FROM `sessions`;" );
+				
+				if ( sql.getRowCount( rs ) > 0 )
+					do
+					{
+						sessionList.add( new PersistentSession( rs ) );
+					}
+					while ( rs.next() );
+			}
+			catch ( SQLException e )
+			{
+				Loader.getLogger().panic( e.getMessage() );
+			}
 		}
 	}
 	
@@ -117,18 +143,28 @@ public class PersistenceManager
 	{
 		// TODO: Cleanup the session database tables of unused sessions.
 		
+		Map<String, Integer> sessionLimits = Maps.newHashMap();
+		
 		synchronized ( sessionList )
 		{
 			for ( PersistentSession var1 : sessionList )
 			{
-				//Loader.getLogger().debug( "" + var1 );
+				int cnt = ( sessionLimits.containsKey( var1.getId() ) ) ? sessionLimits.get( var1.getId() ) : 0;
+				sessionLimits.put( var1.getId(), cnt + 1 );
+				
+				if ( sessionLimits.get( var1.getId() ) > Loader.getConfig().getInt( "server.sessionLimit", 6 ) )
+				{
+					// Finish making this work.
+				}
+				
+				// Loader.getLogger().debug( "" + var1 );
 				
 				if ( var1.getTimeout() > 0 && var1.getTimeout() < Common.getEpoch() )
 				{
 					Loader.getLogger().info( "&4Unloaded expired session: " + var1.getId() );
 					
 					sessionList.remove( var1 ); // This should allow this session to get picked up by the Java Garbage
-															// Collector once it's released by other classes.
+											// Collector once it's released by other classes.
 				}
 			}
 		}
@@ -142,5 +178,10 @@ public class PersistenceManager
 	public SqlConnector getSql()
 	{
 		return sql;
+	}
+	
+	public List<PersistentSession> getSessions()
+	{
+		return sessionList;
 	}
 }

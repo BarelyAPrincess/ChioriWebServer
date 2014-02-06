@@ -72,6 +72,24 @@ public class PersistentSession implements UserHandler
 		setRequest( _request, false );
 	}
 	
+	protected PersistentSession(ResultSet rs) throws SQLException
+	{
+		request = null;
+		stale = true;
+		
+		if ( rs.getString( "sessionSite" ) == null || rs.getString( "sessionSite" ).isEmpty() )
+			failoverSite = Loader.getPersistenceManager().getSiteManager().getFrameworkSite();
+		else
+			failoverSite = Loader.getPersistenceManager().getSiteManager().getSiteById( rs.getString( "sessionSite" ) );
+		
+		if ( rs.getString( "sessionName" ) != null && !rs.getString( "sessionName" ).isEmpty() )
+			candyName = rs.getString( "sessionName" );
+		
+		sessionCandy = new Candy( candyName, rs.getString( "sessionId" ) );
+		
+		initSession();
+	}
+	
 	protected void setRequest( HttpRequest _request, Boolean _stale )
 	{
 		request = _request;
@@ -156,7 +174,7 @@ public class PersistentSession implements UserHandler
 					// _sess.getServer().dummyRedirect( loginPost );
 				}
 				catch ( LoginException l )
-				{	
+				{
 					Loader.getLogger().warning( ChatColor.GREEN + "Login Status: No Valid Login Present" );
 				}
 			}
@@ -171,7 +189,7 @@ public class PersistentSession implements UserHandler
 		}
 		
 		if ( currentUser != null )
-			currentUser.setHandler( this );
+			currentUser.putHandler( this );
 	}
 	
 	public void setGlobal( String key, Object val )
@@ -203,7 +221,7 @@ public class PersistentSession implements UserHandler
 			ResultSet rs = null;
 			try
 			{
-				rs = sql.query( "SELECT * FROM `sessions` WHERE `sessid` = '" + sessionCandy.getValue() + "'" );
+				rs = sql.query( "SELECT * FROM `sessions` WHERE `sessionId` = '" + sessionCandy.getValue() + "'" );
 			}
 			catch ( SQLException e1 )
 			{
@@ -249,7 +267,7 @@ public class PersistentSession implements UserHandler
 			
 			expires = Common.getEpoch() + defaultLife;
 			
-			sql.queryUpdate( "INSERT INTO `sessions` (`sessid`, `expires`, `data`)VALUES('" + candyId + "', '" + expires + "', '" + dataJson + "');" );
+			sql.queryUpdate( "INSERT INTO `sessions` (`sessionId`, `expires`, `sessionName`, `sessionSite`, `data`)VALUES('" + candyId + "', '" + expires + "', '" + candyName + "', '" + getSite().getName() + "', '" + dataJson + "');" );
 		}
 		
 		Loader.getLogger().info( "Session Initalized: " + this );
@@ -262,7 +280,7 @@ public class PersistentSession implements UserHandler
 		data.put( "ipAddr", request.getRemoteAddr() );
 		String dataJson = new Gson().toJson( data );
 		
-		sql.queryUpdate( "UPDATE `sessions` SET `data` = '" + dataJson + "', `expires` = '" + expires + "' WHERE `sessid` = '" + candyId + "';" );
+		sql.queryUpdate( "UPDATE `sessions` SET `data` = '" + dataJson + "', `expires` = '" + expires + "', `sessionName` = '" + candyName + "', `sessionSite` = '" + getSite().getName() + "' WHERE `sessionId` = '" + candyId + "';" );
 	}
 	
 	public String toString()
@@ -434,19 +452,19 @@ public class PersistentSession implements UserHandler
 	{
 		request = null;
 	}
-
+	
 	@Override
 	public void kick( String kickMessage )
 	{
 		// Invalidate this session.
 	}
-
+	
 	@Override
 	public void sendMessage( String[] messages )
 	{
 		// q this message to be sent to the user. Probably not possible with this class
 	}
-
+	
 	@Override
 	public Site getSite()
 	{

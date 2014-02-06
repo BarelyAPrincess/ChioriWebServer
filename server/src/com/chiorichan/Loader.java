@@ -268,11 +268,14 @@ public class Loader implements PluginMessageRecipient
 		
 		enablePlugins( PluginLoadOrder.POSTSERVER );
 		
-		getLogger().info( "Initalizing the User Manager..." );
-		userManager = new UserManager( this );
+		getLogger().info( "Initalizing the Persistence Manager..." );
 		
 		persistence = new PersistenceManager();
+		persistence.loadSessions();
 		persistence.getSiteManager().loadSites();
+		
+		getLogger().info( "Initalizing the User Manager..." );
+		userManager = new UserManager( this );
 		
 		enablePlugins( PluginLoadOrder.POSTFRAMEWORK );
 		

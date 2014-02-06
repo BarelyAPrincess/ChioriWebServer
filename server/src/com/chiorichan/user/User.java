@@ -16,13 +16,13 @@ import com.chiorichan.Loader;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.framework.Site;
-import com.chiorichan.http.PersistentSession;
 import com.chiorichan.permissions.PermissibleBase;
 import com.chiorichan.permissions.Permission;
 import com.chiorichan.permissions.PermissionAttachment;
 import com.chiorichan.permissions.PermissionAttachmentInfo;
 import com.chiorichan.plugin.Plugin;
 import com.chiorichan.user.builtin.UserLookupAdapter;
+import com.google.common.collect.Sets;
 
 public class User implements CommandSender
 {
@@ -32,7 +32,7 @@ public class User implements CommandSender
 	protected UserMetaData metaData = new UserMetaData();
 	protected String username;
 	protected boolean op, loggedIn = false;
-	protected UserHandler handler; // Set this handler for the last login
+	protected Set<UserHandler> handlers = Sets.newLinkedHashSet(); // Set this handler for the last login
 	
 	public User(String user, UserLookupAdapter adapter) throws LoginException
 	{
@@ -45,7 +45,7 @@ public class User implements CommandSender
 		metaData = adapter.loadUser( user );
 		metaData.set( "username", user );
 		username = user;
-		op = Loader.getConfig().getStringList( "framework.users.operators" ).contains( user );
+		op = Loader.getConfig().getStringList( "users.operators" ).contains( user );
 	}
 	
 	public UserMetaData getMetaData()
@@ -83,7 +83,7 @@ public class User implements CommandSender
 	public void kick( String kickMessage )
 	{
 		loggedIn = false;
-		if ( handler != null )
+		for ( UserHandler handler : handlers )
 			handler.kick( kickMessage );
 	}
 	
@@ -154,7 +154,7 @@ public class User implements CommandSender
 	
 	public String toString()
 	{
-		return "User{" + metaData.toString() + "}";
+		return "User{" + metaData.toString() + ",Handlers{" + handlers.toString() + "}}";
 	}
 	
 	public String getString( String key )
@@ -173,7 +173,8 @@ public class User implements CommandSender
 	@Override
 	public void sendMessage( String[] messages )
 	{
-		handler.sendMessage( messages );
+		for ( UserHandler handler : handlers )
+			handler.sendMessage( messages );
 	}
 	
 	/**
@@ -441,7 +442,16 @@ public class User implements CommandSender
 	
 	public Site getSite()
 	{
-		return handler.getSite();
+		Site site = null;
+		
+		for ( UserHandler handler : handlers )
+			if ( handler != null && handler.getSite() != null )
+				site = handler.getSite();
+		
+		if ( site == null )
+			return Loader.getPersistenceManager().getSiteManager().getFrameworkSite();
+		
+		return site;
 	}
 	
 	public boolean isPermissionSet( String name )
@@ -524,20 +534,21 @@ public class User implements CommandSender
 	{
 		perm.clearPermissions();
 	}
-
+	
 	public String getAddress()
 	{
 		// TODO Return the last IP Address this user connected from.
 		return null;
 	}
-
+	
 	public boolean isBanned()
 	{
 		return false;
 	}
-
-	public void setHandler( PersistentSession sess )
+	
+	public void putHandler( UserHandler handler )
 	{
-		handler = sess;
+		if ( !handlers.contains( handler ) )
+			handlers.add( handler );
 	}
 }

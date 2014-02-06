@@ -39,10 +39,24 @@ public interface UserLookupAdapter
 	 * @throws LoginException
 	 */
 	public UserMetaData loadUser( String user ) throws LoginException;
-
+	
+	/**
+	 * Called before the UserManager makes the login offical.
+	 */
 	public void preLoginCheck( User user ) throws LoginException ;
-
+	
+	/**
+	 * Called as the last line before user returned to scripts.
+	 */
 	public void postLoginCheck( User user ) throws LoginException;
-
+	
+	/**
+	 * Update any security mechs of failed login
+	 */
 	public void failedLoginUpdate( User user );
+	
+	/**
+	 * Called from UserManager to determine if User matches Username. Usually used to search the users array.
+	 */
+	public boolean matchUser( User user, String username );
 }

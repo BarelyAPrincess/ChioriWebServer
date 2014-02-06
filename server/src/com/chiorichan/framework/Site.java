@@ -19,8 +19,6 @@ import com.chiorichan.database.SqlConnector;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.SiteLoadEvent;
 import com.chiorichan.file.YamlConfiguration;
-import com.chiorichan.user.builtin.SqlAdapter;
-import com.chiorichan.user.builtin.UserLookupAdapter;
 import com.google.gson.Gson;
 
 public class Site
@@ -30,7 +28,6 @@ public class Site
 	Set<String> metatags, protectedFiles;
 	YamlConfiguration config;
 	SqlConnector sql;
-	UserLookupAdapter userLookupAdapter = null;
 	
 	public Site(ResultSet rs) throws SiteException
 	{
@@ -127,32 +124,10 @@ public class Site
 			
 			SiteLoadEvent event = new SiteLoadEvent( this );
 			
-			if ( config != null )
-			{
-				UserLookupAdapter adapter = null;
-				
-				switch ( config.getString( "users.adapter", "builtin" ) )
-				{
-					case "sql":
-						adapter = new SqlAdapter( sql, config.getString( "users.table", "users" ), config.getStringList( "users.user-fields" ) );
-						break;
-					case "file":
-						// TODO Develop the file backend users system
-						break;
-					default:
-						adapter = Loader.getUserManager().getBuiltinAdapter();
-						break;
-				}
-				
-				event.setUserLookupAdapter( adapter );
-			}
-			
 			Loader.getPluginManager().callEventWithException( event );
 			
 			if ( event.isCancelled() )
 				throw new SiteException( "Site loading was cancelled by an internal event." );
-			
-			userLookupAdapter = event.getUserLookupAdapter();
 		}
 		catch ( SQLException | EventException e )
 		{
@@ -281,11 +256,6 @@ public class Site
 	public String getName()
 	{
 		return siteId;
-	}
-	
-	public UserLookupAdapter getUserLookupAdapter()
-	{
-		return userLookupAdapter;
 	}
 	
 	// TODO: Add methods to add protected files, metatags and aliases to site and save

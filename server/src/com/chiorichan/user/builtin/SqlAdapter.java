@@ -9,6 +9,7 @@ import org.json.JSONException;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.framework.Site;
 import com.chiorichan.user.LoginException;
+import com.chiorichan.user.LookupAdapterException;
 import com.chiorichan.user.User;
 import com.chiorichan.user.UserMetaData;
 import com.chiorichan.util.Common;
@@ -20,9 +21,7 @@ public class SqlAdapter implements UserLookupAdapter
 	String table;
 	List<String> userFields;
 	
-	// site.getYaml().getList( "logins.additionalFields" )
-	
-	public SqlAdapter(SqlConnector _sql, String _table, String... _userFields) throws SQLException
+	public SqlAdapter(SqlConnector _sql, String _table, String... _userFields) throws LookupAdapterException
 	{
 		this( _sql, _table, Lists.newArrayList( _userFields ) );
 	}
@@ -122,5 +121,19 @@ public class SqlAdapter implements UserLookupAdapter
 	{
 		// TODO Update use as top reflect this failure.
 		// sql.queryUpdate( "UPDATE `users` SET `lastactive` = '" + Common.getEpoch() + "', `lastloginfail` = 0, `numloginfail` = 0 WHERE `userID` = '" + user.getUserId() + "'" );
+	}
+
+	@Override
+	public boolean matchUser( User user, String username )
+	{
+		UserMetaData meta = user.getMetaData();
+		
+		for ( String f : userFields )
+		{
+			if ( meta.getString( f ).equals( username ) )
+				return true;
+		}
+		
+		return false;
 	}
 }
