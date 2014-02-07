@@ -43,8 +43,8 @@ public class User implements CommandSender
 			throw new LoginException( LoginException.ExceptionReasons.unknownError );
 		
 		metaData = adapter.loadUser( user );
-		metaData.set( "username", user );
-		username = user;
+		//metaData.set( "username", user );
+		username = metaData.getUsername();
 		op = Loader.getConfig().getStringList( "users.operators" ).contains( user );
 	}
 	
@@ -74,9 +74,14 @@ public class User implements CommandSender
 		return metaData.getString( "displayName" );
 	}
 	
-	public String getName()
+	public String getUsername()
 	{
 		return metaData.getUsername();
+	}
+	
+	public String getName()
+	{
+		return metaData.getUserId();
 	}
 	
 	// TODO: Que kick message in a buffer that is sent to user if they attempt to visit a page using a session user.
@@ -550,5 +555,10 @@ public class User implements CommandSender
 	{
 		if ( !handlers.contains( handler ) )
 			handlers.add( handler );
+	}
+
+	public void removeHandler( UserHandler handler )
+	{
+		handlers.remove( handler );
 	}
 }

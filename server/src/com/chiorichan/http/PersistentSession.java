@@ -277,7 +277,9 @@ public class PersistentSession implements UserHandler
 	{
 		SqlConnector sql = Loader.getPersistenceManager().getSql();
 		
-		data.put( "ipAddr", request.getRemoteAddr() );
+		if ( request != null )
+			data.put( "ipAddr", request.getRemoteAddr() );
+		
 		String dataJson = new Gson().toJson( data );
 		
 		sql.queryUpdate( "UPDATE `sessions` SET `data` = '" + dataJson + "', `expires` = '" + expires + "', `sessionName` = '" + candyName + "', `sessionSite` = '" + getSite().getName() + "' WHERE `sessionId` = '" + candyId + "';" );
@@ -424,6 +426,10 @@ public class PersistentSession implements UserHandler
 		setArgument( "user", null );
 		setArgument( "pass", null );
 		currentUser = null;
+		
+		for ( User u : Loader.getInstance().getOnlineUsers() )
+			u.removeHandler( this );
+		
 		Loader.getLogger().info( "User Logout" );
 	}
 	
@@ -468,9 +474,19 @@ public class PersistentSession implements UserHandler
 	@Override
 	public Site getSite()
 	{
-		if ( getRequest() == null )
-			return failoverSite;
-		else
+		if ( getRequest() != null )
 			return getRequest().getSite();
+		else if ( failoverSite == null )
+			return Loader.getPersistenceManager().getSiteManager().getFrameworkSite();
+		else
+			return failoverSite;
+	}
+	
+	public void unload()
+	{
+		saveSession();
+		
+		for ( User u : Loader.getInstance().getOnlineUsers() )
+			u.removeHandler( this );
 	}
 }

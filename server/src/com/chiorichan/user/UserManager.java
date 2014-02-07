@@ -1,6 +1,8 @@
 package com.chiorichan.user;
 
 import java.io.File;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -12,6 +14,7 @@ import java.util.Set;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import com.chiorichan.Loader;
+import com.chiorichan.database.SqlConnector;
 import com.chiorichan.event.user.UserLoginEvent;
 import com.chiorichan.event.user.UserLoginEvent.Result;
 import com.chiorichan.framework.Site;
@@ -48,13 +51,18 @@ public class UserManager
 			switch ( Loader.getConfig().getString( "users.lookupAdapter.type", "default" ) )
 			{
 				case "sql":
-					userLookupAdapter = new SqlAdapter( Loader.getPersistenceManager().getSql(), Loader.getConfig().getString( "users.lookupAdapter.table", "users" ), Loader.getConfig().getStringList( "users.lookupAdapter.fields" ) );
+					String siteId = Loader.getConfig().getString( "users.lookupAdapter.siteId" );
+					SqlConnector sql = ( siteId != null && !siteId.isEmpty() && Loader.getPersistenceManager().getSiteManager().getSiteById( siteId ) != null ) ? Loader.getPersistenceManager().getSiteManager().getSiteById( siteId ).getDatabase() : Loader.getPersistenceManager().getSql();
+					
+					userLookupAdapter = new SqlAdapter( sql, Loader.getConfig().getString( "users.lookupAdapter.table", "users" ), Loader.getConfig().getStringList( "users.lookupAdapter.fields" ) );
+					Loader.getLogger().info( "Initiated Sql User Lookup Adapter `" + userLookupAdapter + "` with sql `" + sql + "`" );
 					break;
 				// case "file":
 				// TODO Develop the file backend lookup adapter
 				// break;
 				default:
 					userLookupAdapter = new SqlAdapter( Loader.getPersistenceManager().getSql(), "users" );
+					Loader.getLogger().info( "Initiated Default User Lookup Adapter `" + userLookupAdapter + "`" );
 					break;
 			}
 		}
@@ -245,8 +253,6 @@ public class UserManager
 	
 	public User attemptLogin( PersistentSession sess, String username, String password ) throws LoginException
 	{
-		Site site = sess.getRequest().getSite();
-		
 		if ( username == null || username.isEmpty() )
 			throw new LoginException( LoginException.ExceptionReasons.emptyUsername );
 		

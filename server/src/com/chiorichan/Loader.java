@@ -890,6 +890,9 @@ public class Loader implements PluginMessageRecipient
 	{
 		// TODO: Shutdown
 		
+		getPersistenceManager().shutdown();
+		getUserManager().saveUsers();
+		
 		getConsole().primaryThread.interrupt();
 		
 		instance.pluginManager.clearPlugins();

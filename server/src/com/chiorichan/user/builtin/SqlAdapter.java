@@ -7,7 +7,6 @@ import java.util.List;
 import org.json.JSONException;
 
 import com.chiorichan.database.SqlConnector;
-import com.chiorichan.framework.Site;
 import com.chiorichan.user.LoginException;
 import com.chiorichan.user.LookupAdapterException;
 import com.chiorichan.user.User;
@@ -31,12 +30,6 @@ public class SqlAdapter implements UserLookupAdapter
 		sql = _sql;
 		table = _table;
 		userFields = _userFields;
-	}
-
-	@Override
-	public boolean isAdapterValid( Site site )
-	{
-		return sql != null && sql.isConnected();
 	}
 	
 	public ResultSet getResultSet( String uid ) throws SQLException

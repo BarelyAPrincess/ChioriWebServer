@@ -75,4 +75,9 @@ public class UserMetaData
 	{
 		return metaData.containsKey( key );
 	}
+
+	public String getUserId()
+	{
+		return getString( "userID" );
+	}
 }

@@ -34,6 +34,7 @@ auto-updater:
 users:
   lookupAdapter:
     type: default
+    siteId: ''
     table: ''
     fields: {}
   operators:

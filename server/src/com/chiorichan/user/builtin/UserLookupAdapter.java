@@ -1,6 +1,5 @@
 package com.chiorichan.user.builtin;
 
-import com.chiorichan.framework.Site;
 import com.chiorichan.user.LoginException;
 import com.chiorichan.user.User;
 import com.chiorichan.user.UserMetaData;
@@ -13,14 +12,6 @@ import com.chiorichan.user.UserMetaData;
  */
 public interface UserLookupAdapter
 {
-	/**
-	 * Method should check if everything is functioning correctly.
-	 * 
-	 * @param site
-	 * @return isAdapterValid
-	 */
-	public boolean isAdapterValid( Site site );
-	
 	/**
 	 * Attempt to serialize provided user.
 	 * Use of the user instance may continue.

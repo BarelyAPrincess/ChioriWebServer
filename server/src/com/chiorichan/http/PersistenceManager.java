@@ -4,6 +4,7 @@ import java.net.ConnectException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -183,5 +184,19 @@ public class PersistenceManager
 	public List<PersistentSession> getSessions()
 	{
 		return sessionList;
+	}
+	
+	public void shutdown()
+	{
+		Iterator<PersistentSession> sess = sessionList.iterator();
+		
+		while( sess.hasNext() )
+		{
+			PersistentSession it = sess.next();
+			
+			it.unload();
+		}
+		
+		sessionList.clear();
 	}
 }

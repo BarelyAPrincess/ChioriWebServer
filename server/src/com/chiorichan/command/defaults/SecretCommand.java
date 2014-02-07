@@ -43,9 +43,15 @@ public class SecretCommand extends VanillaCommand
 		
 		switch ( args[0].toLowerCase() )
 		{
+			case "test":
+				
+				break;
 			case "users":
 				for ( User u : Loader.getInstance().getOnlineUsers() )
-					Loader.getLogger().debug( "Logged in user: " + u + " -> " + u.hasPermission( "applebloom.admin" ) );
+				{
+					Loader.getLogger().debug( "Logged in user: " + u + " -> " + u.getMetaData().toString() );
+					u.hasPermission( "applebloom.admin" );
+				}
 				break;
 			case "sessions":
 				for ( PersistentSession s : Loader.getPersistenceManager().getSessions() )

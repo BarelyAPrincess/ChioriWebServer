@@ -87,8 +87,16 @@ Who to tell if an update is ready.
 What channel of builds do you prefer. stable, beta, alpha, nightly
 * auto-updater.host: dl.chiorichan.com
 What host address do we check and download updates from
-* framework.enabled: true
-Allows you to disable the Groovy Shell execution of web files. Files with extension .groovy or .chi will not be interpreted as normal but plugins will still be able to manipulate requests.
+* users.lookupAdapter.type
+Tells the server what User Lookup Adapter to use. sql, file, default
+* users.lookupAdapter.siteId
+If using SQL adapter type, This tells the server which Sql Connection to use, empty will default to Server Database.
+* users.lookupAdapter.table
+If using SQL adapter type, This tells the server was table it should check for users.
+* users.lookupAdapter.fields
+If using SQL adapter type, This tells the server all the fields within the table that are to be match to the provided username. username, userId, phonenumber, email.
+* users.operators
+Server Operators. Gives defined users limitless access with all permissions.
 * framework.database.database: chiorifw
 Framework Database Name
 * framework.database.type: mysql
@@ -103,8 +111,6 @@ Database Username
 Database Password
 * framework.sites.defaultTitle: Unnamed Chiori Framework Site
 What title to use for unknown domain requests.
-* framework.users.operators
-Server Operators. Gives defined users limitless access with all permissions.
 
 ===Run as a Service===
 We have plans to release instructions (or possibly an auto installer if it's not too much trouble) on how to install this web server as a service for Linux. Being fans of Linux, Not expecting very many Windows users and Simply not have the time, There is nothing planned for Windows Services. As much as we try to make our product cross-platform compatible it will most likely not happen. If anyone is up to the task of making something for both Windows, Mac and/or Linux then please be our guest.
