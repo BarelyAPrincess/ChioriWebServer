@@ -4,9 +4,9 @@
 *.war
 *.ear
 /bin
-/.classpath
-/.project
-/.settings
+.classpath
+.project
+.settings
 /chiori.yml
 /server.log
 /server.log.lck

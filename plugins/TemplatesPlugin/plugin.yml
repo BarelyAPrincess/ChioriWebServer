@@ -1,6 +1,6 @@
 name: Chiori Framework
 author: Chiori Greene
-main: com.chiorichan.plugin.Template
+main: com.chiorichan.plugin.builtin.Template
 version: '1.0'
 depends: []
 

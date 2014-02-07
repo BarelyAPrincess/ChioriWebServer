@@ -1,4 +1,4 @@
-package com.chiorichan.plugins;
+package com.chiorichan.plugin.builtin;
 
 import java.util.Date;
 import java.util.Properties;

@@ -142,8 +142,6 @@ public class PersistenceManager
 	
 	public static void mainThreadHeartbeat( long tick )
 	{
-		// TODO: Cleanup the session database tables of unused sessions.
-		
 		Map<String, Integer> sessionLimits = Maps.newHashMap();
 		
 		synchronized ( sessionList )

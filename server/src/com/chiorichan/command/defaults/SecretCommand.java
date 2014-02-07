@@ -1,5 +1,7 @@
 package com.chiorichan.command.defaults;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.logging.Handler;
 
 import com.chiorichan.ChatColor;
@@ -9,6 +11,7 @@ import com.chiorichan.command.CommandSender;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.PersistentSession;
 import com.chiorichan.user.User;
+import com.chiorichan.util.Common;
 
 public class SecretCommand extends VanillaCommand
 {
@@ -55,7 +58,10 @@ public class SecretCommand extends VanillaCommand
 				break;
 			case "sessions":
 				for ( PersistentSession s : Loader.getPersistenceManager().getSessions() )
-					Loader.getLogger().debug( "Loaded session: " + s );
+				{
+					Date date = new Date( s.getTimeout() * 1000 );
+					Loader.getLogger().debug( "Loaded session: " + s + " -> " + new SimpleDateFormat( "MMM d YYYY hh:mm:ss" ).format( date ) );
+				}
 				break;
 			case "sites":
 				for ( Site s : Loader.getPersistenceManager().getSiteManager().getSites() )

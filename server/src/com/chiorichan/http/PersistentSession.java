@@ -34,7 +34,7 @@ public class PersistentSession implements UserHandler
 {
 	protected Map<String, String> data = new LinkedHashMap<String, String>();
 	protected int expires = 0, defaultLife = 86400000; // 1 Day!
-	protected int timeout = 0, requestCnt = 0, defaultTimeout = 10000; // 10 minutes
+	protected int timeout = 0, requestCnt = 0, defaultTimeout = 600; // 10 minutes
 	protected String candyId = "", candyName = "candyId";
 	protected Candy sessionCandy;
 	protected Binding binding = new Binding();
@@ -389,7 +389,7 @@ public class PersistentSession implements UserHandler
 		if ( requestCnt < 6 )
 			requestCnt++;
 		
-		timeout = Common.getEpoch() + defaultTimeout + ( requestCnt * 120000 );
+		timeout = Common.getEpoch() + defaultTimeout + ( requestCnt * 120 );
 	}
 	
 	public int getTimeout()

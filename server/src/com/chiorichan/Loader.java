@@ -58,7 +58,6 @@ import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.ServicesManager;
 import com.chiorichan.plugin.SimplePluginManager;
 import com.chiorichan.plugin.SimpleServicesManager;
-import com.chiorichan.plugin.Template;
 import com.chiorichan.plugin.java.JavaPluginLoader;
 import com.chiorichan.plugin.messaging.Messenger;
 import com.chiorichan.plugin.messaging.PluginMessageRecipient;
@@ -434,7 +433,7 @@ public class Loader implements PluginMessageRecipient
 			pluginFolder.mkdir();
 		}
 		
-		pluginManager.loadInternalPlugin( Template.class.getResourceAsStream( "template.yml" ) );
+		//pluginManager.loadInternalPlugin( Template.class.getResourceAsStream( "template.yml" ) );
 	}
 	
 	public void enablePlugins( PluginLoadOrder type )
@@ -746,6 +745,19 @@ public class Loader implements PluginMessageRecipient
 			}
 			getLogger().log( Level.SEVERE, String.format( "Nag author: '%s' of '%s' about the following: %s", author, plugin.getDescription().getName(), "This plugin is not properly shutting down its async tasks when it is being reloaded.  This may cause conflicts with the newly loaded version of the plugin" ) );
 		}
+		
+		getPersistenceManager().shutdown();
+		getUserManager().saveUsers();
+		
+		getLogger().info( "Reinitalizing the Persistence Manager..." );
+		
+		persistence = new PersistenceManager();
+		persistence.loadSessions();
+		persistence.getSiteManager().loadSites();
+		
+		getLogger().info( "Reinitalizing the User Manager..." );
+		userManager = new UserManager( this );
+		
 		loadPlugins();
 		enablePlugins( PluginLoadOrder.STARTUP );
 		enablePlugins( PluginLoadOrder.POSTSERVER );

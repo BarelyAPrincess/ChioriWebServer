@@ -1,4 +1,4 @@
-package com.chiorichan.plugin;
+package com.chiorichan.plugin.builtin;
 
 import java.io.BufferedReader;
 import java.io.File;
