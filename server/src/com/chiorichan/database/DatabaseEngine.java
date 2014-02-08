@@ -26,6 +26,7 @@ public class DatabaseEngine extends SqlConnector
 		con = _sql.con;
 	}
 	
+	@SuppressWarnings( "unchecked" )
 	public LinkedHashMap<String, Object> selectOne( String table, Object where ) throws SQLException
 	{
 		LinkedHashMap<String, Object> result = select( table, where );
@@ -46,6 +47,7 @@ public class DatabaseEngine extends SqlConnector
 		return select( table, where, null );
 	}
 	
+	@SuppressWarnings( "unchecked" )
 	public LinkedHashMap<String, Object> select( String table, Object where, Map<String, Object> options0 ) throws SQLException
 	{
 		String subWhere = "";
@@ -60,7 +62,7 @@ public class DatabaseEngine extends SqlConnector
 		{
 			Map<String, Object> whereMap = (Map<String, Object>) where;
 			
-			String tmp = "", opr = "", opr2 = "";
+			String tmp = "", opr = "";//, opr2 = "";
 			
 			for ( Entry<String, Object> entry : whereMap.entrySet() )
 			{
@@ -77,7 +79,7 @@ public class DatabaseEngine extends SqlConnector
 					
 					for ( Entry<String, Object> entry2 : val.entrySet() )
 					{
-						opr2 = "AND";
+						//opr2 = "AND";
 						if ( entry.getKey().indexOf( "|" ) >= 0 )
 							opr = "OR";
 						if ( entry.getKey().indexOf( "&" ) >= 0 )
@@ -255,6 +257,7 @@ public class DatabaseEngine extends SqlConnector
 		return update( table, data, where, lmt, false );
 	}
 	
+	@SuppressWarnings( "unchecked" )
 	public boolean update( String table, Map<String, Object> data, Object where, int lmt, boolean disableInjectionCheck )
 	{
 		String subWhere = "";
@@ -269,7 +272,7 @@ public class DatabaseEngine extends SqlConnector
 		{
 			Map<String, Object> whereMap = (Map<String, Object>) where;
 			
-			String tmp = "", opr = "", opr2 = "";
+			String tmp = "", opr = "";//, opr2 = "";
 			
 			for ( Entry<String, Object> entry : whereMap.entrySet() )
 			{
@@ -286,7 +289,7 @@ public class DatabaseEngine extends SqlConnector
 					
 					for ( Entry<String, Object> entry2 : val.entrySet() )
 					{
-						opr2 = "AND";
+						//opr2 = "AND";
 						if ( entry.getKey().indexOf( "|" ) >= 0 )
 							opr = "OR";
 						if ( entry.getKey().indexOf( "&" ) >= 0 )
@@ -354,11 +357,12 @@ public class DatabaseEngine extends SqlConnector
 		return delete( table, where, 1 );
 	}
 	
+	@SuppressWarnings( "unchecked" )
 	public boolean delete( String table, Map<String, Object> where, int limit )
 	{
 		String whr = "";
 		
-		String tmp = "", opr = "", opr2 = "";
+		String tmp = "", opr = "";//, opr2 = "";
 		
 		for ( Entry<String, Object> entry : where.entrySet() )
 		{
@@ -375,7 +379,7 @@ public class DatabaseEngine extends SqlConnector
 				
 				for ( Entry<String, Object> entry2 : val.entrySet() )
 				{
-					opr2 = "AND";
+					//opr2 = "AND";
 					if ( entry.getKey().indexOf( "|" ) >= 0 )
 						opr = "OR";
 					if ( entry.getKey().indexOf( "&" ) >= 0 )

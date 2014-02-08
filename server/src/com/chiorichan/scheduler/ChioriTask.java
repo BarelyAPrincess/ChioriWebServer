@@ -2,11 +2,9 @@ package com.chiorichan.scheduler;
 
 import com.chiorichan.Loader;
 import com.chiorichan.plugin.Plugin;
-import com.chiorichan.util.UnhandledException;
 
 class ChioriTask implements IChioriTask, Runnable
 {
-	
 	private volatile ChioriTask next = null;
 	/**
 	 * -1 means no repeating <br>

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import jline.console.ConsoleReader;
 
 public class TerminalConsoleHandler extends ConsoleHandler
@@ -32,7 +33,7 @@ public class TerminalConsoleHandler extends ConsoleHandler
 			{
 				reader.getCursorBuffer().clear();
 			}
-			reader.flush();
+			reader.flush();;
 		}
 		catch ( IOException ex )
 		{

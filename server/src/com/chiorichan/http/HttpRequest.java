@@ -7,7 +7,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.poi.util.IOUtils;
+import org.apache.commons.io.IOUtils;
 
 import com.chiorichan.Loader;
 import com.chiorichan.framework.Framework;
@@ -23,12 +23,12 @@ public class HttpRequest
 	private HttpResponse response;
 	private Map<String, String> getMap, postMap;
 	private int requestTime = 0;
-	private WebHandler handler;
+	//private WebHandler handler;
 	
 	protected HttpRequest(HttpExchange _http, WebHandler _handler)
 	{
 		http = _http;
-		handler = _handler;
+		//handler = _handler;
 		requestTime = Common.getEpoch();
 		
 		response = new HttpResponse( this );

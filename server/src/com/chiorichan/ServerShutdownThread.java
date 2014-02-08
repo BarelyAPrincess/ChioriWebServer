@@ -1,13 +1,12 @@
 package com.chiorichan;
 
-
 public class ServerShutdownThread extends Thread
 {
-	private final Loader server;
+	// private final Loader server;
 	
 	public ServerShutdownThread(Loader loader)
 	{
-		this.server = loader;
+		// this.server = loader;
 	}
 	
 	@Override
@@ -15,7 +14,7 @@ public class ServerShutdownThread extends Thread
 	{
 		try
 		{
-			//server.shutdown();
+			// server.shutdown();
 		}
 		catch ( Exception ex )
 		{

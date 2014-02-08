@@ -2,7 +2,6 @@ package com.chiorichan.event.server;
 
 import com.chiorichan.event.Cancellable;
 import com.chiorichan.framework.Site;
-import com.chiorichan.user.builtin.UserLookupAdapter;
 
 public class SiteLoadEvent extends ServerEvent implements Cancellable
 {

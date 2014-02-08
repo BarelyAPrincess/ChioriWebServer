@@ -1,19 +1,12 @@
 package com.chiorichan.command.defaults;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.commons.lang3.Validate;
-
 import com.chiorichan.Loader;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.user.User;
-import com.chiorichan.util.StringUtil;
-import com.google.common.collect.ImmutableList;
 
 public class BanListCommand extends VanillaCommand
 {
-	private static final List<String> BANLIST_TYPES = ImmutableList.of( "ips", "Users" );
+	//private static final List<String> BANLIST_TYPES = ImmutableList.of( "ips", "Users" );
 	
 	public BanListCommand()
 	{

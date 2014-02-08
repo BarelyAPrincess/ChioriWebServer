@@ -20,7 +20,7 @@ import com.chiorichan.user.User;
 import com.chiorichan.user.UserHandler;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.StringUtil;
-import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
@@ -40,6 +40,7 @@ public class PersistentSession implements UserHandler
 	protected Binding binding = new Binding();
 	protected Evaling eval;
 	protected User currentUser = null;
+	protected List<String> pendingMessages = Lists.newArrayList();
 	
 	protected Map<String, Candy> candies = new LinkedHashMap<String, Candy>();
 	protected Framework framework = null;
@@ -78,6 +79,7 @@ public class PersistentSession implements UserHandler
 		setRequest( _request, false );
 	}
 	
+	@SuppressWarnings( "unchecked" )
 	protected PersistentSession(ResultSet rs) throws SessionException
 	{
 		this();
@@ -106,7 +108,9 @@ public class PersistentSession implements UserHandler
 			sessionCandy = new Candy( candyName, rs.getString( "sessionId" ) );
 			candies.put( candyName, sessionCandy );
 			
-			Loader.getLogger().info( "Restored Session: " + this );
+			loginSessionUser();
+			
+			Loader.getLogger().info( ChatColor.DARK_AQUA + "Session Restored `" + this + "`" );
 		}
 		catch ( SQLException e )
 		{
@@ -153,8 +157,30 @@ public class PersistentSession implements UserHandler
 		binding.setVariable( "__FILE__", new File( "" ) );
 	}
 	
+	protected void loginSessionUser()
+	{
+		String username = getArgument( "user" );
+		String password = getArgument( "pass" );
+		
+		try
+		{
+			User user = Loader.getUserManager().attemptLogin( this, username, password );
+			currentUser = user;
+			Loader.getLogger().info( ChatColor.GREEN + "Login Restored `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
+		}
+		catch ( LoginException l )
+		{
+			// Loader.getLogger().warning( ChatColor.GREEN + "Login Status: No Valid Login Present" );
+		}
+	}
+	
 	protected void handleUserProtocols()
 	{
+		if ( !pendingMessages.isEmpty() )
+		{
+			// request.getResponse().sendMessage( pendingMessages.toArray( new String[0] ) );
+		}
+		
 		String username = request.getArgument( "user" );
 		String password = request.getArgument( "pass" );
 		String remember = request.getArgumentBoolean( "remember" ) ? "true" : "false";
@@ -183,7 +209,7 @@ public class PersistentSession implements UserHandler
 				
 				setArgument( "remember", remember );
 				
-				Loader.getLogger().info( ChatColor.GREEN + "Login Success: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\"" );
+				Loader.getLogger().info( ChatColor.GREEN + "Login Success `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
 				request.getResponse().sendRedirect( loginPost );
 				
 			}
@@ -192,7 +218,7 @@ public class PersistentSession implements UserHandler
 				String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
 				
 				if ( l.getUser() != null )
-					Loader.getLogger().warning( "Login Failed: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + l.getUser().getUserId() + "\", Display Name \"" + l.getUser().getDisplayName() + "\", Reason \"" + l.getMessage() + "\"" );
+					Loader.getLogger().warning( "Login Failed `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + l.getUser().getUserId() + "\", Display Name \"" + l.getUser().getDisplayName() + "\", Reason \"" + l.getMessage() + "\"`" );
 				
 				request.getResponse().sendRedirect( loginForm + "?msg=" + l.getMessage() + "&target=" + target );
 			}
@@ -210,14 +236,11 @@ public class PersistentSession implements UserHandler
 					
 					currentUser = user;
 					
-					String loginPost = ( target == null || target.isEmpty() ) ? request.getSite().getYaml().getString( "scripts.login-post", "/panel" ) : target;
-					
-					Loader.getLogger().info( ChatColor.GREEN + "Login Success: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\"" );
-					// _sess.getServer().dummyRedirect( loginPost );
+					Loader.getLogger().info( ChatColor.GREEN + "Login Success `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
 				}
 				catch ( LoginException l )
 				{
-					Loader.getLogger().warning( ChatColor.GREEN + "Login Status: No Valid Login Present" );
+					Loader.getLogger().warning( ChatColor.GREEN + "Login Failed `No Valid Login Present`" );
 				}
 			}
 			else
@@ -225,9 +248,16 @@ public class PersistentSession implements UserHandler
 		}
 		else
 		{
-			// Recheck validity of user login since possibly we are reusing a session.
-			
-			Loader.getLogger().info( ChatColor.GREEN + "Current Login: Username \"" + currentUser.getName() + "\", Password \"" + currentUser.getMetaData().getPassword() + "\", UserId \"" + currentUser.getUserId() + "\", Display Name \"" + currentUser.getDisplayName() + "\"" );
+			try
+			{
+				currentUser.reloadAndValidate();
+				Loader.getLogger().info( ChatColor.GREEN + "Current Login `Username \"" + currentUser.getName() + "\", Password \"" + currentUser.getMetaData().getPassword() + "\", UserId \"" + currentUser.getUserId() + "\", Display Name \"" + currentUser.getDisplayName() + "\"`" );
+			}
+			catch ( LoginException e )
+			{
+				currentUser = null;
+				Loader.getLogger().warning( ChatColor.GREEN + "Login Failed `There was a login present but it failed validation with error: " + e.getMessage() + "`" );
+			}
 		}
 		
 		if ( currentUser != null )
@@ -247,6 +277,7 @@ public class PersistentSession implements UserHandler
 		return binding.getVariable( key );
 	}
 	
+	@SuppressWarnings( "unchecked" )
 	public Map<String, Object> getGlobals()
 	{
 		return binding.getVariables();
@@ -257,6 +288,7 @@ public class PersistentSession implements UserHandler
 		return binding;
 	}
 	
+	@SuppressWarnings( "unchecked" )
 	protected void initSession()
 	{
 		SqlConnector sql = Loader.getPersistenceManager().getSql();
@@ -342,7 +374,7 @@ public class PersistentSession implements UserHandler
 			sql.queryUpdate( "INSERT INTO `sessions` (`sessionId`, `timeout`, `ipAddr`, `sessionName`, `sessionSite`, `data`)VALUES('" + candyId + "', '" + timeout + "', '" + ipAddr + "', '" + candyName + "', '" + getSite().getName() + "', '" + dataJson + "');" );
 		}
 		
-		Loader.getLogger().info( "Session Initalized: " + this );
+		Loader.getLogger().info( ChatColor.DARK_AQUA + "Session Initalized `" + this + "`" );
 	}
 	
 	protected void saveSession()
@@ -356,7 +388,15 @@ public class PersistentSession implements UserHandler
 	
 	public String toString()
 	{
-		return candyName + "{id=" + candyId + ",ipAddr=" + ipAddr + ",timeout=" + timeout + ",data=" + data + "}";
+		String extra = "";
+		
+		if ( failoverSite != null )
+			extra += ",site=" + failoverSite.getName();
+		
+		if ( currentUser != null )
+			extra += ",loggedIn=" + currentUser.getUserId();
+		
+		return candyName + "{id=" + candyId + ",ipAddr=" + ipAddr + ",timeout=" + timeout + ",data=" + data + ",stale=" + stale + ",requestCount=" + requestCnt + extra + "}";
 	}
 	
 	/**
@@ -370,8 +410,8 @@ public class PersistentSession implements UserHandler
 		String _candyName = request.getSite().getYaml().getString( "sessions.cookie-name", Loader.getConfig().getString( "sessions.defaultSessionName", "candyId" ) );
 		Map<String, Candy> requestCandys = pullCandies( request );
 		
-		//if ( requestCandys.containsKey( candyName ) )
-			//Loader.getLogger().debug( getCandy( candyName ).getValue() + " -> " + requestCandys.get( _candyName ).getValue() + " = " + candyName + " -> " + _candyName );
+		// if ( requestCandys.containsKey( candyName ) )
+		// Loader.getLogger().debug( getCandy( candyName ).getValue() + " -> " + requestCandys.get( _candyName ).getValue() + " = " + candyName + " -> " + _candyName );
 		
 		return ( requestCandys.containsKey( _candyName ) && getCandy( candyName ).compareTo( requestCandys.get( _candyName ) ) );
 	}
@@ -510,14 +550,16 @@ public class PersistentSession implements UserHandler
 	 */
 	public void logoutUser()
 	{
+		if ( currentUser != null )
+			Loader.getLogger().info( ChatColor.GREEN + "User Logout `" + currentUser + "`" );
+		
+		setArgument( "remember", null );
 		setArgument( "user", null );
 		setArgument( "pass", null );
 		currentUser = null;
 		
 		for ( User u : Loader.getInstance().getOnlineUsers() )
 			u.removeHandler( this );
-		
-		Loader.getLogger().info( "User Logout" );
 	}
 	
 	public HttpRequest getRequest()
@@ -549,13 +591,15 @@ public class PersistentSession implements UserHandler
 	@Override
 	public void kick( String kickMessage )
 	{
-		// Invalidate this session.
+		logoutUser();
+		pendingMessages.add( kickMessage );
 	}
 	
 	@Override
 	public void sendMessage( String[] messages )
 	{
-		// q this message to be sent to the user. Probably not possible with this class
+		for ( String m : messages )
+			pendingMessages.add( m );
 	}
 	
 	@Override
@@ -567,5 +611,11 @@ public class PersistentSession implements UserHandler
 			return Loader.getPersistenceManager().getSiteManager().getFrameworkSite();
 		else
 			return failoverSite;
+	}
+	
+	@Override
+	public String getIpAddr()
+	{
+		return ipAddr;
 	}
 }

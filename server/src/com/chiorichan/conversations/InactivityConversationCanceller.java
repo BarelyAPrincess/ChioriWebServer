@@ -1,5 +1,6 @@
 package com.chiorichan.conversations;
 
+import com.chiorichan.Loader;
 import com.chiorichan.plugin.Plugin;
 
 /**
@@ -50,7 +51,7 @@ public class InactivityConversationCanceller implements ConversationCanceller
 	 */
 	private void startTimer()
 	{
-		taskId = plugin.getServer().getScheduler().scheduleSyncDelayedTask( plugin, new Runnable()
+		taskId = Loader.getScheduler().scheduleSyncDelayedTask( plugin, new Runnable()
 		{
 			public void run()
 			{
@@ -74,7 +75,7 @@ public class InactivityConversationCanceller implements ConversationCanceller
 	{
 		if ( taskId != -1 )
 		{
-			plugin.getServer().getScheduler().cancelTask( taskId );
+			Loader.getScheduler().cancelTask( taskId );
 			taskId = -1;
 		}
 	}

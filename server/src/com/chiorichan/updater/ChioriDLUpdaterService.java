@@ -124,6 +124,7 @@ public class ChioriDLUpdaterService
 		}
 	}
 	
+	@SuppressWarnings( "rawtypes" )
 	static class DateDeserializer implements JsonDeserializer
 	{
 		private static final SimpleDateFormat format = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" );

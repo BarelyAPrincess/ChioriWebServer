@@ -55,6 +55,8 @@ The port to start the TCP server on.
 This is the administrator e-mail address for the web server. Future plans to send exceptions and alerts to specified address.
 * server.allowDirectoryListing: false
 If the web browser requests a directory and there is no index file should I like the directory contents?
+* server.haltOnSevereError: false
+Should the console halt on severe errors which would require you to press 'Ctrl-c' to quit.
 * server.enableWebServer: true
 Should the web server start? Useful is you plan on this being strictly a Tcp Server.
 * server.enableTcpServer: true

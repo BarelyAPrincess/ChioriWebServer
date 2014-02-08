@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.json.JSONObject;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
@@ -30,9 +29,10 @@ public class User implements CommandSender
 	
 	protected final PermissibleBase perm = new PermissibleBase( this );
 	protected UserMetaData metaData = new UserMetaData();
-	protected String username;
-	protected boolean op, loggedIn = false;
+	protected String userId;
+	protected boolean op;
 	protected Set<UserHandler> handlers = Sets.newLinkedHashSet(); // Set this handler for the last login
+	protected UserLookupAdapter _cachedAdapter;
 	
 	public User(String user, UserLookupAdapter adapter) throws LoginException
 	{
@@ -42,10 +42,13 @@ public class User implements CommandSender
 		if ( adapter == null )
 			throw new LoginException( LoginException.ExceptionReasons.unknownError );
 		
+		_cachedAdapter = adapter;
+		
 		metaData = adapter.loadUser( user );
-		//metaData.set( "username", user );
-		username = metaData.getUsername();
-		op = Loader.getConfig().getStringList( "users.operators" ).contains( user );
+		userId = metaData.getUserId();
+		
+		List<String> ops = Loader.getConfig().getStringList( "users.operators" );
+		op = ( ops.contains( userId ) || ops.contains( user ) );
 	}
 	
 	public UserMetaData getMetaData()
@@ -64,11 +67,6 @@ public class User implements CommandSender
 		return metaData.getPassword();
 	}
 	
-	public boolean isLoggedIn()
-	{
-		return loggedIn;
-	}
-	
 	public String getDisplayName()
 	{
 		return metaData.getString( "displayName" );
@@ -84,10 +82,8 @@ public class User implements CommandSender
 		return metaData.getUserId();
 	}
 	
-	// TODO: Que kick message in a buffer that is sent to user if they attempt to visit a page using a session user.
 	public void kick( String kickMessage )
 	{
-		loggedIn = false;
 		for ( UserHandler handler : handlers )
 			handler.kick( kickMessage );
 	}
@@ -182,97 +178,11 @@ public class User implements CommandSender
 			handler.sendMessage( messages );
 	}
 	
-	/**
-	 * This function checks the users permission level against the permissions table for if the requested permission is
-	 * allowed by Current User.
-	 */
-	/*
-	 * public boolean hasPermission( List<String> permName )
-	 * {
-	 * try
-	 * {
-	 * if ( permName == null || permName.isEmpty() )
-	 * permName = Arrays.asList( "ROOT" );
-	 * String idenifier = getUserId();
-	 * if ( userLevel == null || userLevel.isEmpty() )
-	 * {
-	 * Map<String, Object> result = sql.selectOne( "users", "userId", idenifier );
-	 * if ( result == null )
-	 * return false;
-	 * userLevel = (String) result.get( "userlevel" );
-	 * }
-	 * Map<String, Object> perm = sql.selectOne( "accounts_access", "accessID", userLevel );
-	 * if ( perm == null )
-	 * return false;
-	 * List<String> permList = Arrays.asList( ( (String) perm.get( "permissions" ) ).split( "[|]" ) );
-	 * if ( permList.contains( "ROOT" ) )
-	 * return true;
-	 * if ( permList.contains( "ADMIN" ) )
-	 * return true;
-	 * for ( String p : permName )
-	 * {
-	 * boolean granted = false;
-	 * String[] pS = p.split( "&" );
-	 * for ( String pP : pS )
-	 * {
-	 * if ( pP.startsWith( "!" ) )
-	 * {
-	 * if ( permList.contains( pP.substring( 1 ) ) )
-	 * {
-	 * granted = false;
-	 * break;
-	 * }
-	 * else
-	 * {
-	 * granted = true;
-	 * }
-	 * }
-	 * else
-	 * {
-	 * if ( permList.contains( pP ) )
-	 * {
-	 * granted = true;
-	 * }
-	 * else
-	 * {
-	 * granted = false;
-	 * break;
-	 * }
-	 * }
-	 * }
-	 * Loader.getLogger().info( "Getting Permission: " + permName + " for " + idenifier + " with result " + granted );
-	 * if ( granted )
-	 * return true; // Return true if one of the requested permission names exists in users allowed permissions
-	 * // list.
-	 * }
-	 * }
-	 * catch ( Exception ex )
-	 * {
-	 * ex.printStackTrace();
-	 * }
-	 * return false;
-	 * }
-	 */
-	
-	/*
-	 * public void checkPermision() throws SQLException { checkPermision( "" ); }
-	 * /* This function gives scripts easy access to the hasPermission function without the extra requirments.
-	 * Recommended uses would be checking if page load is allowed by user.
-	 * TODO: Implement this method elsewhere. public boolean checkPermision( String perm_name ) throws SQLException { if
-	 * ( perm_name == null ) perm_name = "";
-	 * if ( !hasPermission( perm_name ) ) { // XXX: Intent is to give the user an error page if they don't have
-	 * permission. _sess.generateError( 401, "This page is limited to members with access to the \"" + perm_name +
-	 * "\" permission or better. If access is required please contact us or see your account holder for help." ); return
-	 * false; }
-	 * return true; }
-	 */
-	
 	public LinkedHashMap<String, Object> getMyLocations( boolean returnOne, boolean returnString, String whereAlt )
 	{
 		List<String> where = new ArrayList<String>();
 		LinkedHashMap<String, Object> result = new LinkedHashMap<String, Object>();
 		String sqlWhere = "";
-		JSONObject json;
 		SqlConnector sql = getSite().getDatabase();
 		
 		if ( whereAlt == null )
@@ -344,6 +254,7 @@ public class User implements CommandSender
 			
 			if ( o instanceof LinkedHashMap )
 			{
+				@SuppressWarnings( "unchecked" )
 				LinkedHashMap<String, Object> one = (LinkedHashMap<String, Object>) o;
 				return one;
 			}
@@ -375,10 +286,8 @@ public class User implements CommandSender
 	
 	public LinkedHashMap<String, Object> getMyAccounts( boolean returnOne, boolean returnString, String whereAlt )
 	{
-		List<String> where = new ArrayList<String>();
 		LinkedHashMap<String, Object> result = new LinkedHashMap<String, Object>();
 		String sqlWhere = "";
-		JSONObject json;
 		SqlConnector sql = getSite().getDatabase();
 		
 		if ( whereAlt == null )
@@ -416,6 +325,7 @@ public class User implements CommandSender
 			
 			if ( o instanceof LinkedHashMap )
 			{
+				@SuppressWarnings( "unchecked" )
 				LinkedHashMap<String, Object> one = (LinkedHashMap<String, Object>) o;
 				return one;
 			}
@@ -542,7 +452,9 @@ public class User implements CommandSender
 	
 	public String getAddress()
 	{
-		// TODO Return the last IP Address this user connected from.
+		if ( handlers.size() > 0 )
+			return handlers.toArray( new UserHandler[0] )[handlers.size()].getIpAddr();
+		
 		return null;
 	}
 	
@@ -556,9 +468,17 @@ public class User implements CommandSender
 		if ( !handlers.contains( handler ) )
 			handlers.add( handler );
 	}
-
+	
 	public void removeHandler( UserHandler handler )
 	{
 		handlers.remove( handler );
+	}
+	
+	public void reloadAndValidate() throws LoginException
+	{
+		metaData = _cachedAdapter.loadUser( userId );
+		
+		List<String> ops = Loader.getConfig().getStringList( "users.operators" );
+		op = ( ops.contains( userId ) || ops.contains( metaData.getUsername() ) );
 	}
 }

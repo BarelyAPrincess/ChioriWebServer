@@ -9,20 +9,19 @@ import java.nio.channels.FileChannel;
 /**
  * Class containing file utilities
  */
-
 public class FileUtil
 {
-	
 	/**
 	 * This method copies one file to another location
 	 * 
 	 * @param inFile
-	 *           the source filename
+	 *             the source filename
 	 * @param outFile
-	 *           the target filename
+	 *             the target filename
 	 * @return true on success
 	 */
 	
+	@SuppressWarnings( "resource" )
 	public static boolean copy( File inFile, File outFile )
 	{
 		if ( !inFile.exists() )
@@ -70,6 +69,5 @@ public class FileUtil
 		}
 		
 		return true;
-		
 	}
 }

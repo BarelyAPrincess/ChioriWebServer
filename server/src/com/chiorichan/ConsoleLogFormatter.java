@@ -21,14 +21,7 @@ public class ConsoleLogFormatter extends Formatter
 	
 	public ConsoleLogFormatter(Console console)
 	{
-		SimpleDateFormat date = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" );
-		
-		if ( date == null )
-		{
-			date = new SimpleDateFormat( "HH:mm:ss" );
-		}
-		
-		this.date = date;
+		date = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" );
 		
 		replacements.put( ChatColor.BLACK, Ansi.ansi().fg( Ansi.Color.BLACK ).boldOff().toString() );
 		replacements.put( ChatColor.DARK_BLUE, Ansi.ansi().fg( Ansi.Color.BLUE ).boldOff().toString() );
@@ -90,7 +83,6 @@ public class ConsoleLogFormatter extends Formatter
 		{
 			var1 = ChatColor.translateAlternateColorCodes( '&', var1 ) + ChatColor.RESET;
 			
-			String result = ChatColor.translateAlternateColorCodes( '&', var1 );
 			for ( ChatColor color : colors )
 			{
 				if ( replacements.containsKey( color ) )

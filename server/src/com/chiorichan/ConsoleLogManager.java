@@ -1,16 +1,10 @@
 package com.chiorichan;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.EnumMap;
-import java.util.Map;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import org.fusesource.jansi.Ansi;
-import org.fusesource.jansi.Ansi.Attribute;
 
 import com.google.common.base.Strings;
 
@@ -231,7 +225,6 @@ public class ConsoleLogManager
 	public String[] multilineColorRepeater( String[] var1 )
 	{
 		String color = ChatColor.getLastColors( var1[0] );
-		StringBuilder sb = new StringBuilder();
 		
 		for ( int l = 0; l < var1.length; l++ )
 		{

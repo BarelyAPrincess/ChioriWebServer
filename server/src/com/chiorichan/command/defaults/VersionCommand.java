@@ -1,19 +1,14 @@
 package com.chiorichan.command.defaults;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.plugin.Plugin;
 import com.chiorichan.plugin.PluginDescriptionFile;
-import com.chiorichan.util.StringUtil;
 import com.chiorichan.util.Versioning;
-import com.google.common.collect.ImmutableList;
 
 public class VersionCommand extends ChioriCommand
 {

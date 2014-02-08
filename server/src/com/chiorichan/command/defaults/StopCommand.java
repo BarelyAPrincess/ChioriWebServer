@@ -1,16 +1,11 @@
 package com.chiorichan.command.defaults;
 
 import java.util.Arrays;
-import java.util.List;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.Loader;
 import com.chiorichan.command.Command;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.user.User;
-import com.google.common.collect.ImmutableList;
 
 public class StopCommand extends VanillaCommand
 {

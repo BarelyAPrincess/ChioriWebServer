@@ -11,7 +11,6 @@ import com.chiorichan.command.CommandSender;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.PersistentSession;
 import com.chiorichan.user.User;
-import com.chiorichan.util.Common;
 
 public class SecretCommand extends VanillaCommand
 {

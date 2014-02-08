@@ -2,6 +2,8 @@ package com.chiorichan;
 
 import java.io.IOException;
 
+import jline.console.ConsoleReader;
+
 public class ThreadCommandReader extends Thread
 {
 	public Console console;
@@ -18,7 +20,7 @@ public class ThreadCommandReader extends Thread
 			return;
 		}
 		
-		jline.console.ConsoleReader bufferedreader = console.reader;
+		ConsoleReader bufferedreader = console.reader;
 		String s;
 		
 		try

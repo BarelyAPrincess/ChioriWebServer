@@ -73,7 +73,6 @@ public class HttpUtilsWrapper
 		if ( !file.exists() )
 			file = new File( root, pack );
 		
-		// TODO: Needs improvement to make sure it's all set properly.
 		root = Loader.getPersistenceManager().getSiteManager().getSiteById( "framework" ).getResourceRoot();
 		
 		if ( !file.exists() )
@@ -310,6 +309,7 @@ public class HttpUtilsWrapper
 		return createTable( tableData, headerArray, "" );
 	}
 	
+	@SuppressWarnings( "unchecked" )
 	public String createTable( Map<String, Object> tableData, List<String> headerArray, String tableId )
 	{
 		if ( tableId == null )
@@ -335,11 +335,9 @@ public class HttpUtilsWrapper
 		int colLength = headerArray.size();
 		for ( Object row : tableData.values() )
 		{
-			Map<String, String> map;
-			
 			if ( row instanceof Map )
 			{
-				colLength = Math.max( ( (Map) row ).size(), colLength );
+				colLength = Math.max( ( (Map<String, Object>) row ).size(), colLength );
 			}
 		}
 		

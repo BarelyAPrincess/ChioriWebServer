@@ -6,6 +6,7 @@ server:
   tcpPort: 1024
   admin: chiorigreene@gmail.com
   allowDirectoryListing: false
+  haltOnSevereError: false
   enableWebServer: true
   enableTcpServer: true
   allowQuery: false
@@ -55,7 +56,7 @@ users:
     table: ''
     fields: {}
   operators:
-  - ChioriGreene
+  - cg092m
 framework:
   sites:
     defaultTitle: Unnamed Chiori Framework Site

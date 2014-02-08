@@ -5,11 +5,9 @@ import java.util.LinkedList;
 import java.util.Map;
 
 import com.chiorichan.plugin.Plugin;
-import com.chiorichan.util.UnhandledException;
 
 class ChioriAsyncTask extends ChioriTask
 {
-	
 	private final LinkedList<ChioriWorker> workers = new LinkedList<ChioriWorker>();
 	private final Map<Integer, ChioriTask> runners;
 	

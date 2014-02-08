@@ -1,7 +1,6 @@
 package com.chiorichan.framework;
 
 import java.sql.ResultSet;
-import java.sql.SQLException;
 
 import com.chiorichan.database.SqlConnector;
 

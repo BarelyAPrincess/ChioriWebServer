@@ -1,13 +1,9 @@
 package com.chiorichan.command.defaults;
 
-import java.util.List;
-
-import org.apache.commons.lang3.Validate;
-
 import com.chiorichan.Loader;
 import com.chiorichan.command.Command;
 import com.chiorichan.command.CommandSender;
-import com.google.common.collect.ImmutableList;
+import com.chiorichan.framework.Site;
 
 public class SaveOffCommand extends VanillaCommand
 {
@@ -25,10 +21,10 @@ public class SaveOffCommand extends VanillaCommand
 		if ( !testPermission( sender ) )
 			return true;
 		
-		//for ( World world : Main.getWorlds() )
-		//{
-			//world.setAutoSave( false );
-		//}
+		for ( Site site : Loader.getPersistenceManager().getSiteManager().getSites() )
+		{
+			site.setAutoSave( false );
+		}
 		
 		Command.broadcastCommandMessage( sender, "Disabled level saving.." );
 		return true;

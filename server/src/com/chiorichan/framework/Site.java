@@ -29,6 +29,7 @@ public class Site
 	YamlConfiguration config;
 	SqlConnector sql;
 	
+	@SuppressWarnings( "unchecked" )
 	public Site(ResultSet rs) throws SiteException
 	{
 		try
@@ -256,6 +257,11 @@ public class Site
 	public String getName()
 	{
 		return siteId;
+	}
+
+	public void setAutoSave( boolean b )
+	{
+		// TODO Auto-generated method stub
 	}
 	
 	// TODO: Add methods to add protected files, metatags and aliases to site and save

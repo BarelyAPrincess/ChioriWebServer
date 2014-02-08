@@ -22,7 +22,6 @@ import com.chiorichan.util.Common;
 import com.chiorichan.util.ObjectUtil;
 import com.chiorichan.util.StringUtil;
 import com.google.common.base.Joiner;
-import com.google.common.base.Joiner.MapJoiner;
 
 abstract public class scriptingBaseJava extends Script
 {

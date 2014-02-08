@@ -1,6 +1,5 @@
 package com.chiorichan.command.defaults;
 
-import com.chiorichan.ChatColor;
 import com.chiorichan.command.CommandSender;
 
 public class ColorsCommand extends VanillaCommand

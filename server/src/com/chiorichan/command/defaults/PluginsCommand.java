@@ -31,7 +31,7 @@ public class PluginsCommand extends ChioriCommand
 	private String getPluginList()
 	{
 		StringBuilder pluginList = new StringBuilder();
-		Plugin[] plugins = Loader.getInstance().getPluginManager().getPlugins();
+		Plugin[] plugins = Loader.getPluginManager().getPlugins();
 		
 		for ( Plugin plugin : plugins )
 		{

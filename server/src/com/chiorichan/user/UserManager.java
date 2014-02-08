@@ -1,9 +1,6 @@
 package com.chiorichan.user;
 
 import java.io.File;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -17,14 +14,14 @@ import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.event.user.UserLoginEvent;
 import com.chiorichan.event.user.UserLoginEvent.Result;
-import com.chiorichan.framework.Site;
 import com.chiorichan.http.PersistentSession;
 import com.chiorichan.user.builtin.SqlAdapter;
 import com.chiorichan.user.builtin.UserLookupAdapter;
+import com.google.common.collect.Lists;
 
 public class UserManager
 {
-	private static final SimpleDateFormat d = new SimpleDateFormat( "yyyy-MM-dd \'at\' HH:mm:ss z" );
+	//private static final SimpleDateFormat d = new SimpleDateFormat( "yyyy-MM-dd \'at\' HH:mm:ss z" );
 	private Loader server;
 	private UserLookupAdapter userLookupAdapter;
 	public final List<User> users = new java.util.concurrent.CopyOnWriteArrayList<User>();
@@ -35,7 +32,7 @@ public class UserManager
 	public boolean hasWhitelist;
 	protected int maxUsers;
 	protected int c;
-	private boolean m;
+	//private boolean m;
 	private int n;
 	
 	public UserManager(Loader server0)
@@ -126,7 +123,7 @@ public class UserManager
 	
 	public User getUser( String s )
 	{
-		Iterator iterator = users.iterator();
+		Iterator<User> iterator = users.iterator();
 		
 		User user;
 		
@@ -162,12 +159,12 @@ public class UserManager
 		whitelist.remove( s );
 	}
 	
-	public Set getWhitelisted()
+	public Set<String> getWhitelisted()
 	{
 		return whitelist;
 	}
 	
-	public Set getOPs()
+	public Set<String> getOPs()
 	{
 		return operators;
 	}
@@ -196,10 +193,10 @@ public class UserManager
 		hasWhitelist = flag;
 	}
 	
-	public List searchUsers( String s )
+	public List<User> searchUsers( String s )
 	{
-		ArrayList arraylist = new ArrayList();
-		Iterator iterator = users.iterator();
+		ArrayList<User> arraylist = Lists.newArrayList();
+		Iterator<User> iterator = users.iterator();
 		
 		while ( iterator.hasNext() )
 		{

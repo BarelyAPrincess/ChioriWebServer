@@ -1,20 +1,13 @@
 package com.chiorichan.command;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Level;
-
-import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.permissions.Permissible;
 import com.chiorichan.plugin.PluginDescriptionFile;
-import com.chiorichan.user.User;
-import com.chiorichan.util.StringUtil;
-import com.google.common.collect.ImmutableList;
 
 /**
  * Represents a Command, which executes various tasks upon user input

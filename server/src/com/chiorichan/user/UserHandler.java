@@ -4,9 +4,11 @@ import com.chiorichan.framework.Site;
 
 public interface UserHandler
 {
-	void kick( String kickMessage );
+	public void kick( String kickMessage );
 
-	void sendMessage( String[] messages );
+	public void sendMessage( String[] messages );
 
-	Site getSite();
+	public Site getSite();
+
+	public String getIpAddr();
 }

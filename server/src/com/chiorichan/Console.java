@@ -3,19 +3,16 @@ package com.chiorichan;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EnumMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import jline.Terminal;
 import jline.console.ConsoleReader;
 import joptsimple.OptionSet;
-
-import org.fusesource.jansi.Ansi;
-import org.fusesource.jansi.Ansi.Attribute;
 
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.command.ConsoleCommandSender;
@@ -29,8 +26,6 @@ import com.chiorichan.permissions.Permission;
 import com.chiorichan.permissions.PermissionAttachment;
 import com.chiorichan.permissions.PermissionAttachmentInfo;
 import com.chiorichan.plugin.Plugin;
-import com.chiorichan.util.Versioning;
-import com.google.common.base.Strings;
 
 public class Console implements ConsoleCommandSender, Runnable
 {
@@ -59,8 +54,6 @@ public class Console implements ConsoleCommandSender, Runnable
 		
 		Loader.getPluginManager().subscribeToPermission( Loader.BROADCAST_CHANNEL_ADMINISTRATIVE, this );
 		Loader.getPluginManager().subscribeToPermission( Loader.BROADCAST_CHANNEL_USERS, this );
-		
-		Runtime.getRuntime().addShutdownHook( new ServerShutdownThread( loader ) );
 		
 		String jline_UnsupportedTerminal = new String( new char[] { 'j', 'l', 'i', 'n', 'e', '.', 'U', 'n', 's', 'u', 'p', 'p', 'o', 'r', 't', 'e', 'd', 'T', 'e', 'r', 'm', 'i', 'n', 'a', 'l' } );
 		String jline_terminal = new String( new char[] { 'j', 'l', 'i', 'n', 'e', '.', 't', 'e', 'r', 'm', 'i', 'n', 'a', 'l' } );
@@ -111,6 +104,7 @@ public class Console implements ConsoleCommandSender, Runnable
 		ThreadCommandReader threadcommandreader = new ThreadCommandReader( this );
 		
 		threadcommandreader.setDaemon( true );
+		threadcommandreader.setName( "Console Reader Thread" );
 		threadcommandreader.start();
 		logManager = new ConsoleLogManager( "" );
 		logManager.init();
@@ -119,7 +113,9 @@ public class Console implements ConsoleCommandSender, Runnable
 		System.setOut( new PrintStream( new LoggerOutputStream( getLogger().getLogger(), Level.INFO ), true ) );
 		System.setErr( new PrintStream( new LoggerOutputStream( getLogger().getLogger(), Level.SEVERE ), true ) );
 		
-		getLogger().info( ChatColor.RED + "Finished initalizing the server console." );
+		getLogger().info( "Finished initalizing the server console." );
+		
+		Runtime.getRuntime().addShutdownHook( new ServerShutdownThread( loader ) );
 		
 		primaryThread = new Thread( this, "Server thread" );
 	}
@@ -131,10 +127,10 @@ public class Console implements ConsoleCommandSender, Runnable
 		{
 			long i = System.currentTimeMillis();
 			
-			boolean P;
+			Boolean g = false;
 			long Q = 0;
 			
-			for ( long j = 0L; isRunning; P = true )
+			for ( long j = 0L; isRunning; g = true )
 			{
 				long k = System.currentTimeMillis();
 				long l = k - i;
@@ -184,7 +180,8 @@ public class Console implements ConsoleCommandSender, Runnable
 			{
 				try
 				{
-					reader.getTerminal().restore();
+					reader.getTerminal().reset();
+					;
 				}
 				catch ( Exception e )
 				{}

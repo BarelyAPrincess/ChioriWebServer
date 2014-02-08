@@ -1,7 +1,6 @@
 package com.chiorichan.command.defaults;
 
 import com.chiorichan.Console;
-import com.chiorichan.command.Command;
 import com.chiorichan.command.CommandSender;
 
 public class PingCommand extends VanillaCommand

@@ -1,7 +1,6 @@
 package com.chiorichan.plugin;
 
 import java.io.File;
-import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -343,7 +342,7 @@ public final class SimplePluginManager implements PluginManager
 	 * @param directory
 	 *           Directory to check for plugins
 	 * @return A list of all plugins loaded
-	 */
+	 *//*
 	public void loadInternalPlugin( InputStream descriptionFile )
 	{
 		Map<String, Collection<String>> dependencies = new HashMap<String, Collection<String>>();
@@ -477,7 +476,7 @@ public final class SimplePluginManager implements PluginManager
 		{
 			e.printStackTrace();
 		}
-	}
+	}*/
 	
 	/**
 	 * Loads the plugin in the specified file

@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
 
+import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.file.YamlConfiguration;
@@ -240,7 +241,7 @@ public class PersistenceManager
 	 */
 	public static void destroySession( PersistentSession var1 ) throws SQLException
 	{
-		Loader.getLogger().info( "&3Destroyed Session `" + var1 + "`" );
+		Loader.getLogger().info( ChatColor.DARK_AQUA + "Session Destroyed `" + var1 + "`" );
 		
 		for ( User u : Loader.getInstance().getOnlineUsers() )
 			u.removeHandler( var1 );

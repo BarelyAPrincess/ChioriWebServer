@@ -1,6 +1,7 @@
 package com.chiorichan.event.user;
 
 import com.chiorichan.event.Event;
+import com.chiorichan.event.HandlerList;
 import com.chiorichan.user.User;
 
 /**
@@ -8,6 +9,7 @@ import com.chiorichan.user.User;
  */
 public abstract class UserEvent extends Event
 {
+	private static final HandlerList handlers = new HandlerList();
 	protected User User;
 	
 	public UserEvent(final User who)
@@ -30,5 +32,16 @@ public abstract class UserEvent extends Event
 	public final User getUser()
 	{
 		return User;
+	}
+	
+	@Override
+	public HandlerList getHandlers()
+	{
+		return handlers;
+	}
+	
+	public static HandlerList getHandlerList()
+	{
+		return handlers;
 	}
 }

@@ -208,8 +208,12 @@ public class Loader implements PluginMessageRecipient
 				tcpServer.stop();
 				console.isRunning = false;
 				
-				Scanner keyboard = new Scanner( System.in );
-				keyboard.nextLine();
+				if ( configuration != null && configuration.getBoolean( "server.haltOnSevereError" ) )
+				{
+					Scanner keyboard = new Scanner( System.in );
+					keyboard.nextLine();
+					keyboard.close();
+				}
 			}
 			catch ( Exception e )
 			{}
@@ -286,11 +290,12 @@ public class Loader implements PluginMessageRecipient
 		getLogger().info( "Initalizing the Persistence Manager..." );
 		
 		persistence = new PersistenceManager();
-		persistence.loadSessions();
 		persistence.getSiteManager().loadSites();
 		
 		getLogger().info( "Initalizing the User Manager..." );
 		userManager = new UserManager( this );
+		
+		persistence.loadSessions();
 		
 		enablePlugins( PluginLoadOrder.POSTFRAMEWORK );
 		
@@ -307,8 +312,6 @@ public class Loader implements PluginMessageRecipient
 		{
 			InputStream is = Loader.class.getClassLoader().getResourceAsStream( "com/chiorichan/banner.txt" );
 			String[] banner = new String( IOUtils.readFully( is, is.available(), true ) ).split( "\\n" );
-			
-			int len = banner[0].length();
 			
 			for ( String l : banner )
 				Loader.getConsole().sendMessage( ChatColor.GOLD + l );
@@ -505,7 +508,6 @@ public class Loader implements PluginMessageRecipient
 		}
 	}
 	
-	@SuppressWarnings( "unchecked" )
 	public User[] getOnlineUsers()
 	{
 		List<User> online = userManager.users;
@@ -621,7 +623,7 @@ public class Loader implements PluginMessageRecipient
 	
 	public boolean getQueryPlugins()
 	{
-		return this.configuration.getBoolean( "settings.query-plugins" );
+		return configuration.getBoolean( "settings.query-plugins" );
 	}
 	
 	public boolean hasWhitelist()
@@ -651,7 +653,7 @@ public class Loader implements PluginMessageRecipient
 	
 	public File getUpdateFolderFile()
 	{
-		return new File( (File) options.valueOf( "plugins" ), this.configuration.getString( "settings.update-folder", "update" ) );
+		return new File( (File) options.valueOf( "plugins" ), configuration.getString( "settings.update-folder", "update" ) );
 	}
 	
 	public static PluginManager getPluginManager()
@@ -916,8 +918,6 @@ public class Loader implements PluginMessageRecipient
 	
 	public static void shutdown()
 	{
-		// TODO: Shutdown
-		
 		getPersistenceManager().shutdown();
 		getUserManager().saveUsers();
 		
@@ -964,7 +964,6 @@ public class Loader implements PluginMessageRecipient
 		return null;
 	}
 	
-	@SuppressWarnings( "unchecked" )
 	public Set<String> getIPBans()
 	{
 		return userManager.getIPBans().getEntries().keySet();
@@ -1155,7 +1154,7 @@ public class Loader implements PluginMessageRecipient
 	
 	public static Console getConsole()
 	{
-		return instance.console;
+		return console;
 	}
 	
 	public static ConsoleLogManager getLogger()
@@ -1205,7 +1204,7 @@ public class Loader implements PluginMessageRecipient
 	
 	public boolean getWarnOnOverload()
 	{
-		return this.configuration.getBoolean( "settings.warn-on-overload" );
+		return configuration.getBoolean( "settings.warn-on-overload" );
 	}
 	
 	public PluginLoadOrder getCurrentLoadState()

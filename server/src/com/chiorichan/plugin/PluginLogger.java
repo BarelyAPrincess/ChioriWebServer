@@ -4,6 +4,8 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
+import com.chiorichan.Loader;
+
 /**
  * The PluginLogger class is a modified {@link Logger} that prepends all logging calls with the name of the plugin doing
  * the logging. The API for PluginLogger is exactly the same as {@link Logger}.
@@ -18,14 +20,14 @@ public class PluginLogger extends Logger
 	 * Creates a new PluginLogger that extracts the name from a plugin.
 	 * 
 	 * @param context
-	 *           A reference to the plugin
+	 *             A reference to the plugin
 	 */
 	public PluginLogger(Plugin context)
 	{
 		super( context.getClass().getCanonicalName(), null );
 		String prefix = context.getDescription().getPrefix();
 		pluginName = prefix != null ? new StringBuilder().append( "[" ).append( prefix ).append( "] " ).toString() : "[" + context.getDescription().getName() + "] ";
-		setParent( context.getServer().getLogger().getLogger() );
+		setParent( Loader.getLogger().getLogger() );
 		setLevel( Level.ALL );
 	}
 	

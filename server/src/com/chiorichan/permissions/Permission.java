@@ -259,7 +259,7 @@ public class Permission
 			}
 			catch ( Throwable ex )
 			{
-				Loader.getInstance().getLogger().log( Level.SEVERE, String.format( error, entry.getKey() ), ex );
+				Loader.getLogger().log( Level.SEVERE, String.format( error, entry.getKey() ), ex );
 			}
 		}
 		
