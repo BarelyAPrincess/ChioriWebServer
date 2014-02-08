@@ -216,14 +216,11 @@ public class Console implements ConsoleCommandSender, Runnable
 		{
 			ServerCommand servercommand = (ServerCommand) commandList.remove( 0 );
 			
-			// CraftBukkit start - ServerCommand for preprocessing
 			ServerCommandEvent event = new ServerCommandEvent( this, servercommand.command );
 			Loader.getPluginManager().callEvent( event );
 			servercommand = new ServerCommand( event.getCommand(), servercommand.sender );
 			
-			// getCommandHandler().a(servercommand.source, servercommand.command); // Called in dispatchServerCommand
 			Loader.getInstance().dispatchServerCommand( this, servercommand );
-			// CraftBukkit end
 		}
 	}
 	

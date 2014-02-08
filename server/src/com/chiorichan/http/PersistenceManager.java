@@ -3,11 +3,8 @@ package com.chiorichan.http;
 import java.net.ConnectException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
@@ -16,7 +13,6 @@ import com.chiorichan.framework.SiteManager;
 import com.chiorichan.user.User;
 import com.chiorichan.util.Common;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 /**
  * Persistence manager handles sessions kept in memory. It also manages when to unload the session to free memeory.
@@ -29,7 +25,7 @@ public class PersistenceManager
 	protected SqlConnector sql = new SqlConnector();
 	protected SiteManager _sites = new SiteManager( sql );
 	
-	static protected List<PersistentSession> sessionList = new ArrayList<PersistentSession>();
+	static protected List<PersistentSession> sessionList = Lists.newCopyOnWriteArrayList();
 	
 	public PersistenceManager()
 	{
@@ -107,13 +103,19 @@ public class PersistenceManager
 				if ( sql.getRowCount( rs ) > 0 )
 					do
 					{
-						sessionList.add( new PersistentSession( rs ) );
+						try
+						{
+							sessionList.add( new PersistentSession( rs ) );
+						}
+						catch ( SessionException e )
+						{
+							if ( e.getMessage().contains( "expired" ) )
+								sql.queryUpdate( "DELETE FROM `sessions` WHERE `sessionId` = '" + rs.getString( "sessionId" ) + "' && `sessionName` = '" + rs.getString( "sessionName" ) + "';" );
+							else
+								e.printStackTrace();
+						}
 					}
 					while ( rs.next() );
-			}
-			catch ( SessionException e )
-			{
-				e.printStackTrace();
 			}
 			catch ( SQLException e )
 			{
@@ -167,8 +169,6 @@ public class PersistenceManager
 	
 	public static void mainThreadHeartbeat( long tick )
 	{
-		Map<String, Integer> sessionLimits = Maps.newHashMap();
-		
 		Iterator<PersistentSession> sessions = sessionList.iterator();
 		
 		while ( sessions.hasNext() )
@@ -245,7 +245,7 @@ public class PersistenceManager
 		for ( User u : Loader.getInstance().getOnlineUsers() )
 			u.removeHandler( var1 );
 		
-		Loader.getPersistenceManager().sql.query( "DELETE FROM `sessions` WHERE `sessionName` = '" + var1.candyName + "' AND `sessionId` = '" + var1.getId() + "';" );
+		Loader.getPersistenceManager().sql.queryUpdate( "DELETE FROM `sessions` WHERE `sessionName` = '" + var1.candyName + "' AND `sessionId` = '" + var1.getId() + "';" );
 		sessionList.remove( var1 );
 	}
 }

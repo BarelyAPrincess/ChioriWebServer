@@ -8,6 +8,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -256,27 +257,28 @@ public class SqlConnector
 	
 	public ResultSet query( String query ) throws SQLException
 	{
+		Statement stmt = null;
+		ResultSet result = null;
 		try
 		{
-			PreparedStatement statement = con.prepareStatement( query );
-			ResultSet result = statement.executeQuery();
+			stmt = con.createStatement( ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
 			
-			// System.out.print( "Query: \"" + query + "\" which returned " + getRowCount( result ) + " row(s).\n" );
+			result = stmt.executeQuery( query );
 			
-			return result;
+			Loader.getLogger().fine( "SQL Query `" + query + "` returned " + getRowCount( result ) + " rows!" );
 		}
-		catch ( MySQLNonTransientConnectionException e )
+		catch ( CommunicationsException | MySQLNonTransientConnectionException e )
 		{
 			if ( reconnect() )
 				return query( query );
 		}
-		catch ( CommunicationsException e )
+		catch ( Throwable t )
 		{
-			if ( reconnect() )
-				return query( query );
+			t.printStackTrace();
+			throw t;
 		}
 		
-		return null;
+		return result;
 	}
 	
 	public Boolean update( String table, List<? extends Object> keys, List<? extends Object> values )
@@ -472,7 +474,7 @@ public class SqlConnector
 		int numColumns = rsmd.getColumnCount();
 		
 		for ( int i = 1; i < numColumns + 1; i++ )
-		{	
+		{
 			rtn.add( rsmd.getColumnName( i ) );
 		}
 		
@@ -490,7 +492,7 @@ public class SqlConnector
 		int numColumns = rsmd.getColumnCount();
 		
 		for ( int i = 1; i < numColumns + 1; i++ )
-		{	
+		{
 			rtn.add( rsmd.getColumnTypeName( i ) );
 		}
 		

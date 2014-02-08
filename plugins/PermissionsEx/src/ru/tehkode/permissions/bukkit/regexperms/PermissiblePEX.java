@@ -9,6 +9,7 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -198,26 +199,34 @@ public class PermissiblePEX extends PermissibleBase
 	{
 		if ( lock != null )
 		{ // recalculatePermissions() is called from superclass constructor, ignore it because we call it from our constructor
-			lock.writeLock().lock();
 			try
 			{
-				clearPermissions();
-				cache.clear();
-				for ( ListIterator<PermissionAttachment> it = this.attachments.listIterator( this.attachments.size() ); it.hasPrevious(); )
-				{
-					PermissionAttachment attach = it.previous();
-					calculateChildPerms( attach.getPermissions(), false, attach );
-				}
+				lock.writeLock().tryLock( 15L, TimeUnit.SECONDS );
 				
-				for ( Permission p : Loader.getPluginManager().getDefaultPermissions( isOp() ) )
+				try
 				{
-					this.permissions.put( p.getName(), new PermissionAttachmentInfo( user, p.getName(), null, true ) );
-					calculateChildPerms( p.getChildren(), false, null );
+					clearPermissions();
+					cache.clear();
+					for ( ListIterator<PermissionAttachment> it = this.attachments.listIterator( this.attachments.size() ); it.hasPrevious(); )
+					{
+						PermissionAttachment attach = it.previous();
+						calculateChildPerms( attach.getPermissions(), false, attach );
+					}
+					
+					for ( Permission p : Loader.getPluginManager().getDefaultPermissions( isOp() ) )
+					{
+						this.permissions.put( p.getName(), new PermissionAttachmentInfo( user, p.getName(), null, true ) );
+						calculateChildPerms( p.getChildren(), false, null );
+					}
+				}
+				finally
+				{
+					lock.writeLock().unlock();
 				}
 			}
-			finally
+			catch ( InterruptedException e )
 			{
-				lock.writeLock().unlock();
+				Loader.getLogger().warning( "[PermissionsEx] Lock timeout while trying to Recalculate Permissions." );
 			}
 		}
 	}
