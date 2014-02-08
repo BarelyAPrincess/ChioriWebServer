@@ -240,7 +240,7 @@ public class PersistenceManager
 	 */
 	public static void destroySession( PersistentSession var1 ) throws SQLException
 	{
-		Loader.getLogger().info( "&4Unloaded session: " + var1.getId() );
+		Loader.getLogger().info( "&3Destroyed Session `" + var1 + "`" );
 		
 		for ( User u : Loader.getInstance().getOnlineUsers() )
 			u.removeHandler( var1 );

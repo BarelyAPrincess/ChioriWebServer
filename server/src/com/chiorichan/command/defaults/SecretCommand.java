@@ -18,7 +18,7 @@ public class SecretCommand extends VanillaCommand
 	public SecretCommand()
 	{
 		super( "secret" );
-		this.description = "Top Secret! This command is to only be used by our TOP SECRET PEOPLE!";
+		this.description = "Top Secret! This command is to only be used by our TOP SECRET AGENTS!";
 		this.usageMessage = "secret";
 		this.setPermission( "chiori.command.secret" );
 	}
