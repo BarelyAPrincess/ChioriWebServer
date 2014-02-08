@@ -60,6 +60,19 @@ Should the web server start? Useful is you plan on this being strictly a Tcp Ser
 * server.enableTcpServer: true
 Should the tcp server start? Useful is you plan on this being strictly a Web Server.
 * server.allowQuery: false
+* server.database.database: chiorifw
+Server Database
+* server.database.type: mysql
+What driver to use. Currently only supports mysql.
+* server.database.host: localhost
+Where to find the database server. Be sure to allow the host if not running locally.
+* server.database.port: 3306
+Database port number.
+* server.database.username:
+Database Username
+* server.database.password:
+Database Password
+
 Should this server respond to anonymous requests for stats like Software, User Counts, User Inquiries?
 * settings.permissions-file: permissions.yml
 This is the file used to store built-in permissions. These permissions can be extended and controlled via plugins.
@@ -77,6 +90,7 @@ This tells the server if its using a whitelisted user system. Perfect for multip
 Defines the directory used to store web page data. Plans to futher config this per site for home directories.
 * settings.ping-packet-limit: 100
 Defines the max number of connections per minute. Perfect for DDOS prevention.
+
 * auto-updater.enabled: true
 Is the server allowed to automaticly update it's self. Might want to disable this if you plan to run a custom build.
 * auto-updater.on-broken
@@ -87,6 +101,26 @@ Who to tell if an update is ready.
 What channel of builds do you prefer. stable, beta, alpha, nightly
 * auto-updater.host: dl.chiorichan.com
 What host address do we check and download updates from
+
+* sessions.defaultSessionName: sessionId
+If no session name is set by the site then this is the name of the cookie used to make the session persistent.
+* sessions.defaultTimeout: 3600
+Default timeout until the session is destroyed. 3600 = 1 hour
+* sessions.defaultTimeoutWithLogin: 86400
+Default timeout until the session is destroyed if a user is present. 86400 = 24 hours 
+* sessions.defaultTimeoutRememberMe: 604800
+Default timeout until the session is destroyed if a user is present and they selected the remember me (HTTP Argument: remember = true/1). 604800 = 1 week
+* sessions.allowNoTimeoutPermission: false
+Allows a logged in entity to have it's session never destroyed using the permission node: chiori.noTimeout. Be sure to manually destroy it if used.
+* sessions.rearmTimeoutWithEachRequest: true
+Tells the server to recalculate the sessions timeout with each HTTP request made.
+* sessions.maxSessionsPerIP: 6
+Tells the server what is the maximum allowed sessions per IP. If more exist the Persistence Manager will destroy the sessions with the soonest timeout.
+* sessions.reuseVacantSessions: true
+Tells the Persistence Manager to reuse sessions that have no secure information (ie. A user login) that match the requesters IP. Great for those pesky requesters that ignore the session cookie.
+* sessions.allowIPChange: false
+Sort of a prevention of session hiJacking. If a request has a different IP from the IP stored in the session should it be forced to use a new session?
+
 * users.lookupAdapter.type
 Tells the server what User Lookup Adapter to use. sql, file, default
 * users.lookupAdapter.siteId
@@ -97,18 +131,7 @@ If using SQL adapter type, This tells the server was table it should check for u
 If using SQL adapter type, This tells the server all the fields within the table that are to be match to the provided username. username, userId, phonenumber, email.
 * users.operators
 Server Operators. Gives defined users limitless access with all permissions.
-* framework.database.database: chiorifw
-Framework Database Name
-* framework.database.type: mysql
-What driver to use. Currently only supports mysql.
-* framework.database.host: localhost
-Where to find the database server. Be sure to allow the host if not running locally.
-* framework.database.port: 3306
-Database port number.
-* framework.database.username:
-Database Username
-* framework.database.password:
-Database Password
+
 * framework.sites.defaultTitle: Unnamed Chiori Framework Site
 What title to use for unknown domain requests.
 
@@ -224,6 +247,8 @@ As of this version, The framework was offical absorbed into the server as a whol
 ===Subversion 4 (Rarity Falls)===
 ====Build 0204====
 A whole new system for both users and permissions was implemented. If you want to start using the new permissions system you will need to use the PermissionsEx plugin.
+====Build 0207====
+Major improvements to the way sessions are handled. Many session configurations added.
 
 =Coding=
 * We attempt to make our code as easily readable as possible. 

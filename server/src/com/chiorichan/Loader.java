@@ -17,6 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -87,6 +88,7 @@ public class Loader implements PluginMessageRecipient
 	private static YamlConfiguration configuration;
 	private static Loader instance;
 	private static OptionSet options;
+	private static long startTime = System.currentTimeMillis();
 	
 	public static String webroot = "";
 	private WarningState warningState = WarningState.DEFAULT;
@@ -192,16 +194,30 @@ public class Loader implements PluginMessageRecipient
 				new Loader( options );
 			}
 		}
-		catch ( Exception e )
+		catch ( Throwable t )
 		{
-			e.printStackTrace();
+			t.printStackTrace();
+			
+			getLogger().severe( ChatColor.RED + "" + ChatColor.NEGATIVE + "SEVERE ERROR (" + ( System.currentTimeMillis() - startTime ) + "ms)! Press 'Ctrl-c' to quit!'" );
+			
+			// TODO Make it so this exception (and possibly other critical exceptions) are reported to us without user interaction. Should also find a way that the entire log is sent along with it.
+			
+			try
+			{
+				httpServer.stop( 0 );
+				tcpServer.stop();
+				console.isRunning = false;
+				
+				Scanner keyboard = new Scanner( System.in );
+				keyboard.nextLine();
+			}
+			catch ( Exception e )
+			{}
 		}
 	}
 	
 	public Loader(OptionSet options0)
 	{
-		long startTime = System.currentTimeMillis();
-		
 		instance = this;
 		options = options0;
 		
@@ -238,15 +254,15 @@ public class Loader implements PluginMessageRecipient
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
 		webroot = configuration.getString( "settings.webroot" );
 		
-		loadPlugins();
-		enablePlugins( PluginLoadOrder.INITIALIZATION );
-		
 		updater = new AutoUpdater( new ChioriDLUpdaterService( configuration.getString( "auto-updater.host" ) ), getLogger().getLogger(), configuration.getString( "auto-updater.preferred-channel" ) );
 		updater.setEnabled( configuration.getBoolean( "auto-updater.enabled" ) );
 		updater.setSuggestChannels( configuration.getBoolean( "auto-updater.suggest-channels" ) );
 		updater.getOnBroken().addAll( configuration.getStringList( "auto-updater.on-broken" ) );
 		updater.getOnUpdate().addAll( configuration.getStringList( "auto-updater.on-update" ) );
 		updater.check( Versioning.getVersion() );
+		
+		loadPlugins();
+		enablePlugins( PluginLoadOrder.INITIALIZATION );
 		
 		File root = new File( webroot );
 		
@@ -433,7 +449,7 @@ public class Loader implements PluginMessageRecipient
 			pluginFolder.mkdir();
 		}
 		
-		//pluginManager.loadInternalPlugin( Template.class.getResourceAsStream( "template.yml" ) );
+		// pluginManager.loadInternalPlugin( Template.class.getResourceAsStream( "template.yml" ) );
 	}
 	
 	public void enablePlugins( PluginLoadOrder type )

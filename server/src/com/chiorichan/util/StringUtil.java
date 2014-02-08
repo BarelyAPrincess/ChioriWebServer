@@ -14,19 +14,19 @@ public class StringUtil
 	 * Copies all elements from the iterable collection of originals to the collection provided.
 	 * 
 	 * @param token
-	 *           String to search for
+	 *             String to search for
 	 * @param originals
-	 *           An iterable collection of strings to filter.
+	 *             An iterable collection of strings to filter.
 	 * @param collection
-	 *           The collection to add matches to
+	 *             The collection to add matches to
 	 * @return the collection provided that would have the elements copied into
 	 * @throws UnsupportedOperationException
-	 *            if the collection is immutable and originals contains a string which starts with the specified search
-	 *            string.
+	 *              if the collection is immutable and originals contains a string which starts with the specified search
+	 *              string.
 	 * @throws IllegalArgumentException
-	 *            if any parameter is is null
+	 *              if any parameter is is null
 	 * @throws IllegalArgumentException
-	 *            if originals contains a null element. <b>Note: the collection may be modified before this is thrown</b>
+	 *              if originals contains a null element. <b>Note: the collection may be modified before this is thrown</b>
 	 */
 	public static <T extends Collection<String>> T copyPartialMatches( final String token, final Iterable<String> originals, final T collection ) throws UnsupportedOperationException, IllegalArgumentException
 	{
@@ -50,14 +50,14 @@ public class StringUtil
 	 * copied like a toLowerCase() call would.
 	 * 
 	 * @param string
-	 *           String to check
+	 *             String to check
 	 * @param prefix
-	 *           Prefix of string to compare
+	 *             Prefix of string to compare
 	 * @return true if provided string starts with, ignoring case, the prefix provided
 	 * @throws NullPointerException
-	 *            if prefix is null
+	 *              if prefix is null
 	 * @throws IllegalArgumentException
-	 *            if string is null
+	 *              if string is null
 	 */
 	public static boolean startsWithIgnoreCase( final String string, final String prefix ) throws IllegalArgumentException, NullPointerException
 	{
@@ -101,5 +101,12 @@ public class StringUtil
 	public static String md5( String str )
 	{
 		return DigestUtils.md5Hex( str );
+	}
+	
+	public static boolean isTrue( String argument )
+	{
+		Validate.notNull( argument );
+		argument = argument.toLowerCase();
+		return ( argument.equals( "true" ) || argument.equals( "1" ) );
 	}
 }

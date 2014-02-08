@@ -9,8 +9,14 @@ server:
   enableWebServer: true
   enableTcpServer: true
   allowQuery: false
-  maxLogins: -1
-  sessionLimit: 6
+  database:
+    database: chiorifw
+    type: mysql
+    host: localhost
+    port: 3306
+    username: fwuser
+    password: fwpass
+    dbfile: chiori.db
 settings:
   permissions-file: permissions.yml
   update-folder: update
@@ -31,7 +37,18 @@ auto-updater:
   preferred-channel: rb
   host: dl.chiorichan.com
   suggest-channels: true
+sessions:
+  defaultSessionName: sessionId
+  defaultTimeout: 3600
+  defaultTimeoutWithLogin: 86400
+  defaultTimeoutRememberMe: 604800
+  allowNoTimeoutPermission: true
+  rearmTimeoutWithEachRequest: true
+  reuseVacantSessions: true
+  maxSessionsPerIP: 6
+  allowIPChange: false
 users:
+  maxLogins: -1
   lookupAdapter:
     type: default
     siteId: ''
@@ -40,12 +57,5 @@ users:
   operators:
   - ChioriGreene
 framework:
-  database:
-    database: chiorifw
-    type: mysql
-    host: localhost
-    port: 3306
-    username: fwuser
-    password: fwpass
   sites:
     defaultTitle: Unnamed Chiori Framework Site

@@ -7,12 +7,15 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.framework.SiteManager;
+import com.chiorichan.user.User;
 import com.chiorichan.util.Common;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 /**
@@ -45,7 +48,7 @@ public class PersistenceManager
 		switch ( config.getString( "framework-database.type", "mysql" ) )
 		{
 			case "sqlite":
-				String filename = config.getString( "framework.database.dbfile", "framework.db" );
+				String filename = config.getString( "server.database.dbfile", "chiori.db" );
 				
 				try
 				{
@@ -63,11 +66,11 @@ public class PersistenceManager
 				
 				break;
 			case "mysql":
-				String host = config.getString( "framework.database.host", "localhost" );
-				String port = config.getString( "framework.database.port", "3306" );
-				String database = config.getString( "framework.database.database", "chiorifw" );
-				String username = config.getString( "framework.database.user", "fwuser" );
-				String password = config.getString( "framework.database.pass", "fwpass" );
+				String host = config.getString( "server.database.host", "localhost" );
+				String port = config.getString( "server.database.port", "3306" );
+				String database = config.getString( "server.database.database", "chiorifw" );
+				String username = config.getString( "server.database.user", "fwuser" );
+				String password = config.getString( "server.database.pass", "fwpass" );
 				
 				try
 				{
@@ -108,6 +111,10 @@ public class PersistenceManager
 					}
 					while ( rs.next() );
 			}
+			catch ( SessionException e )
+			{
+				e.printStackTrace();
+			}
 			catch ( SQLException e )
 			{
 				Loader.getLogger().panic( e.getMessage() );
@@ -127,6 +134,20 @@ public class PersistenceManager
 				{
 					sess = s;
 					sess.setRequest( request, true );
+					break;
+				}
+			}
+			
+			if ( sess == null && Loader.getConfig().getBoolean( "sessions.reuseVacantSessions", true ) )
+			{
+				for ( PersistentSession s : sessionList )
+				{
+					if ( s.ipAddr.equals( request.getRemoteAddr() ) && !s.getUserState() )
+					{
+						sess = s;
+						sess.setRequest( request, true );
+						break;
+					}
 				}
 			}
 			
@@ -134,8 +155,12 @@ public class PersistenceManager
 			{
 				sess = new PersistentSession( request );
 				sessionList.add( sess );
+				//Loader.getLogger().debug( "Created Session: " + sess.candyName + " -> " + sess.candyId );
 			}
 		}
+		
+		//for ( Entry<String, Candy> e : sess.pullCandies( request ).entrySet() )
+			//Loader.getLogger().debug( "Received Cookie: " + e.getKey() + " -> " + e.getValue().getValue() );
 		
 		return sess;
 	}
@@ -144,26 +169,23 @@ public class PersistenceManager
 	{
 		Map<String, Integer> sessionLimits = Maps.newHashMap();
 		
-		synchronized ( sessionList )
+		Iterator<PersistentSession> sessions = sessionList.iterator();
+		
+		while ( sessions.hasNext() )
 		{
-			for ( PersistentSession var1 : sessionList )
+			PersistentSession var1 = sessions.next();
+			
+			// Loader.getLogger().debug( "" + var1 );
+			
+			if ( var1.getTimeout() > 0 && var1.getTimeout() < Common.getEpoch() )
 			{
-				int cnt = ( sessionLimits.containsKey( var1.getId() ) ) ? sessionLimits.get( var1.getId() ) : 0;
-				sessionLimits.put( var1.getId(), cnt + 1 );
-				
-				if ( sessionLimits.get( var1.getId() ) > Loader.getConfig().getInt( "server.sessionLimit", 6 ) )
+				try
 				{
-					// Finish making this work.
+					destroySession( var1 );
 				}
-				
-				// Loader.getLogger().debug( "" + var1 );
-				
-				if ( var1.getTimeout() > 0 && var1.getTimeout() < Common.getEpoch() )
+				catch ( SQLException e )
 				{
-					Loader.getLogger().info( "&4Unloaded expired session: " + var1.getId() );
-					
-					sessionList.remove( var1 ); // This should allow this session to get picked up by the Java Garbage
-											// Collector once it's released by other classes.
+					e.printStackTrace();
 				}
 			}
 		}
@@ -188,13 +210,42 @@ public class PersistenceManager
 	{
 		Iterator<PersistentSession> sess = sessionList.iterator();
 		
-		while( sess.hasNext() )
+		while ( sess.hasNext() )
 		{
 			PersistentSession it = sess.next();
-			
-			it.unload();
+			it.saveSession();
 		}
 		
 		sessionList.clear();
+	}
+	
+	public List<PersistentSession> getSessionsByIp( String ipAddr )
+	{
+		List<PersistentSession> lst = Lists.newArrayList();
+		
+		for ( PersistentSession sess : sessionList )
+		{
+			if ( sess.ipAddr.equals( ipAddr ) )
+				lst.add( sess );
+		}
+		
+		return lst;
+	}
+	
+	/**
+	 * Remove said session from the server and sql database.
+	 * 
+	 * @param var1
+	 * @throws SQLException
+	 */
+	public static void destroySession( PersistentSession var1 ) throws SQLException
+	{
+		Loader.getLogger().info( "&4Unloaded session: " + var1.getId() );
+		
+		for ( User u : Loader.getInstance().getOnlineUsers() )
+			u.removeHandler( var1 );
+		
+		Loader.getPersistenceManager().sql.query( "DELETE FROM `sessions` WHERE `sessionName` = '" + var1.candyName + "' AND `sessionId` = '" + var1.getId() + "';" );
+		sessionList.remove( var1 );
 	}
 }

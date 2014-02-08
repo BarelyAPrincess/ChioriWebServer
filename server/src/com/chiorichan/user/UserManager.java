@@ -304,22 +304,11 @@ public class UserManager
 				// TODO Make this message customizable from configs.
 			}
 			
-			if ( !sess.isSet( "user" ) )
-				sess.setArgument( "user", user.getUserId() );
-			
-			if ( !sess.isSet( "pass" ) )
-				sess.setArgument( "pass", DigestUtils.md5Hex( user.getPassword() ) );
+			sess.setArgument( "user", user.getUserId() );
+			sess.setArgument( "pass", DigestUtils.md5Hex( user.getPassword() ) );
 			
 			userLookupAdapter.postLoginCheck( user );
 			Loader.getInstance().onUserLogin( user );
-			
-			Object o = sess.getRequest().getAttribute( "remember" );
-			boolean remember = ( o == null ) ? false : (boolean) o;
-			
-			if ( remember )
-				sess.setCookieExpiry( 5 * 365 * 24 * 60 * 60 );
-			else
-				sess.setCookieExpiry( 604800 );
 			
 			return user;
 		}

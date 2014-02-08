@@ -79,6 +79,12 @@ public class HttpRequest
 		return result;
 	}
 	
+	public Boolean getArgumentBoolean( String key )
+	{
+		String rtn = getArgument( key, "0" ).toLowerCase();
+		return ( rtn.equals( "true" ) || rtn.equals( "1" ) );
+	}
+	
 	public String getArgument( String key )
 	{
 		return getArgument( key, "" );

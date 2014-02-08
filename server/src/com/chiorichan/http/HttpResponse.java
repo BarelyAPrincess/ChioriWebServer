@@ -192,7 +192,10 @@ public class HttpResponse
 		for ( Candy c : request.getCandies() )
 		{
 			if ( c.needsUpdating() )
+			{
 				h.add( "Set-Cookie", c.toHeaderValue() );
+				//Loader.getLogger().debug( "Sent Cookie: " + c.toHeaderValue() );
+			}
 		}
 		
 		if ( h.get( "Server" ) == null )

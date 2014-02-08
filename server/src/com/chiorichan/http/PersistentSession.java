@@ -20,6 +20,7 @@ import com.chiorichan.user.User;
 import com.chiorichan.user.UserHandler;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.StringUtil;
+import com.google.common.base.Joiner;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
@@ -33,9 +34,8 @@ import com.google.gson.JsonSyntaxException;
 public class PersistentSession implements UserHandler
 {
 	protected Map<String, String> data = new LinkedHashMap<String, String>();
-	protected int expires = 0, defaultLife = 86400000; // 1 Day!
-	protected int timeout = 0, requestCnt = 0, defaultTimeout = 600; // 10 minutes
-	protected String candyId = "", candyName = "candyId";
+	protected int timeout = 0, requestCnt = 0;
+	protected String candyId = "", candyName = "candyId", ipAddr = null;
 	protected Candy sessionCandy;
 	protected Binding binding = new Binding();
 	protected Evaling eval;
@@ -62,6 +62,11 @@ public class PersistentSession implements UserHandler
 		return framework;
 	}
 	
+	private PersistentSession()
+	{
+		candyName = Loader.getConfig().getString( "sessions.defaultSessionName", candyName );
+	}
+	
 	/**
 	 * Initializes a new session based on the supplied HttpRequest.
 	 * 
@@ -69,25 +74,44 @@ public class PersistentSession implements UserHandler
 	 */
 	protected PersistentSession(HttpRequest _request)
 	{
+		this();
 		setRequest( _request, false );
 	}
 	
-	protected PersistentSession(ResultSet rs) throws SQLException
+	protected PersistentSession(ResultSet rs) throws SessionException
 	{
-		request = null;
-		stale = true;
+		this();
 		
-		if ( rs.getString( "sessionSite" ) == null || rs.getString( "sessionSite" ).isEmpty() )
-			failoverSite = Loader.getPersistenceManager().getSiteManager().getFrameworkSite();
-		else
-			failoverSite = Loader.getPersistenceManager().getSiteManager().getSiteById( rs.getString( "sessionSite" ) );
-		
-		if ( rs.getString( "sessionName" ) != null && !rs.getString( "sessionName" ).isEmpty() )
-			candyName = rs.getString( "sessionName" );
-		
-		sessionCandy = new Candy( candyName, rs.getString( "sessionId" ) );
-		
-		initSession();
+		try
+		{
+			request = null;
+			stale = true;
+			
+			timeout = rs.getInt( "timeout" );
+			ipAddr = rs.getString( "ipAddr" );
+			data = new Gson().fromJson( rs.getString( "data" ), Map.class );
+			
+			if ( rs.getString( "sessionName" ) != null && !rs.getString( "sessionName" ).isEmpty() )
+				candyName = rs.getString( "sessionName" );
+			candyId = rs.getString( "sessionId" );
+			
+			if ( timeout < Common.getEpoch() )
+				throw new SessionException( "This session expired at " + timeout + " epoch!" );
+			
+			if ( rs.getString( "sessionSite" ) == null || rs.getString( "sessionSite" ).isEmpty() )
+				failoverSite = Loader.getPersistenceManager().getSiteManager().getFrameworkSite();
+			else
+				failoverSite = Loader.getPersistenceManager().getSiteManager().getSiteById( rs.getString( "sessionSite" ) );
+			
+			sessionCandy = new Candy( candyName, rs.getString( "sessionId" ) );
+			candies.put( candyName, sessionCandy );
+			
+			Loader.getLogger().info( "Restored Session: " + this );
+		}
+		catch ( SQLException e )
+		{
+			throw new SessionException( e );
+		}
 	}
 	
 	protected void setRequest( HttpRequest _request, Boolean _stale )
@@ -96,13 +120,29 @@ public class PersistentSession implements UserHandler
 		stale = _stale;
 		
 		failoverSite = request.getSite();
+		ipAddr = request.getRemoteAddr();
 		
-		rearmTimeout();
+		Map<String, Candy> pulledCandies = pullCandies( _request );
+		pulledCandies.putAll( candies );
+		candies = pulledCandies;
 		
 		if ( request.getSite().getYaml() != null )
-			candyName = request.getSite().getYaml().getString( "sessions.cookie-name", candyName );
+		{
+			String _candyName = request.getSite().getYaml().getString( "sessions.cookie-name", candyName );
+			
+			if ( !_candyName.equals( candyName ) )
+				if ( candies.containsKey( candyName ) )
+				{
+					candies.put( _candyName, candies.get( candyName ) );
+					candies.remove( candyName );
+					candyName = _candyName;
+				}
+				else
+				{
+					candyName = _candyName;
+				}
+		}
 		
-		candies = pullCandies( _request );
 		sessionCandy = candies.get( candyName );
 		
 		initSession();
@@ -117,6 +157,7 @@ public class PersistentSession implements UserHandler
 	{
 		String username = request.getArgument( "user" );
 		String password = request.getArgument( "pass" );
+		String remember = request.getArgumentBoolean( "remember" ) ? "true" : "false";
 		String target = request.getArgument( "target" );
 		
 		if ( request.getArgument( "logout", "", true ) != null )
@@ -125,8 +166,6 @@ public class PersistentSession implements UserHandler
 			
 			if ( target.isEmpty() )
 				target = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
-			
-			Loader.getLogger().debug( target );
 			
 			request.getResponse().sendRedirect( target + "?ok=You have been successfully logged out." );
 			return;
@@ -142,8 +181,11 @@ public class PersistentSession implements UserHandler
 				
 				String loginPost = ( target.isEmpty() ) ? request.getSite().getYaml().getString( "scripts.login-post", "/panel" ) : target;
 				
+				setArgument( "remember", remember );
+				
 				Loader.getLogger().info( ChatColor.GREEN + "Login Success: Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\"" );
 				request.getResponse().sendRedirect( loginPost );
+				
 			}
 			catch ( LoginException l )
 			{
@@ -190,6 +232,9 @@ public class PersistentSession implements UserHandler
 		
 		if ( currentUser != null )
 			currentUser.putHandler( this );
+		
+		if ( !stale || Loader.getConfig().getBoolean( "sessions.rearmTimeoutWithEachRequest" ) )
+			rearmTimeout();
 	}
 	
 	public void setGlobal( String key, Object val )
@@ -236,8 +281,36 @@ public class PersistentSession implements UserHandler
 			{
 				try
 				{
-					expires = rs.getInt( "expires" );
+					timeout = rs.getInt( "timeout" );
+					String _ipAddr = rs.getString( "ipAddr" );
 					data = new Gson().fromJson( rs.getString( "data" ), Map.class );
+					
+					// Possible Session Hijacking! nullify!!!
+					if ( !_ipAddr.equals( ipAddr ) && !Loader.getConfig().getBoolean( "sessions.allowIPChange" ) )
+					{
+						sessionCandy = null;
+					}
+					
+					ipAddr = _ipAddr;
+					
+					List<PersistentSession> sessions = Loader.getPersistenceManager().getSessionsByIp( ipAddr );
+					if ( sessions.size() > Loader.getConfig().getInt( "sessions.maxSessionsPerIP" ) )
+					{
+						int oldestTime = Common.getEpoch();
+						PersistentSession oldest = null;
+						
+						for ( PersistentSession s : sessions )
+						{
+							if ( s != this && s.getTimeout() < oldestTime )
+							{
+								oldest = s;
+								oldestTime = s.getTimeout();
+							}
+						}
+						
+						if ( oldest != null )
+							PersistenceManager.destroySession( oldest );
+					}
 				}
 				catch ( JsonSyntaxException | SQLException e )
 				{
@@ -249,7 +322,7 @@ public class PersistentSession implements UserHandler
 		
 		if ( sessionCandy == null )
 		{
-			int defaultLife = ( request.getSite().getYaml() != null ) ? request.getSite().getYaml().getInt( "sessions.default-life", 604800 ) : 604800;
+			int defaultLife = ( request != null && request.getSite().getYaml() != null ) ? request.getSite().getYaml().getInt( "sessions.default-life", 604800 ) : 604800;
 			
 			if ( candyId == null || candyId.isEmpty() )
 				candyId = StringUtil.md5( request.getURI().toString() + System.currentTimeMillis() );
@@ -262,12 +335,11 @@ public class PersistentSession implements UserHandler
 			
 			candies.put( candyName, sessionCandy );
 			
-			data.put( "ipAddr", request.getRemoteAddr() );
 			String dataJson = new Gson().toJson( data );
 			
-			expires = Common.getEpoch() + defaultLife;
+			timeout = Common.getEpoch() + Loader.getConfig().getInt( "sessions.defaultTimeout", 3600 );
 			
-			sql.queryUpdate( "INSERT INTO `sessions` (`sessionId`, `expires`, `sessionName`, `sessionSite`, `data`)VALUES('" + candyId + "', '" + expires + "', '" + candyName + "', '" + getSite().getName() + "', '" + dataJson + "');" );
+			sql.queryUpdate( "INSERT INTO `sessions` (`sessionId`, `timeout`, `ipAddr`, `sessionName`, `sessionSite`, `data`)VALUES('" + candyId + "', '" + timeout + "', '" + ipAddr + "', '" + candyName + "', '" + getSite().getName() + "', '" + dataJson + "');" );
 		}
 		
 		Loader.getLogger().info( "Session Initalized: " + this );
@@ -277,17 +349,14 @@ public class PersistentSession implements UserHandler
 	{
 		SqlConnector sql = Loader.getPersistenceManager().getSql();
 		
-		if ( request != null )
-			data.put( "ipAddr", request.getRemoteAddr() );
-		
 		String dataJson = new Gson().toJson( data );
 		
-		sql.queryUpdate( "UPDATE `sessions` SET `data` = '" + dataJson + "', `expires` = '" + expires + "', `sessionName` = '" + candyName + "', `sessionSite` = '" + getSite().getName() + "' WHERE `sessionId` = '" + candyId + "';" );
+		sql.queryUpdate( "UPDATE `sessions` SET `data` = '" + dataJson + "', `timeout` = '" + timeout + "', `sessionName` = '" + candyName + "', `ipAddr` = '" + ipAddr + "', `sessionSite` = '" + getSite().getName() + "' WHERE `sessionId` = '" + candyId + "';" );
 	}
 	
 	public String toString()
 	{
-		return candyName + "{id=" + candyId + ",expires=" + expires + ",data=" + data + "}";
+		return candyName + "{id=" + candyId + ",ipAddr=" + ipAddr + ",timeout=" + timeout + ",data=" + data + "}";
 	}
 	
 	/**
@@ -298,8 +367,13 @@ public class PersistentSession implements UserHandler
 	 */
 	protected boolean matchClient( HttpRequest request )
 	{
+		String _candyName = request.getSite().getYaml().getString( "sessions.cookie-name", Loader.getConfig().getString( "sessions.defaultSessionName", "candyId" ) );
 		Map<String, Candy> requestCandys = pullCandies( request );
-		return ( requestCandys.containsKey( candyName ) && getCandy( candyName ).compareTo( requestCandys.get( candyName ) ) );
+		
+		//if ( requestCandys.containsKey( candyName ) )
+			//Loader.getLogger().debug( getCandy( candyName ).getValue() + " -> " + requestCandys.get( _candyName ).getValue() + " = " + candyName + " -> " + _candyName );
+		
+		return ( requestCandys.containsKey( _candyName ) && getCandy( candyName ).compareTo( requestCandys.get( _candyName ) ) );
 	}
 	
 	/**
@@ -374,22 +448,35 @@ public class PersistentSession implements UserHandler
 		sessionCandy.setMaxAge( valid );
 	}
 	
-	// TODO: Fix ME
-	public void destroy()
+	public void destroy() throws SQLException
 	{
-		expires = 0;
+		timeout = Common.getEpoch();
 		setCookieExpiry( 0 );
+		
+		PersistenceManager.destroySession( this );
 	}
 	
 	public void rearmTimeout()
 	{
-		// TODO: Extend timeout even longer if a user is logged in.
+		int defaultTimeout = Loader.getConfig().getInt( "sessions.defaultTimeout", 3600 );
 		
 		// Grant the timeout an additional 2 minutes per request
 		if ( requestCnt < 6 )
 			requestCnt++;
 		
-		timeout = Common.getEpoch() + defaultTimeout + ( requestCnt * 120 );
+		// Grant the timeout an additional 2 hours for having a user logged in.
+		if ( getUserState() )
+		{
+			defaultTimeout = Loader.getConfig().getInt( "sessions.defaultTimeoutWithLogin", 86400 );
+			
+			if ( StringUtil.isTrue( getArgument( "remember" ) ) )
+				defaultTimeout = Loader.getConfig().getInt( "sessions.defaultTimeoutRememberMe", 604800 );
+			
+			if ( Loader.getConfig().getBoolean( "allowNoTimeoutPermission" ) && currentUser.hasPermission( "chiori.noTimeout" ) )
+				defaultTimeout = Integer.MAX_VALUE;
+		}
+		
+		timeout = Common.getEpoch() + defaultTimeout + ( requestCnt * 600 );
 	}
 	
 	public int getTimeout()
@@ -480,13 +567,5 @@ public class PersistentSession implements UserHandler
 			return Loader.getPersistenceManager().getSiteManager().getFrameworkSite();
 		else
 			return failoverSite;
-	}
-	
-	public void unload()
-	{
-		saveSession();
-		
-		for ( User u : Loader.getInstance().getOnlineUsers() )
-			u.removeHandler( this );
 	}
 }
