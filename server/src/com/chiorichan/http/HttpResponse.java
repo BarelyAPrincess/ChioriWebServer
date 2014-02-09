@@ -110,6 +110,17 @@ public class HttpResponse
 		httpStatus = _status;
 	}
 	
+	public void sendLoginPage()
+	{
+		sendLoginPage( "You must be logged in to view this page!" );
+	}
+	
+	public void sendLoginPage( String msg )
+	{
+		String loginPage = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
+		sendRedirect( loginPage + "?msg=" + msg );
+	}
+	
 	public void sendRedirect( String target )
 	{
 		sendRedirect( target, 302, true );
@@ -201,7 +212,7 @@ public class HttpResponse
 		if ( h.get( "Server" ) == null )
 			h.add( "Server", Versioning.getProduct() + " Version " + Loader.getVersion() );
 		
-		if ( h.get( "Content-Type" ) != null )
+		if ( h.get( "Content-Type" ) == null )
 			h.add( "Content-Type", httpContentType );
 		
 		h.add( "Access-Control-Allow-Origin", request.getSite().getYaml().getString( "web.allowed-origin", "*" ) );

@@ -3,6 +3,7 @@ package com.chiorichan.http;
 import groovy.lang.Binding;
 
 import java.io.File;
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedHashMap;
@@ -23,6 +24,7 @@ import com.chiorichan.util.StringUtil;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.google.zxing.common.detector.MathUtils;
 
 /**
  * This class is used to carry data that is to be persistent from request to request.
@@ -374,7 +376,10 @@ public class PersistentSession implements UserHandler
 			sql.queryUpdate( "INSERT INTO `sessions` (`sessionId`, `timeout`, `ipAddr`, `sessionName`, `sessionSite`, `data`)VALUES('" + candyId + "', '" + timeout + "', '" + ipAddr + "', '" + candyName + "', '" + getSite().getName() + "', '" + dataJson + "');" );
 		}
 		
-		Loader.getLogger().info( ChatColor.DARK_AQUA + "Session Initalized `" + this + "`" );
+		if ( stale )
+			Loader.getLogger().info( ChatColor.DARK_AQUA + "Session Requested `" + this + "`" );
+		else
+			Loader.getLogger().info( ChatColor.DARK_AQUA + "Session Created `" + this + "`" );
 	}
 	
 	protected void saveSession()
@@ -393,9 +398,6 @@ public class PersistentSession implements UserHandler
 		if ( failoverSite != null )
 			extra += ",site=" + failoverSite.getName();
 		
-		if ( currentUser != null )
-			extra += ",loggedIn=" + currentUser.getUserId();
-		
 		return candyName + "{id=" + candyId + ",ipAddr=" + ipAddr + ",timeout=" + timeout + ",data=" + data + ",stale=" + stale + ",requestCount=" + requestCnt + extra + "}";
 	}
 	
@@ -409,9 +411,6 @@ public class PersistentSession implements UserHandler
 	{
 		String _candyName = request.getSite().getYaml().getString( "sessions.cookie-name", Loader.getConfig().getString( "sessions.defaultSessionName", "candyId" ) );
 		Map<String, Candy> requestCandys = pullCandies( request );
-		
-		// if ( requestCandys.containsKey( candyName ) )
-		// Loader.getLogger().debug( getCandy( candyName ).getValue() + " -> " + requestCandys.get( _candyName ).getValue() + " = " + candyName + " -> " + _candyName );
 		
 		return ( requestCandys.containsKey( _candyName ) && getCandy( candyName ).compareTo( requestCandys.get( _candyName ) ) );
 	}
@@ -500,9 +499,8 @@ public class PersistentSession implements UserHandler
 	{
 		int defaultTimeout = Loader.getConfig().getInt( "sessions.defaultTimeout", 3600 );
 		
-		// Grant the timeout an additional 2 minutes per request
-		if ( requestCnt < 6 )
-			requestCnt++;
+		// Grant the timeout an additional 10 minutes per request, capped at one hour or 6 requests.
+		requestCnt++;
 		
 		// Grant the timeout an additional 2 hours for having a user logged in.
 		if ( getUserState() )
@@ -516,7 +514,7 @@ public class PersistentSession implements UserHandler
 				defaultTimeout = Integer.MAX_VALUE;
 		}
 		
-		timeout = Common.getEpoch() + defaultTimeout + ( requestCnt * 600 );
+		timeout = Common.getEpoch() + defaultTimeout + ( Math.min( requestCnt, 6 ) * 600 );
 	}
 	
 	public int getTimeout()
@@ -553,7 +551,7 @@ public class PersistentSession implements UserHandler
 		if ( currentUser != null )
 			Loader.getLogger().info( ChatColor.GREEN + "User Logout `" + currentUser + "`" );
 		
-		setArgument( "remember", null );
+		// setArgument( "remember", null );
 		setArgument( "user", null );
 		setArgument( "pass", null );
 		currentUser = null;
@@ -617,5 +615,20 @@ public class PersistentSession implements UserHandler
 	public String getIpAddr()
 	{
 		return ipAddr;
+	}
+	
+	public void requireLogin() throws IOException
+	{
+		requireLogin( null );
+	}
+	
+	public void requireLogin( String permission ) throws IOException
+	{
+		if ( currentUser == null )
+			request.getResponse().sendLoginPage();
+		
+		if ( permission != null )
+			if ( !currentUser.hasPermission( permission ) )
+				request.getResponse().sendError( HttpCode.HTTP_FORBIDDEN, "You must have the `" + permission + "` in order to view this page!" );
 	}
 }
