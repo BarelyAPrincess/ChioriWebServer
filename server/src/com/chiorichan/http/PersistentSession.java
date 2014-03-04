@@ -24,7 +24,6 @@ import com.chiorichan.util.StringUtil;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-import com.google.zxing.common.detector.MathUtils;
 
 /**
  * This class is used to carry data that is to be persistent from request to request.
