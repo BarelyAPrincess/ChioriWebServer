@@ -254,7 +254,7 @@ Major improvements to the way sessions are handled. Many session configurations 
 
 =Binary Release=
 You can grab the latest binary builds from our jenkins server at http://jenkins.applebloom.co/job/ChioriWebServer/.
-Builds are automaticly made compiled with each git push we make. Be sure to grab the latest successful build for best results.
+Builds are automaticly compiled with each git push we make. Be sure to grab the latest successful build for best results.
 Disclaimer: Be sure to backup your existing installations, We can't be held responsable for damage or unexpected behavior when using bleeding-edge builds.
 
 =Coding=
