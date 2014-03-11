@@ -21,7 +21,6 @@ import com.chiorichan.permissions.PermissionAttachment;
 import com.chiorichan.permissions.PermissionAttachmentInfo;
 import com.chiorichan.plugin.Plugin;
 import com.chiorichan.user.builtin.UserLookupAdapter;
-import com.google.common.collect.Sets;
 
 public class User implements CommandSender
 {
@@ -31,7 +30,8 @@ public class User implements CommandSender
 	protected UserMetaData metaData = new UserMetaData();
 	protected String userId;
 	protected boolean op;
-	protected Set<UserHandler> handlers = Sets.newLinkedHashSet(); // Set this handler for the last login
+	protected Set<UserHandler> handlers = new java.util.concurrent.CopyOnWriteArraySet<UserHandler>(); // Set this handler for the last login
+	
 	protected UserLookupAdapter _cachedAdapter;
 	
 	public User(String user, UserLookupAdapter adapter) throws LoginException

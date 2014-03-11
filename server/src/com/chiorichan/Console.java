@@ -73,7 +73,7 @@ public class Console implements ConsoleCommandSender, Runnable
 		
 		if ( options.has( "noconsole" ) )
 		{
-			getLogger().info( "Console input is disabled due to --noconsole command argument" );
+			System.out.println( "Console input is disabled due to --noconsole command argument" );
 			useConsole = false;
 		}
 		

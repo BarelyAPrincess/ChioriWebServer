@@ -104,7 +104,7 @@ public class Loader implements PluginMessageRecipient
 	private final static ChioriScheduler scheduler = new ChioriScheduler();
 	private static HttpServer httpServer;
 	private static Server tcpServer;
-	public Boolean isRunning = false;
+	public static Boolean isRunning = false;
 	private PluginLoadOrder currentState = PluginLoadOrder.INITIALIZATION;
 	
 	// public java.util.Queue<Runnable> processQueue = new java.util.concurrent.ConcurrentLinkedQueue<Runnable>();
@@ -116,54 +116,11 @@ public class Loader implements PluginMessageRecipient
 	
 	public static void main( String... args ) throws Exception
 	{
+		OptionSet options = null;
+		
 		try
 		{
-			OptionParser parser = new OptionParser()
-			{
-				{
-					acceptsAll( Arrays.asList( "?", "help" ), "Show the help" );
-					
-					acceptsAll( Arrays.asList( "c", "config" ), "Configuration file to use" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "server.properties" ) ).describedAs( "Properties file" );
-					
-					acceptsAll( Arrays.asList( "P", "plugins" ), "Plugin directory to use" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "plugins" ) ).describedAs( "Plugin directory" );
-					
-					acceptsAll( Arrays.asList( "h", "web-ip" ), "Host for Web to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
-					
-					acceptsAll( Arrays.asList( "p", "web-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
-					
-					acceptsAll( Arrays.asList( "h", "tcp-ip" ), "Host for Web to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
-					
-					acceptsAll( Arrays.asList( "p", "tcp-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
-					
-					acceptsAll( Arrays.asList( "p", "web-disable" ), "Disable the internal Web Server" );
-					
-					acceptsAll( Arrays.asList( "p", "tcp-disable" ), "Disable the internal TCP Server" );
-					
-					acceptsAll( Arrays.asList( "s", "size", "max-users" ), "Maximum amount of users" ).withRequiredArg().ofType( Integer.class ).describedAs( "Server size" );
-					
-					acceptsAll( Arrays.asList( "d", "date-format" ), "Format of the date to display in the console (for log entries)" ).withRequiredArg().ofType( SimpleDateFormat.class ).describedAs( "Log date format" );
-					
-					acceptsAll( Arrays.asList( "log-pattern" ), "Specfies the log filename pattern" ).withRequiredArg().ofType( String.class ).defaultsTo( "server.log" ).describedAs( "Log filename" );
-					
-					acceptsAll( Arrays.asList( "log-limit" ), "Limits the maximum size of the log file (0 = unlimited)" ).withRequiredArg().ofType( Integer.class ).defaultsTo( 0 ).describedAs( "Max log size" );
-					
-					acceptsAll( Arrays.asList( "log-count" ), "Specified how many log files to cycle through" ).withRequiredArg().ofType( Integer.class ).defaultsTo( 1 ).describedAs( "Log count" );
-					
-					acceptsAll( Arrays.asList( "log-append" ), "Whether to append to the log file" ).withRequiredArg().ofType( Boolean.class ).defaultsTo( true ).describedAs( "Log append" );
-					
-					acceptsAll( Arrays.asList( "log-strip-color" ), "Strips color codes from log file" );
-					
-					acceptsAll( Arrays.asList( "b", "settings" ), "File for chiori settings" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "chiori.yml" ) ).describedAs( "Yml file" );
-					
-					acceptsAll( Arrays.asList( "nojline" ), "Disables jline and emulates the vanilla console" );
-					
-					acceptsAll( Arrays.asList( "noconsole" ), "Disables the console" );
-					
-					acceptsAll( Arrays.asList( "v", "version" ), "Show the Version" );
-				}
-			};
-			
-			OptionSet options = null;
+			OptionParser parser = getOptionParser();
 			
 			try
 			{
@@ -191,7 +148,7 @@ public class Loader implements PluginMessageRecipient
 			}
 			else
 			{
-				new Loader( options );
+				isRunning = new Loader( options ).start();
 			}
 		}
 		catch ( Throwable t )
@@ -218,6 +175,56 @@ public class Loader implements PluginMessageRecipient
 			catch ( Exception e )
 			{}
 		}
+	}
+	
+	public static OptionParser getOptionParser()
+	{
+		OptionParser parser = new OptionParser()
+		{
+			{
+				acceptsAll( Arrays.asList( "?", "help" ), "Show the help" );
+				
+				acceptsAll( Arrays.asList( "c", "config" ), "Configuration file to use" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "server.properties" ) ).describedAs( "Properties file" );
+				
+				acceptsAll( Arrays.asList( "P", "plugins" ), "Plugin directory to use" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "plugins" ) ).describedAs( "Plugin directory" );
+				
+				acceptsAll( Arrays.asList( "h", "web-ip" ), "Host for Web to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
+				
+				acceptsAll( Arrays.asList( "p", "web-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
+				
+				acceptsAll( Arrays.asList( "h", "tcp-ip" ), "Host for Web to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
+				
+				acceptsAll( Arrays.asList( "p", "tcp-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
+				
+				acceptsAll( Arrays.asList( "p", "web-disable" ), "Disable the internal Web Server" );
+				
+				acceptsAll( Arrays.asList( "p", "tcp-disable" ), "Disable the internal TCP Server" );
+				
+				acceptsAll( Arrays.asList( "s", "size", "max-users" ), "Maximum amount of users" ).withRequiredArg().ofType( Integer.class ).describedAs( "Server size" );
+				
+				acceptsAll( Arrays.asList( "d", "date-format" ), "Format of the date to display in the console (for log entries)" ).withRequiredArg().ofType( SimpleDateFormat.class ).describedAs( "Log date format" );
+				
+				acceptsAll( Arrays.asList( "log-pattern" ), "Specfies the log filename pattern" ).withRequiredArg().ofType( String.class ).defaultsTo( "server.log" ).describedAs( "Log filename" );
+				
+				acceptsAll( Arrays.asList( "log-limit" ), "Limits the maximum size of the log file (0 = unlimited)" ).withRequiredArg().ofType( Integer.class ).defaultsTo( 0 ).describedAs( "Max log size" );
+				
+				acceptsAll( Arrays.asList( "log-count" ), "Specified how many log files to cycle through" ).withRequiredArg().ofType( Integer.class ).defaultsTo( 1 ).describedAs( "Log count" );
+				
+				acceptsAll( Arrays.asList( "log-append" ), "Whether to append to the log file" ).withRequiredArg().ofType( Boolean.class ).defaultsTo( true ).describedAs( "Log append" );
+				
+				acceptsAll( Arrays.asList( "log-strip-color" ), "Strips color codes from log file" );
+				
+				acceptsAll( Arrays.asList( "b", "settings" ), "File for chiori settings" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "chiori.yml" ) ).describedAs( "Yml file" );
+				
+				acceptsAll( Arrays.asList( "nojline" ), "Disables jline and emulates the vanilla console" );
+				
+				acceptsAll( Arrays.asList( "noconsole" ), "Disables the console" );
+				
+				acceptsAll( Arrays.asList( "v", "version" ), "Show the Version" );
+			}
+		};
+		
+		return parser;
 	}
 	
 	public Loader(OptionSet options0)
@@ -264,7 +271,10 @@ public class Loader implements PluginMessageRecipient
 		updater.getOnBroken().addAll( configuration.getStringList( "auto-updater.on-broken" ) );
 		updater.getOnUpdate().addAll( configuration.getStringList( "auto-updater.on-update" ) );
 		updater.check( Versioning.getVersion() );
-		
+	}
+	
+	public boolean start()
+	{
 		loadPlugins();
 		enablePlugins( PluginLoadOrder.INITIALIZATION );
 		
@@ -304,6 +314,8 @@ public class Loader implements PluginMessageRecipient
 		getLogger().info( ChatColor.DARK_AQUA + "" + ChatColor.NEGATIVE + "Done (" + ( System.currentTimeMillis() - startTime ) + "ms)! For help, type \"help\" or \"?\"" );
 		
 		enablePlugins( PluginLoadOrder.RUNNING );
+		
+		return true;
 	}
 	
 	private static void showBanner()
@@ -373,6 +385,8 @@ public class Loader implements PluginMessageRecipient
 	
 	private boolean initWebServer()
 	{
+		boolean isRunning = false;
+		
 		try
 		{
 			InetSocketAddress socket;
@@ -928,6 +942,8 @@ public class Loader implements PluginMessageRecipient
 		
 		httpServer.stop( 0 );
 		tcpServer.stop();
+		
+		isRunning = false;
 		
 		System.exit( 1 );
 	}

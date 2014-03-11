@@ -1,12 +1,14 @@
 package com.chiorichan;
 
+import com.chiorichan.command.Command;
+
 public class ServerShutdownThread extends Thread
 {
-	// private final Loader server;
+	private final Loader server;
 	
 	public ServerShutdownThread(Loader loader)
 	{
-		// this.server = loader;
+		this.server = loader;
 	}
 	
 	@Override
@@ -14,7 +16,11 @@ public class ServerShutdownThread extends Thread
 	{
 		try
 		{
-			// server.shutdown();
+			Command.broadcastCommandMessage( Loader.getConsole(), "Stopping the server... Goodbye!" );
+			System.out.println( "Stopping the server... Goodbye!" );
+			
+			if ( server.isRunning() )
+				Loader.stop();
 		}
 		catch ( Exception ex )
 		{
