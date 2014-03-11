@@ -35,6 +35,10 @@
 		<copy todir="${classes.dir}">
 			<fileset dir="${src.dir}" excludes="**/*.java"/>
 		</copy>
+		
+		<unjar dest="${classes.dir}">
+			<fileset dir="${lib.dir}" includes="**/*.jar" />
+		</unjar>
 	</target>
 	
 	<target name="jar" depends="compile">
