@@ -20,7 +20,7 @@
 	
 	<target name="compile" depends="init">
 		<mkdir dir="${classes.dir}" />
-		<javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath">
+		<javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath" encoding="UTF8">
 			<src path="${src.dir.jline}"/>
 			<src path="${src.dir.api}"/>
 		</javac>
