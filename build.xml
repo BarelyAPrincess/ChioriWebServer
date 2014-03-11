@@ -39,15 +39,21 @@
 	</target>
 	
 	<target name="jar" depends="compile">
+		<import file="build/support/one-jar-ant-task.xml"/>   
+		
 		<mkdir dir="${jar.dir}"/>
-		<jar destfile="${jar.dir}/${ant.project.name}.jar" basedir="${classes.dir}">
+		<one-jar destfile="${jar.dir}/${ant.project.name}.jar">
 			<manifest>
 				<attribute name="Main-Class" value="${main-class}"/>
+				<attribute name="Class-Path" value="."/>
 			</manifest>
-			<zipgroupfileset dir="${lib.dir}" includes="**/*.jar">
-				<exclude name="**/*.RSA, **/*.SF, **/*.DSA"/>
-			</zipgroupfileset>
-		</jar>
+            <main>
+                <fileset dir="${classes.dir}"/>
+            </main>
+            <lib>
+                <fileset dir="${lib.dir}" />
+            </lib>
+        </one-jar>
 	</target>
 	
 	<target name="clean-build" depends="clean,jar"/>
