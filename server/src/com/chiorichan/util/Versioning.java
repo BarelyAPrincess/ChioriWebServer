@@ -25,7 +25,7 @@ public class Versioning
 		if ( metadata == null )
 			loadMetaData();
 		
-		return metadata.getString( "meta.copyright", "Copyright © 2014 Chiori-chan" );
+		return metadata.getString( "meta.copyright", "Copyright &copy; 2014 Chiori-chan" );
 	}
 
 	public static String getProduct()
