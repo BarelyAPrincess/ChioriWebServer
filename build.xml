@@ -1,4 +1,4 @@
-<project name="server" default="jar" basedir=".">
+<project name="server" default="clean-build" basedir=".">
 	<target name="init">
 		<property name="src.dir"		value="server/src"/>
 		<property name="src.dir.jline"		value="jline/src"/>
