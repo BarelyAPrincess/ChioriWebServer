@@ -155,7 +155,10 @@ public class Loader implements PluginMessageRecipient
 		{
 			t.printStackTrace();
 			
-			getLogger().severe( ChatColor.RED + "" + ChatColor.NEGATIVE + "SEVERE ERROR (" + ( System.currentTimeMillis() - startTime ) + "ms)! Press 'Ctrl-c' to quit!'" );
+			if ( getLogger() != null )
+				getLogger().severe( ChatColor.RED + "" + ChatColor.NEGATIVE + "SEVERE ERROR (" + ( System.currentTimeMillis() - startTime ) + "ms)! Press 'Ctrl-c' to quit!'" );
+			else
+				System.err.println( "SEVERE ERROR (" + ( System.currentTimeMillis() - startTime ) + "ms)! Press 'Ctrl-c' to quit!'" );
 			
 			// TODO Make it so this exception (and possibly other critical exceptions) are reported to us without user interaction. Should also find a way that the entire log is sent along with it.
 			

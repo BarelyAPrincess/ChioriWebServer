@@ -5,9 +5,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import jline.Terminal;
@@ -92,9 +89,9 @@ public class Console implements ConsoleCommandSender, Runnable
 				reader = new ConsoleReader( System.in, System.out );
 				reader.setExpandEvents( false );
 			}
-			catch ( java.io.IOException ex )
+			catch ( Exception ex )
 			{
-				// Logger.getLogger( MinecraftServer.class.getName() ).log( Level.SEVERE, null, ex );
+				ex.printStackTrace();
 			}
 		}
 		
