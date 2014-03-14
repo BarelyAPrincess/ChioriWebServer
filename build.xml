@@ -11,7 +11,9 @@
 		<property name="main-class"		value="com.chiorichan.Loader"/>
 		<property name="lib.dir"		value="lib"/>
 		
-		<loadproperties srcFile="server/src/com/chiorichan/metadata.properties"/>
+		<loadproperties srcFile="${src.dir}/com/chiorichan/metadata.properties"/>
+		
+		<property environment="env" />
 		
 		<path id="classpath">
 			<fileset dir="${lib.dir}" includes="**/*.jar"/>
@@ -42,69 +44,12 @@
 			<fileset dir="${src.dir.jline}" excludes="**/*.java"/>
 			<fileset dir="${src.dir.api}" excludes="**/*.java"/>
 		</copy>
-	</target>
-	
-	<target name="compile-plugins" depends="init, compile">
-		<mkdir dir="${classes.dir.plugins}" />
 		
-		<scriptdef name="forit" language="javascript">
-		<element name="dirset" type="dirset"/>
-		<![CDATA[
-			importClass(java.io.File);
-			sets = elements.get("dirset");
-			
-			for (i = 0; i < sets.size(); ++i) {
-				set = sets.get(i);
-				scanner = set.getDirectoryScanner(project);
-				scanner.scan();
-				files = scanner.getIncludedDirectories();
-				
-				for( j=0; j < files.length; j++) {
-					var basedir  = set.getDir(project);
-					var filename = files[j];
-					var src= new File(basedir, filename);
-					
-					var task = project.createTask("antcall");
-					task.setTarget("compile-plugin");
-					var param = task.createParam();
-					param.setName("plugin.path");
-					param.setValue(src);
-					task.perform();
-				}
-			}
-		]]>
-		</scriptdef>
-		
-		<forit>
-		    <dirset dir="${src.dir.plugins}">
-				<include name="*"/>
-		    </dirset>
-		</forit>
-	</target>
-	
-	<target name="compile-plugin" depends="init">
-		<basename property="plugin.name" file="${plugin.path}"/>
-		<echo message="Compiling the plugin '${plugin.name}' located in directory '${plugin.path}'"/>
-		
-		<mkdir dir="${classes.dir.plugins}/${plugin.name}" />
-		<mkdir dir="${classes.dir.plugins}/${plugin.name}/src" />
-
-		<groovyc srcdir="${plugin.path}/src" destdir="${classes.dir.plugins}/${plugin.name}" classpathref="classpath" encoding="UTF8">
-			<classpath>
-				<pathelement location="${classes.dir}" />
-			</classpath>
-			<javac debug="on" deprecation="true" encoding="UTF8"/>
-		</groovyc>
-		
-		<copy todir="${classes.dir.plugins}/${plugin.name}">
-			<fileset dir="${plugin.path}" excludes="**/*.java,**/src/**"/>
-		</copy>
-		
-		<mkdir dir="${jar.dir}"/>
-		
-		<jar destfile="${jar.dir}/${plugin.name}-for-${ant.project.name}-${project.version}.jar" filesetmanifest="mergewithoutmain">
-			<fileset dir="${classes.dir.plugins}/${plugin.name}"/>
-		</jar>
+		<propertyfile file="${classes.dir}/com/chiorichan/metadata.properties">
+			<entry  key="project.build" value="${env.BUILD_NUMBER}"/>
+			<entry  key="project.version" value="${project.version}-nightly"/>
+			<entry  key="project.built-date" type="date" value="now"/>
+		</propertyfile>
 	</target>
 	
 	<target name="jar" depends="compile">
@@ -160,4 +105,67 @@
 	</target>
 	
 	<target name="clean-build" depends="clean,jar"/>
+	
+	<target name="compile-plugins" depends="init, compile">
+		<mkdir dir="${classes.dir.plugins}" />
+		
+		<scriptdef name="forit" language="javascript">
+		<element name="dirset" type="dirset"/>
+		<![CDATA[
+			importClass(java.io.File);
+			sets = elements.get("dirset");
+			
+			for (i = 0; i < sets.size(); ++i) {
+				set = sets.get(i);
+				scanner = set.getDirectoryScanner(project);
+				scanner.scan();
+				files = scanner.getIncludedDirectories();
+				
+				for( j=0; j < files.length; j++) {
+					var basedir  = set.getDir(project);
+					var filename = files[j];
+					var src= new File(basedir, filename);
+					
+					var task = project.createTask("antcall");
+					task.setTarget("compile-plugin");
+					var param = task.createParam();
+					param.setName("plugin.path");
+					param.setValue(src);
+					task.perform();
+				}
+			}
+		]]>
+		</scriptdef>
+		
+		<forit>
+		    <dirset dir="${src.dir.plugins}">
+				<include name="*"/>
+		    </dirset>
+		</forit>
+	</target>
+	
+	<target name="compile-plugin" depends="init">
+		<basename property="plugin.name" file="${plugin.path}"/>
+		<echo message="Compiling the plugin '${plugin.name}' located in directory '${plugin.path}'"/>
+		
+		<mkdir dir="${classes.dir.plugins}/${plugin.name}" />
+		<mkdir dir="${plugin.path}/src" />
+
+		<groovyc srcdir="${plugin.path}/src" destdir="${classes.dir.plugins}/${plugin.name}" classpathref="classpath" encoding="UTF8">
+			<classpath>
+				<pathelement location="${classes.dir}" />
+			</classpath>
+			<javac debug="on" deprecation="true" encoding="UTF8"/>
+		</groovyc>
+		
+		<copy todir="${classes.dir.plugins}/${plugin.name}">
+			<fileset dir="${plugin.path}" excludes="**/*.java,**/src/**"/>
+		</copy>
+		
+		<mkdir dir="${jar.dir}"/>
+		
+		<jar destfile="${jar.dir}/${plugin.name}-for-${ant.project.name}-${project.version}.jar" filesetmanifest="mergewithoutmain">
+			<fileset dir="${classes.dir.plugins}/${plugin.name}"/>
+		</jar>
+	</target>
 </project>

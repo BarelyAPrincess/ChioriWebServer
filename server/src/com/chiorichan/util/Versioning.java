@@ -34,6 +34,22 @@ public class Versioning
 		}
 	}
 	
+	public static String getVersionNumber()
+	{
+		if ( metadata == null )
+			loadMetaData();
+		
+		return metadata.getProperty( "project.version", "Unknown-Version" );
+	}
+	
+	public static String getBuildNumber()
+	{
+		if ( metadata == null )
+			loadMetaData();
+		
+		return metadata.getProperty( "project.build", "0" );
+	}
+	
 	public static String getVersion()
 	{
 		if ( metadata == null )
