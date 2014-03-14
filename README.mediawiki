@@ -251,11 +251,16 @@ As of this version, The framework was offical absorbed into the server as a whol
 A whole new system for both users and permissions was implemented. If you want to start using the new permissions system you will need to use the PermissionsEx plugin.
 ====Build 0207====
 Major improvements to the way sessions are handled. Many session configurations added.
+====Build 0313====
+Added a build.xml file so the project can not be built with Apache Ant 1.8. Switch from YAML to Properties for project details/metadata file (server/src/com/chiorichan/metadata.properties) so Ant/build.xml could now make versioned binary files.
 
 =Binary Release=
 You can grab the latest binary builds from our jenkins server at http://jenkins.applebloom.co/job/ChioriWebServer/.
 Builds are automaticly compiled with each git push we make. Be sure to grab the latest successful build for best results.
 Disclaimer: Be sure to backup your existing installations, We can't be held responsable for damage or unexpected behavior when using bleeding-edge builds.
+
+=How To Build=
+You can either build Chiori Web Server with Eclipse IDE or using the included build.xml with Apache ANT 1.8. It should be as simple as executing "ant clean-build". If you would like to also compile the included plugins, be sure to also execute ant "compile-plugins" after you compile the main server.
 
 =Coding=
 * We attempt to make our code as easily readable as possible. 
