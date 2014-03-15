@@ -41,6 +41,7 @@ public class Console implements ConsoleCommandSender, Runnable
 	
 	public boolean useJline = true;
 	public boolean useConsole = true;
+	public boolean useColors = true;
 	
 	public Loader loader;
 	
@@ -72,6 +73,11 @@ public class Console implements ConsoleCommandSender, Runnable
 		{
 			System.out.println( "Console input is disabled due to --noconsole command argument" );
 			useConsole = false;
+		}
+		
+		if ( options.has( "nocolor" ) )
+		{
+			useColors = false;
 		}
 		
 		try

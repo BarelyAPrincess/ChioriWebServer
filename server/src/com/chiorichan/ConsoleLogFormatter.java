@@ -79,7 +79,7 @@ public class ConsoleLogFormatter extends Formatter
 	
 	public String handleAltColors( String var1 )
 	{
-		if ( Loader.getConsole().AnsiSupported() )
+		if ( Loader.getConsole().AnsiSupported() && Loader.getConsole().useColors )
 		{
 			var1 = ChatColor.translateAlternateColorCodes( '&', var1 ) + ChatColor.RESET;
 			
@@ -94,6 +94,10 @@ public class ConsoleLogFormatter extends Formatter
 					var1 = var1.replaceAll( "(?i)" + color.toString(), "" );
 				}
 			}
+		}
+		else
+		{
+			var1 = var1.replaceAll( "§.", "" );
 		}
 		
 		return var1;

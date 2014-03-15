@@ -223,6 +223,8 @@ public class Loader implements PluginMessageRecipient
 				
 				acceptsAll( Arrays.asList( "noconsole" ), "Disables the console" );
 				
+				acceptsAll( Arrays.asList( "nocolor" ), "Disables the console color formatting" );
+				
 				acceptsAll( Arrays.asList( "v", "version" ), "Show the Version" );
 			}
 		};
@@ -273,7 +275,9 @@ public class Loader implements PluginMessageRecipient
 		updater.setSuggestChannels( configuration.getBoolean( "auto-updater.suggest-channels" ) );
 		updater.getOnBroken().addAll( configuration.getStringList( "auto-updater.on-broken" ) );
 		updater.getOnUpdate().addAll( configuration.getStringList( "auto-updater.on-update" ) );
-		updater.check( Versioning.getVersion() );
+		updater.check( Versioning.getBuildNumber() );
+		
+		// TODO Updater can restart the server to apply an update.
 	}
 	
 	public boolean start()
