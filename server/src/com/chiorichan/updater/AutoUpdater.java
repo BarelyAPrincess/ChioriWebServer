@@ -94,7 +94,6 @@ public class AutoUpdater
 		
 		if ( !isEnabled() )
 		{
-			Loader.getLogger().info( logMsg + ".....DISABLED, PER CONFIGS!" );
 			return;
 		}
 		/*
@@ -104,7 +103,7 @@ public class AutoUpdater
 		 * return;
 		 * }
 		 */
-		Loader.getLogger().info( logMsg + "....." );
+		Loader.getLogger().info( logMsg + ".....Please Wait." );
 		
 		new Thread()
 		{

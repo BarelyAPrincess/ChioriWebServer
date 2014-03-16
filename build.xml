@@ -47,20 +47,17 @@
 		
 		<propertyfile file="${classes.dir}/com/chiorichan/metadata.properties">
 			<entry  key="project.build" value="${env.BUILD_NUMBER}"/>
-			<entry  key="project.version" default="${project.version}" operation="+" value="-github-build${env.BUILD_NUMBER}"/>
+			<entry  key="project.version" value="${project.version}-github-build${env.BUILD_NUMBER}"/>
 			<entry  key="project.builtOn" type="date" value="now" pattern="EEE, d MMM yyyy HH:mm:ss Z"/>
 		</propertyfile>
-		
-		<loadproperties srcFile="${classes.dir}/com/chiorichan/metadata.properties"/>
 	</target>
 	
 	<target name="jar" depends="compile">
 		<mkdir dir="${jar.dir}"/>
 		
 		<copy file="${classes.dir}/com/chiorichan/metadata.properties" tofile="${jar.dir}/build.properties"/>
-		<loadproperties srcFile="${classes.dir}/com/chiorichan/metadata.properties"/>
 		
-		<jar destfile="${jar.dir}/${ant.project.name}-${project.version}.jar" filesetmanifest="mergewithoutmain">
+		<jar destfile="${jar.dir}/${ant.project.name}-${project.version}-github-build${env.BUILD_NUMBER}.jar" filesetmanifest="mergewithoutmain">
 			<manifest>
 				<attribute name="Main-Class" value="${main-class}"/>
 				<attribute name="Class-Path" value="."/>
@@ -72,6 +69,7 @@
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/commons-lang3-3.1.jar"/>
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/commons-logging-1.1.1.jar"/>
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/fluent-hc-4.2.3.jar"/>
+			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/groovy-all-2.2.2.jar"/>
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/gson-2.2.4.jar"/>
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/guava-14.0.1.jar"/>
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/hibernate-validator-4.3.0.Final.jar"/>
@@ -112,10 +110,8 @@
 	
 	<target name="clean-build" depends="clean,jar"/>
 	
-	<target name="compile-plugins" depends="init, compile">
+	<target name="compile-plugins" depends="init">
 		<mkdir dir="${classes.dir.plugins}" />
-		
-		<loadproperties srcFile="${classes.dir}/com/chiorichan/metadata.properties"/>
 		
 		<scriptdef name="forit" language="javascript">
 		<element name="dirset" type="dirset"/>
@@ -172,16 +168,17 @@
 		
 		<mkdir dir="${jar.dir}"/>
 		
-		<jar destfile="${jar.dir}/${plugin.name}-for-${ant.project.name}-${project.version}.jar" filesetmanifest="mergewithoutmain">
+		<jar destfile="${jar.dir}/${plugin.name}-for-${ant.project.name}-${project.version}-github-build${env.BUILD_NUMBER}.jar" filesetmanifest="mergewithoutmain">
 			<fileset dir="${classes.dir.plugins}/${plugin.name}"/>
 		</jar>
 		
 		<propertyfile file="${classes.dir}/com/chiorichan/metadata.properties">
 		    <entry  key="plugins" default="" operation="+" value=",${plugin.name}"/>
-			<entry  key="plugin.${plugin.name}.filename" value="${plugin.name}-for-${ant.project.name}-${project.version}.jar"/>
-			<entry  key="plugin.${plugin.name}.serverVersion" value="${project.version}"/>
+			<entry  key="plugin.${plugin.name}.filename" value="${plugin.name}-for-${ant.project.name}-${project.version}-github-build${env.BUILD_NUMBER}.jar"/>
+			<entry  key="plugin.${plugin.name}.serverVersion" value="${project.version}-github-build${env.BUILD_NUMBER}"/>
 			<entry  key="plugin.${plugin.name}.version" value="future use!"/>
 			<entry  key="plugin.${plugin.name}.builtOn" type="date" value="now" pattern="EEE, d MMM yyyy HH:mm:ss Z"/>
 		</propertyfile>
+		<copy file="${classes.dir}/com/chiorichan/metadata.properties" tofile="${jar.dir}/build.properties"/>
 	</target>
 </project>
