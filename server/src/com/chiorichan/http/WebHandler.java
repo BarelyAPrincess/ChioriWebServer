@@ -39,6 +39,8 @@ public class WebHandler implements HttpHandler
 		HttpRequest request = new HttpRequest( t, this );
 		HttpResponse response = request.getResponse();
 		
+		Versioning.getVersionNumber();
+		
 		try
 		{
 			String uri = request.getURI();

@@ -23,7 +23,7 @@ import com.chiorichan.util.ObjectUtil;
 import com.chiorichan.util.StringUtil;
 import com.google.common.base.Joiner;
 
-abstract public class scriptingBaseJava extends Script
+abstract public class ScriptingBaseJava extends Script
 {
 	@SuppressWarnings( "unchecked" )
 	String var_export( Object var )

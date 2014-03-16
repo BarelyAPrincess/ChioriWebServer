@@ -90,20 +90,12 @@ public class AutoUpdater
 	
 	public void check( final String currentSlug )
 	{
-		String logMsg = "Running auto update checker";
+		Loader.getLogger().info( "Auto Update Tick!" );
 		
-		if ( !isEnabled() )
+		if ( !isEnabled() || Versioning.getBuildNumber() == "0" )
 		{
 			return;
 		}
-		/*
-		 * if ( Versioning.getBuildNumber() == "0" )
-		 * {
-		 * Loader.getLogger().info( logMsg + ".....DISABLED, RUNNING IN DEV MODE!" );
-		 * return;
-		 * }
-		 */
-		Loader.getLogger().info( logMsg + ".....Please Wait." );
 		
 		new Thread()
 		{
@@ -112,6 +104,12 @@ public class AutoUpdater
 			{
 				current = service.getArtifact( currentSlug, "information about this Chiori Web Server version; perhaps you are running a custom one?" );
 				latest = service.getArtifact( "lastStableBuild", "latest artifact information" );
+				
+				// If there was a problem finding information about our current build
+				// TODO This might become a problem if someone if running a really old version of our server (If either it was auto purged
+				// or manually removed from our Jenkins Build Server) but updates would still function, So fix that.
+				if ( current == null )
+					enabled = false;
 				
 				if ( isUpdateAvailable() )
 				{

@@ -25,7 +25,7 @@ public class Evaling
 	public Evaling(Binding binding)
 	{
 		CompilerConfiguration configuration = new CompilerConfiguration();
-		configuration.setScriptBaseClass( scriptingBaseGroovy.class.getName() );
+		configuration.setScriptBaseClass( ScriptingBaseGroovy.class.getName() );
 		
 		shell = new GroovyShell( Loader.class.getClassLoader(), binding, configuration );
 		

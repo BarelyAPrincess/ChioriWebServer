@@ -6,7 +6,7 @@ import com.chiorichan.http.PersistentSession
 import com.chiorichan.util.Versioning
 import com.google.common.base.Joiner
 
-abstract class scriptingBaseGroovy extends scriptingBaseJava
+abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 {
 	Framework getFramework()
 	{

@@ -160,7 +160,7 @@ public class Loader implements PluginMessageRecipient
 			else
 				System.err.println( "SEVERE ERROR (" + ( System.currentTimeMillis() - startTime ) + "ms)! Press 'Ctrl-c' to quit!'" );
 			
-			// TODO Make it so this exception (and possibly other critical exceptions) are reported to us without user interaction. Should also find a way that the entire log is sent along with it.
+			// TODO Make it so this exception (and possibly other critical exceptions) are reported to us without user interaction. Should also find a way that the log can be sent along with it.
 			
 			try
 			{
@@ -275,9 +275,6 @@ public class Loader implements PluginMessageRecipient
 		updater.setSuggestChannels( configuration.getBoolean( "auto-updater.suggest-channels" ) );
 		updater.getOnBroken().addAll( configuration.getStringList( "auto-updater.on-broken" ) );
 		updater.getOnUpdate().addAll( configuration.getStringList( "auto-updater.on-update" ) );
-		updater.check( Versioning.getBuildNumber() );
-		
-		// TODO Updater can restart the server to apply an update.
 	}
 	
 	public boolean start()
@@ -321,6 +318,8 @@ public class Loader implements PluginMessageRecipient
 		getLogger().info( ChatColor.DARK_AQUA + "" + ChatColor.NEGATIVE + "Done (" + ( System.currentTimeMillis() - startTime ) + "ms)! For help, type \"help\" or \"?\"" );
 		
 		enablePlugins( PluginLoadOrder.RUNNING );
+		
+		updater.check( Versioning.getBuildNumber() );
 		
 		return true;
 	}

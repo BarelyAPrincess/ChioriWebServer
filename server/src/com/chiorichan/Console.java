@@ -1,8 +1,10 @@
 package com.chiorichan;
 
 import java.io.PrintStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
@@ -10,6 +12,8 @@ import java.util.logging.Level;
 import jline.Terminal;
 import jline.console.ConsoleReader;
 import joptsimple.OptionSet;
+
+import org.joda.time.DateTime;
 
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.command.ConsoleCommandSender;
@@ -23,6 +27,7 @@ import com.chiorichan.permissions.Permission;
 import com.chiorichan.permissions.PermissionAttachment;
 import com.chiorichan.permissions.PermissionAttachmentInfo;
 import com.chiorichan.plugin.Plugin;
+import com.chiorichan.util.Versioning;
 
 public class Console implements ConsoleCommandSender, Runnable
 {
@@ -36,6 +41,7 @@ public class Console implements ConsoleCommandSender, Runnable
 	public Boolean isRunning = true;
 	private OptionSet options;
 	
+	public static int lastFiveTick = -1;
 	public static int currentTick = (int) ( System.currentTimeMillis() / 50 );
 	public Thread primaryThread;
 	
@@ -197,7 +203,19 @@ public class Console implements ConsoleCommandSender, Runnable
 		handleCommands();
 		
 		Loader.getScheduler().mainThreadHeartbeat( tick );
-		PersistenceManager.mainThreadHeartbeat( tick );
+		
+		// Execute every five minutes - ex: clean sessions and checking for updates.
+		int fiveMinuteTick = new DateTime().getMinuteOfHour();
+		if ( fiveMinuteTick % 5 == 0 && lastFiveTick != fiveMinuteTick )
+		{
+			lastFiveTick = fiveMinuteTick;
+			
+			if ( fiveMinuteTick % Loader.getConfig().getInt( "sessions.cleanupInterval", 5 ) == 0 )
+				PersistenceManager.mainThreadHeartbeat( tick );
+			
+			if ( fiveMinuteTick % Loader.getConfig().getInt( "auto-updater.check-interval", 30 ) == 0 )
+				Loader.getInstance().getAutoUpdater().check( Versioning.getBuildNumber() );
+		}
 	}
 	
 	public ConsoleLogManager getLogger()

@@ -12,6 +12,9 @@ public class Versioning
 	
 	public static void loadMetaData()
 	{
+		if ( metadata != null && !metadata.isEmpty() )
+			return;
+		
 		InputStream is = null;
 		try
 		{
@@ -36,41 +39,31 @@ public class Versioning
 	
 	public static String getVersionNumber()
 	{
-		if ( metadata == null )
-			loadMetaData();
-		
+		loadMetaData();
 		return metadata.getProperty( "project.version", "Unknown-Version" );
 	}
 	
 	public static String getBuildNumber()
 	{
-		if ( metadata == null )
-			loadMetaData();
-		
+		loadMetaData();
 		return metadata.getProperty( "project.build", "0" );
 	}
 	
 	public static String getVersion()
 	{
-		if ( metadata == null )
-			loadMetaData();
-		
-		return metadata.getProperty( "project.version", "Unknown-Version" ) + " (" + metadata.getProperty( "project.codename" + ")" );
+		loadMetaData();
+		return metadata.getProperty( "project.version", "Unknown-Version" ) + " (" + metadata.getProperty( "project.codename" ) + ")";
 	}
 	
 	public static String getCopyright()
 	{
-		if ( metadata == null )
-			loadMetaData();
-		
+		loadMetaData();
 		return metadata.getProperty( "project.copyright", "Copyright &copy; 2014 Chiori-chan" );
 	}
 	
 	public static String getProduct()
 	{
-		if ( metadata == null )
-			loadMetaData();
-		
+		loadMetaData();
 		return metadata.getProperty( "project.name", "Chiori Web Server" );
 	}
 }

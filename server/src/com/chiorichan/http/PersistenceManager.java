@@ -176,8 +176,6 @@ public class PersistenceManager
 		{
 			PersistentSession var1 = sessions.next();
 			
-			// Loader.getLogger().debug( "" + var1 );
-			
 			if ( var1.getTimeout() > 0 && var1.getTimeout() < Common.getEpoch() )
 			{
 				try

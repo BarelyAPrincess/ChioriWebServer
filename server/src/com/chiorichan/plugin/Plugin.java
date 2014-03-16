@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.logging.Logger;
 
+import com.chiorichan.ConsoleLogManager;
 import com.chiorichan.Loader;
 import com.chiorichan.command.CommandExecutor;
 import com.chiorichan.configuration.file.FileConfiguration;

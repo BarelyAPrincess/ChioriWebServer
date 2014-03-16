@@ -38,6 +38,7 @@ auto-updater:
   preferred-channel: rb
   host: jenkins.applebloom.co
   suggest-channels: true
+  check-interval: 30
 sessions:
   defaultSessionName: sessionId
   defaultTimeout: 3600
@@ -48,6 +49,7 @@ sessions:
   reuseVacantSessions: true
   maxSessionsPerIP: 6
   allowIPChange: false
+  cleanupInterval: 5
 users:
   maxLogins: -1
   lookupAdapter:
