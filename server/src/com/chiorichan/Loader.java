@@ -1244,4 +1244,9 @@ public class Loader implements PluginMessageRecipient
 	{
 		return getPersistenceManager().getSiteManager().getSiteById( siteName );
 	}
+	
+	public AutoUpdater getAutoUpdater()
+	{
+		return updater;
+	}
 }

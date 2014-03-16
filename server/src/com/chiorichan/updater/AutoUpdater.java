@@ -4,23 +4,28 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import com.chiorichan.Loader;
+import com.chiorichan.util.Versioning;
+
 public class AutoUpdater
 {
 	public static final String WARN_CONSOLE = "warn-console";
 	public static final String WARN_OPERATORS = "warn-ops";
 	
+	private static AutoUpdater instance = null;
 	private final ChioriDLUpdaterService service;
 	private final List<String> onUpdate = new ArrayList<String>();
 	private final List<String> onBroken = new ArrayList<String>();
 	private final Logger log;
 	private final String channel;
 	private boolean enabled;
-	private ArtifactDetails current = null;
-	private ArtifactDetails latest = null;
+	private BuildArtifact current = null;
+	private BuildArtifact latest = null;
 	private boolean suggestChannels = true;
 	
 	public AutoUpdater(ChioriDLUpdaterService service, Logger log, String channel)
 	{
+		instance = this;
 		this.service = service;
 		this.log = log;
 		this.channel = channel;
@@ -69,24 +74,37 @@ public class AutoUpdater
 		}
 		else
 		{
-			return latest.getCreated().after( current.getCreated() );
+			return latest.timestamp > current.timestamp;
 		}
 	}
 	
-	public ArtifactDetails getCurrent()
+	public BuildArtifact getCurrent()
 	{
 		return current;
 	}
 	
-	public ArtifactDetails getLatest()
+	public BuildArtifact getLatest()
 	{
 		return latest;
 	}
 	
 	public void check( final String currentSlug )
 	{
+		String logMsg = "Running auto update checker";
+		
 		if ( !isEnabled() )
+		{
+			Loader.getLogger().info( logMsg + ".....DISABLED, PER CONFIGS!" );
 			return;
+		}
+		/*
+		 * if ( Versioning.getBuildNumber() == "0" )
+		 * {
+		 * Loader.getLogger().info( logMsg + ".....DISABLED, RUNNING IN DEV MODE!" );
+		 * return;
+		 * }
+		 */
+		Loader.getLogger().info( logMsg + "....." );
 		
 		new Thread()
 		{
@@ -94,7 +112,7 @@ public class AutoUpdater
 			public void run()
 			{
 				current = service.getArtifact( currentSlug, "information about this Chiori Web Server version; perhaps you are running a custom one?" );
-				latest = service.getArtifact( "latest-" + channel, "latest artifact information" );
+				latest = service.getArtifact( "lastStableBuild", "latest artifact information" );
 				
 				if ( isUpdateAvailable() )
 				{
@@ -111,7 +129,7 @@ public class AutoUpdater
 						
 						log.severe( "Newer version " + latest.getVersion() + " (build #" + latest.getBuildNumber() + ") was released on " + latest.getCreated() + "." );
 						log.severe( "Details: " + latest.getHtmlUrl() );
-						log.severe( "Download: " + latest.getFile().getUrl() );
+						log.severe( "Download: " + latest.getFile() );
 						log.severe( "----- ------------------- -----" );
 					}
 					else if ( onUpdate.contains( WARN_CONSOLE ) )
@@ -119,7 +137,7 @@ public class AutoUpdater
 						log.warning( "----- Chiori Auto Updater -----" );
 						log.warning( "Your version of Chiori Web Server is out of date. Version " + latest.getVersion() + " (build #" + latest.getBuildNumber() + ") was released on " + latest.getCreated() + "." );
 						log.warning( "Details: " + latest.getHtmlUrl() );
-						log.warning( "Download: " + latest.getFile().getUrl() );
+						log.warning( "Download: " + latest.getFile() );
 						log.warning( "----- ------------------- -----" );
 					}
 				}
@@ -136,7 +154,7 @@ public class AutoUpdater
 					
 					log.severe( "Unfortunately, there is not yet a newer version suitable for your server. We would advise you wait an hour or two, or try out a dev build." );
 					log.severe( "----- ------------------- -----" );
-				}
+				}/*
 				else if ( ( current != null ) && ( shouldSuggestChannels() ) )
 				{
 					ArtifactDetails.ChannelDetails prefChan = service.getChannel( channel, "preferred channel details" );
@@ -150,8 +168,13 @@ public class AutoUpdater
 						log.info( "If you would like to disable this warning, simply set 'suggest-channels' to false in chiori.yml." );
 						log.info( "----- ------------------- -----" );
 					}
-				}
+				}*/
 			}
 		}.start();
+	}
+	
+	protected static ChioriDLUpdaterService getService()
+	{
+		return ( instance == null ) ? null : instance.service;
 	}
 }

@@ -10,6 +10,7 @@ import java.net.UnknownHostException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -23,8 +24,8 @@ import com.google.gson.JsonParseException;
 
 public class ChioriDLUpdaterService
 {
-	private static final String API_PREFIX_ARTIFACT = "/api/1.0/downloads/projects/chioriwebserver/view/";
-	private static final String API_PREFIX_CHANNEL = "/api/1.0/downloads/channels/";
+	private static final String API_PREFIX_ARTIFACT = "/job/ChioriWebServer/";
+	//private static final String API_PREFIX_CHANNEL = "/api/1.0/downloads/channels/";
 	private static final DateDeserializer dateDeserializer = new DateDeserializer();
 	private final String host;
 	
@@ -33,7 +34,7 @@ public class ChioriDLUpdaterService
 		this.host = host;
 	}
 	
-	public ArtifactDetails getArtifact( String slug, String name )
+	public BuildArtifact getArtifact( String slug, String name )
 	{
 		try
 		{
@@ -60,9 +61,14 @@ public class ChioriDLUpdaterService
 		return "ChioriWebServer/" + ChioriDLUpdaterService.class.getPackage().getImplementationVersion() + "/" + System.getProperty( "java.version" );
 	}
 	
-	public ArtifactDetails fetchArtifact( String slug ) throws IOException, UnknownHostException
+	public BuildArtifact fetchArtifact( String slug ) throws IOException, UnknownHostException
 	{
-		URL url = new URL( "http", host, API_PREFIX_ARTIFACT + slug + "/" );
+		URL url = new URL( "http", host, API_PREFIX_ARTIFACT + slug + "/api/json" );
+		return fetchArtifact( url );
+	}
+	
+	public BuildArtifact fetchArtifact( URL url ) throws IOException, UnknownHostException
+	{
 		InputStreamReader reader = null;
 		
 		try
@@ -70,8 +76,9 @@ public class ChioriDLUpdaterService
 			URLConnection connection = url.openConnection();
 			connection.setRequestProperty( "User-Agent", getUserAgent() );
 			reader = new InputStreamReader( connection.getInputStream() );
-			Gson gson = new GsonBuilder().registerTypeAdapter( Date.class, dateDeserializer ).setFieldNamingPolicy( FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES ).create();
-			return gson.fromJson( reader, ArtifactDetails.class );
+			//Gson gson = new GsonBuilder().registerTypeAdapter( Date.class, dateDeserializer ).setFieldNamingPolicy( FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES ).create();
+			Gson gson = new Gson();
+			return gson.fromJson( reader, BuildArtifact.class );
 		}
 		finally
 		{
@@ -82,15 +89,42 @@ public class ChioriDLUpdaterService
 		}
 	}
 	
-	public ArtifactDetails.ChannelDetails getChannel( String slug, String name )
+	public ProjectArtifact getProjectArtifact() throws IOException
+	{
+		URL url = new URL( "http", host, API_PREFIX_ARTIFACT + "api/json" );
+		InputStreamReader reader = null;
+		
+		try
+		{
+			URLConnection connection = url.openConnection();
+			connection.setRequestProperty( "User-Agent", getUserAgent() );
+			reader = new InputStreamReader( connection.getInputStream() );
+			//Gson gson = new GsonBuilder().registerTypeAdapter( Date.class, dateDeserializer ).setFieldNamingPolicy( FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES ).create();
+			Gson gson = new Gson();
+			return gson.fromJson( reader, ProjectArtifact.class );
+		}
+		finally
+		{
+			if ( reader != null )
+			{
+				reader.close();
+			}
+		}
+	}
+	
+	public Properties getBuildProperties( String slug, String name )
 	{
 		try
 		{
-			return fetchChannel( slug );
+			return fetchBuildProperties( slug );
 		}
 		catch ( UnsupportedEncodingException ex )
 		{
 			Logger.getLogger( ChioriDLUpdaterService.class.getName() ).log( Level.WARNING, "Could not get " + name + ": " + ex.getClass().getSimpleName() );
+		}
+		catch ( UnknownHostException ex )
+		{
+			Logger.getLogger( ChioriDLUpdaterService.class.getName() ).log( Level.WARNING, "There was a problem resolving the host: " + host + ". Do you have a properly setup internet connection?" );
 		}
 		catch ( IOException ex )
 		{
@@ -100,20 +134,18 @@ public class ChioriDLUpdaterService
 		return null;
 	}
 	
-	public ArtifactDetails.ChannelDetails fetchChannel( String slug ) throws IOException
+	public Properties fetchBuildProperties( String slug ) throws IOException
 	{
-		URL url = new URL( "http", host, API_PREFIX_CHANNEL + slug + "/" );
+		URL url = new URL( "http", host, API_PREFIX_ARTIFACT + slug + "/artifact/build/jar/build.properties" );
 		InputStreamReader reader = null;
+		Properties prop = new Properties();
 		
 		try
 		{
 			URLConnection connection = url.openConnection();
 			connection.setRequestProperty( "User-Agent", getUserAgent() );
 			reader = new InputStreamReader( connection.getInputStream() );
-			Gson gson = new GsonBuilder().registerTypeAdapter( Date.class, dateDeserializer ).setFieldNamingPolicy( FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES ).create();
-			ArtifactDetails.ChannelDetails fromJson = gson.fromJson( reader, ArtifactDetails.ChannelDetails.class );
-			
-			return fromJson;
+			prop.load( reader );;
 		}
 		finally
 		{
@@ -122,6 +154,8 @@ public class ChioriDLUpdaterService
 				reader.close();
 			}
 		}
+		
+		return prop;
 	}
 	
 	@SuppressWarnings( "rawtypes" )

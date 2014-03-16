@@ -58,6 +58,7 @@
 		<mkdir dir="${jar.dir}"/>
 		
 		<copy file="${classes.dir}/com/chiorichan/metadata.properties" tofile="${jar.dir}/build.properties"/>
+		<loadproperties srcFile="${classes.dir}/com/chiorichan/metadata.properties"/>
 		
 		<jar destfile="${jar.dir}/${ant.project.name}-${project.version}.jar" filesetmanifest="mergewithoutmain">
 			<manifest>
@@ -113,6 +114,8 @@
 	
 	<target name="compile-plugins" depends="init, compile">
 		<mkdir dir="${classes.dir.plugins}" />
+		
+		<loadproperties srcFile="${classes.dir}/com/chiorichan/metadata.properties"/>
 		
 		<scriptdef name="forit" language="javascript">
 		<element name="dirset" type="dirset"/>
