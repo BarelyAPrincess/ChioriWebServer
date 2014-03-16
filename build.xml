@@ -108,7 +108,7 @@
 		</jar>
 	</target>
 	
-	<target name="clean-build" depends="clean,jar"/>
+	<target name="clean-build" depends="clean,jar,compile-plugins"/>
 	
 	<target name="compile-plugins" depends="init">
 		<mkdir dir="${classes.dir.plugins}" />

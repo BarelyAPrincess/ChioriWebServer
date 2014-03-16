@@ -92,7 +92,15 @@ public class PersistentSession implements UserHandler
 			
 			timeout = rs.getInt( "timeout" );
 			ipAddr = rs.getString( "ipAddr" );
-			data = new Gson().fromJson( rs.getString( "data" ), Map.class );
+			
+			try
+			{
+				data = new Gson().fromJson( rs.getString( "data" ), Map.class );
+			}
+			catch ( ClassCastException e )
+			{
+				e.printStackTrace();
+			}
 			
 			if ( rs.getString( "sessionName" ) != null && !rs.getString( "sessionName" ).isEmpty() )
 				candyName = rs.getString( "sessionName" );
@@ -316,7 +324,14 @@ public class PersistentSession implements UserHandler
 				{
 					timeout = rs.getInt( "timeout" );
 					String _ipAddr = rs.getString( "ipAddr" );
-					data = new Gson().fromJson( rs.getString( "data" ), Map.class );
+					try
+					{
+						data = new Gson().fromJson( rs.getString( "data" ), Map.class );
+					}
+					catch ( ClassCastException e )
+					{
+						e.printStackTrace();
+					}
 					
 					// Possible Session Hijacking! nullify!!!
 					if ( !_ipAddr.equals( ipAddr ) && !Loader.getConfig().getBoolean( "sessions.allowIPChange" ) )

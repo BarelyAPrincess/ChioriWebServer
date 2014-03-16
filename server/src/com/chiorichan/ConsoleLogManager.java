@@ -10,14 +10,13 @@ import com.google.common.base.Strings;
 
 public class ConsoleLogManager
 {
-	public static Logger a;
-	public static Logger global = Logger.getLogger( "" );
+	public static Logger logger = Logger.getLogger( "" );
 	
 	private int lineCount = 999;
 	
 	public ConsoleLogManager(String s)
 	{
-		a = Logger.getLogger( s );
+		//logger = Logger.getLogger( s );
 	}
 	
 	public void init()
@@ -25,15 +24,11 @@ public class ConsoleLogManager
 		Console console = Loader.getConsole();
 		ConsoleHandler consolehandler = new TerminalConsoleHandler( console.reader );
 		
-		a.addHandler( consolehandler );
-		
-		for ( java.util.logging.Handler handler : global.getHandlers() )
-		{
-			global.removeHandler( handler );
-		}
+		for ( java.util.logging.Handler handler : logger.getHandlers() )
+			logger.removeHandler( handler );
 		
 		consolehandler.setFormatter( new ConsoleLogFormatter( console ) );
-		global.addHandler( consolehandler );
+		logger.addHandler( consolehandler );
 		
 		try
 		{
@@ -98,9 +93,7 @@ public class ConsoleLogManager
 			// Try to create needed parent directories
 			parent = new File( fixedPattern.toString() );
 			if ( parent != null )
-			{
 				parent.mkdirs();
-			}
 			
 			int limit = (Integer) Loader.getOptions().valueOf( "log-limit" );
 			int count = (Integer) Loader.getOptions().valueOf( "log-count" );
@@ -108,18 +101,17 @@ public class ConsoleLogManager
 			FileHandler filehandler = new FileHandler( pattern, limit, count, append );
 			
 			filehandler.setFormatter( new ConsoleLogFormatter( console ) );
-			a.addHandler( filehandler );
-			global.addHandler( filehandler );
+			logger.addHandler( filehandler );
 		}
 		catch ( Exception exception )
 		{
-			a.log( Level.WARNING, "Failed to log to server.log", exception );
+			logger.log( Level.WARNING, "Failed to log to server.log", exception );
 		}
 	}
 	
 	public Logger getLogger()
 	{
-		return a;
+		return logger;
 	}
 	
 	public void highlight( String msg )
@@ -139,7 +131,7 @@ public class ConsoleLogManager
 	
 	public void warning( String s, Object... aobject )
 	{
-		a.log( Level.WARNING, ChatColor.GOLD + s, aobject );
+		logger.log( Level.WARNING, ChatColor.GOLD + s, aobject );
 	}
 	
 	public void warning( String s, Throwable throwable )
@@ -171,17 +163,17 @@ public class ConsoleLogManager
 	
 	public void fine( String var1 )
 	{
-		a.log( Level.FINE, var1 );
+		logger.log( Level.FINE, var1 );
 	}
 	
 	public void finer( String var1 )
 	{
-		a.log( Level.FINER, var1 );
+		logger.log( Level.FINER, var1 );
 	}
 	
 	public void finest( String var1 )
 	{
-		a.log( Level.FINEST, var1 );
+		logger.log( Level.FINEST, var1 );
 	}
 	
 	private void printHeader()
@@ -209,12 +201,12 @@ public class ConsoleLogManager
 	
 	public void log( Level l, String msg, Throwable t )
 	{
-		a.log( l, msg, t );
+		logger.log( l, msg, t );
 	}
 	
 	public void log( Level l, String msg )
 	{
-		a.log( l, msg );
+		logger.log( l, msg );
 	}
 	
 	public String[] multilineColorRepeater( String var1 )
