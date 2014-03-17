@@ -135,7 +135,9 @@ public class ConsoleLogFormatter extends Formatter
 		builder.append( "] " );
 		builder.append( ChatColor.WHITE );
 		builder.append( formatMessage( record ) );
-		builder.append( '\n' );
+		
+		if ( !formatMessage( record ).endsWith( "\r" ) )
+			builder.append( '\n' );
 		
 		if ( ex != null )
 		{
