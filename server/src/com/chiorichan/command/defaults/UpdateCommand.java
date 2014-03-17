@@ -104,11 +104,11 @@ public class UpdateCommand extends ChioriCommand
 								
 								process.exitValue();
 								
-								Loader.stop();
+								Loader.getLogger().severe( "The Auto Updater failed to start. You can find the new Server Version at \"update.jar\"" );
 							}
 							catch ( IllegalThreadStateException e )
 							{
-								Loader.getLogger().severe( "The Auto Updater failed to start. You can find the new Server Version at \"update.jar\"" );
+								Loader.stop();
 							}
 							catch ( Exception e )
 							{
