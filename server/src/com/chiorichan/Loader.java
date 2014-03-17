@@ -944,9 +944,42 @@ public class Loader implements PluginMessageRecipient
 		return configuration.getString( "settings.shutdown-message" );
 	}
 	
+	public static void gracefullyShutdownServer( String reason )
+	{
+		if ( !reason.isEmpty() )
+		{
+			for ( User User : Loader.getInstance().getOnlineUsers() )
+			{
+				User.kick( reason );
+			}
+		}
+		
+		stop();
+	}
+	
 	public static void stop()
 	{
 		Loader.getConsole().isRunning = false;
+	}
+	
+	public static void unloadServer( String reason )
+	{
+		getPersistenceManager().shutdown();
+		getUserManager().saveUsers();
+		
+		if ( !reason.isEmpty() )
+		{
+			for ( User User : Loader.getInstance().getOnlineUsers() )
+			{
+				User.kick( reason );
+			}
+		}
+		
+		instance.pluginManager.clearPlugins();
+		instance.commandMap.clearCommands();
+		
+		httpServer.stop( 0 );
+		tcpServer.stop();
 	}
 	
 	public static void shutdown()

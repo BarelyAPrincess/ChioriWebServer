@@ -26,4 +26,11 @@ public interface CommandSender extends Permissible
 	 * @return Name of the sender
 	 */
 	public String getName();
+	
+	/**
+	 * Allows the pausing of command processing
+	 * 
+	 * @param b
+	 */
+	public void pauseInput( boolean b );
 }

@@ -1,10 +1,8 @@
 package com.chiorichan;
 
 import java.io.PrintStream;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
@@ -27,7 +25,6 @@ import com.chiorichan.permissions.Permission;
 import com.chiorichan.permissions.PermissionAttachment;
 import com.chiorichan.permissions.PermissionAttachmentInfo;
 import com.chiorichan.plugin.Plugin;
-import com.chiorichan.util.Versioning;
 
 public class Console implements ConsoleCommandSender, Runnable
 {
@@ -40,6 +37,8 @@ public class Console implements ConsoleCommandSender, Runnable
 	public Terminal terminal;
 	public Boolean isRunning = true;
 	private OptionSet options;
+	
+	private boolean isPaused;
 	
 	public static int lastFiveTick = -1;
 	public static int currentTick = (int) ( System.currentTimeMillis() / 50 );
@@ -225,7 +224,8 @@ public class Console implements ConsoleCommandSender, Runnable
 	
 	public void issueCommand( String s, CommandSender commandSender )
 	{
-		commandList.add( new ServerCommand( s, commandSender ) );
+		if ( !isPaused )
+			commandList.add( new ServerCommand( s, commandSender ) );
 	}
 	
 	public void handleCommands()
@@ -420,5 +420,11 @@ public class Console implements ConsoleCommandSender, Runnable
 	public boolean AnsiSupported()
 	{
 		return ( terminal != null && terminal.isAnsiSupported() );
+	}
+
+	@Override
+	public void pauseInput( boolean b )
+	{
+		isPaused = b;
 	}
 }

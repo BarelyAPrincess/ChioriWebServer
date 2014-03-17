@@ -156,7 +156,7 @@ public class BuildArtifact
 		{
 			if ( ra.fileName.startsWith( "ChioriWebServer" ) && ra.fileName.endsWith( ".jar" ) )
 			{
-				mainJar = url + ra.relativePath;
+				mainJar = url + "artifact/" + ra.relativePath;
 				break;
 			}
 		}

@@ -30,6 +30,7 @@ public class User implements CommandSender
 	protected UserMetaData metaData = new UserMetaData();
 	protected String userId;
 	protected boolean op;
+	protected boolean isPaused; // UNUSED FOR NOW
 	protected Set<UserHandler> handlers = new java.util.concurrent.CopyOnWriteArraySet<UserHandler>(); // Set this handler for the last login
 	
 	protected UserLookupAdapter _cachedAdapter;
@@ -480,5 +481,11 @@ public class User implements CommandSender
 		
 		List<String> ops = Loader.getConfig().getStringList( "users.operators" );
 		op = ( ops.contains( userId ) || ops.contains( metaData.getUsername() ) );
+	}
+
+	@Override
+	public void pauseInput( boolean b )
+	{
+		isPaused = b;
 	}
 }

@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.io.IOUtils;
 
+import com.chiorichan.Loader;
 import com.chiorichan.util.WebUtils;
 
 public class Download implements Runnable
@@ -64,7 +65,7 @@ public class Download implements Runnable
 			
 			if ( responseFamily == 3 )
 			{
-				throw new DownloadException( "The server issued a redirect response which Technic failed to follow." );
+				throw new DownloadException( "The server issued a redirect response which the Updater failed to follow." );
 			}
 			else if ( responseFamily != 2 )
 			{
@@ -100,6 +101,8 @@ public class Download implements Runnable
 			{
 				result = Result.SUCCESS;
 			}
+			
+			stateDone();
 		}
 		catch ( PermissionDeniedException e )
 		{
@@ -121,6 +124,9 @@ public class Download implements Runnable
 			IOUtils.closeQuietly( fos );
 			IOUtils.closeQuietly( rbc );
 		}
+		
+		if ( exception != null )
+			Loader.getLogger().severe( "Download Resulted in an Exception", exception );
 	}
 	
 	protected InputStream getConnectionInputStream( final URLConnection urlconnection ) throws DownloadException
@@ -165,6 +171,15 @@ public class Download implements Runnable
 			throw new DownloadException( "Unable to download file from " + urlconnection.getURL() );
 		}
 		return new BufferedInputStream( is.get() );
+	}
+	
+	private void stateDone()
+	{
+		if ( listener != null )
+		{
+			listener.stateChanged( "Download Done!", 100 );
+			listener.stateDone();
+		}
 	}
 	
 	private void stateChanged()

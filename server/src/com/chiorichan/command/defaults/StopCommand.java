@@ -5,7 +5,6 @@ import java.util.Arrays;
 import com.chiorichan.Loader;
 import com.chiorichan.command.Command;
 import com.chiorichan.command.CommandSender;
-import com.chiorichan.user.User;
 
 public class StopCommand extends VanillaCommand
 {
@@ -27,16 +26,7 @@ public class StopCommand extends VanillaCommand
 		
 		Command.broadcastCommandMessage( sender, "Stopping the server.." );
 		
-		String reason = this.createString( args, 0 );
-		if ( !reason.isEmpty() )
-		{
-			for ( User User : Loader.getInstance().getOnlineUsers() )
-			{
-				User.kick( reason );
-			}
-		}
-		
-		Loader.stop();
+		Loader.gracefullyShutdownServer( this.createString( args, 0 ) );
 		
 		return true;
 	}
