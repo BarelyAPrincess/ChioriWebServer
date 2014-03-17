@@ -22,6 +22,7 @@ import com.chiorichan.user.UserHandler;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.StringUtil;
 import com.google.common.collect.Lists;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
@@ -93,15 +94,8 @@ public class PersistentSession implements UserHandler
 			timeout = rs.getInt( "timeout" );
 			ipAddr = rs.getString( "ipAddr" );
 			
-			try
-			{
-				if ( rs.getString( "data" ).length() > 2 )
-					data = new Gson().fromJson( rs.getString( "data" ), Map.class );
-			}
-			catch ( ClassCastException e )
-			{
-				e.printStackTrace();
-			}
+			if ( !rs.getString( "data" ).isEmpty() )
+				data = new Gson().fromJson( rs.getString( "data" ), new TypeToken<Map<String, String>>() {}.getType() );
 			
 			if ( rs.getString( "sessionName" ) != null && !rs.getString( "sessionName" ).isEmpty() )
 				candyName = rs.getString( "sessionName" );
@@ -325,15 +319,9 @@ public class PersistentSession implements UserHandler
 				{
 					timeout = rs.getInt( "timeout" );
 					String _ipAddr = rs.getString( "ipAddr" );
-					try
-					{
-						if ( rs.getString( "data" ).length() > 2 )
-							data = new Gson().fromJson( rs.getString( "data" ), Map.class );
-					}
-					catch ( ClassCastException e )
-					{
-						e.printStackTrace();
-					}
+					
+					if ( !rs.getString( "data" ).isEmpty() )
+						data = new Gson().fromJson( rs.getString( "data" ), new TypeToken<Map<String, String>>() {}.getType() );
 					
 					// Possible Session Hijacking! nullify!!!
 					if ( !_ipAddr.equals( ipAddr ) && !Loader.getConfig().getBoolean( "sessions.allowIPChange" ) )
