@@ -95,7 +95,8 @@ public class PersistentSession implements UserHandler
 			
 			try
 			{
-				data = new Gson().fromJson( rs.getString( "data" ), Map.class );
+				if ( rs.getString( "data" ).length() > 2 )
+					data = new Gson().fromJson( rs.getString( "data" ), Map.class );
 			}
 			catch ( ClassCastException e )
 			{
@@ -326,7 +327,8 @@ public class PersistentSession implements UserHandler
 					String _ipAddr = rs.getString( "ipAddr" );
 					try
 					{
-						data = new Gson().fromJson( rs.getString( "data" ), Map.class );
+						if ( rs.getString( "data" ).length() > 2 )
+							data = new Gson().fromJson( rs.getString( "data" ), Map.class );
 					}
 					catch ( ClassCastException e )
 					{
