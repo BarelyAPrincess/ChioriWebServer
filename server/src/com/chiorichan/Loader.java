@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -105,6 +106,7 @@ public class Loader implements PluginMessageRecipient
 	private static HttpServer httpServer;
 	private static Server tcpServer;
 	public static Boolean isRunning = false;
+	public static String clientId;
 	private PluginLoadOrder currentState = PluginLoadOrder.INITIALIZATION;
 	
 	// public java.util.Queue<Runnable> processQueue = new java.util.concurrent.ConcurrentLinkedQueue<Runnable>();
@@ -264,6 +266,14 @@ public class Loader implements PluginMessageRecipient
 		
 		configuration.options().copyDefaults( true );
 		configuration.setDefaults( YamlConfiguration.loadConfiguration( getClass().getClassLoader().getResourceAsStream( "com/chiorichan/chiori.yml" ) ) );
+		clientId = configuration.getString( "server.installationUID", clientId );
+		
+		if ( clientId == null || clientId.isEmpty() || clientId.equalsIgnoreCase( "null" ) )
+		{
+			clientId = UUID.randomUUID().toString();
+			configuration.set( "server.installationUID", clientId );
+		}
+		
 		saveConfig();
 		
 		( (SimplePluginManager) pluginManager ).useTimings( configuration.getBoolean( "settings.plugin-profiling" ) );
@@ -319,7 +329,7 @@ public class Loader implements PluginMessageRecipient
 		
 		enablePlugins( PluginLoadOrder.RUNNING );
 		
-		updater.check( Versioning.getBuildNumber() );
+		updater.check();
 		
 		return true;
 	}
