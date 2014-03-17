@@ -106,6 +106,8 @@
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/openbeans-1.0.jar"/>
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/tika-app-1.4.jar"/>
 		</jar>
+		
+		<checksum file="${jar.dir}/${ant.project.name}-${project.version}-github-build${env.BUILD_NUMBER}.jar" forceOverwrite="yes"/>
 	</target>
 	
 	<target name="clean-build" depends="clean,jar,compile-plugins"/>
@@ -171,6 +173,8 @@
 		<jar destfile="${jar.dir}/${plugin.name}-for-${ant.project.name}-${project.version}-github-build${env.BUILD_NUMBER}.jar" filesetmanifest="mergewithoutmain">
 			<fileset dir="${classes.dir.plugins}/${plugin.name}"/>
 		</jar>
+		
+		<checksum file="${jar.dir}/${plugin.name}-for-${ant.project.name}-${project.version}-github-build${env.BUILD_NUMBER}.jar" forceOverwrite="yes"/>
 		
 		<propertyfile file="${classes.dir}/com/chiorichan/metadata.properties">
 		    <entry  key="plugins" default="" operation="+" value=",${plugin.name}"/>
