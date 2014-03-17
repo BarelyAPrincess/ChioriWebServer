@@ -10,6 +10,7 @@ server:
   enableWebServer: true
   enableTcpServer: true
   allowQuery: false
+  installationUID: null
   database:
     database: chiorifw
     type: mysql
@@ -39,6 +40,7 @@ auto-updater:
   host: jenkins.applebloom.co
   suggest-channels: true
   check-interval: 30
+  console-only: true
 sessions:
   defaultSessionName: sessionId
   defaultTimeout: 3600

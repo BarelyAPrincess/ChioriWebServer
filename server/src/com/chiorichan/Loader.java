@@ -73,6 +73,7 @@ import com.chiorichan.user.User;
 import com.chiorichan.user.UserManager;
 import com.chiorichan.util.FileUtil;
 import com.chiorichan.util.Versioning;
+import com.chiorichan.util.WebUtils;
 import com.chiorichan.util.permissions.DefaultPermissions;
 import com.esotericsoftware.kryonet.Listener.ThreadedListener;
 import com.esotericsoftware.kryonet.Server;
@@ -280,11 +281,13 @@ public class Loader implements PluginMessageRecipient
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
 		webroot = configuration.getString( "settings.webroot" );
 		
-		updater = new AutoUpdater( new ChioriDLUpdaterService( configuration.getString( "auto-updater.host" ) ), getLogger().getLogger(), configuration.getString( "auto-updater.preferred-channel" ) );
+		updater = new AutoUpdater( new ChioriDLUpdaterService( configuration.getString( "auto-updater.host" ) ), configuration.getString( "auto-updater.preferred-channel" ) );
 		updater.setEnabled( configuration.getBoolean( "auto-updater.enabled" ) );
 		updater.setSuggestChannels( configuration.getBoolean( "auto-updater.suggest-channels" ) );
 		updater.getOnBroken().addAll( configuration.getStringList( "auto-updater.on-broken" ) );
 		updater.getOnUpdate().addAll( configuration.getStringList( "auto-updater.on-update" ) );
+		
+		WebUtils.sendTracking("startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")");
 	}
 	
 	public boolean start()

@@ -214,7 +214,7 @@ public class Console implements ConsoleCommandSender, Runnable
 				PersistenceManager.mainThreadHeartbeat( tick );
 			
 			if ( fiveMinuteTick % Loader.getConfig().getInt( "auto-updater.check-interval", 30 ) == 0 )
-				Loader.getInstance().getAutoUpdater().check( Versioning.getBuildNumber() );
+				Loader.getInstance().getAutoUpdater().check();
 		}
 	}
 	

@@ -36,6 +36,7 @@ import com.chiorichan.command.defaults.SayCommand;
 import com.chiorichan.command.defaults.SecretCommand;
 import com.chiorichan.command.defaults.StopCommand;
 import com.chiorichan.command.defaults.TellCommand;
+import com.chiorichan.command.defaults.UpdateCommand;
 import com.chiorichan.command.defaults.VanillaCommand;
 import com.chiorichan.command.defaults.VersionCommand;
 import com.chiorichan.command.defaults.WhitelistCommand;
@@ -81,6 +82,7 @@ public class CommandMap
 		register( "chiori", new PingCommand() );
 		register( "chiori", new EchoCommand() );
 		register( "chiori", new VersionCommand( "version" ) );
+		register( "chiori", new UpdateCommand() );
 		register( "chiori", new ReloadCommand( "reload" ) );
 		register( "chiori", new PluginsCommand( "plugins" ) );
 	}

@@ -14,10 +14,8 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.chiorichan.Loader;
-import com.google.gson.FieldNamingPolicy;
+import com.chiorichan.util.WebUtils;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -57,11 +55,6 @@ public class ChioriDLUpdaterService
 		return null;
 	}
 	
-	private String getUserAgent()
-	{
-		return "ChioriWebServer/" + ChioriDLUpdaterService.class.getPackage().getImplementationVersion() + "/" + System.getProperty( "java.version" );
-	}
-	
 	public BuildArtifact fetchArtifact( String slug ) throws IOException, UnknownHostException
 	{
 		URL url = new URL( "http", host, API_PREFIX_ARTIFACT + slug + "/api/json" );
@@ -75,7 +68,7 @@ public class ChioriDLUpdaterService
 		try
 		{
 			URLConnection connection = url.openConnection();
-			connection.setRequestProperty( "User-Agent", getUserAgent() );
+			connection.setRequestProperty( "User-Agent", WebUtils.getUserAgent() );
 			reader = new InputStreamReader( connection.getInputStream() );
 			//Gson gson = new GsonBuilder().registerTypeAdapter( Date.class, dateDeserializer ).setFieldNamingPolicy( FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES ).create();
 			Gson gson = new Gson();
@@ -98,7 +91,7 @@ public class ChioriDLUpdaterService
 		try
 		{
 			URLConnection connection = url.openConnection();
-			connection.setRequestProperty( "User-Agent", getUserAgent() );
+			connection.setRequestProperty( "User-Agent", WebUtils.getUserAgent() );
 			reader = new InputStreamReader( connection.getInputStream() );
 			//Gson gson = new GsonBuilder().registerTypeAdapter( Date.class, dateDeserializer ).setFieldNamingPolicy( FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES ).create();
 			Gson gson = new Gson();
@@ -144,7 +137,7 @@ public class ChioriDLUpdaterService
 		try
 		{
 			URLConnection connection = url.openConnection();
-			connection.setRequestProperty( "User-Agent", getUserAgent() );
+			connection.setRequestProperty( "User-Agent", WebUtils.getUserAgent() );
 			reader = new InputStreamReader( connection.getInputStream() );
 			prop.load( reader );;
 		}

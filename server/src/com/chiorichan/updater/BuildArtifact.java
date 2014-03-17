@@ -6,7 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import com.chiorichan.Loader;
+import com.chiorichan.ChatColor;
+import com.chiorichan.updater.BuildArtifact.ChangeSet.ChangeSetDetails;
 
 public class BuildArtifact
 {
@@ -98,6 +99,18 @@ public class BuildArtifact
 				public String editType;
 				public String file;
 			}
+			
+			public String toString()
+			{
+				StringBuilder sb = new StringBuilder();
+				
+				for ( Paths p : paths )
+				{
+					sb.append( "\n\t" + ChatColor.GREEN + "[" + p.editType + "] " + p.file );
+				}
+				
+				return msg + " (Commit: " + id + ")" + sb.toString();
+			}
 		}
 	}
 	
@@ -135,7 +148,7 @@ public class BuildArtifact
 		return getBuildProperties().getProperty( "project.version", "{Internal Error}" );
 	}
 
-	public Object getFile()
+	public String getFile()
 	{
 		String mainJar = null;
 		
@@ -162,5 +175,10 @@ public class BuildArtifact
 	public String getHtmlUrl()
 	{
 		return url;
+	}
+
+	public List<ChangeSetDetails> getChanges()
+	{
+		return changeSet.items;
 	}
 }
