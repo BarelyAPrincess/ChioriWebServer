@@ -50,6 +50,7 @@ import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.PersistenceManager;
 import com.chiorichan.http.WebHandler;
+import com.chiorichan.net.NetworkManager;
 import com.chiorichan.net.Packet;
 import com.chiorichan.net.PacketListener;
 import com.chiorichan.permissions.Permissible;
@@ -75,6 +76,8 @@ import com.chiorichan.util.FileUtil;
 import com.chiorichan.util.Versioning;
 import com.chiorichan.util.WebUtils;
 import com.chiorichan.util.permissions.DefaultPermissions;
+import com.esotericsoftware.kryonet.Client;
+import com.esotericsoftware.kryonet.EndPoint;
 import com.esotericsoftware.kryonet.Listener.ThreadedListener;
 import com.esotericsoftware.kryonet.Server;
 import com.google.common.collect.ImmutableList;
@@ -84,8 +87,6 @@ public class Loader implements PluginMessageRecipient
 {
 	public static final String BROADCAST_CHANNEL_ADMINISTRATIVE = "chiori.broadcast.admin";
 	public static final String BROADCAST_CHANNEL_USERS = "chiori.broadcast.user";
-	
-	private static boolean isClientMode = false;
 	
 	private final AutoUpdater updater;
 	private final Yaml yaml = new Yaml( new SafeConstructor() );
@@ -100,20 +101,15 @@ public class Loader implements PluginMessageRecipient
 	private final PluginManager pluginManager = new SimplePluginManager( this, commandMap );
 	private final StandardMessenger messenger = new StandardMessenger();
 	protected final static Console console = new Console();
-	protected UserManager userManager;
 	
-	protected PersistenceManager persistence;
+	protected static UserManager userManager;
+	protected static PersistenceManager persistence;
 	
 	private final ServicesManager servicesManager = new SimpleServicesManager();
 	private final static ChioriScheduler scheduler = new ChioriScheduler();
-	private static HttpServer httpServer;
-	private static Server tcpServer;
 	public static Boolean isRunning = false;
 	public static String clientId;
 	private PluginLoadOrder currentState = PluginLoadOrder.INITIALIZATION;
-	
-	private String remoteTcpIp = null;
-	private Integer remoteTcpPort = -1;
 	
 	public static void main( String... args ) throws Exception
 	{
@@ -150,13 +146,14 @@ public class Loader implements PluginMessageRecipient
 			else
 			{
 				boolean clientMode = options.has( "client" );
+				NetworkManager.setClientMode( clientMode );
 				
 				if ( ( options.has( "client-ip" ) || options.has( "client-port" ) ) && !clientMode )
 				{
 					System.err.println( "You must also define --client (Puts application is client mode) if you want to use the --client-ip or --client-port arguments." );
 				}
 				else
-					isRunning = new Loader( options, clientMode ).start();
+					isRunning = new Loader( options ).start();
 			}
 		}
 		catch ( Throwable t )
@@ -172,8 +169,7 @@ public class Loader implements PluginMessageRecipient
 			
 			try
 			{
-				httpServer.stop( 0 );
-				tcpServer.stop();
+				NetworkManager.cleanup();
 				console.isRunning = false;
 				
 				if ( configuration != null && configuration.getBoolean( "server.haltOnSevereError" ) )
@@ -246,27 +242,23 @@ public class Loader implements PluginMessageRecipient
 	
 	public Loader(OptionSet options0) throws StartupException
 	{
-		this( options0, false );
-	}
-	
-	public Loader(OptionSet options0, boolean clientMode) throws StartupException
-	{
 		instance = this;
 		options = options0;
-		isClientMode = clientMode;
 		
-		String internalConfigFile = ( isClientMode ) ? "com/chiorichan/config-client.yaml" : "com/chiorichan/config-server.yaml";
+		String internalConfigFile = ( NetworkManager.isClientMode() ) ? "com/chiorichan/config-client.yaml" : "com/chiorichan/config-server.yaml";
 		
 		console.init( this, options );
 		
-		if ( !isClientMode )
-			showBanner();
+		showBanner();
+		
+		if ( NetworkManager.isClientMode() )
+			getLogger().info( "Chiori Web Server is running in Client Mode!" );
 		
 		if ( Runtime.getRuntime().maxMemory() / 1024L / 1024L < 512L )
 			getLogger().warning( "To start the server with more ram, launch it as \"java -Xmx1024M -Xms1024M -jar server.jar\"" );
 		
 		if ( getConfigFile() == null )
-			getLogger().panic( "We had problems loading the configuration file! Did you define the --config argument?" );
+			throw new StartupException( "We had problems loading the configuration file! Did you define the --config argument?" );
 		
 		try
 		{
@@ -295,28 +287,14 @@ public class Loader implements PluginMessageRecipient
 		
 		saveConfig();
 		
-		remoteTcpIp = configuration.getString( "client.remoteTcpHost", null );
-		remoteTcpPort = configuration.getInt( "client.remoteTcpHost", 1024 );
-		
-		if ( options.has( "client-ip" ) )
-			remoteTcpIp = (String) options.valueOf( "client-ip" );
-		
-		if ( options.has( "client-port" ) )
-			remoteTcpPort = (Integer) options.valueOf( "client-port" );
-		
-		if ( remoteTcpIp == null || remoteTcpIp.isEmpty() || remoteTcpPort < 1 )
-		{
-			throw new StartupException( "The remote Host/IP and/or Port are missconfigured, Please define them in the local config file or use --client-ip and/or --client-port arguments." );
-		}
-		
 		( (SimplePluginManager) pluginManager ).useTimings( configuration.getBoolean( "settings.plugin-profiling" ) );
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
 		
-		if ( !isClientMode )
+		if ( !NetworkManager.isClientMode() )
 			webroot = configuration.getString( "settings.webroot" );
 		
 		updater = new AutoUpdater( new ChioriDLUpdaterService( configuration.getString( "auto-updater.host" ) ), configuration.getString( "auto-updater.preferred-channel" ) );
-		if ( !isClientMode )
+		if ( !NetworkManager.isClientMode() )
 		{
 			updater.setEnabled( configuration.getBoolean( "auto-updater.enabled" ) );
 			updater.setSuggestChannels( configuration.getBoolean( "auto-updater.suggest-channels" ) );
@@ -327,15 +305,15 @@ public class Loader implements PluginMessageRecipient
 		else
 			updater.setEnabled( false );
 		
-		WebUtils.sendTracking( ( ( isClientMode ) ? "startClient" : "startServer" ), "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
+		WebUtils.sendTracking( ( ( NetworkManager.isClientMode() ) ? "startClient" : "startServer" ), "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
 	}
 	
-	public boolean start()
+	public boolean start() throws StartupException
 	{
 		loadPlugins();
 		enablePlugins( PluginLoadOrder.INITIALIZATION );
 		
-		if ( !isClientMode )
+		if ( !NetworkManager.isClientMode() )
 		{
 			File root = new File( webroot );
 			
@@ -345,15 +323,15 @@ public class Loader implements PluginMessageRecipient
 		
 		enablePlugins( PluginLoadOrder.STARTUP );
 		
-		if ( !isClientMode )
+		if ( !NetworkManager.isClientMode() )
 		{
 			if ( !options.has( "tcp-disable" ) && configuration.getBoolean( "server.enableTcpServer", true ) )
-				initTcpServer();
+				NetworkManager.initTcpServer();
 			else
 				getLogger().warning( "The integrated tcp server has been disabled per the configuration. Change server.enableTcpServer to true to reenable it." );
 			
 			if ( !options.has( "web-disable" ) && configuration.getBoolean( "server.enableWebServer", true ) )
-				initWebServer();
+				NetworkManager.initWebServer();
 			else
 				getLogger().warning( "The integrated web server has been disabled per the configuration. Change server.enableWebServer to true to reenable it." );
 			
@@ -371,7 +349,7 @@ public class Loader implements PluginMessageRecipient
 		}
 		else
 		{
-			// TODO Make connection to remote server
+			NetworkManager.initTcpClient();
 			
 			enablePlugins( PluginLoadOrder.POSTCLIENT );
 		}
@@ -404,104 +382,6 @@ public class Loader implements PluginMessageRecipient
 		}
 		catch ( Exception e )
 		{}
-	}
-	
-	private boolean initTcpServer()
-	{
-		try
-		{
-			InetSocketAddress socket;
-			String serverIp = configuration.getString( "server.tcpHost", "" );
-			int serverPort = configuration.getInt( "server.tcpPort", 80 );
-			
-			// If there was no tcp host specified then attempt to use the same one as the http server.
-			if ( serverIp.isEmpty() )
-				serverIp = configuration.getString( "server.httpHost", "" );
-			
-			if ( serverIp.isEmpty() )
-				socket = new InetSocketAddress( serverPort );
-			else
-				socket = new InetSocketAddress( serverIp, serverPort );
-			
-			tcpServer = new Server();
-			
-			getLogger().info( "Starting Tcp Server on " + ( serverIp.length() == 0 ? "*" : serverIp ) + ":" + serverPort );
-			
-			tcpServer.start();
-			tcpServer.bind( socket, null );
-			
-			tcpServer.addListener( new ThreadedListener( new PacketListener( tcpServer.getKryo() ), Executors.newFixedThreadPool( 3 ) ) );
-		}
-		catch ( IOException ioexception )
-		{
-			getLogger().warning( "**** FAILED TO BIND TCP SERVER TO PORT!" );
-			getLogger().warning( "The exception was: {0}", new Object[] { ioexception.toString() } );
-			getLogger().warning( "Perhaps a server is already running on that port?" );
-			return false;
-		}
-		
-		return true;
-	}
-	
-	public static boolean registerPacket( Class<? extends Packet> packet )
-	{
-		if ( tcpServer != null )
-		{
-			tcpServer.getKryo().register( packet );
-			return true;
-		}
-		else
-			return false;
-	}
-	
-	private boolean initWebServer()
-	{
-		boolean isRunning = false;
-		
-		try
-		{
-			InetSocketAddress socket;
-			String serverIp = configuration.getString( "server.httpHost", "" );
-			int serverPort = configuration.getInt( "server.httpPort", 80 );
-			
-			if ( serverIp.isEmpty() )
-				socket = new InetSocketAddress( serverPort );
-			else
-				socket = new InetSocketAddress( serverIp, serverPort );
-			
-			httpServer = HttpServer.create( socket, 0 );
-			
-			httpServer.setExecutor( null );
-			httpServer.createContext( "/", new WebHandler() );
-			
-			// TODO: Add SSL support ONEDAY!
-			
-			getLogger().info( "Starting Web Server on " + ( serverIp.length() == 0 ? "*" : serverIp ) + ":" + serverPort );
-			
-			try
-			{
-				httpServer.start();
-			}
-			catch ( NullPointerException e )
-			{
-				getLogger().severe( "There was a problem starting the Web Server. Check logs and try again.", e );
-				System.exit( 1 );
-			}
-			catch ( Throwable e )
-			{
-				getLogger().warning( "**** FAILED TO BIND WEB SERVER TO PORT!" );
-				getLogger().warning( "The exception was: {0}", new Object[] { e.toString() } );
-				getLogger().warning( "Perhaps a server is already running on that port?" );
-			}
-			
-			isRunning = true;
-		}
-		catch ( Throwable e )
-		{
-			getLogger().panic( e );
-		}
-		
-		return isRunning;
 	}
 	
 	public static YamlConfiguration getConfig()
@@ -1011,7 +891,8 @@ public class Loader implements PluginMessageRecipient
 	
 	public static void stop()
 	{
-		Loader.getConsole().isRunning = false;
+		if ( Loader.getConsole() != null )
+			Loader.getConsole().isRunning = false;
 	}
 	
 	public static void unloadServer( String reason )
@@ -1030,8 +911,7 @@ public class Loader implements PluginMessageRecipient
 		instance.pluginManager.clearPlugins();
 		instance.commandMap.clearCommands();
 		
-		httpServer.stop( 0 );
-		tcpServer.stop();
+		NetworkManager.cleanup();
 	}
 	
 	public static void shutdown()
@@ -1044,8 +924,7 @@ public class Loader implements PluginMessageRecipient
 		instance.pluginManager.clearPlugins();
 		instance.commandMap.clearCommands();
 		
-		httpServer.stop( 0 );
-		tcpServer.stop();
+		NetworkManager.cleanup();
 		
 		isRunning = false;
 		
@@ -1257,7 +1136,7 @@ public class Loader implements PluginMessageRecipient
 	
 	private File getConfigFile()
 	{
-		if ( ( (File) options.valueOf( "config" ) ).getName() == "server.yaml" && isClientMode )
+		if ( ( (File) options.valueOf( "config" ) ).getName() == "server.yaml" && NetworkManager.isClientMode() )
 			return new File( "client.yaml" );
 		
 		return (File) options.valueOf( "config" );
@@ -1293,16 +1172,6 @@ public class Loader implements PluginMessageRecipient
 	public static String getVersion()
 	{
 		return Versioning.getVersion();
-	}
-	
-	public static Server getTcpServer()
-	{
-		return tcpServer;
-	}
-	
-	public static HttpServer getWebServer()
-	{
-		return httpServer;
 	}
 	
 	public boolean isRunning()
@@ -1348,10 +1217,5 @@ public class Loader implements PluginMessageRecipient
 	public AutoUpdater getAutoUpdater()
 	{
 		return updater;
-	}
-	
-	public static boolean isClientMode()
-	{
-		return isClientMode;
 	}
 }

@@ -15,16 +15,6 @@ import com.esotericsoftware.kryonet.FrameworkMessage.Ping;
 
 public class PacketListener extends PacketManager
 {
-	protected String lastPingId = "";
-	
-	/*
-	 * public void sendPing()
-	 * {
-	 * lastPingId = Common.md5( System.currentTimeMillis() + "" );
-	 * Loader.getTcpServer().send.sendPacket( new PingPacket( lastPingId, System.currentTimeMillis() ) );
-	 * }
-	 */
-	
 	public PacketListener(Kryo kryo)
 	{
 		super.registerApiPackets( kryo );
@@ -39,48 +29,30 @@ public class PacketListener extends PacketManager
 		}
 		else if ( var2 instanceof Packet )
 		{
-			Loader.getLogger().info( "&5Got packet '" + var2 + "' from client at '" + var1.getRemoteAddressTCP().getAddress().getHostAddress() + "'" );
+			boolean handled = ( (Packet) var2 ).received( var1 );
 			
-			boolean handled = true;
-			
-			( (Packet) var2 ).received( var1 );
-			
-			if ( var2 instanceof PingPacket )
+			if ( handled == false )
 			{
-				PingPacket ping = (PingPacket) var2;
-				if ( ping.isReply )
+				handled = true;
+				if ( var2 instanceof CommandPacket )
 				{
-					if ( ping.id == lastPingId )
+					CommandPacket var3 = ( (CommandPacket) var2 );
+					
+					switch ( var3.getKeyword().toUpperCase() )
 					{
-						long localDelay = System.currentTimeMillis() - ping.created;
-						long outDelay = ping.created - ping.received;
-						long inDelay = System.currentTimeMillis() - ping.received;
-						
-						System.out.println( "Network Latency Report: Round Trip " + localDelay + ", Outbound Trip " + outDelay + ", Inbound Trip " + inDelay );
+						case "PING":
+							Loader.getLogger().info( ChatColor.NEGATIVE + "&2 Received a ping from the client: " + var3.getPayload() + "ms " );
+							var1.sendTCP( new CommandPacket( "PONG", System.currentTimeMillis() ) );
 					}
 				}
 				else
 				{
-					ping.isReply = true;
-					ping.received = System.currentTimeMillis();
-					var1.sendTCP( ping );
+					handled = false;
 				}
 			}
-			else if ( var2 instanceof CommandPacket )
-			{
-				CommandPacket var3 = ( (CommandPacket) var2 );
-				
-				switch ( var3.getKeyword().toUpperCase() )
-				{
-					case "PING":
-						Loader.getLogger().info( ChatColor.NEGATIVE + "&2 Received a ping from the client: " + var3.getPayload() + "ms " );
-						var1.sendTCP( new CommandPacket( "PONG", System.currentTimeMillis() ) );
-				}
-			}
-			else
-			{
-				handled = false;
-			}
+			
+			if ( !handled )
+				Loader.getLogger().info( "&5Got packet '" + var2 + "' from connection at '" + var1.getRemoteAddressTCP().getAddress().getHostAddress() + "'" );
 			
 			TCPIncomingEvent event = new TCPIncomingEvent( var1, (Packet) var2, handled );
 			Loader.getPluginManager().callEvent( event );

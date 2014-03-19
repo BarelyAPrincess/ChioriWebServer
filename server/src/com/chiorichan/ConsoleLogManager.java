@@ -6,6 +6,7 @@ import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.chiorichan.net.NetworkManager;
 import com.google.common.base.Strings;
 
 public class ConsoleLogManager
@@ -35,7 +36,7 @@ public class ConsoleLogManager
 			// XXX Honestly, Why is this called a pattern? Isn't it a filename, not a log pattern?
 			String pattern = (String) Loader.getOptions().valueOf( "log-pattern" );
 			
-			if ( Loader.isClientMode() && (pattern == null || pattern.isEmpty() || pattern == "server.log" ))
+			if ( NetworkManager.isClientMode() && (pattern == null || pattern.isEmpty() || pattern == "server.log" ))
 				pattern = "client.log";
 			
 			String tmpDir = System.getProperty( "java.io.tmpdir" );

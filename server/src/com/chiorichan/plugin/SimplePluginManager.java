@@ -66,9 +66,9 @@ public final class SimplePluginManager implements PluginManager
 	 * Registers the specified plugin loader
 	 * 
 	 * @param loader
-	 *           Class name of the PluginLoader to register
+	 *             Class name of the PluginLoader to register
 	 * @throws IllegalArgumentException
-	 *            Thrown when the given Class is not a valid PluginLoader
+	 *              Thrown when the given Class is not a valid PluginLoader
 	 */
 	public void registerInterface( Class<? extends PluginLoader> loader ) throws IllegalArgumentException
 	{
@@ -114,7 +114,7 @@ public final class SimplePluginManager implements PluginManager
 	 * Loads the plugins contained within the specified directory
 	 * 
 	 * @param directory
-	 *           Directory to check for plugins
+	 *             Directory to check for plugins
 	 * @return A list of all plugins loaded
 	 */
 	public Plugin[] loadPlugins( File directory )
@@ -340,143 +340,125 @@ public final class SimplePluginManager implements PluginManager
 	 * Loads the plugins contained within the specified directory
 	 * 
 	 * @param directory
-	 *           Directory to check for plugins
+	 *             Directory to check for plugins
 	 * @return A list of all plugins loaded
-	 *//*
-	public void loadInternalPlugin( InputStream descriptionFile )
-	{
-		Map<String, Collection<String>> dependencies = new HashMap<String, Collection<String>>();
-		Map<String, Collection<String>> softDependencies = new HashMap<String, Collection<String>>();
-		
-		PluginDescriptionFile description = null;
-		try
-		{
-			description = new PluginDescriptionFile( descriptionFile );
-		}
-		catch ( InvalidDescriptionException ex )
-		{
-			Loader.getLogger().log( Level.SEVERE, "Could not load internal plugin description file", ex );
-			return;
-		}
-		
-		Collection<String> softDependencySet = description.getSoftDepend();
-		if ( softDependencySet != null )
-		{
-			if ( softDependencies.containsKey( description.getName() ) )
-			{
-				// Duplicates do not matter, they will be removed together if applicable
-				softDependencies.get( description.getName() ).addAll( softDependencySet );
-			}
-			else
-			{
-				softDependencies.put( description.getName(), new LinkedList<String>( softDependencySet ) );
-			}
-		}
-		
-		Collection<String> dependencySet = description.getDepend();
-		if ( dependencySet != null )
-		{
-			dependencies.put( description.getName(), new LinkedList<String>( dependencySet ) );
-		}
-		
-		Collection<String> loadBeforeSet = description.getLoadBefore();
-		if ( loadBeforeSet != null )
-		{
-			for ( String loadBeforeTarget : loadBeforeSet )
-			{
-				if ( softDependencies.containsKey( loadBeforeTarget ) )
-				{
-					softDependencies.get( loadBeforeTarget ).add( description.getName() );
-				}
-				else
-				{
-					// softDependencies is never iterated, so 'ghost' plugins aren't an issue
-					Collection<String> shortSoftDependency = new LinkedList<String>();
-					shortSoftDependency.add( description.getName() );
-					softDependencies.put( loadBeforeTarget, shortSoftDependency );
-				}
-			}
-		}
-		
-		boolean missingDependency = true;
-		
-		String plugin = description.getName();
-		
-		if ( dependencies.containsKey( plugin ) )
-		{
-			Iterator<String> dependencyIterator = dependencies.get( plugin ).iterator();
-			
-			while ( dependencyIterator.hasNext() )
-			{
-				String dependency = dependencyIterator.next();
-				
-				// Dependency loaded
-				if ( loadedPlugins.contains( dependency ) )
-				{
-					dependencyIterator.remove();
-					
-					// We have a dependency not found
-				}
-				else
-				{
-					missingDependency = false;
-					softDependencies.remove( plugin );
-					dependencies.remove( plugin );
-					
-					Loader.getLogger().log( Level.SEVERE, "Could not load plugin '" + plugin + "'", new UnknownDependencyException( dependency ) );
-					break;
-				}
-			}
-			
-			if ( dependencies.containsKey( plugin ) && dependencies.get( plugin ).isEmpty() )
-			{
-				dependencies.remove( plugin );
-			}
-		}
-		
-		if ( softDependencies.containsKey( plugin ) )
-		{
-			if ( softDependencies.get( plugin ).isEmpty() )
-			{
-				softDependencies.remove( plugin );
-			}
-		}
-		
-		if ( !( dependencies.containsKey( plugin ) || softDependencies.containsKey( plugin ) ) )
-		{
-			// We're clear to load, no more soft or hard dependencies left
-			missingDependency = false;
-			
-			loadedPlugins.add( plugin );
-		}
-		
-		if ( missingDependency )
-		{
-			softDependencies.clear();
-			dependencies.clear();
-			
-			Loader.getLogger().log( Level.SEVERE, "Could not load plugin '" + plugin + "': a required had not been loaded!" );
-		}
-		
-		// We attempt to get the loader JavaPluginLoader so we can use the method loadPlugin( descriptionFile ), This
-		// might need to change.
-		PluginLoader loader = fileAssociations.values().iterator().next();
-		
-		try
-		{
-			Plugin result = loader.loadPlugin( description );
-			
-			if ( result != null )
-			{
-				plugins.add( result );
-				lookupNames.put( result.getDescription().getName(), result );
-			}
-		}
-		catch ( Exception e )
-		{
-			e.printStackTrace();
-		}
-	}*/
+	 */
+	/*
+	 * public void loadInternalPlugin( InputStream descriptionFile )
+	 * {
+	 * Map<String, Collection<String>> dependencies = new HashMap<String, Collection<String>>();
+	 * Map<String, Collection<String>> softDependencies = new HashMap<String, Collection<String>>();
+	 * PluginDescriptionFile description = null;
+	 * try
+	 * {
+	 * description = new PluginDescriptionFile( descriptionFile );
+	 * }
+	 * catch ( InvalidDescriptionException ex )
+	 * {
+	 * Loader.getLogger().log( Level.SEVERE, "Could not load internal plugin description file", ex );
+	 * return;
+	 * }
+	 * Collection<String> softDependencySet = description.getSoftDepend();
+	 * if ( softDependencySet != null )
+	 * {
+	 * if ( softDependencies.containsKey( description.getName() ) )
+	 * {
+	 * // Duplicates do not matter, they will be removed together if applicable
+	 * softDependencies.get( description.getName() ).addAll( softDependencySet );
+	 * }
+	 * else
+	 * {
+	 * softDependencies.put( description.getName(), new LinkedList<String>( softDependencySet ) );
+	 * }
+	 * }
+	 * Collection<String> dependencySet = description.getDepend();
+	 * if ( dependencySet != null )
+	 * {
+	 * dependencies.put( description.getName(), new LinkedList<String>( dependencySet ) );
+	 * }
+	 * Collection<String> loadBeforeSet = description.getLoadBefore();
+	 * if ( loadBeforeSet != null )
+	 * {
+	 * for ( String loadBeforeTarget : loadBeforeSet )
+	 * {
+	 * if ( softDependencies.containsKey( loadBeforeTarget ) )
+	 * {
+	 * softDependencies.get( loadBeforeTarget ).add( description.getName() );
+	 * }
+	 * else
+	 * {
+	 * // softDependencies is never iterated, so 'ghost' plugins aren't an issue
+	 * Collection<String> shortSoftDependency = new LinkedList<String>();
+	 * shortSoftDependency.add( description.getName() );
+	 * softDependencies.put( loadBeforeTarget, shortSoftDependency );
+	 * }
+	 * }
+	 * }
+	 * boolean missingDependency = true;
+	 * String plugin = description.getName();
+	 * if ( dependencies.containsKey( plugin ) )
+	 * {
+	 * Iterator<String> dependencyIterator = dependencies.get( plugin ).iterator();
+	 * while ( dependencyIterator.hasNext() )
+	 * {
+	 * String dependency = dependencyIterator.next();
+	 * // Dependency loaded
+	 * if ( loadedPlugins.contains( dependency ) )
+	 * {
+	 * dependencyIterator.remove();
+	 * // We have a dependency not found
+	 * }
+	 * else
+	 * {
+	 * missingDependency = false;
+	 * softDependencies.remove( plugin );
+	 * dependencies.remove( plugin );
+	 * Loader.getLogger().log( Level.SEVERE, "Could not load plugin '" + plugin + "'", new UnknownDependencyException( dependency ) );
+	 * break;
+	 * }
+	 * }
+	 * if ( dependencies.containsKey( plugin ) && dependencies.get( plugin ).isEmpty() )
+	 * {
+	 * dependencies.remove( plugin );
+	 * }
+	 * }
+	 * if ( softDependencies.containsKey( plugin ) )
+	 * {
+	 * if ( softDependencies.get( plugin ).isEmpty() )
+	 * {
+	 * softDependencies.remove( plugin );
+	 * }
+	 * }
+	 * if ( !( dependencies.containsKey( plugin ) || softDependencies.containsKey( plugin ) ) )
+	 * {
+	 * // We're clear to load, no more soft or hard dependencies left
+	 * missingDependency = false;
+	 * loadedPlugins.add( plugin );
+	 * }
+	 * if ( missingDependency )
+	 * {
+	 * softDependencies.clear();
+	 * dependencies.clear();
+	 * Loader.getLogger().log( Level.SEVERE, "Could not load plugin '" + plugin + "': a required had not been loaded!" );
+	 * }
+	 * // We attempt to get the loader JavaPluginLoader so we can use the method loadPlugin( descriptionFile ), This
+	 * // might need to change.
+	 * PluginLoader loader = fileAssociations.values().iterator().next();
+	 * try
+	 * {
+	 * Plugin result = loader.loadPlugin( description );
+	 * if ( result != null )
+	 * {
+	 * plugins.add( result );
+	 * lookupNames.put( result.getDescription().getName(), result );
+	 * }
+	 * }
+	 * catch ( Exception e )
+	 * {
+	 * e.printStackTrace();
+	 * }
+	 * }
+	 */
 	
 	/**
 	 * Loads the plugin in the specified file
@@ -484,12 +466,12 @@ public final class SimplePluginManager implements PluginManager
 	 * File must be valid according to the current enabled Plugin interfaces
 	 * 
 	 * @param file
-	 *           File containing the plugin to load
+	 *             File containing the plugin to load
 	 * @return The Plugin loaded, or null if it was invalid
 	 * @throws InvalidPluginException
-	 *            Thrown when the specified file is not a valid plugin
+	 *              Thrown when the specified file is not a valid plugin
 	 * @throws UnknownDependencyException
-	 *            If a required dependency could not be found
+	 *              If a required dependency could not be found
 	 */
 	public synchronized Plugin loadPlugin( File file ) throws InvalidPluginException, UnknownDependencyException
 	{
@@ -542,7 +524,7 @@ public final class SimplePluginManager implements PluginManager
 	 * Please note that the name of the plugin is case-sensitive
 	 * 
 	 * @param name
-	 *           Name of the plugin to check
+	 *             Name of the plugin to check
 	 * @return Plugin if it exists, otherwise null
 	 */
 	public synchronized Plugin getPlugin( String name )
@@ -561,7 +543,7 @@ public final class SimplePluginManager implements PluginManager
 	 * Please note that the name of the plugin is case-sensitive.
 	 * 
 	 * @param name
-	 *           Name of the plugin to check
+	 *             Name of the plugin to check
 	 * @return true if the plugin is enabled, otherwise false
 	 */
 	public boolean isPluginEnabled( String name )
@@ -575,7 +557,7 @@ public final class SimplePluginManager implements PluginManager
 	 * Checks if the given plugin is enabled or not
 	 * 
 	 * @param plugin
-	 *           Plugin to check
+	 *             Plugin to check
 	 * @return true if the plugin is enabled, otherwise false
 	 */
 	public boolean isPluginEnabled( Plugin plugin )
@@ -695,7 +677,7 @@ public final class SimplePluginManager implements PluginManager
 	 * This method only synchronizes when the event is not asynchronous.
 	 * 
 	 * @param event
-	 *           Event details
+	 *             Event details
 	 */
 	public void callEvent( Event event )
 	{
@@ -732,7 +714,7 @@ public final class SimplePluginManager implements PluginManager
 	 * This method only synchronizes when the event is not asynchronous.
 	 * 
 	 * @param event
-	 *           Event details
+	 *             Event details
 	 * @throws EventException
 	 */
 	public void callEventWithException( Event event ) throws EventException
@@ -787,7 +769,10 @@ public final class SimplePluginManager implements PluginManager
 			}
 			catch ( EventException ex )
 			{
-				Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getPlugin().getDescription().getFullName() + "\nEvent Exception Reason: " + ex.getCause().getMessage() );
+				if ( ex.getCause() == null )
+					Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getPlugin().getDescription().getFullName() + "\nEvent Exception Reason: " + ex.getMessage() );
+				else
+					Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getPlugin().getDescription().getFullName() + "\nEvent Exception Reason: " + ex.getCause().getMessage() );
 				throw ex;
 			}
 			catch ( Throwable ex )
@@ -819,17 +804,17 @@ public final class SimplePluginManager implements PluginManager
 	 * Registers the given event to the specified listener using a directly passed EventExecutor
 	 * 
 	 * @param event
-	 *           Event class to register
+	 *             Event class to register
 	 * @param listener
-	 *           PlayerListener to register
+	 *             PlayerListener to register
 	 * @param priority
-	 *           Priority of this event
+	 *             Priority of this event
 	 * @param executor
-	 *           EventExecutor to register
+	 *             EventExecutor to register
 	 * @param plugin
-	 *           Plugin to register
+	 *             Plugin to register
 	 * @param ignoreCancelled
-	 *           Do not call executor if event was already cancelled
+	 *             Do not call executor if event was already cancelled
 	 */
 	public void registerEvent( Class<? extends Event> event, Listener listener, EventPriority priority, EventExecutor executor, Plugin plugin, boolean ignoreCancelled )
 	{
@@ -1060,7 +1045,7 @@ public final class SimplePluginManager implements PluginManager
 	 * Sets whether or not per event timing code should be used
 	 * 
 	 * @param use
-	 *           True if per event timing code should be used
+	 *             True if per event timing code should be used
 	 */
 	public void useTimings( boolean use )
 	{

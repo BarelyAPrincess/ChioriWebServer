@@ -322,7 +322,7 @@ public class Console implements ConsoleCommandSender, Runnable
 	@Override
 	public boolean hasPermission( String name )
 	{
-		getLogger().info( "Console was checked for permission: " + name );
+		getLogger().fine( "Console was checked for permission: " + name );
 		
 		return true;
 	}

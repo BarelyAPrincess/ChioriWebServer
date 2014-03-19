@@ -69,6 +69,7 @@
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/commons-daemon-1.0.15.jar"/>
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/commons-lang3-3.1.jar"/>
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/commons-logging-1.1.1.jar"/>
+			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/commons-net-3.3.jar"/>
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/fluent-hc-4.2.3.jar"/>
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/groovy-all-2.2.2.jar"/>
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/gson-2.2.4.jar"/>

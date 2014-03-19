@@ -2,6 +2,9 @@ package com.chiorichan.command.defaults;
 
 import com.chiorichan.Console;
 import com.chiorichan.command.CommandSender;
+import com.chiorichan.net.NetworkManager;
+import com.chiorichan.net.packet.PingPacket;
+import com.chiorichan.util.StringUtil;
 
 public class PingCommand extends VanillaCommand
 {
@@ -19,7 +22,11 @@ public class PingCommand extends VanillaCommand
 		if ( !testPermission( sender ) )
 			return true;
 		
-		sender.sendMessage( "Pong " + Console.currentTick );
+		if ( NetworkManager.isClientMode() )
+			
+			NetworkManager.sendTCP( new PingPacket( StringUtil.md5( "PingCommand/" + System.currentTimeMillis() ) ) );
+		else
+			sender.sendMessage( "Pong " + Console.currentTick );
 		
 		return true;
 	}

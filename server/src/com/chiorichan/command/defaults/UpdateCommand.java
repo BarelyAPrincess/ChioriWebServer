@@ -34,7 +34,7 @@ public class UpdateCommand extends ChioriCommand
 	{
 		if ( !Loader.getInstance().getAutoUpdater().isEnabled() )
 		{
-			sender.sendMessage( ChatColor.RED + "I'm sorry but updates are disabled on this server per configs!" );
+			sender.sendMessage( ChatColor.RED + "I'm sorry but updates are disabled per configs!" );
 			return true;
 		}
 		

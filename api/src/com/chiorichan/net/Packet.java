@@ -15,8 +15,8 @@ public abstract class Packet
 	/**
 	 * Override this method if you would like the packet to be notified when it reaches it's destination.
 	 */
-	public void received( Connection var1 )
+	public boolean received( Connection var1 )
 	{
-		
+		return false;
 	}
 }
