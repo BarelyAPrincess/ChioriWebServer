@@ -32,7 +32,11 @@ public class ConsoleLogManager
 		
 		try
 		{
+			// XXX Honestly, Why is this called a pattern? Isn't it a filename, not a log pattern?
 			String pattern = (String) Loader.getOptions().valueOf( "log-pattern" );
+			
+			if ( Loader.isClientMode() && (pattern == null || pattern.isEmpty() || pattern == "server.log" ))
+				pattern = "client.log";
 			
 			String tmpDir = System.getProperty( "java.io.tmpdir" );
 			String homeDir = System.getProperty( "user.home" );

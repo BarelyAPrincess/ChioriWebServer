@@ -66,6 +66,7 @@
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/activation.jar"/>
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/annovention-0.1.jar"/>
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/commons-codec-1.6.jar"/>
+			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/commons-daemon-1.0.15.jar"/>
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/commons-lang3-3.1.jar"/>
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/commons-logging-1.1.1.jar"/>
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/fluent-hc-4.2.3.jar"/>

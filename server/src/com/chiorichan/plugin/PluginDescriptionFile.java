@@ -198,7 +198,7 @@ public class PluginDescriptionFile
 	private String website = null;
 	private String prefix = null;
 	private boolean database = false;
-	private PluginLoadOrder order = PluginLoadOrder.POSTFRAMEWORK;
+	private PluginLoadOrder order = PluginLoadOrder.INITIALIZED;
 	private List<Permission> permissions = null;
 	private Map<?, ?> lazyPermissions = null;
 	private PermissionDefault defaultPerm = PermissionDefault.OP;

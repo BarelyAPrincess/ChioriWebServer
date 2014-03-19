@@ -1,0 +1,10 @@
+client:
+  remoteTcpHost: server.applebloom.co
+  remoteTcpPort: 1024
+settings:
+  update-folder: update
+  plugin-profiling: false
+  query-plugins: true
+  deprecated-verbose: default
+server:
+  installationUID: 9ef052bc-a351-4e9f-bcac-c7deeaea9291

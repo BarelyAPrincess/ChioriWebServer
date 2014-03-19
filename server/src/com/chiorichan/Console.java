@@ -121,7 +121,7 @@ public class Console implements ConsoleCommandSender, Runnable
 		System.setOut( new PrintStream( new LoggerOutputStream( getLogger().getLogger(), Level.INFO ), true ) );
 		System.setErr( new PrintStream( new LoggerOutputStream( getLogger().getLogger(), Level.SEVERE ), true ) );
 		
-		getLogger().info( "Finished initalizing the server console." );
+		getLogger().info( "Finished initalizing the console." );
 		
 		Runtime.getRuntime().addShutdownHook( new ServerShutdownThread( loader ) );
 		

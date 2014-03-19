@@ -85,6 +85,8 @@ public class Loader implements PluginMessageRecipient
 	public static final String BROADCAST_CHANNEL_ADMINISTRATIVE = "chiori.broadcast.admin";
 	public static final String BROADCAST_CHANNEL_USERS = "chiori.broadcast.user";
 	
+	private static boolean isClientMode = false;
+	
 	private final AutoUpdater updater;
 	private final Yaml yaml = new Yaml( new SafeConstructor() );
 	private static YamlConfiguration configuration;
@@ -110,12 +112,8 @@ public class Loader implements PluginMessageRecipient
 	public static String clientId;
 	private PluginLoadOrder currentState = PluginLoadOrder.INITIALIZATION;
 	
-	// public java.util.Queue<Runnable> processQueue = new java.util.concurrent.ConcurrentLinkedQueue<Runnable>();
-	
-	static
-	{
-		// ConfigurationSerialization.registerClass( User.class );
-	}
+	private String remoteTcpIp = null;
+	private Integer remoteTcpPort = -1;
 	
 	public static void main( String... args ) throws Exception
 	{
@@ -151,7 +149,14 @@ public class Loader implements PluginMessageRecipient
 			}
 			else
 			{
-				isRunning = new Loader( options ).start();
+				boolean clientMode = options.has( "client" );
+				
+				if ( ( options.has( "client-ip" ) || options.has( "client-port" ) ) && !clientMode )
+				{
+					System.err.println( "You must also define --client (Puts application is client mode) if you want to use the --client-ip or --client-port arguments." );
+				}
+				else
+					isRunning = new Loader( options, clientMode ).start();
 			}
 		}
 		catch ( Throwable t )
@@ -190,7 +195,13 @@ public class Loader implements PluginMessageRecipient
 			{
 				acceptsAll( Arrays.asList( "?", "help" ), "Show the help" );
 				
-				acceptsAll( Arrays.asList( "c", "config" ), "Configuration file to use" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "server.properties" ) ).describedAs( "Properties file" );
+				acceptsAll( Arrays.asList( "client" ), "Runs the application in Client Mode" );
+				
+				acceptsAll( Arrays.asList( "client-ip" ), "Host for the remote server" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
+				
+				acceptsAll( Arrays.asList( "client-port" ), "Port for the remote server" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
+				
+				acceptsAll( Arrays.asList( "c", "config", "b", "settings" ), "File for chiori settings" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "server.yaml" ) ).describedAs( "Yml file" );
 				
 				acceptsAll( Arrays.asList( "P", "plugins" ), "Plugin directory to use" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "plugins" ) ).describedAs( "Plugin directory" );
 				
@@ -220,8 +231,6 @@ public class Loader implements PluginMessageRecipient
 				
 				acceptsAll( Arrays.asList( "log-strip-color" ), "Strips color codes from log file" );
 				
-				acceptsAll( Arrays.asList( "b", "settings" ), "File for chiori settings" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "chiori.yml" ) ).describedAs( "Yml file" );
-				
 				acceptsAll( Arrays.asList( "nojline" ), "Disables jline and emulates the vanilla console" );
 				
 				acceptsAll( Arrays.asList( "noconsole" ), "Disables the console" );
@@ -235,20 +244,29 @@ public class Loader implements PluginMessageRecipient
 		return parser;
 	}
 	
-	public Loader(OptionSet options0)
+	public Loader(OptionSet options0) throws StartupException
+	{
+		this( options0, false );
+	}
+	
+	public Loader(OptionSet options0, boolean clientMode) throws StartupException
 	{
 		instance = this;
 		options = options0;
+		isClientMode = clientMode;
+		
+		String internalConfigFile = ( isClientMode ) ? "com/chiorichan/config-client.yaml" : "com/chiorichan/config-server.yaml";
 		
 		console.init( this, options );
 		
-		showBanner();
+		if ( !isClientMode )
+			showBanner();
 		
 		if ( Runtime.getRuntime().maxMemory() / 1024L / 1024L < 512L )
 			getLogger().warning( "To start the server with more ram, launch it as \"java -Xmx1024M -Xms1024M -jar server.jar\"" );
 		
 		if ( getConfigFile() == null )
-			getLogger().panic( "We had problems loading the configuration file! Did you define the --settings argument?" );
+			getLogger().panic( "We had problems loading the configuration file! Did you define the --config argument?" );
 		
 		try
 		{
@@ -258,7 +276,7 @@ public class Loader implements PluginMessageRecipient
 		{
 			try
 			{
-				FileUtil.copy( new File( getClass().getClassLoader().getResource( "com/chiorichan/chiori.yml" ).toURI() ), getConfigFile() );
+				FileUtil.copy( new File( getClass().getClassLoader().getResource( internalConfigFile ).toURI() ), getConfigFile() );
 				configuration = YamlConfiguration.loadConfiguration( getConfigFile() );
 			}
 			catch ( URISyntaxException e1 )
@@ -266,7 +284,7 @@ public class Loader implements PluginMessageRecipient
 		}
 		
 		configuration.options().copyDefaults( true );
-		configuration.setDefaults( YamlConfiguration.loadConfiguration( getClass().getClassLoader().getResourceAsStream( "com/chiorichan/chiori.yml" ) ) );
+		configuration.setDefaults( YamlConfiguration.loadConfiguration( getClass().getClassLoader().getResourceAsStream( internalConfigFile ) ) );
 		clientId = configuration.getString( "server.installationUID", clientId );
 		
 		if ( clientId == null || clientId.isEmpty() || clientId.equalsIgnoreCase( "null" ) )
@@ -277,17 +295,39 @@ public class Loader implements PluginMessageRecipient
 		
 		saveConfig();
 		
+		remoteTcpIp = configuration.getString( "client.remoteTcpHost", null );
+		remoteTcpPort = configuration.getInt( "client.remoteTcpHost", 1024 );
+		
+		if ( options.has( "client-ip" ) )
+			remoteTcpIp = (String) options.valueOf( "client-ip" );
+		
+		if ( options.has( "client-port" ) )
+			remoteTcpPort = (Integer) options.valueOf( "client-port" );
+		
+		if ( remoteTcpIp == null || remoteTcpIp.isEmpty() || remoteTcpPort < 1 )
+		{
+			throw new StartupException( "The remote Host/IP and/or Port are missconfigured, Please define them in the local config file or use --client-ip and/or --client-port arguments." );
+		}
+		
 		( (SimplePluginManager) pluginManager ).useTimings( configuration.getBoolean( "settings.plugin-profiling" ) );
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
-		webroot = configuration.getString( "settings.webroot" );
+		
+		if ( !isClientMode )
+			webroot = configuration.getString( "settings.webroot" );
 		
 		updater = new AutoUpdater( new ChioriDLUpdaterService( configuration.getString( "auto-updater.host" ) ), configuration.getString( "auto-updater.preferred-channel" ) );
-		updater.setEnabled( configuration.getBoolean( "auto-updater.enabled" ) );
-		updater.setSuggestChannels( configuration.getBoolean( "auto-updater.suggest-channels" ) );
-		updater.getOnBroken().addAll( configuration.getStringList( "auto-updater.on-broken" ) );
-		updater.getOnUpdate().addAll( configuration.getStringList( "auto-updater.on-update" ) );
+		if ( !isClientMode )
+		{
+			updater.setEnabled( configuration.getBoolean( "auto-updater.enabled" ) );
+			updater.setSuggestChannels( configuration.getBoolean( "auto-updater.suggest-channels" ) );
+			updater.getOnBroken().addAll( configuration.getStringList( "auto-updater.on-broken" ) );
+			updater.getOnUpdate().addAll( configuration.getStringList( "auto-updater.on-update" ) );
+			// TODO Get updater working for client side. Idea: Only make available so client can automatically match the software version the server is running.
+		}
+		else
+			updater.setEnabled( false );
 		
-		WebUtils.sendTracking("startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")");
+		WebUtils.sendTracking( ( ( isClientMode ) ? "startClient" : "startServer" ), "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
 	}
 	
 	public boolean start()
@@ -295,36 +335,48 @@ public class Loader implements PluginMessageRecipient
 		loadPlugins();
 		enablePlugins( PluginLoadOrder.INITIALIZATION );
 		
-		File root = new File( webroot );
-		
-		if ( !root.exists() )
-			root.mkdirs();
+		if ( !isClientMode )
+		{
+			File root = new File( webroot );
+			
+			if ( !root.exists() )
+				root.mkdirs();
+		}
 		
 		enablePlugins( PluginLoadOrder.STARTUP );
 		
-		if ( !options.has( "tcp-disable" ) && configuration.getBoolean( "server.enableTcpServer", true ) )
-			initTcpServer();
+		if ( !isClientMode )
+		{
+			if ( !options.has( "tcp-disable" ) && configuration.getBoolean( "server.enableTcpServer", true ) )
+				initTcpServer();
+			else
+				getLogger().warning( "The integrated tcp server has been disabled per the configuration. Change server.enableTcpServer to true to reenable it." );
+			
+			if ( !options.has( "web-disable" ) && configuration.getBoolean( "server.enableWebServer", true ) )
+				initWebServer();
+			else
+				getLogger().warning( "The integrated web server has been disabled per the configuration. Change server.enableWebServer to true to reenable it." );
+			
+			enablePlugins( PluginLoadOrder.POSTSERVER );
+			
+			getLogger().info( "Initalizing the Persistence Manager..." );
+			
+			persistence = new PersistenceManager();
+			persistence.getSiteManager().loadSites();
+			
+			getLogger().info( "Initalizing the User Manager..." );
+			userManager = new UserManager( this );
+			
+			persistence.loadSessions();
+		}
 		else
-			getLogger().warning( "The integrated tcp server has been disabled per the configuration. Change server.enableTcpServer to true to reenable it." );
+		{
+			// TODO Make connection to remote server
+			
+			enablePlugins( PluginLoadOrder.POSTCLIENT );
+		}
 		
-		if ( !options.has( "web-disable" ) && configuration.getBoolean( "server.enableWebServer", true ) )
-			initWebServer();
-		else
-			getLogger().warning( "The integrated web server has been disabled per the configuration. Change server.enableWebServer to true to reenable it." );
-		
-		enablePlugins( PluginLoadOrder.POSTSERVER );
-		
-		getLogger().info( "Initalizing the Persistence Manager..." );
-		
-		persistence = new PersistenceManager();
-		persistence.getSiteManager().loadSites();
-		
-		getLogger().info( "Initalizing the User Manager..." );
-		userManager = new UserManager( this );
-		
-		persistence.loadSessions();
-		
-		enablePlugins( PluginLoadOrder.POSTFRAMEWORK );
+		enablePlugins( PluginLoadOrder.INITIALIZED );
 		
 		console.primaryThread.start();
 		
@@ -1205,7 +1257,10 @@ public class Loader implements PluginMessageRecipient
 	
 	private File getConfigFile()
 	{
-		return (File) options.valueOf( "settings" );
+		if ( ( (File) options.valueOf( "config" ) ).getName() == "server.yaml" && isClientMode )
+			return new File( "client.yaml" );
+		
+		return (File) options.valueOf( "config" );
 	}
 	
 	private void saveConfig()
@@ -1293,5 +1348,10 @@ public class Loader implements PluginMessageRecipient
 	public AutoUpdater getAutoUpdater()
 	{
 		return updater;
+	}
+	
+	public static boolean isClientMode()
+	{
+		return isClientMode;
 	}
 }
