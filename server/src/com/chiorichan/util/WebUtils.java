@@ -6,9 +6,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.URL;
+import java.util.Date;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.net.ntp.NTPUDPClient;
+import org.apache.commons.net.ntp.TimeInfo;
 
 import com.chiorichan.Loader;
 
@@ -110,9 +114,42 @@ public class WebUtils
 			return false;
 		}
 	}
-
+	
 	public static String getUserAgent()
 	{
 		return "ChioriWebServer/" + Loader.class.getPackage().getImplementationVersion() + "/" + System.getProperty( "java.version" );
+	}
+	
+	public static Date getNTPDate()
+	{
+		
+		String[] hosts = new String[] { "ntp02.oal.ul.pt", "ntp04.oal.ul.pt", "ntp.xs4all.nl" };
+		
+		NTPUDPClient client = new NTPUDPClient();
+		// We want to timeout if a response takes longer than 5 seconds
+		client.setDefaultTimeout( 5000 );
+		
+		for ( String host : hosts )
+		{
+			
+			try
+			{
+				InetAddress hostAddr = InetAddress.getByName( host );
+				//System.out.println( "> " + hostAddr.getHostName() + "/" + hostAddr.getHostAddress() );
+				TimeInfo info = client.getTime( hostAddr );
+				Date date = new Date( info.getReturnTime() );
+				return date;
+				
+			}
+			catch ( IOException e )
+			{
+				e.printStackTrace();
+			}
+		}
+		
+		client.close();
+		
+		return null;
+		
 	}
 }
