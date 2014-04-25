@@ -5,7 +5,8 @@ public enum HttpResponseStage
 	READING(0),
 	WRITTING(1),
 	WRITTEN(2),
-	CLOSED(3);
+	CLOSED(3),
+	MULTIPART(4);
 	
 	private final int stageId;
 	

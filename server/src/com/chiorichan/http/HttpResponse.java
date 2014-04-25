@@ -94,12 +94,14 @@ public class HttpResponse
 		return output;
 	}
 	
-	/**
-	 * DEPRECATED???
-	 */
 	public boolean isCommitted()
 	{
-		return false;
+		return stage == HttpResponseStage.CLOSED || stage == HttpResponseStage.WRITTEN;
+	}
+	
+	public HttpResponseStage getStage()
+	{
+		return stage;
 	}
 	
 	public void setStatus( int _status )
@@ -170,15 +172,25 @@ public class HttpResponse
 		}
 	}
 	
-	public void print( String var1 ) throws IOException
+	public void print( byte[] var1 ) throws IOException
 	{
 		stage = HttpResponseStage.WRITTING;
+		output.write( var1 );
+	}
+	
+	public void print( String var1 ) throws IOException
+	{
+		if ( stage != HttpResponseStage.MULTIPART )
+			stage = HttpResponseStage.WRITTING;
+		
 		output.write( var1.getBytes( "ISO-8859-1" ) );
 	}
 	
 	public void println( String var1 ) throws IOException
 	{
-		stage = HttpResponseStage.WRITTING;
+		if ( stage != HttpResponseStage.MULTIPART )
+			stage = HttpResponseStage.WRITTING;
+		
 		output.write( ( var1 + "\n" ).getBytes( "ISO-8859-1" ) );
 	}
 	
@@ -205,15 +217,18 @@ public class HttpResponse
 			if ( c.needsUpdating() )
 			{
 				h.add( "Set-Cookie", c.toHeaderValue() );
-				//Loader.getLogger().debug( "Sent Cookie: " + c.toHeaderValue() );
+				// Loader.getLogger().debug( "Sent Cookie: " + c.toHeaderValue() );
 			}
 		}
 		
 		if ( h.get( "Server" ) == null )
 			h.add( "Server", Versioning.getProduct() + " Version " + Loader.getVersion() );
 		
-		if ( h.get( "Content-Type" ) == null )
-			h.add( "Content-Type", httpContentType );
+		// NOTE: Why did I make it check this again?
+		// if ( h.get( "Content-Type" ) == null )
+		// h.add( "Content-Type", httpContentType );
+		
+		h.set( "Content-Type", httpContentType );
 		
 		h.add( "Access-Control-Allow-Origin", request.getSite().getYaml().getString( "web.allowed-origin", "*" ) );
 		
@@ -229,5 +244,69 @@ public class HttpResponse
 		}
 		
 		stage = HttpResponseStage.CLOSED;
+	}
+	
+	public void closeMultipart() throws IOException
+	{
+		if ( stage == HttpResponseStage.CLOSED )
+			throw new IllegalStateException( "You can't access closeMultipart unless you start MULTIPART with sendMultipart." );
+		
+		stage = HttpResponseStage.CLOSED;
+		
+		HttpExchange http = request.getOriginal();
+		OutputStream os = http.getResponseBody();
+		os.close();
+		
+		output.close();
+	}
+	
+	public void sendMultipart( byte[] bytesToWrite ) throws IOException
+	{
+		HttpExchange http = request.getOriginal();
+		
+		if ( http.getRequestMethod().equalsIgnoreCase( "HEAD" ) )
+			throw new IllegalStateException( "You can't start MULTIPART mode on a HEAD Request." );
+		
+		if ( stage != HttpResponseStage.MULTIPART )
+		{
+			stage = HttpResponseStage.MULTIPART;
+			Headers h = http.getResponseHeaders();
+			request.getSession().saveSession();
+			
+			for ( Candy c : request.getCandies() )
+				if ( c.needsUpdating() )
+					h.add( "Set-Cookie", c.toHeaderValue() );
+			
+			if ( h.get( "Server" ) == null )
+				h.add( "Server", Versioning.getProduct() + " Version " + Loader.getVersion() );
+			
+			h.add( "Access-Control-Allow-Origin", request.getSite().getYaml().getString( "web.allowed-origin", "*" ) );
+			h.add( "Connection", "close" );
+			h.add( "Cache-Control", "no-cache" );
+			h.add( "Cache-Control", "private" );
+			h.add( "Pragma", "no-cache" );
+			h.set( "Content-Type", "multipart/x-mixed-replace; boundary=--cwsframe" );
+			
+			http.sendResponseHeaders( 200, 0);
+		}
+		else
+		{
+			StringBuilder sb = new StringBuilder();
+			
+			sb.append( "--cwsframe\r\n" );
+			sb.append( "Content-Type: " + httpContentType + "\r\n" );
+			sb.append( "Content-Length: " + bytesToWrite.length + "\r\n\r\n" );
+			
+			ByteArrayOutputStream ba = new ByteArrayOutputStream();
+			
+			ba.write( sb.toString().getBytes( "ISO-8859-1" ) );
+			ba.write( bytesToWrite );
+			ba.flush();
+			
+			OutputStream os = http.getResponseBody();
+			os.write( ba.toByteArray() );
+			ba.close();
+			os.flush();
+		}
 	}
 }

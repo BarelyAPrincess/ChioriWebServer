@@ -327,6 +327,26 @@ public class WebHandler implements HttpHandler
 			}
 		
 		// TODO: Possible theme'ing of error pages.
+		
+		// if the connection was in a MultiPart mode, wait for the mode to change then return gracefully.
+		if ( response.stage == HttpResponseStage.MULTIPART )
+		{
+			while( response.stage == HttpResponseStage.MULTIPART )
+			{
+				try
+				{
+					Thread.sleep( 100 );
+				}
+				catch ( InterruptedException e )
+				{
+					e.printStackTrace();
+				}
+			}
+			
+			return true;
+		}
+		
+		// If the connection was closed from page redirect, return gracefully.
 		if ( response.stage == HttpResponseStage.CLOSED )
 			return true;
 		
@@ -373,13 +393,14 @@ public class WebHandler implements HttpHandler
 		 * }
 		 */
 		
+		// TODO: Fix Me!
 		if ( requestFile != null )
 		{
-			response.setContentType( fi.getContentType() );
+			//response.setContentType( fi.getContentType() );
 		}
 		else
 		{
-			response.setContentType( "text/html" );
+			//response.setContentType( "text/html" );
 		}
 		
 		response.sendResponse();

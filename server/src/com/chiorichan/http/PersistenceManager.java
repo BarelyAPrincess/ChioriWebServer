@@ -42,7 +42,7 @@ public class PersistenceManager
 			Loader.stop();
 		}
 		
-		switch ( config.getString( "framework-database.type", "mysql" ) )
+		switch ( config.getString( "server.database.type", "mysql" ) )
 		{
 			case "sqlite":
 				String filename = config.getString( "server.database.dbfile", "chiori.db" );
@@ -66,8 +66,8 @@ public class PersistenceManager
 				String host = config.getString( "server.database.host", "localhost" );
 				String port = config.getString( "server.database.port", "3306" );
 				String database = config.getString( "server.database.database", "chiorifw" );
-				String username = config.getString( "server.database.user", "fwuser" );
-				String password = config.getString( "server.database.pass", "fwpass" );
+				String username = config.getString( "server.database.username", "fwuser" );
+				String password = config.getString( "server.database.password", "fwpass" );
 				
 				try
 				{
