@@ -1,5 +1,6 @@
 package com.chiorichan;
 
+import com.google.common.base.Strings;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
@@ -8,7 +9,6 @@ import java.util.Map;
 import java.util.logging.Formatter;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
-
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.Ansi.Attribute;
 
@@ -18,11 +18,11 @@ public class ConsoleLogFormatter extends Formatter
 	public Map<ChatColor, String> replacements = new EnumMap<ChatColor, String>( ChatColor.class );
 	public ChatColor[] colors = ChatColor.values();
 	public boolean debugMode = false;
-	
-	public ConsoleLogFormatter(Console console)
+
+	public ConsoleLogFormatter( Console console )
 	{
-		date = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" );
-		
+		date = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss.SSS" );
+
 		replacements.put( ChatColor.BLACK, Ansi.ansi().fg( Ansi.Color.BLACK ).boldOff().toString() );
 		replacements.put( ChatColor.DARK_BLUE, Ansi.ansi().fg( Ansi.Color.BLUE ).boldOff().toString() );
 		replacements.put( ChatColor.DARK_GREEN, Ansi.ansi().fg( Ansi.Color.GREEN ).boldOff().toString() );
@@ -48,74 +48,68 @@ public class ConsoleLogFormatter extends Formatter
 		replacements.put( ChatColor.NEGATIVE, Ansi.ansi().a( Attribute.NEGATIVE_ON ).toString() );
 		replacements.put( ChatColor.RESET, Ansi.ansi().a( Attribute.RESET ).fg( Ansi.Color.DEFAULT ).toString() );
 	}
-	
+
 	public ChatColor getLevelColor( Level var1 )
 	{
 		if ( var1 == Level.FINEST || var1 == Level.FINER || var1 == Level.FINE )
-		{
 			return ChatColor.WHITE;
-		}
 		else if ( var1 == Level.INFO )
-		{
 			return ChatColor.AQUA;
-		}
 		else if ( var1 == Level.WARNING )
-		{
 			return ChatColor.GOLD;
-		}
 		else if ( var1 == Level.SEVERE )
-		{
 			return ChatColor.RED;
-		}
 		else if ( var1 == Level.CONFIG )
-		{
 			return ChatColor.WHITE;
-		}
 		else
-		{
 			return ChatColor.WHITE;
-		}
 	}
-	
+
 	public String handleAltColors( String var1 )
 	{
 		if ( Loader.getConsole().AnsiSupported() && Loader.getConsole().useColors )
 		{
 			var1 = ChatColor.translateAlternateColorCodes( '&', var1 ) + ChatColor.RESET;
-			
+
 			for ( ChatColor color : colors )
 			{
 				if ( replacements.containsKey( color ) )
-				{
 					var1 = var1.replaceAll( "(?i)" + color.toString(), replacements.get( color ) );
-				}
 				else
-				{
 					var1 = var1.replaceAll( "(?i)" + color.toString(), "" );
-				}
 			}
 		}
 		else
-		{
 			var1 = var1.replaceAll( "§.", "" );
-		}
-		
+
 		return var1;
 	}
-	
+
 	@Override
 	public String format( LogRecord record )
 	{
 		StringBuilder builder = new StringBuilder();
 		Throwable ex = record.getThrown();
-		
+
+		String threadName = Thread.currentThread().getName();
+
+		if ( threadName.length() > 20 )
+			threadName = threadName.substring( 0, 3 ) + "..." + threadName.substring( 14 );
+		else if ( threadName.length() < 20 )
+			threadName = threadName + Strings.repeat( " ", 20 - threadName.length() );
+
 		builder.append( ChatColor.RESET + "" + ChatColor.GRAY );
 		builder.append( date.format( record.getMillis() ) );
-		
+		builder.append( " [" );
+		builder.append( ChatColor.LIGHT_PURPLE );
+		builder.append( threadName );
+		builder.append( ChatColor.GRAY );
+		builder.append( "]" );
+
 		if ( debugMode )
 		{
 			StackTraceElement[] var1 = Thread.currentThread().getStackTrace();
-			
+
 			for ( StackTraceElement var2 : var1 )
 			{
 				if ( !var2.getClassName().toLowerCase().contains( "java" ) && !var2.getClassName().toLowerCase().contains( "log" ) && !var2.getMethodName().equals( "sendMessage" ) && !var2.getMethodName().equals( "sendRawMessage" ) )
@@ -127,7 +121,7 @@ public class ConsoleLogFormatter extends Formatter
 				}
 			}
 		}
-		
+
 		builder.append( " [" );
 		builder.append( getLevelColor( record.getLevel() ) );
 		builder.append( record.getLevel().getLocalizedName().toUpperCase() );
@@ -135,18 +129,18 @@ public class ConsoleLogFormatter extends Formatter
 		builder.append( "] " );
 		builder.append( ChatColor.WHITE );
 		builder.append( formatMessage( record ) );
-		
+
 		if ( !formatMessage( record ).endsWith( "\r" ) )
 			builder.append( '\n' );
-		
+
 		if ( ex != null )
 		{
 			StringWriter writer = new StringWriter();
 			ex.printStackTrace( new PrintWriter( writer ) );
 			builder.append( writer );
 		}
-		
+
 		return handleAltColors( builder.toString() );
 	}
-	
+
 }
