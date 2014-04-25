@@ -15,3 +15,11 @@
 /resin-data
 /webroot
 /lib/META-INF
+/client.log
+/client.log.lck
+/nbproject/private/
+/build/
+/manifest.mf
+/nbproject
+/nb-build.xml
+/server.yaml
