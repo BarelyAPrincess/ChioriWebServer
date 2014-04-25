@@ -1,7 +1,5 @@
 package com.chiorichan.framework;
 
-import groovy.lang.Script;
-
 import java.io.File;
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -22,6 +20,7 @@ import com.chiorichan.util.Common;
 import com.chiorichan.util.ObjectUtil;
 import com.chiorichan.util.StringUtil;
 import com.google.common.base.Joiner;
+import groovy.lang.Script;
 
 abstract public class ScriptingBaseJava extends Script
 {

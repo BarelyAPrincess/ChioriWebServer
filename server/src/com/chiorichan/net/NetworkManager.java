@@ -2,12 +2,14 @@ package com.chiorichan.net;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import com.chiorichan.Loader;
 import com.chiorichan.StartupException;
 import com.chiorichan.http.WebHandler;
 import com.esotericsoftware.kryonet.Client;
+import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.EndPoint;
 import com.esotericsoftware.kryonet.Listener.ThreadedListener;
 import com.esotericsoftware.kryonet.Server;
@@ -17,6 +19,8 @@ public class NetworkManager
 {
 	private static HttpServer httpServer;
 	private static EndPoint tcpConnection;
+	
+	private static Executor executor = Executors.newCachedThreadPool();
 	
 	private static String remoteTcpIp = null;
 	private static Integer remoteTcpPort = -1;
@@ -47,7 +51,7 @@ public class NetworkManager
 			tcpClient.start();
 			tcpClient.connect( 10000, remoteTcpIp, remoteTcpPort );
 			
-			tcpClient.addListener( new ThreadedListener( new PacketListener( tcpConnection.getKryo() ), Executors.newFixedThreadPool( 3 ) ) );
+			tcpClient.addListener( new ThreadedListener( new PacketListener( tcpClient.getKryo() ), Executors.newFixedThreadPool( 3 ) ) );
 			
 			tcpConnection = tcpClient;
 		}
@@ -77,14 +81,20 @@ public class NetworkManager
 			else
 				socket = new InetSocketAddress( serverIp, serverPort );
 			
-			Server tcpServer = new Server();
+			Server tcpServer = new Server()
+			{
+				protected Connection newConnection()
+				{
+					return new ServerConnection();
+				}
+			};
 			
 			Loader.getLogger().info( "Starting Tcp Server on " + ( serverIp.length() == 0 ? "*" : serverIp ) + ":" + serverPort );
 			
 			tcpServer.start();
 			tcpServer.bind( socket, null );
 			
-			tcpServer.addListener( new ThreadedListener( new PacketListener( tcpConnection.getKryo() ), Executors.newFixedThreadPool( 3 ) ) );
+			tcpServer.addListener( new ThreadedListener( new PacketListener( tcpServer.getKryo() ), Executors.newFixedThreadPool( 3 ) ) );
 			
 			tcpConnection = tcpServer;
 		}
@@ -123,7 +133,7 @@ public class NetworkManager
 			
 			httpServer = HttpServer.create( socket, 0 );
 			
-			httpServer.setExecutor( null );
+			httpServer.setExecutor( executor );
 			httpServer.createContext( "/", new WebHandler() );
 			
 			// TODO: Add SSL support ONEDAY!
@@ -156,13 +166,16 @@ public class NetworkManager
 	{
 		return isClientMode;
 	}
-
+	
 	public static void cleanup()
 	{
-		httpServer.stop( 0 );
-		tcpConnection.stop();
+		if ( httpServer != null )
+			httpServer.stop( 0 );
+		
+		if ( tcpConnection != null )
+			tcpConnection.stop();
 	}
-
+	
 	public static void setClientMode( boolean clientMode )
 	{
 		isClientMode = clientMode;
@@ -197,13 +210,14 @@ public class NetworkManager
 	/**
 	 * Sends the packet over the network using TCP.
 	 * If in ClientMode will send to Server, otherwise will send packet to ALL CLIENTS!
+	 * 
 	 * @param packet
 	 */
 	public static void sendTCP( Packet packet )
 	{
 		if ( isClientMode )
-			((Client) tcpConnection).sendTCP( packet );
+			( (Client) tcpConnection ).sendTCP( packet );
 		else
-			((Server) tcpConnection).sendToAllTCP( packet );
+			( (Server) tcpConnection ).sendToAllTCP( packet );
 	}
 }

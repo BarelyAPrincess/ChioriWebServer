@@ -80,10 +80,11 @@ final class PluginClassLoader extends URLClassLoader
 	
 	Class<?> findClass( String name, boolean checkGlobal ) throws ClassNotFoundException
 	{
-		if ( name.startsWith( "org.bukkit." ) || name.startsWith( "net.minecraft." ) )
+		// TODO: Uncomment this oneday!
+		/*if ( name.startsWith( "com.chiorichan." ) )
 		{
 			throw new ClassNotFoundException( name );
-		}
+		}*/
 		Class<?> result = classes.get( name );
 		
 		if ( result == null )

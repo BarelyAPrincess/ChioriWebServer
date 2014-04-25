@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 
 import com.chiorichan.net.packet.PingPacket;
-import com.chiorichan.util.Common;
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.FrameworkMessage.KeepAlive;
@@ -46,7 +45,7 @@ public final class TcpClient extends PacketManager
 	public void attemptConnection( InetAddress addr, int port ) throws IOException
 	{
 		client.addListener( this );
-		client.connect( 1000, addr, port );
+		client.connect( 5000, addr, port );
 	}
 	
 	/**
@@ -79,7 +78,7 @@ public final class TcpClient extends PacketManager
 	{
 		if ( var1 instanceof BasePacket )
 		{
-			// Handle packet for auth methods
+			super.handleBasePacket( var0, (BasePacket) var1 );
 		}
 		else if ( var1 instanceof Packet )
 		{

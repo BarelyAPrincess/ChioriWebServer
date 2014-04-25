@@ -1,18 +1,19 @@
 package com.chiorichan.command.network;
 
 import com.chiorichan.ChatColor;
+import com.chiorichan.Loader;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.command.defaults.ChioriCommand;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.net.packet.CommandPacket;
 
-public class SendCommand extends ChioriCommand
+public class ConnectCommand extends ChioriCommand
 {
-	public SendCommand()
+	public ConnectCommand()
 	{
 		super( "send" );
-		this.description = "Sends a command to remote virtual console. Clients Only!";
-		this.usageMessage = "/send (command) [params]";
+		this.description = "Attempts to connect to the remote client. Clients Only!";
+		this.usageMessage = "/connect";
 	}
 	
 	@Override
@@ -24,21 +25,7 @@ public class SendCommand extends ChioriCommand
 			return true;
 		}
 		
-		if ( args.length < 1 )
-		{
-			sender.sendMessage( ChatColor.RED + "Usage: " + usageMessage );
-			return false;
-		}
-		
-		StringBuilder params = new StringBuilder();
-		
-		for ( int i = 1; i < args.length; i++ )
-		{
-			params.append( " " );
-			params.append( args[i] );
-		}
-		
-		NetworkManager.sendTCP( new CommandPacket( args[0], params.toString() ) );
+		NetworkManager.initTcpClient();
 		
 		return true;
 	}

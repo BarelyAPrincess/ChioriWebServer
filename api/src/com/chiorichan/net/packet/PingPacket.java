@@ -27,6 +27,7 @@ public class PingPacket extends Packet
 	public boolean received( Connection var1 )
 	{
 		// TODO I'd really like to make this packet awesome with some super awesome statistic data like Latency, Jitter, Time Offset, etc.
+		// Server and Client's time being out of sync is causing issues with proper calculations. Need to find a solution.
 		
 		if ( isReply )
 		{

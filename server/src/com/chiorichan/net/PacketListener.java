@@ -7,7 +7,7 @@ import com.chiorichan.event.net.TCPDisconnectedEvent;
 import com.chiorichan.event.net.TCPIdleEvent;
 import com.chiorichan.event.net.TCPIncomingEvent;
 import com.chiorichan.net.packet.CommandPacket;
-import com.chiorichan.net.packet.PingPacket;
+import com.chiorichan.net.packet.DataPacket;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.FrameworkMessage.KeepAlive;
@@ -24,8 +24,8 @@ public class PacketListener extends PacketManager
 	public void received( Connection var1, Object var2 )
 	{
 		if ( var2 instanceof BasePacket )
-		{	
-			
+		{
+			super.handleBasePacket( var1, (BasePacket) var2 );
 		}
 		else if ( var2 instanceof Packet )
 		{
@@ -80,6 +80,10 @@ public class PacketListener extends PacketManager
 		{
 			Loader.getLogger().info( ChatColor.YELLOW + "Connection from " + var1.getRemoteAddressTCP().getAddress().getHostAddress() + " was disconnected because it was concelled by the TCPConnectedEvent!" );
 			var1.close();
+		}
+		else if ( NetworkManager.isClientMode() )
+		{
+			var1.sendTCP( new DataPacket( "beginSession", null ) );
 		}
 	}
 	

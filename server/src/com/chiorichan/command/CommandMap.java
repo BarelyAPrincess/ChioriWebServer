@@ -40,6 +40,8 @@ import com.chiorichan.command.defaults.UpdateCommand;
 import com.chiorichan.command.defaults.VanillaCommand;
 import com.chiorichan.command.defaults.VersionCommand;
 import com.chiorichan.command.defaults.WhitelistCommand;
+import com.chiorichan.command.network.ConnectCommand;
+import com.chiorichan.command.network.LoginCommand;
 import com.chiorichan.command.network.SendCommand;
 
 public class CommandMap
@@ -89,6 +91,8 @@ public class CommandMap
 		
 		// XXX Client Commands
 		register( "chiori", new SendCommand() );
+		register( "chiori", new ConnectCommand() );
+		register( "chiori", new LoginCommand() );
 	}
 	
 	/**

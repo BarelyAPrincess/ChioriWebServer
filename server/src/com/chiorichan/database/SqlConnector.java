@@ -220,7 +220,7 @@ public class SqlConnector
 		}
 		catch ( Exception e )
 		{
-			e.printStackTrace();
+			Loader.getLogger().warning( "There was an error reconnection to the DB, " + "jdbc:mysql://" + saved_host + ":" + saved_port + "/" + saved_db + ", " + saved_user + " " + saved_pass, e );
 		}
 		
 		return true;
