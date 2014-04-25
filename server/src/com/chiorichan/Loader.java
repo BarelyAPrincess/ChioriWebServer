@@ -7,7 +7,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
-import java.net.InetSocketAddress;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -20,7 +19,6 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -49,10 +47,7 @@ import com.chiorichan.conversations.Conversable;
 import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.PersistenceManager;
-import com.chiorichan.http.WebHandler;
 import com.chiorichan.net.NetworkManager;
-import com.chiorichan.net.Packet;
-import com.chiorichan.net.PacketListener;
 import com.chiorichan.permissions.Permissible;
 import com.chiorichan.permissions.Permission;
 import com.chiorichan.plugin.Plugin;
@@ -76,12 +71,7 @@ import com.chiorichan.util.FileUtil;
 import com.chiorichan.util.Versioning;
 import com.chiorichan.util.WebUtils;
 import com.chiorichan.util.permissions.DefaultPermissions;
-import com.esotericsoftware.kryonet.Client;
-import com.esotericsoftware.kryonet.EndPoint;
-import com.esotericsoftware.kryonet.Listener.ThreadedListener;
-import com.esotericsoftware.kryonet.Server;
 import com.google.common.collect.ImmutableList;
-import com.sun.net.httpserver.HttpServer;
 
 public class Loader implements PluginMessageRecipient
 {
@@ -93,6 +83,7 @@ public class Loader implements PluginMessageRecipient
 	private static YamlConfiguration configuration;
 	private static Loader instance;
 	private static OptionSet options;
+	public static ExtendedOptions extendedOpt;
 	private static long startTime = System.currentTimeMillis();
 	
 	public static String webroot = "";
@@ -242,14 +233,24 @@ public class Loader implements PluginMessageRecipient
 	
 	public Loader(OptionSet options0) throws StartupException
 	{
+		this( options0, new ExtendedOptions() );
+	}
+	
+	public Loader(OptionSet options0, ExtendedOptions options1) throws StartupException
+	{
 		instance = this;
 		options = options0;
+		extendedOpt = options1;
 		
 		String internalConfigFile = ( NetworkManager.isClientMode() ) ? "com/chiorichan/config-client.yaml" : "com/chiorichan/config-server.yaml";
 		
+		if ( options1.altDefaultConfig != null )
+			internalConfigFile = options1.altDefaultConfig;
+		
 		console.init( this, options );
 		
-		showBanner();
+		if ( !options1.noBanner )
+			showBanner();
 		
 		if ( NetworkManager.isClientMode() )
 			getLogger().info( "Chiori Web Server is running in Client Mode!" );
@@ -371,7 +372,7 @@ public class Loader implements PluginMessageRecipient
 	{
 		try
 		{
-			InputStream is = Loader.class.getClassLoader().getResourceAsStream( "com/chiorichan/banner.txt" );
+			InputStream is = Loader.class.getClassLoader().getResourceAsStream( ( extendedOpt.altBanner == null ) ? "com/chiorichan/banner.txt" : extendedOpt.altBanner );
 			String[] banner = new String( IOUtils.readFully( is, is.available(), true ) ).split( "\\n" );
 			
 			for ( String l : banner )
@@ -1136,6 +1137,9 @@ public class Loader implements PluginMessageRecipient
 	
 	private File getConfigFile()
 	{
+		if ( extendedOpt.altConfigFilename != null )
+			return new File( extendedOpt.altConfigFilename );
+		
 		if ( ( (File) options.valueOf( "config" ) ).getName() == "server.yaml" && NetworkManager.isClientMode() )
 			return new File( "client.yaml" );
 		
@@ -1186,12 +1190,12 @@ public class Loader implements PluginMessageRecipient
 	
 	public static UserManager getUserManager()
 	{
-		return instance.userManager;
+		return Loader.userManager;
 	}
 	
 	public static PersistenceManager getPersistenceManager()
 	{
-		return getInstance().persistence;
+		return Loader.persistence;
 	}
 	
 	public boolean getWarnOnOverload()

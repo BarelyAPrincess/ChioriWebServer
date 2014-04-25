@@ -63,7 +63,7 @@ public class Console implements ConsoleCommandSender, Runnable
 		
 		useJline = !( jline_UnsupportedTerminal ).equals( System.getProperty( jline_terminal ) );
 		
-		if ( options.has( "nojline" ) )
+		if ( options.has( "nojline" ) || Loader.extendedOpt.noJline )
 		{
 			System.setProperty( "user.language", "en" );
 			useJline = false;
@@ -74,13 +74,13 @@ public class Console implements ConsoleCommandSender, Runnable
 			System.setProperty( jline.TerminalFactory.JLINE_TERMINAL, jline.UnsupportedTerminal.class.getName() );
 		}
 		
-		if ( options.has( "noconsole" ) )
+		if ( options.has( "noconsole" ) || Loader.extendedOpt.noConsole )
 		{
 			System.out.println( "Console input is disabled due to --noconsole command argument" );
 			useConsole = false;
 		}
 		
-		if ( options.has( "nocolor" ) )
+		if ( options.has( "nocolor" ) || Loader.extendedOpt.noColor )
 		{
 			useColors = false;
 		}
