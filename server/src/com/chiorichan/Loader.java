@@ -1,40 +1,5 @@
 package com.chiorichan;
 
-import java.awt.Color;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Field;
-import java.net.URISyntaxException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.Set;
-import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import jline.console.ConsoleReader;
-import joptsimple.OptionParser;
-import joptsimple.OptionSet;
-
-import org.apache.commons.lang3.Validate;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.SafeConstructor;
-import org.yaml.snakeyaml.error.MarkedYAMLException;
-
-import sun.misc.IOUtils;
-
 import com.chiorichan.Warning.WarningState;
 import com.chiorichan.command.Command;
 import com.chiorichan.command.CommandMap;
@@ -72,6 +37,37 @@ import com.chiorichan.util.Versioning;
 import com.chiorichan.util.WebUtils;
 import com.chiorichan.util.permissions.DefaultPermissions;
 import com.google.common.collect.ImmutableList;
+import java.awt.Color;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Field;
+import java.net.URISyntaxException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
+import java.util.Set;
+import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import jline.console.ConsoleReader;
+import joptsimple.OptionParser;
+import joptsimple.OptionSet;
+import org.apache.commons.lang3.Validate;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.SafeConstructor;
+import org.yaml.snakeyaml.error.MarkedYAMLException;
+import sun.misc.IOUtils;
 
 public class Loader implements PluginMessageRecipient
 {
@@ -899,7 +895,6 @@ public class Loader implements PluginMessageRecipient
 	public static void unloadServer( String reason )
 	{
 		getPersistenceManager().shutdown();
-		getUserManager().saveUsers();
 		
 		if ( !reason.isEmpty() )
 		{
@@ -911,6 +906,8 @@ public class Loader implements PluginMessageRecipient
 		
 		instance.pluginManager.clearPlugins();
 		instance.commandMap.clearCommands();
+
+		getUserManager().saveUsers();
 		
 		NetworkManager.cleanup();
 	}
@@ -918,18 +915,17 @@ public class Loader implements PluginMessageRecipient
 	public static void shutdown()
 	{
 		getPersistenceManager().shutdown();
-		getUserManager().saveUsers();
-		
-		getConsole().primaryThread.interrupt();
-		
+
 		instance.pluginManager.clearPlugins();
 		instance.commandMap.clearCommands();
+
+		getUserManager().saveUsers();
 		
 		NetworkManager.cleanup();
 		
 		isRunning = false;
 		
-		System.exit( 1 );
+		//System.exit( 1 );
 	}
 	
 	public int broadcast( String message, String permission )
