@@ -93,18 +93,18 @@ public class ConsoleLogFormatter extends Formatter
 
 		String threadName = Thread.currentThread().getName();
 
-		if ( threadName.length() > 20 )
-			threadName = threadName.substring( 0, 3 ) + "..." + threadName.substring( 14 );
-		else if ( threadName.length() < 20 )
-			threadName = threadName + Strings.repeat( " ", 20 - threadName.length() );
+		if ( threadName.length() > 10 )
+			threadName = threadName.substring( 0, 2 ) + ".." + threadName.substring( threadName.length() - 6 );
+		else if ( threadName.length() < 10 )
+			threadName = threadName + Strings.repeat( " ", 10 - threadName.length() );
 
 		builder.append( ChatColor.RESET + "" + ChatColor.GRAY );
-		builder.append( date.format( record.getMillis() ) );
-		builder.append( " [" );
+		builder.append( "[" );
 		builder.append( ChatColor.LIGHT_PURPLE );
 		builder.append( threadName );
 		builder.append( ChatColor.GRAY );
-		builder.append( "]" );
+		builder.append( "] " );
+		builder.append( date.format( record.getMillis() ) );
 
 		if ( debugMode )
 		{
