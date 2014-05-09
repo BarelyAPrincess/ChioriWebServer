@@ -34,7 +34,7 @@ Contains some basic starter plugins like PermissionsEx (Ported from Bukkit) and 
 
 =Installation=
 ==Configuration==
-The server configuration will be located in the file "chiori.yml" in the root folder of the running jar (Will generate with default values on first run) and is in the standard format of YAML. It is important to note the binding to ports below 1024 on linux (for example port 80, like most web servers run on) will require access to privileged ports.
+The server configuration will be located in the file "server.yaml" ("client.yaml" for client mode runs) in the root folder of the running jar (Will generate with default values on first run) and is in the standard format of YAML. It is important to note the binding to ports below 1024 on linux (for example port 80, like most web servers run on) will require access to privileged ports.
 
 ===About YAML===
 YAML(tm) is an international collaboration to make a data serialization language which is both pony readable and computationally powerful. The founding members of YAML are Ingy döt Net (author of the Perl module Data::Denter), Clark Evans, and Oren Ben-Kiki. YAML emerged from the union of two efforts. The first was Ingy döt Net's need for a serialization format for Inline, this resulted in his Data::Denter module. The second, was the joint work of Oren Ben-Kiki Clark Evans on simplifying XML within the sml-dev group. YAML was first publicized with a <?xmlhack?> article on 12 May 2001. Oren and Clark's vision for YAML was very similar to Ingy's Data::Denter, and vice versa, thus a few days later they teamed up and YAML was born. For more information: http://www.yaml.org/start.html
