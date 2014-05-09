@@ -1,5 +1,6 @@
 package com.chiorichan.http;
 
+import com.chiorichan.Loader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -8,131 +9,135 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.chiorichan.Loader;
-
 class FileInterpreter
 {
 	Map<String, String> fwOverrides = new HashMap<String, String>();
 	ByteArrayOutputStream bs = new ByteArrayOutputStream();
 	File cachedFile;
-	
+
 	public String toString()
 	{
 		String overrides = "";
-		
-		for( Entry<String, String> o : fwOverrides.entrySet() )
+
+		for ( Entry<String, String> o : fwOverrides.entrySet() )
 		{
 			overrides += "," + o.getKey() + "=" + o.getValue();
 		}
-		
+
 		return "FileInterpreter{content=" + bs.size() + " bytes,file=" + cachedFile.getAbsolutePath() + ",overrides={" + overrides.substring( 1 ) + "}}";
 	}
-	
-	public FileInterpreter(File file) throws IOException
+
+	public FileInterpreter( File file ) throws IOException
 	{
-		cachedFile = file;
-		
-		fwOverrides.put( "title", null );
-		fwOverrides.put( "reqlevel", null );
-		fwOverrides.put( "theme", null );
-		fwOverrides.put( "view", null );
-		
-		// Shell Options (groovy,text,html)
-		fwOverrides.put( "shell", "html" );
-		
-		if ( file == null || !file.exists() )
-			return;
-		
-		if ( file.getName().toLowerCase().endsWith( ".chi" ) || file.getName().toLowerCase().endsWith( ".groovy" ) )
-			fwOverrides.put( "shell", "groovy" );
-		else if ( file.getName().toLowerCase().endsWith( ".txt" ) )
-			fwOverrides.put( "shell", "text" );
-		else if ( ContentTypes.getContentType( cachedFile.getAbsoluteFile() ).toLowerCase().contains( "image" ) )
-			fwOverrides.put( "shell", "image" );
-		
-		FileInputStream is = new FileInputStream( file );
-		
-		int nRead;
-		byte[] data = new byte[16384];
-		
-		while ( ( nRead = is.read( data, 0, data.length ) ) != -1 )
+		FileInputStream is = null;
+		try
 		{
-			bs.write( data, 0, nRead );
-		}
-		
-		bs.flush();
-		
-		String[] scanner = new String( bs.toByteArray() ).split( "\\n" );
-		
-		int inx = 0;
-		int ln = 0;
-		for ( String l : scanner )
-		{
-			if ( l.trim().startsWith( "@" ) )
+			cachedFile = file;
+
+			fwOverrides.put( "title", null );
+			fwOverrides.put( "reqlevel", null );
+			fwOverrides.put( "theme", null );
+			fwOverrides.put( "view", null );
+
+			// Shell Options (groovy,text,html)
+			fwOverrides.put( "shell", "html" );
+
+			if ( file == null || !file.exists() )
+				return;
+
+			if ( file.getName().toLowerCase().endsWith( ".chi" ) || file.getName().toLowerCase().endsWith( ".groovy" ) )
+				fwOverrides.put( "shell", "groovy" );
+			else if ( file.getName().toLowerCase().endsWith( ".txt" ) )
+				fwOverrides.put( "shell", "text" );
+			else if ( ContentTypes.getContentType( cachedFile.getAbsoluteFile() ).toLowerCase().contains( "image" ) )
+				fwOverrides.put( "shell", "image" );
+
+			is = new FileInputStream( file );
+
+			int nRead;
+			byte[] data = new byte[16384];
+
+			while ( (nRead = is.read( data, 0, data.length )) != -1 )
 			{
-				try
+				bs.write( data, 0, nRead );
+			}
+
+			bs.flush();
+
+			String[] scanner = new String( bs.toByteArray() ).split( "\\n" );
+
+			int inx = 0;
+			int ln = 0;
+			for ( String l : scanner )
+			{
+				if ( l.trim().startsWith( "@" ) )
+					try
+					{
+						String key = l.trim().substring( 1, l.trim().indexOf( " " ) );
+						String val = l.trim().substring( l.trim().indexOf( " " ) + 1 );
+
+						fwOverrides.put( key, val );
+						Loader.getLogger().finer( "Setting fwOverride '" + key + "' to '" + val + "'" );
+					}
+					catch ( NullPointerException | ArrayIndexOutOfBoundsException e )
+					{
+						e.printStackTrace();
+					}
+				else if ( l.trim().isEmpty() )
+					Loader.getLogger().finest( "Continue reading, this line is empty." );
+				else
 				{
-					String key = l.trim().substring( 1, l.trim().indexOf( " " ) );
-					String val = l.trim().substring( l.trim().indexOf( " " ) + 1 );
-					
-					fwOverrides.put( key, val );
-					Loader.getLogger().finer( "Setting fwOverride '" + key + "' to '" + val + "'" );
+					Loader.getLogger().finest( "We encountered the beginning of the file content. BREAK!" );
+					break;
 				}
-				catch ( NullPointerException | ArrayIndexOutOfBoundsException e )
-				{
-					e.printStackTrace();
-				}
+
+				inx += l.length() + 1;
+				ln++;
 			}
-			else if ( l.trim().isEmpty() )
+
+			ByteArrayOutputStream finished = new ByteArrayOutputStream();
+
+			int h = 0;
+			for ( byte b : bs.toByteArray() )
 			{
-				Loader.getLogger().finest( "Continue reading, this line is empty." );
+				h++;
+
+				if ( h > inx )
+					finished.write( b );
 			}
-			else
+
+			for ( int lnn = 0; lnn < ln; lnn++ )
 			{
-				Loader.getLogger().finest( "We encountered the beginning of the file content. BREAK!" );
-				break;
+				finished.write( "\n".getBytes( "ISO-8859-1" ) );
 			}
-			
-			inx += l.length() + 1;
-			ln++;
+
+			bs = finished;
+
 		}
-		
-		ByteArrayOutputStream finished = new ByteArrayOutputStream();
-		
-		int h = 0;
-		for ( byte b : bs.toByteArray() )
+		finally
 		{
-			h++;
-			
-			if ( h > inx )
-				finished.write( b );
+			if ( is != null )
+				is.close();
 		}
-		
-		for ( int lnn = 0; lnn < ln; lnn++ )
-			finished.write( "\n".getBytes( "ISO-8859-1" ) );
-		
-		bs = finished;
-		
-		is.close();
 	}
-	
+
 	public String getContentType()
 	{
 		String type = ContentTypes.getContentType( cachedFile.getAbsoluteFile() );
 		Loader.getLogger().info( "Detected '" + cachedFile.getAbsolutePath() + "' to be of '" + type + "' type." );
 		return type;
 	}
-	
+
 	public Map<String, String> getOverrides()
 	{
 		return fwOverrides;
 	}
-	
+
 	public byte[] getContent()
 	{
 		return bs.toByteArray();
 	}
-	
+
 	public String get( String key )
 	{
 		return fwOverrides.get( key );

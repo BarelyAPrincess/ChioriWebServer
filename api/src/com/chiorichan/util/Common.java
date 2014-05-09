@@ -96,4 +96,9 @@ public class Common
 	{
 		return s.matches( "[a-fA-F0-9]{32}" );
 	}
+
+	public static boolean isRoot()
+	{
+		return System.getProperty( "user.name" ).equalsIgnoreCase( "root" );
+	}
 }
