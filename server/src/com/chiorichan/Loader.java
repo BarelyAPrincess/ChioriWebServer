@@ -67,7 +67,6 @@ import org.apache.commons.lang3.Validate;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.error.MarkedYAMLException;
-import sun.misc.IOUtils;
 
 public class Loader implements PluginMessageRecipient
 {
@@ -369,7 +368,10 @@ public class Loader implements PluginMessageRecipient
 		try
 		{
 			InputStream is = Loader.class.getClassLoader().getResourceAsStream( ( extendedOpt.altBanner == null ) ? "com/chiorichan/banner.txt" : extendedOpt.altBanner );
-			String[] banner = new String( IOUtils.readFully( is, is.available(), true ) ).split( "\\n" );
+
+			String[] banner = new String( FileUtil.inputStream2Bytes( is ) ).split( "\\n" );
+
+			is.close();
 			
 			for ( String l : banner )
 				Loader.getConsole().sendMessage( ChatColor.GOLD + l );

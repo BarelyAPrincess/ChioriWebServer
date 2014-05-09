@@ -1,6 +1,7 @@
 package com.chiorichan.http;
 
 import com.chiorichan.Loader;
+import com.chiorichan.util.FileUtil;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -54,15 +55,7 @@ class FileInterpreter
 
 			is = new FileInputStream( file );
 
-			int nRead;
-			byte[] data = new byte[16384];
-
-			while ( (nRead = is.read( data, 0, data.length )) != -1 )
-			{
-				bs.write( data, 0, nRead );
-			}
-
-			bs.flush();
+			bs = FileUtil.inputStream2ByteArray( is );
 
 			String[] scanner = new String( bs.toByteArray() ).split( "\\n" );
 
