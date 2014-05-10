@@ -1,15 +1,5 @@
 package com.chiorichan.http;
 
-import groovy.lang.Binding;
-
-import java.io.File;
-import java.io.IOException;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
@@ -25,6 +15,14 @@ import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import groovy.lang.Binding;
+import java.io.File;
+import java.io.IOException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This class is used to carry data that is to be persistent from request to request.
@@ -573,7 +571,8 @@ public class PersistentSession implements UserHandler
 	{
 		return request.getResponse();
 	}
-	
+
+	// Is this thread safe? Could this spell trouble?
 	public Evaling getEvaling()
 	{
 		if ( eval == null )

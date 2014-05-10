@@ -8,62 +8,62 @@ import com.google.common.base.Joiner
 
 abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 {
-	Framework getFramework()
-	{
-		if ( chiori == null )
-			chiori = request.getFramework();
+    Framework getFramework()
+    {
+        if ( chiori == null )
+        chiori = request.getFramework();
 		
-		return chiori;
-	}
+        return chiori;
+    }
 	
-	void var_dump ( Object obj )
-	{
-		println var_export( obj )
-	}
+    void var_dump ( Object obj )
+    {
+        println var_export( obj )
+    }
 	
-	HttpRequest getRequest()
-	{
-		return request;
-	}
+    HttpRequest getRequest()
+    {
+        return request;
+    }
 	
-	HttpResponse getResponse()
-	{
-		return response;
-	}
+    HttpResponse getResponse()
+    {
+        return response;
+    }
 	
-	PersistentSession getSession()
-	{
-		return request.getSession();
-	}
+    PersistentSession getSession()
+    {
+        return request.getSession();
+    }
 	
-	void echo( String var )
-	{
-		println var
-	}
+    void echo( String var )
+    {
+        println var
+    }
 	
-	void include( String file )
-	{
-		println ( getFramework().getServer().fileReader( file ) );
-	}
+    void include( String file )
+    {
+        println ( getFramework().getServer().fileReader( file ) );
+    }
 	
-	String getVersion()
-	{
-		return Versioning.getVersion();
-	}
+    String getVersion()
+    {
+        return Versioning.getVersion();
+    }
 	
-	String getProduct()
-	{
-		return Versioning.getProduct();
-	}
+    String getProduct()
+    {
+        return Versioning.getProduct();
+    }
 	
-	String getCopyright()
-	{
-		return Versioning.getCopyright();
-	}
+    String getCopyright()
+    {
+        return Versioning.getCopyright();
+    }
 	
-	@Deprecated
-	String get_version()
-	{
-		return getFramework().getProduct() + " " + getFramework().getVersion();
-	}
+    @Deprecated
+    String get_version()
+    {
+        return getFramework().getProduct() + " " + getFramework().getVersion();
+    }
 }

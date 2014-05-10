@@ -3,9 +3,11 @@ package com.chiorichan.framework;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
+import java.lang.reflect.Type;
 import java.net.ConnectException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -19,7 +21,11 @@ import com.chiorichan.database.SqlConnector;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.SiteLoadEvent;
 import com.chiorichan.file.YamlConfiguration;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 
 public class Site
 {
@@ -34,13 +40,15 @@ public class Site
 	{
 		try
 		{
+			Type mapType = new TypeToken<HashMap<String, String>>() {}.getType();
+			
 			siteId = rs.getString( "siteID" );
 			title = rs.getString( "title" );
 			domain = rs.getString( "domain" );
 			
 			Loader.getLogger().info( "Loading site '" + siteId + "' with title '" + title + "' from Framework Database." );
 			
-			Gson gson = new Gson();
+			Gson gson = new GsonBuilder().create();
 			try
 			{
 				if ( !rs.getString( "protected" ).isEmpty() )
@@ -64,7 +72,7 @@ public class Site
 			try
 			{
 				if ( !rs.getString( "aliases" ).isEmpty() )
-					aliases = gson.fromJson( new JSONObject( rs.getString( "aliases" ) ).toString(), LinkedHashMap.class );
+					aliases = gson.fromJson( new JSONObject( rs.getString( "aliases" ) ).toString(), mapType );
 			}
 			catch ( Exception e )
 			{
@@ -74,7 +82,7 @@ public class Site
 			try
 			{
 				if ( !rs.getString( "subdomains" ).isEmpty() )
-					subdomains = gson.fromJson( new JSONObject( rs.getString( "subdomains" ) ).toString(), LinkedHashMap.class );
+					subdomains = gson.fromJson( new JSONObject( rs.getString( "subdomains" ) ).toString(), mapType );
 			}
 			catch ( Exception e )
 			{
@@ -163,9 +171,9 @@ public class Site
 		title = title0;
 		domain = domain0;
 		protectedFiles = new HashSet<String>();
-		metatags = new HashSet<String>();
-		aliases = new LinkedHashMap<String, String>();
-		subdomains = new LinkedHashMap<String, String>();
+		metatags = Sets.newHashSet();
+		aliases = Maps.newLinkedHashMap();
+		subdomains = Maps.newLinkedHashMap();
 	}
 	
 	public boolean protectCheck( String file )
@@ -189,6 +197,16 @@ public class Site
 		return target;
 	}
 	
+	public File getAbsoluteWebRoot( String subdomain )
+	{
+		File root = new File( Loader.webroot, getWebRoot( subdomain ) );
+		
+		if ( !root.exists() )
+			root.mkdirs();
+		
+		return root;
+	}
+	
 	public String getWebRoot( String subdomain )
 	{
 		String target = "/" + siteId;
@@ -207,21 +225,6 @@ public class Site
 	public SqlConnector getDatabase()
 	{
 		return sql;
-	}
-	
-	public String subDomain = "";
-	
-	public void setSubDomain( String var1 )
-	{
-		if ( var1 == null )
-			var1 = "";
-		
-		subDomain = var1;
-	}
-	
-	public String getSubDomain()
-	{
-		return subDomain;
 	}
 	
 	public File getResourceRoot()
@@ -249,7 +252,9 @@ public class Site
 			return source;
 		
 		for ( Entry<String, String> entry : aliases.entrySet() )
+		{
 			source = source.replace( "%" + entry.getKey() + "%", entry.getValue() );
+		}
 		
 		return source;
 	}
@@ -258,7 +263,7 @@ public class Site
 	{
 		return siteId;
 	}
-
+	
 	public void setAutoSave( boolean b )
 	{
 		// TODO Auto-generated method stub

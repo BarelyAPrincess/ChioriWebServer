@@ -1,11 +1,5 @@
 package com.chiorichan.http;
 
-import java.net.ConnectException;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Iterator;
-import java.util.List;
-
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
@@ -14,6 +8,11 @@ import com.chiorichan.framework.SiteManager;
 import com.chiorichan.user.User;
 import com.chiorichan.util.Common;
 import com.google.common.collect.Lists;
+import java.net.ConnectException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Persistence manager handles sessions kept in memory. It also manages when to unload the session to free memeory.
@@ -158,12 +157,8 @@ public class PersistenceManager
 			{
 				sess = new PersistentSession( request );
 				sessionList.add( sess );
-				//Loader.getLogger().debug( "Created Session: " + sess.candyName + " -> " + sess.candyId );
 			}
 		}
-		
-		//for ( Entry<String, Candy> e : sess.pullCandies( request ).entrySet() )
-			//Loader.getLogger().debug( "Received Cookie: " + e.getKey() + " -> " + e.getValue().getValue() );
 		
 		return sess;
 	}
