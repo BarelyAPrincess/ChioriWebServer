@@ -43,7 +43,9 @@ public class FileInterpreter
 			overrides += "," + o.getKey() + "=" + o.getValue();
 		}
 		
-		return "FileInterpreter{content=" + bs.size() + " bytes,file=" + cachedFile.getAbsolutePath() + ",overrides={" + overrides.substring( 1 ) + "}}";
+		String cachedFileStr = ( cachedFile == null ) ? "N/A" : cachedFile.getAbsolutePath();
+		
+		return "FileInterpreter{content=" + bs.size() + " bytes,file=" + cachedFileStr + ",overrides={" + overrides.substring( 1 ) + "}}";
 	}
 	
 	public File getFile()
@@ -62,7 +64,7 @@ public class FileInterpreter
 		interpParams.put( "file", null );
 		
 		// Shell Options (groovy,text,html)
-		interpParams.put( "shell", "html" );
+		interpParams.put( "shell", null );
 	}
 	
 	public FileInterpreter(HttpRequest request) throws IOException, HttpErrorException
@@ -259,6 +261,8 @@ public class FileInterpreter
 		{
 			if ( dest != null && dest.exists() )
 				interpretParamsFromFile( dest );
+			else if ( !interpParams.containsKey( "shell" ) || interpParams.get( "shell" ) == null )
+				interpParams.put( "shell", "html" );
 		}
 		else
 			throw new HttpErrorException( 404 );

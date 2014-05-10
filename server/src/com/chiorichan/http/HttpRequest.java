@@ -195,6 +195,11 @@ public class HttpRequest
 			childDomainName = var1[0];
 			parentDomainName = var1[1];
 		}
+		else
+		{
+			childDomainName = "";
+			parentDomainName = domain;
+		}
 	}
 
 	public String getMethod()

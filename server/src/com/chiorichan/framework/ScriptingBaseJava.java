@@ -1,5 +1,7 @@
 package com.chiorichan.framework;
 
+import groovy.lang.Script;
+
 import java.io.File;
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -20,7 +22,6 @@ import com.chiorichan.util.Common;
 import com.chiorichan.util.ObjectUtil;
 import com.chiorichan.util.StringUtil;
 import com.google.common.base.Joiner;
-import groovy.lang.Script;
 
 abstract public class ScriptingBaseJava extends Script
 {
@@ -81,6 +82,20 @@ abstract public class ScriptingBaseJava extends Script
 	int strlen( String var )
 	{
 		return var.length();
+	}
+	
+	boolean empty ( Object o )
+	{
+		if ( o == null )
+			return true;
+		else if ( o instanceof List<?> )
+			return empty( (List) o );
+		else if ( o instanceof Map<?, ?> )
+			return empty( (Map) o );
+		else if ( o instanceof String )
+			return empty( (String) o );
+		
+		return false;
 	}
 	
 	boolean empty( List<Object> list )

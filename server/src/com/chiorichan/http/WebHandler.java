@@ -58,12 +58,25 @@ public class WebHandler implements HttpHandler
 		}
 		catch ( IndexOutOfBoundsException | NullPointerException | IOException e )
 		{
-			e.printStackTrace();
-			response.sendError( 500, null, "<pre>" + ExceptionUtils.getStackTrace( e ) + "</pre>" );
+			/**
+			 * TODO!!! Proper Exception Handling. PRETTY EXCEPTIONS A MUST FOR HTTP RESPONSE!!!
+			 * We should even consider the ability to have these exceptions cached and/or delivered to your e-mail address.
+			 */
+			if ( e instanceof IOException && e.getCause() != null )
+			{
+				e.getCause().printStackTrace();
+				response.sendError( 500, null, "<pre>" + ExceptionUtils.getStackTrace( e.getCause() ) + "</pre>" );
+			}
+			else
+			{
+				e.printStackTrace();
+				response.sendError( 500, null, "<pre>" + ExceptionUtils.getStackTrace( e ) + "</pre>" );
+			}
 		}
 		catch ( Exception e )
 		{
-			// TEMP
+			// Temp until all exceptions can be found!
+			Loader.getLogger().warning( "WARNING THIS IS AN UNCAUGHT EXCEPTION! PLEASE FIX THE CODE!" );
 			e.printStackTrace();
 		}
 		finally
@@ -139,7 +152,7 @@ public class WebHandler implements HttpHandler
 		// Throws IOException and HttpErrorException
 		FileInterpreter fi = new FileInterpreter( request );
 		
-		Loader.getLogger().info( "New page request '" + subdomain + "." + domain + "' '" + uri + "' '" + fi.toString() + "'" );
+		Loader.getLogger().info( "&dNew page request '" + subdomain + "." + domain + "' '" + uri + "' '" + fi.toString() + "'" );
 		
 		response.setContentType( fi.getContentType() );
 		

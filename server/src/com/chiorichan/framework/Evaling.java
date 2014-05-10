@@ -1,11 +1,9 @@
 package com.chiorichan.framework;
 
-import com.chiorichan.Loader;
-import com.chiorichan.exceptions.ShellExecuteException;
-import com.chiorichan.http.FileInterpreter;
-import com.google.common.collect.Lists;
 import groovy.lang.Binding;
+import groovy.lang.GroovyRuntimeException;
 import groovy.lang.GroovyShell;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -15,8 +13,14 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
+
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.codehaus.groovy.control.CompilerConfiguration;
+
+import com.chiorichan.Loader;
+import com.chiorichan.exceptions.ShellExecuteException;
+import com.chiorichan.http.FileInterpreter;
+import com.google.common.collect.Lists;
 
 public class Evaling
 {
@@ -165,7 +169,7 @@ public class Evaling
 				evalFile( file.getAbsolutePath() );
 				return true;
 			}
-			catch ( CodeParsingException e )
+			catch ( CodeParsingException | GroovyRuntimeException e )
 			{
 				throw new ShellExecuteException( e );
 			}
@@ -194,7 +198,7 @@ public class Evaling
 				evalCode( html );
 				return true;
 			}
-			catch ( CodeParsingException e )
+			catch ( CodeParsingException | GroovyRuntimeException e )
 			{
 				throw new ShellExecuteException( e );
 			}
@@ -219,7 +223,7 @@ public class Evaling
 				evalFileVirtual( fi.getContent(), fi.getFile().getAbsolutePath() );
 				return true;
 			}
-			catch ( CodeParsingException e )
+			catch ( CodeParsingException | GroovyRuntimeException e )
 			{
 				throw new ShellExecuteException( e );
 			}
