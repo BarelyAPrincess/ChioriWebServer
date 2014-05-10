@@ -53,7 +53,8 @@ public final class JavaPluginLoader implements PluginLoader
 	private final Map<String, Class<?>> classes = new HashMap<String, Class<?>>();
 	private final Map<String, PluginClassLoader> loaders = new LinkedHashMap<String, PluginClassLoader>();
 	
-	public JavaPluginLoader()
+	// Need to deprecate this requirement.
+	public JavaPluginLoader( Loader loader )
 	{
 		
 	}
