@@ -106,7 +106,6 @@
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/reflectasm-1.07.jar"/>
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/commons-io-2.4.jar"/>
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/openbeans-1.0.jar"/>
-			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/tika-app-1.4.jar"/>
 		</jar>
 		
 		<checksum file="${jar.dir}/${ant.project.name}-${project.version}-github-build${env.BUILD_NUMBER}.jar" forceOverwrite="yes"/>
