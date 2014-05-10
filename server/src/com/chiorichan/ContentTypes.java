@@ -45,7 +45,7 @@ public class ContentTypes
 		}
 		else
 		{
-			return "text/html";
+			return "text/plain";
 		}
 	}
 }
