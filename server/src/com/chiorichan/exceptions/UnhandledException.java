@@ -1,4 +1,4 @@
-package com.chiorichan.util;
+package com.chiorichan.exceptions;
 
 public class UnhandledException extends Exception
 {

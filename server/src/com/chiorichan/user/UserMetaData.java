@@ -3,7 +3,6 @@ package com.chiorichan.user;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.chiorichan.Loader;
 import com.chiorichan.util.ObjectUtil;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
@@ -50,8 +49,6 @@ public class UserMetaData
 	public Integer getInteger( String key, int def )
 	{
 		Object obj = metaData.get( key );
-		
-		Loader.getLogger().debug( key + " -> " + obj );
 		
 		if ( obj instanceof String )
 			if ( ( ( String ) obj ).isEmpty() )

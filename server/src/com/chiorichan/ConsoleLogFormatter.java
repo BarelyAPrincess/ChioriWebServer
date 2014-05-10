@@ -18,6 +18,7 @@ public class ConsoleLogFormatter extends Formatter
 	public Map<ChatColor, String> replacements = new EnumMap<ChatColor, String>( ChatColor.class );
 	public ChatColor[] colors = ChatColor.values();
 	public boolean debugMode = false;
+	public int debugModeHowDeep = 1;
 
 	public ConsoleLogFormatter( Console console )
 	{
@@ -106,18 +107,23 @@ public class ConsoleLogFormatter extends Formatter
 		builder.append( "] " );
 		builder.append( date.format( record.getMillis() ) );
 
+		int howDeep = debugModeHowDeep;
+
 		if ( debugMode )
 		{
 			StackTraceElement[] var1 = Thread.currentThread().getStackTrace();
 
 			for ( StackTraceElement var2 : var1 )
 			{
-				if ( !var2.getClassName().toLowerCase().contains( "java" ) && !var2.getClassName().toLowerCase().contains( "log" ) && !var2.getMethodName().equals( "sendMessage" ) && !var2.getMethodName().equals( "sendRawMessage" ) )
+				if ( !var2.getClassName().toLowerCase().contains( "java" ) && !var2.getClassName().toLowerCase().contains( "sun" ) && !var2.getClassName().toLowerCase().contains( "log" ) && !var2.getMethodName().equals( "sendMessage" ) && !var2.getMethodName().equals( "sendRawMessage" ) )
 				{
-					builder.append( " " + var2.getClassName() );
-					builder.append( "$" + var2.getMethodName() );
-					builder.append( ":" + var2.getLineNumber() );
-					break;
+					howDeep--;
+
+					if ( howDeep <= 0 )
+					{
+						builder.append( " " ).append( var2.getClassName()).append( "$" ).append( var2.getMethodName() ).append( ":").append( var2.getLineNumber());
+						break;
+					}
 				}
 			}
 		}

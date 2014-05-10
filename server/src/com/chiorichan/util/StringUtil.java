@@ -3,7 +3,6 @@ package com.chiorichan.util;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.util.Collection;
-
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.Validate;
 
@@ -108,5 +107,12 @@ public class StringUtil
 		Validate.notNull( argument );
 		argument = argument.toLowerCase();
 		return ( argument.equals( "true" ) || argument.equals( "1" ) );
+	}
+
+	public static String replaceAt( String par, int at, String rep )
+	{
+		StringBuilder sb = new StringBuilder( par );
+		sb.setCharAt( at, rep.toCharArray()[0] );
+		return sb.toString();
 	}
 }
