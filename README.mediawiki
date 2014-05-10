@@ -253,6 +253,26 @@ A whole new system for both users and permissions was implemented. If you want t
 Major improvements to the way sessions are handled. Many session configurations added.
 ====Build 0313====
 Added a build.xml file so the project can not be built with Apache Ant 1.8. Switch from YAML to Properties for project details/metadata file (server/src/com/chiorichan/metadata.properties) so Ant/build.xml could now make versioned binary files.
+====Release 6====
+* Changed from using build numbers to release numbers since Jenkins implements this.
+* Optimize WebHandler code for improved performance.
+* Added new InputStream consume file util method.
+* Added privilaged port check to NetworkManager.
+* Changed log formating layout. Log messages now show the current thread and milliseconds.
+* Changed the shutdown proceedure. System.exit was prematurly terminating plugins.
+* Added support for Multipart HTTP Sessions.
+* Added support for applications to embed the Web Server as a library. (WIP)
+* Moved Networking Code from Loader to it's own Class.
+* Made the base changes needed to run to application as a Client. (WIP)
+* Changed the way GSON loads Maps for Sessions.
+* Added auto updater that works with the Jenkins Build Server at http://jenkins.chiorichan.com. (WIP)
+* Added ant build.xml for use with the Jenkins Build Server.
+* Added Cartridge Return char support to the ConsoleLogFormatter. (You can now make Progress Bars in console. WOOT!)
+* Added InstallationId. Great for installation tracking.
+* Session cleanups and Update Checks are now on a Time Based Rotation.
+* Fixed bug with doubled output in log file.
+* Added option to disable chat colors.
+* Switch metadata file from YAML to Properties.
 
 =Binary Release=
 You can grab the latest binary builds from our jenkins server at http://jenkins.applebloom.co/job/ChioriWebServer/.
