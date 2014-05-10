@@ -64,7 +64,7 @@ public class HttpResponse
 		if ( var2 == null )
 			var2 = HttpCode.msg( var1 );
 
-		Loader.getLogger().severe( "HttpError: " + var1 + " - " + var2 );
+		Loader.getLogger().warning( "HttpError: " + var1 + " - " + var2 + "... '" + request.getSubDomain() + "." + request.getParentDomain() + "' '" + request.getURI() + "'" );
 
 		httpStatus = var1;
 

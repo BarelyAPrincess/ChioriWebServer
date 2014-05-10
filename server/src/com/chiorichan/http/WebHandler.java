@@ -22,13 +22,13 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 /**
  * This class is not thread safe.
  * Be sure to keep all references out of global name space in case of concurrent requests.
- *
+ * 
  * @author Chiori Greene
  */
 public class WebHandler implements HttpHandler
 {
 	protected static Map<ServerVars, Object> staticServerVars = Maps.newLinkedHashMap();
-
+	
 	public WebHandler()
 	{
 		// Initalize Static Server Vars
@@ -36,13 +36,13 @@ public class WebHandler implements HttpHandler
 		staticServerVars.put( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "webmaster@example.com" ) );
 		staticServerVars.put( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Versioning.getVersion() );
 	}
-
+	
 	@Override
 	public void handle( HttpExchange t ) throws IOException
 	{
 		HttpRequest request = new HttpRequest( t );
 		HttpResponse response = request.getResponse();
-
+		
 		// TODO Catch Broken Pipes.
 		try
 		{
@@ -70,46 +70,46 @@ public class WebHandler implements HttpHandler
 		{
 			/*
 			 * PersistentSession sess = request.getSessionNoWarning();
-			 *
 			 * if ( sess != null )
 			 * {
 			 * sess.releaseResources();
 			 * sess.saveSession();
-			 * } */
-
+			 * }
+			 */
+			
 			response.sendResponse();
-
+			
 			request.getSession().getEvaling().reset();
-
+			
 			// Too many files open error. Is this a fix? FIFO Pipes.
 			request.getOriginal().getRequestBody().close();
 			request.getOriginal().getResponseBody().close();
-
+			
 			t.close();
 		}
 	}
-
+	
 	public void handleHttp( HttpRequest request, HttpResponse response ) throws IOException, HttpErrorException
 	{
 		String uri = request.getURI();
 		String domain = request.getParentDomain();
 		String subdomain = request.getSubDomain();
-
+		
 		Site currentSite = Loader.getPersistenceManager().getSiteManager().getSiteByDomain( domain );
-
+		
 		if ( currentSite == null )
 			currentSite = new Site( "default", Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Chiori Framework Site" ), domain );
-
+		
 		request.setSite( currentSite );
-
+		
 		request.initSession();
-
+		
 		request.initServerVars( staticServerVars );
-
+		
 		PersistentSession sess = request.getSession();
-
+		
 		RequestEvent requestEvent = new RequestEvent( request );
-
+		
 		try
 		{
 			Loader.getPluginManager().callEventWithException( requestEvent );
@@ -118,63 +118,66 @@ public class WebHandler implements HttpHandler
 		{
 			throw new IOException( "Exception encountered during request event call, most likely the fault of a plugin.", ex );
 		}
-
+		
 		if ( requestEvent.isCancelled() )
 		{
 			Loader.getLogger().warning( "Navigation was cancelled by a Server Plugin" );
-
+			
 			int status = requestEvent.getStatus();
 			String reason = requestEvent.getReason();
-
+			
 			if ( status < 400 && status > 599 )
 			{
 				status = 502;
 				reason = "Navigation Cancelled by Internal Plugin Event";
 			}
-
+			
 			response.sendError( status, reason );
 			return;
 		}
-
+		
 		// Throws IOException and HttpErrorException
 		FileInterpreter fi = new FileInterpreter( request );
+		
+		Loader.getLogger().info( "New page request '" + subdomain + "." + domain + "' '" + uri + "' '" + fi.toString() + "'" );
+		
 		response.setContentType( fi.getContentType() );
-
+		
 		String file = fi.get( "file" );
 		String html = fi.get( "html" );
-
+		
 		if ( file == null )
 			file = "";
-
+		
 		if ( html == null )
 			html = "";
-
+		
 		if ( file.isEmpty() && html.isEmpty() )
 			throw new HttpErrorException( 500, "Internal Server Error Encountered While Rendering Request" );
-
+		
 		File requestFile = null;
 		if ( !file.isEmpty() )
 		{
 			if ( currentSite.protectCheck( file ) )
 				throw new HttpErrorException( 401, "Loading of this page (" + file + ") is not allowed since its hard protected in the site configs." );
-
+			
 			requestFile = new File( file );
 			sess.setGlobal( "__FILE__", requestFile );
 		}
-
+		
 		request.putServerVar( ServerVars.DOCUMENT_ROOT, currentSite.getAbsoluteWebRoot( subdomain ) );
-
+		
 		sess.setGlobal( "_SERVER", request.getServerStrings() );
 		sess.setGlobal( "_REQUEST", request.getRequestMap() );
 		sess.setGlobal( "_POST", request.getPostMap() );
 		sess.setGlobal( "_GET", request.getGetMap() );
 		sess.setGlobal( "_REWRITE", request.getRewriteVars() );
-
+		
 		Evaling eval = sess.getEvaling();
 		eval.reset(); // Reset eval so any left over output from any previous requests does not leak into this request.
-
+		
 		String req = fi.get( "reqlevel" );
-
+		
 		if ( !req.equals( "-1" ) )
 			if ( sess.getCurrentUser() == null )
 			{
@@ -188,10 +191,10 @@ public class WebHandler implements HttpHandler
 			{
 				if ( req.equals( "0" ) )
 					response.sendError( 401, "This page is limited to Operators only!" );
-
+				
 				response.sendError( 401, "This page is limited to users with access to the \"" + req + "\" permission." );
 			}
-
+		
 		try
 		{
 			// Enhancement: Allow html to be ran under different shells. Default is GROOVY.
@@ -203,7 +206,7 @@ public class WebHandler implements HttpHandler
 		{
 			throw new IOException( "Exception encountered during shell execution of requested file.", e );
 		}
-
+		
 		try
 		{
 			if ( requestFile != null )
@@ -214,7 +217,7 @@ public class WebHandler implements HttpHandler
 		{
 			throw new IOException( "Exception encountered during shell execution of requested file.", e );
 		}
-
+		
 		// TODO: Possible theme'ing of error pages.
 		// if the connection was in a MultiPart mode, wait for the mode to change then return gracefully.
 		if ( response.stage == HttpResponseStage.MULTIPART )
@@ -231,30 +234,30 @@ public class WebHandler implements HttpHandler
 					throw new HttpErrorException( 500, "Internal Server Error encountered during multipart execution." );
 				}
 			}
-
+			
 			return;
 		}
 		// If the connection was closed from page redirect, return gracefully.
 		else if ( response.stage == HttpResponseStage.CLOSED || response.stage == HttpResponseStage.WRITTEN )
 			return;
-
+		
 		// Allows scripts to directly override interpreter values. For example: Themes, Views, Titles
 		for ( Entry<String, String> kv : response.pageDataOverrides.entrySet() )
 		{
 			fi.put( kv.getKey(), kv.getValue() );
 		}
-
+		
 		String source = eval.reset();
-
+		
 		RenderEvent renderEvent = new RenderEvent( sess, source, fi.getParams() );
-
+		
 		try
 		{
 			Loader.getPluginManager().callEventWithException( renderEvent );
-
+			
 			if ( renderEvent.sourceChanged() && !fi.get( "shell" ).equals( "null" ) )
 				source = renderEvent.getSource();
-
+			
 			response.getOutput().write( source.getBytes( "ISO-8859-1" ) );
 		}
 		catch ( EventException ex )
