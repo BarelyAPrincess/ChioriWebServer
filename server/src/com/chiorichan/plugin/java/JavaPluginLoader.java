@@ -49,20 +49,9 @@ import com.google.common.collect.ImmutableList;
  */
 public final class JavaPluginLoader implements PluginLoader
 {
-	final Loader server;
 	private final Pattern[] fileFilters = new Pattern[] { Pattern.compile( "\\.jar$" ), };
 	private final Map<String, Class<?>> classes = new HashMap<String, Class<?>>();
 	private final Map<String, PluginClassLoader> loaders = new LinkedHashMap<String, PluginClassLoader>();
-	
-	/**
-	 * This class was not meant to be constructed explicitly
-	 */
-	@Deprecated
-	public JavaPluginLoader(Loader instance)
-	{
-		Validate.notNull( instance, "Server cannot be null" );
-		server = instance;
-	}
 	
 	public Plugin loadPlugin( File file ) throws InvalidPluginException
 	{
@@ -182,11 +171,14 @@ public final class JavaPluginLoader implements PluginLoader
 		try
 		{
 			jar = new JarFile( file );
-			JarEntry entry = jar.getJarEntry( "plugin.yml" );
+			JarEntry entry = jar.getJarEntry( "plugin.yaml" );
+			
+			if ( entry == null )
+				entry = jar.getJarEntry( "plugin.yml" );
 			
 			if ( entry == null )
 			{
-				throw new InvalidDescriptionException( new FileNotFoundException( "Jar does not contain plugin.yml" ) );
+				throw new InvalidDescriptionException( new FileNotFoundException( "Jar does not contain plugin.yaml" ) );
 			}
 			
 			stream = jar.getInputStream( entry );
