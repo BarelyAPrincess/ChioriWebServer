@@ -63,6 +63,7 @@
 				<attribute name="Class-Path" value="."/>
 			</manifest>
 			<fileset dir="${classes.dir}"/>
+			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/asm-5.0.2.jar"/>
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/activation.jar"/>
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/annovention-0.1.jar"/>
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/commons-codec-1.6.jar"/>
