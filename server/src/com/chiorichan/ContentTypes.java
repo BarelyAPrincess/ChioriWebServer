@@ -23,11 +23,19 @@ public class ContentTypes
 		try
 		{
 			InputStream is = Loader.class.getClassLoader().getResourceAsStream( "com/chiorichan/ContentTypes.properties" );
-			Properties prop = new Properties();
-			prop.load( is );
-			for ( Object o : prop.keySet() )
-				if ( o instanceof String )
-					types.put( (String) o, (String) prop.get( (String) o ) );
+			try
+			{
+				Properties prop = new Properties();
+				prop.load( is );
+				for ( Object o : prop.keySet() )
+					if ( o instanceof String )
+						types.put( (String) o, (String) prop.get( (String) o ) );
+			}
+			finally
+			{
+				if ( is != null )
+					is.close();
+			}
 		}
 		catch ( IOException e )
 		{

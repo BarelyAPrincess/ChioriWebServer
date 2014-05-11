@@ -163,6 +163,12 @@ public class Evaling
 
 	public boolean shellExecute( String shellIdent, File file ) throws ShellExecuteException
 	{
+		if ( file == null )
+			return false;
+		
+		if ( shellIdent == null )
+			shellIdent = "html";
+		
 		if ( shellIdent.equalsIgnoreCase( "groovy" ) )
 			try
 			{
@@ -192,6 +198,12 @@ public class Evaling
 
 	public boolean shellExecute( String shellIdent, String html ) throws ShellExecuteException
 	{
+		if ( html == null )
+			return false;
+		
+		if ( shellIdent == null )
+			shellIdent = "html";
+		
 		if ( shellIdent.equalsIgnoreCase( "groovy" ) )
 			try
 			{
@@ -217,6 +229,12 @@ public class Evaling
 
 	public boolean shellExecute( String shellIdent, FileInterpreter fi ) throws ShellExecuteException
 	{
+		if ( fi == null )
+			return false;
+		
+		if ( shellIdent == null )
+			shellIdent = "html";
+		
 		if ( shellIdent.equalsIgnoreCase( "groovy" ) )
 			try
 			{

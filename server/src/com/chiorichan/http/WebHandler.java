@@ -154,6 +154,8 @@ public class WebHandler implements HttpHandler
 		
 		Loader.getLogger().info( "&dNew page request '" + subdomain + "." + domain + "' '" + uri + "' '" + fi.toString() + "'" );
 		
+		request.rewriteVars.putAll( fi.getRewriteParams() );
+		
 		response.setContentType( fi.getContentType() );
 		
 		String file = fi.get( "file" );
@@ -268,14 +270,14 @@ public class WebHandler implements HttpHandler
 		{
 			Loader.getPluginManager().callEventWithException( renderEvent );
 			
-			if ( renderEvent.sourceChanged() && !fi.get( "shell" ).equals( "null" ) )
+			if ( renderEvent.sourceChanged() )
 				source = renderEvent.getSource();
-			
-			response.getOutput().write( source.getBytes( "ISO-8859-1" ) );
 		}
 		catch ( EventException ex )
 		{
 			throw new IOException( "Exception encountered during render event call, most likely the fault of a plugin.", ex );
 		}
+		
+		response.getOutput().write( source.getBytes( "ISO-8859-1" ) );
 	}
 }

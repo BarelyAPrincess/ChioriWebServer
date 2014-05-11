@@ -30,6 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 public class FileInterpreter
 {
 	Map<String, String> interpParams = Maps.newTreeMap();
+	Map<String, String> rewriteParams = Maps.newTreeMap();
 	ByteArrayOutputStream bs = new ByteArrayOutputStream();
 	File cachedFile = null;
 	
@@ -43,9 +44,22 @@ public class FileInterpreter
 			overrides += "," + o.getKey() + "=" + o.getValue();
 		}
 		
+		if ( overrides.length() > 1 )
+			overrides = overrides.substring( 1 );
+		
+		String rewrites = "";
+		
+		for ( Entry<String, String> o : rewriteParams.entrySet() )
+		{
+			rewrites += "," + o.getKey() + "=" + o.getValue();
+		}
+		
+		if ( rewrites.length() > 1 )
+			rewrites = rewrites.substring( 1 );
+		
 		String cachedFileStr = ( cachedFile == null ) ? "N/A" : cachedFile.getAbsolutePath();
 		
-		return "FileInterpreter{content=" + bs.size() + " bytes,file=" + cachedFileStr + ",overrides={" + overrides.substring( 1 ) + "}}";
+		return "FileInterpreter{content=" + bs.size() + " bytes,file=" + cachedFileStr + ",overrides={" + overrides + "},rewrites={" + rewrites + "}}";
 	}
 	
 	public File getFile()
@@ -121,7 +135,7 @@ public class FileInterpreter
 								String key = props[i].replaceAll( "[\\[\\]=]", "" );
 								String value = uris[i];
 								
-								request.putRewriteParam( key, value );
+								rewriteParams.put( key, value );
 								
 								// PREP MATCH
 								Loader.getLogger().fine( "Found a PREG match to " + rs.getString( "page" ) );
@@ -175,8 +189,8 @@ public class FileInterpreter
 					interpParams.putAll( (Map<String, String>) rewrite.values().toArray()[0] );
 					wasSuccessful = true;
 					
-					if ( request.getRewriteVars().size() > 0 )
-						Loader.getLogger().info( "Found rewrite params " + request.getRewriteVars() );
+					//if ( request.getRewriteVars().size() > 0 )
+					//	Loader.getLogger().info( "Found rewrite params " + request.getRewriteVars() );
 				}
 				else
 					Loader.getLogger().fine( "Failed to find a page redirect for Rewrite... '" + subdomain + "." + domain + "' '" + uri + "'" );
@@ -387,5 +401,10 @@ public class FileInterpreter
 	protected void put( String key, String value )
 	{
 		interpParams.put( key, value );
+	}
+
+	public Map<String, String> getRewriteParams()
+	{
+		return rewriteParams;
 	}
 }
