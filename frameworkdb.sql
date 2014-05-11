@@ -37,6 +37,8 @@ CREATE TABLE `sites` (
   `siteID` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `title` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'Unnamed Chiori Framework Site',
   `domain` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `source` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'pages',
+  `resource` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'resources',
   `subdomains` text COLLATE utf8_unicode_ci NOT NULL,
   `protected` text COLLATE utf8_unicode_ci NOT NULL,
   `metatags` text COLLATE utf8_unicode_ci NOT NULL,
