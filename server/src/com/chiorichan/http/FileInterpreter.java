@@ -177,7 +177,7 @@ public class FileInterpreter
 						}
 						
 						if ( data.get( "file" ) != null && !data.get( "file" ).isEmpty() )
-							dest = new File( request.getSite().getAbsoluteWebRoot( subdomain ), data.get( "file" ) );
+							dest = new File( request.getSite().getSourceDirectory(), data.get( "file" ) );
 						
 						rewrite.put( weight, data );
 					}

@@ -54,7 +54,7 @@ public class HttpUtilsWrapper
 			return "";
 		
 		pack = pack.replace( ".", System.getProperty( "file.separator" ) );
-		File root = sess.getRequest().getSite().getResourceRoot();
+		File root = sess.getRequest().getSite().getResourceDirectory();
 		
 		File file = new File( root, pack + ".php" );
 		
@@ -73,7 +73,7 @@ public class HttpUtilsWrapper
 		if ( !file.exists() )
 			file = new File( root, pack );
 		
-		root = Loader.getPersistenceManager().getSiteManager().getSiteById( "framework" ).getResourceRoot();
+		root = Loader.getPersistenceManager().getSiteManager().getSiteById( "framework" ).getResourceDirectory();
 		
 		if ( !file.exists() )
 			file = new File( root, pack + ".php" );

@@ -375,7 +375,7 @@ public class HttpRequest
 		try
 		{
 			serverVars = staticServerVars;
-			serverVars.put( ServerVars.DOCUMENT_ROOT, Loader.getConfig().getString( "settings.webroot", "webroot" ) + getSite().getWebRoot( null ) );
+			serverVars.put( ServerVars.DOCUMENT_ROOT, getSite().getAbsoluteRoot( null ) );
 			serverVars.put( ServerVars.HTTP_ACCEPT, getHeader( "Accept" ) );
 			serverVars.put( ServerVars.HTTP_USER_AGENT, getUserAgent() );
 			serverVars.put( ServerVars.HTTP_CONNECTION, getHeader( "Connection" ) );

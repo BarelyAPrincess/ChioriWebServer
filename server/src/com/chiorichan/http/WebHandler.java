@@ -170,6 +170,8 @@ public class WebHandler implements HttpHandler
 		if ( file.isEmpty() && html.isEmpty() )
 			throw new HttpErrorException( 500, "Internal Server Error Encountered While Rendering Request" );
 		
+		File docRoot = currentSite.getAbsoluteRoot( subdomain );
+		
 		File requestFile = null;
 		if ( !file.isEmpty() )
 		{
@@ -178,9 +180,11 @@ public class WebHandler implements HttpHandler
 			
 			requestFile = new File( file );
 			sess.setGlobal( "__FILE__", requestFile );
+			
+			docRoot = new File( requestFile.getParent() );
 		}
 		
-		request.putServerVar( ServerVars.DOCUMENT_ROOT, currentSite.getAbsoluteWebRoot( subdomain ) );
+		request.putServerVar( ServerVars.DOCUMENT_ROOT, docRoot );
 		
 		sess.setGlobal( "_SERVER", request.getServerStrings() );
 		sess.setGlobal( "_REQUEST", request.getRequestMap() );
@@ -262,7 +266,7 @@ public class WebHandler implements HttpHandler
 			fi.put( kv.getKey(), kv.getValue() );
 		}
 		
-		String source = eval.reset();
+		String source = currentSite.applyAlias( eval.reset() );
 		
 		RenderEvent renderEvent = new RenderEvent( sess, source, fi.getParams() );
 		
