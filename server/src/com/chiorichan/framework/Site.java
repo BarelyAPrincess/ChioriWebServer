@@ -150,18 +150,26 @@ public class Site
 			
 			if ( config != null && config.getConfigurationSection( "database" ) != null )
 			{
-				// String type = config.getString("database.type");
+				String type = config.getString( "database.type" );
+				
 				String host = config.getString( "database.host" );
 				String port = config.getString( "database.port" );
 				String database = config.getString( "database.database" );
 				String username = config.getString( "database.username" );
 				String password = config.getString( "database.password" );
 				
+				String filename = config.getString( "database.filename" );
+				
 				sql = new SqlConnector();
 				
 				try
 				{
-					sql.init( database, username, password, host, port );
+					if ( type.equalsIgnoreCase( "mysql" ) )
+						sql.init( database, username, password, host, port );
+					else if ( type.equalsIgnoreCase( "sqlite" ) )
+						sql.init( filename );
+					else
+						Loader.getLogger().severe( "The SqlConnector for site '" + siteId + "' can not support anything other then mySql or sqLite at the moment. Please change 'database.type' in the site config to 'mysql' or 'sqLite' and set the connection params." );
 				}
 				catch ( SQLException e )
 				{
