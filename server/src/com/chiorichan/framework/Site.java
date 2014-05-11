@@ -29,9 +29,10 @@ import com.google.gson.reflect.TypeToken;
 public class Site
 {
 	public String siteId, title, domain;
-	public File source, resource;
+	File source, resource;
 	Map<String, String> subdomains, aliases;
-	Set<String> metatags, protectedFiles;
+	Set<String> metatags = Sets.newHashSet(),
+			protectedFiles = Sets.newHashSet();
 	YamlConfiguration config;
 	SqlConnector sql;
 	
@@ -54,7 +55,7 @@ public class Site
 			try
 			{
 				if ( !rs.getString( "protected" ).isEmpty() )
-					protectedFiles = gson.fromJson( new JSONObject( rs.getString( "protected" ) ).toString(), HashSet.class );
+					protectedFiles.addAll( gson.fromJson( new JSONObject( rs.getString( "protected" ) ).toString(), HashSet.class ) );
 			}
 			catch ( Exception e )
 			{
@@ -108,7 +109,7 @@ public class Site
 			try
 			{
 				if ( !rs.getString( "metatags" ).isEmpty() )
-					metatags = gson.fromJson( new JSONObject( rs.getString( "metatags" ) ).toString(), HashSet.class );
+					metatags.addAll( gson.fromJson( new JSONObject( rs.getString( "metatags" ) ).toString(), HashSet.class ) );
 			}
 			catch ( Exception e )
 			{
