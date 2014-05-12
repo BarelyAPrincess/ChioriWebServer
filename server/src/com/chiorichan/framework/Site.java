@@ -7,21 +7,24 @@ import java.lang.reflect.Type;
 import java.net.ConnectException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.json.JSONObject;
 
 import com.chiorichan.Loader;
+import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.SiteLoadEvent;
 import com.chiorichan.file.YamlConfiguration;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -30,11 +33,183 @@ public class Site
 {
 	public String siteId, title, domain;
 	File source, resource;
-	Map<String, String> subdomains, aliases;
-	Set<String> metatags = Sets.newHashSet(),
-			protectedFiles = Sets.newHashSet();
+	Map<String, String> subdomains = Maps.newConcurrentMap(),
+			aliases = Maps.newConcurrentMap();
+	List<String> metatags = Lists.newCopyOnWriteArrayList(),
+			protectedFiles = Lists.newCopyOnWriteArrayList();
 	YamlConfiguration config;
 	SqlConnector sql;
+	
+	public Site(File f) throws SiteException
+	{
+		try
+		{
+			config = YamlConfiguration.loadConfiguration( f );
+			
+			if ( config == null )
+				throw new SiteException( "Could not load site from YAML FileBase '" + f.getAbsolutePath() + "'" );
+			
+			siteId = config.getString( "site.siteId", null );
+			title = config.getString( "site.title", Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Chiori-chan's Web Server Site" ) );
+			domain = config.getString( "site.domain", null );
+			
+			String reason = null;
+			
+			if ( siteId == null )
+				reason = "the provided Site Id is NULL. Check configs";
+			
+			if ( domain == null )
+				reason = "the provided domain is NULL. Check configs";
+			
+			if ( Loader.getPersistenceManager().getSiteManager().getSiteById( siteId ) != null )
+				reason = "there already exists a site by the provided Site Id '" + siteId + "'";
+			
+			if ( reason != null )
+				throw new SiteException( "Could not load site from YAML FileBase '" + f.getAbsolutePath() + "' because " + reason + "." );
+			
+			Loader.getLogger().info( "Loading site '" + siteId + "' with title '" + title + "' from YAML FileBase '" + f.getAbsolutePath() + "'." );
+			
+			// Load protected files list
+			List<?> protectedFilesPre = config.getList( "protected", new CopyOnWriteArrayList<String>() );
+			
+			for ( Object o : protectedFilesPre )
+			{
+				if ( o instanceof String )
+					protectedFiles.add( (String) o );
+				else
+					Loader.getLogger().warning( "Site '" + siteId + "' had an incorrect data object type under the YAML config for option 'protected', found type '" + o.getClass() + "'." );
+			}
+			
+			// Load sources location
+			String sources = config.getString( "site.source", "pages" );
+			
+			if ( sources == null || sources.isEmpty() )
+			{
+				source = getAbsoluteRoot();
+			}
+			else if ( sources.startsWith( "." ) )
+			{
+				source = new File( getAbsoluteRoot() + sources );
+			}
+			else
+			{
+				source = new File( getAbsoluteRoot(), sources );
+				protectedFiles.add( "/" + sources );
+			}
+			
+			if ( source.isFile() )
+				source.delete();
+			
+			if ( !source.exists() )
+				source.mkdirs();
+			
+			// Load resources location
+			String resources = config.getString( "site.resource", "resource" );
+			
+			if ( resources == null || resources.isEmpty() )
+			{
+				resource = getAbsoluteRoot();
+			}
+			else if ( resources.startsWith( "." ) )
+			{
+				resource = new File( getAbsoluteRoot() + resources );
+			}
+			else
+			{
+				resource = new File( getAbsoluteRoot(), resources );
+				protectedFiles.add( "/" + resources );
+			}
+			
+			if ( resource.isFile() )
+				resource.delete();
+			
+			if ( !resource.exists() )
+				resource.mkdirs();
+			
+			// Load metatags
+			List<?> metatagsPre = config.getList( "metatags", new CopyOnWriteArrayList<String>() );
+			
+			for ( Object o : metatagsPre )
+			{
+				if ( o instanceof String )
+					metatags.add( (String) o );
+				else
+					Loader.getLogger().warning( "Site '" + siteId + "' had an incorrect data object type under the YAML config for option 'metatags', found type '" + o.getClass() + "'." );
+			}
+			
+			// Load aliases map
+			ConfigurationSection aliasesPre = config.getConfigurationSection( "aliases" );
+			if ( aliasesPre != null )
+			{
+				Set<String> akeys = aliasesPre.getKeys( false );
+				
+				if ( akeys != null )
+					for ( String k : akeys )
+					{
+						if ( aliasesPre.getString( k, null ) != null )
+							aliases.put( k, aliasesPre.getString( k ) );
+					}
+			}
+			
+			// Loader subdomains map
+			ConfigurationSection subdomainsPre = config.getConfigurationSection( "subdomains" );
+			if ( subdomainsPre != null )
+			{
+				Set<String> skeys = subdomainsPre.getKeys( false );
+				
+				if ( skeys != null )
+					for ( String k : skeys )
+					{
+						if ( aliasesPre.getString( k, null ) != null )
+							subdomains.put( k, aliasesPre.getString( k ) );
+					}
+			}
+			
+			// Load database configuration
+			if ( config != null && config.getConfigurationSection( "database" ) != null )
+			{
+				String type = config.getString( "database.type" );
+				
+				String host = config.getString( "database.host" );
+				String port = config.getString( "database.port" );
+				String database = config.getString( "database.database" );
+				String username = config.getString( "database.username" );
+				String password = config.getString( "database.password" );
+				
+				String filename = config.getString( "database.filename" );
+				
+				sql = new SqlConnector();
+				
+				try
+				{
+					if ( type.equalsIgnoreCase( "mysql" ) )
+						sql.init( database, username, password, host, port );
+					else if ( type.equalsIgnoreCase( "sqlite" ) )
+						sql.init( filename );
+					else
+						throw new SiteException( "The SqlConnector for site '" + siteId + "' can not support anything other then mySql or sqLite at the moment. Please change 'database.type' in the site config to 'mysql' or 'sqLite' and set the connection params." );
+				}
+				catch ( SQLException e )
+				{
+					if ( e.getCause() instanceof ConnectException )
+						throw new SiteException( "We had a problem connecting to database '" + database + "'. Reason: " + e.getCause().getMessage() );
+					else
+						throw new SiteException( e.getMessage() );
+				}
+			}
+			
+			SiteLoadEvent event = new SiteLoadEvent( this );
+			
+			Loader.getPluginManager().callEventWithException( event );
+			
+			if ( event.isCancelled() )
+				throw new SiteException( "Site loading was cancelled by an internal event." );
+		}
+		catch ( EventException e )
+		{
+			throw new SiteException( e );
+		}
+	}
 	
 	@SuppressWarnings( "unchecked" )
 	public Site(ResultSet rs) throws SiteException
@@ -49,13 +224,27 @@ public class Site
 			title = rs.getString( "title" );
 			domain = rs.getString( "domain" );
 			
-			Loader.getLogger().info( "Loading site '" + siteId + "' with title '" + title + "' from Framework Database." );
+			String reason = null;
+			
+			if ( siteId == null )
+				reason = "the provided Site Id is NULL. Check configs";
+			
+			if ( domain == null )
+				reason = "the provided domain is NULL. Check configs";
+			
+			if ( Loader.getPersistenceManager().getSiteManager().getSiteById( siteId ) != null )
+				reason = "there already exists a site by the provided Site Id '" + siteId + "'";
+			
+			if ( reason != null )
+				throw new SiteException( "Could not load site from Database because " + reason + "." );
+			
+			Loader.getLogger().info( "Loading site '" + siteId + "' with title '" + title + "' from Database." );
 			
 			Gson gson = new GsonBuilder().create();
 			try
 			{
 				if ( !rs.getString( "protected" ).isEmpty() )
-					protectedFiles.addAll( gson.fromJson( new JSONObject( rs.getString( "protected" ) ).toString(), HashSet.class ) );
+					protectedFiles.addAll( gson.fromJson( new JSONObject( rs.getString( "protected" ) ).toString(), ArrayList.class ) );
 			}
 			catch ( Exception e )
 			{
@@ -109,7 +298,7 @@ public class Site
 			try
 			{
 				if ( !rs.getString( "metatags" ).isEmpty() )
-					metatags.addAll( gson.fromJson( new JSONObject( rs.getString( "metatags" ) ).toString(), HashSet.class ) );
+					metatags.addAll( gson.fromJson( new JSONObject( rs.getString( "metatags" ) ).toString(), ArrayList.class ) );
 			}
 			catch ( Exception e )
 			{
@@ -169,20 +358,14 @@ public class Site
 					else if ( type.equalsIgnoreCase( "sqlite" ) )
 						sql.init( filename );
 					else
-						Loader.getLogger().severe( "The SqlConnector for site '" + siteId + "' can not support anything other then mySql or sqLite at the moment. Please change 'database.type' in the site config to 'mysql' or 'sqLite' and set the connection params." );
+						throw new SiteException( "The SqlConnector for site '" + siteId + "' can not support anything other then mySql or sqLite at the moment. Please change 'database.type' in the site config to 'mysql' or 'sqLite' and set the connection params." );
 				}
 				catch ( SQLException e )
 				{
 					if ( e.getCause() instanceof ConnectException )
-						Loader.getLogger().severe( "We had a problem connecting to database '" + database + "'. Reason: " + e.getCause().getMessage() );
+						throw new SiteException( "We had a problem connecting to database '" + database + "'. Reason: " + e.getCause().getMessage() );
 					else
-						Loader.getLogger().severe( e.getMessage() );
-					
-					return;
-				}
-				finally
-				{
-					Loader.getLogger().info( "Successfully connected to site database for site `" + siteId + "`" );
+						throw new SiteException( e.getMessage() );
 				}
 			}
 			
@@ -199,6 +382,13 @@ public class Site
 		}
 	}
 	
+	protected Site setDatabase( SqlConnector sql )
+	{
+		this.sql = sql;
+		
+		return this;
+	}
+	
 	public YamlConfiguration getYaml()
 	{
 		if ( config == null )
@@ -207,10 +397,10 @@ public class Site
 		return config;
 	}
 	
-	public Set<String> getMetatags()
+	public List<String> getMetatags()
 	{
 		if ( metatags == null )
-			return new HashSet<String>();
+			return new CopyOnWriteArrayList<String>();
 		
 		return metatags;
 	}
@@ -225,8 +415,8 @@ public class Site
 		siteId = id;
 		title = title0;
 		domain = domain0;
-		protectedFiles = new HashSet<String>();
-		metatags = Sets.newHashSet();
+		protectedFiles = Lists.newCopyOnWriteArrayList();
+		metatags = Lists.newCopyOnWriteArrayList();
 		aliases = Maps.newLinkedHashMap();
 		subdomains = Maps.newLinkedHashMap();
 		

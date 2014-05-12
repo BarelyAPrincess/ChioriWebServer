@@ -17,7 +17,6 @@ import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
 import com.chiorichan.event.server.RenderEvent;
 import com.chiorichan.event.server.RequestEvent;
-import com.chiorichan.event.user.UserLoginEvent;
 import com.chiorichan.framework.CodeParsingException;
 import com.chiorichan.framework.Site;
 import com.chiorichan.plugin.java.JavaPlugin;
