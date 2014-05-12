@@ -1,5 +1,8 @@
 package com.chiorichan.command;
 
+import java.io.IOException;
+
+import com.chiorichan.auth.AuthHandler;
 import com.chiorichan.permissions.Permissible;
 
 public interface CommandSender extends Permissible
@@ -33,4 +36,16 @@ public interface CommandSender extends Permissible
 	 * @param b
 	 */
 	public void pauseInput( boolean b );
+	
+	/**
+	 * Just a recommended way to ping the CommandSender to try and prompt if a AuthHandler is pending.
+	 */
+	public boolean promptForAuth() throws IOException;
+	
+	/**
+	 * Called when an AuthHandler needs to be satisfied.
+	 * Method can either cache the AuthHandler for later or try and satisfy on the spot.
+	 * Recommended that you try and not block the IO since the requester might not respond properly.
+	 */
+	public void addAuthHandler( AuthHandler ah );
 }

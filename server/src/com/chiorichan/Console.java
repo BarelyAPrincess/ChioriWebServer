@@ -1,5 +1,6 @@
 package com.chiorichan;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,6 +14,7 @@ import joptsimple.OptionSet;
 
 import org.joda.time.DateTime;
 
+import com.chiorichan.auth.AuthHandler;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.command.ConsoleCommandSender;
 import com.chiorichan.command.RemoteConsoleCommandSender;
@@ -25,6 +27,7 @@ import com.chiorichan.permissions.Permission;
 import com.chiorichan.permissions.PermissionAttachment;
 import com.chiorichan.permissions.PermissionAttachmentInfo;
 import com.chiorichan.plugin.Plugin;
+import com.google.common.collect.Lists;
 
 public class Console implements ConsoleCommandSender, Runnable
 {
@@ -47,6 +50,8 @@ public class Console implements ConsoleCommandSender, Runnable
 	public boolean useJline = true;
 	public boolean useConsole = true;
 	public boolean useColors = true;
+	
+	protected List<AuthHandler> authHandlers = Lists.newCopyOnWriteArrayList();
 	
 	public Loader loader;
 	
@@ -109,11 +114,6 @@ public class Console implements ConsoleCommandSender, Runnable
 		reader.setPrompt( "?> " );
 		terminal = reader.getTerminal();
 		
-		ThreadCommandReader threadcommandreader = new ThreadCommandReader( this );
-		
-		threadcommandreader.setDaemon( true );
-		threadcommandreader.setName( "Console Reader Thread" );
-		threadcommandreader.start();
 		logManager = new ConsoleLogManager( "" );
 		logManager.init();
 		
@@ -121,11 +121,44 @@ public class Console implements ConsoleCommandSender, Runnable
 		System.setOut( new PrintStream( new LoggerOutputStream( getLogger().getLogger(), Level.INFO ), true ) );
 		System.setErr( new PrintStream( new LoggerOutputStream( getLogger().getLogger(), Level.SEVERE ), true ) );
 		
-		getLogger().info( "Finished initalizing the console." );
-		
 		Runtime.getRuntime().addShutdownHook( new ServerShutdownThread( loader ) );
 		
-		primaryThread = new Thread( this, "Server thread" );
+		primaryThread = new Thread( this, "Server Thread" );
+	}
+	
+	protected void startCommandReader()
+	{
+		ThreadCommandReader threadcommandreader = new ThreadCommandReader( this );
+		
+		threadcommandreader.setDaemon( true );
+		threadcommandreader.setName( "Console Reader Thread" );
+		threadcommandreader.start();
+	}
+	
+	public boolean promptForAuth() throws IOException
+	{
+		if ( authHandlers.size() < 1 )
+			return false;
+		
+		for ( AuthHandler ah : authHandlers )
+		{
+			if ( ah.promptForAuth( this, reader ) )
+			{
+				authHandlers.remove( ah );
+				return false;
+			}
+			else
+			{
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	public void addAuthHandler( AuthHandler ah )
+	{
+		authHandlers.add( ah );
 	}
 	
 	@Override
@@ -421,7 +454,7 @@ public class Console implements ConsoleCommandSender, Runnable
 	{
 		return ( terminal != null && terminal.isAnsiSupported() );
 	}
-
+	
 	@Override
 	public void pauseInput( boolean b )
 	{

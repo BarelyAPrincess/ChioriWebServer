@@ -12,6 +12,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
+import com.chiorichan.auth.AuthHandler;
 import com.chiorichan.command.CommandSender;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.framework.Site;
@@ -33,15 +34,17 @@ public class User implements CommandSender
 	protected boolean isPaused; // UNUSED FOR NOW
 	protected Set<UserHandler> handlers = new java.util.concurrent.CopyOnWriteArraySet<UserHandler>(); // Set this handler for the last login
 	
+	//protected List<AuthHandler> authHandlers = Lists.newCopyOnWriteArrayList();
+	
 	protected UserLookupAdapter _cachedAdapter;
 	
 	public User(String user, UserLookupAdapter adapter) throws LoginException
 	{
 		if ( user.isEmpty() )
-			throw new LoginException( LoginException.ExceptionReasons.emptyUsername );
+			throw new LoginException( LoginExceptionReasons.emptyUsername );
 		
 		if ( adapter == null )
-			throw new LoginException( LoginException.ExceptionReasons.unknownError );
+			throw new LoginException( LoginExceptionReasons.unknownError );
 		
 		_cachedAdapter = adapter;
 		
@@ -487,5 +490,17 @@ public class User implements CommandSender
 	public void pauseInput( boolean b )
 	{
 		isPaused = b;
+	}
+
+	@Override
+	public boolean promptForAuth()
+	{
+		return false;
+	}
+
+	@Override
+	public void addAuthHandler( AuthHandler ah )
+	{
+		
 	}
 }

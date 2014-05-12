@@ -27,24 +27,27 @@ public class ThreadCommandReader extends Thread
 		{
 			while ( console.isRunning() )
 			{
-				if ( console.useJline )
+				if ( !console.promptForAuth() )
 				{
-					s = bufferedreader.readLine( "?>", null );
-				}
-				else
-				{
-					s = bufferedreader.readLine();
-				}
-				
-				if ( s != null )
-				{
-					console.issueCommand( s, console );
+					if ( console.useJline )
+					{
+						s = bufferedreader.readLine( "?>", null );
+					}
+					else
+					{
+						s = bufferedreader.readLine();
+					}
+					
+					if ( s != null )
+					{
+						console.issueCommand( s, console );
+					}
 				}
 			}
 		}
-		catch ( IOException ioexception )
+		catch ( IOException e )
 		{
-			java.util.logging.Logger.getLogger( "" ).log( java.util.logging.Level.SEVERE, null, ioexception );
+			Loader.getLogger().severe( "Exception encountered in the ThreadedConsoleReader.", e );
 		}
 	}
 }

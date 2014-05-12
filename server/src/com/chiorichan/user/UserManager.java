@@ -251,7 +251,7 @@ public class UserManager
 	public User attemptLogin( PersistentSession sess, String username, String password ) throws LoginException
 	{
 		if ( username == null || username.isEmpty() )
-			throw new LoginException( LoginException.ExceptionReasons.emptyUsername );
+			throw new LoginException( LoginExceptionReasons.emptyUsername );
 		
 		User user = loadUser( username );
 		user.putHandler( sess );
@@ -259,25 +259,25 @@ public class UserManager
 		try
 		{
 			if ( password == null || password.isEmpty() )
-				throw new LoginException( LoginException.ExceptionReasons.emptyPassword );
+				throw new LoginException( LoginExceptionReasons.emptyPassword );
 			
 			if ( !user.validatePassword( password ) )
-				throw new LoginException( LoginException.ExceptionReasons.incorrectLogin );
+				throw new LoginException( LoginExceptionReasons.incorrectLogin );
 			
 			UserLoginEvent event = new UserLoginEvent( user );
 			Loader.getPluginManager().callEvent( event );
 			
 			if ( !user.isWhitelisted() )
-				throw new LoginException( LoginException.ExceptionReasons.notWhiteListed );
+				throw new LoginException( LoginExceptionReasons.notWhiteListed );
 			
 			if ( user.isBanned() )
-				throw new LoginException( LoginException.ExceptionReasons.banned );
+				throw new LoginException( LoginExceptionReasons.banned );
 			
 			if ( event.getResult() != Result.ALLOWED )
 				if ( event.getKickMessage().isEmpty() )
-					throw new LoginException( LoginException.ExceptionReasons.incorrectLogin );
+					throw new LoginException( LoginExceptionReasons.incorrectLogin );
 				else
-					throw new LoginException( LoginException.customExceptionReason( event.getKickMessage() ) );
+					throw new LoginException( LoginExceptionReasons.customReason.setReason( event.getKickMessage() ) );
 			
 			userLookupAdapter.preLoginCheck( user );
 			

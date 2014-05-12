@@ -8,6 +8,7 @@ import org.json.JSONException;
 
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.user.LoginException;
+import com.chiorichan.user.LoginExceptionReasons;
 import com.chiorichan.user.LookupAdapterException;
 import com.chiorichan.user.User;
 import com.chiorichan.user.UserMetaData;
@@ -65,7 +66,7 @@ public class SqlAdapter implements UserLookupAdapter
 			UserMetaData meta = new UserMetaData();
 			
 			if ( username == null || username.isEmpty() )
-				throw new LoginException( LoginException.ExceptionReasons.emptyUsername );
+				throw new LoginException( LoginExceptionReasons.emptyUsername );
 			
 			String additionalUserFields = "";
 			for ( String f : userFields )
@@ -76,7 +77,7 @@ public class SqlAdapter implements UserLookupAdapter
 			ResultSet rs = sql.query( "SELECT * FROM `users` WHERE `username` = '" + username + "' OR `userID` = '" + username + "'" + additionalUserFields + ";" );
 			
 			if ( rs == null || sql.getRowCount( rs ) < 1 )
-				throw new LoginException( LoginException.ExceptionReasons.incorrectLogin );
+				throw new LoginException( LoginExceptionReasons.incorrectLogin );
 			
 			meta.setAll( SqlConnector.convertRow( rs ) );
 			
@@ -97,10 +98,10 @@ public class SqlAdapter implements UserLookupAdapter
 		
 		if ( meta.getInteger( "numloginfail" ) > 5 )
 			if ( meta.getInteger( "lastloginfail" ) > ( Common.getEpoch() - 1800 ) )
-				throw new LoginException( LoginException.ExceptionReasons.underAttackPleaseWait );
+				throw new LoginException( LoginExceptionReasons.underAttackPleaseWait );
 		
 		if ( !meta.getString( "actnum" ).equals( "0" ) )
-			throw new LoginException( LoginException.ExceptionReasons.accountNotActivated );
+			throw new LoginException( LoginExceptionReasons.accountNotActivated );
 	}
 	
 	@Override

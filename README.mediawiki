@@ -62,6 +62,9 @@ Should the web server start? Useful is you plan on this being strictly a Tcp Ser
 * server.enableTcpServer: true
 Should the tcp server start? Useful is you plan on this being strictly a Web Server.
 * server.allowQuery: false
+Allow querying of Server Status thru HTTP.
+* server.consolePassword: null
+Require this password to be entered before use of the console is allowed. MD5 recommended but not required.
 * server.database.database: chiorifw
 Server Database
 * server.database.type: mysql

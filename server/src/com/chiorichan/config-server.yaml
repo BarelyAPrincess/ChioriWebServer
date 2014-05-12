@@ -11,6 +11,7 @@ server:
   enableTcpServer: true
   allowQuery: false
   installationUID: null
+  consolePassword: null
   database:
     database: chiorifw
     type: mysql
