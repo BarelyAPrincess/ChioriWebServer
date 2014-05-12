@@ -434,6 +434,28 @@ public class MemorySection implements ConfigurationSection
 		return val instanceof List;
 	}
 	
+	public List<String> getStringList( String path, List<String> def )
+	{
+		List<?> list = getList( path );
+		
+		if ( list == null )
+		{
+			return def;
+		}
+		
+		List<String> result = new ArrayList<String>();
+		
+		for ( Object object : list )
+		{
+			if ( ( object instanceof String ) || ( isPrimitiveWrapper( object ) ) )
+			{
+				result.add( String.valueOf( object ) );
+			}
+		}
+		
+		return result;
+	}
+	
 	public List<String> getStringList( String path )
 	{
 		List<?> list = getList( path );
