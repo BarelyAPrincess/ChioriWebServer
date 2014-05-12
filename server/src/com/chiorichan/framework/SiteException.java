@@ -13,4 +13,9 @@ public class SiteException extends Exception
 	{
 		super( e );
 	}
+
+	public SiteException(String reason, Exception e)
+	{
+		super( reason, e );
+	}
 }
