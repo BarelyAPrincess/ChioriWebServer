@@ -10,6 +10,8 @@ import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
 
+import com.chiorichan.Loader;
+
 /**
  * A type of {@link ConfigurationSection} that is stored in memory.
  */

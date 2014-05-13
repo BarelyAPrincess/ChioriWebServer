@@ -219,12 +219,14 @@ public class PersistentSession implements UserHandler
 			}
 			catch ( LoginException l )
 			{
+				//l.printStackTrace();
+				
 				String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
 				
 				if ( l.getUser() != null )
 					Loader.getLogger().warning( "Login Failed `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + l.getUser().getUserId() + "\", Display Name \"" + l.getUser().getDisplayName() + "\", Reason \"" + l.getMessage() + "\"`" );
 				
-				request.getResponse().sendRedirect( loginForm + "?msg=" + l.getMessage() + "&target=" + target );
+				request.getResponse().sendRedirect( loginForm + "?ok=" + l.getMessage() + "&target=" + target );
 			}
 		}
 		else if ( currentUser == null )

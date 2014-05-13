@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.json.JSONException;
 
+import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.user.LoginException;
 import com.chiorichan.user.LoginExceptionReasons;
@@ -74,7 +75,7 @@ public class SqlAdapter implements UserLookupAdapter
 				additionalUserFields += " OR `" + f + "` = '" + username + "'";
 			}
 			
-			ResultSet rs = sql.query( "SELECT * FROM `users` WHERE `username` = '" + username + "' OR `userID` = '" + username + "'" + additionalUserFields + ";" );
+			ResultSet rs = sql.query( "SELECT * FROM `" + table + "` WHERE `username` = '" + username + "' OR `userID` = '" + username + "'" + additionalUserFields + ";" );
 			
 			if ( rs == null || sql.getRowCount( rs ) < 1 )
 				throw new LoginException( LoginExceptionReasons.incorrectLogin );
