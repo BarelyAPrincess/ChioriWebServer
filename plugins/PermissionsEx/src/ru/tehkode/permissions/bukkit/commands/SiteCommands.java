@@ -44,7 +44,7 @@ public class SiteCommands extends PermissionsCommand
 	{
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
 		PermissionManager manager = PermissionsEx.getPermissionManager();
-		if ( Loader.getInstance().getSite( siteName ) == null )
+		if ( Loader.getInstance().getSiteById( siteName ) == null )
 		{
 			sender.sendMessage( "Specified site \"" + args.get( "site" ) + "\" not found." );
 			return;
@@ -77,7 +77,7 @@ public class SiteCommands extends PermissionsCommand
 	{
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
 		PermissionManager manager = PermissionsEx.getPermissionManager();
-		if ( Loader.getInstance().getSite( siteName ) == null )
+		if ( Loader.getInstance().getSiteById( siteName ) == null )
 		{
 			sender.sendMessage( "Specified site \"" + args.get( "site" ) + "\" not found." );
 			return;
