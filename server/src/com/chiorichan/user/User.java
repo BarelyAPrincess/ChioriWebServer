@@ -22,6 +22,8 @@ import com.chiorichan.permissions.PermissionAttachment;
 import com.chiorichan.permissions.PermissionAttachmentInfo;
 import com.chiorichan.plugin.Plugin;
 import com.chiorichan.user.builtin.UserLookupAdapter;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 public class User implements CommandSender
 {
@@ -32,9 +34,9 @@ public class User implements CommandSender
 	protected String userId;
 	protected boolean op;
 	protected boolean isPaused; // UNUSED FOR NOW
-	protected Set<UserHandler> handlers = new java.util.concurrent.CopyOnWriteArraySet<UserHandler>(); // Set this handler for the last login
+	protected Set<UserHandler> handlers = Sets.newCopyOnWriteArraySet(); // Set this handler for the last login
 	
-	//protected List<AuthHandler> authHandlers = Lists.newCopyOnWriteArrayList();
+	protected List<AuthHandler> authHandlers = Lists.newCopyOnWriteArrayList();
 	
 	protected UserLookupAdapter _cachedAdapter;
 	
@@ -368,7 +370,7 @@ public class User implements CommandSender
 				site = handler.getSite();
 		
 		if ( site == null )
-			return Loader.getPersistenceManager().getSiteManager().getFrameworkSite();
+			return Loader.getSiteManager().getFrameworkSite();
 		
 		return site;
 	}
@@ -502,5 +504,10 @@ public class User implements CommandSender
 	public void addAuthHandler( AuthHandler ah )
 	{
 		
+	}
+
+	public UserLookupAdapter getCachedUserLookupAdapter()
+	{
+		return _cachedAdapter;
 	}
 }

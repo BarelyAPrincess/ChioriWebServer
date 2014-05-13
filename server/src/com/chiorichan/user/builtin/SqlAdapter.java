@@ -26,7 +26,7 @@ public class SqlAdapter implements UserLookupAdapter
 		this( _sql, _table, Lists.newArrayList( _userFields ) );
 	}
 	
-	public SqlAdapter(SqlConnector _sql, String _table, List<String> _userFields)
+	public SqlAdapter(SqlConnector _sql, String _table, List<String> _userFields) throws LookupAdapterException
 	{
 		sql = _sql;
 		table = _table;

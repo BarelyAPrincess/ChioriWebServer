@@ -21,9 +21,7 @@ import com.google.common.collect.Lists;
 
 public class UserManager
 {
-	//private static final SimpleDateFormat d = new SimpleDateFormat( "yyyy-MM-dd \'at\' HH:mm:ss z" );
 	private Loader server;
-	private UserLookupAdapter userLookupAdapter;
 	public final List<User> users = new java.util.concurrent.CopyOnWriteArrayList<User>();
 	private final BanList banByName = new BanList( new File( "banned-users.txt" ) );
 	private final BanList banByIP = new BanList( new File( "banned-ips.txt" ) );
@@ -32,42 +30,15 @@ public class UserManager
 	public boolean hasWhitelist;
 	protected int maxUsers;
 	protected int c;
-	//private boolean m;
 	private int n;
 	
-	public UserManager(Loader server0)
+	public UserManager(Loader _server)
 	{
 		banByName.setEnabled( false );
 		banByIP.setEnabled( false );
 		maxUsers = Loader.getConfig().getInt( "server.maxLogins", -1 );
 		
-		server = server0;
-		
-		try
-		{
-			switch ( Loader.getConfig().getString( "users.lookupAdapter.type", "default" ) )
-			{
-				case "sql":
-					String siteId = Loader.getConfig().getString( "users.lookupAdapter.siteId" );
-					SqlConnector sql = ( siteId != null && !siteId.isEmpty() && Loader.getPersistenceManager().getSiteManager().getSiteById( siteId ) != null ) ? Loader.getPersistenceManager().getSiteManager().getSiteById( siteId ).getDatabase() : Loader.getPersistenceManager().getSql();
-					
-					userLookupAdapter = new SqlAdapter( sql, Loader.getConfig().getString( "users.lookupAdapter.table", "users" ), Loader.getConfig().getStringList( "users.lookupAdapter.fields" ) );
-					Loader.getLogger().info( "Initiated Sql User Lookup Adapter `" + userLookupAdapter + "` with sql `" + sql + "`" );
-					break;
-				// case "file":
-				// TODO Develop the file backend lookup adapter
-				// break;
-				default:
-					userLookupAdapter = new SqlAdapter( Loader.getPersistenceManager().getSql(), "users" );
-					Loader.getLogger().info( "Initiated Default User Lookup Adapter `" + userLookupAdapter + "`" );
-					break;
-			}
-		}
-		catch ( LookupAdapterException e )
-		{
-			Loader.getLogger().severe( "There was a severe error encoutered when attempting to create the User Lookup Adapter." );
-			Loader.getLogger().panic( e.getMessage() );
-		}
+		server = _server;
 	}
 	
 	public void tick()
@@ -229,31 +200,31 @@ public class UserManager
 		Loader.getConsole().sendMessage( msg );
 	}
 	
-	public User loadUser( String username ) throws LoginException
-	{
-		User user = null;
-		
-		for ( User u : users )
-		{
-			if ( userLookupAdapter.matchUser( u, username ) )
-				user = u;
-		}
-		
-		if ( user == null )
-		{
-			user = new User( username, userLookupAdapter );
-			users.add( user );
-		}
-		
-		return user;
-	}
-	
 	public User attemptLogin( PersistentSession sess, String username, String password ) throws LoginException
 	{
 		if ( username == null || username.isEmpty() )
 			throw new LoginException( LoginExceptionReasons.emptyUsername );
 		
-		User user = loadUser( username );
+		if ( sess == null || sess.getRequest() == null || sess.getRequest().getSite() == null || sess.getRequest().getSite().getUserLookupAdapter() == null )
+			throw new LoginException( LoginExceptionReasons.internalError );
+		
+		UserLookupAdapter adapter = sess.getRequest().getSite().getUserLookupAdapter();
+		
+		User user = null;
+		
+		for ( User u : users )
+		{
+			if ( u.getCachedUserLookupAdapter() == adapter )
+				if ( adapter.matchUser( u, username ) )
+					user = u;
+		}
+		
+		if ( user == null )
+		{
+			user = new User( username, adapter );
+			users.add( user );
+		}
+		
 		user.putHandler( sess );
 		
 		try
@@ -279,7 +250,7 @@ public class UserManager
 				else
 					throw new LoginException( LoginExceptionReasons.customReason.setReason( event.getKickMessage() ) );
 			
-			userLookupAdapter.preLoginCheck( user );
+			adapter.preLoginCheck( user );
 			
 			List<User> arraylist = new ArrayList<User>();
 			User usera;
@@ -304,15 +275,20 @@ public class UserManager
 			sess.setArgument( "user", user.getUserId() );
 			sess.setArgument( "pass", DigestUtils.md5Hex( user.getPassword() ) );
 			
-			userLookupAdapter.postLoginCheck( user );
+			adapter.postLoginCheck( user );
 			Loader.getInstance().onUserLogin( user );
 			
 			return user;
 		}
 		catch ( LoginException l )
 		{
-			userLookupAdapter.failedLoginUpdate( user );
+			adapter.failedLoginUpdate( user );
 			throw l.setUser( user );
 		}
+	}
+	
+	public UserLookupAdapter getBuiltinUserLookupAdapter()
+	{
+		return Loader.getSiteManager().getSiteById( "framework" ).getUserLookupAdapter();
 	}
 }
