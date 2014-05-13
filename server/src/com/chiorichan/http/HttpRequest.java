@@ -16,7 +16,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.math.NumberUtils;
 
 public class HttpRequest
 {
@@ -193,17 +195,29 @@ public class HttpRequest
 			String domain = http.getRequestHeaders().get( "Host" ).get( 0 );
 			domain = domain.split( "\\:" )[0];
 			
-			if ( domain.equalsIgnoreCase( "localhost" ) || domain.equalsIgnoreCase( "127.0.0.1" ) | domain.equalsIgnoreCase( getLocalAddr() ) )
+			if ( domain.equalsIgnoreCase( "localhost" ) || domain.equalsIgnoreCase( "127.0.0.1" ) || domain.equalsIgnoreCase( getLocalAddr() ) || domain.equalsIgnoreCase( getLocalHost() ) )
 				domain = "";
 			
-			if ( domain.split( "\\." ).length > 2 )
+			String[] var1 = domain.split( "\\." );
+			
+			if ( var1.length == 4 && NumberUtils.isNumber( var1[0] ) && NumberUtils.isNumber( var1[1] ) && NumberUtils.isNumber( var1[2] ) && NumberUtils.isNumber( var1[3] ) )
 			{
-				String[] var1 = domain.split( "\\.", 2 );
+				// This should be an IP Address
+				childDomainName = "";
+				parentDomainName = domain;
+			}
+			else if ( var1.length > 2 )
+			{
+				// This will not work if there is more then one subdomain like s1.t2.example.com
+				var1 = domain.split( "\\.", 2 );
+				
+				// This should be a domain with subdomain
 				childDomainName = var1[0];
 				parentDomainName = var1[1];
 			}
 			else
 			{
+				// This should be a domain without a subdomain
 				childDomainName = "";
 				parentDomainName = domain;
 			}
@@ -213,11 +227,6 @@ public class HttpRequest
 	public String getMethod()
 	{
 		return http.getRequestMethod();
-	}
-	
-	public String getLocalAddr()
-	{
-		return http.getLocalAddress().getHostName();
 	}
 	
 	public String getHeader( String key )
@@ -312,7 +321,7 @@ public class HttpRequest
 	public Site getSite()
 	{
 		if ( currentSite == null )
-			return Loader.getPersistenceManager().getSiteManager().getSiteById( "framework" );
+			return Loader.getSiteManager().getSiteById( "framework" );
 		
 		return currentSite;
 	}
@@ -366,9 +375,19 @@ public class HttpRequest
 		return requestTime;
 	}
 	
-	public String getLocalHost()
+	public String getRequestHost()
 	{
 		return getHeader( "Host" );
+	}
+	
+	public String getLocalHost()
+	{
+		return http.getLocalAddress().getAddress().getCanonicalHostName();
+	}
+	
+	public String getLocalAddr()
+	{
+		return http.getLocalAddress().getAddress().getHostAddress();
 	}
 	
 	public String getUserAgent()

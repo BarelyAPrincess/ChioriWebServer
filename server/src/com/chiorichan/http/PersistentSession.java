@@ -93,7 +93,9 @@ public class PersistentSession implements UserHandler
 			ipAddr = rs.getString( "ipAddr" );
 			
 			if ( !rs.getString( "data" ).isEmpty() )
-				data = new Gson().fromJson( rs.getString( "data" ), new TypeToken<Map<String, String>>() {}.getType() );
+				data = new Gson().fromJson( rs.getString( "data" ), new TypeToken<Map<String, String>>()
+				{
+				}.getType() );
 			
 			if ( rs.getString( "sessionName" ) != null && !rs.getString( "sessionName" ).isEmpty() )
 				candyName = rs.getString( "sessionName" );
@@ -103,9 +105,9 @@ public class PersistentSession implements UserHandler
 				throw new SessionException( "This session expired at " + timeout + " epoch!" );
 			
 			if ( rs.getString( "sessionSite" ) == null || rs.getString( "sessionSite" ).isEmpty() )
-				failoverSite = Loader.getPersistenceManager().getSiteManager().getFrameworkSite();
+				failoverSite = Loader.getSiteManager().getFrameworkSite();
 			else
-				failoverSite = Loader.getPersistenceManager().getSiteManager().getSiteById( rs.getString( "sessionSite" ) );
+				failoverSite = Loader.getSiteManager().getSiteById( rs.getString( "sessionSite" ) );
 			
 			sessionCandy = new Candy( candyName, rs.getString( "sessionId" ) );
 			candies.put( candyName, sessionCandy );
@@ -319,7 +321,9 @@ public class PersistentSession implements UserHandler
 					String _ipAddr = rs.getString( "ipAddr" );
 					
 					if ( !rs.getString( "data" ).isEmpty() )
-						data = new Gson().fromJson( rs.getString( "data" ), new TypeToken<Map<String, String>>() {}.getType() );
+						data = new Gson().fromJson( rs.getString( "data" ), new TypeToken<Map<String, String>>()
+						{
+						}.getType() );
 					
 					// Possible Session Hijacking! nullify!!!
 					if ( !_ipAddr.equals( ipAddr ) && !Loader.getConfig().getBoolean( "sessions.allowIPChange" ) )
@@ -366,7 +370,12 @@ public class PersistentSession implements UserHandler
 			sessionCandy = new Candy( candyName, candyId );
 			
 			sessionCandy.setMaxAge( defaultLife );
-			sessionCandy.setDomain( "." + request.getSite().domain );
+			
+			if ( request.getSite().domain != null && !request.getSite().domain.isEmpty() && request.getParentDomain().toLowerCase().contains( request.getSite().domain.toLowerCase() ) )
+				sessionCandy.setDomain( "." + request.getSite().domain );
+			else if ( request.getParentDomain() != null && !request.getParentDomain().isEmpty() )
+				sessionCandy.setDomain( "." + request.getParentDomain() );
+			
 			sessionCandy.setPath( "/" );
 			
 			candies.put( candyName, sessionCandy );
@@ -390,7 +399,10 @@ public class PersistentSession implements UserHandler
 		
 		String dataJson = new Gson().toJson( data );
 		
-		sql.queryUpdate( "UPDATE `sessions` SET `data` = '" + dataJson + "', `timeout` = '" + timeout + "', `sessionName` = '" + candyName + "', `ipAddr` = '" + ipAddr + "', `sessionSite` = '" + getSite().getName() + "' WHERE `sessionId` = '" + candyId + "';" );
+		if ( sql != null )
+			sql.queryUpdate( "UPDATE `sessions` SET `data` = '" + dataJson + "', `timeout` = '" + timeout + "', `sessionName` = '" + candyName + "', `ipAddr` = '" + ipAddr + "', `sessionSite` = '" + getSite().getName() + "' WHERE `sessionId` = '" + candyId + "';" );
+		else
+			Loader.getLogger().severe( "SQL is NULL. Can't save session." );
 	}
 	
 	public String toString()
@@ -571,7 +583,7 @@ public class PersistentSession implements UserHandler
 	{
 		return request.getResponse();
 	}
-
+	
 	// Is this thread safe? Could this spell trouble?
 	public Evaling getEvaling()
 	{
@@ -609,7 +621,7 @@ public class PersistentSession implements UserHandler
 		if ( getRequest() != null )
 			return getRequest().getSite();
 		else if ( failoverSite == null )
-			return Loader.getPersistenceManager().getSiteManager().getFrameworkSite();
+			return Loader.getSiteManager().getFrameworkSite();
 		else
 			return failoverSite;
 	}

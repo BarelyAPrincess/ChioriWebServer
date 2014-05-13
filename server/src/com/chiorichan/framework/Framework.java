@@ -13,9 +13,6 @@ import com.chiorichan.util.Versioning;
 
 public class Framework
 {
-	// protected boolean continueNormally = true;
-	// protected String alternateOutput = "An Unknown Error Has Risen!";
-	
 	protected final PersistentSession sess;
 	
 	public Framework(PersistentSession _sess)

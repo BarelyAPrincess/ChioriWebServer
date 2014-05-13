@@ -50,7 +50,7 @@ public class WebHandler implements HttpHandler
 		}
 		catch ( HttpErrorException e )
 		{
-			if ( e.getHttpCode() != 404 )
+			if ( e.getHttpCode() < 400 && e.getHttpCode() > 499 )
 				e.printStackTrace();
 			
 			response.sendError( e );
@@ -108,10 +108,13 @@ public class WebHandler implements HttpHandler
 		String domain = request.getParentDomain();
 		String subdomain = request.getSubDomain();
 		
-		Site currentSite = Loader.getPersistenceManager().getSiteManager().getSiteByDomain( domain );
+		Site currentSite = Loader.getSiteManager().getSiteByDomain( domain );
 		
 		if ( currentSite == null )
-			currentSite = new Site( "default", Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Chiori Framework Site" ), domain );
+			if ( domain.isEmpty() )
+				currentSite = Loader.getSiteManager().getSiteById( "framework" );
+			else
+				currentSite = new Site( "default", Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Chiori Framework Site" ), domain );
 		
 		request.setSite( currentSite );
 		

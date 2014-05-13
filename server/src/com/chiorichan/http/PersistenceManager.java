@@ -23,7 +23,6 @@ import java.util.List;
 public class PersistenceManager
 {
 	protected SqlConnector sql = new SqlConnector();
-	protected SiteManager _sites = new SiteManager( sql );
 	
 	static protected List<PersistentSession> sessionList = Lists.newCopyOnWriteArrayList();
 	
@@ -183,11 +182,6 @@ public class PersistenceManager
 				}
 			}
 		}
-	}
-	
-	public SiteManager getSiteManager()
-	{
-		return _sites;
 	}
 	
 	public SqlConnector getSql()

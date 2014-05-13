@@ -21,7 +21,7 @@ public class SaveOffCommand extends VanillaCommand
 		if ( !testPermission( sender ) )
 			return true;
 		
-		for ( Site site : Loader.getPersistenceManager().getSiteManager().getSites() )
+		for ( Site site : Loader.getSiteManager().getSites() )
 		{
 			site.setAutoSave( false );
 		}

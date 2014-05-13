@@ -73,7 +73,7 @@ public class HttpUtilsWrapper
 		if ( !file.exists() )
 			file = new File( root, pack );
 		
-		root = Loader.getPersistenceManager().getSiteManager().getSiteById( "framework" ).getResourceDirectory();
+		root = Loader.getSiteManager().getSiteById( "framework" ).getResourceDirectory();
 		
 		if ( !file.exists() )
 			file = new File( root, pack + ".php" );

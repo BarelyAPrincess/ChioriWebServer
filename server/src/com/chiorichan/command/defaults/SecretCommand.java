@@ -63,7 +63,7 @@ public class SecretCommand extends VanillaCommand
 				}
 				break;
 			case "sites":
-				for ( Site s : Loader.getPersistenceManager().getSiteManager().getSites() )
+				for ( Site s : Loader.getSiteManager().getSites() )
 				{
 					sender.sendMessage( "&5Loaded site: " + s );
 				}
