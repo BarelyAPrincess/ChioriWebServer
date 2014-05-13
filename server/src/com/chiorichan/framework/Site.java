@@ -8,6 +8,7 @@ import java.net.ConnectException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,11 +19,17 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.json.JSONObject;
 
 import com.chiorichan.Loader;
+import com.chiorichan.StartupException;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.SiteLoadEvent;
 import com.chiorichan.file.YamlConfiguration;
+import com.chiorichan.user.LookupAdapterException;
+import com.chiorichan.user.builtin.FileAdapter;
+import com.chiorichan.user.builtin.SqlAdapter;
+import com.chiorichan.user.builtin.UserLookupAdapter;
+import com.chiorichan.util.FileUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -31,7 +38,7 @@ import com.google.gson.reflect.TypeToken;
 
 public class Site
 {
-	public String siteId, title, domain;
+	public String siteId = null, title = null, domain = null;
 	File source, resource;
 	Map<String, String> subdomains = Maps.newConcurrentMap(),
 			aliases = Maps.newConcurrentMap();
@@ -40,179 +47,132 @@ public class Site
 	YamlConfiguration config;
 	SqlConnector sql;
 	
-	public Site(File f) throws SiteException
+	UserLookupAdapter userLookupAdapter = null;
+	
+	public Site(File f) throws SiteException, StartupException
 	{
-		try
+		config = YamlConfiguration.loadConfiguration( f );
+		
+		if ( config == null )
+			throw new SiteException( "Could not load site from YAML FileBase '" + f.getAbsolutePath() + "'" );
+		
+		siteId = config.getString( "site.siteId", null );
+		title = config.getString( "site.title", Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Chiori-chan's Web Server Site" ) );
+		domain = config.getString( "site.domain", null );
+		
+		String reason = null;
+		
+		if ( siteId == null )
+			reason = "the provided Site Id is NULL. Check configs";
+		else
+			siteId = siteId.toLowerCase();
+		
+		if ( domain == null )
+			reason = "the provided domain is NULL. Check configs";
+		else
+			domain = domain.toLowerCase();
+		
+		if ( Loader.getSiteManager().getSiteById( siteId ) != null )
+			reason = "there already exists a site by the provided Site Id '" + siteId + "'";
+		
+		if ( reason != null )
+			throw new SiteException( "Could not load site from YAML FileBase '" + f.getAbsolutePath() + "' because " + reason + "." );
+		
+		Loader.getLogger().info( "Loading site '" + siteId + "' with title '" + title + "' from YAML FileBase '" + f.getAbsolutePath() + "'." );
+		
+		// Load protected files list
+		List<?> protectedFilesPre = config.getList( "protected", new CopyOnWriteArrayList<String>() );
+		
+		for ( Object o : protectedFilesPre )
 		{
-			config = YamlConfiguration.loadConfiguration( f );
-			
-			if ( config == null )
-				throw new SiteException( "Could not load site from YAML FileBase '" + f.getAbsolutePath() + "'" );
-			
-			siteId = config.getString( "site.siteId", null );
-			title = config.getString( "site.title", Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Chiori-chan's Web Server Site" ) );
-			domain = config.getString( "site.domain", null );
-			
-			String reason = null;
-			
-			if ( siteId == null )
-				reason = "the provided Site Id is NULL. Check configs";
-			
-			if ( domain == null )
-				reason = "the provided domain is NULL. Check configs";
-			
-			if ( Loader.getPersistenceManager().getSiteManager().getSiteById( siteId ) != null )
-				reason = "there already exists a site by the provided Site Id '" + siteId + "'";
-			
-			if ( reason != null )
-				throw new SiteException( "Could not load site from YAML FileBase '" + f.getAbsolutePath() + "' because " + reason + "." );
-			
-			Loader.getLogger().info( "Loading site '" + siteId + "' with title '" + title + "' from YAML FileBase '" + f.getAbsolutePath() + "'." );
-			
-			// Load protected files list
-			List<?> protectedFilesPre = config.getList( "protected", new CopyOnWriteArrayList<String>() );
-			
-			for ( Object o : protectedFilesPre )
-			{
-				if ( o instanceof String )
-					protectedFiles.add( (String) o );
-				else
-					Loader.getLogger().warning( "Site '" + siteId + "' had an incorrect data object type under the YAML config for option 'protected', found type '" + o.getClass() + "'." );
-			}
-			
-			// Load sources location
-			String sources = config.getString( "site.source", "pages" );
-			
-			if ( sources == null || sources.isEmpty() )
-			{
-				source = getAbsoluteRoot();
-			}
-			else if ( sources.startsWith( "." ) )
-			{
-				source = new File( getAbsoluteRoot() + sources );
-			}
+			if ( o instanceof String )
+				protectedFiles.add( (String) o );
 			else
-			{
-				source = new File( getAbsoluteRoot(), sources );
-				protectedFiles.add( "/" + sources );
-			}
-			
-			if ( source.isFile() )
-				source.delete();
-			
-			if ( !source.exists() )
-				source.mkdirs();
-			
-			// Load resources location
-			String resources = config.getString( "site.resource", "resource" );
-			
-			if ( resources == null || resources.isEmpty() )
-			{
-				resource = getAbsoluteRoot();
-			}
-			else if ( resources.startsWith( "." ) )
-			{
-				resource = new File( getAbsoluteRoot() + resources );
-			}
-			else
-			{
-				resource = new File( getAbsoluteRoot(), resources );
-				protectedFiles.add( "/" + resources );
-			}
-			
-			if ( resource.isFile() )
-				resource.delete();
-			
-			if ( !resource.exists() )
-				resource.mkdirs();
-			
-			// Load metatags
-			List<?> metatagsPre = config.getList( "metatags", new CopyOnWriteArrayList<String>() );
-			
-			for ( Object o : metatagsPre )
-			{
-				if ( o instanceof String )
-					metatags.add( (String) o );
-				else
-					Loader.getLogger().warning( "Site '" + siteId + "' had an incorrect data object type under the YAML config for option 'metatags', found type '" + o.getClass() + "'." );
-			}
-			
-			// Load aliases map
-			ConfigurationSection aliasesPre = config.getConfigurationSection( "aliases" );
-			if ( aliasesPre != null )
-			{
-				Set<String> akeys = aliasesPre.getKeys( false );
-				
-				if ( akeys != null )
-					for ( String k : akeys )
-					{
-						if ( aliasesPre.getString( k, null ) != null )
-							aliases.put( k, aliasesPre.getString( k ) );
-					}
-			}
-			
-			// Loader subdomains map
-			ConfigurationSection subdomainsPre = config.getConfigurationSection( "subdomains" );
-			if ( subdomainsPre != null )
-			{
-				Set<String> skeys = subdomainsPre.getKeys( false );
-				
-				if ( skeys != null )
-					for ( String k : skeys )
-					{
-						if ( aliasesPre.getString( k, null ) != null )
-							subdomains.put( k, aliasesPre.getString( k ) );
-					}
-			}
-			
-			// Load database configuration
-			if ( config != null && config.getConfigurationSection( "database" ) != null )
-			{
-				String type = config.getString( "database.type" );
-				
-				String host = config.getString( "database.host" );
-				String port = config.getString( "database.port" );
-				String database = config.getString( "database.database" );
-				String username = config.getString( "database.username" );
-				String password = config.getString( "database.password" );
-				
-				String filename = config.getString( "database.filename" );
-				
-				sql = new SqlConnector();
-				
-				try
-				{
-					if ( type.equalsIgnoreCase( "mysql" ) )
-						sql.init( database, username, password, host, port );
-					else if ( type.equalsIgnoreCase( "sqlite" ) )
-						sql.init( filename );
-					else
-						throw new SiteException( "The SqlConnector for site '" + siteId + "' can not support anything other then mySql or sqLite at the moment. Please change 'database.type' in the site config to 'mysql' or 'sqLite' and set the connection params." );
-				}
-				catch ( SQLException e )
-				{
-					if ( e.getCause() instanceof ConnectException )
-						throw new SiteException( "We had a problem connecting to database '" + database + "'. Reason: " + e.getCause().getMessage() );
-					else
-						throw new SiteException( e.getMessage() );
-				}
-			}
-			
-			SiteLoadEvent event = new SiteLoadEvent( this );
-			
-			Loader.getPluginManager().callEventWithException( event );
-			
-			if ( event.isCancelled() )
-				throw new SiteException( "Site loading was cancelled by an internal event." );
+				Loader.getLogger().warning( "Site '" + siteId + "' had an incorrect data object type under the YAML config for option 'protected', found type '" + o.getClass() + "'." );
 		}
-		catch ( EventException e )
+		
+		// Load sources location
+		String sources = config.getString( "site.source", "pages" );
+		
+		if ( sources == null || sources.isEmpty() )
 		{
-			throw new SiteException( e );
+			source = getAbsoluteRoot();
 		}
+		else if ( sources.startsWith( "." ) )
+		{
+			source = new File( getAbsoluteRoot() + sources );
+		}
+		else
+		{
+			source = new File( getAbsoluteRoot(), sources );
+			protectedFiles.add( "/" + sources );
+		}
+		
+		FileUtil.directoryHealthCheck( source );
+		
+		// Load resources location
+		String resources = config.getString( "site.resource", "resource" );
+		
+		if ( resources == null || resources.isEmpty() )
+		{
+			resource = getAbsoluteRoot();
+		}
+		else if ( resources.startsWith( "." ) )
+		{
+			resource = new File( getAbsoluteRoot() + resources );
+		}
+		else
+		{
+			resource = new File( getAbsoluteRoot(), resources );
+			protectedFiles.add( "/" + resources );
+		}
+		
+		FileUtil.directoryHealthCheck( resource );
+		
+		// Load metatags
+		List<?> metatagsPre = config.getList( "metatags", new CopyOnWriteArrayList<String>() );
+		
+		for ( Object o : metatagsPre )
+		{
+			if ( o instanceof String )
+				metatags.add( (String) o );
+			else
+				Loader.getLogger().warning( "Site '" + siteId + "' had an incorrect data object type under the YAML config for option 'metatags', found type '" + o.getClass() + "'." );
+		}
+		
+		// Load aliases map
+		ConfigurationSection aliasesPre = config.getConfigurationSection( "aliases" );
+		if ( aliasesPre != null )
+		{
+			Set<String> akeys = aliasesPre.getKeys( false );
+			
+			if ( akeys != null )
+				for ( String k : akeys )
+				{
+					if ( aliasesPre.getString( k, null ) != null )
+						aliases.put( k, aliasesPre.getString( k ) );
+				}
+		}
+		
+		// Loader subdomains map
+		ConfigurationSection subdomainsPre = config.getConfigurationSection( "subdomains" );
+		if ( subdomainsPre != null )
+		{
+			Set<String> skeys = subdomainsPre.getKeys( false );
+			
+			if ( skeys != null )
+				for ( String k : skeys )
+				{
+					if ( aliasesPre.getString( k, null ) != null )
+						subdomains.put( k, aliasesPre.getString( k ) );
+				}
+		}
+		
+		finishLoad();
 	}
 	
 	@SuppressWarnings( "unchecked" )
-	public Site(ResultSet rs) throws SiteException
+	public Site(ResultSet rs) throws SiteException, StartupException
 	{
 		try
 		{
@@ -228,11 +188,18 @@ public class Site
 			
 			if ( siteId == null )
 				reason = "the provided Site Id is NULL. Check configs";
+			else
+				siteId = siteId.toLowerCase();
+			
+			if ( title == null )
+				title = Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Chiori-chan's Web Server Site" );
 			
 			if ( domain == null )
 				reason = "the provided domain is NULL. Check configs";
+			else
+				domain = domain.toLowerCase();
 			
-			if ( Loader.getPersistenceManager().getSiteManager().getSiteById( siteId ) != null )
+			if ( Loader.getSiteManager().getSiteById( siteId ) != null )
 				reason = "there already exists a site by the provided Site Id '" + siteId + "'";
 			
 			if ( reason != null )
@@ -337,49 +304,119 @@ public class Site
 				config = new YamlConfiguration();
 			}
 			
-			if ( config != null && config.getConfigurationSection( "database" ) != null )
-			{
-				String type = config.getString( "database.type" );
-				
-				String host = config.getString( "database.host" );
-				String port = config.getString( "database.port" );
-				String database = config.getString( "database.database" );
-				String username = config.getString( "database.username" );
-				String password = config.getString( "database.password" );
-				
-				String filename = config.getString( "database.filename" );
-				
-				sql = new SqlConnector();
-				
-				try
-				{
-					if ( type.equalsIgnoreCase( "mysql" ) )
-						sql.init( database, username, password, host, port );
-					else if ( type.equalsIgnoreCase( "sqlite" ) )
-						sql.init( filename );
-					else
-						throw new SiteException( "The SqlConnector for site '" + siteId + "' can not support anything other then mySql or sqLite at the moment. Please change 'database.type' in the site config to 'mysql' or 'sqLite' and set the connection params." );
-				}
-				catch ( SQLException e )
-				{
-					if ( e.getCause() instanceof ConnectException )
-						throw new SiteException( "We had a problem connecting to database '" + database + "'. Reason: " + e.getCause().getMessage() );
-					else
-						throw new SiteException( e.getMessage() );
-				}
-			}
-			
-			SiteLoadEvent event = new SiteLoadEvent( this );
-			
-			Loader.getPluginManager().callEventWithException( event );
-			
-			if ( event.isCancelled() )
-				throw new SiteException( "Site loading was cancelled by an internal event." );
+			finishLoad();
 		}
-		catch ( SQLException | EventException e )
+		catch ( SQLException e )
 		{
 			throw new SiteException( e );
 		}
+	}
+	
+	private void finishLoad() throws SiteException, StartupException
+	{
+		// Framework site always uses the Builtin SQL Connector. Ignore YAML FileBase on this one.
+		if ( siteId.equalsIgnoreCase( "framework" ) )
+		{
+			sql = Loader.getPersistenceManager().getSql();
+		}
+		else if ( config != null && config.getConfigurationSection( "database" ) != null )
+		{
+			String type = config.getString( "database.type" );
+			
+			String host = config.getString( "database.host" );
+			String port = config.getString( "database.port" );
+			String database = config.getString( "database.database" );
+			String username = config.getString( "database.username" );
+			String password = config.getString( "database.password" );
+			
+			String filename = config.getString( "database.filename" );
+			
+			sql = new SqlConnector();
+			
+			try
+			{
+				if ( type.equalsIgnoreCase( "mysql" ) )
+					sql.init( database, username, password, host, port );
+				else if ( type.equalsIgnoreCase( "sqlite" ) )
+					sql.init( filename );
+				else
+					throw new SiteException( "The SqlConnector for site '" + siteId + "' can not support anything other then mySql or sqLite at the moment. Please change 'database.type' in the site config to 'mysql' or 'sqLite' and set the connection params." );
+			}
+			catch ( SQLException e )
+			{
+				if ( e.getCause() instanceof ConnectException )
+					throw new SiteException( "We had a problem connecting to database '" + database + "'. Reason: " + e.getCause().getMessage() );
+				else
+					throw new SiteException( e.getMessage() );
+			}
+		}
+		
+		if ( config != null && config.getConfigurationSection( "users" ) != null )
+		{
+			try
+			{
+				switch ( config.getString( "users.adapter", null ) )
+				{
+					case "sql":
+						if ( sql == null )
+							throw new SiteException( "Site '" + siteId + "' is configured with a SQL UserLookupAdapter but the site is missing a valid SQL Database, which is required for this adapter." );
+						
+						userLookupAdapter = new SqlAdapter( sql, config.getString( "users.table", "users" ), config.getStringList( "users.fields", Arrays.asList( "username", "userId" ) ) );
+						Loader.getLogger().info( "Initiated Sql UserLookupAdapter `" + userLookupAdapter + "` with sql '" + sql + "' for site '" + siteId + "'" );
+						break;
+					case "file":
+						userLookupAdapter = new FileAdapter( config.getString( "users.filebase", "[site].users" ), this );
+						Loader.getLogger().info( "Initiated FileBase UserLookupAdapter `" + userLookupAdapter + "` for site '" + siteId + "'" );
+						break;
+					case "builtin":
+						if ( siteId.equalsIgnoreCase( "framework" ) )
+							throw new SiteException( "Site 'framework' can not be configuration to use builtin UserLookupAdapter since it's the provider of the buildin UserLookupAdapter." );
+						
+						userLookupAdapter = Loader.getUserManager().getBuiltinUserLookupAdapter();
+						Loader.getLogger().info( "Initiated Default UserLookupAdapter `" + userLookupAdapter + "` for site '" + siteId + "'" );
+						break;
+					case "shared":
+						if ( config.getString( "users.shareWith", null ) == null )
+							throw new SiteException( "Site '" + siteId + "' is configured to share the UserLookupAdapter with another site, but the config section 'users.shareWith' is missing." );
+						
+						Site shared = Loader.getSiteManager().getSiteById( config.getString( "users.shareWith" ) );
+						
+						if ( shared == null )
+							throw new SiteException( "Site '" + siteId + "' is configured to share the UserLookupAdapter with site '" + config.getString( "users.shareWith" ) + "', but there was no sites found by that id." );
+						
+						if ( shared.getUserLookupAdapter() == null )
+							throw new SiteException( "Site '" + siteId + "' is configured to share the UserLookupAdapter with site '" + config.getString( "users.shareWith" ) + "', but the found site has no Adapter configured." );
+						
+						userLookupAdapter = shared.getUserLookupAdapter();
+						Loader.getLogger().info( "Initiated Shared UserLookupAdapter `" + userLookupAdapter + "` with site '" + config.getString( "users.shareWith" ) + "' for site '" + siteId + "'" );
+						break;
+					default: // TODO Create custom UserLookupAdapters.
+						if ( siteId.equalsIgnoreCase( "framework" ) )
+							throw new StartupException( "Site 'framework' must have a UserLookupAdapter configured. The simplest one to use would be 'file', set this in the '000-default.yaml' YAML FileBase." );
+						
+						Loader.getLogger().warning( "Site '" + siteId + "' is not configured with a UserLookupAdapter. This site will be unable to login any users." );
+				}
+			}
+			catch ( LookupAdapterException e )
+			{
+				throw new SiteException( "There was an exception encoutered when attempting to create the UserLookupAdapter for site '" + siteId + "'.", e );
+			}
+		}
+		
+		SiteLoadEvent event = new SiteLoadEvent( this );
+		
+		try
+		{
+			Loader.getPluginManager().callEventWithException( event );
+		}
+		catch ( EventException e )
+		{
+			throw new SiteException( e );
+		}
+		
+		// Plugins are not permitted to cancel the loading of the framework site
+		if ( event.isCancelled() && !siteId.equalsIgnoreCase( "framework" ) )
+			throw new SiteException( "Loading of site '" + siteId + "' was cancelled by an internal event." );
 	}
 	
 	protected Site setDatabase( SqlConnector sql )
@@ -547,6 +584,11 @@ public class Site
 	public void setAutoSave( boolean b )
 	{
 		// TODO Auto-generated method stub
+	}
+	
+	public UserLookupAdapter getUserLookupAdapter()
+	{
+		return userLookupAdapter;
 	}
 	
 	// TODO: Add methods to add protected files, metatags and aliases to site and save

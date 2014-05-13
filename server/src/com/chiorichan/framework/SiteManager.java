@@ -2,6 +2,7 @@ package com.chiorichan.framework;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.net.URISyntaxException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -12,29 +13,41 @@ import java.util.Map;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 import com.chiorichan.Loader;
+import com.chiorichan.StartupException;
 import com.chiorichan.database.SqlConnector;
-import com.chiorichan.file.YamlConfiguration;
+import com.chiorichan.util.FileUtil;
 
 public class SiteManager
 {
-	SqlConnector sql;
-	Map<String, Site> siteMap = new LinkedHashMap<String, Site>();
+	Map<String, Site> siteMap;
 	
-	public SiteManager(SqlConnector sql0)
+	public SiteManager()
 	{
-		sql = sql0;
+		siteMap = new LinkedHashMap<String, Site>();
 	}
 	
-	public void loadSites()
+	public void loadSites() throws StartupException
 	{
+		if ( siteMap.size() > 0 )
+			throw new StartupException( "Site manager already has sites loaded. Please unload the existing sites first." );
+		
+		SqlConnector sql = Loader.getPersistenceManager().getSql();
+		
 		// Load sites from YAML Filebase.
 		File siteFileBase = new File( "sites" );
 		
-		if ( siteFileBase.isFile() )
-			siteFileBase.delete();
+		FileUtil.directoryHealthCheck( siteFileBase );
 		
-		if ( !siteFileBase.exists() )
-			siteFileBase.mkdirs();
+		// We make sure the default framework YAML FileBase exists and if not we copy it from the Jar.
+		if ( !new File( siteFileBase, "000-default.yaml" ).exists() )
+		{
+			try
+			{
+				FileUtil.copy( new File( getClass().getClassLoader().getResource( "com/chiorichan/default-site.yaml" ).toURI() ), new File( siteFileBase, "000-default.yaml" ) );
+			}
+			catch ( URISyntaxException e1 )
+			{}
+		}
 		
 		FileFilter fileFilter = new WildcardFileFilter( "*.yaml" );
 		File[] files = siteFileBase.listFiles( fileFilter );
@@ -49,9 +62,6 @@ public class SiteManager
 					if ( site != null )
 					{
 						siteMap.put( site.siteId, site );
-						
-						if ( site.siteId.equals( "framework" ) )
-							site.setDatabase( Loader.getPersistenceManager().getSql() );
 					}
 				}
 				catch ( SiteException e )
@@ -63,42 +73,40 @@ public class SiteManager
 			}
 		
 		// Load sites from Framework Database.
-		try
-		{
-			// Load sites from the database
-			ResultSet rs = sql.query( "SELECT * FROM `sites`;" );
-			
-			if ( sql.getRowCount( rs ) > 0 )
+		if ( sql != null )
+			try
 			{
-				do
+				// Load sites from the database
+				ResultSet rs = sql.query( "SELECT * FROM `sites`;" );
+				
+				if ( sql.getRowCount( rs ) > 0 )
 				{
-					try
+					do
 					{
-						Site site = new Site( rs );
-						
-						if ( site != null )
+						try
 						{
-							siteMap.put( site.siteId, site );
+							Site site = new Site( rs );
 							
-							if ( rs.getString( "siteID" ).equals( "framework" ) )
-								site.setDatabase( Loader.getPersistenceManager().getSql() );
+							if ( site != null )
+							{
+								siteMap.put( site.siteId, site );
+							}
 						}
+						catch ( SiteException e )
+						{
+							Loader.getLogger().severe( "Exception encountered while loading a site from SQL DataBase, Reason: " + e.getMessage() );
+							if ( e.getCause() != null )
+								e.getCause().printStackTrace();
+						}
+						
 					}
-					catch ( SiteException e )
-					{
-						Loader.getLogger().severe( "Exception encountered while loading a site from Database, Reason: " + e.getMessage() );
-						if ( e.getCause() != null )
-							e.getCause().printStackTrace();
-					}
-					
+					while ( rs.next() );
 				}
-				while ( rs.next() );
 			}
-		}
-		catch ( SQLException e )
-		{
-			Loader.getLogger().severe( "Exception encountered while loading a sites from Database", e );
-		}
+			catch ( SQLException e )
+			{
+				Loader.getLogger().severe( "Exception encountered while loading a sites from Database", e );
+			}
 	}
 	
 	public Site getSiteById( String siteId )

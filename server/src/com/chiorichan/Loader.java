@@ -45,6 +45,7 @@ import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.conversations.Conversable;
 import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.framework.Site;
+import com.chiorichan.framework.SiteManager;
 import com.chiorichan.http.PersistenceManager;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.permissions.Permissible;
@@ -94,6 +95,7 @@ public class Loader implements PluginMessageRecipient
 	
 	protected static UserManager userManager;
 	protected static PersistenceManager persistence;
+	protected static SiteManager sites;
 	
 	private final ServicesManager servicesManager = new SimpleServicesManager();
 	private final static ChioriScheduler scheduler = new ChioriScheduler();
@@ -342,7 +344,10 @@ public class Loader implements PluginMessageRecipient
 			getLogger().info( "Initalizing the Persistence Manager..." );
 			
 			persistence = new PersistenceManager();
-			persistence.getSiteManager().loadSites();
+			
+			getLogger().info( "Initalizing the Site Manager..." );
+			sites = new SiteManager();
+			sites.loadSites();
 			
 			getLogger().info( "Initalizing the User Manager..." );
 			userManager = new UserManager( this );
@@ -369,6 +374,11 @@ public class Loader implements PluginMessageRecipient
 		updater.check();
 		
 		return true;
+	}
+	
+	public static SiteManager getSiteManager()
+	{
+		return sites;
 	}
 	
 	private static void showBanner()
@@ -695,7 +705,7 @@ public class Loader implements PluginMessageRecipient
 		return false;
 	}
 	
-	// TOOD: Reload might need some checking over.
+	// TOOD: Reload seems to be broken. This needs some serious reworking.
 	public void reload()
 	{
 		configuration = YamlConfiguration.loadConfiguration( getConfigFile() );
@@ -738,7 +748,11 @@ public class Loader implements PluginMessageRecipient
 		
 		persistence = new PersistenceManager();
 		persistence.loadSessions();
-		persistence.getSiteManager().loadSites();
+		
+		getLogger().info( "Reinitalizing the Site Manager..." );
+		
+		sites = new SiteManager();
+		sites.loadSites();
 		
 		getLogger().info( "Reinitalizing the User Manager..." );
 		userManager = new UserManager( this );
@@ -1186,12 +1200,17 @@ public class Loader implements PluginMessageRecipient
 	
 	public List<Site> getSites()
 	{
-		return getPersistenceManager().getSiteManager().getSites();
+		return sites.getSites();
 	}
 	
-	public Site getSite( String siteName )
+	public Site getSiteById( String siteName )
 	{
-		return getPersistenceManager().getSiteManager().getSiteById( siteName );
+		return sites.getSiteById( siteName );
+	}
+	
+	public Site getSiteByDomain( String domain )
+	{
+		return sites.getSiteByDomain( domain );
 	}
 	
 	public AutoUpdater getAutoUpdater()
