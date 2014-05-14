@@ -147,7 +147,7 @@ public class WebUtils
 		if ( !source.isEmpty() )
 		{
 			if ( filePath == null || filePath.isEmpty() )
-				eval.evalCode( source, true );
+				eval.evalCode( source );
 			else
 				eval.evalFileVirtual( source, filePath );
 		}

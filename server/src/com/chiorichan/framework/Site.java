@@ -623,4 +623,25 @@ public class Site
 	}
 	
 	// TODO: Add methods to add protected files, metatags and aliases to site and save
+	
+	public void setGlobal( String key, Object val )
+	{
+		binding.setVariable( key, val );
+	}
+	
+	public Object getGlobal( String key )
+	{
+		return binding.getVariable( key );
+	}
+	
+	@SuppressWarnings( "unchecked" )
+	public Map<String, Object> getGlobals()
+	{
+		return binding.getVariables();
+	}
+	
+	protected Binding getBinding()
+	{
+		return binding;
+	}
 }
