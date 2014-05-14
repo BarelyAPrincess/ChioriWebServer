@@ -127,7 +127,26 @@ public class Evaling
 		}
 	}
 	
-	public void evalCode( String code ) throws CodeParsingException
+	public void evalCode( String code )
+	{
+		try
+		{
+			evalCodeWithException( code );
+		}
+		catch ( CodeParsingException e )
+		{
+			try
+			{
+				bs.write( ( e.getMessage() ).getBytes( "UTF-8" ) );
+			}
+			catch ( IOException e1 )
+			{
+				e1.printStackTrace();
+			}
+		}
+	}
+	
+	public void evalCodeWithException( String code ) throws CodeParsingException
 	{
 		try
 		{
@@ -137,22 +156,6 @@ public class Evaling
 		catch ( CompilationFailedException e )
 		{
 			throw new CodeParsingException( e, code );
-		}
-	}
-	
-	public void evalCode( String code, boolean throwException ) throws CodeParsingException, UnsupportedEncodingException, IOException
-	{
-		try
-		{
-			if ( !code.isEmpty() )
-				shell.evaluate( code );
-		}
-		catch ( CompilationFailedException e )
-		{
-			if ( throwException )
-				throw new CodeParsingException( e, code );
-			else
-				bs.write( ( e.getMessage() ).getBytes( "UTF-8" ) );
 		}
 	}
 	
@@ -207,7 +210,7 @@ public class Evaling
 		if ( shellIdent.equalsIgnoreCase( "groovy" ) )
 			try
 			{
-				evalCode( html );
+				evalCodeWithException( html );
 				return true;
 			}
 			catch ( CodeParsingException | GroovyRuntimeException e )
