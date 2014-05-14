@@ -46,6 +46,7 @@ import com.chiorichan.conversations.Conversable;
 import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.framework.Site;
 import com.chiorichan.framework.SiteManager;
+import com.chiorichan.framework.WebUtils;
 import com.chiorichan.http.PersistenceManager;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.permissions.Permissible;
@@ -69,7 +70,6 @@ import com.chiorichan.user.User;
 import com.chiorichan.user.UserManager;
 import com.chiorichan.util.FileUtil;
 import com.chiorichan.util.Versioning;
-import com.chiorichan.util.WebUtils;
 import com.chiorichan.util.permissions.DefaultPermissions;
 import com.google.common.collect.ImmutableList;
 

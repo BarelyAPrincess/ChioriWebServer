@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.io.IOUtils;
 
 import com.chiorichan.Loader;
-import com.chiorichan.util.WebUtils;
+import com.chiorichan.framework.WebUtils;
 
 public class Download implements Runnable
 {
