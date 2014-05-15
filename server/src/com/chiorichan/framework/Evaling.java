@@ -19,7 +19,6 @@ import org.codehaus.groovy.control.CompilerConfiguration;
 
 import com.chiorichan.Loader;
 import com.chiorichan.exceptions.ShellExecuteException;
-import com.chiorichan.http.FileInterpreter;
 import com.google.common.collect.Lists;
 
 public class Evaling

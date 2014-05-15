@@ -54,23 +54,6 @@ public abstract class JavaPlugin extends PluginBase
 		( (PluginClassLoader) classLoader ).initialize( this );
 	}
 	
-	/**
-	 * @deprecated This method is intended for unit testing purposes when the
-	 *             other {@linkplain #JavaPlugin(JavaPluginLoader, PluginDescriptionFile, File, File) constructor} cannot be used.
-	 *             <p>
-	 *             Its existence may be temporary.
-	 */
-	@Deprecated
-	protected JavaPlugin(final PluginLoader loader, final Loader server, final PluginDescriptionFile description, final File dataFolder, final File file)
-	{
-		final ClassLoader classLoader = this.getClass().getClassLoader();
-		if ( classLoader instanceof PluginClassLoader )
-		{
-			throw new IllegalStateException( "Cannot use initialization constructor at runtime" );
-		}
-		init( loader, server, description, dataFolder, file, classLoader );
-	}
-	
 	protected JavaPlugin(final JavaPluginLoader loader, final PluginDescriptionFile description, final File dataFolder, final File file)
 	{
 		final ClassLoader classLoader = this.getClass().getClassLoader();
@@ -289,20 +272,6 @@ public abstract class JavaPlugin extends PluginBase
 				onDisable();
 			}
 		}
-	}
-	
-	/**
-	 * @deprecated This method is legacy and will be removed - it must be
-	 *             replaced by the specially provided constructor(s).
-	 */
-	@Deprecated
-	protected final void initialize( PluginLoader loader, Loader server, PluginDescriptionFile description, File dataFolder, File file, ClassLoader classLoader )
-	{
-		if ( server.getWarningState() == WarningState.OFF )
-		{
-			return;
-		}
-		getLogger().log( Level.WARNING, getClass().getName() + " is already initialized", server.getWarningState() == WarningState.DEFAULT ? null : new AuthorNagException( "Explicit initialization" ) );
 	}
 	
 	final void init( PluginLoader loader, Loader server, PluginDescriptionFile description, File dataFolder, File file, ClassLoader classLoader )

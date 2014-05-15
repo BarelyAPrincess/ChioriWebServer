@@ -8,7 +8,6 @@
 package com.chiorichan.framework;
 
 import com.chiorichan.exceptions.ShellExecuteException;
-import com.chiorichan.http.FileInterpreter;
 import java.io.File;
 
 /**

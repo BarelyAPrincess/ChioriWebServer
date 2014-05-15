@@ -1,119 +1,386 @@
 package com.chiorichan.plugin;
 
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+
+import com.chiorichan.Loader;
+import com.chiorichan.event.server.ServiceRegisterEvent;
+import com.chiorichan.event.server.ServiceUnregisterEvent;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 /**
- * Manages services and service providers. Services are an interface specifying a list of methods that a provider must
- * implement. Providers are implementations of these services. A provider can be queried from the services manager in
- * order to use a service (if one is available). If multiple plugins register a service, then the service with the
- * highest priority takes precedence.
+ * A simple services manager.
  */
-public interface ServicesManager
+public class ServicesManager
 {
+	
+	/**
+	 * Map of providers.
+	 */
+	private final Map<Class<?>, List<RegisteredServiceProvider<?>>> providers = new HashMap<Class<?>, List<RegisteredServiceProvider<?>>>();
 	
 	/**
 	 * Register a provider of a service.
 	 * 
 	 * @param <T>
-	 *           Provider
+	 *             Provider
 	 * @param service
-	 *           service class
+	 *             service class
 	 * @param provider
-	 *           provider to register
+	 *             provider to register
 	 * @param plugin
-	 *           plugin with the provider
+	 *             plugin with the provider
 	 * @param priority
-	 *           priority of the provider
+	 *             priority of the provider
 	 */
-	public <T> void register( Class<T> service, T provider, Plugin plugin, ServicePriority priority );
+	public <T> void register( Class<T> service, T provider, Plugin plugin, ServicePriority priority )
+	{
+		RegisteredServiceProvider<T> registeredProvider = null;
+		synchronized ( providers )
+		{
+			List<RegisteredServiceProvider<?>> registered = providers.get( service );
+			if ( registered == null )
+			{
+				registered = new ArrayList<RegisteredServiceProvider<?>>();
+				providers.put( service, registered );
+			}
+			
+			registeredProvider = new RegisteredServiceProvider<T>( service, provider, priority, plugin );
+			
+			// Insert the provider into the collection, much more efficient big O than sort
+			int position = Collections.binarySearch( registered, registeredProvider );
+			if ( position < 0 )
+			{
+				registered.add( -( position + 1 ), registeredProvider );
+			}
+			else
+			{
+				registered.add( position, registeredProvider );
+			}
+			
+		}
+		Loader.getPluginManager().callEvent( new ServiceRegisterEvent( registeredProvider ) );
+	}
 	
 	/**
 	 * Unregister all the providers registered by a particular plugin.
 	 * 
 	 * @param plugin
-	 *           The plugin
+	 *             The plugin
 	 */
-	public void unregisterAll( Plugin plugin );
+	public void unregisterAll( Plugin plugin )
+	{
+		ArrayList<ServiceUnregisterEvent> unregisteredEvents = new ArrayList<ServiceUnregisterEvent>();
+		synchronized ( providers )
+		{
+			Iterator<Map.Entry<Class<?>, List<RegisteredServiceProvider<?>>>> it = providers.entrySet().iterator();
+			
+			try
+			{
+				while ( it.hasNext() )
+				{
+					Map.Entry<Class<?>, List<RegisteredServiceProvider<?>>> entry = it.next();
+					Iterator<RegisteredServiceProvider<?>> it2 = entry.getValue().iterator();
+					
+					try
+					{
+						// Removed entries that are from this plugin
+						
+						while ( it2.hasNext() )
+						{
+							RegisteredServiceProvider<?> registered = it2.next();
+							
+							if ( registered.getPlugin().equals( plugin ) )
+							{
+								it2.remove();
+								unregisteredEvents.add( new ServiceUnregisterEvent( registered ) );
+							}
+						}
+					}
+					catch ( NoSuchElementException e )
+					{ // Why does Java suck
+					}
+					
+					// Get rid of the empty list
+					if ( entry.getValue().size() == 0 )
+					{
+						it.remove();
+					}
+				}
+			}
+			catch ( NoSuchElementException e )
+			{}
+		}
+		for ( ServiceUnregisterEvent event : unregisteredEvents )
+		{
+			Loader.getPluginManager().callEvent( event );
+		}
+	}
 	
 	/**
 	 * Unregister a particular provider for a particular service.
 	 * 
 	 * @param service
-	 *           The service interface
+	 *             The service interface
 	 * @param provider
-	 *           The service provider implementation
+	 *             The service provider implementation
 	 */
-	public void unregister( Class<?> service, Object provider );
+	public void unregister( Class<?> service, Object provider )
+	{
+		ArrayList<ServiceUnregisterEvent> unregisteredEvents = new ArrayList<ServiceUnregisterEvent>();
+		synchronized ( providers )
+		{
+			Iterator<Map.Entry<Class<?>, List<RegisteredServiceProvider<?>>>> it = providers.entrySet().iterator();
+			
+			try
+			{
+				while ( it.hasNext() )
+				{
+					Map.Entry<Class<?>, List<RegisteredServiceProvider<?>>> entry = it.next();
+					
+					// We want a particular service
+					if ( entry.getKey() != service )
+					{
+						continue;
+					}
+					
+					Iterator<RegisteredServiceProvider<?>> it2 = entry.getValue().iterator();
+					
+					try
+					{
+						// Removed entries that are from this plugin
+						
+						while ( it2.hasNext() )
+						{
+							RegisteredServiceProvider<?> registered = it2.next();
+							
+							if ( registered.getProvider() == provider )
+							{
+								it2.remove();
+								unregisteredEvents.add( new ServiceUnregisterEvent( registered ) );
+							}
+						}
+					}
+					catch ( NoSuchElementException e )
+					{ // Why does Java suck
+					}
+					
+					// Get rid of the empty list
+					if ( entry.getValue().size() == 0 )
+					{
+						it.remove();
+					}
+				}
+			}
+			catch ( NoSuchElementException e )
+			{}
+		}
+		for ( ServiceUnregisterEvent event : unregisteredEvents )
+		{
+			Loader.getPluginManager().callEvent( event );
+		}
+	}
 	
 	/**
 	 * Unregister a particular provider.
 	 * 
 	 * @param provider
-	 *           The service provider implementation
+	 *             The service provider implementation
 	 */
-	public void unregister( Object provider );
+	public void unregister( Object provider )
+	{
+		ArrayList<ServiceUnregisterEvent> unregisteredEvents = new ArrayList<ServiceUnregisterEvent>();
+		synchronized ( providers )
+		{
+			Iterator<Map.Entry<Class<?>, List<RegisteredServiceProvider<?>>>> it = providers.entrySet().iterator();
+			
+			try
+			{
+				while ( it.hasNext() )
+				{
+					Map.Entry<Class<?>, List<RegisteredServiceProvider<?>>> entry = it.next();
+					Iterator<RegisteredServiceProvider<?>> it2 = entry.getValue().iterator();
+					
+					try
+					{
+						// Removed entries that are from this plugin
+						
+						while ( it2.hasNext() )
+						{
+							RegisteredServiceProvider<?> registered = it2.next();
+							
+							if ( registered.getProvider().equals( provider ) )
+							{
+								it2.remove();
+								unregisteredEvents.add( new ServiceUnregisterEvent( registered ) );
+							}
+						}
+					}
+					catch ( NoSuchElementException e )
+					{ // Why does Java suck
+					}
+					
+					// Get rid of the empty list
+					if ( entry.getValue().size() == 0 )
+					{
+						it.remove();
+					}
+				}
+			}
+			catch ( NoSuchElementException e )
+			{}
+		}
+		for ( ServiceUnregisterEvent event : unregisteredEvents )
+		{
+			Loader.getPluginManager().callEvent( event );
+		}
+	}
 	
 	/**
 	 * Queries for a provider. This may return if no provider has been registered for a service. The highest priority
 	 * provider is returned.
 	 * 
 	 * @param <T>
-	 *           The service interface
+	 *             The service interface
 	 * @param service
-	 *           The service interface
+	 *             The service interface
 	 * @return provider or null
 	 */
-	public <T> T load( Class<T> service );
+	public <T> T load( Class<T> service )
+	{
+		synchronized ( providers )
+		{
+			List<RegisteredServiceProvider<?>> registered = providers.get( service );
+			
+			if ( registered == null )
+			{
+				return null;
+			}
+			
+			// This should not be null!
+			return service.cast( registered.get( 0 ).getProvider() );
+		}
+	}
 	
 	/**
 	 * Queries for a provider registration. This may return if no provider has been registered for a service.
 	 * 
 	 * @param <T>
-	 *           The service interface
+	 *             The service interface
 	 * @param service
-	 *           The service interface
+	 *             The service interface
 	 * @return provider registration or null
 	 */
-	public <T> RegisteredServiceProvider<T> getRegistration( Class<T> service );
+	@SuppressWarnings( "unchecked" )
+	public <T> RegisteredServiceProvider<T> getRegistration( Class<T> service )
+	{
+		synchronized ( providers )
+		{
+			List<RegisteredServiceProvider<?>> registered = providers.get( service );
+			
+			if ( registered == null )
+			{
+				return null;
+			}
+			
+			// This should not be null!
+			return (RegisteredServiceProvider<T>) registered.get( 0 );
+		}
+	}
 	
 	/**
 	 * Get registrations of providers for a plugin.
 	 * 
 	 * @param plugin
-	 *           The plugin
+	 *             The plugin
 	 * @return provider registration or null
 	 */
-	public List<RegisteredServiceProvider<?>> getRegistrations( Plugin plugin );
+	public List<RegisteredServiceProvider<?>> getRegistrations( Plugin plugin )
+	{
+		ImmutableList.Builder<RegisteredServiceProvider<?>> ret = ImmutableList.<RegisteredServiceProvider<?>> builder();
+		synchronized ( providers )
+		{
+			for ( List<RegisteredServiceProvider<?>> registered : providers.values() )
+			{
+				for ( RegisteredServiceProvider<?> provider : registered )
+				{
+					if ( provider.getPlugin().equals( plugin ) )
+					{
+						ret.add( provider );
+					}
+				}
+			}
+		}
+		return ret.build();
+	}
 	
 	/**
-	 * Get registrations of providers for a service. The returned list is unmodifiable.
+	 * Get registrations of providers for a service. The returned list is an unmodifiable copy.
 	 * 
 	 * @param <T>
-	 *           The service interface
+	 *             The service interface
 	 * @param service
-	 *           The service interface
-	 * @return list of registrations
+	 *             The service interface
+	 * @return a copy of the list of registrations
 	 */
-	public <T> Collection<RegisteredServiceProvider<T>> getRegistrations( Class<T> service );
+	@SuppressWarnings( "unchecked" )
+	public <T> List<RegisteredServiceProvider<T>> getRegistrations( Class<T> service )
+	{
+		ImmutableList.Builder<RegisteredServiceProvider<T>> ret;
+		synchronized ( providers )
+		{
+			List<RegisteredServiceProvider<?>> registered = providers.get( service );
+			
+			if ( registered == null )
+			{
+				return ImmutableList.<RegisteredServiceProvider<T>> of();
+			}
+			
+			ret = ImmutableList.<RegisteredServiceProvider<T>> builder();
+			
+			for ( RegisteredServiceProvider<?> provider : registered )
+			{
+				ret.add( (RegisteredServiceProvider<T>) provider );
+			}
+			
+		}
+		return ret.build();
+	}
 	
 	/**
 	 * Get a list of known services. A service is known if it has registered providers for it.
 	 * 
-	 * @return list of known services
+	 * @return a copy of the set of known services
 	 */
-	public Collection<Class<?>> getKnownServices();
+	public Set<Class<?>> getKnownServices()
+	{
+		synchronized ( providers )
+		{
+			return ImmutableSet.<Class<?>> copyOf( providers.keySet() );
+		}
+	}
 	
 	/**
-	 * Returns whether a provider has been registered for a service. Do not check this first only to call
-	 * <code>load(service)</code> later, as that would be a non-thread safe situation.
+	 * Returns whether a provider has been registered for a service.
 	 * 
 	 * @param <T>
-	 *           service
+	 *             service
 	 * @param service
-	 *           service to check
-	 * @return whether there has been a registered provider
+	 *             service to check
+	 * @return true if and only if there are registered providers
 	 */
-	public <T> boolean isProvidedFor( Class<T> service );
-	
+	public <T> boolean isProvidedFor( Class<T> service )
+	{
+		synchronized ( providers )
+		{
+			return providers.containsKey( service );
+		}
+	}
 }

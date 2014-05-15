@@ -45,19 +45,13 @@ import com.chiorichan.serialization.ConfigurationSerialization;
 import com.google.common.collect.ImmutableList;
 
 /**
- * Represents a Java plugin loader, allowing plugins in the form of .jar
+ * Represents a Groovy plugin loader, allowing plugins in the form of .groovy
  */
 public final class GroovyPluginLoader implements PluginLoader
 {
 	private final Pattern[] fileFilters = new Pattern[] { Pattern.compile( "\\.groovy$" ), };
 	private final Map<String, Class<?>> classes = new HashMap<String, Class<?>>();
 	private final Map<String, GroovyPluginClassLoader> loaders = new LinkedHashMap<String, GroovyPluginClassLoader>();
-	
-	// Need to deprecate this requirement.
-	public GroovyPluginLoader( Loader loader )
-	{
-		
-	}
 	
 	public Plugin loadPlugin( File file ) throws InvalidPluginException
 	{

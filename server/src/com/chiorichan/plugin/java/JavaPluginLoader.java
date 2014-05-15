@@ -53,12 +53,6 @@ public final class JavaPluginLoader implements PluginLoader
 	private final Map<String, Class<?>> classes = new HashMap<String, Class<?>>();
 	private final Map<String, PluginClassLoader> loaders = new LinkedHashMap<String, PluginClassLoader>();
 	
-	// Need to deprecate this requirement.
-	public JavaPluginLoader( Loader loader )
-	{
-		
-	}
-	
 	public Plugin loadPlugin( File file ) throws InvalidPluginException
 	{
 		Validate.notNull( file, "File cannot be null" );
