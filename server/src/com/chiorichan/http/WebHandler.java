@@ -1,5 +1,12 @@
 package com.chiorichan.http;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
 import com.chiorichan.Loader;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.RenderEvent;
@@ -13,11 +20,6 @@ import com.chiorichan.util.Versioning;
 import com.google.common.collect.Maps;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import java.io.File;
-import java.io.IOException;
-import java.util.Map;
-import java.util.Map.Entry;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 
 /**
  * This class is not thread safe.
@@ -153,7 +155,7 @@ public class WebHandler implements HttpHandler
 		}
 		
 		// Throws IOException and HttpErrorException
-		FileInterpreter fi = new FileInterpreter( request );
+		WebInterpreter fi = new WebInterpreter( request );
 		
 		Loader.getLogger().info( "&dNew page request '" + subdomain + "." + domain + "' '" + uri + "' '" + fi.toString() + "'" );
 		

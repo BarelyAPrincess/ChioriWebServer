@@ -55,8 +55,7 @@ import com.chiorichan.plugin.Plugin;
 import com.chiorichan.plugin.PluginLoadOrder;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.ServicesManager;
-import com.chiorichan.plugin.SimplePluginManager;
-import com.chiorichan.plugin.SimpleServicesManager;
+import com.chiorichan.plugin.groovy.GroovyPluginLoader;
 import com.chiorichan.plugin.java.JavaPluginLoader;
 import com.chiorichan.plugin.messaging.Messenger;
 import com.chiorichan.plugin.messaging.PluginMessageRecipient;
@@ -89,7 +88,7 @@ public class Loader implements PluginMessageRecipient
 	public static String webroot = "";
 	private WarningState warningState = WarningState.DEFAULT;
 	private final CommandMap commandMap = new CommandMap();
-	private final PluginManager pluginManager = new SimplePluginManager( this, commandMap );
+	private final PluginManager pluginManager = new PluginManager( this, commandMap );
 	private final StandardMessenger messenger = new StandardMessenger();
 	protected final static Console console = new Console();
 	
@@ -97,7 +96,7 @@ public class Loader implements PluginMessageRecipient
 	protected static PersistenceManager persistence;
 	protected static SiteManager sites;
 	
-	private final ServicesManager servicesManager = new SimpleServicesManager();
+	private final ServicesManager servicesManager = new ServicesManager();
 	private final static ChioriScheduler scheduler = new ChioriScheduler();
 	public static Boolean isRunning = false;
 	public static String clientId;
@@ -291,7 +290,7 @@ public class Loader implements PluginMessageRecipient
 		
 		saveConfig();
 		
-		( (SimplePluginManager) pluginManager ).useTimings( configuration.getBoolean( "settings.plugin-profiling" ) );
+		pluginManager.useTimings( configuration.getBoolean( "settings.plugin-profiling" ) );
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
 		
 		if ( !NetworkManager.isClientMode() )
@@ -420,6 +419,7 @@ public class Loader implements PluginMessageRecipient
 	public void loadPlugins()
 	{
 		pluginManager.registerInterface( JavaPluginLoader.class );
+		pluginManager.registerInterface( GroovyPluginLoader.class );
 		
 		File pluginFolder = (File) options.valueOf( "plugins" );
 		
