@@ -268,7 +268,7 @@ public class Console implements ConsoleCommandSender, Runnable
 			ServerCommand servercommand = (ServerCommand) commandList.remove( 0 );
 			
 			ServerCommandEvent event = new ServerCommandEvent( this, servercommand.command );
-			Loader.getPluginManager().callEvent( event );
+			Loader.getEventBus().callEvent( event );
 			servercommand = new ServerCommand( event.getCommand(), servercommand.sender );
 			
 			Loader.getInstance().dispatchServerCommand( this, servercommand );

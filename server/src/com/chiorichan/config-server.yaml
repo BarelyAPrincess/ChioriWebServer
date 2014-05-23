@@ -63,5 +63,7 @@ users:
   operators:
   - cg092m
 framework:
+  groovy:
+
   sites:
     defaultTitle: Unnamed Chiori-chan's Web Server Site

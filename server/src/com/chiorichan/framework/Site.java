@@ -438,7 +438,7 @@ public class Site
 		
 		try
 		{
-			Loader.getPluginManager().callEventWithException( event );
+			Loader.getEventBus().callEventWithException( event );
 		}
 		catch ( EventException e )
 		{

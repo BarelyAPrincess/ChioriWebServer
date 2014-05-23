@@ -2,7 +2,6 @@ package com.chiorichan.plugin;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -24,11 +23,7 @@ import com.chiorichan.Loader;
 import com.chiorichan.command.Command;
 import com.chiorichan.command.CommandMap;
 import com.chiorichan.command.PluginCommandYamlParser;
-import com.chiorichan.event.Event;
-import com.chiorichan.event.EventException;
-import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.HandlerList;
-import com.chiorichan.event.Listener;
 import com.chiorichan.permissions.Permissible;
 import com.chiorichan.permissions.Permission;
 import com.chiorichan.permissions.PermissionDefault;
@@ -50,7 +45,6 @@ public final class PluginManager
 	private final Map<Boolean, Set<Permission>> defaultPerms = new LinkedHashMap<Boolean, Set<Permission>>();
 	private final Map<String, Map<Permissible, Boolean>> permSubs = new HashMap<String, Map<Permissible, Boolean>>();
 	private final Map<Boolean, Map<Permissible, Boolean>> defSubs = new HashMap<Boolean, Map<Permissible, Boolean>>();
-	private boolean useTimings = false;
 	private Set<String> loadedPlugins = new HashSet<String>();
 	
 	public PluginManager(Loader instance, CommandMap commandMap)
@@ -349,130 +343,6 @@ public final class PluginManager
 	}
 	
 	/**
-	 * Loads the plugins contained within the specified directory
-	 * 
-	 * @param directory
-	 *             Directory to check for plugins
-	 * @return A list of all plugins loaded
-	 */
-	/*
-	 * public void loadInternalPlugin( InputStream descriptionFile )
-	 * {
-	 * Map<String, Collection<String>> dependencies = new HashMap<String, Collection<String>>();
-	 * Map<String, Collection<String>> softDependencies = new HashMap<String, Collection<String>>();
-	 * PluginDescriptionFile description = null;
-	 * try
-	 * {
-	 * description = new PluginDescriptionFile( descriptionFile );
-	 * }
-	 * catch ( InvalidDescriptionException ex )
-	 * {
-	 * Loader.getLogger().log( Level.SEVERE, "Could not load internal plugin description file", ex );
-	 * return;
-	 * }
-	 * Collection<String> softDependencySet = description.getSoftDepend();
-	 * if ( softDependencySet != null )
-	 * {
-	 * if ( softDependencies.containsKey( description.getName() ) )
-	 * {
-	 * // Duplicates do not matter, they will be removed together if applicable
-	 * softDependencies.get( description.getName() ).addAll( softDependencySet );
-	 * }
-	 * else
-	 * {
-	 * softDependencies.put( description.getName(), new LinkedList<String>( softDependencySet ) );
-	 * }
-	 * }
-	 * Collection<String> dependencySet = description.getDepend();
-	 * if ( dependencySet != null )
-	 * {
-	 * dependencies.put( description.getName(), new LinkedList<String>( dependencySet ) );
-	 * }
-	 * Collection<String> loadBeforeSet = description.getLoadBefore();
-	 * if ( loadBeforeSet != null )
-	 * {
-	 * for ( String loadBeforeTarget : loadBeforeSet )
-	 * {
-	 * if ( softDependencies.containsKey( loadBeforeTarget ) )
-	 * {
-	 * softDependencies.get( loadBeforeTarget ).add( description.getName() );
-	 * }
-	 * else
-	 * {
-	 * // softDependencies is never iterated, so 'ghost' plugins aren't an issue
-	 * Collection<String> shortSoftDependency = new LinkedList<String>();
-	 * shortSoftDependency.add( description.getName() );
-	 * softDependencies.put( loadBeforeTarget, shortSoftDependency );
-	 * }
-	 * }
-	 * }
-	 * boolean missingDependency = true;
-	 * String plugin = description.getName();
-	 * if ( dependencies.containsKey( plugin ) )
-	 * {
-	 * Iterator<String> dependencyIterator = dependencies.get( plugin ).iterator();
-	 * while ( dependencyIterator.hasNext() )
-	 * {
-	 * String dependency = dependencyIterator.next();
-	 * // Dependency loaded
-	 * if ( loadedPlugins.contains( dependency ) )
-	 * {
-	 * dependencyIterator.remove();
-	 * // We have a dependency not found
-	 * }
-	 * else
-	 * {
-	 * missingDependency = false;
-	 * softDependencies.remove( plugin );
-	 * dependencies.remove( plugin );
-	 * Loader.getLogger().log( Level.SEVERE, "Could not load plugin '" + plugin + "'", new UnknownDependencyException( dependency ) );
-	 * break;
-	 * }
-	 * }
-	 * if ( dependencies.containsKey( plugin ) && dependencies.get( plugin ).isEmpty() )
-	 * {
-	 * dependencies.remove( plugin );
-	 * }
-	 * }
-	 * if ( softDependencies.containsKey( plugin ) )
-	 * {
-	 * if ( softDependencies.get( plugin ).isEmpty() )
-	 * {
-	 * softDependencies.remove( plugin );
-	 * }
-	 * }
-	 * if ( !( dependencies.containsKey( plugin ) || softDependencies.containsKey( plugin ) ) )
-	 * {
-	 * // We're clear to load, no more soft or hard dependencies left
-	 * missingDependency = false;
-	 * loadedPlugins.add( plugin );
-	 * }
-	 * if ( missingDependency )
-	 * {
-	 * softDependencies.clear();
-	 * dependencies.clear();
-	 * Loader.getLogger().log( Level.SEVERE, "Could not load plugin '" + plugin + "': a required had not been loaded!" );
-	 * }
-	 * // We attempt to get the loader JavaPluginLoader so we can use the method loadPlugin( descriptionFile ), This
-	 * // might need to change.
-	 * PluginLoader loader = fileAssociations.values().iterator().next();
-	 * try
-	 * {
-	 * Plugin result = loader.loadPlugin( description );
-	 * if ( result != null )
-	 * {
-	 * plugins.add( result );
-	 * lookupNames.put( result.getDescription().getName(), result );
-	 * }
-	 * }
-	 * catch ( Exception e )
-	 * {
-	 * e.printStackTrace();
-	 * }
-	 * }
-	 */
-	
-	/**
 	 * Loads the plugin in the specified file
 	 * <p>
 	 * File must be valid according to the current enabled Plugin interfaces
@@ -684,209 +554,6 @@ public final class PluginManager
 		}
 	}
 	
-	/**
-	 * Calls an event with the given details.<br>
-	 * This method only synchronizes when the event is not asynchronous.
-	 * 
-	 * @param event
-	 *             Event details
-	 */
-	public void callEvent( Event event )
-	{
-		try
-		{
-			if ( event.isAsynchronous() )
-			{
-				if ( Thread.holdsLock( this ) )
-				{
-					throw new IllegalStateException( event.getEventName() + " cannot be triggered asynchronously from inside synchronized code." );
-				}
-				if ( server.isPrimaryThread() )
-				{
-					throw new IllegalStateException( event.getEventName() + " cannot be triggered asynchronously from primary server thread." );
-				}
-				fireEvent( event );
-			}
-			else
-			{
-				synchronized ( this )
-				{
-					fireEvent( event );
-				}
-			}
-		}
-		catch ( EventException ex )
-		{	
-			
-		}
-	}
-	
-	/**
-	 * Calls an event with the given details.<br>
-	 * This method only synchronizes when the event is not asynchronous.
-	 * 
-	 * @param event
-	 *             Event details
-	 * @throws EventException
-	 */
-	public void callEventWithException( Event event ) throws EventException
-	{
-		if ( event.isAsynchronous() )
-		{
-			if ( Thread.holdsLock( this ) )
-			{
-				throw new IllegalStateException( event.getEventName() + " cannot be triggered asynchronously from inside synchronized code." );
-			}
-			if ( server.isPrimaryThread() )
-			{
-				throw new IllegalStateException( event.getEventName() + " cannot be triggered asynchronously from primary server thread." );
-			}
-			fireEvent( event );
-		}
-		else
-		{
-			synchronized ( this )
-			{
-				fireEvent( event );
-			}
-		}
-	}
-	
-	private void fireEvent( Event event ) throws EventException
-	{
-		HandlerList handlers = event.getHandlers();
-		RegisteredListener[] listeners = handlers.getRegisteredListeners();
-		
-		for ( RegisteredListener registration : listeners )
-		{
-			if ( !registration.getPlugin().isEnabled() )
-			{
-				continue;
-			}
-			
-			try
-			{
-				registration.callEvent( event );
-			}
-			catch ( AuthorNagException ex )
-			{
-				Plugin plugin = registration.getPlugin();
-				
-				if ( plugin.isNaggable() )
-				{
-					plugin.setNaggable( false );
-					
-					Loader.getLogger().log( Level.SEVERE, String.format( "Nag author(s): '%s' of '%s' about the following: %s", plugin.getDescription().getAuthors(), plugin.getDescription().getFullName(), ex.getMessage() ) );
-				}
-			}
-			catch ( EventException ex )
-			{
-				if ( ex.getCause() == null )
-					Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getPlugin().getDescription().getFullName() + "\nEvent Exception Reason: " + ex.getMessage() );
-				else
-					Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getPlugin().getDescription().getFullName() + "\nEvent Exception Reason: " + ex.getCause().getMessage() );
-				throw ex;
-			}
-			catch ( Throwable ex )
-			{
-				Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getPlugin().getDescription().getFullName(), ex );
-			}
-		}
-	}
-	
-	public void registerEvents( Listener listener, Plugin plugin )
-	{
-		if ( !plugin.isEnabled() )
-		{
-			throw new IllegalPluginAccessException( "Plugin attempted to register " + listener + " while not enabled" );
-		}
-		
-		for ( Map.Entry<Class<? extends Event>, Set<RegisteredListener>> entry : plugin.getPluginLoader().createRegisteredListeners( listener, plugin ).entrySet() )
-		{
-			getEventListeners( getRegistrationClass( entry.getKey() ) ).registerAll( entry.getValue() );
-		}
-	}
-	
-	public void registerEvent( Class<? extends Event> event, Listener listener, EventPriority priority, EventExecutor executor, Plugin plugin )
-	{
-		registerEvent( event, listener, priority, executor, plugin, false );
-	}
-	
-	/**
-	 * Registers the given event to the specified listener using a directly passed EventExecutor
-	 * 
-	 * @param event
-	 *             Event class to register
-	 * @param listener
-	 *             PlayerListener to register
-	 * @param priority
-	 *             Priority of this event
-	 * @param executor
-	 *             EventExecutor to register
-	 * @param plugin
-	 *             Plugin to register
-	 * @param ignoreCancelled
-	 *             Do not call executor if event was already cancelled
-	 */
-	public void registerEvent( Class<? extends Event> event, Listener listener, EventPriority priority, EventExecutor executor, Plugin plugin, boolean ignoreCancelled )
-	{
-		Validate.notNull( listener, "Listener cannot be null" );
-		Validate.notNull( priority, "Priority cannot be null" );
-		Validate.notNull( executor, "Executor cannot be null" );
-		Validate.notNull( plugin, "Plugin cannot be null" );
-		
-		if ( !plugin.isEnabled() )
-		{
-			throw new IllegalPluginAccessException( "Plugin attempted to register " + event + " while not enabled" );
-		}
-		
-		if ( useTimings )
-		{
-			getEventListeners( event ).register( new TimedRegisteredListener( listener, executor, priority, plugin, ignoreCancelled ) );
-		}
-		else
-		{
-			getEventListeners( event ).register( new RegisteredListener( listener, executor, priority, plugin, ignoreCancelled ) );
-		}
-	}
-	
-	private HandlerList getEventListeners( Class<? extends Event> type )
-	{
-		try
-		{
-			Method method = getRegistrationClass( type ).getDeclaredMethod( "getHandlerList" );
-			method.setAccessible( true );
-			return (HandlerList) method.invoke( null );
-		}
-		catch ( Exception e )
-		{
-			throw new IllegalPluginAccessException( e.toString() );
-		}
-	}
-	
-	private Class<? extends Event> getRegistrationClass( Class<? extends Event> clazz )
-	{
-		try
-		{
-			clazz.getDeclaredMethod( "getHandlerList" );
-			return clazz;
-		}
-		catch ( NoSuchMethodException e )
-		{
-			if ( clazz.getSuperclass() != null && !clazz.getSuperclass().equals( Event.class ) && Event.class.isAssignableFrom( clazz.getSuperclass() ) )
-			{
-				return getRegistrationClass( clazz.getSuperclass().asSubclass( Event.class ) );
-			}
-			else
-			{
-				Loader.getLogger().warning( "Unable to find handler list for event " + clazz.getName() );
-				return Event.class;
-				
-				// throw new IllegalPluginAccessException( "Unable to find handler list for event " + clazz.getName() );
-			}
-		}
-	}
-	
 	public Permission getPermission( String name )
 	{
 		return permissions.get( name.toLowerCase() );
@@ -1045,22 +712,6 @@ public final class PluginManager
 	public Set<Permission> getPermissions()
 	{
 		return new HashSet<Permission>( permissions.values() );
-	}
-	
-	public boolean useTimings()
-	{
-		return useTimings;
-	}
-	
-	/**
-	 * Sets whether or not per event timing code should be used
-	 * 
-	 * @param use
-	 *             True if per event timing code should be used
-	 */
-	public void useTimings( boolean use )
-	{
-		useTimings = use;
 	}
 	
 	public Plugin getPluginbyName( String pluginPath )

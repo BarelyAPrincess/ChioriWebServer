@@ -130,7 +130,7 @@ public class WebHandler implements HttpHandler
 		
 		try
 		{
-			Loader.getPluginManager().callEventWithException( requestEvent );
+			Loader.getEventBus().callEventWithException( requestEvent );
 		}
 		catch ( EventException ex )
 		{
@@ -277,7 +277,7 @@ public class WebHandler implements HttpHandler
 		
 		try
 		{
-			Loader.getPluginManager().callEventWithException( renderEvent );
+			Loader.getEventBus().callEventWithException( renderEvent );
 			
 			if ( renderEvent.sourceChanged() )
 				source = renderEvent.getSource();

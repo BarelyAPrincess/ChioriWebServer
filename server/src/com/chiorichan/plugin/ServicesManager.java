@@ -66,7 +66,7 @@ public class ServicesManager
 			}
 			
 		}
-		Loader.getPluginManager().callEvent( new ServiceRegisterEvent( registeredProvider ) );
+		Loader.getEventBus().callEvent( new ServiceRegisterEvent( registeredProvider ) );
 	}
 	
 	/**
@@ -120,7 +120,7 @@ public class ServicesManager
 		}
 		for ( ServiceUnregisterEvent event : unregisteredEvents )
 		{
-			Loader.getPluginManager().callEvent( event );
+			Loader.getEventBus().callEvent( event );
 		}
 	}
 	
@@ -184,7 +184,7 @@ public class ServicesManager
 		}
 		for ( ServiceUnregisterEvent event : unregisteredEvents )
 		{
-			Loader.getPluginManager().callEvent( event );
+			Loader.getEventBus().callEvent( event );
 		}
 	}
 	
@@ -239,7 +239,7 @@ public class ServicesManager
 		}
 		for ( ServiceUnregisterEvent event : unregisteredEvents )
 		{
-			Loader.getPluginManager().callEvent( event );
+			Loader.getEventBus().callEvent( event );
 		}
 	}
 	

@@ -236,7 +236,7 @@ public class UserManager
 				throw new LoginException( LoginExceptionReasons.incorrectLogin );
 			
 			UserLoginEvent event = new UserLoginEvent( user );
-			Loader.getPluginManager().callEvent( event );
+			Loader.getEventBus().callEvent( event );
 			
 			if ( !user.isWhitelisted() )
 				throw new LoginException( LoginExceptionReasons.notWhiteListed );

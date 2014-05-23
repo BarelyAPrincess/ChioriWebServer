@@ -1,5 +1,10 @@
 package com.chiorichan.http;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Map;
+
 import com.chiorichan.Loader;
 import com.chiorichan.event.http.ErrorEvent;
 import com.chiorichan.exceptions.HttpErrorException;
@@ -7,10 +12,6 @@ import com.chiorichan.util.Versioning;
 import com.google.common.collect.Maps;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Map;
 
 // NOTE: Change to consider, Have headers sent before data can be written to the output stream.
 // This will allow for quicker responses but might make it harder for spontaneous header changes.
@@ -80,7 +81,7 @@ public class HttpResponse
 
 		// Trigger an internal Error Event to notify plugins of a possible problem.
 		ErrorEvent event = new ErrorEvent( request, var1, var2 );
-		Loader.getPluginManager().callEvent( event );
+		Loader.getEventBus().callEvent( event );
 
 		sendResponse();
 	}

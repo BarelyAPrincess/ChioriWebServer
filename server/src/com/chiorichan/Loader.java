@@ -43,6 +43,7 @@ import com.chiorichan.command.PluginCommand;
 import com.chiorichan.command.ServerCommand;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.conversations.Conversable;
+import com.chiorichan.event.EventBus;
 import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.framework.Site;
 import com.chiorichan.framework.SiteManager;
@@ -89,6 +90,7 @@ public class Loader implements PluginMessageRecipient
 	private WarningState warningState = WarningState.DEFAULT;
 	private final CommandMap commandMap = new CommandMap();
 	private final PluginManager pluginManager = new PluginManager( this, commandMap );
+	private final EventBus eventBus = new EventBus( this );
 	private final StandardMessenger messenger = new StandardMessenger();
 	protected final static Console console = new Console();
 	
@@ -290,7 +292,7 @@ public class Loader implements PluginMessageRecipient
 		
 		saveConfig();
 		
-		pluginManager.useTimings( configuration.getBoolean( "settings.plugin-profiling" ) );
+		eventBus.useTimings( configuration.getBoolean( "settings.plugin-profiling" ) );
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
 		
 		if ( !NetworkManager.isClientMode() )
@@ -414,6 +416,11 @@ public class Loader implements PluginMessageRecipient
 	public static YamlConfiguration getConfig()
 	{
 		return configuration;
+	}
+	
+	public static EventBus getEventBus()
+	{
+		return instance.eventBus;
 	}
 	
 	public void loadPlugins()

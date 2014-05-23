@@ -55,7 +55,7 @@ public class PacketListener extends PacketManager
 				Loader.getLogger().info( "&5Got packet '" + var2 + "' from connection at '" + var1.getRemoteAddressTCP().getAddress().getHostAddress() + "'" );
 			
 			TCPIncomingEvent event = new TCPIncomingEvent( var1, (Packet) var2, handled );
-			Loader.getPluginManager().callEvent( event );
+			Loader.getEventBus().callEvent( event );
 		}
 		else if ( var2 instanceof KeepAlive )
 		{
@@ -75,7 +75,7 @@ public class PacketListener extends PacketManager
 	public void connected( Connection var1 )
 	{
 		TCPConnectedEvent event = new TCPConnectedEvent( var1 );
-		Loader.getPluginManager().callEvent( event );
+		Loader.getEventBus().callEvent( event );
 		if ( event.isCancelled() )
 		{
 			Loader.getLogger().info( ChatColor.YELLOW + "Connection from " + var1.getRemoteAddressTCP().getAddress().getHostAddress() + " was disconnected because it was concelled by the TCPConnectedEvent!" );
@@ -90,12 +90,12 @@ public class PacketListener extends PacketManager
 	@Override
 	public void disconnected( Connection var1 )
 	{
-		Loader.getPluginManager().callEvent( new TCPDisconnectedEvent( var1 ) );
+		Loader.getEventBus().callEvent( new TCPDisconnectedEvent( var1 ) );
 	}
 	
 	@Override
 	public void idle( Connection var1 )
 	{
-		Loader.getPluginManager().callEvent( new TCPIdleEvent( var1 ) );
+		Loader.getEventBus().callEvent( new TCPIdleEvent( var1 ) );
 	}
 }
