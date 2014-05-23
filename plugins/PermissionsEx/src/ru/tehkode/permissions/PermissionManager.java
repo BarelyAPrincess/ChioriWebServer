@@ -552,7 +552,7 @@ public class PermissionManager
 	
 	protected void callEvent( PermissionEvent event )
 	{
-		Loader.getPluginManager().callEvent( event );
+		Loader.getEventBus().callEvent( event );
 	}
 	
 	protected void callEvent( PermissionSystemEvent.Action action )

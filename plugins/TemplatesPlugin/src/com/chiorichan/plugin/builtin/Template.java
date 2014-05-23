@@ -29,7 +29,7 @@ public class Template extends JavaPlugin implements Listener
 	
 	public void onEnable()
 	{
-		Loader.getPluginManager().registerEvents( this, this );
+		Loader.getEventBus().registerEvents( this, this );
 	}
 	
 	public void onDisable()

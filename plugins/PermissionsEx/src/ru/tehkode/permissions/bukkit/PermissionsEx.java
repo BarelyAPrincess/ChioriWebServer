@@ -113,13 +113,13 @@ public class PermissionsEx extends JavaPlugin
 			// Register User permissions cleaner
 			UserEventsListener cleaner = new UserEventsListener();
 			cleaner.logLastUserLogin = this.config.getBoolean( "permissions.log-users", cleaner.logLastUserLogin );
-			Loader.getPluginManager().registerEvents( cleaner, this );
+			Loader.getEventBus().registerEvents( cleaner, this );
 			
 			// register service
 			this.getInstance().getServicesManager().register( PermissionManager.class, this.permissionsManager, this, ServicePriority.Normal );
 			regexPerms = new RegexPermissions( this );
 			superms = new SuperpermsListener( this );
-			Loader.getPluginManager().registerEvents( superms, this );
+			Loader.getEventBus().registerEvents( superms, this );
 			this.saveConfig();
 			
 			// Start timed permissions cleaner timer

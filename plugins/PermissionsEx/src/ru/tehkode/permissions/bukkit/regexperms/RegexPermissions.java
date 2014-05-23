@@ -27,7 +27,7 @@ public class RegexPermissions
 		this.plugin = plugin;
 		subscriptionHandler = PEXPermissionSubscriptionMap.inject( plugin, Loader.getPluginManager() );
 		permsList = PermissionList.inject( Loader.getPluginManager() );
-		Loader.getPluginManager().registerEvents( new EventListener(), plugin );
+		Loader.getEventBus().registerEvents( new EventListener(), plugin );
 		injectAllPermissibles();
 	}
 	
