@@ -69,12 +69,18 @@ public class WebInterpreter extends FileInterpreter
 		// Try to find the virtual file from the database
 		try
 		{
+			// Original Select Query
 			// TODO: Fix the select issue with blank subdomains. It's not suppose to be 1111 but it is to prevent the redirect loop.
-			ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE (site = '" + subdomain + "' OR site = 'FIXME') AND domain = '" + domain + "' UNION SELECT * FROM `pages` WHERE (site = '" + subdomain + "' OR site = 'FIXME') AND domain = '';" );
+			//ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE (site = '" + subdomain + "' OR site = 'FIXME') AND domain = '" + domain + "' UNION SELECT * FROM `pages` WHERE (site = '" + subdomain + "' OR site = 'FIXME') AND domain = '';" );
+			
+			//ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE site = '" + subdomain + "' AND domain = '" + domain + "' UNION SELECT * FROM `pages` WHERE site = '' AND domain = '" + domain + "' UNION SELECT * FROM `pages` WHERE site = '" + subdomain + "' AND domain = '' UNION SELECT * FROM `pages` WHERE site = '' AND domain = '';" );
+			
+			ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE (site = '" + subdomain + "' OR site = '') AND domain = '" + domain + "' UNION SELECT * FROM `pages` WHERE (site = '" + subdomain + "' OR site = '') AND domain = '';" );
 			
 			if ( sql.getRowCount( rs ) > 0 )
 			{
 				Map<String, Map<String, String>> rewrite = Maps.newTreeMap();
+				int keyInter = 0;
 				
 				do
 				{
@@ -150,7 +156,8 @@ public class WebInterpreter extends FileInterpreter
 						if ( data.get( "file" ) != null && !data.get( "file" ).isEmpty() )
 							dest = new File( request.getSite().getSourceDirectory(), data.get( "file" ) );
 						
-						rewrite.put( weight, data );
+						rewrite.put( weight + keyInter, data );
+						keyInter++;
 					}
 				}
 				while ( rs.next() );
