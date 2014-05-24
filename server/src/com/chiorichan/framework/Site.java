@@ -169,8 +169,8 @@ public class Site
 			if ( skeys != null )
 				for ( String k : skeys )
 				{
-					if ( aliasesPre.getString( k, null ) != null )
-						subdomains.put( k, aliasesPre.getString( k ) );
+					if ( subdomainsPre.getString( k, null ) != null )
+						subdomains.put( k, subdomainsPre.getString( k ) );
 				}
 		}
 		
