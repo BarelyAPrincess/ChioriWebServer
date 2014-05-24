@@ -73,19 +73,31 @@ public class WebUtils
 		pack = pack.replace( ".", System.getProperty( "file.separator" ) );
 		File root = site.getResourceDirectory();
 		
-		File file = new File( root, pack + ".php" );
+		// TODO Add non-case sensitive extension selection 
 		
-		if ( !file.exists() )
-			file = new File( root, pack + ".inc.php" );
-		
-		if ( !file.exists() )
-			file = new File( root, pack + ".groovy" );
+		File file = new File( root, pack + ".groovy" );
 		
 		if ( !file.exists() )
 			file = new File( root, pack + ".inc.groovy" );
 		
 		if ( !file.exists() )
 			file = new File( root, pack + ".chi" );
+		
+		if ( !file.exists() )
+			file = new File( root, pack + ".inc.chi" );
+		
+		if ( !file.exists() )
+			file = new File( root, pack + ".htm" );
+		
+		if ( !file.exists() )
+			file = new File( root, pack + ".html" );
+		
+		// Just an extra file check. Seems useless considering that any PHP file will not be compatible with our groovy shell. More of my own personal reason.
+		if ( !file.exists() )
+			file = new File( root, pack + ".php" );
+		
+		if ( !file.exists() )
+			file = new File( root, pack + ".inc.php" );
 		
 		if ( !file.exists() )
 			file = new File( root, pack );
@@ -114,6 +126,10 @@ public class WebUtils
 		
 		if ( site != null )
 			site.applyAlias( source );
+		
+		// HTM and HTML can not be evaled since it's not a script file
+		if ( file.getName().toLowerCase().endsWith( ".htm" ) || file.getName().toLowerCase().endsWith( ".html" ) )
+			return source;
 		
 		return evalGroovy( eval, source, file.getAbsolutePath() );
 	}

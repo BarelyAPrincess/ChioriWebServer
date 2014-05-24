@@ -20,6 +20,7 @@ import com.chiorichan.event.server.RequestEvent;
 import com.chiorichan.framework.CodeParsingException;
 import com.chiorichan.framework.Site;
 import com.chiorichan.plugin.java.JavaPlugin;
+import com.chiorichan.util.StringUtil;
 
 public class Template extends JavaPlugin implements Listener
 {
@@ -159,8 +160,14 @@ public class Template extends JavaPlugin implements Listener
 			ob.append( tag + "\n" );
 		
 		// Allow pages to disable the inclusion of common header
-		ob.append( doInclude( domainToPackage( site.domain ) + ".includes.common", event ) + "\n" );
-		ob.append( doInclude( domainToPackage( site.domain ) + ".includes." + getPackageName( theme ), event ) + "\n" );
+		if ( fwVals.get( "noCommons" ) == null || !StringUtil.isTrue( fwVals.get( "noCommons" ) ) )
+		{
+			ob.append( doInclude( domainToPackage( site.domain ) + ".includes.common", event ) + "\n" );
+			ob.append( doInclude( domainToPackage( site.domain ) + ".includes." + getPackageName( theme ), event ) + "\n" );
+		}
+		
+		if ( fwVals.get( "header" ) != null && !fwVals.get( "header" ).isEmpty() )
+			ob.append( doInclude( fwVals.get( "header" ), event ) + "\n" );
 		
 		ob.append( "</head>\n" );
 		ob.append( "<body>\n" );
@@ -194,12 +201,13 @@ public class Template extends JavaPlugin implements Listener
 		}
 		catch ( IOException | CodeParsingException e )
 		{
-			e.printStackTrace();
+			// TODO Improved error handling needed here.
+			Loader.getLogger().warning( e.getMessage() );
 		}
 		
 		return "";
 	}
-
+	
 	// This is going to cause trouble *sigh*
 	public void setTitleOverride( String title )
 	{
