@@ -537,10 +537,18 @@ public class Site
 	
 	public File getAbsoluteRoot()
 	{
-		return getAbsoluteRoot( null );
+		try
+		{
+			return getAbsoluteRoot( null );
+		}
+		catch ( SiteException e )
+		{
+			return null;
+			// SiteException WILL NEVER THROW ON AN EMPTY SUBDOMAIN ARGUMENT. At least for now.
+		}
 	}
 	
-	public File getAbsoluteRoot( String subdomain )
+	public File getAbsoluteRoot( String subdomain ) throws SiteException
 	{
 		File target = new File( Loader.webroot, getRoot( subdomain ) );
 		
@@ -555,10 +563,18 @@ public class Site
 	
 	public String getRoot()
 	{
-		return getRoot( null );
+		try
+		{
+			return getRoot( null );
+		}
+		catch ( SiteException e )
+		{
+			return null;
+			// SiteException WILL NEVER THROW ON AN EMPTY SUBDOMAIN ARGUMENT. At least for now.
+		}
 	}
 	
-	public String getRoot( String subdomain )
+	public String getRoot( String subdomain ) throws SiteException
 	{
 		String target = siteId;
 		
@@ -568,6 +584,10 @@ public class Site
 			
 			if ( sub != null )
 				target = siteId + "/" + sub;
+			else if ( Loader.getConfig().getBoolean( "framework.sites.autoCreateSubdomains", true ) )
+				target = siteId + "/" + subdomain;
+			else if ( !Loader.getConfig().getBoolean( "framework.sites.subdomainsDefaultToRoot" ) )
+				throw new SiteException( "This subdomain was not found on this server. If your the website owner, please check documentation." );
 		}
 		
 		return target;

@@ -16,6 +16,7 @@ import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.exceptions.HttpErrorException;
 import com.chiorichan.framework.FileInterpreter;
+import com.chiorichan.framework.SiteException;
 import com.chiorichan.util.StringUtil;
 import com.google.common.collect.Maps;
 
@@ -51,7 +52,7 @@ public class WebInterpreter extends FileInterpreter
 		return "WebInterpreter{content=" + bs.size() + " bytes,file=" + cachedFileStr + ",overrides={" + overrides + "},rewrites={" + rewrites + "}}";
 	}
 	
-	public WebInterpreter(HttpRequest request) throws IOException, HttpErrorException
+	public WebInterpreter(HttpRequest request) throws IOException, HttpErrorException, SiteException
 	{
 		super();
 		

@@ -16,6 +16,7 @@ import com.chiorichan.exceptions.HttpErrorException;
 import com.chiorichan.exceptions.ShellExecuteException;
 import com.chiorichan.framework.Evaling;
 import com.chiorichan.framework.Site;
+import com.chiorichan.framework.SiteException;
 import com.chiorichan.util.Versioning;
 import com.google.common.collect.Maps;
 import com.sun.net.httpserver.HttpExchange;
@@ -58,7 +59,7 @@ public class WebHandler implements HttpHandler
 			response.sendError( e );
 			return;
 		}
-		catch ( IndexOutOfBoundsException | NullPointerException | IOException e )
+		catch ( IndexOutOfBoundsException | NullPointerException | IOException | SiteException e )
 		{
 			/**
 			 * TODO!!! Proper Exception Handling. PRETTY EXCEPTIONS A MUST FOR HTTP RESPONSE!!!
@@ -104,7 +105,7 @@ public class WebHandler implements HttpHandler
 		}
 	}
 	
-	public void handleHttp( HttpRequest request, HttpResponse response ) throws IOException, HttpErrorException
+	public void handleHttp( HttpRequest request, HttpResponse response ) throws IOException, HttpErrorException, SiteException
 	{
 		String uri = request.getURI();
 		String domain = request.getParentDomain();

@@ -65,3 +65,5 @@ users:
 framework:
   sites:
     defaultTitle: Unnamed Chiori-chan's Web Server Site
+    autoCreateSubdomains: true
+    subdomainsDefaultToRoot: false
