@@ -24,7 +24,6 @@ import com.chiorichan.util.StringUtil;
 
 public class Template extends JavaPlugin implements Listener
 {
-	String pageTitleOverride;
 	String docType = "html";
 	String pageMark = "<!-- PAGE DATA -->";
 	
@@ -142,12 +141,6 @@ public class Template extends JavaPlugin implements Listener
 		ob.append( "<head>\n" );
 		ob.append( "<meta charset=\"utf-8\">\n" );
 		
-		if ( pageTitleOverride != null )
-		{
-			title = pageTitleOverride;
-			pageTitleOverride = "";
-		}
-		
 		if ( site.title == null )
 			site.title = Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Chiori Framework Site" );
 		
@@ -187,6 +180,9 @@ public class Template extends JavaPlugin implements Listener
 		
 		ob.append( pageData + "\n" );
 		
+		if ( fwVals.get( "footer" ) != null && !fwVals.get( "footer" ).isEmpty() )
+			ob.append( doInclude( fwVals.get( "footer" ), event ) + "\n" );
+		
 		ob.append( "</body>\n" );
 		ob.append( "</html>\n" );
 		
@@ -206,12 +202,6 @@ public class Template extends JavaPlugin implements Listener
 		}
 		
 		return "";
-	}
-	
-	// This is going to cause trouble *sigh*
-	public void setTitleOverride( String title )
-	{
-		pageTitleOverride = title;
 	}
 	
 	public String getPackageParent( String pack )
