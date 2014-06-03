@@ -45,7 +45,8 @@ public class ContentTypes
 	
 	public static String getContentType( File file )
 	{
-		String ext = file.getName().split( "\\." )[1];
+		String[] exts = file.getName().split( "\\." );
+		String ext = exts[exts.length - 1];
 		
 		if ( types != null && types.containsKey( ext ) )
 		{
