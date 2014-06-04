@@ -157,7 +157,7 @@ public class Template extends JavaPlugin implements Listener
 			ob.append( tag + "\n" );
 		
 		// Allow pages to disable the inclusion of common header
-		if ( fwVals.get( "noCommons" ) == null || !StringUtil.isTrue( fwVals.get( "noCommons" ) ) )
+		if ( (fwVals.get( "noCommons" ) == null || !StringUtil.isTrue( fwVals.get( "noCommons" ) )) && !getConfig().getBoolean( "config.noCommons" ) )
 		{
 			ob.append( doInclude( domainToPackage( site.domain ) + ".includes.common", event ) + "\n" );
 			ob.append( doInclude( domainToPackage( site.domain ) + ".includes." + getPackageName( theme ), event ) + "\n" );
