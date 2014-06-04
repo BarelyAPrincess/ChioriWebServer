@@ -1,3 +1,4 @@
 config:
   defaultDocType: html
   defaultTag: PAGE DATA
+  alwaysRender: false

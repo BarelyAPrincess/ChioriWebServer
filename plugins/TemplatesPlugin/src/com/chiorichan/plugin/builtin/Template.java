@@ -127,7 +127,7 @@ public class Template extends JavaPlugin implements Listener
 		if ( view == null )
 			view = "";
 		
-		if ( theme.isEmpty() && view.isEmpty() )
+		if ( theme.isEmpty() && view.isEmpty() && !getConfig().getBoolean( "config.alwaysRender" ) )
 			return;
 		
 		if ( theme.isEmpty() )
