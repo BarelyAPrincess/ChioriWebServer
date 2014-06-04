@@ -24,11 +24,10 @@ import com.chiorichan.util.StringUtil;
 
 public class Template extends JavaPlugin implements Listener
 {
-	String docType = "html";
-	String pageMark = "<!-- PAGE DATA -->";
-	
 	public void onEnable()
 	{
+		saveDefaultConfig();
+		
 		Loader.getEventBus().registerEvents( this, this );
 	}
 	
@@ -136,6 +135,11 @@ public class Template extends JavaPlugin implements Listener
 		
 		StringBuilder ob = new StringBuilder();
 		
+		String docType = getConfig().getString( "config.defaultDocType", "html" );
+		
+		if ( fwVals.get( "docType" ) != null && !fwVals.get( "docType" ).isEmpty() )
+			docType = fwVals.get( "docType" );
+		
 		ob.append( "<!DOCTYPE " + docType + ">\n" );
 		ob.append( "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n" );
 		ob.append( "<head>\n" );
@@ -164,6 +168,8 @@ public class Template extends JavaPlugin implements Listener
 		
 		ob.append( "</head>\n" );
 		ob.append( "<body>\n" );
+		
+		String pageMark = "<!-- " + getConfig().getString( "config.defaultTag", "PAGE DATA" ) + " -->";
 		
 		String pageData = ( theme.isEmpty() ) ? pageMark : doInclude( theme, event );
 		String viewData = ( view.isEmpty() ) ? pageMark : doInclude( view, event );
