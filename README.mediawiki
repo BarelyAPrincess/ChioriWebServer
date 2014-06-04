@@ -145,7 +145,7 @@ Overrides can by applied either by using a string column inside the pages table 
 It is also possible to set the overrides using the framework api (From GroovyShell). ex: getResponse().setOverride(key, value);
 Most (if not all) overrides require the Template Plugin which is included by default.
 * theme [package]
-Sets the theme to use for this file upon request, page content is placed inside this file. By default the server uses "<!-- PAGE DATA -- >" to find where the page content is to be inserted. See plugins/Template/config.yml:config.defaultTag to change the default tag.
+Sets the theme to use for this file upon request, page content is placed inside this file. By default the server uses "<!-- PAGE DATA --" to find where the page content is to be inserted. See plugins/Template/config.yml:config.defaultTag to change the default tag.
 * view [package]
 Similar to theme except it provides a second layer of theming bu placing it's content inside the theme then the page content inside of it.
 * title [string]

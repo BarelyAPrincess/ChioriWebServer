@@ -58,17 +58,20 @@ public class Evaling
 	
 	public static String parseForIncludes( Evaling eval, String source, Site site ) throws IOException, CodeParsingException
 	{
-		Matcher m1 = Pattern.compile( "<!-- *include\\((.*)\\) *-->" ).matcher( source );
-		Matcher m2 = Pattern.compile( "(<!-- *include\\(.*\\) *-->)" ).matcher( source );
+		Pattern p1 = Pattern.compile( "<!-- *include\\((.*)\\) *-->" );
+		Pattern p2 = Pattern.compile( "(<!-- *include\\(.*\\) *-->)" );
 		
-		if ( m1.find() && m2.find() )
+		Matcher m1 = p1.matcher( source );
+		Matcher m2 = p2.matcher( source );
+		
+		while ( m1.find() && m2.find() )
 		{
-			for ( int i = m1.groupCount(); i > 0; i-- )
-			{
-				String pack = m1.group( i );
-				String result = WebUtils.evalPackage( eval, pack, site );
-				source = new StringBuilder( source ).replace( m2.start( i ), m2.end( i ), result ).toString();
-			}
+			String result = WebUtils.evalPackage( eval, m1.group( 1 ), site );
+			source = new StringBuilder( source ).replace( m2.start( 1 ), m2.end( 1 ), result ).toString();
+			
+			// We have to reset the matcher since the source changes with each loop
+			m1 = p1.matcher( source );
+			m2 = p2.matcher( source );
 		}
 		
 		return source;
