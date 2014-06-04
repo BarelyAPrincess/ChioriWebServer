@@ -13,6 +13,8 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.codehaus.groovy.control.CompilerConfiguration;
@@ -47,6 +49,29 @@ public class Evaling
 	public void setFileName( String fileName )
 	{
 		shell.setVariable( "__FILE__", new File( fileName ) );
+	}
+	
+	public String parseForIncludes( String source, Site site ) throws IOException, CodeParsingException
+	{
+		return parseForIncludes( this, source, site );
+	}
+	
+	public static String parseForIncludes( Evaling eval, String source, Site site ) throws IOException, CodeParsingException
+	{
+		Matcher m1 = Pattern.compile( "<!-- *include\\((.*)\\) *-->" ).matcher( source );
+		Matcher m2 = Pattern.compile( "(<!-- *include\\(.*\\) *-->)" ).matcher( source );
+		
+		if ( m1.find() && m2.find() )
+		{
+			for ( int i = m1.groupCount(); i > 0; i-- )
+			{
+				String pack = m1.group( i );
+				String result = WebUtils.evalPackage( eval, pack, site );
+				source = new StringBuilder( source ).replace( m2.start( i ), m2.end( i ), result ).toString();
+			}
+		}
+		
+		return source;
 	}
 	
 	public String flush() throws UnsupportedEncodingException

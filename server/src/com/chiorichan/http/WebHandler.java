@@ -14,6 +14,7 @@ import com.chiorichan.event.server.RequestEvent;
 import com.chiorichan.event.server.ServerVars;
 import com.chiorichan.exceptions.HttpErrorException;
 import com.chiorichan.exceptions.ShellExecuteException;
+import com.chiorichan.framework.CodeParsingException;
 import com.chiorichan.framework.Evaling;
 import com.chiorichan.framework.Site;
 import com.chiorichan.framework.SiteException;
@@ -273,6 +274,15 @@ public class WebHandler implements HttpHandler
 		}
 		
 		String source = currentSite.applyAlias( eval.reset() );
+		
+		try
+		{
+			source = eval.parseForIncludes( source, currentSite );
+		}
+		catch ( CodeParsingException ex )
+		{
+			throw new IOException( "Exception encountered during parsing for text based includes, unknown fault.", ex );
+		}
 		
 		RenderEvent renderEvent = new RenderEvent( sess, source, fi.getParams() );
 		

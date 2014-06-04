@@ -78,7 +78,9 @@ public class HttpResponse
 
 		println( "<hr>" );
 		println( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + "<br />" + Versioning.getCopyright() + "</small>" );
-
+		
+		// TODO Make it so the Template Plugin can control the error pages. A TOTAL PLUS!!!
+		
 		// Trigger an internal Error Event to notify plugins of a possible problem.
 		ErrorEvent event = new ErrorEvent( request, var1, var2 );
 		Loader.getEventBus().callEvent( event );

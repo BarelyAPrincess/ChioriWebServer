@@ -193,7 +193,16 @@ public class Template extends JavaPlugin implements Listener
 	{
 		try
 		{
-			return event.getFramework().getHttpUtils().evalPackage( pack );
+			String source = event.getFramework().getHttpUtils().evalPackage( pack );
+			try
+			{
+				source = event.getSession().getEvaling().parseForIncludes( source, event.getSite() );
+			}
+			catch ( CodeParsingException ex )
+			{
+				Loader.getLogger().warning( "Exception encountered during parsing for text based includes, unknown fault.", ex );
+			}
+			return source;
 		}
 		catch ( IOException | CodeParsingException e )
 		{
