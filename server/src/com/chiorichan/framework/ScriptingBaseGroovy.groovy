@@ -60,10 +60,4 @@ abstract class ScriptingBaseGroovy extends ScriptingBaseJava
     {
         return Versioning.getCopyright();
     }
-	
-    @Deprecated
-    String get_version()
-    {
-        return getFramework().getProduct() + " " + getFramework().getVersion();
-    }
 }
