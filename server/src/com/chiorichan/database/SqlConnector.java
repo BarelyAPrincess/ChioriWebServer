@@ -257,6 +257,11 @@ public class SqlConnector
 	
 	public ResultSet query( String query ) throws SQLException
 	{
+		return query( query, false );
+	}
+	
+	public ResultSet query( String query, boolean retried ) throws SQLException
+	{
 		Statement stmt = null;
 		ResultSet result = null;
 		try
@@ -269,8 +274,13 @@ public class SqlConnector
 		}
 		catch ( CommunicationsException | MySQLNonTransientConnectionException e )
 		{
-			if ( reconnect() )
-				return query( query );
+			if ( !retried && reconnect() )
+				return query( query, true );
+			else
+			{
+				e.printStackTrace();
+				throw e;
+			}
 		}
 		catch ( Throwable t )
 		{
