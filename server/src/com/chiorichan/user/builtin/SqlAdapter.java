@@ -2,19 +2,19 @@ package com.chiorichan.user.builtin;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.json.JSONException;
 
-import com.chiorichan.Loader;
 import com.chiorichan.database.SqlConnector;
+import com.chiorichan.framework.Site;
 import com.chiorichan.user.LoginException;
 import com.chiorichan.user.LoginExceptionReasons;
 import com.chiorichan.user.LookupAdapterException;
 import com.chiorichan.user.User;
 import com.chiorichan.user.UserMetaData;
 import com.chiorichan.util.Common;
-import com.google.common.collect.Lists;
 
 public class SqlAdapter implements UserLookupAdapter
 {
@@ -22,16 +22,11 @@ public class SqlAdapter implements UserLookupAdapter
 	String table;
 	List<String> userFields;
 	
-	public SqlAdapter(SqlConnector _sql, String _table, String... _userFields) throws LookupAdapterException
+	public SqlAdapter( Site site ) throws LookupAdapterException
 	{
-		this( _sql, _table, Lists.newArrayList( _userFields ) );
-	}
-	
-	public SqlAdapter(SqlConnector _sql, String _table, List<String> _userFields) throws LookupAdapterException
-	{
-		sql = _sql;
-		table = _table;
-		userFields = _userFields;
+		sql = site.getDatabase();
+		table = site.getYaml().getString( "users.table", "users" );
+		userFields = site.getYaml().getStringList( "users.fields", new ArrayList<String>() );
 	}
 	
 	public ResultSet getResultSet( String uid ) throws SQLException

@@ -2,6 +2,7 @@ package com.chiorichan.user;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import com.chiorichan.util.ObjectUtil;
 import com.google.common.base.Joiner;
@@ -87,5 +88,10 @@ public class UserMetaData
 	public String getUserId()
 	{
 		return getString( "userID" );
+	}
+
+	public Set<String> getKeys()
+	{
+		return metaData.keySet();
 	}
 }

@@ -391,11 +391,11 @@ public class Site
 							if ( sql == null )
 								throw new SiteException( "Site '" + siteId + "' is configured with a SQL UserLookupAdapter but the site is missing a valid SQL Database, which is required for this adapter." );
 							
-							userLookupAdapter = new SqlAdapter( sql, config.getString( "users.table", "users" ), config.getStringList( "users.fields", new ArrayList<String>() ) );
+							userLookupAdapter = new SqlAdapter( this );
 							Loader.getLogger().info( "Initiated Sql UserLookupAdapter `" + userLookupAdapter + "` with sql '" + sql + "' for site '" + siteId + "'" );
 							break;
 						case "file":
-							userLookupAdapter = new FileAdapter( config.getString( "users.filebase", "[site].users" ), this );
+							userLookupAdapter = new FileAdapter( this );
 							Loader.getLogger().info( "Initiated FileBase UserLookupAdapter `" + userLookupAdapter + "` for site '" + siteId + "'" );
 							break;
 						case "builtin":
