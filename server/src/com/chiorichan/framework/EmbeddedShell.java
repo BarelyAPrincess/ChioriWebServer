@@ -16,6 +16,7 @@ public class EmbeddedShell implements SeaShell
 {
 	private static final String MARKER_START = "<%";
 	private static final String MARKER_END = "%>";
+	private int m_scriptCount = 0;
 	
 	@Override
 	public boolean doYouHandle( String shellIdent )
@@ -29,7 +30,7 @@ public class EmbeddedShell implements SeaShell
 		try
 		{
 			eval.getShell().setVariable( "__FILE__", fi.getFile() );
-			evaluate( new String( fi.getContent() ), eval.getShell(), eval.bs );
+			evaluate( new String( fi.getContent(), fi.getEncoding() ), eval.getShell(), eval.bs );
 		}
 		catch ( Throwable e )
 		{
@@ -77,21 +78,21 @@ public class EmbeddedShell implements SeaShell
 				if ( -1 != startIndex )
 				{
 					// Append all the simple text until the marker
-					bs.write( fullFile.substring( fullFileIndex, startIndex ).getBytes() );
+					bs.write( fullFile.substring( fullFileIndex, startIndex ).getBytes( "UTF-8" ) );
 					int endIndex = fullFile.indexOf( MARKER_END, fullFileIndex );
 					assert -1 != endIndex : "MARKER NOT CLOSED";
 					
 					String fragment = fullFile.substring( startIndex + MARKER_START.length(), endIndex );
 					// Append all the substituted text
 					String interpretedText = interpret( shell, fragment );
-					bs.write( interpretedText.getBytes() );
+					bs.write( interpretedText.getBytes( "UTF-8" ) );
 					
 					// Position index after end marker
 					fullFileIndex = endIndex + MARKER_END.length();
 				}
 				else
 				{
-					bs.write( fullFile.substring( fullFileIndex ).getBytes() );
+					bs.write( fullFile.substring( fullFileIndex ).getBytes( "UTF-8" ) );
 					
 					// Position index after the end of the file
 					fullFileIndex = fullFile.length() + 1;
@@ -101,7 +102,7 @@ public class EmbeddedShell implements SeaShell
 		catch ( SyntaxException e1 )
 		{
 			e1.printStackTrace();
-			bs.write( fullFile.substring( fullFileIndex ).getBytes() );
+			bs.write( fullFile.substring( fullFileIndex ).getBytes( "UTF-8" ) );
 			
 			// Position index after the end of the file
 			fullFileIndex = fullFile.length() + 1;
@@ -109,7 +110,7 @@ public class EmbeddedShell implements SeaShell
 		catch ( ClassNotFoundException e1 )
 		{
 			e1.printStackTrace();
-			bs.write( fullFile.substring( fullFileIndex ).getBytes() );
+			bs.write( fullFile.substring( fullFileIndex ).getBytes( "UTF-8" ) );
 			
 			// Position index after the end of the file
 			fullFileIndex = fullFile.length() + 1;
@@ -117,14 +118,12 @@ public class EmbeddedShell implements SeaShell
 		catch ( IOException e1 )
 		{
 			e1.printStackTrace();
-			bs.write( fullFile.substring( fullFileIndex ).getBytes() );
+			bs.write( fullFile.substring( fullFileIndex ).getBytes( "UTF-8" ) );
 			
 			// Position index after the end of the file
 			fullFileIndex = fullFile.length() + 1;
 		}
 	}
-	
-	private int m_scriptCount = 0;
 	
 	private String interpretFragment( GroovyShell shell, String source ) throws SyntaxException, ClassNotFoundException, IOException
 	{

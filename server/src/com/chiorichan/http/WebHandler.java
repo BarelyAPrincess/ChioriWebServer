@@ -1,7 +1,11 @@
 package com.chiorichan.http;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -164,6 +168,7 @@ public class WebHandler implements HttpHandler
 		request.rewriteVars.putAll( fi.getRewriteParams() );
 		
 		response.setContentType( fi.getContentType() );
+		response.setEncoding( fi.getEncoding() );
 		
 		String file = fi.get( "file" );
 		String html = fi.get( "html" );
@@ -226,7 +231,7 @@ public class WebHandler implements HttpHandler
 			// Enhancement: Allow html to be ran under different shells. Default is GROOVY.
 			if ( !html.isEmpty() )
 				if ( !eval.shellExecute( "groovy", html ) )
-					eval.write( html.getBytes( "ISO-8859-1" ) );
+					eval.write( html.getBytes( fi.getEncoding() ) );
 		}
 		catch ( ShellExecuteException e )
 		{
@@ -273,7 +278,7 @@ public class WebHandler implements HttpHandler
 			fi.put( kv.getKey(), kv.getValue() );
 		}
 		
-		String source = currentSite.applyAlias( eval.reset() );
+		String source = currentSite.applyAlias( eval.reset( fi.getEncoding() ) );
 		
 		try
 		{
@@ -298,6 +303,6 @@ public class WebHandler implements HttpHandler
 			throw new IOException( "Exception encountered during render event call, most likely the fault of a plugin.", ex );
 		}
 		
-		response.getOutput().write( source.getBytes( "ISO-8859-1" ) );
+		response.getOutput().write( source.getBytes( fi.getEncoding() ) );
 	}
 }

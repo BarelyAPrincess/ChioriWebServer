@@ -7,10 +7,15 @@
 
 package com.chiorichan.framework;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -24,6 +29,17 @@ public class FileInterpreter
 	protected Map<String, String> interpParams = Maps.newTreeMap();
 	protected ByteArrayOutputStream bs = new ByteArrayOutputStream();
 	protected File cachedFile = null;
+	protected String encoding = "UTF-8";
+	
+	public String getEncoding()
+	{
+		return encoding;
+	}
+	
+	public void setEncoding( String _encoding )
+	{
+		encoding = _encoding;
+	}
 	
 	@Override
 	public String toString()
@@ -40,7 +56,7 @@ public class FileInterpreter
 		
 		String cachedFileStr = ( cachedFile == null ) ? "N/A" : cachedFile.getAbsolutePath();
 		
-		return "FileInterpreter{content=" + bs.size() + " bytes,file=" + cachedFileStr + ",overrides={" + overrides + "}}";
+		return "FileInterpreter{content=" + bs.size() + " bytes,encoding=" + encoding + ",file=" + cachedFileStr + ",overrides={" + overrides + "}}";
 	}
 	
 	public File getFile()
@@ -89,7 +105,10 @@ public class FileInterpreter
 				else if ( file.getName().toLowerCase().endsWith( ".txt" ) )
 					interpParams.put( "shell", "text" );
 				else if ( ContentTypes.getContentType( cachedFile.getAbsoluteFile() ).toLowerCase().contains( "image" ) )
+				{
+					encoding = "ISO-8859-1";
 					interpParams.put( "shell", "image" );
+				}
 			
 			is = new FileInputStream( file );
 			
@@ -139,11 +158,10 @@ public class FileInterpreter
 			
 			for ( int lnn = 0; lnn < ln; lnn++ )
 			{
-				finished.write( "\n".getBytes( "ISO-8859-1" ) );
+				finished.write( "\n".getBytes( encoding ) );
 			}
 			
 			bs = finished;
-			
 		}
 		finally
 		{

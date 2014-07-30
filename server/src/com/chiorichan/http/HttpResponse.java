@@ -1,8 +1,13 @@
 package com.chiorichan.http;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.Map;
 
 import com.chiorichan.Loader;
@@ -21,6 +26,7 @@ public class HttpResponse
 	protected ByteArrayOutputStream output = new ByteArrayOutputStream();
 	protected int httpStatus = 200;
 	protected String httpContentType = "text/html";
+	protected String encoding = "UTF-8";
 	protected HttpResponseStage stage = HttpResponseStage.READING;
 	protected Map<String, String> pageDataOverrides = Maps.newHashMap();
 
@@ -192,7 +198,7 @@ public class HttpResponse
 		if ( stage != HttpResponseStage.MULTIPART )
 			stage = HttpResponseStage.WRITTING;
 
-		output.write( var1.getBytes( "ISO-8859-1" ) );
+		output.write( var1.getBytes( encoding ) );
 	}
 
 	public void println( String var1 ) throws IOException
@@ -200,7 +206,7 @@ public class HttpResponse
 		if ( stage != HttpResponseStage.MULTIPART )
 			stage = HttpResponseStage.WRITTING;
 
-		output.write( (var1 + "\n").getBytes( "ISO-8859-1" ) );
+		output.write( (var1 + "\n").getBytes( encoding ) );
 	}
 
 	public void setContentType( String type )
@@ -217,7 +223,7 @@ public class HttpResponse
 			return;
 
 		stage = HttpResponseStage.WRITTEN;
-
+		
 		HttpExchange http = request.getOriginal();
 
 		Headers h = http.getResponseHeaders();
@@ -234,12 +240,14 @@ public class HttpResponse
 		// NOTE: Why did I make it check this again?
 		// if ( h.get( "Content-Type" ) == null )
 		// h.add( "Content-Type", httpContentType );
-		h.set( "Content-Type", httpContentType );
+		
+		// This might be a temporary measure - TODO Properly set the charset for each request.
+		h.set( "Content-Type", httpContentType +  "; charset=" + encoding.toLowerCase() );
 
 		h.add( "Access-Control-Allow-Origin", request.getSite().getYaml().getString( "web.allowed-origin", "*" ) );
 
 		http.sendResponseHeaders( httpStatus, output.size() );
-
+		
 		// Fixes an issue with requests coming from CURL with --head argument.
 		if ( !http.getRequestMethod().equalsIgnoreCase( "HEAD" ) )
 		{
@@ -307,7 +315,7 @@ public class HttpResponse
 
 			ByteArrayOutputStream ba = new ByteArrayOutputStream();
 
-			ba.write( sb.toString().getBytes( "ISO-8859-1" ) );
+			ba.write( sb.toString().getBytes( encoding ) );
 			ba.write( bytesToWrite );
 			ba.flush();
 
@@ -316,5 +324,10 @@ public class HttpResponse
 			ba.close();
 			os.flush();
 		}
+	}
+
+	public void setEncoding( String _encoding )
+	{
+		encoding = _encoding;
 	}
 }

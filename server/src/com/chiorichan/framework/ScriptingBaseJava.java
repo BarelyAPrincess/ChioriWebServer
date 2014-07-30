@@ -15,12 +15,14 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import com.chiorichan.ConsoleLogManager;
 import com.chiorichan.Loader;
 import com.chiorichan.plugin.Plugin;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.ObjectUtil;
 import com.chiorichan.util.StringUtil;
+import com.chiorichan.util.Versioning;
 import com.google.common.base.Joiner;
 
 abstract public class ScriptingBaseJava extends Script
@@ -30,6 +32,9 @@ abstract public class ScriptingBaseJava extends Script
 	{
 		if ( var instanceof List )
 			return var_export( (List<Object>) var );
+		
+		if ( var instanceof Map )
+			return var_export( (Map<Object, Object>) var );
 		
 		return ObjectUtil.castToString( var );
 	}
@@ -313,8 +318,23 @@ abstract public class ScriptingBaseJava extends Script
 		return Loader.getInstance();
 	}
 	
+	ConsoleLogManager getLogger()
+	{
+		return Loader.getLogger();
+	}
+	
 	String apache_get_version()
 	{
 		return "THIS IS NOT APACHE YOU DUMMY!!!";
+	}
+	
+	String getProduct()
+	{
+		return Versioning.getProduct();
+	}
+	
+	String getVersion()
+	{
+		return Versioning.getVersion();
 	}
 }

@@ -40,10 +40,18 @@ public class Evaling
 		CompilerConfiguration configuration = new CompilerConfiguration();
 		
 		configuration.setScriptBaseClass( ScriptingBaseGroovy.class.getName() );
+		configuration.setSourceEncoding( "UTF-8" );
 		
 		shell = new GroovyShell( Loader.class.getClassLoader(), binding, configuration );
 		
-		shell.setProperty( "out", new PrintStream( bs ) );
+		try
+		{
+			shell.setProperty( "out", new PrintStream( bs, true, "UTF-8" ) );
+		}
+		catch ( UnsupportedEncodingException e )
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	public void setVariable( String key, Object val )
@@ -82,17 +90,22 @@ public class Evaling
 		return source;
 	}
 	
-	public String flush() throws UnsupportedEncodingException
+	public String flush( String encoding ) throws UnsupportedEncodingException
 	{
-		return new String( bs.toByteArray(), "ISO-8859-1" );
+		return new String( bs.toByteArray(), encoding );
+	}
+	
+	public String reset( String encoding ) throws UnsupportedEncodingException
+	{
+		String bsOut = flush( encoding );
+		bs.reset();
+		
+		return bsOut;
 	}
 	
 	public String reset() throws UnsupportedEncodingException
 	{
-		String bsOut = flush();
-		bs.reset();
-		
-		return bsOut;
+		return reset( "UTF-8" );
 	}
 	
 	public byte[] flushToBytes()
@@ -297,7 +310,7 @@ public class Evaling
 	{
 		return shell.getContext();
 	}
-
+	
 	public GroovyShell getShell()
 	{
 		return shell;

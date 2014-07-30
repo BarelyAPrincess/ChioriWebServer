@@ -72,6 +72,7 @@ public class Loader
 	
 	public static void main( String... args ) throws Exception
 	{
+		System.setProperty( "file.encoding", "utf-8" );
 		OptionSet options = null;
 		
 		try
