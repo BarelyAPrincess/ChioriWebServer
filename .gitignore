@@ -14,6 +14,7 @@
 /permissions.yml
 /resin-data
 /webroot
+/sites
 /lib/META-INF
 /client.log
 /client.log.lck
