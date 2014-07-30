@@ -1,7 +1,7 @@
 package com.chiorichan.command.network;
 
 import com.chiorichan.ChatColor;
-import com.chiorichan.command.CommandSender;
+import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.command.defaults.ChioriCommand;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.net.packet.CommandPacket;
@@ -16,13 +16,14 @@ public class SendCommand extends ChioriCommand
 	}
 	
 	@Override
-	public boolean execute( CommandSender sender, String currentAlias, String[] args )
-	{
-		if ( !NetworkManager.isClientMode() )
-		{
-			sender.sendMessage( ChatColor.RED + "Severe: You can only use this command on a client connection." );
-			return true;
-		}
+	public boolean execute( SentientHandler sender, String currentAlias, String[] args )
+	{/*
+	 * if ( !NetworkManager.isClientMode() )
+	 * {
+	 * sender.sendMessage( ChatColor.RED + "Severe: You can only use this command on a client connection." );
+	 * return true;
+	 * }
+	 */
 		
 		if ( args.length < 1 )
 		{

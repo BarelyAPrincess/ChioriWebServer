@@ -1,6 +1,7 @@
 package com.chiorichan.plugin.groovy;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,8 +14,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 
@@ -24,12 +23,12 @@ import org.yaml.snakeyaml.error.YAMLException;
 import com.chiorichan.Loader;
 import com.chiorichan.Warning;
 import com.chiorichan.Warning.WarningState;
-import com.chiorichan.event.Event;
-import com.chiorichan.event.EventException;
-import com.chiorichan.event.EventHandler;
-import com.chiorichan.event.Listener;
-import com.chiorichan.event.server.PluginDisableEvent;
-import com.chiorichan.event.server.PluginEnableEvent;
+import com.chiorichan.bus.bases.EventException;
+import com.chiorichan.bus.events.Event;
+import com.chiorichan.bus.events.EventHandler;
+import com.chiorichan.bus.events.Listener;
+import com.chiorichan.bus.events.server.PluginDisableEvent;
+import com.chiorichan.bus.events.server.PluginEnableEvent;
 import com.chiorichan.plugin.AuthorNagException;
 import com.chiorichan.plugin.EventExecutor;
 import com.chiorichan.plugin.InvalidDescriptionException;
@@ -165,26 +164,19 @@ public final class GroovyPluginLoader implements PluginLoader
 	{
 		Validate.notNull( file, "File cannot be null" );
 		
-		JarFile jar = null;
+		File description = null;
 		InputStream stream = null;
 		
 		try
 		{
-			jar = new JarFile( file );
-			JarEntry entry = jar.getJarEntry( "plugin.yaml" );
+			description = new File( file.getAbsolutePath() + ".yml" );
 			
-			if ( entry == null )
-				entry = jar.getJarEntry( "plugin.yml" );
-			
-			if ( entry == null )
+			if ( !description.exists() )
 			{
-				throw new InvalidDescriptionException( new FileNotFoundException( "Jar does not contain plugin.yaml" ) );
+				throw new InvalidDescriptionException( new FileNotFoundException( "Could not find the Plugin Description file at `" + description.getAbsolutePath() + "`" ) );
 			}
 			
-			stream = jar.getInputStream( entry );
-			
-			return new PluginDescriptionFile( stream );
-			
+			return new PluginDescriptionFile( description );
 		}
 		catch ( IOException ex )
 		{
@@ -193,27 +185,6 @@ public final class GroovyPluginLoader implements PluginLoader
 		catch ( YAMLException ex )
 		{
 			throw new InvalidDescriptionException( ex );
-		}
-		finally
-		{
-			if ( jar != null )
-			{
-				try
-				{
-					jar.close();
-				}
-				catch ( IOException e )
-				{}
-			}
-			if ( stream != null )
-			{
-				try
-				{
-					stream.close();
-				}
-				catch ( IOException e )
-				{}
-			}
 		}
 	}
 	
@@ -307,7 +278,7 @@ public final class GroovyPluginLoader implements PluginLoader
 		}
 		catch ( NoClassDefFoundError e )
 		{
-			plugin.getLogger().severe( "Plugin " + plugin.getDescription().getFullName() + " has failed to register events for " + listener.getClass() + " because " + e.getMessage() + " does not exist." );
+			Loader.getLogger().severe( "Plugin " + plugin.getDescription().getFullName() + " has failed to register events for " + listener.getClass() + " because " + e.getMessage() + " does not exist." );
 			return ret;
 		}
 		
@@ -319,7 +290,7 @@ public final class GroovyPluginLoader implements PluginLoader
 			final Class<?> checkClass;
 			if ( method.getParameterTypes().length != 1 || !Event.class.isAssignableFrom( checkClass = method.getParameterTypes()[0] ) )
 			{
-				plugin.getLogger().severe( plugin.getDescription().getFullName() + " attempted to register an invalid EventHandler method signature \"" + method.toGenericString() + "\" in " + listener.getClass() );
+				Loader.getLogger().severe( plugin.getDescription().getFullName() + " attempted to register an invalid EventHandler method signature \"" + method.toGenericString() + "\" in " + listener.getClass() );
 				continue;
 			}
 			final Class<? extends Event> eventClass = checkClass.asSubclass( Event.class );
@@ -342,7 +313,7 @@ public final class GroovyPluginLoader implements PluginLoader
 					{
 						break;
 					}
-					plugin.getLogger().log( Level.WARNING, String.format( "\"%s\" has registered a listener for %s on method \"%s\", but the event is Deprecated." + " \"%s\"; please notify the authors %s.", plugin.getDescription().getFullName(), clazz.getName(), method.toGenericString(), ( warning != null && warning.reason().length() != 0 ) ? warning.reason() : "Server performance will be affected", Arrays.toString( plugin.getDescription().getAuthors().toArray() ) ), warningState == WarningState.ON ? new AuthorNagException( null ) : null );
+					Loader.getLogger().log( Level.WARNING, String.format( "\"%s\" has registered a listener for %s on method \"%s\", but the event is Deprecated." + " \"%s\"; please notify the authors %s.", plugin.getDescription().getFullName(), clazz.getName(), method.toGenericString(), ( warning != null && warning.reason().length() != 0 ) ? warning.reason() : "Server performance will be affected", Arrays.toString( plugin.getDescription().getAuthors().toArray() ) ), warningState == WarningState.ON ? new AuthorNagException( null ) : null );
 					break;
 				}
 			}
@@ -387,7 +358,7 @@ public final class GroovyPluginLoader implements PluginLoader
 		
 		if ( !plugin.isEnabled() )
 		{
-			plugin.getLogger().info( "Enabling " + plugin.getDescription().getFullName() );
+			Loader.getLogger().info( "Enabling " + plugin.getDescription().getFullName() );
 			
 			GroovyPlugin jPlugin = (GroovyPlugin) plugin;
 			
@@ -421,7 +392,7 @@ public final class GroovyPluginLoader implements PluginLoader
 		if ( plugin.isEnabled() )
 		{
 			String message = String.format( "Disabling %s", plugin.getDescription().getFullName() );
-			plugin.getLogger().info( message );
+			Loader.getLogger().info( message );
 			
 			Loader.getEventBus().callEvent( new PluginDisableEvent( plugin ) );
 			

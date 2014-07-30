@@ -1,18 +1,19 @@
 package com.chiorichan.http;
 
-import com.chiorichan.ChatColor;
-import com.chiorichan.Loader;
-import com.chiorichan.database.SqlConnector;
-import com.chiorichan.file.YamlConfiguration;
-import com.chiorichan.framework.SiteManager;
-import com.chiorichan.user.User;
-import com.chiorichan.util.Common;
-import com.google.common.collect.Lists;
 import java.net.ConnectException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
+
+import com.chiorichan.ChatColor;
+import com.chiorichan.Loader;
+import com.chiorichan.StartupException;
+import com.chiorichan.account.bases.Account;
+import com.chiorichan.database.SqlConnector;
+import com.chiorichan.file.YamlConfiguration;
+import com.chiorichan.util.Common;
+import com.google.common.collect.Lists;
 
 /**
  * Persistence manager handles sessions kept in memory. It also manages when to unload the session to free memeory.
@@ -26,7 +27,7 @@ public class PersistenceManager
 	
 	static protected List<PersistentSession> sessionList = Lists.newCopyOnWriteArrayList();
 	
-	public PersistenceManager()
+	public void init() throws StartupException
 	{
 		YamlConfiguration config = Loader.getConfig();
 		
@@ -36,8 +37,7 @@ public class PersistenceManager
 		}
 		catch ( ClassNotFoundException e )
 		{
-			Loader.getLogger().severe( "We could not locate the 'com.mysql.jdbc.Driver' library regardless that its suppose to be included. If your running from source code be sure to have this library in your build path." );
-			Loader.stop();
+			throw new StartupException( "We could not locate the 'com.mysql.jdbc.Driver' library regardless that its suppose to be included. If your running from source code be sure to have this library in your build path." );
 		}
 		
 		switch ( config.getString( "server.database.type", "mysql" ) )
@@ -52,11 +52,13 @@ public class PersistenceManager
 				catch ( SQLException e )
 				{
 					if ( e.getCause() instanceof ConnectException )
-						Loader.getLogger().severe( "We had a problem connecting to database '" + filename + "'. Reason: " + e.getCause().getMessage() );
+					{
+						throw new StartupException( "We had a problem connecting to database '" + filename + "'. Reason: " + e.getCause().getMessage() );
+					}
 					else
-						Loader.getLogger().severe( e.getMessage() );
-					
-					Loader.stop();
+					{
+						throw new StartupException( e );
+					}
 				}
 				
 				break;
@@ -76,11 +78,13 @@ public class PersistenceManager
 					// e.printStackTrace();
 					
 					if ( e.getCause() instanceof ConnectException )
-						Loader.getLogger().severe( "We had a problem connecting to database '" + host + "'. Reason: " + e.getCause().getMessage() );
+					{
+						throw new StartupException( "We had a problem connecting to database '" + host + "'. Reason: " + e.getCause().getMessage() );
+					}
 					else
-						Loader.getLogger().severe( e.getMessage() );
-					
-					Loader.stop();
+					{
+						throw new StartupException( e );
+					}
 				}
 				
 				break;
@@ -118,7 +122,7 @@ public class PersistenceManager
 			}
 			catch ( SQLException e )
 			{
-				Loader.getLogger().panic( e.getMessage() );
+				Loader.getLogger().warning( "There was a problem reloading saved sessions.", e );
 			}
 		}
 	}
@@ -184,7 +188,13 @@ public class PersistenceManager
 		}
 	}
 	
+	@Deprecated
 	public SqlConnector getSql()
+	{
+		return sql;
+	}
+	
+	public SqlConnector getDatabase()
 	{
 		return sql;
 	}
@@ -230,10 +240,15 @@ public class PersistenceManager
 	{
 		Loader.getLogger().info( ChatColor.DARK_AQUA + "Session Destroyed `" + var1 + "`" );
 		
-		for ( User u : Loader.getInstance().getOnlineUsers() )
+		for ( Account u : Loader.getAccountsManager().getOnlineAccounts() )
 			u.removeHandler( var1 );
 		
 		Loader.getPersistenceManager().sql.queryUpdate( "DELETE FROM `sessions` WHERE `sessionName` = '" + var1.candyName + "' AND `sessionId` = '" + var1.getId() + "';" );
 		sessionList.remove( var1 );
+	}
+	
+	public void reload()
+	{
+		// RELOAD ALL
 	}
 }

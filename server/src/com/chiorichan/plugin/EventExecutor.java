@@ -1,8 +1,8 @@
 package com.chiorichan.plugin;
 
-import com.chiorichan.event.Event;
-import com.chiorichan.event.EventException;
-import com.chiorichan.event.Listener;
+import com.chiorichan.bus.bases.EventException;
+import com.chiorichan.bus.events.Event;
+import com.chiorichan.bus.events.Listener;
 
 /**
  * Interface which defines the class for event call backs to plugins

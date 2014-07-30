@@ -1,8 +1,13 @@
 package com.chiorichan.util;
 
+import java.awt.Color;
+import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.util.Collection;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.Validate;
 
@@ -114,5 +119,34 @@ public class StringUtil
 		StringBuilder sb = new StringBuilder( par );
 		sb.setCharAt( at, rep.toCharArray()[0] );
 		return sb.toString();
+	}
+	
+	public static Color parseColor( String color )
+	{
+		Pattern c = Pattern.compile( "rgb *\\( *([0-9]+), *([0-9]+), *([0-9]+) *\\)" );
+		Matcher m = c.matcher( color );
+		
+		// First try to parse RGB(0,0,0);
+		if ( m.matches() )
+			return new Color( Integer.valueOf( m.group( 1 ) ), // r
+			Integer.valueOf( m.group( 2 ) ), // g
+			Integer.valueOf( m.group( 3 ) ) ); // b
+			
+		try
+		{
+			Field field = Class.forName( "java.awt.Color" ).getField( color.trim().toUpperCase() );
+			return (Color) field.get( null );
+		}
+		catch ( Exception e )
+		{}
+		
+		try
+		{
+			return Color.decode( color );
+		}
+		catch ( Exception e )
+		{}
+		
+		return null;
 	}
 }

@@ -22,15 +22,15 @@ import org.json.JSONObject;
 
 import com.chiorichan.Loader;
 import com.chiorichan.StartupException;
+import com.chiorichan.account.adapter.AccountLookupAdapter;
+import com.chiorichan.account.adapter.FileAdapter;
+import com.chiorichan.account.adapter.SqlAdapter;
+import com.chiorichan.account.helpers.LookupAdapterException;
+import com.chiorichan.bus.bases.EventException;
+import com.chiorichan.bus.events.server.SiteLoadEvent;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.database.SqlConnector;
-import com.chiorichan.event.EventException;
-import com.chiorichan.event.server.SiteLoadEvent;
 import com.chiorichan.file.YamlConfiguration;
-import com.chiorichan.user.LookupAdapterException;
-import com.chiorichan.user.builtin.FileAdapter;
-import com.chiorichan.user.builtin.SqlAdapter;
-import com.chiorichan.user.builtin.UserLookupAdapter;
 import com.chiorichan.util.FileUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -52,8 +52,6 @@ public class Site
 	// Binding and evaling for use inside each site for executing site scripts outside of web requests.
 	Binding binding = new Binding();
 	Evaling eval = new Evaling( binding );
-	
-	UserLookupAdapter userLookupAdapter = null;
 	
 	public Site(File f) throws SiteException, StartupException
 	{
@@ -380,58 +378,6 @@ public class Site
 					}
 				}
 			}
-			
-			if ( config.getConfigurationSection( "users" ) != null )
-			{
-				try
-				{
-					switch ( config.getString( "users.adapter", null ) )
-					{
-						case "sql":
-							if ( sql == null )
-								throw new SiteException( "Site '" + siteId + "' is configured with a SQL UserLookupAdapter but the site is missing a valid SQL Database, which is required for this adapter." );
-							
-							userLookupAdapter = new SqlAdapter( this );
-							Loader.getLogger().info( "Initiated Sql UserLookupAdapter `" + userLookupAdapter + "` with sql '" + sql + "' for site '" + siteId + "'" );
-							break;
-						case "file":
-							userLookupAdapter = new FileAdapter( this );
-							Loader.getLogger().info( "Initiated FileBase UserLookupAdapter `" + userLookupAdapter + "` for site '" + siteId + "'" );
-							break;
-						case "builtin":
-							if ( siteId.equalsIgnoreCase( "framework" ) )
-								throw new SiteException( "Site 'framework' can not be configuration to use builtin UserLookupAdapter since it's the provider of the buildin UserLookupAdapter." );
-							
-							userLookupAdapter = Loader.getUserManager().getBuiltinUserLookupAdapter();
-							Loader.getLogger().info( "Initiated Default UserLookupAdapter `" + userLookupAdapter + "` for site '" + siteId + "'" );
-							break;
-						case "shared":
-							if ( config.getString( "users.shareWith", null ) == null )
-								throw new SiteException( "Site '" + siteId + "' is configured to share the UserLookupAdapter with another site, but the config section 'users.shareWith' is missing." );
-							
-							Site shared = Loader.getSiteManager().getSiteById( config.getString( "users.shareWith" ) );
-							
-							if ( shared == null )
-								throw new SiteException( "Site '" + siteId + "' is configured to share the UserLookupAdapter with site '" + config.getString( "users.shareWith" ) + "', but there was no sites found by that id." );
-							
-							if ( shared.getUserLookupAdapter() == null )
-								throw new SiteException( "Site '" + siteId + "' is configured to share the UserLookupAdapter with site '" + config.getString( "users.shareWith" ) + "', but the found site has no Adapter configured." );
-							
-							userLookupAdapter = shared.getUserLookupAdapter();
-							Loader.getLogger().info( "Initiated Shared UserLookupAdapter `" + userLookupAdapter + "` with site '" + config.getString( "users.shareWith" ) + "' for site '" + siteId + "'" );
-							break;
-						default: // TODO Create custom UserLookupAdapters.
-							if ( siteId.equalsIgnoreCase( "framework" ) )
-								throw new StartupException( "Site 'framework' must have a UserLookupAdapter configured. The simplest one to use would be 'file', set this in the '000-default.yaml' YAML FileBase." );
-							
-							Loader.getLogger().warning( "Site '" + siteId + "' is not configured with a UserLookupAdapter. This site will be unable to login any users." );
-					}
-				}
-				catch ( LookupAdapterException e )
-				{
-					throw new SiteException( "There was an exception encoutered when attempting to create the UserLookupAdapter for site '" + siteId + "'.", e );
-				}
-			}
 		}
 		
 		SiteLoadEvent event = new SiteLoadEvent( this );
@@ -635,11 +581,6 @@ public class Site
 	public void setAutoSave( boolean b )
 	{
 		// TODO Auto-generated method stub
-	}
-	
-	public UserLookupAdapter getUserLookupAdapter()
-	{
-		return userLookupAdapter;
 	}
 	
 	// TODO: Add methods to add protected files, metatags and aliases to site and save

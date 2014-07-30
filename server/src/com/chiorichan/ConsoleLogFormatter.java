@@ -1,6 +1,5 @@
 package com.chiorichan;
 
-import com.google.common.base.Strings;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
@@ -9,8 +8,12 @@ import java.util.Map;
 import java.util.logging.Formatter;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
+
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.Ansi.Attribute;
+
+import com.chiorichan.bus.ConsoleBus;
+import com.google.common.base.Strings;
 
 public class ConsoleLogFormatter extends Formatter
 {
@@ -20,7 +23,7 @@ public class ConsoleLogFormatter extends Formatter
 	public boolean debugMode = false;
 	public int debugModeHowDeep = 1;
 
-	public ConsoleLogFormatter( Console console )
+	public ConsoleLogFormatter( ConsoleBus console )
 	{
 		date = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss.SSS" );
 

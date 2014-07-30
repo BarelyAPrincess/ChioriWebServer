@@ -4,9 +4,10 @@ import java.util.regex.Pattern;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
+import com.chiorichan.account.bases.Account;
+import com.chiorichan.account.bases.Sentient;
+import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.command.Command;
-import com.chiorichan.command.CommandSender;
-import com.chiorichan.user.User;
 
 public class BanIpCommand extends VanillaCommand
 {
@@ -21,9 +22,9 @@ public class BanIpCommand extends VanillaCommand
 	}
 	
 	@Override
-	public boolean execute( CommandSender sender, String currentAlias, String[] args )
+	public boolean execute( SentientHandler sender, String currentAlias, String[] args )
 	{
-		if ( !testPermission( sender ) )
+		if ( !testPermission( sender.getSentient() ) )
 			return true;
 		if ( args.length < 1 )
 		{
@@ -38,25 +39,26 @@ public class BanIpCommand extends VanillaCommand
 		}
 		else
 		{
-			User User = Loader.getInstance().getUser( args[0] );
+			Account acct = Loader.getAccountsManager().getAccount( args[0] );
 			
-			if ( User == null )
+			if ( acct == null )
 			{
 				sender.sendMessage( ChatColor.RED + "Usage: " + usageMessage );
 				return false;
 			}
 			
-			processIPBan( User.getAddress(), sender );
+			if ( acct.getAddress() != null )
+				processIPBan( acct.getAddress(), sender );
+			else
+				sender.sendMessage( ChatColor.RED + "Sorry, there seems to be no IP Address associated with that account. Can only ban by IP if they connect using a TCP/IP connection." );
 		}
 		
 		return true;
 	}
 	
-	private void processIPBan( String ip, CommandSender sender )
+	private void processIPBan( String ip, SentientHandler sender )
 	{
-		// TODO: Kick on ban
-		Loader.getInstance().banIP( ip );
-		
+		Loader.getAccountsManager().banIp( ip );
 		Command.broadcastCommandMessage( sender, "Banned IP Address " + ip );
 	}
 }

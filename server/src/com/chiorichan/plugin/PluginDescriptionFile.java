@@ -15,7 +15,6 @@ import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 import com.chiorichan.command.Command;
 import com.chiorichan.command.CommandExecutor;
-import com.chiorichan.command.CommandSender;
 import com.chiorichan.command.PluginCommand;
 import com.chiorichan.permissions.Permissible;
 import com.chiorichan.permissions.Permission;

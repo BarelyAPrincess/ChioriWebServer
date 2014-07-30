@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
-import com.chiorichan.command.CommandSender;
+import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.plugin.Plugin;
 
 public class PluginsCommand extends ChioriCommand
@@ -19,9 +19,9 @@ public class PluginsCommand extends ChioriCommand
 	}
 	
 	@Override
-	public boolean execute( CommandSender sender, String currentAlias, String[] args )
+	public boolean execute( SentientHandler sender, String currentAlias, String[] args )
 	{
-		if ( !testPermission( sender ) )
+		if ( !testPermission( sender.getSentient() ) )
 			return true;
 		
 		sender.sendMessage( "Plugins " + getPluginList() );

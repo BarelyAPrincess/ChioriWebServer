@@ -7,13 +7,13 @@ import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.events.PermissionSystemEvent;
 
 import com.chiorichan.Loader;
-import com.chiorichan.event.EventHandler;
-import com.chiorichan.event.EventPriority;
-import com.chiorichan.event.Listener;
-import com.chiorichan.event.user.UserLoginEvent;
-import com.chiorichan.event.user.UserLogoutEvent;
+import com.chiorichan.account.bases.Account;
+import com.chiorichan.bus.events.EventHandler;
+import com.chiorichan.bus.events.EventPriority;
+import com.chiorichan.bus.events.Listener;
+import com.chiorichan.bus.events.account.AccountLoginEvent;
+import com.chiorichan.bus.events.account.AccountLogoutEvent;
 import com.chiorichan.permissions.Permissible;
-import com.chiorichan.user.User;
 
 public class RegexPermissions
 {
@@ -57,7 +57,7 @@ public class RegexPermissions
 		return permsList;
 	}
 	
-	public void injectPermissible( User user )
+	public void injectPermissible( Account user )
 	{
 		if ( user.hasPermission( "permissionsex.disabled" ) )
 		{ // this user shouldn't get permissionsex matching
@@ -108,13 +108,13 @@ public class RegexPermissions
 	
 	private void injectAllPermissibles()
 	{
-		for ( User user : plugin.getInstance().getOnlineUsers() )
+		for ( Account user : Loader.getAccountsManager().getOnlineAccounts() )
 		{
 			injectPermissible( user );
 		}
 	}
 	
-	private void uninjectPermissible( User user )
+	private void uninjectPermissible( Account user )
 	{
 		if ( user.hasPermission( "permissionsex.disabled" ) )
 		{ // this user shouldn't get permissionsex matching
@@ -157,7 +157,7 @@ public class RegexPermissions
 	
 	private void uninjectAllPermissibles()
 	{
-		for ( User user : plugin.getInstance().getOnlineUsers() )
+		for ( Account user : Loader.getAccountsManager().getOnlineAccounts() )
 		{
 			uninjectPermissible( user );
 		}
@@ -166,16 +166,16 @@ public class RegexPermissions
 	private class EventListener implements Listener
 	{
 		@EventHandler( priority = EventPriority.LOWEST )
-		public void onUserLogin( UserLoginEvent event )
+		public void onUserLogin( AccountLoginEvent event )
 		{
-			injectPermissible( event.getUser() );
+			injectPermissible( event.getAccount() );
 		}
 		
 		@EventHandler( priority = EventPriority.MONITOR )
 		// Technically not supposed to use MONITOR for this, but we don't want to remove before other plugins are done checking permissions
-		public void onUserQuit( UserLogoutEvent event )
+		public void onUserQuit( AccountLogoutEvent event )
 		{
-			uninjectPermissible( event.getUser() );
+			uninjectPermissible( event.getAccount() );
 		}
 		
 		@EventHandler( priority = EventPriority.LOWEST )

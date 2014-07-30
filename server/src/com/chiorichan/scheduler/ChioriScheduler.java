@@ -16,6 +16,7 @@ import java.util.logging.Level;
 
 import org.apache.commons.lang3.Validate;
 
+import com.chiorichan.Loader;
 import com.chiorichan.plugin.IllegalPluginAccessException;
 import com.chiorichan.plugin.Plugin;
 
@@ -413,7 +414,7 @@ public class ChioriScheduler implements IChioriScheduler
 				}
 				catch ( final Throwable throwable )
 				{
-					task.getOwner().getLogger().log( Level.WARNING, String.format( "Task #%s for %s generated an exception", task.getTaskId(), task.getOwner().getDescription().getFullName() ), throwable );
+					Loader.getLogger().log( Level.WARNING, String.format( "Task #%s for %s generated an exception", task.getTaskId(), task.getOwner().getDescription().getFullName() ), throwable );
 				}
 				parsePending();
 			}

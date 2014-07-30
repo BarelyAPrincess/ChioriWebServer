@@ -21,12 +21,12 @@ import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.utils.FieldReplacer;
 
 import com.chiorichan.Loader;
+import com.chiorichan.account.bases.Account;
 import com.chiorichan.permissions.Permissible;
 import com.chiorichan.permissions.PermissibleBase;
 import com.chiorichan.permissions.Permission;
 import com.chiorichan.permissions.PermissionAttachment;
 import com.chiorichan.permissions.PermissionAttachmentInfo;
-import com.chiorichan.user.User;
 
 /**
  * Implements regex-based permission matching for superperms.
@@ -59,13 +59,13 @@ public class PermissiblePEX extends PermissibleBase
 	private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 	private static final AtomicBoolean LAST_CALL_ERRORED = new AtomicBoolean( false );
 	
-	protected final User user;
+	protected final Account user;
 	protected final PermissionsEx plugin;
 	private Permissible previousPermissible = null;
 	protected final Map<String, PermissionCheckResult> cache = new ConcurrentHashMap<String, PermissionCheckResult>();
 	
 	@SuppressWarnings( "unchecked" )
-	public PermissiblePEX(User user, PermissionsEx plugin)
+	public PermissiblePEX(Account user, PermissionsEx plugin)
 	{
 		super( user );
 		this.user = user;
@@ -213,7 +213,7 @@ public class PermissiblePEX extends PermissibleBase
 						calculateChildPerms( attach.getPermissions(), false, attach );
 					}
 					
-					for ( Permission p : Loader.getPluginManager().getDefaultPermissions( isOp() ) )
+					for ( Permission p : Loader.getPermissionsManager().getDefaultPermissions( isOp() ) )
 					{
 						this.permissions.put( p.getName(), new PermissionAttachmentInfo( user, p.getName(), null, true ) );
 						calculateChildPerms( p.getChildren(), false, null );

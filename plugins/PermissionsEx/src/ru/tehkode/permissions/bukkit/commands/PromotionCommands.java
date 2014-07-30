@@ -10,15 +10,15 @@ import ru.tehkode.permissions.commands.Command;
 import ru.tehkode.permissions.exceptions.RankingException;
 
 import com.chiorichan.ChatColor;
-import com.chiorichan.command.CommandSender;
+import com.chiorichan.account.bases.Account;
+import com.chiorichan.account.bases.Sentient;
 import com.chiorichan.plugin.Plugin;
-import com.chiorichan.user.User;
 
 public class PromotionCommands extends PermissionsCommand
 {
 	
 	@Command( name = "pex", syntax = "group <group> rank [rank] [ladder]", description = "Get or set <group> [rank] [ladder]", isPrimary = true, permission = "permissions.groups.rank.<group>" )
-	public void rankGroup( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void rankGroup( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String groupName = this.autoCompleteGroupName( args.get( "group" ) );
 		
@@ -62,7 +62,7 @@ public class PromotionCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "promote <user> [ladder]", description = "Promotes <user> to next group on [ladder]", isPrimary = true )
-	public void promoteUser( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void promoteUser( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String userName = this.autoCompleteUserName( args.get( "user" ) );
 		PermissionUser user = PermissionsEx.getPermissionManager().getUser( userName );
@@ -82,10 +82,10 @@ public class PromotionCommands extends PermissionsCommand
 		}
 		
 		PermissionUser promoter = null;
-		if ( sender instanceof User )
+		if ( sender instanceof Account )
 		{
-			promoter = PermissionsEx.getPermissionManager().getUser( ( (User) sender ).getName() );
-			if ( promoter == null || !promoter.has( "permissions.user.promote." + ladder, ( (User) sender ).getSite().getName() ) )
+			promoter = PermissionsEx.getPermissionManager().getUser( ( (Account) sender ).getName() );
+			if ( promoter == null || !promoter.has( "permissions.user.promote." + ladder, ( (Account) sender ).getSite().getName() ) )
 			{
 				sender.sendMessage( ChatColor.RED + "You don't have enough permissions to promote on this ladder" );
 				return;
@@ -110,7 +110,7 @@ public class PromotionCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "demote <user> [ladder]", description = "Demotes <user> to previous group or [ladder]", isPrimary = true )
-	public void demoteUser( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void demoteUser( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String userName = this.autoCompleteUserName( args.get( "user" ) );
 		PermissionUser user = PermissionsEx.getPermissionManager().getUser( userName );
@@ -130,11 +130,11 @@ public class PromotionCommands extends PermissionsCommand
 		}
 		
 		PermissionUser demoter = null;
-		if ( sender instanceof User )
+		if ( sender instanceof Account )
 		{
-			demoter = PermissionsEx.getPermissionManager().getUser( ( (User) sender ).getName() );
+			demoter = PermissionsEx.getPermissionManager().getUser( ( (Account) sender ).getName() );
 			
-			if ( demoter == null || !demoter.has( "permissions.user.demote." + ladder, ( (User) sender ).getSite().getName() ) )
+			if ( demoter == null || !demoter.has( "permissions.user.demote." + ladder, ( (Account) sender ).getSite().getName() ) )
 			{
 				sender.sendMessage( ChatColor.RED + "You don't have enough permissions to demote on this ladder" );
 				return;
@@ -159,13 +159,13 @@ public class PromotionCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "promote", syntax = "<user>", description = "Promotes <user> to next group", isPrimary = true, permission = "permissions.user.rank.promote" )
-	public void promoteUserAlias( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void promoteUserAlias( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		this.promoteUser( plugin, sender, args );
 	}
 	
 	@Command( name = "demote", syntax = "<user>", description = "Demotes <user> to previous group", isPrimary = true, permission = "permissions.user.rank.demote" )
-	public void demoteUserAlias( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void demoteUserAlias( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		this.demoteUser( plugin, sender, args );
 	}

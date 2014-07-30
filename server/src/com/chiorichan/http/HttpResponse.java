@@ -6,7 +6,7 @@ import java.io.OutputStream;
 import java.util.Map;
 
 import com.chiorichan.Loader;
-import com.chiorichan.event.http.ErrorEvent;
+import com.chiorichan.bus.events.http.ErrorEvent;
 import com.chiorichan.exceptions.HttpErrorException;
 import com.chiorichan.util.Versioning;
 import com.google.common.collect.Maps;
@@ -229,7 +229,7 @@ public class HttpResponse
 		}
 
 		if ( h.get( "Server" ) == null )
-			h.add( "Server", Versioning.getProduct() + " Version " + Loader.getVersion() );
+			h.add( "Server", Versioning.getProduct() + " Version " + Versioning.getVersion() );
 
 		// NOTE: Why did I make it check this again?
 		// if ( h.get( "Content-Type" ) == null )
@@ -286,7 +286,7 @@ public class HttpResponse
 			}
 
 			if ( h.get( "Server" ) == null )
-				h.add( "Server", Versioning.getProduct() + " Version " + Loader.getVersion() );
+				h.add( "Server", Versioning.getProduct() + " Version " + Versioning.getVersion() );
 
 			h.add( "Access-Control-Allow-Origin", request.getSite().getYaml().getString( "web.allowed-origin", "*" ) );
 			h.add( "Connection", "close" );

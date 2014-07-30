@@ -1,10 +1,7 @@
 package com.chiorichan.command.defaults;
 
-import com.chiorichan.Console;
-import com.chiorichan.command.CommandSender;
-import com.chiorichan.net.NetworkManager;
-import com.chiorichan.net.packet.PingPacket;
-import com.chiorichan.util.StringUtil;
+import com.chiorichan.account.bases.SentientHandler;
+import com.chiorichan.bus.ConsoleBus;
 
 public class PingCommand extends VanillaCommand
 {
@@ -17,16 +14,12 @@ public class PingCommand extends VanillaCommand
 	}
 	
 	@Override
-	public boolean execute( CommandSender sender, String currentAlias, String[] args )
+	public boolean execute( SentientHandler sender, String currentAlias, String[] args )
 	{
-		if ( !testPermission( sender ) )
+		if ( !testPermission( sender.getSentient() ) )
 			return true;
 		
-		if ( NetworkManager.isClientMode() )
-			
-			NetworkManager.sendTCP( new PingPacket( StringUtil.md5( "PingCommand/" + System.currentTimeMillis() ) ) );
-		else
-			sender.sendMessage( "Pong " + Console.currentTick );
+		sender.sendMessage( "Pong " + ConsoleBus.currentTick );
 		
 		return true;
 	}

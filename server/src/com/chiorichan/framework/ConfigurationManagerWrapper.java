@@ -157,7 +157,7 @@ public class ConfigurationManagerWrapper
 			
 			if ( idenifier == null || idenifier == "-1" )
 			{
-				idenifier = ( sess.getUserState() ) ? sess.getCurrentUser().getUserId() : "";
+				idenifier = ( sess.getUserState() ) ? sess.getCurrentUser().getAccountId() : "";
 			}
 			
 			ResultSet defaultRs = sql.query( "SELECT * FROM `settings_default` WHERE `key` = '" + key + "';" );

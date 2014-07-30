@@ -3,6 +3,7 @@ package ru.tehkode.permissions.bukkit.regexperms;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -11,9 +12,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.utils.FieldReplacer;
 
+import com.chiorichan.Loader;
+import com.chiorichan.account.bases.Account;
 import com.chiorichan.permissions.Permissible;
 import com.chiorichan.plugin.PluginManager;
-import com.chiorichan.user.User;
 import com.google.common.collect.Sets;
 
 /**
@@ -197,9 +199,9 @@ public class PEXPermissionSubscriptionMap extends HashMap<String, Map<Permissibl
 		@Override
 		public Set<Permissible> keySet()
 		{
-			User[] users = plugin.getInstance().getOnlineUsers();
-			Set<Permissible> pexMatches = new HashSet<Permissible>( users.length );
-			for ( User user : users )
+			List<Account> users = Loader.getAccountsManager().getOnlineAccounts();
+			Set<Permissible> pexMatches = new HashSet<Permissible>( users.size() );
+			for ( Account user : users )
 			{
 				if ( user.hasPermission( permission ) )
 				{

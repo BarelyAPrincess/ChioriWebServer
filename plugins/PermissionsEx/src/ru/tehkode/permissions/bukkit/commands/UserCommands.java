@@ -12,16 +12,16 @@ import ru.tehkode.utils.StringUtils;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
-import com.chiorichan.command.CommandSender;
+import com.chiorichan.account.bases.Account;
+import com.chiorichan.account.bases.Sentient;
 import com.chiorichan.permissions.PermissionAttachmentInfo;
 import com.chiorichan.plugin.Plugin;
-import com.chiorichan.user.User;
 
 public class UserCommands extends PermissionsCommand
 {
 	
 	@Command( name = "pex", syntax = "users list", permission = "permissions.manage.users", description = "List all registered users" )
-	public void usersList( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void usersList( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		PermissionUser[] users = PermissionsEx.getPermissionManager().getUsers();
 		
@@ -33,13 +33,13 @@ public class UserCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "users", permission = "permissions.manage.users", description = "List all registered users (alias)", isPrimary = true )
-	public void userListAlias( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void userListAlias( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		this.usersList( plugin, sender, args );
 	}
 	
 	@Command( name = "pex", syntax = "user", permission = "permissions.manage.users", description = "List all registered users (alias)" )
-	public void userListAnotherAlias( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void userListAnotherAlias( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		this.usersList( plugin, sender, args );
 	}
@@ -48,7 +48,7 @@ public class UserCommands extends PermissionsCommand
 	 * User permission management
 	 */
 	@Command( name = "pex", syntax = "user <user>", permission = "permissions.manage.users.permissions.<user>", description = "List user permissions (list alias)" )
-	public void userListAliasPermissions( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void userListAliasPermissions( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String userName = this.autoCompleteUserName( args.get( "user" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -87,7 +87,7 @@ public class UserCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "user <user> list [site]", permission = "permissions.manage.users.permissions.<user>", description = "List user permissions" )
-	public void userListPermissions( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void userListPermissions( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String userName = this.autoCompleteUserName( args.get( "user" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -110,11 +110,11 @@ public class UserCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "user <user> superperms", permission = "permissions.manage.users.permissions.<user>", description = "List user actual superperms" )
-	public void userListSuperPermissions( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void userListSuperPermissions( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String userName = this.autoCompleteUserName( args.get( "user" ) );
 		
-		User user = Loader.getInstance().getUser( userName );
+		Account user = Loader.getAccountsManager().getAccount( userName );
 		if ( user == null )
 		{
 			sender.sendMessage( ChatColor.RED + "User not found (offline?)" );
@@ -137,7 +137,7 @@ public class UserCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "user <user> prefix [newprefix] [site]", permission = "permissions.manage.users.prefix.<user>", description = "Get or set <user> prefix" )
-	public void userPrefix( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void userPrefix( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String userName = this.autoCompleteUserName( args.get( "user" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -159,7 +159,7 @@ public class UserCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "user <user> suffix [newsuffix] [site]", permission = "permissions.manage.users.suffix.<user>", description = "Get or set <user> suffix" )
-	public void userSuffix( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void userSuffix( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String userName = this.autoCompleteUserName( args.get( "user" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -181,7 +181,7 @@ public class UserCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "user <user> toggle debug", permission = "permissions.manage.<user>", description = "Toggle debug only for <user>" )
-	public void userToggleDebug( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void userToggleDebug( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String userName = this.autoCompleteUserName( args.get( "user" ) );
 		
@@ -199,7 +199,7 @@ public class UserCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "user <user> check <permission> [site]", permission = "permissions.manage.<user>", description = "Checks user for <permission>" )
-	public void userCheckPermission( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void userCheckPermission( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String userName = this.autoCompleteUserName( args.get( "user" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -227,7 +227,7 @@ public class UserCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "user <user> get <option> [site]", permission = "permissions.manage.<user>", description = "Toggle debug only for <user>" )
-	public void userGetOption( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void userGetOption( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String userName = this.autoCompleteUserName( args.get( "user" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -248,7 +248,7 @@ public class UserCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "user <user> delete", permission = "permissions.manage.users.<user>", description = "Remove <user>" )
-	public void userDelete( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void userDelete( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String userName = this.autoCompleteUserName( args.get( "user" ) );
 		PermissionUser user = PermissionsEx.getPermissionManager().getUser( userName );
@@ -272,7 +272,7 @@ public class UserCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "user <user> add <permission> [site]", permission = "permissions.manage.users.permissions.<user>", description = "Add <permission> to <user> in [site]" )
-	public void userAddPermission( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void userAddPermission( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String userName = this.autoCompleteUserName( args.get( "user" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -293,7 +293,7 @@ public class UserCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "user <user> remove <permission> [site]", permission = "permissions.manage.users.permissions.<user>", description = "Remove permission from <user> in [site]" )
-	public void userRemovePermission( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void userRemovePermission( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String userName = this.autoCompleteUserName( args.get( "user" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -316,7 +316,7 @@ public class UserCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "user <user> swap <permission> <targetPermission> [site]", permission = "permissions.manage.users.permissions.<user>", description = "Swap <permission> and <targetPermission> in permission list. Could be number or permission itself" )
-	public void userSwapPermission( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void userSwapPermission( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String userName = this.autoCompleteUserName( args.get( "user" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -352,7 +352,7 @@ public class UserCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "user <user> timed add <permission> [lifetime] [site]", permission = "permissions.manage.users.permissions.timed.<user>", description = "Add timed <permissions> to <user> for [lifetime] seconds in [site]" )
-	public void userAddTimedPermission( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void userAddTimedPermission( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String userName = this.autoCompleteUserName( args.get( "user" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -383,7 +383,7 @@ public class UserCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "user <user> timed remove <permission> [site]", permission = "permissions.manage.users.permissions.timed.<user>", description = "Remove timed <permission> from <user> in [site]" )
-	public void userRemoveTimedPermission( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void userRemoveTimedPermission( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String userName = this.autoCompleteUserName( args.get( "user" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -404,7 +404,7 @@ public class UserCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "user <user> set <option> <value> [site]", permission = "permissions.manage.users.permissions.<user>", description = "Set <option> to <value> in [site]" )
-	public void userSetOption( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void userSetOption( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String userName = this.autoCompleteUserName( args.get( "user" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -435,7 +435,7 @@ public class UserCommands extends PermissionsCommand
 	 * User's groups management
 	 */
 	@Command( name = "pex", syntax = "user <user> group list [site]", permission = "permissions.manage.membership.<user>", description = "List all <user> groups" )
-	public void userListGroup( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void userListGroup( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String userName = this.autoCompleteUserName( args.get( "user" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -456,7 +456,7 @@ public class UserCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "user <user> group add <group> [site] [lifetime]", permission = "permissions.manage.membership.<group>", description = "Add <user> to <group>" )
-	public void userAddGroup( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void userAddGroup( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String userName = this.autoCompleteUserName( args.get( "user" ) );
 		String groupName = this.autoCompleteGroupName( args.get( "group" ) );
@@ -495,7 +495,7 @@ public class UserCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "user <user> group set <group> [site]", permission = "", description = "Set <group> for <user>" )
-	public void userSetGroup( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void userSetGroup( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		PermissionManager manager = PermissionsEx.getPermissionManager();
 		
@@ -519,7 +519,7 @@ public class UserCommands extends PermissionsCommand
 			
 			for ( int i = 0; i < groupsNames.length; i++ )
 			{
-				if ( sender instanceof User && !manager.has( (User) sender, "permissions.manage.membership." + groupsNames[i].toLowerCase() ) )
+				if ( sender instanceof Account && !manager.has( (Account) sender, "permissions.manage.membership." + groupsNames[i].toLowerCase() ) )
 				{
 					sender.sendMessage( ChatColor.RED + "Don't have enough permission for group " + groupsNames[i] );
 					return;
@@ -537,7 +537,7 @@ public class UserCommands extends PermissionsCommand
 			{
 				groups = new PermissionGroup[] { manager.getGroup( groupName ) };
 				
-				if ( sender instanceof User && !manager.has( (User) sender, "permissions.manage.membership." + groupName.toLowerCase() ) )
+				if ( sender instanceof Account && !manager.has( (Account) sender, "permissions.manage.membership." + groupName.toLowerCase() ) )
 				{
 					sender.sendMessage( ChatColor.RED + "Don't have enough permission for group " + groupName );
 					return;
@@ -565,7 +565,7 @@ public class UserCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "user <user> group remove <group> [site]", permission = "permissions.manage.membership.<group>", description = "Remove <user> from <group>" )
-	public void userRemoveGroup( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void userRemoveGroup( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String userName = this.autoCompleteUserName( args.get( "user" ) );
 		String groupName = this.autoCompleteGroupName( args.get( "group" ) );
@@ -587,7 +587,7 @@ public class UserCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "users cleanup <group> [threshold]", permission = "permissions.manage.users.cleanup", description = "Clean users of specified group, which last login was before threshold (in days). By default threshold is 30 days." )
-	public void usersCleanup( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void usersCleanup( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		long threshold = 2304000;
 		

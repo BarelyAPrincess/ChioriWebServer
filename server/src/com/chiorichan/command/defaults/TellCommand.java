@@ -2,8 +2,8 @@ package com.chiorichan.command.defaults;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
-import com.chiorichan.command.CommandSender;
-import com.chiorichan.user.User;
+import com.chiorichan.account.bases.Account;
+import com.chiorichan.account.bases.SentientHandler;
 
 public class TellCommand extends VanillaCommand
 {
@@ -16,9 +16,9 @@ public class TellCommand extends VanillaCommand
 	}
 	
 	@Override
-	public boolean execute( CommandSender sender, String currentAlias, String[] args )
+	public boolean execute( SentientHandler sender, String currentAlias, String[] args )
 	{
-		if ( !testPermission( sender ) )
+		if ( !testPermission( sender.getSentient() ) )
 			return true;
 		if ( args.length < 2 )
 		{
@@ -26,10 +26,10 @@ public class TellCommand extends VanillaCommand
 			return false;
 		}
 		
-		User user = Loader.getInstance().getUserExact( args[0] );
+		Account user = Loader.getAccountsManager().getAccount( args[0] );
 		
 		// If a user is hidden from the sender pretend they are offline
-		if ( user == null || ( sender instanceof User && !( (User) sender ).canSee( user ) ) )
+		if ( user == null || ( sender instanceof Account && !( (Account) sender ).canSee( user ) ) )
 		{
 			sender.sendMessage( "There's no user by that name online." );
 		}
@@ -44,9 +44,9 @@ public class TellCommand extends VanillaCommand
 				message.append( args[i] );
 			}
 			
-			String result = ChatColor.GRAY + sender.getName() + " whispers " + message;
+			String result = ChatColor.GRAY + sender.getSentient().getName() + " whispers " + message;
 			
-			sender.sendMessage( "[" + sender.getName() + "->" + user.getName() + "] " + message );
+			sender.sendMessage( "[" + sender.getSentient().getName() + "->" + user.getName() + "] " + message );
 			user.sendMessage( result );
 		}
 		

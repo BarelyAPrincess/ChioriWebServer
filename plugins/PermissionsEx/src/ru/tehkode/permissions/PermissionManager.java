@@ -13,8 +13,8 @@ import ru.tehkode.permissions.events.PermissionSystemEvent;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
 import com.chiorichan.Loader;
+import com.chiorichan.account.bases.Account;
 import com.chiorichan.configuration.Configuration;
-import com.chiorichan.user.User;
 
 public class PermissionManager
 {
@@ -50,9 +50,9 @@ public class PermissionManager
 	 * @param permission permission string to check against
 	 * @return true on success false otherwise
 	 */
-	public boolean has( User user, String permission )
+	public boolean has( Account user, String permission )
 	{
-		return this.has( user.getName(), permission, user.getSite().getName() );
+		return has( user.getName(), permission, user.getSite().getName() );
 	}
 	
 	/**
@@ -63,7 +63,7 @@ public class PermissionManager
 	 * @param site site's name as string
 	 * @return true on success false otherwise
 	 */
-	public boolean has( User user, String permission, String site )
+	public boolean has( Account user, String permission, String site )
 	{
 		return this.has( user.getName(), permission, site );
 	}
@@ -126,7 +126,7 @@ public class PermissionManager
 	 * @param user user object
 	 * @return PermissionUser instance
 	 */
-	public PermissionUser getUser( User user )
+	public PermissionUser getUser( Account user )
 	{
 		return this.getUser( user.getName() );
 	}
@@ -209,7 +209,7 @@ public class PermissionManager
 	 * 
 	 * @param user
 	 */
-	public void clearUserCache( User user )
+	public void clearUserCache( Account user )
 	{
 		this.clearUserCache( user.getName() );
 	}

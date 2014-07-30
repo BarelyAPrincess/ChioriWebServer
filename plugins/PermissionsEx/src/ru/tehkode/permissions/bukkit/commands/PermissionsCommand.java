@@ -18,10 +18,10 @@ import ru.tehkode.utils.StringUtils;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
-import com.chiorichan.command.CommandSender;
+import com.chiorichan.account.bases.Account;
+import com.chiorichan.account.bases.Sentient;
 import com.chiorichan.framework.Site;
 import com.chiorichan.plugin.Plugin;
-import com.chiorichan.user.User;
 
 public abstract class PermissionsCommand implements CommandListener
 {
@@ -50,7 +50,7 @@ public abstract class PermissionsCommand implements CommandListener
 			return; // User informing is disabled
 		}
 		
-		User user = Loader.getInstance().getUser( userName );
+		Account user = Loader.getAccountsManager().getAccount( userName );
 		if ( user == null )
 		{
 			return;
@@ -64,7 +64,7 @@ public abstract class PermissionsCommand implements CommandListener
 		return autoCompleteUserName( userName, "user" );
 	}
 	
-	protected void printEntityInheritance( CommandSender sender, PermissionGroup[] groups )
+	protected void printEntityInheritance( Sentient sender, PermissionGroup[] groups )
 	{
 		for ( PermissionGroup group : groups )
 		{
@@ -93,7 +93,7 @@ public abstract class PermissionsCommand implements CommandListener
 		List<String> users = new LinkedList<String>();
 		
 		// Collect online User names
-		for ( User user : Loader.getInstance().getOnlineUsers() )
+		for ( Account user : Loader.getAccountsManager().getOnlineAccounts() )
 		{
 			if ( user.getName().equalsIgnoreCase( userName ) )
 			{
@@ -133,11 +133,11 @@ public abstract class PermissionsCommand implements CommandListener
 		return userName;
 	}
 	
-	protected String getSenderName( CommandSender sender )
+	protected String getSenderName( Sentient sender )
 	{
-		if ( sender instanceof User )
+		if ( sender instanceof Account )
 		{
-			return ( (User) sender ).getName();
+			return ( (Account) sender ).getName();
 		}
 		
 		return "console";
@@ -198,7 +198,7 @@ public abstract class PermissionsCommand implements CommandListener
 		
 		List<String> sites = new LinkedList<String>();
 		
-		for ( Site site : Loader.getInstance().getSites() )
+		for ( Site site : Loader.getSiteManager().getSites() )
 		{
 			if ( site.getName().equalsIgnoreCase( siteName ) )
 			{
@@ -227,7 +227,7 @@ public abstract class PermissionsCommand implements CommandListener
 	{
 		if ( siteName == null )
 		{
-			User user = Loader.getInstance().getUser( userName );
+			Account user = Loader.getAccountsManager().getAccount( userName );
 			
 			if ( user != null )
 			{
@@ -235,7 +235,7 @@ public abstract class PermissionsCommand implements CommandListener
 			}
 			else
 			{
-				siteName = Loader.getInstance().getSites().get( 0 ).getName();
+				siteName = Loader.getSiteManager().getSites().get( 0 ).getName();
 			}
 		}
 		
@@ -467,7 +467,7 @@ public abstract class PermissionsCommand implements CommandListener
 		return value;
 	}
 	
-	protected void sendMessage( CommandSender sender, String message )
+	protected void sendMessage( Sentient sender, String message )
 	{
 		for ( String messagePart : message.split( "\n" ) )
 		{

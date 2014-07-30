@@ -1,7 +1,8 @@
 package com.chiorichan.conversations;
 
+import com.chiorichan.Loader;
+import com.chiorichan.account.bases.Account;
 import com.chiorichan.plugin.Plugin;
-import com.chiorichan.user.User;
 
 /**
  * PlayerNamePrompt is the base class for any prompt that requires the player to enter another player's name.
@@ -19,14 +20,14 @@ public abstract class PlayerNamePrompt extends ValidatingPrompt
 	@Override
 	protected boolean isInputValid( ConversationContext context, String input )
 	{
-		return plugin.getServer().getUser( input ) != null;
+		return Loader.getAccountsBus().getAccount( input ) != null;
 		
 	}
 	
 	@Override
 	protected Prompt acceptValidatedInput( ConversationContext context, String input )
 	{
-		return acceptValidatedInput( context, plugin.getServer().getUser( input ) );
+		return acceptValidatedInput( context, Loader.getAccountsBus().getAccount( input ) );
 	}
 	
 	/**
@@ -38,5 +39,5 @@ public abstract class PlayerNamePrompt extends ValidatingPrompt
 	 *           The user's player name response.
 	 * @return The next {@link Prompt} in the prompt graph.
 	 */
-	protected abstract Prompt acceptValidatedInput( ConversationContext context, User input );
+	protected abstract Prompt acceptValidatedInput( ConversationContext context, Account input );
 }

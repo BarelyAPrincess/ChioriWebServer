@@ -1,108 +1,74 @@
 package com.chiorichan;
 
-import java.awt.Color;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
-import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import jline.console.ConsoleReader;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 
-import org.apache.commons.lang3.Validate;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.SafeConstructor;
-import org.yaml.snakeyaml.error.MarkedYAMLException;
-
 import com.chiorichan.Warning.WarningState;
-import com.chiorichan.auth.ConsoleAuth;
-import com.chiorichan.command.Command;
-import com.chiorichan.command.CommandMap;
-import com.chiorichan.command.CommandSender;
-import com.chiorichan.command.ConsoleCommandSender;
-import com.chiorichan.command.PluginCommand;
-import com.chiorichan.command.ServerCommand;
-import com.chiorichan.configuration.ConfigurationSection;
-import com.chiorichan.conversations.Conversable;
-import com.chiorichan.event.EventBus;
+import com.chiorichan.account.AccountManager;
+import com.chiorichan.account.bases.Account;
+import com.chiorichan.bus.ConsoleBus;
+import com.chiorichan.bus.EventBus;
 import com.chiorichan.file.YamlConfiguration;
-import com.chiorichan.framework.Site;
 import com.chiorichan.framework.SiteManager;
 import com.chiorichan.framework.WebUtils;
 import com.chiorichan.http.PersistenceManager;
 import com.chiorichan.net.NetworkManager;
-import com.chiorichan.permissions.Permissible;
-import com.chiorichan.permissions.Permission;
+import com.chiorichan.permissions.PermissionsManager;
 import com.chiorichan.plugin.Plugin;
 import com.chiorichan.plugin.PluginLoadOrder;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.ServicesManager;
-import com.chiorichan.plugin.groovy.GroovyPluginLoader;
-import com.chiorichan.plugin.java.JavaPluginLoader;
 import com.chiorichan.plugin.messaging.Messenger;
-import com.chiorichan.plugin.messaging.PluginMessageRecipient;
 import com.chiorichan.plugin.messaging.StandardMessenger;
 import com.chiorichan.scheduler.ChioriScheduler;
 import com.chiorichan.scheduler.ChioriWorker;
 import com.chiorichan.updater.AutoUpdater;
 import com.chiorichan.updater.ChioriDLUpdaterService;
-import com.chiorichan.user.BanEntry;
-import com.chiorichan.user.User;
-import com.chiorichan.user.UserManager;
 import com.chiorichan.util.FileUtil;
 import com.chiorichan.util.Versioning;
-import com.chiorichan.util.permissions.DefaultPermissions;
-import com.google.common.collect.ImmutableList;
 
-public class Loader implements PluginMessageRecipient
+public class Loader
 {
 	public static final String BROADCAST_CHANNEL_ADMINISTRATIVE = "chiori.broadcast.admin";
 	public static final String BROADCAST_CHANNEL_USERS = "chiori.broadcast.user";
 	
-	private final AutoUpdater updater;
-	private final Yaml yaml = new Yaml( new SafeConstructor() );
+	private static AutoUpdater updater = null;
 	private static YamlConfiguration configuration;
 	private static Loader instance;
 	private static OptionSet options;
-	public static ExtendedOptions extendedOpt;
 	private static long startTime = System.currentTimeMillis();
 	
 	public static String webroot = "";
 	private WarningState warningState = WarningState.DEFAULT;
-	private final CommandMap commandMap = new CommandMap();
-	private final PluginManager pluginManager = new PluginManager( this, commandMap );
-	private final EventBus eventBus = new EventBus( this );
-	private final StandardMessenger messenger = new StandardMessenger();
-	protected final static Console console = new Console();
 	
-	protected static UserManager userManager;
-	protected static PersistenceManager persistence;
-	protected static SiteManager sites;
+	protected final static ConsoleBus console = new ConsoleBus();
 	
-	private final ServicesManager servicesManager = new ServicesManager();
+	protected static final PluginManager modules = new PluginManager();
+	protected static final EventBus events = new EventBus();
+	protected static final AccountManager accounts = new AccountManager();
+	protected static final PersistenceManager persistence = new PersistenceManager();
+	protected static final SiteManager sites = new SiteManager();
+	protected static final PermissionsManager permissions = new PermissionsManager();
+	
+	private final static StandardMessenger messenger = new StandardMessenger();
+	
+	private final static ServicesManager servicesManager = new ServicesManager();
 	private final static ChioriScheduler scheduler = new ChioriScheduler();
-	public static Boolean isRunning = false;
 	public static String clientId;
-	private PluginLoadOrder currentState = PluginLoadOrder.INITIALIZATION;
+	private static boolean isRunning;
+	private static String stopReason = null;
 	
 	public static void main( String... args ) throws Exception
 	{
@@ -134,13 +100,7 @@ public class Loader implements PluginMessageRecipient
 				System.out.println( Versioning.getVersion() );
 			else
 			{
-				boolean clientMode = options.has( "client" );
-				NetworkManager.setClientMode( clientMode );
-				
-				if ( ( options.has( "client-ip" ) || options.has( "client-port" ) ) && !clientMode )
-					System.err.println( "You must also define --client (Puts application is client mode) if you want to use the --client-ip or --client-port arguments." );
-				else
-					isRunning = new Loader( options ).start();
+				isRunning = new Loader( options ).start();
 			}
 		}
 		catch ( Throwable t )
@@ -151,12 +111,11 @@ public class Loader implements PluginMessageRecipient
 				getLogger().severe( ChatColor.RED + "" + ChatColor.NEGATIVE + "SEVERE ERROR (" + ( System.currentTimeMillis() - startTime ) + "ms)! Press 'Ctrl-c' to quit!'" );
 			else
 				System.err.println( "SEVERE ERROR (" + ( System.currentTimeMillis() - startTime ) + "ms)! Press 'Ctrl-c' to quit!'" );
-			
 			// TODO Make it so this exception (and possibly other critical exceptions) are reported to us without user interaction. Should also find a way that the log can be sent along with it.
 			try
 			{
 				NetworkManager.cleanup();
-				console.isRunning = false;
+				isRunning = false;
 				
 				if ( configuration != null && configuration.getBoolean( "server.haltOnSevereError" ) )
 				{
@@ -176,12 +135,6 @@ public class Loader implements PluginMessageRecipient
 		{
 			{
 				acceptsAll( Arrays.asList( "?", "help" ), "Show the help" );
-				
-				acceptsAll( Arrays.asList( "client" ), "Runs the application in Client Mode" );
-				
-				acceptsAll( Arrays.asList( "client-ip" ), "Host for the remote server" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
-				
-				acceptsAll( Arrays.asList( "client-port" ), "Port for the remote server" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
 				
 				acceptsAll( Arrays.asList( "c", "config", "b", "settings" ), "File for chiori settings" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "server.yaml" ) ).describedAs( "Yml file" );
 				
@@ -217,6 +170,8 @@ public class Loader implements PluginMessageRecipient
 				
 				acceptsAll( Arrays.asList( "noconsole" ), "Disables the console" );
 				
+				acceptsAll( Arrays.asList( "nobanner" ), "Disables the banner" );
+				
 				acceptsAll( Arrays.asList( "nocolor" ), "Disables the console color formatting" );
 				
 				acceptsAll( Arrays.asList( "v", "version" ), "Show the Version" );
@@ -228,27 +183,15 @@ public class Loader implements PluginMessageRecipient
 	
 	public Loader(OptionSet options0) throws StartupException
 	{
-		this( options0, new ExtendedOptions() );
-	}
-	
-	public Loader(OptionSet options0, ExtendedOptions options1) throws StartupException
-	{
 		instance = this;
 		options = options0;
-		extendedOpt = options1;
 		
-		String internalConfigFile = ( NetworkManager.isClientMode() ) ? "com/chiorichan/config-client.yaml" : "com/chiorichan/config-server.yaml";
-		
-		if ( options1.altDefaultConfig != null )
-			internalConfigFile = options1.altDefaultConfig;
+		String internalConfigFile = "com/chiorichan/config.yaml";
 		
 		console.init( this, options );
 		
-		if ( !options1.noBanner )
-			showBanner();
-		
-		if ( NetworkManager.isClientMode() )
-			getLogger().info( "Chiori Web Server is running in Client Mode!" );
+		if ( !options0.has( "nobanner" ) )
+			console.showBanner();
 		
 		if ( Runtime.getRuntime().maxMemory() / 1024L / 1024L < 512L )
 			getLogger().warning( "To start the server with more ram, launch it as \"java -Xmx1024M -Xms1024M -jar server.jar\"" );
@@ -271,15 +214,6 @@ public class Loader implements PluginMessageRecipient
 			{}
 		}
 		
-		String consolePassword = configuration.getString( "server.consolePassword", null );
-		
-		if ( consolePassword != null && !consolePassword.equals( "null" ) && !consolePassword.isEmpty() )
-		{
-			ConsoleAuth handler = new ConsoleAuth();
-			handler.setPassword( consolePassword );
-			console.addAuthHandler( handler );
-		}
-		
 		configuration.options().copyDefaults( true );
 		configuration.setDefaults( YamlConfiguration.loadConfiguration( getClass().getClassLoader().getResourceAsStream( internalConfigFile ) ) );
 		clientId = configuration.getString( "server.installationUID", clientId );
@@ -292,305 +226,74 @@ public class Loader implements PluginMessageRecipient
 		
 		saveConfig();
 		
-		eventBus.useTimings( configuration.getBoolean( "settings.plugin-profiling" ) );
+		events.useTimings( configuration.getBoolean( "settings.plugin-profiling" ) );
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
 		
-		if ( !NetworkManager.isClientMode() )
-			webroot = configuration.getString( "settings.webroot" );
+		webroot = configuration.getString( "settings.webroot" );
 		
 		updater = new AutoUpdater( new ChioriDLUpdaterService( configuration.getString( "auto-updater.host" ) ), configuration.getString( "auto-updater.preferred-channel" ) );
-		if ( !NetworkManager.isClientMode() )
-		{
-			updater.setEnabled( configuration.getBoolean( "auto-updater.enabled" ) );
-			updater.setSuggestChannels( configuration.getBoolean( "auto-updater.suggest-channels" ) );
-			updater.getOnBroken().addAll( configuration.getStringList( "auto-updater.on-broken" ) );
-			updater.getOnUpdate().addAll( configuration.getStringList( "auto-updater.on-update" ) );
-			// TODO Get updater working for client side. Idea: Only make available so client can automatically match the software version the server is running.
-		}
-		else
-			updater.setEnabled( false );
 		
-		WebUtils.sendTracking( ( ( NetworkManager.isClientMode() ) ? "startClient" : "startServer" ), "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
+		updater.setEnabled( configuration.getBoolean( "auto-updater.enabled" ) );
+		updater.setSuggestChannels( configuration.getBoolean( "auto-updater.suggest-channels" ) );
+		updater.getOnBroken().addAll( configuration.getStringList( "auto-updater.on-broken" ) );
+		updater.getOnUpdate().addAll( configuration.getStringList( "auto-updater.on-update" ) );
+		
+		WebUtils.sendTracking( "startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
 	}
 	
 	public boolean start() throws StartupException
 	{
-		loadPlugins();
-		enablePlugins( PluginLoadOrder.INITIALIZATION );
+		modules.loadPlugins();
+		modules.enablePlugins( PluginLoadOrder.INITIALIZATION );
 		
-		if ( !NetworkManager.isClientMode() )
-		{
-			File root = new File( webroot );
-			
-			if ( !root.exists() )
-				root.mkdirs();
-		}
+		File root = new File( webroot );
 		
-		enablePlugins( PluginLoadOrder.STARTUP );
+		if ( !root.exists() )
+			root.mkdirs();
 		
-		if ( !NetworkManager.isClientMode() )
-		{
-			if ( !options.has( "tcp-disable" ) && configuration.getBoolean( "server.enableTcpServer", true ) )
-				NetworkManager.initTcpServer();
-			else
-				getLogger().warning( "The integrated tcp server has been disabled per the configuration. Change server.enableTcpServer to true to reenable it." );
-			
-			if ( !options.has( "web-disable" ) && configuration.getBoolean( "server.enableWebServer", true ) )
-				NetworkManager.initWebServer();
-			else
-				getLogger().warning( "The integrated web server has been disabled per the configuration. Change server.enableWebServer to true to reenable it." );
-			
-			enablePlugins( PluginLoadOrder.POSTSERVER );
-			
-			getLogger().info( "Initalizing the Persistence Manager..." );
-			
-			persistence = new PersistenceManager();
-			
-			getLogger().info( "Initalizing the Site Manager..." );
-			sites = new SiteManager();
-			sites.loadSites();
-			
-			getLogger().info( "Initalizing the User Manager..." );
-			userManager = new UserManager( this );
-			
-			persistence.loadSessions();
-		}
+		modules.enablePlugins( PluginLoadOrder.STARTUP );
+		
+		if ( !options.has( "tcp-disable" ) && configuration.getBoolean( "server.enableTcpServer", true ) )
+			NetworkManager.initTcpServer();
 		else
-		{
-			NetworkManager.initTcpClient();
-			
-			enablePlugins( PluginLoadOrder.POSTCLIENT );
-		}
+			getLogger().warning( "The integrated tcp server has been disabled per the configuration. Change server.enableTcpServer to true to reenable it." );
 		
-		enablePlugins( PluginLoadOrder.INITIALIZED );
+		if ( !options.has( "web-disable" ) && configuration.getBoolean( "server.enableWebServer", true ) )
+			NetworkManager.initWebServer();
+		else
+			getLogger().warning( "The integrated web server has been disabled per the configuration. Change server.enableWebServer to true to reenable it." );
+		
+		modules.enablePlugins( PluginLoadOrder.POSTSERVER );
+		
+		getLogger().info( "Initalizing the Persistence Manager..." );
+		persistence.init();
+		
+		getLogger().info( "Initalizing the Site Manager..." );
+		sites.init();
+		
+		getLogger().info( "Initalizing the Accounts Bus..." );
+		accounts.init();
+		
+		persistence.loadSessions();
+		
+		modules.enablePlugins( PluginLoadOrder.INITIALIZED );
 		
 		console.primaryThread.start();
 		
 		getLogger().info( ChatColor.DARK_AQUA + "" + ChatColor.NEGATIVE + "Done (" + ( System.currentTimeMillis() - startTime ) + "ms)! For help, type \"help\" or \"?\"" );
 		
-		enablePlugins( PluginLoadOrder.RUNNING );
-		
-		console.startCommandReader();
+		modules.enablePlugins( PluginLoadOrder.RUNNING );
 		
 		updater.check();
 		
+		console.startConsolePrompt();
+		
 		return true;
-	}
-	
-	public static SiteManager getSiteManager()
-	{
-		return sites;
-	}
-	
-	private static void showBanner()
-	{
-		try
-		{
-			InputStream is = null;
-			try
-			{
-				is = Loader.class.getClassLoader().getResourceAsStream( ( extendedOpt.altBanner == null ) ? "com/chiorichan/banner.txt" : extendedOpt.altBanner );
-				
-				String[] banner = new String( FileUtil.inputStream2Bytes( is ) ).split( "\\n" );
-				
-				for ( String l : banner )
-				{
-					Loader.getConsole().sendMessage( ChatColor.GOLD + l );
-				}
-				
-				getLogger().info( ChatColor.NEGATIVE + "" + ChatColor.GOLD + "Starting " + Versioning.getProduct() + " Version " + Versioning.getVersion() );
-				getLogger().info( ChatColor.NEGATIVE + "" + ChatColor.GOLD + Versioning.getCopyright() );
-			}
-			finally
-			{
-				if ( is != null )
-					is.close();
-			}
-		}
-		catch ( IOException e )
-		{	
-			
-		}
 	}
 	
 	public static YamlConfiguration getConfig()
 	{
 		return configuration;
-	}
-	
-	public static EventBus getEventBus()
-	{
-		return instance.eventBus;
-	}
-	
-	public void loadPlugins()
-	{
-		pluginManager.registerInterface( JavaPluginLoader.class );
-		pluginManager.registerInterface( GroovyPluginLoader.class );
-		
-		File pluginFolder = (File) options.valueOf( "plugins" );
-		
-		if ( pluginFolder.exists() )
-		{
-			Plugin[] plugins = pluginManager.loadPlugins( pluginFolder );
-			for ( Plugin plugin : plugins )
-			{
-				try
-				{
-					String message = String.format( "Loading %s", plugin.getDescription().getFullName() );
-					plugin.getLogger().info( message );
-					plugin.onLoad();
-				}
-				catch ( Throwable ex )
-				{
-					getLogger().log( Level.SEVERE, ex.getMessage() + " initializing " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
-				}
-			}
-		}
-		else
-			pluginFolder.mkdir();
-		
-		// pluginManager.loadInternalPlugin( Template.class.getResourceAsStream( "template.yml" ) );
-	}
-	
-	public void enablePlugins( PluginLoadOrder type )
-	{
-		currentState = type;
-		
-		Plugin[] plugins = pluginManager.getPlugins();
-		
-		for ( Plugin plugin : plugins )
-		{
-			if ( ( !plugin.isEnabled() ) && ( plugin.getDescription().getLoad() == type ) )
-				loadPlugin( plugin );
-		}
-		
-		if ( type == PluginLoadOrder.POSTSERVER )
-		{
-			commandMap.registerServerAliases();
-			loadCustomPermissions();
-			DefaultPermissions.registerCorePermissions();
-		}
-	}
-	
-	public void disablePlugins()
-	{
-		pluginManager.disablePlugins();
-	}
-	
-	private void loadPlugin( Plugin plugin )
-	{
-		try
-		{
-			pluginManager.enablePlugin( plugin );
-			
-			List<Permission> perms = plugin.getDescription().getPermissions();
-			
-			for ( Permission perm : perms )
-			{
-				try
-				{
-					pluginManager.addPermission( perm );
-				}
-				catch ( IllegalArgumentException ex )
-				{
-					getLogger().log( Level.WARNING, "Plugin " + plugin.getDescription().getFullName() + " tried to register permission '" + perm.getName() + "' but it's already registered", ex );
-				}
-			}
-		}
-		catch ( Throwable ex )
-		{
-			getLogger().log( Level.SEVERE, ex.getMessage() + " loading " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
-		}
-	}
-	
-	public User[] getOnlineUsers()
-	{
-		List<User> online = userManager.users;
-		User[] Users = new User[online.size()];
-		
-		for ( int i = 0; i < Users.length; i++ )
-		{
-			Users[i] = online.get( i );
-		}
-		
-		return Users;
-	}
-	
-	public User getUser( final String name )
-	{
-		Validate.notNull( name, "Name cannot be null" );
-		
-		User[] Users = getOnlineUsers();
-		
-		User found = null;
-		String lowerName = name.toLowerCase();
-		int delta = Integer.MAX_VALUE;
-		for ( User User : Users )
-		{
-			if ( User.getName().toLowerCase().startsWith( lowerName ) )
-			{
-				int curDelta = User.getName().length() - lowerName.length();
-				if ( curDelta < delta )
-				{
-					found = User;
-					delta = curDelta;
-				}
-				if ( curDelta == 0 )
-					break;
-			}
-		}
-		return found;
-	}
-	
-	public User getUserExact( String name )
-	{
-		Validate.notNull( name, "Name cannot be null" );
-		
-		String lname = name.toLowerCase();
-		
-		for ( User User : getOnlineUsers() )
-		{
-			if ( User.getName().equalsIgnoreCase( lname ) )
-				return User;
-		}
-		
-		return null;
-	}
-	
-	public int broadcastMessage( String message )
-	{
-		return broadcast( message, BROADCAST_CHANNEL_USERS );
-	}
-	
-	public List<User> matchUser( String partialName )
-	{
-		Validate.notNull( partialName, "PartialName cannot be null" );
-		
-		List<User> matchedUsers = new ArrayList<User>();
-		
-		for ( User iterUser : this.getOnlineUsers() )
-		{
-			String iterUserName = iterUser.getName();
-			
-			if ( partialName.equalsIgnoreCase( iterUserName ) )
-			{
-				// Exact match
-				matchedUsers.clear();
-				matchedUsers.add( iterUser );
-				break;
-			}
-			if ( iterUserName.toLowerCase().contains( partialName.toLowerCase() ) )
-				// Partial match
-				matchedUsers.add( iterUser );
-		}
-		
-		return matchedUsers;
-	}
-	
-	public int getMaxUsers()
-	{
-		return userManager.getMaxUsers();
 	}
 	
 	public int getPort()
@@ -648,11 +351,6 @@ public class Loader implements PluginMessageRecipient
 		return new File( (File) options.valueOf( "plugins" ), configuration.getString( "settings.update-folder", "update" ) );
 	}
 	
-	public static PluginManager getPluginManager()
-	{
-		return Loader.getInstance().pluginManager;
-	}
-	
 	public static Loader getInstance()
 	{
 		return instance;
@@ -663,66 +361,14 @@ public class Loader implements PluginMessageRecipient
 		return scheduler;
 	}
 	
-	public ServicesManager getServicesManager()
-	{
-		return servicesManager;
-	}
-	
-	public UserManager getHandle()
-	{
-		return userManager;
-	}
-	
-	public boolean dispatchServerCommand( CommandSender sender, ServerCommand serverCommand )
-	{
-		if ( sender instanceof Conversable )
-		{
-			Conversable conversable = (Conversable) sender;
-			
-			if ( conversable.isConversing() )
-			{
-				conversable.acceptConversationInput( serverCommand.command );
-				return true;
-			}
-		}
-		try
-		{
-			return dispatchCommand( sender, serverCommand.command );
-		}
-		catch ( Exception ex )
-		{
-			getLogger().log( Level.WARNING, "Unexpected exception while parsing console command \"" + serverCommand.command + '"', ex );
-			return false;
-		}
-	}
-	
-	public boolean dispatchCommand( CommandSender sender, String commandLine )
-	{
-		Validate.notNull( sender, "Sender cannot be null" );
-		Validate.notNull( commandLine, "CommandLine cannot be null" );
-		
-		if ( commandMap.dispatch( sender, commandLine ) )
-			return true;
-		
-		if ( sender instanceof User )
-			sender.sendMessage( "Unknown command. Type \"/help\" for help." );
-		else
-			sender.sendMessage( "Unknown command. Type \"help\" for help." );
-		
-		return false;
-	}
-	
 	// TOOD: Reload seems to be broken. This needs some serious reworking.
 	public void reload()
 	{
 		configuration = YamlConfiguration.loadConfiguration( getConfigFile() );
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
 		
-		userManager.getIPBans().load();
-		userManager.getNameBans().load();
-		
-		pluginManager.clearPlugins();
-		commandMap.clearCommands();
+		modules.clearPlugins();
+		// ModuleBus.getCommandMap().clearCommands();
 		
 		int pollCount = 0;
 		
@@ -748,94 +394,20 @@ public class Loader implements PluginMessageRecipient
 			getLogger().log( Level.SEVERE, String.format( "Nag author: '%s' of '%s' about the following: %s", author, plugin.getDescription().getName(), "This plugin is not properly shutting down its async tasks when it is being reloaded.  This may cause conflicts with the newly loaded version of the plugin" ) );
 		}
 		
-		getPersistenceManager().shutdown();
-		getUserManager().saveUsers();
-		
 		getLogger().info( "Reinitalizing the Persistence Manager..." );
 		
-		persistence = new PersistenceManager();
-		persistence.loadSessions();
+		persistence.reload();
 		
 		getLogger().info( "Reinitalizing the Site Manager..." );
 		
-		sites = new SiteManager();
-		sites.loadSites();
+		sites.reload();
 		
-		getLogger().info( "Reinitalizing the User Manager..." );
-		userManager = new UserManager( this );
+		getLogger().info( "Reinitalizing the Accounts Bus..." );
+		accounts.reload();
 		
-		loadPlugins();
-		enablePlugins( PluginLoadOrder.STARTUP );
-		enablePlugins( PluginLoadOrder.POSTSERVER );
-	}
-	
-	@SuppressWarnings( { "unchecked", "finally" } )
-	private void loadCustomPermissions()
-	{
-		File file = new File( configuration.getString( "settings.permissions-file" ) );
-		FileInputStream stream;
-		
-		try
-		{
-			stream = new FileInputStream( file );
-		}
-		catch ( FileNotFoundException ex )
-		{
-			try
-			{
-				file.createNewFile();
-			}
-			finally
-			{
-				return;
-			}
-		}
-		
-		Map<String, Map<String, Object>> perms;
-		
-		try
-		{
-			perms = (Map<String, Map<String, Object>>) yaml.load( stream );
-		}
-		catch ( MarkedYAMLException ex )
-		{
-			getLogger().log( Level.WARNING, "Server permissions file " + file + " is not valid YAML: " + ex.toString() );
-			return;
-		}
-		catch ( Throwable ex )
-		{
-			getLogger().log( Level.WARNING, "Server permissions file " + file + " is not valid YAML.", ex );
-			return;
-		}
-		finally
-		{
-			try
-			{
-				stream.close();
-			}
-			catch ( IOException ex )
-			{}
-		}
-		
-		if ( perms == null )
-		{
-			getLogger().log( Level.INFO, "Server permissions file " + file + " is empty, ignoring it" );
-			return;
-		}
-		
-		List<Permission> permsList = Permission.loadPermissions( perms, "Permission node '%s' in " + file + " is invalid", Permission.DEFAULT_PERMISSION );
-		
-		for ( Permission perm : permsList )
-		{
-			try
-			{
-				pluginManager.addPermission( perm );
-			}
-			catch ( IllegalArgumentException ex )
-			{
-				getLogger().log( Level.SEVERE, "Permission in " + file + " was already defined", ex );
-			}
-		}
+		modules.loadPlugins();
+		modules.enablePlugins( PluginLoadOrder.RELOAD );
+		modules.enablePlugins( PluginLoadOrder.POSTSERVER );
 	}
 	
 	public String toString()
@@ -848,42 +420,6 @@ public class Loader implements PluginMessageRecipient
 		return console.reader;
 	}
 	
-	public PluginCommand getPluginCommand( String name )
-	{
-		Command command = commandMap.getCommand( name );
-		
-		if ( command instanceof PluginCommand )
-			return (PluginCommand) command;
-		else
-			return null;
-	}
-	
-	public void saveUsers()
-	{
-		userManager.saveUsers();
-	}
-	
-	public Map<String, String[]> getCommandAliases()
-	{
-		ConfigurationSection section = configuration.getConfigurationSection( "aliases" );
-		Map<String, String[]> result = new LinkedHashMap<String, String[]>();
-		
-		if ( section != null )
-			for ( String key : section.getKeys( false ) )
-			{
-				List<String> commands;
-				
-				if ( section.isList( key ) )
-					commands = section.getStringList( key );
-				else
-					commands = ImmutableList.of( section.getString( key ) );
-				
-				result.put( key, commands.toArray( new String[commands.size()] ) );
-			}
-		
-		return result;
-	}
-	
 	public String getShutdownMessage()
 	{
 		return configuration.getString( "settings.shutdown-message" );
@@ -892,18 +428,18 @@ public class Loader implements PluginMessageRecipient
 	public static void gracefullyShutdownServer( String reason )
 	{
 		if ( !reason.isEmpty() )
-			for ( User User : Loader.getInstance().getOnlineUsers() )
+			for ( Account User : accounts.getOnlineAccounts() )
 			{
 				User.kick( reason );
 			}
 		
-		stop();
+		stop( reason );
 	}
 	
-	public static void stop()
+	public static void stop( String _stopReason )
 	{
-		if ( Loader.getConsole() != null )
-			Loader.getConsole().isRunning = false;
+		stopReason = _stopReason;
+		isRunning = false;
 	}
 	
 	public static void unloadServer( String reason )
@@ -911,191 +447,34 @@ public class Loader implements PluginMessageRecipient
 		getPersistenceManager().shutdown();
 		
 		if ( !reason.isEmpty() )
-			for ( User User : Loader.getInstance().getOnlineUsers() )
+			for ( Account User : accounts.getOnlineAccounts() )
 			{
 				User.kick( reason );
 			}
 		
-		instance.pluginManager.clearPlugins();
-		instance.commandMap.clearCommands();
-		
-		getUserManager().saveUsers();
-		
+		getAccountsManager().shutdown();
 		NetworkManager.cleanup();
 	}
 	
+	/**
+	 * If you wish to shutdown the server, we recommend you use the stop() method instead.
+	 */
 	public static void shutdown()
 	{
 		getPersistenceManager().shutdown();
-		
-		instance.pluginManager.clearPlugins();
-		instance.commandMap.clearCommands();
-		
-		getUserManager().saveUsers();
-		
+		getAccountsManager().shutdown();
+		modules.shutdown();
 		NetworkManager.cleanup();
 		
 		isRunning = false;
 		
-		// System.exit( 1 );
+		if ( stopReason != null )
+			System.err.println( "The server was stoped for reason: " + stopReason );
 	}
 	
-	public int broadcast( String message, String permission )
+	public static boolean isRunning()
 	{
-		int count = 0;
-		Set<Permissible> permissibles = getPluginManager().getPermissionSubscriptions( permission );
-		
-		for ( Permissible permissible : permissibles )
-		{
-			if ( permissible instanceof CommandSender && permissible.hasPermission( permission ) )
-			{
-				CommandSender user = (CommandSender) permissible;
-				user.sendMessage( message );
-				count++;
-			}
-		}
-		
-		return count;
-	}
-	
-	public User getOfflineUser( String name )
-	{
-		return getOfflineUser( name, true );
-	}
-	
-	public User getOfflineUser( String name, boolean search )
-	{
-		Validate.notNull( name, "Name cannot be null" );
-		
-		// TOOD: Fix Me
-		return null;
-	}
-	
-	public Set<String> getIPBans()
-	{
-		return userManager.getIPBans().getEntries().keySet();
-	}
-	
-	public void banIP( String address )
-	{
-		Validate.notNull( address, "Address cannot be null." );
-		
-		BanEntry entry = new BanEntry( address );
-		userManager.getIPBans().add( entry );
-		userManager.getIPBans().save();
-	}
-	
-	public void unbanIP( String address )
-	{
-		userManager.getIPBans().remove( address );
-		userManager.getIPBans().save();
-	}
-	
-	public Set<User> getBannedUsers()
-	{
-		Set<User> result = new HashSet<User>();
-		
-		for ( Object name : userManager.getNameBans().getEntries().keySet() )
-		{
-			result.add( getOfflineUser( (String) name ) );
-		}
-		
-		return result;
-	}
-	
-	public void setWhitelist( boolean value )
-	{
-		userManager.hasWhitelist = value;
-		configuration.set( "settings.whitelist", value );
-	}
-	
-	public Set<User> getWhitelistedUsers()
-	{
-		Set<User> result = new LinkedHashSet<User>();
-		
-		for ( Object name : userManager.getWhitelisted() )
-		{
-			if ( ( (String) name ).length() == 0 || ( (String) name ).startsWith( "#" ) )
-				continue;
-			result.add( getOfflineUser( (String) name ) );
-		}
-		
-		return result;
-	}
-	
-	public Set<User> getOperators()
-	{
-		Set<User> result = new HashSet<User>();
-		
-		for ( Object name : userManager.getOPs() )
-		{
-			result.add( getOfflineUser( (String) name ) );
-		}
-		
-		return result;
-	}
-	
-	public void reloadWhitelist()
-	{
-		userManager.reloadWhitelist();
-	}
-	
-	public ConsoleCommandSender getConsoleSender()
-	{
-		return console;
-	}
-	
-	public User[] getOfflineUsers()
-	{
-		// TODO: Fix ME
-		
-		return null;
-	}
-	
-	public Messenger getMessenger()
-	{
-		return messenger;
-	}
-	
-	public void sendPluginMessage( Plugin source, String channel, byte[] message )
-	{
-		StandardMessenger.validatePluginMessage( getMessenger(), source, channel, message );
-		
-		for ( User User : getOnlineUsers() )
-		{
-			User.sendPluginMessage( source, channel, message );
-		}
-	}
-	
-	public Set<String> getListeningPluginChannels()
-	{
-		Set<String> result = new HashSet<String>();
-		
-		for ( User User : getOnlineUsers() )
-		{
-			result.addAll( User.getListeningPluginChannels() );
-		}
-		
-		return result;
-	}
-	
-	public void onUserLogin( User User )
-	{
-		if ( ( updater.isEnabled() ) && ( updater.getCurrent() != null ) && ( User.hasPermission( BROADCAST_CHANNEL_ADMINISTRATIVE ) ) )
-			if ( ( updater.getCurrent().isBroken() ) && ( updater.getOnBroken().contains( AutoUpdater.WARN_OPERATORS ) ) )
-				User.sendMessage( ChatColor.DARK_RED + "The version of Chiori Web Server that this server is running is known to be broken. Please consider updating to the latest version at dl.bukkit.org." );
-			else if ( ( updater.isUpdateAvailable() ) && ( updater.getOnUpdate().contains( AutoUpdater.WARN_OPERATORS ) ) )
-				User.sendMessage( ChatColor.DARK_PURPLE + "The version of Chiori Web Server that this server is running is out of date. Please consider updating to the latest version at dl.bukkit.org." );
-	}
-	
-	public CommandMap getCommandMap()
-	{
-		return commandMap;
-	}
-	
-	public boolean isPrimaryThread()
-	{
-		return true;
+		return isRunning;
 	}
 	
 	public WarningState getWarningState()
@@ -1103,43 +482,8 @@ public class Loader implements PluginMessageRecipient
 		return warningState;
 	}
 	
-	public static Color parseColor( String color )
-	{
-		Pattern c = Pattern.compile( "rgb *\\( *([0-9]+), *([0-9]+), *([0-9]+) *\\)" );
-		Matcher m = c.matcher( color );
-		
-		// First try to parse RGB(0,0,0);
-		if ( m.matches() )
-			return new Color( Integer.valueOf( m.group( 1 ) ), // r
-			Integer.valueOf( m.group( 2 ) ), // g
-			Integer.valueOf( m.group( 3 ) ) ); // b
-			
-		try
-		{
-			Field field = Class.forName( "java.awt.Color" ).getField( color.trim().toUpperCase() );
-			return (Color) field.get( null );
-		}
-		catch ( Exception e )
-		{}
-		
-		try
-		{
-			return Color.decode( color );
-		}
-		catch ( Exception e )
-		{}
-		
-		return null;
-	}
-	
 	private File getConfigFile()
 	{
-		if ( extendedOpt.altConfigFilename != null )
-			return new File( extendedOpt.altConfigFilename );
-		
-		if ( ( (File) options.valueOf( "config" ) ).getName() == "server.yaml" && NetworkManager.isClientMode() )
-			return new File( "client.yaml" );
-		
 		return (File) options.valueOf( "config" );
 	}
 	
@@ -1155,7 +499,12 @@ public class Loader implements PluginMessageRecipient
 		}
 	}
 	
-	public static Console getConsole()
+	public static ConsoleBus getConsole()
+	{
+		return console;
+	}
+	
+	public static ConsoleBus getConsoleBus()
 	{
 		return console;
 	}
@@ -1165,34 +514,9 @@ public class Loader implements PluginMessageRecipient
 		return console.getLogger();
 	}
 	
-	public static String getName()
-	{
-		return Versioning.getProduct();
-	}
-	
-	public static String getVersion()
-	{
-		return Versioning.getVersion();
-	}
-	
-	public boolean isRunning()
-	{
-		return isRunning;
-	}
-	
 	public static OptionSet getOptions()
 	{
 		return options;
-	}
-	
-	public static UserManager getUserManager()
-	{
-		return Loader.userManager;
-	}
-	
-	public static PersistenceManager getPersistenceManager()
-	{
-		return Loader.persistence;
 	}
 	
 	public boolean getWarnOnOverload()
@@ -1200,28 +524,71 @@ public class Loader implements PluginMessageRecipient
 		return configuration.getBoolean( "settings.warn-on-overload" );
 	}
 	
-	public PluginLoadOrder getCurrentLoadState()
+	public static SiteManager getSiteManager()
 	{
-		return currentState;
+		return sites;
 	}
 	
-	public List<Site> getSites()
-	{
-		return sites.getSites();
-	}
-	
-	public Site getSiteById( String siteName )
-	{
-		return sites.getSiteById( siteName );
-	}
-	
-	public Site getSiteByDomain( String domain )
-	{
-		return sites.getSiteByDomain( domain );
-	}
-	
-	public AutoUpdater getAutoUpdater()
+	public static AutoUpdater getAutoUpdater()
 	{
 		return updater;
+	}
+	
+	public static EventBus getEventBus()
+	{
+		return events;
+	}
+	
+	@Deprecated
+	public static PluginManager getModuleBus()
+	{
+		return modules;
+	}
+	
+	public static PluginManager getPluginManager()
+	{
+		return modules;
+	}
+	
+	public static PersistenceManager getPersistenceManager()
+	{
+		return persistence;
+	}
+	
+	@Deprecated
+	public static AccountManager getAccountsBus()
+	{
+		return accounts;
+	}
+	
+	public static AccountManager getAccountsManager()
+	{
+		return accounts;
+	}
+	
+	public static File getRoot()
+	{
+		return new File( Loader.class.getProtectionDomain().getCodeSource().getLocation().getPath() );
+	}
+	
+	@Deprecated
+	public static PermissionsManager getPermissionsBus()
+	{
+		return permissions;
+	}
+	
+	public static PermissionsManager getPermissionsManager()
+	{
+		return permissions;
+	}
+	
+	public static Messenger getMessenger()
+	{
+		return messenger;
+	}
+	
+	public static ServicesManager getServicesManager()
+	{
+		return servicesManager;
 	}
 }

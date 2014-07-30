@@ -5,12 +5,12 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import com.chiorichan.Loader;
+import com.chiorichan.account.bases.Account;
 import com.chiorichan.permissions.Permissible;
 import com.chiorichan.permissions.PermissibleBase;
-import com.chiorichan.user.User;
 
 /**
- * This class handles injection of {@link Permissible}s into {@link User}s for various server implementations.
+ * This class handles injection of {@link Permissible}s into {@link Account}s for various server implementations.
  */
 public abstract class PermissibleInjector
 {
@@ -33,7 +33,7 @@ public abstract class PermissibleInjector
 	 * @throws NoSuchFieldException when the permissions field could not be found in the Permissible
 	 * @throws IllegalAccessException when things go very wrong
 	 */
-	public Permissible inject( User user, Permissible permissible ) throws NoSuchFieldException, IllegalAccessException
+	public Permissible inject( Account user, Permissible permissible ) throws NoSuchFieldException, IllegalAccessException
 	{
 		Field permField = getPermissibleField( user );
 		if ( permField == null )
@@ -53,12 +53,12 @@ public abstract class PermissibleInjector
 		return oldPerm;
 	}
 	
-	public Permissible getPermissible( User user ) throws NoSuchFieldException, IllegalAccessException
+	public Permissible getPermissible( Account user ) throws NoSuchFieldException, IllegalAccessException
 	{
 		return (Permissible) getPermissibleField( user ).get( user );
 	}
 	
-	private Field getPermissibleField( User user ) throws NoSuchFieldException
+	private Field getPermissibleField( Account user ) throws NoSuchFieldException
 	{
 		Class<?> humanEntity;
 		try
@@ -92,7 +92,7 @@ public abstract class PermissibleInjector
 		newPerm.recalculatePermissions();
 	}
 	
-	public abstract boolean isApplicable( User user );
+	public abstract boolean isApplicable( Account user );
 	
 	public static class ServerNamePermissibleInjector extends PermissibleInjector
 	{
@@ -105,9 +105,9 @@ public abstract class PermissibleInjector
 		}
 		
 		@Override
-		public boolean isApplicable( User user )
+		public boolean isApplicable( Account user )
 		{
-			return Loader.getName().equalsIgnoreCase( serverName );
+			return Loader.getInstance().getServerName().equalsIgnoreCase( serverName );
 		}
 	}
 	
@@ -120,7 +120,7 @@ public abstract class PermissibleInjector
 		}
 		
 		@Override
-		public boolean isApplicable( User user )
+		public boolean isApplicable( Account user )
 		{
 			try
 			{
@@ -144,7 +144,7 @@ public abstract class PermissibleInjector
 		}
 		
 		@Override
-		public boolean isApplicable( User user )
+		public boolean isApplicable( Account user )
 		{
 			return user.getClass().getName().matches( regex );
 		}

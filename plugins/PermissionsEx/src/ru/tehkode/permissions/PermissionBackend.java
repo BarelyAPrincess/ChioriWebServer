@@ -19,9 +19,10 @@ import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.exceptions.PermissionBackendException;
 
 import com.chiorichan.Loader;
+import com.chiorichan.account.AccountManager;
+import com.chiorichan.account.bases.Account;
 import com.chiorichan.configuration.Configuration;
 import com.chiorichan.framework.Site;
-import com.chiorichan.user.User;
 
 /**
  * @author t3hk0d3
@@ -161,7 +162,7 @@ public abstract class PermissionBackend
 	{
 		Set<PermissionGroup> groups = new HashSet<PermissionGroup>();
 		
-		for ( Site site : Loader.getInstance().getSites() )
+		for ( Site site : Loader.getSiteManager().getSites() )
 		{
 			groups.addAll( Arrays.asList( getGroups( groupName, site.getName(), inheritance ) ) );
 		}
@@ -196,7 +197,7 @@ public abstract class PermissionBackend
 	{
 		Set<PermissionUser> users = new HashSet<PermissionUser>();
 		
-		for ( User user : Loader.getInstance().getOnlineUsers() )
+		for ( Account user : Loader.getAccountsManager().getOnlineAccounts() )
 		{
 			users.add( this.manager.getUser( user ) );
 		}

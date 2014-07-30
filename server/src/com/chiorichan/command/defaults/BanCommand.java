@@ -2,9 +2,9 @@ package com.chiorichan.command.defaults;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
+import com.chiorichan.account.bases.Account;
+import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.command.Command;
-import com.chiorichan.command.CommandSender;
-import com.chiorichan.user.User;
 
 public class BanCommand extends VanillaCommand
 {
@@ -17,9 +17,9 @@ public class BanCommand extends VanillaCommand
 	}
 	
 	@Override
-	public boolean execute( CommandSender sender, String currentAlias, String[] args )
+	public boolean execute( SentientHandler sender, String currentAlias, String[] args )
 	{
-		if ( !testPermission( sender ) )
+		if ( !testPermission( sender.getSentient() ) )
 			return true;
 		if ( args.length == 0 )
 		{
@@ -28,12 +28,13 @@ public class BanCommand extends VanillaCommand
 		}
 		
 		// TODO: Ban Reason support
-		Loader.getInstance().getOfflineUser( args[0] ).setBanned( true );
+		Account acct = Loader.getAccountsManager().getAccount( args[0] );
 		
-		User User = Loader.getInstance().getUser( args[0] );
-		if ( User != null )
+		Loader.getAccountsManager().banId( acct.getAccountId() );
+		
+		if ( acct != null )
 		{
-			User.kick( "Banned by admin." );
+			acct.kick( "Banned by admin." );
 		}
 		
 		Command.broadcastCommandMessage( sender, "Banned User " + args[0] );

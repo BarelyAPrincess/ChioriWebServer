@@ -2,9 +2,9 @@ package com.chiorichan.command.defaults;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
+import com.chiorichan.account.bases.Account;
+import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.command.Command;
-import com.chiorichan.command.CommandSender;
-import com.chiorichan.user.User;
 
 public class OpCommand extends VanillaCommand
 {
@@ -17,9 +17,9 @@ public class OpCommand extends VanillaCommand
 	}
 	
 	@Override
-	public boolean execute( CommandSender sender, String currentAlias, String[] args )
+	public boolean execute( SentientHandler sender, String currentAlias, String[] args )
 	{
-		if ( !testPermission( sender ) )
+		if ( !testPermission( sender.getSentient() ) )
 			return true;
 		if ( args.length != 1 || args[0].length() == 0 )
 		{
@@ -27,18 +27,10 @@ public class OpCommand extends VanillaCommand
 			return false;
 		}
 		
-		User user = Loader.getInstance().getOfflineUser( args[0] );
+		Account acct = Loader.getAccountsManager().op( args[0] );
 		
-		if ( args[0].equals( "[console]" ) )
+		if ( acct != null )
 		{
-			Loader.getConsole().setOp( true );
-			Command.broadcastCommandMessage( sender, "Opped the Console User" );
-			return true;
-		}
-		
-		if ( user != null )
-		{
-			user.setOp( true );
 			Command.broadcastCommandMessage( sender, "Opped " + args[0] );
 		}
 		else

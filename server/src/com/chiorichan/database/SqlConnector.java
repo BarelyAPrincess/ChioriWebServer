@@ -111,13 +111,26 @@ public class SqlConnector
 		saved_host = host;
 		saved_port = port;
 		
-		con = DriverManager.getConnection( "jdbc:mysql://" + host + ":" + port + "/" + db, user, pass );
+		try
+		{
+			con = DriverManager.getConnection( "jdbc:mysql://" + host + ":" + port + "/" + db, user, pass );
+		}
+		catch ( SQLException e )
+		{
+			throw e;
+		}
 		
-		Loader.getLogger().info( "We succesully connected to the sql database using 'jdbc:mysql://" + host + ":" + port + "/" + db + "'." );
+		if ( con != null && !con.isClosed() )
+			Loader.getLogger().info( "We succesully connected to the sql database using 'jdbc:mysql://" + host + ":" + port + "/" + db + "'." );
+		else
+			Loader.getLogger().warning( "There was a problem connecting to the sql database using 'jdbc:mysql://" + host + ":" + port + "/" + db + "'." );
 	}
 	
 	public LinkedHashMap<String, Object> selectOne( String table, List<String> keys, List<? extends Object> values ) throws SQLException
 	{
+		if ( con == null )
+			throw new SQLException( "The SQL connection is closed or was never opened." );
+		
 		if ( isNull( keys ) || isNull( values ) )
 		{
 			Loader.getLogger().warning( "[DB ERROR] Either keys array or values array equals null!\n" );
@@ -201,6 +214,9 @@ public class SqlConnector
 	
 	public Boolean isConnected()
 	{
+		if ( con == null )
+			return false;
+		
 		try
 		{
 			return !con.isClosed();
@@ -226,9 +242,12 @@ public class SqlConnector
 		return true;
 	}
 	
-	public int queryUpdate( String query )
+	public int queryUpdate( String query ) throws SQLException
 	{
 		int cnt = 0;
+		
+		if ( con == null )
+			throw new SQLException( "The SQL connection is closed or was never opened." );
 		
 		try
 		{
@@ -264,6 +283,10 @@ public class SqlConnector
 	{
 		Statement stmt = null;
 		ResultSet result = null;
+		
+		if ( con == null )
+			throw new SQLException( "The SQL connection is closed or was never opened." );
+		
 		try
 		{
 			stmt = con.createStatement( ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
@@ -351,7 +374,16 @@ public class SqlConnector
 				where = " WHERE " + where;
 		}
 		
-		int cnt = queryUpdate( "UPDATE " + table + " SET " + update + where + ";" );
+		int cnt = 0;
+		try
+		{
+			cnt = queryUpdate( "UPDATE " + table + " SET " + update + where + ";" );
+		}
+		catch ( SQLException e )
+		{
+			e.printStackTrace();
+			return false;
+		}
 		
 		return ( cnt > 0 );
 	}

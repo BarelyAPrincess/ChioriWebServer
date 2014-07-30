@@ -1,21 +1,7 @@
 package com.chiorichan.http;
 
-import com.chiorichan.ChatColor;
-import com.chiorichan.Loader;
-import com.chiorichan.database.SqlConnector;
-import com.chiorichan.framework.Evaling;
-import com.chiorichan.framework.Framework;
-import com.chiorichan.framework.Site;
-import com.chiorichan.user.LoginException;
-import com.chiorichan.user.User;
-import com.chiorichan.user.UserHandler;
-import com.chiorichan.util.Common;
-import com.chiorichan.util.StringUtil;
-import com.google.common.collect.Lists;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 import groovy.lang.Binding;
+
 import java.io.File;
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -24,6 +10,23 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.chiorichan.ChatColor;
+import com.chiorichan.Loader;
+import com.chiorichan.account.bases.Account;
+import com.chiorichan.account.bases.Sentient;
+import com.chiorichan.account.bases.SentientHandler;
+import com.chiorichan.account.helpers.LoginException;
+import com.chiorichan.database.SqlConnector;
+import com.chiorichan.framework.Evaling;
+import com.chiorichan.framework.Framework;
+import com.chiorichan.framework.Site;
+import com.chiorichan.util.Common;
+import com.chiorichan.util.StringUtil;
+import com.google.common.collect.Lists;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+
 /**
  * This class is used to carry data that is to be persistent from request to request.
  * If you need to sync data across requests then we recommend using Session Vars for Security.
@@ -31,7 +34,7 @@ import java.util.Map;
  * @author Chiori Greene
  * @copyright Greenetree LLC
  */
-public class PersistentSession implements UserHandler
+public class PersistentSession implements SentientHandler
 {
 	protected Map<String, String> data = new LinkedHashMap<String, String>();
 	protected int timeout = 0, requestCnt = 0;
@@ -39,14 +42,15 @@ public class PersistentSession implements UserHandler
 	protected Candy sessionCandy;
 	protected Binding binding = new Binding();
 	protected Evaling eval;
-	protected User currentUser = null;
+	protected Account currentAccount = null;
 	protected List<String> pendingMessages = Lists.newArrayList();
 	
 	protected Map<String, Candy> candies = new LinkedHashMap<String, Candy>();
 	protected Framework framework = null;
 	protected HttpRequest request;
 	protected Site failoverSite;
-	protected Boolean stale = false;
+	protected boolean stale = false;
+	protected boolean isValid = true;
 	
 	/**
 	 * Returns an instance of Framework relevant to this session. Instigates a new one if not already done.
@@ -79,7 +83,6 @@ public class PersistentSession implements UserHandler
 		setRequest( _request, false );
 	}
 	
-	@SuppressWarnings( "unchecked" )
 	protected PersistentSession(ResultSet rs) throws SessionException
 	{
 		this();
@@ -168,9 +171,9 @@ public class PersistentSession implements UserHandler
 		
 		try
 		{
-			User user = Loader.getUserManager().attemptLogin( this, username, password );
-			currentUser = user;
-			Loader.getLogger().info( ChatColor.GREEN + "Login Restored `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
+			Account user = Loader.getAccountsManager().attemptLogin( this, username, password );
+			currentAccount = user;
+			Loader.getLogger().info( ChatColor.GREEN + "Login Restored `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getAccountId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
 		}
 		catch ( LoginException l )
 		{
@@ -205,31 +208,31 @@ public class PersistentSession implements UserHandler
 		{
 			try
 			{
-				User user = Loader.getUserManager().attemptLogin( this, username, password );
+				Account user = Loader.getAccountsManager().attemptLogin( this, username, password );
 				
-				currentUser = user;
+				currentAccount = user;
 				
 				String loginPost = ( target.isEmpty() ) ? request.getSite().getYaml().getString( "scripts.login-post", "/panel" ) : target;
 				
 				setArgument( "remember", remember );
 				
-				Loader.getLogger().info( ChatColor.GREEN + "Login Success `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
+				Loader.getLogger().info( ChatColor.GREEN + "Login Success `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getAccountId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
 				request.getResponse().sendRedirect( loginPost );
 				
 			}
 			catch ( LoginException l )
 			{
-				//l.printStackTrace();
+				// l.printStackTrace();
 				
 				String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
 				
 				if ( l.getUser() != null )
-					Loader.getLogger().warning( "Login Failed `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + l.getUser().getUserId() + "\", Display Name \"" + l.getUser().getDisplayName() + "\", Reason \"" + l.getMessage() + "\"`" );
+					Loader.getLogger().warning( "Login Failed `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + l.getUser().getAccountId() + "\", Display Name \"" + l.getUser().getDisplayName() + "\", Reason \"" + l.getMessage() + "\"`" );
 				
 				request.getResponse().sendRedirect( loginForm + "?ok=" + l.getMessage() + "&target=" + target );
 			}
 		}
-		else if ( currentUser == null )
+		else if ( currentAccount == null )
 		{
 			username = getArgument( "user" );
 			password = getArgument( "pass" );
@@ -238,11 +241,11 @@ public class PersistentSession implements UserHandler
 			{
 				try
 				{
-					User user = Loader.getUserManager().attemptLogin( this, username, password );
+					Account user = Loader.getAccountsManager().attemptLogin( this, username, password );
 					
-					currentUser = user;
+					currentAccount = user;
 					
-					Loader.getLogger().info( ChatColor.GREEN + "Login Success `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getUserId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
+					Loader.getLogger().info( ChatColor.GREEN + "Login Success `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getAccountId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
 				}
 				catch ( LoginException l )
 				{
@@ -250,24 +253,24 @@ public class PersistentSession implements UserHandler
 				}
 			}
 			else
-				currentUser = null;
+				currentAccount = null;
 		}
 		else
 		{
 			try
 			{
-				currentUser.reloadAndValidate();
-				Loader.getLogger().info( ChatColor.GREEN + "Current Login `Username \"" + currentUser.getName() + "\", Password \"" + currentUser.getMetaData().getPassword() + "\", UserId \"" + currentUser.getUserId() + "\", Display Name \"" + currentUser.getDisplayName() + "\"`" );
+				currentAccount.reloadAndValidate();
+				Loader.getLogger().info( ChatColor.GREEN + "Current Login `Username \"" + currentAccount.getName() + "\", Password \"" + currentAccount.getMetaData().getPassword() + "\", UserId \"" + currentAccount.getAccountId() + "\", Display Name \"" + currentAccount.getDisplayName() + "\"`" );
 			}
 			catch ( LoginException e )
 			{
-				currentUser = null;
+				currentAccount = null;
 				Loader.getLogger().warning( ChatColor.GREEN + "Login Failed `There was a login present but it failed validation with error: " + e.getMessage() + "`" );
 			}
 		}
 		
-		if ( currentUser != null )
-			currentUser.putHandler( this );
+		if ( currentAccount != null )
+			currentAccount.putHandler( this );
 		
 		if ( !stale || Loader.getConfig().getBoolean( "sessions.rearmTimeoutWithEachRequest" ) )
 			rearmTimeout();
@@ -294,10 +297,9 @@ public class PersistentSession implements UserHandler
 		return binding;
 	}
 	
-	@SuppressWarnings( "unchecked" )
 	protected void initSession()
 	{
-		SqlConnector sql = Loader.getPersistenceManager().getSql();
+		SqlConnector sql = Loader.getPersistenceManager().getDatabase();
 		
 		if ( sessionCandy != null )
 		{
@@ -386,7 +388,14 @@ public class PersistentSession implements UserHandler
 			
 			timeout = Common.getEpoch() + Loader.getConfig().getInt( "sessions.defaultTimeout", 3600 );
 			
-			sql.queryUpdate( "INSERT INTO `sessions` (`sessionId`, `timeout`, `ipAddr`, `sessionName`, `sessionSite`, `data`)VALUES('" + candyId + "', '" + timeout + "', '" + ipAddr + "', '" + candyName + "', '" + getSite().getName() + "', '" + dataJson + "');" );
+			try
+			{
+				sql.queryUpdate( "INSERT INTO `sessions` (`sessionId`, `timeout`, `ipAddr`, `sessionName`, `sessionSite`, `data`)VALUES('" + candyId + "', '" + timeout + "', '" + ipAddr + "', '" + candyName + "', '" + getSite().getName() + "', '" + dataJson + "');" );
+			}
+			catch ( SQLException e )
+			{
+				e.printStackTrace();
+			}
 		}
 		
 		if ( stale )
@@ -397,12 +406,19 @@ public class PersistentSession implements UserHandler
 	
 	protected void saveSession()
 	{
-		SqlConnector sql = Loader.getPersistenceManager().getSql();
+		SqlConnector sql = Loader.getPersistenceManager().getDatabase();
 		
 		String dataJson = new Gson().toJson( data );
 		
 		if ( sql != null )
-			sql.queryUpdate( "UPDATE `sessions` SET `data` = '" + dataJson + "', `timeout` = '" + timeout + "', `sessionName` = '" + candyName + "', `ipAddr` = '" + ipAddr + "', `sessionSite` = '" + getSite().getName() + "' WHERE `sessionId` = '" + candyId + "';" );
+			try
+			{
+				sql.queryUpdate( "UPDATE `sessions` SET `data` = '" + dataJson + "', `timeout` = '" + timeout + "', `sessionName` = '" + candyName + "', `ipAddr` = '" + ipAddr + "', `sessionSite` = '" + getSite().getName() + "' WHERE `sessionId` = '" + candyId + "';" );
+			}
+			catch ( SQLException e )
+			{
+				Loader.getLogger().severe( "There was an exception thorwn while trying to save the session.", e );
+			}
 		else
 			Loader.getLogger().severe( "SQL is NULL. Can't save session." );
 	}
@@ -526,7 +542,7 @@ public class PersistentSession implements UserHandler
 			if ( StringUtil.isTrue( getArgument( "remember" ) ) )
 				defaultTimeout = Loader.getConfig().getInt( "sessions.defaultTimeoutRememberMe", 604800 );
 			
-			if ( Loader.getConfig().getBoolean( "allowNoTimeoutPermission" ) && currentUser.hasPermission( "chiori.noTimeout" ) )
+			if ( Loader.getConfig().getBoolean( "allowNoTimeoutPermission" ) && currentAccount.hasPermission( "chiori.noTimeout" ) )
 				defaultTimeout = Integer.MAX_VALUE;
 		}
 		
@@ -551,12 +567,12 @@ public class PersistentSession implements UserHandler
 	
 	public boolean getUserState()
 	{
-		return ( currentUser != null );
+		return ( currentAccount != null );
 	}
 	
-	public User getCurrentUser()
+	public Account getCurrentUser()
 	{
-		return currentUser;
+		return currentAccount;
 	}
 	
 	/**
@@ -564,15 +580,15 @@ public class PersistentSession implements UserHandler
 	 */
 	public void logoutUser()
 	{
-		if ( currentUser != null )
-			Loader.getLogger().info( ChatColor.GREEN + "User Logout `" + currentUser + "`" );
+		if ( currentAccount != null )
+			Loader.getLogger().info( ChatColor.GREEN + "User Logout `" + currentAccount + "`" );
 		
 		// setArgument( "remember", null );
 		setArgument( "user", null );
 		setArgument( "pass", null );
-		currentUser = null;
+		currentAccount = null;
 		
-		for ( User u : Loader.getInstance().getOnlineUsers() )
+		for ( Account u : Loader.getAccountsManager().getOnlineAccounts() )
 			u.removeHandler( this );
 	}
 	
@@ -604,20 +620,21 @@ public class PersistentSession implements UserHandler
 	}
 	
 	@Override
-	public void kick( String kickMessage )
+	public boolean kick( String kickMessage )
 	{
 		logoutUser();
 		pendingMessages.add( kickMessage );
+		
+		return true;
 	}
 	
 	@Override
-	public void sendMessage( String[] messages )
+	public void sendMessage( String... messages )
 	{
 		for ( String m : messages )
 			pendingMessages.add( m );
 	}
 	
-	@Override
 	public Site getSite()
 	{
 		if ( getRequest() != null )
@@ -641,11 +658,40 @@ public class PersistentSession implements UserHandler
 	
 	public void requireLogin( String permission ) throws IOException
 	{
-		if ( currentUser == null )
+		if ( currentAccount == null )
 			request.getResponse().sendLoginPage();
 		
 		if ( permission != null )
-			if ( !currentUser.hasPermission( permission ) )
+			if ( !currentAccount.hasPermission( permission ) )
 				request.getResponse().sendError( HttpCode.HTTP_FORBIDDEN, "You must have the `" + permission + "` in order to view this page!" );
+	}
+	
+	// A session can't handle just any sentient object.
+	// At least for the time being.
+	@Override
+	public void attachSentient( Sentient sentient )
+	{
+		if ( sentient instanceof Account )
+			currentAccount = (Account) sentient;
+		else
+			isValid = false;
+	}
+	
+	@Override
+	public boolean isValid()
+	{
+		return isValid;
+	}
+	
+	@Override
+	public Sentient getSentient()
+	{
+		return currentAccount;
+	}
+	
+	@Override
+	public void removeSentient()
+	{
+		currentAccount = null;
 	}
 }

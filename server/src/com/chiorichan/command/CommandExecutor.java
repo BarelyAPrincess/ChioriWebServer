@@ -1,5 +1,7 @@
 package com.chiorichan.command;
 
+import com.chiorichan.account.bases.SentientHandler;
+
 /**
  * Represents a class which contains a single method for executing commands
  */
@@ -19,5 +21,5 @@ public interface CommandExecutor
 	 *           Passed command arguments
 	 * @return true if a valid command, otherwise false
 	 */
-	public boolean onCommand( CommandSender sender, Command command, String label, String[] args );
+	public boolean onCommand( SentientHandler sender, Command command, String label, String[] args );
 }

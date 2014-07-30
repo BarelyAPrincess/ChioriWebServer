@@ -1,6 +1,6 @@
 package com.chiorichan.command.defaults;
 
-import com.chiorichan.command.CommandSender;
+import com.chiorichan.account.bases.SentientHandler;
 
 public class ColorsCommand extends VanillaCommand
 {
@@ -13,9 +13,9 @@ public class ColorsCommand extends VanillaCommand
 	}
 	
 	@Override
-	public boolean execute( CommandSender sender, String currentAlias, String[] args )
+	public boolean execute( SentientHandler sender, String currentAlias, String[] args )
 	{
-		if ( !testPermission( sender ) )
+		if ( !testPermission( sender.getSentient() ) )
 			return true;
 		
 		sender.sendMessage( "&l&d&oTo use any of these just type & (amperstamp) folowed by the color/format code." );

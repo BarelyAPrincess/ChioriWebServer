@@ -3,7 +3,7 @@ package com.chiorichan.command.defaults;
 import java.util.Arrays;
 
 import com.chiorichan.ChatColor;
-import com.chiorichan.command.CommandSender;
+import com.chiorichan.account.bases.SentientHandler;
 
 public class HelpCommand extends VanillaCommand
 {
@@ -17,9 +17,9 @@ public class HelpCommand extends VanillaCommand
 	}
 	
 	@Override
-	public boolean execute( CommandSender sender, String currentAlias, String[] args )
+	public boolean execute( SentientHandler sender, String currentAlias, String[] args )
 	{
-		if ( !testPermission( sender ) )
+		if ( !testPermission( sender.getSentient() ) )
 			return true;
 		
 		sender.sendMessage( ChatColor.RED + "Not Implemented!" );

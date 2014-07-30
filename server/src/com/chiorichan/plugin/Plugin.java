@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.logging.Logger;
 
-import com.chiorichan.ConsoleLogManager;
 import com.chiorichan.Loader;
 import com.chiorichan.command.CommandExecutor;
 import com.chiorichan.configuration.file.FileConfiguration;
@@ -87,13 +86,6 @@ public interface Plugin extends CommandExecutor
 	public PluginLoader getPluginLoader();
 	
 	/**
-	 * Returns the Server instance currently running this plugin
-	 * 
-	 * @return Server running this plugin
-	 */
-	public Loader getServer();
-	
-	/**
 	 * Returns a value indicating whether or not this plugin is currently enabled
 	 * 
 	 * @return true if this plugin is enabled, otherwise false
@@ -130,14 +122,6 @@ public interface Plugin extends CommandExecutor
 	 *           is this plugin still naggable?
 	 */
 	public void setNaggable( boolean canNag );
-	
-	/**
-	 * Returns the primary logger associated with this server instance. The returned logger automatically tags all log
-	 * messages with the plugin's name.
-	 * 
-	 * @return Logger associated with this server
-	 */
-	public Logger getLogger();
 	
 	/**
 	 * Returns the name of the plugin.

@@ -2,8 +2,8 @@ package com.chiorichan.command.defaults;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
-import com.chiorichan.command.CommandSender;
-import com.chiorichan.user.User;
+import com.chiorichan.account.bases.Account;
+import com.chiorichan.account.bases.SentientHandler;
 
 public class SayCommand extends VanillaCommand
 {
@@ -16,9 +16,9 @@ public class SayCommand extends VanillaCommand
 	}
 	
 	@Override
-	public boolean execute( CommandSender sender, String currentAlias, String[] args )
+	public boolean execute( SentientHandler sender, String currentAlias, String[] args )
 	{
-		if ( !testPermission( sender ) )
+		if ( !testPermission( sender.getSentient() ) )
 			return true;
 		if ( args.length == 0 )
 		{
@@ -37,12 +37,12 @@ public class SayCommand extends VanillaCommand
 			}
 		}
 		
-		if ( sender instanceof User )
+		if ( sender instanceof Account )
 		{
-			Loader.getLogger().info( "[" + sender.getName() + "] " + message );
+			Loader.getLogger().info( "[" + sender.getSentient().getName() + "] " + message );
 		}
 		
-		Loader.getInstance().broadcastMessage( ChatColor.LIGHT_PURPLE + "[Server] " + message );
+		Loader.getPluginManager().broadcastMessage( ChatColor.LIGHT_PURPLE + "[Server] " + message );
 		
 		return true;
 	}

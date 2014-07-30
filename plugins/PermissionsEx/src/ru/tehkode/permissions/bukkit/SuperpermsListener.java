@@ -9,17 +9,16 @@ import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.events.PermissionSystemEvent;
 
 import com.chiorichan.Loader;
-import com.chiorichan.event.EventHandler;
-import com.chiorichan.event.EventPriority;
-import com.chiorichan.event.Listener;
-import com.chiorichan.event.user.UserChangedEvent;
-import com.chiorichan.event.user.UserJoinEvent;
-import com.chiorichan.event.user.UserLoginEvent;
-import com.chiorichan.event.user.UserLogoutEvent;
+import com.chiorichan.account.bases.Account;
+import com.chiorichan.bus.events.EventHandler;
+import com.chiorichan.bus.events.EventPriority;
+import com.chiorichan.bus.events.Listener;
+import com.chiorichan.bus.events.account.AccountChangedEvent;
+import com.chiorichan.bus.events.account.AccountLoginEvent;
+import com.chiorichan.bus.events.account.AccountLogoutEvent;
 import com.chiorichan.permissions.Permission;
 import com.chiorichan.permissions.PermissionAttachment;
 import com.chiorichan.permissions.PermissionDefault;
-import com.chiorichan.user.User;
 
 /**
  * PEX permissions database integration with superperms
@@ -32,18 +31,18 @@ public class SuperpermsListener implements Listener
 	public SuperpermsListener(PermissionsEx plugin)
 	{
 		this.plugin = plugin;
-		for ( User user : plugin.getInstance().getOnlineUsers() )
+		for ( Account user : Loader.getAccountsManager().getOnlineAccounts() )
 		{
 			updateAttachment( user );
 		}
 	}
 	
-	protected void updateAttachment( User user )
+	protected void updateAttachment( Account user )
 	{
 		updateAttachment( user, user.getSite().getName() );
 	}
 	
-	protected void updateAttachment( User user, String siteName )
+	protected void updateAttachment( Account user, String siteName )
 	{
 		PermissionAttachment attach = attachments.get( user.getName() );
 		Permission userPerm = getCreateWrapper( user, "" );
@@ -64,31 +63,31 @@ public class SuperpermsListener implements Listener
 		}
 	}
 	
-	private String permissionName( User user, String suffix )
+	private String permissionName( Account user, String suffix )
 	{
 		return "permissionsex.user." + user.getName() + suffix;
 	}
 	
-	private void removePEXPerm( User user, String suffix )
+	private void removePEXPerm( Account user, String suffix )
 	{
-		Loader.getPluginManager().removePermission( permissionName( user, suffix ) );
+		Loader.getPermissionsManager().removePermission( permissionName( user, suffix ) );
 	}
 	
-	private Permission getCreateWrapper( User user, String suffix )
+	private Permission getCreateWrapper( Account user, String suffix )
 	{
 		final String name = permissionName( user, suffix );
-		Permission perm = Loader.getPluginManager().getPermission( name );
+		Permission perm = Loader.getPermissionsManager().getPermission( name );
 		if ( perm == null )
 		{
 			perm = new Permission( name, "Internal permission for PEX. DO NOT SET DIRECTLY", PermissionDefault.FALSE );
-			plugin.getInstance().getPluginManager().addPermission( perm );
+			Loader.getPermissionsManager().addPermission( perm );
 		}
 		
 		return perm;
 		
 	}
 	
-	private void updateUserPermission( Permission permission, User user, PermissionUser puser, String siteName )
+	private void updateUserPermission( Permission permission, Account user, PermissionUser puser, String siteName )
 	{
 		permission.getChildren().clear();
 		permission.getChildren().put( permissionName( user, ".options" ), true );
@@ -132,7 +131,7 @@ public class SuperpermsListener implements Listener
 		
 	}
 	
-	protected void removeAttachment( User user )
+	protected void removeAttachment( Account user )
 	{
 		PermissionAttachment attach = attachments.remove( user.getName() );
 		if ( attach != null )
@@ -154,24 +153,11 @@ public class SuperpermsListener implements Listener
 	}
 	
 	@EventHandler( priority = EventPriority.LOWEST )
-	public void onUserJoin( UserJoinEvent event )
+	public void onUserLogin( AccountLoginEvent event )
 	{
 		try
 		{
-			updateAttachment( event.getUser() );
-		}
-		catch ( Throwable t )
-		{
-			ErrorReport.handleError( "Superperms event join", t );
-		}
-	}
-	
-	@EventHandler( priority = EventPriority.LOWEST )
-	public void onUserLogin( UserLoginEvent event )
-	{
-		try
-		{
-			final User user = event.getUser();
+			final Account user = event.getAccount();
 			// Because user site is inaccurate in the login event (at least with MV), start with null site and then reset to the real site in join event
 			updateAttachment( user, null );
 		}
@@ -183,11 +169,11 @@ public class SuperpermsListener implements Listener
 	
 	@EventHandler( priority = EventPriority.MONITOR )
 	// Technically not supposed to use MONITOR for this, but we don't want to remove before other plugins are done checking permissions
-	public void onUserQuit( UserLogoutEvent event )
+	public void onUserQuit( AccountLogoutEvent event )
 	{
 		try
 		{
-			removeAttachment( event.getUser() );
+			removeAttachment( event.getAccount() );
 		}
 		catch ( Throwable t )
 		{
@@ -197,7 +183,7 @@ public class SuperpermsListener implements Listener
 	
 	private void updateSelective( PermissionEntityEvent event, PermissionUser user )
 	{
-		final User p = plugin.getInstance().getUserExact( user.getName() );
+		final Account p = Loader.getAccountsManager().getAccount( user.getName() );
 		if ( p != null )
 		{
 			switch ( event.getAction() )
@@ -247,11 +233,11 @@ public class SuperpermsListener implements Listener
 	}
 	
 	@EventHandler
-	public void onSiteChanged( UserChangedEvent event )
+	public void onSiteChanged( AccountChangedEvent event )
 	{
 		try
 		{
-			updateAttachment( event.getUser() );
+			updateAttachment( event.getAccount() );
 		}
 		catch ( Throwable t )
 		{
@@ -274,7 +260,7 @@ public class SuperpermsListener implements Listener
 				case REINJECT_PERMISSIBLES:
 					return;
 				default:
-					for ( User p : plugin.getInstance().getOnlineUsers() )
+					for ( Account p : Loader.getAccountsManager().getOnlineAccounts() )
 					{
 						updateAttachment( p );
 					}

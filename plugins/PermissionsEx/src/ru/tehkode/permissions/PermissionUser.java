@@ -30,8 +30,8 @@ import ru.tehkode.permissions.events.PermissionEntityEvent;
 import ru.tehkode.permissions.exceptions.RankingException;
 
 import com.chiorichan.Loader;
+import com.chiorichan.account.bases.Account;
 import com.chiorichan.permissions.Permission;
-import com.chiorichan.user.User;
 
 /**
  * @author code
@@ -888,7 +888,7 @@ public abstract class PermissionUser extends PermissionEntity
 			invert = !invert;
 			perm = perm.substring( 1 );
 		}
-		getInheritedChildPermissions( Loader.getPluginManager().getPermission( perm ), list, invert );
+		getInheritedChildPermissions( Loader.getPermissionsManager().getPermission( perm ), list, invert );
 	}
 	
 	protected void getInheritedChildPermissions( Permission perm, List<String> list, boolean invert )
@@ -1013,7 +1013,7 @@ public abstract class PermissionUser extends PermissionEntity
 	@Override
 	public boolean has( String permission )
 	{
-		User user = Loader.getInstance().getUser( this.getName() );
+		Account user = Loader.getAccountsManager().getAccount( this.getName() );
 		if ( user != null )
 		{
 			return this.has( permission, user.getSite().getName() );
@@ -1142,7 +1142,7 @@ public abstract class PermissionUser extends PermissionEntity
 	{
 		if ( expression == null && this.manager.allowOps )
 		{
-			User user = Loader.getInstance().getUser( this.getName() );
+			Account user = Loader.getAccountsManager().getAccount( this.getName() );
 			if ( user != null && user.isOp() )
 			{
 				return true;

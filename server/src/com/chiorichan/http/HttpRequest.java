@@ -1,7 +1,18 @@
 package com.chiorichan.http;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.math.NumberUtils;
+
 import com.chiorichan.Loader;
-import com.chiorichan.event.server.ServerVars;
+import com.chiorichan.bus.events.server.ServerVars;
 import com.chiorichan.framework.Framework;
 import com.chiorichan.framework.Site;
 import com.chiorichan.util.Common;
@@ -9,16 +20,6 @@ import com.chiorichan.util.Versioning;
 import com.google.common.collect.Maps;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.Validate;
-import org.apache.commons.lang3.math.NumberUtils;
 
 public class HttpRequest
 {
@@ -161,10 +162,17 @@ public class HttpRequest
 	
 	public String getDomain()
 	{
-		String domain = http.getRequestHeaders().get( "Host" ).get( 0 );
-		domain = domain.split( "\\:" )[0];
-		
-		return domain;
+		try
+		{
+			String domain = http.getRequestHeaders().get( "Host" ).get( 0 );
+			domain = domain.split( "\\:" )[0];
+			
+			return domain;
+		}
+		catch ( NullPointerException e )
+		{
+			return "";
+		}
 	}
 	
 	public String getParentDomain()

@@ -10,8 +10,8 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 import com.chiorichan.Loader;
-import com.chiorichan.event.server.ServiceRegisterEvent;
-import com.chiorichan.event.server.ServiceUnregisterEvent;
+import com.chiorichan.bus.events.server.ServiceRegisterEvent;
+import com.chiorichan.bus.events.server.ServiceUnregisterEvent;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 

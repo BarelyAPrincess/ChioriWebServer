@@ -5,8 +5,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import com.chiorichan.event.Event;
-import com.chiorichan.event.Listener;
+import com.chiorichan.bus.events.Event;
+import com.chiorichan.bus.events.Listener;
 
 /**
  * Represents a plugin loader, which handles direct access to specific types

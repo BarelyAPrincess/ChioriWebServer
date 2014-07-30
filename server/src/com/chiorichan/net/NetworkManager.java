@@ -24,7 +24,6 @@ public class NetworkManager
 
 	private static String remoteTcpIp = null;
 	private static Integer remoteTcpPort = -1;
-	private static boolean isClientMode = false;
 
 	public static void initTcpClient() throws StartupException
 	{
@@ -205,11 +204,6 @@ public class NetworkManager
 		}
 	}
 
-	public static boolean isClientMode()
-	{
-		return isClientMode;
-	}
-
 	public static void cleanup()
 	{
 		if ( httpServer != null )
@@ -219,11 +213,6 @@ public class NetworkManager
 			tcpConnection.stop();
 	}
 
-	public static void setClientMode( boolean clientMode )
-	{
-		isClientMode = clientMode;
-	}
-
 	public static EndPoint getTcpConnection()
 	{
 		return tcpConnection;
@@ -231,17 +220,11 @@ public class NetworkManager
 
 	public static Server getTcpServer()
 	{
-		if ( isClientMode )
-			return null;
-
 		return (Server) tcpConnection;
 	}
 
 	public static Client getTcpClient()
 	{
-		if ( !isClientMode )
-			return null;
-
 		return (Client) tcpConnection;
 	}
 
@@ -258,9 +241,6 @@ public class NetworkManager
 	 */
 	public static void sendTCP( Packet packet )
 	{
-		if ( isClientMode )
-			((Client) tcpConnection).sendTCP( packet );
-		else
-			((Server) tcpConnection).sendToAllTCP( packet );
+		((Server) tcpConnection).sendToAllTCP( packet );
 	}
 }

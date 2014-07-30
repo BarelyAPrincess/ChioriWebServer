@@ -5,8 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.chiorichan.account.bases.Account;
 import com.chiorichan.plugin.Plugin;
-import com.chiorichan.user.User;
 
 /**
  * A ConversationFactory is responsible for creating a {@link Conversation} from a predefined template. A
@@ -196,7 +196,7 @@ public class ConversationFactory
 	public Conversation buildConversation( Conversable forWhom )
 	{
 		// Abort conversation construction if we aren't supposed to talk to non-players
-		if ( playerOnlyMessage != null && !( forWhom instanceof User ) )
+		if ( playerOnlyMessage != null && !( forWhom instanceof Account ) )
 		{
 			return new Conversation( plugin, forWhom, new NotPlayerMessagePrompt() );
 		}

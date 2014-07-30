@@ -5,8 +5,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.chiorichan.account.bases.Account;
 import com.chiorichan.plugin.Plugin;
-import com.chiorichan.user.User;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSet.Builder;
 
@@ -519,7 +519,7 @@ public class StandardMessenger implements Messenger
 		}
 	}
 	
-	public void dispatchIncomingMessage( User source, String channel, byte[] message )
+	public void dispatchIncomingMessage( Account source, String channel, byte[] message )
 	{
 		if ( source == null )
 		{

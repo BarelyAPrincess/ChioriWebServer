@@ -16,11 +16,10 @@ public class ServerShutdownThread extends Thread
 	{
 		try
 		{
-			Command.broadcastCommandMessage( Loader.getConsole(), "Stopping the server... Goodbye!" );
-			System.out.println( "Stopping the server... Goodbye!" );
+			Command.broadcastCommandMessage( Loader.getConsole().getConsoleReader(), "Stopping the server... Goodbye!" );
 			
-			if ( server.isRunning() )
-				Loader.stop();
+			if ( Loader.isRunning() )
+				Loader.stop( "Stopping the server... Goodbye!" );
 		}
 		catch ( Exception ex )
 		{

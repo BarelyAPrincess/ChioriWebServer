@@ -2,7 +2,7 @@ package ru.tehkode.permissions.events;
 
 import ru.tehkode.permissions.PermissionEntity;
 
-import com.chiorichan.event.HandlerList;
+import com.chiorichan.bus.events.HandlerList;
 
 public class PermissionEntityEvent extends PermissionEvent
 {

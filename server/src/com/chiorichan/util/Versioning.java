@@ -18,7 +18,7 @@ public class Versioning
 		InputStream is = null;
 		try
 		{
-			is = Loader.class.getClassLoader().getResourceAsStream( ( Loader.extendedOpt.altMetadata == null ) ? "com/chiorichan/metadata.properties" : Loader.extendedOpt.altMetadata );
+			is = Loader.class.getClassLoader().getResourceAsStream( "com/chiorichan/metadata.properties" );
 			metadata.load( is );
 		}
 		catch ( IOException e )

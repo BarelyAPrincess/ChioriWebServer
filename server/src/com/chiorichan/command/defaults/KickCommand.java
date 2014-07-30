@@ -2,9 +2,9 @@ package com.chiorichan.command.defaults;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
+import com.chiorichan.account.bases.Account;
+import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.command.Command;
-import com.chiorichan.command.CommandSender;
-import com.chiorichan.user.User;
 
 public class KickCommand extends VanillaCommand
 {
@@ -17,9 +17,9 @@ public class KickCommand extends VanillaCommand
 	}
 	
 	@Override
-	public boolean execute( CommandSender sender, String currentAlias, String[] args )
+	public boolean execute( SentientHandler sender, String currentAlias, String[] args )
 	{
-		if ( !testPermission( sender ) )
+		if ( !testPermission( sender.getSentient() ) )
 			return true;
 		if ( args.length < 1 || args[0].length() == 0 )
 		{
@@ -27,7 +27,7 @@ public class KickCommand extends VanillaCommand
 			return false;
 		}
 		
-		User user = Loader.getInstance().getUserExact( args[0] );
+		Account user = Loader.getAccountsManager().getAccount( args[0] );
 		
 		if ( user != null )
 		{

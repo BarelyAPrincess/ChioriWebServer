@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import com.chiorichan.Loader;
+import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.command.defaults.BanCommand;
 import com.chiorichan.command.defaults.BanIpCommand;
 import com.chiorichan.command.defaults.BanListCommand;
@@ -210,7 +211,7 @@ public class CommandMap
 	/**
 	 * {@inheritDoc}
 	 */
-	public boolean dispatch( CommandSender sender, String commandLine ) throws CommandException
+	public boolean dispatch( SentientHandler sender, String commandLine ) throws CommandException
 	{
 		String[] args = PATTERN_ON_SPACE.split( commandLine );
 		
@@ -274,7 +275,7 @@ public class CommandMap
 	
 	public void registerServerAliases()
 	{
-		Map<String, String[]> values = Loader.getInstance().getCommandAliases();
+		Map<String, String[]> values = Loader.getModuleBus().getCommandAliases();
 		
 		for ( String alias : values.keySet() )
 		{

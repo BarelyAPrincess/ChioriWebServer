@@ -11,7 +11,7 @@ import ru.tehkode.utils.StringUtils;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
-import com.chiorichan.command.CommandSender;
+import com.chiorichan.account.bases.Sentient;
 import com.chiorichan.framework.Site;
 import com.chiorichan.plugin.Plugin;
 
@@ -19,9 +19,9 @@ public class SiteCommands extends PermissionsCommand
 {
 	
 	@Command( name = "pex", syntax = "sites", description = "Print loaded sites", isPrimary = true, permission = "permissions.manage.sites" )
-	public void sitesTree( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void sitesTree( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
-		List<Site> sites = Loader.getInstance().getSites();
+		List<Site> sites = Loader.getSiteManager().getSites();
 		
 		PermissionManager manager = PermissionsEx.getPermissionManager();
 		
@@ -40,11 +40,11 @@ public class SiteCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "site <site>", description = "Print <site> inheritance info", permission = "permissions.manage.sites" )
-	public void sitePrintInheritance( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void sitePrintInheritance( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
 		PermissionManager manager = PermissionsEx.getPermissionManager();
-		if ( Loader.getInstance().getSiteById( siteName ) == null )
+		if ( Loader.getSiteManager().getSiteById( siteName ) == null )
 		{
 			sender.sendMessage( "Specified site \"" + args.get( "site" ) + "\" not found." );
 			return;
@@ -73,11 +73,11 @@ public class SiteCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "site <site> inherit <parentSites>", description = "Set <parentSites> for <site>", permission = "permissions.manage.sites.inheritance" )
-	public void siteSetInheritance( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void siteSetInheritance( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
 		PermissionManager manager = PermissionsEx.getPermissionManager();
-		if ( Loader.getInstance().getSiteById( siteName ) == null )
+		if ( Loader.getSiteManager().getSiteById( siteName ) == null )
 		{
 			sender.sendMessage( "Specified site \"" + args.get( "site" ) + "\" not found." );
 			return;

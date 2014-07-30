@@ -1,9 +1,9 @@
 package com.chiorichan.plugin;
 
-import com.chiorichan.event.Event;
-import com.chiorichan.event.EventException;
-import com.chiorichan.event.EventPriority;
-import com.chiorichan.event.Listener;
+import com.chiorichan.bus.bases.EventException;
+import com.chiorichan.bus.events.Event;
+import com.chiorichan.bus.events.EventPriority;
+import com.chiorichan.bus.events.Listener;
 
 /**
  * Extends RegisteredListener to include timing information

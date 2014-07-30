@@ -450,7 +450,7 @@ public class SQLBackend extends PermissionBackend
 		
 		// Site-inheritance
 		writer.append( "/* Site Inheritance */\n" );
-		for ( Site site : Loader.getInstance().getSites() )
+		for ( Site site : Loader.getSiteManager().getSites() )
 		{
 			String[] parentSites = manager.getSiteInheritance( site.getName() );
 			if ( parentSites.length == 0 )

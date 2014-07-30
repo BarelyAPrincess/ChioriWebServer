@@ -435,7 +435,7 @@ public class FileBackend extends PermissionBackend
 		}
 		
 		// Site inheritance
-		for ( Site site : Loader.getInstance().getSites() )
+		for ( Site site : Loader.getSiteManager().getSites() )
 		{
 			String[] parentSites = manager.getSiteInheritance( site.getName() );
 			if ( parentSites.length == 0 )

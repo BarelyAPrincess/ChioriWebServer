@@ -1,6 +1,6 @@
 package com.chiorichan.framework;
 
-import com.chiorichan.user.User;
+import com.chiorichan.account.bases.Account;
 
 /**
  * User Service Wrapper allows scripts to safely access the User API without threat of getting NullPointers. 
@@ -9,9 +9,9 @@ import com.chiorichan.user.User;
  */
 public class UserServiceWrapper
 {
-	protected User currentUser;
+	protected Account currentUser;
 	
-	public UserServiceWrapper(User _currentUser)
+	public UserServiceWrapper(Account _currentUser)
 	{
 		currentUser = _currentUser;
 	}

@@ -5,8 +5,13 @@ import java.util.List;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
-import com.chiorichan.command.CommandSender;
-import com.chiorichan.command.ConsoleCommandSender;
+import com.chiorichan.account.bases.Sentient;
+import com.chiorichan.account.bases.SentientHandler;
+import com.chiorichan.bus.events.EventHandler;
+import com.chiorichan.bus.events.EventPriority;
+import com.chiorichan.bus.events.Listener;
+import com.chiorichan.bus.events.account.AccountLoginEvent;
+import com.chiorichan.plugin.anon.AnonymousPlugin;
 import com.chiorichan.updater.BuildArtifact.ChangeSet.ChangeSetDetails;
 import com.chiorichan.util.Versioning;
 
@@ -30,6 +35,21 @@ public class AutoUpdater
 		instance = this;
 		this.service = service;
 		this.channel = channel;
+		
+		Loader.getEventBus().registerEvents( new UpdaterEvents(), new AnonymousPlugin( this ) );
+	}
+	
+	private class UpdaterEvents implements Listener
+	{
+		@EventHandler( priority = EventPriority.NORMAL )
+		public void onAccountLoginEvent( AccountLoginEvent event )
+		{
+			if ( ( Loader.getAutoUpdater().isEnabled() ) && ( Loader.getAutoUpdater().getCurrent() != null ) && ( event.getAccount().hasPermission( Loader.BROADCAST_CHANNEL_ADMINISTRATIVE ) ) )
+				if ( ( Loader.getAutoUpdater().getCurrent().isBroken() ) && ( Loader.getAutoUpdater().getOnBroken().contains( AutoUpdater.WARN_OPERATORS ) ) )
+					event.getAccount().sendMessage( ChatColor.DARK_RED + "The version of Chiori Web Server that this server is running is known to be broken. Please consider updating to the latest version at dl.bukkit.org." );
+				else if ( ( Loader.getAutoUpdater().isUpdateAvailable() ) && ( Loader.getAutoUpdater().getOnUpdate().contains( AutoUpdater.WARN_OPERATORS ) ) )
+					event.getAccount().sendMessage( ChatColor.DARK_PURPLE + "The version of Chiori Web Server that this server is running is out of date. Please consider updating to the latest version at dl.bukkit.org." );
+		}
 	}
 	
 	public String getChannel()
@@ -91,10 +111,10 @@ public class AutoUpdater
 	
 	public void check()
 	{
-		check( Loader.getConsole() );
+		check( Loader.getConsole().getConsoleReader() );
 	}
 	
-	public void check( final CommandSender sender )
+	public void check( final SentientHandler sender )
 	{
 		final String currentSlug = Versioning.getBuildNumber();
 		
@@ -164,21 +184,23 @@ public class AutoUpdater
 					sender.sendMessage( ChatColor.YELLOW + "Download: " + latest.getFile() );
 					sender.sendMessage( ChatColor.YELLOW + "----- ------------------- -----" );
 				}/*
-				else if ( ( current != null ) && ( shouldSuggestChannels() ) )
-				{
-					ArtifactDetails.ChannelDetails prefChan = service.getChannel( channel, "preferred channel details" );
-					
-					if ( ( prefChan != null ) && ( current.getChannel().getPriority() < prefChan.getPriority() ) )
-					{
-						sender.sendMessage( ChatColor.AQUA + "----- Chiori Auto Updater -----" );
-						sender.sendMessage( ChatColor.AQUA + "It appears that you're running a " + current.getChannel().getName() + ", when you've specified in chiori.yml that you prefer to run " + prefChan.getName() + "s." );
-						sender.sendMessage( ChatColor.AQUA + "If you would like to be kept informed about new " + current.getChannel().getName() + " releases, it is recommended that you change 'preferred-channel' in your chiori.yml to '" + current.getChannel().getSlug() + "'." );
-						sender.sendMessage( ChatColor.AQUA + "With that set, you will be told whenever a new version is available for download, so that you can always keep up to date and secure with the latest fixes." );
-						sender.sendMessage( ChatColor.AQUA + "If you would like to disable this warning, simply set 'suggest-channels' to false in chiori.yml." );
-						sender.sendMessage( ChatColor.AQUA + "----- ------------------- -----" );
-					}
-				}*/
-				else if ( !(sender instanceof ConsoleCommandSender) )
+				 * else if ( ( current != null ) && ( shouldSuggestChannels() ) )
+				 * {
+				 * ArtifactDetails.ChannelDetails prefChan = service.getChannel( channel, "preferred channel details" );
+				 * if ( ( prefChan != null ) && ( current.getChannel().getPriority() < prefChan.getPriority() ) )
+				 * {
+				 * sender.sendMessage( ChatColor.AQUA + "----- Chiori Auto Updater -----" );
+				 * sender.sendMessage( ChatColor.AQUA + "It appears that you're running a " + current.getChannel().getName() + ", when you've specified in chiori.yml that you prefer to run " + prefChan.getName() + "s." );
+				 * sender.sendMessage( ChatColor.AQUA + "If you would like to be kept informed about new " + current.getChannel().getName() + " releases, it is recommended that you change 'preferred-channel' in your chiori.yml to '" +
+				 * current.getChannel().getSlug() + "'." );
+				 * sender.sendMessage( ChatColor.AQUA + "With that set, you will be told whenever a new version is available for download, so that you can always keep up to date and secure with the latest fixes." );
+				 * sender.sendMessage( ChatColor.AQUA + "If you would like to disable this warning, simply set 'suggest-channels' to false in chiori.yml." );
+				 * sender.sendMessage( ChatColor.AQUA + "----- ------------------- -----" );
+				 * }
+				 * }
+				 */
+				else
+				// if ( !( sender instanceof ConsoleCommandSender ) )
 				{
 					sender.sendMessage( ChatColor.YELLOW + "----- Chiori Auto Updater -----" );
 					
@@ -193,7 +215,7 @@ public class AutoUpdater
 		}.start();
 	}
 	
-	public void forceUpdate( final CommandSender sender )
+	public void forceUpdate( final SentientHandler sender )
 	{
 		new Thread()
 		{

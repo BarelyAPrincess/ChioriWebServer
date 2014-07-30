@@ -15,13 +15,11 @@ import java.util.logging.Logger;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.Loader;
-import com.chiorichan.Warning.WarningState;
+import com.chiorichan.account.bases.Sentient;
 import com.chiorichan.command.Command;
-import com.chiorichan.command.CommandSender;
 import com.chiorichan.command.PluginCommand;
 import com.chiorichan.configuration.file.FileConfiguration;
 import com.chiorichan.configuration.file.YamlConfiguration;
-import com.chiorichan.plugin.AuthorNagException;
 import com.chiorichan.plugin.PluginBase;
 import com.chiorichan.plugin.PluginDescriptionFile;
 import com.chiorichan.plugin.PluginLoader;
@@ -306,7 +304,7 @@ public abstract class JavaPlugin extends PluginBase
 	/**
 	 * {@inheritDoc}
 	 */
-	public boolean onCommand( CommandSender sender, Command command, String label, String[] args )
+	public boolean onCommand( Sentient sender, Command command, String label, String[] args )
 	{
 		return false;
 	}
@@ -314,7 +312,7 @@ public abstract class JavaPlugin extends PluginBase
 	/**
 	 * {@inheritDoc}
 	 */
-	public List<String> onTabComplete( CommandSender sender, Command command, String alias, String[] args )
+	public List<String> onTabComplete( Sentient sender, Command command, String alias, String[] args )
 	{
 		return null;
 	}
@@ -330,11 +328,11 @@ public abstract class JavaPlugin extends PluginBase
 	public PluginCommand getCommand( String name )
 	{
 		String alias = name.toLowerCase();
-		PluginCommand command = getServer().getPluginCommand( alias );
+		PluginCommand command = Loader.getModuleBus().getPluginCommand( alias );
 		
 		if ( ( command != null ) && ( command.getPlugin() != this ) )
 		{
-			command = getServer().getPluginCommand( description.getName().toLowerCase() + ":" + alias );
+			command = Loader.getModuleBus().getPluginCommand( description.getName().toLowerCase() + ":" + alias );
 		}
 		
 		if ( ( command != null ) && ( command.getPlugin() == this ) )

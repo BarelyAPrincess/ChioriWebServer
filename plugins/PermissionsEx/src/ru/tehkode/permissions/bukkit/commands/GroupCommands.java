@@ -13,14 +13,14 @@ import ru.tehkode.utils.DateUtils;
 import ru.tehkode.utils.StringUtils;
 
 import com.chiorichan.ChatColor;
-import com.chiorichan.command.CommandSender;
+import com.chiorichan.account.bases.Sentient;
 import com.chiorichan.plugin.Plugin;
 
 public class GroupCommands extends PermissionsCommand
 {
 	
 	@Command( name = "pex", syntax = "groups list [site]", permission = "permissions.manage.groups.list", description = "List all registered groups" )
-	public void groupsList( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void groupsList( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		PermissionGroup[] groups = PermissionsEx.getPermissionManager().getGroups();
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -39,19 +39,19 @@ public class GroupCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "groups", permission = "permissions.manage.groups.list", description = "List all registered groups (alias)" )
-	public void groupsListAlias( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void groupsListAlias( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		this.groupsList( plugin, sender, args );
 	}
 	
 	@Command( name = "pex", syntax = "group", permission = "permissions.manage.groups.list", description = "List all registered groups (alias)" )
-	public void groupsListAnotherAlias( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void groupsListAnotherAlias( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		this.groupsList( plugin, sender, args );
 	}
 	
 	@Command( name = "pex", syntax = "group <group> weight [weight]", permission = "permissions.manage.groups.weight.<group>", description = "Print or set group weight" )
-	public void groupPrintSetWeight( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void groupPrintSetWeight( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String groupName = this.autoCompleteGroupName( args.get( "group" ) );
 		
@@ -80,7 +80,7 @@ public class GroupCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "group <group> toggle debug", permission = "permissions.manage.groups.debug.<group>", description = "Toggle debug mode for group" )
-	public void groupToggleDebug( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void groupToggleDebug( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String groupName = this.autoCompleteGroupName( args.get( "group" ) );
 		
@@ -98,7 +98,7 @@ public class GroupCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "group <group> prefix [newprefix] [site]", permission = "permissions.manage.groups.prefix.<group>", description = "Get or set <group> prefix." )
-	public void groupPrefix( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void groupPrefix( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String groupName = this.autoCompleteGroupName( args.get( "group" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -120,7 +120,7 @@ public class GroupCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "group <group> suffix [newsuffix] [site]", permission = "permissions.manage.groups.suffix.<group>", description = "Get or set <group> suffix" )
-	public void groupSuffix( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void groupSuffix( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String groupName = this.autoCompleteGroupName( args.get( "group" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -142,7 +142,7 @@ public class GroupCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "group <group> create [parents]", permission = "permissions.manage.groups.create.<group>", description = "Create <group> and/or set [parents]" )
-	public void groupCreate( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void groupCreate( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		PermissionGroup group = PermissionsEx.getPermissionManager().getGroup( args.get( "group" ) );
 		
@@ -177,7 +177,7 @@ public class GroupCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "group <group> delete", permission = "permissions.manage.groups.remove.<group>", description = "Remove <group>" )
-	public void groupDelete( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void groupDelete( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String groupName = this.autoCompleteGroupName( args.get( "group" ) );
 		
@@ -200,13 +200,13 @@ public class GroupCommands extends PermissionsCommand
 	 * Group inheritance
 	 */
 	@Command( name = "pex", syntax = "group <group> parents [site]", permission = "permissions.manage.groups.inheritance.<group>", description = "List parents for <group> (alias)" )
-	public void groupListParentsAlias( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void groupListParentsAlias( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		this.groupListParents( plugin, sender, args );
 	}
 	
 	@Command( name = "pex", syntax = "group <group> parents list [site]", permission = "permissions.manage.groups.inheritance.<group>", description = "List parents for <group>" )
-	public void groupListParents( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void groupListParents( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String groupName = this.autoCompleteGroupName( args.get( "group" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -235,7 +235,7 @@ public class GroupCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "group <group> parents set <parents> [site]", permission = "permissions.manage.groups.inheritance.<group>", description = "Set parent(s) for <group> (single or comma-separated list)" )
-	public void groupSetParents( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void groupSetParents( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String groupName = this.autoCompleteGroupName( args.get( "group" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -272,7 +272,7 @@ public class GroupCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "group <group> parents add <parents> [site]", permission = "permissions.manage.groups.inheritance.<group>", description = "Set parent(s) for <group> (single or comma-separated list)" )
-	public void groupAddParents( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void groupAddParents( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String groupName = this.autoCompleteGroupName( args.get( "group" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -309,7 +309,7 @@ public class GroupCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "group <group> parents remove <parents> [site]", permission = "permissions.manage.groups.inheritance.<group>", description = "Set parent(s) for <group> (single or comma-separated list)" )
-	public void groupRemoveParents( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void groupRemoveParents( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String groupName = this.autoCompleteGroupName( args.get( "group" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -346,13 +346,13 @@ public class GroupCommands extends PermissionsCommand
 	 * Group permissions
 	 */
 	@Command( name = "pex", syntax = "group <group>", permission = "permissions.manage.groups.permissions.<group>", description = "List all <group> permissions (alias)" )
-	public void groupListAliasPermissions( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void groupListAliasPermissions( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		this.groupListPermissions( plugin, sender, args );
 	}
 	
 	@Command( name = "pex", syntax = "group <group> list [site]", permission = "permissions.manage.groups.permissions.<group>", description = "List all <group> permissions in [site]" )
-	public void groupListPermissions( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void groupListPermissions( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String groupName = this.autoCompleteGroupName( args.get( "group" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -390,7 +390,7 @@ public class GroupCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "group <group> add <permission> [site]", permission = "permissions.manage.groups.permissions.<group>", description = "Add <permission> to <group> in [site]" )
-	public void groupAddPermission( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void groupAddPermission( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String groupName = this.autoCompleteGroupName( args.get( "group" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -411,7 +411,7 @@ public class GroupCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "group <group> set <option> <value> [site]", permission = "permissions.manage.groups.permissions.<group>", description = "Set <option> <value> for <group> in [site]" )
-	public void groupSetOption( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void groupSetOption( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String groupName = this.autoCompleteGroupName( args.get( "group" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -439,7 +439,7 @@ public class GroupCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "group <group> remove <permission> [site]", permission = "permissions.manage.groups.permissions.<group>", description = "Remove <permission> from <group> in [site]" )
-	public void groupRemovePermission( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void groupRemovePermission( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String groupName = this.autoCompleteGroupName( args.get( "group" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -463,7 +463,7 @@ public class GroupCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "group <group> swap <permission> <targetPermission> [site]", permission = "permissions.manage.groups.permissions.<group>", description = "Swap <permission> and <targetPermission> in permission list. Could be number or permission itself" )
-	public void userSwapPermission( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void userSwapPermission( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String groupName = this.autoCompleteGroupName( args.get( "group" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -499,7 +499,7 @@ public class GroupCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "group <group> timed add <permission> [lifetime] [site]", permission = "permissions.manage.groups.permissions.timed.<group>", description = "Add timed <permission> to <group> with [lifetime] in [site]" )
-	public void groupAddTimedPermission( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void groupAddTimedPermission( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String groupName = this.autoCompleteGroupName( args.get( "group" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -528,7 +528,7 @@ public class GroupCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "group <group> timed remove <permission> [site]", permission = "permissions.manage.groups.permissions.timed.<group>", description = "Remove timed <permissions> for <group> in [site]" )
-	public void groupRemoveTimedPermission( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void groupRemoveTimedPermission( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String groupName = this.autoCompleteGroupName( args.get( "group" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -551,7 +551,7 @@ public class GroupCommands extends PermissionsCommand
 	 * Group users management
 	 */
 	@Command( name = "pex", syntax = "group <group> users", permission = "permissions.manage.membership.<group>", description = "List all users in <group>" )
-	public void groupUsersList( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void groupUsersList( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String groupName = this.autoCompleteGroupName( args.get( "group" ) );
 		
@@ -571,7 +571,7 @@ public class GroupCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "group <group> user add <user> [site]", permission = "permissions.manage.membership.<group>", description = "Add <user> (single or comma-separated list) to <group>" )
-	public void groupUsersAdd( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void groupUsersAdd( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String groupName = this.autoCompleteGroupName( args.get( "group" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -606,7 +606,7 @@ public class GroupCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "group <group> user remove <user> [site]", permission = "permissions.manage.membership.<group>", description = "Add <user> (single or comma-separated list) to <group>" )
-	public void groupUsersRemove( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void groupUsersRemove( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String groupName = this.autoCompleteGroupName( args.get( "group" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
@@ -642,7 +642,7 @@ public class GroupCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "default group [site]", permission = "permissions.manage.groups.inheritance", description = "Print default group for specified site" )
-	public void groupDefaultCheck( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void groupDefaultCheck( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
 		
@@ -651,7 +651,7 @@ public class GroupCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "set default group <group> [site]", permission = "permissions.manage.groups.inheritance", description = "Set default group for specified site" )
-	public void groupDefaultSet( Plugin plugin, CommandSender sender, Map<String, String> args )
+	public void groupDefaultSet( Plugin plugin, Sentient sender, Map<String, String> args )
 	{
 		String groupName = this.autoCompleteGroupName( args.get( "group" ) );
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );

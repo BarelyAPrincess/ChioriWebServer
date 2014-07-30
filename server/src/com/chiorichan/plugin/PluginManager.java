@@ -12,7 +12,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.WeakHashMap;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -20,40 +19,118 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.Loader;
+import com.chiorichan.account.bases.Sentient;
+import com.chiorichan.bus.events.HandlerList;
 import com.chiorichan.command.Command;
 import com.chiorichan.command.CommandMap;
+import com.chiorichan.command.PluginCommand;
 import com.chiorichan.command.PluginCommandYamlParser;
-import com.chiorichan.event.HandlerList;
+import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.permissions.Permissible;
 import com.chiorichan.permissions.Permission;
-import com.chiorichan.permissions.PermissionDefault;
+import com.chiorichan.permissions.helpers.DefaultPermissions;
+import com.chiorichan.plugin.anon.AnonymousLoader;
+import com.chiorichan.plugin.groovy.GroovyPluginLoader;
+import com.chiorichan.plugin.java.JavaPluginLoader;
 import com.chiorichan.util.FileUtil;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableList;
 
 /**
  * Handles all plugin management from the Server
  */
 public final class PluginManager
 {
-	private final Loader server;
 	private final Map<Pattern, PluginLoader> fileAssociations = new HashMap<Pattern, PluginLoader>();
 	private final List<Plugin> plugins = new ArrayList<Plugin>();
 	private final Map<String, Plugin> lookupNames = new HashMap<String, Plugin>();
 	private static File updateDirectory = null;
-	private final CommandMap commandMap;
-	private final Map<String, Permission> permissions = new HashMap<String, Permission>();
-	private final Map<Boolean, Set<Permission>> defaultPerms = new LinkedHashMap<Boolean, Set<Permission>>();
-	private final Map<String, Map<Permissible, Boolean>> permSubs = new HashMap<String, Map<Permissible, Boolean>>();
-	private final Map<Boolean, Map<Permissible, Boolean>> defSubs = new HashMap<Boolean, Map<Permissible, Boolean>>();
 	private Set<String> loadedPlugins = new HashSet<String>();
+	private PluginLoadOrder currentState = PluginLoadOrder.INITIALIZATION;
+	private AnonymousLoader anonLoader;
 	
-	public PluginManager(Loader instance, CommandMap commandMap)
+	private final static CommandMap commandMap = new CommandMap();
+	
+	private static PluginManager instance;
+	
+	public PluginManager()
 	{
-		server = instance;
-		this.commandMap = commandMap;
+		instance = this;
+	}
+	
+	public void init()
+	{
 		
-		defaultPerms.put( true, new HashSet<Permission>() );
-		defaultPerms.put( false, new HashSet<Permission>() );
+	}
+	
+	public static PluginManager getInstance()
+	{
+		return instance;
+	}
+	
+	public static CommandMap getCommandMap()
+	{
+		return commandMap;
+	}
+	
+	public void shutdown()
+	{
+		clearPlugins();
+		commandMap.clearCommands();
+	}
+	
+	public void enablePlugins( PluginLoadOrder type )
+	{
+		currentState = type;
+		
+		Plugin[] plugins = getPlugins();
+		
+		for ( Plugin plugin : plugins )
+		{
+			if ( ( !plugin.isEnabled() ) && ( plugin.getDescription().getLoad() == type ) )
+				loadPlugin( plugin );
+		}
+		
+		if ( type == PluginLoadOrder.POSTSERVER )
+		{
+			commandMap.registerServerAliases();
+			Loader.getPermissionsBus().loadCustomPermissions();
+			DefaultPermissions.registerCorePermissions();
+		}
+	}
+	
+	public void loadPlugins()
+	{
+		registerInterface( JavaPluginLoader.class );
+		registerInterface( GroovyPluginLoader.class );
+		
+		anonLoader = new AnonymousLoader();
+		
+		File pluginFolder = (File) Loader.getOptions().valueOf( "plugins" );
+		
+		if ( pluginFolder.exists() )
+		{
+			Plugin[] plugins = loadPlugins( pluginFolder );
+			for ( Plugin plugin : plugins )
+			{
+				try
+				{
+					String message = String.format( "Loading %s", plugin.getDescription().getFullName() );
+					Loader.getLogger().info( message );
+					plugin.onLoad();
+				}
+				catch ( Throwable ex )
+				{
+					Loader.getLogger().log( Level.SEVERE, ex.getMessage() + " initializing " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
+				}
+			}
+		}
+		else
+			pluginFolder.mkdir();
+	}
+	
+	public PluginLoadOrder getCurrentLoadState()
+	{
+		return currentState;
 	}
 	
 	/**
@@ -82,7 +159,7 @@ public final class PluginManager
 				try
 				{
 					constructor = loader.getConstructor( Loader.class );
-					instance = constructor.newInstance( server );
+					instance = constructor.newInstance( Loader.getInstance() );
 				}
 				catch ( NoSuchMethodException ex1 )
 				{
@@ -131,9 +208,9 @@ public final class PluginManager
 		List<Plugin> result = new ArrayList<Plugin>();
 		Set<Pattern> filters = fileAssociations.keySet();
 		
-		if ( !( server.getUpdateFolder().equals( "" ) ) )
+		if ( !( Loader.getInstance().getUpdateFolder().equals( "" ) ) )
 		{
-			updateDirectory = new File( directory, server.getUpdateFolder() );
+			updateDirectory = new File( directory, Loader.getInstance().getUpdateFolder() );
 		}
 		
 		Map<String, File> plugins = new HashMap<String, File>();
@@ -511,7 +588,7 @@ public final class PluginManager
 			
 			try
 			{
-				server.getServicesManager().unregisterAll( plugin );
+				Loader.getServicesManager().unregisterAll( plugin );
 			}
 			catch ( Throwable ex )
 			{
@@ -529,8 +606,8 @@ public final class PluginManager
 			
 			try
 			{
-				server.getMessenger().unregisterIncomingPluginChannel( plugin );
-				server.getMessenger().unregisterOutgoingPluginChannel( plugin );
+				Loader.getMessenger().unregisterIncomingPluginChannel( plugin );
+				Loader.getMessenger().unregisterOutgoingPluginChannel( plugin );
 			}
 			catch ( Throwable ex )
 			{
@@ -548,177 +625,16 @@ public final class PluginManager
 			lookupNames.clear();
 			HandlerList.unregisterAll();
 			fileAssociations.clear();
-			permissions.clear();
-			defaultPerms.get( true ).clear();
-			defaultPerms.get( false ).clear();
 		}
 	}
 	
-	public Permission getPermission( String name )
-	{
-		return permissions.get( name.toLowerCase() );
-	}
-	
-	public void addPermission( Permission perm )
-	{
-		String name = perm.getName().toLowerCase();
-		
-		if ( permissions.containsKey( name ) )
-		{
-			throw new IllegalArgumentException( "The permission " + name + " is already defined!" );
-		}
-		
-		permissions.put( name, perm );
-		calculatePermissionDefault( perm );
-	}
-	
-	public Set<Permission> getDefaultPermissions( boolean op )
-	{
-		return ImmutableSet.copyOf( defaultPerms.get( op ) );
-	}
-	
-	public void removePermission( Permission perm )
-	{
-		removePermission( perm.getName() );
-	}
-	
-	public void removePermission( String name )
-	{
-		permissions.remove( name.toLowerCase() );
-	}
-	
-	public void recalculatePermissionDefaults( Permission perm )
-	{
-		if ( permissions.containsValue( perm ) )
-		{
-			defaultPerms.get( true ).remove( perm );
-			defaultPerms.get( false ).remove( perm );
-			
-			calculatePermissionDefault( perm );
-		}
-	}
-	
-	private void calculatePermissionDefault( Permission perm )
-	{
-		if ( ( perm.getDefault() == PermissionDefault.OP ) || ( perm.getDefault() == PermissionDefault.TRUE ) )
-		{
-			defaultPerms.get( true ).add( perm );
-			dirtyPermissibles( true );
-		}
-		if ( ( perm.getDefault() == PermissionDefault.NOT_OP ) || ( perm.getDefault() == PermissionDefault.TRUE ) )
-		{
-			defaultPerms.get( false ).add( perm );
-			dirtyPermissibles( false );
-		}
-	}
-	
-	private void dirtyPermissibles( boolean op )
-	{
-		Set<Permissible> permissibles = getDefaultPermSubscriptions( op );
-		
-		for ( Permissible p : permissibles )
-		{
-			p.recalculatePermissions();
-		}
-	}
-	
-	public void subscribeToPermission( String permission, Permissible permissible )
-	{
-		String name = permission.toLowerCase();
-		Map<Permissible, Boolean> map = permSubs.get( name );
-		
-		if ( map == null )
-		{
-			map = new WeakHashMap<Permissible, Boolean>();
-			permSubs.put( name, map );
-		}
-		
-		map.put( permissible, true );
-	}
-	
-	public void unsubscribeFromPermission( String permission, Permissible permissible )
-	{
-		String name = permission.toLowerCase();
-		Map<Permissible, Boolean> map = permSubs.get( name );
-		
-		if ( map != null )
-		{
-			map.remove( permissible );
-			
-			if ( map.isEmpty() )
-			{
-				permSubs.remove( name );
-			}
-		}
-	}
-	
-	public Set<Permissible> getPermissionSubscriptions( String permission )
-	{
-		String name = permission.toLowerCase();
-		Map<Permissible, Boolean> map = permSubs.get( name );
-		
-		if ( map == null )
-		{
-			return ImmutableSet.of();
-		}
-		else
-		{
-			return ImmutableSet.copyOf( map.keySet() );
-		}
-	}
-	
-	public void subscribeToDefaultPerms( boolean op, Permissible permissible )
-	{
-		Map<Permissible, Boolean> map = defSubs.get( op );
-		
-		if ( map == null )
-		{
-			map = new WeakHashMap<Permissible, Boolean>();
-			defSubs.put( op, map );
-		}
-		
-		map.put( permissible, true );
-	}
-	
-	public void unsubscribeFromDefaultPerms( boolean op, Permissible permissible )
-	{
-		Map<Permissible, Boolean> map = defSubs.get( op );
-		
-		if ( map != null )
-		{
-			map.remove( permissible );
-			
-			if ( map.isEmpty() )
-			{
-				defSubs.remove( op );
-			}
-		}
-	}
-	
-	public Set<Permissible> getDefaultPermSubscriptions( boolean op )
-	{
-		Map<Permissible, Boolean> map = defSubs.get( op );
-		
-		if ( map == null )
-		{
-			return ImmutableSet.of();
-		}
-		else
-		{
-			return ImmutableSet.copyOf( map.keySet() );
-		}
-	}
-	
-	public Set<Permission> getPermissions()
-	{
-		return new HashSet<Permission>( permissions.values() );
-	}
+
 	
 	public Plugin getPluginbyName( String pluginPath )
 	{
 		try
 		{
-			for ( Plugin plugin1 : Loader.getPluginManager().getPlugins() )
+			for ( Plugin plugin1 : getPlugins() )
 			{
 				if ( plugin1.getClass().toString().substring( 6 ).equals( pluginPath ) || plugin1.getClass().getName().equals( pluginPath ) )
 					return plugin1;
@@ -730,5 +646,90 @@ public final class PluginManager
 		}
 		
 		return null;
+	}
+	
+	public int broadcastMessage( String message )
+	{
+		return broadcast( message, Loader.BROADCAST_CHANNEL_USERS );
+	}
+	
+	public int broadcast( String message, String permission )
+	{
+		int count = 0;
+		Set<Permissible> permissibles = Loader.getPermissionsBus().getPermissionSubscriptions( permission );
+		
+		for ( Permissible permissible : permissibles )
+		{
+			if ( permissible instanceof Sentient && permissible.hasPermission( permission ) )
+			{
+				Sentient user = (Sentient) permissible;
+				user.sendMessage( message );
+				count++;
+			}
+		}
+		
+		return count;
+	}
+	
+	public Map<String, String[]> getCommandAliases()
+	{
+		ConfigurationSection section = Loader.getConfig().getConfigurationSection( "aliases" );
+		Map<String, String[]> result = new LinkedHashMap<String, String[]>();
+		
+		if ( section != null )
+			for ( String key : section.getKeys( false ) )
+			{
+				List<String> commands;
+				
+				if ( section.isList( key ) )
+					commands = section.getStringList( key );
+				else
+					commands = ImmutableList.of( section.getString( key ) );
+				
+				result.put( key, commands.toArray( new String[commands.size()] ) );
+			}
+		
+		return result;
+	}
+	
+	public PluginCommand getPluginCommand( String name )
+	{
+		Command command = commandMap.getCommand( name );
+		
+		if ( command instanceof PluginCommand )
+			return (PluginCommand) command;
+		else
+			return null;
+	}
+	
+	private void loadPlugin( Plugin plugin )
+	{
+		try
+		{
+			enablePlugin( plugin );
+			
+			List<Permission> perms = plugin.getDescription().getPermissions();
+			
+			for ( Permission perm : perms )
+			{
+				try
+				{
+					Loader.getPermissionsBus().addPermission( perm );
+				}
+				catch ( IllegalArgumentException ex )
+				{
+					Loader.getLogger().log( Level.WARNING, "Plugin " + plugin.getDescription().getFullName() + " tried to register permission '" + perm.getName() + "' but it's already registered", ex );
+				}
+			}
+		}
+		catch ( Throwable ex )
+		{
+			Loader.getLogger().log( Level.SEVERE, ex.getMessage() + " loading " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
+		}
+	}
+	
+	public AnonymousLoader getAnonLoader()
+	{
+		return anonLoader;
 	}
 }

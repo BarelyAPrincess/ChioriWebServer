@@ -62,7 +62,7 @@ public class DatabaseEngine extends SqlConnector
 		{
 			Map<String, Object> whereMap = (Map<String, Object>) where;
 			
-			String tmp = "", opr = "";//, opr2 = "";
+			String tmp = "", opr = "";// , opr2 = "";
 			
 			for ( Entry<String, Object> entry : whereMap.entrySet() )
 			{
@@ -79,7 +79,7 @@ public class DatabaseEngine extends SqlConnector
 					
 					for ( Entry<String, Object> entry2 : val.entrySet() )
 					{
-						//opr2 = "AND";
+						// opr2 = "AND";
 						if ( entry.getKey().indexOf( "|" ) >= 0 )
 							opr = "OR";
 						if ( entry.getKey().indexOf( "&" ) >= 0 )
@@ -272,7 +272,7 @@ public class DatabaseEngine extends SqlConnector
 		{
 			Map<String, Object> whereMap = (Map<String, Object>) where;
 			
-			String tmp = "", opr = "";//, opr2 = "";
+			String tmp = "", opr = "";// , opr2 = "";
 			
 			for ( Entry<String, Object> entry : whereMap.entrySet() )
 			{
@@ -289,7 +289,7 @@ public class DatabaseEngine extends SqlConnector
 					
 					for ( Entry<String, Object> entry2 : val.entrySet() )
 					{
-						//opr2 = "AND";
+						// opr2 = "AND";
 						if ( entry.getKey().indexOf( "|" ) >= 0 )
 							opr = "OR";
 						if ( entry.getKey().indexOf( "&" ) >= 0 )
@@ -338,7 +338,15 @@ public class DatabaseEngine extends SqlConnector
 		if ( !disableInjectionCheck )
 			SQLInjectionDetection( query );
 		
-		int result = queryUpdate( query );
+		int result = 0;
+		try
+		{
+			result = queryUpdate( query );
+		}
+		catch ( SQLException e )
+		{
+			e.printStackTrace();
+		}
 		
 		if ( result > 0 )
 		{
@@ -362,7 +370,7 @@ public class DatabaseEngine extends SqlConnector
 	{
 		String whr = "";
 		
-		String tmp = "", opr = "";//, opr2 = "";
+		String tmp = "", opr = "";// , opr2 = "";
 		
 		for ( Entry<String, Object> entry : where.entrySet() )
 		{
@@ -379,7 +387,7 @@ public class DatabaseEngine extends SqlConnector
 				
 				for ( Entry<String, Object> entry2 : val.entrySet() )
 				{
-					//opr2 = "AND";
+					// opr2 = "AND";
 					if ( entry.getKey().indexOf( "|" ) >= 0 )
 						opr = "OR";
 					if ( entry.getKey().indexOf( "&" ) >= 0 )
@@ -421,7 +429,15 @@ public class DatabaseEngine extends SqlConnector
 		if ( limit > 0 )
 			lmt = " LIMIT 1";
 		
-		int i = queryUpdate( "DELETE FROM `" + table + "` WHERE " + where + lmt + ";" );
+		int i = 0;
+		try
+		{
+			i = queryUpdate( "DELETE FROM `" + table + "` WHERE " + where + lmt + ";" );
+		}
+		catch ( SQLException e )
+		{
+			e.printStackTrace();
+		}
 		
 		Loader.getLogger().fine( "Deleting from table " + table + " where " + where + " " + i );
 		
@@ -476,7 +492,15 @@ public class DatabaseEngine extends SqlConnector
 		if ( !disableInjectionCheck && query.length() < 255 )
 			SQLInjectionDetection( query );
 		
-		int result = queryUpdate( query );
+		int result = 0;
+		try
+		{
+			result = queryUpdate( query );
+		}
+		catch ( SQLException e )
+		{
+			e.printStackTrace();
+		}
 		
 		if ( result > 0 )
 		{

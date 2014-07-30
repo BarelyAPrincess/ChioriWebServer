@@ -11,50 +11,21 @@ import java.util.logging.Level;
 import com.chiorichan.Loader;
 import com.chiorichan.plugin.Plugin;
 
-/**
- * Base Permissible for use in any Permissible object via proxy or extension
- */
-public class PermissibleBase implements Permissible
+public class PermissibleBase extends Permissible
 {
-	private ServerOperator opable = null;
 	private Permissible parent = this;
 	private final List<PermissionAttachment> attachments = new LinkedList<PermissionAttachment>();
 	private final Map<String, PermissionAttachmentInfo> permissions = new HashMap<String, PermissionAttachmentInfo>();
 	
-	public PermissibleBase(ServerOperator opable)
+	public PermissibleBase( Permissible p )
 	{
-		this.opable = opable;
-		
-		if ( opable instanceof Permissible )
-		{
-			this.parent = (Permissible) opable;
-		}
-		
+		parent = p;
 		recalculatePermissions();
 	}
 	
 	public boolean isOp()
 	{
-		if ( opable == null )
-		{
-			return false;
-		}
-		else
-		{
-			return opable.isOp();
-		}
-	}
-	
-	public void setOp( boolean value )
-	{
-		if ( opable == null )
-		{
-			throw new UnsupportedOperationException( "Cannot change op value as no ServerOperator is set" );
-		}
-		else
-		{
-			opable.setOp( value );
-		}
+		return Loader.getAccountsManager().isOp( parent.getId() );
 	}
 	
 	public boolean isPermissionSet( String name )
@@ -92,7 +63,7 @@ public class PermissibleBase implements Permissible
 		}
 		else
 		{
-			Permission perm = Loader.getPluginManager().getPermission( name );
+			Permission perm = Loader.getPermissionsManager().getPermission( name );
 			
 			if ( perm != null )
 			{
@@ -191,14 +162,14 @@ public class PermissibleBase implements Permissible
 	public void recalculatePermissions()
 	{
 		clearPermissions();
-		Set<Permission> defaults = Loader.getPluginManager().getDefaultPermissions( isOp() );
-		Loader.getPluginManager().subscribeToDefaultPerms( isOp(), parent );
+		Set<Permission> defaults = Loader.getPermissionsManager().getDefaultPermissions( isOp() );
+		Loader.getPermissionsManager().subscribeToDefaultPerms( isOp(), parent );
 		
 		for ( Permission perm : defaults )
 		{
 			String name = perm.getName().toLowerCase();
 			permissions.put( name, new PermissionAttachmentInfo( parent, name, null, true ) );
-			Loader.getPluginManager().subscribeToPermission( name, parent );
+			Loader.getPermissionsManager().subscribeToPermission( name, parent );
 			calculateChildPermissions( perm.getChildren(), false, null );
 		}
 		
@@ -214,11 +185,11 @@ public class PermissibleBase implements Permissible
 		
 		for ( String name : perms )
 		{
-			Loader.getPluginManager().unsubscribeFromPermission( name, parent );
+			Loader.getPermissionsManager().unsubscribeFromPermission( name, parent );
 		}
 		
-		Loader.getPluginManager().unsubscribeFromDefaultPerms( false, parent );
-		Loader.getPluginManager().unsubscribeFromDefaultPerms( true, parent );
+		Loader.getPermissionsManager().unsubscribeFromDefaultPerms( false, parent );
+		Loader.getPermissionsManager().unsubscribeFromDefaultPerms( true, parent );
 		
 		permissions.clear();
 	}
@@ -229,12 +200,12 @@ public class PermissibleBase implements Permissible
 		
 		for ( String name : keys )
 		{
-			Permission perm = Loader.getPluginManager().getPermission( name );
+			Permission perm = Loader.getPermissionsManager().getPermission( name );
 			boolean value = children.get( name ) ^ invert;
 			String lname = name.toLowerCase();
 			
 			permissions.put( lname, new PermissionAttachmentInfo( parent, lname, attachment, value ) );
-			Loader.getPluginManager().subscribeToPermission( name, parent );
+			Loader.getPermissionsManager().subscribeToPermission( name, parent );
 			
 			if ( perm != null )
 			{
@@ -311,5 +282,11 @@ public class PermissibleBase implements Permissible
 		{
 			attachment.remove();
 		}
+	}
+
+	@Override
+	public String getId()
+	{
+		return parent.getId();
 	}
 }

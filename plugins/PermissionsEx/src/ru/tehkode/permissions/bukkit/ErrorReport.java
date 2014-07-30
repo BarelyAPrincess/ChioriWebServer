@@ -23,7 +23,7 @@ import org.yaml.snakeyaml.Yaml;
 import ru.tehkode.utils.StringUtils;
 
 import com.chiorichan.Loader;
-import com.chiorichan.command.CommandSender;
+import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.configuration.InvalidConfigurationException;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.plugin.Plugin;
@@ -235,7 +235,7 @@ public class ErrorReport
 		handleError( cause, error, null );
 	}
 	
-	public static void handleError( final String cause, final Throwable error, final CommandSender target )
+	public static void handleError( final String cause, final Throwable error, final SentientHandler target )
 	{
 		if ( !ASYNC_EXEC.isShutdown() )
 		{
@@ -251,7 +251,7 @@ public class ErrorReport
 					}
 					else
 					{
-						PermissionsEx.getPlugin().getLogger().severe( msg );
+						Loader.getLogger().severe( msg );
 					}
 				}
 			} );
@@ -265,7 +265,7 @@ public class ErrorReport
 			}
 			else
 			{
-				PermissionsEx.getPlugin().getLogger().severe( msg );
+				Loader.getLogger().severe( msg );
 			}
 		}
 	}

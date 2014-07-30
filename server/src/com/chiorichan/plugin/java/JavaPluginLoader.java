@@ -24,12 +24,12 @@ import org.yaml.snakeyaml.error.YAMLException;
 import com.chiorichan.Loader;
 import com.chiorichan.Warning;
 import com.chiorichan.Warning.WarningState;
-import com.chiorichan.event.Event;
-import com.chiorichan.event.EventException;
-import com.chiorichan.event.EventHandler;
-import com.chiorichan.event.Listener;
-import com.chiorichan.event.server.PluginDisableEvent;
-import com.chiorichan.event.server.PluginEnableEvent;
+import com.chiorichan.bus.bases.EventException;
+import com.chiorichan.bus.events.Event;
+import com.chiorichan.bus.events.EventHandler;
+import com.chiorichan.bus.events.Listener;
+import com.chiorichan.bus.events.server.PluginDisableEvent;
+import com.chiorichan.bus.events.server.PluginEnableEvent;
 import com.chiorichan.plugin.AuthorNagException;
 import com.chiorichan.plugin.EventExecutor;
 import com.chiorichan.plugin.InvalidDescriptionException;
@@ -307,7 +307,7 @@ public final class JavaPluginLoader implements PluginLoader
 		}
 		catch ( NoClassDefFoundError e )
 		{
-			plugin.getLogger().severe( "Plugin " + plugin.getDescription().getFullName() + " has failed to register events for " + listener.getClass() + " because " + e.getMessage() + " does not exist." );
+			Loader.getLogger().severe( "Plugin " + plugin.getDescription().getFullName() + " has failed to register events for " + listener.getClass() + " because " + e.getMessage() + " does not exist." );
 			return ret;
 		}
 		
@@ -319,7 +319,7 @@ public final class JavaPluginLoader implements PluginLoader
 			final Class<?> checkClass;
 			if ( method.getParameterTypes().length != 1 || !Event.class.isAssignableFrom( checkClass = method.getParameterTypes()[0] ) )
 			{
-				plugin.getLogger().severe( plugin.getDescription().getFullName() + " attempted to register an invalid EventHandler method signature \"" + method.toGenericString() + "\" in " + listener.getClass() );
+				Loader.getLogger().severe( plugin.getDescription().getFullName() + " attempted to register an invalid EventHandler method signature \"" + method.toGenericString() + "\" in " + listener.getClass() );
 				continue;
 			}
 			final Class<? extends Event> eventClass = checkClass.asSubclass( Event.class );
@@ -342,7 +342,7 @@ public final class JavaPluginLoader implements PluginLoader
 					{
 						break;
 					}
-					plugin.getLogger().log( Level.WARNING, String.format( "\"%s\" has registered a listener for %s on method \"%s\", but the event is Deprecated." + " \"%s\"; please notify the authors %s.", plugin.getDescription().getFullName(), clazz.getName(), method.toGenericString(), ( warning != null && warning.reason().length() != 0 ) ? warning.reason() : "Server performance will be affected", Arrays.toString( plugin.getDescription().getAuthors().toArray() ) ), warningState == WarningState.ON ? new AuthorNagException( null ) : null );
+					Loader.getLogger().log( Level.WARNING, String.format( "\"%s\" has registered a listener for %s on method \"%s\", but the event is Deprecated." + " \"%s\"; please notify the authors %s.", plugin.getDescription().getFullName(), clazz.getName(), method.toGenericString(), ( warning != null && warning.reason().length() != 0 ) ? warning.reason() : "Server performance will be affected", Arrays.toString( plugin.getDescription().getAuthors().toArray() ) ), warningState == WarningState.ON ? new AuthorNagException( null ) : null );
 					break;
 				}
 			}
@@ -387,7 +387,7 @@ public final class JavaPluginLoader implements PluginLoader
 		
 		if ( !plugin.isEnabled() )
 		{
-			plugin.getLogger().info( "Enabling " + plugin.getDescription().getFullName() );
+			Loader.getLogger().info( "Enabling " + plugin.getDescription().getFullName() );
 			
 			JavaPlugin jPlugin = (JavaPlugin) plugin;
 			
@@ -421,7 +421,7 @@ public final class JavaPluginLoader implements PluginLoader
 		if ( plugin.isEnabled() )
 		{
 			String message = String.format( "Disabling %s", plugin.getDescription().getFullName() );
-			plugin.getLogger().info( message );
+			Loader.getLogger().info( message );
 			
 			Loader.getEventBus().callEvent( new PluginDisableEvent( plugin ) );
 			

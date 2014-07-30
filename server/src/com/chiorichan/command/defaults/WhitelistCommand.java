@@ -2,13 +2,13 @@ package com.chiorichan.command.defaults;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
+import com.chiorichan.account.bases.Account;
+import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.command.Command;
-import com.chiorichan.command.CommandSender;
-import com.chiorichan.user.User;
 
 public class WhitelistCommand extends VanillaCommand
 {
-	//private static final List<String> WHITELIST_SUBCOMMANDS = ImmutableList.of( "add", "remove", "on", "off", "list", "reload" );
+	// private static final List<String> WHITELIST_SUBCOMMANDS = ImmutableList.of( "add", "remove", "on", "off", "list", "reload" );
 	
 	public WhitelistCommand()
 	{
@@ -19,9 +19,9 @@ public class WhitelistCommand extends VanillaCommand
 	}
 	
 	@Override
-	public boolean execute( CommandSender sender, String currentAlias, String[] args )
+	public boolean execute( SentientHandler sender, String currentAlias, String[] args )
 	{
-		if ( !testPermission( sender ) )
+		if ( !testPermission( sender.getSentient() ) )
 			return true;
 		
 		if ( args.length == 1 )
@@ -31,7 +31,7 @@ public class WhitelistCommand extends VanillaCommand
 				if ( badPerm( sender, "reload" ) )
 					return true;
 				
-				Loader.getInstance().reloadWhitelist();
+				Loader.getAccountsManager().reloadWhitelist();
 				Command.broadcastCommandMessage( sender, "Reloaded white-list from file" );
 				return true;
 			}
@@ -40,7 +40,7 @@ public class WhitelistCommand extends VanillaCommand
 				if ( badPerm( sender, "enable" ) )
 					return true;
 				
-				Loader.getInstance().setWhitelist( true );
+				Loader.getAccountsManager().setWhitelist( true );
 				Command.broadcastCommandMessage( sender, "Turned on white-listing" );
 				return true;
 			}
@@ -49,7 +49,7 @@ public class WhitelistCommand extends VanillaCommand
 				if ( badPerm( sender, "disable" ) )
 					return true;
 				
-				Loader.getInstance().setWhitelist( false );
+				Loader.getAccountsManager().setWhitelist( false );
 				Command.broadcastCommandMessage( sender, "Turned off white-listing" );
 				return true;
 			}
@@ -60,7 +60,7 @@ public class WhitelistCommand extends VanillaCommand
 				
 				StringBuilder result = new StringBuilder();
 				
-				for ( User User : Loader.getInstance().getWhitelistedUsers() )
+				for ( Account User : Loader.getAccountsManager().getWhitelisted() )
 				{
 					if ( result.length() > 0 )
 					{
@@ -81,7 +81,7 @@ public class WhitelistCommand extends VanillaCommand
 				if ( badPerm( sender, "add" ) )
 					return true;
 				
-				Loader.getInstance().getOfflineUser( args[1] ).setWhitelisted( true );
+				Loader.getAccountsManager().addWhitelist( args[1] );
 				
 				Command.broadcastCommandMessage( sender, "Added " + args[1] + " to white-list" );
 				return true;
@@ -91,7 +91,7 @@ public class WhitelistCommand extends VanillaCommand
 				if ( badPerm( sender, "remove" ) )
 					return true;
 				
-				Loader.getInstance().getOfflineUser( args[1] ).setWhitelisted( false );
+				Loader.getAccountsManager().removeWhitelist( args[1] );
 				
 				Command.broadcastCommandMessage( sender, "Removed " + args[1] + " from white-list" );
 				return true;
@@ -102,9 +102,9 @@ public class WhitelistCommand extends VanillaCommand
 		return false;
 	}
 	
-	private boolean badPerm( CommandSender sender, String perm )
+	private boolean badPerm( SentientHandler sender, String perm )
 	{
-		if ( !sender.hasPermission( "bukkit.command.whitelist." + perm ) )
+		if ( !sender.getSentient().hasPermission( "bukkit.command.whitelist." + perm ) )
 		{
 			sender.sendMessage( ChatColor.RED + "You do not have permission to perform this action." );
 			return true;

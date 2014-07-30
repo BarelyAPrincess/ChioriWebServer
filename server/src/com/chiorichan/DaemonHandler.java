@@ -15,7 +15,7 @@ public class DaemonHandler implements Daemon
 	public void destroy()
 	{
 		if ( server.isRunning() )
-			server.stop();
+			server.stop( "Daemon was stopped!" );
 	}
 	
 	@Override
@@ -39,7 +39,7 @@ public class DaemonHandler implements Daemon
 	public void stop() throws Exception
 	{
 		if ( server.isRunning() )
-			server.stop();
+			server.stop( "Daemon was stopped!" );
 	}
 	
 }

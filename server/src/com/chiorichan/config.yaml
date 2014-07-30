@@ -1,0 +1,68 @@
+server:
+  httpHost: ''
+  httpPort: 8080
+  httpsPort: 4443
+  tcpHost: ''
+  tcpPort: 1024
+  admin: chiorigreene@gmail.com
+  allowDirectoryListing: false
+  haltOnSevereError: false
+  enableWebServer: true
+  enableTcpServer: true
+  allowQuery: false
+  installationUID: null
+  consolePassword: null
+  database:
+    database: chiorifw
+    type: mysql
+    host: localhost
+    port: 3306
+    username: fwuser
+    password: fwpass
+    dbfile: chiori.db
+settings:
+  permissions-file: permissions.yml
+  update-folder: update
+  plugin-profiling: false
+  query-plugins: true
+  deprecated-verbose: default
+  shutdown-message: Server Shutdown
+  whitelist: false
+  webroot: webroot
+auto-updater:
+  enabled: true
+  on-broken:
+  - warn-console
+  - warn-ops
+  on-update:
+  - warn-console
+  - warn-ops
+  preferred-channel: rb
+  host: jenkins.applebloom.co
+  suggest-channels: true
+  check-interval: 30
+  console-only: true
+sessions:
+  defaultSessionName: sessionId
+  defaultTimeout: 3600
+  defaultTimeoutWithLogin: 86400
+  defaultTimeoutRememberMe: 604800
+  allowNoTimeoutPermission: true
+  rearmTimeoutWithEachRequest: true
+  reuseVacantSessions: true
+  maxSessionsPerIP: 6
+  allowIPChange: false
+  cleanupInterval: 5
+users:
+  maxLogins: -1
+  lookupAdapter:
+    type: default
+    table: ''
+    fields: {}
+  operators:
+  - cg092m
+framework:
+  sites:
+    defaultTitle: Unnamed Chiori-chan's Web Server Site
+    autoCreateSubdomains: true
+    subdomainsDefaultToRoot: false

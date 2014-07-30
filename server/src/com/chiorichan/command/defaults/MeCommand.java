@@ -2,7 +2,7 @@ package com.chiorichan.command.defaults;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
-import com.chiorichan.command.CommandSender;
+import com.chiorichan.account.bases.SentientHandler;
 
 public class MeCommand extends VanillaCommand
 {
@@ -15,9 +15,9 @@ public class MeCommand extends VanillaCommand
 	}
 	
 	@Override
-	public boolean execute( CommandSender sender, String currentAlias, String[] args )
+	public boolean execute( SentientHandler sender, String currentAlias, String[] args )
 	{
-		if ( !testPermission( sender ) )
+		if ( !testPermission( sender.getSentient() ) )
 			return true;
 		if ( args.length < 1 )
 		{
@@ -26,7 +26,7 @@ public class MeCommand extends VanillaCommand
 		}
 		
 		StringBuilder message = new StringBuilder();
-		message.append( sender.getName() );
+		message.append( sender.getSentient().getName() );
 		
 		for ( String arg : args )
 		{
@@ -34,7 +34,7 @@ public class MeCommand extends VanillaCommand
 			message.append( arg );
 		}
 		
-		Loader.getInstance().broadcastMessage( "* " + message.toString() );
+		Loader.getPluginManager().broadcastMessage( "* " + message.toString() );
 		
 		return true;
 	}

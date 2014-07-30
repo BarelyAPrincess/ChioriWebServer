@@ -1,5 +1,7 @@
 package com.chiorichan.command;
 
+import com.chiorichan.account.bases.SentientHandler;
+
 /**
  * Represents a command that delegates to one or more other commands
  */
@@ -19,7 +21,7 @@ public class MultipleCommandAlias extends Command
 	}
 	
 	@Override
-	public boolean execute( CommandSender sender, String commandLabel, String[] args )
+	public boolean execute( SentientHandler sender, String commandLabel, String[] args )
 	{
 		boolean result = false;
 		

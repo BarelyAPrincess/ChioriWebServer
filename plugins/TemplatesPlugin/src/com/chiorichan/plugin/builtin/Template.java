@@ -12,11 +12,11 @@ import java.util.List;
 import java.util.Map;
 
 import com.chiorichan.Loader;
-import com.chiorichan.event.EventHandler;
-import com.chiorichan.event.EventPriority;
-import com.chiorichan.event.Listener;
-import com.chiorichan.event.server.RenderEvent;
-import com.chiorichan.event.server.RequestEvent;
+import com.chiorichan.bus.events.EventHandler;
+import com.chiorichan.bus.events.EventPriority;
+import com.chiorichan.bus.events.Listener;
+import com.chiorichan.bus.events.server.RenderEvent;
+import com.chiorichan.bus.events.server.RequestEvent;
 import com.chiorichan.framework.CodeParsingException;
 import com.chiorichan.framework.Site;
 import com.chiorichan.plugin.java.JavaPlugin;

@@ -21,18 +21,19 @@ import ru.tehkode.utils.StringUtils;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
+import com.chiorichan.account.bases.Account;
+import com.chiorichan.account.bases.Sentient;
+import com.chiorichan.account.bases.SentientHandler;
+import com.chiorichan.bus.events.EventHandler;
+import com.chiorichan.bus.events.Listener;
+import com.chiorichan.bus.events.account.AccountLoginEvent;
+import com.chiorichan.bus.events.account.AccountLogoutEvent;
 import com.chiorichan.command.Command;
-import com.chiorichan.command.CommandSender;
 import com.chiorichan.configuration.file.FileConfiguration;
-import com.chiorichan.event.EventHandler;
-import com.chiorichan.event.Listener;
-import com.chiorichan.event.user.UserLoginEvent;
-import com.chiorichan.event.user.UserLogoutEvent;
 import com.chiorichan.plugin.Plugin;
 import com.chiorichan.plugin.PluginDescriptionFile;
 import com.chiorichan.plugin.ServicePriority;
 import com.chiorichan.plugin.java.JavaPlugin;
-import com.chiorichan.user.User;
 
 /**
  * @author code
@@ -116,7 +117,7 @@ public class PermissionsEx extends JavaPlugin
 			Loader.getEventBus().registerEvents( cleaner, this );
 			
 			// register service
-			this.getInstance().getServicesManager().register( PermissionManager.class, this.permissionsManager, this, ServicePriority.Normal );
+			Loader.getServicesManager().register( PermissionManager.class, this.permissionsManager, this, ServicePriority.Normal );
 			regexPerms = new RegexPermissions( this );
 			superms = new SuperpermsListener( this );
 			Loader.getEventBus().registerEvents( superms, this );
@@ -147,7 +148,7 @@ public class PermissionsEx extends JavaPlugin
 				this.permissionsManager.end();
 			}
 			
-			this.getInstance().getServicesManager().unregister( PermissionManager.class, this.permissionsManager );
+			Loader.getServicesManager().unregister( PermissionManager.class, this.permissionsManager );
 			if ( this.regexPerms != null )
 			{
 				this.regexPerms.onDisable();
@@ -166,7 +167,7 @@ public class PermissionsEx extends JavaPlugin
 	}
 	
 	@Override
-	public boolean onCommand( CommandSender sender, Command command, String commandLabel, String[] args )
+	public boolean onCommand( SentientHandler sender, Command command, String commandLabel, String[] args )
 	{
 		try
 		{
@@ -177,11 +178,11 @@ public class PermissionsEx extends JavaPlugin
 			}
 			else
 			{
-				if ( sender instanceof User )
+				if ( sender instanceof Account )
 				{
 					sender.sendMessage( "[" + ChatColor.RED + "PermissionsEx" + ChatColor.WHITE + "] version [" + ChatColor.BLUE + pdf.getVersion() + ChatColor.WHITE + "]" );
 					
-					return !this.permissionsManager.has( (User) sender, "permissions.manage" );
+					return !this.permissionsManager.has( (Account) sender, "permissions.manage" );
 				}
 				else
 				{
@@ -193,7 +194,7 @@ public class PermissionsEx extends JavaPlugin
 		}
 		catch ( Throwable t )
 		{
-			ErrorReport.handleError( "While " + sender.getName() + " was executing /" + command.getName() + " " + StringUtils.implode( args, " " ), t, sender );
+			ErrorReport.handleError( "While " + sender.getSentient().getName() + " was executing /" + command.getName() + " " + StringUtils.implode( args, " " ), t, sender );
 			return true;
 		}
 	}
@@ -235,7 +236,7 @@ public class PermissionsEx extends JavaPlugin
 		return permissionsManager;
 	}
 	
-	public static PermissionUser getUser( User user )
+	public static PermissionUser getUser( Account user )
 	{
 		return getPermissionManager().getUser( user );
 	}
@@ -245,12 +246,12 @@ public class PermissionsEx extends JavaPlugin
 		return getPermissionManager().getUser( name );
 	}
 	
-	public boolean has( User user, String permission )
+	public boolean has( Account user, String permission )
 	{
 		return this.permissionsManager.has( user, permission );
 	}
 	
-	public boolean has( User user, String permission, String site )
+	public boolean has( Account user, String permission, String site )
 	{
 		return this.permissionsManager.has( user, permission, site );
 	}
@@ -261,7 +262,7 @@ public class PermissionsEx extends JavaPlugin
 		protected boolean logLastUserLogin = false;
 		
 		@EventHandler
-		public void onUserLogin( UserLoginEvent event )
+		public void onUserLogin( AccountLoginEvent event )
 		{
 			try
 			{
@@ -270,7 +271,7 @@ public class PermissionsEx extends JavaPlugin
 					return;
 				}
 				
-				PermissionUser user = getPermissionManager().getUser( event.getUser() );
+				PermissionUser user = getPermissionManager().getUser( event.getAccount() );
 				user.setOption( "last-login-time", Long.toString( System.currentTimeMillis() / 1000L ) );
 				// user.setOption("last-login-ip", event.getUser().getAddress().getAddress().getHostAddress()); // somehow this won't work
 			}
@@ -281,16 +282,16 @@ public class PermissionsEx extends JavaPlugin
 		}
 		
 		@EventHandler
-		public void onUserQuit( UserLogoutEvent event )
+		public void onUserQuit( AccountLogoutEvent event )
 		{
 			try
 			{
 				if ( logLastUserLogin )
 				{
-					getPermissionManager().getUser( event.getUser() ).setOption( "last-logout-time", Long.toString( System.currentTimeMillis() / 1000L ) );
+					getPermissionManager().getUser( event.getAccount() ).setOption( "last-logout-time", Long.toString( System.currentTimeMillis() / 1000L ) );
 				}
 				
-				getPermissionManager().resetUser( event.getUser().getName() );
+				getPermissionManager().resetUser( event.getAccount().getName() );
 			}
 			catch ( Throwable t )
 			{

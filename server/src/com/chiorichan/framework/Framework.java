@@ -30,12 +30,6 @@ public class Framework
 		return new ConfigurationManagerWrapper( sess );
 	}
 	
-	@SuppressWarnings( "deprecation" )
-	public ServerUtilsWrapper getServerUtils()
-	{
-		return new ServerUtilsWrapper( sess );
-	}
-	
 	public HttpUtilsWrapper getHttpUtils()
 	{
 		return new HttpUtilsWrapper( sess );
@@ -86,9 +80,9 @@ public class Framework
 		return Versioning.getCopyright();
 	}
 	
-	public PluginManager getPluginManager()
+	public PluginManager getModuleBus()
 	{
-		return Loader.getPluginManager();
+		return Loader.getModuleBus();
 	}
 	
 	public ConsoleLogManager getLogger()

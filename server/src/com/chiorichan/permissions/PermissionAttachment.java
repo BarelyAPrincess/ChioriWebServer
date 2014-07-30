@@ -44,7 +44,7 @@ public class PermissionAttachment
 	 * Sets an object to be called for when this attachment is removed from a {@link Permissible}. May be null.
 	 * 
 	 * @param ex
-	 *           Object to be called when this is removed
+	 *             Object to be called when this is removed
 	 */
 	public void setRemovalCallback( PermissionRemovedExecutor ex )
 	{
@@ -88,9 +88,9 @@ public class PermissionAttachment
 	 * Sets a permission to the given value, by its fully qualified name
 	 * 
 	 * @param name
-	 *           Name of the permission
+	 *             Name of the permission
 	 * @param value
-	 *           New value of the permission
+	 *             New value of the permission
 	 */
 	public void setPermission( String name, boolean value )
 	{
@@ -102,9 +102,9 @@ public class PermissionAttachment
 	 * Sets a permission to the given value
 	 * 
 	 * @param perm
-	 *           Permission to set
+	 *             Permission to set
 	 * @param value
-	 *           New value of the permission
+	 *             New value of the permission
 	 */
 	public void setPermission( Permission perm, boolean value )
 	{
@@ -117,7 +117,7 @@ public class PermissionAttachment
 	 * If the permission does not exist in this attachment, nothing will happen.
 	 * 
 	 * @param name
-	 *           Name of the permission to remove
+	 *             Name of the permission to remove
 	 */
 	public void unsetPermission( String name )
 	{
@@ -131,7 +131,7 @@ public class PermissionAttachment
 	 * If the permission does not exist in this attachment, nothing will happen.
 	 * 
 	 * @param perm
-	 *           Permission to remove
+	 *             Permission to remove
 	 */
 	public void unsetPermission( Permission perm )
 	{

@@ -1,6 +1,6 @@
 package ru.tehkode.permissions.events;
 
-import com.chiorichan.event.HandlerList;
+import com.chiorichan.bus.events.HandlerList;
 
 public class PermissionSystemEvent extends PermissionEvent
 {

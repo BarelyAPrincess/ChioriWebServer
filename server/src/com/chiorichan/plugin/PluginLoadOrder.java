@@ -35,5 +35,10 @@ public enum PluginLoadOrder
 	 * Indicates that the server has completed all required startup procedures.
 	 * NOT A RECOMMENDED PLUGIN LOAD ORDER
 	 */
-	RUNNING
+	RUNNING,
+	/**
+	 * Indicates that the server is able to reload or currently is reloading.
+	 * NOT A RECOMMENDED PLUGIN LOAD ORDER - BUT GOOD FOR IDENIFYING CURRENT SERVER STATE
+	 */
+	RELOAD;
 }

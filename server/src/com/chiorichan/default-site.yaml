@@ -4,10 +4,7 @@ site:
   siteId: framework
   title: Chiori Framework
   domain: chiorichan.com
-  resource: [site]/resource
-users:
-  adapter: file
-  filebase: users
+  resource: resource
 sessions:
   cookie-name: ChioriFramework
   default-life: 604800

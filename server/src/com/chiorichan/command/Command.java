@@ -6,6 +6,8 @@ import java.util.Set;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
+import com.chiorichan.account.bases.Sentient;
+import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.permissions.Permissible;
 import com.chiorichan.plugin.PluginDescriptionFile;
 
@@ -52,7 +54,7 @@ public abstract class Command
 	 *           All arguments passed to the command, split via ' '
 	 * @return true if the command was successful, otherwise false
 	 */
-	public abstract boolean execute( CommandSender sender, String commandLabel, String[] args );
+	public abstract boolean execute( SentientHandler sender, String commandLabel, String[] args );
 	
 	/**
 	 * Returns the name of this command
@@ -86,7 +88,7 @@ public abstract class Command
 	}
 	
 	/**
-	 * Tests the given {@link CommandSender} to see if they can perform this command.
+	 * Tests the given {@link Sentient} to see if they can perform this command.
 	 * <p>
 	 * If they do not have permission, they will be informed that they cannot do this.
 	 * 
@@ -94,7 +96,7 @@ public abstract class Command
 	 *           User to test
 	 * @return true if they can use it, otherwise false
 	 */
-	public boolean testPermission( CommandSender target )
+	public boolean testPermission( Sentient target )
 	{
 		if ( testPermissionSilent( target ) )
 		{
@@ -117,7 +119,7 @@ public abstract class Command
 	}
 	
 	/**
-	 * Tests the given {@link CommandSender} to see if they can perform this command.
+	 * Tests the given {@link Sentient} to see if they can perform this command.
 	 * <p>
 	 * No error is sent to the sender.
 	 * 
@@ -125,7 +127,7 @@ public abstract class Command
 	 *           User to test
 	 * @return true if they can use it, otherwise false
 	 */
-	public boolean testPermissionSilent( CommandSender target )
+	public boolean testPermissionSilent( Permissible target )
 	{
 		if ( ( permission == null ) || ( permission.length() == 0 ) )
 		{
@@ -327,28 +329,32 @@ public abstract class Command
 		return this;
 	}
 	
-	public static void broadcastCommandMessage( CommandSender source, String message )
+	public static void broadcastCommandMessage( SentientHandler source, String message )
 	{
 		broadcastCommandMessage( source, message, true );
 	}
 	
-	public static void broadcastCommandMessage( CommandSender source, String message, boolean sendToSource )
+	public static void broadcastCommandMessage( SentientHandler source, String message, boolean sendToSource )
 	{
-		String result = source.getName() + ": " + message;
+		String result;
+		if ( source.getSentient() == null )
+			result = source + ": " + message; // SentientHandlers should have some sort of idents
+		else
+			result = source.getSentient().getName() + ": " + message;
 		
-		Set<Permissible> users = Loader.getPluginManager().getPermissionSubscriptions( Loader.BROADCAST_CHANNEL_ADMINISTRATIVE );
+		Set<Permissible> subscribed = Loader.getPermissionsManager().getPermissionSubscriptions( Loader.BROADCAST_CHANNEL_ADMINISTRATIVE );
 		String colored = ChatColor.GRAY + "" + ChatColor.ITALIC + "[" + result + "]";
 		
-		if ( sendToSource && !( source instanceof ConsoleCommandSender ) )
+		if ( sendToSource )
 		{
 			source.sendMessage( message );
 		}
 		
-		for ( Permissible user : users )
+		for ( Permissible obj : subscribed )
 		{
-			if ( user instanceof CommandSender )
+			if ( obj instanceof Sentient )
 			{
-				CommandSender target = (CommandSender) user;
+				Sentient target = (Sentient) obj;
 				
 				if ( target != source )
 				{

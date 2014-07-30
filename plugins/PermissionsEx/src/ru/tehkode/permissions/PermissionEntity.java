@@ -106,7 +106,7 @@ public abstract class PermissionEntity
 	 */
 	public boolean has( String permission )
 	{
-		return this.has( permission, Loader.getInstance().getSites().get( 0 ).getName() );
+		return this.has( permission, Loader.getSiteManager().getSites().get( 0 ).getName() );
 	}
 	
 	/**

@@ -26,12 +26,12 @@ public class SiteManager
 		siteMap = new LinkedHashMap<String, Site>();
 	}
 	
-	public void loadSites() throws StartupException
+	public void init() throws StartupException
 	{
 		if ( siteMap.size() > 0 )
 			throw new StartupException( "Site manager already has sites loaded. Please unload the existing sites first." );
 		
-		SqlConnector sql = Loader.getPersistenceManager().getSql();
+		SqlConnector sql = Loader.getPersistenceManager().getDatabase();
 		
 		// Load sites from YAML Filebase.
 		File siteFileBase = new File( "sites" );
@@ -66,14 +66,14 @@ public class SiteManager
 				}
 				catch ( SiteException e )
 				{
-					Loader.getLogger().severe( "Exception encountered while loading a site from YAML FileBase, Reason: " + e.getMessage() );
+					Loader.getLogger().warning( "Exception encountered while loading a site from YAML FileBase, Reason: " + e.getMessage() );
 					if ( e.getCause() != null )
 						e.getCause().printStackTrace();
 				}
 			}
 		
 		// Load sites from Framework Database.
-		if ( sql != null )
+		if ( sql != null && sql.isConnected() )
 			try
 			{
 				// Load sites from the database
@@ -105,7 +105,7 @@ public class SiteManager
 			}
 			catch ( SQLException e )
 			{
-				Loader.getLogger().severe( "Exception encountered while loading a sites from Database", e );
+				Loader.getLogger().warning( "Exception encountered while loading a sites from Database", e );
 			}
 	}
 	
@@ -136,5 +136,10 @@ public class SiteManager
 	public Site getFrameworkSite()
 	{
 		return getSiteById( "framework" );
+	}
+
+	public void reload()
+	{
+		// RELOAD ALL
 	}
 }

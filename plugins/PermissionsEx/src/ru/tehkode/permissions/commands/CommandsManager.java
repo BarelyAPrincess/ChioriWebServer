@@ -18,9 +18,9 @@ import ru.tehkode.permissions.commands.exceptions.AutoCompleteChoicesException;
 import ru.tehkode.utils.StringUtils;
 
 import com.chiorichan.ChatColor;
-import com.chiorichan.command.CommandSender;
+import com.chiorichan.account.bases.Account;
+import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.plugin.Plugin;
-import com.chiorichan.user.User;
 
 /**
  * @author code
@@ -62,7 +62,7 @@ public class CommandsManager
 		listener.onRegistered( this );
 	}
 	
-	public boolean execute( CommandSender sender, com.chiorichan.command.Command command, String[] args )
+	public boolean execute( SentientHandler sender, com.chiorichan.command.Command command, String[] args )
 	{
 		Map<CommandSyntax, CommandBinding> callMap = this.listeners.get( command.getName() );
 		
@@ -99,11 +99,11 @@ public class CommandsManager
 		}
 		
 		// Check permission
-		if ( sender instanceof User )
+		if ( sender instanceof Account )
 		{ // this method are not public and required permission
-			if ( !selectedBinding.checkPermissions( (User) sender ) )
+			if ( !selectedBinding.checkPermissions( (Account) sender ) )
 			{
-				logger.warning( "User " + ( (User) sender ).getName() + " tried to access chat command \"" + command.getName() + " " + arguments + "\", but doesn't have permission to do this." );
+				logger.warning( "User " + ( (Account) sender ).getName() + " tried to access chat command \"" + command.getName() + " " + arguments + "\", but doesn't have permission to do this." );
 				sender.sendMessage( ChatColor.RED + "Sorry, you don't have enough permissions." );
 				return true;
 			}
@@ -262,7 +262,7 @@ public class CommandsManager
 			this.params = params;
 		}
 		
-		public boolean checkPermissions( User user )
+		public boolean checkPermissions( Account user )
 		{
 			PermissionManager manager = PermissionsEx.getPermissionManager();
 			

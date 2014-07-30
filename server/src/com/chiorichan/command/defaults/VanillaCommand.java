@@ -2,8 +2,8 @@ package com.chiorichan.command.defaults;
 
 import java.util.List;
 
+import com.chiorichan.account.bases.Sentient;
 import com.chiorichan.command.Command;
-import com.chiorichan.command.CommandSender;
 
 public abstract class VanillaCommand extends Command
 {
@@ -26,17 +26,17 @@ public abstract class VanillaCommand extends Command
 		return input.equalsIgnoreCase( this.getName() );
 	}
 	
-	protected int getInteger( CommandSender sender, String value, int min )
+	protected int getInteger( Sentient sender, String value, int min )
 	{
 		return getInteger( sender, value, min, Integer.MAX_VALUE );
 	}
 	
-	int getInteger( CommandSender sender, String value, int min, int max )
+	int getInteger( Sentient sender, String value, int min, int max )
 	{
 		return getInteger( sender, value, min, max, false );
 	}
 	
-	int getInteger( CommandSender sender, String value, int min, int max, boolean Throws )
+	int getInteger( Sentient sender, String value, int min, int max, boolean Throws )
 	{
 		int i = min;
 		
@@ -76,7 +76,7 @@ public abstract class VanillaCommand extends Command
 		}
 	}
 	
-	public static double getRelativeDouble( double original, CommandSender sender, String input )
+	public static double getRelativeDouble( double original, Sentient sender, String input )
 	{
 		if ( input.startsWith( "~" ) )
 		{
@@ -93,7 +93,7 @@ public abstract class VanillaCommand extends Command
 		}
 	}
 	
-	public static double getDouble( CommandSender sender, String input )
+	public static double getDouble( Sentient sender, String input )
 	{
 		try
 		{
@@ -105,7 +105,7 @@ public abstract class VanillaCommand extends Command
 		}
 	}
 	
-	public static double getDouble( CommandSender sender, String input, double min, double max )
+	public static double getDouble( Sentient sender, String input, double min, double max )
 	{
 		double result = getDouble( sender, input );
 		

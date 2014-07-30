@@ -3,8 +3,8 @@ package com.chiorichan.command.defaults;
 import java.util.Arrays;
 
 import com.chiorichan.Loader;
+import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.command.Command;
-import com.chiorichan.command.CommandSender;
 
 public class StopCommand extends VanillaCommand
 {
@@ -19,12 +19,12 @@ public class StopCommand extends VanillaCommand
 	}
 	
 	@Override
-	public boolean execute( CommandSender sender, String currentAlias, String[] args )
+	public boolean execute( SentientHandler sender, String currentAlias, String[] args )
 	{
-		if ( !testPermission( sender ) )
+		if ( !testPermission( sender.getSentient() ) )
 			return true;
 		
-		Command.broadcastCommandMessage( sender, "Stopping the server.." );
+		Command.broadcastCommandMessage( sender, "Stopping the server..." );
 		
 		Loader.gracefullyShutdownServer( this.createString( args, 0 ) );
 		

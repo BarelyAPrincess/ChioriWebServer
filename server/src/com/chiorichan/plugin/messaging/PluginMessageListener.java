@@ -1,6 +1,6 @@
 package com.chiorichan.plugin.messaging;
 
-import com.chiorichan.user.User;
+import com.chiorichan.account.bases.Account;
 
 
 /**
@@ -18,5 +18,5 @@ public interface PluginMessageListener
 	 * @param message
 	 *           The raw message that was sent.
 	 */
-	public void onPluginMessageReceived( String channel, User player, byte[] message );
+	public void onPluginMessageReceived( String channel, Account player, byte[] message );
 }

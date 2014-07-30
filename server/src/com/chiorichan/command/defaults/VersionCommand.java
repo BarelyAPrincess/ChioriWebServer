@@ -5,7 +5,7 @@ import java.util.List;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
-import com.chiorichan.command.CommandSender;
+import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.plugin.Plugin;
 import com.chiorichan.plugin.PluginDescriptionFile;
 import com.chiorichan.util.Versioning;
@@ -23,14 +23,14 @@ public class VersionCommand extends ChioriCommand
 	}
 	
 	@Override
-	public boolean execute( CommandSender sender, String currentAlias, String[] args )
+	public boolean execute( SentientHandler sender, String currentAlias, String[] args )
 	{
-		if ( !testPermission( sender ) )
+		if ( !testPermission( sender.getSentient() ) )
 			return true;
 		
 		if ( args.length == 0 )
 		{
-			sender.sendMessage( "This server is running " + Loader.getName() + " version " + Loader.getVersion() );
+			sender.sendMessage( "This server is running " + Versioning.getProduct() + " version " + Versioning.getVersion() );
 			sender.sendMessage( Versioning.getCopyright() );
 		}
 		else
@@ -75,7 +75,7 @@ public class VersionCommand extends ChioriCommand
 		return true;
 	}
 	
-	private void describeToSender( Plugin plugin, CommandSender sender )
+	private void describeToSender( Plugin plugin, SentientHandler sender )
 	{
 		PluginDescriptionFile desc = plugin.getDescription();
 		sender.sendMessage( ChatColor.GREEN + desc.getName() + ChatColor.WHITE + " version " + ChatColor.GREEN + desc.getVersion() );

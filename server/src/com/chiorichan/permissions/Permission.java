@@ -169,7 +169,7 @@ public class Permission
 	 */
 	public Set<Permissible> getPermissibles()
 	{
-		return Loader.getPluginManager().getPermissionSubscriptions( name );
+		return Loader.getPermissionsManager().getPermissionSubscriptions( name );
 	}
 	
 	/**
@@ -181,7 +181,7 @@ public class Permission
 	{
 		Set<Permissible> perms = getPermissibles();
 		
-		Loader.getPluginManager().recalculatePermissionDefaults( this );
+		Loader.getPermissionsManager().recalculatePermissionDefaults( this );
 		
 		for ( Permissible p : perms )
 		{
@@ -202,7 +202,7 @@ public class Permission
 	 */
 	public Permission addParent( String name, boolean value )
 	{
-		PluginManager pm = Loader.getPluginManager();
+		PermissionsManager pm = Loader.getPermissionsManager();
 		String lname = name.toLowerCase();
 		
 		Permission perm = pm.getPermission( lname );

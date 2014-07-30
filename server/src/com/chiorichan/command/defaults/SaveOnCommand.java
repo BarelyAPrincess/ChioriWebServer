@@ -1,8 +1,8 @@
 package com.chiorichan.command.defaults;
 
 import com.chiorichan.Loader;
+import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.command.Command;
-import com.chiorichan.command.CommandSender;
 import com.chiorichan.framework.Site;
 
 public class SaveOnCommand extends VanillaCommand
@@ -16,9 +16,9 @@ public class SaveOnCommand extends VanillaCommand
 	}
 	
 	@Override
-	public boolean execute( CommandSender sender, String currentAlias, String[] args )
+	public boolean execute( SentientHandler sender, String currentAlias, String[] args )
 	{
-		if ( !testPermission( sender ) )
+		if ( !testPermission( sender.getSentient() ) )
 			return true;
 		
 		for ( Site site : Loader.getSiteManager().getSites() )
@@ -26,7 +26,7 @@ public class SaveOnCommand extends VanillaCommand
 			site.setAutoSave( true );
 		}
 		
-		Command.broadcastCommandMessage( sender, "Enabled level saving.." );
+		Command.broadcastCommandMessage( sender, "Enabled auto saving..." );
 		return true;
 	}
 }

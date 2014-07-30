@@ -1,8 +1,8 @@
 package com.chiorichan.command.defaults;
 
 import com.chiorichan.Loader;
-import com.chiorichan.command.CommandSender;
-import com.chiorichan.user.User;
+import com.chiorichan.account.bases.Account;
+import com.chiorichan.account.bases.SentientHandler;
 
 public class BanListCommand extends VanillaCommand
 {
@@ -17,14 +17,14 @@ public class BanListCommand extends VanillaCommand
 	}
 	
 	@Override
-	public boolean execute( CommandSender sender, String currentAlias, String[] args )
+	public boolean execute( SentientHandler sender, String currentAlias, String[] args )
 	{
-		if ( !testPermission( sender ) )
+		if ( !testPermission( sender.getSentient() ) )
 			return true;
 		
 		// TODO: ips support
 		StringBuilder message = new StringBuilder();
-		User[] banlist = Loader.getInstance().getBannedUsers().toArray( new User[0] );
+		Account[] banlist = Loader.getAccountsManager().getBannedAccounts().toArray( new Account[0] );
 		
 		for ( int x = 0; x < banlist.length; x++ )
 		{

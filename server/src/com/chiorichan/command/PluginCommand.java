@@ -1,5 +1,6 @@
 package com.chiorichan.command;
 
+import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.plugin.Plugin;
 
 /**
@@ -30,7 +31,7 @@ public final class PluginCommand extends Command implements PluginIdentifiableCo
 	 * @return true if the command was successful, otherwise false
 	 */
 	@Override
-	public boolean execute( CommandSender sender, String commandLabel, String[] args )
+	public boolean execute( SentientHandler sender, String commandLabel, String[] args )
 	{
 		boolean success = false;
 		
@@ -39,7 +40,7 @@ public final class PluginCommand extends Command implements PluginIdentifiableCo
 			return false;
 		}
 		
-		if ( !testPermission( sender ) )
+		if ( !testPermission( sender.getSentient() ) )
 		{
 			return true;
 		}

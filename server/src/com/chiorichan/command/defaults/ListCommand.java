@@ -1,8 +1,10 @@
 package com.chiorichan.command.defaults;
 
+import java.util.List;
+
 import com.chiorichan.Loader;
-import com.chiorichan.command.CommandSender;
-import com.chiorichan.user.User;
+import com.chiorichan.account.bases.Account;
+import com.chiorichan.account.bases.SentientHandler;
 
 public class ListCommand extends VanillaCommand
 {
@@ -15,19 +17,19 @@ public class ListCommand extends VanillaCommand
 	}
 	
 	@Override
-	public boolean execute( CommandSender sender, String currentAlias, String[] args )
+	public boolean execute( SentientHandler sender, String currentAlias, String[] args )
 	{
-		if ( !testPermission( sender ) )
+		if ( !testPermission( sender.getSentient() ) )
 			return true;
 		
 		StringBuilder online = new StringBuilder();
 		
-		User[] users = Loader.getInstance().getOnlineUsers();
+		List<Account> users = Loader.getAccountsManager().getOnlineAccounts();
 		
-		for ( User user : users )
+		for ( Account user : users )
 		{
 			// If a user is hidden from the sender don't show them in the list
-			if ( sender instanceof User && !( (User) sender ).canSee( user ) )
+			if ( sender instanceof Account && !( (Account) sender ).canSee( user ) )
 				continue;
 			
 			if ( online.length() > 0 )
@@ -38,7 +40,7 @@ public class ListCommand extends VanillaCommand
 			online.append( user.getDisplayName() );
 		}
 		
-		sender.sendMessage( "There are " + users.length + "/" + Loader.getInstance().getMaxUsers() + " users online:\n" + online.toString() );
+		sender.sendMessage( "There are " + users.size() + "/" + Loader.getAccountsBus().getMaxAccounts() + " users online:\n" + online.toString() );
 		
 		return true;
 	}

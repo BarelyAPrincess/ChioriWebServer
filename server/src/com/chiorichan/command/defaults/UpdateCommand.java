@@ -4,13 +4,12 @@ import java.io.File;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
-import com.chiorichan.command.CommandSender;
-import com.chiorichan.command.ConsoleCommandSender;
+import com.chiorichan.ThreadCommandReader;
+import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.updater.BuildArtifact;
 import com.chiorichan.updater.Download;
 import com.chiorichan.updater.DownloadListener;
@@ -30,27 +29,27 @@ public class UpdateCommand extends ChioriCommand
 	}
 	
 	@Override
-	public boolean execute( CommandSender sender, String currentAlias, String[] args )
+	public boolean execute( SentientHandler sender, String currentAlias, String[] args )
 	{
-		if ( !Loader.getInstance().getAutoUpdater().isEnabled() )
+		if ( !Loader.getAutoUpdater().isEnabled() )
 		{
 			sender.sendMessage( ChatColor.RED + "I'm sorry but updates are disabled per configs!" );
 			return true;
 		}
 		
-		if ( Loader.getConfig().getBoolean( "auto-updater.console-only" ) && !( sender instanceof ConsoleCommandSender ) )
+		if ( Loader.getConfig().getBoolean( "auto-updater.console-only" ) && sender instanceof ThreadCommandReader )
 		{
 			sender.sendMessage( ChatColor.RED + "I'm sorry but updates can only be performed from the console!" );
 			return true;
 		}
 		
-		if ( !testPermission( sender ) )
+		if ( !testPermission( sender.getSentient() ) )
 			return true;
 		
 		if ( args.length == 0 )
 		{
 			sender.sendMessage( ChatColor.AQUA + "Please wait as we check for updates..." );
-			Loader.getInstance().getAutoUpdater().check( sender );
+			Loader.getAutoUpdater().check( sender );
 		}
 		else
 		{
@@ -60,7 +59,7 @@ public class UpdateCommand extends ChioriCommand
 				{
 					if ( args.length > 1 && args[1].equalsIgnoreCase( "force" ) )
 					{
-						BuildArtifact latest = Loader.getInstance().getAutoUpdater().getLatest();
+						BuildArtifact latest = Loader.getAutoUpdater().getLatest();
 						
 						if ( latest == null )
 							sender.sendMessage( ChatColor.RED + "Please review the latest version without \"force\" arg before updating." );
@@ -108,7 +107,7 @@ public class UpdateCommand extends ChioriCommand
 							}
 							catch ( IllegalThreadStateException e )
 							{
-								Loader.stop();
+								Loader.stop( null );
 							}
 							catch ( Exception e )
 							{
@@ -119,7 +118,7 @@ public class UpdateCommand extends ChioriCommand
 					else
 					{
 						sender.sendMessage( ChatColor.AQUA + "Please wait as we poll the Jenkins Build Server..." );
-						Loader.getInstance().getAutoUpdater().forceUpdate( sender );
+						Loader.getAutoUpdater().forceUpdate( sender );
 					}
 				}
 				catch ( Exception e )
@@ -134,14 +133,12 @@ public class UpdateCommand extends ChioriCommand
 	
 	private static class DownloadProgressDisplay implements DownloadListener
 	{
-		private final CommandSender sender;
+		private final SentientHandler sender;
 		
-		DownloadProgressDisplay(CommandSender _sender)
+		DownloadProgressDisplay(SentientHandler _sender)
 		{
 			sender = _sender;
 			sender.sendMessage( "" );
-			
-			sender.pauseInput( true );
 		}
 		
 		@Override
@@ -154,8 +151,6 @@ public class UpdateCommand extends ChioriCommand
 		public void stateDone()
 		{
 			sender.sendMessage( "\n" );
-			
-			sender.pauseInput( false );
 		}
 	}
 }

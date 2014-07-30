@@ -2,10 +2,10 @@ package com.chiorichan.net;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
-import com.chiorichan.event.net.TCPConnectedEvent;
-import com.chiorichan.event.net.TCPDisconnectedEvent;
-import com.chiorichan.event.net.TCPIdleEvent;
-import com.chiorichan.event.net.TCPIncomingEvent;
+import com.chiorichan.bus.events.net.TCPConnectedEvent;
+import com.chiorichan.bus.events.net.TCPDisconnectedEvent;
+import com.chiorichan.bus.events.net.TCPIdleEvent;
+import com.chiorichan.bus.events.net.TCPIncomingEvent;
 import com.chiorichan.net.packet.CommandPacket;
 import com.chiorichan.net.packet.DataPacket;
 import com.esotericsoftware.kryo.Kryo;
@@ -80,10 +80,6 @@ public class PacketListener extends PacketManager
 		{
 			Loader.getLogger().info( ChatColor.YELLOW + "Connection from " + var1.getRemoteAddressTCP().getAddress().getHostAddress() + " was disconnected because it was concelled by the TCPConnectedEvent!" );
 			var1.close();
-		}
-		else if ( NetworkManager.isClientMode() )
-		{
-			var1.sendTCP( new DataPacket( "beginSession", null ) );
 		}
 	}
 	
