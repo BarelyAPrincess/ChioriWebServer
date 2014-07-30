@@ -15,6 +15,7 @@ import ru.tehkode.utils.FieldReplacer;
 import com.chiorichan.Loader;
 import com.chiorichan.account.bases.Account;
 import com.chiorichan.permissions.Permissible;
+import com.chiorichan.permissions.PermissionsManager;
 import com.chiorichan.plugin.PluginManager;
 import com.google.common.collect.Sets;
 
@@ -23,16 +24,16 @@ import com.google.common.collect.Sets;
  */
 public class PEXPermissionSubscriptionMap extends HashMap<String, Map<Permissible, Boolean>>
 {
-	private static FieldReplacer<PluginManager, Map> INJECTOR;
+	private static FieldReplacer<PermissionsManager, Map> INJECTOR;
 	private static final AtomicReference<PEXPermissionSubscriptionMap> INSTANCE = new AtomicReference<PEXPermissionSubscriptionMap>();
 	private final PermissionsEx plugin;
-	private final PluginManager manager;
+	private final PermissionsManager manager;
 	
-	private PEXPermissionSubscriptionMap(PermissionsEx plugin, PluginManager manager, Map<String, Map<Permissible, Boolean>> backing)
+	private PEXPermissionSubscriptionMap(PermissionsEx plugin, PermissionsManager manager2, Map<String, Map<Permissible, Boolean>> backing)
 	{
 		super( backing );
 		this.plugin = plugin;
-		this.manager = manager;
+		this.manager = manager2;
 	}
 	
 	/**
@@ -42,7 +43,7 @@ public class PEXPermissionSubscriptionMap extends HashMap<String, Map<Permissibl
 	 * @param manager The manager to inject into
 	 */
 	@SuppressWarnings( "unchecked" )
-	public static PEXPermissionSubscriptionMap inject( PermissionsEx plugin, PluginManager manager )
+	public static PEXPermissionSubscriptionMap inject( PermissionsEx plugin, PermissionsManager manager )
 	{
 		PEXPermissionSubscriptionMap map = INSTANCE.get();
 		if ( map != null )
@@ -52,7 +53,7 @@ public class PEXPermissionSubscriptionMap extends HashMap<String, Map<Permissibl
 		
 		if ( INJECTOR == null )
 		{
-			INJECTOR = new FieldReplacer<PluginManager, Map>( manager.getClass(), "permSubs", Map.class );
+			INJECTOR = new FieldReplacer<PermissionsManager, Map>( manager.getClass(), "permSubs", Map.class );
 		}
 		
 		Map backing = INJECTOR.get( manager );

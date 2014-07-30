@@ -9,13 +9,14 @@ import java.util.Map;
 import ru.tehkode.utils.FieldReplacer;
 
 import com.chiorichan.permissions.Permission;
+import com.chiorichan.permissions.PermissionsManager;
 import com.chiorichan.plugin.PluginManager;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
 public class PermissionList extends HashMap<String, Permission>
 {
-	private static FieldReplacer<PluginManager, Map> INJECTOR;
+	private static FieldReplacer<PermissionsManager, Map> INJECTOR;
 	
 	private static final Map<Class<?>, FieldReplacer<Permission, Map>> CHILDREN_MAPS = new HashMap<Class<?>, FieldReplacer<Permission, Map>>();
 	/**
@@ -101,11 +102,11 @@ public class PermissionList extends HashMap<String, Permission>
 		}
 	}
 	
-	public static PermissionList inject( PluginManager manager )
+	public static PermissionList inject( PermissionsManager manager )
 	{
 		if ( INJECTOR == null )
 		{
-			INJECTOR = new FieldReplacer<PluginManager, Map>( manager.getClass(), "permissions", Map.class );
+			INJECTOR = new FieldReplacer<PermissionsManager, Map>( manager.getClass(), "permissions", Map.class );
 		}
 		Map existing = INJECTOR.get( manager );
 		@SuppressWarnings( "unchecked" )
