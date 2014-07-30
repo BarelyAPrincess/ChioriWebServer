@@ -1,9 +1,12 @@
 package com.chiorichan.account.adapter;
 
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
 import org.json.JSONException;
@@ -105,13 +108,44 @@ public class SqlAdapter implements AccountLookupAdapter
 			if ( accountname == null || accountname.isEmpty() )
 				throw new LoginException( LoginExceptionReasons.emptyUsername );
 			
-			String additionalAccountFields = "";
-			for ( String f : accountFields )
+			Set<String> accountFieldSet = new HashSet<String>( accountFields );
+			Set<String> accountColumnSet = new HashSet<String>();
+			
+			accountFieldSet.add( "acctId" );
+			accountFieldSet.add( "username" );
+			
+			ResultSet rs = sql.query( "SELECT * FROM `" + table + "` LIMIT 0;" );
+			
+			ResultSetMetaData rsmd = rs.getMetaData();
+			int columnCount = rsmd.getColumnCount();
+			
+			do
 			{
-				additionalAccountFields += " OR `" + f + "` = '" + accountname + "'";
+				for ( int i = 1; i < columnCount + 1; i++ )
+				{
+					accountColumnSet.add( rsmd.getColumnName( i ) );
+				}
+			}
+			while ( rs.next() );
+			
+			String additionalAccountFields = "";
+			for ( String f : accountFieldSet )
+			{
+				if ( !f.isEmpty() )
+					if ( accountColumnSet.contains( f ) )
+						additionalAccountFields += " OR `" + f + "` = '" + accountname + "'";
+					else
+						for ( String c : accountColumnSet )
+						{
+							if ( c.equalsIgnoreCase( f ) )
+							{
+								additionalAccountFields += " OR `" + c + "` = '" + accountname + "'";
+								break;
+							}
+						}
 			}
 			
-			ResultSet rs = sql.query( "SELECT * FROM `" + table + "` WHERE `accountname` = '" + accountname + "' OR `accountID` = '" + accountname + "'" + additionalAccountFields + ";" );
+			rs = sql.query( "SELECT * FROM `" + table + "` WHERE " + additionalAccountFields.substring( 4 ) + ";" );
 			
 			if ( rs == null || sql.getRowCount( rs ) < 1 )
 				throw new LoginException( LoginExceptionReasons.incorrectLogin );
@@ -168,7 +202,7 @@ public class SqlAdapter implements AccountLookupAdapter
 		
 		for ( String f : accountFields )
 		{
-			if ( meta.getString( f ).equals( accountname ) )
+			if ( meta.getString( f ) != null && meta.getString( f ).equals( accountname ) )
 				return true;
 		}
 		
