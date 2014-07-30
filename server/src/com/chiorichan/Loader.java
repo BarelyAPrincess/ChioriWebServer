@@ -67,7 +67,7 @@ public class Loader
 	private final static ServicesManager servicesManager = new ServicesManager();
 	private final static ChioriScheduler scheduler = new ChioriScheduler();
 	public static String clientId;
-	private static boolean isRunning;
+	private static boolean isRunning = true;
 	private static String stopReason = null;
 	
 	public static void main( String... args ) throws Exception
@@ -438,6 +438,7 @@ public class Loader
 	
 	public static void stop( String _stopReason )
 	{
+		getLogger().warning( "Server Stopping for Reason: " + _stopReason );
 		stopReason = _stopReason;
 		isRunning = false;
 	}
@@ -461,15 +462,21 @@ public class Loader
 	 */
 	public static void shutdown()
 	{
-		getPersistenceManager().shutdown();
-		getAccountsManager().shutdown();
+		persistence.shutdown();
+		accounts.shutdown();
 		modules.shutdown();
 		NetworkManager.cleanup();
 		
 		isRunning = false;
 		
 		if ( stopReason != null )
-			System.err.println( "The server was stoped for reason: " + stopReason );
+			System.err.println( "The server was stopped for reason: " + stopReason );
+		else
+		{
+			System.err.println( "The server was stopped for an unknown reason" );
+			for ( StackTraceElement se : Thread.currentThread().getStackTrace() )
+				System.err.println( se );
+		}
 	}
 	
 	public static boolean isRunning()

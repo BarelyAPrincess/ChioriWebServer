@@ -15,7 +15,7 @@ import java.util.logging.Logger;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.Loader;
-import com.chiorichan.account.bases.Sentient;
+import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.command.Command;
 import com.chiorichan.command.PluginCommand;
 import com.chiorichan.configuration.file.FileConfiguration;
@@ -304,7 +304,7 @@ public abstract class JavaPlugin extends PluginBase
 	/**
 	 * {@inheritDoc}
 	 */
-	public boolean onCommand( Sentient sender, Command command, String label, String[] args )
+	public boolean onCommand( SentientHandler sender, Command command, String label, String[] args )
 	{
 		return false;
 	}
@@ -312,7 +312,7 @@ public abstract class JavaPlugin extends PluginBase
 	/**
 	 * {@inheritDoc}
 	 */
-	public List<String> onTabComplete( Sentient sender, Command command, String alias, String[] args )
+	public List<String> onTabComplete( SentientHandler sender, Command command, String alias, String[] args )
 	{
 		return null;
 	}

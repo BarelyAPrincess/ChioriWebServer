@@ -1,5 +1,6 @@
 package com.chiorichan.plugin;
 
+
 /**
  * Represents a base {@link Plugin}
  * <p>
@@ -28,7 +29,14 @@ public abstract class PluginBase implements Plugin
 		{
 			return false;
 		}
-		return getName().equals( ( (Plugin) obj ).getName() );
+		try
+		{
+			return getName().equals( ( (Plugin) obj ).getName() );
+		}
+		catch ( NullPointerException e )
+		{
+			return false;
+		}
 	}
 	
 	public final String getName()
