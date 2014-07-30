@@ -56,7 +56,7 @@ public class WebInterpreter extends FileInterpreter
 	{
 		super();
 		
-		SqlConnector sql = Loader.getPersistenceManager().getSql();
+		SqlConnector sql = Loader.getPersistenceManager().getDatabase();
 		
 		File dest = null;
 		

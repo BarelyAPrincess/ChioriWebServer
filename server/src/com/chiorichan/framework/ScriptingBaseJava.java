@@ -298,14 +298,19 @@ abstract public class ScriptingBaseJava extends Script
 		return amt.round( new MathContext( dec, RoundingMode.HALF_DOWN ) );
 	}
 	
-	PluginManager getModuleBus()
+	PluginManager getPluginManager()
 	{
-		return Loader.getModuleBus();
+		return Loader.getPluginManager();
 	}
 	
 	Plugin getPluginByName( String search )
 	{
-		return Loader.getModuleBus().getPluginbyName( search );
+		return Loader.getPluginManager().getPluginbyName( search );
+	}
+	
+	Loader getLoader()
+	{
+		return Loader.getInstance();
 	}
 	
 	String apache_get_version()

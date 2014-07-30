@@ -7,25 +7,17 @@
 
 package com.chiorichan.framework;
 
-import com.chiorichan.ContentTypes;
-import com.chiorichan.Loader;
-import com.chiorichan.database.SqlConnector;
-import com.chiorichan.exceptions.HttpErrorException;
-import com.chiorichan.util.FileUtil;
-import com.chiorichan.util.StringUtil;
-import com.google.common.collect.Maps;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
 import java.util.Map;
 import java.util.Map.Entry;
-import org.apache.commons.io.filefilter.WildcardFileFilter;
-import org.apache.commons.lang3.StringUtils;
+
+import com.chiorichan.ContentTypes;
+import com.chiorichan.Loader;
+import com.chiorichan.util.FileUtil;
+import com.google.common.collect.Maps;
 
 public class FileInterpreter
 {
@@ -90,8 +82,10 @@ public class FileInterpreter
 			interpParams.put( "file", file.getAbsolutePath() );
 			
 			if ( !interpParams.containsKey( "shell" ) || interpParams.get( "shell" ) == null )
-				if ( file.getName().toLowerCase().endsWith( ".chi" ) || file.getName().toLowerCase().endsWith( ".groovy" ) )
+				if ( file.getName().toLowerCase().endsWith( ".groovy" ) )
 					interpParams.put( "shell", "groovy" );
+				else if ( file.getName().toLowerCase().endsWith( ".chi" ) || file.getName().toLowerCase().endsWith( ".gsp" ) )
+					interpParams.put( "shell", "embedded" );
 				else if ( file.getName().toLowerCase().endsWith( ".txt" ) )
 					interpParams.put( "shell", "text" );
 				else if ( ContentTypes.getContentType( cachedFile.getAbsoluteFile() ).toLowerCase().contains( "image" ) )

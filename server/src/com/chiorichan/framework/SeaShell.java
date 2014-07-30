@@ -18,6 +18,6 @@ public interface SeaShell
 {
 	public boolean doYouHandle( String shellIdent );
 	public void eval( FileInterpreter fi, Evaling eval ) throws ShellExecuteException;
-	public void evalFile( File file, Evaling aThis ) throws ShellExecuteException;
-	public void evalCode( String html, Evaling aThis ) throws ShellExecuteException;
+	public void evalFile( File file, Evaling eval ) throws ShellExecuteException;
+	public void evalCode( String html, Evaling eval ) throws ShellExecuteException;
 }

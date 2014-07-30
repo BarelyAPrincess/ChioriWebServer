@@ -37,7 +37,7 @@ public class Framework
 	
 	public DatabaseEngine getServerDatabase()
 	{
-		return new DatabaseEngine( Loader.getPersistenceManager().getSql() );
+		return new DatabaseEngine( Loader.getPersistenceManager().getDatabase() );
 	}
 	
 	public DatabaseEngine getSiteDatabase()
@@ -80,9 +80,9 @@ public class Framework
 		return Versioning.getCopyright();
 	}
 	
-	public PluginManager getModuleBus()
+	public PluginManager getPluginManager()
 	{
-		return Loader.getModuleBus();
+		return Loader.getPluginManager();
 	}
 	
 	public ConsoleLogManager getLogger()

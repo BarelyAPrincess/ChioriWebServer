@@ -30,6 +30,11 @@ public class Evaling
 	ByteArrayOutputStream bs = new ByteArrayOutputStream();
 	GroovyShell shell;
 	
+	static
+	{
+		registerShell( new EmbeddedShell() );
+	}
+	
 	public Evaling(Binding binding)
 	{
 		CompilerConfiguration configuration = new CompilerConfiguration();
@@ -291,5 +296,10 @@ public class Evaling
 	public Binding getBinding()
 	{
 		return shell.getContext();
+	}
+
+	public GroovyShell getShell()
+	{
+		return shell;
 	}
 }
