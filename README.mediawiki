@@ -297,6 +297,30 @@ Added a build.xml file so the project can not be built with Apache Ant 1.8. Swit
 * Fixed bug with doubled output in log file.
 * Added option to disable chat colors.
 * Switch metadata file from YAML to Properties.
+==Release 7 EXPERIMENTAL (Pony Feathers)==
+===Subversion 0===
+====Release 0====
+* Implemented the FileUserAdapter
+* Added a mech to prevent repetitive retrys in the SqlConnector.query().
+* Fixed the includes matcher loop bug. We had to reset the matcher since the source changes on each loop.
+* Commons can be indefinitely turned off from the config option config.noCommons.
+* You can now optionally force the Template Plugin to always render page requests. You can disable this with the override @themeless.
+* Made both defaultDocType and defaultTag a configurable option for the Template Plugin. See plugins/Template/config.yml
+* Implemented the ability to include packages inside html using "<!-- include(com.chiorichan.includes.menu) -->"
+* Bug fix with the way file extension is parsed.
+* Bug fixes to Database Virtual Request Interpreter
+* Bug fixes to doInclude and added non-evaled htm/html.
+* Bug fixes to subdomain load inside Site
+* Added 'framework.sites.autoCreateSubdomains' and 'framework.sites.subdomainsDefaultToRoot' options in server configs.
+* Moved event system to it's own class, plan to make events usable outside of plugins
+* Enhanced FileInterpreter, simplified the PluginManager and ServicesManager, Added Groovy Plugin Loader (Still needs reworking to actually function.)
+===Subversion 1===
+====Release 0====
+* Fixes to charset of both loading files and output to browser. getResponse().setEncoding( "UTF-8" ) implemented.
+* Implemented Embedded Groovy Server Pages. See EmbeddedShell.java
+* SQLAccountAdapter now confirms if additional user field exists in table
+* Major code restructuring to hopefully fix many lingering problems.
+* Undid a bunch of really silly implementations. "What was I thinking?"
 
 =Binary Release=
 You can grab the latest binary builds from our jenkins server at http://jenkins.applebloom.co/job/ChioriWebServer/.

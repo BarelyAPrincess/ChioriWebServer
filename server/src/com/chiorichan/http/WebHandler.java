@@ -228,9 +228,9 @@ public class WebHandler implements HttpHandler
 		
 		try
 		{
-			// Enhancement: Allow html to be ran under different shells. Default is GROOVY.
+			// Enhancement: Allow html to be ran under different shells. Default is embedded.
 			if ( !html.isEmpty() )
-				if ( !eval.shellExecute( "groovy", html ) )
+				if ( !eval.shellExecute( "embedded", html ) )
 					eval.write( html.getBytes( fi.getEncoding() ) );
 		}
 		catch ( ShellExecuteException e )
