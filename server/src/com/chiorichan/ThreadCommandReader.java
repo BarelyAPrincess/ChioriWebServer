@@ -17,6 +17,7 @@ public class ThreadCommandReader extends Thread implements SentientHandler
 	public ThreadCommandReader(ConsoleBus cb)
 	{
 		console = cb;
+		sentient.putHandler( this );
 	}
 	
 	public void run()
@@ -35,7 +36,8 @@ public class ThreadCommandReader extends Thread implements SentientHandler
 			{
 				if ( console.useJline )
 				{
-					s = bufferedreader.readLine( "?>", null );
+					String login = ( sentient == null ) ? "noLogin" : sentient.getId();
+					s = bufferedreader.readLine( "(" + login + ") ?>", null );
 				}
 				else
 				{
@@ -74,6 +76,7 @@ public class ThreadCommandReader extends Thread implements SentientHandler
 	public void attachSentient( Sentient _sentient )
 	{
 		sentient = _sentient;
+		sentient.putHandler( this );
 		
 		Loader.getPermissionsManager().subscribeToPermission( Loader.BROADCAST_CHANNEL_ADMINISTRATIVE, _sentient );
 		Loader.getPermissionsManager().subscribeToPermission( Loader.BROADCAST_CHANNEL_USERS, _sentient );

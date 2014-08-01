@@ -47,11 +47,11 @@ public abstract class Command
 	 * Executes the command, returning its success
 	 * 
 	 * @param sender
-	 *           Source object which is executing this command
+	 *             Source object which is executing this command
 	 * @param commandLabel
-	 *           The alias of the command used
+	 *             The alias of the command used
 	 * @param args
-	 *           All arguments passed to the command, split via ' '
+	 *             All arguments passed to the command, split via ' '
 	 * @return true if the command was successful, otherwise false
 	 */
 	public abstract boolean execute( SentientHandler sender, String commandLabel, String[] args );
@@ -80,7 +80,7 @@ public abstract class Command
 	 * Sets the permission required by users to be able to perform this command
 	 * 
 	 * @param permission
-	 *           Permission name or null
+	 *             Permission name or null
 	 */
 	public void setPermission( String permission )
 	{
@@ -93,9 +93,39 @@ public abstract class Command
 	 * If they do not have permission, they will be informed that they cannot do this.
 	 * 
 	 * @param target
-	 *           User to test
+	 *             User to test
 	 * @return true if they can use it, otherwise false
 	 */
+	public boolean testPermission( SentientHandler target )
+	{
+		if ( target.getSentient() == null )
+		{
+			target.sendMessage( ChatColor.RED + "There seems to be a problem with your login. Please relogin and then try again." );
+			return false;
+		}
+		
+		if ( testPermissionSilent( target.getSentient() ) )
+		{
+			return true;
+		}
+		
+		if ( permissionMessage == null )
+		{
+			target.sendMessage( ChatColor.RED + "I'm sorry, but you do not have permission to perform this command. Please contact the server administrators if you believe that this is in error." );
+		}
+		else if ( permissionMessage.length() != 0 )
+		{
+			for ( String line : permissionMessage.replace( "<permission>", permission ).split( "\n" ) )
+			{
+				target.sendMessage( line );
+			}
+		}
+		
+		return false;
+	}
+	
+	/* TEMPORARY */
+	@Deprecated
 	public boolean testPermission( Sentient target )
 	{
 		if ( testPermissionSilent( target ) )
@@ -118,13 +148,15 @@ public abstract class Command
 		return false;
 	}
 	
+	/* END TEMP */
+	
 	/**
 	 * Tests the given {@link Sentient} to see if they can perform this command.
 	 * <p>
 	 * No error is sent to the sender.
 	 * 
 	 * @param target
-	 *           User to test
+	 *             User to test
 	 * @return true if they can use it, otherwise false
 	 */
 	public boolean testPermissionSilent( Permissible target )
@@ -160,7 +192,7 @@ public abstract class Command
 	 * its been reregistered e.g. after a /reload
 	 * 
 	 * @param name
-	 *           The command's name
+	 *             The command's name
 	 * @return returns true if the name change happened instantly or false if it was scheduled for reregistration
 	 */
 	public boolean setLabel( String name )
@@ -178,7 +210,7 @@ public abstract class Command
 	 * Registers this command to a CommandMap Once called it only allows changes the registered CommandMap
 	 * 
 	 * @param commandMap
-	 *           the CommandMap to register this command to
+	 *             the CommandMap to register this command to
 	 * @return true if the registration was successful (the current registered CommandMap was the passed CommandMap or
 	 *         null) false otherwise
 	 */
@@ -197,7 +229,7 @@ public abstract class Command
 	 * Unregisters this command from the passed CommandMap applying any outstanding changes
 	 * 
 	 * @param commandMap
-	 *           the CommandMap to unregister
+	 *             the CommandMap to unregister
 	 * @return true if the unregistration was successfull (the current registered CommandMap was the passed CommandMap or
 	 *         null) false otherwise
 	 */
@@ -275,7 +307,7 @@ public abstract class Command
 	 * to this method.
 	 * 
 	 * @param aliases
-	 *           aliases to register to this command
+	 *             aliases to register to this command
 	 * @return this command object, for chaining
 	 */
 	public Command setAliases( List<String> aliases )
@@ -289,12 +321,11 @@ public abstract class Command
 	}
 	
 	/**
-	 * Sets a brief description of this command. Defining a description in the
-	 * {@link PluginDescriptionFile#getCommands()} (under the `<code>description</code>' node) is equivalent to this
+	 * Sets a brief description of this command. Defining a description in the {@link PluginDescriptionFile#getCommands()} (under the `<code>description</code>' node) is equivalent to this
 	 * method.
 	 * 
 	 * @param description
-	 *           new command description
+	 *             new command description
 	 * @return this command object, for chaining
 	 */
 	public Command setDescription( String description )
@@ -307,7 +338,7 @@ public abstract class Command
 	 * Sets the message sent when a permission check fails
 	 * 
 	 * @param permissionMessage
-	 *           new permission message, null to indicate default message, or an empty string to indicate no message
+	 *             new permission message, null to indicate default message, or an empty string to indicate no message
 	 * @return this command object, for chaining
 	 */
 	public Command setPermissionMessage( String permissionMessage )
@@ -320,7 +351,7 @@ public abstract class Command
 	 * Sets the example usage of this command
 	 * 
 	 * @param usage
-	 *           new example usage
+	 *             new example usage
 	 * @return this command object, for chaining
 	 */
 	public Command setUsage( String usage )

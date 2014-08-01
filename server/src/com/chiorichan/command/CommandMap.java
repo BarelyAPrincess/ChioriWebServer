@@ -36,6 +36,7 @@ import com.chiorichan.command.defaults.SaveOnCommand;
 import com.chiorichan.command.defaults.SayCommand;
 import com.chiorichan.command.defaults.SecretCommand;
 import com.chiorichan.command.defaults.StopCommand;
+import com.chiorichan.command.defaults.SuCommand;
 import com.chiorichan.command.defaults.TellCommand;
 import com.chiorichan.command.defaults.UpdateCommand;
 import com.chiorichan.command.defaults.VanillaCommand;
@@ -56,6 +57,7 @@ public class CommandMap
 	{
 		fallbackCommands.add( new ListCommand() );
 		fallbackCommands.add( new OpCommand() );
+		fallbackCommands.add( new SuCommand() );
 		fallbackCommands.add( new ColorsCommand() );
 		fallbackCommands.add( new DeopCommand() );
 		fallbackCommands.add( new BanIpCommand() );

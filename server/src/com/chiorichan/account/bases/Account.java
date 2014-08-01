@@ -10,21 +10,17 @@ import com.chiorichan.account.adapter.AccountLookupAdapter;
 import com.chiorichan.account.helpers.AccountMetaData;
 import com.chiorichan.account.helpers.LoginException;
 import com.chiorichan.account.helpers.LoginExceptionReasons;
-import com.chiorichan.framework.Site;
-import com.chiorichan.http.PersistentSession;
 import com.chiorichan.permissions.PermissibleBase;
 import com.chiorichan.permissions.Permission;
 import com.chiorichan.permissions.PermissionAttachment;
 import com.chiorichan.permissions.PermissionAttachmentInfo;
 import com.chiorichan.plugin.Plugin;
-import com.google.common.collect.Sets;
 
 public class Account extends Sentient
 {
 	protected final PermissibleBase perm;
 	protected AccountMetaData metaData = new AccountMetaData();
 	protected String acctId;
-	protected Set<SentientHandler> handlers = Sets.newCopyOnWriteArraySet();
 	
 	protected AccountLookupAdapter _cachedAdapter;
 	
@@ -111,19 +107,6 @@ public class Account extends Sentient
 		_cachedAdapter.saveAccount( metaData );
 	}
 	
-	/**
-	 * TODO: How can we make it so messages are sent to the original handler that requested the message?
-	 */
-	public void sendMessage( String string )
-	{
-		checkHandlers();
-		
-		for ( SentientHandler h : handlers )
-		{
-			h.sendMessage( string );
-		}
-	}
-	
 	public boolean canSee( Account user )
 	{
 		return false;
@@ -172,13 +155,6 @@ public class Account extends Sentient
 			return def;
 		
 		return metaData.getString( key );
-	}
-	
-	@Override
-	public void sendMessage( String... messages )
-	{
-		for ( SentientHandler handler : handlers )
-			handler.sendMessage( messages );
 	}
 	
 	public boolean isPermissionSet( String name )
@@ -251,71 +227,10 @@ public class Account extends Sentient
 		perm.clearPermissions();
 	}
 	
-	public void putHandler( SentientHandler handler )
-	{
-		if ( !handlers.contains( handler ) )
-			handlers.add( handler );
-	}
-	
-	public void removeHandler( SentientHandler handler )
-	{
-		checkHandlers();
-		handlers.remove( handler );
-	}
-	
-	public void clearHandlers()
-	{
-		checkHandlers();
-		handlers.clear();
-	}
-	
-	public boolean hasHandler()
-	{
-		checkHandlers();
-		return !handlers.isEmpty();
-	}
-	
-	public int countHandlers()
-	{
-		checkHandlers();
-		return handlers.size();
-	}
-	
-	public Set<SentientHandler> getHandlers()
-	{
-		checkHandlers();
-		return handlers;
-	}
-	
-	private void checkHandlers()
-	{
-		for ( SentientHandler h : handlers )
-			if ( !h.isValid() )
-				handlers.remove( h );
-	}
-	
 	public void reloadAndValidate() throws LoginException
 	{
 		metaData = _cachedAdapter.loadAccount( acctId );
 	}
 	
-	public String getAddress()
-	{
-		for ( SentientHandler h : handlers )
-			if ( h.getIpAddr() != null || !h.getIpAddr().isEmpty() )
-				return ( h.getIpAddr() );
-		
-		return null;
-	}
 	
-	public Site getSite()
-	{
-		Site site = Loader.getSiteManager().getFrameworkSite();
-		
-		for ( SentientHandler h : handlers )
-			if ( h instanceof PersistentSession )
-				site = ( (PersistentSession) h ).getSite();
-		
-		return site;
-	}
 }
