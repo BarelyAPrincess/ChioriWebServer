@@ -7,15 +7,10 @@
 
 package com.chiorichan.framework;
 
-import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -100,7 +95,7 @@ public class FileInterpreter
 			if ( !interpParams.containsKey( "shell" ) || interpParams.get( "shell" ) == null )
 				if ( file.getName().toLowerCase().endsWith( ".groovy" ) )
 					interpParams.put( "shell", "groovy" );
-				else if ( file.getName().toLowerCase().endsWith( ".chi" ) || file.getName().toLowerCase().endsWith( ".gsp" ) )
+				else if ( file.getName().toLowerCase().endsWith( ".chi" ) || file.getName().toLowerCase().endsWith( ".gsp" ) || file.getName().toLowerCase().endsWith( ".jsp" ) )
 					interpParams.put( "shell", "embedded" );
 				else if ( file.getName().toLowerCase().endsWith( ".txt" ) )
 					interpParams.put( "shell", "text" );

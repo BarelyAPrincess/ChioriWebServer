@@ -211,7 +211,7 @@ public class PersistenceManager
 		while ( sess.hasNext() )
 		{
 			PersistentSession it = sess.next();
-			it.saveSession();
+			it.saveSession( true );
 		}
 		
 		sessionList.clear();

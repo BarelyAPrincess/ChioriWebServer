@@ -51,6 +51,7 @@ public class PersistentSession implements SentientHandler
 	protected Site failoverSite;
 	protected boolean stale = false;
 	protected boolean isValid = true;
+	protected boolean changesMade = false;
 	
 	/**
 	 * Returns an instance of Framework relevant to this session. Instigates a new one if not already done.
@@ -237,7 +238,7 @@ public class PersistentSession implements SentientHandler
 			username = getArgument( "user" );
 			password = getArgument( "pass" );
 			
-			if ( !username.isEmpty() && !password.isEmpty() )
+			if ( username != null && !username.isEmpty() && password != null && !password.isEmpty() )
 			{
 				try
 				{
@@ -259,7 +260,7 @@ public class PersistentSession implements SentientHandler
 		{
 			try
 			{
-				currentAccount.reloadAndValidate();
+				currentAccount.reloadAndValidate(); // <- Is this being overly redundant?
 				Loader.getLogger().info( ChatColor.GREEN + "Current Login `Username \"" + currentAccount.getName() + "\", Password \"" + currentAccount.getMetaData().getPassword() + "\", UserId \"" + currentAccount.getAccountId() + "\", Display Name \"" + currentAccount.getDisplayName() + "\"`" );
 			}
 			catch ( LoginException e )
@@ -325,9 +326,19 @@ public class PersistentSession implements SentientHandler
 					String _ipAddr = rs.getString( "ipAddr" );
 					
 					if ( !rs.getString( "data" ).isEmpty() )
-						data = new Gson().fromJson( rs.getString( "data" ), new TypeToken<Map<String, String>>()
+					{
+						Map<String, String> tmpData = new Gson().fromJson( rs.getString( "data" ), new TypeToken<Map<String, String>>()
 						{
 						}.getType() );
+						
+						if ( changesMade )
+						{
+							tmpData.putAll( data );
+							data = tmpData;
+						}
+						else
+							data.putAll( tmpData );
+					}
 					
 					// Possible Session Hijacking! nullify!!!
 					if ( !_ipAddr.equals( ipAddr ) && !Loader.getConfig().getBoolean( "sessions.allowIPChange" ) )
@@ -404,23 +415,28 @@ public class PersistentSession implements SentientHandler
 			Loader.getLogger().info( ChatColor.DARK_AQUA + "Session Created `" + this + "`" );
 	}
 	
-	protected void saveSession()
+	protected void saveSession( boolean force )
 	{
-		SqlConnector sql = Loader.getPersistenceManager().getDatabase();
-		
-		String dataJson = new Gson().toJson( data );
-		
-		if ( sql != null )
-			try
-			{
-				sql.queryUpdate( "UPDATE `sessions` SET `data` = '" + dataJson + "', `timeout` = '" + timeout + "', `sessionName` = '" + candyName + "', `ipAddr` = '" + ipAddr + "', `sessionSite` = '" + getSite().getName() + "' WHERE `sessionId` = '" + candyId + "';" );
-			}
-			catch ( SQLException e )
-			{
-				Loader.getLogger().severe( "There was an exception thorwn while trying to save the session.", e );
-			}
-		else
-			Loader.getLogger().severe( "SQL is NULL. Can't save session." );
+		if ( force || changesMade )
+		{
+			SqlConnector sql = Loader.getPersistenceManager().getDatabase();
+			
+			String dataJson = new Gson().toJson( data );
+			
+			if ( sql != null )
+				try
+				{
+					sql.queryUpdate( "UPDATE `sessions` SET `data` = '" + dataJson + "', `timeout` = '" + timeout + "', `sessionName` = '" + candyName + "', `ipAddr` = '" + ipAddr + "', `sessionSite` = '" + getSite().getName() + "' WHERE `sessionId` = '" + candyId + "';" );
+				}
+				catch ( SQLException e )
+				{
+					Loader.getLogger().severe( "There was an exception thorwn while trying to save the session.", e );
+				}
+			else
+				Loader.getLogger().severe( "SQL is NULL. Can't save session." );
+			
+			changesMade = false;
+		}
 	}
 	
 	public String toString()
@@ -498,12 +514,19 @@ public class PersistentSession implements SentientHandler
 	
 	public void setArgument( String key, String value )
 	{
+		if ( value == null )
+			data.remove( key );
+		
 		data.put( key, value );
+		changesMade = true;
 	}
 	
 	public String getArgument( String key )
 	{
 		if ( !data.containsKey( key ) )
+			return "";
+		
+		if ( data.get( key ) == null )
 			return "";
 		
 		return data.get( key );
@@ -656,6 +679,13 @@ public class PersistentSession implements SentientHandler
 		requireLogin( null );
 	}
 	
+	/**
+	 * First checks in an account is present, sends to login page if not.
+	 * Second checks if the present accounts has the specified permission.
+	 * 
+	 * @param permission
+	 * @throws IOException
+	 */
 	public void requireLogin( String permission ) throws IOException
 	{
 		if ( currentAccount == null )

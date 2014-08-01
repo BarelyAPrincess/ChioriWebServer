@@ -89,14 +89,13 @@ public class WebHandler implements HttpHandler
 		}
 		finally
 		{
-			/*
-			 * PersistentSession sess = request.getSessionNoWarning();
-			 * if ( sess != null )
-			 * {
-			 * sess.releaseResources();
-			 * sess.saveSession();
-			 * }
-			 */
+			
+			PersistentSession sess = request.getSessionNoWarning();
+			if ( sess != null )
+			{
+				sess.releaseResources();
+				sess.saveSession( false );
+			}
 			
 			response.sendResponse();
 			
@@ -180,7 +179,7 @@ public class WebHandler implements HttpHandler
 			html = "";
 		
 		if ( file.isEmpty() && html.isEmpty() )
-			throw new HttpErrorException( 500, "Internal Server Error Encountered While Rendering Request" );
+			throw new HttpErrorException( 500, "Internal Server Error Encountered While Handling Request" );
 		
 		File docRoot = currentSite.getAbsoluteRoot( subdomain );
 		
@@ -190,10 +189,8 @@ public class WebHandler implements HttpHandler
 			if ( currentSite.protectCheck( file ) )
 				throw new HttpErrorException( 401, "Loading of this page (" + file + ") is not allowed since its hard protected in the site configs." );
 			
-			requestFile = new File( file );
+			requestFile = new File( docRoot, file );
 			sess.setGlobal( "__FILE__", requestFile );
-			
-			docRoot = new File( requestFile.getParent() );
 		}
 		
 		request.putServerVar( ServerVars.DOCUMENT_ROOT, docRoot );
@@ -205,7 +202,7 @@ public class WebHandler implements HttpHandler
 		sess.setGlobal( "_REWRITE", request.getRewriteVars() );
 		
 		Evaling eval = sess.getEvaling();
-		eval.reset(); // Reset eval so any left over output from any previous requests does not leak into this request.
+		eval.reset();
 		
 		String req = fi.get( "reqlevel" );
 		
@@ -240,7 +237,7 @@ public class WebHandler implements HttpHandler
 		
 		try
 		{
-			if ( requestFile != null )
+			if ( !file.isEmpty() )
 				if ( !eval.shellExecute( fi.get( "shell" ), fi ) )
 					eval.write( fi.getContent() );
 		}

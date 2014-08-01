@@ -199,7 +199,7 @@ public class WebInterpreter extends FileInterpreter
 						if ( f.exists() )
 						{
 							String filename = f.getName().toLowerCase();
-							if ( filename.endsWith( ".chi" ) || filename.endsWith( ".groovy" ) || filename.endsWith( ".html" ) || filename.endsWith( ".htm" ) )
+							if ( filename.endsWith( ".chi" ) || filename.endsWith( ".gsp" ) || filename.endsWith( ".jsp" ) || filename.endsWith( ".groovy" ) || filename.endsWith( ".html" ) || filename.endsWith( ".htm" ) )
 							{
 								selectedFile = f;
 								break;
