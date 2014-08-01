@@ -19,6 +19,7 @@ import com.chiorichan.bus.events.server.RenderEvent;
 import com.chiorichan.bus.events.server.RequestEvent;
 import com.chiorichan.framework.CodeParsingException;
 import com.chiorichan.framework.Site;
+import com.chiorichan.framework.WebUtils;
 import com.chiorichan.plugin.java.JavaPlugin;
 import com.chiorichan.util.StringUtil;
 
@@ -199,7 +200,7 @@ public class Template extends JavaPlugin implements Listener
 	{
 		try
 		{
-			String source = event.getFramework().getHttpUtils().evalPackage( pack );
+			String source = WebUtils.evalPackage( event.getSession().getEvaling(), pack );
 			try
 			{
 				source = event.getSession().getEvaling().parseForIncludes( source, event.getSite() );

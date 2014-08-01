@@ -4,7 +4,6 @@ import java.util.Map;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
-import com.chiorichan.framework.Framework;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.HttpRequest;
 import com.chiorichan.http.HttpResponse;
@@ -67,10 +66,5 @@ public class RenderEvent extends ServerEvent
 	public boolean sourceChanged()
 	{
 		return !DigestUtils.md5( pageSource ).equals( pageHash );
-	}
-
-	public Framework getFramework()
-	{
-		return sess.getFramework();
 	}
 }

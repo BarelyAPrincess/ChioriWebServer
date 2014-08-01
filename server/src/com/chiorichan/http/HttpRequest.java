@@ -13,7 +13,6 @@ import org.apache.commons.lang3.math.NumberUtils;
 
 import com.chiorichan.Loader;
 import com.chiorichan.bus.events.server.ServerVars;
-import com.chiorichan.framework.Framework;
 import com.chiorichan.framework.Site;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.Versioning;
@@ -121,11 +120,6 @@ public class HttpRequest
 	public Headers getHeaders()
 	{
 		return http.getRequestHeaders();
-	}
-	
-	public Framework getFramework()
-	{
-		return getSession().getFramework();
 	}
 	
 	protected PersistentSession getSessionNoWarning()

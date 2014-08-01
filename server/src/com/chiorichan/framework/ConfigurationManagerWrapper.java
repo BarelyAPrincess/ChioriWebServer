@@ -30,7 +30,7 @@ public class ConfigurationManagerWrapper
 	
 	public DatabaseEngine getServerDatabase()
 	{
-		return new DatabaseEngine( Loader.getPersistenceManager().getSql() );
+		return new DatabaseEngine( Loader.getPersistenceManager().getDatabase() );
 	}
 	
 	public YamlConfiguration getSiteConfiguration()
@@ -157,7 +157,7 @@ public class ConfigurationManagerWrapper
 			
 			if ( idenifier == null || idenifier == "-1" )
 			{
-				idenifier = ( sess.getUserState() ) ? sess.getCurrentUser().getAccountId() : "";
+				idenifier = ( sess.getUserState() ) ? sess.getCurrentAccount().getAccountId() : "";
 			}
 			
 			ResultSet defaultRs = sql.query( "SELECT * FROM `settings_default` WHERE `key` = '" + key + "';" );

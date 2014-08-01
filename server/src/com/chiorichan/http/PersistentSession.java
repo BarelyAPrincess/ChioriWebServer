@@ -17,8 +17,8 @@ import com.chiorichan.account.bases.Sentient;
 import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.account.helpers.LoginException;
 import com.chiorichan.database.SqlConnector;
+import com.chiorichan.framework.ConfigurationManagerWrapper;
 import com.chiorichan.framework.Evaling;
-import com.chiorichan.framework.Framework;
 import com.chiorichan.framework.Site;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.StringUtil;
@@ -47,27 +47,11 @@ public class PersistentSession implements SentientHandler
 	protected List<String> pendingMessages = Lists.newArrayList();
 	
 	protected Map<String, Candy> candies = new LinkedHashMap<String, Candy>();
-	protected Framework framework = null;
 	protected HttpRequest request;
 	protected Site failoverSite;
 	protected boolean stale = false;
 	protected boolean isValid = true;
 	protected boolean changesMade = false;
-	
-	/**
-	 * Returns an instance of Framework relevant to this session. Instigates a new one if not already done.
-	 * 
-	 * @return Framework
-	 */
-	public Framework getFramework()
-	{
-		if ( framework == null )
-			framework = new Framework( this );
-		
-		binding.setVariable( "chiori", framework );
-		
-		return framework;
-	}
 	
 	private PersistentSession()
 	{
@@ -731,5 +715,10 @@ public class PersistentSession implements SentientHandler
 	public void removeSentient()
 	{
 		currentAccount = null;
+	}
+
+	public ConfigurationManagerWrapper getConfigurationManager()
+	{
+		return new ConfigurationManagerWrapper( request.getSession() );
 	}
 }

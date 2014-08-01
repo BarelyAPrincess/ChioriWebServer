@@ -1,63 +1,95 @@
 package com.chiorichan.framework
 
+import com.chiorichan.ConsoleLogManager
+import com.chiorichan.Loader
+import com.chiorichan.database.DatabaseEngine
+import com.chiorichan.http.HttpCode
 import com.chiorichan.http.HttpRequest
 import com.chiorichan.http.HttpResponse
+import com.chiorichan.http.PersistenceManager
 import com.chiorichan.http.PersistentSession
+import com.chiorichan.plugin.PluginManager
 import com.chiorichan.util.Versioning
-import com.google.common.base.Joiner
 
 abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 {
-    Framework getFramework()
-    {
-        if ( chiori == null )
-        chiori = request.getFramework();
-		
-        return chiori;
-    }
+	void var_dump ( Object obj )
+	{
+		println var_export( obj )
+	}
 	
-    void var_dump ( Object obj )
-    {
-        println var_export( obj )
-    }
+	HttpRequest getRequest()
+	{
+		return request;
+	}
 	
-    HttpRequest getRequest()
-    {
-        return request;
-    }
+	HttpResponse getResponse()
+	{
+		return response;
+	}
 	
-    HttpResponse getResponse()
-    {
-        return response;
-    }
+	PersistentSession getSession()
+	{
+		return request.getSession();
+	}
 	
-    PersistentSession getSession()
-    {
-        return request.getSession();
-    }
+	void echo( String var )
+	{
+		println var
+	}
 	
-    void echo( String var )
-    {
-        println var
-    }
+	String getVersion()
+	{
+		return Versioning.getVersion();
+	}
 	
-    void include( String file )
-    {
-        println ( getFramework().getServer().fileReader( file ) );
-    }
+	String getProduct()
+	{
+		return Versioning.getProduct();
+	}
 	
-    String getVersion()
-    {
-        return Versioning.getVersion();
-    }
+	String getCopyright()
+	{
+		return Versioning.getCopyright();
+	}
 	
-    String getProduct()
-    {
-        return Versioning.getProduct();
-    }
+	public AccountServiceWrapper getAccountManager()
+	{
+		return new AccountServiceWrapper( request.getSession().getCurrentAccount() );
+	}
 	
-    String getCopyright()
-    {
-        return Versioning.getCopyright();
-    }
+	public ConfigurationManagerWrapper getConfigurationManager()
+	{
+		return new ConfigurationManagerWrapper( request.getSession() );
+	}
+	
+	public HttpUtilsWrapper getHttpUtils()
+	{
+		return new HttpUtilsWrapper( request.getSession() );
+	}
+	
+	public DatabaseEngine getServerDatabase()
+	{
+		return new DatabaseEngine( Loader.getPersistenceManager().getDatabase() );
+	}
+	
+	public DatabaseEngine getSiteDatabase()
+	{
+		return new DatabaseEngine( request.getSite().getDatabase() );
+	}
+	
+	Site getSite()
+	{
+		return getRequest().getSite();
+	}
+	
+	String getStatusDescription( int errNo )
+	{
+		return HttpCode.msg( errNo );
+	}
+	
+	PersistenceManager getPersistenceManager()
+	{
+		return Loader.getPersistenceManager();
+	}
 }

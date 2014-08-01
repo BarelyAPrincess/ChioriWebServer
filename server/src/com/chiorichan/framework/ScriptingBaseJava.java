@@ -89,7 +89,7 @@ abstract public class ScriptingBaseJava extends Script
 		return var.length();
 	}
 	
-	boolean empty ( Object o )
+	boolean empty( Object o )
 	{
 		if ( o == null )
 			return true;
