@@ -4,10 +4,6 @@ To give your websites more power, files ending with .groovy or .chi are ran thou
 Need more power? Then try out the Plugin system that is based on CraftBukkit (A Minecraft Game Server).
 The idea was to give you the ability to create amazing websites using the power of Java while taking less time and resources.
 
-=Included Framework=
-The development of Chiori Framework in the PHP form will be discontinued but it's evolution will continue from with
-this Java Web Server. Porting the framework to Java meant faster load times and less server lag.
-
 =To Do=
 * Implement a Server Administration Web Interface.
 * Switch to a Maven Dependency system (Low Priority).
@@ -320,7 +316,7 @@ Added a build.xml file so the project can not be built with Apache Ant 1.8. Swit
 * Implemented Embedded Groovy Server Pages. See EmbeddedShell.java
 * SQLAccountAdapter now confirms if additional user field exists in table
 * Major code restructuring to hopefully fix many lingering problems.
-* Undid a bunch of really silly implementations. "What was I thinking?"
+* Undid a few of really silly implementations I did.
 
 =Binary Release=
 You can grab the latest binary builds from our jenkins server at http://jenkins.applebloom.co/job/ChioriWebServer/.
