@@ -7,11 +7,11 @@ import com.chiorichan.account.bases.Account;
  * @author Chiori Greene
  *
  */
-public class UserServiceWrapper
+public class AccountServiceWrapper
 {
 	protected Account currentUser;
 	
-	public UserServiceWrapper(Account _currentUser)
+	public AccountServiceWrapper(Account _currentUser)
 	{
 		currentUser = _currentUser;
 	}

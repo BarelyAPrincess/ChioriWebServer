@@ -595,7 +595,13 @@ public class PersistentSession implements SentientHandler
 		return ( currentAccount != null );
 	}
 	
+	@Deprecated
 	public Account getCurrentUser()
+	{
+		return currentAccount;
+	}
+	
+	public Account getCurrentAccount()
 	{
 		return currentAccount;
 	}

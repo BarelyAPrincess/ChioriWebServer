@@ -20,9 +20,9 @@ public class Framework
 		sess = _sess;
 	}
 	
-	public UserServiceWrapper getUserService()
+	public AccountServiceWrapper getAccountManager()
 	{
-		return new UserServiceWrapper( sess.getCurrentUser() );
+		return new AccountServiceWrapper( sess.getCurrentAccount() );
 	}
 	
 	public ConfigurationManagerWrapper getConfigurationManager()
