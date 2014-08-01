@@ -37,7 +37,8 @@ import com.google.gson.JsonSyntaxException;
 public class PersistentSession implements SentientHandler
 {
 	protected Map<String, String> data = new LinkedHashMap<String, String>();
-	protected int timeout = 0, requestCnt = 0;
+	protected long timeout = 0;
+	protected int requestCnt = 0;
 	protected String candyId = "", candyName = "candyId", ipAddr = null;
 	protected Candy sessionCandy;
 	protected Binding binding = new Binding();
@@ -351,7 +352,7 @@ public class PersistentSession implements SentientHandler
 					List<PersistentSession> sessions = Loader.getPersistenceManager().getSessionsByIp( ipAddr );
 					if ( sessions.size() > Loader.getConfig().getInt( "sessions.maxSessionsPerIP" ) )
 					{
-						int oldestTime = Common.getEpoch();
+						long oldestTime = Common.getEpoch();
 						PersistentSession oldest = null;
 						
 						for ( PersistentSession s : sessions )
@@ -552,7 +553,7 @@ public class PersistentSession implements SentientHandler
 	
 	public void rearmTimeout()
 	{
-		int defaultTimeout = Loader.getConfig().getInt( "sessions.defaultTimeout", 3600 );
+		long defaultTimeout = Loader.getConfig().getInt( "sessions.defaultTimeout", 3600 );
 		
 		// Grant the timeout an additional 10 minutes per request, capped at one hour or 6 requests.
 		requestCnt++;
@@ -566,13 +567,14 @@ public class PersistentSession implements SentientHandler
 				defaultTimeout = Loader.getConfig().getInt( "sessions.defaultTimeoutRememberMe", 604800 );
 			
 			if ( Loader.getConfig().getBoolean( "allowNoTimeoutPermission" ) && currentAccount.hasPermission( "chiori.noTimeout" ) )
-				defaultTimeout = Integer.MAX_VALUE;
+				defaultTimeout = 31096821392L;
 		}
 		
 		timeout = Common.getEpoch() + defaultTimeout + ( Math.min( requestCnt, 6 ) * 600 );
+		sessionCandy.setExpiration( timeout );
 	}
 	
-	public int getTimeout()
+	public long getTimeout()
 	{
 		return timeout;
 	}

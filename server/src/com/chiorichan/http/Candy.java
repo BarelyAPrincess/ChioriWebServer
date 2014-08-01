@@ -8,7 +8,7 @@ import com.chiorichan.util.Common;
 public class Candy
 {
 	private String key, value, path = "/", domain = "";
-	private int epoch = 0;
+	private long epoch = 0;
 	
 	/*
 	 * Tells the response writer if it needs to set this candy in the response headers.
@@ -61,7 +61,7 @@ public class Candy
 	 * 
 	 * @param _epoch
 	 */
-	public void setExpiration( int _epoch )
+	public void setExpiration( long _epoch )
 	{
 		needsUpdating = true;
 		epoch = _epoch;
@@ -72,7 +72,7 @@ public class Candy
 	 * 
 	 * @param defaultLife
 	 */
-	public void setMaxAge( int defaultLife )
+	public void setMaxAge( long defaultLife )
 	{
 		needsUpdating = true;
 		epoch = Common.getEpoch() + defaultLife;
@@ -102,7 +102,7 @@ public class Candy
 		if ( epoch > 0 )
 		{
 			SimpleDateFormat dateFormat = new SimpleDateFormat( "EE, dd-MMM-yyyy HH:mm:ss zz" );
-			additional += "expires=" + dateFormat.format( new Date( (long) epoch * 1000 ) ) + "; ";
+			additional += "expires=" + dateFormat.format( new Date( epoch * 1000 ) ) + "; ";
 		}
 		
 		if ( !path.isEmpty() )

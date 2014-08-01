@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
+import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.bus.bases.EventException;
 import com.chiorichan.bus.events.server.RenderEvent;
@@ -159,10 +160,13 @@ public class WebHandler implements HttpHandler
 			return;
 		}
 		
+		if ( response.isCommitted() )
+			return;
+		
 		// Throws IOException and HttpErrorException
 		WebInterpreter fi = new WebInterpreter( request );
 		
-		Loader.getLogger().info( "&dNew page request '" + subdomain + "." + domain + "' '" + uri + "' '" + fi.toString() + "'" );
+		Loader.getLogger().info( ChatColor.DARK_AQUA + "Page Request '" + subdomain + "." + domain + "' '" + uri + "' '" + fi.toString() + "'" );
 		
 		request.rewriteVars.putAll( fi.getRewriteParams() );
 		
