@@ -281,9 +281,9 @@ public class Loader
 		
 		console.primaryThread.start();
 		
-		getLogger().info( ChatColor.DARK_AQUA + "" + ChatColor.NEGATIVE + "Done (" + ( System.currentTimeMillis() - startTime ) + "ms)! For help, type \"help\" or \"?\"" );
-		
 		modules.enablePlugins( PluginLoadOrder.RUNNING );
+		
+		getLogger().info( ChatColor.RED + "" + ChatColor.NEGATIVE + "Done (" + ( System.currentTimeMillis() - startTime ) + "ms)! Type \"help\" for help or \"su\" to change accounts.!" );
 		
 		updater.check();
 		
