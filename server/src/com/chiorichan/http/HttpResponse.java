@@ -1,13 +1,8 @@
 package com.chiorichan.http;
 
-import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.util.Map;
 
 import com.chiorichan.Loader;

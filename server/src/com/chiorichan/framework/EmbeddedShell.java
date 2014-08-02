@@ -10,6 +10,7 @@ import java.io.IOException;
 
 import org.codehaus.groovy.syntax.SyntaxException;
 
+import com.chiorichan.Loader;
 import com.chiorichan.exceptions.ShellExecuteException;
 
 public class EmbeddedShell implements SeaShell
@@ -66,62 +67,66 @@ public class EmbeddedShell implements SeaShell
 		}
 	}
 	
-	public void evaluate( String fullFile, GroovyShell shell, ByteArrayOutputStream bs ) throws IOException
+	public String escapeFragment( String fragment )
+	{
+		fragment = fragment.replace( "$", "\\$" );
+		Loader.getLogger().debug( "println \"\"\"" + fragment + "\"\"\";" );
+		return "println \"\"\"" + fragment + "\"\"\";";
+	}
+	
+	public void evaluate( String fullFile, GroovyShell shell, ByteArrayOutputStream bs ) throws IOException, ShellExecuteException
 	{
 		int fullFileIndex = 0;
 		
 		try
 		{
+			StringBuilder output = new StringBuilder();
+			
 			while ( fullFileIndex < fullFile.length() )
 			{
 				int startIndex = fullFile.indexOf( MARKER_START, fullFileIndex );
 				if ( -1 != startIndex )
 				{
 					// Append all the simple text until the marker
-					bs.write( fullFile.substring( fullFileIndex, startIndex ).getBytes( "UTF-8" ) );
+					
+					String fragment = escapeFragment( fullFile.substring( fullFileIndex, startIndex ) );
+					if ( !fragment.isEmpty() )
+						output.append( fragment );
+					
 					int endIndex = fullFile.indexOf( MARKER_END, fullFileIndex );
 					assert -1 != endIndex : "MARKER NOT CLOSED";
+					fragment = fullFile.substring( startIndex + MARKER_START.length(), endIndex ).trim();
 					
-					String fragment = fullFile.substring( startIndex + MARKER_START.length(), endIndex );
-					// Append all the substituted text
-					String interpretedText = interpret( shell, fragment );
-					bs.write( interpretedText.getBytes( "UTF-8" ) );
+					if ( !fragment.startsWith( "print" ) && !fragment.startsWith( "echo" ) && !fragment.startsWith( "def" ) )
+						fragment = "print " + fragment;
+					
+					if ( !fragment.isEmpty() )
+						output.append( fragment + ";" );
 					
 					// Position index after end marker
 					fullFileIndex = endIndex + MARKER_END.length();
 				}
 				else
 				{
-					bs.write( fullFile.substring( fullFileIndex ).getBytes( "UTF-8" ) );
+					String fragment = escapeFragment( fullFile.substring( fullFileIndex ) );
+					
+					if ( !fragment.isEmpty() )
+						output.append( fragment );
 					
 					// Position index after the end of the file
 					fullFileIndex = fullFile.length() + 1;
 				}
 			}
-		}
-		catch ( SyntaxException e1 )
-		{
-			e1.printStackTrace();
-			bs.write( fullFile.substring( fullFileIndex ).getBytes( "UTF-8" ) );
 			
-			// Position index after the end of the file
-			fullFileIndex = fullFile.length() + 1;
-		}
-		catch ( ClassNotFoundException e1 )
-		{
-			e1.printStackTrace();
-			bs.write( fullFile.substring( fullFileIndex ).getBytes( "UTF-8" ) );
+			String embeddedCode = interpret( shell, output.toString() );
 			
-			// Position index after the end of the file
-			fullFileIndex = fullFile.length() + 1;
+			if ( !embeddedCode.isEmpty() )
+				bs.write( embeddedCode.getBytes( "UTF-8" ) );
 		}
-		catch ( IOException e1 )
+		catch ( Exception e1 )
 		{
-			e1.printStackTrace();
-			bs.write( fullFile.substring( fullFileIndex ).getBytes( "UTF-8" ) );
-			
-			// Position index after the end of the file
 			fullFileIndex = fullFile.length() + 1;
+			throw new ShellExecuteException( e1 );
 		}
 	}
 	
