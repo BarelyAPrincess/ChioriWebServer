@@ -1,11 +1,7 @@
 package com.chiorichan.framework;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -50,125 +46,6 @@ public class WebUtils
 	public static String QRPNG( String code ) throws IOException
 	{
 		return new String( QRCode.from( code ).withSize( 200, 200 ).setMargin( 1 ).to( ImageType.PNG ).stream().toByteArray(), "ISO-8859-1" );
-	}
-	
-	public static String findPackagePath( String pack, Site site )
-	{
-		try
-		{
-			return findPackagePathWithException( pack, site );
-		}
-		catch ( FileNotFoundException e )
-		{
-			Loader.getLogger().warning( e.getMessage() );
-			return "";
-		}
-	}
-	
-	public static String findPackagePathWithException( String pack, Site site ) throws FileNotFoundException
-	{
-		if ( pack == null || pack.isEmpty() )
-			return "";
-		
-		pack = pack.replace( ".", System.getProperty( "file.separator" ) );
-		File root = site.getResourceDirectory();
-		
-		// TODO Add non-case sensitive extension selection 
-		
-		File file = new File( root, pack + ".groovy" );
-		
-		if ( !file.exists() )
-			file = new File( root, pack + ".inc.groovy" );
-		
-		if ( !file.exists() )
-			file = new File( root, pack + ".chi" );
-		
-		if ( !file.exists() )
-			file = new File( root, pack + ".inc.chi" );
-		
-		if ( !file.exists() )
-			file = new File( root, pack + ".htm" );
-		
-		if ( !file.exists() )
-			file = new File( root, pack + ".html" );
-		
-		// Just an extra file check. Seems useless considering that any PHP file will not be compatible with our groovy shell. More of my own personal reason.
-		if ( !file.exists() )
-			file = new File( root, pack + ".php" );
-		
-		if ( !file.exists() )
-			file = new File( root, pack + ".inc.php" );
-		
-		if ( !file.exists() )
-			file = new File( root, pack );
-		
-		if ( !file.exists() )
-		{
-			throw new FileNotFoundException( "Could not find the package " + pack + " file" );
-		}
-		
-		return file.getAbsolutePath();
-	}
-	
-	public static String evalPackage( Evaling eval, String pack ) throws IOException, CodeParsingException
-	{
-		return evalPackage( eval, pack, null );
-	}
-	
-	public static String evalPackage( Evaling eval, String pack, Site site ) throws IOException, CodeParsingException
-	{
-		File file = new File( findPackagePathWithException( pack, site ) );
-		
-		if ( !file.exists() )
-			return "";
-		
-		String source = fileToString( file );
-		
-		if ( site != null )
-			site.applyAlias( source );
-		
-		// HTM and HTML can not be evaled since it's not a script file
-		if ( file.getName().toLowerCase().endsWith( ".htm" ) || file.getName().toLowerCase().endsWith( ".html" ) )
-			return source;
-		
-		return evalGroovy( eval, source, file.getAbsolutePath() );
-	}
-	
-	public static String readPackage( String pack, Site site ) throws IOException
-	{
-		File file = new File( findPackagePathWithException( pack, site ) );
-		
-		if ( !file.exists() )
-			return "";
-		
-		String source = fileToString( file );
-		
-		if ( site != null )
-			site.applyAlias( source );
-		
-		return source;
-	}
-	
-	public static String evalFile( Evaling eval, String absoluteFile ) throws IOException, CodeParsingException
-	{
-		eval.evalFile( absoluteFile );
-		return eval.reset();
-	}
-	
-	public static String evalGroovy( Evaling eval, String source, String filePath ) throws IOException, CodeParsingException
-	{
-		if ( filePath != null )
-			Loader.getLogger().info( "Attempting to evaluate source for file '" + filePath + "'" );
-		
-		if ( !source.isEmpty() )
-		{
-			if ( filePath == null || filePath.isEmpty() )
-				eval.evalCode( source );
-			else
-				eval.evalFileVirtual( source, filePath );
-		}
-		
-		return eval.reset();
 	}
 	
 	public static String randomNum()
@@ -449,48 +326,6 @@ public class WebUtils
 	public static String escapeHTML( String l )
 	{
 		return StringUtils.replaceEach( l, new String[] { "&", "\"", "<", ">" }, new String[] { "&amp;", "&quot;", "&lt;", "&gt;" } );
-	}
-	
-	public static byte[] fileToByteArray( String path ) throws IOException
-	{
-		FileInputStream is = new FileInputStream( path );
-		
-		ByteArrayOutputStream bs = new ByteArrayOutputStream();
-		
-		int nRead;
-		byte[] data = new byte[16384];
-		
-		while ( ( nRead = is.read( data, 0, data.length ) ) != -1 )
-		{
-			bs.write( data, 0, nRead );
-		}
-		
-		bs.flush();
-		is.close();
-		
-		return bs.toByteArray();
-	}
-	
-	public byte[] fileToByteArray( File path ) throws IOException
-	{
-		return fileToByteArray( path.getAbsolutePath() );
-	}
-	
-	public static String fileToString( String path ) throws IOException
-	{
-		try
-		{
-			return new String( fileToByteArray( path ), "ISO-8859-1" );
-		}
-		catch ( UnsupportedEncodingException e )
-		{
-			return "";
-		}
-	}
-	
-	public static String fileToString( File path ) throws IOException
-	{
-		return fileToString( path.getAbsolutePath() );
 	}
 	
 	/**

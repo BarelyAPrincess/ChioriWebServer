@@ -17,8 +17,9 @@ import com.chiorichan.account.bases.Sentient;
 import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.account.helpers.LoginException;
 import com.chiorichan.database.SqlConnector;
+import com.chiorichan.factory.BindingProvider;
+import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.framework.ConfigurationManagerWrapper;
-import com.chiorichan.framework.Evaling;
 import com.chiorichan.framework.Site;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.StringUtil;
@@ -34,15 +35,13 @@ import com.google.gson.JsonSyntaxException;
  * @author Chiori Greene
  * @copyright Greenetree LLC
  */
-public class PersistentSession implements SentientHandler
+public class PersistentSession implements SentientHandler, BindingProvider
 {
 	protected Map<String, String> data = new LinkedHashMap<String, String>();
 	protected long timeout = 0;
 	protected int requestCnt = 0;
 	protected String candyId = "", candyName = "candyId", ipAddr = null;
 	protected Candy sessionCandy;
-	protected Binding binding = new Binding();
-	protected Evaling eval;
 	protected Account currentAccount = null;
 	protected List<String> pendingMessages = Lists.newArrayList();
 	
@@ -52,6 +51,9 @@ public class PersistentSession implements SentientHandler
 	protected boolean stale = false;
 	protected boolean isValid = true;
 	protected boolean changesMade = false;
+	
+	protected final Binding binding = new Binding();
+	protected CodeEvalFactory factory = null;
 	
 	private PersistentSession()
 	{
@@ -617,15 +619,6 @@ public class PersistentSession implements SentientHandler
 		return request.getResponse();
 	}
 	
-	// Is this thread safe? Could this spell trouble?
-	public Evaling getEvaling()
-	{
-		if ( eval == null )
-			eval = new Evaling( binding );
-		
-		return eval;
-	}
-	
 	/**
 	 * Called when request has finished so that this stale session can nullify unneeded stuff such as the HttpRequest
 	 */
@@ -716,7 +709,26 @@ public class PersistentSession implements SentientHandler
 	{
 		currentAccount = null;
 	}
+	
+	@Override
+	public CodeEvalFactory getCodeFactory()
+	{
+		if ( factory == null )
+			factory = CodeEvalFactory.create( binding );
+		
+		factory.reset();
+		
+		return factory;
+	}
 
+	@Override
+	public CodeEvalFactory forceNewCodeFactory()
+	{
+		factory = CodeEvalFactory.create( binding );
+		
+		return factory;
+	}
+	
 	public ConfigurationManagerWrapper getConfigurationManager()
 	{
 		return new ConfigurationManagerWrapper( request.getSession() );

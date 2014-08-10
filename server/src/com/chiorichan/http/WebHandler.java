@@ -1,11 +1,7 @@
 package com.chiorichan.http;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -19,8 +15,7 @@ import com.chiorichan.bus.events.server.RequestEvent;
 import com.chiorichan.bus.events.server.ServerVars;
 import com.chiorichan.exceptions.HttpErrorException;
 import com.chiorichan.exceptions.ShellExecuteException;
-import com.chiorichan.framework.CodeParsingException;
-import com.chiorichan.framework.Evaling;
+import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.framework.Site;
 import com.chiorichan.framework.SiteException;
 import com.chiorichan.util.Versioning;
@@ -100,7 +95,7 @@ public class WebHandler implements HttpHandler
 			
 			response.sendResponse();
 			
-			request.getSession().getEvaling().reset();
+			request.getSession().getCodeFactory().reset();
 			
 			// Too many files open error. Is this a fix? FIFO Pipes.
 			request.getOriginal().getRequestBody().close();
@@ -205,13 +200,14 @@ public class WebHandler implements HttpHandler
 		sess.setGlobal( "_GET", request.getGetMap() );
 		sess.setGlobal( "_REWRITE", request.getRewriteVars() );
 		
-		Evaling eval = sess.getEvaling();
-		eval.reset();
+		StringBuilder source = new StringBuilder();
+		CodeEvalFactory factory = CodeEvalFactory.create( sess );
+		factory.setEncoding( fi.getEncoding() );
 		
 		String req = fi.get( "reqlevel" );
 		
 		if ( !req.equals( "-1" ) )
-			if ( sess.getCurrentUser() == null )
+			if ( sess.getCurrentAccount() == null )
 			{
 				String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
 				Loader.getLogger().warning( "Requester of page '" + file + "' has been redirected to the login page." );
@@ -219,7 +215,7 @@ public class WebHandler implements HttpHandler
 				// TODO: Come up with a better way to handle the URI used in the target. ie. Params are lost.
 				return;
 			}
-			else if ( !sess.getCurrentUser().hasPermission( req ) )
+			else if ( !sess.getCurrentAccount().hasPermission( req ) )
 			{
 				if ( req.equals( "0" ) )
 					response.sendError( 401, "This page is limited to Operators only!" );
@@ -231,8 +227,13 @@ public class WebHandler implements HttpHandler
 		{
 			// Enhancement: Allow html to be ran under different shells. Default is embedded.
 			if ( !html.isEmpty() )
-				if ( !eval.shellExecute( "embedded", html ) )
-					eval.write( html.getBytes( fi.getEncoding() ) );
+			{
+				factory.put( html, "embedded" );
+				factory.applyAliases( currentSite.getAliases() );
+				factory.parseForIncludes( currentSite );
+				factory.eval( true );
+				source.append( factory.reset() );
+			}
 		}
 		catch ( ShellExecuteException e )
 		{
@@ -242,8 +243,13 @@ public class WebHandler implements HttpHandler
 		try
 		{
 			if ( !file.isEmpty() )
-				if ( !eval.shellExecute( fi.get( "shell" ), fi ) )
-					eval.write( fi.getContent() );
+			{
+				factory.put( fi );
+				factory.applyAliases( currentSite.getAliases() );
+				factory.parseForIncludes( currentSite );
+				factory.eval( true );
+				source.append( factory.reset() );
+			}
 		}
 		catch ( ShellExecuteException e )
 		{
@@ -279,31 +285,20 @@ public class WebHandler implements HttpHandler
 			fi.put( kv.getKey(), kv.getValue() );
 		}
 		
-		String source = currentSite.applyAlias( eval.reset( fi.getEncoding() ) );
-		
-		try
-		{
-			source = eval.parseForIncludes( source, currentSite );
-		}
-		catch ( CodeParsingException ex )
-		{
-			throw new IOException( "Exception encountered during parsing for text based includes, unknown fault.", ex );
-		}
-		
-		RenderEvent renderEvent = new RenderEvent( sess, source, fi.getParams() );
+		RenderEvent renderEvent = new RenderEvent( sess, source.toString(), fi.getParams() );
 		
 		try
 		{
 			Loader.getEventBus().callEventWithException( renderEvent );
 			
 			if ( renderEvent.sourceChanged() )
-				source = renderEvent.getSource();
+				source = new StringBuilder( renderEvent.getSource() );
 		}
 		catch ( EventException ex )
 		{
 			throw new IOException( "Exception encountered during render event call, most likely the fault of a plugin.", ex );
 		}
 		
-		response.getOutput().write( source.getBytes( fi.getEncoding() ) );
+		response.getOutput().write( source.toString().getBytes( fi.getEncoding() ) );
 	}
 }

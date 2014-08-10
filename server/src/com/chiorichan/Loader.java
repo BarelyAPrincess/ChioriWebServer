@@ -11,6 +11,8 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.io.FileUtils;
+
 import jline.console.ConsoleReader;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
@@ -199,6 +201,30 @@ public class Loader
 		
 		if ( getConfigFile() == null )
 			throw new StartupException( "We had problems loading the configuration file! Did you define the --config argument?" );
+		
+		try
+		{
+			File contentTypes = new File( "ContentTypes.properties" );
+			
+			if ( !contentTypes.exists() )
+				FileUtils.writeStringToFile( contentTypes, "# Chiori-chan's Web Server Content-Types File which overrides the default internal ones.\n# Syntax: 'ext: mime/type'" );
+		}
+		catch ( IOException e )
+		{
+			getLogger().warning( "There was an exception thrown trying to create the 'ContentTypes.properties' file.", e );
+		}
+		
+		try
+		{
+			File shellOverrides = new File( "ShellOverrides.properties" );
+			
+			if ( !shellOverrides.exists() )
+				FileUtils.writeStringToFile( shellOverrides, "# Chiori-chan's Web Server Shell Overrides File which overrides the default internal ones.\n# You don't have to add a string if the key and value are the same, hence Convension!\n# Syntax: 'fileExt: shellHandler'" );
+		}
+		catch ( IOException e )
+		{
+			getLogger().warning( "There was an exception thrown trying to create the 'ContentTypes.properties' file.", e );
+		}
 		
 		try
 		{

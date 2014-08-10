@@ -1,11 +1,7 @@
 package com.chiorichan.plugin.builtin;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -17,9 +13,9 @@ import com.chiorichan.bus.events.EventPriority;
 import com.chiorichan.bus.events.Listener;
 import com.chiorichan.bus.events.server.RenderEvent;
 import com.chiorichan.bus.events.server.RequestEvent;
-import com.chiorichan.framework.CodeParsingException;
+import com.chiorichan.exceptions.ShellExecuteException;
+import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.framework.Site;
-import com.chiorichan.framework.WebUtils;
 import com.chiorichan.plugin.java.JavaPlugin;
 import com.chiorichan.util.StringUtil;
 
@@ -42,71 +38,6 @@ public class Template extends JavaPlugin implements Listener
 	{
 		// event.setStatus( 418, "I'm a teapot!" );
 		// event.setCancelled( true );
-	}
-	
-	public String getPackageSource( File root, String pack )
-	{
-		if ( pack == null || pack.isEmpty() )
-			return "";
-		
-		pack = pack.replace( ".", System.getProperty( "file.separator" ) );
-		
-		File file = new File( root, pack + ".php" );
-		
-		if ( !file.exists() )
-			file = new File( root, pack + ".inc.php" );
-		
-		if ( !file.exists() )
-			file = new File( root, pack + ".chi" );
-		
-		if ( !file.exists() )
-			file = new File( root, pack + ".inc.groovy" );
-		
-		if ( !file.exists() )
-			file = new File( root, pack + ".groovy" );
-		
-		if ( !file.exists() )
-			file = new File( root, pack );
-		
-		if ( !file.exists() )
-		{
-			Loader.getLogger().info( "Could not find the file " + file.getAbsolutePath() );
-			return "";
-		}
-		
-		Loader.getLogger().info( "Retriving File: " + file.getAbsolutePath() );
-		
-		FileInputStream is;
-		try
-		{
-			is = new FileInputStream( file );
-		}
-		catch ( FileNotFoundException e )
-		{
-			return "";
-		}
-		
-		StringBuilder sb = new StringBuilder();
-		
-		try
-		{
-			BufferedReader br = new BufferedReader( new InputStreamReader( is, "ISO-8859-1" ) );
-			
-			String l;
-			while ( ( l = br.readLine() ) != null )
-			{
-				sb.append( l );
-				sb.append( '\n' );
-			}
-			
-			is.close();
-		}
-		catch ( IOException e )
-		{
-			e.printStackTrace();
-		}
-		
-		return sb.toString();
 	}
 	
 	@EventHandler( priority = EventPriority.LOWEST )
@@ -193,28 +124,34 @@ public class Template extends JavaPlugin implements Listener
 		ob.append( "</body>\n" );
 		ob.append( "</html>\n" );
 		
-		event.setSource( event.getSite().applyAlias( ob.toString() ) );
+		event.setSource( ob.toString() );
 	}
 	
 	private String doInclude( String pack, RenderEvent event )
 	{
 		try
 		{
-			String source = WebUtils.evalPackage( event.getSession().getEvaling(), pack );
-			try
-			{
-				source = event.getSession().getEvaling().parseForIncludes( source, event.getSite() );
-			}
-			catch ( CodeParsingException ex )
-			{
-				Loader.getLogger().warning( "Exception encountered during parsing for text based includes, unknown fault.", ex );
-			}
-			return source;
+			CodeEvalFactory factory = event.getSession().getCodeFactory();
+			
+			File packFile = event.getSite().getResource( pack );
+			
+			if ( packFile == null || !packFile.exists() )
+				packFile = Loader.getSiteManager().getFrameworkSite().getResource( pack );
+			
+			if ( packFile == null || !packFile.exists() )
+				return "";
+			
+			factory.reset();
+			factory.put( packFile );
+			factory.applyAliases( event.getSite().getAliases() );
+			factory.parseForIncludes( event.getSite() );
+			factory.eval();
+			return factory.reset();
 		}
-		catch ( IOException | CodeParsingException e )
+		catch ( ShellExecuteException | IOException ex )
 		{
 			// TODO Improved error handling needed here.
-			Loader.getLogger().warning( e.getMessage() );
+			Loader.getLogger().warning( "Exception encountered during include of package `" + pack + "`, unknown fault.", ex );
 		}
 		
 		return "";

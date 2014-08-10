@@ -4,6 +4,7 @@ import groovy.lang.Binding;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
@@ -14,22 +15,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
 
 import com.chiorichan.Loader;
 import com.chiorichan.StartupException;
-import com.chiorichan.account.adapter.AccountLookupAdapter;
-import com.chiorichan.account.adapter.FileAdapter;
-import com.chiorichan.account.adapter.SqlAdapter;
-import com.chiorichan.account.helpers.LookupAdapterException;
 import com.chiorichan.bus.bases.EventException;
 import com.chiorichan.bus.events.server.SiteLoadEvent;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.database.SqlConnector;
+import com.chiorichan.exceptions.ShellExecuteException;
+import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.util.FileUtil;
 import com.google.common.collect.Lists;
@@ -51,7 +50,7 @@ public class Site
 	
 	// Binding and evaling for use inside each site for executing site scripts outside of web requests.
 	Binding binding = new Binding();
-	Evaling eval = new Evaling( binding );
+	CodeEvalFactory factory = CodeEvalFactory.create( binding );
 	
 	public Site(File f) throws SiteException, StartupException
 	{
@@ -321,7 +320,7 @@ public class Site
 		// Framework site always uses the Builtin SQL Connector. Ignore YAML FileBase on this one.
 		if ( siteId.equalsIgnoreCase( "framework" ) )
 		{
-			sql = Loader.getPersistenceManager().getSql();
+			sql = Loader.getPersistenceManager().getDatabase();
 		}
 		else if ( config != null && config.getConfigurationSection( "database" ) != null )
 		{
@@ -365,14 +364,18 @@ public class Site
 				{
 					try
 					{
-						String result = WebUtils.evalPackage( eval, script, this );
+						factory.put( script );
+						factory.applyAliases( aliases );
+						factory.parseForIncludes( this );
+						factory.eval();
+						String result = factory.reset();
 						
 						if ( result == null || result.isEmpty() )
 							Loader.getLogger().info( "Finsihed evaling onLoadScript '" + script + "' for site '" + siteId + "'" );
 						else
 							Loader.getLogger().info( "Finsihed evaling onLoadScript '" + script + "' for site '" + siteId + "' with result: " + result );
 					}
-					catch ( IOException | CodeParsingException e )
+					catch ( ShellExecuteException | IOException e )
 					{
 						Loader.getLogger().warning( "There was an exception encountered while evaling onLoadScript '" + script + "' for site '" + siteId + "'.", e );
 					}
@@ -544,19 +547,6 @@ public class Site
 		return sql;
 	}
 	
-	public String applyAlias( String source )
-	{
-		if ( aliases == null || aliases.size() < 1 )
-			return source;
-		
-		for ( Entry<String, String> entry : aliases.entrySet() )
-		{
-			source = source.replace( "%" + entry.getKey() + "%", entry.getValue() );
-		}
-		
-		return source;
-	}
-	
 	public String getName()
 	{
 		return siteId;
@@ -604,5 +594,72 @@ public class Site
 	protected Binding getBinding()
 	{
 		return binding;
+	}
+	
+	public File getResource( String packageNode )
+	{
+		try
+		{
+			return getResourceWithException( packageNode );
+		}
+		catch ( FileNotFoundException e )
+		{
+			Loader.getLogger().warning( e.getMessage() );
+			return null;
+		}
+	}
+	
+	public File getResourceWithException( String pack ) throws FileNotFoundException
+	{
+		if ( pack == null || pack.isEmpty() )
+			throw new FileNotFoundException( "Package can't be empty!" );
+		
+		pack = pack.replace( ".", System.getProperty( "file.separator" ) );
+		
+		File root = getResourceDirectory();
+		
+		File packFile = new File( root, pack );
+		
+		if ( packFile.exists() )
+			return packFile;
+		
+		root = packFile.getParentFile();
+		
+		if ( root.exists() && root.isDirectory() )
+		{
+			File[] files = root.listFiles();
+			String[] exts = new String[]{"html", "htm", "groovy", "gsp", "jsp", "chi"};
+			
+			for ( File child : files )
+				if ( child.getName().startsWith( packFile.getName() ) )
+					for ( String ext : exts )
+						if ( child.getName().toLowerCase().endsWith( "." + ext ) )
+							return child;
+		}
+		
+		throw new FileNotFoundException( "Could not find the package `" + pack + "` file in site `" + getName() + "`." );
+	}
+	
+	public String readResource( String pack )
+	{
+		try
+		{
+			return readResourceWithException( pack );
+		}
+		catch ( IOException e )
+		{
+			return "";
+		}
+	}
+	
+	public String readResourceWithException( String pack ) throws IOException
+	{
+		File file = getResourceWithException( pack );
+		
+		String source = FileUtils.readFileToString( file );
+		
+		// TODO Apply aliases to file.
+		
+		return source;
 	}
 }

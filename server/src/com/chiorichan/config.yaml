@@ -11,7 +11,8 @@ server:
   enableTcpServer: true
   allowQuery: false
   installationUID: null
-  consolePassword: null
+  defaultEncoding: UTF-8
+  defaultImageEncoding: ISO-8859-1
   database:
     database: chiorifw
     type: mysql

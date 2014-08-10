@@ -6,8 +6,7 @@ import java.util.Arrays;
 
 import com.chiorichan.account.bases.Sentient;
 import com.chiorichan.account.bases.SentientHandler;
-import com.chiorichan.framework.Evaling;
-import com.chiorichan.framework.Site;
+import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.net.packet.DataPacket;
 import com.chiorichan.net.packet.KickPacket;
 import com.esotericsoftware.kryonet.Connection;
@@ -15,7 +14,7 @@ import com.esotericsoftware.kryonet.Connection;
 public class ServerConnection extends Connection implements SentientHandler
 {
 	protected Binding binding = new Binding();
-	protected Evaling eval;
+	protected CodeEvalFactory factory;
 	protected Sentient currentSentient = null;
 	
 	@Override

@@ -11,11 +11,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import com.chiorichan.ContentTypes;
 import com.chiorichan.Loader;
+import com.chiorichan.ShellOverrides;
 import com.chiorichan.util.FileUtil;
 import com.google.common.collect.Maps;
 
@@ -24,7 +26,7 @@ public class FileInterpreter
 	protected Map<String, String> interpParams = Maps.newTreeMap();
 	protected ByteArrayOutputStream bs = new ByteArrayOutputStream();
 	protected File cachedFile = null;
-	protected String encoding = "UTF-8";
+	protected String encoding = Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" );
 	
 	public String getEncoding()
 	{
@@ -34,6 +36,7 @@ public class FileInterpreter
 	public void setEncoding( String _encoding )
 	{
 		encoding = _encoding;
+		interpParams.put( "encoding", encoding );
 	}
 	
 	@Override
@@ -71,6 +74,7 @@ public class FileInterpreter
 		
 		// Shell Options (groovy,text,html)
 		interpParams.put( "shell", null );
+		interpParams.put( "encoding", encoding );
 	}
 	
 	public FileInterpreter(File file) throws IOException
@@ -78,6 +82,18 @@ public class FileInterpreter
 		this();
 		
 		interpretParamsFromFile( file );
+	}
+	
+	public static String determineShellFromName( String fileName )
+	{
+		fileName = fileName.toLowerCase();
+		
+		String shell = ShellOverrides.getShellForExt( ShellOverrides.getFileExtension( fileName ) );
+		
+		if ( shell == null || shell.isEmpty() )
+			return ShellOverrides.getFileExtension( fileName );
+		
+		return shell;
 	}
 	
 	public final void interpretParamsFromFile( File file ) throws IOException
@@ -93,22 +109,17 @@ public class FileInterpreter
 			interpParams.put( "file", file.getAbsolutePath() );
 			
 			if ( !interpParams.containsKey( "shell" ) || interpParams.get( "shell" ) == null )
-				if ( file.getName().toLowerCase().endsWith( ".groovy" ) )
-					interpParams.put( "shell", "groovy" );
-				else if ( file.getName().toLowerCase().endsWith( ".chi" ) || file.getName().toLowerCase().endsWith( ".gsp" ) || file.getName().toLowerCase().endsWith( ".jsp" ) )
-					interpParams.put( "shell", "embedded" );
-				else if ( file.getName().toLowerCase().endsWith( ".txt" ) )
-					interpParams.put( "shell", "text" );
-				else if ( ContentTypes.getContentType( cachedFile.getAbsoluteFile() ).toLowerCase().contains( "image" ) )
-				{
-					encoding = "ISO-8859-1";
-					interpParams.put( "shell", "image" );
-				}
+			{
+				String shell = determineShellFromName( file.getName() );
+				if ( shell != null && shell != "" )
+					interpParams.put( "shell", shell );
+			}
 			
 			is = new FileInputStream( file );
 			
 			bs = FileUtil.inputStream2ByteArray( is );
 			
+			ByteArrayOutputStream finished = new ByteArrayOutputStream();
 			String[] scanner = new String( bs.toByteArray() ).split( "\\n" );
 			
 			int inx = 0;
@@ -118,11 +129,35 @@ public class FileInterpreter
 				if ( l.trim().startsWith( "@" ) )
 					try
 					{
+						/* Only solutions I could think of for CSS files */
+						if ( ContentTypes.getContentType( file ).toLowerCase().contains( "css" ) )
+							finished.write( (l + "\n").getBytes( encoding ) );
+						/* Only solutions I could think of for CSS files */
+						
 						String key = l.trim().substring( 1, l.trim().indexOf( " " ) );
 						String val = l.trim().substring( l.trim().indexOf( " " ) + 1 );
 						
+						if ( val.endsWith( ";" ) )
+							val = val.substring( 0, val.length() - 1 );
+						
+						if ( val.startsWith( "'" ) && val.endsWith( "'" ) )
+							val = val.substring( 1, val.length() - 1 );
+						
 						interpParams.put( key, val );
 						Loader.getLogger().finer( "Setting param '" + key + "' to '" + val + "'" );
+						
+						if ( key.equals( "encoding" ) )
+						{
+							try
+							{
+								l.getBytes( val ); // Test encoding before applying it.
+								setEncoding( val );
+							}
+							catch ( UnsupportedEncodingException e )
+							{
+								e.printStackTrace();
+							}
+						}
 					}
 					catch ( NullPointerException | ArrayIndexOutOfBoundsException e )
 					{	
@@ -139,8 +174,6 @@ public class FileInterpreter
 				inx += l.length() + 1;
 				ln++;
 			}
-			
-			ByteArrayOutputStream finished = new ByteArrayOutputStream();
 			
 			int h = 0;
 			for ( byte b : bs.toByteArray() )
@@ -171,7 +204,11 @@ public class FileInterpreter
 			return "text/html";
 		
 		String type = ContentTypes.getContentType( cachedFile.getAbsoluteFile() );
-		Loader.getLogger().info( "Detected '" + cachedFile.getAbsolutePath() + "' to be of '" + type + "' type." );
+		
+		if ( type.toLowerCase().contains( "image" ) )
+			setEncoding( Loader.getConfig().getString( "server.defaultImageEncoding", "ISO-8859-1" ) );
+		
+		Loader.getLogger().info( "Detected '" + cachedFile.getAbsolutePath() + "' to be of '" + type + "' type with '" + encoding + "' encoding." );
 		return type;
 	}
 	

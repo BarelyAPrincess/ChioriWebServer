@@ -1,6 +1,7 @@
 package com.chiorichan;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
@@ -18,14 +19,23 @@ public class ContentTypes
 {
 	public static Map<String, String> types = Maps.newLinkedHashMap();
 	
+	// TODO Place a copy of the properties in the server root for user modification
+	
 	static
 	{
 		try
 		{
-			InputStream is = Loader.class.getClassLoader().getResourceAsStream( "com/chiorichan/ContentTypes.properties" );
+			File contentTypes = new File( "ContentTypes.properties" );
+			
+			if ( !contentTypes.exists() )
+				contentTypes.createNewFile();
+			
+			InputStream isDefault = Loader.class.getClassLoader().getResourceAsStream( "com/chiorichan/ContentTypes.properties" );
+			InputStream is = new FileInputStream( contentTypes );
 			try
 			{
 				Properties prop = new Properties();
+				prop.load( isDefault );
 				prop.load( is );
 				for ( Object o : prop.keySet() )
 					if ( o instanceof String )
