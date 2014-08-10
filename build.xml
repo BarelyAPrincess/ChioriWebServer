@@ -110,6 +110,8 @@
 		</jar>
 		
 		<checksum file="${jar.dir}/${ant.project.name}-${project.version}-github-build${env.BUILD_NUMBER}.jar" forceOverwrite="yes"/>
+
+		<copy file="${jar.dir}/${ant.project.name}-${project.version}-github-build${env.BUILD_NUMBER}.jar" tofile="${jar.dir}/${ant.project.name}.jar"/>
 	</target>
 	
 	<target name="clean-build" depends="clean,jar,compile-plugins"/>
@@ -175,6 +177,8 @@
 		<jar destfile="${jar.dir}/${plugin.name}-for-${ant.project.name}-${project.version}-github-build${env.BUILD_NUMBER}.jar" filesetmanifest="mergewithoutmain">
 			<fileset dir="${classes.dir.plugins}/${plugin.name}"/>
 		</jar>
+
+		<copy file="${jar.dir}/${plugin.name}-for-${ant.project.name}-${project.version}-github-build${env.BUILD_NUMBER}.jar" tofile="${jar.dir}/${plugin.name}.jar"/>
 		
 		<checksum file="${jar.dir}/${plugin.name}-for-${ant.project.name}-${project.version}-github-build${env.BUILD_NUMBER}.jar" forceOverwrite="yes"/>
 		
