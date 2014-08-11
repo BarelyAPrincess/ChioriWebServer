@@ -16,6 +16,7 @@ import com.chiorichan.bus.events.server.ServerVars;
 import com.chiorichan.exceptions.HttpErrorException;
 import com.chiorichan.exceptions.ShellExecuteException;
 import com.chiorichan.factory.CodeEvalFactory;
+import com.chiorichan.factory.CodeMetaData;
 import com.chiorichan.framework.Site;
 import com.chiorichan.framework.SiteException;
 import com.chiorichan.util.Versioning;
@@ -94,8 +95,6 @@ public class WebHandler implements HttpHandler
 			}
 			
 			response.sendResponse();
-			
-			request.getSession().getCodeFactory().reset();
 			
 			// Too many files open error. Is this a fix? FIFO Pipes.
 			request.getOriginal().getRequestBody().close();
@@ -201,7 +200,7 @@ public class WebHandler implements HttpHandler
 		sess.setGlobal( "_REWRITE", request.getRewriteVars() );
 		
 		StringBuilder source = new StringBuilder();
-		CodeEvalFactory factory = CodeEvalFactory.create( sess );
+		CodeEvalFactory factory = sess.getCodeFactory();
 		factory.setEncoding( fi.getEncoding() );
 		
 		String req = fi.get( "reqlevel" );
@@ -228,12 +227,9 @@ public class WebHandler implements HttpHandler
 			// Enhancement: Allow html to be ran under different shells. Default is embedded.
 			if ( !html.isEmpty() )
 			{
-				factory.resetSource();
-				factory.put( html, "embedded" );
-				factory.applyAliases( currentSite.getAliases() );
-				factory.parseForIncludes( currentSite );
-				factory.eval( true );
-				source.append( factory.reset() );
+				CodeMetaData meta = new CodeMetaData();
+				meta.shell = "embedded";
+				source.append( factory.eval( html, meta, currentSite ) );
 			}
 		}
 		catch ( ShellExecuteException e )
@@ -245,12 +241,7 @@ public class WebHandler implements HttpHandler
 		{
 			if ( !file.isEmpty() )
 			{
-				factory.resetSource();
-				factory.put( fi );
-				factory.applyAliases( currentSite.getAliases() );
-				factory.parseForIncludes( currentSite );
-				factory.eval( true );
-				source.append( factory.reset() );
+				source.append( factory.eval( fi, currentSite ) );
 			}
 		}
 		catch ( ShellExecuteException e )

@@ -29,6 +29,7 @@ import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.database.SqlConnector;
 import com.chiorichan.exceptions.ShellExecuteException;
 import com.chiorichan.factory.CodeEvalFactory;
+import com.chiorichan.factory.CodeMetaData;
 import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.util.FileUtil;
 import com.google.common.collect.Lists;
@@ -364,18 +365,16 @@ public class Site
 				{
 					try
 					{
-						factory.put( script );
-						factory.applyAliases( aliases );
-						factory.parseForIncludes( this );
-						factory.eval();
-						String result = factory.reset();
+						CodeMetaData meta = new CodeMetaData();
+						meta.shell = "groovy";
+						String result = factory.eval( script, meta, this );
 						
 						if ( result == null || result.isEmpty() )
 							Loader.getLogger().info( "Finsihed evaling onLoadScript '" + script + "' for site '" + siteId + "'" );
 						else
 							Loader.getLogger().info( "Finsihed evaling onLoadScript '" + script + "' for site '" + siteId + "' with result: " + result );
 					}
-					catch ( ShellExecuteException | IOException e )
+					catch ( ShellExecuteException e )
 					{
 						Loader.getLogger().warning( "There was an exception encountered while evaling onLoadScript '" + script + "' for site '" + siteId + "'.", e );
 					}

@@ -476,13 +476,7 @@ public class WebUtils
 		if ( packFile == null || !packFile.exists() )
 			return "";
 		
-		factory.reset();
-		factory.resetSource();
-		factory.put( packFile );
-		factory.applyAliases( site.getAliases() );
-		factory.parseForIncludes( site );
-		factory.eval();
-		return factory.reset();
+		return factory.eval( packFile, site );
 	}
 	
 	public static String evalPackage( CodeEvalFactory factory, Site site, String pack ) throws IOException, ShellExecuteException
@@ -500,12 +494,6 @@ public class WebUtils
 		if ( packFile == null || !packFile.exists() )
 			return "";
 		
-		factory.reset();
-		factory.resetSource();
-		factory.put( packFile );
-		factory.applyAliases( site.getAliases() );
-		factory.parseForIncludes( site );
-		factory.eval();
-		return factory.reset();
+		return factory.eval( packFile, site );
 	}
 }

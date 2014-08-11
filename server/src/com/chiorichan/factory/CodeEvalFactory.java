@@ -27,17 +27,15 @@ import com.chiorichan.framework.FileInterpreter;
 import com.chiorichan.framework.ScriptingBaseGroovy;
 import com.chiorichan.framework.Site;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 public class CodeEvalFactory
 {
 	protected String encoding = Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" );
-	protected StringBuilder awaitingCode = new StringBuilder();
-	protected CodeMetaData codeMeta = null;
-	protected ByteArrayOutputStream bs = new ByteArrayOutputStream();
 	
 	protected static List<SeaShell> shells = Lists.newCopyOnWriteArrayList();
-	
-	protected GroovyShell shell;
+	protected Map<GroovyShell, Boolean> groovyShells = Maps.newConcurrentMap();
+	protected Binding binding;
 	
 	static
 	{
@@ -59,15 +57,17 @@ public class CodeEvalFactory
 	
 	public void setVariable( String key, Object val )
 	{
-		shell.setVariable( key, val );
+		for ( GroovyShell shell : groovyShells.keySet() )
+			shell.setVariable( key, val );
 	}
 	
 	public void setFileName( String fileName )
 	{
-		shell.setVariable( "__FILE__", new File( fileName ) );
+		for ( GroovyShell shell : groovyShells.keySet() )
+			shell.setVariable( "__FILE__", new File( fileName ) );
 	}
 	
-	public void setOutputStream( ByteArrayOutputStream _bs )
+	private void setOutputStream( GroovyShell shell, ByteArrayOutputStream _bs )
 	{
 		try
 		{
@@ -79,21 +79,42 @@ public class CodeEvalFactory
 		}
 	}
 	
-	public void resetOutputStream()
+	protected GroovyShell getUnusedShell()
 	{
-		setOutputStream( bs );
+		for ( Entry<GroovyShell, Boolean> eShell : groovyShells.entrySet() )
+		{
+			if ( eShell.getValue() == false )
+				return eShell.getKey();
+		}
+		
+		GroovyShell shell = getNewShell();
+		groovyShells.put( shell, false );
+		return shell;
 	}
 	
-	protected CodeEvalFactory(Binding binding)
+	protected GroovyShell getNewShell()
 	{
 		CompilerConfiguration configuration = new CompilerConfiguration();
 		
 		configuration.setScriptBaseClass( ScriptingBaseGroovy.class.getName() );
 		configuration.setSourceEncoding( encoding );
 		
-		shell = new GroovyShell( Loader.class.getClassLoader(), binding, configuration );
-		
-		resetOutputStream();
+		return new GroovyShell( Loader.class.getClassLoader(), binding, configuration );
+	}
+	
+	protected void lock( GroovyShell shell )
+	{
+		groovyShells.put( shell, true );
+	}
+	
+	protected void unlock( GroovyShell shell )
+	{
+		groovyShells.put( shell, false );
+	}
+	
+	protected CodeEvalFactory(Binding _binding)
+	{
+		binding = _binding;
 	}
 	
 	public void setEncoding( String _encoding )
@@ -106,18 +127,78 @@ public class CodeEvalFactory
 		shells.add( shell );
 	}
 	
-	public boolean eval() throws ShellExecuteException
+	public String eval( File fi, Site site ) throws ShellExecuteException
 	{
-		return eval( false );
+		CodeMetaData codeMeta = new CodeMetaData();
+		
+		codeMeta.shell = FileInterpreter.determineShellFromName( fi.getName() );
+		codeMeta.fileName = fi.getAbsolutePath();
+		
+		return eval( fi, codeMeta, site );
 	}
 	
-	public boolean eval( boolean dumpSourceOnFailure ) throws ShellExecuteException
+	public String eval( File fi, CodeMetaData meta, Site site ) throws ShellExecuteException
 	{
-		String shell = ( codeMeta == null ) ? "html" : codeMeta.shell;
-		shell = ( shell == null || shell.isEmpty() ) ? "html" : shell;
+		try
+		{
+			return eval( FileUtils.readFileToString( fi, encoding ), meta, site );
+		}
+		catch ( IOException e )
+		{
+			throw new ShellExecuteException( e, meta );
+		}
+	}
+	
+	public String eval( FileInterpreter fi, Site site ) throws ShellExecuteException
+	{
+		CodeMetaData codeMeta = new CodeMetaData();
 		
-		if ( awaitingCode.toString().isEmpty() )
-			return true;
+		codeMeta.shell = fi.getParams().get( "shell" );
+		codeMeta.fileName = fi.getFile().getAbsolutePath();
+		
+		try
+		{
+			return eval( new String( fi.getContent(), fi.getEncoding() ), codeMeta, site );
+		}
+		catch ( UnsupportedEncodingException e )
+		{
+			throw new ShellExecuteException( e, codeMeta );
+		}
+	}
+	
+	public String eval( String code, Site site ) throws ShellExecuteException
+	{
+		CodeMetaData codeMeta = new CodeMetaData();
+		
+		codeMeta.shell = "html";
+		
+		return eval( code, codeMeta, site );
+	}
+	
+	public String eval( String code, CodeMetaData meta, Site site ) throws ShellExecuteException
+	{
+		ByteArrayOutputStream bs = new ByteArrayOutputStream();
+		boolean success = false;
+		
+		if ( code == null || code.isEmpty() )
+			return "";
+		
+		GroovyShell gShell = getUnusedShell();
+		lock( gShell );
+		setOutputStream( gShell, bs );
+		
+		if ( site != null )
+		{
+			code = applyAliases( code, site.getAliases() );
+			try
+			{
+				code = parseForIncludes( code, site );
+			}
+			catch ( IOException e)
+			{
+				throw new ShellExecuteException( e, meta );
+			}
+		}
 		
 		for ( SeaShell s : shells )
 		{
@@ -125,10 +206,10 @@ public class CodeEvalFactory
 			
 			for ( String she : handledShells )
 			{
-				if ( she.equalsIgnoreCase( shell ) || she.equalsIgnoreCase( "all" ) )
+				if ( she.equalsIgnoreCase( meta.shell ) || she.equalsIgnoreCase( "all" ) )
 				{
 					// TODO Add HTML to CodeMeta
-					String result = s.eval( codeMeta, awaitingCode.toString(), this );
+					String result = s.eval( meta, code, gShell, bs );
 					
 					try
 					{
@@ -141,155 +222,48 @@ public class CodeEvalFactory
 					
 					if ( result != null )
 					{
-						awaitingCode = new StringBuilder();
-						codeMeta = new CodeMetaData();
-						return true;
+						success = true;
+						break;
 					}
 				}
 			}
 		}
 		
-		if ( dumpSourceOnFailure )
+		unlock( gShell );
+		
+		if ( success )
 			try
 			{
-				bs.write( awaitingCode.toString().getBytes( encoding ) );
+				return new String( bs.toByteArray(), encoding );
 			}
-			catch ( IOException e )
+			catch ( UnsupportedEncodingException e )
 			{
-				throw new ShellExecuteException( e, codeMeta );
+				throw new ShellExecuteException( e, meta );
 			}
 		
-		return false;
+		return code;
 	}
 	
-	public String getSource()
+	private String applyAliases( String source, Map<String, String> aliases )
 	{
-		return awaitingCode.toString();
-	}
-	
-	public void resetSource()
-	{
-		awaitingCode = new StringBuilder();
-		codeMeta = new CodeMetaData();
-	}
-	
-	public GroovyShell getShell()
-	{
-		return shell;
-	}
-	
-	public String reset()
-	{
-		String result = "";
+		if ( source.isEmpty() )
+			return "";
 		
-		try
-		{
-			result = new String( bs.toByteArray(), encoding );
-		}
-		catch ( UnsupportedEncodingException e )
-		{	
-			
-		}
-		
-		bs = new ByteArrayOutputStream();
-		resetOutputStream();
-		
-		return result;
-	}
-	
-	public ByteArrayOutputStream getOutputStream()
-	{
-		return bs;
-	}
-	
-	public void put( String code, String shell )
-	{
-		put( code );
-		
-		if ( codeMeta == null )
-			codeMeta = new CodeMetaData();
-		
-		codeMeta.shell = shell;
-	}
-	
-	public void put( String code )
-	{
-		awaitingCode.append( code );
-	}
-	
-	public byte[] resetToBytes()
-	{
-		try
-		{
-			return reset().getBytes( encoding );
-		}
-		catch ( UnsupportedEncodingException e )
-		{
-			return new byte[0];
-		}
-	}
-	
-	public void put( File fi, String shell ) throws IOException
-	{
-		put( fi );
-		
-		codeMeta.shell = shell;
-	}
-	
-	public void put( File fi ) throws IOException
-	{
-		put( FileUtils.readFileToString( fi, encoding ) );
-		
-		if ( codeMeta == null )
-			codeMeta = new CodeMetaData();
-		
-		codeMeta.shell = FileInterpreter.determineShellFromName( fi.getName() );
-		codeMeta.fileName = fi.getAbsolutePath();
-	}
-	
-	public void put( FileInterpreter fi )
-	{
-		try
-		{
-			put( new String( fi.getContent(), fi.getEncoding() ) );
-		}
-		catch ( UnsupportedEncodingException e )
-		{
-			e.printStackTrace();
-			return;
-		}
-		
-		if ( codeMeta == null )
-			codeMeta = new CodeMetaData();
-		
-		codeMeta.shell = fi.getParams().get( "shell" );
-		codeMeta.fileName = fi.getFile().getAbsolutePath();
-	}
-	
-	public void applyAliases( Map<String, String> aliases )
-	{
 		if ( aliases == null || aliases.size() < 1 )
-			return;
-		
-		if ( awaitingCode.toString().isEmpty() )
-			return;
-		
-		String source = awaitingCode.toString();
+			return source;
 		
 		for ( Entry<String, String> entry : aliases.entrySet() )
 		{
 			source = source.replace( "%" + entry.getKey() + "%", entry.getValue() );
 		}
 		
-		awaitingCode = new StringBuilder( source );
+		return source;
 	}
 	
-	public void parseForIncludes( Site site ) throws IOException, ShellExecuteException
+	private String parseForIncludes( String source, Site site ) throws IOException, ShellExecuteException
 	{
-		if ( awaitingCode.toString().isEmpty() )
-			return;
-		
-		String source = awaitingCode.toString();
+		if ( source.isEmpty() )
+			return source;
 		
 		Pattern p1 = Pattern.compile( "<!-- *include\\((.*)\\) *-->" );
 		Pattern p2 = Pattern.compile( "(<!-- *include\\(.*\\) *-->)" );
@@ -308,12 +282,8 @@ public class CodeEvalFactory
 			
 			if ( res != null && res.exists() )
 			{
-				CodeEvalFactory iFactory = create( shell.getContext() );
-				iFactory.put( res );
-				iFactory.applyAliases( site.getAliases() );
-				iFactory.parseForIncludes( site ); // XXX Prevent this from going into an infinite loop!
-				iFactory.eval();
-				result = iFactory.reset();
+				// TODO Prevent this from going into an infinite loop!
+				result = eval( res, site );
 			}
 			else if ( !res.exists() )
 			{
@@ -330,6 +300,6 @@ public class CodeEvalFactory
 			m2 = p2.matcher( source );
 		}
 		
-		awaitingCode = new StringBuilder( source );
+		return source;
 	}
 }

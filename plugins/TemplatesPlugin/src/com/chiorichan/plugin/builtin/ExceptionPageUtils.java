@@ -75,7 +75,7 @@ public class ExceptionPageUtils
 				catch ( IOException e2 )
 				{
 					codeSample = "Could not read file '" + fileUrl + "' from the GitHub repository.\nYou could be running a mismatching version to the repository or this file belongs to another repository.";
-					Loader.getLogger().warning( codeSample );
+					// Loader.getLogger().warning( codeSample );
 				}
 			}
 			
@@ -137,7 +137,11 @@ public class ExceptionPageUtils
 			}
 			else
 			{
-				ele = t.getCause().getStackTrace()[0];
+				if ( t.getCause() == null )
+					ele = t.getStackTrace()[0];
+				else
+					ele = t.getCause().getStackTrace()[0];
+				
 				fileName = ele.getFileName();
 			}
 			
@@ -149,7 +153,10 @@ public class ExceptionPageUtils
 			ob.append( "</p>\n" );
 			ob.append( "\n" );
 			ob.append( "<div class=\"source\">\n" );
-			ob.append( "<p class=\"file\">" + fileName + "(" + ele.getLineNumber() + "): <strong>" + ele.getClassName() + "." + ele.getMethodName() + "</strong></p>\n" );
+			
+			if ( ele != null )
+				ob.append( "<p class=\"file\">" + fileName + "(" + ele.getLineNumber() + "): <strong>" + ele.getClassName() + "." + ele.getMethodName() + "</strong></p>\n" );
+			
 			ob.append( "\n" );
 			ob.append( "<div class=\"code\">\n" );
 			if ( codeSample != null )
@@ -318,15 +325,8 @@ public class ExceptionPageUtils
 		String pageMark = "<!-- PAGE DATA -->";
 		String baseTemplate = new String( FileUtil.inputStream2Bytes( ExceptionPageUtils.class.getClassLoader().getResourceAsStream( "com/chiorichan/plugin/builtin/BaseTemplate.html" ) ), "UTF-8" );
 		
-		factory.resetSource();
-		factory.reset();
-		factory.put( baseTemplate.replace( pageMark, html ), "html" );
-		
-		factory.applyAliases( Loader.getSiteManager().getFrameworkSite().getAliases() );
-		factory.parseForIncludes( Loader.getSiteManager().getFrameworkSite() );
-		
-		factory.eval();
-		
-		return factory.reset();
+		CodeMetaData meta = new CodeMetaData();
+		meta.shell = "html";
+		return factory.eval( baseTemplate.replace( pageMark, html ), meta, Loader.getSiteManager().getFrameworkSite() );
 	}
 }

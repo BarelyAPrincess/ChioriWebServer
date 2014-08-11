@@ -8,7 +8,6 @@ import java.io.IOException;
 import org.codehaus.groovy.syntax.SyntaxException;
 
 import com.chiorichan.exceptions.ShellExecuteException;
-import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.factory.CodeMetaData;
 
 /**
@@ -26,7 +25,6 @@ public class GSPSeaShell implements SeaShell
 {
 	private static final String MARKER_START = "<%";
 	private static final String MARKER_END = "%>";
-	private int m_scriptCount = 0;
 	
 	@Override
 	public String[] getHandledShells()
@@ -35,14 +33,10 @@ public class GSPSeaShell implements SeaShell
 	}
 	
 	@Override
-	public String eval( CodeMetaData meta, String fullFile, CodeEvalFactory factory ) throws ShellExecuteException
+	public String eval( CodeMetaData meta, String fullFile, GroovyShell shell, ByteArrayOutputStream bs ) throws ShellExecuteException
 	{
 		try
 		{
-			//Loader.getLogger().debug( fullFile.substring( 0, 1000 ) );
-			
-			ByteArrayOutputStream bs = factory.getOutputStream();
-			GroovyShell shell = factory.getShell();
 			shell.setVariable( "__FILE__", meta.fileName );
 			
 			int fullFileIndex = 0;
@@ -59,7 +53,7 @@ public class GSPSeaShell implements SeaShell
 					
 					String fragment = escapeFragment( fullFile.substring( fullFileIndex, startIndex ) );
 					if ( !fragment.isEmpty() )
-						output.append( fragment + "\n" );
+						output.append( fragment );
 					
 					int endIndex = fullFile.indexOf( MARKER_END, Math.max( startIndex, fullFileIndex ) );
 					assert -1 != endIndex : "MARKER NOT CLOSED";
@@ -75,7 +69,7 @@ public class GSPSeaShell implements SeaShell
 						fragment = "print " + fragment;
 					
 					if ( !fragment.isEmpty() )
-						output.append( fragment + ";\n" );
+						output.append( fragment + ";" );
 					
 					// Position index after end marker
 					fullFileIndex = endIndex + MARKER_END.length();
@@ -116,8 +110,7 @@ public class GSPSeaShell implements SeaShell
 	
 	private String interpret( GroovyShell shell, String source ) throws SyntaxException, ClassNotFoundException, IOException
 	{
-		Object result = shell.evaluate( source, "EmbeddedShellScript" + m_scriptCount );
-		m_scriptCount++;
+		Object result = shell.evaluate( source );
 		if ( result != null )
 			return result.toString();
 		else

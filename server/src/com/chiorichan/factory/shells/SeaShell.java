@@ -7,8 +7,11 @@
 
 package com.chiorichan.factory.shells;
 
+import groovy.lang.GroovyShell;
+
+import java.io.ByteArrayOutputStream;
+
 import com.chiorichan.exceptions.ShellExecuteException;
-import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.factory.CodeMetaData;
 
 /**
@@ -22,5 +25,5 @@ public interface SeaShell
 	 * @return
 	 */
 	public String[] getHandledShells();
-	public String eval( CodeMetaData meta, String code, CodeEvalFactory factory ) throws ShellExecuteException;
+	public String eval( CodeMetaData meta, String code, GroovyShell shell, ByteArrayOutputStream bs ) throws ShellExecuteException;
 }

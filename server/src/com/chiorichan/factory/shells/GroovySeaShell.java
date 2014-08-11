@@ -1,9 +1,10 @@
 package com.chiorichan.factory.shells;
 
+import java.io.ByteArrayOutputStream;
+
 import groovy.lang.GroovyShell;
 
 import com.chiorichan.exceptions.ShellExecuteException;
-import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.factory.CodeMetaData;
 
 /**
@@ -21,11 +22,10 @@ public class GroovySeaShell implements SeaShell
 	}
 	
 	@Override
-	public String eval( CodeMetaData meta, String code, CodeEvalFactory factory ) throws ShellExecuteException
+	public String eval( CodeMetaData meta, String code, GroovyShell shell, ByteArrayOutputStream bs ) throws ShellExecuteException
 	{
 		try
 		{
-			GroovyShell shell = factory.getShell();
 			shell.setVariable( "__FILE__", meta.fileName );
 			
 			Object o = shell.evaluate( code );

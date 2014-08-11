@@ -53,6 +53,7 @@ public class PersistentSession implements SentientHandler, BindingProvider
 	protected boolean changesMade = false;
 	
 	protected final Binding binding = new Binding();
+	
 	protected CodeEvalFactory factory = null;
 	
 	private PersistentSession()
@@ -184,7 +185,7 @@ public class PersistentSession implements SentientHandler, BindingProvider
 		
 		if ( request.getArgument( "logout", "", true ) != null )
 		{
-			logoutUser();
+			logoutAccount();
 			
 			if ( target.isEmpty() )
 				target = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
@@ -583,12 +584,6 @@ public class PersistentSession implements SentientHandler, BindingProvider
 		return ( currentAccount != null );
 	}
 	
-	@Deprecated
-	public Account getCurrentUser()
-	{
-		return currentAccount;
-	}
-	
 	public Account getCurrentAccount()
 	{
 		return currentAccount;
@@ -597,7 +592,7 @@ public class PersistentSession implements SentientHandler, BindingProvider
 	/**
 	 * Logout the current logged in user.
 	 */
-	public void logoutUser()
+	public void logoutAccount()
 	{
 		if ( currentAccount != null )
 			Loader.getLogger().info( ChatColor.GREEN + "User Logout `" + currentAccount + "`" );
@@ -632,7 +627,7 @@ public class PersistentSession implements SentientHandler, BindingProvider
 	@Override
 	public boolean kick( String kickMessage )
 	{
-		logoutUser();
+		logoutAccount();
 		pendingMessages.add( kickMessage );
 		
 		return true;
@@ -712,21 +707,14 @@ public class PersistentSession implements SentientHandler, BindingProvider
 		currentAccount = null;
 	}
 	
+	/**
+	 * It's HIGHLY important that you call the .unlock() method on the factory once your done with it or else it will build up in memory.
+	 */
 	@Override
 	public CodeEvalFactory getCodeFactory()
 	{
 		if ( factory == null )
 			factory = CodeEvalFactory.create( binding );
-		
-		factory.reset();
-		
-		return factory;
-	}
-	
-	@Override
-	public CodeEvalFactory forceNewCodeFactory()
-	{
-		factory = CodeEvalFactory.create( binding );
 		
 		return factory;
 	}
