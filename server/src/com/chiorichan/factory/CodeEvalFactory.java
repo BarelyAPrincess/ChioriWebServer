@@ -127,6 +127,7 @@ public class CodeEvalFactory
 			{
 				if ( she.equalsIgnoreCase( shell ) || she.equalsIgnoreCase( "all" ) )
 				{
+					// TODO Add HTML to CodeMeta
 					String result = s.eval( codeMeta, awaitingCode.toString(), this );
 					
 					try
@@ -155,7 +156,7 @@ public class CodeEvalFactory
 			}
 			catch ( IOException e )
 			{
-				throw new ShellExecuteException( e );
+				throw new ShellExecuteException( e, codeMeta );
 			}
 		
 		return false;

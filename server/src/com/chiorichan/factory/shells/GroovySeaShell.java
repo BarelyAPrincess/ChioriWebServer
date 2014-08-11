@@ -33,7 +33,10 @@ public class GroovySeaShell implements SeaShell
 		}
 		catch ( Throwable e )
 		{
-			throw new ShellExecuteException( e );
+			if ( e instanceof ShellExecuteException )
+				throw (ShellExecuteException) e;
+			else
+				throw new ShellExecuteException( e, meta );
 		}
 	}
 }

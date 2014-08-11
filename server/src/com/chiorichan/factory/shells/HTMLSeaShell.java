@@ -15,7 +15,7 @@ public class HTMLSeaShell implements SeaShell
 	@Override
 	public String[] getHandledShells()
 	{
-		return new String[]{"text", "txt", "html", "htm"};
+		return new String[]{"plain", "text", "txt", "html", "htm"};
 	}
 
 	@Override

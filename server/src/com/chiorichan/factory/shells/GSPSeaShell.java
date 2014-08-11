@@ -7,6 +7,7 @@ import java.io.IOException;
 
 import org.codehaus.groovy.syntax.SyntaxException;
 
+import com.chiorichan.Loader;
 import com.chiorichan.exceptions.ShellExecuteException;
 import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.factory.CodeMetaData;
@@ -39,12 +40,14 @@ public class GSPSeaShell implements SeaShell
 	{
 		try
 		{
+			//Loader.getLogger().debug( fullFile.substring( 0, 1000 ) );
+			
 			ByteArrayOutputStream bs = factory.getOutputStream();
 			GroovyShell shell = factory.getShell();
 			shell.setVariable( "__FILE__", meta.fileName );
 			
 			int fullFileIndex = 0;
-			String[] dontStartWith = new String[] { "print", "echo", "def", "import" };
+			String[] dontStartWith = new String[] { "println", "print", "echo", "def", "import" };
 			
 			StringBuilder output = new StringBuilder();
 			
@@ -57,9 +60,9 @@ public class GSPSeaShell implements SeaShell
 					
 					String fragment = escapeFragment( fullFile.substring( fullFileIndex, startIndex ) );
 					if ( !fragment.isEmpty() )
-						output.append( fragment );
+						output.append( fragment + "\n" );
 					
-					int endIndex = fullFile.indexOf( MARKER_END, fullFileIndex );
+					int endIndex = fullFile.indexOf( MARKER_END, Math.max( startIndex, fullFileIndex ) );
 					assert -1 != endIndex : "MARKER NOT CLOSED";
 					fragment = fullFile.substring( startIndex + MARKER_START.length(), endIndex ).trim();
 					
@@ -73,7 +76,7 @@ public class GSPSeaShell implements SeaShell
 						fragment = "print " + fragment;
 					
 					if ( !fragment.isEmpty() )
-						output.append( fragment + ";" );
+						output.append( fragment + ";\n" );
 					
 					// Position index after end marker
 					fullFileIndex = endIndex + MARKER_END.length();
@@ -90,18 +93,24 @@ public class GSPSeaShell implements SeaShell
 				}
 			}
 			
+			//Loader.getLogger().debug( output.toString().substring( 0, 1000 ) );
+			
 			bs.write( interpret( shell, output.toString() ).getBytes( "UTF-8" ) );
 			
 			return "";
 		}
 		catch ( Throwable e )
 		{
-			throw new ShellExecuteException( e );
+			if ( e instanceof ShellExecuteException )
+				throw (ShellExecuteException) e;
+			else
+				throw new ShellExecuteException( e, meta );
 		}
 	}
 	
 	public String escapeFragment( String fragment )
 	{
+		fragment = fragment.replace( "\\$", "$" );
 		fragment = fragment.replace( "$", "\\$" );
 		return "println \"\"\"" + fragment + "\"\"\";";
 	}
