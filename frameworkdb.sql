@@ -45,3 +45,31 @@ CREATE TABLE `sites` (
   `aliases` text COLLATE utf8_unicode_ci NOT NULL,
   `configYaml` text COLLATE utf8_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+DROP TABLE IF EXISTS `users`;
+CREATE TABLE `users` (
+  `email` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `username` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `password` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `name` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `fname` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `title` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `acctId` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `imgID` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `address` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `city` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `state` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `zipcode` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `country` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `phone` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `sex` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `date` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `numloginfail` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `lastloginfail` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `timezone` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `type` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `actnum` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `userlevel` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `lastactive` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `lastlogin` varchar(255) COLLATE utf8_unicode_ci NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;

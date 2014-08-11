@@ -174,7 +174,7 @@ To get started, create a sql database using the sql file (frameworkdb.sql) inclu
 Sites are the equivalent of the VirtualHosts on Apache Web Server -- YES, Chiori Web Server has been virtual host compatible from day one. More information on this will be coming soon.
 
 =Plugins=
-Because this web server has a Plugin System based on Bukkit (A Minecraft Game Server) you can develop Plugins the same way they are done for Bukkit.
+Because this web server has a Plugin System loosly based on Bukkit (A Minecraft Game Server) you can develop Plugins the same way they are done for Bukkit.
 The only major differences is the API has different package nodes (which if you are using an IDE like Eclipse should resolve automatically) and NOT all the same events exist (ie. How do you implement a BlockBreakEvent on a web server?).
 You can find a nice beginners tutorial at https://forums.bukkit.org/threads/basic-bukkit-plugin-tutorial.1339/. At the moment the Web Server Plugin system is based on CraftBukkit implmenting Minecraft 1.6 API. There are currently no plans to closely follow the changes that Bukkit will make to there Plugin API but this might change.
 
@@ -293,7 +293,7 @@ Added a build.xml file so the project can not be built with Apache Ant 1.8. Swit
 * Fixed bug with doubled output in log file.
 * Added option to disable chat colors.
 * Switch metadata file from YAML to Properties.
-==Release 7 EXPERIMENTAL (Pony Feathers)==
+==Version 7 EXPERIMENTAL (Pony Feathers)==
 ===Subversion 0===
 ====Release 0====
 * Implemented the FileUserAdapter
@@ -317,6 +317,19 @@ Added a build.xml file so the project can not be built with Apache Ant 1.8. Swit
 * SQLAccountAdapter now confirms if additional user field exists in table
 * Major code restructuring to hopefully fix many lingering problems.
 * Undid a few of really silly implementations I did.
+==Version 8 (Pony Toaster)==
+===Subversion 0===
+====Release 0====
+* Ant build script now creates simple filename jar files.
+* Evaling is now CodeEvalFactory.
+* Simplifying and improvments to EvalPackage and EvalFile methods inside WebUtils class.
+* Null and empty check for print method inside of HttpResponse.
+* Added GetLookupAdapter to Accounts and fixes to ScriptingBaseGroovy.
+* Templates plugin now listens for Http Exceptions and responds.
+* Updates to PluginManager, getPluginByName method.
+* Updates to SeaShells and how they handle exceptions.
+* Added Exception and Error events for http requests.
+* Offica release of Version 8.0.0
 
 =Binary Release=
 You can grab the latest binary builds from our jenkins server at http://jenkins.applebloom.co/job/ChioriWebServer/.
