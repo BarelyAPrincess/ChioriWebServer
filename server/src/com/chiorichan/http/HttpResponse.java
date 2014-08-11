@@ -80,7 +80,7 @@ public class HttpResponse
 		Loader.getEventBus().callEvent( event );
 		
 		// TODO Allow the ErrorEvent to change the http code and reason.
-		if ( !event.getErrorHtml().isEmpty() )
+		if ( event.getErrorHtml() != null && !event.getErrorHtml().isEmpty() )
 		{
 			
 			println( "<h1>" + var1 + " - " + var2 + "</h1>" );
@@ -237,7 +237,8 @@ public class HttpResponse
 		if ( stage != HttpResponseStage.MULTIPART )
 			stage = HttpResponseStage.WRITTING;
 		
-		output.write( var1.getBytes( encoding ) );
+		if ( var1 != null && !var1.isEmpty() )
+			output.write( var1.getBytes( encoding ) );
 	}
 	
 	public void println( String var1 ) throws IOException
