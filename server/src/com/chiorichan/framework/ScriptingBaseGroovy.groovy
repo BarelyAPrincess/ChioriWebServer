@@ -2,6 +2,7 @@ package com.chiorichan.framework
 
 import com.chiorichan.ConsoleLogManager
 import com.chiorichan.Loader
+import com.chiorichan.account.bases.Account
 import com.chiorichan.database.DatabaseEngine
 import com.chiorichan.http.HttpCode
 import com.chiorichan.http.HttpRequest
@@ -53,27 +54,27 @@ abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 		return Versioning.getCopyright();
 	}
 	
-	public AccountServiceWrapper getAccountManager()
+	Account getAccount()
 	{
-		return new AccountServiceWrapper( request.getSession().getCurrentAccount() );
+		return request.getSession().getCurrentAccount();
 	}
 	
-	public ConfigurationManagerWrapper getConfigurationManager()
+	ConfigurationManagerWrapper getConfigurationManager()
 	{
 		return new ConfigurationManagerWrapper( request.getSession() );
 	}
 	
-	public HttpUtilsWrapper getHttpUtils()
+	HttpUtilsWrapper getHttpUtils()
 	{
 		return new HttpUtilsWrapper( request.getSession() );
 	}
 	
-	public DatabaseEngine getServerDatabase()
+	DatabaseEngine getServerDatabase()
 	{
 		return new DatabaseEngine( Loader.getPersistenceManager().getDatabase() );
 	}
 	
-	public DatabaseEngine getSiteDatabase()
+	DatabaseEngine getSiteDatabase()
 	{
 		return new DatabaseEngine( request.getSite().getDatabase() );
 	}

@@ -231,6 +231,9 @@ public class Account extends Sentient
 	{
 		metaData = _cachedAdapter.loadAccount( acctId );
 	}
-	
-	
+
+	public AccountLookupAdapter getLookupAdapter()
+	{
+		return _cachedAdapter;
+	}
 }
