@@ -5,8 +5,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
 import com.chiorichan.Loader;
 import com.chiorichan.bus.events.http.ErrorEvent;
+import com.chiorichan.bus.events.http.HttpExceptionEvent;
 import com.chiorichan.exceptions.HttpErrorException;
 import com.chiorichan.util.Versioning;
 import com.google.common.collect.Maps;
@@ -72,21 +75,62 @@ public class HttpResponse
 		
 		output.reset();
 		
-		println( "<h1>" + var1 + " - " + var2 + "</h1>" );
-		
-		if ( var3 != null && !var3.isEmpty() )
-			println( "<p>" + var3 + "</p>" );
-		
-		println( "<hr>" );
-		println( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + "<br />" + Versioning.getCopyright() + "</small>" );
-		
-		// TODO Make it so the Template Plugin can control the error pages. A TOTAL PLUS!!!
-		
 		// Trigger an internal Error Event to notify plugins of a possible problem.
 		ErrorEvent event = new ErrorEvent( request, var1, var2 );
 		Loader.getEventBus().callEvent( event );
 		
+		// TODO Allow the ErrorEvent to change the http code and reason.
+		if ( !event.getErrorHtml().isEmpty() )
+		{
+			
+			println( "<h1>" + var1 + " - " + var2 + "</h1>" );
+			
+			if ( var3 != null && !var3.isEmpty() )
+				println( "<p>" + var3 + "</p>" );
+			
+			println( "<hr>" );
+			println( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + "<br />" + Versioning.getCopyright() + "</small>" );
+			
+		}
+		else
+		{
+			print( event.getErrorHtml() );
+		}
+		
 		sendResponse();
+	}
+	
+	public void sendException( Throwable cause ) throws IOException
+	{
+		if ( stage == HttpResponseStage.CLOSED )
+			throw new IllegalStateException( "You can't access setter methods within this HttpResponse because the connection has been closed." );
+		
+		if ( false )// !developmentMode )
+		{
+			sendError( 500, null, "<pre>" + ExceptionUtils.getStackTrace( cause ) + "</pre>" );
+		}
+		else
+		{
+			HttpExceptionEvent event = new HttpExceptionEvent( request, cause );
+			Loader.getEventBus().callEvent( event );
+			
+			int httpCode = event.getHttpCode();
+			
+			if ( httpCode < 1 )
+				httpCode = 500;
+			
+			if ( event.getErrorHtml() != null )
+			{
+				Loader.getLogger().warning( "HttpError: " + httpCode + " - " + HttpCode.msg( httpCode ) + "... '" + request.getSubDomain() + "." + request.getParentDomain() + "' '" + request.getURI() + "'" );
+				
+				output.reset();
+				print( event.getErrorHtml() );
+				httpStatus = httpCode;
+				sendResponse();
+			}
+			else
+				sendError( httpStatus, null, "<pre>" + ExceptionUtils.getStackTrace( cause ) + "</pre>" );
+		}
 	}
 	
 	/**

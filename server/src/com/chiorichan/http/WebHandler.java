@@ -18,6 +18,7 @@ import com.chiorichan.exceptions.ShellExecuteException;
 import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.framework.Site;
 import com.chiorichan.framework.SiteException;
+import com.chiorichan.framework.WebUtils;
 import com.chiorichan.util.Versioning;
 import com.google.common.collect.Maps;
 import com.sun.net.httpserver.HttpExchange;
@@ -69,7 +70,7 @@ public class WebHandler implements HttpHandler
 			if ( e instanceof IOException && e.getCause() != null )
 			{
 				e.getCause().printStackTrace();
-				response.sendError( 500, null, "<pre>" + ExceptionUtils.getStackTrace( e.getCause() ) + "</pre>" );
+				response.sendException( e.getCause() );
 			}
 			else
 			{
@@ -228,6 +229,7 @@ public class WebHandler implements HttpHandler
 			// Enhancement: Allow html to be ran under different shells. Default is embedded.
 			if ( !html.isEmpty() )
 			{
+				factory.resetSource();
 				factory.put( html, "embedded" );
 				factory.applyAliases( currentSite.getAliases() );
 				factory.parseForIncludes( currentSite );
@@ -244,6 +246,7 @@ public class WebHandler implements HttpHandler
 		{
 			if ( !file.isEmpty() )
 			{
+				factory.resetSource();
 				factory.put( fi );
 				factory.applyAliases( currentSite.getAliases() );
 				factory.parseForIncludes( currentSite );

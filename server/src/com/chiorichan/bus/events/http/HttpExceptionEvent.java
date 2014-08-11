@@ -5,41 +5,17 @@ import com.chiorichan.http.HttpRequest;
 import com.chiorichan.http.HttpResponse;
 import com.sun.net.httpserver.Headers;
 
-public class ErrorEvent extends HttpEvent
+public class HttpExceptionEvent extends HttpEvent
 {
-	private final int statusNo;
-	private final String reason;
+	private final Throwable cause;
+	private int httpCode = -1;
 	private final HttpRequest request;
 	private String errorHtml = "";
 	
-	public ErrorEvent( HttpRequest _request )
+	public HttpExceptionEvent(HttpRequest _request, Throwable _cause)
 	{
-		this( _request, 500, null );
-	}
-	
-	public ErrorEvent( HttpRequest _request, int _statusNo )
-	{
-		this( _request, _statusNo, null );
-	}
-	
-	public ErrorEvent( HttpRequest _request, int _statusNo, String _reason )
-	{
-		if ( _reason == null )
-			_reason = HttpCode.msg( _statusNo );
-		
+		cause = _cause;
 		request = _request;
-		statusNo = _statusNo;
-		reason = _reason;
-	}
-	
-	public String getReason()
-	{
-		return reason;
-	}
-	
-	public int getStatus()
-	{
-		return statusNo;
 	}
 	
 	public HttpRequest getRequest()
@@ -51,7 +27,7 @@ public class ErrorEvent extends HttpEvent
 	{
 		return request.getResponse();
 	}
-
+	
 	public String getErrorHtml()
 	{
 		if ( errorHtml.isEmpty() )
@@ -63,5 +39,15 @@ public class ErrorEvent extends HttpEvent
 	public void setErrorHtml( String _errorHtml )
 	{
 		errorHtml = _errorHtml;
+	}
+	
+	public int getHttpCode()
+	{
+		return httpCode;
+	}
+	
+	public Throwable getThrowable()
+	{
+		return cause;
 	}
 }
