@@ -4,7 +4,6 @@ import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.bases.Account;
 import com.chiorichan.account.bases.SentientHandler;
-import com.chiorichan.command.Command;
 
 public class SuCommand extends VanillaCommand
 {

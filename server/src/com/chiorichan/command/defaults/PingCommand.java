@@ -16,7 +16,7 @@ public class PingCommand extends VanillaCommand
 	@Override
 	public boolean execute( SentientHandler sender, String currentAlias, String[] args )
 	{
-		if ( !testPermission( sender.getSentient() ) )
+		if ( !testPermission( sender ) )
 			return true;
 		
 		sender.sendMessage( "Pong " + ConsoleBus.currentTick );

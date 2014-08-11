@@ -52,6 +52,7 @@ public class WebInterpreter extends FileInterpreter
 		return "WebInterpreter{content=" + bs.size() + " bytes,file=" + cachedFileStr + ",overrides={" + overrides + "},rewrites={" + rewrites + "}}";
 	}
 	
+	@SuppressWarnings( "unchecked" )
 	public WebInterpreter(HttpRequest request) throws IOException, HttpErrorException, SiteException
 	{
 		super();

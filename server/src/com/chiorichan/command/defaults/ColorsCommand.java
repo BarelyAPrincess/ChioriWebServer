@@ -15,7 +15,7 @@ public class ColorsCommand extends VanillaCommand
 	@Override
 	public boolean execute( SentientHandler sender, String currentAlias, String[] args )
 	{
-		if ( !testPermission( sender.getSentient() ) )
+		if ( !testPermission( sender ) )
 			return true;
 		
 		sender.sendMessage( "&l&d&oTo use any of these just type & (amperstamp) folowed by the color/format code." );

@@ -14,10 +14,10 @@ public class SystemAccounts
 		try
 		{
 			NO_LOGIN = new NoLogin();
-			Loader.getAccountsBus().LoadUser( NO_LOGIN, true, true, false );
+			Loader.getAccountsManager().LoadAccount( NO_LOGIN, true, true, false );
 			
 			ROOT = new Root();
-			Loader.getAccountsBus().LoadUser( ROOT, true, true, false );
+			Loader.getAccountsManager().LoadAccount( ROOT, true, true, false );
 		}
 		catch ( LoginException e )
 		{

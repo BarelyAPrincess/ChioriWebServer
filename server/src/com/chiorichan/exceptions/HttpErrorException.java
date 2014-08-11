@@ -14,6 +14,7 @@ import com.chiorichan.http.HttpCode;
  */
 public class HttpErrorException extends Exception
 {
+	private static final long serialVersionUID = 8116947267974772489L;
 	int httpCode = 200;
 	String reason = null;
 

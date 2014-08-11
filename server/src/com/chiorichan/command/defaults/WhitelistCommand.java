@@ -21,7 +21,7 @@ public class WhitelistCommand extends VanillaCommand
 	@Override
 	public boolean execute( SentientHandler sender, String currentAlias, String[] args )
 	{
-		if ( !testPermission( sender.getSentient() ) )
+		if ( !testPermission( sender ) )
 			return true;
 		
 		if ( args.length == 1 )

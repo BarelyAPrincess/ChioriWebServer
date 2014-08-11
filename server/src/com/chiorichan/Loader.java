@@ -573,12 +573,6 @@ public class Loader
 		return events;
 	}
 	
-	@Deprecated
-	public static PluginManager getModuleBus()
-	{
-		return modules;
-	}
-	
 	public static PluginManager getPluginManager()
 	{
 		return modules;
@@ -589,12 +583,6 @@ public class Loader
 		return persistence;
 	}
 	
-	@Deprecated
-	public static AccountManager getAccountsBus()
-	{
-		return accounts;
-	}
-	
 	public static AccountManager getAccountsManager()
 	{
 		return accounts;
@@ -603,12 +591,6 @@ public class Loader
 	public static File getRoot()
 	{
 		return new File( Loader.class.getProtectionDomain().getCodeSource().getLocation().getPath() );
-	}
-	
-	@Deprecated
-	public static PermissionsManager getPermissionsBus()
-	{
-		return permissions;
 	}
 	
 	public static PermissionsManager getPermissionsManager()

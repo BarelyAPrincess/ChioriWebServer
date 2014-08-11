@@ -1,6 +1,5 @@
 package com.chiorichan.bus.events.server;
 
-import com.chiorichan.account.bases.Sentient;
 import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.bus.events.HandlerList;
 

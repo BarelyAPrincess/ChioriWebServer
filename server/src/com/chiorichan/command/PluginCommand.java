@@ -40,7 +40,7 @@ public final class PluginCommand extends Command implements PluginIdentifiableCo
 			return false;
 		}
 		
-		if ( !testPermission( sender.getSentient() ) )
+		if ( !testPermission( sender ) )
 		{
 			return true;
 		}

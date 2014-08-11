@@ -20,8 +20,6 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.UUID;
 
-import javax.ws.rs.core.MediaType;
-
 import net.glxn.qrgen.QRCode;
 import net.glxn.qrgen.image.ImageType;
 
@@ -32,7 +30,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.TimeInfo;
-import org.apache.ivy.util.FileUtil;
 
 import com.chiorichan.Loader;
 import com.chiorichan.exceptions.ShellExecuteException;
@@ -41,13 +38,7 @@ import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
 import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import com.sun.jersey.core.util.Base64;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
-import com.sun.jersey.multipart.FormDataMultiPart;
 
 public class WebUtils
 {

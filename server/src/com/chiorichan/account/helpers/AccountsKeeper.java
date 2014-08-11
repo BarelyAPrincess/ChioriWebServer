@@ -51,19 +51,6 @@ public class AccountsKeeper
 		return accounts.containsKey( acct );
 	}
 	
-	public ArrayList<Account> getOnlineAccounts()
-	{
-		ArrayList<Account> accts = Lists.newArrayList();
-		
-		for ( Entry<Account, AccountsKeeperOptions> entry : accounts.entrySet() )
-		{
-			if ( entry.getKey().hasHandler() )
-				accts.add( entry.getKey() );
-		}
-		
-		return accts;
-	}
-	
 	public ArrayList<Account> getAccounts()
 	{
 		ArrayList<Account> accts = Lists.newArrayList();
@@ -119,7 +106,7 @@ public class AccountsKeeper
 		return acct;
 	}
 	
-	public List<Account> getOnlineUsers()
+	public List<Account> getOnlineAccounts()
 	{
 		ArrayList<Account> accts = Lists.newArrayList();
 		
@@ -132,7 +119,7 @@ public class AccountsKeeper
 		return accts;
 	}
 	
-	public List<Account> getOfflineUsers()
+	public List<Account> getOfflineAccounts()
 	{
 		List<AccountMetaData> metas = adapter.getAccounts();
 		List<Account> accts = Lists.newArrayList();
@@ -166,8 +153,11 @@ public class AccountsKeeper
 	public interface IAccountsKeeperOptions
 	{
 		public boolean keepInMemory();
+		
 		public boolean isOp();
+		
 		public boolean isWhitelisted();
+		
 		public boolean isBanned();
 	}
 	

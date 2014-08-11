@@ -86,6 +86,7 @@ public class PersistentSession implements SentientHandler, BindingProvider
 			if ( !rs.getString( "data" ).isEmpty() )
 				data = new Gson().fromJson( rs.getString( "data" ), new TypeToken<Map<String, String>>()
 				{
+					private static final long serialVersionUID = 2808406085740098578L;
 				}.getType() );
 			
 			if ( rs.getString( "sessionName" ) != null && !rs.getString( "sessionName" ).isEmpty() )
@@ -214,8 +215,8 @@ public class PersistentSession implements SentientHandler, BindingProvider
 				
 				String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
 				
-				if ( l.getUser() != null )
-					Loader.getLogger().warning( "Login Failed `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + l.getUser().getAccountId() + "\", Display Name \"" + l.getUser().getDisplayName() + "\", Reason \"" + l.getMessage() + "\"`" );
+				if ( l.getAccount() != null )
+					Loader.getLogger().warning( "Login Failed `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + l.getAccount().getAccountId() + "\", Display Name \"" + l.getAccount().getDisplayName() + "\", Reason \"" + l.getMessage() + "\"`" );
 				
 				request.getResponse().sendRedirect( loginForm + "?ok=" + l.getMessage() + "&target=" + target );
 			}
@@ -316,6 +317,7 @@ public class PersistentSession implements SentientHandler, BindingProvider
 					{
 						Map<String, String> tmpData = new Gson().fromJson( rs.getString( "data" ), new TypeToken<Map<String, String>>()
 						{
+							private static final long serialVersionUID = -1734352198651744570L;
 						}.getType() );
 						
 						if ( changesMade )
@@ -720,7 +722,7 @@ public class PersistentSession implements SentientHandler, BindingProvider
 		
 		return factory;
 	}
-
+	
 	@Override
 	public CodeEvalFactory forceNewCodeFactory()
 	{

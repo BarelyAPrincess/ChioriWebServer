@@ -114,12 +114,12 @@ public class AccountManager
 		new SystemAccounts();
 	}
 	
-	public void LoadUser( Account acct )
+	public void LoadAccount( Account acct )
 	{
-		LoadUser( acct, false, false, false );
+		LoadAccount( acct, false, false, false );
 	}
 	
-	public void LoadUser( Account acct, boolean keepInMemory, boolean whitelistOverride, boolean opOverride )
+	public void LoadAccount( Account acct, boolean keepInMemory, boolean whitelistOverride, boolean opOverride )
 	{
 		AccountsKeeperOptions options = (AccountsKeeperOptions) accounts.putAccount( acct, keepInMemory );
 		
@@ -142,12 +142,12 @@ public class AccountManager
 		return banById.contains( id );
 	}
 	
-	public Account getOfflineUser( String name )
+	public Account getOfflineAccount( String name )
 	{
-		return getOfflineUser( name, true );
+		return getOfflineAccount( name, true );
 	}
 	
-	public Account getOfflineUser( String name, boolean search )
+	public Account getOfflineAccount( String name, boolean search )
 	{
 		Validate.notNull( name, "Name cannot be null" );
 		
@@ -292,9 +292,9 @@ public class AccountManager
 		return accounts.getOnlineAccounts();
 	}
 	
-	public List<Account> getOfflineUsers()
+	public List<Account> getOfflineAccounts()
 	{
-		return accounts.getOfflineUsers();
+		return accounts.getOfflineAccounts();
 	}
 	
 	public ArrayList<Account> getAccounts()
@@ -425,12 +425,6 @@ public class AccountManager
 		hasWhitelist = Loader.getConfig().getBoolean( "settings.whitelist" );
 	}
 	
-	@Deprecated
-	public int getMaxUsers()
-	{
-		return maxAccounts;
-	}
-	
 	public int getMaxAccounts()
 	{
 		return maxAccounts;
@@ -490,7 +484,7 @@ public class AccountManager
 		catch ( LoginException l )
 		{
 			accountLookupAdapter.failedLoginUpdate( acct );
-			throw l.setUser( acct );
+			throw l.setAccount( acct );
 		}
 	}
 }

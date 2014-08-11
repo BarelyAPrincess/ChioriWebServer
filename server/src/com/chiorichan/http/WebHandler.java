@@ -18,7 +18,6 @@ import com.chiorichan.exceptions.ShellExecuteException;
 import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.framework.Site;
 import com.chiorichan.framework.SiteException;
-import com.chiorichan.framework.WebUtils;
 import com.chiorichan.util.Versioning;
 import com.google.common.collect.Maps;
 import com.sun.net.httpserver.HttpExchange;

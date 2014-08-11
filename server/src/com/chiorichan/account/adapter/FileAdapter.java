@@ -19,7 +19,6 @@ import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.framework.WebUtils;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.FileUtil;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 public class FileAdapter implements AccountLookupAdapter

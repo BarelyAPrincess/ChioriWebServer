@@ -25,7 +25,7 @@ public class ChioriDLUpdaterService
 {
 	private static final String API_PREFIX_ARTIFACT = "/job/ChioriWebServer/";
 	//private static final String API_PREFIX_CHANNEL = "/api/1.0/downloads/channels/";
-	private static final DateDeserializer dateDeserializer = new DateDeserializer();
+	//private static final DateDeserializer dateDeserializer = new DateDeserializer();
 	private final String host;
 	
 	public ChioriDLUpdaterService(String host)

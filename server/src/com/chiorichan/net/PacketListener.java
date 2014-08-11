@@ -7,7 +7,6 @@ import com.chiorichan.bus.events.net.TCPDisconnectedEvent;
 import com.chiorichan.bus.events.net.TCPIdleEvent;
 import com.chiorichan.bus.events.net.TCPIncomingEvent;
 import com.chiorichan.net.packet.CommandPacket;
-import com.chiorichan.net.packet.DataPacket;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.FrameworkMessage.KeepAlive;

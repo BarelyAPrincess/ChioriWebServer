@@ -43,7 +43,7 @@ public class UpdateCommand extends ChioriCommand
 			return true;
 		}
 		
-		if ( !testPermission( sender.getSentient() ) )
+		if ( !testPermission( sender ) )
 			return true;
 		
 		if ( args.length == 0 )

@@ -21,7 +21,7 @@ public class PluginsCommand extends ChioriCommand
 	@Override
 	public boolean execute( SentientHandler sender, String currentAlias, String[] args )
 	{
-		if ( !testPermission( sender.getSentient() ) )
+		if ( !testPermission( sender ) )
 			return true;
 		
 		sender.sendMessage( "Plugins " + getPluginList() );

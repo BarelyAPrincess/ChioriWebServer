@@ -3,7 +3,6 @@ package com.chiorichan.framework;
 import java.io.IOException;
 
 import com.chiorichan.exceptions.ShellExecuteException;
-import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.http.PersistentSession;
 
 public class HttpUtilsWrapper extends WebUtils

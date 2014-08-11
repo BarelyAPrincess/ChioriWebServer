@@ -10,7 +10,6 @@ import java.util.logging.Level;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.Loader;
-import com.chiorichan.plugin.PluginManager;
 
 /**
  * Represents a unique permission that may be attached to a {@link Permissible}

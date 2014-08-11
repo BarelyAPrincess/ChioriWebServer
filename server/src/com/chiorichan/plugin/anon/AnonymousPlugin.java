@@ -21,7 +21,7 @@ public final class AnonymousPlugin extends PluginBase
 {
 	private boolean isNaggable = false;
 	private final static AnonymousLoader anonLoader = new AnonymousLoader();
-	private Object parent;
+	protected Object parent;
 	
 	public AnonymousPlugin()
 	{

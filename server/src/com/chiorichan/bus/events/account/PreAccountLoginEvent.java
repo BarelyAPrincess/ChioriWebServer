@@ -1,7 +1,6 @@
 package com.chiorichan.bus.events.account;
 
 import com.chiorichan.account.bases.Account;
-import com.chiorichan.bus.bases.Cancellable;
 import com.chiorichan.bus.events.HandlerList;
 
 /**

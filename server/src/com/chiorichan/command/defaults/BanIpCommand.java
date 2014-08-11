@@ -5,7 +5,6 @@ import java.util.regex.Pattern;
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.bases.Account;
-import com.chiorichan.account.bases.Sentient;
 import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.command.Command;
 
@@ -24,7 +23,7 @@ public class BanIpCommand extends VanillaCommand
 	@Override
 	public boolean execute( SentientHandler sender, String currentAlias, String[] args )
 	{
-		if ( !testPermission( sender.getSentient() ) )
+		if ( !testPermission( sender ) )
 			return true;
 		if ( args.length < 1 )
 		{

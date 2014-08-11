@@ -1,10 +1,8 @@
 package com.chiorichan.plugin.groovy;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -165,7 +163,6 @@ public final class GroovyPluginLoader implements PluginLoader
 		Validate.notNull( file, "File cannot be null" );
 		
 		File description = null;
-		InputStream stream = null;
 		
 		try
 		{

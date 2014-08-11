@@ -328,11 +328,11 @@ public abstract class GroovyPlugin extends PluginBase
 	public PluginCommand getCommand( String name )
 	{
 		String alias = name.toLowerCase();
-		PluginCommand command = Loader.getModuleBus().getPluginCommand( alias );
+		PluginCommand command = Loader.getPluginManager().getPluginCommand( alias );
 		
 		if ( ( command != null ) && ( command.getPlugin() != this ) )
 		{
-			command = Loader.getModuleBus().getPluginCommand( description.getName().toLowerCase() + ":" + alias );
+			command = Loader.getPluginManager().getPluginCommand( description.getName().toLowerCase() + ":" + alias );
 		}
 		
 		if ( ( command != null ) && ( command.getPlugin() == this ) )

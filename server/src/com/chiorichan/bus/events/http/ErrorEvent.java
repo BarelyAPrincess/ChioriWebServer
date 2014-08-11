@@ -3,7 +3,6 @@ package com.chiorichan.bus.events.http;
 import com.chiorichan.http.HttpCode;
 import com.chiorichan.http.HttpRequest;
 import com.chiorichan.http.HttpResponse;
-import com.sun.net.httpserver.Headers;
 
 public class ErrorEvent extends HttpEvent
 {

@@ -7,8 +7,6 @@
 
 package com.chiorichan.factory.shells;
 
-import java.util.List;
-
 import com.chiorichan.exceptions.ShellExecuteException;
 import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.factory.CodeMetaData;

@@ -277,7 +277,7 @@ public class CommandMap
 	
 	public void registerServerAliases()
 	{
-		Map<String, String[]> values = Loader.getModuleBus().getCommandAliases();
+		Map<String, String[]> values = Loader.getPluginManager().getCommandAliases();
 		
 		for ( String alias : values.keySet() )
 		{

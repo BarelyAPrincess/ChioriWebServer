@@ -7,7 +7,6 @@ import java.io.IOException;
 
 import org.codehaus.groovy.syntax.SyntaxException;
 
-import com.chiorichan.Loader;
 import com.chiorichan.exceptions.ShellExecuteException;
 import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.factory.CodeMetaData;

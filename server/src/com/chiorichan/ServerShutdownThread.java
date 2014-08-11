@@ -4,11 +4,11 @@ import com.chiorichan.command.Command;
 
 public class ServerShutdownThread extends Thread
 {
-	private final Loader server;
+	//private final Loader server;
 	
 	public ServerShutdownThread(Loader loader)
 	{
-		this.server = loader;
+		//this.server = loader;
 	}
 	
 	@Override

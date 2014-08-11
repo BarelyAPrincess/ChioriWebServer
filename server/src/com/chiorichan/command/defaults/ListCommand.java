@@ -19,7 +19,7 @@ public class ListCommand extends VanillaCommand
 	@Override
 	public boolean execute( SentientHandler sender, String currentAlias, String[] args )
 	{
-		if ( !testPermission( sender.getSentient() ) )
+		if ( !testPermission( sender ) )
 			return true;
 		
 		StringBuilder online = new StringBuilder();
@@ -40,7 +40,7 @@ public class ListCommand extends VanillaCommand
 			online.append( user.getDisplayName() );
 		}
 		
-		sender.sendMessage( "There are " + users.size() + "/" + Loader.getAccountsBus().getMaxAccounts() + " users online:\n" + online.toString() );
+		sender.sendMessage( "There are " + users.size() + "/" + Loader.getAccountsManager().getMaxAccounts() + " users online:\n" + online.toString() );
 		
 		return true;
 	}

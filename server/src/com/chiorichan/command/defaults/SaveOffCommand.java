@@ -18,7 +18,7 @@ public class SaveOffCommand extends VanillaCommand
 	@Override
 	public boolean execute( SentientHandler sender, String currentAlias, String[] args )
 	{
-		if ( !testPermission( sender.getSentient() ) )
+		if ( !testPermission( sender ) )
 			return true;
 		
 		for ( Site site : Loader.getSiteManager().getSites() )

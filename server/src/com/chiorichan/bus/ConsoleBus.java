@@ -125,6 +125,7 @@ public class ConsoleBus implements Runnable
 		{
 			long i = System.currentTimeMillis();
 			
+			@SuppressWarnings( "unused" )
 			boolean g = false;
 			long Q = 0;
 			

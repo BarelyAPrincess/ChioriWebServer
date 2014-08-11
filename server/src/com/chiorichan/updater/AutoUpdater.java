@@ -5,7 +5,6 @@ import java.util.List;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
-import com.chiorichan.account.bases.Sentient;
 import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.bus.events.EventHandler;
 import com.chiorichan.bus.events.EventPriority;

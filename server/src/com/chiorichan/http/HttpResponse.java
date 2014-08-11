@@ -100,6 +100,7 @@ public class HttpResponse
 		sendResponse();
 	}
 	
+	@SuppressWarnings( "unused" )
 	public void sendException( Throwable cause ) throws IOException
 	{
 		if ( stage == HttpResponseStage.CLOSED )

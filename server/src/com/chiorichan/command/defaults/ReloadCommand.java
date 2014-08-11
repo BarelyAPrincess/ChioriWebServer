@@ -21,7 +21,7 @@ public class ReloadCommand extends ChioriCommand
 	@Override
 	public boolean execute( SentientHandler sender, String currentAlias, String[] args )
 	{
-		if ( !testPermission( sender.getSentient() ) )
+		if ( !testPermission( sender ) )
 			return true;
 		
 		Loader.getInstance().reload();

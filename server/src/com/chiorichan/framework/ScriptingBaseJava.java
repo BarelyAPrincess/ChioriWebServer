@@ -89,14 +89,15 @@ abstract public class ScriptingBaseJava extends Script
 		return var.length();
 	}
 	
+	@SuppressWarnings( "unchecked" )
 	boolean empty( Object o )
 	{
 		if ( o == null )
 			return true;
 		else if ( o instanceof List<?> )
-			return empty( (List) o );
+			return empty( (List<Object>) o );
 		else if ( o instanceof Map<?, ?> )
-			return empty( (Map) o );
+			return empty( (Map<Object, Object>) o );
 		else if ( o instanceof String )
 			return empty( (String) o );
 		

@@ -5,17 +5,17 @@ import com.chiorichan.account.bases.Account;
 public class LoginException extends Exception
 {
 	private static final long serialVersionUID = 5522301956671473324L;
-	private Account user = null;
+	private Account acct = null;
 	
 	public LoginException(Exception e)
 	{
 		super( e );
 	}
 	
-	public LoginException(LoginExceptionReasons reason, Account _user)
+	public LoginException(LoginExceptionReasons reason, Account _acct)
 	{
 		this( reason );
-		user = _user;
+		acct = _acct;
 	}
 	
 	public LoginException(LoginExceptionReasons reason)
@@ -28,14 +28,14 @@ public class LoginException extends Exception
 		return LoginExceptionReasons.customReason.setReason( reason );
 	}
 	
-	public Account getUser()
+	public Account getAccount()
 	{
-		return user;
+		return acct;
 	}
 
-	public LoginException setUser( Account _user )
+	public LoginException setAccount( Account _acct )
 	{
-		user = _user;
+		acct = _acct;
 		return this;
 	}
 }

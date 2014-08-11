@@ -26,6 +26,7 @@ class PacketManager extends Listener
 		kryo.register( DataPacket.class );
 	}
 	
+	@SuppressWarnings( "unchecked" )
 	public void handleBasePacket( Connection var0, BasePacket var1 )
 	{
 		if ( var1 instanceof DataPacket )

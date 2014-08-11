@@ -14,8 +14,8 @@ public class DaemonHandler implements Daemon
 	@Override
 	public void destroy()
 	{
-		if ( server.isRunning() )
-			server.stop( "Daemon was stopped!" );
+		if ( Loader.isRunning() )
+			Loader.stop( "Daemon was stopped!" );
 	}
 	
 	@Override
@@ -31,15 +31,15 @@ public class DaemonHandler implements Daemon
 	@Override
 	public void start() throws Exception
 	{
-		if ( !server.isRunning() )
+		if ( !Loader.isRunning() )
 			server.start();
 	}
 	
 	@Override
 	public void stop() throws Exception
 	{
-		if ( server.isRunning() )
-			server.stop( "Daemon was stopped!" );
+		if ( Loader.isRunning() )
+			Loader.stop( "Daemon was stopped!" );
 	}
 	
 }

@@ -52,7 +52,6 @@ public class Download implements Runnable
 	}
 	
 	@Override
-	@SuppressWarnings( "unused" )
 	public void run()
 	{
 		ReadableByteChannel rbc = null;

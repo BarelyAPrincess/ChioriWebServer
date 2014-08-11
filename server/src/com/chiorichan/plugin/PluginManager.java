@@ -93,7 +93,7 @@ public final class PluginManager
 		if ( type == PluginLoadOrder.POSTSERVER )
 		{
 			commandMap.registerServerAliases();
-			Loader.getPermissionsBus().loadCustomPermissions();
+			Loader.getPermissionsManager().loadCustomPermissions();
 			DefaultPermissions.registerCorePermissions();
 		}
 	}
@@ -628,8 +628,6 @@ public final class PluginManager
 		}
 	}
 	
-
-	
 	public Plugin getPluginbyName( String pluginPath )
 	{
 		try
@@ -714,7 +712,7 @@ public final class PluginManager
 			{
 				try
 				{
-					Loader.getPermissionsBus().addPermission( perm );
+					Loader.getPermissionsManager().addPermission( perm );
 				}
 				catch ( IllegalArgumentException ex )
 				{
