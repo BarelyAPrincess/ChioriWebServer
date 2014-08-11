@@ -636,7 +636,7 @@ public final class PluginManager
 		{
 			for ( Plugin plugin1 : getPlugins() )
 			{
-				if ( plugin1.getClass().toString().substring( 6 ).equals( pluginPath ) || plugin1.getClass().getName().equals( pluginPath ) )
+				if ( plugin1.getClass().getCanonicalName().equals( pluginPath ) || plugin1.getName().equalsIgnoreCase( pluginPath ) )
 					return plugin1;
 			}
 		}
@@ -656,7 +656,7 @@ public final class PluginManager
 	public int broadcast( String message, String permission )
 	{
 		int count = 0;
-		Set<Permissible> permissibles = Loader.getPermissionsBus().getPermissionSubscriptions( permission );
+		Set<Permissible> permissibles = Loader.getPermissionsManager().getPermissionSubscriptions( permission );
 		
 		for ( Permissible permissible : permissibles )
 		{
