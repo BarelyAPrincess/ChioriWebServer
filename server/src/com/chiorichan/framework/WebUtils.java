@@ -1,7 +1,9 @@
 package com.chiorichan.framework;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -9,6 +11,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,10 +29,14 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
 import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.TimeInfo;
+import org.apache.ivy.util.FileUtil;
 
 import com.chiorichan.Loader;
+import com.chiorichan.exceptions.ShellExecuteException;
+import com.chiorichan.factory.CodeEvalFactory;
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
@@ -38,6 +45,7 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
+import com.sun.jersey.core.util.Base64;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import com.sun.jersey.multipart.FormDataMultiPart;
 
@@ -45,7 +53,18 @@ public class WebUtils
 {
 	public static String QRPNG( String code ) throws IOException
 	{
-		return new String( QRCode.from( code ).withSize( 200, 200 ).setMargin( 1 ).to( ImageType.PNG ).stream().toByteArray(), "ISO-8859-1" );
+		return QRPNG( code, 200 );
+	}
+	
+	public static String QRPNG( String code, int size ) throws IOException
+	{
+		if ( size < 1 )
+			return "";
+		
+		Validate.notNull( code );
+		Validate.notEmpty( code );
+		
+		return new String( QRCode.from( code ).withSize( size, size ).setMargin( 1 ).to( ImageType.PNG ).stream().toByteArray(), "ISO-8859-1" );
 	}
 	
 	public static String randomNum()
@@ -281,48 +300,6 @@ public class WebUtils
 		return sb.toString();
 	}
 	
-	@Deprecated
-	public static ClientResponse CreateMailingList( String apiKey )
-	{
-		Client client = Client.create();
-		client.addFilter( new HTTPBasicAuthFilter( "api", apiKey ) );
-		WebResource webResource = client.resource( "https://api.mailgun.net/v2/lists" );
-		MultivaluedMapImpl formData = new MultivaluedMapImpl();
-		formData.add( "address", "dev@samples.mailgun.org" );
-		formData.add( "description", "Mailgun developers list" );
-		return webResource.type( MediaType.APPLICATION_FORM_URLENCODED ).post( ClientResponse.class, formData );
-		
-	}
-	
-	@Deprecated
-	public static ClientResponse AddListMember( String apiKey )
-	{
-		Client client = Client.create();
-		client.addFilter( new HTTPBasicAuthFilter( "api", apiKey ) );
-		WebResource webResource = client.resource( "https://api.mailgun.net/v2/lists/" + "dev@samples.mailgun.org/members" );
-		MultivaluedMapImpl formData = new MultivaluedMapImpl();
-		formData.add( "address", "bar@example.com" );
-		formData.add( "subscribed", true );
-		formData.add( "name", "Bob Bar" );
-		formData.add( "description", "Developer" );
-		formData.add( "vars", "{\"age\": 26}" );
-		return webResource.type( MediaType.APPLICATION_FORM_URLENCODED ).post( ClientResponse.class, formData );
-	}
-	
-	@Deprecated
-	public static ClientResponse fireMailgun( String apiKey, String from, String to, String subject, String html, String url )
-	{
-		Client client = Client.create();
-		client.addFilter( new HTTPBasicAuthFilter( "api", apiKey ) );
-		WebResource webResource = client.resource( url );
-		FormDataMultiPart form = new FormDataMultiPart();
-		form.field( "from", from );
-		form.field( "to", to );
-		form.field( "subject", subject );
-		form.field( "html", html );
-		return webResource.type( MediaType.MULTIPART_FORM_DATA_TYPE ).post( ClientResponse.class, form );
-	}
-	
 	public static String escapeHTML( String l )
 	{
 		return StringUtils.replaceEach( l, new String[] { "&", "\"", "<", ">" }, new String[] { "&amp;", "&quot;", "&lt;", "&gt;" } );
@@ -370,6 +347,7 @@ public class WebUtils
 			if ( responseFamily == 2 )
 			{
 				stream = conn.getInputStream();
+				IOUtils.closeQuietly( stream );
 				return true;
 			}
 			else
@@ -432,7 +410,6 @@ public class WebUtils
 	
 	public static Date getNTPDate()
 	{
-		
 		String[] hosts = new String[] { "ntp02.oal.ul.pt", "ntp04.oal.ul.pt", "ntp.xs4all.nl" };
 		
 		NTPUDPClient client = new NTPUDPClient();
@@ -461,5 +438,83 @@ public class WebUtils
 		
 		return null;
 		
+	}
+	
+	public static byte[] readUrl( String url ) throws IOException
+	{
+		return readUrl( url, null, null );
+	}
+	
+	public static byte[] readUrl( String surl, String user, String pass ) throws IOException
+	{
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		
+		URL url = new URL( surl );
+		URLConnection uc = url.openConnection();
+		if ( user != null || pass != null )
+		{
+			String userpass = user + ":" + pass;
+			String basicAuth = "Basic " + new String( Base64.encode( userpass.getBytes() ) );
+			uc.setRequestProperty( "Authorization", basicAuth );
+		}
+		InputStream is = uc.getInputStream();
+		
+		byte[] byteChunk = new byte[4096];
+		int n;
+		
+		while ( ( n = is.read( byteChunk ) ) > 0 )
+		{
+			out.write( byteChunk, 0, n );
+		}
+		
+		is.close();
+		
+		return out.toByteArray();
+	}
+	
+	public static String evalFile( CodeEvalFactory factory, Site site, String file ) throws IOException, ShellExecuteException
+	{
+		if ( file == null || file.isEmpty() )
+			return "";
+		
+		File packFile = new File( file );
+		
+		if ( site == null )
+			site = Loader.getSiteManager().getFrameworkSite();
+		
+		if ( packFile == null || !packFile.exists() )
+			return "";
+		
+		factory.reset();
+		factory.resetSource();
+		factory.put( packFile );
+		factory.applyAliases( site.getAliases() );
+		factory.parseForIncludes( site );
+		factory.eval();
+		return factory.reset();
+	}
+	
+	public static String evalPackage( CodeEvalFactory factory, Site site, String pack ) throws IOException, ShellExecuteException
+	{
+		File packFile = null;
+		
+		if ( site != null )
+			packFile = site.getResource( pack );
+		else
+			site = Loader.getSiteManager().getFrameworkSite();
+		
+		if ( packFile == null || !packFile.exists() )
+			packFile = Loader.getSiteManager().getFrameworkSite().getResource( pack );
+		
+		if ( packFile == null || !packFile.exists() )
+			return "";
+		
+		factory.reset();
+		factory.resetSource();
+		factory.put( packFile );
+		factory.applyAliases( site.getAliases() );
+		factory.parseForIncludes( site );
+		factory.eval();
+		return factory.reset();
 	}
 }
