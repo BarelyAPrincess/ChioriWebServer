@@ -35,6 +35,7 @@ public class CodeEvalFactory
 	
 	protected static List<SeaShell> shells = Lists.newCopyOnWriteArrayList();
 	protected Map<GroovyShell, Boolean> groovyShells = Maps.newConcurrentMap();
+	protected ByteArrayOutputStream bs = new ByteArrayOutputStream();
 	protected Binding binding;
 	
 	static
@@ -57,26 +58,7 @@ public class CodeEvalFactory
 	
 	public void setVariable( String key, Object val )
 	{
-		for ( GroovyShell shell : groovyShells.keySet() )
-			shell.setVariable( key, val );
-	}
-	
-	public void setFileName( String fileName )
-	{
-		for ( GroovyShell shell : groovyShells.keySet() )
-			shell.setVariable( "__FILE__", new File( fileName ) );
-	}
-	
-	private void setOutputStream( GroovyShell shell, ByteArrayOutputStream _bs )
-	{
-		try
-		{
-			shell.setProperty( "out", new PrintStream( _bs, true, encoding ) );
-		}
-		catch ( UnsupportedEncodingException e )
-		{
-			e.printStackTrace();
-		}
+		binding.setVariable( key, val );
 	}
 	
 	protected GroovyShell getUnusedShell()
@@ -115,11 +97,25 @@ public class CodeEvalFactory
 	protected CodeEvalFactory(Binding _binding)
 	{
 		binding = _binding;
+		setOutputStream( bs );
+	}
+	
+	public void setOutputStream( ByteArrayOutputStream _bs )
+	{
+		try
+		{
+			binding.setProperty( "out", new PrintStream( _bs, true, encoding ) );
+		}
+		catch ( UnsupportedEncodingException e )
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	public void setEncoding( String _encoding )
 	{
 		encoding = _encoding;
+		setOutputStream( bs );
 	}
 	
 	public static void registerShell( SeaShell shell )
@@ -177,15 +173,14 @@ public class CodeEvalFactory
 	
 	public String eval( String code, CodeMetaData meta, Site site ) throws ShellExecuteException
 	{
-		ByteArrayOutputStream bs = new ByteArrayOutputStream();
 		boolean success = false;
 		
 		if ( code == null || code.isEmpty() )
 			return "";
 		
 		GroovyShell gShell = getUnusedShell();
+		Loader.getLogger().fine( "Locking GroovyShell '" + gShell.toString() + "' for execution of '" + meta.fileName + ":" + code.length() + "'" );
 		lock( gShell );
-		setOutputStream( gShell, bs );
 		
 		if ( site != null )
 		{
@@ -194,11 +189,14 @@ public class CodeEvalFactory
 			{
 				code = parseForIncludes( code, site );
 			}
-			catch ( IOException e)
+			catch ( IOException e )
 			{
 				throw new ShellExecuteException( e, meta );
 			}
 		}
+		
+		byte[] saved = bs.toByteArray();
+		bs.reset();
 		
 		for ( SeaShell s : shells )
 		{
@@ -229,17 +227,29 @@ public class CodeEvalFactory
 			}
 		}
 		
+		Loader.getLogger().fine( "Unlocking GroovyShell '" + gShell.toString() + "' for execution of '" + meta.fileName + ":" + code.length() + "'" );
 		unlock( gShell );
 		
 		if ( success )
 			try
 			{
-				return new String( bs.toByteArray(), encoding );
+				code = new String( bs.toByteArray(), encoding );
 			}
 			catch ( UnsupportedEncodingException e )
 			{
 				throw new ShellExecuteException( e, meta );
 			}
+		
+		bs.reset();
+		
+		try
+		{
+			bs.write( saved );
+		}
+		catch ( IOException e )
+		{
+			throw new ShellExecuteException( e, meta );
+		}
 		
 		return code;
 	}

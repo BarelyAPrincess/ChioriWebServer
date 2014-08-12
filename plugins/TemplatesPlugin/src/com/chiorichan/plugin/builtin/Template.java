@@ -47,7 +47,7 @@ public class Template extends JavaPlugin implements Listener
 			Site site = event.getSite();
 			Map<String, String> fwVals = event.getPageData();
 			
-			if ( fwVals.get( "themeless" ) != null && fwVals.get( "themeless" ).equals( "true" ) )
+			if ( fwVals.get( "themeless" ) != null && StringUtil.isTrue( fwVals.get( "themeless" ) ) )
 				return;
 			
 			String theme = fwVals.get( "theme" );
@@ -144,7 +144,6 @@ public class Template extends JavaPlugin implements Listener
 		}
 		catch ( IOException ex )
 		{
-			// TODO Improved error handling needed here.
 			Loader.getLogger().warning( "Exception encountered during include of package `" + pack + "`, unknown fault.", ex );
 		}
 		

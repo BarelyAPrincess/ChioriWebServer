@@ -55,17 +55,13 @@ public class WebHandler implements HttpHandler
 		}
 		catch ( HttpErrorException e )
 		{
-			if ( e.getHttpCode() < 400 && e.getHttpCode() > 499 )
-				e.printStackTrace();
-			
 			response.sendError( e );
 			return;
 		}
 		catch ( IndexOutOfBoundsException | NullPointerException | IOException | SiteException e )
 		{
 			/**
-			 * TODO!!! Proper Exception Handling. PRETTY EXCEPTIONS A MUST FOR HTTP RESPONSE!!!
-			 * We should even consider the ability to have these exceptions cached and/or delivered to your e-mail address.
+			 * TODO!!! Proper Exception Handling. Consider the ability to have these exceptions cached and/or delivered by e-mail.
 			 */
 			if ( e instanceof IOException && e.getCause() != null )
 			{
@@ -80,9 +76,11 @@ public class WebHandler implements HttpHandler
 		}
 		catch ( Exception e )
 		{
-			// Temp until all exceptions can be found!
-			Loader.getLogger().warning( "WARNING THIS IS AN UNCAUGHT EXCEPTION! PLEASE FIX THE CODE!" );
-			e.printStackTrace();
+			/**
+			 * XXX Temporary way of capturing exception that were unexpected by the server.
+			 * Exceptions caught here should have proper exception captures implemented.
+			 */
+			Loader.getLogger().warning( "WARNING THIS IS AN UNCAUGHT EXCEPTION! PLEASE FIX THE CODE!", e );
 		}
 		finally
 		{

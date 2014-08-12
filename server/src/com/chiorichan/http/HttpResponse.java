@@ -79,10 +79,10 @@ public class HttpResponse
 		ErrorEvent event = new ErrorEvent( request, var1, var2 );
 		Loader.getEventBus().callEvent( event );
 		
-		// TODO Allow the ErrorEvent to change the http code and reason.
-		if ( event.getErrorHtml() != null && !event.getErrorHtml().isEmpty() )
+		// TODO Make these error pages a bit more creative and/or informational to developers. 
+		
+		if ( event.getErrorHtml() == null || event.getErrorHtml().isEmpty() )
 		{
-			
 			println( "<h1>" + var1 + " - " + var2 + "</h1>" );
 			
 			if ( var3 != null && !var3.isEmpty() )
