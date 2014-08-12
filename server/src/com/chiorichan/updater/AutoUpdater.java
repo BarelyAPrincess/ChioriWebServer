@@ -130,12 +130,39 @@ public class AutoUpdater
 				current = service.getArtifact( currentSlug, "information about this Chiori Web Server version; perhaps you are running a custom one?" );
 				latest = service.getArtifact( "lastStableBuild", "latest artifact information" );
 				
-				if ( isUpdateAvailable() )
+				try
 				{
-					if ( ( current.isBroken() ) && ( onBroken.contains( WARN_CONSOLE ) ) )
+					if ( isUpdateAvailable() )
+					{
+						if ( ( current.isBroken() ) && ( onBroken.contains( WARN_CONSOLE ) ) )
+						{
+							sender.sendMessage( ChatColor.RED + "----- Chiori Auto Updater -----" );
+							sender.sendMessage( ChatColor.RED + "Your version of Chiori Web Server is known to be broken. It is strongly advised that you update to a more recent version ASAP." );
+							sender.sendMessage( ChatColor.RED + "Known issues with your version:" );
+							
+							for ( String line : current.getBrokenReason().split( "\n" ) )
+							{
+								sender.sendMessage( ChatColor.RED + "> " + line );
+							}
+							
+							sender.sendMessage( ChatColor.RED + "Newer version " + latest.getVersion() + " (build #" + latest.getBuildNumber() + ") was released on " + latest.getCreated() + "." );
+							sender.sendMessage( ChatColor.RED + "Details: " + latest.getHtmlUrl() );
+							sender.sendMessage( ChatColor.RED + "Download: " + latest.getJar() );
+							sender.sendMessage( ChatColor.RED + "----- ------------------- -----" );
+						}
+						else if ( onUpdate.contains( WARN_CONSOLE ) )
+						{
+							sender.sendMessage( ChatColor.YELLOW + "----- Chiori Auto Updater -----" );
+							sender.sendMessage( ChatColor.YELLOW + "Your version of Chiori Web Server is out of date. Version " + latest.getVersion() + " (build #" + latest.getBuildNumber() + ") was released on " + latest.getCreated() + "." );
+							sender.sendMessage( ChatColor.YELLOW + "Details: " + latest.getHtmlUrl() );
+							sender.sendMessage( ChatColor.YELLOW + "Download: " + latest.getJar() );
+							sender.sendMessage( ChatColor.YELLOW + "----- ------------------- -----" );
+						}
+					}
+					else if ( ( current != null ) && ( current.isBroken() ) && ( onBroken.contains( WARN_CONSOLE ) ) )
 					{
 						sender.sendMessage( ChatColor.RED + "----- Chiori Auto Updater -----" );
-						sender.sendMessage( ChatColor.RED + "Your version of Chiori Web Server is known to be broken. It is strongly advised that you update to a more recent version ASAP." );
+						sender.sendMessage( ChatColor.RED + "Your version of Chiori Web Server is known to be broken. It is strongly advised that you update to a more recent (or older) version ASAP." );
 						sender.sendMessage( ChatColor.RED + "Known issues with your version:" );
 						
 						for ( String line : current.getBrokenReason().split( "\n" ) )
@@ -143,72 +170,53 @@ public class AutoUpdater
 							sender.sendMessage( ChatColor.RED + "> " + line );
 						}
 						
-						sender.sendMessage( ChatColor.RED + "Newer version " + latest.getVersion() + " (build #" + latest.getBuildNumber() + ") was released on " + latest.getCreated() + "." );
-						sender.sendMessage( ChatColor.RED + "Details: " + latest.getHtmlUrl() );
-						sender.sendMessage( ChatColor.RED + "Download: " + latest.getFile() );
+						sender.sendMessage( ChatColor.RED + "Unfortunately, there is not yet a newer version suitable for your server. We would advise you wait an hour or two, or try out a dev build." );
 						sender.sendMessage( ChatColor.RED + "----- ------------------- -----" );
 					}
-					else if ( onUpdate.contains( WARN_CONSOLE ) )
+					else if ( current == null && latest != null )
 					{
 						sender.sendMessage( ChatColor.YELLOW + "----- Chiori Auto Updater -----" );
-						sender.sendMessage( ChatColor.YELLOW + "Your version of Chiori Web Server is out of date. Version " + latest.getVersion() + " (build #" + latest.getBuildNumber() + ") was released on " + latest.getCreated() + "." );
+						sender.sendMessage( ChatColor.YELLOW + "It appears that we could not find any information regarding your current build of Chiori Web Server. This could either be due to your" );
+						sender.sendMessage( ChatColor.YELLOW + "version being so out of date that our Build Server has no information or you self compiled this build, in which case you should have disabled" );
+						sender.sendMessage( ChatColor.YELLOW + "the auto updates. For the sake of fair warning below is our latest release. Please run \"update latest\" if you like us to auto update." );
+						sender.sendMessage( ChatColor.YELLOW + "" );
+						sender.sendMessage( ChatColor.YELLOW + "Latest Version " + latest.getVersion() + " (build #" + latest.getBuildNumber() + ") was released on " + latest.getCreated() + "." );
 						sender.sendMessage( ChatColor.YELLOW + "Details: " + latest.getHtmlUrl() );
-						sender.sendMessage( ChatColor.YELLOW + "Download: " + latest.getFile() );
+						sender.sendMessage( ChatColor.YELLOW + "Download: " + latest.getJar() );
+						sender.sendMessage( ChatColor.YELLOW + "----- ------------------- -----" );
+					}/*
+					 * else if ( ( current != null ) && ( shouldSuggestChannels() ) )
+					 * {
+					 * ArtifactDetails.ChannelDetails prefChan = service.getChannel( channel, "preferred channel details" );
+					 * if ( ( prefChan != null ) && ( current.getChannel().getPriority() < prefChan.getPriority() ) )
+					 * {
+					 * sender.sendMessage( ChatColor.AQUA + "----- Chiori Auto Updater -----" );
+					 * sender.sendMessage( ChatColor.AQUA + "It appears that you're running a " + current.getChannel().getName() + ", when you've specified in chiori.yml that you prefer to run " + prefChan.getName() + "s." );
+					 * sender.sendMessage( ChatColor.AQUA + "If you would like to be kept informed about new " + current.getChannel().getName() +
+					 * " releases, it is recommended that you change 'preferred-channel' in your chiori.yml to '" +
+					 * current.getChannel().getSlug() + "'." );
+					 * sender.sendMessage( ChatColor.AQUA + "With that set, you will be told whenever a new version is available for download, so that you can always keep up to date and secure with the latest fixes." );
+					 * sender.sendMessage( ChatColor.AQUA + "If you would like to disable this warning, simply set 'suggest-channels' to false in chiori.yml." );
+					 * sender.sendMessage( ChatColor.AQUA + "----- ------------------- -----" );
+					 * }
+					 * }
+					 */
+					else
+					// if ( !( sender instanceof ConsoleCommandSender ) )
+					{
+						sender.sendMessage( ChatColor.YELLOW + "----- Chiori Auto Updater -----" );
+						
+						if ( current == null && latest == null )
+							sender.sendMessage( ChatColor.YELLOW + "There seems to have been a problem checking for updates!" );
+						else
+							sender.sendMessage( ChatColor.YELLOW + "You are already running the latest version of Chiori Web Server!" );
+						
 						sender.sendMessage( ChatColor.YELLOW + "----- ------------------- -----" );
 					}
 				}
-				else if ( ( current != null ) && ( current.isBroken() ) && ( onBroken.contains( WARN_CONSOLE ) ) )
+				catch ( Throwable t )
 				{
-					sender.sendMessage( ChatColor.RED + "----- Chiori Auto Updater -----" );
-					sender.sendMessage( ChatColor.RED + "Your version of Chiori Web Server is known to be broken. It is strongly advised that you update to a more recent (or older) version ASAP." );
-					sender.sendMessage( ChatColor.RED + "Known issues with your version:" );
-					
-					for ( String line : current.getBrokenReason().split( "\n" ) )
-					{
-						sender.sendMessage( ChatColor.RED + "> " + line );
-					}
-					
-					sender.sendMessage( ChatColor.RED + "Unfortunately, there is not yet a newer version suitable for your server. We would advise you wait an hour or two, or try out a dev build." );
-					sender.sendMessage( ChatColor.RED + "----- ------------------- -----" );
-				}
-				else if ( current == null && latest != null )
-				{
-					sender.sendMessage( ChatColor.YELLOW + "----- Chiori Auto Updater -----" );
-					sender.sendMessage( ChatColor.YELLOW + "It appears that we could not find any information regarding your current build of Chiori Web Server. This could either be due to your" );
-					sender.sendMessage( ChatColor.YELLOW + "version being so out of date that our Build Server has no information or you self compiled this build, in which case you should have disabled" );
-					sender.sendMessage( ChatColor.YELLOW + "the auto updates. For the sake of fair warning below is our latest release. Please run \"update latest\" if you like us to auto update." );
-					sender.sendMessage( ChatColor.YELLOW + "" );
-					sender.sendMessage( ChatColor.YELLOW + "Latest Version " + latest.getVersion() + " (build #" + latest.getBuildNumber() + ") was released on " + latest.getCreated() + "." );
-					sender.sendMessage( ChatColor.YELLOW + "Details: " + latest.getHtmlUrl() );
-					sender.sendMessage( ChatColor.YELLOW + "Download: " + latest.getFile() );
-					sender.sendMessage( ChatColor.YELLOW + "----- ------------------- -----" );
-				}/*
-				 * else if ( ( current != null ) && ( shouldSuggestChannels() ) )
-				 * {
-				 * ArtifactDetails.ChannelDetails prefChan = service.getChannel( channel, "preferred channel details" );
-				 * if ( ( prefChan != null ) && ( current.getChannel().getPriority() < prefChan.getPriority() ) )
-				 * {
-				 * sender.sendMessage( ChatColor.AQUA + "----- Chiori Auto Updater -----" );
-				 * sender.sendMessage( ChatColor.AQUA + "It appears that you're running a " + current.getChannel().getName() + ", when you've specified in chiori.yml that you prefer to run " + prefChan.getName() + "s." );
-				 * sender.sendMessage( ChatColor.AQUA + "If you would like to be kept informed about new " + current.getChannel().getName() + " releases, it is recommended that you change 'preferred-channel' in your chiori.yml to '" +
-				 * current.getChannel().getSlug() + "'." );
-				 * sender.sendMessage( ChatColor.AQUA + "With that set, you will be told whenever a new version is available for download, so that you can always keep up to date and secure with the latest fixes." );
-				 * sender.sendMessage( ChatColor.AQUA + "If you would like to disable this warning, simply set 'suggest-channels' to false in chiori.yml." );
-				 * sender.sendMessage( ChatColor.AQUA + "----- ------------------- -----" );
-				 * }
-				 * }
-				 */
-				else
-				// if ( !( sender instanceof ConsoleCommandSender ) )
-				{
-					sender.sendMessage( ChatColor.YELLOW + "----- Chiori Auto Updater -----" );
-					
-					if ( current == null && latest == null )
-						sender.sendMessage( ChatColor.YELLOW + "There seems to have been a problem checking for updates!" );
-					else
-						sender.sendMessage( ChatColor.YELLOW + "You are already running the latest version of Chiori Web Server!" );
-					
-					sender.sendMessage( ChatColor.YELLOW + "----- ------------------- -----" );
+					t.printStackTrace();
 				}
 			}
 		}.start();
@@ -239,12 +247,12 @@ public class AutoUpdater
 					
 					sender.sendMessage( ChatColor.YELLOW + "Latest Version " + latest.getVersion() + " (build #" + latest.getBuildNumber() + ") was released on " + latest.getCreated() + "." );
 					sender.sendMessage( ChatColor.YELLOW + "Details: " + latest.getHtmlUrl() );
-					sender.sendMessage( ChatColor.YELLOW + "Download: " + latest.getFile() );
+					sender.sendMessage( ChatColor.YELLOW + "Download: " + latest.getJar() );
 					sender.sendMessage( "" );
 					
 					for ( ChangeSetDetails l : latest.getChanges() )
 						for ( String ll : l.toString().split( "\n" ) )
-							sender.sendMessage( ChatColor.WHITE + "[CHANGES] " + ll );
+							sender.sendMessage( ChatColor.AQUA + "[CHANGES] " + ChatColor.WHITE + ll );
 					
 					sender.sendMessage( "" );
 					sender.sendMessage( ChatColor.YELLOW + "If you would like Chiori Web Server to update to the latest version run \"update latest force\"" );

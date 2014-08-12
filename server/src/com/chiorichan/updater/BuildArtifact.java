@@ -148,13 +148,55 @@ public class BuildArtifact
 		return getBuildProperties().getProperty( "project.version", "{Internal Error}" );
 	}
 
-	public String getFile()
+	public String getJar()
+	{
+		return getJar( "ChioriWebServer" );
+	}
+	
+	public String getJar( String artifactName )
 	{
 		String mainJar = null;
 		
 		for ( ResultingArtifact ra : artifacts )
 		{
-			if ( ra.fileName.startsWith( "ChioriWebServer" ) && ra.fileName.endsWith( ".jar" ) )
+			if ( ra.fileName.startsWith( artifactName ) && ra.fileName.endsWith( ".jar" ) )
+			{
+				mainJar = url + "artifact/" + ra.relativePath;
+				break;
+			}
+		}
+		
+		return mainJar;
+	}
+	
+	public String getFile( String artifactName, String ext )
+	{
+		String mainJar = null;
+		
+		for ( ResultingArtifact ra : artifacts )
+		{
+			if ( ra.fileName.startsWith( artifactName ) && ra.fileName.endsWith( "." + ext ) )
+			{
+				mainJar = url + "artifact/" + ra.relativePath;
+				break;
+			}
+		}
+		
+		return mainJar;
+	}
+	
+	public String getMD5File()
+	{
+		return getMD5File( "ChioriWebServer" );
+	}
+	
+	public String getMD5File( String artifactName )
+	{
+		String mainJar = null;
+		
+		for ( ResultingArtifact ra : artifacts )
+		{
+			if ( ra.fileName.startsWith( artifactName ) && ra.fileName.endsWith( ".MD5" ) )
 			{
 				mainJar = url + "artifact/" + ra.relativePath;
 				break;

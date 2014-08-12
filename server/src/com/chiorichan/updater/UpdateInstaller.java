@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
 import com.chiorichan.Loader;
@@ -47,12 +48,15 @@ public class UpdateInstaller
 		{
 			IOUtils.closeQuietly( fis );
 			IOUtils.closeQuietly( fos );
+			FileUtils.deleteQuietly( currentJar );
 		}
 		
 		codeSource.setExecutable( true, true );
 		
 		ProcessBuilder processBuilder = new ProcessBuilder();
 		ArrayList<String> commands = new ArrayList<String>();
+		
+		File startBash = new File( "start.sh" );
 		
 		if ( OperatingSystem.getOperatingSystem().equals( OperatingSystem.WINDOWS ) )
 		{

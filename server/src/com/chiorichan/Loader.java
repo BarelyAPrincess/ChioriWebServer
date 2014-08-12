@@ -429,7 +429,7 @@ public class Loader
 		
 		sites.reload();
 		
-		getLogger().info( "Reinitalizing the Accounts Bus..." );
+		getLogger().info( "Reinitalizing the Accounts Manager..." );
 		accounts.reload();
 		
 		modules.loadPlugins();
@@ -473,13 +473,13 @@ public class Loader
 	public static void unloadServer( String reason )
 	{
 		getPersistenceManager().shutdown();
-		
+		/*
 		if ( !reason.isEmpty() )
 			for ( Account User : accounts.getOnlineAccounts() )
 			{
 				User.kick( reason );
 			}
-		
+		*/
 		getAccountsManager().shutdown();
 		NetworkManager.cleanup();
 	}
