@@ -5,13 +5,13 @@ Need more power? Then try out the Plugin system that is based on CraftBukkit (A 
 The idea was to give you the ability to create amazing websites using the power of Java while taking less time and resources.
 
 =Jenkins Build Server=
-[[Image:http://jenkins.applebloom.co:8080/job/ChioriWebServer/badge/icon]]
-
 Do you like running the latest bleeding edge builds? Well we have the best thing for you since sliced bread.
 Our Jenkins Build Server, reachable at this address: http://jenkins.chiorichan.com/job/ChioriWebServer/.
 Builds are automaticly compiled with each git push we make. Be sure to grab the latest successful build for best results.
 Also our server is equiped with an auto updater that runs every 30 minutes by default. We recommend turning it off for production enviroments.
 Disclaimer: Be sure to backup your existing installations, We can't be held responsable for damage or unexpected behavior when using bleeding-edge builds.
+
+[[Image:http://jenkins.chiorichan.com/job/ChioriWebServer/badge/icon]]
 
 =To Do=
 * Implement a Server Administration Web Interface.
