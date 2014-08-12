@@ -6,8 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
@@ -21,8 +19,6 @@ import com.chiorichan.framework.WebUtils;
 import com.chiorichan.updater.BuildArtifact;
 import com.chiorichan.updater.Download;
 import com.chiorichan.updater.DownloadListener;
-import com.chiorichan.updater.OperatingSystem;
-import com.chiorichan.updater.UpdateInstaller;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Strings;
 

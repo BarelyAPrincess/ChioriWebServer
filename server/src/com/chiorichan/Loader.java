@@ -311,9 +311,9 @@ public class Loader
 		
 		getLogger().info( ChatColor.RED + "" + ChatColor.NEGATIVE + "Done (" + ( System.currentTimeMillis() - startTime ) + "ms)! Type \"help\" for help or \"su\" to change accounts.!" );
 		
-		updater.check();
-		
 		console.startConsolePrompt();
+		
+		updater.check();
 		
 		return true;
 	}
