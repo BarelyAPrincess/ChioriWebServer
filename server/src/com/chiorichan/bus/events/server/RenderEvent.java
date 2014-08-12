@@ -30,6 +30,9 @@ public class RenderEvent extends ServerEvent
 	
 	public Site getSite()
 	{
+		if ( sess == null || sess.getRequest() == null )
+			return null;
+		
 		return sess.getRequest().getSite();
 	}
 	

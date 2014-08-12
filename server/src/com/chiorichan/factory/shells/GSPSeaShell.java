@@ -86,8 +86,7 @@ public class GSPSeaShell implements SeaShell
 				}
 			}
 			
-			//Loader.getLogger().debug( output.toString().substring( 0, 1000 ) );
-			
+			meta.source = output.toString();
 			bs.write( interpret( shell, output.toString() ).getBytes( "UTF-8" ) );
 			
 			return "";

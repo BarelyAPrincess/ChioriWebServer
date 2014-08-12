@@ -6,6 +6,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -126,23 +128,46 @@ public class ExceptionPageUtils
 			
 			String codeSample = getCodeSample( t );
 			String fileName = "";
-			StackTraceElement ele;
+			int lineNo = -1;
+			String className = null;
 			
 			if ( t instanceof ShellExecuteException )
 			{
 				CodeMetaData meta = ( (ShellExecuteException) t ).getCodeMetaData();
-				ele = getGroovyScriptElement( t.getCause().getStackTrace() );
-				fileName = meta.fileName;
+				StackTraceElement ele = getGroovyScriptElement( t.getCause().getStackTrace() );
 				t = t.getCause();
+				
+				fileName = meta.fileName;
+				
+				if ( ele == null )
+				{
+					Pattern p1 = Pattern.compile( "line[: ]?([0-9]*)" );
+					Matcher m1 = p1.matcher( t.getMessage() );
+					if ( m1.find() )
+						lineNo = Integer.parseInt( m1.group( 1 ) );
+					
+					if ( meta.source != null && !meta.source.isEmpty() )
+						codeSample = codeSampleEval( meta.source, lineNo );
+					else
+						codeSample = codeSample( fileName, lineNo );
+				}
+				else
+				{
+					lineNo = ele.getLineNumber();
+					className = ele.getClassName() + "." + ele.getMethodName();
+				}
 			}
 			else
 			{
+				StackTraceElement ele;
 				if ( t.getCause() == null )
 					ele = t.getStackTrace()[0];
 				else
 					ele = t.getCause().getStackTrace()[0];
 				
 				fileName = ele.getFileName();
+				lineNo = ele.getLineNumber();
+				className = ele.getClassName() + "." + ele.getMethodName();
 			}
 			
 			Loader.getLogger().warning( "Could not run file '" + fileName + "' because of error '" + t.getMessage() + "'" );
@@ -154,8 +179,7 @@ public class ExceptionPageUtils
 			ob.append( "\n" );
 			ob.append( "<div class=\"source\">\n" );
 			
-			if ( ele != null )
-				ob.append( "<p class=\"file\">" + fileName + "(" + ele.getLineNumber() + "): <strong>" + ele.getClassName() + "." + ele.getMethodName() + "</strong></p>\n" );
+			ob.append( "<p class=\"file\">" + fileName + "(" + lineNo + "): <strong>" + ( ( className != null ) ? className : "" ) + "</strong></p>\n" );
 			
 			ob.append( "\n" );
 			ob.append( "<div class=\"code\">\n" );

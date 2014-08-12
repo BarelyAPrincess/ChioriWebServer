@@ -206,7 +206,7 @@ public class CodeEvalFactory
 			{
 				if ( she.equalsIgnoreCase( meta.shell ) || she.equalsIgnoreCase( "all" ) )
 				{
-					// TODO Add HTML to CodeMeta
+					meta.source = code;
 					String result = s.eval( meta, code, gShell, bs );
 					
 					try
@@ -234,6 +234,7 @@ public class CodeEvalFactory
 			try
 			{
 				code = new String( bs.toByteArray(), encoding );
+				meta.source = code;
 			}
 			catch ( UnsupportedEncodingException e )
 			{
