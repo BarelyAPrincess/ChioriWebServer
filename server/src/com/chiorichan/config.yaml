@@ -13,6 +13,7 @@ server:
   installationUID: null
   defaultEncoding: UTF-8
   defaultImageEncoding: ISO-8859-1
+  developmentMode: true
   database:
     database: chiorifw
     type: mysql

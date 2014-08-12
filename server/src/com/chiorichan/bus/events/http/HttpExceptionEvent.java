@@ -9,11 +9,18 @@ public class HttpExceptionEvent extends HttpEvent
 	private int httpCode = -1;
 	private final HttpRequest request;
 	private String errorHtml = "";
+	private boolean isDevelopmentMode;
 	
-	public HttpExceptionEvent(HttpRequest _request, Throwable _cause)
+	public HttpExceptionEvent(HttpRequest _request, Throwable _cause, boolean _isDevelopmentMode)
 	{
 		cause = _cause;
 		request = _request;
+		isDevelopmentMode = _isDevelopmentMode;
+	}
+	
+	public boolean isDevelopmentMode()
+	{
+		return isDevelopmentMode;
 	}
 	
 	public HttpRequest getRequest()

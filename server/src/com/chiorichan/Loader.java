@@ -298,7 +298,7 @@ public class Loader
 		getLogger().info( "Initalizing the Site Manager..." );
 		sites.init();
 		
-		getLogger().info( "Initalizing the Accounts Bus..." );
+		getLogger().info( "Initalizing the Accounts Manager..." );
 		accounts.init();
 		
 		persistence.loadSessions();

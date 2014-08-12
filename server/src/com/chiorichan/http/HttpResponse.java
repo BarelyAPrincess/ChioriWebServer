@@ -100,37 +100,37 @@ public class HttpResponse
 		sendResponse();
 	}
 	
-	@SuppressWarnings( "unused" )
 	public void sendException( Throwable cause ) throws IOException
 	{
 		if ( stage == HttpResponseStage.CLOSED )
 			throw new IllegalStateException( "You can't access setter methods within this HttpResponse because the connection has been closed." );
 		
-		if ( false )// !developmentMode )
+		HttpExceptionEvent event = new HttpExceptionEvent( request, cause, Loader.getConfig().getBoolean( "server.developmentMode" ) );
+		Loader.getEventBus().callEvent( event );
+		
+		int httpCode = event.getHttpCode();
+		
+		if ( httpCode < 1 )
+			httpCode = 500;
+		
+		httpStatus = httpCode;
+		
+		Loader.getLogger().warning( "HttpError: " + httpCode + " - " + HttpCode.msg( httpCode ) + "... '" + request.getSubDomain() + "." + request.getParentDomain() + "' '" + request.getURI() + "'" );
+		
+		if ( Loader.getConfig().getBoolean( "server.developmentMode" ) )
 		{
-			sendError( 500, null, "<pre>" + ExceptionUtils.getStackTrace( cause ) + "</pre>" );
-		}
-		else
-		{
-			HttpExceptionEvent event = new HttpExceptionEvent( request, cause );
-			Loader.getEventBus().callEvent( event );
-			
-			int httpCode = event.getHttpCode();
-			
-			if ( httpCode < 1 )
-				httpCode = 500;
-			
 			if ( event.getErrorHtml() != null )
 			{
-				Loader.getLogger().warning( "HttpError: " + httpCode + " - " + HttpCode.msg( httpCode ) + "... '" + request.getSubDomain() + "." + request.getParentDomain() + "' '" + request.getURI() + "'" );
-				
 				output.reset();
 				print( event.getErrorHtml() );
-				httpStatus = httpCode;
 				sendResponse();
 			}
 			else
 				sendError( httpStatus, null, "<pre>" + ExceptionUtils.getStackTrace( cause ) + "</pre>" );
+		}
+		else
+		{
+			sendError( 500, null, "<pre>" + ExceptionUtils.getStackTrace( cause ) + "</pre>" );
 		}
 	}
 	
