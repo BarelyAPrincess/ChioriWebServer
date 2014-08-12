@@ -131,6 +131,9 @@ public class UpdateCommand extends ChioriCommand
 								sender.sendMessage( ChatColor.YELLOW + "----- ------------------- -----" );
 							}
 							
+							// Disable updater until next boot.
+							Loader.getAutoUpdater().setEnabled( false );
+							
 							/*
 							 * TODO It would be nice if the server could automatically restart the server.
 							 * But there has been problems with this sadly.
@@ -192,7 +195,7 @@ public class UpdateCommand extends ChioriCommand
 		if ( args.length == 0 )
 		{
 			sender.sendMessage( ChatColor.AQUA + "Please wait as we check for updates..." );
-			Loader.getAutoUpdater().check( sender );
+			Loader.getAutoUpdater().check( sender, false );
 		}
 		
 		return true;

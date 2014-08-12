@@ -110,10 +110,10 @@ public class AutoUpdater
 	
 	public void check()
 	{
-		check( Loader.getConsole().getConsoleReader() );
+		check( Loader.getConsole().getConsoleReader(), true );
 	}
 	
-	public void check( final SentientHandler sender )
+	public void check( final SentientHandler sender, final boolean automatic )
 	{
 		final String currentSlug = Versioning.getBuildNumber();
 		
@@ -204,14 +204,17 @@ public class AutoUpdater
 					else
 					// if ( !( sender instanceof ConsoleCommandSender ) )
 					{
-						sender.sendMessage( ChatColor.YELLOW + "----- Chiori Auto Updater -----" );
-						
-						if ( current == null && latest == null )
-							sender.sendMessage( ChatColor.YELLOW + "There seems to have been a problem checking for updates!" );
-						else
-							sender.sendMessage( ChatColor.YELLOW + "You are already running the latest version of Chiori Web Server!" );
-						
-						sender.sendMessage( ChatColor.YELLOW + "----- ------------------- -----" );
+						if ( !automatic )
+						{
+							sender.sendMessage( ChatColor.YELLOW + "----- Chiori Auto Updater -----" );
+							
+							if ( current == null && latest == null )
+								sender.sendMessage( ChatColor.YELLOW + "There seems to have been a problem checking for updates!" );
+							else
+								sender.sendMessage( ChatColor.YELLOW + "You are already running the latest version of Chiori Web Server!" );
+							
+							sender.sendMessage( ChatColor.YELLOW + "----- ------------------- -----" );
+						}
 					}
 				}
 				catch ( Throwable t )
