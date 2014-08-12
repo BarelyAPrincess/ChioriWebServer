@@ -40,7 +40,7 @@ public class GSPSeaShell implements SeaShell
 			shell.setVariable( "__FILE__", meta.fileName );
 			
 			int fullFileIndex = 0;
-			String[] dontStartWith = new String[] { "println", "print", "echo", "def", "import" };
+			String[] dontStartWith = new String[] { "println", "print", "echo", "def", "import", "if", "for", "do" };
 			
 			StringBuilder output = new StringBuilder();
 			
@@ -62,14 +62,14 @@ public class GSPSeaShell implements SeaShell
 					boolean appendPrint = true;
 					
 					for ( String s : dontStartWith )
-						if ( fragment.startsWith( s ) )
+						if ( fragment.trim().startsWith( s ) )
 							appendPrint = false;
 					
 					if ( appendPrint )
 						fragment = "print " + fragment;
 					
 					if ( !fragment.isEmpty() )
-						output.append( fragment + ";" );
+						output.append( fragment + "; " );
 					
 					// Position index after end marker
 					fullFileIndex = endIndex + MARKER_END.length();
@@ -102,9 +102,15 @@ public class GSPSeaShell implements SeaShell
 	
 	public String escapeFragment( String fragment )
 	{
+		String brackets = "\"\"\"";
+		
 		fragment = fragment.replace( "\\$", "$" );
 		fragment = fragment.replace( "$", "\\$" );
-		return "println \"\"\"" + fragment + "\"\"\";";
+		
+		if( fragment.endsWith( "\"" ) )
+			brackets = "'''";
+		
+		return "print " + brackets + fragment + brackets + "; ";
 	}
 	
 	private String interpret( GroovyShell shell, String source ) throws SyntaxException, ClassNotFoundException, IOException

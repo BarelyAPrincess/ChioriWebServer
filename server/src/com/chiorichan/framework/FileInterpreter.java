@@ -175,6 +175,11 @@ public class FileInterpreter
 				ln++;
 			}
 			
+			for ( int lnn = 0; lnn < ln; lnn++ )
+			{
+				finished.write( "\n".getBytes( encoding ) );
+			}
+			
 			int h = 0;
 			for ( byte b : bs.toByteArray() )
 			{
@@ -182,11 +187,6 @@ public class FileInterpreter
 				
 				if ( h > inx )
 					finished.write( b );
-			}
-			
-			for ( int lnn = 0; lnn < ln; lnn++ )
-			{
-				finished.write( "\n".getBytes( encoding ) );
 			}
 			
 			bs = finished;

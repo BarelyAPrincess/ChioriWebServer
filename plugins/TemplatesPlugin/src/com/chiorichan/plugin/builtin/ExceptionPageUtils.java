@@ -143,19 +143,20 @@ public class ExceptionPageUtils
 				{
 					Pattern p1 = Pattern.compile( "line[: ]?([0-9]*)" );
 					Matcher m1 = p1.matcher( t.getMessage() );
-					if ( m1.find() )
-						lineNo = Integer.parseInt( m1.group( 1 ) );
 					
-					if ( meta.source != null && !meta.source.isEmpty() )
-						codeSample = codeSampleEval( meta.source, lineNo );
-					else
-						codeSample = codeSample( fileName, lineNo );
+					if ( m1.find() && !m1.group( 1 ).isEmpty() )
+						lineNo = Integer.parseInt( m1.group( 1 ) );
 				}
 				else
 				{
 					lineNo = ele.getLineNumber();
 					className = ele.getClassName() + "." + ele.getMethodName();
 				}
+				
+				codeSample = codeSample( fileName, lineNo );
+				
+				if ( meta.source != null && !meta.source.isEmpty() )
+					codeSample += "</pre><p>Pre-evaluated Code:</p><pre>" + codeSampleEval( meta.source, lineNo );
 			}
 			else
 			{
@@ -275,7 +276,7 @@ public class ExceptionPageUtils
 						l = l.substring( 0, col ) + "<span style=\"background-color: red; font-weight: bolder;\">" + l.substring( col, col + 1 ) + "</span>" + l.substring( col + 1 );
 					}
 					
-					sb.append( "<span class=\"error\"><span class=\"ln error-ln\">" + cLine + "</span> " + l + "</span>\n" );
+					sb.append( "<span class=\"error\"><span class=\"ln error-ln\">" + cLine + "</span> " + l + "</span>" );
 				}
 				else
 				{
@@ -284,7 +285,7 @@ public class ExceptionPageUtils
 			}
 		}
 		
-		return sb.toString();// .substring( 0, sb.toString().length() - 1 );
+		return sb.toString();
 	}
 	
 	public static String codeSample( String file, int line )
