@@ -153,10 +153,10 @@ public class ExceptionPageUtils
 					className = ele.getClassName() + "." + ele.getMethodName();
 				}
 				
-				codeSample = codeSample( fileName, lineNo );
+				codeSample = "<p>Source Code:</p><pre>" + codeSample( fileName, lineNo ) + "</pre>";
 				
 				if ( meta.source != null && !meta.source.isEmpty() )
-					codeSample += "</pre><p>Pre-evaluated Code:</p><pre>" + codeSampleEval( meta.source, lineNo );
+					codeSample += "<p>Pre-evaluated Code:</p><pre>" + codeSampleEval( meta.source, lineNo ) + "</pre>";
 			}
 			else
 			{
@@ -185,7 +185,7 @@ public class ExceptionPageUtils
 			ob.append( "\n" );
 			ob.append( "<div class=\"code\">\n" );
 			if ( codeSample != null )
-				ob.append( "<pre>" + codeSample + "</pre>\n" );
+				ob.append( codeSample + "\n" );
 			ob.append( "</div>\n" );
 			ob.append( "</div>\n" );
 			ob.append( "\n" );
@@ -316,7 +316,7 @@ public class ExceptionPageUtils
 				String l;
 				while ( ( l = br.readLine() ) != null )
 				{
-					l = escapeHTML( l ) + "\n";
+					l = escapeHTML( l );
 					
 					cLine++;
 					
@@ -324,11 +324,11 @@ public class ExceptionPageUtils
 					{
 						if ( cLine == line )
 						{
-							sb.append( "<span class=\"error\"><span class=\"ln error-ln\">" + cLine + "</span> " + l + "</span>" );
+							sb.append( "<span class=\"error\"><span class=\"ln error-ln\">" + cLine + "</span> " + l + "</span>\n" );
 						}
 						else
 						{
-							sb.append( "<span class=\"ln\">" + cLine + "</span> " + l );
+							sb.append( "<span class=\"ln\">" + cLine + "</span> " + l + "\n" );
 						}
 					}
 				}

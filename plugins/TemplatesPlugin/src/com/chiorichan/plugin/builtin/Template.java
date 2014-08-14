@@ -47,6 +47,9 @@ public class Template extends JavaPlugin implements Listener
 			Site site = event.getSite();
 			Map<String, String> fwVals = event.getPageData();
 			
+			if ( site == null )
+				site = Loader.getSiteManager().getFrameworkSite();
+			
 			if ( fwVals.get( "themeless" ) != null && StringUtil.isTrue( fwVals.get( "themeless" ) ) )
 				return;
 			
@@ -78,7 +81,7 @@ public class Template extends JavaPlugin implements Listener
 			ob.append( "<head>\n" );
 			ob.append( "<meta charset=\"utf-8\">\n" );
 			
-			if ( site.title == null )
+			if ( site == null && site.title == null )
 				site.title = Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Chiori Framework Site" );
 			
 			if ( title == null || title.isEmpty() )

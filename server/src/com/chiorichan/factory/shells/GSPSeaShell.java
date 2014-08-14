@@ -40,7 +40,7 @@ public class GSPSeaShell implements SeaShell
 			shell.setVariable( "__FILE__", meta.fileName );
 			
 			int fullFileIndex = 0;
-			String[] dontStartWith = new String[] { "println", "print", "echo", "def", "import", "if", "for", "do" };
+			String[] dontStartWith = new String[] { "println", "print", "echo", "def", "import", "if", "for", "do", "}", "else" };
 			
 			StringBuilder output = new StringBuilder();
 			
