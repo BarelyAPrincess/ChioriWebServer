@@ -201,7 +201,18 @@ public class WebHandler implements HttpHandler
 		CodeEvalFactory factory = sess.getCodeFactory();
 		factory.setEncoding( fi.getEncoding() );
 		
-		String req = fi.get( "reqlevel" );
+		String req = fi.get( "reqperm" );
+		
+		// Deprecated!!!
+		if ( req == null )
+			req = fi.get( "reqlevel" );
+		
+		/**
+		 * -1 = Allow All!
+		 * 0 = OP Only!
+		 * 1 = Valid Accounts Only!
+		 * All Others = Per Account
+		 */
 		
 		if ( !req.equals( "-1" ) )
 			if ( sess.getCurrentAccount() == null )
@@ -212,7 +223,7 @@ public class WebHandler implements HttpHandler
 				// TODO: Come up with a better way to handle the URI used in the target. ie. Params are lost.
 				return;
 			}
-			else if ( !sess.getCurrentAccount().hasPermission( req ) )
+			else if ( !req.equals( "1" ) && !sess.getCurrentAccount().hasPermission( req ) )
 			{
 				if ( req.equals( "0" ) )
 					response.sendError( 401, "This page is limited to Operators only!" );

@@ -57,7 +57,7 @@ public class Loader
 	
 	protected final static ConsoleBus console = new ConsoleBus();
 	
-	protected static final PluginManager modules = new PluginManager();
+	protected static final PluginManager pluginManager = new PluginManager();
 	protected static final EventBus events = new EventBus();
 	protected static final AccountManager accounts = new AccountManager();
 	protected static final PersistenceManager persistence = new PersistenceManager();
@@ -270,15 +270,15 @@ public class Loader
 	
 	public boolean start() throws StartupException
 	{
-		modules.loadPlugins();
-		modules.enablePlugins( PluginLoadOrder.INITIALIZATION );
+		pluginManager.loadPlugins();
+		pluginManager.enablePlugins( PluginLoadOrder.INITIALIZATION );
 		
 		File root = new File( webroot );
 		
 		if ( !root.exists() )
 			root.mkdirs();
 		
-		modules.enablePlugins( PluginLoadOrder.STARTUP );
+		pluginManager.enablePlugins( PluginLoadOrder.STARTUP );
 		
 		if ( !options.has( "tcp-disable" ) && configuration.getBoolean( "server.enableTcpServer", true ) )
 			NetworkManager.initTcpServer();
@@ -290,7 +290,7 @@ public class Loader
 		else
 			getLogger().warning( "The integrated web server has been disabled per the configuration. Change server.enableWebServer to true to reenable it." );
 		
-		modules.enablePlugins( PluginLoadOrder.POSTSERVER );
+		pluginManager.enablePlugins( PluginLoadOrder.POSTSERVER );
 		
 		getLogger().info( "Initalizing the Persistence Manager..." );
 		persistence.init();
@@ -303,11 +303,11 @@ public class Loader
 		
 		persistence.loadSessions();
 		
-		modules.enablePlugins( PluginLoadOrder.INITIALIZED );
+		pluginManager.enablePlugins( PluginLoadOrder.INITIALIZED );
 		
 		console.primaryThread.start();
 		
-		modules.enablePlugins( PluginLoadOrder.RUNNING );
+		pluginManager.enablePlugins( PluginLoadOrder.RUNNING );
 		
 		getLogger().info( ChatColor.RED + "" + ChatColor.NEGATIVE + "Done (" + ( System.currentTimeMillis() - startTime ) + "ms)! Type \"help\" for help or \"su\" to change accounts.!" );
 		
@@ -394,7 +394,7 @@ public class Loader
 		configuration = YamlConfiguration.loadConfiguration( getConfigFile() );
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
 		
-		modules.clearPlugins();
+		pluginManager.clearPlugins();
 		// ModuleBus.getCommandMap().clearCommands();
 		
 		int pollCount = 0;
@@ -432,9 +432,9 @@ public class Loader
 		getLogger().info( "Reinitalizing the Accounts Manager..." );
 		accounts.reload();
 		
-		modules.loadPlugins();
-		modules.enablePlugins( PluginLoadOrder.RELOAD );
-		modules.enablePlugins( PluginLoadOrder.POSTSERVER );
+		pluginManager.loadPlugins();
+		pluginManager.enablePlugins( PluginLoadOrder.RELOAD );
+		pluginManager.enablePlugins( PluginLoadOrder.POSTSERVER );
 	}
 	
 	public String toString()
@@ -491,7 +491,7 @@ public class Loader
 	{
 		persistence.shutdown();
 		accounts.shutdown();
-		modules.shutdown();
+		pluginManager.shutdown();
 		NetworkManager.cleanup();
 		
 		isRunning = false;
@@ -575,7 +575,7 @@ public class Loader
 	
 	public static PluginManager getPluginManager()
 	{
-		return modules;
+		return pluginManager;
 	}
 	
 	public static PersistenceManager getPersistenceManager()

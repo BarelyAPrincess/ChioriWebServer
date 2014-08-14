@@ -148,9 +148,11 @@ public class PersistentSession implements SentientHandler, BindingProvider
 		
 		initSession();
 		
-		binding.setVariable( "chiori", null );
-		binding.setVariable( "request", request );
-		binding.setVariable( "response", request.getResponse() );
+		if ( request != null )
+		{
+			binding.setVariable( "request", request );
+			binding.setVariable( "response", request.getResponse() );
+		}
 		binding.setVariable( "__FILE__", new File( "" ) );
 	}
 	
@@ -176,6 +178,12 @@ public class PersistentSession implements SentientHandler, BindingProvider
 		if ( !pendingMessages.isEmpty() )
 		{
 			// request.getResponse().sendMessage( pendingMessages.toArray( new String[0] ) );
+		}
+		
+		if ( request == null )
+		{
+			Loader.getLogger().warning( "PersistentSession: Request was misteriously empty for an unknown reason." );
+			return;
 		}
 		
 		String username = request.getArgument( "user" );
@@ -212,7 +220,7 @@ public class PersistentSession implements SentientHandler, BindingProvider
 			}
 			catch ( LoginException l )
 			{
-				// l.printStackTrace();
+				//l.printStackTrace();
 				
 				String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
 				
@@ -447,7 +455,7 @@ public class PersistentSession implements SentientHandler, BindingProvider
 	 */
 	protected boolean matchClient( HttpRequest request )
 	{
-		String _candyName = request.getSite().getYaml().getString( "sessions.cookie-name", Loader.getConfig().getString( "sessions.defaultSessionName", "candyId" ) );
+		String _candyName = request.getSite().getYaml().getString( "sessions.cookie-name", Loader.getConfig().getString( "sessions.defaultSessionName", "sessionId" ) );
 		Map<String, Candy> requestCandys = pullCandies( request );
 		
 		return ( requestCandys.containsKey( _candyName ) && getCandy( candyName ).compareTo( requestCandys.get( _candyName ) ) );
