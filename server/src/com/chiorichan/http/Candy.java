@@ -2,7 +2,9 @@ package com.chiorichan.http;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 
+import com.chiorichan.Loader;
 import com.chiorichan.util.Common;
 
 public class Candy
@@ -102,6 +104,7 @@ public class Candy
 		if ( epoch > 0 )
 		{
 			SimpleDateFormat dateFormat = new SimpleDateFormat( "EE, dd-MMM-yyyy HH:mm:ss zz" );
+			dateFormat.setTimeZone( TimeZone.getTimeZone( "UTC" ) );
 			additional += "expires=" + dateFormat.format( new Date( epoch * 1000 ) ) + "; ";
 		}
 		
