@@ -4,7 +4,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-import com.chiorichan.Loader;
 import com.chiorichan.util.Common;
 
 public class Candy

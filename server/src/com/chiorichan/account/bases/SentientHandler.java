@@ -15,4 +15,6 @@ public interface SentientHandler
 	public Sentient getSentient();
 	
 	public String getIpAddr();
+
+	public String getName();
 }

@@ -731,4 +731,13 @@ public class PersistentSession implements SentientHandler, BindingProvider
 	{
 		return new ConfigurationManagerWrapper( request.getSession() );
 	}
+
+	@Override
+	public String getName()
+	{
+		if ( currentAccount == null )
+			return "(NULL)";
+		
+		return currentAccount.getName();
+	}
 }

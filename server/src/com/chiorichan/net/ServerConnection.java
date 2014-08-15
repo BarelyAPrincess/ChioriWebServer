@@ -66,4 +66,13 @@ public class ServerConnection extends Connection implements SentientHandler
 	{
 		currentSentient = null;
 	}
+
+	@Override
+	public String getName()
+	{
+		if ( currentSentient == null )
+			return "(NULL)";
+		
+		return currentSentient.getName();
+	}
 }

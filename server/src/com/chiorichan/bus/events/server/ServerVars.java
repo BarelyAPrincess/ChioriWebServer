@@ -34,7 +34,8 @@ public enum ServerVars
 	CONTENT_LENGTH( "CONTENT_LENGTH", 29 ),
 	SESSION( "SESSION", 30 ),
 	PHP_SELF( "PHP_SELF", 31 ),
-	HTTP_X_REQUESTED_WITH( "HTTP_X_REQUESTED_WITH", 32 );
+	HTTP_X_REQUESTED_WITH( "HTTP_X_REQUESTED_WITH", 32 ),
+	SERVER_VERSION( "SERVER_VERSION", 33 );
 	
 	private final int id;
 	private final String name;
