@@ -14,6 +14,8 @@ server:
   defaultEncoding: UTF-8
   defaultImageEncoding: ISO-8859-1
   developmentMode: true
+  maxFileUploadKb: 5120
+  tmpFileDirectory: tmp
   database:
     database: chiorifw
     type: mysql

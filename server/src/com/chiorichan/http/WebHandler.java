@@ -45,8 +45,19 @@ public class WebHandler implements HttpHandler
 	@Override
 	public void handle( HttpExchange t ) throws IOException
 	{
-		HttpRequest request = new HttpRequest( t );
-		HttpResponse response = request.getResponse();
+		HttpRequest request;
+		HttpResponse response;
+		
+		try
+		{
+			request = new HttpRequest( t );
+			response = request.getResponse();
+		}
+		catch ( Throwable t1 )
+		{
+			t1.printStackTrace();
+			throw t1;
+		}
 		
 		// TODO Catch Broken Pipes.
 		try
@@ -71,7 +82,8 @@ public class WebHandler implements HttpHandler
 			else
 			{
 				e.printStackTrace();
-				response.sendError( 500, null, "<pre>" + ExceptionUtils.getStackTrace( e ) + "</pre>" );
+				response.sendException( e );
+				//response.sendError( 500, null, "<pre>" + ExceptionUtils.getStackTrace( e ) + "</pre>" );
 			}
 		}
 		catch ( Exception e )
@@ -84,7 +96,6 @@ public class WebHandler implements HttpHandler
 		}
 		finally
 		{
-			
 			PersistentSession sess = request.getSessionNoWarning();
 			if ( sess != null )
 			{
@@ -196,6 +207,7 @@ public class WebHandler implements HttpHandler
 		sess.setGlobal( "_POST", request.getPostMap() );
 		sess.setGlobal( "_GET", request.getGetMap() );
 		sess.setGlobal( "_REWRITE", request.getRewriteVars() );
+		sess.setGlobal( "_FILES", request.getUploadedFiles() );
 		
 		StringBuilder source = new StringBuilder();
 		CodeEvalFactory factory = sess.getCodeFactory();

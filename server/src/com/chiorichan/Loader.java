@@ -52,6 +52,7 @@ public class Loader
 	private static OptionSet options;
 	private static long startTime = System.currentTimeMillis();
 	
+	public static File tmpFileDirectory;
 	public static String webroot = "";
 	private WarningState warningState = WarningState.DEFAULT;
 	
@@ -257,6 +258,17 @@ public class Loader
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
 		
 		webroot = configuration.getString( "settings.webroot" );
+		
+		tmpFileDirectory = new File( Loader.getConfig().getString( "server.tmpFileDirectory", "tmp" ) );
+		
+		if ( !tmpFileDirectory.exists() )
+			tmpFileDirectory.mkdirs();
+		
+		if ( !tmpFileDirectory.isDirectory() )
+			Loader.getLogger().warning( "The `server.tmpFileDirectory` in config, specifies a directory that is not a directory. File uploads and other similar operations that need the temp directory will fail to function correctly." );
+		
+		if ( !tmpFileDirectory.canWrite() )
+			Loader.getLogger().warning( "The `server.tmpFileDirectory` in config, specifies a directory that is not writable to the server. File uploads and other similar operations that need the temp directory will fail to function correctly." );
 		
 		updater = new AutoUpdater( new ChioriDLUpdaterService( configuration.getString( "auto-updater.host" ) ), configuration.getString( "auto-updater.preferred-channel" ) );
 		
@@ -606,5 +618,10 @@ public class Loader
 	public static ServicesManager getServicesManager()
 	{
 		return servicesManager;
+	}
+	
+	public static File getTempFileDirectory()
+	{
+		return tmpFileDirectory;
 	}
 }

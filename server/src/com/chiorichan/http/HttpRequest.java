@@ -1,10 +1,12 @@
 package com.chiorichan.http;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
@@ -13,7 +15,12 @@ import org.apache.commons.lang3.math.NumberUtils;
 
 import com.chiorichan.Loader;
 import com.chiorichan.bus.events.server.ServerVars;
+import com.chiorichan.exceptions.HttpErrorException;
 import com.chiorichan.framework.Site;
+import com.chiorichan.http.multipart.FilePart;
+import com.chiorichan.http.multipart.MultiPartRequestParser;
+import com.chiorichan.http.multipart.ParamPart;
+import com.chiorichan.http.multipart.Part;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.Versioning;
 import com.google.common.collect.Maps;
@@ -30,8 +37,9 @@ public class HttpRequest
 	private HttpResponse response;
 	private Map<String, String> getMap, postMap;
 	private int requestTime = 0;
+	private Map<String, UploadedFile> uploadedFiles = new HashMap<String, UploadedFile>();
 	
-	protected HttpRequest(HttpExchange _http)
+	protected HttpRequest(HttpExchange _http) throws IOException
 	{
 		http = _http;
 		requestTime = Common.getEpoch();
@@ -44,15 +52,98 @@ public class HttpRequest
 			
 			if ( http.getRequestBody().available() > 0 )
 			{
-				byte[] queryBytes = new byte[http.getRequestBody().available()];
-				IOUtils.readFully( http.getRequestBody(), queryBytes );
-				
-				postMap = queryToMap( new String( queryBytes ) );
+				if ( MultiPartRequestParser.isMultipart( this ) )
+				{ // Multipart Request - File Upload Usually.
+					try
+					{
+						postMap = new HashMap<String, String>();
+						MultiPartRequestParser parser = new MultiPartRequestParser( this );
+						
+						File tmpFileDirectory = Loader.getTempFileDirectory();
+						
+						if ( !tmpFileDirectory.exists() )
+							tmpFileDirectory.mkdirs();
+						
+						if ( !tmpFileDirectory.isDirectory() )
+							throw new IOException( "The temp directory specified in the server configs is not a directory, File Uploads will continue to fail until this problem is resolved." );
+						
+						if ( !tmpFileDirectory.canWrite() )
+							throw new IOException( "The temp directory specified in the server configs is not writable, File Uploads will continue to fail until this problem is resolved." );
+						
+						Part part;
+						while ( ( part = parser.readNextPart() ) != null )
+						{
+							String name = part.getName();
+							if ( name == null )
+							{
+								throw new IOException( "Malformed input: parameter name missing (known Opera 7 bug)" );
+							}
+							if ( part.isParam() )
+							{
+								ParamPart paramPart = (ParamPart) part;
+								String value = paramPart.getStringValue();
+								/*
+								 * Vector existingValues = (Vector) parameters.get( name );
+								 * if ( existingValues == null )
+								 * {
+								 * existingValues = new Vector();
+								 * postMap.put( name, existingValues );
+								 * }
+								 * existingValues.addElement( value );
+								 * 
+								 * XXX Should we use vectors in our Get and Post Maps?
+								 */
+								postMap.put( name, value );
+							}
+							else if ( part.isFile() )
+							{
+								FilePart filePart = (FilePart) part;
+								String fileName = filePart.getFileName();
+								if ( fileName != null )
+								{
+									long size = -1;
+									String msg = "The file uploaded successfully.";
+									
+									try
+									{
+										size = filePart.writeTo( tmpFileDirectory );
+									}
+									catch ( IOException e )
+									{
+										msg = e.getMessage();
+									}
+									
+									String tmpFileName = filePart.getTmpFileName();
+									
+									File newFile = new File( tmpFileDirectory, tmpFileName);
+									newFile.deleteOnExit();
+									uploadedFiles.put( name, new UploadedFile( newFile, fileName, size, msg ) );
+								}
+							}
+						}
+						
+					}
+					catch ( HttpErrorException e )
+					{
+						response.sendError( e.getHttpCode(), null, e.getReason() );
+					}
+					catch ( IOException e )
+					{
+						response.sendException( e );
+					}
+				}
+				else
+				{
+					byte[] queryBytes = new byte[http.getRequestBody().available()];
+					IOUtils.readFully( http.getRequestBody(), queryBytes );
+					postMap = queryToMap( new String( queryBytes ) );
+				}
 			}
 		}
 		catch ( IOException e )
 		{
-			Loader.getLogger().severe( "There was a severe error reading the POST query.", e );
+			Loader.getLogger().severe( "There was a severe error reading the " + http.getRequestMethod().toUpperCase() + " query.", e );
+			response.sendException( e );
 		}
 	}
 	
@@ -114,6 +205,9 @@ public class HttpRequest
 	
 	public Collection<Candy> getCandies()
 	{
+		if ( sess == null )
+			return new LinkedHashMap<String, Candy>().values();
+		
 		return getSession().candies.values();
 	}
 	
@@ -338,7 +432,7 @@ public class HttpRequest
 		http.getResponseHeaders().set( key, value );
 	}
 	
-	protected HttpExchange getOriginal()
+	public HttpExchange getOriginal()
 	{
 		return http;
 	}
@@ -424,6 +518,7 @@ public class HttpRequest
 			serverVars.put( ServerVars.HTTPS, isSecure() );
 			serverVars.put( ServerVars.SESSION, getSession() );
 			serverVars.put( ServerVars.SERVER_SOFTWARE, Versioning.getProduct() );
+			// serverVars.put( ServerVars.SERVER_VERSION, Versioning.getVersion() );
 			serverVars.put( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "webmaster@" + getDomain() ) );
 			serverVars.put( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Versioning.getVersion() );
 		}
@@ -468,5 +563,10 @@ public class HttpRequest
 	protected void putRewriteParam( String key, String val )
 	{
 		rewriteVars.put( key, val );
+	}
+	
+	public Map<String, UploadedFile> getUploadedFiles()
+	{
+		return uploadedFiles;
 	}
 }
