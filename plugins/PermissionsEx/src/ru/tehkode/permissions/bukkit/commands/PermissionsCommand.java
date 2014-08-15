@@ -19,7 +19,7 @@ import ru.tehkode.utils.StringUtils;
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.bases.Account;
-import com.chiorichan.account.bases.Sentient;
+import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.framework.Site;
 import com.chiorichan.plugin.Plugin;
 
@@ -64,7 +64,7 @@ public abstract class PermissionsCommand implements CommandListener
 		return autoCompleteUserName( userName, "user" );
 	}
 	
-	protected void printEntityInheritance( Sentient sender, PermissionGroup[] groups )
+	protected void printEntityInheritance( SentientHandler sender, PermissionGroup[] groups )
 	{
 		for ( PermissionGroup group : groups )
 		{
@@ -133,7 +133,7 @@ public abstract class PermissionsCommand implements CommandListener
 		return userName;
 	}
 	
-	protected String getSenderName( Sentient sender )
+	protected String getSenderName( SentientHandler sender )
 	{
 		if ( sender instanceof Account )
 		{
@@ -467,7 +467,7 @@ public abstract class PermissionsCommand implements CommandListener
 		return value;
 	}
 	
-	protected void sendMessage( Sentient sender, String message )
+	protected void sendMessage( SentientHandler sender, String message )
 	{
 		for ( String messagePart : message.split( "\n" ) )
 		{

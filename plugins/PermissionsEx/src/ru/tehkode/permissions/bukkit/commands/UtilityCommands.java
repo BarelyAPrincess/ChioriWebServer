@@ -19,7 +19,7 @@ import ru.tehkode.permissions.exceptions.PermissionBackendException;
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.bases.Account;
-import com.chiorichan.account.bases.Sentient;
+import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.configuration.file.FileConfiguration;
 import com.chiorichan.plugin.Plugin;
 
@@ -27,7 +27,7 @@ public class UtilityCommands extends PermissionsCommand
 {
 	
 	@Command( name = "pex", syntax = "reload", permission = "permissions.manage.reload", description = "Reload environment" )
-	public void reload( Plugin plugin, Sentient sender, Map<String, String> args )
+	public void reload( Plugin plugin, SentientHandler sender, Map<String, String> args )
 	{
 		try
 		{
@@ -42,7 +42,7 @@ public class UtilityCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "report", permission = "permissions.manage.reportbug", description = "Create an issue template to report an issue" )
-	public void report( Plugin plugin, Sentient sender, Map<String, String> args )
+	public void report( Plugin plugin, SentientHandler sender, Map<String, String> args )
 	{
 		ErrorReport report = ErrorReport.withException( "User-requested report", new Exception().fillInStackTrace() );
 		sender.sendMessage( "Fill in the information at " + report.getShortURL() + " to report an issue" );
@@ -50,7 +50,7 @@ public class UtilityCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "config <node> [value]", permission = "permissions.manage.config", description = "Print or set <node> [value]" )
-	public void config( Plugin plugin, Sentient sender, Map<String, String> args )
+	public void config( Plugin plugin, SentientHandler sender, Map<String, String> args )
 	{
 		if ( !( plugin instanceof PermissionsEx ) )
 		{
@@ -102,13 +102,13 @@ public class UtilityCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "backend", permission = "permissions.manage.backend", description = "Print currently used backend" )
-	public void getBackend( Plugin plugin, Sentient sender, Map<String, String> args )
+	public void getBackend( Plugin plugin, SentientHandler sender, Map<String, String> args )
 	{
 		sender.sendMessage( "Current backend: " + PermissionsEx.getPermissionManager().getBackend() );
 	}
 	
 	@Command( name = "pex", syntax = "backend <backend>", permission = "permissions.manage.backend", description = "Change permission backend on the fly (Use with caution!)" )
-	public void setBackend( Plugin plugin, Sentient sender, Map<String, String> args )
+	public void setBackend( Plugin plugin, SentientHandler sender, Map<String, String> args )
 	{
 		if ( args.get( "backend" ) == null )
 		{
@@ -140,14 +140,14 @@ public class UtilityCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "hierarchy [site]", permission = "permissions.manage.users", description = "Print complete user/group hierarchy" )
-	public void printHierarchy( Plugin plugin, Sentient sender, Map<String, String> args )
+	public void printHierarchy( Plugin plugin, SentientHandler sender, Map<String, String> args )
 	{
 		sender.sendMessage( "User/Group inheritance hierarchy:" );
 		this.sendMessage( sender, this.printHierarchy( null, this.autoCompleteSiteName( args.get( "site" ) ), 0 ) );
 	}
 	
 	@Command( name = "pex", syntax = "dump <backend> <filename>", permission = "permissions.dump", description = "Dump users/groups to selected <backend> format" )
-	public void dumpData( Plugin plugin, Sentient sender, Map<String, String> args )
+	public void dumpData( Plugin plugin, SentientHandler sender, Map<String, String> args )
 	{
 		if ( !( plugin instanceof PermissionsEx ) )
 		{
@@ -188,7 +188,7 @@ public class UtilityCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "toggle debug", permission = "permissions.debug", description = "Enable/disable debug mode" )
-	public void toggleFeature( Plugin plugin, Sentient sender, Map<String, String> args )
+	public void toggleFeature( Plugin plugin, SentientHandler sender, Map<String, String> args )
 	{
 		PermissionManager manager = PermissionsEx.getPermissionManager();
 		
@@ -204,7 +204,7 @@ public class UtilityCommands extends PermissionsCommand
 		logger.warning( debugStatusMessage );
 	}
 	
-	private static int tryGetInt( Sentient sender, Map<String, String> args, String key, int def )
+	private static int tryGetInt( SentientHandler sender, Map<String, String> args, String key, int def )
 	{
 		if ( !args.containsKey( key ) )
 		{
@@ -223,7 +223,7 @@ public class UtilityCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "help [page] [count]", permission = "permissions.manage", description = "PermissionsEx commands help" )
-	public void showHelp( Plugin plugin, Sentient sender, Map<String, String> args )
+	public void showHelp( Plugin plugin, SentientHandler sender, Map<String, String> args )
 	{
 		List<CommandBinding> commands = this.manager.getCommands();
 		

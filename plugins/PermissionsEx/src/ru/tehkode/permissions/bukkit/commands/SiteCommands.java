@@ -11,7 +11,7 @@ import ru.tehkode.utils.StringUtils;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
-import com.chiorichan.account.bases.Sentient;
+import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.framework.Site;
 import com.chiorichan.plugin.Plugin;
 
@@ -19,7 +19,7 @@ public class SiteCommands extends PermissionsCommand
 {
 	
 	@Command( name = "pex", syntax = "sites", description = "Print loaded sites", isPrimary = true, permission = "permissions.manage.sites" )
-	public void sitesTree( Plugin plugin, Sentient sender, Map<String, String> args )
+	public void sitesTree( Plugin plugin, SentientHandler sender, Map<String, String> args )
 	{
 		List<Site> sites = Loader.getSiteManager().getSites();
 		
@@ -40,7 +40,7 @@ public class SiteCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "site <site>", description = "Print <site> inheritance info", permission = "permissions.manage.sites" )
-	public void sitePrintInheritance( Plugin plugin, Sentient sender, Map<String, String> args )
+	public void sitePrintInheritance( Plugin plugin, SentientHandler sender, Map<String, String> args )
 	{
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
 		PermissionManager manager = PermissionsEx.getPermissionManager();
@@ -73,7 +73,7 @@ public class SiteCommands extends PermissionsCommand
 	}
 	
 	@Command( name = "pex", syntax = "site <site> inherit <parentSites>", description = "Set <parentSites> for <site>", permission = "permissions.manage.sites.inheritance" )
-	public void siteSetInheritance( Plugin plugin, Sentient sender, Map<String, String> args )
+	public void siteSetInheritance( Plugin plugin, SentientHandler sender, Map<String, String> args )
 	{
 		String siteName = this.autoCompleteSiteName( args.get( "site" ) );
 		PermissionManager manager = PermissionsEx.getPermissionManager();

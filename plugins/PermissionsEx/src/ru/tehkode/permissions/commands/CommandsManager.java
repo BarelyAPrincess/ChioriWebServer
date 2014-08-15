@@ -18,6 +18,7 @@ import ru.tehkode.permissions.commands.exceptions.AutoCompleteChoicesException;
 import ru.tehkode.utils.StringUtils;
 
 import com.chiorichan.ChatColor;
+import com.chiorichan.Loader;
 import com.chiorichan.account.bases.Account;
 import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.plugin.Plugin;
