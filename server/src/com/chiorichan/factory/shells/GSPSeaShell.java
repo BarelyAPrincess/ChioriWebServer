@@ -57,7 +57,7 @@ public class GSPSeaShell implements SeaShell
 					
 					int endIndex = fullFile.indexOf( MARKER_END, Math.max( startIndex, fullFileIndex ) );
 					assert -1 != endIndex : "MARKER NOT CLOSED";
-					fragment = fullFile.substring( startIndex + MARKER_START.length(), endIndex ).trim();
+					fragment = fullFile.substring( startIndex + MARKER_START.length(), endIndex );
 					
 					boolean appendPrint = true;
 					

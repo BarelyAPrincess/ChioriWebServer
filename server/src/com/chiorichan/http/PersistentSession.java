@@ -16,7 +16,7 @@ import com.chiorichan.account.bases.Account;
 import com.chiorichan.account.bases.Sentient;
 import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.account.helpers.LoginException;
-import com.chiorichan.database.SqlConnector;
+import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.factory.BindingProvider;
 import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.framework.ConfigurationManagerWrapper;
@@ -297,7 +297,7 @@ public class PersistentSession implements SentientHandler, BindingProvider
 	
 	protected void initSession()
 	{
-		SqlConnector sql = Loader.getPersistenceManager().getDatabase();
+		DatabaseEngine sql = Loader.getPersistenceManager().getDatabase();
 		
 		if ( sessionCandy != null )
 		{
@@ -417,7 +417,7 @@ public class PersistentSession implements SentientHandler, BindingProvider
 	{
 		if ( force || changesMade )
 		{
-			SqlConnector sql = Loader.getPersistenceManager().getDatabase();
+			DatabaseEngine sql = Loader.getPersistenceManager().getDatabase();
 			
 			String dataJson = new Gson().toJson( data );
 			

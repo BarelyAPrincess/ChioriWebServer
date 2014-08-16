@@ -10,20 +10,20 @@ import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.StartupException;
 import com.chiorichan.account.bases.Account;
-import com.chiorichan.database.SqlConnector;
+import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.util.Common;
 import com.google.common.collect.Lists;
 
 /**
- * Persistence manager handles sessions kept in memory. It also manages when to unload the session to free memeory.
+ * Persistence manager handles sessions kept in memory. It also manages when to unload the session to free memory.
  * 
  * @author Chiori Greene
  * @copyright Greenetree LLC 2014
  */
 public class PersistenceManager
 {
-	protected SqlConnector sql = new SqlConnector();
+	protected DatabaseEngine sql = new DatabaseEngine();
 	
 	static protected List<PersistentSession> sessionList = Lists.newCopyOnWriteArrayList();
 	
@@ -188,13 +188,7 @@ public class PersistenceManager
 		}
 	}
 	
-	@Deprecated
-	public SqlConnector getSql()
-	{
-		return sql;
-	}
-	
-	public SqlConnector getDatabase()
+	public DatabaseEngine getDatabase()
 	{
 		return sql;
 	}

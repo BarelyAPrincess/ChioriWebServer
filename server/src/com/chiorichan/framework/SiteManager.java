@@ -14,7 +14,7 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 import com.chiorichan.Loader;
 import com.chiorichan.StartupException;
-import com.chiorichan.database.SqlConnector;
+import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.util.FileUtil;
 
 public class SiteManager
@@ -31,7 +31,7 @@ public class SiteManager
 		if ( siteMap.size() > 0 )
 			throw new StartupException( "Site manager already has sites loaded. Please unload the existing sites first." );
 		
-		SqlConnector sql = Loader.getPersistenceManager().getDatabase();
+		DatabaseEngine sql = Loader.getPersistenceManager().getDatabase();
 		
 		// Load sites from YAML Filebase.
 		File siteFileBase = new File( "sites" );

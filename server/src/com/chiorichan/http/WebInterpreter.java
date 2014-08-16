@@ -13,7 +13,7 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang3.StringUtils;
 
 import com.chiorichan.Loader;
-import com.chiorichan.database.SqlConnector;
+import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.exceptions.HttpErrorException;
 import com.chiorichan.framework.FileInterpreter;
 import com.chiorichan.framework.SiteException;
@@ -57,7 +57,7 @@ public class WebInterpreter extends FileInterpreter
 	{
 		super();
 		
-		SqlConnector sql = Loader.getPersistenceManager().getDatabase();
+		DatabaseEngine sql = Loader.getPersistenceManager().getDatabase();
 		
 		File dest = null;
 		

@@ -16,6 +16,7 @@ import java.io.IOException;
  */
 public class ExceededSizeException extends IOException
 {
+	private static final long serialVersionUID = 5121823618984272023L;
 	
 	/**
 	 * Constructs a new ExceededSizeException with no detail message.

@@ -12,8 +12,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import com.chiorichan.Loader;
-
 /**
  * A <code>FilePart</code> is an upload part which represents a <code>INPUT TYPE="file"</code> form parameter. Note that because file
  * upload data arrives via a single InputStream, each FilePart's contents

@@ -26,7 +26,7 @@ import com.chiorichan.StartupException;
 import com.chiorichan.bus.bases.EventException;
 import com.chiorichan.bus.events.server.SiteLoadEvent;
 import com.chiorichan.configuration.ConfigurationSection;
-import com.chiorichan.database.SqlConnector;
+import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.exceptions.ShellExecuteException;
 import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.factory.CodeMetaData;
@@ -47,7 +47,7 @@ public class Site
 	List<String> metatags = Lists.newCopyOnWriteArrayList(),
 			protectedFiles = Lists.newCopyOnWriteArrayList();
 	YamlConfiguration config;
-	SqlConnector sql;
+	DatabaseEngine sql;
 	
 	// Binding and evaling for use inside each site for executing site scripts outside of web requests.
 	Binding binding = new Binding();
@@ -335,7 +335,7 @@ public class Site
 			
 			String filename = config.getString( "database.filename" );
 			
-			sql = new SqlConnector();
+			sql = new DatabaseEngine();
 			
 			try
 			{
@@ -398,7 +398,7 @@ public class Site
 			throw new SiteException( "Loading of site '" + siteId + "' was cancelled by an internal event." );
 	}
 	
-	protected Site setDatabase( SqlConnector sql )
+	protected Site setDatabase( DatabaseEngine sql )
 	{
 		this.sql = sql;
 		
@@ -541,7 +541,7 @@ public class Site
 		return target;
 	}
 	
-	public SqlConnector getDatabase()
+	public DatabaseEngine getDatabase()
 	{
 		return sql;
 	}

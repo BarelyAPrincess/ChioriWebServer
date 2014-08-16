@@ -175,7 +175,7 @@ public class ExceptionPageUtils
 			
 			ob.append( "<h1>Internal Server Exception Thrown</h1>\n" );
 			ob.append( "<p class=\"message\">\n" );
-			ob.append( t.getMessage() + "\n" );
+			ob.append( t.getClass().getName() + ": " + t.getMessage() + "\n" );
 			ob.append( "</p>\n" );
 			ob.append( "\n" );
 			ob.append( "<div class=\"source\">\n" );
@@ -324,7 +324,7 @@ public class ExceptionPageUtils
 					{
 						if ( cLine == line )
 						{
-							sb.append( "<span class=\"error\"><span class=\"ln error-ln\">" + cLine + "</span> " + l + "</span>\n" );
+							sb.append( "<span class=\"error\"><span class=\"ln error-ln\">" + cLine + "</span> " + l + "</span>" );
 						}
 						else
 						{

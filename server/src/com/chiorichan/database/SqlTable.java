@@ -85,7 +85,7 @@ public abstract class SqlTable
 		return result;
 	}
 	
-	public SqlTable select( SqlConnector sql, String query ) throws SQLException
+	public SqlTable select( DatabaseEngine sql, String query ) throws SQLException
 	{
 		rs = sql.query( query );
 		setValues( rs );

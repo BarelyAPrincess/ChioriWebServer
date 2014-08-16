@@ -6,8 +6,6 @@ import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.Vector;
 
-import com.chiorichan.Loader;
-
 public class RandomReadWriteByteArray
 {
 	ByteBuffer buffer = ByteBuffer.allocate( 0 );

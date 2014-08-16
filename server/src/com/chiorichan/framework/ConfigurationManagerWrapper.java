@@ -10,7 +10,6 @@ import org.json.JSONException;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
-import com.chiorichan.database.SqlConnector;
 import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.http.PersistentSession;
 
@@ -30,7 +29,7 @@ public class ConfigurationManagerWrapper
 	
 	public DatabaseEngine getServerDatabase()
 	{
-		return new DatabaseEngine( Loader.getPersistenceManager().getDatabase() );
+		return Loader.getPersistenceManager().getDatabase();
 	}
 	
 	public YamlConfiguration getSiteConfiguration()
@@ -40,7 +39,7 @@ public class ConfigurationManagerWrapper
 	
 	public DatabaseEngine getSiteDatabase()
 	{
-		return new DatabaseEngine( sess.getRequest().getSite().getDatabase() );
+		return sess.getRequest().getSite().getDatabase();
 	}
 	
 	public boolean settingCompare( String settings )
@@ -153,7 +152,7 @@ public class ConfigurationManagerWrapper
 		
 		try
 		{
-			SqlConnector sql = sess.getRequest().getSite().getDatabase();
+			DatabaseEngine sql = sess.getRequest().getSite().getDatabase();
 			
 			if ( idenifier == null || idenifier == "-1" )
 			{
@@ -167,7 +166,7 @@ public class ConfigurationManagerWrapper
 			
 			ResultSet customRs = sql.query( "SELECT * FROM `settings_custom` WHERE `key` = '" + key + "' AND `owner` = '" + idenifier + "';" );
 			
-			Map<String, Object> defop = SqlConnector.convertRow( defaultRs );
+			Map<String, Object> defop = DatabaseEngine.convertRow( defaultRs );
 			defop.put( "default", defop.get( "value" ) );
 			
 			if ( customRs == null || sql.getRowCount( customRs ) < 1 )
@@ -184,7 +183,7 @@ public class ConfigurationManagerWrapper
 				if ( !returnRow )
 					return customRs.getString( "value" );
 				
-				Map<String, Object> op = SqlConnector.convertRow( customRs );
+				Map<String, Object> op = DatabaseEngine.convertRow( customRs );
 				
 				defop.putAll( op );
 				
@@ -205,7 +204,7 @@ public class ConfigurationManagerWrapper
 	{
 		try
 		{
-			SqlConnector sql = sess.getRequest().getSite().getDatabase();
+			DatabaseEngine sql = sess.getRequest().getSite().getDatabase();
 			
 			if ( idenifier == null || idenifier == "-1" )
 			{

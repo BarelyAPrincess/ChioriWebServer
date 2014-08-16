@@ -15,8 +15,8 @@ public class MultiPartRequestParser
 	private FilePart lastFilePart;
 	private RandomReadWriteByteArray buffer = new RandomReadWriteByteArray();
 	
-	private static String DEFAULT_ENCODING = "ISO-8859-1";
-	private String encoding = DEFAULT_ENCODING;
+	//private static String DEFAULT_ENCODING = "ISO-8859-1";
+	//private String encoding = DEFAULT_ENCODING;
 	
 	public static boolean isMultipart( HttpRequest request )
 	{
@@ -103,7 +103,7 @@ public class MultiPartRequestParser
 		// Content-Disposition: form-data; name="field1"; filename="file1.txt"
 		// Content-Type: type/subtype
 		// Content-Transfer-Encoding: binary
-		Vector headers = new Vector();
+		Vector<String> headers = new Vector<String>();
 		
 		String line = buffer.readLine();
 		
@@ -155,7 +155,7 @@ public class MultiPartRequestParser
 		String origname = null;
 		String contentType = "text/plain"; // rfc1867 says this is the default
 		
-		Enumeration enu = headers.elements();
+		Enumeration<String> enu = headers.elements();
 		while ( enu.hasMoreElements() )
 		{
 			String headerline = (String) enu.nextElement();

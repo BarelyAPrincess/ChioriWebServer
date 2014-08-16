@@ -1,6 +1,9 @@
 package com.chiorichan.http;
 
 import java.io.File;
+import java.io.IOException;
+
+import org.apache.commons.io.FileUtils;
 
 import com.chiorichan.ContentTypes;
 
@@ -58,5 +61,15 @@ public class UploadedFile
 	public String getMessage()
 	{
 		return message;
+	}
+	
+	public String readToString() throws IOException
+	{
+		return FileUtils.readFileToString( file );
+	}
+	
+	public byte[] readToBytes() throws IOException
+	{
+		return FileUtils.readFileToByteArray( file );
 	}
 }

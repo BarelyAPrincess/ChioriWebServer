@@ -17,14 +17,14 @@ import com.chiorichan.account.helpers.AccountMetaData;
 import com.chiorichan.account.helpers.LoginException;
 import com.chiorichan.account.helpers.LoginExceptionReasons;
 import com.chiorichan.account.helpers.LookupAdapterException;
-import com.chiorichan.database.SqlConnector;
+import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.framework.Site;
 import com.chiorichan.util.Common;
 import com.google.common.collect.Lists;
 
 public class SqlAdapter implements AccountLookupAdapter
 {
-	SqlConnector sql;
+	DatabaseEngine sql;
 	String table;
 	List<String> accountFields;
 	
@@ -72,7 +72,7 @@ public class SqlAdapter implements AccountLookupAdapter
 			do
 			{
 				AccountMetaData meta = new AccountMetaData();
-				meta.setAll( SqlConnector.convertRow( rs ) );
+				meta.setAll( DatabaseEngine.convertRow( rs ) );
 				meta.set( "displayName", ( rs.getString( "fname" ).isEmpty() ) ? rs.getString( "name" ) : rs.getString( "fname" ) + " " + rs.getString( "name" ) );
 				metas.add( meta );
 			}
@@ -150,7 +150,7 @@ public class SqlAdapter implements AccountLookupAdapter
 			if ( rs == null || sql.getRowCount( rs ) < 1 )
 				throw new LoginException( LoginExceptionReasons.incorrectLogin );
 			
-			meta.setAll( SqlConnector.convertRow( rs ) );
+			meta.setAll( DatabaseEngine.convertRow( rs ) );
 			
 			meta.set( "displayName", ( rs.getString( "fname" ).isEmpty() ) ? rs.getString( "name" ) : rs.getString( "fname" ) + " " + rs.getString( "name" ) );
 			
