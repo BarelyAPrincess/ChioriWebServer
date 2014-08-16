@@ -71,12 +71,12 @@ abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	
 	DatabaseEngine getServerDatabase()
 	{
-		return new DatabaseEngine( Loader.getPersistenceManager().getDatabase() );
+		return Loader.getPersistenceManager().getDatabase();
 	}
 	
 	DatabaseEngine getSiteDatabase()
 	{
-		return new DatabaseEngine( request.getSite().getDatabase() );
+		return request.getSite().getDatabase();
 	}
 	
 	Site getSite()
