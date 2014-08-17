@@ -250,7 +250,7 @@ public class CodeEvalFactory
 	private String runParsers( String source, Site site ) throws ShellExecuteException
 	{
 		source = new IncludesParser().runParser( source, site, this );
-		source = new LinksParser().runParser( source );
+		source = new LinksParser().runParser( source, site );
 		
 		return source;
 	}

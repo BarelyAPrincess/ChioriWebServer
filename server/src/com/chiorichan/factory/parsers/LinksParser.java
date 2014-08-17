@@ -3,6 +3,7 @@ package com.chiorichan.factory.parsers;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.chiorichan.Loader;
 import com.chiorichan.exceptions.ShellExecuteException;
 import com.chiorichan.factory.HTMLCommentParser;
 import com.chiorichan.framework.Site;
@@ -48,7 +49,10 @@ public class LinksParser extends HTMLCommentParser
 		if ( args.length >= 1 )
 			url += args[0] + ".";
 		
-		url += site.getDomain() + "/";
+		if ( site != null )
+			url += site.getDomain() + "/";
+		else
+			url += Loader.getSiteManager().getFrameworkSite().getDomain() + "/";
 		
 		return url;
 	}
