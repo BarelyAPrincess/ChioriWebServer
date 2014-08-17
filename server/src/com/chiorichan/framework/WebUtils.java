@@ -200,8 +200,13 @@ public class WebUtils
 		return createTable( tableData, headerArray, "" );
 	}
 	
-	@SuppressWarnings( "unchecked" )
 	public static String createTable( Map<String, Object> tableData, List<String> headerArray, String tableId )
+	{
+		return createTable( tableData, headerArray, tableId, null );
+	}
+	
+	@SuppressWarnings( "unchecked" )
+	public static String createTable( Map<String, Object> tableData, List<String> headerArray, String tableId, String altTableClass )
 	{
 		if ( tableId == null )
 			tableId = "";
@@ -209,9 +214,12 @@ public class WebUtils
 		if ( tableData == null )
 			return "";
 		
+		if ( altTableClass == null || altTableClass.isEmpty() )
+			altTableClass = "altrowstable";
+		
 		StringBuilder sb = new StringBuilder();
 		int x = 0;
-		sb.append( "<table id=\"" + tableId + "\" class=\"altrowstable\">\n" );
+		sb.append( "<table id=\"" + tableId + "\" class=\"" + altTableClass + "\">\n" );
 		
 		if ( headerArray != null )
 		{
