@@ -35,7 +35,11 @@ public abstract class HTMLCommentParser
 			String[] args2 = new String[args.length];
 			
 			for ( int i = 0; i < args.length; i++ )
-				args2[i] = p3.matcher( args[i] ).group( 1 );
+			{
+				Matcher m3 = p3.matcher( args[i] );
+				if ( m3.find() )
+					args2[i] = m3.group( 1 );
+			}
 			
 			String result = resolveMethod( args2 );
 			
