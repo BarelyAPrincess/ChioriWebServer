@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
 
 import com.chiorichan.Loader;
@@ -40,7 +39,7 @@ import com.google.gson.reflect.TypeToken;
 
 public class Site
 {
-	public String siteId = null, title = null, domain = null;
+	protected String siteId = null, title = null, domain = null;
 	File source, resource;
 	Map<String, String> subdomains = Maps.newConcurrentMap(),
 			aliases = Maps.newConcurrentMap();
@@ -48,20 +47,25 @@ public class Site
 			protectedFiles = Lists.newCopyOnWriteArrayList();
 	YamlConfiguration config;
 	DatabaseEngine sql;
+	protected SiteType siteType = SiteType.NOTSET;
+	protected File filePath = null;
 	
 	// Binding and evaling for use inside each site for executing site scripts outside of web requests.
 	Binding binding = new Binding();
 	CodeEvalFactory factory = CodeEvalFactory.create( binding );
 	
-	public Site(File f) throws SiteException, StartupException
+	protected Site(File f) throws SiteException, StartupException
 	{
+		siteType = SiteType.FILE;
+		filePath = f;
+		
 		config = YamlConfiguration.loadConfiguration( f );
 		
 		if ( config == null )
 			throw new SiteException( "Could not load site from YAML FileBase '" + f.getAbsolutePath() + "'" );
 		
 		siteId = config.getString( "site.siteId", null );
-		title = config.getString( "site.title", Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Chiori-chan's Web Server Site" ) );
+		title = config.getString( "site.title", Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Site" ) );
 		domain = config.getString( "site.domain", null );
 		
 		String reason = null;
@@ -176,8 +180,10 @@ public class Site
 	}
 	
 	@SuppressWarnings( "unchecked" )
-	public Site(ResultSet rs) throws SiteException, StartupException
+	protected Site(ResultSet rs) throws SiteException, StartupException
 	{
+		siteType = SiteType.SQL;
+		
 		try
 		{
 			Type mapType = new TypeToken<HashMap<String, String>>()
@@ -396,6 +402,24 @@ public class Site
 		// Plugins are not permitted to cancel the loading of the framework site
 		if ( event.isCancelled() && !siteId.equalsIgnoreCase( "framework" ) )
 			throw new SiteException( "Loading of site '" + siteId + "' was cancelled by an internal event." );
+	}
+	
+	protected void save()
+	{
+		switch ( siteType )
+		{
+			case FILE:
+				
+				
+				
+				break;
+			case SQL:
+				
+				
+				
+				break;
+			default: // DO NOTHING
+		}
 	}
 	
 	protected Site setDatabase( DatabaseEngine sql )
@@ -627,7 +651,7 @@ public class Site
 		if ( root.exists() && root.isDirectory() )
 		{
 			File[] files = root.listFiles();
-			String[] exts = new String[]{"html", "htm", "groovy", "gsp", "jsp", "chi"};
+			String[] exts = new String[] { "html", "htm", "groovy", "gsp", "jsp", "chi" };
 			
 			for ( File child : files )
 				if ( child.getName().startsWith( packFile.getName() ) )
@@ -645,20 +669,48 @@ public class Site
 		{
 			return readResourceWithException( pack );
 		}
-		catch ( IOException e )
+		catch ( ShellExecuteException e )
 		{
 			return "";
 		}
 	}
 	
-	public String readResourceWithException( String pack ) throws IOException
+	public String readResourceWithException( String pack ) throws ShellExecuteException
 	{
-		File file = getResourceWithException( pack );
+		CodeMetaData codeMeta = new CodeMetaData();
 		
-		String source = FileUtils.readFileToString( file );
-		
-		// TODO Apply aliases to file.
-		
-		return source;
+		try
+		{
+			File file = getResourceWithException( pack );
+			
+			codeMeta.shell = "text";// FileInterpreter.determineShellFromName( file.getName() );
+			codeMeta.fileName = file.getAbsolutePath();
+			
+			return factory.eval( file, this );
+		}
+		catch ( IOException e )
+		{
+			throw new ShellExecuteException( e, codeMeta );
+		}
+	}
+	
+	public String getSiteId()
+	{
+		return siteId;
+	}
+	
+	public String getTitle()
+	{
+		return title;
+	}
+	
+	public String getDomain()
+	{
+		return domain;
+	}
+	
+	public File getFile()
+	{
+		return filePath;
 	}
 }

@@ -104,7 +104,7 @@ public class WhitelistCommand extends VanillaCommand
 	
 	private boolean badPerm( SentientHandler sender, String perm )
 	{
-		if ( !sender.getSentient().hasPermission( "bukkit.command.whitelist." + perm ) )
+		if ( !sender.getSentient().hasPermission( "chiori.command.whitelist." + perm ) )
 		{
 			sender.sendMessage( ChatColor.RED + "You do not have permission to perform this action." );
 			return true;

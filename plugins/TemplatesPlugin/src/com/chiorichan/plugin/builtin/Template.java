@@ -81,13 +81,16 @@ public class Template extends JavaPlugin implements Listener
 			ob.append( "<head>\n" );
 			ob.append( "<meta charset=\"utf-8\">\n" );
 			
-			if ( site == null && site.title == null )
-				site.title = Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Chiori Framework Site" );
+			String siteTitle;
+			if ( site.getTitle() == null || site.getTitle().isEmpty() )
+				siteTitle = Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Site" );
+			else
+				siteTitle = site.getTitle();
 			
 			if ( title == null || title.isEmpty() )
-				ob.append( "<title>" + site.title + "</title>\n" );
+				ob.append( "<title>" + siteTitle + "</title>\n" );
 			else
-				ob.append( "<title>" + title + " - " + site.title + "</title>\n" );
+				ob.append( "<title>" + title + " - " + siteTitle + "</title>\n" );
 			
 			for ( String tag : site.getMetatags() )
 				ob.append( tag + "\n" );
@@ -95,8 +98,8 @@ public class Template extends JavaPlugin implements Listener
 			// Allow pages to disable the inclusion of common header
 			if ( ( fwVals.get( "noCommons" ) == null || !StringUtil.isTrue( fwVals.get( "noCommons" ) ) ) && !getConfig().getBoolean( "config.noCommons" ) )
 			{
-				ob.append( doInclude( domainToPackage( site.domain ) + ".includes.common", event ) + "\n" );
-				ob.append( doInclude( domainToPackage( site.domain ) + ".includes." + getPackageName( theme ), event ) + "\n" );
+				ob.append( doInclude( domainToPackage( site.getDomain() ) + ".includes.common", event ) + "\n" );
+				ob.append( doInclude( domainToPackage( site.getDomain() ) + ".includes." + getPackageName( theme ), event ) + "\n" );
 			}
 			
 			if ( fwVals.get( "header" ) != null && !fwVals.get( "header" ).isEmpty() )

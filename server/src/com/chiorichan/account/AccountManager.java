@@ -476,7 +476,7 @@ public class AccountManager
 			sess.setArgument( "user", acct.getAccountId() );
 			sess.setArgument( "pass", DigestUtils.md5Hex( acct.getPassword() ) );
 			
-			AccountLoginEvent loginEvent = new AccountLoginEvent( acct, String.format( Loader.getConfig().getString( "accounts.loginMessage", "%s has logged in at site %s" ), acct.getUsername(), sess.getSite().title ) );
+			AccountLoginEvent loginEvent = new AccountLoginEvent( acct, String.format( Loader.getConfig().getString( "accounts.loginMessage", "%s has logged in at site %s" ), acct.getUsername(), sess.getSite().getTitle() ) );
 			Loader.getEventBus().callEvent( loginEvent );
 			
 			return acct;

@@ -137,9 +137,71 @@ public class SiteManager
 	{
 		return getSiteById( "framework" );
 	}
-
+	
 	public void reload()
 	{
-		// RELOAD ALL
+		siteMap = new LinkedHashMap<String, Site>();
+		init();
+	}
+	
+	public String remove( String siteId )
+	{
+		if ( siteId.equals( "framework" ) )
+			return "You can not delete the framework site.";
+		
+		if ( siteMap.containsKey( siteId ) )
+		{
+			Site site = siteMap.get( siteId );
+			
+			// TODO Either confirm that someone want to delete a site or make it so they can be restored.
+			
+			switch ( site.siteType )
+			{
+				case SQL:
+					DatabaseEngine sql = Loader.getPersistenceManager().getDatabase();
+					
+					if ( sql != null && sql.isConnected() )
+					{
+						if ( !sql.delete( "sites", "`siteId` = '" + siteId + "'" ) )
+							return "There was an unknown reason the site could be deleted.";
+					}
+					else
+						return "There was an unknown reason the site could be deleted.";
+					
+					break;
+				case FILE:
+					File f = site.getFile();
+					f.delete();
+					
+					break;
+				default:
+					return "There was an unknown reason the site could be deleted.";
+			}
+			
+			siteMap.remove( siteId );
+			
+			return "The specified site was successfully removed.";
+		}
+		else
+			return "The specified site was not found.";
+	}
+	
+	public String add( String siteId, String type )
+	{
+		if ( siteMap.containsKey( siteId ) )
+			return "There already exists a site by the id you provided.";
+		
+		if ( type.equalsIgnoreCase( "sql" ) )
+		{
+			
+		}
+		else if ( type.equalsIgnoreCase( "file" ) )
+		{
+			
+		}
+		else
+			return "The only available site types are 'sql' and 'file'. '" + type + "' was not a valid option.";
+		
+		return "";
 	}
 }

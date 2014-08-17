@@ -150,7 +150,7 @@ public class CodeEvalFactory
 		CodeMetaData codeMeta = new CodeMetaData();
 		
 		codeMeta.shell = fi.getParams().get( "shell" );
-		codeMeta.fileName = fi.getFile().getAbsolutePath();
+		codeMeta.fileName = (fi.getFile() != null) ? fi.getFile().getAbsolutePath() : fi.getParams().get( "file" );
 		
 		try
 		{

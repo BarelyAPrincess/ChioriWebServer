@@ -384,8 +384,8 @@ public class PersistentSession implements SentientHandler, BindingProvider
 			
 			sessionCandy.setMaxAge( defaultLife );
 			
-			if ( request.getSite().domain != null && !request.getSite().domain.isEmpty() && request.getParentDomain().toLowerCase().contains( request.getSite().domain.toLowerCase() ) )
-				sessionCandy.setDomain( "." + request.getSite().domain );
+			if ( request.getSite().getDomain() != null && !request.getSite().getDomain().isEmpty() && request.getParentDomain().toLowerCase().contains( request.getSite().getDomain().toLowerCase() ) )
+				sessionCandy.setDomain( "." + request.getSite().getDomain() );
 			else if ( request.getParentDomain() != null && !request.getParentDomain().isEmpty() )
 				sessionCandy.setDomain( "." + request.getParentDomain() );
 			

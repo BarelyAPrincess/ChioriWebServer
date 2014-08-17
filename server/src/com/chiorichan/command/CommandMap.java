@@ -35,6 +35,7 @@ import com.chiorichan.command.defaults.SaveOffCommand;
 import com.chiorichan.command.defaults.SaveOnCommand;
 import com.chiorichan.command.defaults.SayCommand;
 import com.chiorichan.command.defaults.SecretCommand;
+import com.chiorichan.command.defaults.SiteCommand;
 import com.chiorichan.command.defaults.StopCommand;
 import com.chiorichan.command.defaults.SuCommand;
 import com.chiorichan.command.defaults.TellCommand;
@@ -96,6 +97,8 @@ public class CommandMap
 		register( "chiori", new SendCommand() );
 		register( "chiori", new ConnectCommand() );
 		register( "chiori", new LoginCommand() );
+		
+		register( "chiori", new SiteCommand() );
 	}
 	
 	/**
