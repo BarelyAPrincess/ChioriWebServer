@@ -93,4 +93,37 @@ abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	{
 		return Loader.getPersistenceManager();
 	}
+	
+	String url_to()
+	{
+		return url_to( null );
+	}
+	
+	String url_to( String subdomain )
+	{
+		String url = "http://";
+		
+		if ( subdomain != null && !subdomain.isEmpty() )
+			url += subdomain + ".";
+		
+		if ( request.getSite() != null )
+			url += request.getSite().getDomain() + "/";
+		else
+			url += Loader.getSiteManager().getFrameworkSite().getDomain() + "/";
+		
+		return url;
+	}
+	
+	String url_to_login()
+	{
+		if ( request.getSite() == null )
+			return "/login";
+		
+		return request.getSite().getYaml().getString( "scripts.login-form", "/login" );;
+	}
+	
+	String url_to_logout()
+	{
+		return url_to_login + "?logout";
+	}
 }

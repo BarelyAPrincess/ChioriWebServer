@@ -46,7 +46,7 @@ public class LinksParser extends HTMLCommentParser
 	{
 		String url = "http://";
 		
-		if ( args.length >= 1 )
+		if ( args.length >= 1 && !args[0].isEmpty() )
 			url += args[0] + ".";
 		
 		if ( site != null )
