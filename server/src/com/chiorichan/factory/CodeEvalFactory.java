@@ -11,14 +11,14 @@ import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.codehaus.groovy.control.CompilerConfiguration;
 
 import com.chiorichan.Loader;
 import com.chiorichan.exceptions.ShellExecuteException;
+import com.chiorichan.factory.parsers.IncludesParser;
+import com.chiorichan.factory.parsers.LinksParser;
 import com.chiorichan.factory.shells.GSPSeaShell;
 import com.chiorichan.factory.shells.GroovySeaShell;
 import com.chiorichan.factory.shells.HTMLSeaShell;
@@ -184,15 +184,7 @@ public class CodeEvalFactory
 		
 		if ( site != null )
 		{
-			code = applyAliases( code, site.getAliases() );
-			try
-			{
-				code = parseForIncludes( code, site );
-			}
-			catch ( IOException e )
-			{
-				throw new ShellExecuteException( e, meta );
-			}
+			code = runParsers( code, site );
 		}
 		
 		byte[] saved = bs.toByteArray();
@@ -255,61 +247,10 @@ public class CodeEvalFactory
 		return code;
 	}
 	
-	private String applyAliases( String source, Map<String, String> aliases )
+	private String runParsers( String source, Site site ) throws ShellExecuteException
 	{
-		if ( source.isEmpty() )
-			return "";
-		
-		if ( aliases == null || aliases.size() < 1 )
-			return source;
-		
-		for ( Entry<String, String> entry : aliases.entrySet() )
-		{
-			source = source.replace( "%" + entry.getKey() + "%", entry.getValue() );
-		}
-		
-		return source;
-	}
-	
-	private String parseForIncludes( String source, Site site ) throws IOException, ShellExecuteException
-	{
-		if ( source.isEmpty() )
-			return source;
-		
-		Pattern p1 = Pattern.compile( "<!-- *include\\((.*)\\) *-->" );
-		Pattern p2 = Pattern.compile( "(<!-- *include\\(.*\\) *-->)" );
-		
-		Matcher m1 = p1.matcher( source );
-		Matcher m2 = p2.matcher( source );
-		
-		while ( m1.find() && m2.find() )
-		{
-			File res = site.getResource( m1.group( 1 ) );
-			
-			if ( res == null )
-				res = Loader.getSiteManager().getFrameworkSite().getResource( m1.group( 1 ) );
-			
-			String result = "";
-			
-			if ( res != null && res.exists() )
-			{
-				// TODO Prevent this from going into an infinite loop!
-				result = eval( res, site );
-			}
-			else if ( !res.exists() )
-			{
-				Loader.getLogger().warning( "We had a problem finding the include file `" + res.getAbsolutePath() + "`" );
-			}
-			
-			if ( result == null )
-				result = "";
-			
-			source = new StringBuilder( source ).replace( m2.start( 1 ), m2.end( 1 ), result ).toString();
-			
-			// We have to reset the matcher since the source changes with each loop
-			m1 = p1.matcher( source );
-			m2 = p2.matcher( source );
-		}
+		source = new IncludesParser().runParser( source, site, this );
+		source = new LinksParser().runParser( source );
 		
 		return source;
 	}
