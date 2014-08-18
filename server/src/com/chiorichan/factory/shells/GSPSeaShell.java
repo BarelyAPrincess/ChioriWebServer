@@ -5,6 +5,7 @@ import groovy.lang.GroovyShell;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.groovy.syntax.SyntaxException;
 
 import com.chiorichan.exceptions.ShellExecuteException;
@@ -56,7 +57,10 @@ public class GSPSeaShell implements SeaShell
 						output.append( fragment );
 					
 					int endIndex = fullFile.indexOf( MARKER_END, Math.max( startIndex, fullFileIndex ) );
-					assert -1 != endIndex : "MARKER NOT CLOSED";
+
+					if ( endIndex == -1 )
+						throw new ShellExecuteException( new IOException( "Marker `<%` was not closed after line " + ( StringUtils.countMatches( output.toString(), "\n" ) + 1 ) + ", please check your source file and try again." ), meta );
+					
 					fragment = fullFile.substring( startIndex + MARKER_START.length(), endIndex );
 					
 					boolean appendPrint = true;

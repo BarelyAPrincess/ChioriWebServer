@@ -168,15 +168,20 @@ public class WebUtils
 	
 	public static String createTable( List<Object> tableData )
 	{
-		return createTable( tableData, null, "" );
+		return createTable( tableData, null, null );
 	}
 	
 	public static String createTable( List<Object> tableData, List<String> headerArray )
 	{
-		return createTable( tableData, headerArray, "" );
+		return createTable( tableData, headerArray, null, null );
 	}
 	
 	public static String createTable( List<Object> tableData, List<String> headerArray, String tableId )
+	{
+		return createTable( tableData, headerArray, tableId, null );
+	}
+	
+	public static String createTable( List<Object> tableData, List<String> headerArray, String tableId, String altTableClass )
 	{
 		Map<String, Object> newData = new LinkedHashMap<String, Object>();
 		
@@ -187,7 +192,7 @@ public class WebUtils
 			x++;
 		}
 		
-		return createTable( newData, headerArray, tableId );
+		return createTable( newData, headerArray, tableId, altTableClass );
 	}
 	
 	public static String createTable( Map<String, Object> tableData )
