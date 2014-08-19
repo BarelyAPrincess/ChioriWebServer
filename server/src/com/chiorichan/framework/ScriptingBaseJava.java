@@ -166,7 +166,27 @@ abstract public class ScriptingBaseJava extends Script
 	
 	String date( String format )
 	{
-		return date( format, null );
+		return date( format, "" );
+	}
+	
+	String date( String format, Object data )
+	{
+		return date( format, data, null );
+	}
+	
+	String date( String format, Object data, String def )
+	{
+		return date( format, ObjectUtil.castToString( data ), def );
+	}
+	
+	String date( String format, Date date )
+	{
+		return date( format, date, null );
+	}
+	
+	String date( String format, Date date, String def )
+	{
+		return date( format, ObjectUtil.castToString( date.getTime() / 1000 ), def );
 	}
 	
 	String date( String format, String data )
