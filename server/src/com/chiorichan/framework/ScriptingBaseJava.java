@@ -8,6 +8,7 @@ import java.math.MathContext;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -128,6 +129,34 @@ abstract public class ScriptingBaseJava extends Script
 	int time()
 	{
 		return Common.getEpoch();
+	}
+	
+	/**
+	 * Default format is M/d/yyyy
+	 * 
+	 * @param Date you wish to convert
+	 * @return Long containing the epoch of provided date
+	 */
+	Long dateToEpoch( String date )
+	{
+		return dateToEpoch( date, null );
+	}
+	
+	Long dateToEpoch( String date, String format )
+	{
+		try
+		{
+			if ( format == null )
+				format = "M/d/yyyy";
+			
+			SimpleDateFormat sdf = new SimpleDateFormat( format );
+			
+			return sdf.parse( date ).getTime() / 1000;
+		}
+		catch ( ParseException e )
+		{
+			return 0L;
+		}
 	}
 	
 	String date()
