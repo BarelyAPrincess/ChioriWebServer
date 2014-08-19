@@ -17,13 +17,13 @@ import com.chiorichan.factory.CodeMetaData;
 /**
  * @author Chiori Greene
  */
-public interface SeaShell
+public interface Interpreter
 {
 	/**
 	 * Shell "all" will attempt to eval any and everything. Don't abuse it!
 	 * Returning null will continue to next available SeaShell that handles shell.
 	 * @return
 	 */
-	public String[] getHandledShells();
+	public String[] getHandledTypes();
 	public String eval( CodeMetaData meta, String code, GroovyShell shell, ByteArrayOutputStream bs ) throws ShellExecuteException;
 }

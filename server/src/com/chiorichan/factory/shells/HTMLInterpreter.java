@@ -13,10 +13,10 @@ import com.chiorichan.factory.CodeMetaData;
  * 
  * @author Chiori Greene
  */
-public class HTMLSeaShell implements SeaShell
+public class HTMLInterpreter implements Interpreter
 {
 	@Override
-	public String[] getHandledShells()
+	public String[] getHandledTypes()
 	{
 		return new String[] { "plain", "text", "txt", "html", "htm" };
 	}

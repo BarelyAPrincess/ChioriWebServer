@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 
 import com.chiorichan.Loader;
-import com.chiorichan.ShellOverrides;
+import com.chiorichan.InterpreterOverrides;
 import com.chiorichan.exceptions.ShellExecuteException;
 import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.factory.CodeMetaData;
@@ -58,7 +58,7 @@ public class ExceptionPageUtils
 		
 		String githubBaseUrl = "https://raw.githubusercontent.com/ChioriGreene/ChioriWebServer/v7-experimental/server/src/";
 		String githubApiUrl = "https://raw.githubusercontent.com/ChioriGreene/ChioriWebServer/v7-experimental/api/src/";
-		String fileUrl = e.getClassName().replace( '.', '/' ).replace( "$1", "" ) + "." + ShellOverrides.getFileExtension( e.getFileName() );
+		String fileUrl = e.getClassName().replace( '.', '/' ).replace( "$1", "" ) + "." + InterpreterOverrides.getFileExtension( e.getFileName() );
 		
 		String codeSample = null;
 		

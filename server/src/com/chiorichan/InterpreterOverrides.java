@@ -15,9 +15,9 @@ import com.google.common.collect.Maps;
  * 
  * @author Chiori-chan
  */
-public class ShellOverrides
+public class InterpreterOverrides
 {
-	public static Map<String, String> shells = Maps.newLinkedHashMap();
+	public static Map<String, String> interpreters = Maps.newLinkedHashMap();
 	
 	// TODO Place a copy of the properties in the server root for user modification
 	
@@ -25,12 +25,12 @@ public class ShellOverrides
 	{
 		try
 		{
-			File contentTypes = new File( "ContentTypes.properties" );
+			File contentTypes = new File( "InterpreterOverrides.properties" );
 			
 			if ( !contentTypes.exists() )
 				contentTypes.createNewFile();
 			
-			InputStream isDefault = Loader.class.getClassLoader().getResourceAsStream( "com/chiorichan/ShellOverrides.properties" );
+			InputStream isDefault = Loader.class.getClassLoader().getResourceAsStream( "com/chiorichan/InterpreterOverrides.properties" );
 			InputStream is = new FileInputStream( contentTypes );
 			try
 			{
@@ -39,7 +39,7 @@ public class ShellOverrides
 				prop.load( is );
 				for ( Object o : prop.keySet() )
 					if ( o instanceof String )
-						shells.put( (String) o, (String) prop.get( (String) o ) );
+						interpreters.put( (String) o, (String) prop.get( (String) o ) );
 			}
 			finally
 			{
@@ -49,7 +49,7 @@ public class ShellOverrides
 		}
 		catch ( IOException e )
 		{
-			Loader.getLogger().severe( "Could not load the ShellOverride properties file, exact error was: " + e.getMessage() );
+			Loader.getLogger().severe( "Could not load the InterpreterOverride properties file, exact error was: " + e.getMessage() );
 		}
 	}
 	
@@ -76,9 +76,9 @@ public class ShellOverrides
 		if ( ext.isEmpty() )
 			return null;
 		
-		if ( shells != null && shells.containsKey( ext.toLowerCase() ) )
+		if ( interpreters != null && interpreters.containsKey( ext.toLowerCase() ) )
 		{
-			return shells.get( ext.toLowerCase() );
+			return interpreters.get( ext.toLowerCase() );
 		}
 		else
 		{
@@ -93,9 +93,9 @@ public class ShellOverrides
 		if ( ext.isEmpty() )
 			return null;
 		
-		if ( shells != null && shells.containsKey( ext ) )
+		if ( interpreters != null && interpreters.containsKey( ext ) )
 		{
-			return shells.get( ext );
+			return interpreters.get( ext );
 		}
 		else
 		{

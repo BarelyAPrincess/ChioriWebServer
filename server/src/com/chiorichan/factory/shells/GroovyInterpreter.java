@@ -13,10 +13,10 @@ import com.chiorichan.factory.CodeMetaData;
  * 
  * @author Chiori Greene
  */
-public class GroovySeaShell implements SeaShell
+public class GroovyInterpreter implements Interpreter
 {
 	@Override
-	public String[] getHandledShells()
+	public String[] getHandledTypes()
 	{
 		return new String[] { "groovy" };
 	}

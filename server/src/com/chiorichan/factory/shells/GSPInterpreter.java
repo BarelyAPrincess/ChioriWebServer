@@ -22,13 +22,13 @@ import com.chiorichan.factory.CodeMetaData;
  * 
  * @author Chiori Greene
  */
-public class GSPSeaShell implements SeaShell
+public class GSPInterpreter implements Interpreter
 {
 	private static final String MARKER_START = "<%";
 	private static final String MARKER_END = "%>";
 	
 	@Override
-	public String[] getHandledShells()
+	public String[] getHandledTypes()
 	{
 		return new String[] { "embedded", "gsp", "jsp", "chi" };
 	}

@@ -19,11 +19,11 @@ import com.chiorichan.Loader;
 import com.chiorichan.exceptions.ShellExecuteException;
 import com.chiorichan.factory.parsers.IncludesParser;
 import com.chiorichan.factory.parsers.LinksParser;
-import com.chiorichan.factory.shells.CoffeeSeaShell;
-import com.chiorichan.factory.shells.GSPSeaShell;
-import com.chiorichan.factory.shells.GroovySeaShell;
-import com.chiorichan.factory.shells.HTMLSeaShell;
-import com.chiorichan.factory.shells.SeaShell;
+import com.chiorichan.factory.processors.CoffeePreProcessor;
+import com.chiorichan.factory.shells.GSPInterpreter;
+import com.chiorichan.factory.shells.GroovyInterpreter;
+import com.chiorichan.factory.shells.HTMLInterpreter;
+import com.chiorichan.factory.shells.Interpreter;
 import com.chiorichan.framework.FileInterpreter;
 import com.chiorichan.framework.ScriptingBaseGroovy;
 import com.chiorichan.framework.Site;
@@ -34,18 +34,26 @@ public class CodeEvalFactory
 {
 	protected String encoding = Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" );
 	
-	protected static List<SeaShell> shells = Lists.newCopyOnWriteArrayList();
+	protected static List<Interpreter> interpreters = Lists.newCopyOnWriteArrayList();
+	
+	
 	protected Map<GroovyShell, Boolean> groovyShells = Maps.newConcurrentMap();
 	protected ByteArrayOutputStream bs = new ByteArrayOutputStream();
 	protected Binding binding;
 	
 	static
 	{
-		// TODO Allow to override and/or extending of shells.
-		registerShell( new GSPSeaShell() );
-		registerShell( new HTMLSeaShell() );
-		registerShell( new GroovySeaShell() );
-		registerShell( new CoffeeSeaShell() );
+		//TODO Allow to override and/or extending of Pre-Processors, Interpreters and Post-Processors.
+		
+		//registerPreProcessor( new CoffeePreProcessor() );
+		//registerPreProcessor( new LessPreProcessor() );
+		//registerPreProcessor( new SassPreProcessor() );
+		
+		registerInterpreter( new GSPInterpreter() );
+		registerInterpreter( new HTMLInterpreter() );
+		registerInterpreter( new GroovyInterpreter() );
+		
+		//registerProcessor( new JavascriptMinimizer() );
 	}
 	
 	public static CodeEvalFactory create( Binding binding )
@@ -120,9 +128,9 @@ public class CodeEvalFactory
 		setOutputStream( bs );
 	}
 	
-	public static void registerShell( SeaShell shell )
+	public static void registerInterpreter( Interpreter shell )
 	{
-		shells.add( shell );
+		interpreters.add( shell );
 	}
 	
 	public String eval( File fi, Site site ) throws ShellExecuteException
@@ -192,9 +200,9 @@ public class CodeEvalFactory
 		byte[] saved = bs.toByteArray();
 		bs.reset();
 		
-		for ( SeaShell s : shells )
+		for ( Interpreter s : interpreters )
 		{
-			String[] handledShells = s.getHandledShells();
+			String[] handledShells = s.getHandledTypes();
 			
 			for ( String she : handledShells )
 			{

@@ -17,7 +17,7 @@ import java.util.Map.Entry;
 
 import com.chiorichan.ContentTypes;
 import com.chiorichan.Loader;
-import com.chiorichan.ShellOverrides;
+import com.chiorichan.InterpreterOverrides;
 import com.chiorichan.util.FileUtil;
 import com.google.common.collect.Maps;
 
@@ -88,10 +88,10 @@ public class FileInterpreter
 	{
 		fileName = fileName.toLowerCase();
 		
-		String shell = ShellOverrides.getShellForExt( ShellOverrides.getFileExtension( fileName ) );
+		String shell = InterpreterOverrides.getShellForExt( InterpreterOverrides.getFileExtension( fileName ) );
 		
 		if ( shell == null || shell.isEmpty() )
-			return ShellOverrides.getFileExtension( fileName );
+			return InterpreterOverrides.getFileExtension( fileName );
 		
 		return shell;
 	}
