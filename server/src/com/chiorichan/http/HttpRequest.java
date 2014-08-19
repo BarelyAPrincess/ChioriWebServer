@@ -165,7 +165,7 @@ public class HttpRequest
 			String pair[] = param.split( "=" );
 			if ( pair.length > 1 )
 				result.put( URLDecoder.decode( pair[0], "ISO-8859-1" ), URLDecoder.decode( pair[1], "ISO-8859-1" ) );
-			else
+			else if ( pair.length == 1 )
 				result.put( URLDecoder.decode( pair[0], "ISO-8859-1" ), "" );
 		}
 		return result;
