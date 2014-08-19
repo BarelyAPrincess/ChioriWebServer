@@ -19,6 +19,7 @@ import com.chiorichan.Loader;
 import com.chiorichan.exceptions.ShellExecuteException;
 import com.chiorichan.factory.parsers.IncludesParser;
 import com.chiorichan.factory.parsers.LinksParser;
+import com.chiorichan.factory.shells.CoffeeSeaShell;
 import com.chiorichan.factory.shells.GSPSeaShell;
 import com.chiorichan.factory.shells.GroovySeaShell;
 import com.chiorichan.factory.shells.HTMLSeaShell;
@@ -44,6 +45,7 @@ public class CodeEvalFactory
 		registerShell( new GSPSeaShell() );
 		registerShell( new HTMLSeaShell() );
 		registerShell( new GroovySeaShell() );
+		registerShell( new CoffeeSeaShell() );
 	}
 	
 	public static CodeEvalFactory create( Binding binding )
