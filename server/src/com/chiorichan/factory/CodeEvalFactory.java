@@ -215,19 +215,20 @@ public class CodeEvalFactory
 		if ( site != null )
 			code = runParsers( code, site );
 		
-		File cacheFile = new File( site.getCacheDirectory(), StringUtil.md5( meta.fileName ) );
-		
 		// XXX Crude cache system, improve upon this and make it better.
-		if ( meta.fileName != null && !meta.fileName.isEmpty() && cacheFile.exists() )
+		if ( meta.fileName != null && !meta.fileName.isEmpty() )
 		{
-			try
-			{
-				return FileUtils.readFileToString( cacheFile );
-			}
-			catch ( IOException e )
-			{
-				throw new ShellExecuteException( e, meta );
-			}
+			File cacheFile = new File( site.getCacheDirectory(), StringUtil.md5( meta.fileName ) );
+			
+			if ( cacheFile.exists() )
+				try
+				{
+					return FileUtils.readFileToString( cacheFile );
+				}
+				catch ( IOException e )
+				{
+					throw new ShellExecuteException( e, meta );
+				}
 		}
 		else
 		{
@@ -314,6 +315,8 @@ public class CodeEvalFactory
 			if ( meta.fileName != null && !meta.fileName.isEmpty() )
 				try
 				{
+					File cacheFile = new File( site.getCacheDirectory(), StringUtil.md5( meta.fileName ) );
+					
 					List<String> cachePatterns = site.getCachePatterns();
 					
 					for ( String cache : cachePatterns )
