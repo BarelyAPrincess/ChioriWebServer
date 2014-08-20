@@ -5,9 +5,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
-import sun.org.mozilla.javascript.Context;
-import sun.org.mozilla.javascript.JavaScriptException;
-import sun.org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.JavaScriptException;
+import org.mozilla.javascript.Scriptable;
 
 import com.chiorichan.factory.CodeMetaData;
 

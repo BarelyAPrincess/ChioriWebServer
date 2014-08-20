@@ -117,6 +117,7 @@
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/junit.jar"/>
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/mockito-core.jar"/>
 			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/protobuf-java.jar"/>
+			<zipfileset excludes="META-INF/*.SF" src="${lib.dir}/mozilla-rhino-14.jar"/>
 		</jar>
 		
 		<checksum file="${jar.dir}/${ant.project.name}-${project.version}-github-build${env.BUILD_NUMBER}.jar" forceOverwrite="yes"/>
