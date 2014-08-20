@@ -17,6 +17,7 @@ import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.command.defaults.BanCommand;
 import com.chiorichan.command.defaults.BanIpCommand;
 import com.chiorichan.command.defaults.BanListCommand;
+import com.chiorichan.command.defaults.CacheCommand;
 import com.chiorichan.command.defaults.ColorsCommand;
 import com.chiorichan.command.defaults.DeopCommand;
 import com.chiorichan.command.defaults.EchoCommand;
@@ -90,6 +91,7 @@ public class CommandMap
 		register( "chiori", new EchoCommand() );
 		register( "chiori", new VersionCommand( "version" ) );
 		register( "chiori", new UpdateCommand() );
+		register( "chiori", new CacheCommand() );
 		register( "chiori", new ReloadCommand( "reload" ) );
 		register( "chiori", new PluginsCommand( "plugins" ) );
 		
