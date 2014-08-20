@@ -5,4 +5,5 @@ public class CodeMetaData
 	public String shell;
 	public String fileName;
 	public String source;
+	public String contentType;
 }

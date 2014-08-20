@@ -17,13 +17,16 @@ import org.codehaus.groovy.control.CompilerConfiguration;
 
 import com.chiorichan.Loader;
 import com.chiorichan.exceptions.ShellExecuteException;
+import com.chiorichan.factory.interpreters.GSPInterpreter;
+import com.chiorichan.factory.interpreters.GroovyInterpreter;
+import com.chiorichan.factory.interpreters.HTMLInterpreter;
+import com.chiorichan.factory.interpreters.Interpreter;
 import com.chiorichan.factory.parsers.IncludesParser;
 import com.chiorichan.factory.parsers.LinksParser;
-import com.chiorichan.factory.processors.CoffeePreProcessor;
-import com.chiorichan.factory.shells.GSPInterpreter;
-import com.chiorichan.factory.shells.GroovyInterpreter;
-import com.chiorichan.factory.shells.HTMLInterpreter;
-import com.chiorichan.factory.shells.Interpreter;
+import com.chiorichan.factory.postprocessors.JSMinPostProcessor;
+import com.chiorichan.factory.postprocessors.PostProcessor;
+import com.chiorichan.factory.preprocessors.CoffeePreProcessor;
+import com.chiorichan.factory.preprocessors.PreProcessor;
 import com.chiorichan.framework.FileInterpreter;
 import com.chiorichan.framework.ScriptingBaseGroovy;
 import com.chiorichan.framework.Site;
@@ -34,8 +37,9 @@ public class CodeEvalFactory
 {
 	protected String encoding = Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" );
 	
+	protected static List<PreProcessor> preProcessors = Lists.newCopyOnWriteArrayList();
 	protected static List<Interpreter> interpreters = Lists.newCopyOnWriteArrayList();
-	
+	protected static List<PostProcessor> postProcessors = Lists.newCopyOnWriteArrayList();
 	
 	protected Map<GroovyShell, Boolean> groovyShells = Maps.newConcurrentMap();
 	protected ByteArrayOutputStream bs = new ByteArrayOutputStream();
@@ -43,17 +47,20 @@ public class CodeEvalFactory
 	
 	static
 	{
-		//TODO Allow to override and/or extending of Pre-Processors, Interpreters and Post-Processors.
+		// TODO Allow to override and/or extending of Pre-Processors, Interpreters and Post-Processors.
 		
-		//registerPreProcessor( new CoffeePreProcessor() );
-		//registerPreProcessor( new LessPreProcessor() );
-		//registerPreProcessor( new SassPreProcessor() );
+		// Register Pre Processors
+		register( new CoffeePreProcessor() );
+		// register( new LessPreProcessor() );
+		// register( new SassPreProcessor() );
 		
-		registerInterpreter( new GSPInterpreter() );
-		registerInterpreter( new HTMLInterpreter() );
-		registerInterpreter( new GroovyInterpreter() );
+		// Register Interpreters
+		register( new GSPInterpreter() );
+		register( new HTMLInterpreter() );
+		register( new GroovyInterpreter() );
 		
-		//registerProcessor( new JavascriptMinimizer() );
+		// Register Post Processors
+		register( new JSMinPostProcessor() );
 	}
 	
 	public static CodeEvalFactory create( Binding binding )
@@ -128,9 +135,19 @@ public class CodeEvalFactory
 		setOutputStream( bs );
 	}
 	
-	public static void registerInterpreter( Interpreter shell )
+	public static void register( PreProcessor preProcessor )
 	{
-		interpreters.add( shell );
+		preProcessors.add( preProcessor );
+	}
+	
+	public static void register( Interpreter interpreter )
+	{
+		interpreters.add( interpreter );
+	}
+	
+	public static void register( PostProcessor postProcessor )
+	{
+		postProcessors.add( postProcessor );
 	}
 	
 	public String eval( File fi, Site site ) throws ShellExecuteException
@@ -159,8 +176,9 @@ public class CodeEvalFactory
 	{
 		CodeMetaData codeMeta = new CodeMetaData();
 		
+		codeMeta.contentType = fi.getContentType();
 		codeMeta.shell = fi.getParams().get( "shell" );
-		codeMeta.fileName = (fi.getFile() != null) ? fi.getFile().getAbsolutePath() : fi.getParams().get( "file" );
+		codeMeta.fileName = ( fi.getFile() != null ) ? fi.getFile().getAbsolutePath() : fi.getParams().get( "file" );
 		
 		try
 		{
@@ -188,27 +206,38 @@ public class CodeEvalFactory
 		if ( code == null || code.isEmpty() )
 			return "";
 		
+		if ( meta.contentType == null )
+			meta.contentType = meta.shell;
+		
+		meta.source = code;
+		
+		if ( site != null )
+			code = runParsers( code, site );
+		
+		for ( PreProcessor p : preProcessors )
+		{
+			String[] handledTypes = p.getHandledTypes();
+			
+			for ( String t : handledTypes )
+				if ( t.equalsIgnoreCase( meta.shell ) || meta.contentType.toLowerCase().contains( t.toLowerCase() ) || t.equalsIgnoreCase( "all" ) )
+					code = p.process( meta, code );
+		}
+		
 		GroovyShell gShell = getUnusedShell();
 		Loader.getLogger().fine( "Locking GroovyShell '" + gShell.toString() + "' for execution of '" + meta.fileName + ":" + code.length() + "'" );
 		lock( gShell );
-		
-		if ( site != null )
-		{
-			code = runParsers( code, site );
-		}
 		
 		byte[] saved = bs.toByteArray();
 		bs.reset();
 		
 		for ( Interpreter s : interpreters )
 		{
-			String[] handledShells = s.getHandledTypes();
+			String[] handledTypes = s.getHandledTypes();
 			
-			for ( String she : handledShells )
+			for ( String she : handledTypes )
 			{
 				if ( she.equalsIgnoreCase( meta.shell ) || she.equalsIgnoreCase( "all" ) )
 				{
-					meta.source = code;
 					String result = s.eval( meta, code, gShell, bs );
 					
 					try
@@ -242,6 +271,15 @@ public class CodeEvalFactory
 			{
 				throw new ShellExecuteException( e, meta );
 			}
+		
+		for ( PostProcessor p : postProcessors )
+		{
+			String[] handledTypes = p.getHandledTypes();
+			
+			for ( String t : handledTypes )
+				if ( t.equalsIgnoreCase( meta.shell ) || meta.contentType.toLowerCase().contains( t.toLowerCase() ) || t.equalsIgnoreCase( "all" ) )
+					code = p.process( meta, code );
+		}
 		
 		bs.reset();
 		

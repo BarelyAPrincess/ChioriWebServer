@@ -5,7 +5,7 @@
  * Copyright 2014, Atom Node LLC. All Right Reserved.
  */
 
-package com.chiorichan.factory.shells;
+package com.chiorichan.factory.interpreters;
 
 import groovy.lang.GroovyShell;
 
@@ -15,13 +15,15 @@ import com.chiorichan.exceptions.ShellExecuteException;
 import com.chiorichan.factory.CodeMetaData;
 
 /**
+ * Interpreters are commonly used to process commands and create dynamic content, most notably the groovy scripts.
+ * 
  * @author Chiori Greene
  */
 public interface Interpreter
 {
 	/**
-	 * Shell "all" will attempt to eval any and everything. Don't abuse it!
-	 * Returning null will continue to next available SeaShell that handles shell.
+	 * Response "all" will attempt to eval any and everything. Don't abuse it!
+	 * Returning null will continue to next available Interpreter that handles type.
 	 * @return
 	 */
 	public String[] getHandledTypes();

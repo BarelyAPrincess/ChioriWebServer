@@ -1,4 +1,4 @@
-package com.chiorichan.factory.shells;
+package com.chiorichan.factory.interpreters;
 
 import groovy.lang.GroovyShell;
 
