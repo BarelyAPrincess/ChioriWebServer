@@ -28,7 +28,7 @@ public class JSMinPostProcessor implements PostProcessor
 		
 		CompilerOptions options = new CompilerOptions();
 		
-		CompilationLevel.ADVANCED_OPTIMIZATIONS.setOptionsForCompilationLevel( options );
+		CompilationLevel.SIMPLE_OPTIMIZATIONS.setOptionsForCompilationLevel( options );
 		
 		compiler.compile(externs, inputs, options );
 		
