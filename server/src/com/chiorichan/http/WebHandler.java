@@ -248,7 +248,7 @@ public class WebHandler implements HttpHandler
 			{
 				CodeMetaData meta = new CodeMetaData();
 				meta.shell = "embedded";
-				meta.shell = "text/html";
+				meta.contentType = fi.getContentType();
 				source.append( factory.eval( html, meta, currentSite ) );
 			}
 		}

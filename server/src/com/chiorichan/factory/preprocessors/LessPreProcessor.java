@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Map;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.JavaScriptException;
@@ -13,6 +14,9 @@ import org.mozilla.javascript.ScriptableObject;
 
 import com.chiorichan.Loader;
 import com.chiorichan.factory.CodeMetaData;
+import com.google.common.collect.Maps;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 public class LessPreProcessor implements PreProcessor
 {
@@ -26,13 +30,11 @@ public class LessPreProcessor implements PreProcessor
 	public String process( CodeMetaData meta, String code )
 	{
 		ClassLoader classLoader = getClass().getClassLoader();
-		InputStream inputStream = classLoader.getResourceAsStream( "com/chiorichan/less.js" );
-		InputStream inputStream2 = classLoader.getResourceAsStream( "com/chiorichan/env.rhino.js" );
+		InputStream inputStream = classLoader.getResourceAsStream( "com/chiorichan/less-rhino-1.7.4.js" );
 		
 		try
 		{
 			Reader reader = new InputStreamReader( inputStream, "UTF-8" );
-			Reader reader2 = new InputStreamReader( inputStream2, "UTF-8" );
 			
 			Context context = Context.enter();
 			context.setOptimizationLevel( -1 ); // Without this, Rhino hits a 64K bytecode limit and fails
@@ -41,12 +43,7 @@ public class LessPreProcessor implements PreProcessor
 			{
 				ScriptableObject globalScope = context.initStandardObjects();
 				
-				// context.setLanguageVersion( Context.VERSION_1_5 );
-				
-				globalScope.defineFunctionProperties( new String[] { "print" }, dummyJS.class, ScriptableObject.DONTENUM );
-				
-				context.evaluateReader( globalScope, reader2, "env.rhino.js", 0, null );
-				context.evaluateReader( globalScope, reader, "less.js", 0, null );
+				context.evaluateReader( globalScope, reader, "less-rhino-1.7.4.js", 0, null );
 				
 				Scriptable compileScope = context.newObject( globalScope );
 				compileScope.setParentScope( globalScope );
@@ -57,8 +54,15 @@ public class LessPreProcessor implements PreProcessor
 				if ( meta.fileName != null && !meta.fileName.isEmpty() )
 					fileName = new File( meta.fileName ).getName();
 				
-				String script = "var parser = new(less.Parser)({ paths: ['.'], filename: '" + fileName + "' });";
-				script += "parser.parse(lessSource, function (e, tree) { try{source = tree.toCSS({compress:true});}catch(ee){source = ee;}});";
+				Gson gson = new GsonBuilder().create();
+				
+				Map<String, Object> compilerOptions = Maps.newHashMap();
+				
+				compilerOptions.put( "filename", fileName );
+				compilerOptions.put( "compress", true );
+				
+				String script = "var parser = new(less.Parser)(" + gson.toJson( compilerOptions ) + ");";
+				script += "parser.parse(lessSource, function (e, tree) { try{source = tree.toCSS(" + gson.toJson( compilerOptions ) + ");}catch(ee){source = ee;}});";
 				
 				context.evaluateString( compileScope, script, "less2css.js", 0, null );
 				

@@ -31,7 +31,11 @@ public class WebInterpreter extends FileInterpreter
 		
 		for ( Entry<String, String> o : interpParams.entrySet() )
 		{
-			overrides += "," + o.getKey() + "=" + o.getValue();
+			String l = o.getValue();
+			if ( l != null )
+				l = l.replace( "\n", "" );
+			
+			overrides += "," + o.getKey() + "=" + l;
 		}
 		
 		if ( overrides.length() > 1 )
