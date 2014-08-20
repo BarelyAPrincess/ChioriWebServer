@@ -24,6 +24,9 @@
 					<path refid="classpath"/>
 			</classpath>
 		</taskdef>
+		
+		<echo>Building with Java Version: ${java.version}</echo>
+		<echoproperties destfile="enviro_debug.properties"/>
 	</target>
 	
 	<target name="clean" depends="init">
