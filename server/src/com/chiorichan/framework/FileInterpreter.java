@@ -54,7 +54,7 @@ public class FileInterpreter
 		
 		String cachedFileStr = ( cachedFile == null ) ? "N/A" : cachedFile.getAbsolutePath();
 		
-		return "FileInterpreter{content=" + bs.size() + " bytes,encoding=" + encoding + ",file=" + cachedFileStr + ",overrides={" + overrides + "}}";
+		return "FileInterpreter{content=" + bs.size() + " bytes,file=" + cachedFileStr + ",overrides={" + overrides + "}}";
 	}
 	
 	public File getFile()

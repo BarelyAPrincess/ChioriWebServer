@@ -29,7 +29,7 @@ public class UpdateCommand extends ChioriCommand
 		super( "update" );
 		
 		this.description = "Gets the version of this server including any plugins in use";
-		this.usageMessage = "/update [latest]";
+		this.usageMessage = "update [latest]";
 		this.setPermission( "chiori.command.update" );
 	}
 	
@@ -69,7 +69,7 @@ public class UpdateCommand extends ChioriCommand
 							
 							File currentJar = new File( URLDecoder.decode( Loader.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8" ) );
 							File updatedJar = new File( "update.jar" );
-							File backupJar = new File( currentJar, ".bak" );
+							File backupJar = new File( currentJar.getAbsolutePath() + ".bak" );
 							
 							Download download = new Download( new URL( latest.getJar() ), updatedJar.getName(), updatedJar.getPath() );
 							download.setListener( new DownloadProgressDisplay( sender ) );
@@ -94,8 +94,7 @@ public class UpdateCommand extends ChioriCommand
 							try
 							{
 								backupJar.delete();
-								FileUtils.copyFile( currentJar, backupJar );
-								currentJar.delete();
+								FileUtils.moveFile( currentJar, backupJar );
 							}
 							catch ( Exception e )
 							{
@@ -120,7 +119,8 @@ public class UpdateCommand extends ChioriCommand
 								IOUtils.closeQuietly( fos );
 							}
 							
-							updatedJar.setExecutable( true, true );
+							currentJar.setExecutable( true, true );
+							updatedJar.delete();
 							
 							String newMD5 = DigestUtils.md5Hex( new FileInputStream( currentJar.getPath() ) ).trim();
 							

@@ -217,14 +217,14 @@ public class Loader
 		
 		try
 		{
-			File shellOverrides = new File( "ShellOverrides.properties" );
+			File shellOverrides = new File( "InterpreterOverrides.properties" );
 			
 			if ( !shellOverrides.exists() )
-				FileUtils.writeStringToFile( shellOverrides, "# Chiori-chan's Web Server Shell Overrides File which overrides the default internal ones.\n# You don't have to add a string if the key and value are the same, hence Convension!\n# Syntax: 'fileExt: shellHandler'" );
+				FileUtils.writeStringToFile( shellOverrides, "# Chiori-chan's Web Server Interpreter Overrides File which overrides the default internal ones.\n# You don't have to add a string if the key and value are the same, hence Convension!\n# Syntax: 'fileExt: shellHandler'" );
 		}
 		catch ( IOException e )
 		{
-			getLogger().warning( "There was an exception thrown trying to create the 'ContentTypes.properties' file.", e );
+			getLogger().warning( "There was an exception thrown trying to create the 'InterpreterOverrides.properties' file.", e );
 		}
 		
 		try

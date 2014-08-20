@@ -47,9 +47,9 @@ public class WebInterpreter extends FileInterpreter
 		if ( rewrites.length() > 1 )
 			rewrites = rewrites.substring( 1 );
 		
-		String cachedFileStr = ( cachedFile == null ) ? "N/A" : cachedFile.getAbsolutePath();
+		//String cachedFileStr = ( cachedFile == null ) ? "N/A" : cachedFile.getAbsolutePath();
 		
-		return "WebInterpreter{content=" + bs.size() + " bytes,file=" + cachedFileStr + ",contentType=" + getContentType() + ",encoding=" + encoding + ",overrides={" + overrides + "},rewrites={" + rewrites + "}}";
+		return "WebInterpreter{content=" + bs.size() + " bytes,contentType=" + getContentType() + ",overrides={" + overrides + "},rewrites={" + rewrites + "}}";
 	}
 	
 	@SuppressWarnings( "unchecked" )
