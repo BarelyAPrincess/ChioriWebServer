@@ -14,7 +14,7 @@ public class CacheCommand extends VanillaCommand
 	{
 		super( "cache" );
 		this.description = "Manages the site cache files.";
-		this.usageMessage = "cache <sideId> (purge|list), cache <sideId> add <pattern>";
+		this.usageMessage = "cache <sideId> (purge|list|patterns), cache <sideId> add <pattern>";
 		this.setPermission( "chiori.command.cache" );
 	}
 	
@@ -53,8 +53,23 @@ public class CacheCommand extends VanillaCommand
 			{
 				File cacheDir = site.getCacheDirectory();
 				
+				sender.sendMessage( ChatColor.AQUA + "<--- Cached Files --->" );
+				
 				for ( File f : cacheDir.listFiles() )
-					f.delete();
+					sender.sendMessage( ChatColor.AQUA + f.getAbsolutePath() );
+				
+				return true;
+			}
+			else if ( args[1].equalsIgnoreCase( "patterns" ) )
+			{
+				sender.sendMessage( ChatColor.AQUA + "<--- Patterns --->" );
+				
+				int n = 0;
+				for ( String s : site.getCachePatterns() )
+				{
+					sender.sendMessage( ChatColor.AQUA + "" + n + ": `" + s + "`" );
+					n++;
+				}
 				
 				return true;
 			}
@@ -63,9 +78,9 @@ public class CacheCommand extends VanillaCommand
 		{
 			if ( args[1].equalsIgnoreCase( "add" ) )
 			{
-				site.addToCachePatterns( args[2] );
+				site.addToCachePatterns( args[2].trim() );
 				
-				sender.sendMessage( ChatColor.AQUA + Loader.getSiteManager().add( args[1], args[2] ) );
+				sender.sendMessage( ChatColor.AQUA + "Added pattern `" + args[2].trim() + "` to site `" + site.getSiteId() + "`" );
 				
 				return true;
 			}

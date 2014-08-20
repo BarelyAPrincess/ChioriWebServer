@@ -215,10 +215,12 @@ public class CodeEvalFactory
 		if ( site != null )
 			code = runParsers( code, site );
 		
+		File cacheFile = null;
+		
 		// XXX Crude cache system, improve upon this and make it better.
 		if ( meta.fileName != null && !meta.fileName.isEmpty() )
 		{
-			File cacheFile = new File( site.getCacheDirectory(), StringUtil.md5( meta.fileName ) );
+			cacheFile = new File( site.getCacheDirectory(), StringUtil.md5( meta.fileName ) + ".cache" );
 			
 			if ( cacheFile.exists() )
 				try
@@ -230,109 +232,106 @@ public class CodeEvalFactory
 					throw new ShellExecuteException( e, meta );
 				}
 		}
-		else
+		
+		for ( PreProcessor p : preProcessors )
 		{
-			for ( PreProcessor p : preProcessors )
+			String[] handledTypes = p.getHandledTypes();
+			
+			for ( String t : handledTypes )
+				if ( t.equalsIgnoreCase( meta.shell ) || meta.contentType.toLowerCase().contains( t.toLowerCase() ) || t.equalsIgnoreCase( "all" ) )
+					code = p.process( meta, code );
+		}
+		
+		GroovyShell gShell = getUnusedShell();
+		Loader.getLogger().fine( "Locking GroovyShell '" + gShell.toString() + "' for execution of '" + meta.fileName + ":" + code.length() + "'" );
+		lock( gShell );
+		
+		byte[] saved = bs.toByteArray();
+		bs.reset();
+		
+		for ( Interpreter s : interpreters )
+		{
+			String[] handledTypes = s.getHandledTypes();
+			
+			for ( String she : handledTypes )
 			{
-				String[] handledTypes = p.getHandledTypes();
-				
-				for ( String t : handledTypes )
-					if ( t.equalsIgnoreCase( meta.shell ) || meta.contentType.toLowerCase().contains( t.toLowerCase() ) || t.equalsIgnoreCase( "all" ) )
-						code = p.process( meta, code );
-			}
-			
-			GroovyShell gShell = getUnusedShell();
-			Loader.getLogger().fine( "Locking GroovyShell '" + gShell.toString() + "' for execution of '" + meta.fileName + ":" + code.length() + "'" );
-			lock( gShell );
-			
-			byte[] saved = bs.toByteArray();
-			bs.reset();
-			
-			for ( Interpreter s : interpreters )
-			{
-				String[] handledTypes = s.getHandledTypes();
-				
-				for ( String she : handledTypes )
+				if ( she.equalsIgnoreCase( meta.shell ) || she.equalsIgnoreCase( "all" ) )
 				{
-					if ( she.equalsIgnoreCase( meta.shell ) || she.equalsIgnoreCase( "all" ) )
+					String result = s.eval( meta, code, gShell, bs );
+					
+					try
 					{
-						String result = s.eval( meta, code, gShell, bs );
-						
-						try
-						{
-							bs.write( result.getBytes( encoding ) );
-						}
-						catch ( IOException e )
-						{
-							e.printStackTrace();
-						}
-						
-						if ( result != null )
-						{
-							success = true;
-							break;
-						}
+						bs.write( result.getBytes( encoding ) );
+					}
+					catch ( IOException e )
+					{
+						e.printStackTrace();
+					}
+					
+					if ( result != null )
+					{
+						success = true;
+						break;
 					}
 				}
 			}
-			
-			Loader.getLogger().fine( "Unlocking GroovyShell '" + gShell.toString() + "' for execution of '" + meta.fileName + ":" + code.length() + "'" );
-			unlock( gShell );
-			
-			if ( success )
-				try
-				{
-					code = new String( bs.toByteArray(), encoding );
-					meta.source = code;
-				}
-				catch ( UnsupportedEncodingException e )
-				{
-					throw new ShellExecuteException( e, meta );
-				}
-			
-			for ( PostProcessor p : postProcessors )
-			{
-				String[] handledTypes = p.getHandledTypes();
-				
-				// TODO Cache these results and only update on occasion
-				
-				for ( String t : handledTypes )
-					if ( t.equalsIgnoreCase( meta.shell ) || meta.contentType.toLowerCase().contains( t.toLowerCase() ) || t.equalsIgnoreCase( "all" ) )
-						code = p.process( meta, code );
-			}
-			
-			bs.reset();
-			
+		}
+		
+		Loader.getLogger().fine( "Unlocking GroovyShell '" + gShell.toString() + "' for execution of '" + meta.fileName + ":" + code.length() + "'" );
+		unlock( gShell );
+		
+		if ( success )
 			try
 			{
-				bs.write( saved );
+				code = new String( bs.toByteArray(), encoding );
+				meta.source = code;
 			}
-			catch ( IOException e )
+			catch ( UnsupportedEncodingException e )
 			{
 				throw new ShellExecuteException( e, meta );
 			}
+		
+		for ( PostProcessor p : postProcessors )
+		{
+			String[] handledTypes = p.getHandledTypes();
 			
-			if ( meta.fileName != null && !meta.fileName.isEmpty() )
-				try
+			// TODO Cache these results and only update on occasion
+			
+			for ( String t : handledTypes )
+				if ( t.equalsIgnoreCase( meta.shell ) || meta.contentType.toLowerCase().contains( t.toLowerCase() ) || t.equalsIgnoreCase( "all" ) )
+					code = p.process( meta, code );
+		}
+		
+		bs.reset();
+		
+		try
+		{
+			bs.write( saved );
+		}
+		catch ( IOException e )
+		{
+			throw new ShellExecuteException( e, meta );
+		}
+		
+		if ( cacheFile != null )
+			try
+			{
+				List<String> cachePatterns = site.getCachePatterns();
+				
+				for ( String cache : cachePatterns )
 				{
-					File cacheFile = new File( site.getCacheDirectory(), StringUtil.md5( meta.fileName ) );
-					
-					List<String> cachePatterns = site.getCachePatterns();
-					
-					for ( String cache : cachePatterns )
+					if ( new File( meta.fileName ).getName().toLowerCase().contains( cache ) )
 					{
-						if ( new File( meta.fileName ).getName().toLowerCase().contains( cache ) )
-						{
-							FileUtils.writeStringToFile( cacheFile, code );
-							break;
-						}
+						Loader.getLogger().info( "Wrote a cache file for requested file: " + meta.fileName );
+						FileUtils.writeStringToFile( cacheFile, code );
+						break;
 					}
 				}
-				catch ( IOException e )
-				{
-					e.printStackTrace();
-				}
-		}
+			}
+			catch ( IOException e )
+			{
+				e.printStackTrace();
+			}
 		
 		return code;
 	}

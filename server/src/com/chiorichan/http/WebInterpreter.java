@@ -49,7 +49,7 @@ public class WebInterpreter extends FileInterpreter
 		
 		String cachedFileStr = ( cachedFile == null ) ? "N/A" : cachedFile.getAbsolutePath();
 		
-		return "WebInterpreter{content=" + bs.size() + " bytes,file=" + cachedFileStr + ",overrides={" + overrides + "},rewrites={" + rewrites + "}}";
+		return "WebInterpreter{content=" + bs.size() + " bytes,file=" + cachedFileStr + ",contentType=" + getContentType() + ",encoding=" + encoding + ",overrides={" + overrides + "},rewrites={" + rewrites + "}}";
 	}
 	
 	@SuppressWarnings( "unchecked" )

@@ -81,7 +81,7 @@ public class WebHandler implements HttpHandler
 			{
 				e.printStackTrace();
 				response.sendException( e );
-				//response.sendError( 500, null, "<pre>" + ExceptionUtils.getStackTrace( e ) + "</pre>" );
+				// response.sendError( 500, null, "<pre>" + ExceptionUtils.getStackTrace( e ) + "</pre>" );
 			}
 		}
 		catch ( Exception e )
@@ -167,7 +167,7 @@ public class WebHandler implements HttpHandler
 		// Throws IOException and HttpErrorException
 		WebInterpreter fi = new WebInterpreter( request );
 		
-		Loader.getLogger().info( ChatColor.DARK_AQUA + "Page Request '" + subdomain + "." + domain + "' '" + uri + "' '" + fi.toString() + "'" );
+		Loader.getLogger().info( "Request '" + subdomain + "." + domain + "' '" + uri + "' '" + fi.toString() + "'" );
 		
 		request.rewriteVars.putAll( fi.getRewriteParams() );
 		

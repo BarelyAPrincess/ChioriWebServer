@@ -208,7 +208,6 @@ public class FileInterpreter
 		if ( type.toLowerCase().contains( "image" ) )
 			setEncoding( Loader.getConfig().getString( "server.defaultImageEncoding", "ISO-8859-1" ) );
 		
-		Loader.getLogger().info( "Detected '" + cachedFile.getAbsolutePath() + "' to be of '" + type + "' type with '" + encoding + "' encoding." );
 		return type;
 	}
 	
