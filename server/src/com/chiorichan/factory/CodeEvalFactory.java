@@ -26,6 +26,7 @@ import com.chiorichan.factory.parsers.LinksParser;
 import com.chiorichan.factory.postprocessors.JSMinPostProcessor;
 import com.chiorichan.factory.postprocessors.PostProcessor;
 import com.chiorichan.factory.preprocessors.CoffeePreProcessor;
+import com.chiorichan.factory.preprocessors.LessPreProcessor;
 import com.chiorichan.factory.preprocessors.PreProcessor;
 import com.chiorichan.framework.FileInterpreter;
 import com.chiorichan.framework.ScriptingBaseGroovy;
@@ -52,7 +53,7 @@ public class CodeEvalFactory
 		
 		// Register Pre Processors
 		register( new CoffeePreProcessor() );
-		// register( new LessPreProcessor() );
+		register( new LessPreProcessor() );
 		// register( new SassPreProcessor() );
 		
 		// Register Interpreters
@@ -239,7 +240,14 @@ public class CodeEvalFactory
 			
 			for ( String t : handledTypes )
 				if ( t.equalsIgnoreCase( meta.shell ) || meta.contentType.toLowerCase().contains( t.toLowerCase() ) || t.equalsIgnoreCase( "all" ) )
-					code = p.process( meta, code );
+				{
+					String result = p.process( meta, code );
+					if ( result != null )
+					{
+						code = result;
+						break;
+					}
+				}
 		}
 		
 		GroovyShell gShell = getUnusedShell();
@@ -299,7 +307,14 @@ public class CodeEvalFactory
 			
 			for ( String t : handledTypes )
 				if ( t.equalsIgnoreCase( meta.shell ) || meta.contentType.toLowerCase().contains( t.toLowerCase() ) || t.equalsIgnoreCase( "all" ) )
-					code = p.process( meta, code );
+				{
+					String result = p.process( meta, code );
+					if ( result != null )
+					{
+						code = result;
+						break;
+					}
+				}
 		}
 		
 		bs.reset();
