@@ -30,6 +30,7 @@ import com.chiorichan.factory.preprocessors.PreProcessor;
 import com.chiorichan.framework.FileInterpreter;
 import com.chiorichan.framework.ScriptingBaseGroovy;
 import com.chiorichan.framework.Site;
+import com.chiorichan.util.StringUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -214,82 +215,120 @@ public class CodeEvalFactory
 		if ( site != null )
 			code = runParsers( code, site );
 		
-		for ( PreProcessor p : preProcessors )
+		File cacheFile = new File( site.getCacheDirectory(), StringUtil.md5( meta.fileName ) );
+		
+		// XXX Crude cache system, improve upon this and make it better.
+		if ( meta.fileName != null && !meta.fileName.isEmpty() && cacheFile.exists() )
 		{
-			String[] handledTypes = p.getHandledTypes();
-			
-			for ( String t : handledTypes )
-				if ( t.equalsIgnoreCase( meta.shell ) || meta.contentType.toLowerCase().contains( t.toLowerCase() ) || t.equalsIgnoreCase( "all" ) )
-					code = p.process( meta, code );
-		}
-		
-		GroovyShell gShell = getUnusedShell();
-		Loader.getLogger().fine( "Locking GroovyShell '" + gShell.toString() + "' for execution of '" + meta.fileName + ":" + code.length() + "'" );
-		lock( gShell );
-		
-		byte[] saved = bs.toByteArray();
-		bs.reset();
-		
-		for ( Interpreter s : interpreters )
-		{
-			String[] handledTypes = s.getHandledTypes();
-			
-			for ( String she : handledTypes )
-			{
-				if ( she.equalsIgnoreCase( meta.shell ) || she.equalsIgnoreCase( "all" ) )
-				{
-					String result = s.eval( meta, code, gShell, bs );
-					
-					try
-					{
-						bs.write( result.getBytes( encoding ) );
-					}
-					catch ( IOException e )
-					{
-						e.printStackTrace();
-					}
-					
-					if ( result != null )
-					{
-						success = true;
-						break;
-					}
-				}
-			}
-		}
-		
-		Loader.getLogger().fine( "Unlocking GroovyShell '" + gShell.toString() + "' for execution of '" + meta.fileName + ":" + code.length() + "'" );
-		unlock( gShell );
-		
-		if ( success )
 			try
 			{
-				code = new String( bs.toByteArray(), encoding );
-				meta.source = code;
+				return FileUtils.readFileToString( cacheFile );
 			}
-			catch ( UnsupportedEncodingException e )
+			catch ( IOException e )
 			{
 				throw new ShellExecuteException( e, meta );
 			}
-		
-		for ( PostProcessor p : postProcessors )
+		}
+		else
 		{
-			String[] handledTypes = p.getHandledTypes();
+			for ( PreProcessor p : preProcessors )
+			{
+				String[] handledTypes = p.getHandledTypes();
+				
+				for ( String t : handledTypes )
+					if ( t.equalsIgnoreCase( meta.shell ) || meta.contentType.toLowerCase().contains( t.toLowerCase() ) || t.equalsIgnoreCase( "all" ) )
+						code = p.process( meta, code );
+			}
 			
-			for ( String t : handledTypes )
-				if ( t.equalsIgnoreCase( meta.shell ) || meta.contentType.toLowerCase().contains( t.toLowerCase() ) || t.equalsIgnoreCase( "all" ) )
-					code = p.process( meta, code );
-		}
-		
-		bs.reset();
-		
-		try
-		{
-			bs.write( saved );
-		}
-		catch ( IOException e )
-		{
-			throw new ShellExecuteException( e, meta );
+			GroovyShell gShell = getUnusedShell();
+			Loader.getLogger().fine( "Locking GroovyShell '" + gShell.toString() + "' for execution of '" + meta.fileName + ":" + code.length() + "'" );
+			lock( gShell );
+			
+			byte[] saved = bs.toByteArray();
+			bs.reset();
+			
+			for ( Interpreter s : interpreters )
+			{
+				String[] handledTypes = s.getHandledTypes();
+				
+				for ( String she : handledTypes )
+				{
+					if ( she.equalsIgnoreCase( meta.shell ) || she.equalsIgnoreCase( "all" ) )
+					{
+						String result = s.eval( meta, code, gShell, bs );
+						
+						try
+						{
+							bs.write( result.getBytes( encoding ) );
+						}
+						catch ( IOException e )
+						{
+							e.printStackTrace();
+						}
+						
+						if ( result != null )
+						{
+							success = true;
+							break;
+						}
+					}
+				}
+			}
+			
+			Loader.getLogger().fine( "Unlocking GroovyShell '" + gShell.toString() + "' for execution of '" + meta.fileName + ":" + code.length() + "'" );
+			unlock( gShell );
+			
+			if ( success )
+				try
+				{
+					code = new String( bs.toByteArray(), encoding );
+					meta.source = code;
+				}
+				catch ( UnsupportedEncodingException e )
+				{
+					throw new ShellExecuteException( e, meta );
+				}
+			
+			for ( PostProcessor p : postProcessors )
+			{
+				String[] handledTypes = p.getHandledTypes();
+				
+				// TODO Cache these results and only update on occasion
+				
+				for ( String t : handledTypes )
+					if ( t.equalsIgnoreCase( meta.shell ) || meta.contentType.toLowerCase().contains( t.toLowerCase() ) || t.equalsIgnoreCase( "all" ) )
+						code = p.process( meta, code );
+			}
+			
+			bs.reset();
+			
+			try
+			{
+				bs.write( saved );
+			}
+			catch ( IOException e )
+			{
+				throw new ShellExecuteException( e, meta );
+			}
+			
+			if ( meta.fileName != null && !meta.fileName.isEmpty() )
+				try
+				{
+					List<String> cachePatterns = site.getCachePatterns();
+					
+					for ( String cache : cachePatterns )
+					{
+						if ( new File( meta.fileName ).getName().toLowerCase().contains( cache ) )
+						{
+							FileUtils.writeStringToFile( cacheFile, code );
+							break;
+						}
+					}
+				}
+				catch ( IOException e )
+				{
+					e.printStackTrace();
+				}
 		}
 		
 		return code;

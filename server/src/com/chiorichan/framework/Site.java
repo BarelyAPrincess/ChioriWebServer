@@ -31,6 +31,7 @@ import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.factory.CodeMetaData;
 import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.util.FileUtil;
+import com.chiorichan.util.StringUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -40,15 +41,17 @@ import com.google.gson.reflect.TypeToken;
 public class Site
 {
 	protected String siteId = null, title = null, domain = null;
-	File source, resource;
-	Map<String, String> subdomains = Maps.newConcurrentMap(),
+	protected File source, resource;
+	protected Map<String, String> subdomains = Maps.newConcurrentMap(),
 			aliases = Maps.newConcurrentMap();
-	List<String> metatags = Lists.newCopyOnWriteArrayList(),
+	protected List<String> metatags = Lists.newCopyOnWriteArrayList(),
 			protectedFiles = Lists.newCopyOnWriteArrayList();
-	YamlConfiguration config;
-	DatabaseEngine sql;
+	protected YamlConfiguration config;
+	protected DatabaseEngine sql;
 	protected SiteType siteType = SiteType.NOTSET;
 	protected File filePath = null;
+	protected File cacheDir = null;
+	protected List<String> cachePatterns = Lists.newArrayList();
 	
 	// Binding and evaling for use inside each site for executing site scripts outside of web requests.
 	Binding binding = new Binding();
@@ -410,12 +413,8 @@ public class Site
 		{
 			case FILE:
 				
-				
-				
 				break;
 			case SQL:
-				
-				
 				
 				break;
 			default: // DO NOTHING
@@ -583,6 +582,16 @@ public class Site
 		return resource;
 	}
 	
+	public File getCacheDirectory()
+	{
+		if ( cacheDir == null )
+			cacheDir = new File( Loader.getTempFileDirectory(), this.getSiteId() );
+		
+		cacheDir.mkdirs();
+		
+		return cacheDir;
+	}
+	
 	public File getSourceDirectory()
 	{
 		if ( source == null )
@@ -712,5 +721,16 @@ public class Site
 	public File getFile()
 	{
 		return filePath;
+	}
+
+	public void addToCachePatterns( String pattern )
+	{
+		if ( !cachePatterns.contains( pattern.toLowerCase() ) )
+			cachePatterns.add( pattern.toLowerCase() );
+	}
+	
+	public List<String> getCachePatterns()
+	{
+		return cachePatterns;
 	}
 }
