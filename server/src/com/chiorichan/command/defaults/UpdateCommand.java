@@ -91,8 +91,16 @@ public class UpdateCommand extends ChioriCommand
 								}
 							}
 							
-							backupJar.delete();
-							FileUtils.moveFile( currentJar, backupJar );
+							try
+							{
+								backupJar.delete();
+								FileUtils.copyFile( currentJar, backupJar );
+								currentJar.delete();
+							}
+							catch ( Exception e )
+							{
+								e.printStackTrace();
+							}
 							
 							FileInputStream fis = null;
 							FileOutputStream fos = null;
@@ -132,7 +140,7 @@ public class UpdateCommand extends ChioriCommand
 								
 								sender.sendMessage( ChatColor.YELLOW + "----- Chiori Auto Updater -----" );
 								sender.sendMessage( ChatColor.RED + "SEVERE: There was a problem installing the downloaded jar in the place of your old one." );
-								sender.sendMessage( ChatColor.RED + "Don't worry we restored your original jar file.");
+								sender.sendMessage( ChatColor.RED + "Don't worry we restored your original jar file." );
 								sender.sendMessage( ChatColor.RED + "Try redownloading this version yourself from: " + latest.getJar() );
 								sender.sendMessage( ChatColor.RED + "Details: " + latest.getHtmlUrl() );
 								sender.sendMessage( ChatColor.YELLOW + "----- ------------------- -----" );
