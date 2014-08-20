@@ -69,6 +69,7 @@ public class UpdateCommand extends ChioriCommand
 							
 							File currentJar = new File( URLDecoder.decode( Loader.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8" ) );
 							File updatedJar = new File( "update.jar" );
+							File backupJar = new File( currentJar, ".bak" );
 							
 							Download download = new Download( new URL( latest.getJar() ), updatedJar.getName(), updatedJar.getPath() );
 							download.setListener( new DownloadProgressDisplay( sender ) );
@@ -90,7 +91,9 @@ public class UpdateCommand extends ChioriCommand
 								}
 							}
 							
-							currentJar.delete();
+							backupJar.delete();
+							FileUtils.moveFile( currentJar, backupJar );
+							
 							FileInputStream fis = null;
 							FileOutputStream fos = null;
 							try
@@ -117,15 +120,19 @@ public class UpdateCommand extends ChioriCommand
 							{
 								sender.sendMessage( ChatColor.AQUA + "----- Chiori Auto Updater -----" );
 								sender.sendMessage( ChatColor.AQUA + "SUCCESS: The downloaded jar was successfully installed in the place of your old one." );
+								sender.sendMessage( ChatColor.AQUA + "If you have a problem with the updated jar, you can find a backup jar file at: " + backupJar.getAbsolutePath() );
 								sender.sendMessage( ChatColor.AQUA + "You will need to restart " + Versioning.getProduct() + " for the changes to take effect." );
 								sender.sendMessage( ChatColor.AQUA + "Please type 'stop' and press enter to make this happen, otherwise you may encounter unexpected problems!" );
 								sender.sendMessage( ChatColor.AQUA + "----- ------------------- -----" );
 							}
 							else
 							{
+								currentJar.delete();
+								FileUtils.moveFile( backupJar, currentJar );
+								
 								sender.sendMessage( ChatColor.YELLOW + "----- Chiori Auto Updater -----" );
 								sender.sendMessage( ChatColor.RED + "SEVERE: There was a problem installing the downloaded jar in the place of your old one." );
-								sender.sendMessage( ChatColor.RED + "Sorry about that because most likely your current jar is now currupt");
+								sender.sendMessage( ChatColor.RED + "Don't worry we restored your original jar file.");
 								sender.sendMessage( ChatColor.RED + "Try redownloading this version yourself from: " + latest.getJar() );
 								sender.sendMessage( ChatColor.RED + "Details: " + latest.getHtmlUrl() );
 								sender.sendMessage( ChatColor.YELLOW + "----- ------------------- -----" );
