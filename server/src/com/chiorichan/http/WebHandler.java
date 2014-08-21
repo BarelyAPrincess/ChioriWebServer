@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.bus.bases.EventException;
 import com.chiorichan.bus.events.server.RenderEvent;

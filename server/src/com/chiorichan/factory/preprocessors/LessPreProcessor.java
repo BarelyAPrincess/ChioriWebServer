@@ -13,6 +13,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
 import com.chiorichan.Loader;
+import com.chiorichan.exceptions.ShellExecuteException;
 import com.chiorichan.factory.CodeMetaData;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -56,10 +57,21 @@ public class LessPreProcessor implements PreProcessor
 				
 				Gson gson = new GsonBuilder().create();
 				
+				try
+				{
+					code = new LessImportParser().runParser( code, new File( meta.fileName ).getParentFile().getAbsoluteFile() );
+				}
+				catch ( ShellExecuteException e )
+				{
+					e.printStackTrace();
+				}
+				
 				Map<String, Object> compilerOptions = Maps.newHashMap();
 				
 				compilerOptions.put( "filename", fileName );
 				compilerOptions.put( "compress", true );
+				
+				Loader.getLogger().debug( gson.toJson( compilerOptions ) );
 				
 				String script = "var parser = new(less.Parser)(" + gson.toJson( compilerOptions ) + ");";
 				script += "parser.parse(lessSource, function (e, tree) { try{source = tree.toCSS(" + gson.toJson( compilerOptions ) + ");}catch(ee){source = ee;}});";
@@ -88,14 +100,6 @@ public class LessPreProcessor implements PreProcessor
 		{
 			e.printStackTrace();
 			return null;
-		}
-	}
-	
-	public static class dummyJS
-	{
-		public static void print()
-		{
-			
 		}
 	}
 }

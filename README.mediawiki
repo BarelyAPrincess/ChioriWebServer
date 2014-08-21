@@ -26,7 +26,6 @@ Disclaimer: Be sure to backup your existing installations, We can't be held resp
 * Allow curtain events to be thrown on site Groovy files not just Plugins. ie. [siteroot]/com/chiorichan/events/UserLogginEvent.groovy or NotFoundEvent.groovy
 * Improve built-in file cache system
 * Implement SASS Preprocessor
-* Fix bugs in LESS Preprocessor
 
 =Repository Directory Structure=
 ==server==

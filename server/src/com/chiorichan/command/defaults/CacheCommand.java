@@ -5,7 +5,6 @@ import java.io.File;
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.bases.SentientHandler;
-import com.chiorichan.command.Command;
 import com.chiorichan.framework.Site;
 
 public class CacheCommand extends VanillaCommand
