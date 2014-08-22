@@ -8,3 +8,8 @@ dependencies
 {
 	compile rootProject
 }
+
+libsDirName = '../../build/dist'
+
+artifacts
+{ archives jar }

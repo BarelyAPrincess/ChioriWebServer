@@ -1,8 +1,7 @@
 <project name="ChioriWebServer" default="clean-build" basedir=".">
 	<target name="init">
-		<property name="src.dir"		value="server/src"/>
-		<property name="src.dir.jline"		value="jline/src"/>
-		<property name="src.dir.api"		value="api/src"/>
+		<property name="src.dir"		value="src/main/groovy"/>
+		<property name="src.dir.jline"		value="jline/src/main/java"/>
 		<property name="src.dir.plugins"	value="plugins"/>
 		<property name="build.dir"		value="build"/>
 		<property name="classes.dir"		value="${build.dir}/classes/server"/>
@@ -37,14 +36,12 @@
 		
 		<groovyc srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath" encoding="UTF8">
 			<src path="${src.dir.jline}"/>
-			<src path="${src.dir.api}"/>
 			<javac debug="on" deprecation="true" encoding="UTF8"/>
 		</groovyc>
 		
 		<copy todir="${classes.dir}">
 			<fileset dir="${src.dir}" excludes="**/*.java"/>
 			<fileset dir="${src.dir.jline}" excludes="**/*.java"/>
-			<fileset dir="${src.dir.api}" excludes="**/*.java"/>
 		</copy>
 		
 		<propertyfile file="${classes.dir}/com/chiorichan/metadata.properties">

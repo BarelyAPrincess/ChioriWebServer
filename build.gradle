@@ -2,6 +2,7 @@ apply plugin: 'eclipse'
 apply plugin: 'groovy'
 apply plugin: 'license'
 apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'maven'
 
 buildscript
 {
@@ -19,9 +20,17 @@ buildscript
 }
 
 sourceCompatibility = 1.7
-version = '8.1.0'
+group = 'com.chiorichan'
 
-configurations {}
+def rawVersion = '8.1.0'
+
+if ( System.getenv('BUILD_NUMBER') == null || System.getenv('BUILD_NUMBER').isEmpty() )
+	version = rawVersion + '-github'
+else
+	version = rawVersion + '-github-build-' + System.getenv('BUILD_NUMBER')
+
+distsDirName = 'dist'
+libsDirName = 'dist'
 
 license
 {
@@ -96,12 +105,58 @@ jar
 	{
 		attributes 'Implementation-Title': 'Chiori-chan\'s Web Server'
 		attributes 'Implementation-Version': version
+		attributes 'Implementation-Vendor-Id': 'chiorigreene@gmail.com'
 		attributes 'Main-Class': 'com.chiorichan.Loader'
 	}
 }
 
-task extract <<
-{
+task sourcesArchive(type: Zip){
+	classifier = 'sources'
+	from sourceSets.main.allSource
 }
 
-//jar.baseName = ''
+task javadocArchive(type: Zip, dependsOn: 'javadoc'){
+	classifier = 'javadoc'
+	from javadoc.destinationDir
+}
+/*
+task libsArchive(type: Zip){
+	classifier = 'libs'
+	from configurations.compile
+}
+*/
+task writeNewPom <<
+{
+	pom
+	{
+		project
+		{
+			inceptionYear '2013'
+			licenses
+			{
+				license
+				{
+					name 'Mozilla Public License, Version 2.0'
+					url 'http://mozilla.org/MPL/2.0/'
+					distribution 'repo'
+				}
+			}
+		}
+	}.writeTo("$buildDir/dist/pom.xml")
+}
+
+artifacts
+{ archives shadowJar, sourcesArchive, javadocArchive }
+
+allprojects
+{
+	tasks.withType(Zip)
+	{ task ->
+		task.doLast
+		{
+			ant.checksum file: it.archivePath
+		}
+	}
+}
+
+defaultTasks 'clean', 'writeNewPom', 'shadowJar', ':PermissionsEx:build', ':TemplatesPlugin:build', 'javadocArchive', 'sourcesArchive'

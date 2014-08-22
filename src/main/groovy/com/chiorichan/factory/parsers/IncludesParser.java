@@ -360,7 +360,6 @@ import java.io.File;
 import com.chiorichan.Loader;
 import com.chiorichan.exceptions.ShellExecuteException;
 import com.chiorichan.factory.CodeEvalFactory;
-import com.chiorichan.factory.HTMLCommentParser;
 import com.chiorichan.framework.Site;
 
 public class IncludesParser extends HTMLCommentParser

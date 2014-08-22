@@ -362,7 +362,7 @@ import org.apache.commons.io.FileUtils;
 
 import com.chiorichan.Loader;
 import com.chiorichan.exceptions.ShellExecuteException;
-import com.chiorichan.factory.BasicParser;
+import com.chiorichan.factory.parsers.BasicParser;
 
 public class LessImportParser extends BasicParser
 {
