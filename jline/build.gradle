@@ -1,0 +1,12 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+
+sourceCompatibility = 1.7
+
+repositories
+{ mavenCentral() }
+
+dependencies
+{
+	compile group: 'org.fusesource.jansi', name: 'jansi', version: '1.11'
+}
