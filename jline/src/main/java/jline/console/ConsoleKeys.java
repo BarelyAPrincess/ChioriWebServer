@@ -20,9 +20,6 @@ import java.util.Map;
 
 import jline.internal.Log;
 
-/**
- * @author Ståle W. Pedersen <stale.pedersen@jboss.org>
- */
 public class ConsoleKeys {
 
     private KeyMap keys;

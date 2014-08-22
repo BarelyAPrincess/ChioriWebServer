@@ -19,10 +19,6 @@ import jline.internal.TerminalLineSettings;
  * Linux and Macintosh OS X) support the <em>stty</em>), so this
  * implementation should work for an reasonable POSIX system.
  *
- * @author <a href="mailto:mwp1@cornell.edu">Marc Prud'hommeaux</a>
- * @author <a href="mailto:dwkemp@gmail.com">Dale Kemp</a>
- * @author <a href="mailto:jason@planet57.com">Jason Dillon</a>
- * @author <a href="mailto:jbonofre@apache.org">Jean-Baptiste Onofré</a>
  * @since 2.0
  */
 public class UnixTerminal
