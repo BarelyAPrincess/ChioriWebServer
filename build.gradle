@@ -21,6 +21,7 @@ buildscript
 
 sourceCompatibility = 1.7
 group = 'com.chiorichan'
+description = 'Chiori-chan\'s Web Server is a Java Based HTTP/TCP Server featuring Groovy Shell and a feature rich Plugin System'
 
 def rawVersion = '8.1.0'
 
@@ -169,4 +170,4 @@ allprojects
 	}
 }
 
-defaultTasks 'clean', 'writeNewPom', 'shadowJar', ':PermissionsEx:build', ':TemplatesPlugin:build', 'javadocArchive', 'sourcesArchive'
+defaultTasks 'clean', 'shadowJar', ':PermissionsEx:build', ':TemplatesPlugin:build', 'javadocArchive', 'sourcesArchive', 'writeNewPom'
