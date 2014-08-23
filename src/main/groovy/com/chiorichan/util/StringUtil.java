@@ -366,6 +366,8 @@ import java.util.regex.Pattern;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.Validate;
 
+import com.chiorichan.Loader;
+
 public class StringUtil
 {
 	
@@ -519,7 +521,7 @@ public class StringUtil
 		String normalizedText;
 		int index;
 		
-		if ( text == null )
+		if ( text == null || text.isEmpty() )
 		{
 			return text;
 		}
@@ -548,7 +550,7 @@ public class StringUtil
 		String normalizedText;
 		int index;
 		
-		if ( text == null )
+		if ( text == null || text.isEmpty() )
 		{
 			return text;
 		}
