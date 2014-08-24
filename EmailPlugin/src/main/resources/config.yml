@@ -1,0 +1,5 @@
+mail:
+  host: mail.example.com
+  login: john@example.com
+  password: johnsmith
+  smtpport: 25
