@@ -396,7 +396,7 @@ public class GSPInterpreter implements Interpreter
 			shell.setVariable( "__FILE__", meta.fileName );
 			
 			int fullFileIndex = 0;
-			String[] dontStartWith = new String[] { "println", "print", "echo", "def", "import", "if", "for", "do", "}", "else" };
+			String[] dontStartWith = new String[] { "println", "print", "echo", "def", "import", "if", "for", "do", "}", "else", "//", "/*", "\n", "\r" };
 			
 			StringBuilder output = new StringBuilder();
 			
@@ -421,7 +421,7 @@ public class GSPInterpreter implements Interpreter
 					boolean appendPrint = true;
 					
 					for ( String s : dontStartWith )
-						if ( fragment.trim().startsWith( s ) )
+						if ( fragment.trim().startsWith( s ) || fragment.startsWith( s ) || fragment.trim().isEmpty() )
 							appendPrint = false;
 					
 					if ( appendPrint )
