@@ -435,7 +435,7 @@ public class BuildArtifact
 		{
 			public List<String> affectedPaths;
 			public String commitId;
-			public int timestamp;
+			public long timestamp;
 			public Author author;
 			public String comment;
 			public String date;
