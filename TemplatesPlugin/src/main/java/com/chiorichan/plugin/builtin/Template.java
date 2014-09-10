@@ -115,7 +115,6 @@ public class Template extends JavaPlugin implements Listener
 			ob.append( "<body>\n" );
 			
 			String pageMark = "<!-- " + getConfig().getString( "config.defaultTag", "PAGE DATA" ) + " -->";
-			
 			String pageData = ( theme.isEmpty() ) ? pageMark : doInclude( theme, event );
 			String viewData = ( view.isEmpty() ) ? pageMark : doInclude( view, event );
 			

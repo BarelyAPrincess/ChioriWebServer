@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -11,8 +12,8 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.chiorichan.Loader;
 import com.chiorichan.InterpreterOverrides;
+import com.chiorichan.Loader;
 import com.chiorichan.exceptions.ShellExecuteException;
 import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.factory.CodeMetaData;
@@ -348,7 +349,8 @@ public class ExceptionPageUtils
 	public static String wrapAndEval( CodeEvalFactory factory, String html ) throws IOException, ShellExecuteException
 	{
 		String pageMark = "<!-- PAGE DATA -->";
-		String baseTemplate = new String( FileUtil.inputStream2Bytes( ExceptionPageUtils.class.getClassLoader().getResourceAsStream( "com/chiorichan/plugin/builtin/BaseTemplate.html" ) ), "UTF-8" );
+		InputStream is = ExceptionPageUtils.class.getClassLoader().getResourceAsStream( "BaseTemplate.html" );
+		String baseTemplate = ( is == null ) ? "" : new String( FileUtil.inputStream2Bytes( is ), "UTF-8" );
 		
 		CodeMetaData meta = new CodeMetaData();
 		meta.shell = "html";
