@@ -22,4 +22,5 @@
 /build/
 /manifest.mf
 /server.yaml
-/.gradle
+*.gradle
+/.metadata
