@@ -151,11 +151,15 @@ task writePropertiesFile <<
 	if ( System.getenv('BUILD_NUMBER') != null )
 	{
 		// If not null then we are running from the Jenkin's Build Server. So we need to update the build.properties
-		OutputStream out1 = new FileOutputStream( new File("./src/main/resources/com/chiorichan/metadata.properties") );
+		File f1 = new File("./src/main/resources/com/chiorichan/metadata.properties")
+		f1.createNewFile();
+		OutputStream out1 = new FileOutputStream( f1 );
 		props.store(out1, "Chiori-chan's Web Server Metadata Properties File - Used by the auto updater and Jenkins Build Server.");
 	}
 	
-	OutputStream out2 = new FileOutputStream( new File("./build/dist/build.properties") );
+	File f2 = new File("./build/dist/build.properties");
+	f2.createNewFile();
+	OutputStream out2 = new FileOutputStream( f2 );
 	props.store(out2, "Chiori-chan's Web Server Metadata Properties File - Used by the auto updater and Jenkins Build Server.");
 	
 }
