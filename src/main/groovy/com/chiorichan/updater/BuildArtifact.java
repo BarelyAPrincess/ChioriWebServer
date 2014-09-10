@@ -362,6 +362,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import com.chiorichan.ChatColor;
+import com.chiorichan.Loader;
 import com.chiorichan.updater.BuildArtifact.ChangeSet.ChangeSetDetails;
 
 public class BuildArtifact
@@ -505,7 +506,12 @@ public class BuildArtifact
 
 	public String getJar()
 	{
-		return getJar( "ChioriWebServer" );
+		String downloadUrl = getJar( "ChioriWebServer" );
+		
+		if ( downloadUrl == null )
+			downloadUrl = getJar( "workspace" );
+		
+		return downloadUrl;
 	}
 	
 	public String getJar( String artifactName )
@@ -514,7 +520,7 @@ public class BuildArtifact
 		
 		for ( ResultingArtifact ra : artifacts )
 		{
-			if ( ra.fileName.startsWith( artifactName ) && ra.fileName.endsWith( ".jar" ) )
+			if ( ra.fileName.startsWith( artifactName ) && ra.fileName.endsWith( "-all.jar" ) )
 			{
 				mainJar = url + "artifact/" + ra.relativePath;
 				break;
@@ -542,7 +548,12 @@ public class BuildArtifact
 	
 	public String getMD5File()
 	{
-		return getMD5File( "ChioriWebServer" );
+		String downloadUrl = getMD5File( "ChioriWebServer" );
+		
+		if ( downloadUrl == null )
+			downloadUrl = getMD5File( "workspace" );
+		
+		return downloadUrl;
 	}
 	
 	public String getMD5File( String artifactName )
