@@ -95,8 +95,15 @@ public class Template extends JavaPlugin implements Listener
 			for ( String tag : site.getMetatags() )
 				ob.append( tag + "\n" );
 			
+			boolean showCommons = !getConfig().getBoolean( "config.noCommons" );
+			
+			if ( fwVals.get( "commons" ) != null )
+				showCommons = StringUtil.isTrue( fwVals.get( "commons" ) );
+			else if ( fwVals.get( "noCommons" ) != null && StringUtil.isTrue( fwVals.get( "noCommons" ) ) )
+				showCommons = false;
+			
 			// Allow pages to disable the inclusion of common header
-			if ( ( fwVals.get( "noCommons" ) == null || !StringUtil.isTrue( fwVals.get( "noCommons" ) ) ) && !getConfig().getBoolean( "config.noCommons" ) )
+			if ( showCommons )
 			{
 				ob.append( doInclude( domainToPackage( site.getDomain() ) + ".includes.common", event ) + "\n" );
 				ob.append( doInclude( domainToPackage( site.getDomain() ) + ".includes." + getPackageName( theme ), event ) + "\n" );
