@@ -1,3 +1,5 @@
+import java.text.SimpleDateFormat;
+
 apply plugin: 'eclipse'
 apply plugin: 'groovy'
 apply plugin: 'license'
@@ -136,6 +138,28 @@ task libsArchive(type: Zip){
 	from configurations.compile
 }
 */
+task writePropertiesFile <<
+{
+	SimpleDateFormat sdf = new SimpleDateFormat( "EEE, d MMM yyyy HH:mm:ss Z" );
+	
+	Properties props = new Properties();
+	props.load( new FileInputStream( new File( "./src/main/resources/com/chiorichan/metadata.properties" ) ) );
+	props.setProperty("project.builtOn", sdf.format( new Date() ));
+	props.setProperty("project.build", System.getenv('BUILD_NUMBER') ?: "0");
+	props.setProperty("project.version", version);
+	
+	if ( System.getenv('BUILD_NUMBER') != null )
+	{
+		// If not null then we are running from the Jenkin's Build Server. So we need to update the build.properties
+		OutputStream out1 = new FileOutputStream( new File("./src/main/resources/com/chiorichan/metadata.properties") );
+		props.store(out1, "Chiori-chan's Web Server Metadata Properties File - Used by the auto updater and Jenkins Build Server.");
+	}
+	
+	OutputStream out2 = new FileOutputStream( new File("./build/dist/build.properties") );
+	props.store(out2, "Chiori-chan's Web Server Metadata Properties File - Used by the auto updater and Jenkins Build Server.");
+	
+}
+
 task writeNewPom <<
 {
 	pom
@@ -170,4 +194,4 @@ allprojects
 	}
 }
 
-defaultTasks 'clean', 'shadowJar', ':PermissionsEx:build', ':TemplatesPlugin:build', 'javadocArchive', 'sourcesArchive', 'writeNewPom'
+defaultTasks 'clean', 'writePropertiesFile', 'shadowJar', ':PermissionsEx:build', ':TemplatesPlugin:build', 'javadocArchive', 'sourcesArchive', 'writeNewPom'

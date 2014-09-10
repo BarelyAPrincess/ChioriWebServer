@@ -369,6 +369,7 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.chiorichan.Loader;
 import com.chiorichan.framework.WebUtils;
 import com.google.gson.Gson;
 import com.google.gson.JsonDeserializationContext;
@@ -485,7 +486,7 @@ public class ChioriDLUpdaterService
 	
 	public Properties fetchBuildProperties( String slug ) throws IOException
 	{
-		URL url = new URL( "http", host, API_PREFIX_ARTIFACT + slug + "/artifact/build/jar/build.properties" );
+		URL url = new URL( "http", host, API_PREFIX_ARTIFACT + slug + "/artifact/build/dist/build.properties" );
 		InputStreamReader reader = null;
 		Properties prop = new Properties();
 		
