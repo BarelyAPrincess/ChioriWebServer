@@ -70,3 +70,6 @@ framework:
     defaultTitle: Unnamed Chiori-chan's Web Server Site
     autoCreateSubdomains: true
     subdomainsDefaultToRoot: false
+advanced:
+  processors:
+    useFastGraphics: false

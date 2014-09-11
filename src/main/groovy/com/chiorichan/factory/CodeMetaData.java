@@ -355,10 +355,16 @@
  */
 package com.chiorichan.factory;
 
+import java.util.Map;
+
+import com.chiorichan.framework.Site;
+
 public class CodeMetaData
 {
 	public String shell;
 	public String fileName;
 	public String source;
 	public String contentType;
+	public Site site;
+	public Map<String, String> params;
 }
