@@ -340,7 +340,40 @@ Added a build.xml file so the project can not be built with Apache Ant 1.8. Swit
 * Updates to PluginManager, getPluginByName method.
 * Updates to SeaShells and how they handle exceptions.
 * Added Exception and Error events for http requests.
-* Offica release of Version 8.0.0
+* Offical release of Version 8.0.0
+===Subversion 1===
+====Release 0====
+* BUG FIX! Rewrites to CodeEvalFactory over a major design flaw
+* BIG FIX! Auto Updater was broken
+* BUG FIX! to Exceptions
+* BUG FIX! Timezone is now forced to UTC when sent to browser
+* BUG FIX! Proper exception is thrown if you forget to close a GSP Marker
+* BIG FIX! to common annotations
+* BUG FIX! to Templates Plugin with BaseTemplate.html
+* EXPANSION! to noCommons in the Templates plugin
+* EXPANSION! to date() method
+* EXPANSION! Added additional conditions to the GSP Interpreter
+* NEW FEATURE! CoffeeScripts can now be server side compiled with a PreProcessor
+* NEW FEATURE! Implemented File Uploaded a.k.a. Multipart Form Requests
+* NEW FEATURE! HTMLCommentParsers
+* NEW FEATURE! PreProcessors, Interpreters and PostProcessors which can manipulate requests server-side
+* NEW FEATURE! [WIP] Less PreProcessor, currently buggy
+* NEW FEATURE! Image PostProcessor, can resize images using params
+* NEW FEATURE! Implemented the site command which can create, delete and view sites
+* NEW METHOD! dateToEpoch(date), allows you to convert M/d/YYYY to epoch
+* NEW METHOD! castToLong() method in ObjectUtil
+* NEW METHOD! trim() to StringUtil
+* NEW METHOD! getAllTypes() to ContentTypes class
+* ADDED! url_to([subdomain]) to HTMLCommentParsers
+* ADDED! include(<package>) to HTMLCommentParsers
+* ADDED! url_to_[login|logout]() to HTMLCommentParsers
+* ADDED! optional param (altTableClass) to createTable method under WebUtils class
+* ADDED! crude cache system with command. Needs much more work
+* ADDED! Mozilla Rhino Library for non-OpenJDK compiles
+* ADDED! LICENSE file
+* ADDED! HEADER file
+* UPDATED! Guava library from v14.0.1 to v17.0.0
+* SWITCHED! to the Gradle Build System from Apache Ant
 
 =How To Build=
 You can either build Chiori Web Server with Eclipse IDE or using the included build.xml with Apache ANT 1.8. It should be as simple as executing "ant clean-build". If you would like to also compile the included plugins, be sure to also execute ant "compile-plugins" after you compile the main server.
