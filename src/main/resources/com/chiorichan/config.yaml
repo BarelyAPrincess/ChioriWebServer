@@ -72,4 +72,11 @@ framework:
     subdomainsDefaultToRoot: false
 advanced:
   processors:
+    imageProcessorEnabled: true
     useFastGraphics: false
+    minifierJSProcessorEnabled: true
+    lessProcessorEnabled: true
+    coffeeProcessorEnabled: true
+  interpreters:
+    gspEnabled: true
+    groovyEnabled: true

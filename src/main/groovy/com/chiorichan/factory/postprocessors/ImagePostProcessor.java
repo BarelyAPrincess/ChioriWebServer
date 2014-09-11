@@ -37,9 +37,9 @@ public class ImagePostProcessor implements PostProcessor
 				
 				for ( String p : params )
 				{
-					if ( p.toLowerCase().startsWith( "x" ) && p.length() > 1 )
+					if ( ( p.toLowerCase().startsWith( "x" ) || p.toLowerCase().startsWith( "w" ) || p.toLowerCase().startsWith( "width" ) ) && p.length() > 1 )
 						x = Integer.parseInt( p.substring( 1 ) );
-					else if ( p.toLowerCase().startsWith( "y" ) && p.length() > 1 )
+					else if ( ( p.toLowerCase().startsWith( "y" ) || p.toLowerCase().startsWith( "h" ) || p.toLowerCase().startsWith( "height" ) ) && p.length() > 1 )
 						y = Integer.parseInt( p.substring( 1 ) );
 					else if ( p.toLowerCase().equals( "thumb" ) )
 					{
