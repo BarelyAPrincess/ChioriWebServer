@@ -359,9 +359,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 /**
@@ -406,6 +409,24 @@ public class ContentTypes
 		{
 			Loader.getLogger().severe( "Could not load the Content-Type properties file, exact error was: " + e.getMessage() );
 		}
+	}
+	
+	public static String[] getAllTypes()
+	{
+		return types.values().toArray( new String[0] );
+	}
+	
+	public static String[] getAllTypes( String search )
+	{
+		List<String> rtn = Lists.newArrayList();
+		
+		for ( Entry<String, String> e : types.entrySet() )
+		{
+			if ( e.getKey().toLowerCase().contains( search ) || e.getValue().toLowerCase().contains( search ) )
+				rtn.add( e.getValue() );
+		}
+		
+		return rtn.toArray( new String[0] );
 	}
 	
 	public static String getContentType( File file )
