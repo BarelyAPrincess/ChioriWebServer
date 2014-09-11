@@ -390,6 +390,7 @@ import com.chiorichan.factory.preprocessors.PreProcessor;
 import com.chiorichan.framework.FileInterpreter;
 import com.chiorichan.framework.ScriptingBaseGroovy;
 import com.chiorichan.framework.Site;
+import com.chiorichan.http.WebInterpreter;
 import com.chiorichan.util.StringUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -537,11 +538,19 @@ public class CodeEvalFactory
 	public String eval( FileInterpreter fi, Site site ) throws ShellExecuteException
 	{
 		CodeMetaData codeMeta = new CodeMetaData();
+		if ( fi instanceof WebInterpreter )
+			codeMeta.params = ( (WebInterpreter) fi ).getRewriteParams();
+		else
+			codeMeta.params = fi.getParams();
 		
+		return eval( fi, codeMeta, site );
+	}
+	
+	public String eval( FileInterpreter fi, CodeMetaData codeMeta, Site site ) throws ShellExecuteException
+	{
 		codeMeta.contentType = fi.getContentType();
 		codeMeta.shell = fi.getParams().get( "shell" );
 		codeMeta.fileName = ( fi.getFile() != null ) ? fi.getFile().getAbsolutePath() : fi.getParams().get( "file" );
-		codeMeta.params = fi.getParams();
 		
 		try
 		{

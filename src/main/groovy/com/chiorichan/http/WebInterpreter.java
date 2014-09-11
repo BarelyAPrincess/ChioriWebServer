@@ -631,7 +631,7 @@ public class WebInterpreter extends FileInterpreter
 										paramString = paramString.substring( 0, paramString.length() - ext.length() - 1 );
 									
 									if ( !paramString.isEmpty() )
-										interpParams.put( "serverSideOptions", paramString );
+										rewriteParams.put( "serverSideOptions", paramString );
 								}
 							}
 						}

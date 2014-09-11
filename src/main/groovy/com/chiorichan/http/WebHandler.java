@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2014 Chiori-chan. All Right Reserved.
- *
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -257,6 +256,9 @@ public class WebHandler implements HttpHandler
 				CodeMetaData meta = new CodeMetaData();
 				meta.shell = "embedded";
 				meta.contentType = fi.getContentType();
+				meta.params = Maps.newHashMap();
+				meta.params.putAll( fi.getRewriteParams() );
+				meta.params.putAll( request.getGetMap() );
 				source.append( factory.eval( html, meta, currentSite ) );
 			}
 		}
@@ -269,7 +271,11 @@ public class WebHandler implements HttpHandler
 		{
 			if ( !file.isEmpty() )
 			{
-				source.append( factory.eval( fi, currentSite ) );
+				CodeMetaData meta = new CodeMetaData();
+				meta.params = Maps.newHashMap();
+				meta.params.putAll( fi.getRewriteParams() );
+				meta.params.putAll( request.getGetMap() );
+				source.append( factory.eval( fi, meta, currentSite ) );
 			}
 		}
 		catch ( ShellExecuteException e )
