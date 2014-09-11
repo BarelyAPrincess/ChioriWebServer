@@ -44,6 +44,7 @@ public class ImagePostProcessor implements PostProcessor
 					else if ( p.toLowerCase().equals( "thumb" ) )
 					{
 						x = 150;
+						y = 0;
 						break;
 					}
 				}
@@ -60,6 +61,12 @@ public class ImagePostProcessor implements PostProcessor
 			
 			if ( meta.params.get( "h" ) != null )
 				y = Integer.parseInt( meta.params.get( "h" ) );
+			
+			if ( meta.params.get( "thumb" ) != null )
+			{
+				x = 150;
+				y = 0;
+			}
 		}
 		
 		try
