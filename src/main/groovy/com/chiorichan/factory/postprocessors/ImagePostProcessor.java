@@ -41,6 +41,11 @@ public class ImagePostProcessor implements PostProcessor
 						x = Integer.parseInt( p.substring( 1 ) );
 					else if ( p.toLowerCase().startsWith( "y" ) && p.length() > 1 )
 						y = Integer.parseInt( p.substring( 1 ) );
+					else if ( p.toLowerCase().equals( "thumb" ) )
+					{
+						x = 150;
+						break;
+					}
 				}
 			}
 			
@@ -89,7 +94,7 @@ public class ImagePostProcessor implements PostProcessor
 					h1 = y;
 				}
 				
-				if ( w1 < 1 || h1 < 1 )
+				if ( w1 < 1 || h1 < 1 || ( w1 == w && h1 == h ) )
 					return null;
 				
 				Image image = buf.getScaledInstance( MathUtils.round( w1 ), MathUtils.round( h1 ), Loader.getConfig().getBoolean( "advanced.processors.useFastGraphics", true ) ? Image.SCALE_FAST : Image.SCALE_SMOOTH );
