@@ -367,6 +367,7 @@ import java.util.Map.Entry;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang3.StringUtils;
 
+import com.chiorichan.ContentTypes;
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.exceptions.HttpErrorException;
@@ -559,7 +560,7 @@ public class WebInterpreter extends FileInterpreter
 						if ( f.exists() )
 						{
 							String filename = f.getName().toLowerCase();
-							if ( filename.endsWith( ".chi" ) || filename.endsWith( ".gsp" ) || filename.endsWith( ".jsp" ) || filename.endsWith( ".groovy" ) || filename.endsWith( ".html" ) || filename.endsWith( ".htm" ) )
+							if ( filename.endsWith( ".chi" ) || filename.endsWith( ".groovy" ) || filename.endsWith( ".html" ) || filename.endsWith( ".htm" ) )
 							{
 								selectedFile = f;
 								break;
@@ -595,13 +596,43 @@ public class WebInterpreter extends FileInterpreter
 							if ( f.exists() )
 							{
 								String filename = f.getName().toLowerCase();
-								if ( filename.endsWith( ".chi" ) || filename.endsWith( ".groovy" ) || filename.endsWith( ".html" ) || filename.endsWith( ".htm" ) )
+								if ( filename.endsWith( ".chi" ) || filename.endsWith( ".gsp" ) || filename.endsWith( ".jsp" ) || filename.endsWith( ".groovy" ) || filename.endsWith( ".html" ) || filename.endsWith( ".htm" ) )
 								{
 									dest = f;
 									break;
 								}
 								else
 									dest = f;
+							}
+						}
+					
+					// Attempt to determine is it's possible that the uri is a name without extension but it also contains server-side options
+					// For Example: uri(http://images.example.com/logo_x150.jpg) = file([root]/images/logo.jpg) and resize to 150 width.
+					fileFilter = new WildcardFileFilter( "*" ); // dest.getName() + "_*"
+					files = dest.getParentFile().listFiles( fileFilter );
+					
+					if ( files != null && files.length > 0 )
+						for ( File f : files )
+						{
+							if ( f.exists() && !f.isDirectory() )
+							{
+								String destFileName = dest.getName();
+								String fileNameFull = f.getName();
+								String fileName = ( fileNameFull.contains( "." ) ) ? fileNameFull.substring( 0, fileNameFull.lastIndexOf( "." ) ) : fileNameFull;
+								String ext = ( fileNameFull.contains( "." ) ) ? fileNameFull.substring( fileNameFull.lastIndexOf( "." ) + 1 ) : "";
+								
+								if ( destFileName.startsWith( fileName ) && destFileName.endsWith( ext ) )
+								{
+									dest = f;
+									
+									String paramString = destFileName.substring( fileName.length() );
+									
+									if ( !ext.isEmpty() )
+										paramString = paramString.substring( 0, paramString.length() - ext.length() - 1 );
+									
+									if ( !paramString.isEmpty() )
+										interpParams.put( "serverSideOptions", paramString );
+								}
 							}
 						}
 				}
