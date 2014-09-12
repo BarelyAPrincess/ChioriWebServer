@@ -47,13 +47,16 @@ public class UpdateCommand extends ChioriCommand
 	{
 		if ( !Loader.getAutoUpdater().isEnabled() )
 		{
-			sender.sendMessage( ChatColor.RED + "I'm sorry but updates are disabled per configs!" );
+			if ( Loader.getConfig().getBoolean( "auto-updater.enabled" ) )
+				sender.sendMessage( ChatColor.GOLD + "" + ChatColor.NEGATIVE + "Updates are currently on hold until a server restart is performed." );
+			else
+				sender.sendMessage( ChatColor.RED + "" + ChatColor.NEGATIVE + "I'm sorry but updates are disabled per configs!" );
 			return true;
 		}
 		
 		if ( Loader.getConfig().getBoolean( "auto-updater.console-only" ) && !( sender instanceof ThreadCommandReader ) )
 		{
-			sender.sendMessage( ChatColor.RED + "I'm sorry but updates can only be performed from the console!" );
+			sender.sendMessage( ChatColor.RED + "" + ChatColor.NEGATIVE + "I'm sorry but updates can only be performed from the console!" );
 			return true;
 		}
 		
