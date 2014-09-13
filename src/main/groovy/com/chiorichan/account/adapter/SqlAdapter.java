@@ -87,7 +87,7 @@ public class SqlAdapter implements AccountLookupAdapter
 			}
 			while ( rs.next() );
 		}
-		catch ( SQLException | JSONException e )
+		catch ( SQLException e )
 		{
 			return metas;
 		}
@@ -165,7 +165,7 @@ public class SqlAdapter implements AccountLookupAdapter
 			
 			return meta;
 		}
-		catch ( SQLException | JSONException e )
+		catch ( SQLException e )
 		{
 			throw new LoginException( e );
 		}

@@ -39,8 +39,8 @@ import com.chiorichan.exceptions.ShellExecuteException;
 import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.factory.CodeMetaData;
 import com.chiorichan.file.YamlConfiguration;
+import com.chiorichan.http.Routes;
 import com.chiorichan.util.FileUtil;
-import com.chiorichan.util.StringUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -61,6 +61,7 @@ public class Site
 	protected File filePath = null;
 	protected File cacheDir = null;
 	protected List<String> cachePatterns = Lists.newArrayList();
+	protected Routes routes = null;
 	
 	// Binding and evaling for use inside each site for executing site scripts outside of web requests.
 	Binding binding = new Binding();
@@ -741,5 +742,13 @@ public class Site
 	public List<String> getCachePatterns()
 	{
 		return cachePatterns;
+	}
+	
+	public Routes getRoutes()
+	{
+		if ( routes == null )
+			routes = new Routes( this );
+		
+		return routes;
 	}
 }

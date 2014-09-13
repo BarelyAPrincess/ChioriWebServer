@@ -54,6 +54,7 @@ public class Loader
 {
 	public static final String BROADCAST_CHANNEL_ADMINISTRATIVE = "chiori.broadcast.admin";
 	public static final String BROADCAST_CHANNEL_USERS = "chiori.broadcast.user";
+	public static final String FILE_SEPERATOR = File.separator;
 	
 	private static AutoUpdater updater = null;
 	private static YamlConfiguration configuration;

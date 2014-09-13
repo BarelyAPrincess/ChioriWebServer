@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.gradle.jarjar.com.google.common.collect.Maps;
 import org.json.JSONException;
 
 import vnet.java.util.MySQLUtils;
@@ -434,9 +435,24 @@ public class DatabaseEngine
 		return result;
 	}
 	
-	public static LinkedHashMap<String, Object> convertRow( ResultSet rs ) throws SQLException, JSONException
+	public static Map<String, String> toStringsMap( ResultSet rs ) throws SQLException
 	{
-		LinkedHashMap<String, Object> result = new LinkedHashMap<String, Object>();
+		Map<String, Object> source = convertRow( rs );
+		Map<String, String> result = Maps.newLinkedHashMap();
+		
+		for ( Entry<String, Object> e : source.entrySet() )
+		{
+			String val = ObjectUtil.castToString( e.getValue() );
+			if ( val != null )
+				result.put( e.getKey(), val );
+		}
+		
+		return result;
+	}
+	
+	public static Map<String, Object> convertRow( ResultSet rs ) throws SQLException
+	{
+		Map<String, Object> result = Maps.newLinkedHashMap();
 		ResultSetMetaData rsmd = rs.getMetaData();
 		
 		int numColumns = rsmd.getColumnCount();
@@ -517,8 +533,6 @@ public class DatabaseEngine
 				result.put( column_name, rs.getObject( column_name ) );
 			}
 		}
-		
-		// Loader.getLogger().info( result.toString() );
 		
 		return result;
 	}

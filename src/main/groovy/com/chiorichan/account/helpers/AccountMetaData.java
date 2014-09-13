@@ -91,7 +91,7 @@ public class AccountMetaData
 			return (Boolean) obj;
 	}
 	
-	public void setAll( LinkedHashMap<String, Object> data )
+	public void setAll( Map<String, Object> data )
 	{
 		metaData.putAll( data );
 	}

@@ -199,7 +199,7 @@ public class ConfigurationManagerWrapper
 				return defop;
 			}
 		}
-		catch ( SQLException | JSONException e )
+		catch ( SQLException e )
 		{
 			e.printStackTrace();
 			return defaultValue;

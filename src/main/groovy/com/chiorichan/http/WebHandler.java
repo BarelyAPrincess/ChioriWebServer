@@ -173,7 +173,7 @@ public class WebHandler implements HttpHandler
 			return;
 		
 		// Throws IOException and HttpErrorException
-		WebInterpreter fi = new WebInterpreter( request );
+		WebInterpreter fi = new WebInterpreter( request, currentSite.getRoutes() );
 		
 		Loader.getLogger().info( "Request '" + subdomain + "." + domain + "' '" + uri + "' '" + fi.toString() + "'" );
 		
