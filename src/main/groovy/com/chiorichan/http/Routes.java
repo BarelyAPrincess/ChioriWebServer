@@ -137,12 +137,12 @@ public class Routes
 		{
 			String prop = params.get( "page" );
 			
-			if ( prop == null || prop.isEmpty() )
+			if ( prop == null )
 				prop = params.get( "pattern" );
 			
-			if ( prop == null || prop.isEmpty() )
+			if ( prop == null )
 			{
-				Loader.getLogger().warning( "The `pattern` attibute was empty for route '" + this + "'. Unusable!" );
+				Loader.getLogger().warning( "The `pattern` attibute was null for route '" + this + "'. Unusable!" );
 				return null;
 			}
 			
