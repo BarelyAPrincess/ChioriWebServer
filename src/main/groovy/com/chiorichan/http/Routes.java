@@ -7,8 +7,6 @@ import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -22,25 +20,46 @@ import com.google.common.collect.Sets;
 
 public class Routes
 {
+	/**
+	 * Prevents file and sql lag from reloading the routes for every dozen requests made within a small span of time.
+	 */
+	private long lastRequest = 0;
+	private Set<Route> routes = Sets.newHashSet();
 	private Site site;
-	private int cachedCount = 0;
-	private Set<Route> fileBasedRoutes = Sets.newHashSet();
 	
 	public enum RouteType
 	{
 		NOTSET(), SQL(), FILE();
+		
+		public String toString()
+		{
+			switch ( this )
+			{
+				case FILE:
+					return "File";
+				case SQL:
+					return "Sql";
+				default:
+					return "Not Set";
+			}
+		}
 	}
 	
 	public class Route
 	{
 		protected RouteType type = RouteType.NOTSET;
-		protected Map<String, String> params;
+		protected Map<String, String> params = Maps.newLinkedHashMap();
 		protected Map<String, String> rewrites = Maps.newHashMap();
 		
 		protected Route(ResultSet rs) throws SQLException
 		{
 			type = RouteType.SQL;
 			params = DatabaseEngine.toStringsMap( rs );
+		}
+		
+		public String toString()
+		{
+			return "Type: " + type + ", Params: " + params;
 		}
 		
 		/**
@@ -53,27 +72,38 @@ public class Routes
 			if ( args == null || args.isEmpty() )
 				throw new IOException( "args can't be null or empty" );
 			
-			Pattern p = Pattern.compile( "(.*)[: ]?[\"']?(.*)['\"]?" ); // TODO
 			type = RouteType.FILE;
 			
 			for ( String o : args.split( "," ) )
 			{
+				String key = null;
+				String val = null;
+				
 				o = o.trim();
 				
-				Matcher m = p.matcher( o );
-				if ( m.find() )
+				if ( o.contains( ":" ) )
 				{
-					String key = m.group( 0 );
+					key = o.substring( 0, o.indexOf( ":" ) );
+					val = o.substring( o.indexOf( ":" ) + 1 );
+				}
+				else if ( ( !o.contains( "\"" ) && !o.contains( "'" ) ) || ( o.contains( "\"" ) && o.indexOf( " " ) < o.indexOf( "\"" ) ) || ( o.contains( "'" ) && o.indexOf( " " ) < o.indexOf( "'" ) ) )
+				{
+					key = o.substring( 0, o.indexOf( " " ) );
+					val = o.substring( o.indexOf( " " ) + 1 );
+				}
+				
+				if ( key != null && val != null )
+				{
+					key = StringUtils.trimToEmpty( key.toLowerCase() );
+					val = StringUtils.trimToEmpty( val );
 					
-					switch ( key )
-					{
-						case "pattern":
-							key = "page";
-						case "to":
-							key = "file";
-					}
+					val = StringUtils.removeStart( val, "\"" );
+					val = StringUtils.removeStart( val, "'" );
 					
-					params.put( key, m.group( 1 ) );
+					val = StringUtils.removeEnd( val, "\"" );
+					val = StringUtils.removeEnd( val, "'" );
+					
+					params.put( key, val );
 				}
 			}
 			
@@ -106,6 +136,15 @@ public class Routes
 		public String match( String domain, String subdomain, String uri )
 		{
 			String prop = params.get( "page" );
+			
+			if ( prop == null || prop.isEmpty() )
+				prop = params.get( "pattern" );
+			
+			if ( prop == null || prop.isEmpty() )
+			{
+				Loader.getLogger().warning( "The `pattern` attibute was empty for route '" + this + "'. Unusable!" );
+				return null;
+			}
 			
 			if ( prop.startsWith( "/" ) )
 			{
@@ -170,23 +209,21 @@ public class Routes
 	
 	public Route searchRoutes( String uri, String domain, String subdomain ) throws IOException
 	{
-		Set<Route> routes = new HashSet<Route>();
+		File routesFile = new File( Loader.getWebRoot() + Loader.PATH_SEPERATOR + site.getRoot() + Loader.PATH_SEPERATOR + "routes" );
 		
-		File routesFile = new File( site.getRoot() + Loader.FILE_SEPERATOR + "routes" );
-		
-		try
+		if ( routes.size() < 1 || lastRequest - System.currentTimeMillis() > 1000 )
 		{
-			if ( fileBasedRoutes.size() < 1 || cachedCount > 5 )
+			try
 			{
 				if ( routesFile.exists() )
 				{
-					cachedCount = 0;
+					routes.clear();
 					String contents = FileUtils.readFileToString( routesFile );
 					for ( String l : contents.split( "\n" ) )
 					{
 						try
 						{
-							fileBasedRoutes.add( new Route( l ) );
+							routes.add( new Route( l ) );
 						}
 						catch ( IOException e1 )
 						{	
@@ -195,32 +232,30 @@ public class Routes
 					}
 				}
 			}
-			cachedCount++;
-		}
-		catch ( IOException e )
-		{
-			e.printStackTrace();
-		}
-		
-		routes.addAll( fileBasedRoutes );
-		
-		try
-		{
-			DatabaseEngine sql = Loader.getPersistenceManager().getDatabase();
-			ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE (site = '" + subdomain + "' OR site = '') AND domain = '" + domain + "' UNION SELECT * FROM `pages` WHERE (site = '" + subdomain + "' OR site = '') AND domain = '';" );
-			if ( sql.getRowCount( rs ) > 0 )
+			catch ( IOException e )
 			{
-				do
+				e.printStackTrace();
+			}
+			
+			try
+			{
+				DatabaseEngine sql = Loader.getPersistenceManager().getDatabase();
+				ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE (site = '" + subdomain + "' OR site = '') AND domain = '" + domain + "' UNION SELECT * FROM `pages` WHERE (site = '" + subdomain + "' OR site = '') AND domain = '';" );
+				if ( sql.getRowCount( rs ) > 0 )
 				{
-					routes.add( new Route( rs ) );
+					do
+					{
+						routes.add( new Route( rs ) );
+					}
+					while ( rs.next() );
 				}
-				while ( rs.next() );
+			}
+			catch ( SQLException e )
+			{
+				throw new IOException( e );
 			}
 		}
-		catch ( SQLException e )
-		{
-			throw new IOException( e );
-		}
+		lastRequest = System.currentTimeMillis();
 		
 		if ( routes.size() > 0 )
 		{
