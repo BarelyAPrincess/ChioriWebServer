@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.gradle.jarjar.com.google.common.collect.Maps;
 import org.json.JSONException;
 
 import vnet.java.util.MySQLUtils;
@@ -32,6 +31,7 @@ import vnet.java.util.MySQLUtils;
 import com.chiorichan.Loader;
 import com.chiorichan.util.ObjectUtil;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.mysql.jdbc.exceptions.jdbc4.CommunicationsException;
 import com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException;
 
