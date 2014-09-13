@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2014 Chiori-chan. All Right Reserved.
- *
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -209,11 +208,13 @@ public class WebHandler implements HttpHandler
 		request.putServerVar( ServerVars.DOCUMENT_ROOT, docRoot );
 		
 		sess.setGlobal( "_SERVER", request.getServerStrings() );
-		sess.setGlobal( "_REQUEST", request.getRequestMap() );
 		sess.setGlobal( "_POST", request.getPostMap() );
 		sess.setGlobal( "_GET", request.getGetMap() );
 		sess.setGlobal( "_REWRITE", request.getRewriteMap() );
 		sess.setGlobal( "_FILES", request.getUploadedFiles() );
+		
+		if ( Loader.getConfig().getBoolean( "advanced.security.requestMapEnabled", true ) )
+			sess.setGlobal( "_REQUEST", request.getRequestMap() );
 		
 		StringBuilder source = new StringBuilder();
 		CodeEvalFactory factory = sess.getCodeFactory();

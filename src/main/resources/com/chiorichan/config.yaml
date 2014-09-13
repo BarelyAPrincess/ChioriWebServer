@@ -80,3 +80,5 @@ advanced:
   interpreters:
     gspEnabled: true
     groovyEnabled: true
+  security:
+    requestMapEnabled: true
