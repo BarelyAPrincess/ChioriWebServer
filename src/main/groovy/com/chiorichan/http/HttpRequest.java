@@ -38,13 +38,12 @@ import com.sun.net.httpserver.HttpExchange;
 
 public class HttpRequest
 {
-	protected Map<String, String> rewriteVars = Maps.newLinkedHashMap();
 	protected Map<ServerVars, Object> serverVars = Maps.newLinkedHashMap();
 	
 	private HttpExchange http;
 	private PersistentSession sess = null;
 	private HttpResponse response;
-	private Map<String, String> getMap, postMap;
+	private Map<String, String> getMap, postMap, rewriteMap = Maps.newLinkedHashMap();
 	private int requestTime = 0;
 	private Map<String, UploadedFile> uploadedFiles = new HashMap<String, UploadedFile>();
 	
@@ -202,6 +201,9 @@ public class HttpRequest
 		
 		if ( val == null && postMap != null )
 			val = postMap.get( key );
+		
+		if ( val == null && rewriteMap != null )
+			val = rewriteMap.get( key );
 		
 		if ( val == null && rtnNull )
 			return null;
@@ -456,6 +458,9 @@ public class HttpRequest
 		if ( postMap != null )
 			requestMap.putAll( postMap );
 		
+		if ( rewriteMap != null )
+			requestMap.putAll( rewriteMap );
+		
 		return requestMap;
 	}
 	
@@ -556,9 +561,9 @@ public class HttpRequest
 		return server;
 	}
 	
-	public Map<String, String> getRewriteVars()
+	public Map<String, String> getRewriteMap()
 	{
-		return rewriteVars;
+		return rewriteMap;
 	}
 	
 	protected void putServerVar( ServerVars type, Object value )
@@ -571,7 +576,12 @@ public class HttpRequest
 	
 	protected void putRewriteParam( String key, String val )
 	{
-		rewriteVars.put( key, val );
+		rewriteMap.put( key, val );
+	}
+	
+	protected void putRewriteParams( Map<String, String> map )
+	{
+		rewriteMap.putAll( map );
 	}
 	
 	public Map<String, UploadedFile> getUploadedFiles()

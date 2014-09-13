@@ -177,7 +177,7 @@ public class WebHandler implements HttpHandler
 		
 		Loader.getLogger().info( "Request '" + subdomain + "." + domain + "' '" + uri + "' '" + fi.toString() + "'" );
 		
-		request.rewriteVars.putAll( fi.getRewriteParams() );
+		request.putRewriteParams( fi.getRewriteParams() );
 		
 		response.setContentType( fi.getContentType() );
 		response.setEncoding( fi.getEncoding() );
@@ -212,7 +212,7 @@ public class WebHandler implements HttpHandler
 		sess.setGlobal( "_REQUEST", request.getRequestMap() );
 		sess.setGlobal( "_POST", request.getPostMap() );
 		sess.setGlobal( "_GET", request.getGetMap() );
-		sess.setGlobal( "_REWRITE", request.getRewriteVars() );
+		sess.setGlobal( "_REWRITE", request.getRewriteMap() );
 		sess.setGlobal( "_FILES", request.getUploadedFiles() );
 		
 		StringBuilder source = new StringBuilder();
