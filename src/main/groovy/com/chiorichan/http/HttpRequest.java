@@ -12,6 +12,7 @@ package com.chiorichan.http;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URLDecoder;
 import java.util.Collection;
 import java.util.HashMap;
@@ -245,9 +246,16 @@ public class HttpRequest
 		return response;
 	}
 	
+	/**
+	 * getPath() method was removing the beginning of a uri if it started with a double slash ie. //pages/about.gsp
+	 * This method might need some work up to make it more reliable.
+	 */
 	public String getURI()
 	{
-		String uri = http.getRequestURI().getPath();
+		String uri = http.getRequestURI().toString();
+		
+		if ( uri.contains( "?" ) )
+			uri = uri.substring( 0, uri.indexOf( "?" ) );
 		
 		if ( uri.startsWith( "/" ) )
 			uri = uri.substring( 1 );
