@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
@@ -15,6 +15,7 @@ import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.framework.Site;
 import com.chiorichan.util.StringUtil;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -135,10 +136,10 @@ public class Routes
 		
 		public String match( String domain, String subdomain, String uri )
 		{
-			String prop = params.get( "page" );
+			String prop = params.get( "pattern" );
 			
 			if ( prop == null )
-				prop = params.get( "pattern" );
+				prop = params.get( "page" );
 			
 			if ( prop == null )
 			{
@@ -146,37 +147,51 @@ public class Routes
 				return null;
 			}
 			
+			prop = StringUtils.trimToEmpty( prop );
+			uri = StringUtils.trimToEmpty( uri );
+			
 			if ( prop.startsWith( "/" ) )
 			{
 				prop = prop.substring( 1 );
-				params.put( "page", prop );
+				params.put( "pattern", prop );
 			}
 			
-			String[] props = prop.split( "[.//]" );
-			String[] uris = uri.split( "[.//]" );
+			String[] propsRaw = prop.split( "[.//]" );
+			String[] urisRaw = uri.split( "[.//]" );
 			
-			String weight = StringUtils.repeat( "?", Math.max( props.length, uris.length ) );
+			ArrayList<String> props = Lists.newArrayList();
+			ArrayList<String> uris = Lists.newArrayList();
+			
+			for ( String s : propsRaw )
+				if ( s != null && !s.isEmpty() )
+					props.add( s );
+			
+			for ( String s : urisRaw )
+				if ( s != null && !s.isEmpty() )
+					uris.add( s );
+			
+			String weight = StringUtils.repeat( "?", Math.max( props.size(), uris.size() ) );
 			
 			boolean match = true;
-			for ( int i = 0; i < Math.max( props.length, uris.length ); i++ )
+			for ( int i = 0; i < Math.max( props.size(), uris.size() ); i++ )
 			{
 				try
 				{
-					Loader.getLogger().fine( prop + " --> " + props[i] + " == " + uris[i] );
+					Loader.getLogger().fine( prop + " --> " + props.get( i ) + " == " + uris.get( i ) );
 					
-					if ( props[i].matches( "\\[([a-zA-Z0-9]+)=\\]" ) )
+					if ( props.get( i ).matches( "\\[([a-zA-Z0-9]+)=\\]" ) )
 					{
 						weight = StringUtil.replaceAt( weight, i, "Z" );
 						
-						String key = props[i].replaceAll( "[\\[\\]=]", "" );
-						String value = uris[i];
+						String key = props.get( i ).replaceAll( "[\\[\\]=]", "" );
+						String value = uris.get( i );
 						
 						rewrites.put( key, value );
 						
 						// PREG MATCH
 						Loader.getLogger().fine( "Found a PREG match to " + params.get( "page" ) );
 					}
-					else if ( props[i].equals( uris[i] ) )
+					else if ( props.get( i ).equals( uris.get( i ) ) )
 					{
 						weight = StringUtil.replaceAt( weight, i, "A" );
 						
