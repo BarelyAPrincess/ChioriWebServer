@@ -275,7 +275,7 @@ public class WebHandler implements HttpHandler
 			{
 				CodeMetaData meta = new CodeMetaData();
 				meta.params = Maps.newHashMap();
-				meta.params.putAll( fi.getRewriteParams() );
+				meta.params.putAll( request.getRewriteMap() );
 				meta.params.putAll( request.getGetMap() );
 				source.append( factory.eval( fi, meta, currentSite ) );
 			}
