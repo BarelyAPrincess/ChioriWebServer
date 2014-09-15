@@ -3,21 +3,17 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2014 Chiori-chan. All Right Reserved.
- *
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.http;
+package com.chiorichan.http.session;
 
-import groovy.lang.Binding;
-
-import java.io.File;
-import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
@@ -26,13 +22,15 @@ import com.chiorichan.account.bases.Sentient;
 import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.account.helpers.LoginException;
 import com.chiorichan.database.DatabaseEngine;
-import com.chiorichan.factory.BindingProvider;
-import com.chiorichan.factory.CodeEvalFactory;
-import com.chiorichan.framework.ConfigurationManagerWrapper;
 import com.chiorichan.framework.Site;
+import com.chiorichan.framework.WebUtils;
+import com.chiorichan.http.Candy;
+import com.chiorichan.http.HttpRequest;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.StringUtil;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -40,11 +38,8 @@ import com.google.gson.JsonSyntaxException;
 /**
  * This class is used to carry data that is to be persistent from request to request.
  * If you need to sync data across requests then we recommend using Session Vars for Security.
- * 
- * @author Chiori Greene
- * @copyright Greenetree LLC
  */
-public class PersistentSession implements SentientHandler, BindingProvider
+public class Session implements SentientHandler
 {
 	protected Map<String, String> data = new LinkedHashMap<String, String>();
 	protected long timeout = 0;
@@ -55,39 +50,27 @@ public class PersistentSession implements SentientHandler, BindingProvider
 	protected List<String> pendingMessages = Lists.newArrayList();
 	
 	protected Map<String, Candy> candies = new LinkedHashMap<String, Candy>();
-	protected HttpRequest request;
-	protected Site failoverSite;
+	protected Site site;
 	protected boolean stale = false;
 	protected boolean isValid = true;
 	protected boolean changesMade = false;
 	
-	protected final Binding binding = new Binding();
-	
-	protected CodeEvalFactory factory = null;
-	
-	private PersistentSession()
-	{
-		candyName = Loader.getConfig().getString( "sessions.defaultSessionName", candyName );
-	}
+	protected final Map<String, Object> bindingMap = Maps.newConcurrentMap();
+	protected final Set<SessionProvider> sessionProviders = Sets.newHashSet();
 	
 	/**
-	 * Initializes a new session based on the supplied HttpRequest.
-	 * 
-	 * @param _request
+	 * Initializes a new session.
 	 */
-	protected PersistentSession(HttpRequest _request)
+	protected Session( Site _site )
 	{
-		this();
-		setRequest( _request, false );
+		candyName = Loader.getConfig().getString( "sessions.defaultSessionName", candyName );
+		site = _site;
 	}
 	
-	protected PersistentSession(ResultSet rs) throws SessionException
+	protected Session(ResultSet rs) throws SessionException
 	{
-		this();
-		
 		try
 		{
-			request = null;
 			stale = true;
 			
 			timeout = rs.getInt( "timeout" );
@@ -107,9 +90,9 @@ public class PersistentSession implements SentientHandler, BindingProvider
 				throw new SessionException( "This session expired at " + timeout + " epoch!" );
 			
 			if ( rs.getString( "sessionSite" ) == null || rs.getString( "sessionSite" ).isEmpty() )
-				failoverSite = Loader.getSiteManager().getFrameworkSite();
+				site = Loader.getSiteManager().getFrameworkSite();
 			else
-				failoverSite = Loader.getSiteManager().getSiteById( rs.getString( "sessionSite" ) );
+				site = Loader.getSiteManager().getSiteById( rs.getString( "sessionSite" ) );
 			
 			sessionCandy = new Candy( candyName, rs.getString( "sessionId" ) );
 			candies.put( candyName, sessionCandy );
@@ -122,47 +105,6 @@ public class PersistentSession implements SentientHandler, BindingProvider
 		{
 			throw new SessionException( e );
 		}
-	}
-	
-	protected void setRequest( HttpRequest _request, Boolean _stale )
-	{
-		request = _request;
-		stale = _stale;
-		
-		failoverSite = request.getSite();
-		ipAddr = request.getRemoteAddr();
-		
-		Map<String, Candy> pulledCandies = pullCandies( _request );
-		pulledCandies.putAll( candies );
-		candies = pulledCandies;
-		
-		if ( request.getSite().getYaml() != null )
-		{
-			String _candyName = request.getSite().getYaml().getString( "sessions.cookie-name", candyName );
-			
-			if ( !_candyName.equals( candyName ) )
-				if ( candies.containsKey( candyName ) )
-				{
-					candies.put( _candyName, candies.get( candyName ) );
-					candies.remove( candyName );
-					candyName = _candyName;
-				}
-				else
-				{
-					candyName = _candyName;
-				}
-		}
-		
-		sessionCandy = candies.get( candyName );
-		
-		initSession();
-		
-		if ( request != null )
-		{
-			binding.setVariable( "request", request );
-			binding.setVariable( "response", request.getResponse() );
-		}
-		binding.setVariable( "__FILE__", new File( "" ) );
 	}
 	
 	protected void loginSessionUser()
@@ -182,131 +124,9 @@ public class PersistentSession implements SentientHandler, BindingProvider
 		}
 	}
 	
-	protected void handleUserProtocols()
-	{
-		if ( !pendingMessages.isEmpty() )
-		{
-			// request.getResponse().sendMessage( pendingMessages.toArray( new String[0] ) );
-		}
-		
-		if ( request == null )
-		{
-			Loader.getLogger().warning( "PersistentSession: Request was misteriously empty for an unknown reason." );
-			return;
-		}
-		
-		String username = request.getArgument( "user" );
-		String password = request.getArgument( "pass" );
-		String remember = request.getArgumentBoolean( "remember" ) ? "true" : "false";
-		String target = request.getArgument( "target" );
-		
-		if ( request.getArgument( "logout", "", true ) != null )
-		{
-			logoutAccount();
-			
-			if ( target.isEmpty() )
-				target = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
-			
-			request.getResponse().sendRedirect( target + "?ok=You have been successfully logged out." );
-			return;
-		}
-		
-		if ( !username.isEmpty() && !password.isEmpty() )
-		{
-			try
-			{
-				Account user = Loader.getAccountsManager().attemptLogin( this, username, password );
-				
-				currentAccount = user;
-				
-				String loginPost = ( target.isEmpty() ) ? request.getSite().getYaml().getString( "scripts.login-post", "/panel" ) : target;
-				
-				setArgument( "remember", remember );
-				
-				Loader.getLogger().info( ChatColor.GREEN + "Login Success `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getAccountId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
-				request.getResponse().sendRedirect( loginPost );
-				
-			}
-			catch ( LoginException l )
-			{
-				//l.printStackTrace();
-				
-				String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
-				
-				if ( l.getAccount() != null )
-					Loader.getLogger().warning( "Login Failed `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + l.getAccount().getAccountId() + "\", Display Name \"" + l.getAccount().getDisplayName() + "\", Reason \"" + l.getMessage() + "\"`" );
-				
-				request.getResponse().sendRedirect( loginForm + "?ok=" + l.getMessage() + "&target=" + target );
-			}
-		}
-		else if ( currentAccount == null )
-		{
-			username = getArgument( "user" );
-			password = getArgument( "pass" );
-			
-			if ( username != null && !username.isEmpty() && password != null && !password.isEmpty() )
-			{
-				try
-				{
-					Account user = Loader.getAccountsManager().attemptLogin( this, username, password );
-					
-					currentAccount = user;
-					
-					Loader.getLogger().info( ChatColor.GREEN + "Login Success `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getAccountId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
-				}
-				catch ( LoginException l )
-				{
-					Loader.getLogger().warning( ChatColor.GREEN + "Login Failed `No Valid Login Present`" );
-				}
-			}
-			else
-				currentAccount = null;
-		}
-		else
-		{
-			try
-			{
-				currentAccount.reloadAndValidate(); // <- Is this being overly redundant?
-				Loader.getLogger().info( ChatColor.GREEN + "Current Login `Username \"" + currentAccount.getName() + "\", Password \"" + currentAccount.getMetaData().getPassword() + "\", UserId \"" + currentAccount.getAccountId() + "\", Display Name \"" + currentAccount.getDisplayName() + "\"`" );
-			}
-			catch ( LoginException e )
-			{
-				currentAccount = null;
-				Loader.getLogger().warning( ChatColor.GREEN + "Login Failed `There was a login present but it failed validation with error: " + e.getMessage() + "`" );
-			}
-		}
-		
-		if ( currentAccount != null )
-			currentAccount.putHandler( this );
-		
-		if ( !stale || Loader.getConfig().getBoolean( "sessions.rearmTimeoutWithEachRequest" ) )
-			rearmTimeout();
-	}
-	
-	public void setGlobal( String key, Object val )
-	{
-		binding.setVariable( key, val );
-	}
-	
-	public Object getGlobal( String key )
-	{
-		return binding.getVariable( key );
-	}
-	
-	@SuppressWarnings( "unchecked" )
-	public Map<String, Object> getGlobals()
-	{
-		return binding.getVariables();
-	}
-	
-	protected Binding getBinding()
-	{
-		return binding;
-	}
-	
 	protected void initSession()
 	{
-		DatabaseEngine sql = Loader.getPersistenceManager().getDatabase();
+		DatabaseEngine sql = Loader.getSessionManager().getDatabase();
 		
 		if ( sessionCandy != null )
 		{
@@ -355,13 +175,13 @@ public class PersistentSession implements SentientHandler, BindingProvider
 					
 					ipAddr = _ipAddr;
 					
-					List<PersistentSession> sessions = Loader.getPersistenceManager().getSessionsByIp( ipAddr );
+					List<Session> sessions = Loader.getSessionManager().getSessionsByIp( ipAddr );
 					if ( sessions.size() > Loader.getConfig().getInt( "sessions.maxSessionsPerIP" ) )
 					{
 						long oldestTime = Common.getEpoch();
-						PersistentSession oldest = null;
+						Session oldest = null;
 						
-						for ( PersistentSession s : sessions )
+						for ( Session s : sessions )
 						{
 							if ( s != this && s.getTimeout() < oldestTime )
 							{
@@ -371,7 +191,7 @@ public class PersistentSession implements SentientHandler, BindingProvider
 						}
 						
 						if ( oldest != null )
-							PersistenceManager.destroySession( oldest );
+							SessionManager.destroySession( oldest );
 					}
 				}
 				catch ( JsonSyntaxException | SQLException e )
@@ -384,19 +204,16 @@ public class PersistentSession implements SentientHandler, BindingProvider
 		
 		if ( sessionCandy == null )
 		{
-			int defaultLife = ( request != null && request.getSite().getYaml() != null ) ? request.getSite().getYaml().getInt( "sessions.default-life", 604800 ) : 604800;
+			int defaultLife = ( getSite().getYaml() != null ) ? getSite().getYaml().getInt( "sessions.default-life", 604800 ) : 604800;
 			
 			if ( candyId == null || candyId.isEmpty() )
-				candyId = StringUtil.md5( request.getURI().toString() + System.currentTimeMillis() );
+				candyId = StringUtil.md5( WebUtils.createGUID( "sessionGen" ) + System.currentTimeMillis() );
 			
 			sessionCandy = new Candy( candyName, candyId );
 			
 			sessionCandy.setMaxAge( defaultLife );
 			
-			if ( request.getSite().getDomain() != null && !request.getSite().getDomain().isEmpty() && request.getParentDomain().toLowerCase().contains( request.getSite().getDomain().toLowerCase() ) )
-				sessionCandy.setDomain( "." + request.getSite().getDomain() );
-			else if ( request.getParentDomain() != null && !request.getParentDomain().isEmpty() )
-				sessionCandy.setDomain( "." + request.getParentDomain() );
+			sessionCandy.setDomain( "." + getSite().getDomain() );
 			
 			sessionCandy.setPath( "/" );
 			
@@ -422,11 +239,11 @@ public class PersistentSession implements SentientHandler, BindingProvider
 			Loader.getLogger().info( ChatColor.DARK_AQUA + "Session Created `" + this + "`" );
 	}
 	
-	protected void saveSession( boolean force )
+	public void saveSession( boolean force )
 	{
 		if ( force || changesMade )
 		{
-			DatabaseEngine sql = Loader.getPersistenceManager().getDatabase();
+			DatabaseEngine sql = Loader.getSessionManager().getDatabase();
 			
 			String dataJson = new Gson().toJson( data );
 			
@@ -450,8 +267,8 @@ public class PersistentSession implements SentientHandler, BindingProvider
 	{
 		String extra = "";
 		
-		if ( failoverSite != null )
-			extra += ",site=" + failoverSite.getName();
+		if ( site != null )
+			extra += ",site=" + site.getName();
 		
 		return candyName + "{id=" + candyId + ",ipAddr=" + ipAddr + ",timeout=" + timeout + ",data=" + data + ",stale=" + stale + ",requestCount=" + requestCnt + extra + "}";
 	}
@@ -465,7 +282,7 @@ public class PersistentSession implements SentientHandler, BindingProvider
 	protected boolean matchClient( HttpRequest request )
 	{
 		String _candyName = request.getSite().getYaml().getString( "sessions.cookie-name", Loader.getConfig().getString( "sessions.defaultSessionName", "sessionId" ) );
-		Map<String, Candy> requestCandys = pullCandies( request );
+		Map<String, Candy> requestCandys = SessionUtils.poleCandies( request );
 		
 		return ( requestCandys.containsKey( _candyName ) && getCandy( candyName ).compareTo( requestCandys.get( _candyName ) ) );
 	}
@@ -479,29 +296,6 @@ public class PersistentSession implements SentientHandler, BindingProvider
 	public Candy getCandy( String key )
 	{
 		return ( candies.containsKey( key ) ) ? candies.get( key ) : new Candy( key, null );
-	}
-	
-	public Map<String, Candy> pullCandies( HttpRequest request )
-	{
-		Map<String, Candy> candies = new LinkedHashMap<String, Candy>();
-		List<String> var1 = request.getHeaders().get( "Cookie" );
-		
-		if ( var1 == null || var1.isEmpty() )
-			return candies;
-		
-		String[] var2 = var1.get( 0 ).split( "\\;" );
-		
-		for ( String var3 : var2 )
-		{
-			String[] var4 = var3.trim().split( "\\=" );
-			
-			if ( var4.length == 2 )
-			{
-				candies.put( var4[0], new Candy( var4[0], var4[1] ) );
-			}
-		}
-		
-		return candies;
 	}
 	
 	/**
@@ -554,7 +348,7 @@ public class PersistentSession implements SentientHandler, BindingProvider
 		timeout = Common.getEpoch();
 		setCookieExpiry( 0 );
 		
-		PersistenceManager.destroySession( this );
+		SessionManager.destroySession( this );
 	}
 	
 	public void rearmTimeout()
@@ -594,14 +388,12 @@ public class PersistentSession implements SentientHandler, BindingProvider
 		timeout = 0;
 	}
 	
-	// TODO: Future add of setDomain, setCookieName, setSecure (http verses https)
-	
 	public boolean getUserState()
 	{
 		return ( currentAccount != null );
 	}
 	
-	public Account getCurrentAccount()
+	public Account getAccount()
 	{
 		return currentAccount;
 	}
@@ -623,24 +415,6 @@ public class PersistentSession implements SentientHandler, BindingProvider
 			u.removeHandler( this );
 	}
 	
-	public HttpRequest getRequest()
-	{
-		return request;
-	}
-	
-	public HttpResponse getResponse()
-	{
-		return request.getResponse();
-	}
-	
-	/**
-	 * Called when request has finished so that this stale session can nullify unneeded stuff such as the HttpRequest
-	 */
-	public void releaseResources()
-	{
-		request = null;
-	}
-	
 	@Override
 	public boolean kick( String kickMessage )
 	{
@@ -657,42 +431,10 @@ public class PersistentSession implements SentientHandler, BindingProvider
 			pendingMessages.add( m );
 	}
 	
-	public Site getSite()
-	{
-		if ( getRequest() != null )
-			return getRequest().getSite();
-		else if ( failoverSite == null )
-			return Loader.getSiteManager().getFrameworkSite();
-		else
-			return failoverSite;
-	}
-	
 	@Override
 	public String getIpAddr()
 	{
 		return ipAddr;
-	}
-	
-	public void requireLogin() throws IOException
-	{
-		requireLogin( null );
-	}
-	
-	/**
-	 * First checks in an account is present, sends to login page if not.
-	 * Second checks if the present accounts has the specified permission.
-	 * 
-	 * @param permission
-	 * @throws IOException
-	 */
-	public void requireLogin( String permission ) throws IOException
-	{
-		if ( currentAccount == null )
-			request.getResponse().sendLoginPage();
-		
-		if ( permission != null )
-			if ( !currentAccount.hasPermission( permission ) )
-				request.getResponse().sendError( HttpCode.HTTP_FORBIDDEN, "You must have the `" + permission + "` in order to view this page!" );
 	}
 	
 	// A session can't handle just any sentient object.
@@ -724,23 +466,6 @@ public class PersistentSession implements SentientHandler, BindingProvider
 		currentAccount = null;
 	}
 	
-	/**
-	 * It's HIGHLY important that you call the .unlock() method on the factory once your done with it or else it will build up in memory.
-	 */
-	@Override
-	public CodeEvalFactory getCodeFactory()
-	{
-		if ( factory == null )
-			factory = CodeEvalFactory.create( binding );
-		
-		return factory;
-	}
-	
-	public ConfigurationManagerWrapper getConfigurationManager()
-	{
-		return new ConfigurationManagerWrapper( request.getSession() );
-	}
-
 	@Override
 	public String getName()
 	{
@@ -748,5 +473,38 @@ public class PersistentSession implements SentientHandler, BindingProvider
 			return "(NULL)";
 		
 		return currentAccount.getName();
+	}
+	
+	public Site getSite()
+	{
+		if ( site == null )
+			return Loader.getSiteManager().getFrameworkSite();
+		else
+			return site;
+	}
+
+	public SessionProvider getSessionProvider( HttpRequest request )
+	{
+		return new SessionProviderWeb( this, request );
+	}
+
+	public Map<String, Candy> getCandies()
+	{
+		return candies;
+	}
+	
+	public void setGlobal( String key, Object val )
+	{
+		bindingMap.put( key, val );
+	}
+	
+	public Object getGlobal( String key )
+	{
+		return bindingMap.get( key );
+	}
+	
+	public Map<String, Object> getGlobals()
+	{
+		return bindingMap;
 	}
 }

@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.http;
+package com.chiorichan.http.session;
 
 import java.sql.SQLException;
 

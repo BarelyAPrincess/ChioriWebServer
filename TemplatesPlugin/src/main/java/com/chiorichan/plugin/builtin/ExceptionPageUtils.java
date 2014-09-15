@@ -335,13 +335,21 @@ public class ExceptionPageUtils
 				}
 				
 				is.close();
+				
+				if ( cLine < line )
+					sb.append( "<span class=\"error\"><span class=\"ln error-ln\">" + line + "</span> Unexpected EOF!</span>" );
 			}
 			catch ( IOException e )
 			{
 				e.printStackTrace();
 			}
 			
-			return sb.toString().substring( 0, sb.toString().length() - 1 );
+			String rtn = sb.toString();
+			
+			if ( rtn.endsWith( "\n" ) )
+				rtn = sb.toString().substring( 0, sb.toString().length() - 1 );
+			
+			return rtn;
 		}
 		return "";
 	}

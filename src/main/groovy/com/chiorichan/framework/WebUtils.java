@@ -153,12 +153,21 @@ public class WebUtils
 		return createGUID( "" );
 	}
 	
-	public static String createGUID( String seed ) throws UnsupportedEncodingException
+	public static String createGUID( String seed )
 	{
 		if ( seed == null )
 			seed = "";
 		
-		byte[] bytes = seed.getBytes( "ISO-8859-1" );
+		byte[] bytes;
+		try
+		{
+			bytes = seed.getBytes( "ISO-8859-1" );
+		}
+		catch ( UnsupportedEncodingException e )
+		{
+			bytes = new byte[0];
+		}
+		
 		byte[] bytesScrambled = new byte[0];
 		
 		for ( byte b : bytes )

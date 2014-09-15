@@ -13,7 +13,7 @@ import java.util.Set;
 
 import com.chiorichan.Loader;
 import com.chiorichan.framework.Site;
-import com.chiorichan.http.PersistentSession;
+import com.chiorichan.http.session.Session;
 import com.chiorichan.permissions.Permissible;
 import com.google.common.collect.Sets;
 
@@ -51,8 +51,8 @@ public abstract class Sentient extends Permissible
 		Site site = Loader.getSiteManager().getFrameworkSite();
 		
 		for ( SentientHandler h : handlers )
-			if ( h instanceof PersistentSession )
-				site = ( (PersistentSession) h ).getSite();
+			if ( h instanceof Session )
+				site = ( (Session) h ).getSite();
 		
 		return site;
 	}

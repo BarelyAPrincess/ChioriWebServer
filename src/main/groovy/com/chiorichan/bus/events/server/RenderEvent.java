@@ -16,15 +16,15 @@ import org.apache.commons.codec.digest.DigestUtils;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.HttpRequest;
 import com.chiorichan.http.HttpResponse;
-import com.chiorichan.http.PersistentSession;
+import com.chiorichan.http.session.SessionProvider;
 
 public class RenderEvent extends ServerEvent
 {
 	private String pageSource, pageHash;
-	private final PersistentSession sess;
+	private final SessionProvider sess;
 	private final Map<String, String> pageData;
 	
-	public RenderEvent(PersistentSession _sess, String source, Map<String, String> _pageData)
+	public RenderEvent(SessionProvider _sess, String source, Map<String, String> _pageData)
 	{
 		pageSource = source;
 		pageHash = DigestUtils.md5Hex( source );
@@ -47,10 +47,10 @@ public class RenderEvent extends ServerEvent
 	
 	public String getRequestId()
 	{
-		return sess.getId();
+		return sess.getParentSession().getId();
 	}
 	
-	public PersistentSession getSession()
+	public SessionProvider getSession()
 	{
 		return sess;
 	}

@@ -340,7 +340,7 @@ public class Site
 		// Framework site always uses the Builtin SQL Connector. Ignore YAML FileBase on this one.
 		if ( siteId.equalsIgnoreCase( "framework" ) )
 		{
-			sql = Loader.getPersistenceManager().getDatabase();
+			sql = Loader.getSessionManager().getDatabase();
 		}
 		else if ( config != null && config.getConfigurationSection( "database" ) != null )
 		{

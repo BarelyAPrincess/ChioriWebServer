@@ -9,16 +9,14 @@
  */
 package com.chiorichan.framework
 
-import com.chiorichan.ConsoleLogManager
 import com.chiorichan.Loader
 import com.chiorichan.account.bases.Account
 import com.chiorichan.database.DatabaseEngine
 import com.chiorichan.http.HttpCode
 import com.chiorichan.http.HttpRequest
 import com.chiorichan.http.HttpResponse
-import com.chiorichan.http.PersistenceManager
-import com.chiorichan.http.PersistentSession
-import com.chiorichan.plugin.PluginManager
+import com.chiorichan.http.session.SessionManager
+import com.chiorichan.http.session.SessionProvider
 import com.chiorichan.util.Versioning
 
 abstract class ScriptingBaseGroovy extends ScriptingBaseJava
@@ -38,7 +36,7 @@ abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 		return response;
 	}
 	
-	PersistentSession getSession()
+	SessionProvider getSession()
 	{
 		return request.getSession();
 	}
@@ -65,7 +63,7 @@ abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	
 	Account getAccount()
 	{
-		return request.getSession().getCurrentAccount();
+		return request.getSession().getAccount();
 	}
 	
 	ConfigurationManagerWrapper getConfigurationManager()
@@ -80,7 +78,7 @@ abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	
 	DatabaseEngine getServerDatabase()
 	{
-		return Loader.getPersistenceManager().getDatabase();
+		return Loader.getSessionManager().getDatabase();
 	}
 	
 	DatabaseEngine getSiteDatabase()
@@ -98,9 +96,9 @@ abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 		return HttpCode.msg( errNo );
 	}
 	
-	PersistenceManager getPersistenceManager()
+	SessionManager getSessionManager()
 	{
-		return Loader.getPersistenceManager();
+		return Loader.getSessionManager();
 	}
 	
 	String url_to()

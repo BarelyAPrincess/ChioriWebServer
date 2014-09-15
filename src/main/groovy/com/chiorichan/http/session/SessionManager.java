@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.http;
+package com.chiorichan.http.session;
 
 import java.net.ConnectException;
 import java.sql.ResultSet;
@@ -21,6 +21,7 @@ import com.chiorichan.StartupException;
 import com.chiorichan.account.bases.Account;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.file.YamlConfiguration;
+import com.chiorichan.http.HttpRequest;
 import com.chiorichan.util.Common;
 import com.google.common.collect.Lists;
 
@@ -30,11 +31,11 @@ import com.google.common.collect.Lists;
  * @author Chiori Greene
  * @copyright Greenetree LLC 2014
  */
-public class PersistenceManager
+public class SessionManager
 {
 	protected DatabaseEngine sql = new DatabaseEngine();
 	
-	static protected List<PersistentSession> sessionList = Lists.newCopyOnWriteArrayList();
+	static protected List<Session> sessionList = Lists.newCopyOnWriteArrayList();
 	
 	public void init() throws StartupException
 	{
@@ -117,7 +118,7 @@ public class PersistenceManager
 					{
 						try
 						{
-							sessionList.add( new PersistentSession( rs ) );
+							sessionList.add( new Session( rs ) );
 						}
 						catch ( SessionException e )
 						{
@@ -136,30 +137,30 @@ public class PersistenceManager
 		}
 	}
 	
-	protected PersistentSession find( HttpRequest request )
+	public SessionProvider find( HttpRequest request )
 	{
-		PersistentSession sess = null;
+		SessionProvider sess = null;
 		
 		synchronized ( sessionList )
 		{
-			for ( PersistentSession s : sessionList )
+			for ( Session s : sessionList )
 			{
 				if ( s.matchClient( request ) )
 				{
-					sess = s;
-					sess.setRequest( request, true );
+					s.stale = true;
+					sess = s.getSessionProvider( request );
 					break;
 				}
 			}
 			
 			if ( sess == null && Loader.getConfig().getBoolean( "sessions.reuseVacantSessions", true ) )
 			{
-				for ( PersistentSession s : sessionList )
+				for ( Session s : sessionList )
 				{
 					if ( s.ipAddr.equals( request.getRemoteAddr() ) && !s.getUserState() )
 					{
-						sess = s;
-						sess.setRequest( request, true );
+						s.stale = true;
+						sess = s.getSessionProvider( request );
 						break;
 					}
 				}
@@ -167,8 +168,8 @@ public class PersistenceManager
 			
 			if ( sess == null )
 			{
-				sess = new PersistentSession( request );
-				sessionList.add( sess );
+				sess = new SessionProviderWeb( request );
+				sessionList.add( sess.getParentSession() );
 			}
 		}
 		
@@ -177,11 +178,11 @@ public class PersistenceManager
 	
 	public static void mainThreadHeartbeat( long tick )
 	{
-		Iterator<PersistentSession> sessions = sessionList.iterator();
+		Iterator<Session> sessions = sessionList.iterator();
 		
 		while ( sessions.hasNext() )
 		{
-			PersistentSession var1 = sessions.next();
+			Session var1 = sessions.next();
 			
 			if ( var1.getTimeout() > 0 && var1.getTimeout() < Common.getEpoch() )
 			{
@@ -202,29 +203,29 @@ public class PersistenceManager
 		return sql;
 	}
 	
-	public List<PersistentSession> getSessions()
+	public List<Session> getSessions()
 	{
 		return sessionList;
 	}
 	
 	public void shutdown()
 	{
-		Iterator<PersistentSession> sess = sessionList.iterator();
+		Iterator<Session> sess = sessionList.iterator();
 		
 		while ( sess.hasNext() )
 		{
-			PersistentSession it = sess.next();
+			Session it = sess.next();
 			it.saveSession( true );
 		}
 		
 		sessionList.clear();
 	}
 	
-	public List<PersistentSession> getSessionsByIp( String ipAddr )
+	public List<Session> getSessionsByIp( String ipAddr )
 	{
-		List<PersistentSession> lst = Lists.newArrayList();
+		List<Session> lst = Lists.newArrayList();
 		
-		for ( PersistentSession sess : sessionList )
+		for ( Session sess : sessionList )
 		{
 			if ( sess.ipAddr.equals( ipAddr ) )
 				lst.add( sess );
@@ -239,14 +240,14 @@ public class PersistenceManager
 	 * @param var1
 	 * @throws SQLException
 	 */
-	public static void destroySession( PersistentSession var1 ) throws SQLException
+	public static void destroySession( Session var1 ) throws SQLException
 	{
 		Loader.getLogger().info( ChatColor.DARK_AQUA + "Session Destroyed `" + var1 + "`" );
 		
 		for ( Account u : Loader.getAccountsManager().getOnlineAccounts() )
 			u.removeHandler( var1 );
 		
-		Loader.getPersistenceManager().sql.queryUpdate( "DELETE FROM `sessions` WHERE `sessionName` = '" + var1.candyName + "' AND `sessionId` = '" + var1.getId() + "';" );
+		Loader.getSessionManager().sql.queryUpdate( "DELETE FROM `sessions` WHERE `sessionName` = '" + var1.candyName + "' AND `sessionId` = '" + var1.getId() + "';" );
 		sessionList.remove( var1 );
 	}
 	

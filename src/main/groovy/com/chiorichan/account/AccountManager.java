@@ -33,7 +33,7 @@ import com.chiorichan.bus.events.account.PreAccountLoginEvent;
 import com.chiorichan.bus.events.account.PreAccountLoginEvent.Result;
 import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.framework.Site;
-import com.chiorichan.http.PersistentSession;
+import com.chiorichan.http.session.Session;
 import com.google.common.collect.Lists;
 
 public class AccountManager
@@ -78,11 +78,11 @@ public class AccountManager
 				switch ( config.getString( "accounts.lookupAdapter.type", null ) )
 				{
 					case "sql":
-						if ( Loader.getPersistenceManager().getDatabase() == null )
+						if ( Loader.getSessionManager().getDatabase() == null )
 							throw new StartupException( "AccountLookupAdapter is configured with a SQL AccountLookupAdapter but the server is missing a valid SQL Database, which is required for this adapter." );
 						
 						accountLookupAdapter = new SqlAdapter();
-						Loader.getLogger().info( "Initiated Sql AccountLookupAdapter `" + accountLookupAdapter + "` with sql '" + Loader.getPersistenceManager().getDatabase() + "'" );
+						Loader.getLogger().info( "Initiated Sql AccountLookupAdapter `" + accountLookupAdapter + "` with sql '" + Loader.getSessionManager().getDatabase() + "'" );
 						break;
 					case "file":
 						accountLookupAdapter = new FileAdapter();
@@ -439,7 +439,7 @@ public class AccountManager
 		return maxAccounts;
 	}
 	
-	public Account attemptLogin( PersistentSession sess, String username, String password ) throws LoginException
+	public Account attemptLogin( Session sess, String username, String password ) throws LoginException
 	{
 		if ( username == null || username.isEmpty() )
 			throw new LoginException( LoginExceptionReasons.emptyUsername );
@@ -477,7 +477,7 @@ public class AccountManager
 			{
 				for ( SentientHandler sh : acct.getHandlers() )
 				{
-					if ( sh instanceof PersistentSession && ( (PersistentSession) sh ).getSite() == sess.getSite() )
+					if ( sh instanceof Session && ( (Session) sh ).getSite() == sess.getSite() )
 						sh.kick( Loader.getConfig().getString( "accounts.singleLoginMessage", "You logged in from another location." ) );
 				}
 			}

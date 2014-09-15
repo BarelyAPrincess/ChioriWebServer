@@ -33,7 +33,7 @@ import com.chiorichan.ThreadCommandReader;
 import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.bus.events.server.CommandIssuedEvent;
 import com.chiorichan.command.CommandRef;
-import com.chiorichan.http.PersistenceManager;
+import com.chiorichan.http.session.SessionManager;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.util.FileUtil;
 import com.chiorichan.util.Versioning;
@@ -210,7 +210,7 @@ public class ConsoleBus implements Runnable
 			lastFiveTick = fiveMinuteTick;
 			
 			if ( fiveMinuteTick % Loader.getConfig().getInt( "sessions.cleanupInterval", 5 ) == 0 )
-				PersistenceManager.mainThreadHeartbeat( tick );
+				SessionManager.mainThreadHeartbeat( tick );
 			
 			if ( fiveMinuteTick % Loader.getConfig().getInt( "auto-updater.check-interval", 30 ) == 0 )
 				Loader.getAutoUpdater().check();

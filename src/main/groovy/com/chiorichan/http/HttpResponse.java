@@ -335,7 +335,7 @@ public class HttpResponse
 		{
 			stage = HttpResponseStage.MULTIPART;
 			Headers h = http.getResponseHeaders();
-			request.getSession().saveSession( false );
+			request.getSession().getParentSession().saveSession( false );
 			
 			for ( Candy c : request.getCandies() )
 			{

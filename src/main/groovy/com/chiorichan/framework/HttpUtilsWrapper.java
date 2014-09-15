@@ -12,24 +12,24 @@ package com.chiorichan.framework;
 import java.io.IOException;
 
 import com.chiorichan.exceptions.ShellExecuteException;
-import com.chiorichan.http.PersistentSession;
+import com.chiorichan.http.session.SessionProvider;
 
 public class HttpUtilsWrapper extends WebUtils
 {
-	PersistentSession sess;
+	SessionProvider sess;
 	
-	public HttpUtilsWrapper(PersistentSession _sess)
+	public HttpUtilsWrapper(SessionProvider _sess)
 	{
 		sess = _sess;
 	}
 	
 	public String evalFile( String file ) throws IOException, ShellExecuteException
 	{
-		return evalFile( sess.getCodeFactory(), sess.getSite(), file );
+		return evalFile( sess.getCodeFactory(), sess.getParentSession().getSite(), file );
 	}
 	
 	public String evalPackage( String pack ) throws IOException, ShellExecuteException
 	{
-		return evalPackage( sess.getCodeFactory(), sess.getSite(), pack );
+		return evalPackage( sess.getCodeFactory(), sess.getParentSession().getSite(), pack );
 	}
 }

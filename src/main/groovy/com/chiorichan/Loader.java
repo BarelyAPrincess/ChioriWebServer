@@ -34,7 +34,7 @@ import com.chiorichan.bus.EventBus;
 import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.framework.SiteManager;
 import com.chiorichan.framework.WebUtils;
-import com.chiorichan.http.PersistenceManager;
+import com.chiorichan.http.session.SessionManager;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.permissions.PermissionsManager;
 import com.chiorichan.plugin.Plugin;
@@ -71,7 +71,7 @@ public class Loader
 	protected static final PluginManager pluginManager = new PluginManager();
 	protected static final EventBus events = new EventBus();
 	protected static final AccountManager accounts = new AccountManager();
-	protected static final PersistenceManager persistence = new PersistenceManager();
+	protected static final SessionManager sessionManager = new SessionManager();
 	protected static final SiteManager sites = new SiteManager();
 	protected static final PermissionsManager permissions = new PermissionsManager();
 	
@@ -315,7 +315,7 @@ public class Loader
 		pluginManager.enablePlugins( PluginLoadOrder.POSTSERVER );
 		
 		getLogger().info( "Initalizing the Persistence Manager..." );
-		persistence.init();
+		sessionManager.init();
 		
 		getLogger().info( "Initalizing the Site Manager..." );
 		sites.init();
@@ -323,7 +323,7 @@ public class Loader
 		getLogger().info( "Initalizing the Accounts Manager..." );
 		accounts.init();
 		
-		persistence.loadSessions();
+		sessionManager.loadSessions();
 		
 		pluginManager.enablePlugins( PluginLoadOrder.INITIALIZED );
 		
@@ -445,7 +445,7 @@ public class Loader
 		
 		getLogger().info( "Reinitalizing the Persistence Manager..." );
 		
-		persistence.reload();
+		sessionManager.reload();
 		
 		getLogger().info( "Reinitalizing the Site Manager..." );
 		
@@ -494,7 +494,7 @@ public class Loader
 	
 	public static void unloadServer( String reason )
 	{
-		getPersistenceManager().shutdown();
+		getSessionManager().shutdown();
 		/*
 		if ( !reason.isEmpty() )
 			for ( Account User : accounts.getOnlineAccounts() )
@@ -511,7 +511,7 @@ public class Loader
 	 */
 	public static void shutdown()
 	{
-		persistence.shutdown();
+		sessionManager.shutdown();
 		accounts.shutdown();
 		pluginManager.shutdown();
 		NetworkManager.cleanup();
@@ -600,9 +600,9 @@ public class Loader
 		return pluginManager;
 	}
 	
-	public static PersistenceManager getPersistenceManager()
+	public static SessionManager getSessionManager()
 	{
-		return persistence;
+		return sessionManager;
 	}
 	
 	public static AccountManager getAccountsManager()

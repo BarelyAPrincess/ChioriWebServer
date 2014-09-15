@@ -30,6 +30,7 @@ import com.chiorichan.http.multipart.FilePart;
 import com.chiorichan.http.multipart.MultiPartRequestParser;
 import com.chiorichan.http.multipart.ParamPart;
 import com.chiorichan.http.multipart.Part;
+import com.chiorichan.http.session.SessionProvider;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.Versioning;
 import com.google.common.collect.Maps;
@@ -41,7 +42,7 @@ public class HttpRequest
 	protected Map<ServerVars, Object> serverVars = Maps.newLinkedHashMap();
 	
 	private HttpExchange http;
-	private PersistentSession sess = null;
+	private SessionProvider sess = null;
 	private HttpResponse response;
 	private Map<String, String> getMap, postMap, rewriteMap = Maps.newLinkedHashMap();
 	private int requestTime = 0;
@@ -157,7 +158,7 @@ public class HttpRequest
 	
 	protected void initSession()
 	{
-		sess = Loader.getPersistenceManager().find( this );
+		sess = Loader.getSessionManager().find( this );
 		sess.handleUserProtocols();
 	}
 	
@@ -219,7 +220,7 @@ public class HttpRequest
 		if ( sess == null )
 			return new LinkedHashMap<String, Candy>().values();
 		
-		return getSession().candies.values();
+		return getSession().getParentSession().getCandies().values();
 	}
 	
 	public Headers getHeaders()
@@ -227,12 +228,12 @@ public class HttpRequest
 		return http.getRequestHeaders();
 	}
 	
-	protected PersistentSession getSessionNoWarning()
+	protected SessionProvider getSessionNoWarning()
 	{
 		return sess;
 	}
 	
-	public PersistentSession getSession()
+	public SessionProvider getSession()
 	{
 		if ( sess == null )
 			Loader.getLogger().warning( "The Session is NULL! This usually happens because initSession() was not called at the proper time." );

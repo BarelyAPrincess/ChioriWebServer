@@ -24,6 +24,7 @@ import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.factory.CodeMetaData;
 import com.chiorichan.framework.Site;
 import com.chiorichan.framework.SiteException;
+import com.chiorichan.http.session.SessionProvider;
 import com.chiorichan.util.Versioning;
 import com.google.common.collect.Maps;
 import com.sun.net.httpserver.HttpExchange;
@@ -101,11 +102,11 @@ public class WebHandler implements HttpHandler
 		}
 		finally
 		{
-			PersistentSession sess = request.getSessionNoWarning();
+			SessionProvider sess = request.getSessionNoWarning();
 			if ( sess != null )
 			{
-				sess.releaseResources();
-				sess.saveSession( false );
+				sess.getParentSession().saveSession( false );
+				sess.onFinished();
 			}
 			
 			response.sendResponse();
@@ -138,7 +139,7 @@ public class WebHandler implements HttpHandler
 		
 		request.initServerVars( staticServerVars );
 		
-		PersistentSession sess = request.getSession();
+		SessionProvider sess = request.getSession();
 		
 		RequestEvent requestEvent = new RequestEvent( request );
 		
@@ -202,19 +203,19 @@ public class WebHandler implements HttpHandler
 				throw new HttpErrorException( 401, "Loading of this page (" + file + ") is not allowed since its hard protected in the site configs." );
 			
 			requestFile = new File( docRoot, file );
-			sess.setGlobal( "__FILE__", requestFile );
+			sess.setVariable( "__FILE__", requestFile );
 		}
 		
 		request.putServerVar( ServerVars.DOCUMENT_ROOT, docRoot );
 		
-		sess.setGlobal( "_SERVER", request.getServerStrings() );
-		sess.setGlobal( "_POST", request.getPostMap() );
-		sess.setGlobal( "_GET", request.getGetMap() );
-		sess.setGlobal( "_REWRITE", request.getRewriteMap() );
-		sess.setGlobal( "_FILES", request.getUploadedFiles() );
+		sess.setVariable( "_SERVER", request.getServerStrings() );
+		sess.setVariable( "_POST", request.getPostMap() );
+		sess.setVariable( "_GET", request.getGetMap() );
+		sess.setVariable( "_REWRITE", request.getRewriteMap() );
+		sess.setVariable( "_FILES", request.getUploadedFiles() );
 		
 		if ( Loader.getConfig().getBoolean( "advanced.security.requestMapEnabled", true ) )
-			sess.setGlobal( "_REQUEST", request.getRequestMap() );
+			sess.setVariable( "_REQUEST", request.getRequestMap() );
 		
 		StringBuilder source = new StringBuilder();
 		CodeEvalFactory factory = sess.getCodeFactory();
@@ -234,7 +235,7 @@ public class WebHandler implements HttpHandler
 		 */
 		
 		if ( !req.equals( "-1" ) )
-			if ( sess.getCurrentAccount() == null )
+			if ( sess.getParentSession().getAccount() == null )
 			{
 				String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
 				Loader.getLogger().warning( "Requester of page '" + file + "' has been redirected to the login page." );
@@ -242,7 +243,7 @@ public class WebHandler implements HttpHandler
 				// TODO: Come up with a better way to handle the URI used in the target. ie. Params are lost.
 				return;
 			}
-			else if ( !req.equals( "1" ) && !sess.getCurrentAccount().hasPermission( req ) )
+			else if ( !req.equals( "1" ) && !sess.getParentSession().getAccount().hasPermission( req ) )
 			{
 				if ( req.equals( "0" ) )
 					response.sendError( 401, "This page is limited to Operators only!" );

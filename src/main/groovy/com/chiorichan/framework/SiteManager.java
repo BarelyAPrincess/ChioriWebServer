@@ -40,7 +40,7 @@ public class SiteManager
 		if ( siteMap.size() > 0 )
 			throw new StartupException( "Site manager already has sites loaded. Please unload the existing sites first." );
 		
-		DatabaseEngine sql = Loader.getPersistenceManager().getDatabase();
+		DatabaseEngine sql = Loader.getSessionManager().getDatabase();
 		
 		// Load sites from YAML Filebase.
 		File siteFileBase = new File( "sites" );
@@ -167,7 +167,7 @@ public class SiteManager
 			switch ( site.siteType )
 			{
 				case SQL:
-					DatabaseEngine sql = Loader.getPersistenceManager().getDatabase();
+					DatabaseEngine sql = Loader.getSessionManager().getDatabase();
 					
 					if ( sql != null && sql.isConnected() )
 					{

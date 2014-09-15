@@ -20,13 +20,13 @@ import org.json.JSONException;
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.file.YamlConfiguration;
-import com.chiorichan.http.PersistentSession;
+import com.chiorichan.http.session.Session;
 
 public class ConfigurationManagerWrapper
 {
-	protected PersistentSession sess;
+	protected Session sess;
 	
-	public ConfigurationManagerWrapper(PersistentSession _sess)
+	public ConfigurationManagerWrapper(Session _sess)
 	{
 		sess = _sess;
 	}
@@ -38,17 +38,17 @@ public class ConfigurationManagerWrapper
 	
 	public DatabaseEngine getServerDatabase()
 	{
-		return Loader.getPersistenceManager().getDatabase();
+		return Loader.getSessionManager().getDatabase();
 	}
 	
 	public YamlConfiguration getSiteConfiguration()
 	{
-		return sess.getRequest().getSite().getYaml();
+		return sess.getSite().getYaml();
 	}
 	
 	public DatabaseEngine getSiteDatabase()
 	{
-		return sess.getRequest().getSite().getDatabase();
+		return sess.getSite().getDatabase();
 	}
 	
 	public boolean settingCompare( String settings )
@@ -161,11 +161,11 @@ public class ConfigurationManagerWrapper
 		
 		try
 		{
-			DatabaseEngine sql = sess.getRequest().getSite().getDatabase();
+			DatabaseEngine sql = sess.getSite().getDatabase();
 			
 			if ( idenifier == null || idenifier == "-1" )
 			{
-				idenifier = ( sess.getUserState() ) ? sess.getCurrentAccount().getAccountId() : "";
+				idenifier = ( sess.getUserState() ) ? sess.getAccount().getAccountId() : "";
 			}
 			
 			ResultSet defaultRs = sql.query( "SELECT * FROM `settings_default` WHERE `key` = '" + key + "';" );
@@ -213,7 +213,7 @@ public class ConfigurationManagerWrapper
 	{
 		try
 		{
-			DatabaseEngine sql = sess.getRequest().getSite().getDatabase();
+			DatabaseEngine sql = sess.getSite().getDatabase();
 			
 			if ( idenifier == null || idenifier == "-1" )
 			{

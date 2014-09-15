@@ -19,7 +19,7 @@ import com.chiorichan.Loader;
 import com.chiorichan.account.bases.Account;
 import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.framework.Site;
-import com.chiorichan.http.PersistentSession;
+import com.chiorichan.http.session.Session;
 
 public class SecretCommand extends VanillaCommand
 {
@@ -63,7 +63,7 @@ public class SecretCommand extends VanillaCommand
 				}
 				break;
 			case "sessions":
-				for ( PersistentSession s : Loader.getPersistenceManager().getSessions() )
+				for ( Session s : Loader.getSessionManager().getSessions() )
 				{
 					Date date = new Date( s.getTimeout() * 1000 );
 					sender.sendMessage( "&5Loaded session: " + s + " -> " + new SimpleDateFormat( "MMM d YYYY hh:mm:ss" ).format( date ) );
