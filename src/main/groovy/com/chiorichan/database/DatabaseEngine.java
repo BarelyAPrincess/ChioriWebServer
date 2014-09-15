@@ -483,8 +483,9 @@ public class DatabaseEngine
 			{
 				result.put( column_name, rs.getBoolean( column_name ) );
 			}
-			else if ( rsmd.getColumnTypeName( i ) == "BLOB" || rsmd.getColumnTypeName( i ) == "LONGBLOB" )
+			else if ( rsmd.getColumnTypeName( i ).contains( "BLOB" ) || rsmd.getColumnType( i ) == java.sql.Types.BINARY )
 			{
+				// BLOG = Max Length 65,535. Recommended that you use a LONGBLOG.
 				byte[] bytes = rs.getBytes( column_name );
 				
 				try
