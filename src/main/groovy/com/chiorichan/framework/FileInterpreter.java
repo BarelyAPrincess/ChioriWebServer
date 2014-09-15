@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2014 Chiori-chan. All Right Reserved.
- *
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -18,13 +17,16 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.chiorichan.ContentTypes;
-import com.chiorichan.Loader;
 import com.chiorichan.InterpreterOverrides;
+import com.chiorichan.Loader;
 import com.chiorichan.util.FileUtil;
 import com.google.common.collect.Maps;
 
 public class FileInterpreter
 {
+	/**
+	 * All param keys are lower case. No such thing as a non-lowercase param keys because keys are forced to lowercase.
+	 */
 	protected Map<String, String> interpParams = Maps.newTreeMap();
 	protected ByteArrayOutputStream bs = new ByteArrayOutputStream();
 	protected File cachedFile = null;
@@ -131,10 +133,10 @@ public class FileInterpreter
 				if ( l.trim().startsWith( "@" ) )
 					try
 					{
-						/* Only solutions I could think of for CSS files since they use @annotations too */
+						/* Only solution I could think of for CSS files since they use @annotations too, so we share them. */
 						if ( ContentTypes.getContentType( file ).toLowerCase().contains( "css" ) )
 							finished.write( ( l + "\n" ).getBytes( encoding ) );
-						/* Only solutions I could think of for CSS files since they use @annotations too */
+						/* Only solution I could think of for CSS files since they use @annotations too, so we share them. */
 						
 						String key;
 						String val = "";
@@ -153,7 +155,7 @@ public class FileInterpreter
 						if ( val.startsWith( "'" ) && val.endsWith( "'" ) )
 							val = val.substring( 1, val.length() - 1 );
 						
-						interpParams.put( key, val );
+						interpParams.put( key.toLowerCase(), val );
 						Loader.getLogger().finer( "Setting param '" + key + "' to '" + val + "'" );
 						
 						if ( key.equals( "encoding" ) )
@@ -213,7 +215,10 @@ public class FileInterpreter
 		if ( cachedFile == null )
 			return "text/html";
 		
-		String type = ContentTypes.getContentType( cachedFile.getAbsoluteFile() );
+		String type = get( "contenttype" );
+		
+		if ( type == null || type.isEmpty() )
+			type = ContentTypes.getContentType( cachedFile.getAbsoluteFile() );
 		
 		if ( type.toLowerCase().contains( "image" ) )
 			setEncoding( Loader.getConfig().getString( "server.defaultImageEncoding", "ISO-8859-1" ) );
@@ -233,14 +238,14 @@ public class FileInterpreter
 	
 	public String get( String key )
 	{
-		if ( !interpParams.containsKey( key ) )
+		if ( !interpParams.containsKey( key.toLowerCase() ) )
 			return null;
 		
-		return interpParams.get( key );
+		return interpParams.get( key.toLowerCase() );
 	}
 	
 	public void put( String key, String value )
 	{
-		interpParams.put( key, value );
+		interpParams.put( key.toLowerCase(), value );
 	}
 }
