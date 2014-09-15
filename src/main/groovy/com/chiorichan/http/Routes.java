@@ -176,6 +176,12 @@ public class Routes
 				if ( s != null && !s.isEmpty() )
 					uris.add( s );
 			
+			if ( uris.isEmpty() )
+				uris.add( "" );
+			
+			if ( props.isEmpty() )
+				props.add( "" );
+			
 			String weight = StringUtils.repeat( "?", Math.max( props.size(), uris.size() ) );
 			
 			boolean match = true;
