@@ -238,7 +238,7 @@ public class Routes
 	{
 		File routesFile = new File( Loader.getWebRoot() + Loader.PATH_SEPERATOR + site.getRoot() + Loader.PATH_SEPERATOR + "routes" );
 		
-		if ( routes.size() < 1 || lastRequest - System.currentTimeMillis() > 1000 )
+		if ( routes.size() < 1 || System.currentTimeMillis() - lastRequest > 1000 )
 		{
 			try
 			{
