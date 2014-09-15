@@ -156,6 +156,12 @@ public class Routes
 				params.put( "pattern", prop );
 			}
 			
+			if ( !StringUtils.trimToEmpty( params.get( "subdomain" ) ).isEmpty() && !subdomain.equals( params.get( "subdomain" ) ) )
+			{
+				Loader.getLogger().fine( "The subdomain does not match for " + prop + " on route " + this );
+				return null;
+			}
+			
 			String[] propsRaw = prop.split( "[.//]" );
 			String[] urisRaw = uri.split( "[.//]" );
 			
@@ -189,19 +195,19 @@ public class Routes
 						rewrites.put( key, value );
 						
 						// PREG MATCH
-						Loader.getLogger().fine( "Found a PREG match to " + params.get( "page" ) );
+						Loader.getLogger().fine( "Found a PREG match for " + prop + " on route " + this );
 					}
 					else if ( props.get( i ).equals( uris.get( i ) ) )
 					{
 						weight = StringUtil.replaceAt( weight, i, "A" );
 						
-						Loader.getLogger().fine( "Found a match to " + params.get( "page" ) );
+						Loader.getLogger().fine( "Found a match for " + prop + " on route " + this );
 						// MATCH
 					}
 					else
 					{
 						match = false;
-						Loader.getLogger().fine( "Found no match to " + params.get( "page" ) );
+						Loader.getLogger().fine( "Found no match for " + prop + " on route " + this );
 						break;
 						// NO MATCH
 					}
