@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
-import org.json.JSONException;
 
 import com.chiorichan.Loader;
 import com.chiorichan.account.bases.Account;
