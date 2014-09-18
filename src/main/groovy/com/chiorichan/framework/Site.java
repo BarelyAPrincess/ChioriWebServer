@@ -751,4 +751,13 @@ public class Site
 		
 		return routes;
 	}
+
+	/**
+	 * TODO Make it so site config can change the location the the temp directory.
+	 * @return The temp directory for this site.
+	 */
+	public File getTempFileDirectory()
+	{
+		return new File( Loader.getTempFileDirectory(), getName() );
+	}
 }

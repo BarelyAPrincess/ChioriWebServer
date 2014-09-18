@@ -124,16 +124,7 @@ public class WebHandler implements HttpHandler
 		String uri = request.getURI();
 		String domain = request.getParentDomain();
 		String subdomain = request.getSubDomain();
-		
-		Site currentSite = Loader.getSiteManager().getSiteByDomain( domain );
-		
-		if ( currentSite == null )
-			if ( domain.isEmpty() )
-				currentSite = Loader.getSiteManager().getSiteById( "framework" );
-			else
-				currentSite = new Site( "default", Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Chiori Framework Site" ), domain );
-		
-		request.setSite( currentSite );
+		Site currentSite = request.getSite();
 		
 		request.initSession();
 		

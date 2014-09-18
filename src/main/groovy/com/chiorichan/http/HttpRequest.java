@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2014 Chiori-chan. All Right Reserved.
- *
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -40,13 +39,14 @@ import com.sun.net.httpserver.HttpExchange;
 public class HttpRequest
 {
 	protected Map<ServerVars, Object> serverVars = Maps.newLinkedHashMap();
-	
-	private HttpExchange http;
-	private SessionProvider sess = null;
-	private HttpResponse response;
-	private Map<String, String> getMap, postMap, rewriteMap = Maps.newLinkedHashMap();
-	private int requestTime = 0;
-	private Map<String, UploadedFile> uploadedFiles = new HashMap<String, UploadedFile>();
+	protected Site currentSite;
+	protected HttpExchange http;
+	protected SessionProvider sess = null;
+	protected HttpResponse response;
+	protected Map<String, String> getMap, postMap,
+			rewriteMap = Maps.newLinkedHashMap();
+	protected int requestTime = 0;
+	protected Map<String, UploadedFile> uploadedFiles = new HashMap<String, UploadedFile>();
 	
 	protected HttpRequest(HttpExchange _http) throws IOException
 	{
@@ -54,6 +54,16 @@ public class HttpRequest
 		requestTime = Common.getEpoch();
 		
 		response = new HttpResponse( this );
+		
+		String domain = getDomain();
+		
+		Site currentSite = Loader.getSiteManager().getSiteByDomain( domain );
+		
+		if ( currentSite == null )
+			if ( domain.isEmpty() )
+				currentSite = Loader.getSiteManager().getSiteById( "framework" );
+			else
+				currentSite = new Site( "default", Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Chiori Framework Site" ), domain );
 		
 		try
 		{
@@ -68,7 +78,7 @@ public class HttpRequest
 						postMap = new HashMap<String, String>();
 						MultiPartRequestParser parser = new MultiPartRequestParser( this );
 						
-						File tmpFileDirectory = Loader.getTempFileDirectory();
+						File tmpFileDirectory = ( currentSite != null ) ? currentSite.getTempFileDirectory() : Loader.getTempFileDirectory();
 						
 						if ( !tmpFileDirectory.exists() )
 							tmpFileDirectory.mkdirs();
@@ -99,7 +109,6 @@ public class HttpRequest
 								 * postMap.put( name, existingValues );
 								 * }
 								 * existingValues.addElement( value );
-								 * 
 								 * XXX Should we use vectors in our Get and Post Maps?
 								 */
 								postMap.put( name, value );
@@ -124,8 +133,13 @@ public class HttpRequest
 									
 									String tmpFileName = filePart.getTmpFileName();
 									
-									File newFile = new File( tmpFileDirectory, tmpFileName);
+									Loader.getLogger().debug( tmpFileDirectory.getAbsolutePath() );
+									
+									File newFile = new File( tmpFileDirectory, tmpFileName );
 									newFile.deleteOnExit();
+									
+									Loader.getLogger().debug( newFile.getAbsolutePath() + "," + fileName + "," + size + "," + msg );
+									
 									uploadedFiles.put( name, new UploadedFile( newFile, fileName, size, msg ) );
 								}
 							}
@@ -425,8 +439,6 @@ public class HttpRequest
 	{
 		return null;
 	}
-	
-	protected Site currentSite;
 	
 	protected void setSite( Site site )
 	{
