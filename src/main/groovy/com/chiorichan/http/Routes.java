@@ -158,7 +158,7 @@ public class Routes
 			
 			if ( !StringUtils.trimToEmpty( params.get( "subdomain" ) ).isEmpty() && !subdomain.equals( params.get( "subdomain" ) ) )
 			{
-				Loader.getLogger().fine( "The subdomain does not match for " + prop + " on route " + this );
+				Loader.getLogger().fine( "The subdomain does not match for " + uri + " on route " + this );
 				return null;
 			}
 			
@@ -181,6 +181,18 @@ public class Routes
 			
 			if ( props.isEmpty() )
 				props.add( "" );
+			
+			if ( props.size() > uris.size() )
+			{
+				Loader.getLogger().fine( "The length of elements in route " + this + " is LONGER then the length of elements on the uri; " + uris );
+				return null;
+			}
+			
+			if ( props.size() < uris.size() )
+			{
+				Loader.getLogger().fine( "The length of elements in route " + this + " is SHORTER then the length of elements on the uri; " + uris );
+				return null;
+			}
 			
 			String weight = StringUtils.repeat( "?", Math.max( props.size(), uris.size() ) );
 			
