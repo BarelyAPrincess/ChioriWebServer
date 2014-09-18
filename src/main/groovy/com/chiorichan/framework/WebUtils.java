@@ -35,7 +35,7 @@ import net.glxn.qrgen.image.ImageType;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.TimeInfo;
@@ -322,9 +322,15 @@ public class WebUtils
 		return sb.toString();
 	}
 	
+	public static String unescapeHTML( String l )
+	{
+		return StringEscapeUtils.unescapeHtml4( l );
+	}
+	
 	public static String escapeHTML( String l )
 	{
-		return StringUtils.replaceEach( l, new String[] { "&", "\"", "<", ">" }, new String[] { "&amp;", "&quot;", "&lt;", "&gt;" } );
+		return StringEscapeUtils.escapeHtml4( l );
+		//return StringUtils.replaceEach( l, new String[] { "&", "\"", "<", ">" }, new String[] { "&amp;", "&quot;", "&lt;", "&gt;" } );
 	}
 	
 	/**
