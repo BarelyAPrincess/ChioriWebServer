@@ -12,6 +12,9 @@ package com.chiorichan.factory.postprocessors;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
+import com.chiorichan.Loader;
 import com.chiorichan.factory.CodeMetaData;
 import com.google.common.collect.Lists;
 import com.google.javascript.jscomp.CompilationLevel;
@@ -41,7 +44,7 @@ public class JSMinPostProcessor implements PostProcessor
 		
 		compiler.compile(externs, inputs, options );
 		
-		return compiler.toSource();
+		return StringUtils.trimToNull( compiler.toSource() );
 	}
 	
 }
