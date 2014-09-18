@@ -81,4 +81,10 @@ public class UploadedFile
 	{
 		return FileUtils.readFileToByteArray( file );
 	}
+	
+	@Override
+	public String toString()
+	{
+		return file.getName() + "(size:" + size + ",origFileName:" + origFileName + "MimeType:" + getMimeType() + ",Message:" + message + ")";
+	}
 }
