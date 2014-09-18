@@ -758,6 +758,12 @@ public class Site
 	 */
 	public File getTempFileDirectory()
 	{
-		return new File( Loader.getTempFileDirectory(), getName() );
+		return new File( Loader.getTempFileDirectory(), getSiteId() );
+	}
+	
+	@Override
+	public String toString()
+	{
+		return getSiteId() + "(Name:" + getName() + ",Title:" + title + ",Domain:" + getDomain() + ",SiteType:" + siteType + ",SourceDir:" + source + ")";
 	}
 }

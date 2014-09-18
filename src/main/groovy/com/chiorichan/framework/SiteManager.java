@@ -126,13 +126,9 @@ public class SiteManager
 	public Site getSiteByDomain( String domain )
 	{
 		for ( Site site : siteMap.values() )
-		{
 			if ( site != null )
-			{
-				if ( site.domain.equalsIgnoreCase( domain.trim() ) )
+				if ( site.getDomain().equalsIgnoreCase( domain.trim() ) )
 					return site;
-			}
-		}
 		
 		return null;
 	}

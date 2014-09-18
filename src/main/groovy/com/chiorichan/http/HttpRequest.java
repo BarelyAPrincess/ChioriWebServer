@@ -55,9 +55,9 @@ public class HttpRequest
 		
 		response = new HttpResponse( this );
 		
-		String domain = getDomain();
+		String domain = getParentDomain();
 		
-		Site currentSite = Loader.getSiteManager().getSiteByDomain( domain );
+		currentSite = Loader.getSiteManager().getSiteByDomain( domain );
 		
 		if ( currentSite == null )
 			if ( domain.isEmpty() )
@@ -133,12 +133,8 @@ public class HttpRequest
 									
 									String tmpFileName = filePart.getTmpFileName();
 									
-									Loader.getLogger().debug( tmpFileDirectory.getAbsolutePath() );
-									
 									File newFile = new File( tmpFileDirectory, tmpFileName );
 									newFile.deleteOnExit();
-									
-									Loader.getLogger().debug( newFile.getAbsolutePath() + "," + fileName + "," + size + "," + msg );
 									
 									uploadedFiles.put( name, new UploadedFile( newFile, fileName, size, msg ) );
 								}
