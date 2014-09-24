@@ -13,6 +13,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
@@ -36,6 +37,7 @@ public class HttpResponse
 	protected String encoding = "UTF-8";
 	protected HttpResponseStage stage = HttpResponseStage.READING;
 	protected Map<String, String> pageDataOverrides = Maps.newHashMap();
+	protected Map<String, String> headers = Maps.newHashMap();
 	
 	protected HttpResponse(HttpRequest _request)
 	{
@@ -296,6 +298,11 @@ public class HttpResponse
 		
 		h.add( "Access-Control-Allow-Origin", request.getSite().getYaml().getString( "web.allowed-origin", "*" ) );
 		
+		for ( Entry<String, String> header : headers.entrySet() )
+		{
+			h.add( header.getKey(), header.getValue() );
+		}
+		
 		http.sendResponseHeaders( httpStatus, output.size() );
 		
 		// Fixes an issue with requests coming from CURL with --head argument.
@@ -379,5 +386,10 @@ public class HttpResponse
 	public void setEncoding( String _encoding )
 	{
 		encoding = _encoding;
+	}
+	
+	public void setHeader( String key, String val )
+	{
+		headers.put( key, val );
 	}
 }

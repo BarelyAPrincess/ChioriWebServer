@@ -85,6 +85,6 @@ public class UploadedFile
 	@Override
 	public String toString()
 	{
-		return file.getName() + "(size:" + size + ",origFileName:" + origFileName + "MimeType:" + getMimeType() + ",Message:" + message + ")";
+		return file.getName() + "(size:" + size + ",origFileName:" + origFileName + ",MimeType:" + getMimeType() + ",Message:" + message + ")";
 	}
 }
