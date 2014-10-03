@@ -313,7 +313,19 @@ public class Session implements SentientHandler
 		return candyId;
 	}
 	
+	@Deprecated
 	public void setArgument( String key, String value )
+	{
+		setVariable( key, value );
+	}
+	
+	@Deprecated
+	public String getArgument( String key )
+	{
+		return getVariable( key );
+	}
+	
+	public void setVariable( String key, String value )
 	{
 		if ( value == null )
 			data.remove( key );
@@ -322,7 +334,7 @@ public class Session implements SentientHandler
 		changesMade = true;
 	}
 	
-	public String getArgument( String key )
+	public String getVariable( String key )
 	{
 		if ( !data.containsKey( key ) )
 			return "";
