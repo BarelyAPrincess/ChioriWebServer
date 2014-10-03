@@ -14,8 +14,10 @@ public interface SessionProvider extends BindingProvider
 	public Session getParentSession();
 	public void handleUserProtocols();
 	public void onFinished();
-	public void setVariable( String key, Object val );
-	public Object getVariable( String key );
+	public void setGlobal( String key, Object val );
+	public Object getGlobal( String key );
+	public void setVariable( String key, String value );
+	public String getVariable( String key );
 	public HttpRequest getRequest();
 	public HttpResponse getResponse();
 	public Account getAccount();

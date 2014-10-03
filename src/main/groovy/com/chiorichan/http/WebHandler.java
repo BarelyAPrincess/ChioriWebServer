@@ -194,19 +194,19 @@ public class WebHandler implements HttpHandler
 				throw new HttpErrorException( 401, "Loading of this page (" + file + ") is not allowed since its hard protected in the site configs." );
 			
 			requestFile = new File( docRoot, file );
-			sess.setVariable( "__FILE__", requestFile );
+			sess.setGlobal( "__FILE__", requestFile );
 		}
 		
 		request.putServerVar( ServerVars.DOCUMENT_ROOT, docRoot );
 		
-		sess.setVariable( "_SERVER", request.getServerStrings() );
-		sess.setVariable( "_POST", request.getPostMap() );
-		sess.setVariable( "_GET", request.getGetMap() );
-		sess.setVariable( "_REWRITE", request.getRewriteMap() );
-		sess.setVariable( "_FILES", request.getUploadedFiles() );
+		sess.setGlobal( "_SERVER", request.getServerStrings() );
+		sess.setGlobal( "_POST", request.getPostMap() );
+		sess.setGlobal( "_GET", request.getGetMap() );
+		sess.setGlobal( "_REWRITE", request.getRewriteMap() );
+		sess.setGlobal( "_FILES", request.getUploadedFiles() );
 		
 		if ( Loader.getConfig().getBoolean( "advanced.security.requestMapEnabled", true ) )
-			sess.setVariable( "_REQUEST", request.getRequestMap() );
+			sess.setGlobal( "_REQUEST", request.getRequestMap() );
 		
 		StringBuilder source = new StringBuilder();
 		CodeEvalFactory factory = sess.getCodeFactory();

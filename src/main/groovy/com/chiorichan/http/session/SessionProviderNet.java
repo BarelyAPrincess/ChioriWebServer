@@ -99,14 +99,14 @@ public class SessionProviderNet implements SessionProvider, BindingProvider, Sen
 	}
 
 	@Override
-	public void setVariable( String key, Object val )
+	public void setGlobal( String key, Object val )
 	{
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public Object getVariable( String key )
+	public Object getGlobal( String key )
 	{
 		// TODO Auto-generated method stub
 		return null;
@@ -205,6 +205,20 @@ public class SessionProviderNet implements SessionProvider, BindingProvider, Sen
 
 	@Override
 	public Site getSite()
+	{
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void setVariable( String key, String value )
+	{
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public String getVariable( String key )
 	{
 		// TODO Auto-generated method stub
 		return null;

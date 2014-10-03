@@ -203,15 +203,25 @@ public class SessionProviderWeb implements SessionProvider
 	}
 	
 	@Override
-	public void setVariable( String key, Object val )
+	public void setGlobal( String key, Object val )
 	{
 		binding.setVariable( key, val );
 	}
 	
 	@Override
-	public Object getVariable( String key )
+	public Object getGlobal( String key )
 	{
 		return binding.getVariable( key );
+	}
+	
+	public void setVariable( String key, String value )
+	{
+		parentSession.setVariable( key, value );
+	}
+	
+	public String getVariable( String key )
+	{
+		return parentSession.getVariable( key );
 	}
 	
 	protected Binding getBinding()
