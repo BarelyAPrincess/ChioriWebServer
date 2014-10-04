@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2014 Chiori-chan. All Right Reserved.
- *
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -11,7 +10,7 @@ package com.chiorichan.framework;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.net.URISyntaxException;
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -43,19 +42,23 @@ public class SiteManager
 		DatabaseEngine sql = Loader.getSessionManager().getDatabase();
 		
 		// Load sites from YAML Filebase.
-		File siteFileBase = new File( "sites" );
+		File siteFileBase = new File( Loader.getRoot(), "sites" );
 		
 		FileUtil.directoryHealthCheck( siteFileBase );
 		
+		File defaultSite = new File( siteFileBase, "000-default.yaml" );
+		
 		// We make sure the default framework YAML FileBase exists and if not we copy it from the Jar.
-		if ( !new File( siteFileBase, "000-default.yaml" ).exists() )
+		if ( !defaultSite.exists() )
 		{
 			try
 			{
-				FileUtil.copy( new File( getClass().getClassLoader().getResource( "com/chiorichan/default-site.yaml" ).toURI() ), new File( siteFileBase, "000-default.yaml" ) );
+				FileUtil.putResource( "com/chiorichan/default-site.yaml", defaultSite );
 			}
-			catch ( URISyntaxException e1 )
-			{}
+			catch ( IOException e )
+			{
+				e.printStackTrace();
+			}
 		}
 		
 		FileFilter fileFilter = new WildcardFileFilter( "*.yaml" );
@@ -197,11 +200,11 @@ public class SiteManager
 			return "There already exists a site by the id you provided.";
 		
 		if ( type.equalsIgnoreCase( "sql" ) )
-		{
+		{	
 			
 		}
 		else if ( type.equalsIgnoreCase( "file" ) )
-		{
+		{	
 			
 		}
 		else

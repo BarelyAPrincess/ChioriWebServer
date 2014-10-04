@@ -42,7 +42,7 @@ auto-updater:
   - warn-console
   - warn-ops
   preferred-channel: rb
-  host: jenkins.applebloom.co
+  host: jenkins.chiorichan.com
   suggest-channels: true
   check-interval: 30
   console-only: true
@@ -51,23 +51,23 @@ sessions:
   defaultTimeout: 3600
   defaultTimeoutWithLogin: 86400
   defaultTimeoutRememberMe: 604800
-  allowNoTimeoutPermission: true
+  allowNoTimeoutPermission: false
   rearmTimeoutWithEachRequest: true
   reuseVacantSessions: true
   maxSessionsPerIP: 6
   allowIPChange: false
   cleanupInterval: 5
-users:
+accounts:
   maxLogins: -1
   lookupAdapter:
     type: default
     table: ''
     fields: {}
   operators:
-  - cg092m
+  - xx000z
 framework:
   sites:
-    defaultTitle: Unnamed Chiori-chan's Web Server Site
+    defaultTitle: Unnamed Site
     autoCreateSubdomains: true
     subdomainsDefaultToRoot: false
 advanced:

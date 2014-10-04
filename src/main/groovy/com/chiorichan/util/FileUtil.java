@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2014 Chiori-chan. All Right Reserved.
- *
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -12,6 +11,7 @@ package com.chiorichan.util;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,6 +19,7 @@ import java.nio.channels.FileChannel;
 
 import com.chiorichan.Loader;
 import com.chiorichan.framework.Site;
+import com.google.common.io.ByteStreams;
 
 /**
  * Class containing file utilities
@@ -142,5 +143,21 @@ public class FileUtil
 			file.createNewFile();
 		
 		return file;
+	}
+	
+	public static void putResource( String resource, File file ) throws IOException
+	{
+		try
+		{
+			InputStream is = Loader.class.getClassLoader().getResourceAsStream( resource );
+			FileOutputStream os = new FileOutputStream( file );
+			ByteStreams.copy( is, os );
+			is.close();
+			os.close();
+		}
+		catch ( FileNotFoundException e )
+		{	
+			throw new IOException( e );
+		}
 	}
 }

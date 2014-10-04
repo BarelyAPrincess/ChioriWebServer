@@ -104,7 +104,7 @@ public class NetworkManager
 					return new ServerConnection();
 				}
 			};
-
+			
 			Loader.getLogger().info( "Starting Tcp Server on " + (serverIp.length() == 0 ? "*" : serverIp) + ":" + serverPort );
 
 			tcpServer.start();
@@ -166,7 +166,7 @@ public class NetworkManager
 		{
 			InetSocketAddress socket;
 			String serverIp = Loader.getConfig().getString( "server.httpHost", "" );
-			int serverPort = Loader.getConfig().getInt( "server.httpPort", 80 );
+			int serverPort = Loader.getConfig().getInt( "server.httpPort", 8080 );
 
 			if ( !checkPrivilegedPort( serverPort ) )
 			{

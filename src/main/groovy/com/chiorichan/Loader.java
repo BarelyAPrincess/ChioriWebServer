@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2014 Chiori-chan. All Right Reserved.
- *
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -114,7 +113,7 @@ public class Loader
 				System.out.println( Versioning.getVersion() );
 			else
 			{
-				isRunning = new Loader( options ).start();
+				isRunning = new Loader(options).start();
 			}
 		}
 		catch ( Throwable t )
@@ -199,6 +198,7 @@ public class Loader
 	{
 		instance = this;
 		options = options0;
+		boolean firstRun = false;
 		
 		String internalConfigFile = "com/chiorichan/config.yaml";
 		
@@ -237,21 +237,20 @@ public class Loader
 			getLogger().warning( "There was an exception thrown trying to create the 'InterpreterOverrides.properties' file.", e );
 		}
 		
-		try
-		{
-			configuration = YamlConfiguration.loadConfiguration( getConfigFile() );
-		}
-		catch ( Exception e )
+		if ( !getConfigFile().exists() )
 		{
 			try
 			{
-				FileUtil.copy( new File( getClass().getClassLoader().getResource( internalConfigFile ).toURI() ), getConfigFile() );
-				configuration = YamlConfiguration.loadConfiguration( getConfigFile() );
+				FileUtil.putResource( internalConfigFile, getConfigFile() );
+				firstRun = true;
 			}
-			catch ( URISyntaxException e1 )
-			{}
+			catch ( IOException e1 )
+			{
+				e1.printStackTrace();
+			}
 		}
 		
+		configuration = YamlConfiguration.loadConfiguration( getConfigFile() );
 		configuration.options().copyDefaults( true );
 		configuration.setDefaults( YamlConfiguration.loadConfiguration( getClass().getClassLoader().getResourceAsStream( internalConfigFile ) ) );
 		clientId = configuration.getString( "server.installationUID", clientId );
@@ -288,6 +287,13 @@ public class Loader
 		updater.getOnUpdate().addAll( configuration.getStringList( "auto-updater.on-update" ) );
 		
 		WebUtils.sendTracking( "startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
+		
+		if ( firstRun )
+		{
+			Loader.getLogger().highlight( "It appears that this is your first time running Chiori-chan's Web Server." );
+			Loader.getLogger().highlight( "All the needed files have been extracted from the jar file." );
+			Loader.getLogger().highlight( "The server will continue to start but it's recommended that you stop, review config and restart." );
+		}
 	}
 	
 	public boolean start() throws StartupException
@@ -496,12 +502,12 @@ public class Loader
 	{
 		getSessionManager().shutdown();
 		/*
-		if ( !reason.isEmpty() )
-			for ( Account User : accounts.getOnlineAccounts() )
-			{
-				User.kick( reason );
-			}
-		*/
+		 * if ( !reason.isEmpty() )
+		 * for ( Account User : accounts.getOnlineAccounts() )
+		 * {
+		 * User.kick( reason );
+		 * }
+		 */
 		getAccountsManager().shutdown();
 		NetworkManager.cleanup();
 	}
@@ -612,7 +618,7 @@ public class Loader
 	
 	public static File getRoot()
 	{
-		return new File( Loader.class.getProtectionDomain().getCodeSource().getLocation().getPath() );
+		return new File( Loader.class.getProtectionDomain().getCodeSource().getLocation().getPath() ).getParentFile();
 	}
 	
 	public static PermissionsManager getPermissionsManager()
