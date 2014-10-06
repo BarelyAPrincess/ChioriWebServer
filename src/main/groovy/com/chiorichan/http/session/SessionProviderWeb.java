@@ -29,7 +29,7 @@ public class SessionProviderWeb implements SessionProvider
 	
 	protected SessionProviderWeb(HttpRequest _request)
 	{
-		parentSession = new Session( _request.getSite() );
+		parentSession = SessionManager.createSession();
 		parentSession.sessionProviders.add( this );
 		setRequest( _request, false );
 	}
@@ -41,7 +41,7 @@ public class SessionProviderWeb implements SessionProvider
 		for ( Entry<String, Object> e : session.bindingMap.entrySet() )
 			binding.setVariable( e.getKey(), e.getValue() );
 		
-		setRequest( _request, false );
+		setRequest( _request, true );
 	}
 	
 	@Override
@@ -55,7 +55,7 @@ public class SessionProviderWeb implements SessionProvider
 		request = _request;
 		parentSession.stale = _stale;
 		
-		parentSession.site = request.getSite();
+		parentSession.setSite( request.getSite() );
 		parentSession.ipAddr = request.getRemoteAddr();
 		
 		Map<String, Candy> pulledCandies = SessionUtils.poleCandies( _request );
@@ -81,7 +81,14 @@ public class SessionProviderWeb implements SessionProvider
 		
 		parentSession.sessionCandy = parentSession.candies.get( parentSession.candyName );
 		
-		parentSession.initSession();
+		try
+		{
+			parentSession.initSession( request.getParentDomain() );
+		}
+		catch ( SessionException e )
+		{
+			e.printStackTrace();
+		}
 		
 		if ( request != null )
 		{
@@ -131,7 +138,7 @@ public class SessionProviderWeb implements SessionProvider
 				
 				String loginPost = ( target.isEmpty() ) ? request.getSite().getYaml().getString( "scripts.login-post", "/panel" ) : target;
 				
-				parentSession.setArgument( "remember", remember );
+				parentSession.setVariable( "remember", remember );
 				
 				Loader.getLogger().info( ChatColor.GREEN + "Login Success `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getAccountId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
 				request.getResponse().sendRedirect( loginPost );
@@ -151,8 +158,8 @@ public class SessionProviderWeb implements SessionProvider
 		}
 		else if ( parentSession.currentAccount == null )
 		{
-			username = parentSession.getArgument( "user" );
-			password = parentSession.getArgument( "pass" );
+			username = parentSession.getVariable( "user" );
+			password = parentSession.getVariable( "pass" );
 			
 			if ( username != null && !username.isEmpty() && password != null && !password.isEmpty() )
 			{
@@ -329,7 +336,7 @@ public class SessionProviderWeb implements SessionProvider
 	}
 	
 	@Override
-	public void destroy() throws SQLException
+	public void destroy() throws SessionException
 	{
 		parentSession.destroy();
 	}
@@ -362,6 +369,12 @@ public class SessionProviderWeb implements SessionProvider
 	public Site getSite()
 	{
 		return parentSession.getSite();
+	}
+
+	@Override
+	public void saveSession( boolean force )
+	{
+		parentSession.saveSession( force );
 	}
 	
 	// TODO: Future add of setDomain, setCookieName, setSecure (http verses https)

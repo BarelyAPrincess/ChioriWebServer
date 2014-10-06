@@ -1,7 +1,5 @@
 package com.chiorichan.http.session;
 
-import java.sql.SQLException;
-
 import com.chiorichan.account.bases.Account;
 import com.chiorichan.factory.BindingProvider;
 import com.chiorichan.framework.Site;
@@ -26,10 +24,11 @@ public interface SessionProvider extends BindingProvider
 	public String getId();
 	public boolean isSet( String key );
 	public void setCookieExpiry( int valid );
-	public void destroy() throws SQLException;
+	public void destroy() throws SessionException;
 	public long getTimeout();
 	public void infiniTimeout();
 	public boolean getUserState();
 	public void logoutAccount();
 	public Site getSite();
+	public void saveSession( boolean force );
 }

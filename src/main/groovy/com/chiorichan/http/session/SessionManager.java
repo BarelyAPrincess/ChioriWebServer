@@ -3,14 +3,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2014 Chiori-chan. All Right Reserved.
- *
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
 package com.chiorichan.http.session;
 
-import java.net.ConnectException;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
@@ -19,8 +16,6 @@ import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.StartupException;
 import com.chiorichan.account.bases.Account;
-import com.chiorichan.database.DatabaseEngine;
-import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.http.HttpRequest;
 import com.chiorichan.util.Common;
 import com.google.common.collect.Lists;
@@ -33,107 +28,20 @@ import com.google.common.collect.Lists;
  */
 public class SessionManager
 {
-	protected DatabaseEngine sql = new DatabaseEngine();
-	
-	static protected List<Session> sessionList = Lists.newCopyOnWriteArrayList();
+	static private List<Session> sessionList = Lists.newCopyOnWriteArrayList();
 	
 	public void init() throws StartupException
 	{
-		YamlConfiguration config = Loader.getConfig();
-		
-		try
+		switch ( Loader.getConfig().getString( "server.database.type", "file" ) )
 		{
-			Class.forName( "com.mysql.jdbc.Driver" );
-		}
-		catch ( ClassNotFoundException e )
-		{
-			throw new StartupException( "We could not locate the 'com.mysql.jdbc.Driver' library regardless that its suppose to be included. If your running from source code be sure to have this library in your build path." );
-		}
-		
-		switch ( config.getString( "server.database.type", "mysql" ) )
-		{
-			case "sqlite":
-				String filename = config.getString( "server.database.dbfile", "chiori.db" );
+			case "db":
+				if ( Loader.getDatabase() == null )
+					throw new StartupException( "Session Manager is configured to use the Framework Database but the server's database is unconfigured, which is required for this configuration." );
 				
-				try
-				{
-					sql.init( filename );
-				}
-				catch ( SQLException e )
-				{
-					if ( e.getCause() instanceof ConnectException )
-					{
-						throw new StartupException( "We had a problem connecting to database '" + filename + "'. Reason: " + e.getCause().getMessage() );
-					}
-					else
-					{
-						throw new StartupException( e );
-					}
-				}
-				
-				break;
-			case "mysql":
-				String host = config.getString( "server.database.host", "localhost" );
-				String port = config.getString( "server.database.port", "3306" );
-				String database = config.getString( "server.database.database", "chiorifw" );
-				String username = config.getString( "server.database.username", "fwuser" );
-				String password = config.getString( "server.database.password", "fwpass" );
-				
-				try
-				{
-					sql.init( database, username, password, host, port );
-				}
-				catch ( SQLException e )
-				{
-					// e.printStackTrace();
-					
-					if ( e.getCause() instanceof ConnectException )
-					{
-						throw new StartupException( "We had a problem connecting to database '" + host + "'. Reason: " + e.getCause().getMessage() );
-					}
-					else
-					{
-						throw new StartupException( e );
-					}
-				}
-				
+				sessionList = DBSession.getActiveSessions();
 				break;
 			default:
-				Loader.getLogger().panic( "The Framework Database can not support anything other then mySql or sqLite at the moment. Please change 'framework-database.type' to 'mysql' or 'sqLite' in 'chiori.yml'" );
-		}
-	}
-	
-	public void loadSessions()
-	{
-		synchronized ( sessionList )
-		{
-			sessionList.clear();
-			
-			try
-			{
-				ResultSet rs = sql.query( "SELECT * FROM `sessions`;" );
-				
-				if ( sql.getRowCount( rs ) > 0 )
-					do
-					{
-						try
-						{
-							sessionList.add( new Session( rs ) );
-						}
-						catch ( SessionException e )
-						{
-							if ( e.getMessage().contains( "expired" ) )
-								sql.queryUpdate( "DELETE FROM `sessions` WHERE `sessionId` = '" + rs.getString( "sessionId" ) + "' && `sessionName` = '" + rs.getString( "sessionName" ) + "';" );
-							else
-								e.printStackTrace();
-						}
-					}
-					while ( rs.next() );
-			}
-			catch ( SQLException e )
-			{
-				Loader.getLogger().warning( "There was a problem reloading saved sessions.", e );
-			}
+				sessionList = FileSession.getActiveSessions();
 		}
 	}
 	
@@ -147,7 +55,6 @@ public class SessionManager
 			{
 				if ( s.matchClient( request ) )
 				{
-					s.stale = true;
 					sess = s.getSessionProvider( request );
 					break;
 				}
@@ -157,9 +64,8 @@ public class SessionManager
 			{
 				for ( Session s : sessionList )
 				{
-					if ( s.ipAddr.equals( request.getRemoteAddr() ) && !s.getUserState() )
+					if ( s.getIpAddr() != null && s.getIpAddr().equals( request.getRemoteAddr() ) && !s.getUserState() )
 					{
-						s.stale = true;
 						sess = s.getSessionProvider( request );
 						break;
 					}
@@ -186,21 +92,9 @@ public class SessionManager
 			
 			if ( var1.getTimeout() > 0 && var1.getTimeout() < Common.getEpoch() )
 			{
-				try
-				{
-					destroySession( var1 );
-				}
-				catch ( SQLException e )
-				{
-					e.printStackTrace();
-				}
+				destroySession( var1 );
 			}
 		}
-	}
-	
-	public DatabaseEngine getDatabase()
-	{
-		return sql;
 	}
 	
 	public List<Session> getSessions()
@@ -227,7 +121,7 @@ public class SessionManager
 		
 		for ( Session sess : sessionList )
 		{
-			if ( sess.ipAddr.equals( ipAddr ) )
+			if ( sess.getIpAddr() != null && sess.getIpAddr().equals( ipAddr ) )
 				lst.add( sess );
 		}
 		
@@ -240,15 +134,32 @@ public class SessionManager
 	 * @param var1
 	 * @throws SQLException
 	 */
-	public static void destroySession( Session var1 ) throws SQLException
+	public static void destroySession( Session sess )
 	{
-		Loader.getLogger().info( ChatColor.DARK_AQUA + "Session Destroyed `" + var1 + "`" );
+		Loader.getLogger().info( ChatColor.DARK_AQUA + "Session Destroyed `" + sess + "`" );
 		
 		for ( Account u : Loader.getAccountsManager().getOnlineAccounts() )
-			u.removeHandler( var1 );
+			u.removeHandler( sess );
 		
-		Loader.getSessionManager().sql.queryUpdate( "DELETE FROM `sessions` WHERE `sessionName` = '" + var1.candyName + "' AND `sessionId` = '" + var1.getId() + "';" );
-		sessionList.remove( var1 );
+		sess.destroySession();
+		
+		sessionList.remove( sess );
+	}
+	
+	public static Session createSession()
+	{
+		Session newSession = null;
+		
+		switch ( Loader.getConfig().getString( "server.database.type", "file" ) )
+		{
+			case "db":
+				newSession = new DBSession();
+				break;
+			default:
+				newSession = new FileSession();
+		}
+		
+		return newSession;
 	}
 	
 	public void reload()

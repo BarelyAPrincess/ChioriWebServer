@@ -1,7 +1,5 @@
 package com.chiorichan.http.session;
 
-import java.sql.SQLException;
-
 import com.chiorichan.account.bases.Account;
 import com.chiorichan.account.bases.Sentient;
 import com.chiorichan.account.bases.SentientHandler;
@@ -169,7 +167,7 @@ public class SessionProviderNet implements SessionProvider, BindingProvider, Sen
 	}
 
 	@Override
-	public void destroy() throws SQLException
+	public void destroy() throws SessionException
 	{
 		// TODO Auto-generated method stub
 		
@@ -222,5 +220,12 @@ public class SessionProviderNet implements SessionProvider, BindingProvider, Sen
 	{
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public void saveSession( boolean force )
+	{
+		// TODO Auto-generated method stub
+		
 	}
 }

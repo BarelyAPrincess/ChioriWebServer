@@ -324,9 +324,9 @@ public class HttpRequest
 		if ( http.getRequestHeaders().get( "Host" ) != null )
 		{
 			String domain = http.getRequestHeaders().get( "Host" ).get( 0 );
-			domain = domain.substring( 0, domain.indexOf( ":" ) ); // Remove port number.
+			domain = domain.substring( 0, domain.indexOf( ":" ) ).trim(); // Remove port number.
 			
-			if ( domain.equalsIgnoreCase( "localhost" ) || domain.equalsIgnoreCase( "127.0.0.1" ) || domain.equalsIgnoreCase( getLocalAddr() ) || domain.equalsIgnoreCase( getLocalHost() ) )
+			if ( domain.toLowerCase().endsWith( "localhost" ) || domain.equalsIgnoreCase( "127.0.0.1" ) || domain.equalsIgnoreCase( getLocalAddr() ) || domain.toLowerCase().endsWith( getLocalHost() ) )
 				domain = "";
 			
 			if ( domain == null || domain.isEmpty() )
@@ -385,11 +385,13 @@ public class HttpRequest
 		return http.getRemoteAddress().getHostName();
 	}
 	
+	/**
+	 * This method uses a checker that makes it possible for our server to get the correct remote IP even if using it with CloudFlare.
+	 * I believe there are other CDN services like CloudFlare. I'd love it if people inform me, so I can implement similar methods.
+	 * https://support.cloudflare.com/hc/en-us/articles/200170786-Why-do-my-server-logs-show-CloudFlare-s-IPs-using-CloudFlare-
+	 */
 	public String getRemoteAddr()
 	{
-		// This is a checker that makes it possible for our server to get the correct remote IP even if using it with CloudFlare.
-		// I believe there are other similar services to CloudFlare. I'd love it if beta testers can let me know if they find anyone else.
-		// https://support.cloudflare.com/hc/en-us/articles/200170786-Why-do-my-server-logs-show-CloudFlare-s-IPs-using-CloudFlare-
 		if ( http.getRequestHeaders().containsKey( "CF-Connecting-IP" ) )
 			return http.getRequestHeaders().get( "CF-Connecting-IP" ).get( 0 );
 		else

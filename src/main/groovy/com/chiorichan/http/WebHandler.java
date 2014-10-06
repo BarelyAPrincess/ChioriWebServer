@@ -105,7 +105,7 @@ public class WebHandler implements HttpHandler
 			SessionProvider sess = request.getSessionNoWarning();
 			if ( sess != null )
 			{
-				sess.getParentSession().saveSession( false );
+				sess.saveSession( false );
 				sess.onFinished();
 			}
 			
@@ -125,8 +125,6 @@ public class WebHandler implements HttpHandler
 		String domain = request.getParentDomain();
 		String subdomain = request.getSubDomain();
 		Site currentSite = request.getSite();
-		
-		request.initSession();
 		
 		request.initServerVars( staticServerVars );
 		

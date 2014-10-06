@@ -278,15 +278,19 @@ public class Routes
 			
 			try
 			{
-				DatabaseEngine sql = Loader.getSessionManager().getDatabase();
-				ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE (site = '" + subdomain + "' OR site = '') AND domain = '" + domain + "' UNION SELECT * FROM `pages` WHERE (site = '" + subdomain + "' OR site = '') AND domain = '';" );
-				if ( sql.getRowCount( rs ) > 0 )
+				DatabaseEngine sql = Loader.getDatabase();
+				
+				if ( sql != null )
 				{
-					do
+					ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE (site = '" + subdomain + "' OR site = '') AND domain = '" + domain + "' UNION SELECT * FROM `pages` WHERE (site = '" + subdomain + "' OR site = '') AND domain = '';" );
+					if ( sql.getRowCount( rs ) > 0 )
 					{
-						routes.add( new Route( rs ) );
+						do
+						{
+							routes.add( new Route( rs ) );
+						}
+						while ( rs.next() );
 					}
-					while ( rs.next() );
 				}
 			}
 			catch ( SQLException e )

@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2014 Chiori-chan. All Right Reserved.
- *
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -90,7 +89,7 @@ public class HttpResponse
 		ErrorEvent event = new ErrorEvent( request, var1, var2 );
 		Loader.getEventBus().callEvent( event );
 		
-		// TODO Make these error pages a bit more creative and/or informational to developers. 
+		// TODO Make these error pages a bit more creative and/or informational to developers.
 		
 		if ( event.getErrorHtml() == null || event.getErrorHtml().isEmpty() )
 		{
@@ -281,10 +280,8 @@ public class HttpResponse
 		Headers h = http.getResponseHeaders();
 		
 		for ( Candy c : request.getCandies() )
-		{
 			if ( c.needsUpdating() )
 				h.add( "Set-Cookie", c.toHeaderValue() );
-		}
 		
 		if ( h.get( "Server" ) == null )
 			h.add( "Server", Versioning.getProduct() + " Version " + Versioning.getVersion() );
@@ -342,7 +339,7 @@ public class HttpResponse
 		{
 			stage = HttpResponseStage.MULTIPART;
 			Headers h = http.getResponseHeaders();
-			request.getSession().getParentSession().saveSession( false );
+			request.getSession().saveSession( false );
 			
 			for ( Candy c : request.getCandies() )
 			{

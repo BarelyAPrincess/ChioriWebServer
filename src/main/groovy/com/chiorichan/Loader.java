@@ -10,7 +10,8 @@ package com.chiorichan;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
+import java.net.ConnectException;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
@@ -19,17 +20,18 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.apache.commons.io.FileUtils;
-
 import jline.console.ConsoleReader;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
+
+import org.apache.commons.io.FileUtils;
 
 import com.chiorichan.Warning.WarningState;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.bases.Account;
 import com.chiorichan.bus.ConsoleBus;
 import com.chiorichan.bus.EventBus;
+import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.framework.SiteManager;
 import com.chiorichan.framework.WebUtils;
@@ -82,6 +84,8 @@ public class Loader
 	private static boolean isRunning = true;
 	private static String stopReason = null;
 	
+	protected static DatabaseEngine fwDatabase = null;
+	
 	public static void main( String... args ) throws Exception
 	{
 		System.setProperty( "file.encoding", "utf-8" );
@@ -113,7 +117,7 @@ public class Loader
 				System.out.println( Versioning.getVersion() );
 			else
 			{
-				isRunning = new Loader(options).start();
+				isRunning = new Loader( options ).start();
 			}
 		}
 		catch ( Throwable t )
@@ -320,8 +324,8 @@ public class Loader
 		
 		pluginManager.enablePlugins( PluginLoadOrder.POSTSERVER );
 		
-		getLogger().info( "Initalizing the Persistence Manager..." );
-		sessionManager.init();
+		getLogger().info( "Initalizing the Framework Database..." );
+		initDatabase();
 		
 		getLogger().info( "Initalizing the Site Manager..." );
 		sites.init();
@@ -329,7 +333,8 @@ public class Loader
 		getLogger().info( "Initalizing the Accounts Manager..." );
 		accounts.init();
 		
-		sessionManager.loadSessions();
+		getLogger().info( "Initalizing the Session Manager..." );
+		sessionManager.init();
 		
 		pluginManager.enablePlugins( PluginLoadOrder.INITIALIZED );
 		
@@ -344,6 +349,81 @@ public class Loader
 		updater.check();
 		
 		return true;
+	}
+	
+	public static DatabaseEngine getDatabase()
+	{
+		return fwDatabase;
+	}
+	
+	public void initDatabase()
+	{
+		try
+		{
+			Class.forName( "com.mysql.jdbc.Driver" );
+		}
+		catch ( ClassNotFoundException e )
+		{
+			throw new StartupException( "We could not locate the 'com.mysql.jdbc.Driver' library regardless that its suppose to be included. If your running from source code be sure to have this library in your build path." );
+		}
+		
+		switch ( configuration.getString( "server.database.type", "mysql" ) )
+		{
+			case "sqlite":
+				fwDatabase = new DatabaseEngine();
+				String filename = configuration.getString( "server.database.dbfile", "chiori.db" );
+				
+				try
+				{
+					fwDatabase.init( filename );
+				}
+				catch ( SQLException e )
+				{
+					if ( e.getCause() instanceof ConnectException )
+					{
+						throw new StartupException( "We had a problem connecting to database '" + filename + "'. Reason: " + e.getCause().getMessage() );
+					}
+					else
+					{
+						throw new StartupException( e );
+					}
+				}
+				
+				break;
+			case "mysql":
+				fwDatabase = new DatabaseEngine();
+				String host = configuration.getString( "server.database.host", "localhost" );
+				String port = configuration.getString( "server.database.port", "3306" );
+				String database = configuration.getString( "server.database.database", "chiorifw" );
+				String username = configuration.getString( "server.database.username", "fwuser" );
+				String password = configuration.getString( "server.database.password", "fwpass" );
+				
+				try
+				{
+					fwDatabase.init( database, username, password, host, port );
+				}
+				catch ( SQLException e )
+				{
+					// e.printStackTrace();
+					
+					if ( e.getCause() instanceof ConnectException )
+					{
+						throw new StartupException( "We had a problem connecting to database '" + host + "'. Reason: " + e.getCause().getMessage() );
+					}
+					else
+					{
+						throw new StartupException( e );
+					}
+				}
+				
+				break;
+			case "none":
+			case "":
+				Loader.getLogger().warning( "The Framework Database is unconfigured. Some features maybe not function as expected. See config option 'accounts.database.type' in server config file." );
+				break;
+			default:
+				Loader.getLogger().panic( "The Framework Database can not support anything other then mySql or sqLite at the moment. Please change 'framework-database.type' to 'mysql' or 'sqLite' in 'chiori.yml'" );
+		}
 	}
 	
 	public static YamlConfiguration getConfig()

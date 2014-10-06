@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2014 Chiori-chan. All Right Reserved.
- *
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -100,6 +99,9 @@ public class AccountsKeeper
 	{
 		Validate.notNull( s, "Partial Name cannot be null" );
 		
+		if ( adapter == null )
+			return null;
+		
 		Account acct = null;
 		
 		for ( Entry<Account, AccountsKeeperOptions> entry : accounts.entrySet() )
@@ -133,6 +135,9 @@ public class AccountsKeeper
 		List<AccountMetaData> metas = adapter.getAccounts();
 		List<Account> accts = Lists.newArrayList();
 		
+		if ( adapter == null )
+			return accts;
+		
 		for ( AccountMetaData meta : metas )
 		{
 			Account acct = isLoaded( meta.getAccountId() );
@@ -148,9 +153,13 @@ public class AccountsKeeper
 	
 	public void saveAccounts()
 	{
+		if ( adapter == null )
+			return;
+		
 		for ( Account acct : accounts.keySet() )
 		{
-			adapter.saveAccount( acct.getMetaData() );
+			if ( acct != null )
+				adapter.saveAccount( acct.getMetaData() );
 		}
 	}
 	

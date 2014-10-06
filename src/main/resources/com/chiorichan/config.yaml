@@ -18,7 +18,7 @@ server:
   tmpFileDirectory: tmp
   database:
     database: chiorifw
-    type: mysql
+    type: none
     host: localhost
     port: 3306
     username: fwuser
@@ -57,10 +57,11 @@ sessions:
   maxSessionsPerIP: 6
   allowIPChange: false
   cleanupInterval: 5
+  adapterType: none
 accounts:
   maxLogins: -1
   lookupAdapter:
-    type: default
+    type: none
     table: ''
     fields: {}
   operators:
@@ -70,6 +71,7 @@ framework:
     defaultTitle: Unnamed Site
     autoCreateSubdomains: true
     subdomainsDefaultToRoot: false
+    defaultSite: ''
 advanced:
   processors:
     imageProcessorEnabled: true

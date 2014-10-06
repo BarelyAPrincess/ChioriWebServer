@@ -64,7 +64,12 @@ public class FileAdapter implements AccountLookupAdapter
 	
 	public void checkForFiles()
 	{
-		for ( File f : accountsDirectory.listFiles() )
+		File[] files = accountsDirectory.listFiles();
+		
+		if ( files == null )
+			return;
+		
+		for ( File f : files )
 			if ( FileFilterUtils.and( FileFilterUtils.suffixFileFilter( "yaml" ), FileFilterUtils.fileFileFilter() ).accept( f ) )
 				if ( !preloaded.containsKey( f.getName() ) )
 					preloaded.put( f.getName(), loadFromFile( f ) );

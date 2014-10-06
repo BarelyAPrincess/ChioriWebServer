@@ -8,12 +8,11 @@
  */
 package com.chiorichan.http.session;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
@@ -21,7 +20,6 @@ import com.chiorichan.account.bases.Account;
 import com.chiorichan.account.bases.Sentient;
 import com.chiorichan.account.bases.SentientHandler;
 import com.chiorichan.account.helpers.LoginException;
-import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.framework.Site;
 import com.chiorichan.framework.WebUtils;
 import com.chiorichan.http.Candy;
@@ -31,20 +29,17 @@ import com.chiorichan.util.StringUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 
 /**
  * This class is used to carry data that is to be persistent from request to request.
  * If you need to sync data across requests then we recommend using Session Vars for Security.
  */
-public class Session implements SentientHandler
+public abstract class Session implements SentientHandler
 {
 	protected Map<String, String> data = new LinkedHashMap<String, String>();
 	protected long timeout = 0;
 	protected int requestCnt = 0;
-	protected String candyId = "", candyName = "candyId", ipAddr = null;
+	protected String candyId = "", candyName = "sessionId", ipAddr = null;
 	protected Candy sessionCandy;
 	protected Account currentAccount = null;
 	protected List<String> pendingMessages = Lists.newArrayList();
@@ -58,59 +53,20 @@ public class Session implements SentientHandler
 	protected final Map<String, Object> bindingMap = Maps.newConcurrentMap();
 	protected final Set<SessionProvider> sessionProviders = Sets.newHashSet();
 	
-	/**
-	 * Initializes a new session.
-	 */
-	protected Session( Site _site )
+	protected Session()
 	{
-		candyName = Loader.getConfig().getString( "sessions.defaultSessionName", candyName );
-		site = _site;
+		
 	}
 	
-	protected Session(ResultSet rs) throws SessionException
+	protected void setSite( Site _site )
 	{
-		try
-		{
-			stale = true;
-			
-			timeout = rs.getInt( "timeout" );
-			ipAddr = rs.getString( "ipAddr" );
-			
-			if ( !rs.getString( "data" ).isEmpty() )
-				data = new Gson().fromJson( rs.getString( "data" ), new TypeToken<Map<String, String>>()
-				{
-					private static final long serialVersionUID = 2808406085740098578L;
-				}.getType() );
-			
-			if ( rs.getString( "sessionName" ) != null && !rs.getString( "sessionName" ).isEmpty() )
-				candyName = rs.getString( "sessionName" );
-			candyId = rs.getString( "sessionId" );
-			
-			if ( timeout < Common.getEpoch() )
-				throw new SessionException( "This session expired at " + timeout + " epoch!" );
-			
-			if ( rs.getString( "sessionSite" ) == null || rs.getString( "sessionSite" ).isEmpty() )
-				site = Loader.getSiteManager().getFrameworkSite();
-			else
-				site = Loader.getSiteManager().getSiteById( rs.getString( "sessionSite" ) );
-			
-			sessionCandy = new Candy( candyName, rs.getString( "sessionId" ) );
-			candies.put( candyName, sessionCandy );
-			
-			loginSessionUser();
-			
-			Loader.getLogger().info( ChatColor.DARK_AQUA + "Session Restored `" + this + "`" );
-		}
-		catch ( SQLException e )
-		{
-			throw new SessionException( e );
-		}
+		site = _site;
 	}
 	
 	protected void loginSessionUser()
 	{
-		String username = getArgument( "user" );
-		String password = getArgument( "pass" );
+		String username = getVariable( "user" );
+		String password = getVariable( "pass" );
 		
 		try
 		{
@@ -124,82 +80,14 @@ public class Session implements SentientHandler
 		}
 	}
 	
-	protected void initSession()
+	protected void initSession( String parentDomain ) throws SessionException
 	{
-		DatabaseEngine sql = Loader.getSessionManager().getDatabase();
-		
 		if ( sessionCandy != null )
 		{
-			ResultSet rs = null;
-			try
-			{
-				rs = sql.query( "SELECT * FROM `sessions` WHERE `sessionId` = '" + sessionCandy.getValue() + "'" );
-			}
-			catch ( SQLException e1 )
-			{
-				e1.printStackTrace();
-			}
-			
+			candyName = sessionCandy.getKey();
 			candyId = sessionCandy.getValue();
 			
-			if ( rs == null || sql.getRowCount( rs ) < 1 )
-				sessionCandy = null;
-			else
-			{
-				try
-				{
-					timeout = rs.getInt( "timeout" );
-					String _ipAddr = rs.getString( "ipAddr" );
-					
-					if ( !rs.getString( "data" ).isEmpty() )
-					{
-						Map<String, String> tmpData = new Gson().fromJson( rs.getString( "data" ), new TypeToken<Map<String, String>>()
-						{
-							private static final long serialVersionUID = -1734352198651744570L;
-						}.getType() );
-						
-						if ( changesMade )
-						{
-							tmpData.putAll( data );
-							data = tmpData;
-						}
-						else
-							data.putAll( tmpData );
-					}
-					
-					// Possible Session Hijacking! nullify!!!
-					if ( !_ipAddr.equals( ipAddr ) && !Loader.getConfig().getBoolean( "sessions.allowIPChange" ) )
-					{
-						sessionCandy = null;
-					}
-					
-					ipAddr = _ipAddr;
-					
-					List<Session> sessions = Loader.getSessionManager().getSessionsByIp( ipAddr );
-					if ( sessions.size() > Loader.getConfig().getInt( "sessions.maxSessionsPerIP" ) )
-					{
-						long oldestTime = Common.getEpoch();
-						Session oldest = null;
-						
-						for ( Session s : sessions )
-						{
-							if ( s != this && s.getTimeout() < oldestTime )
-							{
-								oldest = s;
-								oldestTime = s.getTimeout();
-							}
-						}
-						
-						if ( oldest != null )
-							SessionManager.destroySession( oldest );
-					}
-				}
-				catch ( JsonSyntaxException | SQLException e )
-				{
-					e.printStackTrace();
-					sessionCandy = null;
-				}
-			}
+			reloadSession();
 		}
 		
 		if ( sessionCandy == null )
@@ -213,23 +101,41 @@ public class Session implements SentientHandler
 			
 			sessionCandy.setMaxAge( defaultLife );
 			
-			sessionCandy.setDomain( "." + getSite().getDomain() );
+			if ( parentDomain != null && !parentDomain.isEmpty() )
+				sessionCandy.setDomain( "." + parentDomain );
 			
 			sessionCandy.setPath( "/" );
 			
 			candies.put( candyName, sessionCandy );
 			
-			String dataJson = new Gson().toJson( data );
-			
 			timeout = Common.getEpoch() + Loader.getConfig().getInt( "sessions.defaultTimeout", 3600 );
 			
-			try
+			saveSession( true );
+		}
+		
+		List<Session> sessions = Loader.getSessionManager().getSessionsByIp( getIpAddr() );
+		int maxPerIp = Loader.getConfig().getInt( "sessions.maxSessionsPerIP" );
+		if ( sessions.size() > maxPerIp )
+		{
+			Map<Long, Session> sortedSessionMap = Maps.newTreeMap();
+			
+			for ( Session s : sessions )
+				sortedSessionMap.put( s.getTimeout(), s );
+			
+			if ( sortedSessionMap.size() > maxPerIp )
 			{
-				sql.queryUpdate( "INSERT INTO `sessions` (`sessionId`, `timeout`, `ipAddr`, `sessionName`, `sessionSite`, `data`)VALUES('" + candyId + "', '" + timeout + "', '" + ipAddr + "', '" + candyName + "', '" + getSite().getName() + "', '" + dataJson + "');" );
-			}
-			catch ( SQLException e )
-			{
-				e.printStackTrace();
+				int stopIndex = sortedSessionMap.size() - maxPerIp;
+				int curIndex = 0;
+				
+				for ( Entry<Long, Session> e : sortedSessionMap.entrySet() )
+				{
+					curIndex++;
+					
+					if ( curIndex > stopIndex )
+						break;
+					
+					SessionManager.destroySession( e.getValue() );
+				}
 			}
 		}
 		
@@ -243,22 +149,7 @@ public class Session implements SentientHandler
 	{
 		if ( force || changesMade )
 		{
-			DatabaseEngine sql = Loader.getSessionManager().getDatabase();
-			
-			String dataJson = new Gson().toJson( data );
-			
-			if ( sql != null )
-				try
-				{
-					sql.queryUpdate( "UPDATE `sessions` SET `data` = '" + dataJson + "', `timeout` = '" + timeout + "', `sessionName` = '" + candyName + "', `ipAddr` = '" + ipAddr + "', `sessionSite` = '" + getSite().getName() + "' WHERE `sessionId` = '" + candyId + "';" );
-				}
-				catch ( SQLException e )
-				{
-					Loader.getLogger().severe( "There was an exception thorwn while trying to save the session.", e );
-				}
-			else
-				Loader.getLogger().severe( "SQL is NULL. Can't save session." );
-			
+			saveSession();
 			changesMade = false;
 		}
 	}
@@ -270,7 +161,7 @@ public class Session implements SentientHandler
 		if ( site != null )
 			extra += ",site=" + site.getName();
 		
-		return candyName + "{id=" + candyId + ",ipAddr=" + ipAddr + ",timeout=" + timeout + ",data=" + data + ",stale=" + stale + ",requestCount=" + requestCnt + extra + "}";
+		return candyName + "{id=" + candyId + ",ipAddr=" + getIpAddr() + ",timeout=" + timeout + ",data=" + data + ",stale=" + stale + ",requestCount=" + requestCnt + extra + "}";
 	}
 	
 	/**
@@ -282,9 +173,9 @@ public class Session implements SentientHandler
 	protected boolean matchClient( HttpRequest request )
 	{
 		String _candyName = request.getSite().getYaml().getString( "sessions.cookie-name", Loader.getConfig().getString( "sessions.defaultSessionName", "sessionId" ) );
-		Map<String, Candy> requestCandys = SessionUtils.poleCandies( request );
+		Map<String, Candy> requestCandies = SessionUtils.poleCandies( request );
 		
-		return ( requestCandys.containsKey( _candyName ) && getCandy( candyName ).compareTo( requestCandys.get( _candyName ) ) );
+		return ( requestCandies.containsKey( _candyName ) && getCandy( candyName ).compareTo( requestCandies.get( _candyName ) ) );
 	}
 	
 	/**
@@ -296,6 +187,11 @@ public class Session implements SentientHandler
 	public Candy getCandy( String key )
 	{
 		return ( candies.containsKey( key ) ) ? candies.get( key ) : new Candy( key, null );
+	}
+	
+	public Candy getSessionCandy()
+	{
+		return sessionCandy;
 	}
 	
 	/**
@@ -311,18 +207,6 @@ public class Session implements SentientHandler
 	public String getId()
 	{
 		return candyId;
-	}
-	
-	@Deprecated
-	public void setArgument( String key, String value )
-	{
-		setVariable( key, value );
-	}
-	
-	@Deprecated
-	public String getArgument( String key )
-	{
-		return getVariable( key );
 	}
 	
 	public void setVariable( String key, String value )
@@ -355,7 +239,7 @@ public class Session implements SentientHandler
 		sessionCandy.setMaxAge( valid );
 	}
 	
-	public void destroy() throws SQLException
+	public void destroy() throws SessionException
 	{
 		timeout = Common.getEpoch();
 		setCookieExpiry( 0 );
@@ -375,7 +259,7 @@ public class Session implements SentientHandler
 		{
 			defaultTimeout = Loader.getConfig().getInt( "sessions.defaultTimeoutWithLogin", 86400 );
 			
-			if ( StringUtil.isTrue( getArgument( "remember" ) ) )
+			if ( StringUtil.isTrue( getVariable( "remember" ) ) )
 				defaultTimeout = Loader.getConfig().getInt( "sessions.defaultTimeoutRememberMe", 604800 );
 			
 			if ( Loader.getConfig().getBoolean( "allowNoTimeoutPermission" ) && currentAccount.hasPermission( "chiori.noTimeout" ) )
@@ -419,8 +303,8 @@ public class Session implements SentientHandler
 			Loader.getLogger().info( ChatColor.GREEN + "User Logout `" + currentAccount + "`" );
 		
 		// setArgument( "remember", null );
-		setArgument( "user", null );
-		setArgument( "pass", null );
+		setVariable( "user", null );
+		setVariable( "pass", null );
 		currentAccount = null;
 		
 		for ( Account u : Loader.getAccountsManager().getOnlineAccounts() )
@@ -446,6 +330,20 @@ public class Session implements SentientHandler
 	@Override
 	public String getIpAddr()
 	{
+		if ( ipAddr == null && sessionProviders.size() > 0 )
+		{
+			for ( SessionProvider sp : sessionProviders )
+				if ( sp.getRequest() != null )
+				{
+					String _ipAddr = sp.getRequest().getRemoteAddr();
+					if ( _ipAddr != null && !_ipAddr.isEmpty() )
+					{
+						ipAddr = _ipAddr;
+						break;
+					}
+				}
+		}
+		
 		return ipAddr;
 	}
 	
@@ -494,12 +392,35 @@ public class Session implements SentientHandler
 		else
 			return site;
 	}
-
+	
+	/**
+	 * Creates a new SessionProvider for the provided HttpRequest instance.
+	 * 
+	 * @param HttpRequest instance
+	 * @return a new SessionProviderWeb
+	 */
 	public SessionProvider getSessionProvider( HttpRequest request )
 	{
 		return new SessionProviderWeb( this, request );
 	}
-
+	
+	/*
+	 * TODO! FOR TCP CONNECTIONS.
+	 * public SessionProvider getSessionProvider( NetConnection net )
+	 * {
+	 * return new SessionProviderNet( this, net );
+	 * }
+	 */
+	
+	/**
+	 * 
+	 * @return A set of active SessionProviders for this session. Sessions are given to the Java TrashCollector when a request finishes.
+	 */
+	public Set<SessionProvider> getSessionProviders()
+	{
+		return sessionProviders;
+	}
+	
 	public Map<String, Candy> getCandies()
 	{
 		return candies;
@@ -519,4 +440,20 @@ public class Session implements SentientHandler
 	{
 		return bindingMap;
 	}
+	
+	public Map<String, String> getDataMap()
+	{
+		return data;
+	}
+	
+	protected static List<Session> getActiveSessions() throws SessionException
+	{
+		return Lists.newCopyOnWriteArrayList();
+	}
+	
+	public abstract void reloadSession();
+	
+	public abstract void saveSession();
+	
+	protected abstract void destroySession();
 }

@@ -78,11 +78,11 @@ public class AccountManager
 				switch ( config.getString( "accounts.lookupAdapter.type", null ) )
 				{
 					case "sql":
-						if ( Loader.getSessionManager().getDatabase() == null )
+						if ( Loader.getDatabase() == null )
 							throw new StartupException( "AccountLookupAdapter is configured with a SQL AccountLookupAdapter but the server is missing a valid SQL Database, which is required for this adapter." );
 						
 						accountLookupAdapter = new SqlAdapter();
-						Loader.getLogger().info( "Initiated Sql AccountLookupAdapter `" + accountLookupAdapter + "` with sql '" + Loader.getSessionManager().getDatabase() + "'" );
+						Loader.getLogger().info( "Initiated Sql AccountLookupAdapter `" + accountLookupAdapter + "` with sql '" + Loader.getDatabase() + "'" );
 						break;
 					case "file":
 						accountLookupAdapter = new FileAdapter();
@@ -104,7 +104,7 @@ public class AccountManager
 						Loader.getLogger().info( "Initiated AccountLookupAdapter `" + accountLookupAdapter + "` to use '" + config.getString( "accounts.shareWith" ) + "''s database." );
 						break;
 					default: // TODO Create custom AccountLookupAdapters.
-						Loader.getLogger().warning( "The Accounts Bus is not configured with a AccountLookupAdapter. We will be unable to login any accounts." );
+						Loader.getLogger().warning( "The Accounts Manager is unconfigured. We will be unable to login any accounts. See config option 'accounts.lookupAdapter.type' in server config file." );
 				}
 			}
 			catch ( LookupAdapterException e )
@@ -482,8 +482,8 @@ public class AccountManager
 				}
 			}
 			
-			sess.setArgument( "user", acct.getAccountId() );
-			sess.setArgument( "pass", DigestUtils.md5Hex( acct.getPassword() ) );
+			sess.setVariable( "user", acct.getAccountId() );
+			sess.setVariable( "pass", DigestUtils.md5Hex( acct.getPassword() ) );
 			
 			AccountLoginEvent loginEvent = new AccountLoginEvent( acct, String.format( Loader.getConfig().getString( "accounts.loginMessage", "%s has logged in at site %s" ), acct.getUsername(), sess.getSite().getTitle() ) );
 			Loader.getEventBus().callEvent( loginEvent );

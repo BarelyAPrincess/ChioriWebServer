@@ -38,7 +38,7 @@ public class ConfigurationManagerWrapper
 	
 	public DatabaseEngine getServerDatabase()
 	{
-		return Loader.getSessionManager().getDatabase();
+		return Loader.getDatabase();
 	}
 	
 	public YamlConfiguration getSiteConfiguration()

@@ -78,7 +78,7 @@ abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	
 	DatabaseEngine getServerDatabase()
 	{
-		return Loader.getSessionManager().getDatabase();
+		return Loader.getDatabase();
 	}
 	
 	DatabaseEngine getSiteDatabase()

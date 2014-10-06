@@ -38,7 +38,7 @@ public class SqlAdapter implements AccountLookupAdapter
 	
 	public SqlAdapter() throws LookupAdapterException
 	{
-		sql = Loader.getSessionManager().getDatabase();
+		sql = Loader.getDatabase();
 		table = Loader.getConfig().getString( "accounts.lookupAdapter.table", "accounts" );
 		accountFields = Loader.getConfig().getStringList( "accounts.lookupAdapter.fields", new ArrayList<String>() );
 	}

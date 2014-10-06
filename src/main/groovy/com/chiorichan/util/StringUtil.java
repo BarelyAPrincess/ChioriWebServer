@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2014 Chiori-chan. All Right Reserved.
- *
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -20,10 +19,16 @@ import java.util.regex.Pattern;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.Loader;
-
 public class StringUtil
 {
+	private static final String IPADDRESS_PATTERN = "^([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])$";
+	
+	public static boolean validateIpAddress( final String ipAddress )
+	{
+		Pattern pattern = Pattern.compile( IPADDRESS_PATTERN );
+		Matcher matcher = pattern.matcher( ipAddress );
+		return matcher.matches();
+	}
 	
 	/**
 	 * Copies all elements from the iterable collection of originals to the collection provided.
