@@ -18,6 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.math.NumberUtils;
 
@@ -31,6 +32,7 @@ import com.chiorichan.http.multipart.ParamPart;
 import com.chiorichan.http.multipart.Part;
 import com.chiorichan.http.session.SessionProvider;
 import com.chiorichan.util.Common;
+import com.chiorichan.util.StringUtil;
 import com.chiorichan.util.Versioning;
 import com.google.common.collect.Maps;
 import com.sun.net.httpserver.Headers;
@@ -60,10 +62,16 @@ public class HttpRequest
 		currentSite = Loader.getSiteManager().getSiteByDomain( domain );
 		
 		if ( currentSite == null )
-			if ( domain.isEmpty() )
-				currentSite = Loader.getSiteManager().getSiteById( "framework" );
-			else
-				currentSite = new Site( "default", Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Chiori Framework Site" ), domain );
+			if ( !domain.isEmpty() )
+			{
+				// Attempt to get the catch all default site. Will use the framework site is not configured or does not exist.
+				String defaultSite = Loader.getConfig().getString( "framework.sites.defaultSite", null );
+				if ( defaultSite != null && !defaultSite.isEmpty() )
+					currentSite = Loader.getSiteManager().getSiteById( defaultSite );
+			}
+		
+		if ( currentSite == null )
+			currentSite = Loader.getSiteManager().getSiteById( "framework" );
 		
 		try
 		{
@@ -246,7 +254,7 @@ public class HttpRequest
 	public SessionProvider getSession()
 	{
 		if ( sess == null )
-			Loader.getLogger().warning( "The Session is NULL! This usually happens because initSession() was not called at the proper time." );
+			initSession();
 		
 		return sess;
 	}
@@ -310,41 +318,39 @@ public class HttpRequest
 	
 	public void calculateDomainName()
 	{
-		if ( http.getRequestHeaders().get( "Host" ) == null )
-		{
-			childDomainName = "";
-			parentDomainName = "";
-		}
-		else
+		childDomainName = "";
+		parentDomainName = "";
+		
+		if ( http.getRequestHeaders().get( "Host" ) != null )
 		{
 			String domain = http.getRequestHeaders().get( "Host" ).get( 0 );
-			domain = domain.split( "\\:" )[0];
+			domain = domain.substring( 0, domain.indexOf( ":" ) ); // Remove port number.
 			
 			if ( domain.equalsIgnoreCase( "localhost" ) || domain.equalsIgnoreCase( "127.0.0.1" ) || domain.equalsIgnoreCase( getLocalAddr() ) || domain.equalsIgnoreCase( getLocalHost() ) )
 				domain = "";
 			
-			String[] var1 = domain.split( "\\." );
+			if ( domain == null || domain.isEmpty() )
+				return;
 			
-			if ( var1.length == 4 && NumberUtils.isNumber( var1[0] ) && NumberUtils.isNumber( var1[1] ) && NumberUtils.isNumber( var1[2] ) && NumberUtils.isNumber( var1[3] ) )
+			if ( domain.startsWith( "." ) )
+				domain = domain.substring( 1 );
+			
+			if ( StringUtil.validateIpAddress( domain ) )
 			{
 				// This should be an IP Address
-				childDomainName = "";
 				parentDomainName = domain;
-			}
-			else if ( var1.length > 2 )
-			{
-				// This will not work if there is more then one subdomain like s1.t2.example.com
-				var1 = domain.split( "\\.", 2 );
-				
-				// This should be a domain with subdomain
-				childDomainName = var1[0];
-				parentDomainName = var1[1];
 			}
 			else
 			{
-				// This should be a domain without a subdomain
-				childDomainName = "";
-				parentDomainName = domain;
+				int periodCount = StringUtils.countMatches( domain, "." );
+				
+				if ( periodCount < 2 )
+					parentDomainName = domain;
+				else
+				{
+					childDomainName = domain.substring( 0, domain.lastIndexOf( ".", domain.lastIndexOf( "." ) - 1 ) );
+					parentDomainName = domain.substring( domain.lastIndexOf( ".", domain.lastIndexOf( "." ) - 1 ) + 1 );
+				}
 			}
 		}
 	}
