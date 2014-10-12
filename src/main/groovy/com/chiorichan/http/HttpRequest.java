@@ -324,8 +324,10 @@ public class HttpRequest
 		if ( http.getRequestHeaders().get( "Host" ) != null )
 		{
 			String domain = http.getRequestHeaders().get( "Host" ).get( 0 );
-			domain = domain.substring( 0, domain.indexOf( ":" ) ).trim(); // Remove port number.
 			
+			if ( domain.contains( ":" ) )
+				domain = domain.substring( 0, domain.indexOf( ":" ) ).trim(); // Remove port number.
+				
 			if ( domain.toLowerCase().endsWith( "localhost" ) || domain.equalsIgnoreCase( "127.0.0.1" ) || domain.equalsIgnoreCase( getLocalAddr() ) || domain.toLowerCase().endsWith( getLocalHost() ) )
 				domain = "";
 			

@@ -179,28 +179,50 @@ public class HttpResponse
 		httpStatus = _status;
 	}
 	
+	/**
+	 * Sends the client to the site login page found in configs and also sends a please login message along with it.
+	 */
 	public void sendLoginPage()
 	{
 		sendLoginPage( "You must be logged in to view this page!" );
 	}
 	
+	/**
+	 * Sends the client to the site login page found in configs.
+	 * @param msg, a message to pass to the login page as a argumnet. ie. ?msg=Please login!
+	 */
 	public void sendLoginPage( String msg )
 	{
 		String loginPage = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
 		sendRedirect( loginPage + "?msg=" + msg );
 	}
 	
+	/**
+	 * Send the client to a specified page with http code 302 automatically.
+	 * @param target, destination url. Can be relative or absolute.
+	 */
 	public void sendRedirect( String target )
 	{
 		sendRedirect( target, 302, true );
 	}
 	
+	/**
+	 * Sends the client to a specified page with specified http code.
+	 * @param target, destination url. Can be relative or absolute.
+	 * @param httpStatus, http code to use.
+	 */
 	public void sendRedirect( String target, int httpStatus )
 	{
 		sendRedirect( target, httpStatus, true );
 	}
 	
-	// autoRedirect argument needs to be working before this method is made public
+	/**
+	 * XXX: autoRedirect argument needs to be working before this method is made public
+	 * Sends the client to a specified page with specified http code but with the option to not automatically go.
+	 * @param target, destination url. Can be relative or absolute.
+	 * @param httpStatus, http code to use.
+	 * @param autoRedirect, Automatically go.
+	 */
 	private void sendRedirect( String target, int httpStatus, boolean autoRedirect )
 	{
 		Loader.getLogger().info( "Sending page redirect to `" + target + "`" );
@@ -237,12 +259,22 @@ public class HttpResponse
 		}
 	}
 	
+	/**
+	 * Prints a byte array to the buffered output
+	 * @param var1 byte array to print
+	 * @throws IOException if there was a problem with the output buffer.
+	 */
 	public void print( byte[] var1 ) throws IOException
 	{
 		stage = HttpResponseStage.WRITTING;
 		output.write( var1 );
 	}
 	
+	/**
+	 * Prints a single string of text to the buffered output
+	 * @param var1 string of text.
+	 * @throws IOException if there was a problem with the output buffer.
+	 */
 	public void print( String var1 ) throws IOException
 	{
 		if ( stage != HttpResponseStage.MULTIPART )
@@ -252,6 +284,11 @@ public class HttpResponse
 			output.write( var1.getBytes( encoding ) );
 	}
 	
+	/**
+	 * Prints a single string of text with a line return to the buffered output
+	 * @param var1 string of text.
+	 * @throws IOException if there was a problem with the output buffer.
+	 */
 	public void println( String var1 ) throws IOException
 	{
 		if ( stage != HttpResponseStage.MULTIPART )
@@ -260,6 +297,10 @@ public class HttpResponse
 		output.write( ( var1 + "\n" ).getBytes( encoding ) );
 	}
 	
+	/**
+	 * Sets the ContentType header.
+	 * @param ContentType. ie. text/html or application/xml
+	 */
 	public void setContentType( String type )
 	{
 		if ( type == null || type.isEmpty() )
@@ -268,6 +309,10 @@ public class HttpResponse
 		httpContentType = type;
 	}
 	
+	/**
+	 * Sends the data to the client. Internal Use.
+	 * @throws IOException if there was a problem sending the data, like the connection was unexpectedly closed.
+	 */
 	public void sendResponse() throws IOException
 	{
 		if ( stage == HttpResponseStage.CLOSED || stage == HttpResponseStage.WRITTEN )
