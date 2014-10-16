@@ -80,7 +80,7 @@ public class FileSession extends Session
 			candyName = yaml.getString( "sessionName", candyName );
 		candyId = yaml.getString( "sessionId", candyId );
 		
-		if ( timeout < Common.getEpoch() )
+		if ( timeout > 0 && timeout < Common.getEpoch() )
 			throw new SessionException( "This session expired at " + timeout + " epoch!" );
 		
 		if ( yaml.getString( "sessionSite" ) == null || yaml.getString( "sessionSite" ).isEmpty() )
