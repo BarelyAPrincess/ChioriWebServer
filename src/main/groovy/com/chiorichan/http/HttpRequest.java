@@ -300,6 +300,10 @@ public class HttpRequest
 		}
 	}
 	
+	/**
+	 *
+	 * @return a string containing the main domain from the request. ie. test.example.com or example.com = "example.com"
+	 */
 	public String getParentDomain()
 	{
 		if ( parentDomainName == null || childDomainName == null )
@@ -308,6 +312,10 @@ public class HttpRequest
 		return ( parentDomainName == null ) ? "" : parentDomainName;
 	}
 	
+	/**
+	 *
+	 * @return A string containing the subdomain from the request. ie. test.example.com = "test"
+	 */
 	public String getSubDomain()
 	{
 		if ( parentDomainName == null || childDomainName == null )
@@ -316,6 +324,9 @@ public class HttpRequest
 		return ( childDomainName == null ) ? "" : childDomainName;
 	}
 	
+	/**
+	 * Calculates both the SubDomain and ParentDomain from the Host Header and saves them in Strings
+	 */
 	public void calculateDomainName()
 	{
 		childDomainName = "";
