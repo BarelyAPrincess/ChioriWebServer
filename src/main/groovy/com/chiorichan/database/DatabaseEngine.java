@@ -461,7 +461,7 @@ public class DatabaseEngine
 		{
 			String column_name = rsmd.getColumnName( i );
 			
-			// Loader.getLogger().info( "Column: " + column_name + " <-> " + rsmd.getColumnTypeName( i ) );
+			//Loader.getLogger().info( "Column: " + column_name + " <-> " + rsmd.getColumnTypeName( i ) );
 			
 			if ( rsmd.getColumnType( i ) == java.sql.Types.ARRAY )
 			{
@@ -487,7 +487,8 @@ public class DatabaseEngine
 			{
 				// BLOG = Max Length 65,535. Recommended that you use a LONGBLOG.
 				byte[] bytes = rs.getBytes( column_name );
-				
+				result.put( column_name, bytes );
+				/*
 				try
 				{
 					result.put( column_name, new String( bytes, "ISO-8859-1" ) );
@@ -496,6 +497,7 @@ public class DatabaseEngine
 				{
 					e.printStackTrace();
 				}
+				*/
 			}
 			else if ( rsmd.getColumnType( i ) == java.sql.Types.DOUBLE )
 			{
