@@ -324,7 +324,7 @@ public class AccountManager
 		}
 		catch ( LoginException e )
 		{
-			Loader.getLogger().warning( "An exception was thrown in AccountsBus while trying to get an account.", e );
+			Loader.getLogger().warning( "LoginException was thrown in AccountsManager while trying to get account '" + s + "'. Message: '" + e.getMessage() + "'" );
 			return null;
 		}
 	}
