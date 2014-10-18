@@ -190,10 +190,17 @@ public class HttpRequest
 		for ( String param : query.split( "&" ) )
 		{
 			String pair[] = param.split( "=" );
-			if ( pair.length > 1 )
-				result.put( URLDecoder.decode( pair[0], "ISO-8859-1" ), URLDecoder.decode( pair[1], "ISO-8859-1" ) );
-			else if ( pair.length == 1 )
-				result.put( URLDecoder.decode( pair[0], "ISO-8859-1" ), "" );
+			try
+			{
+				if ( pair.length > 1 )
+					result.put( URLDecoder.decode( StringUtil.trimEnd( pair[0], '%'), "ISO-8859-1" ), URLDecoder.decode( StringUtil.trimEnd( pair[1], '%'), "ISO-8859-1" ) );
+				else if ( pair.length == 1 )
+					result.put( URLDecoder.decode( StringUtil.trimEnd( pair[0], '%'), "ISO-8859-1" ), "" );
+			}
+			catch ( IllegalArgumentException e )
+			{
+				Loader.getLogger().warning( "Malformed URL exception was thrown, key: `" + pair[0] + "`, val: '" + pair[1] + "'" );
+			}
 		}
 		return result;
 	}
