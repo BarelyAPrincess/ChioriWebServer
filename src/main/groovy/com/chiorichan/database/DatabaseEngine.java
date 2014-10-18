@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2014 Chiori-chan. All Right Reserved.
- *
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -461,7 +460,7 @@ public class DatabaseEngine
 		{
 			String column_name = rsmd.getColumnName( i );
 			
-			//Loader.getLogger().info( "Column: " + column_name + " <-> " + rsmd.getColumnTypeName( i ) );
+			// Loader.getLogger().info( "Column: " + column_name + " <-> " + rsmd.getColumnTypeName( i ) );
 			
 			if ( rsmd.getColumnType( i ) == java.sql.Types.ARRAY )
 			{
@@ -489,15 +488,15 @@ public class DatabaseEngine
 				byte[] bytes = rs.getBytes( column_name );
 				result.put( column_name, bytes );
 				/*
-				try
-				{
-					result.put( column_name, new String( bytes, "ISO-8859-1" ) );
-				}
-				catch ( UnsupportedEncodingException e )
-				{
-					e.printStackTrace();
-				}
-				*/
+				 * try
+				 * {
+				 * result.put( column_name, new String( bytes, "ISO-8859-1" ) );
+				 * }
+				 * catch ( UnsupportedEncodingException e )
+				 * {
+				 * e.printStackTrace();
+				 * }
+				 */
 			}
 			else if ( rsmd.getColumnType( i ) == java.sql.Types.DOUBLE )
 			{
@@ -686,6 +685,8 @@ public class DatabaseEngine
 			options.put( "groupby", "" );
 		if ( !options.containsKey( "fields" ) )
 			options.put( "fields", "*" );
+		if ( !options.containsKey( "debug" ) )
+			options.put( "debug", "false" );
 		
 		String limit = ( Integer.parseInt( options.get( "limit" ) ) > 0 ) ? " LIMIT " + Integer.parseInt( options.get( "offset" ) ) + ", " + Integer.parseInt( options.get( "limit" ) ) : "";
 		String orderby = ( (String) options.get( "orderby" ) ) == "" ? "" : " ORDER BY " + ( (String) options.get( "orderby" ) );
@@ -702,13 +703,19 @@ public class DatabaseEngine
 		
 		if ( rs == null )
 		{
-			Loader.getLogger().fine( "Making SELECT query \"" + query + "\" which returned an error." );
+			if ( options.get( "debug" ) == "true" )
+				Loader.getLogger().info( "Making SELECT query \"" + query + "\" which returned an error." );
+			else
+				Loader.getLogger().fine( "Making SELECT query \"" + query + "\" which returned an error." );
 			return null;
 		}
 		
 		if ( getRowCount( rs ) < 1 )
 		{
-			Loader.getLogger().fine( "Making SELECT query \"" + query + "\" which returned no results." );
+			if ( options.get( "debug" ) == "true" )
+				Loader.getLogger().info( "Making SELECT query \"" + query + "\" which returned no results." );
+			else
+				Loader.getLogger().fine( "Making SELECT query \"" + query + "\" which returned no results." );
 			return new LinkedHashMap<String, Object>();
 		}
 		
@@ -722,7 +729,10 @@ public class DatabaseEngine
 			e.printStackTrace();
 		}
 		
-		Loader.getLogger().fine( "Making SELECT query \"" + query + "\" which returned " + getRowCount( rs ) + " row(s)." );
+		if ( options.get( "debug" ) == "true" )
+			Loader.getLogger().info( "Making SELECT query \"" + query + "\" which returned " + getRowCount( rs ) + " row(s)." );
+		else
+			Loader.getLogger().fine( "Making SELECT query \"" + query + "\" which returned " + getRowCount( rs ) + " row(s)." );
 		
 		return result;
 	}
