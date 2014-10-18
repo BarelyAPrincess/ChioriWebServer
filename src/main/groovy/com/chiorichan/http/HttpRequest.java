@@ -282,8 +282,8 @@ public class HttpRequest
 		if ( uri.contains( "?" ) )
 			uri = uri.substring( 0, uri.indexOf( "?" ) );
 		
-		if ( uri.startsWith( "/" ) )
-			uri = uri.substring( 1 );
+		if ( !uri.startsWith( "/" ) )
+			uri = "/" + uri;
 		
 		return uri;
 	}

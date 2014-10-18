@@ -228,7 +228,7 @@ public class WebHandler implements HttpHandler
 			{
 				String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
 				Loader.getLogger().warning( "Requester of page '" + file + "' has been redirected to the login page." );
-				response.sendRedirect( loginForm + "?msg=You must be logged in to view that page!&target=" + request.getURI() );
+				response.sendRedirect( loginForm + "?msg=You must be logged in to view that page!&target=http://" + request.getDomain() + request.getURI() );
 				// TODO: Come up with a better way to handle the URI used in the target. ie. Params are lost.
 				return;
 			}
