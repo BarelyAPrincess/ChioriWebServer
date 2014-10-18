@@ -61,6 +61,16 @@ abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 		return Versioning.getCopyright();
 	}
 	
+	Account getAccount( String uid )
+	{
+		Account result =  Loader.getAccountsManager().getAccount( uid );
+		
+		if ( result == null )
+			result = Loader.getAccountsManager().getAccountPartial( uid );
+		
+		return result;
+	}
+	
 	Account getAccount()
 	{
 		return request.getSession().getAccount();
