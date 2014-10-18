@@ -20,7 +20,6 @@ import com.chiorichan.Loader;
 import com.chiorichan.exceptions.HttpErrorException;
 import com.chiorichan.framework.FileInterpreter;
 import com.chiorichan.framework.SiteException;
-import com.chiorichan.http.Routes.Route;
 import com.google.common.collect.Maps;
 
 public class WebInterpreter extends FileInterpreter
@@ -36,7 +35,10 @@ public class WebInterpreter extends FileInterpreter
 		{
 			String l = o.getValue();
 			if ( l != null )
+			{
 				l = l.replace( "\n", "" );
+				l = l.replace( "\r", "" );
+			}
 			
 			overrides += "," + o.getKey() + "=" + l;
 		}
