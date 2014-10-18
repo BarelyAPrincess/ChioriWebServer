@@ -130,7 +130,7 @@ public class Route
 			params.put( "pattern", prop );
 		}
 		
-		if ( !StringUtils.trimToEmpty( params.get( "subdomain" ) ).isEmpty() && !subdomain.equals( params.get( "subdomain" ) ) )
+		if ( !StringUtils.trimToEmpty( params.get( "subdomain" ) ).equals( "*" ) && !subdomain.equals( params.get( "subdomain" ) ) )
 		{
 			Loader.getLogger().fine( "The subdomain does not match for " + uri + " on route " + this );
 			return null;

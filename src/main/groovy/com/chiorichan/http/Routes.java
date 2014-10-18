@@ -51,13 +51,14 @@ public class Routes
 	{
 		File routesFile = new File( Loader.getWebRoot() + Loader.PATH_SEPERATOR + site.getRoot() + Loader.PATH_SEPERATOR + "routes" );
 		
-		if ( routes.size() < 1 || System.currentTimeMillis() - lastRequest > 1000 )
+		if ( routes.size() < 1 || System.currentTimeMillis() - lastRequest > 2500 )
 		{
+			routes.clear();
+			
 			try
 			{
 				if ( routesFile.exists() )
 				{
-					routes.clear();
 					String contents = FileUtils.readFileToString( routesFile );
 					for ( String l : contents.split( "\n" ) )
 					{
@@ -83,7 +84,7 @@ public class Routes
 				
 				if ( sql != null )
 				{
-					ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE (site = '" + subdomain + "' OR site = '') AND domain = '" + domain + "' UNION SELECT * FROM `pages` WHERE (site = '" + subdomain + "' OR site = '') AND domain = '';" );
+					ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE (subdomain = '" + subdomain + "' OR subdomain = '') AND domain = '" + domain + "' UNION SELECT * FROM `pages` WHERE (subdomain = '" + subdomain + "' OR subdomain = '') AND domain = '';" );
 					if ( sql.getRowCount( rs ) > 0 )
 					{
 						do
