@@ -284,11 +284,11 @@ public class SessionProviderWeb implements SessionProvider
 		
 		@SuppressWarnings( "unchecked" )
 		Map<String, Object> variables = binding.getVariables();
-		bindingMap.putAll( variables );
 		
-		for ( Entry<String, Object> e : variables.entrySet() )
-			if ( !e.getKey().equals( "__FILE__" ) && !e.getKey().equals( "_REQUEST" ) && !e.getKey().equals( "_REWRITE" ) && !e.getKey().equals( "_GET" ) && !e.getKey().equals( "_POST" ) && !e.getKey().equals( "_SERVER" ) && !e.getKey().equals( "_FILES" ) )
-				bindingMap.put( e.getKey(), e.getValue() );
+		if ( bindingMap != null && variables != null )
+			for ( Entry<String, Object> e : variables.entrySet() )
+				if ( !e.getKey().equals( "__FILE__" ) && !e.getKey().equals( "_REQUEST" ) && !e.getKey().equals( "_REWRITE" ) && !e.getKey().equals( "_GET" ) && !e.getKey().equals( "_POST" ) && !e.getKey().equals( "_SERVER" ) && !e.getKey().equals( "_FILES" ) )
+					bindingMap.put( e.getKey(), e.getValue() );
 		
 		parentSession.sessionProviders.remove( this );
 	}
@@ -370,7 +370,7 @@ public class SessionProviderWeb implements SessionProvider
 	{
 		return parentSession.getSite();
 	}
-
+	
 	@Override
 	public void saveSession( boolean force )
 	{

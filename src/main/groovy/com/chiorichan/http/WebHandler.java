@@ -102,11 +102,18 @@ public class WebHandler implements HttpHandler
 		}
 		finally
 		{
-			SessionProvider sess = request.getSessionNoWarning();
-			if ( sess != null )
+			try
 			{
-				sess.saveSession( false );
-				sess.onFinished();
+				SessionProvider sess = request.getSessionNoWarning();
+				if ( sess != null )
+				{
+					sess.saveSession( false );
+					sess.onFinished();
+				}
+			}
+			catch ( Exception e )
+			{
+				e.printStackTrace();
 			}
 			
 			response.sendResponse();
