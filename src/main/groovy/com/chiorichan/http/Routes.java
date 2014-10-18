@@ -84,7 +84,8 @@ public class Routes
 				
 				if ( sql != null )
 				{
-					ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE (subdomain = '" + subdomain + "' OR subdomain = '') AND domain = '" + domain + "' UNION SELECT * FROM `pages` WHERE (subdomain = '" + subdomain + "' OR subdomain = '') AND domain = '';" );
+					//ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE (subdomain = '" + subdomain + "' OR subdomain = '') AND domain = '" + domain + "' UNION SELECT * FROM `pages` WHERE (subdomain = '" + subdomain + "' OR subdomain = '') AND domain = '';" );
+					ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE domain = '" + domain + "' OR domain = '';" );
 					if ( sql.getRowCount( rs ) > 0 )
 					{
 						do
