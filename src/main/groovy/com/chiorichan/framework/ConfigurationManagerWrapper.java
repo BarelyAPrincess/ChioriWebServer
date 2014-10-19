@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2014 Chiori-chan. All Right Reserved.
- *
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -20,13 +19,13 @@ import org.json.JSONException;
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.file.YamlConfiguration;
-import com.chiorichan.http.session.Session;
+import com.chiorichan.http.session.SessionProvider;
 
 public class ConfigurationManagerWrapper
 {
-	protected Session sess;
+	protected SessionProvider sess;
 	
-	public ConfigurationManagerWrapper(Session _sess)
+	public ConfigurationManagerWrapper(SessionProvider _sess)
 	{
 		sess = _sess;
 	}
@@ -61,7 +60,7 @@ public class ConfigurationManagerWrapper
 	 * USER_BETA_TESTER&USER_RANK=USER|USER_RANK=ADMIN
 	 * 
 	 * @param String
-	 *           settingString
+	 *             settingString
 	 * @throws JSONException
 	 */
 	public boolean compareSetting( List<String> settings )
@@ -258,44 +257,37 @@ public class ConfigurationManagerWrapper
 		}
 	}
 	
-	
-	
-	
 	/*
-	public Object get( String key )
-	{
-		try
-		{
-			return sess.getRequest().getSite().getYaml().get( key );
-		}
-		catch ( Exception e )
-		{
-			return null;
-		}
-	}
-	
-	public boolean keyExists( String key )
-	{
-		return ( sess.getRequest().getSite().getYaml().get( key ) != null );
-	}
-	
-	public String getString( String key )
-	{
-		return sess.getRequest().getSite().getYaml().getString( key );
-	}
-	
-	public List<?> getArray( String key )
-	{
-		return sess.getRequest().getSite().getYaml().getList( key );
-	}
-	
-	public boolean getBoolean( String key )
-	{
-		return sess.getRequest().getSite().getYaml().getBoolean( key );
-	}
-	
-	public int getInt( String key )
-	{
-		return sess.getRequest().getSite().getYaml().getInt( key );
-	}*/
+	 * public Object get( String key )
+	 * {
+	 * try
+	 * {
+	 * return sess.getRequest().getSite().getYaml().get( key );
+	 * }
+	 * catch ( Exception e )
+	 * {
+	 * return null;
+	 * }
+	 * }
+	 * public boolean keyExists( String key )
+	 * {
+	 * return ( sess.getRequest().getSite().getYaml().get( key ) != null );
+	 * }
+	 * public String getString( String key )
+	 * {
+	 * return sess.getRequest().getSite().getYaml().getString( key );
+	 * }
+	 * public List<?> getArray( String key )
+	 * {
+	 * return sess.getRequest().getSite().getYaml().getList( key );
+	 * }
+	 * public boolean getBoolean( String key )
+	 * {
+	 * return sess.getRequest().getSite().getYaml().getBoolean( key );
+	 * }
+	 * public int getInt( String key )
+	 * {
+	 * return sess.getRequest().getSite().getYaml().getInt( key );
+	 * }
+	 */
 }

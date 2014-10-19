@@ -272,7 +272,7 @@ public class SessionProviderWeb implements SessionProvider
 	
 	public ConfigurationManagerWrapper getConfigurationManager()
 	{
-		return new ConfigurationManagerWrapper( getParentSession() );
+		return new ConfigurationManagerWrapper( this );
 	}
 	
 	@Override
