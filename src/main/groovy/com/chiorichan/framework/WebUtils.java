@@ -107,7 +107,13 @@ public class WebUtils
 		return rtn;
 	}
 	
+	@Deprecated
 	public static Map<String, Object> cleanArray( Map<String, Object> oldObj, List<String> allowedKeys )
+	{
+		return filter( oldObj, allowedKeys );
+	}
+	
+	public static Map<String, Object> filter( Map<String, Object> oldObj, List<String> allowedKeys )
 	{
 		Map<String, Object> newArray = new LinkedHashMap<String, Object>();
 		
