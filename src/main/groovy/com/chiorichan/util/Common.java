@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2014 Chiori-chan. All Right Reserved.
- *
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -14,6 +13,10 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.chiorichan.Loader;
 
 public class Common
 {
@@ -105,7 +108,7 @@ public class Common
 	{
 		return s.matches( "[a-fA-F0-9]{32}" );
 	}
-
+	
 	public static boolean isRoot()
 	{
 		return System.getProperty( "user.name" ).equalsIgnoreCase( "root" );

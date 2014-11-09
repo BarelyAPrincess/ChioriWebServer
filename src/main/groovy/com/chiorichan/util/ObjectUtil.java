@@ -59,6 +59,10 @@ public class ObjectUtil
 				return ( (boolean) value ) ? "true" : "false";
 			case "java.math.BigDecimal":
 				return ( (BigDecimal) value ).toString();
+			case "java.util.Map":
+				return value.toString();
+			case "java.util.List":
+				return value.toString();
 			default:
 				Loader.getLogger().warning( "Uncaught Convertion to String of Type: " + value.getClass().getName() );
 				return null;
