@@ -8,6 +8,8 @@
 .project
 .settings
 /chiori.yml
+/ContentTypes.properties
+/InterpreterOverrides.properties
 /server.log
 /server.log.lck
 /help.yml

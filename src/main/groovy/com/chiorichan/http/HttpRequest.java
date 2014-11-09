@@ -16,11 +16,11 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
-import org.apache.commons.lang3.math.NumberUtils;
 
 import com.chiorichan.Loader;
 import com.chiorichan.bus.events.server.ServerVars;
@@ -492,6 +492,101 @@ public class HttpRequest
 		return http;
 	}
 	
+	private Map<String, Object> parseMapArrays( Map<String, String> origMap )
+	{
+		Map<String, Object> result = Maps.newLinkedHashMap();
+		
+		for( Entry<String, String> e : origMap.entrySet() )
+		{
+			String var = null;
+			String key = null;
+			String val = e.getValue();
+			
+			if ( e.getKey().contains( "[" ) && e.getKey().endsWith( "]" ) )
+			{
+				var = e.getKey().substring( 0, e.getKey().indexOf( "[" ) );
+				
+				if ( e.getKey().length() - e.getKey().indexOf( "[" ) > 1 )
+					key = e.getKey().substring( e.getKey().indexOf( "[" ) + 1, e.getKey().length() - 1 );
+				else
+					key = "";
+			}
+			else
+			{
+				var = e.getKey();
+			}
+			
+			if ( result.containsKey( var ) )
+			{
+				Object o = result.get( var );
+				if ( o instanceof String )
+				{
+					if ( key == null || key.isEmpty() )
+						key = "1";
+					
+					Map<String, String> hash = Maps.newLinkedHashMap();
+					hash.put( "0", (String) o );
+					hash.put( key, val );
+					result.put( var, hash );
+				}
+				else if ( o instanceof Map )
+				{
+					Map<String, String> map = (Map<String, String>) o;
+					
+					if ( key == null || key.isEmpty() )
+					{
+						int cnt = 0;
+						while( map.containsKey( cnt ) )
+						{
+							cnt++;
+						}
+						key = "" + cnt;
+					}
+					
+					map.put( key, val );
+				}
+				else
+				{
+					if ( key == null )
+						result.put( var, val );
+					else
+					{
+						if ( key.isEmpty() )
+							key = "0";
+						
+						Map<String, String> hash = Maps.newLinkedHashMap();
+						hash.put( key, val );
+						result.put( var, hash );
+					}
+				}
+					
+			}
+			else
+			{
+				if ( key == null )
+				{
+					result.put( e.getKey(), e.getValue() );
+				}
+				else
+				{
+					if ( key.isEmpty() )
+						key = "0";
+					
+					Map<String, String> hash = Maps.newLinkedHashMap();
+					hash.put( key, val );
+					result.put( var, hash );
+				}
+			}
+		}
+		
+		return result;
+	}
+	
+	public Map<String, Object> getRequestMapParsed()
+	{
+		return parseMapArrays( getRequestMap() );
+	}
+	
 	public Map<String, String> getRequestMap()
 	{
 		Map<String, String> requestMap = new HashMap<String, String>();
@@ -508,12 +603,22 @@ public class HttpRequest
 		return requestMap;
 	}
 	
+	public Map<String, Object> getPostMapParsed()
+	{
+		return parseMapArrays( getPostMap() );
+	}
+	
 	public Map<String, String> getPostMap()
 	{
 		if ( postMap == null )
 			postMap = new HashMap<String, String>();
 		
 		return postMap;
+	}
+	
+	public Map<String, Object> getGetMapParsed()
+	{
+		return parseMapArrays( getGetMap() );
 	}
 	
 	public Map<String, String> getGetMap()

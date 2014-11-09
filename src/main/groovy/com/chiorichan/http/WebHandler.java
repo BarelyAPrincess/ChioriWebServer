@@ -205,13 +205,13 @@ public class WebHandler implements HttpHandler
 		request.putServerVar( ServerVars.DOCUMENT_ROOT, docRoot );
 		
 		sess.setGlobal( "_SERVER", request.getServerStrings() );
-		sess.setGlobal( "_POST", request.getPostMap() );
-		sess.setGlobal( "_GET", request.getGetMap() );
+		sess.setGlobal( "_POST", request.getPostMapParsed() );
+		sess.setGlobal( "_GET", request.getGetMapParsed() );
 		sess.setGlobal( "_REWRITE", request.getRewriteMap() );
 		sess.setGlobal( "_FILES", request.getUploadedFiles() );
 		
 		if ( Loader.getConfig().getBoolean( "advanced.security.requestMapEnabled", true ) )
-			sess.setGlobal( "_REQUEST", request.getRequestMap() );
+			sess.setGlobal( "_REQUEST", request.getRequestMapParsed() );
 		
 		StringBuilder source = new StringBuilder();
 		CodeEvalFactory factory = sess.getCodeFactory();
