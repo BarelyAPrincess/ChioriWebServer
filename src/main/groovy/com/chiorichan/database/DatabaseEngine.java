@@ -962,7 +962,7 @@ public class DatabaseEngine
 	{
 		String lmt = "";
 		if ( limit > 0 )
-			lmt = " LIMIT 1";
+			lmt = " LIMIT " + limit;
 		
 		int i = 0;
 		try

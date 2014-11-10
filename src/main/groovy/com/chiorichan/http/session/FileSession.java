@@ -60,7 +60,7 @@ public class FileSession extends Session
 		
 		ipAddr = yaml.getString( "ipAddr", ipAddr );
 		
-		if ( !yaml.getString( "data" ).isEmpty() )
+		if ( !yaml.getString( "data", "" ).isEmpty() )
 		{
 			Map<String, String> tmpData = new Gson().fromJson( yaml.getString( "data" ), new TypeToken<Map<String, String>>()
 			{
