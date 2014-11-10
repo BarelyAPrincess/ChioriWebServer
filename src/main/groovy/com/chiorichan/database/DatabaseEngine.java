@@ -338,12 +338,12 @@ public class DatabaseEngine
 		return result;
 	}
 	
-	public Boolean update( String table, List<? extends Object> keys, List<? extends Object> values )
+	public boolean update( String table, List<? extends Object> keys, List<? extends Object> values )
 	{
 		return update( table, keys, values, null, null );
 	}
 	
-	public Boolean update( String table, List<? extends Object> keys, List<? extends Object> list, List<? extends Object> keysW, List<? extends Object> valuesW )
+	public boolean update( String table, List<? extends Object> keys, List<? extends Object> list, List<? extends Object> keysW, List<? extends Object> valuesW )
 	{
 		if ( isNull( keys ) || isNull( list ) )
 		{

@@ -75,7 +75,7 @@ public class HttpRequest
 		
 		try
 		{
-			getMap = queryToMap( http.getRequestURI().getQuery() );
+			getMap = queryToMap( getQuery() );
 			
 			if ( http.getRequestBody().available() > 0 )
 			{
@@ -269,6 +269,22 @@ public class HttpRequest
 	public HttpResponse getResponse()
 	{
 		return response;
+	}
+	
+	/**
+	 * Retrives the query for the said request.
+	 * There is a bug in getQuery() that causes the return string to decode special html chars.
+	 * ie. a=1&test=foo & bar&b=2
+	 * @return String containing the query string.
+	 */
+	public String getQuery()
+	{
+		String uri = http.getRequestURI().toString();
+		
+		if ( uri.contains( "?" ) )
+			return uri.substring( uri.indexOf( "?" ) + 1 );
+		else
+			return "";
 	}
 	
 	/**
