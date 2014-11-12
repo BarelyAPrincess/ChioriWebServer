@@ -290,10 +290,10 @@ public class WebUtils
 					}
 				}
 				
-				sb.append( "<tr id=\"" + map.get( "rowId" ) + "\" rel=\"" + map.get( "metaData" ) + "\" class=\"" + clss + "\">\n" );
+				sb.append( "<tr" + ( (map.get( ":id" ) != null ) ? " id=\"" + map.get( ":id" ) + "\"" : "" ) + ( (map.get( ":rel" ) != null ) ? " rel=\"" + map.get( ":rel" ) + "\"" : "" ) + " class=\"" + clss + "\">\n" );
 				
-				map.remove( "rowId" );
-				map.remove( "metaData" );
+				map.remove( ":id" );
+				map.remove( ":rel" );
 				
 				if ( map.size() == 1 )
 				{
