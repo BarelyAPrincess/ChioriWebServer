@@ -4,8 +4,8 @@ import com.chiorichan.account.bases.Account;
 import com.chiorichan.factory.BindingProvider;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.Candy;
-import com.chiorichan.http.HttpRequest;
-import com.chiorichan.http.HttpResponse;
+import com.chiorichan.http.HttpRequestWrapper;
+import com.chiorichan.http.HttpResponseWrapper;
 
 public interface SessionProvider extends BindingProvider
 {
@@ -16,8 +16,8 @@ public interface SessionProvider extends BindingProvider
 	public Object getGlobal( String key );
 	public void setVariable( String key, String value );
 	public String getVariable( String key );
-	public HttpRequest getRequest();
-	public HttpResponse getResponse();
+	public HttpRequestWrapper getRequest();
+	public HttpResponseWrapper getResponse();
 	public Account getAccount();
 	Candy getCandy( String key );
 	public boolean isStale();

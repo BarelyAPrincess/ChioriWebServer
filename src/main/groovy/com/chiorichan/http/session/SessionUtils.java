@@ -1,32 +1,32 @@
 package com.chiorichan.http.session;
 
+import io.netty.handler.codec.http.Cookie;
+import io.netty.handler.codec.http.CookieDecoder;
+
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.chiorichan.http.Candy;
-import com.chiorichan.http.HttpRequest;
+import com.chiorichan.http.HttpRequestWrapper;
 
 public class SessionUtils
 {
-	public static Map<String, Candy> poleCandies( HttpRequest request )
+	public static Map<String, Candy> poleCandies( HttpRequestWrapper request )
 	{
 		Map<String, Candy> candies = new LinkedHashMap<String, Candy>();
-		List<String> var1 = request.getHeaders().get( "Cookie" );
+		String cookies = request.getHeaders().get( "Cookie" );
+		if ( cookies == null )
+			return candies;
+			
+		Set<Cookie> var1 = CookieDecoder.decode( cookies );
 		
 		if ( var1 == null || var1.isEmpty() )
 			return candies;
 		
-		String[] var2 = var1.get( 0 ).split( "\\;" );
-		
-		for ( String var3 : var2 )
+		for ( Cookie cookie : var1 )
 		{
-			String[] var4 = var3.trim().split( "\\=" );
-			
-			if ( var4.length == 2 )
-			{
-				candies.put( var4[0], new Candy( var4[0], var4[1] ) );
-			}
+			candies.put( cookie.getName(), new Candy( cookie.getName(), cookie.getValue() ) );
 		}
 		
 		return candies;

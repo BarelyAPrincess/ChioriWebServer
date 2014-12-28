@@ -16,7 +16,7 @@ import java.util.Vector;
 
 import com.chiorichan.Loader;
 import com.chiorichan.exceptions.HttpErrorException;
-import com.chiorichan.http.HttpRequest;
+import com.chiorichan.http.HttpRequestWrapper;
 
 public class MultiPartRequestParser
 {
@@ -27,22 +27,22 @@ public class MultiPartRequestParser
 	//private static String DEFAULT_ENCODING = "ISO-8859-1";
 	//private String encoding = DEFAULT_ENCODING;
 	
-	public static boolean isMultipart( HttpRequest request )
+	public static boolean isMultipart( HttpRequestWrapper request )
 	{
-		String requestType = request.getOriginal().getRequestHeaders().get( "Content-Type" ).get( 0 );
+		String requestType = request.getOriginal().headers().get( "Content-Type" );
 		return requestType.toLowerCase().startsWith( "multipart/form-data" );
 	}
 	
-	public MultiPartRequestParser(HttpRequest request) throws IOException, HttpErrorException
+	public MultiPartRequestParser(HttpRequestWrapper request) throws IOException, HttpErrorException
 	{
-		String requestType = request.getOriginal().getRequestHeaders().get( "Content-Type" ).get( 0 );
+		String requestType = request.getOriginal().headers().get( "Content-Type" );
 		int maxUpload = Loader.getConfig().getInt( "server.maxFileUploadKb", 5120 );
 		
 		if ( request.getContentLength() > maxUpload )
 			throw new HttpErrorException( 413, "The uploaded file exceeds the `server.maxFileUploadKb` directive that was specified in the server config." );
 		else
 		{
-			InputStream is = request.getOriginal().getRequestBody();
+			InputStream is = null;// request.getOriginal().getRequestBody(); // XXX FIX THIS!
 			boundary = extractBoundary( requestType );
 			
 			if ( boundary == null )

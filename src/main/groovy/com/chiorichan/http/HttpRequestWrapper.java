@@ -8,54 +8,59 @@
  */
 package com.chiorichan.http;
 
+import io.netty.channel.Channel;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.QueryStringDecoder;
+
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.regex.Pattern;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.Loader;
 import com.chiorichan.bus.events.server.ServerVars;
-import com.chiorichan.exceptions.HttpErrorException;
 import com.chiorichan.framework.Site;
-import com.chiorichan.http.multipart.FilePart;
-import com.chiorichan.http.multipart.MultiPartRequestParser;
-import com.chiorichan.http.multipart.ParamPart;
-import com.chiorichan.http.multipart.Part;
 import com.chiorichan.http.session.SessionProvider;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.StringUtil;
 import com.chiorichan.util.Versioning;
 import com.google.common.collect.Maps;
-import com.sun.net.httpserver.Headers;
-import com.sun.net.httpserver.HttpExchange;
 
-public class HttpRequest
+public class HttpRequestWrapper
 {
 	protected Map<ServerVars, Object> serverVars = Maps.newLinkedHashMap();
 	protected Site currentSite;
-	protected HttpExchange http;
 	protected SessionProvider sess = null;
-	protected HttpResponse response;
+	protected HttpResponseWrapper response;
 	protected Map<String, String> getMap, postMap,
 			rewriteMap = Maps.newLinkedHashMap();
 	protected int requestTime = 0;
 	protected Map<String, UploadedFile> uploadedFiles = new HashMap<String, UploadedFile>();
 	
-	protected HttpRequest(HttpExchange _http) throws IOException
+	protected HttpRequest http;
+	protected Channel channel;
+	
+	protected HttpRequestWrapper(Channel _channel, HttpRequest _http) throws IOException
 	{
+		channel = _channel;
 		http = _http;
+		
 		requestTime = Common.getEpoch();
 		
-		response = new HttpResponse( this );
+		response = new HttpResponseWrapper( this );
 		
 		String domain = getParentDomain();
 		
@@ -73,105 +78,110 @@ public class HttpRequest
 		if ( currentSite == null )
 			currentSite = Loader.getSiteManager().getSiteById( "framework" );
 		
-		try
+		// try
+		// {
+		getMap = Maps.newTreeMap();
+		QueryStringDecoder queryStringDecoder = new QueryStringDecoder( http.getUri() );
+		Map<String, List<String>> params = queryStringDecoder.parameters();
+		if ( !params.isEmpty() )
 		{
-			getMap = queryToMap( getQuery() );
-			
-			if ( http.getRequestBody().available() > 0 )
+			for ( Entry<String, List<String>> p : params.entrySet() )
 			{
-				if ( MultiPartRequestParser.isMultipart( this ) )
-				{ // Multipart Request - File Upload Usually.
-					try
-					{
-						postMap = new HashMap<String, String>();
-						MultiPartRequestParser parser = new MultiPartRequestParser( this );
-						
-						File tmpFileDirectory = ( currentSite != null ) ? currentSite.getTempFileDirectory() : Loader.getTempFileDirectory();
-						
-						if ( !tmpFileDirectory.exists() )
-							tmpFileDirectory.mkdirs();
-						
-						if ( !tmpFileDirectory.isDirectory() )
-							throw new IOException( "The temp directory specified in the server configs is not a directory, File Uploads will continue to fail until this problem is resolved." );
-						
-						if ( !tmpFileDirectory.canWrite() )
-							throw new IOException( "The temp directory specified in the server configs is not writable, File Uploads will continue to fail until this problem is resolved." );
-						
-						Part part;
-						while ( ( part = parser.readNextPart() ) != null )
-						{
-							String name = part.getName();
-							if ( name == null )
-							{
-								throw new IOException( "Malformed input: parameter name missing (known Opera 7 bug)" );
-							}
-							if ( part.isParam() )
-							{
-								ParamPart paramPart = (ParamPart) part;
-								String value = paramPart.getStringValue();
-								/*
-								 * Vector existingValues = (Vector) parameters.get( name );
-								 * if ( existingValues == null )
-								 * {
-								 * existingValues = new Vector();
-								 * postMap.put( name, existingValues );
-								 * }
-								 * existingValues.addElement( value );
-								 * XXX Should we use vectors in our Get and Post Maps?
-								 */
-								postMap.put( name, value );
-							}
-							else if ( part.isFile() )
-							{
-								FilePart filePart = (FilePart) part;
-								String fileName = filePart.getFileName();
-								if ( fileName != null )
-								{
-									long size = -1;
-									String msg = "The file uploaded successfully.";
-									
-									try
-									{
-										size = filePart.writeTo( tmpFileDirectory );
-									}
-									catch ( IOException e )
-									{
-										msg = e.getMessage();
-									}
-									
-									String tmpFileName = filePart.getTmpFileName();
-									
-									File newFile = new File( tmpFileDirectory, tmpFileName );
-									newFile.deleteOnExit();
-									
-									uploadedFiles.put( name, new UploadedFile( newFile, fileName, size, msg ) );
-								}
-							}
-						}
-						
-					}
-					catch ( HttpErrorException e )
-					{
-						response.sendError( e.getHttpCode(), null, e.getReason() );
-					}
-					catch ( IOException e )
-					{
-						response.sendException( e );
-					}
-				}
-				else
+				String key = p.getKey();
+				List<String> vals = p.getValue();
+				for ( String val : vals )
 				{
-					byte[] queryBytes = new byte[http.getRequestBody().available()];
-					IOUtils.readFully( http.getRequestBody(), queryBytes );
-					postMap = queryToMap( new String( queryBytes ) );
+					getMap.put( key, val );
 				}
 			}
 		}
-		catch ( IOException e )
-		{
-			Loader.getLogger().severe( "There was a severe error reading the " + http.getRequestMethod().toUpperCase() + " query.", e );
-			response.sendException( e );
-		}
+		
+		/*
+		 * if ( http.getRequestBody().available() > 0 )
+		 * {
+		 * if ( MultiPartRequestParser.isMultipart( this ) )
+		 * { // Multipart Request - File Upload Usually.
+		 * try
+		 * {
+		 * postMap = new HashMap<String, String>();
+		 * MultiPartRequestParser parser = new MultiPartRequestParser( this );
+		 * File tmpFileDirectory = ( currentSite != null ) ? currentSite.getTempFileDirectory() : Loader.getTempFileDirectory();
+		 * if ( !tmpFileDirectory.exists() )
+		 * tmpFileDirectory.mkdirs();
+		 * if ( !tmpFileDirectory.isDirectory() )
+		 * throw new IOException( "The temp directory specified in the server configs is not a directory, File Uploads will continue to fail until this problem is resolved." );
+		 * if ( !tmpFileDirectory.canWrite() )
+		 * throw new IOException( "The temp directory specified in the server configs is not writable, File Uploads will continue to fail until this problem is resolved." );
+		 * Part part;
+		 * while ( ( part = parser.readNextPart() ) != null )
+		 * {
+		 * String name = part.getName();
+		 * if ( name == null )
+		 * {
+		 * throw new IOException( "Malformed input: parameter name missing (known Opera 7 bug)" );
+		 * }
+		 * if ( part.isParam() )
+		 * {
+		 * ParamPart paramPart = (ParamPart) part;
+		 * String value = paramPart.getStringValue();
+		 * /*
+		 * Vector existingValues = (Vector) parameters.get( name );
+		 * if ( existingValues == null )
+		 * {
+		 * existingValues = new Vector();
+		 * postMap.put( name, existingValues );
+		 * }
+		 * existingValues.addElement( value );
+		 * XXX Should we use vectors in our Get and Post Maps?
+		 * postMap.put( name, value );
+		 * }
+		 * else if ( part.isFile() )
+		 * {
+		 * FilePart filePart = (FilePart) part;
+		 * String fileName = filePart.getFileName();
+		 * if ( fileName != null )
+		 * {
+		 * long size = -1;
+		 * String msg = "The file uploaded successfully.";
+		 * try
+		 * {
+		 * size = filePart.writeTo( tmpFileDirectory );
+		 * }
+		 * catch ( IOException e )
+		 * {
+		 * msg = e.getMessage();
+		 * }
+		 * String tmpFileName = filePart.getTmpFileName();
+		 * File newFile = new File( tmpFileDirectory, tmpFileName );
+		 * newFile.deleteOnExit();
+		 * uploadedFiles.put( name, new UploadedFile( newFile, fileName, size, msg ) );
+		 * }
+		 * }
+		 * }
+		 * }
+		 * catch ( HttpErrorException e )
+		 * {
+		 * response.sendError( e.getHttpCode(), null, e.getReason() );
+		 * }
+		 * catch ( IOException e )
+		 * {
+		 * response.sendException( e );
+		 * }
+		 * }
+		 * else
+		 * {
+		 * byte[] queryBytes = new byte[http.getRequestBody().available()];
+		 * IOUtils.readFully( http.getRequestBody(), queryBytes );
+		 * postMap = queryToMap( new String( queryBytes ) );
+		 * }
+		 * }
+		 * }
+		 * catch ( IOException e )
+		 * {
+		 * Loader.getLogger().severe( "There was a severe error reading the " + http.getMethod().toString().toUpperCase() + " query.", e );
+		 * response.sendException( e );
+		 * }
+		 */
 	}
 	
 	protected void initSession()
@@ -193,9 +203,9 @@ public class HttpRequest
 			try
 			{
 				if ( pair.length > 1 )
-					result.put( URLDecoder.decode( StringUtil.trimEnd( pair[0], '%'), "ISO-8859-1" ), URLDecoder.decode( StringUtil.trimEnd( pair[1], '%'), "ISO-8859-1" ) );
+					result.put( URLDecoder.decode( StringUtil.trimEnd( pair[0], '%' ), "ISO-8859-1" ), URLDecoder.decode( StringUtil.trimEnd( pair[1], '%' ), "ISO-8859-1" ) );
 				else if ( pair.length == 1 )
-					result.put( URLDecoder.decode( StringUtil.trimEnd( pair[0], '%'), "ISO-8859-1" ), "" );
+					result.put( URLDecoder.decode( StringUtil.trimEnd( pair[0], '%' ), "ISO-8859-1" ), "" );
 			}
 			catch ( IllegalArgumentException e )
 			{
@@ -248,9 +258,9 @@ public class HttpRequest
 		return getSession().getParentSession().getCandies().values();
 	}
 	
-	public Headers getHeaders()
+	public HttpHeaders getHeaders()
 	{
-		return http.getRequestHeaders();
+		return http.headers();
 	}
 	
 	protected SessionProvider getSessionNoWarning()
@@ -266,25 +276,9 @@ public class HttpRequest
 		return sess;
 	}
 	
-	public HttpResponse getResponse()
+	public HttpResponseWrapper getResponse()
 	{
 		return response;
-	}
-	
-	/**
-	 * Retrives the query for the said request.
-	 * There is a bug in getQuery() that causes the return string to decode special html chars.
-	 * ie. a=1&test=foo & bar&b=2
-	 * @return String containing the query string.
-	 */
-	public String getQuery()
-	{
-		String uri = http.getRequestURI().toString();
-		
-		if ( uri.contains( "?" ) )
-			return uri.substring( uri.indexOf( "?" ) + 1 );
-		else
-			return "";
 	}
 	
 	/**
@@ -293,13 +287,50 @@ public class HttpRequest
 	 */
 	public String getURI()
 	{
-		String uri = http.getRequestURI().toString();
+		/*String uri = http.getUri().toString();
 		
 		if ( uri.contains( "?" ) )
 			uri = uri.substring( 0, uri.indexOf( "?" ) );
 		
 		if ( !uri.startsWith( "/" ) )
 			uri = "/" + uri;
+		
+		return uri;*/
+		
+		return sanitizeUri( http.getUri() );
+	}
+	
+	private static final Pattern INSECURE_URI = Pattern.compile(".*[<>&\"].*");
+	
+	private static String sanitizeUri( String uri )
+	{
+		// Decode the path.
+		try
+		{
+			uri = URLDecoder.decode( uri, "UTF-8" );
+		}
+		catch ( UnsupportedEncodingException e )
+		{
+			try
+			{
+				uri = URLDecoder.decode( uri, "ISO-8859-1" );
+			}
+			catch ( UnsupportedEncodingException e1 )
+			{
+				throw new Error();
+			}
+		}
+		
+		if ( !uri.startsWith( "/" ) )
+		{
+			return null;
+		}
+		
+		// TODO Add a security check on the URI!
+		if ( uri.contains( File.separator + '.' ) || uri.contains( '.' + File.separator ) || uri.startsWith( "." ) || uri.endsWith( "." ) || INSECURE_URI.matcher( uri ).matches() )
+		{
+			return null;
+		}
 		
 		return uri;
 	}
@@ -312,7 +343,7 @@ public class HttpRequest
 	{
 		try
 		{
-			String domain = http.getRequestHeaders().get( "Host" ).get( 0 );
+			String domain = http.headers().get( "Host" );
 			domain = domain.split( "\\:" )[0];
 			
 			return domain;
@@ -355,9 +386,9 @@ public class HttpRequest
 		childDomainName = "";
 		parentDomainName = "";
 		
-		if ( http.getRequestHeaders().get( "Host" ) != null )
+		if ( http.headers().get( "Host" ) != null )
 		{
-			String domain = http.getRequestHeaders().get( "Host" ).get( 0 );
+			String domain = http.headers().get( "Host" );
 			
 			if ( domain.contains( ":" ) )
 				domain = domain.substring( 0, domain.indexOf( ":" ) ).trim(); // Remove port number.
@@ -393,14 +424,14 @@ public class HttpRequest
 	
 	public String getMethod()
 	{
-		return http.getRequestMethod();
+		return http.getMethod().toString();
 	}
 	
 	public String getHeader( String key )
 	{
 		try
 		{
-			return http.getRequestHeaders().get( key ).get( 0 );
+			return http.headers().get( key );
 		}
 		catch ( NullPointerException | IndexOutOfBoundsException e )
 		{
@@ -418,7 +449,7 @@ public class HttpRequest
 	
 	public String getRemoteHost()
 	{
-		return http.getRemoteAddress().getHostName();
+		return ((InetSocketAddress) channel.remoteAddress()).getHostName();
 	}
 	
 	/**
@@ -428,28 +459,29 @@ public class HttpRequest
 	 */
 	public String getRemoteAddr()
 	{
-		if ( http.getRequestHeaders().containsKey( "CF-Connecting-IP" ) )
-			return http.getRequestHeaders().get( "CF-Connecting-IP" ).get( 0 );
+		if ( http.headers().contains( "CF-Connecting-IP" ) )
+			return http.headers().get( "CF-Connecting-IP" );
 		else
-			return http.getRemoteAddress().getAddress().getHostAddress();
+			return ((InetSocketAddress) channel.remoteAddress()).getAddress().getHostAddress();
 	}
 	
 	public int getRemotePort()
 	{
-		return http.getRemoteAddress().getPort();
+		return ((InetSocketAddress) channel.remoteAddress()).getPort();
 	}
 	
 	public int getContentLength()
 	{
-		try
+		//try
 		{
-			http.getRequestBody().reset();
-			return http.getRequestBody().available();
+			//http.getRequestBody().reset();
+			//return http.getRequestBody().available();
+			return 0; // XXX FIX THIS!!!
 		}
-		catch ( IOException e )
-		{
-			return -1;
-		}
+		//catch ( IOException e )
+		//{
+		//	return -1;
+		//}
 	}
 	
 	public Object getAuthType()
@@ -467,12 +499,12 @@ public class HttpRequest
 	
 	public int getServerPort()
 	{
-		return http.getLocalAddress().getPort();
+		return ((InetSocketAddress) channel.localAddress()).getPort();
 	}
 	
 	public String getServerName()
 	{
-		return http.getLocalAddress().getHostName();
+		return ((InetSocketAddress) channel.localAddress()).getHostName();
 	}
 	
 	public String getParameter( String key )
@@ -498,12 +530,7 @@ public class HttpRequest
 		return null;
 	}
 	
-	public void setHeader( String key, String value )
-	{
-		http.getResponseHeaders().set( key, value );
-	}
-	
-	public HttpExchange getOriginal()
+	public HttpRequest getOriginal()
 	{
 		return http;
 	}
@@ -512,7 +539,7 @@ public class HttpRequest
 	{
 		Map<String, Object> result = Maps.newLinkedHashMap();
 		
-		for( Entry<String, String> e : origMap.entrySet() )
+		for ( Entry<String, String> e : origMap.entrySet() )
 		{
 			String var = null;
 			String key = null;
@@ -552,7 +579,7 @@ public class HttpRequest
 					if ( key == null || key.isEmpty() )
 					{
 						int cnt = 0;
-						while( map.containsKey( cnt ) )
+						while ( map.containsKey( cnt ) )
 						{
 							cnt++;
 						}
@@ -575,7 +602,7 @@ public class HttpRequest
 						result.put( var, hash );
 					}
 				}
-					
+				
 			}
 			else
 			{
@@ -657,12 +684,12 @@ public class HttpRequest
 	
 	public String getLocalHost()
 	{
-		return http.getLocalAddress().getAddress().getCanonicalHostName();
+		return ((InetSocketAddress) channel.localAddress()).getHostName();
 	}
 	
 	public String getLocalAddr()
 	{
-		return http.getLocalAddress().getAddress().getHostAddress();
+		return ((InetSocketAddress) channel.localAddress()).getAddress().getHostAddress();
 	}
 	
 	public String getUserAgent()
@@ -752,5 +779,10 @@ public class HttpRequest
 	public Map<String, UploadedFile> getUploadedFiles()
 	{
 		return uploadedFiles;
+	}
+
+	public Channel getChannel()
+	{
+		return channel;
 	}
 }

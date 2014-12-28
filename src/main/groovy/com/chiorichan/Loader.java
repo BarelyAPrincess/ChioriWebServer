@@ -297,6 +297,7 @@ public class Loader
 			Loader.getLogger().highlight( "It appears that this is your first time running Chiori-chan's Web Server." );
 			Loader.getLogger().highlight( "All the needed files have been extracted from the jar file." );
 			Loader.getLogger().highlight( "The server will continue to start but it's recommended that you stop, review config and restart." );
+			// TODO have the server pause and ask if the user would like to stop as to make changes to config.
 		}
 	}
 	

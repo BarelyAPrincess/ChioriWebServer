@@ -9,18 +9,18 @@
  */
 package com.chiorichan.bus.events.http;
 
-import com.chiorichan.http.HttpRequest;
-import com.chiorichan.http.HttpResponse;
+import com.chiorichan.http.HttpRequestWrapper;
+import com.chiorichan.http.HttpResponseWrapper;
 
 public class HttpExceptionEvent extends HttpEvent
 {
 	private final Throwable cause;
 	private int httpCode = -1;
-	private final HttpRequest request;
+	private final HttpRequestWrapper request;
 	private String errorHtml = "";
 	private boolean isDevelopmentMode;
 	
-	public HttpExceptionEvent(HttpRequest _request, Throwable _cause, boolean _isDevelopmentMode)
+	public HttpExceptionEvent(HttpRequestWrapper _request, Throwable _cause, boolean _isDevelopmentMode)
 	{
 		cause = _cause;
 		request = _request;
@@ -32,12 +32,12 @@ public class HttpExceptionEvent extends HttpEvent
 		return isDevelopmentMode;
 	}
 	
-	public HttpRequest getRequest()
+	public HttpRequestWrapper getRequest()
 	{
 		return request;
 	}
 	
-	public HttpResponse getResponse()
+	public HttpResponseWrapper getResponse()
 	{
 		return request.getResponse();
 	}

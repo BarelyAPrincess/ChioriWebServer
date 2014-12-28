@@ -8,9 +8,25 @@
  */
 package com.chiorichan.http;
 
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelProgressiveFuture;
+import io.netty.channel.ChannelProgressiveFutureListener;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.DefaultHttpResponse;
+import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.LastHttpContent;
+import io.netty.handler.stream.ChunkedStream;
+
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -22,14 +38,12 @@ import com.chiorichan.bus.events.http.HttpExceptionEvent;
 import com.chiorichan.exceptions.HttpErrorException;
 import com.chiorichan.util.Versioning;
 import com.google.common.collect.Maps;
-import com.sun.net.httpserver.Headers;
-import com.sun.net.httpserver.HttpExchange;
 
 // NOTE: Change to consider, Have headers sent before data can be written to the output stream.
 // This will allow for quicker responses but might make it harder for spontaneous header changes.
-public class HttpResponse
+public class HttpResponseWrapper
 {
-	protected HttpRequest request;
+	protected HttpRequestWrapper request;
 	protected ByteArrayOutputStream output = new ByteArrayOutputStream();
 	protected int httpStatus = 200;
 	protected String httpContentType = "text/html";
@@ -38,7 +52,7 @@ public class HttpResponse
 	protected Map<String, String> pageDataOverrides = Maps.newHashMap();
 	protected Map<String, String> headers = Maps.newHashMap();
 	
-	protected HttpResponse(HttpRequest _request)
+	protected HttpResponseWrapper(HttpRequestWrapper _request)
 	{
 		request = _request;
 	}
@@ -189,6 +203,7 @@ public class HttpResponse
 	
 	/**
 	 * Sends the client to the site login page found in configs.
+	 * 
 	 * @param msg, a message to pass to the login page as a argumnet. ie. ?msg=Please login!
 	 */
 	public void sendLoginPage( String msg )
@@ -199,6 +214,7 @@ public class HttpResponse
 	
 	/**
 	 * Send the client to a specified page with http code 302 automatically.
+	 * 
 	 * @param target, destination url. Can be relative or absolute.
 	 */
 	public void sendRedirect( String target )
@@ -208,6 +224,7 @@ public class HttpResponse
 	
 	/**
 	 * Sends the client to a specified page with specified http code.
+	 * 
 	 * @param target, destination url. Can be relative or absolute.
 	 * @param httpStatus, http code to use.
 	 */
@@ -219,6 +236,7 @@ public class HttpResponse
 	/**
 	 * XXX: autoRedirect argument needs to be working before this method is made public
 	 * Sends the client to a specified page with specified http code but with the option to not automatically go.
+	 * 
 	 * @param target, destination url. Can be relative or absolute.
 	 * @param httpStatus, http code to use.
 	 * @param autoRedirect, Automatically go.
@@ -233,7 +251,7 @@ public class HttpResponse
 		if ( autoRedirect )
 		{
 			setStatus( httpStatus );
-			request.getOriginal().getResponseHeaders().set( "Location", target );
+			request.getOriginal().headers().set( "Location", target );
 		}
 		else
 			// TODO: Send client a redirection page.
@@ -261,6 +279,7 @@ public class HttpResponse
 	
 	/**
 	 * Prints a byte array to the buffered output
+	 * 
 	 * @param var1 byte array to print
 	 * @throws IOException if there was a problem with the output buffer.
 	 */
@@ -272,6 +291,7 @@ public class HttpResponse
 	
 	/**
 	 * Prints a single string of text to the buffered output
+	 * 
 	 * @param var1 string of text.
 	 * @throws IOException if there was a problem with the output buffer.
 	 */
@@ -286,6 +306,7 @@ public class HttpResponse
 	
 	/**
 	 * Prints a single string of text with a line return to the buffered output
+	 * 
 	 * @param var1 string of text.
 	 * @throws IOException if there was a problem with the output buffer.
 	 */
@@ -299,6 +320,7 @@ public class HttpResponse
 	
 	/**
 	 * Sets the ContentType header.
+	 * 
 	 * @param ContentType. ie. text/html or application/xml
 	 */
 	public void setContentType( String type )
@@ -311,6 +333,7 @@ public class HttpResponse
 	
 	/**
 	 * Sends the data to the client. Internal Use.
+	 * 
 	 * @throws IOException if there was a problem sending the data, like the connection was unexpectedly closed.
 	 */
 	public void sendResponse() throws IOException
@@ -320,9 +343,10 @@ public class HttpResponse
 		
 		stage = HttpResponseStage.WRITTEN;
 		
-		HttpExchange http = request.getOriginal();
+		HttpRequest http = request.getOriginal();
 		
-		Headers h = http.getResponseHeaders();
+		FullHttpResponse response = new DefaultFullHttpResponse( HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf( httpStatus ), Unpooled.copiedBuffer( output.toByteArray() ) );
+		HttpHeaders h = response.headers();
 		
 		for ( Candy c : request.getCandies() )
 			if ( c.needsUpdating() )
@@ -345,18 +369,12 @@ public class HttpResponse
 			h.add( header.getKey(), header.getValue() );
 		}
 		
-		http.sendResponseHeaders( httpStatus, output.size() );
-		
-		// Fixes an issue with requests coming from CURL with --head argument.
-		if ( !http.getRequestMethod().equalsIgnoreCase( "HEAD" ) )
-		{
-			OutputStream os = http.getResponseBody();
-			os.write( output.toByteArray() );
-			output.close();
-			os.close(); // This terminates the HttpExchange and frees the resources.
-		}
+		h.set(HttpHeaders.Names.CONTENT_LENGTH, response.content().readableBytes());
+		h.set(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
 		
 		stage = HttpResponseStage.CLOSED;
+		
+		request.getChannel().write( response );
 	}
 	
 	public void closeMultipart() throws IOException
@@ -366,24 +384,28 @@ public class HttpResponse
 		
 		stage = HttpResponseStage.CLOSED;
 		
-		HttpExchange http = request.getOriginal();
-		OutputStream os = http.getResponseBody();
-		os.close();
+		// Write the end marker
+		ChannelFuture lastContentFuture = request.getChannel().writeAndFlush( LastHttpContent.EMPTY_LAST_CONTENT );
 		
-		output.close();
+		// Decide whether to close the connection or not.
+		// if ( !isKeepAlive( request ) )
+		{
+			// Close the connection when the whole content is written out.
+			lastContentFuture.addListener( ChannelFutureListener.CLOSE );
+		}
 	}
 	
 	public void sendMultipart( byte[] bytesToWrite ) throws IOException
 	{
-		HttpExchange http = request.getOriginal();
-		
-		if ( http.getRequestMethod().equalsIgnoreCase( "HEAD" ) )
+		if ( request.getMethod().equalsIgnoreCase( "HEAD" ) )
 			throw new IllegalStateException( "You can't start MULTIPART mode on a HEAD Request." );
 		
 		if ( stage != HttpResponseStage.MULTIPART )
 		{
 			stage = HttpResponseStage.MULTIPART;
-			Headers h = http.getResponseHeaders();
+			HttpResponse response = new DefaultHttpResponse( HttpVersion.HTTP_1_1, HttpResponseStatus.OK );
+			
+			HttpHeaders h = response.headers();
 			request.getSession().saveSession( false );
 			
 			for ( Candy c : request.getCandies() )
@@ -402,7 +424,12 @@ public class HttpResponse
 			h.add( "Pragma", "no-cache" );
 			h.set( "Content-Type", "multipart/x-mixed-replace; boundary=--cwsframe" );
 			
-			http.sendResponseHeaders( 200, 0 );
+			// if ( isKeepAlive( request ) )
+			{
+				// response.headers().set( CONNECTION, HttpHeaders.Values.KEEP_ALIVE );
+			}
+			
+			request.getChannel().write( response );
 		}
 		else
 		{
@@ -418,10 +445,31 @@ public class HttpResponse
 			ba.write( bytesToWrite );
 			ba.flush();
 			
-			OutputStream os = http.getResponseBody();
-			os.write( ba.toByteArray() );
+			ChannelFuture sendFuture = request.getChannel().write( new ChunkedStream( new ByteArrayInputStream( ba.toByteArray() ) ), request.getChannel().newProgressivePromise() );
+			
 			ba.close();
-			os.flush();
+			
+			sendFuture.addListener( new ChannelProgressiveFutureListener()
+			{
+				@Override
+				public void operationProgressed( ChannelProgressiveFuture future, long progress, long total )
+				{
+					if ( total < 0 )
+					{ // total unknown
+						System.err.println( "Transfer progress: " + progress );
+					}
+					else
+					{
+						System.err.println( "Transfer progress: " + progress + " / " + total );
+					}
+				}
+				
+				@Override
+				public void operationComplete( ChannelProgressiveFuture future ) throws Exception
+				{
+					System.err.println( "Transfer complete." );
+				}
+			} );
 		}
 	}
 	

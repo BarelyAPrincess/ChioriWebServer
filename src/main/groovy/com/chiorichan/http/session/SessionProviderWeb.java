@@ -4,7 +4,6 @@ import groovy.lang.Binding;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -17,24 +16,24 @@ import com.chiorichan.framework.ConfigurationManagerWrapper;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.Candy;
 import com.chiorichan.http.HttpCode;
-import com.chiorichan.http.HttpRequest;
-import com.chiorichan.http.HttpResponse;
+import com.chiorichan.http.HttpRequestWrapper;
+import com.chiorichan.http.HttpResponseWrapper;
 
 public class SessionProviderWeb implements SessionProvider
 {
 	protected final Binding binding = new Binding();
 	protected CodeEvalFactory factory = null;
-	protected HttpRequest request;
+	protected HttpRequestWrapper request;
 	protected Session parentSession;
 	
-	protected SessionProviderWeb(HttpRequest _request)
+	protected SessionProviderWeb(HttpRequestWrapper _request)
 	{
 		parentSession = SessionManager.createSession();
 		parentSession.sessionProviders.add( this );
 		setRequest( _request, false );
 	}
 	
-	protected SessionProviderWeb(Session session, HttpRequest _request)
+	protected SessionProviderWeb(Session session, HttpRequestWrapper _request)
 	{
 		parentSession = session;
 		parentSession.sessionProviders.add( this );
@@ -50,7 +49,7 @@ public class SessionProviderWeb implements SessionProvider
 		return parentSession;
 	}
 	
-	protected void setRequest( HttpRequest _request, Boolean _stale )
+	protected void setRequest( HttpRequestWrapper _request, Boolean _stale )
 	{
 		request = _request;
 		parentSession.stale = _stale;
@@ -237,13 +236,13 @@ public class SessionProviderWeb implements SessionProvider
 	}
 	
 	@Override
-	public HttpRequest getRequest()
+	public HttpRequestWrapper getRequest()
 	{
 		return request;
 	}
 	
 	@Override
-	public HttpResponse getResponse()
+	public HttpResponseWrapper getResponse()
 	{
 		return request.getResponse();
 	}

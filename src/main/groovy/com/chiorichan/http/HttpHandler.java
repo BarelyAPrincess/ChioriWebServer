@@ -1,12 +1,14 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
- */
 package com.chiorichan.http;
+
+import static io.netty.handler.codec.http.HttpHeaders.is100ContinueExpected;
+import static io.netty.handler.codec.http.HttpResponseStatus.CONTINUE;
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpContent;
+import io.netty.handler.codec.http.HttpRequest;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,20 +29,14 @@ import com.chiorichan.framework.SiteException;
 import com.chiorichan.http.session.SessionProvider;
 import com.chiorichan.util.Versioning;
 import com.google.common.collect.Maps;
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 
-/**
- * This class is not thread safe.
- * Be sure to keep all references out of global scope in case of concurrent requests.
- * 
- * @author Chiori Greene
- */
-public class WebHandler implements HttpHandler
+public class HttpHandler extends SimpleChannelInboundHandler<Object>
 {
 	protected static Map<ServerVars, Object> staticServerVars = Maps.newLinkedHashMap();
+	protected HttpRequestWrapper request;
+	protected HttpResponseWrapper response;
 	
-	public WebHandler()
+	public HttpHandler()
 	{
 		// Initalize Static Server Vars
 		staticServerVars.put( ServerVars.SERVER_SOFTWARE, Versioning.getProduct() );
@@ -49,59 +45,59 @@ public class WebHandler implements HttpHandler
 	}
 	
 	@Override
-	public void handle( HttpExchange t ) throws IOException
+	public void channelReadComplete( ChannelHandlerContext ctx ) throws Exception
 	{
-		HttpRequest request;
-		HttpResponse response;
-		
-		try
+		ctx.flush();
+	}
+	
+	@Override
+	protected void messageReceived( ChannelHandlerContext ctx, Object msg ) throws Exception
+	{
+		if ( msg instanceof HttpRequest )
 		{
-			request = new HttpRequest( t );
+			request = new HttpRequestWrapper( ctx.channel(), (HttpRequest) msg );
 			response = request.getResponse();
-		}
-		catch ( Throwable t1 )
-		{
-			t1.printStackTrace();
-			throw t1;
-		}
-		
-		// TODO Catch Broken Pipes.
-		try
-		{
-			handleHttp( request, response );
-		}
-		catch ( HttpErrorException e )
-		{
-			response.sendError( e );
-			return;
-		}
-		catch ( IndexOutOfBoundsException | NullPointerException | IOException | SiteException e )
-		{
-			/**
-			 * TODO!!! Proper Exception Handling. Consider the ability to have these exceptions cached and/or delivered by e-mail.
-			 */
-			if ( e instanceof IOException && e.getCause() != null )
+			
+			if ( is100ContinueExpected( (HttpRequest) msg ) )
 			{
-				e.getCause().printStackTrace();
-				response.sendException( e.getCause() );
+				send100Continue( ctx );
 			}
-			else
+			
+			try
 			{
-				e.printStackTrace();
-				response.sendException( e );
-				// response.sendError( 500, null, "<pre>" + ExceptionUtils.getStackTrace( e ) + "</pre>" );
+				handleHttp( request, response );
 			}
-		}
-		catch ( Exception e )
-		{
-			/**
-			 * XXX Temporary way of capturing exception that were unexpected by the server.
-			 * Exceptions caught here should have proper exception captures implemented.
-			 */
-			Loader.getLogger().warning( "WARNING THIS IS AN UNCAUGHT EXCEPTION! PLEASE FIX THE CODE!", e );
-		}
-		finally
-		{
+			catch ( HttpErrorException e )
+			{
+				response.sendError( e );
+				return;
+			}
+			catch ( IndexOutOfBoundsException | NullPointerException | IOException | SiteException e )
+			{
+				/**
+				 * TODO!!! Proper Exception Handling. Consider the ability to have these exceptions cached and/or delivered by e-mail.
+				 */
+				if ( e instanceof IOException && e.getCause() != null )
+				{
+					e.getCause().printStackTrace();
+					response.sendException( e.getCause() );
+				}
+				else
+				{
+					e.printStackTrace();
+					response.sendException( e );
+					// response.sendError( 500, null, "<pre>" + ExceptionUtils.getStackTrace( e ) + "</pre>" );
+				}
+			}
+			catch ( Exception e )
+			{
+				/**
+				 * XXX Temporary way of capturing exception that were unexpected by the server.
+				 * Exceptions caught here should have proper exception captures implemented.
+				 */
+				Loader.getLogger().warning( "WARNING THIS IS AN UNCAUGHT EXCEPTION! PLEASE FIX THE CODE!", e );
+			}
+			
 			try
 			{
 				SessionProvider sess = request.getSessionNoWarning();
@@ -116,17 +112,33 @@ public class WebHandler implements HttpHandler
 				e.printStackTrace();
 			}
 			
+			//response.sendResponse();
+		}
+		
+		if ( msg instanceof HttpContent )
+		{
+			HttpContent httpContent = (HttpContent) msg;
+			
+			Loader.getLogger().debug( "Got a HTTPCONTENT: " + httpContent );
+			
 			response.sendResponse();
-			
-			// Too many files open error. Is this a fix? FIFO Pipes.
-			request.getOriginal().getRequestBody().close();
-			request.getOriginal().getResponseBody().close();
-			
-			t.close();
 		}
 	}
 	
-	public void handleHttp( HttpRequest request, HttpResponse response ) throws IOException, HttpErrorException, SiteException
+	private static void send100Continue( ChannelHandlerContext ctx )
+	{
+		FullHttpResponse response = new DefaultFullHttpResponse( HTTP_1_1, CONTINUE );
+		ctx.write( response );
+	}
+	
+	@Override
+	public void exceptionCaught( ChannelHandlerContext ctx, Throwable cause ) throws Exception
+	{
+		cause.printStackTrace();
+		ctx.close();
+	}
+	
+	public void handleHttp( HttpRequestWrapper request, HttpResponseWrapper response ) throws IOException, HttpErrorException, SiteException
 	{
 		String uri = request.getURI();
 		String domain = request.getParentDomain();

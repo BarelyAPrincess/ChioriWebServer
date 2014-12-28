@@ -7,8 +7,8 @@ import com.chiorichan.factory.BindingProvider;
 import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.Candy;
-import com.chiorichan.http.HttpRequest;
-import com.chiorichan.http.HttpResponse;
+import com.chiorichan.http.HttpRequestWrapper;
+import com.chiorichan.http.HttpResponseWrapper;
 
 public class SessionProviderNet implements SessionProvider, BindingProvider, SentientHandler
 {
@@ -111,14 +111,14 @@ public class SessionProviderNet implements SessionProvider, BindingProvider, Sen
 	}
 
 	@Override
-	public HttpRequest getRequest()
+	public HttpRequestWrapper getRequest()
 	{
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public HttpResponse getResponse()
+	public HttpResponseWrapper getResponse()
 	{
 		// TODO Auto-generated method stub
 		return null;

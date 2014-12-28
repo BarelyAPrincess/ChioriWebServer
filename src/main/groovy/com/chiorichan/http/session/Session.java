@@ -23,7 +23,7 @@ import com.chiorichan.account.helpers.LoginException;
 import com.chiorichan.framework.Site;
 import com.chiorichan.framework.WebUtils;
 import com.chiorichan.http.Candy;
-import com.chiorichan.http.HttpRequest;
+import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.StringUtil;
 import com.google.common.collect.Lists;
@@ -170,7 +170,7 @@ public abstract class Session implements SentientHandler
 	 * @param request
 	 * @return boolean
 	 */
-	protected boolean matchClient( HttpRequest request )
+	protected boolean matchClient( HttpRequestWrapper request )
 	{
 		String _candyName = request.getSite().getYaml().getString( "sessions.cookie-name", Loader.getConfig().getString( "sessions.defaultSessionName", "sessionId" ) );
 		Map<String, Candy> requestCandies = SessionUtils.poleCandies( request );
@@ -396,10 +396,10 @@ public abstract class Session implements SentientHandler
 	/**
 	 * Creates a new SessionProvider for the provided HttpRequest instance.
 	 * 
-	 * @param HttpRequest instance
+	 * @param HttpRequestWrapper instance
 	 * @return a new SessionProviderWeb
 	 */
-	public SessionProvider getSessionProvider( HttpRequest request )
+	public SessionProvider getSessionProvider( HttpRequestWrapper request )
 	{
 		return new SessionProviderWeb( this, request );
 	}

@@ -13,8 +13,8 @@ import com.chiorichan.Loader
 import com.chiorichan.account.bases.Account
 import com.chiorichan.database.DatabaseEngine
 import com.chiorichan.http.HttpCode
-import com.chiorichan.http.HttpRequest
-import com.chiorichan.http.HttpResponse
+import com.chiorichan.http.HttpRequestWrapper
+import com.chiorichan.http.HttpResponseWrapper
 import com.chiorichan.http.session.SessionManager
 import com.chiorichan.http.session.SessionProvider
 import com.chiorichan.util.Versioning
@@ -26,12 +26,12 @@ abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 		println var_export( obj )
 	}
 	
-	HttpRequest getRequest()
+	HttpRequestWrapper getRequest()
 	{
 		return request;
 	}
 	
-	HttpResponse getResponse()
+	HttpResponseWrapper getResponse()
 	{
 		return response;
 	}

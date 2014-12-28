@@ -14,8 +14,8 @@ import java.util.Map;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import com.chiorichan.framework.Site;
-import com.chiorichan.http.HttpRequest;
-import com.chiorichan.http.HttpResponse;
+import com.chiorichan.http.HttpRequestWrapper;
+import com.chiorichan.http.HttpResponseWrapper;
 import com.chiorichan.http.session.SessionProvider;
 
 public class RenderEvent extends ServerEvent
@@ -55,12 +55,12 @@ public class RenderEvent extends ServerEvent
 		return sess;
 	}
 	
-	public HttpRequest getRequest()
+	public HttpRequestWrapper getRequest()
 	{
 		return sess.getRequest();
 	}
 	
-	public HttpResponse getResponse()
+	public HttpResponseWrapper getResponse()
 	{
 		return sess.getResponse();
 	}

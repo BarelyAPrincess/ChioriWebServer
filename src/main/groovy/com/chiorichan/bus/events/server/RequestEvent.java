@@ -10,16 +10,16 @@
 package com.chiorichan.bus.events.server;
 
 import com.chiorichan.bus.bases.Cancellable;
-import com.chiorichan.http.HttpRequest;
+import com.chiorichan.http.HttpRequestWrapper;
 
 public class RequestEvent extends ServerEvent implements Cancellable
 {
 	private int statusNo = 200;
 	private String reason;
-	private HttpRequest _request;
+	private HttpRequestWrapper _request;
 	private boolean cancelled = false;
 	
-	public RequestEvent( HttpRequest request )
+	public RequestEvent( HttpRequestWrapper request )
 	{
 		_request = request;
 	}
@@ -89,7 +89,7 @@ public class RequestEvent extends ServerEvent implements Cancellable
 	}
 	*/
 	
-	public HttpRequest getFramework()
+	public HttpRequestWrapper getFramework()
 	{
 		return _request;
 	}

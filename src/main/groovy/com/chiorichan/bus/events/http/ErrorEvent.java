@@ -10,27 +10,27 @@
 package com.chiorichan.bus.events.http;
 
 import com.chiorichan.http.HttpCode;
-import com.chiorichan.http.HttpRequest;
-import com.chiorichan.http.HttpResponse;
+import com.chiorichan.http.HttpRequestWrapper;
+import com.chiorichan.http.HttpResponseWrapper;
 
 public class ErrorEvent extends HttpEvent
 {
 	private final int statusNo;
 	private final String reason;
-	private final HttpRequest request;
+	private final HttpRequestWrapper request;
 	private String errorHtml = "";
 	
-	public ErrorEvent( HttpRequest _request )
+	public ErrorEvent( HttpRequestWrapper _request )
 	{
 		this( _request, 500, null );
 	}
 	
-	public ErrorEvent( HttpRequest _request, int _statusNo )
+	public ErrorEvent( HttpRequestWrapper _request, int _statusNo )
 	{
 		this( _request, _statusNo, null );
 	}
 	
-	public ErrorEvent( HttpRequest _request, int _statusNo, String _reason )
+	public ErrorEvent( HttpRequestWrapper _request, int _statusNo, String _reason )
 	{
 		if ( _reason == null )
 			_reason = HttpCode.msg( _statusNo );
@@ -50,12 +50,12 @@ public class ErrorEvent extends HttpEvent
 		return statusNo;
 	}
 	
-	public HttpRequest getRequest()
+	public HttpRequestWrapper getRequest()
 	{
 		return request;
 	}
 	
-	public HttpResponse getResponse()
+	public HttpResponseWrapper getResponse()
 	{
 		return request.getResponse();
 	}

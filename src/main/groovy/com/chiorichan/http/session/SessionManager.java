@@ -16,7 +16,7 @@ import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.StartupException;
 import com.chiorichan.account.bases.Account;
-import com.chiorichan.http.HttpRequest;
+import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.util.Common;
 import com.google.common.collect.Lists;
 
@@ -45,7 +45,7 @@ public class SessionManager
 		}
 	}
 	
-	public SessionProvider find( HttpRequest request )
+	public SessionProvider find( HttpRequestWrapper request )
 	{
 		SessionProvider sess = null;
 		

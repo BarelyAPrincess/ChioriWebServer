@@ -61,7 +61,7 @@ public class WebInterpreter extends FileInterpreter
 		return "WebInterpreter{content=" + bs.size() + " bytes,contentType=" + getContentType() + ",overrides={" + overrides + "},rewrites={" + rewrites + "}}";
 	}
 	
-	public WebInterpreter(HttpRequest request, Routes routes) throws IOException, HttpErrorException, SiteException
+	public WebInterpreter(HttpRequestWrapper request, Routes routes) throws IOException, HttpErrorException, SiteException
 	{
 		super();
 		
