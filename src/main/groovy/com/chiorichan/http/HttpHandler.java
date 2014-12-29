@@ -8,7 +8,21 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpContent;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.LastHttpContent;
+import io.netty.handler.codec.http.multipart.Attribute;
+import io.netty.handler.codec.http.multipart.DefaultHttpDataFactory;
+import io.netty.handler.codec.http.multipart.DiskAttribute;
+import io.netty.handler.codec.http.multipart.DiskFileUpload;
+import io.netty.handler.codec.http.multipart.FileUpload;
+import io.netty.handler.codec.http.multipart.HttpDataFactory;
+import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
+import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder.EndOfDataDecoderException;
+import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder.ErrorDataDecoderException;
+import io.netty.handler.codec.http.multipart.InterfaceHttpData;
+import io.netty.handler.codec.http.multipart.InterfaceHttpData.HttpDataType;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,11 +44,24 @@ import com.chiorichan.http.session.SessionProvider;
 import com.chiorichan.util.Versioning;
 import com.google.common.collect.Maps;
 
-public class HttpHandler extends SimpleChannelInboundHandler<Object>
+public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 {
 	protected static Map<ServerVars, Object> staticServerVars = Maps.newLinkedHashMap();
-	protected HttpRequestWrapper request;
-	protected HttpResponseWrapper response;
+	
+	private boolean readingChunks;
+	private HttpRequest requestOrig;
+	private HttpRequestWrapper request;
+	private HttpResponseWrapper response;
+	private HttpPostRequestDecoder decoder;
+	private static final HttpDataFactory factory = new DefaultHttpDataFactory( DefaultHttpDataFactory.MINSIZE );
+	
+	static
+	{
+		DiskFileUpload.deleteOnExitTemporaryFile = true;
+		DiskFileUpload.baseDirectory = Loader.getTempFileDirectory().getAbsolutePath();
+		DiskAttribute.deleteOnExitTemporaryFile = true;
+		DiskAttribute.baseDirectory = Loader.getTempFileDirectory().getAbsolutePath();
+	}
 	
 	public HttpHandler()
 	{
@@ -45,83 +72,223 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	}
 	
 	@Override
+	public void channelInactive( ChannelHandlerContext ctx ) throws Exception
+	{
+		if ( decoder != null )
+		{
+			decoder.cleanFiles();
+		}
+	}
+	
+	@Override
 	public void channelReadComplete( ChannelHandlerContext ctx ) throws Exception
 	{
 		ctx.flush();
 	}
 	
 	@Override
-	protected void messageReceived( ChannelHandlerContext ctx, Object msg ) throws Exception
+	protected void messageReceived( ChannelHandlerContext ctx, HttpObject msg ) throws Exception
 	{
 		if ( msg instanceof HttpRequest )
 		{
-			request = new HttpRequestWrapper( ctx.channel(), (HttpRequest) msg );
+			requestOrig = (HttpRequest) msg;
+			request = new HttpRequestWrapper( ctx.channel(), requestOrig );
 			response = request.getResponse();
 			
 			if ( is100ContinueExpected( (HttpRequest) msg ) )
-			{
 				send100Continue( ctx );
+			
+			Site currentSite = request.getSite();
+			
+			File tmpFileDirectory = ( currentSite != null ) ? currentSite.getTempFileDirectory() : Loader.getTempFileDirectory();
+			if ( !tmpFileDirectory.exists() )
+				tmpFileDirectory.mkdirs();
+			if ( !tmpFileDirectory.isDirectory() )
+				Loader.getLogger().severe( "The temp directory specified in the server configs is not a directory, File Uploads will FAIL until this problem is resolved." );
+			if ( !tmpFileDirectory.canWrite() )
+				Loader.getLogger().severe( "The temp directory specified in the server configs is not writable, File Uploads will FAIL until this problem is resolved." );
+			
+			DiskFileUpload.baseDirectory = tmpFileDirectory.getAbsolutePath();
+			DiskAttribute.baseDirectory = tmpFileDirectory.getAbsolutePath();
+			
+			if ( request.getMethod().equals( HttpMethod.GET ) )
+			{
+				return;
 			}
 			
 			try
 			{
-				handleHttp( request, response );
+				decoder = new HttpPostRequestDecoder( factory, requestOrig );
 			}
-			catch ( HttpErrorException e )
+			catch ( ErrorDataDecoderException e )
 			{
-				response.sendError( e );
+				e.printStackTrace();
+				response.sendException( e );
 				return;
 			}
-			catch ( IndexOutOfBoundsException | NullPointerException | IOException | SiteException e )
+		}
+		else if ( msg instanceof HttpContent )
+		{
+			HttpContent chunk = (HttpContent) msg;
+			
+			request.addContentLength( chunk.content().readableBytes() );
+			
+			if ( decoder != null )
 			{
-				/**
-				 * TODO!!! Proper Exception Handling. Consider the ability to have these exceptions cached and/or delivered by e-mail.
-				 */
-				if ( e instanceof IOException && e.getCause() != null )
+				try
 				{
-					e.getCause().printStackTrace();
-					response.sendException( e.getCause() );
+					decoder.offer( chunk );
 				}
-				else
+				catch ( ErrorDataDecoderException e )
+				{
+					e.printStackTrace();
+					response.sendError( e );
+					// ctx.channel().close();
+					return;
+				}
+				readHttpDataChunkByChunk();
+				
+				if ( chunk instanceof LastHttpContent )
+					finishRequest();
+			}
+			else
+				finishRequest();
+		}
+	}
+	
+	private void finishRequest() throws IOException
+	{
+		try
+		{
+			handleHttp( request, response );
+		}
+		catch ( HttpErrorException e )
+		{
+			response.sendError( e );
+			return;
+		}
+		catch ( IndexOutOfBoundsException | NullPointerException | IOException | SiteException e )
+		{
+			/**
+			 * TODO!!! Proper Exception Handling. Consider the ability to have these exceptions cached and/or delivered by e-mail.
+			 */
+			if ( e instanceof IOException && e.getCause() != null )
+			{
+				e.getCause().printStackTrace();
+				response.sendException( e.getCause() );
+			}
+			else
+			{
+				e.printStackTrace();
+				response.sendException( e );
+			}
+		}
+		catch ( Exception e )
+		{
+			/**
+			 * XXX Temporary way of capturing exceptions that were unexpected by the server.
+			 * Exceptions caught here should have proper exception captures implemented.
+			 */
+			Loader.getLogger().warning( "WARNING THIS IS AN UNCAUGHT EXCEPTION! CAN YOU KINDLY REPORT THIS STACKTRACE TO THE DEVELOPER?", e );
+		}
+		
+		try
+		{
+			SessionProvider sess = request.getSession( false );
+			if ( sess != null )
+			{
+				sess.saveSession( false );
+				sess.onFinished();
+			}
+		}
+		catch ( Exception e )
+		{
+			e.printStackTrace();
+		}
+		
+		response.sendResponse();
+		readingChunks = false;
+		reset();
+	}
+	
+	private void reset()
+	{
+		request = null;
+		response = null;
+		if ( decoder != null )
+		{
+			decoder.destroy();
+			decoder = null;
+		}
+	}
+	
+	private void readHttpDataChunkByChunk() throws IOException
+	{
+		try
+		{
+			while ( decoder.hasNext() )
+			{
+				InterfaceHttpData data = decoder.next();
+				if ( data != null )
+				{
+					try
+					{
+						writeHttpData( data );
+					}
+					finally
+					{
+						data.release();
+					}
+				}
+			}
+		}
+		catch ( EndOfDataDecoderException e )
+		{
+			// END OF CONTENT
+		}
+	}
+	
+	private void writeHttpData( InterfaceHttpData data ) throws IOException
+	{
+		if ( data.getHttpDataType() == HttpDataType.Attribute )
+		{
+			Attribute attribute = (Attribute) data;
+			String value;
+			try
+			{
+				value = attribute.getValue();
+			}
+			catch ( IOException e )
+			{
+				e.printStackTrace();
+				response.sendException( e );
+				return;
+			}
+			
+			request.getPostMap().put( attribute.getName(), value );
+		}
+		else if ( data.getHttpDataType() == HttpDataType.FileUpload )
+		{
+			FileUpload fileUpload = (FileUpload) data;
+			if ( fileUpload.isCompleted() )
+			{
+				try
+				{
+					request.putFile( fileUpload.getName(), new UploadedFile( fileUpload.getFile(), fileUpload.getFilename(), fileUpload.length(), "File upload was successful!" ) );
+					
+					// fileUpload.renameTo(dest);
+					// decoder.removeFileUploadFromClean(fileUpload);
+				}
+				catch ( IOException e )
 				{
 					e.printStackTrace();
 					response.sendException( e );
-					// response.sendError( 500, null, "<pre>" + ExceptionUtils.getStackTrace( e ) + "</pre>" );
 				}
 			}
-			catch ( Exception e )
+			else
 			{
-				/**
-				 * XXX Temporary way of capturing exception that were unexpected by the server.
-				 * Exceptions caught here should have proper exception captures implemented.
-				 */
-				Loader.getLogger().warning( "WARNING THIS IS AN UNCAUGHT EXCEPTION! PLEASE FIX THE CODE!", e );
+				Loader.getLogger().warning( "File to be continued but should not!" );
 			}
-			
-			try
-			{
-				SessionProvider sess = request.getSessionNoWarning();
-				if ( sess != null )
-				{
-					sess.saveSession( false );
-					sess.onFinished();
-				}
-			}
-			catch ( Exception e )
-			{
-				e.printStackTrace();
-			}
-			
-			//response.sendResponse();
-		}
-		
-		if ( msg instanceof HttpContent )
-		{
-			HttpContent httpContent = (HttpContent) msg;
-			
-			Loader.getLogger().debug( "Got a HTTPCONTENT: " + httpContent );
-			
-			response.sendResponse();
 		}
 	}
 	

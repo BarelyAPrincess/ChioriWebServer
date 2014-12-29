@@ -32,7 +32,7 @@ public class NetworkManager
 {
 	private static EndPoint tcpConnection;
 	
-	public static EventLoopGroup bossGroup = new NioEventLoopGroup();
+	public static EventLoopGroup bossGroup = new NioEventLoopGroup(1);
 	public static EventLoopGroup workerGroup = new NioEventLoopGroup();
 	
 	private static String remoteTcpIp = null;

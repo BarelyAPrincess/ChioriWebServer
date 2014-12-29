@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2014 Chiori-chan. All Right Reserved.
- *
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -21,7 +20,9 @@ import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLDecoder;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +44,7 @@ import org.apache.commons.net.ntp.TimeInfo;
 import com.chiorichan.Loader;
 import com.chiorichan.exceptions.ShellExecuteException;
 import com.chiorichan.factory.CodeEvalFactory;
+import com.chiorichan.util.StringUtil;
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
@@ -290,7 +292,7 @@ public class WebUtils
 					}
 				}
 				
-				sb.append( "<tr" + ( (map.get( ":id" ) != null ) ? " id=\"" + map.get( ":id" ) + "\"" : "" ) + ( (map.get( ":rel" ) != null ) ? " rel=\"" + map.get( ":rel" ) + "\"" : "" ) + " class=\"" + clss + "\">\n" );
+				sb.append( "<tr" + ( ( map.get( ":id" ) != null ) ? " id=\"" + map.get( ":id" ) + "\"" : "" ) + ( ( map.get( ":rel" ) != null ) ? " rel=\"" + map.get( ":rel" ) + "\"" : "" ) + " class=\"" + clss + "\">\n" );
 				
 				map.remove( ":id" );
 				map.remove( ":rel" );
@@ -336,7 +338,7 @@ public class WebUtils
 	public static String escapeHTML( String l )
 	{
 		return StringEscapeUtils.escapeHtml4( l );
-		//return StringUtils.replaceEach( l, new String[] { "&", "\"", "<", ">" }, new String[] { "&amp;", "&quot;", "&lt;", "&gt;" } );
+		// return StringUtils.replaceEach( l, new String[] { "&", "\"", "<", ">" }, new String[] { "&amp;", "&quot;", "&lt;", "&gt;" } );
 	}
 	
 	/**
@@ -538,5 +540,30 @@ public class WebUtils
 			return "";
 		
 		return factory.eval( packFile, site );
+	}
+	
+	public static Map<String, String> queryToMap( String query ) throws UnsupportedEncodingException
+	{
+		Map<String, String> result = new HashMap<String, String>();
+		
+		if ( query == null )
+			return result;
+		
+		for ( String param : query.split( "&" ) )
+		{
+			String pair[] = param.split( "=" );
+			try
+			{
+				if ( pair.length > 1 )
+					result.put( URLDecoder.decode( StringUtil.trimEnd( pair[0], '%' ), "ISO-8859-1" ), URLDecoder.decode( StringUtil.trimEnd( pair[1], '%' ), "ISO-8859-1" ) );
+				else if ( pair.length == 1 )
+					result.put( URLDecoder.decode( StringUtil.trimEnd( pair[0], '%' ), "ISO-8859-1" ), "" );
+			}
+			catch ( IllegalArgumentException e )
+			{
+				Loader.getLogger().warning( "Malformed URL exception was thrown, key: `" + pair[0] + "`, val: '" + pair[1] + "'" );
+			}
+		}
+		return result;
 	}
 }
