@@ -324,14 +324,21 @@ public class HttpRequestWrapper
 		return ( (InetSocketAddress) channel.remoteAddress() ).getHostName();
 	}
 	
-	/**
-	 * This method uses a checker that makes it possible for our server to get the correct remote IP even if using it with CloudFlare.
-	 * I believe there are other CDN services like CloudFlare. I'd love it if people inform me, so I can implement similar methods.
-	 * https://support.cloudflare.com/hc/en-us/articles/200170786-Why-do-my-server-logs-show-CloudFlare-s-IPs-using-CloudFlare-
-	 */
 	public String getRemoteAddr()
 	{
-		if ( http.headers().contains( "CF-Connecting-IP" ) )
+		return getRemoteAddr( true );
+	}
+	
+	/**
+	 * This method uses a checker that makes it possible for our server to get the correct remote IP even if using it with CloudFlare.
+	 * I believe there are other CDN services like CloudFlare. I'd love it if people could inform me, so I can implement similar methods.
+	 * https://support.cloudflare.com/hc/en-us/articles/200170786-Why-do-my-server-logs-show-CloudFlare-s-IPs-using-CloudFlare-
+	 * 
+	 * boolean detectCDN will disable the detection of CDN, e.g., CloudFlare, IP headers when set to false.
+	 */
+	public String getRemoteAddr( boolean detectCDN )
+	{
+		if ( detectCDN && http.headers().contains( "CF-Connecting-IP" ) )
 			return http.headers().get( "CF-Connecting-IP" );
 		else
 			return ( (InetSocketAddress) channel.remoteAddress() ).getAddress().getHostAddress();
