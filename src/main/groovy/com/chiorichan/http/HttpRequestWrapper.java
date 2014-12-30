@@ -13,6 +13,7 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import io.netty.handler.ssl.SslHandler;
 
 import java.io.File;
 import java.io.IOException;
@@ -187,10 +188,10 @@ public class HttpRequestWrapper
 			}
 		}
 		
-		//if ( uri.contains( File.separator + '.' ) || uri.contains( '.' + File.separator ) || uri.startsWith( "." ) || uri.endsWith( "." ) || INSECURE_URI.matcher( uri ).matches() )
-		//{
-		//	return "/";
-		//}
+		// if ( uri.contains( File.separator + '.' ) || uri.contains( '.' + File.separator ) || uri.startsWith( "." ) || uri.endsWith( "." ) || INSECURE_URI.matcher( uri ).matches() )
+		// {
+		// return "/";
+		// }
 		
 		if ( uri.contains( "?" ) )
 			uri = uri.substring( 0, uri.indexOf( "?" ) );
@@ -341,12 +342,9 @@ public class HttpRequestWrapper
 		return ( (InetSocketAddress) channel.remoteAddress() ).getPort();
 	}
 	
-	/**
-	 * XXX Update once https is available
-	 */
 	public boolean isSecure()
 	{
-		return false;
+		return ( channel.pipeline().get( SslHandler.class ) != null );
 	}
 	
 	public int getServerPort()
@@ -580,7 +578,7 @@ public class HttpRequestWrapper
 			serverVars.put( ServerVars.REQUEST_TIME, getRequestTime() );
 			serverVars.put( ServerVars.REQUEST_URI, getURI() );
 			serverVars.put( ServerVars.CONTENT_LENGTH, getContentLength() );
-			//serverVars.put( ServerVars.AUTH_TYPE, getAuthType() );
+			// serverVars.put( ServerVars.AUTH_TYPE, getAuthType() );
 			serverVars.put( ServerVars.SERVER_NAME, getServerName() );
 			serverVars.put( ServerVars.SERVER_PORT, getServerPort() );
 			serverVars.put( ServerVars.HTTPS, isSecure() );
