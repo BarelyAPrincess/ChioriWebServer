@@ -524,6 +524,16 @@ public class HttpRequestWrapper
 		return getMap;
 	}
 	
+	public Map<String, UploadedFile> getUploadMap()
+	{
+		return uploadedFiles;
+	}
+	
+	protected void putUpload( String name, UploadedFile uploadedFile )
+	{
+		uploadedFiles.put( name, uploadedFile );
+	}
+	
 	public int getRequestTime()
 	{
 		return requestTime;
@@ -636,11 +646,6 @@ public class HttpRequestWrapper
 	public Channel getChannel()
 	{
 		return channel;
-	}
-	
-	public void putFile( String name, UploadedFile uploadedFile )
-	{
-		uploadedFiles.put( name, uploadedFile );
 	}
 	
 	protected void addContentLength( int size )

@@ -48,7 +48,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 {
 	protected static Map<ServerVars, Object> staticServerVars = Maps.newLinkedHashMap();
 	
-	private boolean readingChunks;
 	private HttpRequest requestOrig;
 	private HttpRequestWrapper request;
 	private HttpResponseWrapper response;
@@ -207,7 +206,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 		}
 		
 		response.sendResponse();
-		readingChunks = false;
 		reset();
 	}
 	
@@ -237,7 +235,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 					}
 					finally
 					{
-						data.release();
+						// This method deletes the temp file from disk!
+						// data.release();
 					}
 				}
 			}
@@ -274,10 +273,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 			{
 				try
 				{
-					request.putFile( fileUpload.getName(), new UploadedFile( fileUpload.getFile(), fileUpload.getFilename(), fileUpload.length(), "File upload was successful!" ) );
-					
-					// fileUpload.renameTo(dest);
-					// decoder.removeFileUploadFromClean(fileUpload);
+					request.putUpload( fileUpload.getName(), new UploadedFile( fileUpload.getFile(), fileUpload.getFilename(), fileUpload.length(), "File upload was successful!" ) );
 				}
 				catch ( IOException e )
 				{
