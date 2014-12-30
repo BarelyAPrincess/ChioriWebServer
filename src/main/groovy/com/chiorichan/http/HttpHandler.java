@@ -86,6 +86,12 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 	}
 	
 	@Override
+	public void channelActive( final ChannelHandlerContext ctx ) throws Exception
+	{
+		
+	}
+	
+	@Override
 	protected void messageReceived( ChannelHandlerContext ctx, HttpObject msg ) throws Exception
 	{
 		if ( msg instanceof HttpRequest )

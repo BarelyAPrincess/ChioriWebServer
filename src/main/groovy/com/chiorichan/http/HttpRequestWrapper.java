@@ -149,7 +149,7 @@ public class HttpRequestWrapper
 		return http.headers();
 	}
 	
-	protected SessionProvider getSession()
+	public SessionProvider getSession()
 	{
 		return getSession( true );
 	}

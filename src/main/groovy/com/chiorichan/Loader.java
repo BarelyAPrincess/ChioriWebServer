@@ -313,10 +313,12 @@ public class Loader
 		
 		pluginManager.enablePlugins( PluginLoadOrder.STARTUP );
 		
-		if ( !options.has( "tcp-disable" ) && configuration.getBoolean( "server.enableTcpServer", true ) )
-			NetworkManager.initTcpServer();
-		else
-			getLogger().warning( "The integrated tcp server has been disabled per the configuration. Change server.enableTcpServer to true to reenable it." );
+		//if ( !options.has( "tcp-disable" ) && configuration.getBoolean( "server.enableTcpServer", true ) )
+			//NetworkManager.initTcpServer();
+		//else
+			//getLogger().warning( "The integrated tcp server has been disabled per the configuration. Change server.enableTcpServer to true to reenable it." );
+		// TCP IS TEMPORARY REMOVED UNTIL IT CAN BE PORTED TO NETTY.
+		// BUT IT MIGHT END UP AS A PLUGIN VERSES BUILTIN NEXT TIME.
 		
 		if ( !options.has( "web-disable" ) && configuration.getBoolean( "server.enableWebServer", true ) )
 			NetworkManager.initWebServer();

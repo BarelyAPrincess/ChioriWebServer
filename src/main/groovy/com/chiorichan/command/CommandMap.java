@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2014 Chiori-chan. All Right Reserved.
- *
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -53,9 +52,6 @@ import com.chiorichan.command.defaults.UpdateCommand;
 import com.chiorichan.command.defaults.VanillaCommand;
 import com.chiorichan.command.defaults.VersionCommand;
 import com.chiorichan.command.defaults.WhitelistCommand;
-import com.chiorichan.command.network.ConnectCommand;
-import com.chiorichan.command.network.LoginCommand;
-import com.chiorichan.command.network.SendCommand;
 
 public class CommandMap
 {
@@ -103,11 +99,6 @@ public class CommandMap
 		register( "chiori", new CacheCommand() );
 		register( "chiori", new ReloadCommand( "reload" ) );
 		register( "chiori", new PluginsCommand( "plugins" ) );
-		
-		// XXX Client Commands
-		register( "chiori", new SendCommand() );
-		register( "chiori", new ConnectCommand() );
-		register( "chiori", new LoginCommand() );
 		
 		register( "chiori", new SiteCommand() );
 	}

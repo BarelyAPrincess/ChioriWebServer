@@ -14,13 +14,6 @@ public class HttpInitializer extends ChannelInitializer<SocketChannel>
 	{
 		ChannelPipeline p = ch.pipeline();
 		
-		// TODO: Add SSL support ONEDAY!
-		
-		// Uncomment the following line if you want HTTPS
-		// SSLEngine engine = SecureChatSslContextFactory.getServerContext().createSSLEngine();
-		//engine.setUseClientMode(false);
-		//p.addLast("ssl", new SslHandler(engine));
-		
 		p.addLast( "decoder", new HttpRequestDecoder() );
 		// Uncomment the following line if you don't want to handle HttpChunks.
 		// p.addLast("aggregator", new HttpObjectAggregator(1048576));
