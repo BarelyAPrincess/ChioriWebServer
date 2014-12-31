@@ -24,9 +24,6 @@ import java.util.logging.Logger;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.Loader;
-import com.chiorichan.account.bases.Sentient;
-import com.chiorichan.command.Command;
-import com.chiorichan.command.PluginCommand;
 import com.chiorichan.configuration.file.FileConfiguration;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.plugin.PluginBase;
@@ -308,50 +305,6 @@ public abstract class GroovyPlugin extends PluginBase
 		input = input.replaceAll( "\\{DIR\\}", dataFolder.getPath().replaceAll( "\\\\", "/" ) + "/" );
 		input = input.replaceAll( "\\{NAME\\}", description.getName().replaceAll( "[^\\w_-]", "" ) );
 		return input;
-	}
-	
-	/**
-	 * {@inheritDoc}
-	 */
-	public boolean onCommand( Sentient sender, Command command, String label, String[] args )
-	{
-		return false;
-	}
-	
-	/**
-	 * {@inheritDoc}
-	 */
-	public List<String> onTabComplete( Sentient sender, Command command, String alias, String[] args )
-	{
-		return null;
-	}
-	
-	/**
-	 * Gets the command with the given name, specific to this plugin. Commands
-	 * need to be registered in the {@link PluginDescriptionFile#getCommands()
-	 * PluginDescriptionFile} to exist at runtime.
-	 * 
-	 * @param name name or alias of the command
-	 * @return the plugin command if found, otherwise null
-	 */
-	public PluginCommand getCommand( String name )
-	{
-		String alias = name.toLowerCase();
-		PluginCommand command = Loader.getPluginManager().getPluginCommand( alias );
-		
-		if ( ( command != null ) && ( command.getPlugin() != this ) )
-		{
-			command = Loader.getPluginManager().getPluginCommand( description.getName().toLowerCase() + ":" + alias );
-		}
-		
-		if ( ( command != null ) && ( command.getPlugin() == this ) )
-		{
-			return command;
-		}
-		else
-		{
-			return null;
-		}
 	}
 	
 	public void onLoad()

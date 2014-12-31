@@ -33,6 +33,11 @@ settings:
   shutdown-message: Server Shutdown
   whitelist: false
   webroot: webroot
+console:
+  color: true
+  style: '&r&7[&d%ct&7] %dt %tm [%lv&7]&f'
+  dateFormat: MM-dd
+  timeFormat: HH:mm:ss.SSS
 auto-updater:
   enabled: true
   on-broken:

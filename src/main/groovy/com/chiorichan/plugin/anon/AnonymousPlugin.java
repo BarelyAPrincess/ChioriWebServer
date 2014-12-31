@@ -12,9 +12,10 @@ package com.chiorichan.plugin.anon;
 import java.io.File;
 import java.io.InputStream;
 
+import org.codehaus.groovy.tools.shell.Command;
+
 import com.chiorichan.Loader;
 import com.chiorichan.account.bases.SentientHandler;
-import com.chiorichan.command.Command;
 import com.chiorichan.configuration.file.FileConfiguration;
 import com.chiorichan.plugin.PluginBase;
 import com.chiorichan.plugin.PluginDescriptionFile;
@@ -130,11 +131,5 @@ public final class AnonymousPlugin extends PluginBase
 	public void setNaggable( boolean canNag )
 	{
 		isNaggable = canNag;
-	}
-	
-	@Override
-	public boolean onCommand( SentientHandler sender, Command command, String label, String[] args )
-	{
-		return false;
 	}
 }

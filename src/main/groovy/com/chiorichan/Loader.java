@@ -20,7 +20,6 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import jline.console.ConsoleReader;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 
@@ -267,6 +266,9 @@ public class Loader
 		
 		saveConfig();
 		
+		if ( console.useColors == true )
+			console.useColors = Loader.getConfig().getBoolean( "console.color", true );
+		
 		events.useTimings( configuration.getBoolean( "settings.plugin-profiling" ) );
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
 		
@@ -344,8 +346,6 @@ public class Loader
 		pluginManager.enablePlugins( PluginLoadOrder.RUNNING );
 		
 		getLogger().info( ChatColor.RED + "" + ChatColor.NEGATIVE + "Done (" + ( System.currentTimeMillis() - startTime ) + "ms)! Type \"help\" for help or \"su\" to change accounts.!" );
-		
-		console.startConsolePrompt();
 		
 		updater.check();
 		
@@ -549,11 +549,6 @@ public class Loader
 	public String toString()
 	{
 		return Versioning.getProduct() + " " + Versioning.getVersion();
-	}
-	
-	public ConsoleReader getReader()
-	{
-		return console.reader;
 	}
 	
 	public String getShutdownMessage()

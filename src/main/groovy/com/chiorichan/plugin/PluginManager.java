@@ -30,10 +30,6 @@ import org.apache.commons.lang3.Validate;
 import com.chiorichan.Loader;
 import com.chiorichan.account.bases.Sentient;
 import com.chiorichan.bus.events.HandlerList;
-import com.chiorichan.command.Command;
-import com.chiorichan.command.CommandMap;
-import com.chiorichan.command.PluginCommand;
-import com.chiorichan.command.PluginCommandYamlParser;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.permissions.Permissible;
 import com.chiorichan.permissions.Permission;
@@ -57,8 +53,6 @@ public final class PluginManager
 	private PluginLoadOrder currentState = PluginLoadOrder.INITIALIZATION;
 	private AnonymousLoader anonLoader;
 	
-	private final static CommandMap commandMap = new CommandMap();
-	
 	private static PluginManager instance;
 	
 	public PluginManager()
@@ -76,15 +70,9 @@ public final class PluginManager
 		return instance;
 	}
 	
-	public static CommandMap getCommandMap()
-	{
-		return commandMap;
-	}
-	
 	public void shutdown()
 	{
 		clearPlugins();
-		commandMap.clearCommands();
 	}
 	
 	public void enablePlugins( PluginLoadOrder type )
@@ -101,7 +89,6 @@ public final class PluginManager
 		
 		if ( type == PluginLoadOrder.POSTSERVER )
 		{
-			commandMap.registerServerAliases();
 			Loader.getPermissionsManager().loadCustomPermissions();
 			DefaultPermissions.registerCorePermissions();
 		}
@@ -544,13 +531,6 @@ public final class PluginManager
 	{
 		if ( !plugin.isEnabled() )
 		{
-			List<Command> pluginCommands = PluginCommandYamlParser.parse( plugin );
-			
-			if ( !pluginCommands.isEmpty() )
-			{
-				commandMap.registerAll( plugin.getDescription().getName(), pluginCommands );
-			}
-			
 			try
 			{
 				plugin.getPluginLoader().enablePlugin( plugin );
@@ -697,16 +677,6 @@ public final class PluginManager
 			}
 		
 		return result;
-	}
-	
-	public PluginCommand getPluginCommand( String name )
-	{
-		Command command = commandMap.getCommand( name );
-		
-		if ( command instanceof PluginCommand )
-			return (PluginCommand) command;
-		else
-			return null;
 	}
 	
 	private void loadPlugin( Plugin plugin )
