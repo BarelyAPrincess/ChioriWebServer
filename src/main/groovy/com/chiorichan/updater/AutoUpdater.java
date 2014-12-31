@@ -119,7 +119,7 @@ public class AutoUpdater
 	
 	public void check()
 	{
-		check( Loader.getConsole().getConsoleReader(), true );
+		//check( , true );
 	}
 	
 	public void check( final SentientHandler sender, final boolean automatic )

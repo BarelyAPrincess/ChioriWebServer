@@ -32,7 +32,7 @@ public class ConsoleLogManager
 	public void init()
 	{
 		ConsoleBus console = Loader.getConsole();
-		ConsoleHandler consolehandler = new TerminalConsoleHandler( console.reader );
+		ConsoleHandler consolehandler = new ConsoleHandler();
 		
 		for ( java.util.logging.Handler handler : logger.getHandlers() )
 			logger.removeHandler( handler );

@@ -19,12 +19,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.codehaus.groovy.tools.shell.Command;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 
-import com.chiorichan.command.Command;
-import com.chiorichan.command.CommandExecutor;
-import com.chiorichan.command.PluginCommand;
 import com.chiorichan.permissions.Permissible;
 import com.chiorichan.permissions.Permission;
 import com.chiorichan.permissions.PermissionDefault;

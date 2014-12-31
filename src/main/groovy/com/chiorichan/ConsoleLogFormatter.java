@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2014 Chiori-chan. All Right Reserved.
- *
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -26,16 +25,20 @@ import com.google.common.base.Strings;
 
 public class ConsoleLogFormatter extends Formatter
 {
-	private final SimpleDateFormat date;
+	private SimpleDateFormat dateFormat;
+	private SimpleDateFormat timeFormat;
+	private boolean formatConfigLoaded = false;
+	
 	public Map<ChatColor, String> replacements = new EnumMap<ChatColor, String>( ChatColor.class );
 	public ChatColor[] colors = ChatColor.values();
 	public boolean debugMode = false;
 	public int debugModeHowDeep = 1;
-
-	public ConsoleLogFormatter( ConsoleBus console )
+	
+	public ConsoleLogFormatter(ConsoleBus console)
 	{
-		date = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss.SSS" );
-
+		dateFormat = new SimpleDateFormat( "MM-dd" );
+		timeFormat = new SimpleDateFormat( "HH:mm:ss.SSS" );
+		
 		replacements.put( ChatColor.BLACK, Ansi.ansi().fg( Ansi.Color.BLACK ).boldOff().toString() );
 		replacements.put( ChatColor.DARK_BLUE, Ansi.ansi().fg( Ansi.Color.BLUE ).boldOff().toString() );
 		replacements.put( ChatColor.DARK_GREEN, Ansi.ansi().fg( Ansi.Color.GREEN ).boldOff().toString() );
@@ -61,7 +64,7 @@ public class ConsoleLogFormatter extends Formatter
 		replacements.put( ChatColor.NEGATIVE, Ansi.ansi().a( Attribute.NEGATIVE_ON ).toString() );
 		replacements.put( ChatColor.RESET, Ansi.ansi().a( Attribute.RESET ).fg( Ansi.Color.DEFAULT ).toString() );
 	}
-
+	
 	public ChatColor getLevelColor( Level var1 )
 	{
 		if ( var1 == Level.FINEST || var1 == Level.FINER || var1 == Level.FINE )
@@ -77,13 +80,14 @@ public class ConsoleLogFormatter extends Formatter
 		else
 			return ChatColor.WHITE;
 	}
-
+	
 	public String handleAltColors( String var1 )
 	{
-		if ( Loader.getConsole().AnsiSupported() && Loader.getConsole().useColors )
+		// Loader.getConsole().AnsiSupported() &&
+		if ( Loader.getConsole().useColors )
 		{
 			var1 = ChatColor.translateAlternateColorCodes( '&', var1 ) + ChatColor.RESET;
-
+			
 			for ( ChatColor color : colors )
 			{
 				if ( replacements.containsKey( color ) )
@@ -93,72 +97,78 @@ public class ConsoleLogFormatter extends Formatter
 			}
 		}
 		else
-			var1 = var1.replaceAll( "§.", "" );
-
+		{
+			var1 = var1.replaceAll( "&.", "" );
+		}
+		
 		return var1;
 	}
-
+	
 	@Override
 	public String format( LogRecord record )
 	{
-		StringBuilder builder = new StringBuilder();
+		if ( Loader.getConfig() != null && !formatConfigLoaded )
+		{
+			dateFormat = new SimpleDateFormat( Loader.getConfig().getString( "console.dateFormat", "MM-dd" ) );
+			timeFormat = new SimpleDateFormat( Loader.getConfig().getString( "console.timeFormat", "HH:mm:ss.SSS" ) );
+			formatConfigLoaded = true;
+		}
+		
+		String style = ( Loader.getConfig() == null ) ? "&r&7[&d%ct&7] %dt %tm [%lv&7]&f" : Loader.getConfig().getString( "console.style", "&r&7[&d%ct&7] %dt %tm [%lv&7]&f" );
+		
 		Throwable ex = record.getThrown();
-
-		String threadName = Thread.currentThread().getName();
-
-		if ( threadName.length() > 10 )
-			threadName = threadName.substring( 0, 2 ) + ".." + threadName.substring( threadName.length() - 6 );
-		else if ( threadName.length() < 10 )
-			threadName = threadName + Strings.repeat( " ", 10 - threadName.length() );
-
-		builder.append( ChatColor.RESET + "" + ChatColor.GRAY );
-		builder.append( "[" );
-		builder.append( ChatColor.LIGHT_PURPLE );
-		builder.append( threadName );
-		builder.append( ChatColor.GRAY );
-		builder.append( "] " );
-		builder.append( date.format( record.getMillis() ) );
-
+		
+		if ( style.contains( "%ct" ) )
+		{
+			String threadName = Thread.currentThread().getName();
+			
+			if ( threadName.length() > 10 )
+				threadName = threadName.substring( 0, 2 ) + ".." + threadName.substring( threadName.length() - 6 );
+			else if ( threadName.length() < 10 )
+				threadName = threadName + Strings.repeat( " ", 10 - threadName.length() );
+			
+			style = style.replaceAll( "%ct", threadName );
+		}
+		
+		style = style.replaceAll( "%dt", dateFormat.format( record.getMillis() ) );
+		style = style.replaceAll( "%tm", timeFormat.format( record.getMillis() ) );
+		
 		int howDeep = debugModeHowDeep;
-
+		
 		if ( debugMode )
 		{
 			StackTraceElement[] var1 = Thread.currentThread().getStackTrace();
-
+			
 			for ( StackTraceElement var2 : var1 )
 			{
 				if ( !var2.getClassName().toLowerCase().contains( "java" ) && !var2.getClassName().toLowerCase().contains( "sun" ) && !var2.getClassName().toLowerCase().contains( "log" ) && !var2.getMethodName().equals( "sendMessage" ) && !var2.getMethodName().equals( "sendRawMessage" ) )
 				{
 					howDeep--;
-
+					
 					if ( howDeep <= 0 )
 					{
-						builder.append( " " ).append( var2.getClassName()).append( "$" ).append( var2.getMethodName() ).append( ":").append( var2.getLineNumber());
+						style += " " + var2.getClassName() + "$" + var2.getMethodName() + ":" + var2.getLineNumber();
 						break;
 					}
 				}
 			}
 		}
-
-		builder.append( " [" );
-		builder.append( getLevelColor( record.getLevel() ) );
-		builder.append( record.getLevel().getLocalizedName().toUpperCase() );
-		builder.append( ChatColor.GRAY );
-		builder.append( "] " );
-		builder.append( ChatColor.WHITE );
-		builder.append( formatMessage( record ) );
-
+		
+		if ( style.contains( "%lv" ) )
+			style = style.replaceAll( "%lv", getLevelColor( record.getLevel() ) + record.getLevel().getLocalizedName().toUpperCase() );
+		
+		style += " " + formatMessage( record );
+		
 		if ( !formatMessage( record ).endsWith( "\r" ) )
-			builder.append( '\n' );
-
+			style += "\n";
+		
 		if ( ex != null )
 		{
 			StringWriter writer = new StringWriter();
 			ex.printStackTrace( new PrintWriter( writer ) );
-			builder.append( writer );
+			style += writer;
 		}
-
-		return handleAltColors( builder.toString() );
+		
+		return handleAltColors( style );
 	}
-
 }
