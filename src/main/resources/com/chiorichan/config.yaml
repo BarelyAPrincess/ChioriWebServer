@@ -65,7 +65,7 @@ accounts:
     table: ''
     fields: {}
   operators:
-  - xx000z
+  - noLogin
 framework:
   sites:
     defaultTitle: Unnamed Site

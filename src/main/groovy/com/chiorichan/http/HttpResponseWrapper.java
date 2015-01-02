@@ -17,6 +17,7 @@ import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -67,9 +68,12 @@ public class HttpResponseWrapper
 		pageDataOverrides.put( key, val );
 	}
 	
-	public void sendError( HttpErrorException e ) throws IOException
+	public void sendError( Exception e ) throws IOException
 	{
-		sendError( e.getHttpCode(), e.getReason() );
+		if ( e instanceof HttpErrorException )
+			sendError( ( (HttpErrorException) e ).getHttpCode(), ( (HttpErrorException) e ).getReason() );
+		else
+			sendError( 500, e.getMessage() );
 	}
 	
 	public void sendError( int var1 ) throws IOException
@@ -369,8 +373,8 @@ public class HttpResponseWrapper
 			h.add( header.getKey(), header.getValue() );
 		}
 		
-		h.set(HttpHeaders.Names.CONTENT_LENGTH, response.content().readableBytes());
-		h.set(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
+		h.set( HttpHeaders.Names.CONTENT_LENGTH, response.content().readableBytes() );
+		h.set( HttpHeaders.Names.CONNECTION, HttpHeaders.Values.KEEP_ALIVE );
 		
 		stage = HttpResponseStage.CLOSED;
 		
@@ -397,7 +401,7 @@ public class HttpResponseWrapper
 	
 	public void sendMultipart( byte[] bytesToWrite ) throws IOException
 	{
-		if ( request.getMethod().equalsIgnoreCase( "HEAD" ) )
+		if ( request.getMethod().equals( HttpMethod.HEAD ) )
 			throw new IllegalStateException( "You can't start MULTIPART mode on a HEAD Request." );
 		
 		if ( stage != HttpResponseStage.MULTIPART )
