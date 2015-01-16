@@ -166,10 +166,11 @@ public class Account extends Sentient
 	public boolean isPermissionSet( Permission perm )
 	{
 		return this.perm.isPermissionSet( perm );
-	}
+	}*/
 	
 	public boolean hasPermission( String req )
-	{
+	{return true;
+		/*
 		Loader.getLogger().info( ChatColor.GREEN + "Checking `" + getAccountId() + "` for permission `" + req + "` with result `" + perm.hasPermission( req ) + "`" );
 		
 		// Everyone
@@ -180,9 +181,9 @@ public class Account extends Sentient
 		if ( req.equals( "0" ) || req.equalsIgnoreCase( "op" ) || req.equalsIgnoreCase( "admin" ) || req.equalsIgnoreCase( "root" ) )
 			return isOp();
 		
-		return perm.hasPermission( req );
+		return perm.hasPermission( req );*/
 	}
-	
+	/*
 	public boolean hasPermission( Permission perm )
 	{
 		return this.perm.hasPermission( perm );

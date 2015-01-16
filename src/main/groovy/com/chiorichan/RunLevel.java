@@ -3,39 +3,31 @@ package com.chiorichan;
 public enum RunLevel
 {
 	/**
-	 * Indicates the the server has just begun loading procedures
-	 * NOT A RECOMMENDED PLUGIN LOAD ORDER
+	 * Indicates the server has not done anything YET!
 	 */
 	INITIALIZATION,
 	/**
-	 * Indicates that the plugin will be loaded at startup
-	 * It is recommended to register your plugin tcp packets at this point.
+	 * Indicates the server has begun startup procedures.
 	 */
 	STARTUP,
 	/**
-	 * Indicates that the plugin will be loaded after the server was started.
-	 * If your plugin has any specific server side tasks, put them here.
-	 * NOTE: POSTCLIENT will never happen on server side.
+	 * Indicates the server has started the HTTP, HTTPS and TCP listeners.
 	 */
 	POSTSERVER,
 	/**
-	 * Indicates that the plugin will be loader after the client was started.
-	 * If your plugin has any specific client side tasks, put them here.
-	 * Note: POSTSERVER will never happen on client side.
-	 */
-	POSTCLIENT,
-	/**
-	 * Indicates that the plugin will be loaded after the framework was initialized
+	 * Indicates the server has started the DatabaseEngine, SitesManager, AccountManager, and SessionManager.
 	 */
 	INITIALIZED,
 	/**
-	 * Indicates that the server has completed all required startup procedures.
-	 * NOT A RECOMMENDED PLUGIN LOAD ORDER
+	 * Indicates the server has completed all required startup procedures and started the main thread tick.
 	 */
 	RUNNING,
 	/**
-	 * Indicates that the server is able to reload or currently is reloading.
-	 * NOT A RECOMMENDED PLUGIN LOAD ORDER - BUT GOOD FOR IDENIFYING CURRENT SERVER STATE
+	 * Indicates the server is reloading.
 	 */
-	RELOAD;
+	RELOAD,
+	/**
+	 * Indicates the server is preparing to shutdown.
+	 */
+	SHUTDOWN;
 }

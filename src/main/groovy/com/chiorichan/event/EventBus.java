@@ -23,6 +23,7 @@ import com.chiorichan.Loader;
 import com.chiorichan.Warning;
 import com.chiorichan.Warning.WarningState;
 import com.chiorichan.plugin.AuthorNagException;
+import com.chiorichan.plugin.PluginBase;
 
 public class EventBus
 {
@@ -119,13 +120,15 @@ public class EventBus
 			}
 			catch ( AuthorNagException ex )
 			{
-				EventCreator creator = registration.getCreator();
-				
-				if ( creator.isNaggable() )
+				if ( registration.getCreator() instanceof PluginBase )
 				{
-					creator.setNaggable( false );
+					PluginBase plugin = (PluginBase) registration.getCreator();
 					
-					Loader.getLogger().log( Level.SEVERE, String.format( "Nag author(s): '%s' of '%s' about the following: %s", creator.getDescription().getAuthors(), creator.getDescription().getFullName(), ex.getMessage() ) );
+					if ( plugin.isNaggable() )
+					{
+						plugin.setNaggable( false );
+						Loader.getLogger().log( Level.SEVERE, String.format( "Nag author(s): '%s' of '%s' about the following: %s", plugin.getDescription().getAuthors(), plugin.getDescription().getFullName(), ex.getMessage() ) );
+					}
 				}
 			}
 			catch ( EventException ex )
@@ -141,6 +144,16 @@ public class EventBus
 				Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getCreator().getDescription().getFullName(), ex );
 			}
 		}
+	}
+	
+	public void unregisterEvents( EventCreator creator )
+	{
+		HandlerList.unregisterAll( creator );
+	}
+	
+	public void unregisterEvents( Listener listener )
+	{
+		HandlerList.unregisterAll( listener );
 	}
 	
 	public void registerEvents( Listener listener, EventCreator creator )

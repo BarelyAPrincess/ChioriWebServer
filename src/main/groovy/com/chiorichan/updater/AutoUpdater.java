@@ -22,7 +22,7 @@ import com.chiorichan.event.Listener;
 import com.chiorichan.updater.BuildArtifact.ChangeSet.ChangeSetDetails;
 import com.chiorichan.util.Versioning;
 
-public class AutoUpdater extends BuiltinEventCreator
+public class AutoUpdater extends BuiltinEventCreator implements Listener
 {
 	public static final String WARN_CONSOLE = "warn-console";
 	public static final String WARN_OPERATORS = "warn-ops";
@@ -59,22 +59,9 @@ public class AutoUpdater extends BuiltinEventCreator
 		enabled = isEnabled;
 		
 		if ( enabled )
-			Loader.getEventBus().registerEvents( new UpdaterEvents(), this );
+			Loader.getEventBus().registerEvents( this, this );
 		// else
 		// Loader.getEventBus().unregisterEvents( this );
-	}
-	
-	private class UpdaterEvents implements Listener
-	{
-		@EventHandler( priority = EventPriority.NORMAL )
-		public void onAccountLoginEvent( AccountLoginEvent event )
-		{
-			if ( ( Loader.getAutoUpdater().isEnabled() ) && ( Loader.getAutoUpdater().getCurrent() != null ) )//&& ( event.getAccount().hasPermission( Loader.BROADCAST_CHANNEL_ADMINISTRATIVE ) ) )
-				if ( ( Loader.getAutoUpdater().getCurrent().isBroken() ) && ( Loader.getAutoUpdater().getOnBroken().contains( AutoUpdater.WARN_OPERATORS ) ) )
-					event.getAccount().sendMessage( ChatColor.DARK_RED + "The version of Chiori Web Server that this server is running is known to be broken. Please consider updating to the latest version at dl.bukkit.org." );
-				else if ( ( Loader.getAutoUpdater().isUpdateAvailable() ) && ( Loader.getAutoUpdater().getOnUpdate().contains( AutoUpdater.WARN_OPERATORS ) ) )
-					event.getAccount().sendMessage( ChatColor.DARK_PURPLE + "The version of Chiori Web Server that this server is running is out of date. Please consider updating to the latest version at dl.bukkit.org." );
-		}
 	}
 	
 	public boolean shouldSuggestChannels()
@@ -287,5 +274,15 @@ public class AutoUpdater extends BuiltinEventCreator
 	public String getName()
 	{
 		return "Auto Updater";
+	}
+	
+	@EventHandler( priority = EventPriority.NORMAL )
+	public void onAccountLoginEvent( AccountLoginEvent event )
+	{
+		if ( ( Loader.getAutoUpdater().isEnabled() ) && ( Loader.getAutoUpdater().getCurrent() != null ) && ( event.getAccount().hasPermission( Loader.BROADCAST_CHANNEL_ADMINISTRATIVE ) ) )
+			if ( ( Loader.getAutoUpdater().getCurrent().isBroken() ) && ( Loader.getAutoUpdater().getOnBroken().contains( AutoUpdater.WARN_OPERATORS ) ) )
+				event.getAccount().sendMessage( ChatColor.DARK_RED + "The version of " + Versioning.getProduct() + " that this server is running is known to be broken. Please consider updating to the latest version at jenkins.chiorichan.com." );
+			else if ( ( Loader.getAutoUpdater().isUpdateAvailable() ) && ( Loader.getAutoUpdater().getOnUpdate().contains( AutoUpdater.WARN_OPERATORS ) ) )
+				event.getAccount().sendMessage( ChatColor.DARK_PURPLE + "The version of " + Versioning.getProduct() + " that this server is running is out of date. Please consider updating to the latest version at jenkins.chiorichan.com." );
 	}
 }

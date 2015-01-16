@@ -38,8 +38,8 @@ public class HandlerList
 	private static ArrayList<HandlerList> allLists = new ArrayList<HandlerList>();
 	
 	/**
-	 * Bake all handler lists. Best used just after all normal event registration is complete, ie just after all plugins
-	 * are loaded if you're using fevents in a plugin system.
+	 * Bake all handler lists. Best used just after all normal event registration is complete, ie just after all creators
+	 * are loaded if you're using fevents in a creator system.
 	 */
 	public static void bakeAll()
 	{
@@ -74,18 +74,18 @@ public class HandlerList
 	}
 	
 	/**
-	 * Unregister a specific plugin's listeners from all handler lists.
+	 * Unregister a specific creator's listeners from all handler lists.
 	 * 
-	 * @param plugin
-	 *           plugin to unregister
+	 * @param creator
+	 *           creator to unregister
 	 */
-	public static void unregisterAll( EventCreator plugin )
+	public static void unregisterAll( EventCreator creator )
 	{
 		synchronized ( allLists )
 		{
 			for ( HandlerList h : allLists )
 			{
-				h.unregister( plugin );
+				h.unregister( creator );
 			}
 		}
 	}
@@ -167,19 +167,19 @@ public class HandlerList
 	}
 	
 	/**
-	 * Remove a specific plugin's listeners from this handler
+	 * Remove a specific creator's listeners from this handler
 	 * 
-	 * @param plugin
-	 *           plugin to remove
+	 * @param EventCreator
+	 *           creator to remove
 	 */
-	public synchronized void unregister( EventCreator plugin )
+	public synchronized void unregister( EventCreator creator )
 	{
 		boolean changed = false;
 		for ( List<RegisteredListener> list : handlerslots.values() )
 		{
 			for ( ListIterator<RegisteredListener> i = list.listIterator(); i.hasNext(); )
 			{
-				if ( i.next().getCreator().equals( plugin ) )
+				if ( i.next().getCreator().equals( creator ) )
 				{
 					i.remove();
 					changed = true;
@@ -243,13 +243,13 @@ public class HandlerList
 	}
 	
 	/**
-	 * Get a specific plugin's registered listeners associated with this handler list
+	 * Get a specific creator's registered listeners associated with this handler list
 	 * 
-	 * @param plugin
-	 *           the plugin to get the listeners of
+	 * @param creator
+	 *           the creator to get the listeners of
 	 * @return the list of registered listeners
 	 */
-	public static ArrayList<RegisteredListener> getRegisteredListeners( EventCreator plugin )
+	public static ArrayList<RegisteredListener> getRegisteredListeners( EventCreator creator )
 	{
 		ArrayList<RegisteredListener> listeners = new ArrayList<RegisteredListener>();
 		synchronized ( allLists )
@@ -262,7 +262,7 @@ public class HandlerList
 					{
 						for ( RegisteredListener listener : list )
 						{
-							if ( listener.getCreator().equals( plugin ) )
+							if ( listener.getCreator().equals( creator ) )
 							{
 								listeners.add( listener );
 							}

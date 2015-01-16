@@ -25,16 +25,4 @@ public abstract class BuiltinEventCreator implements EventCreator
 	{
 		return true;
 	}
-	
-	@Override
-	final public boolean isNaggable()
-	{
-		return false;
-	}
-	
-	@Override
-	final public void setNaggable( boolean canNag )
-	{
-		
-	}
 }

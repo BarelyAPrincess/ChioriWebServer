@@ -18,10 +18,6 @@ public interface EventCreator
 	 */
 	public boolean isEnabled();
 	
-	public boolean isNaggable();
-
-	public void setNaggable( boolean canNag );
-	
 	/**
 	 * Returns the name of the plugin.
 	 * <p>
