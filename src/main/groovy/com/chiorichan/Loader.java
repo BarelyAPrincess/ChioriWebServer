@@ -40,6 +40,7 @@ import com.chiorichan.framework.SiteManager;
 import com.chiorichan.framework.WebUtils;
 import com.chiorichan.http.session.SessionManager;
 import com.chiorichan.net.NetworkManager;
+import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.updater.AutoUpdater;
 import com.chiorichan.updater.ChioriDLUpdaterService;
 import com.chiorichan.util.FileUtil;
@@ -62,9 +63,10 @@ public class Loader extends BuiltinEventCreator implements Listener
 	private WarningState warningState = WarningState.DEFAULT;
 	final private ServerRunLevelEvent runLevelEvent = new ServerRunLevelEventImpl();
 	
-	protected final static ConsoleBus console = new ConsoleBus();
+	protected static final ConsoleBus console = new ConsoleBus();
 	protected static final EventBus events = new EventBus();
 	
+	protected static final PluginManager plugins = new PluginManager();
 	protected static final AccountManager accounts = new AccountManager();
 	protected static final SessionManager sessionManager = new SessionManager();
 	protected static final SiteManager sites = new SiteManager();
@@ -141,45 +143,25 @@ public class Loader extends BuiltinEventCreator implements Listener
 		{
 			{
 				acceptsAll( Arrays.asList( "?", "help" ), "Show the help" );
-				
 				acceptsAll( Arrays.asList( "c", "config", "b", "settings" ), "File for chiori settings" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "server.yaml" ) ).describedAs( "Yml file" );
-				
 				acceptsAll( Arrays.asList( "P", "plugins" ), "Plugin directory to use" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "plugins" ) ).describedAs( "Plugin directory" );
-				
 				acceptsAll( Arrays.asList( "h", "web-ip" ), "Host for Web to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
-				
 				acceptsAll( Arrays.asList( "p", "web-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
-				
 				acceptsAll( Arrays.asList( "h", "tcp-ip" ), "Host for Web to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
-				
 				acceptsAll( Arrays.asList( "p", "tcp-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
-				
 				acceptsAll( Arrays.asList( "p", "web-disable" ), "Disable the internal Web Server" );
-				
 				acceptsAll( Arrays.asList( "p", "tcp-disable" ), "Disable the internal TCP Server" );
-				
 				acceptsAll( Arrays.asList( "s", "size", "max-users" ), "Maximum amount of users" ).withRequiredArg().ofType( Integer.class ).describedAs( "Server size" );
-				
 				acceptsAll( Arrays.asList( "d", "date-format" ), "Format of the date to display in the console (for log entries)" ).withRequiredArg().ofType( SimpleDateFormat.class ).describedAs( "Log date format" );
-				
 				acceptsAll( Arrays.asList( "log-pattern" ), "Specfies the log filename pattern" ).withRequiredArg().ofType( String.class ).defaultsTo( "server.log" ).describedAs( "Log filename" );
-				
 				acceptsAll( Arrays.asList( "log-limit" ), "Limits the maximum size of the log file (0 = unlimited)" ).withRequiredArg().ofType( Integer.class ).defaultsTo( 0 ).describedAs( "Max log size" );
-				
 				acceptsAll( Arrays.asList( "log-count" ), "Specified how many log files to cycle through" ).withRequiredArg().ofType( Integer.class ).defaultsTo( 1 ).describedAs( "Log count" );
-				
 				acceptsAll( Arrays.asList( "log-append" ), "Whether to append to the log file" ).withRequiredArg().ofType( Boolean.class ).defaultsTo( true ).describedAs( "Log append" );
-				
 				acceptsAll( Arrays.asList( "log-strip-color" ), "Strips color codes from log file" );
-				
 				acceptsAll( Arrays.asList( "nojline" ), "Disables jline and emulates the vanilla console" );
-				
 				acceptsAll( Arrays.asList( "noconsole" ), "Disables the console" );
-				
 				acceptsAll( Arrays.asList( "nobanner" ), "Disables the banner" );
-				
 				acceptsAll( Arrays.asList( "nocolor" ), "Disables the console color formatting" );
-				
 				acceptsAll( Arrays.asList( "v", "version" ), "Show the Version" );
 			}
 		};
@@ -306,7 +288,6 @@ public class Loader extends BuiltinEventCreator implements Listener
 	{
 		( (ServerRunLevelEventImpl) runLevelEvent ).setRunLevel( level );
 		events.callEvent( runLevelEvent );
-		// pluginManager.enablePlugins( level );
 	}
 	
 	public RunLevel getRunLevel()
@@ -322,10 +303,12 @@ public class Loader extends BuiltinEventCreator implements Listener
 	public boolean start() throws StartupException
 	{
 		Loader.getEventBus().registerEvents( this, this );
-		
-		// pluginManager.loadPlugins();
+		plugins.init();
 		
 		changeRunLevel( RunLevel.INITIALIZATION );
+		
+		plugins.loadPlugins();
+		
 		changeRunLevel( RunLevel.STARTUP );
 		
 		// if ( !options.has( "tcp-disable" ) && configuration.getBoolean( "server.enableTcpServer", true ) )
@@ -513,7 +496,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		configuration = YamlConfiguration.loadConfiguration( getConfigFile() );
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
 		
-		// pluginManager.clearPlugins();
+		plugins.clearPlugins();
 		// ModuleBus.getCommandMap().clearCommands();
 		
 		int pollCount = 0;
@@ -540,6 +523,10 @@ public class Loader extends BuiltinEventCreator implements Listener
 		 * "This plugin is not properly shutting down its async tasks when it is being reloaded.  This may cause conflicts with the newly loaded version of the plugin" ) );
 		 * }
 		 */
+		
+		plugins.loadPlugins();
+		changeRunLevel( RunLevel.RELOAD );
+		
 		getLogger().info( "Reinitalizing the Persistence Manager..." );
 		
 		sessionManager.reload();
@@ -551,9 +538,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		getLogger().info( "Reinitalizing the Accounts Manager..." );
 		accounts.reload();
 		
-		// pluginManager.loadPlugins();
-		// pluginManager.enablePlugins( PluginLoadOrder.RELOAD );
-		// pluginManager.enablePlugins( PluginLoadOrder.POSTSERVER );
+		changeRunLevel( RunLevel.RUNNING );
 	}
 	
 	public String toString()
@@ -657,9 +642,19 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return console;
 	}
 	
-	public static ConsoleLogManager getLogger()
+	public static ConsoleLogger getLogger()
 	{
 		return console.getLogger();
+	}
+	
+	public static ConsoleLogger getLogger( String loggerId )
+	{
+		return console.getLogger( loggerId );
+	}
+	
+	public static ConsoleLogManager getLogManager()
+	{
+		return console.getLogManager();
 	}
 	
 	public static OptionSet getOptions()
@@ -711,16 +706,16 @@ public class Loader extends BuiltinEventCreator implements Listener
 	{
 		return events;
 	}
-
+	
 	@Override
 	public String getName()
 	{
-		return "Chiori-chan's Web Server";
+		return Versioning.getProduct() + " " + Versioning.getVersion();
 	}
 	
 	@EventHandler( priority = EventPriority.NORMAL )
 	public void onServerRunLevelEvent( ServerRunLevelEvent event )
 	{
-		//getLogger().debug( "Got RunLevel Event: " + event.getRunLevel() );
-	}  
+		// getLogger().debug( "Got RunLevel Event: " + event.getRunLevel() );
+	}
 }

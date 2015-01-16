@@ -114,7 +114,7 @@ public class ConsoleLogFormatter extends Formatter
 			formatConfigLoaded = true;
 		}
 		
-		String style = ( Loader.getConfig() == null ) ? "&r&7[&d%ct&7] %dt %tm [%lv&7]&f" : Loader.getConfig().getString( "console.style", "&r&7[&d%ct&7] %dt %tm [%lv&7]&f" );
+		String style = ( Loader.getConfig() == null ) ? "&r&7%dt %tm [%lv&7]&f" : Loader.getConfig().getString( "console.style", "&r&7[&d%ct&7] %dt %tm [%lv&7]&f" );
 		
 		Throwable ex = record.getThrown();
 		

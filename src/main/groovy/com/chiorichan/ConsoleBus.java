@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2014 Chiori-chan. All Right Reserved.
- *
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -47,13 +46,12 @@ public class ConsoleBus implements Runnable
 		
 		if ( options.has( "nocolor" ) )
 			useColors = false;
-			
-		logManager = new ConsoleLogManager( "" );
+		
+		logManager = new ConsoleLogManager();
 		logManager.init();
 		
-		// TODO: Add alt color handling for System OUT and ERR.
-		System.setOut( new PrintStream( new LoggerOutputStream( getLogger().getLogger(), Level.INFO ), true ) );
-		System.setErr( new PrintStream( new LoggerOutputStream( getLogger().getLogger(), Level.SEVERE ), true ) );
+		System.setOut( new PrintStream( new LoggerOutputStream( getLogger( "SysOut" ).getLogger(), Level.INFO ), true ) );
+		System.setErr( new PrintStream( new LoggerOutputStream( getLogger( "SysErr" ).getLogger(), Level.SEVERE ), true ) );
 		
 		Runtime.getRuntime().addShutdownHook( new ServerShutdownThread() );
 		
@@ -122,7 +120,7 @@ public class ConsoleBus implements Runnable
 	
 	private void loopTick( int tick )
 	{
-		//Loader.getScheduler().mainThreadHeartbeat( tick );
+		// Loader.getScheduler().mainThreadHeartbeat( tick );
 		
 		// Execute every five minutes - ex: clean sessions and checking for updates.
 		int fiveMinuteTick = new DateTime().getMinuteOfHour();
@@ -138,7 +136,17 @@ public class ConsoleBus implements Runnable
 		}
 	}
 	
-	public ConsoleLogManager getLogger()
+	public ConsoleLogger getLogger()
+	{
+		return logManager.getLogger();
+	}
+	
+	public ConsoleLogger getLogger( String loggerId )
+	{
+		return logManager.getLogger( loggerId );
+	}
+	
+	public ConsoleLogManager getLogManager()
 	{
 		return logManager;
 	}

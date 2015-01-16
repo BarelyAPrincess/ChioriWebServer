@@ -25,7 +25,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import com.chiorichan.ConsoleLogManager;
+import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.util.Common;
@@ -382,9 +382,9 @@ abstract public class ScriptingBaseJava extends Script
 		return Loader.getInstance();
 	}
 	
-	ConsoleLogManager getLogger()
+	ConsoleLogger getLogger()
 	{
-		return Loader.getLogger();
+		return Loader.getLogger( getClass().getSimpleName() );
 	}
 	
 	String apache_get_version()
