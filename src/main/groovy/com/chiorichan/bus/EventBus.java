@@ -9,25 +9,22 @@
  */
 package com.chiorichan.bus;
 
+import io.netty.util.concurrent.EventExecutor;
+
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 
 import org.apache.commons.lang3.Validate;
+import org.gradle.api.Plugin;
 
 import com.chiorichan.Loader;
-import com.chiorichan.bus.bases.EventException;
 import com.chiorichan.bus.events.Event;
+import com.chiorichan.bus.events.EventException;
 import com.chiorichan.bus.events.EventPriority;
 import com.chiorichan.bus.events.HandlerList;
 import com.chiorichan.bus.events.Listener;
-import com.chiorichan.plugin.AuthorNagException;
-import com.chiorichan.plugin.EventExecutor;
-import com.chiorichan.plugin.IllegalPluginAccessException;
-import com.chiorichan.plugin.Plugin;
-import com.chiorichan.plugin.RegisteredListener;
-import com.chiorichan.plugin.TimedRegisteredListener;
 
 public class EventBus
 {

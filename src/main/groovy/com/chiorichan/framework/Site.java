@@ -31,7 +31,7 @@ import org.json.JSONObject;
 
 import com.chiorichan.Loader;
 import com.chiorichan.StartupException;
-import com.chiorichan.bus.bases.EventException;
+import com.chiorichan.bus.events.EventException;
 import com.chiorichan.bus.events.server.SiteLoadEvent;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.database.DatabaseEngine;

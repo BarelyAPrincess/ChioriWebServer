@@ -13,7 +13,7 @@ import java.util.IllegalFormatException;
 import java.util.Set;
 
 import com.chiorichan.account.bases.Account;
-import com.chiorichan.bus.bases.Cancellable;
+import com.chiorichan.bus.events.Cancellable;
 import com.chiorichan.bus.events.HandlerList;
 
 /**

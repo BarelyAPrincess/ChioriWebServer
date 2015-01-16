@@ -78,7 +78,6 @@ dependencies
 	compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version: '4.7'
 	compile group: 'joda-time', name: 'joda-time', version: '2.4'
 	compile group: 'org.apache.httpcomponents', name: 'fluent-hc', version: '4.3.5'
-	compile group: 'com.esotericsoftware', name: 'jsonbeans', version: '0.7'
 	compile group: 'org.ow2.asm', name: 'asm-all', version: '5.0.3'
 	compile group: 'org.javassist', name: 'javassist', version: '3.18.2-GA'
 	compile group: 'com.googlecode.libphonenumber', name: 'libphonenumber', version: '6.2'
@@ -94,9 +93,6 @@ dependencies
 	compile group: 'org.jboss.logging', name: 'jboss-logging', version: '3.1.4.GA'
 	compile group: 'com.google.zxing', name: 'core', version: '3.1.0'
 	compile group: 'com.google.zxing', name: 'javase', version: '3.1.0'
-	compile group: 'com.esotericsoftware.kryo', name: 'kryo', version: '2.24.0'
-	compile group: 'com.esotericsoftware.minlog', name: 'minlog', version: '1.2'
-	compile group: 'com.esotericsoftware', name: 'jsonbeans', version: '0.7'
 	compile group: 'org.json', name: 'json', version: '20090211'
 	compile group: 'io.netty', name: 'netty-all', version: '5.0.0.Alpha1'
 	

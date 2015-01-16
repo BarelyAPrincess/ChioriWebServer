@@ -17,7 +17,7 @@ import org.apache.commons.lang3.Validate;
 import com.chiorichan.Loader;
 import com.chiorichan.Warning;
 import com.chiorichan.account.bases.Account;
-import com.chiorichan.bus.bases.Cancellable;
+import com.chiorichan.bus.events.Cancellable;
 import com.chiorichan.bus.events.HandlerList;
 
 /**

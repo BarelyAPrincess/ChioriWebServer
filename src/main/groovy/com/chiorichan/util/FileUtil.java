@@ -111,7 +111,7 @@ public class FileUtil
 		if ( path.startsWith( "[" ) )
 		{
 			path = path.replace( "[pwd]", new File( "" ).getAbsolutePath() );
-			path = path.replace( "[web]", Loader.webroot );
+			path = path.replace( "[web]", Loader.getWebRoot().getAbsolutePath() );
 			
 			if ( site != null )
 				path = path.replace( "[site]", site.getAbsoluteRoot().getAbsolutePath() );

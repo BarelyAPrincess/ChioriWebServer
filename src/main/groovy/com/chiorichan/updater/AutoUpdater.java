@@ -19,11 +19,11 @@ import com.chiorichan.bus.events.EventHandler;
 import com.chiorichan.bus.events.EventPriority;
 import com.chiorichan.bus.events.Listener;
 import com.chiorichan.bus.events.account.AccountLoginEvent;
-import com.chiorichan.plugin.anon.AnonymousPlugin;
+import com.chiorichan.events.EventSource;
 import com.chiorichan.updater.BuildArtifact.ChangeSet.ChangeSetDetails;
 import com.chiorichan.util.Versioning;
 
-public class AutoUpdater
+public class AutoUpdater implements EventSource
 {
 	public static final String WARN_CONSOLE = "warn-console";
 	public static final String WARN_OPERATORS = "warn-ops";
@@ -44,7 +44,7 @@ public class AutoUpdater
 		this.service = service;
 		this.channel = channel;
 		
-		Loader.getEventBus().registerEvents( new UpdaterEvents(), new AnonymousPlugin( this ) );
+		Loader.getEventBus().registerEvents( new UpdaterEvents(), this );
 	}
 	
 	private class UpdaterEvents implements Listener

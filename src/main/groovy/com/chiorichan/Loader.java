@@ -14,7 +14,6 @@ import java.net.ConnectException;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Scanner;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -30,21 +29,14 @@ import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.bases.Account;
 import com.chiorichan.bus.ConsoleBus;
 import com.chiorichan.bus.EventBus;
+import com.chiorichan.bus.events.server.ServerRunLevelEvent;
+import com.chiorichan.bus.events.server.ServerRunLevelEventImpl;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.framework.SiteManager;
 import com.chiorichan.framework.WebUtils;
 import com.chiorichan.http.session.SessionManager;
 import com.chiorichan.net.NetworkManager;
-import com.chiorichan.permissions.PermissionsManager;
-import com.chiorichan.plugin.Plugin;
-import com.chiorichan.plugin.PluginLoadOrder;
-import com.chiorichan.plugin.PluginManager;
-import com.chiorichan.plugin.ServicesManager;
-import com.chiorichan.plugin.messaging.Messenger;
-import com.chiorichan.plugin.messaging.StandardMessenger;
-import com.chiorichan.scheduler.ChioriScheduler;
-import com.chiorichan.scheduler.ChioriWorker;
 import com.chiorichan.updater.AutoUpdater;
 import com.chiorichan.updater.ChioriDLUpdaterService;
 import com.chiorichan.util.FileUtil;
@@ -63,22 +55,17 @@ public class Loader
 	private static long startTime = System.currentTimeMillis();
 	
 	public static File tmpFileDirectory;
-	public static String webroot = "";
+	public static File webroot = new File("");
 	private WarningState warningState = WarningState.DEFAULT;
+	final private ServerRunLevelEvent runLevelEvent = new ServerRunLevelEventImpl();
 	
 	protected final static ConsoleBus console = new ConsoleBus();
-	
-	protected static final PluginManager pluginManager = new PluginManager();
 	protected static final EventBus events = new EventBus();
+	
 	protected static final AccountManager accounts = new AccountManager();
 	protected static final SessionManager sessionManager = new SessionManager();
 	protected static final SiteManager sites = new SiteManager();
-	protected static final PermissionsManager permissions = new PermissionsManager();
 	
-	private final static StandardMessenger messenger = new StandardMessenger();
-	
-	private final static ServicesManager servicesManager = new ServicesManager();
-	private final static ChioriScheduler scheduler = new ChioriScheduler();
 	public static String clientId;
 	private static boolean isRunning = true;
 	private static String stopReason = null;
@@ -127,7 +114,7 @@ public class Loader
 				getLogger().severe( ChatColor.RED + "" + ChatColor.NEGATIVE + "SEVERE ERROR (" + ( System.currentTimeMillis() - startTime ) + "ms)! Press 'Ctrl-c' to quit!'" );
 			else
 				System.err.println( "SEVERE ERROR (" + ( System.currentTimeMillis() - startTime ) + "ms)! Press 'Ctrl-c' to quit!'" );
-			// TODO Make it so this exception (and possibly other critical exceptions) are reported to us without user interaction. Should also find a way that the log can be sent along with it.
+				// TODO Make it so this exception (and possibly other critical exceptions) are reported to us without user interaction. Should also find a way that the log can be sent along with it.
 			try
 			{
 				NetworkManager.cleanup();
@@ -269,12 +256,20 @@ public class Loader
 		if ( console.useColors == true )
 			console.useColors = Loader.getConfig().getBoolean( "console.color", true );
 		
-		events.useTimings( configuration.getBoolean( "settings.plugin-profiling" ) );
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
 		
-		webroot = configuration.getString( "settings.webroot" );
+		webroot = new File( configuration.getString( "server.webFileDirectory", "webroot" ) );
 		
-		tmpFileDirectory = new File( Loader.getConfig().getString( "server.tmpFileDirectory", "tmp" ) );
+		if ( !webroot.exists() )
+			webroot.mkdirs();
+		
+		if ( !webroot.isDirectory() )
+			Loader.getLogger().severe( "The `server.webFileDirectory` in config, specifies a directory that is not a directory. The server will be unable to serve files unless you correct this issue." );
+		
+		if ( !webroot.canWrite() )
+			Loader.getLogger().warning( "The `server.webFileDirectory` in config, specifies a directory that is not writable. Though the server itself will NEVER need to write to this directory, any scripts that need write permissions will fail. You can ignore this if you did this to improve security." );
+		
+		tmpFileDirectory = new File( configuration.getString( "server.tmpFileDirectory", "tmp" ) );
 		
 		if ( !tmpFileDirectory.exists() )
 			tmpFileDirectory.mkdirs();
@@ -303,29 +298,43 @@ public class Loader
 		}
 	}
 	
+	protected void changeRunLevel( RunLevel level )
+	{
+		((ServerRunLevelEventImpl) runLevelEvent).setRunLevel( level );
+		events.callEvent( runLevelEvent );
+		//pluginManager.enablePlugins( level );
+	}
+	
+	public RunLevel getRunLevel()
+	{
+		return runLevelEvent.getRunLevel();
+	}
+	
+	public RunLevel getLastRunLevel()
+	{
+		return runLevelEvent.getLastRunLevel();
+	}
+	
 	public boolean start() throws StartupException
 	{
-		pluginManager.loadPlugins();
-		pluginManager.enablePlugins( PluginLoadOrder.INITIALIZATION );
+		//pluginManager.loadPlugins();
 		
-		File root = new File( webroot );
+		changeRunLevel( RunLevel.INITIALIZATION );
+		changeRunLevel( RunLevel.STARTUP );
 		
-		if ( !root.exists() )
-			root.mkdirs();
-		
-		pluginManager.enablePlugins( PluginLoadOrder.STARTUP );
-		
-		if ( !options.has( "tcp-disable" ) && configuration.getBoolean( "server.enableTcpServer", true ) )
-			NetworkManager.initTcpServer();
-		else
-			getLogger().warning( "The integrated tcp server has been disabled per the configuration. Change server.enableTcpServer to true to reenable it." );
+		//if ( !options.has( "tcp-disable" ) && configuration.getBoolean( "server.enableTcpServer", true ) )
+			//NetworkManager.initTcpServer();
+		//else
+			//getLogger().warning( "The integrated tcp server has been disabled per the configuration. Change server.enableTcpServer to true to reenable it." );
+		// TCP IS TEMPORARY REMOVED UNTIL IT CAN BE PORTED TO NETTY.
+		// BUT IT MIGHT END UP AS A PLUGIN VERSES BUILTIN NEXT TIME.
 		
 		if ( !options.has( "web-disable" ) && configuration.getBoolean( "server.enableWebServer", true ) )
 			NetworkManager.initWebServer();
 		else
 			getLogger().warning( "The integrated web server has been disabled per the configuration. Change server.enableWebServer to true to reenable it." );
 		
-		pluginManager.enablePlugins( PluginLoadOrder.POSTSERVER );
+		changeRunLevel( RunLevel.POSTSERVER );
 		
 		getLogger().info( "Initalizing the Framework Database..." );
 		initDatabase();
@@ -339,11 +348,11 @@ public class Loader
 		getLogger().info( "Initalizing the Session Manager..." );
 		sessionManager.init();
 		
-		pluginManager.enablePlugins( PluginLoadOrder.INITIALIZED );
+		changeRunLevel( RunLevel.INITIALIZED );
 		
 		console.primaryThread.start();
 		
-		pluginManager.enablePlugins( PluginLoadOrder.RUNNING );
+		changeRunLevel( RunLevel.RUNNING );
 		
 		getLogger().info( ChatColor.RED + "" + ChatColor.NEGATIVE + "Done (" + ( System.currentTimeMillis() - startTime ) + "ms)! Type \"help\" for help or \"su\" to change accounts.!" );
 		
@@ -492,22 +501,17 @@ public class Loader
 		return instance;
 	}
 	
-	public static ChioriScheduler getScheduler()
-	{
-		return scheduler;
-	}
-	
 	// TOOD: Reload seems to be broken. This needs some serious reworking.
 	public void reload()
 	{
 		configuration = YamlConfiguration.loadConfiguration( getConfigFile() );
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
 		
-		pluginManager.clearPlugins();
+		//pluginManager.clearPlugins();
 		// ModuleBus.getCommandMap().clearCommands();
 		
 		int pollCount = 0;
-		
+		/*
 		// Wait for at most 2.5 seconds for plugins to close their threads
 		while ( pollCount < 50 && getScheduler().getActiveWorkers().size() > 0 )
 		{
@@ -529,7 +533,7 @@ public class Loader
 				author = plugin.getDescription().getAuthors().get( 0 );
 			getLogger().log( Level.SEVERE, String.format( "Nag author: '%s' of '%s' about the following: %s", author, plugin.getDescription().getName(), "This plugin is not properly shutting down its async tasks when it is being reloaded.  This may cause conflicts with the newly loaded version of the plugin" ) );
 		}
-		
+		*/
 		getLogger().info( "Reinitalizing the Persistence Manager..." );
 		
 		sessionManager.reload();
@@ -541,9 +545,9 @@ public class Loader
 		getLogger().info( "Reinitalizing the Accounts Manager..." );
 		accounts.reload();
 		
-		pluginManager.loadPlugins();
-		pluginManager.enablePlugins( PluginLoadOrder.RELOAD );
-		pluginManager.enablePlugins( PluginLoadOrder.POSTSERVER );
+		//pluginManager.loadPlugins();
+		//pluginManager.enablePlugins( PluginLoadOrder.RELOAD );
+		//pluginManager.enablePlugins( PluginLoadOrder.POSTSERVER );
 	}
 	
 	public String toString()
@@ -595,7 +599,7 @@ public class Loader
 	{
 		sessionManager.shutdown();
 		accounts.shutdown();
-		pluginManager.shutdown();
+		//pluginManager.shutdown();
 		NetworkManager.cleanup();
 		
 		isRunning = false;
@@ -672,16 +676,6 @@ public class Loader
 		return updater;
 	}
 	
-	public static EventBus getEventBus()
-	{
-		return events;
-	}
-	
-	public static PluginManager getPluginManager()
-	{
-		return pluginManager;
-	}
-	
 	public static SessionManager getSessionManager()
 	{
 		return sessionManager;
@@ -697,21 +691,6 @@ public class Loader
 		return new File( Loader.class.getProtectionDomain().getCodeSource().getLocation().getPath() ).getParentFile();
 	}
 	
-	public static PermissionsManager getPermissionsManager()
-	{
-		return permissions;
-	}
-	
-	public static Messenger getMessenger()
-	{
-		return messenger;
-	}
-	
-	public static ServicesManager getServicesManager()
-	{
-		return servicesManager;
-	}
-	
 	public static File getTempFileDirectory()
 	{
 		return tmpFileDirectory;
@@ -719,6 +698,11 @@ public class Loader
 	
 	public static File getWebRoot()
 	{
-		return new File( webroot );
+		return webroot;
+	}
+	
+	public static EventBus getEventBus()
+	{
+		return events;
 	}
 }

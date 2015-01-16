@@ -27,8 +27,6 @@ import java.util.Map;
 
 import com.chiorichan.ConsoleLogManager;
 import com.chiorichan.Loader;
-import com.chiorichan.plugin.Plugin;
-import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.ObjectUtil;
 import com.chiorichan.util.StringUtil;
@@ -361,7 +359,7 @@ abstract public class ScriptingBaseJava extends Script
 	{
 		return amt.round( new MathContext( dec, RoundingMode.HALF_DOWN ) );
 	}
-	
+	/*
 	PluginManager getPluginManager()
 	{
 		return Loader.getPluginManager();
@@ -371,7 +369,7 @@ abstract public class ScriptingBaseJava extends Script
 	{
 		return Loader.getPluginManager().getPluginbyName( search );
 	}
-	
+	*/
 	Loader getLoader()
 	{
 		return Loader.getInstance();

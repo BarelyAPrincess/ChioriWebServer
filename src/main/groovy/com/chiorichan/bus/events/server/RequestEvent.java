@@ -9,7 +9,7 @@
  */
 package com.chiorichan.bus.events.server;
 
-import com.chiorichan.bus.bases.Cancellable;
+import com.chiorichan.bus.events.Cancellable;
 import com.chiorichan.http.HttpRequestWrapper;
 
 public class RequestEvent extends ServerEvent implements Cancellable

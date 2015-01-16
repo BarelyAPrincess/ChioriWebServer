@@ -10,10 +10,11 @@ package com.chiorichan.http;
 
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import io.netty.handler.ssl.SslHandler;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -78,8 +79,6 @@ public class HttpRequestWrapper
 		if ( currentSite == null )
 			currentSite = Loader.getSiteManager().getSiteById( "framework" );
 		
-		// try
-		// {
 		getMap = Maps.newTreeMap();
 		QueryStringDecoder queryStringDecoder = new QueryStringDecoder( http.getUri() );
 		Map<String, List<String>> params = queryStringDecoder.parameters();
@@ -95,124 +94,12 @@ public class HttpRequestWrapper
 				}
 			}
 		}
-		
-		/*
-		 * if ( http.getRequestBody().available() > 0 )
-		 * {
-		 * if ( MultiPartRequestParser.isMultipart( this ) )
-		 * { // Multipart Request - File Upload Usually.
-		 * try
-		 * {
-		 * postMap = new HashMap<String, String>();
-		 * MultiPartRequestParser parser = new MultiPartRequestParser( this );
-		 * File tmpFileDirectory = ( currentSite != null ) ? currentSite.getTempFileDirectory() : Loader.getTempFileDirectory();
-		 * if ( !tmpFileDirectory.exists() )
-		 * tmpFileDirectory.mkdirs();
-		 * if ( !tmpFileDirectory.isDirectory() )
-		 * throw new IOException( "The temp directory specified in the server configs is not a directory, File Uploads will continue to fail until this problem is resolved." );
-		 * if ( !tmpFileDirectory.canWrite() )
-		 * throw new IOException( "The temp directory specified in the server configs is not writable, File Uploads will continue to fail until this problem is resolved." );
-		 * Part part;
-		 * while ( ( part = parser.readNextPart() ) != null )
-		 * {
-		 * String name = part.getName();
-		 * if ( name == null )
-		 * {
-		 * throw new IOException( "Malformed input: parameter name missing (known Opera 7 bug)" );
-		 * }
-		 * if ( part.isParam() )
-		 * {
-		 * ParamPart paramPart = (ParamPart) part;
-		 * String value = paramPart.getStringValue();
-		 * /*
-		 * Vector existingValues = (Vector) parameters.get( name );
-		 * if ( existingValues == null )
-		 * {
-		 * existingValues = new Vector();
-		 * postMap.put( name, existingValues );
-		 * }
-		 * existingValues.addElement( value );
-		 * XXX Should we use vectors in our Get and Post Maps?
-		 * postMap.put( name, value );
-		 * }
-		 * else if ( part.isFile() )
-		 * {
-		 * FilePart filePart = (FilePart) part;
-		 * String fileName = filePart.getFileName();
-		 * if ( fileName != null )
-		 * {
-		 * long size = -1;
-		 * String msg = "The file uploaded successfully.";
-		 * try
-		 * {
-		 * size = filePart.writeTo( tmpFileDirectory );
-		 * }
-		 * catch ( IOException e )
-		 * {
-		 * msg = e.getMessage();
-		 * }
-		 * String tmpFileName = filePart.getTmpFileName();
-		 * File newFile = new File( tmpFileDirectory, tmpFileName );
-		 * newFile.deleteOnExit();
-		 * uploadedFiles.put( name, new UploadedFile( newFile, fileName, size, msg ) );
-		 * }
-		 * }
-		 * }
-		 * }
-		 * catch ( HttpErrorException e )
-		 * {
-		 * response.sendError( e.getHttpCode(), null, e.getReason() );
-		 * }
-		 * catch ( IOException e )
-		 * {
-		 * response.sendException( e );
-		 * }
-		 * }
-		 * else
-		 * {
-		 * byte[] queryBytes = new byte[http.getRequestBody().available()];
-		 * IOUtils.readFully( http.getRequestBody(), queryBytes );
-		 * postMap = queryToMap( new String( queryBytes ) );
-		 * }
-		 * }
-		 * }
-		 * catch ( IOException e )
-		 * {
-		 * Loader.getLogger().severe( "There was a severe error reading the " + http.getMethod().toString().toUpperCase() + " query.", e );
-		 * response.sendException( e );
-		 * }
-		 */
 	}
 	
 	protected void initSession()
 	{
 		sess = Loader.getSessionManager().find( this );
 		sess.handleUserProtocols();
-	}
-	
-	protected Map<String, String> queryToMap( String query ) throws UnsupportedEncodingException
-	{
-		Map<String, String> result = new HashMap<String, String>();
-		
-		if ( query == null )
-			return result;
-		
-		for ( String param : query.split( "&" ) )
-		{
-			String pair[] = param.split( "=" );
-			try
-			{
-				if ( pair.length > 1 )
-					result.put( URLDecoder.decode( StringUtil.trimEnd( pair[0], '%' ), "ISO-8859-1" ), URLDecoder.decode( StringUtil.trimEnd( pair[1], '%' ), "ISO-8859-1" ) );
-				else if ( pair.length == 1 )
-					result.put( URLDecoder.decode( StringUtil.trimEnd( pair[0], '%' ), "ISO-8859-1" ), "" );
-			}
-			catch ( IllegalArgumentException e )
-			{
-				Loader.getLogger().warning( "Malformed URL exception was thrown, key: `" + pair[0] + "`, val: '" + pair[1] + "'" );
-			}
-		}
-		return result;
 	}
 	
 	public Boolean getArgumentBoolean( String key )
@@ -263,14 +150,14 @@ public class HttpRequestWrapper
 		return http.headers();
 	}
 	
-	protected SessionProvider getSessionNoWarning()
-	{
-		return sess;
-	}
-	
 	public SessionProvider getSession()
 	{
-		if ( sess == null )
+		return getSession( true );
+	}
+	
+	public SessionProvider getSession( boolean initIfNull )
+	{
+		if ( sess == null && initIfNull )
 			initSession();
 		
 		return sess;
@@ -281,30 +168,10 @@ public class HttpRequestWrapper
 		return response;
 	}
 	
-	/**
-	 * getPath() method was removing the beginning of a uri if it started with a double slash ie. //pages/about.gsp
-	 * This method might need some work up to make it more reliable.
-	 */
 	public String getURI()
 	{
-		/*String uri = http.getUri().toString();
+		String uri = http.getUri();
 		
-		if ( uri.contains( "?" ) )
-			uri = uri.substring( 0, uri.indexOf( "?" ) );
-		
-		if ( !uri.startsWith( "/" ) )
-			uri = "/" + uri;
-		
-		return uri;*/
-		
-		return sanitizeUri( http.getUri() );
-	}
-	
-	private static final Pattern INSECURE_URI = Pattern.compile(".*[<>&\"].*");
-	
-	private static String sanitizeUri( String uri )
-	{
-		// Decode the path.
 		try
 		{
 			uri = URLDecoder.decode( uri, "UTF-8" );
@@ -321,16 +188,16 @@ public class HttpRequestWrapper
 			}
 		}
 		
-		if ( !uri.startsWith( "/" ) )
-		{
-			return null;
-		}
+		// if ( uri.contains( File.separator + '.' ) || uri.contains( '.' + File.separator ) || uri.startsWith( "." ) || uri.endsWith( "." ) || INSECURE_URI.matcher( uri ).matches() )
+		// {
+		// return "/";
+		// }
 		
-		// TODO Add a security check on the URI!
-		if ( uri.contains( File.separator + '.' ) || uri.contains( '.' + File.separator ) || uri.startsWith( "." ) || uri.endsWith( "." ) || INSECURE_URI.matcher( uri ).matches() )
-		{
-			return null;
-		}
+		if ( uri.contains( "?" ) )
+			uri = uri.substring( 0, uri.indexOf( "?" ) );
+		
+		if ( !uri.startsWith( "/" ) )
+			uri = "/" + uri;
 		
 		return uri;
 	}
@@ -422,9 +289,14 @@ public class HttpRequestWrapper
 		}
 	}
 	
-	public String getMethod()
+	public String getMethodString()
 	{
 		return http.getMethod().toString();
+	}
+	
+	public HttpMethod getMethod()
+	{
+		return http.getMethod();
 	}
 	
 	public String getHeader( String key )
@@ -449,62 +321,47 @@ public class HttpRequestWrapper
 	
 	public String getRemoteHost()
 	{
-		return ((InetSocketAddress) channel.remoteAddress()).getHostName();
+		return ( (InetSocketAddress) channel.remoteAddress() ).getHostName();
+	}
+	
+	public String getRemoteAddr()
+	{
+		return getRemoteAddr( true );
 	}
 	
 	/**
 	 * This method uses a checker that makes it possible for our server to get the correct remote IP even if using it with CloudFlare.
-	 * I believe there are other CDN services like CloudFlare. I'd love it if people inform me, so I can implement similar methods.
+	 * I believe there are other CDN services like CloudFlare. I'd love it if people could inform me, so I can implement similar methods.
 	 * https://support.cloudflare.com/hc/en-us/articles/200170786-Why-do-my-server-logs-show-CloudFlare-s-IPs-using-CloudFlare-
+	 * 
+	 * boolean detectCDN will disable the detection of CDN, e.g., CloudFlare, IP headers when set to false.
 	 */
-	public String getRemoteAddr()
+	public String getRemoteAddr( boolean detectCDN )
 	{
-		if ( http.headers().contains( "CF-Connecting-IP" ) )
+		if ( detectCDN && http.headers().contains( "CF-Connecting-IP" ) )
 			return http.headers().get( "CF-Connecting-IP" );
 		else
-			return ((InetSocketAddress) channel.remoteAddress()).getAddress().getHostAddress();
+			return ( (InetSocketAddress) channel.remoteAddress() ).getAddress().getHostAddress();
 	}
 	
 	public int getRemotePort()
 	{
-		return ((InetSocketAddress) channel.remoteAddress()).getPort();
+		return ( (InetSocketAddress) channel.remoteAddress() ).getPort();
 	}
 	
-	public int getContentLength()
-	{
-		//try
-		{
-			//http.getRequestBody().reset();
-			//return http.getRequestBody().available();
-			return 0; // XXX FIX THIS!!!
-		}
-		//catch ( IOException e )
-		//{
-		//	return -1;
-		//}
-	}
-	
-	public Object getAuthType()
-	{
-		return "";
-	}
-	
-	/**
-	 * Update once https is available
-	 */
 	public boolean isSecure()
 	{
-		return false;
+		return ( channel.pipeline().get( SslHandler.class ) != null );
 	}
 	
 	public int getServerPort()
 	{
-		return ((InetSocketAddress) channel.localAddress()).getPort();
+		return ( (InetSocketAddress) channel.localAddress() ).getPort();
 	}
 	
 	public String getServerName()
 	{
-		return ((InetSocketAddress) channel.localAddress()).getHostName();
+		return ( (InetSocketAddress) channel.localAddress() ).getHostName();
 	}
 	
 	public String getParameter( String key )
@@ -672,6 +529,16 @@ public class HttpRequestWrapper
 		return getMap;
 	}
 	
+	public Map<String, UploadedFile> getUploadMap()
+	{
+		return uploadedFiles;
+	}
+	
+	protected void putUpload( String name, UploadedFile uploadedFile )
+	{
+		uploadedFiles.put( name, uploadedFile );
+	}
+	
 	public int getRequestTime()
 	{
 		return requestTime;
@@ -684,12 +551,12 @@ public class HttpRequestWrapper
 	
 	public String getLocalHost()
 	{
-		return ((InetSocketAddress) channel.localAddress()).getHostName();
+		return ( (InetSocketAddress) channel.localAddress() ).getHostName();
 	}
 	
 	public String getLocalAddr()
 	{
-		return ((InetSocketAddress) channel.localAddress()).getAddress().getHostAddress();
+		return ( (InetSocketAddress) channel.localAddress() ).getAddress().getHostAddress();
 	}
 	
 	public String getUserAgent()
@@ -718,13 +585,13 @@ public class HttpRequestWrapper
 			serverVars.put( ServerVars.REQUEST_TIME, getRequestTime() );
 			serverVars.put( ServerVars.REQUEST_URI, getURI() );
 			serverVars.put( ServerVars.CONTENT_LENGTH, getContentLength() );
-			serverVars.put( ServerVars.AUTH_TYPE, getAuthType() );
+			// serverVars.put( ServerVars.AUTH_TYPE, getAuthType() );
 			serverVars.put( ServerVars.SERVER_NAME, getServerName() );
 			serverVars.put( ServerVars.SERVER_PORT, getServerPort() );
 			serverVars.put( ServerVars.HTTPS, isSecure() );
 			serverVars.put( ServerVars.SESSION, getSession() );
 			serverVars.put( ServerVars.SERVER_SOFTWARE, Versioning.getProduct() );
-			// serverVars.put( ServerVars.SERVER_VERSION, Versioning.getVersion() );
+			serverVars.put( ServerVars.SERVER_VERSION, Versioning.getVersion() );
 			serverVars.put( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "webmaster@" + getDomain() ) );
 			serverVars.put( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Versioning.getVersion() );
 		}
@@ -780,9 +647,21 @@ public class HttpRequestWrapper
 	{
 		return uploadedFiles;
 	}
-
+	
 	public Channel getChannel()
 	{
 		return channel;
 	}
+	
+	protected void addContentLength( int size )
+	{
+		contentSize += size;
+	}
+	
+	public int getContentLength()
+	{
+		return contentSize;
+	}
+	
+	protected int contentSize = 0;
 }
