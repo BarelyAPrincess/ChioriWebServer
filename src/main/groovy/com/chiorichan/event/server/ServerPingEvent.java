@@ -7,11 +7,11 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.bus.events.server;
+package com.chiorichan.event.server;
 
 import java.net.InetAddress;
 
-import com.chiorichan.bus.events.HandlerList;
+import com.chiorichan.event.HandlerList;
 
 /**
  * Called when a server list ping is coming in.

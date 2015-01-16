@@ -14,10 +14,9 @@ import java.util.Set;
 import com.chiorichan.Loader;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.session.Session;
-import com.chiorichan.permissions.Permissible;
 import com.google.common.collect.Sets;
 
-public abstract class Sentient extends Permissible
+public abstract class Sentient
 {
 	protected Set<SentientHandler> handlers = Sets.newCopyOnWriteArraySet();
 	

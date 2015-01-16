@@ -7,9 +7,9 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.bus.events;
+package com.chiorichan.event;
 
-import com.chiorichan.plugin.Plugin;
+import org.gradle.api.Plugin;
 
 /**
  * Represents an event.

@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2014 Chiori-chan. All Right Reserved.
- *
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -15,15 +14,15 @@ import java.util.List;
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.bases.SentientHandler;
-import com.chiorichan.bus.events.EventHandler;
-import com.chiorichan.bus.events.EventPriority;
-import com.chiorichan.bus.events.Listener;
 import com.chiorichan.bus.events.account.AccountLoginEvent;
-import com.chiorichan.events.EventSource;
+import com.chiorichan.event.BuiltinEventCreator;
+import com.chiorichan.event.EventHandler;
+import com.chiorichan.event.EventPriority;
+import com.chiorichan.event.Listener;
 import com.chiorichan.updater.BuildArtifact.ChangeSet.ChangeSetDetails;
 import com.chiorichan.util.Versioning;
 
-public class AutoUpdater implements EventSource
+public class AutoUpdater extends BuiltinEventCreator
 {
 	public static final String WARN_CONSOLE = "warn-console";
 	public static final String WARN_OPERATORS = "warn-ops";
@@ -43,21 +42,6 @@ public class AutoUpdater implements EventSource
 		instance = this;
 		this.service = service;
 		this.channel = channel;
-		
-		Loader.getEventBus().registerEvents( new UpdaterEvents(), this );
-	}
-	
-	private class UpdaterEvents implements Listener
-	{
-		@EventHandler( priority = EventPriority.NORMAL )
-		public void onAccountLoginEvent( AccountLoginEvent event )
-		{
-			if ( ( Loader.getAutoUpdater().isEnabled() ) && ( Loader.getAutoUpdater().getCurrent() != null ) && ( event.getAccount().hasPermission( Loader.BROADCAST_CHANNEL_ADMINISTRATIVE ) ) )
-				if ( ( Loader.getAutoUpdater().getCurrent().isBroken() ) && ( Loader.getAutoUpdater().getOnBroken().contains( AutoUpdater.WARN_OPERATORS ) ) )
-					event.getAccount().sendMessage( ChatColor.DARK_RED + "The version of Chiori Web Server that this server is running is known to be broken. Please consider updating to the latest version at dl.bukkit.org." );
-				else if ( ( Loader.getAutoUpdater().isUpdateAvailable() ) && ( Loader.getAutoUpdater().getOnUpdate().contains( AutoUpdater.WARN_OPERATORS ) ) )
-					event.getAccount().sendMessage( ChatColor.DARK_PURPLE + "The version of Chiori Web Server that this server is running is out of date. Please consider updating to the latest version at dl.bukkit.org." );
-		}
 	}
 	
 	public String getChannel()
@@ -72,7 +56,25 @@ public class AutoUpdater implements EventSource
 	
 	public void setEnabled( boolean isEnabled )
 	{
-		this.enabled = isEnabled;
+		enabled = isEnabled;
+		
+		if ( enabled )
+			Loader.getEventBus().registerEvents( new UpdaterEvents(), this );
+		// else
+		// Loader.getEventBus().unregisterEvents( this );
+	}
+	
+	private class UpdaterEvents implements Listener
+	{
+		@EventHandler( priority = EventPriority.NORMAL )
+		public void onAccountLoginEvent( AccountLoginEvent event )
+		{
+			if ( ( Loader.getAutoUpdater().isEnabled() ) && ( Loader.getAutoUpdater().getCurrent() != null ) )//&& ( event.getAccount().hasPermission( Loader.BROADCAST_CHANNEL_ADMINISTRATIVE ) ) )
+				if ( ( Loader.getAutoUpdater().getCurrent().isBroken() ) && ( Loader.getAutoUpdater().getOnBroken().contains( AutoUpdater.WARN_OPERATORS ) ) )
+					event.getAccount().sendMessage( ChatColor.DARK_RED + "The version of Chiori Web Server that this server is running is known to be broken. Please consider updating to the latest version at dl.bukkit.org." );
+				else if ( ( Loader.getAutoUpdater().isUpdateAvailable() ) && ( Loader.getAutoUpdater().getOnUpdate().contains( AutoUpdater.WARN_OPERATORS ) ) )
+					event.getAccount().sendMessage( ChatColor.DARK_PURPLE + "The version of Chiori Web Server that this server is running is out of date. Please consider updating to the latest version at dl.bukkit.org." );
+		}
 	}
 	
 	public boolean shouldSuggestChannels()
@@ -119,7 +121,7 @@ public class AutoUpdater implements EventSource
 	
 	public void check()
 	{
-		//check( , true );
+		// check( , true );
 	}
 	
 	public void check( final SentientHandler sender, final boolean automatic )
@@ -279,5 +281,11 @@ public class AutoUpdater implements EventSource
 	protected static ChioriDLUpdaterService getService()
 	{
 		return ( instance == null ) ? null : instance.service;
+	}
+	
+	@Override
+	public String getName()
+	{
+		return "Auto Updater";
 	}
 }

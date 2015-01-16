@@ -9,25 +9,17 @@
  */
 package com.chiorichan.account.bases;
 
-import java.util.Set;
-
 import org.apache.commons.codec.digest.DigestUtils;
 
-import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.adapter.AccountLookupAdapter;
 import com.chiorichan.account.helpers.AccountMetaData;
 import com.chiorichan.account.helpers.LoginException;
 import com.chiorichan.account.helpers.LoginExceptionReasons;
-import com.chiorichan.permissions.PermissibleBase;
-import com.chiorichan.permissions.Permission;
-import com.chiorichan.permissions.PermissionAttachment;
-import com.chiorichan.permissions.PermissionAttachmentInfo;
-import com.chiorichan.plugin.Plugin;
 
 public class Account extends Sentient
 {
-	protected final PermissibleBase perm;
+	//protected final PermissibleBase perm;
 	protected AccountMetaData metaData = new AccountMetaData();
 	protected String acctId;
 	
@@ -46,7 +38,7 @@ public class Account extends Sentient
 		metaData = adapter.loadAccount( userId );
 		acctId = metaData.getAccountId();
 		
-		perm = new PermissibleBase( this );
+		//perm = new PermissibleBase( this );
 	}
 	
 	public Account(AccountMetaData meta, AccountLookupAdapter adapter)
@@ -56,7 +48,7 @@ public class Account extends Sentient
 		metaData = meta;
 		acctId = meta.getAccountId();
 		
-		perm = new PermissibleBase( this );
+		//perm = new PermissibleBase( this );
 	}
 	
 	public AccountMetaData getMetaData()
@@ -121,7 +113,7 @@ public class Account extends Sentient
 		return false;
 	}
 	
-	@Override
+	//@Override
 	public String getId()
 	{
 		return getAccountId();
@@ -165,7 +157,7 @@ public class Account extends Sentient
 		
 		return metaData.getString( key );
 	}
-	
+	/*
 	public boolean isPermissionSet( String name )
 	{
 		return perm.isPermissionSet( name );
@@ -244,5 +236,5 @@ public class Account extends Sentient
 	public AccountLookupAdapter getLookupAdapter()
 	{
 		return _cachedAdapter;
-	}
+	}*/
 }

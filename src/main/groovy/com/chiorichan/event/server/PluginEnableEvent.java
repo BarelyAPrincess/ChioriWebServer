@@ -7,19 +7,19 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.bus.events.server;
+package com.chiorichan.event.server;
 
-import com.chiorichan.bus.events.HandlerList;
-import com.chiorichan.plugin.Plugin;
+import com.chiorichan.event.EventCreator;
+import com.chiorichan.event.HandlerList;
 
 /**
- * Called when a plugin is disabled.
+ * Called when a plugin is enabled.
  */
-public class PluginDisableEvent extends PluginEvent
+public class PluginEnableEvent extends PluginEvent
 {
 	private static final HandlerList handlers = new HandlerList();
 	
-	public PluginDisableEvent(final Plugin plugin)
+	public PluginEnableEvent(final EventCreator plugin)
 	{
 		super( plugin );
 	}

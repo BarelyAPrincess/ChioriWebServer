@@ -20,7 +20,6 @@ import java.util.logging.LogRecord;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.Ansi.Attribute;
 
-import com.chiorichan.bus.ConsoleBus;
 import com.google.common.base.Strings;
 
 public class ConsoleLogFormatter extends Formatter
@@ -99,6 +98,7 @@ public class ConsoleLogFormatter extends Formatter
 		else
 		{
 			var1 = var1.replaceAll( "&.", "" );
+			var1 = var1.replaceAll( "§.", "" );
 		}
 		
 		return var1;

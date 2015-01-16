@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.bus;
+package com.chiorichan;
 
 import java.io.IOException;
 import java.io.InputStream;

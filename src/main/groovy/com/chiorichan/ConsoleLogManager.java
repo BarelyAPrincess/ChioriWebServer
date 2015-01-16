@@ -15,7 +15,6 @@ import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.chiorichan.bus.ConsoleBus;
 import com.google.common.base.Strings;
 
 public class ConsoleLogManager

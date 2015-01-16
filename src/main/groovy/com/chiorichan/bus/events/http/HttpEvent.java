@@ -9,8 +9,8 @@
  */
 package com.chiorichan.bus.events.http;
 
-import com.chiorichan.bus.events.Event;
-import com.chiorichan.bus.events.HandlerList;
+import com.chiorichan.event.Event;
+import com.chiorichan.event.HandlerList;
 
 /**
  * Miscellaneous server events

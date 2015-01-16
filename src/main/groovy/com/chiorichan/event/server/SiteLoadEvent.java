@@ -7,9 +7,9 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.bus.events.server;
+package com.chiorichan.event.server;
 
-import com.chiorichan.bus.events.Cancellable;
+import com.chiorichan.event.Cancellable;
 import com.chiorichan.framework.Site;
 
 public class SiteLoadEvent extends ServerEvent implements Cancellable

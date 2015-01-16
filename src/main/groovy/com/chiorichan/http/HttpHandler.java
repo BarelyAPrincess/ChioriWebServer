@@ -30,10 +30,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.chiorichan.Loader;
-import com.chiorichan.bus.events.EventException;
-import com.chiorichan.bus.events.server.RenderEvent;
-import com.chiorichan.bus.events.server.RequestEvent;
-import com.chiorichan.bus.events.server.ServerVars;
+import com.chiorichan.event.EventException;
+import com.chiorichan.event.server.RenderEvent;
+import com.chiorichan.event.server.RequestEvent;
+import com.chiorichan.event.server.ServerVars;
 import com.chiorichan.exceptions.HttpErrorException;
 import com.chiorichan.exceptions.ShellExecuteException;
 import com.chiorichan.factory.CodeEvalFactory;
@@ -420,7 +420,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 				// TODO: Come up with a better way to handle the URI used in the target. ie. Params are lost.
 				return;
 			}
-			else if ( !req.equals( "1" ) && !sess.getParentSession().getAccount().hasPermission( req ) )
+			else if ( !req.equals( "1" ))// XXX && !sess.getParentSession().getAccount().hasPermission( req ) )
 			{
 				if ( req.equals( "0" ) )
 					response.sendError( 401, "This page is limited to Operators only!" );

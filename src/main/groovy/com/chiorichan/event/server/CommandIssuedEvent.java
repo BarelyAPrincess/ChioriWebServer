@@ -7,10 +7,10 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.bus.events.server;
+package com.chiorichan.event.server;
 
 import com.chiorichan.account.bases.SentientHandler;
-import com.chiorichan.bus.events.HandlerList;
+import com.chiorichan.event.HandlerList;
 
 /**
  * Server Command events

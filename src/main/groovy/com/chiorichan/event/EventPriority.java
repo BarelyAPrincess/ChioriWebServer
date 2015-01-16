@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.bus.events;
+package com.chiorichan.event;
 
 /**
  * Represents an event's priority in execution

@@ -13,8 +13,8 @@ import java.util.IllegalFormatException;
 import java.util.Set;
 
 import com.chiorichan.account.bases.Account;
-import com.chiorichan.bus.events.Cancellable;
-import com.chiorichan.bus.events.HandlerList;
+import com.chiorichan.event.Cancellable;
+import com.chiorichan.event.HandlerList;
 
 /**
  * This event will sometimes fire synchronously, depending on how it was triggered. The constructor provides a boolean

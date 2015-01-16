@@ -10,8 +10,8 @@
 package com.chiorichan.bus.events.account;
 
 import com.chiorichan.account.bases.Account;
-import com.chiorichan.bus.events.Event;
-import com.chiorichan.bus.events.HandlerList;
+import com.chiorichan.event.Event;
+import com.chiorichan.event.HandlerList;
 
 /**
  * Represents a User related event

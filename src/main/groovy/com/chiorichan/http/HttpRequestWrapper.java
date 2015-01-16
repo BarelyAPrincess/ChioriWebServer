@@ -32,7 +32,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.Loader;
-import com.chiorichan.bus.events.server.ServerVars;
+import com.chiorichan.event.server.ServerVars;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.session.SessionProvider;
 import com.chiorichan.util.Common;

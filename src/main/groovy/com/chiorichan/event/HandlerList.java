@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.bus.events;
+package com.chiorichan.event;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,9 +15,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map.Entry;
-
-import com.chiorichan.plugin.Plugin;
-import com.chiorichan.plugin.RegisteredListener;
 
 /**
  * A list of event handlers, stored per-event. Based on lahwran's fevents.
@@ -82,7 +79,7 @@ public class HandlerList
 	 * @param plugin
 	 *           plugin to unregister
 	 */
-	public static void unregisterAll( Plugin plugin )
+	public static void unregisterAll( EventCreator plugin )
 	{
 		synchronized ( allLists )
 		{
@@ -175,14 +172,14 @@ public class HandlerList
 	 * @param plugin
 	 *           plugin to remove
 	 */
-	public synchronized void unregister( Plugin plugin )
+	public synchronized void unregister( EventCreator plugin )
 	{
 		boolean changed = false;
 		for ( List<RegisteredListener> list : handlerslots.values() )
 		{
 			for ( ListIterator<RegisteredListener> i = list.listIterator(); i.hasNext(); )
 			{
-				if ( i.next().getPlugin().equals( plugin ) )
+				if ( i.next().getCreator().equals( plugin ) )
 				{
 					i.remove();
 					changed = true;
@@ -252,7 +249,7 @@ public class HandlerList
 	 *           the plugin to get the listeners of
 	 * @return the list of registered listeners
 	 */
-	public static ArrayList<RegisteredListener> getRegisteredListeners( Plugin plugin )
+	public static ArrayList<RegisteredListener> getRegisteredListeners( EventCreator plugin )
 	{
 		ArrayList<RegisteredListener> listeners = new ArrayList<RegisteredListener>();
 		synchronized ( allLists )
@@ -265,7 +262,7 @@ public class HandlerList
 					{
 						for ( RegisteredListener listener : list )
 						{
-							if ( listener.getPlugin().equals( plugin ) )
+							if ( listener.getCreator().equals( plugin ) )
 							{
 								listeners.add( listener );
 							}

@@ -262,7 +262,7 @@ public abstract class Session implements SentientHandler
 			if ( StringUtil.isTrue( getVariable( "remember" ) ) )
 				defaultTimeout = Loader.getConfig().getInt( "sessions.defaultTimeoutRememberMe", 604800 );
 			
-			if ( Loader.getConfig().getBoolean( "allowNoTimeoutPermission" ) && currentAccount.hasPermission( "chiori.noTimeout" ) )
+			if ( Loader.getConfig().getBoolean( "allowNoTimeoutPermission" ))// XXX && currentAccount.hasPermission( "chiori.noTimeout" ) )
 				defaultTimeout = 31096821392L;
 		}
 		

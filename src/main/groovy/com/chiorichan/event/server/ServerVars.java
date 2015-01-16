@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.bus.events.server;
+package com.chiorichan.event.server;
 
 public enum ServerVars
 {

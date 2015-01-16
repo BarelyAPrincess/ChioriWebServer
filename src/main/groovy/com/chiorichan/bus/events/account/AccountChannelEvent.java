@@ -10,7 +10,7 @@
 package com.chiorichan.bus.events.account;
 
 import com.chiorichan.account.bases.Account;
-import com.chiorichan.bus.events.HandlerList;
+import com.chiorichan.event.HandlerList;
 
 /**
  * This event is called after a User registers or unregisters a new plugin channel.

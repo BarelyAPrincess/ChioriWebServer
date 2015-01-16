@@ -10,8 +10,8 @@
 package com.chiorichan.bus.events.account;
 
 import com.chiorichan.account.bases.Account;
-import com.chiorichan.bus.events.Cancellable;
-import com.chiorichan.bus.events.HandlerList;
+import com.chiorichan.event.Cancellable;
+import com.chiorichan.event.HandlerList;
 
 /**
  * Called when a User gets kicked from the server

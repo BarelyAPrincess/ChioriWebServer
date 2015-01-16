@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.bus.events;
+package com.chiorichan.event;
 
 public class EventException extends Exception
 {

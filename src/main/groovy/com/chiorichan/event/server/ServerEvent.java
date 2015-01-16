@@ -7,11 +7,18 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.bus.events;
+package com.chiorichan.event.server;
+
+import com.chiorichan.event.Event;
+import com.chiorichan.event.HandlerList;
 
 /**
- * Simple interface for tagging all EventListeners
+ * Miscellaneous server events
  */
-public interface Listener
+public abstract class ServerEvent extends Event
 {
+	public static HandlerList getHandlerList()
+	{
+		return handlers;
+	}
 }

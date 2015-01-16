@@ -25,10 +25,13 @@ server:
     username: fwuser
     password: fwpass
     dbfile: chiori.db
+plugins:
+  useTimings: true
+  allowQuery: false
+permissions:
+  file: permissions.yml
 settings:
-  permissions-file: permissions.yml
   update-folder: update
-  query-plugins: true
   deprecated-verbose: default
   shutdown-message: Server Shutdown
   whitelist: false

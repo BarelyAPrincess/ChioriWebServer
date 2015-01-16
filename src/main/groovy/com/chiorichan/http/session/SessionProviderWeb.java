@@ -180,6 +180,7 @@ public class SessionProviderWeb implements SessionProvider
 		}
 		else
 		{
+			/* XXX
 			try
 			{
 				parentSession.currentAccount.reloadAndValidate(); // <- Is this being overly redundant?
@@ -189,7 +190,7 @@ public class SessionProviderWeb implements SessionProvider
 			{
 				parentSession.currentAccount = null;
 				Loader.getLogger().warning( ChatColor.GREEN + "Login Failed `There was a login present but it failed validation with error: " + e.getMessage() + "`" );
-			}
+			}*/
 		}
 		
 		if ( parentSession.currentAccount != null )
@@ -264,9 +265,9 @@ public class SessionProviderWeb implements SessionProvider
 		if ( parentSession.currentAccount == null )
 			request.getResponse().sendLoginPage();
 		
-		if ( permission != null )
-			if ( !parentSession.currentAccount.hasPermission( permission ) )
-				request.getResponse().sendError( HttpCode.HTTP_FORBIDDEN, "You must have the `" + permission + "` in order to view this page!" );
+		//if ( permission != null )
+			// XXX if ( !parentSession.currentAccount.hasPermission( permission ) )
+				//request.getResponse().sendError( HttpCode.HTTP_FORBIDDEN, "You must have the `" + permission + "` in order to view this page!" );
 	}
 	
 	public ConfigurationManagerWrapper getConfigurationManager()

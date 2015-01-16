@@ -17,8 +17,8 @@ import org.apache.commons.lang3.Validate;
 import com.chiorichan.Loader;
 import com.chiorichan.Warning;
 import com.chiorichan.account.bases.Account;
-import com.chiorichan.bus.events.Cancellable;
-import com.chiorichan.bus.events.HandlerList;
+import com.chiorichan.event.Cancellable;
+import com.chiorichan.event.HandlerList;
 
 /**
  * Holds information for Account chat and commands

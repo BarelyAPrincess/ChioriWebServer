@@ -27,11 +27,14 @@ import org.apache.commons.io.FileUtils;
 import com.chiorichan.Warning.WarningState;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.bases.Account;
-import com.chiorichan.bus.ConsoleBus;
-import com.chiorichan.bus.EventBus;
-import com.chiorichan.bus.events.server.ServerRunLevelEvent;
-import com.chiorichan.bus.events.server.ServerRunLevelEventImpl;
 import com.chiorichan.database.DatabaseEngine;
+import com.chiorichan.event.BuiltinEventCreator;
+import com.chiorichan.event.EventBus;
+import com.chiorichan.event.EventHandler;
+import com.chiorichan.event.EventPriority;
+import com.chiorichan.event.Listener;
+import com.chiorichan.event.server.ServerRunLevelEvent;
+import com.chiorichan.event.server.ServerRunLevelEventImpl;
 import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.framework.SiteManager;
 import com.chiorichan.framework.WebUtils;
@@ -42,7 +45,7 @@ import com.chiorichan.updater.ChioriDLUpdaterService;
 import com.chiorichan.util.FileUtil;
 import com.chiorichan.util.Versioning;
 
-public class Loader
+public class Loader extends BuiltinEventCreator implements Listener
 {
 	public static final String BROADCAST_CHANNEL_ADMINISTRATIVE = "chiori.broadcast.admin";
 	public static final String BROADCAST_CHANNEL_USERS = "chiori.broadcast.user";
@@ -55,7 +58,7 @@ public class Loader
 	private static long startTime = System.currentTimeMillis();
 	
 	public static File tmpFileDirectory;
-	public static File webroot = new File("");
+	public static File webroot = new File( "" );
 	private WarningState warningState = WarningState.DEFAULT;
 	final private ServerRunLevelEvent runLevelEvent = new ServerRunLevelEventImpl();
 	
@@ -114,7 +117,7 @@ public class Loader
 				getLogger().severe( ChatColor.RED + "" + ChatColor.NEGATIVE + "SEVERE ERROR (" + ( System.currentTimeMillis() - startTime ) + "ms)! Press 'Ctrl-c' to quit!'" );
 			else
 				System.err.println( "SEVERE ERROR (" + ( System.currentTimeMillis() - startTime ) + "ms)! Press 'Ctrl-c' to quit!'" );
-				// TODO Make it so this exception (and possibly other critical exceptions) are reported to us without user interaction. Should also find a way that the log can be sent along with it.
+			// TODO Make it so this exception (and possibly other critical exceptions) are reported to us without user interaction. Should also find a way that the log can be sent along with it.
 			try
 			{
 				NetworkManager.cleanup();
@@ -256,6 +259,7 @@ public class Loader
 		if ( console.useColors == true )
 			console.useColors = Loader.getConfig().getBoolean( "console.color", true );
 		
+		events.useTimings( configuration.getBoolean( "plugins.useTimings" ) );
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
 		
 		webroot = new File( configuration.getString( "server.webFileDirectory", "webroot" ) );
@@ -300,9 +304,9 @@ public class Loader
 	
 	protected void changeRunLevel( RunLevel level )
 	{
-		((ServerRunLevelEventImpl) runLevelEvent).setRunLevel( level );
+		( (ServerRunLevelEventImpl) runLevelEvent ).setRunLevel( level );
 		events.callEvent( runLevelEvent );
-		//pluginManager.enablePlugins( level );
+		// pluginManager.enablePlugins( level );
 	}
 	
 	public RunLevel getRunLevel()
@@ -317,15 +321,17 @@ public class Loader
 	
 	public boolean start() throws StartupException
 	{
-		//pluginManager.loadPlugins();
+		Loader.getEventBus().registerEvents( this, this );
+		
+		// pluginManager.loadPlugins();
 		
 		changeRunLevel( RunLevel.INITIALIZATION );
 		changeRunLevel( RunLevel.STARTUP );
 		
-		//if ( !options.has( "tcp-disable" ) && configuration.getBoolean( "server.enableTcpServer", true ) )
-			//NetworkManager.initTcpServer();
-		//else
-			//getLogger().warning( "The integrated tcp server has been disabled per the configuration. Change server.enableTcpServer to true to reenable it." );
+		// if ( !options.has( "tcp-disable" ) && configuration.getBoolean( "server.enableTcpServer", true ) )
+		// NetworkManager.initTcpServer();
+		// else
+		// getLogger().warning( "The integrated tcp server has been disabled per the configuration. Change server.enableTcpServer to true to reenable it." );
 		// TCP IS TEMPORARY REMOVED UNTIL IT CAN BE PORTED TO NETTY.
 		// BUT IT MIGHT END UP AS A PLUGIN VERSES BUILTIN NEXT TIME.
 		
@@ -354,7 +360,7 @@ public class Loader
 		
 		changeRunLevel( RunLevel.RUNNING );
 		
-		getLogger().info( ChatColor.RED + "" + ChatColor.NEGATIVE + "Done (" + ( System.currentTimeMillis() - startTime ) + "ms)! Type \"help\" for help or \"su\" to change accounts.!" );
+		getLogger().info( ChatColor.RED + "" + ChatColor.NEGATIVE + "Finished Initalizing " + Versioning.getProduct() + "! It took " + ( System.currentTimeMillis() - startTime ) + "ms!" );
 		
 		updater.check();
 		
@@ -463,7 +469,7 @@ public class Loader
 	
 	public boolean getQueryPlugins()
 	{
-		return configuration.getBoolean( "settings.query-plugins" );
+		return configuration.getBoolean( "plugins.allowQuery" );
 	}
 	
 	public boolean hasWhitelist()
@@ -507,33 +513,33 @@ public class Loader
 		configuration = YamlConfiguration.loadConfiguration( getConfigFile() );
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
 		
-		//pluginManager.clearPlugins();
+		// pluginManager.clearPlugins();
 		// ModuleBus.getCommandMap().clearCommands();
 		
 		int pollCount = 0;
 		/*
-		// Wait for at most 2.5 seconds for plugins to close their threads
-		while ( pollCount < 50 && getScheduler().getActiveWorkers().size() > 0 )
-		{
-			try
-			{
-				Thread.sleep( 50 );
-			}
-			catch ( InterruptedException e )
-			{}
-			pollCount++;
-		}
-		
-		List<ChioriWorker> overdueWorkers = getScheduler().getActiveWorkers();
-		for ( ChioriWorker worker : overdueWorkers )
-		{
-			Plugin plugin = worker.getOwner();
-			String author = "<NoAuthorGiven>";
-			if ( plugin.getDescription().getAuthors().size() > 0 )
-				author = plugin.getDescription().getAuthors().get( 0 );
-			getLogger().log( Level.SEVERE, String.format( "Nag author: '%s' of '%s' about the following: %s", author, plugin.getDescription().getName(), "This plugin is not properly shutting down its async tasks when it is being reloaded.  This may cause conflicts with the newly loaded version of the plugin" ) );
-		}
-		*/
+		 * // Wait for at most 2.5 seconds for plugins to close their threads
+		 * while ( pollCount < 50 && getScheduler().getActiveWorkers().size() > 0 )
+		 * {
+		 * try
+		 * {
+		 * Thread.sleep( 50 );
+		 * }
+		 * catch ( InterruptedException e )
+		 * {}
+		 * pollCount++;
+		 * }
+		 * List<ChioriWorker> overdueWorkers = getScheduler().getActiveWorkers();
+		 * for ( ChioriWorker worker : overdueWorkers )
+		 * {
+		 * Plugin plugin = worker.getOwner();
+		 * String author = "<NoAuthorGiven>";
+		 * if ( plugin.getDescription().getAuthors().size() > 0 )
+		 * author = plugin.getDescription().getAuthors().get( 0 );
+		 * getLogger().log( Level.SEVERE, String.format( "Nag author: '%s' of '%s' about the following: %s", author, plugin.getDescription().getName(),
+		 * "This plugin is not properly shutting down its async tasks when it is being reloaded.  This may cause conflicts with the newly loaded version of the plugin" ) );
+		 * }
+		 */
 		getLogger().info( "Reinitalizing the Persistence Manager..." );
 		
 		sessionManager.reload();
@@ -545,9 +551,9 @@ public class Loader
 		getLogger().info( "Reinitalizing the Accounts Manager..." );
 		accounts.reload();
 		
-		//pluginManager.loadPlugins();
-		//pluginManager.enablePlugins( PluginLoadOrder.RELOAD );
-		//pluginManager.enablePlugins( PluginLoadOrder.POSTSERVER );
+		// pluginManager.loadPlugins();
+		// pluginManager.enablePlugins( PluginLoadOrder.RELOAD );
+		// pluginManager.enablePlugins( PluginLoadOrder.POSTSERVER );
 	}
 	
 	public String toString()
@@ -599,7 +605,7 @@ public class Loader
 	{
 		sessionManager.shutdown();
 		accounts.shutdown();
-		//pluginManager.shutdown();
+		// pluginManager.shutdown();
 		NetworkManager.cleanup();
 		
 		isRunning = false;
@@ -705,4 +711,16 @@ public class Loader
 	{
 		return events;
 	}
+
+	@Override
+	public String getName()
+	{
+		return "Chiori-chan's Web Server";
+	}
+	
+	@EventHandler( priority = EventPriority.NORMAL )
+	public void onServerRunLevelEvent( ServerRunLevelEvent event )
+	{
+		//getLogger().debug( "Got RunLevel Event: " + event.getRunLevel() );
+	}  
 }

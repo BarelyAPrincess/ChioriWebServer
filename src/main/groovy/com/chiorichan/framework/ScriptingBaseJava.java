@@ -27,6 +27,7 @@ import java.util.Map;
 
 import com.chiorichan.ConsoleLogManager;
 import com.chiorichan.Loader;
+import com.chiorichan.event.EventBus;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.ObjectUtil;
 import com.chiorichan.util.StringUtil;
@@ -370,6 +371,12 @@ abstract public class ScriptingBaseJava extends Script
 		return Loader.getPluginManager().getPluginbyName( search );
 	}
 	*/
+	
+	EventBus getEventBus()
+	{
+		return Loader.getEventBus();
+	}
+	
 	Loader getLoader()
 	{
 		return Loader.getInstance();

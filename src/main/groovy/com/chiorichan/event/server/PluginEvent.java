@@ -7,18 +7,18 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.bus.events.server;
+package com.chiorichan.event.server;
 
-import com.chiorichan.plugin.Plugin;
+import com.chiorichan.event.EventCreator;
 
 /**
  * Used for plugin enable and disable events
  */
 public abstract class PluginEvent extends ServerEvent
 {
-	private final Plugin plugin;
+	private final EventCreator plugin;
 	
-	public PluginEvent(final Plugin plugin)
+	public PluginEvent(final EventCreator plugin)
 	{
 		this.plugin = plugin;
 	}
@@ -28,7 +28,7 @@ public abstract class PluginEvent extends ServerEvent
 	 * 
 	 * @return Plugin for this event
 	 */
-	public Plugin getPlugin()
+	public EventCreator getPlugin()
 	{
 		return plugin;
 	}
