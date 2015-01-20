@@ -7,8 +7,9 @@ import com.chiorichan.event.EventCreator;
 import com.chiorichan.file.FileConfiguration;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.plugin.loader.PluginLoader;
+import com.chiorichan.scheduler.TaskCreator;
 
-public abstract class PluginBase implements EventCreator
+public abstract class PluginBase implements EventCreator, TaskCreator
 {
 	/**
 	 * Returns the folder that the plugin data's files are located in. The folder may not yet exist.

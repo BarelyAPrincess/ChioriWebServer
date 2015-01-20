@@ -17,20 +17,14 @@ import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.Loader;
 import com.chiorichan.StartupException;
+import com.chiorichan.account.AccountsKeeper.AccountsKeeperOptions;
 import com.chiorichan.account.adapter.AccountLookupAdapter;
-import com.chiorichan.account.adapter.FileAdapter;
-import com.chiorichan.account.adapter.SqlAdapter;
-import com.chiorichan.account.bases.Account;
-import com.chiorichan.account.bases.SentientHandler;
-import com.chiorichan.account.helpers.AccountsKeeper;
-import com.chiorichan.account.helpers.AccountsKeeper.AccountsKeeperOptions;
-import com.chiorichan.account.helpers.LoginException;
-import com.chiorichan.account.helpers.LoginExceptionReasons;
-import com.chiorichan.account.helpers.LookupAdapterException;
+import com.chiorichan.account.adapter.file.FileAdapter;
+import com.chiorichan.account.adapter.sql.SqlAdapter;
 import com.chiorichan.account.system.SystemAccounts;
-import com.chiorichan.bus.events.account.AccountLoginEvent;
-import com.chiorichan.bus.events.account.PreAccountLoginEvent;
-import com.chiorichan.bus.events.account.PreAccountLoginEvent.Result;
+import com.chiorichan.event.account.AccountLoginEvent;
+import com.chiorichan.event.account.PreAccountLoginEvent;
+import com.chiorichan.event.account.PreAccountLoginEvent.Result;
 import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.session.Session;
@@ -132,8 +126,8 @@ public class AccountManager
 	{
 		AccountsKeeperOptions options = (AccountsKeeperOptions) accounts.putAccount( acct, keepInMemory );
 		
-		options.setWhitelisted( whitelistOverride || isWhitelisted( acct.getAccountId() ) );
-		options.setOp( opOverride || isOp( acct.getAccountId() ) );
+		options.setWhitelisted( whitelistOverride || isWhitelisted( acct.getAcctId() ) );
+		options.setOp( opOverride || isOp( acct.getAcctId() ) );
 	}
 	
 	public boolean isWhitelisted( String id )
@@ -176,7 +170,7 @@ public class AccountManager
 	
 	public void banId( Account acct )
 	{
-		banId( acct.getAccountId() );
+		banId( acct.getAcctId() );
 	}
 	
 	public void banId( String id )
@@ -189,7 +183,7 @@ public class AccountManager
 	
 	public void unbanId( Account acct )
 	{
-		unbanId( acct.getAccountId() );
+		unbanId( acct.getAcctId() );
 	}
 	
 	public void unbanId( String id )
@@ -232,7 +226,7 @@ public class AccountManager
 		if ( acct == null )
 			return;
 		
-		whitelist.add( acct.getAccountId() );
+		whitelist.add( acct.getAcctId() );
 		Loader.getConfig().set( "accounts.whitelisted", whitelist );
 		
 		( (AccountsKeeperOptions) accounts.getAccountOptions( acct ) ).setWhitelisted( true );
@@ -248,9 +242,9 @@ public class AccountManager
 		if ( acct == null )
 			return;
 		
-		if ( whitelist.contains( acct.getAccountId() ) )
+		if ( whitelist.contains( acct.getAcctId() ) )
 		{
-			whitelist.remove( acct.getAccountId() );
+			whitelist.remove( acct.getAcctId() );
 			Loader.getConfig().set( "accounts.whitelisted", whitelist );
 			
 			( (AccountsKeeperOptions) accounts.getAccountOptions( acct ) ).setWhitelisted( false );
@@ -267,7 +261,7 @@ public class AccountManager
 		if ( acct == null )
 			return null;
 		
-		operators.add( acct.getAccountId() );
+		operators.add( acct.getAcctId() );
 		Loader.getConfig().set( "accounts.operators", operators );
 		
 		( (AccountsKeeperOptions) accounts.getAccountOptions( acct ) ).setOp( true );
@@ -285,9 +279,9 @@ public class AccountManager
 		if ( acct == null )
 			return null;
 		
-		if ( operators.contains( acct.getAccountId() ) )
+		if ( operators.contains( acct.getAcctId() ) )
 		{
-			operators.remove( acct.getAccountId() );
+			operators.remove( acct.getAcctId() );
 			Loader.getConfig().set( "accounts.operators", operators );
 			
 			( (AccountsKeeperOptions) accounts.getAccountOptions( acct ) ).setOp( false );
@@ -442,7 +436,7 @@ public class AccountManager
 	public Account attemptLogin( Session sess, String username, String password ) throws LoginException
 	{
 		if ( username == null || username.isEmpty() )
-			throw new LoginException( LoginExceptionReasons.emptyUsername );
+			throw new LoginException( LoginExceptionReason.emptyUsername );
 		
 		Account acct = accounts.getAccount( username );
 		
@@ -451,38 +445,38 @@ public class AccountManager
 		try
 		{
 			if ( password == null || password.isEmpty() )
-				throw new LoginException( LoginExceptionReasons.emptyPassword );
+				throw new LoginException( LoginExceptionReason.emptyPassword );
 			
 			if ( !acct.validatePassword( password ) )
-				throw new LoginException( LoginExceptionReasons.incorrectLogin );
+				throw new LoginException( LoginExceptionReason.incorrectLogin );
 			
 			if ( !acct.isWhitelisted() )
-				throw new LoginException( LoginExceptionReasons.notWhiteListed );
+				throw new LoginException( LoginExceptionReason.notWhiteListed );
 			
 			if ( acct.isBanned() )
-				throw new LoginException( LoginExceptionReasons.banned );
+				throw new LoginException( LoginExceptionReason.banned );
 			
 			PreAccountLoginEvent preLoginEvent = new PreAccountLoginEvent( acct );
 			Loader.getEventBus().callEvent( preLoginEvent );
 			
 			if ( preLoginEvent.getResult() != Result.ALLOWED )
 				if ( preLoginEvent.getKickMessage().isEmpty() )
-					throw new LoginException( LoginExceptionReasons.cancelledByEvent );
+					throw new LoginException( LoginExceptionReason.cancelledByEvent );
 				else
-					throw new LoginException( LoginExceptionReasons.customReason.setReason( preLoginEvent.getKickMessage() ) );
+					throw new LoginException( LoginExceptionReason.customReason.setReason( preLoginEvent.getKickMessage() ) );
 			
-			accountLookupAdapter.preLoginCheck( acct );
+			acct.preLoginCheck();
 			
 			if ( acct.countHandlers() > 1 && Loader.getConfig().getBoolean( "accounts.singleLogin" ) )
 			{
-				for ( SentientHandler sh : acct.getHandlers() )
+				for ( AccountHandler sh : acct.getHandlers() )
 				{
 					if ( sh instanceof Session && ( (Session) sh ).getSite() == sess.getSite() )
 						sh.kick( Loader.getConfig().getString( "accounts.singleLoginMessage", "You logged in from another location." ) );
 				}
 			}
 			
-			sess.setVariable( "user", acct.getAccountId() );
+			sess.setVariable( "user", acct.getAcctId() );
 			sess.setVariable( "pass", DigestUtils.md5Hex( acct.getPassword() ) );
 			
 			AccountLoginEvent loginEvent = new AccountLoginEvent( acct, String.format( Loader.getConfig().getString( "accounts.loginMessage", "%s has logged in at site %s" ), acct.getUsername(), sess.getSite().getTitle() ) );
@@ -492,8 +486,9 @@ public class AccountManager
 		}
 		catch ( LoginException l )
 		{
-			accountLookupAdapter.failedLoginUpdate( acct );
-			throw l.setAccount( acct );
+			l.setAccount( acct );
+			accountLookupAdapter.failedLoginUpdate( acct.getMetaData(), l.getReason() );
+			throw l;
 		}
 	}
 }

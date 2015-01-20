@@ -11,19 +11,20 @@ package com.chiorichan.http.session;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
-import com.chiorichan.account.bases.Account;
-import com.chiorichan.account.bases.Sentient;
-import com.chiorichan.account.bases.SentientHandler;
-import com.chiorichan.account.helpers.LoginException;
+import com.chiorichan.account.Account;
+import com.chiorichan.account.AccountHandler;
+import com.chiorichan.account.LoginException;
 import com.chiorichan.framework.Site;
 import com.chiorichan.framework.WebUtils;
 import com.chiorichan.http.Candy;
 import com.chiorichan.http.HttpRequestWrapper;
+import com.chiorichan.permission.Permissible;
+import com.chiorichan.permission.PermissibleType;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.StringUtil;
 import com.google.common.collect.Lists;
@@ -34,7 +35,7 @@ import com.google.common.collect.Sets;
  * This class is used to carry data that is to be persistent from request to request.
  * If you need to sync data across requests then we recommend using Session Vars for Security.
  */
-public abstract class Session implements SentientHandler
+public abstract class Session extends AccountHandler
 {
 	protected Map<String, String> data = new LinkedHashMap<String, String>();
 	protected long timeout = 0;
@@ -72,7 +73,7 @@ public abstract class Session implements SentientHandler
 		{
 			Account user = Loader.getAccountsManager().attemptLogin( this, username, password );
 			currentAccount = user;
-			Loader.getLogger().info( ChatColor.GREEN + "Login Restored `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getAccountId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
+			Loader.getLogger().info( ChatColor.GREEN + "Login Restored `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getAcctId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
 		}
 		catch ( LoginException l )
 		{
@@ -262,7 +263,7 @@ public abstract class Session implements SentientHandler
 			if ( StringUtil.isTrue( getVariable( "remember" ) ) )
 				defaultTimeout = Loader.getConfig().getInt( "sessions.defaultTimeoutRememberMe", 604800 );
 			
-			if ( Loader.getConfig().getBoolean( "allowNoTimeoutPermission" ))// XXX && currentAccount.hasPermission( "chiori.noTimeout" ) )
+			if ( Loader.getConfig().getBoolean( "allowNoTimeoutPermission" ) )// XXX && currentAccount.hasPermission( "chiori.noTimeout" ) )
 				defaultTimeout = 31096821392L;
 		}
 		
@@ -328,32 +329,18 @@ public abstract class Session implements SentientHandler
 	}
 	
 	@Override
-	public String getIpAddr()
+	public void sendMessage( String msg )
 	{
-		if ( ipAddr == null && sessionProviders.size() > 0 )
-		{
-			for ( SessionProvider sp : sessionProviders )
-				if ( sp.getRequest() != null )
-				{
-					String _ipAddr = sp.getRequest().getRemoteAddr();
-					if ( _ipAddr != null && !_ipAddr.isEmpty() )
-					{
-						ipAddr = _ipAddr;
-						break;
-					}
-				}
-		}
-		
-		return ipAddr;
+		pendingMessages.add( msg );
 	}
 	
-	// A session can't handle just any sentient object.
+	// A session can't handle just any permissible object.
 	// At least for the time being.
 	@Override
-	public void attachSentient( Sentient sentient )
+	public void attachPermissible( Permissible permissible )
 	{
-		if ( sentient instanceof Account )
-			currentAccount = (Account) sentient;
+		if ( permissible instanceof Account )
+			currentAccount = (Account) permissible;
 		else
 			isValid = false;
 	}
@@ -365,13 +352,13 @@ public abstract class Session implements SentientHandler
 	}
 	
 	@Override
-	public Sentient getSentient()
+	public Permissible getPermissible()
 	{
 		return currentAccount;
 	}
 	
 	@Override
-	public void removeSentient()
+	public void removePermissible()
 	{
 		currentAccount = null;
 	}
@@ -456,4 +443,46 @@ public abstract class Session implements SentientHandler
 	public abstract void saveSession();
 	
 	protected abstract void destroySession();
+	
+	@Override
+	public PermissibleType getType()
+	{
+		return PermissibleType.lookup( "HTTP" );
+	}
+	
+	@Override
+	public Set<PermissibleType> getTypes()
+	{
+		Set<PermissibleType> types = Sets.newHashSet();
+		types.add( getType() );
+		return types;
+	}
+	
+	@Override
+	public String getIpAddr()
+	{
+		if ( ipAddr == null && sessionProviders.size() > 0 )
+		{
+			for ( SessionProvider sp : sessionProviders )
+				if ( sp.getRequest() != null )
+				{
+					String _ipAddr = sp.getRequest().getRemoteAddr();
+					if ( _ipAddr != null && !_ipAddr.isEmpty() )
+					{
+						ipAddr = _ipAddr;
+						break;
+					}
+				}
+		}
+		
+		return ipAddr;
+	}
+	
+	@Override
+	public Set<String> getIpAddrs()
+	{
+		Set<String> ipAddrs = Sets.newHashSet();
+		ipAddrs.add( getIpAddr() );
+		return ipAddrs;
+	}
 }

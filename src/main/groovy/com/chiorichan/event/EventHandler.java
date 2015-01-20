@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2014 Chiori-chan. All Right Reserved.
- *
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -14,7 +13,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-
 /**
  * An annotation to mark methods as being event handler methods
  */
@@ -22,7 +20,6 @@ import java.lang.annotation.Target;
 @Retention( RetentionPolicy.RUNTIME )
 public @interface EventHandler
 {
-	
 	/**
 	 * Define the priority of the event.
 	 * <p>
@@ -41,8 +38,7 @@ public @interface EventHandler
 	/**
 	 * Define if the handler ignores a cancelled event.
 	 * <p>
-	 * If ignoreCancelled is true and the event is cancelled, the method is not called. Otherwise, the method is always
-	 * called.
+	 * If ignoreCancelled is true and the event is cancelled, the method is not called. Otherwise, the method is always called.
 	 */
 	boolean ignoreCancelled() default false;
 }

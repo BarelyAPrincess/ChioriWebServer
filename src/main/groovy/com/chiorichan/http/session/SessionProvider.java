@@ -1,6 +1,6 @@
 package com.chiorichan.http.session;
 
-import com.chiorichan.account.bases.Account;
+import com.chiorichan.account.Account;
 import com.chiorichan.factory.BindingProvider;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.Candy;

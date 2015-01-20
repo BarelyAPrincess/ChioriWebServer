@@ -5,11 +5,13 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.http.Candy;
+import com.chiorichan.permission.PermissibleType;
 import com.chiorichan.util.Common;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;

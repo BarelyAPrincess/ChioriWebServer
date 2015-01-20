@@ -16,7 +16,7 @@ import com.google.common.collect.Multimap;
 
 public class PermissionList extends HashMap<String, Permission>
 {
-	private static FieldReplacer<PermissionsManager, Map> INJECTOR;
+	private static FieldReplacer<PermissionManager, Map> INJECTOR;
 	
 	private static final Map<Class<?>, FieldReplacer<Permission, Map>> CHILDREN_MAPS = new HashMap<Class<?>, FieldReplacer<Permission, Map>>();
 	/**
@@ -102,11 +102,11 @@ public class PermissionList extends HashMap<String, Permission>
 		}
 	}
 	
-	public static PermissionList inject( PermissionsManager manager )
+	public static PermissionList inject( PermissionManager manager )
 	{
 		if ( INJECTOR == null )
 		{
-			INJECTOR = new FieldReplacer<PermissionsManager, Map>( manager.getClass(), "permissions", Map.class );
+			INJECTOR = new FieldReplacer<PermissionManager, Map>( manager.getClass(), "permissions", Map.class );
 		}
 		Map existing = INJECTOR.get( manager );
 		@SuppressWarnings( "unchecked" )

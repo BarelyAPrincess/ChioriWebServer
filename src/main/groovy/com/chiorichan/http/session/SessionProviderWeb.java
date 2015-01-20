@@ -9,13 +9,12 @@ import java.util.Map.Entry;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
-import com.chiorichan.account.bases.Account;
-import com.chiorichan.account.helpers.LoginException;
+import com.chiorichan.account.Account;
+import com.chiorichan.account.LoginException;
 import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.framework.ConfigurationManagerWrapper;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.Candy;
-import com.chiorichan.http.HttpCode;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.http.HttpResponseWrapper;
 
@@ -139,7 +138,7 @@ public class SessionProviderWeb implements SessionProvider
 				
 				parentSession.setVariable( "remember", remember );
 				
-				Loader.getLogger().info( ChatColor.GREEN + "Login Success `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getAccountId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
+				Loader.getLogger().info( ChatColor.GREEN + "Login Success `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getAcctId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
 				request.getResponse().sendRedirect( loginPost );
 				
 			}
@@ -150,7 +149,7 @@ public class SessionProviderWeb implements SessionProvider
 				String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
 				
 				if ( l.getAccount() != null )
-					Loader.getLogger().warning( "Login Failed `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + l.getAccount().getAccountId() + "\", Display Name \"" + l.getAccount().getDisplayName() + "\", Reason \"" + l.getMessage() + "\"`" );
+					Loader.getLogger().warning( "Login Failed `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + l.getAccount().getAcctId() + "\", Display Name \"" + l.getAccount().getDisplayName() + "\", Reason \"" + l.getMessage() + "\"`" );
 				
 				request.getResponse().sendRedirect( loginForm + "?ok=" + l.getMessage() + "&target=" + target );
 			}
@@ -168,7 +167,7 @@ public class SessionProviderWeb implements SessionProvider
 					
 					parentSession.currentAccount = user;
 					
-					Loader.getLogger().info( ChatColor.GREEN + "Login Success `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getAccountId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
+					Loader.getLogger().info( ChatColor.GREEN + "Login Success `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getAcctId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
 				}
 				catch ( LoginException l )
 				{

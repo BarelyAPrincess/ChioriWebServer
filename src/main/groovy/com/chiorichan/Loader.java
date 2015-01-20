@@ -25,8 +25,8 @@ import joptsimple.OptionSet;
 import org.apache.commons.io.FileUtils;
 
 import com.chiorichan.Warning.WarningState;
+import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountManager;
-import com.chiorichan.account.bases.Account;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.event.BuiltinEventCreator;
 import com.chiorichan.event.EventBus;
@@ -40,7 +40,10 @@ import com.chiorichan.framework.SiteManager;
 import com.chiorichan.framework.WebUtils;
 import com.chiorichan.http.session.SessionManager;
 import com.chiorichan.net.NetworkManager;
+import com.chiorichan.permission.PermissionBackendException;
+import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.plugin.PluginManager;
+import com.chiorichan.scheduler.ChioriScheduler;
 import com.chiorichan.updater.AutoUpdater;
 import com.chiorichan.updater.ChioriDLUpdaterService;
 import com.chiorichan.util.FileUtil;
@@ -65,7 +68,9 @@ public class Loader extends BuiltinEventCreator implements Listener
 	
 	protected static final ConsoleBus console = new ConsoleBus();
 	protected static final EventBus events = new EventBus();
-	
+
+	protected static final ChioriScheduler scheduler = new ChioriScheduler();
+	protected static final PermissionManager permissions = new PermissionManager();
 	protected static final PluginManager plugins = new PluginManager();
 	protected static final AccountManager accounts = new AccountManager();
 	protected static final SessionManager sessionManager = new SessionManager();
@@ -327,6 +332,16 @@ public class Loader extends BuiltinEventCreator implements Listener
 		
 		getLogger().info( "Initalizing the Framework Database..." );
 		initDatabase();
+		
+		getLogger().info( "Initalizing the Permissions Manager..." );
+		try
+		{
+			permissions.init();
+		}
+		catch ( PermissionBackendException e )
+		{
+			throw new StartupException( e );
+		}
 		
 		getLogger().info( "Initalizing the Site Manager..." );
 		sites.init();
@@ -705,6 +720,16 @@ public class Loader extends BuiltinEventCreator implements Listener
 	public static EventBus getEventBus()
 	{
 		return events;
+	}
+	
+	public static PermissionManager getPermissionsManager()
+	{
+		return permissions;
+	}
+	
+	public static ChioriScheduler getScheduler()
+	{
+		return scheduler;
 	}
 	
 	@Override

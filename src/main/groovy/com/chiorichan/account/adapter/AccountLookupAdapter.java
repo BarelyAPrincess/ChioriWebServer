@@ -11,19 +11,22 @@ package com.chiorichan.account.adapter;
 
 import java.util.List;
 
-import com.chiorichan.account.bases.Account;
-import com.chiorichan.account.helpers.AccountMetaData;
-import com.chiorichan.account.helpers.LoginException;
+import com.chiorichan.account.Account;
+import com.chiorichan.account.AccountMetaData;
+import com.chiorichan.account.LoginException;
+import com.chiorichan.account.LoginExceptionReason;
+import com.chiorichan.account.adapter.file.FileAdapter;
+import com.chiorichan.account.adapter.memory.MemoryAdapter;
+import com.chiorichan.account.adapter.sql.SqlAdapter;
 
 /**
- * Provided so that any site can have custom places to store login information.
- * mySql, sqLite, file, etc.
+ * Used to lookup Account MetaData from the adapters datastore
  * 
  * @author Chiori Greene
  */
 public interface AccountLookupAdapter
 {
-	public AccountLookupAdapter MEMORY_ADAPTER = new MemoryAdapter();
+	public MemoryAdapter MEMORY_ADAPTER = new MemoryAdapter();
 
 	/**
 	 * Returns all accounts maintained by this adapter.
@@ -48,25 +51,21 @@ public interface AccountLookupAdapter
 	 * 
 	 * @throws LoginException
 	 */
-	public AccountMetaData loadAccount( String account ) throws LoginException;
+	public AccountMetaData readAccount( String account ) throws LoginException;
+	
+	/** 
+	 * @return Class extends Account
+	 * 			The class that should be used to create the Account Object
+	 */
+	public Class<? extends Account<? extends AccountLookupAdapter>> getAccountClass();
 	
 	/**
-	 * Called before the AccountManager makes the login offical.
+	 * Informs the Adapater of a failed login
+	 * @param account
+	 * 			The account that failed the login.
+	 * @param reason
+	 * 			The reason the login failed.
+	 * 			
 	 */
-	public void preLoginCheck( Account account ) throws LoginException ;
-	
-	/**
-	 * Called as the last line before account returned to scripts.
-	 */
-	public void postLoginCheck( Account account ) throws LoginException;
-	
-	/**
-	 * Update any security mechs of failed login
-	 */
-	public void failedLoginUpdate( Account account );
-	
-	/**
-	 * Called from AccountManager to determine if Account matches Accountname. Usually used to search the accounts array in a way the adapter sees fit. ex: email, phone, accountname, accountId
-	 */
-	public boolean matchAccount( Account account, String accountname );
+	public void failedLoginUpdate( AccountMetaData meta, LoginExceptionReason reason );
 }

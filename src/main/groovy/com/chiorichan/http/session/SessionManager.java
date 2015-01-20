@@ -15,7 +15,7 @@ import java.util.List;
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.StartupException;
-import com.chiorichan.account.bases.Account;
+import com.chiorichan.account.Account;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.util.Common;
 import com.google.common.collect.Lists;

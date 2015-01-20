@@ -13,12 +13,12 @@ import java.util.List;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
-import com.chiorichan.account.bases.SentientHandler;
-import com.chiorichan.bus.events.account.AccountLoginEvent;
 import com.chiorichan.event.BuiltinEventCreator;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
+import com.chiorichan.event.account.AccountLoginEvent;
+import com.chiorichan.permission.PermissibleInteractive;
 import com.chiorichan.updater.BuildArtifact.ChangeSet.ChangeSetDetails;
 import com.chiorichan.util.Versioning;
 
@@ -111,7 +111,7 @@ public class AutoUpdater extends BuiltinEventCreator implements Listener
 		// check( , true );
 	}
 	
-	public void check( final SentientHandler sender, final boolean automatic )
+	public void check( final PermissibleInteractive sender, final boolean automatic )
 	{
 		final String currentSlug = Versioning.getBuildNumber();
 		
@@ -223,7 +223,7 @@ public class AutoUpdater extends BuiltinEventCreator implements Listener
 		}.start();
 	}
 	
-	public void forceUpdate( final SentientHandler sender )
+	public void forceUpdate( final PermissibleInteractive sender )
 	{
 		new Thread()
 		{

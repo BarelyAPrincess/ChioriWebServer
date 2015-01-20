@@ -1,10 +1,9 @@
 package ru.tehkode.permissions.events;
 
-import com.chiorichan.bus.events.HandlerList;
+import com.chiorichan.event.HandlerList;
 
 public class PermissionSystemEvent extends PermissionEvent
 {
-	
 	protected Action action;
 	private static final HandlerList handlers = new HandlerList();
 	
@@ -33,7 +32,6 @@ public class PermissionSystemEvent extends PermissionEvent
 	
 	public enum Action
 	{
-		
 		BACKEND_CHANGED, RELOADED, WORLDINHERITANCE_CHANGED, DEFAULTGROUP_CHANGED, DEBUGMODE_TOGGLE, REINJECT_PERMISSIBLES,
 	}
 }

@@ -11,8 +11,8 @@ import com.chiorichan.account.bases.Account;
 import com.chiorichan.bus.events.EventHandler;
 import com.chiorichan.bus.events.EventPriority;
 import com.chiorichan.bus.events.Listener;
-import com.chiorichan.bus.events.account.AccountLoginEvent;
-import com.chiorichan.bus.events.account.AccountLogoutEvent;
+import com.chiorichan.event.account.AccountLoginEvent;
+import com.chiorichan.event.account.AccountLogoutEvent;
 import com.chiorichan.permissions.Permissible;
 
 public class RegexPermissions

@@ -34,8 +34,8 @@ import java.util.Map.Entry;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import com.chiorichan.Loader;
-import com.chiorichan.bus.events.http.ErrorEvent;
-import com.chiorichan.bus.events.http.HttpExceptionEvent;
+import com.chiorichan.event.http.ErrorEvent;
+import com.chiorichan.event.http.HttpExceptionEvent;
 import com.chiorichan.exceptions.HttpErrorException;
 import com.chiorichan.util.Versioning;
 import com.google.common.collect.Maps;

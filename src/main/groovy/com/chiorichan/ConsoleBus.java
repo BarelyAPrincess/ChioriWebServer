@@ -120,7 +120,7 @@ public class ConsoleBus implements Runnable
 	
 	private void loopTick( int tick )
 	{
-		// Loader.getScheduler().mainThreadHeartbeat( tick );
+		Loader.getScheduler().mainThreadHeartbeat( tick );
 		
 		// Execute every five minutes - ex: clean sessions and checking for updates.
 		int fiveMinuteTick = new DateTime().getMinuteOfHour();

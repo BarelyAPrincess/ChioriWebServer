@@ -9,15 +9,12 @@
  */
 package com.chiorichan.framework
 
-import com.chiorichan.Loader
-import com.chiorichan.account.bases.Account
-import com.chiorichan.database.DatabaseEngine
-import com.chiorichan.http.HttpCode
-import com.chiorichan.http.HttpRequestWrapper
-import com.chiorichan.http.HttpResponseWrapper
-import com.chiorichan.http.session.SessionManager
-import com.chiorichan.http.session.SessionProvider
-import com.chiorichan.util.Versioning
+import com.chiorichan.account.Account;
+import com.chiorichan.database.DatabaseEngine;
+import com.chiorichan.http.HttpRequestWrapper;
+import com.chiorichan.http.HttpResponseWrapper;
+import com.chiorichan.http.session.SessionManager;
+import com.chiorichan.http.session.SessionProvider;
 
 abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 {

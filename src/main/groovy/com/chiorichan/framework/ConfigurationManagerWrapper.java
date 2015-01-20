@@ -164,7 +164,7 @@ public class ConfigurationManagerWrapper
 			
 			if ( idenifier == null || idenifier == "-1" )
 			{
-				idenifier = ( sess.getUserState() ) ? sess.getAccount().getAccountId() : "";
+				idenifier = ( sess.getUserState() ) ? sess.getAccount().getAcctId() : "";
 			}
 			
 			ResultSet defaultRs = sql.query( "SELECT * FROM `settings_default` WHERE `key` = '" + key + "';" );

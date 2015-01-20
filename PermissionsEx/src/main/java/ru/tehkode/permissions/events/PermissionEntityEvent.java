@@ -2,11 +2,10 @@ package ru.tehkode.permissions.events;
 
 import ru.tehkode.permissions.PermissionEntity;
 
-import com.chiorichan.bus.events.HandlerList;
+import com.chiorichan.event.HandlerList;
 
 public class PermissionEntityEvent extends PermissionEvent
 {
-	
 	private static final HandlerList handlers = new HandlerList();
 	protected PermissionEntity entity;
 	protected Action action;
@@ -31,7 +30,6 @@ public class PermissionEntityEvent extends PermissionEvent
 	
 	public enum Action
 	{
-		
 		PERMISSIONS_CHANGED, OPTIONS_CHANGED, INHERITANCE_CHANGED, INFO_CHANGED, TIMEDPERMISSION_EXPIRED, RANK_CHANGED, DEFAULTGROUP_CHANGED, WEIGHT_CHANGED, SAVED, REMOVED,
 	}
 	

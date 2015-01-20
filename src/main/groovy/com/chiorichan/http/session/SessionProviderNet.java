@@ -1,231 +1,206 @@
 package com.chiorichan.http.session;
 
-import com.chiorichan.account.bases.Account;
-import com.chiorichan.account.bases.Sentient;
-import com.chiorichan.account.bases.SentientHandler;
+import java.util.Set;
+
+import com.chiorichan.account.Account;
+import com.chiorichan.account.AccountHandler;
 import com.chiorichan.factory.BindingProvider;
 import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.Candy;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.http.HttpResponseWrapper;
+import com.chiorichan.permission.Permissible;
+import com.chiorichan.permission.PermissibleType;
 
-public class SessionProviderNet implements SessionProvider, BindingProvider, SentientHandler
+public class SessionProviderNet extends AccountHandler implements SessionProvider, BindingProvider
 {
 	@Override
 	public boolean kick( String kickMessage )
 	{
-		// TODO Auto-generated method stub
 		return false;
 	}
-
+	
 	@Override
 	public void sendMessage( String... msg )
 	{
-		// TODO Auto-generated method stub
 		
 	}
-
+	
 	@Override
-	public void attachSentient( Sentient sentient )
+	public void sendMessage( String string )
 	{
-		// TODO Auto-generated method stub
 		
 	}
-
-	@Override
-	public void removeSentient()
-	{
-		// TODO Auto-generated method stub
-		
-	}
-
+	
 	@Override
 	public boolean isValid()
 	{
-		// TODO Auto-generated method stub
 		return false;
 	}
-
-	@Override
-	public Sentient getSentient()
-	{
-		// TODO Auto-generated method stub
-		return null;
-	}
-
+	
 	@Override
 	public String getIpAddr()
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
-
-	@Override
-	public String getName()
-	{
-		// TODO Auto-generated method stub
-		return null;
-	}
-
+	
 	@Override
 	public CodeEvalFactory getCodeFactory()
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
 	@Override
 	public Session getParentSession()
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
 	@Override
 	public void handleUserProtocols()
 	{
-		// TODO Auto-generated method stub
 		
 	}
-
+	
 	@Override
 	public void onFinished()
 	{
-		// TODO Auto-generated method stub
 		
 	}
-
+	
 	@Override
 	public void setGlobal( String key, Object val )
 	{
-		// TODO Auto-generated method stub
 		
 	}
-
+	
 	@Override
 	public Object getGlobal( String key )
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
 	@Override
 	public HttpRequestWrapper getRequest()
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
 	@Override
 	public HttpResponseWrapper getResponse()
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
 	@Override
 	public Account getAccount()
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
 	@Override
 	public Candy getCandy( String key )
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
 	@Override
 	public boolean isStale()
 	{
-		// TODO Auto-generated method stub
 		return false;
 	}
-
+	
 	@Override
 	public String getId()
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
 	@Override
 	public boolean isSet( String key )
 	{
-		// TODO Auto-generated method stub
 		return false;
 	}
-
+	
 	@Override
 	public void setCookieExpiry( int valid )
 	{
-		// TODO Auto-generated method stub
 		
 	}
-
+	
 	@Override
 	public void destroy() throws SessionException
 	{
-		// TODO Auto-generated method stub
 		
 	}
-
+	
 	@Override
 	public long getTimeout()
 	{
-		// TODO Auto-generated method stub
 		return 0;
 	}
-
+	
 	@Override
 	public void infiniTimeout()
 	{
-		// TODO Auto-generated method stub
 		
 	}
-
+	
 	@Override
 	public boolean getUserState()
 	{
-		// TODO Auto-generated method stub
 		return false;
 	}
-
+	
 	@Override
 	public void logoutAccount()
 	{
-		// TODO Auto-generated method stub
 		
 	}
-
+	
 	@Override
 	public Site getSite()
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
 	@Override
 	public void setVariable( String key, String value )
 	{
-		// TODO Auto-generated method stub
+		
+	}
+	
+	@Override
+	public String getVariable( String key )
+	{
+		return null;
+	}
+	
+	@Override
+	public void saveSession( boolean force )
+	{
 		
 	}
 
 	@Override
-	public String getVariable( String key )
+	public PermissibleType getType()
 	{
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public void saveSession( boolean force )
+	public Set<PermissibleType> getTypes()
 	{
 		// TODO Auto-generated method stub
-		
+		return null;
+	}
+
+	@Override
+	public Set<String> getIpAddrs()
+	{
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
