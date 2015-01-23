@@ -44,6 +44,8 @@ public abstract class Session extends AccountHandler
 	protected Candy sessionCandy;
 	protected Account currentAccount = null;
 	protected List<String> pendingMessages = Lists.newArrayList();
+	protected static String lastSession = "";
+	protected static long lastTime = Common.getEpoch();
 	
 	protected Map<String, Candy> candies = new LinkedHashMap<String, Candy>();
 	protected Site site;
@@ -75,7 +77,7 @@ public abstract class Session extends AccountHandler
 			currentAccount = user;
 			Loader.getLogger().info( ChatColor.GREEN + "Login Restored `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getAcctId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
 		}
-		catch ( LoginException l )
+		catch( LoginException l )
 		{
 			// Loader.getLogger().warning( ChatColor.GREEN + "Login Status: No Valid Login Present" );
 		}
@@ -93,7 +95,7 @@ public abstract class Session extends AccountHandler
 		
 		if ( sessionCandy == null )
 		{
-			int defaultLife = ( getSite().getYaml() != null ) ? getSite().getYaml().getInt( "sessions.default-life", 604800 ) : 604800;
+			int defaultLife = (getSite().getYaml() != null) ? getSite().getYaml().getInt( "sessions.default-life", 604800 ) : 604800;
 			
 			if ( candyId == null || candyId.isEmpty() )
 				candyId = StringUtil.md5( WebUtils.createGUID( "sessionGen" ) + System.currentTimeMillis() );
@@ -140,10 +142,15 @@ public abstract class Session extends AccountHandler
 			}
 		}
 		
-		if ( stale )
-			Loader.getLogger().info( ChatColor.DARK_AQUA + "Session Requested `" + this + "`" );
-		else
-			Loader.getLogger().info( ChatColor.DARK_AQUA + "Session Created `" + this + "`" );
+		if ( !lastSession.equals( getId() ) || Common.getEpoch() - lastTime > 5 )
+		{
+			lastSession = getId();
+			lastTime = Common.getEpoch();
+			if ( stale )
+				Loader.getLogger().info( ChatColor.DARK_AQUA + "Session Requested `" + this + "`" );
+			else
+				Loader.getLogger().info( ChatColor.DARK_AQUA + "Session Created `" + this + "`" );
+		}
 	}
 	
 	public void saveSession( boolean force )
@@ -176,7 +183,7 @@ public abstract class Session extends AccountHandler
 		String _candyName = request.getSite().getYaml().getString( "sessions.cookie-name", Loader.getConfig().getString( "sessions.defaultSessionName", "sessionId" ) );
 		Map<String, Candy> requestCandies = SessionUtils.poleCandies( request );
 		
-		return ( requestCandies.containsKey( _candyName ) && getCandy( candyName ).compareTo( requestCandies.get( _candyName ) ) );
+		return (requestCandies.containsKey( _candyName ) && getCandy( candyName ).compareTo( requestCandies.get( _candyName ) ));
 	}
 	
 	/**
@@ -187,7 +194,7 @@ public abstract class Session extends AccountHandler
 	 */
 	public Candy getCandy( String key )
 	{
-		return ( candies.containsKey( key ) ) ? candies.get( key ) : new Candy( key, null );
+		return (candies.containsKey( key )) ? candies.get( key ) : new Candy( key, null );
 	}
 	
 	public Candy getSessionCandy()
@@ -267,7 +274,7 @@ public abstract class Session extends AccountHandler
 				defaultTimeout = 31096821392L;
 		}
 		
-		timeout = Common.getEpoch() + defaultTimeout + ( Math.min( requestCnt, 6 ) * 600 );
+		timeout = Common.getEpoch() + defaultTimeout + (Math.min( requestCnt, 6 ) * 600);
 		sessionCandy.setExpiration( timeout );
 	}
 	
@@ -287,7 +294,7 @@ public abstract class Session extends AccountHandler
 	
 	public boolean getUserState()
 	{
-		return ( currentAccount != null );
+		return (currentAccount != null);
 	}
 	
 	public Account getAccount()
@@ -383,7 +390,8 @@ public abstract class Session extends AccountHandler
 	/**
 	 * Creates a new SessionProvider for the provided HttpRequest instance.
 	 * 
-	 * @param HttpRequestWrapper instance
+	 * @param HttpRequestWrapper
+	 *             instance
 	 * @return a new SessionProviderWeb
 	 */
 	public SessionProvider getSessionProvider( HttpRequestWrapper request )
