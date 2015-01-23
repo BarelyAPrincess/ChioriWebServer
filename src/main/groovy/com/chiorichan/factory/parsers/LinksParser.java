@@ -359,7 +359,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.chiorichan.Loader;
-import com.chiorichan.exceptions.ShellExecuteException;
+import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.framework.Site;
 
 public class LinksParser extends HTMLCommentParser

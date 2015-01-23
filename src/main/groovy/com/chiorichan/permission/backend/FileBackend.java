@@ -22,6 +22,8 @@ import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.PermissionBackend;
 import com.chiorichan.permission.PermissionBackendException;
+import com.chiorichan.permission.backend.file.FileEntity;
+import com.chiorichan.permission.backend.file.FileGroup;
 
 public class FileBackend extends PermissionBackend
 {

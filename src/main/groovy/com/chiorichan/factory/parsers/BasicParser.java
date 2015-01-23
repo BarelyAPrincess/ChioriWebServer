@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.exceptions.ShellExecuteException;
+import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.util.StringUtil;
 
 public abstract class BasicParser

@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 import com.chiorichan.Loader;
 import com.chiorichan.permission.event.PermissibleEntityEvent;
 
-public abstract class PermissibleEntity
+public abstract class PermissibleEntity implements PermissibleParent
 {
 	private String name;
 	protected boolean virtual = true;

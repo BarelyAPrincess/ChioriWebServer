@@ -13,7 +13,7 @@ import java.io.ByteArrayOutputStream;
 
 import groovy.lang.GroovyShell;
 
-import com.chiorichan.exceptions.ShellExecuteException;
+import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.factory.CodeMetaData;
 
 /**

@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.exceptions;
+package com.chiorichan.exception;
 
 import com.chiorichan.http.HttpCode;
 

@@ -11,7 +11,7 @@ package com.chiorichan.framework;
 
 import java.io.IOException;
 
-import com.chiorichan.exceptions.ShellExecuteException;
+import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.http.session.SessionProvider;
 
 public class HttpUtilsWrapper extends WebUtils

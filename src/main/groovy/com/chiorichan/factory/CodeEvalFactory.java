@@ -28,7 +28,7 @@ import org.apache.commons.io.FileUtils;
 import org.codehaus.groovy.control.CompilerConfiguration;
 
 import com.chiorichan.Loader;
-import com.chiorichan.exceptions.ShellExecuteException;
+import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.factory.interpreters.GSPInterpreter;
 import com.chiorichan.factory.interpreters.GroovyInterpreter;
 import com.chiorichan.factory.interpreters.HTMLInterpreter;

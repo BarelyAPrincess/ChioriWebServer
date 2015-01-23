@@ -28,6 +28,7 @@ import com.chiorichan.event.account.PreAccountLoginEvent.Result;
 import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.session.Session;
+import com.chiorichan.util.Common;
 import com.google.common.collect.Lists;
 
 public class AccountManager
@@ -80,7 +81,7 @@ public class AccountManager
 						break;
 					case "file":
 						accountLookupAdapter = new FileAdapter();
-						Loader.getLogger().info( "Initiated FileBase AccountLookupAdapter `" + accountLookupAdapter + "`" );
+						Loader.getLogger().info( "Initiated File AccountLookupAdapter `" + accountLookupAdapter + "`" );
 						break;
 					case "shared":
 						if ( config.getString( "accounts.lookupAdapter.shareWith", null ) == null )
@@ -113,7 +114,7 @@ public class AccountManager
 		
 		accounts.setAdapter( accountLookupAdapter );
 		
-		// Create instance of System Accounts (which in turn loads them into memory.)
+		// Create instance of System Accounts which loads them into memory, i.e., Root and NoLogin.
 		new SystemAccounts();
 	}
 	
@@ -478,6 +479,9 @@ public class AccountManager
 			
 			sess.setVariable( "user", acct.getAcctId() );
 			sess.setVariable( "pass", DigestUtils.md5Hex( acct.getPassword() ) );
+			
+			acct.getMetaData().set( "lastLoginTime", Common.getEpoch() );
+			acct.getMetaData().set( "lastLoginIp", sess.getIpAddr() );
 			
 			AccountLoginEvent loginEvent = new AccountLoginEvent( acct, String.format( Loader.getConfig().getString( "accounts.loginMessage", "%s has logged in at site %s" ), acct.getUsername(), sess.getSite().getTitle() ) );
 			Loader.getEventBus().callEvent( loginEvent );

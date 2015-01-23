@@ -17,7 +17,7 @@ import java.io.IOException;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.groovy.syntax.SyntaxException;
 
-import com.chiorichan.exceptions.ShellExecuteException;
+import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.factory.CodeMetaData;
 
 /**

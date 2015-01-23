@@ -17,7 +17,7 @@ import java.util.Map.Entry;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 import com.chiorichan.Loader;
-import com.chiorichan.exceptions.HttpErrorException;
+import com.chiorichan.exception.HttpErrorException;
 import com.chiorichan.framework.FileInterpreter;
 import com.chiorichan.framework.SiteException;
 import com.google.common.collect.Maps;

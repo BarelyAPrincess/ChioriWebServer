@@ -652,11 +652,6 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return console;
 	}
 	
-	public static ConsoleBus getConsoleBus()
-	{
-		return console;
-	}
-	
 	public static ConsoleLogger getLogger()
 	{
 		return console.getLogger();
@@ -730,6 +725,11 @@ public class Loader extends BuiltinEventCreator implements Listener
 	public static ChioriScheduler getScheduler()
 	{
 		return scheduler;
+	}
+	
+	public static PluginManager getPluginManager()
+	{
+		return plugins;
 	}
 	
 	@Override

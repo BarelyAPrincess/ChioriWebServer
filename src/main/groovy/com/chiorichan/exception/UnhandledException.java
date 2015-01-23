@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.exceptions;
+package com.chiorichan.exception;
 
 public class UnhandledException extends Exception
 {

@@ -35,7 +35,7 @@ import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.SiteLoadEvent;
-import com.chiorichan.exceptions.ShellExecuteException;
+import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.factory.CodeMetaData;
 import com.chiorichan.file.YamlConfiguration;

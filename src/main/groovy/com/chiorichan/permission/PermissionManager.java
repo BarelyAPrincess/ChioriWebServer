@@ -1,26 +1,31 @@
 package com.chiorichan.permission;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimerTask;
 
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
 import com.chiorichan.file.YamlConfiguration;
+import com.chiorichan.permission.backend.FileBackend;
+import com.chiorichan.permission.backend.MemoryBackend;
+import com.chiorichan.permission.backend.SQLBackend;
 import com.chiorichan.permission.event.PermissibleEntityEvent;
 import com.chiorichan.permission.event.PermissibleEvent;
 import com.chiorichan.permission.event.PermissibleSystemEvent;
+import com.chiorichan.permission.structure.Permission;
 import com.chiorichan.scheduler.TaskCreator;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 public class PermissionManager implements TaskCreator
 {
 	protected Map<String, PermissibleGroup> defaultGroups = new HashMap<String, PermissibleGroup>();
-	protected Map<String, PermissibleEntity> users = new HashMap<String, PermissibleEntity>();
 	protected Map<String, PermissibleGroup> groups = new HashMap<String, PermissibleGroup>();
 	protected Map<String, PermissibleEntity> entities = Maps.newHashMap();
+	protected Set<Permission> roots = Sets.newConcurrentHashSet();
 	protected PermissionMatcher matcher = new RegExpMatcher();
 	protected PermissionBackend backend = null;
 	protected boolean debugMode = false;
@@ -36,6 +41,10 @@ public class PermissionManager implements TaskCreator
 	
 	private void initBackend() throws PermissionBackendException
 	{
+		PermissionBackend.registerBackendAlias( "sql", SQLBackend.class );
+		PermissionBackend.registerBackendAlias( "file", FileBackend.class );
+		PermissionBackend.registerBackendAlias( "memory", MemoryBackend.class );
+		
 		String backendName = config.getString( "permissions.backend" );
 		
 		if ( backendName == null || backendName.isEmpty() )
@@ -44,14 +53,55 @@ public class PermissionManager implements TaskCreator
 			this.config.set( "permissions.backend", backendName );
 		}
 		
-		this.setBackend( backendName );
+		setBackend( backendName );
+	}
+	
+	/**
+	 * Set backend to specified backend.
+	 * This would also cause backend resetting.
+	 * 
+	 * @param backendName
+	 *             name of backend to set to
+	 */
+	public void setBackend( String backendName ) throws PermissionBackendException
+	{
+		synchronized( this )
+		{
+			clearCache();
+			backend = PermissionBackend.getBackend( backendName );
+			backend.initialize();
+			
+			loadData();
+		}
+		
+		this.callEvent( PermissibleSystemEvent.Action.BACKEND_CHANGED );
+	}
+	
+	/**
+	 * Forcefully saves groups and entities to the backend data source.
+	 */
+	public void saveData()
+	{
+		
+	}
+	
+	/**
+	 * Loads all groups and entities from the backend data source.
+	 */
+	public void loadData()
+	{
+		groups.clear();
+		for ( PermissibleGroup group : backend.getGroups() )
+			groups.put( group.getName(), group );
 	}
 	
 	/**
 	 * Check if specified entity has specified permission
 	 * 
-	 * @param entity entity object
-	 * @param permission permission string to check against
+	 * @param entity
+	 *             entity object
+	 * @param permission
+	 *             permission string to check against
 	 * @return true on success false otherwise
 	 */
 	public boolean has( Permissible perm, String permission )
@@ -62,9 +112,12 @@ public class PermissionManager implements TaskCreator
 	/**
 	 * Check if entity has specified permission in site
 	 * 
-	 * @param entity entity object
-	 * @param permission permission as string to check against
-	 * @param site site's name as string
+	 * @param entity
+	 *             entity object
+	 * @param permission
+	 *             permission as string to check against
+	 * @param site
+	 *             site's name as string
 	 * @return true on success false otherwise
 	 */
 	public boolean has( Account entity, String permission, String site )
@@ -75,9 +128,12 @@ public class PermissionManager implements TaskCreator
 	/**
 	 * Check if entity with name has permission in site
 	 * 
-	 * @param entityName entity name
-	 * @param permission permission as string to check against
-	 * @param site site's name as string
+	 * @param entityName
+	 *             entity name
+	 * @param permission
+	 *             permission as string to check against
+	 * @param site
+	 *             site's name as string
 	 * @return true on success false otherwise
 	 */
 	public boolean has( String entityName, String permission, String site )
@@ -95,7 +151,8 @@ public class PermissionManager implements TaskCreator
 	/**
 	 * Return entity's object
 	 * 
-	 * @param entityname get PermissibleEntity with given name
+	 * @param entityname
+	 *             get PermissibleEntity with given name
 	 * @return PermissibleEntity instance
 	 */
 	public PermissibleEntity getEntity( String entityname )
@@ -127,7 +184,8 @@ public class PermissionManager implements TaskCreator
 	/**
 	 * Return object of specified entity
 	 * 
-	 * @param entity entity object
+	 * @param entity
+	 *             entity object
 	 * @return PermissibleEntity instance
 	 */
 	public PermissibleEntity getEntity( Account entity )
@@ -145,48 +203,11 @@ public class PermissionManager implements TaskCreator
 		return backend.getEntities();
 	}
 	
-	public Collection<String> getEntityNames()
-	{
-		return backend.getRegisteredEntityNames();
-	}
-	
-	/**
-	 * Return all entities in group
-	 * 
-	 * @param groupName group's name
-	 * @return PermissibleEntity array
-	 */
-	public PermissibleEntity[] getEntities( String groupName, String siteName )
-	{
-		return backend.getEntities( groupName, siteName );
-	}
-	
-	public PermissibleEntity[] getEntities( String groupName )
-	{
-		return backend.getEntities( groupName );
-	}
-	
-	/**
-	 * Return all entities in group and descendant groups
-	 * 
-	 * @param groupName group's name
-	 * @param inheritance true return members of descendant groups of specified group
-	 * @return PermissibleEntity array for groupnName
-	 */
-	public PermissibleEntity[] getEntities( String groupName, String siteName, boolean inheritance )
-	{
-		return backend.getEntities( groupName, siteName, inheritance );
-	}
-	
-	public PermissibleEntity[] getEntities( String groupName, boolean inheritance )
-	{
-		return backend.getEntities( groupName, inheritance );
-	}
-	
 	/**
 	 * Reset in-memory object of specified entity
 	 * 
-	 * @param entityName entity's name
+	 * @param entityName
+	 *             entity's name
 	 */
 	public void resetEntity( String entityName )
 	{
@@ -194,34 +215,10 @@ public class PermissionManager implements TaskCreator
 	}
 	
 	/**
-	 * Clear cache for specified entity
-	 * 
-	 * @param entityName
-	 */
-	public void clearEntityCache( String entityName )
-	{
-		PermissibleEntity entity = this.getEntity( entityName );
-		
-		if ( entity != null )
-		{
-			entity.clearCache();
-		}
-	}
-	
-	/**
-	 * Clear cache for specified entity
-	 * 
-	 * @param entity
-	 */
-	public void clearEntityCache( Account entity )
-	{
-		this.clearEntityCache( entity.getName() );
-	}
-	
-	/**
 	 * Return object for specified group
 	 * 
-	 * @param groupname group's name
+	 * @param groupname
+	 *             group's name
 	 * @return PermissibleGroup object
 	 */
 	public PermissibleGroup getGroup( String groupname )
@@ -261,39 +258,6 @@ public class PermissionManager implements TaskCreator
 	}
 	
 	/**
-	 * Return all child groups of specified group
-	 * 
-	 * @param groupName group's name
-	 * @return PermissibleGroup array
-	 */
-	public PermissibleGroup[] getGroups( String groupName, String siteName )
-	{
-		return backend.getGroups( groupName, siteName );
-	}
-	
-	public PermissibleGroup[] getGroups( String groupName )
-	{
-		return backend.getGroups( groupName );
-	}
-	
-	/**
-	 * Return all descendants or child groups for groupName
-	 * 
-	 * @param groupName group's name
-	 * @param inheritance true: only direct child groups would be returned
-	 * @return PermissibleGroup array for specified groupName
-	 */
-	public PermissibleGroup[] getGroups( String groupName, String siteName, boolean inheritance )
-	{
-		return backend.getGroups( groupName, siteName, inheritance );
-	}
-	
-	public PermissibleGroup[] getGroups( String groupName, boolean inheritance )
-	{
-		return backend.getGroups( groupName, inheritance );
-	}
-	
-	/**
 	 * Return default group object
 	 * 
 	 * @return default group object. null if not specified
@@ -321,25 +285,13 @@ public class PermissionManager implements TaskCreator
 		
 		if ( defaultGroup == null && siteName == null )
 		{
-			throw new IllegalStateException( "No default group defined. Use \"pex set default group <group> [site]\" to define default group." );
+			getLogger().warning( "No default group defined. Use \"perm set default group <group> [site]\" to define default group." );
+			return fallback;
 		}
 		
 		if ( defaultGroup != null )
 		{
 			return defaultGroup;
-		}
-		
-		if ( siteName != null )
-		{
-			// check site-inheritance
-			for ( String parentSite : this.getSiteInheritance( siteName ) )
-			{
-				defaultGroup = this.getDefaultGroup( parentSite, null );
-				if ( defaultGroup != null )
-				{
-					return defaultGroup;
-				}
-			}
 		}
 		
 		return fallback;
@@ -348,7 +300,8 @@ public class PermissionManager implements TaskCreator
 	/**
 	 * Set default group to specified group
 	 * 
-	 * @param group PermissibleGroup group object
+	 * @param group
+	 *             PermissibleGroup group object
 	 */
 	public void setDefaultGroup( PermissibleGroup group, String siteName )
 	{
@@ -357,7 +310,7 @@ public class PermissionManager implements TaskCreator
 			return;
 		}
 		
-		backend.setDefaultGroup( group, siteName );
+		backend.setDefaultGroup( group.getName(), siteName );
 		
 		this.defaultGroups.clear();
 		
@@ -373,7 +326,8 @@ public class PermissionManager implements TaskCreator
 	/**
 	 * Reset in-memory object for groupName
 	 * 
-	 * @param groupName group's name
+	 * @param groupName
+	 *             group's name
 	 */
 	public void resetGroup( String groupName )
 	{
@@ -383,7 +337,8 @@ public class PermissionManager implements TaskCreator
 	/**
 	 * Set debug mode
 	 * 
-	 * @param debug true enables debug mode, false disables
+	 * @param debug
+	 *             true enables debug mode, false disables
 	 */
 	public void setDebug( boolean debug )
 	{
@@ -402,55 +357,6 @@ public class PermissionManager implements TaskCreator
 	}
 	
 	/**
-	 * Return groups of specified rank ladder
-	 * 
-	 * @param ladderName
-	 * @return Map of ladder, key - rank of group, value - group object. Empty map if ladder does not exist
-	 */
-	public Map<Integer, PermissibleGroup> getRankLadder( String ladderName )
-	{
-		Map<Integer, PermissibleGroup> ladder = new HashMap<Integer, PermissibleGroup>();
-		
-		for ( PermissibleGroup group : this.getGroups() )
-		{
-			if ( !group.isRanked() )
-			{
-				continue;
-			}
-			
-			if ( group.getRankLadder().equalsIgnoreCase( ladderName ) )
-			{
-				ladder.put( group.getRank(), group );
-			}
-		}
-		
-		return ladder;
-	}
-	
-	/**
-	 * Return array of site names who has site inheritance
-	 * 
-	 * @param siteName Site name
-	 * @return Array of parent site, if site does not exist return empty array
-	 */
-	public String[] getSiteInheritance( String siteName )
-	{
-		return backend.getSiteInheritance( siteName );
-	}
-	
-	/**
-	 * Set site inheritance parents for site
-	 * 
-	 * @param site site name which inheritance should be set
-	 * @param parentSites array of parent site names
-	 */
-	public void setSiteInheritance( String site, String[] parentSites )
-	{
-		backend.setSiteInheritance( site, parentSites );
-		this.callEvent( PermissibleSystemEvent.Action.WORLDINHERITANCE_CHANGED );
-	}
-	
-	/**
 	 * Return current backend
 	 * 
 	 * @return current backend object
@@ -461,28 +367,12 @@ public class PermissionManager implements TaskCreator
 	}
 	
 	/**
-	 * Set backend to specified backend.
-	 * This would also cause backend resetting.
-	 * 
-	 * @param backendName name of backend to set to
-	 */
-	public void setBackend( String backendName ) throws PermissionBackendException
-	{
-		synchronized ( this )
-		{
-			this.clearCache();
-			this.backend = PermissionBackend.getBackend( backendName );
-			this.backend.initialize();
-		}
-		
-		this.callEvent( PermissibleSystemEvent.Action.BACKEND_CHANGED );
-	}
-	
-	/**
 	 * Register new timer task
 	 * 
-	 * @param task TimerTask object
-	 * @param delay delay in seconds
+	 * @param task
+	 *             TimerTask object
+	 * @param delay
+	 *             delay in seconds
 	 */
 	protected void registerTask( TimerTask task, int delay )
 	{
@@ -509,7 +399,7 @@ public class PermissionManager implements TaskCreator
 		{
 			reset();
 		}
-		catch ( PermissionBackendException ignore )
+		catch( PermissionBackendException ignore )
 		{
 			// Ignore because we're shutting down so who cares
 		}
@@ -542,22 +432,17 @@ public class PermissionManager implements TaskCreator
 		this.matcher = matcher;
 	}
 	
-	public Collection<String> getGroupNames()
-	{
-		return backend.getRegisteredGroupNames();
-	}
-	
 	public static ConsoleLogger getLogger()
 	{
 		return Loader.getLogger( "PermissionsManager" );
 	}
-
+	
 	@Override
 	public boolean isEnabled()
 	{
 		return true;
 	}
-
+	
 	@Override
 	public String getName()
 	{

@@ -288,6 +288,12 @@ public abstract class Account<T extends AccountLookupAdapter> extends Permissibl
 		return ipAddrs;
 	}
 	
+	@Override
+	public boolean isValid()
+	{
+		return metaData.hasMinimumData();
+	}
+	
 	/**
 	 * Called before the AccountManager makes the login offical.
 	 * 

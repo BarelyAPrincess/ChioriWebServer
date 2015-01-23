@@ -39,10 +39,10 @@ public class ConsoleBus implements Runnable
 	
 	public Loader loader;
 	
-	public void init( Loader _loader, OptionSet _options )
+	public void init( Loader parent, OptionSet optionSet )
 	{
-		loader = _loader;
-		options = _options;
+		loader = parent;
+		options = optionSet;
 		
 		if ( options.has( "nocolor" ) )
 			useColors = false;

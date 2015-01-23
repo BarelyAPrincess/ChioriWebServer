@@ -1,33 +1,45 @@
 package com.chiorichan.permission;
 
-import java.util.Set;
-
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
-import com.chiorichan.plugin.loader.Plugin;
+import com.chiorichan.permission.structure.Permission;
 
 public abstract class PermissibleBase implements Permissible
 {
-	private PermissibleEntity perm = new PermissibleEntity( getId() );
+	private PermissibleEntity perm;
 	
+	protected PermissibleBase( PermissibleEntity entity )
+	{
+		perm = entity;
+	}
+	
+	public PermissibleBase()
+	{
+		perm = Loader.getPermissionsManager().getBackend().getEntity( getId() );
+	}
+	
+	@Override
 	public String getName()
 	{
 		return getId();
 	}
 	
-	public boolean isPermissionSet( String name )
+	@Override
+	public final boolean isPermissionSet( String req )
 	{
-		return perm.isPermissionSet( name );
+		return perm.isPermissionSet( req );
 	}
 	
-	public boolean isPermissionSet( Permission perm )
+	@Override
+	public final boolean isPermissionSet( Permission req )
 	{
-		return this.perm.isPermissionSet( perm );
+		return perm.isPermissionSet( req );
 	}
 	
-	public boolean hasPermission( String req )
+	@Override
+	public final boolean hasPermission( String req )
 	{
-		Loader.getLogger().info( ChatColor.GREEN + "Checking `" + getAccountId() + "` for permission `" + req + "` with result `" + perm.hasPermission( req ) + "`" );
+		Loader.getLogger().info( ChatColor.GREEN + "Checking `" + getId() + "` for permission `" + req + "` with result `" + perm.hasPermission( req ) + "`" );
 		// Everyone
 		if ( req.equals( "-1" ) || req.isEmpty() )
 			return true;
@@ -37,54 +49,15 @@ public abstract class PermissibleBase implements Permissible
 		return perm.hasPermission( req );
 	}
 	
-	public boolean hasPermission( Permission perm )
+	@Override
+	public final boolean hasPermission( Permission perm )
 	{
 		return this.perm.hasPermission( perm );
 	}
 	
-	public PermissionAttachment addAttachment( Plugin plugin, String name, boolean value )
-	{
-		return perm.addAttachment( plugin, name, value );
-	}
-	
-	public PermissionAttachment addAttachment( Plugin plugin )
-	{
-		return perm.addAttachment( plugin );
-	}
-	
-	public PermissionAttachment addAttachment( Plugin plugin, String name, boolean value, int ticks )
-	{
-		return perm.addAttachment( plugin, name, value, ticks );
-	}
-	
-	public PermissionAttachment addAttachment( Plugin plugin, int ticks )
-	{
-		return perm.addAttachment( plugin, ticks );
-	}
-	
-	public void removeAttachment( PermissionAttachment attachment )
-	{
-		perm.removeAttachment( attachment );
-	}
-	
-	public void recalculatePermissions()
-	{
-		perm.recalculatePermissions();
-	}
-	
-	public Set<PermissionAttachmentInfo> getEffectivePermissions()
-	{
-		return perm.getEffectivePermissions();
-	}
-	
-	public void disconnect( String reason )
-	{
-		perm.clearPermissions();
-	}
-	
 	@Override
-	public boolean isOp()
+	public final boolean isOp()
 	{
-		return Loader.getAccountsManager().isOp( getId() );
+		return perm.isOp();
 	}
 }

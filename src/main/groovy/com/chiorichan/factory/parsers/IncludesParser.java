@@ -358,7 +358,7 @@ package com.chiorichan.factory.parsers;
 import java.io.File;
 
 import com.chiorichan.Loader;
-import com.chiorichan.exceptions.ShellExecuteException;
+import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.framework.Site;
 
