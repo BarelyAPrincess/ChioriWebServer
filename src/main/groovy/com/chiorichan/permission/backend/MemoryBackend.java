@@ -2,6 +2,8 @@ package com.chiorichan.permission.backend;
 
 import java.util.Set;
 
+import org.gradle.jarjar.com.google.common.collect.Sets;
+
 import com.chiorichan.Loader;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
@@ -68,13 +70,13 @@ public class MemoryBackend extends PermissionBackend
 	@Override
 	public PermissibleEntity[] getEntities()
 	{
-		return null;// TODO Auto-generated method stub
+		return new PermissibleEntity[0];
 	}
 
 	@Override
 	public Set<String> getEntityNames( int type )
 	{
-		return null;// TODO Auto-generated method stub
+		return Sets.newHashSet();
 	}
 
 	@Override

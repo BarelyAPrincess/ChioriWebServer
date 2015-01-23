@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.gradle.jarjar.com.google.common.base.Joiner;
+import org.gradle.jarjar.com.google.common.collect.Sets;
 
 import com.chiorichan.Loader;
 import com.chiorichan.configuration.ConfigurationSection;
@@ -258,13 +259,13 @@ public class FileBackend extends PermissionBackend
 	@Override
 	public PermissibleEntity[] getEntities()
 	{
-		return null;
+		return new PermissibleEntity[0];
 	}
-	
+
 	@Override
 	public Set<String> getEntityNames( int type )
 	{
-		return null;
+		return Sets.newHashSet();
 	}
 	
 	@Override

@@ -9,7 +9,7 @@ import com.google.common.base.Strings;
 public class ConsoleLogger
 {
 	private int lineCount = 999;
-	private static Logger logger = null;
+	private Logger logger = null;
 	private String id;
 	
 	/**
@@ -156,7 +156,7 @@ public class ConsoleLogger
 		for ( String var2 : var1 )
 			info( ChatColor.NEGATIVE + "" + ChatColor.YELLOW + " >>>>   " + var2 + "   <<<< " );
 	}
-
+	
 	protected Logger getLogger()
 	{
 		return logger;

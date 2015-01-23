@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2014 Chiori-chan. All Right Reserved.
- *
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -12,7 +11,6 @@ package com.chiorichan.account;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeMap;
 
 import com.chiorichan.util.ObjectUtil;
 import com.google.common.base.Joiner;
@@ -27,7 +25,7 @@ public class AccountMetaData
 		
 	}
 	
-	public AccountMetaData(String username, String password, String acctId)
+	public AccountMetaData( String username, String password, String acctId )
 	{
 		metaData.put( "username", username );
 		metaData.put( "password", password );
@@ -64,7 +62,7 @@ public class AccountMetaData
 		Object obj = metaData.get( key );
 		
 		if ( obj instanceof String )
-			if ( ( (String) obj ).isEmpty() )
+			if ( ((String) obj).isEmpty() )
 				return def;
 			else
 				return Integer.parseInt( (String) obj );
@@ -99,14 +97,30 @@ public class AccountMetaData
 	
 	public String getAcctId()
 	{
-		return getString( "acctId" );
+		String uid = getString( "acctId" );
+		
+		if ( uid == null )
+			uid = getString( "accountId" );
+		
+		/** TEMP START - MAYBE **/
+		if ( uid == null )
+			uid = getString( "userId" );
+		
+		if ( uid == null )
+			uid = getString( "userID" );
+		
+		if ( uid == null )
+			uid = getString( "id" );
+		/** TEMP END **/
+		
+		return uid;
 	}
 	
 	public Set<String> getKeys()
 	{
 		return metaData.keySet();
 	}
-
+	
 	public void mergeData( AccountMetaData data )
 	{
 		for ( Entry<String, Object> entry : metaData.entrySet() )

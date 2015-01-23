@@ -437,7 +437,7 @@ public class PermissionManager implements TaskCreator
 	
 	public static ConsoleLogger getLogger()
 	{
-		return Loader.getLogger( "PermissionsManager" );
+		return Loader.getLogger( "PermMgr" );
 	}
 	
 	@Override

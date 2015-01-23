@@ -3,7 +3,7 @@ language: java
 jdk: oraclejdk7
 
 # Compile and package JAR and set build properties
-install: ./gradlew clean writePropertiesFile shadowJar :PermissionsEx:build :TemplatesPlugin:build javadocArchive sourcesArchive writeNewPom
+install: ./gradlew clean writePropertiesFile shadowJar :TemplatesPlugin:build javadocArchive sourcesArchive writeNewPom
 
 #after_success:
   # Check if commit is not a pull request, if repo is official, and branch is master, generate and deploy artifacts and reports

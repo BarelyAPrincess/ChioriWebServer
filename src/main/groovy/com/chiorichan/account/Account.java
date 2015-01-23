@@ -21,6 +21,38 @@ import com.google.common.collect.Sets;
 
 public abstract class Account<T extends AccountLookupAdapter> extends PermissibleInteractive
 {
+	public Account( String userId, T adapter ) throws LoginException
+	{
+		if ( userId.isEmpty() )
+			throw new LoginException( LoginExceptionReason.emptyUsername );
+		
+		if ( adapter == null )
+			throw new LoginException( LoginExceptionReason.unknownError );
+		
+		lookupAdapter = adapter;
+		
+		metaData = adapter.readAccount( userId );
+		acctId = metaData.getAcctId();
+		
+		init();
+	}
+	
+	public Account( AccountMetaData meta, T adapter ) throws LoginException
+	{
+		if ( meta == null )
+			throw new LoginException( LoginExceptionReason.unknownError );
+		
+		if ( adapter == null )
+			throw new LoginException( LoginExceptionReason.unknownError );
+		
+		lookupAdapter = adapter;
+		
+		metaData = meta;
+		acctId = meta.getAcctId();
+		
+		init();
+	}
+	
 	/**
 	 * Cached Account lookup adapter.
 	 */
@@ -40,34 +72,6 @@ public abstract class Account<T extends AccountLookupAdapter> extends Permissibl
 	 * Account Id
 	 */
 	protected final String acctId;
-	
-	public Account(String userId, T adapter) throws LoginException
-	{
-		if ( userId.isEmpty() )
-			throw new LoginException( LoginExceptionReason.emptyUsername );
-		
-		if ( adapter == null )
-			throw new LoginException( LoginExceptionReason.unknownError );
-		
-		lookupAdapter = adapter;
-		
-		metaData = adapter.readAccount( userId );
-		acctId = metaData.getAcctId();
-	}
-	
-	public Account(AccountMetaData meta, T adapter) throws LoginException
-	{
-		if ( meta == null )
-			throw new LoginException( LoginExceptionReason.unknownError );
-		
-		if ( adapter == null )
-			throw new LoginException( LoginExceptionReason.unknownError );
-		
-		lookupAdapter = adapter;
-		
-		metaData = meta;
-		acctId = meta.getAcctId();
-	}
 	
 	/**
 	 * Get the baked registered listeners associated with this handler list
@@ -125,7 +129,7 @@ public abstract class Account<T extends AccountLookupAdapter> extends Permissibl
 	public final boolean validatePassword( String _password )
 	{
 		String password = getPassword();
-		return ( password.equals( _password ) || password.equals( DigestUtils.md5Hex( _password ) ) || DigestUtils.md5Hex( password ).equals( _password ) );
+		return (password.equals( _password ) || password.equals( DigestUtils.md5Hex( _password ) ) || DigestUtils.md5Hex( password ).equals( _password ));
 	}
 	
 	public boolean isBanned()
@@ -172,23 +176,7 @@ public abstract class Account<T extends AccountLookupAdapter> extends Permissibl
 	
 	public String getAcctId()
 	{
-		String uid = metaData.getString( "acctId" );
-		
-		if ( uid == null )
-			uid = metaData.getString( "accountId" );
-		
-		/** TEMP START - MAYBE **/
-		if ( uid == null )
-			uid = metaData.getString( "userId" );
-		
-		if ( uid == null )
-			uid = metaData.getString( "userID" );
-		
-		if ( uid == null )
-			uid = metaData.getString( "id" );
-		/** TEMP END **/
-		
-		return uid;
+		return metaData.getAcctId();
 	}
 	
 	public String toString()

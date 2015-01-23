@@ -14,7 +14,7 @@ public class ConsoleSubLogger extends Logger
 	public void log( LogRecord logRecord )
 	{
 		if ( Loader.getConfig() != null && !Loader.getConfig().getBoolean( "console.hideLoggerName" ) )
-			logRecord.setMessage( "&7[" + getName().toUpperCase() + "]&f " + logRecord.getMessage() );
+			logRecord.setMessage( "&7[" + getName() + "]&f " + logRecord.getMessage() );
 		
 		super.log( logRecord );
 	}

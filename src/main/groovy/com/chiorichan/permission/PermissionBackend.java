@@ -18,7 +18,7 @@ public abstract class PermissionBackend
 	public final static int GROUP = 1;
 	public final static int ENTITY = 0;
 	
-	protected final static String defaultBackend = "file";
+	protected final static String defaultBackend = "memory";
 	
 	/**
 	 * Backend initialization should be done here
@@ -116,7 +116,7 @@ public abstract class PermissionBackend
 		
 		registedAliases.put( alias, backendClass );
 		
-		Logger.getLogger( "" ).info( "[PermissionsEx] " + alias + " backend registered!" );
+		PermissionManager.getLogger().info( alias + " backend registered!" );
 	}
 	
 	/**
@@ -176,7 +176,7 @@ public abstract class PermissionBackend
 			
 			PermissionManager.getLogger().info( "Initializing " + backendName + " backend" );
 			
-			Constructor<? extends PermissionBackend> constructor = backendClass.getConstructor( PermissionManager.class, Configuration.class );
+			Constructor<? extends PermissionBackend> constructor = backendClass.getConstructor();
 			return (PermissionBackend) constructor.newInstance();
 		}
 		catch( ClassNotFoundException e )
