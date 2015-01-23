@@ -5,31 +5,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
+
+import org.gradle.jarjar.com.google.common.collect.Maps;
 
 import com.chiorichan.Loader;
 import com.chiorichan.permission.event.PermissibleEntityEvent;
+import com.chiorichan.permission.structure.ChildPermission;
 
 public abstract class PermissibleEntity implements PermissibleParent
 {
 	private String name;
 	protected boolean virtual = true;
+	protected boolean debugMode = false;
 	protected Map<String, List<String>> timedPermissions = new ConcurrentHashMap<String, List<String>>();
 	protected Map<String, Long> timedPermissionsTime = new ConcurrentHashMap<String, Long>();
-	protected boolean debugMode = false;
+	
+	protected Map<String, ChildPermission> childPermissions = Maps.newConcurrentMap();
 	
 	public PermissibleEntity( String name )
 	{
 		this.name = name;
-	}
-	
-	/**
-	 * This method 100% run after all constructors have been run and entity
-	 * object, and entity object are completely ready to operate
-	 */
-	public void initialize()
-	{
-		this.debugMode = this.getOptionBoolean( "debug", null, this.debugMode );
 	}
 	
 	/**
@@ -46,6 +41,21 @@ public abstract class PermissibleEntity implements PermissibleParent
 	protected void setName( String name )
 	{
 		this.name = name;
+	}
+	
+	public void attachPermission( ChildPermission perm )
+	{
+		childPermissions.put( perm.getPermission().getNamespace(), perm );
+	}
+	
+	public void detachPermission( ChildPermission perm )
+	{
+		detachPermission( perm.getPermission().getNamespace() );
+	}
+	
+	public void detachPermission( String perm )
+	{
+		childPermissions.remove( perm );
 	}
 	
 	/**
@@ -68,7 +78,8 @@ public abstract class PermissibleEntity implements PermissibleParent
 	/**
 	 * Set prefix to value
 	 * 
-	 * @param prefix new prefix
+	 * @param prefix
+	 *             new prefix
 	 */
 	public abstract void setPrefix( String prefix, String siteName );
 	
@@ -87,26 +98,30 @@ public abstract class PermissibleEntity implements PermissibleParent
 	/**
 	 * Set suffix to value
 	 * 
-	 * @param suffix new suffix
+	 * @param suffix
+	 *             new suffix
 	 */
 	public abstract void setSuffix( String suffix, String siteName );
 	
 	/**
 	 * Checks if entity has specified permission in default site
 	 * 
-	 * @param permission Permission to check
+	 * @param permission
+	 *             Permission to check
 	 * @return true if entity has this permission otherwise false
 	 */
 	public boolean has( String permission )
 	{
-		return this.has( permission, Loader.getSiteManager().getSites().get( 0 ).getName() );
+		return has( permission, Loader.getSiteManager().getSites().get( 0 ).getName() );
 	}
 	
 	/**
 	 * Check if entity has specified permission in site
 	 * 
-	 * @param permission Permission to check
-	 * @param site Site to check permission in
+	 * @param permission
+	 *             Permission to check
+	 * @param site
+	 *             Site to check permission in
 	 * @return true if entity has this permission otherwise false
 	 */
 	public boolean has( String permission, String site )
@@ -116,20 +131,19 @@ public abstract class PermissibleEntity implements PermissibleParent
 			return true;
 		}
 		
-		String expression = getMatchingExpression( permission, site );
+		ChildPermission perm = childPermissions.get( permission );
 		
-		if ( this.isDebug() )
-		{
-			Logger.getLogger( "" ).info( "User " + this.getName() + " checked for \"" + permission + "\", " + ( expression == null ? "no permission found" : "\"" + expression + "\" found" ) );
-		}
+		if ( isDebug() )
+			PermissionManager.getLogger().info( "Entity " + getName() + " checked for \"" + permission + "\", " + (perm == null ? "no permission found" : "\"" + perm + "\" found") );
 		
-		return explainExpression( expression );
+		return (perm == null) ? false : true;
 	}
 	
 	/**
 	 * Return all entity permissions in specified site
 	 * 
-	 * @param site Site name
+	 * @param site
+	 *             Site name
 	 * @return Array of permission expressions
 	 */
 	public abstract String[] getPermissions( String site );
@@ -141,207 +155,6 @@ public abstract class PermissibleEntity implements PermissibleParent
 	 * @return Map with site name as key and permissions array as value
 	 */
 	public abstract Map<String, String[]> getAllPermissions();
-	
-	/**
-	 * Add permissions for specified site
-	 * 
-	 * @param permission Permission to add
-	 * @param site Site name to add permission to
-	 */
-	public void addPermission( String permission, String site )
-	{
-		throw new UnsupportedOperationException( "You shouldn't call this method" );
-	}
-	
-	/**
-	 * Add permission in common space (all sites)
-	 * 
-	 * @param permission Permission to add
-	 */
-	public void addPermission( String permission )
-	{
-		this.addPermission( permission, "" );
-	}
-	
-	/**
-	 * Remove permission in site
-	 * 
-	 * @param permission Permission to remove
-	 * @param site Site name to remove permission for
-	 */
-	public void removePermission( String permission, String siteName )
-	{
-		throw new UnsupportedOperationException( "You shouldn't call this method" );
-	}
-	
-	/**
-	 * Remove specified permission from all sites
-	 * 
-	 * @param permission Permission to remove
-	 */
-	public void removePermission( String permission )
-	{
-		for ( String site : this.getAllPermissions().keySet() )
-		{
-			this.removePermission( permission, site );
-		}
-	}
-	
-	/**
-	 * Set permissions in site
-	 * 
-	 * @param permissions Array of permissions to set
-	 * @param site Site to set permissions for
-	 */
-	public abstract void setPermissions( String[] permissions, String site );
-	
-	/**
-	 * Set specified permissions in common space (all site)
-	 * 
-	 * @param permission Permission to set
-	 */
-	public void setPermissions( String[] permission )
-	{
-		this.setPermissions( permission, "" );
-	}
-	
-	/**
-	 * Get option in site
-	 * 
-	 * @param option Name of option
-	 * @param site Site to look for
-	 * @param defaultValue Default value to fallback if no such option was found
-	 * @return Value of option as String
-	 */
-	public abstract String getOption( String option, String site, String defaultValue );
-	
-	/**
-	 * Return option
-	 * Option would be looked up in common options
-	 * 
-	 * @param option Option name
-	 * @return option value or empty string if option was not found
-	 */
-	public String getOption( String option )
-	{
-		// @todo Replace empty string with null
-		return this.getOption( option, "", "" );
-	}
-	
-	/**
-	 * Return option for site
-	 * 
-	 * @param option Option name
-	 * @param site Site to look in
-	 * @return option value or empty string if option was not found
-	 */
-	public String getOption( String option, String site )
-	{
-		// @todo Replace empty string with null
-		return this.getOption( option, site, "" );
-	}
-	
-	/**
-	 * Return integer value for option
-	 * 
-	 * @param optionName
-	 * @param site
-	 * @param defaultValue
-	 * @return option value or defaultValue if option was not found or is not integer
-	 */
-	public int getOptionInteger( String optionName, String site, int defaultValue )
-	{
-		try
-		{
-			return Integer.parseInt( this.getOption( optionName, site, Integer.toString( defaultValue ) ) );
-		}
-		catch ( NumberFormatException e )
-		{}
-		
-		return defaultValue;
-	}
-	
-	/**
-	 * Returns double value for option
-	 * 
-	 * @param optionName
-	 * @param site
-	 * @param defaultValue
-	 * @return option value or defaultValue if option was not found or is not double
-	 */
-	public double getOptionDouble( String optionName, String site, double defaultValue )
-	{
-		String option = this.getOption( optionName, site, Double.toString( defaultValue ) );
-		
-		try
-		{
-			return Double.parseDouble( option );
-		}
-		catch ( NumberFormatException e )
-		{}
-		
-		return defaultValue;
-	}
-	
-	/**
-	 * Returns boolean value for option
-	 * 
-	 * @param optionName
-	 * @param site
-	 * @param defaultValue
-	 * @return option value or defaultValue if option was not found or is not boolean
-	 */
-	public boolean getOptionBoolean( String optionName, String site, boolean defaultValue )
-	{
-		String option = this.getOption( optionName, site, Boolean.toString( defaultValue ) );
-		
-		if ( "false".equalsIgnoreCase( option ) )
-		{
-			return false;
-		}
-		else if ( "true".equalsIgnoreCase( option ) )
-		{
-			return true;
-		}
-		
-		return defaultValue;
-	}
-	
-	/**
-	 * Set specified option in site
-	 * 
-	 * @param option Option name
-	 * @param value Value to set, null to remove
-	 * @param site Site name
-	 */
-	public abstract void setOption( String option, String value, String site );
-	
-	/**
-	 * Set option for all sites. Can be overwritten by site specific option
-	 * 
-	 * @param option Option name
-	 * @param value Value to set, null to remove
-	 */
-	public void setOption( String permission, String value )
-	{
-		this.setOption( permission, value, "" );
-	}
-	
-	/**
-	 * Get options in site
-	 * 
-	 * @param site
-	 * @return Option value as string Map
-	 */
-	public abstract Map<String, String> getOptions( String site );
-	
-	/**
-	 * Return options for all sites
-	 * Common options stored as "" (empty string) as site.
-	 * 
-	 * @return Map with site name as key and map of options as value
-	 */
-	public abstract Map<String, Map<String, String>> getAllOptions();
 	
 	/**
 	 * Save in-memory data to storage backend
@@ -394,7 +207,8 @@ public abstract class PermissibleEntity implements PermissibleParent
 	/**
 	 * Returns remaining lifetime of specified permission in site
 	 * 
-	 * @param permission Name of permission
+	 * @param permission
+	 *             Name of permission
 	 * @param site
 	 * @return remaining lifetime in seconds of timed permission. 0 if permission is transient
 	 */
@@ -410,7 +224,7 @@ public abstract class PermissibleEntity implements PermissibleParent
 			return 0;
 		}
 		
-		return (int) ( this.timedPermissionsTime.get( site + ":" + permission ).longValue() - ( System.currentTimeMillis() / 1000L ) );
+		return (int) (this.timedPermissionsTime.get( site + ":" + permission ).longValue() - (System.currentTimeMillis() / 1000L));
 	}
 	
 	/**
@@ -418,7 +232,8 @@ public abstract class PermissibleEntity implements PermissibleParent
 	 * 
 	 * @param permission
 	 * @param site
-	 * @param lifeTime Lifetime of permission in seconds. 0 for transient permission (site disappear only after server reload)
+	 * @param lifeTime
+	 *             Lifetime of permission in seconds. 0 for transient permission (site disappear only after server reload)
 	 */
 	public void addTimedPermission( final String permission, String site, int lifeTime )
 	{
@@ -450,7 +265,7 @@ public abstract class PermissibleEntity implements PermissibleParent
 			
 			Loader.getPermissionsManager().registerTask( task, lifeTime );
 			
-			this.timedPermissionsTime.put( site + ":" + permission, ( System.currentTimeMillis() / 1000L ) + lifeTime );
+			this.timedPermissionsTime.put( site + ":" + permission, (System.currentTimeMillis() / 1000L) + lifeTime );
 		}
 		
 		Loader.getEventBus().callEvent( new PermissibleEntityEvent( this, PermissibleEntityEvent.Action.PERMISSIONS_CHANGED ) );
@@ -505,7 +320,7 @@ public abstract class PermissibleEntity implements PermissibleParent
 	public int hashCode()
 	{
 		int hash = 7;
-		hash = 89 * hash + ( this.name != null ? this.name.hashCode() : 0 );
+		hash = 89 * hash + (this.name != null ? this.name.hashCode() : 0);
 		return hash;
 	}
 	
@@ -513,37 +328,6 @@ public abstract class PermissibleEntity implements PermissibleParent
 	public String toString()
 	{
 		return this.getClass().getSimpleName() + "(" + this.getName() + ")";
-	}
-	
-	public String getMatchingExpression( String permission, String site )
-	{
-		return this.getMatchingExpression( this.getPermissions( site ), permission );
-	}
-	
-	public String getMatchingExpression( String[] permissions, String permission )
-	{
-		for ( String expression : permissions )
-		{
-			if ( isMatches( expression, permission, true ) )
-			{
-				return expression;
-			}
-		}
-		
-		return null;
-	}
-	
-	/**
-	 * Checks if specified permission matches specified permission expression
-	 * 
-	 * @param expression permission expression - what user have in his permissions list (permission.nodes.*)
-	 * @param permission permission which are checking for (permission.node.some.subnode)
-	 * @param additionalChecks check for parent node matching
-	 * @return
-	 */
-	public boolean isMatches( String expression, String permission, boolean additionalChecks )
-	{
-		return Loader.getPermissionsManager().getPermissionMatcher().isMatches( expression, permission );
 	}
 	
 	public boolean explainExpression( String expression )

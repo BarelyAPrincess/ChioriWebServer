@@ -1,39 +1,99 @@
 package com.chiorichan.permission.backend.memory;
 
-import ru.tehkode.permissions.PermissionManager;
-import ru.tehkode.permissions.ProxyPermissionGroup;
-import ru.tehkode.permissions.backends.MemoryBackend;
-import ru.tehkode.permissions.backends.memory.MemoryEntity;
-import ru.tehkode.permissions.events.PermissionEntityEvent;
+import java.util.Map;
 
-public class MemoryGroup extends ProxyPermissionGroup
+import com.chiorichan.permission.backend.MemoryBackend;
+import com.chiorichan.permission.backend.PermissibleGroupProxy;
+import com.chiorichan.permission.structure.Permission;
+
+public class MemoryGroup extends PermissibleGroupProxy
 {
-	MemoryEntity backend;
-	
-	public MemoryGroup(String name, PermissionManager manager, MemoryBackend backend)
+	public MemoryGroup( String name, MemoryBackend backend )
 	{
-		super( new MemoryEntity( name, manager, backend ) );
-		
-		this.backend = (MemoryEntity) this.backendEntity;
+		super( name, backend );
 	}
 	
 	@Override
-	protected String[] getParentGroupsNamesImpl( String siteName )
+	public boolean isPermissionSet( String req )
 	{
-		return this.backend.getParentNames( siteName );
+		return false;
 	}
 	
 	@Override
-	public void setParentGroups( String[] parentGroups, String siteName )
+	public boolean isPermissionSet( Permission req )
 	{
-		if ( parentGroups == null )
-		{
-			return;
-		}
-		
-		this.backend.setParents( parentGroups, siteName );
-		
-		this.callEvent( PermissionEntityEvent.Action.INHERITANCE_CHANGED );
+		return false;
 	}
 	
+	@Override
+	public boolean hasPermission( String req )
+	{
+		return false;
+	}
+	
+	@Override
+	public boolean hasPermission( Permission req )
+	{
+		return false;
+	}
+	
+	@Override
+	public boolean isOp()
+	{
+		return false;
+	}
+	
+	@Override
+	public String getPrefix( String siteName )
+	{
+		return null;
+	}
+	
+	@Override
+	public void setPrefix( String prefix, String siteName )
+	{
+		
+	}
+	
+	@Override
+	public String getSuffix( String siteName )
+	{
+		return null;
+	}
+	
+	@Override
+	public void setSuffix( String suffix, String siteName )
+	{
+		
+	}
+	
+	@Override
+	public String[] getPermissions( String site )
+	{
+		return null;
+	}
+	
+	@Override
+	public Map<String, String[]> getAllPermissions()
+	{
+		return null;
+	}
+	
+	@Override
+	public void save()
+	{
+		
+	}
+	
+	@Override
+	public void remove()
+	{
+		
+	}
+	
+	@Override
+	public String[] getSites()
+	{
+		return null;
+	}
 }

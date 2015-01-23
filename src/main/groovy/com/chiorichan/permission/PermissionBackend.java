@@ -203,6 +203,8 @@ public abstract class PermissionBackend
 			throw new RuntimeException( e );
 		}
 	}
-
-	public abstract void reload();
+	
+	public abstract void reload() throws PermissionBackendException;
+	
+	public abstract void loadPermissionTree();
 }

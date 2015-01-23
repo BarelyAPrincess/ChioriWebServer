@@ -1,16 +1,10 @@
 package com.chiorichan.permission.structure;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
-import org.gradle.jarjar.com.google.common.collect.Sets;
-
 public abstract class PermissionValue<Type>
 {
 	private Type value;
 	
-	private PermissionValue( Type type )
+	protected PermissionValue( Type type )
 	{
 		value = type;
 	}
@@ -25,7 +19,7 @@ public abstract class PermissionValue<Type>
 		switch ( this.getClass().getSimpleName() )
 		{
 			case "PermissionBoolean":
-				return PermissionType.BOOLEAN;
+				return PermissionType.BOOL;
 			case "PermissionEnum":
 				return PermissionType.ENUM;
 			case "PermissionVar":
@@ -37,63 +31,15 @@ public abstract class PermissionValue<Type>
 		}
 	}
 	
+	public abstract PermissionValue createChild( Object val );
+	
+	protected void setValue( Type val )
+	{
+		value = val;
+	}
+	
 	public enum PermissionType
 	{
-		UNKNOWN, BOOLEAN, ENUM, VAR, INT;
-	}
-	
-	public class PermissionBoolean extends PermissionValue<Boolean>
-	{
-		public PermissionBoolean( Boolean val )
-		{
-			super( val );
-		}
-	}
-	
-	public class PermissionEnum extends PermissionValue<String>
-	{
-		private Set<String> enumList = Sets.newHashSet();
-		private int maxLen = -1;
-		
-		public PermissionEnum( String val, int len, String... enums )
-		{
-			super( val );
-			maxLen = len;
-			enumList = new HashSet<String>( Arrays.asList( enums ) );
-		}
-		
-		public Set<String> getEnumList()
-		{
-			return enumList;
-		}
-		
-		public int getMaxLen()
-		{
-			return maxLen;
-		}
-	}
-	
-	public class PermissionVar extends PermissionValue<String>
-	{
-		private int maxLen = -1;
-		
-		public PermissionVar( String val, int len )
-		{
-			super( val );
-			maxLen = len;
-		}
-		
-		public int getMaxLen()
-		{
-			return maxLen;
-		}
-	}
-	
-	public class PermissionInt extends PermissionValue<Integer>
-	{
-		public PermissionInt( Integer val )
-		{
-			super( val );
-		}
+		UNKNOWN, BOOL, ENUM, VAR, INT;
 	}
 }

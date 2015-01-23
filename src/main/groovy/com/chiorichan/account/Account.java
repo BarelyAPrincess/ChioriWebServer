@@ -74,10 +74,10 @@ public abstract class Account<T extends AccountLookupAdapter> extends Permissibl
 	 * 
 	 * @return the array of registered listeners
 	 */
-	public final Set<AccountHandler> getHandlers()
+	public final AccountHandler[] getHandlers()
 	{
 		checkHandlers();
-		return handlers;
+		return handlers.toArray( new AccountHandler[0] );
 	}
 	
 	public final void putHandler( AccountHandler handler )
@@ -136,11 +136,6 @@ public abstract class Account<T extends AccountLookupAdapter> extends Permissibl
 	public boolean isWhitelisted()
 	{
 		return Loader.getAccountsManager().isWhitelisted( acctId );
-	}
-	
-	public boolean isOp()
-	{
-		return Loader.getAccountsManager().isOp( acctId );
 	}
 	
 	public abstract String getPassword();
@@ -262,30 +257,12 @@ public abstract class Account<T extends AccountLookupAdapter> extends Permissibl
 	}
 	
 	@Override
-	public final Set<PermissibleType> getTypes()
-	{
-		Set<PermissibleType> types = Sets.newHashSet();
-		for ( AccountHandler h : handlers )
-			types.addAll( h.getTypes() );
-		return types;
-	}
-	
-	@Override
 	public final String getIpAddr()
 	{
 		if ( handlers.size() == 1 )
 			return handlers.toArray( new AccountHandler[0] )[0].getIpAddr();
 		
 		return null;
-	}
-	
-	@Override
-	public final Set<String> getIpAddrs()
-	{
-		Set<String> ipAddrs = Sets.newHashSet();
-		for ( AccountHandler h : handlers )
-			ipAddrs.addAll( h.getIpAddrs() );
-		return ipAddrs;
 	}
 	
 	@Override

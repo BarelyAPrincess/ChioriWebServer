@@ -189,18 +189,4 @@ public class SessionProviderNet extends AccountHandler implements SessionProvide
 		// TODO Auto-generated method stub
 		return null;
 	}
-
-	@Override
-	public Set<PermissibleType> getTypes()
-	{
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Set<String> getIpAddrs()
-	{
-		// TODO Auto-generated method stub
-		return null;
-	}
 }

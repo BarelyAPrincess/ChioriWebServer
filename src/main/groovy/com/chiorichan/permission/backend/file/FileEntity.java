@@ -1,19 +1,16 @@
-package com.chiorichan.permission.backend.sql;
+package com.chiorichan.permission.backend.file;
 
 import java.util.Map;
 
+import com.chiorichan.permission.backend.FileBackend;
 import com.chiorichan.permission.backend.PermissibleProxy;
-import com.chiorichan.permission.backend.SQLBackend;
 import com.chiorichan.permission.structure.Permission;
 
-/**
- * @author Chiori Greene
- */
-public class SQLEntity extends PermissibleProxy
+public class FileEntity extends PermissibleProxy
 {
-	public SQLEntity( String name, SQLBackend sql )
+	public FileEntity( String userName, FileBackend backend )
 	{
-		super( name, sql );
+		super( userName, backend );
 	}
 	
 	@Override

@@ -8,25 +8,26 @@ import org.gradle.jarjar.com.google.common.collect.Sets;
 
 import com.google.common.collect.Lists;
 
-public class Permission
+public final class Permission
 {
 	protected static final Set<Permission> allPerms = Sets.newConcurrentHashSet();
 	protected final List<Permission> children = Lists.newCopyOnWriteArrayList();
-	protected Set<String> acceptableSites = Sets.newConcurrentHashSet();
-	private PermissionValue value = null;
-	private String name;
-	private String description;
-	private boolean isRootNode = false;
+	protected PermissionValue value = null;
+	protected boolean isRootNode = false;
+	protected String description = "";
+	protected Permission parent = null;
+	protected String name;
 	
-	public Permission( String name, boolean rootNode )
+	public Permission( String name, Permission parentNode, boolean rootNode )
 	{
-		this( name );
+		this( name, parentNode );
 		isRootNode = rootNode;
 	}
 	
-	public Permission( String permName )
+	public Permission( String name, Permission parentNode )
 	{
-		name = permName.toLowerCase();
+		name = name.toLowerCase();
+		parent = parentNode;
 		allPerms.add( this );
 	}
 	
@@ -63,7 +64,7 @@ public class Permission
 	
 	public Boolean getBoolean()
 	{
-		if ( value.getType() == PermissionValue.PermissionType.BOOLEAN )
+		if ( value.getType() == PermissionValue.PermissionType.BOOL )
 			return (Boolean) value.getValue();
 		
 		return null;
@@ -129,32 +130,25 @@ public class Permission
 		return name;
 	}
 	
-	/**
-	 * Finds a registered permission node in the stack by crawling.
-	 * 
-	 * @param fullNode
-	 * @return
-	 */
-	public static Permission nodeWalker( String fullNode )
+	public Permission getParent()
 	{
-		String[] nodes = fullNode.split( "\\." );
+		return parent;
+	}
+	
+	public String getNamespace()
+	{
+		String namespace = "";
+		Permission curr = this;
 		
-		if ( nodes.length < 1 )
-			return null;
-		
-		Permission curr = getRootNode( nodes[0] );
-		
-		if ( curr == null )
-			return null;
-		
-		for ( String node : Arrays.copyOfRange( nodes, 1, nodes.length ) )
+		do
 		{
-			curr = curr.getChild( node );
-			if ( curr == null )
-				return null;
+			namespace = getName() + "." + namespace;
+			curr = curr.getParent();
 		}
+		while( curr != null );
 		
-		return curr;
+		namespace = namespace.substring( 0, namespace.length() - 1 );
+		return namespace;
 	}
 	
 	protected static Permission getRootNode( String name )
@@ -171,5 +165,58 @@ public class Permission
 			if ( perm.getName() == name )
 				return perm;
 		return null;
+	}
+	
+	public static Permission crawlPermissionStack( String namespace )
+	{
+		return crawlPermissionStack( namespace, false );
+	}
+	
+	/**
+	 * Finds a registered permission node in the stack by crawling.
+	 * 
+	 * @param fullNode
+	 *             The full node path we need to crawl for.
+	 * @param createChildren
+	 *             Indicates if we should create the child node if not existent.
+	 * @return The child node based on the namespace.
+	 */
+	public static Permission crawlPermissionStack( String namespace, boolean createChildren )
+	{
+		String[] nodes = namespace.split( "\\." );
+		
+		if ( nodes.length < 1 )
+			return null;
+		
+		Permission curr = getRootNode( nodes[0] );
+		
+		if ( curr == null )
+			if ( createChildren )
+				curr = new Permission( nodes[0], null, true );
+			else
+				return null;
+		
+		if ( nodes.length == 1 )
+			return curr;
+		
+		for ( String node : Arrays.copyOfRange( nodes, 1, nodes.length ) )
+		{
+			Permission child = curr.getChild( node );
+			if ( child == null )
+			{
+				if ( createChildren )
+				{
+					child = new Permission( node, curr );
+					curr.addChild( child );
+					curr = child;
+				}
+				else
+					return null;
+			}
+			else
+				curr = child;
+		}
+		
+		return curr;
 	}
 }

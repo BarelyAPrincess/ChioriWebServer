@@ -3,18 +3,17 @@ package com.chiorichan.permission.backend.file;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.logging.Logger;
-
-import ru.tehkode.permissions.backends.FileBackend;
 
 import com.chiorichan.configuration.file.YamlConfiguration;
+import com.chiorichan.permission.PermissionManager;
+import com.chiorichan.permission.backend.FileBackend;
 
 public class FileConfig extends YamlConfiguration
 {
 	
 	protected File file;
 	
-	public FileConfig(File file)
+	public FileConfig( File file )
 	{
 		super();
 		
@@ -37,11 +36,11 @@ public class FileConfig extends YamlConfiguration
 		{
 			this.load( file );
 		}
-		catch ( FileNotFoundException e )
+		catch( FileNotFoundException e )
 		{
 			// do nothing
 		}
-		catch ( Throwable e )
+		catch( Throwable e )
 		{
 			throw new IllegalStateException( "Error loading permissions file", e );
 		}
@@ -53,9 +52,9 @@ public class FileConfig extends YamlConfiguration
 		{
 			this.save( file );
 		}
-		catch ( IOException e )
+		catch( IOException e )
 		{
-			Logger.getLogger( "" ).severe( "[PermissionsEx] Error during saving permissions file: " + e.getMessage() );
+			PermissionManager.getLogger().severe( "Error during saving permissions file: " + e.getMessage() );
 		}
 	}
 }

@@ -51,7 +51,7 @@ public class EventBus
 				{
 					throw new IllegalStateException( event.getEventName() + " cannot be triggered asynchronously from inside synchronized code." );
 				}
-				if ( Loader.getConsoleBus().isPrimaryThread() )
+				if ( Loader.getConsole().isPrimaryThread() )
 				{
 					throw new IllegalStateException( event.getEventName() + " cannot be triggered asynchronously from primary server thread." );
 				}

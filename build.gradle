@@ -198,4 +198,4 @@ allprojects
 	}
 }
 
-defaultTasks 'clean', 'writePropertiesFile', 'shadowJar', ':PermissionsEx:build', ':TemplatesPlugin:build', 'javadocArchive', 'sourcesArchive', 'writeNewPom'
+defaultTasks 'clean', 'writePropertiesFile', 'shadowJar', ':TemplatesPlugin:build', 'javadocArchive', 'sourcesArchive', 'writeNewPom'

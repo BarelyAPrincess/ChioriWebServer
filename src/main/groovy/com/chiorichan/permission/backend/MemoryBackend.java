@@ -1,14 +1,14 @@
 package com.chiorichan.permission.backend;
 
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.util.Set;
 
+import com.chiorichan.Loader;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.PermissionBackend;
 import com.chiorichan.permission.PermissionBackendException;
-import com.chiorichan.permission.backend.memory.MemoryGroup;
 import com.chiorichan.permission.backend.memory.MemoryEntity;
+import com.chiorichan.permission.backend.memory.MemoryGroup;
 
 /*
  * Memory Backend
@@ -29,39 +29,27 @@ public class MemoryBackend extends PermissionBackend
 	}
 	
 	@Override
-	public PermissibleEntity getUser( String name )
+	public PermissibleEntity getEntity( String name )
 	{
-		return new MemoryEntity( name, manager, this );
+		return new MemoryEntity( name, this );
 	}
 	
 	@Override
 	public PermissibleGroup getGroup( String name )
 	{
-		return new MemoryGroup( name, manager, this );
+		return new MemoryGroup( name, this );
 	}
 	
 	@Override
 	public PermissibleGroup getDefaultGroup( String siteName )
 	{
-		return this.manager.getGroup( "Default" );
+		return Loader.getPermissionsManager().getGroup( "Default" );
 	}
 	
 	@Override
-	public void setDefaultGroup( PermissibleGroup group, String siteName )
+	public void setDefaultGroup( String child, String... site )
 	{
 		
-	}
-	
-	@Override
-	public String[] getSiteInheritance( String site )
-	{
-		return new String[0];
-	}
-	
-	@Override
-	public void setSiteInheritance( String site, String[] parentSites )
-	{
-		// Do Nothing
 	}
 	
 	@Override
@@ -71,22 +59,27 @@ public class MemoryBackend extends PermissionBackend
 	}
 	
 	@Override
-	public PermissibleEntity[] getRegisteredUsers()
-	{
-		return new PermissibleEntity[0];
-	}
-	
-	@Override
 	public void reload() throws PermissionBackendException
 	{
 		// Do Nothing
 		
 	}
-	
+
 	@Override
-	public void dumpData( OutputStreamWriter writer ) throws IOException
+	public PermissibleEntity[] getEntities()
 	{
-		// Do Nothing
+		return null;// TODO Auto-generated method stub
 	}
-	
+
+	@Override
+	public Set<String> getEntityNames( int type )
+	{
+		return null;// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void loadPermissionTree()
+	{
+		
+	}
 }

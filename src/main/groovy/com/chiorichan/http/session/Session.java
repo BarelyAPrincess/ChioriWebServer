@@ -451,14 +451,6 @@ public abstract class Session extends AccountHandler
 	}
 	
 	@Override
-	public Set<PermissibleType> getTypes()
-	{
-		Set<PermissibleType> types = Sets.newHashSet();
-		types.add( getType() );
-		return types;
-	}
-	
-	@Override
 	public String getIpAddr()
 	{
 		if ( ipAddr == null && sessionProviders.size() > 0 )
@@ -476,13 +468,5 @@ public abstract class Session extends AccountHandler
 		}
 		
 		return ipAddr;
-	}
-	
-	@Override
-	public Set<String> getIpAddrs()
-	{
-		Set<String> ipAddrs = Sets.newHashSet();
-		ipAddrs.add( getIpAddr() );
-		return ipAddrs;
 	}
 }

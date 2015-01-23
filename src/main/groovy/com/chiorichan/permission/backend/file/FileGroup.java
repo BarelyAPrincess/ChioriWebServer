@@ -1,51 +1,99 @@
 package com.chiorichan.permission.backend.file;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.Map;
 
-import ru.tehkode.permissions.PermissionManager;
-import ru.tehkode.permissions.ProxyPermissionGroup;
-import ru.tehkode.permissions.backends.FileBackend;
-import ru.tehkode.permissions.backends.file.FileEntity;
+import com.chiorichan.permission.backend.FileBackend;
+import com.chiorichan.permission.backend.PermissibleGroupProxy;
+import com.chiorichan.permission.structure.Permission;
 
-import com.chiorichan.configuration.ConfigurationSection;
-
-public class FileGroup extends ProxyPermissionGroup
+public class FileGroup extends PermissibleGroupProxy
 {
-	protected ConfigurationSection node;
-	
-	public FileGroup(String name, PermissionManager manager, FileBackend backend)
+	public FileGroup( String name, FileBackend backend )
 	{
-		super( new FileEntity( name, manager, backend, "groups" ) );
-		
-		this.node = ( (FileEntity) this.backendEntity ).getConfigNode();
+		super( name, backend );
 	}
 	
 	@Override
-	public String[] getParentGroupsNamesImpl( String siteName )
+	public boolean isPermissionSet( String req )
 	{
-		List<String> parents = this.node.getStringList( FileEntity.formatPath( siteName, "inheritance" ) );
-		
-		if ( parents.isEmpty() )
-		{
-			return new String[0];
-		}
-		
-		return parents.toArray( new String[parents.size()] );
+		return false;
 	}
 	
 	@Override
-	public void setParentGroups( String[] parentGroups, String siteName )
+	public boolean isPermissionSet( Permission req )
 	{
-		if ( parentGroups == null )
-		{
-			return;
-		}
+		return false;
+	}
+	
+	@Override
+	public boolean hasPermission( String req )
+	{
+		return false;
+	}
+	
+	@Override
+	public boolean hasPermission( Permission req )
+	{
+		return false;
+	}
+	
+	@Override
+	public boolean isOp()
+	{
+		return false;
+	}
+	
+	@Override
+	public String getPrefix( String siteName )
+	{
+		return null;
+	}
+	
+	@Override
+	public void setPrefix( String prefix, String siteName )
+	{
 		
-		this.node.set( FileEntity.formatPath( siteName, "inheritance" ), Arrays.asList( parentGroups ) );
+	}
+	
+	@Override
+	public String getSuffix( String siteName )
+	{
+		return null;
+	}
+	
+	@Override
+	public void setSuffix( String suffix, String siteName )
+	{
 		
-		this.save();
+	}
+	
+	@Override
+	public String[] getPermissions( String site )
+	{
+		return null;
+	}
+	
+	@Override
+	public Map<String, String[]> getAllPermissions()
+	{
+		return null;
+	}
+	
+	@Override
+	public void save()
+	{
 		
-		// this.callEvent(PermissionEntityEvent.Action.INHERITANCE_CHANGED);
+	}
+	
+	@Override
+	public void remove()
+	{
+		
+	}
+	
+	@Override
+	public String[] getSites()
+	{
+		return null;
 	}
 }

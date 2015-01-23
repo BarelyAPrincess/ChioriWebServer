@@ -91,8 +91,13 @@ public class PermissionManager implements TaskCreator
 	public void loadData()
 	{
 		groups.clear();
+		entities.clear();
+		
 		for ( PermissibleGroup group : backend.getGroups() )
 			groups.put( group.getName(), group );
+		for ( PermissibleEntity entity : backend.getEntities() )
+			entities.put( entity.getName(), entity );
+		backend.loadPermissionTree();
 	}
 	
 	/**
@@ -169,7 +174,6 @@ public class PermissionManager implements TaskCreator
 			entity = this.backend.getEntity( entityname );
 			if ( entity != null )
 			{
-				entity.initialize();
 				this.entities.put( entityname.toLowerCase(), entity );
 			}
 			else
@@ -235,7 +239,6 @@ public class PermissionManager implements TaskCreator
 			group = this.backend.getGroup( groupname );
 			if ( group != null )
 			{
-				group.initialize();
 				this.groups.put( groupname.toLowerCase(), group );
 			}
 			else

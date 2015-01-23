@@ -13,6 +13,7 @@ import org.gradle.jarjar.com.google.common.collect.Sets;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
+import com.chiorichan.framework.Site;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.PermissionBackend;
@@ -20,10 +21,18 @@ import com.chiorichan.permission.PermissionBackendException;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.backend.sql.SQLEntity;
 import com.chiorichan.permission.backend.sql.SQLGroup;
+import com.chiorichan.permission.structure.ChildPermission;
+import com.chiorichan.permission.structure.Permission;
+import com.chiorichan.permission.structure.PermissionValue;
+import com.chiorichan.permission.structure.PermissionValueBoolean;
+import com.chiorichan.permission.structure.PermissionValueEnum;
+import com.chiorichan.permission.structure.PermissionValueInt;
+import com.chiorichan.permission.structure.PermissionValueVar;
 import com.google.common.collect.Maps;
 
 /**
  * @author Chiori Greene
+ * @email chiorigreene@gmail.com
  */
 public class SQLBackend extends PermissionBackend
 {
@@ -203,10 +212,68 @@ public class SQLBackend extends PermissionBackend
 		
 		return groups.toArray( new PermissibleGroup[0] );
 	}
-
+	
 	@Override
 	public void reload()
 	{
 		
+	}
+	
+	@Override
+	public void loadPermissionTree()
+	{
+		try
+		{
+			ResultSet result = getSQL().query( "SELECT * FROM `permissions`" );
+			
+			if ( result.next() )
+				do
+				{
+					Permission perm = Permission.crawlPermissionStack( result.getString( "permission" ).toLowerCase(), true );
+					
+					switch ( result.getString( "type" ) )
+					{
+						case "BOOL":
+							perm.setValue( new PermissionValueBoolean( result.getBoolean( "value" ) ) );
+							break;
+						case "ENUM":
+							perm.setValue( new PermissionValueEnum( result.getString( "value" ), result.getInt( "maxlen" ), result.getString( "enum" ) ) );
+							break;
+						case "VAR":
+							perm.setValue( new PermissionValueVar( result.getString( "value" ), result.getInt( "maxlen" ) ) );
+							break;
+						case "INT":
+							perm.setValue( new PermissionValueInt( result.getInt( "value" ) ) );
+							break;
+					}
+					
+					perm.setDescription( result.getString( "description" ) );
+				}
+				while( result.next() );
+			
+			result = getSQL().query( "SELECT * FROM `permissions_entity`" );
+			
+			if ( result.next() )
+				do
+				{
+					PermissibleEntity entity;
+					if ( result.getInt( "type" ) == ENTITY )
+						entity = Loader.getPermissionsManager().getEntity( result.getString( "owner" ) );
+					else
+						entity = Loader.getPermissionsManager().getGroup( result.getString( "owner" ) );
+					
+					Permission perm = Permission.crawlPermissionStack( result.getString( "permission" ).toLowerCase(), true );
+					
+					List<Site> sites = Loader.getSiteManager().parseSites( result.getString( "sites" ) );
+					PermissionValue value = perm.getValue().createChild( result.getObject( "value" ) );
+					
+					entity.attachPermission( new ChildPermission( perm, sites, value ) );
+				}
+				while( result.next() );
+		}
+		catch( SQLException e )
+		{
+			throw new RuntimeException( e );
+		}
 	}
 }

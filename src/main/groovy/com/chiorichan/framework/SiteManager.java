@@ -24,6 +24,7 @@ import com.chiorichan.Loader;
 import com.chiorichan.StartupException;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.util.FileUtil;
+import com.google.common.collect.Lists;
 
 public class SiteManager
 {
@@ -55,7 +56,7 @@ public class SiteManager
 			{
 				FileUtil.putResource( "com/chiorichan/default-site.yaml", defaultSite );
 			}
-			catch ( IOException e )
+			catch( IOException e )
 			{
 				e.printStackTrace();
 			}
@@ -76,7 +77,7 @@ public class SiteManager
 						siteMap.put( site.siteId, site );
 					}
 				}
-				catch ( SiteException e )
+				catch( SiteException e )
 				{
 					Loader.getLogger().warning( "Exception encountered while loading a site from YAML FileBase, Reason: " + e.getMessage() );
 					if ( e.getCause() != null )
@@ -104,7 +105,7 @@ public class SiteManager
 								siteMap.put( site.siteId, site );
 							}
 						}
-						catch ( SiteException e )
+						catch( SiteException e )
 						{
 							Loader.getLogger().severe( "Exception encountered while loading a site from SQL DataBase, Reason: " + e.getMessage() );
 							if ( e.getCause() != null )
@@ -112,10 +113,10 @@ public class SiteManager
 						}
 						
 					}
-					while ( rs.next() );
+					while( rs.next() );
 				}
 			}
-			catch ( SQLException e )
+			catch( SQLException e )
 			{
 				Loader.getLogger().warning( "Exception encountered while loading a sites from Database", e );
 			}
@@ -211,5 +212,25 @@ public class SiteManager
 			return "The only available site types are 'sql' and 'file'. '" + type + "' was not a valid option.";
 		
 		return "";
+	}
+	
+	public List<Site> parseSites( String sites )
+	{
+		return parseSites( sites, "|" );
+	}
+	
+	public List<Site> parseSites( String sites, String regExSplit )
+	{
+		List<Site> siteList = Lists.newArrayList();
+		String[] sitesArray = sites.split( regExSplit );
+		
+		for ( String siteId : sitesArray )
+		{
+			Site site = getSiteById( siteId );
+			if ( site != null )
+				siteList.add( site );
+		}
+		
+		return siteList;
 	}
 }
