@@ -14,17 +14,23 @@ public abstract class PermissionValue<Type>
 		return value;
 	}
 	
+	@Override
+	public String toString()
+	{
+		return "[type=" + getType() + ",value=" + getValue() + "]";
+	}
+	
 	public PermissionType getType()
 	{
 		switch ( this.getClass().getSimpleName() )
 		{
-			case "PermissionBoolean":
+			case "PermissionValueBoolean":
 				return PermissionType.BOOL;
-			case "PermissionEnum":
+			case "PermissionValueEnum":
 				return PermissionType.ENUM;
-			case "PermissionVar":
+			case "PermissionValueVar":
 				return PermissionType.VAR;
-			case "PermissionInt":
+			case "PermissionValueInt":
 				return PermissionType.INT;
 			default:
 				return PermissionType.UNKNOWN;

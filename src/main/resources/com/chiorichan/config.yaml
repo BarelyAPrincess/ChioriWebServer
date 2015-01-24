@@ -31,6 +31,7 @@ plugins:
 permissions:
   backend: file
   file: permissions.yml
+  debug: false
 settings:
   update-folder: update
   deprecated-verbose: default

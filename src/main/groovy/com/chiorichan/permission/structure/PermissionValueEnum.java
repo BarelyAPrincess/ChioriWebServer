@@ -31,6 +31,12 @@ public class PermissionValueEnum extends PermissionValue<String>
 	}
 	
 	@Override
+	public String toString()
+	{
+		return "[type=" + getType() + ",value=" + getValue() + ",enumList=" + enumList + ",maxlen=" + maxLen + "]";
+	}
+	
+	@Override
 	public PermissionValue createChild( Object val )
 	{
 		try

@@ -102,6 +102,11 @@ public final class Permission
 		}
 	}
 	
+	public boolean hasChildren()
+	{
+		return children.size() > 0;
+	}
+	
 	public Permission[] getChildren()
 	{
 		return children.toArray( new Permission[0] );
@@ -198,6 +203,8 @@ public final class Permission
 			else
 				return null;
 		
+		Loader.getLogger().debug( curr + " " + curr.hashCode() );
+		
 		if ( nodes.length == 1 )
 			return curr;
 		
@@ -224,7 +231,7 @@ public final class Permission
 	
 	public String toString()
 	{
-		return "Permission[name=" + getName() + ",parent=" + getParent() + "]";
+		return "Permission[name=" + getName() + ",parent=" + getParent() + ( ( value != null ) ? ",value=" + value.toString() : "" ) + "]";
 	}
 	
 	public static Set<Permission> getRootNodes()
@@ -238,7 +245,10 @@ public final class Permission
 	
 	public void debugPermissionStack( int deepth )
 	{
-		Loader.getLogger().info( Strings.repeat( "-->", deepth ) + getName() );
+		if ( value == null )
+			Loader.getLogger().info( Strings.repeat( "-->", deepth ) + getName() );
+		else
+			Loader.getLogger().info( Strings.repeat( "-->", deepth ) + getName() + "=" + value.toString() );
 		
 		deepth++;
 		for ( Permission p : children )

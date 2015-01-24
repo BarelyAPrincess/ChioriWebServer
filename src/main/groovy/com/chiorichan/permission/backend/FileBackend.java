@@ -298,10 +298,10 @@ public class FileBackend extends PermissionBackend
 							perm.setValue( new PermissionValueBoolean( result.getBoolean( "value" ) ) );
 							break;
 						case "ENUM":
-							perm.setValue( new PermissionValueEnum( result.getString( "value" ), result.getInt( "maxlen" ), result.getString( "enum" ) ) );
+							perm.setValue( new PermissionValueEnum( result.getString( "value", "" ), result.getInt( "maxlen", -1 ), result.getString( "enum", "" ) ) );
 							break;
 						case "VAR":
-							perm.setValue( new PermissionValueVar( result.getString( "value" ), result.getInt( "maxlen" ) ) );
+							perm.setValue( new PermissionValueVar( result.getString( "value", "" ), result.getInt( "maxlen", -1 ) ) );
 							break;
 						case "INT":
 							perm.setValue( new PermissionValueInt( result.getInt( "value" ) ) );

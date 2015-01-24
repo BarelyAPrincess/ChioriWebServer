@@ -34,9 +34,9 @@ public class PermissionManager implements TaskCreator
 	public void init() throws PermissionBackendException
 	{
 		config = Loader.getConfig();
+		debugMode = config.getBoolean( "permissions.debug", debugMode );
 		
 		initBackend();
-		debugMode = config.getBoolean( "permissions.debug", debugMode );
 	}
 	
 	private void initBackend() throws PermissionBackendException
@@ -104,7 +104,7 @@ public class PermissionManager implements TaskCreator
 			Loader.getLogger().info( "Debugging permissions stack!" );
 			for ( Permission root : Permission.getRootNodes() )
 			{
-				root.debugPermissionStack( 1 );
+				root.debugPermissionStack( 0 );
 			}
 		}
 	}

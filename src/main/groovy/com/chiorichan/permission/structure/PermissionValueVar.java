@@ -18,6 +18,12 @@ public class PermissionValueVar extends PermissionValue<String>
 	}
 	
 	@Override
+	public String toString()
+	{
+		return "[type=" + getType() + ",value=" + getValue() + ",maxlen=" + maxLen + "]";
+	}
+	
+	@Override
 	public PermissionValue createChild( Object val )
 	{
 		try
