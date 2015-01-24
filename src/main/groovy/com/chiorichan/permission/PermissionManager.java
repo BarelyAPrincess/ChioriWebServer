@@ -98,6 +98,15 @@ public class PermissionManager implements TaskCreator
 		for ( PermissibleEntity entity : backend.getEntities() )
 			entities.put( entity.getName(), entity );
 		backend.loadPermissionTree();
+		
+		if ( isDebug() )
+		{
+			Loader.getLogger().info( "Debugging permissions stack!" );
+			for ( Permission root : Permission.getRootNodes() )
+			{
+				root.debugPermissionStack( 1 );
+			}
+		}
 	}
 	
 	/**

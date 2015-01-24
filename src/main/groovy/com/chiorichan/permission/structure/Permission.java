@@ -6,6 +6,8 @@ import java.util.Set;
 
 import org.gradle.jarjar.com.google.common.collect.Sets;
 
+import com.chiorichan.Loader;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 
 public final class Permission
@@ -24,9 +26,9 @@ public final class Permission
 		isRootNode = rootNode;
 	}
 	
-	public Permission( String name, Permission parentNode )
+	public Permission( String _name, Permission parentNode )
 	{
-		name = name.toLowerCase();
+		name = _name.toLowerCase();
 		parent = parentNode;
 		allPerms.add( this );
 	}
@@ -218,5 +220,30 @@ public final class Permission
 		}
 		
 		return curr;
+	}
+	
+	public String toString()
+	{
+		return "Permission[name=" + getName() + ",parent=" + getParent() + "]";
+	}
+	
+	public static Set<Permission> getRootNodes()
+	{
+		Set<Permission> rootNodes = Sets.newHashSet();
+		for ( Permission p : allPerms )
+			if ( p.isRootNode )
+				rootNodes.add( p );
+		return rootNodes;
+	}
+	
+	public void debugPermissionStack( int deepth )
+	{
+		Loader.getLogger().info( Strings.repeat( "-->", deepth ) + getName() );
+		
+		deepth++;
+		for ( Permission p : children )
+		{
+			p.debugPermissionStack( deepth );
+		}
 	}
 }

@@ -18,7 +18,7 @@ public abstract class PermissionBackend
 	public final static int GROUP = 1;
 	public final static int ENTITY = 0;
 	
-	protected final static String defaultBackend = "memory";
+	protected final static String defaultBackend = "file";
 	
 	/**
 	 * Backend initialization should be done here

@@ -29,6 +29,7 @@ plugins:
   useTimings: true
   allowQuery: false
 permissions:
+  backend: file
   file: permissions.yml
 settings:
   update-folder: update

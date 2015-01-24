@@ -17,12 +17,21 @@ import com.chiorichan.Loader;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.configuration.file.FileConfiguration;
 import com.chiorichan.configuration.file.YamlConfiguration;
+import com.chiorichan.framework.Site;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.PermissionBackend;
 import com.chiorichan.permission.PermissionBackendException;
+import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.backend.file.FileEntity;
 import com.chiorichan.permission.backend.file.FileGroup;
+import com.chiorichan.permission.structure.ChildPermission;
+import com.chiorichan.permission.structure.Permission;
+import com.chiorichan.permission.structure.PermissionValue;
+import com.chiorichan.permission.structure.PermissionValueBoolean;
+import com.chiorichan.permission.structure.PermissionValueEnum;
+import com.chiorichan.permission.structure.PermissionValueInt;
+import com.chiorichan.permission.structure.PermissionValueVar;
 
 public class FileBackend extends PermissionBackend
 {
@@ -38,12 +47,12 @@ public class FileBackend extends PermissionBackend
 	@Override
 	public void initialize() throws PermissionBackendException
 	{
-		String permissionFilename = Loader.getConfig().getString( "permissions.backends.file.file" );
+		String permissionFilename = Loader.getConfig().getString( "permissions.file" );
 		
 		if ( permissionFilename == null )
 		{
 			permissionFilename = "permissions.yml";
-			Loader.getConfig().set( "permissions.backends.file.file", "permissions.yml" );
+			Loader.getConfig().set( "permissions.file", "permissions.yml" );
 		}
 		
 		File baseDirectory = Loader.getRoot();
@@ -195,7 +204,7 @@ public class FileBackend extends PermissionBackend
 			
 			newPermissions.load( permissionsFile );
 			
-			Logger.getLogger( "PermissionsEx" ).info( "Permissions file successfully reloaded" );
+			PermissionManager.getLogger().info( "Permissions file successfully loaded" );
 			
 			permissions = newPermissions;
 		}
@@ -226,12 +235,10 @@ public class FileBackend extends PermissionBackend
 			{
 				permissionsFile.createNewFile();
 				
-				// Load default permissions
 				permissions.set( "groups/default/default", true );
 				
 				List<String> defaultPermissions = new LinkedList<String>();
-				// Specify here default permissions
-				defaultPermissions.add( "modifysite.*" );
+				defaultPermissions.add( "com.chiorichan.*" );
 				
 				permissions.set( "groups/default/permissions", defaultPermissions );
 				
@@ -261,16 +268,104 @@ public class FileBackend extends PermissionBackend
 	{
 		return new PermissibleEntity[0];
 	}
-
+	
 	@Override
 	public Set<String> getEntityNames( int type )
 	{
-		return Sets.newHashSet();
+		ConfigurationSection section = permissions.getConfigurationSection( (type == 1) ? "groups" : "entities" );
+		
+		if ( section == null )
+			return Sets.newHashSet();
+		
+		return section.getKeys( false );
 	}
 	
 	@Override
 	public void loadPermissionTree()
 	{
+		ConfigurationSection section = permissions.getConfigurationSection( "permissions" );
 		
+		if ( section != null )
+			for ( String s : section.getKeys( false ) )
+			{
+				ConfigurationSection result = section.getConfigurationSection( s );
+				Permission perm = Permission.crawlPermissionStack( s.toLowerCase(), true );
+				
+				if ( result.getString( "type" ) != null )
+					switch ( result.getString( "type" ) )
+					{
+						case "BOOL":
+							perm.setValue( new PermissionValueBoolean( result.getBoolean( "value" ) ) );
+							break;
+						case "ENUM":
+							perm.setValue( new PermissionValueEnum( result.getString( "value" ), result.getInt( "maxlen" ), result.getString( "enum" ) ) );
+							break;
+						case "VAR":
+							perm.setValue( new PermissionValueVar( result.getString( "value" ), result.getInt( "maxlen" ) ) );
+							break;
+						case "INT":
+							perm.setValue( new PermissionValueInt( result.getInt( "value" ) ) );
+							break;
+					}
+				
+				if ( result.getString( "description" ) != null )
+					perm.setDescription( result.getString( "description" ) );
+			}
+		
+		section = permissions.getConfigurationSection( "entities" );
+		
+		if ( section != null )
+			for ( String s : section.getKeys( false ) )
+			{
+				PermissibleEntity entity = Loader.getPermissionsManager().getEntity( s );
+				
+				ConfigurationSection result = section.getConfigurationSection( s );
+				ConfigurationSection permissions = result.getConfigurationSection( "permissions" );
+				
+				for ( String ss : permissions.getKeys( false ) )
+				{
+					ConfigurationSection permission = section.getConfigurationSection( ss );
+					if ( permission != null && permission.getString( "permission" ) != null )
+					{
+						Permission perm = Permission.crawlPermissionStack( permission.getString( "permission" ).toLowerCase(), true );
+						
+						List<Site> sites = Loader.getSiteManager().parseSites( (permission.getString( "sites" ) == null) ? "" : permission.getString( "sites" ) );
+						
+						PermissionValue value = null;
+						if ( permission.getString( "value" ) != null )
+							value = perm.getValue().createChild( permission.getString( "value" ) );
+						
+						entity.attachPermission( new ChildPermission( perm, sites, value ) );
+					}
+				}
+			}
+		
+		section = permissions.getConfigurationSection( "groups" );
+		
+		if ( section != null )
+			for ( String s : section.getKeys( false ) )
+			{
+				ConfigurationSection result = section.getConfigurationSection( s );
+				
+				PermissibleEntity group = Loader.getPermissionsManager().getGroup( s );
+				
+				ConfigurationSection permissions = result.getConfigurationSection( "permissions" );
+				
+				if ( permissions != null )
+					for ( String ss : permissions.getKeys( false ) )
+					{
+						ConfigurationSection permission = section.getConfigurationSection( ss );
+						
+						Permission perm = Permission.crawlPermissionStack( permission.getString( "permission" ).toLowerCase(), true );
+						
+						List<Site> sites = Loader.getSiteManager().parseSites( (permission.getString( "sites" ) == null) ? "" : permission.getString( "sites" ) );
+						
+						PermissionValue value = null;
+						if ( permission.getString( "value" ) != null )
+							value = perm.getValue().createChild( permission.getString( "value" ) );
+						
+						group.attachPermission( new ChildPermission( perm, sites, value ) );
+					}
+			}
 	}
 }
