@@ -52,6 +52,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 	private HttpRequestWrapper request;
 	private HttpResponseWrapper response;
 	private HttpPostRequestDecoder decoder;
+	private static DirectoryInterpreter dirInter = new DirectoryInterpreter();
 	private static final HttpDataFactory factory = new DefaultHttpDataFactory( DefaultHttpDataFactory.MINSIZE );
 	
 	static
@@ -105,7 +106,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 			
 			Site currentSite = request.getSite();
 			
-			File tmpFileDirectory = ( currentSite != null ) ? currentSite.getTempFileDirectory() : Loader.getTempFileDirectory();
+			File tmpFileDirectory = (currentSite != null) ? currentSite.getTempFileDirectory() : Loader.getTempFileDirectory();
 			if ( !tmpFileDirectory.exists() )
 				tmpFileDirectory.mkdirs();
 			if ( !tmpFileDirectory.isDirectory() )
@@ -125,7 +126,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 			{
 				decoder = new HttpPostRequestDecoder( factory, requestOrig );
 			}
-			catch ( ErrorDataDecoderException e )
+			catch( ErrorDataDecoderException e )
 			{
 				e.printStackTrace();
 				response.sendException( e );
@@ -144,7 +145,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 				{
 					decoder.offer( chunk );
 				}
-				catch ( ErrorDataDecoderException e )
+				catch( ErrorDataDecoderException e )
 				{
 					e.printStackTrace();
 					response.sendError( e );
@@ -167,12 +168,12 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 		{
 			handleHttp( request, response );
 		}
-		catch ( HttpErrorException e )
+		catch( HttpErrorException e )
 		{
 			response.sendError( e );
 			return;
 		}
-		catch ( IndexOutOfBoundsException | NullPointerException | IOException | SiteException e )
+		catch( IndexOutOfBoundsException | NullPointerException | IOException | SiteException e )
 		{
 			/**
 			 * TODO!!! Proper Exception Handling. Consider the ability to have these exceptions cached and/or delivered by e-mail.
@@ -188,7 +189,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 				response.sendException( e );
 			}
 		}
-		catch ( Exception e )
+		catch( Exception e )
 		{
 			/**
 			 * XXX Temporary way of capturing exceptions that were unexpected by the server.
@@ -206,7 +207,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 				sess.onFinished();
 			}
 		}
-		catch ( Exception e )
+		catch( Exception e )
 		{
 			e.printStackTrace();
 		}
@@ -230,7 +231,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 	{
 		try
 		{
-			while ( decoder.hasNext() )
+			while( decoder.hasNext() )
 			{
 				InterfaceHttpData data = decoder.next();
 				if ( data != null )
@@ -247,7 +248,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 				}
 			}
 		}
-		catch ( EndOfDataDecoderException e )
+		catch( EndOfDataDecoderException e )
 		{
 			// END OF CONTENT
 		}
@@ -263,7 +264,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 			{
 				value = attribute.getValue();
 			}
-			catch ( IOException e )
+			catch( IOException e )
 			{
 				e.printStackTrace();
 				response.sendException( e );
@@ -281,7 +282,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 				{
 					request.putUpload( fileUpload.getName(), new UploadedFile( fileUpload.getFile(), fileUpload.getFilename(), fileUpload.length(), "File upload was successful!" ) );
 				}
-				catch ( IOException e )
+				catch( IOException e )
 				{
 					e.printStackTrace();
 					response.sendException( e );
@@ -324,7 +325,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 		{
 			Loader.getEventBus().callEventWithException( requestEvent );
 		}
-		catch ( EventException ex )
+		catch( EventException ex )
 		{
 			throw new IOException( "Exception encountered during request event call, most likely the fault of a plugin.", ex );
 		}
@@ -354,6 +355,12 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 		
 		Loader.getLogger().info( "Request '" + subdomain + "." + domain + "' '" + uri + "' '" + fi.toString() + "'" );
 		
+		if ( fi.isDirectoryRequest )
+		{
+			dirInter.processDirectoryListing( this, fi );
+			return;
+		}
+		
 		request.putRewriteParams( fi.getRewriteParams() );
 		
 		response.setContentType( fi.getContentType() );
@@ -377,7 +384,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 		if ( !file.isEmpty() )
 		{
 			if ( currentSite.protectCheck( file ) )
-				throw new HttpErrorException( 401, "Loading of this page (" + file + ") is not allowed since its hard protected in the site configs." );
+				throw new HttpErrorException( 401, "Loading of this page (" + file + ") is not allowed since its hard protected in the configs." );
 			
 			requestFile = new File( docRoot, file );
 			sess.setGlobal( "__FILE__", requestFile );
@@ -420,7 +427,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 				// TODO: Come up with a better way to handle the URI used in the target. ie. Params are lost.
 				return;
 			}
-			else if ( !req.equals( "1" ))// XXX && !sess.getParentSession().getAccount().hasPermission( req ) )
+			else if ( !req.equals( "1" ) )// XXX && !sess.getParentSession().getAccount().hasPermission( req ) )
 			{
 				if ( req.equals( "0" ) )
 					response.sendError( 401, "This page is limited to Operators only!" );
@@ -442,7 +449,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 				source.append( factory.eval( html, meta, currentSite ) );
 			}
 		}
-		catch ( ShellExecuteException e )
+		catch( ShellExecuteException e )
 		{
 			throw new IOException( "Exception encountered during shell execution of requested file.", e );
 		}
@@ -458,7 +465,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 				source.append( factory.eval( fi, meta, currentSite ) );
 			}
 		}
-		catch ( ShellExecuteException e )
+		catch( ShellExecuteException e )
 		{
 			throw new IOException( "Exception encountered during shell execution of requested file.", e );
 		}
@@ -467,14 +474,14 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 		// if the connection was in a MultiPart mode, wait for the mode to change then return gracefully.
 		if ( response.stage == HttpResponseStage.MULTIPART )
 		{
-			while ( response.stage == HttpResponseStage.MULTIPART )
+			while( response.stage == HttpResponseStage.MULTIPART )
 			{
 				// I wonder if there is a better way to handle an on going multipart response.
 				try
 				{
 					Thread.sleep( 100 );
 				}
-				catch ( InterruptedException e )
+				catch( InterruptedException e )
 				{
 					throw new HttpErrorException( 500, "Internal Server Error encountered during multipart execution." );
 				}
@@ -501,11 +508,21 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 			if ( renderEvent.sourceChanged() )
 				source = new StringBuilder( renderEvent.getSource() );
 		}
-		catch ( EventException ex )
+		catch( EventException ex )
 		{
 			throw new IOException( "Exception encountered during render event call, most likely the fault of a plugin.", ex );
 		}
 		
 		response.getOutput().write( source.toString().getBytes( fi.getEncoding() ) );
+	}
+	
+	protected HttpRequestWrapper getRequest()
+	{
+		return request;
+	}
+	
+	protected HttpResponseWrapper getResponse()
+	{
+		return response;
 	}
 }

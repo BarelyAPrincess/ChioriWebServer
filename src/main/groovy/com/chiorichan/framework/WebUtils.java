@@ -262,7 +262,7 @@ public class WebUtils
 			sb.append( "</tr>\n" );
 		}
 		
-		int colLength = headerArray.size();
+		int colLength = ( headerArray != null ) ? headerArray.size() : tableData.size();
 		for ( Object row : tableData.values() )
 		{
 			if ( row instanceof Map )

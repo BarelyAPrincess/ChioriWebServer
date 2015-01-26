@@ -85,6 +85,9 @@ public class ContentTypes
 	
 	public static String getContentType( File file )
 	{
+		if ( file.isDirectory() )
+			return "directory";
+		
 		String[] exts = file.getName().split( "\\." );
 		String ext = exts[exts.length - 1];
 		

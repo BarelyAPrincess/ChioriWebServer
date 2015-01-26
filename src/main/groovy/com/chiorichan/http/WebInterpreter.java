@@ -25,6 +25,7 @@ import com.google.common.collect.Maps;
 public class WebInterpreter extends FileInterpreter
 {
 	protected Map<String, String> rewriteParams = Maps.newTreeMap();
+	protected boolean isDirectoryRequest = false;
 	
 	@Override
 	public String toString()
@@ -116,8 +117,7 @@ public class WebInterpreter extends FileInterpreter
 					dest = new File( request.getSite().getAbsoluteRoot( subdomain ), uri );
 				}
 				else if ( Loader.getConfig().getBoolean( "server.allowDirectoryListing" ) )
-					// TODO: Implement Directory Listings
-					throw new HttpErrorException( 403, "Sorry, Directory Listing has not been implemented on this Server!" );
+					isDirectoryRequest = true;
 				else
 					throw new HttpErrorException( 403, "Directory Listing is Disallowed on this Server!" );
 			}
@@ -195,5 +195,10 @@ public class WebInterpreter extends FileInterpreter
 	public Map<String, String> getRewriteParams()
 	{
 		return rewriteParams;
+	}
+	
+	public boolean isDirectoryRequest()
+	{
+		return isDirectoryRequest;
 	}
 }

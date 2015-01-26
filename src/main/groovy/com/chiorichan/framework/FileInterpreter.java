@@ -56,7 +56,7 @@ public class FileInterpreter
 		if ( overrides.length() > 1 )
 			overrides = overrides.substring( 1 );
 		
-		String cachedFileStr = ( cachedFile == null ) ? "N/A" : cachedFile.getAbsolutePath();
+		String cachedFileStr = (cachedFile == null) ? "N/A" : cachedFile.getAbsolutePath();
 		
 		return "FileInterpreter{content=" + bs.size() + " bytes,file=" + cachedFileStr + ",overrides={" + overrides + "}}";
 	}
@@ -81,7 +81,7 @@ public class FileInterpreter
 		interpParams.put( "encoding", encoding );
 	}
 	
-	public FileInterpreter(File file) throws IOException
+	public FileInterpreter( File file ) throws IOException
 	{
 		this();
 		
@@ -112,96 +112,103 @@ public class FileInterpreter
 			
 			interpParams.put( "file", file.getAbsolutePath() );
 			
-			if ( !interpParams.containsKey( "shell" ) || interpParams.get( "shell" ) == null )
-			{
-				String shell = determineShellFromName( file.getName() );
-				if ( shell != null && shell != "" )
-					interpParams.put( "shell", shell );
+			if ( file.isDirectory() )
+			{	
+				interpParams.put( "shell", "embedded" );
 			}
-			
-			is = new FileInputStream( file );
-			
-			bs = FileUtil.inputStream2ByteArray( is );
-			
-			ByteArrayOutputStream finished = new ByteArrayOutputStream();
-			String[] scanner = new String( bs.toByteArray() ).split( "\\n" );
-			
-			int inx = 0;
-			int ln = 0;
-			for ( String l : scanner )
+			else
 			{
-				if ( l.trim().startsWith( "@" ) )
-					try
-					{
-						/* Only solution I could think of for CSS files since they use @annotations too, so we share them. */
-						if ( ContentTypes.getContentType( file ).toLowerCase().contains( "css" ) )
-							finished.write( ( l + "\n" ).getBytes( encoding ) );
-						/* Only solution I could think of for CSS files since they use @annotations too, so we share them. */
-						
-						String key;
-						String val = "";
-						
-						if ( l.contains( " " ) )
-						{
-							key = l.trim().substring( 1, l.trim().indexOf( " " ) );
-							val = l.trim().substring( l.trim().indexOf( " " ) + 1 );
-						}
-						else
-							key = l;
-						
-						if ( val.endsWith( ";" ) )
-							val = val.substring( 0, val.length() - 1 );
-						
-						if ( val.startsWith( "'" ) && val.endsWith( "'" ) )
-							val = val.substring( 1, val.length() - 1 );
-						
-						interpParams.put( key.toLowerCase(), val );
-						Loader.getLogger().finer( "Setting param '" + key + "' to '" + val + "'" );
-						
-						if ( key.equals( "encoding" ) )
-						{
-							try
-							{
-								l.getBytes( val ); // Test encoding before applying it.
-								setEncoding( val );
-							}
-							catch ( UnsupportedEncodingException e )
-							{
-								e.printStackTrace();
-							}
-						}
-					}
-					catch ( NullPointerException | ArrayIndexOutOfBoundsException e )
-					{	
-						
-					}
-				else if ( l.trim().isEmpty() )
-					Loader.getLogger().finest( "Continue reading, this line is empty." );
-				else
+				if ( !interpParams.containsKey( "shell" ) || interpParams.get( "shell" ) == null )
 				{
-					Loader.getLogger().finest( "We encountered the beginning of the file content. BREAK!" );
-					break;
+					String shell = determineShellFromName( file.getName() );
+					if ( shell != null && shell != "" )
+						interpParams.put( "shell", shell );
 				}
 				
-				inx += l.length() + 1;
-				ln++;
-			}
-			
-			for ( int lnn = 0; lnn < ln; lnn++ )
-			{
-				finished.write( "\n".getBytes( encoding ) );
-			}
-			
-			int h = 0;
-			for ( byte b : bs.toByteArray() )
-			{
-				h++;
+				is = new FileInputStream( file );
 				
-				if ( h > inx )
-					finished.write( b );
+				bs = FileUtil.inputStream2ByteArray( is );
+				
+				ByteArrayOutputStream finished = new ByteArrayOutputStream();
+				String[] scanner = new String( bs.toByteArray() ).split( "\\n" );
+				
+				int inx = 0;
+				int ln = 0;
+				for ( String l : scanner )
+				{
+					if ( l.trim().startsWith( "@" ) )
+						try
+						{
+							/* Only solution I could think of for CSS files since they use @annotations too, so we share them. */
+							if ( ContentTypes.getContentType( file ).toLowerCase().contains( "css" ) )
+								finished.write( (l + "\n").getBytes( encoding ) );
+							/* Only solution I could think of for CSS files since they use @annotations too, so we share them. */
+							
+							String key;
+							String val = "";
+							
+							if ( l.contains( " " ) )
+							{
+								key = l.trim().substring( 1, l.trim().indexOf( " " ) );
+								val = l.trim().substring( l.trim().indexOf( " " ) + 1 );
+							}
+							else
+								key = l;
+							
+							if ( val.endsWith( ";" ) )
+								val = val.substring( 0, val.length() - 1 );
+							
+							if ( val.startsWith( "'" ) && val.endsWith( "'" ) )
+								val = val.substring( 1, val.length() - 1 );
+							
+							interpParams.put( key.toLowerCase(), val );
+							Loader.getLogger().finer( "Setting param '" + key + "' to '" + val + "'" );
+							
+							if ( key.equals( "encoding" ) )
+							{
+								try
+								{
+									l.getBytes( val ); // Test encoding before applying it.
+									setEncoding( val );
+								}
+								catch( UnsupportedEncodingException e )
+								{
+									e.printStackTrace();
+								}
+							}
+						}
+						catch( NullPointerException | ArrayIndexOutOfBoundsException e )
+						{	
+							
+						}
+					else if ( l.trim().isEmpty() )
+						Loader.getLogger().finest( "Continue reading, this line is empty." );
+					else
+					{
+						Loader.getLogger().finest( "We encountered the beginning of the file content. BREAK!" );
+						break;
+					}
+					
+					inx += l.length() + 1;
+					ln++;
+				}
+				
+				for ( int lnn = 0; lnn < ln; lnn++ )
+				{
+					finished.write( "\n".getBytes( encoding ) );
+				}
+				
+				int h = 0;
+				for ( byte b : bs.toByteArray() )
+				{
+					h++;
+					
+					if ( h > inx )
+						finished.write( b );
+				}
+				
+				bs = finished;
 			}
-			
-			bs = finished;
 		}
 		finally
 		{
