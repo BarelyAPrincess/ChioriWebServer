@@ -20,6 +20,7 @@ import java.util.Map;
 
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 
+import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.StartupException;
 import com.chiorichan.database.DatabaseEngine;
@@ -79,7 +80,7 @@ public class SiteManager
 				}
 				catch( SiteException e )
 				{
-					Loader.getLogger().warning( "Exception encountered while loading a site from YAML FileBase, Reason: " + e.getMessage() );
+					getLogger().warning( "Exception encountered while loading a site from YAML FileBase, Reason: " + e.getMessage() );
 					if ( e.getCause() != null )
 						e.getCause().printStackTrace();
 				}
@@ -107,7 +108,7 @@ public class SiteManager
 						}
 						catch( SiteException e )
 						{
-							Loader.getLogger().severe( "Exception encountered while loading a site from SQL DataBase, Reason: " + e.getMessage() );
+							getLogger().severe( "Exception encountered while loading a site from SQL DataBase, Reason: " + e.getMessage() );
 							if ( e.getCause() != null )
 								e.getCause().printStackTrace();
 						}
@@ -118,7 +119,7 @@ public class SiteManager
 			}
 			catch( SQLException e )
 			{
-				Loader.getLogger().warning( "Exception encountered while loading a sites from Database", e );
+				getLogger().warning( "Exception encountered while loading a sites from Database", e );
 			}
 	}
 	
@@ -232,5 +233,10 @@ public class SiteManager
 		}
 		
 		return siteList;
+	}
+
+	public static ConsoleLogger getLogger()
+	{
+		return Loader.getLogger( "SiteMgr" );
 	}
 }

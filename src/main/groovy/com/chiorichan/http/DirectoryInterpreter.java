@@ -33,28 +33,37 @@ public class DirectoryInterpreter
 		StringBuilder sb = new StringBuilder();
 		SimpleDateFormat sdf = new SimpleDateFormat( "dd-MMM-yyyy HH:mm:ss" );
 		
+		sb.append( "<style>.altrowstable { border-spacing: 12px; }</style>" );
 		sb.append( "<h1>Index of " + http.getRequest().getURI() + "</h1>" );
 		
 		for ( File f : files )
 		{
 			List<String> l = Lists.newArrayList();
 			String type = ContentTypes.getContentType( f );
+			String mainType = (type.contains( "/" )) ? type.substring( 0, type.indexOf( "/" ) ) : type;
 			
-			l.add( "<img src=\"/fw/icons/" + type + "\" />" );
-			l.add( f.getName() );
+			l.add( "<img src=\"/fw/icons/" + mainType + "\" />" );
+			l.add( "<a href=\"" + http.getRequest().getURI() + "/" + f.getName() + "\">" + f.getName() + "</a>" );
 			l.add( sdf.format( f.lastModified() ) );
 			
-			InputStream stream = null;
-			try
+			if ( f.isDirectory() )
 			{
-				URL url = f.toURI().toURL();
-				stream = url.openStream();
-				l.add( String.valueOf( stream.available() ) + "kb" );
+				l.add( "-" );
 			}
-			finally
+			else
 			{
-				if ( stream != null )
-					stream.close();
+				InputStream stream = null;
+				try
+				{
+					URL url = f.toURI().toURL();
+					stream = url.openStream();
+					l.add( String.valueOf( stream.available() ) + "kb" );
+				}
+				finally
+				{
+					if ( stream != null )
+						stream.close();
+				}
 			}
 			
 			l.add( type );

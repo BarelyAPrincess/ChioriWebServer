@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2014 Chiori-chan. All Right Reserved.
- *
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -67,7 +66,7 @@ public class Site
 	Binding binding = new Binding();
 	CodeEvalFactory factory = CodeEvalFactory.create( binding );
 	
-	protected Site(File f) throws SiteException, StartupException
+	protected Site( File f ) throws SiteException, StartupException
 	{
 		siteType = SiteType.FILE;
 		filePath = f;
@@ -193,7 +192,7 @@ public class Site
 	}
 	
 	@SuppressWarnings( "unchecked" )
-	protected Site(ResultSet rs) throws SiteException, StartupException
+	protected Site( ResultSet rs ) throws SiteException, StartupException
 	{
 		siteType = SiteType.SQL;
 		
@@ -236,7 +235,7 @@ public class Site
 				if ( !rs.getString( "protected" ).isEmpty() )
 					protectedFiles.addAll( gson.fromJson( new JSONObject( rs.getString( "protected" ) ).toString(), ArrayList.class ) );
 			}
-			catch ( Exception e )
+			catch( Exception e )
 			{
 				Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'protected' field for site '" + siteId + "'" );
 			}
@@ -290,7 +289,7 @@ public class Site
 				if ( !rs.getString( "metatags" ).isEmpty() )
 					metatags.addAll( gson.fromJson( new JSONObject( rs.getString( "metatags" ) ).toString(), ArrayList.class ) );
 			}
-			catch ( Exception e )
+			catch( Exception e )
 			{
 				Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'metatags' field for site '" + siteId + "'" );
 			}
@@ -300,7 +299,7 @@ public class Site
 				if ( !rs.getString( "aliases" ).isEmpty() )
 					aliases = gson.fromJson( new JSONObject( rs.getString( "aliases" ) ).toString(), mapType );
 			}
-			catch ( Exception e )
+			catch( Exception e )
 			{
 				Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'aliases' field for site '" + siteId + "'" );
 			}
@@ -310,7 +309,7 @@ public class Site
 				if ( !rs.getString( "subdomains" ).isEmpty() )
 					subdomains = gson.fromJson( new JSONObject( rs.getString( "subdomains" ) ).toString(), mapType );
 			}
-			catch ( Exception e )
+			catch( Exception e )
 			{
 				Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'subdomains' field for site '" + siteId + "'" );
 			}
@@ -321,7 +320,7 @@ public class Site
 				InputStream is = new ByteArrayInputStream( yaml.getBytes( "ISO-8859-1" ) );
 				config = YamlConfiguration.loadConfiguration( is );
 			}
-			catch ( Exception e )
+			catch( Exception e )
 			{
 				Loader.getLogger().warning( "MALFORMED YAML EXPRESSION for 'configYaml' field for site '" + siteId + "'" );
 				config = new YamlConfiguration();
@@ -329,7 +328,7 @@ public class Site
 			
 			finishLoad();
 		}
-		catch ( SQLException e )
+		catch( SQLException e )
 		{
 			throw new SiteException( e );
 		}
@@ -365,7 +364,7 @@ public class Site
 				else
 					throw new SiteException( "The SqlConnector for site '" + siteId + "' can not support anything other then mySql or sqLite at the moment. Please change 'database.type' in the site config to 'mysql' or 'sqLite' and set the connection params." );
 			}
-			catch ( SQLException e )
+			catch( SQLException e )
 			{
 				if ( e.getCause() instanceof ConnectException )
 					throw new SiteException( "We had a problem connecting to database '" + database + "'. Reason: " + e.getCause().getMessage() );
@@ -393,7 +392,7 @@ public class Site
 						else
 							Loader.getLogger().info( "Finsihed evaling onLoadScript '" + script + "' for site '" + siteId + "' with result: " + result );
 					}
-					catch ( ShellExecuteException e )
+					catch( ShellExecuteException e )
 					{
 						Loader.getLogger().warning( "There was an exception encountered while evaling onLoadScript '" + script + "' for site '" + siteId + "'.", e );
 					}
@@ -407,7 +406,7 @@ public class Site
 		{
 			Loader.getEventBus().callEventWithException( event );
 		}
-		catch ( EventException e )
+		catch( EventException e )
 		{
 			throw new SiteException( e );
 		}
@@ -415,6 +414,9 @@ public class Site
 		// Plugins are not permitted to cancel the loading of the framework site
 		if ( event.isCancelled() && !siteId.equalsIgnoreCase( "framework" ) )
 			throw new SiteException( "Loading of site '" + siteId + "' was cancelled by an internal event." );
+		
+		if ( new File( getAbsoluteRoot(), "fw" ).exists() )
+			SiteManager.getLogger().warning( "It would appear that site '" + siteId + "' contains a subfolder by the name of 'fw', since this server uses the uri '/fw' for special functions, you will be unable to serve files from this folder!" );
 	}
 	
 	protected void save()
@@ -459,7 +461,7 @@ public class Site
 		return aliases;
 	}
 	
-	public Site(String id, String title0, String domain0)
+	public Site( String id, String title0, String domain0 )
 	{
 		siteId = id;
 		title = title0;
@@ -522,7 +524,7 @@ public class Site
 		{
 			return getAbsoluteRoot( null );
 		}
-		catch ( SiteException e )
+		catch( SiteException e )
 		{
 			return null;
 			// SiteException WILL NEVER THROW ON AN EMPTY SUBDOMAIN ARGUMENT. At least for now.
@@ -548,7 +550,7 @@ public class Site
 		{
 			return getRoot( null );
 		}
-		catch ( SiteException e )
+		catch( SiteException e )
 		{
 			return null;
 			// SiteException WILL NEVER THROW ON AN EMPTY SUBDOMAIN ARGUMENT. At least for now.
@@ -644,7 +646,7 @@ public class Site
 		{
 			return getResourceWithException( packageNode );
 		}
-		catch ( FileNotFoundException e )
+		catch( FileNotFoundException e )
 		{
 			Loader.getLogger().warning( e.getMessage() );
 			return null;
@@ -670,7 +672,7 @@ public class Site
 		if ( root.exists() && root.isDirectory() )
 		{
 			File[] files = root.listFiles();
-			String[] exts = new String[] { "html", "htm", "groovy", "gsp", "jsp", "chi" };
+			String[] exts = new String[] {"html", "htm", "groovy", "gsp", "jsp", "chi"};
 			
 			for ( File child : files )
 				if ( child.getName().startsWith( packFile.getName() ) )
@@ -688,7 +690,7 @@ public class Site
 		{
 			return readResourceWithException( pack );
 		}
-		catch ( ShellExecuteException e )
+		catch( ShellExecuteException e )
 		{
 			return "";
 		}
@@ -707,7 +709,7 @@ public class Site
 			
 			return factory.eval( file, this );
 		}
-		catch ( IOException e )
+		catch( IOException e )
 		{
 			throw new ShellExecuteException( e, codeMeta );
 		}
@@ -732,7 +734,7 @@ public class Site
 	{
 		return filePath;
 	}
-
+	
 	public void addToCachePatterns( String pattern )
 	{
 		if ( !cachePatterns.contains( pattern.toLowerCase() ) )
@@ -751,9 +753,10 @@ public class Site
 		
 		return routes;
 	}
-
+	
 	/**
 	 * TODO Make it so site config can change the location the the temp directory.
+	 * 
 	 * @return The temp directory for this site.
 	 */
 	public File getTempFileDirectory()
