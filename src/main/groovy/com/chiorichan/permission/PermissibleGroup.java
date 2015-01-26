@@ -20,7 +20,7 @@ public abstract class PermissibleGroup extends PermissibleEntity implements Comp
 	public void setWeight( int weight )
 	{
 		this.weight = weight;
-		Loader.getPermissionsManager().callEvent( new PermissibleEntityEvent( this, PermissibleEntityEvent.Action.WEIGHT_CHANGED ) );
+		Loader.getPermissionManager().callEvent( new PermissibleEntityEvent( this, PermissibleEntityEvent.Action.WEIGHT_CHANGED ) );
 	}
 	
 	@Override

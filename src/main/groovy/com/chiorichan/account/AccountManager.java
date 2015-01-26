@@ -14,6 +14,7 @@ import java.util.List;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.Validate;
 
+import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.StartupException;
 import com.chiorichan.account.AccountsKeeper.AccountsKeeperOptions;
@@ -76,11 +77,11 @@ public class AccountManager
 							throw new StartupException( "AccountLookupAdapter is configured with a SQL AccountLookupAdapter but the server is missing a valid SQL Database, which is required for this adapter." );
 						
 						accountLookupAdapter = new SqlAdapter();
-						Loader.getLogger().info( "Initiated Sql AccountLookupAdapter `" + accountLookupAdapter + "` with sql '" + Loader.getDatabase() + "'" );
+						getLogger().info( "Initiated Sql AccountLookupAdapter `" + accountLookupAdapter + "` with sql '" + Loader.getDatabase() + "'" );
 						break;
 					case "file":
 						accountLookupAdapter = new FileAdapter();
-						Loader.getLogger().info( "Initiated File AccountLookupAdapter `" + accountLookupAdapter + "`" );
+						getLogger().info( "Initiated File AccountLookupAdapter `" + accountLookupAdapter + "`" );
 						break;
 					case "shared":
 						if ( config.getString( "accounts.lookupAdapter.shareWith", null ) == null )
@@ -95,10 +96,10 @@ public class AccountManager
 							throw new StartupException( "The AccountLookupAdapter is configured to use '" + config.getString( "accounts.shareWith" ) + "''s database, but the found site has no Database configured." );
 						
 						accountLookupAdapter = new SqlAdapter( shared );
-						Loader.getLogger().info( "Initiated AccountLookupAdapter `" + accountLookupAdapter + "` to use '" + config.getString( "accounts.shareWith" ) + "''s database." );
+						getLogger().info( "Initiated AccountLookupAdapter `" + accountLookupAdapter + "` to use '" + config.getString( "accounts.shareWith" ) + "''s database." );
 						break;
 					default: // TODO Create custom AccountLookupAdapters.
-						Loader.getLogger().warning( "The Accounts Manager is unconfigured. We will be unable to login any accounts. See config option 'accounts.lookupAdapter.type' in server config file." );
+						getLogger().warning( "The Accounts Manager is unconfigured. We will be unable to login any accounts. See config option 'accounts.lookupAdapter.type' in server config file." );
 				}
 			}
 			catch( LookupAdapterException e )
@@ -318,7 +319,7 @@ public class AccountManager
 		}
 		catch( LoginException e )
 		{
-			Loader.getLogger().warning( "LoginException was thrown in AccountsManager while trying to get account '" + s + "'. Message: '" + e.getMessage() + "'" );
+			getLogger().warning( "LoginException was thrown in AccountsManager while trying to get account '" + s + "'. Message: '" + e.getMessage() + "'" );
 			return null;
 		}
 	}
@@ -431,6 +432,11 @@ public class AccountManager
 	public int getMaxAccounts()
 	{
 		return maxAccounts;
+	}
+	
+	public ConsoleLogger getLogger()
+	{
+		return Loader.getLogger( "AcctMgr" );
 	}
 	
 	public Account attemptLogin( Session sess, String username, String password ) throws LoginException

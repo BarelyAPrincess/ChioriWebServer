@@ -134,12 +134,12 @@ public abstract class Account<T extends AccountLookupAdapter> extends Permissibl
 	
 	public boolean isBanned()
 	{
-		return Loader.getAccountsManager().isBanned( acctId );
+		return Loader.getAccountManager().isBanned( acctId );
 	}
 	
 	public boolean isWhitelisted()
 	{
-		return Loader.getAccountsManager().isWhitelisted( acctId );
+		return Loader.getAccountManager().isWhitelisted( acctId );
 	}
 	
 	public abstract String getPassword();

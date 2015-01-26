@@ -4,9 +4,9 @@ import com.chiorichan.util.ObjectUtil;
 
 public class PermissionValueInt extends PermissionValue<Integer>
 {
-	public PermissionValueInt( Integer val )
+	public PermissionValueInt( String name, Integer val )
 	{
-		super( val );
+		super( name, val );
 	}
 	
 	@Override

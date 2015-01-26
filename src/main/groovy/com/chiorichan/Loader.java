@@ -68,7 +68,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	
 	protected static final ConsoleBus console = new ConsoleBus();
 	protected static final EventBus events = new EventBus();
-
+	
 	protected static final ChioriScheduler scheduler = new ChioriScheduler();
 	protected static final PermissionManager permissions = new PermissionManager();
 	protected static final PluginManager plugins = new PluginManager();
@@ -95,17 +95,17 @@ public class Loader extends BuiltinEventCreator implements Listener
 			{
 				options = parser.parse( args );
 			}
-			catch ( joptsimple.OptionException ex )
+			catch( joptsimple.OptionException ex )
 			{
 				Logger.getLogger( Loader.class.getName() ).log( Level.SEVERE, ex.getLocalizedMessage() );
 			}
 			
-			if ( ( options == null ) || ( options.has( "?" ) ) )
+			if ( (options == null) || (options.has( "?" )) )
 				try
 				{
 					parser.printHelpOn( System.out );
 				}
-				catch ( IOException ex )
+				catch( IOException ex )
 				{
 					Logger.getLogger( Loader.class.getName() ).log( Level.SEVERE, null, ex );
 				}
@@ -116,14 +116,14 @@ public class Loader extends BuiltinEventCreator implements Listener
 				isRunning = new Loader( options ).start();
 			}
 		}
-		catch ( Throwable t )
+		catch( Throwable t )
 		{
 			t.printStackTrace();
 			
 			if ( getLogger() != null )
-				getLogger().severe( ChatColor.RED + "" + ChatColor.NEGATIVE + "SEVERE ERROR (" + ( System.currentTimeMillis() - startTime ) + "ms)! Press 'Ctrl-c' to quit!'" );
+				getLogger().severe( ChatColor.RED + "" + ChatColor.NEGATIVE + "SEVERE ERROR (" + (System.currentTimeMillis() - startTime) + "ms)! Press 'Ctrl-c' to quit!'" );
 			else
-				System.err.println( "SEVERE ERROR (" + ( System.currentTimeMillis() - startTime ) + "ms)! Press 'Ctrl-c' to quit!'" );
+				System.err.println( "SEVERE ERROR (" + (System.currentTimeMillis() - startTime) + "ms)! Press 'Ctrl-c' to quit!'" );
 			// TODO Make it so this exception (and possibly other critical exceptions) are reported to us without user interaction. Should also find a way that the log can be sent along with it.
 			try
 			{
@@ -137,7 +137,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 					keyboard.close();
 				}
 			}
-			catch ( Exception e )
+			catch( Exception e )
 			{}
 		}
 	}
@@ -174,7 +174,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return parser;
 	}
 	
-	public Loader(OptionSet options0) throws StartupException
+	public Loader( OptionSet options0 ) throws StartupException
 	{
 		instance = this;
 		options = options0;
@@ -200,7 +200,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 			if ( !contentTypes.exists() )
 				FileUtils.writeStringToFile( contentTypes, "# Chiori-chan's Web Server Content-Types File which overrides the default internal ones.\n# Syntax: 'ext: mime/type'" );
 		}
-		catch ( IOException e )
+		catch( IOException e )
 		{
 			getLogger().warning( "There was an exception thrown trying to create the 'ContentTypes.properties' file.", e );
 		}
@@ -212,7 +212,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 			if ( !shellOverrides.exists() )
 				FileUtils.writeStringToFile( shellOverrides, "# Chiori-chan's Web Server Interpreter Overrides File which overrides the default internal ones.\n# You don't have to add a string if the key and value are the same, hence Convension!\n# Syntax: 'fileExt: shellHandler'" );
 		}
-		catch ( IOException e )
+		catch( IOException e )
 		{
 			getLogger().warning( "There was an exception thrown trying to create the 'InterpreterOverrides.properties' file.", e );
 		}
@@ -224,7 +224,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 				FileUtil.putResource( internalConfigFile, getConfigFile() );
 				firstRun = true;
 			}
-			catch ( IOException e1 )
+			catch( IOException e1 )
 			{
 				e1.printStackTrace();
 			}
@@ -291,7 +291,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	
 	protected void changeRunLevel( RunLevel level )
 	{
-		( (ServerRunLevelEventImpl) runLevelEvent ).setRunLevel( level );
+		((ServerRunLevelEventImpl) runLevelEvent).setRunLevel( level );
 		events.callEvent( runLevelEvent );
 	}
 	
@@ -338,7 +338,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		{
 			permissions.init();
 		}
-		catch ( PermissionBackendException e )
+		catch( PermissionBackendException e )
 		{
 			throw new StartupException( e );
 		}
@@ -358,7 +358,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		
 		changeRunLevel( RunLevel.RUNNING );
 		
-		getLogger().info( ChatColor.RED + "" + ChatColor.NEGATIVE + "Finished Initalizing " + Versioning.getProduct() + "! It took " + ( System.currentTimeMillis() - startTime ) + "ms!" );
+		getLogger().info( ChatColor.RED + "" + ChatColor.NEGATIVE + "Finished Initalizing " + Versioning.getProduct() + "! It took " + (System.currentTimeMillis() - startTime) + "ms!" );
 		
 		updater.check();
 		
@@ -376,7 +376,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		{
 			Class.forName( "com.mysql.jdbc.Driver" );
 		}
-		catch ( ClassNotFoundException e )
+		catch( ClassNotFoundException e )
 		{
 			throw new StartupException( "We could not locate the 'com.mysql.jdbc.Driver' library regardless that its suppose to be included. If your running from source code be sure to have this library in your build path." );
 		}
@@ -391,7 +391,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 				{
 					fwDatabase.init( filename );
 				}
-				catch ( SQLException e )
+				catch( SQLException e )
 				{
 					if ( e.getCause() instanceof ConnectException )
 					{
@@ -416,7 +416,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 				{
 					fwDatabase.init( database, username, password, host, port );
 				}
-				catch ( SQLException e )
+				catch( SQLException e )
 				{
 					// e.printStackTrace();
 					
@@ -594,7 +594,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		 * User.kick( reason );
 		 * }
 		 */
-		getAccountsManager().shutdown();
+		getAccountManager().shutdown();
 		NetworkManager.cleanup();
 	}
 	
@@ -641,7 +641,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		{
 			configuration.save( getConfigFile() );
 		}
-		catch ( IOException ex )
+		catch( IOException ex )
 		{
 			Logger.getLogger( Loader.class.getName() ).log( Level.SEVERE, "Could not save " + getConfigFile(), ex );
 		}
@@ -652,11 +652,64 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return console;
 	}
 	
+	/**
+	 * Gets an instance of the system logger so requester can log information to both the screen and log file with ease.
+	 * The auto selection of named loggers might be temporary feature until most of system can be manually programmed to
+	 * use named loggers since it's a relatively new feature.
+	 * 
+	 * @return The system logger
+	 */
 	public static ConsoleLogger getLogger()
 	{
+		StackTraceElement[] ste = Thread.currentThread().getStackTrace();
+		String clz = ste[2].getClassName().toLowerCase();
+		
+		if ( clz.startsWith( "com.chiorichan" ) )
+		{
+			int ind = clz.indexOf( ".", 5 ) + 1;
+			int end = clz.indexOf( ".", ind );
+			clz = clz.substring( ind, (end > ind) ? end : clz.length() );
+		}
+		
+		switch ( clz )
+		{
+			case "http":
+				return getLogger( "HttpHdl" );
+			case "https":
+				return getLogger( "HttpsHdl" );
+			case "framework":
+				return getLogger( "Framework" );
+			case "net":
+				return getLogger( "NetMgr" );
+			case "account":
+				return getLogger( "AcctMgr" );
+			case "permission":
+				return getLogger( "PermMgr" );
+			case "factory":
+				return getLogger( "CodeEval" );
+			case "event":
+				return getLogger( "EvtMgr" );
+			case "database":
+				return getLogger( "DBMgr" );
+			case "plugin":
+				return getLogger( "PlgMgr" );
+			case "scheduler":
+				return getLogger( "TskSchd" );
+			case "updater":
+				return getLogger( "Updater" );
+		}
+		
 		return console.getLogger();
 	}
 	
+	/**
+	 * Gets an instance of ConsoleLogger for provided loggerId. If the logger does not exist it will create one.
+	 * 
+	 * @param loggerId
+	 *             The loggerId we are looking for.
+	 * @return ConsoleLogger
+	 *         An empty loggerId will return the System Logger.
+	 */
 	public static ConsoleLogger getLogger( String loggerId )
 	{
 		return console.getLogger( loggerId );
@@ -667,32 +720,62 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return console.getLogManager();
 	}
 	
+	/**
+	 * Gets the OptionSet used to start the server.
+	 * 
+	 * @return OptionSet
+	 */
 	public static OptionSet getOptions()
 	{
 		return options;
 	}
 	
+	/**
+	 * Should the server print a warning in console when the ticks are less then 20.
+	 * 
+	 * @return boolean
+	 */
 	public boolean getWarnOnOverload()
 	{
 		return configuration.getBoolean( "settings.warn-on-overload" );
 	}
 	
+	/**
+	 * Gets an instance of the SiteManager which is used to manage the various domains.
+	 * 
+	 * @return SiteManager
+	 */
 	public static SiteManager getSiteManager()
 	{
 		return sites;
 	}
 	
+	/**
+	 * Gets an instance of the AutoUpdater.
+	 * 
+	 * @return AutoUpdater
+	 */
 	public static AutoUpdater getAutoUpdater()
 	{
 		return updater;
 	}
 	
+	/**
+	 * Gets an instance of the SessionManager
+	 * 
+	 * @return SessionManager
+	 */
 	public static SessionManager getSessionManager()
 	{
 		return sessionManager;
 	}
 	
-	public static AccountManager getAccountsManager()
+	/**
+	 * Gets an instance of the AccountManager
+	 * 
+	 * @return AccountManager
+	 */
+	public static AccountManager getAccountManager()
 	{
 		return accounts;
 	}
@@ -712,21 +795,41 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return webroot;
 	}
 	
+	/**
+	 * Gets an instance of the EventBus. Used to notify the server and plugins of events that take place, e.g., AccountLoginEvent .
+	 * 
+	 * @return EventBus
+	 */
 	public static EventBus getEventBus()
 	{
 		return events;
 	}
 	
-	public static PermissionManager getPermissionsManager()
+	/**
+	 * Gets an instance of the PermissionManager. Used to track and check the various permissions on this server.
+	 * 
+	 * @return PermissionManager
+	 */
+	public static PermissionManager getPermissionManager()
 	{
 		return permissions;
 	}
 	
+	/**
+	 * Gets an instance of the Scheduler. Which is used to schedule tasks at a set tick interval.
+	 * 
+	 * @return ChioriScheduler
+	 */
 	public static ChioriScheduler getScheduler()
 	{
 		return scheduler;
 	}
 	
+	/**
+	 * Gets an instance of the Plugin Manager.
+	 * 
+	 * @return PluginManager
+	 */
 	public static PluginManager getPluginManager()
 	{
 		return plugins;

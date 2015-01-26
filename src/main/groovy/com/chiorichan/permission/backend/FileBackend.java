@@ -32,6 +32,7 @@ import com.chiorichan.permission.structure.PermissionValueBoolean;
 import com.chiorichan.permission.structure.PermissionValueEnum;
 import com.chiorichan.permission.structure.PermissionValueInt;
 import com.chiorichan.permission.structure.PermissionValueVar;
+import com.google.common.base.Splitter;
 
 public class FileBackend extends PermissionBackend
 {
@@ -98,7 +99,7 @@ public class FileBackend extends PermissionBackend
 				
 				if ( groupSection.getBoolean( defaultGroupProperty, false ) )
 				{
-					return Loader.getPermissionsManager().getGroup( entry.getKey() );
+					return Loader.getPermissionManager().getGroup( entry.getKey() );
 				}
 			}
 		}
@@ -159,7 +160,7 @@ public class FileBackend extends PermissionBackend
 		
 		for ( String groupName : groupsSection.getKeys( false ) )
 		{
-			groups.add( Loader.getPermissionsManager().getGroup( groupName ) );
+			groups.add( Loader.getPermissionManager().getGroup( groupName ) );
 		}
 		
 		Collections.sort( groups );
@@ -288,23 +289,24 @@ public class FileBackend extends PermissionBackend
 		if ( section != null )
 			for ( String s : section.getKeys( false ) )
 			{
+				String permName = s.toLowerCase();
 				ConfigurationSection result = section.getConfigurationSection( s );
-				Permission perm = Permission.crawlPermissionStack( s.toLowerCase(), true );
+				Permission perm = Permission.crawlPermissionStack( permName, true );
 				
 				if ( result.getString( "type" ) != null )
 					switch ( result.getString( "type" ) )
 					{
 						case "BOOL":
-							perm.setValue( new PermissionValueBoolean( result.getBoolean( "value" ) ) );
+							perm.setValue( new PermissionValueBoolean( permName, result.getBoolean( "value" ) ) );
 							break;
 						case "ENUM":
-							perm.setValue( new PermissionValueEnum( result.getString( "value", "" ), result.getInt( "maxlen", -1 ), result.getString( "enum", "" ) ) );
+							perm.setValue( new PermissionValueEnum( permName, result.getString( "value", "" ), result.getInt( "maxlen", -1 ), Splitter.on( "|" ).splitToList( result.getString( "enum", "" ) ) ) );
 							break;
 						case "VAR":
-							perm.setValue( new PermissionValueVar( result.getString( "value", "" ), result.getInt( "maxlen", -1 ) ) );
+							perm.setValue( new PermissionValueVar( permName, result.getString( "value", "" ), result.getInt( "maxlen", -1 ) ) );
 							break;
 						case "INT":
-							perm.setValue( new PermissionValueInt( result.getInt( "value" ) ) );
+							perm.setValue( new PermissionValueInt( permName, result.getInt( "value" ) ) );
 							break;
 					}
 				
@@ -317,7 +319,7 @@ public class FileBackend extends PermissionBackend
 		if ( section != null )
 			for ( String s : section.getKeys( false ) )
 			{
-				PermissibleEntity entity = Loader.getPermissionsManager().getEntity( s );
+				PermissibleEntity entity = Loader.getPermissionManager().getEntity( s );
 				
 				ConfigurationSection result = section.getConfigurationSection( s );
 				ConfigurationSection permissions = result.getConfigurationSection( "permissions" );
@@ -347,7 +349,7 @@ public class FileBackend extends PermissionBackend
 			{
 				ConfigurationSection result = section.getConfigurationSection( s );
 				
-				PermissibleEntity group = Loader.getPermissionsManager().getGroup( s );
+				PermissibleEntity group = Loader.getPermissionManager().getGroup( s );
 				
 				ConfigurationSection permissions = result.getConfigurationSection( "permissions" );
 				

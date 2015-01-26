@@ -263,7 +263,7 @@ public abstract class PermissibleEntity implements PermissibleParent
 				}
 			};
 			
-			Loader.getPermissionsManager().registerTask( task, lifeTime );
+			Loader.getPermissionManager().registerTask( task, lifeTime );
 			
 			this.timedPermissionsTime.put( site + ":" + permission, (System.currentTimeMillis() / 1000L) + lifeTime );
 		}
@@ -342,11 +342,11 @@ public abstract class PermissibleEntity implements PermissibleParent
 	
 	public boolean isDebug()
 	{
-		return this.debugMode || Loader.getPermissionsManager().isDebug();
+		return debugMode || Loader.getPermissionManager().isDebug();
 	}
 	
 	public void setDebug( boolean debug )
 	{
-		this.debugMode = debug;
+		debugMode = debug;
 	}
 }

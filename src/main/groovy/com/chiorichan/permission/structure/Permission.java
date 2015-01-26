@@ -6,7 +6,7 @@ import java.util.Set;
 
 import org.gradle.jarjar.com.google.common.collect.Sets;
 
-import com.chiorichan.Loader;
+import com.chiorichan.permission.PermissionManager;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 
@@ -116,7 +116,7 @@ public final class Permission
 	{
 		for ( Permission node : children )
 		{
-			if ( node.getName() == name )
+			if ( node.getName().equals( name ) )
 				return node;
 		}
 		return null;
@@ -161,7 +161,7 @@ public final class Permission
 	protected static Permission getRootNode( String name )
 	{
 		for ( Permission perm : allPerms )
-			if ( perm.isRootNode && perm.getName() == name )
+			if ( perm.isRootNode && perm.getName().equals( name ) )
 				return perm;
 		return null;
 	}
@@ -169,7 +169,7 @@ public final class Permission
 	protected static Permission getNode( String name )
 	{
 		for ( Permission perm : allPerms )
-			if ( perm.getName() == name )
+			if ( perm.getName().equals( name ) )
 				return perm;
 		return null;
 	}
@@ -203,8 +203,6 @@ public final class Permission
 			else
 				return null;
 		
-		Loader.getLogger().debug( curr + " " + curr.hashCode() );
-		
 		if ( nodes.length == 1 )
 			return curr;
 		
@@ -231,7 +229,7 @@ public final class Permission
 	
 	public String toString()
 	{
-		return "Permission[name=" + getName() + ",parent=" + getParent() + ( ( value != null ) ? ",value=" + value.toString() : "" ) + "]";
+		return "Permission[name=" + getName() + ",parent=" + getParent() + ((value != null) ? ",value=" + value.toString() : "") + "]";
 	}
 	
 	public static Set<Permission> getRootNodes()
@@ -245,10 +243,12 @@ public final class Permission
 	
 	public void debugPermissionStack( int deepth )
 	{
+		String spacing = (deepth > 0) ? Strings.repeat( "      ", deepth - 1 ) + "|---> " : "";
+		
 		if ( value == null )
-			Loader.getLogger().info( Strings.repeat( "-->", deepth ) + getName() );
+			PermissionManager.getLogger().info( "[DEBUG] " + spacing + getName() );
 		else
-			Loader.getLogger().info( Strings.repeat( "-->", deepth ) + getName() + "=" + value.toString() );
+			PermissionManager.getLogger().info( "[DEBUG] " + spacing + getName() + "=" + value.toString() );
 		
 		deepth++;
 		for ( Permission p : children )

@@ -130,7 +130,7 @@ public class SessionProviderWeb implements SessionProvider
 		{
 			try
 			{
-				Account user = Loader.getAccountsManager().attemptLogin( parentSession, username, password );
+				Account user = Loader.getAccountManager().attemptLogin( parentSession, username, password );
 				
 				parentSession.currentAccount = user;
 				
@@ -163,7 +163,7 @@ public class SessionProviderWeb implements SessionProvider
 			{
 				try
 				{
-					Account user = Loader.getAccountsManager().attemptLogin( parentSession, username, password );
+					Account user = Loader.getAccountManager().attemptLogin( parentSession, username, password );
 					
 					parentSession.currentAccount = user;
 					

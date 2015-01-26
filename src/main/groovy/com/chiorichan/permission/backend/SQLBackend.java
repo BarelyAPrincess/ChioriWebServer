@@ -28,6 +28,7 @@ import com.chiorichan.permission.structure.PermissionValueBoolean;
 import com.chiorichan.permission.structure.PermissionValueEnum;
 import com.chiorichan.permission.structure.PermissionValueInt;
 import com.chiorichan.permission.structure.PermissionValueVar;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Maps;
 
 /**
@@ -229,21 +230,22 @@ public class SQLBackend extends PermissionBackend
 			if ( result.next() )
 				do
 				{
-					Permission perm = Permission.crawlPermissionStack( result.getString( "permission" ).toLowerCase(), true );
+					String permName = result.getString( "permission" ).toLowerCase();
+					Permission perm = Permission.crawlPermissionStack( permName, true );
 					
 					switch ( result.getString( "type" ) )
 					{
 						case "BOOL":
-							perm.setValue( new PermissionValueBoolean( result.getBoolean( "value" ) ) );
+							perm.setValue( new PermissionValueBoolean( permName, result.getBoolean( "value" ) ) );
 							break;
 						case "ENUM":
-							perm.setValue( new PermissionValueEnum( result.getString( "value" ), result.getInt( "maxlen" ), result.getString( "enum" ) ) );
+							perm.setValue( new PermissionValueEnum( permName, result.getString( "value" ), result.getInt( "maxlen" ), Splitter.on( "|" ).splitToList( result.getString( "enum" ) ) ) );
 							break;
 						case "VAR":
-							perm.setValue( new PermissionValueVar( result.getString( "value" ), result.getInt( "maxlen" ) ) );
+							perm.setValue( new PermissionValueVar( permName, result.getString( "value" ), result.getInt( "maxlen" ) ) );
 							break;
 						case "INT":
-							perm.setValue( new PermissionValueInt( result.getInt( "value" ) ) );
+							perm.setValue( new PermissionValueInt( permName, result.getInt( "value" ) ) );
 							break;
 					}
 					
@@ -258,9 +260,9 @@ public class SQLBackend extends PermissionBackend
 				{
 					PermissibleEntity entity;
 					if ( result.getInt( "type" ) == ENTITY )
-						entity = Loader.getPermissionsManager().getEntity( result.getString( "owner" ) );
+						entity = Loader.getPermissionManager().getEntity( result.getString( "owner" ) );
 					else
-						entity = Loader.getPermissionsManager().getGroup( result.getString( "owner" ) );
+						entity = Loader.getPermissionManager().getGroup( result.getString( "owner" ) );
 					
 					Permission perm = Permission.crawlPermissionStack( result.getString( "permission" ).toLowerCase(), true );
 					

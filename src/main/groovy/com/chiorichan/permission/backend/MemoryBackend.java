@@ -45,7 +45,7 @@ public class MemoryBackend extends PermissionBackend
 	@Override
 	public PermissibleGroup getDefaultGroup( String siteName )
 	{
-		return Loader.getPermissionsManager().getGroup( "Default" );
+		return Loader.getPermissionManager().getGroup( "Default" );
 	}
 	
 	@Override

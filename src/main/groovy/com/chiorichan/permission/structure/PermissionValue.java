@@ -3,15 +3,22 @@ package com.chiorichan.permission.structure;
 public abstract class PermissionValue<Type>
 {
 	private Type value;
+	private final String name;
 	
-	protected PermissionValue( Type type )
+	protected PermissionValue( String permName, Type type )
 	{
 		value = type;
+		name = permName;
 	}
 	
 	public Type getValue()
 	{
 		return value;
+	}
+	
+	public String getName()
+	{
+		return name;
 	}
 	
 	@Override

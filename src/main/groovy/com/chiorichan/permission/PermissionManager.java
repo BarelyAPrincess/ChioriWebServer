@@ -101,11 +101,9 @@ public class PermissionManager implements TaskCreator
 		
 		if ( isDebug() )
 		{
-			Loader.getLogger().info( "Debugging permissions stack!" );
+			getLogger().info( "DEBUGGING LOADED PERMISSIONS!! (Permission Debug is On!)" );
 			for ( Permission root : Permission.getRootNodes() )
-			{
 				root.debugPermissionStack( 0 );
-			}
 		}
 	}
 	

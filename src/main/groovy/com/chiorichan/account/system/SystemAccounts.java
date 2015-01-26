@@ -23,10 +23,10 @@ public class SystemAccounts
 		try
 		{
 			NO_LOGIN = new NoLogin();
-			Loader.getAccountsManager().LoadAccount( NO_LOGIN, true, true, false );
+			Loader.getAccountManager().LoadAccount( NO_LOGIN, true, true, false );
 			
 			ROOT = new Root();
-			Loader.getAccountsManager().LoadAccount( ROOT, true, true, true );
+			Loader.getAccountManager().LoadAccount( ROOT, true, true, true );
 		}
 		catch ( LoginException e )
 		{

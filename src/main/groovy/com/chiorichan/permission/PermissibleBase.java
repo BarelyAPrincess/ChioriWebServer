@@ -20,7 +20,7 @@ public abstract class PermissibleBase implements Permissible
 	
 	public void init()
 	{
-		perm = Loader.getPermissionsManager().getBackend().getEntity( getId() );
+		perm = Loader.getPermissionManager().getBackend().getEntity( getId() );
 	}
 	
 	@Override

@@ -42,7 +42,7 @@ public class AccountChatEvent extends AccountEvent implements Cancellable
 		super( Account );
 		this.message = message;
 		this.format = "<%1$s> %2$s";
-		this.recipients = new HashSet<Account>( Loader.getAccountsManager().getOnlineAccounts() );
+		this.recipients = new HashSet<Account>( Loader.getAccountManager().getOnlineAccounts() );
 	}
 	
 	public AccountChatEvent(final Account Account, final String message, final String format, final Set<Account> recipients)
