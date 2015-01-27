@@ -7,19 +7,19 @@ import java.util.List;
 import java.util.Map;
 
 import com.chiorichan.Loader;
-import com.chiorichan.bus.events.EventHandler;
-import com.chiorichan.bus.events.EventPriority;
-import com.chiorichan.bus.events.Listener;
-import com.chiorichan.bus.events.http.HttpExceptionEvent;
-import com.chiorichan.bus.events.server.RenderEvent;
-import com.chiorichan.exceptions.ShellExecuteException;
+import com.chiorichan.event.EventHandler;
+import com.chiorichan.event.EventPriority;
+import com.chiorichan.event.Listener;
+import com.chiorichan.event.http.HttpExceptionEvent;
+import com.chiorichan.event.server.RenderEvent;
+import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.framework.Site;
 import com.chiorichan.framework.WebUtils;
-import com.chiorichan.plugin.java.JavaPlugin;
+import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.util.StringUtil;
 
-public class Template extends JavaPlugin implements Listener
+public class Template extends Plugin implements Listener
 {
 	public void onEnable()
 	{

@@ -14,7 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.chiorichan.InterpreterOverrides;
 import com.chiorichan.Loader;
-import com.chiorichan.exceptions.ShellExecuteException;
+import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.factory.CodeMetaData;
 import com.chiorichan.framework.WebUtils;
@@ -57,8 +57,8 @@ public class ExceptionPageUtils
 	{
 		// TODO Match the server version to the correct commit on the github. The closer the better.
 		
-		String githubBaseUrl = "https://raw.githubusercontent.com/ChioriGreene/ChioriWebServer/v7-experimental/server/src/";
-		String githubApiUrl = "https://raw.githubusercontent.com/ChioriGreene/ChioriWebServer/v7-experimental/api/src/";
+		String githubBaseUrl = "https://raw.githubusercontent.com/ChioriGreene/ChioriWebServer/master/server/src/";
+		String githubApiUrl = "https://raw.githubusercontent.com/ChioriGreene/ChioriWebServer/master/api/src/";
 		String fileUrl = e.getClassName().replace( '.', '/' ).replace( "$1", "" ) + "." + InterpreterOverrides.getFileExtension( e.getFileName() );
 		
 		String codeSample = null;
@@ -69,13 +69,13 @@ public class ExceptionPageUtils
 			{
 				codeSample = new String( WebUtils.readUrl( githubBaseUrl + fileUrl ) );
 			}
-			catch ( IOException e1 )
+			catch( IOException e1 )
 			{
 				try
 				{
 					codeSample = new String( WebUtils.readUrl( githubApiUrl + fileUrl ) );
 				}
-				catch ( IOException e2 )
+				catch( IOException e2 )
 				{
 					codeSample = "Could not read file '" + fileUrl + "' from the GitHub repository.\nYou could be running a mismatching version to the repository or this file belongs to another repository.";
 					// Loader.getLogger().warning( codeSample );
@@ -102,7 +102,7 @@ public class ExceptionPageUtils
 		{
 			if ( t instanceof ShellExecuteException )
 			{
-				CodeMetaData meta = ( (ShellExecuteException) t ).getCodeMetaData();
+				CodeMetaData meta = ((ShellExecuteException) t).getCodeMetaData();
 				StackTraceElement ele = getGroovyScriptElement( t.getCause().getStackTrace() );
 				
 				if ( ele != null )
@@ -113,7 +113,7 @@ public class ExceptionPageUtils
 				return getCodeSample( t.getStackTrace()[0], null );
 			}
 		}
-		catch ( Throwable t1 )
+		catch( Throwable t1 )
 		{
 			t1.printStackTrace();
 		}
@@ -134,7 +134,7 @@ public class ExceptionPageUtils
 			
 			if ( t instanceof ShellExecuteException )
 			{
-				CodeMetaData meta = ( (ShellExecuteException) t ).getCodeMetaData();
+				CodeMetaData meta = ((ShellExecuteException) t).getCodeMetaData();
 				StackTraceElement ele = getGroovyScriptElement( t.getCause().getStackTrace() );
 				t = t.getCause();
 				
@@ -181,7 +181,7 @@ public class ExceptionPageUtils
 			ob.append( "\n" );
 			ob.append( "<div class=\"source\">\n" );
 			
-			ob.append( "<p class=\"file\">" + fileName + "(" + lineNo + "): <strong>" + ( ( className != null ) ? className : "" ) + "</strong></p>\n" );
+			ob.append( "<p class=\"file\">" + fileName + "(" + lineNo + "): <strong>" + ((className != null) ? className : "") + "</strong></p>\n" );
 			
 			ob.append( "\n" );
 			ob.append( "<div class=\"code\">\n" );
@@ -202,7 +202,7 @@ public class ExceptionPageUtils
 			
 			return wrapAndEval( factory, ob.toString() );
 		}
-		catch ( Throwable t1 )
+		catch( Throwable t1 )
 		{
 			t1.printStackTrace();
 			return "";
@@ -220,12 +220,12 @@ public class ExceptionPageUtils
 		
 		for ( StackTraceElement e : ste )
 		{
-			String file = ( e.getFileName() == null ) ? "eval()" : e.getFileName() + "(" + e.getLineNumber() + ")";
+			String file = (e.getFileName() == null) ? "eval()" : e.getFileName() + "(" + e.getLineNumber() + ")";
 			
-			String codeSample = ( e.getClassName().startsWith( "com.chiori" ) ) ? getCodeSample( e, null ) : "There is no available source code to preview.";
+			String codeSample = (e.getClassName().startsWith( "com.chiori" )) ? getCodeSample( e, null ) : "There is no available source code to preview.";
 			
 			// || e.getClassName().startsWith( "org.eclipse" ) || e.getClassName().startsWith( "java" )
-			sb.append( "<tr class=\"trace " + ( ( e.getClassName().startsWith( "com.chiori" ) ) ? "app expanded" : "core collapsed" ) + "\">\n" );
+			sb.append( "<tr class=\"trace " + ((e.getClassName().startsWith( "com.chiori" )) ? "app expanded" : "core collapsed") + "\">\n" );
 			sb.append( "	<td class=\"number\">#" + l + "</td>\n" );
 			sb.append( "	<td class=\"content\">\n" );
 			sb.append( "		<div class=\"trace-file\">\n" );
@@ -247,7 +247,7 @@ public class ExceptionPageUtils
 	
 	public static String escapeHTML( String l )
 	{
-		return StringUtils.replaceEach( l, new String[] { "&", "\"", "<", ">" }, new String[] { "&amp;", "&quot;", "&lt;", "&gt;" } );
+		return StringUtils.replaceEach( l, new String[] {"&", "\"", "<", ">"}, new String[] {"&amp;", "&quot;", "&lt;", "&gt;"} );
 	}
 	
 	public static String codeSampleEval( String code, int line )
@@ -303,7 +303,7 @@ public class ExceptionPageUtils
 			{
 				is = new FileInputStream( file );
 			}
-			catch ( FileNotFoundException e )
+			catch( FileNotFoundException e )
 			{
 				return e.getMessage();
 			}
@@ -315,7 +315,7 @@ public class ExceptionPageUtils
 				
 				int cLine = 0;
 				String l;
-				while ( ( l = br.readLine() ) != null )
+				while( (l = br.readLine()) != null )
 				{
 					l = escapeHTML( l );
 					
@@ -339,7 +339,7 @@ public class ExceptionPageUtils
 				if ( cLine < line )
 					sb.append( "<span class=\"error\"><span class=\"ln error-ln\">" + line + "</span> Unexpected EOF!</span>" );
 			}
-			catch ( IOException e )
+			catch( IOException e )
 			{
 				e.printStackTrace();
 			}
@@ -358,7 +358,7 @@ public class ExceptionPageUtils
 	{
 		String pageMark = "<!-- PAGE DATA -->";
 		InputStream is = ExceptionPageUtils.class.getClassLoader().getResourceAsStream( "BaseTemplate.html" );
-		String baseTemplate = ( is == null ) ? "" : new String( FileUtil.inputStream2Bytes( is ), "UTF-8" );
+		String baseTemplate = (is == null) ? "" : new String( FileUtil.inputStream2Bytes( is ), "UTF-8" );
 		
 		CodeMetaData meta = new CodeMetaData();
 		meta.shell = "html";
