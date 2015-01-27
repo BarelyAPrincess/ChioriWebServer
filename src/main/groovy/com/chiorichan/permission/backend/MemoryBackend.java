@@ -2,8 +2,6 @@ package com.chiorichan.permission.backend;
 
 import java.util.Set;
 
-import org.gradle.jarjar.com.google.common.collect.Sets;
-
 import com.chiorichan.Loader;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
@@ -11,6 +9,7 @@ import com.chiorichan.permission.PermissionBackend;
 import com.chiorichan.permission.PermissionBackendException;
 import com.chiorichan.permission.backend.memory.MemoryEntity;
 import com.chiorichan.permission.backend.memory.MemoryGroup;
+import com.google.common.collect.Sets;
 
 /*
  * Memory Backend

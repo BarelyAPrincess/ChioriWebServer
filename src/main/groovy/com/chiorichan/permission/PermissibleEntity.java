@@ -6,11 +6,10 @@ import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.gradle.jarjar.com.google.common.collect.Maps;
-
 import com.chiorichan.Loader;
 import com.chiorichan.permission.event.PermissibleEntityEvent;
 import com.chiorichan.permission.structure.ChildPermission;
+import com.google.common.collect.Maps;
 
 public abstract class PermissibleEntity implements PermissibleParent
 {

@@ -10,9 +10,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import org.gradle.jarjar.com.google.common.base.Joiner;
-import org.gradle.jarjar.com.google.common.collect.Sets;
-
 import com.chiorichan.Loader;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.configuration.file.FileConfiguration;
@@ -32,7 +29,9 @@ import com.chiorichan.permission.structure.PermissionValueBoolean;
 import com.chiorichan.permission.structure.PermissionValueEnum;
 import com.chiorichan.permission.structure.PermissionValueInt;
 import com.chiorichan.permission.structure.PermissionValueVar;
+import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
+import com.google.common.collect.Sets;
 
 public class FileBackend extends PermissionBackend
 {

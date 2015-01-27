@@ -18,12 +18,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.gradle.api.Plugin;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 import com.chiorichan.RunLevel;
 import com.chiorichan.file.YamlConfiguration;
+import com.chiorichan.plugin.loader.Plugin;
 import com.google.common.collect.ImmutableList;
 
 /**

@@ -13,10 +13,9 @@ import java.util.Set;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.gradle.jarjar.com.google.common.collect.Sets;
+import com.google.common.collect.Sets;
 
 public class ConsoleLogManager
 {
@@ -48,7 +47,7 @@ public class ConsoleLogManager
 			}
 			
 			int i = 0;
-			while ( i < parentPath.length() )
+			while( i < parentPath.length() )
 			{
 				char ch = parentPath.charAt( i );
 				char ch2 = 0;
@@ -100,7 +99,7 @@ public class ConsoleLogManager
 			
 			logger.addHandler( fileHandler );
 		}
-		catch ( Exception exception )
+		catch( Exception exception )
 		{
 			getLogger().warning( "Failed to log to server.log", exception );
 		}
@@ -126,7 +125,7 @@ public class ConsoleLogManager
 		loggers.add( log );
 		return log;
 	}
-
+	
 	public Logger getParent()
 	{
 		return logger;

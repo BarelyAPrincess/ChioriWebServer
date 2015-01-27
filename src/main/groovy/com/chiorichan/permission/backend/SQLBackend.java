@@ -8,9 +8,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.gradle.jarjar.com.google.common.collect.Lists;
-import org.gradle.jarjar.com.google.common.collect.Sets;
-
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.framework.Site;
@@ -29,7 +26,9 @@ import com.chiorichan.permission.structure.PermissionValueEnum;
 import com.chiorichan.permission.structure.PermissionValueInt;
 import com.chiorichan.permission.structure.PermissionValueVar;
 import com.google.common.base.Splitter;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 /**
  * @author Chiori Greene

@@ -3,13 +3,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2014 Chiori-chan. All Right Reserved.
- *
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
 package com.chiorichan.event;
 
-import org.gradle.api.Plugin;
+import com.chiorichan.plugin.PluginManager;
+import com.chiorichan.plugin.loader.Plugin;
 
 /**
  * Represents an event.
@@ -36,16 +36,15 @@ public abstract class Event
 	 * This constructor is used to explicitly declare an event as synchronous or asynchronous.
 	 * 
 	 * @param isAsync
-	 *           true indicates the event will fire asynchronously, false by default from default constructor
+	 *             true indicates the event will fire asynchronously, false by default from default constructor
 	 */
-	public Event(boolean isAsync)
+	public Event( boolean isAsync )
 	{
 		this.async = isAsync;
 	}
 	
 	/**
-	 * Convenience method for providing a user-friendly identifier. By default, it is the event's class's
-	 * {@linkplain Class#getSimpleName() simple name}.
+	 * Convenience method for providing a user-friendly identifier. By default, it is the event's class's {@linkplain Class#getSimpleName() simple name}.
 	 * 
 	 * @return name of this event
 	 */
@@ -72,14 +71,12 @@ public abstract class Event
 	 * Any custom event that should not by synchronized with other events must use the specific constructor. These are
 	 * the caveats of using an asynchronous event:
 	 * <ul>
-	 * <li>The event is never fired from inside code triggered by a synchronous event. Attempting to do so results in an
-	 * {@link java.lang.IllegalStateException}.
+	 * <li>The event is never fired from inside code triggered by a synchronous event. Attempting to do so results in an {@link java.lang.IllegalStateException}.
 	 * <li>However, asynchronous event handlers may fire synchronous or asynchronous events
 	 * <li>The event may be fired multiple times simultaneously and in any order.
 	 * <li>Any newly registered or unregistered handler is ignored after an event starts execution.
 	 * <li>The handlers for this event may block for any length of time.
-	 * <li>Some implementations may selectively declare a specific event use as asynchronous. This behavior should be
-	 * clearly defined.
+	 * <li>Some implementations may selectively declare a specific event use as asynchronous. This behavior should be clearly defined.
 	 * <li>Asynchronous calls are not calculated in the plugin timing system.
 	 * </ul>
 	 * 

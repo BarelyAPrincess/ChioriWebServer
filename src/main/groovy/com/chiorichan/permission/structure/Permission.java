@@ -4,11 +4,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import org.gradle.jarjar.com.google.common.collect.Sets;
-
 import com.chiorichan.permission.PermissionManager;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 public final class Permission
 {

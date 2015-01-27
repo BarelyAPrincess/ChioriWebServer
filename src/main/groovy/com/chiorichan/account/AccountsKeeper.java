@@ -17,12 +17,12 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
-import org.gradle.jarjar.com.google.common.collect.Sets;
 
 import com.chiorichan.account.adapter.AccountLookupAdapter;
 import com.chiorichan.account.adapter.memory.MemoryAccount;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 public class AccountsKeeper
 {

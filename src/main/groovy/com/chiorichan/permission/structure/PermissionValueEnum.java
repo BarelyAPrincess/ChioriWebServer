@@ -5,10 +5,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.gradle.jarjar.com.google.common.collect.Sets;
-
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.util.ObjectUtil;
+import com.google.common.collect.Sets;
 
 public class PermissionValueEnum extends PermissionValue<String>
 {
