@@ -14,6 +14,7 @@ import java.net.ConnectException;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -21,6 +22,8 @@ import java.util.logging.Logger;
 
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
+import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
 
 import org.apache.commons.io.FileUtils;
 
@@ -44,6 +47,8 @@ import com.chiorichan.permission.PermissionBackendException;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.scheduler.ChioriScheduler;
+import com.chiorichan.scheduler.ChioriWorker;
+import com.chiorichan.scheduler.TaskCreator;
 import com.chiorichan.updater.AutoUpdater;
 import com.chiorichan.updater.ChioriDLUpdaterService;
 import com.chiorichan.util.FileUtil;
@@ -282,10 +287,23 @@ public class Loader extends BuiltinEventCreator implements Listener
 		
 		if ( firstRun )
 		{
-			Loader.getLogger().highlight( "It appears that this is your first time running Chiori-chan's Web Server." );
-			Loader.getLogger().highlight( "All the needed files have been extracted from the jar file." );
-			Loader.getLogger().highlight( "The server will continue to start but it's recommended that you stop, review config and restart." );
-			// TODO have the server pause and ask if the user would like to stop as to make changes to config.
+			try
+			{
+				getLogger().info( "Extracting the Web UI to the Framework Webroot... Please wait..." );
+				File fwRoot = new File( webroot, "framework" );
+				ZipFile zipFile = new ZipFile( getClass().getClassLoader().getResource( "com/chiorichan/framework.zip" ).getPath() );
+				zipFile.extractAll( fwRoot.getAbsolutePath() );
+				getLogger().info( "Finished with no errors!!" );
+			}
+			catch( ZipException e )
+			{
+				e.printStackTrace();
+			}
+			
+			Loader.getLogger().highlight( "It appears that this is your first time running Chiori-chan's Web Server.".toUpperCase() );
+			Loader.getLogger().highlight( "All the needed files have been extracted from the jar file.".toUpperCase() );
+			Loader.getLogger().highlight( "------------------------------------------------------".toUpperCase() );
+			Loader.getConsole().pause( "The server will resume it's boot sequence in %s. Press CTRL-C now to stop. It's highly recommended that you stop, review config, and restart.", 9000 );
 		}
 	}
 	
@@ -515,29 +533,28 @@ public class Loader extends BuiltinEventCreator implements Listener
 		// ModuleBus.getCommandMap().clearCommands();
 		
 		int pollCount = 0;
-		/*
-		 * // Wait for at most 2.5 seconds for plugins to close their threads
-		 * while ( pollCount < 50 && getScheduler().getActiveWorkers().size() > 0 )
-		 * {
-		 * try
-		 * {
-		 * Thread.sleep( 50 );
-		 * }
-		 * catch ( InterruptedException e )
-		 * {}
-		 * pollCount++;
-		 * }
-		 * List<ChioriWorker> overdueWorkers = getScheduler().getActiveWorkers();
-		 * for ( ChioriWorker worker : overdueWorkers )
-		 * {
-		 * Plugin plugin = worker.getOwner();
-		 * String author = "<NoAuthorGiven>";
-		 * if ( plugin.getDescription().getAuthors().size() > 0 )
-		 * author = plugin.getDescription().getAuthors().get( 0 );
-		 * getLogger().log( Level.SEVERE, String.format( "Nag author: '%s' of '%s' about the following: %s", author, plugin.getDescription().getName(),
-		 * "This plugin is not properly shutting down its async tasks when it is being reloaded.  This may cause conflicts with the newly loaded version of the plugin" ) );
-		 * }
-		 */
+		
+		// Wait for at most 2.5 seconds for plugins to close their threads
+		while( pollCount < 50 && getScheduler().getActiveWorkers().size() > 0 )
+		{
+			try
+			{
+				Thread.sleep( 50 );
+			}
+			catch( InterruptedException e )
+			{}
+			pollCount++;
+		}
+		List<ChioriWorker> overdueWorkers = getScheduler().getActiveWorkers();
+		for ( ChioriWorker worker : overdueWorkers )
+		{
+			TaskCreator creator = worker.getOwner();
+			String author = "<NoAuthorGiven>";
+			// if ( creator.getDescription().getAuthors().size() > 0 )
+			// author = plugin.getDescription().getAuthors().get( 0 );
+			// getLogger().log( Level.SEVERE, String.format( "Nag author: '%s' of '%s' about the following: %s", author, plugin.getDescription().getName(),
+			// "This plugin is not properly shutting down its async tasks when it is being reloaded.  This may cause conflicts with the newly loaded version of the plugin" ) );
+		}
 		
 		plugins.loadPlugins();
 		changeRunLevel( RunLevel.RELOAD );
