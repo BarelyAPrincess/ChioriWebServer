@@ -25,6 +25,7 @@ import joptsimple.OptionSet;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 
 import com.chiorichan.Warning.WarningState;
@@ -285,21 +286,28 @@ public class Loader extends BuiltinEventCreator implements Listener
 		
 		WebUtils.sendTracking( "startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
 		
-		if ( firstRun )
+		try
 		{
-			try
+			String fwZip = "com/chiorichan/framework.zip";
+			File fwRoot = new File( webroot, "framework" );
+			String zipMD5 = DigestUtils.md5Hex( getClass().getClassLoader().getResourceAsStream( fwZip ) );
+			File curMD5 = new File( fwRoot, "version.md5" );
+			if ( firstRun || !curMD5.exists() || !zipMD5.equals( FileUtils.readFileToString( curMD5 ) ) )
 			{
 				getLogger().info( "Extracting the Web UI to the Framework Webroot... Please wait..." );
-				File fwRoot = new File( webroot, "framework" );
-				ZipFile zipFile = new ZipFile( getClass().getClassLoader().getResource( "com/chiorichan/framework.zip" ).getPath() );
+				ZipFile zipFile = new ZipFile( getClass().getClassLoader().getResource( fwZip ).getPath() );
 				zipFile.extractAll( fwRoot.getAbsolutePath() );
+				FileUtils.write( new File( fwRoot, "version.md5" ), zipMD5 );
 				getLogger().info( "Finished with no errors!!" );
 			}
-			catch( ZipException e )
-			{
-				e.printStackTrace();
-			}
-			
+		}
+		catch( ZipException | IOException e )
+		{
+			e.printStackTrace();
+		}
+		
+		if ( firstRun )
+		{
 			Loader.getLogger().highlight( "It appears that this is your first time running Chiori-chan's Web Server.".toUpperCase() );
 			Loader.getLogger().highlight( "All the needed files have been extracted from the jar file.".toUpperCase() );
 			Loader.getLogger().highlight( "------------------------------------------------------".toUpperCase() );

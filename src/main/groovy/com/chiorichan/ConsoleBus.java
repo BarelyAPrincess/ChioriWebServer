@@ -17,11 +17,6 @@ import joptsimple.OptionSet;
 
 import org.joda.time.DateTime;
 
-import com.chiorichan.ChatColor;
-import com.chiorichan.ConsoleLogManager;
-import com.chiorichan.Loader;
-import com.chiorichan.LoggerOutputStream;
-import com.chiorichan.ServerShutdownThread;
 import com.chiorichan.http.session.SessionManager;
 import com.chiorichan.util.FileUtil;
 import com.chiorichan.util.Versioning;
@@ -32,7 +27,7 @@ public class ConsoleBus implements Runnable
 	
 	private OptionSet options;
 	public static int lastFiveTick = -1;
-	public static int currentTick = (int) ( System.currentTimeMillis() / 50 );
+	public static int currentTick = (int) (System.currentTimeMillis() / 50);
 	public Thread primaryThread;
 	
 	public boolean useColors = true;
@@ -90,9 +85,9 @@ public class ConsoleBus implements Runnable
 				
 				j += l;
 				i = k;
-				while ( j > 50L )
+				while( j > 50L )
 				{
-					currentTick = (int) ( System.currentTimeMillis() / 50 );
+					currentTick = (int) (System.currentTimeMillis() / 50);
 					j -= 50L;
 					loopTick( currentTick );
 				}
@@ -100,7 +95,7 @@ public class ConsoleBus implements Runnable
 				Thread.sleep( 1L );
 			}
 		}
-		catch ( Throwable t )
+		catch( Throwable t )
 		{
 			t.printStackTrace();
 			// Crash report generate here
@@ -111,7 +106,7 @@ public class ConsoleBus implements Runnable
 			{
 				Loader.shutdown();
 			}
-			catch ( Throwable throwable1 )
+			catch( Throwable throwable1 )
 			{
 				throwable1.printStackTrace();
 			}
@@ -181,9 +176,33 @@ public class ConsoleBus implements Runnable
 					is.close();
 			}
 		}
-		catch ( IOException e )
+		catch( IOException e )
 		{	
 			
 		}
+	}
+	
+	public void pause( String msg, int timeout )
+	{
+		int last = 100;
+		do
+		{
+			if ( timeout / 1000 < last )
+			{
+				getLogger().info( ChatColor.GOLD + "" + ChatColor.NEGATIVE + String.format( msg, ((timeout / 1000) + 1) + " seconds" ).toUpperCase() + "/r" );
+				last = timeout / 1000;
+			}
+			
+			try
+			{
+				timeout = timeout - 250;
+				Thread.sleep( 250 );
+			}
+			catch( InterruptedException e )
+			{
+				e.printStackTrace();
+			}
+		}
+		while( timeout > 0 );
 	}
 }

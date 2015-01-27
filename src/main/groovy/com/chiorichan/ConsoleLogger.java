@@ -41,7 +41,7 @@ public class ConsoleLogger
 	
 	public void highlight( String msg )
 	{
-		log( Level.INFO, ChatColor.AQUA + msg );
+		log( Level.INFO, ChatColor.GOLD + "" + ChatColor.NEGATIVE + msg );
 	}
 	
 	public void info( String s )

@@ -415,7 +415,7 @@ public class Site
 		if ( event.isCancelled() && !siteId.equalsIgnoreCase( "framework" ) )
 			throw new SiteException( "Loading of site '" + siteId + "' was cancelled by an internal event." );
 		
-		if ( new File( getAbsoluteRoot(), "fw" ).exists() )
+		if ( new File( getAbsoluteRoot(), "fw" ).exists() && !siteId.equalsIgnoreCase( "framework" ) )
 			SiteManager.getLogger().warning( "It would appear that site '" + siteId + "' contains a subfolder by the name of 'fw', since this server uses the uri '/fw' for special functions, you will be unable to serve files from this folder!" );
 	}
 	

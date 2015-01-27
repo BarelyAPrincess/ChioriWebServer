@@ -19,6 +19,7 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import com.chiorichan.Loader;
 import com.chiorichan.exception.HttpErrorException;
 import com.chiorichan.framework.FileInterpreter;
+import com.chiorichan.framework.Site;
 import com.chiorichan.framework.SiteException;
 import com.google.common.collect.Maps;
 
@@ -59,10 +60,10 @@ public class WebInterpreter extends FileInterpreter
 		
 		// String cachedFileStr = ( cachedFile == null ) ? "N/A" : cachedFile.getAbsolutePath();
 		
-		return "WebInterpreter{content=" + bs.size() + " bytes,contentType=" + getContentType() + ",overrides={" + overrides + "},rewrites={" + rewrites + "}}";
+		return "WebInterpreter[content=" + bs.size() + " bytes,contentType=" + getContentType() + ",overrides=[" + overrides + "],rewrites=[" + rewrites + "]]";
 	}
 	
-	public WebInterpreter(HttpRequestWrapper request, Routes routes) throws IOException, HttpErrorException, SiteException
+	public WebInterpreter( HttpRequestWrapper request, Routes routes ) throws IOException, HttpErrorException, SiteException
 	{
 		super();
 		
@@ -72,6 +73,14 @@ public class WebInterpreter extends FileInterpreter
 		String uri = request.getURI();
 		String domain = request.getParentDomain();
 		String subdomain = request.getSubDomain();
+		
+		boolean fwRequest = uri.startsWith( "/fw" );
+		if ( fwRequest )
+		{
+			Site fwSite = Loader.getSiteManager().getFrameworkSite();
+			routes = fwSite.getRoutes();
+			request.setSite( fwSite );
+		}
 		
 		Route route = routes.searchRoutes( uri, domain, subdomain );
 		
@@ -158,11 +167,11 @@ public class WebInterpreter extends FileInterpreter
 							{
 								String destFileName = dest.getName();
 								String fileNameFull = f.getName();
-								String fileName = ( fileNameFull.contains( "." ) ) ? fileNameFull.substring( 0, fileNameFull.lastIndexOf( "." ) ) : fileNameFull;
-								String ext = ( fileNameFull.contains( "." ) ) ? fileNameFull.substring( fileNameFull.lastIndexOf( "." ) + 1 ) : "";
-								String ext2 = ( destFileName.contains( "." ) ) ? destFileName.substring( destFileName.lastIndexOf( "." ) + 1 ) : "";
+								String fileName = (fileNameFull.contains( "." )) ? fileNameFull.substring( 0, fileNameFull.lastIndexOf( "." ) ) : fileNameFull;
+								String ext = (fileNameFull.contains( "." )) ? fileNameFull.substring( fileNameFull.lastIndexOf( "." ) + 1 ) : "";
+								String ext2 = (destFileName.contains( "." )) ? destFileName.substring( destFileName.lastIndexOf( "." ) + 1 ) : "";
 								
-								if ( destFileName.startsWith( fileName ) && ( ext2.isEmpty() || destFileName.endsWith( ext ) ) )
+								if ( destFileName.startsWith( fileName ) && (ext2.isEmpty() || destFileName.endsWith( ext )) )
 								{
 									dest = f;
 									
