@@ -15,9 +15,9 @@ import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 
 import com.chiorichan.Loader;
-import com.chiorichan.plugin.java.JavaPlugin;
+import com.chiorichan.plugin.loader.Plugin;
 
-public class EmailPlugin extends JavaPlugin
+public class EmailPlugin extends Plugin
 {
 	public void onEnable()
 	{
@@ -56,7 +56,7 @@ public class EmailPlugin extends JavaPlugin
 			
 			Loader.getLogger().info( "&5[EmailPlugin] &2Sent message subjected '" + subject + "' to '" + sendTo + "'" );
 		}
-		catch ( MessagingException mex )
+		catch( MessagingException mex )
 		{
 			System.out.println( "send failed, exception: " + mex );
 			throw mex;
