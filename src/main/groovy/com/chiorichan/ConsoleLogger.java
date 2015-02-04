@@ -69,15 +69,20 @@ public class ConsoleLogger
 		log( Level.SEVERE, ChatColor.RED + s );
 	}
 	
-	public void severe( String s, Throwable throwable )
+	public void severe( Throwable t )
 	{
-		log( Level.SEVERE, ChatColor.RED + s, throwable );
+		log( Level.SEVERE, ChatColor.RED + t.getMessage(), t );
+	}
+	
+	public void severe( String s, Throwable t )
+	{
+		log( Level.SEVERE, ChatColor.RED + s, t );
 	}
 	
 	public void panic( Throwable e )
 	{
-		severe( e.getMessage(), e );
-		System.exit( 1 );
+		severe( e );
+		Loader.stop( "The server is stopping due to a severe error!" );
 	}
 	
 	public void panic( String var1 )

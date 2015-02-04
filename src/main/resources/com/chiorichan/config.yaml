@@ -2,6 +2,8 @@ server:
   httpHost: ''
   httpPort: 8080
   httpsPort: 4443
+  httpsKeystone: server.keystone
+  httpsSecret: abcd1234
   tcpHost: ''
   tcpPort: 1024
   admin: chiorigreene@gmail.com

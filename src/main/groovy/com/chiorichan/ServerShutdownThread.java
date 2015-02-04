@@ -18,7 +18,7 @@ public class ServerShutdownThread extends Thread
 		try
 		{
 			if ( Loader.isRunning() )
-				Loader.stop( "Stopping the server... Goodbye!" );
+				Loader.stop( null );
 		}
 		catch ( Exception ex )
 		{

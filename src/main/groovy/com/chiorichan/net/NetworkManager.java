@@ -15,11 +15,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.net.InetSocketAddress;
-
-import org.apache.commons.io.IOUtils;
-import org.yaml.snakeyaml.external.biz.base64Coder.Base64Coder;
 
 import com.chiorichan.Loader;
 import com.chiorichan.StartupException;
@@ -57,6 +53,11 @@ public class NetworkManager
 		return Common.isRoot();
 	}
 	
+	public static void initTcpServer()
+	{
+		// TCP IS TEMPORARY REMOVED UNTIL IT CAN BE PORTED TO NETTY.
+	}
+	
 	public static void initWebServer() throws StartupException
 	{
 		try
@@ -79,7 +80,7 @@ public class NetworkManager
 				else
 					socket = new InetSocketAddress( httpIp, httpPort );
 				
-				Loader.getLogger().info( "Starting Web Server on " + ( httpIp.length() == 0 ? "*" : httpIp ) + ":" + httpPort );
+				Loader.getLogger().info( "Starting Web Server on " + (httpIp.length() == 0 ? "*" : httpIp) + ":" + httpPort );
 				
 				try
 				{
@@ -96,7 +97,7 @@ public class NetworkManager
 							{
 								ch.closeFuture().sync();
 							}
-							catch ( InterruptedException e )
+							catch( InterruptedException e )
 							{
 								e.printStackTrace();
 							}
@@ -109,16 +110,17 @@ public class NetworkManager
 					};
 					thread.start();
 				}
-				catch ( NullPointerException e )
+				catch( NullPointerException e )
 				{
-					Loader.getLogger().severe( "There was a problem starting the Web Server. Check logs and try again.", e );
-					System.exit( 1 );
+					throw new StartupException( "There was a problem starting the Web Server. Check logs and try again.", e );
 				}
-				catch ( Throwable e )
+				catch( Throwable e )
 				{
 					Loader.getLogger().warning( "**** FAILED TO BIND WEB SERVER TO PORT!" );
-					Loader.getLogger().warning( "The exception was: {0}", new Object[] { e.toString() } );
+					// Loader.getLogger().warning( "The exception was: {0}", new Object[] {e.toString()} );
 					Loader.getLogger().warning( "Perhaps a server is already running on that port?" );
+					
+					throw new StartupException( e );
 				}
 			}
 			
@@ -139,7 +141,12 @@ public class NetworkManager
 				else
 					socket = new InetSocketAddress( httpIp, httpsPort );
 				
-				Loader.getLogger().info( "Starting Web Server on " + ( httpIp.length() == 0 ? "*" : httpIp ) + ":" + httpsPort );
+				Loader.getLogger().info( "Starting Web Server on " + (httpIp.length() == 0 ? "*" : httpIp) + ":" + httpsPort );
+				
+				File sslCert = new File( Loader.getRoot(), Loader.getConfig().getString( "server.httpsKeystone", "server.keystone" ) );
+				
+				if ( !sslCert.exists() )
+					throw new StartupException( "We could not start the HTTPS Server because the '" + sslCert.getName() + "' (aka. SSL Cert) file does not exist. Please generate one and reload the server, or disable SSL in the configs." );
 				
 				try
 				{
@@ -156,7 +163,7 @@ public class NetworkManager
 							{
 								ch.closeFuture().sync();
 							}
-							catch ( InterruptedException e )
+							catch( InterruptedException e )
 							{
 								e.printStackTrace();
 							}
@@ -171,20 +178,21 @@ public class NetworkManager
 					};
 					thread.start();
 				}
-				catch ( NullPointerException e )
+				catch( NullPointerException e )
 				{
-					Loader.getLogger().severe( "There was a problem starting the Web Server. Check logs and try again.", e );
-					System.exit( 1 );
+					throw new StartupException( "There was a problem starting the Web Server. Check logs and try again.", e );
 				}
-				catch ( Throwable e )
+				catch( Throwable e )
 				{
 					Loader.getLogger().warning( "**** FAILED TO BIND WEB SERVER TO PORT!" );
-					Loader.getLogger().warning( "The exception was: {0}", new Object[] { e.toString() } );
+					// Loader.getLogger().warning( "The exception was: {0}", new Object[] {e.toString()} );
 					Loader.getLogger().warning( "Perhaps a server is already running on that port?" );
+					
+					throw new StartupException( e );
 				}
 			}
 		}
-		catch ( Throwable e )
+		catch( Throwable e )
 		{
 			throw new StartupException( e );
 		}

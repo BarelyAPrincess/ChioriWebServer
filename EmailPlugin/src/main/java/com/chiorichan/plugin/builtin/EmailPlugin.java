@@ -54,7 +54,7 @@ public class EmailPlugin extends Plugin
 			transport.sendMessage( msg, msg.getAllRecipients() );
 			transport.close();
 			
-			Loader.getLogger().info( "&5[EmailPlugin] &2Sent message subjected '" + subject + "' to '" + sendTo + "'" );
+			getLogger().info( "&2Sent message subjected '" + subject + "' to '" + sendTo + "'" );
 		}
 		catch( MessagingException mex )
 		{

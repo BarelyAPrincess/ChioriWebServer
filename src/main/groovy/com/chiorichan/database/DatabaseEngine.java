@@ -27,6 +27,7 @@ import org.json.JSONException;
 import vnet.java.util.MySQLUtils;
 
 import com.chiorichan.Loader;
+import com.chiorichan.StartupException;
 import com.chiorichan.util.ObjectUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -86,8 +87,7 @@ public class DatabaseEngine
 		}
 		catch( ClassNotFoundException e )
 		{
-			Loader.getLogger().severe( "We could not locate the 'com.mysql.jdbc.Driver' library regardless that its suppose to be included. If your running from source code be sure to have this library in your build path." );
-			System.exit( 1 );
+			throw new StartupException( "We could not locate the 'com.mysql.jdbc.Driver' library regardless that its suppose to be included. If your running from source code be sure to have this library in your build path." );
 		}
 		
 		con = DriverManager.getConnection( "jdbc:sqlite:" + filename );
@@ -121,8 +121,7 @@ public class DatabaseEngine
 		}
 		catch( ClassNotFoundException e )
 		{
-			Loader.getLogger().severe( "We could not locate the 'com.mysql.jdbc.Driver' library regardless that its suppose to be included. If your running from an IDE be sure to have this library in your build path." );
-			System.exit( 1 );
+			throw new StartupException( "We could not locate the 'com.mysql.jdbc.Driver' library regardless that its suppose to be included. If your running from source code be sure to have this library in your build path." );
 		}
 		
 		saved_db = db;

@@ -183,12 +183,12 @@ public class PluginDescriptionFile
 	private boolean database = false;
 	private RunLevel order = RunLevel.INITIALIZED;
 	
-	public PluginDescriptionFile(final File file) throws InvalidDescriptionException, FileNotFoundException
+	public PluginDescriptionFile( final File file ) throws InvalidDescriptionException, FileNotFoundException
 	{
 		loadMap( asMap( yaml.load( new FileInputStream( file ) ) ) );
 	}
 	
-	public PluginDescriptionFile(final InputStream stream) throws InvalidDescriptionException
+	public PluginDescriptionFile( final InputStream stream ) throws InvalidDescriptionException
 	{
 		loadMap( asMap( yaml.load( stream ) ) );
 	}
@@ -206,7 +206,7 @@ public class PluginDescriptionFile
 	 * @throws InvalidDescriptionException
 	 *              If the PluginDescriptionFile is invalid
 	 */
-	public PluginDescriptionFile(final Reader reader) throws InvalidDescriptionException
+	public PluginDescriptionFile( final Reader reader ) throws InvalidDescriptionException
 	{
 		loadMap( asMap( yaml.load( reader ) ) );
 	}
@@ -221,7 +221,7 @@ public class PluginDescriptionFile
 	 * @param mainClass
 	 *             Full location of the main class of this plugin
 	 */
-	public PluginDescriptionFile(final String pluginName, final String pluginVersion, final String mainClass)
+	public PluginDescriptionFile( final String pluginName, final String pluginVersion, final String mainClass )
 	{
 		name = pluginName;
 		version = pluginVersion;
@@ -606,11 +606,11 @@ public class PluginDescriptionFile
 				throw new InvalidDescriptionException( "name '" + name + "' contains invalid characters." );
 			}
 		}
-		catch ( NullPointerException ex )
+		catch( NullPointerException ex )
 		{
 			throw new InvalidDescriptionException( ex, "name is not defined" );
 		}
-		catch ( ClassCastException ex )
+		catch( ClassCastException ex )
 		{
 			throw new InvalidDescriptionException( ex, "name is of wrong type" );
 		}
@@ -619,11 +619,11 @@ public class PluginDescriptionFile
 		{
 			version = map.get( "version" ).toString();
 		}
-		catch ( NullPointerException ex )
+		catch( NullPointerException ex )
 		{
 			throw new InvalidDescriptionException( ex, "version is not defined" );
 		}
-		catch ( ClassCastException ex )
+		catch( ClassCastException ex )
 		{
 			throw new InvalidDescriptionException( ex, "version is of wrong type" );
 		}
@@ -631,14 +631,14 @@ public class PluginDescriptionFile
 		try
 		{
 			main = map.get( "main" ).toString();
-			if ( main.startsWith( "com.chiori" ) )
+			if ( main.startsWith( "com.chiori" ) && !main.startsWith( "com.chiorichan.plugin.builtin" ) )
 				throw new InvalidDescriptionException( "main may not be within the com.chiori namespace" );
 		}
-		catch ( NullPointerException ex )
+		catch( NullPointerException ex )
 		{
 			throw new InvalidDescriptionException( ex, "main is not defined" );
 		}
-		catch ( ClassCastException ex )
+		catch( ClassCastException ex )
 		{
 			throw new InvalidDescriptionException( ex, "main is of wrong type" );
 		}
@@ -658,11 +658,11 @@ public class PluginDescriptionFile
 					dependBuilder.add( dependency.toString() );
 				}
 			}
-			catch ( ClassCastException ex )
+			catch( ClassCastException ex )
 			{
 				throw new InvalidDescriptionException( ex, "depend is of wrong type" );
 			}
-			catch ( NullPointerException e )
+			catch( NullPointerException e )
 			{
 				throw new InvalidDescriptionException( e, "invalid dependency format" );
 			}
@@ -679,11 +679,11 @@ public class PluginDescriptionFile
 					softDependBuilder.add( dependency.toString() );
 				}
 			}
-			catch ( ClassCastException ex )
+			catch( ClassCastException ex )
 			{
 				throw new InvalidDescriptionException( ex, "softdepend is of wrong type" );
 			}
-			catch ( NullPointerException ex )
+			catch( NullPointerException ex )
 			{
 				throw new InvalidDescriptionException( ex, "invalid soft-dependency format" );
 			}
@@ -700,11 +700,11 @@ public class PluginDescriptionFile
 					loadBeforeBuilder.add( predependency.toString() );
 				}
 			}
-			catch ( ClassCastException ex )
+			catch( ClassCastException ex )
 			{
 				throw new InvalidDescriptionException( ex, "loadbefore is of wrong type" );
 			}
-			catch ( NullPointerException ex )
+			catch( NullPointerException ex )
 			{
 				throw new InvalidDescriptionException( ex, "invalid load-before format" );
 			}
@@ -717,7 +717,7 @@ public class PluginDescriptionFile
 			{
 				database = (Boolean) map.get( "database" );
 			}
-			catch ( ClassCastException ex )
+			catch( ClassCastException ex )
 			{
 				throw new InvalidDescriptionException( ex, "database is of wrong type" );
 			}
@@ -737,13 +737,13 @@ public class PluginDescriptionFile
 		{
 			try
 			{
-				order = RunLevel.valueOf( ( (String) map.get( "load" ) ).toUpperCase().replaceAll( "\\W", "" ) );
+				order = RunLevel.valueOf( ((String) map.get( "load" )).toUpperCase().replaceAll( "\\W", "" ) );
 			}
-			catch ( ClassCastException ex )
+			catch( ClassCastException ex )
 			{
 				throw new InvalidDescriptionException( ex, "load is of wrong type" );
 			}
-			catch ( IllegalArgumentException ex )
+			catch( IllegalArgumentException ex )
 			{
 				throw new InvalidDescriptionException( ex, "load is not a valid choice" );
 			}
@@ -763,11 +763,11 @@ public class PluginDescriptionFile
 					authorsBuilder.add( o.toString() );
 				}
 			}
-			catch ( ClassCastException ex )
+			catch( ClassCastException ex )
 			{
 				throw new InvalidDescriptionException( ex, "authors are of wrong type" );
 			}
-			catch ( NullPointerException ex )
+			catch( NullPointerException ex )
 			{
 				throw new InvalidDescriptionException( ex, "authors are improperly defined" );
 			}

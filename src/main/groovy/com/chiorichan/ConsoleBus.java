@@ -11,6 +11,7 @@ package com.chiorichan;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.Scanner;
 import java.util.logging.Level;
 
 import joptsimple.OptionSet;
@@ -20,6 +21,7 @@ import org.joda.time.DateTime;
 import com.chiorichan.http.session.SessionManager;
 import com.chiorichan.util.FileUtil;
 import com.chiorichan.util.Versioning;
+import com.google.common.base.Joiner;
 
 public class ConsoleBus implements Runnable
 {
@@ -204,5 +206,26 @@ public class ConsoleBus implements Runnable
 			}
 		}
 		while( timeout > 0 );
+	}
+	
+	public String prompt( String msg, String... keys )
+	{
+		Scanner scanner = new Scanner( System.in );
+		
+		getLogger().highlight( msg );
+		
+		while( true )
+		{
+			String key = scanner.next();
+			
+			for ( String s : keys )
+				if ( key.equalsIgnoreCase( s ) || key.toUpperCase().startsWith( s.toUpperCase() ) )
+				{
+					scanner.close();
+					return s;
+				}
+			
+			Loader.getLogger().warning( key + " is not an available option, please press " + Joiner.on( "," ).join( keys ) + " to continue." );
+		}
 	}
 }

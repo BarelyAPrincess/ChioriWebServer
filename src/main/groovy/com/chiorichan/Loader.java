@@ -124,27 +124,30 @@ public class Loader extends BuiltinEventCreator implements Listener
 		}
 		catch( Throwable t )
 		{
-			t.printStackTrace();
-			
-			if ( getLogger() != null )
-				getLogger().severe( ChatColor.RED + "" + ChatColor.NEGATIVE + "SEVERE ERROR (" + (System.currentTimeMillis() - startTime) + "ms)! Press 'Ctrl-c' to quit!'" );
-			else
-				System.err.println( "SEVERE ERROR (" + (System.currentTimeMillis() - startTime) + "ms)! Press 'Ctrl-c' to quit!'" );
-			// TODO Make it so this exception (and possibly other critical exceptions) are reported to us without user interaction. Should also find a way that the log can be sent along with it.
-			try
+			if ( t.getMessage() != "" )
 			{
-				NetworkManager.cleanup();
-				isRunning = false;
+				t.printStackTrace();
+				// TODO Make it so this exception (and possibly other critical exceptions) are reported to us without user interaction. Should also find a way that the log can be sent along with it.
+				
+				if ( getLogger() != null )
+					getLogger().severe( ChatColor.RED + "" + ChatColor.NEGATIVE + "THE SERVER FAILED TO START, CHECK THE LOGS AND TRY AGAIN (" + (System.currentTimeMillis() - startTime) + "ms)!" );
+				else
+					System.err.println( "THE SERVER FAILED TO START, CHECK THE LOGS AND TRY AGAIN (" + (System.currentTimeMillis() - startTime) + "ms)!" );
+				
+				try
+				{
+					NetworkManager.cleanup();
+					isRunning = false;
+				}
+				catch( Exception e )
+				{}
 				
 				if ( configuration != null && configuration.getBoolean( "server.haltOnSevereError" ) )
 				{
-					Scanner keyboard = new Scanner( System.in );
-					keyboard.nextLine();
-					keyboard.close();
+					System.out.println( "Press enter to exit..." );
+					System.in.read();
 				}
 			}
-			catch( Exception e )
-			{}
 		}
 	}
 	
@@ -306,12 +309,17 @@ public class Loader extends BuiltinEventCreator implements Listener
 			e.printStackTrace();
 		}
 		
-		if ( firstRun )
+		if ( true )// firstRun )
 		{
-			Loader.getLogger().highlight( "It appears that this is your first time running Chiori-chan's Web Server.".toUpperCase() );
-			Loader.getLogger().highlight( "All the needed files have been extracted from the jar file.".toUpperCase() );
-			Loader.getLogger().highlight( "------------------------------------------------------".toUpperCase() );
-			Loader.getConsole().pause( "The server will resume it's boot sequence in %s. Press CTRL-C now to stop. It's highly recommended that you stop, review config, and restart.", 9000 );
+			Loader.getLogger().highlight( "It appears that this is your first time running Chiori-chan's Web Server." );
+			Loader.getLogger().highlight( "All the needed files have been extracted from the jar file." );
+			Loader.getLogger().highlight( "We highly recommended that you stop the server, review configuration," );
+			Loader.getLogger().highlight( "and restart. You can find documentation and guides on our Github for more help." );
+			Loader.getLogger().highlight( "-------------------------------------------------------------------------------" );
+			String key = Loader.getConsole().prompt( "Would you like to stop and review config? Press 'Y' for Yes or 'N' for No.", "Y", "N" );
+			
+			if ( key.equals( "Y" ) )
+				throw new StartupException( "" );
 		}
 	}
 	
@@ -342,12 +350,10 @@ public class Loader extends BuiltinEventCreator implements Listener
 		
 		changeRunLevel( RunLevel.STARTUP );
 		
-		// if ( !options.has( "tcp-disable" ) && configuration.getBoolean( "server.enableTcpServer", true ) )
-		// NetworkManager.initTcpServer();
-		// else
-		// getLogger().warning( "The integrated tcp server has been disabled per the configuration. Change server.enableTcpServer to true to reenable it." );
-		// TCP IS TEMPORARY REMOVED UNTIL IT CAN BE PORTED TO NETTY.
-		// BUT IT MIGHT END UP AS A PLUGIN VERSES BUILTIN NEXT TIME.
+		if ( !options.has( "tcp-disable" ) && configuration.getBoolean( "server.enableTcpServer", true ) )
+			NetworkManager.initTcpServer();
+		else
+			getLogger().warning( "The integrated tcp server has been disabled per the configuration. Change server.enableTcpServer to true to reenable it." );
 		
 		if ( !options.has( "web-disable" ) && configuration.getBoolean( "server.enableWebServer", true ) )
 			NetworkManager.initWebServer();
@@ -604,7 +610,11 @@ public class Loader extends BuiltinEventCreator implements Listener
 	
 	public static void stop( String _stopReason )
 	{
-		getLogger().warning( "Server Stopping for Reason: " + _stopReason );
+		if ( _stopReason == null )
+			getLogger().highlight( "Stopping the server... Goodbye!" );
+		else if ( _stopReason != "" )
+			getLogger().highlight( "Server Stopping for Reason: " + _stopReason );
+		
 		stopReason = _stopReason;
 		isRunning = false;
 	}
