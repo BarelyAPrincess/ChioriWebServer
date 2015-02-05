@@ -1,3 +1,12 @@
+/**
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
+ */
 package com.chiorichan.permission;
 
 import java.util.HashMap;
@@ -132,7 +141,7 @@ public class PermissionManager implements TaskCreator
 	 *             site's name as string
 	 * @return true on success false otherwise
 	 */
-	public boolean has( Account entity, String permission, String site )
+	public boolean has( Account<?> entity, String permission, String site )
 	{
 		return this.has( entity.getName(), permission, site );
 	}
@@ -199,7 +208,7 @@ public class PermissionManager implements TaskCreator
 	 *             entity object
 	 * @return PermissibleEntity instance
 	 */
-	public PermissibleEntity getEntity( Account entity )
+	public PermissibleEntity getEntity( Account<?> entity )
 	{
 		return this.getEntity( entity.getName() );
 	}

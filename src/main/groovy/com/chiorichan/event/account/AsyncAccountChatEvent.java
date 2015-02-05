@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -31,7 +32,7 @@ public class AsyncAccountChatEvent extends AccountEvent implements Cancellable
 	private boolean cancel = false;
 	private String message;
 	private String format = "<%1$s> %2$s";
-	private final Set<Account> recipients;
+	private final Set<Account<?>> recipients;
 	
 	/**
 	 * 
@@ -44,11 +45,11 @@ public class AsyncAccountChatEvent extends AccountEvent implements Cancellable
 	 * @param Users
 	 *             the Users to receive the message. This may be a lazy or unmodifiable collection.
 	 */
-	public AsyncAccountChatEvent(final boolean async, final Account who, final String message, final Set<Account> Users)
+	public AsyncAccountChatEvent( final boolean async, final Account<?> who, final String message, final Set<Account<?>> accts )
 	{
 		super( who, async );
 		this.message = message;
-		recipients = Users;
+		recipients = accts;
 	}
 	
 	/**
@@ -102,7 +103,7 @@ public class AsyncAccountChatEvent extends AccountEvent implements Cancellable
 		{
 			String.format( format, acct.getAcctId(), message );
 		}
-		catch ( RuntimeException ex )
+		catch( RuntimeException ex )
 		{
 			ex.fillInStackTrace();
 			throw ex;
@@ -121,7 +122,7 @@ public class AsyncAccountChatEvent extends AccountEvent implements Cancellable
 	 * 
 	 * @return All Users who will see this chat message
 	 */
-	public Set<Account> getRecipients()
+	public Set<Account<?>> getRecipients()
 	{
 		return recipients;
 	}

@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2014 Chiori-chan. All Right Reserved.
- *
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -15,21 +14,18 @@ import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountMetaData;
 import com.chiorichan.account.LoginException;
 import com.chiorichan.account.LoginExceptionReason;
-import com.chiorichan.account.adapter.file.FileAdapter;
 import com.chiorichan.account.adapter.memory.MemoryAdapter;
-import com.chiorichan.account.adapter.sql.SqlAdapter;
 
 /**
  * Used to lookup Account MetaData from the adapters datastore
- * 
- * @author Chiori Greene
  */
 public interface AccountLookupAdapter
 {
 	public MemoryAdapter MEMORY_ADAPTER = new MemoryAdapter();
-
+	
 	/**
 	 * Returns all accounts maintained by this adapter.
+	 * 
 	 * @return
 	 */
 	public List<AccountMetaData> getAccounts();
@@ -42,7 +38,8 @@ public interface AccountLookupAdapter
 	
 	/**
 	 * Attempt to reload details regarding this account.
-	 * @return 
+	 * 
+	 * @return
 	 */
 	public AccountMetaData reloadAccount( AccountMetaData account );
 	
@@ -53,19 +50,20 @@ public interface AccountLookupAdapter
 	 */
 	public AccountMetaData readAccount( String account ) throws LoginException;
 	
-	/** 
+	/**
 	 * @return Class extends Account
-	 * 			The class that should be used to create the Account Object
+	 *         The class that should be used to create the Account Object
 	 */
 	public Class<? extends Account<? extends AccountLookupAdapter>> getAccountClass();
 	
 	/**
 	 * Informs the Adapater of a failed login
+	 * 
 	 * @param account
-	 * 			The account that failed the login.
+	 *             The account that failed the login.
 	 * @param reason
-	 * 			The reason the login failed.
-	 * 			
+	 *             The reason the login failed.
+	 * 
 	 */
 	public void failedLoginUpdate( AccountMetaData meta, LoginExceptionReason reason );
 }

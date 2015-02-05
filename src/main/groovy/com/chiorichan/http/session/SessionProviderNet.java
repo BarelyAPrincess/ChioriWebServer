@@ -1,6 +1,12 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
+ */
 package com.chiorichan.http.session;
-
-import java.util.Set;
 
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountHandler;
@@ -10,7 +16,6 @@ import com.chiorichan.framework.Site;
 import com.chiorichan.http.Candy;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.http.HttpResponseWrapper;
-import com.chiorichan.permission.Permissible;
 import com.chiorichan.permission.PermissibleType;
 
 public class SessionProviderNet extends AccountHandler implements SessionProvider, BindingProvider
@@ -94,7 +99,7 @@ public class SessionProviderNet extends AccountHandler implements SessionProvide
 	}
 	
 	@Override
-	public Account getAccount()
+	public Account<?> getAccount()
 	{
 		return null;
 	}
@@ -182,7 +187,7 @@ public class SessionProviderNet extends AccountHandler implements SessionProvide
 	{
 		
 	}
-
+	
 	@Override
 	public PermissibleType getType()
 	{

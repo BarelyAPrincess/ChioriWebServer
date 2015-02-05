@@ -1,12 +1,17 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
+ */
 package com.chiorichan.permission;
 
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
-
-import com.chiorichan.configuration.Configuration;
 
 public abstract class PermissionBackend
 {
@@ -91,6 +96,7 @@ public abstract class PermissionBackend
 	 * @return
 	 * @throws ClassNotFoundException
 	 */
+	@SuppressWarnings( "unchecked" )
 	public static Class<? extends PermissionBackend> getBackendClass( String alias ) throws ClassNotFoundException
 	{
 		if ( !registedAliases.containsKey( alias ) )

@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
+ */
 package com.chiorichan.http.session;
 
 import groovy.lang.Binding;
@@ -25,14 +33,14 @@ public class SessionProviderWeb implements SessionProvider
 	protected HttpRequestWrapper request;
 	protected Session parentSession;
 	
-	protected SessionProviderWeb(HttpRequestWrapper _request)
+	protected SessionProviderWeb( HttpRequestWrapper _request )
 	{
 		parentSession = SessionManager.createSession();
 		parentSession.sessionProviders.add( this );
 		setRequest( _request, false );
 	}
 	
-	protected SessionProviderWeb(Session session, HttpRequestWrapper _request)
+	protected SessionProviderWeb( Session session, HttpRequestWrapper _request )
 	{
 		parentSession = session;
 		parentSession.sessionProviders.add( this );
@@ -83,7 +91,7 @@ public class SessionProviderWeb implements SessionProvider
 		{
 			parentSession.initSession( request.getParentDomain() );
 		}
-		catch ( SessionException e )
+		catch( SessionException e )
 		{
 			e.printStackTrace();
 		}
@@ -130,11 +138,11 @@ public class SessionProviderWeb implements SessionProvider
 		{
 			try
 			{
-				Account user = Loader.getAccountManager().attemptLogin( parentSession, username, password );
+				Account<?> user = Loader.getAccountManager().attemptLogin( parentSession, username, password );
 				
 				parentSession.currentAccount = user;
 				
-				String loginPost = ( target.isEmpty() ) ? request.getSite().getYaml().getString( "scripts.login-post", "/panel" ) : target;
+				String loginPost = (target.isEmpty()) ? request.getSite().getYaml().getString( "scripts.login-post", "/panel" ) : target;
 				
 				parentSession.setVariable( "remember", remember );
 				
@@ -142,7 +150,7 @@ public class SessionProviderWeb implements SessionProvider
 				request.getResponse().sendRedirect( loginPost );
 				
 			}
-			catch ( LoginException l )
+			catch( LoginException l )
 			{
 				// l.printStackTrace();
 				
@@ -163,13 +171,13 @@ public class SessionProviderWeb implements SessionProvider
 			{
 				try
 				{
-					Account user = Loader.getAccountManager().attemptLogin( parentSession, username, password );
+					Account<?> user = Loader.getAccountManager().attemptLogin( parentSession, username, password );
 					
 					parentSession.currentAccount = user;
 					
 					Loader.getLogger().info( ChatColor.GREEN + "Login Success `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getAcctId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
 				}
-				catch ( LoginException l )
+				catch( LoginException l )
 				{
 					Loader.getLogger().warning( ChatColor.GREEN + "Login Failed `No Valid Login Present`" );
 				}
@@ -179,17 +187,20 @@ public class SessionProviderWeb implements SessionProvider
 		}
 		else
 		{
-			/* XXX
-			try
-			{
-				parentSession.currentAccount.reloadAndValidate(); // <- Is this being overly redundant?
-				Loader.getLogger().info( ChatColor.GREEN + "Current Login `Username \"" + parentSession.currentAccount.getName() + "\", Password \"" + parentSession.currentAccount.getMetaData().getPassword() + "\", UserId \"" + parentSession.currentAccount.getAccountId() + "\", Display Name \"" + parentSession.currentAccount.getDisplayName() + "\"`" );
-			}
-			catch ( LoginException e )
-			{
-				parentSession.currentAccount = null;
-				Loader.getLogger().warning( ChatColor.GREEN + "Login Failed `There was a login present but it failed validation with error: " + e.getMessage() + "`" );
-			}*/
+			/*
+			 * XXX
+			 * try
+			 * {
+			 * parentSession.currentAccount.reloadAndValidate(); // <- Is this being overly redundant?
+			 * Loader.getLogger().info( ChatColor.GREEN + "Current Login `Username \"" + parentSession.currentAccount.getName() + "\", Password \"" + parentSession.currentAccount.getMetaData().getPassword() + "\", UserId \"" +
+			 * parentSession.currentAccount.getAccountId() + "\", Display Name \"" + parentSession.currentAccount.getDisplayName() + "\"`" );
+			 * }
+			 * catch ( LoginException e )
+			 * {
+			 * parentSession.currentAccount = null;
+			 * Loader.getLogger().warning( ChatColor.GREEN + "Login Failed `There was a login present but it failed validation with error: " + e.getMessage() + "`" );
+			 * }
+			 */
 		}
 		
 		if ( parentSession.currentAccount != null )
@@ -264,9 +275,9 @@ public class SessionProviderWeb implements SessionProvider
 		if ( parentSession.currentAccount == null )
 			request.getResponse().sendLoginPage();
 		
-		//if ( permission != null )
-			// XXX if ( !parentSession.currentAccount.hasPermission( permission ) )
-				//request.getResponse().sendError( HttpCode.HTTP_FORBIDDEN, "You must have the `" + permission + "` in order to view this page!" );
+		// if ( permission != null )
+		// XXX if ( !parentSession.currentAccount.hasPermission( permission ) )
+		// request.getResponse().sendError( HttpCode.HTTP_FORBIDDEN, "You must have the `" + permission + "` in order to view this page!" );
 	}
 	
 	public ConfigurationManagerWrapper getConfigurationManager()
@@ -293,7 +304,7 @@ public class SessionProviderWeb implements SessionProvider
 	}
 	
 	@Override
-	public Account getAccount()
+	public Account<?> getAccount()
 	{
 		return parentSession.getAccount();
 	}

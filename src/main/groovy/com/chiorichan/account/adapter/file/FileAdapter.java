@@ -2,8 +2,7 @@
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -23,7 +22,6 @@ import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountMetaData;
 import com.chiorichan.account.LoginException;
 import com.chiorichan.account.LoginExceptionReason;
-import com.chiorichan.account.LookupAdapterException;
 import com.chiorichan.account.adapter.AccountLookupAdapter;
 import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.framework.WebUtils;
@@ -117,7 +115,7 @@ public class FileAdapter implements AccountLookupAdapter
 		{
 			yser.save( (File) meta.getObject( "relPath" ) );
 		}
-		catch ( IOException e )
+		catch( IOException e )
 		{
 			e.printStackTrace();
 		}
@@ -154,7 +152,7 @@ public class FileAdapter implements AccountLookupAdapter
 			AccountMetaData meta = e.getValue();
 			
 			for ( String f : accountFields )
-				if ( meta.getObject( f ) != null && ( meta.getString( f ).equalsIgnoreCase( acctId ) || meta.getString( f ).equalsIgnoreCase( accountname ) ) )
+				if ( meta.getObject( f ) != null && (meta.getString( f ).equalsIgnoreCase( acctId ) || meta.getString( f ).equalsIgnoreCase( accountname )) )
 					throw new LoginException( LoginExceptionReason.accountExists );
 		}
 		
@@ -172,7 +170,7 @@ public class FileAdapter implements AccountLookupAdapter
 		{
 			yser.save( new File( accountsDirectory, relPath ) );
 		}
-		catch ( IOException e )
+		catch( IOException e )
 		{
 			e.printStackTrace();
 			throw new LoginException( e );
@@ -245,12 +243,12 @@ public class FileAdapter implements AccountLookupAdapter
 		{
 			yser.save( relPath );
 		}
-		catch ( IOException e )
+		catch( IOException e )
 		{
 			e.printStackTrace();
 		}
 	}
-
+	
 	@Override
 	public Class<? extends Account<? extends AccountLookupAdapter>> getAccountClass()
 	{

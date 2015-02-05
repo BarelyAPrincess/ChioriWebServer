@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
+ */
 package com.chiorichan.permission.structure;
 
 import java.util.Arrays;
@@ -13,7 +21,7 @@ public final class Permission
 {
 	protected static final Set<Permission> allPerms = Sets.newConcurrentHashSet();
 	protected final List<Permission> children = Lists.newCopyOnWriteArrayList();
-	protected PermissionValue value = null;
+	protected PermissionValue<?> value = null;
 	protected boolean isRootNode = false;
 	protected String description = "";
 	protected Permission parent = null;
@@ -32,12 +40,12 @@ public final class Permission
 		allPerms.add( this );
 	}
 	
-	public void setValue( PermissionValue val )
+	public void setValue( PermissionValue<?> val )
 	{
 		value = val;
 	}
 	
-	public PermissionValue getValue()
+	public PermissionValue<?> getValue()
 	{
 		return value;
 	}

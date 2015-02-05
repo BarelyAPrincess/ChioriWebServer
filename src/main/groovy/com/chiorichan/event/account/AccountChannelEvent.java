@@ -19,7 +19,7 @@ public abstract class AccountChannelEvent extends AccountEvent
 	private static final HandlerList handlers = new HandlerList();
 	private final String channel;
 	
-	public AccountChannelEvent(final Account User, final String channel)
+	public AccountChannelEvent( final Account<?> User, final String channel )
 	{
 		super( User );
 		this.channel = channel;

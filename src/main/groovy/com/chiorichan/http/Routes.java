@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
+ */
 package com.chiorichan.http;
 
 import java.io.File;
@@ -42,7 +50,7 @@ public class Routes
 		}
 	}
 	
-	public Routes(Site _site)
+	public Routes( Site _site )
 	{
 		site = _site;
 	}
@@ -66,14 +74,14 @@ public class Routes
 						{
 							routes.add( new Route( l, site ) );
 						}
-						catch ( IOException e1 )
+						catch( IOException e1 )
 						{	
 							
 						}
 					}
 				}
 			}
-			catch ( IOException e )
+			catch( IOException e )
 			{
 				e.printStackTrace();
 			}
@@ -84,7 +92,8 @@ public class Routes
 				
 				if ( sql != null )
 				{
-					//ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE (subdomain = '" + subdomain + "' OR subdomain = '') AND domain = '" + domain + "' UNION SELECT * FROM `pages` WHERE (subdomain = '" + subdomain + "' OR subdomain = '') AND domain = '';" );
+					// ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE (subdomain = '" + subdomain + "' OR subdomain = '') AND domain = '" + domain + "' UNION SELECT * FROM `pages` WHERE (subdomain = '" + subdomain +
+					// "' OR subdomain = '') AND domain = '';" );
 					ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE domain = '" + domain + "' OR domain = '';" );
 					if ( sql.getRowCount( rs ) > 0 )
 					{
@@ -92,11 +101,11 @@ public class Routes
 						{
 							routes.add( new Route( rs, site ) );
 						}
-						while ( rs.next() );
+						while( rs.next() );
 					}
 				}
 			}
-			catch ( SQLException e )
+			catch( SQLException e )
 			{
 				throw new IOException( e );
 			}

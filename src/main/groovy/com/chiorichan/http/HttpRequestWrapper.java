@@ -15,7 +15,6 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.ssl.SslHandler;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
@@ -26,7 +25,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
@@ -439,6 +437,7 @@ public class HttpRequestWrapper
 				}
 				else if ( o instanceof Map )
 				{
+					@SuppressWarnings( "unchecked" )
 					Map<String, String> map = (Map<String, String>) o;
 					
 					if ( key == null || key.isEmpty() )

@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
+ */
 package com.chiorichan.permission.backend;
 
 import java.sql.ResultSet;
@@ -30,10 +38,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-/**
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
- */
 public class SQLBackend extends PermissionBackend
 {
 	public SQLBackend()
@@ -266,7 +270,7 @@ public class SQLBackend extends PermissionBackend
 					Permission perm = Permission.crawlPermissionStack( result.getString( "permission" ).toLowerCase(), true );
 					
 					List<Site> sites = Loader.getSiteManager().parseSites( result.getString( "sites" ) );
-					PermissionValue value = perm.getValue().createChild( result.getObject( "value" ) );
+					PermissionValue<?> value = perm.getValue().createChild( result.getObject( "value" ) );
 					
 					entity.attachPermission( new ChildPermission( perm, sites, value ) );
 				}

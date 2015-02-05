@@ -12,7 +12,7 @@ import com.chiorichan.account.Account;
 
 public class AccountChangedEvent extends AccountEvent
 {
-	public AccountChangedEvent(Account who)
+	public AccountChangedEvent( Account<?> who )
 	{
 		super( who );
 	}

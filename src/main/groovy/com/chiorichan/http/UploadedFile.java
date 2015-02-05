@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2014 Chiori-chan. All Right Reserved.
- *
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -18,8 +17,6 @@ import com.chiorichan.ContentTypes;
 
 /**
  * TODO Upload file to temp dir with random name but preserve original filename
- * 
- * @author Chiori Greene
  */
 public class UploadedFile
 {
@@ -28,7 +25,7 @@ public class UploadedFile
 	protected long size;
 	protected String message;
 	
-	public UploadedFile(File _file, String _origFileName, long _size, String msg)
+	public UploadedFile( File _file, String _origFileName, long _size, String msg )
 	{
 		file = _file;
 		origFileName = _origFileName;

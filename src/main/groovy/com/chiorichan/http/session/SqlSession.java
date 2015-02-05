@@ -1,27 +1,31 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
+ */
 package com.chiorichan.http.session;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.http.Candy;
-import com.chiorichan.permission.PermissibleType;
 import com.chiorichan.util.Common;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
-public class DBSession extends Session
+public class SqlSession extends Session
 {
-	public DBSession(ResultSet rs) throws SessionException
+	public SqlSession( ResultSet rs ) throws SessionException
 	{
 		try
 		{
@@ -55,13 +59,13 @@ public class DBSession extends Session
 			
 			Loader.getLogger().info( ChatColor.DARK_AQUA + "Session Restored `" + this + "`" );
 		}
-		catch ( SQLException e )
+		catch( SQLException e )
 		{
 			throw new SessionException( e );
 		}
 	}
 	
-	protected DBSession()
+	protected SqlSession()
 	{
 		
 	}
@@ -74,7 +78,7 @@ public class DBSession extends Session
 		{
 			rs = Loader.getDatabase().query( "SELECT * FROM `sessions` WHERE `sessionId` = '" + sessionCandy.getValue() + "'" );
 		}
-		catch ( SQLException e1 )
+		catch( SQLException e1 )
 		{
 			e1.printStackTrace();
 		}
@@ -116,7 +120,7 @@ public class DBSession extends Session
 					ipAddr = _ipAddr;
 				}
 			}
-			catch ( JsonSyntaxException | SQLException e )
+			catch( JsonSyntaxException | SQLException e )
 			{
 				e.printStackTrace();
 				sessionCandy = null;
@@ -146,7 +150,7 @@ public class DBSession extends Session
 			else
 				sql.queryUpdate( "UPDATE `sessions` SET `data` = '" + dataJson + "', `timeout` = '" + getTimeout() + "', `sessionName` = '" + sessionCandy.getKey() + "', `ipAddr` = '" + getIpAddr() + "', `sessionSite` = '" + getSite().getName() + "' WHERE `sessionId` = '" + sessionCandy.getValue() + "';" );
 		}
-		catch ( SQLException e )
+		catch( SQLException e )
 		{
 			Loader.getLogger().severe( "There was an exception thorwn while trying to save the session.", e );
 		}
@@ -159,7 +163,7 @@ public class DBSession extends Session
 		{
 			Loader.getDatabase().queryUpdate( "DELETE FROM `sessions` WHERE `sessionName` = '" + getName() + "' AND `sessionId` = '" + getId() + "';" );
 		}
-		catch ( SQLException e )
+		catch( SQLException e )
 		{
 			e.printStackTrace();
 		}
@@ -179,9 +183,9 @@ public class DBSession extends Session
 				{
 					try
 					{
-						sessionList.add( new DBSession( rs ) );
+						sessionList.add( new SqlSession( rs ) );
 					}
-					catch ( SessionException e )
+					catch( SessionException e )
 					{
 						if ( e.getMessage().contains( "expired" ) )
 							sql.queryUpdate( "DELETE FROM `sessions` WHERE `sessionId` = '" + rs.getString( "sessionId" ) + "' && `sessionName` = '" + rs.getString( "sessionName" ) + "';" );
@@ -189,9 +193,9 @@ public class DBSession extends Session
 							e.printStackTrace();
 					}
 				}
-				while ( rs.next() );
+				while( rs.next() );
 		}
-		catch ( SQLException e )
+		catch( SQLException e )
 		{
 			Loader.getLogger().warning( "There was a problem reloading saved sessions.", e );
 		}

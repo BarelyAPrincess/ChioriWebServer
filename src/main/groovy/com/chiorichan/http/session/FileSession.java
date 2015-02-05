@@ -1,20 +1,23 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
+ */
 package com.chiorichan.http.session;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 
 import com.chiorichan.ChatColor;
 import com.chiorichan.Loader;
 import com.chiorichan.configuration.file.YamlConfiguration;
-import com.chiorichan.database.DatabaseEngine;
-import com.chiorichan.framework.Site;
 import com.chiorichan.http.Candy;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.FileUtil;
@@ -27,7 +30,7 @@ public class FileSession extends Session
 	private File cachedFile = null;
 	private static File sessionsDirectory = null;
 	
-	public FileSession(File file) throws SessionException
+	public FileSession( File file ) throws SessionException
 	{
 		cachedFile = file;
 		
@@ -53,7 +56,7 @@ public class FileSession extends Session
 		
 		YamlConfiguration yaml = YamlConfiguration.loadConfiguration( cachedFile );
 		
-		//int defaultLife = ( getSite().getYaml() != null ) ? getSite().getYaml().getInt( "default-life", 604800 ) : 604800;
+		// int defaultLife = ( getSite().getYaml() != null ) ? getSite().getYaml().getInt( "default-life", 604800 ) : 604800;
 		
 		if ( yaml.getLong( "timeout", 0 ) > timeout )
 			timeout = yaml.getLong( "timeout", timeout );
@@ -122,7 +125,7 @@ public class FileSession extends Session
 		{
 			readSessionFile();
 		}
-		catch ( SessionException e )
+		catch( SessionException e )
 		{
 			e.printStackTrace();
 		}
@@ -166,10 +169,10 @@ public class FileSession extends Session
 		{
 			yaml.save( cachedFile );
 		}
-		catch ( IOException e )
+		catch( IOException e )
 		{
 			Loader.getLogger().severe( "There was an exception thorwn while trying to save the session.", e );
-		}		
+		}
 	}
 	
 	@Override
@@ -194,7 +197,7 @@ public class FileSession extends Session
 				{
 					sessions.add( new FileSession( f ) );
 				}
-				catch ( SessionException e )
+				catch( SessionException e )
 				{
 					e.printStackTrace();
 				}

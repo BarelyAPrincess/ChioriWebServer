@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -13,10 +14,6 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.List;
-
-import com.chiorichan.Loader;
 
 public class Common
 {
@@ -25,7 +22,7 @@ public class Common
 	 */
 	public static int getEpoch()
 	{
-		return (int) ( System.currentTimeMillis() / 1000 );
+		return (int) (System.currentTimeMillis() / 1000);
 	}
 	
 	public static void logMessage( String level, String msg )
@@ -39,7 +36,7 @@ public class Common
 			
 			meth.invoke( o, msg );
 		}
-		catch ( ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e )
+		catch( ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e )
 		{
 			System.out.println( "[" + level.toUpperCase() + "] " + msg );
 		}
@@ -61,7 +58,7 @@ public class Common
 				complete.update( buffer, 0, numRead );
 			}
 		}
-		while ( numRead != -1 );
+		while( numRead != -1 );
 		
 		fis.close();
 		return complete.digest();
@@ -74,7 +71,7 @@ public class Common
 		
 		for ( int i = 0; i < b.length; i++ )
 		{
-			result += Integer.toString( ( b[i] & 0xff ) + 0x100, 16 ).substring( 1 );
+			result += Integer.toString( (b[i] & 0xff) + 0x100, 16 ).substring( 1 );
 		}
 		return result;
 	}
@@ -91,12 +88,12 @@ public class Common
 			
 			for ( int i = 0; i < b.length; i++ )
 			{
-				result += Integer.toString( ( b[i] & 0xff ) + 0x100, 16 ).substring( 1 );
+				result += Integer.toString( (b[i] & 0xff) + 0x100, 16 ).substring( 1 );
 			}
 			
 			return result;
 		}
-		catch ( Exception e )
+		catch( Exception e )
 		{
 			e.printStackTrace();
 		}

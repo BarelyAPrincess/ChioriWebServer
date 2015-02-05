@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
+ */
 package com.chiorichan.account.adapter.sql;
 
 import java.sql.SQLException;
@@ -6,13 +14,11 @@ import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountMetaData;
 import com.chiorichan.account.LoginException;
 import com.chiorichan.account.LoginExceptionReason;
-import com.chiorichan.account.adapter.AccountLookupAdapter;
-import com.chiorichan.permission.PermissibleType;
 import com.chiorichan.util.Common;
 
 public class SqlAccount extends Account<SqlAdapter>
 {
-	public SqlAccount(AccountMetaData meta, SqlAdapter adapter) throws LoginException
+	public SqlAccount( AccountMetaData meta, SqlAdapter adapter ) throws LoginException
 	{
 		super( meta, adapter );
 	}
@@ -21,7 +27,7 @@ public class SqlAccount extends Account<SqlAdapter>
 	public void preLoginCheck() throws LoginException
 	{
 		if ( metaData.getInteger( "numloginfail" ) > 5 )
-			if ( metaData.getInteger( "lastloginfail" ) > ( Common.getEpoch() - 1800 ) )
+			if ( metaData.getInteger( "lastloginfail" ) > (Common.getEpoch() - 1800) )
 				throw new LoginException( LoginExceptionReason.underAttackPleaseWait );
 		
 		if ( !metaData.getString( "actnum" ).equals( "0" ) )
@@ -35,7 +41,7 @@ public class SqlAccount extends Account<SqlAdapter>
 		{
 			lookupAdapter.sql.queryUpdate( "UPDATE `accounts` SET `lastActive` = '" + Common.getEpoch() + "', `lastLogin` = '" + Common.getEpoch() + "', `lastLoginFail` = 0, `numLoginFail` = 0 WHERE `accountID` = '" + getAcctId() + "'" );
 		}
-		catch ( SQLException e )
+		catch( SQLException e )
 		{
 			throw new LoginException( e );
 		}
@@ -56,13 +62,13 @@ public class SqlAccount extends Account<SqlAdapter>
 	{
 		return getString( "password" );
 	}
-
+	
 	@Override
 	public String getDisplayName()
 	{
-		return ( getString( "fname" ).isEmpty() ) ? getString( "name" ) : getString( "fname" ) + " " + getString( "name" );
+		return (getString( "fname" ).isEmpty()) ? getString( "name" ) : getString( "fname" ) + " " + getString( "name" );
 	}
-
+	
 	@Override
 	public String getUsername()
 	{

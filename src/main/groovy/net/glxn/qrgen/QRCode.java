@@ -1,15 +1,20 @@
 package net.glxn.qrgen;
 
-import com.google.zxing.*;
-import com.google.zxing.Writer;
-import com.google.zxing.client.j2se.*;
-import com.google.zxing.common.*;
-import com.google.zxing.qrcode.*;
-import net.glxn.qrgen.exception.*;
-import net.glxn.qrgen.image.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.HashMap;
 
-import java.io.*;
-import java.util.*;
+import net.glxn.qrgen.exception.QRGenerationException;
+import net.glxn.qrgen.image.ImageType;
+
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.Writer;
+import com.google.zxing.WriterException;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 
 /**
  * QRCode generator. This is a simple class that is built on top of <a href="http://code.google.com/p/zxing/">ZXING</a><br/>
@@ -31,7 +36,7 @@ public class QRCode
 	private ImageType imageType = ImageType.PNG;
 	private final HashMap<EncodeHintType, Object> hints = new HashMap<EncodeHintType, Object>();
 	
-	private QRCode(String text)
+	private QRCode( String text )
 	{
 		this.text = text;
 		qrWriter = new QRCodeWriter();
@@ -57,7 +62,7 @@ public class QRCode
 	 * 125) <br/>
 	 * 
 	 * @param text
-	 *           the text to encode to a new QRCode, this may fail if the text is too large. <br/>
+	 *             the text to encode to a new QRCode, this may fail if the text is too large. <br/>
 	 * @return the QRCode object <br/>
 	 */
 	public static QRCode from( String text )
@@ -69,7 +74,7 @@ public class QRCode
 	 * Overrides the imageType from its default {@link ImageType#PNG}
 	 * 
 	 * @param imageType
-	 *           the {@link ImageType} you would like the resulting QR to be
+	 *             the {@link ImageType} you would like the resulting QR to be
 	 * @return the current QRCode object
 	 */
 	public QRCode to( ImageType imageType )
@@ -82,9 +87,9 @@ public class QRCode
 	 * Overrides the size of the qr from its default 125x125
 	 * 
 	 * @param width
-	 *           the width in pixels
+	 *             the width in pixels
 	 * @param height
-	 *           the height in pixels
+	 *             the height in pixels
 	 * @return the current QRCode object
 	 */
 	public QRCode withSize( int width, int height )
@@ -95,8 +100,7 @@ public class QRCode
 	}
 	
 	/**
-	 * Overrides the default cahrset by supplying a {@link com.google.zxing.EncodeHintType#CHARACTER_SET} hint to
-	 * {@link com.google.zxing.qrcode.QRCodeWriter#encode}
+	 * Overrides the default cahrset by supplying a {@link com.google.zxing.EncodeHintType#CHARACTER_SET} hint to {@link com.google.zxing.qrcode.QRCodeWriter#encode}
 	 * 
 	 * @return the current QRCode object
 	 */
@@ -113,12 +117,12 @@ public class QRCode
 	}
 	
 	/**
-	 * returns a {@link File} representation of the QR code. The file is set to be deleted on exit (i.e.
-	 * {@link java.io.File#deleteOnExit()}). If you want the file to live beyond the life of the jvm process, you should
+	 * returns a {@link File} representation of the QR code. The file is set to be deleted on exit (i.e. {@link java.io.File#deleteOnExit()}). If you want the file to live beyond the life of the jvm process, you should
 	 * make a copy.
 	 * 
 	 * @return qrcode as file
 	 */
+	@SuppressWarnings( "deprecation" )
 	public File file()
 	{
 		File file;
@@ -127,7 +131,7 @@ public class QRCode
 			file = createTempFile();
 			MatrixToImageWriter.writeToFile( createMatrix(), imageType.toString(), file );
 		}
-		catch ( Exception e )
+		catch( Exception e )
 		{
 			throw new QRGenerationException( "Failed to create QR image from text due to underlying exception", e );
 		}
@@ -142,9 +146,10 @@ public class QRCode
 	 * 
 	 * @see #file()
 	 * @param name
-	 *           name of the created file
+	 *             name of the created file
 	 * @return qrcode as file
 	 */
+	@SuppressWarnings( "deprecation" )
 	public File file( String name )
 	{
 		File file;
@@ -153,7 +158,7 @@ public class QRCode
 			file = createTempFile( name );
 			MatrixToImageWriter.writeToFile( createMatrix(), imageType.toString(), file );
 		}
-		catch ( Exception e )
+		catch( Exception e )
 		{
 			throw new QRGenerationException( "Failed to create QR image from text due to underlying exception", e );
 		}
@@ -173,7 +178,7 @@ public class QRCode
 		{
 			writeToStream( stream );
 		}
-		catch ( Exception e )
+		catch( Exception e )
 		{
 			throw new QRGenerationException( "Failed to create QR image from text due to underlying exception", e );
 		}
@@ -185,7 +190,7 @@ public class QRCode
 	 * writes a representation of the QR code to the supplied {@link OutputStream}
 	 * 
 	 * @param stream
-	 *           the {@link OutputStream} to write QR Code to
+	 *             the {@link OutputStream} to write QR Code to
 	 */
 	public void writeTo( OutputStream stream )
 	{
@@ -193,7 +198,7 @@ public class QRCode
 		{
 			writeToStream( stream );
 		}
-		catch ( Exception e )
+		catch( Exception e )
 		{
 			throw new QRGenerationException( "Failed to create QR image from text due to underlying exception", e );
 		}

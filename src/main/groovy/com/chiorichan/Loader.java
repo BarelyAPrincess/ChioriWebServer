@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -567,11 +568,10 @@ public class Loader extends BuiltinEventCreator implements Listener
 		for ( ChioriWorker worker : overdueWorkers )
 		{
 			TaskCreator creator = worker.getOwner();
-			String author = "<NoAuthorGiven>";
+			String author = "<AuthorUnknown>";
 			// if ( creator.getDescription().getAuthors().size() > 0 )
 			// author = plugin.getDescription().getAuthors().get( 0 );
-			// getLogger().log( Level.SEVERE, String.format( "Nag author: '%s' of '%s' about the following: %s", author, plugin.getDescription().getName(),
-			// "This plugin is not properly shutting down its async tasks when it is being reloaded.  This may cause conflicts with the newly loaded version of the plugin" ) );
+			getLogger().log( Level.SEVERE, String.format( "Nag author: '%s' of '%s' about the following: %s", author, creator.getName(), "This plugin is not properly shutting down its async tasks when it is being reloaded.  This may cause conflicts with the newly loaded version of the plugin" ) );
 		}
 		
 		plugins.loadPlugins();
@@ -604,7 +604,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	public static void gracefullyShutdownServer( String reason )
 	{
 		if ( !reason.isEmpty() )
-			for ( Account User : accounts.getOnlineAccounts() )
+			for ( Account<?> User : accounts.getOnlineAccounts() )
 			{
 				User.kick( reason );
 			}

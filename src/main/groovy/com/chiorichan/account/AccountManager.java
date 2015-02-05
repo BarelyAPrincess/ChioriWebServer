@@ -118,12 +118,12 @@ public class AccountManager
 		new SystemAccounts();
 	}
 	
-	public void LoadAccount( Account acct )
+	public void LoadAccount( Account<?> acct )
 	{
 		LoadAccount( acct, false, false, false );
 	}
 	
-	public void LoadAccount( Account acct, boolean keepInMemory, boolean whitelistOverride, boolean opOverride )
+	public void LoadAccount( Account<?> acct, boolean keepInMemory, boolean whitelistOverride, boolean opOverride )
 	{
 		AccountsKeeperOptions options = (AccountsKeeperOptions) accounts.putAccount( acct, keepInMemory );
 		
@@ -146,12 +146,12 @@ public class AccountManager
 		return banById.contains( id );
 	}
 	
-	public Account getOfflineAccount( String name )
+	public Account<?> getOfflineAccount( String name )
 	{
 		return getOfflineAccount( name, true );
 	}
 	
-	public Account getOfflineAccount( String name, boolean search )
+	public Account<?> getOfflineAccount( String name, boolean search )
 	{
 		Validate.notNull( name, "Name cannot be null" );
 		
@@ -169,27 +169,27 @@ public class AccountManager
 		return banById;
 	}
 	
-	public void banId( Account acct )
+	public void banId( Account<?> acct )
 	{
 		banId( acct.getAcctId() );
 	}
 	
 	public void banId( String id )
 	{
-		Validate.notNull( id, "Account Id cannot be null." );
+		Validate.notNull( id, "Account<?> Id cannot be null." );
 		
 		banById.add( id );
 		Loader.getConfig().set( "accounts.banById", banById );
 	}
 	
-	public void unbanId( Account acct )
+	public void unbanId( Account<?> acct )
 	{
 		unbanId( acct.getAcctId() );
 	}
 	
 	public void unbanId( String id )
 	{
-		Validate.notNull( id, "Account Id cannot be null." );
+		Validate.notNull( id, "Account<?> Id cannot be null." );
 		
 		if ( banById.contains( id ) )
 		{
@@ -222,7 +222,7 @@ public class AccountManager
 		addWhitelist( getAccount( id ) );
 	}
 	
-	public void addWhitelist( Account acct )
+	public void addWhitelist( Account<?> acct )
 	{
 		if ( acct == null )
 			return;
@@ -238,7 +238,7 @@ public class AccountManager
 		removeWhitelist( getAccount( id ) );
 	}
 	
-	public void removeWhitelist( Account acct )
+	public void removeWhitelist( Account<?> acct )
 	{
 		if ( acct == null )
 			return;
@@ -252,12 +252,12 @@ public class AccountManager
 		}
 	}
 	
-	public Account op( String id )
+	public Account<?> op( String id )
 	{
 		return op( getAccount( id ) );
 	}
 	
-	public Account op( Account acct )
+	public Account<?> op( Account<?> acct )
 	{
 		if ( acct == null )
 			return null;
@@ -270,12 +270,12 @@ public class AccountManager
 		return acct;
 	}
 	
-	public Account deop( String id )
+	public Account<?> deop( String id )
 	{
 		return deop( getAccount( id ) );
 	}
 	
-	public Account deop( Account acct )
+	public Account<?> deop( Account<?> acct )
 	{
 		if ( acct == null )
 			return null;
@@ -291,27 +291,27 @@ public class AccountManager
 		return acct;
 	}
 	
-	public List<Account> getOnlineAccounts()
+	public List<Account<?>> getOnlineAccounts()
 	{
 		return accounts.getOnlineAccounts();
 	}
 	
-	public List<Account> getOfflineAccounts()
+	public List<Account<?>> getOfflineAccounts()
 	{
 		return accounts.getOfflineAccounts();
 	}
 	
-	public ArrayList<Account> getAccounts()
+	public ArrayList<Account<?>> getAccounts()
 	{
 		return accounts.getAccounts();
 	}
 	
-	public Account getAccountPartial( String partial )
+	public Account<?> getAccountPartial( String partial )
 	{
 		return accounts.getAccountPartial( partial );
 	}
 	
-	public Account getAccount( String s )
+	public Account<?> getAccount( String s )
 	{
 		try
 		{
@@ -324,20 +324,20 @@ public class AccountManager
 		}
 	}
 	
-	public Account getAccountWithException( String s ) throws LoginException
+	public Account<?> getAccountWithException( String s ) throws LoginException
 	{
 		return accounts.getAccount( s );
 	}
 	
-	public List<Account> getBannedAccounts()
+	public List<Account<?>> getBannedAccounts()
 	{
-		ArrayList<Account> accts = Lists.newArrayList();
+		ArrayList<Account<?>> accts = Lists.newArrayList();
 		
 		for ( String id : banById )
 		{
 			try
 			{
-				Account acct = accounts.getAccount( id );
+				Account<?> acct = accounts.getAccount( id );
 				if ( acct != null )
 					accts.add( acct );
 			}
@@ -350,15 +350,15 @@ public class AccountManager
 		return accts;
 	}
 	
-	public List<Account> getWhitelisted()
+	public List<Account<?>> getWhitelisted()
 	{
-		ArrayList<Account> accts = Lists.newArrayList();
+		ArrayList<Account<?>> accts = Lists.newArrayList();
 		
 		for ( String id : whitelist )
 		{
 			try
 			{
-				Account acct = accounts.getAccount( id );
+				Account<?> acct = accounts.getAccount( id );
 				if ( acct != null )
 					accts.add( acct );
 			}
@@ -371,15 +371,15 @@ public class AccountManager
 		return accts;
 	}
 	
-	public List<Account> getOperators()
+	public List<Account<?>> getOperators()
 	{
-		ArrayList<Account> accts = Lists.newArrayList();
+		ArrayList<Account<?>> accts = Lists.newArrayList();
 		
 		for ( String id : operators )
 		{
 			try
 			{
-				Account acct = accounts.getAccount( id );
+				Account<?> acct = accounts.getAccount( id );
 				if ( acct != null )
 					accts.add( acct );
 			}
@@ -439,12 +439,12 @@ public class AccountManager
 		return Loader.getLogger( "AcctMgr" );
 	}
 	
-	public Account attemptLogin( Session sess, String username, String password ) throws LoginException
+	public Account<?> attemptLogin( Session sess, String username, String password ) throws LoginException
 	{
 		if ( username == null || username.isEmpty() )
 			throw new LoginException( LoginExceptionReason.emptyUsername );
 		
-		Account acct = accounts.getAccount( username );
+		Account<?> acct = accounts.getAccount( username );
 		
 		acct.putHandler( sess );
 		

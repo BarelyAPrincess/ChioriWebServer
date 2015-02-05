@@ -18,7 +18,6 @@ import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
@@ -40,8 +39,6 @@ import com.chiorichan.exception.HttpErrorException;
 import com.chiorichan.util.Versioning;
 import com.google.common.collect.Maps;
 
-// NOTE: Change to consider, Have headers sent before data can be written to the output stream.
-// This will allow for quicker responses but might make it harder for spontaneous header changes.
 public class HttpResponseWrapper
 {
 	protected HttpRequestWrapper request;
@@ -53,7 +50,7 @@ public class HttpResponseWrapper
 	protected Map<String, String> pageDataOverrides = Maps.newHashMap();
 	protected Map<String, String> headers = Maps.newHashMap();
 	
-	protected HttpResponseWrapper(HttpRequestWrapper _request)
+	protected HttpResponseWrapper( HttpRequestWrapper _request )
 	{
 		request = _request;
 	}
@@ -71,7 +68,7 @@ public class HttpResponseWrapper
 	public void sendError( Exception e ) throws IOException
 	{
 		if ( e instanceof HttpErrorException )
-			sendError( ( (HttpErrorException) e ).getHttpCode(), ( (HttpErrorException) e ).getReason() );
+			sendError( ((HttpErrorException) e).getHttpCode(), ((HttpErrorException) e).getReason() );
 		else
 			sendError( 500, e.getMessage() );
 	}
@@ -208,7 +205,8 @@ public class HttpResponseWrapper
 	/**
 	 * Sends the client to the site login page found in configs.
 	 * 
-	 * @param msg, a message to pass to the login page as a argumnet. ie. ?msg=Please login!
+	 * @param msg
+	 *             , a message to pass to the login page as a argumnet. ie. ?msg=Please login!
 	 */
 	public void sendLoginPage( String msg )
 	{
@@ -219,7 +217,8 @@ public class HttpResponseWrapper
 	/**
 	 * Send the client to a specified page with http code 302 automatically.
 	 * 
-	 * @param target, destination url. Can be relative or absolute.
+	 * @param target
+	 *             , destination url. Can be relative or absolute.
 	 */
 	public void sendRedirect( String target )
 	{
@@ -229,8 +228,10 @@ public class HttpResponseWrapper
 	/**
 	 * Sends the client to a specified page with specified http code.
 	 * 
-	 * @param target, destination url. Can be relative or absolute.
-	 * @param httpStatus, http code to use.
+	 * @param target
+	 *             , destination url. Can be relative or absolute.
+	 * @param httpStatus
+	 *             , http code to use.
 	 */
 	public void sendRedirect( String target, int httpStatus )
 	{
@@ -241,9 +242,12 @@ public class HttpResponseWrapper
 	 * XXX: autoRedirect argument needs to be working before this method is made public
 	 * Sends the client to a specified page with specified http code but with the option to not automatically go.
 	 * 
-	 * @param target, destination url. Can be relative or absolute.
-	 * @param httpStatus, http code to use.
-	 * @param autoRedirect, Automatically go.
+	 * @param target
+	 *             , destination url. Can be relative or absolute.
+	 * @param httpStatus
+	 *             , http code to use.
+	 * @param autoRedirect
+	 *             , Automatically go.
 	 */
 	private void sendRedirect( String target, int httpStatus, boolean autoRedirect )
 	{
@@ -266,7 +270,7 @@ public class HttpResponseWrapper
 			{
 				println( "<script>window.location = '" + target + "';</script>" );
 			}
-			catch ( IOException e )
+			catch( IOException e )
 			{
 				e.printStackTrace();
 			}
@@ -275,7 +279,7 @@ public class HttpResponseWrapper
 		{
 			sendResponse();
 		}
-		catch ( IOException e )
+		catch( IOException e )
 		{
 			e.printStackTrace();
 		}
@@ -284,8 +288,10 @@ public class HttpResponseWrapper
 	/**
 	 * Prints a byte array to the buffered output
 	 * 
-	 * @param var1 byte array to print
-	 * @throws IOException if there was a problem with the output buffer.
+	 * @param var1
+	 *             byte array to print
+	 * @throws IOException
+	 *              if there was a problem with the output buffer.
 	 */
 	public void print( byte[] var1 ) throws IOException
 	{
@@ -296,8 +302,10 @@ public class HttpResponseWrapper
 	/**
 	 * Prints a single string of text to the buffered output
 	 * 
-	 * @param var1 string of text.
-	 * @throws IOException if there was a problem with the output buffer.
+	 * @param var1
+	 *             string of text.
+	 * @throws IOException
+	 *              if there was a problem with the output buffer.
 	 */
 	public void print( String var1 ) throws IOException
 	{
@@ -311,21 +319,24 @@ public class HttpResponseWrapper
 	/**
 	 * Prints a single string of text with a line return to the buffered output
 	 * 
-	 * @param var1 string of text.
-	 * @throws IOException if there was a problem with the output buffer.
+	 * @param var1
+	 *             string of text.
+	 * @throws IOException
+	 *              if there was a problem with the output buffer.
 	 */
 	public void println( String var1 ) throws IOException
 	{
 		if ( stage != HttpResponseStage.MULTIPART )
 			stage = HttpResponseStage.WRITTING;
 		
-		output.write( ( var1 + "\n" ).getBytes( encoding ) );
+		output.write( (var1 + "\n").getBytes( encoding ) );
 	}
 	
 	/**
 	 * Sets the ContentType header.
 	 * 
-	 * @param ContentType. ie. text/html or application/xml
+	 * @param ContentType
+	 *             . ie. text/html or application/xml
 	 */
 	public void setContentType( String type )
 	{
@@ -338,7 +349,8 @@ public class HttpResponseWrapper
 	/**
 	 * Sends the data to the client. Internal Use.
 	 * 
-	 * @throws IOException if there was a problem sending the data, like the connection was unexpectedly closed.
+	 * @throws IOException
+	 *              if there was a problem sending the data, like the connection was unexpectedly closed.
 	 */
 	public void sendResponse() throws IOException
 	{
@@ -347,7 +359,7 @@ public class HttpResponseWrapper
 		
 		stage = HttpResponseStage.WRITTEN;
 		
-		HttpRequest http = request.getOriginal();
+		// HttpRequest http = request.getOriginal();
 		
 		FullHttpResponse response = new DefaultFullHttpResponse( HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf( httpStatus ), Unpooled.copiedBuffer( output.toByteArray() ) );
 		HttpHeaders h = response.headers();

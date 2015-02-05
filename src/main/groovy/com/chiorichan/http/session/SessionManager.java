@@ -38,7 +38,7 @@ public class SessionManager
 				if ( Loader.getDatabase() == null )
 					throw new StartupException( "Session Manager is configured to use the Framework Database but the server's database is unconfigured, which is required for this configuration." );
 				
-				sessionList = DBSession.getActiveSessions();
+				sessionList = SqlSession.getActiveSessions();
 				break;
 			default:
 				sessionList = FileSession.getActiveSessions();
@@ -49,7 +49,7 @@ public class SessionManager
 	{
 		SessionProvider sess = null;
 		
-		synchronized ( sessionList )
+		synchronized( sessionList )
 		{
 			for ( Session s : sessionList )
 			{
@@ -86,7 +86,7 @@ public class SessionManager
 	{
 		Iterator<Session> sessions = sessionList.iterator();
 		
-		while ( sessions.hasNext() )
+		while( sessions.hasNext() )
 		{
 			Session var1 = sessions.next();
 			
@@ -106,7 +106,7 @@ public class SessionManager
 	{
 		Iterator<Session> sess = sessionList.iterator();
 		
-		while ( sess.hasNext() )
+		while( sess.hasNext() )
 		{
 			Session it = sess.next();
 			it.saveSession( true );
@@ -138,7 +138,7 @@ public class SessionManager
 	{
 		Loader.getLogger().info( ChatColor.DARK_AQUA + "Session Destroyed `" + sess + "`" );
 		
-		for ( Account u : Loader.getAccountManager().getOnlineAccounts() )
+		for ( Account<?> u : Loader.getAccountManager().getOnlineAccounts() )
 			u.removeHandler( sess );
 		
 		sess.destroySession();
@@ -153,7 +153,7 @@ public class SessionManager
 		switch ( Loader.getConfig().getString( "server.database.type", "file" ) )
 		{
 			case "db":
-				newSession = new DBSession();
+				newSession = new SqlSession();
 				break;
 			default:
 				newSession = new FileSession();
