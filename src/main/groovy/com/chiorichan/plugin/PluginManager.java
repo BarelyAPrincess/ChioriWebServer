@@ -529,6 +529,42 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 		return plugins.toArray( new Plugin[0] );
 	}
 	
+	public Plugin getPluginbyClassname( String className )
+	{
+		try
+		{
+			for ( Plugin plugin1 : getPlugins() )
+			{
+				if ( plugin1.getClass().getName().startsWith( className ) )
+					return plugin1;
+			}
+		}
+		catch( Exception e )
+		{
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+	
+	public Plugin getPluginbyName( String pluginPath )
+	{
+		try
+		{
+			for ( Plugin plugin1 : getPlugins() )
+			{
+				if ( plugin1.getClass().getCanonicalName().equals( pluginPath ) || plugin1.getName().equalsIgnoreCase( pluginPath ) )
+					return plugin1;
+			}
+		}
+		catch( Exception e )
+		{
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+	
 	private void loadPlugin( Plugin plugin )
 	{
 		try

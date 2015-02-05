@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2014 Chiori-chan. All Right Reserved.
- *
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -28,6 +27,8 @@ import java.util.Map;
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.event.EventBus;
+import com.chiorichan.plugin.PluginManager;
+import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.ObjectUtil;
 import com.chiorichan.util.StringUtil;
@@ -115,12 +116,12 @@ abstract public class ScriptingBaseJava extends Script
 	
 	boolean empty( List<Object> list )
 	{
-		return ( list == null || list.size() < 1 );
+		return (list == null || list.size() < 1);
 	}
 	
 	boolean empty( Map<Object, Object> maps )
 	{
-		return ( maps == null || maps.size() < 1 );
+		return (maps == null || maps.size() < 1);
 	}
 	
 	boolean empty( String var )
@@ -142,7 +143,8 @@ abstract public class ScriptingBaseJava extends Script
 	/**
 	 * Default format is M/d/yyyy
 	 * 
-	 * @param Date you wish to convert
+	 * @param Date
+	 *             you wish to convert
 	 * @return Long containing the epoch of provided date
 	 */
 	Long dateToEpoch( String date )
@@ -161,7 +163,7 @@ abstract public class ScriptingBaseJava extends Script
 			
 			return sdf.parse( date ).getTime() / 1000;
 		}
-		catch ( ParseException e )
+		catch( ParseException e )
 		{
 			return 0L;
 		}
@@ -217,7 +219,7 @@ abstract public class ScriptingBaseJava extends Script
 			{
 				date = new Date( Long.parseLong( data ) * 1000 );
 			}
-			catch ( NumberFormatException e )
+			catch( NumberFormatException e )
 			{
 				if ( def != null )
 					return def;
@@ -229,7 +231,7 @@ abstract public class ScriptingBaseJava extends Script
 		
 		if ( format.contains( "U" ) )
 		{
-			format = format.replaceAll( "U", ( date.getTime() / 1000 ) + "" );
+			format = format.replaceAll( "U", (date.getTime() / 1000) + "" );
 		}
 		
 		if ( format.contains( "x" ) )
@@ -333,7 +335,7 @@ abstract public class ScriptingBaseJava extends Script
 	
 	boolean is_null( Object obj )
 	{
-		return ( obj == null );
+		return (obj == null);
 	}
 	
 	boolean file_exists( File file )
@@ -360,7 +362,7 @@ abstract public class ScriptingBaseJava extends Script
 	{
 		return amt.round( new MathContext( dec, RoundingMode.HALF_DOWN ) );
 	}
-	/*
+	
 	PluginManager getPluginManager()
 	{
 		return Loader.getPluginManager();
@@ -370,7 +372,6 @@ abstract public class ScriptingBaseJava extends Script
 	{
 		return Loader.getPluginManager().getPluginbyName( search );
 	}
-	*/
 	
 	EventBus getEventBus()
 	{

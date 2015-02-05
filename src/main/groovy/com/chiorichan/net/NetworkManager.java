@@ -143,10 +143,10 @@ public class NetworkManager
 				
 				Loader.getLogger().info( "Starting Web Server on " + (httpIp.length() == 0 ? "*" : httpIp) + ":" + httpsPort );
 				
-				File sslCert = new File( Loader.getRoot(), Loader.getConfig().getString( "server.httpsKeystone", "server.keystone" ) );
+				File sslCert = new File( Loader.getRoot(), Loader.getConfig().getString( "server.httpsKeystore", "server.keystore" ) );
 				
 				if ( !sslCert.exists() )
-					throw new StartupException( "We could not start the HTTPS Server because the '" + sslCert.getName() + "' (aka. SSL Cert) file does not exist. Please generate one and reload the server, or disable SSL in the configs." );
+					throw new StartupException( sslCert.getAbsolutePath() + " We could not start the HTTPS Server because the '" + sslCert.getName() + "' (aka. SSL Cert) file does not exist. Please generate one and reload the server, or disable SSL in the configs." );
 				
 				try
 				{

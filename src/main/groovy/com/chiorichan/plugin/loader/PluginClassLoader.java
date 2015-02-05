@@ -36,9 +36,9 @@ final class PluginClassLoader extends URLClassLoader
 	private Plugin pluginInit;
 	private IllegalStateException pluginState;
 	
-	PluginClassLoader(final JavaPluginLoader loader, final ClassLoader parent, final PluginDescriptionFile description, final File dataFolder, final File file) throws InvalidPluginException, MalformedURLException
+	PluginClassLoader( final JavaPluginLoader loader, final ClassLoader parent, final PluginDescriptionFile description, final File dataFolder, final File file ) throws InvalidPluginException, MalformedURLException
 	{
-		super( new URL[] { file.toURI().toURL() }, parent );
+		super( new URL[] {file.toURI().toURL()}, parent );
 		Validate.notNull( loader, "Loader cannot be null" );
 		
 		this.loader = loader;
@@ -53,7 +53,7 @@ final class PluginClassLoader extends URLClassLoader
 			{
 				jarClass = Class.forName( description.getMain(), true, this );
 			}
-			catch ( ClassNotFoundException ex )
+			catch( ClassNotFoundException ex )
 			{
 				throw new InvalidPluginException( "Cannot find mane class `" + description.getMain() + "'", ex );
 			}
@@ -63,18 +63,18 @@ final class PluginClassLoader extends URLClassLoader
 			{
 				pluginClass = jarClass.asSubclass( Plugin.class );
 			}
-			catch ( ClassCastException ex )
+			catch( ClassCastException ex )
 			{
 				throw new InvalidPluginException( "main class `" + description.getMain() + "' does not extend Plugin", ex );
 			}
 			
 			plugin = pluginClass.newInstance();
 		}
-		catch ( IllegalAccessException ex )
+		catch( IllegalAccessException ex )
 		{
 			throw new InvalidPluginException( "No public constructor", ex );
 		}
-		catch ( InstantiationException ex )
+		catch( InstantiationException ex )
 		{
 			throw new InvalidPluginException( "Abnormal plugin type", ex );
 		}
@@ -88,13 +88,11 @@ final class PluginClassLoader extends URLClassLoader
 	
 	Class<?> findClass( String name, boolean checkGlobal ) throws ClassNotFoundException
 	{
-		// TODO: Uncomment this oneday!
-		/*
-		 * if ( name.startsWith( "com.chiorichan." ) )
-		 * {
-		 * throw new ClassNotFoundException( name );
-		 * }
-		 */
+		if ( name.startsWith( "com.chiorichan." ) && !name.startsWith( "com.chiorichan.plugin.builtin." ) )
+		{
+			throw new ClassNotFoundException( name );
+		}
+		
 		Class<?> result = classes.get( name );
 		
 		if ( result == null )

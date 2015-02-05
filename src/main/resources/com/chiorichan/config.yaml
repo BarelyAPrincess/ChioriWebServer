@@ -2,7 +2,7 @@ server:
   httpHost: ''
   httpPort: 8080
   httpsPort: 4443
-  httpsKeystone: server.keystone
+  httpsKeystore: server.keystore
   httpsSecret: abcd1234
   tcpHost: ''
   tcpPort: 1024
