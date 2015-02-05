@@ -1,10 +1,13 @@
 import java.text.SimpleDateFormat;
 
+defaultTasks 'clean', 'writePropertiesFile', 'shadowJar', ':TemplatesPlugin:build', 'javadocArchive', 'sourcesArchive', 'writeNewPom'
+
 apply plugin: 'eclipse'
 apply plugin: 'groovy'
 apply plugin: 'license'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'maven'
+apply plugin: 'checkstyle'
 
 buildscript
 {
@@ -21,7 +24,9 @@ buildscript
 	}
 }
 
-sourceCompatibility = 1.7
+sourceCompatibility = '1.7'
+targetCompatibility = '1.7'
+
 group = 'com.chiorichan'
 description = 'Chiori-chan\'s Web Server is a Java Based HTTP/TCP Server featuring Groovy Shell and a feature rich Plugin System'
 
@@ -35,9 +40,14 @@ else
 distsDirName = 'dist'
 libsDirName = 'dist'
 
+compileJava
+{
+	options.encoding = 'UTF-8'
+}
+
 license
 {
-	header rootProject.file('HEADER')
+	header rootProject.file('etc/java.header')
 	ignoreFailures true
 	strictCheck false
 	skipExistingHeaders true
@@ -123,6 +133,11 @@ javadoc
 	options.encoding = "UTF-8"
 }
 
+checkstyle
+{
+	configFile = file('etc/checkstyle.xml')
+}
+
 task sourcesArchive(type: Zip){
 	classifier = 'sources'
 	from sourceSets.main.allSource
@@ -197,5 +212,3 @@ allprojects
 		}
 	}
 }
-
-defaultTasks 'clean', 'writePropertiesFile', 'shadowJar', ':TemplatesPlugin:build', 'javadocArchive', 'sourcesArchive', 'writeNewPom'
