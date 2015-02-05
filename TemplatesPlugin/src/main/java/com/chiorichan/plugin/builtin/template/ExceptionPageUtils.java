@@ -1,4 +1,4 @@
-package com.chiorichan.plugin.builtin;
+package com.chiorichan.plugin.builtin.template;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -46,7 +46,7 @@ public class ExceptionPageUtils
 		
 		for ( StackTraceElement ele : elements )
 		{
-			if ( !ele.getClassName().startsWith( "org.codehaus.groovy" ) )
+			if ( !ele.getClassName().startsWith( "org.codehaus.groovy." ) )
 				result.add( ele );
 		}
 		
@@ -55,42 +55,54 @@ public class ExceptionPageUtils
 	
 	public static String getCodeSample( StackTraceElement e, String filePath )
 	{
-		// TODO Match the server version to the correct commit on the github. The closer the better.
+		if ( filePath != null )
+			return codeSample( filePath, e.getLineNumber() );
 		
-		String githubBaseUrl = "https://raw.githubusercontent.com/ChioriGreene/ChioriWebServer/master/server/src/";
-		String githubApiUrl = "https://raw.githubusercontent.com/ChioriGreene/ChioriWebServer/master/api/src/";
-		String fileUrl = e.getClassName().replace( '.', '/' ).replace( "$1", "" ) + "." + InterpreterOverrides.getFileExtension( e.getFileName() );
+		// TODO Match the server version to the correct commit on the github. The closer the better.
 		
 		String codeSample = null;
 		
-		if ( filePath == null )
+		filePath = e.getClassName();
+		
+		String subProject = "";
+		String builtinPluginClassPath = "com.chiorichan.plugin.builtin.";
+		if ( filePath.startsWith( builtinPluginClassPath ) )
+		{
+			String plugin = filePath.substring( builtinPluginClassPath.length(), filePath.indexOf( ".", builtinPluginClassPath.length() ) ).toLowerCase();
+			
+			if ( plugin.equals( "email" ) )
+				subProject = "EmailPlugin/";
+			else if ( plugin.equals( "template" ) )
+				subProject = "TemplatesPlugin/";
+		}
+		
+		String githubGroovyUrl = "https://raw.githubusercontent.com/ChioriGreene/ChioriWebServer/master/" + subProject + "src/main/groovy/";
+		String githubJavaUrl = "https://raw.githubusercontent.com/ChioriGreene/ChioriWebServer/master/" + subProject + "src/main/java/";
+		String fileUrl = filePath.replace( '.', '/' ).replace( "$1", "" ) + "." + InterpreterOverrides.getFileExtension( e.getFileName() );
+		String finalFileUrl = "";
+		
+		try
+		{
+			finalFileUrl = githubGroovyUrl + fileUrl;
+			codeSample = new String( WebUtils.readUrl( finalFileUrl ) );
+		}
+		catch( IOException e1 )
 		{
 			try
 			{
-				codeSample = new String( WebUtils.readUrl( githubBaseUrl + fileUrl ) );
+				finalFileUrl = githubJavaUrl + fileUrl;
+				codeSample = new String( WebUtils.readUrl( finalFileUrl ) );
 			}
-			catch( IOException e1 )
+			catch( IOException e2 )
 			{
-				try
-				{
-					codeSample = new String( WebUtils.readUrl( githubApiUrl + fileUrl ) );
-				}
-				catch( IOException e2 )
-				{
-					codeSample = "Could not read file '" + fileUrl + "' from the GitHub repository.\nYou could be running a mismatching version to the repository or this file belongs to another repository.";
-					// Loader.getLogger().warning( codeSample );
-				}
-			}
-			
-			if ( !codeSample.startsWith( "Could not read file" ) )
-			{
-				codeSample = codeSampleEval( codeSample, e.getLineNumber() );
-				Loader.getLogger().fine( "Got file '" + fileUrl + "' from the GitHub, line: " + e.getLineNumber() );
+				codeSample = "Could not read file '" + fileUrl + "' from the GitHub repository.\nYou could be running a mismatching version to the repository or this file belongs to another repository.";
 			}
 		}
-		else
+		
+		if ( !codeSample.startsWith( "Could not read file" ) )
 		{
-			codeSample = codeSample( filePath, e.getLineNumber() );
+			codeSample = codeSampleEval( codeSample, e.getLineNumber() );
+			codeSample += "<br /><a target=\"_blank\" href=\"" + finalFileUrl + "\">View this file on our GitHub!</a>";
 		}
 		
 		return codeSample;
@@ -192,7 +204,7 @@ public class ExceptionPageUtils
 			ob.append( "\n" );
 			ob.append( "<div class=\"traces\">\n" );
 			ob.append( "<h2>Stack Trace</h2>\n" );
-			ob.append( "<p>Disclaimer: Code samples are pulled from our GitHub repository, if your running version does not match then the sample will not be accurate. When it does work, it can really help dignose bugs.</p>\n" );
+			ob.append( "<p><b><i>Disclaimer: Code samples are pulled from our GitHub repository, if the server is not running the latest version then the sample will not be accurate. When it does work, it can really help dignose bugs.</i></b></p>\n" );
 			ob.append( "<table style=\"width:100%;\">\n" );
 			ob.append( stackTraceToHtml( t.getStackTrace() ) + "\n" );
 			ob.append( "</table>\n" );
@@ -221,11 +233,15 @@ public class ExceptionPageUtils
 		for ( StackTraceElement e : ste )
 		{
 			String file = (e.getFileName() == null) ? "eval()" : e.getFileName() + "(" + e.getLineNumber() + ")";
+			boolean expanded = false;
+			boolean isApp = e.getClassName().startsWith( "com.chiori" );
 			
-			String codeSample = (e.getClassName().startsWith( "com.chiori" )) ? getCodeSample( e, null ) : "There is no available source code to preview.";
+			String codeSample = isApp ? getCodeSample( e, null ) : "There is no source code available to preview.";
 			
-			// || e.getClassName().startsWith( "org.eclipse" ) || e.getClassName().startsWith( "java" )
-			sb.append( "<tr class=\"trace " + ((e.getClassName().startsWith( "com.chiori" )) ? "app expanded" : "core collapsed") + "\">\n" );
+			if ( isApp && !codeSample.startsWith( "Could not read file" ) )
+				expanded = true;
+			
+			sb.append( "<tr class=\"trace" + (isApp ? " app" : " core") + (expanded ? " expanded" : " collapsed") + "\">\n" );
 			sb.append( "	<td class=\"number\">#" + l + "</td>\n" );
 			sb.append( "	<td class=\"content\">\n" );
 			sb.append( "		<div class=\"trace-file\">\n" );

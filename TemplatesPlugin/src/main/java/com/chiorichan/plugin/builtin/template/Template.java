@@ -1,4 +1,4 @@
-package com.chiorichan.plugin.builtin;
+package com.chiorichan.plugin.builtin.template;
 
 import java.io.IOException;
 import java.util.Arrays;
