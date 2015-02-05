@@ -1,4 +1,4 @@
-package com.chiorichan.plugin.builtin;
+package com.chiorichan.plugin.builtin.email;
 
 import java.util.Date;
 import java.util.Properties;
@@ -14,7 +14,6 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 
-import com.chiorichan.Loader;
 import com.chiorichan.plugin.loader.Plugin;
 
 public class EmailPlugin extends Plugin
@@ -27,10 +26,15 @@ public class EmailPlugin extends Plugin
 	
 	public void mail( String sendTo, String subject, String message ) throws MessagingException
 	{
+		String host = getConfig().getString( "mail.host" );
+		int port = getConfig().getInt( "mail.smtpport", 25 );
+		String user = getConfig().getString( "mail.login" );
+		String pass = getConfig().getString( "mail.password" );
+		
 		Properties props = new Properties();
-		props.setProperty( "mail.smtp.host", getConfig().getString( "mail.host" ) );
-		props.setProperty( "mail.user", getConfig().getString( "mail.login" ) );
-		props.setProperty( "mail.password", getConfig().getString( "mail.password" ) );
+		props.setProperty( "mail.smtp.host", host );
+		props.setProperty( "mail.user", user );
+		props.setProperty( "mail.password", pass );
 		props.setProperty( "mail.smtp.auth", "true" );
 		
 		Session session = Session.getInstance( props, null );
@@ -50,7 +54,7 @@ public class EmailPlugin extends Plugin
 			msg.setContent( body, "text/html; charset=utf-8" );
 			
 			Transport transport = session.getTransport( "smtp" );
-			transport.connect( getConfig().getString( "mail.host" ), getConfig().getInt( "mail.smtpport" ), getConfig().getString( "mail.login" ), getConfig().getString( "mail.password" ) );
+			transport.connect( host, port, user, pass );
 			transport.sendMessage( msg, msg.getAllRecipients() );
 			transport.close();
 			
