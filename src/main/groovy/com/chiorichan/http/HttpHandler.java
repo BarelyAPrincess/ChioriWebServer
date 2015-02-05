@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.RenderEvent;
@@ -313,7 +314,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 		String uri = request.getURI();
 		String domain = request.getParentDomain();
 		String subdomain = request.getSubDomain();
-		Site currentSite = request.getSite();
 		
 		request.initServerVars( staticServerVars );
 		
@@ -351,11 +351,14 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 			return;
 		
 		// Throws IOException and HttpErrorException
-		WebInterpreter fi = new WebInterpreter( request, currentSite.getRoutes() );
+		WebInterpreter fi = new WebInterpreter( request );
 		
-		Loader.getLogger().info( "Request '" + subdomain + "." + domain + "' '" + uri + "' '" + fi.toString() + "'" );
+		Site currentSite = request.getSite();
+		sess.getParentSession().setSite( currentSite );
 		
-		if ( fi.isDirectoryRequest )
+		Loader.getLogger().info( "Request '" + currentSite.getSiteId() + "' '" + subdomain + "." + domain + "' '" + uri + "' '" + fi.toString() + "'" );
+		
+		if ( fi.isDirectoryRequest() )
 		{
 			dirInter.processDirectoryListing( this, fi );
 			return;
@@ -524,5 +527,10 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 	protected HttpResponseWrapper getResponse()
 	{
 		return response;
+	}
+	
+	public static ConsoleLogger getLogger()
+	{
+		return Loader.getLogger( "HttpHdl" );
 	}
 }

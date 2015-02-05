@@ -648,7 +648,8 @@ public class Site
 		}
 		catch( FileNotFoundException e )
 		{
-			Loader.getLogger().warning( e.getMessage() );
+			if ( !packageNode.endsWith( "includes.default" ) )
+				Loader.getLogger().warning( e.getMessage() );
 			return null;
 		}
 	}

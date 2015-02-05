@@ -15,7 +15,6 @@ import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Scanner;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -312,15 +311,15 @@ public class Loader extends BuiltinEventCreator implements Listener
 		if ( firstRun )
 		{
 			Loader.getLogger().highlight( "It appears that this is your first time running Chiori-chan's Web Server." );
-			Loader.getLogger().highlight( "All the needed files have been extracted from the jar file." );
+			Loader.getLogger().highlight( "All the needed files have been created or extracted from the jar file." );
 			Loader.getLogger().highlight( "We highly recommended that you stop the server, review configuration," );
 			Loader.getLogger().highlight( "and restart. You can find documentation and guides on our Github for more help." );
 			Loader.getLogger().highlight( "-------------------------------------------------------------------------------" );
-			String key = Loader.getConsole().prompt( "Would you like to stop and review config? Press 'Y' for Yes or 'N' for No.", "Y", "N", "C" );
+			String key = Loader.getConsole().prompt( "Would you like to stop and review configuration? Press 'Y' for Yes or 'N' for No.", "Y", "N", "C" );
 			
 			if ( key.equals( "C" ) )
 			{
-				// TODO Implement configuration imterview
+				// TODO Implement configuration interview
 			}
 			
 			if ( key.equals( "Y" ) )

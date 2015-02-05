@@ -12,6 +12,7 @@ package com.chiorichan.framework
 import com.chiorichan.Loader
 import com.chiorichan.account.Account
 import com.chiorichan.database.DatabaseEngine
+import com.chiorichan.exception.ShellExecuteException
 import com.chiorichan.http.HttpCode
 import com.chiorichan.http.HttpRequestWrapper
 import com.chiorichan.http.HttpResponseWrapper
@@ -88,12 +89,22 @@ abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	
 	DatabaseEngine getServerDatabase()
 	{
-		return Loader.getDatabase();
+		DatabaseEngine engine = Loader.getDatabase();
+		
+		if ( engine == null )
+			throw new IllegalStateException( "The framework database is unconfigured. This will need to be setup in order for you to use the getServerDatabase() method." );
+		
+		return engine;
 	}
 	
 	DatabaseEngine getSiteDatabase()
 	{
-		return request.getSite().getDatabase();
+		DatabaseEngine engine = getSite().getDatabase();
+		
+		if ( engine == null )
+			throw new IllegalStateException( "The site database is unconfigured. This will need to be setup in order for you to use the getSiteDatabase() method." );
+		
+		return engine;
 	}
 	
 	Site getSite()

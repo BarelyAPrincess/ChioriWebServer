@@ -61,7 +61,7 @@ public abstract class Session extends AccountHandler
 		
 	}
 	
-	protected void setSite( Site _site )
+	public void setSite( Site _site )
 	{
 		site = _site;
 	}

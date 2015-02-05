@@ -30,7 +30,8 @@ public class ExceptionPageUtils
 		
 		for ( StackTraceElement ele : elements )
 		{
-			if ( ele.getFileName() != null && ele.getFileName().toLowerCase().contains( ".groovy" ) )
+			// if ( ele.getFileName() != null && ele.getFileName().toLowerCase().contains( ".groovy" ) )
+			if ( ele.getFileName() != null && ele.getClassName().toLowerCase().startsWith( "script" ) )
 			{
 				result = ele;
 				break;
@@ -46,7 +47,7 @@ public class ExceptionPageUtils
 		
 		for ( StackTraceElement ele : elements )
 		{
-			if ( !ele.getClassName().startsWith( "org.codehaus.groovy." ) )
+			if ( !ele.getClassName().toLowerCase().startsWith( "script" ) )
 				result.add( ele );
 		}
 		

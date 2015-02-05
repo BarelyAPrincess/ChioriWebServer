@@ -186,7 +186,6 @@ public class SessionProviderNet extends AccountHandler implements SessionProvide
 	@Override
 	public PermissibleType getType()
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
 }

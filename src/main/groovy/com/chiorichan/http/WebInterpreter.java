@@ -27,6 +27,7 @@ public class WebInterpreter extends FileInterpreter
 {
 	protected Map<String, String> rewriteParams = Maps.newTreeMap();
 	protected boolean isDirectoryRequest = false;
+	protected boolean fwRequest = false;
 	
 	@Override
 	public String toString()
@@ -63,23 +64,46 @@ public class WebInterpreter extends FileInterpreter
 		return "WebInterpreter[content=" + bs.size() + " bytes,contentType=" + getContentType() + ",overrides=[" + overrides + "],rewrites=[" + rewrites + "]]";
 	}
 	
-	public WebInterpreter( HttpRequestWrapper request, Routes routes ) throws IOException, HttpErrorException, SiteException
+	public WebInterpreter( HttpRequestWrapper request ) throws IOException, HttpErrorException, SiteException
 	{
 		super();
 		
 		File dest = null;
+		Routes routes = request.getSite().getRoutes();
 		boolean wasSuccessful = false;
 		
 		String uri = request.getURI();
 		String domain = request.getParentDomain();
 		String subdomain = request.getSubDomain();
 		
-		boolean fwRequest = uri.startsWith( "/fw" );
+		fwRequest = uri.startsWith( "/fw" );
 		if ( fwRequest )
 		{
 			Site fwSite = Loader.getSiteManager().getFrameworkSite();
 			routes = fwSite.getRoutes();
 			request.setSite( fwSite );
+		}
+		
+		if ( uri.startsWith( "/fw/~" ) )
+		{
+			int indexOf = uri.indexOf( "/", 5 );
+			
+			if ( indexOf < 0 )
+				indexOf = uri.length();
+			
+			String siteId = uri.substring( 5, indexOf );
+			
+			Site fwSite = Loader.getSiteManager().getSiteById( siteId );
+			
+			if ( fwSite != null )
+			{
+				fwRequest = false;
+				routes = fwSite.getRoutes();
+				request.setSite( fwSite );
+				uri = (indexOf == uri.length()) ? "/" : uri.substring( indexOf );
+				request.setUri( uri );
+				Loader.getLogger().info( "Detected a virtual site request. New request on site '" + siteId + "' with URI '" + uri + "'. &4Caution: There could be site bugs when doing these kind of requests." );
+			}
 		}
 		
 		Route route = routes.searchRoutes( uri, domain, subdomain );
@@ -209,5 +233,10 @@ public class WebInterpreter extends FileInterpreter
 	public boolean isDirectoryRequest()
 	{
 		return isDirectoryRequest;
+	}
+	
+	public boolean isFrameworkRequest()
+	{
+		return fwRequest;
 	}
 }
