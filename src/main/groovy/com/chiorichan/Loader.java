@@ -70,7 +70,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	public static File tmpFileDirectory;
 	public static File webroot = new File( "" );
 	private WarningState warningState = WarningState.DEFAULT;
-	final private ServerRunLevelEvent runLevelEvent = new ServerRunLevelEventImpl();
+	private final ServerRunLevelEvent runLevelEvent = new ServerRunLevelEventImpl();
 	
 	protected static final ConsoleBus console = new ConsoleBus();
 	protected static final EventBus events = new EventBus();
@@ -101,17 +101,17 @@ public class Loader extends BuiltinEventCreator implements Listener
 			{
 				options = parser.parse( args );
 			}
-			catch( joptsimple.OptionException ex )
+			catch ( joptsimple.OptionException ex )
 			{
 				Logger.getLogger( Loader.class.getName() ).log( Level.SEVERE, ex.getLocalizedMessage() );
 			}
 			
-			if ( (options == null) || (options.has( "?" )) )
+			if ( ( options == null ) || ( options.has( "?" ) ) )
 				try
 				{
 					parser.printHelpOn( System.out );
 				}
-				catch( IOException ex )
+				catch ( IOException ex )
 				{
 					Logger.getLogger( Loader.class.getName() ).log( Level.SEVERE, null, ex );
 				}
@@ -122,25 +122,31 @@ public class Loader extends BuiltinEventCreator implements Listener
 				isRunning = new Loader( options ).start();
 			}
 		}
-		catch( Throwable t )
+		catch ( Throwable t )
 		{
-			if ( t.getMessage() != "" )
+			if ( !t.getMessage().isEmpty() )
 			{
 				t.printStackTrace();
-				// TODO Make it so this exception (and possibly other critical exceptions) are reported to us without user interaction. Should also find a way that the log can be sent along with it.
+				// TODO Make it so this exception (and possibly other critical exceptions) are
+				// reported to
+				// us without user interaction. Should also find a way that the log can be sent
+				// along with
+				// it.
 				
 				if ( getLogger() != null )
-					getLogger().severe( ChatColor.RED + "" + ChatColor.NEGATIVE + "THE SERVER FAILED TO START, CHECK THE LOGS AND TRY AGAIN (" + (System.currentTimeMillis() - startTime) + "ms)!" );
+					getLogger().severe( ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "THE SERVER FAILED TO START, CHECK THE LOGS AND TRY AGAIN (" + ( System.currentTimeMillis() - startTime ) + "ms)!" );
 				else
-					System.err.println( "THE SERVER FAILED TO START, CHECK THE LOGS AND TRY AGAIN (" + (System.currentTimeMillis() - startTime) + "ms)!" );
+					System.err.println( "THE SERVER FAILED TO START, CHECK THE LOGS AND TRY AGAIN (" + ( System.currentTimeMillis() - startTime ) + "ms)!" );
 				
 				try
 				{
 					NetworkManager.cleanup();
 					isRunning = false;
 				}
-				catch( Exception e )
-				{}
+				catch ( Exception e )
+				{	
+					
+				}
 				
 				if ( configuration != null && configuration.getBoolean( "server.haltOnSevereError" ) )
 				{
@@ -209,7 +215,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 			if ( !contentTypes.exists() )
 				FileUtils.writeStringToFile( contentTypes, "# Chiori-chan's Web Server Content-Types File which overrides the default internal ones.\n# Syntax: 'ext: mime/type'" );
 		}
-		catch( IOException e )
+		catch ( IOException e )
 		{
 			getLogger().warning( "There was an exception thrown trying to create the 'ContentTypes.properties' file.", e );
 		}
@@ -221,7 +227,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 			if ( !shellOverrides.exists() )
 				FileUtils.writeStringToFile( shellOverrides, "# Chiori-chan's Web Server Interpreter Overrides File which overrides the default internal ones.\n# You don't have to add a string if the key and value are the same, hence Convension!\n# Syntax: 'fileExt: shellHandler'" );
 		}
-		catch( IOException e )
+		catch ( IOException e )
 		{
 			getLogger().warning( "There was an exception thrown trying to create the 'InterpreterOverrides.properties' file.", e );
 		}
@@ -233,7 +239,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 				FileUtil.putResource( internalConfigFile, getConfigFile() );
 				firstRun = true;
 			}
-			catch( IOException e1 )
+			catch ( IOException e1 )
 			{
 				e1.printStackTrace();
 			}
@@ -252,7 +258,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		
 		saveConfig();
 		
-		if ( console.useColors == true )
+		if ( console.useColors )
 			console.useColors = Loader.getConfig().getBoolean( "console.color", true );
 		
 		events.useTimings( configuration.getBoolean( "plugins.useTimings" ) );
@@ -304,7 +310,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 				getLogger().info( "Finished with no errors!!" );
 			}
 		}
-		catch( ZipException | IOException e )
+		catch ( ZipException | IOException e )
 		{
 			e.printStackTrace();
 		}
@@ -330,7 +336,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	
 	protected void changeRunLevel( RunLevel level )
 	{
-		((ServerRunLevelEventImpl) runLevelEvent).setRunLevel( level );
+		( ( ServerRunLevelEventImpl ) runLevelEvent ).setRunLevel( level );
 		events.callEvent( runLevelEvent );
 	}
 	
@@ -375,7 +381,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		{
 			permissions.init();
 		}
-		catch( PermissionBackendException e )
+		catch ( PermissionBackendException e )
 		{
 			throw new StartupException( e );
 		}
@@ -395,7 +401,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		
 		changeRunLevel( RunLevel.RUNNING );
 		
-		getLogger().info( ChatColor.RED + "" + ChatColor.NEGATIVE + "Finished Initalizing " + Versioning.getProduct() + "! It took " + (System.currentTimeMillis() - startTime) + "ms!" );
+		getLogger().info( ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "Finished Initalizing " + Versioning.getProduct() + "! It took " + ( System.currentTimeMillis() - startTime ) + "ms!" );
 		
 		updater.check();
 		
@@ -413,7 +419,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		{
 			Class.forName( "com.mysql.jdbc.Driver" );
 		}
-		catch( ClassNotFoundException e )
+		catch ( ClassNotFoundException e )
 		{
 			throw new StartupException( "We could not locate the 'com.mysql.jdbc.Driver' library regardless that its suppose to be included. If your running from source code be sure to have this library in your build path." );
 		}
@@ -428,7 +434,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 				{
 					fwDatabase.init( filename );
 				}
-				catch( SQLException e )
+				catch ( SQLException e )
 				{
 					if ( e.getCause() instanceof ConnectException )
 					{
@@ -453,7 +459,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 				{
 					fwDatabase.init( database, username, password, host, port );
 				}
-				catch( SQLException e )
+				catch ( SQLException e )
 				{
 					// e.printStackTrace();
 					
@@ -534,7 +540,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	
 	public File getUpdateFolderFile()
 	{
-		return new File( (File) options.valueOf( "plugins" ), configuration.getString( "settings.update-folder", "update" ) );
+		return new File( ( File ) options.valueOf( "plugins" ), configuration.getString( "settings.update-folder", "update" ) );
 	}
 	
 	public static Loader getInstance()
@@ -554,14 +560,16 @@ public class Loader extends BuiltinEventCreator implements Listener
 		int pollCount = 0;
 		
 		// Wait for at most 2.5 seconds for plugins to close their threads
-		while( pollCount < 50 && getScheduler().getActiveWorkers().size() > 0 )
+		while ( pollCount < 50 && getScheduler().getActiveWorkers().size() > 0 )
 		{
 			try
 			{
 				Thread.sleep( 50 );
 			}
-			catch( InterruptedException e )
-			{}
+			catch ( InterruptedException e )
+			{	
+				
+			}
 			pollCount++;
 		}
 		List<ChioriWorker> overdueWorkers = getScheduler().getActiveWorkers();
@@ -604,22 +612,22 @@ public class Loader extends BuiltinEventCreator implements Listener
 	public static void gracefullyShutdownServer( String reason )
 	{
 		if ( !reason.isEmpty() )
-			for ( Account<?> User : accounts.getOnlineAccounts() )
+			for ( Account<?> user : accounts.getOnlineAccounts() )
 			{
-				User.kick( reason );
+				user.kick( reason );
 			}
 		
 		stop( reason );
 	}
 	
-	public static void stop( String _stopReason )
+	public static void stop( String stopReason )
 	{
-		if ( _stopReason == null )
+		if ( stopReason == null )
 			getLogger().highlight( "Stopping the server... Goodbye!" );
-		else if ( _stopReason != "" )
-			getLogger().highlight( "Server Stopping for Reason: " + _stopReason );
+		else if ( !stopReason.isEmpty() )
+			getLogger().highlight( "Server Stopping for Reason: " + stopReason );
 		
-		stopReason = _stopReason;
+		Loader.stopReason = stopReason;
 		isRunning = false;
 	}
 	
@@ -671,7 +679,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	
 	private File getConfigFile()
 	{
-		return (File) options.valueOf( "config" );
+		return ( File ) options.valueOf( "config" );
 	}
 	
 	private void saveConfig()
@@ -680,7 +688,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		{
 			configuration.save( getConfigFile() );
 		}
-		catch( IOException ex )
+		catch ( IOException ex )
 		{
 			Logger.getLogger( Loader.class.getName() ).log( Level.SEVERE, "Could not save " + getConfigFile(), ex );
 		}
@@ -692,8 +700,10 @@ public class Loader extends BuiltinEventCreator implements Listener
 	}
 	
 	/**
-	 * Gets an instance of the system logger so requester can log information to both the screen and log file with ease.
-	 * The auto selection of named loggers might be temporary feature until most of system can be manually programmed to
+	 * Gets an instance of the system logger so requester can log information to both the screen and
+	 * log file with ease.
+	 * The auto selection of named loggers might be temporary feature until most of system can be
+	 * manually programmed to
 	 * use named loggers since it's a relatively new feature.
 	 * 
 	 * @return The system logger
@@ -707,7 +717,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		{
 			int ind = clz.indexOf( ".", 5 ) + 1;
 			int end = clz.indexOf( ".", ind );
-			clz = clz.substring( ind, (end > ind) ? end : clz.length() );
+			clz = clz.substring( ind, ( end > ind ) ? end : clz.length() );
 		}
 		
 		switch ( clz )
@@ -742,10 +752,11 @@ public class Loader extends BuiltinEventCreator implements Listener
 	}
 	
 	/**
-	 * Gets an instance of ConsoleLogger for provided loggerId. If the logger does not exist it will create one.
+	 * Gets an instance of ConsoleLogger for provided loggerId. If the logger does not exist it will
+	 * create one.
 	 * 
 	 * @param loggerId
-	 *             The loggerId we are looking for.
+	 *            The loggerId we are looking for.
 	 * @return ConsoleLogger
 	 *         An empty loggerId will return the System Logger.
 	 */
@@ -835,7 +846,8 @@ public class Loader extends BuiltinEventCreator implements Listener
 	}
 	
 	/**
-	 * Gets an instance of the EventBus. Used to notify the server and plugins of events that take place, e.g., AccountLoginEvent .
+	 * Gets an instance of the EventBus. Used to notify the server and plugins of events that take
+	 * place, e.g., AccountLoginEvent .
 	 * 
 	 * @return EventBus
 	 */
@@ -845,7 +857,8 @@ public class Loader extends BuiltinEventCreator implements Listener
 	}
 	
 	/**
-	 * Gets an instance of the PermissionManager. Used to track and check the various permissions on this server.
+	 * Gets an instance of the PermissionManager. Used to track and check the various permissions on
+	 * this server.
 	 * 
 	 * @return PermissionManager
 	 */

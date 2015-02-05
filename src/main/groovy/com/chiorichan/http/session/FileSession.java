@@ -15,7 +15,7 @@ import java.util.Map;
 
 import org.apache.commons.io.filefilter.FileFilterUtils;
 
-import com.chiorichan.ChatColor;
+import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.http.Candy;
@@ -43,7 +43,7 @@ public class FileSession extends Session
 		
 		loginSessionUser();
 		
-		Loader.getLogger().info( ChatColor.DARK_AQUA + "Session Restored `" + this + "`" );
+		Loader.getLogger().info( ConsoleColor.DARK_AQUA + "Session Restored `" + this + "`" );
 	}
 	
 	private void readSessionFile() throws SessionException

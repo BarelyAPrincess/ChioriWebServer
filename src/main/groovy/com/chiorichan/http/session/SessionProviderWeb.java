@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.chiorichan.ChatColor;
+import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
 import com.chiorichan.account.LoginException;
@@ -146,7 +146,7 @@ public class SessionProviderWeb implements SessionProvider
 				
 				parentSession.setVariable( "remember", remember );
 				
-				Loader.getLogger().info( ChatColor.GREEN + "Login Success `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getAcctId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
+				Loader.getLogger().info( ConsoleColor.GREEN + "Login Success `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getAcctId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
 				request.getResponse().sendRedirect( loginPost );
 				
 			}
@@ -175,11 +175,11 @@ public class SessionProviderWeb implements SessionProvider
 					
 					parentSession.currentAccount = user;
 					
-					Loader.getLogger().info( ChatColor.GREEN + "Login Success `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getAcctId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
+					Loader.getLogger().info( ConsoleColor.GREEN + "Login Success `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getAcctId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
 				}
 				catch( LoginException l )
 				{
-					Loader.getLogger().warning( ChatColor.GREEN + "Login Failed `No Valid Login Present`" );
+					Loader.getLogger().warning( ConsoleColor.GREEN + "Login Failed `No Valid Login Present`" );
 				}
 			}
 			else

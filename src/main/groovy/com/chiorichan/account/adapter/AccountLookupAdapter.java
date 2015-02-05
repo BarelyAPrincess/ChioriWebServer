@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -21,49 +22,49 @@ import com.chiorichan.account.adapter.memory.MemoryAdapter;
  */
 public interface AccountLookupAdapter
 {
-	public MemoryAdapter MEMORY_ADAPTER = new MemoryAdapter();
+	MemoryAdapter MEMORY_ADAPTER = new MemoryAdapter();
 	
 	/**
 	 * Returns all accounts maintained by this adapter.
 	 * 
 	 * @return
 	 */
-	public List<AccountMetaData> getAccounts();
+	List<AccountMetaData> getAccounts();
 	
 	/**
 	 * Attempt to serialize provided account.
 	 * Use of the account instance may continue.
 	 */
-	public void saveAccount( AccountMetaData account );
+	void saveAccount( AccountMetaData account );
 	
 	/**
 	 * Attempt to reload details regarding this account.
 	 * 
 	 * @return
 	 */
-	public AccountMetaData reloadAccount( AccountMetaData account );
+	AccountMetaData reloadAccount( AccountMetaData account );
 	
 	/**
 	 * Attempt to load a account.
 	 * 
 	 * @throws LoginException
 	 */
-	public AccountMetaData readAccount( String account ) throws LoginException;
+	AccountMetaData readAccount( String account ) throws LoginException;
 	
 	/**
 	 * @return Class extends Account
 	 *         The class that should be used to create the Account Object
 	 */
-	public Class<? extends Account<? extends AccountLookupAdapter>> getAccountClass();
+	Class<? extends Account<? extends AccountLookupAdapter>> getAccountClass();
 	
 	/**
 	 * Informs the Adapater of a failed login
 	 * 
 	 * @param account
-	 *             The account that failed the login.
+	 *            The account that failed the login.
 	 * @param reason
-	 *             The reason the login failed.
+	 *            The reason the login failed.
 	 * 
 	 */
-	public void failedLoginUpdate( AccountMetaData meta, LoginExceptionReason reason );
+	void failedLoginUpdate( AccountMetaData meta, LoginExceptionReason reason );
 }

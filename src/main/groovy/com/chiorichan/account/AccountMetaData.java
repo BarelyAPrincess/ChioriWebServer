@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -62,12 +63,12 @@ public class AccountMetaData
 		Object obj = metaData.get( key );
 		
 		if ( obj instanceof String )
-			if ( ((String) obj).isEmpty() )
+			if ( ( ( String ) obj ).isEmpty() )
 				return def;
 			else
-				return Integer.parseInt( (String) obj );
+				return Integer.parseInt( ( String ) obj );
 		else
-			return (Integer) obj;
+			return ( Integer ) obj;
 	}
 	
 	public Boolean getBoolean( String key )
@@ -75,9 +76,9 @@ public class AccountMetaData
 		Object obj = metaData.get( key );
 		
 		if ( obj instanceof String )
-			return Boolean.parseBoolean( (String) obj );
+			return Boolean.parseBoolean( ( String ) obj );
 		else
-			return (Boolean) obj;
+			return ( Boolean ) obj;
 	}
 	
 	public void setAll( Map<String, Object> data )

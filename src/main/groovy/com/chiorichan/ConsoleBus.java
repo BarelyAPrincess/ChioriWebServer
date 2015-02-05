@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -29,7 +30,7 @@ public class ConsoleBus implements Runnable
 	
 	private OptionSet options;
 	public static int lastFiveTick = -1;
-	public static int currentTick = (int) (System.currentTimeMillis() / 50);
+	public static int currentTick = ( int ) ( System.currentTimeMillis() / 50 );
 	public Thread primaryThread;
 	
 	public boolean useColors = true;
@@ -64,19 +65,19 @@ public class ConsoleBus implements Runnable
 			
 			@SuppressWarnings( "unused" )
 			boolean g = false;
-			long Q = 0;
+			long q = 0;
 			
 			for ( long j = 0L; Loader.isRunning(); g = true )
 			{
 				long k = System.currentTimeMillis();
 				long l = k - i;
 				
-				if ( l > 2000L && i - Q >= 15000L )
+				if ( l > 2000L && i - q >= 15000L )
 				{
 					if ( loader.getWarnOnOverload() )
 						getLogger().warning( "Can\'t keep up! Did the system time change, or is the server overloaded?" );
 					l = 2000L;
-					Q = i;
+					q = i;
 				}
 				
 				if ( l < 0L )
@@ -87,9 +88,9 @@ public class ConsoleBus implements Runnable
 				
 				j += l;
 				i = k;
-				while( j > 50L )
+				while ( j > 50L )
 				{
-					currentTick = (int) (System.currentTimeMillis() / 50);
+					currentTick = ( int ) ( System.currentTimeMillis() / 50 );
 					j -= 50L;
 					loopTick( currentTick );
 				}
@@ -97,7 +98,7 @@ public class ConsoleBus implements Runnable
 				Thread.sleep( 1L );
 			}
 		}
-		catch( Throwable t )
+		catch ( Throwable t )
 		{
 			t.printStackTrace();
 			// Crash report generate here
@@ -108,7 +109,7 @@ public class ConsoleBus implements Runnable
 			{
 				Loader.shutdown();
 			}
-			catch( Throwable throwable1 )
+			catch ( Throwable throwable1 )
 			{
 				throwable1.printStackTrace();
 			}
@@ -166,11 +167,11 @@ public class ConsoleBus implements Runnable
 				
 				for ( String l : banner )
 				{
-					getLogger().info( ChatColor.GOLD + l );
+					getLogger().info( ConsoleColor.GOLD + l );
 				}
 				
-				getLogger().info( ChatColor.NEGATIVE + "" + ChatColor.GOLD + "Starting " + Versioning.getProduct() + " Version " + Versioning.getVersion() );
-				getLogger().info( ChatColor.NEGATIVE + "" + ChatColor.GOLD + Versioning.getCopyright() );
+				getLogger().info( ConsoleColor.NEGATIVE + "" + ConsoleColor.GOLD + "Starting " + Versioning.getProduct() + " Version " + Versioning.getVersion() );
+				getLogger().info( ConsoleColor.NEGATIVE + "" + ConsoleColor.GOLD + Versioning.getCopyright() );
 			}
 			finally
 			{
@@ -178,7 +179,7 @@ public class ConsoleBus implements Runnable
 					is.close();
 			}
 		}
-		catch( IOException e )
+		catch ( IOException e )
 		{	
 			
 		}
@@ -191,7 +192,7 @@ public class ConsoleBus implements Runnable
 		{
 			if ( timeout / 1000 < last )
 			{
-				getLogger().info( ChatColor.GOLD + "" + ChatColor.NEGATIVE + String.format( msg, ((timeout / 1000) + 1) + " seconds" ).toUpperCase() + "/r" );
+				getLogger().info( ConsoleColor.GOLD + "" + ConsoleColor.NEGATIVE + String.format( msg, ( ( timeout / 1000 ) + 1 ) + " seconds" ).toUpperCase() + "/r" );
 				last = timeout / 1000;
 			}
 			
@@ -200,12 +201,12 @@ public class ConsoleBus implements Runnable
 				timeout = timeout - 250;
 				Thread.sleep( 250 );
 			}
-			catch( InterruptedException e )
+			catch ( InterruptedException e )
 			{
 				e.printStackTrace();
 			}
 		}
-		while( timeout > 0 );
+		while ( timeout > 0 );
 	}
 	
 	public String prompt( String msg, String... keys )
@@ -214,7 +215,7 @@ public class ConsoleBus implements Runnable
 		
 		getLogger().highlight( msg );
 		
-		while( true )
+		while ( true )
 		{
 			String key = scanner.next();
 			

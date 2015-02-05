@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -19,10 +19,8 @@ import java.util.Properties;
 import com.google.common.collect.Maps;
 
 /**
- * Loads ShellOverrides from ShellOverrides.properties file.
- * You can use that file to override what SeaShell will handle a purticular file extension.
- * 
- * @author Chiori-chan
+ * Loads InterpreterOverrides from InterpreterOverrides.properties file.
+ * You can use that file to override what SeaShell will handle a particular file extension.
  */
 public class InterpreterOverrides
 {
@@ -48,7 +46,7 @@ public class InterpreterOverrides
 				prop.load( is );
 				for ( Object o : prop.keySet() )
 					if ( o instanceof String )
-						interpreters.put( (String) o, (String) prop.get( (String) o ) );
+						interpreters.put( ( String ) o, ( String ) prop.get( ( String ) o ) );
 			}
 			finally
 			{

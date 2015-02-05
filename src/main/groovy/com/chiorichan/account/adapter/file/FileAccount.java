@@ -1,3 +1,12 @@
+/**
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
+ */
 package com.chiorichan.account.adapter.file;
 
 import java.io.File;
@@ -12,7 +21,7 @@ import com.chiorichan.util.Common;
 
 public class FileAccount extends Account<FileAdapter>
 {
-	public FileAccount(AccountMetaData meta, FileAdapter adapter) throws LoginException
+	public FileAccount( AccountMetaData meta, FileAdapter adapter ) throws LoginException
 	{
 		super( meta, adapter );
 	}
@@ -36,7 +45,7 @@ public class FileAccount extends Account<FileAdapter>
 		if ( !getMetaData().containsKey( "relPath" ) )
 			return;
 		
-		File relPath = (File) getMetaData().getObject( "relPath" );
+		File relPath = ( File ) getMetaData().getObject( "relPath" );
 		
 		if ( relPath == null )
 			return;
@@ -82,19 +91,19 @@ public class FileAccount extends Account<FileAdapter>
 		
 		return false;
 	}
-
+	
 	@Override
 	public String getPassword()
 	{
 		return getString( "password" );
 	}
-
+	
 	@Override
 	public String getDisplayName()
 	{
 		return ( getString( "fname" ).isEmpty() ) ? getString( "name" ) : getString( "fname" ) + " " + getString( "name" );
 	}
-
+	
 	@Override
 	public String getUsername()
 	{

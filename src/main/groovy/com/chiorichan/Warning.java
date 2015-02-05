@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -21,7 +21,7 @@ import com.google.common.collect.ImmutableMap;
  * This designates the warning state for a specific item. When the server settings dictate 'default' warnings, warnings
  * are printed if the {@link #value()} is true.
  */
-@Target( { ElementType.CONSTRUCTOR, ElementType.METHOD, ElementType.TYPE } )
+@Target( {ElementType.CONSTRUCTOR, ElementType.METHOD, ElementType.TYPE} )
 @Retention( RetentionPolicy.RUNTIME )
 public @interface Warning
 {
@@ -50,7 +50,7 @@ public @interface Warning
 		 * This method checks the provided warning should be printed for this state
 		 * 
 		 * @param warning
-		 *           The warning annotation added to a deprecated item
+		 *            The warning annotation added to a deprecated item
 		 * @return ON is always True<br>
 		 *         OFF is always false<br>
 		 *         DEFAULT is false if and only if annotation is not null and specifies false for {@link Warning#value()},
@@ -69,7 +69,7 @@ public @interface Warning
 		 * This method returns the corresponding warning state for the given string value.
 		 * 
 		 * @param value
-		 *           The string value to check
+		 *            The string value to check
 		 * @return {@link #DEFAULT} if not found, or the respective WarningState
 		 */
 		public static WarningState value( final String value )

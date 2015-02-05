@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -114,7 +115,7 @@ public abstract class Account<T extends AccountLookupAdapter> extends Permissibl
 		return handlers.size();
 	}
 	
-	private final void checkHandlers()
+	private void checkHandlers()
 	{
 		for ( AccountHandler h : handlers )
 			if ( !h.isValid() )
@@ -126,10 +127,10 @@ public abstract class Account<T extends AccountLookupAdapter> extends Permissibl
 		return metaData;
 	}
 	
-	public final boolean validatePassword( String _password )
+	public final boolean validatePassword( String pass )
 	{
 		String password = getPassword();
-		return (password.equals( _password ) || password.equals( DigestUtils.md5Hex( _password ) ) || DigestUtils.md5Hex( password ).equals( _password ));
+		return ( password.equals( pass ) || password.equals( DigestUtils.md5Hex( pass ) ) || DigestUtils.md5Hex( password ).equals( pass ) );
 	}
 	
 	public boolean isBanned()
@@ -187,7 +188,7 @@ public abstract class Account<T extends AccountLookupAdapter> extends Permissibl
 	/**
 	 * 
 	 * @param key
-	 *             Metadata key.
+	 *            Metadata key.
 	 * @return String
 	 *         Returns an empty string if no result.
 	 */
@@ -200,9 +201,9 @@ public abstract class Account<T extends AccountLookupAdapter> extends Permissibl
 	 * Get a string from the Metadata with a default value
 	 * 
 	 * @param key
-	 *             Metadata key.
+	 *            Metadata key.
 	 * @param def
-	 *             Default value to return if no result.
+	 *            Default value to return if no result.
 	 * @return String
 	 */
 	public String getString( String key, String def )
@@ -263,9 +264,9 @@ public abstract class Account<T extends AccountLookupAdapter> extends Permissibl
 	 * Called before the AccountManager makes the login offical.
 	 * 
 	 * @param account
-	 *             The account used in this check
+	 *            The account used in this check
 	 * @throws LoginException
-	 *              Throw this exception if you wish to interrupt the login
+	 *             Throw this exception if you wish to interrupt the login
 	 */
 	public abstract void preLoginCheck() throws LoginException;
 	
@@ -273,9 +274,9 @@ public abstract class Account<T extends AccountLookupAdapter> extends Permissibl
 	 * Called as the last line before account is returned.
 	 * 
 	 * @param account
-	 *             The account used in this check
+	 *            The account used in this check
 	 * @throws LoginException
-	 *              Throw this exception if you wish to interrupt the login
+	 *             Throw this exception if you wish to interrupt the login
 	 */
 	public abstract void postLoginCheck() throws LoginException;
 	
@@ -283,7 +284,7 @@ public abstract class Account<T extends AccountLookupAdapter> extends Permissibl
 	 * Called from AccountManager to match the account using an array of fields, e.g., email, phone, name, acctId
 	 * 
 	 * @param id
-	 *             The identifier to match against.
+	 *            The identifier to match against.
 	 * @return Boolean
 	 *         true if it matches.
 	 */

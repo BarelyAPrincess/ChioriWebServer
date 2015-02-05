@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -81,12 +82,12 @@ public class SqlAdapter implements AccountLookupAdapter
 			{
 				AccountMetaData meta = new AccountMetaData();
 				meta.setAll( DatabaseEngine.convertRow( rs ) );
-				meta.set( "displayName", (rs.getString( "fname" ).isEmpty()) ? rs.getString( "name" ) : rs.getString( "fname" ) + " " + rs.getString( "name" ) );
+				meta.set( "displayName", ( rs.getString( "fname" ).isEmpty() ) ? rs.getString( "name" ) : rs.getString( "fname" ) + " " + rs.getString( "name" ) );
 				metas.add( meta );
 			}
-			while( rs.next() );
+			while ( rs.next() );
 		}
-		catch( SQLException e )
+		catch ( SQLException e )
 		{
 			return metas;
 		}
@@ -134,7 +135,7 @@ public class SqlAdapter implements AccountLookupAdapter
 					accountColumnSet.add( rsmd.getColumnName( i ) );
 				}
 			}
-			while( rs.next() );
+			while ( rs.next() );
 			
 			String additionalAccountFields = "";
 			for ( String f : accountFieldSet )
@@ -160,11 +161,11 @@ public class SqlAdapter implements AccountLookupAdapter
 			
 			meta.setAll( DatabaseEngine.convertRow( rs ) );
 			
-			meta.set( "displayName", (rs.getString( "fname" ).isEmpty()) ? rs.getString( "name" ) : rs.getString( "fname" ) + " " + rs.getString( "name" ) );
+			meta.set( "displayName", ( rs.getString( "fname" ).isEmpty() ) ? rs.getString( "name" ) : rs.getString( "fname" ) + " " + rs.getString( "name" ) );
 			
 			return meta;
 		}
-		catch( SQLException e )
+		catch ( SQLException e )
 		{
 			throw new LoginException( e );
 		}
@@ -177,7 +178,7 @@ public class SqlAdapter implements AccountLookupAdapter
 		{
 			sql.queryUpdate( "UPDATE `" + table + "` SET `lastActive` = '" + Common.getEpoch() + "', `lastLoginFail` = 0, `numLoginFail` = 0 WHERE `accountID` = '" + meta.getAcctId() + "'" );
 		}
-		catch( SQLException e )
+		catch ( SQLException e )
 		{
 			e.printStackTrace();
 		}

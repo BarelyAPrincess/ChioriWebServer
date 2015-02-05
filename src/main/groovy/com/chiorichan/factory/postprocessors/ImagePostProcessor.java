@@ -17,7 +17,7 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
-import com.chiorichan.ChatColor;
+import com.chiorichan.ConsoleColor;
 import com.chiorichan.ContentTypes;
 import com.chiorichan.Loader;
 import com.chiorichan.factory.CodeMetaData;
@@ -119,7 +119,7 @@ public class ImagePostProcessor implements PostProcessor
 				graphics.drawImage( image, 0, 0, null );
 				graphics.dispose();
 				
-				Loader.getLogger().info( ChatColor.AQUA + "Resized image from " + MathUtils.round( w ) + "px by " + MathUtils.round( h ) + "px to " + MathUtils.round( w1 ) + "px by " + MathUtils.round( h1 ) + "px" );
+				Loader.getLogger().info( ConsoleColor.AQUA + "Resized image from " + MathUtils.round( w ) + "px by " + MathUtils.round( h ) + "px to " + MathUtils.round( w1 ) + "px by " + MathUtils.round( h1 ) + "px" );
 				
 				if ( rtn != null )
 				{

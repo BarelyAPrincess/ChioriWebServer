@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -29,7 +30,7 @@ public class ConsoleLogManager
 		
 		try
 		{
-			String filename = (String) Loader.getOptions().valueOf( "log-pattern" );
+			String filename = ( String ) Loader.getOptions().valueOf( "log-pattern" );
 			
 			String tmpDir = System.getProperty( "java.io.tmpdir" );
 			String homeDir = System.getProperty( "user.home" );
@@ -47,7 +48,7 @@ public class ConsoleLogManager
 			}
 			
 			int i = 0;
-			while( i < parentPath.length() )
+			while ( i < parentPath.length() )
 			{
 				char ch = parentPath.charAt( i );
 				char ch2 = 0;
@@ -91,15 +92,15 @@ public class ConsoleLogManager
 			if ( parent != null )
 				parent.mkdirs();
 			
-			int limit = (Integer) Loader.getOptions().valueOf( "log-limit" );
-			int count = (Integer) Loader.getOptions().valueOf( "log-count" );
-			boolean append = (Boolean) Loader.getOptions().valueOf( "log-append" );
+			int limit = ( Integer ) Loader.getOptions().valueOf( "log-limit" );
+			int count = ( Integer ) Loader.getOptions().valueOf( "log-count" );
+			boolean append = ( Boolean ) Loader.getOptions().valueOf( "log-append" );
 			FileHandler fileHandler = new FileHandler( filename, limit, count, append );
 			fileHandler.setFormatter( new ConsoleLogFormatter( Loader.getConsole() ) );
 			
 			logger.addHandler( fileHandler );
 		}
-		catch( Exception exception )
+		catch ( Exception exception )
 		{
 			getLogger().warning( "Failed to log to server.log", exception );
 		}

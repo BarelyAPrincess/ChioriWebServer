@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.chiorichan.ChatColor;
+import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountHandler;
@@ -75,7 +75,7 @@ public abstract class Session extends AccountHandler
 		{
 			Account<?> user = Loader.getAccountManager().attemptLogin( this, username, password );
 			currentAccount = user;
-			Loader.getLogger().info( ChatColor.GREEN + "Login Restored `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getAcctId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
+			Loader.getLogger().info( ConsoleColor.GREEN + "Login Restored `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getAcctId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
 		}
 		catch( LoginException l )
 		{
@@ -147,9 +147,9 @@ public abstract class Session extends AccountHandler
 			lastSession = getId();
 			lastTime = Common.getEpoch();
 			if ( stale )
-				Loader.getLogger().info( ChatColor.DARK_AQUA + "Session Requested `" + this + "`" );
+				Loader.getLogger().info( ConsoleColor.DARK_AQUA + "Session Requested `" + this + "`" );
 			else
-				Loader.getLogger().info( ChatColor.DARK_AQUA + "Session Created `" + this + "`" );
+				Loader.getLogger().info( ConsoleColor.DARK_AQUA + "Session Created `" + this + "`" );
 		}
 	}
 	
@@ -308,7 +308,7 @@ public abstract class Session extends AccountHandler
 	public void logoutAccount()
 	{
 		if ( currentAccount != null )
-			Loader.getLogger().info( ChatColor.GREEN + "User Logout `" + currentAccount + "`" );
+			Loader.getLogger().info( ConsoleColor.GREEN + "User Logout `" + currentAccount + "`" );
 		
 		// setArgument( "remember", null );
 		setVariable( "user", null );

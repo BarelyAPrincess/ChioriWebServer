@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -113,9 +114,9 @@ public class FileAdapter implements AccountLookupAdapter
 		
 		try
 		{
-			yser.save( (File) meta.getObject( "relPath" ) );
+			yser.save( ( File ) meta.getObject( "relPath" ) );
 		}
-		catch( IOException e )
+		catch ( IOException e )
 		{
 			e.printStackTrace();
 		}
@@ -127,7 +128,7 @@ public class FileAdapter implements AccountLookupAdapter
 		if ( meta == null || !meta.containsKey( "relPath" ) )
 			return meta;
 		
-		YamlConfiguration yser = YamlConfiguration.loadConfiguration( (File) meta.getObject( "relPath" ) );
+		YamlConfiguration yser = YamlConfiguration.loadConfiguration( ( File ) meta.getObject( "relPath" ) );
 		
 		if ( yser == null )
 			return meta;
@@ -152,7 +153,7 @@ public class FileAdapter implements AccountLookupAdapter
 			AccountMetaData meta = e.getValue();
 			
 			for ( String f : accountFields )
-				if ( meta.getObject( f ) != null && (meta.getString( f ).equalsIgnoreCase( acctId ) || meta.getString( f ).equalsIgnoreCase( accountname )) )
+				if ( meta.getObject( f ) != null && ( meta.getString( f ).equalsIgnoreCase( acctId ) || meta.getString( f ).equalsIgnoreCase( accountname ) ) )
 					throw new LoginException( LoginExceptionReason.accountExists );
 		}
 		
@@ -170,7 +171,7 @@ public class FileAdapter implements AccountLookupAdapter
 		{
 			yser.save( new File( accountsDirectory, relPath ) );
 		}
-		catch( IOException e )
+		catch ( IOException e )
 		{
 			e.printStackTrace();
 			throw new LoginException( e );
@@ -220,7 +221,7 @@ public class FileAdapter implements AccountLookupAdapter
 		if ( meta != null && meta.containsKey( "relPath" ) )
 			return;
 		
-		File relPath = (File) meta.getObject( "relPath" );
+		File relPath = ( File ) meta.getObject( "relPath" );
 		
 		if ( relPath == null )
 			return;
@@ -243,7 +244,7 @@ public class FileAdapter implements AccountLookupAdapter
 		{
 			yser.save( relPath );
 		}
-		catch( IOException e )
+		catch ( IOException e )
 		{
 			e.printStackTrace();
 		}

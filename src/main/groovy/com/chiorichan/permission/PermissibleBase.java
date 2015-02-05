@@ -8,7 +8,7 @@
  */
 package com.chiorichan.permission;
 
-import com.chiorichan.ChatColor;
+import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.permission.structure.Permission;
 
@@ -52,7 +52,7 @@ public abstract class PermissibleBase implements Permissible
 	@Override
 	public final boolean hasPermission( String req )
 	{
-		Loader.getLogger().info( ChatColor.GREEN + "Checking `" + getId() + "` for permission `" + req + "` with result `" + perm.hasPermission( req ) + "`" );
+		Loader.getLogger().info( ConsoleColor.GREEN + "Checking `" + getId() + "` for permission `" + req + "` with result `" + perm.hasPermission( req ) + "`" );
 		// Everyone
 		if ( req.equals( "-1" ) || req.isEmpty() )
 			return true;

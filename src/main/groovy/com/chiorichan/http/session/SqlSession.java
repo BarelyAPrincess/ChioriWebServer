@@ -13,7 +13,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
-import com.chiorichan.ChatColor;
+import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.http.Candy;
@@ -57,7 +57,7 @@ public class SqlSession extends Session
 			
 			loginSessionUser();
 			
-			Loader.getLogger().info( ChatColor.DARK_AQUA + "Session Restored `" + this + "`" );
+			Loader.getLogger().info( ConsoleColor.DARK_AQUA + "Session Restored `" + this + "`" );
 		}
 		catch( SQLException e )
 		{

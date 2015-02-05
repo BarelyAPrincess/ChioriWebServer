@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -49,42 +50,42 @@ public class ConsoleLogger
 	
 	public void highlight( String msg )
 	{
-		log( Level.INFO, ChatColor.GOLD + "" + ChatColor.NEGATIVE + msg );
+		log( Level.INFO, ConsoleColor.GOLD + "" + ConsoleColor.NEGATIVE + msg );
 	}
 	
 	public void info( String s )
 	{
-		log( Level.INFO, ChatColor.WHITE + s );
+		log( Level.INFO, ConsoleColor.WHITE + s );
 	}
 	
 	public void warning( String s )
 	{
-		log( Level.WARNING, ChatColor.GOLD + s );
+		log( Level.WARNING, ConsoleColor.GOLD + s );
 	}
 	
 	public void warning( String s, Object... aobject )
 	{
-		logger.log( Level.WARNING, ChatColor.GOLD + s, aobject );
+		logger.log( Level.WARNING, ConsoleColor.GOLD + s, aobject );
 	}
 	
 	public void warning( String s, Throwable throwable )
 	{
-		log( Level.WARNING, ChatColor.GOLD + s, throwable );
+		log( Level.WARNING, ConsoleColor.GOLD + s, throwable );
 	}
 	
 	public void severe( String s )
 	{
-		log( Level.SEVERE, ChatColor.RED + s );
+		log( Level.SEVERE, ConsoleColor.RED + s );
 	}
 	
 	public void severe( Throwable t )
 	{
-		log( Level.SEVERE, ChatColor.RED + t.getMessage(), t );
+		log( Level.SEVERE, ConsoleColor.RED + t.getMessage(), t );
 	}
 	
 	public void severe( String s, Throwable t )
 	{
-		log( Level.SEVERE, ChatColor.RED + s, t );
+		log( Level.SEVERE, ConsoleColor.RED + s, t );
 	}
 	
 	public void panic( Throwable e )
@@ -119,7 +120,7 @@ public class ConsoleLogger
 		if ( lineCount > 40 )
 		{
 			lineCount = 0;
-			log( Level.FINE, ChatColor.GOLD + "<CLIENT ID>     <MESSAGE>" );
+			log( Level.FINE, ConsoleColor.GOLD + "<CLIENT ID>     <MESSAGE>" );
 		}
 		
 		lineCount++;
@@ -134,7 +135,7 @@ public class ConsoleLogger
 		
 		printHeader();
 		
-		log( l, ChatColor.LIGHT_PURPLE + client + " " + ChatColor.AQUA + msg );
+		log( l, ConsoleColor.LIGHT_PURPLE + client + " " + ConsoleColor.AQUA + msg );
 	}
 	
 	public void log( Level l, String msg, Throwable t )
@@ -154,7 +155,7 @@ public class ConsoleLogger
 	
 	public String[] multilineColorRepeater( String[] var1 )
 	{
-		String color = ChatColor.getLastColors( var1[0] );
+		String color = ConsoleColor.getLastColors( var1[0] );
 		
 		for ( int l = 0; l < var1.length; l++ )
 		{
@@ -167,7 +168,7 @@ public class ConsoleLogger
 	public void debug( String... var1 )
 	{
 		for ( String var2 : var1 )
-			info( ChatColor.NEGATIVE + "" + ChatColor.YELLOW + " >>>>   " + var2 + "   <<<< " );
+			info( ConsoleColor.NEGATIVE + "" + ConsoleColor.YELLOW + " >>>>   " + var2 + "   <<<< " );
 	}
 	
 	protected Logger getLogger()

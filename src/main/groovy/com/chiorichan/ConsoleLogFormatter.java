@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -28,56 +29,56 @@ public class ConsoleLogFormatter extends Formatter
 	private SimpleDateFormat timeFormat;
 	private boolean formatConfigLoaded = false;
 	
-	public Map<ChatColor, String> replacements = new EnumMap<ChatColor, String>( ChatColor.class );
-	public ChatColor[] colors = ChatColor.values();
+	public Map<ConsoleColor, String> replacements = new EnumMap<ConsoleColor, String>( ConsoleColor.class );
+	public ConsoleColor[] colors = ConsoleColor.values();
 	public boolean debugMode = false;
 	public int debugModeHowDeep = 1;
 	
-	public ConsoleLogFormatter(ConsoleBus console)
+	public ConsoleLogFormatter( ConsoleBus console )
 	{
 		dateFormat = new SimpleDateFormat( "MM-dd" );
 		timeFormat = new SimpleDateFormat( "HH:mm:ss.SSS" );
 		
-		replacements.put( ChatColor.BLACK, Ansi.ansi().fg( Ansi.Color.BLACK ).boldOff().toString() );
-		replacements.put( ChatColor.DARK_BLUE, Ansi.ansi().fg( Ansi.Color.BLUE ).boldOff().toString() );
-		replacements.put( ChatColor.DARK_GREEN, Ansi.ansi().fg( Ansi.Color.GREEN ).boldOff().toString() );
-		replacements.put( ChatColor.DARK_AQUA, Ansi.ansi().fg( Ansi.Color.CYAN ).boldOff().toString() );
-		replacements.put( ChatColor.DARK_RED, Ansi.ansi().fg( Ansi.Color.RED ).boldOff().toString() );
-		replacements.put( ChatColor.DARK_PURPLE, Ansi.ansi().fg( Ansi.Color.MAGENTA ).boldOff().toString() );
-		replacements.put( ChatColor.GOLD, Ansi.ansi().fg( Ansi.Color.YELLOW ).boldOff().toString() );
-		replacements.put( ChatColor.GRAY, Ansi.ansi().fg( Ansi.Color.WHITE ).boldOff().toString() );
-		replacements.put( ChatColor.DARK_GRAY, Ansi.ansi().fg( Ansi.Color.BLACK ).bold().toString() );
-		replacements.put( ChatColor.BLUE, Ansi.ansi().fg( Ansi.Color.BLUE ).bold().toString() );
-		replacements.put( ChatColor.GREEN, Ansi.ansi().fg( Ansi.Color.GREEN ).bold().toString() );
-		replacements.put( ChatColor.AQUA, Ansi.ansi().fg( Ansi.Color.CYAN ).bold().toString() );
-		replacements.put( ChatColor.RED, Ansi.ansi().fg( Ansi.Color.RED ).bold().toString() );
-		replacements.put( ChatColor.LIGHT_PURPLE, Ansi.ansi().fg( Ansi.Color.MAGENTA ).bold().toString() );
-		replacements.put( ChatColor.YELLOW, Ansi.ansi().fg( Ansi.Color.YELLOW ).bold().toString() );
-		replacements.put( ChatColor.WHITE, Ansi.ansi().fg( Ansi.Color.WHITE ).bold().toString() );
-		replacements.put( ChatColor.MAGIC, Ansi.ansi().a( Attribute.BLINK_SLOW ).toString() );
-		replacements.put( ChatColor.BOLD, Ansi.ansi().a( Attribute.INTENSITY_BOLD ).toString() );
-		replacements.put( ChatColor.STRIKETHROUGH, Ansi.ansi().a( Attribute.STRIKETHROUGH_ON ).toString() );
-		replacements.put( ChatColor.UNDERLINE, Ansi.ansi().a( Attribute.UNDERLINE ).toString() );
-		replacements.put( ChatColor.ITALIC, Ansi.ansi().a( Attribute.ITALIC ).toString() );
-		replacements.put( ChatColor.FAINT, Ansi.ansi().a( Attribute.INTENSITY_FAINT ).toString() );
-		replacements.put( ChatColor.NEGATIVE, Ansi.ansi().a( Attribute.NEGATIVE_ON ).toString() );
-		replacements.put( ChatColor.RESET, Ansi.ansi().a( Attribute.RESET ).fg( Ansi.Color.DEFAULT ).toString() );
+		replacements.put( ConsoleColor.BLACK, Ansi.ansi().fg( Ansi.Color.BLACK ).boldOff().toString() );
+		replacements.put( ConsoleColor.DARK_BLUE, Ansi.ansi().fg( Ansi.Color.BLUE ).boldOff().toString() );
+		replacements.put( ConsoleColor.DARK_GREEN, Ansi.ansi().fg( Ansi.Color.GREEN ).boldOff().toString() );
+		replacements.put( ConsoleColor.DARK_AQUA, Ansi.ansi().fg( Ansi.Color.CYAN ).boldOff().toString() );
+		replacements.put( ConsoleColor.DARK_RED, Ansi.ansi().fg( Ansi.Color.RED ).boldOff().toString() );
+		replacements.put( ConsoleColor.DARK_PURPLE, Ansi.ansi().fg( Ansi.Color.MAGENTA ).boldOff().toString() );
+		replacements.put( ConsoleColor.GOLD, Ansi.ansi().fg( Ansi.Color.YELLOW ).boldOff().toString() );
+		replacements.put( ConsoleColor.GRAY, Ansi.ansi().fg( Ansi.Color.WHITE ).boldOff().toString() );
+		replacements.put( ConsoleColor.DARK_GRAY, Ansi.ansi().fg( Ansi.Color.BLACK ).bold().toString() );
+		replacements.put( ConsoleColor.BLUE, Ansi.ansi().fg( Ansi.Color.BLUE ).bold().toString() );
+		replacements.put( ConsoleColor.GREEN, Ansi.ansi().fg( Ansi.Color.GREEN ).bold().toString() );
+		replacements.put( ConsoleColor.AQUA, Ansi.ansi().fg( Ansi.Color.CYAN ).bold().toString() );
+		replacements.put( ConsoleColor.RED, Ansi.ansi().fg( Ansi.Color.RED ).bold().toString() );
+		replacements.put( ConsoleColor.LIGHT_PURPLE, Ansi.ansi().fg( Ansi.Color.MAGENTA ).bold().toString() );
+		replacements.put( ConsoleColor.YELLOW, Ansi.ansi().fg( Ansi.Color.YELLOW ).bold().toString() );
+		replacements.put( ConsoleColor.WHITE, Ansi.ansi().fg( Ansi.Color.WHITE ).bold().toString() );
+		replacements.put( ConsoleColor.MAGIC, Ansi.ansi().a( Attribute.BLINK_SLOW ).toString() );
+		replacements.put( ConsoleColor.BOLD, Ansi.ansi().a( Attribute.INTENSITY_BOLD ).toString() );
+		replacements.put( ConsoleColor.STRIKETHROUGH, Ansi.ansi().a( Attribute.STRIKETHROUGH_ON ).toString() );
+		replacements.put( ConsoleColor.UNDERLINE, Ansi.ansi().a( Attribute.UNDERLINE ).toString() );
+		replacements.put( ConsoleColor.ITALIC, Ansi.ansi().a( Attribute.ITALIC ).toString() );
+		replacements.put( ConsoleColor.FAINT, Ansi.ansi().a( Attribute.INTENSITY_FAINT ).toString() );
+		replacements.put( ConsoleColor.NEGATIVE, Ansi.ansi().a( Attribute.NEGATIVE_ON ).toString() );
+		replacements.put( ConsoleColor.RESET, Ansi.ansi().a( Attribute.RESET ).fg( Ansi.Color.DEFAULT ).toString() );
 	}
 	
-	public ChatColor getLevelColor( Level var1 )
+	public ConsoleColor getLevelColor( Level var1 )
 	{
 		if ( var1 == Level.FINEST || var1 == Level.FINER || var1 == Level.FINE )
-			return ChatColor.WHITE;
+			return ConsoleColor.WHITE;
 		else if ( var1 == Level.INFO )
-			return ChatColor.AQUA;
+			return ConsoleColor.AQUA;
 		else if ( var1 == Level.WARNING )
-			return ChatColor.GOLD;
+			return ConsoleColor.GOLD;
 		else if ( var1 == Level.SEVERE )
-			return ChatColor.RED;
+			return ConsoleColor.RED;
 		else if ( var1 == Level.CONFIG )
-			return ChatColor.WHITE;
+			return ConsoleColor.WHITE;
 		else
-			return ChatColor.WHITE;
+			return ConsoleColor.WHITE;
 	}
 	
 	public String handleAltColors( String var1 )
@@ -85,9 +86,9 @@ public class ConsoleLogFormatter extends Formatter
 		// Loader.getConsole().AnsiSupported() &&
 		if ( Loader.getConsole().useColors )
 		{
-			var1 = ChatColor.translateAlternateColorCodes( '&', var1 ) + ChatColor.RESET;
+			var1 = ConsoleColor.translateAlternateColorCodes( '&', var1 ) + ConsoleColor.RESET;
 			
-			for ( ChatColor color : colors )
+			for ( ConsoleColor color : colors )
 			{
 				if ( replacements.containsKey( color ) )
 					var1 = var1.replaceAll( "(?i)" + color.toString(), replacements.get( color ) );

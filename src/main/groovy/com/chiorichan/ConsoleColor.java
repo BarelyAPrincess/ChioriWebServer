@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -18,7 +18,7 @@ import com.google.common.collect.Maps;
 /**
  * All supported color values for chat
  */
-public enum ChatColor
+public enum ConsoleColor
 {
 	/**
 	 * Represents black
@@ -124,20 +124,20 @@ public enum ChatColor
 	private final char code;
 	private final boolean isFormat;
 	private final String toString;
-	private final static Map<Integer, ChatColor> BY_ID = Maps.newHashMap();
-	private final static Map<Character, ChatColor> BY_CHAR = Maps.newHashMap();
+	private static final Map<Integer, ConsoleColor> BY_ID = Maps.newHashMap();
+	private static final Map<Character, ConsoleColor> BY_CHAR = Maps.newHashMap();
 	
-	private ChatColor(char code, int intCode)
+	private ConsoleColor( char code, int intCode )
 	{
 		this( code, intCode, false );
 	}
 	
-	private ChatColor(char code, int intCode, boolean isFormat)
+	private ConsoleColor( char code, int intCode, boolean isFormat )
 	{
 		this.code = code;
 		this.intCode = intCode;
 		this.isFormat = isFormat;
-		this.toString = new String( new char[] { COLOR_CHAR, code } );
+		this.toString = new String( new char[] {COLOR_CHAR, code} );
 	}
 	
 	/**
@@ -176,10 +176,10 @@ public enum ChatColor
 	 * Gets the color represented by the specified color code
 	 * 
 	 * @param code
-	 *           Code to check
-	 * @return Associative {@link org.bukkit.ChatColor} with the given code, or null if it doesn't exist
+	 *            Code to check
+	 * @return Associative {@link org.ConsoleColor.ChatColor} with the given code, or null if it doesn't exist
 	 */
-	public static ChatColor getByChar( char code )
+	public static ConsoleColor getByChar( char code )
 	{
 		return BY_CHAR.get( code );
 	}
@@ -188,10 +188,10 @@ public enum ChatColor
 	 * Gets the color represented by the specified color code
 	 * 
 	 * @param code
-	 *           Code to check
-	 * @return Associative {@link org.bukkit.ChatColor} with the given code, or null if it doesn't exist
+	 *            Code to check
+	 * @return Associative {@link org.ConsoleColor.ChatColor} with the given code, or null if it doesn't exist
 	 */
-	public static ChatColor getByChar( String code )
+	public static ConsoleColor getByChar( String code )
 	{
 		Validate.notNull( code, "Code cannot be null" );
 		Validate.isTrue( code.length() > 0, "Code must have at least one char" );
@@ -203,7 +203,7 @@ public enum ChatColor
 	 * Strips the given message of all color codes
 	 * 
 	 * @param input
-	 *           String to strip of color
+	 *            String to strip of color
 	 * @return A copy of the input string, without any coloring
 	 */
 	public static String stripColor( final String input )
@@ -222,9 +222,9 @@ public enum ChatColor
 	 * immediately followed by 0-9, A-F, a-f, K-O, k-o, R or r.
 	 * 
 	 * @param altColorChar
-	 *           The alternate color code character to replace. Ex: &
+	 *            The alternate color code character to replace. Ex: &
 	 * @param textToTranslate
-	 *           Text containing the alternate color code character.
+	 *            Text containing the alternate color code character.
 	 * @return Text containing the ChatColor.COLOR_CODE color code character.
 	 */
 	public static String translateAlternateColorCodes( char altColorChar, String textToTranslate )
@@ -234,7 +234,7 @@ public enum ChatColor
 		{
 			if ( b[i] == altColorChar && "0123456789AaBbCcDdEeFfKkLlMmNnOoRr".indexOf( b[i + 1] ) > -1 )
 			{
-				b[i] = ChatColor.COLOR_CHAR;
+				b[i] = ConsoleColor.COLOR_CHAR;
 				b[i + 1] = Character.toLowerCase( b[i + 1] );
 			}
 		}
@@ -245,7 +245,7 @@ public enum ChatColor
 	 * Gets the ChatColors used at the end of the given input string.
 	 * 
 	 * @param input
-	 *           Input string to retrieve the colors from.
+	 *            Input string to retrieve the colors from.
 	 * @return Any remaining ChatColors to pass onto the next line.
 	 */
 	public static String getLastColors( String input )
@@ -260,7 +260,7 @@ public enum ChatColor
 			if ( section == COLOR_CHAR && index < length - 1 )
 			{
 				char c = input.charAt( index + 1 );
-				ChatColor color = getByChar( c );
+				ConsoleColor color = getByChar( c );
 				
 				if ( color != null )
 				{
@@ -280,7 +280,7 @@ public enum ChatColor
 	
 	static
 	{
-		for ( ChatColor color : values() )
+		for ( ConsoleColor color : values() )
 		{
 			BY_ID.put( color.intCode, color );
 			BY_CHAR.put( color.code, color );

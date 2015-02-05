@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -43,11 +44,11 @@ public class AccountsKeeper
 			Constructor<? extends Account<? extends AccountLookupAdapter>> constructor = adapter.getAccountClass().getConstructor( paramsClass.toArray( new Class<?>[0] ) );
 			return constructor.newInstance( params );
 		}
-		catch( InvocationTargetException e )
+		catch ( InvocationTargetException e )
 		{
-			throw (LoginException) e.getTargetException();
+			throw ( LoginException ) e.getTargetException();
 		}
-		catch( NoSuchMethodException | InstantiationException | IllegalAccessException | IllegalArgumentException e )
+		catch ( NoSuchMethodException | InstantiationException | IllegalAccessException | IllegalArgumentException e )
 		{
 			return new MemoryAccount( "", adapter );
 		}
@@ -57,7 +58,7 @@ public class AccountsKeeper
 	{
 		AccountsKeeperOptions options = new AccountsKeeperOptions( keepInMemory );
 		accounts.put( acct, options );
-		return (IAccountsKeeperOptions) options;
+		return ( IAccountsKeeperOptions ) options;
 	}
 	
 	public void clearAll()
@@ -175,7 +176,7 @@ public class AccountsKeeper
 				{
 					accts.add( accountConstruct( adapter, meta, adapter ) );
 				}
-				catch( LoginException e )
+				catch ( LoginException e )
 				{
 					e.printStackTrace();
 				}
@@ -198,20 +199,20 @@ public class AccountsKeeper
 		}
 	}
 	
-	public void setAdapter( AccountLookupAdapter _adapter )
+	public void setAdapter( AccountLookupAdapter adapter )
 	{
-		adapter = _adapter;
+		this.adapter = adapter;
 	}
 	
 	public interface IAccountsKeeperOptions
 	{
-		public boolean keepInMemory();
+		boolean keepInMemory();
 		
-		public boolean isOp();
+		boolean isOp();
 		
-		public boolean isWhitelisted();
+		boolean isWhitelisted();
 		
-		public boolean isBanned();
+		boolean isBanned();
 	}
 	
 	public class AccountsKeeperOptions implements IAccountsKeeperOptions
@@ -228,9 +229,9 @@ public class AccountsKeeper
 		// Is this account banned from this server.
 		protected boolean isBanned = false;
 		
-		public AccountsKeeperOptions( boolean _keepInMemory )
+		public AccountsKeeperOptions( boolean keepInMemory )
 		{
-			keepInMemory = _keepInMemory;
+			this.keepInMemory = keepInMemory;
 		}
 		
 		public boolean keepInMemory()

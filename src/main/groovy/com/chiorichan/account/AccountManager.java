@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -102,7 +103,7 @@ public class AccountManager
 						getLogger().warning( "The Accounts Manager is unconfigured. We will be unable to login any accounts. See config option 'accounts.lookupAdapter.type' in server config file." );
 				}
 			}
-			catch( LookupAdapterException e )
+			catch ( LookupAdapterException e )
 			{
 				throw new StartupException( "There was an exception encoutered when attempting to create the AccountLookupAdapter. Please check and retry to start the server.", e );
 			}
@@ -118,14 +119,14 @@ public class AccountManager
 		new SystemAccounts();
 	}
 	
-	public void LoadAccount( Account<?> acct )
+	public void loadAccount( Account<?> acct )
 	{
-		LoadAccount( acct, false, false, false );
+		loadAccount( acct, false, false, false );
 	}
 	
-	public void LoadAccount( Account<?> acct, boolean keepInMemory, boolean whitelistOverride, boolean opOverride )
+	public void loadAccount( Account<?> acct, boolean keepInMemory, boolean whitelistOverride, boolean opOverride )
 	{
-		AccountsKeeperOptions options = (AccountsKeeperOptions) accounts.putAccount( acct, keepInMemory );
+		AccountsKeeperOptions options = ( AccountsKeeperOptions ) accounts.putAccount( acct, keepInMemory );
 		
 		options.setWhitelisted( whitelistOverride || isWhitelisted( acct.getAcctId() ) );
 		options.setOp( opOverride || isOp( acct.getAcctId() ) );
@@ -230,7 +231,7 @@ public class AccountManager
 		whitelist.add( acct.getAcctId() );
 		Loader.getConfig().set( "accounts.whitelisted", whitelist );
 		
-		((AccountsKeeperOptions) accounts.getAccountOptions( acct )).setWhitelisted( true );
+		( ( AccountsKeeperOptions ) accounts.getAccountOptions( acct ) ).setWhitelisted( true );
 	}
 	
 	public void removeWhitelist( String id )
@@ -248,7 +249,7 @@ public class AccountManager
 			whitelist.remove( acct.getAcctId() );
 			Loader.getConfig().set( "accounts.whitelisted", whitelist );
 			
-			((AccountsKeeperOptions) accounts.getAccountOptions( acct )).setWhitelisted( false );
+			( ( AccountsKeeperOptions ) accounts.getAccountOptions( acct ) ).setWhitelisted( false );
 		}
 	}
 	
@@ -265,7 +266,7 @@ public class AccountManager
 		operators.add( acct.getAcctId() );
 		Loader.getConfig().set( "accounts.operators", operators );
 		
-		((AccountsKeeperOptions) accounts.getAccountOptions( acct )).setOp( true );
+		( ( AccountsKeeperOptions ) accounts.getAccountOptions( acct ) ).setOp( true );
 		
 		return acct;
 	}
@@ -285,7 +286,7 @@ public class AccountManager
 			operators.remove( acct.getAcctId() );
 			Loader.getConfig().set( "accounts.operators", operators );
 			
-			((AccountsKeeperOptions) accounts.getAccountOptions( acct )).setOp( false );
+			( ( AccountsKeeperOptions ) accounts.getAccountOptions( acct ) ).setOp( false );
 		}
 		
 		return acct;
@@ -317,7 +318,7 @@ public class AccountManager
 		{
 			return accounts.getAccount( s );
 		}
-		catch( LoginException e )
+		catch ( LoginException e )
 		{
 			getLogger().warning( "LoginException was thrown in AccountsManager while trying to get account '" + s + "'. Message: '" + e.getMessage() + "'" );
 			return null;
@@ -341,7 +342,7 @@ public class AccountManager
 				if ( acct != null )
 					accts.add( acct );
 			}
-			catch( LoginException e )
+			catch ( LoginException e )
 			{	
 				
 			}
@@ -362,7 +363,7 @@ public class AccountManager
 				if ( acct != null )
 					accts.add( acct );
 			}
-			catch( LoginException e )
+			catch ( LoginException e )
 			{	
 				
 			}
@@ -383,7 +384,7 @@ public class AccountManager
 				if ( acct != null )
 					accts.add( acct );
 			}
-			catch( LoginException e )
+			catch ( LoginException e )
 			{	
 				
 			}
@@ -477,7 +478,7 @@ public class AccountManager
 			{
 				for ( AccountHandler sh : acct.getHandlers() )
 				{
-					if ( sh instanceof Session && ((Session) sh).getSite() == sess.getSite() )
+					if ( sh instanceof Session && ( ( Session ) sh ).getSite() == sess.getSite() )
 						sh.kick( Loader.getConfig().getString( "accounts.singleLoginMessage", "You logged in from another location." ) );
 				}
 			}
@@ -493,7 +494,7 @@ public class AccountManager
 			
 			return acct;
 		}
-		catch( LoginException l )
+		catch ( LoginException l )
 		{
 			l.setAccount( acct );
 			accountLookupAdapter.failedLoginUpdate( acct.getMetaData(), l.getReason() );

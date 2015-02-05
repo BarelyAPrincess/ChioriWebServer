@@ -12,7 +12,7 @@ import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
 
-import com.chiorichan.ChatColor;
+import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.StartupException;
 import com.chiorichan.account.Account;
@@ -136,7 +136,7 @@ public class SessionManager
 	 */
 	public static void destroySession( Session sess )
 	{
-		Loader.getLogger().info( ChatColor.DARK_AQUA + "Session Destroyed `" + sess + "`" );
+		Loader.getLogger().info( ConsoleColor.DARK_AQUA + "Session Destroyed `" + sess + "`" );
 		
 		for ( Account<?> u : Loader.getAccountManager().getOnlineAccounts() )
 			u.removeHandler( sess );
