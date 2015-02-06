@@ -11,6 +11,7 @@ package com.chiorichan;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.ConnectException;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
@@ -285,27 +286,35 @@ public class Loader extends BuiltinEventCreator implements Listener
 		updater.getOnUpdate().addAll( configuration.getStringList( "auto-updater.on-update" ) );
 		
 		WebUtils.sendTracking( "startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
-		
-		try
-		{
-			String fwZip = "com/chiorichan/framework.zip";
-			File fwRoot = new File( webroot, "framework" );
-			String zipMD5 = DigestUtils.md5Hex( getClass().getClassLoader().getResourceAsStream( fwZip ) );
-			File curMD5 = new File( fwRoot, "version.md5" );
-			if ( firstRun || !curMD5.exists() || !zipMD5.equals( FileUtils.readFileToString( curMD5 ) ) )
-			{
-				getLogger().info( "Extracting the Web UI to the Framework Webroot... Please wait..." );
-				ZipFile zipFile = new ZipFile( getClass().getClassLoader().getResource( fwZip ).getPath() );
-				zipFile.extractAll( fwRoot.getAbsolutePath() );
-				FileUtils.write( new File( fwRoot, "version.md5" ), zipMD5 );
-				getLogger().info( "Finished with no errors!!" );
-			}
-		}
-		catch ( ZipException | IOException e )
-		{
-			e.printStackTrace();
-		}
-		
+		/*
+		 * try
+		 * {
+		 * String fwZip = "com/chiorichan/framework.zip";
+		 * InputStream is = getClass().getClassLoader().getResourceAsStream( fwZip );
+		 * if ( is != null )
+		 * {
+		 * File fwRoot = new File( webroot, "framework" );
+		 * String zipMD5 = DigestUtils.md5Hex( is );
+		 * File curMD5 = new File( fwRoot, "version.md5" );
+		 * if ( firstRun || !curMD5.exists() || !zipMD5.equals( FileUtils.readFileToString( curMD5 ) ) )
+		 * {
+		 * getLogger().info( "Extracting the Web UI to the Framework Webroot... Please wait..." );
+		 * ZipFile zipFile = new ZipFile( getClass().getClassLoader().getResource( fwZip ).getPath() );
+		 * zipFile.extractAll( fwRoot.getAbsolutePath() );
+		 * FileUtils.write( new File( fwRoot, "version.md5" ), zipMD5 );
+		 * getLogger().info( "Finished with no errors!!" );
+		 * }
+		 * }
+		 * else
+		 * {
+		 * getLogger().severe( "There seems to be a problem with your server jar. We had a problem getting the WebUI zip file which is compiled internally." );
+		 * }
+		 * }
+		 * catch ( ZipException | IOException e )
+		 * {
+		 * e.printStackTrace();
+		 * }
+		 */
 		if ( firstRun )
 		{
 			Loader.getLogger().highlight( "It appears that this is your first time running Chiori-chan's Web Server." );

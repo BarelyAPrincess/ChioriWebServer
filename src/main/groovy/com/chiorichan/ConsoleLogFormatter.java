@@ -29,16 +29,13 @@ public class ConsoleLogFormatter extends Formatter
 	private SimpleDateFormat timeFormat;
 	private boolean formatConfigLoaded = false;
 	
-	public Map<ConsoleColor, String> replacements = new EnumMap<ConsoleColor, String>( ConsoleColor.class );
-	public ConsoleColor[] colors = ConsoleColor.values();
+	public static Map<ConsoleColor, String> replacements = new EnumMap<ConsoleColor, String>( ConsoleColor.class );
+	public static ConsoleColor[] colors = ConsoleColor.values();
 	public boolean debugMode = false;
 	public int debugModeHowDeep = 1;
 	
-	public ConsoleLogFormatter( ConsoleBus console )
+	static
 	{
-		dateFormat = new SimpleDateFormat( "MM-dd" );
-		timeFormat = new SimpleDateFormat( "HH:mm:ss.SSS" );
-		
 		replacements.put( ConsoleColor.BLACK, Ansi.ansi().fg( Ansi.Color.BLACK ).boldOff().toString() );
 		replacements.put( ConsoleColor.DARK_BLUE, Ansi.ansi().fg( Ansi.Color.BLUE ).boldOff().toString() );
 		replacements.put( ConsoleColor.DARK_GREEN, Ansi.ansi().fg( Ansi.Color.GREEN ).boldOff().toString() );
@@ -65,6 +62,12 @@ public class ConsoleLogFormatter extends Formatter
 		replacements.put( ConsoleColor.RESET, Ansi.ansi().a( Attribute.RESET ).fg( Ansi.Color.DEFAULT ).toString() );
 	}
 	
+	public ConsoleLogFormatter( ConsoleBus console )
+	{
+		dateFormat = new SimpleDateFormat( "MM-dd" );
+		timeFormat = new SimpleDateFormat( "HH:mm:ss.SSS" );
+	}
+	
 	public ConsoleColor getLevelColor( Level var1 )
 	{
 		if ( var1 == Level.FINEST || var1 == Level.FINER || var1 == Level.FINE )
@@ -81,7 +84,7 @@ public class ConsoleLogFormatter extends Formatter
 			return ConsoleColor.WHITE;
 	}
 	
-	public String handleAltColors( String var1 )
+	public static String handleAltColors( String var1 )
 	{
 		// Loader.getConsole().AnsiSupported() &&
 		if ( Loader.getConsole().useColors )

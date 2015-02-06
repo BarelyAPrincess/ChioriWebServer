@@ -30,7 +30,7 @@ targetCompatibility = '1.7'
 group = 'com.chiorichan'
 description = 'Chiori-chan\'s Web Server is a Java Based HTTP/TCP Server featuring Groovy Shell and a feature rich Plugin System'
 
-def rawVersion = '8.2.0'
+def rawVersion = '9.0.0'
 
 if ( System.getenv('BUILD_NUMBER') == null || System.getenv('BUILD_NUMBER').isEmpty() )
 	version = rawVersion + '-github'

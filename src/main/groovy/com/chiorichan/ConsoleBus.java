@@ -252,13 +252,17 @@ public class ConsoleBus implements Runnable
 	
 	protected static void safeLog( Level l, String msg )
 	{
-		//if ( Loader.getLogger() != null )
-		//	Loader.getLogger().log( l, msg );
-		//else
-		System.out.println( l.intValue() + " " + Level.WARNING.intValue() );
-		if ( l.intValue() >= Level.WARNING.intValue() )
-			System.err.println( msg );
+		if ( Loader.getLogger() != null )
+			Loader.getLogger().log( l, msg );
 		else
-			System.out.println( msg );
+		{
+			msg = msg.replaceAll( "&.", "" );
+			msg = msg.replaceAll( "§.", "" );
+			
+			if ( l.intValue() >= Level.WARNING.intValue() )
+				System.err.println( msg );
+			else
+				System.out.println( msg );
+		}
 	}
 }
