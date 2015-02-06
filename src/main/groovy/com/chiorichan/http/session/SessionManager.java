@@ -1,21 +1,21 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
 package com.chiorichan.http.session;
 
-import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
-import com.chiorichan.StartupException;
 import com.chiorichan.account.Account;
+import com.chiorichan.exception.StartupException;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.util.Common;
 import com.google.common.collect.Lists;
@@ -28,7 +28,7 @@ import com.google.common.collect.Lists;
  */
 public class SessionManager
 {
-	static private List<Session> sessionList = Lists.newCopyOnWriteArrayList();
+	private static List<Session> sessionList = Lists.newCopyOnWriteArrayList();
 	
 	public void init() throws StartupException
 	{
@@ -49,7 +49,7 @@ public class SessionManager
 	{
 		SessionProvider sess = null;
 		
-		synchronized( sessionList )
+		synchronized ( sessionList )
 		{
 			for ( Session s : sessionList )
 			{
@@ -86,7 +86,7 @@ public class SessionManager
 	{
 		Iterator<Session> sessions = sessionList.iterator();
 		
-		while( sessions.hasNext() )
+		while ( sessions.hasNext() )
 		{
 			Session var1 = sessions.next();
 			
@@ -106,7 +106,7 @@ public class SessionManager
 	{
 		Iterator<Session> sess = sessionList.iterator();
 		
-		while( sess.hasNext() )
+		while ( sess.hasNext() )
 		{
 			Session it = sess.next();
 			it.saveSession( true );
@@ -132,7 +132,6 @@ public class SessionManager
 	 * Remove said session from the server and sql database.
 	 * 
 	 * @param var1
-	 * @throws SQLException
 	 */
 	public static void destroySession( Session sess )
 	{

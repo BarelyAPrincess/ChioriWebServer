@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -50,9 +51,9 @@ public class HttpResponseWrapper
 	protected Map<String, String> pageDataOverrides = Maps.newHashMap();
 	protected Map<String, String> headers = Maps.newHashMap();
 	
-	protected HttpResponseWrapper( HttpRequestWrapper _request )
+	protected HttpResponseWrapper( HttpRequestWrapper request )
 	{
-		request = _request;
+		this.request = request;
 	}
 	
 	public void mergeOverrides( Map<String, String> overrides )
@@ -68,7 +69,7 @@ public class HttpResponseWrapper
 	public void sendError( Exception e ) throws IOException
 	{
 		if ( e instanceof HttpErrorException )
-			sendError( ((HttpErrorException) e).getHttpCode(), ((HttpErrorException) e).getReason() );
+			sendError( ( ( HttpErrorException ) e ).getHttpCode(), ( ( HttpErrorException ) e ).getReason() );
 		else
 			sendError( 500, e.getMessage() );
 	}
@@ -186,12 +187,12 @@ public class HttpResponseWrapper
 		return stage;
 	}
 	
-	public void setStatus( int _status )
+	public void setStatus( int status )
 	{
 		if ( stage == HttpResponseStage.CLOSED )
 			throw new IllegalStateException( "You can't access setter methods within this HttpResponse because the connection has been closed." );
 		
-		httpStatus = _status;
+		httpStatus = status;
 	}
 	
 	/**
@@ -206,7 +207,7 @@ public class HttpResponseWrapper
 	 * Sends the client to the site login page found in configs.
 	 * 
 	 * @param msg
-	 *             , a message to pass to the login page as a argumnet. ie. ?msg=Please login!
+	 *            , a message to pass to the login page as a argumnet. ie. ?msg=Please login!
 	 */
 	public void sendLoginPage( String msg )
 	{
@@ -218,7 +219,7 @@ public class HttpResponseWrapper
 	 * Send the client to a specified page with http code 302 automatically.
 	 * 
 	 * @param target
-	 *             , destination url. Can be relative or absolute.
+	 *            , destination url. Can be relative or absolute.
 	 */
 	public void sendRedirect( String target )
 	{
@@ -229,9 +230,9 @@ public class HttpResponseWrapper
 	 * Sends the client to a specified page with specified http code.
 	 * 
 	 * @param target
-	 *             , destination url. Can be relative or absolute.
+	 *            , destination url. Can be relative or absolute.
 	 * @param httpStatus
-	 *             , http code to use.
+	 *            , http code to use.
 	 */
 	public void sendRedirect( String target, int httpStatus )
 	{
@@ -243,11 +244,11 @@ public class HttpResponseWrapper
 	 * Sends the client to a specified page with specified http code but with the option to not automatically go.
 	 * 
 	 * @param target
-	 *             , destination url. Can be relative or absolute.
+	 *            , destination url. Can be relative or absolute.
 	 * @param httpStatus
-	 *             , http code to use.
+	 *            , http code to use.
 	 * @param autoRedirect
-	 *             , Automatically go.
+	 *            , Automatically go.
 	 */
 	private void sendRedirect( String target, int httpStatus, boolean autoRedirect )
 	{
@@ -270,7 +271,7 @@ public class HttpResponseWrapper
 			{
 				println( "<script>window.location = '" + target + "';</script>" );
 			}
-			catch( IOException e )
+			catch ( IOException e )
 			{
 				e.printStackTrace();
 			}
@@ -279,7 +280,7 @@ public class HttpResponseWrapper
 		{
 			sendResponse();
 		}
-		catch( IOException e )
+		catch ( IOException e )
 		{
 			e.printStackTrace();
 		}
@@ -289,9 +290,9 @@ public class HttpResponseWrapper
 	 * Prints a byte array to the buffered output
 	 * 
 	 * @param var1
-	 *             byte array to print
+	 *            byte array to print
 	 * @throws IOException
-	 *              if there was a problem with the output buffer.
+	 *             if there was a problem with the output buffer.
 	 */
 	public void print( byte[] var1 ) throws IOException
 	{
@@ -303,9 +304,9 @@ public class HttpResponseWrapper
 	 * Prints a single string of text to the buffered output
 	 * 
 	 * @param var1
-	 *             string of text.
+	 *            string of text.
 	 * @throws IOException
-	 *              if there was a problem with the output buffer.
+	 *             if there was a problem with the output buffer.
 	 */
 	public void print( String var1 ) throws IOException
 	{
@@ -320,23 +321,23 @@ public class HttpResponseWrapper
 	 * Prints a single string of text with a line return to the buffered output
 	 * 
 	 * @param var1
-	 *             string of text.
+	 *            string of text.
 	 * @throws IOException
-	 *              if there was a problem with the output buffer.
+	 *             if there was a problem with the output buffer.
 	 */
 	public void println( String var1 ) throws IOException
 	{
 		if ( stage != HttpResponseStage.MULTIPART )
 			stage = HttpResponseStage.WRITTING;
 		
-		output.write( (var1 + "\n").getBytes( encoding ) );
+		output.write( ( var1 + "\n" ).getBytes( encoding ) );
 	}
 	
 	/**
 	 * Sets the ContentType header.
 	 * 
 	 * @param ContentType
-	 *             . ie. text/html or application/xml
+	 *            . ie. text/html or application/xml
 	 */
 	public void setContentType( String type )
 	{
@@ -350,7 +351,7 @@ public class HttpResponseWrapper
 	 * Sends the data to the client. Internal Use.
 	 * 
 	 * @throws IOException
-	 *              if there was a problem sending the data, like the connection was unexpectedly closed.
+	 *             if there was a problem sending the data, like the connection was unexpectedly closed.
 	 */
 	public void sendResponse() throws IOException
 	{
@@ -489,9 +490,9 @@ public class HttpResponseWrapper
 		}
 	}
 	
-	public void setEncoding( String _encoding )
+	public void setEncoding( String encoding )
 	{
-		encoding = _encoding;
+		this.encoding = encoding;
 	}
 	
 	public void setHeader( String key, String val )

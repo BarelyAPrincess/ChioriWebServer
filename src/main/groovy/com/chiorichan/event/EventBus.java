@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -39,7 +40,7 @@ public class EventBus
 	 * This method only synchronizes when the event is not asynchronous.
 	 * 
 	 * @param event
-	 *             Event details
+	 *            Event details
 	 */
 	public void callEvent( Event event )
 	{
@@ -76,7 +77,7 @@ public class EventBus
 	 * This method only synchronizes when the event is not asynchronous.
 	 * 
 	 * @param event
-	 *             Event details
+	 *            Event details
 	 * @throws EventException
 	 */
 	public void callEventWithException( Event event ) throws EventException
@@ -122,7 +123,7 @@ public class EventBus
 			{
 				if ( registration.getCreator() instanceof PluginBase )
 				{
-					PluginBase plugin = (PluginBase) registration.getCreator();
+					PluginBase plugin = ( PluginBase ) registration.getCreator();
 					
 					if ( plugin.isNaggable() )
 					{
@@ -178,17 +179,17 @@ public class EventBus
 	 * Registers the given event to the specified listener using a directly passed EventExecutor
 	 * 
 	 * @param event
-	 *             Event class to register
+	 *            Event class to register
 	 * @param listener
-	 *             Listener to register
+	 *            Listener to register
 	 * @param priority
-	 *             Priority of this event
+	 *            Priority of this event
 	 * @param executor
-	 *             EventExecutor to register
+	 *            EventExecutor to register
 	 * @param creator
-	 *             Creator to register
+	 *            Creator to register
 	 * @param ignoreCancelled
-	 *             Do not call executor if event was already cancelled
+	 *            Do not call executor if event was already cancelled
 	 */
 	public void registerEvent( Class<? extends Event> event, Listener listener, EventPriority priority, EventExecutor executor, EventCreator creator, boolean ignoreCancelled )
 	{
@@ -218,7 +219,7 @@ public class EventBus
 		{
 			Method method = getRegistrationClass( type ).getDeclaredMethod( "getHandlerList" );
 			method.setAccessible( true );
-			return (HandlerList) method.invoke( null );
+			return ( HandlerList ) method.invoke( null );
 		}
 		catch ( Exception e )
 		{
@@ -251,7 +252,7 @@ public class EventBus
 	 * Sets whether or not per event timing code should be used
 	 * 
 	 * @param use
-	 *             True if per event timing code should be used
+	 *            True if per event timing code should be used
 	 */
 	public void useTimings( boolean use )
 	{

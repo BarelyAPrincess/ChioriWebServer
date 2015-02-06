@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -19,7 +20,7 @@ public enum PermissionDefault
 	TRUE( "true" ), FALSE( "false" ), OP( "op", "isop", "operator", "isoperator", "admin", "isadmin" ), NOT_OP( "!op", "notop", "!operator", "notoperator", "!admin", "notadmin" );
 	
 	private final String[] names;
-	private final static Map<String, PermissionDefault> lookup = new HashMap<String, PermissionDefault>();
+	private static final Map<String, PermissionDefault> lookup = new HashMap<String, PermissionDefault>();
 	
 	private PermissionDefault( String... names )
 	{
@@ -30,7 +31,7 @@ public enum PermissionDefault
 	 * Calculates the value of this PermissionDefault for the given operator value
 	 * 
 	 * @param op
-	 *             If the target is op
+	 *            If the target is op
 	 * @return True if the default should be true, or false
 	 */
 	public boolean getValue( boolean op )
@@ -54,7 +55,7 @@ public enum PermissionDefault
 	 * Looks up a PermissionDefault by name
 	 * 
 	 * @param name
-	 *             Name of the default
+	 *            Name of the default
 	 * @return Specified value, or null if not found
 	 */
 	public static PermissionDefault getByName( String name )

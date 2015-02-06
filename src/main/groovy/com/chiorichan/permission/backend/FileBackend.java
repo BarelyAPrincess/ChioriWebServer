@@ -44,7 +44,7 @@ import com.google.common.collect.Sets;
 
 public class FileBackend extends PermissionBackend
 {
-	public final static char PATH_SEPARATOR = '/';
+	public static final char PATH_SEPARATOR = '/';
 	public FileConfiguration permissions;
 	public File permissionsFile;
 	
@@ -103,7 +103,7 @@ public class FileBackend extends PermissionBackend
 		{
 			if ( entry.getValue() instanceof ConfigurationSection )
 			{
-				ConfigurationSection groupSection = (ConfigurationSection) entry.getValue();
+				ConfigurationSection groupSection = ( ConfigurationSection ) entry.getValue();
 				
 				if ( groupSection.getBoolean( defaultGroupProperty, false ) )
 				{
@@ -137,7 +137,7 @@ public class FileBackend extends PermissionBackend
 		{
 			if ( entry.getValue() instanceof ConfigurationSection )
 			{
-				ConfigurationSection groupSection = (ConfigurationSection) entry.getValue();
+				ConfigurationSection groupSection = ( ConfigurationSection ) entry.getValue();
 				
 				groupSection.set( defaultGroupProperty, false );
 				
@@ -217,7 +217,7 @@ public class FileBackend extends PermissionBackend
 			
 			permissions = newPermissions;
 		}
-		catch( FileNotFoundException e )
+		catch ( FileNotFoundException e )
 		{
 			if ( permissions == null )
 			{
@@ -226,7 +226,7 @@ public class FileBackend extends PermissionBackend
 				initNewConfiguration();
 			}
 		}
-		catch( Throwable e )
+		catch ( Throwable e )
 		{
 			throw new PermissionBackendException( "Error loading permissions file!", e );
 		}
@@ -253,7 +253,7 @@ public class FileBackend extends PermissionBackend
 				
 				save();
 			}
-			catch( IOException e )
+			catch ( IOException e )
 			{
 				throw new PermissionBackendException( e );
 			}
@@ -266,7 +266,7 @@ public class FileBackend extends PermissionBackend
 		{
 			permissions.save( permissionsFile );
 		}
-		catch( IOException e )
+		catch ( IOException e )
 		{
 			Logger.getLogger( "" ).severe( "[PermissionsEx] Error during saving permissions file: " + e.getMessage() );
 		}
@@ -281,7 +281,7 @@ public class FileBackend extends PermissionBackend
 	@Override
 	public Set<String> getEntityNames( int type )
 	{
-		ConfigurationSection section = permissions.getConfigurationSection( (type == 1) ? "groups" : "entities" );
+		ConfigurationSection section = permissions.getConfigurationSection( ( type == 1 ) ? "groups" : "entities" );
 		
 		if ( section == null )
 			return Sets.newHashSet();
@@ -339,7 +339,7 @@ public class FileBackend extends PermissionBackend
 					{
 						Permission perm = Permission.crawlPermissionStack( permission.getString( "permission" ).toLowerCase(), true );
 						
-						List<Site> sites = Loader.getSiteManager().parseSites( (permission.getString( "sites" ) == null) ? "" : permission.getString( "sites" ) );
+						List<Site> sites = Loader.getSiteManager().parseSites( ( permission.getString( "sites" ) == null ) ? "" : permission.getString( "sites" ) );
 						
 						PermissionValue<?> value = null;
 						if ( permission.getString( "value" ) != null )
@@ -368,7 +368,7 @@ public class FileBackend extends PermissionBackend
 						
 						Permission perm = Permission.crawlPermissionStack( permission.getString( "permission" ).toLowerCase(), true );
 						
-						List<Site> sites = Loader.getSiteManager().parseSites( (permission.getString( "sites" ) == null) ? "" : permission.getString( "sites" ) );
+						List<Site> sites = Loader.getSiteManager().parseSites( ( permission.getString( "sites" ) == null ) ? "" : permission.getString( "sites" ) );
 						
 						PermissionValue<?> value = null;
 						if ( permission.getString( "value" ) != null )

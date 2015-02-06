@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -77,7 +77,7 @@ public class HandlerList
 	 * Unregister a specific creator's listeners from all handler lists.
 	 * 
 	 * @param creator
-	 *           creator to unregister
+	 *            creator to unregister
 	 */
 	public static void unregisterAll( EventCreator creator )
 	{
@@ -94,7 +94,7 @@ public class HandlerList
 	 * Unregister a specific listener from all handler lists.
 	 * 
 	 * @param listener
-	 *           listener to unregister
+	 *            listener to unregister
 	 */
 	public static void unregisterAll( Listener listener )
 	{
@@ -128,7 +128,7 @@ public class HandlerList
 	 * Register a new listener in this handler list
 	 * 
 	 * @param listener
-	 *           listener to register
+	 *            listener to register
 	 */
 	public synchronized void register( RegisteredListener listener )
 	{
@@ -142,7 +142,7 @@ public class HandlerList
 	 * Register a collection of new listeners in this handler list
 	 * 
 	 * @param listeners
-	 *           listeners to register
+	 *            listeners to register
 	 */
 	public void registerAll( Collection<RegisteredListener> listeners )
 	{
@@ -156,7 +156,7 @@ public class HandlerList
 	 * Remove a listener from a specific order slot
 	 * 
 	 * @param listener
-	 *           listener to remove
+	 *            listener to remove
 	 */
 	public synchronized void unregister( RegisteredListener listener )
 	{
@@ -170,7 +170,7 @@ public class HandlerList
 	 * Remove a specific creator's listeners from this handler
 	 * 
 	 * @param EventCreator
-	 *           creator to remove
+	 *            creator to remove
 	 */
 	public synchronized void unregister( EventCreator creator )
 	{
@@ -194,7 +194,7 @@ public class HandlerList
 	 * Remove a specific listener from this handler
 	 * 
 	 * @param listener
-	 *           listener to remove
+	 *            listener to remove
 	 */
 	public synchronized void unregister( Listener listener )
 	{
@@ -246,7 +246,7 @@ public class HandlerList
 	 * Get a specific creator's registered listeners associated with this handler list
 	 * 
 	 * @param creator
-	 *           the creator to get the listeners of
+	 *            the creator to get the listeners of
 	 * @return the list of registered listeners
 	 */
 	public static ArrayList<RegisteredListener> getRegisteredListeners( EventCreator creator )
@@ -284,7 +284,7 @@ public class HandlerList
 	{
 		synchronized ( allLists )
 		{
-			return (ArrayList<HandlerList>) allLists.clone();
+			return ( ArrayList<HandlerList> ) allLists.clone();
 		}
 	}
 }

@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -20,7 +21,7 @@ public class ObjectUtil
 			return false;
 		
 		if ( value.getClass() == Boolean.class )
-			return (Boolean) value;
+			return ( Boolean ) value;
 		
 		String val = castToString( value );
 		
@@ -54,17 +55,17 @@ public class ObjectUtil
 		switch ( value.getClass().getName() )
 		{
 			case "java.lang.Long":
-				return (Long) value;
+				return ( Long ) value;
 			case "java.lang.String":
-				return Long.parseLong( (String) value );
+				return Long.parseLong( ( String ) value );
 			case "java.lang.Integer":
-				return (Long) value;
+				return ( Long ) value;
 			case "java.lang.Double":
-				return (Long) value;
+				return ( Long ) value;
 			case "java.lang.Boolean":
-				return ((boolean) value) ? 1L : 0L;
+				return ( ( boolean ) value ) ? 1L : 0L;
 			case "java.math.BigDecimal":
-				return ((BigDecimal) value).setScale( 0, BigDecimal.ROUND_HALF_UP ).longValue();
+				return ( ( BigDecimal ) value ).setScale( 0, BigDecimal.ROUND_HALF_UP ).longValue();
 			default:
 				Loader.getLogger().warning( "Uncaught Convertion to String of Type: " + value.getClass().getName() );
 				return null;
@@ -79,17 +80,17 @@ public class ObjectUtil
 		switch ( value.getClass().getName() )
 		{
 			case "java.lang.Long":
-				return Long.toString( (long) value );
+				return Long.toString( ( long ) value );
 			case "java.lang.String":
-				return (String) value;
+				return ( String ) value;
 			case "java.lang.Integer":
-				return Integer.toString( (int) value );
+				return Integer.toString( ( int ) value );
 			case "java.lang.Double":
-				return Double.toString( (double) value );
+				return Double.toString( ( double ) value );
 			case "java.lang.Boolean":
-				return ((boolean) value) ? "true" : "false";
+				return ( ( boolean ) value ) ? "true" : "false";
 			case "java.math.BigDecimal":
-				return ((BigDecimal) value).toString();
+				return ( ( BigDecimal ) value ).toString();
 			case "java.util.Map":
 				return value.toString();
 			case "java.util.List":

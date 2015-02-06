@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -61,9 +62,9 @@ public abstract class Session extends AccountHandler
 		
 	}
 	
-	public void setSite( Site _site )
+	public void setSite( Site site )
 	{
-		site = _site;
+		this.site = site;
 	}
 	
 	protected void loginSessionUser()
@@ -77,7 +78,7 @@ public abstract class Session extends AccountHandler
 			currentAccount = user;
 			Loader.getLogger().info( ConsoleColor.GREEN + "Login Restored `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getAcctId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
 		}
-		catch( LoginException l )
+		catch ( LoginException l )
 		{
 			// Loader.getLogger().warning( ChatColor.GREEN + "Login Status: No Valid Login Present" );
 		}
@@ -95,7 +96,7 @@ public abstract class Session extends AccountHandler
 		
 		if ( sessionCandy == null )
 		{
-			int defaultLife = (getSite().getYaml() != null) ? getSite().getYaml().getInt( "sessions.default-life", 604800 ) : 604800;
+			int defaultLife = ( getSite().getYaml() != null ) ? getSite().getYaml().getInt( "sessions.default-life", 604800 ) : 604800;
 			
 			if ( candyId == null || candyId.isEmpty() )
 				candyId = StringUtil.md5( WebUtils.createGUID( "sessionGen" ) + System.currentTimeMillis() );
@@ -180,10 +181,10 @@ public abstract class Session extends AccountHandler
 	 */
 	protected boolean matchClient( HttpRequestWrapper request )
 	{
-		String _candyName = request.getSite().getYaml().getString( "sessions.cookie-name", Loader.getConfig().getString( "sessions.defaultSessionName", "sessionId" ) );
+		String candyName = request.getSite().getYaml().getString( "sessions.cookie-name", Loader.getConfig().getString( "sessions.defaultSessionName", "sessionId" ) );
 		Map<String, Candy> requestCandies = SessionUtils.poleCandies( request );
 		
-		return (requestCandies.containsKey( _candyName ) && getCandy( candyName ).compareTo( requestCandies.get( _candyName ) ));
+		return ( requestCandies.containsKey( candyName ) && getCandy( this.candyName ).compareTo( requestCandies.get( candyName ) ) );
 	}
 	
 	/**
@@ -194,7 +195,7 @@ public abstract class Session extends AccountHandler
 	 */
 	public Candy getCandy( String key )
 	{
-		return (candies.containsKey( key )) ? candies.get( key ) : new Candy( key, null );
+		return ( candies.containsKey( key ) ) ? candies.get( key ) : new Candy( key, null );
 	}
 	
 	public Candy getSessionCandy()
@@ -274,7 +275,7 @@ public abstract class Session extends AccountHandler
 				defaultTimeout = 31096821392L;
 		}
 		
-		timeout = Common.getEpoch() + defaultTimeout + (Math.min( requestCnt, 6 ) * 600);
+		timeout = Common.getEpoch() + defaultTimeout + ( Math.min( requestCnt, 6 ) * 600 );
 		sessionCandy.setExpiration( timeout );
 	}
 	
@@ -294,7 +295,7 @@ public abstract class Session extends AccountHandler
 	
 	public boolean getUserState()
 	{
-		return (currentAccount != null);
+		return ( currentAccount != null );
 	}
 	
 	public Account<?> getAccount()
@@ -347,7 +348,7 @@ public abstract class Session extends AccountHandler
 	public void attachPermissible( Permissible permissible )
 	{
 		if ( permissible instanceof Account )
-			currentAccount = (Account<?>) permissible;
+			currentAccount = ( Account<?> ) permissible;
 		else
 			isValid = false;
 	}
@@ -391,7 +392,7 @@ public abstract class Session extends AccountHandler
 	 * Creates a new SessionProvider for the provided HttpRequest instance.
 	 * 
 	 * @param HttpRequestWrapper
-	 *             instance
+	 *            instance
 	 * @return a new SessionProviderWeb
 	 */
 	public SessionProvider getSessionProvider( HttpRequestWrapper request )
@@ -466,10 +467,10 @@ public abstract class Session extends AccountHandler
 			for ( SessionProvider sp : sessionProviders )
 				if ( sp.getRequest() != null )
 				{
-					String _ipAddr = sp.getRequest().getRemoteAddr();
-					if ( _ipAddr != null && !_ipAddr.isEmpty() )
+					String ipAddr = sp.getRequest().getRemoteAddr();
+					if ( ipAddr != null && !ipAddr.isEmpty() )
 					{
-						ipAddr = _ipAddr;
+						this.ipAddr = ipAddr;
 						break;
 					}
 				}

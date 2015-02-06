@@ -1,13 +1,13 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.serialization;
+package com.chiorichan.configuration.serialization;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -19,23 +19,22 @@ import java.lang.annotation.Target;
  * If this is not present on a {@link ConfigurationSerializable} class, it will use the
  * fully qualified name of the class.
  * <p />
- * This value will be stored in the configuration so that the configuration deserialization
- * can determine what type it is.
+ * This value will be stored in the configuration so that the configuration deserialization can determine what type it is.
  * <p />
- * Using this annotation on any other class than a {@link ConfigurationSerializable} will
- * have no effect.
+ * Using this annotation on any other class than a {@link ConfigurationSerializable} will have no effect.
+ * 
  * @see ConfigurationSerialization#registerClass(Class, String)
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface SerializableAs {
-    /**
-     * This is the name your class will be stored and retrieved as.
-     * <p />
-     * This name MUST be unique. We recommend using names such as "MyPluginThing" instead of
-     * "Thing".
-     *
-     * @return Name to serialize the class as.
-     */
-    public String value();
+@Retention( RetentionPolicy.RUNTIME )
+@Target( ElementType.TYPE )
+public @interface SerializableAs
+{
+	/**
+	 * This is the name your class will be stored and retrieved as.
+	 * <p />
+	 * This name MUST be unique. We recommend using names such as "MyPluginThing" instead of "Thing".
+	 *
+	 * @return Name to serialize the class as.
+	 */
+	String value();
 }

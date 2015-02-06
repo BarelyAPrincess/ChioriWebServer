@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -37,9 +38,9 @@ public class FileInterpreter
 		return encoding;
 	}
 	
-	public void setEncoding( String _encoding )
+	public void setEncoding( String encoding )
 	{
-		encoding = _encoding;
+		this.encoding = encoding;
 		interpParams.put( "encoding", encoding );
 	}
 	
@@ -56,7 +57,7 @@ public class FileInterpreter
 		if ( overrides.length() > 1 )
 			overrides = overrides.substring( 1 );
 		
-		String cachedFileStr = (cachedFile == null) ? "N/A" : cachedFile.getAbsolutePath();
+		String cachedFileStr = ( cachedFile == null ) ? "N/A" : cachedFile.getAbsolutePath();
 		
 		return "FileInterpreter{content=" + bs.size() + " bytes,file=" + cachedFileStr + ",overrides={" + overrides + "}}";
 	}
@@ -113,7 +114,7 @@ public class FileInterpreter
 			interpParams.put( "file", file.getAbsolutePath() );
 			
 			if ( file.isDirectory() )
-			{	
+			{
 				interpParams.put( "shell", "embedded" );
 			}
 			else
@@ -121,7 +122,7 @@ public class FileInterpreter
 				if ( !interpParams.containsKey( "shell" ) || interpParams.get( "shell" ) == null )
 				{
 					String shell = determineShellFromName( file.getName() );
-					if ( shell != null && shell != "" )
+					if ( shell != null && !shell.isEmpty() )
 						interpParams.put( "shell", shell );
 				}
 				
@@ -141,7 +142,7 @@ public class FileInterpreter
 						{
 							/* Only solution I could think of for CSS files since they use @annotations too, so we share them. */
 							if ( ContentTypes.getContentType( file ).toLowerCase().contains( "css" ) )
-								finished.write( (l + "\n").getBytes( encoding ) );
+								finished.write( ( l + "\n" ).getBytes( encoding ) );
 							/* Only solution I could think of for CSS files since they use @annotations too, so we share them. */
 							
 							String key;
@@ -171,14 +172,14 @@ public class FileInterpreter
 									l.getBytes( val ); // Test encoding before applying it.
 									setEncoding( val );
 								}
-								catch( UnsupportedEncodingException e )
+								catch ( UnsupportedEncodingException e )
 								{
 									e.printStackTrace();
 								}
 							}
 						}
-						catch( NullPointerException | ArrayIndexOutOfBoundsException e )
-						{	
+						catch ( NullPointerException | ArrayIndexOutOfBoundsException e )
+						{
 							
 						}
 					else if ( l.trim().isEmpty() )

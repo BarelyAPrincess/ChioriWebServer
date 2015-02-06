@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -27,16 +27,16 @@ public class LessImportParser extends BasicParser
 		super( "@import[: ]*(.*);", "(@import[: ]*.*;)" );
 	}
 	
-	public String runParser( String source, File _rootDir ) throws ShellExecuteException
+	public String runParser( String source, File rootDir ) throws ShellExecuteException
 	{
-		rootDir = _rootDir;
+		this.rootDir = rootDir;
 		return runParser( source );
 	}
 	
 	@Override
 	public String resolveMethod( String... args ) throws ShellExecuteException
 	{
-		File imp = ( args[0].startsWith( "/" ) || args[0].startsWith( "\\" ) || rootDir == null ) ? new File( args[0]) : new File( rootDir, args[0] );
+		File imp = ( args[0].startsWith( "/" ) || args[0].startsWith( "\\" ) || rootDir == null ) ? new File( args[0] ) : new File( rootDir, args[0] );
 		
 		try
 		{

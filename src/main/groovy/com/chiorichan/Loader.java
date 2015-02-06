@@ -31,6 +31,7 @@ import org.apache.commons.io.FileUtils;
 import com.chiorichan.Warning.WarningState;
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountManager;
+import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.event.BuiltinEventCreator;
 import com.chiorichan.event.EventBus;
@@ -39,7 +40,8 @@ import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
 import com.chiorichan.event.server.ServerRunLevelEvent;
 import com.chiorichan.event.server.ServerRunLevelEventImpl;
-import com.chiorichan.file.YamlConfiguration;
+import com.chiorichan.exception.StartupAbortException;
+import com.chiorichan.exception.StartupException;
 import com.chiorichan.framework.SiteManager;
 import com.chiorichan.framework.WebUtils;
 import com.chiorichan.http.session.SessionManager;
@@ -65,7 +67,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	private static YamlConfiguration configuration;
 	private static Loader instance;
 	private static OptionSet options;
-	private static long startTime = System.currentTimeMillis();
+	protected static long startTime = System.currentTimeMillis();
 	
 	public static File tmpFileDirectory;
 	public static File webroot = new File( "" );
@@ -122,39 +124,28 @@ public class Loader extends BuiltinEventCreator implements Listener
 				isRunning = new Loader( options ).start();
 			}
 		}
+		catch ( StartupAbortException e )
+		{
+			// Graceful Shutdown
+			NetworkManager.cleanup();
+			isRunning = false;
+		}
 		catch ( Throwable t )
 		{
-			if ( !t.getMessage().isEmpty() )
+			ConsoleBus.handleException( t );
+			
+			if ( Loader.getConfig() != null && Loader.getConfig().getBoolean( "server.haltOnSevereError" ) )
 			{
-				t.printStackTrace();
-				// TODO Make it so this exception (and possibly other critical exceptions) are
-				// reported to
-				// us without user interaction. Should also find a way that the log can be sent
-				// along with
-				// it.
-				
-				if ( getLogger() != null )
-					getLogger().severe( ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "THE SERVER FAILED TO START, CHECK THE LOGS AND TRY AGAIN (" + ( System.currentTimeMillis() - startTime ) + "ms)!" );
-				else
-					System.err.println( "THE SERVER FAILED TO START, CHECK THE LOGS AND TRY AGAIN (" + ( System.currentTimeMillis() - startTime ) + "ms)!" );
-				
-				try
-				{
-					NetworkManager.cleanup();
-					isRunning = false;
-				}
-				catch ( Exception e )
-				{	
-					
-				}
-				
-				if ( configuration != null && configuration.getBoolean( "server.haltOnSevereError" ) )
-				{
-					System.out.println( "Press enter to exit..." );
-					System.in.read();
-				}
+				System.out.println( "Press enter to exit..." );
+				System.in.read();
 			}
+			
+			NetworkManager.cleanup();
+			isRunning = false;
 		}
+		
+		if ( isRunning )
+			getLogger().info( ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "Finished Initalizing " + Versioning.getProduct() + "! It took " + ( System.currentTimeMillis() - startTime ) + "ms!" );
 	}
 	
 	public static OptionParser getOptionParser()
@@ -330,7 +321,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 			}
 			
 			if ( key.equals( "Y" ) )
-				throw new StartupException( "" );
+				throw new StartupAbortException();
 		}
 	}
 	
@@ -400,8 +391,6 @@ public class Loader extends BuiltinEventCreator implements Listener
 		console.primaryThread.start();
 		
 		changeRunLevel( RunLevel.RUNNING );
-		
-		getLogger().info( ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "Finished Initalizing " + Versioning.getProduct() + "! It took " + ( System.currentTimeMillis() - startTime ) + "ms!" );
 		
 		updater.check();
 		
@@ -567,7 +556,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 				Thread.sleep( 50 );
 			}
 			catch ( InterruptedException e )
-			{	
+			{
 				
 			}
 			pollCount++;

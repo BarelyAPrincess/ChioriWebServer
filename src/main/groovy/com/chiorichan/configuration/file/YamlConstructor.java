@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -17,7 +17,7 @@ import org.yaml.snakeyaml.error.YAMLException;
 import org.yaml.snakeyaml.nodes.Node;
 import org.yaml.snakeyaml.nodes.Tag;
 
-import com.chiorichan.serialization.ConfigurationSerialization;
+import com.chiorichan.configuration.serialization.ConfigurationSerialization;
 
 public class YamlConstructor extends SafeConstructor
 {
@@ -37,7 +37,7 @@ public class YamlConstructor extends SafeConstructor
 				throw new YAMLException( "Unexpected referential mapping structure. Node: " + node );
 			}
 			
-			Map<?, ?> raw = (Map<?, ?>) super.construct( node );
+			Map<?, ?> raw = ( Map<?, ?> ) super.construct( node );
 			
 			if ( raw.containsKey( ConfigurationSerialization.SERIALIZED_TYPE_KEY ) )
 			{

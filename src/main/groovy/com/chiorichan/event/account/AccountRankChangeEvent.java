@@ -21,9 +21,9 @@ public class AccountRankChangeEvent extends AccountEvent
 	private final int oldLevel;
 	private final int newLevel;
 	
-	public AccountRankChangeEvent( final Account<?> User, final int oldLevel, final int newLevel )
+	public AccountRankChangeEvent( final Account<?> user, final int oldLevel, final int newLevel )
 	{
-		super( User );
+		super( user );
 		this.oldLevel = oldLevel;
 		this.newLevel = newLevel;
 	}

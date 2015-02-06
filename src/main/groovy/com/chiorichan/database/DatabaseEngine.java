@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -27,8 +28,9 @@ import org.json.JSONException;
 import vnet.java.util.MySQLUtils;
 
 import com.chiorichan.Loader;
-import com.chiorichan.StartupException;
+import com.chiorichan.exception.StartupException;
 import com.chiorichan.util.ObjectUtil;
+import com.chiorichan.util.StringUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mysql.jdbc.exceptions.jdbc4.CommunicationsException;
@@ -36,15 +38,12 @@ import com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException;
 
 /**
  * Gives easy access to the SQL Database within Groovy scripts.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class DatabaseEngine
 {
 	public Connection con;
 	
-	private String saved_db, saved_user, saved_pass, saved_host, saved_port;
+	private String savedDb, savedUser, savedPass, savedHost, savedPort;
 	
 	public DatabaseEngine()
 	{
@@ -85,7 +84,7 @@ public class DatabaseEngine
 			Class.forName( "org.sqlite.JDBC" );
 			// Class.forName( "com.mysql.jdbc.Driver" );
 		}
-		catch( ClassNotFoundException e )
+		catch ( ClassNotFoundException e )
 		{
 			throw new StartupException( "We could not locate the 'com.mysql.jdbc.Driver' library regardless that its suppose to be included. If your running from source code be sure to have this library in your build path." );
 		}
@@ -119,22 +118,22 @@ public class DatabaseEngine
 		{
 			Class.forName( "com.mysql.jdbc.Driver" );
 		}
-		catch( ClassNotFoundException e )
+		catch ( ClassNotFoundException e )
 		{
 			throw new StartupException( "We could not locate the 'com.mysql.jdbc.Driver' library regardless that its suppose to be included. If your running from source code be sure to have this library in your build path." );
 		}
 		
-		saved_db = db;
-		saved_user = user;
-		saved_pass = pass;
-		saved_host = host;
-		saved_port = port;
+		savedDb = db;
+		savedUser = user;
+		savedPass = pass;
+		savedHost = host;
+		savedPort = port;
 		
 		try
 		{
 			con = DriverManager.getConnection( "jdbc:mysql://" + host + ":" + port + "/" + db, user, pass );
 		}
-		catch( SQLException e )
+		catch ( SQLException e )
 		{
 			throw e;
 		}
@@ -194,11 +193,11 @@ public class DatabaseEngine
 						result.put( rsmd.getColumnName( i ), rs.getObject( i ) );
 					}
 				}
-				while( rs.next() );
+				while ( rs.next() );
 				
 				return result;
 			}
-			catch( Exception e )
+			catch ( Exception e )
 			{
 				e.printStackTrace();
 			}
@@ -225,7 +224,7 @@ public class DatabaseEngine
 			rs.first(); // TODO: Set the row???
 			return lastRow;
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
 			return 0;
 		}
@@ -240,7 +239,7 @@ public class DatabaseEngine
 		{
 			return !con.isClosed();
 		}
-		catch( SQLException e )
+		catch ( SQLException e )
 		{
 			return false;
 		}
@@ -250,18 +249,18 @@ public class DatabaseEngine
 	{
 		try
 		{
-			if ( saved_host == null || saved_port == null || saved_db == null )
+			if ( savedHost == null || savedPort == null || savedDb == null )
 			{
 				Loader.getLogger().severe( "There was an error reconnection to the DB, unknown cause other then connection string are NULL." );
 				return false;
 			}
 			
-			con = DriverManager.getConnection( "jdbc:mysql://" + saved_host + ":" + saved_port + "/" + saved_db, saved_user, saved_pass );
+			con = DriverManager.getConnection( "jdbc:mysql://" + savedHost + ":" + savedPort + "/" + savedDb, savedUser, savedPass );
 			Loader.getLogger().info( "We succesully connected to the sql database." );
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
-			Loader.getLogger().severe( "There was an error reconnection to the DB, " + "jdbc:mysql://" + saved_host + ":" + saved_port + "/" + saved_db + ", " + saved_user + " " + saved_pass, e );
+			Loader.getLogger().severe( "There was an error reconnection to the DB, " + "jdbc:mysql://" + savedHost + ":" + savedPort + "/" + savedDb + ", " + savedUser + " " + savedPass, e );
 		}
 		
 		return true;
@@ -280,17 +279,17 @@ public class DatabaseEngine
 			statement.execute();
 			cnt = statement.getUpdateCount();
 		}
-		catch( MySQLNonTransientConnectionException e )
+		catch ( MySQLNonTransientConnectionException e )
 		{
 			if ( reconnect() )
 				return queryUpdate( query );
 		}
-		catch( CommunicationsException e )
+		catch ( CommunicationsException e )
 		{
 			if ( reconnect() )
 				return queryUpdate( query );
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
 			e.printStackTrace();
 		}
@@ -320,7 +319,7 @@ public class DatabaseEngine
 			
 			Loader.getLogger().fine( "SQL Query `" + query + "` returned " + getRowCount( result ) + " rows!" );
 		}
-		catch( CommunicationsException | MySQLNonTransientConnectionException e )
+		catch ( CommunicationsException | MySQLNonTransientConnectionException e )
 		{
 			if ( !retried && reconnect() )
 				return query( query, true );
@@ -329,7 +328,7 @@ public class DatabaseEngine
 				throw e;
 			}
 		}
-		catch( Throwable t )
+		catch ( Throwable t )
 		{
 			t.printStackTrace();
 			throw t;
@@ -403,13 +402,13 @@ public class DatabaseEngine
 		{
 			cnt = queryUpdate( "UPDATE " + table + " SET " + update + where + ";" );
 		}
-		catch( SQLException e )
+		catch ( SQLException e )
 		{
 			e.printStackTrace();
 			return false;
 		}
 		
-		return (cnt > 0);
+		return ( cnt > 0 );
 	}
 	
 	public LinkedHashMap<String, Object> selectOne( String table, String key, String val ) throws SQLException
@@ -429,7 +428,7 @@ public class DatabaseEngine
 			result.put( "" + x, convertRow( rs ) );
 			x++;
 		}
-		while( rs.next() );
+		while ( rs.next() );
 		
 		return result;
 	}
@@ -458,39 +457,39 @@ public class DatabaseEngine
 		
 		for ( int i = 1; i < numColumns + 1; i++ )
 		{
-			String column_name = rsmd.getColumnName( i );
+			String columnName = rsmd.getColumnName( i );
 			
-			// Loader.getLogger().info( "Column: " + column_name + " <-> " + rsmd.getColumnTypeName( i ) );
+			// Loader.getLogger().info( "Column: " + columnName + " <-> " + rsmd.getColumnTypeName( i ) );
 			
 			if ( rsmd.getColumnType( i ) == java.sql.Types.ARRAY )
 			{
-				result.put( column_name, rs.getArray( column_name ) );
+				result.put( columnName, rs.getArray( columnName ) );
 			}
 			else if ( rsmd.getColumnType( i ) == java.sql.Types.BIGINT )
 			{
-				result.put( column_name, rs.getInt( column_name ) );
+				result.put( columnName, rs.getInt( columnName ) );
 			}
 			else if ( rsmd.getColumnType( i ) == java.sql.Types.TINYINT )
 			{
-				result.put( column_name, rs.getInt( column_name ) );
+				result.put( columnName, rs.getInt( columnName ) );
 			}
 			else if ( rsmd.getColumnType( i ) == java.sql.Types.BIT ) // Sometimes tinyints are read as bits
 			{
-				result.put( column_name, rs.getInt( column_name ) );
+				result.put( columnName, rs.getInt( columnName ) );
 			}
 			else if ( rsmd.getColumnType( i ) == java.sql.Types.BOOLEAN )
 			{
-				result.put( column_name, rs.getBoolean( column_name ) );
+				result.put( columnName, rs.getBoolean( columnName ) );
 			}
 			else if ( rsmd.getColumnTypeName( i ).contains( "BLOB" ) || rsmd.getColumnType( i ) == java.sql.Types.BINARY )
 			{
 				// BLOG = Max Length 65,535. Recommended that you use a LONGBLOG.
-				byte[] bytes = rs.getBytes( column_name );
-				result.put( column_name, bytes );
+				byte[] bytes = rs.getBytes( columnName );
+				result.put( columnName, bytes );
 				/*
 				 * try
 				 * {
-				 * result.put( column_name, new String( bytes, "ISO-8859-1" ) );
+				 * result.put( columnName, new String( bytes, "ISO-8859-1" ) );
 				 * }
 				 * catch ( UnsupportedEncodingException e )
 				 * {
@@ -500,39 +499,39 @@ public class DatabaseEngine
 			}
 			else if ( rsmd.getColumnType( i ) == java.sql.Types.DOUBLE )
 			{
-				result.put( column_name, rs.getDouble( column_name ) );
+				result.put( columnName, rs.getDouble( columnName ) );
 			}
 			else if ( rsmd.getColumnType( i ) == java.sql.Types.FLOAT )
 			{
-				result.put( column_name, rs.getFloat( column_name ) );
+				result.put( columnName, rs.getFloat( columnName ) );
 			}
-			else if ( rsmd.getColumnTypeName( i ) == "INT" )
+			else if ( rsmd.getColumnTypeName( i ).equals( "INT" ) )
 			{
-				result.put( column_name, rs.getInt( column_name ) );
+				result.put( columnName, rs.getInt( columnName ) );
 			}
 			else if ( rsmd.getColumnType( i ) == java.sql.Types.NVARCHAR )
 			{
-				result.put( column_name, rs.getNString( column_name ) );
+				result.put( columnName, rs.getNString( columnName ) );
 			}
-			else if ( rsmd.getColumnTypeName( i ) == "VARCHAR" )
+			else if ( rsmd.getColumnTypeName( i ).equals( "VARCHAR" ) )
 			{
-				result.put( column_name, rs.getString( column_name ) );
+				result.put( columnName, rs.getString( columnName ) );
 			}
 			else if ( rsmd.getColumnType( i ) == java.sql.Types.SMALLINT )
 			{
-				result.put( column_name, rs.getInt( column_name ) );
+				result.put( columnName, rs.getInt( columnName ) );
 			}
 			else if ( rsmd.getColumnType( i ) == java.sql.Types.DATE )
 			{
-				result.put( column_name, rs.getDate( column_name ) );
+				result.put( columnName, rs.getDate( columnName ) );
 			}
 			else if ( rsmd.getColumnType( i ) == java.sql.Types.TIMESTAMP )
 			{
-				result.put( column_name, rs.getTimestamp( column_name ) );
+				result.put( columnName, rs.getTimestamp( columnName ) );
 			}
 			else
 			{
-				result.put( column_name, rs.getObject( column_name ) );
+				result.put( columnName, rs.getObject( columnName ) );
 			}
 		}
 		
@@ -589,7 +588,7 @@ public class DatabaseEngine
 		if ( result == null || result.size() < 1 )
 			return null;
 		
-		return (LinkedHashMap<String, Object>) result.get( "0" );
+		return ( LinkedHashMap<String, Object> ) result.get( "0" );
 	}
 	
 	public LinkedHashMap<String, Object> select( String table ) throws SQLException
@@ -611,11 +610,11 @@ public class DatabaseEngine
 		
 		if ( where instanceof String )
 		{
-			whr = ((String) where);
+			whr = ( ( String ) where );
 		}
 		else if ( where instanceof Map )
 		{
-			Map<String, Object> whereMap = (Map<String, Object>) where;
+			Map<String, Object> whereMap = ( Map<String, Object> ) where;
 			
 			String tmp = "", opr = "";// , opr2 = "";
 			
@@ -630,7 +629,7 @@ public class DatabaseEngine
 						opr = "AND";
 					
 					String tmp2 = "";
-					Map<String, Object> val = (Map<String, Object>) entry.getValue();
+					Map<String, Object> val = ( Map<String, Object> ) entry.getValue();
 					
 					for ( Entry<String, Object> entry2 : val.entrySet() )
 					{
@@ -642,10 +641,10 @@ public class DatabaseEngine
 						
 						String key = entry2.getKey().replace( "|", "" ).replace( "&", "" );
 						tmp2 = "`" + key + "` = '" + entry2.getValue() + "'";
-						tmp += (tmp.isEmpty()) ? tmp2 : subWhere + " " + opr + " " + tmp2;
+						tmp += ( tmp.isEmpty() ) ? tmp2 : subWhere + " " + opr + " " + tmp2;
 					}
 					
-					whr = (whr.isEmpty()) ? "(" + tmp + ")" : whr + " " + opr + " (" + tmp + ")";
+					whr = ( whr.isEmpty() ) ? "(" + tmp + ")" : whr + " " + opr + " (" + tmp + ")";
 				}
 				else
 				{
@@ -658,7 +657,7 @@ public class DatabaseEngine
 					String key = entry.getKey().replace( "|", "" ).replace( "&", "" );
 					
 					tmp = "`" + key + "` = '" + entry.getValue() + "'";
-					whr = (whr.isEmpty()) ? tmp : whr + " " + opr + " " + tmp;
+					whr = ( whr.isEmpty() ) ? tmp : whr + " " + opr + " " + tmp;
 				}
 			}
 		}
@@ -675,9 +674,9 @@ public class DatabaseEngine
 				options.put( o.getKey().toLowerCase(), ObjectUtil.castToString( o.getValue() ) );
 			}
 		
-		if ( !options.containsKey( "limit" ) || !(options.get( "limit" ) instanceof String) )
+		if ( !options.containsKey( "limit" ) || !( options.get( "limit" ) instanceof String ) )
 			options.put( "limit", "0" );
-		if ( !options.containsKey( "offset" ) || !(options.get( "offset" ) instanceof String) )
+		if ( !options.containsKey( "offset" ) || !( options.get( "offset" ) instanceof String ) )
 			options.put( "offset", "0" );
 		if ( !options.containsKey( "orderby" ) )
 			options.put( "orderby", "" );
@@ -688,22 +687,22 @@ public class DatabaseEngine
 		if ( !options.containsKey( "debug" ) )
 			options.put( "debug", "false" );
 		
-		String limit = (Integer.parseInt( options.get( "limit" ) ) > 0) ? " LIMIT " + Integer.parseInt( options.get( "offset" ) ) + ", " + Integer.parseInt( options.get( "limit" ) ) : "";
-		String orderby = ((String) options.get( "orderby" )) == "" ? "" : " ORDER BY " + ((String) options.get( "orderby" ));
-		String groupby = ((String) options.get( "groupby" )) == "" ? "" : " GROUP BY " + ((String) options.get( "groupby" ));
+		String limit = ( Integer.parseInt( options.get( "limit" ) ) > 0 ) ? " LIMIT " + Integer.parseInt( options.get( "offset" ) ) + ", " + Integer.parseInt( options.get( "limit" ) ) : "";
+		String orderby = ( ( String ) options.get( "orderby" ) ) == "" ? "" : " ORDER BY " + ( ( String ) options.get( "orderby" ) );
+		String groupby = ( ( String ) options.get( "groupby" ) ) == "" ? "" : " GROUP BY " + ( ( String ) options.get( "groupby" ) );
 		
-		where = (whr.isEmpty()) ? "" : " WHERE " + whr;
+		where = ( whr.isEmpty() ) ? "" : " WHERE " + whr;
 		
-		String query = "SELECT " + ((String) options.get( "fields" )) + " FROM `" + table + "`" + where + groupby + orderby + limit + ";";
+		String query = "SELECT " + ( ( String ) options.get( "fields" ) ) + " FROM `" + table + "`" + where + groupby + orderby + limit + ";";
 		
 		// TODO: Act on result!
-		SQLInjectionDetection( query );
+		sqlInjectionDetection( query );
 		
 		ResultSet rs = query( query );
 		
 		if ( rs == null )
 		{
-			if ( options.get( "debug" ) == "true" )
+			if ( StringUtil.isTrue( options.get( "debug" ) ) )
 				Loader.getLogger().info( "Making SELECT query \"" + query + "\" which returned an error." );
 			else
 				Loader.getLogger().fine( "Making SELECT query \"" + query + "\" which returned an error." );
@@ -712,7 +711,7 @@ public class DatabaseEngine
 		
 		if ( getRowCount( rs ) < 1 )
 		{
-			if ( options.get( "debug" ) == "true" )
+			if ( StringUtil.isTrue( options.get( "debug" ) ) )
 				Loader.getLogger().info( "Making SELECT query \"" + query + "\" which returned no results." );
 			else
 				Loader.getLogger().fine( "Making SELECT query \"" + query + "\" which returned no results." );
@@ -724,12 +723,12 @@ public class DatabaseEngine
 		{
 			result = convert( rs );
 		}
-		catch( JSONException e )
+		catch ( JSONException e )
 		{
 			e.printStackTrace();
 		}
 		
-		if ( options.get( "debug" ) == "true" )
+		if ( StringUtil.isTrue( options.get( "debug" ) ) )
 			Loader.getLogger().info( "Making SELECT query \"" + query + "\" which returned " + getRowCount( rs ) + " row(s)." );
 		else
 			Loader.getLogger().fine( "Making SELECT query \"" + query + "\" which returned " + getRowCount( rs ) + " row(s)." );
@@ -741,7 +740,7 @@ public class DatabaseEngine
 	 * Checks Query String for Attempted SQL Injection by Checking for Certain Commands After the First 6 Characters.
 	 * Warning: This Check Will Return True (or Positive) if You Check A Query That Inserts an Image.
 	 */
-	public boolean SQLInjectionDetection( String query )
+	public boolean sqlInjectionDetection( String query )
 	{
 		query = query.toUpperCase();
 		boolean safe = false;
@@ -801,11 +800,11 @@ public class DatabaseEngine
 		
 		if ( where instanceof String )
 		{
-			whr = ((String) where);
+			whr = ( ( String ) where );
 		}
 		else if ( where instanceof Map )
 		{
-			Map<String, Object> whereMap = (Map<String, Object>) where;
+			Map<String, Object> whereMap = ( Map<String, Object> ) where;
 			
 			String tmp = "", opr = "";// , opr2 = "";
 			
@@ -820,7 +819,7 @@ public class DatabaseEngine
 						opr = "AND";
 					
 					String tmp2 = "";
-					Map<String, Object> val = (Map<String, Object>) entry.getValue();
+					Map<String, Object> val = ( Map<String, Object> ) entry.getValue();
 					
 					for ( Entry<String, Object> entry2 : val.entrySet() )
 					{
@@ -832,10 +831,10 @@ public class DatabaseEngine
 						
 						String key = entry2.getKey().replace( "|", "" ).replace( "&", "" );
 						tmp2 = "`" + key + "` = '" + entry2.getValue() + "'";
-						tmp += (tmp.isEmpty()) ? tmp2 : subWhere + " " + opr + " " + tmp2;
+						tmp += ( tmp.isEmpty() ) ? tmp2 : subWhere + " " + opr + " " + tmp2;
 					}
 					
-					whr = (whr.isEmpty()) ? "(" + tmp + ")" : whr + " " + opr + " (" + tmp + ")";
+					whr = ( whr.isEmpty() ) ? "(" + tmp + ")" : whr + " " + opr + " (" + tmp + ")";
 				}
 				else
 				{
@@ -848,7 +847,7 @@ public class DatabaseEngine
 					String key = entry.getKey().replace( "|", "" ).replace( "&", "" );
 					
 					tmp = "`" + key + "` = '" + entry.getValue() + "'";
-					whr = (whr.isEmpty()) ? tmp : whr + " " + opr + " " + tmp;
+					whr = ( whr.isEmpty() ) ? tmp : whr + " " + opr + " " + tmp;
 				}
 			}
 		}
@@ -857,8 +856,8 @@ public class DatabaseEngine
 			whr = "";
 		}
 		
-		String limit = (lmt > 0) ? " LIMIT " + lmt : "";
-		where = (whr.isEmpty()) ? "" : " WHERE " + whr;
+		String limit = ( lmt > 0 ) ? " LIMIT " + lmt : "";
+		where = ( whr.isEmpty() ) ? "" : " WHERE " + whr;
 		
 		String set = "";
 		
@@ -871,14 +870,14 @@ public class DatabaseEngine
 		String query = "UPDATE " + table + " SET " + set + where + limit + ";";
 		
 		if ( !disableInjectionCheck )
-			SQLInjectionDetection( query );
+			sqlInjectionDetection( query );
 		
 		int result = 0;
 		try
 		{
 			result = queryUpdate( query );
 		}
-		catch( SQLException e )
+		catch ( SQLException e )
 		{
 			e.printStackTrace();
 		}
@@ -918,7 +917,7 @@ public class DatabaseEngine
 					opr = "AND";
 				
 				String tmp2 = "";
-				Map<String, Object> val = (Map<String, Object>) entry.getValue();
+				Map<String, Object> val = ( Map<String, Object> ) entry.getValue();
 				
 				for ( Entry<String, Object> entry2 : val.entrySet() )
 				{
@@ -930,10 +929,10 @@ public class DatabaseEngine
 					
 					String key = entry2.getKey().replace( "|", "" ).replace( "&", "" );
 					tmp2 = "`" + key + "` = '" + entry2.getValue() + "'";
-					tmp += (tmp.isEmpty()) ? tmp2 : opr + " " + tmp2;
+					tmp += ( tmp.isEmpty() ) ? tmp2 : opr + " " + tmp2;
 				}
 				
-				whr = (whr.isEmpty()) ? "(" + tmp + ")" : whr + " " + opr + " (" + tmp + ")";
+				whr = ( whr.isEmpty() ) ? "(" + tmp + ")" : whr + " " + opr + " (" + tmp + ")";
 			}
 			else
 			{
@@ -946,7 +945,7 @@ public class DatabaseEngine
 				String key = entry.getKey().replace( "|", "" ).replace( "&", "" );
 				
 				tmp = "`" + key + "` = '" + entry.getValue() + "'";
-				whr = (whr.isEmpty()) ? tmp : whr + " " + opr + " " + tmp;
+				whr = ( whr.isEmpty() ) ? tmp : whr + " " + opr + " " + tmp;
 			}
 		}
 		
@@ -969,7 +968,7 @@ public class DatabaseEngine
 		{
 			i = queryUpdate( "DELETE FROM `" + table + "` WHERE " + where + lmt + ";" );
 		}
-		catch( SQLException e )
+		catch ( SQLException e )
 		{
 			e.printStackTrace();
 		}
@@ -996,9 +995,9 @@ public class DatabaseEngine
 			String value;
 			try
 			{
-				value = escape( (String) e.getValue() );
+				value = escape( ( String ) e.getValue() );
 			}
-			catch( Exception ee )
+			catch ( Exception ee )
 			{
 				value = ObjectUtil.castToString( e.getValue() );
 			}
@@ -1025,14 +1024,14 @@ public class DatabaseEngine
 		String query = "INSERT INTO " + table + " (" + keys + ")VALUES(" + values + ");";
 		
 		if ( !disableInjectionCheck && query.length() < 255 )
-			SQLInjectionDetection( query );
+			sqlInjectionDetection( query );
 		
 		int result = 0;
 		try
 		{
 			result = queryUpdate( query );
 		}
-		catch( SQLException e )
+		catch ( SQLException e )
 		{
 			e.printStackTrace();
 		}

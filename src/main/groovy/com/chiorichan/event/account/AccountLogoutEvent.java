@@ -20,7 +20,7 @@ public class AccountLogoutEvent extends AccountEvent
 	private static final HandlerList handlers = new HandlerList();
 	private String quitMessage;
 	
-	public AccountLogoutEvent(final Account<?> who, final String quitMessage)
+	public AccountLogoutEvent( final Account<?> who, final String quitMessage )
 	{
 		super( who );
 		this.quitMessage = quitMessage;
@@ -40,7 +40,7 @@ public class AccountLogoutEvent extends AccountEvent
 	 * Sets the quit message to send to all online Users
 	 * 
 	 * @param quitMessage
-	 *             quit message
+	 *            quit message
 	 */
 	public void setQuitMessage( String quitMessage )
 	{

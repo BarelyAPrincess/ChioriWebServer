@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -33,9 +34,9 @@ public final class Permission
 		isRootNode = rootNode;
 	}
 	
-	public Permission( String _name, Permission parentNode )
+	public Permission( String name, Permission parentNode )
 	{
-		name = _name.toLowerCase();
+		this.name = name.toLowerCase();
 		parent = parentNode;
 		allPerms.add( this );
 	}
@@ -58,7 +59,7 @@ public final class Permission
 	public String getString()
 	{
 		if ( value.getType() == PermissionValue.PermissionType.ENUM || value.getType() == PermissionValue.PermissionType.VAR )
-			return (String) value.getValue();
+			return ( String ) value.getValue();
 		
 		return null;
 	}
@@ -66,7 +67,7 @@ public final class Permission
 	public Integer getInt()
 	{
 		if ( value.getType() == PermissionValue.PermissionType.INT )
-			return (Integer) value.getValue();
+			return ( Integer ) value.getValue();
 		
 		return null;
 	}
@@ -74,7 +75,7 @@ public final class Permission
 	public Boolean getBoolean()
 	{
 		if ( value.getType() == PermissionValue.PermissionType.BOOL )
-			return (Boolean) value.getValue();
+			return ( Boolean ) value.getValue();
 		
 		return null;
 	}
@@ -95,7 +96,7 @@ public final class Permission
 	 * This will not be saved to disk, and is a temporary operation until the server reloads permissions.
 	 * 
 	 * @param value
-	 *             The new description to set
+	 *            The new description to set
 	 */
 	public void setDescription( String value )
 	{
@@ -159,7 +160,7 @@ public final class Permission
 			namespace = getName() + "." + namespace;
 			curr = curr.getParent();
 		}
-		while( curr != null );
+		while ( curr != null );
 		
 		namespace = namespace.substring( 0, namespace.length() - 1 );
 		return namespace;
@@ -190,9 +191,9 @@ public final class Permission
 	 * Finds a registered permission node in the stack by crawling.
 	 * 
 	 * @param fullNode
-	 *             The full node path we need to crawl for.
+	 *            The full node path we need to crawl for.
 	 * @param createChildren
-	 *             Indicates if we should create the child node if not existent.
+	 *            Indicates if we should create the child node if not existent.
 	 * @return The child node based on the namespace.
 	 */
 	public static Permission crawlPermissionStack( String namespace, boolean createChildren )
@@ -236,7 +237,7 @@ public final class Permission
 	
 	public String toString()
 	{
-		return "Permission[name=" + getName() + ",parent=" + getParent() + ((value != null) ? ",value=" + value.toString() : "") + "]";
+		return "Permission[name=" + getName() + ",parent=" + getParent() + ( ( value != null ) ? ",value=" + value.toString() : "" ) + "]";
 	}
 	
 	public static Set<Permission> getRootNodes()
@@ -250,7 +251,7 @@ public final class Permission
 	
 	public void debugPermissionStack( int deepth )
 	{
-		String spacing = (deepth > 0) ? Strings.repeat( "      ", deepth - 1 ) + "|---> " : "";
+		String spacing = ( deepth > 0 ) ? Strings.repeat( "      ", deepth - 1 ) + "|---> " : "";
 		
 		if ( value == null )
 			PermissionManager.getLogger().info( "[DEBUG] " + spacing + getName() );

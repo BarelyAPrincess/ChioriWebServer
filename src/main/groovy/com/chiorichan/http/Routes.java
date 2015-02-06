@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -50,9 +51,9 @@ public class Routes
 		}
 	}
 	
-	public Routes( Site _site )
+	public Routes( Site site )
 	{
-		site = _site;
+		this.site = site;
 	}
 	
 	public Route searchRoutes( String uri, String domain, String subdomain ) throws IOException
@@ -74,14 +75,14 @@ public class Routes
 						{
 							routes.add( new Route( l, site ) );
 						}
-						catch( IOException e1 )
-						{	
+						catch ( IOException e1 )
+						{
 							
 						}
 					}
 				}
 			}
-			catch( IOException e )
+			catch ( IOException e )
 			{
 				e.printStackTrace();
 			}
@@ -101,11 +102,11 @@ public class Routes
 						{
 							routes.add( new Route( rs, site ) );
 						}
-						while( rs.next() );
+						while ( rs.next() );
 					}
 				}
 			}
-			catch( SQLException e )
+			catch ( SQLException e )
 			{
 				throw new IOException( e );
 			}
@@ -129,7 +130,7 @@ public class Routes
 			
 			if ( matches.size() > 0 )
 			{
-				return (Route) matches.values().toArray()[0];
+				return ( Route ) matches.values().toArray()[0];
 			}
 			else
 				Loader.getLogger().fine( "Failed to find a page redirect for Rewrite... '" + subdomain + "." + domain + "' '" + uri + "'" );

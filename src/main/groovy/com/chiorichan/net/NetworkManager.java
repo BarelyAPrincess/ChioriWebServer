@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -18,7 +19,7 @@ import java.io.File;
 import java.net.InetSocketAddress;
 
 import com.chiorichan.Loader;
-import com.chiorichan.StartupException;
+import com.chiorichan.exception.StartupException;
 import com.chiorichan.http.HttpInitializer;
 import com.chiorichan.https.HttpsInitializer;
 import com.chiorichan.util.Common;
@@ -27,8 +28,6 @@ public class NetworkManager
 {
 	public static EventLoopGroup bossGroup = new NioEventLoopGroup( 1 );
 	public static EventLoopGroup workerGroup = new NioEventLoopGroup();
-	
-	private static String SSLData;
 	
 	/**
 	 * Only effects Unit-like OS'es (Linux and Mac OS X)
@@ -80,7 +79,7 @@ public class NetworkManager
 				else
 					socket = new InetSocketAddress( httpIp, httpPort );
 				
-				Loader.getLogger().info( "Starting Web Server on " + (httpIp.length() == 0 ? "*" : httpIp) + ":" + httpPort );
+				Loader.getLogger().info( "Starting Web Server on " + ( httpIp.length() == 0 ? "*" : httpIp ) + ":" + httpPort );
 				
 				try
 				{
@@ -97,7 +96,7 @@ public class NetworkManager
 							{
 								ch.closeFuture().sync();
 							}
-							catch( InterruptedException e )
+							catch ( InterruptedException e )
 							{
 								e.printStackTrace();
 							}
@@ -110,11 +109,11 @@ public class NetworkManager
 					};
 					thread.start();
 				}
-				catch( NullPointerException e )
+				catch ( NullPointerException e )
 				{
 					throw new StartupException( "There was a problem starting the Web Server. Check logs and try again.", e );
 				}
-				catch( Throwable e )
+				catch ( Throwable e )
 				{
 					Loader.getLogger().warning( "**** FAILED TO BIND WEB SERVER TO PORT!" );
 					// Loader.getLogger().warning( "The exception was: {0}", new Object[] {e.toString()} );
@@ -141,7 +140,7 @@ public class NetworkManager
 				else
 					socket = new InetSocketAddress( httpIp, httpsPort );
 				
-				Loader.getLogger().info( "Starting Web Server on " + (httpIp.length() == 0 ? "*" : httpIp) + ":" + httpsPort );
+				Loader.getLogger().info( "Starting Web Server on " + ( httpIp.length() == 0 ? "*" : httpIp ) + ":" + httpsPort );
 				
 				File sslCert = new File( Loader.getRoot(), Loader.getConfig().getString( "server.httpsKeystore", "server.keystore" ) );
 				
@@ -163,7 +162,7 @@ public class NetworkManager
 							{
 								ch.closeFuture().sync();
 							}
-							catch( InterruptedException e )
+							catch ( InterruptedException e )
 							{
 								e.printStackTrace();
 							}
@@ -178,11 +177,11 @@ public class NetworkManager
 					};
 					thread.start();
 				}
-				catch( NullPointerException e )
+				catch ( NullPointerException e )
 				{
 					throw new StartupException( "There was a problem starting the Web Server. Check logs and try again.", e );
 				}
-				catch( Throwable e )
+				catch ( Throwable e )
 				{
 					Loader.getLogger().warning( "**** FAILED TO BIND WEB SERVER TO PORT!" );
 					// Loader.getLogger().warning( "The exception was: {0}", new Object[] {e.toString()} );
@@ -192,7 +191,7 @@ public class NetworkManager
 				}
 			}
 		}
-		catch( Throwable e )
+		catch ( Throwable e )
 		{
 			throw new StartupException( e );
 		}
@@ -202,10 +201,5 @@ public class NetworkManager
 	{
 		bossGroup.shutdownGracefully();
 		workerGroup.shutdownGracefully();
-	}
-	
-	public static String getSSLData()
-	{
-		return SSLData;
 	}
 }

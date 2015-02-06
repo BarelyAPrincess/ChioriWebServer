@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -36,7 +36,7 @@ public class MemorySection implements ConfigurationSection
 	 * Note that calling this without being yourself a {@link Configuration} will throw an exception!
 	 * 
 	 * @throws IllegalStateException
-	 *            Thrown if this is not a {@link Configuration} root.
+	 *             Thrown if this is not a {@link Configuration} root.
 	 */
 	protected MemorySection()
 	{
@@ -48,20 +48,20 @@ public class MemorySection implements ConfigurationSection
 		this.path = "";
 		this.fullPath = "";
 		this.parent = null;
-		this.root = (Configuration) this;
+		this.root = ( Configuration ) this;
 	}
 	
 	/**
 	 * Creates an empty MemorySection with the specified parent and path.
 	 * 
 	 * @param parent
-	 *           Parent section that contains this own section.
+	 *            Parent section that contains this own section.
 	 * @param path
-	 *           Path that you may access this section from via the root {@link Configuration}.
+	 *            Path that you may access this section from via the root {@link Configuration}.
 	 * @throws IllegalArgumentException
-	 *            Thrown is parent or path is null, or if parent contains no root Configuration.
+	 *             Thrown is parent or path is null, or if parent contains no root Configuration.
 	 */
-	protected MemorySection(ConfigurationSection parent, String path)
+	protected MemorySection( ConfigurationSection parent, String path )
 	{
 		Validate.notNull( parent, "Parent cannot be null" );
 		Validate.notNull( path, "Path cannot be null" );
@@ -322,7 +322,7 @@ public class MemorySection implements ConfigurationSection
 		{
 			if ( entry.getValue() instanceof Map )
 			{
-				section.createSection( entry.getKey().toString(), (Map<?, ?>) entry.getValue() );
+				section.createSection( entry.getKey().toString(), ( Map<?, ?> ) entry.getValue() );
 			}
 			else
 			{
@@ -363,7 +363,7 @@ public class MemorySection implements ConfigurationSection
 		Object val = get( path, def );
 		return ( val instanceof Integer ) ? toInt( val ) : def;
 	}
-
+	
 	public boolean isInt( String path )
 	{
 		Object val = get( path );
@@ -373,13 +373,13 @@ public class MemorySection implements ConfigurationSection
 	public boolean getBoolean( String path )
 	{
 		Object def = getDefault( path );
-		return getBoolean( path, ( def instanceof Boolean ) ? (Boolean) def : false );
+		return getBoolean( path, ( def instanceof Boolean ) ? ( Boolean ) def : false );
 	}
 	
 	public boolean getBoolean( String path, boolean def )
 	{
 		Object val = get( path, def );
-		return ( val instanceof Boolean ) ? (Boolean) val : def;
+		return ( val instanceof Boolean ) ? ( Boolean ) val : def;
 	}
 	
 	public boolean isBoolean( String path )
@@ -393,7 +393,7 @@ public class MemorySection implements ConfigurationSection
 		Object def = getDefault( path );
 		return getDouble( path, ( def instanceof Number ) ? toDouble( def ) : 0 );
 	}
-
+	
 	public double getDouble( String path, double def )
 	{
 		Object val = get( path, def );
@@ -411,7 +411,7 @@ public class MemorySection implements ConfigurationSection
 		Object def = getDefault( path );
 		return getLong( path, ( def instanceof Number ) ? toLong( def ) : 0 );
 	}
-
+	
 	public long getLong( String path, long def )
 	{
 		Object val = get( path, def );
@@ -428,13 +428,13 @@ public class MemorySection implements ConfigurationSection
 	public List<?> getList( String path )
 	{
 		Object def = getDefault( path );
-		return getList( path, ( def instanceof List ) ? (List<?>) def : null );
+		return getList( path, ( def instanceof List ) ? ( List<?> ) def : null );
 	}
 	
 	public List<?> getList( String path, List<?> def )
 	{
 		Object val = get( path, def );
-		return (List<?>) ( ( val instanceof List ) ? val : def );
+		return ( List<?> ) ( ( val instanceof List ) ? val : def );
 	}
 	
 	public boolean isList( String path )
@@ -502,24 +502,26 @@ public class MemorySection implements ConfigurationSection
 		{
 			if ( object instanceof Integer )
 			{
-				result.add( (Integer) object );
+				result.add( ( Integer ) object );
 			}
 			else if ( object instanceof String )
 			{
 				try
 				{
-					result.add( Integer.valueOf( (String) object ) );
+					result.add( Integer.valueOf( ( String ) object ) );
 				}
 				catch ( Exception ex )
-				{}
+				{	
+					
+				}
 			}
 			else if ( object instanceof Character )
 			{
-				result.add( (int) ( (Character) object ).charValue() );
+				result.add( ( int ) ( ( Character ) object ).charValue() );
 			}
 			else if ( object instanceof Number )
 			{
-				result.add( ( (Number) object ).intValue() );
+				result.add( ( ( Number ) object ).intValue() );
 			}
 		}
 		
@@ -541,7 +543,7 @@ public class MemorySection implements ConfigurationSection
 		{
 			if ( object instanceof Boolean )
 			{
-				result.add( (Boolean) object );
+				result.add( ( Boolean ) object );
 			}
 			else if ( object instanceof String )
 			{
@@ -574,24 +576,26 @@ public class MemorySection implements ConfigurationSection
 		{
 			if ( object instanceof Double )
 			{
-				result.add( (Double) object );
+				result.add( ( Double ) object );
 			}
 			else if ( object instanceof String )
 			{
 				try
 				{
-					result.add( Double.valueOf( (String) object ) );
+					result.add( Double.valueOf( ( String ) object ) );
 				}
 				catch ( Exception ex )
-				{}
+				{	
+					
+				}
 			}
 			else if ( object instanceof Character )
 			{
-				result.add( (double) ( (Character) object ).charValue() );
+				result.add( ( double ) ( ( Character ) object ).charValue() );
 			}
 			else if ( object instanceof Number )
 			{
-				result.add( ( (Number) object ).doubleValue() );
+				result.add( ( ( Number ) object ).doubleValue() );
 			}
 		}
 		
@@ -613,24 +617,26 @@ public class MemorySection implements ConfigurationSection
 		{
 			if ( object instanceof Float )
 			{
-				result.add( (Float) object );
+				result.add( ( Float ) object );
 			}
 			else if ( object instanceof String )
 			{
 				try
 				{
-					result.add( Float.valueOf( (String) object ) );
+					result.add( Float.valueOf( ( String ) object ) );
 				}
 				catch ( Exception ex )
-				{}
+				{	
+					
+				}
 			}
 			else if ( object instanceof Character )
 			{
-				result.add( (float) ( (Character) object ).charValue() );
+				result.add( ( float ) ( ( Character ) object ).charValue() );
 			}
 			else if ( object instanceof Number )
 			{
-				result.add( ( (Number) object ).floatValue() );
+				result.add( ( ( Number ) object ).floatValue() );
 			}
 		}
 		
@@ -652,24 +658,26 @@ public class MemorySection implements ConfigurationSection
 		{
 			if ( object instanceof Long )
 			{
-				result.add( (Long) object );
+				result.add( ( Long ) object );
 			}
 			else if ( object instanceof String )
 			{
 				try
 				{
-					result.add( Long.valueOf( (String) object ) );
+					result.add( Long.valueOf( ( String ) object ) );
 				}
 				catch ( Exception ex )
-				{}
+				{	
+					
+				}
 			}
 			else if ( object instanceof Character )
 			{
-				result.add( (long) ( (Character) object ).charValue() );
+				result.add( ( long ) ( ( Character ) object ).charValue() );
 			}
 			else if ( object instanceof Number )
 			{
-				result.add( ( (Number) object ).longValue() );
+				result.add( ( ( Number ) object ).longValue() );
 			}
 		}
 		
@@ -691,24 +699,26 @@ public class MemorySection implements ConfigurationSection
 		{
 			if ( object instanceof Byte )
 			{
-				result.add( (Byte) object );
+				result.add( ( Byte ) object );
 			}
 			else if ( object instanceof String )
 			{
 				try
 				{
-					result.add( Byte.valueOf( (String) object ) );
+					result.add( Byte.valueOf( ( String ) object ) );
 				}
 				catch ( Exception ex )
-				{}
+				{	
+					
+				}
 			}
 			else if ( object instanceof Character )
 			{
-				result.add( (byte) ( (Character) object ).charValue() );
+				result.add( ( byte ) ( ( Character ) object ).charValue() );
 			}
 			else if ( object instanceof Number )
 			{
-				result.add( ( (Number) object ).byteValue() );
+				result.add( ( ( Number ) object ).byteValue() );
 			}
 		}
 		
@@ -730,11 +740,11 @@ public class MemorySection implements ConfigurationSection
 		{
 			if ( object instanceof Character )
 			{
-				result.add( (Character) object );
+				result.add( ( Character ) object );
 			}
 			else if ( object instanceof String )
 			{
-				String str = (String) object;
+				String str = ( String ) object;
 				
 				if ( str.length() == 1 )
 				{
@@ -743,7 +753,7 @@ public class MemorySection implements ConfigurationSection
 			}
 			else if ( object instanceof Number )
 			{
-				result.add( (char) ( (Number) object ).intValue() );
+				result.add( ( char ) ( ( Number ) object ).intValue() );
 			}
 		}
 		
@@ -765,24 +775,26 @@ public class MemorySection implements ConfigurationSection
 		{
 			if ( object instanceof Short )
 			{
-				result.add( (Short) object );
+				result.add( ( Short ) object );
 			}
 			else if ( object instanceof String )
 			{
 				try
 				{
-					result.add( Short.valueOf( (String) object ) );
+					result.add( Short.valueOf( ( String ) object ) );
 				}
 				catch ( Exception ex )
-				{}
+				{	
+					
+				}
 			}
 			else if ( object instanceof Character )
 			{
-				result.add( (short) ( (Character) object ).charValue() );
+				result.add( ( short ) ( ( Character ) object ).charValue() );
 			}
 			else if ( object instanceof Number )
 			{
-				result.add( ( (Number) object ).shortValue() );
+				result.add( ( ( Number ) object ).shortValue() );
 			}
 		}
 		
@@ -803,7 +815,7 @@ public class MemorySection implements ConfigurationSection
 		{
 			if ( object instanceof Map )
 			{
-				result.add( (Map<?, ?>) object );
+				result.add( ( Map<?, ?> ) object );
 			}
 		}
 		
@@ -813,13 +825,13 @@ public class MemorySection implements ConfigurationSection
 	public Color getColor( String path )
 	{
 		Object def = getDefault( path );
-		return getColor( path, ( def instanceof Color ) ? (Color) def : null );
+		return getColor( path, ( def instanceof Color ) ? ( Color ) def : null );
 	}
 	
 	public Color getColor( String path, Color def )
 	{
 		Object val = get( path, def );
-		return ( val instanceof Color ) ? (Color) val : def;
+		return ( val instanceof Color ) ? ( Color ) val : def;
 	}
 	
 	public boolean isColor( String path )
@@ -833,7 +845,7 @@ public class MemorySection implements ConfigurationSection
 		Object val = get( path, null );
 		if ( val != null )
 		{
-			return ( val instanceof ConfigurationSection ) ? (ConfigurationSection) val : null;
+			return ( val instanceof ConfigurationSection ) ? ( ConfigurationSection ) val : null;
 		}
 		
 		val = get( path, getDefault( path ) );
@@ -864,7 +876,7 @@ public class MemorySection implements ConfigurationSection
 	{
 		if ( section instanceof MemorySection )
 		{
-			MemorySection sec = (MemorySection) section;
+			MemorySection sec = ( MemorySection ) section;
 			
 			for ( Map.Entry<String, Object> entry : sec.map.entrySet() )
 			{
@@ -872,7 +884,7 @@ public class MemorySection implements ConfigurationSection
 				
 				if ( ( deep ) && ( entry.getValue() instanceof ConfigurationSection ) )
 				{
-					ConfigurationSection subsection = (ConfigurationSection) entry.getValue();
+					ConfigurationSection subsection = ( ConfigurationSection ) entry.getValue();
 					mapChildrenKeys( output, subsection, deep );
 				}
 			}
@@ -892,7 +904,7 @@ public class MemorySection implements ConfigurationSection
 	{
 		if ( section instanceof MemorySection )
 		{
-			MemorySection sec = (MemorySection) section;
+			MemorySection sec = ( MemorySection ) section;
 			
 			for ( Map.Entry<String, Object> entry : sec.map.entrySet() )
 			{
@@ -902,7 +914,7 @@ public class MemorySection implements ConfigurationSection
 				{
 					if ( deep )
 					{
-						mapChildrenValues( output, (ConfigurationSection) entry.getValue(), deep );
+						mapChildrenValues( output, ( ConfigurationSection ) entry.getValue(), deep );
 					}
 				}
 			}
@@ -924,9 +936,9 @@ public class MemorySection implements ConfigurationSection
 	 * You may use this method for any given {@link ConfigurationSection}, not only {@link MemorySection}.
 	 * 
 	 * @param section
-	 *           Section to create a path for.
+	 *            Section to create a path for.
 	 * @param key
-	 *           Name of the specified section.
+	 *            Name of the specified section.
 	 * @return Full path of the section from its root.
 	 */
 	public static String createPath( ConfigurationSection section, String key )
@@ -940,11 +952,11 @@ public class MemorySection implements ConfigurationSection
 	 * You may use this method for any given {@link ConfigurationSection}, not only {@link MemorySection}.
 	 * 
 	 * @param section
-	 *           Section to create a path for.
+	 *            Section to create a path for.
 	 * @param key
-	 *           Name of the specified section.
+	 *            Name of the specified section.
 	 * @param relativeTo
-	 *           Section to create the path relative to.
+	 *            Section to create the path relative to.
 	 * @return Full path of the section from its root.
 	 */
 	public static String createPath( ConfigurationSection section, String key, ConfigurationSection relativeTo )
@@ -994,11 +1006,11 @@ public class MemorySection implements ConfigurationSection
 	private int toInt( Object val )
 	{
 		if ( val instanceof Integer )
-			return (int) val;
+			return ( int ) val;
 		
 		try
 		{
-			return Integer.parseInt( (String) val );
+			return Integer.parseInt( ( String ) val );
 		}
 		catch ( Exception e )
 		{
@@ -1010,11 +1022,11 @@ public class MemorySection implements ConfigurationSection
 	private double toDouble( Object def )
 	{
 		if ( def instanceof Double )
-			return (double) def;
+			return ( double ) def;
 		
 		try
 		{
-			return Double.parseDouble( (String) def );
+			return Double.parseDouble( ( String ) def );
 		}
 		catch ( Exception e )
 		{
@@ -1027,7 +1039,7 @@ public class MemorySection implements ConfigurationSection
 	{
 		try
 		{
-			return Long.parseLong( (String) def );
+			return Long.parseLong( ( String ) def );
 		}
 		catch ( Exception e )
 		{

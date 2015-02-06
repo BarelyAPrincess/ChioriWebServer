@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -100,7 +101,7 @@ public class WebInterpreter extends FileInterpreter
 				fwRequest = false;
 				routes = fwSite.getRoutes();
 				request.setSite( fwSite );
-				uri = (indexOf == uri.length()) ? "/" : uri.substring( indexOf );
+				uri = ( indexOf == uri.length() ) ? "/" : uri.substring( indexOf );
 				request.setUri( uri );
 				Loader.getLogger().info( "Detected a virtual site request. New request on site '" + siteId + "' with URI '" + uri + "'. &4Caution: There could be site bugs when doing these kind of requests." );
 			}
@@ -191,11 +192,11 @@ public class WebInterpreter extends FileInterpreter
 							{
 								String destFileName = dest.getName();
 								String fileNameFull = f.getName();
-								String fileName = (fileNameFull.contains( "." )) ? fileNameFull.substring( 0, fileNameFull.lastIndexOf( "." ) ) : fileNameFull;
-								String ext = (fileNameFull.contains( "." )) ? fileNameFull.substring( fileNameFull.lastIndexOf( "." ) + 1 ) : "";
-								String ext2 = (destFileName.contains( "." )) ? destFileName.substring( destFileName.lastIndexOf( "." ) + 1 ) : "";
+								String fileName = ( fileNameFull.contains( "." ) ) ? fileNameFull.substring( 0, fileNameFull.lastIndexOf( "." ) ) : fileNameFull;
+								String ext = ( fileNameFull.contains( "." ) ) ? fileNameFull.substring( fileNameFull.lastIndexOf( "." ) + 1 ) : "";
+								String ext2 = ( destFileName.contains( "." ) ) ? destFileName.substring( destFileName.lastIndexOf( "." ) + 1 ) : "";
 								
-								if ( destFileName.startsWith( fileName ) && (ext2.isEmpty() || destFileName.endsWith( ext )) )
+								if ( destFileName.startsWith( fileName ) && ( ext2.isEmpty() || destFileName.endsWith( ext ) ) )
 								{
 									dest = f;
 									

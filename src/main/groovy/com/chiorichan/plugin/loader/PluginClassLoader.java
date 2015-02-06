@@ -1,12 +1,12 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-
 package com.chiorichan.plugin.loader;
 
 import java.io.File;
@@ -53,7 +53,7 @@ final class PluginClassLoader extends URLClassLoader
 			{
 				jarClass = Class.forName( description.getMain(), true, this );
 			}
-			catch( ClassNotFoundException ex )
+			catch ( ClassNotFoundException ex )
 			{
 				throw new InvalidPluginException( "Cannot find mane class `" + description.getMain() + "'", ex );
 			}
@@ -63,18 +63,18 @@ final class PluginClassLoader extends URLClassLoader
 			{
 				pluginClass = jarClass.asSubclass( Plugin.class );
 			}
-			catch( ClassCastException ex )
+			catch ( ClassCastException ex )
 			{
 				throw new InvalidPluginException( "main class `" + description.getMain() + "' does not extend Plugin", ex );
 			}
 			
 			plugin = pluginClass.newInstance();
 		}
-		catch( IllegalAccessException ex )
+		catch ( IllegalAccessException ex )
 		{
 			throw new InvalidPluginException( "No public constructor", ex );
 		}
-		catch( InstantiationException ex )
+		catch ( InstantiationException ex )
 		{
 			throw new InvalidPluginException( "Abnormal plugin type", ex );
 		}

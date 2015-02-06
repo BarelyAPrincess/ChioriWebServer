@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -14,20 +15,18 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import org.json.JSONException;
-
 import com.chiorichan.Loader;
+import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.database.DatabaseEngine;
-import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.http.session.SessionProvider;
 
 public class ConfigurationManagerWrapper
 {
 	protected SessionProvider sess;
 	
-	public ConfigurationManagerWrapper(SessionProvider _sess)
+	public ConfigurationManagerWrapper( SessionProvider sess )
 	{
-		sess = _sess;
+		this.sess = sess;
 	}
 	
 	public YamlConfiguration getServerConfiguration()
@@ -59,9 +58,8 @@ public class ConfigurationManagerWrapper
 	 * Does a setting compare based on a string if No expected mean is interped as a boolean of true. ex.
 	 * USER_BETA_TESTER&USER_RANK=USER|USER_RANK=ADMIN
 	 * 
-	 * @param String
-	 *             settingString
-	 * @throws JSONException
+	 * @param strings
+	 *            settings to compare
 	 */
 	public boolean compareSetting( List<String> settings )
 	{
@@ -114,15 +112,15 @@ public class ConfigurationManagerWrapper
 		Object result = getSetting( key );
 		
 		if ( result instanceof Boolean )
-			return ( (Boolean) result );
+			return ( ( Boolean ) result );
 		
-		if ( result instanceof Integer && ( (Integer) result ) == 1 )
+		if ( result instanceof Integer && ( ( Integer ) result ) == 1 )
 			return true;
 		
-		if ( result instanceof Long && ( (Long) result ) == 1 )
+		if ( result instanceof Long && ( ( Long ) result ) == 1 )
 			return true;
 		
-		if ( result instanceof String && ( (String) result ).equals( "1" ) )
+		if ( result instanceof String && ( ( String ) result ).equals( "1" ) )
 			return true;
 		
 		return false;
@@ -162,7 +160,7 @@ public class ConfigurationManagerWrapper
 		{
 			DatabaseEngine sql = sess.getSite().getDatabase();
 			
-			if ( idenifier == null || idenifier == "-1" )
+			if ( idenifier == null || idenifier.equals( "-1" ) )
 			{
 				idenifier = ( sess.getUserState() ) ? sess.getAccount().getAcctId() : "";
 			}
@@ -214,7 +212,7 @@ public class ConfigurationManagerWrapper
 		{
 			DatabaseEngine sql = sess.getSite().getDatabase();
 			
-			if ( idenifier == null || idenifier == "-1" )
+			if ( idenifier == null || idenifier.equals( "-1" ) )
 			{
 				// TODO: Set idenifier to the logged in userId
 				

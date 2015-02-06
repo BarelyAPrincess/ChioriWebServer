@@ -27,7 +27,7 @@ public interface AccountLookupAdapter
 	/**
 	 * Returns all accounts maintained by this adapter.
 	 * 
-	 * @return
+	 * @return List of loaded accounts by this adapter
 	 */
 	List<AccountMetaData> getAccounts();
 	
@@ -40,7 +40,7 @@ public interface AccountLookupAdapter
 	/**
 	 * Attempt to reload details regarding this account.
 	 * 
-	 * @return
+	 * @return Same AccountMetaData that was provided as an argument
 	 */
 	AccountMetaData reloadAccount( AccountMetaData account );
 	
@@ -60,11 +60,10 @@ public interface AccountLookupAdapter
 	/**
 	 * Informs the Adapater of a failed login
 	 * 
-	 * @param account
+	 * @param meta
 	 *            The account that failed the login.
 	 * @param reason
 	 *            The reason the login failed.
-	 * 
 	 */
 	void failedLoginUpdate( AccountMetaData meta, LoginExceptionReason reason );
 }

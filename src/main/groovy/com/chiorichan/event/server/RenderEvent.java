@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -24,12 +24,12 @@ public class RenderEvent extends ServerEvent
 	private final SessionProvider sess;
 	private final Map<String, String> pageData;
 	
-	public RenderEvent(SessionProvider _sess, String source, Map<String, String> _pageData)
+	public RenderEvent( SessionProvider sess, String source, Map<String, String> pageData )
 	{
 		pageSource = source;
 		pageHash = DigestUtils.md5Hex( source );
-		pageData = _pageData;
-		sess = _sess;
+		this.pageData = pageData;
+		this.sess = sess;
 	}
 	
 	public Map<String, String> getPageData()

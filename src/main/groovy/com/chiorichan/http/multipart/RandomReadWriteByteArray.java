@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -21,13 +21,13 @@ public class RandomReadWriteByteArray
 	
 	public void consumeInputStream( InputStream is ) throws IOException
 	{
-		int BUFSIZE = 1024;
+		int bufSize = 1024;
 		
 		Vector<Byte> byteV = new Vector<Byte>();
-		byte[] tmp1 = new byte[BUFSIZE];
+		byte[] tmp1 = new byte[bufSize];
 		while ( true )
 		{
-			int r = is.read( tmp1, 0, BUFSIZE );
+			int r = is.read( tmp1, 0, bufSize );
 			if ( r == -1 )
 				break;
 			for ( int i = 0; i < r; i++ )
@@ -54,14 +54,14 @@ public class RandomReadWriteByteArray
 			{
 				byte b = buffer.get();
 				
-				if ( (char) b == '\r' )
+				if ( ( char ) b == '\r' )
 				{
 					// DO NOTHING
 				}
-				else if ( (char) b == '\n' )
+				else if ( ( char ) b == '\n' )
 					cont = false;
 				else
-					out.append( new String( new byte[] { b } ) );
+					out.append( new String( new byte[] {b} ) );
 			}
 			catch ( BufferUnderflowException e )
 			{

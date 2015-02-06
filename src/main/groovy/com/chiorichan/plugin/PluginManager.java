@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -72,7 +73,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 		registerInterface( JavaPluginLoader.class );
 		// registerInterface( GroovyPluginLoader.class );
 		
-		File pluginFolder = (File) Loader.getOptions().valueOf( "plugins" );
+		File pluginFolder = ( File ) Loader.getOptions().valueOf( "plugins" );
 		
 		if ( pluginFolder.exists() )
 		{
@@ -85,7 +86,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 					PluginManager.getLogger().info( message );
 					plugin.onLoad();
 				}
-				catch( Throwable ex )
+				catch ( Throwable ex )
 				{
 					getLogger().log( Level.SEVERE, ex.getMessage() + " initializing " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 				}
@@ -99,9 +100,9 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 	 * Registers the specified plugin loader
 	 * 
 	 * @param loader
-	 *             Class name of the PluginLoader to register
+	 *            Class name of the PluginLoader to register
 	 * @throws IllegalArgumentException
-	 *              Thrown when the given Class is not a valid PluginLoader
+	 *             Thrown when the given Class is not a valid PluginLoader
 	 */
 	public void registerInterface( Class<? extends PluginLoader> loader ) throws IllegalArgumentException
 	{
@@ -116,25 +117,25 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 				constructor = loader.getConstructor();
 				instance = constructor.newInstance();
 			}
-			catch( NoSuchMethodException ex )
+			catch ( NoSuchMethodException ex )
 			{
 				try
 				{
 					constructor = loader.getConstructor( Loader.class );
 					instance = constructor.newInstance( Loader.getInstance() );
 				}
-				catch( NoSuchMethodException ex1 )
+				catch ( NoSuchMethodException ex1 )
 				{
 					String className = loader.getName();
 					
 					throw new IllegalArgumentException( String.format( "Class %s does not have a public %s(Server) constructor", className, className ), ex1 );
 				}
-				catch( Exception ex1 )
+				catch ( Exception ex1 )
 				{
 					throw new IllegalArgumentException( String.format( "Unexpected exception %s while attempting to construct a new instance of %s", ex.getClass().getName(), loader.getName() ), ex1 );
 				}
 			}
-			catch( Exception ex )
+			catch ( Exception ex )
 			{
 				throw new IllegalArgumentException( String.format( "Unexpected exception %s while attempting to construct a new instance of %s", ex.getClass().getName(), loader.getName() ), ex );
 			}
@@ -146,7 +147,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 		
 		Pattern[] patterns = instance.getPluginFileFilters();
 		
-		synchronized( this )
+		synchronized ( this )
 		{
 			for ( Pattern pattern : patterns )
 			{
@@ -159,7 +160,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 	 * Loads the plugins contained within the specified directory
 	 * 
 	 * @param directory
-	 *             Directory to check for plugins
+	 *            Directory to check for plugins
 	 * @return A list of all plugins loaded
 	 */
 	public Plugin[] loadPlugins( File directory )
@@ -170,7 +171,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 		List<Plugin> result = new ArrayList<Plugin>();
 		Set<Pattern> filters = fileAssociations.keySet();
 		
-		if ( !(Loader.getInstance().getUpdateFolder().equals( "" )) )
+		if ( ! ( Loader.getInstance().getUpdateFolder().equals( "" ) ) )
 		{
 			updateDirectory = new File( directory, Loader.getInstance().getUpdateFolder() );
 		}
@@ -200,7 +201,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 			{
 				description = loader.getPluginDescription( file );
 			}
-			catch( InvalidDescriptionException ex )
+			catch ( InvalidDescriptionException ex )
 			{
 				getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", ex );
 				continue;
@@ -248,12 +249,12 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 			}
 		}
 		
-		while( !plugins.isEmpty() )
+		while ( !plugins.isEmpty() )
 		{
 			boolean missingDependency = true;
 			Iterator<String> pluginIterator = plugins.keySet().iterator();
 			
-			while( pluginIterator.hasNext() )
+			while ( pluginIterator.hasNext() )
 			{
 				String plugin = pluginIterator.next();
 				
@@ -261,7 +262,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 				{
 					Iterator<String> dependencyIterator = dependencies.get( plugin ).iterator();
 					
-					while( dependencyIterator.hasNext() )
+					while ( dependencyIterator.hasNext() )
 					{
 						String dependency = dependencyIterator.next();
 						
@@ -294,7 +295,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 				{
 					Iterator<String> softDependencyIterator = softDependencies.get( plugin ).iterator();
 					
-					while( softDependencyIterator.hasNext() )
+					while ( softDependencyIterator.hasNext() )
 					{
 						String softDependency = softDependencyIterator.next();
 						
@@ -310,7 +311,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 						softDependencies.remove( plugin );
 					}
 				}
-				if ( !(dependencies.containsKey( plugin ) || softDependencies.containsKey( plugin )) && plugins.containsKey( plugin ) )
+				if ( ! ( dependencies.containsKey( plugin ) || softDependencies.containsKey( plugin ) ) && plugins.containsKey( plugin ) )
 				{
 					// We're clear to load, no more soft or hard dependencies left
 					File file = plugins.get( plugin );
@@ -323,7 +324,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 						loadedPlugins.add( plugin );
 						continue;
 					}
-					catch( InvalidPluginException ex )
+					catch ( InvalidPluginException ex )
 					{
 						getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", ex );
 					}
@@ -336,7 +337,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 				// This loop will ignore soft dependencies
 				pluginIterator = plugins.keySet().iterator();
 				
-				while( pluginIterator.hasNext() )
+				while ( pluginIterator.hasNext() )
 				{
 					String plugin = pluginIterator.next();
 					
@@ -353,7 +354,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 							loadedPlugins.add( plugin );
 							break;
 						}
-						catch( InvalidPluginException ex )
+						catch ( InvalidPluginException ex )
 						{
 							getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", ex );
 						}
@@ -366,7 +367,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 					dependencies.clear();
 					Iterator<File> failedPluginIterator = plugins.values().iterator();
 					
-					while( failedPluginIterator.hasNext() )
+					while ( failedPluginIterator.hasNext() )
 					{
 						File file = failedPluginIterator.next();
 						failedPluginIterator.remove();
@@ -385,12 +386,12 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 	 * File must be valid according to the current enabled Plugin interfaces
 	 * 
 	 * @param file
-	 *             File containing the plugin to load
+	 *            File containing the plugin to load
 	 * @return The Plugin loaded, or null if it was invalid
 	 * @throws InvalidPluginException
-	 *              Thrown when the specified file is not a valid plugin
+	 *             Thrown when the specified file is not a valid plugin
 	 * @throws UnknownDependencyException
-	 *              If a required dependency could not be found
+	 *             If a required dependency could not be found
 	 */
 	public synchronized Plugin loadPlugin( File file ) throws InvalidPluginException, UnknownDependencyException
 	{
@@ -445,7 +446,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 			{
 				plugin.getPluginLoader().enablePlugin( plugin );
 			}
-			catch( Throwable ex )
+			catch ( Throwable ex )
 			{
 				getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while enabling " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 			}
@@ -471,7 +472,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 			{
 				plugin.getPluginLoader().disablePlugin( plugin );
 			}
-			catch( Throwable ex )
+			catch ( Throwable ex )
 			{
 				getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while disabling " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 			}
@@ -480,7 +481,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 			{
 				// Loader.getScheduler().cancelTasks( plugin );
 			}
-			catch( Throwable ex )
+			catch ( Throwable ex )
 			{
 				getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while cancelling tasks for " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 			}
@@ -489,7 +490,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 			{
 				// Loader.getServicesManager().unregisterAll( plugin );
 			}
-			catch( Throwable ex )
+			catch ( Throwable ex )
 			{
 				getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while unregistering services for " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 			}
@@ -498,7 +499,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 			{
 				HandlerList.unregisterAll( plugin );
 			}
-			catch( Throwable ex )
+			catch ( Throwable ex )
 			{
 				getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while unregistering events for " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 			}
@@ -508,7 +509,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 				// Loader.getMessenger().unregisterIncomingPluginChannel( plugin );
 				// Loader.getMessenger().unregisterOutgoingPluginChannel( plugin );
 			}
-			catch( Throwable ex )
+			catch ( Throwable ex )
 			{
 				getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while unregistering plugin channels for " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 			}
@@ -517,7 +518,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 	
 	public void clearPlugins()
 	{
-		synchronized( this )
+		synchronized ( this )
 		{
 			disablePlugins();
 			plugins.clear();
@@ -547,7 +548,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 					return plugin1;
 			}
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
 			e.printStackTrace();
 		}
@@ -565,7 +566,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 					return plugin1;
 			}
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
 			e.printStackTrace();
 		}
@@ -579,7 +580,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 		{
 			enablePlugin( plugin );
 		}
-		catch( Throwable ex )
+		catch ( Throwable ex )
 		{
 			getLogger().log( Level.SEVERE, ex.getMessage() + " loading " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 		}
@@ -608,7 +609,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 		
 		for ( Plugin plugin : plugins )
 		{
-			if ( (!plugin.isEnabled()) && (plugin.getDescription().getLoad() == level) )
+			if ( ( !plugin.isEnabled() ) && ( plugin.getDescription().getLoad() == level ) )
 				loadPlugin( plugin );
 		}
 	}

@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -11,8 +12,8 @@ package com.chiorichan.plugin;
 import java.io.File;
 import java.io.InputStream;
 
+import com.chiorichan.configuration.file.FileConfiguration;
 import com.chiorichan.event.EventCreator;
-import com.chiorichan.file.FileConfiguration;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.plugin.loader.PluginLoader;
 import com.chiorichan.scheduler.TaskCreator;
@@ -46,7 +47,7 @@ public abstract class PluginBase implements EventCreator, TaskCreator
 	 * Gets an embedded resource in this plugin
 	 * 
 	 * @param filename
-	 *             Filename of the resource
+	 *            Filename of the resource
 	 * @return File if found, otherwise null
 	 */
 	public abstract InputStream getResource( String filename );
@@ -68,11 +69,11 @@ public abstract class PluginBase implements EventCreator, TaskCreator
 	 * .jar file (subdirectories are preserved).
 	 * 
 	 * @param resourcePath
-	 *             the embedded resource path to look for within the plugin's .jar file. (No preceding slash).
+	 *            the embedded resource path to look for within the plugin's .jar file. (No preceding slash).
 	 * @param replace
-	 *             if true, the embedded resource will overwrite the contents of an existing file.
+	 *            if true, the embedded resource will overwrite the contents of an existing file.
 	 * @throws IllegalArgumentException
-	 *              if the resource path is null, empty, or points to a nonexistent resource.
+	 *             if the resource path is null, empty, or points to a nonexistent resource.
 	 */
 	public abstract void saveResource( String resourcePath, boolean replace );
 	
@@ -122,7 +123,7 @@ public abstract class PluginBase implements EventCreator, TaskCreator
 	 * Set naggable state
 	 * 
 	 * @param canNag
-	 *             is this plugin still naggable?
+	 *            is this plugin still naggable?
 	 */
 	public abstract void setNaggable( boolean canNag );
 	
@@ -155,15 +156,15 @@ public abstract class PluginBase implements EventCreator, TaskCreator
 		{
 			return false;
 		}
-		if ( !(obj instanceof Plugin) )
+		if ( ! ( obj instanceof Plugin ) )
 		{
 			return false;
 		}
 		try
 		{
-			return getName().equals( ((Plugin) obj).getName() );
+			return getName().equals( ( ( Plugin ) obj ).getName() );
 		}
-		catch( NullPointerException e )
+		catch ( NullPointerException e )
 		{
 			return false;
 		}

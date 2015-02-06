@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -18,9 +18,9 @@ public class EventException extends Exception
 	 * Constructs a new EventException based on the given Exception
 	 * 
 	 * @param throwable
-	 *           Exception that triggered this Exception
+	 *            Exception that triggered this Exception
 	 */
-	public EventException(Throwable throwable)
+	public EventException( Throwable throwable )
 	{
 		cause = throwable;
 	}
@@ -37,11 +37,11 @@ public class EventException extends Exception
 	 * Constructs a new EventException with the given message
 	 * 
 	 * @param cause
-	 *           The exception that caused this
+	 *            The exception that caused this
 	 * @param message
-	 *           The message
+	 *            The message
 	 */
-	public EventException(Throwable cause, String message)
+	public EventException( Throwable cause, String message )
 	{
 		super( message );
 		this.cause = cause;
@@ -51,9 +51,9 @@ public class EventException extends Exception
 	 * Constructs a new EventException with the given message
 	 * 
 	 * @param message
-	 *           The message
+	 *            The message
 	 */
-	public EventException(String message)
+	public EventException( String message )
 	{
 		super( message );
 		cause = null;

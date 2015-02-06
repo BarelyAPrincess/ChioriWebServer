@@ -19,6 +19,7 @@ import joptsimple.OptionSet;
 
 import org.joda.time.DateTime;
 
+import com.chiorichan.exception.StartupException;
 import com.chiorichan.http.session.SessionManager;
 import com.chiorichan.util.FileUtil;
 import com.chiorichan.util.Versioning;
@@ -180,7 +181,7 @@ public class ConsoleBus implements Runnable
 			}
 		}
 		catch ( IOException e )
-		{	
+		{
 			
 		}
 	}
@@ -228,5 +229,36 @@ public class ConsoleBus implements Runnable
 			
 			Loader.getLogger().warning( key + " is not an available option, please press " + Joiner.on( "," ).join( keys ) + " to continue." );
 		}
+	}
+	
+	protected static void handleException( StartupException t )
+	{
+		if ( t.getCause() != null )
+			t.getCause().printStackTrace();
+		else
+			t.printStackTrace();
+		
+		// TODO Make it so this exception (and possibly other critical exceptions) are reported to
+		// us without user interaction. Should also find a way that the log can be sent along with it.
+		
+		safeLog( Level.SEVERE, ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "THE SERVER FAILED TO START, CHECK THE LOGS AND TRY AGAIN (" + ( System.currentTimeMillis() - Loader.startTime ) + "ms)!" );
+	}
+	
+	protected static void handleException( Throwable t )
+	{
+		t.printStackTrace();
+		safeLog( Level.WARNING, ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "**** WE ENCOUNTERED AN UNEXPECTED EXCEPTION ****" );
+	}
+	
+	protected static void safeLog( Level l, String msg )
+	{
+		//if ( Loader.getLogger() != null )
+		//	Loader.getLogger().log( l, msg );
+		//else
+		System.out.println( l.intValue() + " " + Level.WARNING.intValue() );
+		if ( l.intValue() >= Level.WARNING.intValue() )
+			System.err.println( msg );
+		else
+			System.out.println( msg );
 	}
 }

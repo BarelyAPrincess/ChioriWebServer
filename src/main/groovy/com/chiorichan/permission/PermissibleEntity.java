@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -86,7 +87,7 @@ public abstract class PermissibleEntity implements PermissibleParent
 	 * Set prefix to value
 	 * 
 	 * @param prefix
-	 *             new prefix
+	 *            new prefix
 	 */
 	public abstract void setPrefix( String prefix, String siteName );
 	
@@ -106,7 +107,7 @@ public abstract class PermissibleEntity implements PermissibleParent
 	 * Set suffix to value
 	 * 
 	 * @param suffix
-	 *             new suffix
+	 *            new suffix
 	 */
 	public abstract void setSuffix( String suffix, String siteName );
 	
@@ -114,7 +115,7 @@ public abstract class PermissibleEntity implements PermissibleParent
 	 * Checks if entity has specified permission in default site
 	 * 
 	 * @param permission
-	 *             Permission to check
+	 *            Permission to check
 	 * @return true if entity has this permission otherwise false
 	 */
 	public boolean has( String permission )
@@ -126,9 +127,9 @@ public abstract class PermissibleEntity implements PermissibleParent
 	 * Check if entity has specified permission in site
 	 * 
 	 * @param permission
-	 *             Permission to check
+	 *            Permission to check
 	 * @param site
-	 *             Site to check permission in
+	 *            Site to check permission in
 	 * @return true if entity has this permission otherwise false
 	 */
 	public boolean has( String permission, String site )
@@ -141,16 +142,16 @@ public abstract class PermissibleEntity implements PermissibleParent
 		ChildPermission perm = childPermissions.get( permission );
 		
 		if ( isDebug() )
-			PermissionManager.getLogger().info( "Entity " + getName() + " checked for \"" + permission + "\", " + (perm == null ? "no permission found" : "\"" + perm + "\" found") );
+			PermissionManager.getLogger().info( "Entity " + getName() + " checked for \"" + permission + "\", " + ( perm == null ? "no permission found" : "\"" + perm + "\" found" ) );
 		
-		return (perm == null) ? false : true;
+		return ( perm == null ) ? false : true;
 	}
 	
 	/**
 	 * Return all entity permissions in specified site
 	 * 
 	 * @param site
-	 *             Site name
+	 *            Site name
 	 * @return Array of permission expressions
 	 */
 	public abstract String[] getPermissions( String site );
@@ -215,7 +216,7 @@ public abstract class PermissibleEntity implements PermissibleParent
 	 * Returns remaining lifetime of specified permission in site
 	 * 
 	 * @param permission
-	 *             Name of permission
+	 *            Name of permission
 	 * @param site
 	 * @return remaining lifetime in seconds of timed permission. 0 if permission is transient
 	 */
@@ -231,7 +232,7 @@ public abstract class PermissibleEntity implements PermissibleParent
 			return 0;
 		}
 		
-		return (int) (this.timedPermissionsTime.get( site + ":" + permission ).longValue() - (System.currentTimeMillis() / 1000L));
+		return ( int ) ( this.timedPermissionsTime.get( site + ":" + permission ).longValue() - ( System.currentTimeMillis() / 1000L ) );
 	}
 	
 	/**
@@ -240,7 +241,7 @@ public abstract class PermissibleEntity implements PermissibleParent
 	 * @param permission
 	 * @param site
 	 * @param lifeTime
-	 *             Lifetime of permission in seconds. 0 for transient permission (site disappear only after server reload)
+	 *            Lifetime of permission in seconds. 0 for transient permission (site disappear only after server reload)
 	 */
 	public void addTimedPermission( final String permission, String site, int lifeTime )
 	{
@@ -272,7 +273,7 @@ public abstract class PermissibleEntity implements PermissibleParent
 			
 			Loader.getPermissionManager().registerTask( task, lifeTime );
 			
-			this.timedPermissionsTime.put( site + ":" + permission, (System.currentTimeMillis() / 1000L) + lifeTime );
+			this.timedPermissionsTime.put( site + ":" + permission, ( System.currentTimeMillis() / 1000L ) + lifeTime );
 		}
 		
 		Loader.getEventBus().callEvent( new PermissibleEntityEvent( this, PermissibleEntityEvent.Action.PERMISSIONS_CHANGED ) );
@@ -319,7 +320,7 @@ public abstract class PermissibleEntity implements PermissibleParent
 			return true;
 		}
 		
-		final PermissibleEntity other = (PermissibleEntity) obj;
+		final PermissibleEntity other = ( PermissibleEntity ) obj;
 		return this.name.equals( other.name );
 	}
 	
@@ -327,7 +328,7 @@ public abstract class PermissibleEntity implements PermissibleParent
 	public int hashCode()
 	{
 		int hash = 7;
-		hash = 89 * hash + (this.name != null ? this.name.hashCode() : 0);
+		hash = 89 * hash + ( this.name != null ? this.name.hashCode() : 0 );
 		return hash;
 	}
 	

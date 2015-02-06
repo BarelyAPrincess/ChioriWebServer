@@ -17,16 +17,16 @@ import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
-import com.chiorichan.StartupException;
 import com.chiorichan.account.AccountsKeeper.AccountsKeeperOptions;
 import com.chiorichan.account.adapter.AccountLookupAdapter;
 import com.chiorichan.account.adapter.file.FileAdapter;
 import com.chiorichan.account.adapter.sql.SqlAdapter;
 import com.chiorichan.account.system.SystemAccounts;
+import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.event.account.AccountLoginEvent;
 import com.chiorichan.event.account.PreAccountLoginEvent;
 import com.chiorichan.event.account.PreAccountLoginEvent.Result;
-import com.chiorichan.file.YamlConfiguration;
+import com.chiorichan.exception.StartupException;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.session.Session;
 import com.chiorichan.util.Common;

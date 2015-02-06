@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -53,12 +54,12 @@ import com.sun.jersey.core.util.Base64;
 
 public class WebUtils
 {
-	public static String QRPNG( String code ) throws IOException
+	public static String qrPNG( String code ) throws IOException
 	{
-		return QRPNG( code, 200 );
+		return qrPNG( code, 200 );
 	}
 	
-	public static String QRPNG( String code, int size ) throws IOException
+	public static String qrPNG( String code, int size ) throws IOException
 	{
 		if ( size < 1 )
 			return "";
@@ -95,10 +96,10 @@ public class WebUtils
 			allowedChars = new String[0];
 		
 		if ( numbers )
-			allowedChars = ArrayUtils.addAll( allowedChars, new String[] { "1", "2", "3", "4", "5", "6", "7", "8", "9", "0" } );
+			allowedChars = ArrayUtils.addAll( allowedChars, new String[] {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0"} );
 		
 		if ( letters )
-			allowedChars = ArrayUtils.addAll( allowedChars, new String[] { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z" } );
+			allowedChars = ArrayUtils.addAll( allowedChars, new String[] {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"} );
 		
 		String rtn = "";
 		for ( int i = 0; i < length; i++ )
@@ -183,8 +184,8 @@ public class WebUtils
 			byte[] tbyte = new byte[2];
 			new Random().nextBytes( bytes );
 			
-			tbyte[0] = (byte) ( b + tbyte[0] );
-			tbyte[1] = (byte) ( b + tbyte[1] );
+			tbyte[0] = ( byte ) ( b + tbyte[0] );
+			tbyte[1] = ( byte ) ( b + tbyte[1] );
 			
 			bytesScrambled = ArrayUtils.addAll( bytesScrambled, tbyte );
 		}
@@ -267,7 +268,7 @@ public class WebUtils
 		{
 			if ( row instanceof Map )
 			{
-				colLength = Math.max( ( (Map<String, Object>) row ).size(), colLength );
+				colLength = Math.max( ( ( Map<String, Object> ) row ).size(), colLength );
 			}
 		}
 		
@@ -281,11 +282,11 @@ public class WebUtils
 				Map<String, Object> map = new LinkedHashMap<String, Object>();
 				
 				if ( row instanceof Map )
-					map = (Map<String, Object>) row;
+					map = ( Map<String, Object> ) row;
 				else
 				{
 					int y = 0;
-					for ( Object o : (List<Object>) row )
+					for ( Object o : ( List<Object> ) row )
 					{
 						map.put( y + "", o );
 						y++;
@@ -308,7 +309,7 @@ public class WebUtils
 					{
 						if ( col != null )
 						{
-							String subclass = ( col instanceof String && ( (String) col ).isEmpty() ) ? " emptyCol" : "";
+							String subclass = ( col instanceof String && ( ( String ) col ).isEmpty() ) ? " emptyCol" : "";
 							sb.append( "<td id=\"col_" + cc + "\" class=\"" + subclass + "\">" + col + "</td>\n" );
 							cc++;
 						}
@@ -318,7 +319,7 @@ public class WebUtils
 			}
 			else if ( row instanceof String )
 			{
-				sb.append( "<tr><td class=\"" + clss + "\" colspan=\"" + colLength + "\"><b><center>" + ( (String) row ) + "</b></center></td></tr>\n" );
+				sb.append( "<tr><td class=\"" + clss + "\" colspan=\"" + colLength + "\"><b><center>" + ( ( String ) row ) + "</b></center></td></tr>\n" );
 			}
 			else
 			{
@@ -344,14 +345,16 @@ public class WebUtils
 	/**
 	 * Establishes an HttpURLConnection from a URL, with the correct configuration to receive content from the given URL.
 	 * 
-	 * @param url The URL to set up and receive content from
+	 * @param url
+	 *            The URL to set up and receive content from
 	 * @return A valid HttpURLConnection
 	 * 
-	 * @throws IOException The openConnection() method throws an IOException and the calling method is responsible for handling it.
+	 * @throws IOException
+	 *             The openConnection() method throws an IOException and the calling method is responsible for handling it.
 	 */
 	public static HttpURLConnection openHttpConnection( URL url ) throws IOException
 	{
-		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+		HttpURLConnection conn = ( HttpURLConnection ) url.openConnection();
 		conn.setDoInput( true );
 		conn.setDoOutput( false );
 		System.setProperty( "http.agent", getUserAgent() );
@@ -366,7 +369,8 @@ public class WebUtils
 	 * Opens an HTTP connection to a web URL and tests that the response is a valid 200-level code
 	 * and we can successfully open a stream to the content.
 	 * 
-	 * @param urlLoc The HTTP URL indicating the location of the content.
+	 * @param url
+	 *            The HTTP URL indicating the location of the content.
 	 * @return True if the content can be accessed successfully, false otherwise.
 	 */
 	public static boolean pingHttpURL( String url )
@@ -407,7 +411,7 @@ public class WebUtils
 		try
 		{
 			URL urlObj = new URL( url );
-			HttpURLConnection con = (HttpURLConnection) urlObj.openConnection();
+			HttpURLConnection con = ( HttpURLConnection ) urlObj.openConnection();
 			con.setRequestMethod( "POST" );
 			
 			String urlParameters = "v=1&tid=UA-32999410-1&cid=" + Loader.getConfig().getString( "server.installationUID", Loader.clientId ) + "&t=event&ec=" + category + "&ea=" + action + "&el=" + label;
@@ -446,7 +450,7 @@ public class WebUtils
 	
 	public static Date getNTPDate()
 	{
-		String[] hosts = new String[] { "ntp02.oal.ul.pt", "ntp04.oal.ul.pt", "ntp.xs4all.nl" };
+		String[] hosts = new String[] {"ntp02.oal.ul.pt", "ntp04.oal.ul.pt", "ntp.xs4all.nl"};
 		
 		NTPUDPClient client = new NTPUDPClient();
 		// We want to timeout if a response takes longer than 5 seconds
@@ -551,7 +555,7 @@ public class WebUtils
 		
 		for ( String param : query.split( "&" ) )
 		{
-			String pair[] = param.split( "=" );
+			String[] pair = param.split( "=" );
 			try
 			{
 				if ( pair.length > 1 )

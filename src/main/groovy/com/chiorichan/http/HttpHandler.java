@@ -1,3 +1,12 @@
+/**
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
+ */
 package com.chiorichan.http;
 
 import static io.netty.handler.codec.http.HttpHeaders.is100ContinueExpected;
@@ -98,16 +107,16 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 	{
 		if ( msg instanceof HttpRequest )
 		{
-			requestOrig = (HttpRequest) msg;
+			requestOrig = ( HttpRequest ) msg;
 			request = new HttpRequestWrapper( ctx.channel(), requestOrig );
 			response = request.getResponse();
 			
-			if ( is100ContinueExpected( (HttpRequest) msg ) )
+			if ( is100ContinueExpected( ( HttpRequest ) msg ) )
 				send100Continue( ctx );
 			
 			Site currentSite = request.getSite();
 			
-			File tmpFileDirectory = (currentSite != null) ? currentSite.getTempFileDirectory() : Loader.getTempFileDirectory();
+			File tmpFileDirectory = ( currentSite != null ) ? currentSite.getTempFileDirectory() : Loader.getTempFileDirectory();
 			if ( !tmpFileDirectory.exists() )
 				tmpFileDirectory.mkdirs();
 			if ( !tmpFileDirectory.isDirectory() )
@@ -127,7 +136,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 			{
 				decoder = new HttpPostRequestDecoder( factory, requestOrig );
 			}
-			catch( ErrorDataDecoderException e )
+			catch ( ErrorDataDecoderException e )
 			{
 				e.printStackTrace();
 				response.sendException( e );
@@ -136,7 +145,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 		}
 		else if ( msg instanceof HttpContent )
 		{
-			HttpContent chunk = (HttpContent) msg;
+			HttpContent chunk = ( HttpContent ) msg;
 			
 			request.addContentLength( chunk.content().readableBytes() );
 			
@@ -146,7 +155,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 				{
 					decoder.offer( chunk );
 				}
-				catch( ErrorDataDecoderException e )
+				catch ( ErrorDataDecoderException e )
 				{
 					e.printStackTrace();
 					response.sendError( e );
@@ -169,12 +178,12 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 		{
 			handleHttp( request, response );
 		}
-		catch( HttpErrorException e )
+		catch ( HttpErrorException e )
 		{
 			response.sendError( e );
 			return;
 		}
-		catch( IndexOutOfBoundsException | NullPointerException | IOException | SiteException e )
+		catch ( IndexOutOfBoundsException | NullPointerException | IOException | SiteException e )
 		{
 			/**
 			 * TODO!!! Proper Exception Handling. Consider the ability to have these exceptions cached and/or delivered by e-mail.
@@ -190,7 +199,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 				response.sendException( e );
 			}
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
 			/**
 			 * XXX Temporary way of capturing exceptions that were unexpected by the server.
@@ -208,7 +217,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 				sess.onFinished();
 			}
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
 			e.printStackTrace();
 		}
@@ -232,7 +241,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 	{
 		try
 		{
-			while( decoder.hasNext() )
+			while ( decoder.hasNext() )
 			{
 				InterfaceHttpData data = decoder.next();
 				if ( data != null )
@@ -249,7 +258,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 				}
 			}
 		}
-		catch( EndOfDataDecoderException e )
+		catch ( EndOfDataDecoderException e )
 		{
 			// END OF CONTENT
 		}
@@ -259,13 +268,13 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 	{
 		if ( data.getHttpDataType() == HttpDataType.Attribute )
 		{
-			Attribute attribute = (Attribute) data;
+			Attribute attribute = ( Attribute ) data;
 			String value;
 			try
 			{
 				value = attribute.getValue();
 			}
-			catch( IOException e )
+			catch ( IOException e )
 			{
 				e.printStackTrace();
 				response.sendException( e );
@@ -276,14 +285,14 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 		}
 		else if ( data.getHttpDataType() == HttpDataType.FileUpload )
 		{
-			FileUpload fileUpload = (FileUpload) data;
+			FileUpload fileUpload = ( FileUpload ) data;
 			if ( fileUpload.isCompleted() )
 			{
 				try
 				{
 					request.putUpload( fileUpload.getName(), new UploadedFile( fileUpload.getFile(), fileUpload.getFilename(), fileUpload.length(), "File upload was successful!" ) );
 				}
-				catch( IOException e )
+				catch ( IOException e )
 				{
 					e.printStackTrace();
 					response.sendException( e );
@@ -325,7 +334,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 		{
 			Loader.getEventBus().callEventWithException( requestEvent );
 		}
-		catch( EventException ex )
+		catch ( EventException ex )
 		{
 			throw new IOException( "Exception encountered during request event call, most likely the fault of a plugin.", ex );
 		}
@@ -452,7 +461,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 				source.append( factory.eval( html, meta, currentSite ) );
 			}
 		}
-		catch( ShellExecuteException e )
+		catch ( ShellExecuteException e )
 		{
 			throw new IOException( "Exception encountered during shell execution of requested file.", e );
 		}
@@ -468,7 +477,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 				source.append( factory.eval( fi, meta, currentSite ) );
 			}
 		}
-		catch( ShellExecuteException e )
+		catch ( ShellExecuteException e )
 		{
 			throw new IOException( "Exception encountered during shell execution of requested file.", e );
 		}
@@ -477,14 +486,14 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 		// if the connection was in a MultiPart mode, wait for the mode to change then return gracefully.
 		if ( response.stage == HttpResponseStage.MULTIPART )
 		{
-			while( response.stage == HttpResponseStage.MULTIPART )
+			while ( response.stage == HttpResponseStage.MULTIPART )
 			{
 				// I wonder if there is a better way to handle an on going multipart response.
 				try
 				{
 					Thread.sleep( 100 );
 				}
-				catch( InterruptedException e )
+				catch ( InterruptedException e )
 				{
 					throw new HttpErrorException( 500, "Internal Server Error encountered during multipart execution." );
 				}
@@ -511,7 +520,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 			if ( renderEvent.sourceChanged() )
 				source = new StringBuilder( renderEvent.getSource() );
 		}
-		catch( EventException ex )
+		catch ( EventException ex )
 		{
 			throw new IOException( "Exception encountered during render event call, most likely the fault of a plugin.", ex );
 		}

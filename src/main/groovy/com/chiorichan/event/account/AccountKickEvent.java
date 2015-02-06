@@ -23,9 +23,9 @@ public class AccountKickEvent extends AccountEvent implements Cancellable
 	private String kickReason;
 	private Boolean cancel;
 	
-	public AccountKickEvent(final Account<?> UserKicked, final String kickReason, final String leaveMessage)
+	public AccountKickEvent( final Account<?> userKicked, final String kickReason, final String leaveMessage )
 	{
-		super( UserKicked );
+		super( userKicked );
 		this.kickReason = kickReason;
 		this.leaveMessage = leaveMessage;
 		this.cancel = false;
@@ -65,7 +65,7 @@ public class AccountKickEvent extends AccountEvent implements Cancellable
 	 * Sets the reason why the User is getting kicked
 	 * 
 	 * @param kickReason
-	 *             kick reason
+	 *            kick reason
 	 */
 	public void setReason( String kickReason )
 	{
@@ -76,7 +76,7 @@ public class AccountKickEvent extends AccountEvent implements Cancellable
 	 * Sets the leave message send to all online Users
 	 * 
 	 * @param leaveMessage
-	 *             leave message
+	 *            leave message
 	 */
 	public void setLeaveMessage( String leaveMessage )
 	{

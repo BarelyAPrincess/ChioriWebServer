@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -17,14 +18,14 @@ public interface EventCreator
 	 * 
 	 * @return Contents of the plugin.yaml file
 	 */
-	public PluginDescriptionFile getDescription();
+	PluginDescriptionFile getDescription();
 	
 	/**
 	 * Returns a value indicating whether or not this plugin is currently enabled
 	 * 
 	 * @return true if this plugin is enabled, otherwise false
 	 */
-	public boolean isEnabled();
+	boolean isEnabled();
 	
 	/**
 	 * Returns the name of the plugin.
@@ -33,5 +34,5 @@ public interface EventCreator
 	 * 
 	 * @return name of the plugin
 	 */
-	public String getName();
+	String getName();
 }

@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -42,19 +42,26 @@ public class FilePart extends Part
 	/**
 	 * Construct a file part; this is called by the parser.
 	 * 
-	 * @param name the name of the parameter.
-	 * @param buffer the servlet input stream to read the file from.
-	 * @param boundary the MIME boundary that delimits the end of file.
-	 * @param contentType the content type of the file provided in the
-	 *             MIME header.
-	 * @param fileName the file system name of the file provided in the
-	 *             MIME header.
-	 * @param filePath the file system path of the file provided in the
-	 *             MIME header (as specified in disposition info).
+	 * @param name
+	 *            the name of the parameter.
+	 * @param buffer
+	 *            the servlet input stream to read the file from.
+	 * @param boundary
+	 *            the MIME boundary that delimits the end of file.
+	 * @param contentType
+	 *            the content type of the file provided in the
+	 *            MIME header.
+	 * @param fileName
+	 *            the file system name of the file provided in the
+	 *            MIME header.
+	 * @param filePath
+	 *            the file system path of the file provided in the
+	 *            MIME header (as specified in disposition info).
 	 * 
-	 * @exception IOException if an input or output exception has occurred.
+	 * @exception IOException
+	 *                if an input or output exception has occurred.
 	 */
-	FilePart(String name, byte[] data, String contentType, String fileName, String filePath) throws IOException
+	FilePart( String name, byte[] data, String contentType, String fileName, String filePath ) throws IOException
 	{
 		super( name );
 		this.fileName = fileName;
@@ -138,7 +145,8 @@ public class FilePart extends Part
 	 * method does nothing.
 	 *
 	 * @return number of bytes written
-	 * @exception IOException if an input or output exception has occurred.
+	 * @exception IOException
+	 *                if an input or output exception has occurred.
 	 */
 	public long writeTo( File fileOrDirectory ) throws IOException
 	{
@@ -235,7 +243,8 @@ public class FilePart extends Part
 	 * contain a file this method does nothing.
 	 *
 	 * @return number of bytes written.
-	 * @exception IOException if an input or output exception has occurred.
+	 * @exception IOException
+	 *                if an input or output exception has occurred.
 	 */
 	public long writeTo( OutputStream out ) throws IOException
 	{
@@ -254,7 +263,8 @@ public class FilePart extends Part
 	 * if it has contents first.
 	 *
 	 * @return number of bytes written.
-	 * @exception IOException if an input or output exception has occurred.
+	 * @exception IOException
+	 *                if an input or output exception has occurred.
 	 */
 	long write( OutputStream out ) throws IOException
 	{

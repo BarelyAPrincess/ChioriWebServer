@@ -1,3 +1,12 @@
+/**
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
+ */
 package net.glxn.qrgen;
 
 import java.io.ByteArrayOutputStream;
@@ -62,7 +71,7 @@ public class QRCode
 	 * 125) <br/>
 	 * 
 	 * @param text
-	 *             the text to encode to a new QRCode, this may fail if the text is too large. <br/>
+	 *            the text to encode to a new QRCode, this may fail if the text is too large. <br/>
 	 * @return the QRCode object <br/>
 	 */
 	public static QRCode from( String text )
@@ -74,7 +83,7 @@ public class QRCode
 	 * Overrides the imageType from its default {@link ImageType#PNG}
 	 * 
 	 * @param imageType
-	 *             the {@link ImageType} you would like the resulting QR to be
+	 *            the {@link ImageType} you would like the resulting QR to be
 	 * @return the current QRCode object
 	 */
 	public QRCode to( ImageType imageType )
@@ -87,9 +96,9 @@ public class QRCode
 	 * Overrides the size of the qr from its default 125x125
 	 * 
 	 * @param width
-	 *             the width in pixels
+	 *            the width in pixels
 	 * @param height
-	 *             the height in pixels
+	 *            the height in pixels
 	 * @return the current QRCode object
 	 */
 	public QRCode withSize( int width, int height )
@@ -131,7 +140,7 @@ public class QRCode
 			file = createTempFile();
 			MatrixToImageWriter.writeToFile( createMatrix(), imageType.toString(), file );
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
 			throw new QRGenerationException( "Failed to create QR image from text due to underlying exception", e );
 		}
@@ -146,7 +155,7 @@ public class QRCode
 	 * 
 	 * @see #file()
 	 * @param name
-	 *             name of the created file
+	 *            name of the created file
 	 * @return qrcode as file
 	 */
 	@SuppressWarnings( "deprecation" )
@@ -158,7 +167,7 @@ public class QRCode
 			file = createTempFile( name );
 			MatrixToImageWriter.writeToFile( createMatrix(), imageType.toString(), file );
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
 			throw new QRGenerationException( "Failed to create QR image from text due to underlying exception", e );
 		}
@@ -178,7 +187,7 @@ public class QRCode
 		{
 			writeToStream( stream );
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
 			throw new QRGenerationException( "Failed to create QR image from text due to underlying exception", e );
 		}
@@ -190,7 +199,7 @@ public class QRCode
 	 * writes a representation of the QR code to the supplied {@link OutputStream}
 	 * 
 	 * @param stream
-	 *             the {@link OutputStream} to write QR Code to
+	 *            the {@link OutputStream} to write QR Code to
 	 */
 	public void writeTo( OutputStream stream )
 	{
@@ -198,7 +207,7 @@ public class QRCode
 		{
 			writeToStream( stream );
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
 			throw new QRGenerationException( "Failed to create QR image from text due to underlying exception", e );
 		}

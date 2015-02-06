@@ -1,4 +1,15 @@
 /**
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
+ */
+package vnet.java.util;
+
+/**
  * Mysql Utilities
  * 
  * @author Ralph Ritoch <rritoch@gmail.com>
@@ -6,9 +17,6 @@
  * @link http://www.vnetpublishing.com
  * 
  */
-
-package vnet.java.util;
-
 public class MySQLUtils
 {
 	
@@ -37,22 +45,22 @@ public class MySQLUtils
 			return str;
 		}
 		
-		String clean_string = str;
-		clean_string = clean_string.replaceAll( "\\\\", "\\\\\\\\" );
-		clean_string = clean_string.replaceAll( "\\n", "\\\\n" );
-		clean_string = clean_string.replaceAll( "\\r", "\\\\r" );
-		clean_string = clean_string.replaceAll( "\\t", "\\\\t" );
-		clean_string = clean_string.replaceAll( "\\00", "\\\\0" );
-		clean_string = clean_string.replaceAll( "'", "\\\\'" );
-		clean_string = clean_string.replaceAll( "\\\"", "\\\\\"" );
+		String cleanString = str;
+		cleanString = cleanString.replaceAll( "\\\\", "\\\\\\\\" );
+		cleanString = cleanString.replaceAll( "\\n", "\\\\n" );
+		cleanString = cleanString.replaceAll( "\\r", "\\\\r" );
+		cleanString = cleanString.replaceAll( "\\t", "\\\\t" );
+		cleanString = cleanString.replaceAll( "\\00", "\\\\0" );
+		cleanString = cleanString.replaceAll( "'", "\\\\'" );
+		cleanString = cleanString.replaceAll( "\\\"", "\\\\\"" );
 		
-		if ( clean_string.replaceAll( "[a-zA-Z0-9_!@#$%^&*()-=+~.;:,\\Q[\\E\\Q]\\E<>{}\\/?\\\\\"' ]", "" ).length() < 1 )
+		if ( cleanString.replaceAll( "[a-zA-Z0-9_!@#$%^&*()-=+~.;:,\\Q[\\E\\Q]\\E<>{}\\/?\\\\\"' ]", "" ).length() < 1 )
 		{
-			return clean_string;
+			return cleanString;
 		}
 		
 		java.sql.Statement stmt = link.createStatement();
-		String qry = "SELECT QUOTE('" + clean_string + "')";
+		String qry = "SELECT QUOTE('" + cleanString + "')";
 		
 		stmt.executeQuery( qry );
 		java.sql.ResultSet resultSet = stmt.getResultSet();
@@ -73,21 +81,21 @@ public class MySQLUtils
 			return str;
 		}
 		
-		String clean_string = str;
-		clean_string = clean_string.replaceAll( "\\\\", "\\\\\\\\" );
-		clean_string = clean_string.replaceAll( "\\n", "\\\\n" );
-		clean_string = clean_string.replaceAll( "\\r", "\\\\r" );
-		clean_string = clean_string.replaceAll( "\\t", "\\\\t" );
-		clean_string = clean_string.replaceAll( "\\00", "\\\\0" );
-		clean_string = clean_string.replaceAll( "'", "\\\\'" );
-		clean_string = clean_string.replaceAll( "\\\"", "\\\\\"" );
+		String cleanString = str;
+		cleanString = cleanString.replaceAll( "\\\\", "\\\\\\\\" );
+		cleanString = cleanString.replaceAll( "\\n", "\\\\n" );
+		cleanString = cleanString.replaceAll( "\\r", "\\\\r" );
+		cleanString = cleanString.replaceAll( "\\t", "\\\\t" );
+		cleanString = cleanString.replaceAll( "\\00", "\\\\0" );
+		cleanString = cleanString.replaceAll( "'", "\\\\'" );
+		cleanString = cleanString.replaceAll( "\\\"", "\\\\\"" );
 		
-		if ( clean_string.replaceAll( "[a-zA-Z0-9_!@#$%^&*()-=+~.;:,\\Q[\\E\\Q]\\E<>{}\\/?\\\\\"' ]", "" ).length() < 1 )
+		if ( cleanString.replaceAll( "[a-zA-Z0-9_!@#$%^&*()-=+~.;:,\\Q[\\E\\Q]\\E<>{}\\/?\\\\\"' ]", "" ).length() < 1 )
 		{
-			return clean_string;
+			return cleanString;
 		}
 		
-		return clean_string;
+		return cleanString;
 	}
 	
 	/**

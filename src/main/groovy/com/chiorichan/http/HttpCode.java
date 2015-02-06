@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -148,8 +148,8 @@ public class HttpCode
 				return " Gateway Timeout";
 			case HTTP_VERSION:
 				return " HTTP Version Not Supported";
-			//case HTTP_THE_DOCTOR:
-				//return "I'm a Madman With A Blue Box!";
+				// case HTTP_THE_DOCTOR:
+				// return "I'm a Madman With A Blue Box!";
 			case HTTP_BLUE_BOX:
 				return "Time and Relative Dimensions in Space. Yes, that's it. Names are funny. It's me. I'm the TARDIS.";
 			default:
@@ -157,62 +157,62 @@ public class HttpCode
 		}
 		
 		/*
-		statusCodes.put( 202, "Accepted" );
-		statusCodes.put( 208, "Already Reported" );
-		statusCodes.put( 502, "Bad Gateway" );
-		statusCodes.put( 400, "Bad Request" );
-		statusCodes.put( 409, "Conflict" );
-		statusCodes.put( 100, "Continue" );
-		statusCodes.put( 201, "Created" );
-		statusCodes.put( 421, "Destination Locked" );
-		statusCodes.put( 417, "Expectation Failed" );
-		statusCodes.put( 424, "Failed Dependency" );
-		statusCodes.put( 403, "Forbidden" );
-		statusCodes.put( 302, "Found" );
-		statusCodes.put( 504, "Gateway Timeout" );
-		statusCodes.put( 410, "Gone" );
-		statusCodes.put( 505, "HTTP Version Not Supported" );
-		statusCodes.put( 226, "IM Used" );
-		statusCodes.put( 419, "Insufficient Space on Resource" );
-		statusCodes.put( 507, "Insufficient Storage" );
-		statusCodes.put( 500, "Internal Server Error" );
-		statusCodes.put( 411, "Length Required" );
-		statusCodes.put( 423, "Locked" );
-		statusCodes.put( 508, "Loop Detected" );
-		statusCodes.put( 420, "Method Failure" );
-		statusCodes.put( 405, "Method Not Allowed" );
-		statusCodes.put( 301, "Moved Permanently" );
-		statusCodes.put( 302, "Moved Temporarily" );
-		statusCodes.put( 207, "Multi-Status" );
-		statusCodes.put( 300, "Multiple Choices" );
-		statusCodes.put( 204, "No Content" );
-		statusCodes.put( 203, "Non-Authoritative Information" );
-		statusCodes.put( 406, "Not Acceptable" );
-		statusCodes.put( 510, "Not Extended" );
-		statusCodes.put( 404, "Not Found" );
-		statusCodes.put( 501, "Not Implemented" );
-		statusCodes.put( 304, "Not Modified" );
-		statusCodes.put( 200, "OK" );
-		statusCodes.put( 206, "Partial Content" );
-		statusCodes.put( 402, "Payment Required" );
-		statusCodes.put( 412, "Precondition failed" );
-		statusCodes.put( 102, "Processing" );
-		statusCodes.put( 407, "Proxy Authentication Required" );
-		statusCodes.put( 413, "Request Entity Too Large" );
-		statusCodes.put( 408, "Request Timeout" );
-		statusCodes.put( 414, "Request-URI Too Long" );
-		statusCodes.put( 416, "Requested Range Not Satisfiable" );
-		statusCodes.put( 205, "Reset Content" );
-		statusCodes.put( 303, "See Other" );
-		statusCodes.put( 503, "Service Unavailable." );
-		statusCodes.put( 101, "Switching Protocols" );
-		statusCodes.put( 307, "Temporary Redirect" );
-		statusCodes.put( 401, "Unauthorized" );
-		statusCodes.put( 422, "Unprocessable Entity" );
-		statusCodes.put( 415, "Unsupported Media Type" );
-		statusCodes.put( 426, "Upgrade Required" );
-		statusCodes.put( 305, "Use Proxy" );
-		statusCodes.put( 506, "Variant Also Negotiates" );
-		*/
+		 * statusCodes.put( 202, "Accepted" );
+		 * statusCodes.put( 208, "Already Reported" );
+		 * statusCodes.put( 502, "Bad Gateway" );
+		 * statusCodes.put( 400, "Bad Request" );
+		 * statusCodes.put( 409, "Conflict" );
+		 * statusCodes.put( 100, "Continue" );
+		 * statusCodes.put( 201, "Created" );
+		 * statusCodes.put( 421, "Destination Locked" );
+		 * statusCodes.put( 417, "Expectation Failed" );
+		 * statusCodes.put( 424, "Failed Dependency" );
+		 * statusCodes.put( 403, "Forbidden" );
+		 * statusCodes.put( 302, "Found" );
+		 * statusCodes.put( 504, "Gateway Timeout" );
+		 * statusCodes.put( 410, "Gone" );
+		 * statusCodes.put( 505, "HTTP Version Not Supported" );
+		 * statusCodes.put( 226, "IM Used" );
+		 * statusCodes.put( 419, "Insufficient Space on Resource" );
+		 * statusCodes.put( 507, "Insufficient Storage" );
+		 * statusCodes.put( 500, "Internal Server Error" );
+		 * statusCodes.put( 411, "Length Required" );
+		 * statusCodes.put( 423, "Locked" );
+		 * statusCodes.put( 508, "Loop Detected" );
+		 * statusCodes.put( 420, "Method Failure" );
+		 * statusCodes.put( 405, "Method Not Allowed" );
+		 * statusCodes.put( 301, "Moved Permanently" );
+		 * statusCodes.put( 302, "Moved Temporarily" );
+		 * statusCodes.put( 207, "Multi-Status" );
+		 * statusCodes.put( 300, "Multiple Choices" );
+		 * statusCodes.put( 204, "No Content" );
+		 * statusCodes.put( 203, "Non-Authoritative Information" );
+		 * statusCodes.put( 406, "Not Acceptable" );
+		 * statusCodes.put( 510, "Not Extended" );
+		 * statusCodes.put( 404, "Not Found" );
+		 * statusCodes.put( 501, "Not Implemented" );
+		 * statusCodes.put( 304, "Not Modified" );
+		 * statusCodes.put( 200, "OK" );
+		 * statusCodes.put( 206, "Partial Content" );
+		 * statusCodes.put( 402, "Payment Required" );
+		 * statusCodes.put( 412, "Precondition failed" );
+		 * statusCodes.put( 102, "Processing" );
+		 * statusCodes.put( 407, "Proxy Authentication Required" );
+		 * statusCodes.put( 413, "Request Entity Too Large" );
+		 * statusCodes.put( 408, "Request Timeout" );
+		 * statusCodes.put( 414, "Request-URI Too Long" );
+		 * statusCodes.put( 416, "Requested Range Not Satisfiable" );
+		 * statusCodes.put( 205, "Reset Content" );
+		 * statusCodes.put( 303, "See Other" );
+		 * statusCodes.put( 503, "Service Unavailable." );
+		 * statusCodes.put( 101, "Switching Protocols" );
+		 * statusCodes.put( 307, "Temporary Redirect" );
+		 * statusCodes.put( 401, "Unauthorized" );
+		 * statusCodes.put( 422, "Unprocessable Entity" );
+		 * statusCodes.put( 415, "Unsupported Media Type" );
+		 * statusCodes.put( 426, "Upgrade Required" );
+		 * statusCodes.put( 305, "Use Proxy" );
+		 * statusCodes.put( 506, "Variant Also Negotiates" );
+		 */
 	}
 }

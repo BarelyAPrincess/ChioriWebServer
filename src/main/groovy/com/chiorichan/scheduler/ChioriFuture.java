@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -22,31 +23,31 @@ class ChioriFuture<T> extends ChioriTask implements Future<T>
 	private T value;
 	private Exception exception = null;
 	
-	ChioriFuture(final Callable<T> callable, final TaskCreator creator, final int id)
+	ChioriFuture( final Callable<T> callable, final TaskCreator creator, final int id )
 	{
-		super( creator, null, id, -1l );
+		super( creator, null, id, -1L );
 		this.callable = callable;
 	}
 	
 	public synchronized boolean cancel( final boolean mayInterruptIfRunning )
 	{
-		if ( getPeriod() != -1l )
+		if ( getPeriod() != -1L )
 		{
 			return false;
 		}
-		setPeriod( -2l );
+		setPeriod( -2L );
 		return true;
 	}
 	
 	public boolean isCancelled()
 	{
-		return getPeriod() == -2l;
+		return getPeriod() == -2L;
 	}
 	
 	public boolean isDone()
 	{
 		final long period = this.getPeriod();
-		return period != -1l && period != -3l;
+		return period != -1L && period != -3L;
 	}
 	
 	public T get() throws CancellationException, InterruptedException, ExecutionException
@@ -65,16 +66,16 @@ class ChioriFuture<T> extends ChioriTask implements Future<T>
 	{
 		timeout = unit.toMillis( timeout );
 		long period = this.getPeriod();
-		long timestamp = timeout > 0 ? System.currentTimeMillis() : 0l;
+		long timestamp = timeout > 0 ? System.currentTimeMillis() : 0L;
 		while ( true )
 		{
-			if ( period == -1l || period == -3l )
+			if ( period == -1L || period == -3L )
 			{
 				this.wait( timeout );
 				period = this.getPeriod();
-				if ( period == -1l || period == -3l )
+				if ( period == -1L || period == -3L )
 				{
-					if ( timeout == 0l )
+					if ( timeout == 0L )
 					{
 						continue;
 					}
@@ -86,11 +87,11 @@ class ChioriFuture<T> extends ChioriTask implements Future<T>
 					throw new TimeoutException();
 				}
 			}
-			if ( period == -2l )
+			if ( period == -2L )
 			{
 				throw new CancellationException();
 			}
-			if ( period == -4l )
+			if ( period == -4L )
 			{
 				if ( exception == null )
 				{
@@ -98,7 +99,7 @@ class ChioriFuture<T> extends ChioriTask implements Future<T>
 				}
 				throw new ExecutionException( exception );
 			}
-			throw new IllegalStateException( "Expected " + -1l + " to " + -4l + ", got " + period );
+			throw new IllegalStateException( "Expected " + -1L + " to " + -4L + ", got " + period );
 		}
 	}
 	
@@ -107,11 +108,11 @@ class ChioriFuture<T> extends ChioriTask implements Future<T>
 	{
 		synchronized ( this )
 		{
-			if ( getPeriod() == -2l )
+			if ( getPeriod() == -2L )
 			{
 				return;
 			}
-			setPeriod( -3l );
+			setPeriod( -3L );
 		}
 		try
 		{
@@ -125,7 +126,7 @@ class ChioriFuture<T> extends ChioriTask implements Future<T>
 		{
 			synchronized ( this )
 			{
-				setPeriod( -4l );
+				setPeriod( -4L );
 				this.notifyAll();
 			}
 		}
@@ -133,11 +134,11 @@ class ChioriFuture<T> extends ChioriTask implements Future<T>
 	
 	synchronized boolean cancel0()
 	{
-		if ( getPeriod() != -1l )
+		if ( getPeriod() != -1L )
 		{
 			return false;
 		}
-		setPeriod( -2l );
+		setPeriod( -2L );
 		notifyAll();
 		return true;
 	}

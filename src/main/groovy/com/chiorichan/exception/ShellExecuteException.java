@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -21,34 +21,34 @@ public class ShellExecuteException extends Exception
 	
 	CodeMetaData meta = new CodeMetaData();
 	
-	public ShellExecuteException(CodeMetaData _meta)
+	public ShellExecuteException( CodeMetaData meta )
 	{
 		super();
-		meta = _meta;
+		this.meta = meta;
 	}
 	
-	public ShellExecuteException(String message, CodeMetaData _meta)
+	public ShellExecuteException( String message, CodeMetaData meta )
 	{
 		super( message );
-		meta = _meta;
+		this.meta = meta;
 	}
 	
-	public ShellExecuteException(String message, Throwable cause, CodeMetaData _meta)
+	public ShellExecuteException( String message, Throwable cause, CodeMetaData meta )
 	{
 		super( message, cause );
-		meta = _meta;
+		this.meta = meta;
 	}
 	
-	public ShellExecuteException(Throwable cause, CodeMetaData _meta)
+	public ShellExecuteException( Throwable cause, CodeMetaData meta )
 	{
 		super( cause );
-		meta = _meta;
+		this.meta = meta;
 	}
 	
-	protected ShellExecuteException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace, CodeMetaData _meta)
+	protected ShellExecuteException( String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace, CodeMetaData meta )
 	{
 		super( message, cause, enableSuppression, writableStackTrace );
-		meta = _meta;
+		this.meta = meta;
 	}
 	
 	public CodeMetaData getCodeMetaData()

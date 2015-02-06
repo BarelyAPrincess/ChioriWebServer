@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -59,7 +60,7 @@ public class SqlSession extends Session
 			
 			Loader.getLogger().info( ConsoleColor.DARK_AQUA + "Session Restored `" + this + "`" );
 		}
-		catch( SQLException e )
+		catch ( SQLException e )
 		{
 			throw new SessionException( e );
 		}
@@ -78,7 +79,7 @@ public class SqlSession extends Session
 		{
 			rs = Loader.getDatabase().query( "SELECT * FROM `sessions` WHERE `sessionId` = '" + sessionCandy.getValue() + "'" );
 		}
-		catch( SQLException e1 )
+		catch ( SQLException e1 )
 		{
 			e1.printStackTrace();
 		}
@@ -108,19 +109,19 @@ public class SqlSession extends Session
 						data.putAll( tmpData );
 				}
 				
-				String _ipAddr = rs.getString( "ipAddr" );
-				if ( _ipAddr != null && !_ipAddr.isEmpty() )
+				String ipAddr = rs.getString( "ipAddr" );
+				if ( ipAddr != null && !ipAddr.isEmpty() )
 				{
 					// Possible Session Hijacking! nullify!!!
-					if ( !_ipAddr.equals( ipAddr ) && !Loader.getConfig().getBoolean( "sessions.allowIPChange" ) )
+					if ( !ipAddr.equals( ipAddr ) && !Loader.getConfig().getBoolean( "sessions.allowIPChange" ) )
 					{
 						sessionCandy = null;
 					}
 					
-					ipAddr = _ipAddr;
+					this.ipAddr = ipAddr;
 				}
 			}
-			catch( JsonSyntaxException | SQLException e )
+			catch ( JsonSyntaxException | SQLException e )
 			{
 				e.printStackTrace();
 				sessionCandy = null;
@@ -150,7 +151,7 @@ public class SqlSession extends Session
 			else
 				sql.queryUpdate( "UPDATE `sessions` SET `data` = '" + dataJson + "', `timeout` = '" + getTimeout() + "', `sessionName` = '" + sessionCandy.getKey() + "', `ipAddr` = '" + getIpAddr() + "', `sessionSite` = '" + getSite().getName() + "' WHERE `sessionId` = '" + sessionCandy.getValue() + "';" );
 		}
-		catch( SQLException e )
+		catch ( SQLException e )
 		{
 			Loader.getLogger().severe( "There was an exception thorwn while trying to save the session.", e );
 		}
@@ -163,7 +164,7 @@ public class SqlSession extends Session
 		{
 			Loader.getDatabase().queryUpdate( "DELETE FROM `sessions` WHERE `sessionName` = '" + getName() + "' AND `sessionId` = '" + getId() + "';" );
 		}
-		catch( SQLException e )
+		catch ( SQLException e )
 		{
 			e.printStackTrace();
 		}
@@ -185,7 +186,7 @@ public class SqlSession extends Session
 					{
 						sessionList.add( new SqlSession( rs ) );
 					}
-					catch( SessionException e )
+					catch ( SessionException e )
 					{
 						if ( e.getMessage().contains( "expired" ) )
 							sql.queryUpdate( "DELETE FROM `sessions` WHERE `sessionId` = '" + rs.getString( "sessionId" ) + "' && `sessionName` = '" + rs.getString( "sessionName" ) + "';" );
@@ -193,9 +194,9 @@ public class SqlSession extends Session
 							e.printStackTrace();
 					}
 				}
-				while( rs.next() );
+				while ( rs.next() );
 		}
-		catch( SQLException e )
+		catch ( SQLException e )
 		{
 			Loader.getLogger().warning( "There was a problem reloading saved sessions.", e );
 		}

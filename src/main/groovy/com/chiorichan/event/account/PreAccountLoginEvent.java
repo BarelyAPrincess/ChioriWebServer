@@ -40,7 +40,7 @@ public class PreAccountLoginEvent extends AccountEvent
 	 * Sets the new result of the login, as an enum
 	 * 
 	 * @param result
-	 *             New result to set
+	 *            New result to set
 	 */
 	public void setResult( final Result result )
 	{
@@ -61,7 +61,7 @@ public class PreAccountLoginEvent extends AccountEvent
 	 * Sets the kick message to display if getResult() != Result.ALLOWED
 	 * 
 	 * @param message
-	 *             New kick message
+	 *            New kick message
 	 */
 	public void setKickMessage( final String message )
 	{
@@ -81,9 +81,9 @@ public class PreAccountLoginEvent extends AccountEvent
 	 * Disallows the User from logging in, with the given reason
 	 * 
 	 * @param result
-	 *             New result for disallowing the User
+	 *            New result for disallowing the User
 	 * @param message
-	 *             Kick message to display to the user
+	 *            Kick message to display to the user
 	 */
 	public void disallow( final Result result, final String message )
 	{

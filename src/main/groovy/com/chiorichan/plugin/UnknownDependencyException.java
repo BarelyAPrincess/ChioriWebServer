@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -20,9 +21,9 @@ public class UnknownDependencyException extends RuntimeException
 	 * Constructs a new UnknownDependencyException based on the given Exception
 	 * 
 	 * @param throwable
-	 *             Exception that triggered this Exception
+	 *            Exception that triggered this Exception
 	 */
-	public UnknownDependencyException(final Throwable throwable)
+	public UnknownDependencyException( final Throwable throwable )
 	{
 		super( throwable );
 	}
@@ -31,9 +32,9 @@ public class UnknownDependencyException extends RuntimeException
 	 * Constructs a new UnknownDependencyException with the given message
 	 * 
 	 * @param message
-	 *             Brief message explaining the cause of the exception
+	 *            Brief message explaining the cause of the exception
 	 */
-	public UnknownDependencyException(final String message)
+	public UnknownDependencyException( final String message )
 	{
 		super( message );
 	}
@@ -42,11 +43,11 @@ public class UnknownDependencyException extends RuntimeException
 	 * Constructs a new UnknownDependencyException based on the given Exception
 	 * 
 	 * @param message
-	 *             Brief message explaining the cause of the exception
+	 *            Brief message explaining the cause of the exception
 	 * @param throwable
-	 *             Exception that triggered this Exception
+	 *            Exception that triggered this Exception
 	 */
-	public UnknownDependencyException(final Throwable throwable, final String message)
+	public UnknownDependencyException( final Throwable throwable, final String message )
 	{
 		super( message, throwable );
 	}

@@ -37,13 +37,13 @@ public class AsyncAccountChatEvent extends AccountEvent implements Cancellable
 	/**
 	 * 
 	 * @param async
-	 *             This changes the event to a synchronous state.
+	 *            This changes the event to a synchronous state.
 	 * @param who
-	 *             the chat sender
+	 *            the chat sender
 	 * @param message
-	 *             the message sent
+	 *            the message sent
 	 * @param Users
-	 *             the Users to receive the message. This may be a lazy or unmodifiable collection.
+	 *            the Users to receive the message. This may be a lazy or unmodifiable collection.
 	 */
 	public AsyncAccountChatEvent( final boolean async, final Account<?> who, final String message, final Set<Account<?>> accts )
 	{
@@ -66,7 +66,7 @@ public class AsyncAccountChatEvent extends AccountEvent implements Cancellable
 	 * Sets the message that the User will send. This message will be used with {@link #getFormat()}.
 	 * 
 	 * @param message
-	 *             New message that the User will send
+	 *            New message that the User will send
 	 */
 	public void setMessage( String message )
 	{
@@ -89,11 +89,11 @@ public class AsyncAccountChatEvent extends AccountEvent implements Cancellable
 	 * parameter is the {@link Account#getDisplayName()} and the second parameter is {@link #getMessage()}
 	 * 
 	 * @param format
-	 *             {@link String#format(String, Object...)} compatible format string
+	 *            {@link String#format(String, Object...)} compatible format string
 	 * @throws IllegalFormatException
-	 *              if the underlying API throws the exception
+	 *             if the underlying API throws the exception
 	 * @throws NullPointerException
-	 *              if format is null
+	 *             if format is null
 	 * @see String#format(String, Object...)
 	 */
 	public void setFormat( final String format ) throws IllegalFormatException, NullPointerException
@@ -103,7 +103,7 @@ public class AsyncAccountChatEvent extends AccountEvent implements Cancellable
 		{
 			String.format( format, acct.getAcctId(), message );
 		}
-		catch( RuntimeException ex )
+		catch ( RuntimeException ex )
 		{
 			ex.fillInStackTrace();
 			throw ex;

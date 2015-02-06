@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -35,16 +36,16 @@ import com.chiorichan.util.StringUtil;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Joiner;
 
-abstract public class ScriptingBaseJava extends Script
+public abstract class ScriptingBaseJava extends Script
 {
 	@SuppressWarnings( "unchecked" )
 	String var_export( Object var )
 	{
 		if ( var instanceof List )
-			return var_export( (List<Object>) var );
+			return var_export( ( List<Object> ) var );
 		
 		if ( var instanceof Map )
-			return var_export( (Map<Object, Object>) var );
+			return var_export( ( Map<Object, Object> ) var );
 		
 		return ObjectUtil.castToString( var );
 	}
@@ -105,23 +106,23 @@ abstract public class ScriptingBaseJava extends Script
 		if ( o == null )
 			return true;
 		else if ( o instanceof List<?> )
-			return empty( (List<Object>) o );
+			return empty( ( List<Object> ) o );
 		else if ( o instanceof Map<?, ?> )
-			return empty( (Map<Object, Object>) o );
+			return empty( ( Map<Object, Object> ) o );
 		else if ( o instanceof String )
-			return empty( (String) o );
+			return empty( ( String ) o );
 		
 		return false;
 	}
 	
 	boolean empty( List<Object> list )
 	{
-		return (list == null || list.size() < 1);
+		return ( list == null || list.size() < 1 );
 	}
 	
 	boolean empty( Map<Object, Object> maps )
 	{
-		return (maps == null || maps.size() < 1);
+		return ( maps == null || maps.size() < 1 );
 	}
 	
 	boolean empty( String var )
@@ -144,7 +145,7 @@ abstract public class ScriptingBaseJava extends Script
 	 * Default format is M/d/yyyy
 	 * 
 	 * @param Date
-	 *             you wish to convert
+	 *            you wish to convert
 	 * @return Long containing the epoch of provided date
 	 */
 	Long dateToEpoch( String date )
@@ -163,7 +164,7 @@ abstract public class ScriptingBaseJava extends Script
 			
 			return sdf.parse( date ).getTime() / 1000;
 		}
-		catch( ParseException e )
+		catch ( ParseException e )
 		{
 			return 0L;
 		}
@@ -219,7 +220,7 @@ abstract public class ScriptingBaseJava extends Script
 			{
 				date = new Date( Long.parseLong( data ) * 1000 );
 			}
-			catch( NumberFormatException e )
+			catch ( NumberFormatException e )
 			{
 				if ( def != null )
 					return def;
@@ -231,7 +232,7 @@ abstract public class ScriptingBaseJava extends Script
 		
 		if ( format.contains( "U" ) )
 		{
-			format = format.replaceAll( "U", (date.getTime() / 1000) + "" );
+			format = format.replaceAll( "U", ( date.getTime() / 1000 ) + "" );
 		}
 		
 		if ( format.contains( "x" ) )
@@ -296,7 +297,7 @@ abstract public class ScriptingBaseJava extends Script
 	
 	String money_format( String amt )
 	{
-		if ( amt == "" )
+		if ( amt.isEmpty() )
 			return "$0.00";
 		
 		return money_format( Integer.parseInt( amt ) );
@@ -335,7 +336,7 @@ abstract public class ScriptingBaseJava extends Script
 	
 	boolean is_null( Object obj )
 	{
-		return (obj == null);
+		return ( obj == null );
 	}
 	
 	boolean file_exists( File file )

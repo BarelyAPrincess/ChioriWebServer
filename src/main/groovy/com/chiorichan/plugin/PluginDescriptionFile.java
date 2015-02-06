@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -22,8 +23,7 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 import com.chiorichan.RunLevel;
-import com.chiorichan.file.YamlConfiguration;
-import com.chiorichan.plugin.loader.Plugin;
+import com.chiorichan.configuration.file.YamlConfiguration;
 import com.google.common.collect.ImmutableList;
 
 /**
@@ -202,9 +202,9 @@ public class PluginDescriptionFile
 	 * Loads a PluginDescriptionFile from the specified reader
 	 * 
 	 * @param reader
-	 *             The reader
+	 *            The reader
 	 * @throws InvalidDescriptionException
-	 *              If the PluginDescriptionFile is invalid
+	 *             If the PluginDescriptionFile is invalid
 	 */
 	public PluginDescriptionFile( final Reader reader ) throws InvalidDescriptionException
 	{
@@ -215,11 +215,11 @@ public class PluginDescriptionFile
 	 * Creates a new PluginDescriptionFile with the given detailed
 	 * 
 	 * @param pluginName
-	 *             Name of this plugin
+	 *            Name of this plugin
 	 * @param pluginVersion
-	 *             Version of this plugin
+	 *            Version of this plugin
 	 * @param mainClass
-	 *             Full location of the main class of this plugin
+	 *            Full location of the main class of this plugin
 	 */
 	public PluginDescriptionFile( final String pluginName, final String pluginVersion, final String mainClass )
 	{
@@ -588,7 +588,7 @@ public class PluginDescriptionFile
 	 * Saves this PluginDescriptionFile to the given writer
 	 * 
 	 * @param writer
-	 *             Writer to output this file to
+	 *            Writer to output this file to
 	 */
 	public void save( Writer writer )
 	{
@@ -606,11 +606,11 @@ public class PluginDescriptionFile
 				throw new InvalidDescriptionException( "name '" + name + "' contains invalid characters." );
 			}
 		}
-		catch( NullPointerException ex )
+		catch ( NullPointerException ex )
 		{
 			throw new InvalidDescriptionException( ex, "name is not defined" );
 		}
-		catch( ClassCastException ex )
+		catch ( ClassCastException ex )
 		{
 			throw new InvalidDescriptionException( ex, "name is of wrong type" );
 		}
@@ -619,11 +619,11 @@ public class PluginDescriptionFile
 		{
 			version = map.get( "version" ).toString();
 		}
-		catch( NullPointerException ex )
+		catch ( NullPointerException ex )
 		{
 			throw new InvalidDescriptionException( ex, "version is not defined" );
 		}
-		catch( ClassCastException ex )
+		catch ( ClassCastException ex )
 		{
 			throw new InvalidDescriptionException( ex, "version is of wrong type" );
 		}
@@ -634,11 +634,11 @@ public class PluginDescriptionFile
 			if ( main.startsWith( "com.chiori" ) && !main.startsWith( "com.chiorichan.plugin.builtin" ) )
 				throw new InvalidDescriptionException( "main may not be within the com.chiori namespace" );
 		}
-		catch( NullPointerException ex )
+		catch ( NullPointerException ex )
 		{
 			throw new InvalidDescriptionException( ex, "main is not defined" );
 		}
-		catch( ClassCastException ex )
+		catch ( ClassCastException ex )
 		{
 			throw new InvalidDescriptionException( ex, "main is of wrong type" );
 		}
@@ -653,16 +653,16 @@ public class PluginDescriptionFile
 			ImmutableList.Builder<String> dependBuilder = ImmutableList.<String> builder();
 			try
 			{
-				for ( Object dependency : (Iterable<?>) map.get( "depend" ) )
+				for ( Object dependency : ( Iterable<?> ) map.get( "depend" ) )
 				{
 					dependBuilder.add( dependency.toString() );
 				}
 			}
-			catch( ClassCastException ex )
+			catch ( ClassCastException ex )
 			{
 				throw new InvalidDescriptionException( ex, "depend is of wrong type" );
 			}
-			catch( NullPointerException e )
+			catch ( NullPointerException e )
 			{
 				throw new InvalidDescriptionException( e, "invalid dependency format" );
 			}
@@ -674,16 +674,16 @@ public class PluginDescriptionFile
 			ImmutableList.Builder<String> softDependBuilder = ImmutableList.<String> builder();
 			try
 			{
-				for ( Object dependency : (Iterable<?>) map.get( "softdepend" ) )
+				for ( Object dependency : ( Iterable<?> ) map.get( "softdepend" ) )
 				{
 					softDependBuilder.add( dependency.toString() );
 				}
 			}
-			catch( ClassCastException ex )
+			catch ( ClassCastException ex )
 			{
 				throw new InvalidDescriptionException( ex, "softdepend is of wrong type" );
 			}
-			catch( NullPointerException ex )
+			catch ( NullPointerException ex )
 			{
 				throw new InvalidDescriptionException( ex, "invalid soft-dependency format" );
 			}
@@ -695,16 +695,16 @@ public class PluginDescriptionFile
 			ImmutableList.Builder<String> loadBeforeBuilder = ImmutableList.<String> builder();
 			try
 			{
-				for ( Object predependency : (Iterable<?>) map.get( "loadbefore" ) )
+				for ( Object predependency : ( Iterable<?> ) map.get( "loadbefore" ) )
 				{
 					loadBeforeBuilder.add( predependency.toString() );
 				}
 			}
-			catch( ClassCastException ex )
+			catch ( ClassCastException ex )
 			{
 				throw new InvalidDescriptionException( ex, "loadbefore is of wrong type" );
 			}
-			catch( NullPointerException ex )
+			catch ( NullPointerException ex )
 			{
 				throw new InvalidDescriptionException( ex, "invalid load-before format" );
 			}
@@ -715,9 +715,9 @@ public class PluginDescriptionFile
 		{
 			try
 			{
-				database = (Boolean) map.get( "database" );
+				database = ( Boolean ) map.get( "database" );
 			}
-			catch( ClassCastException ex )
+			catch ( ClassCastException ex )
 			{
 				throw new InvalidDescriptionException( ex, "database is of wrong type" );
 			}
@@ -737,13 +737,13 @@ public class PluginDescriptionFile
 		{
 			try
 			{
-				order = RunLevel.valueOf( ((String) map.get( "load" )).toUpperCase().replaceAll( "\\W", "" ) );
+				order = RunLevel.valueOf( ( ( String ) map.get( "load" ) ).toUpperCase().replaceAll( "\\W", "" ) );
 			}
-			catch( ClassCastException ex )
+			catch ( ClassCastException ex )
 			{
 				throw new InvalidDescriptionException( ex, "load is of wrong type" );
 			}
-			catch( IllegalArgumentException ex )
+			catch ( IllegalArgumentException ex )
 			{
 				throw new InvalidDescriptionException( ex, "load is not a valid choice" );
 			}
@@ -758,16 +758,16 @@ public class PluginDescriptionFile
 			}
 			try
 			{
-				for ( Object o : (Iterable<?>) map.get( "authors" ) )
+				for ( Object o : ( Iterable<?> ) map.get( "authors" ) )
 				{
 					authorsBuilder.add( o.toString() );
 				}
 			}
-			catch( ClassCastException ex )
+			catch ( ClassCastException ex )
 			{
 				throw new InvalidDescriptionException( ex, "authors are of wrong type" );
 			}
-			catch( NullPointerException ex )
+			catch ( NullPointerException ex )
 			{
 				throw new InvalidDescriptionException( ex, "authors are improperly defined" );
 			}
@@ -841,7 +841,7 @@ public class PluginDescriptionFile
 	{
 		if ( object instanceof Map )
 		{
-			return (Map<?, ?>) object;
+			return ( Map<?, ?> ) object;
 		}
 		throw new InvalidDescriptionException( object + " is not properly structured." );
 	}

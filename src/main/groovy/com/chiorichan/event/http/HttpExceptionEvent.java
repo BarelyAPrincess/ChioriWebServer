@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -20,11 +20,11 @@ public class HttpExceptionEvent extends HttpEvent
 	private String errorHtml = "";
 	private boolean isDevelopmentMode;
 	
-	public HttpExceptionEvent(HttpRequestWrapper _request, Throwable _cause, boolean _isDevelopmentMode)
+	public HttpExceptionEvent( HttpRequestWrapper request, Throwable cause, boolean isDevelopmentMode )
 	{
-		cause = _cause;
-		request = _request;
-		isDevelopmentMode = _isDevelopmentMode;
+		this.cause = cause;
+		this.request = request;
+		this.isDevelopmentMode = isDevelopmentMode;
 	}
 	
 	public boolean isDevelopmentMode()
@@ -50,9 +50,9 @@ public class HttpExceptionEvent extends HttpEvent
 		return errorHtml;
 	}
 	
-	public void setErrorHtml( String _errorHtml )
+	public void setErrorHtml( String errorHtml )
 	{
-		errorHtml = _errorHtml;
+		this.errorHtml = errorHtml;
 	}
 	
 	public int getHttpCode()

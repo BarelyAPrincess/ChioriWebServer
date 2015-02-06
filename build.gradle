@@ -72,6 +72,7 @@ dependencies
 	compile group: 'org.yaml', name: 'snakeyaml', version: '1.13'
 	compile group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.3.6'
 	compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.5'
+	compile group: 'org.codeartisans', name: 'org.json', version: '20131017'
 	compile group: 'javax', name: 'javaee-api', version: '7.0'
 	compile group: 'javax.xml', name: 'jaxr-api', version: '1.0_04'
 	compile group: 'javax.xml', name: 'jaxrpc', version: '1.1'

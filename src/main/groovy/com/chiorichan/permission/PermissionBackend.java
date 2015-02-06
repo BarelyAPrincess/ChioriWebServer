@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -20,10 +21,10 @@ public abstract class PermissionBackend
 	 */
 	protected static Map<String, Class<? extends PermissionBackend>> registedAliases = new HashMap<String, Class<? extends PermissionBackend>>();
 	
-	public final static int GROUP = 1;
-	public final static int ENTITY = 0;
+	public static final int GROUP = 1;
+	public static final int ENTITY = 0;
 	
-	protected final static String defaultBackend = "file";
+	protected static final String defaultBackend = "file";
 	
 	/**
 	 * Backend initialization should be done here
@@ -101,7 +102,7 @@ public abstract class PermissionBackend
 	{
 		if ( !registedAliases.containsKey( alias ) )
 		{
-			return (Class<? extends PermissionBackend>) Class.forName( alias );
+			return ( Class<? extends PermissionBackend> ) Class.forName( alias );
 		}
 		
 		return registedAliases.get( alias );
@@ -158,13 +159,13 @@ public abstract class PermissionBackend
 	 * Returns new Backend class instance for specified backendName
 	 * 
 	 * @param backendName
-	 *             Class name or alias of backend
+	 *            Class name or alias of backend
 	 * @param manager
-	 *             PermissionManager object
+	 *            PermissionManager object
 	 * @param config
-	 *             Configuration object to access backend settings
+	 *            Configuration object to access backend settings
 	 * @param fallBackBackend
-	 *             name of backend that should be used if specified backend was not found or failed to initialize
+	 *            name of backend that should be used if specified backend was not found or failed to initialize
 	 * @return new instance of PermissionBackend object
 	 */
 	public static PermissionBackend getBackend( String backendName, String fallBackBackend )
@@ -183,9 +184,9 @@ public abstract class PermissionBackend
 			PermissionManager.getLogger().info( "Initializing " + backendName + " backend" );
 			
 			Constructor<? extends PermissionBackend> constructor = backendClass.getConstructor();
-			return (PermissionBackend) constructor.newInstance();
+			return ( PermissionBackend ) constructor.newInstance();
 		}
-		catch( ClassNotFoundException e )
+		catch ( ClassNotFoundException e )
 		{
 			
 			PermissionManager.getLogger().warning( "Specified backend \"" + backendName + "\" are not found." );
@@ -204,7 +205,7 @@ public abstract class PermissionBackend
 				throw new RuntimeException( e );
 			}
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
 			throw new RuntimeException( e );
 		}

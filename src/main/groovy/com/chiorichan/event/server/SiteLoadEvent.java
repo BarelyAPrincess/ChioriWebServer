@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -17,22 +17,22 @@ public class SiteLoadEvent extends ServerEvent implements Cancellable
 	Site site;
 	boolean cancelled;
 	
-	public SiteLoadEvent(Site _site)
+	public SiteLoadEvent( Site site )
 	{
-		site = _site;
+		this.site = site;
 	}
 	
 	public Site getSite()
 	{
 		return site;
 	}
-
+	
 	@Override
 	public boolean isCancelled()
 	{
 		return cancelled;
 	}
-
+	
 	@Override
 	public void setCancelled( boolean cancel )
 	{

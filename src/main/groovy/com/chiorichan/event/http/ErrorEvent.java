@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -20,24 +20,24 @@ public class ErrorEvent extends HttpEvent
 	private final HttpRequestWrapper request;
 	private String errorHtml = "";
 	
-	public ErrorEvent( HttpRequestWrapper _request )
+	public ErrorEvent( HttpRequestWrapper request )
 	{
-		this( _request, 500, null );
+		this( request, 500, null );
 	}
 	
-	public ErrorEvent( HttpRequestWrapper _request, int _statusNo )
+	public ErrorEvent( HttpRequestWrapper request, int statusNo )
 	{
-		this( _request, _statusNo, null );
+		this( request, statusNo, null );
 	}
 	
-	public ErrorEvent( HttpRequestWrapper _request, int _statusNo, String _reason )
+	public ErrorEvent( HttpRequestWrapper request, int statusNo, String reason )
 	{
-		if ( _reason == null )
-			_reason = HttpCode.msg( _statusNo );
+		if ( reason == null )
+			reason = HttpCode.msg( statusNo );
 		
-		request = _request;
-		statusNo = _statusNo;
-		reason = _reason;
+		this.request = request;
+		this.statusNo = statusNo;
+		this.reason = reason;
 	}
 	
 	public String getReason()
@@ -59,7 +59,7 @@ public class ErrorEvent extends HttpEvent
 	{
 		return request.getResponse();
 	}
-
+	
 	public String getErrorHtml()
 	{
 		if ( errorHtml.isEmpty() )
@@ -68,8 +68,8 @@ public class ErrorEvent extends HttpEvent
 		return errorHtml;
 	}
 	
-	public void setErrorHtml( String _errorHtml )
+	public void setErrorHtml( String errorHtml )
 	{
-		errorHtml = _errorHtml;
+		this.errorHtml = errorHtml;
 	}
 }

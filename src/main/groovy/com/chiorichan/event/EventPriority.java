@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -15,7 +15,7 @@ package com.chiorichan.event;
 public enum EventPriority
 {
 	/**
-	 * Event call is of very low importance and should be ran first, to allow other plugins to further customise the
+	 * Event call is of very low importance and should be ran first, to allow other plugins to further customize the
 	 * outcome
 	 */
 	LOWEST( 0 ),
@@ -44,7 +44,7 @@ public enum EventPriority
 	
 	private final int slot;
 	
-	private EventPriority(int slot)
+	private EventPriority( int slot )
 	{
 		this.slot = slot;
 	}

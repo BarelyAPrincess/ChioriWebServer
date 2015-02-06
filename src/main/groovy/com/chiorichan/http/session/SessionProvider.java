@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -17,47 +18,47 @@ import com.chiorichan.http.HttpResponseWrapper;
 
 public interface SessionProvider extends BindingProvider
 {
-	public Session getParentSession();
+	Session getParentSession();
 	
-	public void handleUserProtocols();
+	void handleUserProtocols();
 	
-	public void onFinished();
+	void onFinished();
 	
-	public void setGlobal( String key, Object val );
+	void setGlobal( String key, Object val );
 	
-	public Object getGlobal( String key );
+	Object getGlobal( String key );
 	
-	public void setVariable( String key, String value );
+	void setVariable( String key, String value );
 	
-	public String getVariable( String key );
+	String getVariable( String key );
 	
-	public HttpRequestWrapper getRequest();
+	HttpRequestWrapper getRequest();
 	
-	public HttpResponseWrapper getResponse();
+	HttpResponseWrapper getResponse();
 	
-	public Account<?> getAccount();
+	Account<?> getAccount();
 	
 	Candy getCandy( String key );
 	
-	public boolean isStale();
+	boolean isStale();
 	
-	public String getId();
+	String getId();
 	
-	public boolean isSet( String key );
+	boolean isSet( String key );
 	
-	public void setCookieExpiry( int valid );
+	void setCookieExpiry( int valid );
 	
-	public void destroy() throws SessionException;
+	void destroy() throws SessionException;
 	
-	public long getTimeout();
+	long getTimeout();
 	
-	public void infiniTimeout();
+	void infiniTimeout();
 	
-	public boolean getUserState();
+	boolean getUserState();
 	
-	public void logoutAccount();
+	void logoutAccount();
 	
-	public Site getSite();
+	Site getSite();
 	
-	public void saveSession( boolean force );
+	void saveSession( boolean force );
 }

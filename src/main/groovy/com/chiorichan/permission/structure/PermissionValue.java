@@ -1,25 +1,26 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
 package com.chiorichan.permission.structure;
 
-public abstract class PermissionValue<Type>
+public abstract class PermissionValue<T>
 {
-	private Type value;
+	private T value;
 	private final String name;
 	
-	protected PermissionValue( String permName, Type type )
+	protected PermissionValue( String permName, T type )
 	{
 		value = type;
 		name = permName;
 	}
 	
-	public Type getValue()
+	public T getValue()
 	{
 		return value;
 	}
@@ -52,9 +53,9 @@ public abstract class PermissionValue<Type>
 		}
 	}
 	
-	public abstract PermissionValue<Type> createChild( Object val );
+	public abstract PermissionValue<T> createChild( Object val );
 	
-	protected void setValue( Type val )
+	protected void setValue( T val )
 	{
 		value = val;
 	}

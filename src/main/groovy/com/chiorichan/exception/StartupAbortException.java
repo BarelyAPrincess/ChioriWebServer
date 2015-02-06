@@ -7,24 +7,15 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan;
+package com.chiorichan.exception;
 
-public class StartupException extends RuntimeException
+
+public class StartupAbortException extends StartupException
 {
-	private static final long serialVersionUID = 13L;
+	private static final long serialVersionUID = -4937198089020390887L;
 	
-	public StartupException( String msg )
+	public StartupAbortException()
 	{
-		super( msg );
-	}
-	
-	public StartupException( Throwable e )
-	{
-		super( e );
-	}
-	
-	public StartupException( String msg, Throwable e )
-	{
-		super( msg, e );
+		super( "STARTUP ABORTED!" );
 	}
 }

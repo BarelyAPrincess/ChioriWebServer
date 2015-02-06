@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -48,7 +49,7 @@ public class DirectoryInterpreter
 		{
 			List<String> l = Lists.newArrayList();
 			String type = ContentTypes.getContentType( f );
-			String mainType = (type.contains( "/" )) ? type.substring( 0, type.indexOf( "/" ) ) : type;
+			String mainType = ( type.contains( "/" ) ) ? type.substring( 0, type.indexOf( "/" ) ) : type;
 			
 			l.add( "<img src=\"/fw/icons/" + mainType + "\" />" );
 			l.add( "<a href=\"" + http.getRequest().getURI() + "/" + f.getName() + "\">" + f.getName() + "</a>" );

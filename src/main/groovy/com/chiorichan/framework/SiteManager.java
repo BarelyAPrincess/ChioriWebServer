@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -22,8 +23,8 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
-import com.chiorichan.StartupException;
 import com.chiorichan.database.DatabaseEngine;
+import com.chiorichan.exception.StartupException;
 import com.chiorichan.util.FileUtil;
 import com.google.common.collect.Lists;
 
@@ -57,7 +58,7 @@ public class SiteManager
 			{
 				FileUtil.putResource( "com/chiorichan/default-site.yaml", defaultSite );
 			}
-			catch( IOException e )
+			catch ( IOException e )
 			{
 				e.printStackTrace();
 			}
@@ -78,7 +79,7 @@ public class SiteManager
 						siteMap.put( site.siteId, site );
 					}
 				}
-				catch( SiteException e )
+				catch ( SiteException e )
 				{
 					getLogger().warning( "Exception encountered while loading a site from YAML FileBase, Reason: " + e.getMessage() );
 					if ( e.getCause() != null )
@@ -106,7 +107,7 @@ public class SiteManager
 								siteMap.put( site.siteId, site );
 							}
 						}
-						catch( SiteException e )
+						catch ( SiteException e )
 						{
 							getLogger().severe( "Exception encountered while loading a site from SQL DataBase, Reason: " + e.getMessage() );
 							if ( e.getCause() != null )
@@ -114,10 +115,10 @@ public class SiteManager
 						}
 						
 					}
-					while( rs.next() );
+					while ( rs.next() );
 				}
 			}
-			catch( SQLException e )
+			catch ( SQLException e )
 			{
 				getLogger().warning( "Exception encountered while loading a sites from Database", e );
 			}
@@ -201,15 +202,7 @@ public class SiteManager
 		if ( siteMap.containsKey( siteId ) )
 			return "There already exists a site by the id you provided.";
 		
-		if ( type.equalsIgnoreCase( "sql" ) )
-		{	
-			
-		}
-		else if ( type.equalsIgnoreCase( "file" ) )
-		{	
-			
-		}
-		else
+		if ( !type.equalsIgnoreCase( "sql" ) && !type.equalsIgnoreCase( "file" ) )
 			return "The only available site types are 'sql' and 'file'. '" + type + "' was not a valid option.";
 		
 		return "";
@@ -234,7 +227,7 @@ public class SiteManager
 		
 		return siteList;
 	}
-
+	
 	public static ConsoleLogger getLogger()
 	{
 		return Loader.getLogger( "SiteMgr" );

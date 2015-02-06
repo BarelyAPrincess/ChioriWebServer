@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -18,7 +18,7 @@ public class ConfigurationOptions
 	private boolean copyDefaults = false;
 	private final Configuration configuration;
 	
-	protected ConfigurationOptions(Configuration configuration)
+	protected ConfigurationOptions( Configuration configuration )
 	{
 		this.configuration = configuration;
 	}
@@ -36,8 +36,7 @@ public class ConfigurationOptions
 	/**
 	 * Gets the char that will be used to separate {@link ConfigurationSection}s
 	 * <p />
-	 * This value does not affect how the {@link Configuration} is stored, only in how you access the data. The default
-	 * value is '.'.
+	 * This value does not affect how the {@link Configuration} is stored, only in how you access the data. The default value is '.'.
 	 * 
 	 * @return Path separator
 	 */
@@ -49,11 +48,10 @@ public class ConfigurationOptions
 	/**
 	 * Sets the char that will be used to separate {@link ConfigurationSection}s
 	 * <p />
-	 * This value does not affect how the {@link Configuration} is stored, only in how you access the data. The default
-	 * value is '.'.
+	 * This value does not affect how the {@link Configuration} is stored, only in how you access the data. The default value is '.'.
 	 * 
 	 * @param value
-	 *           Path separator
+	 *            Path separator
 	 * @return This object, for chaining
 	 */
 	public ConfigurationOptions pathSeparator( char value )
@@ -65,10 +63,8 @@ public class ConfigurationOptions
 	/**
 	 * Checks if the {@link Configuration} should copy values from its default {@link Configuration} directly.
 	 * <p />
-	 * If this is true, all values in the default Configuration will be directly copied, making it impossible to
-	 * distinguish between values that were set and values that are provided by default. As a result,
-	 * {@link ConfigurationSection#contains(java.lang.String)} will always return the same value as
-	 * {@link ConfigurationSection#isSet(java.lang.String)}. The default value is false.
+	 * If this is true, all values in the default Configuration will be directly copied, making it impossible to distinguish between values that were set and values that are provided by default. As a result,
+	 * {@link ConfigurationSection#contains(java.lang.String)} will always return the same value as {@link ConfigurationSection#isSet(java.lang.String)}. The default value is false.
 	 * 
 	 * @return Whether or not defaults are directly copied
 	 */
@@ -80,13 +76,11 @@ public class ConfigurationOptions
 	/**
 	 * Sets if the {@link Configuration} should copy values from its default {@link Configuration} directly.
 	 * <p />
-	 * If this is true, all values in the default Configuration will be directly copied, making it impossible to
-	 * distinguish between values that were set and values that are provided by default. As a result,
-	 * {@link ConfigurationSection#contains(java.lang.String)} will always return the same value as
-	 * {@link ConfigurationSection#isSet(java.lang.String)}. The default value is false.
+	 * If this is true, all values in the default Configuration will be directly copied, making it impossible to distinguish between values that were set and values that are provided by default. As a result,
+	 * {@link ConfigurationSection#contains(java.lang.String)} will always return the same value as {@link ConfigurationSection#isSet(java.lang.String)}. The default value is false.
 	 * 
 	 * @param value
-	 *           Whether or not defaults are directly copied
+	 *            Whether or not defaults are directly copied
 	 * @return This object, for chaining
 	 */
 	public ConfigurationOptions copyDefaults( boolean value )

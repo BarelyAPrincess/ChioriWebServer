@@ -1,13 +1,12 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-
 package com.chiorichan.plugin.loader;
 
 import java.io.File;
@@ -34,6 +33,8 @@ import org.yaml.snakeyaml.error.YAMLException;
 import com.chiorichan.Loader;
 import com.chiorichan.Warning;
 import com.chiorichan.Warning.WarningState;
+import com.chiorichan.configuration.serialization.ConfigurationSerializable;
+import com.chiorichan.configuration.serialization.ConfigurationSerialization;
 import com.chiorichan.event.Event;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.EventExecutor;
@@ -48,8 +49,6 @@ import com.chiorichan.plugin.InvalidDescriptionException;
 import com.chiorichan.plugin.InvalidPluginException;
 import com.chiorichan.plugin.PluginDescriptionFile;
 import com.chiorichan.plugin.UnknownDependencyException;
-import com.chiorichan.serialization.ConfigurationSerializable;
-import com.chiorichan.serialization.ConfigurationSerialization;
 import com.google.common.collect.ImmutableList;
 
 /**
@@ -57,7 +56,7 @@ import com.google.common.collect.ImmutableList;
  */
 public final class JavaPluginLoader implements PluginLoader
 {
-	private final Pattern[] fileFilters = new Pattern[] { Pattern.compile( "\\.jar$" ), };
+	private final Pattern[] fileFilters = new Pattern[] {Pattern.compile( "\\.jar$" )};
 	private final Map<String, Class<?>> classes = new HashMap<String, Class<?>>();
 	private final Map<String, PluginClassLoader> loaders = new LinkedHashMap<String, PluginClassLoader>();
 	
@@ -211,7 +210,8 @@ public final class JavaPluginLoader implements PluginLoader
 					jar.close();
 				}
 				catch ( IOException e )
-				{}
+				{
+				}
 			}
 			if ( stream != null )
 			{
@@ -220,7 +220,8 @@ public final class JavaPluginLoader implements PluginLoader
 					stream.close();
 				}
 				catch ( IOException e )
-				{}
+				{
+				}
 			}
 		}
 	}
@@ -249,7 +250,8 @@ public final class JavaPluginLoader implements PluginLoader
 					cachedClass = loader.findClass( name, false );
 				}
 				catch ( ClassNotFoundException cnfe )
-				{}
+				{
+				}
 				if ( cachedClass != null )
 				{
 					return cachedClass;
@@ -397,13 +399,13 @@ public final class JavaPluginLoader implements PluginLoader
 		{
 			Loader.getLogger().info( "Enabling " + plugin.getDescription().getFullName() );
 			
-			Plugin jPlugin = (Plugin) plugin;
+			Plugin jPlugin = ( Plugin ) plugin;
 			
 			String pluginName = jPlugin.getDescription().getName();
 			
 			if ( !loaders.containsKey( pluginName ) )
 			{
-				loaders.put( pluginName, (PluginClassLoader) jPlugin.getClassLoader() );
+				loaders.put( pluginName, ( PluginClassLoader ) jPlugin.getClassLoader() );
 			}
 			
 			try
@@ -433,7 +435,7 @@ public final class JavaPluginLoader implements PluginLoader
 			
 			Loader.getEventBus().callEvent( new PluginDisableEvent( plugin ) );
 			
-			Plugin jPlugin = (Plugin) plugin;
+			Plugin jPlugin = ( Plugin ) plugin;
 			ClassLoader cloader = jPlugin.getClassLoader();
 			
 			try
@@ -449,7 +451,7 @@ public final class JavaPluginLoader implements PluginLoader
 			
 			if ( cloader instanceof PluginClassLoader )
 			{
-				PluginClassLoader loader = (PluginClassLoader) cloader;
+				PluginClassLoader loader = ( PluginClassLoader ) cloader;
 				Set<String> names = loader.getClasses();
 				
 				for ( String name : names )

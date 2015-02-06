@@ -20,10 +20,10 @@ public class AccountLoginEvent extends AccountEvent
 	private static final HandlerList handlers = new HandlerList();
 	private String message;
 	
-	public AccountLoginEvent(Account<?> user, final String _message)
+	public AccountLoginEvent( Account<?> user, final String message )
 	{
 		super( user );
-		message = _message;
+		this.message = message;
 	}
 	
 	/**
@@ -40,11 +40,11 @@ public class AccountLoginEvent extends AccountEvent
 	 * Sets the join message to send to all online Accounts
 	 * 
 	 * @param joinMessage
-	 *             join message
+	 *            join message
 	 */
-	public void setJoinMessage( String _message )
+	public void setJoinMessage( String message )
 	{
-		message = _message;
+		this.message = message;
 	}
 	
 	@Override

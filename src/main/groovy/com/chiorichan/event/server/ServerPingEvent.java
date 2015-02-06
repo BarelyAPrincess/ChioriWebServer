@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -24,7 +24,7 @@ public class ServerPingEvent extends ServerEvent
 	private final int numPlayers;
 	private int maxPlayers;
 	
-	public ServerPingEvent(final InetAddress address, final String motd, final int numPlayers, final int maxPlayers)
+	public ServerPingEvent( final InetAddress address, final String motd, final int numPlayers, final int maxPlayers )
 	{
 		this.address = address;
 		this.motd = motd;
@@ -56,7 +56,7 @@ public class ServerPingEvent extends ServerEvent
 	 * Change the message of the day message.
 	 * 
 	 * @param motd
-	 *           the message of the day
+	 *            the message of the day
 	 */
 	public void setMotd( String motd )
 	{
@@ -87,7 +87,7 @@ public class ServerPingEvent extends ServerEvent
 	 * Set the maximum number of players sent.
 	 * 
 	 * @param maxPlayers
-	 *           the maximum number of player
+	 *            the maximum number of player
 	 */
 	public void setMaxPlayers( int maxPlayers )
 	{

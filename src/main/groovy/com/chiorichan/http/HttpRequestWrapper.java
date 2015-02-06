@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -44,8 +45,7 @@ public class HttpRequestWrapper
 	protected Site currentSite;
 	protected SessionProvider sess = null;
 	protected HttpResponseWrapper response;
-	protected Map<String, String> getMap, postMap,
-			rewriteMap = Maps.newLinkedHashMap();
+	protected Map<String, String> getMap, postMap, rewriteMap = Maps.newLinkedHashMap();
 	protected int requestTime = 0;
 	protected Map<String, UploadedFile> uploadedFiles = new HashMap<String, UploadedFile>();
 	protected String uri = null;
@@ -54,10 +54,10 @@ public class HttpRequestWrapper
 	protected HttpRequest http;
 	protected Channel channel;
 	
-	protected HttpRequestWrapper( Channel _channel, HttpRequest _http ) throws IOException
+	protected HttpRequestWrapper( Channel channel, HttpRequest http ) throws IOException
 	{
-		channel = _channel;
-		http = _http;
+		this.channel = channel;
+		this.http = http;
 		
 		requestTime = Common.getEpoch();
 		
@@ -105,7 +105,7 @@ public class HttpRequestWrapper
 	public Boolean getArgumentBoolean( String key )
 	{
 		String rtn = getArgument( key, "0" ).toLowerCase();
-		return (rtn.equals( "true" ) || rtn.equals( "1" ));
+		return ( rtn.equals( "true" ) || rtn.equals( "1" ) );
 	}
 	
 	public String getArgument( String key )
@@ -177,18 +177,18 @@ public class HttpRequestWrapper
 		{
 			uri = URLDecoder.decode( uri, "UTF-8" );
 		}
-		catch( UnsupportedEncodingException e )
+		catch ( UnsupportedEncodingException e )
 		{
 			try
 			{
 				uri = URLDecoder.decode( uri, "ISO-8859-1" );
 			}
-			catch( UnsupportedEncodingException e1 )
+			catch ( UnsupportedEncodingException e1 )
 			{
 				throw new Error();
 			}
 		}
-		catch( IllegalArgumentException e1 )
+		catch ( IllegalArgumentException e1 )
 		{
 			// [ni..up-3-1] 02-05 00:17:10.273 [WARNING] [HttpHdl] WARNING THIS IS AN UNCAUGHT EXCEPTION! CAN YOU KINDLY REPORT THIS STACKTRACE TO THE DEVELOPER?
 			// java.lang.IllegalArgumentException: URLDecoder: Illegal hex characters in escape (%) pattern - For input string: "im"
@@ -221,7 +221,7 @@ public class HttpRequestWrapper
 			
 			return domain;
 		}
-		catch( NullPointerException e )
+		catch ( NullPointerException e )
 		{
 			return "";
 		}
@@ -236,7 +236,7 @@ public class HttpRequestWrapper
 		if ( parentDomainName == null || childDomainName == null )
 			calculateDomainName();
 		
-		return (parentDomainName == null) ? "" : parentDomainName;
+		return ( parentDomainName == null ) ? "" : parentDomainName;
 	}
 	
 	/**
@@ -248,7 +248,7 @@ public class HttpRequestWrapper
 		if ( parentDomainName == null || childDomainName == null )
 			calculateDomainName();
 		
-		return (childDomainName == null) ? "" : childDomainName;
+		return ( childDomainName == null ) ? "" : childDomainName;
 	}
 	
 	/**
@@ -311,7 +311,7 @@ public class HttpRequestWrapper
 		{
 			return http.headers().get( key );
 		}
-		catch( NullPointerException | IndexOutOfBoundsException e )
+		catch ( NullPointerException | IndexOutOfBoundsException e )
 		{
 			return "";
 		}
@@ -322,12 +322,12 @@ public class HttpRequestWrapper
 	 */
 	public boolean isAjaxRequest()
 	{
-		return (getHeader( "X-requested-with" ).equals( "XMLHttpRequest" ));
+		return ( getHeader( "X-requested-with" ).equals( "XMLHttpRequest" ) );
 	}
 	
 	public String getRemoteHost()
 	{
-		return ((InetSocketAddress) channel.remoteAddress()).getHostName();
+		return ( ( InetSocketAddress ) channel.remoteAddress() ).getHostName();
 	}
 	
 	public String getRemoteAddr()
@@ -347,27 +347,27 @@ public class HttpRequestWrapper
 		if ( detectCDN && http.headers().contains( "CF-Connecting-IP" ) )
 			return http.headers().get( "CF-Connecting-IP" );
 		else
-			return ((InetSocketAddress) channel.remoteAddress()).getAddress().getHostAddress();
+			return ( ( InetSocketAddress ) channel.remoteAddress() ).getAddress().getHostAddress();
 	}
 	
 	public int getRemotePort()
 	{
-		return ((InetSocketAddress) channel.remoteAddress()).getPort();
+		return ( ( InetSocketAddress ) channel.remoteAddress() ).getPort();
 	}
 	
 	public boolean isSecure()
 	{
-		return (channel.pipeline().get( SslHandler.class ) != null);
+		return ( channel.pipeline().get( SslHandler.class ) != null );
 	}
 	
 	public int getServerPort()
 	{
-		return ((InetSocketAddress) channel.localAddress()).getPort();
+		return ( ( InetSocketAddress ) channel.localAddress() ).getPort();
 	}
 	
 	public String getServerName()
 	{
-		return ((InetSocketAddress) channel.localAddress()).getHostName();
+		return ( ( InetSocketAddress ) channel.localAddress() ).getHostName();
 	}
 	
 	public String getParameter( String key )
@@ -431,19 +431,19 @@ public class HttpRequestWrapper
 						key = "1";
 					
 					Map<String, String> hash = Maps.newLinkedHashMap();
-					hash.put( "0", (String) o );
+					hash.put( "0", ( String ) o );
 					hash.put( key, val );
 					result.put( var, hash );
 				}
 				else if ( o instanceof Map )
 				{
 					@SuppressWarnings( "unchecked" )
-					Map<String, String> map = (Map<String, String>) o;
+					Map<String, String> map = ( Map<String, String> ) o;
 					
 					if ( key == null || key.isEmpty() )
 					{
 						int cnt = 0;
-						while( map.containsKey( cnt ) )
+						while ( map.containsKey( cnt ) )
 						{
 							cnt++;
 						}
@@ -558,12 +558,12 @@ public class HttpRequestWrapper
 	
 	public String getLocalHost()
 	{
-		return ((InetSocketAddress) channel.localAddress()).getHostName();
+		return ( ( InetSocketAddress ) channel.localAddress() ).getHostName();
 	}
 	
 	public String getLocalAddr()
 	{
-		return ((InetSocketAddress) channel.localAddress()).getAddress().getHostAddress();
+		return ( ( InetSocketAddress ) channel.localAddress() ).getAddress().getHostAddress();
 	}
 	
 	public String getUserAgent()
@@ -602,7 +602,7 @@ public class HttpRequestWrapper
 			serverVars.put( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "webmaster@" + getDomain() ) );
 			serverVars.put( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Versioning.getVersion() );
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
 			e.printStackTrace();
 		}
@@ -670,9 +670,9 @@ public class HttpRequestWrapper
 		return contentSize;
 	}
 	
-	protected void setUri( String _uri )
+	protected void setUri( String uri )
 	{
-		uri = _uri;
+		this.uri = uri;
 		
 		if ( !uri.startsWith( "/" ) )
 			uri = "/" + uri;

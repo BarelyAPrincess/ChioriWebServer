@@ -24,7 +24,7 @@ import com.chiorichan.account.AccountMetaData;
 import com.chiorichan.account.LoginException;
 import com.chiorichan.account.LoginExceptionReason;
 import com.chiorichan.account.adapter.AccountLookupAdapter;
-import com.chiorichan.file.YamlConfiguration;
+import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.framework.WebUtils;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.FileUtil;

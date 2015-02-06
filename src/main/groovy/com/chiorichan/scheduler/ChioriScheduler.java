@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -47,7 +48,7 @@ public class ChioriScheduler implements IChioriScheduler
 	{
 		public int compare( final ChioriTask o1, final ChioriTask o2 )
 		{
-			return (int) ( o1.getNextRun() - o2.getNextRun() );
+			return ( int ) ( o1.getNextRun() - o2.getNextRun() );
 		}
 	} );
 	/**
@@ -78,42 +79,42 @@ public class ChioriScheduler implements IChioriScheduler
 	
 	public int scheduleSyncDelayedTask( final TaskCreator creator, final Runnable task )
 	{
-		return this.scheduleSyncDelayedTask( creator, task, 0l );
+		return this.scheduleSyncDelayedTask( creator, task, 0L );
 	}
 	
 	public ChioriTask runTask( TaskCreator creator, Runnable runnable )
 	{
-		return runTaskLater( creator, runnable, 0l );
+		return runTaskLater( creator, runnable, 0L );
 	}
 	
 	public int scheduleAsyncDelayedTask( final TaskCreator creator, final Runnable task )
 	{
-		return this.scheduleAsyncDelayedTask( creator, task, 0l );
+		return this.scheduleAsyncDelayedTask( creator, task, 0L );
 	}
 	
 	public ChioriTask runTaskAsynchronously( TaskCreator creator, Runnable runnable )
 	{
-		return runTaskLaterAsynchronously( creator, runnable, 0l );
+		return runTaskLaterAsynchronously( creator, runnable, 0L );
 	}
 	
 	public int scheduleSyncDelayedTask( final TaskCreator creator, final Runnable task, final long delay )
 	{
-		return this.scheduleSyncRepeatingTask( creator, task, delay, -1l );
+		return this.scheduleSyncRepeatingTask( creator, task, delay, -1L );
 	}
 	
 	public ChioriTask runTaskLater( TaskCreator creator, Runnable runnable, long delay )
 	{
-		return runTaskTimer( creator, runnable, delay, -1l );
+		return runTaskTimer( creator, runnable, delay, -1L );
 	}
 	
 	public int scheduleAsyncDelayedTask( final TaskCreator creator, final Runnable task, final long delay )
 	{
-		return this.scheduleAsyncRepeatingTask( creator, task, delay, -1l );
+		return this.scheduleAsyncRepeatingTask( creator, task, delay, -1L );
 	}
 	
 	public ChioriTask runTaskLaterAsynchronously( TaskCreator creator, Runnable runnable, long delay )
 	{
-		return runTaskTimerAsynchronously( creator, runnable, delay, -1l );
+		return runTaskTimerAsynchronously( creator, runnable, delay, -1L );
 	}
 	
 	public int scheduleSyncRepeatingTask( final TaskCreator creator, final Runnable runnable, long delay, long period )
@@ -124,17 +125,17 @@ public class ChioriScheduler implements IChioriScheduler
 	public ChioriTask runTaskTimer( TaskCreator creator, Runnable runnable, long delay, long period )
 	{
 		validate( creator, runnable );
-		if ( delay < 0l )
+		if ( delay < 0L )
 		{
 			delay = 0;
 		}
-		if ( period == 0l )
+		if ( period == 0L )
 		{
-			period = 1l;
+			period = 1L;
 		}
-		else if ( period < -1l )
+		else if ( period < -1L )
 		{
-			period = -1l;
+			period = -1L;
 		}
 		return handle( new ChioriTask( creator, runnable, nextId(), period ), delay );
 	}
@@ -147,17 +148,17 @@ public class ChioriScheduler implements IChioriScheduler
 	public ChioriTask runTaskTimerAsynchronously( TaskCreator creator, Runnable runnable, long delay, long period )
 	{
 		validate( creator, runnable );
-		if ( delay < 0l )
+		if ( delay < 0L )
 		{
 			delay = 0;
 		}
-		if ( period == 0l )
+		if ( period == 0L )
 		{
-			period = 1l;
+			period = 1L;
 		}
-		else if ( period < -1l )
+		else if ( period < -1L )
 		{
-			period = -1l;
+			period = -1L;
 		}
 		return handle( new ChioriAsyncTask( runners, creator, runnable, nextId(), period ), delay );
 	}
@@ -166,7 +167,7 @@ public class ChioriScheduler implements IChioriScheduler
 	{
 		validate( creator, task );
 		final ChioriFuture<T> future = new ChioriFuture<T>( task, creator, nextId() );
-		handle( future, 0l );
+		handle( future, 0L );
 		return future;
 	}
 	
@@ -211,7 +212,7 @@ public class ChioriScheduler implements IChioriScheduler
 				return false;
 			}
 		} );
-		handle( task, 0l );
+		handle( task, 0L );
 		for ( ChioriTask taskPending = head.getNext(); taskPending != null; taskPending = taskPending.getNext() )
 		{
 			if ( taskPending == task )
@@ -254,7 +255,7 @@ public class ChioriScheduler implements IChioriScheduler
 				}
 			}
 		} );
-		handle( task, 0l );
+		handle( task, 0L );
 		for ( ChioriTask taskPending = head.getNext(); taskPending != null; taskPending = taskPending.getNext() )
 		{
 			if ( taskPending == task )
@@ -295,7 +296,7 @@ public class ChioriScheduler implements IChioriScheduler
 				ChioriScheduler.this.temp.clear();
 			}
 		} );
-		handle( task, 0l );
+		handle( task, 0L );
 		for ( ChioriTask taskPending = head.getNext(); taskPending != null; taskPending = taskPending.getNext() )
 		{
 			if ( taskPending == task )
@@ -317,7 +318,7 @@ public class ChioriScheduler implements IChioriScheduler
 		{
 			return false;
 		}
-		final ChioriAsyncTask asyncTask = (ChioriAsyncTask) task;
+		final ChioriAsyncTask asyncTask = ( ChioriAsyncTask ) task;
 		synchronized ( asyncTask.getWorkers() )
 		{
 			return asyncTask.getWorkers().isEmpty();
@@ -334,11 +335,11 @@ public class ChioriScheduler implements IChioriScheduler
 		{
 			if ( task.getTaskId() == taskId )
 			{
-				return task.getPeriod() >= -1l; // The task will run
+				return task.getPeriod() >= -1L; // The task will run
 			}
 		}
 		ChioriTask task = runners.get( taskId );
-		return task != null && task.getPeriod() >= -1l;
+		return task != null && task.getPeriod() >= -1L;
 	}
 	
 	public List<ChioriWorker> getActiveWorkers()
@@ -351,7 +352,7 @@ public class ChioriScheduler implements IChioriScheduler
 			{
 				continue;
 			}
-			final ChioriAsyncTask task = (ChioriAsyncTask) taskObj;
+			final ChioriAsyncTask task = ( ChioriAsyncTask ) taskObj;
 			synchronized ( task.getWorkers() )
 			{
 				// This will never have an issue with stale threads; it's state-safe
@@ -376,7 +377,7 @@ public class ChioriScheduler implements IChioriScheduler
 		final ArrayList<ChioriTask> pending = new ArrayList<ChioriTask>();
 		for ( ChioriTask task : runners.values() )
 		{
-			if ( task.getPeriod() >= -1l )
+			if ( task.getPeriod() >= -1L )
 			{
 				pending.add( task );
 			}
@@ -384,7 +385,7 @@ public class ChioriScheduler implements IChioriScheduler
 		
 		for ( final ChioriTask task : truePending )
 		{
-			if ( task.getPeriod() >= -1l && !pending.contains( task ) )
+			if ( task.getPeriod() >= -1L && !pending.contains( task ) )
 			{
 				pending.add( task );
 			}
@@ -403,7 +404,7 @@ public class ChioriScheduler implements IChioriScheduler
 		while ( isReady( currentTick ) )
 		{
 			final ChioriTask task = pending.remove();
-			if ( task.getPeriod() < -1l )
+			if ( task.getPeriod() < -1L )
 			{
 				if ( task.isSync() )
 				{
@@ -491,7 +492,7 @@ public class ChioriScheduler implements IChioriScheduler
 			{
 				task.run();
 			}
-			else if ( task.getPeriod() >= -1l )
+			else if ( task.getPeriod() >= -1L )
 			{
 				pending.add( task );
 				runners.put( task.getTaskId(), task );

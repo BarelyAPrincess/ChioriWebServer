@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -125,7 +126,7 @@ public class FileSession extends Session
 		{
 			readSessionFile();
 		}
-		catch( SessionException e )
+		catch ( SessionException e )
 		{
 			e.printStackTrace();
 		}
@@ -169,7 +170,7 @@ public class FileSession extends Session
 		{
 			yaml.save( cachedFile );
 		}
-		catch( IOException e )
+		catch ( IOException e )
 		{
 			Loader.getLogger().severe( "There was an exception thorwn while trying to save the session.", e );
 		}
@@ -197,7 +198,7 @@ public class FileSession extends Session
 				{
 					sessions.add( new FileSession( f ) );
 				}
-				catch( SessionException e )
+				catch ( SessionException e )
 				{
 					e.printStackTrace();
 				}

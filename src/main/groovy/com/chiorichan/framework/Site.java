@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -29,15 +30,15 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.json.JSONObject;
 
 import com.chiorichan.Loader;
-import com.chiorichan.StartupException;
 import com.chiorichan.configuration.ConfigurationSection;
+import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.SiteLoadEvent;
 import com.chiorichan.exception.ShellExecuteException;
+import com.chiorichan.exception.StartupException;
 import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.factory.CodeMetaData;
-import com.chiorichan.file.YamlConfiguration;
 import com.chiorichan.http.Routes;
 import com.chiorichan.util.FileUtil;
 import com.google.common.collect.Lists;
@@ -50,10 +51,8 @@ public class Site
 {
 	protected String siteId = null, title = null, domain = null;
 	protected File source, resource;
-	protected Map<String, String> subdomains = Maps.newConcurrentMap(),
-			aliases = Maps.newConcurrentMap();
-	protected List<String> metatags = Lists.newCopyOnWriteArrayList(),
-			protectedFiles = Lists.newCopyOnWriteArrayList();
+	protected Map<String, String> subdomains = Maps.newConcurrentMap(), aliases = Maps.newConcurrentMap();
+	protected List<String> metatags = Lists.newCopyOnWriteArrayList(), protectedFiles = Lists.newCopyOnWriteArrayList();
 	protected YamlConfiguration config;
 	protected DatabaseEngine sql;
 	protected SiteType siteType = SiteType.NOTSET;
@@ -106,7 +105,7 @@ public class Site
 		for ( Object o : protectedFilesPre )
 		{
 			if ( o instanceof String )
-				protectedFiles.add( (String) o );
+				protectedFiles.add( ( String ) o );
 			else
 				Loader.getLogger().warning( "Site '" + siteId + "' had an incorrect data object type under the YAML config for option 'protected', found type '" + o.getClass() + "'." );
 		}
@@ -155,7 +154,7 @@ public class Site
 		for ( Object o : metatagsPre )
 		{
 			if ( o instanceof String )
-				metatags.add( (String) o );
+				metatags.add( ( String ) o );
 			else
 				Loader.getLogger().warning( "Site '" + siteId + "' had an incorrect data object type under the YAML config for option 'metatags', found type '" + o.getClass() + "'." );
 		}
@@ -235,7 +234,7 @@ public class Site
 				if ( !rs.getString( "protected" ).isEmpty() )
 					protectedFiles.addAll( gson.fromJson( new JSONObject( rs.getString( "protected" ) ).toString(), ArrayList.class ) );
 			}
-			catch( Exception e )
+			catch ( Exception e )
 			{
 				Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'protected' field for site '" + siteId + "'" );
 			}
@@ -289,7 +288,7 @@ public class Site
 				if ( !rs.getString( "metatags" ).isEmpty() )
 					metatags.addAll( gson.fromJson( new JSONObject( rs.getString( "metatags" ) ).toString(), ArrayList.class ) );
 			}
-			catch( Exception e )
+			catch ( Exception e )
 			{
 				Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'metatags' field for site '" + siteId + "'" );
 			}
@@ -299,7 +298,7 @@ public class Site
 				if ( !rs.getString( "aliases" ).isEmpty() )
 					aliases = gson.fromJson( new JSONObject( rs.getString( "aliases" ) ).toString(), mapType );
 			}
-			catch( Exception e )
+			catch ( Exception e )
 			{
 				Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'aliases' field for site '" + siteId + "'" );
 			}
@@ -309,7 +308,7 @@ public class Site
 				if ( !rs.getString( "subdomains" ).isEmpty() )
 					subdomains = gson.fromJson( new JSONObject( rs.getString( "subdomains" ) ).toString(), mapType );
 			}
-			catch( Exception e )
+			catch ( Exception e )
 			{
 				Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'subdomains' field for site '" + siteId + "'" );
 			}
@@ -320,7 +319,7 @@ public class Site
 				InputStream is = new ByteArrayInputStream( yaml.getBytes( "ISO-8859-1" ) );
 				config = YamlConfiguration.loadConfiguration( is );
 			}
-			catch( Exception e )
+			catch ( Exception e )
 			{
 				Loader.getLogger().warning( "MALFORMED YAML EXPRESSION for 'configYaml' field for site '" + siteId + "'" );
 				config = new YamlConfiguration();
@@ -328,7 +327,7 @@ public class Site
 			
 			finishLoad();
 		}
-		catch( SQLException e )
+		catch ( SQLException e )
 		{
 			throw new SiteException( e );
 		}
@@ -364,7 +363,7 @@ public class Site
 				else
 					throw new SiteException( "The SqlConnector for site '" + siteId + "' can not support anything other then mySql or sqLite at the moment. Please change 'database.type' in the site config to 'mysql' or 'sqLite' and set the connection params." );
 			}
-			catch( SQLException e )
+			catch ( SQLException e )
 			{
 				if ( e.getCause() instanceof ConnectException )
 					throw new SiteException( "We had a problem connecting to database '" + database + "'. Reason: " + e.getCause().getMessage() );
@@ -392,7 +391,7 @@ public class Site
 						else
 							Loader.getLogger().info( "Finsihed evaling onLoadScript '" + script + "' for site '" + siteId + "' with result: " + result );
 					}
-					catch( ShellExecuteException e )
+					catch ( ShellExecuteException e )
 					{
 						Loader.getLogger().warning( "There was an exception encountered while evaling onLoadScript '" + script + "' for site '" + siteId + "'.", e );
 					}
@@ -406,7 +405,7 @@ public class Site
 		{
 			Loader.getEventBus().callEventWithException( event );
 		}
-		catch( EventException e )
+		catch ( EventException e )
 		{
 			throw new SiteException( e );
 		}
@@ -524,7 +523,7 @@ public class Site
 		{
 			return getAbsoluteRoot( null );
 		}
-		catch( SiteException e )
+		catch ( SiteException e )
 		{
 			return null;
 			// SiteException WILL NEVER THROW ON AN EMPTY SUBDOMAIN ARGUMENT. At least for now.
@@ -550,7 +549,7 @@ public class Site
 		{
 			return getRoot( null );
 		}
-		catch( SiteException e )
+		catch ( SiteException e )
 		{
 			return null;
 			// SiteException WILL NEVER THROW ON AN EMPTY SUBDOMAIN ARGUMENT. At least for now.
@@ -646,7 +645,7 @@ public class Site
 		{
 			return getResourceWithException( packageNode );
 		}
-		catch( FileNotFoundException e )
+		catch ( FileNotFoundException e )
 		{
 			if ( !packageNode.endsWith( "includes.default" ) )
 				Loader.getLogger().warning( e.getMessage() );
@@ -691,7 +690,7 @@ public class Site
 		{
 			return readResourceWithException( pack );
 		}
-		catch( ShellExecuteException e )
+		catch ( ShellExecuteException e )
 		{
 			return "";
 		}
@@ -710,7 +709,7 @@ public class Site
 			
 			return factory.eval( file, this );
 		}
-		catch( IOException e )
+		catch ( IOException e )
 		{
 			throw new ShellExecuteException( e, codeMeta );
 		}

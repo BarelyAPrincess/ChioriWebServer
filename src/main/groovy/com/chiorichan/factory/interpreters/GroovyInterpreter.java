@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -19,15 +19,13 @@ import com.chiorichan.factory.CodeMetaData;
 /**
  * Groovy SeaShell.
  * More of another dummy SeaShell to evaluate groovy files.
- * 
- * @author Chiori Greene
  */
 public class GroovyInterpreter implements Interpreter
 {
 	@Override
 	public String[] getHandledTypes()
 	{
-		return new String[] { "groovy" };
+		return new String[] {"groovy"};
 	}
 	
 	@Override
@@ -43,7 +41,7 @@ public class GroovyInterpreter implements Interpreter
 		catch ( Throwable e )
 		{
 			if ( e instanceof ShellExecuteException )
-				throw (ShellExecuteException) e;
+				throw ( ShellExecuteException ) e;
 			else
 				throw new ShellExecuteException( e, meta );
 		}

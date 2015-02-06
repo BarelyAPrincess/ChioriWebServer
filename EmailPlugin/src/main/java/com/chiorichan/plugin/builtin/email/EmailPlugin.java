@@ -60,7 +60,7 @@ public class EmailPlugin extends Plugin
 			
 			getLogger().info( "&2Sent message subjected '" + subject + "' to '" + sendTo + "'" );
 		}
-		catch( MessagingException mex )
+		catch ( MessagingException mex )
 		{
 			System.out.println( "send failed, exception: " + mex );
 			throw mex;

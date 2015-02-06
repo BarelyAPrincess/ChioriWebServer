@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -33,21 +34,21 @@ public class SessionProviderWeb implements SessionProvider
 	protected HttpRequestWrapper request;
 	protected Session parentSession;
 	
-	protected SessionProviderWeb( HttpRequestWrapper _request )
+	protected SessionProviderWeb( HttpRequestWrapper request )
 	{
 		parentSession = SessionManager.createSession();
 		parentSession.sessionProviders.add( this );
-		setRequest( _request, false );
+		setRequest( request, false );
 	}
 	
-	protected SessionProviderWeb( Session session, HttpRequestWrapper _request )
+	protected SessionProviderWeb( Session session, HttpRequestWrapper request )
 	{
 		parentSession = session;
 		parentSession.sessionProviders.add( this );
 		for ( Entry<String, Object> e : session.bindingMap.entrySet() )
 			binding.setVariable( e.getKey(), e.getValue() );
 		
-		setRequest( _request, true );
+		setRequest( request, true );
 	}
 	
 	@Override
@@ -56,32 +57,32 @@ public class SessionProviderWeb implements SessionProvider
 		return parentSession;
 	}
 	
-	protected void setRequest( HttpRequestWrapper _request, Boolean _stale )
+	protected void setRequest( HttpRequestWrapper request, Boolean stale )
 	{
-		request = _request;
-		parentSession.stale = _stale;
+		this.request = request;
+		parentSession.stale = stale;
 		
 		parentSession.setSite( request.getSite() );
 		parentSession.ipAddr = request.getRemoteAddr();
 		
-		Map<String, Candy> pulledCandies = SessionUtils.poleCandies( _request );
+		Map<String, Candy> pulledCandies = SessionUtils.poleCandies( request );
 		pulledCandies.putAll( parentSession.candies );
 		parentSession.candies = pulledCandies;
 		
 		if ( request.getSite().getYaml() != null )
 		{
-			String _candyName = request.getSite().getYaml().getString( "sessions.cookie-name", parentSession.candyName );
+			String candyName = request.getSite().getYaml().getString( "sessions.cookie-name", parentSession.candyName );
 			
-			if ( !_candyName.equals( parentSession.candyName ) )
+			if ( !candyName.equals( parentSession.candyName ) )
 				if ( parentSession.candies.containsKey( parentSession.candyName ) )
 				{
-					parentSession.candies.put( _candyName, parentSession.candies.get( parentSession.candyName ) );
+					parentSession.candies.put( candyName, parentSession.candies.get( parentSession.candyName ) );
 					parentSession.candies.remove( parentSession.candyName );
-					parentSession.candyName = _candyName;
+					parentSession.candyName = candyName;
 				}
 				else
 				{
-					parentSession.candyName = _candyName;
+					parentSession.candyName = candyName;
 				}
 		}
 		
@@ -91,7 +92,7 @@ public class SessionProviderWeb implements SessionProvider
 		{
 			parentSession.initSession( request.getParentDomain() );
 		}
-		catch( SessionException e )
+		catch ( SessionException e )
 		{
 			e.printStackTrace();
 		}
@@ -142,7 +143,7 @@ public class SessionProviderWeb implements SessionProvider
 				
 				parentSession.currentAccount = user;
 				
-				String loginPost = (target.isEmpty()) ? request.getSite().getYaml().getString( "scripts.login-post", "/panel" ) : target;
+				String loginPost = ( target.isEmpty() ) ? request.getSite().getYaml().getString( "scripts.login-post", "/panel" ) : target;
 				
 				parentSession.setVariable( "remember", remember );
 				
@@ -150,7 +151,7 @@ public class SessionProviderWeb implements SessionProvider
 				request.getResponse().sendRedirect( loginPost );
 				
 			}
-			catch( LoginException l )
+			catch ( LoginException l )
 			{
 				// l.printStackTrace();
 				
@@ -177,7 +178,7 @@ public class SessionProviderWeb implements SessionProvider
 					
 					Loader.getLogger().info( ConsoleColor.GREEN + "Login Success `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getAcctId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
 				}
-				catch( LoginException l )
+				catch ( LoginException l )
 				{
 					Loader.getLogger().warning( ConsoleColor.GREEN + "Login Failed `No Valid Login Present`" );
 				}

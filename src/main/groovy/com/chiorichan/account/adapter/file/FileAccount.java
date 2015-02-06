@@ -16,7 +16,7 @@ import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountMetaData;
 import com.chiorichan.account.LoginException;
 import com.chiorichan.account.LoginExceptionReason;
-import com.chiorichan.file.YamlConfiguration;
+import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.util.Common;
 
 public class FileAccount extends Account<FileAdapter>

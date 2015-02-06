@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -93,7 +94,7 @@ public class SQLBackend extends PermissionBackend
 					for ( String siteA : sites.split( "|" ) )
 						defaults.put( siteA.toLowerCase(), result.getString( "child" ) );
 			}
-			while( result.next() );
+			while ( result.next() );
 			
 			// Update defaults
 			for ( String s : site )
@@ -121,7 +122,7 @@ public class SQLBackend extends PermissionBackend
 				getSQL().queryUpdate( "INSERT INTO `permissions_group` (`child`, `parent`, `type`, `sites`) VALUES ('" + c + "', 'default', '1', '" + sites + "');" );
 			}
 		}
-		catch( SQLException e )
+		catch ( SQLException e )
 		{
 			throw new RuntimeException( e );
 		}
@@ -148,14 +149,14 @@ public class SQLBackend extends PermissionBackend
 					for ( String siteA : sites.split( "|" ) )
 						defaults.put( siteA.toLowerCase(), result.getString( "child" ) );
 			}
-			while( result.next() );
+			while ( result.next() );
 			
 			if ( defaults.isEmpty() )
 				throw new RuntimeException( "There is no default group set. New entities will not have any groups." );
 			
-			return getGroup( (site == null || site.isEmpty()) ? defaults.get( "" ) : defaults.get( site.toLowerCase() ) );
+			return getGroup( ( site == null || site.isEmpty() ) ? defaults.get( "" ) : defaults.get( site.toLowerCase() ) );
 		}
-		catch( SQLException e )
+		catch ( SQLException e )
 		{
 			throw new RuntimeException( e );
 		}
@@ -177,11 +178,11 @@ public class SQLBackend extends PermissionBackend
 			{
 				entities.add( result.getString( "owner" ) );
 			}
-			while( result.next() );
+			while ( result.next() );
 			
 			return entities;
 		}
-		catch( SQLException e )
+		catch ( SQLException e )
 		{
 			throw new RuntimeException( e );
 		}
@@ -254,7 +255,7 @@ public class SQLBackend extends PermissionBackend
 					
 					perm.setDescription( result.getString( "description" ) );
 				}
-				while( result.next() );
+				while ( result.next() );
 			
 			result = getSQL().query( "SELECT * FROM `permissions_entity`" );
 			
@@ -274,9 +275,9 @@ public class SQLBackend extends PermissionBackend
 					
 					entity.attachPermission( new ChildPermission( perm, sites, value ) );
 				}
-				while( result.next() );
+				while ( result.next() );
 		}
-		catch( SQLException e )
+		catch ( SQLException e )
 		{
 			throw new RuntimeException( e );
 		}

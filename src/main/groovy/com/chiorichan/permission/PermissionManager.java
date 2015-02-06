@@ -17,7 +17,7 @@ import java.util.TimerTask;
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
-import com.chiorichan.file.YamlConfiguration;
+import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.permission.backend.FileBackend;
 import com.chiorichan.permission.backend.MemoryBackend;
 import com.chiorichan.permission.backend.SQLBackend;
@@ -70,11 +70,11 @@ public class PermissionManager implements TaskCreator
 	 * This would also cause backend resetting.
 	 * 
 	 * @param backendName
-	 *             name of backend to set to
+	 *            name of backend to set to
 	 */
 	public void setBackend( String backendName ) throws PermissionBackendException
 	{
-		synchronized( this )
+		synchronized ( this )
 		{
 			clearCache();
 			backend = PermissionBackend.getBackend( backendName );
@@ -120,9 +120,9 @@ public class PermissionManager implements TaskCreator
 	 * Check if specified entity has specified permission
 	 * 
 	 * @param entity
-	 *             entity object
+	 *            entity object
 	 * @param permission
-	 *             permission string to check against
+	 *            permission string to check against
 	 * @return true on success false otherwise
 	 */
 	public boolean has( Permissible perm, String permission )
@@ -134,11 +134,11 @@ public class PermissionManager implements TaskCreator
 	 * Check if entity has specified permission in site
 	 * 
 	 * @param entity
-	 *             entity object
+	 *            entity object
 	 * @param permission
-	 *             permission as string to check against
+	 *            permission as string to check against
 	 * @param site
-	 *             site's name as string
+	 *            site's name as string
 	 * @return true on success false otherwise
 	 */
 	public boolean has( Account<?> entity, String permission, String site )
@@ -150,11 +150,11 @@ public class PermissionManager implements TaskCreator
 	 * Check if entity with name has permission in site
 	 * 
 	 * @param entityName
-	 *             entity name
+	 *            entity name
 	 * @param permission
-	 *             permission as string to check against
+	 *            permission as string to check against
 	 * @param site
-	 *             site's name as string
+	 *            site's name as string
 	 * @return true on success false otherwise
 	 */
 	public boolean has( String entityName, String permission, String site )
@@ -173,7 +173,7 @@ public class PermissionManager implements TaskCreator
 	 * Return entity's object
 	 * 
 	 * @param entityname
-	 *             get PermissibleEntity with given name
+	 *            get PermissibleEntity with given name
 	 * @return PermissibleEntity instance
 	 */
 	public PermissibleEntity getEntity( String entityname )
@@ -205,7 +205,7 @@ public class PermissionManager implements TaskCreator
 	 * Return object of specified entity
 	 * 
 	 * @param entity
-	 *             entity object
+	 *            entity object
 	 * @return PermissibleEntity instance
 	 */
 	public PermissibleEntity getEntity( Account<?> entity )
@@ -227,7 +227,7 @@ public class PermissionManager implements TaskCreator
 	 * Reset in-memory object of specified entity
 	 * 
 	 * @param entityName
-	 *             entity's name
+	 *            entity's name
 	 */
 	public void resetEntity( String entityName )
 	{
@@ -238,7 +238,7 @@ public class PermissionManager implements TaskCreator
 	 * Return object for specified group
 	 * 
 	 * @param groupname
-	 *             group's name
+	 *            group's name
 	 * @return PermissibleGroup object
 	 */
 	public PermissibleGroup getGroup( String groupname )
@@ -320,7 +320,7 @@ public class PermissionManager implements TaskCreator
 	 * Set default group to specified group
 	 * 
 	 * @param group
-	 *             PermissibleGroup group object
+	 *            PermissibleGroup group object
 	 */
 	public void setDefaultGroup( PermissibleGroup group, String siteName )
 	{
@@ -346,7 +346,7 @@ public class PermissionManager implements TaskCreator
 	 * Reset in-memory object for groupName
 	 * 
 	 * @param groupName
-	 *             group's name
+	 *            group's name
 	 */
 	public void resetGroup( String groupName )
 	{
@@ -357,7 +357,7 @@ public class PermissionManager implements TaskCreator
 	 * Set debug mode
 	 * 
 	 * @param debug
-	 *             true enables debug mode, false disables
+	 *            true enables debug mode, false disables
 	 */
 	public void setDebug( boolean debug )
 	{
@@ -389,9 +389,9 @@ public class PermissionManager implements TaskCreator
 	 * Register new timer task
 	 * 
 	 * @param task
-	 *             TimerTask object
+	 *            TimerTask object
 	 * @param delay
-	 *             delay in seconds
+	 *            delay in seconds
 	 */
 	protected void registerTask( TimerTask task, int delay )
 	{
@@ -418,7 +418,7 @@ public class PermissionManager implements TaskCreator
 		{
 			reset();
 		}
-		catch( PermissionBackendException ignore )
+		catch ( PermissionBackendException ignore )
 		{
 			// Ignore because we're shutting down so who cares
 		}

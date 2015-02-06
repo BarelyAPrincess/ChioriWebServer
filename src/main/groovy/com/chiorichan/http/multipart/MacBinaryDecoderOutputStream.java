@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -22,7 +22,7 @@ public class MacBinaryDecoderOutputStream extends FilterOutputStream
 	private int bytesFiltered = 0;
 	private int dataForkLength = 0;
 	
-	public MacBinaryDecoderOutputStream(OutputStream out)
+	public MacBinaryDecoderOutputStream( OutputStream out )
 	{
 		super( out );
 	}
@@ -46,12 +46,12 @@ public class MacBinaryDecoderOutputStream extends FilterOutputStream
 		bytesFiltered++;
 	}
 	
-	public void write( byte b[] ) throws IOException
+	public void write( byte[] b ) throws IOException
 	{
 		write( b, 0, b.length );
 	}
 	
-	public void write( byte b[], int off, int len ) throws IOException
+	public void write( byte[] b, int off, int len ) throws IOException
 	{
 		// If the write is for content past the end of the data fork, ignore
 		if ( bytesFiltered >= ( 128 + dataForkLength ) )

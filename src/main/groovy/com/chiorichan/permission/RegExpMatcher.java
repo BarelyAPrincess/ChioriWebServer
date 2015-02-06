@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -39,7 +40,7 @@ public class RegExpMatcher implements PermissionMatcher
 		{
 			return Pattern.compile( prepareRegexp( expression ), Pattern.CASE_INSENSITIVE );
 		}
-		catch( PatternSyntaxException e )
+		catch ( PatternSyntaxException e )
 		{
 			return Pattern.compile( Pattern.quote( expression ), Pattern.CASE_INSENSITIVE );
 		}
@@ -68,7 +69,7 @@ public class RegExpMatcher implements PermissionMatcher
 		try
 		{
 			Matcher rangeMatcher = rangeExpression.matcher( regexp );
-			while( rangeMatcher.find() )
+			while ( rangeMatcher.find() )
 			{
 				StringBuilder range = new StringBuilder();
 				int from = Integer.parseInt( rangeMatcher.group( 1 ) );
@@ -97,8 +98,9 @@ public class RegExpMatcher implements PermissionMatcher
 				regexp = regexp.replace( rangeMatcher.group( 0 ), range.toString() );
 			}
 		}
-		catch( Throwable e )
-		{}
+		catch ( Throwable e )
+		{
+		}
 		
 		return regexp;
 	}

@@ -22,7 +22,7 @@ public class Common
 	 */
 	public static int getEpoch()
 	{
-		return (int) (System.currentTimeMillis() / 1000);
+		return ( int ) ( System.currentTimeMillis() / 1000 );
 	}
 	
 	public static void logMessage( String level, String msg )
@@ -36,7 +36,7 @@ public class Common
 			
 			meth.invoke( o, msg );
 		}
-		catch( ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e )
+		catch ( ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e )
 		{
 			System.out.println( "[" + level.toUpperCase() + "] " + msg );
 		}
@@ -58,7 +58,7 @@ public class Common
 				complete.update( buffer, 0, numRead );
 			}
 		}
-		while( numRead != -1 );
+		while ( numRead != -1 );
 		
 		fis.close();
 		return complete.digest();
@@ -71,7 +71,7 @@ public class Common
 		
 		for ( int i = 0; i < b.length; i++ )
 		{
-			result += Integer.toString( (b[i] & 0xff) + 0x100, 16 ).substring( 1 );
+			result += Integer.toString( ( b[i] & 0xff ) + 0x100, 16 ).substring( 1 );
 		}
 		return result;
 	}
@@ -88,12 +88,12 @@ public class Common
 			
 			for ( int i = 0; i < b.length; i++ )
 			{
-				result += Integer.toString( (b[i] & 0xff) + 0x100, 16 ).substring( 1 );
+				result += Integer.toString( ( b[i] & 0xff ) + 0x100, 16 ).substring( 1 );
 			}
 			
 			return result;
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
 			e.printStackTrace();
 		}

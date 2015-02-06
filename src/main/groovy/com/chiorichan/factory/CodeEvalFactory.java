@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -111,7 +111,7 @@ public class CodeEvalFactory
 	{
 		for ( Entry<GroovyShell, Boolean> eShell : groovyShells.entrySet() )
 		{
-			if ( eShell.getValue() == false )
+			if ( !eShell.getValue() )
 				return eShell.getKey();
 		}
 		
@@ -140,17 +140,17 @@ public class CodeEvalFactory
 		groovyShells.put( shell, false );
 	}
 	
-	protected CodeEvalFactory(Binding _binding)
+	protected CodeEvalFactory( Binding binding )
 	{
-		binding = _binding;
+		this.binding = binding;
 		setOutputStream( bs );
 	}
 	
-	public void setOutputStream( ByteArrayOutputStream _bs )
+	public void setOutputStream( ByteArrayOutputStream bs )
 	{
 		try
 		{
-			binding.setProperty( "out", new PrintStream( _bs, true, encoding ) );
+			binding.setProperty( "out", new PrintStream( bs, true, encoding ) );
 		}
 		catch ( UnsupportedEncodingException e )
 		{
@@ -158,16 +158,18 @@ public class CodeEvalFactory
 		}
 	}
 	
-	public void setEncoding( String _encoding )
+	public void setEncoding( String encoding )
 	{
-		encoding = _encoding;
+		this.encoding = encoding;
 		setOutputStream( bs );
 	}
 	
 	/**
 	 * 
-	 * @param orig, The original class you would like to override.
-	 * @param replace, An instance of the class you are overriding with. Must extend the original class.
+	 * @param orig
+	 *            , The original class you would like to override.
+	 * @param replace
+	 *            , An instance of the class you are overriding with. Must extend the original class.
 	 */
 	public static boolean overrideProcessor( Class<? extends PreProcessor> orig, PreProcessor replace )
 	{
@@ -184,8 +186,10 @@ public class CodeEvalFactory
 	
 	/**
 	 * 
-	 * @param orig, The original class you would like to override.
-	 * @param replace, An instance of the class you are overriding with. Must extend the original class.
+	 * @param orig
+	 *            , The original class you would like to override.
+	 * @param replace
+	 *            , An instance of the class you are overriding with. Must extend the original class.
 	 */
 	public static boolean overrideInterpreter( Class<? extends Interpreter> orig, Interpreter replace )
 	{
@@ -202,8 +206,10 @@ public class CodeEvalFactory
 	
 	/**
 	 * 
-	 * @param orig, The original class you would like to override.
-	 * @param replace, An instance of the class you are overriding with. Must extend the original class.
+	 * @param orig
+	 *            , The original class you would like to override.
+	 * @param replace
+	 *            , An instance of the class you are overriding with. Must extend the original class.
 	 */
 	public static boolean overrideProcessor( Class<? extends PostProcessor> orig, PostProcessor replace )
 	{
@@ -259,7 +265,7 @@ public class CodeEvalFactory
 	{
 		CodeMetaData codeMeta = new CodeMetaData();
 		if ( fi instanceof WebInterpreter )
-			codeMeta.params = ( (WebInterpreter) fi ).getRewriteParams();
+			codeMeta.params = ( ( WebInterpreter ) fi ).getRewriteParams();
 		else
 			codeMeta.params = fi.getParams();
 		

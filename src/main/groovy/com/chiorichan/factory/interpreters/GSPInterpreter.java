@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -28,8 +28,6 @@ import com.chiorichan.factory.CodeMetaData;
  * <p>
  * This is plain html<% print ", with a twist of groovy. Today's date: " + date("") %>.
  * </p>
- * 
- * @author Chiori Greene
  */
 public class GSPInterpreter implements Interpreter
 {
@@ -39,7 +37,7 @@ public class GSPInterpreter implements Interpreter
 	@Override
 	public String[] getHandledTypes()
 	{
-		return new String[] { "embedded", "gsp", "jsp", "chi" };
+		return new String[] {"embedded", "gsp", "jsp", "chi"};
 	}
 	
 	@Override
@@ -50,7 +48,7 @@ public class GSPInterpreter implements Interpreter
 			shell.setVariable( "__FILE__", meta.fileName );
 			
 			int fullFileIndex = 0;
-			String[] dontStartWith = new String[] { "println", "print", "echo", "def", "import", "if", "for", "do", "}", "else", "//", "/*", "\n", "\r" };
+			String[] dontStartWith = new String[] {"println", "print", "echo", "def", "import", "if", "for", "do", "}", "else", "//", "/*", "\n", "\r"};
 			
 			StringBuilder output = new StringBuilder();
 			
@@ -66,7 +64,7 @@ public class GSPInterpreter implements Interpreter
 						output.append( fragment );
 					
 					int endIndex = fullFile.indexOf( MARKER_END, Math.max( startIndex, fullFileIndex ) );
-
+					
 					if ( endIndex == -1 )
 						throw new ShellExecuteException( new IOException( "Marker `<%` was not closed after line " + ( StringUtils.countMatches( output.toString(), "\n" ) + 1 ) + ", please check your source file and try again." ), meta );
 					
@@ -107,7 +105,7 @@ public class GSPInterpreter implements Interpreter
 		catch ( Throwable e )
 		{
 			if ( e instanceof ShellExecuteException )
-				throw (ShellExecuteException) e;
+				throw ( ShellExecuteException ) e;
 			else
 				throw new ShellExecuteException( e, meta );
 		}
@@ -120,7 +118,7 @@ public class GSPInterpreter implements Interpreter
 		fragment = fragment.replace( "\\$", "$" );
 		fragment = fragment.replace( "$", "\\$" );
 		
-		if( fragment.endsWith( "\"" ) )
+		if ( fragment.endsWith( "\"" ) )
 			brackets = "'''";
 		
 		return "print " + brackets + fragment + brackets + "; ";
