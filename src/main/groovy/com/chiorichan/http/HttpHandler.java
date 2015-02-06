@@ -434,17 +434,17 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 			if ( sess.getParentSession().getAccount() == null )
 			{
 				String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
-				Loader.getLogger().warning( "Requester of page '" + file + "' has been redirected to the login page." );
+				// Loader.getLogger().warning( "Requester of page '" + file + "' has been redirected to the login page." );
 				response.sendRedirect( loginForm + "?msg=You must be logged in to view that page!&target=http://" + request.getDomain() + request.getURI() );
 				// TODO: Come up with a better way to handle the URI used in the target. ie. Params are lost.
 				return;
 			}
-			else if ( !req.equals( "1" ) )// XXX && !sess.getParentSession().getAccount().hasPermission( req ) )
+			else if ( !req.equals( "1" ) && !sess.getParentSession().getAccount().hasPermission( req ) )
 			{
 				if ( req.equals( "0" ) )
 					response.sendError( 401, "This page is limited to Operators only!" );
-				
-				response.sendError( 401, "This page is limited to users with access to the \"" + req + "\" permission." );
+				else
+					response.sendError( 401, "This page is limited to users with access to the \"" + req + "\" permission." );
 			}
 		
 		try

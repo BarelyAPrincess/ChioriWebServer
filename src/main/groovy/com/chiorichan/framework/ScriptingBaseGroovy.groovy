@@ -12,7 +12,6 @@ package com.chiorichan.framework
 import com.chiorichan.Loader
 import com.chiorichan.account.Account
 import com.chiorichan.database.DatabaseEngine
-import com.chiorichan.exception.ShellExecuteException
 import com.chiorichan.http.HttpCode
 import com.chiorichan.http.HttpRequestWrapper
 import com.chiorichan.http.HttpResponseWrapper
@@ -64,10 +63,10 @@ abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	
 	Account getAccount( String uid )
 	{
-		Account result =  Loader.getAccountsManager().getAccount( uid );
+		Account result =  Loader.getAccountManager().getAccount( uid );
 		
 		if ( result == null )
-			result = Loader.getAccountsManager().getAccountPartial( uid );
+			result = Loader.getAccountManager().getAccountPartial( uid );
 		
 		return result;
 	}

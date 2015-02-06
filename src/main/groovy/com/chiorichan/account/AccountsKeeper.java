@@ -30,7 +30,7 @@ public class AccountsKeeper
 	protected Map<Account<?>, AccountsKeeperOptions> accounts = Maps.newConcurrentMap();
 	protected AccountLookupAdapter adapter = null;
 	
-	public Account<? extends AccountLookupAdapter> accountConstruct( AccountLookupAdapter adapter, Object... params ) throws LoginException
+	public Account<? extends AccountLookupAdapter> accountConstruct( AccountLookupAdapter adapter, String userId, Object... params ) throws LoginException
 	{
 		Set<Class<?>> paramsClass = Sets.newHashSet();
 		
@@ -50,7 +50,7 @@ public class AccountsKeeper
 		}
 		catch ( NoSuchMethodException | InstantiationException | IllegalAccessException | IllegalArgumentException e )
 		{
-			return new MemoryAccount( "", adapter );
+			return new MemoryAccount( userId, adapter );
 		}
 	}
 	
@@ -139,8 +139,12 @@ public class AccountsKeeper
 		
 		if ( acct == null )
 		{
-			acct = accountConstruct( adapter, s, adapter );
-			putAccount( acct, false );
+			AccountMetaData meta = adapter.readAccount( s );
+			if ( meta != null )
+			{
+				acct = accountConstruct( adapter, s, meta, adapter );
+				putAccount( acct, false );
+			}
 		}
 		
 		return acct;
@@ -174,7 +178,7 @@ public class AccountsKeeper
 			if ( acct == null )
 				try
 				{
-					accts.add( accountConstruct( adapter, meta, adapter ) );
+					accts.add( accountConstruct( adapter, meta.getAcctId(), meta, adapter ) );
 				}
 				catch ( LoginException e )
 				{

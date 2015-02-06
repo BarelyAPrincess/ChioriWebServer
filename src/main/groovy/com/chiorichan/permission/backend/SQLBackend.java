@@ -172,7 +172,7 @@ public class SQLBackend extends PermissionBackend
 			ResultSet result = getSQL().query( "SELECT * FROM `permissions_entity` WHERE `type` = " + type + ";" );
 			
 			if ( !result.next() )
-				return null;
+				return Sets.newHashSet();
 			
 			do
 			{
@@ -271,7 +271,7 @@ public class SQLBackend extends PermissionBackend
 					Permission perm = Permission.crawlPermissionStack( result.getString( "permission" ).toLowerCase(), true );
 					
 					List<Site> sites = Loader.getSiteManager().parseSites( result.getString( "sites" ) );
-					PermissionValue<?> value = perm.getValue().createChild( result.getObject( "value" ) );
+					PermissionValue<?> value = ( perm.getValue() != null ) ? perm.getValue().createChild( result.getObject( "value" ) ) : null;
 					
 					entity.attachPermission( new ChildPermission( perm, sites, value ) );
 				}

@@ -40,19 +40,22 @@ public class SQLEntity extends PermissibleProxy
 	@Override
 	public boolean hasPermission( String req )
 	{
-		return false;
+		// TEMP!
+		return true;
 	}
 	
 	@Override
 	public boolean hasPermission( Permission req )
 	{
-		return false;
+		// TEMP!
+		return true;
 	}
 	
 	@Override
 	public boolean isOp()
 	{
-		return false;
+		// TEMP
+		return true;
 	}
 	
 	@Override

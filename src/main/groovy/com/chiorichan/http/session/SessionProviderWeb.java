@@ -153,7 +153,7 @@ public class SessionProviderWeb implements SessionProvider
 			}
 			catch ( LoginException l )
 			{
-				// l.printStackTrace();
+				l.printStackTrace();
 				
 				String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
 				

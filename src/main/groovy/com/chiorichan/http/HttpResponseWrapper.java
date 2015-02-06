@@ -260,7 +260,7 @@ public class HttpResponseWrapper
 		if ( autoRedirect )
 		{
 			setStatus( httpStatus );
-			request.getOriginal().headers().set( "Location", target );
+			setHeader( "Location", target );
 		}
 		else
 			// TODO: Send client a redirection page.
