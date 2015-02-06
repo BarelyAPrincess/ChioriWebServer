@@ -37,7 +37,6 @@ import com.google.zxing.qrcode.QRCodeWriter;
  */
 public class QRCode
 {
-	
 	Writer qrWriter;
 	private int width = 125;
 	private int height = 125;

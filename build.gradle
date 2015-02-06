@@ -137,6 +137,7 @@ javadoc
 checkstyle
 {
 	configFile = file('etc/checkstyle.xml')
+	configProperties = ["basedir":project.projectDir]
 }
 
 task sourcesArchive(type: Zip){
@@ -154,8 +155,7 @@ task libsArchive(type: Zip){
 	from configurations.compile
 }
 */
-task writePropertiesFile <<
-{
+task writePropertiesFile << {
 	SimpleDateFormat sdf = new SimpleDateFormat( "EEE, d MMM yyyy HH:mm:ss Z" );
 	
 	Properties props = new Properties();
