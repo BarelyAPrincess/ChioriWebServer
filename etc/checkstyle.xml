@@ -106,7 +106,7 @@
     <property name="fileExtensions" value="java, groovy"/>
   </module>
   <module name="Header">
-    <property name="headerFile" value="${config_loc}/java.header"/>
+    <property name="headerFile" value="${basedir}/etc/java.header"/>
     <property name="fileExtensions" value="java, groovy"/>
   </module>
   <module name="UniqueProperties"/>
