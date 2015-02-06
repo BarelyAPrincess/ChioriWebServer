@@ -104,8 +104,11 @@ public class FileUtil
 	/**
 	 * Calculate a file location
 	 * 
-	 * @param name
-	 * @return
+	 * @param path
+	 *            Base file path
+	 * @param site
+	 *            Site that is used in relative
+	 * @return A File object calculated
 	 */
 	public static File calculateFileBase( String path, Site site )
 	{

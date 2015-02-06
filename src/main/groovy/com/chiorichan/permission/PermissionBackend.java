@@ -59,14 +59,14 @@ public abstract class PermissionBackend
 	/**
 	 * Return all registered groups
 	 * 
-	 * @return
+	 * @return Array of PermissibleGroup
 	 */
 	public abstract PermissibleGroup[] getGroups();
 	
 	/**
 	 * Return all registered and online entities
 	 * 
-	 * @return
+	 * @return Array of PermissibleEntity
 	 */
 	public abstract PermissibleEntity[] getEntities();
 	
@@ -94,7 +94,7 @@ public abstract class PermissionBackend
 	 * then try to find it using Class.forName(alias)
 	 * 
 	 * @param alias
-	 * @return
+	 * @return PermissionBackend Class for alias provided
 	 * @throws ClassNotFoundException
 	 */
 	@SuppressWarnings( "unchecked" )
@@ -160,10 +160,6 @@ public abstract class PermissionBackend
 	 * 
 	 * @param backendName
 	 *            Class name or alias of backend
-	 * @param manager
-	 *            PermissionManager object
-	 * @param config
-	 *            Configuration object to access backend settings
 	 * @param fallBackBackend
 	 *            name of backend that should be used if specified backend was not found or failed to initialize
 	 * @return new instance of PermissionBackend object

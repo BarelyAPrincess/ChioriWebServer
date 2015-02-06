@@ -58,7 +58,7 @@ public class ConfigurationManagerWrapper
 	 * Does a setting compare based on a string if No expected mean is interped as a boolean of true. ex.
 	 * USER_BETA_TESTER&USER_RANK=USER|USER_RANK=ADMIN
 	 * 
-	 * @param strings
+	 * @param settings
 	 *            settings to compare
 	 */
 	public boolean compareSetting( List<String> settings )

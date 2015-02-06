@@ -22,9 +22,6 @@ import com.google.common.collect.Lists;
 
 /**
  * Persistence manager handles sessions kept in memory. It also manages when to unload the session to free memory.
- * 
- * @author Chiori Greene
- * @copyright Greenetree LLC 2014
  */
 public class SessionManager
 {
@@ -131,7 +128,7 @@ public class SessionManager
 	/**
 	 * Remove said session from the server and sql database.
 	 * 
-	 * @param var1
+	 * @param sess
 	 */
 	public static void destroySession( Session sess )
 	{

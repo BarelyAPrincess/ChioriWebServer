@@ -190,7 +190,7 @@ public final class Permission
 	/**
 	 * Finds a registered permission node in the stack by crawling.
 	 * 
-	 * @param fullNode
+	 * @param namespace
 	 *            The full node path we need to crawl for.
 	 * @param createChildren
 	 *            Indicates if we should create the child node if not existent.

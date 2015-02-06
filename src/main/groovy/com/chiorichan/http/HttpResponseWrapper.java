@@ -336,8 +336,8 @@ public class HttpResponseWrapper
 	/**
 	 * Sets the ContentType header.
 	 * 
-	 * @param ContentType
-	 *            . ie. text/html or application/xml
+	 * @param type
+	 *            e.g., text/html or application/xml
 	 */
 	public void setContentType( String type )
 	{

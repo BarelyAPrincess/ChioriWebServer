@@ -169,7 +169,7 @@ public class HandlerList
 	/**
 	 * Remove a specific creator's listeners from this handler
 	 * 
-	 * @param EventCreator
+	 * @param creator
 	 *            creator to remove
 	 */
 	public synchronized void unregister( EventCreator creator )

@@ -119,7 +119,7 @@ public class PermissionManager implements TaskCreator
 	/**
 	 * Check if specified entity has specified permission
 	 * 
-	 * @param entity
+	 * @param perm
 	 *            entity object
 	 * @param permission
 	 *            permission string to check against

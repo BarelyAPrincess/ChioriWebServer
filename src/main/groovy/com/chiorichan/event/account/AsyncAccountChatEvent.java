@@ -42,7 +42,7 @@ public class AsyncAccountChatEvent extends AccountEvent implements Cancellable
 	 *            the chat sender
 	 * @param message
 	 *            the message sent
-	 * @param Users
+	 * @param accts
 	 *            the Users to receive the message. This may be a lazy or unmodifiable collection.
 	 */
 	public AsyncAccountChatEvent( final boolean async, final Account<?> who, final String message, final Set<Account<?>> accts )

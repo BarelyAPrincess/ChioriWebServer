@@ -39,8 +39,8 @@ public class AccountLoginEvent extends AccountEvent
 	/**
 	 * Sets the join message to send to all online Accounts
 	 * 
-	 * @param joinMessage
-	 *            join message
+	 * @param message
+	 *            Join message
 	 */
 	public void setJoinMessage( String message )
 	{

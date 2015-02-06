@@ -187,7 +187,7 @@ public abstract class PermissibleEntity implements PermissibleParent
 	/**
 	 * Return site names where entity have permissions/options/etc
 	 * 
-	 * @return
+	 * @return String array of site ids
 	 */
 	public abstract String[] getSites();
 	

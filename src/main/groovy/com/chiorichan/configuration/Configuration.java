@@ -50,7 +50,7 @@ public interface Configuration extends ConfigurationSection
 	 * If no source {@link Configuration} was provided as a default collection, then a new {@link MemoryConfiguration} will be created to hold the new default value.
 	 * <p />
 	 * This method will not hold a reference to the specified Configuration, nor will it automatically update if that Configuration ever changes. If you require this, you should set the default source with
-	 * {@link #setDefaults(org.bukkit.configuration.Configuration)}.
+	 * {@link #setDefaults(Configuration)}.
 	 * 
 	 * @param defaults
 	 *            A configuration holding a list of defaults to copy.

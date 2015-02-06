@@ -177,7 +177,7 @@ public enum ConsoleColor
 	 * 
 	 * @param code
 	 *            Code to check
-	 * @return Associative {@link org.ConsoleColor.ChatColor} with the given code, or null if it doesn't exist
+	 * @return Associative ConsoleColor with the given code, or null if it doesn't exist
 	 */
 	public static ConsoleColor getByChar( char code )
 	{
@@ -189,7 +189,7 @@ public enum ConsoleColor
 	 * 
 	 * @param code
 	 *            Code to check
-	 * @return Associative {@link org.ConsoleColor.ChatColor} with the given code, or null if it doesn't exist
+	 * @return Associative ConsoleColor with the given code, or null if it doesn't exist
 	 */
 	public static ConsoleColor getByChar( String code )
 	{

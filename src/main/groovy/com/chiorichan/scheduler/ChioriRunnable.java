@@ -10,7 +10,6 @@
 package com.chiorichan.scheduler;
 
 import com.chiorichan.Loader;
-import com.chiorichan.plugin.loader.Plugin;
 
 /**
  * This class is provided as an easy way to handle scheduling tasks.
@@ -33,7 +32,7 @@ public abstract class ChioriRunnable implements Runnable
 	/**
 	 * Schedules this in the Chiori scheduler to run on next tick.
 	 * 
-	 * @param plugin
+	 * @param creator
 	 *            the reference to the plugin scheduling task
 	 * @return a ChioriTask that contains the id number
 	 * @throws IllegalArgumentException
@@ -54,7 +53,7 @@ public abstract class ChioriRunnable implements Runnable
 	 * <br>
 	 * Schedules this in the Chiori scheduler to run asynchronously.
 	 * 
-	 * @param plugin
+	 * @param creator
 	 *            the reference to the plugin scheduling task
 	 * @return a ChioriTask that contains the id number
 	 * @throws IllegalArgumentException
@@ -72,7 +71,7 @@ public abstract class ChioriRunnable implements Runnable
 	/**
 	 * Schedules this to run after the specified number of server ticks.
 	 * 
-	 * @param plugin
+	 * @param creator
 	 *            the reference to the plugin scheduling task
 	 * @param delay
 	 *            the ticks to wait before running the task
@@ -81,12 +80,12 @@ public abstract class ChioriRunnable implements Runnable
 	 *             if plugin is null
 	 * @throws IllegalStateException
 	 *             if this was already scheduled
-	 * @see IChioriScheduler#runTaskLater(Plugin, Runnable, long)
+	 * @see IChioriScheduler#runTaskLater(TaskCreator, Runnable, long)
 	 */
-	public synchronized IChioriTask runTaskLater( Plugin plugin, long delay ) throws IllegalArgumentException, IllegalStateException
+	public synchronized IChioriTask runTaskLater( TaskCreator creator, long delay ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
-		return setupId( Loader.getScheduler().runTaskLater( plugin, this, delay ) );
+		return setupId( Loader.getScheduler().runTaskLater( creator, this, delay ) );
 	}
 	
 	/**
@@ -95,7 +94,7 @@ public abstract class ChioriRunnable implements Runnable
 	 * <br>
 	 * Schedules this to run asynchronously after the specified number of server ticks.
 	 * 
-	 * @param plugin
+	 * @param creator
 	 *            the reference to the plugin scheduling task
 	 * @param delay
 	 *            the ticks to wait before running the task
@@ -104,18 +103,18 @@ public abstract class ChioriRunnable implements Runnable
 	 *             if plugin is null
 	 * @throws IllegalStateException
 	 *             if this was already scheduled
-	 * @see IChioriScheduler#runTaskLaterAsynchronously(Plugin, Runnable, long)
+	 * @see IChioriScheduler#runTaskLaterAsynchronously(TaskCreator, Runnable, long)
 	 */
-	public synchronized IChioriTask runTaskLaterAsynchronously( Plugin plugin, long delay ) throws IllegalArgumentException, IllegalStateException
+	public synchronized IChioriTask runTaskLaterAsynchronously( TaskCreator creator, long delay ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
-		return setupId( Loader.getScheduler().runTaskLaterAsynchronously( plugin, this, delay ) );
+		return setupId( Loader.getScheduler().runTaskLaterAsynchronously( creator, this, delay ) );
 	}
 	
 	/**
 	 * Schedules this to repeatedly run until cancelled, starting after the specified number of server ticks.
 	 * 
-	 * @param plugin
+	 * @param creator
 	 *            the reference to the plugin scheduling task
 	 * @param delay
 	 *            the ticks to wait before running the task
@@ -126,12 +125,12 @@ public abstract class ChioriRunnable implements Runnable
 	 *             if plugin is null
 	 * @throws IllegalStateException
 	 *             if this was already scheduled
-	 * @see IChioriScheduler#runTaskTimer(Plugin, Runnable, long, long)
+	 * @see IChioriScheduler#runTaskTimer(TaskCreator, Runnable, long, long)
 	 */
-	public synchronized IChioriTask runTaskTimer( Plugin plugin, long delay, long period ) throws IllegalArgumentException, IllegalStateException
+	public synchronized IChioriTask runTaskTimer( TaskCreator creator, long delay, long period ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
-		return setupId( Loader.getScheduler().runTaskTimer( plugin, this, delay, period ) );
+		return setupId( Loader.getScheduler().runTaskTimer( creator, this, delay, period ) );
 	}
 	
 	/**
@@ -141,7 +140,7 @@ public abstract class ChioriRunnable implements Runnable
 	 * Schedules this to repeatedly run asynchronously until cancelled, starting after the specified number of server
 	 * ticks.
 	 * 
-	 * @param plugin
+	 * @param creator
 	 *            the reference to the plugin scheduling task
 	 * @param delay
 	 *            the ticks to wait before running the task for the first time
@@ -152,12 +151,12 @@ public abstract class ChioriRunnable implements Runnable
 	 *             if plugin is null
 	 * @throws IllegalStateException
 	 *             if this was already scheduled
-	 * @see IChioriScheduler#runTaskTimerAsynchronously(Plugin, Runnable, long, long)
+	 * @see IChioriScheduler#runTaskTimerAsynchronously(TaskCreator, Runnable, long, long)
 	 */
-	public synchronized IChioriTask runTaskTimerAsynchronously( Plugin plugin, long delay, long period ) throws IllegalArgumentException, IllegalStateException
+	public synchronized IChioriTask runTaskTimerAsynchronously( TaskCreator creator, long delay, long period ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
-		return setupId( Loader.getScheduler().runTaskTimerAsynchronously( plugin, this, delay, period ) );
+		return setupId( Loader.getScheduler().runTaskTimerAsynchronously( creator, this, delay, period ) );
 	}
 	
 	/**

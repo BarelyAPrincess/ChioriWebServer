@@ -263,8 +263,6 @@ public abstract class Account<T extends AccountLookupAdapter> extends Permissibl
 	/**
 	 * Called before the AccountManager makes the login offical.
 	 * 
-	 * @param account
-	 *            The account used in this check
 	 * @throws LoginException
 	 *             Throw this exception if you wish to interrupt the login
 	 */
@@ -273,8 +271,6 @@ public abstract class Account<T extends AccountLookupAdapter> extends Permissibl
 	/**
 	 * Called as the last line before account is returned.
 	 * 
-	 * @param account
-	 *            The account used in this check
 	 * @throws LoginException
 	 *             Throw this exception if you wish to interrupt the login
 	 */

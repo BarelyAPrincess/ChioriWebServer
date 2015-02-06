@@ -36,7 +36,7 @@ public class NetworkManager
 	 * complicated for Java Apps and a Security Risk.
 	 *
 	 * @param port
-	 * @return
+	 * @return Is this a privileged port?
 	 */
 	public static boolean checkPrivilegedPort( int port )
 	{

@@ -9,17 +9,18 @@
  */
 package vnet.java.util;
 
+import java.sql.Connection;
+
 /**
  * Mysql Utilities
+ * Ralph Ritoch 2011 ALL RIGHTS RESERVED
  * 
  * @author Ralph Ritoch <rritoch@gmail.com>
- * @copyright Ralph Ritoch 2011 ALL RIGHTS RESERVED
  * @link http://www.vnetpublishing.com
  * 
  */
 public class MySQLUtils
 {
-	
 	/**
 	 * Escape string to protected against SQL Injection
 	 * 
@@ -29,11 +30,10 @@ public class MySQLUtils
 	 * 
 	 * @param link
 	 * @param str
-	 * @return
+	 * @return String that has been escaped
 	 * @throws Exception
 	 */
-	
-	public static String mysql_real_escape_string( java.sql.Connection link, String str ) throws Exception
+	public static String mysql_real_escape_string( Connection link, String str ) throws Exception
 	{
 		if ( str == null )
 		{
@@ -103,11 +103,11 @@ public class MySQLUtils
 	 * 
 	 * @param link
 	 * @param str
-	 * @return
+	 * @return String thats been escaped
 	 * @throws Exception
 	 */
 	
-	public static String quote( java.sql.Connection link, String str ) throws Exception
+	public static String quote( Connection link, String str ) throws Exception
 	{
 		if ( str == null )
 		{
@@ -121,11 +121,11 @@ public class MySQLUtils
 	 * 
 	 * @param link
 	 * @param str
-	 * @return
+	 * @return String that has been escaped
 	 * @throws Exception
 	 */
 	
-	public static String nameQuote( java.sql.Connection link, String str ) throws Exception
+	public static String nameQuote( Connection link, String str ) throws Exception
 	{
 		if ( str == null )
 		{

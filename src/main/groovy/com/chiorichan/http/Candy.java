@@ -69,7 +69,7 @@ public class Candy
 	/**
 	 * Sets an explicit expiration time using an epoch.
 	 * 
-	 * @param _epoch
+	 * @param epoch
 	 */
 	public void setExpiration( long epoch )
 	{

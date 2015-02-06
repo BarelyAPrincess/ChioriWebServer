@@ -81,7 +81,7 @@ public class FileConfigurationOptions extends MemoryConfigurationOptions
 	/**
 	 * Gets whether or not the header should be copied from a default source.
 	 * <p>
-	 * If this is true, if a default {@link FileConfiguration} is passed to {@link MemoryConfiguration#setDefaults(org.bukkit.configuration.Configuration)} then upon saving it will use the header from that config, instead of the one provided
+	 * If this is true, if a default {@link FileConfiguration} is passed to {@link MemoryConfiguration#setDefaults(Configuration)} then upon saving it will use the header from that config, instead of the one provided
 	 * here.
 	 * <p>
 	 * If no default is set on the configuration, or the default is not of type FileConfiguration, or that config has no header ({@link #header()} returns null) then the header specified in this configuration will be used.
@@ -98,7 +98,7 @@ public class FileConfigurationOptions extends MemoryConfigurationOptions
 	/**
 	 * Sets whether or not the header should be copied from a default source.
 	 * <p>
-	 * If this is true, if a default {@link FileConfiguration} is passed to {@link MemoryConfiguration#setDefaults(org.bukkit.configuration.Configuration)} then upon saving it will use the header from that config, instead of the one provided
+	 * If this is true, if a default {@link FileConfiguration} is passed to {@link MemoryConfiguration#setDefaults(Configuration)} then upon saving it will use the header from that config, instead of the one provided
 	 * here.
 	 * <p>
 	 * If no default is set on the configuration, or the default is not of type FileConfiguration, or that config has no header ({@link #header()} returns null) then the header specified in this configuration will be used.

@@ -86,11 +86,6 @@ import com.google.common.collect.ImmutableList;
  * <td>The token to prefix plugin log entries</td>
  * </tr>
  * <tr>
- * <td><code>database</code></td>
- * <td>{@link #isDatabaseEnabled()}</td>
- * <td>Indicator to enable database support</td>
- * </tr>
- * <tr>
  * <td><code>load</code></td>
  * <td>{@link #getLoad()}</td>
  * <td>The phase of server-startup this plugin will load during</td>
@@ -180,7 +175,6 @@ public class PluginDescriptionFile
 	private List<String> authors = null;
 	private String website = null;
 	private String prefix = null;
-	private boolean database = false;
 	private RunLevel order = RunLevel.INITIALIZED;
 	
 	public PluginDescriptionFile( final File file ) throws InvalidDescriptionException, FileNotFoundException
@@ -232,8 +226,7 @@ public class PluginDescriptionFile
 	 * Gives the name of the plugin. This name is a unique identifier for plugins.
 	 * <ul>
 	 * <li>Must consist of all alphanumeric characters, underscores, hyphon, and period (a-z,A-Z,0-9, _.-). Any other character will cause the plugin.yaml to fail loading.
-	 * <li>Used to determine the name of the plugin's data folder. Data folders are placed in the ./plugins/ directory by default, but this behavior should not be relied on. {@link Plugin#getDataFolder()} should be used to reference the
-	 * data folder.
+	 * <li>Used to determine the name of the plugin's data folder. Data folders are placed in the ./plugins/ directory by default, but this behavior should not be relied on.
 	 * <li>It is good practice to name your jar the same as this, for example 'MyPlugin.jar'.
 	 * <li>Case sensitive.
 	 * <li>The is the token referenced in {@link #getDepend()}, {@link #getSoftDepend()}, and {@link #getLoadBefore()}.
@@ -283,10 +276,10 @@ public class PluginDescriptionFile
 	
 	/**
 	 * Gives the fully qualified name of the main class for a plugin. The format should follow the {@link ClassLoader#loadClass(String)} syntax to successfully be resolved at runtime. For most plugins, this is the
-	 * class that extends {@link JavaPlugin}.
+	 * class that extends
 	 * <ul>
 	 * <li>This must contain the full namespace including the class file itself.
-	 * <li>If your namespace is <code>org.bukkit.plugin</code>, and your class file is called <code>MyPlugin</code> then this must be <code>org.bukkit.plugin.MyPlugin</code>
+	 * <li>If your namespace is <code>com.chiorichan.plugin</code>, and your class file is called <code>MyPlugin</code> then this must be <code>com.chiorichan.plugin.MyPlugin</code>
 	 * <li>No plugin can use <code>org.bukkit.</code> as a base package for <b>any class</b>, including the main class.
 	 * </ul>
 	 * <p>
@@ -334,8 +327,8 @@ public class PluginDescriptionFile
 	/**
 	 * Gives the phase of server startup that the plugin should be loaded.
 	 * <ul>
-	 * <li>Possible values are in {@link PluginLoadOrder}.
-	 * <li>Defaults to {@link PluginLoadOrder#POSTWORLD}.
+	 * <li>Possible values are in {@link RunLevel}.
+	 * <li>Defaults to {@link RunLevel#POSTSERVER}.
 	 * <li>Certain caveats apply to each phase.
 	 * <li>When different, {@link #getDepend()}, {@link #getSoftDepend()}, and {@link #getLoadBefore()} become relative in order loaded per-phase. If a plugin loads at <code>STARTUP</code>, but a dependency loads at <code>POSTWORLD</code>,
 	 * the dependency will not be loaded before the plugin is loaded.
@@ -430,31 +423,6 @@ public class PluginDescriptionFile
 	}
 	
 	/**
-	 * Gives if the plugin uses a database.
-	 * <ul>
-	 * <li>Using a database is non-trivial.
-	 * <li>Valid values include <code>true</code> and <code>false</code>
-	 * </ul>
-	 * <p>
-	 * In the plugin.yaml, this entry is named <code>database</code>.
-	 * <p>
-	 * Example: <blockquote>
-	 * 
-	 * <pre>
-	 * database: false
-	 * </pre>
-	 * 
-	 * </blockquote>
-	 * 
-	 * @return if this plugin requires a database
-	 * @see Plugin#getDatabase()
-	 */
-	public boolean isDatabaseEnabled()
-	{
-		return database;
-	}
-	
-	/**
 	 * Gives a list of other plugins that the plugin requires.
 	 * <ul>
 	 * <li>Use the value in the {@link #getName()} of the target plugin to specify the dependency.
@@ -542,7 +510,7 @@ public class PluginDescriptionFile
 	/**
 	 * Gives the token to prefix plugin-specific logging messages with.
 	 * <ul>
-	 * <li>This includes all messages using {@link Plugin#getLogger()}.
+	 * <li>This includes all messages using Plugin#getLogger()
 	 * <li>If not specified, the server uses the plugin's {@link #getName() name}.
 	 * <li>This should clearly indicate what plugin is being logged.
 	 * </ul>
@@ -577,11 +545,6 @@ public class PluginDescriptionFile
 	public String getClassLoaderOf()
 	{
 		return classLoaderOf;
-	}
-	
-	public void setDatabaseEnabled( boolean database )
-	{
-		this.database = database;
 	}
 	
 	/**
@@ -711,18 +674,6 @@ public class PluginDescriptionFile
 			loadBefore = loadBeforeBuilder.build();
 		}
 		
-		if ( map.get( "database" ) != null )
-		{
-			try
-			{
-				database = ( Boolean ) map.get( "database" );
-			}
-			catch ( ClassCastException ex )
-			{
-				throw new InvalidDescriptionException( ex, "database is of wrong type" );
-			}
-		}
-		
 		if ( map.get( "website" ) != null )
 		{
 			website = map.get( "website" ).toString();
@@ -795,7 +746,6 @@ public class PluginDescriptionFile
 		map.put( "name", name );
 		map.put( "main", main );
 		map.put( "version", version );
-		map.put( "database", database );
 		map.put( "order", order.toString() );
 		
 		if ( depend != null )

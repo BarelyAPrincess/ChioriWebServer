@@ -391,7 +391,7 @@ public abstract class Session extends AccountHandler
 	/**
 	 * Creates a new SessionProvider for the provided HttpRequest instance.
 	 * 
-	 * @param HttpRequestWrapper
+	 * @param request
 	 *            instance
 	 * @return a new SessionProviderWeb
 	 */

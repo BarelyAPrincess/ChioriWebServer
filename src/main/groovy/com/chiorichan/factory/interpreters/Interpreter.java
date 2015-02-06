@@ -25,7 +25,7 @@ public interface Interpreter
 	 * Response "all" will attempt to eval any and everything. Don't abuse it!
 	 * Returning null will continue to next available Interpreter that handles type.
 	 * 
-	 * @return
+	 * @return String array of types handled by the Interpreter
 	 */
 	String[] getHandledTypes();
 	

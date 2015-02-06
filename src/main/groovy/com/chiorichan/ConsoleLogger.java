@@ -28,7 +28,6 @@ public class ConsoleLogger
 	 * or you will need to use the replaceLogger() method.
 	 * 
 	 * @param loggerId
-	 * @param parent
 	 */
 	protected ConsoleLogger( String loggerId )
 	{

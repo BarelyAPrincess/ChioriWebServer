@@ -11,9 +11,6 @@ package com.chiorichan.event;
 
 /**
  * Represents an event.
- * 
- * @see PluginManager#callEvent(Event)
- * @see PluginManager#registerEvents(Listener,Plugin)
  */
 public abstract class Event
 {
@@ -34,7 +31,7 @@ public abstract class Event
 	 * This constructor is used to explicitly declare an event as synchronous or asynchronous.
 	 * 
 	 * @param isAsync
-	 *             true indicates the event will fire asynchronously, false by default from default constructor
+	 *            true indicates the event will fire asynchronously, false by default from default constructor
 	 */
 	public Event( boolean isAsync )
 	{
