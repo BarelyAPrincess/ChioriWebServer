@@ -31,7 +31,6 @@ import com.chiorichan.permission.PermissionBackendException;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.backend.file.FileEntity;
 import com.chiorichan.permission.backend.file.FileGroup;
-import com.chiorichan.permission.structure.ChildPermission;
 import com.chiorichan.permission.structure.Permission;
 import com.chiorichan.permission.structure.PermissionValue;
 import com.chiorichan.permission.structure.PermissionValueBoolean;
@@ -345,7 +344,7 @@ public class FileBackend extends PermissionBackend
 						if ( permission.getString( "value" ) != null )
 							value = perm.getValue().createChild( permission.getString( "value" ) );
 						
-						entity.attachPermission( new ChildPermission( perm, sites, value ) );
+						//entity.attachPermission( new ChildPermission( perm, sites, value ) );
 					}
 				}
 			}
@@ -366,7 +365,7 @@ public class FileBackend extends PermissionBackend
 					{
 						ConfigurationSection permission = section.getConfigurationSection( ss );
 						
-						Permission perm = Permission.crawlPermissionStack( permission.getString( "permission" ).toLowerCase(), true );
+						Permission perm = Permission.getPermissionNode( permission.getString( "permission" ).toLowerCase(), true );
 						
 						List<Site> sites = Loader.getSiteManager().parseSites( ( permission.getString( "sites" ) == null ) ? "" : permission.getString( "sites" ) );
 						
@@ -374,7 +373,7 @@ public class FileBackend extends PermissionBackend
 						if ( permission.getString( "value" ) != null )
 							value = perm.getValue().createChild( permission.getString( "value" ) );
 						
-						group.attachPermission( new ChildPermission( perm, sites, value ) );
+						//group.attachPermission( new ChildPermission( perm, sites, value ) );
 					}
 			}
 	}

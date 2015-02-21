@@ -11,7 +11,6 @@ package com.chiorichan;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.ConnectException;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
@@ -23,10 +22,7 @@ import java.util.logging.Logger;
 
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
-import net.lingala.zip4j.core.ZipFile;
-import net.lingala.zip4j.exception.ZipException;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 
 import com.chiorichan.Warning.WarningState;
@@ -64,7 +60,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	public static final String BROADCAST_CHANNEL_USERS = "chiori.broadcast.user";
 	public static final String PATH_SEPERATOR = File.separator;
 	
-	private static AutoUpdater updater = null;
+	private static AutoUpdater updater = null;	
 	private static YamlConfiguration configuration;
 	private static Loader instance;
 	private static OptionSet options;

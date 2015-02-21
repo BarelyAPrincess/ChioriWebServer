@@ -12,7 +12,6 @@ package com.chiorichan.event.account;
 import java.util.IllegalFormatException;
 import java.util.Set;
 
-import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountHandler;
 import com.chiorichan.account.InteractiveEntity;
 import com.chiorichan.event.Cancellable;
@@ -77,7 +76,7 @@ public class AsyncAccountChatEvent extends AccountEvent implements Cancellable
 	
 	/**
 	 * Gets the format to use to display this chat message. When this event finishes execution, the first format
-	 * parameter is the {@link Account#getDisplayName()} and the second parameter is {@link #getMessage()}
+	 * parameter is the {@link AccountHandler#getAccount()#getDisplayName()} and the second parameter is {@link #getMessage()}
 	 * 
 	 * @return {@link String#format(String, Object...)} compatible format string
 	 */
@@ -88,7 +87,7 @@ public class AsyncAccountChatEvent extends AccountEvent implements Cancellable
 	
 	/**
 	 * Sets the format to use to display this chat message. When this event finishes execution, the first format
-	 * parameter is the {@link Account#getDisplayName()} and the second parameter is {@link #getMessage()}
+	 * parameter is the {@link AccountHandler#getAccount()#getDisplayName()} and the second parameter is {@link #getMessage()}
 	 * 
 	 * @param format
 	 *            {@link String#format(String, Object...)} compatible format string
@@ -103,7 +102,7 @@ public class AsyncAccountChatEvent extends AccountEvent implements Cancellable
 		// Oh for a better way to do this!
 		try
 		{
-			String.format( format, handler.getId(), message );
+			String.format( format, handler.getAccount().getDisplayName(), message );
 		}
 		catch ( RuntimeException ex )
 		{
