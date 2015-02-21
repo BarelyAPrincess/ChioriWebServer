@@ -9,13 +9,44 @@
  */
 package com.chiorichan.permission;
 
-public interface Permissible extends PermissibleParent
+import com.chiorichan.Loader;
+import com.chiorichan.permission.structure.Permission;
+
+public abstract class Permissible
 {
 	/**
-	 * @return String
-	 *         a unique name
+	 * Used to reference the PermissibleEntity for the Permissible object.
+	 * Referencing the entity here allows the Trash Collector to destroy this instance if the Permissible is no longer used.
 	 */
-	String getName();
+	protected PermissibleEntity entity = null;
+	
+	public final PermissibleEntity getPermissibleEntity()
+	{
+		if ( entity == null )
+			entity = Loader.getPermissionManager().getEntity( this );
+		
+		return entity;
+	}
+	
+	/**
+	 * Is this permissible on the OP list.
+	 * 
+	 * @return true if OP
+	 */
+	public final boolean isOp()
+	{
+		return getPermissibleEntity().isOp( this );
+	}
+	
+	public final PermissionResult checkPermission( String perm )
+	{
+		return getPermissibleEntity().checkPermission( perm );
+	}
+	
+	public final PermissionResult checkPermission( Permission perm )
+	{
+		return getPermissibleEntity().checkPermission( perm );
+	}
 	
 	/**
 	 * Web users id will be in the form of `siteId`_`acctId`.
@@ -23,15 +54,13 @@ public interface Permissible extends PermissibleParent
 	 * @return String
 	 *         a unique identifier
 	 */
-	String getId();
+	public abstract String getId();
 	
 	/**
-	 * Handler type
-	 * 
-	 * @return PermissibleType
-	 *         the connection method
+	 * @return boolean
+	 *         is the connection remote
 	 */
-	PermissibleType getType();
+	public abstract boolean isRemote();
 	
 	/**
 	 * If the entity is connected remotely then return the Remote Address.
@@ -39,5 +68,5 @@ public interface Permissible extends PermissibleParent
 	 * @return String
 	 *         an IPv4/IPv6 Address or null if no remote handlers
 	 */
-	String getIpAddr();
+	public abstract String getIpAddr();
 }

@@ -14,12 +14,12 @@ import java.util.List;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
+import com.chiorichan.account.InteractiveEntity;
 import com.chiorichan.event.BuiltinEventCreator;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
 import com.chiorichan.event.account.AccountLoginEvent;
-import com.chiorichan.permission.PermissibleInteractive;
 import com.chiorichan.updater.BuildArtifact.ChangeSet.ChangeSetDetails;
 import com.chiorichan.util.Versioning;
 
@@ -112,7 +112,7 @@ public class AutoUpdater extends BuiltinEventCreator implements Listener
 		// check( , true );
 	}
 	
-	public void check( final PermissibleInteractive sender, final boolean automatic )
+	public void check( final InteractiveEntity sender, final boolean automatic )
 	{
 		final String currentSlug = Versioning.getBuildNumber();
 		
@@ -126,7 +126,7 @@ public class AutoUpdater extends BuiltinEventCreator implements Listener
 			@Override
 			public void run()
 			{
-				current = service.getArtifact( currentSlug, "information about this Chiori Web Server version; perhaps you are running a custom one?" );
+				current = service.getArtifact( currentSlug, "information about this version; perhaps you are running a custom one?" );
 				latest = service.getArtifact( "lastStableBuild", "latest artifact information" );
 				
 				try
@@ -136,7 +136,7 @@ public class AutoUpdater extends BuiltinEventCreator implements Listener
 						if ( ( current.isBroken() ) && ( onBroken.contains( WARN_CONSOLE ) ) )
 						{
 							sender.sendMessage( ConsoleColor.RED + "----- Chiori Auto Updater -----" );
-							sender.sendMessage( ConsoleColor.RED + "Your version of Chiori Web Server is known to be broken. It is strongly advised that you update to a more recent version ASAP." );
+							sender.sendMessage( ConsoleColor.RED + "Your version of " + Versioning.getProduct() + " is known to be broken. It is strongly advised that you update to a more recent version ASAP." );
 							sender.sendMessage( ConsoleColor.RED + "Known issues with your version:" );
 							
 							for ( String line : current.getBrokenReason().split( "\n" ) )
@@ -152,7 +152,7 @@ public class AutoUpdater extends BuiltinEventCreator implements Listener
 						else if ( onUpdate.contains( WARN_CONSOLE ) )
 						{
 							sender.sendMessage( ConsoleColor.YELLOW + "----- Chiori Auto Updater -----" );
-							sender.sendMessage( ConsoleColor.YELLOW + "Your version of Chiori Web Server is out of date. Version " + latest.getVersion() + " (build #" + latest.getBuildNumber() + ") was released on " + latest.getCreated() + "." );
+							sender.sendMessage( ConsoleColor.YELLOW + "Your version of " + Versioning.getProduct() + " is out of date. Version " + latest.getVersion() + " (build #" + latest.getBuildNumber() + ") was released on " + latest.getCreated() + "." );
 							sender.sendMessage( ConsoleColor.YELLOW + "Details: " + latest.getHtmlUrl() );
 							sender.sendMessage( ConsoleColor.YELLOW + "Download: " + latest.getJar() );
 							sender.sendMessage( ConsoleColor.YELLOW + "----- ------------------- -----" );
@@ -161,7 +161,7 @@ public class AutoUpdater extends BuiltinEventCreator implements Listener
 					else if ( ( current != null ) && ( current.isBroken() ) && ( onBroken.contains( WARN_CONSOLE ) ) )
 					{
 						sender.sendMessage( ConsoleColor.RED + "----- Chiori Auto Updater -----" );
-						sender.sendMessage( ConsoleColor.RED + "Your version of Chiori Web Server is known to be broken. It is strongly advised that you update to a more recent (or older) version ASAP." );
+						sender.sendMessage( ConsoleColor.RED + "Your version of " + Versioning.getProduct() + " is known to be broken. It is strongly advised that you update to a more recent (or older) version ASAP." );
 						sender.sendMessage( ConsoleColor.RED + "Known issues with your version:" );
 						
 						for ( String line : current.getBrokenReason().split( "\n" ) )
@@ -212,7 +212,7 @@ public class AutoUpdater extends BuiltinEventCreator implements Listener
 							if ( current == null && latest == null )
 								sender.sendMessage( ConsoleColor.YELLOW + "There seems to have been a problem checking for updates!" );
 							else
-								sender.sendMessage( ConsoleColor.YELLOW + "You are already running the latest version of Chiori Web Server!" );
+								sender.sendMessage( ConsoleColor.YELLOW + "You are already running the latest version of " + Versioning.getProduct() + "!" );
 							
 							sender.sendMessage( ConsoleColor.YELLOW + "----- ------------------- -----" );
 						}
@@ -226,14 +226,14 @@ public class AutoUpdater extends BuiltinEventCreator implements Listener
 		}.start();
 	}
 	
-	public void forceUpdate( final PermissibleInteractive sender )
+	public void forceUpdate( final InteractiveEntity sender )
 	{
 		new Thread()
 		{
 			@Override
 			public void run()
 			{
-				current = ( Versioning.getBuildNumber().equals( "0" ) ) ? null : service.getArtifact( Versioning.getBuildNumber(), "information about this Chiori Web Server version; perhaps you are running a custom one?" );
+				current = ( Versioning.getBuildNumber().equals( "0" ) ) ? null : service.getArtifact( Versioning.getBuildNumber(), "information about this " + Versioning.getProduct() + " version; perhaps you are running a custom one?" );
 				latest = service.getArtifact( "lastStableBuild", "latest artifact information" );
 				
 				if ( latest == null )
@@ -259,7 +259,7 @@ public class AutoUpdater extends BuiltinEventCreator implements Listener
 							sender.sendMessage( ConsoleColor.AQUA + "[CHANGES] " + ConsoleColor.WHITE + ll );
 					
 					sender.sendMessage( "" );
-					sender.sendMessage( ConsoleColor.YELLOW + "If you would like Chiori Web Server to update to the latest version run \"update latest force\"" );
+					sender.sendMessage( ConsoleColor.YELLOW + "If you would like " + Versioning.getProduct() + " to update to the latest version run \"update latest force\"" );
 					sender.sendMessage( ConsoleColor.RED + "WARNING: Chiori Auto Updater currently can't auto update any installed plugins." );
 					sender.sendMessage( ConsoleColor.RED + "You can obtain updated offical plugins from the Details URL above or you will need to contact the original developer." );
 					sender.sendMessage( ConsoleColor.RED + "Quite frankly, If there has been no changes to the Plugin API (See Change Log) then even outdated plugins should still work." );
@@ -282,10 +282,10 @@ public class AutoUpdater extends BuiltinEventCreator implements Listener
 	@EventHandler( priority = EventPriority.NORMAL )
 	public void onAccountLoginEvent( AccountLoginEvent event )
 	{
-		if ( ( Loader.getAutoUpdater().isEnabled() ) && ( Loader.getAutoUpdater().getCurrent() != null ) && ( event.getAccount().hasPermission( Loader.BROADCAST_CHANNEL_ADMINISTRATIVE ) ) )
-			if ( ( Loader.getAutoUpdater().getCurrent().isBroken() ) && ( Loader.getAutoUpdater().getOnBroken().contains( AutoUpdater.WARN_OPERATORS ) ) )
-				event.getAccount().sendMessage( ConsoleColor.DARK_RED + "The version of " + Versioning.getProduct() + " that this server is running is known to be broken. Please consider updating to the latest version at jenkins.chiorichan.com." );
-			else if ( ( Loader.getAutoUpdater().isUpdateAvailable() ) && ( Loader.getAutoUpdater().getOnUpdate().contains( AutoUpdater.WARN_OPERATORS ) ) )
-				event.getAccount().sendMessage( ConsoleColor.DARK_PURPLE + "The version of " + Versioning.getProduct() + " that this server is running is out of date. Please consider updating to the latest version at jenkins.chiorichan.com." );
+		if ( ( Loader.getAutoUpdater().isEnabled() ) && ( Loader.getAutoUpdater().getCurrent() != null ) && ( event.getHandler().checkPermission( Loader.BROADCAST_CHANNEL_ADMINISTRATIVE ).isTrue() ) )
+			if ( ( Loader.getAutoUpdater().getCurrent().isBroken() ) && ( getOnBroken().contains( AutoUpdater.WARN_OPERATORS ) ) )
+				event.getHandler().sendMessage( ConsoleColor.DARK_RED + "The version of " + Versioning.getProduct() + " that this server is running is known to be broken. Please consider updating to the latest version at jenkins.chiorichan.com." );
+			else if ( ( Loader.getAutoUpdater().isUpdateAvailable() ) && ( getOnUpdate().contains( AutoUpdater.WARN_OPERATORS ) ) )
+				event.getHandler().sendMessage( ConsoleColor.DARK_PURPLE + "The version of " + Versioning.getProduct() + " that this server is running is out of date. Please consider updating to the latest version at jenkins.chiorichan.com." );
 	}
 }

@@ -26,6 +26,7 @@ import com.chiorichan.framework.Site;
 import com.chiorichan.http.Candy;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.http.HttpResponseWrapper;
+import com.chiorichan.util.Common;
 
 public class SessionProviderWeb implements SessionProvider
 {
@@ -33,6 +34,7 @@ public class SessionProviderWeb implements SessionProvider
 	protected CodeEvalFactory factory = null;
 	protected HttpRequestWrapper request;
 	protected Session parentSession;
+	protected int created = Common.getEpoch();
 	
 	protected SessionProviderWeb( HttpRequestWrapper request )
 	{
@@ -63,7 +65,7 @@ public class SessionProviderWeb implements SessionProvider
 		parentSession.stale = stale;
 		
 		parentSession.setSite( request.getSite() );
-		parentSession.ipAddr = request.getRemoteAddr();
+		parentSession.lastIpAddr = request.getRemoteAddr();
 		
 		Map<String, Candy> pulledCandies = SessionUtils.poleCandies( request );
 		pulledCandies.putAll( parentSession.candies );

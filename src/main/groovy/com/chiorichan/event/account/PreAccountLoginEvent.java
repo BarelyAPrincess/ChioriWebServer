@@ -9,7 +9,7 @@
  */
 package com.chiorichan.event.account;
 
-import com.chiorichan.account.Account;
+import com.chiorichan.account.AccountHandler;
 import com.chiorichan.event.HandlerList;
 
 /**
@@ -21,7 +21,7 @@ public class PreAccountLoginEvent extends AccountEvent
 	private Result result = Result.ALLOWED;
 	private String message = "";
 	
-	public PreAccountLoginEvent( Account<?> acct )
+	public PreAccountLoginEvent( AccountHandler acct )
 	{
 		super( acct );
 	}

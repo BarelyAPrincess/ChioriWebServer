@@ -463,7 +463,7 @@ public class AccountManager
 			if ( acct.isBanned() )
 				throw new LoginException( LoginExceptionReason.banned );
 			
-			PreAccountLoginEvent preLoginEvent = new PreAccountLoginEvent( acct );
+			PreAccountLoginEvent preLoginEvent = new PreAccountLoginEvent( sess );
 			Loader.getEventBus().callEvent( preLoginEvent );
 			
 			if ( preLoginEvent.getResult() != Result.ALLOWED )
@@ -489,7 +489,7 @@ public class AccountManager
 			acct.getMetaData().set( "lastLoginTime", Common.getEpoch() );
 			acct.getMetaData().set( "lastLoginIp", sess.getIpAddr() );
 			
-			AccountLoginEvent loginEvent = new AccountLoginEvent( acct, String.format( Loader.getConfig().getString( "accounts.loginMessage", "%s has logged in at site %s" ), acct.getUsername(), sess.getSite().getTitle() ) );
+			AccountLoginEvent loginEvent = new AccountLoginEvent( sess, String.format( Loader.getConfig().getString( "accounts.loginMessage", "%s has logged in at site %s" ), acct.getUsername(), sess.getSite().getTitle() ) );
 			Loader.getEventBus().callEvent( loginEvent );
 			
 			return acct;

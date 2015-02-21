@@ -10,106 +10,61 @@
 package com.chiorichan.permission;
 
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
 
 import com.chiorichan.Loader;
 import com.chiorichan.permission.event.PermissibleEntityEvent;
 import com.chiorichan.permission.structure.ChildPermission;
+import com.chiorichan.permission.structure.Permission;
+import com.chiorichan.util.Common;
 import com.google.common.collect.Maps;
 
-public abstract class PermissibleEntity implements PermissibleParent
+public abstract class PermissibleEntity
 {
-	private String name;
-	protected boolean virtual = true;
+	protected class TimedPermission
+	{
+		public TimedPermission( Permission perm, int lifeTime )
+		{
+			permission = perm;
+			time = lifeTime;
+		}
+		
+		Permission permission;
+		int time;
+		
+		public boolean isExpired()
+		{
+			return ( time - Common.getEpoch() < 0 );
+		}
+	}
+	
+	private String id;
 	protected boolean debugMode = false;
-	protected Map<String, List<String>> timedPermissions = new ConcurrentHashMap<String, List<String>>();
-	protected Map<String, Long> timedPermissionsTime = new ConcurrentHashMap<String, Long>();
+	protected PermissionBackend backend;
 	
+	protected Map<String, LinkedList<TimedPermission>> timedPermissions = Maps.newConcurrentMap();
 	protected Map<String, ChildPermission> childPermissions = Maps.newConcurrentMap();
+	protected Map<String, PermissibleGroup> groups = Maps.newConcurrentMap();
 	
-	public PermissibleEntity( String name )
+	public PermissibleEntity( String id, PermissionBackend permBackend )
 	{
-		this.name = name;
+		this.id = id;
+		backend = permBackend;
+		
+		recalculateChildPermissions();
 	}
 	
 	/**
-	 * Return name of permission entity (User or Group)
-	 * User should be equal to User's name on the server
+	 * Return id of permission entity (User or Group)
+	 * User should be equal to User's id on the server
 	 * 
-	 * @return name
+	 * @return id
 	 */
-	public String getName()
+	public String getId()
 	{
-		return this.name;
+		return id;
 	}
-	
-	protected void setName( String name )
-	{
-		this.name = name;
-	}
-	
-	public void attachPermission( ChildPermission perm )
-	{
-		childPermissions.put( perm.getPermission().getNamespace(), perm );
-	}
-	
-	public void detachPermission( ChildPermission perm )
-	{
-		detachPermission( perm.getPermission().getNamespace() );
-	}
-	
-	public void detachPermission( String perm )
-	{
-		childPermissions.remove( perm );
-	}
-	
-	/**
-	 * Returns entity prefix
-	 * 
-	 * @param siteName
-	 * @return prefix
-	 */
-	public abstract String getPrefix( String siteName );
-	
-	public String getPrefix()
-	{
-		return this.getPrefix( null );
-	}
-	
-	/**
-	 * Returns entity prefix
-	 * 
-	 */
-	/**
-	 * Set prefix to value
-	 * 
-	 * @param prefix
-	 *            new prefix
-	 */
-	public abstract void setPrefix( String prefix, String siteName );
-	
-	/**
-	 * Return entity suffix
-	 * 
-	 * @return suffix
-	 */
-	public abstract String getSuffix( String siteName );
-	
-	public String getSuffix()
-	{
-		return getSuffix( null );
-	}
-	
-	/**
-	 * Set suffix to value
-	 * 
-	 * @param suffix
-	 *            new suffix
-	 */
-	public abstract void setSuffix( String suffix, String siteName );
 	
 	/**
 	 * Checks if entity has specified permission in default site
@@ -142,27 +97,26 @@ public abstract class PermissibleEntity implements PermissibleParent
 		ChildPermission perm = childPermissions.get( permission );
 		
 		if ( isDebug() )
-			PermissionManager.getLogger().info( "Entity " + getName() + " checked for \"" + permission + "\", " + ( perm == null ? "no permission found" : "\"" + perm + "\" found" ) );
+			PermissionManager.getLogger().info( "Entity " + getId() + " checked for \"" + permission + "\", " + ( perm == null ? "no permission found" : "\"" + perm + "\" found" ) );
 		
 		return ( perm == null ) ? false : true;
 	}
 	
-	/**
-	 * Return all entity permissions in specified site
-	 * 
-	 * @param site
-	 *            Site name
-	 * @return Array of permission expressions
-	 */
-	public abstract String[] getPermissions( String site );
+	public void reload()
+	{
+		reloadPermissions();
+		reloadGroups();
+		recalculateChildPermissions();
+	}
 	
-	/**
-	 * Return permissions for all sites
-	 * Common permissions stored as "" (empty string) as site.
-	 * 
-	 * @return Map with site name as key and permissions array as value
-	 */
-	public abstract Map<String, String[]> getAllPermissions();
+	public abstract void reloadPermissions();
+	
+	public abstract void reloadGroups();
+	
+	public void recalculateChildPermissions()
+	{
+		
+	}
 	
 	/**
 	 * Save in-memory data to storage backend
@@ -175,41 +129,50 @@ public abstract class PermissibleEntity implements PermissibleParent
 	public abstract void remove();
 	
 	/**
-	 * Return state of entity
-	 * 
-	 * @return true if entity is only in-memory
-	 */
-	public boolean isVirtual()
-	{
-		return this.virtual;
-	}
-	
-	/**
-	 * Return site names where entity have permissions/options/etc
-	 * 
-	 * @return String array of site ids
-	 */
-	public abstract String[] getSites();
-	
-	/**
-	 * Return entity timed (temporary) permission for site
+	 * Return entity timed (temporary) permission for ref
 	 * 
 	 * @param site
-	 * @return Array of timed permissions in that site
+	 * @return Array of timed permissions in that ref
 	 */
-	public String[] getTimedPermissions( String site )
+	public TimedPermission[] getTimedPermissions( String ref )
 	{
-		if ( site == null )
-		{
-			site = "";
-		}
+		if ( ref == null )
+			ref = "";
 		
-		if ( !this.timedPermissions.containsKey( site ) )
-		{
-			return new String[0];
-		}
+		if ( !timedPermissions.containsKey( ref ) )
+			return new TimedPermission[0];
 		
-		return this.timedPermissions.get( site ).toArray( new String[0] );
+		return timedPermissions.get( ref ).toArray( new TimedPermission[0] );
+	}
+	
+	public TimedPermission getTimedPermission( Permission perm, String ref )
+	{
+		if ( ref == null )
+			ref = "";
+		
+		if ( !timedPermissions.containsKey( ref ) )
+			return null;
+		
+		for ( TimedPermission tp : timedPermissions.get( ref ) )
+			if ( tp.permission == perm )
+				return tp;
+		
+		return null;
+	}
+	
+	public TimedPermission getTimedPermission( String perm, String ref )
+	{
+		if ( ref == null )
+			ref = "";
+		
+		if ( !timedPermissions.containsKey( ref ) )
+			return null;
+		
+		for ( TimedPermission tp : timedPermissions.get( ref ) )
+			if ( tp.permission.getName().equals( perm ) || tp.permission.getNamespace().equals( perm ) )
+				return tp;
+		
+		return null;
 	}
 	
 	/**
@@ -220,60 +183,49 @@ public abstract class PermissibleEntity implements PermissibleParent
 	 * @param site
 	 * @return remaining lifetime in seconds of timed permission. 0 if permission is transient
 	 */
-	public int getTimedPermissionLifetime( String permission, String site )
+	public int getTimedPermissionLifetime( String perm, String ref )
 	{
-		if ( site == null )
-		{
-			site = "";
-		}
+		if ( ref == null )
+			ref = "";
 		
-		if ( !this.timedPermissionsTime.containsKey( site + ":" + permission ) )
-		{
+		if ( !timedPermissions.containsKey( ref ) )
 			return 0;
-		}
 		
-		return ( int ) ( this.timedPermissionsTime.get( site + ":" + permission ).longValue() - ( System.currentTimeMillis() / 1000L ) );
+		return getTimedPermission( perm, ref ).time - Common.getEpoch();
 	}
 	
 	/**
 	 * Adds timed permission to specified site in seconds
 	 * 
 	 * @param permission
-	 * @param site
+	 * @param ref
 	 * @param lifeTime
 	 *            Lifetime of permission in seconds. 0 for transient permission (site disappear only after server reload)
 	 */
-	public void addTimedPermission( final String permission, String site, int lifeTime )
+	public void addTimedPermission( final Permission perm, String ref, int lifeTime )
 	{
-		if ( site == null )
-		{
-			site = "";
-		}
+		if ( ref == null )
+			ref = "";
 		
-		if ( !this.timedPermissions.containsKey( site ) )
-		{
-			this.timedPermissions.put( site, new LinkedList<String>() );
-		}
+		if ( !timedPermissions.containsKey( ref ) )
+			this.timedPermissions.put( ref, new LinkedList<TimedPermission>() );
 		
-		this.timedPermissions.get( site ).add( permission );
+		timedPermissions.get( ref ).add( new TimedPermission( perm, Common.getEpoch() + lifeTime ) );
 		
-		final String finalSite = site;
+		final String finalRef = ref;
 		
 		if ( lifeTime > 0 )
 		{
 			TimerTask task = new TimerTask()
 			{
-				
 				@Override
 				public void run()
 				{
-					removeTimedPermission( permission, finalSite );
+					removeTimedPermission( perm, finalRef );
 				}
 			};
 			
 			Loader.getPermissionManager().registerTask( task, lifeTime );
-			
-			this.timedPermissionsTime.put( site + ":" + permission, ( System.currentTimeMillis() / 1000L ) + lifeTime );
 		}
 		
 		Loader.getEventBus().callEvent( new PermissibleEntityEvent( this, PermissibleEntityEvent.Action.PERMISSIONS_CHANGED ) );
@@ -285,20 +237,19 @@ public abstract class PermissibleEntity implements PermissibleParent
 	 * @param permission
 	 * @param site
 	 */
-	public void removeTimedPermission( String permission, String site )
+	public void removeTimedPermission( Permission perm, String ref )
 	{
-		if ( site == null )
-		{
-			site = "";
-		}
+		if ( ref == null )
+			ref = "";
 		
-		if ( !this.timedPermissions.containsKey( site ) )
-		{
+		if ( !timedPermissions.containsKey( ref ) )
 			return;
-		}
 		
-		this.timedPermissions.get( site ).remove( permission );
-		this.timedPermissions.remove( site + ":" + permission );
+		for ( TimedPermission tp : timedPermissions.get( ref ) )
+		{
+			if ( tp.permission == perm )
+				timedPermissions.get( ref ).remove( tp );
+		}
 		
 		Loader.getEventBus().callEvent( new PermissibleEntityEvent( this, PermissibleEntityEvent.Action.PERMISSIONS_CHANGED ) );
 	}
@@ -314,36 +265,33 @@ public abstract class PermissibleEntity implements PermissibleParent
 		{
 			return false;
 		}
-		
 		if ( this == obj )
 		{
 			return true;
 		}
 		
 		final PermissibleEntity other = ( PermissibleEntity ) obj;
-		return this.name.equals( other.name );
+		return this.id.equals( other.id );
 	}
 	
 	@Override
 	public int hashCode()
 	{
 		int hash = 7;
-		hash = 89 * hash + ( this.name != null ? this.name.hashCode() : 0 );
+		hash = 89 * hash + ( this.id != null ? this.id.hashCode() : 0 );
 		return hash;
 	}
 	
 	@Override
 	public String toString()
 	{
-		return this.getClass().getSimpleName() + "(" + this.getName() + ")";
+		return this.getClass().getSimpleName() + "(" + this.getId() + ")";
 	}
 	
 	public boolean explainExpression( String expression )
 	{
 		if ( expression == null || expression.isEmpty() )
-		{
 			return false;
-		}
 		
 		return !expression.startsWith( "-" ); // If expression have - (minus) before then that mean expression are negative
 	}
@@ -356,5 +304,22 @@ public abstract class PermissibleEntity implements PermissibleParent
 	public void setDebug( boolean debug )
 	{
 		debugMode = debug;
+	}
+	
+	public boolean isOp( Permissible permissible )
+	{
+		PermissionResult result = checkPermission( "sys.op" );
+		return result.isTrue();
+	}
+	
+	public PermissionResult checkPermission( String perm )
+	{
+		Permission permission = Permission.getPermissionNode( perm );
+		return checkPermission( permission );
+	}
+	
+	public PermissionResult checkPermission( Permission perm )
+	{
+		return new PermissionResult( this, perm );
 	}
 }

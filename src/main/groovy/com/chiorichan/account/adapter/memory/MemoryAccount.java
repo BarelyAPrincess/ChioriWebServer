@@ -67,4 +67,10 @@ public class MemoryAccount extends Account<AccountLookupAdapter>
 	{
 		return getString( "username" );
 	}
+	
+	@Override
+	public boolean isValid()
+	{
+		return metaData.hasMinimumData();
+	}
 }

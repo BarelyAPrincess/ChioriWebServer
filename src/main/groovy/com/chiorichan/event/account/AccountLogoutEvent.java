@@ -9,7 +9,7 @@
  */
 package com.chiorichan.event.account;
 
-import com.chiorichan.account.Account;
+import com.chiorichan.account.AccountHandler;
 import com.chiorichan.event.HandlerList;
 
 /**
@@ -20,7 +20,7 @@ public class AccountLogoutEvent extends AccountEvent
 	private static final HandlerList handlers = new HandlerList();
 	private String quitMessage;
 	
-	public AccountLogoutEvent( final Account<?> who, final String quitMessage )
+	public AccountLogoutEvent( final AccountHandler who, final String quitMessage )
 	{
 		super( who );
 		this.quitMessage = quitMessage;

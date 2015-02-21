@@ -19,7 +19,6 @@ import java.util.Set;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
-import com.chiorichan.framework.Site;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.PermissionBackend;
@@ -27,13 +26,12 @@ import com.chiorichan.permission.PermissionBackendException;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.backend.sql.SQLEntity;
 import com.chiorichan.permission.backend.sql.SQLGroup;
-import com.chiorichan.permission.structure.ChildPermission;
 import com.chiorichan.permission.structure.Permission;
-import com.chiorichan.permission.structure.PermissionValue;
 import com.chiorichan.permission.structure.PermissionValueBoolean;
 import com.chiorichan.permission.structure.PermissionValueEnum;
 import com.chiorichan.permission.structure.PermissionValueInt;
 import com.chiorichan.permission.structure.PermissionValueVar;
+import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -49,22 +47,28 @@ public class SQLBackend extends PermissionBackend
 	@Override
 	public void initialize() throws PermissionBackendException
 	{
-		if ( Loader.getDatabase() == null )
+		DatabaseEngine db = Loader.getDatabase();
+		
+		if ( db == null )
 			throw new PermissionBackendException( "SQL connection is not configured, see config.yml" );
 		
+		Set<String> missingTables = Sets.newHashSet();
+		
+		if ( !db.tableExist( "permissions" ) )
+			missingTables.add( "permissions" );
+		
+		if ( !db.tableExist( "permissions_entity" ) )
+			missingTables.add( "permissions_entity" );
+		
+		if ( !db.tableExist( "permissions_groups" ) )
+			missingTables.add( "permissions_groups" );
+		
+		if ( !missingTables.isEmpty() )
+			throw new PermissionBackendException( "SQL connection is configured but your missing tables: " + Joiner.on( "," ).join( missingTables ) + ", check the SQL Backend getting started guide for help." );
+		
+		// TODO Create these tables.
+		
 		PermissionManager.getLogger().info( "Successfully initalized SQL Backend!" );
-	}
-	
-	@Override
-	public PermissibleEntity getEntity( String name )
-	{
-		return new SQLEntity( name, this );
-	}
-	
-	@Override
-	public PermissibleGroup getGroup( String name )
-	{
-		return new SQLGroup( name, this );
 	}
 	
 	public DatabaseEngine getSQL()
@@ -73,7 +77,7 @@ public class SQLBackend extends PermissionBackend
 	}
 	
 	@Override
-	public void setDefaultGroup( String child, String... site )
+	public void setDefaultGroup( String child, String... ref )
 	{
 		try
 		{
@@ -82,25 +86,24 @@ public class SQLBackend extends PermissionBackend
 			
 			ResultSet result = getSQL().query( "SELECT * FROM `permissions_groups` WHERE `parent` = 'default' AND `type` = '1';" );
 			
-			if ( !result.next() )
-				throw new RuntimeException( "There is no default group set. New entities will not have any groups." );
-			
-			do
-			{
-				String sites = result.getString( "sites" );
-				if ( sites == null || sites.isEmpty() )
-					defaults.put( "", result.getString( "child" ) );
-				else
-					for ( String siteA : sites.split( "|" ) )
-						defaults.put( siteA.toLowerCase(), result.getString( "child" ) );
-			}
-			while ( result.next() );
+			// throw new RuntimeException( "There is no default group set. New entities will not have any groups." );
+			if ( result.next() )
+				do
+				{
+					String refs = result.getString( "ref" );
+					if ( refs == null || refs.isEmpty() )
+						defaults.put( "", result.getString( "child" ) );
+					else
+						for ( String r : refs.split( "|" ) )
+							defaults.put( r.toLowerCase(), result.getString( "child" ) );
+				}
+				while ( result.next() );
 			
 			// Update defaults
-			for ( String s : site )
+			for ( String s : ref )
 				defaults.put( s.toLowerCase(), child );
 			
-			// Gather child names
+			// Remove duplicate children
 			for ( Entry<String, String> e : defaults.entrySet() )
 				if ( !children.contains( e.getKey() ) )
 					children.add( e.getKey() );
@@ -111,15 +114,15 @@ public class SQLBackend extends PermissionBackend
 			// Save changes
 			for ( String c : children )
 			{
-				String sites = "";
+				String refs = "";
 				for ( Entry<String, String> e : defaults.entrySet() )
 					if ( e.getKey() == c )
-						sites += "|" + e.getValue();
+						refs += "|" + e.getValue();
 				
-				if ( sites.length() > 0 )
-					sites = sites.substring( 1 );
+				if ( refs.length() > 0 )
+					refs = refs.substring( 1 );
 				
-				getSQL().queryUpdate( "INSERT INTO `permissions_group` (`child`, `parent`, `type`, `sites`) VALUES ('" + c + "', 'default', '1', '" + sites + "');" );
+				getSQL().queryUpdate( "INSERT INTO `permissions_group` (`child`, `parent`, `type`, `ref`) VALUES ('" + c + "', 'default', '1', '" + refs + "');" );
 			}
 		}
 		catch ( SQLException e )
@@ -129,7 +132,7 @@ public class SQLBackend extends PermissionBackend
 	}
 	
 	@Override
-	public PermissibleGroup getDefaultGroup( String site )
+	public PermissibleGroup getDefaultGroup( String ref )
 	{
 		try
 		{
@@ -142,19 +145,19 @@ public class SQLBackend extends PermissionBackend
 			
 			do
 			{
-				String sites = result.getString( "sites" );
-				if ( sites == null || sites.isEmpty() )
+				String refs = result.getString( "ref" );
+				if ( refs == null || refs.isEmpty() )
 					defaults.put( "", result.getString( "child" ) );
 				else
-					for ( String siteA : sites.split( "|" ) )
-						defaults.put( siteA.toLowerCase(), result.getString( "child" ) );
+					for ( String r : refs.split( "|" ) )
+						defaults.put( r.toLowerCase(), result.getString( "child" ) );
 			}
 			while ( result.next() );
 			
 			if ( defaults.isEmpty() )
 				throw new RuntimeException( "There is no default group set. New entities will not have any groups." );
 			
-			return getGroup( ( site == null || site.isEmpty() ) ? defaults.get( "" ) : defaults.get( site.toLowerCase() ) );
+			return getGroup( ( ref == null || ref.isEmpty() ) ? defaults.get( "" ) : defaults.get( ref.toLowerCase() ) );
 		}
 		catch ( SQLException e )
 		{
@@ -196,7 +199,7 @@ public class SQLBackend extends PermissionBackend
 		
 		for ( String entityName : entityNames )
 		{
-			entities.add( getGroup( entityName ) );
+			entities.add( getEntity( entityName ) );
 		}
 		
 		return entities.toArray( new PermissibleEntity[0] );
@@ -235,7 +238,7 @@ public class SQLBackend extends PermissionBackend
 				do
 				{
 					String permName = result.getString( "permission" ).toLowerCase();
-					Permission perm = Permission.crawlPermissionStack( permName, true );
+					Permission perm = Permission.getPermissionNode( permName, true );
 					
 					switch ( result.getString( "type" ) )
 					{
@@ -256,30 +259,22 @@ public class SQLBackend extends PermissionBackend
 					perm.setDescription( result.getString( "description" ) );
 				}
 				while ( result.next() );
-			
-			result = getSQL().query( "SELECT * FROM `permissions_entity`" );
-			
-			if ( result.next() )
-				do
-				{
-					PermissibleEntity entity;
-					if ( result.getInt( "type" ) == ENTITY )
-						entity = Loader.getPermissionManager().getEntity( result.getString( "owner" ) );
-					else
-						entity = Loader.getPermissionManager().getGroup( result.getString( "owner" ) );
-					
-					Permission perm = Permission.crawlPermissionStack( result.getString( "permission" ).toLowerCase(), true );
-					
-					List<Site> sites = Loader.getSiteManager().parseSites( result.getString( "sites" ) );
-					PermissionValue<?> value = ( perm.getValue() != null ) ? perm.getValue().createChild( result.getObject( "value" ) ) : null;
-					
-					entity.attachPermission( new ChildPermission( perm, sites, value ) );
-				}
-				while ( result.next() );
 		}
 		catch ( SQLException e )
 		{
 			throw new RuntimeException( e );
 		}
+	}
+	
+	@Override
+	public PermissibleEntity getEntity( String id )
+	{
+		return new SQLEntity( id, this );
+	}
+	
+	@Override
+	public PermissibleGroup getGroup( String id )
+	{
+		return new SQLGroup( id, this );
 	}
 }

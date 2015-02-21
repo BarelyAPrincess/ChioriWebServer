@@ -13,6 +13,8 @@ import java.util.IllegalFormatException;
 import java.util.Set;
 
 import com.chiorichan.account.Account;
+import com.chiorichan.account.AccountHandler;
+import com.chiorichan.account.InteractiveEntity;
 import com.chiorichan.event.Cancellable;
 import com.chiorichan.event.HandlerList;
 
@@ -32,7 +34,7 @@ public class AsyncAccountChatEvent extends AccountEvent implements Cancellable
 	private boolean cancel = false;
 	private String message;
 	private String format = "<%1$s> %2$s";
-	private final Set<Account<?>> recipients;
+	private final Set<InteractiveEntity> recipients;
 	
 	/**
 	 * 
@@ -45,7 +47,7 @@ public class AsyncAccountChatEvent extends AccountEvent implements Cancellable
 	 * @param accts
 	 *            the Users to receive the message. This may be a lazy or unmodifiable collection.
 	 */
-	public AsyncAccountChatEvent( final boolean async, final Account<?> who, final String message, final Set<Account<?>> accts )
+	public AsyncAccountChatEvent( final boolean async, final AccountHandler who, final String message, final Set<InteractiveEntity> accts )
 	{
 		super( who, async );
 		this.message = message;
@@ -101,7 +103,7 @@ public class AsyncAccountChatEvent extends AccountEvent implements Cancellable
 		// Oh for a better way to do this!
 		try
 		{
-			String.format( format, acct.getAcctId(), message );
+			String.format( format, handler.getId(), message );
 		}
 		catch ( RuntimeException ex )
 		{
@@ -122,7 +124,7 @@ public class AsyncAccountChatEvent extends AccountEvent implements Cancellable
 	 * 
 	 * @return All Users who will see this chat message
 	 */
-	public Set<Account<?>> getRecipients()
+	public Set<InteractiveEntity> getRecipients()
 	{
 		return recipients;
 	}

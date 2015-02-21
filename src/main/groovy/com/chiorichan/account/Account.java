@@ -15,12 +15,10 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 import com.chiorichan.Loader;
 import com.chiorichan.account.adapter.AccountLookupAdapter;
-import com.chiorichan.permission.PermissibleInteractive;
-import com.chiorichan.permission.PermissibleType;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Sets;
 
-public abstract class Account<T extends AccountLookupAdapter> extends PermissibleInteractive
+public abstract class Account<T extends AccountLookupAdapter> implements InteractiveEntity
 {
 	public Account( String userId, T adapter ) throws LoginException
 	{
@@ -34,8 +32,6 @@ public abstract class Account<T extends AccountLookupAdapter> extends Permissibl
 		
 		metaData = adapter.readAccount( userId );
 		acctId = metaData.getAcctId();
-		
-		init();
 	}
 	
 	public Account( AccountMetaData meta, T adapter ) throws LoginException
@@ -50,8 +46,6 @@ public abstract class Account<T extends AccountLookupAdapter> extends Permissibl
 		
 		metaData = meta;
 		acctId = meta.getAcctId();
-		
-		init();
 	}
 	
 	/**
@@ -117,9 +111,9 @@ public abstract class Account<T extends AccountLookupAdapter> extends Permissibl
 	
 	private void checkHandlers()
 	{
-		for ( AccountHandler h : handlers )
-			if ( !h.isValid() )
-				handlers.remove( h );
+		//for ( AccountHandler h : handlers )
+			//if ( !h.isValid() )
+				//handlers.remove( h );
 	}
 	
 	public final AccountMetaData getMetaData()
@@ -149,12 +143,6 @@ public abstract class Account<T extends AccountLookupAdapter> extends Permissibl
 	
 	public abstract String getUsername();
 	
-	@Override
-	public final String getName()
-	{
-		return getUsername();
-	}
-	
 	public final boolean kick( final String kickMessage )
 	{
 		for ( AccountHandler h : handlers )
@@ -167,12 +155,6 @@ public abstract class Account<T extends AccountLookupAdapter> extends Permissibl
 	public final void save()
 	{
 		lookupAdapter.saveAccount( metaData );
-	}
-	
-	@Override
-	public String getId()
-	{
-		return getAcctId();
 	}
 	
 	public String getAcctId()
@@ -214,12 +196,14 @@ public abstract class Account<T extends AccountLookupAdapter> extends Permissibl
 		return metaData.getString( key );
 	}
 	
+	@Override
 	public final void sendMessage( String... msgs )
 	{
 		for ( String msg : msgs )
 			sendMessage( msg );
 	}
 	
+	@Override
 	public final void sendMessage( String msg )
 	{
 		for ( AccountHandler h : handlers )
@@ -234,30 +218,6 @@ public abstract class Account<T extends AccountLookupAdapter> extends Permissibl
 	public final AccountLookupAdapter getLookupAdapter()
 	{
 		return lookupAdapter;
-	}
-	
-	@Override
-	public final PermissibleType getType()
-	{
-		if ( handlers.size() == 1 )
-			return handlers.toArray( new AccountHandler[0] )[0].getType();
-		
-		return null;
-	}
-	
-	@Override
-	public final String getIpAddr()
-	{
-		if ( handlers.size() == 1 )
-			return handlers.toArray( new AccountHandler[0] )[0].getIpAddr();
-		
-		return null;
-	}
-	
-	@Override
-	public boolean isValid()
-	{
-		return metaData.hasMinimumData();
 	}
 	
 	/**

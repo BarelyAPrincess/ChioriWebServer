@@ -75,4 +75,10 @@ public class SqlAccount extends Account<SqlAdapter>
 	{
 		return getString( "username" );
 	}
+
+	@Override
+	public boolean isValid()
+	{
+		return metaData.hasMinimumData();
+	}
 }

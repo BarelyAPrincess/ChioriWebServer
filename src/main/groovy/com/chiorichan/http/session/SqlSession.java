@@ -33,7 +33,7 @@ public class SqlSession extends Session
 			stale = true;
 			
 			timeout = rs.getInt( "timeout" );
-			ipAddr = rs.getString( "ipAddr" );
+			lastIpAddr = rs.getString( "ipAddr" );
 			
 			if ( !rs.getString( "data" ).isEmpty() )
 				data = new Gson().fromJson( rs.getString( "data" ), new TypeToken<Map<String, String>>()
@@ -118,7 +118,7 @@ public class SqlSession extends Session
 						sessionCandy = null;
 					}
 					
-					this.ipAddr = ipAddr;
+					this.lastIpAddr = ipAddr;
 				}
 			}
 			catch ( JsonSyntaxException | SQLException e )

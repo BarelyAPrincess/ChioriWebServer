@@ -109,4 +109,10 @@ public class FileAccount extends Account<FileAdapter>
 	{
 		return getString( "username" );
 	}
+	
+	@Override
+	public boolean isValid()
+	{
+		return metaData.hasMinimumData();
+	}
 }

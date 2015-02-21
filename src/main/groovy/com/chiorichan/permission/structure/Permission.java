@@ -182,9 +182,9 @@ public final class Permission
 		return null;
 	}
 	
-	public static Permission crawlPermissionStack( String namespace )
+	public static Permission getPermissionNode( String namespace )
 	{
-		return crawlPermissionStack( namespace, false );
+		return getPermissionNode( namespace, true );
 	}
 	
 	/**
@@ -196,7 +196,7 @@ public final class Permission
 	 *            Indicates if we should create the child node if not existent.
 	 * @return The child node based on the namespace.
 	 */
-	public static Permission crawlPermissionStack( String namespace, boolean createChildren )
+	public static Permission getPermissionNode( String namespace, boolean createChildren )
 	{
 		String[] nodes = namespace.split( "\\." );
 		
@@ -207,7 +207,10 @@ public final class Permission
 		
 		if ( curr == null )
 			if ( createChildren )
+			{
 				curr = new Permission( nodes[0], null, true );
+				allPerms.add( curr );
+			}
 			else
 				return null;
 		

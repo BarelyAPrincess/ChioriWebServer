@@ -9,14 +9,14 @@
  */
 package com.chiorichan.event.account;
 
-import com.chiorichan.account.Account;
+import com.chiorichan.account.AccountHandler;
 
 /**
  * This is called immediately after a User registers for a plugin channel.
  */
 public class AccountRegisterChannelEvent extends AccountChannelEvent
 {
-	public AccountRegisterChannelEvent( final Account<?> acct, final String channel )
+	public AccountRegisterChannelEvent( final AccountHandler acct, final String channel )
 	{
 		super( acct, channel );
 	}

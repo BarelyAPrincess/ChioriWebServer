@@ -62,7 +62,7 @@ public class FileSession extends Session
 		if ( yaml.getLong( "timeout", 0 ) > timeout )
 			timeout = yaml.getLong( "timeout", timeout );
 		
-		ipAddr = yaml.getString( "ipAddr", ipAddr );
+		lastIpAddr = yaml.getString( "ipAddr", lastIpAddr );
 		
 		if ( !yaml.getString( "data", "" ).isEmpty() )
 		{
@@ -92,7 +92,7 @@ public class FileSession extends Session
 		else
 			setSite( Loader.getSiteManager().getSiteById( yaml.getString( "sessionSite" ) ) );
 		
-		List<Session> sessions = Loader.getSessionManager().getSessionsByIp( ipAddr );
+		List<Session> sessions = Loader.getSessionManager().getSessionsByIp( lastIpAddr );
 		if ( sessions.size() > Loader.getConfig().getInt( "sessions.maxSessionsPerIP" ) )
 		{
 			long oldestTime = Common.getEpoch();
@@ -120,7 +120,7 @@ public class FileSession extends Session
 	@Override
 	public void reloadSession()
 	{
-		String origIpAddr = ipAddr;
+		String origIpAddr = lastIpAddr;
 		
 		try
 		{
@@ -132,10 +132,10 @@ public class FileSession extends Session
 		}
 		
 		// Possible Session Hijacking! nullify!!!
-		if ( ipAddr != null && !ipAddr.equals( origIpAddr ) && !Loader.getConfig().getBoolean( "sessions.allowIPChange" ) )
+		if ( lastIpAddr != null && !lastIpAddr.equals( origIpAddr ) && !Loader.getConfig().getBoolean( "sessions.allowIPChange" ) )
 		{
 			sessionCandy = null;
-			ipAddr = origIpAddr;
+			lastIpAddr = origIpAddr;
 		}
 	}
 	

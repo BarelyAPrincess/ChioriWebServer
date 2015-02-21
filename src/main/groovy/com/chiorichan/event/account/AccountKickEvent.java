@@ -9,7 +9,7 @@
  */
 package com.chiorichan.event.account;
 
-import com.chiorichan.account.Account;
+import com.chiorichan.account.AccountHandler;
 import com.chiorichan.event.Cancellable;
 import com.chiorichan.event.HandlerList;
 
@@ -23,7 +23,7 @@ public class AccountKickEvent extends AccountEvent implements Cancellable
 	private String kickReason;
 	private Boolean cancel;
 	
-	public AccountKickEvent( final Account<?> userKicked, final String kickReason, final String leaveMessage )
+	public AccountKickEvent( final AccountHandler userKicked, final String kickReason, final String leaveMessage )
 	{
 		super( userKicked );
 		this.kickReason = kickReason;

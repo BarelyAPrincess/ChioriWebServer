@@ -9,83 +9,14 @@
  */
 package com.chiorichan.permission.backend.file;
 
-import java.util.Map;
-
+import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.backend.FileBackend;
-import com.chiorichan.permission.backend.PermissibleGroupProxy;
-import com.chiorichan.permission.structure.Permission;
 
-public class FileGroup extends PermissibleGroupProxy
+public class FileGroup extends PermissibleGroup
 {
 	public FileGroup( String name, FileBackend backend )
 	{
 		super( name, backend );
-	}
-	
-	@Override
-	public boolean isPermissionSet( String req )
-	{
-		return false;
-	}
-	
-	@Override
-	public boolean isPermissionSet( Permission req )
-	{
-		return false;
-	}
-	
-	@Override
-	public boolean hasPermission( String req )
-	{
-		return false;
-	}
-	
-	@Override
-	public boolean hasPermission( Permission req )
-	{
-		return false;
-	}
-	
-	@Override
-	public boolean isOp()
-	{
-		return false;
-	}
-	
-	@Override
-	public String getPrefix( String siteName )
-	{
-		return null;
-	}
-	
-	@Override
-	public void setPrefix( String prefix, String siteName )
-	{
-		
-	}
-	
-	@Override
-	public String getSuffix( String siteName )
-	{
-		return null;
-	}
-	
-	@Override
-	public void setSuffix( String suffix, String siteName )
-	{
-		
-	}
-	
-	@Override
-	public String[] getPermissions( String site )
-	{
-		return null;
-	}
-	
-	@Override
-	public Map<String, String[]> getAllPermissions()
-	{
-		return null;
 	}
 	
 	@Override
@@ -99,10 +30,16 @@ public class FileGroup extends PermissibleGroupProxy
 	{
 		
 	}
-	
+
 	@Override
-	public String[] getSites()
+	public void reloadPermissions()
 	{
-		return null;
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void reloadGroups()
+	{
+		// TODO Auto-generated method stub
 	}
 }

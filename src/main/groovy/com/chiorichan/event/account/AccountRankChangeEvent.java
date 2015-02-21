@@ -9,7 +9,7 @@
  */
 package com.chiorichan.event.account;
 
-import com.chiorichan.account.Account;
+import com.chiorichan.account.AccountHandler;
 import com.chiorichan.event.HandlerList;
 
 /**
@@ -21,7 +21,7 @@ public class AccountRankChangeEvent extends AccountEvent
 	private final int oldLevel;
 	private final int newLevel;
 	
-	public AccountRankChangeEvent( final Account<?> user, final int oldLevel, final int newLevel )
+	public AccountRankChangeEvent( final AccountHandler user, final int oldLevel, final int newLevel )
 	{
 		super( user );
 		this.oldLevel = oldLevel;

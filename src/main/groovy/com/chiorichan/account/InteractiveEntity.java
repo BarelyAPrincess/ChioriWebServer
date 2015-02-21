@@ -7,14 +7,15 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.event.account;
+package com.chiorichan.account;
 
-import com.chiorichan.account.AccountHandler;
-
-public class AccountChangedEvent extends AccountEvent
+public interface InteractiveEntity
 {
-	public AccountChangedEvent( AccountHandler who )
-	{
-		super( who );
-	}
+	void sendMessage( String... msgs );
+	
+	void sendMessage( String string );
+	
+	boolean kick( String kickMessage );
+	
+	boolean isValid();
 }

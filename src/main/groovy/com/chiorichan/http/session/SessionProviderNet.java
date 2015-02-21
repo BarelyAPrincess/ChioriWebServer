@@ -17,7 +17,6 @@ import com.chiorichan.framework.Site;
 import com.chiorichan.http.Candy;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.http.HttpResponseWrapper;
-import com.chiorichan.permission.PermissibleType;
 
 public class SessionProviderNet extends AccountHandler implements SessionProvider, BindingProvider
 {
@@ -188,10 +187,10 @@ public class SessionProviderNet extends AccountHandler implements SessionProvide
 	{
 		
 	}
-	
+
 	@Override
-	public PermissibleType getType()
+	public boolean isRemote()
 	{
-		return null;
+		return true;
 	}
 }

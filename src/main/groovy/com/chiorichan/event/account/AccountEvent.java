@@ -9,27 +9,27 @@
  */
 package com.chiorichan.event.account;
 
-import com.chiorichan.account.Account;
+import com.chiorichan.account.AccountHandler;
 import com.chiorichan.event.Event;
 import com.chiorichan.event.HandlerList;
 
 /**
- * Represents a User related event
+ * Represents a account related event
  */
 public abstract class AccountEvent extends Event
 {
 	private static final HandlerList handlers = new HandlerList();
-	protected Account<?> acct;
+	protected AccountHandler handler;
 	
-	public AccountEvent( final Account<?> who )
+	public AccountEvent( final AccountHandler who )
 	{
-		acct = who;
+		handler = who;
 	}
 	
-	AccountEvent( final Account<?> who, boolean async )
+	AccountEvent( final AccountHandler who, boolean async )
 	{
 		super( async );
-		acct = who;
+		handler = who;
 		
 	}
 	
@@ -38,9 +38,9 @@ public abstract class AccountEvent extends Event
 	 * 
 	 * @return User who is involved in this event
 	 */
-	public final Account<?> getAccount()
+	public final AccountHandler getHandler()
 	{
-		return acct;
+		return handler;
 	}
 	
 	@Override

@@ -11,6 +11,7 @@ package com.chiorichan.database;
 
 import java.net.ConnectException;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -674,9 +675,9 @@ public class DatabaseEngine
 				options.put( o.getKey().toLowerCase(), ObjectUtil.castToString( o.getValue() ) );
 			}
 		
-		if ( !options.containsKey( "limit" ) || !( options.get( "limit" ) instanceof String ) )
+		if ( !options.containsKey( "limit" ) || ! ( options.get( "limit" ) instanceof String ) )
 			options.put( "limit", "0" );
-		if ( !options.containsKey( "offset" ) || !( options.get( "offset" ) instanceof String ) )
+		if ( !options.containsKey( "offset" ) || ! ( options.get( "offset" ) instanceof String ) )
 			options.put( "offset", "0" );
 		if ( !options.containsKey( "orderby" ) )
 			options.put( "orderby", "" );
@@ -1051,5 +1052,24 @@ public class DatabaseEngine
 	public String escape( String str )
 	{
 		return MySQLUtils.escape( str );
+	}
+	
+	public boolean tableExist( String table )
+	{
+		try
+		{
+			DatabaseMetaData md = con.getMetaData();
+			ResultSet rs = md.getTables( null, null, "%", null );
+			while ( rs.next() )
+			{
+				if ( rs.getString( 3 ).equalsIgnoreCase( table ) )
+					return true;
+			}
+		}
+		catch ( SQLException e )
+		{
+			e.printStackTrace();
+		}
+		return false;
 	}
 }

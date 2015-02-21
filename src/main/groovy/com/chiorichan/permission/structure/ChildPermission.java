@@ -11,18 +11,16 @@ package com.chiorichan.permission.structure;
 
 import java.util.List;
 
-import com.chiorichan.framework.Site;
-
 public class ChildPermission
 {
 	public Permission perm;
-	public List<Site> sites;
+	public List<String> refs;
 	public PermissionValue<?> value;
 	
-	public ChildPermission( Permission parent, List<Site> siteList, PermissionValue<?> childValue )
+	public ChildPermission( Permission parent, List<String> refList, PermissionValue<?> childValue )
 	{
 		perm = parent;
-		sites = siteList;
+		refs = refList;
 		value = childValue;
 	}
 	
@@ -31,9 +29,9 @@ public class ChildPermission
 		return perm;
 	}
 	
-	public List<Site> getSites()
+	public List<String> getRefs()
 	{
-		return sites;
+		return refs;
 	}
 	
 	public PermissionValue<?> getValue()

@@ -47,6 +47,34 @@ public class ObjectUtil
 		}
 	}
 	
+	public static Integer castToInt( Object value )
+	{
+		if ( value == null )
+			return null;
+		
+		switch ( value.getClass().getName() )
+		{
+			case "java.lang.Long":
+				if ( ( long ) value < Integer.MIN_VALUE || ( long ) value > Integer.MAX_VALUE )
+					return ( Integer ) value;
+				else
+					return null;
+			case "java.lang.String":
+				return Integer.parseInt( ( String ) value );
+			case "java.lang.Integer":
+				return ( Integer ) value;
+			case "java.lang.Double":
+				return ( Integer ) value;
+			case "java.lang.Boolean":
+				return ( ( boolean ) value ) ? 1 : 0;
+			case "java.math.BigDecimal":
+				return ( ( BigDecimal ) value ).setScale( 0, BigDecimal.ROUND_HALF_UP ).intValue();
+			default:
+				Loader.getLogger().warning( "Uncaught Convertion to String of Type: " + value.getClass().getName() );
+				return null;
+		}
+	}
+	
 	public static Long castToLong( Object value )
 	{
 		if ( value == null )

@@ -9,7 +9,7 @@
  */
 package com.chiorichan.event.account;
 
-import com.chiorichan.account.Account;
+import com.chiorichan.account.AccountHandler;
 import com.chiorichan.event.HandlerList;
 
 /**
@@ -20,7 +20,7 @@ public abstract class AccountChannelEvent extends AccountEvent
 	private static final HandlerList handlers = new HandlerList();
 	private final String channel;
 	
-	public AccountChannelEvent( final Account<?> user, final String channel )
+	public AccountChannelEvent( final AccountHandler user, final String channel )
 	{
 		super( user );
 		this.channel = channel;

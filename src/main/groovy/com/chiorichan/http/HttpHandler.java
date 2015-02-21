@@ -439,7 +439,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 				// TODO: Come up with a better way to handle the URI used in the target. ie. Params are lost.
 				return;
 			}
-			else if ( !req.equals( "1" ) && !sess.getParentSession().getAccount().hasPermission( req ) )
+			else if ( !req.equals( "1" ) && !sess.getParentSession().checkPermission( req ).isTrue() )
 			{
 				if ( req.equals( "0" ) )
 					response.sendError( 401, "This page is limited to Operators only!" );

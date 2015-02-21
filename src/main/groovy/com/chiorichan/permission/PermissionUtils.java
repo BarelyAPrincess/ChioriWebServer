@@ -9,17 +9,16 @@
  */
 package com.chiorichan.permission;
 
-public abstract class PermissibleInteractive extends PermissibleBase
+import org.apache.commons.lang3.StringUtils;
+
+public class PermissionUtils
 {
-	public abstract void sendMessage( String string );
-	
-	public abstract boolean kick( String kickMessage );
-	
-	public abstract boolean isValid();
-	
-	public void sendMessage( String... msgs )
+	public static String getName( String permNamespace )
 	{
-		for ( String m : msgs )
-			sendMessage( m );
+		if ( !permNamespace.contains( "." ) )
+			return permNamespace;
+		
+		int inx = StringUtils.reverse( permNamespace ).indexOf( "." );
+		return permNamespace.substring( permNamespace.length() - inx );
 	}
 }

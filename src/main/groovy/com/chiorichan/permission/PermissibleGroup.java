@@ -16,9 +16,9 @@ public abstract class PermissibleGroup extends PermissibleEntity implements Comp
 {
 	protected int weight = 0;
 	
-	public PermissibleGroup( String groupName )
+	public PermissibleGroup( String groupName, PermissionBackend backend )
 	{
-		super( groupName );
+		super( groupName, backend );
 	}
 	
 	public int getWeight()

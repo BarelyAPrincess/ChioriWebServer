@@ -24,8 +24,6 @@ import com.chiorichan.framework.Site;
 import com.chiorichan.framework.WebUtils;
 import com.chiorichan.http.Candy;
 import com.chiorichan.http.HttpRequestWrapper;
-import com.chiorichan.permission.Permissible;
-import com.chiorichan.permission.PermissibleType;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.StringUtil;
 import com.google.common.collect.Lists;
@@ -41,7 +39,7 @@ public abstract class Session extends AccountHandler
 	protected Map<String, String> data = new LinkedHashMap<String, String>();
 	protected long timeout = 0;
 	protected int requestCnt = 0;
-	protected String candyId = "", candyName = "sessionId", ipAddr = null;
+	protected String candyId = "", candyName = "sessionId", lastIpAddr = null;
 	protected Candy sessionCandy;
 	protected Account<?> currentAccount = null;
 	protected List<String> pendingMessages = Lists.newArrayList();
@@ -271,8 +269,8 @@ public abstract class Session extends AccountHandler
 			if ( StringUtil.isTrue( getVariable( "remember" ) ) )
 				defaultTimeout = Loader.getConfig().getInt( "sessions.defaultTimeoutRememberMe", 604800 );
 			
-			if ( Loader.getConfig().getBoolean( "allowNoTimeoutPermission" ) )// XXX && currentAccount.hasPermission( "chiori.noTimeout" ) )
-				defaultTimeout = 31096821392L;
+			if ( Loader.getConfig().getBoolean( "allowNoTimeoutPermission" ) && checkPermission( "com.chiorichan.noTimeout" ).isTrue() )
+				defaultTimeout = Long.MAX_VALUE;
 		}
 		
 		timeout = Common.getEpoch() + defaultTimeout + ( Math.min( requestCnt, 6 ) * 600 );
@@ -342,44 +340,6 @@ public abstract class Session extends AccountHandler
 		pendingMessages.add( msg );
 	}
 	
-	// A session can't handle just any permissible object.
-	// At least for the time being.
-	@Override
-	public void attachPermissible( Permissible permissible )
-	{
-		if ( permissible instanceof Account )
-			currentAccount = ( Account<?> ) permissible;
-		else
-			isValid = false;
-	}
-	
-	@Override
-	public boolean isValid()
-	{
-		return isValid;
-	}
-	
-	@Override
-	public Permissible getPermissible()
-	{
-		return currentAccount;
-	}
-	
-	@Override
-	public void removePermissible()
-	{
-		currentAccount = null;
-	}
-	
-	@Override
-	public String getName()
-	{
-		if ( currentAccount == null )
-			return "(NULL)";
-		
-		return currentAccount.getName();
-	}
-	
 	public Site getSite()
 	{
 		if ( site == null )
@@ -409,8 +369,7 @@ public abstract class Session extends AccountHandler
 	 */
 	
 	/**
-	 * 
-	 * @return A set of active SessionProviders for this session. Sessions are given to the Java TrashCollector when a request finishes.
+	 * @return A set of active SessionProviders for this session.
 	 */
 	public Set<SessionProvider> getSessionProviders()
 	{
@@ -453,29 +412,40 @@ public abstract class Session extends AccountHandler
 	
 	protected abstract void destroySession();
 	
-	@Override
-	public PermissibleType getType()
+	public Set<String> getIpAddrs()
 	{
-		return PermissibleType.lookup( "HTTP" );
+		Set<String> ips = Sets.newHashSet();
+		
+		synchronized ( sessionProviders )
+		{
+			for ( SessionProvider sp : sessionProviders )
+				if ( sp.getParentSession() == this && sp.getRequest() != null )
+				{
+					String ipAddr = sp.getRequest().getRemoteAddr();
+					if ( ipAddr != null && !ipAddr.isEmpty() && !ips.contains( ipAddr ) )
+					{
+						ips.add( ipAddr );
+					}
+				}
+		}
+		
+		return ips;
 	}
 	
 	@Override
 	public String getIpAddr()
 	{
-		if ( ipAddr == null && sessionProviders.size() > 0 )
-		{
-			for ( SessionProvider sp : sessionProviders )
-				if ( sp.getRequest() != null )
-				{
-					String ipAddr = sp.getRequest().getRemoteAddr();
-					if ( ipAddr != null && !ipAddr.isEmpty() )
-					{
-						this.ipAddr = ipAddr;
-						break;
-					}
-				}
-		}
-		
-		return ipAddr;
+		return lastIpAddr;
+	}
+	
+	@Override
+	public boolean isRemote()
+	{
+		return true;
+	}
+	
+	public String getName()
+	{
+		return candyName;
 	}
 }

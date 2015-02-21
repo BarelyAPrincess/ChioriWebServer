@@ -109,9 +109,9 @@ public class AccountsKeeper
 		int delta = Integer.MAX_VALUE;
 		for ( Entry<Account<?>, AccountsKeeperOptions> entry : accounts.entrySet() )
 		{
-			if ( entry.getKey().getName().toLowerCase().startsWith( lowerName ) )
+			if ( entry.getKey().getAcctId().toLowerCase().startsWith( lowerName ) )
 			{
-				int curDelta = entry.getKey().getName().length() - lowerName.length();
+				int curDelta = entry.getKey().getAcctId().length() - lowerName.length();
 				if ( curDelta < delta )
 				{
 					found = entry.getKey();

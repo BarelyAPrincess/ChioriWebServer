@@ -10,24 +10,35 @@
 package com.chiorichan.account;
 
 import com.chiorichan.permission.Permissible;
-import com.chiorichan.permission.PermissibleInteractive;
 
-public abstract class AccountHandler extends PermissibleInteractive
+public abstract class AccountHandler extends Permissible implements InteractiveEntity
 {
-	protected Permissible permissible = null;
+	Account<?> currentAccount = null;
 	
-	public void attachPermissible( Permissible permissibleAttachment )
+	public void attachAccount( Account<?> acct )
 	{
-		permissible = permissibleAttachment;
+		this.currentAccount = acct;
 	}
 	
-	public Permissible getPermissible()
+	public Account<?> getAccount()
 	{
-		return permissible;
+		return currentAccount;
 	}
 	
-	public void removePermissible()
+	public void reset()
 	{
-		permissible = null;
+		currentAccount = null;
+	}
+	
+	@Override
+	public boolean isValid()
+	{
+		return currentAccount != null;
+	}
+	
+	@Override
+	public String getId()
+	{
+		return currentAccount.getAcctId();
 	}
 }

@@ -87,6 +87,69 @@ public class PermissionManager implements TaskCreator
 	}
 	
 	/**
+	 * Return entity's object
+	 * 
+	 * @param entityname
+	 *            get PermissibleEntity with given name
+	 * @return PermissibleEntity instance
+	 */
+	public PermissibleEntity getEntity( Permissible permissible )
+	{
+		if ( permissible == null )
+			throw new IllegalArgumentException( "Null entity passed! Name must not be empty" );
+		
+		if ( permissible.entity == null )
+		{
+			if ( entities.containsKey( permissible.getId() ) )
+				permissible.entity = entities.get( permissible.getId() );
+			else
+			{
+				PermissibleEntity entity = backend.getEntity( permissible.getId() );
+				entities.put( permissible.getId(), entity );
+				permissible.entity = entity;
+			}
+		}
+		
+		return permissible.entity;
+	}
+	
+	public PermissibleEntity getEntity( String permissible )
+	{
+		if ( permissible == null )
+			throw new IllegalArgumentException( "Null entity passed! Name must not be empty" );
+		
+		if ( entities.containsKey( permissible ) )
+			return entities.get( permissible );
+		else
+		{
+			PermissibleEntity entity = backend.getEntity( permissible );
+			entities.put( permissible, entity );
+			return entity;
+		}
+	}
+	
+	/**
+	 * Return all registered entity objects
+	 * 
+	 * @return PermissibleEntity array
+	 */
+	public PermissibleEntity[] getEntities()
+	{
+		return entities.values().toArray( new PermissibleEntity[0] );
+	}
+	
+	/**
+	 * Reset in-memory object of specified entity
+	 * 
+	 * @param entityName
+	 *            entity's name
+	 */
+	public void resetEntity( Permissible entity )
+	{
+		entities.remove( entity.getId() );
+	}
+	
+	/**
 	 * Forcefully saves groups and entities to the backend data source.
 	 */
 	public void saveData()
@@ -103,9 +166,9 @@ public class PermissionManager implements TaskCreator
 		entities.clear();
 		
 		for ( PermissibleGroup group : backend.getGroups() )
-			groups.put( group.getName(), group );
+			groups.put( group.getId(), group );
 		for ( PermissibleEntity entity : backend.getEntities() )
-			entities.put( entity.getName(), entity );
+			entities.put( entity.getId(), entity );
 		backend.loadPermissionTree();
 		
 		if ( isDebug() )
@@ -127,7 +190,7 @@ public class PermissionManager implements TaskCreator
 	 */
 	public boolean has( Permissible perm, String permission )
 	{
-		return has( perm.getId(), permission, perm.getType().toString() );
+		return has( perm.getId(), permission, "" ); // perm.getRef()
 	}
 	
 	/**
@@ -141,9 +204,9 @@ public class PermissionManager implements TaskCreator
 	 *            site's name as string
 	 * @return true on success false otherwise
 	 */
-	public boolean has( Account<?> entity, String permission, String site )
+	public boolean has( Account<?> entity, String permission, String ref )
 	{
-		return this.has( entity.getName(), permission, site );
+		return this.has( entity.getAcctId(), permission, ref );
 	}
 	
 	/**
@@ -159,7 +222,7 @@ public class PermissionManager implements TaskCreator
 	 */
 	public boolean has( String entityName, String permission, String site )
 	{
-		PermissibleEntity entity = this.getEntity( entityName );
+		PermissibleEntity entity = getEntity( entityName );
 		
 		if ( entity == null )
 		{
@@ -167,71 +230,6 @@ public class PermissionManager implements TaskCreator
 		}
 		
 		return entity.has( permission, site );
-	}
-	
-	/**
-	 * Return entity's object
-	 * 
-	 * @param entityname
-	 *            get PermissibleEntity with given name
-	 * @return PermissibleEntity instance
-	 */
-	public PermissibleEntity getEntity( String entityname )
-	{
-		if ( entityname == null || entityname.isEmpty() )
-		{
-			throw new IllegalArgumentException( "Null or empty name passed! Name must not be empty" );
-		}
-		
-		PermissibleEntity entity = entities.get( entityname.toLowerCase() );
-		
-		if ( entity == null )
-		{
-			entity = this.backend.getEntity( entityname );
-			if ( entity != null )
-			{
-				this.entities.put( entityname.toLowerCase(), entity );
-			}
-			else
-			{
-				throw new IllegalStateException( "Entity " + entityname + " is null" );
-			}
-		}
-		
-		return entity;
-	}
-	
-	/**
-	 * Return object of specified entity
-	 * 
-	 * @param entity
-	 *            entity object
-	 * @return PermissibleEntity instance
-	 */
-	public PermissibleEntity getEntity( Account<?> entity )
-	{
-		return this.getEntity( entity.getName() );
-	}
-	
-	/**
-	 * Return all registered entity objects
-	 * 
-	 * @return PermissibleEntity array
-	 */
-	public PermissibleEntity[] getEntities()
-	{
-		return backend.getEntities();
-	}
-	
-	/**
-	 * Reset in-memory object of specified entity
-	 * 
-	 * @param entityName
-	 *            entity's name
-	 */
-	public void resetEntity( String entityName )
-	{
-		this.entities.remove( entityName.toLowerCase() );
 	}
 	
 	/**
@@ -329,7 +327,7 @@ public class PermissionManager implements TaskCreator
 			return;
 		}
 		
-		backend.setDefaultGroup( group.getName(), siteName );
+		backend.setDefaultGroup( group.getId(), siteName );
 		
 		this.defaultGroups.clear();
 		
