@@ -13,10 +13,12 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.TimerTask;
 
+import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.permission.event.PermissibleEntityEvent;
 import com.chiorichan.permission.structure.ChildPermission;
 import com.chiorichan.permission.structure.Permission;
+import com.chiorichan.permission.structure.PermissionValueBoolean;
 import com.chiorichan.util.Common;
 import com.google.common.collect.Maps;
 
@@ -306,16 +308,35 @@ public abstract class PermissibleEntity
 		debugMode = debug;
 	}
 	
-	public boolean isOp( Permissible permissible )
+	public boolean isOp()
 	{
-		PermissionResult result = checkPermission( "sys.op" );
+		PermissionResult result = checkPermission( Permission.OP );
 		return result.isTrue();
 	}
 	
 	public PermissionResult checkPermission( String perm )
 	{
-		Permission permission = Permission.getPermissionNode( perm );
-		return checkPermission( permission );
+		PermissionResult result = null;
+		
+		// Everyone
+		if ( perm == null || perm.equals( "-1" ) || perm.isEmpty() )
+			result = new PermissionResult( this, new Permission( "all", new PermissionValueBoolean( "all", true, true ), "The dummy node used for the 'everyone' permission check." ) );
+		
+		// OP Only
+		if ( perm.equals( "0" ) || perm.equalsIgnoreCase( "op" ) || perm.equalsIgnoreCase( "root" ) )
+			perm = Permission.OP;
+		
+		if ( perm.equalsIgnoreCase( "admin" ) )
+			perm = Permission.ADMIN;
+		
+		if ( perm == null )
+		{
+			Permission permission = Permission.getPermissionNode( perm );
+			result = checkPermission( permission );
+		}
+		
+		Loader.getLogger().info( ConsoleColor.GREEN + "Is `" + getId() + "` true for permission `" + perm + "` with result `" + result + "`" );
+		return result;
 	}
 	
 	public PermissionResult checkPermission( Permission perm )

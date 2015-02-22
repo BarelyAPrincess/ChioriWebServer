@@ -37,13 +37,16 @@ public class PermissionManager implements TaskCreator
 	protected Set<Permission> roots = Sets.newConcurrentHashSet();
 	protected PermissionMatcher matcher = new RegExpMatcher();
 	protected PermissionBackend backend = null;
-	protected boolean debugMode = false;
 	protected YamlConfiguration config;
+	
+	protected static boolean debugMode = false;
+	protected static boolean allowOps = true;
 	
 	public void init() throws PermissionBackendException
 	{
 		config = Loader.getConfig();
 		debugMode = config.getBoolean( "permissions.debug", debugMode );
+		allowOps = config.getBoolean( "permissions.allowOps", allowOps );
 		
 		initBackend();
 	}
@@ -83,7 +86,7 @@ public class PermissionManager implements TaskCreator
 			loadData();
 		}
 		
-		this.callEvent( PermissibleSystemEvent.Action.BACKEND_CHANGED );
+		callEvent( PermissibleSystemEvent.Action.BACKEND_CHANGED );
 	}
 	
 	/**
@@ -331,8 +334,8 @@ public class PermissionManager implements TaskCreator
 		
 		this.defaultGroups.clear();
 		
-		this.callEvent( PermissibleSystemEvent.Action.DEFAULTGROUP_CHANGED );
-		this.callEvent( new PermissibleEntityEvent( group, PermissibleEntityEvent.Action.DEFAULTGROUP_CHANGED ) );
+		callEvent( PermissibleSystemEvent.Action.DEFAULTGROUP_CHANGED );
+		callEvent( new PermissibleEntityEvent( group, PermissibleEntityEvent.Action.DEFAULTGROUP_CHANGED ) );
 	}
 	
 	public void setDefaultGroup( PermissibleGroup group )
@@ -357,10 +360,10 @@ public class PermissionManager implements TaskCreator
 	 * @param debug
 	 *            true enables debug mode, false disables
 	 */
-	public void setDebug( boolean debug )
+	public static void setDebug( boolean debug )
 	{
-		this.debugMode = debug;
-		this.callEvent( PermissibleSystemEvent.Action.DEBUGMODE_TOGGLE );
+		debugMode = debug;
+		callEvent( PermissibleSystemEvent.Action.DEBUGMODE_TOGGLE );
 	}
 	
 	/**
@@ -370,7 +373,7 @@ public class PermissionManager implements TaskCreator
 	 */
 	public boolean isDebug()
 	{
-		return this.debugMode;
+		return debugMode;
 	}
 	
 	/**
@@ -407,7 +410,8 @@ public class PermissionManager implements TaskCreator
 		{
 			this.backend.reload();
 		}
-		this.callEvent( PermissibleSystemEvent.Action.RELOADED );
+		
+		callEvent( PermissibleSystemEvent.Action.RELOADED );
 	}
 	
 	public void end()
@@ -429,14 +433,14 @@ public class PermissionManager implements TaskCreator
 		this.defaultGroups.clear();
 	}
 	
-	protected void callEvent( PermissibleEvent event )
+	protected static void callEvent( PermissibleEvent event )
 	{
 		Loader.getEventBus().callEvent( event );
 	}
 	
-	protected void callEvent( PermissibleSystemEvent.Action action )
+	protected static void callEvent( PermissibleSystemEvent.Action action )
 	{
-		this.callEvent( new PermissibleSystemEvent( action ) );
+		callEvent( new PermissibleSystemEvent( action ) );
 	}
 	
 	public PermissionMatcher getPermissionMatcher()

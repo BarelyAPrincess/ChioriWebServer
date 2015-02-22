@@ -75,19 +75,12 @@ public class RegExpMatcher implements PermissionMatcher
 				int from = Integer.parseInt( rangeMatcher.group( 1 ) );
 				int to = Integer.parseInt( rangeMatcher.group( 2 ) );
 				
-				if ( from > to )
-				{
-					int temp = from;
-					from = to;
-					to = temp;
-				} // swap them
-				
 				range.append( "(" );
 				
-				for ( int i = from; i <= to; i++ )
+				for ( int i = Math.min( from, to ); i <= Math.max( from, to ); i++ )
 				{
 					range.append( i );
-					if ( i < to )
+					if ( i < Math.max( from, to ) )
 					{
 						range.append( "|" );
 					}

@@ -15,9 +15,9 @@ public class PermissionValueVar extends PermissionValue<String>
 {
 	private int maxLen = -1;
 	
-	public PermissionValueVar( String name, String val, int len )
+	public PermissionValueVar( String name, String val, String def, int len )
 	{
-		super( name, val );
+		super( name, val, def );
 		maxLen = len;
 	}
 	

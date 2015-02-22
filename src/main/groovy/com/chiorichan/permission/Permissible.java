@@ -35,7 +35,7 @@ public abstract class Permissible
 	 */
 	public final boolean isOp()
 	{
-		return getPermissibleEntity().isOp( this );
+		return getPermissibleEntity().isOp();
 	}
 	
 	public final PermissionResult checkPermission( String perm )

@@ -28,10 +28,34 @@ public final class Permission
 	protected Permission parent = null;
 	protected String name;
 	
+	public static final String DEFAULT = "default";
+	public static final String OP = "sys.op";
+	public static final String ADMIN = "sys.admin";
+	public static final String BANNED = "sys.banned";
+	public static final String WHITELISTED = "sys.whitelisted";
+	
+	/**
+	 * Used only for creating dummy permission nodes that have no real connection to actual permission nodes.
+	 * 
+	 * @param name
+	 *            The name used for this dummy node
+	 * @param value
+	 *            The value used for this dummy node
+	 * @param desc
+	 *            The description used for this dummy node
+	 */
+	public Permission( String name, PermissionValue<?> value, String desc )
+	{
+		this.name = name;
+		this.value = value;
+		description = desc;
+	}
+	
 	public Permission( String name, Permission parentNode, boolean rootNode )
 	{
 		this( name, parentNode );
 		isRootNode = rootNode;
+		allPerms.add( this );
 	}
 	
 	public Permission( String name, Permission parentNode )
@@ -182,6 +206,29 @@ public final class Permission
 		return null;
 	}
 	
+	/**
+	 * Similar to {@link #createPermissionNode(String, PermissionValue, String)} as in it will
+	 * try to create non-existent nodes but will not override existing values.
+	 * 
+	 * @param namespace
+	 *            The namespace to use, e.g., com.chiorichan.permission.node
+	 * @param val
+	 *            The value to set if it needed to be created
+	 * @param desc
+	 *            The description to set if it needed to be created
+	 * @return
+	 *         The Permission
+	 */
+	public static Permission getPermissionNode( String namespace, PermissionValue<?> val, String desc )
+	{
+		Permission perm = getPermissionNode( namespace, false );
+		
+		if ( perm == null )
+			return createPermissionNode( namespace, val, desc );
+		
+		return perm;
+	}
+	
 	public static Permission getPermissionNode( String namespace )
 	{
 		return getPermissionNode( namespace, true );
@@ -236,6 +283,14 @@ public final class Permission
 		}
 		
 		return curr;
+	}
+	
+	public static Permission createPermissionNode( String namespace, PermissionValue<?> val, String desc )
+	{
+		Permission perm = getPermissionNode( namespace, true );
+		perm.setValue( val );
+		perm.setDescription( desc );
+		return perm;
 	}
 	
 	public String toString()

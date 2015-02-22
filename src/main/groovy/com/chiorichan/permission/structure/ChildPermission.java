@@ -16,12 +16,26 @@ public class ChildPermission
 	public Permission perm;
 	public List<String> refs;
 	public PermissionValue<?> value;
+	public boolean isInherited;
 	
-	public ChildPermission( Permission parent, List<String> refList, PermissionValue<?> childValue )
+	/**
+	 * References a permission state/value against an entity
+	 * 
+	 * @param parent
+	 *            The permission this value ortains to
+	 * @param refList
+	 *            A list of references such as connection or ip this permission would apply
+	 * @param childValue
+	 *            The custom value assigned to this permission. Can be null to use default assigned value.
+	 * @param isInherited
+	 *            Was this value given to the entity because it was a member of a group?
+	 */
+	public ChildPermission( Permission perm, List<String> refs, PermissionValue<?> value, boolean isInherited )
 	{
-		perm = parent;
-		refs = refList;
-		value = childValue;
+		this.perm = perm;
+		this.refs = refs;
+		this.value = value;
+		this.isInherited = isInherited;
 	}
 	
 	public Permission getPermission()
@@ -37,5 +51,34 @@ public class ChildPermission
 	public PermissionValue<?> getValue()
 	{
 		return value;
+	}
+	
+	public Object getObject()
+	{
+		return value.getValue();
+	}
+	
+	public String getString()
+	{
+		if ( value.getType() == PermissionValue.PermissionType.ENUM || value.getType() == PermissionValue.PermissionType.VAR )
+			return ( String ) value.getValue();
+		
+		return null;
+	}
+	
+	public Integer getInt()
+	{
+		if ( value.getType() == PermissionValue.PermissionType.INT )
+			return ( Integer ) value.getValue();
+		
+		return null;
+	}
+	
+	public Boolean getBoolean()
+	{
+		if ( value.getType() == PermissionValue.PermissionType.BOOL )
+			return ( Boolean ) value.getValue();
+		
+		return null;
 	}
 }

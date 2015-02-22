@@ -304,16 +304,16 @@ public class FileBackend extends PermissionBackend
 					switch ( result.getString( "type" ) )
 					{
 						case "BOOL":
-							perm.setValue( new PermissionValueBoolean( permName, result.getBoolean( "value" ) ) );
+							perm.setValue( new PermissionValueBoolean( permName, result.getBoolean( "value" ), result.getBoolean( "default" ) ) );
 							break;
 						case "ENUM":
-							perm.setValue( new PermissionValueEnum( permName, result.getString( "value", "" ), result.getInt( "maxlen", -1 ), Splitter.on( "|" ).splitToList( result.getString( "enum", "" ) ) ) );
+							perm.setValue( new PermissionValueEnum( permName, result.getString( "value", "" ), result.getString( "default" ), result.getInt( "maxlen", -1 ), Splitter.on( "|" ).splitToList( result.getString( "enum", "" ) ) ) );
 							break;
 						case "VAR":
-							perm.setValue( new PermissionValueVar( permName, result.getString( "value", "" ), result.getInt( "maxlen", -1 ) ) );
+							perm.setValue( new PermissionValueVar( permName, result.getString( "value", "" ), result.getString( "default" ), result.getInt( "maxlen", -1 ) ) );
 							break;
 						case "INT":
-							perm.setValue( new PermissionValueInt( permName, result.getInt( "value" ) ) );
+							perm.setValue( new PermissionValueInt( permName, result.getInt( "value" ), result.getInt( "default" ) ) );
 							break;
 					}
 				

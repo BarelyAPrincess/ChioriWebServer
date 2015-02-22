@@ -12,17 +12,24 @@ package com.chiorichan.permission.structure;
 public abstract class PermissionValue<T>
 {
 	private T value;
+	private T def;
 	private final String name;
 	
-	protected PermissionValue( String permName, T type )
+	protected PermissionValue( String permName, T type, T def )
 	{
-		value = type;
 		name = permName;
+		value = type;
+		this.def = def;
 	}
 	
 	public T getValue()
 	{
 		return value;
+	}
+	
+	public T getDefault()
+	{
+		return def;
 	}
 	
 	public String getName()
@@ -33,7 +40,7 @@ public abstract class PermissionValue<T>
 	@Override
 	public String toString()
 	{
-		return "[type=" + getType() + ",value=" + getValue() + "]";
+		return "[type=" + getType() + ",value=" + getValue() + ",default=" + getDefault() + "]";
 	}
 	
 	public PermissionType getType()
@@ -58,6 +65,11 @@ public abstract class PermissionValue<T>
 	protected void setValue( T val )
 	{
 		value = val;
+	}
+	
+	protected void setDefault( T val )
+	{
+		def = val;
 	}
 	
 	public enum PermissionType

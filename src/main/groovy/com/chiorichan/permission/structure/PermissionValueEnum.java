@@ -23,9 +23,9 @@ public class PermissionValueEnum extends PermissionValue<String>
 	private Set<String> enumList = Sets.newHashSet();
 	private int maxLen = -1;
 	
-	public PermissionValueEnum( String name, String val, int len, Set<String> enums )
+	public PermissionValueEnum( String name, String val, String def, int len, Set<String> enums )
 	{
-		super( name, val );
+		super( name, val, def );
 		maxLen = len;
 		enumList = enums;
 		
@@ -33,14 +33,14 @@ public class PermissionValueEnum extends PermissionValue<String>
 			PermissionManager.getLogger().warning( "It would appear that permission '" + name + "' of type 'Enum' has a value of '" + val + "' which is not in the list of available enums '" + enumList.toString() + "', it would be recommended that this is fixed." );
 	}
 	
-	public PermissionValueEnum( String name, String val, int len, List<String> enums )
+	public PermissionValueEnum( String name, String val, String def, int len, List<String> enums )
 	{
-		this( name, val, len, new HashSet<String>( enums ) );
+		this( name, val, def, len, new HashSet<String>( enums ) );
 	}
 	
-	public PermissionValueEnum( String name, String val, int len, String... enums )
+	public PermissionValueEnum( String name, String val, String def, int len, String... enums )
 	{
-		this( name, val, len, Arrays.asList( enums ) );
+		this( name, val, def, len, Arrays.asList( enums ) );
 	}
 	
 	public Set<String> getEnumList()

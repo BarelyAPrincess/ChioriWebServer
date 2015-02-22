@@ -9,7 +9,6 @@
  */
 package com.chiorichan.permission;
 
-import com.chiorichan.Loader;
 import com.chiorichan.permission.event.PermissibleEntityEvent;
 
 public abstract class PermissibleGroup extends PermissibleEntity implements Comparable<PermissibleGroup>
@@ -29,7 +28,7 @@ public abstract class PermissibleGroup extends PermissibleEntity implements Comp
 	public void setWeight( int weight )
 	{
 		this.weight = weight;
-		Loader.getPermissionManager().callEvent( new PermissibleEntityEvent( this, PermissibleEntityEvent.Action.WEIGHT_CHANGED ) );
+		PermissionManager.callEvent( new PermissibleEntityEvent( this, PermissibleEntityEvent.Action.WEIGHT_CHANGED ) );
 	}
 	
 	@Override

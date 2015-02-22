@@ -13,9 +13,9 @@ import com.chiorichan.util.ObjectUtil;
 
 public class PermissionValueBoolean extends PermissionValue<Boolean>
 {
-	public PermissionValueBoolean( String name, Boolean val )
+	public PermissionValueBoolean( String name, Boolean val, Boolean def )
 	{
-		super( name, val );
+		super( name, val, def );
 	}
 	
 	@Override

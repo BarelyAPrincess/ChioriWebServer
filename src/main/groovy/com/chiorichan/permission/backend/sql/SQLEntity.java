@@ -19,6 +19,7 @@ import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.backend.SQLBackend;
 import com.chiorichan.permission.structure.ChildPermission;
 import com.chiorichan.permission.structure.Permission;
+import com.chiorichan.permission.structure.PermissionValue;
 import com.chiorichan.util.ObjectUtil;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -44,7 +45,8 @@ public class SQLEntity extends PermissibleEntityProxy
 				do
 				{
 					Permission perm = Permission.getPermissionNode( rs.getString( "permission" ) );
-					attachPermission( new ChildPermission( perm, Splitter.on( "|" ).splitToList( rs.getString( "ref" ) ), perm.getValue().createChild( rs.getString( "value" ) ) ) );
+					PermissionValue<?> childValue = ( rs.getString( "value" ) == null || rs.getString( "value" ).isEmpty() ) ? null : perm.getValue().createChild( rs.getString( "value" ) );
+					attachPermission( new ChildPermission( perm, Splitter.on( "|" ).splitToList( rs.getString( "ref" ) ), childValue, false ) );
 				}
 				while ( rs.next() );
 		}

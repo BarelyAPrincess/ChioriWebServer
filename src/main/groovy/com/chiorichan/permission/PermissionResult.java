@@ -9,6 +9,7 @@
  */
 package com.chiorichan.permission;
 
+import com.chiorichan.permission.structure.ChildPermission;
 import com.chiorichan.permission.structure.Permission;
 import com.chiorichan.permission.structure.PermissionValue;
 import com.chiorichan.util.ObjectUtil;
@@ -23,8 +24,8 @@ public class PermissionResult
 	
 	private PermissibleEntity entity = null;
 	private Permission perm = null;
-	private boolean inherited = false;
-
+	private ChildPermission childPerm = null;
+	
 	public PermissionResult()
 	{
 		
@@ -34,14 +35,31 @@ public class PermissionResult
 	{
 		this.entity = entity;
 		this.perm = perm;
+		
+		childPerm = recursiveEntityScan( entity, perm );
 	}
-
+	
+	private ChildPermission recursiveEntityScan( PermissibleEntity pe, Permission perm )
+	{
+		if ( pe.childPermissions.containsKey( perm.getNamespace() ) )
+			return pe.childPermissions.get( perm.getNamespace() );
+		
+		for ( PermissibleGroup group : pe.groups.values() )
+		{
+			ChildPermission childPerm = recursiveEntityScan( group, perm );
+			if ( childPerm != null )
+				return childPerm;
+		}
+		
+		return null;
+	}
+	
 	/**
 	 * @return was this permission assigned to our entity?
 	 */
 	public boolean isAssigned()
 	{
-		return false;
+		return childPerm != null;
 	}
 	
 	/**
@@ -52,15 +70,15 @@ public class PermissionResult
 		if ( !isAssigned() )
 			return false;
 		
-		return inherited;
+		return childPerm.isInherited;
 	}
 	
 	/**
 	 * @return was this entity assigned an custom value for this permission.
 	 */
-	public boolean isCustomValue()
+	public boolean hasCustomValue()
 	{
-		return false;
+		return ( childPerm != null && childPerm.getValue() != null );
 	}
 	
 	/**
@@ -92,14 +110,10 @@ public class PermissionResult
 		if ( getValue().getType() != PermissionValue.PermissionType.BOOL )
 			throw new IllegalAccessException( "This Permission Node is not of the type Boolean and can not be checked if true." );
 		
-		// TODO this!
+		if ( !perm.getNamespace().equals( "sys.op" ) && PermissionManager.allowOps && entity.isOp() )
+			return true;
 		
-		return false;
-	}
-	
-	public Object getObject()
-	{
-		return getValue().getValue();
+		return ( Boolean ) getObject();
 	}
 	
 	public String getString()
@@ -114,14 +128,34 @@ public class PermissionResult
 	
 	public PermissionValue<?> getDefaultValue()
 	{
-		return null;
+		return perm.getValue();
 	}
 	
 	public PermissionValue<?> getValue()
 	{
-		//perm.getValue()
+		if ( childPerm == null || childPerm.getValue() == null )
+			return perm.getValue();
 		
-		return null;
+		return childPerm.getValue();
+	}
+	
+	/**
+	 * Returns a final object based on assignment state.
+	 * 
+	 * @return
+	 *         Unassigned will return the default value.
+	 */
+	public Object getObject()
+	{
+		if ( isAssigned() )
+		{
+			if ( childPerm == null || childPerm.getValue() == null )
+				return perm.getObject();
+			else
+				return childPerm.getObject();
+		}
+		else
+			return perm.getValue().getDefault();
 	}
 	
 	public PermissibleEntity getEntity()
@@ -133,15 +167,4 @@ public class PermissionResult
 	{
 		return perm;
 	}
-	
-	/*
-	 * Loader.getLogger().info( ConsoleColor.GREEN + "Checking `" + getId() + "` for permission `" + req + "` with result `" + perm.hasPermission( req ) + "`" );
-	 * // Everyone
-	 * if ( req.equals( "-1" ) || req.isEmpty() )
-	 * return true;
-	 * // OP Only
-	 * if ( req.equals( "0" ) || req.equalsIgnoreCase( "op" ) || req.equalsIgnoreCase( "admin" ) || req.equalsIgnoreCase( "root" ) )
-	 * return isOp();
-	 * return perm.hasPermission( req );
-	 */
 }

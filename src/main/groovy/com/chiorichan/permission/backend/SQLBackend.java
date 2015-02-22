@@ -243,22 +243,34 @@ public class SQLBackend extends PermissionBackend
 					switch ( result.getString( "type" ) )
 					{
 						case "BOOL":
-							perm.setValue( new PermissionValueBoolean( permName, result.getBoolean( "value" ) ) );
+							perm.setValue( new PermissionValueBoolean( permName, result.getBoolean( "value" ), result.getBoolean( "default" ) ) );
 							break;
 						case "ENUM":
-							perm.setValue( new PermissionValueEnum( permName, result.getString( "value" ), result.getInt( "maxlen" ), Splitter.on( "|" ).splitToList( result.getString( "enum" ) ) ) );
+							perm.setValue( new PermissionValueEnum( permName, result.getString( "value" ), result.getString( "default" ), result.getInt( "maxlen" ), Splitter.on( "|" ).splitToList( result.getString( "enum" ) ) ) );
 							break;
 						case "VAR":
-							perm.setValue( new PermissionValueVar( permName, result.getString( "value" ), result.getInt( "maxlen" ) ) );
+							perm.setValue( new PermissionValueVar( permName, result.getString( "value" ), result.getString( "default" ), result.getInt( "maxlen" ) ) );
 							break;
 						case "INT":
-							perm.setValue( new PermissionValueInt( permName, result.getInt( "value" ) ) );
+							perm.setValue( new PermissionValueInt( permName, result.getInt( "value" ), result.getInt( "value" ) ) );
 							break;
 					}
 					
 					perm.setDescription( result.getString( "description" ) );
 				}
 				while ( result.next() );
+			
+			if ( Permission.getPermissionNode( "default", false ) == null )
+				Permission.createPermissionNode( "default", new PermissionValueBoolean( "op", true, false ), "Used as the default permission node if one does not exist. (DO NOT EDIT)" );
+			
+			if ( Permission.getPermissionNode( "sys.op", false ) == null )
+				Permission.createPermissionNode( "sys.op", new PermissionValueBoolean( "op", true, false ), "Indicates OP entities. (DO NOT EDIT)" );
+			
+			if ( Permission.getPermissionNode( "sys.admin", false ) == null )
+				Permission.createPermissionNode( "sys.admin", new PermissionValueBoolean( "admin", true, false ), "Indicates ADMIN entities. (DO NOT EDIT)" );
+			
+			if ( Permission.getPermissionNode( "sys.banned", false ) == null )
+				Permission.createPermissionNode( "sys.banned", new PermissionValueBoolean( "banned", true, false ), "Indicates BANNED entities. (DO NOT EDIT)" );
 		}
 		catch ( SQLException e )
 		{
