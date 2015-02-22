@@ -29,6 +29,8 @@ import com.chiorichan.event.account.PreAccountLoginEvent.Result;
 import com.chiorichan.exception.StartupException;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.session.Session;
+import com.chiorichan.permission.Permissible;
+import com.chiorichan.permission.structure.Permission;
 import com.chiorichan.util.Common;
 import com.google.common.collect.Lists;
 
@@ -38,12 +40,7 @@ public class AccountManager
 	protected static AccountsKeeper accounts = new AccountsKeeper();
 	protected AccountLookupAdapter accountLookupAdapter;
 	
-	protected List<String> banById = new ArrayList<String>();
 	protected List<String> banByIp = new ArrayList<String>();
-	protected List<String> operators = new ArrayList<String>();
-	protected List<String> whitelist = new ArrayList<String>();
-	protected boolean hasWhitelist = false;
-	
 	protected int maxAccounts = -1;
 	
 	public AccountManager()
@@ -60,11 +57,7 @@ public class AccountManager
 	{
 		YamlConfiguration config = Loader.getConfig();
 		
-		banById = config.getStringList( "accounts.banById", new ArrayList<String>() );
 		banByIp = config.getStringList( "accounts.banByIp", new ArrayList<String>() );
-		operators = config.getStringList( "accounts.operators", new ArrayList<String>() );
-		whitelist = config.getStringList( "accounts.whitelisted", new ArrayList<String>() );
-		hasWhitelist = config.getBoolean( "settings.whitelist" );
 		maxAccounts = config.getInt( "accounts.maxLogins", -1 );
 		
 		if ( config.getConfigurationSection( "accounts" ) != null )
@@ -128,23 +121,14 @@ public class AccountManager
 	{
 		AccountsKeeperOptions options = ( AccountsKeeperOptions ) accounts.putAccount( acct, keepInMemory );
 		
-		options.setWhitelisted( whitelistOverride || isWhitelisted( acct.getAcctId() ) );
-		options.setOp( opOverride || isOp( acct.getAcctId() ) );
-	}
-	
-	public boolean isWhitelisted( String id )
-	{
-		return !hasWhitelist || operators.contains( id ) || whitelist.contains( id );
-	}
-	
-	public boolean isOp( String id )
-	{
-		return operators.contains( id );
+		options.setWhitelisted( whitelistOverride || Loader.getPermissionManager().getEntity( acct.getAcctId() ).isWhitelisted() );
+		options.setOp( opOverride || Loader.getPermissionManager().getEntity( acct.getAcctId() ).isOp() );
+		options.setBanned( opOverride || Loader.getPermissionManager().getEntity( acct.getAcctId() ).isBanned() );
 	}
 	
 	public boolean isBanned( String id )
 	{
-		return banById.contains( id );
+		return banByIp.contains( id );
 	}
 	
 	public Account<?> getOfflineAccount( String name )
@@ -165,40 +149,6 @@ public class AccountManager
 		return banByIp;
 	}
 	
-	public List<String> getIdBans()
-	{
-		return banById;
-	}
-	
-	public void banId( Account<?> acct )
-	{
-		banId( acct.getAcctId() );
-	}
-	
-	public void banId( String id )
-	{
-		Validate.notNull( id, "Account<?> Id cannot be null." );
-		
-		banById.add( id );
-		Loader.getConfig().set( "accounts.banById", banById );
-	}
-	
-	public void unbanId( Account<?> acct )
-	{
-		unbanId( acct.getAcctId() );
-	}
-	
-	public void unbanId( String id )
-	{
-		Validate.notNull( id, "Account<?> Id cannot be null." );
-		
-		if ( banById.contains( id ) )
-		{
-			banById.remove( id );
-			Loader.getConfig().set( "accounts.banById", banById );
-		}
-	}
-	
 	public void banIp( String addr )
 	{
 		Validate.notNull( addr, "Ip Address cannot be null." );
@@ -216,80 +166,6 @@ public class AccountManager
 			banByIp.remove( addr );
 			Loader.getConfig().set( "accounts.banByIp", banByIp );
 		}
-	}
-	
-	public void addWhitelist( String id )
-	{
-		addWhitelist( getAccount( id ) );
-	}
-	
-	public void addWhitelist( Account<?> acct )
-	{
-		if ( acct == null )
-			return;
-		
-		whitelist.add( acct.getAcctId() );
-		Loader.getConfig().set( "accounts.whitelisted", whitelist );
-		
-		( ( AccountsKeeperOptions ) accounts.getAccountOptions( acct ) ).setWhitelisted( true );
-	}
-	
-	public void removeWhitelist( String id )
-	{
-		removeWhitelist( getAccount( id ) );
-	}
-	
-	public void removeWhitelist( Account<?> acct )
-	{
-		if ( acct == null )
-			return;
-		
-		if ( whitelist.contains( acct.getAcctId() ) )
-		{
-			whitelist.remove( acct.getAcctId() );
-			Loader.getConfig().set( "accounts.whitelisted", whitelist );
-			
-			( ( AccountsKeeperOptions ) accounts.getAccountOptions( acct ) ).setWhitelisted( false );
-		}
-	}
-	
-	public Account<?> op( String id )
-	{
-		return op( getAccount( id ) );
-	}
-	
-	public Account<?> op( Account<?> acct )
-	{
-		if ( acct == null )
-			return null;
-		
-		operators.add( acct.getAcctId() );
-		Loader.getConfig().set( "accounts.operators", operators );
-		
-		( ( AccountsKeeperOptions ) accounts.getAccountOptions( acct ) ).setOp( true );
-		
-		return acct;
-	}
-	
-	public Account<?> deop( String id )
-	{
-		return deop( getAccount( id ) );
-	}
-	
-	public Account<?> deop( Account<?> acct )
-	{
-		if ( acct == null )
-			return null;
-		
-		if ( operators.contains( acct.getAcctId() ) )
-		{
-			operators.remove( acct.getAcctId() );
-			Loader.getConfig().set( "accounts.operators", operators );
-			
-			( ( AccountsKeeperOptions ) accounts.getAccountOptions( acct ) ).setOp( false );
-		}
-		
-		return acct;
 	}
 	
 	public List<Account<?>> getOnlineAccounts()
@@ -334,7 +210,7 @@ public class AccountManager
 	{
 		ArrayList<Account<?>> accts = Lists.newArrayList();
 		
-		for ( String id : banById )
+		for ( String id : banByIp )
 		{
 			try
 			{
@@ -343,7 +219,7 @@ public class AccountManager
 					accts.add( acct );
 			}
 			catch ( LoginException e )
-			{	
+			{
 				
 			}
 		}
@@ -355,19 +231,11 @@ public class AccountManager
 	{
 		ArrayList<Account<?>> accts = Lists.newArrayList();
 		
-		for ( String id : whitelist )
-		{
-			try
-			{
-				Account<?> acct = accounts.getAccount( id );
-				if ( acct != null )
-					accts.add( acct );
-			}
-			catch ( LoginException e )
-			{	
-				
-			}
-		}
+		List<Permissible> entities = Loader.getPermissionManager().getEntitiesWithPermission( Permission.WHITELISTED );
+		
+		for ( Permissible entity : entities )
+			if ( entity instanceof AccountHandler )
+				accts.add( ( ( AccountHandler ) entity ).getAccount() );
 		
 		return accts;
 	}
@@ -376,27 +244,13 @@ public class AccountManager
 	{
 		ArrayList<Account<?>> accts = Lists.newArrayList();
 		
-		for ( String id : operators )
-		{
-			try
-			{
-				Account<?> acct = accounts.getAccount( id );
-				if ( acct != null )
-					accts.add( acct );
-			}
-			catch ( LoginException e )
-			{	
-				
-			}
-		}
+		List<Permissible> entities = Loader.getPermissionManager().getEntitiesWithPermission( Permission.OP );
+		
+		for ( Permissible entity : entities )
+			if ( entity instanceof AccountHandler )
+				accts.add( ( ( AccountHandler ) entity ).getAccount() );
 		
 		return accts;
-	}
-	
-	public void setWhitelist( boolean value )
-	{
-		hasWhitelist = value;
-		Loader.getConfig().set( "settings.whitelist", value );
 	}
 	
 	public void shutdown()
@@ -415,19 +269,8 @@ public class AccountManager
 		accounts.saveAccounts();
 		accounts.clearAll();
 		
-		banById = Loader.getConfig().getStringList( "accounts.banById", new ArrayList<String>() );
 		banByIp = Loader.getConfig().getStringList( "accounts.banByIp", new ArrayList<String>() );
-		operators = Loader.getConfig().getStringList( "accounts.operators", new ArrayList<String>() );
-		
 		maxAccounts = Loader.getConfig().getInt( "accounts.maxLogins", maxAccounts );
-		
-		reloadWhitelist();
-	}
-	
-	public void reloadWhitelist()
-	{
-		whitelist = Loader.getConfig().getStringList( "accounts.whitelisted", new ArrayList<String>() );
-		hasWhitelist = Loader.getConfig().getBoolean( "settings.whitelist" );
 	}
 	
 	public int getMaxAccounts()
@@ -457,7 +300,7 @@ public class AccountManager
 			if ( !acct.validatePassword( password ) )
 				throw new LoginException( LoginExceptionReason.incorrectLogin );
 			
-			if ( hasWhitelist && !acct.isWhitelisted() )
+			if ( Loader.getPermissionManager().hasWhitelist() && !acct.isWhitelisted() )
 				throw new LoginException( LoginExceptionReason.notWhiteListed );
 			
 			if ( acct.isBanned() )

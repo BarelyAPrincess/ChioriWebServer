@@ -132,14 +132,12 @@ public abstract class Account<T extends AccountLookupAdapter> implements Interac
 	@Override
 	public boolean isBanned()
 	{
-		// return Loader.getAccountManager().isBanned( acctId );
 		return Loader.getPermissionManager().getEntity( getAcctId() ).isBanned();
 	}
 	
 	@Override
 	public boolean isWhitelisted()
 	{
-		// return Loader.getAccountManager().isWhitelisted( acctId );
 		return Loader.getPermissionManager().getEntity( getAcctId() ).isWhitelisted();
 	}
 	
@@ -167,7 +165,7 @@ public abstract class Account<T extends AccountLookupAdapter> implements Interac
 	
 	/**
 	 * @deprecated
-	 *             {@link #checkPermission(String)} is to replace this method since it provides more options to requesters
+	 *             {@link #checkPermission(String)} is to replace this method since it provides more options to the requester
 	 * @param perm
 	 *            The permission node, e.g., com.chiorichan.permission.node
 	 * @return

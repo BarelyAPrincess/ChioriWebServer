@@ -68,42 +68,6 @@ public abstract class PermissibleEntity
 		return id;
 	}
 	
-	/**
-	 * Checks if entity has specified permission in default ref
-	 * 
-	 * @param permission
-	 *            Permission to check
-	 * @return true if entity has this permission otherwise false
-	 */
-	public boolean has( String permission )
-	{
-		return has( permission, Loader.getSiteManager().getSites().get( 0 ).getName() );
-	}
-	
-	/**
-	 * Check if entity has specified permission in ref
-	 * 
-	 * @param permission
-	 *            Permission to check
-	 * @param ref
-	 *            Site to check permission in
-	 * @return true if entity has this permission otherwise false
-	 */
-	public boolean has( String permission, String ref )
-	{
-		if ( permission != null && permission.isEmpty() )
-		{ // empty permission for public access :)
-			return true;
-		}
-		
-		ChildPermission perm = childPermissions.get( permission );
-		
-		if ( isDebug() )
-			PermissionManager.getLogger().info( "Entity " + getId() + " checked for \"" + permission + "\", " + ( perm == null ? "no permission found" : "\"" + perm + "\" found" ) );
-		
-		return ( perm == null ) ? false : true;
-	}
-	
 	public void reload()
 	{
 		reloadPermissions();
@@ -316,6 +280,9 @@ public abstract class PermissibleEntity
 	
 	public boolean isWhitelisted()
 	{
+		if ( !Loader.getPermissionManager().hasWhitelist )
+			return true;
+		
 		PermissionResult result = checkPermission( Permission.WHITELISTED );
 		return result.isTrue();
 	}
@@ -334,11 +301,24 @@ public abstract class PermissibleEntity
 	
 	public PermissionResult checkPermission( String perm )
 	{
+		return checkPermission( perm, "" );
+	}
+	
+	public PermissionResult checkPermission( Permission perm )
+	{
+		return checkPermission( perm, "" );
+	}
+	
+	public PermissionResult checkPermission( String perm, String ref )
+	{
 		PermissionResult result = null;
+		
+		if ( ref == null )
+			ref = "";
 		
 		// Everyone
 		if ( perm == null || perm.equals( "-1" ) || perm.isEmpty() )
-			result = new PermissionResult( this, new Permission( "all", new PermissionValueBoolean( "all", true, true ), "The dummy node used for the 'everyone' permission check." ) );
+			perm = Permission.EVERYBODY;
 		
 		// OP Only
 		if ( perm.equals( "0" ) || perm.equalsIgnoreCase( "op" ) || perm.equalsIgnoreCase( "root" ) )
@@ -347,20 +327,22 @@ public abstract class PermissibleEntity
 		if ( perm.equalsIgnoreCase( "admin" ) )
 			perm = Permission.ADMIN;
 		
-		if ( result == null )
-		{
-			Permission permission = Permission.getPermissionNode( perm, true );
-			result = checkPermission( permission );
-		}
-		
-		if ( !perm.equalsIgnoreCase( Permission.OP ) )
-			Loader.getLogger().info( ConsoleColor.GREEN + "Is `" + getId() + "` true for permission `" + perm + "` with result `" + result + "`" );
+		Permission permission = Permission.getPermissionNode( perm, true );
+		result = checkPermission( permission, ref );
 		
 		return result;
 	}
 	
-	public PermissionResult checkPermission( Permission perm )
+	public PermissionResult checkPermission( Permission perm, String ref )
 	{
-		return new PermissionResult( this, perm );
+		if ( ref == null )
+			ref = "";
+		
+		PermissionResult result = new PermissionResult( this, perm, ref );
+		
+		if ( !perm.getNamespace().equalsIgnoreCase( Permission.OP ) && isDebug() )
+			PermissionManager.getLogger().info( ConsoleColor.GREEN + "Entity `" + getId() + "` checked for permission `" + perm + "`" + ( ( ref.isEmpty() ) ? "" : " with reference `" + ref + "`" ) + " with result `" + result + "`" );
+		
+		return result;
 	}
 }

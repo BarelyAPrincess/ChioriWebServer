@@ -56,7 +56,14 @@ public class PermissionResult
 	private ChildPermission recursiveEntityScan( PermissibleEntity pe )
 	{
 		if ( pe.childPermissions.containsKey( perm.getNamespace() ) )
-			return pe.childPermissions.get( perm.getNamespace() );
+		{
+			ChildPermission result = pe.childPermissions.get( perm.getNamespace() );
+			if ( ref != null )
+			{
+				result.getReferences().contains( ref.toLowerCase() );
+			}
+			return result;
+		}
 		
 		boolean isFirst = false;
 		ChildPermission result = null;
@@ -71,6 +78,7 @@ public class PermissionResult
 		{
 			if ( !groupStackTrace.contains( group ) )
 			{
+				groupStackTrace.add( group );
 				ChildPermission childPerm = recursiveEntityScan( group );
 				if ( childPerm != null )
 				{

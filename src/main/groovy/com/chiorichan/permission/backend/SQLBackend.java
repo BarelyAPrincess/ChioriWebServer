@@ -24,6 +24,7 @@ import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.PermissionBackend;
 import com.chiorichan.permission.PermissionBackendException;
 import com.chiorichan.permission.PermissionManager;
+import com.chiorichan.permission.PermissionResult;
 import com.chiorichan.permission.backend.sql.SQLEntity;
 import com.chiorichan.permission.backend.sql.SQLGroup;
 import com.chiorichan.permission.structure.Permission;
@@ -259,18 +260,6 @@ public class SQLBackend extends PermissionBackend
 					perm.setDescription( result.getString( "description" ) );
 				}
 				while ( result.next() );
-			
-			if ( Permission.getPermissionNode( "default", false ) == null )
-				Permission.createPermissionNode( "default", new PermissionValueBoolean( "default", true, false ), "Used as the default permission node if one does not exist. (DO NOT EDIT)" );
-			
-			if ( Permission.getPermissionNode( "sys.op", false ) == null )
-				Permission.createPermissionNode( "sys.op", new PermissionValueBoolean( "op", true, false ), "Indicates OP entities. (DO NOT EDIT)" );
-			
-			if ( Permission.getPermissionNode( "sys.admin", false ) == null )
-				Permission.createPermissionNode( "sys.admin", new PermissionValueBoolean( "admin", true, false ), "Indicates ADMIN entities. (DO NOT EDIT)" );
-			
-			if ( Permission.getPermissionNode( "sys.banned", false ) == null )
-				Permission.createPermissionNode( "sys.banned", new PermissionValueBoolean( "banned", true, false ), "Indicates BANNED entities. (DO NOT EDIT)" );
 		}
 		catch ( SQLException e )
 		{

@@ -77,8 +77,6 @@ accounts:
     type: none
     table: ''
     fields: {}
-  operators:
-  - noLogin
 framework:
   sites:
     defaultTitle: Unnamed Site

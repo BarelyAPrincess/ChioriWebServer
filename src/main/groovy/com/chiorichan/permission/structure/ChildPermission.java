@@ -11,6 +11,9 @@ package com.chiorichan.permission.structure;
 
 import java.util.List;
 
+import com.chiorichan.util.StringUtil;
+import com.google.common.collect.Lists;
+
 public class ChildPermission
 {
 	public Permission perm;
@@ -32,6 +35,11 @@ public class ChildPermission
 	 */
 	public ChildPermission( Permission perm, List<String> refs, PermissionValue<?> value, boolean isInherited )
 	{
+		if ( refs == null )
+			refs = Lists.newArrayList();
+		
+		refs = StringUtil.toLowerCase( refs );
+		
 		this.perm = perm;
 		this.refs = refs;
 		this.value = value;
@@ -43,7 +51,7 @@ public class ChildPermission
 		return perm;
 	}
 	
-	public List<String> getRefs()
+	public List<String> getReferences()
 	{
 		return refs;
 	}

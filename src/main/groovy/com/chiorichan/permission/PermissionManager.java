@@ -10,6 +10,7 @@
 package com.chiorichan.permission;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimerTask;
@@ -25,6 +26,7 @@ import com.chiorichan.permission.event.PermissibleEntityEvent;
 import com.chiorichan.permission.event.PermissibleEvent;
 import com.chiorichan.permission.event.PermissibleSystemEvent;
 import com.chiorichan.permission.structure.Permission;
+import com.chiorichan.permission.structure.PermissionValueBoolean;
 import com.chiorichan.scheduler.TaskCreator;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -38,6 +40,7 @@ public class PermissionManager implements TaskCreator
 	protected PermissionMatcher matcher = new RegExpMatcher();
 	protected PermissionBackend backend = null;
 	protected YamlConfiguration config;
+	protected boolean hasWhitelist = false;
 	
 	protected static boolean debugMode = false;
 	protected static boolean allowOps = true;
@@ -47,6 +50,8 @@ public class PermissionManager implements TaskCreator
 		config = Loader.getConfig();
 		debugMode = config.getBoolean( "permissions.debug", debugMode );
 		allowOps = config.getBoolean( "permissions.allowOps", allowOps );
+		
+		hasWhitelist = config.getBoolean( "settings.whitelist" );
 		
 		initBackend();
 	}
@@ -88,6 +93,23 @@ public class PermissionManager implements TaskCreator
 		
 		callEvent( PermissibleSystemEvent.Action.BACKEND_CHANGED );
 	}
+	
+	public void setWhitelist( boolean value )
+	{
+		hasWhitelist = value;
+		Loader.getConfig().set( "settings.whitelist", value );
+	}
+	
+	public boolean hasWhitelist()
+	{
+		return hasWhitelist;
+	}
+	
+	public void reload()
+	{
+		hasWhitelist = Loader.getConfig().getBoolean( "settings.whitelist" );
+	}
+	
 	
 	/**
 	 * Return entity's object
@@ -174,65 +196,27 @@ public class PermissionManager implements TaskCreator
 			entities.put( entity.getId(), entity );
 		backend.loadPermissionTree();
 		
+		if ( Permission.getPermissionNode( Permission.DEFAULT, false ) == null )
+			Permission.createPermissionNode( Permission.DEFAULT, new PermissionValueBoolean( "default", true, false ), "Used as the default permission node if one does not exist. (DO NOT EDIT)" );
+		
+		if ( Permission.getPermissionNode( Permission.OP, false ) == null )
+			Permission.createPermissionNode( Permission.OP, new PermissionValueBoolean( "op", true, false ), "Indicates OP entities. (DO NOT EDIT)" );
+		
+		if ( Permission.getPermissionNode( Permission.ADMIN, false ) == null )
+			Permission.createPermissionNode( Permission.ADMIN, new PermissionValueBoolean( "admin", true, false ), "Indicates ADMIN entities. (DO NOT EDIT)" );
+		
+		if ( Permission.getPermissionNode( Permission.BANNED, false ) == null )
+			Permission.createPermissionNode( Permission.BANNED, new PermissionValueBoolean( "banned", true, false ), "Indicates BANNED entities. (DO NOT EDIT)" );
+		
+		if ( Permission.getPermissionNode( Permission.EVERYBODY, false ) == null )
+			Permission.createPermissionNode( Permission.EVERYBODY, new PermissionValueBoolean( "", true, true ), "The dummy node used for the 'everyone' permission check." );
+		
 		if ( isDebug() )
 		{
 			getLogger().info( "DEBUGGING LOADED PERMISSIONS!! (Permission Debug is On!)" );
 			for ( Permission root : Permission.getRootNodes() )
 				root.debugPermissionStack( 0 );
 		}
-	}
-	
-	/**
-	 * Check if specified entity has specified permission
-	 * 
-	 * @param perm
-	 *            entity object
-	 * @param permission
-	 *            permission string to check against
-	 * @return true on success false otherwise
-	 */
-	public boolean has( Permissible perm, String permission )
-	{
-		return has( perm.getEntityId(), permission, "" ); // perm.getRef()
-	}
-	
-	/**
-	 * Check if entity has specified permission in ref
-	 * 
-	 * @param entity
-	 *            entity object
-	 * @param permission
-	 *            permission as string to check against
-	 * @param ref
-	 *            ref used for this perm
-	 * @return true on success false otherwise
-	 */
-	public boolean has( Account<?> entity, String permission, String ref )
-	{
-		return this.has( entity.getAcctId(), permission, ref );
-	}
-	
-	/**
-	 * Check if entity with name has permission in ref
-	 * 
-	 * @param entityName
-	 *            entity name
-	 * @param permission
-	 *            permission as string to check against
-	 * @param ref
-	 *            ref's name as string
-	 * @return true on success false otherwise
-	 */
-	public boolean has( String entityName, String permission, String ref )
-	{
-		PermissibleEntity entity = getEntity( entityName );
-		
-		if ( entity == null )
-		{
-			return false;
-		}
-		
-		return entity.has( permission, ref );
 	}
 	
 	/**
@@ -275,6 +259,11 @@ public class PermissionManager implements TaskCreator
 	public PermissibleGroup[] getGroups()
 	{
 		return backend.getGroups();
+	}
+	
+	public List<Permissible> getEntitiesWithPermission( String whitelisted )
+	{
+		return null;// TODO Auto-generated method stub
 	}
 	
 	/**
@@ -468,5 +457,56 @@ public class PermissionManager implements TaskCreator
 	public String getName()
 	{
 		return "PermissionsManager";
+	}
+	
+	/**
+	 * Check if specified entity has specified permission
+	 * 
+	 * @param entity
+	 *            entity object
+	 * @param perm
+	 *            permission string to check against
+	 * @return true on success false otherwise
+	 */
+	public PermissionResult checkPermission( Permissible entity, String perm )
+	{
+		return checkPermission( entity.getEntityId(), perm, "" );
+	}
+	
+	/**
+	 * Check if entity has specified permission in ref
+	 * 
+	 * @param entity
+	 *            entity object
+	 * @param perm
+	 *            permission as string to check against
+	 * @param ref
+	 *            ref used for this perm
+	 * @return true on success false otherwise
+	 */
+	public PermissionResult checkPermission( Account<?> entity, String perm, String ref )
+	{
+		return this.checkPermission( entity.getAcctId(), perm, ref );
+	}
+	
+	/**
+	 * Check if entity with name has permission in ref
+	 * 
+	 * @param entityId
+	 *            entity name
+	 * @param permission
+	 *            permission as string to check against
+	 * @param ref
+	 *            ref's name as string
+	 * @return true on success false otherwise
+	 */
+	public PermissionResult checkPermission( String entityId, String permission, String ref )
+	{
+		PermissibleEntity entity = getEntity( entityId );
+		
+		if ( entity == null )
+			throw new RuntimeException( "Entity returned null! This is a bug and needs to be reported to the developers." );
+		
+		return entity.checkPermission( permission, ref );
 	}
 }
