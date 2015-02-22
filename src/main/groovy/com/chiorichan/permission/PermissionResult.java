@@ -9,10 +9,13 @@
  */
 package com.chiorichan.permission;
 
+import java.util.List;
+
 import com.chiorichan.permission.structure.ChildPermission;
 import com.chiorichan.permission.structure.Permission;
 import com.chiorichan.permission.structure.PermissionValue;
 import com.chiorichan.util.ObjectUtil;
+import com.google.common.collect.Lists;
 
 /**
  * Is returned when Permissible#getPermission() is called
@@ -24,6 +27,7 @@ public class PermissionResult
 	
 	private PermissibleEntity entity = null;
 	private Permission perm = null;
+	private String ref = "";
 	private ChildPermission childPerm = null;
 	
 	public PermissionResult()
@@ -31,27 +35,60 @@ public class PermissionResult
 		
 	}
 	
-	public PermissionResult( PermissibleEntity entity, Permission perm )
+	public PermissionResult( PermissibleEntity entity, Permission perm, String ref )
 	{
+		if ( ref == null )
+			ref = "";
+		
 		this.entity = entity;
 		this.perm = perm;
+		this.ref = ref;
 		
-		childPerm = recursiveEntityScan( entity, perm );
+		childPerm = recursiveEntityScan( entity );
 	}
 	
-	private ChildPermission recursiveEntityScan( PermissibleEntity pe, Permission perm )
+	/**
+	 * Used as a constant tracker for already checked groups, prevents infinite looping.
+	 * e.g., User -> Group1 -> Group2 -> Group3 -> Group1
+	 */
+	private List<PermissibleGroup> groupStackTrace = null;
+	
+	private ChildPermission recursiveEntityScan( PermissibleEntity pe )
 	{
 		if ( pe.childPermissions.containsKey( perm.getNamespace() ) )
 			return pe.childPermissions.get( perm.getNamespace() );
 		
-		for ( PermissibleGroup group : pe.groups.values() )
+		boolean isFirst = false;
+		ChildPermission result = null;
+		
+		if ( groupStackTrace == null )
 		{
-			ChildPermission childPerm = recursiveEntityScan( group, perm );
-			if ( childPerm != null )
-				return childPerm;
+			groupStackTrace = Lists.newArrayList();
+			isFirst = true;
 		}
 		
-		return null;
+		for ( PermissibleGroup group : pe.groups.values() )
+		{
+			if ( !groupStackTrace.contains( group ) )
+			{
+				ChildPermission childPerm = recursiveEntityScan( group );
+				if ( childPerm != null )
+				{
+					result = childPerm;
+					break;
+				}
+			}
+		}
+		
+		if ( isFirst )
+			groupStackTrace = null;
+		
+		return result;
+	}
+	
+	public String getReference()
+	{
+		return ref;
 	}
 	
 	/**
