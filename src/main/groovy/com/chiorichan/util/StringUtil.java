@@ -14,11 +14,14 @@ import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.util.Collection;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.Validate;
+
+import com.google.common.collect.Lists;
 
 public class StringUtil
 {
@@ -244,5 +247,37 @@ public class StringUtil
 		String normalizedText = trimFront( text, character );
 		
 		return trimEnd( normalizedText, character );
+	}
+	
+	/**
+	 * Scans a string list for entries that are not all lower case.
+	 * 
+	 * @param stringList
+	 *            The original list to check.
+	 * @return The corrected string list.
+	 */
+	public static List<String> toLowerCase( List<String> stringList )
+	{
+		/*
+		 * Strings that need correction are added to this temp list to prevent the
+		 * EVIL ConcurrentModificationException since we can't control the input
+		 * list type, e.g., ArrayList, CopyOnWriteArrayList, or LinkedList.
+		 */
+		List<String> temp = Lists.newArrayList();
+		
+		for ( String s : stringList )
+		{
+			if ( !stringList.contains( s.toLowerCase() ) )
+				temp.add( s );
+		}
+		
+		for ( String s : temp )
+		{
+			stringList.remove( s );
+			stringList.add( s.toLowerCase() );
+		}
+		
+		temp = null;
+		return stringList;
 	}
 }
