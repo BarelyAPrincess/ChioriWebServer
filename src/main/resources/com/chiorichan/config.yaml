@@ -35,6 +35,8 @@ permissions:
   file: permissions.yml
   debug: false
   allowOps: true
+  preloadGroups: true
+  preloadEntities: true
 settings:
   update-folder: update
   deprecated-verbose: default

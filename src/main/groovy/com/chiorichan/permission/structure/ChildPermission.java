@@ -9,6 +9,8 @@
  */
 package com.chiorichan.permission.structure;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.chiorichan.util.StringUtil;
@@ -20,6 +22,11 @@ public class ChildPermission
 	public List<String> refs;
 	public PermissionValue<?> value;
 	public boolean isInherited;
+	
+	public ChildPermission( Permission perm, PermissionValue<?> value, boolean isInherited, String... refs )
+	{
+		this( perm, value, isInherited, new ArrayList<String>( Arrays.asList( refs ) ) );
+	}
 	
 	/**
 	 * References a permission state/value against an entity
@@ -33,7 +40,7 @@ public class ChildPermission
 	 * @param isInherited
 	 *            Was this value given to the entity because it was a member of a group?
 	 */
-	public ChildPermission( Permission perm, List<String> refs, PermissionValue<?> value, boolean isInherited )
+	public ChildPermission( Permission perm, PermissionValue<?> value, boolean isInherited, List<String> refs )
 	{
 		if ( refs == null )
 			refs = Lists.newArrayList();

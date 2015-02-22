@@ -26,7 +26,7 @@ import com.chiorichan.permission.event.PermissibleEntityEvent;
 import com.chiorichan.permission.event.PermissibleEvent;
 import com.chiorichan.permission.event.PermissibleSystemEvent;
 import com.chiorichan.permission.structure.Permission;
-import com.chiorichan.permission.structure.PermissionValueBoolean;
+import com.chiorichan.permission.structure.PermissionDefault;
 import com.chiorichan.scheduler.TaskCreator;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -187,33 +187,54 @@ public class PermissionManager implements TaskCreator
 	 */
 	public void loadData()
 	{
-		groups.clear();
-		entities.clear();
+		if ( isDebug() )
+			getLogger().warning( "Permission Debug is Enabled!" );
 		
-		for ( PermissibleGroup group : backend.getGroups() )
-			groups.put( group.getId(), group );
-		for ( PermissibleEntity entity : backend.getEntities() )
-			entities.put( entity.getId(), entity );
+		entities.clear();
+		groups.clear();
+		
+		if ( config.getBoolean( "permissions.preloadGroups", true ) )
+		{
+			if ( isDebug() )
+				getLogger().info( "Preloading Groups from Backend!" );
+			for ( PermissibleGroup group : backend.getGroups() )
+				groups.put( group.getId(), group );
+		}
+		
+		if ( config.getBoolean( "permissions.preloadEntities", true ) )
+		{
+			if ( isDebug() )
+				getLogger().info( "Preloading Entities from Backend!" );
+			for ( PermissibleEntity entity : backend.getEntities() )
+				entities.put( entity.getId(), entity );
+		}
+		
+		if ( isDebug() )
+			getLogger().info( "Loading Permissions from Backend!" );
+		
+		/*
+		 * This method loads all permissions and groups from the backend data store.
+		 */
 		backend.loadPermissionTree();
 		
-		if ( Permission.getPermissionNode( Permission.DEFAULT, false ) == null )
-			Permission.createPermissionNode( Permission.DEFAULT, new PermissionValueBoolean( "default", true, false ), "Used as the default permission node if one does not exist. (DO NOT EDIT)" );
-		
-		if ( Permission.getPermissionNode( Permission.OP, false ) == null )
-			Permission.createPermissionNode( Permission.OP, new PermissionValueBoolean( "op", true, false ), "Indicates OP entities. (DO NOT EDIT)" );
-		
-		if ( Permission.getPermissionNode( Permission.ADMIN, false ) == null )
-			Permission.createPermissionNode( Permission.ADMIN, new PermissionValueBoolean( "admin", true, false ), "Indicates ADMIN entities. (DO NOT EDIT)" );
-		
-		if ( Permission.getPermissionNode( Permission.BANNED, false ) == null )
-			Permission.createPermissionNode( Permission.BANNED, new PermissionValueBoolean( "banned", true, false ), "Indicates BANNED entities. (DO NOT EDIT)" );
-		
-		if ( Permission.getPermissionNode( Permission.EVERYBODY, false ) == null )
-			Permission.createPermissionNode( Permission.EVERYBODY, new PermissionValueBoolean( "", true, true ), "The dummy node used for the 'everyone' permission check." );
+		/*
+		 * Calling all the default permissions from here initializes them.
+		 * They are created them if they were not loaded by the backend already.
+		 * 
+		 * Sidenote: Might be able to skip this but that might cause problems
+		 * if the first call is not to getPermissionNode() which is the method
+		 * that creates it if non-existent.
+		 */
+		PermissionDefault.DEFAULT.getPermissionNode();
+		PermissionDefault.EVERYBODY.getPermissionNode();
+		PermissionDefault.ADMIN.getPermissionNode();
+		PermissionDefault.OP.getPermissionNode();
+		PermissionDefault.BANNED.getPermissionNode();
+		PermissionDefault.WHITELISTED.getPermissionNode();
 		
 		if ( isDebug() )
 		{
-			getLogger().info( "DEBUGGING LOADED PERMISSIONS!! (Permission Debug is On!)" );
+			getLogger().info( "Dumping Loaded Permissions:" );
 			for ( Permission root : Permission.getRootNodes() )
 				root.debugPermissionStack( 0 );
 		}
@@ -261,7 +282,12 @@ public class PermissionManager implements TaskCreator
 		return backend.getGroups();
 	}
 	
-	public List<Permissible> getEntitiesWithPermission( String whitelisted )
+	public List<Permissible> getEntitiesWithPermission( String perm )
+	{
+		return getEntitiesWithPermission( Permission.getPermissionNode( perm ) );
+	}
+	
+	public List<Permissible> getEntitiesWithPermission( Permission perm )
 	{
 		return null;// TODO Auto-generated method stub
 	}

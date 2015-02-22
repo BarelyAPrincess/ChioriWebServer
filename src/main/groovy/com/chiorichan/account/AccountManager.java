@@ -31,6 +31,7 @@ import com.chiorichan.framework.Site;
 import com.chiorichan.http.session.Session;
 import com.chiorichan.permission.Permissible;
 import com.chiorichan.permission.structure.Permission;
+import com.chiorichan.permission.structure.PermissionDefault;
 import com.chiorichan.util.Common;
 import com.google.common.collect.Lists;
 
@@ -231,7 +232,7 @@ public class AccountManager
 	{
 		ArrayList<Account<?>> accts = Lists.newArrayList();
 		
-		List<Permissible> entities = Loader.getPermissionManager().getEntitiesWithPermission( Permission.WHITELISTED );
+		List<Permissible> entities = Loader.getPermissionManager().getEntitiesWithPermission( PermissionDefault.WHITELISTED.getPermissionNode() );
 		
 		for ( Permissible entity : entities )
 			if ( entity instanceof AccountHandler )
@@ -244,7 +245,7 @@ public class AccountManager
 	{
 		ArrayList<Account<?>> accts = Lists.newArrayList();
 		
-		List<Permissible> entities = Loader.getPermissionManager().getEntitiesWithPermission( Permission.OP );
+		List<Permissible> entities = Loader.getPermissionManager().getEntitiesWithPermission( PermissionDefault.OP.getPermissionNode() );
 		
 		for ( Permissible entity : entities )
 			if ( entity instanceof AccountHandler )

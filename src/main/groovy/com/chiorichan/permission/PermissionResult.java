@@ -13,6 +13,7 @@ import java.util.List;
 
 import com.chiorichan.permission.structure.ChildPermission;
 import com.chiorichan.permission.structure.Permission;
+import com.chiorichan.permission.structure.PermissionDefault;
 import com.chiorichan.permission.structure.PermissionValue;
 import com.chiorichan.util.ObjectUtil;
 import com.google.common.collect.Lists;
@@ -155,7 +156,7 @@ public class PermissionResult
 		if ( getValue().getType() != PermissionValue.PermissionType.BOOL )
 			throw new IllegalAccessException( "This Permission Node is not type Boolean and can not be checked if true." );
 		
-		if ( !perm.getNamespace().equals( Permission.OP ) && PermissionManager.allowOps && entity.isOp() )
+		if ( perm != PermissionDefault.OP.getPermissionNode() && PermissionManager.allowOps && entity.isOp() )
 			return true;
 		
 		return ( getObject() == null ) ? false : ( Boolean ) getObject();

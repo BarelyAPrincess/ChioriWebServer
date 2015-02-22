@@ -18,7 +18,7 @@ import com.chiorichan.Loader;
 import com.chiorichan.permission.event.PermissibleEntityEvent;
 import com.chiorichan.permission.structure.ChildPermission;
 import com.chiorichan.permission.structure.Permission;
-import com.chiorichan.permission.structure.PermissionValueBoolean;
+import com.chiorichan.permission.structure.PermissionDefault;
 import com.chiorichan.util.Common;
 import com.google.common.collect.Maps;
 
@@ -274,7 +274,7 @@ public abstract class PermissibleEntity
 	
 	public boolean isBanned()
 	{
-		PermissionResult result = checkPermission( Permission.BANNED );
+		PermissionResult result = checkPermission( PermissionDefault.BANNED.getPermissionNode() );
 		return result.isTrue();
 	}
 	
@@ -283,19 +283,19 @@ public abstract class PermissibleEntity
 		if ( !Loader.getPermissionManager().hasWhitelist )
 			return true;
 		
-		PermissionResult result = checkPermission( Permission.WHITELISTED );
+		PermissionResult result = checkPermission( PermissionDefault.WHITELISTED.getPermissionNode() );
 		return result.isTrue();
 	}
 	
 	public boolean isAdmin()
 	{
-		PermissionResult result = checkPermission( Permission.ADMIN );
+		PermissionResult result = checkPermission( PermissionDefault.ADMIN.getPermissionNode() );
 		return result.isTrue();
 	}
 	
 	public boolean isOp()
 	{
-		PermissionResult result = checkPermission( Permission.OP );
+		PermissionResult result = checkPermission( PermissionDefault.OP.getPermissionNode() );
 		return result.isTrue();
 	}
 	
@@ -318,14 +318,14 @@ public abstract class PermissibleEntity
 		
 		// Everyone
 		if ( perm == null || perm.equals( "-1" ) || perm.isEmpty() )
-			perm = Permission.EVERYBODY;
+			perm = PermissionDefault.EVERYBODY.getNameSpace();
 		
 		// OP Only
 		if ( perm.equals( "0" ) || perm.equalsIgnoreCase( "op" ) || perm.equalsIgnoreCase( "root" ) )
-			perm = Permission.OP;
+			perm = PermissionDefault.OP.getNameSpace();
 		
 		if ( perm.equalsIgnoreCase( "admin" ) )
-			perm = Permission.ADMIN;
+			perm = PermissionDefault.ADMIN.getNameSpace();
 		
 		Permission permission = Permission.getPermissionNode( perm, true );
 		result = checkPermission( permission, ref );
@@ -340,7 +340,7 @@ public abstract class PermissibleEntity
 		
 		PermissionResult result = new PermissionResult( this, perm, ref );
 		
-		if ( !perm.getNamespace().equalsIgnoreCase( Permission.OP ) && isDebug() )
+		if ( !perm.getNamespace().equalsIgnoreCase( PermissionDefault.OP.getNameSpace() ) && isDebug() )
 			PermissionManager.getLogger().info( ConsoleColor.GREEN + "Entity `" + getId() + "` checked for permission `" + perm + "`" + ( ( ref.isEmpty() ) ? "" : " with reference `" + ref + "`" ) + " with result `" + result + "`" );
 		
 		return result;

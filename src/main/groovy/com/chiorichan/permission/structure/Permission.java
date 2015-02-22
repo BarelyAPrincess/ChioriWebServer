@@ -28,12 +28,6 @@ public final class Permission
 	protected Permission parent = null;
 	protected String name;
 	
-	public static final String DEFAULT = "default";
-	public static final String OP = "sys.op";
-	public static final String ADMIN = "sys.admin";
-	public static final String BANNED = "sys.banned";
-	public static final String WHITELISTED = "sys.whitelisted";
-	
 	/**
 	 * Used only for creating dummy permission nodes that have no real connection to actual permission nodes.
 	 * 
