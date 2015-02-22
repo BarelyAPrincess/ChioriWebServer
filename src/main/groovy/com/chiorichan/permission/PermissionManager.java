@@ -103,12 +103,12 @@ public class PermissionManager implements TaskCreator
 		
 		if ( permissible.entity == null )
 		{
-			if ( entities.containsKey( permissible.getId() ) )
-				permissible.entity = entities.get( permissible.getId() );
+			if ( entities.containsKey( permissible.getEntityId() ) )
+				permissible.entity = entities.get( permissible.getEntityId() );
 			else
 			{
-				PermissibleEntity entity = backend.getEntity( permissible.getId() );
-				entities.put( permissible.getId(), entity );
+				PermissibleEntity entity = backend.getEntity( permissible.getEntityId() );
+				entities.put( permissible.getEntityId(), entity );
 				permissible.entity = entity;
 			}
 		}
@@ -149,7 +149,7 @@ public class PermissionManager implements TaskCreator
 	 */
 	public void resetEntity( Permissible entity )
 	{
-		entities.remove( entity.getId() );
+		entities.remove( entity.getEntityId() );
 	}
 	
 	/**
@@ -193,18 +193,18 @@ public class PermissionManager implements TaskCreator
 	 */
 	public boolean has( Permissible perm, String permission )
 	{
-		return has( perm.getId(), permission, "" ); // perm.getRef()
+		return has( perm.getEntityId(), permission, "" ); // perm.getRef()
 	}
 	
 	/**
-	 * Check if entity has specified permission in site
+	 * Check if entity has specified permission in ref
 	 * 
 	 * @param entity
 	 *            entity object
 	 * @param permission
 	 *            permission as string to check against
-	 * @param site
-	 *            site's name as string
+	 * @param ref
+	 *            ref used for this perm
 	 * @return true on success false otherwise
 	 */
 	public boolean has( Account<?> entity, String permission, String ref )
@@ -213,17 +213,17 @@ public class PermissionManager implements TaskCreator
 	}
 	
 	/**
-	 * Check if entity with name has permission in site
+	 * Check if entity with name has permission in ref
 	 * 
 	 * @param entityName
 	 *            entity name
 	 * @param permission
 	 *            permission as string to check against
-	 * @param site
-	 *            site's name as string
+	 * @param ref
+	 *            ref's name as string
 	 * @return true on success false otherwise
 	 */
-	public boolean has( String entityName, String permission, String site )
+	public boolean has( String entityName, String permission, String ref )
 	{
 		PermissibleEntity entity = getEntity( entityName );
 		
@@ -232,7 +232,7 @@ public class PermissionManager implements TaskCreator
 			return false;
 		}
 		
-		return entity.has( permission, site );
+		return entity.has( permission, ref );
 	}
 	
 	/**
@@ -282,16 +282,16 @@ public class PermissionManager implements TaskCreator
 	 * 
 	 * @return default group object. null if not specified
 	 */
-	public PermissibleGroup getDefaultGroup( String siteName )
+	public PermissibleGroup getDefaultGroup( String refName )
 	{
-		String siteIndex = siteName != null ? siteName : "";
+		String refIndex = refName != null ? refName : "";
 		
-		if ( !this.defaultGroups.containsKey( siteIndex ) )
+		if ( !this.defaultGroups.containsKey( refIndex ) )
 		{
-			this.defaultGroups.put( siteIndex, this.getDefaultGroup( siteName, this.getDefaultGroup( null, null ) ) );
+			this.defaultGroups.put( refIndex, this.getDefaultGroup( refName, this.getDefaultGroup( null, null ) ) );
 		}
 		
-		return this.defaultGroups.get( siteIndex );
+		return this.defaultGroups.get( refIndex );
 	}
 	
 	public PermissibleGroup getDefaultGroup()
@@ -299,13 +299,13 @@ public class PermissionManager implements TaskCreator
 		return this.getDefaultGroup( null );
 	}
 	
-	private PermissibleGroup getDefaultGroup( String siteName, PermissibleGroup fallback )
+	private PermissibleGroup getDefaultGroup( String refName, PermissibleGroup fallback )
 	{
-		PermissibleGroup defaultGroup = this.backend.getDefaultGroup( siteName );
+		PermissibleGroup defaultGroup = this.backend.getDefaultGroup( refName );
 		
-		if ( defaultGroup == null && siteName == null )
+		if ( defaultGroup == null && refName == null )
 		{
-			getLogger().warning( "No default group defined. Use \"perm set default group <group> [site]\" to define default group." );
+			getLogger().warning( "No default group defined. Use \"perm set default group <group> [ref]\" to define default group." );
 			return fallback;
 		}
 		
@@ -323,14 +323,14 @@ public class PermissionManager implements TaskCreator
 	 * @param group
 	 *            PermissibleGroup group object
 	 */
-	public void setDefaultGroup( PermissibleGroup group, String siteName )
+	public void setDefaultGroup( PermissibleGroup group, String refName )
 	{
 		if ( group == null || group.equals( this.defaultGroups ) )
 		{
 			return;
 		}
 		
-		backend.setDefaultGroup( group.getId(), siteName );
+		backend.setDefaultGroup( group.getId(), refName );
 		
 		this.defaultGroups.clear();
 		

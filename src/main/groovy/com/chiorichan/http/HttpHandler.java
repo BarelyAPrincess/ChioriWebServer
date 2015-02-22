@@ -445,6 +445,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 					response.sendError( 401, "This page is limited to Operators only!" );
 				else
 					response.sendError( 401, "This page is limited to users with access to the \"" + req + "\" permission." );
+				return;
 			}
 		
 		try

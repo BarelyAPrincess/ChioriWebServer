@@ -18,4 +18,12 @@ public interface InteractiveEntity
 	boolean kick( String kickMessage );
 	
 	boolean isValid();
+	
+	boolean isBanned();
+	
+	boolean isWhitelisted();
+	
+	boolean isAdmin();
+	
+	boolean isOp();
 }

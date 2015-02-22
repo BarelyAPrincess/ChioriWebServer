@@ -108,12 +108,12 @@ public class PermissionResult
 	public boolean isTrueWithException() throws IllegalAccessException
 	{
 		if ( getValue().getType() != PermissionValue.PermissionType.BOOL )
-			throw new IllegalAccessException( "This Permission Node is not of the type Boolean and can not be checked if true." );
+			throw new IllegalAccessException( "This Permission Node is not type Boolean and can not be checked if true." );
 		
-		if ( !perm.getNamespace().equals( "sys.op" ) && PermissionManager.allowOps && entity.isOp() )
+		if ( !perm.getNamespace().equals( Permission.OP ) && PermissionManager.allowOps && entity.isOp() )
 			return true;
 		
-		return ( Boolean ) getObject();
+		return ( getObject() == null ) ? false : ( Boolean ) getObject();
 	}
 	
 	public String getString()
@@ -166,5 +166,11 @@ public class PermissionResult
 	public Permission getPermission()
 	{
 		return perm;
+	}
+	
+	@Override
+	public String toString()
+	{
+		return "PermissionResult{value=" + getObject() + ",isAssigned=" + isAssigned() + ",permission=" + perm + "}";
 	}
 }

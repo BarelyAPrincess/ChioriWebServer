@@ -15,6 +15,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 import com.chiorichan.Loader;
 import com.chiorichan.account.adapter.AccountLookupAdapter;
+import com.chiorichan.permission.PermissionResult;
+import com.chiorichan.permission.structure.Permission;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Sets;
 
@@ -111,9 +113,9 @@ public abstract class Account<T extends AccountLookupAdapter> implements Interac
 	
 	private void checkHandlers()
 	{
-		//for ( AccountHandler h : handlers )
-			//if ( !h.isValid() )
-				//handlers.remove( h );
+		// for ( AccountHandler h : handlers )
+		// if ( !h.isValid() )
+		// handlers.remove( h );
 	}
 	
 	public final AccountMetaData getMetaData()
@@ -127,14 +129,54 @@ public abstract class Account<T extends AccountLookupAdapter> implements Interac
 		return ( password.equals( pass ) || password.equals( DigestUtils.md5Hex( pass ) ) || DigestUtils.md5Hex( password ).equals( pass ) );
 	}
 	
+	@Override
 	public boolean isBanned()
 	{
-		return Loader.getAccountManager().isBanned( acctId );
+		// return Loader.getAccountManager().isBanned( acctId );
+		return Loader.getPermissionManager().getEntity( getAcctId() ).isBanned();
 	}
 	
+	@Override
 	public boolean isWhitelisted()
 	{
-		return Loader.getAccountManager().isWhitelisted( acctId );
+		// return Loader.getAccountManager().isWhitelisted( acctId );
+		return Loader.getPermissionManager().getEntity( getAcctId() ).isWhitelisted();
+	}
+	
+	@Override
+	public boolean isAdmin()
+	{
+		return Loader.getPermissionManager().getEntity( getAcctId() ).isAdmin();
+	}
+	
+	@Override
+	public boolean isOp()
+	{
+		return Loader.getPermissionManager().getEntity( getAcctId() ).isOp();
+	}
+	
+	public final PermissionResult checkPermission( String perm )
+	{
+		return Loader.getPermissionManager().getEntity( getAcctId() ).checkPermission( perm );
+	}
+	
+	public final PermissionResult checkPermission( Permission perm )
+	{
+		return Loader.getPermissionManager().getEntity( getAcctId() ).checkPermission( perm );
+	}
+	
+	/**
+	 * @deprecated
+	 *             {@link #checkPermission(String)} is to replace this method since it provides more options to requesters
+	 * @param perm
+	 *            The permission node, e.g., com.chiorichan.permission.node
+	 * @return
+	 *         The result of said check. Will always return false if permission value is not of type boolean.
+	 */
+	@Deprecated
+	public final boolean hasPermission( String perm )
+	{
+		return checkPermission( perm ).isTrue();
 	}
 	
 	public abstract String getPassword();

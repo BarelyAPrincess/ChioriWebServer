@@ -457,7 +457,7 @@ public class AccountManager
 			if ( !acct.validatePassword( password ) )
 				throw new LoginException( LoginExceptionReason.incorrectLogin );
 			
-			if ( !acct.isWhitelisted() )
+			if ( hasWhitelist && !acct.isWhitelisted() )
 				throw new LoginException( LoginExceptionReason.notWhiteListed );
 			
 			if ( acct.isBanned() )

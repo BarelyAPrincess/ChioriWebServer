@@ -28,6 +28,21 @@ public abstract class Permissible
 		return entity;
 	}
 	
+	public final boolean isBanned()
+	{
+		return getPermissibleEntity().isBanned();
+	}
+	
+	public final boolean isWhitelisted()
+	{
+		return getPermissibleEntity().isWhitelisted();
+	}
+	
+	public final boolean isAdmin()
+	{
+		return getPermissibleEntity().isAdmin();
+	}
+	
 	/**
 	 * Is this permissible on the OP list.
 	 * 
@@ -54,7 +69,7 @@ public abstract class Permissible
 	 * @return String
 	 *         a unique identifier
 	 */
-	public abstract String getId();
+	public abstract String getEntityId();
 	
 	/**
 	 * @return boolean

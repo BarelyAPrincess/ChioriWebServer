@@ -125,7 +125,7 @@ public class NetworkManager
 			
 			int httpsPort = Loader.getConfig().getInt( "server.httpsPort", 4443 );
 			
-			if ( httpsPort > 0 )
+			if ( httpsPort > 0 );
 			{
 				
 				if ( !checkPrivilegedPort( httpsPort ) )

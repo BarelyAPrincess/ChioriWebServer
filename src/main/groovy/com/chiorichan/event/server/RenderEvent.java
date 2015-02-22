@@ -47,7 +47,7 @@ public class RenderEvent extends ServerEvent
 	
 	public String getRequestId()
 	{
-		return sess.getParentSession().getId();
+		return sess.getParentSession().getSessId();
 	}
 	
 	public SessionProvider getSession()

@@ -144,7 +144,7 @@ public class SqlSession extends Session
 		
 		try
 		{
-			ResultSet rs = sql.query( "SELECT * FROM `sessions` WHERE `sessionId` = '" + getId() + "';" );
+			ResultSet rs = sql.query( "SELECT * FROM `sessions` WHERE `sessionId` = '" + getSessId() + "';" );
 			
 			if ( rs == null || sql.getRowCount( rs ) < 1 )
 				sql.queryUpdate( "INSERT INTO `sessions` (`sessionId`, `timeout`, `ipAddr`, `sessionName`, `sessionSite`, `data`)VALUES('" + sessionCandy.getValue() + "', '" + getTimeout() + "', '" + getIpAddr() + "', '" + sessionCandy.getKey() + "', '" + getSite().getName() + "', '" + dataJson + "');" );
@@ -162,7 +162,7 @@ public class SqlSession extends Session
 	{
 		try
 		{
-			Loader.getDatabase().queryUpdate( "DELETE FROM `sessions` WHERE `sessionName` = '" + getName() + "' AND `sessionId` = '" + getId() + "';" );
+			Loader.getDatabase().queryUpdate( "DELETE FROM `sessions` WHERE `sessionName` = '" + getName() + "' AND `sessionId` = '" + getSessId() + "';" );
 		}
 		catch ( SQLException e )
 		{

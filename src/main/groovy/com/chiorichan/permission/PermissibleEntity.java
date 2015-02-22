@@ -54,7 +54,7 @@ public abstract class PermissibleEntity
 		this.id = id;
 		backend = permBackend;
 		
-		recalculateChildPermissions();
+		reload();
 	}
 	
 	/**
@@ -69,7 +69,7 @@ public abstract class PermissibleEntity
 	}
 	
 	/**
-	 * Checks if entity has specified permission in default site
+	 * Checks if entity has specified permission in default ref
 	 * 
 	 * @param permission
 	 *            Permission to check
@@ -81,15 +81,15 @@ public abstract class PermissibleEntity
 	}
 	
 	/**
-	 * Check if entity has specified permission in site
+	 * Check if entity has specified permission in ref
 	 * 
 	 * @param permission
 	 *            Permission to check
-	 * @param site
+	 * @param ref
 	 *            Site to check permission in
 	 * @return true if entity has this permission otherwise false
 	 */
-	public boolean has( String permission, String site )
+	public boolean has( String permission, String ref )
 	{
 		if ( permission != null && permission.isEmpty() )
 		{ // empty permission for public access :)
@@ -133,7 +133,7 @@ public abstract class PermissibleEntity
 	/**
 	 * Return entity timed (temporary) permission for ref
 	 * 
-	 * @param site
+	 * @param ref
 	 * @return Array of timed permissions in that ref
 	 */
 	public TimedPermission[] getTimedPermissions( String ref )
@@ -178,11 +178,11 @@ public abstract class PermissibleEntity
 	}
 	
 	/**
-	 * Returns remaining lifetime of specified permission in site
+	 * Returns remaining lifetime of specified permission in ref
 	 * 
 	 * @param permission
 	 *            Name of permission
-	 * @param site
+	 * @param ref
 	 * @return remaining lifetime in seconds of timed permission. 0 if permission is transient
 	 */
 	public int getTimedPermissionLifetime( String perm, String ref )
@@ -197,12 +197,12 @@ public abstract class PermissibleEntity
 	}
 	
 	/**
-	 * Adds timed permission to specified site in seconds
+	 * Adds timed permission to specified ref in seconds
 	 * 
 	 * @param permission
 	 * @param ref
 	 * @param lifeTime
-	 *            Lifetime of permission in seconds. 0 for transient permission (site disappear only after server reload)
+	 *            Lifetime of permission in seconds. 0 for transient permission (ref disappear only after server reload)
 	 */
 	public void addTimedPermission( final Permission perm, String ref, int lifeTime )
 	{
@@ -234,10 +234,10 @@ public abstract class PermissibleEntity
 	}
 	
 	/**
-	 * Removes specified timed permission for site
+	 * Removes specified timed permission for ref
 	 * 
 	 * @param permission
-	 * @param site
+	 * @param ref
 	 */
 	public void removeTimedPermission( Permission perm, String ref )
 	{
@@ -308,6 +308,24 @@ public abstract class PermissibleEntity
 		debugMode = debug;
 	}
 	
+	public boolean isBanned()
+	{
+		PermissionResult result = checkPermission( Permission.BANNED );
+		return result.isTrue();
+	}
+	
+	public boolean isWhitelisted()
+	{
+		PermissionResult result = checkPermission( Permission.WHITELISTED );
+		return result.isTrue();
+	}
+	
+	public boolean isAdmin()
+	{
+		PermissionResult result = checkPermission( Permission.ADMIN );
+		return result.isTrue();
+	}
+	
 	public boolean isOp()
 	{
 		PermissionResult result = checkPermission( Permission.OP );
@@ -329,13 +347,15 @@ public abstract class PermissibleEntity
 		if ( perm.equalsIgnoreCase( "admin" ) )
 			perm = Permission.ADMIN;
 		
-		if ( perm == null )
+		if ( result == null )
 		{
-			Permission permission = Permission.getPermissionNode( perm );
+			Permission permission = Permission.getPermissionNode( perm, true );
 			result = checkPermission( permission );
 		}
 		
-		Loader.getLogger().info( ConsoleColor.GREEN + "Is `" + getId() + "` true for permission `" + perm + "` with result `" + result + "`" );
+		if ( !perm.equalsIgnoreCase( Permission.OP ) )
+			Loader.getLogger().info( ConsoleColor.GREEN + "Is `" + getId() + "` true for permission `" + perm + "` with result `" + result + "`" );
+		
 		return result;
 	}
 	

@@ -22,7 +22,7 @@ public final class Permission
 {
 	protected static final Set<Permission> allPerms = Sets.newConcurrentHashSet();
 	protected final List<Permission> children = Lists.newCopyOnWriteArrayList();
-	protected PermissionValue<?> value = null;
+	protected PermissionValue<?> value;
 	protected boolean isRootNode = false;
 	protected String description = "";
 	protected Permission parent = null;
@@ -49,6 +49,9 @@ public final class Permission
 		this.name = name;
 		this.value = value;
 		description = desc;
+		
+		// Sets the default value used when assigned verses not
+		value = new PermissionValueBoolean( name, true, false );
 	}
 	
 	public Permission( String name, Permission parentNode, boolean rootNode )
@@ -56,6 +59,9 @@ public final class Permission
 		this( name, parentNode );
 		isRootNode = rootNode;
 		allPerms.add( this );
+		
+		// Sets the default value used when assigned verses not
+		value = new PermissionValueBoolean( name, true, false );
 	}
 	
 	public Permission( String name, Permission parentNode )
@@ -63,6 +69,9 @@ public final class Permission
 		this.name = name.toLowerCase();
 		parent = parentNode;
 		allPerms.add( this );
+		
+		// Sets the default value used when assigned verses not
+		value = new PermissionValueBoolean( name, true, false );
 	}
 	
 	public void setValue( PermissionValue<?> val )
@@ -70,14 +79,22 @@ public final class Permission
 		value = val;
 	}
 	
+	public boolean hasValue()
+	{
+		return value != null;
+	}
+	
 	public PermissionValue<?> getValue()
 	{
+		if ( value == null )
+			return Permission.getPermissionNode( "default" ).getValue();
+		
 		return value;
 	}
 	
 	public Object getObject()
 	{
-		return value.getValue();
+		return ( value == null ) ? null : value.getValue();
 	}
 	
 	public String getString()
@@ -181,7 +198,7 @@ public final class Permission
 		
 		do
 		{
-			namespace = getName() + "." + namespace;
+			namespace = curr.getName() + "." + namespace;
 			curr = curr.getParent();
 		}
 		while ( curr != null );
@@ -198,7 +215,7 @@ public final class Permission
 		return null;
 	}
 	
-	protected static Permission getNode( String name )
+	protected static Permission getNodeBySimpleName( String name )
 	{
 		for ( Permission perm : allPerms )
 			if ( perm.getName().equals( name ) )
@@ -266,12 +283,12 @@ public final class Permission
 		
 		for ( String node : Arrays.copyOfRange( nodes, 1, nodes.length ) )
 		{
-			Permission child = curr.getChild( node );
+			Permission child = curr.getChild( node.toLowerCase() );
 			if ( child == null )
 			{
 				if ( createChildren )
 				{
-					child = new Permission( node, curr );
+					child = new Permission( node.toLowerCase(), curr );
 					curr.addChild( child );
 					curr = child;
 				}

@@ -37,6 +37,8 @@ public class SessionManager
 				
 				sessionList = SqlSession.getActiveSessions();
 				break;
+			case "memory":
+				break;
 			default:
 				sessionList = FileSession.getActiveSessions();
 		}

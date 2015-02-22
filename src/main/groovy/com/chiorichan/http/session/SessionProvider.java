@@ -42,7 +42,7 @@ public interface SessionProvider extends BindingProvider
 	
 	boolean isStale();
 	
-	String getId();
+	String getSessId();
 	
 	boolean isSet( String key );
 	

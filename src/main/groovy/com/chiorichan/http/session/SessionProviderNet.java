@@ -10,46 +10,14 @@
 package com.chiorichan.http.session;
 
 import com.chiorichan.account.Account;
-import com.chiorichan.account.AccountHandler;
-import com.chiorichan.factory.BindingProvider;
 import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.Candy;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.http.HttpResponseWrapper;
 
-public class SessionProviderNet extends AccountHandler implements SessionProvider, BindingProvider
+public class SessionProviderNet implements SessionProvider
 {
-	@Override
-	public boolean kick( String kickMessage )
-	{
-		return false;
-	}
-	
-	@Override
-	public void sendMessage( String... msg )
-	{
-		
-	}
-	
-	@Override
-	public void sendMessage( String string )
-	{
-		
-	}
-	
-	@Override
-	public boolean isValid()
-	{
-		return false;
-	}
-	
-	@Override
-	public String getIpAddr()
-	{
-		return null;
-	}
-	
 	@Override
 	public CodeEvalFactory getCodeFactory()
 	{
@@ -117,7 +85,7 @@ public class SessionProviderNet extends AccountHandler implements SessionProvide
 	}
 	
 	@Override
-	public String getId()
+	public String getSessId()
 	{
 		return null;
 	}
@@ -186,11 +154,5 @@ public class SessionProviderNet extends AccountHandler implements SessionProvide
 	public void saveSession( boolean force )
 	{
 		
-	}
-
-	@Override
-	public boolean isRemote()
-	{
-		return true;
 	}
 }

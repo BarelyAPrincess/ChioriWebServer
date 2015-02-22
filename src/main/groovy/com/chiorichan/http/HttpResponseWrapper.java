@@ -87,7 +87,7 @@ public class HttpResponseWrapper
 	public void sendError( int var1, String var2, String var3 ) throws IOException
 	{
 		if ( stage == HttpResponseStage.CLOSED )
-			throw new IllegalStateException( "You can't access setter methods within this HttpResponse because the connection has been closed." );
+			throw new IllegalStateException( "You can't access sendError method within this HttpResponse because the connection has been closed." );
 		
 		if ( var1 < 1 )
 			var1 = 500;
@@ -129,7 +129,7 @@ public class HttpResponseWrapper
 	public void sendException( Throwable cause ) throws IOException
 	{
 		if ( stage == HttpResponseStage.CLOSED )
-			throw new IllegalStateException( "You can't access setter methods within this HttpResponse because the connection has been closed." );
+			throw new IllegalStateException( "You can't access sendException method within this HttpResponse because the connection has been closed." );
 		
 		HttpExceptionEvent event = new HttpExceptionEvent( request, cause, Loader.getConfig().getBoolean( "server.developmentMode" ) );
 		Loader.getEventBus().callEvent( event );
@@ -190,7 +190,7 @@ public class HttpResponseWrapper
 	public void setStatus( int status )
 	{
 		if ( stage == HttpResponseStage.CLOSED )
-			throw new IllegalStateException( "You can't access setter methods within this HttpResponse because the connection has been closed." );
+			throw new IllegalStateException( "You can't access setStatus method within this HttpResponse because the connection has been closed." );
 		
 		httpStatus = status;
 	}
@@ -255,7 +255,7 @@ public class HttpResponseWrapper
 		Loader.getLogger().info( "Sending page redirect to `" + target + "`" );
 		
 		if ( stage == HttpResponseStage.CLOSED )
-			throw new IllegalStateException( "You can't access setter methods within this HttpResponse because the connection has been closed." );
+			throw new IllegalStateException( "You can't access sendRedirect method within this HttpResponse because the connection has been closed." );
 		
 		if ( autoRedirect )
 		{

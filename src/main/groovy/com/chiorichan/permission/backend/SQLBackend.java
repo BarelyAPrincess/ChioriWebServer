@@ -261,7 +261,7 @@ public class SQLBackend extends PermissionBackend
 				while ( result.next() );
 			
 			if ( Permission.getPermissionNode( "default", false ) == null )
-				Permission.createPermissionNode( "default", new PermissionValueBoolean( "op", true, false ), "Used as the default permission node if one does not exist. (DO NOT EDIT)" );
+				Permission.createPermissionNode( "default", new PermissionValueBoolean( "default", true, false ), "Used as the default permission node if one does not exist. (DO NOT EDIT)" );
 			
 			if ( Permission.getPermissionNode( "sys.op", false ) == null )
 				Permission.createPermissionNode( "sys.op", new PermissionValueBoolean( "op", true, false ), "Indicates OP entities. (DO NOT EDIT)" );

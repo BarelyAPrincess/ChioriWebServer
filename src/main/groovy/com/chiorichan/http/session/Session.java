@@ -41,7 +41,6 @@ public abstract class Session extends AccountHandler
 	protected int requestCnt = 0;
 	protected String candyId = "", candyName = "sessionId", lastIpAddr = null;
 	protected Candy sessionCandy;
-	protected Account<?> currentAccount = null;
 	protected List<String> pendingMessages = Lists.newArrayList();
 	protected static String lastSession = "";
 	protected static long lastTime = Common.getEpoch();
@@ -141,9 +140,9 @@ public abstract class Session extends AccountHandler
 			}
 		}
 		
-		if ( !lastSession.equals( getId() ) || Common.getEpoch() - lastTime > 5 )
+		if ( !lastSession.equals( getSessId() ) || Common.getEpoch() - lastTime > 5 )
 		{
-			lastSession = getId();
+			lastSession = getSessId();
 			lastTime = Common.getEpoch();
 			if ( stale )
 				Loader.getLogger().info( ConsoleColor.DARK_AQUA + "Session Requested `" + this + "`" );
@@ -211,7 +210,7 @@ public abstract class Session extends AccountHandler
 		return stale;
 	}
 	
-	public String getId()
+	public String getSessId()
 	{
 		return candyId;
 	}
@@ -294,11 +293,6 @@ public abstract class Session extends AccountHandler
 	public boolean getUserState()
 	{
 		return ( currentAccount != null );
-	}
-	
-	public Account<?> getAccount()
-	{
-		return currentAccount;
 	}
 	
 	/**

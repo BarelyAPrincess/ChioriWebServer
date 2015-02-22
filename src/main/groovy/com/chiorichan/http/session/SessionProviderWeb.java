@@ -26,6 +26,8 @@ import com.chiorichan.framework.Site;
 import com.chiorichan.http.Candy;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.http.HttpResponseWrapper;
+import com.chiorichan.permission.PermissionResult;
+import com.chiorichan.permission.structure.Permission;
 import com.chiorichan.util.Common;
 
 public class SessionProviderWeb implements SessionProvider
@@ -331,9 +333,9 @@ public class SessionProviderWeb implements SessionProvider
 	}
 	
 	@Override
-	public String getId()
+	public String getSessId()
 	{
-		return parentSession.getId();
+		return parentSession.getSessId();
 	}
 	
 	@Override
@@ -391,4 +393,34 @@ public class SessionProviderWeb implements SessionProvider
 	}
 	
 	// TODO: Future add of setDomain, setCookieName, setSecure (http verses https)
+	
+	public final boolean isBanned()
+	{
+		return parentSession.isBanned();
+	}
+	
+	public final boolean isWhitelisted()
+	{
+		return parentSession.isWhitelisted();
+	}
+	
+	public final boolean isAdmin()
+	{
+		return parentSession.isAdmin();
+	}
+	
+	public final boolean isOp()
+	{
+		return parentSession.isOp();
+	}
+	
+	public final PermissionResult checkPermission( String perm )
+	{
+		return parentSession.checkPermission( perm );
+	}
+	
+	public final PermissionResult checkPermission( Permission perm )
+	{
+		return parentSession.checkPermission( perm );
+	}
 }
