@@ -46,8 +46,8 @@ public class SqlSession extends Session
 				candyName = rs.getString( "sessionName" );
 			candyId = rs.getString( "sessionId" );
 			
-			if ( timeout < Common.getEpoch() )
-				throw new SessionException( "This session expired at " + timeout + " epoch!" );
+			if ( timeout > 0 && timeout < Common.getEpoch() )
+				SessionManager.getLogger().warning( "The session '" + getSessId() + "' expired at epoch '" + timeout + "', might have expired while offline or this is a bug!" );
 			
 			if ( rs.getString( "sessionSite" ) == null || rs.getString( "sessionSite" ).isEmpty() )
 				setSite( Loader.getSiteManager().getFrameworkSite() );
@@ -92,8 +92,8 @@ public class SqlSession extends Session
 		{
 			try
 			{
-				if ( rs.getLong( "timeout" ) > timeout )
-					timeout = rs.getLong( "timeout" );
+				if ( rs.getInt( "timeout" ) > timeout )
+					timeout = rs.getInt( "timeout" );
 				
 				if ( !rs.getString( "data" ).isEmpty() )
 				{
@@ -204,7 +204,7 @@ public class SqlSession extends Session
 			Loader.getLogger().warning( "There was a problem reloading saved sessions.", e );
 		}
 		
-		PermissionManager.getLogger().info( "SqlSession loaded " + sessionList.size() + " sessions from the sql backend in " + ( start - System.currentTimeMillis() ) + "ms!" );
+		PermissionManager.getLogger().info( "SqlSession loaded " + sessionList.size() + " sessions from the data store in " + ( System.currentTimeMillis() - start ) + "ms!" );
 		
 		return sessionList;
 	}

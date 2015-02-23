@@ -61,8 +61,8 @@ public class FileSession extends Session
 		
 		// int defaultLife = ( getSite().getYaml() != null ) ? getSite().getYaml().getInt( "default-life", 604800 ) : 604800;
 		
-		if ( yaml.getLong( "timeout", 0 ) > timeout )
-			timeout = yaml.getLong( "timeout", timeout );
+		if ( yaml.getInt( "timeout", 0 ) > timeout )
+			timeout = yaml.getInt( "timeout", timeout );
 		
 		lastIpAddr = yaml.getString( "ipAddr", lastIpAddr );
 		
@@ -87,7 +87,7 @@ public class FileSession extends Session
 		candyId = yaml.getString( "sessionId", candyId );
 		
 		if ( timeout > 0 && timeout < Common.getEpoch() )
-			throw new SessionException( "This session expired at " + timeout + " epoch!" );
+			SessionManager.getLogger().warning( "The session '" + getSessId() + "' expired at epoch '" + timeout + "', might have expired while offline or this is a bug!" );
 		
 		if ( yaml.getString( "sessionSite" ) == null || yaml.getString( "sessionSite" ).isEmpty() )
 			setSite( Loader.getSiteManager().getFrameworkSite() );
@@ -206,7 +206,7 @@ public class FileSession extends Session
 				}
 			}
 		
-		PermissionManager.getLogger().info( "FileSession loaded " + sessions.size() + " sessions from the data store in " + ( start - System.currentTimeMillis() ) + "ms!" );
+		PermissionManager.getLogger().info( "FileSession loaded " + sessions.size() + " sessions from the data store in " + ( System.currentTimeMillis() - start ) + "ms!" );
 		
 		return sessions;
 	}

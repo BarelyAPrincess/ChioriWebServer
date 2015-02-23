@@ -38,7 +38,7 @@ import com.google.common.collect.Sets;
 public abstract class Session extends AccountHandler
 {
 	protected Map<String, String> data = new LinkedHashMap<String, String>();
-	protected long timeout = 0;
+	protected int timeout = 0;
 	protected int requestCnt = 0;
 	protected String candyId = "", candyName = "sessionId", lastIpAddr = null;
 	protected Candy sessionCandy;
@@ -261,7 +261,7 @@ public abstract class Session extends AccountHandler
 	
 	public void rearmTimeout()
 	{
-		long defaultTimeout = Loader.getConfig().getInt( "sessions.defaultTimeout", 3600 );
+		int defaultTimeout = Loader.getConfig().getInt( "sessions.defaultTimeout", 3600 );
 		
 		// Grant the timeout an additional 10 minutes per request, capped at one hour or 6 requests.
 		requestCnt++;
@@ -275,7 +275,7 @@ public abstract class Session extends AccountHandler
 				defaultTimeout = Loader.getConfig().getInt( "sessions.defaultTimeoutRememberMe", 604800 );
 			
 			if ( Loader.getConfig().getBoolean( "allowNoTimeoutPermission" ) && checkPermission( "com.chiorichan.noTimeout" ).isTrue() )
-				defaultTimeout = Long.MAX_VALUE;
+				defaultTimeout = Integer.MAX_VALUE;
 		}
 		
 		timeout = Common.getEpoch() + defaultTimeout + ( Math.min( requestCnt, 6 ) * 600 );

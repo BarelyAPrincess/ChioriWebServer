@@ -128,7 +128,7 @@ public class ConsoleBus implements Runnable
 			lastFiveTick = fiveMinuteTick;
 			
 			if ( fiveMinuteTick % Loader.getConfig().getInt( "sessions.cleanupInterval", 5 ) == 0 )
-				SessionManager.mainThreadHeartbeat( tick );
+				SessionManager.runSessionChecks( tick );
 			
 			if ( fiveMinuteTick % Loader.getConfig().getInt( "auto-updater.check-interval", 30 ) == 0 )
 				Loader.getAutoUpdater().check();

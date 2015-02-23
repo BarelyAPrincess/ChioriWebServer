@@ -12,6 +12,7 @@ package com.chiorichan.http.session;
 import java.util.Iterator;
 import java.util.List;
 
+import com.chiorichan.ConsoleBus;
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
@@ -46,6 +47,11 @@ public class SessionManager
 			default:
 				sessionList = FileSession.getActiveSessions();
 		}
+		
+		/*
+		 * We run the session checks after loading to catch things like expired sessions.
+		 */
+		runSessionChecks( ConsoleBus.currentTick );
 	}
 	
 	public SessionProvider find( HttpRequestWrapper request )
@@ -85,7 +91,7 @@ public class SessionManager
 		return sess;
 	}
 	
-	public static void mainThreadHeartbeat( long tick )
+	public static void runSessionChecks( long tick )
 	{
 		Iterator<Session> sessions = sessionList.iterator();
 		
@@ -138,7 +144,8 @@ public class SessionManager
 	 */
 	public static void destroySession( Session sess )
 	{
-		Loader.getLogger().info( ConsoleColor.DARK_AQUA + "Session Destroyed `" + sess + "`" );
+		if ( isDebug() )
+			Loader.getLogger().info( ConsoleColor.DARK_AQUA + "Session Destroyed `" + sess + "`" );
 		
 		for ( Account<?> u : Loader.getAccountManager().getOnlineAccounts() )
 			u.removeHandler( sess );
@@ -173,7 +180,7 @@ public class SessionManager
 	{
 		return isDebug;
 	}
-
+	
 	public static ConsoleLogger getLogger()
 	{
 		return Loader.getLogger( "SessMgr" );
