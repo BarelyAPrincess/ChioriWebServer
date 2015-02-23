@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.chiorichan.permission.PermissionManager;
+import com.chiorichan.permission.PermissionNamespace;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -50,7 +51,7 @@ public final class Permission
 	
 	public Permission( String name, Permission parentNode, boolean rootNode )
 	{
-		this( name, parentNode );
+		this( name, ( rootNode ) ? null : parentNode );
 		isRootNode = rootNode;
 		allPerms.add( this );
 		
@@ -81,7 +82,7 @@ public final class Permission
 	public PermissionValue<?> getValue()
 	{
 		if ( value == null )
-			return Permission.getPermissionNode( "default" ).getValue();
+			return PermissionDefault.DEFAULT.getNode().getValue();
 		
 		return value;
 	}
@@ -159,7 +160,7 @@ public final class Permission
 	{
 		for ( Permission node : children )
 		{
-			if ( node.getName().equals( name ) )
+			if ( node.getLocalName().equals( name ) )
 				return node;
 		}
 		return null;
@@ -175,9 +176,9 @@ public final class Permission
 	 * 
 	 * @return Fully qualified name
 	 */
-	public String getName()
+	public String getLocalName()
 	{
-		return name;
+		return name.toLowerCase();
 	}
 	
 	public Permission getParent()
@@ -192,7 +193,7 @@ public final class Permission
 		
 		do
 		{
-			namespace = curr.getName() + "." + namespace;
+			namespace = curr.getLocalName() + "." + namespace;
 			curr = curr.getParent();
 		}
 		while ( curr != null );
@@ -204,15 +205,15 @@ public final class Permission
 	protected static Permission getRootNode( String name )
 	{
 		for ( Permission perm : allPerms )
-			if ( perm.isRootNode && perm.getName().equals( name ) )
+			if ( perm.isRootNode && perm.getLocalName().equals( name ) )
 				return perm;
 		return null;
 	}
 	
-	protected static Permission getNodeBySimpleName( String name )
+	protected static Permission getNodeByLocalName( String name )
 	{
 		for ( Permission perm : allPerms )
-			if ( perm.getName().equals( name ) )
+			if ( perm.getLocalName().equalsIgnoreCase( name ) )
 				return perm;
 		return null;
 	}
@@ -230,31 +231,82 @@ public final class Permission
 	 * @return
 	 *         The Permission
 	 */
-	public static Permission getPermissionNode( String namespace, PermissionValue<?> val, String desc )
+	public static Permission getNode( String namespace, PermissionValue<?> val, String desc )
 	{
-		Permission perm = getPermissionNode( namespace, false );
+		Permission perm = getNode( namespace, false );
 		
 		if ( perm == null )
-			return createPermissionNode( namespace, val, desc );
+			return createNode( namespace, val, desc );
 		
 		return perm;
 	}
 	
-	public static Permission getPermissionNode( String namespace )
+	public static Permission getNode( String namespace )
 	{
-		return getPermissionNode( namespace, true );
+		return getNode( namespace, true );
+	}
+	
+	public static List<Permission> getNodes( String ns )
+	{
+		return getNodes( new PermissionNamespace( ns ) );
+	}
+	
+	/**
+	 * Finds registered permission nodes.
+	 * 
+	 * @param namespace
+	 *            The full name space we need to crawl for.
+	 * @return A list of permissions that matched the namespace. Will return more then one if namespace contained asterisk.
+	 */
+	public static List<Permission> getNodes( PermissionNamespace ns )
+	{
+		if ( ns == null )
+			return Lists.newArrayList();
+		
+		if ( ns.getNodeCount() < 1 )
+			return Lists.newArrayList();
+		
+		List<Permission> matches = Lists.newArrayList();
+		
+		for ( Permission p : allPerms )
+		{
+			if ( ns.matches( p ) )
+				matches.add( p );
+		}
+		
+		return matches;
+	}
+	
+	public List<Permission> getChildrenRecursive( boolean includeAll )
+	{
+		return getChildrenRecursive( this, includeAll );
+	}
+	
+	public static List<Permission> getChildrenRecursive( Permission parent, boolean includeAll )
+	{
+		List<Permission> result = Lists.newArrayList();
+		
+		if ( includeAll || !parent.hasChildren() )
+			result.add( parent );
+		
+		for ( Permission p : parent.getChildren() )
+		{
+			result.addAll( getChildrenRecursive( p, includeAll ) );
+		}
+		
+		return result;
 	}
 	
 	/**
 	 * Finds a registered permission node in the stack by crawling.
 	 * 
 	 * @param namespace
-	 *            The full node path we need to crawl for.
+	 *            The full name space we need to crawl for.
 	 * @param createChildren
 	 *            Indicates if we should create the child node if not existent.
-	 * @return The child node based on the namespace.
+	 * @return The child node based on the namespace. Will return NULL if non-existent and createChildren is false.
 	 */
-	public static Permission getPermissionNode( String namespace, boolean createChildren )
+	public static Permission getNode( String namespace, boolean createChildren )
 	{
 		String[] nodes = namespace.split( "\\." );
 		
@@ -296,9 +348,9 @@ public final class Permission
 		return curr;
 	}
 	
-	public static Permission createPermissionNode( String namespace, PermissionValue<?> val, String desc )
+	public static Permission createNode( String namespace, PermissionValue<?> val, String desc )
 	{
-		Permission perm = getPermissionNode( namespace, true );
+		Permission perm = getNode( namespace, true );
 		perm.setValue( val );
 		perm.setDescription( desc );
 		return perm;
@@ -306,14 +358,14 @@ public final class Permission
 	
 	public String toString()
 	{
-		return "Permission[name=" + getName() + ",parent=" + getParent() + ( ( value != null ) ? ",value=" + value.toString() : "" ) + "]";
+		return "Permission[name=" + getLocalName() + ",parent=" + getParent() + ( ( value != null ) ? ",value=" + value.toString() : "" ) + "]";
 	}
 	
-	public static Set<Permission> getRootNodes()
+	public static List<Permission> getRootNodes()
 	{
-		Set<Permission> rootNodes = Sets.newHashSet();
+		List<Permission> rootNodes = Lists.newArrayList();
 		for ( Permission p : allPerms )
-			if ( p.isRootNode )
+			if ( p.isRootNode && p.getParent() == null && !p.getNamespace().startsWith( "sys" ) )
 				rootNodes.add( p );
 		return rootNodes;
 	}
@@ -323,9 +375,9 @@ public final class Permission
 		String spacing = ( deepth > 0 ) ? Strings.repeat( "      ", deepth - 1 ) + "|---> " : "";
 		
 		if ( value == null )
-			PermissionManager.getLogger().info( "[DEBUG] " + spacing + getName() );
+			PermissionManager.getLogger().info( "[DEBUG] " + spacing + getLocalName() );
 		else
-			PermissionManager.getLogger().info( "[DEBUG] " + spacing + getName() + "=" + value.toString() );
+			PermissionManager.getLogger().info( "[DEBUG] " + spacing + getLocalName() + "=" + value.toString() );
 		
 		deepth++;
 		for ( Permission p : children )

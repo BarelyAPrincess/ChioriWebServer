@@ -7,18 +7,28 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.permission;
+package com.chiorichan.util;
 
 import org.apache.commons.lang3.StringUtils;
 
-public class PermissionUtils
+public class PermissionUtil
 {
-	public static String getName( String permNamespace )
+	public static String getLocalName( String permNamespace )
 	{
 		if ( !permNamespace.contains( "." ) )
 			return permNamespace;
 		
 		int inx = StringUtils.reverse( permNamespace ).indexOf( "." );
 		return permNamespace.substring( permNamespace.length() - inx );
+	}
+	
+	public static boolean containsValidChars( String ref )
+	{
+		return ref.matches( "[a-z0-9_]*" );
+	}
+	
+	public static String removeInvalidChars( String ref )
+	{
+		return ref.replaceAll( "[^a-z0-9_]", "" );
 	}
 }

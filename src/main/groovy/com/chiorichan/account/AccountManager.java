@@ -29,8 +29,7 @@ import com.chiorichan.event.account.PreAccountLoginEvent.Result;
 import com.chiorichan.exception.StartupException;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.session.Session;
-import com.chiorichan.permission.Permissible;
-import com.chiorichan.permission.structure.Permission;
+import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.structure.PermissionDefault;
 import com.chiorichan.util.Common;
 import com.google.common.collect.Lists;
@@ -232,11 +231,11 @@ public class AccountManager
 	{
 		ArrayList<Account<?>> accts = Lists.newArrayList();
 		
-		List<Permissible> entities = Loader.getPermissionManager().getEntitiesWithPermission( PermissionDefault.WHITELISTED.getPermissionNode() );
+		List<PermissibleEntity> entities = Loader.getPermissionManager().getEntitiesWithPermission( PermissionDefault.WHITELISTED.getNode() );
 		
-		for ( Permissible entity : entities )
-			if ( entity instanceof AccountHandler )
-				accts.add( ( ( AccountHandler ) entity ).getAccount() );
+		// TODO Check if this PermissibleEntity is attached to an AccountHandler.
+		for ( PermissibleEntity entity : entities )
+			accts.add( getAccount( entity.getId() ) );
 		
 		return accts;
 	}
@@ -245,11 +244,11 @@ public class AccountManager
 	{
 		ArrayList<Account<?>> accts = Lists.newArrayList();
 		
-		List<Permissible> entities = Loader.getPermissionManager().getEntitiesWithPermission( PermissionDefault.OP.getPermissionNode() );
+		List<PermissibleEntity> entities = Loader.getPermissionManager().getEntitiesWithPermission( PermissionDefault.OP.getNode() );
 		
-		for ( Permissible entity : entities )
-			if ( entity instanceof AccountHandler )
-				accts.add( ( ( AccountHandler ) entity ).getAccount() );
+		// TODO Check if this PermissibleEntity is attached to an AccountHandler.
+		for ( PermissibleEntity entity : entities )
+			accts.add( getAccount( entity.getId() ) );
 		
 		return accts;
 	}

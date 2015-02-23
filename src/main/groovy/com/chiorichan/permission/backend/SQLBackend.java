@@ -24,7 +24,6 @@ import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.PermissionBackend;
 import com.chiorichan.permission.PermissionBackendException;
 import com.chiorichan.permission.PermissionManager;
-import com.chiorichan.permission.PermissionResult;
 import com.chiorichan.permission.backend.sql.SQLEntity;
 import com.chiorichan.permission.backend.sql.SQLGroup;
 import com.chiorichan.permission.structure.Permission;
@@ -239,7 +238,7 @@ public class SQLBackend extends PermissionBackend
 				do
 				{
 					String permName = result.getString( "permission" ).toLowerCase();
-					Permission perm = Permission.getPermissionNode( permName, true );
+					Permission perm = Permission.getNode( permName, true );
 					
 					switch ( result.getString( "type" ) )
 					{

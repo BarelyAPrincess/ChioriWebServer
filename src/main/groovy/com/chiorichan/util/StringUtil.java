@@ -21,8 +21,6 @@ import java.util.regex.Pattern;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.Validate;
 
-import com.google.common.collect.Lists;
-
 public class StringUtil
 {
 	private static final String IPADDRESS_PATTERN = "^([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])$";
@@ -250,7 +248,7 @@ public class StringUtil
 	}
 	
 	/**
-	 * Scans a string list for entries that are not all lower case.
+	 * Scans a string list for entries that are not lower case.
 	 * 
 	 * @param stringList
 	 *            The original list to check.
@@ -258,26 +256,26 @@ public class StringUtil
 	 */
 	public static List<String> toLowerCase( List<String> stringList )
 	{
-		/*
-		 * Strings that need correction are added to this temp list to prevent the
-		 * EVIL ConcurrentModificationException since we can't control the input
-		 * list type, e.g., ArrayList, CopyOnWriteArrayList, or LinkedList.
-		 */
-		List<String> temp = Lists.newArrayList();
+		String[] array = toLowerCase( stringList.toArray( new String[0] ) );
+		stringList.clear();
+		for ( String s : array )
+			stringList.add( s );
 		
-		for ( String s : stringList )
-		{
-			if ( !stringList.contains( s.toLowerCase() ) )
-				temp.add( s );
-		}
-		
-		for ( String s : temp )
-		{
-			stringList.remove( s );
-			stringList.add( s.toLowerCase() );
-		}
-		
-		temp = null;
 		return stringList;
+	}
+	
+	/**
+	 * Scans a string array for entries that are not lower case.
+	 * 
+	 * @param stringList
+	 *            The original array to check.
+	 * @return The corrected string array.
+	 */
+	public static String[] toLowerCase( String... array )
+	{
+		for ( int i = 0; i < array.length; i++ )
+			array[i] = array[i].toLowerCase();
+		
+		return array;
 	}
 }

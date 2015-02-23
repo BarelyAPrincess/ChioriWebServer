@@ -298,7 +298,7 @@ public class FileBackend extends PermissionBackend
 			{
 				String permName = s.toLowerCase();
 				ConfigurationSection result = section.getConfigurationSection( s );
-				Permission perm = Permission.getPermissionNode( permName, true );
+				Permission perm = Permission.getNode( permName, true );
 				
 				if ( result.getString( "type" ) != null )
 					switch ( result.getString( "type" ) )
@@ -336,7 +336,7 @@ public class FileBackend extends PermissionBackend
 					ConfigurationSection permission = section.getConfigurationSection( ss );
 					if ( permission != null && permission.getString( "permission" ) != null )
 					{
-						Permission perm = Permission.getPermissionNode( permission.getString( "permission" ).toLowerCase(), true );
+						Permission perm = Permission.getNode( permission.getString( "permission" ).toLowerCase(), true );
 						
 						List<Site> sites = Loader.getSiteManager().parseSites( ( permission.getString( "sites" ) == null ) ? "" : permission.getString( "sites" ) );
 						
@@ -365,7 +365,7 @@ public class FileBackend extends PermissionBackend
 					{
 						ConfigurationSection permission = section.getConfigurationSection( ss );
 						
-						Permission perm = Permission.getPermissionNode( permission.getString( "permission" ).toLowerCase(), true );
+						Permission perm = Permission.getNode( permission.getString( "permission" ).toLowerCase(), true );
 						
 						List<Site> sites = Loader.getSiteManager().parseSites( ( permission.getString( "sites" ) == null ) ? "" : permission.getString( "sites" ) );
 						

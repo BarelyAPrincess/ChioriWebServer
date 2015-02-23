@@ -30,35 +30,35 @@ public enum PermissionDefault
 		return nameSpace;
 	}
 	
-	public String getName()
+	public String getLocalName()
 	{
 		return ( nameSpace.contains( "." ) ) ? nameSpace.substring( nameSpace.indexOf( "." ) + 1 ) : nameSpace;
 	}
 	
-	public Permission getPermissionNode()
+	public Permission getNode()
 	{
-		Permission result = Permission.getPermissionNode( nameSpace, false );
+		Permission result = Permission.getNode( nameSpace, false );
 		
 		if ( result == null )
 			switch ( this )
 			{
 				case DEFAULT:
-					result = Permission.createPermissionNode( getNameSpace(), new PermissionValueBoolean( getName(), true, false ), "Used as the default permission node if one does not exist. (DO NOT EDIT!)" );
+					result = Permission.createNode( getNameSpace(), new PermissionValueBoolean( getLocalName(), true, false ), "Used as the default permission node if one does not exist. (DO NOT EDIT!)" );
 					break;
 				case EVERYBODY:
-					result = Permission.createPermissionNode( getNameSpace(), new PermissionValueBoolean( getName(), true, true ), "The dummy node used for the 'everyone' permission check. (DO NOT EDIT!)" );
+					result = Permission.createNode( getNameSpace(), new PermissionValueBoolean( getLocalName(), true, true ), "The dummy node used for the 'everyone' permission check. (DO NOT EDIT!)" );
 					break;
 				case OP:
-					result = Permission.createPermissionNode( getNameSpace(), new PermissionValueBoolean( getName(), true, false ), "Indicates OP entities. (DO NOT EDIT!)" );
+					result = Permission.createNode( getNameSpace(), new PermissionValueBoolean( getLocalName(), true, false ), "Indicates OP entities. (DO NOT EDIT!)" );
 					break;
 				case ADMIN:
-					result = Permission.createPermissionNode( getNameSpace(), new PermissionValueBoolean( getName(), true, false ), "Indicates ADMIN entities. (DO NOT EDIT!)" );
+					result = Permission.createNode( getNameSpace(), new PermissionValueBoolean( getLocalName(), true, false ), "Indicates ADMIN entities. (DO NOT EDIT!)" );
 					break;
 				case BANNED:
-					result = Permission.createPermissionNode( getNameSpace(), new PermissionValueBoolean( getName(), true, false ), "Indicates BANNED entities. (DO NOT EDIT!)" );
+					result = Permission.createNode( getNameSpace(), new PermissionValueBoolean( getLocalName(), true, false ), "Indicates BANNED entities. (DO NOT EDIT!)" );
 					break;
 				case WHITELISTED:
-					result = Permission.createPermissionNode( getNameSpace(), new PermissionValueBoolean( getName(), true, false ), "Indicates WHITELISTED entities. (DO NOT EDIT!)" );
+					result = Permission.createNode( getNameSpace(), new PermissionValueBoolean( getLocalName(), true, false ), "Indicates WHITELISTED entities. (DO NOT EDIT!)" );
 					break;
 			}
 		

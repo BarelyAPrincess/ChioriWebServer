@@ -11,6 +11,7 @@ package com.chiorichan.permission;
 
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimerTask;
 
 import com.chiorichan.ConsoleColor;
@@ -20,7 +21,9 @@ import com.chiorichan.permission.structure.ChildPermission;
 import com.chiorichan.permission.structure.Permission;
 import com.chiorichan.permission.structure.PermissionDefault;
 import com.chiorichan.util.Common;
+import com.chiorichan.util.PermissionUtil;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 public abstract class PermissibleEntity
 {
@@ -46,7 +49,7 @@ public abstract class PermissibleEntity
 	protected PermissionBackend backend;
 	
 	protected Map<String, LinkedList<TimedPermission>> timedPermissions = Maps.newConcurrentMap();
-	protected Map<String, ChildPermission> childPermissions = Maps.newConcurrentMap();
+	protected Set<ChildPermission> childPermissions = Sets.newConcurrentHashSet();
 	protected Map<String, PermissibleGroup> groups = Maps.newConcurrentMap();
 	
 	public PermissibleEntity( String id, PermissionBackend permBackend )
@@ -55,6 +58,32 @@ public abstract class PermissibleEntity
 		backend = permBackend;
 		
 		reload();
+	}
+	
+	protected ChildPermission getChildPermission( String namespace )
+	{
+		return getChildPermission( namespace, "" );
+	}
+	
+	protected ChildPermission getChildPermission( String namespace, String ref )
+	{
+		PermissionNamespace ns = new PermissionNamespace( namespace ).fixInvalidChars();
+		
+		if ( ref == null )
+			ref = "";
+		
+		ref = ref.toLowerCase();
+		
+		if ( !PermissionUtil.containsValidChars( ref ) )
+			ref = PermissionUtil.removeInvalidChars( ref );
+		
+		for ( ChildPermission child : childPermissions )
+		{
+			if ( ns.matches( child.getPermission() ) && ( ( child.getReferences().isEmpty() && ref.isEmpty() ) || child.getReferences().contains( ref ) ) )
+				return child;
+		}
+		
+		return null;
 	}
 	
 	/**
@@ -135,7 +164,7 @@ public abstract class PermissibleEntity
 			return null;
 		
 		for ( TimedPermission tp : timedPermissions.get( ref ) )
-			if ( tp.permission.getName().equals( perm ) || tp.permission.getNamespace().equals( perm ) )
+			if ( tp.permission.getLocalName().equals( perm ) || tp.permission.getNamespace().equals( perm ) )
 				return tp;
 		
 		return null;
@@ -274,7 +303,7 @@ public abstract class PermissibleEntity
 	
 	public boolean isBanned()
 	{
-		PermissionResult result = checkPermission( PermissionDefault.BANNED.getPermissionNode() );
+		PermissionResult result = checkPermission( PermissionDefault.BANNED.getNode() );
 		return result.isTrue();
 	}
 	
@@ -283,19 +312,19 @@ public abstract class PermissibleEntity
 		if ( !Loader.getPermissionManager().hasWhitelist )
 			return true;
 		
-		PermissionResult result = checkPermission( PermissionDefault.WHITELISTED.getPermissionNode() );
+		PermissionResult result = checkPermission( PermissionDefault.WHITELISTED.getNode() );
 		return result.isTrue();
 	}
 	
 	public boolean isAdmin()
 	{
-		PermissionResult result = checkPermission( PermissionDefault.ADMIN.getPermissionNode() );
+		PermissionResult result = checkPermission( PermissionDefault.ADMIN.getNode() );
 		return result.isTrue();
 	}
 	
 	public boolean isOp()
 	{
-		PermissionResult result = checkPermission( PermissionDefault.OP.getPermissionNode() );
+		PermissionResult result = checkPermission( PermissionDefault.OP.getNode() );
 		return result.isTrue();
 	}
 	
@@ -327,7 +356,7 @@ public abstract class PermissibleEntity
 		if ( perm.equalsIgnoreCase( "admin" ) )
 			perm = PermissionDefault.ADMIN.getNameSpace();
 		
-		Permission permission = Permission.getPermissionNode( perm, true );
+		Permission permission = Permission.getNode( perm, true );
 		result = checkPermission( permission, ref );
 		
 		return result;

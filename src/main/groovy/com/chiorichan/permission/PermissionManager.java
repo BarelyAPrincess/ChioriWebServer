@@ -28,6 +28,7 @@ import com.chiorichan.permission.event.PermissibleSystemEvent;
 import com.chiorichan.permission.structure.Permission;
 import com.chiorichan.permission.structure.PermissionDefault;
 import com.chiorichan.scheduler.TaskCreator;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -37,7 +38,6 @@ public class PermissionManager implements TaskCreator
 	protected Map<String, PermissibleGroup> groups = new HashMap<String, PermissibleGroup>();
 	protected Map<String, PermissibleEntity> entities = Maps.newHashMap();
 	protected Set<Permission> roots = Sets.newConcurrentHashSet();
-	protected PermissionMatcher matcher = new RegExpMatcher();
 	protected PermissionBackend backend = null;
 	protected YamlConfiguration config;
 	protected boolean hasWhitelist = false;
@@ -225,12 +225,12 @@ public class PermissionManager implements TaskCreator
 		 * if the first call is not to getPermissionNode() which is the method
 		 * that creates it if non-existent.
 		 */
-		PermissionDefault.DEFAULT.getPermissionNode();
-		PermissionDefault.EVERYBODY.getPermissionNode();
-		PermissionDefault.ADMIN.getPermissionNode();
-		PermissionDefault.OP.getPermissionNode();
-		PermissionDefault.BANNED.getPermissionNode();
-		PermissionDefault.WHITELISTED.getPermissionNode();
+		PermissionDefault.DEFAULT.getNode();
+		PermissionDefault.EVERYBODY.getNode();
+		PermissionDefault.ADMIN.getNode();
+		PermissionDefault.OP.getNode();
+		PermissionDefault.BANNED.getNode();
+		PermissionDefault.WHITELISTED.getNode();
 		
 		if ( isDebug() )
 		{
@@ -282,14 +282,38 @@ public class PermissionManager implements TaskCreator
 		return backend.getGroups();
 	}
 	
-	public List<Permissible> getEntitiesWithPermission( String perm )
+	/**
+	 * Finds entities assigned provided permission.
+	 * 
+	 * @param perm
+	 *            The permission to check for.
+	 * @return a list of permissibles that have that permission assigned to them.
+	 * @see PermissionManager#getEntitiesWithPermission(Permission)
+	 */
+	public List<PermissibleEntity> getEntitiesWithPermission( String perm )
 	{
-		return getEntitiesWithPermission( Permission.getPermissionNode( perm ) );
+		return getEntitiesWithPermission( Permission.getNode( perm ) );
 	}
 	
-	public List<Permissible> getEntitiesWithPermission( Permission perm )
+	/**
+	 * Finds entities assigned provided permission.
+	 * WARNING: Will not return a complete list if permissions.preloadEntities config is false.
+	 * 
+	 * @param perm
+	 *            The permission to check for.
+	 * @return a list of permissibles that have that permission assigned to them.
+	 */
+	public List<PermissibleEntity> getEntitiesWithPermission( Permission perm )
 	{
-		return null;// TODO Auto-generated method stub
+		List<PermissibleEntity> result = Lists.newArrayList();
+		
+		for ( PermissibleEntity entity : entities.values() )
+		{
+			if ( entity.checkPermission( perm ).isAssigned() )
+				result.add( entity );
+		}
+		
+		return result;
 	}
 	
 	/**
@@ -458,33 +482,6 @@ public class PermissionManager implements TaskCreator
 		callEvent( new PermissibleSystemEvent( action ) );
 	}
 	
-	public PermissionMatcher getPermissionMatcher()
-	{
-		return matcher;
-	}
-	
-	public void setPermissionMatcher( PermissionMatcher matcher )
-	{
-		this.matcher = matcher;
-	}
-	
-	public static ConsoleLogger getLogger()
-	{
-		return Loader.getLogger( "PermMgr" );
-	}
-	
-	@Override
-	public boolean isEnabled()
-	{
-		return true;
-	}
-	
-	@Override
-	public String getName()
-	{
-		return "PermissionsManager";
-	}
-	
 	/**
 	 * Check if specified entity has specified permission
 	 * 
@@ -534,5 +531,22 @@ public class PermissionManager implements TaskCreator
 			throw new RuntimeException( "Entity returned null! This is a bug and needs to be reported to the developers." );
 		
 		return entity.checkPermission( permission, ref );
+	}
+	
+	public static ConsoleLogger getLogger()
+	{
+		return Loader.getLogger( "PermMgr" );
+	}
+	
+	@Override
+	public boolean isEnabled()
+	{
+		return true;
+	}
+	
+	@Override
+	public String getName()
+	{
+		return "PermissionsManager";
 	}
 }

@@ -56,18 +56,12 @@ public class PermissionResult
 	
 	private ChildPermission recursiveEntityScan( PermissibleEntity pe )
 	{
-		if ( pe.childPermissions.containsKey( perm.getNamespace() ) )
-		{
-			ChildPermission result = pe.childPermissions.get( perm.getNamespace() );
-			if ( ref != null )
-			{
-				result.getReferences().contains( ref.toLowerCase() );
-			}
+		ChildPermission result = pe.getChildPermission( perm.getNamespace(), ref );
+		
+		if ( result != null )
 			return result;
-		}
 		
 		boolean isFirst = false;
-		ChildPermission result = null;
 		
 		if ( groupStackTrace == null )
 		{
@@ -156,7 +150,7 @@ public class PermissionResult
 		if ( getValue().getType() != PermissionValue.PermissionType.BOOL )
 			throw new IllegalAccessException( "This Permission Node is not type Boolean and can not be checked if true." );
 		
-		if ( perm != PermissionDefault.OP.getPermissionNode() && PermissionManager.allowOps && entity.isOp() )
+		if ( perm != PermissionDefault.OP.getNode() && PermissionManager.allowOps && entity.isOp() )
 			return true;
 		
 		return ( getObject() == null ) ? false : ( Boolean ) getObject();

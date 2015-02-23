@@ -20,7 +20,7 @@ public abstract class PermissibleEntityProxy extends PermissibleEntity
 	
 	public void attachPermission( ChildPermission perm )
 	{
-		childPermissions.put( perm.getPermission().getNamespace(), perm );
+		childPermissions.add( perm );
 	}
 	
 	public void detachPermission( ChildPermission perm )
@@ -40,7 +40,7 @@ public abstract class PermissibleEntityProxy extends PermissibleEntity
 	
 	public ChildPermission[] getChildPermissions()
 	{
-		return childPermissions.values().toArray( new ChildPermission[0] );
+		return childPermissions.toArray( new ChildPermission[0] );
 	}
 	
 	public void clearGroups()

@@ -11,11 +11,13 @@ package com.chiorichan.permission.backend.sql;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.permission.PermissibleEntityProxy;
 import com.chiorichan.permission.PermissibleGroup;
+import com.chiorichan.permission.PermissionNamespace;
 import com.chiorichan.permission.backend.SQLBackend;
 import com.chiorichan.permission.structure.ChildPermission;
 import com.chiorichan.permission.structure.Permission;
@@ -45,16 +47,24 @@ public class SQLEntity extends PermissibleEntityProxy
 			if ( rs.next() )
 				do
 				{
-					Permission perm = Permission.getPermissionNode( rs.getString( "permission" ) );
-					PermissionValue<?> childValue = ( rs.getString( "value" ) == null || rs.getString( "value" ).isEmpty() ) ? null : perm.getValue().createChild( rs.getString( "value" ) );
-					attachPermission( new ChildPermission( perm, childValue, false, Splitter.on( "|" ).splitToList( rs.getString( "ref" ) ) ) );
+					PermissionNamespace ns = new PermissionNamespace( rs.getString( "permission" ) );
+					List<Permission> perms = Permission.getNodes( ns );
+					
+					for ( Permission perm : perms )
+					{
+						if ( getChildPermission( perm.getNamespace() ) != null )
+						{
+							PermissionValue<?> childValue = ( rs.getString( "value" ) == null || rs.getString( "value" ).isEmpty() ) ? null : perm.getValue().createChild( rs.getString( "value" ) );
+							attachPermission( new ChildPermission( perm, childValue, false, Splitter.on( "|" ).splitToList( rs.getString( "ref" ) ) ) );
+						}
+					}
 				}
 				while ( rs.next() );
 			
 			/*
 			 * Adds the EVERYBODY Permission Node to all entities.
 			 */
-			Permission perm = PermissionDefault.EVERYBODY.getPermissionNode();
+			Permission perm = PermissionDefault.EVERYBODY.getNode();
 			attachPermission( new ChildPermission( perm, null, false, "" ) );
 		}
 		catch ( SQLException e )
