@@ -21,6 +21,8 @@ import java.util.regex.Pattern;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.Validate;
 
+import com.google.common.collect.Lists;
+
 public class StringUtil
 {
 	private static final String IPADDRESS_PATTERN = "^([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])$";
@@ -257,7 +259,17 @@ public class StringUtil
 	public static List<String> toLowerCase( List<String> stringList )
 	{
 		String[] array = toLowerCase( stringList.toArray( new String[0] ) );
-		stringList.clear();
+		
+		try
+		{
+			stringList.clear();
+		}
+		catch ( UnsupportedOperationException e )
+		{
+			// In this case we can't preserve the original list type.
+			stringList = Lists.newArrayList();
+		}
+		
 		for ( String s : array )
 			stringList.add( s );
 		

@@ -48,7 +48,11 @@ public class SQLEntity extends PermissibleEntityProxy
 				do
 				{
 					PermissionNamespace ns = new PermissionNamespace( rs.getString( "permission" ) );
+					
 					List<Permission> perms = Permission.getNodes( ns );
+					
+					if ( perms.isEmpty() && !ns.containsRegex() )
+						perms.add( Permission.getNode( ns.fixInvalidChars().getNamespace() ) );
 					
 					for ( Permission perm : perms )
 					{

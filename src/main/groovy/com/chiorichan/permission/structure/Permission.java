@@ -13,6 +13,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import com.chiorichan.ConsoleColor;
+import com.chiorichan.Loader;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.PermissionNamespace;
 import com.google.common.base.Strings;
@@ -269,10 +271,8 @@ public final class Permission
 		List<Permission> matches = Lists.newArrayList();
 		
 		for ( Permission p : allPerms )
-		{
 			if ( ns.matches( p ) )
 				matches.add( p );
-		}
 		
 		return matches;
 	}
@@ -363,9 +363,14 @@ public final class Permission
 	
 	public static List<Permission> getRootNodes()
 	{
+		return getRootNodes( true );
+	}
+	
+	public static List<Permission> getRootNodes( boolean ignoreSysNode )
+	{
 		List<Permission> rootNodes = Lists.newArrayList();
 		for ( Permission p : allPerms )
-			if ( p.isRootNode && p.getParent() == null && !p.getNamespace().startsWith( "sys" ) )
+			if ( p.isRootNode && p.getParent() == null && !p.getNamespace().startsWith( "sys" ) && ignoreSysNode )
 				rootNodes.add( p );
 		return rootNodes;
 	}
@@ -375,9 +380,9 @@ public final class Permission
 		String spacing = ( deepth > 0 ) ? Strings.repeat( "      ", deepth - 1 ) + "|---> " : "";
 		
 		if ( value == null )
-			PermissionManager.getLogger().info( "[DEBUG] " + spacing + getLocalName() );
+			PermissionManager.getLogger().info( ConsoleColor.YELLOW + spacing + getLocalName() );
 		else
-			PermissionManager.getLogger().info( "[DEBUG] " + spacing + getLocalName() + "=" + value.toString() );
+			PermissionManager.getLogger().info( ConsoleColor.YELLOW + spacing + getLocalName() + "=" + value.toString() );
 		
 		deepth++;
 		for ( Permission p : children )

@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimerTask;
 
+import com.chiorichan.ConsoleColor;
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
@@ -188,29 +189,13 @@ public class PermissionManager implements TaskCreator
 	public void loadData()
 	{
 		if ( isDebug() )
-			getLogger().warning( "Permission Debug is Enabled!" );
+			getLogger().warning( ConsoleColor.YELLOW + "Permission debug is enabled!" );
 		
 		entities.clear();
 		groups.clear();
 		
-		if ( config.getBoolean( "permissions.preloadGroups", true ) )
-		{
-			if ( isDebug() )
-				getLogger().info( "Preloading Groups from Backend!" );
-			for ( PermissibleGroup group : backend.getGroups() )
-				groups.put( group.getId(), group );
-		}
-		
-		if ( config.getBoolean( "permissions.preloadEntities", true ) )
-		{
-			if ( isDebug() )
-				getLogger().info( "Preloading Entities from Backend!" );
-			for ( PermissibleEntity entity : backend.getEntities() )
-				entities.put( entity.getId(), entity );
-		}
-		
 		if ( isDebug() )
-			getLogger().info( "Loading Permissions from Backend!" );
+			getLogger().info( ConsoleColor.YELLOW + "Loading permissions from backend!" );
 		
 		/*
 		 * This method loads all permissions and groups from the backend data store.
@@ -234,9 +219,25 @@ public class PermissionManager implements TaskCreator
 		
 		if ( isDebug() )
 		{
-			getLogger().info( "Dumping Loaded Permissions:" );
-			for ( Permission root : Permission.getRootNodes() )
+			getLogger().info( ConsoleColor.YELLOW + "Dumping Loaded Permissions:" );
+			for ( Permission root : Permission.getRootNodes( false ) )
 				root.debugPermissionStack( 0 );
+		}
+		
+		if ( config.getBoolean( "permissions.preloadGroups", true ) )
+		{
+			if ( isDebug() )
+				getLogger().info( ConsoleColor.YELLOW + "Preloading groups from backend!" );
+			for ( PermissibleGroup group : backend.getGroups() )
+				groups.put( group.getId(), group );
+		}
+		
+		if ( config.getBoolean( "permissions.preloadEntities", true ) )
+		{
+			if ( isDebug() )
+				getLogger().info( ConsoleColor.YELLOW + "Preloading entities from backend!" );
+			for ( PermissibleEntity entity : backend.getEntities() )
+				entities.put( entity.getId(), entity );
 		}
 	}
 	

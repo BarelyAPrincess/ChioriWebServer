@@ -370,7 +370,7 @@ public abstract class PermissibleEntity
 		PermissionResult result = new PermissionResult( this, perm, ref );
 		
 		if ( !perm.getNamespace().equalsIgnoreCase( PermissionDefault.OP.getNameSpace() ) && isDebug() )
-			PermissionManager.getLogger().info( ConsoleColor.GREEN + "Entity `" + getId() + "` checked for permission `" + perm + "`" + ( ( ref.isEmpty() ) ? "" : " with reference `" + ref + "`" ) + " with result `" + result + "`" );
+			PermissionManager.getLogger().info( ConsoleColor.YELLOW + "Entity `" + getId() + "` checked for permission `" + perm.getNamespace() + "`" + ( ( ref.isEmpty() ) ? "" : " with reference `" + ref + "`" ) + " with result `" + result + "`" );
 		
 		return result;
 	}

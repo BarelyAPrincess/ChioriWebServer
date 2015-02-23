@@ -24,6 +24,7 @@ import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.PermissionBackend;
 import com.chiorichan.permission.PermissionBackendException;
 import com.chiorichan.permission.PermissionManager;
+import com.chiorichan.permission.PermissionNamespace;
 import com.chiorichan.permission.backend.sql.SQLEntity;
 import com.chiorichan.permission.backend.sql.SQLGroup;
 import com.chiorichan.permission.structure.Permission;
@@ -237,22 +238,27 @@ public class SQLBackend extends PermissionBackend
 			if ( result.next() )
 				do
 				{
-					String permName = result.getString( "permission" ).toLowerCase();
-					Permission perm = Permission.getNode( permName, true );
+					PermissionNamespace ns = new PermissionNamespace( result.getString( "permission" ) );
+					
+					// TODO Remove invalid characters and save
+					if ( !ns.containsOnlyValidChars() )
+						PermissionManager.getLogger().warning( "The permission '" + ns.getNamespace() + "' contains invalid characters. Permission namespaces can only contain the characters a-z, 0-9, and _." );
+					
+					Permission perm = Permission.getNode( ns.getNamespace(), true );
 					
 					switch ( result.getString( "type" ) )
 					{
 						case "BOOL":
-							perm.setValue( new PermissionValueBoolean( permName, result.getBoolean( "value" ), result.getBoolean( "default" ) ) );
+							perm.setValue( new PermissionValueBoolean( ns.getLocalName(), result.getBoolean( "value" ), result.getBoolean( "default" ) ) );
 							break;
 						case "ENUM":
-							perm.setValue( new PermissionValueEnum( permName, result.getString( "value" ), result.getString( "default" ), result.getInt( "maxlen" ), Splitter.on( "|" ).splitToList( result.getString( "enum" ) ) ) );
+							perm.setValue( new PermissionValueEnum( ns.getLocalName(), result.getString( "value" ), result.getString( "default" ), result.getInt( "maxlen" ), Splitter.on( "|" ).splitToList( result.getString( "enum" ) ) ) );
 							break;
 						case "VAR":
-							perm.setValue( new PermissionValueVar( permName, result.getString( "value" ), result.getString( "default" ), result.getInt( "maxlen" ) ) );
+							perm.setValue( new PermissionValueVar( ns.getLocalName(), result.getString( "value" ), result.getString( "default" ), result.getInt( "maxlen" ) ) );
 							break;
 						case "INT":
-							perm.setValue( new PermissionValueInt( permName, result.getInt( "value" ), result.getInt( "value" ) ) );
+							perm.setValue( new PermissionValueInt( ns.getLocalName(), result.getInt( "value" ), result.getInt( "value" ) ) );
 							break;
 					}
 					
@@ -262,6 +268,10 @@ public class SQLBackend extends PermissionBackend
 		}
 		catch ( SQLException e )
 		{
+			/*
+			 * TODO Do something if comumns don't exist.
+			 * Caused by: java.sql.SQLException: Column 'premission' not found.
+			 */
 			throw new RuntimeException( e );
 		}
 	}

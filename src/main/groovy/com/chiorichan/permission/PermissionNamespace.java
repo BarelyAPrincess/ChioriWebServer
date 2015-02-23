@@ -88,7 +88,7 @@ public class PermissionNamespace
 	 * 
 	 * @return True if namespace contains only valid characters
 	 */
-	public boolean isValid()
+	public boolean containsOnlyValidChars()
 	{
 		boolean isValid = true;
 		

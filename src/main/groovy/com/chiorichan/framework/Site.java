@@ -384,7 +384,9 @@ public class Site
 					{
 						CodeMetaData meta = new CodeMetaData();
 						meta.shell = "groovy";
-						String result = factory.eval( script, meta, this );
+						
+						File file = getResourceWithException( script );
+						String result = factory.eval( file, meta, this );
 						
 						if ( result == null || result.isEmpty() )
 							Loader.getLogger().info( "Finsihed evaling onLoadScript '" + script + "' for site '" + siteId + "'" );
@@ -393,7 +395,11 @@ public class Site
 					}
 					catch ( ShellExecuteException e )
 					{
-						Loader.getLogger().warning( "There was an exception encountered while evaling onLoadScript '" + script + "' for site '" + siteId + "'.", e );
+						SiteManager.getLogger().warning( "There was an exception encountered while evaling onLoadScript '" + script + "' for site '" + siteId + "'.", e );
+					}
+					catch ( FileNotFoundException e )
+					{
+						SiteManager.getLogger().warning( "The onLoadScript '" + script + "' was not found for site '" + siteId + "'." );
 					}
 				}
 			}
