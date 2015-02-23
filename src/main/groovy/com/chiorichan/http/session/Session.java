@@ -19,6 +19,7 @@ import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountHandler;
+import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.LoginException;
 import com.chiorichan.framework.Site;
 import com.chiorichan.framework.WebUtils;
@@ -73,11 +74,14 @@ public abstract class Session extends AccountHandler
 		{
 			Account<?> user = Loader.getAccountManager().attemptLogin( this, username, password );
 			currentAccount = user;
-			Loader.getLogger().info( ConsoleColor.GREEN + "Login Restored `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getAcctId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
+			
+			if ( AccountManager.isDebug() )
+				SessionManager.getLogger().info( ConsoleColor.GREEN + "Login Restored `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getAcctId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
 		}
 		catch ( LoginException l )
 		{
-			// Loader.getLogger().warning( ChatColor.GREEN + "Login Status: No Valid Login Present" );
+			if ( AccountManager.isDebug() )
+				SessionManager.getLogger().info( ConsoleColor.YELLOW + "No Valid Login Present" );
 		}
 	}
 	
@@ -144,10 +148,12 @@ public abstract class Session extends AccountHandler
 		{
 			lastSession = getSessId();
 			lastTime = Common.getEpoch();
-			if ( stale )
-				Loader.getLogger().info( ConsoleColor.DARK_AQUA + "Session Requested `" + this + "`" );
-			else
-				Loader.getLogger().info( ConsoleColor.DARK_AQUA + "Session Created `" + this + "`" );
+			
+			if ( SessionManager.isDebug() )
+				if ( stale )
+					SessionManager.getLogger().info( ConsoleColor.DARK_AQUA + "Session Requested `" + this + "`" );
+				else
+					SessionManager.getLogger().info( ConsoleColor.DARK_AQUA + "Session Created `" + this + "`" );
 		}
 	}
 	
@@ -395,6 +401,7 @@ public abstract class Session extends AccountHandler
 		return data;
 	}
 	
+	// TODO Make abstract
 	protected static List<Session> getActiveSessions() throws SessionException
 	{
 		return Lists.newCopyOnWriteArrayList();

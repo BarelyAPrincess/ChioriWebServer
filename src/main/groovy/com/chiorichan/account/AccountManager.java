@@ -43,6 +43,8 @@ public class AccountManager
 	protected List<String> banByIp = new ArrayList<String>();
 	protected int maxAccounts = -1;
 	
+	private static boolean isDebug = false;
+	
 	public AccountManager()
 	{
 		instance = this;
@@ -56,6 +58,7 @@ public class AccountManager
 	public void init()
 	{
 		YamlConfiguration config = Loader.getConfig();
+		isDebug = config.getBoolean( "accounts.debug" );
 		
 		banByIp = config.getStringList( "accounts.banByIp", new ArrayList<String>() );
 		maxAccounts = config.getInt( "accounts.maxLogins", -1 );
@@ -343,5 +346,10 @@ public class AccountManager
 			accountLookupAdapter.failedLoginUpdate( acct.getMetaData(), l.getReason() );
 			throw l;
 		}
+	}
+	
+	public static boolean isDebug()
+	{
+		return isDebug;
 	}
 }

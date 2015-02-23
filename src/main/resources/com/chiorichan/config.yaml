@@ -73,12 +73,15 @@ sessions:
   allowIPChange: false
   cleanupInterval: 5
   adapterType: none
+  debug: false
 accounts:
   maxLogins: -1
+  debug: false
   lookupAdapter:
     type: none
     table: ''
-    fields: {}
+    fields: {
+      }
 framework:
   sites:
     defaultTitle: Unnamed Site

@@ -18,6 +18,7 @@ import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.http.Candy;
+import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.util.Common;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
@@ -58,7 +59,8 @@ public class SqlSession extends Session
 			
 			loginSessionUser();
 			
-			Loader.getLogger().info( ConsoleColor.DARK_AQUA + "Session Restored `" + this + "`" );
+			if ( SessionManager.isDebug() )
+				PermissionManager.getLogger().info( ConsoleColor.DARK_AQUA + "Session Restored `" + this + "`" );
 		}
 		catch ( SQLException e )
 		{
@@ -174,6 +176,7 @@ public class SqlSession extends Session
 	{
 		List<Session> sessionList = Lists.newCopyOnWriteArrayList();
 		DatabaseEngine sql = Loader.getDatabase();
+		long start = System.currentTimeMillis();
 		
 		try
 		{
@@ -200,6 +203,8 @@ public class SqlSession extends Session
 		{
 			Loader.getLogger().warning( "There was a problem reloading saved sessions.", e );
 		}
+		
+		PermissionManager.getLogger().info( "SqlSession loaded " + sessionList.size() + " sessions from the sql backend in " + ( start - System.currentTimeMillis() ) + "ms!" );
 		
 		return sessionList;
 	}

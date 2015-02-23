@@ -20,6 +20,7 @@ import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.http.Candy;
+import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.FileUtil;
 import com.google.common.collect.Lists;
@@ -44,7 +45,8 @@ public class FileSession extends Session
 		
 		loginSessionUser();
 		
-		Loader.getLogger().info( ConsoleColor.DARK_AQUA + "Session Restored `" + this + "`" );
+		if ( SessionManager.isDebug() )
+			PermissionManager.getLogger().info( ConsoleColor.DARK_AQUA + "Session Restored `" + this + "`" );
 	}
 	
 	private void readSessionFile() throws SessionException
@@ -185,8 +187,8 @@ public class FileSession extends Session
 	protected static List<Session> getActiveSessions()
 	{
 		List<Session> sessions = Lists.newCopyOnWriteArrayList();
-		
 		File[] files = getSessionsDirectory().listFiles();
+		long start = System.currentTimeMillis();
 		
 		if ( files == null )
 			return sessions;
@@ -203,6 +205,8 @@ public class FileSession extends Session
 					e.printStackTrace();
 				}
 			}
+		
+		PermissionManager.getLogger().info( "FileSession loaded " + sessions.size() + " sessions from the data store in " + ( start - System.currentTimeMillis() ) + "ms!" );
 		
 		return sessions;
 	}

@@ -52,7 +52,7 @@ public class SQLEntity extends PermissibleEntityProxy
 					
 					for ( Permission perm : perms )
 					{
-						if ( getChildPermission( perm.getNamespace() ) != null )
+						if ( getChildPermission( perm.getNamespace() ) == null )
 						{
 							PermissionValue<?> childValue = ( rs.getString( "value" ) == null || rs.getString( "value" ).isEmpty() ) ? null : perm.getValue().createChild( rs.getString( "value" ) );
 							attachPermission( new ChildPermission( perm, childValue, false, Splitter.on( "|" ).splitToList( rs.getString( "ref" ) ) ) );

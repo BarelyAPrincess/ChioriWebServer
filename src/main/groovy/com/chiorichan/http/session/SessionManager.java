@@ -13,6 +13,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.chiorichan.ConsoleColor;
+import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
 import com.chiorichan.exception.StartupException;
@@ -26,9 +27,12 @@ import com.google.common.collect.Lists;
 public class SessionManager
 {
 	private static List<Session> sessionList = Lists.newCopyOnWriteArrayList();
+	private static boolean isDebug = false;
 	
 	public void init() throws StartupException
 	{
+		isDebug = Loader.getConfig().getBoolean( "sessions.debug" );
+		
 		switch ( Loader.getConfig().getString( "server.database.type", "file" ) )
 		{
 			case "db":
@@ -163,5 +167,15 @@ public class SessionManager
 	public void reload()
 	{
 		// RELOAD ALL
+	}
+	
+	public static boolean isDebug()
+	{
+		return isDebug;
+	}
+
+	public static ConsoleLogger getLogger()
+	{
+		return Loader.getLogger( "SessMgr" );
 	}
 }
