@@ -9,6 +9,7 @@
  */
 package com.chiorichan.permission.structure;
 
+
 public enum PermissionDefault
 {
 	DEFAULT( "default" ), EVERYBODY( "" ), OP( "sys.op" ), ADMIN( "sys.admin" ), BANNED( "sys.banned" ), WHITELISTED( "sys.whitelisted" );
@@ -63,5 +64,16 @@ public enum PermissionDefault
 			}
 		
 		return result;
+	}
+	
+	public static boolean isDefault( Permission perm )
+	{
+		for ( PermissionDefault pd : PermissionDefault.values() )
+		{
+			if ( pd.getNameSpace().equalsIgnoreCase( perm.getNamespace() ) )
+				return true;
+		}
+		
+		return false;
 	}
 }

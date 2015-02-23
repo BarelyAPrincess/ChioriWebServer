@@ -281,7 +281,7 @@ public class AccountManager
 		return maxAccounts;
 	}
 	
-	public ConsoleLogger getLogger()
+	public static ConsoleLogger getLogger()
 	{
 		return Loader.getLogger( "AcctMgr" );
 	}

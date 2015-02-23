@@ -176,7 +176,7 @@ public class SqlAdapter implements AccountLookupAdapter
 	{
 		try
 		{
-			sql.queryUpdate( "UPDATE `" + table + "` SET `lastActive` = '" + Common.getEpoch() + "', `lastLoginFail` = 0, `numLoginFail` = 0 WHERE `accountID` = '" + meta.getAcctId() + "'" );
+			sql.queryUpdate( "UPDATE `" + table + "` SET `lastActive` = '" + Common.getEpoch() + "', `lastLoginFail` = 0, `numLoginFail` = 0 WHERE `acctID` = '" + meta.getAcctId() + "'" );
 		}
 		catch ( SQLException e )
 		{

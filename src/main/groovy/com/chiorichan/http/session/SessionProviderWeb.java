@@ -19,6 +19,7 @@ import java.util.Map.Entry;
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
+import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.LoginException;
 import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.framework.ConfigurationManagerWrapper;
@@ -180,11 +181,11 @@ public class SessionProviderWeb implements SessionProvider
 					
 					parentSession.currentAccount = user;
 					
-					Loader.getLogger().info( ConsoleColor.GREEN + "Login Success `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getAcctId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
+					AccountManager.getLogger().info( ConsoleColor.GREEN + "Successful Login [username='" + username + "',password='" + password + "',userId='" + user.getAcctId() + "',displayName='" + user.getDisplayName() + "']" );
 				}
 				catch ( LoginException l )
 				{
-					Loader.getLogger().warning( ConsoleColor.GREEN + "Login Failed `No Valid Login Present`" );
+					AccountManager.getLogger().warning( ConsoleColor.GREEN + "Failed Login [username='" + username + "',password='" + password + "',reason='" + l.getMessage() + "']" );
 				}
 			}
 			else
