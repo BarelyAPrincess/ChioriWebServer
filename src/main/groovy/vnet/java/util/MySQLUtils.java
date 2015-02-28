@@ -10,6 +10,7 @@
 package vnet.java.util;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 
 /**
  * Mysql Utilities
@@ -31,9 +32,10 @@ public class MySQLUtils
 	 * @param link
 	 * @param str
 	 * @return String that has been escaped
+	 * @throws SQLException 
 	 * @throws Exception
 	 */
-	public static String mysql_real_escape_string( Connection link, String str ) throws Exception
+	public static String mysql_real_escape_string( Connection link, String str ) throws SQLException
 	{
 		if ( str == null )
 		{
@@ -90,11 +92,6 @@ public class MySQLUtils
 		cleanString = cleanString.replaceAll( "'", "\\\\'" );
 		cleanString = cleanString.replaceAll( "\\\"", "\\\\\"" );
 		
-		if ( cleanString.replaceAll( "[a-zA-Z0-9_!@#$%^&*()-=+~.;:,\\Q[\\E\\Q]\\E<>{}\\/?\\\\\"' ]", "" ).length() < 1 )
-		{
-			return cleanString;
-		}
-		
 		return cleanString;
 	}
 	
@@ -107,7 +104,7 @@ public class MySQLUtils
 	 * @throws Exception
 	 */
 	
-	public static String quote( Connection link, String str ) throws Exception
+	public static String quote( Connection link, String str ) throws SQLException
 	{
 		if ( str == null )
 		{
@@ -125,7 +122,7 @@ public class MySQLUtils
 	 * @throws Exception
 	 */
 	
-	public static String nameQuote( Connection link, String str ) throws Exception
+	public static String nameQuote( Connection link, String str ) throws SQLException
 	{
 		if ( str == null )
 		{

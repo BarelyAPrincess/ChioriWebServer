@@ -147,7 +147,7 @@ public class SessionManager
 		if ( isDebug() )
 			Loader.getLogger().info( ConsoleColor.DARK_AQUA + "Session Destroyed `" + sess + "`" );
 		
-		for ( Account<?> u : Loader.getAccountManager().getOnlineAccounts() )
+		for ( Account u : Loader.getAccountManager().getOnlineAccounts() )
 			u.removeHandler( sess );
 		
 		sess.destroySession();

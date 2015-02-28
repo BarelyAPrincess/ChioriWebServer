@@ -15,10 +15,10 @@ public abstract class PermissionValue<T>
 	private T def;
 	private final String name;
 	
-	protected PermissionValue( String permName, T type, T def )
+	protected PermissionValue( String name, T value, T def )
 	{
-		name = permName;
-		value = type;
+		this.name = name;
+		this.value = value;
 		this.def = def;
 	}
 	
@@ -62,9 +62,9 @@ public abstract class PermissionValue<T>
 	
 	public abstract PermissionValue<T> createChild( Object val );
 	
-	protected void setValue( T val )
+	protected void setValue( T value )
 	{
-		value = val;
+		this.value = value;
 	}
 	
 	protected void setDefault( T val )
@@ -75,5 +75,15 @@ public abstract class PermissionValue<T>
 	public enum PermissionType
 	{
 		UNKNOWN, BOOL, ENUM, VAR, INT;
+		
+		public String toString()
+		{
+			return name();
+		}
+		
+		public boolean hasMaxLen()
+		{
+			return this == ENUM || this == VAR;
+		}
 	}
 }

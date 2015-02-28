@@ -29,7 +29,7 @@ public class PermissionResult
 	private PermissibleEntity entity = null;
 	private Permission perm = null;
 	private String ref = "";
-	private ChildPermission childPerm = null;
+	private ChildPermission<?> childPerm = null;
 	
 	public PermissionResult()
 	{
@@ -54,9 +54,9 @@ public class PermissionResult
 	 */
 	private List<PermissibleGroup> groupStackTrace = null;
 	
-	private ChildPermission recursiveEntityScan( PermissibleEntity pe )
+	private ChildPermission<?> recursiveEntityScan( PermissibleEntity pe )
 	{
-		ChildPermission result = pe.getChildPermission( perm.getNamespace(), ref );
+		ChildPermission<?> result = pe.getChildPermission( perm.getNamespace(), ref );
 		
 		if ( result != null )
 			return result;
@@ -74,7 +74,7 @@ public class PermissionResult
 			if ( !groupStackTrace.contains( group ) )
 			{
 				groupStackTrace.add( group );
-				ChildPermission childPerm = recursiveEntityScan( group );
+				ChildPermission<?> childPerm = recursiveEntityScan( group );
 				if ( childPerm != null )
 				{
 					result = childPerm;

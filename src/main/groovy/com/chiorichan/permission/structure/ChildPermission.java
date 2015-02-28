@@ -16,14 +16,14 @@ import java.util.List;
 import com.chiorichan.util.StringUtil;
 import com.google.common.collect.Lists;
 
-public class ChildPermission
+public class ChildPermission<T>
 {
 	public Permission perm;
 	public List<String> refs;
-	public PermissionValue<?> value;
+	public PermissionValue<T> value;
 	public boolean isInherited;
 	
-	public ChildPermission( Permission perm, PermissionValue<?> value, boolean isInherited, String... refs )
+	public ChildPermission( Permission perm, PermissionValue<T> value, boolean isInherited, String... refs )
 	{
 		this( perm, value, isInherited, new ArrayList<String>( Arrays.asList( refs ) ) );
 	}
@@ -40,7 +40,7 @@ public class ChildPermission
 	 * @param isInherited
 	 *            Was this value given to the entity because it was a member of a group?
 	 */
-	public ChildPermission( Permission perm, PermissionValue<?> value, boolean isInherited, List<String> refs )
+	public ChildPermission( Permission perm, PermissionValue<T> value, boolean isInherited, List<String> refs )
 	{
 		if ( refs == null )
 			refs = Lists.newArrayList();
@@ -63,12 +63,26 @@ public class ChildPermission
 		return refs;
 	}
 	
-	public PermissionValue<?> getValue()
+	public PermissionValue<T> getValue()
 	{
 		return value;
 	}
 	
-	public Object getObject()
+	/**
+	 * Sets the custom value for the entity specified.
+	 * Empty or null will set value to Permission default.
+	 */
+	public void setValue( T val )
+	{
+		if ( val == null || val.equals( "" ) )
+			value = null;
+		else
+			value.setValue( val );
+		
+		// TODO Save custom value to backend
+	}
+	
+	public T getObject()
 	{
 		return value.getValue();
 	}

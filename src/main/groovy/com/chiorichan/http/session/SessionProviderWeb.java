@@ -31,6 +31,7 @@ import com.chiorichan.permission.PermissionResult;
 import com.chiorichan.permission.structure.Permission;
 import com.chiorichan.util.Common;
 
+@SuppressWarnings( "deprecation" )
 public class SessionProviderWeb implements SessionProvider
 {
 	protected final Binding binding = new Binding();
@@ -144,7 +145,7 @@ public class SessionProviderWeb implements SessionProvider
 		{
 			try
 			{
-				Account<?> user = Loader.getAccountManager().attemptLogin( parentSession, username, password );
+				Account user = Loader.getAccountManager().attemptLogin( parentSession, username, password );
 				
 				parentSession.currentAccount = user;
 				
@@ -152,18 +153,21 @@ public class SessionProviderWeb implements SessionProvider
 				
 				parentSession.setVariable( "remember", remember );
 				
-				Loader.getLogger().info( ConsoleColor.GREEN + "Login Success `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getAcctId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
+				AccountManager.getLogger().info( ConsoleColor.GREEN + "Successful Login [username='" + username + "',password='" + password + "',userId='" + user.getAcctId() + "',displayName='" + user.getDisplayName() + "']" );
 				request.getResponse().sendRedirect( loginPost );
 				
 			}
 			catch ( LoginException l )
 			{
-				l.printStackTrace();
-				
 				String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
 				
 				if ( l.getAccount() != null )
-					Loader.getLogger().warning( "Login Failed `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + l.getAccount().getAcctId() + "\", Display Name \"" + l.getAccount().getDisplayName() + "\", Reason \"" + l.getMessage() + "\"`" );
+					AccountManager.getLogger().warning( ConsoleColor.GREEN + "Failed Login [username='" + username + "',password='" + password + "',userId='" + l.getAccount().getAcctId() + "',displayName='" + l.getAccount().getDisplayName() + "',reason='" + l.getMessage() + "']" );
+				
+				parentSession.currentAccount = null;
+				parentSession.setVariable( "user", "" );
+				parentSession.setVariable( "pass", "" );
+				parentSession.setVariable( "remember", "false" );
 				
 				request.getResponse().sendRedirect( loginForm + "?ok=" + l.getMessage() + "&target=" + target );
 			}
@@ -177,7 +181,7 @@ public class SessionProviderWeb implements SessionProvider
 			{
 				try
 				{
-					Account<?> user = Loader.getAccountManager().attemptLogin( parentSession, username, password );
+					Account user = Loader.getAccountManager().attemptLogin( parentSession, username, password );
 					
 					parentSession.currentAccount = user;
 					
@@ -310,7 +314,7 @@ public class SessionProviderWeb implements SessionProvider
 	}
 	
 	@Override
-	public Account<?> getAccount()
+	public Account getAccount()
 	{
 		return parentSession.getAccount();
 	}

@@ -23,17 +23,13 @@ import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.PermissionBackend;
 import com.chiorichan.permission.PermissionBackendException;
+import com.chiorichan.permission.PermissionException;
 import com.chiorichan.permission.PermissionManager;
-import com.chiorichan.permission.PermissionNamespace;
 import com.chiorichan.permission.backend.sql.SQLEntity;
 import com.chiorichan.permission.backend.sql.SQLGroup;
+import com.chiorichan.permission.backend.sql.SQLPermission;
 import com.chiorichan.permission.structure.Permission;
-import com.chiorichan.permission.structure.PermissionValueBoolean;
-import com.chiorichan.permission.structure.PermissionValueEnum;
-import com.chiorichan.permission.structure.PermissionValueInt;
-import com.chiorichan.permission.structure.PermissionValueVar;
 import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -238,42 +234,37 @@ public class SQLBackend extends PermissionBackend
 			if ( result.next() )
 				do
 				{
-					PermissionNamespace ns = new PermissionNamespace( result.getString( "permission" ) );
-					
-					// TODO Remove invalid characters and save
-					if ( !ns.containsOnlyValidChars() )
-						PermissionManager.getLogger().warning( "The permission '" + ns.getNamespace() + "' contains invalid characters. Permission namespaces can only contain the characters a-z, 0-9, and _." );
-					
-					Permission perm = Permission.getNode( ns.getNamespace(), true );
-					
-					switch ( result.getString( "type" ) )
+					try
 					{
-						case "BOOL":
-							perm.setValue( new PermissionValueBoolean( ns.getLocalName(), result.getBoolean( "value" ), result.getBoolean( "default" ) ) );
-							break;
-						case "ENUM":
-							perm.setValue( new PermissionValueEnum( ns.getLocalName(), result.getString( "value" ), result.getString( "default" ), result.getInt( "maxlen" ), Splitter.on( "|" ).splitToList( result.getString( "enum" ) ) ) );
-							break;
-						case "VAR":
-							perm.setValue( new PermissionValueVar( ns.getLocalName(), result.getString( "value" ), result.getString( "default" ), result.getInt( "maxlen" ) ) );
-							break;
-						case "INT":
-							perm.setValue( new PermissionValueInt( ns.getLocalName(), result.getInt( "value" ), result.getInt( "value" ) ) );
-							break;
+						SQLPermission.initNode( result );
 					}
-					
-					perm.setDescription( result.getString( "description" ) );
+					catch ( PermissionException e )
+					{
+						PermissionManager.getLogger().warning( e.getMessage() );
+					}
 				}
 				while ( result.next() );
 		}
 		catch ( SQLException e )
 		{
 			/*
-			 * TODO Do something if comumns don't exist.
-			 * Caused by: java.sql.SQLException: Column 'premission' not found.
+			 * TODO Do something if columns don't exist.
+			 * Caused by: java.sql.SQLException: Column 'permission' not found.
 			 */
 			throw new RuntimeException( e );
 		}
+	}
+	
+	@Override
+	public Permission createNode( String namespace ) throws PermissionException
+	{
+		return SQLPermission.initNode( namespace, null );
+	}
+	
+	@Override
+	public Permission createNode( String namespace, Permission parent ) throws PermissionException
+	{
+		return SQLPermission.initNode( namespace, parent );
 	}
 	
 	@Override

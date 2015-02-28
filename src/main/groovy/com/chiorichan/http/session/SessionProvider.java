@@ -36,7 +36,7 @@ public interface SessionProvider extends BindingProvider
 	
 	HttpResponseWrapper getResponse();
 	
-	Account<?> getAccount();
+	Account getAccount();
 	
 	Candy getCandy( String key );
 	

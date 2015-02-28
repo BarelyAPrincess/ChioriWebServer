@@ -16,8 +16,11 @@ import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.PermissionBackend;
 import com.chiorichan.permission.PermissionBackendException;
+import com.chiorichan.permission.PermissionException;
 import com.chiorichan.permission.backend.memory.MemoryEntity;
 import com.chiorichan.permission.backend.memory.MemoryGroup;
+import com.chiorichan.permission.backend.memory.MemoryPermission;
+import com.chiorichan.permission.structure.Permission;
 import com.google.common.collect.Sets;
 
 /*
@@ -71,8 +74,7 @@ public class MemoryBackend extends PermissionBackend
 	@Override
 	public void reload() throws PermissionBackendException
 	{
-		// Do Nothing
-		
+		// Nothing to do here!
 	}
 	
 	@Override
@@ -90,6 +92,18 @@ public class MemoryBackend extends PermissionBackend
 	@Override
 	public void loadPermissionTree()
 	{
-		
+		// Nothing to do here!
+	}
+	
+	@Override
+	public Permission createNode( String namespace ) throws PermissionException
+	{
+		return new MemoryPermission( namespace );
+	}
+	
+	@Override
+	public Permission createNode( String namespace, Permission parent ) throws PermissionException
+	{
+		return new MemoryPermission( namespace, parent );
 	}
 }

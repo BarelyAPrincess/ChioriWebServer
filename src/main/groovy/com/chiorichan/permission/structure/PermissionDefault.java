@@ -47,7 +47,7 @@ public enum PermissionDefault
 					result = Permission.createNode( getNameSpace(), new PermissionValueBoolean( getLocalName(), true, false ), "Used as the default permission node if one does not exist. (DO NOT EDIT!)" );
 					break;
 				case EVERYBODY:
-					result = Permission.createNode( getNameSpace(), new PermissionValueBoolean( getLocalName(), true, true ), "The dummy node used for the 'everyone' permission check. (DO NOT EDIT!)" );
+					result = Permission.createNode( getNameSpace(), new PermissionValueBoolean( getLocalName(), true, true ), "This node is used for the 'everyone' permission check. (DO NOT EDIT!)" );
 					break;
 				case OP:
 					result = Permission.createNode( getNameSpace(), new PermissionValueBoolean( getLocalName(), true, false ), "Indicates OP entities. (DO NOT EDIT!)" );

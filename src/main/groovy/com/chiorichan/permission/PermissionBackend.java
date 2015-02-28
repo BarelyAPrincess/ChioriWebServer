@@ -14,6 +14,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import com.chiorichan.permission.structure.Permission;
+
 public abstract class PermissionBackend
 {
 	/**
@@ -210,4 +212,8 @@ public abstract class PermissionBackend
 	public abstract void reload() throws PermissionBackendException;
 	
 	public abstract void loadPermissionTree();
+	
+	public abstract Permission createNode( String namespace ) throws PermissionException;
+	
+	public abstract Permission createNode( String namespace, Permission parent ) throws PermissionException;
 }

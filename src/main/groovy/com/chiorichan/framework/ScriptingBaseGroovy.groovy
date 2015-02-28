@@ -76,6 +76,7 @@ abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 		return request.getSession().getAccount();
 	}
 	
+	@SuppressWarnings( "deprecation" )
 	ConfigurationManagerWrapper getConfigurationManager()
 	{
 		return new ConfigurationManagerWrapper( request.getSession() );

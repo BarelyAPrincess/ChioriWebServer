@@ -9,7 +9,7 @@
  */
 package com.chiorichan.permission;
 
-public class RankingException extends Exception
+public class RankingException extends PermissionException
 {
 	private static final long serialVersionUID = -328357153481259189L;
 	

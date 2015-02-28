@@ -9,6 +9,7 @@
  */
 package com.chiorichan.permission;
 
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -57,6 +58,22 @@ public class PermissionNamespace
 	public String getNamespace()
 	{
 		return Joiner.on( "." ).join( nodes );
+	}
+	
+	public String getParent()
+	{
+		if ( nodes.length == 1 )
+			return "";
+		
+		if ( nodes.length < 1 )
+			return "";
+		
+		return Joiner.on( "." ).join( Arrays.copyOf( nodes, nodes.length - 1 ) );
+	}
+	
+	public PermissionNamespace getParentNamespace()
+	{
+		return new PermissionNamespace( getParent() );
 	}
 	
 	public int matchPercentage( String namespace )

@@ -28,9 +28,11 @@ import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.PermissionBackend;
 import com.chiorichan.permission.PermissionBackendException;
+import com.chiorichan.permission.PermissionException;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.backend.file.FileEntity;
 import com.chiorichan.permission.backend.file.FileGroup;
+import com.chiorichan.permission.backend.file.FilePermission;
 import com.chiorichan.permission.structure.Permission;
 import com.chiorichan.permission.structure.PermissionValue;
 import com.chiorichan.permission.structure.PermissionValueBoolean;
@@ -304,21 +306,21 @@ public class FileBackend extends PermissionBackend
 					switch ( result.getString( "type" ) )
 					{
 						case "BOOL":
-							perm.setValue( new PermissionValueBoolean( permName, result.getBoolean( "value" ), result.getBoolean( "default" ) ) );
+							perm.setValue( new PermissionValueBoolean( permName, result.getBoolean( "value" ), result.getBoolean( "default" ) ), false );
 							break;
 						case "ENUM":
-							perm.setValue( new PermissionValueEnum( permName, result.getString( "value", "" ), result.getString( "default" ), result.getInt( "maxlen", -1 ), Splitter.on( "|" ).splitToList( result.getString( "enum", "" ) ) ) );
+							perm.setValue( new PermissionValueEnum( permName, result.getString( "value", "" ), result.getString( "default" ), result.getInt( "maxlen", -1 ), Splitter.on( "|" ).splitToList( result.getString( "enum", "" ) ) ), false );
 							break;
 						case "VAR":
-							perm.setValue( new PermissionValueVar( permName, result.getString( "value", "" ), result.getString( "default" ), result.getInt( "maxlen", -1 ) ) );
+							perm.setValue( new PermissionValueVar( permName, result.getString( "value", "" ), result.getString( "default" ), result.getInt( "maxlen", -1 ) ), false );
 							break;
 						case "INT":
-							perm.setValue( new PermissionValueInt( permName, result.getInt( "value" ), result.getInt( "default" ) ) );
+							perm.setValue( new PermissionValueInt( permName, result.getInt( "value" ), result.getInt( "default" ) ), false );
 							break;
 					}
 				
 				if ( result.getString( "description" ) != null )
-					perm.setDescription( result.getString( "description" ) );
+					perm.setDescription( result.getString( "description" ), false );
 			}
 		
 		section = permissions.getConfigurationSection( "entities" );
@@ -376,5 +378,17 @@ public class FileBackend extends PermissionBackend
 						//group.attachPermission( new ChildPermission( perm, sites, value ) );
 					}
 			}
+	}
+
+	@Override
+	public Permission createNode( String namespace ) throws PermissionException
+	{
+		return new FilePermission( namespace );
+	}
+
+	@Override
+	public Permission createNode( String namespace, Permission parent ) throws PermissionException
+	{
+		return new FilePermission( namespace, parent );
 	}
 }

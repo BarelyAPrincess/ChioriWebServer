@@ -72,7 +72,7 @@ public abstract class Session extends AccountHandler
 		
 		try
 		{
-			Account<?> user = Loader.getAccountManager().attemptLogin( this, username, password );
+			Account user = Loader.getAccountManager().attemptLogin( this, username, password );
 			currentAccount = user;
 			
 			if ( AccountManager.isDebug() )
@@ -314,7 +314,7 @@ public abstract class Session extends AccountHandler
 		setVariable( "pass", null );
 		currentAccount = null;
 		
-		for ( Account<?> u : Loader.getAccountManager().getOnlineAccounts() )
+		for ( Account u : Loader.getAccountManager().getOnlineAccounts() )
 			u.removeHandler( this );
 	}
 	

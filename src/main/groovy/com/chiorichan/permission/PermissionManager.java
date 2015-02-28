@@ -68,7 +68,7 @@ public class PermissionManager implements TaskCreator
 		if ( backendName == null || backendName.isEmpty() )
 		{
 			backendName = PermissionBackend.defaultBackend; // Default backend
-			this.config.set( "permissions.backend", backendName );
+			config.set( "permissions.backend", backendName );
 		}
 		
 		setBackend( backendName );
@@ -508,7 +508,7 @@ public class PermissionManager implements TaskCreator
 	 *            ref used for this perm
 	 * @return true on success false otherwise
 	 */
-	public PermissionResult checkPermission( Account<?> entity, String perm, String ref )
+	public PermissionResult checkPermission( Account entity, String perm, String ref )
 	{
 		return this.checkPermission( entity.getAcctId(), perm, ref );
 	}

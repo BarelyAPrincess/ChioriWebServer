@@ -67,7 +67,7 @@ public class SessionProviderNet implements SessionProvider
 	}
 	
 	@Override
-	public Account<?> getAccount()
+	public Account getAccount()
 	{
 		return null;
 	}

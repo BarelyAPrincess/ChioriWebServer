@@ -14,65 +14,73 @@ import java.util.List;
 import java.util.Set;
 
 import com.chiorichan.ConsoleColor;
+import com.chiorichan.Loader;
+import com.chiorichan.permission.PermissionException;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.PermissionNamespace;
+import com.chiorichan.permission.backend.memory.MemoryPermission;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
-public final class Permission
+public abstract class Permission
 {
 	protected static final Set<Permission> allPerms = Sets.newConcurrentHashSet();
 	protected final List<Permission> children = Lists.newCopyOnWriteArrayList();
 	protected PermissionValue<?> value;
-	protected boolean isRootNode = false;
 	protected String description = "";
 	protected Permission parent = null;
-	protected String name;
+	protected String localName;
+	protected boolean changesMade = false;
 	
 	/**
 	 * Used only for creating dummy permission nodes that have no real connection to actual permission nodes.
 	 * 
-	 * @param name
+	 * @param localName
 	 *            The name used for this dummy node
 	 * @param value
 	 *            The value used for this dummy node
 	 * @param desc
 	 *            The description used for this dummy node
 	 */
-	public Permission( String name, PermissionValue<?> value, String desc )
+	protected Permission( String localName, PermissionValue<?> value, String desc )
 	{
-		this.name = name;
+		if ( localName.contains( "." ) )
+			throw new RuntimeException( "The permission local name can not contain periods, localName: " + localName + "" );
+		
+		this.localName = localName.toLowerCase();
 		this.value = value;
 		description = desc;
-		
-		// Sets the default value used when assigned verses not
-		value = new PermissionValueBoolean( name, true, false );
 	}
 	
-	public Permission( String name, Permission parentNode, boolean rootNode )
+	protected Permission( String localName )
 	{
-		this( name, ( rootNode ) ? null : parentNode );
-		isRootNode = rootNode;
+		this( localName, null );
 		allPerms.add( this );
-		
-		// Sets the default value used when assigned verses not
-		value = new PermissionValueBoolean( name, true, false );
 	}
 	
-	public Permission( String name, Permission parentNode )
+	protected Permission( String localName, Permission parentNode )
 	{
-		this.name = name.toLowerCase();
+		if ( localName.contains( "." ) )
+			throw new RuntimeException( "The permission local name can not contain periods!" );
+		
+		this.localName = localName.toLowerCase();
 		parent = parentNode;
 		allPerms.add( this );
-		
-		// Sets the default value used when assigned verses not
-		value = new PermissionValueBoolean( name, true, false );
 	}
 	
 	public void setValue( PermissionValue<?> val )
 	{
+		setValue( val, true );
+	}
+	
+	public void setValue( PermissionValue<?> val, boolean saveChanges )
+	{
 		value = val;
+		changesMade = true;
+		
+		if ( saveChanges )
+			saveNode();
 	}
 	
 	public boolean hasValue()
@@ -127,6 +135,11 @@ public final class Permission
 		return description;
 	}
 	
+	public void setDescription( String value )
+	{
+		setDescription( value, true );
+	}
+	
 	/**
 	 * Sets the description of this permission.
 	 * <p>
@@ -134,17 +147,25 @@ public final class Permission
 	 * 
 	 * @param value
 	 *            The new description to set
+	 * @param saveChanges
+	 *            shall we make the call to the backend to save these changes?
 	 */
-	public void setDescription( String value )
+	public void setDescription( String value, boolean saveChanges )
 	{
 		if ( value == null )
-		{
 			description = "";
-		}
 		else
-		{
 			description = value;
-		}
+		
+		changesMade = true;
+		
+		if ( saveChanges )
+			saveNode();
+	}
+	
+	public boolean hasDescription()
+	{
+		return description != null && !description.isEmpty();
 	}
 	
 	public boolean hasChildren()
@@ -169,7 +190,17 @@ public final class Permission
 	
 	public void addChild( Permission node )
 	{
+		addChild( node, true );
+	}
+	
+	public void addChild( Permission node, boolean saveChanges )
+	{
 		children.add( node );
+		
+		changesMade = true;
+		
+		if ( saveChanges )
+			saveNode();
 	}
 	
 	/**
@@ -179,7 +210,7 @@ public final class Permission
 	 */
 	public String getLocalName()
 	{
-		return name.toLowerCase();
+		return localName.toLowerCase();
 	}
 	
 	public Permission getParent()
@@ -203,10 +234,33 @@ public final class Permission
 		return namespace;
 	}
 	
+	public PermissionNamespace getNamespaceObj()
+	{
+		return new PermissionNamespace( getNamespace() );
+	}
+	
+	/**
+	 * Attempts to move a permission from one namespace to another.
+	 * e.g., com.chiorichan.oldspace1.same.oldname -> com.chiorichan.newspace2.same.newname.
+	 * 
+	 * @param newNamespace
+	 *            The new namespace you wish to use.
+	 * @param appendLocalName
+	 *            Pass true if you wish the method to append the LocalName to the new namespace.
+	 *            If the localname of the new namespace is different then this permission will be renamed.
+	 * @return true is move/rename was successful.
+	 */
+	public boolean refactorNamespace( String newNamespace, boolean appendLocalName )
+	{
+		// PermissionNamespace ns = getNamespaceObj();
+		// TODO THIS!
+		return false;
+	}
+	
 	protected static Permission getRootNode( String name )
 	{
 		for ( Permission perm : allPerms )
-			if ( perm.isRootNode && perm.getLocalName().equals( name ) )
+			if ( perm.parent == null && perm.getLocalName().equalsIgnoreCase( name ) )
 				return perm;
 		return null;
 	}
@@ -317,7 +371,15 @@ public final class Permission
 		if ( curr == null )
 			if ( createChildren )
 			{
-				curr = new Permission( nodes[0], null, true );
+				try
+				{
+					curr = Loader.getPermissionManager().getBackend().createNode( nodes[0] );
+				}
+				catch ( PermissionException e )
+				{
+					PermissionManager.getLogger().warning( "Failed to create node '" + nodes[0] + "':" + e.getMessage() );
+					curr = new MemoryPermission( nodes[0] );
+				}
 				allPerms.add( curr );
 			}
 			else
@@ -333,7 +395,15 @@ public final class Permission
 			{
 				if ( createChildren )
 				{
-					child = new Permission( node.toLowerCase(), curr );
+					try
+					{
+						child = Loader.getPermissionManager().getBackend().createNode( node, curr );
+					}
+					catch ( PermissionException e )
+					{
+						PermissionManager.getLogger().warning( "Failed to create node '" + nodes[0] + "':" + e.getMessage() );
+						child = new MemoryPermission( node, curr );
+					}
 					curr.addChild( child );
 					curr = child;
 				}
@@ -369,7 +439,7 @@ public final class Permission
 	{
 		List<Permission> rootNodes = Lists.newArrayList();
 		for ( Permission p : allPerms )
-			if ( p.isRootNode && p.getParent() == null && !p.getNamespace().startsWith( "sys" ) && ignoreSysNode )
+			if ( p.parent == null && !p.getNamespace().startsWith( "sys" ) && ignoreSysNode )
 				rootNodes.add( p );
 		return rootNodes;
 	}
@@ -389,4 +459,10 @@ public final class Permission
 			p.debugPermissionStack( deepth );
 		}
 	}
+	
+	public abstract void saveNode();
+	
+	public abstract void reloadNode();
+	
+	public abstract void destroyNode();
 }
