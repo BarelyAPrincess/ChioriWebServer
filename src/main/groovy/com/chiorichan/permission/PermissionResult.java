@@ -190,7 +190,7 @@ public class PermissionResult
 		if ( isAssigned() )
 		{
 			if ( childPerm == null || childPerm.getValue() == null )
-				return perm.getObject();
+				return perm.getValue().getValue();
 			else
 				return childPerm.getObject();
 		}

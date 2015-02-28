@@ -162,6 +162,11 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 					// ctx.channel().close();
 					return;
 				}
+				catch ( IllegalArgumentException e )
+				{
+					// TODO Handle This! Maybe?
+					// java.lang.IllegalArgumentException: empty name
+				}
 				readHttpDataChunkByChunk();
 				
 				if ( chunk instanceof LastHttpContent )

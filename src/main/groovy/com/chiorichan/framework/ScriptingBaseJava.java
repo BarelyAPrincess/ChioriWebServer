@@ -35,6 +35,7 @@ import com.chiorichan.util.ObjectUtil;
 import com.chiorichan.util.StringUtil;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 
 public abstract class ScriptingBaseJava extends Script
 {
@@ -314,7 +315,7 @@ public abstract class ScriptingBaseJava extends Script
 	
 	String[] explode( String limiter, String data )
 	{
-		return data.split( "\\" + limiter );
+		return Splitter.on( limiter ).splitToList( data ).toArray( new String[0] );
 	}
 	
 	String money_format( Double amt )

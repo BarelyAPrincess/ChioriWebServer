@@ -98,7 +98,12 @@ public abstract class Permission
 	
 	public Object getObject()
 	{
-		return ( value == null ) ? null : value.getValue();
+		return ( value == null ) ? PermissionDefault.DEFAULT.getNode().getObject() : value.getValue();
+	}
+	
+	public Object getDefaultValue()
+	{
+		return ( value == null ) ? PermissionDefault.DEFAULT.getNode().getDefaultValue() : value.getDefault();
 	}
 	
 	public String getString()
