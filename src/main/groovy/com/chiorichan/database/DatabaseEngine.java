@@ -28,6 +28,7 @@ import org.json.JSONException;
 
 import vnet.java.util.MySQLUtils;
 
+import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.exception.StartupException;
 import com.chiorichan.util.ObjectUtil;
@@ -267,6 +268,53 @@ public class DatabaseEngine
 		return true;
 	}
 	
+	public int queryUpdate( String query, Object... args ) throws SQLException
+	{
+		PreparedStatement stmt = null;
+		
+		if ( con == null )
+			throw new SQLException( "The SQL connection is closed or was never opened." );
+		
+		try
+		{
+			stmt = con.prepareStatement( query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
+			
+			int x = 0;
+			
+			for ( Object s : args )
+				try
+				{
+					x++;
+					stmt.setString( x, ObjectUtil.castToString( s ) );
+				}
+				catch ( SQLException e )
+				{
+					if ( !e.getMessage().startsWith( "Parameter index out of range" ) )
+						throw e;
+				}
+			
+			stmt.execute();
+			
+			Loader.getLogger().fine( "Update Query: \"" + stmt.toString() + "\" which affected " + stmt.getUpdateCount() + " row(s)." );
+		}
+		catch ( MySQLNonTransientConnectionException e )
+		{
+			if ( reconnect() )
+				return queryUpdate( query );
+		}
+		catch ( CommunicationsException e )
+		{
+			if ( reconnect() )
+				return queryUpdate( query );
+		}
+		catch ( Exception e )
+		{
+			e.printStackTrace();
+		}
+		
+		return stmt.getUpdateCount();
+	}
+	
 	public int queryUpdate( String query ) throws SQLException
 	{
 		int cnt = 0;
@@ -324,6 +372,60 @@ public class DatabaseEngine
 		{
 			if ( !retried && reconnect() )
 				return query( query, true );
+			else
+			{
+				throw e;
+			}
+		}
+		catch ( Throwable t )
+		{
+			t.printStackTrace();
+			throw t;
+		}
+		
+		return result;
+	}
+	
+	public ResultSet query( String query, Object... args ) throws SQLException
+	{
+		return query( query, false, args );
+	}
+	
+	public ResultSet query( String query, boolean retried, Object... args ) throws SQLException
+	{
+		PreparedStatement stmt = null;
+		ResultSet result = null;
+		
+		if ( con == null )
+			throw new SQLException( "The SQL connection is closed or was never opened." );
+		
+		try
+		{
+			stmt = con.prepareStatement( query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
+			
+			int x = 0;
+			
+			for ( Object s : args )
+				try
+				{
+					x++;
+					Loader.getLogger().debug( x + " -> " + ObjectUtil.castToString( s ) );
+					stmt.setString( x, ObjectUtil.castToString( s ) );
+				}
+				catch ( SQLException e )
+				{
+					if ( !e.getMessage().startsWith( "Parameter index out of range" ) )
+						throw e;
+				}
+			
+			result = stmt.executeQuery();
+			
+			Loader.getLogger().fine( "SQL Query `" + stmt.toString() + "` returned " + getRowCount( result ) + " rows!" );
+		}
+		catch ( CommunicationsException | MySQLNonTransientConnectionException e )
+		{
+			if ( !retried && reconnect() )
+				return query( query, true, args );
 			else
 			{
 				throw e;
@@ -1049,7 +1151,7 @@ public class DatabaseEngine
 		}
 	}
 	
-	public String escape( String str )
+	public static String escape( String str )
 	{
 		return MySQLUtils.escape( str );
 	}
@@ -1071,5 +1173,10 @@ public class DatabaseEngine
 			e.printStackTrace();
 		}
 		return false;
+	}
+	
+	public ConsoleLogger getLogger()
+	{
+		return Loader.getLogger( "DBEngine" );
 	}
 }
