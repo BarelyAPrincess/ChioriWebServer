@@ -31,7 +31,7 @@ public class FileInterpreter
 	protected Map<String, String> interpParams = Maps.newTreeMap();
 	protected ByteArrayOutputStream bs = new ByteArrayOutputStream();
 	protected File cachedFile = null;
-	protected String encoding = Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" );
+	protected String encoding = Loader.getConfig().getString( "server.defaultBinaryEncoding", "ISO-8859-1" );
 	
 	public String getEncoding()
 	{
@@ -141,7 +141,7 @@ public class FileInterpreter
 						try
 						{
 							/* Only solution I could think of for CSS files since they use @annotations too, so we share them. */
-							if ( ContentTypes.getContentType( file ).toLowerCase().contains( "css" ) )
+							if ( ContentTypes.getContentType( file ).equalsIgnoreCase( "text/css" ) )
 								finished.write( ( l + "\n" ).getBytes( encoding ) );
 							/* Only solution I could think of for CSS files since they use @annotations too, so we share them. */
 							
@@ -228,8 +228,10 @@ public class FileInterpreter
 		if ( type == null || type.isEmpty() )
 			type = ContentTypes.getContentType( cachedFile.getAbsoluteFile() );
 		
-		if ( type.toLowerCase().contains( "image" ) )
-			setEncoding( Loader.getConfig().getString( "server.defaultImageEncoding", "ISO-8859-1" ) );
+		if ( type.startsWith( "text" ) )
+			setEncoding( Loader.getConfig().getString( "server.defaultTextEncoding", "UTF-8" ) );
+		else
+			setEncoding( Loader.getConfig().getString( "server.defaultBinaryEncoding", "ISO-8859-1" ) );
 		
 		return type;
 	}

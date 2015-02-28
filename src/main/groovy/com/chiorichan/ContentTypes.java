@@ -93,11 +93,11 @@ public class ContentTypes
 		
 		if ( types != null && types.containsKey( ext ) )
 		{
-			return types.get( ext );
+			return types.get( ext ).toLowerCase();
 		}
 		else
 		{
-			return "text/plain";
+			return "application/octet-stream";
 		}
 	}
 }

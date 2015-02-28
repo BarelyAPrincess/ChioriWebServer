@@ -13,8 +13,8 @@ server:
   enableTcpServer: true
   allowQuery: false
   installationUID: null
-  defaultEncoding: UTF-8
-  defaultImageEncoding: ISO-8859-1
+  defaultTextEncoding: UTF-8
+  defaultBinaryEncoding: ISO-8859-1
   developmentMode: true
   maxFileUploadKb: 5120
   tmpFileDirectory: tmp
