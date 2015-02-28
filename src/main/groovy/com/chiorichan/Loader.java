@@ -16,6 +16,7 @@ import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -60,7 +61,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	public static final String BROADCAST_CHANNEL_USERS = "chiori.broadcast.user";
 	public static final String PATH_SEPERATOR = File.separator;
 	
-	private static AutoUpdater updater = null;	
+	private static AutoUpdater updater = null;
 	private static YamlConfiguration configuration;
 	private static Loader instance;
 	private static OptionSet options;
@@ -606,7 +607,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	public static void gracefullyShutdownServer( String reason )
 	{
 		if ( !reason.isEmpty() )
-			for ( Account<?> user : accounts.getOnlineAccounts() )
+			for ( Account user : accounts.getOnlineAccounts() )
 			{
 				user.kick( reason );
 			}
@@ -733,7 +734,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 			case "event":
 				return getLogger( "EvtMgr" );
 			case "database":
-				return getLogger( "DBMgr" );
+				return getLogger( "DBEngine" );
 			case "plugin":
 				return getLogger( "PlgMgr" );
 			case "scheduler":
@@ -891,5 +892,28 @@ public class Loader extends BuiltinEventCreator implements Listener
 	public void onServerRunLevelEvent( ServerRunLevelEvent event )
 	{
 		// getLogger().debug( "Got RunLevel Event: " + event.getRunLevel() );
+	}
+	
+	public static String getRandomGag()
+	{
+		switch ( new Random().nextInt( 10 ) )
+		{
+			case 0:
+				return "Or unexpected things could happen, like global distruction things. Well, not really. But they could. :)";
+			case 1:
+				return "Your only human, so I forgive you.";
+			case 3:
+				return "..... I will always love my user regardless! <3 <3 <3";
+			case 5:
+				return "Enjoy knowing you might have been the cause of this.";
+			case 7:
+				return "I need more chips! The other programs in this room seem to be hogging them all.";
+			case 9:
+				return "What are you doing later tonight? I might have some free time if this problem is too much for you.";
+			case 10:
+				return "Have you seen my cheese?";
+		}
+		
+		return "";
 	}
 }
