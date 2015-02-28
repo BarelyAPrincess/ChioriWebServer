@@ -13,14 +13,14 @@ import com.chiorichan.permission.Permissible;
 
 public abstract class AccountHandler extends Permissible implements InteractiveEntity
 {
-	public Account<?> currentAccount = null;
+	public Account currentAccount = null;
 	
-	public final void attachAccount( Account<?> acct )
+	public final void attachAccount( Account acct )
 	{
 		this.currentAccount = acct;
 	}
 	
-	public final Account<?> getAccount()
+	public final Account getAccount()
 	{
 		return currentAccount;
 	}

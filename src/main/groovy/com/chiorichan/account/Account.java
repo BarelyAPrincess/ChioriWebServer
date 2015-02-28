@@ -20,41 +20,8 @@ import com.chiorichan.permission.structure.Permission;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Sets;
 
-public abstract class Account<T extends AccountLookupAdapter> implements InteractiveEntity
+public abstract class Account implements InteractiveEntity
 {
-	public Account( String userId, T adapter ) throws LoginException
-	{
-		if ( userId.isEmpty() )
-			throw new LoginException( LoginExceptionReason.emptyUsername );
-		
-		if ( adapter == null )
-			throw new LoginException( LoginExceptionReason.unknownError );
-		
-		lookupAdapter = adapter;
-		
-		metaData = adapter.readAccount( userId );
-		acctId = metaData.getAcctId();
-	}
-	
-	public Account( AccountMetaData meta, T adapter ) throws LoginException
-	{
-		if ( meta == null )
-			throw new LoginException( LoginExceptionReason.unknownError );
-		
-		if ( adapter == null )
-			throw new LoginException( LoginExceptionReason.unknownError );
-		
-		lookupAdapter = adapter;
-		
-		metaData = meta;
-		acctId = meta.getAcctId();
-	}
-	
-	/**
-	 * Cached Account lookup adapter.
-	 */
-	protected final T lookupAdapter;
-	
 	/**
 	 * Set of AccountHandlers
 	 */
@@ -69,6 +36,27 @@ public abstract class Account<T extends AccountLookupAdapter> implements Interac
 	 * Account Id
 	 */
 	protected final String acctId;
+	
+	public Account( String userId, AccountLookupAdapter adapter ) throws LoginException
+	{
+		if ( userId.isEmpty() )
+			throw new LoginException( LoginExceptionReason.emptyUsername );
+		
+		if ( adapter == null )
+			throw new LoginException( LoginExceptionReason.unknownError );
+		
+		metaData = adapter.readAccount( userId );
+		acctId = metaData.getAcctId();
+	}
+	
+	public Account( AccountMetaData meta ) throws LoginException
+	{
+		if ( meta == null )
+			throw new LoginException( LoginExceptionReason.unknownError );
+		
+		metaData = meta;
+		acctId = meta.getAcctId();
+	}
 	
 	/**
 	 * Get the baked registered listeners associated with this handler list
@@ -194,7 +182,7 @@ public abstract class Account<T extends AccountLookupAdapter> implements Interac
 	
 	public final void save()
 	{
-		lookupAdapter.saveAccount( metaData );
+		getLookupAdapter().saveAccount( metaData );
 	}
 	
 	public String getAcctId()
@@ -252,16 +240,13 @@ public abstract class Account<T extends AccountLookupAdapter> implements Interac
 	
 	public final void reloadAndValidate() throws LoginException
 	{
-		metaData.mergeData( lookupAdapter.reloadAccount( metaData ) );
+		metaData.mergeData( getLookupAdapter().reloadAccount( metaData ) );
 	}
 	
-	public final AccountLookupAdapter getLookupAdapter()
-	{
-		return lookupAdapter;
-	}
+	public abstract AccountLookupAdapter getLookupAdapter();
 	
 	/**
-	 * Called before the AccountManager makes the login offical.
+	 * Called before the AccountManager makes the login official.
 	 * 
 	 * @throws LoginException
 	 *             Throw this exception if you wish to interrupt the login

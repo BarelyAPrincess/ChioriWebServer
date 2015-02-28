@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
 
@@ -23,25 +22,22 @@ import com.chiorichan.account.adapter.AccountLookupAdapter;
 import com.chiorichan.account.adapter.memory.MemoryAccount;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 
 public class AccountsKeeper
 {
-	protected Map<Account<?>, AccountsKeeperOptions> accounts = Maps.newConcurrentMap();
+	protected Map<Account, AccountsKeeperOptions> accounts = Maps.newConcurrentMap();
 	protected AccountLookupAdapter adapter = null;
 	
-	public Account<? extends AccountLookupAdapter> accountConstruct( AccountLookupAdapter adapter, String userId, Object... params ) throws LoginException
+	public Account accountConstruct( AccountLookupAdapter adapter, String userId, Object... params ) throws LoginException
 	{
-		Set<Class<?>> paramsClass = Sets.newHashSet();
+		List<Class<?>> paramsClass = Lists.newLinkedList();
 		
 		for ( Object o : params )
-		{
 			paramsClass.add( o.getClass() );
-		}
 		
 		try
 		{
-			Constructor<? extends Account<? extends AccountLookupAdapter>> constructor = adapter.getAccountClass().getConstructor( paramsClass.toArray( new Class<?>[0] ) );
+			Constructor<? extends Account> constructor = adapter.getAccountClass().getConstructor( paramsClass.toArray( new Class<?>[0] ) );
 			return constructor.newInstance( params );
 		}
 		catch ( InvocationTargetException e )
@@ -50,11 +46,13 @@ public class AccountsKeeper
 		}
 		catch ( NoSuchMethodException | InstantiationException | IllegalAccessException | IllegalArgumentException e )
 		{
-			return new MemoryAccount( userId, adapter );
+			e.printStackTrace();
+			AccountManager.getLogger().severe( "We had a problem constructing a new instance of '" + adapter.getAccountClass().getCanonicalName() + "' account class. We are not sure of the reason but this is most likely a SEVERE error. For the time being, we constructed a MemoryAccount but this is only temporary and logins will fail." );
+			return new MemoryAccount( userId, AccountLookupAdapter.MEMORY_ADAPTER );
 		}
 	}
 	
-	public IAccountsKeeperOptions putAccount( Account<?> acct, boolean keepInMemory )
+	public IAccountsKeeperOptions putAccount( Account acct, boolean keepInMemory )
 	{
 		AccountsKeeperOptions options = new AccountsKeeperOptions( keepInMemory );
 		accounts.put( acct, options );
@@ -66,7 +64,7 @@ public class AccountsKeeper
 		accounts.clear();
 	}
 	
-	public IAccountsKeeperOptions getAccountOptions( Account<?> acct )
+	public IAccountsKeeperOptions getAccountOptions( Account acct )
 	{
 		if ( !accounts.containsKey( acct ) )
 			return null;
@@ -74,25 +72,25 @@ public class AccountsKeeper
 		return accounts.get( acct );
 	}
 	
-	public Account<?> isLoaded( String acctId )
+	public Account isLoaded( String acctId )
 	{
-		for ( Account<?> acct : accounts.keySet() )
+		for ( Account acct : accounts.keySet() )
 			if ( acct.getAcctId().equals( acctId ) )
 				return acct;
 		
 		return null;
 	}
 	
-	public boolean isLoaded( Account<?> acct )
+	public boolean isLoaded( Account acct )
 	{
 		return accounts.containsKey( acct );
 	}
 	
-	public ArrayList<Account<?>> getAccounts()
+	public ArrayList<Account> getAccounts()
 	{
-		ArrayList<Account<?>> accts = Lists.newArrayList();
+		ArrayList<Account> accts = Lists.newArrayList();
 		
-		for ( Entry<Account<?>, AccountsKeeperOptions> entry : accounts.entrySet() )
+		for ( Entry<Account, AccountsKeeperOptions> entry : accounts.entrySet() )
 		{
 			accts.add( entry.getKey() );
 		}
@@ -100,14 +98,14 @@ public class AccountsKeeper
 		return accts;
 	}
 	
-	public Account<?> getAccountPartial( final String partial )
+	public Account getAccountPartial( final String partial )
 	{
 		Validate.notNull( partial, "Partial Name cannot be null" );
 		
-		Account<?> found = null;
+		Account found = null;
 		String lowerName = partial.toLowerCase();
 		int delta = Integer.MAX_VALUE;
-		for ( Entry<Account<?>, AccountsKeeperOptions> entry : accounts.entrySet() )
+		for ( Entry<Account, AccountsKeeperOptions> entry : accounts.entrySet() )
 		{
 			if ( entry.getKey().getAcctId().toLowerCase().startsWith( lowerName ) )
 			{
@@ -124,22 +122,23 @@ public class AccountsKeeper
 		return found;
 	}
 	
-	public Account<?> getAccount( String s ) throws LoginException
+	public Account getAccount( String s ) throws LoginException
 	{
 		Validate.notNull( s, "Partial Name cannot be null" );
 		
 		if ( adapter == null )
 			return null;
 		
-		Account<?> acct = null;
+		Account acct = null;
 		
-		for ( Entry<Account<?>, AccountsKeeperOptions> entry : accounts.entrySet() )
+		for ( Entry<Account, AccountsKeeperOptions> entry : accounts.entrySet() )
 			if ( entry.getKey().isYou( s ) )
 				acct = entry.getKey();
 		
 		if ( acct == null )
 		{
 			AccountMetaData meta = adapter.readAccount( s );
+			
 			if ( meta != null )
 			{
 				acct = accountConstruct( adapter, s, meta, adapter );
@@ -150,11 +149,11 @@ public class AccountsKeeper
 		return acct;
 	}
 	
-	public List<Account<?>> getOnlineAccounts()
+	public List<Account> getOnlineAccounts()
 	{
-		ArrayList<Account<?>> accts = Lists.newArrayList();
+		ArrayList<Account> accts = Lists.newArrayList();
 		
-		for ( Entry<Account<?>, AccountsKeeperOptions> entry : accounts.entrySet() )
+		for ( Entry<Account, AccountsKeeperOptions> entry : accounts.entrySet() )
 		{
 			if ( entry.getKey().hasHandler() )
 				accts.add( entry.getKey() );
@@ -163,17 +162,17 @@ public class AccountsKeeper
 		return accts;
 	}
 	
-	public List<Account<?>> getOfflineAccounts()
+	public List<Account> getOfflineAccounts()
 	{
 		List<AccountMetaData> metas = adapter.getAccounts();
-		List<Account<?>> accts = Lists.newArrayList();
+		List<Account> accts = Lists.newArrayList();
 		
 		if ( adapter == null )
 			return accts;
 		
 		for ( AccountMetaData meta : metas )
 		{
-			Account<?> acct = isLoaded( meta.getAcctId() );
+			Account acct = isLoaded( meta.getAcctId() );
 			
 			if ( acct == null )
 				try
@@ -196,7 +195,7 @@ public class AccountsKeeper
 		if ( adapter == null )
 			return;
 		
-		for ( Account<?> acct : accounts.keySet() )
+		for ( Account acct : accounts.keySet() )
 		{
 			if ( acct != null )
 				adapter.saveAccount( acct.getMetaData() );

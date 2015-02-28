@@ -115,12 +115,12 @@ public class AccountManager
 		new SystemAccounts();
 	}
 	
-	public void loadAccount( Account<?> acct )
+	public void loadAccount( Account acct )
 	{
 		loadAccount( acct, false, false, false );
 	}
 	
-	public void loadAccount( Account<?> acct, boolean keepInMemory, boolean whitelistOverride, boolean opOverride )
+	public void loadAccount( Account acct, boolean keepInMemory, boolean whitelistOverride, boolean opOverride )
 	{
 		AccountsKeeperOptions options = ( AccountsKeeperOptions ) accounts.putAccount( acct, keepInMemory );
 		
@@ -134,12 +134,12 @@ public class AccountManager
 		return banByIp.contains( id );
 	}
 	
-	public Account<?> getOfflineAccount( String name )
+	public Account getOfflineAccount( String name )
 	{
 		return getOfflineAccount( name, true );
 	}
 	
-	public Account<?> getOfflineAccount( String name, boolean search )
+	public Account getOfflineAccount( String name, boolean search )
 	{
 		Validate.notNull( name, "Name cannot be null" );
 		
@@ -171,27 +171,27 @@ public class AccountManager
 		}
 	}
 	
-	public List<Account<?>> getOnlineAccounts()
+	public List<Account> getOnlineAccounts()
 	{
 		return accounts.getOnlineAccounts();
 	}
 	
-	public List<Account<?>> getOfflineAccounts()
+	public List<Account> getOfflineAccounts()
 	{
 		return accounts.getOfflineAccounts();
 	}
 	
-	public ArrayList<Account<?>> getAccounts()
+	public ArrayList<Account> getAccounts()
 	{
 		return accounts.getAccounts();
 	}
 	
-	public Account<?> getAccountPartial( String partial )
+	public Account getAccountPartial( String partial )
 	{
 		return accounts.getAccountPartial( partial );
 	}
 	
-	public Account<?> getAccount( String s )
+	public Account getAccount( String s )
 	{
 		try
 		{
@@ -204,20 +204,20 @@ public class AccountManager
 		}
 	}
 	
-	public Account<?> getAccountWithException( String s ) throws LoginException
+	public Account getAccountWithException( String s ) throws LoginException
 	{
 		return accounts.getAccount( s );
 	}
 	
-	public List<Account<?>> getBannedAccounts()
+	public List<Account> getBannedAccounts()
 	{
-		ArrayList<Account<?>> accts = Lists.newArrayList();
+		ArrayList<Account> accts = Lists.newArrayList();
 		
 		for ( String id : banByIp )
 		{
 			try
 			{
-				Account<?> acct = accounts.getAccount( id );
+				Account acct = accounts.getAccount( id );
 				if ( acct != null )
 					accts.add( acct );
 			}
@@ -230,9 +230,9 @@ public class AccountManager
 		return accts;
 	}
 	
-	public List<Account<?>> getWhitelisted()
+	public List<Account> getWhitelisted()
 	{
-		ArrayList<Account<?>> accts = Lists.newArrayList();
+		ArrayList<Account> accts = Lists.newArrayList();
 		
 		List<PermissibleEntity> entities = Loader.getPermissionManager().getEntitiesWithPermission( PermissionDefault.WHITELISTED.getNode() );
 		
@@ -243,9 +243,9 @@ public class AccountManager
 		return accts;
 	}
 	
-	public List<Account<?>> getOperators()
+	public List<Account> getOperators()
 	{
-		ArrayList<Account<?>> accts = Lists.newArrayList();
+		ArrayList<Account> accts = Lists.newArrayList();
 		
 		List<PermissibleEntity> entities = Loader.getPermissionManager().getEntitiesWithPermission( PermissionDefault.OP.getNode() );
 		
@@ -281,19 +281,12 @@ public class AccountManager
 		return maxAccounts;
 	}
 	
-	public static ConsoleLogger getLogger()
-	{
-		return Loader.getLogger( "AcctMgr" );
-	}
-	
-	public Account<?> attemptLogin( Session sess, String username, String password ) throws LoginException
+	public Account attemptLogin( Session sess, String username, String password ) throws LoginException
 	{
 		if ( username == null || username.isEmpty() )
 			throw new LoginException( LoginExceptionReason.emptyUsername );
 		
-		Account<?> acct = accounts.getAccount( username );
-		
-		acct.putHandler( sess );
+		Account acct = accounts.getAccount( username );
 		
 		try
 		{
@@ -318,6 +311,7 @@ public class AccountManager
 				else
 					throw new LoginException( LoginExceptionReason.customReason.setReason( preLoginEvent.getKickMessage() ) );
 			
+			acct.putHandler( sess );
 			acct.preLoginCheck();
 			
 			if ( acct.countHandlers() > 1 && Loader.getConfig().getBoolean( "accounts.singleLogin" ) )
@@ -346,6 +340,11 @@ public class AccountManager
 			accountLookupAdapter.failedLoginUpdate( acct.getMetaData(), l.getReason() );
 			throw l;
 		}
+	}
+	
+	public static ConsoleLogger getLogger()
+	{
+		return Loader.getLogger( "AcctMgr" );
 	}
 	
 	public static boolean isDebug()

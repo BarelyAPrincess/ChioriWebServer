@@ -16,30 +16,39 @@ import com.chiorichan.account.AccountMetaData;
 import com.chiorichan.account.LoginException;
 import com.chiorichan.account.LoginExceptionReason;
 import com.chiorichan.account.adapter.AccountLookupAdapter;
+import com.chiorichan.util.Common;
 import com.google.common.collect.Lists;
 
+/**
+ * Works as the virtual adapter for virtual accounts. See {@link SystemAccounts} for a better idea.
+ */
 public class MemoryAdapter implements AccountLookupAdapter
 {
 	/**
-	 * Accounts are created programmably.
+	 * This is only so we can pretend to actually have accounts with the {@link #getAccounts()} method.
+	 * Obviously if we did not initialize any account during runtime {@link #getAccounts()} will return empty.
 	 */
+	protected final List<AccountMetaData> cachedAccts = Lists.newCopyOnWriteArrayList();
+	
 	@Override
 	public List<AccountMetaData> getAccounts()
 	{
-		return Lists.newArrayList();
+		return cachedAccts;
 	}
 	
-	/**
-	 * Can't save programmably created accounts.
-	 */
+	protected void cacheAcct( AccountMetaData acct )
+	{
+		cachedAccts.add( acct );
+	}
+	
 	@Override
-	public void saveAccount( AccountMetaData account )
+	public void saveAccount( AccountMetaData meta )
 	{
 		
 	}
 	
 	@Override
-	public void failedLoginUpdate( AccountMetaData account, LoginExceptionReason reason )
+	public void failedLoginUpdate( AccountMetaData meta, LoginExceptionReason reason )
 	{
 		
 	}
@@ -48,19 +57,19 @@ public class MemoryAdapter implements AccountLookupAdapter
 	 * Nothing to reload.
 	 */
 	@Override
-	public AccountMetaData reloadAccount( AccountMetaData account )
+	public AccountMetaData reloadAccount( AccountMetaData meta )
 	{
-		return account;
+		return meta;
 	}
 	
 	@Override
 	public AccountMetaData readAccount( String account ) throws LoginException
 	{
-		return new AccountMetaData( account, "9834h9fh3497ah4ea3a", account );
+		return new AccountMetaData( account, Common.md5( "9834h9fh3497ah4ea3a" + System.currentTimeMillis() ), account );
 	}
 	
 	@Override
-	public Class<? extends Account<AccountLookupAdapter>> getAccountClass()
+	public Class<? extends Account> getAccountClass()
 	{
 		return MemoryAccount.class;
 	}

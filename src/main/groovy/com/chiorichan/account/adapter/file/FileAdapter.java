@@ -251,7 +251,7 @@ public class FileAdapter implements AccountLookupAdapter
 	}
 	
 	@Override
-	public Class<? extends Account<? extends AccountLookupAdapter>> getAccountClass()
+	public Class<? extends Account> getAccountClass()
 	{
 		return FileAccount.class;
 	}

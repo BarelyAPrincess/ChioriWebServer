@@ -19,11 +19,15 @@ import com.chiorichan.account.LoginExceptionReason;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.util.Common;
 
-public class FileAccount extends Account<FileAdapter>
+public class FileAccount extends Account
 {
+	protected final FileAdapter lookupAdapter;
+	
 	public FileAccount( AccountMetaData meta, FileAdapter adapter ) throws LoginException
 	{
-		super( meta, adapter );
+		super( meta );
+		
+		lookupAdapter = adapter;
 	}
 	
 	@Override
@@ -114,5 +118,11 @@ public class FileAccount extends Account<FileAdapter>
 	public boolean isValid()
 	{
 		return metaData.hasMinimumData();
+	}
+	
+	@Override
+	public FileAdapter getLookupAdapter()
+	{
+		return lookupAdapter;
 	}
 }

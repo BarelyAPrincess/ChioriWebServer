@@ -17,11 +17,18 @@ import com.chiorichan.account.LoginException;
 import com.chiorichan.account.LoginExceptionReason;
 import com.chiorichan.util.Common;
 
-public class SqlAccount extends Account<SqlAdapter>
+public class SqlAccount extends Account
 {
+	protected final SqlAdapter lookupAdapter;
+	
 	public SqlAccount( AccountMetaData meta, SqlAdapter adapter ) throws LoginException
 	{
-		super( meta, adapter );
+		super( meta );
+		
+		if ( adapter == null )
+			throw new LoginException( LoginExceptionReason.unknownError );
+		
+		lookupAdapter = adapter;
 	}
 	
 	@Override
@@ -75,10 +82,16 @@ public class SqlAccount extends Account<SqlAdapter>
 	{
 		return getString( "username" );
 	}
-
+	
 	@Override
 	public boolean isValid()
 	{
 		return metaData.hasMinimumData();
+	}
+	
+	@Override
+	public SqlAdapter getLookupAdapter()
+	{
+		return null;
 	}
 }

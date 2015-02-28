@@ -188,7 +188,7 @@ public class SqlAdapter implements AccountLookupAdapter
 	}
 	
 	@Override
-	public Class<? extends Account<SqlAdapter>> getAccountClass()
+	public Class<? extends Account> getAccountClass()
 	{
 		return SqlAccount.class;
 	}

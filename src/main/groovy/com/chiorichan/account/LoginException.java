@@ -12,7 +12,8 @@ package com.chiorichan.account;
 public class LoginException extends Exception
 {
 	private static final long serialVersionUID = 5522301956671473324L;
-	private Account<?> acct = null;
+	
+	private Account acct = null;
 	private LoginExceptionReason reason = null;
 	
 	public LoginException( Exception e )
@@ -21,7 +22,7 @@ public class LoginException extends Exception
 		reason = LoginExceptionReason.customReason.setReason( e.getMessage() );
 	}
 	
-	public LoginException( LoginExceptionReason reason, Account<?> acct )
+	public LoginException( LoginExceptionReason reason, Account acct )
 	{
 		this( reason );
 		this.acct = acct;
@@ -43,12 +44,12 @@ public class LoginException extends Exception
 		return reason;
 	}
 	
-	public Account<?> getAccount()
+	public Account getAccount()
 	{
 		return acct;
 	}
 	
-	public void setAccount( Account<?> acct )
+	public void setAccount( Account acct )
 	{
 		this.acct = acct;
 	}

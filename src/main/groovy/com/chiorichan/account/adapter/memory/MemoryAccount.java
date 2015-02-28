@@ -12,18 +12,25 @@ package com.chiorichan.account.adapter.memory;
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountMetaData;
 import com.chiorichan.account.LoginException;
-import com.chiorichan.account.adapter.AccountLookupAdapter;
 
-public class MemoryAccount extends Account<AccountLookupAdapter>
+public class MemoryAccount extends Account
 {
-	public MemoryAccount( AccountMetaData meta, AccountLookupAdapter adapter ) throws LoginException
+	protected final MemoryAdapter lookupAdapter;
+	
+	public MemoryAccount( AccountMetaData meta, MemoryAdapter adapter ) throws LoginException
 	{
-		super( meta, adapter );
+		super( meta );
+		
+		lookupAdapter = adapter;
+		adapter.cacheAcct( meta );
 	}
 	
-	public MemoryAccount( String userId, AccountLookupAdapter adapter ) throws LoginException
+	public MemoryAccount( String userId, MemoryAdapter adapter ) throws LoginException
 	{
 		super( userId, adapter );
+		
+		lookupAdapter = adapter;
+		adapter.cacheAcct( metaData );
 	}
 	
 	@Override
@@ -72,5 +79,11 @@ public class MemoryAccount extends Account<AccountLookupAdapter>
 	public boolean isValid()
 	{
 		return metaData.hasMinimumData();
+	}
+	
+	@Override
+	public MemoryAdapter getLookupAdapter()
+	{
+		return lookupAdapter;
 	}
 }

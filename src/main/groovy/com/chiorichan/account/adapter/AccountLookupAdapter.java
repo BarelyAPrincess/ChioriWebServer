@@ -55,7 +55,7 @@ public interface AccountLookupAdapter
 	 * @return Class extends Account
 	 *         The class that should be used to create the Account Object
 	 */
-	Class<? extends Account<? extends AccountLookupAdapter>> getAccountClass();
+	Class<? extends Account> getAccountClass();
 	
 	/**
 	 * Informs the Adapater of a failed login
