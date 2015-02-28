@@ -653,7 +653,7 @@ public class Site
 		}
 		catch ( FileNotFoundException e )
 		{
-			if ( !packageNode.endsWith( "includes.default" ) )
+			if ( !packageNode.contains( ".includes." ) )
 				Loader.getLogger().warning( e.getMessage() );
 			return null;
 		}
