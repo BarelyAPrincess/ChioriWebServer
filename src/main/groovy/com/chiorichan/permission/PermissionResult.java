@@ -27,7 +27,7 @@ public class PermissionResult
 	private Permission perm = null;
 	private String ref = "";
 	private ChildPermission<?> childPerm = null;
-	private int timecode = Common.getEpoch();
+	protected int timecode = Common.getEpoch();
 	
 	public PermissionResult()
 	{

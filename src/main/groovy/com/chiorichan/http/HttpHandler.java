@@ -424,6 +424,9 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 		
 		String req = fi.get( "reqperm" );
 		
+		if ( req == null )
+			req = "-1";
+		
 		/**
 		 * -1 = Allow All!
 		 * 0 = OP Only!

@@ -46,8 +46,9 @@ public abstract class PermissibleEntity
 	protected PermissionBackend backend;
 	
 	protected Map<String, LinkedList<TimedPermission>> timedPermissions = Maps.newConcurrentMap();
-	protected Set<ChildPermission> childPermissions = Sets.newConcurrentHashSet();
+	protected Set<ChildPermission<?>> childPermissions = Sets.newConcurrentHashSet();
 	protected Map<String, PermissibleGroup> groups = Maps.newConcurrentMap();
+	protected Map<String, PermissionResult> cachedResults = Maps.newConcurrentMap();
 	
 	public PermissibleEntity( String id, PermissionBackend permBackend )
 	{
@@ -57,12 +58,12 @@ public abstract class PermissibleEntity
 		reload();
 	}
 	
-	protected ChildPermission getChildPermission( String namespace )
+	protected ChildPermission<?> getChildPermission( String namespace )
 	{
 		return getChildPermission( namespace, "" );
 	}
 	
-	protected ChildPermission getChildPermission( String namespace, String ref )
+	protected ChildPermission<?> getChildPermission( String namespace, String ref )
 	{
 		PermissionNamespace ns = new PermissionNamespace( namespace ).fixInvalidChars();
 		
@@ -74,7 +75,7 @@ public abstract class PermissibleEntity
 		if ( !PermissionUtil.containsValidChars( ref ) )
 			ref = PermissionUtil.removeInvalidChars( ref );
 		
-		for ( ChildPermission child : childPermissions )
+		for ( ChildPermission<?> child : childPermissions )
 		{
 			if ( ns.matches( child.getPermission() ) && ( ( child.getReferences().isEmpty() && ref.isEmpty() ) || child.getReferences().contains( ref ) ) )
 				return child;
@@ -111,7 +112,7 @@ public abstract class PermissibleEntity
 	}
 	
 	/**
-	 * Save in-memory data to storage backend
+	 * Save entity data to backend
 	 */
 	public abstract void save();
 	
@@ -364,7 +365,20 @@ public abstract class PermissibleEntity
 		if ( ref == null )
 			ref = "";
 		
-		PermissionResult result = new PermissionResult( this, perm, ref );
+		/**
+		 * We cache the results to reduce lag when a permission is checked multiple times over.
+		 */
+		PermissionResult result = cachedResults.get( perm.getNamespace() + "-" + ref );
+		
+		if ( result != null )
+			if ( result.timecode > Common.getEpoch() - 150 ) // 150 Seconds = 2.5 Minutes
+				return result;
+			else
+				cachedResults.remove( perm.getNamespace() + "-" + ref );
+		
+		result = new PermissionResult( this, perm, ref );
+		
+		cachedResults.put( perm.getNamespace() + "-" + ref, result );
 		
 		if ( !perm.getNamespace().equalsIgnoreCase( PermissionDefault.OP.getNameSpace() ) && isDebug() )
 			PermissionManager.getLogger().info( ConsoleColor.YELLOW + "Entity `" + getId() + "` checked for permission `" + perm.getNamespace() + "`" + ( ( ref.isEmpty() ) ? "" : " with reference `" + ref + "`" ) + " with result `" + result + "`" );

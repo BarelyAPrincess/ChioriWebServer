@@ -70,7 +70,7 @@ public class FileInterpreter
 	public FileInterpreter()
 	{
 		interpParams.put( "title", null );
-		interpParams.put( "reqlevel", "-1" );
+		interpParams.put( "reqperm", "-1" );
 		interpParams.put( "theme", null );
 		interpParams.put( "view", null );
 		
