@@ -19,6 +19,7 @@ server:
   maxFileUploadKb: 5120
   tmpFileDirectory: tmp
   webFileDirectory: webroot
+  fileUploadMinInMemory: 0
   database:
     database: chiorifw
     type: none

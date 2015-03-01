@@ -26,6 +26,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.gradle.jarjar.com.google.common.collect.Maps;
+
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.event.EventBus;
@@ -37,6 +39,7 @@ import com.chiorichan.util.StringUtil;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
+import com.google.common.collect.Lists;
 
 public abstract class ScriptingBaseJava extends Script
 {
@@ -314,13 +317,24 @@ public abstract class ScriptingBaseJava extends Script
 		return df.format( amt );
 	}
 	
+	int getEpoch()
+	{
+		return Common.getEpoch();
+	}
+	
 	List<String> explode( String limiter, String data )
 	{
+		if ( data == null || data.isEmpty() )
+			return Lists.newArrayList();
+		
 		return Splitter.on( limiter ).splitToList( data );
 	}
 	
 	Map<String, String> explode( String limiter, String separator, String data )
 	{
+		if ( data == null || data.isEmpty() )
+			return Maps.newHashMap();
+		
 		return Splitter.on( limiter ).withKeyValueSeparator( separator ).split( data );
 	}
 	

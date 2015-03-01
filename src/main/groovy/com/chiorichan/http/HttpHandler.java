@@ -63,10 +63,23 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 	private HttpResponseWrapper response;
 	private HttpPostRequestDecoder decoder;
 	private static DirectoryInterpreter dirInter = new DirectoryInterpreter();
-	private static final HttpDataFactory factory = new DefaultHttpDataFactory( DefaultHttpDataFactory.MINSIZE );
+	private static HttpDataFactory factory;
 	
 	static
 	{
+		/**
+		 * Determines the minimum file size required to create a temporary file.
+		 * See {@link DefaultHttpDataFactory#DefaultHttpDataFactory(boolean)} and {@link DefaultHttpDataFactory#DefaultHttpDataFactory(long)}
+		 */
+		long minsize = Loader.getConfig().getLong( "server.fileUploadMinInMemory", DefaultHttpDataFactory.MINSIZE );
+		
+		if ( minsize < 1 ) // Less then 1kb = always
+			factory = new DefaultHttpDataFactory( true );
+		if ( minsize > 102400 ) // Greater then 100mb = never
+			factory = new DefaultHttpDataFactory( false );
+		else
+			factory = new DefaultHttpDataFactory( minsize );
+		
 		DiskFileUpload.deleteOnExitTemporaryFile = true;
 		DiskFileUpload.baseDirectory = Loader.getTempFileDirectory().getAbsolutePath();
 		DiskAttribute.deleteOnExitTemporaryFile = true;
@@ -117,10 +130,13 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 			Site currentSite = request.getSite();
 			
 			File tmpFileDirectory = ( currentSite != null ) ? currentSite.getTempFileDirectory() : Loader.getTempFileDirectory();
+			
 			if ( !tmpFileDirectory.exists() )
 				tmpFileDirectory.mkdirs();
+			
 			if ( !tmpFileDirectory.isDirectory() )
 				Loader.getLogger().severe( "The temp directory specified in the server configs is not a directory, File Uploads will FAIL until this problem is resolved." );
+			
 			if ( !tmpFileDirectory.canWrite() )
 				Loader.getLogger().severe( "The temp directory specified in the server configs is not writable, File Uploads will FAIL until this problem is resolved." );
 			
@@ -293,9 +309,11 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 			FileUpload fileUpload = ( FileUpload ) data;
 			if ( fileUpload.isCompleted() )
 			{
+				Loader.getLogger().debug( "" + fileUpload );
+				
 				try
 				{
-					request.putUpload( fileUpload.getName(), new UploadedFile( fileUpload.getFile(), fileUpload.getFilename(), fileUpload.length(), "File upload was successful!" ) );
+					request.putUpload( fileUpload.getName(), new UploadedFile( fileUpload ) );
 				}
 				catch ( IOException e )
 				{
