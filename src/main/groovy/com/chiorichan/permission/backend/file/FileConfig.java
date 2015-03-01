@@ -15,7 +15,6 @@ import java.io.IOException;
 
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.permission.PermissionManager;
-import com.chiorichan.permission.backend.FileBackend;
 
 public class FileConfig extends YamlConfiguration
 {

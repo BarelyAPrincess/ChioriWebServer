@@ -14,18 +14,17 @@ import java.sql.SQLException;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
+import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionBackend;
 import com.chiorichan.permission.PermissionException;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.PermissionNamespace;
-import com.chiorichan.permission.backend.SQLBackend;
-import com.chiorichan.permission.structure.Permission;
-import com.chiorichan.permission.structure.PermissionValue;
-import com.chiorichan.permission.structure.PermissionValue.PermissionType;
-import com.chiorichan.permission.structure.PermissionValueBoolean;
-import com.chiorichan.permission.structure.PermissionValueEnum;
-import com.chiorichan.permission.structure.PermissionValueInt;
-import com.chiorichan.permission.structure.PermissionValueVar;
+import com.chiorichan.permission.PermissionValue;
+import com.chiorichan.permission.PermissionValueBoolean;
+import com.chiorichan.permission.PermissionValueEnum;
+import com.chiorichan.permission.PermissionValueInt;
+import com.chiorichan.permission.PermissionValueVar;
+import com.chiorichan.permission.PermissionValue.PermissionType;
 import com.chiorichan.util.ObjectUtil;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -43,7 +42,7 @@ public class SQLPermission extends Permission
 	 * @throws PermissionException
 	 *             Thrown for database and permission problems, duh.
 	 */
-	public static SQLPermission initNode( ResultSet result ) throws PermissionException
+	protected static SQLPermission initNode( ResultSet result ) throws PermissionException
 	{
 		try
 		{
@@ -90,7 +89,7 @@ public class SQLPermission extends Permission
 	 * @return
 	 * @throws PermissionException
 	 */
-	public static SQLPermission initNode( String namespace, Permission parent ) throws PermissionException
+	protected static SQLPermission initNode( String namespace, Permission parent ) throws PermissionException
 	{
 		PermissionNamespace ns = new PermissionNamespace( namespace );
 		

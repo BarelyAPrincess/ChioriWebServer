@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.permission.structure;
+package com.chiorichan.permission;
 
 import java.util.Arrays;
 import java.util.List;
@@ -15,9 +15,6 @@ import java.util.Set;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
-import com.chiorichan.permission.PermissionException;
-import com.chiorichan.permission.PermissionManager;
-import com.chiorichan.permission.PermissionNamespace;
 import com.chiorichan.permission.backend.memory.MemoryPermission;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;

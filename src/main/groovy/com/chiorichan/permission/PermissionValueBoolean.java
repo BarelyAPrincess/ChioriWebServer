@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.permission.structure;
+package com.chiorichan.permission;
 
 import com.chiorichan.util.ObjectUtil;
 
@@ -24,7 +24,7 @@ public class PermissionValueBoolean extends PermissionValue<Boolean>
 		try
 		{
 			@SuppressWarnings( "unchecked" )
-			PermissionValue<Boolean> newVal = ( PermissionValue<Boolean> ) clone();
+			PermissionValue<Boolean> newVal = (com.chiorichan.permission.PermissionValue<Boolean> ) clone();
 			newVal.setValue( ObjectUtil.castToBool( val ) );
 			return newVal;
 		}

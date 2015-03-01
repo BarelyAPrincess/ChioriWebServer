@@ -14,7 +14,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import com.chiorichan.permission.structure.Permission;
 import com.chiorichan.util.StringUtil;
 import com.google.common.base.Joiner;
 

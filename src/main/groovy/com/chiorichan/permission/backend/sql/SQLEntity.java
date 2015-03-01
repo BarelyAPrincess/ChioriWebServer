@@ -15,14 +15,13 @@ import java.util.List;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
+import com.chiorichan.permission.ChildPermission;
 import com.chiorichan.permission.PermissibleEntityProxy;
 import com.chiorichan.permission.PermissibleGroup;
+import com.chiorichan.permission.Permission;
+import com.chiorichan.permission.PermissionDefault;
 import com.chiorichan.permission.PermissionNamespace;
-import com.chiorichan.permission.backend.SQLBackend;
-import com.chiorichan.permission.structure.ChildPermission;
-import com.chiorichan.permission.structure.Permission;
-import com.chiorichan.permission.structure.PermissionDefault;
-import com.chiorichan.permission.structure.PermissionValue;
+import com.chiorichan.permission.PermissionValue;
 import com.chiorichan.util.ObjectUtil;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;

@@ -11,10 +11,7 @@ package com.chiorichan.permission;
 
 import java.util.List;
 
-import com.chiorichan.permission.structure.ChildPermission;
-import com.chiorichan.permission.structure.Permission;
-import com.chiorichan.permission.structure.PermissionDefault;
-import com.chiorichan.permission.structure.PermissionValue;
+import com.chiorichan.util.Common;
 import com.chiorichan.util.ObjectUtil;
 import com.google.common.collect.Lists;
 
@@ -30,6 +27,7 @@ public class PermissionResult
 	private Permission perm = null;
 	private String ref = "";
 	private ChildPermission<?> childPerm = null;
+	private int timecode = Common.getEpoch();
 	
 	public PermissionResult()
 	{

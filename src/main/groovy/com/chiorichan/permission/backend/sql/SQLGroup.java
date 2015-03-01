@@ -10,7 +10,6 @@
 package com.chiorichan.permission.backend.sql;
 
 import com.chiorichan.permission.PermissibleGroup;
-import com.chiorichan.permission.backend.SQLBackend;
 
 public class SQLGroup extends PermissibleGroup
 {

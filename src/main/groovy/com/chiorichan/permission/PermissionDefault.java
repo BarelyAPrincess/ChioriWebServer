@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.permission.structure;
+package com.chiorichan.permission;
 
 
 public enum PermissionDefault

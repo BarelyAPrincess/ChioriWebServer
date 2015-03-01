@@ -10,7 +10,6 @@
 package com.chiorichan.permission.backend.file;
 
 import com.chiorichan.permission.PermissibleGroup;
-import com.chiorichan.permission.backend.FileBackend;
 
 public class FileGroup extends PermissibleGroup
 {

@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.permission.structure;
+package com.chiorichan.permission;
 
 import java.util.ArrayList;
 import java.util.Arrays;

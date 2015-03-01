@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.permission.backend;
+package com.chiorichan.permission.backend.sql;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -21,14 +21,11 @@ import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
+import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionBackend;
 import com.chiorichan.permission.PermissionBackendException;
 import com.chiorichan.permission.PermissionException;
 import com.chiorichan.permission.PermissionManager;
-import com.chiorichan.permission.backend.sql.SQLEntity;
-import com.chiorichan.permission.backend.sql.SQLGroup;
-import com.chiorichan.permission.backend.sql.SQLPermission;
-import com.chiorichan.permission.structure.Permission;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;

@@ -9,9 +9,9 @@
  */
 package com.chiorichan.permission.backend.memory;
 
+import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionManager;
-import com.chiorichan.permission.structure.Permission;
-import com.chiorichan.permission.structure.PermissionValue;
+import com.chiorichan.permission.PermissionValue;
 
 public final class MemoryPermission extends Permission
 {

@@ -9,7 +9,7 @@
  */
 package com.chiorichan.permission.backend.file;
 
-import com.chiorichan.permission.structure.Permission;
+import com.chiorichan.permission.Permission;
 
 public final class FilePermission extends Permission
 {

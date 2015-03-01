@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.permission.backend;
+package com.chiorichan.permission.backend.file;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -26,19 +26,16 @@ import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.framework.Site;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
+import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionBackend;
 import com.chiorichan.permission.PermissionBackendException;
 import com.chiorichan.permission.PermissionException;
 import com.chiorichan.permission.PermissionManager;
-import com.chiorichan.permission.backend.file.FileEntity;
-import com.chiorichan.permission.backend.file.FileGroup;
-import com.chiorichan.permission.backend.file.FilePermission;
-import com.chiorichan.permission.structure.Permission;
-import com.chiorichan.permission.structure.PermissionValue;
-import com.chiorichan.permission.structure.PermissionValueBoolean;
-import com.chiorichan.permission.structure.PermissionValueEnum;
-import com.chiorichan.permission.structure.PermissionValueInt;
-import com.chiorichan.permission.structure.PermissionValueVar;
+import com.chiorichan.permission.PermissionValue;
+import com.chiorichan.permission.PermissionValueBoolean;
+import com.chiorichan.permission.PermissionValueEnum;
+import com.chiorichan.permission.PermissionValueInt;
+import com.chiorichan.permission.PermissionValueVar;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Sets;

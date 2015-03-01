@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.permission.structure;
+package com.chiorichan.permission;
 
 import com.chiorichan.util.ObjectUtil;
 
@@ -38,7 +38,7 @@ public class PermissionValueVar extends PermissionValue<String>
 		try
 		{
 			@SuppressWarnings( "unchecked" )
-			PermissionValue<String> newVal = ( PermissionValue<String> ) clone();
+			PermissionValue<String> newVal = (com.chiorichan.permission.PermissionValue<String> ) clone();
 			newVal.setValue( ObjectUtil.castToString( val ) );
 			return newVal;
 		}

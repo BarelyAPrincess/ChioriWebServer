@@ -7,14 +7,13 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.permission.structure;
+package com.chiorichan.permission;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.util.ObjectUtil;
 import com.google.common.collect.Sets;
 
@@ -68,7 +67,7 @@ public class PermissionValueEnum extends PermissionValue<String>
 		try
 		{
 			@SuppressWarnings( "unchecked" )
-			PermissionValue<String> newVal = ( PermissionValue<String> ) clone();
+			PermissionValue<String> newVal = (com.chiorichan.permission.PermissionValue<String> ) clone();
 			newVal.setValue( ObjectUtil.castToString( val ) );
 			return newVal;
 		}

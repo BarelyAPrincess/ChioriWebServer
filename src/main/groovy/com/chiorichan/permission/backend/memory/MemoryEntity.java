@@ -10,7 +10,6 @@
 package com.chiorichan.permission.backend.memory;
 
 import com.chiorichan.permission.PermissibleEntityProxy;
-import com.chiorichan.permission.backend.MemoryBackend;
 
 public class MemoryEntity extends PermissibleEntityProxy
 {

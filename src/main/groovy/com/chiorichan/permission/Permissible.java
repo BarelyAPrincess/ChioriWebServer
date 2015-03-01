@@ -10,7 +10,6 @@
 package com.chiorichan.permission;
 
 import com.chiorichan.Loader;
-import com.chiorichan.permission.structure.Permission;
 
 public abstract class Permissible
 {

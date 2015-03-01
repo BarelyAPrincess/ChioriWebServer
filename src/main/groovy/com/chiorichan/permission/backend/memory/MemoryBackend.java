@@ -7,20 +7,17 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.permission.backend;
+package com.chiorichan.permission.backend.memory;
 
 import java.util.Set;
 
 import com.chiorichan.Loader;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
+import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionBackend;
 import com.chiorichan.permission.PermissionBackendException;
 import com.chiorichan.permission.PermissionException;
-import com.chiorichan.permission.backend.memory.MemoryEntity;
-import com.chiorichan.permission.backend.memory.MemoryGroup;
-import com.chiorichan.permission.backend.memory.MemoryPermission;
-import com.chiorichan.permission.structure.Permission;
 import com.google.common.collect.Sets;
 
 /*

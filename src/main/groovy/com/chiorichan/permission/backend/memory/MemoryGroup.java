@@ -10,7 +10,6 @@
 package com.chiorichan.permission.backend.memory;
 
 import com.chiorichan.permission.PermissibleGroup;
-import com.chiorichan.permission.backend.MemoryBackend;
 
 public class MemoryGroup extends PermissibleGroup
 {

@@ -191,7 +191,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 		catch ( IndexOutOfBoundsException | NullPointerException | IOException | SiteException e )
 		{
 			/**
-			 * TODO!!! Proper Exception Handling. Consider the ability to have these exceptions cached and/or delivered by e-mail.
+			 * TODO!!! Proper Exception Handling. Consider the ability to have these exceptions cached and/or delivered by e-mail to developer.
 			 */
 			if ( e instanceof IOException && e.getCause() != null )
 			{
@@ -210,7 +210,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 			 * XXX Temporary way of capturing exceptions that were unexpected by the server.
 			 * Exceptions caught here should have proper exception captures implemented.
 			 */
-			Loader.getLogger().warning( "WARNING THIS IS AN UNCAUGHT EXCEPTION! CAN YOU KINDLY REPORT THIS STACKTRACE TO THE DEVELOPER?", e );
+			Loader.getLogger().warning( "WARNING THIS IS AN UNCAUGHT EXCEPTION! WOULD YOU KINDLY REPORT THIS STACKTRACE TO THE DEVELOPER?", e );
 		}
 		
 		try
@@ -424,10 +424,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 		
 		String req = fi.get( "reqperm" );
 		
-		// Deprecated!!!
-		if ( req == null )
-			req = fi.get( "reqlevel" );
-		
 		/**
 		 * -1 = Allow All!
 		 * 0 = OP Only!
@@ -441,7 +437,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 				String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
 				// Loader.getLogger().warning( "Requester of page '" + file + "' has been redirected to the login page." );
 				response.sendRedirect( loginForm + "?msg=You must be logged in to view that page!&target=http://" + request.getDomain() + request.getURI() );
-				// TODO: Come up with a better way to handle the URI used in the target. ie. Params are lost.
+				// TODO: Come up with a better way to handle the URI used in the target, i.e., currently params are being lost in the redirect.
 				return;
 			}
 			else if ( !req.equals( "1" ) && !sess.getParentSession().checkPermission( req ).isTrue() )

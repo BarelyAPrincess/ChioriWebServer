@@ -9,7 +9,6 @@
  */
 package com.chiorichan.permission;
 
-import com.chiorichan.permission.structure.ChildPermission;
 
 public abstract class PermissibleEntityProxy extends PermissibleEntity
 {

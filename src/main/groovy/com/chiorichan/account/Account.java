@@ -15,8 +15,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 import com.chiorichan.Loader;
 import com.chiorichan.account.adapter.AccountLookupAdapter;
+import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionResult;
-import com.chiorichan.permission.structure.Permission;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Sets;
 

@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.permission.structure;
+package com.chiorichan.permission;
 
 import com.chiorichan.util.ObjectUtil;
 
@@ -24,7 +24,7 @@ public class PermissionValueInt extends PermissionValue<Integer>
 		try
 		{
 			@SuppressWarnings( "unchecked" )
-			PermissionValue<Integer> newVal = ( PermissionValue<Integer> ) clone();
+			PermissionValue<Integer> newVal = (com.chiorichan.permission.PermissionValue<Integer> ) clone();
 			newVal.setValue( ObjectUtil.castToLong( val ).intValue() );
 			return newVal;
 		}
