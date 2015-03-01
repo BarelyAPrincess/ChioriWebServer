@@ -1,8 +1,7 @@
 language: java
 jdk: oraclejdk7
 install:
-- gradle clean writePropertiesFile shadowJar :TemplatesPlugin:build javadocArchive
-  writeNewPom
+- gradle clean writePropertiesFile shadowJar javadocArchive sourcesArchive
 script:
 - gradle build
 after_success:

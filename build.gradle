@@ -6,22 +6,31 @@ apply plugin: 'eclipse'
 apply plugin: 'groovy'
 apply plugin: 'license'
 apply plugin: 'com.github.johnrengelman.shadow'
-apply plugin: 'maven'
 apply plugin: 'checkstyle'
 apply from: 'etc/publish.gradle'
+
+repositories
+{
+	jcenter()
+	maven
+	{ url "http://jenkins.chiorichan.com:8081/artifactory/" }
+	mavenCentral()
+}
 
 buildscript
 {
 	repositories
 	{
-		mavenCentral()
 		jcenter()
+		maven
+		{ url "http://jenkins.chiorichan.com:8081/artifactory/" }
+		mavenCentral()
 	}
 	
 	dependencies
 	{
-		classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.10.0'
 		classpath 'com.github.jengelman.gradle.plugins:shadow:1.1.2'
+		classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.10.0'
 	}
 }
 
@@ -62,6 +71,11 @@ def getVersionNumber()
 sourceCompatibility = '1.7'
 targetCompatibility = '1.7'
 
+def rawVersion = getVersionNumber() + '-' + gitDescribe()
+def jenkins_build = System.getenv("BUILD_NUMBER")
+def travis_build = System.getenv("TRAVIS_BUILD_NUMBER")
+def buildNumber = '0';
+
 group = 'com.chiorichan'
 description = 'Chiori-chan\'s Web Server is a Java Based HTTP/TCP Server featuring Groovy Shell and a feature rich Plugin System'
 
@@ -71,12 +85,6 @@ if ( System.getenv("releaseBuild") != null )
 }
 else
 {
-	def rawVersion = getVersionNumber() + '-' + gitDescribe()
-	
-	def jenkins_build = System.getenv("BUILD_NUMBER")
-	def travis_build = System.getenv("TRAVIS_BUILD_NUMBER")
-	def buildNumber = 0;
-	
 	if ( jenkins_build != null )
 	{
 		version = rawVersion + '-jenkins-' + jenkins_build
@@ -129,13 +137,6 @@ license
 	ignoreFailures true
 	strictCheck false
 	skipExistingHeaders true
-}
-
-repositories
-{
-	maven
-	{ url "http://jenkins.chiorichan.com:8081/artifactory/" }
-	mavenCentral()
 }
 
 dependencies
