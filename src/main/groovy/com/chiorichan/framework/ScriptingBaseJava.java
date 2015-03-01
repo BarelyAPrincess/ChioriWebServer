@@ -338,6 +338,23 @@ public abstract class ScriptingBaseJava extends Script
 		return Joiner.on( joiner ).join( data );
 	}
 	
+	String implode( String joiner, List<String> data )
+	{
+		return Joiner.on( joiner ).join( data );
+	}
+	
+	/**
+	 * Determines if the color hex is darker then 50%
+	 * 
+	 * @param hexdec
+	 *            A hexdec color, e.g., #fff, #f3f3f3
+	 * @return True if color is darker then 50%
+	 */
+	boolean isDarkColor( String hexdec )
+	{
+		return Integer.parseInt( hexdec, 16 ) > ( 0xffffff / 2 );
+	}
+	
 	String money_format( Double amt )
 	{
 		if ( amt == 0 )
