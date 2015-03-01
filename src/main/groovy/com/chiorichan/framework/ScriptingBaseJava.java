@@ -318,6 +318,26 @@ public abstract class ScriptingBaseJava extends Script
 		return Splitter.on( limiter ).splitToList( data ).toArray( new String[0] );
 	}
 	
+	Map<String, String> explode( String limiter, String separator, String data )
+	{
+		return Splitter.on( limiter ).withKeyValueSeparator( separator ).split( data );
+	}
+	
+	String implode( String joiner, Map<String, String> data )
+	{
+		return implode( joiner, "=", data );
+	}
+	
+	String implode( String joiner, String separator, Map<String, String> data )
+	{
+		return Joiner.on( joiner ).withKeyValueSeparator( separator ).join( data );
+	}
+	
+	String implode( String joiner, String[] data )
+	{
+		return Joiner.on( joiner ).join( data );
+	}
+	
 	String money_format( Double amt )
 	{
 		if ( amt == 0 )
