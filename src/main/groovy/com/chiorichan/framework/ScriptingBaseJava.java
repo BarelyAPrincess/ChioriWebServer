@@ -26,8 +26,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.gradle.jarjar.com.google.common.collect.Maps;
-
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.event.EventBus;
@@ -40,6 +38,7 @@ import com.chiorichan.util.Versioning;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 public abstract class ScriptingBaseJava extends Script
 {
