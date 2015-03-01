@@ -22,6 +22,7 @@ import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -338,7 +339,12 @@ public abstract class ScriptingBaseJava extends Script
 		return Joiner.on( joiner ).join( data );
 	}
 	
-	String implode( String joiner, List<String> data )
+	String implode( String joiner, Iterator<String> data )
+	{
+		return Joiner.on( joiner ).join( data );
+	}
+	
+	String implode( String joiner, Iterable<String> data )
 	{
 		return Joiner.on( joiner ).join( data );
 	}
