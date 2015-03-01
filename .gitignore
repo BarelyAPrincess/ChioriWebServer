@@ -24,7 +24,7 @@
 /build/
 /manifest.mf
 /server.yaml
-*.gradle
 /.metadata
 /sessions/
 /plugins
+/.gradle/
