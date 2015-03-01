@@ -313,9 +313,9 @@ public abstract class ScriptingBaseJava extends Script
 		return df.format( amt );
 	}
 	
-	String[] explode( String limiter, String data )
+	List<String> explode( String limiter, String data )
 	{
-		return Splitter.on( limiter ).splitToList( data ).toArray( new String[0] );
+		return Splitter.on( limiter ).splitToList( data );
 	}
 	
 	Map<String, String> explode( String limiter, String separator, String data )
