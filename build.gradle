@@ -1,6 +1,6 @@
 import java.text.SimpleDateFormat;
 
-defaultTasks 'clean', 'writePropertiesFile', 'shadowJar', ':TemplatesPlugin:build', 'javadocArchive', 'sourcesArchive', 'writeNewPom'
+defaultTasks 'clean', 'writePropertiesFile', 'shadowJar', ':TemplatesPlugin:build', 'javadocArchive', 'sourcesArchive'
 
 apply plugin: 'eclipse'
 apply plugin: 'groovy'
@@ -8,6 +8,7 @@ apply plugin: 'license'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'maven'
 apply plugin: 'checkstyle'
+apply from: 'etc/publish.gradle'
 
 buildscript
 {
@@ -20,7 +21,41 @@ buildscript
 	dependencies
 	{
 		classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.10.0'
-		classpath 'com.github.jengelman.gradle.plugins:shadow:1.0.3'
+		classpath 'com.github.jengelman.gradle.plugins:shadow:1.1.2'
+	}
+}
+
+def gitDescribe()
+{
+	try
+	{
+		// determine git-describe output
+		def stdout = new ByteArrayOutputStream()
+		exec
+		{
+			commandLine 'git', 'describe', '--always'
+			standardOutput = stdout
+		}
+		return stdout.toString().trim()
+	}
+	catch (e)
+	{
+		return "unknown"
+	}
+}
+
+def getVersionNumber()
+{
+	try
+	{
+		Properties props = new Properties();
+		props.load( new FileInputStream( new File( "./src/main/resources/com/chiorichan/metadata.properties" ) ) );
+		
+		return props.getProperty( "project.version" );
+	}
+	catch ( e )
+	{
+		return 0;
 	}
 }
 
@@ -30,19 +65,62 @@ targetCompatibility = '1.7'
 group = 'com.chiorichan'
 description = 'Chiori-chan\'s Web Server is a Java Based HTTP/TCP Server featuring Groovy Shell and a feature rich Plugin System'
 
-def rawVersion = '9.0.0'
-
-if ( System.getenv('BUILD_NUMBER') == null || System.getenv('BUILD_NUMBER').isEmpty() )
-	version = rawVersion + '-github'
+if ( System.getenv("releaseBuild") != null )
+{
+	version = getVersionNumber();
+}
 else
-	version = rawVersion + '-github-build-' + System.getenv('BUILD_NUMBER')
-
+{
+	def rawVersion = getVersionNumber() + '-' + gitDescribe()
+	
+	def jenkins_build = System.getenv("BUILD_NUMBER")
+	def travis_build = System.getenv("TRAVIS_BUILD_NUMBER")
+	def buildNumber = 0;
+	
+	if ( jenkins_build != null )
+	{
+		version = rawVersion + '-jenkins-' + jenkins_build
+		buildNumber = jenkins_build;
+	}
+	else if ( travis_build != null )
+	{
+		version = rawVersion + '-travis-' + travis_build
+		buildNumber = travis_build;
+	}
+	else
+		version = rawVersion + '-dev'
+}	
+	
 distsDirName = 'dist'
 libsDirName = 'dist'
 
 compileJava
 {
 	options.encoding = 'UTF-8'
+}
+
+compileGroovy
+{
+	options.encoding = "UTF-8"
+}
+
+javadoc
+{
+	options.encoding = "UTF-8"
+}
+
+checkstyle
+{
+	configFile = file('etc/checkstyle.xml')
+	configProperties = ["basedir":project.projectDir]
+}
+
+eclipse
+{
+	project
+	{
+		name = 'ChioriWebServer'
+	}
 }
 
 license
@@ -56,7 +134,7 @@ license
 repositories
 {
 	maven
-	{ url "http://jenkins.chiorichan.com/plugin/repository/" }
+	{ url "http://jenkins.chiorichan.com:8081/artifactory/" }
 	mavenCentral()
 }
 
@@ -119,25 +197,10 @@ jar
 	{
 		attributes 'Implementation-Title': 'Chiori-chan\'s Web Server'
 		attributes 'Implementation-Version': version
+		attributes 'Implementation-Vendor': 'Chiori Greene'
 		attributes 'Implementation-Vendor-Id': 'chiorigreene@gmail.com'
 		attributes 'Main-Class': 'com.chiorichan.Loader'
 	}
-}
-
-compileGroovy
-{
-	options.encoding = "UTF-8"
-}
-
-javadoc
-{
-	options.encoding = "UTF-8"
-}
-
-checkstyle
-{
-	configFile = file('etc/checkstyle.xml')
-	configProperties = ["basedir":project.projectDir]
 }
 
 task sourcesArchive(type: Zip){
@@ -161,43 +224,14 @@ task writePropertiesFile << {
 	Properties props = new Properties();
 	props.load( new FileInputStream( new File( "./src/main/resources/com/chiorichan/metadata.properties" ) ) );
 	props.setProperty("project.builtOn", sdf.format( new Date() ));
-	props.setProperty("project.build", System.getenv('BUILD_NUMBER') ?: "0");
+	props.setProperty("project.build", buildNumber);
 	props.setProperty("project.version", version);
-	
-	if ( System.getenv('BUILD_NUMBER') != null )
-	{
-		// If not null then we are running from the Jenkin's Build Server. So we need to update the build.properties
-		File f1 = new File("./src/main/resources/com/chiorichan/metadata.properties")
-		f1.parentFile.mkdirs();
-		OutputStream out1 = new FileOutputStream( f1 );
-		props.store(out1, "Chiori-chan's Web Server Metadata Properties File - Used by the auto updater and Jenkins Build Server.");
-	}
 	
 	File f2 = new File("./build/dist/build.properties");
 	f2.parentFile.mkdirs();
 	OutputStream out2 = new FileOutputStream( f2 );
 	props.store(out2, "Chiori-chan's Web Server Metadata Properties File - Used by the auto updater and Jenkins Build Server.");
 	
-}
-
-task writeNewPom <<
-{
-	pom
-	{
-		project
-		{
-			inceptionYear '2015'
-			licenses
-			{
-				license
-				{
-					name 'Mozilla Public License, Version 2.0'
-					url 'http://mozilla.org/MPL/2.0/'
-					distribution 'repo'
-				}
-			}
-		}
-	}.writeTo("$buildDir/dist/pom.xml")
 }
 
 artifacts

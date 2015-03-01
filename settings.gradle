@@ -1,1 +1,2 @@
-include 'jline', 'PermissionsEx', 'TemplatesPlugin', 'EmailPlugin'
+include 'TemplatesPlugin', 'EmailPlugin'
+rootProject.name = 'ChioriWebServer'
