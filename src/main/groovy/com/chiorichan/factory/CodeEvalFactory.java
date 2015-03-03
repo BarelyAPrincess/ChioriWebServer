@@ -472,11 +472,11 @@ public class CodeEvalFactory
 			if ( l.getFileName() != null && l.getFileName().matches( "Script\\d*.groovy" ) )
 				tracker.setLineNumber( l.getLineNumber() );
 		
-		Loader.getLogger().info( "Locking GroovyShell '" + shell.toString() + "' for execution of '" + meta.fileName + "', length '" + code.length() + "', line '" + tracker.getLineNumber() + "'" );
+		Loader.getLogger().fine( "Locking GroovyShell '" + shell.toString() + "' for execution of '" + meta.fileName + "', length '" + code.length() + "', line '" + tracker.getLineNumber() + "'" );
 		tracker.setInUse( true );
 		tracker.setMetaData( meta );
 		
-		shell.setVariable( "evalVar", meta.global );
+		shell.setVariable( "_EVAL", meta.global );
 		
 		byte[] saved = bs.toByteArray();
 		bs.reset();
@@ -507,9 +507,9 @@ public class CodeEvalFactory
 			}
 		}
 		
-		shell.setVariable( "evalVar", null );
+		shell.setVariable( "_EVAL", null );
 		
-		Loader.getLogger().info( "Unlocking GroovyShell '" + shell.toString() + "' for execution of '" + meta.fileName + "', length '" + code.length() + "', line '" + tracker.getLineNumber() + "'" );
+		Loader.getLogger().fine( "Unlocking GroovyShell '" + shell.toString() + "' for execution of '" + meta.fileName + "', length '" + code.length() + "', line '" + tracker.getLineNumber() + "'" );
 		tracker.setInUse( false );
 		tracker.setMetaData( null );
 		

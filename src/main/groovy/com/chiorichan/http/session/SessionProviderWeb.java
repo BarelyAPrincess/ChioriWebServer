@@ -307,7 +307,7 @@ public class SessionProviderWeb implements SessionProvider
 		
 		if ( bindingMap != null && variables != null )
 			for ( Entry<String, Object> e : variables.entrySet() )
-				if ( !e.getKey().equals( "__FILE__" ) && !e.getKey().equals( "_REQUEST" ) && !e.getKey().equals( "_REWRITE" ) && !e.getKey().equals( "_GET" ) && !e.getKey().equals( "_POST" ) && !e.getKey().equals( "_SERVER" ) && !e.getKey().equals( "_FILES" ) )
+				if ( !e.getKey().equals( "__FILE__" ) && !e.getKey().equals( "_REQUEST" ) && !e.getKey().equals( "_REWRITE" ) && !e.getKey().equals( "_GET" ) && !e.getKey().equals( "_POST" ) && !e.getKey().equals( "_SERVER" ) && !e.getKey().equals( "_FILES" ) && !e.getKey().equals( "_EVAL" ) )
 					bindingMap.put( e.getKey(), e.getValue() );
 		
 		parentSession.sessionProviders.remove( this );
