@@ -45,6 +45,7 @@ import org.apache.commons.net.ntp.TimeInfo;
 import com.chiorichan.Loader;
 import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.factory.CodeEvalFactory;
+import com.chiorichan.util.Common;
 import com.chiorichan.util.StringUtil;
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
@@ -111,17 +112,37 @@ public class WebUtils
 	}
 	
 	@Deprecated
-	public static Map<String, Object> cleanArray( Map<String, Object> oldObj, List<String> allowedKeys )
+	public static Map<String, Object> cleanArray( Map<String, Object> data, List<String> allowedKeys )
 	{
-		return filter( oldObj, allowedKeys );
+		return filter( data, allowedKeys );
 	}
 	
-	public static Map<String, Object> filter( Map<String, Object> oldObj, List<String> allowedKeys )
+	public static Map<String, Object> filter( Map<String, Object> data, List<String> allowedKeys )
+	{
+		return filter( data, allowedKeys, false );
+	}
+	
+	/**
+	 * Filters a map for the specified list of keys, removing keys that are not contained in the list.
+	 * Groovy example: def filteredMap = getHttpUtils().filter( unfilteredMap, ["keyA", "keyB", "someKey"], false );
+	 * 
+	 * @param data
+	 *            The map that needs checking
+	 * @param allowedKeys
+	 *            A list of keys allowed
+	 * @param caseSensitive
+	 *            Will the key match be case sensitive or not
+	 * @return The resulting map of filtered data
+	 */
+	public static Map<String, Object> filter( Map<String, Object> data, List<String> allowedKeys, boolean caseSensitive )
 	{
 		Map<String, Object> newArray = new LinkedHashMap<String, Object>();
 		
-		for ( Entry<String, Object> e : oldObj.entrySet() )
-			if ( allowedKeys.contains( e.getKey() ) )
+		if ( !caseSensitive )
+			allowedKeys = StringUtil.toLowerCase( allowedKeys );
+		
+		for ( Entry<String, Object> e : data.entrySet() )
+			if ( ( !caseSensitive && allowedKeys.contains( e.getKey().toLowerCase() ) ) || allowedKeys.contains( e.getKey() ) )
 				newArray.put( e.getKey(), e.getValue() );
 		
 		return newArray;
@@ -149,7 +170,7 @@ public class WebUtils
 	
 	public static String createUUID() throws UnsupportedEncodingException
 	{
-		return createUUID( "" );
+		return createUUID( Common.getEpoch() + "-uuid" );
 	}
 	
 	public static String createUUID( String seed ) throws UnsupportedEncodingException
@@ -159,7 +180,7 @@ public class WebUtils
 	
 	public static String createGUID() throws UnsupportedEncodingException
 	{
-		return createGUID( "" );
+		return createGUID( Common.getEpoch() + "-guid" );
 	}
 	
 	public static String createGUID( String seed )
@@ -339,7 +360,6 @@ public class WebUtils
 	public static String escapeHTML( String l )
 	{
 		return StringEscapeUtils.escapeHtml4( l );
-		// return StringUtils.replaceEach( l, new String[] { "&", "\"", "<", ">" }, new String[] { "&amp;", "&quot;", "&lt;", "&gt;" } );
 	}
 	
 	/**

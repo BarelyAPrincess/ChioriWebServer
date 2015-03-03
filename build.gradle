@@ -213,12 +213,7 @@ task javadocArchive(type: Zip, dependsOn: 'javadoc'){
 	classifier = 'javadoc'
 	from javadoc.destinationDir
 }
-/*
-task libsArchive(type: Zip){
-	classifier = 'libs'
-	from configurations.compile
-}
-*/
+
 task writePropertiesFile << {
 	SimpleDateFormat sdf = new SimpleDateFormat( "EEE, d MMM yyyy HH:mm:ss Z" );
 	
@@ -237,14 +232,3 @@ task writePropertiesFile << {
 
 artifacts
 { archives shadowJar, sourcesArchive, javadocArchive }
-
-allprojects
-{
-	tasks.withType(Zip)
-	{ task ->
-		task.doLast
-		{
-			ant.checksum file: it.archivePath
-		}
-	}
-}
