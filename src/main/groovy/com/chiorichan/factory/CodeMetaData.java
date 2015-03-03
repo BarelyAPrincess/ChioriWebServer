@@ -12,6 +12,7 @@ package com.chiorichan.factory;
 import java.util.Map;
 
 import com.chiorichan.framework.Site;
+import com.google.common.collect.Maps;
 
 public class CodeMetaData
 {
@@ -20,5 +21,6 @@ public class CodeMetaData
 	public String source;
 	public String contentType;
 	public Site site;
-	public Map<String, String> params;
+	public Map<String, String> params = Maps.newHashMap();
+	public Map<String, Object> global = Maps.newHashMap();
 }

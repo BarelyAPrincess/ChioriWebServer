@@ -20,13 +20,12 @@ import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.codehaus.groovy.control.CompilerConfiguration;
 
+import com.chiorichan.ContentTypes;
 import com.chiorichan.Loader;
 import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.factory.interpreters.GSPInterpreter;
@@ -47,17 +46,71 @@ import com.chiorichan.framework.Site;
 import com.chiorichan.http.WebInterpreter;
 import com.chiorichan.util.StringUtil;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 public class CodeEvalFactory
 {
+	public class GroovyShellTracker
+	{
+		private GroovyShell shell = null;
+		private boolean inUse = false;
+		private int lineNumber = -1;
+		private CodeMetaData meta = null;
+		
+		public GroovyShellTracker( GroovyShell shell )
+		{
+			this.shell = shell;
+		}
+		
+		public GroovyShell getShell()
+		{
+			return shell;
+		}
+		
+		public void setInUse( boolean inUse )
+		{
+			this.inUse = inUse;
+		}
+		
+		public boolean isInUse()
+		{
+			return inUse;
+		}
+		
+		public int getLineNumber()
+		{
+			return lineNumber;
+		}
+		
+		public void setLineNumber( int lineNumber )
+		{
+			this.lineNumber = lineNumber;
+		}
+		
+		public CodeMetaData getMetaData()
+		{
+			return meta;
+		}
+		
+		public void setMetaData( CodeMetaData meta )
+		{
+			this.meta = meta;
+		}
+		
+		@Override
+		public String toString()
+		{
+			return "GroovyShellTracker(shell=" + shell + ",inUse=" + inUse + ",lineNumber=" + lineNumber + ")";
+		}
+	}
+	
 	protected String encoding = Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" );
 	
 	protected static List<PreProcessor> preProcessors = Lists.newCopyOnWriteArrayList();
 	protected static List<Interpreter> interpreters = Lists.newCopyOnWriteArrayList();
 	protected static List<PostProcessor> postProcessors = Lists.newCopyOnWriteArrayList();
 	
-	protected Map<GroovyShell, Boolean> groovyShells = Maps.newConcurrentMap();
+	protected Set<GroovyShellTracker> groovyShells = Sets.newLinkedHashSet();
 	protected ByteArrayOutputStream bs = new ByteArrayOutputStream();
 	protected Binding binding;
 	
@@ -107,16 +160,26 @@ public class CodeEvalFactory
 		binding.setVariable( key, val );
 	}
 	
-	protected GroovyShell getUnusedShell()
+	protected GroovyShellTracker getUnusedShellTracker()
 	{
-		for ( Entry<GroovyShell, Boolean> eShell : groovyShells.entrySet() )
-		{
-			if ( !eShell.getValue() )
-				return eShell.getKey();
-		}
+		for ( GroovyShellTracker tracker : groovyShells )
+			if ( !tracker.isInUse() )
+				return tracker;
 		
 		GroovyShell shell = getNewShell();
-		groovyShells.put( shell, false );
+		GroovyShellTracker tracker = new GroovyShellTracker( shell );
+		groovyShells.add( tracker );
+		return tracker;
+	}
+	
+	protected GroovyShell getUnusedShell()
+	{
+		for ( GroovyShellTracker tracker : groovyShells )
+			if ( !tracker.isInUse() )
+				return tracker.getShell();
+		
+		GroovyShell shell = getNewShell();
+		groovyShells.add( new GroovyShellTracker( shell ) );
 		return shell;
 	}
 	
@@ -130,14 +193,68 @@ public class CodeEvalFactory
 		return new GroovyShell( Loader.class.getClassLoader(), binding, configuration );
 	}
 	
+	protected GroovyShellTracker getTracker( GroovyShell shell )
+	{
+		for ( GroovyShellTracker t : groovyShells )
+			if ( t.getShell() == shell )
+				return t;
+		
+		return null;
+	}
+	
+	/**
+	 * Attempts to find the current line number for the current groovy script.
+	 * 
+	 * @return The current line number. Returns -1 if no there was a problem getting the current line number.
+	 */
+	public int getLineNumber()
+	{
+		for ( StackTraceElement l : Thread.currentThread().getStackTrace() )
+			if ( l.getFileName() != null && l.getFileName().matches( "Script\\d*.groovy" ) )
+				return l.getLineNumber();
+		
+		return -1;
+	}
+	
+	public String getFileName()
+	{
+		if ( getCurrentTracker() == null || getCurrentTracker().getMetaData() == null )
+			return "<codeEval>";
+		else
+			return getCurrentTracker().getMetaData().fileName;
+	}
+	
+	private GroovyShellTracker getCurrentTracker()
+	{
+		try
+		{
+			return groovyShells.toArray( new GroovyShellTracker[0] )[groovyShells.size() - 1];
+		}
+		catch ( ArrayIndexOutOfBoundsException e )
+		{
+			return null;
+		}
+	}
+	
 	protected void lock( GroovyShell shell )
 	{
-		groovyShells.put( shell, true );
+		GroovyShellTracker tracker = getTracker( shell );
+		
+		if ( tracker == null )
+		{
+			tracker = new GroovyShellTracker( shell );
+			groovyShells.add( tracker );
+		}
+		
+		tracker.setInUse( true );
 	}
 	
 	protected void unlock( GroovyShell shell )
 	{
-		groovyShells.put( shell, false );
+		GroovyShellTracker tracker = getTracker( shell );
+		
+		if ( tracker != null )
+			tracker.setInUse( false );
 	}
 	
 	protected CodeEvalFactory( Binding binding )
@@ -305,7 +422,10 @@ public class CodeEvalFactory
 			return "";
 		
 		if ( meta.contentType == null )
-			meta.contentType = meta.shell;
+			if ( meta.fileName == null )
+				meta.contentType = meta.shell;
+			else
+				meta.contentType = ContentTypes.getContentType( meta.fileName );
 		
 		meta.source = code;
 		meta.site = site;
@@ -345,9 +465,18 @@ public class CodeEvalFactory
 				}
 		}
 		
-		GroovyShell gShell = getUnusedShell();
-		Loader.getLogger().fine( "Locking GroovyShell '" + gShell.toString() + "' for execution of '" + meta.fileName + ":" + code.length() + "'" );
-		lock( gShell );
+		GroovyShellTracker tracker = getUnusedShellTracker();
+		GroovyShell shell = tracker.getShell();
+		
+		for ( StackTraceElement l : Thread.currentThread().getStackTrace() )
+			if ( l.getFileName() != null && l.getFileName().matches( "Script\\d*.groovy" ) )
+				tracker.setLineNumber( l.getLineNumber() );
+		
+		Loader.getLogger().info( "Locking GroovyShell '" + shell.toString() + "' for execution of '" + meta.fileName + "', length '" + code.length() + "', line '" + tracker.getLineNumber() + "'" );
+		tracker.setInUse( true );
+		tracker.setMetaData( meta );
+		
+		shell.setVariable( "evalVar", meta.global );
 		
 		byte[] saved = bs.toByteArray();
 		bs.reset();
@@ -360,7 +489,7 @@ public class CodeEvalFactory
 			{
 				if ( she.equalsIgnoreCase( meta.shell ) || she.equalsIgnoreCase( "all" ) )
 				{
-					String result = s.eval( meta, code, gShell, bs );
+					String result = s.eval( meta, code, shell, bs );
 					
 					try
 					{
@@ -378,8 +507,11 @@ public class CodeEvalFactory
 			}
 		}
 		
-		Loader.getLogger().fine( "Unlocking GroovyShell '" + gShell.toString() + "' for execution of '" + meta.fileName + ":" + code.length() + "'" );
-		unlock( gShell );
+		shell.setVariable( "evalVar", null );
+		
+		Loader.getLogger().info( "Unlocking GroovyShell '" + shell.toString() + "' for execution of '" + meta.fileName + "', length '" + code.length() + "', line '" + tracker.getLineNumber() + "'" );
+		tracker.setInUse( false );
+		tracker.setMetaData( null );
 		
 		if ( success )
 			try

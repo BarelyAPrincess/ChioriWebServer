@@ -45,6 +45,7 @@ import org.apache.commons.net.ntp.TimeInfo;
 import com.chiorichan.Loader;
 import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.factory.CodeEvalFactory;
+import com.chiorichan.factory.CodeMetaData;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.StringUtil;
 import com.google.i18n.phonenumbers.NumberParseException;
@@ -534,6 +535,11 @@ public class WebUtils
 	
 	public static String evalFile( CodeEvalFactory factory, Site site, String file ) throws IOException, ShellExecuteException
 	{
+		return evalFile( factory, site, file, new HashMap<String, Object>() );
+	}
+	
+	public static String evalFile( CodeEvalFactory factory, Site site, String file, Map<String, Object> global ) throws IOException, ShellExecuteException
+	{
 		if ( file == null || file.isEmpty() )
 			return "";
 		
@@ -545,10 +551,21 @@ public class WebUtils
 		if ( packFile == null || !packFile.exists() )
 			return "";
 		
-		return factory.eval( packFile, site );
+		CodeMetaData codeMeta = new CodeMetaData();
+		
+		codeMeta.shell = FileInterpreter.determineShellFromName( packFile.getName() );
+		codeMeta.fileName = packFile.getAbsolutePath();
+		codeMeta.global = global;
+		
+		return factory.eval( packFile, codeMeta, site );
 	}
 	
 	public static String evalPackage( CodeEvalFactory factory, Site site, String pack ) throws IOException, ShellExecuteException
+	{
+		return evalPackage( factory, site, pack, new HashMap<String, Object>() );
+	}
+	
+	public static String evalPackage( CodeEvalFactory factory, Site site, String pack, Map<String, Object> global ) throws IOException, ShellExecuteException
 	{
 		File packFile = null;
 		
@@ -563,7 +580,13 @@ public class WebUtils
 		if ( packFile == null || !packFile.exists() )
 			return "";
 		
-		return factory.eval( packFile, site );
+		CodeMetaData codeMeta = new CodeMetaData();
+		
+		codeMeta.shell = FileInterpreter.determineShellFromName( packFile.getName() );
+		codeMeta.fileName = packFile.getAbsolutePath();
+		codeMeta.global = global;
+		
+		return factory.eval( packFile, codeMeta, site );
 	}
 	
 	public static Map<String, String> queryToMap( String query ) throws UnsupportedEncodingException

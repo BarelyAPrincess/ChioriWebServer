@@ -83,8 +83,29 @@ public class ContentTypes
 		return rtn.toArray( new String[0] );
 	}
 	
+	public static String getContentType( String fileName )
+	{
+		if ( fileName == null )
+			return "application/octet-stream";
+		
+		String[] exts = fileName.split( "\\." );
+		String ext = exts[exts.length - 1];
+		
+		if ( types != null && types.containsKey( ext ) )
+		{
+			return types.get( ext ).toLowerCase();
+		}
+		else
+		{
+			return "application/octet-stream";
+		}
+	}
+	
 	public static String getContentType( File file )
 	{
+		if ( file == null )
+			return "application/octet-stream";
+		
 		if ( file.isDirectory() )
 			return "folder";
 		
