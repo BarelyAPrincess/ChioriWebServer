@@ -28,11 +28,13 @@ public class ConsoleLogFormatter extends Formatter
 	private SimpleDateFormat dateFormat;
 	private SimpleDateFormat timeFormat;
 	private boolean formatConfigLoaded = false;
+	private boolean useColor;
 	
-	public static Map<ConsoleColor, String> replacements = new EnumMap<ConsoleColor, String>( ConsoleColor.class );
-	public static ConsoleColor[] colors = ConsoleColor.values();
-	public boolean debugMode = false;
-	public int debugModeHowDeep = 1;
+	private static Map<ConsoleColor, String> replacements = new EnumMap<ConsoleColor, String>( ConsoleColor.class );
+	private static ConsoleColor[] colors = ConsoleColor.values();
+	
+	public static boolean debugMode = false;
+	public static int debugModeHowDeep = 1;
 	
 	static
 	{
@@ -64,8 +66,14 @@ public class ConsoleLogFormatter extends Formatter
 	
 	public ConsoleLogFormatter( ConsoleBus console )
 	{
+		this( console, true );
+	}
+	
+	public ConsoleLogFormatter( ConsoleBus console, boolean useColor )
+	{
 		dateFormat = new SimpleDateFormat( "MM-dd" );
 		timeFormat = new SimpleDateFormat( "HH:mm:ss.SSS" );
+		this.useColor = useColor;
 	}
 	
 	public ConsoleColor getLevelColor( Level var1 )
@@ -84,10 +92,14 @@ public class ConsoleLogFormatter extends Formatter
 			return ConsoleColor.WHITE;
 	}
 	
-	public static String handleAltColors( String var1 )
+	public String handleAltColors( String var1 )
 	{
-		// Loader.getConsole().AnsiSupported() &&
-		if ( Loader.getConsole().useColors )
+		if ( !Loader.getConsole().useColors || !useColor )
+		{
+			var1 = var1.replaceAll( "&.", "" );
+			var1 = var1.replaceAll( "§.", "" );
+		}
+		else
 		{
 			var1 = ConsoleColor.translateAlternateColorCodes( '&', var1 ) + ConsoleColor.RESET;
 			
@@ -98,11 +110,6 @@ public class ConsoleLogFormatter extends Formatter
 				else
 					var1 = var1.replaceAll( "(?i)" + color.toString(), "" );
 			}
-		}
-		else
-		{
-			var1 = var1.replaceAll( "&.", "" );
-			var1 = var1.replaceAll( "§.", "" );
 		}
 		
 		return var1;

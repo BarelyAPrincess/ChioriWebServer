@@ -13,6 +13,7 @@ server:
   enableTcpServer: true
   allowQuery: false
   installationUID: null
+  disableTracking: false
   defaultTextEncoding: UTF-8
   defaultBinaryEncoding: ISO-8859-1
   developmentMode: true

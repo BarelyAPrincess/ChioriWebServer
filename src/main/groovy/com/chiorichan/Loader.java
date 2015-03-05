@@ -285,7 +285,9 @@ public class Loader extends BuiltinEventCreator implements Listener
 		updater.getOnBroken().addAll( configuration.getStringList( "auto-updater.on-broken" ) );
 		updater.getOnUpdate().addAll( configuration.getStringList( "auto-updater.on-update" ) );
 		
-		WebUtils.sendTracking( "startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
+		if ( !configuration.getBoolean( "server.disableTracking" ) )
+			WebUtils.sendTracking( "startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
+		
 		/*
 		 * try
 		 * {
@@ -317,11 +319,11 @@ public class Loader extends BuiltinEventCreator implements Listener
 		 */
 		if ( firstRun )
 		{
-			Loader.getLogger().highlight( "It appears that this is your first time running Chiori-chan's Web Server." );
-			Loader.getLogger().highlight( "All the needed files have been created or extracted from the jar file." );
-			Loader.getLogger().highlight( "We highly recommended that you stop the server, review configuration," );
-			Loader.getLogger().highlight( "and restart. You can find documentation and guides on our Github for more help." );
-			Loader.getLogger().highlight( "-------------------------------------------------------------------------------" );
+			getLogger().highlight( "It appears that this is your first time running Chiori-chan's Web Server." );
+			getLogger().highlight( "All the needed files have been created or extracted from the jar file." );
+			getLogger().highlight( "We highly recommended that you stop the server, review configuration," );
+			getLogger().highlight( "and restart. You can find documentation and guides on our Github for more help." );
+			getLogger().highlight( "-------------------------------------------------------------------------------" );
 			String key = Loader.getConsole().prompt( "Would you like to stop and review configuration? Press 'Y' for Yes or 'N' for No.", "Y", "N", "C" );
 			
 			if ( key.equals( "C" ) )
@@ -330,7 +332,10 @@ public class Loader extends BuiltinEventCreator implements Listener
 			}
 			
 			if ( key.equals( "Y" ) )
+			{
+				getLogger().info( "The server will now stop, please wait..." );
 				throw new StartupAbortException();
+			}
 		}
 	}
 	

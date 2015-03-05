@@ -435,7 +435,7 @@ public class WebUtils
 			HttpURLConnection con = ( HttpURLConnection ) urlObj.openConnection();
 			con.setRequestMethod( "POST" );
 			
-			String urlParameters = "v=1&tid=UA-32999410-1&cid=" + Loader.getConfig().getString( "server.installationUID", Loader.clientId ) + "&t=event&ec=" + category + "&ea=" + action + "&el=" + label;
+			String urlParameters = "v=1&tid=UA-60405654-1&cid=" + Loader.clientId + "&t=event&ec=" + category + "&ea=" + action + "&el=" + label;
 			
 			con.setDoOutput( true );
 			DataOutputStream wr = new DataOutputStream( con.getOutputStream() );

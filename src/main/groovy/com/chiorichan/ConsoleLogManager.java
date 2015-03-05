@@ -96,7 +96,7 @@ public class ConsoleLogManager
 			int count = ( Integer ) Loader.getOptions().valueOf( "log-count" );
 			boolean append = ( Boolean ) Loader.getOptions().valueOf( "log-append" );
 			FileHandler fileHandler = new FileHandler( filename, limit, count, append );
-			fileHandler.setFormatter( new ConsoleLogFormatter( Loader.getConsole() ) );
+			fileHandler.setFormatter( new ConsoleLogFormatter( Loader.getConsole(), false ) );
 			
 			logger.addHandler( fileHandler );
 		}
