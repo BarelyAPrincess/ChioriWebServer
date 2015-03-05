@@ -22,6 +22,7 @@ import com.chiorichan.Loader;
 import com.chiorichan.exception.StartupException;
 import com.chiorichan.http.HttpInitializer;
 import com.chiorichan.https.HttpsInitializer;
+import com.chiorichan.net.query.QueryServerInitializer;
 import com.chiorichan.util.Common;
 
 public class NetworkManager
@@ -79,7 +80,7 @@ public class NetworkManager
 				else
 					socket = new InetSocketAddress( httpIp, httpPort );
 				
-				Loader.getLogger().info( "Starting Web Server on " + ( httpIp.length() == 0 ? "*" : httpIp ) + ":" + httpPort );
+				Loader.getLogger().info( "Starting Web Server on " + ( httpIp.isEmpty() ? "*" : httpIp ) + ":" + httpPort );
 				
 				try
 				{
@@ -115,8 +116,68 @@ public class NetworkManager
 				}
 				catch ( Throwable e )
 				{
-					Loader.getLogger().warning( "**** FAILED TO BIND WEB SERVER TO PORT!" );
+					Loader.getLogger().warning( "**** FAILED TO BIND HTTP SERVER TO PORT!" );
 					// Loader.getLogger().warning( "The exception was: {0}", new Object[] {e.toString()} );
+					Loader.getLogger().warning( "Perhaps a server is already running on that port?" );
+					
+					throw new StartupException( e );
+				}
+			}
+			
+			String queryHost = Loader.getConfig().getString( "server.queryHost", "" );
+			int queryPort = Loader.getConfig().getInt( "server.queryPort", 4443 );
+			
+			if ( queryPort >= 1 && Loader.getConfig().getBoolean( "server.queryEnabled" ) )
+			{
+				if ( !checkPrivilegedPort( queryPort ) )
+				{
+					Loader.getLogger().warning( "It would seem that you are trying to start the Query Server on a privileged port without root access." );
+					Loader.getLogger().warning( "Most likely you will see an exception thrown below this. http://www.w3.org/Daemon/User/Installation/PrivilegedPorts.html" );
+					Loader.getLogger().warning( "It's recommended that you either run CWS on a port like 8080 then use the firewall to redirect or run as root if you must use port: " + queryPort );
+				}
+				
+				if ( queryHost.isEmpty() )
+					socket = new InetSocketAddress( queryPort );
+				else
+					socket = new InetSocketAddress( queryHost, queryPort );
+				
+				Loader.getLogger().info( "Starting Query Server on " + ( queryHost.isEmpty() ? "*" : queryHost ) + ":" + queryPort );
+				
+				try
+				{
+					ServerBootstrap b = new ServerBootstrap();
+					b.group( bossGroup, workerGroup ).channel( NioServerSocketChannel.class ).childHandler( new QueryServerInitializer() );
+					
+					final Channel ch = b.bind( socket ).sync().channel();
+					
+					Thread thread = new Thread( "Query Server Thread" )
+					{
+						public void run()
+						{
+							try
+							{
+								ch.closeFuture().sync();
+							}
+							catch ( InterruptedException e )
+							{
+								e.printStackTrace();
+							}
+							finally
+							{
+								bossGroup.shutdownGracefully();
+								workerGroup.shutdownGracefully();
+							}
+						}
+					};
+					thread.start();
+				}
+				catch ( NullPointerException e )
+				{
+					throw new StartupException( "There was a problem starting the Web Server. Check logs and try again.", e );
+				}
+				catch ( Throwable e )
+				{
+					Loader.getLogger().warning( "**** FAILED TO BIND QUERY SERVER TO PORT!" );
 					Loader.getLogger().warning( "Perhaps a server is already running on that port?" );
 					
 					throw new StartupException( e );
@@ -139,7 +200,7 @@ public class NetworkManager
 				else
 					socket = new InetSocketAddress( httpIp, httpsPort );
 				
-				Loader.getLogger().info( "Starting Secure Web Server on " + ( httpIp.length() == 0 ? "*" : httpIp ) + ":" + httpsPort );
+				Loader.getLogger().info( "Starting Secure Web Server on " + ( httpIp.isEmpty() ? "*" : httpIp ) + ":" + httpsPort );
 				
 				File sslCert = new File( Loader.getConfig().getString( "server.httpsKeystore", "server.keystore" ) );
 				
@@ -182,8 +243,7 @@ public class NetworkManager
 				}
 				catch ( Throwable e )
 				{
-					Loader.getLogger().warning( "**** FAILED TO BIND WEB SERVER TO PORT!" );
-					// Loader.getLogger().warning( "The exception was: {0}", new Object[] {e.toString()} );
+					Loader.getLogger().warning( "**** FAILED TO BIND HTTPS SERVER TO PORT!" );
 					Loader.getLogger().warning( "Perhaps a server is already running on that port?" );
 					
 					throw new StartupException( e );

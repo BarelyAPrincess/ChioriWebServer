@@ -6,6 +6,9 @@ server:
   httpsSecret: abcd1234
   tcpHost: ''
   tcpPort: 1024
+  queryEnabled: false
+  queryHost: ''
+  queryPort: 8992
   admin: chiorigreene@gmail.com
   allowDirectoryListing: false
   haltOnSevereError: false
@@ -31,10 +34,9 @@ server:
     dbfile: server.db
 plugins:
   useTimings: true
-  allowQuery: false
 permissions:
   backend: file
-  file: permissions.yml
+  file: permissions.yaml
   debug: false
   allowOps: true
   preloadGroups: true
