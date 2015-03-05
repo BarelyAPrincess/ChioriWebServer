@@ -123,7 +123,7 @@ public abstract class PermissionBackend
 		
 		registedAliases.put( alias, backendClass );
 		
-		PermissionManager.getLogger().info( alias + " backend registered!" );
+		PermissionManager.getLogger().fine( alias + " backend registered!" );
 	}
 	
 	/**

@@ -58,8 +58,8 @@ public class FileBackend extends PermissionBackend
 		
 		if ( permissionFilename == null )
 		{
-			permissionFilename = "permissions.yml";
-			Loader.getConfig().set( "permissions.file", "permissions.yml" );
+			permissionFilename = "permissions.yaml";
+			Loader.getConfig().set( "permissions.file", "permissions.yaml" );
 		}
 		
 		permissionsFile = new File( permissionFilename );
