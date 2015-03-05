@@ -201,7 +201,7 @@ public class Site
 			{
 			}.getType();
 			
-			siteId = rs.getString( "siteID" );
+			siteId = rs.getString( "siteId" );
 			title = rs.getString( "title" );
 			domain = rs.getString( "domain" );
 			

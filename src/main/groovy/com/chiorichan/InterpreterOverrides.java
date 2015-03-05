@@ -3,9 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 package com.chiorichan;
 
@@ -20,13 +17,14 @@ import com.google.common.collect.Maps;
 
 /**
  * Loads InterpreterOverrides from InterpreterOverrides.properties file.
- * You can use that file to override what SeaShell will handle a particular file extension.
+ * This file is used to override what Interpreter will handle a particular file extension.
+ * 
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
  */
 public class InterpreterOverrides
 {
-	public static Map<String, String> interpreters = Maps.newLinkedHashMap();
-	
-	// TODO Place a copy of the properties in the server root for user modification
+	static Map<String, String> interpreters = Maps.newLinkedHashMap();
 	
 	static
 	{

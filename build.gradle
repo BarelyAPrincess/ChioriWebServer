@@ -174,7 +174,6 @@ dependencies
 	compile group: 'org.mozilla', name: 'rhino', version: '1.7R4'
 	compile group: 'org.ocpsoft.prettytime', name: 'prettytime', version: '3.2.5.Final'
 	compile group: 'commons-daemon', name: 'commons-daemon', version: '1.0.15'
-	compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.32'
 	compile group: 'net.java.dev.jna', name: 'jna', version: '4.1.0'
 	compile group: 'org.objenesis', name: 'objenesis', version: '2.1'
 	compile group: 'net.java.dev.jna', name: 'platform', version: '3.5.2'
@@ -185,6 +184,9 @@ dependencies
 	compile group: 'com.google.zxing', name: 'javase', version: '3.1.0'
 	compile group: 'org.json', name: 'json', version: '20090211'
 	compile group: 'io.netty', name: 'netty-all', version: '5.0.0.Alpha1'
+	
+	compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.32'
+	compile group: 'org.xerial', name: 'sqlite-jdbc', version: '3.6.16'
 	
 	compile group: 'org.fusesource.jansi', name: 'jansi', version: '1.11'
 	

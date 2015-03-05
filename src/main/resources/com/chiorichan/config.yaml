@@ -22,12 +22,12 @@ server:
   fileUploadMinInMemory: 0
   database:
     database: chiorifw
-    type: none
+    type: sqlite
     host: localhost
     port: 3306
     username: fwuser
     password: fwpass
-    dbfile: chiori.db
+    dbfile: server.db
 plugins:
   useTimings: true
   allowQuery: false

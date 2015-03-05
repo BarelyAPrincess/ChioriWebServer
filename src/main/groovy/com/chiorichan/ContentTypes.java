@@ -3,9 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 package com.chiorichan;
 
@@ -25,13 +22,12 @@ import com.google.common.collect.Maps;
  * Loader Content-Types from ContentTypes.properties file.
  * FileInterpreter uses this class to find the correct Content-Type based on file extension.
  * 
- * @author Chiori-chan
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
  */
 public class ContentTypes
 {
-	public static Map<String, String> types = Maps.newLinkedHashMap();
-	
-	// TODO Place a copy of the properties in the server root for user modification
+	static Map<String, String> types = Maps.newLinkedHashMap();
 	
 	static
 	{

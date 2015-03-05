@@ -62,9 +62,7 @@ public class FileBackend extends PermissionBackend
 			Loader.getConfig().set( "permissions.file", "permissions.yml" );
 		}
 		
-		File baseDirectory = Loader.getRoot();
-		
-		permissionsFile = new File( baseDirectory, permissionFilename );
+		permissionsFile = new File( permissionFilename );
 		
 		reload();
 	}
@@ -343,7 +341,7 @@ public class FileBackend extends PermissionBackend
 						if ( permission.getString( "value" ) != null )
 							value = perm.getValue().createChild( permission.getString( "value" ) );
 						
-						//entity.attachPermission( new ChildPermission( perm, sites, value ) );
+						// entity.attachPermission( new ChildPermission( perm, sites, value ) );
 					}
 				}
 			}
@@ -372,17 +370,17 @@ public class FileBackend extends PermissionBackend
 						if ( permission.getString( "value" ) != null )
 							value = perm.getValue().createChild( permission.getString( "value" ) );
 						
-						//group.attachPermission( new ChildPermission( perm, sites, value ) );
+						// group.attachPermission( new ChildPermission( perm, sites, value ) );
 					}
 			}
 	}
-
+	
 	@Override
 	public Permission createNode( String namespace ) throws PermissionException
 	{
 		return new FilePermission( namespace );
 	}
-
+	
 	@Override
 	public Permission createNode( String namespace, Permission parent ) throws PermissionException
 	{

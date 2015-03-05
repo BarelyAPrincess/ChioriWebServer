@@ -37,7 +37,7 @@ public class SslContextFactory
 		SSLContext clientContext;
 		try
 		{
-			final File sslCert = new File( Loader.getRoot(), Loader.getConfig().getString( "server.httpsKeystone", "server.keystone" ) );
+			final File sslCert = new File( Loader.getConfig().getString( "server.httpsKeystone", "server.keystone" ) );
 			// byte[] bytes = new byte[932];
 			// IOUtils.readFully( new FileInputStream( sslCert ), bytes );
 			// pkcs12Base64 = Base64Coder.encodeLines( bytes );

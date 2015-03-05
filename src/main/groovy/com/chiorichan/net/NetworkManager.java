@@ -125,9 +125,8 @@ public class NetworkManager
 			
 			int httpsPort = Loader.getConfig().getInt( "server.httpsPort", 4443 );
 			
-			if ( httpsPort > 0 );
+			if ( httpsPort >= 1 )
 			{
-				
 				if ( !checkPrivilegedPort( httpsPort ) )
 				{
 					Loader.getLogger().warning( "It would seem that you are trying to start ChioriWebServer's Web Server on a privileged port without root access." );
@@ -140,9 +139,9 @@ public class NetworkManager
 				else
 					socket = new InetSocketAddress( httpIp, httpsPort );
 				
-				Loader.getLogger().info( "Starting Web Server on " + ( httpIp.length() == 0 ? "*" : httpIp ) + ":" + httpsPort );
+				Loader.getLogger().info( "Starting Secure Web Server on " + ( httpIp.length() == 0 ? "*" : httpIp ) + ":" + httpsPort );
 				
-				File sslCert = new File( Loader.getRoot(), Loader.getConfig().getString( "server.httpsKeystore", "server.keystore" ) );
+				File sslCert = new File( Loader.getConfig().getString( "server.httpsKeystore", "server.keystore" ) );
 				
 				if ( !sslCert.exists() )
 					throw new StartupException( sslCert.getAbsolutePath() + " We could not start the HTTPS Server because the '" + sslCert.getName() + "' (aka. SSL Cert) file does not exist. Please generate one and reload the server, or disable SSL in the configs." );

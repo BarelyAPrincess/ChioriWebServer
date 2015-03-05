@@ -9,6 +9,8 @@
  */
 package com.chiorichan.database;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.ConnectException;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -43,9 +45,14 @@ import com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException;
  */
 public class DatabaseEngine
 {
-	public Connection con;
+	public enum DBType
+	{
+		SQLITE, MYSQL, UNKNOWN;
+	}
 	
+	private Connection con;
 	private String savedDb, savedUser, savedPass, savedHost, savedPort;
+	private DBType type = DBType.UNKNOWN;
 	
 	public DatabaseEngine()
 	{
@@ -84,16 +91,31 @@ public class DatabaseEngine
 		try
 		{
 			Class.forName( "org.sqlite.JDBC" );
-			// Class.forName( "com.mysql.jdbc.Driver" );
 		}
 		catch ( ClassNotFoundException e )
 		{
-			throw new StartupException( "We could not locate the 'com.mysql.jdbc.Driver' library regardless that its suppose to be included. If your running from source code be sure to have this library in your build path." );
+			throw new StartupException( "We could not locate the 'org.sqlite.JDBC' library, be sure to have this library in your build path." );
 		}
 		
-		con = DriverManager.getConnection( "jdbc:sqlite:" + filename );
+		File sqliteDb = new File( filename );
 		
-		Loader.getLogger().info( "We succesully connected to the sqLite database using 'jdbc:sqlite:" + filename + "'" );
+		if ( !sqliteDb.exists() )
+		{
+			getLogger().warning( "The SQLite file '" + sqliteDb.getAbsolutePath() + "' did not exist, we will attempt to create a blank one now." );
+			try
+			{
+				sqliteDb.createNewFile();
+			}
+			catch ( IOException e )
+			{
+				throw new SQLException( "We had a problem creating the SQLite file, the exact exception message was: " + e.getMessage(), e );
+			}
+		}
+		
+		con = DriverManager.getConnection( "jdbc:sqlite:" + sqliteDb.getAbsolutePath() );
+		
+		getLogger().info( "We succesully connected to the sqLite database using 'jdbc:sqlite:" + sqliteDb.getAbsolutePath() + "'" );
+		type = DBType.SQLITE;
 	}
 	
 	/**
@@ -122,7 +144,7 @@ public class DatabaseEngine
 		}
 		catch ( ClassNotFoundException e )
 		{
-			throw new StartupException( "We could not locate the 'com.mysql.jdbc.Driver' library regardless that its suppose to be included. If your running from source code be sure to have this library in your build path." );
+			throw new StartupException( "We could not locate the 'com.mysql.jdbc.Driver' library, be sure to have this library in your build path." );
 		}
 		
 		savedDb = db;
@@ -144,6 +166,8 @@ public class DatabaseEngine
 			Loader.getLogger().info( "We succesully connected to the sql database using 'jdbc:mysql://" + host + ":" + port + "/" + db + "'." );
 		else
 			Loader.getLogger().warning( "There was a problem connecting to the sql database using 'jdbc:mysql://" + host + ":" + port + "/" + db + "'." );
+		
+		type = DBType.MYSQL;
 	}
 	
 	public LinkedHashMap<String, Object> selectOne( String table, List<String> keys, List<? extends Object> values ) throws SQLException
@@ -362,7 +386,14 @@ public class DatabaseEngine
 		
 		try
 		{
-			stmt = con.createStatement( ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
+			try
+			{
+				stmt = con.createStatement( ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
+			}
+			catch ( SQLException e )
+			{
+				stmt = con.createStatement();
+			}
 			
 			result = stmt.executeQuery( query );
 			
@@ -1175,8 +1206,13 @@ public class DatabaseEngine
 		return false;
 	}
 	
-	public ConsoleLogger getLogger()
+	public static ConsoleLogger getLogger()
 	{
 		return Loader.getLogger( "DBEngine" );
+	}
+	
+	public DBType getType()
+	{
+		return type;
 	}
 }

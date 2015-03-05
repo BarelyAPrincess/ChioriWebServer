@@ -144,7 +144,7 @@ public class FileSession extends Session
 	public static File getSessionsDirectory()
 	{
 		if ( sessionsDirectory == null )
-			sessionsDirectory = new File( Loader.getRoot(), "sessions" );
+			sessionsDirectory = new File( "sessions" );
 		
 		FileUtil.directoryHealthCheck( sessionsDirectory );
 		

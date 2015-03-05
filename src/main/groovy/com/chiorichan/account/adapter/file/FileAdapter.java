@@ -39,11 +39,7 @@ public class FileAdapter implements AccountLookupAdapter
 	public FileAdapter()
 	{
 		String fileBase = Loader.getConfig().getString( "accounts.lookupAdapter.filebase", "accounts" );
-		
-		if ( fileBase.startsWith( "/" ) )
-			accountsDirectory = new File( fileBase );
-		else
-			accountsDirectory = new File( Loader.getRoot(), fileBase );
+		accountsDirectory = new File( fileBase );
 		
 		FileUtil.directoryHealthCheck( accountsDirectory );
 		

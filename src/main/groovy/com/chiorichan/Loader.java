@@ -410,20 +410,11 @@ public class Loader extends BuiltinEventCreator implements Listener
 	
 	public void initDatabase()
 	{
-		try
-		{
-			Class.forName( "com.mysql.jdbc.Driver" );
-		}
-		catch ( ClassNotFoundException e )
-		{
-			throw new StartupException( "We could not locate the 'com.mysql.jdbc.Driver' library regardless that its suppose to be included. If your running from source code be sure to have this library in your build path." );
-		}
-		
-		switch ( configuration.getString( "server.database.type", "mysql" ) )
+		switch ( configuration.getString( "server.database.type", "sqlite" ).toLowerCase() )
 		{
 			case "sqlite":
 				fwDatabase = new DatabaseEngine();
-				String filename = configuration.getString( "server.database.dbfile", "chiori.db" );
+				String filename = configuration.getString( "server.database.dbfile", "server.db" );
 				
 				try
 				{
@@ -471,10 +462,10 @@ public class Loader extends BuiltinEventCreator implements Listener
 				break;
 			case "none":
 			case "":
-				Loader.getLogger().warning( "The Framework Database is unconfigured. Some features maybe not function as expected. See config option 'accounts.database.type' in server config file." );
+				DatabaseEngine.getLogger().warning( "The Server Database is unconfigured, some features maybe not function as expected. See config option 'server.database.type' in server config 'server.yaml'." );
 				break;
 			default:
-				Loader.getLogger().panic( "The Framework Database can not support anything other then mySql or sqLite at the moment. Please change 'framework-database.type' to 'mysql' or 'sqLite' in 'chiori.yml'" );
+				DatabaseEngine.getLogger().severe( "We are sorry, Database Engine currently only supports mysql and sqlite but we found '" + configuration.getString( "server.database.type", "sqlite" ).toLowerCase() + "', please change 'server.database.type' to 'mysql' or 'sqlite' in server config 'server.yaml'" );
 		}
 	}
 	
@@ -823,11 +814,6 @@ public class Loader extends BuiltinEventCreator implements Listener
 	public static AccountManager getAccountManager()
 	{
 		return accounts;
-	}
-	
-	public static File getRoot()
-	{
-		return new File( Loader.class.getProtectionDomain().getCodeSource().getLocation().getPath() ).getParentFile();
 	}
 	
 	public static File getTempFileDirectory()
