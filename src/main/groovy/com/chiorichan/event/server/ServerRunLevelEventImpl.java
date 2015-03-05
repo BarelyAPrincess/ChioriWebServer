@@ -9,6 +9,7 @@
  */
 package com.chiorichan.event.server;
 
+import com.chiorichan.Loader;
 import com.chiorichan.RunLevel;
 
 public class ServerRunLevelEventImpl extends ServerRunLevelEvent
@@ -17,5 +18,7 @@ public class ServerRunLevelEventImpl extends ServerRunLevelEvent
 	{
 		previousLevel = currentLevel;
 		currentLevel = level;
+		
+		Loader.getLogger().fine( "Server Runlevel has changed to '" + level.name() + "'" );
 	}
 }

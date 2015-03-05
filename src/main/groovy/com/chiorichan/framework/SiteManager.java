@@ -24,7 +24,6 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
-import com.chiorichan.database.DatabaseEngine.DBType;
 import com.chiorichan.exception.StartupException;
 import com.chiorichan.util.FileUtil;
 import com.google.common.collect.Lists;
@@ -97,20 +96,20 @@ public class SiteManager
 				{
 					DatabaseEngine.getLogger().info( "We detected the non-existence of table 'sites' in the server database, we will attempt to create it now." );
 					
-					String siteTable = "CREATE TABLE `sites` (";
-					siteTable += "`siteId` varchar(255) NOT NULL,";
-					siteTable += " `title` varchar(255) NOT NULL DEFAULT 'Unnamed Chiori Framework Site',";
-					siteTable += " `domain` varchar(255) NOT NULL,";
-					siteTable += " `source` varchar(255) NOT NULL DEFAULT 'pages',";
-					siteTable += " `resource` varchar(255) NOT NULL DEFAULT 'resources',";
-					siteTable += " `subdomains` text NOT NULL,";
-					siteTable += " `protected` text NOT NULL,";
-					siteTable += " `metatags` text NOT NULL,";
-					siteTable += " `aliases` text NOT NULL,";
-					siteTable += " `configYaml` text NOT NULL";
-					siteTable += ");";
+					String table = "CREATE TABLE `sites` (";
+					table += "`siteId` varchar(255) NOT NULL,";
+					table += " `title` varchar(255) NOT NULL DEFAULT 'Unnamed Chiori Framework Site',";
+					table += " `domain` varchar(255) NOT NULL,";
+					table += " `source` varchar(255) NOT NULL DEFAULT 'pages',";
+					table += " `resource` varchar(255) NOT NULL DEFAULT 'resources',";
+					table += " `subdomains` text NOT NULL,";
+					table += " `protected` text NOT NULL,";
+					table += " `metatags` text NOT NULL,";
+					table += " `aliases` text NOT NULL,";
+					table += " `configYaml` text NOT NULL";
+					table += ");";
 					
-					sql.queryUpdate( siteTable );
+					sql.queryUpdate( table );
 				}
 				
 				// Load sites from the database

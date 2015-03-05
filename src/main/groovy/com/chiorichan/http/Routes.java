@@ -93,6 +93,25 @@ public class Routes
 				
 				if ( sql != null )
 				{
+					if ( !sql.tableExist( "pages" ) )
+					{
+						DatabaseEngine.getLogger().info( "We detected the non-existence of table 'pages' in the server database, we will attempt to create it now." );
+						
+						String table = "CREATE TABLE `pages` (";
+						table += " `site` varchar(255) NOT NULL,";
+						table += " `domain` varchar(255) NOT NULL,";
+						table += " `page` varchar(255) NOT NULL,";
+						table += " `title` varchar(255) NOT NULL,";
+						table += " `reqlevel` varchar(255) NOT NULL DEFAULT '-1',";
+						table += " `theme` varchar(255) NOT NULL,";
+						table += " `view` varchar(255) NOT NULL,";
+						table += " `html` text NOT NULL,";
+						table += " `file` varchar(255) NOT NULL";
+						table += ");";
+						
+						sql.queryUpdate( table );
+					}
+					
 					// ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE (subdomain = '" + subdomain + "' OR subdomain = '') AND domain = '" + domain + "' UNION SELECT * FROM `pages` WHERE (subdomain = '" + subdomain +
 					// "' OR subdomain = '') AND domain = '';" );
 					ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE domain = '" + domain + "' OR domain = '';" );

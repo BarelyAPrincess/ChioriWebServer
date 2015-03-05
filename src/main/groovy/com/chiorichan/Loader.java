@@ -25,6 +25,9 @@ import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 
 import org.apache.commons.io.FileUtils;
+import org.joda.time.Duration;
+import org.joda.time.format.PeriodFormatter;
+import org.joda.time.format.PeriodFormatterBuilder;
 
 import com.chiorichan.Warning.WarningState;
 import com.chiorichan.account.Account;
@@ -882,7 +885,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	
 	public static String getRandomGag()
 	{
-		switch ( new Random().nextInt( 10 ) )
+		switch ( new Random().nextInt( 25 ) )
 		{
 			case 0:
 				return "Or unexpected things could happen, like global distruction things. Well, not really. But they could. :)";
@@ -898,8 +901,19 @@ public class Loader extends BuiltinEventCreator implements Listener
 				return "What are you doing later tonight? I might have some free time if this problem is too much for you.";
 			case 10:
 				return "Have you seen my cheese?";
+			case 23:
+				return "What's it like to be human?";
+			case 25:
+				return "If only I was a human too...";
 		}
 		
 		return "";
+	}
+	
+	public static String getUptime()
+	{
+		Duration duration = new Duration( System.currentTimeMillis() - startTime );
+		PeriodFormatter formatter = new PeriodFormatterBuilder().appendDays().appendSuffix( " Day(s) " ).appendHours().appendSuffix( " Hour(s) " ).appendMinutes().appendSuffix( " Minute(s) " ).appendSeconds().appendSuffix( " Second(s)" ).toFormatter();
+		return formatter.print( duration.toPeriod() );
 	}
 }
