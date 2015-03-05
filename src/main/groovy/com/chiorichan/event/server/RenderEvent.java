@@ -16,7 +16,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.http.HttpResponseWrapper;
-import com.chiorichan.http.session.SessionProvider;
+import com.chiorichan.session.SessionProvider;
 
 public class RenderEvent extends ServerEvent
 {

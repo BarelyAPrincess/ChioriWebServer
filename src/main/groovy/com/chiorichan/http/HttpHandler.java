@@ -50,7 +50,7 @@ import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.factory.CodeMetaData;
 import com.chiorichan.framework.Site;
 import com.chiorichan.framework.SiteException;
-import com.chiorichan.http.session.SessionProvider;
+import com.chiorichan.session.SessionProvider;
 import com.chiorichan.util.Versioning;
 import com.google.common.collect.Maps;
 

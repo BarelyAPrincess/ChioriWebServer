@@ -28,9 +28,9 @@ import com.chiorichan.event.account.PreAccountLoginEvent;
 import com.chiorichan.event.account.PreAccountLoginEvent.Result;
 import com.chiorichan.exception.StartupException;
 import com.chiorichan.framework.Site;
-import com.chiorichan.http.session.Session;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissionDefault;
+import com.chiorichan.session.Session;
 import com.chiorichan.util.Common;
 import com.google.common.collect.Lists;
 

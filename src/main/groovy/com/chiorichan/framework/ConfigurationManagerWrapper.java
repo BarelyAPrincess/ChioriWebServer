@@ -18,7 +18,7 @@ import java.util.Map;
 import com.chiorichan.Loader;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.database.DatabaseEngine;
-import com.chiorichan.http.session.SessionProvider;
+import com.chiorichan.session.SessionProvider;
 
 /**
  * @deprecated Soon there will be no use for this class since the Permission system offers a better configuration solution for entities

@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import com.chiorichan.exception.ShellExecuteException;
-import com.chiorichan.http.session.SessionProvider;
+import com.chiorichan.session.SessionProvider;
 import com.google.common.collect.Maps;
 
 public class HttpUtilsWrapper extends WebUtils

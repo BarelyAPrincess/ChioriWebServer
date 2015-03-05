@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.http.session;
+package com.chiorichan.session;
 
 import com.chiorichan.account.Account;
 import com.chiorichan.factory.CodeEvalFactory;
