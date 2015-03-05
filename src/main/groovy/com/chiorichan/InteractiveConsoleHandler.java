@@ -3,27 +3,20 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
+ */
+package com.chiorichan;
+
+/**
+ * Used to interface InteractiveConsole with it's creator
  * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.account;
-
-public interface InteractiveEntity
+public interface InteractiveConsoleHandler
 {
-	void sendMessage( String... msgs );
-	
-	void sendMessage( String string );
-	
-	boolean kick( String kickMessage );
-	
-	boolean isBanned();
-	
-	boolean isWhitelisted();
-	
-	boolean isAdmin();
-	
-	boolean isOp();
-	
-	boolean isValid();
+	void println( String... msg );
+	void println( String msg );
+	void print( String... msg );
+	void print( String msg );
+	void prompt();
 }

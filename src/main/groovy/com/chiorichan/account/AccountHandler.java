@@ -39,6 +39,6 @@ public abstract class AccountHandler extends Permissible implements InteractiveE
 	@Override
 	public final String getEntityId()
 	{
-		return currentAccount.getAcctId();
+		return ( currentAccount == null ) ? null : currentAccount.getAcctId();
 	}
 }

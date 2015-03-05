@@ -22,6 +22,7 @@ import com.google.common.collect.Lists;
 public class PermissionResult
 {
 	public static final PermissionResult DUMMY = new PermissionResult();
+	public static final PermissionResult NORESULT = new PermissionResult( null, PermissionDefault.DEFAULT.getNode(), "" );
 	
 	private PermissibleEntity entity = null;
 	private Permission perm = null;
@@ -34,6 +35,11 @@ public class PermissionResult
 		
 	}
 	
+	public PermissionResult( PermissibleEntity entity, Permission perm )
+	{
+		this( entity, perm, "" );
+	}
+	
 	public PermissionResult( PermissibleEntity entity, Permission perm, String ref )
 	{
 		if ( ref == null )
@@ -43,7 +49,8 @@ public class PermissionResult
 		this.perm = perm;
 		this.ref = ref;
 		
-		childPerm = recursiveEntityScan( entity );
+		if ( entity != null )
+			childPerm = recursiveEntityScan( entity );
 	}
 	
 	/**

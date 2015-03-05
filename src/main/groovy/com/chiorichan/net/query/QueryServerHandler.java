@@ -8,12 +8,20 @@ package com.chiorichan.net.query;
 
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
-import java.util.Date;
+import java.io.IOException;
 
-import com.chiorichan.util.Versioning;
+import com.chiorichan.ConsoleColor;
+import com.chiorichan.InteractiveConsole;
+import com.chiorichan.InteractiveConsoleHandler;
+import com.chiorichan.Loader;
+import com.chiorichan.event.EventException;
+import com.chiorichan.event.query.QueryEvent;
+import com.chiorichan.event.query.QueryEvent.QueryType;
+import com.chiorichan.session.SessionProviderQuery;
 
 /**
  * Handles the Query Server traffic
@@ -21,48 +29,109 @@ import com.chiorichan.util.Versioning;
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-public class QueryServerHandler extends SimpleChannelInboundHandler<String>
+@Sharable
+public class QueryServerHandler extends SimpleChannelInboundHandler<String> implements InteractiveConsoleHandler
 {
+	private ChannelHandlerContext context;
+	private SessionProviderQuery session;
+	private InteractiveConsole console;
+	
 	@Override
 	public void channelActive( ChannelHandlerContext ctx ) throws Exception
 	{
-		// Send greeting for a new connection.
-		ctx.write( "Welcome to " + Versioning.getProduct() + " " + Versioning.getVersion() + "!\r\n" );
-		ctx.write( "It is " + new Date() + " now.\r\n" );
-		ctx.flush();
+		context = ctx;
+		
+		session = new SessionProviderQuery( this );
+		console = InteractiveConsole.createInstance( this, session );
+		
+		console.displayWelcomeMessage();
+		
+		session.handleUserProtocols();
+		/*
+		 * if ( !session.checkPermission( "sys.query" ).isTrue() )
+		 * {
+		 * ChannelFuture future = ctx.write( parseColor( ConsoleColor.RED + "We're sorry, you are not permitted to login to this server via the Query Server.\r\n" ) );
+		 * future.addListener( ChannelFutureListener.CLOSE );
+		 * ctx.flush();
+		 * return;
+		 * }
+		 */
+		QueryEvent queryEvent = new QueryEvent( ctx, QueryType.CONNECTED, null );
+		
+		try
+		{
+			Loader.getEventBus().callEventWithException( queryEvent );
+		}
+		catch ( EventException ex )
+		{
+			throw new IOException( "Exception encountered during query event call, most likely the fault of a plugin.", ex );
+		}
+		
+		if ( queryEvent.isCancelled() )
+		{
+			ChannelFuture future = ctx.write( parseColor( ( queryEvent.getReason().isEmpty() ) ? "We're sorry, you've been disconnected from the server by a Cancelled Event." : queryEvent.getReason() ) );
+			future.addListener( ChannelFutureListener.CLOSE );
+			ctx.flush();
+			return;
+		}
+	}
+	
+	private String parseColor( String text )
+	{
+		if ( Loader.getConfig().getBoolean( "server.queryUseColor" ) )
+			return ConsoleColor.transAltColors( text );
+		else
+			return ConsoleColor.removeAltColors( text );
+	}
+	
+	@Override
+	public void println( String... msgs )
+	{
+		for ( String msg : msgs )
+			println( msg );
+	}
+	
+	@Override
+	public void println( String msg )
+	{
+		context.write( parseColor( msg ) + "\r\n" );
+		context.flush();
+	}
+	
+	public void prompt()
+	{
+		print( ConsoleColor.AQUA + "?> " );
+	}
+	
+	@Override
+	public void print( String... msgs )
+	{
+		for ( String msg : msgs )
+			print( msg );
+	}
+	
+	@Override
+	public void print( String msg )
+	{
+		context.write( parseColor( msg ) );
+		context.flush();
+	}
+	
+	public void disconnect()
+	{
+		disconnect( ConsoleColor.RED + "The server is disconnecting you connection, good bye!" );
+	}
+	
+	public void disconnect( String msg )
+	{
+		ChannelFuture future = context.write( parseColor( msg ) );
+		future.addListener( ChannelFutureListener.CLOSE );
 	}
 	
 	@Override
 	public void messageReceived( ChannelHandlerContext ctx, String request )
 	{
-		QuerySession
-		
-		String response;
-		boolean close = false;
-		if ( request.isEmpty() )
-		{
-			response = "Please type something.\r\n";
-		}
-		else if ( "bye".equals( request.toLowerCase() ) )
-		{
-			response = "Have a good day!\r\n";
-			close = true;
-		}
-		else
-		{
-			response = "Did you say '" + request + "'?\r\n";
-		}
-		
-		// We do not need to write a ChannelBuffer here.
-		// We know the encoder inserted at TelnetPipelineFactory will do the conversion.
-		ChannelFuture future = ctx.write( response );
-		
-		// Close the connection after sending 'Have a good day!'
-		// if the client has sent 'bye'.
-		if ( close )
-		{
-			future.addListener( ChannelFutureListener.CLOSE );
-		}
+		console.handleMessage( request );
 	}
 	
 	@Override

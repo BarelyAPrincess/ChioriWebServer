@@ -122,6 +122,9 @@ public class PermissionManager implements TaskCreator
 		if ( permissible == null )
 			throw new IllegalArgumentException( "Null entity passed! Name must not be empty" );
 		
+		if ( !permissible.isValid() )
+			return null;
+		
 		if ( permissible.entity == null )
 		{
 			if ( entities.containsKey( permissible.getEntityId() ) )

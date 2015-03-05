@@ -9,6 +9,7 @@ server:
   queryEnabled: false
   queryHost: ''
   queryPort: 8992
+  queryUseColor: true
   admin: chiorigreene@gmail.com
   allowDirectoryListing: false
   haltOnSevereError: false

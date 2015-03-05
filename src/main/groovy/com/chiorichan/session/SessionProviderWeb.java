@@ -25,6 +25,7 @@ import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.framework.ConfigurationManagerWrapper;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.Candy;
+import com.chiorichan.http.HttpCode;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.http.HttpResponseWrapper;
 import com.chiorichan.permission.Permission;
@@ -121,7 +122,7 @@ public class SessionProviderWeb implements SessionProvider
 		
 		if ( request == null )
 		{
-			Loader.getLogger().warning( "PersistentSession: Request was misteriously empty for an unknown reason." );
+			Loader.getLogger().severe( "PersistentSession: Request was empty for an unknown reason." );
 			return;
 		}
 		
@@ -285,9 +286,9 @@ public class SessionProviderWeb implements SessionProvider
 		if ( parentSession.currentAccount == null )
 			request.getResponse().sendLoginPage();
 		
-		// if ( permission != null )
-		// XXX if ( !parentSession.currentAccount.hasPermission( permission ) )
-		// request.getResponse().sendError( HttpCode.HTTP_FORBIDDEN, "You must have the `" + permission + "` in order to view this page!" );
+		if ( permission != null )
+			if ( !parentSession.checkPermission( permission ).isTrue() )
+				request.getResponse().sendError( HttpCode.HTTP_FORBIDDEN, "You must have the permission `" + permission + "` in order to view this page!" );
 	}
 	
 	public ConfigurationManagerWrapper getConfigurationManager()

@@ -19,27 +19,42 @@ public abstract class Permissible
 	 */
 	protected PermissibleEntity entity = null;
 	
-	public final PermissibleEntity getPermissibleEntity()
+	public final boolean checkEntity()
 	{
 		if ( entity == null )
 			entity = Loader.getPermissionManager().getEntity( this );
 		
+		return entity != null;
+	}
+	
+	public final PermissibleEntity getPermissibleEntity()
+	{
+		checkEntity();
 		return entity;
 	}
 	
 	public final boolean isBanned()
 	{
-		return getPermissibleEntity().isBanned();
+		if ( !checkEntity() )
+			return false;
+		
+		return entity.isBanned();
 	}
 	
 	public final boolean isWhitelisted()
 	{
-		return getPermissibleEntity().isWhitelisted();
+		if ( !checkEntity() )
+			return false;
+		
+		return entity.isWhitelisted();
 	}
 	
 	public final boolean isAdmin()
 	{
-		return getPermissibleEntity().isAdmin();
+		if ( !checkEntity() )
+			return false;
+		
+		return entity.isAdmin();
 	}
 	
 	/**
@@ -49,16 +64,25 @@ public abstract class Permissible
 	 */
 	public final boolean isOp()
 	{
-		return getPermissibleEntity().isOp();
+		if ( !checkEntity() )
+			return false;
+		
+		return entity.isOp();
 	}
 	
 	public final PermissionResult checkPermission( String perm )
 	{
+		if ( !checkEntity() )
+			return PermissionResult.NORESULT;
+		
 		return getPermissibleEntity().checkPermission( perm );
 	}
 	
 	public final PermissionResult checkPermission( Permission perm )
 	{
+		if ( !checkEntity() )
+			return PermissionResult.NORESULT;
+		
 		return getPermissibleEntity().checkPermission( perm );
 	}
 	
@@ -83,4 +107,6 @@ public abstract class Permissible
 	 *         an IPv4/IPv6 Address or null if no remote handlers
 	 */
 	public abstract String getIpAddr();
+	
+	public abstract boolean isValid();
 }
