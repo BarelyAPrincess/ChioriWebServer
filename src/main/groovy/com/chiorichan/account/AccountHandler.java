@@ -9,14 +9,19 @@
  */
 package com.chiorichan.account;
 
-import com.chiorichan.permission.Permissible;
-
-public abstract class AccountHandler extends Permissible implements InteractiveEntity
+/**
+ * Handles the link between an Account and it's Handler
+ * 
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
+ */
+public abstract class AccountHandler extends InteractivePermissible
 {
 	public Account currentAccount = null;
 	
 	public final void attachAccount( Account acct )
 	{
+		acct.putHandler( this );
 		this.currentAccount = acct;
 	}
 	
@@ -27,6 +32,7 @@ public abstract class AccountHandler extends Permissible implements InteractiveE
 	
 	public final void reset()
 	{
+		currentAccount.removeHandler( this );
 		currentAccount = null;
 	}
 	

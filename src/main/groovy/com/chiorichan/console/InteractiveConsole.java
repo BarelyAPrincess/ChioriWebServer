@@ -4,11 +4,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
  */
-package com.chiorichan;
+package com.chiorichan.console;
 
 import java.io.IOException;
 import java.io.InputStream;
 
+import com.chiorichan.ConsoleColor;
+import com.chiorichan.Loader;
 import com.chiorichan.session.SessionProviderQuery;
 import com.chiorichan.util.FileUtil;
 import com.chiorichan.util.Versioning;
@@ -64,16 +66,6 @@ public class InteractiveConsole
 		{
 			
 		}
-	}
-	
-	public void handleMessage( String request )
-	{
-		if ( request == null || request.isEmpty() )
-		{
-			handler.println( ConsoleColor.RED + "Your entry was unrecognized. Type \"help\" for help." );
-		}
-		
-		handler.prompt();
 	}
 	
 	public InteractiveConsoleHandler getHandler()

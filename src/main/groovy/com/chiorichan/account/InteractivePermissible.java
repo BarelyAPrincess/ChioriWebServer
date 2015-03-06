@@ -6,27 +6,14 @@
  */
 package com.chiorichan.account;
 
+import com.chiorichan.permission.Permissible;
+
 /**
- * 
  * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-public interface InteractiveEntity
+public abstract class InteractivePermissible extends Permissible implements InteractiveEntity
 {
-	void sendMessage( String... msgs );
 	
-	void sendMessage( String string );
-	
-	boolean isBanned();
-	
-	boolean isWhitelisted();
-	
-	boolean isAdmin();
-	
-	boolean isOp();
-	
-	boolean kick( String kickMessage );
-	
-	boolean isValid();
 }

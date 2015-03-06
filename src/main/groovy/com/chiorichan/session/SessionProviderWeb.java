@@ -429,4 +429,10 @@ public class SessionProviderWeb implements SessionProvider
 	{
 		return parentSession.checkPermission( perm );
 	}
+	
+	@Override
+	public void onNotify()
+	{
+		// Do Nothing
+	}
 }

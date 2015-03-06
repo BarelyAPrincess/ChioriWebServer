@@ -61,4 +61,6 @@ public interface SessionProvider extends BindingProvider
 	Site getSite();
 	
 	void saveSession( boolean force );
+
+	void onNotify();
 }

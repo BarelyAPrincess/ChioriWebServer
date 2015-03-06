@@ -155,4 +155,10 @@ public class SessionProviderNet implements SessionProvider
 	{
 		
 	}
+
+	@Override
+	public void onNotify()
+	{
+		// TODO Auto-generated method stub
+	}
 }

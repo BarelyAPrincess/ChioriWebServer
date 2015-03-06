@@ -331,13 +331,20 @@ public abstract class Session extends AccountHandler
 	public void sendMessage( String... messages )
 	{
 		for ( String m : messages )
-			pendingMessages.add( m );
+			sendMessage( m );
 	}
 	
 	@Override
 	public void sendMessage( String msg )
 	{
 		pendingMessages.add( msg );
+		notifyProviders();
+	}
+	
+	public void notifyProviders()
+	{
+		for ( SessionProvider p : sessionProviders )
+			p.onNotify();
 	}
 	
 	public Site getSite()

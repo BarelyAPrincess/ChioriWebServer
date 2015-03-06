@@ -4,19 +4,22 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
  */
-package com.chiorichan;
+package com.chiorichan.console;
 
 /**
- * Used to interface InteractiveConsole with it's creator
  * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-public interface InteractiveConsoleHandler
+abstract class BuiltinCommand extends Command
 {
-	void println( String... msg );
-	void println( String msg );
-	void print( String... msg );
-	void print( String msg );
-	void prompt();
+	public BuiltinCommand( String name )
+	{
+		super( name );
+	}
+	
+	public BuiltinCommand( String name, String permission )
+	{
+		super( name, permission );
+	}
 }

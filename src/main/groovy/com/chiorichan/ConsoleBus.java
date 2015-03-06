@@ -19,6 +19,7 @@ import joptsimple.OptionSet;
 
 import org.joda.time.DateTime;
 
+import com.chiorichan.console.CommandDispatch;
 import com.chiorichan.exception.StartupException;
 import com.chiorichan.session.SessionManager;
 import com.chiorichan.util.FileUtil;
@@ -119,6 +120,8 @@ public class ConsoleBus implements Runnable
 	
 	private void loopTick( int tick )
 	{
+		CommandDispatch.handleCommands();
+		
 		Loader.getScheduler().mainThreadHeartbeat( tick );
 		
 		// Execute every five minutes - ex: clean sessions and checking for updates.

@@ -15,9 +15,10 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import java.io.IOException;
 
 import com.chiorichan.ConsoleColor;
-import com.chiorichan.InteractiveConsole;
-import com.chiorichan.InteractiveConsoleHandler;
 import com.chiorichan.Loader;
+import com.chiorichan.console.CommandDispatch;
+import com.chiorichan.console.InteractiveConsole;
+import com.chiorichan.console.InteractiveConsoleHandler;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.query.QueryEvent;
 import com.chiorichan.event.query.QueryEvent.QueryType;
@@ -46,7 +47,6 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 		
 		console.displayWelcomeMessage();
 		
-		session.handleUserProtocols();
 		/*
 		 * if ( !session.checkPermission( "sys.query" ).isTrue() )
 		 * {
@@ -74,6 +74,17 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 			ctx.flush();
 			return;
 		}
+		
+		session.handleUserProtocols();
+		
+		//prompt();
+	}
+	
+	@Override
+	public void channelInactive( ChannelHandlerContext ctx ) throws Exception
+	{
+		session.logoutAccount();
+		session.onFinished();
 	}
 	
 	private String parseColor( String text )
@@ -100,7 +111,7 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 	
 	public void prompt()
 	{
-		print( ConsoleColor.AQUA + "?> " );
+		print( ConsoleColor.AQUA + "(" + session.getAccount().getAcctId() + ") ?> " );
 	}
 	
 	@Override
@@ -131,7 +142,7 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 	@Override
 	public void messageReceived( ChannelHandlerContext ctx, String request )
 	{
-		console.handleMessage( request );
+		CommandDispatch.issueCommand( session.getParentSession(), request );
 	}
 	
 	@Override

@@ -8,8 +8,8 @@ package com.chiorichan.session;
 
 import groovy.lang.Binding;
 
-import com.chiorichan.ConsoleColor;
 import com.chiorichan.account.Account;
+import com.chiorichan.account.system.SystemAccounts;
 import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.Candy;
@@ -58,9 +58,9 @@ public class SessionProviderQuery implements SessionProvider
 	public void handleUserProtocols()
 	{
 		if ( !parentSession.pendingMessages.isEmpty() )
-		{
 			handler.println( parentSession.pendingMessages.toArray( new String[0] ) );
-		}
+		
+		parentSession.attachAccount( SystemAccounts.noLogin );
 	}
 	
 	@Override
@@ -222,5 +222,14 @@ public class SessionProviderQuery implements SessionProvider
 	public final PermissionResult checkPermission( Permission perm )
 	{
 		return parentSession.checkPermission( perm );
+	}
+	
+	@Override
+	public void onNotify()
+	{
+		for ( String s : parentSession.pendingMessages )
+			handler.println( "\r" + s ); // \r = Cartridge Return.
+		handler.prompt();
+		parentSession.pendingMessages.clear();
 	}
 }
