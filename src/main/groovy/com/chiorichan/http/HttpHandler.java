@@ -84,10 +84,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 		DiskFileUpload.baseDirectory = Loader.getTempFileDirectory().getAbsolutePath();
 		DiskAttribute.deleteOnExitTemporaryFile = true;
 		DiskAttribute.baseDirectory = Loader.getTempFileDirectory().getAbsolutePath();
-	}
-	
-	public HttpHandler()
-	{
+		
 		// Initalize Static Server Vars
 		staticServerVars.put( ServerVars.SERVER_SOFTWARE, Versioning.getProduct() );
 		staticServerVars.put( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "webmaster@example.com" ) );
@@ -98,9 +95,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 	public void channelInactive( ChannelHandlerContext ctx ) throws Exception
 	{
 		if ( decoder != null )
-		{
 			decoder.cleanFiles();
-		}
 	}
 	
 	@Override

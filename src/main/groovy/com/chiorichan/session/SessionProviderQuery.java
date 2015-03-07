@@ -229,7 +229,12 @@ public class SessionProviderQuery implements SessionProvider
 	{
 		for ( String s : parentSession.pendingMessages )
 			handler.println( "\r" + s ); // \r = Cartridge Return.
-		handler.prompt();
 		parentSession.pendingMessages.clear();
+	}
+
+	@Override
+	public void sendMessage( String... msgs )
+	{
+		handler.println( msgs );
 	}
 }

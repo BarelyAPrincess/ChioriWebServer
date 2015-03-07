@@ -7,19 +7,14 @@
 package com.chiorichan.console;
 
 /**
- * References an issued command.
+ * Used to receive user input from console
  * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-public class CommandRef
+public interface Interviewer
 {
-	protected final String command;
-	protected final InteractiveConsole handler;
+	boolean handleInput( String command );
 	
-	public CommandRef( InteractiveConsole handler, String command )
-	{
-		this.handler = handler;
-		this.command = command;
-	}
+	String getPrompt();
 }

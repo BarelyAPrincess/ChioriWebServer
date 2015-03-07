@@ -8,12 +8,17 @@ package com.chiorichan.console;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Map;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
+import com.chiorichan.session.SessionProvider;
 import com.chiorichan.session.SessionProviderQuery;
 import com.chiorichan.util.FileUtil;
 import com.chiorichan.util.Versioning;
+import com.google.common.collect.Maps;
 
 /**
  * Used to interact with commands and logs
@@ -23,10 +28,12 @@ import com.chiorichan.util.Versioning;
  */
 public class InteractiveConsole
 {
-	private SessionProviderQuery session;
+	private Map<String, String> metadata = Maps.newConcurrentMap();
 	private InteractiveConsoleHandler handler;
+	private SessionProvider session;
+	private String prompt = "";
 	
-	private InteractiveConsole( InteractiveConsoleHandler handler, SessionProviderQuery session )
+	private InteractiveConsole( InteractiveConsoleHandler handler, SessionProvider session )
 	{
 		this.handler = handler;
 		this.session = session;
@@ -71,5 +78,64 @@ public class InteractiveConsole
 	public InteractiveConsoleHandler getHandler()
 	{
 		return handler;
+	}
+	
+	public SessionProvider getSession()
+	{
+		return session;
+	}
+	
+	public void sendMessage( String... msgs )
+	{
+		for ( String msg : msgs )
+			handler.println( msg );
+	}
+	
+	public void setMetadata( String key, String val )
+	{
+		if ( val == null )
+			metadata.remove( key );
+		else
+			metadata.put( key, val );
+	}
+	
+	public String getMetadata( String key )
+	{
+		return getMetadata( key, null );
+	}
+	
+	public String getMetadata( String key, String def )
+	{
+		if ( !metadata.containsKey( key ) )
+			return def;
+		
+		return metadata.get( key );
+	}
+	
+	public void setPrompt( String prompt )
+	{
+		if ( prompt != null )
+			this.prompt = prompt;
+		
+		prompt();
+	}
+	
+	public void resetPrompt()
+	{
+		try
+		{
+			prompt = ConsoleColor.GREEN + session.getAccount().getAcctId() + "@" + InetAddress.getLocalHost().getHostName() + ConsoleColor.RESET + ":" + ConsoleColor.BLUE + "~" + ConsoleColor.RESET + "$ ";
+		}
+		catch ( UnknownHostException e )
+		{
+			prompt = ConsoleColor.GREEN + session.getAccount().getAcctId() + "@localhost ~$ ";
+		}
+		
+		prompt();
+	}
+	
+	public void prompt()
+	{
+		handler.print( "\r" + prompt );
 	}
 }

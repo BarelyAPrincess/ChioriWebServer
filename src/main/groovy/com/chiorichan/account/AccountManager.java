@@ -351,4 +351,9 @@ public class AccountManager
 	{
 		return isDebug;
 	}
+
+	public boolean isConfigured()
+	{
+		return accounts.isConfigured();
+	}
 }

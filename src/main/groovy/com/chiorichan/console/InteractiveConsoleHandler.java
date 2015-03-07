@@ -6,6 +6,8 @@
  */
 package com.chiorichan.console;
 
+import com.chiorichan.session.SessionProvider;
+
 /**
  * Used to interface InteractiveConsole with it's creator
  * 
@@ -15,8 +17,8 @@ package com.chiorichan.console;
 public interface InteractiveConsoleHandler
 {
 	void println( String... msg );
-	void println( String msg );
+	
 	void print( String... msg );
-	void print( String msg );
-	void prompt();
+	
+	SessionProvider getSession();
 }

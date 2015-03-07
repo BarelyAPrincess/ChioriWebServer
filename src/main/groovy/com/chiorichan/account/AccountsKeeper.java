@@ -127,7 +127,7 @@ public class AccountsKeeper
 		Validate.notNull( s, "Partial Name cannot be null" );
 		
 		if ( adapter == null )
-			return null;
+			throw new LoginException( LoginExceptionReason.unconfigured );
 		
 		Account acct = null;
 		
@@ -276,5 +276,10 @@ public class AccountsKeeper
 		{
 			isBanned = value;
 		}
+	}
+	
+	public boolean isConfigured()
+	{
+		return adapter != null;
 	}
 }

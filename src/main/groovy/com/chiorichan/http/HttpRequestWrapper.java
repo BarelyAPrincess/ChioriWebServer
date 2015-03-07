@@ -105,7 +105,7 @@ public class HttpRequestWrapper
 	public Boolean getArgumentBoolean( String key )
 	{
 		String rtn = getArgument( key, "0" ).toLowerCase();
-		return ( rtn.equals( "true" ) || rtn.equals( "1" ) );
+		return StringUtil.isTrue( rtn );
 	}
 	
 	public String getArgument( String key )
@@ -115,7 +115,7 @@ public class HttpRequestWrapper
 	
 	public String getArgument( String key, String def )
 	{
-		return getArgument( key, "", false );
+		return getArgument( key, def, false );
 	}
 	
 	public String getArgument( String key, String def, boolean rtnNull )

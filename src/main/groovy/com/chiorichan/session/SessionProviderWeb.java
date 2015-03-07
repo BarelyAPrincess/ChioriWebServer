@@ -435,4 +435,10 @@ public class SessionProviderWeb implements SessionProvider
 	{
 		// Do Nothing
 	}
+
+	@Override
+	public void sendMessage( String... msgs )
+	{
+		// Do Nothing
+	}
 }

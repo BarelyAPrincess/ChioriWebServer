@@ -63,4 +63,6 @@ public interface SessionProvider extends BindingProvider
 	void saveSession( boolean force );
 
 	void onNotify();
+
+	void sendMessage( String... msgs );
 }

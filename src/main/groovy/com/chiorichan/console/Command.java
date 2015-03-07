@@ -53,7 +53,7 @@ public abstract class Command
 	/**
 	 * Executes the command, returning its success
 	 * 
-	 * @param permissible
+	 * @param handler
 	 *            Source object which is executing this command
 	 * @param commandLabel
 	 *            The alias of the command used
@@ -61,7 +61,7 @@ public abstract class Command
 	 *            All arguments passed to the command, split via ' '
 	 * @return true if the command was successful, otherwise false
 	 */
-	public abstract boolean execute( InteractivePermissible permissible, String command, String[] args );
+	public abstract boolean execute( InteractiveConsole handler, String command, String[] args );
 	
 	/**
 	 * Returns the name of this command

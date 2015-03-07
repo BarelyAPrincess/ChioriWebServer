@@ -23,6 +23,7 @@ import com.chiorichan.event.EventException;
 import com.chiorichan.event.query.QueryEvent;
 import com.chiorichan.event.query.QueryEvent.QueryType;
 import com.chiorichan.session.SessionProviderQuery;
+import com.chiorichan.util.StringUtil;
 
 /**
  * Handles the Query Server traffic
@@ -77,7 +78,7 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 		
 		session.handleUserProtocols();
 		
-		//prompt();
+		console.resetPrompt();
 	}
 	
 	@Override
@@ -89,42 +90,26 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 	
 	private String parseColor( String text )
 	{
-		if ( Loader.getConfig().getBoolean( "server.queryUseColor" ) )
-			return ConsoleColor.transAltColors( text );
-		else
+		if ( !Loader.getConfig().getBoolean( "server.queryUseColor" ) || StringUtil.isTrue( console.getMetadata( "nocolor", "true" ) ) )
 			return ConsoleColor.removeAltColors( text );
+		else
+			return ConsoleColor.transAltColors( text );
 	}
 	
 	@Override
 	public void println( String... msgs )
 	{
 		for ( String msg : msgs )
-			println( msg );
-	}
-	
-	@Override
-	public void println( String msg )
-	{
-		context.write( parseColor( msg ) + "\r\n" );
+			context.write( parseColor( msg ) + "\r\n" );
 		context.flush();
-	}
-	
-	public void prompt()
-	{
-		print( ConsoleColor.AQUA + "(" + session.getAccount().getAcctId() + ") ?> " );
+		console.prompt();
 	}
 	
 	@Override
 	public void print( String... msgs )
 	{
 		for ( String msg : msgs )
-			print( msg );
-	}
-	
-	@Override
-	public void print( String msg )
-	{
-		context.write( parseColor( msg ) );
+			context.write( parseColor( msg ) );
 		context.flush();
 	}
 	
@@ -142,7 +127,7 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 	@Override
 	public void messageReceived( ChannelHandlerContext ctx, String request )
 	{
-		CommandDispatch.issueCommand( session.getParentSession(), request );
+		CommandDispatch.issueCommand( console, request );
 	}
 	
 	@Override
@@ -156,5 +141,11 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 	{
 		cause.printStackTrace();
 		ctx.close();
+	}
+	
+	@Override
+	public SessionProviderQuery getSession()
+	{
+		return session;
 	}
 }

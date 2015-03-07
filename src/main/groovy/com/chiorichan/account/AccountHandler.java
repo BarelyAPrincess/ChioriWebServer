@@ -32,8 +32,11 @@ public abstract class AccountHandler extends InteractivePermissible
 	
 	public final void reset()
 	{
-		currentAccount.removeHandler( this );
-		currentAccount = null;
+		if ( currentAccount != null )
+		{
+			currentAccount.removeHandler( this );
+			currentAccount = null;
+		}
 	}
 	
 	@Override

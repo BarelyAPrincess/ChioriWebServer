@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.Validate;
@@ -17,11 +19,12 @@ import org.apache.commons.lang3.Validate;
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.InteractivePermissible;
+import com.chiorichan.console.commands.BuiltinCommand;
 import com.chiorichan.event.server.CommandIssuedEvent;
-import com.chiorichan.util.Versioning;
-import com.google.common.base.Joiner;
+import com.google.common.collect.Maps;
 
 /**
+ * This is the Command Dispatch for executing a command from a console.
  * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
@@ -31,46 +34,26 @@ public final class CommandDispatch
 	private static List<CommandRef> pendingCommands = Collections.synchronizedList( new ArrayList<CommandRef>() );
 	private static List<Command> registeredCommands = Collections.synchronizedList( new ArrayList<Command>() );
 	private static final Pattern PATTERN_ON_SPACE = Pattern.compile( " ", Pattern.LITERAL );
+	private static Map<InteractiveConsole, List<Interviewer>> interviewers = Maps.newConcurrentMap();
+	private static Map<InteractiveConsole, Interviewer> activeInterviewer = Maps.newConcurrentMap();
 	
 	static
 	{
-		reg( new BuiltinCommand( "version" )
-		{
-			@Override
-			public boolean execute( InteractivePermissible handler, String command, String[] args )
-			{
-				handler.sendMessage( ConsoleColor.AQUA + Versioning.getProduct() + " is running version " + Versioning.getVersion() + ( ( Versioning.getBuildNumber().equals( "0" ) ) ? " (dev)" : " (build #" + Versioning.getBuildNumber() + ")" ) );
-				return true;
-			}
-		} );
-		
-		reg( new BuiltinCommand( "echo" )
-		{
-			@Override
-			public boolean execute( InteractivePermissible handler, String command, String[] args )
-			{
-				handler.sendMessage( Joiner.on( " " ).join( args ) );
-				return true;
-			}
-		} );
-		
-		reg( new BuiltinCommand( "help" )
-		{
-			@Override
-			public boolean execute( InteractivePermissible handler, String command, String[] args )
-			{
-				handler.sendMessage( ConsoleColor.YELLOW + "We're sorry, help has not been implemented as of yet, try again in a later version." );
-				return true;
-			}
-		} );
+		BuiltinCommand.registerBuiltinCommands();
 	}
 	
 	protected static void reg( Command command )
 	{
-		registeredCommands.add( command );
+		registerCommand( command );
 	}
 	
-	public static void issueCommand( InteractivePermissible handler, String command )
+	public static void registerCommand( Command command )
+	{
+		if ( getCommand( command.getName() ) == null )
+			registeredCommands.add( command );
+	}
+	
+	public static void issueCommand( InteractiveConsole handler, String command )
 	{
 		Validate.notNull( handler, "Handler cannot be null" );
 		Validate.notNull( command, "CommandLine cannot be null" );
@@ -82,50 +65,81 @@ public final class CommandDispatch
 	
 	public static void handleCommands()
 	{
+		for ( Entry<InteractiveConsole, List<Interviewer>> entry : interviewers.entrySet() )
+		{
+			if ( activeInterviewer.get( entry.getKey() ) == null )
+			{
+				if ( entry.getValue().isEmpty() )
+				{
+					interviewers.remove( entry.getKey() );
+					entry.getKey().resetPrompt();
+				}
+				else
+				{
+					Interviewer i = entry.getValue().remove( 0 );
+					activeInterviewer.put( entry.getKey(), i );
+					entry.getKey().setPrompt( i.getPrompt() );
+				}
+			}
+		}
+		
 		while ( !pendingCommands.isEmpty() )
 		{
 			CommandRef command = pendingCommands.remove( 0 );
 			
 			try
 			{
-				CommandIssuedEvent event = new CommandIssuedEvent( command.command, command.permissible );
+				Interviewer i = activeInterviewer.get( command.handler );
+				InteractivePermissible permissible = command.handler.getSession().getParentSession();
 				
-				Loader.getEventBus().callEvent( event );
-				
-				if ( event.isCancelled() )
+				if ( i != null )
 				{
-					command.permissible.sendMessage( ConsoleColor.RED + "Your entry was cancelled by the event system." );
-					return;
+					if ( i.handleInput( command.command ) )
+						activeInterviewer.remove( command.handler );
+					else
+						command.handler.prompt();
 				}
-				
-				String[] args = PATTERN_ON_SPACE.split( command.command );
-				
-				if ( args.length > 0 )
+				else
 				{
-					String sentCommandLabel = args[0].toLowerCase();
-					Command target = getCommand( sentCommandLabel );
+					CommandIssuedEvent event = new CommandIssuedEvent( command.command, permissible );
 					
-					if ( target != null )
+					Loader.getEventBus().callEvent( event );
+					
+					if ( event.isCancelled() )
 					{
-						try
+						permissible.sendMessage( ConsoleColor.RED + "Your entry was cancelled by the event system." );
+						return;
+					}
+					
+					String[] args = PATTERN_ON_SPACE.split( command.command );
+					
+					if ( args.length > 0 )
+					{
+						String sentCommandLabel = args[0].toLowerCase();
+						Command target = getCommand( sentCommandLabel );
+						
+						if ( target != null )
 						{
-							if ( target.testPermission( command.permissible ) )
-								target.execute( command.permissible, sentCommandLabel, Arrays.copyOfRange( args, 1, args.length ) );
-							
-							return;
-						}
-						catch ( CommandException ex )
-						{
-							throw ex;
-						}
-						catch ( Throwable ex )
-						{
-							throw new CommandException( "Unhandled exception executing '" + command.command + "' in " + target, ex );
+							try
+							{
+								if ( target.testPermission( permissible ) )
+									target.execute( command.handler, sentCommandLabel, Arrays.copyOfRange( args, 1, args.length ) );
+								
+								return;
+							}
+							catch ( CommandException ex )
+							{
+								throw ex;
+							}
+							catch ( Throwable ex )
+							{
+								throw new CommandException( "Unhandled exception executing '" + command.command + "' in " + target, ex );
+							}
 						}
 					}
+					
+					permissible.sendMessage( ConsoleColor.YELLOW + "Your entry was unrecognized, type \"help\" for help." );
 				}
-				
-				command.permissible.sendMessage( ConsoleColor.YELLOW + "Your entry was unrecognized, type \"help\" for help." );
 			}
 			catch ( Exception ex )
 			{
@@ -143,5 +157,17 @@ public final class CommandDispatch
 		}
 		
 		return null;
+	}
+	
+	public static void addInterviewer( InteractiveConsole handler, Interviewer interviewer )
+	{
+		if ( interviewers.get( handler ) == null )
+		{
+			interviewers.put( handler, new ArrayList<Interviewer>( Arrays.asList( interviewer ) ) );
+		}
+		else
+		{
+			interviewers.get( handler ).add( interviewer );
+		}
 	}
 }

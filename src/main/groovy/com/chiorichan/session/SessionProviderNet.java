@@ -161,4 +161,10 @@ public class SessionProviderNet implements SessionProvider
 	{
 		// TODO Auto-generated method stub
 	}
+
+	@Override
+	public void sendMessage( String... msgs )
+	{
+		// TODO Auto-generated method stub
+	}
 }
