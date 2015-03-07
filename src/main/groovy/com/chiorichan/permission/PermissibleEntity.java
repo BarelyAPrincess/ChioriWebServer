@@ -343,16 +343,7 @@ public abstract class PermissibleEntity
 		if ( ref == null )
 			ref = "";
 		
-		// Everyone
-		if ( perm == null || perm.equals( "-1" ) || perm.isEmpty() )
-			perm = PermissionDefault.EVERYBODY.getNameSpace();
-		
-		// OP Only
-		if ( perm.equals( "0" ) || perm.equalsIgnoreCase( "op" ) || perm.equalsIgnoreCase( "root" ) )
-			perm = PermissionDefault.OP.getNameSpace();
-		
-		if ( perm.equalsIgnoreCase( "admin" ) )
-			perm = PermissionDefault.ADMIN.getNameSpace();
+		perm = Permission.parseNode( perm );
 		
 		Permission permission = Permission.getNode( perm, true );
 		result = checkPermission( permission, ref );

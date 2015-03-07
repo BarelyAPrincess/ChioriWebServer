@@ -72,16 +72,14 @@ public abstract class Permissible
 	
 	public final PermissionResult checkPermission( String perm )
 	{
-		if ( !checkEntity() )
-			return PermissionResult.NORESULT;
-		
-		return getPermissibleEntity().checkPermission( perm );
+		perm = Permission.parseNode( perm );
+		return checkPermission( Permission.getNode( perm ) );
 	}
 	
 	public final PermissionResult checkPermission( Permission perm )
 	{
 		if ( !checkEntity() )
-			return PermissionResult.NORESULT;
+			return new PermissionResult( null, perm, "" );
 		
 		return getPermissibleEntity().checkPermission( perm );
 	}

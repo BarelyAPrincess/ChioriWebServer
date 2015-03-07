@@ -22,7 +22,6 @@ import com.google.common.collect.Lists;
 public class PermissionResult
 {
 	public static final PermissionResult DUMMY = new PermissionResult();
-	public static final PermissionResult NORESULT = new PermissionResult( null, PermissionDefault.DEFAULT.getNode(), "" );
 	
 	private PermissibleEntity entity = null;
 	private Permission perm = null;

@@ -24,7 +24,6 @@ public class Template extends Plugin implements Listener
 	public void onEnable()
 	{
 		saveDefaultConfig();
-		
 		Loader.getEventBus().registerEvents( this, this );
 	}
 	

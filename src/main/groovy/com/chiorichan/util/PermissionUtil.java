@@ -31,4 +31,6 @@ public class PermissionUtil
 	{
 		return ref.replaceAll( "[^a-z0-9_]", "" );
 	}
+	
+	
 }

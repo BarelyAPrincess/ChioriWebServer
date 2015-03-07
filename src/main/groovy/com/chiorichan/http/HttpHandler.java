@@ -50,6 +50,8 @@ import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.factory.CodeMetaData;
 import com.chiorichan.framework.Site;
 import com.chiorichan.framework.SiteException;
+import com.chiorichan.permission.PermissionDefault;
+import com.chiorichan.permission.PermissionResult;
 import com.chiorichan.session.SessionProvider;
 import com.chiorichan.util.Versioning;
 import com.google.common.collect.Maps;
@@ -441,14 +443,16 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 			req = "-1";
 		
 		/**
-		 * -1 = Allow All!
-		 * 0 = OP Only!
-		 * 1 = Valid Accounts Only!
-		 * All Others = Per Account
+		 * -1, everybody, everyone = Allow All!
+		 * 0, op, root | sys.op = OP Only!
+		 * admin | sys.admin = Admin Only!
 		 */
 		
-		if ( !req.equals( "-1" ) )
-			if ( sess.getParentSession().getAccount() == null )
+		PermissionResult perm = sess.getParentSession().checkPermission( req );
+		
+		if ( perm.getPermission() != PermissionDefault.EVERYBODY.getNode() )
+		{
+			if ( perm.getEntity() == null )
 			{
 				String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
 				// Loader.getLogger().warning( "Requester of page '" + file + "' has been redirected to the login page." );
@@ -456,14 +460,16 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 				// TODO: Come up with a better way to handle the URI used in the target, i.e., currently params are being lost in the redirect.
 				return;
 			}
-			else if ( !req.equals( "1" ) && !sess.getParentSession().checkPermission( req ).isTrue() )
+			
+			if ( !perm.isTrue() )
 			{
-				if ( req.equals( "0" ) )
+				if ( perm.getPermission() == PermissionDefault.OP.getNode() )
 					response.sendError( 401, "This page is limited to Operators only!" );
 				else
-					response.sendError( 401, "This page is limited to users with access to the \"" + req + "\" permission." );
+					response.sendError( 401, "This page is limited to users with access to the \"" + perm.getPermission().getNamespace() + "\" permission." );
 				return;
 			}
+		}
 		
 		try
 		{
