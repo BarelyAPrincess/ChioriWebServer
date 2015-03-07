@@ -560,22 +560,37 @@ public class WebUtils
 		return factory.eval( packFile, codeMeta, site );
 	}
 	
-	public static String evalPackage( CodeEvalFactory factory, Site site, String pack ) throws IOException, ShellExecuteException
+	public static String evalPackage( CodeEvalFactory factory, Site site, String pack ) throws ShellExecuteException
 	{
 		return evalPackage( factory, site, pack, new HashMap<String, Object>() );
 	}
 	
-	public static String evalPackage( CodeEvalFactory factory, Site site, String pack, Map<String, Object> global ) throws IOException, ShellExecuteException
+	public static String evalPackage( CodeEvalFactory factory, Site site, String pack, Map<String, Object> global ) throws ShellExecuteException
+	{
+		try
+		{
+			return evalPackageWithException( factory, site, pack, global );
+		}
+		catch ( IOException e )
+		{
+			
+			return "";
+		}
+	}
+	
+	public static String evalPackageWithException( CodeEvalFactory factory, Site site, String pack ) throws IOException, ShellExecuteException
+	{
+		return evalPackageWithException( factory, site, pack, new HashMap<String, Object>() );
+	}
+	
+	public static String evalPackageWithException( CodeEvalFactory factory, Site site, String pack, Map<String, Object> global ) throws IOException, ShellExecuteException
 	{
 		File packFile = null;
 		
-		if ( site != null )
-			packFile = site.getResource( pack );
-		else
+		if ( site == null )
 			site = Loader.getSiteManager().getFrameworkSite();
 		
-		if ( packFile == null || !packFile.exists() )
-			packFile = Loader.getSiteManager().getFrameworkSite().getResource( pack );
+		packFile = site.getResourceWithException( pack );
 		
 		if ( packFile == null || !packFile.exists() )
 			return "";

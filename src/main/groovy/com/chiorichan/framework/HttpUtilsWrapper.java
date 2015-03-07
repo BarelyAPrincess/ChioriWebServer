@@ -45,7 +45,7 @@ public class HttpUtilsWrapper extends WebUtils
 		return evalFile( sess.getCodeFactory(), sess.getParentSession().getSite(), file );
 	}
 	
-	public String evalPackage( String pack, Object... global ) throws IOException, ShellExecuteException
+	public String evalPackage( String pack, Object... global ) throws ShellExecuteException
 	{
 		Map<String, Object> globals = Maps.newHashMap();
 		
@@ -55,13 +55,33 @@ public class HttpUtilsWrapper extends WebUtils
 		return evalPackage( sess.getCodeFactory(), sess.getParentSession().getSite(), pack, globals );
 	}
 	
-	public String evalPackage( String pack, Map<String, Object> global ) throws IOException, ShellExecuteException
+	public String evalPackage( String pack, Map<String, Object> global ) throws ShellExecuteException
 	{
 		return evalPackage( sess.getCodeFactory(), sess.getParentSession().getSite(), pack, global );
 	}
 	
-	public String evalPackage( String pack ) throws IOException, ShellExecuteException
+	public String evalPackage( String pack ) throws ShellExecuteException
 	{
 		return evalPackage( sess.getCodeFactory(), sess.getParentSession().getSite(), pack );
+	}
+	
+	public String evalPackageWithException( String pack, Object... global ) throws IOException, ShellExecuteException
+	{
+		Map<String, Object> globals = Maps.newHashMap();
+		
+		for ( int i = 0; i < global.length; i++ )
+			globals.put( "" + i, global[i] );
+		
+		return evalPackageWithException( sess.getCodeFactory(), sess.getParentSession().getSite(), pack, globals );
+	}
+	
+	public String evalPackageWithException( String pack, Map<String, Object> global ) throws IOException, ShellExecuteException
+	{
+		return evalPackageWithException( sess.getCodeFactory(), sess.getParentSession().getSite(), pack, global );
+	}
+	
+	public String evalPackageWithException( String pack ) throws IOException, ShellExecuteException
+	{
+		return evalPackageWithException( sess.getCodeFactory(), sess.getParentSession().getSite(), pack );
 	}
 }

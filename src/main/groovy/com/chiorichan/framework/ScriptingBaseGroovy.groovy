@@ -18,9 +18,12 @@ import com.chiorichan.http.HttpResponseWrapper
 import com.chiorichan.session.SessionManager
 import com.chiorichan.session.SessionProvider
 import com.chiorichan.util.Versioning
+import com.google.common.collect.Lists;
 
 abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 {
+	private List<String> includedPackages = Lists.newArrayList();
+	
 	void var_dump ( Object obj )
 	{
 		println var_export( obj )
@@ -153,5 +156,33 @@ abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	String url_to_logout()
 	{
 		return url_to_login + "?logout";
+	}
+	
+	String include( String pack )
+	{
+		getHttpUtils().evalPackage( pack );
+	}
+	
+	String include_once( String pack )
+	{
+		if ( !includedPackages.contains( pack )
+		{
+			includedPackages.add( pack );
+			getHttpUtils().evalPackage( pack );
+		}
+	}
+	
+	String require( String pack )
+	{
+		getHttpUtils().evalPackageWithException( pack );
+	}
+	
+	String require_once( String pack )
+	{
+		if ( !includedPackages.contains( pack )
+		{
+			includedPackages.add( pack );
+			getHttpUtils().evalPackageWithException( pack );
+		}
 	}
 }
