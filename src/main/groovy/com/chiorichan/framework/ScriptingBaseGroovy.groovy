@@ -165,7 +165,7 @@ abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	
 	String include_once( String pack )
 	{
-		if ( !includedPackages.contains( pack )
+		if ( !includedPackages.contains( pack ) )
 		{
 			includedPackages.add( pack );
 			getHttpUtils().evalPackage( pack );
@@ -179,7 +179,7 @@ abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	
 	String require_once( String pack )
 	{
-		if ( !includedPackages.contains( pack )
+		if ( !includedPackages.contains( pack ) )
 		{
 			includedPackages.add( pack );
 			getHttpUtils().evalPackageWithException( pack );

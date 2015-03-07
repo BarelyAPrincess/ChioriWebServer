@@ -3,3 +3,4 @@ config:
   defaultTag: PAGE DATA
   alwaysRender: false
   noCommons: false
+  ignoreFileNotFound: true

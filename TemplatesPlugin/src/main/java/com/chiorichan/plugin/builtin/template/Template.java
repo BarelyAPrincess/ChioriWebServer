@@ -138,27 +138,21 @@ public class Template extends Plugin implements Listener
 			
 			event.setSource( ob.toString() );
 		}
-		catch ( ShellExecuteException e )
+		catch ( IOException | ShellExecuteException e )
 		{
 			event.setSource( ExceptionPageUtils.makeExceptionPage( e, event.getSession().getCodeFactory() ) );
 			event.getResponse().setStatus( 500 );
 		}
 	}
 	
-	private String doInclude( String pack, RenderEvent event ) throws ShellExecuteException
+	private String doInclude( String pack, RenderEvent event ) throws IOException, ShellExecuteException
 	{
-		try
-		{
-			CodeEvalFactory factory = event.getSession().getCodeFactory();
-			
-			return WebUtils.evalPackage( factory, event.getSite(), pack );
-		}
-		catch ( IOException ex )
-		{
-			Loader.getLogger().warning( "Exception encountered during include of package `" + pack + "`, unknown fault.", ex );
-		}
+		CodeEvalFactory factory = event.getSession().getCodeFactory();
 		
-		return "";
+		if ( getConfig().getBoolean( "config.ignoreFileNotFound" ) )
+			return WebUtils.evalPackage( factory, event.getSite(), pack );
+		
+		return WebUtils.evalPackageWithException( factory, event.getSite(), pack );
 	}
 	
 	public String getPackageParent( String pack )

@@ -1,7 +1,7 @@
-name: Chiori Framework
+name: Chiori-chan Template Plugin
 author: Chiori Greene
 main: com.chiorichan.plugin.builtin.template.Template
-version: '1.0'
+version: '1.1'
 depends: []
 
 commands:
