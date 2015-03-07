@@ -24,7 +24,7 @@ abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 {
 	private List<String> includedPackages = Lists.newArrayList();
 	
-	void var_dump ( Object obj )
+	void var_dump ( Object... obj )
 	{
 		println var_export( obj )
 	}

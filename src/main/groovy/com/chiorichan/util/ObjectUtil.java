@@ -11,8 +11,6 @@ package com.chiorichan.util;
 
 import java.math.BigDecimal;
 
-import com.chiorichan.Loader;
-
 public class ObjectUtil
 {
 	public static Boolean castToBool( Object value )
@@ -70,7 +68,7 @@ public class ObjectUtil
 			case "java.math.BigDecimal":
 				return ( ( BigDecimal ) value ).setScale( 0, BigDecimal.ROUND_HALF_UP ).intValue();
 			default:
-				Loader.getLogger().warning( "Uncaught Convertion to String of Type: " + value.getClass().getName() );
+				//Loader.getLogger().warning( "Uncaught Convertion to String of Type: " + value.getClass().getName() );
 				return null;
 		}
 	}
@@ -95,7 +93,7 @@ public class ObjectUtil
 			case "java.math.BigDecimal":
 				return ( ( BigDecimal ) value ).setScale( 0, BigDecimal.ROUND_HALF_UP ).longValue();
 			default:
-				Loader.getLogger().warning( "Uncaught Convertion to String of Type: " + value.getClass().getName() );
+				//Loader.getLogger().warning( "Uncaught Convertion to String of Type: " + value.getClass().getName() );
 				return null;
 		}
 	}
@@ -124,7 +122,7 @@ public class ObjectUtil
 			case "java.util.List":
 				return value.toString();
 			default:
-				Loader.getLogger().warning( "Uncaught Convertion to String of Type: " + value.getClass().getName() );
+				//Loader.getLogger().warning( "Uncaught Convertion to String of Type: " + value.getClass().getName() );
 				return null;
 		}
 	}

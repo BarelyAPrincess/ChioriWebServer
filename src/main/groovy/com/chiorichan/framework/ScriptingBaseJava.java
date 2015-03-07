@@ -25,6 +25,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
@@ -42,26 +43,67 @@ import com.google.common.collect.Maps;
 
 public abstract class ScriptingBaseJava extends Script
 {
-	@SuppressWarnings( "unchecked" )
-	String var_export( Object var )
+	String var_export( Object... objs )
 	{
-		if ( var instanceof List )
-			return var_export( ( List<Object> ) var );
+		StringBuilder sb = new StringBuilder();
 		
-		if ( var instanceof Map )
-			return var_export( ( Map<Object, Object> ) var );
+		for ( Object obj : objs )
+		{
+			if ( obj != null )
+			{
+				Map<String, Object> children = Maps.newLinkedHashMap();
+				
+				if ( obj instanceof Map )
+				{
+					for ( Entry<Object, Object> e : ( ( Map<Object, Object> ) obj ).entrySet() )
+					{
+						String key = ObjectUtil.castToString( e.getKey() );
+						if ( key == null )
+							key = e.getKey().toString();
+						children.put( key, e.getValue() );
+					}
+				}
+				else if ( obj instanceof List )
+				{
+					for ( int i = 0; i < ( ( List ) obj ).size(); i++ )
+						children.put( "" + i, ( ( List ) obj ).get( i ) );
+				}
+				else if ( obj instanceof Object[] )
+				{
+					for ( int i = 0; i < ( ( Object[] ) obj ).length; i++ )
+						children.put( "" + i, ( ( Object[] ) obj )[i] );
+				}
+				
+				// boolean[], byte[], short[], char[], int[], long[], float[], double[], Object[]
+				
+				Object value = ObjectUtil.castToString( obj );
+				if ( value == null )
+					value = obj.toString();
+				
+				if ( !children.isEmpty() )
+					value = children.size();
+				
+				sb.append( "\n" + obj.getClass().getName() + "(" + value + ")" );
+				
+				if ( !children.isEmpty() )
+				{
+					sb.append( " {" );
+					for ( Entry<String, Object> c : children.entrySet() )
+					{
+						sb.append( "\n\t[" + c.getKey() + "]=>" );
+						for ( String s : var_export( c.getValue() ).split( "\n" ) )
+							sb.append( "\n\t" + s );
+					}
+					sb.append( "\n}" );
+				}
+			}
+			else
+			{
+				sb.append( "\nnull" );
+			}
+		}
 		
-		return ObjectUtil.castToString( var );
-	}
-	
-	String var_export( List<Object> lst )
-	{
-		return Joiner.on( "," ).skipNulls().join( lst );
-	}
-	
-	String var_export( Map<Object, Object> map )
-	{
-		return Joiner.on( "," ).withKeyValueSeparator( "=" ).join( map );
+		return sb.substring( 1 ).toString();
 	}
 	
 	String trim( String str )
