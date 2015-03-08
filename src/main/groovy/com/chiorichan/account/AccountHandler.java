@@ -19,17 +19,31 @@ public abstract class AccountHandler extends InteractivePermissible
 {
 	public Account currentAccount = null;
 	
+	/**
+	 * Attachs an account to this handler
+	 * 
+	 * @param acct
+	 *            The account to be attached
+	 */
 	public final void attachAccount( Account acct )
 	{
 		acct.putHandler( this );
 		this.currentAccount = acct;
 	}
 	
+	/**
+	 * Returns the account current associated with this handler
+	 * 
+	 * @return The account
+	 */
 	public final Account getAccount()
 	{
 		return currentAccount;
 	}
 	
+	/**
+	 * Removes the current account from the handler
+	 */
 	public final void reset()
 	{
 		if ( currentAccount != null )

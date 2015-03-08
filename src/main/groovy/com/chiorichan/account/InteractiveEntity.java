@@ -16,8 +16,6 @@ public interface InteractiveEntity
 {
 	void sendMessage( String... msgs );
 	
-	void sendMessage( String string );
-	
 	boolean isBanned();
 	
 	boolean isWhitelisted();

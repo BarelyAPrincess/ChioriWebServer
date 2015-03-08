@@ -10,6 +10,7 @@ import com.chiorichan.ConsoleColor;
 import com.chiorichan.console.Command;
 import com.chiorichan.console.CommandDispatch;
 import com.chiorichan.console.InteractiveConsole;
+import com.chiorichan.util.StringUtil;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Joiner;
 
@@ -28,7 +29,7 @@ public abstract class BuiltinCommand extends Command
 			@Override
 			public boolean execute( InteractiveConsole handler, String command, String[] args )
 			{
-				handler.getSession().sendMessage( ConsoleColor.AQUA + Versioning.getProduct() + " is running version " + Versioning.getVersion() + ( ( Versioning.getBuildNumber().equals( "0" ) ) ? " (dev)" : " (build #" + Versioning.getBuildNumber() + ")" ) );
+				handler.getPersistence().sendMessage( ConsoleColor.AQUA + Versioning.getProduct() + " is running version " + Versioning.getVersion() + ( ( Versioning.getBuildNumber().equals( "0" ) ) ? " (dev)" : " (build #" + Versioning.getBuildNumber() + ")" ) );
 				return true;
 			}
 		} );
@@ -38,7 +39,7 @@ public abstract class BuiltinCommand extends Command
 			@Override
 			public boolean execute( InteractiveConsole handler, String command, String[] args )
 			{
-				handler.getSession().sendMessage( Joiner.on( " " ).join( args ) );
+				handler.getPersistence().sendMessage( Joiner.on( " " ).join( args ) );
 				return true;
 			}
 		} );
@@ -48,7 +49,7 @@ public abstract class BuiltinCommand extends Command
 			@Override
 			public boolean execute( InteractiveConsole handler, String command, String[] args )
 			{
-				handler.getSession().sendMessage( ConsoleColor.YELLOW + "We're sorry, help has not been implemented as of yet, try again in a later version." );
+				handler.getPersistence().sendMessage( ConsoleColor.YELLOW + "We're sorry, help has not been implemented as of yet, try again in a later version." );
 				return true;
 			}
 		} );
@@ -58,17 +59,19 @@ public abstract class BuiltinCommand extends Command
 			@Override
 			public boolean execute( InteractiveConsole handler, String command, String[] args )
 			{
-				handler.getSession().sendMessage( handler.getSession().getAccount().getAcctId() );
+				handler.getPersistence().sendMessage( handler.getPersistence().getAccount().getAcctId() );
 				return true;
 			}
 		} );
 		
-		CommandDispatch.registerCommand( new BuiltinCommand( "nocolor" )
+		CommandDispatch.registerCommand( new BuiltinCommand( "color" )
 		{
 			@Override
 			public boolean execute( InteractiveConsole handler, String command, String[] args )
 			{
-				handler.setMetadata( "nocolor", "true" );
+				String color = "" + ( ( args.length < 1 ) ? !StringUtil.isTrue( handler.getMetadata( "color", "true" ) ) : StringUtil.isTrue( args[0] ) );
+				handler.setMetadata( "color", color );
+				handler.sendMessage( ConsoleColor.AQUA + "Console color has been " + ( ( StringUtil.isTrue( color ) ) ? "enabled" : "disabled" ) + "." );
 				return true;
 			}
 		} );

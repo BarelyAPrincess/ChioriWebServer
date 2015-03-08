@@ -68,7 +68,7 @@ public class SQLEntity extends PermissibleEntityProxy
 			 * Adds the EVERYBODY Permission Node to all entities.
 			 */
 			Permission perm = PermissionDefault.EVERYBODY.getNode();
-			attachPermission( new ChildPermission( perm, null, false, "" ) );
+			attachPermission( new ChildPermission<Boolean>( perm, null, false, "" ) );
 		}
 		catch ( SQLException e )
 		{

@@ -90,7 +90,7 @@ public final class CommandDispatch
 			try
 			{
 				Interviewer i = activeInterviewer.get( command.handler );
-				InteractivePermissible permissible = command.handler.getSession().getParentSession();
+				InteractivePermissible permissible = command.handler.getPersistence();
 				
 				if ( i != null )
 				{

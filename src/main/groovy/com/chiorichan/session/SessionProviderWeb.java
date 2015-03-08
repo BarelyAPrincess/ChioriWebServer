@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.codec.digest.DigestUtils;
+
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
@@ -117,6 +119,7 @@ public class SessionProviderWeb implements SessionProvider
 	{
 		if ( !parentSession.pendingMessages.isEmpty() )
 		{
+			// TODO Figure out a way that messages can be delivered to web users
 			// request.getResponse().sendMessage( pendingMessages.toArray( new String[0] ) );
 		}
 		
@@ -136,7 +139,7 @@ public class SessionProviderWeb implements SessionProvider
 			parentSession.logoutAccount();
 			
 			if ( target.isEmpty() )
-				target = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
+				target = request.getSite().getYaml().getString( "scripts.login-form", "/login" ); // TODO Make a fw login form for websites without one
 			
 			request.getResponse().sendRedirect( target + "?ok=You have been successfully logged out." );
 			return;
@@ -146,15 +149,17 @@ public class SessionProviderWeb implements SessionProvider
 		{
 			try
 			{
-				Account user = Loader.getAccountManager().attemptLogin( parentSession, username, password );
+				Account acct = Loader.getAccountManager().attemptLogin( parentSession, username, password );
+				parentSession.currentAccount = acct;
 				
-				parentSession.currentAccount = user;
+				parentSession.setVariable( "user", acct.getAcctId() );
+				parentSession.setVariable( "pass", DigestUtils.md5Hex( acct.getPassword() ) );
 				
-				String loginPost = ( target.isEmpty() ) ? request.getSite().getYaml().getString( "scripts.login-post", "/panel" ) : target;
+				String loginPost = ( target.isEmpty() ) ? request.getSite().getYaml().getString( "scripts.login-post", "" ) : target;
 				
 				parentSession.setVariable( "remember", remember );
 				
-				AccountManager.getLogger().info( ConsoleColor.GREEN + "Successful Login [username='" + username + "',password='" + password + "',userId='" + user.getAcctId() + "',displayName='" + user.getDisplayName() + "']" );
+				AccountManager.getLogger().info( ConsoleColor.GREEN + "Successful Login [username='" + username + "',password='" + password + "',userId='" + acct.getAcctId() + "',displayName='" + acct.getDisplayName() + "']" );
 				request.getResponse().sendRedirect( loginPost );
 				
 			}
@@ -182,11 +187,10 @@ public class SessionProviderWeb implements SessionProvider
 			{
 				try
 				{
-					Account user = Loader.getAccountManager().attemptLogin( parentSession, username, password );
+					Account acct = Loader.getAccountManager().attemptLogin( parentSession, username, password );
+					parentSession.currentAccount = acct;
 					
-					parentSession.currentAccount = user;
-					
-					AccountManager.getLogger().info( ConsoleColor.GREEN + "Successful Login [username='" + username + "',password='" + password + "',userId='" + user.getAcctId() + "',displayName='" + user.getDisplayName() + "']" );
+					AccountManager.getLogger().info( ConsoleColor.GREEN + "Successful Login [username='" + username + "',password='" + password + "',userId='" + acct.getAcctId() + "',displayName='" + acct.getDisplayName() + "']" );
 				}
 				catch ( LoginException l )
 				{

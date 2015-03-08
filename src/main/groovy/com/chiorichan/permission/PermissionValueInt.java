@@ -24,7 +24,7 @@ public class PermissionValueInt extends PermissionValue<Integer>
 		try
 		{
 			@SuppressWarnings( "unchecked" )
-			PermissionValue<Integer> newVal = (com.chiorichan.permission.PermissionValue<Integer> ) clone();
+			PermissionValue<Integer> newVal = ( PermissionValue<Integer> ) clone();
 			newVal.setValue( ObjectUtil.castToLong( val ).intValue() );
 			return newVal;
 		}

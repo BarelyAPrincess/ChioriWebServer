@@ -43,6 +43,7 @@ import com.google.common.collect.Maps;
 
 public abstract class ScriptingBaseJava extends Script
 {
+	@SuppressWarnings( "unchecked" )
 	String var_export( Object... objs )
 	{
 		StringBuilder sb = new StringBuilder();
@@ -65,8 +66,8 @@ public abstract class ScriptingBaseJava extends Script
 				}
 				else if ( obj instanceof List )
 				{
-					for ( int i = 0; i < ( ( List ) obj ).size(); i++ )
-						children.put( "" + i, ( ( List ) obj ).get( i ) );
+					for ( int i = 0; i < ( ( List<Object> ) obj ).size(); i++ )
+						children.put( "" + i, ( ( List<Object> ) obj ).get( i ) );
 				}
 				else if ( obj instanceof Object[] )
 				{

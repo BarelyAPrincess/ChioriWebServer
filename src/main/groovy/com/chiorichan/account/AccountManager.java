@@ -12,7 +12,6 @@ package com.chiorichan.account;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.ConsoleLogger;
@@ -30,7 +29,6 @@ import com.chiorichan.exception.StartupException;
 import com.chiorichan.framework.Site;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissionDefault;
-import com.chiorichan.session.Session;
 import com.chiorichan.util.Common;
 import com.google.common.collect.Lists;
 
@@ -281,7 +279,7 @@ public class AccountManager
 		return maxAccounts;
 	}
 	
-	public Account attemptLogin( Session sess, String username, String password ) throws LoginException
+	public Account attemptLogin( AccountHandler sess, String username, String password ) throws LoginException
 	{
 		if ( username == null || username.isEmpty() )
 			throw new LoginException( LoginExceptionReason.emptyUsername );
@@ -315,21 +313,13 @@ public class AccountManager
 			acct.preLoginCheck();
 			
 			if ( acct.countHandlers() > 1 && Loader.getConfig().getBoolean( "accounts.singleLogin" ) )
-			{
 				for ( AccountHandler sh : acct.getHandlers() )
-				{
-					if ( sh instanceof Session && ( ( Session ) sh ).getSite() == sess.getSite() )
-						sh.kick( Loader.getConfig().getString( "accounts.singleLoginMessage", "You logged in from another location." ) );
-				}
-			}
-			
-			sess.setVariable( "user", acct.getAcctId() );
-			sess.setVariable( "pass", DigestUtils.md5Hex( acct.getPassword() ) );
+					sh.kick( Loader.getConfig().getString( "accounts.singleLoginMessage", "You logged in from another location." ) );
 			
 			acct.getMetaData().set( "lastLoginTime", Common.getEpoch() );
 			acct.getMetaData().set( "lastLoginIp", sess.getIpAddr() );
 			
-			AccountLoginEvent loginEvent = new AccountLoginEvent( sess, String.format( Loader.getConfig().getString( "accounts.loginMessage", "%s has logged in at site %s" ), acct.getUsername(), sess.getSite().getTitle() ) );
+			AccountLoginEvent loginEvent = new AccountLoginEvent( sess );
 			Loader.getEventBus().callEvent( loginEvent );
 			
 			return acct;
@@ -351,7 +341,7 @@ public class AccountManager
 	{
 		return isDebug;
 	}
-
+	
 	public boolean isConfigured()
 	{
 		return accounts.isConfigured();

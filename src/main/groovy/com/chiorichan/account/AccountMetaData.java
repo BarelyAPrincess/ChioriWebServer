@@ -50,7 +50,13 @@ public class AccountMetaData
 	
 	public String getString( String key )
 	{
-		return ObjectUtil.castToString( metaData.get( key ) );
+		return getString( key, null );
+	}
+	
+	public String getString( String key, String def )
+	{
+		String val = ObjectUtil.castToString( metaData.get( key ) );
+		return ( val == null ) ? def : val;
 	}
 	
 	public Integer getInteger( String key )
@@ -61,14 +67,9 @@ public class AccountMetaData
 	public Integer getInteger( String key, int def )
 	{
 		Object obj = metaData.get( key );
+		Integer val = ObjectUtil.castToInt( obj );
 		
-		if ( obj instanceof String )
-			if ( ( ( String ) obj ).isEmpty() )
-				return def;
-			else
-				return Integer.parseInt( ( String ) obj );
-		else
-			return ( Integer ) obj;
+		return ( val == null ) ? def : val;
 	}
 	
 	public Boolean getBoolean( String key )

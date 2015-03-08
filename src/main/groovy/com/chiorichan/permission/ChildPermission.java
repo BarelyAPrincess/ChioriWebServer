@@ -32,7 +32,7 @@ public class ChildPermission<T>
 	 * References a permission state/value against an entity
 	 * 
 	 * @param parent
-	 *            The permission this value ortains to
+	 *            The permission this value ordains to
 	 * @param refList
 	 *            A list of references such as connection or ip this permission would apply
 	 * @param childValue
@@ -63,7 +63,7 @@ public class ChildPermission<T>
 		return refs;
 	}
 	
-	public PermissionValue<T> getValue()
+	public PermissionValue<?> getValue()
 	{
 		return value;
 	}

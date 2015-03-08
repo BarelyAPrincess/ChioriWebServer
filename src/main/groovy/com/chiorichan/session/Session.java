@@ -3,9 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 package com.chiorichan.session;
 
@@ -34,6 +31,9 @@ import com.google.common.collect.Sets;
 /**
  * This class is used to carry data that is to be persistent from request to request.
  * If you need to sync data across requests then we recommend using Session Vars for Security.
+ * 
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
  */
 public abstract class Session extends AccountHandler
 {
@@ -166,6 +166,7 @@ public abstract class Session extends AccountHandler
 		}
 	}
 	
+	@Override
 	public String toString()
 	{
 		String extra = "";
@@ -328,16 +329,10 @@ public abstract class Session extends AccountHandler
 	}
 	
 	@Override
-	public void sendMessage( String... messages )
+	public void sendMessage( String... msgs )
 	{
-		for ( String m : messages )
-			sendMessage( m );
-	}
-	
-	@Override
-	public void sendMessage( String msg )
-	{
-		pendingMessages.add( msg );
+		for ( String msg : msgs )
+			pendingMessages.add( msg );
 		notifyProviders();
 	}
 	
@@ -366,14 +361,6 @@ public abstract class Session extends AccountHandler
 	{
 		return new SessionProviderWeb( this, request );
 	}
-	
-	/*
-	 * TODO! FOR TCP CONNECTIONS.
-	 * public SessionProvider getSessionProvider( NetConnection net )
-	 * {
-	 * return new SessionProviderNet( this, net );
-	 * }
-	 */
 	
 	/**
 	 * @return A set of active SessionProviders for this session.

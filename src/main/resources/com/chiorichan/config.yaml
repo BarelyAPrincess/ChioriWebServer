@@ -82,6 +82,8 @@ sessions:
 accounts:
   maxLogins: -1
   debug: false
+  singleLogin: false
+  singleLoginMessage: 'You logged in from another location.'
   lookupAdapter:
     type: none
     table: ''

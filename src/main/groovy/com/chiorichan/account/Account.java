@@ -228,14 +228,8 @@ public abstract class Account implements InteractiveEntity
 	public final void sendMessage( String... msgs )
 	{
 		for ( String msg : msgs )
-			sendMessage( msg );
-	}
-	
-	@Override
-	public final void sendMessage( String msg )
-	{
-		for ( AccountHandler h : handlers )
-			h.sendMessage( msg );
+			for ( AccountHandler h : handlers )
+				h.sendMessage( msg );
 	}
 	
 	public final void reloadAndValidate() throws LoginException

@@ -35,11 +35,11 @@ public class FileAccount extends Account
 	{
 		AccountMetaData meta = getMetaData();
 		
-		if ( meta.getInteger( "numloginfail" ) > 5 )
-			if ( meta.getInteger( "lastloginfail" ) > ( Common.getEpoch() - 1800 ) )
+		if ( meta.getInteger( "numloginfail", 0 ) > 5 )
+			if ( meta.getInteger( "lastloginfail", 0 ) > ( Common.getEpoch() - 1800 ) )
 				throw new LoginException( LoginExceptionReason.underAttackPleaseWait );
 		
-		if ( !meta.getString( "actnum" ).equals( "0" ) )
+		if ( !meta.getString( "actnum", "0" ).equals( "0" ) )
 			throw new LoginException( LoginExceptionReason.accountNotActivated );
 	}
 	

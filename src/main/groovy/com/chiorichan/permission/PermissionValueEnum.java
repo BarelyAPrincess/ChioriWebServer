@@ -67,7 +67,7 @@ public class PermissionValueEnum extends PermissionValue<String>
 		try
 		{
 			@SuppressWarnings( "unchecked" )
-			PermissionValue<String> newVal = (com.chiorichan.permission.PermissionValue<String> ) clone();
+			PermissionValue<String> newVal = ( PermissionValue<String> ) clone();
 			newVal.setValue( ObjectUtil.castToString( val ) );
 			return newVal;
 		}

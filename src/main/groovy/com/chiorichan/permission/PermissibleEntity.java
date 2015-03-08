@@ -46,7 +46,7 @@ public abstract class PermissibleEntity
 	protected PermissionBackend backend;
 	
 	protected Map<String, LinkedList<TimedPermission>> timedPermissions = Maps.newConcurrentMap();
-	protected Set<ChildPermission<?>> childPermissions = Sets.newConcurrentHashSet();
+	protected Set<ChildPermission> childPermissions = Sets.newConcurrentHashSet();
 	protected Map<String, PermissibleGroup> groups = Maps.newConcurrentMap();
 	protected Map<String, PermissionResult> cachedResults = Maps.newConcurrentMap();
 	
@@ -58,12 +58,12 @@ public abstract class PermissibleEntity
 		reload();
 	}
 	
-	protected ChildPermission<?> getChildPermission( String namespace )
+	protected ChildPermission getChildPermission( String namespace )
 	{
 		return getChildPermission( namespace, "" );
 	}
 	
-	protected ChildPermission<?> getChildPermission( String namespace, String ref )
+	protected ChildPermission getChildPermission( String namespace, String ref )
 	{
 		PermissionNamespace ns = new PermissionNamespace( namespace ).fixInvalidChars();
 		
@@ -75,7 +75,7 @@ public abstract class PermissibleEntity
 		if ( !PermissionUtil.containsValidChars( ref ) )
 			ref = PermissionUtil.removeInvalidChars( ref );
 		
-		for ( ChildPermission<?> child : childPermissions )
+		for ( ChildPermission child : childPermissions )
 		{
 			if ( ns.matches( child.getPermission() ) && ( ( child.getReferences().isEmpty() && ref.isEmpty() ) || child.getReferences().contains( ref ) ) )
 				return child;

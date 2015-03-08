@@ -14,8 +14,7 @@ import java.util.Map;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
-import com.chiorichan.session.SessionProvider;
-import com.chiorichan.session.SessionProviderQuery;
+import com.chiorichan.net.NetworkPersistence;
 import com.chiorichan.util.FileUtil;
 import com.chiorichan.util.Versioning;
 import com.google.common.collect.Maps;
@@ -30,18 +29,18 @@ public class InteractiveConsole
 {
 	private Map<String, String> metadata = Maps.newConcurrentMap();
 	private InteractiveConsoleHandler handler;
-	private SessionProvider session;
+	private NetworkPersistence persistence;
 	private String prompt = "";
 	
-	private InteractiveConsole( InteractiveConsoleHandler handler, SessionProvider session )
+	private InteractiveConsole( InteractiveConsoleHandler handler, NetworkPersistence persistence )
 	{
 		this.handler = handler;
-		this.session = session;
+		this.persistence = persistence;
 	}
 	
-	public static InteractiveConsole createInstance( InteractiveConsoleHandler handler, SessionProviderQuery session )
+	public static InteractiveConsole createInstance( InteractiveConsoleHandler handler, NetworkPersistence persistence )
 	{
-		return new InteractiveConsole( handler, session );
+		return new InteractiveConsole( handler, persistence );
 	}
 	
 	public void displayWelcomeMessage()
@@ -80,9 +79,9 @@ public class InteractiveConsole
 		return handler;
 	}
 	
-	public SessionProvider getSession()
+	public NetworkPersistence getPersistence()
 	{
-		return session;
+		return persistence;
 	}
 	
 	public void sendMessage( String... msgs )
@@ -124,11 +123,11 @@ public class InteractiveConsole
 	{
 		try
 		{
-			prompt = ConsoleColor.GREEN + session.getAccount().getAcctId() + "@" + InetAddress.getLocalHost().getHostName() + ConsoleColor.RESET + ":" + ConsoleColor.BLUE + "~" + ConsoleColor.RESET + "$ ";
+			prompt = ConsoleColor.GREEN + persistence.getAccount().getAcctId() + "@" + InetAddress.getLocalHost().getHostName() + ConsoleColor.RESET + ":" + ConsoleColor.BLUE + "~" + ConsoleColor.RESET + "$ ";
 		}
 		catch ( UnknownHostException e )
 		{
-			prompt = ConsoleColor.GREEN + session.getAccount().getAcctId() + "@localhost ~$ ";
+			prompt = ConsoleColor.GREEN + persistence.getAccount().getAcctId() + "@localhost ~$ ";
 		}
 		
 		prompt();

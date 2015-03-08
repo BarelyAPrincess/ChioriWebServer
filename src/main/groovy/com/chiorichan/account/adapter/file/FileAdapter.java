@@ -110,7 +110,7 @@ public class FileAdapter implements AccountLookupAdapter
 		
 		try
 		{
-			yser.save( ( File ) meta.getObject( "relPath" ) );
+			yser.save( ( String ) meta.getObject( "relPath" ) );
 		}
 		catch ( IOException e )
 		{
@@ -207,6 +207,9 @@ public class FileAdapter implements AccountLookupAdapter
 			throw new LoginException( LoginExceptionReason.incorrectLogin );
 		
 		meta = reloadAccount( meta );
+		
+		if ( meta.containsKey( "password" ) )
+			meta.set( "password", Common.md5( meta.getString( "password" ) ) );
 		
 		return meta;
 	}

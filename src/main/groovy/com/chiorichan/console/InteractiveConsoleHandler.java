@@ -6,7 +6,7 @@
  */
 package com.chiorichan.console;
 
-import com.chiorichan.session.SessionProvider;
+import com.chiorichan.net.NetworkPersistence;
 
 /**
  * Used to interface InteractiveConsole with it's creator
@@ -20,5 +20,5 @@ public interface InteractiveConsoleHandler
 	
 	void print( String... msg );
 	
-	SessionProvider getSession();
+	NetworkPersistence getPersistence();
 }

@@ -24,7 +24,7 @@ public class PermissionValueBoolean extends PermissionValue<Boolean>
 		try
 		{
 			@SuppressWarnings( "unchecked" )
-			PermissionValue<Boolean> newVal = (com.chiorichan.permission.PermissionValue<Boolean> ) clone();
+			PermissionValue<Boolean> newVal = ( PermissionValue<Boolean> ) clone();
 			newVal.setValue( ObjectUtil.castToBool( val ) );
 			return newVal;
 		}

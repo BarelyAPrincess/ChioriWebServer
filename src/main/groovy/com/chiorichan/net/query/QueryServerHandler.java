@@ -13,6 +13,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
@@ -22,7 +23,7 @@ import com.chiorichan.console.InteractiveConsoleHandler;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.query.QueryEvent;
 import com.chiorichan.event.query.QueryEvent.QueryType;
-import com.chiorichan.session.SessionProviderQuery;
+import com.chiorichan.net.NetworkPersistence;
 import com.chiorichan.util.StringUtil;
 
 /**
@@ -35,7 +36,7 @@ import com.chiorichan.util.StringUtil;
 public class QueryServerHandler extends SimpleChannelInboundHandler<String> implements InteractiveConsoleHandler
 {
 	private ChannelHandlerContext context;
-	private SessionProviderQuery session;
+	private NetworkPersistence persistence;
 	private InteractiveConsole console;
 	
 	@Override
@@ -43,20 +44,11 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 	{
 		context = ctx;
 		
-		session = new SessionProviderQuery( this );
-		console = InteractiveConsole.createInstance( this, session );
+		persistence = new NetworkPersistence( this );
+		console = InteractiveConsole.createInstance( this, persistence );
 		
 		console.displayWelcomeMessage();
 		
-		/*
-		 * if ( !session.checkPermission( "sys.query" ).isTrue() )
-		 * {
-		 * ChannelFuture future = ctx.write( parseColor( ConsoleColor.RED + "We're sorry, you are not permitted to login to this server via the Query Server.\r\n" ) );
-		 * future.addListener( ChannelFutureListener.CLOSE );
-		 * ctx.flush();
-		 * return;
-		 * }
-		 */
 		QueryEvent queryEvent = new QueryEvent( ctx, QueryType.CONNECTED, null );
 		
 		try
@@ -76,21 +68,18 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 			return;
 		}
 		
-		session.handleUserProtocols();
-		
 		console.resetPrompt();
 	}
 	
 	@Override
 	public void channelInactive( ChannelHandlerContext ctx ) throws Exception
 	{
-		session.logoutAccount();
-		session.onFinished();
+		persistence.reset();
 	}
 	
 	private String parseColor( String text )
 	{
-		if ( !Loader.getConfig().getBoolean( "server.queryUseColor" ) || StringUtil.isTrue( console.getMetadata( "nocolor", "true" ) ) )
+		if ( !Loader.getConfig().getBoolean( "server.queryUseColor" ) || !StringUtil.isTrue( console.getMetadata( "color", "true" ) ) )
 			return ConsoleColor.removeAltColors( text );
 		else
 			return ConsoleColor.transAltColors( text );
@@ -144,8 +133,13 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 	}
 	
 	@Override
-	public SessionProviderQuery getSession()
+	public NetworkPersistence getPersistence()
 	{
-		return session;
+		return persistence;
+	}
+	
+	public String getIpAddr()
+	{
+		return ( ( InetSocketAddress ) context.channel().remoteAddress() ).getAddress().getHostAddress();
 	}
 }

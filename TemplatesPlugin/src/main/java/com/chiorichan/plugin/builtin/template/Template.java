@@ -98,8 +98,6 @@ public class Template extends Plugin implements Listener
 			
 			if ( fwVals.get( "commons" ) != null )
 				showCommons = StringUtil.isTrue( fwVals.get( "commons" ) );
-			else if ( fwVals.get( "noCommons" ) != null && StringUtil.isTrue( fwVals.get( "noCommons" ) ) )
-				showCommons = false;
 			
 			// Allow pages to disable the inclusion of common header
 			if ( showCommons )

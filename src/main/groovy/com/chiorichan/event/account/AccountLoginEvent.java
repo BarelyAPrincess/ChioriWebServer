@@ -18,33 +18,10 @@ import com.chiorichan.event.HandlerList;
 public class AccountLoginEvent extends AccountEvent
 {
 	private static final HandlerList handlers = new HandlerList();
-	private String message;
 	
-	public AccountLoginEvent( AccountHandler user, final String message )
+	public AccountLoginEvent( AccountHandler user )
 	{
 		super( user );
-		this.message = message;
-	}
-	
-	/**
-	 * Gets the join message to send to all online Accounts
-	 * 
-	 * @return string join message
-	 */
-	public String getLoginMessage()
-	{
-		return message;
-	}
-	
-	/**
-	 * Sets the join message to send to all online Accounts
-	 * 
-	 * @param message
-	 *            Join message
-	 */
-	public void setJoinMessage( String message )
-	{
-		this.message = message;
 	}
 	
 	@Override
