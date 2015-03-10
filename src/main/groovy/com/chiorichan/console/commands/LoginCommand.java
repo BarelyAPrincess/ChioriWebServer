@@ -86,8 +86,8 @@ class LoginCommand extends BuiltinCommand
 				{
 					Account acct = Loader.getAccountManager().attemptLogin( handler.getPersistence(), user, pass );
 					
-					if ( !handler.getPersistence().checkPermission( "sys.query" ).isTrue() )
-						throw new LoginException( LoginExceptionReason.notAuthorized, acct );
+					//if ( !handler.getPersistence().checkPermission( "sys.query" ).isTrue() )
+						//throw new LoginException( LoginExceptionReason.notAuthorized, acct );
 					
 					AccountManager.getLogger().info( ConsoleColor.GREEN + "Successful Console Login [username='" + user + "',password='" + pass + "',userId='" + acct.getAcctId() + "',displayName='" + acct.getDisplayName() + "']" );
 					

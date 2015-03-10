@@ -9,7 +9,7 @@
  */
 package com.chiorichan.permission;
 
-public abstract class PermissionValue<T>
+public abstract class PermissionValue<T> implements Cloneable
 {
 	private T value;
 	private T def;

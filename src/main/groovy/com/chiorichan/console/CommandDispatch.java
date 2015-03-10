@@ -15,12 +15,15 @@ import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.InteractivePermissible;
 import com.chiorichan.console.commands.BuiltinCommand;
 import com.chiorichan.event.server.CommandIssuedEvent;
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 /**
@@ -133,6 +136,8 @@ public final class CommandDispatch
 							}
 							catch ( Throwable ex )
 							{
+								command.handler.sendMessage( ConsoleColor.RED + "Unhandled exception executing '" + command.command + "' in " + target + "\n" + ExceptionUtils.getStackTrace( ex ) );
+								
 								throw new CommandException( "Unhandled exception executing '" + command.command + "' in " + target, ex );
 							}
 						}

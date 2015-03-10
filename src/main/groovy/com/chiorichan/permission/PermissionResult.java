@@ -160,6 +160,12 @@ public class PermissionResult
 		return ( getObject() == null ) ? false : ( Boolean ) getObject();
 	}
 	
+	public void assign()
+	{
+		childPerm = new ChildPermission( perm, getValue().createChild( true ), false );
+		entity.childPermissions.add( childPerm );
+	}
+	
 	public String getString()
 	{
 		return ObjectUtil.castToString( getValue().getValue() );
