@@ -74,48 +74,48 @@ public class HttpResponseWrapper
 			sendError( 500, e.getMessage() );
 	}
 	
-	public void sendError( int var1 ) throws IOException
+	public void sendError( int httpCode ) throws IOException
 	{
-		sendError( var1, null );
+		sendError( httpCode, null );
 	}
 	
-	public void sendError( int var1, String var2 ) throws IOException
+	public void sendError( int httpCode, String httpMsg ) throws IOException
 	{
-		sendError( var1, var2, null );
+		sendError( httpCode, httpMsg, null );
 	}
 	
-	public void sendError( int var1, String var2, String var3 ) throws IOException
+	public void sendError( int httpCode, String httpMsg, String msg ) throws IOException
 	{
 		if ( stage == HttpResponseStage.CLOSED )
 			throw new IllegalStateException( "You can't access sendError method within this HttpResponse because the connection has been closed." );
 		
-		if ( var1 < 1 )
-			var1 = 500;
+		if ( httpCode < 1 )
+			httpCode = 500;
 		
-		if ( var2 == null )
-			var2 = HttpCode.msg( var1 );
+		if ( httpMsg == null )
+			httpMsg = HttpCode.msg( httpCode );
 		
-		Loader.getLogger().warning( "HttpError: " + var1 + " - " + var2 + "... '" + request.getSubDomain() + "." + request.getParentDomain() + "' '" + request.getURI() + "'" );
+		Loader.getLogger().warning( "HttpError: " + httpCode + " - " + httpMsg + "... '" + request.getSubDomain() + "." + request.getParentDomain() + "' '" + request.getURI() + "'" );
 		
-		httpStatus = var1;
+		httpStatus = httpCode;
 		
 		output.reset();
 		
 		// Trigger an internal Error Event to notify plugins of a possible problem.
-		ErrorEvent event = new ErrorEvent( request, var1, var2 );
+		ErrorEvent event = new ErrorEvent( request, httpCode, httpMsg );
 		Loader.getEventBus().callEvent( event );
 		
 		// TODO Make these error pages a bit more creative and/or informational to developers.
 		
 		if ( event.getErrorHtml() == null || event.getErrorHtml().isEmpty() )
 		{
-			println( "<h1>" + var1 + " - " + var2 + "</h1>" );
+			println( "<h1>" + httpCode + " - " + httpMsg + "</h1>" );
 			
-			if ( var3 != null && !var3.isEmpty() )
-				println( "<p>" + var3 + "</p>" );
+			if ( msg != null && !msg.isEmpty() )
+				println( "<p>" + msg + "</p>" );
 			
 			println( "<hr>" );
-			println( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + "<br />" + Versioning.getCopyright() + "</small>" );
+			println( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")<br />" + Versioning.getCopyright() + "</small>" );
 			
 		}
 		else

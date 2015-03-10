@@ -15,12 +15,11 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.codec.http.multipart.Attribute;
 import io.netty.handler.codec.http.multipart.DefaultHttpDataFactory;
 import io.netty.handler.codec.http.multipart.DiskAttribute;
@@ -32,6 +31,14 @@ import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder.EndOfDataDec
 import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder.ErrorDataDecoderException;
 import io.netty.handler.codec.http.multipart.InterfaceHttpData;
 import io.netty.handler.codec.http.multipart.InterfaceHttpData.HttpDataType;
+import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
+import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
+import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,10 +67,12 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 {
 	protected static Map<ServerVars, Object> staticServerVars = Maps.newLinkedHashMap();
 	
-	private HttpRequest requestOrig;
+	private boolean ssl;
+	private FullHttpRequest requestOrig;
 	private HttpRequestWrapper request;
 	private HttpResponseWrapper response;
 	private HttpPostRequestDecoder decoder;
+	private WebSocketServerHandshaker handshaker = null;
 	private static DirectoryInterpreter dirInter = new DirectoryInterpreter();
 	private static HttpDataFactory factory;
 	
@@ -93,6 +102,11 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 		staticServerVars.put( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Versioning.getVersion() );
 	}
 	
+	public HttpHandler( boolean ssl )
+	{
+		this.ssl = ssl;
+	}
+	
 	@Override
 	public void channelInactive( ChannelHandlerContext ctx ) throws Exception
 	{
@@ -115,10 +129,10 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 	@Override
 	protected void messageReceived( ChannelHandlerContext ctx, HttpObject msg ) throws Exception
 	{
-		if ( msg instanceof HttpRequest )
+		if ( msg instanceof FullHttpRequest )
 		{
-			requestOrig = ( HttpRequest ) msg;
-			request = new HttpRequestWrapper( ctx.channel(), requestOrig );
+			requestOrig = ( FullHttpRequest ) msg;
+			request = new HttpRequestWrapper( ctx.channel(), requestOrig, ssl );
 			response = request.getResponse();
 			
 			if ( is100ContinueExpected( ( HttpRequest ) msg ) )
@@ -140,33 +154,50 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 			DiskFileUpload.baseDirectory = tmpFileDirectory.getAbsolutePath();
 			DiskAttribute.baseDirectory = tmpFileDirectory.getAbsolutePath();
 			
-			if ( request.getMethod().equals( HttpMethod.GET ) )
+			if ( request.isWebsocketRequest() )
 			{
-				return;
+				try
+				{
+					WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory( request.getWebSocketLocation( msg ), null, true );
+					handshaker = wsFactory.newHandshaker( requestOrig );
+					if ( handshaker == null )
+					{
+						WebSocketServerHandshakerFactory.sendUnsupportedWebSocketVersionResponse( ctx.channel() );
+					}
+					else
+					{
+						handshaker.handshake( ctx.channel(), requestOrig );
+					}
+				}
+				catch ( WebSocketHandshakeException e )
+				{
+					getLogger().severe( "A request was made on the websocket uri '/fw/websocket' but it failed to handshake for reason '" + e.getMessage() + "'." );
+					response.sendError( 500, null, "This URI is for websocket requests only<br />" + e.getMessage() );
+					return;
+				}
 			}
 			
-			try
+			if ( !request.getMethod().equals( HttpMethod.GET ) )
 			{
-				decoder = new HttpPostRequestDecoder( factory, requestOrig );
+				try
+				{
+					decoder = new HttpPostRequestDecoder( factory, requestOrig );
+				}
+				catch ( ErrorDataDecoderException e )
+				{
+					e.printStackTrace();
+					response.sendException( e );
+					return;
+				}
 			}
-			catch ( ErrorDataDecoderException e )
-			{
-				e.printStackTrace();
-				response.sendException( e );
-				return;
-			}
-		}
-		else if ( msg instanceof HttpContent )
-		{
-			HttpContent chunk = ( HttpContent ) msg;
 			
-			request.addContentLength( chunk.content().readableBytes() );
+			request.addContentLength( requestOrig.content().readableBytes() );
 			
 			if ( decoder != null )
 			{
 				try
 				{
-					decoder.offer( chunk );
+					decoder.offer( requestOrig );
 				}
 				catch ( ErrorDataDecoderException e )
 				{
@@ -182,11 +213,36 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 				}
 				readHttpDataChunkByChunk();
 				
-				if ( chunk instanceof LastHttpContent )
-					finishRequest();
+				finishRequest();
 			}
 			else
 				finishRequest();
+		}
+		else if ( msg instanceof WebSocketFrame )
+		{
+			WebSocketFrame frame = ( WebSocketFrame ) msg;
+			
+			// Check for closing frame
+			if ( frame instanceof CloseWebSocketFrame )
+			{
+				handshaker.close( ctx.channel(), ( CloseWebSocketFrame ) frame.retain() );
+				return;
+			}
+			
+			if ( frame instanceof PingWebSocketFrame )
+			{
+				ctx.channel().write( new PongWebSocketFrame( frame.content().retain() ) );
+				return;
+			}
+			
+			if ( ! ( frame instanceof TextWebSocketFrame ) )
+			{
+				throw new UnsupportedOperationException( String.format( "%s frame types not supported", frame.getClass().getName() ) );
+			}
+			
+			String request = ( ( TextWebSocketFrame ) frame ).text();
+			System.out.printf( "%s received %s%n", ctx.channel(), request );
+			ctx.channel().write( new TextWebSocketFrame( request.toUpperCase() ) );
 		}
 	}
 	

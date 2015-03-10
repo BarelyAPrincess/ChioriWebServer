@@ -12,6 +12,7 @@ package com.chiorichan.http;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.ssl.SslHandler;
@@ -50,14 +51,16 @@ public class HttpRequestWrapper
 	protected Map<String, UploadedFile> uploadedFiles = new HashMap<String, UploadedFile>();
 	protected String uri = null;
 	protected int contentSize = 0;
+	protected boolean ssl;
 	
 	protected HttpRequest http;
 	protected Channel channel;
 	
-	protected HttpRequestWrapper( Channel channel, HttpRequest http ) throws IOException
+	protected HttpRequestWrapper( Channel channel, HttpRequest http, boolean ssl ) throws IOException
 	{
 		this.channel = channel;
 		this.http = http;
+		this.ssl = ssl;
 		
 		requestTime = Common.getEpoch();
 		
@@ -206,6 +209,11 @@ public class HttpRequestWrapper
 			uri = "/" + uri;
 		
 		return uri;
+	}
+	
+	public String getHost()
+	{
+		return http.headers().get( "Host" );
 	}
 	
 	// Cached domain names.
@@ -676,5 +684,23 @@ public class HttpRequestWrapper
 		
 		if ( !uri.startsWith( "/" ) )
 			uri = "/" + uri;
+	}
+	
+	public boolean isWebsocketRequest()
+	{
+		return getURI().equals( "/fw/websocket" );
+	}
+	
+	public String getWebSocketLocation( HttpObject req )
+	{
+		String location = getHost() + "/fw/websocket";
+		if ( ssl )
+		{
+			return "wss://" + location;
+		}
+		else
+		{
+			return "ws://" + location;
+		}
 	}
 }
