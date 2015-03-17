@@ -45,7 +45,7 @@ public class ObjectUtil
 		}
 	}
 	
-	public static Integer castToInt( Object value )
+	public static Integer castToIntWithException( Object value )
 	{
 		if ( value == null )
 			return null;
@@ -68,12 +68,23 @@ public class ObjectUtil
 			case "java.math.BigDecimal":
 				return ( ( BigDecimal ) value ).setScale( 0, BigDecimal.ROUND_HALF_UP ).intValue();
 			default:
-				//Loader.getLogger().warning( "Uncaught Convertion to String of Type: " + value.getClass().getName() );
-				return null;
+				throw new ClassCastException( "Uncaught Convertion to Integer of Type: " + value.getClass().getName() );
 		}
 	}
 	
-	public static Long castToLong( Object value )
+	public static Integer castToInt( Object value )
+	{
+		try
+		{
+			return castToIntWithException( value );
+		}
+		catch ( ClassCastException e )
+		{
+			return 0;
+		}
+	}
+	
+	public static Long castToLongWithException( Object value )
 	{
 		if ( value == null )
 			return null;
@@ -93,12 +104,23 @@ public class ObjectUtil
 			case "java.math.BigDecimal":
 				return ( ( BigDecimal ) value ).setScale( 0, BigDecimal.ROUND_HALF_UP ).longValue();
 			default:
-				//Loader.getLogger().warning( "Uncaught Convertion to String of Type: " + value.getClass().getName() );
-				return null;
+				throw new ClassCastException( "Uncaught Convertion to Long of Type: " + value.getClass().getName() );
 		}
 	}
 	
-	public static String castToString( Object value )
+	public static Long castToLong( Object value )
+	{
+		try
+		{
+			return castToLongWithException( value );
+		}
+		catch ( ClassCastException e )
+		{
+			return 0L;
+		}
+	}
+	
+	public static String castToStringWithException( Object value )
 	{
 		if ( value == null )
 			return null;
@@ -122,8 +144,19 @@ public class ObjectUtil
 			case "java.util.List":
 				return value.toString();
 			default:
-				//Loader.getLogger().warning( "Uncaught Convertion to String of Type: " + value.getClass().getName() );
-				return null;
+				throw new ClassCastException( "Uncaught Convertion to String of Type: " + value.getClass().getName() );
+		}
+	}
+	
+	public static String castToString( Object value )
+	{
+		try
+		{
+			return castToStringWithException( value );
+		}
+		catch ( ClassCastException e )
+		{
+			return null;
 		}
 	}
 }
