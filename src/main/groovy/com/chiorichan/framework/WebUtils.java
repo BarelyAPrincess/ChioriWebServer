@@ -47,7 +47,9 @@ import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.factory.CodeEvalFactory;
 import com.chiorichan.factory.CodeMetaData;
 import com.chiorichan.util.Common;
+import com.chiorichan.util.ObjectUtil;
 import com.chiorichan.util.StringUtil;
+import com.google.common.collect.Maps;
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
@@ -232,7 +234,7 @@ public class WebUtils
 	
 	public static String createTable( List<Object> tableData, List<String> headerArray, String tableId, String altTableClass )
 	{
-		Map<String, Object> newData = new LinkedHashMap<String, Object>();
+		Map<Object, Object> newData = Maps.newLinkedHashMap();
 		
 		Integer x = 0;
 		for ( Object o : tableData )
@@ -244,23 +246,23 @@ public class WebUtils
 		return createTable( newData, headerArray, tableId, altTableClass );
 	}
 	
-	public static String createTable( Map<String, Object> tableData )
+	public static String createTable( Map<Object, Object> tableData )
 	{
 		return createTable( tableData, null, "" );
 	}
 	
-	public static String createTable( Map<String, Object> tableData, List<String> headerArray )
+	public static String createTable( Map<Object, Object> tableData, List<String> headerArray )
 	{
 		return createTable( tableData, headerArray, "" );
 	}
 	
-	public static String createTable( Map<String, Object> tableData, List<String> headerArray, String tableId )
+	public static String createTable( Map<Object, Object> tableData, List<String> headerArray, String tableId )
 	{
 		return createTable( tableData, headerArray, tableId, null );
 	}
 	
 	@SuppressWarnings( "unchecked" )
-	public static String createTable( Map<String, Object> tableData, List<String> headerArray, String tableId, String altTableClass )
+	public static String createTable( Map<Object, Object> tableData, List<String> headerArray, String tableId, String altTableClass )
 	{
 		if ( tableId == null )
 			tableId = "";
@@ -301,24 +303,37 @@ public class WebUtils
 			
 			if ( row instanceof Map || row instanceof List )
 			{
-				Map<String, Object> map = new LinkedHashMap<String, Object>();
+				Map<Object, Object> map = Maps.newLinkedHashMap();
 				
 				if ( row instanceof Map )
-					map = ( Map<String, Object> ) row;
+					map = ( Map<Object, Object> ) row;
 				else
 				{
 					int y = 0;
 					for ( Object o : ( List<Object> ) row )
 					{
-						map.put( y + "", o );
+						map.put( Integer.toString( y ), o );
 						y++;
 					}
 				}
 				
-				sb.append( "<tr" + ( ( map.get( ":id" ) != null ) ? " id=\"" + map.get( ":id" ) + "\"" : "" ) + ( ( map.get( ":rel" ) != null ) ? " rel=\"" + map.get( ":rel" ) + "\"" : "" ) + " class=\"" + clss + "\">\n" );
+				sb.append( "<tr" );
 				
-				map.remove( ":id" );
-				map.remove( ":rel" );
+				for ( Entry<Object, Object> e : map.entrySet() )
+					try
+					{
+						if ( ObjectUtil.castToStringWithException( e.getKey() ).startsWith( ":" ) )
+						{
+							map.remove( e.getKey() );
+							sb.append( " " + ObjectUtil.castToStringWithException( e.getKey() ).substring( 1 ) + "=\"" + ObjectUtil.castToStringWithException( e.getValue() ) + "\"" );
+						}
+					}
+					catch ( ClassCastException ex )
+					{
+						ex.printStackTrace();
+					}
+				
+				sb.append( " class=\"" + clss + "\">\n" );
 				
 				if ( map.size() == 1 )
 				{
