@@ -114,9 +114,9 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 	}
 	
 	@Override
-	public void messageReceived( ChannelHandlerContext ctx, String request )
+	public void messageReceived( ChannelHandlerContext ctx, String msg )
 	{
-		CommandDispatch.issueCommand( console, request );
+		CommandDispatch.issueCommand( console, msg );
 	}
 	
 	@Override

@@ -118,7 +118,7 @@ public enum ConsoleColor
 	NEGATIVE( 'x', 0x17 );
 	
 	/**
-	 * The special character which prefixes all chat colour codes. Use this if you need to dynamically convert colour
+	 * The special character which prefixes all chat color codes. Use this if you need to dynamically convert color
 	 * codes from your custom format.
 	 */
 	public static final char COLOR_CHAR = '\u00A7';

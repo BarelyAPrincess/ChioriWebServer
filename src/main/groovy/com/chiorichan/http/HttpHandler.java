@@ -3,9 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 package com.chiorichan.http;
 
@@ -18,7 +15,6 @@ import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.multipart.Attribute;
 import io.netty.handler.codec.http.multipart.DefaultHttpDataFactory;
@@ -63,7 +59,13 @@ import com.chiorichan.session.SessionProvider;
 import com.chiorichan.util.Versioning;
 import com.google.common.collect.Maps;
 
-public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
+/**
+ * Handles both HTTP and HTTPS connections for Netty.
+ * 
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
+ */
+public class HttpHandler extends SimpleChannelInboundHandler<Object>
 {
 	protected static Map<ServerVars, Object> staticServerVars = Maps.newLinkedHashMap();
 	
@@ -127,7 +129,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 	}
 	
 	@Override
-	protected void messageReceived( ChannelHandlerContext ctx, HttpObject msg ) throws Exception
+	protected void messageReceived( ChannelHandlerContext ctx, Object msg ) throws Exception
 	{
 		if ( msg instanceof FullHttpRequest )
 		{
@@ -146,10 +148,10 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 				tmpFileDirectory.mkdirs();
 			
 			if ( !tmpFileDirectory.isDirectory() )
-				Loader.getLogger().severe( "The temp directory specified in the server configs is not a directory, File Uploads will FAIL until this problem is resolved." );
+				getLogger().severe( "The temp directory specified in the server configs is not a directory, File Uploads will FAIL until this problem is resolved." );
 			
 			if ( !tmpFileDirectory.canWrite() )
-				Loader.getLogger().severe( "The temp directory specified in the server configs is not writable, File Uploads will FAIL until this problem is resolved." );
+				getLogger().severe( "The temp directory specified in the server configs is not writable, File Uploads will FAIL until this problem is resolved." );
 			
 			DiskFileUpload.baseDirectory = tmpFileDirectory.getAbsolutePath();
 			DiskAttribute.baseDirectory = tmpFileDirectory.getAbsolutePath();
@@ -158,7 +160,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 			{
 				try
 				{
-					WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory( request.getWebSocketLocation( msg ), null, true );
+					WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory( request.getWebSocketLocation( requestOrig ), null, true );
 					handshaker = wsFactory.newHandshaker( requestOrig );
 					if ( handshaker == null )
 					{
@@ -173,8 +175,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 				{
 					getLogger().severe( "A request was made on the websocket uri '/fw/websocket' but it failed to handshake for reason '" + e.getMessage() + "'." );
 					response.sendError( 500, null, "This URI is for websocket requests only<br />" + e.getMessage() );
-					return;
 				}
+				return;
 			}
 			
 			if ( !request.getMethod().equals( HttpMethod.GET ) )
@@ -241,8 +243,12 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 			}
 			
 			String request = ( ( TextWebSocketFrame ) frame ).text();
-			System.out.printf( "%s received %s%n", ctx.channel(), request );
+			getLogger().fine( "Received '" + request + "' over WebSocket connection '" + ctx.channel() + "'" );
 			ctx.channel().write( new TextWebSocketFrame( request.toUpperCase() ) );
+		}
+		else
+		{
+			getLogger().warning( "Received Object '" + msg.getClass() + "' and had nothing to do with it, is this a bug?" );
 		}
 	}
 	
@@ -279,7 +285,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 			 * XXX Temporary way of capturing exceptions that were unexpected by the server.
 			 * Exceptions caught here should have proper exception captures implemented.
 			 */
-			Loader.getLogger().warning( "WARNING THIS IS AN UNCAUGHT EXCEPTION! WOULD YOU KINDLY REPORT THIS STACKTRACE TO THE DEVELOPER?", e );
+			getLogger().warning( "WARNING THIS IS AN UNCAUGHT EXCEPTION! WOULD YOU KINDLY REPORT THIS STACKTRACE TO THE DEVELOPER?", e );
 		}
 		
 		try
@@ -362,7 +368,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 			FileUpload fileUpload = ( FileUpload ) data;
 			if ( fileUpload.isCompleted() )
 			{
-				Loader.getLogger().debug( "" + fileUpload );
+				getLogger().debug( "" + fileUpload );
 				
 				try
 				{
@@ -376,7 +382,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 			}
 			else
 			{
-				Loader.getLogger().warning( "File to be continued but should not!" );
+				getLogger().warning( "File to be continued but should not!" );
 			}
 		}
 	}
@@ -417,7 +423,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 		
 		if ( requestEvent.isCancelled() )
 		{
-			Loader.getLogger().warning( "Navigation was cancelled by a Server Plugin" );
+			getLogger().warning( "Navigation was cancelled by a Server Plugin" );
 			
 			int status = requestEvent.getStatus();
 			String reason = requestEvent.getReason();
@@ -441,7 +447,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 		Site currentSite = request.getSite();
 		sess.getParentSession().setSite( currentSite );
 		
-		Loader.getLogger().info( "Request '" + currentSite.getSiteId() + "' '" + subdomain + "." + domain + "' '" + uri + "' '" + fi.toString() + "'" );
+		getLogger().info( "Request '" + currentSite.getSiteId() + "' '" + subdomain + "." + domain + "' '" + uri + "' '" + fi.toString() + "'" );
 		
 		if ( fi.isDirectoryRequest() )
 		{
@@ -511,7 +517,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpObject>
 			if ( perm.getEntity() == null )
 			{
 				String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
-				// Loader.getLogger().warning( "Requester of page '" + file + "' has been redirected to the login page." );
+				// getLogger().warning( "Requester of page '" + file + "' has been redirected to the login page." );
 				response.sendRedirect( loginForm + "?msg=You must be logged in to view that page!&target=http://" + request.getDomain() + request.getURI() );
 				// TODO: Come up with a better way to handle the URI used in the target, i.e., currently params are being lost in the redirect.
 				return;

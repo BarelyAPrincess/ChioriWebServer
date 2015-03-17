@@ -146,7 +146,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		}
 		
 		if ( isRunning )
-			getLogger().info( ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "Finished Initalizing " + Versioning.getProduct() + "! It took " + ( System.currentTimeMillis() - startTime ) + "ms!" );
+			getLogger().info( ConsoleColor.YELLOW + "" + ConsoleColor.NEGATIVE + "Finished Initalizing " + Versioning.getProduct() + "! It took " + ( System.currentTimeMillis() - startTime ) + "ms!" );
 	}
 	
 	public static OptionParser getOptionParser()
