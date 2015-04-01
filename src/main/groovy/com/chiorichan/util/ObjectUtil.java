@@ -13,6 +13,15 @@ import java.math.BigDecimal;
 
 public class ObjectUtil
 {
+	public static int safeLongToInt( long l )
+	{
+		if ( l < Integer.MIN_VALUE )
+			return Integer.MIN_VALUE;
+		if ( l > Integer.MAX_VALUE )
+			return Integer.MAX_VALUE;
+		return ( int ) l;
+	}
+	
 	public static Boolean castToBool( Object value )
 	{
 		if ( value == null )

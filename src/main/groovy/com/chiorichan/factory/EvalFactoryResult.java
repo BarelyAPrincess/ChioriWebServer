@@ -79,6 +79,8 @@ public class EvalFactoryResult
 	@Override
 	public String toString()
 	{
+		if ( code == null )
+			return "";
 		return code;
 	}
 }

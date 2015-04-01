@@ -18,8 +18,8 @@ import com.chiorichan.factory.EvalFactoryResult;
 import com.chiorichan.framework.Site;
 import com.chiorichan.framework.WebUtils;
 import com.chiorichan.plugin.loader.Plugin;
+import com.chiorichan.util.Common;
 import com.chiorichan.util.StringUtil;
-import com.google.common.collect.Maps;
 
 public class Template extends Plugin implements Listener
 {
@@ -113,13 +113,13 @@ public class Template extends Plugin implements Listener
 			ob.append( "</head>\n" );
 			
 			String pageMark = "<!-- " + getConfig().getString( "config.defaultTag", "PAGE DATA" ) + " -->";
-			String pageData = pageMark;
-			String viewData = pageMark;
+			String pageData = "";
+			String viewData = "";
 			Map<String, String> params = fwVals;
 			
 			if ( !theme.isEmpty() )
 			{
-				EvalFactoryResult result = doInclude( theme, event );
+				EvalFactoryResult result = doInclude0( theme, event );
 				if ( result.isSuccessful() )
 				{
 					pageData = result.getResult();
@@ -127,12 +127,12 @@ public class Template extends Plugin implements Listener
 				}
 			}
 			
-			if ( !theme.isEmpty() )
+			if ( !view.isEmpty() )
 			{
-				EvalFactoryResult result = doInclude( theme, event );
+				EvalFactoryResult result = doInclude0( view, event );
 				if ( result.isSuccessful() )
 				{
-					pageData = result.getResult();
+					viewData = result.getResult();
 					params.putAll( result.getMeta().params );
 				}
 			}
@@ -142,12 +142,20 @@ public class Template extends Plugin implements Listener
 			if ( pageData.indexOf( pageMark ) < 0 )
 				pageData = pageData + viewData;
 			else
-				pageData = pageData.replace( pageMark, viewData );
+			{
+				pageData = pageData.replace( pageMark, Common.md5( pageMark ) );
+				pageData = pageData.replaceAll( pageMark, "" );
+				pageData = pageData.replace( Common.md5( pageMark ), viewData );
+			}
 			
 			if ( pageData.indexOf( pageMark ) < 0 )
 				pageData = pageData + event.getSource();
 			else
-				pageData = pageData.replace( pageMark, event.getSource() );
+			{
+				pageData = pageData.replace( pageMark, Common.md5( pageMark ) );
+				pageData = pageData.replaceAll( pageMark, "" );
+				pageData = pageData.replace( Common.md5( pageMark ), event.getSource() );
+			}
 			
 			ob.append( pageData + "\n" );
 			
@@ -166,7 +174,15 @@ public class Template extends Plugin implements Listener
 		}
 	}
 	
-	private EvalFactoryResult doInclude( String pack, RenderEvent event ) throws IOException, ShellExecuteException
+	private String doInclude( String pack, RenderEvent event ) throws IOException, ShellExecuteException
+	{
+		EvalFactoryResult result = doInclude0( pack, event );
+		if ( result.isSuccessful() )
+			return result.getResult();
+		return "";
+	}
+	
+	private EvalFactoryResult doInclude0( String pack, RenderEvent event ) throws IOException, ShellExecuteException
 	{
 		EvalFactory factory = event.getSession().getCodeFactory();
 		

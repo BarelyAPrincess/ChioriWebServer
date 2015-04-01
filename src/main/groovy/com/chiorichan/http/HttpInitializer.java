@@ -16,6 +16,8 @@ import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 
 public class HttpInitializer extends ChannelInitializer<SocketChannel>
 {
@@ -24,8 +26,9 @@ public class HttpInitializer extends ChannelInitializer<SocketChannel>
 	{
 		ChannelPipeline p = ch.pipeline();
 		
+		// p.addLast( new LoggingHandler( LogLevel.INFO ) );
 		p.addLast( "decoder", new HttpRequestDecoder() );
-		p.addLast( "aggregator", new HttpObjectAggregator( 1048576 ) );
+		p.addLast( "aggregator", new HttpObjectAggregator( 104857600 ) ); // One Hundred Megabytes
 		p.addLast( "encoder", new HttpResponseEncoder() );
 		p.addLast( "deflater", new HttpContentCompressor() );
 		p.addLast( "handler", new HttpHandler( false ) );

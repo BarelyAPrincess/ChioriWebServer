@@ -44,7 +44,6 @@ import com.chiorichan.framework.FileInterpreter;
 import com.chiorichan.framework.ScriptingBaseGroovy;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.WebInterpreter;
-import com.chiorichan.util.StringUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
@@ -435,24 +434,6 @@ public class EvalFactory
 		if ( site != null )
 			code = runParsers( code, site );
 		
-		File cacheFile = null;
-		
-		// XXX Crude cache system, improve upon this and make it better.
-		if ( meta.fileName != null && !meta.fileName.isEmpty() )
-		{
-			cacheFile = new File( site.getCacheDirectory(), StringUtil.md5( meta.fileName ) + ".cache" );
-			
-			if ( cacheFile.exists() )
-				try
-				{
-					return result.setResult( FileUtils.readFileToString( cacheFile ), true );
-				}
-				catch ( IOException e )
-				{
-					throw new ShellExecuteException( e, meta );
-				}
-		}
-		
 		for ( PreProcessor p : preProcessors )
 		{
 			Set<String> handledTypes = new HashSet<String>( Arrays.asList( p.getHandledTypes() ) );
@@ -551,27 +532,7 @@ public class EvalFactory
 			throw new ShellExecuteException( e, meta );
 		}
 		
-		if ( cacheFile != null )
-			try
-			{
-				List<String> cachePatterns = site.getCachePatterns();
-				
-				for ( String cache : cachePatterns )
-				{
-					if ( new File( meta.fileName ).getName().toLowerCase().contains( cache ) )
-					{
-						Loader.getLogger().info( "Wrote a cache file for requested file: " + meta.fileName );
-						FileUtils.writeStringToFile( cacheFile, code );
-						break;
-					}
-				}
-			}
-			catch ( IOException e )
-			{
-				e.printStackTrace();
-			}
-		
-		return result.setResult( code );
+		return result.setResult( code, true );
 	}
 	
 	private String runParsers( String source, Site site ) throws ShellExecuteException
