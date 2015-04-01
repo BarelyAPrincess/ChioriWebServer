@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.Validate;
 
+import com.chiorichan.Loader;
 import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.util.StringUtil;
 

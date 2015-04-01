@@ -18,7 +18,6 @@ import com.chiorichan.factory.EvalFactoryResult;
 import com.chiorichan.framework.Site;
 import com.chiorichan.framework.WebUtils;
 import com.chiorichan.plugin.loader.Plugin;
-import com.chiorichan.util.Common;
 import com.chiorichan.util.StringUtil;
 
 public class Template extends Plugin implements Listener
@@ -139,23 +138,22 @@ public class Template extends Plugin implements Listener
 			
 			ob.append( "<body" + ( ( params == null ) ? " " + params.get( "bodyArgs" ) : "" ) + ">\n" );
 			
-			if ( pageData.indexOf( pageMark ) < 0 )
-				pageData = pageData + viewData;
-			else
-			{
-				pageData = pageData.replace( pageMark, Common.md5( pageMark ) );
-				pageData = pageData.replaceAll( pageMark, "" );
-				pageData = pageData.replace( Common.md5( pageMark ), viewData );
-			}
+			if ( viewData != null && !viewData.isEmpty() )
+				if ( pageData.indexOf( pageMark ) < 0 )
+				{
+					pageData = pageData + viewData;
+					Loader.getLogger().warning( "Pass 1: Did not find the pageMark `" + pageMark + "` within code." );
+				}
+				else
+					pageData = pageData.replace( pageMark, viewData );
 			
 			if ( pageData.indexOf( pageMark ) < 0 )
-				pageData = pageData + event.getSource();
-			else
 			{
-				pageData = pageData.replace( pageMark, Common.md5( pageMark ) );
-				pageData = pageData.replaceAll( pageMark, "" );
-				pageData = pageData.replace( Common.md5( pageMark ), event.getSource() );
+				pageData = pageData + event.getSource();
+				Loader.getLogger().warning( "Pass 2: Did not find the pageMark `" + pageMark + "` within code." );
 			}
+			else
+				pageData = pageData.replace( pageMark, event.getSource() );
 			
 			ob.append( pageData + "\n" );
 			
