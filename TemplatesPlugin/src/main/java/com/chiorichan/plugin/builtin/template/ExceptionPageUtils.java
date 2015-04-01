@@ -15,8 +15,8 @@ import org.apache.commons.lang3.StringUtils;
 import com.chiorichan.InterpreterOverrides;
 import com.chiorichan.Loader;
 import com.chiorichan.exception.ShellExecuteException;
-import com.chiorichan.factory.CodeEvalFactory;
-import com.chiorichan.factory.CodeMetaData;
+import com.chiorichan.factory.EvalFactory;
+import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.framework.WebUtils;
 import com.chiorichan.util.FileUtil;
 import com.chiorichan.util.Versioning;
@@ -30,7 +30,6 @@ public class ExceptionPageUtils
 		
 		for ( StackTraceElement ele : elements )
 		{
-			// if ( ele.getFileName() != null && ele.getFileName().toLowerCase().contains( ".groovy" ) )
 			if ( ele.getFileName() != null && ele.getClassName().toLowerCase().startsWith( "script" ) )
 			{
 				result = ele;
@@ -87,14 +86,14 @@ public class ExceptionPageUtils
 			finalFileUrl = githubGroovyUrl + fileUrl;
 			codeSample = new String( WebUtils.readUrl( finalFileUrl ) );
 		}
-		catch( IOException e1 )
+		catch ( IOException e1 )
 		{
 			try
 			{
 				finalFileUrl = githubJavaUrl + fileUrl;
 				codeSample = new String( WebUtils.readUrl( finalFileUrl ) );
 			}
-			catch( IOException e2 )
+			catch ( IOException e2 )
 			{
 				codeSample = "Could not read file '" + fileUrl + "' from the GitHub repository.\nYou could be running a mismatching version to the repository or this file belongs to another repository.";
 			}
@@ -115,7 +114,7 @@ public class ExceptionPageUtils
 		{
 			if ( t instanceof ShellExecuteException )
 			{
-				CodeMetaData meta = ((ShellExecuteException) t).getCodeMetaData();
+				EvalMetaData meta = ( ( ShellExecuteException ) t ).getCodeMetaData();
 				StackTraceElement ele = getGroovyScriptElement( t.getCause().getStackTrace() );
 				
 				if ( ele != null )
@@ -126,7 +125,7 @@ public class ExceptionPageUtils
 				return getCodeSample( t.getStackTrace()[0], null );
 			}
 		}
-		catch( Throwable t1 )
+		catch ( Throwable t1 )
 		{
 			t1.printStackTrace();
 		}
@@ -134,7 +133,7 @@ public class ExceptionPageUtils
 		return null;
 	}
 	
-	public static String makeExceptionPage( Throwable t, CodeEvalFactory factory )
+	public static String makeExceptionPage( Throwable t, EvalFactory factory )
 	{
 		try
 		{
@@ -147,7 +146,7 @@ public class ExceptionPageUtils
 			
 			if ( t instanceof ShellExecuteException )
 			{
-				CodeMetaData meta = ((ShellExecuteException) t).getCodeMetaData();
+				EvalMetaData meta = ( ( ShellExecuteException ) t ).getCodeMetaData();
 				StackTraceElement ele = getGroovyScriptElement( t.getCause().getStackTrace() );
 				t = t.getCause();
 				
@@ -194,7 +193,7 @@ public class ExceptionPageUtils
 			ob.append( "\n" );
 			ob.append( "<div class=\"source\">\n" );
 			
-			ob.append( "<p class=\"file\">" + fileName + "(" + lineNo + "): <strong>" + ((className != null) ? className : "") + "</strong></p>\n" );
+			ob.append( "<p class=\"file\">" + fileName + "(" + lineNo + "): <strong>" + ( ( className != null ) ? className : "" ) + "</strong></p>\n" );
 			
 			ob.append( "\n" );
 			ob.append( "<div class=\"code\">\n" );
@@ -215,7 +214,7 @@ public class ExceptionPageUtils
 			
 			return wrapAndEval( factory, ob.toString() );
 		}
-		catch( Throwable t1 )
+		catch ( Throwable t1 )
 		{
 			t1.printStackTrace();
 			return "";
@@ -233,7 +232,7 @@ public class ExceptionPageUtils
 		
 		for ( StackTraceElement e : ste )
 		{
-			String file = (e.getFileName() == null) ? "eval()" : e.getFileName() + "(" + e.getLineNumber() + ")";
+			String file = ( e.getFileName() == null ) ? "eval()" : e.getFileName() + "(" + e.getLineNumber() + ")";
 			boolean expanded = false;
 			boolean isApp = e.getClassName().startsWith( "com.chiori" );
 			
@@ -242,7 +241,7 @@ public class ExceptionPageUtils
 			if ( isApp && !codeSample.startsWith( "Could not read file" ) )
 				expanded = true;
 			
-			sb.append( "<tr class=\"trace" + (isApp ? " app" : " core") + (expanded ? " expanded" : " collapsed") + "\">\n" );
+			sb.append( "<tr class=\"trace" + ( isApp ? " app" : " core" ) + ( expanded ? " expanded" : " collapsed" ) + "\">\n" );
 			sb.append( "	<td class=\"number\">#" + l + "</td>\n" );
 			sb.append( "	<td class=\"content\">\n" );
 			sb.append( "		<div class=\"trace-file\">\n" );
@@ -320,7 +319,7 @@ public class ExceptionPageUtils
 			{
 				is = new FileInputStream( file );
 			}
-			catch( FileNotFoundException e )
+			catch ( FileNotFoundException e )
 			{
 				return e.getMessage();
 			}
@@ -332,7 +331,7 @@ public class ExceptionPageUtils
 				
 				int cLine = 0;
 				String l;
-				while( (l = br.readLine()) != null )
+				while ( ( l = br.readLine() ) != null )
 				{
 					l = escapeHTML( l );
 					
@@ -356,7 +355,7 @@ public class ExceptionPageUtils
 				if ( cLine < line )
 					sb.append( "<span class=\"error\"><span class=\"ln error-ln\">" + line + "</span> Unexpected EOF!</span>" );
 			}
-			catch( IOException e )
+			catch ( IOException e )
 			{
 				e.printStackTrace();
 			}
@@ -371,14 +370,14 @@ public class ExceptionPageUtils
 		return "";
 	}
 	
-	public static String wrapAndEval( CodeEvalFactory factory, String html ) throws IOException, ShellExecuteException
+	public static String wrapAndEval( EvalFactory factory, String html ) throws IOException, ShellExecuteException
 	{
 		String pageMark = "<!-- PAGE DATA -->";
 		InputStream is = ExceptionPageUtils.class.getClassLoader().getResourceAsStream( "BaseTemplate.html" );
-		String baseTemplate = (is == null) ? "" : new String( FileUtil.inputStream2Bytes( is ), "UTF-8" );
+		String baseTemplate = ( is == null ) ? "" : new String( FileUtil.inputStream2Bytes( is ), "UTF-8" );
 		
-		CodeMetaData meta = new CodeMetaData();
+		EvalMetaData meta = new EvalMetaData();
 		meta.shell = "html";
-		return factory.eval( baseTemplate.replace( pageMark, html ), meta, Loader.getSiteManager().getFrameworkSite() );
+		return factory.eval( baseTemplate.replace( pageMark, html ), meta, Loader.getSiteManager().getFrameworkSite() ).getResult();
 	}
 }

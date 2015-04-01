@@ -18,7 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.codehaus.groovy.syntax.SyntaxException;
 
 import com.chiorichan.exception.ShellExecuteException;
-import com.chiorichan.factory.CodeMetaData;
+import com.chiorichan.factory.EvalMetaData;
 
 /**
  * SeaShell for handling GSP files.
@@ -41,7 +41,7 @@ public class GSPInterpreter implements Interpreter
 	}
 	
 	@Override
-	public String eval( CodeMetaData meta, String fullFile, GroovyShell shell, ByteArrayOutputStream bs ) throws ShellExecuteException
+	public String eval( EvalMetaData meta, String fullFile, GroovyShell shell, ByteArrayOutputStream bs ) throws ShellExecuteException
 	{
 		try
 		{

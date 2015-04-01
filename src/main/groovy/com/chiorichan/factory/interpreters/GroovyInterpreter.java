@@ -14,7 +14,7 @@ import java.io.ByteArrayOutputStream;
 import groovy.lang.GroovyShell;
 
 import com.chiorichan.exception.ShellExecuteException;
-import com.chiorichan.factory.CodeMetaData;
+import com.chiorichan.factory.EvalMetaData;
 
 /**
  * Groovy SeaShell.
@@ -29,7 +29,7 @@ public class GroovyInterpreter implements Interpreter
 	}
 	
 	@Override
-	public String eval( CodeMetaData meta, String code, GroovyShell shell, ByteArrayOutputStream bs ) throws ShellExecuteException
+	public String eval( EvalMetaData meta, String code, GroovyShell shell, ByteArrayOutputStream bs ) throws ShellExecuteException
 	{
 		try
 		{

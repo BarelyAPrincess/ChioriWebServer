@@ -14,7 +14,7 @@ import groovy.lang.GroovyShell;
 import java.io.ByteArrayOutputStream;
 
 import com.chiorichan.exception.ShellExecuteException;
-import com.chiorichan.factory.CodeMetaData;
+import com.chiorichan.factory.EvalMetaData;
 
 /**
  * Interpreters are commonly used to process commands and create dynamic content, most notably the groovy scripts.
@@ -29,5 +29,5 @@ public interface Interpreter
 	 */
 	String[] getHandledTypes();
 	
-	String eval( CodeMetaData meta, String code, GroovyShell shell, ByteArrayOutputStream bs ) throws ShellExecuteException;
+	String eval( EvalMetaData meta, String code, GroovyShell shell, ByteArrayOutputStream bs ) throws ShellExecuteException;
 }

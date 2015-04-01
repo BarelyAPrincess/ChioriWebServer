@@ -10,7 +10,7 @@
 package com.chiorichan.session;
 
 import com.chiorichan.account.Account;
-import com.chiorichan.factory.CodeEvalFactory;
+import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.Candy;
 import com.chiorichan.http.HttpRequestWrapper;
@@ -19,7 +19,7 @@ import com.chiorichan.http.HttpResponseWrapper;
 public class SessionProviderNet implements SessionProvider
 {
 	@Override
-	public CodeEvalFactory getCodeFactory()
+	public EvalFactory getCodeFactory()
 	{
 		return null;
 	}

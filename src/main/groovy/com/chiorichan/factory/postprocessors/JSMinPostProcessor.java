@@ -14,7 +14,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.chiorichan.factory.CodeMetaData;
+import com.chiorichan.factory.EvalMetaData;
 import com.google.common.collect.Lists;
 import com.google.javascript.jscomp.CompilationLevel;
 import com.google.javascript.jscomp.Compiler;
@@ -30,7 +30,7 @@ public class JSMinPostProcessor implements PostProcessor
 	}
 	
 	@Override
-	public String process( CodeMetaData meta, String code )
+	public String process( EvalMetaData meta, String code )
 	{
 		List<SourceFile> externs = Lists.newArrayList();
 		List<SourceFile> inputs = Arrays.asList( SourceFile.fromCode( ( meta.fileName == null || meta.fileName.isEmpty() ) ? "fakefile.js" : meta.fileName, code ) );

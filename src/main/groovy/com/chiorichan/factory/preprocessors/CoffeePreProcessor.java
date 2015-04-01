@@ -18,7 +18,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.Scriptable;
 
-import com.chiorichan.factory.CodeMetaData;
+import com.chiorichan.factory.EvalMetaData;
 
 public class CoffeePreProcessor implements PreProcessor
 {
@@ -30,7 +30,7 @@ public class CoffeePreProcessor implements PreProcessor
 	}
 	
 	@Override
-	public String process( CodeMetaData meta, String code )
+	public String process( EvalMetaData meta, String code )
 	{
 		ClassLoader classLoader = getClass().getClassLoader();
 		InputStream inputStream = classLoader.getResourceAsStream( "com/chiorichan/coffee-script.js" );

@@ -48,14 +48,14 @@ import com.chiorichan.util.StringUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
-public class CodeEvalFactory
+public class EvalFactory
 {
 	public class GroovyShellTracker
 	{
 		private GroovyShell shell = null;
 		private boolean inUse = false;
 		private int lineNumber = -1;
-		private CodeMetaData meta = null;
+		private EvalMetaData meta = null;
 		
 		public GroovyShellTracker( GroovyShell shell )
 		{
@@ -87,12 +87,12 @@ public class CodeEvalFactory
 			this.lineNumber = lineNumber;
 		}
 		
-		public CodeMetaData getMetaData()
+		public EvalMetaData getMetaData()
 		{
 			return meta;
 		}
 		
-		public void setMetaData( CodeMetaData meta )
+		public void setMetaData( EvalMetaData meta )
 		{
 			this.meta = meta;
 		}
@@ -145,12 +145,12 @@ public class CodeEvalFactory
 			register( new ImagePostProcessor() );
 	}
 	
-	public static CodeEvalFactory create( Binding binding )
+	public static EvalFactory create( Binding binding )
 	{
-		return new CodeEvalFactory( binding );
+		return new EvalFactory( binding );
 	}
 	
-	public static CodeEvalFactory create( BindingProvider provider )
+	public static EvalFactory create( BindingProvider provider )
 	{
 		return provider.getCodeFactory();
 	}
@@ -257,7 +257,7 @@ public class CodeEvalFactory
 			tracker.setInUse( false );
 	}
 	
-	protected CodeEvalFactory( Binding binding )
+	protected EvalFactory( Binding binding )
 	{
 		this.binding = binding;
 		setOutputStream( bs );
@@ -324,9 +324,9 @@ public class CodeEvalFactory
 	/**
 	 * 
 	 * @param orig
-	 *            , The original class you would like to override.
+	 *            The original class you would like to override.
 	 * @param replace
-	 *            , An instance of the class you are overriding with. Must extend the original class.
+	 *            An instance of the class you are overriding with. Must extend the original class.
 	 */
 	public static boolean overrideProcessor( Class<? extends PostProcessor> orig, PostProcessor replace )
 	{
@@ -356,9 +356,9 @@ public class CodeEvalFactory
 		postProcessors.add( postProcessor );
 	}
 	
-	public String eval( File fi, Site site ) throws ShellExecuteException
+	public EvalFactoryResult eval( File fi, Site site ) throws ShellExecuteException
 	{
-		CodeMetaData codeMeta = new CodeMetaData();
+		EvalMetaData codeMeta = new EvalMetaData();
 		
 		codeMeta.shell = FileInterpreter.determineShellFromName( fi.getName() );
 		codeMeta.fileName = fi.getAbsolutePath();
@@ -366,7 +366,7 @@ public class CodeEvalFactory
 		return eval( fi, codeMeta, site );
 	}
 	
-	public String eval( File fi, CodeMetaData meta, Site site ) throws ShellExecuteException
+	public EvalFactoryResult eval( File fi, EvalMetaData meta, Site site ) throws ShellExecuteException
 	{
 		try
 		{
@@ -378,19 +378,21 @@ public class CodeEvalFactory
 		}
 	}
 	
-	public String eval( FileInterpreter fi, Site site ) throws ShellExecuteException
+	public EvalFactoryResult eval( FileInterpreter fi, Site site ) throws ShellExecuteException
 	{
-		CodeMetaData codeMeta = new CodeMetaData();
+		return eval( fi, null, site );
+	}
+	
+	public EvalFactoryResult eval( FileInterpreter fi, EvalMetaData codeMeta, Site site ) throws ShellExecuteException
+	{
+		if ( codeMeta == null )
+			codeMeta = new EvalMetaData();
+		
 		if ( fi instanceof WebInterpreter )
 			codeMeta.params = ( ( WebInterpreter ) fi ).getRewriteParams();
 		else
 			codeMeta.params = fi.getParams();
 		
-		return eval( fi, codeMeta, site );
-	}
-	
-	public String eval( FileInterpreter fi, CodeMetaData codeMeta, Site site ) throws ShellExecuteException
-	{
 		codeMeta.contentType = fi.getContentType();
 		codeMeta.shell = fi.getParams().get( "shell" );
 		codeMeta.fileName = ( fi.getFile() != null ) ? fi.getFile().getAbsolutePath() : fi.getParams().get( "file" );
@@ -405,21 +407,21 @@ public class CodeEvalFactory
 		}
 	}
 	
-	public String eval( String code, Site site ) throws ShellExecuteException
+	public EvalFactoryResult eval( String code, Site site ) throws ShellExecuteException
 	{
-		CodeMetaData codeMeta = new CodeMetaData();
+		EvalMetaData codeMeta = new EvalMetaData();
 		
 		codeMeta.shell = "html";
 		
 		return eval( code, codeMeta, site );
 	}
 	
-	public String eval( String code, CodeMetaData meta, Site site ) throws ShellExecuteException
+	public EvalFactoryResult eval( String code, EvalMetaData meta, Site site ) throws ShellExecuteException
 	{
-		boolean success = false;
+		EvalFactoryResult result = new EvalFactoryResult( meta, site );
 		
 		if ( code == null || code.isEmpty() )
-			return "";
+			return result.setReason( "Code Block was null or empty!" );
 		
 		if ( meta.contentType == null )
 			if ( meta.fileName == null )
@@ -443,7 +445,7 @@ public class CodeEvalFactory
 			if ( cacheFile.exists() )
 				try
 				{
-					return FileUtils.readFileToString( cacheFile );
+					return result.setResult( FileUtils.readFileToString( cacheFile ), true );
 				}
 				catch ( IOException e )
 				{
@@ -458,9 +460,9 @@ public class CodeEvalFactory
 			for ( String t : handledTypes )
 				if ( t.equalsIgnoreCase( meta.shell ) || meta.contentType.toLowerCase().contains( t.toLowerCase() ) || t.equalsIgnoreCase( "all" ) )
 				{
-					String result = p.process( meta, code );
-					if ( result != null )
-						code = result;
+					String evaled = p.process( meta, code );
+					if ( evaled != null )
+						code = evaled;
 					break;
 				}
 		}
@@ -489,19 +491,19 @@ public class CodeEvalFactory
 			{
 				if ( she.equalsIgnoreCase( meta.shell ) || she.equalsIgnoreCase( "all" ) )
 				{
-					String result = s.eval( meta, code, shell, bs );
+					String evaled = s.eval( meta, code, shell, bs );
 					
 					try
 					{
-						bs.write( result.getBytes( encoding ) );
+						bs.write( evaled.getBytes( encoding ) );
 					}
 					catch ( IOException e )
 					{
 						e.printStackTrace();
 					}
 					
-					if ( result != null )
-						success = true;
+					if ( evaled != null )
+						result.setResult( true );
 					break;
 				}
 			}
@@ -513,7 +515,7 @@ public class CodeEvalFactory
 		tracker.setInUse( false );
 		tracker.setMetaData( null );
 		
-		if ( success )
+		if ( result.isSuccessful() )
 			try
 			{
 				code = new String( bs.toByteArray(), encoding );
@@ -531,9 +533,9 @@ public class CodeEvalFactory
 			for ( String t : handledTypes )
 				if ( t.equalsIgnoreCase( meta.shell ) || meta.contentType.toLowerCase().contains( t.toLowerCase() ) || t.equalsIgnoreCase( "all" ) )
 				{
-					String result = p.process( meta, code );
-					if ( result != null )
-						code = result;
+					String evaled = p.process( meta, code );
+					if ( evaled != null )
+						code = evaled;
 					break;
 				}
 		}
@@ -569,7 +571,7 @@ public class CodeEvalFactory
 				e.printStackTrace();
 			}
 		
-		return code;
+		return result.setResult( code );
 	}
 	
 	private String runParsers( String source, Site site ) throws ShellExecuteException

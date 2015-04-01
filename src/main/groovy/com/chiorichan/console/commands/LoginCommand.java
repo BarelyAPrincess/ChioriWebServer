@@ -14,7 +14,6 @@ import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.LoginException;
-import com.chiorichan.account.LoginExceptionReason;
 import com.chiorichan.account.system.SystemAccounts;
 import com.chiorichan.console.CommandDispatch;
 import com.chiorichan.console.InteractiveConsole;

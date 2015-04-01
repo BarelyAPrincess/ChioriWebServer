@@ -11,7 +11,7 @@ import groovy.lang.Binding;
 import com.chiorichan.account.AccountHandler;
 import com.chiorichan.account.system.SystemAccounts;
 import com.chiorichan.factory.BindingProvider;
-import com.chiorichan.factory.CodeEvalFactory;
+import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.net.query.QueryServerHandler;
 
 /**
@@ -23,7 +23,7 @@ import com.chiorichan.net.query.QueryServerHandler;
 public class NetworkPersistence extends AccountHandler implements BindingProvider
 {
 	protected final Binding binding = new Binding();
-	protected CodeEvalFactory factory = null;
+	protected EvalFactory factory = null;
 	protected QueryServerHandler handler;
 	
 	public NetworkPersistence( QueryServerHandler handler )
@@ -63,7 +63,7 @@ public class NetworkPersistence extends AccountHandler implements BindingProvide
 	}
 	
 	@Override
-	public CodeEvalFactory getCodeFactory()
+	public EvalFactory getCodeFactory()
 	{
 		return factory;
 	}

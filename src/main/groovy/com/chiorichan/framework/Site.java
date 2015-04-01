@@ -37,8 +37,8 @@ import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.SiteLoadEvent;
 import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.exception.StartupException;
-import com.chiorichan.factory.CodeEvalFactory;
-import com.chiorichan.factory.CodeMetaData;
+import com.chiorichan.factory.EvalFactory;
+import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.http.Routes;
 import com.chiorichan.util.FileUtil;
 import com.google.common.collect.Lists;
@@ -63,7 +63,7 @@ public class Site
 	
 	// Binding and evaling for use inside each site for executing site scripts outside of web requests.
 	Binding binding = new Binding();
-	CodeEvalFactory factory = CodeEvalFactory.create( binding );
+	EvalFactory factory = EvalFactory.create( binding );
 	
 	protected Site( File f ) throws SiteException, StartupException
 	{
@@ -382,11 +382,11 @@ public class Site
 				{
 					try
 					{
-						CodeMetaData meta = new CodeMetaData();
+						EvalMetaData meta = new EvalMetaData();
 						meta.shell = "groovy";
 						
 						File file = getResourceWithException( script );
-						String result = factory.eval( file, meta, this );
+						String result = factory.eval( file, meta, this ).getResult();
 						
 						if ( result == null || result.isEmpty() )
 							Loader.getLogger().info( "Finsihed evaling onLoadScript '" + script + "' for site '" + siteId + "'" );
@@ -704,7 +704,7 @@ public class Site
 	
 	public String readResourceWithException( String pack ) throws ShellExecuteException
 	{
-		CodeMetaData codeMeta = new CodeMetaData();
+		EvalMetaData codeMeta = new EvalMetaData();
 		
 		try
 		{
@@ -713,7 +713,7 @@ public class Site
 			codeMeta.shell = "text";// FileInterpreter.determineShellFromName( file.getName() );
 			codeMeta.fileName = file.getAbsolutePath();
 			
-			return factory.eval( file, this );
+			return factory.eval( file, this ).getResult();
 		}
 		catch ( IOException e )
 		{

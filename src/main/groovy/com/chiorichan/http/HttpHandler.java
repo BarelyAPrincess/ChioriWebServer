@@ -49,8 +49,9 @@ import com.chiorichan.event.server.RequestEvent;
 import com.chiorichan.event.server.ServerVars;
 import com.chiorichan.exception.HttpErrorException;
 import com.chiorichan.exception.ShellExecuteException;
-import com.chiorichan.factory.CodeEvalFactory;
-import com.chiorichan.factory.CodeMetaData;
+import com.chiorichan.factory.EvalFactory;
+import com.chiorichan.factory.EvalMetaData;
+import com.chiorichan.factory.EvalFactoryResult;
 import com.chiorichan.framework.Site;
 import com.chiorichan.framework.SiteException;
 import com.chiorichan.permission.PermissionDefault;
@@ -496,7 +497,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			sess.setGlobal( "_REQUEST", request.getRequestMapParsed() );
 		
 		StringBuilder source = new StringBuilder();
-		CodeEvalFactory factory = sess.getCodeFactory();
+		EvalFactory factory = sess.getCodeFactory();
 		factory.setEncoding( fi.getEncoding() );
 		
 		String req = fi.get( "reqperm" );
@@ -538,13 +539,15 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			// Enhancement: Allow html to be ran under different shells. Default is embedded.
 			if ( !html.isEmpty() )
 			{
-				CodeMetaData meta = new CodeMetaData();
+				EvalMetaData meta = new EvalMetaData();
 				meta.shell = "embedded";
 				meta.contentType = fi.getContentType();
 				meta.params = Maps.newHashMap();
 				meta.params.putAll( fi.getRewriteParams() );
 				meta.params.putAll( request.getGetMap() );
-				source.append( factory.eval( html, meta, currentSite ) );
+				EvalFactoryResult result = factory.eval( html, meta, currentSite );
+				if ( result.isSuccessful() )
+					source.append( result.getResult() );
 			}
 		}
 		catch ( ShellExecuteException e )
@@ -556,11 +559,13 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		{
 			if ( !file.isEmpty() )
 			{
-				CodeMetaData meta = new CodeMetaData();
+				EvalMetaData meta = new EvalMetaData();
 				meta.params = Maps.newHashMap();
 				meta.params.putAll( request.getRewriteMap() );
 				meta.params.putAll( request.getGetMap() );
-				source.append( factory.eval( fi, meta, currentSite ) );
+				EvalFactoryResult result = factory.eval( fi, meta, currentSite );
+				if ( result.isSuccessful() )
+					source.append( result.getResult() );
 			}
 		}
 		catch ( ShellExecuteException e )

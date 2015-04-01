@@ -97,25 +97,19 @@ else
 	}
 	else
 		version = rawVersion + '-dev'
-}	
-	
+}
+
 distsDirName = 'dist'
 libsDirName = 'dist'
 
 compileJava
-{
-	options.encoding = 'UTF-8'
-}
+{ options.encoding = 'UTF-8' }
 
 compileGroovy
-{
-	options.encoding = "UTF-8"
-}
+{ options.encoding = "UTF-8" }
 
 javadoc
-{
-	options.encoding = "UTF-8"
-}
+{ options.encoding = "UTF-8" }
 
 checkstyle
 {
@@ -126,9 +120,7 @@ checkstyle
 eclipse
 {
 	project
-	{
-		name = 'ChioriWebServer'
-	}
+	{ name = 'ChioriWebServer' }
 }
 
 license
@@ -173,7 +165,6 @@ dependencies
 	compile group: 'com.googlecode.libphonenumber', name: 'libphonenumber', version: '6.2'
 	compile group: 'org.mozilla', name: 'rhino', version: '1.7R4'
 	compile group: 'org.ocpsoft.prettytime', name: 'prettytime', version: '3.2.5.Final'
-	compile group: 'commons-daemon', name: 'commons-daemon', version: '1.0.15'
 	compile group: 'net.java.dev.jna', name: 'jna', version: '4.1.0'
 	compile group: 'org.objenesis', name: 'objenesis', version: '2.1'
 	compile group: 'net.java.dev.jna', name: 'platform', version: '3.5.2'

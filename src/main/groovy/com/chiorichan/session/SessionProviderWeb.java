@@ -23,7 +23,7 @@ import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.LoginException;
-import com.chiorichan.factory.CodeEvalFactory;
+import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.framework.ConfigurationManagerWrapper;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.Candy;
@@ -38,7 +38,7 @@ import com.chiorichan.util.Common;
 public class SessionProviderWeb implements SessionProvider
 {
 	protected final Binding binding = new Binding();
-	protected CodeEvalFactory factory = null;
+	protected EvalFactory factory = null;
 	protected HttpRequestWrapper request;
 	protected Session parentSession;
 	protected int created = Common.getEpoch();
@@ -226,10 +226,10 @@ public class SessionProviderWeb implements SessionProvider
 	}
 	
 	@Override
-	public CodeEvalFactory getCodeFactory()
+	public EvalFactory getCodeFactory()
 	{
 		if ( factory == null )
-			factory = CodeEvalFactory.create( binding );
+			factory = EvalFactory.create( binding );
 		
 		return factory;
 	}

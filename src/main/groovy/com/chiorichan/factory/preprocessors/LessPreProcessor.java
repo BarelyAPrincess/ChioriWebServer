@@ -22,7 +22,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
 import com.chiorichan.Loader;
-import com.chiorichan.factory.CodeMetaData;
+import com.chiorichan.factory.EvalMetaData;
 import com.google.common.collect.Maps;
 import com.google.gson.GsonBuilder;
 
@@ -35,7 +35,7 @@ public class LessPreProcessor implements PreProcessor
 	}
 	
 	@Override
-	public String process( CodeMetaData meta, String code )
+	public String process( EvalMetaData meta, String code )
 	{
 		ClassLoader classLoader = getClass().getClassLoader();
 		InputStream inputStream = classLoader.getResourceAsStream( "com/chiorichan/less-rhino-1.7.4.js" );

@@ -11,5 +11,5 @@ package com.chiorichan.factory;
 
 public interface BindingProvider
 {
-	CodeEvalFactory getCodeFactory();
+	EvalFactory getCodeFactory();
 }

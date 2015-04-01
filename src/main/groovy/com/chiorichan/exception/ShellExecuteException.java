@@ -9,7 +9,7 @@
  */
 package com.chiorichan.exception;
 
-import com.chiorichan.factory.CodeMetaData;
+import com.chiorichan.factory.EvalMetaData;
 
 /**
  *
@@ -19,39 +19,39 @@ public class ShellExecuteException extends Exception
 {
 	private static final long serialVersionUID = -1611181613618341914L;
 	
-	CodeMetaData meta = new CodeMetaData();
+	EvalMetaData meta = new EvalMetaData();
 	
-	public ShellExecuteException( CodeMetaData meta )
+	public ShellExecuteException( EvalMetaData meta )
 	{
 		super();
 		this.meta = meta;
 	}
 	
-	public ShellExecuteException( String message, CodeMetaData meta )
+	public ShellExecuteException( String message, EvalMetaData meta )
 	{
 		super( message );
 		this.meta = meta;
 	}
 	
-	public ShellExecuteException( String message, Throwable cause, CodeMetaData meta )
+	public ShellExecuteException( String message, Throwable cause, EvalMetaData meta )
 	{
 		super( message, cause );
 		this.meta = meta;
 	}
 	
-	public ShellExecuteException( Throwable cause, CodeMetaData meta )
+	public ShellExecuteException( Throwable cause, EvalMetaData meta )
 	{
 		super( cause );
 		this.meta = meta;
 	}
 	
-	protected ShellExecuteException( String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace, CodeMetaData meta )
+	protected ShellExecuteException( String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace, EvalMetaData meta )
 	{
 		super( message, cause, enableSuppression, writableStackTrace );
 		this.meta = meta;
 	}
 	
-	public CodeMetaData getCodeMetaData()
+	public EvalMetaData getCodeMetaData()
 	{
 		return meta;
 	}

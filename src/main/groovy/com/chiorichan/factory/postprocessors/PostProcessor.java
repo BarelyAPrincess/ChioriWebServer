@@ -9,7 +9,7 @@
  */
 package com.chiorichan.factory.postprocessors;
 
-import com.chiorichan.factory.CodeMetaData;
+import com.chiorichan.factory.EvalMetaData;
 
 /**
  * PostProcessors are commonly used to compress/optimize final files into something smaller in size
@@ -25,5 +25,5 @@ public interface PostProcessor
 	 */
 	String[] getHandledTypes();
 	
-	String process( CodeMetaData meta, String code );
+	String process( EvalMetaData meta, String code );
 }

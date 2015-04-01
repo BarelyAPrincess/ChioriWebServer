@@ -9,13 +9,33 @@
  */
 package com.chiorichan.factory;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 
+import com.chiorichan.framework.FileInterpreter;
 import com.chiorichan.framework.Site;
 import com.google.common.collect.Maps;
 
-public class CodeMetaData
+public class EvalMetaData
 {
+	public EvalMetaData()
+	{
+		
+	}
+	
+	public EvalMetaData( FileInterpreter fi )
+	{
+		contentType = fi.getContentType();
+		shell = fi.getParams().get( "shell" );
+		fileName = ( fi.getFile() != null ) ? fi.getFile().getAbsolutePath() : fi.getParams().get( "file" );
+	}
+	
+	public EvalMetaData( String file ) throws IOException
+	{
+		this( new FileInterpreter( new File( file ) ) );
+	}
+	
 	public String shell;
 	public String fileName;
 	public String source;

@@ -13,11 +13,13 @@ import com.chiorichan.event.Listener;
 import com.chiorichan.event.http.HttpExceptionEvent;
 import com.chiorichan.event.server.RenderEvent;
 import com.chiorichan.exception.ShellExecuteException;
-import com.chiorichan.factory.CodeEvalFactory;
+import com.chiorichan.factory.EvalFactory;
+import com.chiorichan.factory.EvalFactoryResult;
 import com.chiorichan.framework.Site;
 import com.chiorichan.framework.WebUtils;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.util.StringUtil;
+import com.google.common.collect.Maps;
 
 public class Template extends Plugin implements Listener
 {
@@ -109,11 +111,33 @@ public class Template extends Plugin implements Listener
 				ob.append( doInclude( fwVals.get( "header" ), event ) + "\n" );
 			
 			ob.append( "</head>\n" );
-			ob.append( "<body>\n" );
 			
 			String pageMark = "<!-- " + getConfig().getString( "config.defaultTag", "PAGE DATA" ) + " -->";
-			String pageData = ( theme.isEmpty() ) ? pageMark : doInclude( theme, event );
-			String viewData = ( view.isEmpty() ) ? pageMark : doInclude( view, event );
+			String pageData = pageMark;
+			String viewData = pageMark;
+			Map<String, String> params = fwVals;
+			
+			if ( !theme.isEmpty() )
+			{
+				EvalFactoryResult result = doInclude( theme, event );
+				if ( result.isSuccessful() )
+				{
+					pageData = result.getResult();
+					params.putAll( result.getMeta().params );
+				}
+			}
+			
+			if ( !theme.isEmpty() )
+			{
+				EvalFactoryResult result = doInclude( theme, event );
+				if ( result.isSuccessful() )
+				{
+					pageData = result.getResult();
+					params.putAll( result.getMeta().params );
+				}
+			}
+			
+			ob.append( "<body" + ( ( params == null ) ? " " + params.get( "bodyArgs" ) : "" ) + ">\n" );
 			
 			if ( pageData.indexOf( pageMark ) < 0 )
 				pageData = pageData + viewData;
@@ -142,9 +166,9 @@ public class Template extends Plugin implements Listener
 		}
 	}
 	
-	private String doInclude( String pack, RenderEvent event ) throws IOException, ShellExecuteException
+	private EvalFactoryResult doInclude( String pack, RenderEvent event ) throws IOException, ShellExecuteException
 	{
-		CodeEvalFactory factory = event.getSession().getCodeFactory();
+		EvalFactory factory = event.getSession().getCodeFactory();
 		
 		if ( getConfig().getBoolean( "config.ignoreFileNotFound" ) )
 			return WebUtils.evalPackage( factory, event.getSite(), pack );

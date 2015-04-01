@@ -85,7 +85,6 @@ public class FileInterpreter
 	public FileInterpreter( File file ) throws IOException
 	{
 		this();
-		
 		interpretParamsFromFile( file );
 	}
 	

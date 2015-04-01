@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import com.chiorichan.exception.ShellExecuteException;
+import com.chiorichan.factory.EvalFactoryResult;
 import com.chiorichan.session.SessionProvider;
 import com.google.common.collect.Maps;
 
@@ -25,7 +26,7 @@ public class HttpUtilsWrapper extends WebUtils
 		this.sess = sess;
 	}
 	
-	public String evalFile( String file, Object... global ) throws IOException, ShellExecuteException
+	public EvalFactoryResult evalFile( String file, Object... global ) throws IOException, ShellExecuteException
 	{
 		Map<String, Object> globals = Maps.newHashMap();
 		
@@ -35,17 +36,17 @@ public class HttpUtilsWrapper extends WebUtils
 		return evalFile( sess.getCodeFactory(), sess.getParentSession().getSite(), file, globals );
 	}
 	
-	public String evalFile( String file, Map<String, Object> global ) throws IOException, ShellExecuteException
+	public EvalFactoryResult evalFile( String file, Map<String, Object> global ) throws IOException, ShellExecuteException
 	{
 		return evalFile( sess.getCodeFactory(), sess.getParentSession().getSite(), file, global );
 	}
 	
-	public String evalFile( String file ) throws IOException, ShellExecuteException
+	public EvalFactoryResult evalFile( String file ) throws IOException, ShellExecuteException
 	{
 		return evalFile( sess.getCodeFactory(), sess.getParentSession().getSite(), file );
 	}
 	
-	public String evalPackage( String pack, Object... global ) throws ShellExecuteException
+	public EvalFactoryResult evalPackage( String pack, Object... global ) throws ShellExecuteException
 	{
 		Map<String, Object> globals = Maps.newHashMap();
 		
@@ -55,17 +56,17 @@ public class HttpUtilsWrapper extends WebUtils
 		return evalPackage( sess.getCodeFactory(), sess.getParentSession().getSite(), pack, globals );
 	}
 	
-	public String evalPackage( String pack, Map<String, Object> global ) throws ShellExecuteException
+	public EvalFactoryResult evalPackage( String pack, Map<String, Object> global ) throws ShellExecuteException
 	{
 		return evalPackage( sess.getCodeFactory(), sess.getParentSession().getSite(), pack, global );
 	}
 	
-	public String evalPackage( String pack ) throws ShellExecuteException
+	public EvalFactoryResult evalPackage( String pack ) throws ShellExecuteException
 	{
 		return evalPackage( sess.getCodeFactory(), sess.getParentSession().getSite(), pack );
 	}
 	
-	public String evalPackageWithException( String pack, Object... global ) throws IOException, ShellExecuteException
+	public EvalFactoryResult evalPackageWithException( String pack, Object... global ) throws IOException, ShellExecuteException
 	{
 		Map<String, Object> globals = Maps.newHashMap();
 		
@@ -75,12 +76,12 @@ public class HttpUtilsWrapper extends WebUtils
 		return evalPackageWithException( sess.getCodeFactory(), sess.getParentSession().getSite(), pack, globals );
 	}
 	
-	public String evalPackageWithException( String pack, Map<String, Object> global ) throws IOException, ShellExecuteException
+	public EvalFactoryResult evalPackageWithException( String pack, Map<String, Object> global ) throws IOException, ShellExecuteException
 	{
 		return evalPackageWithException( sess.getCodeFactory(), sess.getParentSession().getSite(), pack, global );
 	}
 	
-	public String evalPackageWithException( String pack ) throws IOException, ShellExecuteException
+	public EvalFactoryResult evalPackageWithException( String pack ) throws IOException, ShellExecuteException
 	{
 		return evalPackageWithException( sess.getCodeFactory(), sess.getParentSession().getSite(), pack );
 	}

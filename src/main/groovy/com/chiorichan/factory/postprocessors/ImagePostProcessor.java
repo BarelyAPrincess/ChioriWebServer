@@ -21,7 +21,7 @@ import javax.imageio.ImageIO;
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.ContentTypes;
 import com.chiorichan.Loader;
-import com.chiorichan.factory.CodeMetaData;
+import com.chiorichan.factory.EvalMetaData;
 import com.google.zxing.common.detector.MathUtils;
 
 public class ImagePostProcessor implements PostProcessor
@@ -33,7 +33,7 @@ public class ImagePostProcessor implements PostProcessor
 	}
 	
 	@Override
-	public String process( CodeMetaData meta, String code )
+	public String process( EvalMetaData meta, String code )
 	{
 		float x = 0;
 		float y = 0;

@@ -13,20 +13,20 @@ import java.io.File;
 
 import com.chiorichan.Loader;
 import com.chiorichan.exception.ShellExecuteException;
-import com.chiorichan.factory.CodeEvalFactory;
+import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.framework.Site;
 
 public class IncludesParser extends HTMLCommentParser
 {
 	Site site;
-	CodeEvalFactory factory;
+	EvalFactory factory;
 	
 	public IncludesParser()
 	{
 		super( "include" );
 	}
 	
-	public String runParser( String source, Site site, CodeEvalFactory factory ) throws ShellExecuteException
+	public String runParser( String source, Site site, EvalFactory factory ) throws ShellExecuteException
 	{
 		this.site = site;
 		this.factory = factory;
@@ -50,7 +50,7 @@ public class IncludesParser extends HTMLCommentParser
 		if ( res != null && res.exists() )
 		{
 			// TODO Prevent this from going into an infinite loop!
-			result = factory.eval( res, site );
+			result = factory.eval( res, site ).getResult();
 		}
 		else if ( !res.exists() )
 		{

@@ -22,8 +22,6 @@ import com.chiorichan.Loader;
 import com.chiorichan.account.InteractivePermissible;
 import com.chiorichan.console.commands.BuiltinCommand;
 import com.chiorichan.event.server.CommandIssuedEvent;
-import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 /**

@@ -9,7 +9,7 @@
  */
 package com.chiorichan.factory.preprocessors;
 
-import com.chiorichan.factory.CodeMetaData;
+import com.chiorichan.factory.EvalMetaData;
 
 /**
  * PreProcessors are commonly used to convert files into something readable by either an Interpreter and/or Browser,
@@ -25,5 +25,5 @@ public interface PreProcessor
 	 */
 	String[] getHandledTypes();
 	
-	String process( CodeMetaData meta, String code );
+	String process( EvalMetaData meta, String code );
 }
