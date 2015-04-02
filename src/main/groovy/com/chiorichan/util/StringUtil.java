@@ -122,6 +122,11 @@ public class StringUtil
 		return cBuffer.toString();
 	}
 	
+	public static String md5( byte[] bytes )
+	{
+		return DigestUtils.md5Hex( bytes );
+	}
+	
 	public static String md5( String str )
 	{
 		return DigestUtils.md5Hex( str );

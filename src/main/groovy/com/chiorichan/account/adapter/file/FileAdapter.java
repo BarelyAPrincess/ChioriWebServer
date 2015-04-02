@@ -28,6 +28,7 @@ import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.framework.WebUtils;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.FileUtil;
+import com.chiorichan.util.StringUtil;
 import com.google.common.collect.Maps;
 
 public class FileAdapter implements AccountLookupAdapter
@@ -209,7 +210,7 @@ public class FileAdapter implements AccountLookupAdapter
 		meta = reloadAccount( meta );
 		
 		if ( meta.containsKey( "password" ) )
-			meta.set( "password", Common.md5( meta.getString( "password" ) ) );
+			meta.set( "password", StringUtil.md5( meta.getString( "password" ) ) );
 		
 		return meta;
 	}

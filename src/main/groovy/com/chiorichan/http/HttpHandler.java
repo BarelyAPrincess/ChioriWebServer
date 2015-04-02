@@ -94,9 +94,10 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		else
 			factory = new DefaultHttpDataFactory( minsize );
 		
-		DiskFileUpload.deleteOnExitTemporaryFile = true;
+		// TODO Config option to delete temporary files on exit?
+		// DiskFileUpload.deleteOnExitTemporaryFile = true;
 		DiskFileUpload.baseDirectory = Loader.getTempFileDirectory().getAbsolutePath();
-		DiskAttribute.deleteOnExitTemporaryFile = true;
+		// DiskAttribute.deleteOnExitTemporaryFile = true;
 		DiskAttribute.baseDirectory = Loader.getTempFileDirectory().getAbsolutePath();
 		
 		// Initalize Static Server Vars

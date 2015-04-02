@@ -16,7 +16,8 @@ import com.chiorichan.account.AccountMetaData;
 import com.chiorichan.account.LoginException;
 import com.chiorichan.account.LoginExceptionReason;
 import com.chiorichan.account.adapter.AccountLookupAdapter;
-import com.chiorichan.util.Common;
+import com.chiorichan.account.system.SystemAccounts;
+import com.chiorichan.util.StringUtil;
 import com.google.common.collect.Lists;
 
 /**
@@ -65,7 +66,7 @@ public class MemoryAdapter implements AccountLookupAdapter
 	@Override
 	public AccountMetaData readAccount( String account ) throws LoginException
 	{
-		return new AccountMetaData( account, Common.md5( "9834h9fh3497ah4ea3a" + System.currentTimeMillis() ), account );
+		return new AccountMetaData( account, StringUtil.md5( "9834h9fh3497ah4ea3a" + System.currentTimeMillis() ), account );
 	}
 	
 	@Override
