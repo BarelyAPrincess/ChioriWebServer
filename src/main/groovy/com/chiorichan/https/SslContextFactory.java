@@ -33,8 +33,8 @@ public class SslContextFactory
 			algorithm = "SunX509";
 		}
 		
-		SSLContext serverContext;
-		SSLContext clientContext;
+		SSLContext serverContext = null;
+		SSLContext clientContext = null;
 		try
 		{
 			final File sslCert = new File( Loader.getConfig().getString( "server.httpsKeystone", "server.keystone" ) );
@@ -42,16 +42,19 @@ public class SslContextFactory
 			// IOUtils.readFully( new FileInputStream( sslCert ), bytes );
 			// pkcs12Base64 = Base64Coder.encodeLines( bytes );
 			
-			KeyStore ks = KeyStore.getInstance( "JKS" );
-			ks.load( new FileInputStream( sslCert ), Loader.getConfig().getString( "server.httpsSecret", "abcd1234" ).toCharArray() );
-			
-			// Set up key manager factory to use our key store
-			KeyManagerFactory kmf = KeyManagerFactory.getInstance( algorithm );
-			kmf.init( ks, Loader.getConfig().getString( "server.httpsSecret", "abcd1234" ).toCharArray() );
-			
-			// Initialize the SSLContext to work with our key managers.
-			serverContext = SSLContext.getInstance( PROTOCOL );
-			serverContext.init( kmf.getKeyManagers(), null, null );
+			if ( sslCert.exists() )
+			{
+				KeyStore ks = KeyStore.getInstance( "JKS" );
+				ks.load( new FileInputStream( sslCert ), Loader.getConfig().getString( "server.httpsSecret", "abcd1234" ).toCharArray() );
+				
+				// Set up key manager factory to use our key store
+				KeyManagerFactory kmf = KeyManagerFactory.getInstance( algorithm );
+				kmf.init( ks, Loader.getConfig().getString( "server.httpsSecret", "abcd1234" ).toCharArray() );
+				
+				// Initialize the SSLContext to work with our key managers.
+				serverContext = SSLContext.getInstance( PROTOCOL );
+				serverContext.init( kmf.getKeyManagers(), null, null );
+			}
 		}
 		catch ( Exception e )
 		{

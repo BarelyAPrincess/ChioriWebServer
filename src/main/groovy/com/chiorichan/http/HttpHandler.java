@@ -369,8 +369,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			FileUpload fileUpload = ( FileUpload ) data;
 			if ( fileUpload.isCompleted() )
 			{
-				getLogger().debug( "" + fileUpload );
-				
 				try
 				{
 					request.putUpload( fileUpload.getName(), new UploadedFile( fileUpload ) );

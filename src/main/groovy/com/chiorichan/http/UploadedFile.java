@@ -82,7 +82,7 @@ public class UploadedFile
 			try
 			{
 				FileUtils.writeByteArrayToFile( file, cachedFileUpload.content().array() );
-				file.deleteOnExit();
+				// file.deleteOnExit();
 				return file;
 			}
 			catch ( IOException e )

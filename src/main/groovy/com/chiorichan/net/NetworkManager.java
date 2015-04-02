@@ -30,6 +30,11 @@ public class NetworkManager
 	public static EventLoopGroup bossGroup = new NioEventLoopGroup( 1 );
 	public static EventLoopGroup workerGroup = new NioEventLoopGroup();
 	
+	public static Channel httpChannel = null;
+	public static Channel httpsChannel = null;
+	public static Channel queryChannel = null;
+	public static Channel tcpChannel = null;
+	
 	/**
 	 * Only effects Unit-like OS'es (Linux and Mac OS X)
 	 * Will return false if the port is under 1024 and we are not running as root.
@@ -53,12 +58,27 @@ public class NetworkManager
 		return Common.isRoot();
 	}
 	
-	public static void initTcpServer()
+	public static void shutdownHttpServer()
 	{
-		// TCP IS TEMPORARY REMOVED UNTIL IT CAN BE PORTED TO NETTY.
+		httpChannel.close();
 	}
 	
-	public static void initWebServer() throws StartupException
+	public static void shutdownHttpsServer()
+	{
+		httpsChannel.close();
+	}
+	
+	public static void shutdownTcpServer()
+	{
+		tcpChannel.close();
+	}
+	
+	public static void shutdownQueryServer()
+	{
+		queryChannel.close();
+	}
+	
+	public static void startHttpServer() throws StartupException
 	{
 		try
 		{
@@ -87,7 +107,7 @@ public class NetworkManager
 					ServerBootstrap b = new ServerBootstrap();
 					b.group( bossGroup, workerGroup ).channel( NioServerSocketChannel.class ).childHandler( new HttpInitializer() );
 					
-					final Channel ch = b.bind( socket ).sync().channel();
+					httpChannel = b.bind( socket ).sync().channel();
 					
 					Thread thread = new Thread( "HTTP Server Thread" )
 					{
@@ -95,7 +115,7 @@ public class NetworkManager
 						{
 							try
 							{
-								ch.closeFuture().sync();
+								httpChannel.closeFuture().sync();
 							}
 							catch ( InterruptedException e )
 							{
@@ -123,7 +143,19 @@ public class NetworkManager
 					throw new StartupException( e );
 				}
 			}
-			
+		}
+		catch ( Throwable e )
+		{
+			throw new StartupException( e );
+		}
+	}
+	
+	public static void startHttpsServer() throws StartupException
+	{
+		try
+		{
+			InetSocketAddress socket;
+			String httpIp = Loader.getConfig().getString( "server.httpHost", "" );
 			int httpsPort = Loader.getConfig().getInt( "server.httpsPort", 4443 );
 			
 			if ( httpsPort >= 1 )
@@ -152,7 +184,7 @@ public class NetworkManager
 					ServerBootstrap b = new ServerBootstrap();
 					b.group( bossGroup, workerGroup ).channel( NioServerSocketChannel.class ).childHandler( new HttpsInitializer() );
 					
-					final Channel ch = b.bind( socket ).sync().channel();
+					httpsChannel = b.bind( socket ).sync().channel();
 					
 					Thread thread = new Thread( "HTTPS Server Thread" )
 					{
@@ -160,7 +192,7 @@ public class NetworkManager
 						{
 							try
 							{
-								ch.closeFuture().sync();
+								httpsChannel.closeFuture().sync();
 							}
 							catch ( InterruptedException e )
 							{
@@ -189,7 +221,18 @@ public class NetworkManager
 					throw new StartupException( e );
 				}
 			}
-			
+		}
+		catch ( Throwable e )
+		{
+			throw new StartupException( e );
+		}
+	}
+	
+	public static void startQueryServer() throws StartupException
+	{
+		try
+		{
+			InetSocketAddress socket;
 			String queryHost = Loader.getConfig().getString( "server.queryHost", "" );
 			int queryPort = Loader.getConfig().getInt( "server.queryPort", 4443 );
 			
@@ -214,7 +257,7 @@ public class NetworkManager
 					ServerBootstrap b = new ServerBootstrap();
 					b.group( bossGroup, workerGroup ).channel( NioServerSocketChannel.class ).childHandler( new QueryServerInitializer() );
 					
-					final Channel ch = b.bind( socket ).sync().channel();
+					queryChannel = b.bind( socket ).sync().channel();
 					
 					Thread thread = new Thread( "Query Server Thread" )
 					{
@@ -222,7 +265,7 @@ public class NetworkManager
 						{
 							try
 							{
-								ch.closeFuture().sync();
+								queryChannel.closeFuture().sync();
 							}
 							catch ( InterruptedException e )
 							{
@@ -254,6 +297,11 @@ public class NetworkManager
 		{
 			throw new StartupException( e );
 		}
+	}
+	
+	public static void startTcpServer() throws StartupException
+	{
+		// XXX TCP IS TEMPORARY REMOVED UNTIL IT CAN BE PORTED TO NETTY.
 	}
 	
 	public static void cleanup()

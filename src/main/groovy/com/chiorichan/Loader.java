@@ -367,14 +367,19 @@ public class Loader extends BuiltinEventCreator implements Listener
 		changeRunLevel( RunLevel.STARTUP );
 		
 		if ( !options.has( "tcp-disable" ) && configuration.getBoolean( "server.enableTcpServer", true ) )
-			NetworkManager.initTcpServer();
+			NetworkManager.startTcpServer();
 		else
 			getLogger().warning( "The integrated tcp server has been disabled per the configuration. Change server.enableTcpServer to true to reenable it." );
 		
 		if ( !options.has( "web-disable" ) && configuration.getBoolean( "server.enableWebServer", true ) )
-			NetworkManager.initWebServer();
+		{
+			NetworkManager.startHttpServer();
+			NetworkManager.startHttpsServer();
+		}
 		else
 			getLogger().warning( "The integrated web server has been disabled per the configuration. Change server.enableWebServer to true to reenable it." );
+		
+		NetworkManager.startQueryServer();
 		
 		changeRunLevel( RunLevel.POSTSERVER );
 		
