@@ -11,6 +11,8 @@ package com.chiorichan.factory;
 
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -41,7 +43,6 @@ import com.chiorichan.factory.preprocessors.CoffeePreProcessor;
 import com.chiorichan.factory.preprocessors.LessPreProcessor;
 import com.chiorichan.factory.preprocessors.PreProcessor;
 import com.chiorichan.framework.FileInterpreter;
-import com.chiorichan.framework.ScriptingBaseGroovy;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.WebInterpreter;
 import com.google.common.collect.Lists;
@@ -144,6 +145,12 @@ public class EvalFactory
 			register( new ImagePostProcessor() );
 	}
 	
+	protected EvalFactory( Binding binding )
+	{
+		this.binding = binding;
+		setOutputStream( bs );
+	}
+	
 	public static EvalFactory create( Binding binding )
 	{
 		return new EvalFactory( binding );
@@ -189,6 +196,7 @@ public class EvalFactory
 		configuration.setScriptBaseClass( ScriptingBaseGroovy.class.getName() );
 		configuration.setSourceEncoding( encoding );
 		
+		// TODO Extend class loader as to create a type of security protection
 		return new GroovyShell( Loader.class.getClassLoader(), binding, configuration );
 	}
 	
@@ -254,12 +262,6 @@ public class EvalFactory
 		
 		if ( tracker != null )
 			tracker.setInUse( false );
-	}
-	
-	protected EvalFactory( Binding binding )
-	{
-		this.binding = binding;
-		setOutputStream( bs );
 	}
 	
 	public void setOutputStream( ByteArrayOutputStream bs )
@@ -443,8 +445,10 @@ public class EvalFactory
 				{
 					String evaled = p.process( meta, code );
 					if ( evaled != null )
+					{
 						code = evaled;
-					break;
+						break;
+					}
 				}
 		}
 		
@@ -455,11 +459,12 @@ public class EvalFactory
 			if ( l.getFileName() != null && l.getFileName().matches( "Script\\d*.groovy" ) )
 				tracker.setLineNumber( l.getLineNumber() );
 		
+		ByteBuf output = Unpooled.buffer();
+		boolean success = false;
+		
 		Loader.getLogger().fine( "Locking GroovyShell '" + shell.toString() + "' for execution of '" + meta.fileName + "', length '" + code.length() + "', line '" + tracker.getLineNumber() + "'" );
 		tracker.setInUse( true );
 		tracker.setMetaData( meta );
-		
-		shell.setVariable( "_EVAL", meta.global );
 		
 		byte[] saved = bs.toByteArray();
 		bs.reset();
@@ -472,40 +477,27 @@ public class EvalFactory
 			{
 				if ( she.equalsIgnoreCase( meta.shell ) || she.equalsIgnoreCase( "all" ) )
 				{
-					String evaled = s.eval( meta, code, shell, bs );
-					
-					try
-					{
-						bs.write( evaled.getBytes( encoding ) );
-					}
-					catch ( IOException e )
-					{
-						e.printStackTrace();
-					}
-					
-					if ( evaled != null )
-						result.setResult( true );
+					result.obj = s.eval( meta, code, shell, bs );
+					success = true;
 					break;
 				}
 			}
 		}
 		
-		shell.setVariable( "_EVAL", null );
+		output.writeBytes( ( success ) ? bs.toByteArray() : code.getBytes() );
+		try
+		{
+			bs.reset();
+			bs.write( saved );
+		}
+		catch ( IOException e )
+		{
+			e.printStackTrace();
+		}
 		
 		Loader.getLogger().fine( "Unlocking GroovyShell '" + shell.toString() + "' for execution of '" + meta.fileName + "', length '" + code.length() + "', line '" + tracker.getLineNumber() + "'" );
 		tracker.setInUse( false );
 		tracker.setMetaData( null );
-		
-		if ( result.isSuccessful() )
-			try
-			{
-				code = new String( bs.toByteArray(), encoding );
-				meta.source = code;
-			}
-			catch ( UnsupportedEncodingException e )
-			{
-				throw new ShellExecuteException( e, meta );
-			}
 		
 		for ( PostProcessor p : postProcessors )
 		{
@@ -514,25 +506,16 @@ public class EvalFactory
 			for ( String t : handledTypes )
 				if ( t.equalsIgnoreCase( meta.shell ) || meta.contentType.toLowerCase().contains( t.toLowerCase() ) || t.equalsIgnoreCase( "all" ) )
 				{
-					String evaled = p.process( meta, code );
-					if ( evaled != null )
-						code = evaled;
-					break;
+					ByteBuf finished = p.process( meta, output );
+					if ( finished != null )
+					{
+						output = finished;
+						break;
+					}
 				}
 		}
 		
-		bs.reset();
-		
-		try
-		{
-			bs.write( saved );
-		}
-		catch ( IOException e )
-		{
-			throw new ShellExecuteException( e, meta );
-		}
-		
-		return result.setResult( code, true );
+		return result.setResult( output, true );
 	}
 	
 	private String runParsers( String source, Site site ) throws ShellExecuteException

@@ -33,13 +33,13 @@ public class Template extends Plugin implements Listener
 		
 	}
 	
-	@EventHandler( priority = EventPriority.HIGHEST )
+	@EventHandler( priority = EventPriority.NORMAL )
 	public void onHttpExceptionEvent( HttpExceptionEvent event )
 	{
 		event.setErrorHtml( ExceptionPageUtils.makeExceptionPage( event.getThrowable(), event.getRequest().getSession().getCodeFactory() ) );
 	}
 	
-	@EventHandler( priority = EventPriority.LOWEST )
+	@EventHandler( priority = EventPriority.NORMAL )
 	public void onRenderEvent( RenderEvent event )
 	{
 		try
@@ -121,7 +121,7 @@ public class Template extends Plugin implements Listener
 				EvalFactoryResult result = doInclude0( theme, event );
 				if ( result.isSuccessful() )
 				{
-					pageData = result.getResult();
+					pageData = result.getString();
 					params.putAll( result.getMeta().params );
 				}
 			}
@@ -131,7 +131,7 @@ public class Template extends Plugin implements Listener
 				EvalFactoryResult result = doInclude0( view, event );
 				if ( result.isSuccessful() )
 				{
-					viewData = result.getResult();
+					viewData = result.getString();
 					params.putAll( result.getMeta().params );
 				}
 			}
@@ -176,7 +176,7 @@ public class Template extends Plugin implements Listener
 	{
 		EvalFactoryResult result = doInclude0( pack, event );
 		if ( result.isSuccessful() )
-			return result.getResult();
+			return result.getString();
 		return "";
 	}
 	

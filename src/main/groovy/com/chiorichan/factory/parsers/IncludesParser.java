@@ -50,7 +50,7 @@ public class IncludesParser extends HTMLCommentParser
 		if ( res != null && res.exists() )
 		{
 			// TODO Prevent this from going into an infinite loop!
-			result = factory.eval( res, site ).getResult();
+			result = factory.eval( res, site ).getString();
 		}
 		else if ( !res.exists() )
 		{

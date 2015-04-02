@@ -29,14 +29,14 @@ public class GroovyInterpreter implements Interpreter
 	}
 	
 	@Override
-	public String eval( EvalMetaData meta, String code, GroovyShell shell, ByteArrayOutputStream bs ) throws ShellExecuteException
+	public Object eval( EvalMetaData meta, String code, GroovyShell shell, ByteArrayOutputStream bs ) throws ShellExecuteException
 	{
 		try
 		{
 			shell.setVariable( "__FILE__", meta.fileName );
 			
 			Object o = shell.evaluate( code );
-			return ( o != null ) ? o.toString() : "";
+			return ( o == null ) ? "" : o;
 		}
 		catch ( Throwable e )
 		{

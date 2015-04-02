@@ -36,7 +36,7 @@ public class HttpsInitializer extends ChannelInitializer<SocketChannel>
 			if ( context == null )
 			{
 				NetworkManager.shutdownHttpsServer();
-				Loader.getLogger().severe( "The SSL engine failed to initalize possibly due to a missing certificate file" );
+				Loader.getLogger().severe( "The SSL engine failed to initalize, possibly due to a missing certificate file" );
 				return;
 			}
 			

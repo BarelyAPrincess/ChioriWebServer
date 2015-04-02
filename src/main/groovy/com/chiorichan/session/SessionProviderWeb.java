@@ -33,6 +33,7 @@ import com.chiorichan.http.HttpResponseWrapper;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionResult;
 import com.chiorichan.util.Common;
+import com.chiorichan.util.ObjectUtil;
 
 @SuppressWarnings( "deprecation" )
 public class SessionProviderWeb implements SessionProvider
@@ -56,6 +57,8 @@ public class SessionProviderWeb implements SessionProvider
 		parentSession.sessionProviders.add( this );
 		for ( Entry<String, Object> e : session.bindingMap.entrySet() )
 			binding.setVariable( e.getKey(), e.getValue() );
+		
+		binding.setVariable( "_SESSION", session.data );
 		
 		setRequest( request, true );
 	}
@@ -125,7 +128,7 @@ public class SessionProviderWeb implements SessionProvider
 		
 		if ( request == null )
 		{
-			Loader.getLogger().severe( "PersistentSession: Request was empty for an unknown reason." );
+			SessionManager.getLogger().severe( "Request was empty for an unknown reason." );
 			return;
 		}
 		
@@ -140,7 +143,7 @@ public class SessionProviderWeb implements SessionProvider
 			
 			if ( target.isEmpty() )
 				target = request.getSite().getYaml().getString( "scripts.login-form", "/login" ); // TODO Make a fw login form for websites without one
-			
+				
 			request.getResponse().sendRedirect( target + "?ok=You have been successfully logged out." );
 			return;
 		}
@@ -300,20 +303,28 @@ public class SessionProviderWeb implements SessionProvider
 		return new ConfigurationManagerWrapper( this );
 	}
 	
+	@SuppressWarnings( "unchecked" )
 	@Override
 	public void onFinished()
 	{
 		request = null;
-		
 		Map<String, Object> bindingMap = parentSession.bindingMap;
-		
-		@SuppressWarnings( "unchecked" )
 		Map<String, Object> variables = binding.getVariables();
 		
 		if ( bindingMap != null && variables != null )
+		{
 			for ( Entry<String, Object> e : variables.entrySet() )
-				if ( !e.getKey().equals( "__FILE__" ) && !e.getKey().equals( "_REQUEST" ) && !e.getKey().equals( "_REWRITE" ) && !e.getKey().equals( "_GET" ) && !e.getKey().equals( "_POST" ) && !e.getKey().equals( "_SERVER" ) && !e.getKey().equals( "_FILES" ) && !e.getKey().equals( "_EVAL" ) )
+				if ( !e.getKey().equals( "__FILE__" ) && !e.getKey().equals( "_REQUEST" ) && !e.getKey().equals( "_SESSION" ) && !e.getKey().equals( "_REWRITE" ) && !e.getKey().equals( "_GET" ) && !e.getKey().equals( "_POST" ) && !e.getKey().equals( "_SERVER" ) && !e.getKey().equals( "_FILES" ) )
 					bindingMap.put( e.getKey(), e.getValue() );
+			
+			if ( variables.containsKey( "_SESSION" ) && variables.get( "_SESSION" ) instanceof Map )
+			{
+				for ( Entry<String, Object> e : ( ( Map<String, Object> ) variables.get( "_SESSION" ) ).entrySet() )
+					parentSession.data.put( e.getKey(), ObjectUtil.castToString( e.getValue() ) );
+				
+				parentSession.changesMade = true;
+			}
+		}
 		
 		parentSession.sessionProviders.remove( this );
 	}
@@ -439,7 +450,7 @@ public class SessionProviderWeb implements SessionProvider
 	{
 		// Do Nothing
 	}
-
+	
 	@Override
 	public void sendMessage( String... msgs )
 	{

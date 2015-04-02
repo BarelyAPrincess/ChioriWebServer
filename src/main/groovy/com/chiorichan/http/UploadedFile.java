@@ -17,9 +17,10 @@ import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
 
+import sun.misc.BASE64Encoder;
+
 import com.chiorichan.ContentTypes;
 import com.chiorichan.util.StringUtil;
-import com.sun.org.apache.xml.internal.security.utils.Base64;
 
 /**
  * TODO Upload file to temp dir with random name but preserve original filename
@@ -158,11 +159,11 @@ public class UploadedFile
 	public String readToString() throws IOException
 	{
 		if ( isInMemory() || file == null )
-			return Base64.encode( cachedFileUpload.content().array() );
+			return new BASE64Encoder().encode( cachedFileUpload.content().array() );
 		// return new String( cachedFileUpload.content().array(), cachedFileUpload.getContentTransferEncoding() );
 		else
 		{
-			return Base64.encode( FileUtils.readFileToByteArray( file ) );
+			return new BASE64Encoder().encode( FileUtils.readFileToByteArray( file ) );
 			// String s = FileUtils.readFileToString( file );
 			// Loader.getLogger().debug( s );
 			// return s;

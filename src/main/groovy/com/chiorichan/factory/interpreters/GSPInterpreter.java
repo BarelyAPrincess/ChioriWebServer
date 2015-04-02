@@ -41,7 +41,7 @@ public class GSPInterpreter implements Interpreter
 	}
 	
 	@Override
-	public String eval( EvalMetaData meta, String fullFile, GroovyShell shell, ByteArrayOutputStream bs ) throws ShellExecuteException
+	public Object eval( EvalMetaData meta, String fullFile, GroovyShell shell, ByteArrayOutputStream bs ) throws ShellExecuteException
 	{
 		try
 		{
@@ -98,9 +98,8 @@ public class GSPInterpreter implements Interpreter
 			}
 			
 			meta.source = output.toString();
-			bs.write( interpret( shell, output.toString() ).getBytes( "UTF-8" ) );
 			
-			return "";
+			return interpret( shell, output.toString() );
 		}
 		catch ( Throwable e )
 		{
@@ -124,12 +123,9 @@ public class GSPInterpreter implements Interpreter
 		return "print " + brackets + fragment + brackets + "; ";
 	}
 	
-	private String interpret( GroovyShell shell, String source ) throws SyntaxException, ClassNotFoundException, IOException
+	private Object interpret( GroovyShell shell, String source ) throws SyntaxException, ClassNotFoundException, IOException
 	{
-		Object result = shell.evaluate( source );
-		if ( result != null )
-			return result.toString();
-		else
-			return "";
+		Object o = shell.evaluate( source );
+		return ( o == null ) ? "" : o;
 	}
 }

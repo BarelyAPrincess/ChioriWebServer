@@ -6,7 +6,12 @@
  */
 package com.chiorichan.factory;
 
+import java.nio.charset.Charset;
+
+import io.netty.buffer.ByteBuf;
+
 import com.chiorichan.framework.Site;
+import com.chiorichan.util.ObjectUtil;
 
 /**
  * Holds the result after evaling block of code or a file
@@ -18,7 +23,8 @@ public class EvalFactoryResult
 {
 	boolean success = false;
 	String reason = null;
-	String code = null;
+	ByteBuf buf = null;
+	Object obj = null;
 	EvalMetaData meta;
 	Site site;
 	
@@ -42,21 +48,9 @@ public class EvalFactoryResult
 		return reason;
 	}
 	
-	public EvalFactoryResult setResult( String code )
+	public EvalFactoryResult setResult( ByteBuf buf, boolean success )
 	{
-		this.code = code;
-		return this;
-	}
-	
-	public EvalFactoryResult setResult( boolean success )
-	{
-		this.success = success;
-		return this;
-	}
-	
-	public EvalFactoryResult setResult( String code, boolean success )
-	{
-		this.code = code;
+		this.buf = buf;
 		this.success = success;
 		return this;
 	}
@@ -66,21 +60,34 @@ public class EvalFactoryResult
 		return meta;
 	}
 	
-	public String getResult()
-	{
-		return code;
-	}
-	
 	public boolean isSuccessful()
 	{
 		return success;
 	}
 	
+	public String getString()
+	{
+		return getString( false );
+	}
+	
+	public String getString( boolean includeObj )
+	{
+		return ( ( buf == null ) ? "" : buf.toString( Charset.defaultCharset() ) ) + ( ( includeObj ) ? ObjectUtil.castToString( obj ) : "" );
+	}
+	
+	public Object getObject()
+	{
+		return obj;
+	}
+	
+	public ByteBuf getResult()
+	{
+		return buf;
+	}
+	
 	@Override
 	public String toString()
 	{
-		if ( code == null )
-			return "";
-		return code;
+		return "EvalFactoryResult{success=" + success + ",reason=" + reason + ",size=" + buf.writerIndex() + ",obj=" + obj + ",meta=" + meta + ",site=" + site + "}";
 	}
 }

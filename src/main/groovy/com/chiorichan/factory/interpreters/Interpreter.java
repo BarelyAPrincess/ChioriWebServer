@@ -22,12 +22,12 @@ import com.chiorichan.factory.EvalMetaData;
 public interface Interpreter
 {
 	/**
-	 * Response "all" will attempt to eval any and everything. Don't abuse it!
+	 * Response "all" will attempt to evaluate everything. Don't abuse it!
 	 * Returning null will continue to next available Interpreter that handles type.
 	 * 
 	 * @return String array of types handled by the Interpreter
 	 */
 	String[] getHandledTypes();
 	
-	String eval( EvalMetaData meta, String code, GroovyShell shell, ByteArrayOutputStream bs ) throws ShellExecuteException;
+	Object eval( EvalMetaData meta, String code, GroovyShell shell, ByteArrayOutputStream bs ) throws ShellExecuteException;
 }

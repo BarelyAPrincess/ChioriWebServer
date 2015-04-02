@@ -551,11 +551,6 @@ public class WebUtils
 	
 	public static EvalFactoryResult evalFile( EvalFactory factory, Site site, String file ) throws IOException, ShellExecuteException
 	{
-		return evalFile( factory, site, file, new HashMap<String, Object>() );
-	}
-	
-	public static EvalFactoryResult evalFile( EvalFactory factory, Site site, String file, Map<String, Object> global ) throws IOException, ShellExecuteException
-	{
 		if ( file == null || file.isEmpty() )
 			return new EvalFactoryResult( new EvalMetaData( file ), site );
 		
@@ -571,21 +566,15 @@ public class WebUtils
 		
 		codeMeta.shell = FileInterpreter.determineShellFromName( packFile.getName() );
 		codeMeta.fileName = packFile.getAbsolutePath();
-		codeMeta.global = global;
 		
 		return factory.eval( packFile, codeMeta, site );
 	}
 	
 	public static EvalFactoryResult evalPackage( EvalFactory factory, Site site, String pack ) throws ShellExecuteException
 	{
-		return evalPackage( factory, site, pack, new HashMap<String, Object>() );
-	}
-	
-	public static EvalFactoryResult evalPackage( EvalFactory factory, Site site, String pack, Map<String, Object> global ) throws ShellExecuteException
-	{
 		try
 		{
-			return evalPackageWithException( factory, site, pack, global );
+			return evalPackageWithException( factory, site, pack );
 		}
 		catch ( IOException e )
 		{
@@ -594,11 +583,6 @@ public class WebUtils
 	}
 	
 	public static EvalFactoryResult evalPackageWithException( EvalFactory factory, Site site, String pack ) throws IOException, ShellExecuteException
-	{
-		return evalPackageWithException( factory, site, pack, new HashMap<String, Object>() );
-	}
-	
-	public static EvalFactoryResult evalPackageWithException( EvalFactory factory, Site site, String pack, Map<String, Object> global ) throws IOException, ShellExecuteException
 	{
 		File packFile = null;
 		
@@ -609,7 +593,6 @@ public class WebUtils
 		
 		FileInterpreter fi = new FileInterpreter( packFile );
 		EvalMetaData codeMeta = new EvalMetaData( fi );
-		codeMeta.global = global;
 		
 		if ( packFile == null || !packFile.exists() )
 			return new EvalFactoryResult( codeMeta, site );

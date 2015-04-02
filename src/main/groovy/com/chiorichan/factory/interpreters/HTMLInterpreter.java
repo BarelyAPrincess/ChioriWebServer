@@ -12,6 +12,7 @@ package com.chiorichan.factory.interpreters;
 import groovy.lang.GroovyShell;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.factory.EvalMetaData;
@@ -31,6 +32,14 @@ public class HTMLInterpreter implements Interpreter
 	@Override
 	public String eval( EvalMetaData meta, String code, GroovyShell shell, ByteArrayOutputStream bs ) throws ShellExecuteException
 	{
-		return code;
+		try
+		{
+			bs.write( code.getBytes() );
+		}
+		catch ( IOException e )
+		{
+			throw new ShellExecuteException( e, meta );
+		}
+		return "";
 	}
 }

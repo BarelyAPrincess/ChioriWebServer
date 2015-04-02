@@ -378,6 +378,7 @@ public class ExceptionPageUtils
 		
 		EvalMetaData meta = new EvalMetaData();
 		meta.shell = "html";
-		return factory.eval( baseTemplate.replace( pageMark, html ), meta, Loader.getSiteManager().getFrameworkSite() ).getResult();
+		
+		return factory.eval( baseTemplate.replace( pageMark, html ), meta, Loader.getSiteManager().getFrameworkSite() ).getString();
 	}
 }

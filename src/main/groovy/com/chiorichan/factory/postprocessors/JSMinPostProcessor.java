@@ -9,6 +9,10 @@
  */
 package com.chiorichan.factory.postprocessors;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 
@@ -30,8 +34,9 @@ public class JSMinPostProcessor implements PostProcessor
 	}
 	
 	@Override
-	public String process( EvalMetaData meta, String code )
+	public ByteBuf process( EvalMetaData meta, ByteBuf buf )
 	{
+		String code = buf.toString( Charset.defaultCharset() );
 		List<SourceFile> externs = Lists.newArrayList();
 		List<SourceFile> inputs = Arrays.asList( SourceFile.fromCode( ( meta.fileName == null || meta.fileName.isEmpty() ) ? "fakefile.js" : meta.fileName, code ) );
 		
@@ -42,8 +47,7 @@ public class JSMinPostProcessor implements PostProcessor
 		CompilationLevel.SIMPLE_OPTIMIZATIONS.setOptionsForCompilationLevel( options );
 		
 		compiler.compile( externs, inputs, options );
-		
-		return StringUtils.trimToNull( compiler.toSource() );
+		return Unpooled.buffer().writeBytes( StringUtils.trimToNull( compiler.toSource() ).getBytes() );
 	}
 	
 }

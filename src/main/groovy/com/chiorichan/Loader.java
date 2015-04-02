@@ -158,11 +158,12 @@ public class Loader extends BuiltinEventCreator implements Listener
 				acceptsAll( Arrays.asList( "c", "config", "b", "settings" ), "File for chiori settings" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "server.yaml" ) ).describedAs( "Yml file" );
 				acceptsAll( Arrays.asList( "P", "plugins" ), "Plugin directory to use" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "plugins" ) ).describedAs( "Plugin directory" );
 				acceptsAll( Arrays.asList( "h", "web-ip" ), "Host for Web to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
-				acceptsAll( Arrays.asList( "p", "web-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
+				acceptsAll( Arrays.asList( "wp", "web-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
 				acceptsAll( Arrays.asList( "h", "tcp-ip" ), "Host for Web to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
-				acceptsAll( Arrays.asList( "p", "tcp-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
-				acceptsAll( Arrays.asList( "p", "web-disable" ), "Disable the internal Web Server" );
-				acceptsAll( Arrays.asList( "p", "tcp-disable" ), "Disable the internal TCP Server" );
+				acceptsAll( Arrays.asList( "tp", "tcp-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
+				acceptsAll( Arrays.asList( "web-disable" ), "Disable the internal Web Server" );
+				acceptsAll( Arrays.asList( "tcp-disable" ), "Disable the internal TCP Server" );
+				acceptsAll( Arrays.asList( "query-disable" ), "Disable the internal TCP Server" );
 				acceptsAll( Arrays.asList( "s", "size", "max-users" ), "Maximum amount of users" ).withRequiredArg().ofType( Integer.class ).describedAs( "Server size" );
 				acceptsAll( Arrays.asList( "d", "date-format" ), "Format of the date to display in the console (for log entries)" ).withRequiredArg().ofType( SimpleDateFormat.class ).describedAs( "Log date format" );
 				acceptsAll( Arrays.asList( "log-pattern" ), "Specfies the log filename pattern" ).withRequiredArg().ofType( String.class ).defaultsTo( "server.log" ).describedAs( "Log filename" );
@@ -379,7 +380,8 @@ public class Loader extends BuiltinEventCreator implements Listener
 		else
 			getLogger().warning( "The integrated web server has been disabled per the configuration. Change server.enableWebServer to true to reenable it." );
 		
-		NetworkManager.startQueryServer();
+		if ( !options.has( "query-disable" ) && configuration.getBoolean( "server.queryEnabled", true ) )
+			NetworkManager.startQueryServer();
 		
 		changeRunLevel( RunLevel.POSTSERVER );
 		
@@ -651,7 +653,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	{
 		sessionManager.shutdown();
 		accounts.shutdown();
-		// pluginManager.shutdown();
+		plugins.shutdown();
 		NetworkManager.cleanup();
 		
 		isRunning = false;

@@ -9,6 +9,8 @@
  */
 package com.chiorichan.factory.postprocessors;
 
+import io.netty.buffer.ByteBuf;
+
 import com.chiorichan.factory.EvalMetaData;
 
 /**
@@ -25,5 +27,5 @@ public interface PostProcessor
 	 */
 	String[] getHandledTypes();
 	
-	String process( EvalMetaData meta, String code );
+	ByteBuf process( EvalMetaData meta, ByteBuf buf );
 }

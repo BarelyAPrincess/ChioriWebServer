@@ -42,5 +42,4 @@ public class EvalMetaData
 	public String contentType;
 	public Site site;
 	public Map<String, String> params = Maps.newHashMap();
-	public Map<String, Object> global = Maps.newHashMap();
 }

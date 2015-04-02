@@ -6,7 +6,6 @@
  */
 package com.chiorichan.session;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -37,7 +36,7 @@ import com.google.common.collect.Sets;
  */
 public abstract class Session extends AccountHandler
 {
-	protected Map<String, String> data = new LinkedHashMap<String, String>();
+	protected Map<String, String> data = Maps.newLinkedHashMap();
 	protected int timeout = 0;
 	protected int requestCnt = 0;
 	protected String candyId = "", candyName = "sessionId", lastIpAddr = null;
@@ -46,13 +45,13 @@ public abstract class Session extends AccountHandler
 	protected static String lastSession = "";
 	protected static long lastTime = Common.getEpoch();
 	
-	protected Map<String, Candy> candies = new LinkedHashMap<String, Candy>();
+	protected Map<String, Candy> candies = Maps.newLinkedHashMap();
 	protected Site site;
 	protected boolean stale = false;
 	protected boolean isValid = true;
 	protected boolean changesMade = false;
 	
-	protected final Map<String, Object> bindingMap = Maps.newConcurrentMap();
+	protected final Map<String, Object> bindingMap = Maps.newLinkedHashMap();
 	protected final Set<SessionProvider> sessionProviders = Sets.newHashSet();
 	
 	protected Session()

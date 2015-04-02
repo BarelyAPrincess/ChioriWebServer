@@ -262,13 +262,16 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		}
 		catch ( HttpErrorException e )
 		{
+			/*
+			 * TODO Format error pages with template plugin
+			 */
 			response.sendError( e );
 			return;
 		}
 		catch ( IndexOutOfBoundsException | NullPointerException | IOException | SiteException e )
 		{
-			/**
-			 * TODO!!! Proper Exception Handling. Consider the ability to have these exceptions cached and/or delivered by e-mail to developer.
+			/*
+			 * TODO Proper Exception Handling. Consider the ability to have these exceptions cached and/or delivered by e-mail to developer.
 			 */
 			if ( e instanceof IOException && e.getCause() != null )
 			{
@@ -283,11 +286,11 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		}
 		catch ( Exception e )
 		{
-			/**
+			/*
 			 * XXX Temporary way of capturing exceptions that were unexpected by the server.
 			 * Exceptions caught here should have proper exception captures implemented.
 			 */
-			getLogger().warning( "WARNING THIS IS AN UNCAUGHT EXCEPTION! WOULD YOU KINDLY REPORT THIS STACKTRACE TO THE DEVELOPER?", e );
+			getLogger().severe( "WARNING THIS IS AN UNCAUGHT EXCEPTION! WOULD YOU KINDLY REPORT THIS STACKTRACE TO THE DEVELOPER?", e );
 		}
 		
 		try

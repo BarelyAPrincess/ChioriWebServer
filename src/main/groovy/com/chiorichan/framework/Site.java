@@ -386,7 +386,7 @@ public class Site
 						meta.shell = "groovy";
 						
 						File file = getResourceWithException( script );
-						String result = factory.eval( file, meta, this ).getResult();
+						String result = factory.eval( file, meta, this ).getString();
 						
 						if ( result == null || result.isEmpty() )
 							Loader.getLogger().info( "Finsihed evaling onLoadScript '" + script + "' for site '" + siteId + "'" );
@@ -713,7 +713,7 @@ public class Site
 			codeMeta.shell = "text";// FileInterpreter.determineShellFromName( file.getName() );
 			codeMeta.fileName = file.getAbsolutePath();
 			
-			return factory.eval( file, this ).getResult();
+			return factory.eval( file, this ).getString();
 		}
 		catch ( IOException e )
 		{

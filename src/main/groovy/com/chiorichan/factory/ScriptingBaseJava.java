@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.framework;
+package com.chiorichan.factory;
 
 import groovy.lang.Script;
 
@@ -41,7 +41,7 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-public abstract class ScriptingBaseJava extends Script
+abstract class ScriptingBaseJava extends Script
 {
 	@SuppressWarnings( "unchecked" )
 	String var_export( Object... objs )

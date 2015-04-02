@@ -10,12 +10,10 @@
 package com.chiorichan.framework;
 
 import java.io.IOException;
-import java.util.Map;
 
 import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.factory.EvalFactoryResult;
 import com.chiorichan.session.SessionProvider;
-import com.google.common.collect.Maps;
 
 public class HttpUtilsWrapper extends WebUtils
 {
@@ -26,39 +24,9 @@ public class HttpUtilsWrapper extends WebUtils
 		this.sess = sess;
 	}
 	
-	public EvalFactoryResult evalFile( String file, Object... global ) throws IOException, ShellExecuteException
-	{
-		Map<String, Object> globals = Maps.newHashMap();
-		
-		for ( int i = 0; i < global.length; i++ )
-			globals.put( "" + i, global[i] );
-		
-		return evalFile( sess.getCodeFactory(), sess.getParentSession().getSite(), file, globals );
-	}
-	
-	public EvalFactoryResult evalFile( String file, Map<String, Object> global ) throws IOException, ShellExecuteException
-	{
-		return evalFile( sess.getCodeFactory(), sess.getParentSession().getSite(), file, global );
-	}
-	
 	public EvalFactoryResult evalFile( String file ) throws IOException, ShellExecuteException
 	{
 		return evalFile( sess.getCodeFactory(), sess.getParentSession().getSite(), file );
-	}
-	
-	public EvalFactoryResult evalPackage( String pack, Object... global ) throws ShellExecuteException
-	{
-		Map<String, Object> globals = Maps.newHashMap();
-		
-		for ( int i = 0; i < global.length; i++ )
-			globals.put( "" + i, global[i] );
-		
-		return evalPackage( sess.getCodeFactory(), sess.getParentSession().getSite(), pack, globals );
-	}
-	
-	public EvalFactoryResult evalPackage( String pack, Map<String, Object> global ) throws ShellExecuteException
-	{
-		return evalPackage( sess.getCodeFactory(), sess.getParentSession().getSite(), pack, global );
 	}
 	
 	public EvalFactoryResult evalPackage( String pack ) throws ShellExecuteException
@@ -68,17 +36,7 @@ public class HttpUtilsWrapper extends WebUtils
 	
 	public EvalFactoryResult evalPackageWithException( String pack, Object... global ) throws IOException, ShellExecuteException
 	{
-		Map<String, Object> globals = Maps.newHashMap();
-		
-		for ( int i = 0; i < global.length; i++ )
-			globals.put( "" + i, global[i] );
-		
-		return evalPackageWithException( sess.getCodeFactory(), sess.getParentSession().getSite(), pack, globals );
-	}
-	
-	public EvalFactoryResult evalPackageWithException( String pack, Map<String, Object> global ) throws IOException, ShellExecuteException
-	{
-		return evalPackageWithException( sess.getCodeFactory(), sess.getParentSession().getSite(), pack, global );
+		return evalPackageWithException( sess.getCodeFactory(), sess.getParentSession().getSite(), pack );
 	}
 	
 	public EvalFactoryResult evalPackageWithException( String pack ) throws IOException, ShellExecuteException

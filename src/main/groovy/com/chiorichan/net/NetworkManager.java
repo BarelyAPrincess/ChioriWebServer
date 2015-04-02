@@ -27,7 +27,7 @@ import com.chiorichan.util.Common;
 
 public class NetworkManager
 {
-	public static EventLoopGroup bossGroup = new NioEventLoopGroup( 1 );
+	public static EventLoopGroup bossGroup = new NioEventLoopGroup( 4 );
 	public static EventLoopGroup workerGroup = new NioEventLoopGroup();
 	
 	public static Channel httpChannel = null;
@@ -60,26 +60,33 @@ public class NetworkManager
 	
 	public static void shutdownHttpServer()
 	{
-		httpChannel.close();
+		if ( httpChannel != null && httpChannel.isOpen() )
+			httpChannel.close();
 	}
 	
 	public static void shutdownHttpsServer()
 	{
-		httpsChannel.close();
+		if ( httpsChannel != null && httpsChannel.isOpen() )
+			httpsChannel.close();
 	}
 	
 	public static void shutdownTcpServer()
 	{
-		tcpChannel.close();
+		if ( tcpChannel != null && tcpChannel.isOpen() )
+			tcpChannel.close();
 	}
 	
 	public static void shutdownQueryServer()
 	{
-		queryChannel.close();
+		if ( queryChannel != null && queryChannel.isOpen() )
+			queryChannel.close();
 	}
 	
 	public static void startHttpServer() throws StartupException
 	{
+		if ( httpChannel != null && httpChannel.isOpen() )
+			throw new StartupException( "The HTTP Server is already running" );
+		
 		try
 		{
 			InetSocketAddress socket;
@@ -123,8 +130,8 @@ public class NetworkManager
 							}
 							finally
 							{
-								bossGroup.shutdownGracefully();
-								workerGroup.shutdownGracefully();
+								// bossGroup.shutdownGracefully();
+								// workerGroup.shutdownGracefully();
 							}
 						}
 					};
@@ -152,6 +159,9 @@ public class NetworkManager
 	
 	public static void startHttpsServer() throws StartupException
 	{
+		if ( httpsChannel != null && httpsChannel.isOpen() )
+			throw new StartupException( "The HTTPS Server is already running" );
+		
 		try
 		{
 			InetSocketAddress socket;
@@ -200,8 +210,8 @@ public class NetworkManager
 							}
 							finally
 							{
-								bossGroup.shutdownGracefully();
-								workerGroup.shutdownGracefully();
+								// bossGroup.shutdownGracefully();
+								// workerGroup.shutdownGracefully();
 								
 								Loader.getLogger().info( "The HTTPS Server has been shutdown!" );
 							}
@@ -230,6 +240,9 @@ public class NetworkManager
 	
 	public static void startQueryServer() throws StartupException
 	{
+		if ( queryChannel != null && queryChannel.isOpen() )
+			throw new StartupException( "The Query Server is already running" );
+		
 		try
 		{
 			InetSocketAddress socket;
@@ -273,8 +286,8 @@ public class NetworkManager
 							}
 							finally
 							{
-								bossGroup.shutdownGracefully();
-								workerGroup.shutdownGracefully();
+								// bossGroup.shutdownGracefully();
+								// workerGroup.shutdownGracefully();
 							}
 						}
 					};
@@ -306,6 +319,18 @@ public class NetworkManager
 	
 	public static void cleanup()
 	{
+		if ( httpChannel != null && httpChannel.isOpen() )
+			httpChannel.close();
+		
+		if ( httpsChannel != null && httpsChannel.isOpen() )
+			httpsChannel.close();
+		
+		if ( tcpChannel != null && tcpChannel.isOpen() )
+			tcpChannel.close();
+		
+		if ( queryChannel != null && queryChannel.isOpen() )
+			queryChannel.close();
+		
 		bossGroup.shutdownGracefully();
 		workerGroup.shutdownGracefully();
 	}

@@ -9,6 +9,9 @@
  */
 package com.chiorichan.factory.postprocessors;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -33,7 +36,7 @@ public class ImagePostProcessor implements PostProcessor
 	}
 	
 	@Override
-	public String process( EvalMetaData meta, String code )
+	public ByteBuf process( EvalMetaData meta, ByteBuf buf )
 	{
 		float x = 0;
 		float y = 0;
@@ -84,12 +87,14 @@ public class ImagePostProcessor implements PostProcessor
 		
 		try
 		{
-			BufferedImage buf = ImageIO.read( new ByteArrayInputStream( code.getBytes( "ISO-8859-1" ) ) );
+			byte[] bytes = new byte[buf.readableBytes()];
+			buf.readBytes( bytes );
+			BufferedImage img = ImageIO.read( new ByteArrayInputStream( bytes ) );
 			
-			if ( buf != null )
+			if ( img != null )
 			{
-				float w = buf.getWidth();
-				float h = buf.getHeight();
+				float w = img.getWidth();
+				float h = img.getHeight();
 				float w1 = w;
 				float h1 = h;
 				
@@ -117,9 +122,9 @@ public class ImagePostProcessor implements PostProcessor
 				if ( w1 < 1 || h1 < 1 || ( w1 == w && h1 == h ) )
 					return null;
 				
-				Image image = buf.getScaledInstance( MathUtils.round( w1 ), MathUtils.round( h1 ), Loader.getConfig().getBoolean( "advanced.processors.useFastGraphics", true ) ? Image.SCALE_FAST : Image.SCALE_SMOOTH );
+				Image image = img.getScaledInstance( MathUtils.round( w1 ), MathUtils.round( h1 ), Loader.getConfig().getBoolean( "advanced.processors.useFastGraphics", true ) ? Image.SCALE_FAST : Image.SCALE_SMOOTH );
 				
-				BufferedImage rtn = new BufferedImage( MathUtils.round( w1 ), MathUtils.round( h1 ), buf.getType() );
+				BufferedImage rtn = new BufferedImage( MathUtils.round( w1 ), MathUtils.round( h1 ), img.getType() );
 				Graphics2D graphics = rtn.createGraphics();
 				graphics.drawImage( image, 0, 0, null );
 				graphics.dispose();
@@ -130,7 +135,7 @@ public class ImagePostProcessor implements PostProcessor
 				{
 					ByteArrayOutputStream bs = new ByteArrayOutputStream();
 					ImageIO.write( rtn, "png", bs );
-					return new String( bs.toByteArray(), "ISO-8859-1" );
+					return Unpooled.buffer().writeBytes( bs.toByteArray() );
 				}
 			}
 		}
