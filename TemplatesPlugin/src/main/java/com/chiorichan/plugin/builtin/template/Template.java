@@ -17,10 +17,13 @@ import com.chiorichan.event.server.RenderEvent;
 import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalFactoryResult;
+import com.chiorichan.factory.EvalMetaData;
+import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.framework.Site;
 import com.chiorichan.framework.WebUtils;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.util.StringUtil;
+import com.chiorichan.util.Versioning;
 
 public class Template extends Plugin implements Listener
 {
@@ -38,7 +41,92 @@ public class Template extends Plugin implements Listener
 	@EventHandler( priority = EventPriority.NORMAL )
 	public void onHttpExceptionEvent( HttpExceptionEvent event )
 	{
-		event.setErrorHtml( ExceptionPageUtils.makeExceptionPage( event.getThrowable(), event.getRequest().getSession().getCodeFactory() ) );
+		event.setErrorHtml( generateExceptionPage( event.getThrowable(), event.getRequest().getSession().getEvalFactory() ) );
+	}
+	
+	public String generateExceptionPage( Throwable t, EvalFactory factory )
+	{
+		StringBuilder ob = new StringBuilder();
+		
+		String fileName = "";
+		int lineNo = -1;
+		String className = null;
+		
+		StackTraceElement[] stackTrace = t.getStackTrace();
+		String codeSample = null;
+		
+		if ( t instanceof ShellExecuteException )
+		{
+			ScriptTraceElement[] scriptTrace = ( ( ShellExecuteException ) t ).getScriptTrace();
+			
+			if ( t.getCause() != null )
+				t = t.getCause();
+			
+			ScriptTraceElement ste = scriptTrace[0];
+			
+			if ( ste != null )
+			{
+				lineNo = ste.getLineNumber();
+				className = ste.getClassName() + "." + ste.getMethodName();
+				
+				EvalMetaData metaData = ste.getMetaData();
+				fileName = metaData.fileName;
+				
+				if ( metaData.source != null && !metaData.source.isEmpty() )
+					codeSample += "<p>Pre-evaluated Code:</p><pre>" + TemplateUtils.generateCodePreview( metaData.source, lineNo ) + "</pre>";
+				
+				codeSample = "<p>Source Code:</p><pre>" + TemplateUtils.generateCodePreview( ste ) + "</pre>";
+			}
+		}
+		else
+		{
+			StackTraceElement ele;
+			if ( t.getCause() == null )
+				ele = t.getStackTrace()[0];
+			else
+				ele = t.getCause().getStackTrace()[0];
+			
+			fileName = ele.getFileName();
+			lineNo = ele.getLineNumber();
+			className = ele.getClassName() + "." + ele.getMethodName();
+		}
+		
+		Loader.getLogger().warning( "Could not run file '" + fileName + "' because of error '" + t.getMessage() + "'" );
+		
+		ob.append( "<h1>Internal Server Exception Thrown</h1>\n" );
+		ob.append( "<p class=\"message\">\n" );
+		ob.append( t.getClass().getName() + ": " + t.getMessage() + "\n" );
+		ob.append( "</p>\n" );
+		ob.append( "\n" );
+		ob.append( "<div class=\"source\">\n" );
+		
+		ob.append( "<p class=\"file\">" + fileName + "(" + lineNo + "): <strong>" + ( ( className != null ) ? className : "" ) + "</strong></p>\n" );
+		
+		ob.append( "\n" );
+		ob.append( "<div class=\"code\">\n" );
+		if ( codeSample != null )
+			ob.append( codeSample + "\n" );
+		ob.append( "</div>\n" );
+		ob.append( "</div>\n" );
+		ob.append( "\n" );
+		ob.append( "<div class=\"traces\">\n" );
+		ob.append( "<h2>Stack Trace</h2>\n" );
+		ob.append( "<table style=\"width:100%;\">\n" );
+		ob.append( TemplateUtils.formatStackTrace( t.getStackTrace() ) + "\n" );
+		ob.append( "</table>\n" );
+		ob.append( "</div>\n" );
+		ob.append( "\n" );
+		ob.append( "<div class=\"version\">Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + "<br />" + Versioning.getCopyright() + "</div>\n" );
+		
+		try
+		{
+			return TemplateUtils.wrapAndEval( factory, ob.toString() );
+		}
+		catch ( IOException | ShellExecuteException e )
+		{
+			e.printStackTrace();
+			return e.getMessage();
+		}
 	}
 	
 	@EventHandler( priority = EventPriority.NORMAL )
@@ -165,7 +253,7 @@ public class Template extends Plugin implements Listener
 		}
 		catch ( IOException | ShellExecuteException e )
 		{
-			event.setSource( Unpooled.buffer().writeBytes( ExceptionPageUtils.makeExceptionPage( e, event.getSession().getCodeFactory() ).getBytes() ) );
+			event.setSource( Unpooled.buffer().writeBytes( generateExceptionPage( e, event.getSession().getEvalFactory() ).getBytes() ) );
 			event.getResponse().setStatus( 500 );
 		}
 	}
@@ -180,7 +268,7 @@ public class Template extends Plugin implements Listener
 	
 	private EvalFactoryResult doInclude0( String pack, RenderEvent event ) throws IOException, ShellExecuteException
 	{
-		EvalFactory factory = event.getSession().getCodeFactory();
+		EvalFactory factory = event.getSession().getEvalFactory();
 		
 		if ( getConfig().getBoolean( "config.ignoreFileNotFound" ) )
 			return WebUtils.evalPackage( factory, event.getSite(), pack );
