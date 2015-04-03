@@ -9,13 +9,12 @@
  */
 package com.chiorichan.factory.interpreters;
 
-import groovy.lang.GroovyShell;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.factory.EvalMetaData;
+import com.chiorichan.factory.ShellFactory;
 
 /**
  * Simple HTML SeaShell.
@@ -30,7 +29,7 @@ public class HTMLInterpreter implements Interpreter
 	}
 	
 	@Override
-	public String eval( EvalMetaData meta, String code, GroovyShell shell, ByteArrayOutputStream bs ) throws ShellExecuteException
+	public String eval( EvalMetaData meta, String code, ShellFactory shellFactory, ByteArrayOutputStream bs ) throws ShellExecuteException
 	{
 		try
 		{
@@ -38,7 +37,7 @@ public class HTMLInterpreter implements Interpreter
 		}
 		catch ( IOException e )
 		{
-			throw new ShellExecuteException( e, meta );
+			throw new ShellExecuteException( e, shellFactory );
 		}
 		return "";
 	}

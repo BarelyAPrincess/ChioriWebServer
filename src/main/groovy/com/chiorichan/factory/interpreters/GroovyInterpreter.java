@@ -9,14 +9,12 @@
  */
 package com.chiorichan.factory.interpreters;
 
-import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 
 import java.io.ByteArrayOutputStream;
 
-import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalMetaData;
-import com.chiorichan.factory.ScriptingBaseJava;
+import com.chiorichan.factory.ShellFactory;
 
 /**
  * Groovy SeaShell.
@@ -31,16 +29,9 @@ public class GroovyInterpreter implements Interpreter
 	}
 	
 	@Override
-	public Object eval( EvalMetaData meta, String code, GroovyShell shell, ByteArrayOutputStream bs ) throws Exception
+	public Object eval( EvalMetaData meta, String scriptText, ShellFactory shell, ByteArrayOutputStream bs ) throws Exception
 	{
-		shell.setVariable( "__FILE__", meta.fileName );
-		
-		Script script = shell.parse( code );
-		
-		if ( script instanceof ScriptingBaseJava )
-			( ( ScriptingBaseJava ) script ).setMeta( meta );
-		
-		EvalFactory.putScript( script );
+		Script script = shell.makeScript( scriptText, meta );
 		
 		Object o = script.run();
 		

@@ -9,12 +9,10 @@
  */
 package com.chiorichan.factory.interpreters;
 
-import groovy.lang.GroovyShell;
-
 import java.io.ByteArrayOutputStream;
 
-import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.factory.EvalMetaData;
+import com.chiorichan.factory.ShellFactory;
 
 /**
  * Interpreters are commonly used to process commands and create dynamic content, most notably the groovy scripts.
@@ -29,5 +27,5 @@ public interface Interpreter
 	 */
 	String[] getHandledTypes();
 	
-	Object eval( EvalMetaData meta, String code, GroovyShell shell, ByteArrayOutputStream bs ) throws Exception;
+	Object eval( EvalMetaData meta, String code, ShellFactory shell, ByteArrayOutputStream bs ) throws Exception;
 }

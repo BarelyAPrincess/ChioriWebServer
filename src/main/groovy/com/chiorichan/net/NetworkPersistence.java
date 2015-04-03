@@ -63,7 +63,7 @@ public class NetworkPersistence extends AccountHandler implements BindingProvide
 	}
 	
 	@Override
-	public EvalFactory getCodeFactory()
+	public EvalFactory getEvalFactory()
 	{
 		return factory;
 	}

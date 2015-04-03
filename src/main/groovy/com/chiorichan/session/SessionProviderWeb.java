@@ -229,7 +229,7 @@ public class SessionProviderWeb implements SessionProvider
 	}
 	
 	@Override
-	public EvalFactory getCodeFactory()
+	public EvalFactory getEvalFactory()
 	{
 		if ( factory == null )
 			factory = EvalFactory.create( binding );

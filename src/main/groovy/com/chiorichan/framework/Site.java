@@ -717,7 +717,7 @@ public class Site
 		}
 		catch ( IOException e )
 		{
-			throw new ShellExecuteException( e, codeMeta );
+			throw new ShellExecuteException( e, factory.getShellFactory() );
 		}
 	}
 	

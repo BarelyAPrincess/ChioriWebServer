@@ -9,7 +9,6 @@
  */
 package com.chiorichan.factory.interpreters;
 
-import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 
 import java.io.ByteArrayOutputStream;
@@ -18,9 +17,8 @@ import java.io.IOException;
 import org.apache.commons.lang3.StringUtils;
 
 import com.chiorichan.exception.ShellExecuteException;
-import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalMetaData;
-import com.chiorichan.factory.ScriptingBaseJava;
+import com.chiorichan.factory.ShellFactory;
 
 /**
  * SeaShell for handling GSP files.
@@ -43,10 +41,8 @@ public class GSPInterpreter implements Interpreter
 	}
 	
 	@Override
-	public Object eval( EvalMetaData meta, String fullFile, GroovyShell shell, ByteArrayOutputStream bs ) throws Exception
+	public Object eval( EvalMetaData meta, String fullFile, ShellFactory shellFactory, ByteArrayOutputStream bs ) throws Exception
 	{
-		shell.setVariable( "__FILE__", meta.fileName );
-		
 		int fullFileIndex = 0;
 		String[] dontStartWith = new String[] {"println", "print", "echo", "def", "import", "if", "for", "do", "}", "else", "//", "/*", "\n", "\r"};
 		
@@ -66,7 +62,7 @@ public class GSPInterpreter implements Interpreter
 				int endIndex = fullFile.indexOf( MARKER_END, Math.max( startIndex, fullFileIndex ) );
 				
 				if ( endIndex == -1 )
-					throw new ShellExecuteException( new IOException( "Marker `<%` was not closed after line " + ( StringUtils.countMatches( output.toString(), "\n" ) + 1 ) + ", please check your source file and try again." ), meta );
+					throw new ShellExecuteException( new IOException( "Marker `<%` was not closed after line " + ( StringUtils.countMatches( output.toString(), "\n" ) + 1 ) + ", please check your source file and try again." ), shellFactory );
 				
 				fragment = fullFile.substring( startIndex + MARKER_START.length(), endIndex );
 				
@@ -99,7 +95,7 @@ public class GSPInterpreter implements Interpreter
 		
 		meta.source = output.toString();
 		
-		return interpret( shell, output.toString(), meta );
+		return interpret( shellFactory, output.toString(), meta );
 	}
 	
 	public String escapeFragment( String fragment )
@@ -115,14 +111,9 @@ public class GSPInterpreter implements Interpreter
 		return "print " + brackets + fragment + brackets + "; ";
 	}
 	
-	private Object interpret( GroovyShell shell, String code, EvalMetaData meta )
+	private Object interpret( ShellFactory shellFactory, String scriptText, EvalMetaData meta )
 	{
-		Script script = shell.parse( code );
-		
-		if ( script instanceof ScriptingBaseJava )
-			( ( ScriptingBaseJava ) script ).setMeta( meta );
-		
-		EvalFactory.putScript( script );
+		Script script = shellFactory.makeScript( scriptText, meta );
 		
 		Object o = script.run();
 		

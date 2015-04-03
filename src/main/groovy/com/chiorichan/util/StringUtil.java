@@ -121,6 +121,9 @@ public class StringUtil
 	
 	public static String bytesToStringUTFNIO( byte[] bytes )
 	{
+		if ( bytes == null )
+			return null;
+		
 		CharBuffer cBuffer = ByteBuffer.wrap( bytes ).asCharBuffer();
 		return cBuffer.toString();
 	}

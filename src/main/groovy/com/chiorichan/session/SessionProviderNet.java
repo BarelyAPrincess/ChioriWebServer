@@ -19,7 +19,7 @@ import com.chiorichan.http.HttpResponseWrapper;
 public class SessionProviderNet implements SessionProvider
 {
 	@Override
-	public EvalFactory getCodeFactory()
+	public EvalFactory getEvalFactory()
 	{
 		return null;
 	}

@@ -517,12 +517,36 @@ public class WebUtils
 		
 	}
 	
-	public static byte[] readUrl( String url ) throws IOException
+	public static byte[] readUrl( String url )
 	{
-		return readUrl( url, null, null );
+		try
+		{
+			return readUrlWithException( url );
+		}
+		catch ( IOException e )
+		{
+			return null;
+		}
 	}
 	
-	public static byte[] readUrl( String surl, String user, String pass ) throws IOException
+	public static byte[] readUrl( String url, String user, String pass )
+	{
+		try
+		{
+			return readUrlWithException( url, user, pass );
+		}
+		catch ( IOException e )
+		{
+			return null;
+		}
+	}
+	
+	public static byte[] readUrlWithException( String url ) throws IOException
+	{
+		return readUrlWithException( url, null, null );
+	}
+	
+	public static byte[] readUrlWithException( String surl, String user, String pass ) throws IOException
 	{
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		

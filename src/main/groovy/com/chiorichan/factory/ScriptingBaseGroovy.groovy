@@ -6,6 +6,8 @@
  */
 package com.chiorichan.factory
 
+import java.util.List;
+
 import com.chiorichan.Loader
 import com.chiorichan.account.Account
 import com.chiorichan.database.DatabaseEngine
@@ -28,6 +30,11 @@ import com.google.common.collect.Lists
  */
 public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 {
+	List<ScriptTraceElement> getScriptTrace()
+	{
+		return getSession().getCodeFactory().getScriptTrace();
+	}
+	
 	/**
 	 * Holds history of included packages
 	 * Used by include_once and require_once methods.

@@ -9,11 +9,10 @@
  */
 package com.chiorichan.exception;
 
-import groovy.lang.Script;
+import java.util.List;
 
-import com.chiorichan.factory.EvalFactory;
-import com.chiorichan.factory.EvalMetaData;
-import com.chiorichan.factory.ScriptingBaseJava;
+import com.chiorichan.factory.ScriptTraceElement;
+import com.chiorichan.factory.ShellFactory;
 
 /**
  *
@@ -23,56 +22,57 @@ public class ShellExecuteException extends Exception
 {
 	private static final long serialVersionUID = -1611181613618341914L;
 	
-	EvalMetaData meta = new EvalMetaData();
+	List<ScriptTraceElement> scriptTrace;
 	
-	public ShellExecuteException( EvalMetaData meta )
-	{
-		super();
-		this.meta = meta;
-	}
-	
-	public ShellExecuteException( String message, EvalMetaData meta )
+	public ShellExecuteException( String message, List<ScriptTraceElement> scriptTrace )
 	{
 		super( message );
-		this.meta = meta;
+		this.scriptTrace = scriptTrace;
 	}
 	
-	public ShellExecuteException( String message, Throwable cause, EvalMetaData meta )
+	
+	public ShellExecuteException( String message, Throwable cause, List<ScriptTraceElement> scriptTrace )
 	{
 		super( message, cause );
-		this.meta = meta;
+		this.scriptTrace = scriptTrace;
 	}
 	
-	public ShellExecuteException( Throwable cause, EvalMetaData meta, Class<?> cls )
+	public ShellExecuteException( Throwable cause, List<ScriptTraceElement> scriptTrace )
 	{
 		super( cause );
-		
-		Script script = EvalFactory.getScript( cls );
-		
-		if ( script != null && script instanceof ScriptingBaseJava )
-		{
-			ScriptingBaseJava base = ( ScriptingBaseJava ) script;
-			if ( base.getMeta() != null )
-				meta = base.getMeta();
-		}
-		
-		this.meta = meta;
+		this.scriptTrace = scriptTrace;
 	}
 	
-	public ShellExecuteException( Throwable cause, EvalMetaData meta )
+	public ShellExecuteException( List<ScriptTraceElement> scriptTrace )
+	{
+		this.scriptTrace = scriptTrace;
+	}
+	
+	public ShellExecuteException( String message, ShellFactory shellFactory )
+	{
+		super( message );
+		scriptTrace = shellFactory.examineStackTrace( getStackTrace() );
+	}
+	
+	public ShellExecuteException( String message, Throwable cause, ShellFactory shellFactory )
+	{
+		super( message, cause );
+		scriptTrace = shellFactory.examineStackTrace( cause.getStackTrace() );
+	}
+	
+	public ShellExecuteException( Throwable cause, ShellFactory shellFactory )
 	{
 		super( cause );
-		this.meta = meta;
+		scriptTrace = shellFactory.examineStackTrace( cause.getStackTrace() );
 	}
 	
-	protected ShellExecuteException( String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace, EvalMetaData meta )
+	public ShellExecuteException( ShellFactory shellFactory )
 	{
-		super( message, cause, enableSuppression, writableStackTrace );
-		this.meta = meta;
+		scriptTrace = shellFactory.examineStackTrace( getStackTrace() );
 	}
 	
-	public EvalMetaData getMetaData()
+	public ScriptTraceElement[] getScriptTrace()
 	{
-		return meta;
+		return scriptTrace.toArray( new ScriptTraceElement[0] );
 	}
 }

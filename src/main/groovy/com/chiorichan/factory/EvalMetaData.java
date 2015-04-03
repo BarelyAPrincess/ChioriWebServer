@@ -9,6 +9,8 @@
  */
 package com.chiorichan.factory;
 
+import groovy.lang.Script;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
@@ -22,8 +24,10 @@ public class EvalMetaData
 	public Map<String, String> params = Maps.newHashMap();
 	public String contentType;
 	public String fileName;
+	public String scriptName;
 	public String source;
 	public String shell;
+	public Script script;
 	public Site site;
 	
 	public EvalMetaData()
@@ -46,6 +50,6 @@ public class EvalMetaData
 	@Override
 	public String toString()
 	{
-		return "EvalMetaData{fileName=" + fileName + ",shell=" + shell + ",sourceSize=" + source.length() + ",site=" + site + ",contentType=" + contentType + ",params=[" + params + "]}";
+		return "EvalMetaData{fileName=" + fileName + ",scriptName=" + scriptName + ",script=" + script + ",shell=" + shell + ",sourceSize=" + source.length() + ",site=" + site + ",contentType=" + contentType + ",params=[" + params + "]}";
 	}
 }

@@ -303,6 +303,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			{
 				sess.saveSession( false );
 				sess.onFinished();
+				
+				sess.getEvalFactory().onFinished();
 			}
 		}
 		catch ( Exception e )
@@ -502,7 +504,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			sess.setGlobal( "_REQUEST", request.getRequestMapParsed() );
 		
 		ByteBuf rendered = Unpooled.buffer();
-		EvalFactory factory = sess.getCodeFactory();
+		EvalFactory factory = sess.getEvalFactory();
 		factory.setEncoding( fi.getEncoding() );
 		
 		String req = fi.get( "reqperm" );
