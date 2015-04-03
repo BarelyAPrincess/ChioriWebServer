@@ -9,9 +9,9 @@
  */
 package com.chiorichan.event.server;
 
-import java.util.Map;
+import io.netty.buffer.ByteBuf;
 
-import org.apache.commons.codec.digest.DigestUtils;
+import java.util.Map;
 
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.HttpRequestWrapper;
@@ -20,21 +20,22 @@ import com.chiorichan.session.SessionProvider;
 
 public class RenderEvent extends ServerEvent
 {
-	private String pageSource, pageHash;
+	private ByteBuf source;
 	private final SessionProvider sess;
-	private final Map<String, String> pageData;
+	private final Map<String, String> params;
+	private String encoding = "UTF-8";
 	
-	public RenderEvent( SessionProvider sess, String source, Map<String, String> pageData )
+	public RenderEvent( SessionProvider sess, ByteBuf source, String encoding, Map<String, String> params )
 	{
-		pageSource = source;
-		pageHash = DigestUtils.md5Hex( source );
-		this.pageData = pageData;
 		this.sess = sess;
+		this.source = source;
+		this.encoding = encoding;
+		this.params = params;
 	}
 	
-	public Map<String, String> getPageData()
+	public Map<String, String> getParams()
 	{
-		return pageData;
+		return params;
 	}
 	
 	public Site getSite()
@@ -65,18 +66,18 @@ public class RenderEvent extends ServerEvent
 		return sess.getResponse();
 	}
 	
-	public String getSource()
+	public ByteBuf getSource()
 	{
-		return pageSource;
+		return source.copy();
 	}
 	
-	public void setSource( String source )
+	public void setSource( ByteBuf source )
 	{
-		pageSource = source;
+		this.source = source;
 	}
 	
-	public boolean sourceChanged()
+	public String getEncoding()
 	{
-		return !DigestUtils.md5( pageSource ).equals( pageHash );
+		return encoding;
 	}
 }

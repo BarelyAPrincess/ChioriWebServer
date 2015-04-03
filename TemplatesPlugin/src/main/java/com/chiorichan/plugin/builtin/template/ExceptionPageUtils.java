@@ -114,7 +114,7 @@ public class ExceptionPageUtils
 		{
 			if ( t instanceof ShellExecuteException )
 			{
-				EvalMetaData meta = ( ( ShellExecuteException ) t ).getCodeMetaData();
+				EvalMetaData meta = ( ( ShellExecuteException ) t ).getMetaData();
 				StackTraceElement ele = getGroovyScriptElement( t.getCause().getStackTrace() );
 				
 				if ( ele != null )
@@ -146,7 +146,7 @@ public class ExceptionPageUtils
 			
 			if ( t instanceof ShellExecuteException )
 			{
-				EvalMetaData meta = ( ( ShellExecuteException ) t ).getCodeMetaData();
+				EvalMetaData meta = ( ( ShellExecuteException ) t ).getMetaData();
 				StackTraceElement ele = getGroovyScriptElement( t.getCause().getStackTrace() );
 				t = t.getCause();
 				

@@ -6,9 +6,9 @@
  */
 package com.chiorichan.factory;
 
-import java.nio.charset.Charset;
-
 import io.netty.buffer.ByteBuf;
+
+import java.nio.charset.Charset;
 
 import com.chiorichan.framework.Site;
 import com.chiorichan.util.ObjectUtil;

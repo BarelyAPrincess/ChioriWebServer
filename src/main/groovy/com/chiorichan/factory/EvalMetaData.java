@@ -19,6 +19,13 @@ import com.google.common.collect.Maps;
 
 public class EvalMetaData
 {
+	public Map<String, String> params = Maps.newHashMap();
+	public String contentType;
+	public String fileName;
+	public String source;
+	public String shell;
+	public Site site;
+	
 	public EvalMetaData()
 	{
 		
@@ -36,10 +43,9 @@ public class EvalMetaData
 		this( new FileInterpreter( new File( file ) ) );
 	}
 	
-	public String shell;
-	public String fileName;
-	public String source;
-	public String contentType;
-	public Site site;
-	public Map<String, String> params = Maps.newHashMap();
+	@Override
+	public String toString()
+	{
+		return "EvalMetaData{fileName=" + fileName + ",shell=" + shell + ",sourceSize=" + source.length() + ",site=" + site + ",contentType=" + contentType + ",params=[" + params + "]}";
+	}
 }

@@ -10,12 +10,12 @@
 package com.chiorichan.factory.postprocessors;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
 
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
@@ -87,9 +87,9 @@ public class ImagePostProcessor implements PostProcessor
 		
 		try
 		{
-			byte[] bytes = new byte[buf.readableBytes()];
-			buf.readBytes( bytes );
-			BufferedImage img = ImageIO.read( new ByteArrayInputStream( bytes ) );
+			int inx = buf.readerIndex();
+			BufferedImage img = ImageIO.read( new ByteBufInputStream( buf ) );
+			buf.readerIndex( inx );
 			
 			if ( img != null )
 			{

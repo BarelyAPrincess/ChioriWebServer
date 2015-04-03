@@ -11,6 +11,10 @@ package com.chiorichan.factory;
 
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
+import groovy.lang.MissingFieldException;
+import groovy.lang.MissingMethodException;
+import groovy.lang.MissingPropertyException;
+import groovy.lang.Script;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
@@ -19,9 +23,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
@@ -46,6 +52,7 @@ import com.chiorichan.framework.FileInterpreter;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.WebInterpreter;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 public class EvalFactory
@@ -143,6 +150,28 @@ public class EvalFactory
 			register( new JSMinPostProcessor() );
 		if ( Loader.getConfig().getBoolean( "advanced.processors.imageProcessorEnabled", true ) )
 			register( new ImagePostProcessor() );
+	}
+	
+	protected static Map<Class<?>, WeakReference<Script>> scripts = Maps.newHashMap();
+	
+	public static void putScript( Script script )
+	{
+		scripts.put( script.getClass(), new WeakReference<Script>( script ) );
+	}
+	
+	public static Script dropScript( Class<?> cls )
+	{
+		return scripts.remove( cls ).get();
+	}
+	
+	public static Script getScript( Class<?> cls )
+	{
+		Script script = scripts.get( cls ).get();
+		
+		if ( script == null )
+			scripts.remove( cls );
+		
+		return script;
 	}
 	
 	protected EvalFactory( Binding binding )
@@ -384,27 +413,29 @@ public class EvalFactory
 		return eval( fi, null, site );
 	}
 	
-	public EvalFactoryResult eval( FileInterpreter fi, EvalMetaData codeMeta, Site site ) throws ShellExecuteException
+	public EvalFactoryResult eval( FileInterpreter fi, EvalMetaData meta, Site site ) throws ShellExecuteException
 	{
-		if ( codeMeta == null )
-			codeMeta = new EvalMetaData();
+		encoding = fi.getEncoding();
+		
+		if ( meta == null )
+			meta = new EvalMetaData();
 		
 		if ( fi instanceof WebInterpreter )
-			codeMeta.params = ( ( WebInterpreter ) fi ).getRewriteParams();
+			meta.params = ( ( WebInterpreter ) fi ).getRewriteParams();
 		else
-			codeMeta.params = fi.getParams();
+			meta.params = fi.getParams();
 		
-		codeMeta.contentType = fi.getContentType();
-		codeMeta.shell = fi.getParams().get( "shell" );
-		codeMeta.fileName = ( fi.getFile() != null ) ? fi.getFile().getAbsolutePath() : fi.getParams().get( "file" );
+		meta.contentType = fi.getContentType();
+		meta.shell = fi.getParams().get( "shell" );
+		meta.fileName = ( fi.getFile() != null ) ? fi.getFile().getAbsolutePath() : fi.getParams().get( "file" );
 		
 		try
 		{
-			return eval( new String( fi.getContent(), fi.getEncoding() ), codeMeta, site );
+			return eval( new String( fi.getContent(), encoding ), meta, site );
 		}
 		catch ( UnsupportedEncodingException e )
 		{
-			throw new ShellExecuteException( e, codeMeta );
+			throw new ShellExecuteException( e, meta );
 		}
 	}
 	
@@ -477,16 +508,47 @@ public class EvalFactory
 			{
 				if ( she.equalsIgnoreCase( meta.shell ) || she.equalsIgnoreCase( "all" ) )
 				{
-					result.obj = s.eval( meta, code, shell, bs );
+					try
+					{
+						result.obj = s.eval( meta, code, shell, bs );
+					}
+					catch ( ShellExecuteException e )
+					{
+						throw e;
+					}
+					catch ( MissingPropertyException e )
+					{
+						throw new ShellExecuteException( e, meta, e.getType() );
+					}
+					catch ( MissingMethodException e )
+					{
+						throw new ShellExecuteException( e, meta, e.getType() );
+					}
+					catch ( MissingFieldException e )
+					{
+						throw new ShellExecuteException( e, meta, e.getType() );
+					}
+					/*
+					 * catch ( MissingClassException e )
+					 * {
+					 * throw new ShellExecuteException( e, meta, e.getType() );
+					 * }
+					 */
+					catch ( Exception e )
+					{
+						throw new ShellExecuteException( "This exception was not explicitly caught, it might have been a programming bug", e, meta );
+					}
+					
 					success = true;
 					break;
 				}
 			}
 		}
 		
-		output.writeBytes( ( success ) ? bs.toByteArray() : code.getBytes() );
 		try
 		{
+			output.writeBytes( ( success ) ? bs.toByteArray() : code.getBytes( encoding ) );
+			
 			bs.reset();
 			bs.write( saved );
 		}

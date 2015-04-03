@@ -9,7 +9,11 @@
  */
 package com.chiorichan.exception;
 
+import groovy.lang.Script;
+
+import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalMetaData;
+import com.chiorichan.factory.ScriptingBaseJava;
 
 /**
  *
@@ -39,6 +43,22 @@ public class ShellExecuteException extends Exception
 		this.meta = meta;
 	}
 	
+	public ShellExecuteException( Throwable cause, EvalMetaData meta, Class<?> cls )
+	{
+		super( cause );
+		
+		Script script = EvalFactory.getScript( cls );
+		
+		if ( script != null && script instanceof ScriptingBaseJava )
+		{
+			ScriptingBaseJava base = ( ScriptingBaseJava ) script;
+			if ( base.getMeta() != null )
+				meta = base.getMeta();
+		}
+		
+		this.meta = meta;
+	}
+	
 	public ShellExecuteException( Throwable cause, EvalMetaData meta )
 	{
 		super( cause );
@@ -51,7 +71,7 @@ public class ShellExecuteException extends Exception
 		this.meta = meta;
 	}
 	
-	public EvalMetaData getCodeMetaData()
+	public EvalMetaData getMetaData()
 	{
 		return meta;
 	}

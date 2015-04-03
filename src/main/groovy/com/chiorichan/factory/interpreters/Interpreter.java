@@ -29,5 +29,5 @@ public interface Interpreter
 	 */
 	String[] getHandledTypes();
 	
-	Object eval( EvalMetaData meta, String code, GroovyShell shell, ByteArrayOutputStream bs ) throws ShellExecuteException;
+	Object eval( EvalMetaData meta, String code, GroovyShell shell, ByteArrayOutputStream bs ) throws Exception;
 }

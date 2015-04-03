@@ -24,6 +24,8 @@ public class HttpUtilsWrapper extends WebUtils
 		this.sess = sess;
 	}
 	
+	// TODO Improve and differ what eval and read do
+	
 	public EvalFactoryResult evalFile( String file ) throws IOException, ShellExecuteException
 	{
 		return evalFile( sess.getCodeFactory(), sess.getParentSession().getSite(), file );
@@ -42,5 +44,25 @@ public class HttpUtilsWrapper extends WebUtils
 	public EvalFactoryResult evalPackageWithException( String pack ) throws IOException, ShellExecuteException
 	{
 		return evalPackageWithException( sess.getCodeFactory(), sess.getParentSession().getSite(), pack );
+	}
+	
+	public String readFile( String file ) throws IOException, ShellExecuteException
+	{
+		return evalFile( sess.getCodeFactory(), sess.getParentSession().getSite(), file ).getString();
+	}
+	
+	public String readPackage( String pack ) throws ShellExecuteException
+	{
+		return evalPackage( sess.getCodeFactory(), sess.getParentSession().getSite(), pack ).getString();
+	}
+	
+	public String readPackageWithException( String pack, Object... global ) throws IOException, ShellExecuteException
+	{
+		return evalPackageWithException( sess.getCodeFactory(), sess.getParentSession().getSite(), pack ).getString();
+	}
+	
+	public String readPackageWithException( String pack ) throws IOException, ShellExecuteException
+	{
+		return evalPackageWithException( sess.getCodeFactory(), sess.getParentSession().getSite(), pack ).getString();
 	}
 }

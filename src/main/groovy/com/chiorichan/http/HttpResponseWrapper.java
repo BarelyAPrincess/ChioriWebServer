@@ -9,6 +9,7 @@
  */
 package com.chiorichan.http;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -43,7 +44,7 @@ import com.google.common.collect.Maps;
 public class HttpResponseWrapper
 {
 	protected HttpRequestWrapper request;
-	protected ByteArrayOutputStream output = new ByteArrayOutputStream();
+	protected ByteBuf output = Unpooled.buffer();
 	protected int httpStatus = 200;
 	protected String httpContentType = "text/html";
 	protected String encoding = "UTF-8";
@@ -99,7 +100,7 @@ public class HttpResponseWrapper
 		
 		httpStatus = httpCode;
 		
-		output.reset();
+		resetBuffer();
 		
 		// Trigger an internal Error Event to notify plugins of a possible problem.
 		ErrorEvent event = new ErrorEvent( request, httpCode, httpMsg );
@@ -126,6 +127,11 @@ public class HttpResponseWrapper
 		sendResponse();
 	}
 	
+	public void resetBuffer()
+	{
+		output = Unpooled.buffer();
+	}
+	
 	public void sendException( Throwable cause ) throws IOException
 	{
 		if ( stage == HttpResponseStage.CLOSED )
@@ -147,7 +153,7 @@ public class HttpResponseWrapper
 		{
 			if ( event.getErrorHtml() != null )
 			{
-				output.reset();
+				resetBuffer();
 				print( event.getErrorHtml() );
 				sendResponse();
 			}
@@ -160,17 +166,19 @@ public class HttpResponseWrapper
 		}
 	}
 	
-	/**
-	 * Clears the output buffer of all content
-	 */
-	public void resetOutput()
-	{
-		output.reset();
-	}
-	
-	public ByteArrayOutputStream getOutput()
+	public ByteBuf getOutput()
 	{
 		return output;
+	}
+	
+	public byte[] getOutputBytes()
+	{
+		byte[] bytes = new byte[output.writerIndex()];
+		int inx = output.readerIndex();
+		output.readerIndex( 0 );
+		output.readBytes( bytes );
+		output.readerIndex( inx );
+		return bytes;
 	}
 	
 	public boolean isCommitted()
@@ -287,17 +295,35 @@ public class HttpResponseWrapper
 	}
 	
 	/**
-	 * Prints a byte array to the buffered output
+	 * Writes a ByteBuf to the buffered output
 	 * 
-	 * @param var1
+	 * @param var
+	 *            byte buffer to print
+	 * @throws IOException
+	 *             if there was a problem with the output buffer.
+	 */
+	public void write( ByteBuf buf ) throws IOException
+	{
+		if ( stage != HttpResponseStage.MULTIPART )
+			stage = HttpResponseStage.WRITTING;
+		
+		output.writeBytes( buf );
+	}
+	
+	/**
+	 * Writes a byte array to the buffered output.
+	 * 
+	 * @param var
 	 *            byte array to print
 	 * @throws IOException
 	 *             if there was a problem with the output buffer.
 	 */
-	public void print( byte[] var1 ) throws IOException
+	public void write( byte[] bytes ) throws IOException
 	{
-		stage = HttpResponseStage.WRITTING;
-		output.write( var1 );
+		if ( stage != HttpResponseStage.MULTIPART )
+			stage = HttpResponseStage.WRITTING;
+		
+		output.writeBytes( bytes );
 	}
 	
 	/**
@@ -308,13 +334,10 @@ public class HttpResponseWrapper
 	 * @throws IOException
 	 *             if there was a problem with the output buffer.
 	 */
-	public void print( String var1 ) throws IOException
+	public void print( String var ) throws IOException
 	{
-		if ( stage != HttpResponseStage.MULTIPART )
-			stage = HttpResponseStage.WRITTING;
-		
-		if ( var1 != null && !var1.isEmpty() )
-			output.write( var1.getBytes( encoding ) );
+		if ( var != null && !var.isEmpty() )
+			write( var.getBytes( encoding ) );
 	}
 	
 	/**
@@ -325,12 +348,10 @@ public class HttpResponseWrapper
 	 * @throws IOException
 	 *             if there was a problem with the output buffer.
 	 */
-	public void println( String var1 ) throws IOException
+	public void println( String var ) throws IOException
 	{
-		if ( stage != HttpResponseStage.MULTIPART )
-			stage = HttpResponseStage.WRITTING;
-		
-		output.write( ( var1 + "\n" ).getBytes( encoding ) );
+		if ( var != null && !var.isEmpty() )
+			write( ( var + "\n" ).getBytes( encoding ) );
 	}
 	
 	/**
@@ -360,9 +381,7 @@ public class HttpResponseWrapper
 		
 		stage = HttpResponseStage.WRITTEN;
 		
-		// HttpRequest http = request.getOriginal();
-		
-		FullHttpResponse response = new DefaultFullHttpResponse( HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf( httpStatus ), Unpooled.copiedBuffer( output.toByteArray() ) );
+		FullHttpResponse response = new DefaultFullHttpResponse( HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf( httpStatus ), output );
 		HttpHeaders h = response.headers();
 		
 		for ( Candy c : request.getCandies() )

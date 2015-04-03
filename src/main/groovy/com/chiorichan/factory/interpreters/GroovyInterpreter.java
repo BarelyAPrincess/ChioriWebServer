@@ -9,12 +9,14 @@
  */
 package com.chiorichan.factory.interpreters;
 
+import groovy.lang.GroovyShell;
+import groovy.lang.Script;
+
 import java.io.ByteArrayOutputStream;
 
-import groovy.lang.GroovyShell;
-
-import com.chiorichan.exception.ShellExecuteException;
+import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalMetaData;
+import com.chiorichan.factory.ScriptingBaseJava;
 
 /**
  * Groovy SeaShell.
@@ -29,21 +31,20 @@ public class GroovyInterpreter implements Interpreter
 	}
 	
 	@Override
-	public Object eval( EvalMetaData meta, String code, GroovyShell shell, ByteArrayOutputStream bs ) throws ShellExecuteException
+	public Object eval( EvalMetaData meta, String code, GroovyShell shell, ByteArrayOutputStream bs ) throws Exception
 	{
-		try
-		{
-			shell.setVariable( "__FILE__", meta.fileName );
-			
-			Object o = shell.evaluate( code );
-			return ( o == null ) ? "" : o;
-		}
-		catch ( Throwable e )
-		{
-			if ( e instanceof ShellExecuteException )
-				throw ( ShellExecuteException ) e;
-			else
-				throw new ShellExecuteException( e, meta );
-		}
+		shell.setVariable( "__FILE__", meta.fileName );
+		
+		Script script = shell.parse( code );
+		
+		if ( script instanceof ScriptingBaseJava )
+			( ( ScriptingBaseJava ) script ).setMeta( meta );
+		
+		EvalFactory.putScript( script );
+		
+		Object o = script.run();
+		
+		// Object o = shell.evaluate( code );
+		return ( o == null ) ? "" : o;
 	}
 }

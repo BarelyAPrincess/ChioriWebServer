@@ -1,5 +1,7 @@
 package com.chiorichan.plugin.builtin.template;
 
+import io.netty.buffer.Unpooled;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -45,7 +47,7 @@ public class Template extends Plugin implements Listener
 		try
 		{
 			Site site = event.getSite();
-			Map<String, String> fwVals = event.getPageData();
+			Map<String, String> fwVals = event.getParams();
 			
 			if ( site == null )
 				site = Loader.getSiteManager().getFrameworkSite();
@@ -65,6 +67,8 @@ public class Template extends Plugin implements Listener
 			
 			if ( theme.isEmpty() && view.isEmpty() && !getConfig().getBoolean( "config.alwaysRender" ) )
 				return;
+			
+			// TODO return if the request is for a none text contentType
 			
 			if ( theme.isEmpty() )
 				theme = "com.chiorichan.themes.default";
@@ -140,20 +144,14 @@ public class Template extends Plugin implements Listener
 			
 			if ( viewData != null && !viewData.isEmpty() )
 				if ( pageData.indexOf( pageMark ) < 0 )
-				{
 					pageData = pageData + viewData;
-					Loader.getLogger().warning( "Pass 1: Did not find the pageMark `" + pageMark + "` within code." );
-				}
 				else
 					pageData = pageData.replace( pageMark, viewData );
 			
 			if ( pageData.indexOf( pageMark ) < 0 )
-			{
-				pageData = pageData + event.getSource();
-				Loader.getLogger().warning( "Pass 2: Did not find the pageMark `" + pageMark + "` within code." );
-			}
+				pageData = pageData + StringUtil.byteBuf2String( event.getSource(), event.getEncoding() );
 			else
-				pageData = pageData.replace( pageMark, event.getSource() );
+				pageData = pageData.replace( pageMark, StringUtil.byteBuf2String( event.getSource(), event.getEncoding() ) );
 			
 			ob.append( pageData + "\n" );
 			
@@ -163,11 +161,11 @@ public class Template extends Plugin implements Listener
 			ob.append( "</body>\n" );
 			ob.append( "</html>\n" );
 			
-			event.setSource( ob.toString() );
+			event.setSource( Unpooled.buffer().writeBytes( ob.toString().getBytes() ) );
 		}
 		catch ( IOException | ShellExecuteException e )
 		{
-			event.setSource( ExceptionPageUtils.makeExceptionPage( e, event.getSession().getCodeFactory() ) );
+			event.setSource( Unpooled.buffer().writeBytes( ExceptionPageUtils.makeExceptionPage( e, event.getSession().getCodeFactory() ).getBytes() ) );
 			event.getResponse().setStatus( 500 );
 		}
 	}

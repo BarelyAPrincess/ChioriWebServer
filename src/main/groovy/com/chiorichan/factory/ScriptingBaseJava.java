@@ -41,8 +41,24 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-abstract class ScriptingBaseJava extends Script
+public abstract class ScriptingBaseJava extends Script
 {
+	/*
+	 * Holds the EvalMetaData for each execution of this script thru Groovy Shell
+	 * Used to trace back script exceptions
+	 */
+	EvalMetaData meta = null;
+	
+	public void setMeta( EvalMetaData meta )
+	{
+		this.meta = meta;
+	}
+	
+	public EvalMetaData getMeta()
+	{
+		return meta;
+	}
+	
 	@SuppressWarnings( "unchecked" )
 	String var_export( Object... objs )
 	{

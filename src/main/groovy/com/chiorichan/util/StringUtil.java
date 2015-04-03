@@ -9,7 +9,10 @@
  */
 package com.chiorichan.util;
 
+import io.netty.buffer.ByteBuf;
+
 import java.awt.Color;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -294,5 +297,18 @@ public class StringUtil
 			array[i] = array[i].toLowerCase();
 		
 		return array;
+	}
+	
+	public static String byteBuf2String( ByteBuf buf, String encoding ) throws UnsupportedEncodingException
+	{
+		return new String( byteBuf2Bytes( buf ), encoding );
+	}
+	
+	public static byte[] byteBuf2Bytes( ByteBuf buf )
+	{
+		byte[] bytes = new byte[buf.readableBytes()];
+		int readerIndex = buf.readerIndex();
+		buf.getBytes( readerIndex, bytes );
+		return bytes;
 	}
 }

@@ -9,6 +9,8 @@ package com.chiorichan.http;
 import static io.netty.handler.codec.http.HttpHeaders.is100ContinueExpected;
 import static io.netty.handler.codec.http.HttpResponseStatus.CONTINUE;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
@@ -50,13 +52,14 @@ import com.chiorichan.event.server.ServerVars;
 import com.chiorichan.exception.HttpErrorException;
 import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.factory.EvalFactory;
-import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.EvalFactoryResult;
+import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.framework.Site;
 import com.chiorichan.framework.SiteException;
 import com.chiorichan.permission.PermissionDefault;
 import com.chiorichan.permission.PermissionResult;
 import com.chiorichan.session.SessionProvider;
+import com.chiorichan.util.ObjectUtil;
 import com.chiorichan.util.Versioning;
 import com.google.common.collect.Maps;
 
@@ -498,7 +501,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		if ( Loader.getConfig().getBoolean( "advanced.security.requestMapEnabled", true ) )
 			sess.setGlobal( "_REQUEST", request.getRequestMapParsed() );
 		
-		StringBuilder source = new StringBuilder();
+		ByteBuf rendered = Unpooled.buffer();
 		EvalFactory factory = sess.getCodeFactory();
 		factory.setEncoding( fi.getEncoding() );
 		
@@ -549,7 +552,11 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				meta.params.putAll( request.getGetMap() );
 				EvalFactoryResult result = factory.eval( html, meta, currentSite );
 				if ( result.isSuccessful() )
-					source.append( result.getResult() );
+				{
+					rendered.writeBytes( result.getResult() );
+					if ( result.getObject() != null )
+						rendered.writeBytes( ObjectUtil.castToString( result.getObject() ).getBytes() );
+				}
 			}
 		}
 		catch ( ShellExecuteException e )
@@ -567,7 +574,11 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				meta.params.putAll( request.getGetMap() );
 				EvalFactoryResult result = factory.eval( fi, meta, currentSite );
 				if ( result.isSuccessful() )
-					source.append( result.getResult() );
+				{
+					rendered.writeBytes( result.getResult() );
+					if ( result.getObject() != null )
+						rendered.writeBytes( ObjectUtil.castToString( result.getObject() ).getBytes() );
+				}
 			}
 		}
 		catch ( ShellExecuteException e )
@@ -604,21 +615,20 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			fi.put( kv.getKey(), kv.getValue() );
 		}
 		
-		RenderEvent renderEvent = new RenderEvent( sess, source.toString(), fi.getParams() );
+		RenderEvent renderEvent = new RenderEvent( sess, rendered, fi.getEncoding(), fi.getParams() );
 		
 		try
 		{
 			Loader.getEventBus().callEventWithException( renderEvent );
-			
-			if ( renderEvent.sourceChanged() )
-				source = new StringBuilder( renderEvent.getSource() );
+			if ( renderEvent.getSource() != null )
+				rendered = renderEvent.getSource();
 		}
 		catch ( EventException ex )
 		{
 			throw new IOException( "Exception encountered during render event call, most likely the fault of a plugin.", ex );
 		}
 		
-		response.getOutput().write( source.toString().getBytes( fi.getEncoding() ) );
+		response.write( rendered );
 	}
 	
 	protected HttpRequestWrapper getRequest()

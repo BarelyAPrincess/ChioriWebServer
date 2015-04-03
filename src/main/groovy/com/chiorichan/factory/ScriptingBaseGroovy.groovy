@@ -6,12 +6,9 @@
  */
 package com.chiorichan.factory
 
-import java.io.IOException;
-
 import com.chiorichan.Loader
 import com.chiorichan.account.Account
 import com.chiorichan.database.DatabaseEngine
-import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.framework.ConfigurationManagerWrapper
 import com.chiorichan.framework.HttpUtilsWrapper
 import com.chiorichan.framework.Site
@@ -29,7 +26,7 @@ import com.google.common.collect.Lists
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-abstract class ScriptingBaseGroovy extends ScriptingBaseJava
+public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 {
 	/**
 	 * Holds history of included packages
