@@ -27,5 +27,5 @@ public interface PostProcessor
 	 */
 	String[] getHandledTypes();
 	
-	ByteBuf process( EvalMetaData meta, ByteBuf buf );
+	ByteBuf process( EvalMetaData meta, ByteBuf buf ) throws Exception;
 }

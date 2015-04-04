@@ -14,13 +14,13 @@ import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
 import com.chiorichan.event.http.HttpExceptionEvent;
 import com.chiorichan.event.server.RenderEvent;
-import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalFactoryResult;
 import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.framework.Site;
 import com.chiorichan.framework.WebUtils;
+import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.util.StringUtil;
 import com.chiorichan.util.Versioning;
@@ -63,9 +63,9 @@ public class Template extends Plugin implements Listener
 		String codeSample = null;
 		ScriptTraceElement[] scriptTrace = null;
 		
-		if ( t instanceof ShellExecuteException )
+		if ( t instanceof EvalFactoryException )
 		{
-			scriptTrace = ( ( ShellExecuteException ) t ).getScriptTrace();
+			scriptTrace = ( ( EvalFactoryException ) t ).getScriptTrace();
 			
 			if ( t.getCause() != null )
 				t = t.getCause();
@@ -142,7 +142,7 @@ public class Template extends Plugin implements Listener
 		{
 			return TemplateUtils.wrapAndEval( factory, ob.toString() );
 		}
-		catch ( IOException | ShellExecuteException e )
+		catch ( IOException | EvalFactoryException e )
 		{
 			e.printStackTrace();
 			return e.getMessage();
@@ -271,14 +271,14 @@ public class Template extends Plugin implements Listener
 			
 			event.setSource( Unpooled.buffer().writeBytes( ob.toString().getBytes() ) );
 		}
-		catch ( IOException | ShellExecuteException e )
+		catch ( IOException | EvalFactoryException e )
 		{
 			event.setSource( Unpooled.buffer().writeBytes( generateExceptionPage( e, event.getSession().getEvalFactory() ).getBytes() ) );
 			event.getResponse().setStatus( 500 );
 		}
 	}
 	
-	private String doInclude( String pack, RenderEvent event ) throws IOException, ShellExecuteException
+	private String doInclude( String pack, RenderEvent event ) throws IOException, EvalFactoryException
 	{
 		EvalFactoryResult result = doInclude0( pack, event );
 		if ( result.isSuccessful() )
@@ -286,7 +286,7 @@ public class Template extends Plugin implements Listener
 		return "";
 	}
 	
-	private EvalFactoryResult doInclude0( String pack, RenderEvent event ) throws IOException, ShellExecuteException
+	private EvalFactoryResult doInclude0( String pack, RenderEvent event ) throws IOException, EvalFactoryException
 	{
 		EvalFactory factory = event.getSession().getEvalFactory();
 		

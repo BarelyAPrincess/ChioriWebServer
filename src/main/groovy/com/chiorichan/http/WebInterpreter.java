@@ -18,10 +18,10 @@ import java.util.Map.Entry;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 import com.chiorichan.Loader;
-import com.chiorichan.exception.HttpErrorException;
 import com.chiorichan.framework.FileInterpreter;
 import com.chiorichan.framework.Site;
 import com.chiorichan.framework.SiteException;
+import com.chiorichan.lang.HttpErrorException;
 import com.google.common.collect.Maps;
 
 public class WebInterpreter extends FileInterpreter

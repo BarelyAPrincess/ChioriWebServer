@@ -9,9 +9,11 @@ package com.chiorichan.factory;
 import io.netty.buffer.ByteBuf;
 
 import java.nio.charset.Charset;
+import java.util.List;
 
 import com.chiorichan.framework.Site;
 import com.chiorichan.util.ObjectUtil;
+import com.google.common.collect.Lists;
 
 /**
  * Holds the result after evaling block of code or a file
@@ -21,6 +23,7 @@ import com.chiorichan.util.ObjectUtil;
  */
 public class EvalFactoryResult
 {
+	List<Exception> caughtExceptions = Lists.newArrayList();
 	boolean success = false;
 	String reason = null;
 	ByteBuf buf = null;
@@ -89,5 +92,20 @@ public class EvalFactoryResult
 	public String toString()
 	{
 		return "EvalFactoryResult{success=" + success + ",reason=" + reason + ",size=" + buf.writerIndex() + ",obj=" + obj + ",meta=" + meta + ",site=" + site + "}";
+	}
+	
+	public void addException( Exception exception )
+	{
+		caughtExceptions.add( exception );
+	}
+	
+	public Exception[] getExceptions()
+	{
+		return caughtExceptions.toArray( new Exception[0] );
+	}
+	
+	public boolean hasExceptions()
+	{
+		return !caughtExceptions.isEmpty();
 	}
 }

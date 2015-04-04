@@ -30,7 +30,7 @@ public class CoffeePreProcessor implements PreProcessor
 	}
 	
 	@Override
-	public String process( EvalMetaData meta, String code )
+	public String process( EvalMetaData meta, String code ) throws Exception
 	{
 		ClassLoader classLoader = getClass().getClassLoader();
 		InputStream inputStream = classLoader.getResourceAsStream( "com/chiorichan/coffee-script.js" );

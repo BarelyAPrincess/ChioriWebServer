@@ -20,7 +20,7 @@ import joptsimple.OptionSet;
 import org.joda.time.DateTime;
 
 import com.chiorichan.console.CommandDispatch;
-import com.chiorichan.exception.StartupException;
+import com.chiorichan.lang.StartupException;
 import com.chiorichan.session.SessionManager;
 import com.chiorichan.util.FileUtil;
 import com.chiorichan.util.Versioning;

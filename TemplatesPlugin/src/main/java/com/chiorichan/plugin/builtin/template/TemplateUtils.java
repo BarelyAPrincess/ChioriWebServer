@@ -14,11 +14,11 @@ import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.InterpreterOverrides;
 import com.chiorichan.Loader;
-import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.framework.WebUtils;
+import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.util.FileUtil;
 
 public class TemplateUtils
@@ -95,9 +95,9 @@ public class TemplateUtils
 	
 	public static String generateCodePreview( Throwable t )
 	{
-		if ( t instanceof ShellExecuteException )
+		if ( t instanceof EvalFactoryException )
 		{
-			ScriptTraceElement[] ste = ( ( ShellExecuteException ) t ).getScriptTrace();
+			ScriptTraceElement[] ste = ( ( EvalFactoryException ) t ).getScriptTrace();
 			
 			if ( ste != null && ste.length > 0 )
 				return generateCodePreview( ste[0] );
@@ -289,7 +289,7 @@ public class TemplateUtils
 		return StringUtils.replaceEach( l, new String[] {"&", "\"", "<", ">"}, new String[] {"&amp;", "&quot;", "&lt;", "&gt;"} );
 	}
 	
-	public static String wrapAndEval( EvalFactory factory, String html ) throws IOException, ShellExecuteException
+	public static String wrapAndEval( EvalFactory factory, String html ) throws IOException, EvalFactoryException
 	{
 		String pageMark = "<!-- PAGE DATA -->";
 		InputStream is = TemplateUtils.class.getClassLoader().getResourceAsStream( "BaseTemplate.html" );

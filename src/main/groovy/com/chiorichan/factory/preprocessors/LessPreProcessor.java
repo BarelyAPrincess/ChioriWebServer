@@ -35,7 +35,7 @@ public class LessPreProcessor implements PreProcessor
 	}
 	
 	@Override
-	public String process( EvalMetaData meta, String code )
+	public String process( EvalMetaData meta, String code ) throws Exception
 	{
 		ClassLoader classLoader = getClass().getClassLoader();
 		InputStream inputStream = classLoader.getResourceAsStream( "com/chiorichan/less-rhino-1.7.4.js" );

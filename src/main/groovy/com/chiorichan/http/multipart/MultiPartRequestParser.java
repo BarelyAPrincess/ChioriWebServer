@@ -15,8 +15,8 @@ import java.util.Enumeration;
 import java.util.Vector;
 
 import com.chiorichan.Loader;
-import com.chiorichan.exception.HttpErrorException;
 import com.chiorichan.http.HttpRequestWrapper;
+import com.chiorichan.lang.HttpErrorException;
 
 public class MultiPartRequestParser
 {

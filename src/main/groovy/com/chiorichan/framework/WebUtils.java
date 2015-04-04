@@ -43,10 +43,10 @@ import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.TimeInfo;
 
 import com.chiorichan.Loader;
-import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.EvalFactoryResult;
+import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.ObjectUtil;
 import com.chiorichan.util.StringUtil;
@@ -573,7 +573,7 @@ public class WebUtils
 		return out.toByteArray();
 	}
 	
-	public static EvalFactoryResult evalFile( EvalFactory factory, Site site, String file ) throws IOException, ShellExecuteException
+	public static EvalFactoryResult evalFile( EvalFactory factory, Site site, String file ) throws IOException, EvalFactoryException
 	{
 		if ( file == null || file.isEmpty() )
 			return new EvalFactoryResult( new EvalMetaData( file ), site );
@@ -594,7 +594,7 @@ public class WebUtils
 		return factory.eval( packFile, codeMeta, site );
 	}
 	
-	public static EvalFactoryResult evalPackage( EvalFactory factory, Site site, String pack ) throws ShellExecuteException
+	public static EvalFactoryResult evalPackage( EvalFactory factory, Site site, String pack ) throws EvalFactoryException
 	{
 		try
 		{
@@ -606,7 +606,7 @@ public class WebUtils
 		}
 	}
 	
-	public static EvalFactoryResult evalPackageWithException( EvalFactory factory, Site site, String pack ) throws IOException, ShellExecuteException
+	public static EvalFactoryResult evalPackageWithException( EvalFactory factory, Site site, String pack ) throws IOException, EvalFactoryException
 	{
 		File packFile = null;
 		

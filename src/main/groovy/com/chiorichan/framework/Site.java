@@ -35,11 +35,11 @@ import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.SiteLoadEvent;
-import com.chiorichan.exception.ShellExecuteException;
-import com.chiorichan.exception.StartupException;
 import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.http.Routes;
+import com.chiorichan.lang.EvalFactoryException;
+import com.chiorichan.lang.StartupException;
 import com.chiorichan.util.FileUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -393,7 +393,7 @@ public class Site
 						else
 							Loader.getLogger().info( "Finsihed evaling onLoadScript '" + script + "' for site '" + siteId + "' with result: " + result );
 					}
-					catch ( ShellExecuteException e )
+					catch ( EvalFactoryException e )
 					{
 						SiteManager.getLogger().warning( "There was an exception encountered while evaling onLoadScript '" + script + "' for site '" + siteId + "'.", e );
 					}
@@ -696,13 +696,13 @@ public class Site
 		{
 			return readResourceWithException( pack );
 		}
-		catch ( ShellExecuteException e )
+		catch ( EvalFactoryException e )
 		{
 			return "";
 		}
 	}
 	
-	public String readResourceWithException( String pack ) throws ShellExecuteException
+	public String readResourceWithException( String pack ) throws EvalFactoryException
 	{
 		EvalMetaData codeMeta = new EvalMetaData();
 		
@@ -717,7 +717,7 @@ public class Site
 		}
 		catch ( IOException e )
 		{
-			throw new ShellExecuteException( e, factory.getShellFactory() );
+			throw new EvalFactoryException( e, factory.getShellFactory() );
 		}
 	}
 	

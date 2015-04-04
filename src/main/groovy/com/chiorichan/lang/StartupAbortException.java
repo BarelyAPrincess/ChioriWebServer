@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.exception;
+package com.chiorichan.lang;
 
 
 public class StartupAbortException extends StartupException

@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.chiorichan.Loader;
-import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.framework.Site;
 
 public class LinksParser extends HTMLCommentParser
@@ -25,7 +24,7 @@ public class LinksParser extends HTMLCommentParser
 		super( "url_to" );
 	}
 	
-	public String runParser( String source, Site site ) throws ShellExecuteException
+	public String runParser( String source, Site site ) throws Exception
 	{
 		this.site = site;
 		Map<String, String> aliases = site.getAliases();
@@ -50,7 +49,7 @@ public class LinksParser extends HTMLCommentParser
 	 * TODO: Expand this function.
 	 */
 	@Override
-	public String resolveMethod( String... args ) throws ShellExecuteException
+	public String resolveMethod( String... args ) throws Exception
 	{
 		String url = "http://";
 		

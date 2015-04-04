@@ -25,5 +25,5 @@ public interface PreProcessor
 	 */
 	String[] getHandledTypes();
 	
-	String process( EvalMetaData meta, String code );
+	String process( EvalMetaData meta, String code ) throws Exception;
 }

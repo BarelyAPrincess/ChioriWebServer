@@ -31,7 +31,6 @@ import org.codehaus.groovy.control.CompilerConfiguration;
 
 import com.chiorichan.ContentTypes;
 import com.chiorichan.Loader;
-import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.factory.interpreters.GSPInterpreter;
 import com.chiorichan.factory.interpreters.GroovyInterpreter;
 import com.chiorichan.factory.interpreters.HTMLInterpreter;
@@ -47,6 +46,8 @@ import com.chiorichan.factory.preprocessors.PreProcessor;
 import com.chiorichan.framework.FileInterpreter;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.WebInterpreter;
+import com.chiorichan.lang.IgnorableEvalException;
+import com.chiorichan.lang.EvalFactoryException;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
@@ -339,7 +340,7 @@ public class EvalFactory
 		postProcessors.add( postProcessor );
 	}
 	
-	public EvalFactoryResult eval( File fi, Site site ) throws ShellExecuteException
+	public EvalFactoryResult eval( File fi, Site site ) throws EvalFactoryException
 	{
 		EvalMetaData codeMeta = new EvalMetaData();
 		
@@ -349,7 +350,7 @@ public class EvalFactory
 		return eval( fi, codeMeta, site );
 	}
 	
-	public EvalFactoryResult eval( File fi, EvalMetaData meta, Site site ) throws ShellExecuteException
+	public EvalFactoryResult eval( File fi, EvalMetaData meta, Site site ) throws EvalFactoryException
 	{
 		try
 		{
@@ -357,16 +358,16 @@ public class EvalFactory
 		}
 		catch ( IOException e )
 		{
-			throw new ShellExecuteException( e, shellFactory );
+			throw new EvalFactoryException( e, shellFactory );
 		}
 	}
 	
-	public EvalFactoryResult eval( FileInterpreter fi, Site site ) throws ShellExecuteException
+	public EvalFactoryResult eval( FileInterpreter fi, Site site ) throws EvalFactoryException
 	{
 		return eval( fi, null, site );
 	}
 	
-	public EvalFactoryResult eval( FileInterpreter fi, EvalMetaData meta, Site site ) throws ShellExecuteException
+	public EvalFactoryResult eval( FileInterpreter fi, EvalMetaData meta, Site site ) throws EvalFactoryException
 	{
 		if ( meta == null )
 			meta = new EvalMetaData();
@@ -386,11 +387,11 @@ public class EvalFactory
 		}
 		catch ( UnsupportedEncodingException e )
 		{
-			throw new ShellExecuteException( e, shellFactory );
+			throw new EvalFactoryException( e, shellFactory );
 		}
 	}
 	
-	public EvalFactoryResult eval( String code, Site site ) throws ShellExecuteException
+	public EvalFactoryResult eval( String code, Site site ) throws EvalFactoryException
 	{
 		EvalMetaData codeMeta = new EvalMetaData();
 		
@@ -399,7 +400,7 @@ public class EvalFactory
 		return eval( code, codeMeta, site );
 	}
 	
-	public EvalFactoryResult eval( String code, EvalMetaData meta, Site site ) throws ShellExecuteException
+	public EvalFactoryResult eval( String code, EvalMetaData meta, Site site ) throws EvalFactoryException
 	{
 		EvalFactoryResult result = new EvalFactoryResult( meta, site );
 		
@@ -415,8 +416,15 @@ public class EvalFactory
 		meta.source = code;
 		meta.site = site;
 		
-		if ( site != null )
-			code = runParsers( code, site );
+		try
+		{
+			if ( site != null )
+				code = runParsers( code, site );
+		}
+		catch ( Exception e )
+		{
+			result.addException( new IgnorableEvalException( "Exception caught while running parsers", e ) );
+		}
 		
 		for ( PreProcessor p : preProcessors )
 		{
@@ -425,11 +433,18 @@ public class EvalFactory
 			for ( String t : handledTypes )
 				if ( t.equalsIgnoreCase( meta.shell ) || meta.contentType.toLowerCase().contains( t.toLowerCase() ) || t.equalsIgnoreCase( "all" ) )
 				{
-					String evaled = p.process( meta, code );
-					if ( evaled != null )
+					try
 					{
-						code = evaled;
-						break;
+						String evaled = p.process( meta, code );
+						if ( evaled != null )
+						{
+							code = evaled;
+							break;
+						}
+					}
+					catch ( Exception e )
+					{
+						result.addException( new IgnorableEvalException( "Exception caught while running PreProcessor `" + p.getClass().getSimpleName() + "`", e ) );
 					}
 				}
 		}
@@ -460,21 +475,21 @@ public class EvalFactory
 					{
 						result.obj = s.eval( meta, code, shellFactory.setShell( shell ), bs );
 					}
-					catch ( ShellExecuteException e )
+					catch ( EvalFactoryException e )
 					{
 						throw e;
 					}
 					catch ( CompilationFailedException e ) // This is usually a parsing exception
 					{
-						throw new ShellExecuteException( e, shellFactory, meta );
+						throw new EvalFactoryException( e, shellFactory, meta );
 					}
 					catch ( GroovyRuntimeException e )
 					{
-						throw new ShellExecuteException( e, shellFactory );
+						throw new EvalFactoryException( e, shellFactory );
 					}
 					catch ( Exception e )
 					{
-						throw new ShellExecuteException( e, shellFactory );
+						throw new EvalFactoryException( e, shellFactory );
 					}
 					
 					success = true;
@@ -505,11 +520,18 @@ public class EvalFactory
 			for ( String t : handledTypes )
 				if ( t.equalsIgnoreCase( meta.shell ) || meta.contentType.toLowerCase().contains( t.toLowerCase() ) || t.equalsIgnoreCase( "all" ) )
 				{
-					ByteBuf finished = p.process( meta, output );
-					if ( finished != null )
+					try
 					{
-						output = finished;
-						break;
+						ByteBuf finished = p.process( meta, output );
+						if ( finished != null )
+						{
+							output = finished;
+							break;
+						}
+					}
+					catch ( Exception e )
+					{
+						result.addException( new IgnorableEvalException( "Exception caught while running PostProcessor `" + p.getClass().getSimpleName() + "`", e ) );
 					}
 				}
 		}
@@ -517,7 +539,7 @@ public class EvalFactory
 		return result.setResult( output, true );
 	}
 	
-	private String runParsers( String source, Site site ) throws ShellExecuteException
+	private String runParsers( String source, Site site ) throws Exception
 	{
 		source = new IncludesParser().runParser( source, site, this );
 		source = new LinksParser().runParser( source, site );

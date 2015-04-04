@@ -32,7 +32,7 @@ import vnet.java.util.MySQLUtils;
 
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
-import com.chiorichan.exception.StartupException;
+import com.chiorichan.lang.StartupException;
 import com.chiorichan.util.ObjectUtil;
 import com.chiorichan.util.StringUtil;
 import com.google.common.collect.Lists;

@@ -7,16 +7,24 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.exception;
+package com.chiorichan.lang;
 
-public class UnhandledException extends Exception
+public class StartupException extends RuntimeException
 {
-	private static final long serialVersionUID = -7820557499294033093L;
-	public String reason;
+	private static final long serialVersionUID = 13L;
 	
-	public UnhandledException( String format, Throwable thrown )
+	public StartupException( String msg )
 	{
-		super( thrown );
-		reason = format;
+		super( msg );
+	}
+	
+	public StartupException( Throwable e )
+	{
+		super( e );
+	}
+	
+	public StartupException( String msg, Throwable e )
+	{
+		super( msg, e );
 	}
 }

@@ -19,9 +19,9 @@ import java.io.File;
 import java.net.InetSocketAddress;
 
 import com.chiorichan.Loader;
-import com.chiorichan.exception.StartupException;
 import com.chiorichan.http.HttpInitializer;
 import com.chiorichan.https.HttpsInitializer;
+import com.chiorichan.lang.StartupException;
 import com.chiorichan.net.query.QueryServerInitializer;
 import com.chiorichan.util.Common;
 

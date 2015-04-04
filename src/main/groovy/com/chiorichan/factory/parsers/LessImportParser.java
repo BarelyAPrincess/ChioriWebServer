@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.factory.preprocessors;
+package com.chiorichan.factory.parsers;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,8 +15,6 @@ import java.io.IOException;
 import org.apache.commons.io.FileUtils;
 
 import com.chiorichan.Loader;
-import com.chiorichan.exception.ShellExecuteException;
-import com.chiorichan.factory.parsers.BasicParser;
 
 public class LessImportParser extends BasicParser
 {
@@ -27,14 +25,14 @@ public class LessImportParser extends BasicParser
 		super( "@import[: ]*(.*);", "(@import[: ]*.*;)" );
 	}
 	
-	public String runParser( String source, File rootDir ) throws ShellExecuteException
+	public String runParser( String source, File rootDir ) throws Exception
 	{
 		this.rootDir = rootDir;
 		return runParser( source );
 	}
 	
 	@Override
-	public String resolveMethod( String... args ) throws ShellExecuteException
+	public String resolveMethod( String... args ) throws Exception
 	{
 		File imp = ( args[0].startsWith( "/" ) || args[0].startsWith( "\\" ) || rootDir == null ) ? new File( args[0] ) : new File( rootDir, args[0] );
 		

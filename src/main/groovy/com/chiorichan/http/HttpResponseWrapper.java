@@ -38,7 +38,7 @@ import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.event.http.ErrorEvent;
 import com.chiorichan.event.http.HttpExceptionEvent;
-import com.chiorichan.exception.HttpErrorException;
+import com.chiorichan.lang.HttpErrorException;
 import com.chiorichan.util.Versioning;
 import com.google.common.collect.Maps;
 

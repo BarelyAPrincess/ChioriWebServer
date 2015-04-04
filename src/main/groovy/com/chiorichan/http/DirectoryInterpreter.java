@@ -18,8 +18,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.chiorichan.ContentTypes;
-import com.chiorichan.exception.HttpErrorException;
 import com.chiorichan.framework.WebUtils;
+import com.chiorichan.lang.HttpErrorException;
 import com.chiorichan.util.Versioning;
 import com.google.common.collect.Lists;
 

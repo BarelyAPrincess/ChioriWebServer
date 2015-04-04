@@ -13,6 +13,7 @@ server:
   admin: chiorigreene@gmail.com
   allowDirectoryListing: false
   haltOnSevereError: false
+  throwInternalServerErrorOnWarnings: false
   enableWebServer: true
   enableTcpServer: true
   allowQuery: false

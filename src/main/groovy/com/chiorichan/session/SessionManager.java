@@ -17,8 +17,8 @@ import com.chiorichan.ConsoleColor;
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
-import com.chiorichan.exception.StartupException;
 import com.chiorichan.http.HttpRequestWrapper;
+import com.chiorichan.lang.StartupException;
 import com.chiorichan.util.Common;
 import com.google.common.collect.Lists;
 

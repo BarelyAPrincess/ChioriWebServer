@@ -36,7 +36,7 @@ public class ImagePostProcessor implements PostProcessor
 	}
 	
 	@Override
-	public ByteBuf process( EvalMetaData meta, ByteBuf buf )
+	public ByteBuf process( EvalMetaData meta, ByteBuf buf ) throws Exception
 	{
 		float x = 0;
 		float y = 0;

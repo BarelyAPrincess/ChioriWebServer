@@ -34,7 +34,7 @@ public class JSMinPostProcessor implements PostProcessor
 	}
 	
 	@Override
-	public ByteBuf process( EvalMetaData meta, ByteBuf buf )
+	public ByteBuf process( EvalMetaData meta, ByteBuf buf ) throws Exception
 	{
 		String code = buf.toString( Charset.defaultCharset() );
 		List<SourceFile> externs = Lists.newArrayList();

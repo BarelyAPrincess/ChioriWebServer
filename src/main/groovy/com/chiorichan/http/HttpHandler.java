@@ -38,6 +38,8 @@ import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
 
+import org.codehaus.groovy.runtime.NullObject;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
@@ -50,13 +52,13 @@ import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.RenderEvent;
 import com.chiorichan.event.server.RequestEvent;
 import com.chiorichan.event.server.ServerVars;
-import com.chiorichan.exception.HttpErrorException;
-import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalFactoryResult;
 import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.framework.Site;
 import com.chiorichan.framework.SiteException;
+import com.chiorichan.lang.EvalFactoryException;
+import com.chiorichan.lang.HttpErrorException;
 import com.chiorichan.permission.PermissionDefault;
 import com.chiorichan.permission.PermissionResult;
 import com.chiorichan.session.SessionProvider;
@@ -552,15 +554,39 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				meta.params.putAll( fi.getRewriteParams() );
 				meta.params.putAll( request.getGetMap() );
 				EvalFactoryResult result = factory.eval( html, meta, currentSite );
+				
+				if ( result.hasExceptions() )
+				{
+					if ( Loader.getConfig().getBoolean( "server.throwInternalServerErrorOnWarnings", false ) )
+					{
+						throw new IOException( "Ignorable Exceptions were thrown, disable this behavior with the `throwInternalServerErrorOnWarnings` option in config.", result.getExceptions()[0] );
+					}
+					else
+					{
+						for ( Exception e : result.getExceptions() )
+						{
+							getLogger().warning( e.getMessage() );
+							getLogger().warning( "" + e.getStackTrace()[0] );
+						}
+					}
+				}
+				
 				if ( result.isSuccessful() )
 				{
 					rendered.writeBytes( result.getResult() );
-					if ( result.getObject() != null )
-						rendered.writeBytes( ObjectUtil.castToString( result.getObject() ).getBytes() );
+					if ( result.getObject() != null && ! ( result.getObject() instanceof NullObject ) )
+						try
+						{
+							rendered.writeBytes( ObjectUtil.castToStringWithException( result.getObject() ).getBytes() );
+						}
+						catch ( Exception e )
+						{
+							e.printStackTrace();
+						}
 				}
 			}
 		}
-		catch ( ShellExecuteException e )
+		catch ( EvalFactoryException e )
 		{
 			throw new IOException( "Exception encountered during shell execution of requested file.", e );
 		}
@@ -574,15 +600,39 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				meta.params.putAll( request.getRewriteMap() );
 				meta.params.putAll( request.getGetMap() );
 				EvalFactoryResult result = factory.eval( fi, meta, currentSite );
+				
+				if ( result.hasExceptions() )
+				{
+					if ( Loader.getConfig().getBoolean( "server.throwInternalServerErrorOnWarnings", false ) )
+					{
+						throw new IOException( "Ignorable Exceptions were thrown, disable this behavior with the `throwInternalServerErrorOnWarnings` option in config.", result.getExceptions()[0] );
+					}
+					else
+					{
+						for ( Exception e : result.getExceptions() )
+						{
+							getLogger().warning( e.getMessage() );
+							getLogger().warning( "" + e.getStackTrace()[0] );
+						}
+					}
+				}
+				
 				if ( result.isSuccessful() )
 				{
 					rendered.writeBytes( result.getResult() );
-					if ( result.getObject() != null )
-						rendered.writeBytes( ObjectUtil.castToString( result.getObject() ).getBytes() );
+					if ( result.getObject() != null && ! ( result.getObject() instanceof NullObject ) )
+						try
+						{
+							rendered.writeBytes( ObjectUtil.castToStringWithException( result.getObject() ).getBytes() );
+						}
+						catch ( Exception e )
+						{
+							e.printStackTrace();
+						}
 				}
 			}
 		}
-		catch ( ShellExecuteException e )
+		catch ( EvalFactoryException e )
 		{
 			throw new IOException( "Exception encountered during shell execution of requested file.", e );
 		}

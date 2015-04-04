@@ -11,8 +11,8 @@ package com.chiorichan.framework;
 
 import java.io.IOException;
 
-import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.factory.EvalFactoryResult;
+import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.session.SessionProvider;
 
 public class HttpUtilsWrapper extends WebUtils
@@ -26,42 +26,42 @@ public class HttpUtilsWrapper extends WebUtils
 	
 	// TODO Improve and differ what eval and read do
 	
-	public EvalFactoryResult evalFile( String file ) throws IOException, ShellExecuteException
+	public EvalFactoryResult evalFile( String file ) throws IOException, EvalFactoryException
 	{
 		return evalFile( sess.getEvalFactory(), sess.getParentSession().getSite(), file );
 	}
 	
-	public EvalFactoryResult evalPackage( String pack ) throws ShellExecuteException
+	public EvalFactoryResult evalPackage( String pack ) throws EvalFactoryException
 	{
 		return evalPackage( sess.getEvalFactory(), sess.getParentSession().getSite(), pack );
 	}
 	
-	public EvalFactoryResult evalPackageWithException( String pack, Object... global ) throws IOException, ShellExecuteException
+	public EvalFactoryResult evalPackageWithException( String pack, Object... global ) throws IOException, EvalFactoryException
 	{
 		return evalPackageWithException( sess.getEvalFactory(), sess.getParentSession().getSite(), pack );
 	}
 	
-	public EvalFactoryResult evalPackageWithException( String pack ) throws IOException, ShellExecuteException
+	public EvalFactoryResult evalPackageWithException( String pack ) throws IOException, EvalFactoryException
 	{
 		return evalPackageWithException( sess.getEvalFactory(), sess.getParentSession().getSite(), pack );
 	}
 	
-	public String readFile( String file ) throws IOException, ShellExecuteException
+	public String readFile( String file ) throws IOException, EvalFactoryException
 	{
 		return evalFile( sess.getEvalFactory(), sess.getParentSession().getSite(), file ).getString();
 	}
 	
-	public String readPackage( String pack ) throws ShellExecuteException
+	public String readPackage( String pack ) throws EvalFactoryException
 	{
 		return evalPackage( sess.getEvalFactory(), sess.getParentSession().getSite(), pack ).getString();
 	}
 	
-	public String readPackageWithException( String pack, Object... global ) throws IOException, ShellExecuteException
+	public String readPackageWithException( String pack, Object... global ) throws IOException, EvalFactoryException
 	{
 		return evalPackageWithException( sess.getEvalFactory(), sess.getParentSession().getSite(), pack ).getString();
 	}
 	
-	public String readPackageWithException( String pack ) throws IOException, ShellExecuteException
+	public String readPackageWithException( String pack ) throws IOException, EvalFactoryException
 	{
 		return evalPackageWithException( sess.getEvalFactory(), sess.getParentSession().getSite(), pack ).getString();
 	}

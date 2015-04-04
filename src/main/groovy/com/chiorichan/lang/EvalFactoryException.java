@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.exception;
+package com.chiorichan.lang;
 
 import java.util.List;
 
@@ -19,43 +19,42 @@ import com.chiorichan.factory.ShellFactory;
  *
  * @author Chiori Greene
  */
-public class ShellExecuteException extends Exception
+public class EvalFactoryException extends Exception
 {
 	private static final long serialVersionUID = -1611181613618341914L;
 	
 	List<ScriptTraceElement> scriptTrace;
 	
-	public ShellExecuteException( String message, List<ScriptTraceElement> scriptTrace )
+	public EvalFactoryException( String message, List<ScriptTraceElement> scriptTrace )
 	{
 		super( message );
 		this.scriptTrace = scriptTrace;
 	}
 	
-	
-	public ShellExecuteException( String message, Throwable cause, List<ScriptTraceElement> scriptTrace )
+	public EvalFactoryException( String message, Throwable cause, List<ScriptTraceElement> scriptTrace )
 	{
 		super( message, cause );
 		this.scriptTrace = scriptTrace;
 	}
 	
-	public ShellExecuteException( Throwable cause, List<ScriptTraceElement> scriptTrace )
+	public EvalFactoryException( Throwable cause, List<ScriptTraceElement> scriptTrace )
 	{
 		super( cause );
 		this.scriptTrace = scriptTrace;
 	}
 	
-	public ShellExecuteException( List<ScriptTraceElement> scriptTrace )
+	public EvalFactoryException( List<ScriptTraceElement> scriptTrace )
 	{
 		this.scriptTrace = scriptTrace;
 	}
 	
-	public ShellExecuteException( String message, ShellFactory shellFactory )
+	public EvalFactoryException( String message, ShellFactory shellFactory )
 	{
 		super( message );
 		scriptTrace = shellFactory.examineStackTrace( getStackTrace() );
 	}
 	
-	public ShellExecuteException( String message, Throwable cause, ShellFactory shellFactory )
+	public EvalFactoryException( String message, Throwable cause, ShellFactory shellFactory )
 	{
 		super( message, cause );
 		scriptTrace = shellFactory.examineStackTrace( cause.getStackTrace() );
@@ -72,7 +71,7 @@ public class ShellExecuteException extends Exception
 	 * @param metaData
 	 *            The script EvalMetaData
 	 */
-	public ShellExecuteException( Throwable cause, ShellFactory shellFactory, EvalMetaData metaData )
+	public EvalFactoryException( Throwable cause, ShellFactory shellFactory, EvalMetaData metaData )
 	{
 		super( cause );
 		scriptTrace = shellFactory.examineStackTrace( cause.getStackTrace() );
@@ -80,13 +79,13 @@ public class ShellExecuteException extends Exception
 		scriptTrace.add( new ScriptTraceElement( cause.getMessage(), metaData ) );
 	}
 	
-	public ShellExecuteException( Throwable cause, ShellFactory shellFactory )
+	public EvalFactoryException( Throwable cause, ShellFactory shellFactory )
 	{
 		super( cause );
 		scriptTrace = shellFactory.examineStackTrace( cause.getStackTrace() );
 	}
 	
-	public ShellExecuteException( ShellFactory shellFactory )
+	public EvalFactoryException( ShellFactory shellFactory )
 	{
 		scriptTrace = shellFactory.examineStackTrace( getStackTrace() );
 	}

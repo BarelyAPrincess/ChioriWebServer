@@ -12,9 +12,9 @@ package com.chiorichan.factory.interpreters;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.ShellFactory;
+import com.chiorichan.lang.EvalFactoryException;
 
 /**
  * Simple HTML SeaShell.
@@ -29,7 +29,7 @@ public class HTMLInterpreter implements Interpreter
 	}
 	
 	@Override
-	public String eval( EvalMetaData meta, String code, ShellFactory shellFactory, ByteArrayOutputStream bs ) throws ShellExecuteException
+	public String eval( EvalMetaData meta, String code, ShellFactory shellFactory, ByteArrayOutputStream bs ) throws EvalFactoryException
 	{
 		try
 		{
@@ -37,7 +37,7 @@ public class HTMLInterpreter implements Interpreter
 		}
 		catch ( IOException e )
 		{
-			throw new ShellExecuteException( e, shellFactory );
+			throw new EvalFactoryException( e, shellFactory );
 		}
 		return "";
 	}

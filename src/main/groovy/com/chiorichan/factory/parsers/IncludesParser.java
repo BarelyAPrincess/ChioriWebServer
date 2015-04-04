@@ -12,7 +12,6 @@ package com.chiorichan.factory.parsers;
 import java.io.File;
 
 import com.chiorichan.Loader;
-import com.chiorichan.exception.ShellExecuteException;
 import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.framework.Site;
 
@@ -26,7 +25,7 @@ public class IncludesParser extends HTMLCommentParser
 		super( "include" );
 	}
 	
-	public String runParser( String source, Site site, EvalFactory factory ) throws ShellExecuteException
+	public String runParser( String source, Site site, EvalFactory factory ) throws Exception
 	{
 		this.site = site;
 		this.factory = factory;
@@ -35,7 +34,7 @@ public class IncludesParser extends HTMLCommentParser
 	}
 	
 	@Override
-	public String resolveMethod( String... args ) throws ShellExecuteException
+	public String resolveMethod( String... args ) throws Exception
 	{
 		if ( args.length > 1 )
 			Loader.getLogger().warning( "CodeEvalFactory: include() method only accepts one argument, ignored." );

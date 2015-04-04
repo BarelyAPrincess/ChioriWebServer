@@ -24,7 +24,7 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
-import com.chiorichan.exception.StartupException;
+import com.chiorichan.lang.StartupException;
 import com.chiorichan.util.FileUtil;
 import com.google.common.collect.Lists;
 
