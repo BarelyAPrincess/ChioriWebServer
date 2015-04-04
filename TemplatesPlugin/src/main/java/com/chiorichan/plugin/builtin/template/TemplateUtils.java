@@ -44,7 +44,7 @@ public class TemplateUtils
 			if ( ste.getClassName().startsWith( "com.chiori" ) )
 				previewType = "app";
 			
-			if ( false ) // is Groovy Script
+			if ( ste.getFileName().matches( "GroovyScript\\d*\\.chi" ) )
 				previewType = "groovy";
 			
 			String codePreview = "There is no source file available for this preview";
