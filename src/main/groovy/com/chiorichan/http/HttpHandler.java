@@ -18,6 +18,8 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.multipart.Attribute;
 import io.netty.handler.codec.http.multipart.DefaultHttpDataFactory;
 import io.netty.handler.codec.http.multipart.DiskAttribute;
@@ -38,12 +40,12 @@ import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
 
-import org.codehaus.groovy.runtime.NullObject;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import org.codehaus.groovy.runtime.NullObject;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.ConsoleLogger;
@@ -145,114 +147,139 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	@Override
 	protected void messageReceived( ChannelHandlerContext ctx, Object msg ) throws Exception
 	{
-		if ( msg instanceof FullHttpRequest )
+		try
 		{
-			requestOrig = ( FullHttpRequest ) msg;
-			request = new HttpRequestWrapper( ctx.channel(), requestOrig, ssl );
-			response = request.getResponse();
-			
-			if ( is100ContinueExpected( ( HttpRequest ) msg ) )
-				send100Continue( ctx );
-			
-			Site currentSite = request.getSite();
-			
-			File tmpFileDirectory = ( currentSite != null ) ? currentSite.getTempFileDirectory() : Loader.getTempFileDirectory();
-			
-			setTempDirectory( tmpFileDirectory );
-			
-			if ( request.isWebsocketRequest() )
+			if ( msg instanceof FullHttpRequest )
 			{
-				try
+				if ( !Loader.hasFinishedStartup() )
 				{
-					WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory( request.getWebSocketLocation( requestOrig ), null, true );
-					handshaker = wsFactory.newHandshaker( requestOrig );
-					if ( handshaker == null )
-					{
-						WebSocketServerHandshakerFactory.sendUnsupportedWebSocketVersionResponse( ctx.channel() );
-					}
-					else
-					{
-						handshaker.handshake( ctx.channel(), requestOrig );
-					}
-				}
-				catch ( WebSocketHandshakeException e )
-				{
-					getLogger().severe( "A request was made on the websocket uri '/fw/websocket' but it failed to handshake for reason '" + e.getMessage() + "'." );
-					response.sendError( 500, null, "This URI is for websocket requests only<br />" + e.getMessage() );
-				}
-				return;
-			}
-			
-			if ( !request.getMethod().equals( HttpMethod.GET ) )
-			{
-				try
-				{
-					decoder = new HttpPostRequestDecoder( factory, requestOrig );
-				}
-				catch ( ErrorDataDecoderException e )
-				{
-					e.printStackTrace();
-					response.sendException( e );
+					StringBuilder sb = new StringBuilder();
+					sb.append( "<h1>503 - Service Unavailable</h1>\n" );
+					sb.append( "<p>I'm sorry to have to be the one to tell you this but the server is currently unavailable.</p>\n" );
+					sb.append( "<p>This is most likely due to many possibilities, most commonly being it's currently booting up. Which would be great news because it means your request should succeed if you try again.</p>\n" );
+					sb.append( "<p>But it is also possible that the server is actually running in a low level mode and might be out for some time. If you feel this is a mistake, might I suggest you talk with the server admin.</p>\n" );
+					sb.append( "<p><i>You have a good now and we will see you again soon. :)</i></p>\n" );
+					sb.append( "<hr>\n" );
+					sb.append( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")<br />" + Versioning.getCopyright() + "</small>" );
+					
+					FullHttpResponse response = new DefaultFullHttpResponse( HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf( 503 ), Unpooled.wrappedBuffer( sb.toString().getBytes() ) );
+					ctx.write( response );
+					
 					return;
 				}
-			}
-			
-			request.addContentLength( requestOrig.content().readableBytes() );
-			
-			if ( decoder != null )
-			{
-				try
-				{
-					decoder.offer( requestOrig );
-				}
-				catch ( ErrorDataDecoderException e )
-				{
-					e.printStackTrace();
-					response.sendError( e );
-					// ctx.channel().close();
-					return;
-				}
-				catch ( IllegalArgumentException e )
-				{
-					// TODO Handle This! Maybe?
-					// java.lang.IllegalArgumentException: empty name
-				}
-				readHttpDataChunkByChunk();
 				
-				finishRequest();
+				requestOrig = ( FullHttpRequest ) msg;
+				request = new HttpRequestWrapper( ctx.channel(), requestOrig, ssl );
+				response = request.getResponse();
+				
+				if ( is100ContinueExpected( ( HttpRequest ) msg ) )
+					send100Continue( ctx );
+				
+				Site currentSite = request.getSite();
+				
+				File tmpFileDirectory = ( currentSite != null ) ? currentSite.getTempFileDirectory() : Loader.getTempFileDirectory();
+				
+				setTempDirectory( tmpFileDirectory );
+				
+				if ( request.isWebsocketRequest() )
+				{
+					try
+					{
+						WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory( request.getWebSocketLocation( requestOrig ), null, true );
+						handshaker = wsFactory.newHandshaker( requestOrig );
+						if ( handshaker == null )
+						{
+							WebSocketServerHandshakerFactory.sendUnsupportedWebSocketVersionResponse( ctx.channel() );
+						}
+						else
+						{
+							handshaker.handshake( ctx.channel(), requestOrig );
+						}
+					}
+					catch ( WebSocketHandshakeException e )
+					{
+						getLogger().severe( "A request was made on the websocket uri '/fw/websocket' but it failed to handshake for reason '" + e.getMessage() + "'." );
+						response.sendError( 500, null, "This URI is for websocket requests only<br />" + e.getMessage() );
+					}
+					return;
+				}
+				
+				if ( !request.getMethod().equals( HttpMethod.GET ) )
+				{
+					try
+					{
+						decoder = new HttpPostRequestDecoder( factory, requestOrig );
+					}
+					catch ( ErrorDataDecoderException e )
+					{
+						e.printStackTrace();
+						response.sendException( e );
+						return;
+					}
+				}
+				
+				request.addContentLength( requestOrig.content().readableBytes() );
+				
+				if ( decoder != null )
+				{
+					try
+					{
+						decoder.offer( requestOrig );
+					}
+					catch ( ErrorDataDecoderException e )
+					{
+						e.printStackTrace();
+						response.sendError( e );
+						// ctx.channel().close();
+						return;
+					}
+					catch ( IllegalArgumentException e )
+					{
+						// TODO Handle This! Maybe?
+						// java.lang.IllegalArgumentException: empty name
+					}
+					readHttpDataChunkByChunk();
+					
+					finishRequest();
+				}
+				else
+					finishRequest();
+			}
+			else if ( msg instanceof WebSocketFrame )
+			{
+				WebSocketFrame frame = ( WebSocketFrame ) msg;
+				
+				// Check for closing frame
+				if ( frame instanceof CloseWebSocketFrame )
+				{
+					handshaker.close( ctx.channel(), ( CloseWebSocketFrame ) frame.retain() );
+					return;
+				}
+				
+				if ( frame instanceof PingWebSocketFrame )
+				{
+					ctx.channel().write( new PongWebSocketFrame( frame.content().retain() ) );
+					return;
+				}
+				
+				if ( ! ( frame instanceof TextWebSocketFrame ) )
+				{
+					throw new UnsupportedOperationException( String.format( "%s frame types not supported", frame.getClass().getName() ) );
+				}
+				
+				String request = ( ( TextWebSocketFrame ) frame ).text();
+				getLogger().fine( "Received '" + request + "' over WebSocket connection '" + ctx.channel() + "'" );
+				ctx.channel().write( new TextWebSocketFrame( request.toUpperCase() ) );
 			}
 			else
-				finishRequest();
+			{
+				getLogger().warning( "Received Object '" + msg.getClass() + "' and had nothing to do with it, is this a bug?" );
+			}
 		}
-		else if ( msg instanceof WebSocketFrame )
+		catch ( Throwable t )
 		{
-			WebSocketFrame frame = ( WebSocketFrame ) msg;
-			
-			// Check for closing frame
-			if ( frame instanceof CloseWebSocketFrame )
-			{
-				handshaker.close( ctx.channel(), ( CloseWebSocketFrame ) frame.retain() );
-				return;
-			}
-			
-			if ( frame instanceof PingWebSocketFrame )
-			{
-				ctx.channel().write( new PongWebSocketFrame( frame.content().retain() ) );
-				return;
-			}
-			
-			if ( ! ( frame instanceof TextWebSocketFrame ) )
-			{
-				throw new UnsupportedOperationException( String.format( "%s frame types not supported", frame.getClass().getName() ) );
-			}
-			
-			String request = ( ( TextWebSocketFrame ) frame ).text();
-			getLogger().fine( "Received '" + request + "' over WebSocket connection '" + ctx.channel() + "'" );
-			ctx.channel().write( new TextWebSocketFrame( request.toUpperCase() ) );
-		}
-		else
-		{
-			getLogger().warning( "Received Object '" + msg.getClass() + "' and had nothing to do with it, is this a bug?" );
+			t.printStackTrace();
+			Loader.getLogger().info( ConsoleColor.RED + "Got an uncaught exception. Please review!" );
 		}
 	}
 	
