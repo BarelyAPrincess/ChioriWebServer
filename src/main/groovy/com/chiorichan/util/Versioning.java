@@ -76,4 +76,10 @@ public class Versioning
 		loadMetaData();
 		return metadata.getProperty( "project.name", "Chiori Web Server" );
 	}
+	
+	public static String getProductSimple()
+	{
+		loadMetaData();
+		return metadata.getProperty( "project.name", "ChioriWebServer" ).replaceAll( " ", "" );
+	}
 }

@@ -12,10 +12,10 @@ package com.chiorichan.plugin.loader;
 import java.io.File;
 import java.util.regex.Pattern;
 
-import com.chiorichan.plugin.InvalidDescriptionException;
-import com.chiorichan.plugin.InvalidPluginException;
+import com.chiorichan.lang.InvalidDescriptionException;
+import com.chiorichan.lang.InvalidPluginException;
+import com.chiorichan.lang.UnknownDependencyException;
 import com.chiorichan.plugin.PluginDescriptionFile;
-import com.chiorichan.plugin.UnknownDependencyException;
 
 /**
  * Represents a plugin loader, which handles direct access to specific types

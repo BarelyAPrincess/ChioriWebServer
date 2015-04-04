@@ -1,6 +1,6 @@
 import java.text.SimpleDateFormat;
 
-defaultTasks 'clean', 'writePropertiesFile', 'shadowJar', ':TemplatesPlugin:build', 'javadocArchive', 'sourcesArchive'
+defaultTasks 'clean', 'writePropertiesFile', 'shadowJar', ':TemplatesPlugin:build', ':DropboxPlugin:build', 'javadocArchive', 'sourcesArchive'
 
 apply plugin: 'eclipse'
 apply plugin: 'groovy'

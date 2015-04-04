@@ -24,6 +24,7 @@ import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 import com.chiorichan.RunLevel;
 import com.chiorichan.configuration.file.YamlConfiguration;
+import com.chiorichan.lang.InvalidDescriptionException;
 import com.google.common.collect.ImmutableList;
 
 /**

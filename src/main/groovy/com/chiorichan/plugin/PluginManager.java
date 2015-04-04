@@ -35,6 +35,9 @@ import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.HandlerList;
 import com.chiorichan.event.Listener;
 import com.chiorichan.event.server.ServerRunLevelEvent;
+import com.chiorichan.lang.InvalidDescriptionException;
+import com.chiorichan.lang.InvalidPluginException;
+import com.chiorichan.lang.UnknownDependencyException;
 import com.chiorichan.plugin.loader.JavaPluginLoader;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.plugin.loader.PluginLoader;
@@ -586,7 +589,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 		}
 	}
 	
-	private static ConsoleLogger getLogger()
+	public static ConsoleLogger getLogger()
 	{
 		return Loader.getLogger( "PluginMgr" );
 	}

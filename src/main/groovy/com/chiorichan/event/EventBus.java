@@ -23,7 +23,7 @@ import org.apache.commons.lang3.Validate;
 import com.chiorichan.Loader;
 import com.chiorichan.Warning;
 import com.chiorichan.Warning.WarningState;
-import com.chiorichan.plugin.AuthorNagException;
+import com.chiorichan.lang.AuthorNagException;
 import com.chiorichan.plugin.PluginBase;
 
 public class EventBus

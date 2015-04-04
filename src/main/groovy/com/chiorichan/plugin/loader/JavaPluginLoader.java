@@ -44,11 +44,13 @@ import com.chiorichan.event.RegisteredListener;
 import com.chiorichan.event.TimedRegisteredListener;
 import com.chiorichan.event.server.PluginDisableEvent;
 import com.chiorichan.event.server.PluginEnableEvent;
-import com.chiorichan.plugin.AuthorNagException;
-import com.chiorichan.plugin.InvalidDescriptionException;
-import com.chiorichan.plugin.InvalidPluginException;
+import com.chiorichan.lang.AuthorNagException;
+import com.chiorichan.lang.InvalidDescriptionException;
+import com.chiorichan.lang.InvalidPluginException;
+import com.chiorichan.lang.PluginUnconfiguredException;
+import com.chiorichan.lang.UnknownDependencyException;
 import com.chiorichan.plugin.PluginDescriptionFile;
-import com.chiorichan.plugin.UnknownDependencyException;
+import com.chiorichan.plugin.PluginManager;
 import com.google.common.collect.ImmutableList;
 
 /**
@@ -89,7 +91,7 @@ public final class JavaPluginLoader implements PluginLoader
 		}
 		else if ( dataFolder.isDirectory() && oldDataFolder.isDirectory() )
 		{
-			Loader.getLogger().log( Level.INFO, String.format( "While loading %s (%s) found old-data folder: %s next to the new one: %s", description.getName(), file, oldDataFolder, dataFolder ) );
+			PluginManager.getLogger().log( Level.INFO, String.format( "While loading %s (%s) found old-data folder: %s next to the new one: %s", description.getName(), file, oldDataFolder, dataFolder ) );
 		}
 		else if ( oldDataFolder.isDirectory() && !dataFolder.exists() )
 		{
@@ -97,7 +99,7 @@ public final class JavaPluginLoader implements PluginLoader
 			{
 				throw new InvalidPluginException( "Unable to rename old data folder: '" + oldDataFolder + "' to: '" + dataFolder + "'" );
 			}
-			Loader.getLogger().log( Level.INFO, String.format( "While loading %s (%s) renamed data folder: '%s' to '%s'", description.getName(), file, oldDataFolder, dataFolder ) );
+			PluginManager.getLogger().log( Level.INFO, String.format( "While loading %s (%s) renamed data folder: '%s' to '%s'", description.getName(), file, oldDataFolder, dataFolder ) );
 		}
 		
 		if ( dataFolder.exists() && !dataFolder.isDirectory() )
@@ -317,7 +319,7 @@ public final class JavaPluginLoader implements PluginLoader
 		}
 		catch ( NoClassDefFoundError e )
 		{
-			Loader.getLogger().severe( "Plugin " + plugin.getDescription().getFullName() + " has failed to register events for " + listener.getClass() + " because " + e.getMessage() + " does not exist." );
+			PluginManager.getLogger().severe( "Plugin " + plugin.getDescription().getFullName() + " has failed to register events for " + listener.getClass() + " because " + e.getMessage() + " does not exist." );
 			return ret;
 		}
 		
@@ -329,7 +331,7 @@ public final class JavaPluginLoader implements PluginLoader
 			final Class<?> checkClass;
 			if ( method.getParameterTypes().length != 1 || !Event.class.isAssignableFrom( checkClass = method.getParameterTypes()[0] ) )
 			{
-				Loader.getLogger().severe( plugin.getDescription().getFullName() + " attempted to register an invalid EventHandler method signature \"" + method.toGenericString() + "\" in " + listener.getClass() );
+				PluginManager.getLogger().severe( plugin.getDescription().getFullName() + " attempted to register an invalid EventHandler method signature \"" + method.toGenericString() + "\" in " + listener.getClass() );
 				continue;
 			}
 			final Class<? extends Event> eventClass = checkClass.asSubclass( Event.class );
@@ -352,7 +354,7 @@ public final class JavaPluginLoader implements PluginLoader
 					{
 						break;
 					}
-					Loader.getLogger().log( Level.WARNING, String.format( "\"%s\" has registered a listener for %s on method \"%s\", but the event is Deprecated." + " \"%s\"; please notify the authors %s.", plugin.getDescription().getFullName(), clazz.getName(), method.toGenericString(), ( warning != null && warning.reason().length() != 0 ) ? warning.reason() : "Server performance will be affected", Arrays.toString( plugin.getDescription().getAuthors().toArray() ) ), warningState == WarningState.ON ? new AuthorNagException( null ) : null );
+					PluginManager.getLogger().log( Level.WARNING, String.format( "\"%s\" has registered a listener for %s on method \"%s\", but the event is Deprecated." + " \"%s\"; please notify the authors %s.", plugin.getDescription().getFullName(), clazz.getName(), method.toGenericString(), ( warning != null && warning.reason().length() != 0 ) ? warning.reason() : "Server performance will be affected", Arrays.toString( plugin.getDescription().getAuthors().toArray() ) ), warningState == WarningState.ON ? new AuthorNagException( null ) : null );
 					break;
 				}
 			}
@@ -397,7 +399,7 @@ public final class JavaPluginLoader implements PluginLoader
 		
 		if ( !plugin.isEnabled() )
 		{
-			Loader.getLogger().info( "Enabling " + plugin.getDescription().getFullName() );
+			PluginManager.getLogger().info( "Enabling " + plugin.getDescription().getFullName() );
 			
 			Plugin jPlugin = ( Plugin ) plugin;
 			
@@ -412,9 +414,13 @@ public final class JavaPluginLoader implements PluginLoader
 			{
 				jPlugin.setEnabled( true );
 			}
+			catch ( PluginUnconfiguredException ex )
+			{
+				PluginManager.getLogger().severe( "The plugin " + plugin.getDescription().getFullName() + " has reported that it's unconfigured. The plugin is now be disabled until this is resolved", ex );
+			}
 			catch ( Throwable ex )
 			{
-				Loader.getLogger().log( Level.SEVERE, "Error occurred while enabling " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
+				PluginManager.getLogger().severe( "Error occurred while enabling " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 			}
 			
 			// Perhaps abort here, rather than continue going, but as it stands,
@@ -431,7 +437,7 @@ public final class JavaPluginLoader implements PluginLoader
 		if ( plugin.isEnabled() )
 		{
 			String message = String.format( "Disabling %s", plugin.getDescription().getFullName() );
-			Loader.getLogger().info( message );
+			PluginManager.getLogger().info( message );
 			
 			Loader.getEventBus().callEvent( new PluginDisableEvent( plugin ) );
 			
@@ -444,7 +450,7 @@ public final class JavaPluginLoader implements PluginLoader
 			}
 			catch ( Throwable ex )
 			{
-				Loader.getLogger().log( Level.SEVERE, "Error occurred while disabling " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
+				PluginManager.getLogger().log( Level.SEVERE, "Error occurred while disabling " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 			}
 			
 			loaders.remove( jPlugin.getDescription().getName() );

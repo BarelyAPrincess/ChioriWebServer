@@ -19,7 +19,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.plugin.InvalidPluginException;
+import com.chiorichan.lang.InvalidPluginException;
 import com.chiorichan.plugin.PluginDescriptionFile;
 
 /**

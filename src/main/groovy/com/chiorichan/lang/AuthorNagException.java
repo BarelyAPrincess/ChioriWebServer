@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.plugin;
+package com.chiorichan.lang;
 
 @SuppressWarnings( "serial" )
 public class AuthorNagException extends RuntimeException
