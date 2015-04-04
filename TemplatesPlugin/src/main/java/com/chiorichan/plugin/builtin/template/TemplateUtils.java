@@ -37,7 +37,7 @@ public class TemplateUtils
 		
 		for ( StackTraceElement ste : stackTrace )
 		{
-			String fileName = ( ste.getFileName() == null ) ? "Unknown Source" : ste.getFileName() + "(" + ste.getLineNumber() + ")";
+			String fileName = ( ste.getFileName() == null ) ? "Unknown Source" : ste.getFileName() + ( ( ste.getLineNumber() > -1 ) ? "(" + ste.getLineNumber() + ")" : "" );
 			
 			String previewType = "core";
 			

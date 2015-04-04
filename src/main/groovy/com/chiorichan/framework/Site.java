@@ -767,7 +767,18 @@ public class Site
 	 */
 	public File getTempFileDirectory()
 	{
-		return new File( Loader.getTempFileDirectory(), getSiteId() );
+		File tmpFileDirectory = new File( Loader.getTempFileDirectory(), getSiteId() );
+		
+		if ( !tmpFileDirectory.exists() )
+			tmpFileDirectory.mkdirs();
+		
+		if ( !tmpFileDirectory.isDirectory() )
+			SiteManager.getLogger().severe( "The temp directory specified in the server configs is not a directory, File Uploads will FAIL until this problem is resolved." );
+		
+		if ( !tmpFileDirectory.canWrite() )
+			SiteManager.getLogger().severe( "The temp directory specified in the server configs is not writable, File Uploads will FAIL until this problem is resolved." );
+		
+		return tmpFileDirectory;
 	}
 	
 	@Override

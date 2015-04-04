@@ -2,8 +2,6 @@ package com.chiorichan.plugin.builtin.template;
 
 import io.netty.buffer.Unpooled;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -58,10 +56,10 @@ public class Template extends Plugin implements Listener
 		StringBuilder ob = new StringBuilder();
 		
 		String fileName = "";
-		int lineNo = -1;
+		int lineNum = -1;
+		int colNum = -1;
 		String className = null;
 		
-		StackTraceElement[] stackTrace = t.getStackTrace();
 		String codeSample = null;
 		
 		if ( t instanceof ShellExecuteException )
@@ -75,16 +73,28 @@ public class Template extends Plugin implements Listener
 			{
 				ScriptTraceElement ste = scriptTrace[0];
 				
-				lineNo = ste.getLineNumber();
-				className = ste.getClassName() + "." + ste.getMethodName();
+				lineNum = ste.getLineNumber();
+				colNum = ste.getColumnNumber();
+				
+				className = ste.getClassName();
+				String methodName = ste.getMethodName();
+				
+				if ( methodName != null && !methodName.isEmpty() )
+					className += "." + methodName;
+				
+				if ( className.isEmpty() )
+					className = null;
 				
 				EvalMetaData metaData = ste.getMetaData();
 				fileName = metaData.fileName;
 				
-				if ( metaData.source != null && !metaData.source.isEmpty() )
-					codeSample += "<p>Pre-evaluated Code:</p><pre>" + TemplateUtils.generateCodePreview( metaData.source, lineNo ) + "</pre>";
-				
-				codeSample = "<p>Source Code:</p><pre>" + TemplateUtils.generateCodePreview( ste ) + "</pre>";
+				if ( lineNum > -1 )
+				{
+					if ( metaData.source != null && !metaData.source.isEmpty() )
+						codeSample += "<p>Pre-evaluated Code:</p><pre>" + TemplateUtils.generateCodePreview( metaData.source, lineNum, colNum ) + "</pre>";
+					
+					codeSample = "<p>Source Code:</p><pre>" + TemplateUtils.generateCodePreview( ste ) + "</pre>";
+				}
 			}
 		}
 		else
@@ -96,20 +106,20 @@ public class Template extends Plugin implements Listener
 				ele = t.getCause().getStackTrace()[0];
 			
 			fileName = ele.getFileName();
-			lineNo = ele.getLineNumber();
+			lineNum = ele.getLineNumber();
 			className = ele.getClassName() + "." + ele.getMethodName();
 		}
 		
 		Loader.getLogger().warning( "Could not run file '" + fileName + "' because of error '" + t.getMessage() + "'" );
 		
-		ob.append( "<h1>Internal Server Exception Thrown</h1>\n" );
+		ob.append( "<h1>Exception Thrown</h1>\n" );
 		ob.append( "<p class=\"message\">\n" );
 		ob.append( t.getClass().getName() + ": " + t.getMessage() + "\n" );
 		ob.append( "</p>\n" );
 		ob.append( "\n" );
 		ob.append( "<div class=\"source\">\n" );
 		
-		ob.append( "<p class=\"file\">" + fileName + "(" + lineNo + "): <strong>" + ( ( className != null ) ? className : "" ) + "</strong></p>\n" );
+		ob.append( "<p class=\"file\">" + fileName + ( ( lineNum > -1 ) ? "(" + lineNum + ( ( colNum > -1 ) ? ":" + colNum : "" ) + ")" : "" ) + ( ( className != null ) ? ": <strong>" + className + "</strong>" : "" ) + "</p>\n" );
 		
 		ob.append( "\n" );
 		ob.append( "<div class=\"code\">\n" );

@@ -12,6 +12,7 @@ package com.chiorichan.http;
 import io.netty.handler.codec.http.multipart.DiskFileUpload;
 import io.netty.handler.codec.http.multipart.FileUpload;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 

@@ -326,6 +326,12 @@ public class HttpResponseWrapper
 		output.writeBytes( bytes );
 	}
 	
+	@Deprecated
+	public void print( byte[] bytes ) throws IOException
+	{
+		write( bytes );
+	}
+	
 	/**
 	 * Prints a single string of text to the buffered output
 	 * 

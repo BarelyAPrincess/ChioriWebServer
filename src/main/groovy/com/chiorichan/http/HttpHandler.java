@@ -97,11 +97,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		else
 			factory = new DefaultHttpDataFactory( minsize );
 		
-		// TODO Config option to delete temporary files on exit?
-		// DiskFileUpload.deleteOnExitTemporaryFile = true;
-		DiskFileUpload.baseDirectory = Loader.getTempFileDirectory().getAbsolutePath();
-		// DiskAttribute.deleteOnExitTemporaryFile = true;
-		DiskAttribute.baseDirectory = Loader.getTempFileDirectory().getAbsolutePath();
+		setTempDirectory( Loader.getTempFileDirectory() );
 		
 		// Initalize Static Server Vars
 		staticServerVars.put( ServerVars.SERVER_SOFTWARE, Versioning.getProduct() );
@@ -133,6 +129,16 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		
 	}
 	
+	public static void setTempDirectory( File tmpDir )
+	{
+		// TODO Config option to delete temporary files on exit?
+		// DiskFileUpload.deleteOnExitTemporaryFile = true;
+		// DiskAttribute.deleteOnExitTemporaryFile = true;
+		
+		DiskFileUpload.baseDirectory = tmpDir.getAbsolutePath();
+		DiskAttribute.baseDirectory = tmpDir.getAbsolutePath();
+	}
+	
 	@Override
 	protected void messageReceived( ChannelHandlerContext ctx, Object msg ) throws Exception
 	{
@@ -149,17 +155,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			
 			File tmpFileDirectory = ( currentSite != null ) ? currentSite.getTempFileDirectory() : Loader.getTempFileDirectory();
 			
-			if ( !tmpFileDirectory.exists() )
-				tmpFileDirectory.mkdirs();
-			
-			if ( !tmpFileDirectory.isDirectory() )
-				getLogger().severe( "The temp directory specified in the server configs is not a directory, File Uploads will FAIL until this problem is resolved." );
-			
-			if ( !tmpFileDirectory.canWrite() )
-				getLogger().severe( "The temp directory specified in the server configs is not writable, File Uploads will FAIL until this problem is resolved." );
-			
-			DiskFileUpload.baseDirectory = tmpFileDirectory.getAbsolutePath();
-			DiskAttribute.baseDirectory = tmpFileDirectory.getAbsolutePath();
+			setTempDirectory( tmpFileDirectory );
 			
 			if ( request.isWebsocketRequest() )
 			{
