@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 
@@ -19,7 +20,6 @@ import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.framework.WebUtils;
 import com.chiorichan.util.FileUtil;
-import com.chiorichan.util.StringUtil;
 
 public class TemplateUtils
 {
@@ -38,12 +38,6 @@ public class TemplateUtils
 		for ( StackTraceElement ste : stackTrace )
 		{
 			String fileName = ( ste.getFileName() == null ) ? "Unknown Source" : ste.getFileName() + "(" + ste.getLineNumber() + ")";
-			String codePreview = generateCodePreview( ste );
-			
-			boolean expanded = codePreview != null;
-			
-			if ( codePreview == null )
-				codePreview = "There was a problem getting this code preview, either the file is non-existent or could not be read.";
 			
 			String previewType = "core";
 			
@@ -52,6 +46,20 @@ public class TemplateUtils
 			
 			if ( false ) // is Groovy Script
 				previewType = "groovy";
+			
+			String codePreview = "There is no source file available for this preview";
+			boolean expanded = false;
+			
+			if ( !previewType.equals( "core" ) )
+			{
+				codePreview = generateCodePreview( ste );
+				
+				if ( codePreview != null )
+					expanded = true;
+				
+				if ( codePreview == null )
+					codePreview = "There was a problem getting this code preview, either the file is non-existent or could not be read.";
+			}
 			
 			sb.append( "<tr class=\"trace " + previewType + ( expanded ? " expanded" : " collapsed" ) + "\">\n" );
 			sb.append( "	<td class=\"number\">#" + l + "</td>\n" );
@@ -111,23 +119,25 @@ public class TemplateUtils
 		String fileUrl = className.replace( '.', '/' ).replace( "$1", "" ) + "." + InterpreterOverrides.getFileExtension( ste.getFileName() );
 		String finalUrl = gitHubGroovyUrl + fileUrl;
 		
-		String result = StringUtil.bytesToStringUTFNIO( WebUtils.readUrl( finalUrl ) );
+		byte[] result = WebUtils.readUrl( finalUrl );
 		
 		if ( result == null )
 		{
 			finalUrl = gitHubJavaUrl + fileUrl;
-			result = StringUtil.bytesToStringUTFNIO( WebUtils.readUrl( finalUrl ) );
+			result = WebUtils.readUrl( finalUrl );
 		}
+		
+		String finalResult;
 		
 		if ( result == null )
-			result = "Could not read file '" + fileUrl + "' from the GitHub repository.\nYou could be running a mismatching version to the repository or this file belongs to another repository.";
+			finalResult = "Could not read file '" + fileUrl + "' from the GitHub repository.\nYou could be running a mismatching version to the repository or this file belongs to another repository.";
 		else
 		{
-			result = generateCodePreview( result, lineNum );
-			result += "<br /><a target=\"_blank\" href=\"" + finalUrl + "\">View this file on our GitHub!</a>";
+			finalResult = generateCodePreview( new String( result ), lineNum );
+			finalResult += "<br /><a target=\"_blank\" href=\"" + finalUrl + "\">View this file on our GitHub!</a>";
 		}
 		
-		return result;
+		return finalResult;
 	}
 	
 	public static String generateCodePreview( ScriptTraceElement ste )
@@ -135,8 +145,9 @@ public class TemplateUtils
 		EvalMetaData metaData = ste.getMetaData();
 		File file = new File( metaData.fileName );
 		int lineNum = ste.getLineNumber();
+		int colNum = ste.getColumnNumber();
 		
-		return generateCodePreview( file, lineNum );
+		return generateCodePreview( file, lineNum, colNum );
 	}
 	
 	public static String generateCodePreview( File file, int lineNum )
@@ -161,7 +172,23 @@ public class TemplateUtils
 			return e.getMessage();
 		}
 		
-		// return generateCodeSample( source, lineNum, colNum );
+		if ( true )
+		{
+			try
+			{
+				byte[] bytes = new byte[is.available()];
+				
+				IOUtils.readFully( is, bytes );
+				
+				String source = new String( bytes );
+				
+				return generateCodePreview( source, lineNum, colNum );
+			}
+			catch ( IOException e )
+			{
+				e.printStackTrace();
+			}
+		}
 		
 		StringBuilder sb = new StringBuilder();
 		try
@@ -227,10 +254,9 @@ public class TemplateUtils
 			{
 				if ( cLine == lineNum )
 				{
-					if ( colNum > -1 )
+					if ( colNum > -1 && colNum <= l.length() )
 					{
-						colNum++;
-						
+						colNum--;
 						l = l.substring( 0, colNum ) + "<span style=\"background-color: red; font-weight: bolder;\">" + l.substring( colNum, colNum + 1 ) + "</span>" + l.substring( colNum + 1 );
 					}
 					

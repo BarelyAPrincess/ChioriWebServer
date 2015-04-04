@@ -11,6 +11,7 @@ package com.chiorichan.exception;
 
 import java.util.List;
 
+import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.factory.ShellFactory;
 
@@ -58,6 +59,25 @@ public class ShellExecuteException extends Exception
 	{
 		super( message, cause );
 		scriptTrace = shellFactory.examineStackTrace( cause.getStackTrace() );
+	}
+	
+	/**
+	 * Used for parsing errors where no script element was recorded,
+	 * so we have to fake one instead
+	 * 
+	 * @param cause
+	 *            The causing exception
+	 * @param shellFactory
+	 *            The ShellFactory used
+	 * @param metaData
+	 *            The script EvalMetaData
+	 */
+	public ShellExecuteException( Throwable cause, ShellFactory shellFactory, EvalMetaData metaData )
+	{
+		super( cause );
+		scriptTrace = shellFactory.examineStackTrace( cause.getStackTrace() );
+		
+		scriptTrace.add( new ScriptTraceElement( cause.getMessage(), metaData ) );
 	}
 	
 	public ShellExecuteException( Throwable cause, ShellFactory shellFactory )

@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
+import org.codehaus.groovy.control.CompilationFailedException;
 import org.codehaus.groovy.control.CompilerConfiguration;
 
 import com.chiorichan.ContentTypes;
@@ -464,6 +465,10 @@ public class EvalFactory
 					catch ( ShellExecuteException e )
 					{
 						throw e;
+					}
+					catch ( CompilationFailedException e ) // This is usually a parsing exception
+					{
+						throw new ShellExecuteException( e, shellFactory, meta );
 					}
 					catch ( GroovyRuntimeException e )
 					{

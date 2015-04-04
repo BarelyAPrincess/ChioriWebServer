@@ -67,10 +67,10 @@ public class ShellFactory
 	public Script makeScript( String scriptText, EvalMetaData metaData )
 	{
 		String scriptName = "GroovyScript" + WebUtils.randomNum( 8 ) + ".chi";
+		metaData.scriptName = scriptName;
 		
 		Script script = shell.parse( scriptText, scriptName );
 		
-		metaData.scriptName = scriptName;
 		metaData.script = script;
 		
 		scriptHistory.put( scriptName, metaData );

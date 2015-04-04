@@ -2,6 +2,8 @@ package com.chiorichan.plugin.builtin.template;
 
 import io.netty.buffer.Unpooled;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,7 +43,14 @@ public class Template extends Plugin implements Listener
 	@EventHandler( priority = EventPriority.NORMAL )
 	public void onHttpExceptionEvent( HttpExceptionEvent event )
 	{
-		event.setErrorHtml( generateExceptionPage( event.getThrowable(), event.getRequest().getSession().getEvalFactory() ) );
+		try
+		{
+			event.setErrorHtml( generateExceptionPage( event.getThrowable(), event.getRequest().getSession().getEvalFactory() ) );
+		}
+		catch ( Exception e )
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	public String generateExceptionPage( Throwable t, EvalFactory factory )
@@ -62,10 +71,10 @@ public class Template extends Plugin implements Listener
 			if ( t.getCause() != null )
 				t = t.getCause();
 			
-			ScriptTraceElement ste = scriptTrace[0];
-			
-			if ( ste != null )
+			if ( scriptTrace.length > 0 )
 			{
+				ScriptTraceElement ste = scriptTrace[0];
+				
 				lineNo = ste.getLineNumber();
 				className = ste.getClassName() + "." + ste.getMethodName();
 				

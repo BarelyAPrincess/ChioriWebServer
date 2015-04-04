@@ -6,6 +6,11 @@
  */
 package com.chiorichan.factory;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import com.chiorichan.Loader;
+
 
 /**
  * Similar to StackTraceElement except only used for Groovy Scripts
@@ -19,9 +24,39 @@ public class ScriptTraceElement
 	String methodName;
 	String className;
 	int lineNum = -1;
+	int colNum = -1;
 	EvalMetaData metaData;
 	
-	ScriptTraceElement( StackTraceElement ste, EvalMetaData metaData )
+	public ScriptTraceElement( String msg, EvalMetaData metaData )
+	{
+		fileName = metaData.scriptName;
+		methodName = "";
+		className = "";
+		msg = msg.replaceAll( "\n", "" );
+		
+		// org.codehaus.groovy.control.MultipleCompilationErrorsException: startup failed: GroovyScript44898378.chi: 69: expecting '}', found ':' @ line 69, column 20. instream.close(): ^ 1 error
+		
+		Pattern p1 = Pattern.compile( "line[: ]?([0-9]*), column[: ]?([0-9]*)\\. (.*):" );
+		Matcher m1 = p1.matcher( msg );
+		
+		if ( m1.find() )
+		{
+			try
+			{
+				lineNum = Integer.parseInt( m1.group( 1 ) );
+				colNum = Integer.parseInt( m1.group( 2 ) );
+				methodName = m1.group( 3 ).trim();
+			}
+			catch ( IndexOutOfBoundsException e )
+			{
+				e.printStackTrace();
+			}
+		}
+		
+		this.metaData = metaData;
+	}
+	
+	public ScriptTraceElement( StackTraceElement ste, EvalMetaData metaData )
 	{
 		fileName = ste.getFileName();
 		methodName = ste.getMethodName();
@@ -48,6 +83,11 @@ public class ScriptTraceElement
 	public int getLineNumber()
 	{
 		return lineNum;
+	}
+	
+	public int getColumnNumber()
+	{
+		return colNum;
 	}
 	
 	public EvalMetaData getMetaData()
