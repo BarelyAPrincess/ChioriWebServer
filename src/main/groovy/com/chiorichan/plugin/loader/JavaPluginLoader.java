@@ -416,7 +416,7 @@ public final class JavaPluginLoader implements PluginLoader
 			}
 			catch ( PluginUnconfiguredException ex )
 			{
-				PluginManager.getLogger().severe( "The plugin " + plugin.getDescription().getFullName() + " has reported that it's unconfigured. The plugin is now be disabled until this is resolved", ex );
+				PluginManager.getLogger().severe( "The plugin " + plugin.getDescription().getFullName() + " has reported that it's unconfigured. The plugin wil be unavailable until this is resolved", ex );
 			}
 			catch ( Throwable ex )
 			{

@@ -123,7 +123,11 @@ public abstract class Plugin extends PluginBase
 	{
 		newConfig = YamlConfiguration.loadConfiguration( configFile );
 		
-		InputStream defConfigStream = getResource( "config.yml" );
+		InputStream defConfigStream = getResource( "config.yaml" );
+		
+		if ( defConfigStream == null )
+			defConfigStream = getResource( "config.yml" );
+		
 		if ( defConfigStream != null )
 		{
 			YamlConfiguration defConfig = YamlConfiguration.loadConfiguration( defConfigStream );
@@ -148,7 +152,14 @@ public abstract class Plugin extends PluginBase
 	{
 		if ( !configFile.exists() )
 		{
-			saveResource( "config.yml", false );
+			try
+			{
+				saveResource( "config.yaml", false );
+			}
+			catch ( IllegalArgumentException e )
+			{
+				saveResource( "config.yml", false );
+			}
 		}
 	}
 	
@@ -266,7 +277,10 @@ public abstract class Plugin extends PluginBase
 		this.description = description;
 		this.dataFolder = dataFolder;
 		this.classLoader = classLoader;
-		this.configFile = new File( dataFolder, "config.yml" );
+		this.configFile = new File( dataFolder, "config.yaml" );
+		
+		if ( !this.configFile.exists() )
+			this.configFile = new File( dataFolder, "config.yml" );
 	}
 	
 	public void onLoad()
