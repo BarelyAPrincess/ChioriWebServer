@@ -97,7 +97,7 @@ public class HttpResponseWrapper
 		if ( httpMsg == null )
 			httpMsg = HttpCode.msg( httpCode );
 		
-		Loader.getLogger().warning( "HttpError: " + httpCode + " - " + httpMsg + "... '" + request.getSubDomain() + "." + request.getParentDomain() + "' '" + request.getURI() + "'" );
+		HttpHandler.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + httpCode + ",httpMsg=" + httpMsg + ",domain=" + request.getSubDomain() + "." + request.getDomain() + ",uri=" + request.getURI() + ",remoteIp=" + request.getRemoteAddr() + "}" );
 		
 		httpStatus = httpCode;
 		
@@ -148,7 +148,7 @@ public class HttpResponseWrapper
 		
 		httpStatus = httpCode;
 		
-		Loader.getLogger().info( ConsoleColor.DARK_PURPLE + "HttpError{httpCode=" + httpCode + ",httpMsg=" + HttpCode.msg( httpCode ) + ",domain=" + request.getSubDomain() + "." + request.getDomain() + ",uri=" + request.getURI() + "}" );
+		HttpHandler.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + httpCode + ",httpMsg=" + HttpCode.msg( httpCode ) + ",domain=" + request.getSubDomain() + "." + request.getDomain() + ",uri=" + request.getURI() + ",remoteIp=" + request.getRemoteAddr() + "}" );
 		
 		if ( Loader.getConfig().getBoolean( "server.developmentMode" ) )
 		{
@@ -253,20 +253,20 @@ public class HttpResponseWrapper
 	 * Sends the client to a specified page with specified http code but with the option to not automatically go.
 	 * 
 	 * @param target
-	 *            , destination url. Can be relative or absolute.
+	 *            The destination url. Can be relative or absolute.
 	 * @param httpStatus
-	 *            , http code to use.
+	 *            What http code to use.
 	 * @param autoRedirect
-	 *            , Automatically go.
+	 *            Use Header or Javascript Script
 	 */
-	private void sendRedirect( String target, int httpStatus, boolean autoRedirect )
+	private void sendRedirect( String target, int httpStatus, boolean insteadRedirect )
 	{
-		Loader.getLogger().info( "Sending page redirect to `" + target + "`" );
+		HttpHandler.getLogger().info( ConsoleColor.DARK_GRAY + "Sending page redirect to `" + target + "` using httpCode `" + httpStatus + " - " + HttpCode.msg( httpStatus ) + "`" );
 		
 		if ( stage == HttpResponseStage.CLOSED )
 			throw new IllegalStateException( "You can't access sendRedirect method within this HttpResponse because the connection has been closed." );
 		
-		if ( autoRedirect )
+		if ( insteadRedirect && !isCommitted() )
 		{
 			setStatus( httpStatus );
 			setHeader( "Location", target );
@@ -278,7 +278,7 @@ public class HttpResponseWrapper
 			
 			try
 			{
-				println( "<script>window.location = '" + target + "';</script>" );
+				println( "<script type=\"text/javascript\">window.location = '" + target + "';</script>" );
 			}
 			catch ( IOException e )
 			{
@@ -499,18 +499,18 @@ public class HttpResponseWrapper
 				{
 					if ( total < 0 )
 					{ // total unknown
-						System.err.println( "Transfer progress: " + progress );
+						HttpHandler.getLogger().info( "Transfer progress: " + progress );
 					}
 					else
 					{
-						System.err.println( "Transfer progress: " + progress + " / " + total );
+						HttpHandler.getLogger().info( "Transfer progress: " + progress + " / " + total );
 					}
 				}
 				
 				@Override
 				public void operationComplete( ChannelProgressiveFuture future ) throws Exception
 				{
-					System.err.println( "Transfer complete." );
+					HttpHandler.getLogger().info( "Transfer complete." );
 				}
 			} );
 		}

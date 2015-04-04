@@ -454,7 +454,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		Site currentSite = request.getSite();
 		sess.getParentSession().setSite( currentSite );
 		
-		getLogger().info( ConsoleColor.DARK_PURPLE + "HttpRequest{httpCode=" + response.getHttpCode() + ",httpMsg=" + response.getHttpMsg() + ",domain=" + subdomain + "." + domain + ",uri=" + uri + ",fullRequest=" + fi.toString() + "}" );
+		getLogger().info( ConsoleColor.BLUE + "Http" + ( ( ssl ) ? "s" : "" ) + "Request{httpCode=" + response.getHttpCode() + ",httpMsg=" + response.getHttpMsg() + ",domain=" + subdomain + "." + domain + ",uri=" + uri + ",remoteIp=" + request.getRemoteAddr() + ",details=" + fi.toString() + "}" );
 		
 		if ( fi.isDirectoryRequest() )
 		{

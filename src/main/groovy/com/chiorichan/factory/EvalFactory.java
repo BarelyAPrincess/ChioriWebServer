@@ -368,8 +368,6 @@ public class EvalFactory
 	
 	public EvalFactoryResult eval( FileInterpreter fi, EvalMetaData meta, Site site ) throws ShellExecuteException
 	{
-		encoding = fi.getEncoding();
-		
 		if ( meta == null )
 			meta = new EvalMetaData();
 		
@@ -384,7 +382,7 @@ public class EvalFactory
 		
 		try
 		{
-			return eval( new String( fi.getContent(), encoding ), meta, site );
+			return eval( new String( fi.getContent(), fi.getEncoding() ), meta, site );
 		}
 		catch ( UnsupportedEncodingException e )
 		{

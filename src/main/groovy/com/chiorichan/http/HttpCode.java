@@ -77,77 +77,79 @@ public class HttpCode
 		switch ( code )
 		{
 			case HTTP_OK:
-				return " OK";
+				return "OK";
 			case HTTP_CONTINUE:
-				return " Continue";
+				return "Continue";
 			case HTTP_CREATED:
-				return " Created";
+				return "Created";
 			case HTTP_ACCEPTED:
-				return " Accepted";
+				return "Accepted";
 			case HTTP_NOT_AUTHORITATIVE:
-				return " Non-Authoritative Information";
+				return "Non-Authoritative Information";
 			case HTTP_NO_CONTENT:
-				return " No Content";
+				return "No Content";
 			case HTTP_RESET:
-				return " Reset Content";
+				return "Reset Content";
 			case HTTP_PARTIAL:
-				return " Partial Content";
+				return "Partial Content";
 			case HTTP_MULT_CHOICE:
-				return " Multiple Choices";
+				return "Multiple Choices";
 			case HTTP_MOVED_PERM:
-				return " Moved Permanently";
+				return "Moved Permanently";
 			case HTTP_MOVED_TEMP:
-				return " Temporary Redirect";
+				return "Temporary Redirect";
 			case HTTP_SEE_OTHER:
-				return " See Other";
+				return "See Other";
 			case HTTP_NOT_MODIFIED:
-				return " Not Modified";
+				return "Not Modified";
 			case HTTP_USE_PROXY:
-				return " Use Proxy";
+				return "Use Proxy";
+			case HTTP_TEMPORARY_REDIRECT:
+				return "Temporary Redirect";
 			case HTTP_BAD_REQUEST:
-				return " Bad Request";
+				return "Bad Request";
 			case HTTP_UNAUTHORIZED:
-				return " Unauthorized";
+				return "Unauthorized";
 			case HTTP_PAYMENT_REQUIRED:
-				return " Payment Required";
+				return "Payment Required";
 			case HTTP_FORBIDDEN:
-				return " Forbidden";
+				return "Forbidden";
 			case HTTP_NOT_FOUND:
-				return " Not Found";
+				return "Not Found";
 			case HTTP_BAD_METHOD:
-				return " Method Not Allowed";
+				return "Method Not Allowed";
 			case HTTP_NOT_ACCEPTABLE:
-				return " Not Acceptable";
+				return "Not Acceptable";
 			case HTTP_PROXY_AUTH:
-				return " Proxy Authentication Required";
+				return "Proxy Authentication Required";
 			case HTTP_CLIENT_TIMEOUT:
-				return " Request Time-Out";
+				return "Request Time-Out";
 			case HTTP_CONFLICT:
-				return " Conflict";
+				return "Conflict";
 			case HTTP_GONE:
-				return " Gone";
+				return "Gone";
 			case HTTP_LENGTH_REQUIRED:
-				return " Length Required";
+				return "Length Required";
 			case HTTP_PRECON_FAILED:
-				return " Precondition Failed";
+				return "Precondition Failed";
 			case HTTP_ENTITY_TOO_LARGE:
-				return " Request Entity Too Large";
+				return "Request Entity Too Large";
 			case HTTP_REQ_TOO_LONG:
-				return " Request-URI Too Large";
+				return "Request-URI Too Large";
 			case HTTP_UNSUPPORTED_TYPE:
-				return " Unsupported Media Type";
+				return "Unsupported Media Type";
 			case HTTP_INTERNAL_ERROR:
-				return " Internal Server Error";
+				return "Internal Server Error";
 			case HTTP_NOT_IMPLEMENTED:
-				return " Not Implemented";
+				return "Not Implemented";
 			case HTTP_BAD_GATEWAY:
-				return " Bad Gateway";
+				return "Bad Gateway";
 			case HTTP_UNAVAILABLE:
-				return " Service Unavailable";
+				return "Service Unavailable";
 			case HTTP_GATEWAY_TIMEOUT:
-				return " Gateway Timeout";
+				return "Gateway Timeout";
 			case HTTP_VERSION:
-				return " HTTP Version Not Supported";
+				return "HTTP Version Not Supported";
 				// case HTTP_THE_DOCTOR:
 				// return "I'm a Madman With A Blue Box!";
 			case HTTP_BLUE_BOX:
@@ -155,64 +157,5 @@ public class HttpCode
 			default:
 				return "";
 		}
-		
-		/*
-		 * statusCodes.put( 202, "Accepted" );
-		 * statusCodes.put( 208, "Already Reported" );
-		 * statusCodes.put( 502, "Bad Gateway" );
-		 * statusCodes.put( 400, "Bad Request" );
-		 * statusCodes.put( 409, "Conflict" );
-		 * statusCodes.put( 100, "Continue" );
-		 * statusCodes.put( 201, "Created" );
-		 * statusCodes.put( 421, "Destination Locked" );
-		 * statusCodes.put( 417, "Expectation Failed" );
-		 * statusCodes.put( 424, "Failed Dependency" );
-		 * statusCodes.put( 403, "Forbidden" );
-		 * statusCodes.put( 302, "Found" );
-		 * statusCodes.put( 504, "Gateway Timeout" );
-		 * statusCodes.put( 410, "Gone" );
-		 * statusCodes.put( 505, "HTTP Version Not Supported" );
-		 * statusCodes.put( 226, "IM Used" );
-		 * statusCodes.put( 419, "Insufficient Space on Resource" );
-		 * statusCodes.put( 507, "Insufficient Storage" );
-		 * statusCodes.put( 500, "Internal Server Error" );
-		 * statusCodes.put( 411, "Length Required" );
-		 * statusCodes.put( 423, "Locked" );
-		 * statusCodes.put( 508, "Loop Detected" );
-		 * statusCodes.put( 420, "Method Failure" );
-		 * statusCodes.put( 405, "Method Not Allowed" );
-		 * statusCodes.put( 301, "Moved Permanently" );
-		 * statusCodes.put( 302, "Moved Temporarily" );
-		 * statusCodes.put( 207, "Multi-Status" );
-		 * statusCodes.put( 300, "Multiple Choices" );
-		 * statusCodes.put( 204, "No Content" );
-		 * statusCodes.put( 203, "Non-Authoritative Information" );
-		 * statusCodes.put( 406, "Not Acceptable" );
-		 * statusCodes.put( 510, "Not Extended" );
-		 * statusCodes.put( 404, "Not Found" );
-		 * statusCodes.put( 501, "Not Implemented" );
-		 * statusCodes.put( 304, "Not Modified" );
-		 * statusCodes.put( 200, "OK" );
-		 * statusCodes.put( 206, "Partial Content" );
-		 * statusCodes.put( 402, "Payment Required" );
-		 * statusCodes.put( 412, "Precondition failed" );
-		 * statusCodes.put( 102, "Processing" );
-		 * statusCodes.put( 407, "Proxy Authentication Required" );
-		 * statusCodes.put( 413, "Request Entity Too Large" );
-		 * statusCodes.put( 408, "Request Timeout" );
-		 * statusCodes.put( 414, "Request-URI Too Long" );
-		 * statusCodes.put( 416, "Requested Range Not Satisfiable" );
-		 * statusCodes.put( 205, "Reset Content" );
-		 * statusCodes.put( 303, "See Other" );
-		 * statusCodes.put( 503, "Service Unavailable." );
-		 * statusCodes.put( 101, "Switching Protocols" );
-		 * statusCodes.put( 307, "Temporary Redirect" );
-		 * statusCodes.put( 401, "Unauthorized" );
-		 * statusCodes.put( 422, "Unprocessable Entity" );
-		 * statusCodes.put( 415, "Unsupported Media Type" );
-		 * statusCodes.put( 426, "Upgrade Required" );
-		 * statusCodes.put( 305, "Use Proxy" );
-		 * statusCodes.put( 506, "Variant Also Negotiates" );
-		 */
 	}
 }
