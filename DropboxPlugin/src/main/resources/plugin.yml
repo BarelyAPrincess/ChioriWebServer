@@ -1,0 +1,5 @@
+name: Chiori-chan Dropbox Plugin
+author: Chiori Greene
+main: com.chiorichan.plugin.builtin.dropbox.Dropbox
+version: '1.0'
+depends: []

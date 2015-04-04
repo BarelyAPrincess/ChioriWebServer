@@ -1,0 +1,18 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+
+repositories
+{ mavenCentral() }
+
+dependencies
+{
+	compile rootProject
+	compile group: 'com.google.guava', name: 'guava', version: '17.0'
+	compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.3.2'
+	compile group: 'com.dropbox.core', name: 'dropbox-core-sdk', version: '1.7.7'
+}
+
+libsDirName = '../../build/dist'
+
+artifacts
+{ archives jar }
