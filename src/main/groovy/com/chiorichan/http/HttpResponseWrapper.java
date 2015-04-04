@@ -34,6 +34,7 @@ import java.util.Map.Entry;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
+import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.event.http.ErrorEvent;
 import com.chiorichan.event.http.HttpExceptionEvent;
@@ -147,7 +148,7 @@ public class HttpResponseWrapper
 		
 		httpStatus = httpCode;
 		
-		Loader.getLogger().warning( "HttpError: " + httpCode + " - " + HttpCode.msg( httpCode ) + "... '" + request.getSubDomain() + "." + request.getParentDomain() + "' '" + request.getURI() + "'" );
+		Loader.getLogger().info( ConsoleColor.DARK_PURPLE + "HttpError{httpCode=" + httpCode + ",httpMsg=" + HttpCode.msg( httpCode ) + ",domain=" + request.getSubDomain() + "." + request.getDomain() + ",uri=" + request.getURI() + "}" );
 		
 		if ( Loader.getConfig().getBoolean( "server.developmentMode" ) )
 		{
@@ -523,5 +524,15 @@ public class HttpResponseWrapper
 	public void setHeader( String key, String val )
 	{
 		headers.put( key, val );
+	}
+	
+	public int getHttpCode()
+	{
+		return httpStatus;
+	}
+	
+	public String getHttpMsg()
+	{
+		return HttpCode.msg( httpStatus );
 	}
 }

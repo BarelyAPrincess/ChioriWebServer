@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.chiorichan.ConsoleColor;
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.event.EventException;
@@ -425,18 +426,20 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			throw new IOException( "Exception encountered during request event call, most likely the fault of a plugin.", ex );
 		}
 		
+		response.setStatus( requestEvent.getStatus() );
+		
 		if ( requestEvent.isCancelled() )
 		{
-			getLogger().warning( "Navigation was cancelled by a Server Plugin" );
-			
 			int status = requestEvent.getStatus();
 			String reason = requestEvent.getReason();
 			
-			if ( status < 400 && status > 599 )
+			if ( status == 200 )
 			{
 				status = 502;
-				reason = "Navigation Cancelled by Internal Plugin Event";
+				reason = "Navigation Cancelled by Plugin Event";
 			}
+			
+			getLogger().warning( "Navigation was cancelled by Plugin Event" );
 			
 			response.sendError( status, reason );
 			return;
@@ -451,7 +454,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		Site currentSite = request.getSite();
 		sess.getParentSession().setSite( currentSite );
 		
-		getLogger().info( "Request '" + currentSite.getSiteId() + "' '" + subdomain + "." + domain + "' '" + uri + "' '" + fi.toString() + "'" );
+		getLogger().info( ConsoleColor.DARK_PURPLE + "HttpRequest{httpCode=" + response.getHttpCode() + ",httpMsg=" + response.getHttpMsg() + ",domain=" + subdomain + "." + domain + ",uri=" + uri + ",fullRequest=" + fi.toString() + "}" );
 		
 		if ( fi.isDirectoryRequest() )
 		{

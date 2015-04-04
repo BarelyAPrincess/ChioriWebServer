@@ -27,7 +27,7 @@ public class TemplateUtils
 	private static final String GITHUB_SERVER_URL = "https://raw.githubusercontent.com/ChioriGreene/ChioriWebServer/";
 	private static final String BUILTIN_PLUGIN_NAMESPACE = "com.chiorichan.plugin.builtin.";
 	
-	public static String formatStackTrace( StackTraceElement[] stackTrace )
+	public static String formatStackTrace( StackTraceElement[] stackTrace, ScriptTraceElement[] scriptTrace )
 	{
 		Validate.notEmpty( stackTrace );
 		
@@ -44,7 +44,7 @@ public class TemplateUtils
 			if ( ste.getClassName().startsWith( "com.chiori" ) )
 				previewType = "app";
 			
-			if ( ste.getFileName().matches( "GroovyScript\\d*\\.chi" ) )
+			if ( ste.getFileName() != null && ste.getFileName().matches( "GroovyScript\\d*\\.chi" ) )
 				previewType = "groovy";
 			
 			String codePreview = "There is no source file available for this preview";
@@ -53,6 +53,18 @@ public class TemplateUtils
 			if ( !previewType.equals( "core" ) )
 			{
 				codePreview = generateCodePreview( ste );
+				
+				if ( scriptTrace != null )
+				{
+					for ( ScriptTraceElement st : scriptTrace )
+					{
+						if ( st.getFileName().equals( ste.getFileName() ) && st.getLineNumber() == ste.getLineNumber() )
+						{
+							codePreview = generateCodePreview( st );
+							break;
+						}
+					}
+				}
 				
 				if ( codePreview != null )
 					expanded = true;

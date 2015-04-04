@@ -61,10 +61,11 @@ public class Template extends Plugin implements Listener
 		String className = null;
 		
 		String codeSample = null;
+		ScriptTraceElement[] scriptTrace = null;
 		
 		if ( t instanceof ShellExecuteException )
 		{
-			ScriptTraceElement[] scriptTrace = ( ( ShellExecuteException ) t ).getScriptTrace();
+			scriptTrace = ( ( ShellExecuteException ) t ).getScriptTrace();
 			
 			if ( t.getCause() != null )
 				t = t.getCause();
@@ -131,7 +132,7 @@ public class Template extends Plugin implements Listener
 		ob.append( "<div class=\"traces\">\n" );
 		ob.append( "<h2>Stack Trace</h2>\n" );
 		ob.append( "<table style=\"width:100%;\">\n" );
-		ob.append( TemplateUtils.formatStackTrace( t.getStackTrace() ) + "\n" );
+		ob.append( TemplateUtils.formatStackTrace( t.getStackTrace(), scriptTrace ) + "\n" );
 		ob.append( "</table>\n" );
 		ob.append( "</div>\n" );
 		ob.append( "\n" );
