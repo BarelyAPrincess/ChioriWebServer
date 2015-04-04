@@ -12,6 +12,9 @@ package com.chiorichan.util;
 import io.netty.buffer.ByteBuf;
 
 import java.awt.Color;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
@@ -23,6 +26,9 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.Validate;
+
+import sun.misc.BASE64Decoder;
+import sun.misc.BASE64Encoder;
 
 import com.google.common.collect.Lists;
 
@@ -126,6 +132,31 @@ public class StringUtil
 		
 		CharBuffer cBuffer = ByteBuffer.wrap( bytes ).asCharBuffer();
 		return cBuffer.toString();
+	}
+	
+	public static String encodeBase64( String var )
+	{
+		return encodeBase64( var.getBytes() );
+	}
+	
+	public static String encodeBase64( byte[] bytes )
+	{
+		return new BASE64Encoder().encode( bytes );
+	}
+	
+	public static byte[] decodeBase64( byte[] bytes ) throws IOException
+	{
+		return decodeBase64( new ByteArrayInputStream( bytes ) );
+	}
+	
+	public static byte[] decodeBase64( String var ) throws IOException
+	{
+		return new BASE64Decoder().decodeBuffer( var );
+	}
+	
+	public static byte[] decodeBase64( InputStream stream ) throws IOException
+	{
+		return new BASE64Decoder().decodeBuffer( stream );
 	}
 	
 	public static String md5( byte[] bytes )
