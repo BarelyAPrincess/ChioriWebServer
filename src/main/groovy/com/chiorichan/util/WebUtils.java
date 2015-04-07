@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.framework;
+package com.chiorichan.util;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -31,6 +31,7 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.UUID;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -42,16 +43,14 @@ import com.chiorichan.Loader;
 import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalFactoryResult;
 import com.chiorichan.factory.EvalMetaData;
+import com.chiorichan.framework.FileInterpreter;
+import com.chiorichan.framework.Site;
 import com.chiorichan.lang.EvalFactoryException;
-import com.chiorichan.util.Common;
-import com.chiorichan.util.ObjectUtil;
-import com.chiorichan.util.StringUtil;
 import com.google.common.collect.Maps;
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
 import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
-import com.sun.jersey.core.util.Base64;
 
 public class WebUtils
 {
@@ -536,7 +535,7 @@ public class WebUtils
 		if ( user != null || pass != null )
 		{
 			String userpass = user + ":" + pass;
-			String basicAuth = "Basic " + new String( Base64.encode( userpass.getBytes() ) );
+			String basicAuth = "Basic " + new String( Base64.encodeBase64( userpass.getBytes() ) );
 			uc.setRequestProperty( "Authorization", basicAuth );
 		}
 		

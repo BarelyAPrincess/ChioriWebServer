@@ -42,7 +42,6 @@ import com.chiorichan.event.Listener;
 import com.chiorichan.event.server.ServerRunLevelEvent;
 import com.chiorichan.event.server.ServerRunLevelEventImpl;
 import com.chiorichan.framework.SiteManager;
-import com.chiorichan.framework.WebUtils;
 import com.chiorichan.lang.StartupAbortException;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.net.NetworkManager;
@@ -57,6 +56,7 @@ import com.chiorichan.updater.AutoUpdater;
 import com.chiorichan.updater.ChioriDLUpdaterService;
 import com.chiorichan.util.FileUtil;
 import com.chiorichan.util.Versioning;
+import com.chiorichan.util.WebUtils;
 
 public class Loader extends BuiltinEventCreator implements Listener
 {

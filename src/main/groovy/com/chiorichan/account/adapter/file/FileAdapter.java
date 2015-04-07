@@ -25,10 +25,10 @@ import com.chiorichan.account.LoginException;
 import com.chiorichan.account.LoginExceptionReason;
 import com.chiorichan.account.adapter.AccountLookupAdapter;
 import com.chiorichan.configuration.file.YamlConfiguration;
-import com.chiorichan.framework.WebUtils;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.FileUtil;
 import com.chiorichan.util.StringUtil;
+import com.chiorichan.util.WebUtils;
 import com.google.common.collect.Maps;
 
 public class FileAdapter implements AccountLookupAdapter

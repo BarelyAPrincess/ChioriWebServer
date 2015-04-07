@@ -17,12 +17,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
+import java.util.zip.ZipFile;
 
 import javax.imageio.ImageIO;
-
-import net.lingala.zip4j.core.ZipFile;
-import net.lingala.zip4j.exception.ZipException;
-import net.lingala.zip4j.model.FileHeader;
 
 import com.google.common.io.CharStreams;
 
@@ -32,7 +31,7 @@ public class ResourceLoader
 	private ZipFile zipLib = null;
 	private boolean isZipFile = false;
 	
-	public ResourceLoader( File path ) throws ZipException
+	public ResourceLoader( File path ) throws IOException
 	{
 		resourcePath = path;
 		isZipFile = path.getAbsolutePath().endsWith( ".zip" );
@@ -55,7 +54,7 @@ public class ResourceLoader
 		{
 			return new ResourceLoader( workingWith );
 		}
-		catch ( ZipException e )
+		catch ( IOException e )
 		{
 			e.printStackTrace();
 			return null;
@@ -66,14 +65,14 @@ public class ResourceLoader
 	{
 		if ( isZipFile )
 		{
-			FileHeader header = zipLib.getFileHeader( relPath );
-			if ( header == null )
+			ZipEntry entry = zipLib.getEntry( relPath );
+			if ( entry == null )
 				throw new IOException( "No idea what went wrong but the Zip Library returned a null file header." );
 			
-			if ( header.isDirectory() )
+			if ( entry.isDirectory() )
 				throw new IOException( "Can not get an InputStream on a folder." );
 			
-			return zipLib.getInputStream( header );
+			return zipLib.getInputStream( entry );
 		}
 		else
 		{
@@ -99,7 +98,7 @@ public class ResourceLoader
 			
 			return ImageIO.read( in );
 		}
-		catch ( ZipException | IOException e )
+		catch ( IOException e )
 		{
 			return null;
 		}
@@ -113,7 +112,7 @@ public class ResourceLoader
 			
 			return CharStreams.toString( new InputStreamReader( is, "UTF-8" ) );
 		}
-		catch ( ZipException | IOException e )
+		catch ( IOException e )
 		{
 			return null;
 		}

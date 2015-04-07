@@ -17,9 +17,9 @@ import com.chiorichan.Loader;
 import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.ScriptTraceElement;
-import com.chiorichan.framework.WebUtils;
 import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.util.FileUtil;
+import com.chiorichan.util.WebUtils;
 
 public class TemplateUtils
 {

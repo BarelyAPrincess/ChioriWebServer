@@ -14,7 +14,7 @@ import java.util.Map;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.framework.WebUtils;
+import com.chiorichan.util.WebUtils;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 

@@ -3,3 +3,5 @@ author: Chiori Greene
 main: com.chiorichan.plugin.email.EmailPlugin
 version: '1.0'
 depends: []
+libraries:
+  - "javax:javaee-api:7.0"

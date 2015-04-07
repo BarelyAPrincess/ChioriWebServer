@@ -18,9 +18,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.chiorichan.ContentTypes;
-import com.chiorichan.framework.WebUtils;
 import com.chiorichan.lang.HttpErrorException;
 import com.chiorichan.util.Versioning;
+import com.chiorichan.util.WebUtils;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 

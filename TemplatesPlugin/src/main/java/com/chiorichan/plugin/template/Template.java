@@ -19,11 +19,11 @@ import com.chiorichan.factory.EvalFactoryResult;
 import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.framework.Site;
-import com.chiorichan.framework.WebUtils;
 import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.util.StringUtil;
 import com.chiorichan.util.Versioning;
+import com.chiorichan.util.WebUtils;
 
 public class Template extends Plugin implements Listener
 {
