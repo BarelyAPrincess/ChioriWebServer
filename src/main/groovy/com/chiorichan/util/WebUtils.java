@@ -38,6 +38,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.TimeInfo;
+import org.ocpsoft.prettytime.PrettyTime;
 
 import com.chiorichan.Loader;
 import com.chiorichan.factory.EvalFactory;
@@ -92,6 +93,13 @@ public class WebUtils
 		}
 		
 		return rtn;
+	}
+	
+	// This might change
+	public static String formatTimeAgo( Date date )
+	{
+		PrettyTime p = new PrettyTime();
+		return p.format( date );
 	}
 	
 	@Deprecated

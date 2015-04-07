@@ -12,7 +12,7 @@ dependencies
 	compile group: 'com.dropbox.core', name: 'dropbox-core-sdk', version: '1.7.7'
 }
 
-libsDirName = '../../build/dist'
+libsDirName = '../../build/dist/plugins'
 
 artifacts
 { archives jar }

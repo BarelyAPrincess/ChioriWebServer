@@ -168,6 +168,7 @@ dependencies
 	
 	// Used to format Time and Dates
 	compile group: 'joda-time', name: 'joda-time', version: '2.7'
+	compile group: 'org.ocpsoft.prettytime', name: 'prettytime', version: '3.2.5.Final'
 	
 	// Used to format Phone Numbers
 	compile group: 'com.googlecode.libphonenumber', name: 'libphonenumber', version: '7.0.4'
@@ -199,7 +200,6 @@ dependencies
 	// compile group: 'org.codeartisans', name: 'org.json', version: '20131017'
 	
 	// compile group: 'tv.cntt', name: 'annovention', version: '1.7'
-	// compile group: 'org.ocpsoft.prettytime', name: 'prettytime', version: '3.2.5.Final'
 	
 	// compile group: 'commons-logging', name: 'commons-logging', version: '1.2'
 	// compile group: 'com.google.protobuf', name: 'protobuf-java', version: '2.5.0'

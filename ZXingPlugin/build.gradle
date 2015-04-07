@@ -13,7 +13,7 @@ dependencies
 	compile group: 'com.google.zxing', name: 'javase', version: '3.1.0'
 }
 
-libsDirName = '../../build/dist'
+libsDirName = '../../build/dist/plugins'
 
 artifacts
 { archives jar }

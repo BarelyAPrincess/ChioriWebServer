@@ -83,6 +83,7 @@ public class WebInterpreter extends FileInterpreter
 			Site fwSite = Loader.getSiteManager().getFrameworkSite();
 			routes = fwSite.getRoutes();
 			request.setSite( fwSite );
+			// request.setUri( uri.substring( 3 ) );
 		}
 		
 		if ( uri.startsWith( "/fw/~" ) )

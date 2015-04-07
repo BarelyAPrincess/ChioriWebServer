@@ -13,7 +13,7 @@ dependencies
 	compile rootProject
 }
 
-libsDirName = '../../build/dist'
+libsDirName = '../../build/dist/plugins'
 
 artifacts
 { archives jar }

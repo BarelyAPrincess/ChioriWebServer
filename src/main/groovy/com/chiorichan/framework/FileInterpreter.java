@@ -111,8 +111,11 @@ public class FileInterpreter
 	
 	public static String readLine( ByteBuf buf )
 	{
+		if ( !buf.isReadable() || buf.readableBytes() < 1 )
+			return null;
+		
 		String op = "";
-		while ( buf.isReadable() )
+		while ( buf.isReadable() && buf.readableBytes() > 0 )
 		{
 			byte bb = buf.readByte();
 			if ( bb == '\n' )
@@ -159,6 +162,9 @@ public class FileInterpreter
 				{
 					lastInx = buf.readerIndex();
 					String l = readLine( buf );
+					if ( l == null )
+						break;
+					
 					if ( l.trim().startsWith( "@" ) )
 						try
 						{
