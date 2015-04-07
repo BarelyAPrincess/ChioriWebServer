@@ -27,8 +27,8 @@ import com.chiorichan.util.Common;
 
 public class NetworkManager
 {
-	public static EventLoopGroup bossGroup = new NioEventLoopGroup( 4 );
-	public static EventLoopGroup workerGroup = new NioEventLoopGroup();
+	public static EventLoopGroup bossGroup = new NioEventLoopGroup( 1 );
+	public static EventLoopGroup workerGroup = new NioEventLoopGroup( 50 );
 	
 	public static Channel httpChannel = null;
 	public static Channel httpsChannel = null;

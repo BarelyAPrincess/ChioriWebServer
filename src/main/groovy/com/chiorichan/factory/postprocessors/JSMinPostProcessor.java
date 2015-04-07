@@ -38,7 +38,7 @@ public class JSMinPostProcessor implements PostProcessor
 	public ByteBuf process( EvalMetaData meta, ByteBuf buf ) throws Exception
 	{
 		// A simple way to ignore JS files that might already be minimized
-		if ( meta.fileName != null && meta.fileName.contains( ".min." ) )
+		if ( meta.fileName != null && meta.fileName.toLowerCase().endsWith( ".min.js" ) )
 			return buf;
 		
 		String code = buf.toString( Charset.defaultCharset() );

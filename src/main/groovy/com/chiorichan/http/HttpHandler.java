@@ -87,9 +87,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	private HttpRequestWrapper request;
 	private boolean ssl;
 	
-	public long startMilli = -1;
-	public String uri = null;
-	
 	static
 	{
 		/**
@@ -115,7 +112,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	
 	public HttpHandler( boolean ssl )
 	{
-		startMilli = System.currentTimeMillis();
 		this.ssl = ssl;
 	}
 	
@@ -344,8 +340,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		
 		response.sendResponse();
 		reset();
-		
-		Loader.getLogger().debug( uri + " --> " + ( System.currentTimeMillis() - startMilli ) );
 	}
 	
 	private void reset()
@@ -445,8 +439,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		String uri = request.getURI();
 		String domain = request.getParentDomain();
 		String subdomain = request.getSubDomain();
-		
-		this.uri = uri;
 		
 		request.initServerVars( staticServerVars );
 		
