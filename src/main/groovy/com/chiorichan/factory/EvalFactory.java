@@ -20,11 +20,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.codehaus.groovy.control.CompilerConfiguration;
@@ -46,8 +48,8 @@ import com.chiorichan.factory.preprocessors.PreProcessor;
 import com.chiorichan.framework.FileInterpreter;
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.WebInterpreter;
-import com.chiorichan.lang.IgnorableEvalException;
 import com.chiorichan.lang.EvalFactoryException;
+import com.chiorichan.lang.IgnorableEvalException;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
@@ -85,7 +87,7 @@ public class EvalFactory
 		}
 	}
 	
-	protected String encoding = Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" );
+	protected Charset encoding = Charsets.toCharset( Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" ) );
 	
 	protected static List<PreProcessor> preProcessors = Lists.newCopyOnWriteArrayList();
 	protected static List<Interpreter> interpreters = Lists.newCopyOnWriteArrayList();
@@ -176,7 +178,7 @@ public class EvalFactory
 		CompilerConfiguration configuration = new CompilerConfiguration();
 		
 		configuration.setScriptBaseClass( ScriptingBaseGroovy.class.getName() );
-		configuration.setSourceEncoding( encoding );
+		configuration.setSourceEncoding( encoding.name() );
 		
 		// TODO Extend class loader as to create a type of security protection
 		return new GroovyShell( Loader.class.getClassLoader(), binding, configuration );
@@ -251,7 +253,7 @@ public class EvalFactory
 	{
 		try
 		{
-			binding.setProperty( "out", new PrintStream( bs, true, encoding ) );
+			binding.setProperty( "out", new PrintStream( bs, true, encoding.name() ) );
 		}
 		catch ( UnsupportedEncodingException e )
 		{
@@ -259,7 +261,7 @@ public class EvalFactory
 		}
 	}
 	
-	public void setEncoding( String encoding )
+	public void setEncoding( Charset encoding )
 	{
 		this.encoding = encoding;
 		setOutputStream( bs );
@@ -381,14 +383,7 @@ public class EvalFactory
 		meta.shell = fi.getParams().get( "shell" );
 		meta.fileName = ( fi.getFile() != null ) ? fi.getFile().getAbsolutePath() : fi.getParams().get( "file" );
 		
-		try
-		{
-			return eval( new String( fi.getContent(), fi.getEncoding() ), meta, site );
-		}
-		catch ( UnsupportedEncodingException e )
-		{
-			throw new EvalFactoryException( e, shellFactory );
-		}
+		return eval( fi.consumeString(), meta, site );
 	}
 	
 	public EvalFactoryResult eval( String code, Site site ) throws EvalFactoryException

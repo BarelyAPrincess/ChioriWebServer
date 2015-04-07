@@ -1,4 +1,4 @@
-package com.chiorichan.plugin.builtin.template;
+package com.chiorichan.plugin.template;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -25,7 +25,7 @@ public class TemplateUtils
 {
 	private static final String GITHUB_BRANCH = "v9-experimental";
 	private static final String GITHUB_SERVER_URL = "https://raw.githubusercontent.com/ChioriGreene/ChioriWebServer/";
-	private static final String BUILTIN_PLUGIN_NAMESPACE = "com.chiorichan.plugin.builtin.";
+	private static final String SERVER_PLUGIN_NAMESPACE = "com.chiorichan.plugin.";
 	
 	public static String formatStackTrace( StackTraceElement[] stackTrace, ScriptTraceElement[] scriptTrace )
 	{
@@ -118,10 +118,10 @@ public class TemplateUtils
 		// TODO Match classname with loaded plugins and query actual plugin for it's Github URL.
 		switch ( className )
 		{
-			case BUILTIN_PLUGIN_NAMESPACE + ".email":
+			case SERVER_PLUGIN_NAMESPACE + ".email":
 				url += "EmailPlugin/";
 				break;
-			case BUILTIN_PLUGIN_NAMESPACE + ".template":
+			case SERVER_PLUGIN_NAMESPACE + ".template":
 				url += "TemplatesPlugin/";
 				break;
 		}

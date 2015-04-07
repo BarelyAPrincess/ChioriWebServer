@@ -78,14 +78,17 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 {
 	protected static Map<ServerVars, Object> staticServerVars = Maps.newLinkedHashMap();
 	
-	private boolean ssl;
+	private static DirectoryInterpreter dirInter = new DirectoryInterpreter();
+	private WebSocketServerHandshaker handshaker = null;
+	private static HttpDataFactory factory;
+	private HttpPostRequestDecoder decoder;
+	private HttpResponseWrapper response;
 	private FullHttpRequest requestOrig;
 	private HttpRequestWrapper request;
-	private HttpResponseWrapper response;
-	private HttpPostRequestDecoder decoder;
-	private WebSocketServerHandshaker handshaker = null;
-	private static DirectoryInterpreter dirInter = new DirectoryInterpreter();
-	private static HttpDataFactory factory;
+	private boolean ssl;
+	
+	public long startMilli = -1;
+	public String uri = null;
 	
 	static
 	{
@@ -112,6 +115,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	
 	public HttpHandler( boolean ssl )
 	{
+		startMilli = System.currentTimeMillis();
 		this.ssl = ssl;
 	}
 	
@@ -340,6 +344,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		
 		response.sendResponse();
 		reset();
+		
+		Loader.getLogger().debug( uri + " --> " + ( System.currentTimeMillis() - startMilli ) );
 	}
 	
 	private void reset()
@@ -440,6 +446,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		String domain = request.getParentDomain();
 		String subdomain = request.getSubDomain();
 		
+		this.uri = uri;
+		
 		request.initServerVars( staticServerVars );
 		
 		SessionProvider sess = request.getSession();
@@ -483,7 +491,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		Site currentSite = request.getSite();
 		sess.getParentSession().setSite( currentSite );
 		
-		getLogger().info( ConsoleColor.BLUE + "Http" + ( ( ssl ) ? "s" : "" ) + "Request{httpCode=" + response.getHttpCode() + ",httpMsg=" + response.getHttpMsg() + ",domain=" + subdomain + "." + domain + ",uri=" + uri + ",remoteIp=" + request.getRemoteAddr() + ",details=" + fi.toString() + "}" );
+		getLogger().info( ConsoleColor.BLUE + "Http" + ( ( ssl ) ? "s" : "" ) + "Request{httpCode=" + response.getHttpCode() + ",httpMsg=" + response.getHttpMsg() + ",subdomain=" + subdomain + ",domain=" + domain + ",uri=" + uri + ",remoteIp=" + request.getRemoteAddr() + ",details=" + fi.toString() + "}" );
 		
 		if ( fi.isDirectoryRequest() )
 		{

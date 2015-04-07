@@ -4,7 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
  */
-package com.chiorichan.plugin.builtin.dropbox;
+package com.chiorichan.plugin.dropbox;
 
 import com.dropbox.core.DbxClient;
 import com.dropbox.core.DbxRequestConfig;

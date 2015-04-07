@@ -380,12 +380,48 @@ Added a build.xml file so the project can not be built with Apache Ant 1.8. Swit
 ===Subversion 3===
 ====Release 0====
 * SWITCHED to Netty for HTTP, HTTPS and TCP servers.
+==Version 9!==
+===Subversion 0 (a.k.a. Milky Planet)===
+====Build 0====
+* ADDED! Directory listing feature [WIP]
+* ADDED! Ability to load sites from backend, using /fw/~siteid
+* ADDED! Added CheckStyle plugin to Gradle
+* REWROTE! EventBus
+* REWROTE! PluginManager
+* REWROTE! Permissions System
+* REMOVED! Removed the Console. Will be reimplementing it later as a Plugin
+* REMOVED! Old org.json source code
+* UPDATED! Various log improvements
+* EXPANDED! PermissionsEx plugin is no longer needed as it funality is built in
+====Build 1====
+* UPDATED! Changed default MIME type
+* UPDATED! Encoding UTF-8 used for text MIME, ISO-8859-1 used for all others
+====Build 2====
+* ADDED! Gradle publish to our Maven Repository
+* ADDED! Several tables are now generated at load
+* FIXED! Finally finished SQLite support
+* UPDATED! Improved FileUploads
+* UPDATED! Major updates to the EvalFactory and associated classes
+* UPDATED! Switch from using byte[] to ByteBuf
+====Build 3====
+* ADDED! Implemented a basic Query Server and Command System [WIP]
+* READDED! Websocket Support [WIP]
+* REWROTE! Rewriting of the Template Plugin
+* REWROTE! NetworkManager
+* UPDATED! EvalFactory now returns EvalFactoryResult
+===Subversion 1 (a.k.a. Milky Way)===
+====Build 0====
+* ADDED! Dropbox Plugin
+* ADDED! Server delivers HttpCode 503 to client if server is not fully loaded up
+* NEW FEATURE! Added a Plugin Maven Library Downloader. See Dropbox plugin config for an example.
 
 =How To Build=
-You can either build Chiori Web Server with Eclipse IDE or using the included build.xml with Apache ANT 1.8. It should be as simple as executing "ant clean-build". If you would like to also compile the included plugins, be sure to also execute ant "compile-plugins" after you compile the main server.
+You can either build Chiori Web Server with Eclipse IDE or using Gradle. It should be as simple as executing "./gradlew build" for linux users. Some plugins will also compile but you will have to execute "./gradlew :EmailPlugin:build" to build it. If built with Gradle, you will find the built files inside the "build/dest" folder.
 
 =Coding=
-* We attempt to make our code as easily readable as possible. 
+Our Gradle enviroment uses a CodeStyle plugin to check coding standards.
+* Please attempt at making your code as easily understandable as possible.
+* Also leave comments whenever possible. Even adding Javadoc would be appreciated when possible.
 * No spaces; use tabs. (As much as ponies don't like TABS, We do.)
 * No trailing whitespaces.
 * Brackets should always be on a new line.
@@ -402,5 +438,5 @@ You can either build Chiori Web Server with Eclipse IDE or using the included bu
 Chiori Web Server is licensed under the Mozila Public License Version 2.0.
 If you decide to use our framework or use any of our code (In part or whole), PLEASE, we would love to hear about it, It's not required but it's generally cool to hear what others do with our stuff.
 
-Any products using the Chiori prefix is considered copyright of Chiori Greene and Greenetree LLC (D.B.A Apple Bloom Company)
-(C) 2013 Apple Bloom Company, Greenetree LLC, ChioriFramework, Chiori Web Server. 
+Any products using the Chiori prefix is considered copyright of Chiori Greene and Greenetree LLC.
+(C) 2015 Greenetree LLC, Chiori-chan's Web Server.

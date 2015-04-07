@@ -7,14 +7,9 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package net.glxn.qrgen.exception;
+package com.chiorichan.plugin.zxing;
 
-public class QRGenerationException extends RuntimeException
+public enum ImageType
 {
-	private static final long serialVersionUID = 5462950734528367920L;
-	
-	public QRGenerationException( String message, Throwable underlyingException )
-	{
-		super( message, underlyingException );
-	}
+	JPG, GIF, PNG
 }

@@ -21,6 +21,7 @@ import com.chiorichan.ContentTypes;
 import com.chiorichan.framework.WebUtils;
 import com.chiorichan.lang.HttpErrorException;
 import com.chiorichan.util.Versioning;
+import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 
 public class DirectoryInterpreter
@@ -35,7 +36,7 @@ public class DirectoryInterpreter
 		HttpResponseWrapper response = http.getResponse();
 		
 		response.setContentType( "text/html" );
-		response.setEncoding( "utf-8" );
+		response.setEncoding( Charsets.UTF_8 );
 		
 		File[] files = dir.listFiles();
 		List<Object> tbl = Lists.newArrayList();

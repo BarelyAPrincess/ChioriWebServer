@@ -29,10 +29,15 @@ import io.netty.handler.stream.ChunkedStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
@@ -40,6 +45,7 @@ import com.chiorichan.event.http.ErrorEvent;
 import com.chiorichan.event.http.HttpExceptionEvent;
 import com.chiorichan.lang.HttpErrorException;
 import com.chiorichan.util.Versioning;
+import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 
 public class HttpResponseWrapper
@@ -48,7 +54,7 @@ public class HttpResponseWrapper
 	protected ByteBuf output = Unpooled.buffer();
 	protected int httpStatus = 200;
 	protected String httpContentType = "text/html";
-	protected String encoding = "UTF-8";
+	protected Charset encoding = Charsets.UTF_8;
 	protected HttpResponseStage stage = HttpResponseStage.READING;
 	protected Map<String, String> pageDataOverrides = Maps.newHashMap();
 	protected Map<String, String> headers = Maps.newHashMap();
@@ -403,7 +409,7 @@ public class HttpResponseWrapper
 		// h.add( "Content-Type", httpContentType );
 		
 		// This might be a temporary measure - TODO Properly set the charset for each request.
-		h.set( "Content-Type", httpContentType + "; charset=" + encoding.toLowerCase() );
+		h.set( "Content-Type", httpContentType + "; charset=" + encoding.name() );
 		
 		h.add( "Access-Control-Allow-Origin", request.getSite().getYaml().getString( "web.allowed-origin", "*" ) );
 		
@@ -411,6 +417,12 @@ public class HttpResponseWrapper
 		{
 			h.add( header.getKey(), header.getValue() );
 		}
+		
+		// Expires: Wed, 08 Apr 2015 02:32:24 GMT
+		// DateTimeFormatter formatter = DateTimeFormat.forPattern( "EE, dd-MMM-yyyy HH:mm:ss zz" );
+		
+		// h.set( HttpHeaders.Names.EXPIRES, formatter.print( DateTime.now( DateTimeZone.UTC ).plusDays( 1 ) ) );
+		// h.set( HttpHeaders.Names.CACHE_CONTROL, "public, max-age=86400" );
 		
 		h.set( HttpHeaders.Names.CONTENT_LENGTH, response.content().readableBytes() );
 		h.set( HttpHeaders.Names.CONNECTION, HttpHeaders.Values.KEEP_ALIVE );
@@ -516,7 +528,7 @@ public class HttpResponseWrapper
 		}
 	}
 	
-	public void setEncoding( String encoding )
+	public void setEncoding( Charset encoding )
 	{
 		this.encoding = encoding;
 	}

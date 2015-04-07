@@ -277,10 +277,14 @@ public abstract class Plugin extends PluginBase
 		this.description = description;
 		this.dataFolder = dataFolder;
 		this.classLoader = classLoader;
-		this.configFile = new File( dataFolder, "config.yaml" );
 		
-		if ( !this.configFile.exists() )
-			this.configFile = new File( dataFolder, "config.yml" );
+		File yamlFile = new File( dataFolder, "config.yaml" );
+		File ymlFile = new File( dataFolder, "config.yml" );
+		
+		if ( ymlFile.exists() )
+			ymlFile.renameTo( yamlFile );
+		
+		this.configFile = yamlFile;
 	}
 	
 	public void onLoad()

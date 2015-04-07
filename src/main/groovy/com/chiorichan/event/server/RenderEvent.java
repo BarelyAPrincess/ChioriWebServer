@@ -11,21 +11,23 @@ package com.chiorichan.event.server;
 
 import io.netty.buffer.ByteBuf;
 
+import java.nio.charset.Charset;
 import java.util.Map;
 
 import com.chiorichan.framework.Site;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.http.HttpResponseWrapper;
 import com.chiorichan.session.SessionProvider;
+import com.google.common.base.Charsets;
 
 public class RenderEvent extends ServerEvent
 {
 	private ByteBuf source;
 	private final SessionProvider sess;
 	private final Map<String, String> params;
-	private String encoding = "UTF-8";
+	private Charset encoding = Charsets.UTF_8;
 	
-	public RenderEvent( SessionProvider sess, ByteBuf source, String encoding, Map<String, String> params )
+	public RenderEvent( SessionProvider sess, ByteBuf source, Charset encoding, Map<String, String> params )
 	{
 		this.sess = sess;
 		this.source = source;
@@ -76,7 +78,7 @@ public class RenderEvent extends ServerEvent
 		this.source = source;
 	}
 	
-	public String getEncoding()
+	public Charset getEncoding()
 	{
 		return encoding;
 	}

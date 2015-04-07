@@ -88,7 +88,7 @@ final class PluginClassLoader extends URLClassLoader
 	
 	Class<?> findClass( String name, boolean checkGlobal ) throws ClassNotFoundException
 	{
-		if ( name.startsWith( "com.chiorichan." ) && !name.startsWith( "com.chiorichan.plugin.builtin." ) )
+		if ( name.startsWith( "com.chiorichan." ) && !name.startsWith( "com.chiorichan.plugin." ) )
 		{
 			throw new ClassNotFoundException( name );
 		}

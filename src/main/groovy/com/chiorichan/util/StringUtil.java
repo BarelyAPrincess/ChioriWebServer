@@ -15,10 +15,10 @@ import java.awt.Color;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
+import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -333,9 +333,9 @@ public class StringUtil
 		return array;
 	}
 	
-	public static String byteBuf2String( ByteBuf buf, String encoding ) throws UnsupportedEncodingException
+	public static String byteBuf2String( ByteBuf buf, Charset charset )
 	{
-		return new String( byteBuf2Bytes( buf ), encoding );
+		return new String( byteBuf2Bytes( buf ), charset );
 	}
 	
 	public static byte[] byteBuf2Bytes( ByteBuf buf )

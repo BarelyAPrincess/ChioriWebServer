@@ -3,20 +3,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
-package net.glxn.qrgen;
+package com.chiorichan.plugin.zxing;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
-
-import net.glxn.qrgen.exception.QRGenerationException;
-import net.glxn.qrgen.image.ImageType;
 
 import com.google.zxing.EncodeHintType;
 import com.google.zxing.Writer;
@@ -44,38 +38,10 @@ public class QRCode
 	private ImageType imageType = ImageType.PNG;
 	private final HashMap<EncodeHintType, Object> hints = new HashMap<EncodeHintType, Object>();
 	
-	private QRCode( String text )
+	protected QRCode( String text )
 	{
 		this.text = text;
 		qrWriter = new QRCodeWriter();
-	}
-	
-	/**
-	 * Create a QR code from the given text. <br/>
-	 * <br/>
-	 * 
-	 * There is a size limitation to how much you can put into a QR code. This has been tested to work with up to a
-	 * length of 2950 characters.<br/>
-	 * <br/>
-	 * 
-	 * The QRCode will have the following defaults: <br/>
-	 * {size: 100x100}<br/>
-	 * {imageType:PNG} <br/>
-	 * <br/>
-	 * 
-	 * Both size and imageType can be overridden: <br/>
-	 * Image type override is done by calling {@link QRCode#to(net.glxn.qrgen.image.ImageType)} e.g.
-	 * QRCode.from("hello world").to(JPG) <br/>
-	 * Size override is done by calling {@link QRCode#withSize} e.g. QRCode.from("hello world").to(JPG).withSize(125,
-	 * 125) <br/>
-	 * 
-	 * @param text
-	 *            the text to encode to a new QRCode, this may fail if the text is too large. <br/>
-	 * @return the QRCode object <br/>
-	 */
-	public static QRCode from( String text )
-	{
-		return new QRCode( text );
 	}
 	
 	/**

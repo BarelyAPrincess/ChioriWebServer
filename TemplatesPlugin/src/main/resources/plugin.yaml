@@ -1,10 +1,5 @@
-name: Chiori-chan Template Plugin
+name: Template Plugin
 author: Chiori Greene
-main: com.chiorichan.plugin.builtin.template.Template
+main: com.chiorichan.plugin.template.Template
 version: '1.2'
 depends: []
-
-commands:
-     status:
-          description: Framework Status
-          usage: /status

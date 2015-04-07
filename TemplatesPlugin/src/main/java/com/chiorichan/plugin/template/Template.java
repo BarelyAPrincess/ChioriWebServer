@@ -1,4 +1,4 @@
-package com.chiorichan.plugin.builtin.template;
+package com.chiorichan.plugin.template;
 
 import io.netty.buffer.Unpooled;
 

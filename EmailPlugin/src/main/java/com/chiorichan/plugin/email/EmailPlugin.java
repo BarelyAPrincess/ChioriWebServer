@@ -1,4 +1,4 @@
-package com.chiorichan.plugin.builtin.email;
+package com.chiorichan.plugin.email;
 
 import java.util.Date;
 import java.util.Properties;

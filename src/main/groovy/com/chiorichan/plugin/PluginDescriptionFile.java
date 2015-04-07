@@ -22,9 +22,11 @@ import java.util.Map;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 
+import com.chiorichan.Loader;
 import com.chiorichan.RunLevel;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.lang.InvalidDescriptionException;
+import com.chiorichan.maven.MavenLibrary;
 import com.google.common.collect.ImmutableList;
 
 /**
@@ -97,6 +99,11 @@ import com.google.common.collect.ImmutableList;
  * <td>Other required plugins</td>
  * </tr>
  * <tr>
+ * <td><code>libraries</code></td>
+ * <td>{@link #getLibraries()}</td>
+ * <td>Required java libraries</td>
+ * </tr>
+ * <tr>
  * <td><code>softdepend</code></td>
  * <td>{@link #getSoftDepend()}</td>
  * <td>Other plugins that add functionality</td>
@@ -111,53 +118,22 @@ import com.google.common.collect.ImmutableList;
  * A plugin.yaml example:<blockquote>
  * 
  * <pre>
- * name: Inferno
- * version: 1.4.1
- * description: This plugin is so 31337. You can set yourself on fire.
- * # We could place every author in the authors list, but chose not to for illustrative purposes
- * # Also, having an author distinguishes that person as the project lead, and ensures their
- * # name is displayed first
- * author: CaptainInflamo
- * authors: [Cogito, verrier, EvilSeph]
- * website: http://www.curse.com/server-mods/minecraft/myplugin
+ * name: SuperAwesomePlugin
+ * version: 1.0.4
+ * description: This plugin does something really awesome to the server
+ * author: SomeAuthor
+ * authors: [SomeAuthor, God, Jesus]
+ * website: http://www.superawesomeplugin.com
  * 
- * main: com.captaininflamo.bukkit.inferno.Inferno
- * database: false
- * depend: [NewFire, FlameWire]
+ * main: com.superawesomeplugin.plugin.Main
+ * depend: [EmailPlugin]
  * 
  * commands:
- *   flagrate:
- *     description: Set yourself on fire.
- *     aliases: [combust_me, combustMe]
- *     permission: inferno.flagrate
- *     usage: Syntax error! Simply type /&lt;command&gt; to ignite yourself.
- *   burningdeaths:
- *     description: List how many times you have died by fire.
- *     aliases: [burning_deaths, burningDeaths]
- *     permission: inferno.burningdeaths
- *     usage: |
- *       /&lt;command&gt; [player]
- *       Example: /&lt;command&gt; - see how many times you have burned to death
- *       Example: /&lt;command&gt; CaptainIce - see how many times CaptainIce has burned to death
- * 
- * permissions:
- *   inferno.*:
- *     description: Gives access to all Inferno commands
- *     children:
- *       inferno.flagrate: true
- *       inferno.burningdeaths: true
- *       inferno.burningdeaths.others: true
- *   inferno.flagrate:
- *     description: Allows you to ignite yourself
- *     default: true
- *   inferno.burningdeaths:
- *     description: Allows you to see how many times you have burned to death
- *     default: true
- *   inferno.burningdeaths.others:
- *     description: Allows you to see how many times others have burned to death
- *     default: op
- *     children:
- *       inferno.burningdeaths: true
+ *   doit:
+ *     description: Does that super awesome thing
+ *     aliases: [doit2, ihateyou]
+ *     permission: com.chiorichan.destruction
+ *     usage: Type /&lt;doit&gt; to do that super awesome thing.
  * </pre>
  * 
  * </blockquote>
@@ -169,6 +145,7 @@ public class PluginDescriptionFile
 	private String main = null;
 	private String classLoaderOf = null;
 	private List<String> depend = null;
+	private List<MavenLibrary> libraries = null;
 	private List<String> softDepend = null;
 	private List<String> loadBefore = null;
 	private String version = null;
@@ -453,6 +430,34 @@ public class PluginDescriptionFile
 	}
 	
 	/**
+	 * Gives a list of java libraries required by this plugin.
+	 * <ul>
+	 * <li>Use the maven group:name:version string to specify the library.
+	 * <li>If any libraries listed here are not found, your plugin will fail to load at startup.
+	 * <li><code>libraries</code> must be in must be in <a href="http://en.wikipedia.org/wiki/YAML#Lists">YAML list format</a>.
+	 * <li>For the time being, libraries are downloaded from the Central Maven Repository. We have plans to implement to ability to specify libraries.
+	 * </ul>
+	 * <p>
+	 * In the plugin.yaml, this entry is named <code>libraries</code>.
+	 * <p>
+	 * Example: <blockquote>
+	 * 
+	 * <pre>
+	 * libraries:
+	 * - com.dropbox.core:dropbox-core-sdk:1.7.7
+	 * - org.apache.commons:commons-lang3:3.3.2
+	 * </pre>
+	 * 
+	 * </blockquote>
+	 * 
+	 * @return immutable list of the plugin's dependencies
+	 */
+	public List<MavenLibrary> getLibraries()
+	{
+		return libraries;
+	}
+	
+	/**
 	 * Gives a list of other plugins that the plugin requires for full functionality. The {@link PluginManager} will make
 	 * best effort to treat all entries here as if they were a {@link #getDepend() dependency}, but will never fail
 	 * because of one of these entries.
@@ -595,7 +600,7 @@ public class PluginDescriptionFile
 		try
 		{
 			main = map.get( "main" ).toString();
-			if ( main.startsWith( "com.chiori" ) && !main.startsWith( "com.chiorichan.plugin.builtin" ) )
+			if ( main.startsWith( "com.chiori" ) && !main.startsWith( "com.chiorichan.plugin" ) )
 				throw new InvalidDescriptionException( "main may not be within the com.chiori namespace" );
 		}
 		catch ( NullPointerException ex )
@@ -631,6 +636,35 @@ public class PluginDescriptionFile
 				throw new InvalidDescriptionException( e, "invalid dependency format" );
 			}
 			depend = dependBuilder.build();
+		}
+		
+		if ( map.get( "libraries" ) != null )
+		{
+			ImmutableList.Builder<MavenLibrary> libraryBuilder = ImmutableList.<MavenLibrary> builder();
+			try
+			{
+				for ( Object library : ( Iterable<?> ) map.get( "libraries" ) )
+				{
+					try
+					{
+						libraryBuilder.add( new MavenLibrary( library.toString() ) );
+					}
+					catch ( IllegalAccessException e )
+					{
+						Loader.getLogger().severe( "Could not parse the library '" + library.toString() + "' for plugin '" + name + "', it will be ignored:" );
+						Loader.getLogger().severe( e.getMessage() );
+					}
+				}
+			}
+			catch ( ClassCastException ex )
+			{
+				throw new InvalidDescriptionException( ex, "library is of wrong type" );
+			}
+			catch ( NullPointerException e )
+			{
+				throw new InvalidDescriptionException( e, "invalid library format" );
+			}
+			libraries = libraryBuilder.build();
 		}
 		
 		if ( map.get( "softdepend" ) != null )
@@ -752,6 +786,10 @@ public class PluginDescriptionFile
 		if ( depend != null )
 		{
 			map.put( "depend", depend );
+		}
+		if ( libraries != null )
+		{
+			map.put( "libraries", libraries );
 		}
 		if ( softDepend != null )
 		{

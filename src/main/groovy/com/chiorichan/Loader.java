@@ -85,7 +85,8 @@ public class Loader extends BuiltinEventCreator implements Listener
 	protected static final SessionManager sessionManager = new SessionManager();
 	protected static final SiteManager sites = new SiteManager();
 	
-	public static String clientId;
+	private static String clientId;
+	private static boolean finishedStartup = false;
 	private static boolean isRunning = true;
 	private static String stopReason = null;
 	
@@ -415,6 +416,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		
 		updater.check();
 		
+		finishedStartup = true;
 		return true;
 	}
 	
@@ -936,5 +938,15 @@ public class Loader extends BuiltinEventCreator implements Listener
 		Duration duration = new Duration( System.currentTimeMillis() - startTime );
 		PeriodFormatter formatter = new PeriodFormatterBuilder().appendDays().appendSuffix( " Day(s) " ).appendHours().appendSuffix( " Hour(s) " ).appendMinutes().appendSuffix( " Minute(s) " ).appendSeconds().appendSuffix( " Second(s)" ).toFormatter();
 		return formatter.print( duration.toPeriod() );
+	}
+	
+	public static boolean hasFinishedStartup()
+	{
+		return finishedStartup;
+	}
+	
+	public static String getClientId()
+	{
+		return clientId;
 	}
 }

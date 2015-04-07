@@ -38,10 +38,13 @@ import com.chiorichan.event.server.ServerRunLevelEvent;
 import com.chiorichan.lang.InvalidDescriptionException;
 import com.chiorichan.lang.InvalidPluginException;
 import com.chiorichan.lang.UnknownDependencyException;
+import com.chiorichan.maven.MavenLibrary;
+import com.chiorichan.maven.MavenUtils;
 import com.chiorichan.plugin.loader.JavaPluginLoader;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.plugin.loader.PluginLoader;
 import com.chiorichan.util.FileUtil;
+import com.google.common.collect.Maps;
 
 public class PluginManager extends BuiltinEventCreator implements Listener
 {
@@ -180,8 +183,9 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 		}
 		
 		Map<String, File> plugins = new HashMap<String, File>();
-		Map<String, Collection<String>> dependencies = new HashMap<String, Collection<String>>();
-		Map<String, Collection<String>> softDependencies = new HashMap<String, Collection<String>>();
+		Map<String, Collection<MavenLibrary>> libraries = Maps.newHashMap();
+		Map<String, Collection<String>> dependencies = Maps.newHashMap();
+		Map<String, Collection<String>> softDependencies = Maps.newHashMap();
 		
 		// This is where it figures out all possible plugins
 		for ( File file : directory.listFiles() )
@@ -191,9 +195,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 			{
 				Matcher match = filter.matcher( file.getName() );
 				if ( match.find() )
-				{
 					loader = fileAssociations.get( filter );
-				}
 			}
 			
 			if ( loader == null )
@@ -214,33 +216,25 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 			
 			Collection<String> softDependencySet = description.getSoftDepend();
 			if ( softDependencySet != null )
-			{
 				if ( softDependencies.containsKey( description.getName() ) )
-				{
 					// Duplicates do not matter, they will be removed together if applicable
 					softDependencies.get( description.getName() ).addAll( softDependencySet );
-				}
 				else
-				{
 					softDependencies.put( description.getName(), new LinkedList<String>( softDependencySet ) );
-				}
-			}
+			
+			Collection<MavenLibrary> librariesSet = description.getLibraries();
+			if ( librariesSet != null )
+				libraries.put( description.getName(), new LinkedList<MavenLibrary>( librariesSet ) );
 			
 			Collection<String> dependencySet = description.getDepend();
 			if ( dependencySet != null )
-			{
 				dependencies.put( description.getName(), new LinkedList<String>( dependencySet ) );
-			}
 			
 			Collection<String> loadBeforeSet = description.getLoadBefore();
 			if ( loadBeforeSet != null )
-			{
 				for ( String loadBeforeTarget : loadBeforeSet )
-				{
 					if ( softDependencies.containsKey( loadBeforeTarget ) )
-					{
 						softDependencies.get( loadBeforeTarget ).add( description.getName() );
-					}
 					else
 					{
 						// softDependencies is never iterated, so 'ghost' plugins aren't an issue
@@ -248,8 +242,6 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 						shortSoftDependency.add( description.getName() );
 						softDependencies.put( loadBeforeTarget, shortSoftDependency );
 					}
-				}
-			}
 		}
 		
 		while ( !plugins.isEmpty() )
@@ -260,6 +252,36 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 			while ( pluginIterator.hasNext() )
 			{
 				String plugin = pluginIterator.next();
+				
+				if ( libraries.containsKey( plugin ) )
+				{
+					Iterator<MavenLibrary> librariesIterator = libraries.get( plugin ).iterator();
+					
+					while ( librariesIterator.hasNext() )
+					{
+						MavenLibrary library = librariesIterator.next();
+						
+						if ( MavenUtils.loadedLibraries.contains( library.getGroup() + ":" + library.getName() ) )
+						{
+							librariesIterator.remove();
+						}
+						else
+						{
+							if ( !MavenUtils.loadLibrary( library ) )
+							{
+								missingDependency = false;
+								File file = plugins.get( plugin );
+								pluginIterator.remove();
+								libraries.remove( plugin );
+								softDependencies.remove( plugin );
+								dependencies.remove( plugin );
+								
+								getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "' due to load issue with library '" + library + "'." );
+								break;
+							}
+						}
+					}
+				}
 				
 				if ( dependencies.containsKey( plugin ) )
 				{
@@ -281,6 +303,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 							missingDependency = false;
 							File file = plugins.get( plugin );
 							pluginIterator.remove();
+							libraries.remove( plugin );
 							softDependencies.remove( plugin );
 							dependencies.remove( plugin );
 							

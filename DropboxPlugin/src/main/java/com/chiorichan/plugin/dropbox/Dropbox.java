@@ -4,7 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
  */
-package com.chiorichan.plugin.builtin.dropbox;
+package com.chiorichan.plugin.dropbox;
 
 import java.util.Locale;
 
@@ -36,6 +36,8 @@ public class Dropbox extends Plugin
 	@Override
 	public void onEnable()
 	{
+		saveDefaultConfig();
+		
 		dbxApiKey = getConfig().getString( "dropbox.apiKey" );
 		dbxApiSecret = getConfig().getString( "dropbox.apiSecret" );
 		

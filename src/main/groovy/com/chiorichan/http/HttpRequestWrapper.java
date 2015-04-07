@@ -596,7 +596,7 @@ public class HttpRequestWrapper
 		// Not sure of the need to do a try... catch.
 		// Instead of a blanket catch, we should make this more of a personal check for each put.
 		serverVars = staticServerVars;
-		putServerVarSafe( ServerVars.DOCUMENT_ROOT, getSite().getAbsoluteRoot( null ) );
+		putServerVarSafe( ServerVars.DOCUMENT_ROOT, getSite().getAbsoluteRoot() );
 		putServerVarSafe( ServerVars.HTTP_ACCEPT, getHeader( "Accept" ) );
 		putServerVarSafe( ServerVars.HTTP_USER_AGENT, getUserAgent() );
 		putServerVarSafe( ServerVars.HTTP_CONNECTION, getHeader( "Connection" ) );

@@ -31,21 +31,17 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.UUID;
 
-import net.glxn.qrgen.QRCode;
-import net.glxn.qrgen.image.ImageType;
-
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.apache.commons.lang3.Validate;
 import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.TimeInfo;
 
 import com.chiorichan.Loader;
 import com.chiorichan.factory.EvalFactory;
-import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.EvalFactoryResult;
+import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.ObjectUtil;
@@ -59,22 +55,6 @@ import com.sun.jersey.core.util.Base64;
 
 public class WebUtils
 {
-	public static String qrPNG( String code ) throws IOException
-	{
-		return qrPNG( code, 200 );
-	}
-	
-	public static String qrPNG( String code, int size ) throws IOException
-	{
-		if ( size < 1 )
-			return "";
-		
-		Validate.notNull( code );
-		Validate.notEmpty( code );
-		
-		return new String( QRCode.from( code ).withSize( size, size ).setMargin( 1 ).to( ImageType.PNG ).stream().toByteArray(), "ISO-8859-1" );
-	}
-	
 	public static String randomNum()
 	{
 		return randomNum( 8, true, false, new String[0] );
@@ -451,7 +431,7 @@ public class WebUtils
 			HttpURLConnection con = ( HttpURLConnection ) urlObj.openConnection();
 			con.setRequestMethod( "POST" );
 			
-			String urlParameters = "v=1&tid=UA-60405654-1&cid=" + Loader.clientId + "&t=event&ec=" + category + "&ea=" + action + "&el=" + label;
+			String urlParameters = "v=1&tid=UA-60405654-1&cid=" + Loader.getClientId() + "&t=event&ec=" + category + "&ea=" + action + "&el=" + label;
 			
 			con.setDoOutput( true );
 			DataOutputStream wr = new DataOutputStream( con.getOutputStream() );
@@ -552,12 +532,14 @@ public class WebUtils
 		
 		URL url = new URL( surl );
 		URLConnection uc = url.openConnection();
+		
 		if ( user != null || pass != null )
 		{
 			String userpass = user + ":" + pass;
 			String basicAuth = "Basic " + new String( Base64.encode( userpass.getBytes() ) );
 			uc.setRequestProperty( "Authorization", basicAuth );
 		}
+		
 		InputStream is = uc.getInputStream();
 		
 		byte[] byteChunk = new byte[4096];

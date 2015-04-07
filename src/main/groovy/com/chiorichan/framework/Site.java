@@ -532,7 +532,7 @@ public class Site
 		catch ( SiteException e )
 		{
 			return null;
-			// SiteException WILL NEVER THROW ON AN EMPTY SUBDOMAIN ARGUMENT. At least for now.
+			// A SiteException will never be thrown when the subdomain is empty.
 		}
 	}
 	
@@ -558,7 +558,7 @@ public class Site
 		catch ( SiteException e )
 		{
 			return null;
-			// SiteException WILL NEVER THROW ON AN EMPTY SUBDOMAIN ARGUMENT. At least for now.
+			// A SiteException will never be thrown when the subdomain is empty.
 		}
 	}
 	

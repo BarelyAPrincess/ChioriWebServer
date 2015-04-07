@@ -62,7 +62,7 @@ public class WebInterpreter extends FileInterpreter
 		
 		// String cachedFileStr = ( cachedFile == null ) ? "N/A" : cachedFile.getAbsolutePath();
 		
-		return "WebInterpreter[content=" + bs.size() + " bytes,contentType=" + getContentType() + ",overrides=[" + overrides + "],rewrites=[" + rewrites + "]]";
+		return "WebInterpreter[content=" + data.writerIndex() + " bytes,contentType=" + getContentType() + ",overrides=[" + overrides + "],rewrites=[" + rewrites + "]]";
 	}
 	
 	public WebInterpreter( HttpRequestWrapper request ) throws IOException, HttpErrorException, SiteException
