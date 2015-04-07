@@ -110,7 +110,8 @@ public class ContentTypes
 		
 		if ( types != null && types.containsKey( ext ) )
 		{
-			return types.get( ext ).toLowerCase();
+			// XXX ContentTypes properties file contain multiple types, for now we are splitting until we can decide how to handle this better.
+			return types.get( ext ).toLowerCase().split( "," )[0];
 		}
 		else
 		{

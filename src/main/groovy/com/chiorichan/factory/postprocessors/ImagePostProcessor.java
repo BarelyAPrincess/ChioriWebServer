@@ -18,6 +18,8 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 
@@ -84,6 +86,12 @@ public class ImagePostProcessor implements PostProcessor
 			}
 		}
 		
+		// Tests if our Post Processor can process the current image.
+		List<String> readerFormats = Arrays.asList( ImageIO.getReaderFormatNames() );
+		List<String> writerFormats = Arrays.asList( ImageIO.getWriterFormatNames() );
+		if ( meta.contentType != null && !readerFormats.contains( meta.contentType.split( "/" )[1].toLowerCase() ) )
+			return null;
+		
 		try
 		{
 			int inx = buf.readerIndex();
@@ -133,7 +141,12 @@ public class ImagePostProcessor implements PostProcessor
 				if ( rtn != null )
 				{
 					ByteArrayOutputStream bs = new ByteArrayOutputStream();
-					ImageIO.write( rtn, "png", bs );
+					
+					if ( meta.contentType != null && writerFormats.contains( meta.contentType.split( "/" )[1].toLowerCase() ) )
+						ImageIO.write( rtn, meta.contentType.split( "/" )[1].toLowerCase(), bs );
+					else
+						ImageIO.write( rtn, "png", bs );
+					
 					return Unpooled.buffer().writeBytes( bs.toByteArray() );
 				}
 			}
