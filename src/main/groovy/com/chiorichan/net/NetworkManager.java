@@ -3,9 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 package com.chiorichan.net;
 
@@ -25,6 +22,13 @@ import com.chiorichan.lang.StartupException;
 import com.chiorichan.net.query.QueryServerInitializer;
 import com.chiorichan.util.Common;
 
+/**
+ * Works as the main Network Operating class
+ * and implements methods used to control such systems
+ * 
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
+ */
 public class NetworkManager
 {
 	public static EventLoopGroup bossGroup = new NioEventLoopGroup( 1 );
@@ -128,11 +132,8 @@ public class NetworkManager
 							{
 								e.printStackTrace();
 							}
-							finally
-							{
-								// bossGroup.shutdownGracefully();
-								// workerGroup.shutdownGracefully();
-							}
+							
+							Loader.getLogger().info( "The HTTP Server has been shutdown!" );
 						}
 					};
 					thread.start();
@@ -208,13 +209,8 @@ public class NetworkManager
 							{
 								e.printStackTrace();
 							}
-							finally
-							{
-								// bossGroup.shutdownGracefully();
-								// workerGroup.shutdownGracefully();
-								
-								Loader.getLogger().info( "The HTTPS Server has been shutdown!" );
-							}
+							
+							Loader.getLogger().info( "The HTTPS Server has been shutdown!" );
 						}
 					};
 					thread.start();
@@ -284,11 +280,8 @@ public class NetworkManager
 							{
 								e.printStackTrace();
 							}
-							finally
-							{
-								// bossGroup.shutdownGracefully();
-								// workerGroup.shutdownGracefully();
-							}
+							
+							Loader.getLogger().info( "The Query Server has been shutdown!" );
 						}
 					};
 					thread.start();

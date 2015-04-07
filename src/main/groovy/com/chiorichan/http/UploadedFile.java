@@ -20,8 +20,6 @@ import com.chiorichan.util.StringUtil;
 /**
  * Acts as the in between for uploaded files and web script
  * 
- * TODO Upload file to temp directory with random name but preserve original filename
- * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */

@@ -28,8 +28,6 @@ import java.util.Map.Entry;
 
 import org.json.JSONException;
 
-import vnet.java.util.MySQLUtils;
-
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.lang.StartupException;
@@ -1184,7 +1182,26 @@ public class DatabaseEngine
 	
 	public static String escape( String str )
 	{
-		return MySQLUtils.escape( str );
+		if ( str == null )
+		{
+			return null;
+		}
+		
+		if ( str.replaceAll( "[a-zA-Z0-9_!@#$%^&*()-=+~.;:,\\Q[\\E\\Q]\\E<>{}\\/? ]", "" ).length() < 1 )
+		{
+			return str;
+		}
+		
+		String cleanString = str;
+		cleanString = cleanString.replaceAll( "\\\\", "\\\\\\\\" );
+		cleanString = cleanString.replaceAll( "\\n", "\\\\n" );
+		cleanString = cleanString.replaceAll( "\\r", "\\\\r" );
+		cleanString = cleanString.replaceAll( "\\t", "\\\\t" );
+		cleanString = cleanString.replaceAll( "\\00", "\\\\0" );
+		cleanString = cleanString.replaceAll( "'", "\\\\'" );
+		cleanString = cleanString.replaceAll( "\\\"", "\\\\\"" );
+		
+		return cleanString;
 	}
 	
 	public boolean tableExist( String table )
