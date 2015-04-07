@@ -3,28 +3,27 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 package com.chiorichan.http;
 
 import io.netty.handler.codec.http.multipart.DiskFileUpload;
 import io.netty.handler.codec.http.multipart.FileUpload;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
 
-import sun.misc.BASE64Encoder;
-
 import com.chiorichan.ContentTypes;
 import com.chiorichan.util.StringUtil;
 
 /**
- * TODO Upload file to temp dir with random name but preserve original filename
+ * Acts as the in between for uploaded files and web script
+ * 
+ * TODO Upload file to temp directory with random name but preserve original filename
+ * 
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
  */
 public class UploadedFile
 {
@@ -160,15 +159,9 @@ public class UploadedFile
 	public String readToString() throws IOException
 	{
 		if ( isInMemory() || file == null )
-			return new BASE64Encoder().encode( cachedFileUpload.content().array() );
-		// return new String( cachedFileUpload.content().array(), cachedFileUpload.getContentTransferEncoding() );
+			return StringUtil.encodeBase64( cachedFileUpload.content().array() );
 		else
-		{
-			return new BASE64Encoder().encode( FileUtils.readFileToByteArray( file ) );
-			// String s = FileUtils.readFileToString( file );
-			// Loader.getLogger().debug( s );
-			// return s;
-		}
+			return StringUtil.encodeBase64( FileUtils.readFileToByteArray( file ) );
 	}
 	
 	public byte[] readToBytes() throws IOException

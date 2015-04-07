@@ -25,7 +25,6 @@ import com.chiorichan.ConsoleColor;
 import com.chiorichan.ContentTypes;
 import com.chiorichan.Loader;
 import com.chiorichan.factory.EvalMetaData;
-import com.google.zxing.common.detector.MathUtils;
 
 public class ImagePostProcessor implements PostProcessor
 {
@@ -122,14 +121,14 @@ public class ImagePostProcessor implements PostProcessor
 				if ( w1 < 1 || h1 < 1 || ( w1 == w && h1 == h ) )
 					return null;
 				
-				Image image = img.getScaledInstance( MathUtils.round( w1 ), MathUtils.round( h1 ), Loader.getConfig().getBoolean( "advanced.processors.useFastGraphics", true ) ? Image.SCALE_FAST : Image.SCALE_SMOOTH );
+				Image image = img.getScaledInstance( Math.round( w1 ), Math.round( h1 ), Loader.getConfig().getBoolean( "advanced.processors.useFastGraphics", true ) ? Image.SCALE_FAST : Image.SCALE_SMOOTH );
 				
-				BufferedImage rtn = new BufferedImage( MathUtils.round( w1 ), MathUtils.round( h1 ), img.getType() );
+				BufferedImage rtn = new BufferedImage( Math.round( w1 ), Math.round( h1 ), img.getType() );
 				Graphics2D graphics = rtn.createGraphics();
 				graphics.drawImage( image, 0, 0, null );
 				graphics.dispose();
 				
-				Loader.getLogger().info( ConsoleColor.GRAY + "Resized image from " + MathUtils.round( w ) + "px by " + MathUtils.round( h ) + "px to " + MathUtils.round( w1 ) + "px by " + MathUtils.round( h1 ) + "px" );
+				Loader.getLogger().info( ConsoleColor.GRAY + "Resized image from " + Math.round( w ) + "px by " + Math.round( h ) + "px to " + Math.round( w1 ) + "px by " + Math.round( h1 ) + "px" );
 				
 				if ( rtn != null )
 				{

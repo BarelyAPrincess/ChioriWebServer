@@ -3,18 +3,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 package com.chiorichan.util;
 
 import io.netty.buffer.ByteBuf;
 
 import java.awt.Color;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -24,14 +18,18 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.Validate;
 
-import sun.misc.BASE64Decoder;
-import sun.misc.BASE64Encoder;
-
 import com.google.common.collect.Lists;
 
+/**
+ * Provides Chiori-chan Web Server specific helper methods
+ * 
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
+ */
 public class StringUtil
 {
 	private static final String IPADDRESS_PATTERN = "^([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])$";
@@ -141,22 +139,17 @@ public class StringUtil
 	
 	public static String encodeBase64( byte[] bytes )
 	{
-		return new BASE64Encoder().encode( bytes );
+		return Base64.encodeBase64String( bytes );
 	}
 	
-	public static byte[] decodeBase64( byte[] bytes ) throws IOException
+	public static byte[] decodeBase64( byte[] bytes )
 	{
-		return decodeBase64( new ByteArrayInputStream( bytes ) );
+		return Base64.decodeBase64( bytes );
 	}
 	
-	public static byte[] decodeBase64( String var ) throws IOException
+	public static byte[] decodeBase64( String var )
 	{
-		return new BASE64Decoder().decodeBuffer( var );
-	}
-	
-	public static byte[] decodeBase64( InputStream stream ) throws IOException
-	{
-		return new BASE64Decoder().decodeBuffer( stream );
+		return Base64.decodeBase64( var );
 	}
 	
 	public static String md5( byte[] bytes )
