@@ -17,12 +17,19 @@ import com.chiorichan.Loader;
 
 public class Versioning
 {
-	private static Properties metadata = new Properties();
+	private static Properties metadata;
 	
-	public static void loadMetaData()
+	static
 	{
-		if ( metadata != null && !metadata.isEmpty() )
+		loadMetaData( false );
+	}
+	
+	public static void loadMetaData( boolean reload )
+	{
+		if ( metadata != null && !metadata.isEmpty() && !reload )
 			return;
+		
+		metadata = new Properties();
 		
 		InputStream is = null;
 		try
@@ -47,39 +54,38 @@ public class Versioning
 		}
 	}
 	
+	public static String getGitHubBranch()
+	{
+		return metadata.getProperty( "project.branch", "master" );
+	}
+	
 	public static String getVersionNumber()
 	{
-		loadMetaData();
 		return metadata.getProperty( "project.version", "Unknown-Version" );
 	}
 	
 	public static String getBuildNumber()
 	{
-		loadMetaData();
 		return metadata.getProperty( "project.build", "0" );
 	}
 	
 	public static String getVersion()
 	{
-		loadMetaData();
 		return metadata.getProperty( "project.version", "Unknown-Version" ) + " (" + metadata.getProperty( "project.codename" ) + ")";
 	}
 	
 	public static String getCopyright()
 	{
-		loadMetaData();
 		return metadata.getProperty( "project.copyright", "Copyright &copy; 2014 Chiori-chan" );
 	}
 	
 	public static String getProduct()
 	{
-		loadMetaData();
 		return metadata.getProperty( "project.name", "Chiori Web Server" );
 	}
 	
 	public static String getProductSimple()
 	{
-		loadMetaData();
 		return metadata.getProperty( "project.name", "ChioriWebServer" ).replaceAll( " ", "" );
 	}
 }

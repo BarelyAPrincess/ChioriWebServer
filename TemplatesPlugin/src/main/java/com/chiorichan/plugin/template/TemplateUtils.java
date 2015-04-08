@@ -19,11 +19,12 @@ import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.util.FileUtil;
+import com.chiorichan.util.Versioning;
 import com.chiorichan.util.WebUtils;
 
 public class TemplateUtils
 {
-	private static final String GITHUB_BRANCH = "v9-experimental";
+	private static final String GITHUB_BRANCH = Versioning.getGitHubBranch();
 	private static final String GITHUB_SERVER_URL = "https://raw.githubusercontent.com/ChioriGreene/ChioriWebServer/";
 	private static final String SERVER_PLUGIN_NAMESPACE = "com.chiorichan.plugin.";
 	

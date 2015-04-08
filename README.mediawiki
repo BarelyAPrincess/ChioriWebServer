@@ -11,9 +11,9 @@ Builds are automaticly compiled with each git push we make. Be sure to grab the 
 Also our server is equiped with an auto updater that runs every 30 minutes by default. We recommend turning it off for production enviroments.
 Disclaimer: Be sure to backup your existing installations, We can't be held responsable for damage or unexpected behavior when using bleeding-edge builds.
 
-[[Image:http://jenkins.chiorichan.com/job/ChioriWebServer/badge/icon]]
+[[http://jenkins.chiorichan.com/job/ChioriWebServer/badge/icon]]
 
-[![Build Status](https://travis-ci.org/ChioriGreene/ChioriWebServer.svg?branch=master)](https://travis-ci.org/ChioriGreene/ChioriWebServer)
+[[https://travis-ci.org/ChioriGreene/ChioriWebServer.svg?branch=master]]
 
 =Youtube Tutorial Videos=
 * (Chiori-chan's Web Server v9.0.3 - Image Manipulation) http://youtu.be/rqu89LHH_r4
