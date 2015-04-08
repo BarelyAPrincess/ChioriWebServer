@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -15,8 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import com.chiorichan.ChatColor;
-import com.chiorichan.Loader;
+import com.chiorichan.ConsoleColor;
 import com.chiorichan.updater.BuildArtifact.ChangeSet.ChangeSetDetails;
 
 public class BuildArtifact
@@ -63,12 +62,12 @@ public class BuildArtifact
 		
 		public class Revision
 		{
-			public String SHA1;
+			public String sha1;
 			public List<Branch> branch;
 			
 			public class Branch
 			{
-				public String SHA1;
+				public String sha1;
 				public String name;
 			}
 		}
@@ -116,7 +115,7 @@ public class BuildArtifact
 				
 				for ( Paths p : paths )
 				{
-					sb.append( "\n\t" + ChatColor.GREEN + "[" + p.editType + "] " + p.file );
+					sb.append( "\n\t" + ConsoleColor.GREEN + "[" + p.editType + "] " + p.file );
 				}
 				
 				return msg + " (Commit: " + id + ")" + sb.toString();
@@ -129,35 +128,35 @@ public class BuildArtifact
 		public String absoluteUrl;
 		public String fullName;
 	}
-
+	
 	public boolean isBroken()
 	{
 		// TODO Parse results to determine if this build was reported as broken (or had bugs). Description parse maybe.
 		return false;
 	}
-
+	
 	public String getBrokenReason()
 	{
 		// TODO Find out why this build was reported broken? Again, Description maybe?
 		return "";
 	}
-
+	
 	public int getBuildNumber()
 	{
 		return number;
 	}
-
+	
 	public String getCreated()
 	{
 		Date date = new Date( timestamp * 1000 );
 		return new SimpleDateFormat( "EEE, d MMM yyyy HH:mm:ss Z" ).format( date );
 	}
-
+	
 	public String getVersion()
 	{
 		return getBuildProperties().getProperty( "project.version", "{Internal Error}" );
 	}
-
+	
 	public String getJar()
 	{
 		String downloadUrl = getJar( "ChioriWebServer" );
@@ -233,12 +232,12 @@ public class BuildArtifact
 		
 		return buildProperties;
 	}
-
+	
 	public String getHtmlUrl()
 	{
 		return url;
 	}
-
+	
 	public List<ChangeSetDetails> getChanges()
 	{
 		return changeSet.items;

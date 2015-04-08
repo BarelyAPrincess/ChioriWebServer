@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.io.IOUtils;
 
 import com.chiorichan.Loader;
-import com.chiorichan.framework.WebUtils;
+import com.chiorichan.util.WebUtils;
 
 public class Download implements Runnable
 {
@@ -43,7 +43,7 @@ public class Download implements Runnable
 	private File outFile = null;
 	private Exception exception = null;
 	
-	public Download(URL url, String name, String outPath) throws MalformedURLException
+	public Download( URL url, String name, String outPath ) throws MalformedURLException
 	{
 		this.url = url;
 		this.outPath = outPath;
@@ -52,7 +52,7 @@ public class Download implements Runnable
 	
 	public float getProgress()
 	{
-		return ( (float) downloaded / size ) * 100;
+		return ( ( float ) downloaded / size ) * 100;
 	}
 	
 	public Exception getException()
@@ -153,7 +153,8 @@ public class Download implements Runnable
 					stream.join( 1000L );
 				}
 				catch ( InterruptedException ignore )
-				{}
+				{
+				}
 			}
 			
 			if ( stream.permDenied.get() )
@@ -171,7 +172,8 @@ public class Download implements Runnable
 				stream.join();
 			}
 			catch ( InterruptedException ignore )
-			{}
+			{
+			}
 		}
 		
 		if ( is.get() == null )
@@ -217,7 +219,7 @@ public class Download implements Runnable
 		private final AtomicReference<InputStream> is;
 		public final AtomicBoolean permDenied = new AtomicBoolean( false );
 		
-		public StreamThread(URLConnection urlconnection, AtomicReference<InputStream> is)
+		public StreamThread( URLConnection urlconnection, AtomicReference<InputStream> is )
 		{
 			this.urlconnection = urlconnection;
 			this.is = is;
@@ -238,7 +240,8 @@ public class Download implements Runnable
 				}
 			}
 			catch ( IOException ignore )
-			{}
+			{
+			}
 		}
 	}
 	
@@ -248,7 +251,7 @@ public class Download implements Runnable
 		private final Thread downloadThread;
 		private long last = System.currentTimeMillis();
 		
-		public MonitorThread(Thread downloadThread, ReadableByteChannel rbc)
+		public MonitorThread( Thread downloadThread, ReadableByteChannel rbc )
 		{
 			super( "Download Monitor Thread" );
 			this.setDaemon( true );

@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -30,16 +30,16 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.json.JSONObject;
 
 import com.chiorichan.Loader;
-import com.chiorichan.StartupException;
-import com.chiorichan.bus.bases.EventException;
-import com.chiorichan.bus.events.server.SiteLoadEvent;
 import com.chiorichan.configuration.ConfigurationSection;
+import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.database.DatabaseEngine;
-import com.chiorichan.exceptions.ShellExecuteException;
-import com.chiorichan.factory.CodeEvalFactory;
-import com.chiorichan.factory.CodeMetaData;
-import com.chiorichan.file.YamlConfiguration;
+import com.chiorichan.event.EventException;
+import com.chiorichan.event.server.SiteLoadEvent;
+import com.chiorichan.factory.EvalFactory;
+import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.http.Routes;
+import com.chiorichan.lang.EvalFactoryException;
+import com.chiorichan.lang.StartupException;
 import com.chiorichan.util.FileUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -51,10 +51,8 @@ public class Site
 {
 	protected String siteId = null, title = null, domain = null;
 	protected File source, resource;
-	protected Map<String, String> subdomains = Maps.newConcurrentMap(),
-			aliases = Maps.newConcurrentMap();
-	protected List<String> metatags = Lists.newCopyOnWriteArrayList(),
-			protectedFiles = Lists.newCopyOnWriteArrayList();
+	protected Map<String, String> subdomains = Maps.newConcurrentMap(), aliases = Maps.newConcurrentMap();
+	protected List<String> metatags = Lists.newCopyOnWriteArrayList(), protectedFiles = Lists.newCopyOnWriteArrayList();
 	protected YamlConfiguration config;
 	protected DatabaseEngine sql;
 	protected SiteType siteType = SiteType.NOTSET;
@@ -65,9 +63,9 @@ public class Site
 	
 	// Binding and evaling for use inside each site for executing site scripts outside of web requests.
 	Binding binding = new Binding();
-	CodeEvalFactory factory = CodeEvalFactory.create( binding );
+	EvalFactory factory = EvalFactory.create( binding );
 	
-	protected Site(File f) throws SiteException, StartupException
+	protected Site( File f ) throws SiteException, StartupException
 	{
 		siteType = SiteType.FILE;
 		filePath = f;
@@ -107,7 +105,7 @@ public class Site
 		for ( Object o : protectedFilesPre )
 		{
 			if ( o instanceof String )
-				protectedFiles.add( (String) o );
+				protectedFiles.add( ( String ) o );
 			else
 				Loader.getLogger().warning( "Site '" + siteId + "' had an incorrect data object type under the YAML config for option 'protected', found type '" + o.getClass() + "'." );
 		}
@@ -156,7 +154,7 @@ public class Site
 		for ( Object o : metatagsPre )
 		{
 			if ( o instanceof String )
-				metatags.add( (String) o );
+				metatags.add( ( String ) o );
 			else
 				Loader.getLogger().warning( "Site '" + siteId + "' had an incorrect data object type under the YAML config for option 'metatags', found type '" + o.getClass() + "'." );
 		}
@@ -193,7 +191,7 @@ public class Site
 	}
 	
 	@SuppressWarnings( "unchecked" )
-	protected Site(ResultSet rs) throws SiteException, StartupException
+	protected Site( ResultSet rs ) throws SiteException, StartupException
 	{
 		siteType = SiteType.SQL;
 		
@@ -203,7 +201,7 @@ public class Site
 			{
 			}.getType();
 			
-			siteId = rs.getString( "siteID" );
+			siteId = rs.getString( "siteId" );
 			title = rs.getString( "title" );
 			domain = rs.getString( "domain" );
 			
@@ -384,18 +382,24 @@ public class Site
 				{
 					try
 					{
-						CodeMetaData meta = new CodeMetaData();
+						EvalMetaData meta = new EvalMetaData();
 						meta.shell = "groovy";
-						String result = factory.eval( script, meta, this );
+						
+						File file = getResourceWithException( script );
+						String result = factory.eval( file, meta, this ).getString();
 						
 						if ( result == null || result.isEmpty() )
 							Loader.getLogger().info( "Finsihed evaling onLoadScript '" + script + "' for site '" + siteId + "'" );
 						else
 							Loader.getLogger().info( "Finsihed evaling onLoadScript '" + script + "' for site '" + siteId + "' with result: " + result );
 					}
-					catch ( ShellExecuteException e )
+					catch ( EvalFactoryException e )
 					{
-						Loader.getLogger().warning( "There was an exception encountered while evaling onLoadScript '" + script + "' for site '" + siteId + "'.", e );
+						SiteManager.getLogger().warning( "There was an exception encountered while evaling onLoadScript '" + script + "' for site '" + siteId + "'.", e );
+					}
+					catch ( FileNotFoundException e )
+					{
+						SiteManager.getLogger().warning( "The onLoadScript '" + script + "' was not found for site '" + siteId + "'." );
 					}
 				}
 			}
@@ -415,6 +419,9 @@ public class Site
 		// Plugins are not permitted to cancel the loading of the framework site
 		if ( event.isCancelled() && !siteId.equalsIgnoreCase( "framework" ) )
 			throw new SiteException( "Loading of site '" + siteId + "' was cancelled by an internal event." );
+		
+		if ( new File( getAbsoluteRoot(), "fw" ).exists() && !siteId.equalsIgnoreCase( "framework" ) )
+			SiteManager.getLogger().warning( "It would appear that site '" + siteId + "' contains a subfolder by the name of 'fw', since this server uses the uri '/fw' for special functions, you will be unable to serve files from this folder!" );
 	}
 	
 	protected void save()
@@ -459,7 +466,7 @@ public class Site
 		return aliases;
 	}
 	
-	public Site(String id, String title0, String domain0)
+	public Site( String id, String title0, String domain0 )
 	{
 		siteId = id;
 		title = title0;
@@ -525,7 +532,7 @@ public class Site
 		catch ( SiteException e )
 		{
 			return null;
-			// SiteException WILL NEVER THROW ON AN EMPTY SUBDOMAIN ARGUMENT. At least for now.
+			// A SiteException will never be thrown when the subdomain is empty.
 		}
 	}
 	
@@ -551,7 +558,7 @@ public class Site
 		catch ( SiteException e )
 		{
 			return null;
-			// SiteException WILL NEVER THROW ON AN EMPTY SUBDOMAIN ARGUMENT. At least for now.
+			// A SiteException will never be thrown when the subdomain is empty.
 		}
 	}
 	
@@ -646,7 +653,8 @@ public class Site
 		}
 		catch ( FileNotFoundException e )
 		{
-			Loader.getLogger().warning( e.getMessage() );
+			if ( !packageNode.contains( ".includes." ) )
+				Loader.getLogger().warning( e.getMessage() );
 			return null;
 		}
 	}
@@ -670,7 +678,7 @@ public class Site
 		if ( root.exists() && root.isDirectory() )
 		{
 			File[] files = root.listFiles();
-			String[] exts = new String[] { "html", "htm", "groovy", "gsp", "jsp", "chi" };
+			String[] exts = new String[] {"html", "htm", "groovy", "gsp", "jsp", "chi"};
 			
 			for ( File child : files )
 				if ( child.getName().startsWith( packFile.getName() ) )
@@ -688,15 +696,15 @@ public class Site
 		{
 			return readResourceWithException( pack );
 		}
-		catch ( ShellExecuteException e )
+		catch ( EvalFactoryException e )
 		{
 			return "";
 		}
 	}
 	
-	public String readResourceWithException( String pack ) throws ShellExecuteException
+	public String readResourceWithException( String pack ) throws EvalFactoryException
 	{
-		CodeMetaData codeMeta = new CodeMetaData();
+		EvalMetaData codeMeta = new EvalMetaData();
 		
 		try
 		{
@@ -705,11 +713,11 @@ public class Site
 			codeMeta.shell = "text";// FileInterpreter.determineShellFromName( file.getName() );
 			codeMeta.fileName = file.getAbsolutePath();
 			
-			return factory.eval( file, this );
+			return factory.eval( file, this ).getString();
 		}
 		catch ( IOException e )
 		{
-			throw new ShellExecuteException( e, codeMeta );
+			throw new EvalFactoryException( e, factory.getShellFactory() );
 		}
 	}
 	
@@ -732,7 +740,7 @@ public class Site
 	{
 		return filePath;
 	}
-
+	
 	public void addToCachePatterns( String pattern )
 	{
 		if ( !cachePatterns.contains( pattern.toLowerCase() ) )
@@ -751,14 +759,26 @@ public class Site
 		
 		return routes;
 	}
-
+	
 	/**
 	 * TODO Make it so site config can change the location the the temp directory.
+	 * 
 	 * @return The temp directory for this site.
 	 */
 	public File getTempFileDirectory()
 	{
-		return new File( Loader.getTempFileDirectory(), getSiteId() );
+		File tmpFileDirectory = new File( Loader.getTempFileDirectory(), getSiteId() );
+		
+		if ( !tmpFileDirectory.exists() )
+			tmpFileDirectory.mkdirs();
+		
+		if ( !tmpFileDirectory.isDirectory() )
+			SiteManager.getLogger().severe( "The temp directory specified in the server configs is not a directory, File Uploads will FAIL until this problem is resolved." );
+		
+		if ( !tmpFileDirectory.canWrite() )
+			SiteManager.getLogger().severe( "The temp directory specified in the server configs is not writable, File Uploads will FAIL until this problem is resolved." );
+		
+		return tmpFileDirectory;
 	}
 	
 	@Override

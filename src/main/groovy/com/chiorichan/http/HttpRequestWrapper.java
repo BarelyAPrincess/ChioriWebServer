@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -11,11 +12,11 @@ package com.chiorichan.http;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.ssl.SslHandler;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
@@ -26,15 +27,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.Loader;
-import com.chiorichan.bus.events.server.ServerVars;
+import com.chiorichan.event.server.ServerVars;
 import com.chiorichan.framework.Site;
-import com.chiorichan.http.session.SessionProvider;
+import com.chiorichan.session.SessionProvider;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.StringUtil;
 import com.chiorichan.util.Versioning;
@@ -46,18 +46,21 @@ public class HttpRequestWrapper
 	protected Site currentSite;
 	protected SessionProvider sess = null;
 	protected HttpResponseWrapper response;
-	protected Map<String, String> getMap, postMap,
-			rewriteMap = Maps.newLinkedHashMap();
+	protected Map<String, String> getMap, postMap, rewriteMap = Maps.newLinkedHashMap();
 	protected int requestTime = 0;
 	protected Map<String, UploadedFile> uploadedFiles = new HashMap<String, UploadedFile>();
+	protected String uri = null;
+	protected int contentSize = 0;
+	protected boolean ssl;
 	
 	protected HttpRequest http;
 	protected Channel channel;
 	
-	protected HttpRequestWrapper(Channel _channel, HttpRequest _http) throws IOException
+	protected HttpRequestWrapper( Channel channel, HttpRequest http, boolean ssl ) throws IOException
 	{
-		channel = _channel;
-		http = _http;
+		this.channel = channel;
+		this.http = http;
+		this.ssl = ssl;
 		
 		requestTime = Common.getEpoch();
 		
@@ -105,7 +108,7 @@ public class HttpRequestWrapper
 	public Boolean getArgumentBoolean( String key )
 	{
 		String rtn = getArgument( key, "0" ).toLowerCase();
-		return ( rtn.equals( "true" ) || rtn.equals( "1" ) );
+		return StringUtil.isTrue( rtn );
 	}
 	
 	public String getArgument( String key )
@@ -115,7 +118,7 @@ public class HttpRequestWrapper
 	
 	public String getArgument( String key, String def )
 	{
-		return getArgument( key, "", false );
+		return getArgument( key, def, false );
 	}
 	
 	public String getArgument( String key, String def, boolean rtnNull )
@@ -170,7 +173,8 @@ public class HttpRequestWrapper
 	
 	public String getURI()
 	{
-		String uri = http.getUri();
+		if ( uri == null )
+			uri = http.getUri();
 		
 		try
 		{
@@ -187,6 +191,11 @@ public class HttpRequestWrapper
 				throw new Error();
 			}
 		}
+		catch ( IllegalArgumentException e1 )
+		{
+			// [ni..up-3-1] 02-05 00:17:10.273 [WARNING] [HttpHdl] WARNING THIS IS AN UNCAUGHT EXCEPTION! CAN YOU KINDLY REPORT THIS STACKTRACE TO THE DEVELOPER?
+			// java.lang.IllegalArgumentException: URLDecoder: Illegal hex characters in escape (%) pattern - For input string: "im"
+		}
 		
 		// if ( uri.contains( File.separator + '.' ) || uri.contains( '.' + File.separator ) || uri.startsWith( "." ) || uri.endsWith( "." ) || INSECURE_URI.matcher( uri ).matches() )
 		// {
@@ -200,6 +209,11 @@ public class HttpRequestWrapper
 			uri = "/" + uri;
 		
 		return uri;
+	}
+	
+	public String getHost()
+	{
+		return http.headers().get( "Host" );
 	}
 	
 	// Cached domain names.
@@ -321,7 +335,7 @@ public class HttpRequestWrapper
 	
 	public String getRemoteHost()
 	{
-		return ( (InetSocketAddress) channel.remoteAddress() ).getHostName();
+		return ( ( InetSocketAddress ) channel.remoteAddress() ).getHostName();
 	}
 	
 	public String getRemoteAddr()
@@ -341,12 +355,12 @@ public class HttpRequestWrapper
 		if ( detectCDN && http.headers().contains( "CF-Connecting-IP" ) )
 			return http.headers().get( "CF-Connecting-IP" );
 		else
-			return ( (InetSocketAddress) channel.remoteAddress() ).getAddress().getHostAddress();
+			return ( ( InetSocketAddress ) channel.remoteAddress() ).getAddress().getHostAddress();
 	}
 	
 	public int getRemotePort()
 	{
-		return ( (InetSocketAddress) channel.remoteAddress() ).getPort();
+		return ( ( InetSocketAddress ) channel.remoteAddress() ).getPort();
 	}
 	
 	public boolean isSecure()
@@ -356,12 +370,12 @@ public class HttpRequestWrapper
 	
 	public int getServerPort()
 	{
-		return ( (InetSocketAddress) channel.localAddress() ).getPort();
+		return ( ( InetSocketAddress ) channel.localAddress() ).getPort();
 	}
 	
 	public String getServerName()
 	{
-		return ( (InetSocketAddress) channel.localAddress() ).getHostName();
+		return ( ( InetSocketAddress ) channel.localAddress() ).getHostName();
 	}
 	
 	public String getParameter( String key )
@@ -425,13 +439,14 @@ public class HttpRequestWrapper
 						key = "1";
 					
 					Map<String, String> hash = Maps.newLinkedHashMap();
-					hash.put( "0", (String) o );
+					hash.put( "0", ( String ) o );
 					hash.put( key, val );
 					result.put( var, hash );
 				}
 				else if ( o instanceof Map )
 				{
-					Map<String, String> map = (Map<String, String>) o;
+					@SuppressWarnings( "unchecked" )
+					Map<String, String> map = ( Map<String, String> ) o;
 					
 					if ( key == null || key.isEmpty() )
 					{
@@ -551,12 +566,12 @@ public class HttpRequestWrapper
 	
 	public String getLocalHost()
 	{
-		return ( (InetSocketAddress) channel.localAddress() ).getHostName();
+		return ( ( InetSocketAddress ) channel.localAddress() ).getHostName();
 	}
 	
 	public String getLocalAddr()
 	{
-		return ( (InetSocketAddress) channel.localAddress() ).getAddress().getHostAddress();
+		return ( ( InetSocketAddress ) channel.localAddress() ).getAddress().getHostAddress();
 	}
 	
 	public String getUserAgent()
@@ -564,41 +579,46 @@ public class HttpRequestWrapper
 		return getHeader( "User-Agent" );
 	}
 	
+	void putServerVarSafe( ServerVars key, Object value )
+	{
+		try
+		{
+			serverVars.put( key, value );
+		}
+		catch ( Exception e )
+		{
+			
+		}
+	}
+	
 	void initServerVars( Map<ServerVars, Object> staticServerVars )
 	{
 		// Not sure of the need to do a try... catch.
 		// Instead of a blanket catch, we should make this more of a personal check for each put.
-		try
-		{
-			serverVars = staticServerVars;
-			serverVars.put( ServerVars.DOCUMENT_ROOT, getSite().getAbsoluteRoot( null ) );
-			serverVars.put( ServerVars.HTTP_ACCEPT, getHeader( "Accept" ) );
-			serverVars.put( ServerVars.HTTP_USER_AGENT, getUserAgent() );
-			serverVars.put( ServerVars.HTTP_CONNECTION, getHeader( "Connection" ) );
-			serverVars.put( ServerVars.HTTP_HOST, getLocalHost() );
-			serverVars.put( ServerVars.HTTP_ACCEPT_ENCODING, getHeader( "Accept-Encoding" ) );
-			serverVars.put( ServerVars.HTTP_ACCEPT_LANGUAGE, getHeader( "Accept-Language" ) );
-			serverVars.put( ServerVars.HTTP_X_REQUESTED_WITH, getHeader( "X-requested-with" ) );
-			serverVars.put( ServerVars.REMOTE_HOST, getRemoteHost() );
-			serverVars.put( ServerVars.REMOTE_ADDR, getRemoteAddr() );
-			serverVars.put( ServerVars.REMOTE_PORT, getRemotePort() );
-			serverVars.put( ServerVars.REQUEST_TIME, getRequestTime() );
-			serverVars.put( ServerVars.REQUEST_URI, getURI() );
-			serverVars.put( ServerVars.CONTENT_LENGTH, getContentLength() );
-			// serverVars.put( ServerVars.AUTH_TYPE, getAuthType() );
-			serverVars.put( ServerVars.SERVER_NAME, getServerName() );
-			serverVars.put( ServerVars.SERVER_PORT, getServerPort() );
-			serverVars.put( ServerVars.HTTPS, isSecure() );
-			serverVars.put( ServerVars.SESSION, getSession() );
-			serverVars.put( ServerVars.SERVER_SOFTWARE, Versioning.getProduct() );
-			serverVars.put( ServerVars.SERVER_VERSION, Versioning.getVersion() );
-			serverVars.put( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "webmaster@" + getDomain() ) );
-			serverVars.put( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Versioning.getVersion() );
-		}
-		catch ( Exception e )
-		{
-			e.printStackTrace();
-		}
+		serverVars = staticServerVars;
+		putServerVarSafe( ServerVars.DOCUMENT_ROOT, getSite().getAbsoluteRoot() );
+		putServerVarSafe( ServerVars.HTTP_ACCEPT, getHeader( "Accept" ) );
+		putServerVarSafe( ServerVars.HTTP_USER_AGENT, getUserAgent() );
+		putServerVarSafe( ServerVars.HTTP_CONNECTION, getHeader( "Connection" ) );
+		putServerVarSafe( ServerVars.HTTP_HOST, getLocalHost() );
+		putServerVarSafe( ServerVars.HTTP_ACCEPT_ENCODING, getHeader( "Accept-Encoding" ) );
+		putServerVarSafe( ServerVars.HTTP_ACCEPT_LANGUAGE, getHeader( "Accept-Language" ) );
+		putServerVarSafe( ServerVars.HTTP_X_REQUESTED_WITH, getHeader( "X-requested-with" ) );
+		putServerVarSafe( ServerVars.REMOTE_HOST, getRemoteHost() );
+		putServerVarSafe( ServerVars.REMOTE_ADDR, getRemoteAddr() );
+		putServerVarSafe( ServerVars.REMOTE_PORT, getRemotePort() );
+		putServerVarSafe( ServerVars.REQUEST_TIME, getRequestTime() );
+		putServerVarSafe( ServerVars.REQUEST_URI, getURI() );
+		putServerVarSafe( ServerVars.CONTENT_LENGTH, getContentLength() );
+		// putServerVarSafe( ServerVars.AUTH_TYPE, getAuthType() );
+		putServerVarSafe( ServerVars.SERVER_NAME, getServerName() );
+		putServerVarSafe( ServerVars.SERVER_PORT, getServerPort() );
+		putServerVarSafe( ServerVars.HTTPS, isSecure() );
+		putServerVarSafe( ServerVars.SESSION, getSession() );
+		putServerVarSafe( ServerVars.SERVER_SOFTWARE, Versioning.getProduct() );
+		putServerVarSafe( ServerVars.SERVER_VERSION, Versioning.getVersion() );
+		putServerVarSafe( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "webmaster@" + getDomain() ) );
+		putServerVarSafe( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Versioning.getVersion() );
 	}
 	
 	public Map<ServerVars, Object> getServerVars()
@@ -663,5 +683,29 @@ public class HttpRequestWrapper
 		return contentSize;
 	}
 	
-	protected int contentSize = 0;
+	protected void setUri( String uri )
+	{
+		this.uri = uri;
+		
+		if ( !uri.startsWith( "/" ) )
+			uri = "/" + uri;
+	}
+	
+	public boolean isWebsocketRequest()
+	{
+		return getURI().equals( "/fw/websocket" );
+	}
+	
+	public String getWebSocketLocation( HttpObject req )
+	{
+		String location = getHost() + "/fw/websocket";
+		if ( ssl )
+		{
+			return "wss://" + location;
+		}
+		else
+		{
+			return "ws://" + location;
+		}
+	}
 }

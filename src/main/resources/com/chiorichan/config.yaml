@@ -1,38 +1,59 @@
 server:
   httpHost: ''
   httpPort: 8080
-  httpsPort: 4443
+  httpsPort: 0
+  httpsKeystore: server.keystore
+  httpsSecret: abcd1234
   tcpHost: ''
   tcpPort: 1024
+  queryEnabled: false
+  queryHost: ''
+  queryPort: 8992
+  queryUseColor: true
   admin: chiorigreene@gmail.com
   allowDirectoryListing: false
   haltOnSevereError: false
+  throwInternalServerErrorOnWarnings: false
   enableWebServer: true
   enableTcpServer: true
   allowQuery: false
   installationUID: null
-  defaultEncoding: UTF-8
-  defaultImageEncoding: ISO-8859-1
+  disableTracking: false
+  defaultTextEncoding: UTF-8
+  defaultBinaryEncoding: ISO-8859-1
   developmentMode: true
   maxFileUploadKb: 5120
   tmpFileDirectory: tmp
+  webFileDirectory: webroot
+  fileUploadMinInMemory: 0
   database:
     database: chiorifw
-    type: none
+    type: sqlite
     host: localhost
     port: 3306
     username: fwuser
     password: fwpass
-    dbfile: chiori.db
+    dbfile: server.db
+plugins:
+  useTimings: true
+permissions:
+  backend: file
+  file: permissions.yaml
+  debug: false
+  allowOps: true
+  preloadGroups: true
+  preloadEntities: true
 settings:
-  permissions-file: permissions.yml
   update-folder: update
-  plugin-profiling: false
-  query-plugins: true
   deprecated-verbose: default
   shutdown-message: Server Shutdown
   whitelist: false
-  webroot: webroot
+console:
+  color: true
+  style: '&r&7[&d%ct&7] %dt %tm [%lv&7]&f'
+  dateFormat: MM-dd
+  timeFormat: HH:mm:ss.SSS
+  hideLoggerName: false
 auto-updater:
   enabled: true
   on-broken:
@@ -58,14 +79,17 @@ sessions:
   allowIPChange: false
   cleanupInterval: 5
   adapterType: none
+  debug: false
 accounts:
   maxLogins: -1
+  debug: false
+  singleLogin: false
+  singleLoginMessage: 'You logged in from another location.'
   lookupAdapter:
     type: none
     table: ''
-    fields: {}
-  operators:
-  - noLogin
+    fields: {
+      }
 framework:
   sites:
     defaultTitle: Unnamed Site

@@ -1,27 +1,26 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
 package com.chiorichan.scheduler;
 
-import com.chiorichan.plugin.Plugin;
 
 class ChioriAsyncDebugger
 {
 	private ChioriAsyncDebugger next = null;
 	private final int expiry;
-	private final Plugin plugin;
+	private final TaskCreator creator;
 	private final Class<? extends Runnable> clazz;
 	
-	ChioriAsyncDebugger(final int expiry, final Plugin plugin, final Class<? extends Runnable> clazz)
+	ChioriAsyncDebugger( final int expiry, final TaskCreator creator, final Class<? extends Runnable> clazz )
 	{
 		this.expiry = expiry;
-		this.plugin = plugin;
+		this.creator = creator;
 		this.clazz = clazz;
 		
 	}
@@ -45,7 +44,7 @@ class ChioriAsyncDebugger
 	{
 		for ( ChioriAsyncDebugger next = this; next != null; next = next.next )
 		{
-			string.append( next.plugin.getDescription().getName() ).append( ':' ).append( next.clazz.getName() ).append( '@' ).append( next.expiry ).append( ',' );
+			string.append( next.creator.getName() ).append( ':' ).append( next.clazz.getName() ).append( '@' ).append( next.expiry ).append( ',' );
 		}
 		return string;
 	}

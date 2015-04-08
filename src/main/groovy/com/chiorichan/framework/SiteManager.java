@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -20,10 +21,12 @@ import java.util.Map;
 
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 
+import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
-import com.chiorichan.StartupException;
 import com.chiorichan.database.DatabaseEngine;
+import com.chiorichan.lang.StartupException;
 import com.chiorichan.util.FileUtil;
+import com.google.common.collect.Lists;
 
 public class SiteManager
 {
@@ -42,7 +45,7 @@ public class SiteManager
 		DatabaseEngine sql = Loader.getDatabase();
 		
 		// Load sites from YAML Filebase.
-		File siteFileBase = new File( Loader.getRoot(), "sites" );
+		File siteFileBase = new File( "sites" );
 		
 		FileUtil.directoryHealthCheck( siteFileBase );
 		
@@ -53,6 +56,7 @@ public class SiteManager
 		{
 			try
 			{
+				defaultSite.getParentFile().mkdirs();
 				FileUtil.putResource( "com/chiorichan/default-site.yaml", defaultSite );
 			}
 			catch ( IOException e )
@@ -78,7 +82,7 @@ public class SiteManager
 				}
 				catch ( SiteException e )
 				{
-					Loader.getLogger().warning( "Exception encountered while loading a site from YAML FileBase, Reason: " + e.getMessage() );
+					getLogger().warning( "Exception encountered while loading a site from YAML FileBase, Reason: " + e.getMessage() );
 					if ( e.getCause() != null )
 						e.getCause().printStackTrace();
 				}
@@ -88,6 +92,26 @@ public class SiteManager
 		if ( sql != null && sql.isConnected() )
 			try
 			{
+				if ( !sql.tableExist( "sites" ) )
+				{
+					DatabaseEngine.getLogger().info( "We detected the non-existence of table 'sites' in the server database, we will attempt to create it now." );
+					
+					String table = "CREATE TABLE `sites` (";
+					table += "`siteId` varchar(255) NOT NULL,";
+					table += " `title` varchar(255) NOT NULL DEFAULT 'Unnamed Chiori Framework Site',";
+					table += " `domain` varchar(255) NOT NULL,";
+					table += " `source` varchar(255) NOT NULL DEFAULT 'pages',";
+					table += " `resource` varchar(255) NOT NULL DEFAULT 'resources',";
+					table += " `subdomains` text NOT NULL,";
+					table += " `protected` text NOT NULL,";
+					table += " `metatags` text NOT NULL,";
+					table += " `aliases` text NOT NULL,";
+					table += " `configYaml` text NOT NULL";
+					table += ");";
+					
+					sql.queryUpdate( table );
+				}
+				
 				// Load sites from the database
 				ResultSet rs = sql.query( "SELECT * FROM `sites`;" );
 				
@@ -106,7 +130,7 @@ public class SiteManager
 						}
 						catch ( SiteException e )
 						{
-							Loader.getLogger().severe( "Exception encountered while loading a site from SQL DataBase, Reason: " + e.getMessage() );
+							getLogger().severe( "Exception encountered while loading a site from SQL DataBase, Reason: " + e.getMessage() );
 							if ( e.getCause() != null )
 								e.getCause().printStackTrace();
 						}
@@ -117,7 +141,7 @@ public class SiteManager
 			}
 			catch ( SQLException e )
 			{
-				Loader.getLogger().warning( "Exception encountered while loading a sites from Database", e );
+				getLogger().warning( "Exception encountered while loading a sites from Database", e );
 			}
 	}
 	
@@ -199,17 +223,34 @@ public class SiteManager
 		if ( siteMap.containsKey( siteId ) )
 			return "There already exists a site by the id you provided.";
 		
-		if ( type.equalsIgnoreCase( "sql" ) )
-		{	
-			
-		}
-		else if ( type.equalsIgnoreCase( "file" ) )
-		{	
-			
-		}
-		else
+		if ( !type.equalsIgnoreCase( "sql" ) && !type.equalsIgnoreCase( "file" ) )
 			return "The only available site types are 'sql' and 'file'. '" + type + "' was not a valid option.";
 		
 		return "";
+	}
+	
+	public List<Site> parseSites( String sites )
+	{
+		return parseSites( sites, "|" );
+	}
+	
+	public List<Site> parseSites( String sites, String regExSplit )
+	{
+		List<Site> siteList = Lists.newArrayList();
+		String[] sitesArray = sites.split( regExSplit );
+		
+		for ( String siteId : sitesArray )
+		{
+			Site site = getSiteById( siteId );
+			if ( site != null )
+				siteList.add( site );
+		}
+		
+		return siteList;
+	}
+	
+	public static ConsoleLogger getLogger()
+	{
+		return Loader.getLogger( "SiteMgr" );
 	}
 }

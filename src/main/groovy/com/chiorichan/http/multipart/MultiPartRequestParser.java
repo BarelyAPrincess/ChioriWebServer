@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -15,8 +15,8 @@ import java.util.Enumeration;
 import java.util.Vector;
 
 import com.chiorichan.Loader;
-import com.chiorichan.exceptions.HttpErrorException;
 import com.chiorichan.http.HttpRequestWrapper;
+import com.chiorichan.lang.HttpErrorException;
 
 public class MultiPartRequestParser
 {
@@ -24,8 +24,8 @@ public class MultiPartRequestParser
 	private FilePart lastFilePart;
 	private RandomReadWriteByteArray buffer = new RandomReadWriteByteArray();
 	
-	//private static String DEFAULT_ENCODING = "ISO-8859-1";
-	//private String encoding = DEFAULT_ENCODING;
+	// private static String DEFAULT_ENCODING = "ISO-8859-1";
+	// private String encoding = DEFAULT_ENCODING;
 	
 	public static boolean isMultipart( HttpRequestWrapper request )
 	{
@@ -33,7 +33,7 @@ public class MultiPartRequestParser
 		return requestType.toLowerCase().startsWith( "multipart/form-data" );
 	}
 	
-	public MultiPartRequestParser(HttpRequestWrapper request) throws IOException, HttpErrorException
+	public MultiPartRequestParser( HttpRequestWrapper request ) throws IOException, HttpErrorException
 	{
 		String requestType = request.getOriginal().headers().get( "Content-Type" );
 		int maxUpload = Loader.getConfig().getInt( "server.maxFileUploadKb", 5120 );
@@ -94,7 +94,8 @@ public class MultiPartRequestParser
 	 * corresponds to the order of the form elements in the submitted form.
 	 * 
 	 * @return either a <code>FilePart</code>, a <code>ParamPart</code> or <code>null</code> if there are no more parts to read.
-	 * @exception IOException if an input or output exception has occurred.
+	 * @exception IOException
+	 *                if an input or output exception has occurred.
 	 * 
 	 * @see FilePart
 	 * @see ParamPart
@@ -167,7 +168,7 @@ public class MultiPartRequestParser
 		Enumeration<String> enu = headers.elements();
 		while ( enu.hasMoreElements() )
 		{
-			String headerline = (String) enu.nextElement();
+			String headerline = ( String ) enu.nextElement();
 			if ( headerline.toLowerCase().startsWith( "content-disposition:" ) )
 			{
 				// Parse the content-disposition line
@@ -214,7 +215,8 @@ public class MultiPartRequestParser
 	 * line was empty.
 	 * 
 	 * @return content type, or null if line was empty.
-	 * @exception IOException if the line is malformatted.
+	 * @exception IOException
+	 *                if the line is malformatted.
 	 */
 	private static String extractContentType( String line ) throws IOException
 	{
@@ -239,7 +241,8 @@ public class MultiPartRequestParser
 	 * array with elements: disposition, name, filename.
 	 * 
 	 * @return String[] of elements: disposition, name, filename.
-	 * @exception IOException if the line is malformatted.
+	 * @exception IOException
+	 *                if the line is malformatted.
 	 */
 	private String[] extractDispositionInfo( String line ) throws IOException
 	{

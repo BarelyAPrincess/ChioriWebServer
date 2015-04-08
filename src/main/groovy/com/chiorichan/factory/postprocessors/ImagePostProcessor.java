@@ -1,27 +1,32 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
 package com.chiorichan.factory.postprocessors;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.buffer.Unpooled;
+
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 
-import com.chiorichan.ChatColor;
+import com.chiorichan.ConsoleColor;
 import com.chiorichan.ContentTypes;
 import com.chiorichan.Loader;
-import com.chiorichan.factory.CodeMetaData;
-import com.google.zxing.common.detector.MathUtils;
+import com.chiorichan.factory.EvalMetaData;
 
 public class ImagePostProcessor implements PostProcessor
 {
@@ -32,7 +37,7 @@ public class ImagePostProcessor implements PostProcessor
 	}
 	
 	@Override
-	public String process( CodeMetaData meta, String code )
+	public ByteBuf process( EvalMetaData meta, ByteBuf buf ) throws Exception
 	{
 		float x = 0;
 		float y = 0;
@@ -45,9 +50,13 @@ public class ImagePostProcessor implements PostProcessor
 				
 				for ( String p : params )
 				{
-					if ( ( p.toLowerCase().startsWith( "x" ) || p.toLowerCase().startsWith( "w" ) || p.toLowerCase().startsWith( "width" ) ) && p.length() > 1 )
+					if ( p.toLowerCase().startsWith( "width" ) && p.length() > 1 )
+						x = Integer.parseInt( p.substring( 5 ) );
+					else if ( ( p.toLowerCase().startsWith( "x" ) || p.toLowerCase().startsWith( "w" ) ) && p.length() > 1 )
 						x = Integer.parseInt( p.substring( 1 ) );
-					else if ( ( p.toLowerCase().startsWith( "y" ) || p.toLowerCase().startsWith( "h" ) || p.toLowerCase().startsWith( "height" ) ) && p.length() > 1 )
+					else if ( p.toLowerCase().startsWith( "height" ) && p.length() > 1 )
+						y = Integer.parseInt( p.substring( 6 ) );
+					else if ( ( p.toLowerCase().startsWith( "y" ) || p.toLowerCase().startsWith( "h" ) ) && p.length() > 1 )
 						y = Integer.parseInt( p.substring( 1 ) );
 					else if ( p.toLowerCase().equals( "thumb" ) )
 					{
@@ -77,14 +86,22 @@ public class ImagePostProcessor implements PostProcessor
 			}
 		}
 		
+		// Tests if our Post Processor can process the current image.
+		List<String> readerFormats = Arrays.asList( ImageIO.getReaderFormatNames() );
+		List<String> writerFormats = Arrays.asList( ImageIO.getWriterFormatNames() );
+		if ( meta.contentType != null && !readerFormats.contains( meta.contentType.split( "/" )[1].toLowerCase() ) )
+			return null;
+		
 		try
 		{
-			BufferedImage buf = ImageIO.read( new ByteArrayInputStream( code.getBytes( "ISO-8859-1" ) ) );
+			int inx = buf.readerIndex();
+			BufferedImage img = ImageIO.read( new ByteBufInputStream( buf ) );
+			buf.readerIndex( inx );
 			
-			if ( buf != null )
+			if ( img != null )
 			{
-				float w = buf.getWidth();
-				float h = buf.getHeight();
+				float w = img.getWidth();
+				float h = img.getHeight();
 				float w1 = w;
 				float h1 = h;
 				
@@ -112,20 +129,25 @@ public class ImagePostProcessor implements PostProcessor
 				if ( w1 < 1 || h1 < 1 || ( w1 == w && h1 == h ) )
 					return null;
 				
-				Image image = buf.getScaledInstance( MathUtils.round( w1 ), MathUtils.round( h1 ), Loader.getConfig().getBoolean( "advanced.processors.useFastGraphics", true ) ? Image.SCALE_FAST : Image.SCALE_SMOOTH );
+				Image image = img.getScaledInstance( Math.round( w1 ), Math.round( h1 ), Loader.getConfig().getBoolean( "advanced.processors.useFastGraphics", true ) ? Image.SCALE_FAST : Image.SCALE_SMOOTH );
 				
-				BufferedImage rtn = new BufferedImage( MathUtils.round( w1 ), MathUtils.round( h1 ), buf.getType() );
+				BufferedImage rtn = new BufferedImage( Math.round( w1 ), Math.round( h1 ), img.getType() );
 				Graphics2D graphics = rtn.createGraphics();
 				graphics.drawImage( image, 0, 0, null );
 				graphics.dispose();
 				
-				Loader.getLogger().info( ChatColor.AQUA + "Resized image from " + MathUtils.round( w ) + "px by " + MathUtils.round( h ) + "px to " + MathUtils.round( w1 ) + "px by " + MathUtils.round( h1 ) + "px" );
+				Loader.getLogger().info( ConsoleColor.GRAY + "Resized image from " + Math.round( w ) + "px by " + Math.round( h ) + "px to " + Math.round( w1 ) + "px by " + Math.round( h1 ) + "px" );
 				
 				if ( rtn != null )
 				{
 					ByteArrayOutputStream bs = new ByteArrayOutputStream();
-					ImageIO.write( rtn, "png", bs );
-					return new String( bs.toByteArray(), "ISO-8859-1" );
+					
+					if ( meta.contentType != null && writerFormats.contains( meta.contentType.split( "/" )[1].toLowerCase() ) )
+						ImageIO.write( rtn, meta.contentType.split( "/" )[1].toLowerCase(), bs );
+					else
+						ImageIO.write( rtn, "png", bs );
+					
+					return Unpooled.buffer().writeBytes( bs.toByteArray() );
 				}
 			}
 		}

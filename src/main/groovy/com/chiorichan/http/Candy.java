@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -25,10 +25,10 @@ public class Candy
 	 */
 	private Boolean needsUpdating = false;
 	
-	public Candy(String _key, String _value)
+	public Candy( String key, String value )
 	{
-		key = _key;
-		value = _value;
+		this.key = key;
+		this.value = value;
 	}
 	
 	public boolean compareTo( Candy var1 )
@@ -69,12 +69,12 @@ public class Candy
 	/**
 	 * Sets an explicit expiration time using an epoch.
 	 * 
-	 * @param _epoch
+	 * @param epoch
 	 */
-	public void setExpiration( long _epoch )
+	public void setExpiration( long epoch )
 	{
 		needsUpdating = true;
-		epoch = _epoch;
+		this.epoch = epoch;
 	}
 	
 	/**
@@ -88,16 +88,16 @@ public class Candy
 		epoch = Common.getEpoch() + defaultLife;
 	}
 	
-	public void setDomain( String _domain )
+	public void setDomain( String domain )
 	{
 		needsUpdating = true;
-		domain = _domain;
+		this.domain = domain;
 	}
 	
-	public void setPath( String _path )
+	public void setPath( String path )
 	{
 		needsUpdating = true;
-		path = _path;
+		this.path = path;
 	}
 	
 	protected Boolean needsUpdating()

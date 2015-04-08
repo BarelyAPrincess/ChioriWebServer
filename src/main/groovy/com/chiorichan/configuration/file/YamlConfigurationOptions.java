@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -18,7 +18,7 @@ public class YamlConfigurationOptions extends FileConfigurationOptions
 {
 	private int indent = 2;
 	
-	protected YamlConfigurationOptions(YamlConfiguration configuration)
+	protected YamlConfigurationOptions( YamlConfiguration configuration )
 	{
 		super( configuration );
 	}
@@ -26,7 +26,7 @@ public class YamlConfigurationOptions extends FileConfigurationOptions
 	@Override
 	public YamlConfiguration configuration()
 	{
-		return (YamlConfiguration) super.configuration();
+		return ( YamlConfiguration ) super.configuration();
 	}
 	
 	@Override
@@ -75,7 +75,7 @@ public class YamlConfigurationOptions extends FileConfigurationOptions
 	 * The minimum value this may be is 2, and the maximum is 9.
 	 * 
 	 * @param value
-	 *           New indent
+	 *            New indent
 	 * @return This object, for chaining
 	 */
 	public YamlConfigurationOptions indent( int value )

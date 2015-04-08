@@ -1,15 +1,14 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
 package com.chiorichan.scheduler;
 
-import com.chiorichan.plugin.Plugin;
 
 /**
  * Represents a worker thread for the scheduler. This gives information about the Thread object for the task, owner of
@@ -24,20 +23,20 @@ public interface ChioriWorker
 	 * 
 	 * @return Task id number
 	 */
-	public int getTaskId();
+	int getTaskId();
 	
 	/**
-	 * Returns the Plugin that owns this task.
+	 * Returns the TaskCreator that owns this task.
 	 * 
-	 * @return The Plugin that owns the task
+	 * @return The TaskCreator that owns the task
 	 */
-	public Plugin getOwner();
+	TaskCreator getOwner();
 	
 	/**
 	 * Returns the thread for the worker.
 	 * 
 	 * @return The Thread object for the worker
 	 */
-	public Thread getThread();
+	Thread getThread();
 	
 }

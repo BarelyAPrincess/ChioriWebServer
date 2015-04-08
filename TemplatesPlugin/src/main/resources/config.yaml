@@ -1,0 +1,6 @@
+config:
+  defaultDocType: html
+  defaultTag: PAGE DATA
+  alwaysRender: false
+  noCommons: false
+  ignoreFileNotFound: true

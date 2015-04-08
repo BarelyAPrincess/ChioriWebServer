@@ -3,7 +3,8 @@
 # Package Files #
 *.war
 *.ear
-/bin
+/bin/
+/*/bin/
 .classpath
 .project
 .settings
@@ -22,8 +23,11 @@
 /client.log.lck
 /nbproject/private/
 /build/
+/*/build/
 /manifest.mf
 /server.yaml
-*.gradle
 /.metadata
-/sessions
+/sessions/
+/plugins
+/.gradle/
+/accounts

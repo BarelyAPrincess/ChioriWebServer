@@ -1,46 +1,53 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
 package com.chiorichan.framework;
 
-import java.io.ByteArrayOutputStream;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.net.util.Charsets;
 
 import com.chiorichan.ContentTypes;
 import com.chiorichan.InterpreterOverrides;
 import com.chiorichan.Loader;
-import com.chiorichan.util.FileUtil;
 import com.google.common.collect.Maps;
 
 public class FileInterpreter
 {
-	/**
-	 * All param keys are lower case. No such thing as a non-lowercase param keys because keys are forced to lowercase.
-	 */
+	protected Charset encoding = null;
 	protected Map<String, String> interpParams = Maps.newTreeMap();
-	protected ByteArrayOutputStream bs = new ByteArrayOutputStream();
+	protected ByteBuf data = Unpooled.buffer();
 	protected File cachedFile = null;
-	protected String encoding = Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" );
 	
-	public String getEncoding()
+	public Charset getEncoding()
 	{
 		return encoding;
 	}
 	
-	public void setEncoding( String _encoding )
+	public String getEncodingName()
 	{
-		encoding = _encoding;
-		interpParams.put( "encoding", encoding );
+		return encoding.name();
+	}
+	
+	public void setEncoding( Charset encoding )
+	{
+		this.encoding = encoding;
+		interpParams.put( "encoding", encoding.name() );
 	}
 	
 	@Override
@@ -58,7 +65,7 @@ public class FileInterpreter
 		
 		String cachedFileStr = ( cachedFile == null ) ? "N/A" : cachedFile.getAbsolutePath();
 		
-		return "FileInterpreter{content=" + bs.size() + " bytes,file=" + cachedFileStr + ",overrides={" + overrides + "}}";
+		return "FileInterpreter{content=" + data.writerIndex() + " bytes,file=" + cachedFileStr + ",overrides={" + overrides + "}}";
 	}
 	
 	public File getFile()
@@ -68,8 +75,11 @@ public class FileInterpreter
 	
 	public FileInterpreter()
 	{
+		encoding = Charsets.toCharset( Loader.getConfig().getString( "server.defaultBinaryEncoding", "ISO-8859-1" ) );
+		
+		// All param keys are lower case. No such thing as a non-lowercase param keys because keys are forced to lowercase.
 		interpParams.put( "title", null );
-		interpParams.put( "reqlevel", "-1" );
+		interpParams.put( "reqperm", "-1" );
 		interpParams.put( "theme", null );
 		interpParams.put( "view", null );
 		
@@ -78,13 +88,12 @@ public class FileInterpreter
 		
 		// Shell Options (groovy,text,html)
 		interpParams.put( "shell", null );
-		interpParams.put( "encoding", encoding );
+		interpParams.put( "encoding", encoding.name() );
 	}
 	
-	public FileInterpreter(File file) throws IOException
+	public FileInterpreter( File file ) throws IOException
 	{
 		this();
-		
 		interpretParamsFromFile( file );
 	}
 	
@@ -100,6 +109,22 @@ public class FileInterpreter
 		return shell;
 	}
 	
+	public static String readLine( ByteBuf buf )
+	{
+		if ( !buf.isReadable() || buf.readableBytes() < 1 )
+			return null;
+		
+		String op = "";
+		while ( buf.isReadable() && buf.readableBytes() > 0 )
+		{
+			byte bb = buf.readByte();
+			if ( bb == '\n' )
+				break;
+			op += ( char ) bb;
+		}
+		return op;
+	}
+	
 	public final void interpretParamsFromFile( File file ) throws IOException
 	{
 		if ( file == null || !file.exists() )
@@ -112,96 +137,89 @@ public class FileInterpreter
 			
 			interpParams.put( "file", file.getAbsolutePath() );
 			
-			if ( !interpParams.containsKey( "shell" ) || interpParams.get( "shell" ) == null )
+			if ( file.isDirectory() )
 			{
-				String shell = determineShellFromName( file.getName() );
-				if ( shell != null && shell != "" )
-					interpParams.put( "shell", shell );
+				interpParams.put( "shell", "embedded" );
 			}
-			
-			is = new FileInputStream( file );
-			
-			bs = FileUtil.inputStream2ByteArray( is );
-			
-			ByteArrayOutputStream finished = new ByteArrayOutputStream();
-			String[] scanner = new String( bs.toByteArray() ).split( "\\n" );
-			
-			int inx = 0;
-			int ln = 0;
-			for ( String l : scanner )
+			else
 			{
-				if ( l.trim().startsWith( "@" ) )
-					try
-					{
-						/* Only solution I could think of for CSS files since they use @annotations too, so we share them. */
-						if ( ContentTypes.getContentType( file ).toLowerCase().contains( "css" ) )
-							finished.write( ( l + "\n" ).getBytes( encoding ) );
-						/* Only solution I could think of for CSS files since they use @annotations too, so we share them. */
-						
-						String key;
-						String val = "";
-						
-						if ( l.contains( " " ) )
-						{
-							key = l.trim().substring( 1, l.trim().indexOf( " " ) );
-							val = l.trim().substring( l.trim().indexOf( " " ) + 1 );
-						}
-						else
-							key = l;
-						
-						if ( val.endsWith( ";" ) )
-							val = val.substring( 0, val.length() - 1 );
-						
-						if ( val.startsWith( "'" ) && val.endsWith( "'" ) )
-							val = val.substring( 1, val.length() - 1 );
-						
-						interpParams.put( key.toLowerCase(), val );
-						Loader.getLogger().finer( "Setting param '" + key + "' to '" + val + "'" );
-						
-						if ( key.equals( "encoding" ) )
-						{
-							try
-							{
-								l.getBytes( val ); // Test encoding before applying it.
-								setEncoding( val );
-							}
-							catch ( UnsupportedEncodingException e )
-							{
-								e.printStackTrace();
-							}
-						}
-					}
-					catch ( NullPointerException | ArrayIndexOutOfBoundsException e )
-					{	
-						
-					}
-				else if ( l.trim().isEmpty() )
-					Loader.getLogger().finest( "Continue reading, this line is empty." );
-				else
+				if ( !interpParams.containsKey( "shell" ) || interpParams.get( "shell" ) == null )
 				{
-					Loader.getLogger().finest( "We encountered the beginning of the file content. BREAK!" );
-					break;
+					String shell = determineShellFromName( file.getName() );
+					if ( shell != null && !shell.isEmpty() )
+						interpParams.put( "shell", shell );
 				}
 				
-				inx += l.length() + 1;
-				ln++;
-			}
-			
-			for ( int lnn = 0; lnn < ln; lnn++ )
-			{
-				finished.write( "\n".getBytes( encoding ) );
-			}
-			
-			int h = 0;
-			for ( byte b : bs.toByteArray() )
-			{
-				h++;
+				is = new FileInputStream( file );
 				
-				if ( h > inx )
-					finished.write( b );
+				ByteBuf buf = Unpooled.wrappedBuffer( IOUtils.toByteArray( is ) );
+				boolean beginContent = false;
+				int lastInx;
+				
+				data = Unpooled.buffer();
+				
+				do
+				{
+					lastInx = buf.readerIndex();
+					String l = readLine( buf );
+					if ( l == null )
+						break;
+					
+					if ( l.trim().startsWith( "@" ) )
+						try
+						{
+							/* Only solution I could think of for CSS files since they use @annotations too, so we share them. */
+							if ( ContentTypes.getContentType( file ).equalsIgnoreCase( "text/css" ) )
+								data.writeBytes( ( l + "\n" ).getBytes() );
+							/* Only solution I could think of for CSS files since they use @annotations too, so we share them. */
+							
+							String key;
+							String val = "";
+							
+							if ( l.contains( " " ) )
+							{
+								key = l.trim().substring( 1, l.trim().indexOf( " " ) );
+								val = l.trim().substring( l.trim().indexOf( " " ) + 1 );
+							}
+							else
+								key = l;
+							
+							if ( val.endsWith( ";" ) )
+								val = val.substring( 0, val.length() - 1 );
+							
+							if ( val.startsWith( "'" ) && val.endsWith( "'" ) )
+								val = val.substring( 1, val.length() - 1 );
+							
+							interpParams.put( key.toLowerCase(), val );
+							Loader.getLogger().finer( "Setting param '" + key + "' to '" + val + "'" );
+							
+							if ( key.equals( "encoding" ) )
+							{
+								if ( Charset.isSupported( val ) )
+									setEncoding( Charsets.toCharset( val ) );
+								else
+									Loader.getLogger().severe( "The file '" + file.getAbsolutePath() + "' requested encoding '" + val + "' but it's not supported by the JVM!" );
+							}
+						}
+						catch ( NullPointerException | ArrayIndexOutOfBoundsException e )
+						{
+							
+						}
+					else if ( l.trim().isEmpty() )
+					{
+						// Continue reading, this line is empty.
+					}
+					else
+					{
+						// We encountered the beginning of the file content.
+						beginContent = true;
+						buf.readerIndex( lastInx ); // This rewinds the buffer to the last reader index
+					}
+				}
+				while ( !beginContent );
+				
+				data.writeBytes( buf );
 			}
-			
-			bs = finished;
 		}
 		finally
 		{
@@ -220,8 +238,10 @@ public class FileInterpreter
 		if ( type == null || type.isEmpty() )
 			type = ContentTypes.getContentType( cachedFile.getAbsoluteFile() );
 		
-		if ( type.toLowerCase().contains( "image" ) )
-			setEncoding( Loader.getConfig().getString( "server.defaultImageEncoding", "ISO-8859-1" ) );
+		if ( type.startsWith( "text" ) )
+			setEncoding( Charsets.toCharset( Loader.getConfig().getString( "server.defaultTextEncoding", "UTF-8" ) ) );
+		else
+			setEncoding( Charsets.toCharset( Loader.getConfig().getString( "server.defaultBinaryEncoding", "ISO-8859-1" ) ) );
 		
 		return type;
 	}
@@ -231,9 +251,18 @@ public class FileInterpreter
 		return interpParams;
 	}
 	
-	public byte[] getContent()
+	public String consumeString()
 	{
-		return bs.toByteArray();
+		return new String( consumeBytes(), encoding );
+	}
+	
+	public byte[] consumeBytes()
+	{
+		byte[] bytes = new byte[data.readableBytes()];
+		int inx = data.readerIndex();
+		data.readBytes( bytes );
+		data.readerIndex( inx );
+		return bytes;
 	}
 	
 	public String get( String key )

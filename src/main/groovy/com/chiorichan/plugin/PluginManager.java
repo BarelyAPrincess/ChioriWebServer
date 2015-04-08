@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -16,7 +16,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -27,37 +26,33 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.Validate;
 
+import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
-import com.chiorichan.account.bases.Sentient;
-import com.chiorichan.bus.events.HandlerList;
-import com.chiorichan.command.Command;
-import com.chiorichan.command.CommandMap;
-import com.chiorichan.command.PluginCommand;
-import com.chiorichan.command.PluginCommandYamlParser;
-import com.chiorichan.configuration.ConfigurationSection;
-import com.chiorichan.permissions.Permissible;
-import com.chiorichan.permissions.Permission;
-import com.chiorichan.permissions.helpers.DefaultPermissions;
-import com.chiorichan.plugin.anon.AnonymousLoader;
-import com.chiorichan.plugin.groovy.GroovyPluginLoader;
-import com.chiorichan.plugin.java.JavaPluginLoader;
+import com.chiorichan.RunLevel;
+import com.chiorichan.event.BuiltinEventCreator;
+import com.chiorichan.event.EventHandler;
+import com.chiorichan.event.EventPriority;
+import com.chiorichan.event.HandlerList;
+import com.chiorichan.event.Listener;
+import com.chiorichan.event.server.ServerRunLevelEvent;
+import com.chiorichan.lang.InvalidDescriptionException;
+import com.chiorichan.lang.InvalidPluginException;
+import com.chiorichan.lang.UnknownDependencyException;
+import com.chiorichan.maven.MavenLibrary;
+import com.chiorichan.maven.MavenUtils;
+import com.chiorichan.plugin.loader.JavaPluginLoader;
+import com.chiorichan.plugin.loader.Plugin;
+import com.chiorichan.plugin.loader.PluginLoader;
 import com.chiorichan.util.FileUtil;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
 
-/**
- * Handles all plugin management from the Server
- */
-public final class PluginManager
+public class PluginManager extends BuiltinEventCreator implements Listener
 {
 	private final Map<Pattern, PluginLoader> fileAssociations = new HashMap<Pattern, PluginLoader>();
 	private final List<Plugin> plugins = new ArrayList<Plugin>();
 	private final Map<String, Plugin> lookupNames = new HashMap<String, Plugin>();
 	private static File updateDirectory = null;
 	private Set<String> loadedPlugins = new HashSet<String>();
-	private PluginLoadOrder currentState = PluginLoadOrder.INITIALIZATION;
-	private AnonymousLoader anonLoader;
-	
-	private final static CommandMap commandMap = new CommandMap();
 	
 	private static PluginManager instance;
 	
@@ -66,55 +61,25 @@ public final class PluginManager
 		instance = this;
 	}
 	
-	public void init()
-	{
-		
-	}
-	
 	public static PluginManager getInstance()
 	{
 		return instance;
 	}
 	
-	public static CommandMap getCommandMap()
+	/**
+	 * Registers with the event bus to we can load plugins in their correct order.
+	 */
+	public void init()
 	{
-		return commandMap;
-	}
-	
-	public void shutdown()
-	{
-		clearPlugins();
-		commandMap.clearCommands();
-	}
-	
-	public void enablePlugins( PluginLoadOrder type )
-	{
-		currentState = type;
-		
-		Plugin[] plugins = getPlugins();
-		
-		for ( Plugin plugin : plugins )
-		{
-			if ( ( !plugin.isEnabled() ) && ( plugin.getDescription().getLoad() == type ) )
-				loadPlugin( plugin );
-		}
-		
-		if ( type == PluginLoadOrder.POSTSERVER )
-		{
-			commandMap.registerServerAliases();
-			Loader.getPermissionsManager().loadCustomPermissions();
-			DefaultPermissions.registerCorePermissions();
-		}
+		Loader.getEventBus().registerEvents( this, this );
 	}
 	
 	public void loadPlugins()
 	{
 		registerInterface( JavaPluginLoader.class );
-		registerInterface( GroovyPluginLoader.class );
+		// registerInterface( GroovyPluginLoader.class );
 		
-		anonLoader = new AnonymousLoader();
-		
-		File pluginFolder = (File) Loader.getOptions().valueOf( "plugins" );
+		File pluginFolder = ( File ) Loader.getOptions().valueOf( "plugins" );
 		
 		if ( pluginFolder.exists() )
 		{
@@ -124,12 +89,12 @@ public final class PluginManager
 				try
 				{
 					String message = String.format( "Loading %s", plugin.getDescription().getFullName() );
-					Loader.getLogger().info( message );
+					PluginManager.getLogger().info( message );
 					plugin.onLoad();
 				}
 				catch ( Throwable ex )
 				{
-					Loader.getLogger().log( Level.SEVERE, ex.getMessage() + " initializing " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
+					getLogger().log( Level.SEVERE, ex.getMessage() + " initializing " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 				}
 			}
 		}
@@ -137,18 +102,13 @@ public final class PluginManager
 			pluginFolder.mkdir();
 	}
 	
-	public PluginLoadOrder getCurrentLoadState()
-	{
-		return currentState;
-	}
-	
 	/**
 	 * Registers the specified plugin loader
 	 * 
 	 * @param loader
-	 *             Class name of the PluginLoader to register
+	 *            Class name of the PluginLoader to register
 	 * @throws IllegalArgumentException
-	 *              Thrown when the given Class is not a valid PluginLoader
+	 *             Thrown when the given Class is not a valid PluginLoader
 	 */
 	public void registerInterface( Class<? extends PluginLoader> loader ) throws IllegalArgumentException
 	{
@@ -206,7 +166,7 @@ public final class PluginManager
 	 * Loads the plugins contained within the specified directory
 	 * 
 	 * @param directory
-	 *             Directory to check for plugins
+	 *            Directory to check for plugins
 	 * @return A list of all plugins loaded
 	 */
 	public Plugin[] loadPlugins( File directory )
@@ -217,14 +177,15 @@ public final class PluginManager
 		List<Plugin> result = new ArrayList<Plugin>();
 		Set<Pattern> filters = fileAssociations.keySet();
 		
-		if ( !( Loader.getInstance().getUpdateFolder().equals( "" ) ) )
+		if ( ! ( Loader.getInstance().getUpdateFolder().equals( "" ) ) )
 		{
 			updateDirectory = new File( directory, Loader.getInstance().getUpdateFolder() );
 		}
 		
 		Map<String, File> plugins = new HashMap<String, File>();
-		Map<String, Collection<String>> dependencies = new HashMap<String, Collection<String>>();
-		Map<String, Collection<String>> softDependencies = new HashMap<String, Collection<String>>();
+		Map<String, Collection<MavenLibrary>> libraries = Maps.newHashMap();
+		Map<String, Collection<String>> dependencies = Maps.newHashMap();
+		Map<String, Collection<String>> softDependencies = Maps.newHashMap();
 		
 		// This is where it figures out all possible plugins
 		for ( File file : directory.listFiles() )
@@ -234,9 +195,7 @@ public final class PluginManager
 			{
 				Matcher match = filter.matcher( file.getName() );
 				if ( match.find() )
-				{
 					loader = fileAssociations.get( filter );
-				}
 			}
 			
 			if ( loader == null )
@@ -249,43 +208,33 @@ public final class PluginManager
 			}
 			catch ( InvalidDescriptionException ex )
 			{
-				Loader.getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", ex );
+				getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", ex );
 				continue;
 			}
 			
 			plugins.put( description.getName(), file );
 			
-			// TODO: Make it so packets can be registered with the TCP Network from the plugin.yml file
-			
 			Collection<String> softDependencySet = description.getSoftDepend();
 			if ( softDependencySet != null )
-			{
 				if ( softDependencies.containsKey( description.getName() ) )
-				{
 					// Duplicates do not matter, they will be removed together if applicable
 					softDependencies.get( description.getName() ).addAll( softDependencySet );
-				}
 				else
-				{
 					softDependencies.put( description.getName(), new LinkedList<String>( softDependencySet ) );
-				}
-			}
+			
+			Collection<MavenLibrary> librariesSet = description.getLibraries();
+			if ( librariesSet != null )
+				libraries.put( description.getName(), new LinkedList<MavenLibrary>( librariesSet ) );
 			
 			Collection<String> dependencySet = description.getDepend();
 			if ( dependencySet != null )
-			{
 				dependencies.put( description.getName(), new LinkedList<String>( dependencySet ) );
-			}
 			
 			Collection<String> loadBeforeSet = description.getLoadBefore();
 			if ( loadBeforeSet != null )
-			{
 				for ( String loadBeforeTarget : loadBeforeSet )
-				{
 					if ( softDependencies.containsKey( loadBeforeTarget ) )
-					{
 						softDependencies.get( loadBeforeTarget ).add( description.getName() );
-					}
 					else
 					{
 						// softDependencies is never iterated, so 'ghost' plugins aren't an issue
@@ -293,8 +242,6 @@ public final class PluginManager
 						shortSoftDependency.add( description.getName() );
 						softDependencies.put( loadBeforeTarget, shortSoftDependency );
 					}
-				}
-			}
 		}
 		
 		while ( !plugins.isEmpty() )
@@ -305,6 +252,36 @@ public final class PluginManager
 			while ( pluginIterator.hasNext() )
 			{
 				String plugin = pluginIterator.next();
+				
+				if ( libraries.containsKey( plugin ) )
+				{
+					Iterator<MavenLibrary> librariesIterator = libraries.get( plugin ).iterator();
+					
+					while ( librariesIterator.hasNext() )
+					{
+						MavenLibrary library = librariesIterator.next();
+						
+						if ( MavenUtils.loadedLibraries.contains( library.getGroup() + ":" + library.getName() ) )
+						{
+							librariesIterator.remove();
+						}
+						else
+						{
+							if ( !MavenUtils.loadLibrary( library ) )
+							{
+								missingDependency = false;
+								File file = plugins.get( plugin );
+								pluginIterator.remove();
+								libraries.remove( plugin );
+								softDependencies.remove( plugin );
+								dependencies.remove( plugin );
+								
+								getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "' due to load issue with library '" + library + "'." );
+								break;
+							}
+						}
+					}
+				}
 				
 				if ( dependencies.containsKey( plugin ) )
 				{
@@ -326,10 +303,11 @@ public final class PluginManager
 							missingDependency = false;
 							File file = plugins.get( plugin );
 							pluginIterator.remove();
+							libraries.remove( plugin );
 							softDependencies.remove( plugin );
 							dependencies.remove( plugin );
 							
-							Loader.getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", new UnknownDependencyException( dependency ) );
+							getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", new UnknownDependencyException( dependency ) );
 							break;
 						}
 					}
@@ -359,7 +337,7 @@ public final class PluginManager
 						softDependencies.remove( plugin );
 					}
 				}
-				if ( !( dependencies.containsKey( plugin ) || softDependencies.containsKey( plugin ) ) && plugins.containsKey( plugin ) )
+				if ( ! ( dependencies.containsKey( plugin ) || softDependencies.containsKey( plugin ) ) && plugins.containsKey( plugin ) )
 				{
 					// We're clear to load, no more soft or hard dependencies left
 					File file = plugins.get( plugin );
@@ -374,7 +352,7 @@ public final class PluginManager
 					}
 					catch ( InvalidPluginException ex )
 					{
-						Loader.getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", ex );
+						getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", ex );
 					}
 				}
 			}
@@ -404,7 +382,7 @@ public final class PluginManager
 						}
 						catch ( InvalidPluginException ex )
 						{
-							Loader.getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", ex );
+							getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", ex );
 						}
 					}
 				}
@@ -419,7 +397,7 @@ public final class PluginManager
 					{
 						File file = failedPluginIterator.next();
 						failedPluginIterator.remove();
-						Loader.getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "': circular dependency detected" );
+						getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "': circular dependency detected" );
 					}
 				}
 			}
@@ -434,12 +412,12 @@ public final class PluginManager
 	 * File must be valid according to the current enabled Plugin interfaces
 	 * 
 	 * @param file
-	 *             File containing the plugin to load
+	 *            File containing the plugin to load
 	 * @return The Plugin loaded, or null if it was invalid
 	 * @throws InvalidPluginException
-	 *              Thrown when the specified file is not a valid plugin
+	 *             Thrown when the specified file is not a valid plugin
 	 * @throws UnknownDependencyException
-	 *              If a required dependency could not be found
+	 *             If a required dependency could not be found
 	 */
 	public synchronized Plugin loadPlugin( File file ) throws InvalidPluginException, UnknownDependencyException
 	{
@@ -486,78 +464,17 @@ public final class PluginManager
 		}
 	}
 	
-	/**
-	 * Checks if the given plugin is loaded and returns it when applicable
-	 * <p>
-	 * Please note that the name of the plugin is case-sensitive
-	 * 
-	 * @param name
-	 *             Name of the plugin to check
-	 * @return Plugin if it exists, otherwise null
-	 */
-	public synchronized Plugin getPlugin( String name )
-	{
-		return lookupNames.get( name );
-	}
-	
-	public synchronized Plugin[] getPlugins()
-	{
-		return plugins.toArray( new Plugin[0] );
-	}
-	
-	/**
-	 * Checks if the given plugin is enabled or not
-	 * <p>
-	 * Please note that the name of the plugin is case-sensitive.
-	 * 
-	 * @param name
-	 *             Name of the plugin to check
-	 * @return true if the plugin is enabled, otherwise false
-	 */
-	public boolean isPluginEnabled( String name )
-	{
-		Plugin plugin = getPlugin( name );
-		
-		return isPluginEnabled( plugin );
-	}
-	
-	/**
-	 * Checks if the given plugin is enabled or not
-	 * 
-	 * @param plugin
-	 *             Plugin to check
-	 * @return true if the plugin is enabled, otherwise false
-	 */
-	public boolean isPluginEnabled( Plugin plugin )
-	{
-		if ( ( plugin != null ) && ( plugins.contains( plugin ) ) )
-		{
-			return plugin.isEnabled();
-		}
-		else
-		{
-			return false;
-		}
-	}
-	
 	public void enablePlugin( final Plugin plugin )
 	{
 		if ( !plugin.isEnabled() )
 		{
-			List<Command> pluginCommands = PluginCommandYamlParser.parse( plugin );
-			
-			if ( !pluginCommands.isEmpty() )
-			{
-				commandMap.registerAll( plugin.getDescription().getName(), pluginCommands );
-			}
-			
 			try
 			{
 				plugin.getPluginLoader().enablePlugin( plugin );
 			}
 			catch ( Throwable ex )
 			{
-				Loader.getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while enabling " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
+				getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while enabling " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 			}
 			
 			HandlerList.bakeAll();
@@ -583,25 +500,25 @@ public final class PluginManager
 			}
 			catch ( Throwable ex )
 			{
-				Loader.getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while disabling " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
+				getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while disabling " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 			}
 			
 			try
 			{
-				Loader.getScheduler().cancelTasks( plugin );
+				// Loader.getScheduler().cancelTasks( plugin );
 			}
 			catch ( Throwable ex )
 			{
-				Loader.getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while cancelling tasks for " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
+				getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while cancelling tasks for " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 			}
 			
 			try
 			{
-				Loader.getServicesManager().unregisterAll( plugin );
+				// Loader.getServicesManager().unregisterAll( plugin );
 			}
 			catch ( Throwable ex )
 			{
-				Loader.getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while unregistering services for " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
+				getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while unregistering services for " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 			}
 			
 			try
@@ -610,17 +527,17 @@ public final class PluginManager
 			}
 			catch ( Throwable ex )
 			{
-				Loader.getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while unregistering events for " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
+				getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while unregistering events for " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 			}
 			
 			try
 			{
-				Loader.getMessenger().unregisterIncomingPluginChannel( plugin );
-				Loader.getMessenger().unregisterOutgoingPluginChannel( plugin );
+				// Loader.getMessenger().unregisterIncomingPluginChannel( plugin );
+				// Loader.getMessenger().unregisterOutgoingPluginChannel( plugin );
 			}
 			catch ( Throwable ex )
 			{
-				Loader.getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while unregistering plugin channels for " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
+				getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while unregistering plugin channels for " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 			}
 		}
 	}
@@ -635,6 +552,34 @@ public final class PluginManager
 			HandlerList.unregisterAll();
 			fileAssociations.clear();
 		}
+	}
+	
+	public void shutdown()
+	{
+		clearPlugins();
+	}
+	
+	public synchronized Plugin[] getPlugins()
+	{
+		return plugins.toArray( new Plugin[0] );
+	}
+	
+	public Plugin getPluginbyClassname( String className )
+	{
+		try
+		{
+			for ( Plugin plugin1 : getPlugins() )
+			{
+				if ( plugin1.getClass().getName().startsWith( className ) )
+					return plugin1;
+			}
+		}
+		catch ( Exception e )
+		{
+			e.printStackTrace();
+		}
+		
+		return null;
 	}
 	
 	public Plugin getPluginbyName( String pluginPath )
@@ -655,88 +600,43 @@ public final class PluginManager
 		return null;
 	}
 	
-	public int broadcastMessage( String message )
-	{
-		return broadcast( message, Loader.BROADCAST_CHANNEL_USERS );
-	}
-	
-	public int broadcast( String message, String permission )
-	{
-		int count = 0;
-		Set<Permissible> permissibles = Loader.getPermissionsManager().getPermissionSubscriptions( permission );
-		
-		for ( Permissible permissible : permissibles )
-		{
-			if ( permissible instanceof Sentient && permissible.hasPermission( permission ) )
-			{
-				Sentient user = (Sentient) permissible;
-				user.sendMessage( message );
-				count++;
-			}
-		}
-		
-		return count;
-	}
-	
-	public Map<String, String[]> getCommandAliases()
-	{
-		ConfigurationSection section = Loader.getConfig().getConfigurationSection( "aliases" );
-		Map<String, String[]> result = new LinkedHashMap<String, String[]>();
-		
-		if ( section != null )
-			for ( String key : section.getKeys( false ) )
-			{
-				List<String> commands;
-				
-				if ( section.isList( key ) )
-					commands = section.getStringList( key );
-				else
-					commands = ImmutableList.of( section.getString( key ) );
-				
-				result.put( key, commands.toArray( new String[commands.size()] ) );
-			}
-		
-		return result;
-	}
-	
-	public PluginCommand getPluginCommand( String name )
-	{
-		Command command = commandMap.getCommand( name );
-		
-		if ( command instanceof PluginCommand )
-			return (PluginCommand) command;
-		else
-			return null;
-	}
-	
 	private void loadPlugin( Plugin plugin )
 	{
 		try
 		{
 			enablePlugin( plugin );
-			
-			List<Permission> perms = plugin.getDescription().getPermissions();
-			
-			for ( Permission perm : perms )
-			{
-				try
-				{
-					Loader.getPermissionsManager().addPermission( perm );
-				}
-				catch ( IllegalArgumentException ex )
-				{
-					Loader.getLogger().log( Level.WARNING, "Plugin " + plugin.getDescription().getFullName() + " tried to register permission '" + perm.getName() + "' but it's already registered", ex );
-				}
-			}
 		}
 		catch ( Throwable ex )
 		{
-			Loader.getLogger().log( Level.SEVERE, ex.getMessage() + " loading " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
+			getLogger().log( Level.SEVERE, ex.getMessage() + " loading " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
 		}
 	}
 	
-	public AnonymousLoader getAnonLoader()
+	public static ConsoleLogger getLogger()
 	{
-		return anonLoader;
+		return Loader.getLogger( "PluginMgr" );
+	}
+	
+	@Override
+	public String getName()
+	{
+		return "Plugins Manager";
+	}
+	
+	/**
+	 * Loads plugins in order as PluginManager receives the notices from the EventBus
+	 */
+	@EventHandler( priority = EventPriority.NORMAL )
+	public void onServerRunLevelEvent( ServerRunLevelEvent event )
+	{
+		RunLevel level = event.getRunLevel();
+		
+		Plugin[] plugins = getPlugins();
+		
+		for ( Plugin plugin : plugins )
+		{
+			if ( ( !plugin.isEnabled() ) && ( plugin.getDescription().getLoad() == level ) )
+				loadPlugin( plugin );
+		}
 	}
 }

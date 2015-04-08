@@ -1,104 +1,209 @@
 import java.text.SimpleDateFormat;
 
+defaultTasks 'clean', 'writePropertiesFile', 'shadowJar', ':TemplatesPlugin:build', 'javadocArchive', 'sourcesArchive'
+
 apply plugin: 'eclipse'
 apply plugin: 'groovy'
 apply plugin: 'license'
 apply plugin: 'com.github.johnrengelman.shadow'
-apply plugin: 'maven'
+apply plugin: 'checkstyle'
+apply from: 'etc/publish.gradle'
+
+repositories
+{
+	jcenter()
+	maven
+	{ url "http://jenkins.chiorichan.com:8081/artifactory/" }
+	mavenCentral()
+}
 
 buildscript
 {
 	repositories
 	{
-		mavenCentral()
 		jcenter()
+		maven
+		{ url "http://jenkins.chiorichan.com:8081/artifactory/" }
+		mavenCentral()
 	}
 	
 	dependencies
 	{
+		classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.0'
 		classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.10.0'
-		classpath 'com.github.jengelman.gradle.plugins:shadow:1.0.3'
 	}
 }
 
-sourceCompatibility = 1.7
+def gitDescribe()
+{
+	try
+	{
+		// determine git-describe output
+		def stdout = new ByteArrayOutputStream()
+		exec
+		{
+			commandLine 'git', 'describe', '--always'
+			standardOutput = stdout
+		}
+		return stdout.toString().trim()
+	}
+	catch (e)
+	{
+		return "unknown"
+	}
+}
+
+def getVersionNumber()
+{
+	try
+	{
+		Properties props = new Properties();
+		props.load( new FileInputStream( new File( "./src/main/resources/com/chiorichan/metadata.properties" ) ) );
+		
+		return props.getProperty( "project.version" );
+	}
+	catch ( e )
+	{
+		return 0;
+	}
+}
+
+sourceCompatibility = '1.7'
+targetCompatibility = '1.7'
+
+def rawVersion = getVersionNumber() + '-' + gitDescribe()
+def jenkins_build = System.getenv("BUILD_NUMBER")
+def travis_build = System.getenv("TRAVIS_BUILD_NUMBER")
+def buildNumber = '0';
+
 group = 'com.chiorichan'
 description = 'Chiori-chan\'s Web Server is a Java Based HTTP/TCP Server featuring Groovy Shell and a feature rich Plugin System'
 
-def rawVersion = '8.2.0'
-
-if ( System.getenv('BUILD_NUMBER') == null || System.getenv('BUILD_NUMBER').isEmpty() )
-	version = rawVersion + '-github'
+if ( System.getenv("releaseBuild") != null )
+{
+	version = getVersionNumber();
+}
 else
-	version = rawVersion + '-github-build-' + System.getenv('BUILD_NUMBER')
+{
+	if ( jenkins_build != null )
+	{
+		version = rawVersion + '-jenkins-' + jenkins_build
+		buildNumber = jenkins_build;
+	}
+	else if ( travis_build != null )
+	{
+		version = rawVersion + '-travis-' + travis_build
+		buildNumber = travis_build;
+	}
+	else
+		version = rawVersion + '-dev'
+}
 
 distsDirName = 'dist'
 libsDirName = 'dist'
 
+compileJava
+{ options.encoding = 'UTF-8' }
+
+compileGroovy
+{ options.encoding = "UTF-8" }
+
+javadoc
+{ options.encoding = "UTF-8" }
+
+checkstyle
+{
+	configFile = file('etc/checkstyle.xml')
+	configProperties = ["basedir":project.projectDir]
+}
+
+eclipse
+{
+	project
+	{ name = 'ChioriWebServer' }
+}
+
 license
 {
-	header rootProject.file('HEADER')
+	header rootProject.file('etc/java.header')
 	ignoreFailures true
 	strictCheck false
 	skipExistingHeaders true
 }
 
-repositories
-{
-	maven
-	{ url "http://jenkins.chiorichan.com/plugin/repository/" }
-	mavenCentral()
-}
-
 dependencies
 {
-	compile project(':jline')
-	compile group: 'org.codehaus.groovy', name: 'groovy', version: '2.3.3'
+	// Used for Console ANSI Color Codes
+	compile group: 'org.fusesource.jansi', name: 'jansi', version: '1.11'
+	
+	// Used to Parse Console Input
+	compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version: '4.7'
+	
+	// Used by EvalFactory
+	compile group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.3.6'
+	
+	// Used for Networking HTTP and TCP
+	compile group: 'io.netty', name: 'netty-all', version: '5.0.0.Alpha1'
+	
+	// Used to Make Database Connections
+	compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.32'
+	compile group: 'org.xerial', name: 'sqlite-jdbc', version: '3.6.16'
+	
+	// Used for Programming Convinience
 	compile group: 'com.google.guava', name: 'guava', version: '17.0'
 	compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.3.2'
 	compile group: 'commons-io', name: 'commons-io', version: '2.4'
-	compile group: 'commons-logging', name: 'commons-logging', version: '1.2'
 	compile group: 'commons-net', name: 'commons-net', version: '3.3'
 	compile group: 'commons-codec', name: 'commons-codec', version: '1.9'
-	compile group: 'org.yaml', name: 'snakeyaml', version: '1.13'
-	compile group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.3.6'
-	compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.5'
-	compile group: 'javax', name: 'javaee-api', version: '7.0'
-	compile group: 'javax.xml', name: 'jaxr-api', version: '1.0_04'
-	compile group: 'javax.xml', name: 'jaxrpc', version: '1.1'
-	compile group: 'javax.validation', name: 'validation-api', version: '1.1.0.Final'
-	compile group: 'javax.activation', name: 'activation', version: '1.1.1'
-	compile group: 'com.asual.lesscss', name: 'lesscss-engine', version: '1.3.0'
-	compile group: 'net.lingala.zip4j', name: 'zip4j', version: '1.3.2'
-	compile group: 'com.google.code.findbugs', name: 'jsr305', version: '1.3.9'
-	compile group: 'com.google.protobuf', name: 'protobuf-java', version: '2.5.0'
-	compile group: 'args4j', name: 'args4j', version: '2.0.26'
-	compile group: 'com.google.javascript', name: 'closure-compiler', version: 'r2388'
-	compile group: 'tv.cntt', name: 'annovention', version: '1.7'
-	compile group: 'com.google.code.gson', name: 'gson', version: '2.3'
-	compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version: '4.7'
-	compile group: 'joda-time', name: 'joda-time', version: '2.4'
-	compile group: 'org.apache.httpcomponents', name: 'fluent-hc', version: '4.3.5'
-	compile group: 'org.ow2.asm', name: 'asm-all', version: '5.0.3'
-	compile group: 'org.javassist', name: 'javassist', version: '3.18.2-GA'
-	compile group: 'com.googlecode.libphonenumber', name: 'libphonenumber', version: '6.2'
-	compile group: 'org.mozilla', name: 'rhino', version: '1.7R4'
-	compile group: 'org.ocpsoft.prettytime', name: 'prettytime', version: '3.2.5.Final'
-	compile group: 'commons-daemon', name: 'commons-daemon', version: '1.0.15'
-	compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.32'
-	compile group: 'net.java.dev.jna', name: 'jna', version: '4.1.0'
-	compile group: 'org.objenesis', name: 'objenesis', version: '2.1'
-	compile group: 'net.java.dev.jna', name: 'platform', version: '3.5.2'
-	compile group: 'com.sun.jersey.contribs', name: 'jersey-multipart', version: '1.18.1'
-	compile group: 'com.sun.jersey', name: 'jersey-bundle', version: '1.18.1'
-	compile group: 'org.jboss.logging', name: 'jboss-logging', version: '3.1.4.GA'
-	compile group: 'com.google.zxing', name: 'core', version: '3.1.0'
-	compile group: 'com.google.zxing', name: 'javase', version: '3.1.0'
-	compile group: 'org.json', name: 'json', version: '20090211'
-	compile group: 'io.netty', name: 'netty-all', version: '5.0.0.Alpha1'
 	
-	testCompile group: 'junit', name: 'junit', version: '4.+'
-	testCompile group: 'org.mockito', name: 'mockito-core', version: '1.9.5'
+	// Used to load configs
+	compile group: 'org.yaml', name: 'snakeyaml', version: '1.13'
+	
+	// Used by JS Minimizer
+	compile group: 'com.google.javascript', name: 'closure-compiler', version: 'r2388'
+	compile group: 'org.mozilla', name: 'rhino', version: '1.7R4'
+	
+	// Used by Less Preprocessor
+	compile group: 'com.asual.lesscss', name: 'lesscss-engine', version: '1.3.0'
+	
+	// Used to format Time and Dates
+	compile group: 'joda-time', name: 'joda-time', version: '2.7'
+	compile group: 'org.ocpsoft.prettytime', name: 'prettytime', version: '3.2.5.Final'
+	
+	// Used to format Phone Numbers
+	compile group: 'com.googlecode.libphonenumber', name: 'libphonenumber', version: '7.0.4'
+
+	// Used for serilization within Sites and Autoupdater
+	compile group: 'com.google.code.gson', name: 'gson', version: '2.3'
+	
+	// Used by MavenUtils and some scripts
+	compile group: 'org.apache.httpcomponents', name: 'fluent-hc', version: '4.3.5'
+	
+	// compile group: 'javax', name: 'javaee-api', version: '7.0'
+	// compile group: 'javax.xml', name: 'jaxr-api', version: '1.0_04'
+	// compile group: 'javax.xml', name: 'jaxrpc', version: '1.1'
+	// compile group: 'javax.validation', name: 'validation-api', version: '1.1.0.Final'
+	// compile group: 'javax.activation', name: 'activation', version: '1.1.1'
+		
+	// compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.5'
+	// compile group: 'com.google.code.findbugs', name: 'jsr305', version: '1.3.9'
+	// compile group: 'org.ow2.asm', name: 'asm-all', version: '5.0.3'
+	// compile group: 'org.javassist', name: 'javassist', version: '3.18.2-GA'
+	// compile group: 'net.java.dev.jna', name: 'jna', version: '4.1.0'
+	// compile group: 'org.objenesis', name: 'objenesis', version: '2.1'
+	// compile group: 'net.java.dev.jna', name: 'platform', version: '3.5.2'
+	// compile group: 'com.sun.jersey.contribs', name: 'jersey-multipart', version: '1.18.1'
+	// compile group: 'com.sun.jersey', name: 'jersey-bundle', version: '1.18.1'
+	// compile group: 'org.jboss.logging', name: 'jboss-logging', version: '3.1.4.GA'
+	
+	// compile group: 'org.json', name: 'json', version: '20090211'
+	// compile group: 'org.codeartisans', name: 'org.json', version: '20131017'
+	
+	// compile group: 'tv.cntt', name: 'annovention', version: '1.7'
+	
+	// compile group: 'commons-logging', name: 'commons-logging', version: '1.2'
+	// compile group: 'com.google.protobuf', name: 'protobuf-java', version: '2.5.0'
+	// compile group: 'args4j', name: 'args4j', version: '2.0.26'
 }
 
 jar
@@ -107,19 +212,10 @@ jar
 	{
 		attributes 'Implementation-Title': 'Chiori-chan\'s Web Server'
 		attributes 'Implementation-Version': version
+		attributes 'Implementation-Vendor': 'Chiori Greene'
 		attributes 'Implementation-Vendor-Id': 'chiorigreene@gmail.com'
 		attributes 'Main-Class': 'com.chiorichan.Loader'
 	}
-}
-
-compileGroovy
-{
-	options.encoding = "UTF-8"
-}
-
-javadoc
-{
-	options.encoding = "UTF-8"
 }
 
 task sourcesArchive(type: Zip){
@@ -131,30 +227,15 @@ task javadocArchive(type: Zip, dependsOn: 'javadoc'){
 	classifier = 'javadoc'
 	from javadoc.destinationDir
 }
-/*
-task libsArchive(type: Zip){
-	classifier = 'libs'
-	from configurations.compile
-}
-*/
-task writePropertiesFile <<
-{
+
+task writePropertiesFile << {
 	SimpleDateFormat sdf = new SimpleDateFormat( "EEE, d MMM yyyy HH:mm:ss Z" );
 	
 	Properties props = new Properties();
 	props.load( new FileInputStream( new File( "./src/main/resources/com/chiorichan/metadata.properties" ) ) );
 	props.setProperty("project.builtOn", sdf.format( new Date() ));
-	props.setProperty("project.build", System.getenv('BUILD_NUMBER') ?: "0");
+	props.setProperty("project.build", buildNumber);
 	props.setProperty("project.version", version);
-	
-	if ( System.getenv('BUILD_NUMBER') != null )
-	{
-		// If not null then we are running from the Jenkin's Build Server. So we need to update the build.properties
-		File f1 = new File("./src/main/resources/com/chiorichan/metadata.properties")
-		f1.parentFile.mkdirs();
-		OutputStream out1 = new FileOutputStream( f1 );
-		props.store(out1, "Chiori-chan's Web Server Metadata Properties File - Used by the auto updater and Jenkins Build Server.");
-	}
 	
 	File f2 = new File("./build/dist/build.properties");
 	f2.parentFile.mkdirs();
@@ -163,38 +244,5 @@ task writePropertiesFile <<
 	
 }
 
-task writeNewPom <<
-{
-	pom
-	{
-		project
-		{
-			inceptionYear '2014'
-			licenses
-			{
-				license
-				{
-					name 'Mozilla Public License, Version 2.0'
-					url 'http://mozilla.org/MPL/2.0/'
-					distribution 'repo'
-				}
-			}
-		}
-	}.writeTo("$buildDir/dist/pom.xml")
-}
-
 artifacts
 { archives shadowJar, sourcesArchive, javadocArchive }
-
-allprojects
-{
-	tasks.withType(Zip)
-	{ task ->
-		task.doLast
-		{
-			ant.checksum file: it.archivePath
-		}
-	}
-}
-
-defaultTasks 'clean', 'writePropertiesFile', 'shadowJar', ':PermissionsEx:build', ':TemplatesPlugin:build', 'javadocArchive', 'sourcesArchive', 'writeNewPom'

@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -18,18 +18,18 @@ public class DownloadException extends IOException
 	private final Throwable cause;
 	private final String message;
 	
-	public DownloadException(String message, Throwable cause)
+	public DownloadException( String message, Throwable cause )
 	{
 		this.cause = cause;
 		this.message = message;
 	}
 	
-	public DownloadException(Throwable cause)
+	public DownloadException( Throwable cause )
 	{
 		this( null, cause );
 	}
 	
-	public DownloadException(String message)
+	public DownloadException( String message )
 	{
 		this( message, null );
 	}

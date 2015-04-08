@@ -1,46 +1,269 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
 package com.chiorichan.util;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.util.internal.StringUtil;
+
 import java.math.BigDecimal;
 
-import com.chiorichan.Loader;
+import org.apache.commons.codec.binary.Hex;
+
+import com.google.common.base.Strings;
 
 public class ObjectUtil
 {
-	public static Long castToLong( Object value )
+	private static final String[] HEXDUMP_ROWPREFIXES = new String[65536 >>> 4];
+	private static final String NEWLINE = StringUtil.NEWLINE;
+	private static final String[] BYTE2HEX = new String[256];
+	private static final char[] BYTE2CHAR = new char[256];
+	private static final String[] HEXPADDING = new String[16];
+	private static final String[] BYTEPADDING = new String[16];
+	
+	static
 	{
-		if ( value == null )
-			return null;
+		int i;
 		
-		switch ( value.getClass().getName() )
+		// Generate the lookup table for byte-to-hex-dump conversion
+		for ( i = 0; i < BYTE2HEX.length; i++ )
 		{
-			case "java.lang.Long":
-				return (Long) value;
-			case "java.lang.String":
-				return Long.parseLong( (String) value );
-			case "java.lang.Integer":
-				return (Long) value;
-			case "java.lang.Double":
-				return (Long) value;
-			case "java.lang.Boolean":
-				return ( (boolean) value ) ? 1L : 0L;
-			case "java.math.BigDecimal":
-				return ( (BigDecimal) value ).setScale( 0, BigDecimal.ROUND_HALF_UP ).longValue();
-			default:
-				Loader.getLogger().warning( "Uncaught Convertion to String of Type: " + value.getClass().getName() );
-				return null;
+			// XXX Fix this! Might requite Netty Alpha 2
+			BYTE2HEX[i] = ' ' + "";// + StringUtil.byteToHexStringPadded( i );
+		}
+		
+		// Generate the lookup table for hex dump paddings
+		for ( i = 0; i < HEXPADDING.length; i++ )
+		{
+			int padding = HEXPADDING.length - i;
+			StringBuilder buf = new StringBuilder( padding * 3 );
+			for ( int j = 0; j < padding; j++ )
+			{
+				buf.append( "   " );
+			}
+			HEXPADDING[i] = buf.toString();
+		}
+		
+		// Generate the lookup table for byte dump paddings
+		for ( i = 0; i < BYTEPADDING.length; i++ )
+		{
+			int padding = BYTEPADDING.length - i;
+			StringBuilder buf = new StringBuilder( padding );
+			for ( int j = 0; j < padding; j++ )
+			{
+				buf.append( ' ' );
+			}
+			BYTEPADDING[i] = buf.toString();
+		}
+		
+		// Generate the lookup table for byte-to-char conversion
+		for ( i = 0; i < BYTE2CHAR.length; i++ )
+		{
+			if ( i <= 0x1f || i >= 0x7f )
+			{
+				BYTE2CHAR[i] = '.';
+			}
+			else
+			{
+				BYTE2CHAR[i] = ( char ) i;
+			}
+		}
+		
+		// Generate the lookup table for the start-offset header in each row (up to 64KiB).
+		for ( i = 0; i < HEXDUMP_ROWPREFIXES.length; i++ )
+		{
+			StringBuilder buf = new StringBuilder( 12 );
+			buf.append( NEWLINE );
+			buf.append( Long.toHexString( i << 4 & 0xFFFFFFFFL | 0x100000000L ) );
+			buf.setCharAt( buf.length() - 9, '|' );
+			buf.append( '|' );
+			HEXDUMP_ROWPREFIXES[i] = buf.toString();
 		}
 	}
 	
-	public static String castToString( Object value )
+	public static String hexDump( ByteBuf buf )
+	{
+		return hexDump( buf, buf.readerIndex() );
+	}
+	
+	public static String hexDump( ByteBuf buf, int highlightIndex )
+	{
+		if ( buf == null )
+			return "Buffer: null!";
+		
+		if ( buf.capacity() < 1 )
+		{
+			return "Buffer: 0B!";
+		}
+		
+		StringBuilder dump = new StringBuilder();
+		
+		final int startIndex = 0;
+		final int endIndex = buf.capacity();
+		final int length = endIndex - startIndex;
+		final int fullRows = length >>> 4;
+		final int remainder = length & 0xF;
+		
+		int highlightRow = -1;
+		
+		dump.append( NEWLINE + "         +-------------------------------------------------+" + NEWLINE + "         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |" + NEWLINE + "+--------+-------------------------------------------------+----------------+" );
+		
+		if ( highlightIndex > 0 )
+		{
+			highlightRow = highlightIndex >>> 4;
+			highlightIndex = highlightIndex - ( 16 * highlightRow ) - 1;
+			
+			dump.append( NEWLINE + "|        |" + Strings.repeat( "   ", highlightIndex ) + " $$" + Strings.repeat( "   ", 15 - highlightIndex ) );
+			dump.append( " |" + Strings.repeat( " ", highlightIndex ) + "$" + Strings.repeat( " ", 15 - highlightIndex ) + "|" );
+		}
+		
+		// Dump the rows which have 16 bytes.
+		for ( int row = 0; row < fullRows; row++ )
+		{
+			int rowStartIndex = row << 4;
+			
+			// Per-row prefix.
+			appendHexDumpRowPrefix( dump, row, rowStartIndex );
+			
+			// Hex dump
+			int rowEndIndex = rowStartIndex + 16;
+			for ( int j = rowStartIndex; j < rowEndIndex; j++ )
+			{
+				dump.append( BYTE2HEX[buf.getUnsignedByte( j )] );
+			}
+			dump.append( " |" );
+			
+			// ASCII dump
+			for ( int j = rowStartIndex; j < rowEndIndex; j++ )
+			{
+				dump.append( BYTE2CHAR[buf.getUnsignedByte( j )] );
+			}
+			dump.append( '|' );
+			
+			if ( highlightIndex > 0 && highlightRow == row + 1 )
+				dump.append( " <--" );
+		}
+		
+		// Dump the last row which has less than 16 bytes.
+		if ( remainder != 0 )
+		{
+			int rowStartIndex = fullRows << 4;
+			appendHexDumpRowPrefix( dump, fullRows, rowStartIndex );
+			
+			// Hex dump
+			int rowEndIndex = rowStartIndex + remainder;
+			for ( int j = rowStartIndex; j < rowEndIndex; j++ )
+			{
+				dump.append( BYTE2HEX[buf.getUnsignedByte( j )] );
+			}
+			dump.append( HEXPADDING[remainder] );
+			dump.append( " |" );
+			
+			// Ascii dump
+			for ( int j = rowStartIndex; j < rowEndIndex; j++ )
+			{
+				dump.append( BYTE2CHAR[buf.getUnsignedByte( j )] );
+			}
+			dump.append( BYTEPADDING[remainder] );
+			dump.append( '|' );
+			
+			if ( highlightIndex > 0 && highlightRow > fullRows + 1 )
+				dump.append( " <--" );
+		}
+		
+		dump.append( NEWLINE + "+--------+-------------------------------------------------+----------------+" );
+		
+		return dump.toString();
+	}
+	
+	/**
+	 * Appends the prefix of each hex dump row. Uses the look-up table for the buffer <= 64 KiB.
+	 */
+	private static void appendHexDumpRowPrefix( StringBuilder dump, int row, int rowStartIndex )
+	{
+		if ( row < HEXDUMP_ROWPREFIXES.length )
+		{
+			dump.append( HEXDUMP_ROWPREFIXES[row] );
+		}
+		else
+		{
+			dump.append( NEWLINE );
+			dump.append( Long.toHexString( rowStartIndex & 0xFFFFFFFFL | 0x100000000L ) );
+			dump.setCharAt( dump.length() - 9, '|' );
+			dump.append( '|' );
+		}
+	}
+	
+	public static String hex2Readable( int... elements )
+	{
+		byte[] e2 = new byte[elements.length];
+		for ( int i = 0; i < elements.length; i++ )
+			e2[i] = ( byte ) elements[i];
+		return hex2Readable( e2 );
+	}
+	
+	public static String hex2Readable( byte... elements )
+	{
+		// TODO Char Dump
+		String result = "";
+		char[] chars = Hex.encodeHex( elements, true );
+		for ( int i = 0; i < chars.length; i = i + 2 )
+			result += " " + chars[i] + chars[i + 1];
+		
+		if ( result.length() > 0 )
+			result = result.substring( 1 );
+		
+		return result;
+	}
+	
+	public static int safeLongToInt( long l )
+	{
+		if ( l < Integer.MIN_VALUE )
+			return Integer.MIN_VALUE;
+		if ( l > Integer.MAX_VALUE )
+			return Integer.MAX_VALUE;
+		return ( int ) l;
+	}
+	
+	public static Boolean castToBool( Object value )
+	{
+		if ( value == null )
+			return false;
+		
+		if ( value.getClass() == Boolean.class )
+			return ( Boolean ) value;
+		
+		String val = castToString( value );
+		
+		if ( val == null )
+			return false;
+		
+		switch ( val.trim().toLowerCase() )
+		{
+			case "yes":
+				return true;
+			case "no":
+				return false;
+			case "true":
+				return true;
+			case "false":
+				return false;
+			case "1":
+				return true;
+			case "0":
+				return false;
+			default:
+				return false;
+		}
+	}
+	
+	public static Integer castToIntWithException( Object value )
 	{
 		if ( value == null )
 			return null;
@@ -48,62 +271,110 @@ public class ObjectUtil
 		switch ( value.getClass().getName() )
 		{
 			case "java.lang.Long":
-				return Long.toString( (long) value );
+				if ( ( long ) value < Integer.MIN_VALUE || ( long ) value > Integer.MAX_VALUE )
+					return ( Integer ) value;
+				else
+					return null;
 			case "java.lang.String":
-				return (String) value;
+				return Integer.parseInt( ( String ) value );
 			case "java.lang.Integer":
-				return Integer.toString( (int) value );
+				return ( Integer ) value;
 			case "java.lang.Double":
-				return Double.toString( (double) value );
+				return ( Integer ) value;
 			case "java.lang.Boolean":
-				return ( (boolean) value ) ? "true" : "false";
+				return ( ( boolean ) value ) ? 1 : 0;
 			case "java.math.BigDecimal":
-				return ( (BigDecimal) value ).toString();
+				return ( ( BigDecimal ) value ).setScale( 0, BigDecimal.ROUND_HALF_UP ).intValue();
+			default:
+				throw new ClassCastException( "Uncaught Convertion to Integer of Type: " + value.getClass().getName() );
+		}
+	}
+	
+	public static Integer castToInt( Object value )
+	{
+		try
+		{
+			return castToIntWithException( value );
+		}
+		catch ( ClassCastException e )
+		{
+			return 0;
+		}
+	}
+	
+	public static Long castToLongWithException( Object value )
+	{
+		if ( value == null )
+			return null;
+		
+		switch ( value.getClass().getName() )
+		{
+			case "java.lang.Long":
+				return ( Long ) value;
+			case "java.lang.String":
+				return Long.parseLong( ( String ) value );
+			case "java.lang.Integer":
+				return ( Long ) value;
+			case "java.lang.Double":
+				return ( Long ) value;
+			case "java.lang.Boolean":
+				return ( ( boolean ) value ) ? 1L : 0L;
+			case "java.math.BigDecimal":
+				return ( ( BigDecimal ) value ).setScale( 0, BigDecimal.ROUND_HALF_UP ).longValue();
+			default:
+				throw new ClassCastException( "Uncaught Convertion to Long of Type: " + value.getClass().getName() );
+		}
+	}
+	
+	public static Long castToLong( Object value )
+	{
+		try
+		{
+			return castToLongWithException( value );
+		}
+		catch ( ClassCastException e )
+		{
+			return 0L;
+		}
+	}
+	
+	public static String castToStringWithException( Object value )
+	{
+		if ( value == null )
+			return null;
+		
+		switch ( value.getClass().getName() )
+		{
+			case "java.lang.Long":
+				return Long.toString( ( long ) value );
+			case "java.lang.String":
+				return ( String ) value;
+			case "java.lang.Integer":
+				return Integer.toString( ( int ) value );
+			case "java.lang.Double":
+				return Double.toString( ( double ) value );
+			case "java.lang.Boolean":
+				return ( ( boolean ) value ) ? "true" : "false";
+			case "java.math.BigDecimal":
+				return ( ( BigDecimal ) value ).toString();
 			case "java.util.Map":
 				return value.toString();
 			case "java.util.List":
 				return value.toString();
 			default:
-				Loader.getLogger().warning( "Uncaught Convertion to String of Type: " + value.getClass().getName() );
-				return null;
+				throw new ClassCastException( "Uncaught Convertion to String of Type: " + value.getClass().getName() );
 		}
 	}
-	/*
-	 * public static void ArrayValueCast( ArrayValue array, String key, Object obj )
-	 * {
-	 * switch ( obj.getClass().getName() )
-	 * {
-	 * case "java.lang.Long":
-	 * array.put( key, (long) obj );
-	 * break;
-	 * case "java.lang.String":
-	 * array.put( key, (String) obj );
-	 * break;
-	 * case "java.lang.Integer":
-	 * array.put( key, (int) obj );
-	 * break;
-	 * case "java.lang.Double":
-	 * array.put( key, (double) obj );
-	 * break;
-	 * case "java.lang.Boolean":
-	 * array.put( key, (boolean) obj );
-	 * break;
-	 * case "java.lang.Char":
-	 * array.put( key, (char) obj );
-	 * break;
-	 * default:
-	 * if ( obj instanceof Map )
-	 * {
-	 * StringValue sv = new LargeStringBuilderValue();
-	 * sv.append( key );
-	 * array.put( sv, castToArrayValue( (Map) obj ) );
-	 * }
-	 * else
-	 * {
-	 * array.put( key, obj.toString() );
-	 * Loader.getLogger().warning( "Uncaught Convertion to Type: " + obj.getClass().getName() );
-	 * }
-	 * }
-	 * }
-	 */
+	
+	public static String castToString( Object value )
+	{
+		try
+		{
+			return castToStringWithException( value );
+		}
+		catch ( ClassCastException e )
+		{
+			return null;
+		}
+	}
 }

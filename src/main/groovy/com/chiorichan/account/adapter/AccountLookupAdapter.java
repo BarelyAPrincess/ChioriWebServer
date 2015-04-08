@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -11,62 +11,59 @@ package com.chiorichan.account.adapter;
 
 import java.util.List;
 
-import com.chiorichan.account.bases.Account;
-import com.chiorichan.account.helpers.AccountMetaData;
-import com.chiorichan.account.helpers.LoginException;
+import com.chiorichan.account.Account;
+import com.chiorichan.account.AccountMetaData;
+import com.chiorichan.account.LoginException;
+import com.chiorichan.account.LoginExceptionReason;
+import com.chiorichan.account.adapter.memory.MemoryAdapter;
 
 /**
- * Provided so that any site can have custom places to store login information.
- * mySql, sqLite, file, etc.
- * 
- * @author Chiori Greene
+ * Used to lookup Account MetaData from the adapters datastore
  */
 public interface AccountLookupAdapter
 {
-	public AccountLookupAdapter MEMORY_ADAPTER = new MemoryAdapter();
-
+	MemoryAdapter MEMORY_ADAPTER = new MemoryAdapter();
+	
 	/**
 	 * Returns all accounts maintained by this adapter.
-	 * @return
+	 * 
+	 * @return List of loaded accounts by this adapter
 	 */
-	public List<AccountMetaData> getAccounts();
+	List<AccountMetaData> getAccounts();
 	
 	/**
 	 * Attempt to serialize provided account.
 	 * Use of the account instance may continue.
 	 */
-	public void saveAccount( AccountMetaData account );
+	void saveAccount( AccountMetaData account );
 	
 	/**
 	 * Attempt to reload details regarding this account.
-	 * @return 
+	 * 
+	 * @return Same AccountMetaData that was provided as an argument
 	 */
-	public AccountMetaData reloadAccount( AccountMetaData account );
+	AccountMetaData reloadAccount( AccountMetaData account );
 	
 	/**
 	 * Attempt to load a account.
 	 * 
 	 * @throws LoginException
 	 */
-	public AccountMetaData loadAccount( String account ) throws LoginException;
+	AccountMetaData readAccount( String account ) throws LoginException;
 	
 	/**
-	 * Called before the AccountManager makes the login offical.
+	 * @return Class extends Account
+	 *         The class that should be used to create the Account Object
 	 */
-	public void preLoginCheck( Account account ) throws LoginException ;
+	Class<? extends Account> getAccountClass();
 	
 	/**
-	 * Called as the last line before account returned to scripts.
+	 * Informs the Adapater of a failed login
+	 * 
+	 * @param meta
+	 *            The account that failed the login.
+	 * @param reason
+	 *            The reason the login failed.
 	 */
-	public void postLoginCheck( Account account ) throws LoginException;
-	
-	/**
-	 * Update any security mechs of failed login
-	 */
-	public void failedLoginUpdate( Account account );
-	
-	/**
-	 * Called from AccountManager to determine if Account matches Accountname. Usually used to search the accounts array in a way the adapter sees fit. ex: email, phone, accountname, accountId
-	 */
-	public boolean matchAccount( Account account, String accountname );
+	void failedLoginUpdate( AccountMetaData meta, LoginExceptionReason reason );
 }

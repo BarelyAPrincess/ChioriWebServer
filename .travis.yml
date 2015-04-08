@@ -1,25 +1,15 @@
-# Source language and JDK version to use
 language: java
 jdk: oraclejdk7
-
-# Compile and package JAR and set build properties
-install: ./gradlew clean writePropertiesFile shadowJar :PermissionsEx:build :TemplatesPlugin:build javadocArchive sourcesArchive writeNewPom
-
-#after_success:
-  # Check if commit is not a pull request, if repo is official, and branch is master, generate and deploy artifacts and reports
-  #- "[[ $TRAVIS_PULL_REQUEST == false ]] && [[ $TRAVIS_REPO_SLUG == GlowstoneMC/Glowstone ]] && [[ $TRAVIS_BRANCH == master ]] && ./gradlew publish"
-
-# Notification services
-# notifications
-  # Disable build status email notifications, until the issue with forks is fixed
-  # email false
-  # webhooks
-    # Send build information and status to Notifico
-    #- http://n.tkte.ch/h/1918/S53Phouna3jUVXcxFc3VjQ83
-
-# Environmental system variables
+install:
+- gradle clean writePropertiesFile shadowJar javadocArchive sourcesArchive
+script:
+- gradle build
+after_success:
+- ! '[[ $TRAVIS_PULL_REQUEST == false ]] && [[ $TRAVIS_REPO_SLUG == ChioriGreene/ChioriWebServer
+  ]] && ( [[ $TRAVIS_BRANCH == v9-experimental ]] || [[ $TRAVIS_BRANCH == master ]]
+  ) && gradle publish'
 env:
   global:
-    # Make the log output cleaner
-    - TERM=dumb
- 
+  - TERM=dumb
+  - secure: cvSpv9nh1BvdwsYg9eMM7XvGGxh/XLPGg4ZgMfq0a4ccs1CinJA0yN8YMS7lgBjabz40YClQIsHk6B9Afwz6UVd5vfaB9HaaLDTgc4Q+sUoCGOuhsSFSmKK+kUl0bHW0bM6T2rIZ7Fy/dGn5jLV0mj9YdAFgJlaMRCwexoxAWKY=
+  - secure: GTjC4bwJqA6vRBSbXrD3GdekfZl/wqo6Oy+fsVI4hGvLywtriGLv8MtX14kGwme/OHtWxkVj7MBxnw+L6uWKvZgjkdNtrPXXSslZlYfwXMQcJOeB7ZgUvp307C+EkfYfBweLiSCU6lXuPOLfRmX1LPJ60kN6jSMk69GlzGvXxnk=

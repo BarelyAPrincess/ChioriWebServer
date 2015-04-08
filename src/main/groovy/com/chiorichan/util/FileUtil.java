@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -51,9 +52,9 @@ public class FileUtil
 	 * This method copies one file to another location
 	 * 
 	 * @param inFile
-	 *             the source filename
+	 *            the source filename
 	 * @param outFile
-	 *             the target filename
+	 *            the target filename
 	 * @return true on success
 	 */
 	@SuppressWarnings( "resource" )
@@ -103,15 +104,18 @@ public class FileUtil
 	/**
 	 * Calculate a file location
 	 * 
-	 * @param name
-	 * @return
+	 * @param path
+	 *            Base file path
+	 * @param site
+	 *            Site that is used in relative
+	 * @return A File object calculated
 	 */
 	public static File calculateFileBase( String path, Site site )
 	{
 		if ( path.startsWith( "[" ) )
 		{
 			path = path.replace( "[pwd]", new File( "" ).getAbsolutePath() );
-			path = path.replace( "[web]", Loader.webroot );
+			path = path.replace( "[web]", Loader.getWebRoot().getAbsolutePath() );
 			
 			if ( site != null )
 				path = path.replace( "[site]", site.getAbsoluteRoot().getAbsolutePath() );
@@ -156,7 +160,7 @@ public class FileUtil
 			os.close();
 		}
 		catch ( FileNotFoundException e )
-		{	
+		{
 			throw new IOException( e );
 		}
 	}

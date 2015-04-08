@@ -1,24 +1,35 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * Copyright 2015 Chiori-chan. All Right Reserved.
  */
 package com.chiorichan.util;
+
+import io.netty.buffer.ByteBuf;
 
 import java.awt.Color;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
+import java.nio.charset.Charset;
 import java.util.Collection;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.Validate;
 
+import com.google.common.collect.Lists;
+
+/**
+ * Provides Chiori-chan Web Server specific helper methods
+ * 
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
+ */
 public class StringUtil
 {
 	private static final String IPADDRESS_PATTERN = "^([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])$";
@@ -34,19 +45,19 @@ public class StringUtil
 	 * Copies all elements from the iterable collection of originals to the collection provided.
 	 * 
 	 * @param token
-	 *             String to search for
+	 *            String to search for
 	 * @param originals
-	 *             An iterable collection of strings to filter.
+	 *            An iterable collection of strings to filter.
 	 * @param collection
-	 *             The collection to add matches to
+	 *            The collection to add matches to
 	 * @return the collection provided that would have the elements copied into
 	 * @throws UnsupportedOperationException
-	 *              if the collection is immutable and originals contains a string which starts with the specified search
-	 *              string.
+	 *             if the collection is immutable and originals contains a string which starts with the specified search
+	 *             string.
 	 * @throws IllegalArgumentException
-	 *              if any parameter is is null
+	 *             if any parameter is is null
 	 * @throws IllegalArgumentException
-	 *              if originals contains a null element. <b>Note: the collection may be modified before this is thrown</b>
+	 *             if originals contains a null element. <b>Note: the collection may be modified before this is thrown</b>
 	 */
 	public static <T extends Collection<String>> T copyPartialMatches( final String token, final Iterable<String> originals, final T collection ) throws UnsupportedOperationException, IllegalArgumentException
 	{
@@ -70,14 +81,14 @@ public class StringUtil
 	 * copied like a toLowerCase() call would.
 	 * 
 	 * @param string
-	 *             String to check
+	 *            String to check
 	 * @param prefix
-	 *             Prefix of string to compare
+	 *            Prefix of string to compare
 	 * @return true if provided string starts with, ignoring case, the prefix provided
 	 * @throws NullPointerException
-	 *              if prefix is null
+	 *             if prefix is null
 	 * @throws IllegalArgumentException
-	 *              if string is null
+	 *             if string is null
 	 */
 	public static boolean startsWithIgnoreCase( final String string, final String prefix ) throws IllegalArgumentException, NullPointerException
 	{
@@ -94,7 +105,7 @@ public class StringUtil
 		byte[] b = new byte[str.length()];
 		for ( int i = 0; i < b.length; i++ )
 		{
-			b[i] = (byte) str.charAt( i );
+			b[i] = ( byte ) str.charAt( i );
 		}
 		return b;
 	}
@@ -106,16 +117,44 @@ public class StringUtil
 		{
 			char strChar = str.charAt( i );
 			int bpos = i << 1;
-			b[bpos] = (byte) ( ( strChar & 0xFF00 ) >> 8 );
-			b[bpos + 1] = (byte) ( strChar & 0x00FF );
+			b[bpos] = ( byte ) ( ( strChar & 0xFF00 ) >> 8 );
+			b[bpos + 1] = ( byte ) ( strChar & 0x00FF );
 		}
 		return b;
 	}
 	
 	public static String bytesToStringUTFNIO( byte[] bytes )
 	{
+		if ( bytes == null )
+			return null;
+		
 		CharBuffer cBuffer = ByteBuffer.wrap( bytes ).asCharBuffer();
 		return cBuffer.toString();
+	}
+	
+	public static String encodeBase64( String var )
+	{
+		return encodeBase64( var.getBytes() );
+	}
+	
+	public static String encodeBase64( byte[] bytes )
+	{
+		return Base64.encodeBase64String( bytes );
+	}
+	
+	public static byte[] decodeBase64( byte[] bytes )
+	{
+		return Base64.decodeBase64( bytes );
+	}
+	
+	public static byte[] decodeBase64( String var )
+	{
+		return Base64.decodeBase64( var );
+	}
+	
+	public static String md5( byte[] bytes )
+	{
+		return DigestUtils.md5Hex( bytes );
 	}
 	
 	public static String md5( String str )
@@ -151,17 +190,19 @@ public class StringUtil
 		try
 		{
 			Field field = Class.forName( "java.awt.Color" ).getField( color.trim().toUpperCase() );
-			return (Color) field.get( null );
+			return ( Color ) field.get( null );
 		}
 		catch ( Exception e )
-		{}
+		{
+		}
 		
 		try
 		{
 			return Color.decode( color );
 		}
 		catch ( Exception e )
-		{}
+		{
+		}
 		
 		return null;
 	}
@@ -170,9 +211,9 @@ public class StringUtil
 	 * Trim specified charcater from front of string
 	 * 
 	 * @param text
-	 *             Text
+	 *            Text
 	 * @param character
-	 *             Character to remove
+	 *            Character to remove
 	 * @return Trimmed text
 	 */
 	public static String trimFront( String text, char character )
@@ -199,9 +240,9 @@ public class StringUtil
 	 * Trim specified character from end of string
 	 * 
 	 * @param text
-	 *             Text
+	 *            Text
 	 * @param character
-	 *             Character to remove
+	 *            Character to remove
 	 * @return Trimmed text
 	 */
 	public static String trimEnd( String text, char character )
@@ -231,9 +272,9 @@ public class StringUtil
 	 * Trim specified charcater from both ends of a String
 	 * 
 	 * @param text
-	 *             Text
+	 *            Text
 	 * @param character
-	 *             Character to remove
+	 *            Character to remove
 	 * @return Trimmed text
 	 */
 	public static String trimAll( String text, char character )
@@ -241,5 +282,60 @@ public class StringUtil
 		String normalizedText = trimFront( text, character );
 		
 		return trimEnd( normalizedText, character );
+	}
+	
+	/**
+	 * Scans a string list for entries that are not lower case.
+	 * 
+	 * @param stringList
+	 *            The original list to check.
+	 * @return The corrected string list.
+	 */
+	public static List<String> toLowerCase( List<String> stringList )
+	{
+		String[] array = toLowerCase( stringList.toArray( new String[0] ) );
+		
+		try
+		{
+			stringList.clear();
+		}
+		catch ( UnsupportedOperationException e )
+		{
+			// In this case we can't preserve the original list type.
+			stringList = Lists.newArrayList();
+		}
+		
+		for ( String s : array )
+			stringList.add( s );
+		
+		return stringList;
+	}
+	
+	/**
+	 * Scans a string array for entries that are not lower case.
+	 * 
+	 * @param stringList
+	 *            The original array to check.
+	 * @return The corrected string array.
+	 */
+	public static String[] toLowerCase( String... array )
+	{
+		for ( int i = 0; i < array.length; i++ )
+			array[i] = array[i].toLowerCase();
+		
+		return array;
+	}
+	
+	public static String byteBuf2String( ByteBuf buf, Charset charset )
+	{
+		return new String( byteBuf2Bytes( buf ), charset );
+	}
+	
+	public static byte[] byteBuf2Bytes( ByteBuf buf )
+	{
+		byte[] bytes = new byte[buf.readableBytes()];
+		int readerIndex = buf.readerIndex();
+		buf.getBytes( readerIndex, bytes );
+		return bytes;
 	}
 }

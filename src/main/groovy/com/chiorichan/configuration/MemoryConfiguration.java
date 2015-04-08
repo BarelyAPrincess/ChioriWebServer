@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -34,11 +34,11 @@ public class MemoryConfiguration extends MemorySection implements Configuration
 	 * values.
 	 * 
 	 * @param defaults
-	 *           Default value provider
+	 *            Default value provider
 	 * @throws IllegalArgumentException
-	 *            Thrown if defaults is null
+	 *             Thrown if defaults is null
 	 */
-	public MemoryConfiguration(Configuration defaults)
+	public MemoryConfiguration( Configuration defaults )
 	{
 		this.defaults = defaults;
 	}

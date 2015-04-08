@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -22,7 +22,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
 import com.chiorichan.Loader;
-import com.chiorichan.factory.CodeMetaData;
+import com.chiorichan.factory.EvalMetaData;
 import com.google.common.collect.Maps;
 import com.google.gson.GsonBuilder;
 
@@ -31,11 +31,11 @@ public class LessPreProcessor implements PreProcessor
 	@Override
 	public String[] getHandledTypes()
 	{
-		return new String[] { "less", "stylesheet/less" };
+		return new String[] {"less", "stylesheet/less"};
 	}
 	
 	@Override
-	public String process( CodeMetaData meta, String code )
+	public String process( EvalMetaData meta, String code ) throws Exception
 	{
 		ClassLoader classLoader = getClass().getClassLoader();
 		InputStream inputStream = classLoader.getResourceAsStream( "com/chiorichan/less-rhino-1.7.4.js" );
@@ -63,14 +63,15 @@ public class LessPreProcessor implements PreProcessor
 					fileName = new File( meta.fileName ).getName();
 				
 				/*
-				try
-				{
-					code = new LessImportParser().runParser( code, new File( meta.fileName ).getParentFile().getAbsoluteFile() );
-				}
-				catch ( ShellExecuteException e )
-				{
-					e.printStackTrace();
-				}*/
+				 * try
+				 * {
+				 * code = new LessImportParser().runParser( code, new File( meta.fileName ).getParentFile().getAbsoluteFile() );
+				 * }
+				 * catch ( ShellExecuteException e )
+				 * {
+				 * e.printStackTrace();
+				 * }
+				 */
 				
 				Map<String, Object> compilerOptions = Maps.newHashMap();
 				
@@ -88,7 +89,7 @@ public class LessPreProcessor implements PreProcessor
 				Loader.getLogger().debug( "" + globalScope.get( "source" ) );
 				
 				if ( globalScope.get( "source" ) != null && globalScope.get( "source" ) instanceof String )
-					code = (String) globalScope.get( "source" );
+					code = ( String ) globalScope.get( "source" );
 				else if ( globalScope.get( "source" ) != null )
 					Loader.getLogger().warning( "We did not get what we expected back from Less.js: " + globalScope.get( "source" ) );
 				

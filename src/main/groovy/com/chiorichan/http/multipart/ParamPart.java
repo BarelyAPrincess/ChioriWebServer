@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -24,13 +24,17 @@ public class ParamPart extends Part
 	/**
 	 * Constructs a parameter part; this is called by the parser.
 	 * 
-	 * @param name the name of the parameter.
-	 * @param buffer the servlet input stream to read the parameter value from.
-	 * @param boundary the MIME boundary that delimits the end of parameter value.
-	 * @param encoding the byte-to-char encoding to use by default
-	 *             value.
+	 * @param name
+	 *            the name of the parameter.
+	 * @param buffer
+	 *            the servlet input stream to read the parameter value from.
+	 * @param boundary
+	 *            the MIME boundary that delimits the end of parameter value.
+	 * @param encoding
+	 *            the byte-to-char encoding to use by default
+	 *            value.
 	 */
-	ParamPart(String name, byte[] data) throws IOException
+	ParamPart( String name, byte[] data ) throws IOException
 	{
 		super( name );
 		value = data;

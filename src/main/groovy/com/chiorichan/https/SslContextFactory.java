@@ -1,6 +1,14 @@
+/**
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
+ */
 package com.chiorichan.https;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.security.KeyStore;
@@ -8,8 +16,6 @@ import java.security.Security;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
-
-import org.apache.commons.io.IOUtils;
 
 import com.chiorichan.Loader;
 
@@ -27,25 +33,28 @@ public class SslContextFactory
 			algorithm = "SunX509";
 		}
 		
-		SSLContext serverContext;
-		SSLContext clientContext;
+		SSLContext serverContext = null;
+		SSLContext clientContext = null;
 		try
 		{
-			final File sslCert = new File( Loader.getRoot(), "server.keystore" );
-			//byte[] bytes = new byte[932];
-			//IOUtils.readFully( new FileInputStream( sslCert ), bytes );
+			final File sslCert = new File( Loader.getConfig().getString( "server.httpsKeystone", "server.keystone" ) );
+			// byte[] bytes = new byte[932];
+			// IOUtils.readFully( new FileInputStream( sslCert ), bytes );
 			// pkcs12Base64 = Base64Coder.encodeLines( bytes );
 			
-			KeyStore ks = KeyStore.getInstance( "JKS" );
-			ks.load( new FileInputStream( sslCert ), "abcd1234".toCharArray() );
-			
-			// Set up key manager factory to use our key store
-			KeyManagerFactory kmf = KeyManagerFactory.getInstance( algorithm );
-			kmf.init( ks, "abcd1234".toCharArray() );
-			
-			// Initialize the SSLContext to work with our key managers.
-			serverContext = SSLContext.getInstance( PROTOCOL );
-			serverContext.init( kmf.getKeyManagers(), null, null );
+			if ( sslCert.exists() )
+			{
+				KeyStore ks = KeyStore.getInstance( "JKS" );
+				ks.load( new FileInputStream( sslCert ), Loader.getConfig().getString( "server.httpsSecret", "abcd1234" ).toCharArray() );
+				
+				// Set up key manager factory to use our key store
+				KeyManagerFactory kmf = KeyManagerFactory.getInstance( algorithm );
+				kmf.init( ks, Loader.getConfig().getString( "server.httpsSecret", "abcd1234" ).toCharArray() );
+				
+				// Initialize the SSLContext to work with our key managers.
+				serverContext = SSLContext.getInstance( PROTOCOL );
+				serverContext.init( kmf.getKeyManagers(), null, null );
+			}
 		}
 		catch ( Exception e )
 		{

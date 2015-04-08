@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -19,72 +19,66 @@ public interface Configuration extends ConfigurationSection
 	/**
 	 * Sets the default value of the given path as provided.
 	 * <p />
-	 * If no source {@link Configuration} was provided as a default collection, then a new {@link MemoryConfiguration}
-	 * will be created to hold the new default value.
+	 * If no source {@link Configuration} was provided as a default collection, then a new {@link MemoryConfiguration} will be created to hold the new default value.
 	 * <p />
 	 * If value is null, the value will be removed from the default Configuration source.
 	 * 
 	 * @param path
-	 *           Path of the value to set.
+	 *            Path of the value to set.
 	 * @param value
-	 *           Value to set the default to.
+	 *            Value to set the default to.
 	 * @throws IllegalArgumentException
-	 *            Thrown if path is null.
+	 *             Thrown if path is null.
 	 */
-	public void addDefault( String path, Object value );
+	void addDefault( String path, Object value );
 	
 	/**
 	 * Sets the default values of the given paths as provided.
 	 * <p />
-	 * If no source {@link Configuration} was provided as a default collection, then a new {@link MemoryConfiguration}
-	 * will be created to hold the new default values.
+	 * If no source {@link Configuration} was provided as a default collection, then a new {@link MemoryConfiguration} will be created to hold the new default values.
 	 * 
 	 * @param defaults
-	 *           A map of Path->Values to add to defaults.
+	 *            A map of Path->Values to add to defaults.
 	 * @throws IllegalArgumentException
-	 *            Thrown if defaults is null.
+	 *             Thrown if defaults is null.
 	 */
-	public void addDefaults( Map<String, Object> defaults );
+	void addDefaults( Map<String, Object> defaults );
 	
 	/**
 	 * Sets the default values of the given paths as provided.
 	 * <p />
-	 * If no source {@link Configuration} was provided as a default collection, then a new {@link MemoryConfiguration}
-	 * will be created to hold the new default value.
+	 * If no source {@link Configuration} was provided as a default collection, then a new {@link MemoryConfiguration} will be created to hold the new default value.
 	 * <p />
-	 * This method will not hold a reference to the specified Configuration, nor will it automatically update if that
-	 * Configuration ever changes. If you require this, you should set the default source with
-	 * {@link #setDefaults(org.bukkit.configuration.Configuration)}.
+	 * This method will not hold a reference to the specified Configuration, nor will it automatically update if that Configuration ever changes. If you require this, you should set the default source with
+	 * {@link #setDefaults(Configuration)}.
 	 * 
 	 * @param defaults
-	 *           A configuration holding a list of defaults to copy.
+	 *            A configuration holding a list of defaults to copy.
 	 * @throws IllegalArgumentException
-	 *            Thrown if defaults is null or this.
+	 *             Thrown if defaults is null or this.
 	 */
-	public void addDefaults( Configuration defaults );
+	void addDefaults( Configuration defaults );
 	
 	/**
 	 * Sets the source of all default values for this {@link Configuration}.
 	 * <p />
-	 * If a previous source was set, or previous default values were defined, then they will not be copied to the new
-	 * source.
+	 * If a previous source was set, or previous default values were defined, then they will not be copied to the new source.
 	 * 
 	 * @param defaults
-	 *           New source of default values for this configuration.
+	 *            New source of default values for this configuration.
 	 * @throws IllegalArgumentException
-	 *            Thrown if defaults is null or this.
+	 *             Thrown if defaults is null or this.
 	 */
-	public void setDefaults( Configuration defaults );
+	void setDefaults( Configuration defaults );
 	
 	/**
 	 * Gets the source {@link Configuration} for this configuration.
 	 * <p />
-	 * If no configuration source was set, but default values were added, then a {@link MemoryConfiguration} will be
-	 * returned. If no source was set and no defaults were set, then this method will return null.
+	 * If no configuration source was set, but default values were added, then a {@link MemoryConfiguration} will be returned. If no source was set and no defaults were set, then this method will return null.
 	 * 
 	 * @return Configuration source for default values, or null if none exist.
 	 */
-	public Configuration getDefaults();
+	Configuration getDefaults();
 	
 	/**
 	 * Gets the {@link ConfigurationOptions} for this {@link Configuration}.
@@ -93,5 +87,5 @@ public interface Configuration extends ConfigurationSection
 	 * 
 	 * @return Options for this configuration
 	 */
-	public ConfigurationOptions options();
+	ConfigurationOptions options();
 }

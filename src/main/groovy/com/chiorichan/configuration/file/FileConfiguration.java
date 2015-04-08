@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -43,9 +43,9 @@ public abstract class FileConfiguration extends MemoryConfiguration
 	 * values.
 	 * 
 	 * @param defaults
-	 *           Default value provider
+	 *            Default value provider
 	 */
-	public FileConfiguration(Configuration defaults)
+	public FileConfiguration( Configuration defaults )
 	{
 		super( defaults );
 	}
@@ -53,15 +53,14 @@ public abstract class FileConfiguration extends MemoryConfiguration
 	/**
 	 * Saves this {@link FileConfiguration} to the specified location.
 	 * <p>
-	 * If the file does not exist, it will be created. If already exists, it will be overwritten. If it cannot be
-	 * overwritten or created, an exception will be thrown.
+	 * If the file does not exist, it will be created. If already exists, it will be overwritten. If it cannot be overwritten or created, an exception will be thrown.
 	 * 
 	 * @param file
-	 *           File to save to.
+	 *            File to save to.
 	 * @throws IOException
-	 *            Thrown when the given file cannot be written to for any reason.
+	 *             Thrown when the given file cannot be written to for any reason.
 	 * @throws IllegalArgumentException
-	 *            Thrown when file is null.
+	 *             Thrown when file is null.
 	 */
 	public void save( File file ) throws IOException
 	{
@@ -86,15 +85,14 @@ public abstract class FileConfiguration extends MemoryConfiguration
 	/**
 	 * Saves this {@link FileConfiguration} to the specified location.
 	 * <p>
-	 * If the file does not exist, it will be created. If already exists, it will be overwritten. If it cannot be
-	 * overwritten or created, an exception will be thrown.
+	 * If the file does not exist, it will be created. If already exists, it will be overwritten. If it cannot be overwritten or created, an exception will be thrown.
 	 * 
 	 * @param file
-	 *           File to save to.
+	 *            File to save to.
 	 * @throws IOException
-	 *            Thrown when the given file cannot be written to for any reason.
+	 *             Thrown when the given file cannot be written to for any reason.
 	 * @throws IllegalArgumentException
-	 *            Thrown when file is null.
+	 *             Thrown when file is null.
 	 */
 	public void save( String file ) throws IOException
 	{
@@ -113,21 +111,20 @@ public abstract class FileConfiguration extends MemoryConfiguration
 	/**
 	 * Loads this {@link FileConfiguration} from the specified location.
 	 * <p>
-	 * All the values contained within this configuration will be removed, leaving only settings and defaults, and the
-	 * new values will be loaded from the given file.
+	 * All the values contained within this configuration will be removed, leaving only settings and defaults, and the new values will be loaded from the given file.
 	 * <p>
 	 * If the file cannot be loaded for any reason, an exception will be thrown.
 	 * 
 	 * @param file
-	 *           File to load from.
+	 *            File to load from.
 	 * @throws FileNotFoundException
-	 *            Thrown when the given file cannot be opened.
+	 *             Thrown when the given file cannot be opened.
 	 * @throws IOException
-	 *            Thrown when the given file cannot be read.
+	 *             Thrown when the given file cannot be read.
 	 * @throws InvalidConfigurationException
-	 *            Thrown when the given file is not a valid Configuration.
+	 *             Thrown when the given file is not a valid Configuration.
 	 * @throws IllegalArgumentException
-	 *            Thrown when file is null.
+	 *             Thrown when file is null.
 	 */
 	public void load( File file ) throws FileNotFoundException, IOException, InvalidConfigurationException
 	{
@@ -139,17 +136,16 @@ public abstract class FileConfiguration extends MemoryConfiguration
 	/**
 	 * Loads this {@link FileConfiguration} from the specified stream.
 	 * <p>
-	 * All the values contained within this configuration will be removed, leaving only settings and defaults, and the
-	 * new values will be loaded from the given stream.
+	 * All the values contained within this configuration will be removed, leaving only settings and defaults, and the new values will be loaded from the given stream.
 	 * 
 	 * @param stream
-	 *           Stream to load from
+	 *            Stream to load from
 	 * @throws IOException
-	 *            Thrown when the given file cannot be read.
+	 *             Thrown when the given file cannot be read.
 	 * @throws InvalidConfigurationException
-	 *            Thrown when the given file is not a valid Configuration.
+	 *             Thrown when the given file is not a valid Configuration.
 	 * @throws IllegalArgumentException
-	 *            Thrown when stream is null.
+	 *             Thrown when stream is null.
 	 */
 	public void load( InputStream stream ) throws IOException, InvalidConfigurationException
 	{
@@ -180,21 +176,20 @@ public abstract class FileConfiguration extends MemoryConfiguration
 	/**
 	 * Loads this {@link FileConfiguration} from the specified location.
 	 * <p>
-	 * All the values contained within this configuration will be removed, leaving only settings and defaults, and the
-	 * new values will be loaded from the given file.
+	 * All the values contained within this configuration will be removed, leaving only settings and defaults, and the new values will be loaded from the given file.
 	 * <p>
 	 * If the file cannot be loaded for any reason, an exception will be thrown.
 	 * 
 	 * @param file
-	 *           File to load from.
+	 *            File to load from.
 	 * @throws FileNotFoundException
-	 *            Thrown when the given file cannot be opened.
+	 *             Thrown when the given file cannot be opened.
 	 * @throws IOException
-	 *            Thrown when the given file cannot be read.
+	 *             Thrown when the given file cannot be read.
 	 * @throws InvalidConfigurationException
-	 *            Thrown when the given file is not a valid Configuration.
+	 *             Thrown when the given file is not a valid Configuration.
 	 * @throws IllegalArgumentException
-	 *            Thrown when file is null.
+	 *             Thrown when file is null.
 	 */
 	public void load( String file ) throws FileNotFoundException, IOException, InvalidConfigurationException
 	{
@@ -206,25 +201,23 @@ public abstract class FileConfiguration extends MemoryConfiguration
 	/**
 	 * Loads this {@link FileConfiguration} from the specified string, as opposed to from file.
 	 * <p>
-	 * All the values contained within this configuration will be removed, leaving only settings and defaults, and the
-	 * new values will be loaded from the given string.
+	 * All the values contained within this configuration will be removed, leaving only settings and defaults, and the new values will be loaded from the given string.
 	 * <p>
 	 * If the string is invalid in any way, an exception will be thrown.
 	 * 
 	 * @param contents
-	 *           Contents of a Configuration to load.
+	 *            Contents of a Configuration to load.
 	 * @throws InvalidConfigurationException
-	 *            Thrown if the specified string is invalid.
+	 *             Thrown if the specified string is invalid.
 	 * @throws IllegalArgumentException
-	 *            Thrown if contents is null.
+	 *             Thrown if contents is null.
 	 */
 	public abstract void loadFromString( String contents ) throws InvalidConfigurationException;
 	
 	/**
 	 * Compiles the header for this {@link FileConfiguration} and returns the result.
 	 * <p>
-	 * This will use the header from {@link #options()} -> {@link FileConfigurationOptions#header()}, respecting the
-	 * rules of {@link FileConfigurationOptions#copyHeader()} if set.
+	 * This will use the header from {@link #options()} -> {@link FileConfigurationOptions#header()}, respecting the rules of {@link FileConfigurationOptions#copyHeader()} if set.
 	 * 
 	 * @return Compiled header
 	 */
@@ -238,6 +231,6 @@ public abstract class FileConfiguration extends MemoryConfiguration
 			options = new FileConfigurationOptions( this );
 		}
 		
-		return (FileConfigurationOptions) options;
+		return ( FileConfigurationOptions ) options;
 	}
 }

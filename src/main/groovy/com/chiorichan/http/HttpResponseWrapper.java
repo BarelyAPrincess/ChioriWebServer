@@ -1,13 +1,15 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
 package com.chiorichan.http;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -18,7 +20,6 @@ import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
@@ -28,34 +29,35 @@ import io.netty.handler.stream.ChunkedStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
+import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
-import com.chiorichan.bus.events.http.ErrorEvent;
-import com.chiorichan.bus.events.http.HttpExceptionEvent;
-import com.chiorichan.exceptions.HttpErrorException;
+import com.chiorichan.event.http.ErrorEvent;
+import com.chiorichan.event.http.HttpExceptionEvent;
+import com.chiorichan.lang.HttpErrorException;
 import com.chiorichan.util.Versioning;
+import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 
-// NOTE: Change to consider, Have headers sent before data can be written to the output stream.
-// This will allow for quicker responses but might make it harder for spontaneous header changes.
 public class HttpResponseWrapper
 {
 	protected HttpRequestWrapper request;
-	protected ByteArrayOutputStream output = new ByteArrayOutputStream();
+	protected ByteBuf output = Unpooled.buffer();
 	protected int httpStatus = 200;
 	protected String httpContentType = "text/html";
-	protected String encoding = "UTF-8";
+	protected Charset encoding = Charsets.UTF_8;
 	protected HttpResponseStage stage = HttpResponseStage.READING;
 	protected Map<String, String> pageDataOverrides = Maps.newHashMap();
 	protected Map<String, String> headers = Maps.newHashMap();
 	
-	protected HttpResponseWrapper(HttpRequestWrapper _request)
+	protected HttpResponseWrapper( HttpRequestWrapper request )
 	{
-		request = _request;
+		this.request = request;
 	}
 	
 	public void mergeOverrides( Map<String, String> overrides )
@@ -71,53 +73,53 @@ public class HttpResponseWrapper
 	public void sendError( Exception e ) throws IOException
 	{
 		if ( e instanceof HttpErrorException )
-			sendError( ( (HttpErrorException) e ).getHttpCode(), ( (HttpErrorException) e ).getReason() );
+			sendError( ( ( HttpErrorException ) e ).getHttpCode(), ( ( HttpErrorException ) e ).getReason() );
 		else
 			sendError( 500, e.getMessage() );
 	}
 	
-	public void sendError( int var1 ) throws IOException
+	public void sendError( int httpCode ) throws IOException
 	{
-		sendError( var1, null );
+		sendError( httpCode, null );
 	}
 	
-	public void sendError( int var1, String var2 ) throws IOException
+	public void sendError( int httpCode, String httpMsg ) throws IOException
 	{
-		sendError( var1, var2, null );
+		sendError( httpCode, httpMsg, null );
 	}
 	
-	public void sendError( int var1, String var2, String var3 ) throws IOException
+	public void sendError( int httpCode, String httpMsg, String msg ) throws IOException
 	{
 		if ( stage == HttpResponseStage.CLOSED )
-			throw new IllegalStateException( "You can't access setter methods within this HttpResponse because the connection has been closed." );
+			throw new IllegalStateException( "You can't access sendError method within this HttpResponse because the connection has been closed." );
 		
-		if ( var1 < 1 )
-			var1 = 500;
+		if ( httpCode < 1 )
+			httpCode = 500;
 		
-		if ( var2 == null )
-			var2 = HttpCode.msg( var1 );
+		if ( httpMsg == null )
+			httpMsg = HttpCode.msg( httpCode );
 		
-		Loader.getLogger().warning( "HttpError: " + var1 + " - " + var2 + "... '" + request.getSubDomain() + "." + request.getParentDomain() + "' '" + request.getURI() + "'" );
+		HttpHandler.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + httpCode + ",httpMsg=" + httpMsg + ",domain=" + request.getSubDomain() + "." + request.getDomain() + ",uri=" + request.getURI() + ",remoteIp=" + request.getRemoteAddr() + "}" );
 		
-		httpStatus = var1;
+		httpStatus = httpCode;
 		
-		output.reset();
+		resetBuffer();
 		
 		// Trigger an internal Error Event to notify plugins of a possible problem.
-		ErrorEvent event = new ErrorEvent( request, var1, var2 );
+		ErrorEvent event = new ErrorEvent( request, httpCode, httpMsg );
 		Loader.getEventBus().callEvent( event );
 		
 		// TODO Make these error pages a bit more creative and/or informational to developers.
 		
 		if ( event.getErrorHtml() == null || event.getErrorHtml().isEmpty() )
 		{
-			println( "<h1>" + var1 + " - " + var2 + "</h1>" );
+			println( "<h1>" + httpCode + " - " + httpMsg + "</h1>" );
 			
-			if ( var3 != null && !var3.isEmpty() )
-				println( "<p>" + var3 + "</p>" );
+			if ( msg != null && !msg.isEmpty() )
+				println( "<p>" + msg + "</p>" );
 			
 			println( "<hr>" );
-			println( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + "<br />" + Versioning.getCopyright() + "</small>" );
+			println( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")<br />" + Versioning.getCopyright() + "</small>" );
 			
 		}
 		else
@@ -128,10 +130,15 @@ public class HttpResponseWrapper
 		sendResponse();
 	}
 	
+	public void resetBuffer()
+	{
+		output = Unpooled.buffer();
+	}
+	
 	public void sendException( Throwable cause ) throws IOException
 	{
 		if ( stage == HttpResponseStage.CLOSED )
-			throw new IllegalStateException( "You can't access setter methods within this HttpResponse because the connection has been closed." );
+			throw new IllegalStateException( "You can't access sendException method within this HttpResponse because the connection has been closed." );
 		
 		HttpExceptionEvent event = new HttpExceptionEvent( request, cause, Loader.getConfig().getBoolean( "server.developmentMode" ) );
 		Loader.getEventBus().callEvent( event );
@@ -143,13 +150,13 @@ public class HttpResponseWrapper
 		
 		httpStatus = httpCode;
 		
-		Loader.getLogger().warning( "HttpError: " + httpCode + " - " + HttpCode.msg( httpCode ) + "... '" + request.getSubDomain() + "." + request.getParentDomain() + "' '" + request.getURI() + "'" );
+		HttpHandler.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + httpCode + ",httpMsg=" + HttpCode.msg( httpCode ) + ",domain=" + request.getSubDomain() + "." + request.getDomain() + ",uri=" + request.getURI() + ",remoteIp=" + request.getRemoteAddr() + "}" );
 		
 		if ( Loader.getConfig().getBoolean( "server.developmentMode" ) )
 		{
 			if ( event.getErrorHtml() != null )
 			{
-				output.reset();
+				resetBuffer();
 				print( event.getErrorHtml() );
 				sendResponse();
 			}
@@ -162,17 +169,19 @@ public class HttpResponseWrapper
 		}
 	}
 	
-	/**
-	 * Clears the output buffer of all content
-	 */
-	public void resetOutput()
-	{
-		output.reset();
-	}
-	
-	public ByteArrayOutputStream getOutput()
+	public ByteBuf getOutput()
 	{
 		return output;
+	}
+	
+	public byte[] getOutputBytes()
+	{
+		byte[] bytes = new byte[output.writerIndex()];
+		int inx = output.readerIndex();
+		output.readerIndex( 0 );
+		output.readBytes( bytes );
+		output.readerIndex( inx );
+		return bytes;
 	}
 	
 	public boolean isCommitted()
@@ -189,12 +198,12 @@ public class HttpResponseWrapper
 		return stage;
 	}
 	
-	public void setStatus( int _status )
+	public void setStatus( int status )
 	{
 		if ( stage == HttpResponseStage.CLOSED )
-			throw new IllegalStateException( "You can't access setter methods within this HttpResponse because the connection has been closed." );
+			throw new IllegalStateException( "You can't access setStatus method within this HttpResponse because the connection has been closed." );
 		
-		httpStatus = _status;
+		httpStatus = status;
 	}
 	
 	/**
@@ -208,7 +217,8 @@ public class HttpResponseWrapper
 	/**
 	 * Sends the client to the site login page found in configs.
 	 * 
-	 * @param msg, a message to pass to the login page as a argumnet. ie. ?msg=Please login!
+	 * @param msg
+	 *            , a message to pass to the login page as a argumnet. ie. ?msg=Please login!
 	 */
 	public void sendLoginPage( String msg )
 	{
@@ -219,7 +229,8 @@ public class HttpResponseWrapper
 	/**
 	 * Send the client to a specified page with http code 302 automatically.
 	 * 
-	 * @param target, destination url. Can be relative or absolute.
+	 * @param target
+	 *            , destination url. Can be relative or absolute.
 	 */
 	public void sendRedirect( String target )
 	{
@@ -229,8 +240,10 @@ public class HttpResponseWrapper
 	/**
 	 * Sends the client to a specified page with specified http code.
 	 * 
-	 * @param target, destination url. Can be relative or absolute.
-	 * @param httpStatus, http code to use.
+	 * @param target
+	 *            , destination url. Can be relative or absolute.
+	 * @param httpStatus
+	 *            , http code to use.
 	 */
 	public void sendRedirect( String target, int httpStatus )
 	{
@@ -241,21 +254,24 @@ public class HttpResponseWrapper
 	 * XXX: autoRedirect argument needs to be working before this method is made public
 	 * Sends the client to a specified page with specified http code but with the option to not automatically go.
 	 * 
-	 * @param target, destination url. Can be relative or absolute.
-	 * @param httpStatus, http code to use.
-	 * @param autoRedirect, Automatically go.
+	 * @param target
+	 *            The destination url. Can be relative or absolute.
+	 * @param httpStatus
+	 *            What http code to use.
+	 * @param autoRedirect
+	 *            Use Header or Javascript Script
 	 */
-	private void sendRedirect( String target, int httpStatus, boolean autoRedirect )
+	private void sendRedirect( String target, int httpStatus, boolean insteadRedirect )
 	{
-		Loader.getLogger().info( "Sending page redirect to `" + target + "`" );
+		HttpHandler.getLogger().info( ConsoleColor.DARK_GRAY + "Sending page redirect to `" + target + "` using httpCode `" + httpStatus + " - " + HttpCode.msg( httpStatus ) + "`" );
 		
 		if ( stage == HttpResponseStage.CLOSED )
-			throw new IllegalStateException( "You can't access setter methods within this HttpResponse because the connection has been closed." );
+			throw new IllegalStateException( "You can't access sendRedirect method within this HttpResponse because the connection has been closed." );
 		
-		if ( autoRedirect )
+		if ( insteadRedirect && !isCommitted() )
 		{
 			setStatus( httpStatus );
-			request.getOriginal().headers().set( "Location", target );
+			setHeader( "Location", target );
 		}
 		else
 			// TODO: Send client a redirection page.
@@ -264,7 +280,7 @@ public class HttpResponseWrapper
 			
 			try
 			{
-				println( "<script>window.location = '" + target + "';</script>" );
+				println( "<script type=\"text/javascript\">window.location = '" + target + "';</script>" );
 			}
 			catch ( IOException e )
 			{
@@ -282,50 +298,76 @@ public class HttpResponseWrapper
 	}
 	
 	/**
-	 * Prints a byte array to the buffered output
+	 * Writes a ByteBuf to the buffered output
 	 * 
-	 * @param var1 byte array to print
-	 * @throws IOException if there was a problem with the output buffer.
+	 * @param var
+	 *            byte buffer to print
+	 * @throws IOException
+	 *             if there was a problem with the output buffer.
 	 */
-	public void print( byte[] var1 ) throws IOException
+	public void write( ByteBuf buf ) throws IOException
 	{
-		stage = HttpResponseStage.WRITTING;
-		output.write( var1 );
+		if ( stage != HttpResponseStage.MULTIPART )
+			stage = HttpResponseStage.WRITTING;
+		
+		output.writeBytes( buf );
+	}
+	
+	/**
+	 * Writes a byte array to the buffered output.
+	 * 
+	 * @param var
+	 *            byte array to print
+	 * @throws IOException
+	 *             if there was a problem with the output buffer.
+	 */
+	public void write( byte[] bytes ) throws IOException
+	{
+		if ( stage != HttpResponseStage.MULTIPART )
+			stage = HttpResponseStage.WRITTING;
+		
+		output.writeBytes( bytes );
+	}
+	
+	@Deprecated
+	public void print( byte[] bytes ) throws IOException
+	{
+		write( bytes );
 	}
 	
 	/**
 	 * Prints a single string of text to the buffered output
 	 * 
-	 * @param var1 string of text.
-	 * @throws IOException if there was a problem with the output buffer.
+	 * @param var1
+	 *            string of text.
+	 * @throws IOException
+	 *             if there was a problem with the output buffer.
 	 */
-	public void print( String var1 ) throws IOException
+	public void print( String var ) throws IOException
 	{
-		if ( stage != HttpResponseStage.MULTIPART )
-			stage = HttpResponseStage.WRITTING;
-		
-		if ( var1 != null && !var1.isEmpty() )
-			output.write( var1.getBytes( encoding ) );
+		if ( var != null && !var.isEmpty() )
+			write( var.getBytes( encoding ) );
 	}
 	
 	/**
 	 * Prints a single string of text with a line return to the buffered output
 	 * 
-	 * @param var1 string of text.
-	 * @throws IOException if there was a problem with the output buffer.
+	 * @param var1
+	 *            string of text.
+	 * @throws IOException
+	 *             if there was a problem with the output buffer.
 	 */
-	public void println( String var1 ) throws IOException
+	public void println( String var ) throws IOException
 	{
-		if ( stage != HttpResponseStage.MULTIPART )
-			stage = HttpResponseStage.WRITTING;
-		
-		output.write( ( var1 + "\n" ).getBytes( encoding ) );
+		if ( var != null && !var.isEmpty() )
+			write( ( var + "\n" ).getBytes( encoding ) );
 	}
 	
 	/**
 	 * Sets the ContentType header.
 	 * 
-	 * @param ContentType. ie. text/html or application/xml
+	 * @param type
+	 *            e.g., text/html or application/xml
 	 */
 	public void setContentType( String type )
 	{
@@ -338,7 +380,8 @@ public class HttpResponseWrapper
 	/**
 	 * Sends the data to the client. Internal Use.
 	 * 
-	 * @throws IOException if there was a problem sending the data, like the connection was unexpectedly closed.
+	 * @throws IOException
+	 *             if there was a problem sending the data, like the connection was unexpectedly closed.
 	 */
 	public void sendResponse() throws IOException
 	{
@@ -347,9 +390,7 @@ public class HttpResponseWrapper
 		
 		stage = HttpResponseStage.WRITTEN;
 		
-		HttpRequest http = request.getOriginal();
-		
-		FullHttpResponse response = new DefaultFullHttpResponse( HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf( httpStatus ), Unpooled.copiedBuffer( output.toByteArray() ) );
+		FullHttpResponse response = new DefaultFullHttpResponse( HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf( httpStatus ), output );
 		HttpHeaders h = response.headers();
 		
 		for ( Candy c : request.getCandies() )
@@ -364,7 +405,7 @@ public class HttpResponseWrapper
 		// h.add( "Content-Type", httpContentType );
 		
 		// This might be a temporary measure - TODO Properly set the charset for each request.
-		h.set( "Content-Type", httpContentType + "; charset=" + encoding.toLowerCase() );
+		h.set( "Content-Type", httpContentType + "; charset=" + encoding.name() );
 		
 		h.add( "Access-Control-Allow-Origin", request.getSite().getYaml().getString( "web.allowed-origin", "*" ) );
 		
@@ -372,6 +413,12 @@ public class HttpResponseWrapper
 		{
 			h.add( header.getKey(), header.getValue() );
 		}
+		
+		// Expires: Wed, 08 Apr 2015 02:32:24 GMT
+		// DateTimeFormatter formatter = DateTimeFormat.forPattern( "EE, dd-MMM-yyyy HH:mm:ss zz" );
+		
+		// h.set( HttpHeaders.Names.EXPIRES, formatter.print( DateTime.now( DateTimeZone.UTC ).plusDays( 1 ) ) );
+		// h.set( HttpHeaders.Names.CACHE_CONTROL, "public, max-age=86400" );
 		
 		h.set( HttpHeaders.Names.CONTENT_LENGTH, response.content().readableBytes() );
 		h.set( HttpHeaders.Names.CONNECTION, HttpHeaders.Values.KEEP_ALIVE );
@@ -460,30 +507,40 @@ public class HttpResponseWrapper
 				{
 					if ( total < 0 )
 					{ // total unknown
-						System.err.println( "Transfer progress: " + progress );
+						HttpHandler.getLogger().info( "Transfer progress: " + progress );
 					}
 					else
 					{
-						System.err.println( "Transfer progress: " + progress + " / " + total );
+						HttpHandler.getLogger().info( "Transfer progress: " + progress + " / " + total );
 					}
 				}
 				
 				@Override
 				public void operationComplete( ChannelProgressiveFuture future ) throws Exception
 				{
-					System.err.println( "Transfer complete." );
+					HttpHandler.getLogger().info( "Transfer complete." );
 				}
 			} );
 		}
 	}
 	
-	public void setEncoding( String _encoding )
+	public void setEncoding( Charset encoding )
 	{
-		encoding = _encoding;
+		this.encoding = encoding;
 	}
 	
 	public void setHeader( String key, String val )
 	{
 		headers.put( key, val );
+	}
+	
+	public int getHttpCode()
+	{
+		return httpStatus;
+	}
+	
+	public String getHttpMsg()
+	{
+		return HttpCode.msg( httpStatus );
 	}
 }

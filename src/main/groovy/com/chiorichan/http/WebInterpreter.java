@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -17,14 +18,17 @@ import java.util.Map.Entry;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 import com.chiorichan.Loader;
-import com.chiorichan.exceptions.HttpErrorException;
 import com.chiorichan.framework.FileInterpreter;
+import com.chiorichan.framework.Site;
 import com.chiorichan.framework.SiteException;
+import com.chiorichan.lang.HttpErrorException;
 import com.google.common.collect.Maps;
 
 public class WebInterpreter extends FileInterpreter
 {
 	protected Map<String, String> rewriteParams = Maps.newTreeMap();
+	protected boolean isDirectoryRequest = false;
+	protected boolean fwRequest = false;
 	
 	@Override
 	public String toString()
@@ -58,19 +62,51 @@ public class WebInterpreter extends FileInterpreter
 		
 		// String cachedFileStr = ( cachedFile == null ) ? "N/A" : cachedFile.getAbsolutePath();
 		
-		return "WebInterpreter{content=" + bs.size() + " bytes,contentType=" + getContentType() + ",overrides={" + overrides + "},rewrites={" + rewrites + "}}";
+		return "WebInterpreter[content=" + data.writerIndex() + " bytes,contentType=" + getContentType() + ",overrides=[" + overrides + "],rewrites=[" + rewrites + "]]";
 	}
 	
-	public WebInterpreter(HttpRequestWrapper request, Routes routes) throws IOException, HttpErrorException, SiteException
+	public WebInterpreter( HttpRequestWrapper request ) throws IOException, HttpErrorException, SiteException
 	{
 		super();
 		
 		File dest = null;
+		Routes routes = request.getSite().getRoutes();
 		boolean wasSuccessful = false;
 		
 		String uri = request.getURI();
 		String domain = request.getParentDomain();
 		String subdomain = request.getSubDomain();
+		
+		fwRequest = uri.startsWith( "/fw" );
+		if ( fwRequest )
+		{
+			Site fwSite = Loader.getSiteManager().getFrameworkSite();
+			routes = fwSite.getRoutes();
+			request.setSite( fwSite );
+			// request.setUri( uri.substring( 3 ) );
+		}
+		
+		if ( uri.startsWith( "/fw/~" ) )
+		{
+			int indexOf = uri.indexOf( "/", 5 );
+			
+			if ( indexOf < 0 )
+				indexOf = uri.length();
+			
+			String siteId = uri.substring( 5, indexOf );
+			
+			Site fwSite = Loader.getSiteManager().getSiteById( siteId );
+			
+			if ( fwSite != null )
+			{
+				fwRequest = false;
+				routes = fwSite.getRoutes();
+				request.setSite( fwSite );
+				uri = ( indexOf == uri.length() ) ? "/" : uri.substring( indexOf );
+				request.setUri( uri );
+				Loader.getLogger().info( "Detected a virtual site request. New request on site '" + siteId + "' with URI '" + uri + "'. &4Caution: There could be site bugs when doing these kind of requests." );
+			}
+		}
 		
 		Route route = routes.searchRoutes( uri, domain, subdomain );
 		
@@ -116,8 +152,7 @@ public class WebInterpreter extends FileInterpreter
 					dest = new File( request.getSite().getAbsoluteRoot( subdomain ), uri );
 				}
 				else if ( Loader.getConfig().getBoolean( "server.allowDirectoryListing" ) )
-					// TODO: Implement Directory Listings
-					throw new HttpErrorException( 403, "Sorry, Directory Listing has not been implemented on this Server!" );
+					isDirectoryRequest = true;
 				else
 					throw new HttpErrorException( 403, "Directory Listing is Disallowed on this Server!" );
 			}
@@ -195,5 +230,15 @@ public class WebInterpreter extends FileInterpreter
 	public Map<String, String> getRewriteParams()
 	{
 		return rewriteParams;
+	}
+	
+	public boolean isDirectoryRequest()
+	{
+		return isDirectoryRequest;
+	}
+	
+	public boolean isFrameworkRequest()
+	{
+		return fwRequest;
 	}
 }

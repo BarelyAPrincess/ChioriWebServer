@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -26,8 +26,6 @@ import java.util.logging.Level;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.Loader;
-import com.chiorichan.plugin.IllegalPluginAccessException;
-import com.chiorichan.plugin.Plugin;
 
 public class ChioriScheduler implements IChioriScheduler
 {
@@ -50,7 +48,7 @@ public class ChioriScheduler implements IChioriScheduler
 	{
 		public int compare( final ChioriTask o1, final ChioriTask o2 )
 		{
-			return (int) ( o1.getNextRun() - o2.getNextRun() );
+			return ( int ) ( o1.getNextRun() - o2.getNextRun() );
 		}
 	} );
 	/**
@@ -76,100 +74,100 @@ public class ChioriScheduler implements IChioriScheduler
 	
 	static
 	{
-		RECENT_TICKS = 30;
+		RECENT_TICKS = 20;
 	}
 	
-	public int scheduleSyncDelayedTask( final Plugin plugin, final Runnable task )
+	public int scheduleSyncDelayedTask( final TaskCreator creator, final Runnable task )
 	{
-		return this.scheduleSyncDelayedTask( plugin, task, 0l );
+		return this.scheduleSyncDelayedTask( creator, task, 0L );
 	}
 	
-	public ChioriTask runTask( Plugin plugin, Runnable runnable )
+	public ChioriTask runTask( TaskCreator creator, Runnable runnable )
 	{
-		return runTaskLater( plugin, runnable, 0l );
+		return runTaskLater( creator, runnable, 0L );
 	}
 	
-	public int scheduleAsyncDelayedTask( final Plugin plugin, final Runnable task )
+	public int scheduleAsyncDelayedTask( final TaskCreator creator, final Runnable task )
 	{
-		return this.scheduleAsyncDelayedTask( plugin, task, 0l );
+		return this.scheduleAsyncDelayedTask( creator, task, 0L );
 	}
 	
-	public ChioriTask runTaskAsynchronously( Plugin plugin, Runnable runnable )
+	public ChioriTask runTaskAsynchronously( TaskCreator creator, Runnable runnable )
 	{
-		return runTaskLaterAsynchronously( plugin, runnable, 0l );
+		return runTaskLaterAsynchronously( creator, runnable, 0L );
 	}
 	
-	public int scheduleSyncDelayedTask( final Plugin plugin, final Runnable task, final long delay )
+	public int scheduleSyncDelayedTask( final TaskCreator creator, final Runnable task, final long delay )
 	{
-		return this.scheduleSyncRepeatingTask( plugin, task, delay, -1l );
+		return this.scheduleSyncRepeatingTask( creator, task, delay, -1L );
 	}
 	
-	public ChioriTask runTaskLater( Plugin plugin, Runnable runnable, long delay )
+	public ChioriTask runTaskLater( TaskCreator creator, Runnable runnable, long delay )
 	{
-		return runTaskTimer( plugin, runnable, delay, -1l );
+		return runTaskTimer( creator, runnable, delay, -1L );
 	}
 	
-	public int scheduleAsyncDelayedTask( final Plugin plugin, final Runnable task, final long delay )
+	public int scheduleAsyncDelayedTask( final TaskCreator creator, final Runnable task, final long delay )
 	{
-		return this.scheduleAsyncRepeatingTask( plugin, task, delay, -1l );
+		return this.scheduleAsyncRepeatingTask( creator, task, delay, -1L );
 	}
 	
-	public ChioriTask runTaskLaterAsynchronously( Plugin plugin, Runnable runnable, long delay )
+	public ChioriTask runTaskLaterAsynchronously( TaskCreator creator, Runnable runnable, long delay )
 	{
-		return runTaskTimerAsynchronously( plugin, runnable, delay, -1l );
+		return runTaskTimerAsynchronously( creator, runnable, delay, -1L );
 	}
 	
-	public int scheduleSyncRepeatingTask( final Plugin plugin, final Runnable runnable, long delay, long period )
+	public int scheduleSyncRepeatingTask( final TaskCreator creator, final Runnable runnable, long delay, long period )
 	{
-		return runTaskTimer( plugin, runnable, delay, period ).getTaskId();
+		return runTaskTimer( creator, runnable, delay, period ).getTaskId();
 	}
 	
-	public ChioriTask runTaskTimer( Plugin plugin, Runnable runnable, long delay, long period )
+	public ChioriTask runTaskTimer( TaskCreator creator, Runnable runnable, long delay, long period )
 	{
-		validate( plugin, runnable );
-		if ( delay < 0l )
+		validate( creator, runnable );
+		if ( delay < 0L )
 		{
 			delay = 0;
 		}
-		if ( period == 0l )
+		if ( period == 0L )
 		{
-			period = 1l;
+			period = 1L;
 		}
-		else if ( period < -1l )
+		else if ( period < -1L )
 		{
-			period = -1l;
+			period = -1L;
 		}
-		return handle( new ChioriTask( plugin, runnable, nextId(), period ), delay );
+		return handle( new ChioriTask( creator, runnable, nextId(), period ), delay );
 	}
 	
-	public int scheduleAsyncRepeatingTask( final Plugin plugin, final Runnable runnable, long delay, long period )
+	public int scheduleAsyncRepeatingTask( final TaskCreator creator, final Runnable runnable, long delay, long period )
 	{
-		return runTaskTimerAsynchronously( plugin, runnable, delay, period ).getTaskId();
+		return runTaskTimerAsynchronously( creator, runnable, delay, period ).getTaskId();
 	}
 	
-	public ChioriTask runTaskTimerAsynchronously( Plugin plugin, Runnable runnable, long delay, long period )
+	public ChioriTask runTaskTimerAsynchronously( TaskCreator creator, Runnable runnable, long delay, long period )
 	{
-		validate( plugin, runnable );
-		if ( delay < 0l )
+		validate( creator, runnable );
+		if ( delay < 0L )
 		{
 			delay = 0;
 		}
-		if ( period == 0l )
+		if ( period == 0L )
 		{
-			period = 1l;
+			period = 1L;
 		}
-		else if ( period < -1l )
+		else if ( period < -1L )
 		{
-			period = -1l;
+			period = -1L;
 		}
-		return handle( new ChioriAsyncTask( runners, plugin, runnable, nextId(), period ), delay );
+		return handle( new ChioriAsyncTask( runners, creator, runnable, nextId(), period ), delay );
 	}
 	
-	public <T> Future<T> callSyncMethod( final Plugin plugin, final Callable<T> task )
+	public <T> Future<T> callSyncMethod( final TaskCreator creator, final Callable<T> task )
 	{
-		validate( plugin, task );
-		final ChioriFuture<T> future = new ChioriFuture<T>( task, plugin, nextId() );
-		handle( future, 0l );
+		validate( creator, task );
+		final ChioriFuture<T> future = new ChioriFuture<T>( task, creator, nextId() );
+		handle( future, 0L );
 		return future;
 	}
 	
@@ -214,7 +212,7 @@ public class ChioriScheduler implements IChioriScheduler
 				return false;
 			}
 		} );
-		handle( task, 0l );
+		handle( task, 0L );
 		for ( ChioriTask taskPending = head.getNext(); taskPending != null; taskPending = taskPending.getNext() )
 		{
 			if ( taskPending == task )
@@ -228,9 +226,9 @@ public class ChioriScheduler implements IChioriScheduler
 		}
 	}
 	
-	public void cancelTasks( final Plugin plugin )
+	public void cancelTasks( final TaskCreator creator )
 	{
-		Validate.notNull( plugin, "Cannot cancel tasks of null plugin" );
+		Validate.notNull( creator, "Cannot cancel tasks of null creator" );
 		final ChioriTask task = new ChioriTask( new Runnable()
 		{
 			public void run()
@@ -245,7 +243,7 @@ public class ChioriScheduler implements IChioriScheduler
 				while ( tasks.hasNext() )
 				{
 					final ChioriTask task = tasks.next();
-					if ( task.getOwner().equals( plugin ) )
+					if ( task.getOwner().equals( creator ) )
 					{
 						task.cancel0();
 						tasks.remove();
@@ -257,21 +255,21 @@ public class ChioriScheduler implements IChioriScheduler
 				}
 			}
 		} );
-		handle( task, 0l );
+		handle( task, 0L );
 		for ( ChioriTask taskPending = head.getNext(); taskPending != null; taskPending = taskPending.getNext() )
 		{
 			if ( taskPending == task )
 			{
 				return;
 			}
-			if ( taskPending.getTaskId() != -1 && taskPending.getOwner().equals( plugin ) )
+			if ( taskPending.getTaskId() != -1 && taskPending.getOwner().equals( creator ) )
 			{
 				taskPending.cancel0();
 			}
 		}
 		for ( ChioriTask runner : runners.values() )
 		{
-			if ( runner.getOwner().equals( plugin ) )
+			if ( runner.getOwner().equals( creator ) )
 			{
 				runner.cancel0();
 			}
@@ -298,7 +296,7 @@ public class ChioriScheduler implements IChioriScheduler
 				ChioriScheduler.this.temp.clear();
 			}
 		} );
-		handle( task, 0l );
+		handle( task, 0L );
 		for ( ChioriTask taskPending = head.getNext(); taskPending != null; taskPending = taskPending.getNext() )
 		{
 			if ( taskPending == task )
@@ -320,7 +318,7 @@ public class ChioriScheduler implements IChioriScheduler
 		{
 			return false;
 		}
-		final ChioriAsyncTask asyncTask = (ChioriAsyncTask) task;
+		final ChioriAsyncTask asyncTask = ( ChioriAsyncTask ) task;
 		synchronized ( asyncTask.getWorkers() )
 		{
 			return asyncTask.getWorkers().isEmpty();
@@ -337,11 +335,11 @@ public class ChioriScheduler implements IChioriScheduler
 		{
 			if ( task.getTaskId() == taskId )
 			{
-				return task.getPeriod() >= -1l; // The task will run
+				return task.getPeriod() >= -1L; // The task will run
 			}
 		}
 		ChioriTask task = runners.get( taskId );
-		return task != null && task.getPeriod() >= -1l;
+		return task != null && task.getPeriod() >= -1L;
 	}
 	
 	public List<ChioriWorker> getActiveWorkers()
@@ -354,7 +352,7 @@ public class ChioriScheduler implements IChioriScheduler
 			{
 				continue;
 			}
-			final ChioriAsyncTask task = (ChioriAsyncTask) taskObj;
+			final ChioriAsyncTask task = ( ChioriAsyncTask ) taskObj;
 			synchronized ( task.getWorkers() )
 			{
 				// This will never have an issue with stale threads; it's state-safe
@@ -379,7 +377,7 @@ public class ChioriScheduler implements IChioriScheduler
 		final ArrayList<ChioriTask> pending = new ArrayList<ChioriTask>();
 		for ( ChioriTask task : runners.values() )
 		{
-			if ( task.getPeriod() >= -1l )
+			if ( task.getPeriod() >= -1L )
 			{
 				pending.add( task );
 			}
@@ -387,7 +385,7 @@ public class ChioriScheduler implements IChioriScheduler
 		
 		for ( final ChioriTask task : truePending )
 		{
-			if ( task.getPeriod() >= -1l && !pending.contains( task ) )
+			if ( task.getPeriod() >= -1L && !pending.contains( task ) )
 			{
 				pending.add( task );
 			}
@@ -406,7 +404,7 @@ public class ChioriScheduler implements IChioriScheduler
 		while ( isReady( currentTick ) )
 		{
 			final ChioriTask task = pending.remove();
-			if ( task.getPeriod() < -1l )
+			if ( task.getPeriod() < -1L )
 			{
 				if ( task.isSync() )
 				{
@@ -423,7 +421,7 @@ public class ChioriScheduler implements IChioriScheduler
 				}
 				catch ( final Throwable throwable )
 				{
-					Loader.getLogger().log( Level.WARNING, String.format( "Task #%s for %s generated an exception", task.getTaskId(), task.getOwner().getDescription().getFullName() ), throwable );
+					Loader.getLogger().log( Level.WARNING, String.format( "Task #%s for %s generated an exception", task.getTaskId(), task.getOwner().getName() ), throwable );
 				}
 				parsePending();
 			}
@@ -468,13 +466,13 @@ public class ChioriScheduler implements IChioriScheduler
 		return task;
 	}
 	
-	private static void validate( final Plugin plugin, final Object task )
+	private static void validate( final TaskCreator creator, final Object task )
 	{
-		Validate.notNull( plugin, "Plugin cannot be null" );
+		Validate.notNull( creator, "TaskCreator cannot be null" );
 		Validate.notNull( task, "Task cannot be null" );
-		if ( !plugin.isEnabled() )
+		if ( !creator.isEnabled() )
 		{
-			throw new IllegalPluginAccessException( "Plugin attempted to register task while disabled" );
+			throw new IllegalTaskCreatorAccessException( "TaskCreator attempted to register task while disabled" );
 		}
 	}
 	
@@ -494,7 +492,7 @@ public class ChioriScheduler implements IChioriScheduler
 			{
 				task.run();
 			}
-			else if ( task.getPeriod() >= -1l )
+			else if ( task.getPeriod() >= -1L )
 			{
 				pending.add( task );
 				runners.put( task.getTaskId(), task );

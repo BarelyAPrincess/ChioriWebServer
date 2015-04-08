@@ -1,3 +1,12 @@
+/**
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
+ */
 package com.chiorichan.http;
 
 import java.io.File;
@@ -24,9 +33,9 @@ public class Route
 	protected Map<String, String> rewrites = Maps.newHashMap();
 	protected Site site;
 	
-	protected Route(ResultSet rs, Site _site) throws SQLException
+	protected Route( ResultSet rs, Site site ) throws SQLException
 	{
-		site = _site;
+		this.site = site;
 		type = RouteType.SQL;
 		params = DatabaseEngine.toStringsMap( rs );
 	}
@@ -38,15 +47,17 @@ public class Route
 	
 	/**
 	 * 
-	 * @param args, line input in the format of "pattern '/dir/[cat=]/[id=]', to '/dir/view_item.gsp'"
-	 * @throws IOException thrown is input string is not valid
+	 * @param args
+	 *            Line input in the format of "pattern '/dir/[cat=]/[id=]', to '/dir/view_item.gsp'"
+	 * @throws IOException
+	 *             Thrown if input string is not valid
 	 */
-	public Route(String args, Site _site) throws IOException
+	public Route( String args, Site site ) throws IOException
 	{
 		if ( args == null || args.isEmpty() )
 			throw new IOException( "args can't be null or empty" );
 		
-		site = _site;
+		this.site = site;
 		type = RouteType.FILE;
 		
 		for ( String o : args.split( "," ) )

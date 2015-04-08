@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -65,7 +65,7 @@ public class YamlConfiguration extends FileConfiguration
 		Map<?, ?> input;
 		try
 		{
-			input = (Map<?, ?>) yaml.load( contents );
+			input = ( Map<?, ?> ) yaml.load( contents );
 		}
 		catch ( YAMLException e )
 		{
@@ -97,7 +97,7 @@ public class YamlConfiguration extends FileConfiguration
 			
 			if ( value instanceof Map )
 			{
-				convertMapsToSections( (Map<?, ?>) value, section.createSection( key ) );
+				convertMapsToSections( ( Map<?, ?> ) value, section.createSection( key ) );
 			}
 			else
 			{
@@ -155,7 +155,7 @@ public class YamlConfiguration extends FileConfiguration
 			
 			if ( ( def != null ) && ( def instanceof FileConfiguration ) )
 			{
-				FileConfiguration filedefaults = (FileConfiguration) def;
+				FileConfiguration filedefaults = ( FileConfiguration ) def;
 				String defaultsHeader = filedefaults.buildHeader();
 				
 				if ( ( defaultsHeader != null ) && ( defaultsHeader.length() > 0 ) )
@@ -197,20 +197,19 @@ public class YamlConfiguration extends FileConfiguration
 			options = new YamlConfigurationOptions( this );
 		}
 		
-		return (YamlConfigurationOptions) options;
+		return ( YamlConfigurationOptions ) options;
 	}
 	
 	/**
 	 * Creates a new {@link YamlConfiguration}, loading from the given file.
 	 * <p>
-	 * Any errors loading the Configuration will be logged and then ignored. If the specified input is not a valid
-	 * config, a blank config will be returned.
+	 * Any errors loading the Configuration will be logged and then ignored. If the specified input is not a valid config, a blank config will be returned.
 	 * 
 	 * @param file
-	 *           Input file
+	 *            Input file
 	 * @return Resulting configuration
 	 * @throws IllegalArgumentException
-	 *            Thrown if file is null
+	 *             Thrown if file is null
 	 */
 	public static YamlConfiguration loadConfiguration( File file )
 	{
@@ -223,7 +222,9 @@ public class YamlConfiguration extends FileConfiguration
 			config.load( file );
 		}
 		catch ( FileNotFoundException ex )
-		{}
+		{	
+			
+		}
 		catch ( IOException ex )
 		{
 			Loader.getLogger().log( Level.SEVERE, "Cannot load " + file, ex );
@@ -239,14 +240,13 @@ public class YamlConfiguration extends FileConfiguration
 	/**
 	 * Creates a new {@link YamlConfiguration}, loading from the given stream.
 	 * <p>
-	 * Any errors loading the Configuration will be logged and then ignored. If the specified input is not a valid
-	 * config, a blank config will be returned.
+	 * Any errors loading the Configuration will be logged and then ignored. If the specified input is not a valid config, a blank config will be returned.
 	 * 
 	 * @param stream
-	 *           Input stream
+	 *            Input stream
 	 * @return Resulting configuration
 	 * @throws IllegalArgumentException
-	 *            Thrown if stream is null
+	 *             Thrown if stream is null
 	 */
 	public static YamlConfiguration loadConfiguration( InputStream stream )
 	{

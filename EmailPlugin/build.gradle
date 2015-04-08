@@ -8,11 +8,12 @@ repositories
 
 dependencies
 {
+	compile group: 'javax', name: 'javaee-api', version: '7.0'
 	compile group: 'com.google.guava', name: 'guava', version: '17.0'
 	compile rootProject
 }
 
-libsDirName = '../../build/dist'
+libsDirName = '../../build/dist/plugins'
 
 artifacts
 { archives jar }

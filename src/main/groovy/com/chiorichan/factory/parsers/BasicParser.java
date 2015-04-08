@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -14,7 +14,6 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.exceptions.ShellExecuteException;
 import com.chiorichan.util.StringUtil;
 
 public abstract class BasicParser
@@ -22,7 +21,7 @@ public abstract class BasicParser
 	private Pattern p1;
 	private Pattern p2;
 	
-	public BasicParser(String patternOne, String patternTwo)
+	public BasicParser( String patternOne, String patternTwo )
 	{
 		Validate.notEmpty( patternOne );
 		Validate.notEmpty( patternTwo );
@@ -31,7 +30,7 @@ public abstract class BasicParser
 		p2 = Pattern.compile( patternTwo );
 	}
 	
-	public String runParser( String source ) throws ShellExecuteException
+	public String runParser( String source ) throws Exception
 	{
 		if ( source == null || source.isEmpty() )
 			return "";
@@ -64,5 +63,5 @@ public abstract class BasicParser
 		return source;
 	}
 	
-	public abstract String resolveMethod( String... args ) throws ShellExecuteException;
+	public abstract String resolveMethod( String... args ) throws Exception;
 }

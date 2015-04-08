@@ -1,16 +1,15 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
 package com.chiorichan.scheduler;
 
 import com.chiorichan.Loader;
-import com.chiorichan.plugin.Plugin;
 
 class ChioriTask implements IChioriTask, Runnable
 {
@@ -26,7 +25,7 @@ class ChioriTask implements IChioriTask, Runnable
 	private volatile long period;
 	private long nextRun;
 	private final Runnable task;
-	private final Plugin plugin;
+	private final TaskCreator creator;
 	private final int id;
 	
 	ChioriTask()
@@ -34,14 +33,14 @@ class ChioriTask implements IChioriTask, Runnable
 		this( null, null, -1, -1 );
 	}
 	
-	ChioriTask(final Runnable task)
+	ChioriTask( final Runnable task )
 	{
 		this( null, task, -1, -1 );
 	}
 	
-	ChioriTask(final Plugin plugin, final Runnable task, final int id, final long period)
+	ChioriTask( final TaskCreator creator, final Runnable task, final int id, final long period )
 	{
-		this.plugin = plugin;
+		this.creator = creator;
 		this.task = task;
 		this.id = id;
 		this.period = period;
@@ -52,9 +51,9 @@ class ChioriTask implements IChioriTask, Runnable
 		return id;
 	}
 	
-	public final Plugin getOwner()
+	public final TaskCreator getOwner()
 	{
-		return plugin;
+		return creator;
 	}
 	
 	public boolean isSync()
@@ -114,7 +113,7 @@ class ChioriTask implements IChioriTask, Runnable
 	 */
 	boolean cancel0()
 	{
-		setPeriod( -2l );
+		setPeriod( -2L );
 		return true;
 	}
 }

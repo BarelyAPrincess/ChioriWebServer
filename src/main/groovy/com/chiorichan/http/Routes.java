@@ -1,3 +1,9 @@
+/**
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ */
 package com.chiorichan.http;
 
 import java.io.File;
@@ -15,6 +21,12 @@ import com.chiorichan.framework.Site;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+/**
+ * Keeps track of routes
+ * 
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
+ */
 public class Routes
 {
 	/**
@@ -42,92 +54,115 @@ public class Routes
 		}
 	}
 	
-	public Routes(Site _site)
+	public Routes( Site site )
 	{
-		site = _site;
+		this.site = site;
 	}
 	
 	public Route searchRoutes( String uri, String domain, String subdomain ) throws IOException
 	{
-		File routesFile = new File( Loader.getWebRoot() + Loader.PATH_SEPERATOR + site.getRoot() + Loader.PATH_SEPERATOR + "routes" );
-		
-		if ( routes.size() < 1 || System.currentTimeMillis() - lastRequest > 2500 )
+		synchronized ( this )
 		{
-			routes.clear();
+			File routesFile = new File( Loader.getWebRoot() + Loader.PATH_SEPERATOR + site.getRoot() + Loader.PATH_SEPERATOR + "routes" );
 			
-			try
+			if ( routes.size() < 1 || System.currentTimeMillis() - lastRequest > 2500 )
 			{
-				if ( routesFile.exists() )
-				{
-					String contents = FileUtils.readFileToString( routesFile );
-					for ( String l : contents.split( "\n" ) )
-					{
-						try
-						{
-							routes.add( new Route( l, site ) );
-						}
-						catch ( IOException e1 )
-						{	
-							
-						}
-					}
-				}
-			}
-			catch ( IOException e )
-			{
-				e.printStackTrace();
-			}
-			
-			try
-			{
-				DatabaseEngine sql = Loader.getDatabase();
+				routes.clear();
 				
-				if ( sql != null )
+				try
 				{
-					//ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE (subdomain = '" + subdomain + "' OR subdomain = '') AND domain = '" + domain + "' UNION SELECT * FROM `pages` WHERE (subdomain = '" + subdomain + "' OR subdomain = '') AND domain = '';" );
-					ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE domain = '" + domain + "' OR domain = '';" );
-					if ( sql.getRowCount( rs ) > 0 )
+					if ( routesFile.exists() )
 					{
-						do
+						String contents = FileUtils.readFileToString( routesFile );
+						for ( String l : contents.split( "\n" ) )
 						{
-							routes.add( new Route( rs, site ) );
+							try
+							{
+								routes.add( new Route( l, site ) );
+							}
+							catch ( IOException e1 )
+							{
+								
+							}
 						}
-						while ( rs.next() );
 					}
 				}
-			}
-			catch ( SQLException e )
-			{
-				throw new IOException( e );
-			}
-		}
-		lastRequest = System.currentTimeMillis();
-		
-		if ( routes.size() > 0 )
-		{
-			Map<String, Route> matches = Maps.newTreeMap();
-			int keyInter = 0;
-			
-			for ( Route route : routes )
-			{
-				String weight = route.match( domain, subdomain, uri );
-				if ( weight != null )
+				catch ( IOException e )
 				{
-					matches.put( weight + keyInter, route );
-					keyInter++;
+					e.printStackTrace();
+				}
+				
+				try
+				{
+					DatabaseEngine sql = Loader.getDatabase();
+					
+					if ( sql != null )
+					{
+						if ( !sql.tableExist( "pages" ) )
+						{
+							DatabaseEngine.getLogger().info( "We detected the non-existence of table 'pages' in the server database, we will attempt to create it now." );
+							
+							String table = "CREATE TABLE `pages` (";
+							table += " `site` varchar(255) NOT NULL,";
+							table += " `domain` varchar(255) NOT NULL,";
+							table += " `page` varchar(255) NOT NULL,";
+							table += " `title` varchar(255) NOT NULL,";
+							table += " `reqlevel` varchar(255) NOT NULL DEFAULT '-1',";
+							table += " `theme` varchar(255) NOT NULL,";
+							table += " `view` varchar(255) NOT NULL,";
+							table += " `html` text NOT NULL,";
+							table += " `file` varchar(255) NOT NULL";
+							table += ");";
+							
+							sql.queryUpdate( table );
+						}
+						
+						// ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE (subdomain = '" + subdomain + "' OR subdomain = '') AND domain = '" + domain + "' UNION SELECT * FROM `pages` WHERE (subdomain = '" + subdomain +
+						// "' OR subdomain = '') AND domain = '';" );
+						ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE domain = '" + domain + "' OR domain = '';" );
+						if ( sql.getRowCount( rs ) > 0 )
+						{
+							do
+							{
+								routes.add( new Route( rs, site ) );
+							}
+							while ( rs.next() );
+						}
+					}
+				}
+				catch ( SQLException e )
+				{
+					throw new IOException( e );
 				}
 			}
+			lastRequest = System.currentTimeMillis();
 			
-			if ( matches.size() > 0 )
+			if ( routes.size() > 0 )
 			{
-				return (Route) matches.values().toArray()[0];
+				Map<String, Route> matches = Maps.newTreeMap();
+				int keyInter = 0;
+				
+				for ( Route route : routes )
+				{
+					String weight = route.match( domain, subdomain, uri );
+					if ( weight != null )
+					{
+						matches.put( weight + keyInter, route );
+						keyInter++;
+					}
+				}
+				
+				if ( matches.size() > 0 )
+				{
+					return ( Route ) matches.values().toArray()[0];
+				}
+				else
+					Loader.getLogger().fine( "Failed to find a page redirect for Rewrite... '" + subdomain + "." + domain + "' '" + uri + "'" );
 			}
 			else
 				Loader.getLogger().fine( "Failed to find a page redirect for Rewrite... '" + subdomain + "." + domain + "' '" + uri + "'" );
+			
+			return null;
 		}
-		else
-			Loader.getLogger().fine( "Failed to find a page redirect for Rewrite... '" + subdomain + "." + domain + "' '" + uri + "'" );
-		
-		return null;
 	}
 }

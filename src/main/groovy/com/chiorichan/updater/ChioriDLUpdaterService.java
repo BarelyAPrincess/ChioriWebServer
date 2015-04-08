@@ -1,9 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
- *
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -23,7 +23,7 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.chiorichan.framework.WebUtils;
+import com.chiorichan.util.WebUtils;
 import com.google.gson.Gson;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
@@ -33,11 +33,11 @@ import com.google.gson.JsonParseException;
 public class ChioriDLUpdaterService
 {
 	private static final String API_PREFIX_ARTIFACT = "/job/ChioriWebServer/";
-	//private static final String API_PREFIX_CHANNEL = "/api/1.0/downloads/channels/";
-	//private static final DateDeserializer dateDeserializer = new DateDeserializer();
+	// private static final String API_PREFIX_CHANNEL = "/api/1.0/downloads/channels/";
+	// private static final DateDeserializer dateDeserializer = new DateDeserializer();
 	private final String host;
 	
-	public ChioriDLUpdaterService(String host)
+	public ChioriDLUpdaterService( String host )
 	{
 		this.host = host;
 	}
@@ -79,7 +79,7 @@ public class ChioriDLUpdaterService
 			URLConnection connection = url.openConnection();
 			connection.setRequestProperty( "User-Agent", WebUtils.getUserAgent() );
 			reader = new InputStreamReader( connection.getInputStream() );
-			//Gson gson = new GsonBuilder().registerTypeAdapter( Date.class, dateDeserializer ).setFieldNamingPolicy( FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES ).create();
+			// Gson gson = new GsonBuilder().registerTypeAdapter( Date.class, dateDeserializer ).setFieldNamingPolicy( FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES ).create();
 			Gson gson = new Gson();
 			return gson.fromJson( reader, BuildArtifact.class );
 		}
@@ -102,7 +102,7 @@ public class ChioriDLUpdaterService
 			URLConnection connection = url.openConnection();
 			connection.setRequestProperty( "User-Agent", WebUtils.getUserAgent() );
 			reader = new InputStreamReader( connection.getInputStream() );
-			//Gson gson = new GsonBuilder().registerTypeAdapter( Date.class, dateDeserializer ).setFieldNamingPolicy( FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES ).create();
+			// Gson gson = new GsonBuilder().registerTypeAdapter( Date.class, dateDeserializer ).setFieldNamingPolicy( FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES ).create();
 			Gson gson = new Gson();
 			return gson.fromJson( reader, ProjectArtifact.class );
 		}
@@ -148,7 +148,8 @@ public class ChioriDLUpdaterService
 			URLConnection connection = url.openConnection();
 			connection.setRequestProperty( "User-Agent", WebUtils.getUserAgent() );
 			reader = new InputStreamReader( connection.getInputStream() );
-			prop.load( reader );;
+			prop.load( reader );
+			;
 		}
 		finally
 		{

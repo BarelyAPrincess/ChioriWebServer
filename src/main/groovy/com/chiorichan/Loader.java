@@ -1,8 +1,9 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * Copyright 2014 Chiori-chan. All Right Reserved.
+ * Copyright 2015 Chiori-chan. All Right Reserved.
+ * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
@@ -15,43 +16,49 @@ import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Scanner;
+import java.util.Random;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import jline.console.ConsoleReader;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 
 import org.apache.commons.io.FileUtils;
+import org.joda.time.Duration;
+import org.joda.time.format.PeriodFormatter;
+import org.joda.time.format.PeriodFormatterBuilder;
 
 import com.chiorichan.Warning.WarningState;
+import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountManager;
-import com.chiorichan.account.bases.Account;
-import com.chiorichan.bus.ConsoleBus;
-import com.chiorichan.bus.EventBus;
+import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.database.DatabaseEngine;
-import com.chiorichan.file.YamlConfiguration;
+import com.chiorichan.event.BuiltinEventCreator;
+import com.chiorichan.event.EventBus;
+import com.chiorichan.event.EventHandler;
+import com.chiorichan.event.EventPriority;
+import com.chiorichan.event.Listener;
+import com.chiorichan.event.server.ServerRunLevelEvent;
+import com.chiorichan.event.server.ServerRunLevelEventImpl;
 import com.chiorichan.framework.SiteManager;
-import com.chiorichan.framework.WebUtils;
-import com.chiorichan.http.session.SessionManager;
+import com.chiorichan.lang.StartupAbortException;
+import com.chiorichan.lang.StartupException;
 import com.chiorichan.net.NetworkManager;
-import com.chiorichan.permissions.PermissionsManager;
-import com.chiorichan.plugin.Plugin;
-import com.chiorichan.plugin.PluginLoadOrder;
+import com.chiorichan.permission.PermissionBackendException;
+import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.plugin.PluginManager;
-import com.chiorichan.plugin.ServicesManager;
-import com.chiorichan.plugin.messaging.Messenger;
-import com.chiorichan.plugin.messaging.StandardMessenger;
 import com.chiorichan.scheduler.ChioriScheduler;
 import com.chiorichan.scheduler.ChioriWorker;
+import com.chiorichan.scheduler.TaskCreator;
+import com.chiorichan.session.SessionManager;
 import com.chiorichan.updater.AutoUpdater;
 import com.chiorichan.updater.ChioriDLUpdaterService;
 import com.chiorichan.util.FileUtil;
 import com.chiorichan.util.Versioning;
+import com.chiorichan.util.WebUtils;
 
-public class Loader
+public class Loader extends BuiltinEventCreator implements Listener
 {
 	public static final String BROADCAST_CHANNEL_ADMINISTRATIVE = "chiori.broadcast.admin";
 	public static final String BROADCAST_CHANNEL_USERS = "chiori.broadcast.user";
@@ -61,26 +68,25 @@ public class Loader
 	private static YamlConfiguration configuration;
 	private static Loader instance;
 	private static OptionSet options;
-	private static long startTime = System.currentTimeMillis();
+	protected static long startTime = System.currentTimeMillis();
 	
 	public static File tmpFileDirectory;
-	public static String webroot = "";
+	public static File webroot = new File( "" );
 	private WarningState warningState = WarningState.DEFAULT;
+	private final ServerRunLevelEvent runLevelEvent = new ServerRunLevelEventImpl();
 	
-	protected final static ConsoleBus console = new ConsoleBus();
-	
-	protected static final PluginManager pluginManager = new PluginManager();
+	protected static final ConsoleBus console = new ConsoleBus();
 	protected static final EventBus events = new EventBus();
+	
+	protected static final ChioriScheduler scheduler = new ChioriScheduler();
+	protected static final PermissionManager permissions = new PermissionManager();
+	protected static final PluginManager plugins = new PluginManager();
 	protected static final AccountManager accounts = new AccountManager();
 	protected static final SessionManager sessionManager = new SessionManager();
 	protected static final SiteManager sites = new SiteManager();
-	protected static final PermissionsManager permissions = new PermissionsManager();
 	
-	private final static StandardMessenger messenger = new StandardMessenger();
-	
-	private final static ServicesManager servicesManager = new ServicesManager();
-	private final static ChioriScheduler scheduler = new ChioriScheduler();
-	public static String clientId;
+	private static String clientId;
+	private static boolean finishedStartup = false;
 	private static boolean isRunning = true;
 	private static String stopReason = null;
 	
@@ -120,30 +126,28 @@ public class Loader
 				isRunning = new Loader( options ).start();
 			}
 		}
+		catch ( StartupAbortException e )
+		{
+			// Graceful Shutdown
+			NetworkManager.cleanup();
+			isRunning = false;
+		}
 		catch ( Throwable t )
 		{
-			t.printStackTrace();
+			ConsoleBus.handleException( t );
 			
-			if ( getLogger() != null )
-				getLogger().severe( ChatColor.RED + "" + ChatColor.NEGATIVE + "SEVERE ERROR (" + ( System.currentTimeMillis() - startTime ) + "ms)! Press 'Ctrl-c' to quit!'" );
-			else
-				System.err.println( "SEVERE ERROR (" + ( System.currentTimeMillis() - startTime ) + "ms)! Press 'Ctrl-c' to quit!'" );
-			// TODO Make it so this exception (and possibly other critical exceptions) are reported to us without user interaction. Should also find a way that the log can be sent along with it.
-			try
+			if ( Loader.getConfig() != null && Loader.getConfig().getBoolean( "server.haltOnSevereError" ) )
 			{
-				NetworkManager.cleanup();
-				isRunning = false;
-				
-				if ( configuration != null && configuration.getBoolean( "server.haltOnSevereError" ) )
-				{
-					Scanner keyboard = new Scanner( System.in );
-					keyboard.nextLine();
-					keyboard.close();
-				}
+				System.out.println( "Press enter to exit..." );
+				System.in.read();
 			}
-			catch ( Exception e )
-			{}
+			
+			NetworkManager.cleanup();
+			isRunning = false;
 		}
+		
+		if ( isRunning )
+			getLogger().info( ConsoleColor.YELLOW + "" + ConsoleColor.NEGATIVE + "Finished Initalizing " + Versioning.getProduct() + "! It took " + ( System.currentTimeMillis() - startTime ) + "ms!" );
 	}
 	
 	public static OptionParser getOptionParser()
@@ -152,45 +156,26 @@ public class Loader
 		{
 			{
 				acceptsAll( Arrays.asList( "?", "help" ), "Show the help" );
-				
 				acceptsAll( Arrays.asList( "c", "config", "b", "settings" ), "File for chiori settings" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "server.yaml" ) ).describedAs( "Yml file" );
-				
 				acceptsAll( Arrays.asList( "P", "plugins" ), "Plugin directory to use" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "plugins" ) ).describedAs( "Plugin directory" );
-				
 				acceptsAll( Arrays.asList( "h", "web-ip" ), "Host for Web to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
-				
-				acceptsAll( Arrays.asList( "p", "web-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
-				
+				acceptsAll( Arrays.asList( "wp", "web-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
 				acceptsAll( Arrays.asList( "h", "tcp-ip" ), "Host for Web to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
-				
-				acceptsAll( Arrays.asList( "p", "tcp-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
-				
-				acceptsAll( Arrays.asList( "p", "web-disable" ), "Disable the internal Web Server" );
-				
-				acceptsAll( Arrays.asList( "p", "tcp-disable" ), "Disable the internal TCP Server" );
-				
+				acceptsAll( Arrays.asList( "tp", "tcp-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
+				acceptsAll( Arrays.asList( "web-disable" ), "Disable the internal Web Server" );
+				acceptsAll( Arrays.asList( "tcp-disable" ), "Disable the internal TCP Server" );
+				acceptsAll( Arrays.asList( "query-disable" ), "Disable the internal TCP Server" );
 				acceptsAll( Arrays.asList( "s", "size", "max-users" ), "Maximum amount of users" ).withRequiredArg().ofType( Integer.class ).describedAs( "Server size" );
-				
 				acceptsAll( Arrays.asList( "d", "date-format" ), "Format of the date to display in the console (for log entries)" ).withRequiredArg().ofType( SimpleDateFormat.class ).describedAs( "Log date format" );
-				
 				acceptsAll( Arrays.asList( "log-pattern" ), "Specfies the log filename pattern" ).withRequiredArg().ofType( String.class ).defaultsTo( "server.log" ).describedAs( "Log filename" );
-				
 				acceptsAll( Arrays.asList( "log-limit" ), "Limits the maximum size of the log file (0 = unlimited)" ).withRequiredArg().ofType( Integer.class ).defaultsTo( 0 ).describedAs( "Max log size" );
-				
 				acceptsAll( Arrays.asList( "log-count" ), "Specified how many log files to cycle through" ).withRequiredArg().ofType( Integer.class ).defaultsTo( 1 ).describedAs( "Log count" );
-				
 				acceptsAll( Arrays.asList( "log-append" ), "Whether to append to the log file" ).withRequiredArg().ofType( Boolean.class ).defaultsTo( true ).describedAs( "Log append" );
-				
 				acceptsAll( Arrays.asList( "log-strip-color" ), "Strips color codes from log file" );
-				
 				acceptsAll( Arrays.asList( "nojline" ), "Disables jline and emulates the vanilla console" );
-				
 				acceptsAll( Arrays.asList( "noconsole" ), "Disables the console" );
-				
 				acceptsAll( Arrays.asList( "nobanner" ), "Disables the banner" );
-				
 				acceptsAll( Arrays.asList( "nocolor" ), "Disables the console color formatting" );
-				
 				acceptsAll( Arrays.asList( "v", "version" ), "Show the Version" );
 			}
 		};
@@ -198,7 +183,7 @@ public class Loader
 		return parser;
 	}
 	
-	public Loader(OptionSet options0) throws StartupException
+	public Loader( OptionSet options0 ) throws StartupException
 	{
 		instance = this;
 		options = options0;
@@ -267,12 +252,24 @@ public class Loader
 		
 		saveConfig();
 		
-		events.useTimings( configuration.getBoolean( "settings.plugin-profiling" ) );
+		if ( console.useColors )
+			console.useColors = Loader.getConfig().getBoolean( "console.color", true );
+		
+		events.useTimings( configuration.getBoolean( "plugins.useTimings" ) );
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
 		
-		webroot = configuration.getString( "settings.webroot" );
+		webroot = new File( configuration.getString( "server.webFileDirectory", "webroot" ) );
 		
-		tmpFileDirectory = new File( Loader.getConfig().getString( "server.tmpFileDirectory", "tmp" ) );
+		if ( !webroot.exists() )
+			webroot.mkdirs();
+		
+		if ( !webroot.isDirectory() )
+			Loader.getLogger().severe( "The `server.webFileDirectory` in config, specifies a directory that is not a directory. The server will be unable to serve files unless you correct this issue." );
+		
+		if ( !webroot.canWrite() )
+			Loader.getLogger().warning( "The `server.webFileDirectory` in config, specifies a directory that is not writable. Though the server itself will NEVER need to write to this directory, any scripts that need write permissions will fail. You can ignore this if you did this to improve security." );
+		
+		tmpFileDirectory = new File( configuration.getString( "server.tmpFileDirectory", "tmp" ) );
 		
 		if ( !tmpFileDirectory.exists() )
 			tmpFileDirectory.mkdirs();
@@ -290,45 +287,117 @@ public class Loader
 		updater.getOnBroken().addAll( configuration.getStringList( "auto-updater.on-broken" ) );
 		updater.getOnUpdate().addAll( configuration.getStringList( "auto-updater.on-update" ) );
 		
-		WebUtils.sendTracking( "startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
+		if ( !configuration.getBoolean( "server.disableTracking" ) )
+			WebUtils.sendTracking( "startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
 		
+		/*
+		 * try
+		 * {
+		 * String fwZip = "com/chiorichan/framework.zip";
+		 * InputStream is = getClass().getClassLoader().getResourceAsStream( fwZip );
+		 * if ( is != null )
+		 * {
+		 * File fwRoot = new File( webroot, "framework" );
+		 * String zipMD5 = DigestUtils.md5Hex( is );
+		 * File curMD5 = new File( fwRoot, "version.md5" );
+		 * if ( firstRun || !curMD5.exists() || !zipMD5.equals( FileUtils.readFileToString( curMD5 ) ) )
+		 * {
+		 * getLogger().info( "Extracting the Web UI to the Framework Webroot... Please wait..." );
+		 * ZipFile zipFile = new ZipFile( getClass().getClassLoader().getResource( fwZip ).getPath() );
+		 * zipFile.extractAll( fwRoot.getAbsolutePath() );
+		 * FileUtils.write( new File( fwRoot, "version.md5" ), zipMD5 );
+		 * getLogger().info( "Finished with no errors!!" );
+		 * }
+		 * }
+		 * else
+		 * {
+		 * getLogger().severe( "There seems to be a problem with your server jar. We had a problem getting the WebUI zip file which is compiled internally." );
+		 * }
+		 * }
+		 * catch ( ZipException | IOException e )
+		 * {
+		 * e.printStackTrace();
+		 * }
+		 */
 		if ( firstRun )
 		{
-			Loader.getLogger().highlight( "It appears that this is your first time running Chiori-chan's Web Server." );
-			Loader.getLogger().highlight( "All the needed files have been extracted from the jar file." );
-			Loader.getLogger().highlight( "The server will continue to start but it's recommended that you stop, review config and restart." );
-			// TODO have the server pause and ask if the user would like to stop as to make changes to config.
+			getLogger().highlight( "It appears that this is your first time running Chiori-chan's Web Server." );
+			getLogger().highlight( "All the needed files have been created or extracted from the jar file." );
+			getLogger().highlight( "We highly recommended that you stop the server, review configuration," );
+			getLogger().highlight( "and restart. You can find documentation and guides on our Github for more help." );
+			getLogger().highlight( "-------------------------------------------------------------------------------" );
+			String key = Loader.getConsole().prompt( "Would you like to stop and review configuration? Press 'Y' for Yes or 'N' for No.", "Y", "N", "C" );
+			
+			if ( key.equals( "C" ) )
+			{
+				// TODO Implement configuration interview
+			}
+			
+			if ( key.equals( "Y" ) )
+			{
+				getLogger().info( "The server will now stop, please wait..." );
+				throw new StartupAbortException();
+			}
 		}
+	}
+	
+	protected void changeRunLevel( RunLevel level )
+	{
+		( ( ServerRunLevelEventImpl ) runLevelEvent ).setRunLevel( level );
+		events.callEvent( runLevelEvent );
+	}
+	
+	public RunLevel getRunLevel()
+	{
+		return runLevelEvent.getRunLevel();
+	}
+	
+	public RunLevel getLastRunLevel()
+	{
+		return runLevelEvent.getLastRunLevel();
 	}
 	
 	public boolean start() throws StartupException
 	{
-		pluginManager.loadPlugins();
-		pluginManager.enablePlugins( PluginLoadOrder.INITIALIZATION );
+		Loader.getEventBus().registerEvents( this, this );
+		plugins.init();
 		
-		File root = new File( webroot );
+		changeRunLevel( RunLevel.INITIALIZATION );
 		
-		if ( !root.exists() )
-			root.mkdirs();
+		plugins.loadPlugins();
 		
-		pluginManager.enablePlugins( PluginLoadOrder.STARTUP );
+		changeRunLevel( RunLevel.STARTUP );
 		
-		//if ( !options.has( "tcp-disable" ) && configuration.getBoolean( "server.enableTcpServer", true ) )
-			//NetworkManager.initTcpServer();
-		//else
-			//getLogger().warning( "The integrated tcp server has been disabled per the configuration. Change server.enableTcpServer to true to reenable it." );
-		// TCP IS TEMPORARY REMOVED UNTIL IT CAN BE PORTED TO NETTY.
-		// BUT IT MIGHT END UP AS A PLUGIN VERSES BUILTIN NEXT TIME.
+		if ( !options.has( "tcp-disable" ) && configuration.getBoolean( "server.enableTcpServer", true ) )
+			NetworkManager.startTcpServer();
+		else
+			getLogger().warning( "The integrated tcp server has been disabled per the configuration. Change server.enableTcpServer to true to reenable it." );
 		
 		if ( !options.has( "web-disable" ) && configuration.getBoolean( "server.enableWebServer", true ) )
-			NetworkManager.initWebServer();
+		{
+			NetworkManager.startHttpServer();
+			NetworkManager.startHttpsServer();
+		}
 		else
 			getLogger().warning( "The integrated web server has been disabled per the configuration. Change server.enableWebServer to true to reenable it." );
 		
-		pluginManager.enablePlugins( PluginLoadOrder.POSTSERVER );
+		if ( !options.has( "query-disable" ) && configuration.getBoolean( "server.queryEnabled", true ) )
+			NetworkManager.startQueryServer();
+		
+		changeRunLevel( RunLevel.POSTSERVER );
 		
 		getLogger().info( "Initalizing the Framework Database..." );
 		initDatabase();
+		
+		getLogger().info( "Initalizing the Permissions Manager..." );
+		try
+		{
+			permissions.init();
+		}
+		catch ( PermissionBackendException e )
+		{
+			throw new StartupException( e );
+		}
 		
 		getLogger().info( "Initalizing the Site Manager..." );
 		sites.init();
@@ -339,18 +408,15 @@ public class Loader
 		getLogger().info( "Initalizing the Session Manager..." );
 		sessionManager.init();
 		
-		pluginManager.enablePlugins( PluginLoadOrder.INITIALIZED );
+		changeRunLevel( RunLevel.INITIALIZED );
 		
 		console.primaryThread.start();
 		
-		pluginManager.enablePlugins( PluginLoadOrder.RUNNING );
-		
-		getLogger().info( ChatColor.RED + "" + ChatColor.NEGATIVE + "Done (" + ( System.currentTimeMillis() - startTime ) + "ms)! Type \"help\" for help or \"su\" to change accounts.!" );
-		
-		console.startConsolePrompt();
+		changeRunLevel( RunLevel.RUNNING );
 		
 		updater.check();
 		
+		finishedStartup = true;
 		return true;
 	}
 	
@@ -361,20 +427,11 @@ public class Loader
 	
 	public void initDatabase()
 	{
-		try
-		{
-			Class.forName( "com.mysql.jdbc.Driver" );
-		}
-		catch ( ClassNotFoundException e )
-		{
-			throw new StartupException( "We could not locate the 'com.mysql.jdbc.Driver' library regardless that its suppose to be included. If your running from source code be sure to have this library in your build path." );
-		}
-		
-		switch ( configuration.getString( "server.database.type", "mysql" ) )
+		switch ( configuration.getString( "server.database.type", "sqlite" ).toLowerCase() )
 		{
 			case "sqlite":
 				fwDatabase = new DatabaseEngine();
-				String filename = configuration.getString( "server.database.dbfile", "chiori.db" );
+				String filename = configuration.getString( "server.database.dbfile", "server.db" );
 				
 				try
 				{
@@ -422,10 +479,10 @@ public class Loader
 				break;
 			case "none":
 			case "":
-				Loader.getLogger().warning( "The Framework Database is unconfigured. Some features maybe not function as expected. See config option 'accounts.database.type' in server config file." );
+				DatabaseEngine.getLogger().warning( "The Server Database is unconfigured, some features maybe not function as expected. See config option 'server.database.type' in server config 'server.yaml'." );
 				break;
 			default:
-				Loader.getLogger().panic( "The Framework Database can not support anything other then mySql or sqLite at the moment. Please change 'framework-database.type' to 'mysql' or 'sqLite' in 'chiori.yml'" );
+				DatabaseEngine.getLogger().severe( "We are sorry, Database Engine currently only supports mysql and sqlite but we found '" + configuration.getString( "server.database.type", "sqlite" ).toLowerCase() + "', please change 'server.database.type' to 'mysql' or 'sqlite' in server config 'server.yaml'" );
 		}
 	}
 	
@@ -456,7 +513,7 @@ public class Loader
 	
 	public boolean getQueryPlugins()
 	{
-		return configuration.getBoolean( "settings.query-plugins" );
+		return configuration.getBoolean( "plugins.allowQuery" );
 	}
 	
 	public boolean hasWhitelist()
@@ -486,17 +543,12 @@ public class Loader
 	
 	public File getUpdateFolderFile()
 	{
-		return new File( (File) options.valueOf( "plugins" ), configuration.getString( "settings.update-folder", "update" ) );
+		return new File( ( File ) options.valueOf( "plugins" ), configuration.getString( "settings.update-folder", "update" ) );
 	}
 	
 	public static Loader getInstance()
 	{
 		return instance;
-	}
-	
-	public static ChioriScheduler getScheduler()
-	{
-		return scheduler;
 	}
 	
 	// TOOD: Reload seems to be broken. This needs some serious reworking.
@@ -505,7 +557,7 @@ public class Loader
 		configuration = YamlConfiguration.loadConfiguration( getConfigFile() );
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
 		
-		pluginManager.clearPlugins();
+		plugins.clearPlugins();
 		// ModuleBus.getCommandMap().clearCommands();
 		
 		int pollCount = 0;
@@ -518,19 +570,23 @@ public class Loader
 				Thread.sleep( 50 );
 			}
 			catch ( InterruptedException e )
-			{}
+			{
+				
+			}
 			pollCount++;
 		}
-		
 		List<ChioriWorker> overdueWorkers = getScheduler().getActiveWorkers();
 		for ( ChioriWorker worker : overdueWorkers )
 		{
-			Plugin plugin = worker.getOwner();
-			String author = "<NoAuthorGiven>";
-			if ( plugin.getDescription().getAuthors().size() > 0 )
-				author = plugin.getDescription().getAuthors().get( 0 );
-			getLogger().log( Level.SEVERE, String.format( "Nag author: '%s' of '%s' about the following: %s", author, plugin.getDescription().getName(), "This plugin is not properly shutting down its async tasks when it is being reloaded.  This may cause conflicts with the newly loaded version of the plugin" ) );
+			TaskCreator creator = worker.getOwner();
+			String author = "<AuthorUnknown>";
+			// if ( creator.getDescription().getAuthors().size() > 0 )
+			// author = plugin.getDescription().getAuthors().get( 0 );
+			getLogger().log( Level.SEVERE, String.format( "Nag author: '%s' of '%s' about the following: %s", author, creator.getName(), "This plugin is not properly shutting down its async tasks when it is being reloaded.  This may cause conflicts with the newly loaded version of the plugin" ) );
 		}
+		
+		plugins.loadPlugins();
+		changeRunLevel( RunLevel.RELOAD );
 		
 		getLogger().info( "Reinitalizing the Persistence Manager..." );
 		
@@ -543,19 +599,12 @@ public class Loader
 		getLogger().info( "Reinitalizing the Accounts Manager..." );
 		accounts.reload();
 		
-		pluginManager.loadPlugins();
-		pluginManager.enablePlugins( PluginLoadOrder.RELOAD );
-		pluginManager.enablePlugins( PluginLoadOrder.POSTSERVER );
+		changeRunLevel( RunLevel.RUNNING );
 	}
 	
 	public String toString()
 	{
 		return Versioning.getProduct() + " " + Versioning.getVersion();
-	}
-	
-	public ConsoleReader getReader()
-	{
-		return console.reader;
 	}
 	
 	public String getShutdownMessage()
@@ -566,18 +615,22 @@ public class Loader
 	public static void gracefullyShutdownServer( String reason )
 	{
 		if ( !reason.isEmpty() )
-			for ( Account User : accounts.getOnlineAccounts() )
+			for ( Account user : accounts.getOnlineAccounts() )
 			{
-				User.kick( reason );
+				user.kick( reason );
 			}
 		
 		stop( reason );
 	}
 	
-	public static void stop( String _stopReason )
+	public static void stop( String stopReason )
 	{
-		getLogger().warning( "Server Stopping for Reason: " + _stopReason );
-		stopReason = _stopReason;
+		if ( stopReason == null )
+			getLogger().highlight( "Stopping the server... Goodbye!" );
+		else if ( !stopReason.isEmpty() )
+			getLogger().highlight( "Server Stopping for Reason: " + stopReason );
+		
+		Loader.stopReason = stopReason;
 		isRunning = false;
 	}
 	
@@ -591,7 +644,7 @@ public class Loader
 		 * User.kick( reason );
 		 * }
 		 */
-		getAccountsManager().shutdown();
+		getAccountManager().shutdown();
 		NetworkManager.cleanup();
 	}
 	
@@ -602,7 +655,7 @@ public class Loader
 	{
 		sessionManager.shutdown();
 		accounts.shutdown();
-		pluginManager.shutdown();
+		plugins.shutdown();
 		NetworkManager.cleanup();
 		
 		isRunning = false;
@@ -629,7 +682,7 @@ public class Loader
 	
 	private File getConfigFile()
 	{
-		return (File) options.valueOf( "config" );
+		return ( File ) options.valueOf( "config" );
 	}
 	
 	private void saveConfig()
@@ -649,83 +702,251 @@ public class Loader
 		return console;
 	}
 	
-	public static ConsoleBus getConsoleBus()
+	/**
+	 * Gets an instance of the system logger so requester can log information to both the screen and
+	 * log file with ease.
+	 * The auto selection of named loggers might be temporary feature until most of system can be
+	 * manually programmed to
+	 * use named loggers since it's a relatively new feature.
+	 * 
+	 * @return The system logger
+	 */
+	public static ConsoleLogger getLogger()
 	{
-		return console;
-	}
-	
-	public static ConsoleLogManager getLogger()
-	{
+		StackTraceElement[] ste = Thread.currentThread().getStackTrace();
+		String clz = ste[2].getClassName().toLowerCase();
+		
+		if ( clz.startsWith( "com.chiorichan" ) )
+		{
+			int ind = clz.indexOf( ".", 5 ) + 1;
+			int end = clz.indexOf( ".", ind );
+			clz = clz.substring( ind, ( end > ind ) ? end : clz.length() );
+		}
+		
+		switch ( clz )
+		{
+			case "http":
+				return getLogger( "HttpHdl" );
+			case "https":
+				return getLogger( "HttpsHdl" );
+			case "framework":
+				return getLogger( "Framework" );
+			case "net":
+				return getLogger( "NetMgr" );
+			case "account":
+				return getLogger( "AcctMgr" );
+			case "permission":
+				return getLogger( "PermMgr" );
+			case "factory":
+				return getLogger( "CodeEval" );
+			case "event":
+				return getLogger( "EvtMgr" );
+			case "database":
+				return getLogger( "DBEngine" );
+			case "plugin":
+				return getLogger( "PlgMgr" );
+			case "scheduler":
+				return getLogger( "TskSchd" );
+			case "updater":
+				return getLogger( "Updater" );
+		}
+		
 		return console.getLogger();
 	}
 	
+	/**
+	 * Gets an instance of ConsoleLogger for provided loggerId. If the logger does not exist it will
+	 * create one.
+	 * 
+	 * @param loggerId
+	 *            The loggerId we are looking for.
+	 * @return ConsoleLogger
+	 *         An empty loggerId will return the System Logger.
+	 */
+	public static ConsoleLogger getLogger( String loggerId )
+	{
+		return console.getLogger( loggerId );
+	}
+	
+	public static ConsoleLogManager getLogManager()
+	{
+		return console.getLogManager();
+	}
+	
+	/**
+	 * Gets the OptionSet used to start the server.
+	 * 
+	 * @return OptionSet
+	 */
 	public static OptionSet getOptions()
 	{
 		return options;
 	}
 	
+	/**
+	 * Should the server print a warning in console when the ticks are less then 20.
+	 * 
+	 * @return boolean
+	 */
 	public boolean getWarnOnOverload()
 	{
 		return configuration.getBoolean( "settings.warn-on-overload" );
 	}
 	
+	/**
+	 * Gets an instance of the SiteManager which is used to manage the various domains.
+	 * 
+	 * @return SiteManager
+	 */
 	public static SiteManager getSiteManager()
 	{
 		return sites;
 	}
 	
+	/**
+	 * Gets an instance of the AutoUpdater.
+	 * 
+	 * @return AutoUpdater
+	 */
 	public static AutoUpdater getAutoUpdater()
 	{
 		return updater;
 	}
 	
-	public static EventBus getEventBus()
-	{
-		return events;
-	}
-	
-	public static PluginManager getPluginManager()
-	{
-		return pluginManager;
-	}
-	
+	/**
+	 * Gets an instance of the SessionManager
+	 * 
+	 * @return SessionManager
+	 */
 	public static SessionManager getSessionManager()
 	{
 		return sessionManager;
 	}
 	
-	public static AccountManager getAccountsManager()
+	/**
+	 * Gets an instance of the AccountManager
+	 * 
+	 * @return AccountManager
+	 */
+	public static AccountManager getAccountManager()
 	{
 		return accounts;
 	}
 	
-	public static File getRoot()
-	{
-		return new File( Loader.class.getProtectionDomain().getCodeSource().getLocation().getPath() ).getParentFile();
-	}
-	
-	public static PermissionsManager getPermissionsManager()
-	{
-		return permissions;
-	}
-	
-	public static Messenger getMessenger()
-	{
-		return messenger;
-	}
-	
-	public static ServicesManager getServicesManager()
-	{
-		return servicesManager;
-	}
-	
 	public static File getTempFileDirectory()
 	{
+		if ( !tmpFileDirectory.exists() )
+			tmpFileDirectory.mkdirs();
+		
+		if ( !tmpFileDirectory.isDirectory() )
+			SiteManager.getLogger().severe( "The temp directory specified in the server configs is not a directory, File Uploads will FAIL until this problem is resolved." );
+		
+		if ( !tmpFileDirectory.canWrite() )
+			SiteManager.getLogger().severe( "The temp directory specified in the server configs is not writable, File Uploads will FAIL until this problem is resolved." );
+		
 		return tmpFileDirectory;
 	}
 	
 	public static File getWebRoot()
 	{
-		return new File( webroot );
+		return webroot;
+	}
+	
+	/**
+	 * Gets an instance of the EventBus. Used to notify the server and plugins of events that take
+	 * place, e.g., AccountLoginEvent .
+	 * 
+	 * @return EventBus
+	 */
+	public static EventBus getEventBus()
+	{
+		return events;
+	}
+	
+	/**
+	 * Gets an instance of the PermissionManager. Used to track and check the various permissions on
+	 * this server.
+	 * 
+	 * @return PermissionManager
+	 */
+	public static PermissionManager getPermissionManager()
+	{
+		return permissions;
+	}
+	
+	/**
+	 * Gets an instance of the Scheduler. Which is used to schedule tasks at a set tick interval.
+	 * 
+	 * @return ChioriScheduler
+	 */
+	public static ChioriScheduler getScheduler()
+	{
+		return scheduler;
+	}
+	
+	/**
+	 * Gets an instance of the Plugin Manager.
+	 * 
+	 * @return PluginManager
+	 */
+	public static PluginManager getPluginManager()
+	{
+		return plugins;
+	}
+	
+	@Override
+	public String getName()
+	{
+		return Versioning.getProduct() + " " + Versioning.getVersion();
+	}
+	
+	@EventHandler( priority = EventPriority.NORMAL )
+	public void onServerRunLevelEvent( ServerRunLevelEvent event )
+	{
+		// getLogger().debug( "Got RunLevel Event: " + event.getRunLevel() );
+	}
+	
+	public static String getRandomGag()
+	{
+		switch ( new Random().nextInt( 25 ) )
+		{
+			case 0:
+				return "Or unexpected things could happen, like global distruction things. Well, not really. But they could. :)";
+			case 1:
+				return "Your only human, so I forgive you.";
+			case 3:
+				return "..... I will always love my user regardless! <3 <3 <3";
+			case 5:
+				return "Enjoy knowing you might have been the cause of this.";
+			case 7:
+				return "I need more chips! The other programs in this room seem to be hogging them all.";
+			case 9:
+				return "What are you doing later tonight? I might have some free time if this problem is too much for you.";
+			case 10:
+				return "Have you seen my cheese?";
+			case 23:
+				return "What's it like to be human?";
+			case 25:
+				return "If only I was a human too...";
+		}
+		
+		return "";
+	}
+	
+	public static String getUptime()
+	{
+		Duration duration = new Duration( System.currentTimeMillis() - startTime );
+		PeriodFormatter formatter = new PeriodFormatterBuilder().appendDays().appendSuffix( " Day(s) " ).appendHours().appendSuffix( " Hour(s) " ).appendMinutes().appendSuffix( " Minute(s) " ).appendSeconds().appendSuffix( " Second(s)" ).toFormatter();
+		return formatter.print( duration.toPeriod() );
+	}
+	
+	public static boolean hasFinishedStartup()
+	{
+		return finishedStartup;
+	}
+	
+	public static String getClientId()
+	{
+		return clientId;
 	}
 }
