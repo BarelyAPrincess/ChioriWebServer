@@ -3,9 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 package com.chiorichan.http;
 
@@ -39,21 +36,30 @@ import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.event.http.ErrorEvent;
 import com.chiorichan.event.http.HttpExceptionEvent;
-import com.chiorichan.lang.HttpErrorException;
+import com.chiorichan.lang.ApacheParser;
+import com.chiorichan.lang.HttpError;
+import com.chiorichan.net.NetworkManager;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 
+/**
+ * Wraps the Netty HttpResponse to provide easy methods for manipulating the result of each request
+ * 
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
+ */
 public class HttpResponseWrapper
 {
 	protected HttpRequestWrapper request;
 	protected ByteBuf output = Unpooled.buffer();
-	protected int httpStatus = 200;
+	protected HttpResponseStatus httpStatus = HttpResponseStatus.OK;
 	protected String httpContentType = "text/html";
 	protected Charset encoding = Charsets.UTF_8;
 	protected HttpResponseStage stage = HttpResponseStage.READING;
 	protected Map<String, String> pageDataOverrides = Maps.newHashMap();
 	protected Map<String, String> headers = Maps.newHashMap();
+	protected ApacheParser htaccess = null;
 	
 	protected HttpResponseWrapper( HttpRequestWrapper request )
 	{
@@ -72,8 +78,8 @@ public class HttpResponseWrapper
 	
 	public void sendError( Exception e ) throws IOException
 	{
-		if ( e instanceof HttpErrorException )
-			sendError( ( ( HttpErrorException ) e ).getHttpCode(), ( ( HttpErrorException ) e ).getReason() );
+		if ( e instanceof HttpError )
+			sendError( ( ( HttpError ) e ).getHttpCode(), ( ( HttpError ) e ).getReason() );
 		else
 			sendError( 500, e.getMessage() );
 	}
@@ -88,46 +94,72 @@ public class HttpResponseWrapper
 		sendError( httpCode, httpMsg, null );
 	}
 	
-	public void sendError( int httpCode, String httpMsg, String msg ) throws IOException
+	public void sendError( int status, String httpMsg, String msg ) throws IOException
+	{
+		if ( status < 1 )
+			status = 500;
+		
+		sendError( HttpResponseStatus.valueOf( status ), httpMsg, msg );
+	}
+	
+	public void sendError( HttpResponseStatus status, String httpMsg, String msg ) throws IOException
 	{
 		if ( stage == HttpResponseStage.CLOSED )
 			throw new IllegalStateException( "You can't access sendError method within this HttpResponse because the connection has been closed." );
 		
-		if ( httpCode < 1 )
-			httpCode = 500;
-		
 		if ( httpMsg == null )
-			httpMsg = HttpCode.msg( httpCode );
+			httpMsg = status.reasonPhrase();
 		
-		HttpHandler.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + httpCode + ",httpMsg=" + httpMsg + ",domain=" + request.getSubDomain() + "." + request.getDomain() + ",uri=" + request.getURI() + ",remoteIp=" + request.getRemoteAddr() + "}" );
-		
-		httpStatus = httpCode;
+		NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + status.code() + ",httpMsg=" + httpMsg + ",subdomain=" + request.getSubDomain() + ",domain=" + request.getDomain() + ",uri=" + request.getURI() + ",remoteIp=" + request.getRemoteAddr() + "}" );
 		
 		resetBuffer();
 		
 		// Trigger an internal Error Event to notify plugins of a possible problem.
-		ErrorEvent event = new ErrorEvent( request, httpCode, httpMsg );
+		ErrorEvent event = new ErrorEvent( request, status.code(), httpMsg );
 		Loader.getEventBus().callEvent( event );
 		
 		// TODO Make these error pages a bit more creative and/or informational to developers.
 		
-		if ( event.getErrorHtml() == null || event.getErrorHtml().isEmpty() )
+		if ( event.getErrorHtml() != null && !event.getErrorHtml().isEmpty() )
 		{
-			println( "<h1>" + httpCode + " - " + httpMsg + "</h1>" );
-			
-			if ( msg != null && !msg.isEmpty() )
-				println( "<p>" + msg + "</p>" );
-			
-			println( "<hr>" );
-			println( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")<br />" + Versioning.getCopyright() + "</small>" );
-			
+			print( event.getErrorHtml() );
+			sendResponse();
 		}
 		else
 		{
-			print( event.getErrorHtml() );
+			boolean contin = true;
+			
+			if ( htaccess != null && htaccess.getErrorDocument( status.code() ) != null )
+			{
+				String resp = htaccess.getErrorDocument( status.code() ).getResponse();
+				
+				if ( resp.startsWith( "/" ) )
+				{
+					sendRedirect( request.getBaseUrl() + resp );
+					contin = false;
+				}
+				else if ( resp.startsWith( "http" ) )
+				{
+					sendRedirect( resp );
+					contin = false;
+				}
+				else
+					httpMsg = resp;
+			}
+			
+			if ( contin )
+			{
+				println( "<h1>" + status.code() + " - " + httpMsg + "</h1>" );
+				
+				if ( msg != null && !msg.isEmpty() )
+					println( "<p>" + msg + "</p>" );
+				
+				println( "<hr>" );
+				println( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")<br />" + Versioning.getCopyright() + "</small>" );
+				
+				sendResponse();
+			}
 		}
-		
-		sendResponse();
 	}
 	
 	public void resetBuffer()
@@ -148,9 +180,9 @@ public class HttpResponseWrapper
 		if ( httpCode < 1 )
 			httpCode = 500;
 		
-		httpStatus = httpCode;
+		httpStatus = HttpResponseStatus.valueOf( httpCode );
 		
-		HttpHandler.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + httpCode + ",httpMsg=" + HttpCode.msg( httpCode ) + ",domain=" + request.getSubDomain() + "." + request.getDomain() + ",uri=" + request.getURI() + ",remoteIp=" + request.getRemoteAddr() + "}" );
+		NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + httpCode + ",httpMsg=" + HttpCode.msg( httpCode ) + ",domain=" + request.getSubDomain() + "." + request.getDomain() + ",uri=" + request.getURI() + ",remoteIp=" + request.getRemoteAddr() + "}" );
 		
 		if ( Loader.getConfig().getBoolean( "server.developmentMode" ) )
 		{
@@ -200,10 +232,15 @@ public class HttpResponseWrapper
 	
 	public void setStatus( int status )
 	{
+		setStatus( HttpResponseStatus.valueOf( status ) );
+	}
+	
+	public void setStatus( HttpResponseStatus httpStatus )
+	{
 		if ( stage == HttpResponseStage.CLOSED )
 			throw new IllegalStateException( "You can't access setStatus method within this HttpResponse because the connection has been closed." );
 		
-		httpStatus = status;
+		this.httpStatus = httpStatus;
 	}
 	
 	/**
@@ -263,7 +300,7 @@ public class HttpResponseWrapper
 	 */
 	private void sendRedirect( String target, int httpStatus, boolean insteadRedirect )
 	{
-		HttpHandler.getLogger().info( ConsoleColor.DARK_GRAY + "Sending page redirect to `" + target + "` using httpCode `" + httpStatus + " - " + HttpCode.msg( httpStatus ) + "`" );
+		NetworkManager.getLogger().info( ConsoleColor.DARK_GRAY + "Sending page redirect to `" + target + "` using httpCode `" + httpStatus + " - " + HttpCode.msg( httpStatus ) + "`" );
 		
 		if ( stage == HttpResponseStage.CLOSED )
 			throw new IllegalStateException( "You can't access sendRedirect method within this HttpResponse because the connection has been closed." );
@@ -388,9 +425,7 @@ public class HttpResponseWrapper
 		if ( stage == HttpResponseStage.CLOSED || stage == HttpResponseStage.WRITTEN )
 			return;
 		
-		stage = HttpResponseStage.WRITTEN;
-		
-		FullHttpResponse response = new DefaultFullHttpResponse( HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf( httpStatus ), output );
+		FullHttpResponse response = new DefaultFullHttpResponse( HttpVersion.HTTP_1_1, httpStatus, output );
 		HttpHeaders h = response.headers();
 		
 		for ( Candy c : request.getCandies() )
@@ -423,12 +458,18 @@ public class HttpResponseWrapper
 		h.set( HttpHeaders.Names.CONTENT_LENGTH, response.content().readableBytes() );
 		h.set( HttpHeaders.Names.CONNECTION, HttpHeaders.Values.KEEP_ALIVE );
 		
-		stage = HttpResponseStage.CLOSED;
+		stage = HttpResponseStage.WRITTEN;
 		
 		request.getChannel().write( response );
 	}
 	
-	public void closeMultipart() throws IOException
+	public void close()
+	{
+		request.getChannel().close();
+		stage = HttpResponseStage.CLOSED;
+	}
+	
+	public void finishMultipart() throws IOException
 	{
 		if ( stage == HttpResponseStage.CLOSED )
 			throw new IllegalStateException( "You can't access closeMultipart unless you start MULTIPART with sendMultipart." );
@@ -507,18 +548,18 @@ public class HttpResponseWrapper
 				{
 					if ( total < 0 )
 					{ // total unknown
-						HttpHandler.getLogger().info( "Transfer progress: " + progress );
+						NetworkManager.getLogger().info( "Transfer progress: " + progress );
 					}
 					else
 					{
-						HttpHandler.getLogger().info( "Transfer progress: " + progress + " / " + total );
+						NetworkManager.getLogger().info( "Transfer progress: " + progress + " / " + total );
 					}
 				}
 				
 				@Override
 				public void operationComplete( ChannelProgressiveFuture future ) throws Exception
 				{
-					HttpHandler.getLogger().info( "Transfer complete." );
+					NetworkManager.getLogger().info( "Transfer complete." );
 				}
 			} );
 		}
@@ -536,11 +577,16 @@ public class HttpResponseWrapper
 	
 	public int getHttpCode()
 	{
-		return httpStatus;
+		return httpStatus.code();
 	}
 	
 	public String getHttpMsg()
 	{
-		return HttpCode.msg( httpStatus );
+		return HttpCode.msg( httpStatus.code() );
+	}
+	
+	public void setApacheParser( ApacheParser htaccess )
+	{
+		this.htaccess = htaccess;
 	}
 }

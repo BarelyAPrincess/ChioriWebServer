@@ -360,6 +360,10 @@ public class DatabaseEngine
 			if ( reconnect() )
 				return queryUpdate( query );
 		}
+		catch ( SQLException e )
+		{
+			throw e;
+		}
 		catch ( Exception e )
 		{
 			e.printStackTrace();
@@ -388,9 +392,15 @@ public class DatabaseEngine
 			{
 				stmt = con.createStatement( ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
 			}
-			catch ( SQLException e )
+			catch ( CommunicationsException e )
 			{
-				stmt = con.createStatement();
+				if ( reconnect() )
+					stmt = con.createStatement( ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
+			}
+			finally
+			{
+				if ( stmt == null )
+					stmt = con.createStatement();
 			}
 			
 			result = stmt.executeQuery( query );
@@ -1215,6 +1225,11 @@ public class DatabaseEngine
 				if ( rs.getString( 3 ).equalsIgnoreCase( table ) )
 					return true;
 			}
+		}
+		catch ( CommunicationsException e )
+		{
+			// Retry
+			return tableExist( table );
 		}
 		catch ( SQLException e )
 		{

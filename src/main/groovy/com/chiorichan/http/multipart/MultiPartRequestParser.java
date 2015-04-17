@@ -16,7 +16,7 @@ import java.util.Vector;
 
 import com.chiorichan.Loader;
 import com.chiorichan.http.HttpRequestWrapper;
-import com.chiorichan.lang.HttpErrorException;
+import com.chiorichan.lang.HttpError;
 
 public class MultiPartRequestParser
 {
@@ -33,13 +33,13 @@ public class MultiPartRequestParser
 		return requestType.toLowerCase().startsWith( "multipart/form-data" );
 	}
 	
-	public MultiPartRequestParser( HttpRequestWrapper request ) throws IOException, HttpErrorException
+	public MultiPartRequestParser( HttpRequestWrapper request ) throws IOException, HttpError
 	{
 		String requestType = request.getOriginal().headers().get( "Content-Type" );
 		int maxUpload = Loader.getConfig().getInt( "server.maxFileUploadKb", 5120 );
 		
 		if ( request.getContentLength() > maxUpload )
-			throw new HttpErrorException( 413, "The uploaded file exceeds the `server.maxFileUploadKb` directive that was specified in the server config." );
+			throw new HttpError( 413, "The uploaded file exceeds the `server.maxFileUploadKb` directive that was specified in the server config." );
 		else
 		{
 			InputStream is = null;// request.getOriginal().getRequestBody(); // XXX FIX THIS!

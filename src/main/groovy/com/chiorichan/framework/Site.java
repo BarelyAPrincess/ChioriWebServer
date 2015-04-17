@@ -491,7 +491,7 @@ public class Site
 		if ( protectedFiles == null )
 			return false;
 		
-		// Is the file being checked belong to our webroot
+		// Does this file belong to our webroot
 		if ( file.startsWith( getRoot() ) )
 		{
 			// Strip our webroot from file

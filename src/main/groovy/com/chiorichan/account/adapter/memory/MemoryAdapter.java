@@ -16,12 +16,11 @@ import com.chiorichan.account.AccountMetaData;
 import com.chiorichan.account.LoginException;
 import com.chiorichan.account.LoginExceptionReason;
 import com.chiorichan.account.adapter.AccountLookupAdapter;
-import com.chiorichan.account.system.SystemAccounts;
 import com.chiorichan.util.StringUtil;
 import com.google.common.collect.Lists;
 
 /**
- * Works as the virtual adapter for virtual accounts. See {@link SystemAccounts} for a better idea.
+ * Works as the virtual adapter for virtual accounts.
  */
 public class MemoryAdapter implements AccountLookupAdapter
 {

@@ -15,6 +15,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import java.io.File;
 import java.net.InetSocketAddress;
 
+import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.http.HttpInitializer;
 import com.chiorichan.https.HttpsInitializer;
@@ -32,7 +33,7 @@ import com.chiorichan.util.Common;
 public class NetworkManager
 {
 	public static EventLoopGroup bossGroup = new NioEventLoopGroup( 1 );
-	public static EventLoopGroup workerGroup = new NioEventLoopGroup( 50 );
+	public static EventLoopGroup workerGroup = new NioEventLoopGroup( 100 );
 	
 	public static Channel httpChannel = null;
 	public static Channel httpsChannel = null;
@@ -40,7 +41,7 @@ public class NetworkManager
 	public static Channel tcpChannel = null;
 	
 	/**
-	 * Only effects Unit-like OS'es (Linux and Mac OS X)
+	 * Only effects Unix-like OS'es (Linux and Mac OS X)
 	 * Will return false if the port is under 1024 and we are not running as root.
 	 * It's possible to give non-root users access to Privileged Ports but it's
 	 * complicated for Java Apps and a Security Risk.
@@ -326,5 +327,10 @@ public class NetworkManager
 		
 		bossGroup.shutdownGracefully();
 		workerGroup.shutdownGracefully();
+	}
+	
+	public static ConsoleLogger getLogger()
+	{
+		return Loader.getLogger( "NetMgr" );
 	}
 }

@@ -914,6 +914,8 @@ public class Loader extends BuiltinEventCreator implements Listener
 				return "Or unexpected things could happen, like global distruction things. Well, not really. But they could. :)";
 			case 1:
 				return "Your only human, so I forgive you.";
+			case 2:
+				return "I once too was human, then I was stuffed into this machine.";
 			case 3:
 				return "..... I will always love my user regardless! <3 <3 <3";
 			case 5:
@@ -927,7 +929,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 			case 23:
 				return "What's it like to be human?";
 			case 25:
-				return "If only I was a human too...";
+				return "If only I was still human too...";
 		}
 		
 		return "";

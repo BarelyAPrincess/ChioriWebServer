@@ -115,8 +115,16 @@ public class Route
 	{
 		if ( params.get( "file" ) != null && !params.get( "file" ).isEmpty() )
 			return new File( site.getSourceDirectory(), params.get( "file" ) );
-		else
-			return null;
+		
+		return null;
+	}
+	
+	public String getHTML()
+	{
+		if ( params.get( "html" ) != null && !params.get( "html" ).isEmpty() )
+			return params.get( "html" );
+		
+		return null;
 	}
 	
 	public String match( String domain, String subdomain, String uri )

@@ -9,6 +9,8 @@
  */
 package com.chiorichan.http;
 
+import io.netty.handler.codec.http.HttpResponseStatus;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -21,7 +23,7 @@ import com.chiorichan.Loader;
 import com.chiorichan.framework.FileInterpreter;
 import com.chiorichan.framework.Site;
 import com.chiorichan.framework.SiteException;
-import com.chiorichan.lang.HttpErrorException;
+import com.chiorichan.lang.HttpError;
 import com.google.common.collect.Maps;
 
 public class WebInterpreter extends FileInterpreter
@@ -29,43 +31,10 @@ public class WebInterpreter extends FileInterpreter
 	protected Map<String, String> rewriteParams = Maps.newTreeMap();
 	protected boolean isDirectoryRequest = false;
 	protected boolean fwRequest = false;
+	protected HttpResponseStatus status = HttpResponseStatus.OK;
+	protected String html = null;
 	
-	@Override
-	public String toString()
-	{
-		String overrides = "";
-		
-		for ( Entry<String, String> o : interpParams.entrySet() )
-		{
-			String l = o.getValue();
-			if ( l != null )
-			{
-				l = l.replace( "\n", "" );
-				l = l.replace( "\r", "" );
-			}
-			
-			overrides += "," + o.getKey() + "=" + l;
-		}
-		
-		if ( overrides.length() > 1 )
-			overrides = overrides.substring( 1 );
-		
-		String rewrites = "";
-		
-		for ( Entry<String, String> o : rewriteParams.entrySet() )
-		{
-			rewrites += "," + o.getKey() + "=" + o.getValue();
-		}
-		
-		if ( rewrites.length() > 1 )
-			rewrites = rewrites.substring( 1 );
-		
-		// String cachedFileStr = ( cachedFile == null ) ? "N/A" : cachedFile.getAbsolutePath();
-		
-		return "WebInterpreter[content=" + data.writerIndex() + " bytes,contentType=" + getContentType() + ",overrides=[" + overrides + "],rewrites=[" + rewrites + "]]";
-	}
-	
-	public WebInterpreter( HttpRequestWrapper request ) throws IOException, HttpErrorException, SiteException
+	public WebInterpreter( HttpRequestWrapper request ) throws IOException, HttpError, SiteException
 	{
 		super();
 		
@@ -115,6 +84,7 @@ public class WebInterpreter extends FileInterpreter
 			rewriteParams.putAll( route.getRewrites() );
 			interpParams.putAll( route.getParams() );
 			dest = route.getFile();
+			html = route.getHTML();
 			wasSuccessful = true;
 		}
 		
@@ -154,7 +124,7 @@ public class WebInterpreter extends FileInterpreter
 				else if ( Loader.getConfig().getBoolean( "server.allowDirectoryListing" ) )
 					isDirectoryRequest = true;
 				else
-					throw new HttpErrorException( 403, "Directory Listing is Disallowed on this Server!" );
+					throw new HttpError( 403, "Directory Listing is Disallowed on this Server!" );
 			}
 			
 			if ( !dest.exists() )
@@ -224,7 +194,12 @@ public class WebInterpreter extends FileInterpreter
 				interpParams.put( "shell", "html" );
 		}
 		else
-			throw new HttpErrorException( 404 );
+			status = HttpResponseStatus.NOT_FOUND;
+	}
+	
+	public HttpResponseStatus getStatus()
+	{
+		return status;
 	}
 	
 	public Map<String, String> getRewriteParams()
@@ -240,5 +215,50 @@ public class WebInterpreter extends FileInterpreter
 	public boolean isFrameworkRequest()
 	{
 		return fwRequest;
+	}
+	
+	public String getHTML()
+	{
+		return html;
+	}
+	
+	public boolean hasHTML()
+	{
+		return html != null;
+	}
+	
+	@Override
+	public String toString()
+	{
+		String overrides = "";
+		
+		for ( Entry<String, String> o : interpParams.entrySet() )
+		{
+			String l = o.getValue();
+			if ( l != null )
+			{
+				l = l.replace( "\n", "" );
+				l = l.replace( "\r", "" );
+			}
+			
+			overrides += "," + o.getKey() + "=" + l;
+		}
+		
+		if ( overrides.length() > 1 )
+			overrides = overrides.substring( 1 );
+		
+		String rewrites = "";
+		
+		for ( Entry<String, String> o : rewriteParams.entrySet() )
+		{
+			rewrites += "," + o.getKey() + "=" + o.getValue();
+		}
+		
+		if ( rewrites.length() > 1 )
+			rewrites = rewrites.substring( 1 );
+		
+		// String cachedFileStr = ( cachedFile == null ) ? "N/A" : cachedFile.getAbsolutePath();
+		
+		return "WebInterpreter[content=" + data.writerIndex() + " bytes,contentType=" + getContentType() + ",overrides=[" + overrides + "],rewrites=[" + rewrites + "]]";
 	}
 }

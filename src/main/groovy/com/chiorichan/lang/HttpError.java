@@ -9,25 +9,32 @@
  */
 package com.chiorichan.lang;
 
+import io.netty.handler.codec.http.HttpResponseStatus;
+
 import com.chiorichan.http.HttpCode;
 
-public class HttpErrorException extends Exception
+public class HttpError extends Exception
 {
 	private static final long serialVersionUID = 8116947267974772489L;
-	int httpCode = 200;
+	HttpResponseStatus status = HttpResponseStatus.OK;
 	String reason = null;
 	
-	public HttpErrorException( int i, String reason )
+	public HttpError( int i, String reason )
 	{
 		super( reason );
 		
-		httpCode = i;
+		status = HttpResponseStatus.valueOf( i );
 		this.reason = reason;
 	}
 	
-	public HttpErrorException( int i )
+	public HttpError( int i )
 	{
 		this( i, HttpCode.msg( i ) );
+	}
+	
+	public HttpError( HttpResponseStatus status )
+	{
+		this.status = status;
 	}
 	
 	public String getReason()
@@ -37,6 +44,11 @@ public class HttpErrorException extends Exception
 	
 	public int getHttpCode()
 	{
-		return httpCode;
+		return status.code();
+	}
+	
+	public String getHttpReason()
+	{
+		return status.reasonPhrase();
 	}
 }

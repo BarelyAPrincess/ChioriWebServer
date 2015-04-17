@@ -50,27 +50,22 @@ public class FileInterpreter
 		interpParams.put( "encoding", encoding.name() );
 	}
 	
-	@Override
-	public String toString()
-	{
-		String overrides = "";
-		
-		for ( Entry<String, String> o : interpParams.entrySet() )
-		{
-			overrides += "," + o.getKey() + "=" + o.getValue();
-		}
-		
-		if ( overrides.length() > 1 )
-			overrides = overrides.substring( 1 );
-		
-		String cachedFileStr = ( cachedFile == null ) ? "N/A" : cachedFile.getAbsolutePath();
-		
-		return "FileInterpreter{content=" + data.writerIndex() + " bytes,file=" + cachedFileStr + ",overrides={" + overrides + "}}";
-	}
-	
 	public File getFile()
 	{
 		return cachedFile;
+	}
+	
+	public String getFilePath()
+	{
+		if ( cachedFile == null )
+			return null;
+		
+		return cachedFile.getAbsolutePath();
+	}
+	
+	public boolean hasFile()
+	{
+		return cachedFile != null;
 	}
 	
 	public FileInterpreter()
@@ -276,5 +271,23 @@ public class FileInterpreter
 	public void put( String key, String value )
 	{
 		interpParams.put( key.toLowerCase(), value );
+	}
+	
+	@Override
+	public String toString()
+	{
+		String overrides = "";
+		
+		for ( Entry<String, String> o : interpParams.entrySet() )
+		{
+			overrides += "," + o.getKey() + "=" + o.getValue();
+		}
+		
+		if ( overrides.length() > 1 )
+			overrides = overrides.substring( 1 );
+		
+		String cachedFileStr = ( cachedFile == null ) ? "N/A" : cachedFile.getAbsolutePath();
+		
+		return "FileInterpreter{content=" + data.writerIndex() + " bytes,file=" + cachedFileStr + ",overrides={" + overrides + "}}";
 	}
 }

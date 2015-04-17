@@ -17,8 +17,8 @@ import java.util.Map;
 import java.util.Set;
 
 import com.chiorichan.http.Candy;
-import com.chiorichan.http.HttpHandler;
 import com.chiorichan.http.HttpRequestWrapper;
+import com.chiorichan.net.NetworkManager;
 
 public class SessionUtils
 {
@@ -36,7 +36,7 @@ public class SessionUtils
 		}
 		catch ( IllegalArgumentException e )
 		{
-			HttpHandler.getLogger().warning( "While trying to decode cookies for string `" + cookies + "` we encountered an IllegalArgumentException.", e );
+			NetworkManager.getLogger().warning( "While trying to decode cookies for string `" + cookies + "` we encountered an IllegalArgumentException.", e );
 		}
 		
 		if ( var1 == null || var1.isEmpty() )

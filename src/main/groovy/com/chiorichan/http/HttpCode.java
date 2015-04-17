@@ -9,6 +9,8 @@
  */
 package com.chiorichan.http;
 
+import io.netty.handler.codec.http.HttpResponseStatus;
+
 public class HttpCode
 {
 	// Reference: http://en.wikipedia.org/wiki/List_of_HTTP_status_codes
@@ -155,7 +157,7 @@ public class HttpCode
 			case HTTP_BLUE_BOX:
 				return "Time and Relative Dimensions in Space. Yes, that's it. Names are funny. It's me. I'm the TARDIS.";
 			default:
-				return "";
+				return HttpResponseStatus.valueOf( code ).reasonPhrase();
 		}
 	}
 }

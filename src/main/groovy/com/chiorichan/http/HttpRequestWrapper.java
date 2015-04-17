@@ -19,8 +19,10 @@ import io.netty.handler.ssl.SslHandler;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
+import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -38,6 +40,7 @@ import com.chiorichan.session.SessionProvider;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.StringUtil;
 import com.chiorichan.util.Versioning;
+import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 
 public class HttpRequestWrapper
@@ -178,13 +181,13 @@ public class HttpRequestWrapper
 		
 		try
 		{
-			uri = URLDecoder.decode( uri, "UTF-8" );
+			uri = URLDecoder.decode( uri, Charsets.UTF_8.name() );
 		}
 		catch ( UnsupportedEncodingException e )
 		{
 			try
 			{
-				uri = URLDecoder.decode( uri, "ISO-8859-1" );
+				uri = URLDecoder.decode( uri, Charsets.ISO_8859_1.name() );
 			}
 			catch ( UnsupportedEncodingException e1 )
 			{
@@ -338,6 +341,12 @@ public class HttpRequestWrapper
 		return ( ( InetSocketAddress ) channel.remoteAddress() ).getHostName();
 	}
 	
+	/**
+	 * Similar to {@link #getRemoteAddr(boolean)} except defaults to true
+	 * 
+	 * @return
+	 *         the remote connections IP address as a string
+	 */
 	public String getRemoteAddr()
 	{
 		return getRemoteAddr( true );
@@ -348,14 +357,52 @@ public class HttpRequestWrapper
 	 * I believe there are other CDN services like CloudFlare. I'd love it if people could inform me, so I can implement similar methods.
 	 * https://support.cloudflare.com/hc/en-us/articles/200170786-Why-do-my-server-logs-show-CloudFlare-s-IPs-using-CloudFlare-
 	 * 
-	 * boolean detectCDN will disable the detection of CDN, e.g., CloudFlare, IP headers when set to false.
+	 * @param detectCDN
+	 *            Try to detect the use of CDNs, e.g., CloudFlare, IP headers when set to false.
+	 * @return
+	 *         the remote connections IP address as a string
 	 */
 	public String getRemoteAddr( boolean detectCDN )
 	{
 		if ( detectCDN && http.headers().contains( "CF-Connecting-IP" ) )
 			return http.headers().get( "CF-Connecting-IP" );
-		else
-			return ( ( InetSocketAddress ) channel.remoteAddress() ).getAddress().getHostAddress();
+		
+		return ( ( InetSocketAddress ) channel.remoteAddress() ).getAddress().getHostAddress();
+	}
+	
+	/**
+	 * Similar to {@link #getRemoteAddr()}
+	 * 
+	 * @return
+	 *         the remote connections IP address
+	 */
+	public InetAddress getRemoteInetAddr()
+	{
+		return getRemoteInetAddr( true );
+	}
+	
+	/**
+	 * Similar to {@link #getRemoteAddr(boolean)}
+	 * 
+	 * @param detectCDN
+	 *            Try to detect the use of CDNs, e.g., CloudFlare, IP headers when set to false.
+	 * @return
+	 *         the remote connections IP address
+	 */
+	public InetAddress getRemoteInetAddr( boolean detectCDN )
+	{
+		if ( detectCDN && http.headers().contains( "CF-Connecting-IP" ) )
+			try
+			{
+				return InetAddress.getByName( http.headers().get( "CF-Connecting-IP" ) );
+			}
+			catch ( UnknownHostException e )
+			{
+				e.printStackTrace();
+				return null;
+			}
+		
+		return ( ( InetSocketAddress ) channel.remoteAddress() ).getAddress();
 	}
 	
 	public int getRemotePort()
@@ -707,5 +754,15 @@ public class HttpRequestWrapper
 		{
 			return "ws://" + location;
 		}
+	}
+	
+	public String getBaseUrl()
+	{
+		String url = getDomain();
+		
+		if ( getSubDomain() != null && !getSubDomain().isEmpty() )
+			url = getSubDomain() + "." + url;
+		
+		return ( ( isSecure() ) ? "https://" : "http://" ) + url;
 	}
 }
