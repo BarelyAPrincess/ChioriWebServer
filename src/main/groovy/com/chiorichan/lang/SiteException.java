@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.framework;
+package com.chiorichan.lang;
 
 public class SiteException extends Exception
 {

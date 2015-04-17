@@ -14,6 +14,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpMethod;
@@ -62,16 +63,16 @@ import com.chiorichan.event.server.ServerVars;
 import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalFactoryResult;
 import com.chiorichan.factory.EvalMetaData;
-import com.chiorichan.framework.Site;
-import com.chiorichan.framework.SiteException;
 import com.chiorichan.lang.ApacheParser;
 import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.lang.HttpError;
+import com.chiorichan.lang.SiteException;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.net.NetworkSecurity;
 import com.chiorichan.permission.PermissionDefault;
 import com.chiorichan.permission.PermissionResult;
 import com.chiorichan.session.SessionProvider;
+import com.chiorichan.site.Site;
 import com.chiorichan.util.ObjectUtil;
 import com.chiorichan.util.Versioning;
 import com.chiorichan.util.WebUtils;
@@ -114,7 +115,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		
 		setTempDirectory( Loader.getTempFileDirectory() );
 		
-		// Initalize Static Server Vars
+		// Initialize static server variables
 		staticServerVars.put( ServerVars.SERVER_SOFTWARE, Versioning.getProduct() );
 		staticServerVars.put( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "webmaster@example.com" ) );
 		staticServerVars.put( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Versioning.getVersion() );
@@ -123,6 +124,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	public HttpHandler( boolean ssl )
 	{
 		this.ssl = ssl;
+		
+		
 	}
 	
 	@Override
@@ -219,6 +222,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				
 				return;
 			}
+			
 			
 			requestOrig = ( FullHttpRequest ) msg;
 			request = new HttpRequestWrapper( ctx.channel(), requestOrig, ssl );
@@ -328,6 +332,10 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			String request = ( ( TextWebSocketFrame ) frame ).text();
 			NetworkManager.getLogger().fine( "Received '" + request + "' over WebSocket connection '" + ctx.channel() + "'" );
 			ctx.channel().write( new TextWebSocketFrame( request.toUpperCase() ) );
+		}
+		else if ( msg instanceof DefaultHttpRequest )
+		{
+			// Do Nothing!
 		}
 		else
 		{

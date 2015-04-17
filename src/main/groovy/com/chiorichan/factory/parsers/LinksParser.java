@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.chiorichan.Loader;
-import com.chiorichan.framework.Site;
+import com.chiorichan.site.Site;
 
 public class LinksParser extends HTMLCommentParser
 {

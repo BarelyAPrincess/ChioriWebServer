@@ -17,7 +17,7 @@ import org.apache.commons.io.FileUtils;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
-import com.chiorichan.framework.Site;
+import com.chiorichan.site.Site;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 

@@ -20,8 +20,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
-import com.chiorichan.framework.Site;
 import com.chiorichan.http.Routes.RouteType;
+import com.chiorichan.site.Site;
 import com.chiorichan.util.StringUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;

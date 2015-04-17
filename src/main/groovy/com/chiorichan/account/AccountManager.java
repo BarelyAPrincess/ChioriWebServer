@@ -25,10 +25,10 @@ import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.event.account.AccountLoginEvent;
 import com.chiorichan.event.account.PreAccountLoginEvent;
 import com.chiorichan.event.account.PreAccountLoginEvent.Result;
-import com.chiorichan.framework.Site;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissionDefault;
+import com.chiorichan.site.Site;
 import com.chiorichan.util.Common;
 import com.google.common.collect.Lists;
 

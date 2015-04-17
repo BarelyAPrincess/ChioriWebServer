@@ -13,12 +13,12 @@ import com.chiorichan.account.Account
 import com.chiorichan.database.DatabaseEngine
 import com.chiorichan.framework.ConfigurationManagerWrapper
 import com.chiorichan.framework.HttpUtilsWrapper
-import com.chiorichan.framework.Site
 import com.chiorichan.http.HttpCode
 import com.chiorichan.http.HttpRequestWrapper
 import com.chiorichan.http.HttpResponseWrapper
 import com.chiorichan.session.SessionManager
 import com.chiorichan.session.SessionProvider
+import com.chiorichan.site.Site;
 import com.chiorichan.util.Versioning
 import com.google.common.collect.Lists
 
@@ -94,32 +94,6 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	}
 	
 	/**
-	 * Returns the current server version string
-	 */
-	String getVersion()
-	{
-		return Versioning.getVersion();
-	}
-	
-	/**
-	 * Returns the current server product string
-	 */
-	String getProduct()
-	{
-		return Versioning.getProduct();
-	}
-	
-	/**
-	 * Returns the current server copyright string
-	 * @return
-	 *       Copyright string
-	 */
-	String getCopyright()
-	{
-		return Versioning.getCopyright();
-	}
-	
-	/**
 	 * Get the account matching specified uid
 	 * @param uid
 	 *       The uid you wish to use
@@ -146,12 +120,15 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 		return request.getSession().getAccount();
 	}
 	
+	// XXX These two deprecated methods will soon be replaced with new static classes
+	
 	@SuppressWarnings( "deprecation" )
 	ConfigurationManagerWrapper getConfigurationManager()
 	{
 		return new ConfigurationManagerWrapper( request.getSession() );
 	}
 	
+	@SuppressWarnings( "deprecation" )
 	HttpUtilsWrapper getHttpUtils()
 	{
 		return new HttpUtilsWrapper( request.getSession() );

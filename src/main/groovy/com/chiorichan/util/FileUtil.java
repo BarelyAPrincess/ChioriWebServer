@@ -19,7 +19,7 @@ import java.io.InputStream;
 import java.nio.channels.FileChannel;
 
 import com.chiorichan.Loader;
-import com.chiorichan.framework.Site;
+import com.chiorichan.site.Site;
 import com.google.common.io.ByteStreams;
 
 /**

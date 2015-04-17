@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.framework;
+package com.chiorichan.lang;
 
 import groovy.lang.GroovyRuntimeException;
 
@@ -15,6 +15,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.codehaus.groovy.control.CompilationFailedException;
+
+import com.chiorichan.framework.HttpUtilsWrapper;
 
 public class CodeParsingException extends Exception
 {

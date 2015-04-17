@@ -17,11 +17,11 @@ import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
 import com.chiorichan.event.http.ErrorEvent;
-import com.chiorichan.framework.Site;
 import com.chiorichan.http.WebInterpreter;
 import com.chiorichan.lang.ApacheParser;
 import com.chiorichan.lang.HttpError;
 import com.chiorichan.plugin.PluginDescriptionFile;
+import com.chiorichan.site.Site;
 
 /**
  * Maintains the network security for all protocols, e.g., TCP, HTTP and HTTPS.

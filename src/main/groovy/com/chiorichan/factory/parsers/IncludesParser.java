@@ -13,7 +13,7 @@ import java.io.File;
 
 import com.chiorichan.Loader;
 import com.chiorichan.factory.EvalFactory;
-import com.chiorichan.framework.Site;
+import com.chiorichan.site.Site;
 
 public class IncludesParser extends HTMLCommentParser
 {

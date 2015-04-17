@@ -11,10 +11,10 @@ package com.chiorichan.session;
 
 import com.chiorichan.account.Account;
 import com.chiorichan.factory.BindingProvider;
-import com.chiorichan.framework.Site;
 import com.chiorichan.http.Candy;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.http.HttpResponseWrapper;
+import com.chiorichan.site.Site;
 
 public interface SessionProvider extends BindingProvider
 {

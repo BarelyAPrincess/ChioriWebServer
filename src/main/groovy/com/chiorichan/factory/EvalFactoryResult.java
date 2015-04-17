@@ -11,7 +11,7 @@ import io.netty.buffer.ByteBuf;
 import java.nio.charset.Charset;
 import java.util.List;
 
-import com.chiorichan.framework.Site;
+import com.chiorichan.site.Site;
 import com.chiorichan.util.ObjectUtil;
 import com.google.common.collect.Lists;
 

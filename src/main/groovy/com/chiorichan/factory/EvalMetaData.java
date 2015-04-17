@@ -15,8 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
-import com.chiorichan.framework.FileInterpreter;
-import com.chiorichan.framework.Site;
+import com.chiorichan.site.Site;
 import com.google.common.collect.Maps;
 
 public class EvalMetaData

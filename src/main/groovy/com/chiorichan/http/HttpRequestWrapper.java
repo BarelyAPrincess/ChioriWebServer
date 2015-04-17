@@ -35,8 +35,8 @@ import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.Loader;
 import com.chiorichan.event.server.ServerVars;
-import com.chiorichan.framework.Site;
 import com.chiorichan.session.SessionProvider;
+import com.chiorichan.site.Site;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.StringUtil;
 import com.chiorichan.util.Versioning;

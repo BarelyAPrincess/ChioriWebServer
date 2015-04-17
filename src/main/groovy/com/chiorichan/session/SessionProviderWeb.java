@@ -25,13 +25,13 @@ import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.LoginException;
 import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.framework.ConfigurationManagerWrapper;
-import com.chiorichan.framework.Site;
 import com.chiorichan.http.Candy;
 import com.chiorichan.http.HttpCode;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.http.HttpResponseWrapper;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionResult;
+import com.chiorichan.site.Site;
 import com.chiorichan.util.Common;
 import com.chiorichan.util.ObjectUtil;
 

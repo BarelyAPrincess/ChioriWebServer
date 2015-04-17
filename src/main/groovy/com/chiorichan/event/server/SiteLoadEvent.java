@@ -10,7 +10,7 @@
 package com.chiorichan.event.server;
 
 import com.chiorichan.event.Cancellable;
-import com.chiorichan.framework.Site;
+import com.chiorichan.site.Site;
 
 public class SiteLoadEvent extends ServerEvent implements Cancellable
 {

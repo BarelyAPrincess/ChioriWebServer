@@ -14,10 +14,10 @@ import io.netty.buffer.ByteBuf;
 import java.nio.charset.Charset;
 import java.util.Map;
 
-import com.chiorichan.framework.Site;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.http.HttpResponseWrapper;
 import com.chiorichan.session.SessionProvider;
+import com.chiorichan.site.Site;
 import com.google.common.base.Charsets;
 
 public class RenderEvent extends ServerEvent

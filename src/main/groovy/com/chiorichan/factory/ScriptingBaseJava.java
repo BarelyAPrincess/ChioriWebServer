@@ -479,11 +479,6 @@ public abstract class ScriptingBaseJava extends Script
 		return Loader.getEventBus();
 	}
 	
-	Loader getLoader()
-	{
-		return Loader.getInstance();
-	}
-	
 	ConsoleLogger getLogger()
 	{
 		return Loader.getLogger( getClass().getSimpleName() );
@@ -494,13 +489,30 @@ public abstract class ScriptingBaseJava extends Script
 		return "THIS IS NOT APACHE YOU DUMMY!!!";
 	}
 	
+	/**
+	 * Returns the current server version string
+	 */
+	String getVersion()
+	{
+		return Versioning.getVersion();
+	}
+	
+	/**
+	 * Returns the current server product string
+	 */
 	String getProduct()
 	{
 		return Versioning.getProduct();
 	}
 	
-	String getVersion()
+	/**
+	 * Returns the current server copyright string
+	 * 
+	 * @return
+	 *         Copyright string
+	 */
+	String getCopyright()
 	{
-		return Versioning.getVersion();
+		return Versioning.getCopyright();
 	}
 }

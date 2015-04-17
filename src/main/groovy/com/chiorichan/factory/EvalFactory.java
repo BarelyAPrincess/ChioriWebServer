@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -30,6 +31,7 @@ import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.codehaus.groovy.control.CompilerConfiguration;
+import org.codehaus.groovy.control.customizers.ImportCustomizer;
 
 import com.chiorichan.ContentTypes;
 import com.chiorichan.Loader;
@@ -45,11 +47,10 @@ import com.chiorichan.factory.postprocessors.PostProcessor;
 import com.chiorichan.factory.preprocessors.CoffeePreProcessor;
 import com.chiorichan.factory.preprocessors.LessPreProcessor;
 import com.chiorichan.factory.preprocessors.PreProcessor;
-import com.chiorichan.framework.FileInterpreter;
-import com.chiorichan.framework.Site;
 import com.chiorichan.http.WebInterpreter;
 import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.lang.IgnorableEvalException;
+import com.chiorichan.site.Site;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
@@ -177,8 +178,14 @@ public class EvalFactory
 	{
 		CompilerConfiguration configuration = new CompilerConfiguration();
 		
+		ImportCustomizer imports = new ImportCustomizer();
+		
+		imports.addStarImports( "com.chiorichan.lang", "com.chiorichan.util", "java.sql" );
+		imports.addImports( "com.chiorichan.Loader", "com.chiorichan.lang.HttpError" );
+		
 		configuration.setScriptBaseClass( ScriptingBaseGroovy.class.getName() );
 		configuration.setSourceEncoding( encoding.name() );
+		configuration.addCompilationCustomizers( imports, new GroovySandbox() );
 		
 		// TODO Extend class loader as to create a type of security protection
 		return new GroovyShell( Loader.class.getClassLoader(), binding, configuration );

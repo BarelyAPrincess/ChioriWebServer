@@ -27,7 +27,7 @@ import com.chiorichan.account.LoginExceptionReason;
 import com.chiorichan.account.LookupAdapterException;
 import com.chiorichan.account.adapter.AccountLookupAdapter;
 import com.chiorichan.database.DatabaseEngine;
-import com.chiorichan.framework.Site;
+import com.chiorichan.site.Site;
 import com.chiorichan.util.Common;
 import com.google.common.collect.Lists;
 
