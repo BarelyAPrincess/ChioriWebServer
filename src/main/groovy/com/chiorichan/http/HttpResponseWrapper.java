@@ -565,6 +565,11 @@ public class HttpResponseWrapper
 		}
 	}
 	
+	public void setEncoding( String encoding )
+	{
+		this.encoding = Charset.forName( encoding );
+	}
+	
 	public void setEncoding( Charset encoding )
 	{
 		this.encoding = encoding;
