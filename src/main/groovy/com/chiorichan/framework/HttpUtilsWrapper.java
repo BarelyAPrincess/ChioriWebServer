@@ -16,6 +16,7 @@ import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.session.SessionProvider;
 import com.chiorichan.util.WebUtils;
 
+@Deprecated
 public class HttpUtilsWrapper extends WebUtils
 {
 	SessionProvider sess;

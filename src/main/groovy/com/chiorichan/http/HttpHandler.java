@@ -171,6 +171,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		}
 		else
 		{
+			response.sendException( cause );
+			
 			/*
 			 * XXX Temporary way of capturing exceptions that were unexpected by the server.
 			 * Exceptions caught here should have proper exception captures implemented.

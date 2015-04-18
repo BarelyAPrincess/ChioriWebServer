@@ -131,6 +131,21 @@ license
 	skipExistingHeaders true
 }
 
+subprojects
+{
+	apply plugin: 'java'
+	apply plugin: 'groovy'
+	apply plugin: 'eclipse'
+
+	repositories
+	{ mavenCentral() }
+
+	libsDirName = '../../build/dist'
+
+	artifacts
+	{ archives jar }
+}
+
 dependencies
 {
 	// Used for Console ANSI Color Codes
@@ -139,7 +154,7 @@ dependencies
 	// Used to Parse Console Input
 	compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version: '4.7'
 	
-	// Used by EvalFactory
+	// Used to evalute GroovyScripts server-side
 	compile group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.3.6'
 	
 	// Used for Networking HTTP and TCP

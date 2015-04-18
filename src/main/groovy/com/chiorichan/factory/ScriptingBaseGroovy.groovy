@@ -6,8 +6,6 @@
  */
 package com.chiorichan.factory
 
-import java.util.List;
-
 import com.chiorichan.Loader
 import com.chiorichan.account.Account
 import com.chiorichan.database.DatabaseEngine
@@ -18,8 +16,7 @@ import com.chiorichan.http.HttpRequestWrapper
 import com.chiorichan.http.HttpResponseWrapper
 import com.chiorichan.session.SessionManager
 import com.chiorichan.session.SessionProvider
-import com.chiorichan.site.Site;
-import com.chiorichan.util.Versioning
+import com.chiorichan.site.Site
 import com.google.common.collect.Lists
 
 /**
@@ -122,13 +119,13 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	
 	// XXX These two deprecated methods will soon be replaced with new static classes
 	
-	@SuppressWarnings( "deprecation" )
+	@Deprecated
 	ConfigurationManagerWrapper getConfigurationManager()
 	{
 		return new ConfigurationManagerWrapper( request.getSession() );
 	}
 	
-	@SuppressWarnings( "deprecation" )
+	@Deprecated
 	HttpUtilsWrapper getHttpUtils()
 	{
 		return new HttpUtilsWrapper( request.getSession() );

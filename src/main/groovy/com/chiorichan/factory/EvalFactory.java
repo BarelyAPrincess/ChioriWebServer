@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -32,6 +31,7 @@ import org.apache.commons.io.FileUtils;
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
+import org.codehaus.groovy.control.customizers.SecureASTCustomizer;
 
 import com.chiorichan.ContentTypes;
 import com.chiorichan.Loader;
@@ -174,20 +174,41 @@ public class EvalFactory
 		return shell;
 	}
 	
+	/**
+	 * Attempts to create a new GroovyShell instance using our own CompilerConfigurations
+	 * 
+	 * @return
+	 *         new instance of GroovyShell
+	 */
 	protected GroovyShell getNewShell()
 	{
 		CompilerConfiguration configuration = new CompilerConfiguration();
 		
 		ImportCustomizer imports = new ImportCustomizer();
+		SecureASTCustomizer secure = new SecureASTCustomizer();
 		
+		/*
+		 * Groovy Imports :P
+		 */
 		imports.addStarImports( "com.chiorichan.lang", "com.chiorichan.util", "java.sql" );
 		imports.addImports( "com.chiorichan.Loader", "com.chiorichan.lang.HttpError" );
 		
-		configuration.setScriptBaseClass( ScriptingBaseGroovy.class.getName() );
-		configuration.setSourceEncoding( encoding.name() );
-		configuration.addCompilationCustomizers( imports, new GroovySandbox() );
 		
-		// TODO Extend class loader as to create a type of security protection
+		/*
+		 * Finalize Imports and implement Sandbox
+		 */
+		configuration.addCompilationCustomizers( imports, secure );
+		
+		/*
+		 * Set Groovy Base Script Class
+		 */
+		configuration.setScriptBaseClass( ScriptingBaseGroovy.class.getName() );
+		
+		/*
+		 * Set default encoding
+		 */
+		configuration.setSourceEncoding( encoding.name() );
+		
 		return new GroovyShell( Loader.class.getClassLoader(), binding, configuration );
 	}
 	
@@ -482,6 +503,10 @@ public class EvalFactory
 						throw e;
 					}
 					catch ( CompilationFailedException e ) // This is usually a parsing exception
+					{
+						throw new EvalFactoryException( e, shellFactory, meta );
+					}
+					catch ( SecurityException e )
 					{
 						throw new EvalFactoryException( e, shellFactory, meta );
 					}
