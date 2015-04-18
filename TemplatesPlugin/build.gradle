@@ -7,7 +7,7 @@ repositories
 dependencies
 {
 	compile rootProject
-	compile group: 'org.codehaus.groovy', name: 'groovy', version: '2.3.3'
+	compile group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.3.6'
 	compile group: 'com.google.guava', name: 'guava', version: '17.0'
 	compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.3.2'
 }

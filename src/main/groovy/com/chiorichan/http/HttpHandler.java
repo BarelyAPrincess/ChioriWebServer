@@ -186,6 +186,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		}
 		catch ( Throwable t )
 		{
+			Loader.getLogger().debug( "Finish throw an exception!" );
 			t.printStackTrace();
 		}
 	}

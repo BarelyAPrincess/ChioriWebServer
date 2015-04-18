@@ -72,6 +72,11 @@ public class Template extends Plugin implements Listener
 			
 			if ( scriptTrace.length > 0 )
 			{
+				for ( ScriptTraceElement ste : scriptTrace )
+				{
+					// Loader.getLogger().debug( "" + ste );
+				}
+				
 				ScriptTraceElement ste = scriptTrace[0];
 				
 				lineNum = ste.getLineNumber();
@@ -114,7 +119,7 @@ public class Template extends Plugin implements Listener
 		Loader.getLogger().warning( "Could not run file '" + fileName + "' because of error '" + t.getMessage() + "'" );
 		
 		ob.append( "<h1>Exception Thrown</h1>\n" );
-		ob.append( "<p class=\"message\">\n" );
+		ob.append( "<p class=\"message\" style=\"white-space: pre;\">\n" );
 		ob.append( t.getClass().getName() + ": " + t.getMessage() + "\n" );
 		ob.append( "</p>\n" );
 		ob.append( "\n" );

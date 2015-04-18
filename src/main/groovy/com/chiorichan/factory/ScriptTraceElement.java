@@ -9,8 +9,6 @@ package com.chiorichan.factory;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.chiorichan.Loader;
-
 
 /**
  * Similar to StackTraceElement except only used for Groovy Scripts
@@ -27,11 +25,31 @@ public class ScriptTraceElement
 	int colNum = -1;
 	EvalMetaData metaData;
 	
-	public ScriptTraceElement( String msg, EvalMetaData metaData )
+	public ScriptTraceElement( EvalMetaData metaData, int lineNum, int colNum )
 	{
-		fileName = metaData.scriptName;
-		methodName = "";
-		className = "";
+		this( metaData, lineNum, colNum, "", "" );
+	}
+	
+	public ScriptTraceElement( EvalMetaData metaData, int lineNum, int colNum, String methodName, String className )
+	{
+		this( metaData );
+		this.lineNum = lineNum;
+		this.colNum = colNum;
+		
+		if ( className == null || className.isEmpty() )
+			if ( metaData.scriptName.contains( "." ) )
+				className = metaData.scriptName.substring( 0, metaData.scriptName.indexOf( "." ) );
+			else
+				className = metaData.scriptName;
+		
+		this.methodName = methodName;
+		this.className = className;
+	}
+	
+	public ScriptTraceElement( EvalMetaData metaData, String msg )
+	{
+		this( metaData );
+		
 		msg = msg.replaceAll( "\n", "" );
 		
 		// org.codehaus.groovy.control.MultipleCompilationErrorsException: startup failed: GroovyScript44898378.chi: 69: expecting '}', found ':' @ line 69, column 20. instream.close(): ^ 1 error
@@ -41,7 +59,7 @@ public class ScriptTraceElement
 		Pattern p1 = Pattern.compile( "line[: ]?([0-9]*), column[: ]?([0-9]*)" );
 		Matcher m1 = p1.matcher( msg );
 		
-		Loader.getLogger().debug( msg );
+		// Loader.getLogger().debug( msg );
 		
 		if ( m1.find() )
 		{
@@ -56,17 +74,23 @@ public class ScriptTraceElement
 				e.printStackTrace();
 			}
 		}
-		
-		this.metaData = metaData;
 	}
 	
-	public ScriptTraceElement( StackTraceElement ste, EvalMetaData metaData )
+	public ScriptTraceElement( EvalMetaData metaData, StackTraceElement ste )
 	{
+		this( metaData );
 		fileName = ste.getFileName();
 		methodName = ste.getMethodName();
 		className = ste.getClassName();
 		lineNum = ste.getLineNumber();
+	}
+	
+	ScriptTraceElement( EvalMetaData metaData )
+	{
 		this.metaData = metaData;
+		fileName = metaData.scriptName;
+		methodName = "run";
+		className = metaData.scriptName;
 	}
 	
 	public String getFileName()

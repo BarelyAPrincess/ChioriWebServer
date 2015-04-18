@@ -57,7 +57,7 @@ public class ShellFactory
 		{
 			if ( ste.getFileName() != null && ste.getFileName().matches( "GroovyScript\\d*\\.chi" ) )
 			{
-				scriptTrace.add( new ScriptTraceElement( ste, scriptHistory.get( ste.getFileName() ) ) );
+				scriptTrace.add( new ScriptTraceElement( scriptHistory.get( ste.getFileName() ), ste ) );
 			}
 		}
 		

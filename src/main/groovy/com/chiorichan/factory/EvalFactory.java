@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -30,8 +31,8 @@ import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.codehaus.groovy.control.CompilerConfiguration;
+import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
-import org.codehaus.groovy.control.customizers.SecureASTCustomizer;
 
 import com.chiorichan.ContentTypes;
 import com.chiorichan.Loader;
@@ -50,6 +51,7 @@ import com.chiorichan.factory.preprocessors.PreProcessor;
 import com.chiorichan.http.WebInterpreter;
 import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.lang.IgnorableEvalException;
+import com.chiorichan.lang.SandboxSecurityException;
 import com.chiorichan.site.Site;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -185,14 +187,26 @@ public class EvalFactory
 		CompilerConfiguration configuration = new CompilerConfiguration();
 		
 		ImportCustomizer imports = new ImportCustomizer();
-		SecureASTCustomizer secure = new SecureASTCustomizer();
+		GroovySandbox secure = new GroovySandbox();
 		
 		/*
 		 * Groovy Imports :P
 		 */
-		imports.addStarImports( "com.chiorichan.lang", "com.chiorichan.util", "java.sql" );
-		imports.addImports( "com.chiorichan.Loader", "com.chiorichan.lang.HttpError" );
+		String[] dynImports = new String[] {"com.chiorichan.Loader", "com.chiorichan.lang.HttpError"};
+		String[] starImports = new String[] {"com.chiorichan.lang", "com.chiorichan.util", "java.sql"};
+		String[] staticImports = new String[] {};
 		
+		imports.addImports( dynImports );
+		imports.addStarImports( starImports );
+		imports.addStaticStars( staticImports );
+		
+		secure.setImportsWhitelist( Arrays.asList( dynImports ) );
+		secure.setStarImportsWhitelist( Arrays.asList( starImports ) );
+		secure.setStaticImportsWhitelist( Arrays.asList( staticImports ) );
+		
+		secure.setConstantTypesClassesWhiteList( Arrays.asList( new Class[] {Object.class, Boolean.class, boolean.class, String.class, Integer.class, Float.class, Long.class, Double.class, BigDecimal.class, Integer.TYPE, Long.TYPE, Float.TYPE, Double.TYPE} ) );
+		
+		secure.setReceiversClassesWhiteList( Arrays.asList( new Class[] {Object.class, Boolean.class, boolean.class, String.class, Integer.class, Float.class, Double.class, Long.class, BigDecimal.class} ) );
 		
 		/*
 		 * Finalize Imports and implement Sandbox
@@ -498,25 +512,9 @@ public class EvalFactory
 					{
 						result.obj = s.eval( meta, code, shellFactory.setShell( shell ), bs );
 					}
-					catch ( EvalFactoryException e )
+					catch ( Throwable t )
 					{
-						throw e;
-					}
-					catch ( CompilationFailedException e ) // This is usually a parsing exception
-					{
-						throw new EvalFactoryException( e, shellFactory, meta );
-					}
-					catch ( SecurityException e )
-					{
-						throw new EvalFactoryException( e, shellFactory, meta );
-					}
-					catch ( GroovyRuntimeException e )
-					{
-						throw new EvalFactoryException( e, shellFactory );
-					}
-					catch ( Exception e )
-					{
-						throw new EvalFactoryException( e, shellFactory );
+						exceptionHandler( t, meta );
 					}
 					
 					success = true;
@@ -564,6 +562,48 @@ public class EvalFactory
 		}
 		
 		return result.setResult( output, true );
+	}
+	
+	private void exceptionHandler( Throwable t, EvalMetaData meta ) throws EvalFactoryException
+	{
+		if ( t instanceof EvalFactoryException )
+		{
+			throw ( EvalFactoryException ) t;
+		}
+		else if ( t instanceof MultipleCompilationErrorsException )
+		{
+			MultipleCompilationErrorsException e = ( MultipleCompilationErrorsException ) t;
+			
+			if ( e.getErrorCollector().getErrorCount() > 0 )
+			{
+				if ( e.getErrorCollector().getErrorCount() == 1 )
+					exceptionHandler( e.getErrorCollector().getException( 0 ), meta );
+				
+				// TODO What should be do when there are more than one exceptions
+				Loader.getLogger().debug( "Got Exception: " + e.getErrorCollector().getErrors() );
+				exceptionHandler( e.getErrorCollector().getException( 0 ), meta );
+			}
+		}
+		else if ( t instanceof CompilationFailedException ) // This is usually a parsing exception
+		{
+			CompilationFailedException e = ( CompilationFailedException ) t;
+			throw new EvalFactoryException( e, shellFactory, meta );
+		}
+		else if ( t instanceof SandboxSecurityException ) // This usually happens when the script tries to use a blacklisted feature
+		{
+			SandboxSecurityException e = ( SandboxSecurityException ) t;
+			throw new EvalFactoryException( e, shellFactory, meta );
+		}
+		else if ( t instanceof GroovyRuntimeException )
+		{
+			GroovyRuntimeException e = ( GroovyRuntimeException ) t;
+			throw new EvalFactoryException( e, shellFactory );
+		}
+		else
+		{
+			Loader.getLogger().warning( "Uncaught exception in EvalFactory for exception " + t.getClass().getName() );
+			throw new EvalFactoryException( t, shellFactory );
+		}
 	}
 	
 	private String runParsers( String source, Site site ) throws Exception

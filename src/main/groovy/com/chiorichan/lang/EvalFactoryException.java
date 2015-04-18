@@ -76,7 +76,13 @@ public class EvalFactoryException extends Exception
 		super( cause );
 		scriptTrace = shellFactory.examineStackTrace( cause.getStackTrace() );
 		
-		scriptTrace.add( new ScriptTraceElement( cause.getMessage(), metaData ) );
+		if ( cause instanceof SandboxSecurityException )
+		{
+			SandboxSecurityException sse = ( SandboxSecurityException ) cause;
+			scriptTrace.add( 0, new ScriptTraceElement( metaData, sse.getLineNumber(), sse.getLineColumnNumber(), sse.getMethodName(), sse.getClassName() ) );
+		}
+		else
+			scriptTrace.add( 0, new ScriptTraceElement( metaData, cause.getMessage() ) );
 	}
 	
 	public EvalFactoryException( Throwable cause, ShellFactory shellFactory )

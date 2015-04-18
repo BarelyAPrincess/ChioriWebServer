@@ -716,6 +716,8 @@ public class Loader extends BuiltinEventCreator implements Listener
 		StackTraceElement[] ste = Thread.currentThread().getStackTrace();
 		String clz = ste[2].getClassName().toLowerCase();
 		
+		//getLogger( "Debug" ).warning( clz );
+		
 		if ( clz.startsWith( "com.chiorichan" ) )
 		{
 			int ind = clz.indexOf( ".", 5 ) + 1;
