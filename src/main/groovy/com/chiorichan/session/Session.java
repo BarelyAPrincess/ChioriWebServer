@@ -179,14 +179,15 @@ public abstract class Session extends AccountHandler
 	/**
 	 * Determines if this session belongs to the supplied HttpRequest based on the SessionId cookie.
 	 * 
-	 * @param request
-	 * @return boolean
+	 * @param candyName
+	 *            The candyName to use in this request
+	 * @param requestCandies
+	 *            A map of poled candies
+	 * @return
+	 *         true is this session matches the request
 	 */
-	protected boolean matchClient( HttpRequestWrapper request )
+	protected boolean matchClient( String candyName, Map<String, Candy> requestCandies )
 	{
-		String candyName = request.getSite().getYaml().getString( "sessions.cookie-name", Loader.getConfig().getString( "sessions.defaultSessionName", "sessionId" ) );
-		Map<String, Candy> requestCandies = SessionUtils.poleCandies( request );
-		
 		return ( requestCandies.containsKey( candyName ) && getCandy( this.candyName ).compareTo( requestCandies.get( candyName ) ) );
 	}
 	

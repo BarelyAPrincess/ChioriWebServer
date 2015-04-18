@@ -22,22 +22,14 @@ import com.chiorichan.net.NetworkManager;
 
 public class SessionUtils
 {
-	public static Map<String, Candy> poleCandies( HttpRequestWrapper request )
+	public static Map<String, Candy> poleCandies( HttpRequestWrapper request ) throws IllegalArgumentException
 	{
 		Map<String, Candy> candies = new LinkedHashMap<String, Candy>();
 		String cookies = request.getHeaders().get( "Cookie" );
 		if ( cookies == null )
 			return candies;
 		
-		Set<Cookie> var1 = null;
-		try
-		{
-			var1 = CookieDecoder.decode( cookies );
-		}
-		catch ( IllegalArgumentException e )
-		{
-			NetworkManager.getLogger().warning( "While trying to decode cookies for string `" + cookies + "` we encountered an IllegalArgumentException.", e );
-		}
+		Set<Cookie> var1 = CookieDecoder.decode( cookies );
 		
 		if ( var1 == null || var1.isEmpty() )
 			return candies;

@@ -11,12 +11,14 @@ package com.chiorichan.session;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import com.chiorichan.ConsoleBus;
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
+import com.chiorichan.http.Candy;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.util.Common;
@@ -58,11 +60,14 @@ public class SessionManager
 	{
 		SessionProvider sess = null;
 		
+		String candyName = request.getSite().getYaml().getString( "sessions.cookie-name", Loader.getConfig().getString( "sessions.defaultSessionName", "sessionId" ) );
+		Map<String, Candy> requestCandies = SessionUtils.poleCandies( request );
+		
 		synchronized ( sessionList )
 		{
 			for ( Session s : sessionList )
 			{
-				if ( s.matchClient( request ) )
+				if ( s.matchClient( candyName, requestCandies ) )
 				{
 					sess = s.getSessionProvider( request );
 					break;
