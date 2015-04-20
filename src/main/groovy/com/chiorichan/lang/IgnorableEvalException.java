@@ -16,8 +16,8 @@ public class IgnorableEvalException extends Exception
 {
 	private static final long serialVersionUID = 8509074551067643277L;
 	
-	public IgnorableEvalException( String msg, Exception e )
+	public IgnorableEvalException( String msg, Throwable t )
 	{
-		super( msg, e );
+		super( msg, t );
 	}
 }

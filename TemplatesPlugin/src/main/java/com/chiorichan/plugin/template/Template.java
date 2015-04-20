@@ -60,7 +60,7 @@ public class Template extends Plugin implements Listener
 		int colNum = -1;
 		String className = null;
 		
-		String codeSample = null;
+		String codeSample = "";
 		ScriptTraceElement[] scriptTrace = null;
 		
 		if ( t instanceof EvalFactoryException )
@@ -72,11 +72,6 @@ public class Template extends Plugin implements Listener
 			
 			if ( scriptTrace.length > 0 )
 			{
-				for ( ScriptTraceElement ste : scriptTrace )
-				{
-					// Loader.getLogger().debug( "" + ste );
-				}
-				
 				ScriptTraceElement ste = scriptTrace[0];
 				
 				lineNum = ste.getLineNumber();
@@ -99,7 +94,7 @@ public class Template extends Plugin implements Listener
 					if ( metaData.source != null && !metaData.source.isEmpty() )
 						codeSample += "<p>Pre-evaluated Code:</p><pre>" + TemplateUtils.generateCodePreview( metaData.source, lineNum, colNum ) + "</pre>";
 					
-					codeSample = "<p>Source Code:</p><pre>" + TemplateUtils.generateCodePreview( ste ) + "</pre>";
+					codeSample += "<p>Source Code:</p><pre>" + TemplateUtils.generateCodePreview( ste ) + "</pre>";
 				}
 			}
 		}
@@ -129,7 +124,7 @@ public class Template extends Plugin implements Listener
 		
 		ob.append( "\n" );
 		ob.append( "<div class=\"code\">\n" );
-		if ( codeSample != null )
+		if ( codeSample != null && !codeSample.isEmpty() )
 			ob.append( codeSample + "\n" );
 		ob.append( "</div>\n" );
 		ob.append( "</div>\n" );

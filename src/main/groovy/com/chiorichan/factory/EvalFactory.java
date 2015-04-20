@@ -21,8 +21,10 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -55,6 +57,8 @@ import com.chiorichan.lang.SandboxSecurityException;
 import com.chiorichan.site.Site;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.common.reflect.ClassPath;
+import com.google.common.reflect.ClassPath.ClassInfo;
 
 public class EvalFactory
 {
@@ -189,11 +193,13 @@ public class EvalFactory
 		ImportCustomizer imports = new ImportCustomizer();
 		GroovySandbox secure = new GroovySandbox();
 		
+		// TODO Making the whitelist easier to work with is going to be a pain.
+		
 		/*
 		 * Groovy Imports :P
 		 */
-		String[] dynImports = new String[] {"com.chiorichan.Loader", "com.chiorichan.lang.HttpError"};
-		String[] starImports = new String[] {"com.chiorichan.lang", "com.chiorichan.util", "java.sql"};
+		String[] dynImports = new String[] {"com.chiorichan.Loader"};
+		String[] starImports = new String[] {"com.chiorichan.lang", "com.chiorichan.util", "org.apache.commons.lang3.text", "java.util", "java.net"};
 		String[] staticImports = new String[] {};
 		
 		imports.addImports( dynImports );
@@ -204,9 +210,52 @@ public class EvalFactory
 		secure.setStarImportsWhitelist( Arrays.asList( starImports ) );
 		secure.setStaticImportsWhitelist( Arrays.asList( staticImports ) );
 		
-		secure.setConstantTypesClassesWhiteList( Arrays.asList( new Class[] {Object.class, Boolean.class, boolean.class, String.class, Integer.class, Float.class, Long.class, Double.class, BigDecimal.class, Integer.TYPE, Long.TYPE, Float.TYPE, Double.TYPE} ) );
+		List<Class> allowedReceivers = Lists.newArrayList();
 		
-		secure.setReceiversClassesWhiteList( Arrays.asList( new Class[] {Object.class, Boolean.class, boolean.class, String.class, Integer.class, Float.class, Double.class, Long.class, BigDecimal.class} ) );
+		// Allowed Receivers
+		allowedReceivers.addAll( Arrays.asList( new Class[] {Arrays.class, Calendar.class, URLEncoder.class, Object.class, Boolean.class, boolean.class, String.class, Integer.class, Float.class, Long.class, Double.class, BigDecimal.class, Integer.TYPE, Long.TYPE, Float.TYPE, Double.TYPE} ) );
+		
+		for ( String i : dynImports )
+		{
+			try
+			{
+				allowedReceivers.add( Class.forName( i ) );
+			}
+			catch ( ClassNotFoundException e )
+			{
+				e.printStackTrace();
+			}
+		}
+		
+		for ( String i : starImports )
+		{
+			try
+			{
+				Set<ClassInfo> classes = ClassPath.from( ClassLoader.getSystemClassLoader() ).getTopLevelClassesRecursive( i );
+				
+				for ( ClassInfo c : classes )
+					allowedReceivers.add( c.load() );
+			}
+			catch ( IOException e )
+			{
+				e.printStackTrace();
+			}
+		}
+		
+		for ( String d : dynImports )
+			try
+			{
+				allowedReceivers.add( Class.forName( d ) );
+			}
+			catch ( ClassNotFoundException e )
+			{
+				e.printStackTrace();
+			}
+		
+		// Loader.getLogger().debug( "Allowed: " + allowedReceivers );
+		
+		secure.setConstantTypesClassesWhiteList( allowedReceivers );
+		secure.setReceiversClassesWhiteList( allowedReceivers );
 		
 		/*
 		 * Finalize Imports and implement Sandbox
@@ -456,11 +505,11 @@ public class EvalFactory
 		try
 		{
 			if ( site != null )
-				code = runParsers( code, site );
+				code = runParsers( code, site, meta );
 		}
 		catch ( Exception e )
 		{
-			result.addException( new IgnorableEvalException( "Exception caught while running parsers", e ) );
+			result.addException( ignorableExceptionHandler( e, meta, "Exception caught while executing runParsers" ) );
 		}
 		
 		for ( PreProcessor p : preProcessors )
@@ -481,7 +530,7 @@ public class EvalFactory
 					}
 					catch ( Exception e )
 					{
-						result.addException( new IgnorableEvalException( "Exception caught while running PreProcessor `" + p.getClass().getSimpleName() + "`", e ) );
+						result.addException( ignorableExceptionHandler( e, meta, "Exception caught while running PreProcessor `" + p.getClass().getSimpleName() + "`" ) );
 					}
 				}
 		}
@@ -494,49 +543,52 @@ public class EvalFactory
 		ByteBuf output = Unpooled.buffer();
 		boolean success = false;
 		
-		Loader.getLogger().fine( "Locking GroovyShell '" + shell.toString() + "' for execution of '" + meta.fileName + "', length '" + code.length() + "'" );
-		tracker.setInUse( true );
-		
-		byte[] saved = bs.toByteArray();
-		bs.reset();
-		
-		for ( Interpreter s : interpreters )
+		synchronized ( tracker )
 		{
-			Set<String> handledTypes = new HashSet<String>( Arrays.asList( s.getHandledTypes() ) );
+			Loader.getLogger().fine( "Locking GroovyShell '" + shell.toString() + "' for execution of '" + meta.fileName + "', length '" + code.length() + "'" );
+			tracker.setInUse( true );
 			
-			for ( String she : handledTypes )
+			byte[] saved = bs.toByteArray();
+			bs.reset();
+			
+			for ( Interpreter s : interpreters )
 			{
-				if ( she.equalsIgnoreCase( meta.shell ) || she.equalsIgnoreCase( "all" ) )
+				Set<String> handledTypes = new HashSet<String>( Arrays.asList( s.getHandledTypes() ) );
+				
+				for ( String she : handledTypes )
 				{
-					try
+					if ( she.equalsIgnoreCase( meta.shell ) || she.equalsIgnoreCase( "all" ) )
 					{
-						result.obj = s.eval( meta, code, shellFactory.setShell( shell ), bs );
+						try
+						{
+							result.obj = s.eval( meta, code, shellFactory.setShell( shell ), bs );
+						}
+						catch ( Throwable t )
+						{
+							exceptionHandler( t, meta );
+						}
+						
+						success = true;
+						break;
 					}
-					catch ( Throwable t )
-					{
-						exceptionHandler( t, meta );
-					}
-					
-					success = true;
-					break;
 				}
 			}
-		}
-		
-		try
-		{
-			output.writeBytes( ( success ) ? bs.toByteArray() : code.getBytes( encoding ) );
 			
-			bs.reset();
-			bs.write( saved );
+			try
+			{
+				output.writeBytes( ( success ) ? bs.toByteArray() : code.getBytes( encoding ) );
+				
+				bs.reset();
+				bs.write( saved );
+			}
+			catch ( IOException e )
+			{
+				e.printStackTrace();
+			}
+			
+			Loader.getLogger().fine( "Unlocking GroovyShell '" + shell.toString() + "' for execution of '" + meta.fileName + "', length '" + code.length() + "'" );
+			tracker.setInUse( false );
 		}
-		catch ( IOException e )
-		{
-			e.printStackTrace();
-		}
-		
-		Loader.getLogger().fine( "Unlocking GroovyShell '" + shell.toString() + "' for execution of '" + meta.fileName + "', length '" + code.length() + "'" );
-		tracker.setInUse( false );
 		
 		for ( PostProcessor p : postProcessors )
 		{
@@ -556,12 +608,59 @@ public class EvalFactory
 					}
 					catch ( Exception e )
 					{
-						result.addException( new IgnorableEvalException( "Exception caught while running PostProcessor `" + p.getClass().getSimpleName() + "`", e ) );
+						result.addException( ignorableExceptionHandler( e, meta, "Exception caught while running PreProcessor `" + p.getClass().getSimpleName() + "`" ) );
 					}
 				}
 		}
 		
 		return result.setResult( output, true );
+	}
+	
+	private IgnorableEvalException ignorableExceptionHandler( Throwable t, EvalMetaData meta, String msg ) throws EvalFactoryException
+	{
+		if ( t instanceof IgnorableEvalException )
+		{
+			return ( IgnorableEvalException ) t;
+		}
+		else if ( t instanceof EvalFactoryException )
+		{
+			return ignorableExceptionHandler( t.getCause(), meta, msg );
+		}
+		else if ( t instanceof MultipleCompilationErrorsException )
+		{
+			MultipleCompilationErrorsException e = ( MultipleCompilationErrorsException ) t;
+			
+			if ( e.getErrorCollector().getErrorCount() > 0 )
+			{
+				if ( e.getErrorCollector().getErrorCount() == 1 )
+					return ignorableExceptionHandler( e.getErrorCollector().getException( 0 ), meta, msg );
+				
+				// TODO What should be do when there are more than one exceptions
+				Loader.getLogger().debug( "Got Exception: " + e.getErrorCollector().getErrors() );
+				return ignorableExceptionHandler( e.getErrorCollector().getException( 0 ), meta, msg );
+			}
+			
+			return null;
+		}
+		else if ( t instanceof CompilationFailedException ) // This is usually a parsing exception
+		{
+			CompilationFailedException e = ( CompilationFailedException ) t;
+			throw new EvalFactoryException( e, shellFactory );
+		}
+		else if ( t instanceof SandboxSecurityException ) // This usually happens when the script tries to use a blacklisted feature
+		{
+			SandboxSecurityException e = ( SandboxSecurityException ) t;
+			throw new EvalFactoryException( e, shellFactory, meta );
+		}
+		else if ( t instanceof GroovyRuntimeException )
+		{
+			GroovyRuntimeException e = ( GroovyRuntimeException ) t;
+			throw new EvalFactoryException( e, shellFactory );
+		}
+		else
+		{
+			return new IgnorableEvalException( msg, t );
+		}
 	}
 	
 	private void exceptionHandler( Throwable t, EvalMetaData meta ) throws EvalFactoryException
@@ -606,9 +705,9 @@ public class EvalFactory
 		}
 	}
 	
-	private String runParsers( String source, Site site ) throws Exception
+	private String runParsers( String source, Site site, EvalMetaData meta ) throws Exception
 	{
-		source = new IncludesParser().runParser( source, site, this );
+		source = new IncludesParser().runParser( source, site, meta, this );
 		source = new LinksParser().runParser( source, site );
 		
 		return source;

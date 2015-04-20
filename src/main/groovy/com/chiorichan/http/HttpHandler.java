@@ -158,15 +158,15 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			response.sendError( ( HttpError ) cause );
 		else if ( cause instanceof IOException && cause.getCause() != null )
 		{
-			cause.getCause().printStackTrace();
+			// cause.getCause().printStackTrace();
 			response.sendException( cause.getCause() );
 		}
 		else if ( cause instanceof IndexOutOfBoundsException || cause instanceof NullPointerException || cause instanceof IOException || cause instanceof SiteException )
 		{
 			/*
-			 * TODO Proper Exception Handling. Consider the ability to have these exceptions cached and/or delivered by e-mail to developer.
+			 * TODO Proper Exception Handling. Consider the ability to have these exceptions cached and/or delivered by e-mail to developer and/or server administrator.
 			 */
-			cause.printStackTrace();
+			// cause.getCause().printStackTrace();
 			response.sendException( cause );
 		}
 		else

@@ -67,7 +67,7 @@ public class EventBus
 			}
 		}
 		catch ( EventException ex )
-		{	
+		{
 			
 		}
 	}

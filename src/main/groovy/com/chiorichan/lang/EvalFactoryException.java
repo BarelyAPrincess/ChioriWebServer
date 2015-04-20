@@ -11,6 +11,7 @@ package com.chiorichan.lang;
 
 import java.util.List;
 
+import com.chiorichan.Loader;
 import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.factory.ShellFactory;

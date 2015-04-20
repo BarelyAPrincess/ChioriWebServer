@@ -9,6 +9,8 @@ package com.chiorichan.factory;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.chiorichan.Loader;
+
 
 /**
  * Similar to StackTraceElement except only used for Groovy Scripts
@@ -36,7 +38,7 @@ public class ScriptTraceElement
 		this.lineNum = lineNum;
 		this.colNum = colNum;
 		
-		if ( className == null || className.isEmpty() )
+		if ( ( className == null || className.isEmpty() ) && metaData.scriptName != null )
 			if ( metaData.scriptName.contains( "." ) )
 				className = metaData.scriptName.substring( 0, metaData.scriptName.indexOf( "." ) );
 			else

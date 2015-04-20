@@ -1018,30 +1018,32 @@ public class GroovySandbox extends CompilationCustomizer
 		
 		public void visitMethodCallExpression( final MethodCallExpression call )
 		{
-			assertExpressionAuthorized( call );
-			Expression receiver = call.getObjectExpression();
-			final String typeName = receiver.getType().getName();
-			if ( receiversWhiteList != null && !receiversWhiteList.contains( typeName ) )
-			{
-				throw new SandboxSecurityException( "Method calls not allowed on [" + typeName + "]" );
-			}
-			else if ( receiversBlackList != null && receiversBlackList.contains( typeName ) )
-			{
-				throw new SandboxSecurityException( "Method calls not allowed on [" + typeName + "]" );
-			}
-			receiver.visit( this );
-			final Expression method = call.getMethod();
-			checkConstantTypeIfNotMethodNameOrProperty( method );
-			
 			try
 			{
+				assertExpressionAuthorized( call );
+				Expression receiver = call.getObjectExpression();
+				final String typeName = receiver.getType().getName();
+				if ( receiversWhiteList != null && !receiversWhiteList.contains( typeName ) )
+				{
+					throw new SandboxSecurityException( "Method calls not allowed on [" + typeName + "]" );
+				}
+				else if ( receiversBlackList != null && receiversBlackList.contains( typeName ) )
+				{
+					throw new SandboxSecurityException( "Method calls not allowed on [" + typeName + "]" );
+				}
+				receiver.visit( this );
+				final Expression method = call.getMethod();
+				checkConstantTypeIfNotMethodNameOrProperty( method );
+				
 				call.getArguments().visit( this );
 			}
 			catch ( SandboxSecurityException e )
 			{
-				e.setLineNumber( call.getArguments().getLineNumber(), call.getArguments().getColumnNumber() );
-				e.setMethodName( call.getMethodAsString() );
-				// e.setClassName( call.getReceiver().getClass().getName() );
+				if ( e.getLineNumber() < 0 )
+				{
+					e.setLineNumber( call.getArguments().getLineNumber(), call.getArguments().getColumnNumber() );
+					e.setMethodName( call.getMethodAsString() );
+				}
 				throw e;
 			}
 		}

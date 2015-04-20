@@ -13,22 +13,26 @@ import java.io.File;
 
 import com.chiorichan.Loader;
 import com.chiorichan.factory.EvalFactory;
+import com.chiorichan.factory.EvalMetaData;
+import com.chiorichan.factory.FileInterpreter;
 import com.chiorichan.site.Site;
 
 public class IncludesParser extends HTMLCommentParser
 {
 	Site site;
 	EvalFactory factory;
+	EvalMetaData meta;
 	
 	public IncludesParser()
 	{
 		super( "include" );
 	}
 	
-	public String runParser( String source, Site site, EvalFactory factory ) throws Exception
+	public String runParser( String source, Site site, EvalMetaData meta, EvalFactory factory ) throws Exception
 	{
 		this.site = site;
 		this.factory = factory;
+		this.meta = meta;
 		
 		return runParser( source );
 	}
@@ -48,8 +52,9 @@ public class IncludesParser extends HTMLCommentParser
 		
 		if ( res != null && res.exists() )
 		{
+			FileInterpreter fi = new FileInterpreter( res );
 			// TODO Prevent this from going into an infinite loop!
-			result = factory.eval( res, site ).getString();
+			result = factory.eval( fi, site ).getString();
 		}
 		else if ( !res.exists() )
 		{

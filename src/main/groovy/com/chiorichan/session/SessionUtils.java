@@ -18,7 +18,6 @@ import java.util.Set;
 
 import com.chiorichan.http.Candy;
 import com.chiorichan.http.HttpRequestWrapper;
-import com.chiorichan.net.NetworkManager;
 
 public class SessionUtils
 {

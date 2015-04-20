@@ -59,7 +59,7 @@ public class TemplateUtils
 				{
 					for ( ScriptTraceElement st : scriptTrace )
 					{
-						if ( st.getFileName().equals( ste.getFileName() ) && st.getLineNumber() == ste.getLineNumber() )
+						if ( st.getFileName() != null && ste.getFileName() != null && st.getFileName().equals( ste.getFileName() ) && st.getLineNumber() == ste.getLineNumber() )
 						{
 							codePreview = generateCodePreview( st );
 							break;
