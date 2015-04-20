@@ -15,15 +15,17 @@ import java.util.List;
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.InteractiveEntity;
+import com.chiorichan.account.system.SystemAccounts;
 import com.chiorichan.event.BuiltinEventCreator;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
 import com.chiorichan.event.account.AccountLoginEvent;
+import com.chiorichan.scheduler.TaskCreator;
 import com.chiorichan.updater.BuildArtifact.ChangeSet.ChangeSetDetails;
 import com.chiorichan.util.Versioning;
 
-public class AutoUpdater extends BuiltinEventCreator implements Listener
+public class AutoUpdater extends BuiltinEventCreator implements Listener, TaskCreator
 {
 	public static final String WARN_CONSOLE = "warn-console";
 	public static final String WARN_OPERATORS = "warn-ops";
@@ -43,6 +45,18 @@ public class AutoUpdater extends BuiltinEventCreator implements Listener
 		instance = this;
 		this.service = service;
 		this.channel = channel;
+		
+		/*
+		 * This schedules the Auto Updater with the Scheduler to run every 30 minutes (by default).
+		 */
+		Loader.getScheduler().scheduleAsyncRepeatingTask( this, new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				check();
+			}
+		}, 0L, Loader.getConfig().getInt( "auto-updater.check-interval", 30 ) * 3000 ); // 3000 ticks = 1 minute
 	}
 	
 	public String getChannel()
@@ -109,7 +123,8 @@ public class AutoUpdater extends BuiltinEventCreator implements Listener
 	
 	public void check()
 	{
-		// check( , true );
+		// Makes an anonymous update check. Unless sys.updater.allow is granted to the noLogin account, the update will fail silently.
+		check( SystemAccounts.noLogin, true );
 	}
 	
 	public void check( final InteractiveEntity sender, final boolean automatic )

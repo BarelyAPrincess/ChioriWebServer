@@ -17,11 +17,8 @@ import java.util.logging.Level;
 
 import joptsimple.OptionSet;
 
-import org.joda.time.DateTime;
-
 import com.chiorichan.console.CommandDispatch;
 import com.chiorichan.lang.StartupException;
-import com.chiorichan.session.SessionManager;
 import com.chiorichan.util.FileUtil;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Joiner;
@@ -94,7 +91,9 @@ public class ConsoleBus implements Runnable
 				{
 					currentTick = ( int ) ( System.currentTimeMillis() / 50 );
 					j -= 50L;
-					loopTick( currentTick );
+					
+					CommandDispatch.handleCommands();
+					Loader.getScheduler().mainThreadHeartbeat( currentTick );
 				}
 				
 				Thread.sleep( 1L );
@@ -115,26 +114,6 @@ public class ConsoleBus implements Runnable
 			{
 				throwable1.printStackTrace();
 			}
-		}
-	}
-	
-	private void loopTick( int tick )
-	{
-		CommandDispatch.handleCommands();
-		
-		Loader.getScheduler().mainThreadHeartbeat( tick );
-		
-		// Execute every five minutes - ex: clean sessions and checking for updates.
-		int fiveMinuteTick = new DateTime().getMinuteOfHour();
-		if ( fiveMinuteTick % 5 == 0 && lastFiveTick != fiveMinuteTick )
-		{
-			lastFiveTick = fiveMinuteTick;
-			
-			if ( fiveMinuteTick % Loader.getConfig().getInt( "sessions.cleanupInterval", 5 ) == 0 )
-				SessionManager.runSessionChecks( tick );
-			
-			if ( fiveMinuteTick % Loader.getConfig().getInt( "auto-updater.check-interval", 30 ) == 0 )
-				Loader.getAutoUpdater().check();
 		}
 	}
 	

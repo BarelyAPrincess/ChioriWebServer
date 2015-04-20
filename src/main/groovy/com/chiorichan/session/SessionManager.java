@@ -13,7 +13,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import com.chiorichan.ConsoleBus;
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
@@ -21,13 +20,14 @@ import com.chiorichan.account.Account;
 import com.chiorichan.http.Candy;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.lang.StartupException;
+import com.chiorichan.scheduler.TaskCreator;
 import com.chiorichan.util.Common;
 import com.google.common.collect.Lists;
 
 /**
  * Persistence manager handles sessions kept in memory. It also manages when to unload the session to free memory.
  */
-public class SessionManager
+public class SessionManager implements TaskCreator
 {
 	private static List<Session> sessionList = Lists.newCopyOnWriteArrayList();
 	private static boolean isDebug = false;
@@ -51,9 +51,26 @@ public class SessionManager
 		}
 		
 		/*
-		 * We run the session checks after loading to catch things like expired sessions.
+		 * This schedules the Session Manager with the Scheduler to run every 5 minutes (by default) to cleanup sessions.
 		 */
-		runSessionChecks( ConsoleBus.currentTick );
+		Loader.getScheduler().scheduleAsyncRepeatingTask( this, new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				Iterator<Session> sessions = sessionList.iterator();
+				
+				while ( sessions.hasNext() )
+				{
+					Session var1 = sessions.next();
+					
+					if ( var1.getTimeout() > 0 && var1.getTimeout() < Common.getEpoch() )
+					{
+						destroySession( var1 );
+					}
+				}
+			}
+		}, 0L, Loader.getConfig().getInt( "sessions.cleanupInterval", 5 ) * 3000 ); // 3000 ticks = 1 minute
 	}
 	
 	public SessionProvider find( HttpRequestWrapper request )
@@ -94,21 +111,6 @@ public class SessionManager
 		}
 		
 		return sess;
-	}
-	
-	public static void runSessionChecks( long tick )
-	{
-		Iterator<Session> sessions = sessionList.iterator();
-		
-		while ( sessions.hasNext() )
-		{
-			Session var1 = sessions.next();
-			
-			if ( var1.getTimeout() > 0 && var1.getTimeout() < Common.getEpoch() )
-			{
-				destroySession( var1 );
-			}
-		}
 	}
 	
 	public List<Session> getSessions()
@@ -189,5 +191,17 @@ public class SessionManager
 	public static ConsoleLogger getLogger()
 	{
 		return Loader.getLogger( "SessMgr" );
+	}
+	
+	@Override
+	public boolean isEnabled()
+	{
+		return true;
+	}
+	
+	@Override
+	public String getName()
+	{
+		return "SessionManager";
 	}
 }
