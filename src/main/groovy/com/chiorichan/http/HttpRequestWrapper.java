@@ -549,9 +549,6 @@ public class HttpRequestWrapper
 	
 	public Map<String, Object> getRequestMap()
 	{
-		if ( unmodifiableMaps )
-			return Collections.unmodifiableMap( parseMapArrays( getRequestMapRaw() ) );
-		
 		return parseMapArrays( getRequestMapRaw() );
 	}
 	
@@ -576,9 +573,6 @@ public class HttpRequestWrapper
 	
 	public Map<String, Object> getPostMap()
 	{
-		if ( unmodifiableMaps )
-			Collections.unmodifiableMap( parseMapArrays( getPostMapRaw() ) );
-		
 		return parseMapArrays( getPostMapRaw() );
 	}
 	
@@ -595,9 +589,6 @@ public class HttpRequestWrapper
 	
 	public Map<String, Object> getGetMap()
 	{
-		if ( unmodifiableMaps )
-			Collections.unmodifiableMap( parseMapArrays( getGetMapRaw() ) );
-		
 		return parseMapArrays( getGetMapRaw() );
 	}
 	
@@ -792,5 +783,25 @@ public class HttpRequestWrapper
 			url = getSubDomain() + "." + url;
 		
 		return ( ( isSecure() ) ? "https://" : "http://" ) + url;
+	}
+	
+	protected void putPostMap( String key, String value )
+	{
+		postMap.put( key, value );
+	}
+	
+	protected void putAllPostMap( Map<String, String> map )
+	{
+		postMap.putAll( map );
+	}
+	
+	protected void putGetMap( String key, String value )
+	{
+		getMap.put( key, value );
+	}
+	
+	protected void putAllGetMap( Map<String, String> map )
+	{
+		getMap.putAll( map );
 	}
 }

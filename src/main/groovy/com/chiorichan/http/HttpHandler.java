@@ -47,8 +47,6 @@ import java.io.InputStream;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -412,7 +410,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				return;
 			}
 			
-			request.getPostMap().put( attribute.getName(), value );
+			request.putPostMap( attribute.getName(), value );
 		}
 		else if ( data.getHttpDataType() == HttpDataType.FileUpload )
 		{
