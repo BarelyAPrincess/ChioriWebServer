@@ -107,6 +107,7 @@ advanced:
     gspEnabled: true
     groovyEnabled: true
   security:
+    unmodifiableMapsEnabled: true
     requestMapEnabled: true
   libraries:
     libPath: 'libraries'

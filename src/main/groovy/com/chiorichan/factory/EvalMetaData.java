@@ -14,13 +14,15 @@ import groovy.lang.Script;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.chiorichan.site.Site;
+import com.chiorichan.util.ObjectUtil;
 import com.google.common.collect.Maps;
 
 public class EvalMetaData
 {
-	public Map<String, String> params = Maps.newHashMap();
+	public Map<String, Object> params = Maps.newLinkedHashMap();
 	public String contentType;
 	public String fileName;
 	public String scriptName;
@@ -44,6 +46,31 @@ public class EvalMetaData
 	public EvalMetaData( String file ) throws IOException
 	{
 		this( new FileInterpreter( new File( file ) ) );
+	}
+	
+	public Map<String, Object> getParams()
+	{
+		return params;
+	}
+	
+	public Map<String, String> getParamStrings()
+	{
+		if ( params == null )
+			return null;
+		
+		Map<String, String> newParams = Maps.newLinkedHashMap();
+		
+		for ( Entry<String, Object> e : params.entrySet() )
+			try
+			{
+				newParams.put( e.getKey(), ObjectUtil.castToStringWithException( e.getValue() ) );
+			}
+			catch ( ClassCastException cce )
+			{
+				
+			}
+		
+		return newParams;
 	}
 	
 	@Override

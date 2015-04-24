@@ -20,6 +20,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 
@@ -47,11 +48,13 @@ public class ImagePostProcessor implements PostProcessor
 		float x = 0;
 		float y = 0;
 		
-		if ( meta.params != null )
+		Map<String, String> paramsRaw = meta.getParamStrings();
+		
+		if ( paramsRaw != null )
 		{
-			if ( meta.params.get( "serverSideOptions" ) != null )
+			if ( paramsRaw.get( "serverSideOptions" ) != null )
 			{
-				String[] params = meta.params.get( "serverSideOptions" ).trim().split( "_" );
+				String[] params = paramsRaw.get( "serverSideOptions" ).trim().split( "_" );
 				
 				for ( String p : params )
 				{
@@ -73,16 +76,16 @@ public class ImagePostProcessor implements PostProcessor
 			}
 			
 			if ( meta.params.get( "width" ) != null )
-				x = Integer.parseInt( meta.params.get( "width" ) );
+				x = Integer.parseInt( paramsRaw.get( "width" ) );
 			
 			if ( meta.params.get( "height" ) != null )
-				y = Integer.parseInt( meta.params.get( "height" ) );
+				y = Integer.parseInt( paramsRaw.get( "height" ) );
 			
 			if ( meta.params.get( "w" ) != null )
-				x = Integer.parseInt( meta.params.get( "w" ) );
+				x = Integer.parseInt( paramsRaw.get( "w" ) );
 			
 			if ( meta.params.get( "h" ) != null )
-				y = Integer.parseInt( meta.params.get( "h" ) );
+				y = Integer.parseInt( paramsRaw.get( "h" ) );
 			
 			if ( meta.params.get( "thumb" ) != null )
 			{

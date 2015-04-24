@@ -20,11 +20,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
-import java.math.BigDecimal;
-import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -36,7 +33,6 @@ import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
 import org.codehaus.groovy.syntax.SyntaxException;
-import org.ocpsoft.prettytime.PrettyTime;
 
 import com.chiorichan.ContentTypes;
 import com.chiorichan.Loader;
@@ -57,10 +53,9 @@ import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.lang.IgnorableEvalException;
 import com.chiorichan.lang.SandboxSecurityException;
 import com.chiorichan.site.Site;
+import com.chiorichan.util.MapFunc;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.common.reflect.ClassPath;
-import com.google.common.reflect.ClassPath.ClassInfo;
 
 @SuppressWarnings( "rawtypes" )
 public class EvalFactory
@@ -387,9 +382,9 @@ public class EvalFactory
 			meta = new EvalMetaData();
 		
 		if ( fi instanceof WebInterpreter )
-			meta.params = ( ( WebInterpreter ) fi ).getRewriteParams();
+			meta.params = new MapFunc<String, Object>().castTypes( ( ( WebInterpreter ) fi ).getRewriteParams() );
 		else
-			meta.params = fi.getParams();
+			meta.params = new MapFunc<String, Object>().castTypes( fi.getParams() );
 		
 		meta.contentType = fi.getContentType();
 		meta.shell = fi.getParams().get( "shell" );

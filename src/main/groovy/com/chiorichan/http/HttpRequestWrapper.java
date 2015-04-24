@@ -24,6 +24,7 @@ import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.net.UnknownHostException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -45,6 +46,8 @@ import com.google.common.collect.Maps;
 
 public class HttpRequestWrapper
 {
+	protected static boolean unmodifiableMaps = Loader.getConfig().getBoolean( "advanced.security.unmodifiableMapsEnabled", true );
+	
 	protected Map<ServerVars, Object> serverVars = Maps.newLinkedHashMap();
 	protected Site currentSite;
 	protected SessionProvider sess = null;
@@ -544,12 +547,15 @@ public class HttpRequestWrapper
 		return result;
 	}
 	
-	public Map<String, Object> getRequestMapParsed()
+	public Map<String, Object> getRequestMap()
 	{
-		return parseMapArrays( getRequestMap() );
+		if ( unmodifiableMaps )
+			return Collections.unmodifiableMap( parseMapArrays( getRequestMapRaw() ) );
+		
+		return parseMapArrays( getRequestMapRaw() );
 	}
 	
-	public Map<String, String> getRequestMap()
+	public Map<String, String> getRequestMapRaw()
 	{
 		Map<String, String> requestMap = new HashMap<String, String>();
 		
@@ -562,31 +568,46 @@ public class HttpRequestWrapper
 		if ( rewriteMap != null )
 			requestMap.putAll( rewriteMap );
 		
+		if ( unmodifiableMaps )
+			return Collections.unmodifiableMap( requestMap );
+		
 		return requestMap;
 	}
 	
-	public Map<String, Object> getPostMapParsed()
+	public Map<String, Object> getPostMap()
 	{
-		return parseMapArrays( getPostMap() );
+		if ( unmodifiableMaps )
+			Collections.unmodifiableMap( parseMapArrays( getPostMapRaw() ) );
+		
+		return parseMapArrays( getPostMapRaw() );
 	}
 	
-	public Map<String, String> getPostMap()
+	public Map<String, String> getPostMapRaw()
 	{
 		if ( postMap == null )
 			postMap = new HashMap<String, String>();
 		
+		if ( unmodifiableMaps )
+			return Collections.unmodifiableMap( postMap );
+		
 		return postMap;
 	}
 	
-	public Map<String, Object> getGetMapParsed()
+	public Map<String, Object> getGetMap()
 	{
-		return parseMapArrays( getGetMap() );
+		if ( unmodifiableMaps )
+			Collections.unmodifiableMap( parseMapArrays( getGetMapRaw() ) );
+		
+		return parseMapArrays( getGetMapRaw() );
 	}
 	
-	public Map<String, String> getGetMap()
+	public Map<String, String> getGetMapRaw()
 	{
 		if ( getMap == null )
 			getMap = new HashMap<String, String>();
+		
+		if ( unmodifiableMaps )
+			return Collections.unmodifiableMap( getMap );
 		
 		return getMap;
 	}
@@ -677,6 +698,7 @@ public class HttpRequestWrapper
 	{
 		Map<String, Object> server = Maps.newLinkedHashMap();
 		
+		// Adds server variables to map in default, lower case, and upper case variations.
 		for ( Map.Entry<ServerVars, Object> en : serverVars.entrySet() )
 		{
 			server.put( en.getKey().getName().toLowerCase(), en.getValue() );
@@ -684,11 +706,17 @@ public class HttpRequestWrapper
 			server.put( en.getKey().getName(), en.getValue() );
 		}
 		
+		if ( unmodifiableMaps )
+			return Collections.unmodifiableMap( server );
+		
 		return server;
 	}
 	
 	public Map<String, String> getRewriteMap()
 	{
+		if ( unmodifiableMaps )
+			Collections.unmodifiableMap( rewriteMap );
+		
 		return rewriteMap;
 	}
 	
@@ -712,7 +740,7 @@ public class HttpRequestWrapper
 	
 	public Map<String, UploadedFile> getUploadedFiles()
 	{
-		return uploadedFiles;
+		return Collections.unmodifiableMap( uploadedFiles );
 	}
 	
 	public Channel getChannel()
