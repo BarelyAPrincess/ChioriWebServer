@@ -14,9 +14,11 @@ import groovy.lang.Binding;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
@@ -35,11 +37,14 @@ import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionResult;
 import com.chiorichan.site.Site;
 import com.chiorichan.util.CommonFunc;
-import com.chiorichan.util.ObjectFunc;
+import com.google.common.collect.Sets;
 
 @SuppressWarnings( "deprecation" )
 public class SessionProviderWeb implements SessionProvider
 {
+	private static final List<String> disallowedKeys = Arrays.asList( new String[] {"user", "pass", "remember", "out", "request", "response", "_REQUEST", "__FILE__", "_SESSION", "_REWRITE", "_GET", "_POST", "_SERVER", "_FILES"} );
+	
+	protected Set<String> lastChangeHistory = Sets.newHashSet();
 	protected final Binding binding = new Binding();
 	protected EvalFactory factory = null;
 	protected HttpRequestWrapper request;
@@ -60,7 +65,8 @@ public class SessionProviderWeb implements SessionProvider
 		for ( Entry<String, Object> e : session.bindingMap.entrySet() )
 			binding.setVariable( e.getKey(), e.getValue() );
 		
-		binding.setVariable( "_SESSION", session.data );
+		binding.setVariable( "_SESSION", new LinkedHashMap<String, String>( session.data ) );
+		lastChangeHistory = session.getChangeHistory();
 		
 		setRequest( request, true );
 	}
@@ -143,9 +149,10 @@ public class SessionProviderWeb implements SessionProvider
 		{
 			parentSession.logoutAccount();
 			
+			// TODO Make a server login page for sites without a login page
 			if ( target.isEmpty() )
-				target = request.getSite().getYaml().getString( "scripts.login-form", "/login" ); // TODO Make a fw login form for websites without one
-				
+				target = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
+			
 			request.getResponse().sendRedirect( target + "?ok=You have been successfully logged out." );
 			return;
 		}
@@ -164,7 +171,7 @@ public class SessionProviderWeb implements SessionProvider
 				
 				parentSession.setVariable( "remember", remember );
 				
-				AccountManager.getLogger().info( ConsoleColor.GREEN + "Successful Login [username='" + username + "',password='" + password + "',userId='" + acct.getAcctId() + "',displayName='" + acct.getDisplayName() + "']" );
+				AccountManager.getLogger().info( ConsoleColor.GREEN + "Successful Login [acctId='" + username + "',password='" + password + "',displayName='" + acct.getDisplayName() + "']" );
 				request.getResponse().sendRedirect( loginPost );
 				
 			}
@@ -173,7 +180,7 @@ public class SessionProviderWeb implements SessionProvider
 				String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
 				
 				if ( l.getAccount() != null )
-					AccountManager.getLogger().warning( ConsoleColor.GREEN + "Failed Login [username='" + username + "',password='" + password + "',userId='" + l.getAccount().getAcctId() + "',displayName='" + l.getAccount().getDisplayName() + "',reason='" + l.getMessage() + "']" );
+					AccountManager.getLogger().warning( ConsoleColor.GREEN + "Failed Login [acctId='" + username + "',password='" + password + "',displayName='" + l.getAccount().getDisplayName() + "',reason='" + l.getMessage() + "']" );
 				
 				parentSession.currentAccount = null;
 				parentSession.setVariable( "user", "" );
@@ -195,11 +202,11 @@ public class SessionProviderWeb implements SessionProvider
 					Account acct = Loader.getAccountManager().attemptLogin( parentSession, username, password );
 					parentSession.currentAccount = acct;
 					
-					AccountManager.getLogger().info( ConsoleColor.GREEN + "Successful Login [username='" + username + "',password='" + password + "',userId='" + acct.getAcctId() + "',displayName='" + acct.getDisplayName() + "']" );
+					AccountManager.getLogger().info( ConsoleColor.GREEN + "Successful Login [acctId='" + username + "',hasPassword='" + ( !password.isEmpty() ) + "',displayName='" + acct.getDisplayName() + "']" );
 				}
 				catch ( LoginException l )
 				{
-					AccountManager.getLogger().warning( ConsoleColor.GREEN + "Failed Login [username='" + username + "',password='" + password + "',reason='" + l.getMessage() + "']" );
+					AccountManager.getLogger().warning( ConsoleColor.RED + "Failed Login [acctId='" + username + "',hasPassword='" + ( !password.isEmpty() ) + "',reason='" + l.getMessage() + "']" );
 				}
 			}
 			else
@@ -319,8 +326,6 @@ public class SessionProviderWeb implements SessionProvider
 		Map<String, Object> bindingMap = parentSession.bindingMap;
 		Map<String, Object> variables = binding.getVariables();
 		
-		List<String> disallowedKeys = Arrays.asList( new String[] {"out", "request", "response", "_REQUEST", "__FILE__", "_SESSION", "_REWRITE", "_GET", "_POST", "_SERVER", "_FILES"} );
-		
 		if ( bindingMap != null && variables != null )
 		{
 			// Copy all keys besides those in disallowedKeys list into the parent binding map
@@ -331,10 +336,19 @@ public class SessionProviderWeb implements SessionProvider
 			// Merge our _SESSION into parentSession's data map
 			if ( variables.containsKey( "_SESSION" ) && variables.get( "_SESSION" ) instanceof Map )
 			{
-				for ( Entry<String, Object> e : ( ( Map<String, Object> ) variables.get( "_SESSION" ) ).entrySet() )
-					parentSession.data.put( e.getKey(), ObjectFunc.castToString( e.getValue() ) );
-				
-				parentSession.changesMade = true;
+				synchronized ( parentSession )
+				{
+					Set<String> changeHistory = parentSession.getChangeHistory();
+					
+					/*
+					 * Update only if values don't match and key was not updated since we copied the data
+					 */
+					for ( Entry<String, String> e : ( ( Map<String, String> ) variables.get( "_SESSION" ) ).entrySet() )
+						if ( parentSession.data.get( e.getKey() ) != e.getValue() ) // We have a value different from parent session
+							if ( ! ( changeHistory.contains( e.getKey() ) && !lastChangeHistory.contains( e.getKey() ) ) )
+								if ( !disallowedKeys.contains( e.getKey() ) )
+									parentSession.setVariable( e.getKey(), e.getValue() );
+				}
 			}
 		}
 		

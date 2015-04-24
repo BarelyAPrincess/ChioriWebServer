@@ -42,7 +42,7 @@ public class WebInterpreter extends FileInterpreter
 		Routes routes = request.getSite().getRoutes();
 		boolean wasSuccessful = false;
 		
-		String uri = request.getURI();
+		String uri = request.getUri();
 		String domain = request.getParentDomain();
 		String subdomain = request.getSubDomain();
 		

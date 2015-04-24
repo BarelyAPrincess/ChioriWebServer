@@ -73,10 +73,11 @@ public class FileSession extends Session
 				private static final long serialVersionUID = -1734352198651744570L;
 			}.getType() );
 			
-			if ( changesMade )
+			if ( changesMade() )
 			{
 				tmpData.putAll( data );
-				data = tmpData;
+				data.clear();
+				data.putAll( tmpData );
 			}
 			else
 				data.putAll( tmpData );

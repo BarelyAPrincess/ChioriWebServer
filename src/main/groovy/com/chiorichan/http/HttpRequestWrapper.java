@@ -176,7 +176,7 @@ public class HttpRequestWrapper
 		return response;
 	}
 	
-	public String getURI()
+	public String getUri()
 	{
 		if ( uri == null )
 			uri = http.getUri();
@@ -645,8 +645,6 @@ public class HttpRequestWrapper
 	
 	void initServerVars( Map<ServerVars, Object> staticServerVars )
 	{
-		// Not sure of the need to do a try... catch.
-		// Instead of a blanket catch, we should make this more of a personal check for each put.
 		serverVars = staticServerVars;
 		putServerVarSafe( ServerVars.DOCUMENT_ROOT, getSite().getAbsoluteRoot() );
 		putServerVarSafe( ServerVars.HTTP_ACCEPT, getHeader( "Accept" ) );
@@ -660,7 +658,7 @@ public class HttpRequestWrapper
 		putServerVarSafe( ServerVars.REMOTE_ADDR, getRemoteAddr() );
 		putServerVarSafe( ServerVars.REMOTE_PORT, getRemotePort() );
 		putServerVarSafe( ServerVars.REQUEST_TIME, getRequestTime() );
-		putServerVarSafe( ServerVars.REQUEST_URI, getURI() );
+		putServerVarSafe( ServerVars.REQUEST_URI, getUri() );
 		putServerVarSafe( ServerVars.CONTENT_LENGTH, getContentLength() );
 		// putServerVarSafe( ServerVars.AUTH_TYPE, getAuthType() );
 		putServerVarSafe( ServerVars.SERVER_NAME, getServerName() );
@@ -752,7 +750,7 @@ public class HttpRequestWrapper
 	
 	public boolean isWebsocketRequest()
 	{
-		return getURI().equals( "/fw/websocket" );
+		return "/fw/websocket".equals( getUri() );
 	}
 	
 	public String getWebSocketLocation( HttpObject req )

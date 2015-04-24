@@ -36,11 +36,23 @@ public class SqlSession extends Session
 			timeout = rs.getInt( "timeout" );
 			lastIpAddr = rs.getString( "ipAddr" );
 			
+			
 			if ( !rs.getString( "data" ).isEmpty() )
-				data = new Gson().fromJson( rs.getString( "data" ), new TypeToken<Map<String, String>>()
+			{
+				Map<String, String> tmpData = new Gson().fromJson( rs.getString( "data" ), new TypeToken<Map<String, String>>()
 				{
-					private static final long serialVersionUID = 2808406085740098578L;
+					private static final long serialVersionUID = -1734352198651744570L;
 				}.getType() );
+				
+				if ( changesMade() )
+				{
+					tmpData.putAll( data );
+					data.clear();
+					data.putAll( tmpData );
+				}
+				else
+					data.putAll( tmpData );
+			}
 			
 			if ( rs.getString( "sessionName" ) != null && !rs.getString( "sessionName" ).isEmpty() )
 				candyName = rs.getString( "sessionName" );
@@ -102,10 +114,11 @@ public class SqlSession extends Session
 						private static final long serialVersionUID = -1734352198651744570L;
 					}.getType() );
 					
-					if ( changesMade )
+					if ( changesMade() )
 					{
 						tmpData.putAll( data );
-						data = tmpData;
+						data.clear();
+						data.putAll( tmpData );
 					}
 					else
 						data.putAll( tmpData );

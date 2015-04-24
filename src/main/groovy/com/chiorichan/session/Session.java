@@ -6,6 +6,8 @@
  */
 package com.chiorichan.session;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -36,7 +38,8 @@ import com.google.common.collect.Sets;
  */
 public abstract class Session extends AccountHandler
 {
-	protected Map<String, String> data = Maps.newLinkedHashMap();
+	protected final Map<String, String> data = Maps.newLinkedHashMap();
+	protected final Set<String> dataChangeHistory = Sets.newHashSet();
 	protected int timeout = 0;
 	protected int requestCnt = 0;
 	protected String candyId = "", candyName = "sessionId", lastIpAddr = null;
@@ -49,7 +52,6 @@ public abstract class Session extends AccountHandler
 	protected Site site;
 	protected boolean stale = false;
 	protected boolean isValid = true;
-	protected boolean changesMade = false;
 	
 	protected final Map<String, Object> bindingMap = Maps.newLinkedHashMap();
 	protected final Set<SessionProvider> sessionProviders = Sets.newHashSet();
@@ -156,12 +158,22 @@ public abstract class Session extends AccountHandler
 		}
 	}
 	
+	public Set<String> getChangeHistory()
+	{
+		return Collections.unmodifiableSet( new HashSet<String>( dataChangeHistory ) );
+	}
+	
+	public boolean changesMade()
+	{
+		return dataChangeHistory.size() > 0;
+	}
+	
 	public void saveSession( boolean force )
 	{
-		if ( force || changesMade )
+		if ( force || changesMade() )
 		{
 			saveSession();
-			changesMade = false;
+			dataChangeHistory.clear();
 		}
 	}
 	
@@ -228,7 +240,7 @@ public abstract class Session extends AccountHandler
 			data.remove( key );
 		
 		data.put( key, value );
-		changesMade = true;
+		dataChangeHistory.add( key );
 	}
 	
 	public String getVariable( String key )
@@ -308,9 +320,9 @@ public abstract class Session extends AccountHandler
 	public void logoutAccount()
 	{
 		if ( currentAccount != null )
-			Loader.getLogger().info( ConsoleColor.GREEN + "User Logout `" + currentAccount + "`" );
+			AccountManager.getLogger().info( ConsoleColor.GREEN + "Successful Logout [acctId='" + currentAccount.getAcctId() + "',hasPassword='" + ( !currentAccount.getPassword().isEmpty() ) + "',displayName='" + currentAccount.getDisplayName() + "']" );
 		
-		// setArgument( "remember", null );
+		setVariable( "remember", null );
 		setVariable( "user", null );
 		setVariable( "pass", null );
 		currentAccount = null;

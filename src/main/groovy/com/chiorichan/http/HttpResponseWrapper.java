@@ -110,7 +110,7 @@ public class HttpResponseWrapper
 		if ( httpMsg == null )
 			httpMsg = status.reasonPhrase();
 		
-		NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + status.code() + ",httpMsg=" + httpMsg + ",subdomain=" + request.getSubDomain() + ",domain=" + request.getDomain() + ",uri=" + request.getURI() + ",remoteIp=" + request.getRemoteAddr() + "}" );
+		NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + status.code() + ",httpMsg=" + httpMsg + ",subdomain=" + request.getSubDomain() + ",domain=" + request.getDomain() + ",uri=" + request.getUri() + ",remoteIp=" + request.getRemoteAddr() + "}" );
 		
 		resetBuffer();
 		
@@ -182,7 +182,7 @@ public class HttpResponseWrapper
 		
 		httpStatus = HttpResponseStatus.valueOf( httpCode );
 		
-		NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + httpCode + ",httpMsg=" + HttpCode.msg( httpCode ) + ",domain=" + request.getSubDomain() + "." + request.getDomain() + ",uri=" + request.getURI() + ",remoteIp=" + request.getRemoteAddr() + "}" );
+		NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + httpCode + ",httpMsg=" + HttpCode.msg( httpCode ) + ",domain=" + request.getSubDomain() + "." + request.getDomain() + ",uri=" + request.getUri() + ",remoteIp=" + request.getRemoteAddr() + "}" );
 		
 		if ( Loader.getConfig().getBoolean( "server.developmentMode" ) )
 		{

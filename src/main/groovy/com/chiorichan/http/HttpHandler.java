@@ -300,7 +300,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				}
 				catch ( IllegalArgumentException e )
 				{
-					// TODO Handle This! Maybe?
+					// TODO Handle this further? maybe?
 					// java.lang.IllegalArgumentException: empty name
 				}
 				readHttpDataChunkByChunk();
@@ -354,8 +354,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		SessionProvider sess;
 		if ( ( sess = request.getSession( false ) ) != null )
 		{
-			sess.saveSession( false );
 			sess.onFinished();
+			sess.saveSession( false );
 			
 			EvalFactory factory = sess.getEvalFactory( false );
 			if ( factory != null )
@@ -442,7 +442,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	
 	public void handleHttp( HttpRequestWrapper request, HttpResponseWrapper response ) throws IOException, HttpError, SiteException
 	{
-		String uri = request.getURI();
+		String uri = request.getUri();
 		String domain = request.getParentDomain();
 		String subdomain = request.getSubDomain();
 		
@@ -549,7 +549,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			{
 				String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
 				// NetworkManager.getLogger().warning( "Requester of page '" + file + "' has been redirected to the login page." );
-				response.sendRedirect( loginForm + "?msg=You must be logged in to view that page!&target=http://" + request.getDomain() + request.getURI() );
+				response.sendRedirect( loginForm + "?msg=You must be logged in to view that page!&target=http://" + request.getDomain() + request.getUri() );
 				// TODO: Come up with a better way to handle the URI used in the target, i.e., currently params are being lost in the redirect.
 				return;
 			}
@@ -725,7 +725,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		SimpleDateFormat sdf = new SimpleDateFormat( "dd-MMM-yyyy HH:mm:ss" );
 		
 		sb.append( "<style>.altrowstable { border-spacing: 12px; }</style>" );
-		sb.append( "<h1>Index of " + request.getURI() + "</h1>" );
+		sb.append( "<h1>Index of " + request.getUri() + "</h1>" );
 		
 		for ( File f : files )
 		{
@@ -734,7 +734,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			String mainType = ( type.contains( "/" ) ) ? type.substring( 0, type.indexOf( "/" ) ) : type;
 			
 			l.add( "<img src=\"/fw/icons/" + mainType + "\" />" );
-			l.add( "<a href=\"" + request.getURI() + "/" + f.getName() + "\">" + f.getName() + "</a>" );
+			l.add( "<a href=\"" + request.getUri() + "/" + f.getName() + "\">" + f.getName() + "</a>" );
 			l.add( sdf.format( f.lastModified() ) );
 			
 			if ( f.isDirectory() )
