@@ -6,6 +6,10 @@
  */
 package com.chiorichan.factory
 
+import groovy.transform.TimedInterrupt
+
+import java.util.concurrent.TimeUnit
+
 import com.chiorichan.Loader
 import com.chiorichan.account.Account
 import com.chiorichan.database.DatabaseEngine
@@ -29,14 +33,14 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 {
 	List<ScriptTraceElement> getScriptTrace()
 	{
-		return getSession().getCodeFactory().getScriptTrace();
+		return getSession().getCodeFactory().getScriptTrace()
 	}
 	
 	/**
 	 * Holds history of included packages
 	 * Used by include_once and require_once methods.
 	 */
-	private List<String> includedPackages = Lists.newArrayList();
+	private List<String> includedPackages = Lists.newArrayList()
 	
 	/**
 	 * Same as @link ScriptingBaseJava:var_export(obj) but instead prints the result to the buffer
@@ -56,7 +60,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 */
 	HttpRequestWrapper getRequest()
 	{
-		return request;
+		return request
 	}
 	
 	/**
@@ -66,7 +70,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 */
 	HttpResponseWrapper getResponse()
 	{
-		return response;
+		return response
 	}
 	
 	/**
@@ -76,7 +80,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 */
 	SessionProvider getSession()
 	{
-		return request.getSession();
+		return request.getSession()
 	}
 	
 	/**
@@ -99,12 +103,12 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 */
 	Account getAccount( String uid )
 	{
-		Account result =  Loader.getAccountManager().getAccount( uid );
+		Account result =  Loader.getAccountManager().getAccount( uid )
 		
 		if ( result == null )
-			result = Loader.getAccountManager().getAccountPartial( uid );
+			result = Loader.getAccountManager().getAccountPartial( uid )
 		
-		return result;
+		return result
 	}
 	
 	/**
@@ -114,7 +118,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 */
 	Account getAccount()
 	{
-		return request.getSession().getAccount();
+		return request.getSession().getAccount()
 	}
 	
 	// XXX These two deprecated methods will soon be replaced with new static classes
@@ -122,13 +126,13 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	@Deprecated
 	ConfigurationManagerWrapper getConfigurationManager()
 	{
-		return new ConfigurationManagerWrapper( request.getSession() );
+		return new ConfigurationManagerWrapper( request.getSession() )
 	}
 	
 	@Deprecated
 	HttpUtilsWrapper getHttpUtils()
 	{
-		return new HttpUtilsWrapper( request.getSession() );
+		return new HttpUtilsWrapper( request.getSession() )
 	}
 	
 	/**
@@ -139,12 +143,12 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 */
 	DatabaseEngine getServerDatabase()
 	{
-		DatabaseEngine engine = Loader.getDatabase();
+		DatabaseEngine engine = Loader.getDatabase()
 		
 		if ( engine == null )
-			throw new IllegalStateException( "The framework database is unconfigured. This will need to be setup in order for you to use the getServerDatabase() method." );
+			throw new IllegalStateException( "The framework database is unconfigured. This will need to be setup in order for you to use the getServerDatabase() method." )
 		
-		return engine;
+		return engine
 	}
 	
 	/**
@@ -155,12 +159,12 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 */
 	DatabaseEngine getSiteDatabase()
 	{
-		DatabaseEngine engine = getSite().getDatabase();
+		DatabaseEngine engine = getSite().getDatabase()
 		
 		if ( engine == null )
-			throw new IllegalStateException( "The site database is unconfigured. This will need to be setup in order for you to use the getSiteDatabase() method." );
+			throw new IllegalStateException( "The site database is unconfigured. This will need to be setup in order for you to use the getSiteDatabase() method." )
 		
-		return engine;
+		return engine
 	}
 	
 	/**
@@ -170,7 +174,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 */
 	Site getSite()
 	{
-		return getRequest().getSite();
+		return getRequest().getSite()
 	}
 	
 	/**
@@ -182,7 +186,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 */
 	String getStatusDescription( int errNo )
 	{
-		return HttpCode.msg( errNo );
+		return HttpCode.msg( errNo )
 	}
 	
 	/**
@@ -192,7 +196,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 */
 	SessionManager getSessionManager()
 	{
-		return Loader.getSessionManager();
+		return Loader.getSessionManager()
 	}
 	
 	/**
@@ -200,7 +204,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 */
 	String url_to()
 	{
-		return url_to( null );
+		return url_to( null )
 	}
 	
 	/**
@@ -214,17 +218,17 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 */
 	String url_to( String subdomain )
 	{
-		String url = "http://";
+		String url = "http://"
 		
 		if ( subdomain != null && !subdomain.isEmpty() )
-			url += subdomain + ".";
+			url += subdomain + "."
 		
 		if ( request.getSite() != null )
-			url += request.getSite().getDomain() + "/";
+			url += request.getSite().getDomain() + "/"
 		else
-			url += Loader.getSiteManager().getFrameworkSite().getDomain() + "/";
+			url += Loader.getSiteManager().getFrameworkSite().getDomain() + "/"
 		
-		return url;
+		return url
 	}
 	
 	/**
@@ -235,9 +239,9 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	String url_to_login()
 	{
 		if ( request.getSite() == null )
-			return "/login";
+			return "/login"
 		
-		return request.getSite().getYaml().getString( "scripts.login-form", "/login" );;
+		return request.getSite().getYaml().getString( "scripts.login-form", "/login" )
 	}
 	
 	/**
@@ -247,7 +251,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 */
 	String url_to_logout()
 	{
-		return url_to_login + "?logout";
+		return url_to_login + "?logout"
 	}
 	
 	/**
@@ -259,9 +263,9 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 */
 	Object include( String pack )
 	{
-		EvalFactoryResult result = getHttpUtils().evalPackage( pack );
-		print result.getString();
-		return result.getObject();
+		EvalFactoryResult result = getHttpUtils().evalPackage( pack )
+		print result.getString()
+		return result.getObject()
 	}
 	
 	/**
@@ -276,10 +280,10 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	{
 		if ( !includedPackages.contains( pack ) )
 		{
-			includedPackages.add( pack );
-			EvalFactoryResult result = getHttpUtils().evalPackage( pack );
-			print result.getString();
-			return result.getObject();
+			includedPackages.add( pack )
+			EvalFactoryResult result = getHttpUtils().evalPackage( pack )
+			print result.getString()
+			return result.getObject()
 		}
 	}
 	
@@ -295,9 +299,9 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 */
 	Object require( String pack )
 	{
-		EvalFactoryResult result = getHttpUtils().evalPackageWithException( pack );
-		print result.getString();
-		return result.getObject();
+		EvalFactoryResult result = getHttpUtils().evalPackageWithException( pack )
+		print result.getString()
+		return result.getObject()
 	}
 	
 	/**
@@ -314,10 +318,10 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	{
 		if ( !includedPackages.contains( pack ) )
 		{
-			includedPackages.add( pack );
-			EvalFactoryResult result = getHttpUtils().evalPackageWithException( pack );
-			print result.getString();
-			return result.getObject();
+			includedPackages.add( pack )
+			EvalFactoryResult result = getHttpUtils().evalPackageWithException( pack )
+			print result.getString()
+			return result.getObject()
 		}
 	}
 }

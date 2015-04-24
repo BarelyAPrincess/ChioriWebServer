@@ -109,5 +109,6 @@ advanced:
   security:
     unmodifiableMapsEnabled: true
     requestMapEnabled: true
+    defaultScriptTimeout: 30
   libraries:
     libPath: 'libraries'

@@ -12,6 +12,7 @@ package com.chiorichan.factory;
 import groovy.lang.Binding;
 import groovy.lang.GroovyRuntimeException;
 import groovy.lang.GroovyShell;
+import groovy.transform.TimedInterrupt;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
@@ -24,13 +25,16 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.MultipleCompilationErrorsException;
+import org.codehaus.groovy.control.customizers.ASTTransformationCustomizer;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
 import org.codehaus.groovy.syntax.SyntaxException;
 
@@ -54,10 +58,11 @@ import com.chiorichan.lang.IgnorableEvalException;
 import com.chiorichan.lang.SandboxSecurityException;
 import com.chiorichan.site.Site;
 import com.chiorichan.util.MapFunc;
+import com.chiorichan.util.ObjectFunc;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-@SuppressWarnings( "rawtypes" )
 public class EvalFactory
 {
 	protected static Charset encoding = Charsets.toCharset( Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" ) );
@@ -74,6 +79,7 @@ public class EvalFactory
 	/*
 	 * Groovy Sandbox Customization
 	 */
+	private static final ASTTransformationCustomizer timedInterrupt = new ASTTransformationCustomizer( TimedInterrupt.class );
 	private static final ImportCustomizer imports = new ImportCustomizer();
 	private static final GroovySandbox secure = new GroovySandbox();
 	
@@ -117,6 +123,12 @@ public class EvalFactory
 		imports.addImports( dynImports );
 		imports.addStarImports( starImports );
 		imports.addStaticStars( staticImports );
+		
+		// Transforms scripts to limit their execution to 30 seconds.
+		Map<String, Object> timedInterruptParams = Maps.newHashMap();
+		timedInterruptParams.put( "value", ObjectFunc.castToLong( Loader.getConfig().getInt( "advanced.security.defaultScriptTimeout", 30 ) ) );
+		timedInterruptParams.put( "unit", TimeUnit.SECONDS );
+		timedInterrupt.setAnnotationParameters( timedInterruptParams );
 	}
 	
 	protected EvalFactory( Binding binding )
@@ -176,7 +188,7 @@ public class EvalFactory
 		/*
 		 * Finalize Imports and implement Sandbox
 		 */
-		configuration.addCompilationCustomizers( imports, secure );
+		configuration.addCompilationCustomizers( imports, timedInterrupt, secure );
 		
 		/*
 		 * Set Groovy Base Script Class
