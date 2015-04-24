@@ -104,21 +104,33 @@ public abstract class ScriptingBaseJava extends Script
 			}
 		}
 		
+		if ( sb.length() < 1 )
+			return "";
+		
 		return sb.substring( 1 ).toString();
 	}
 	
 	String trim( String str )
 	{
+		if ( str == null )
+			return null;
+		
 		return str.trim();
 	}
 	
 	String strtoupper( String str )
 	{
+		if ( str == null )
+			return null;
+		
 		return str.toUpperCase();
 	}
 	
 	String strtolower( String str )
 	{
+		if ( str == null )
+			return null;
+		
 		return str.toLowerCase();
 	}
 	
@@ -147,19 +159,17 @@ public abstract class ScriptingBaseJava extends Script
 		return var.length();
 	}
 	
-	@SuppressWarnings( "unchecked" )
 	boolean empty( Object o )
 	{
 		if ( o == null )
 			return true;
-		else if ( o instanceof List<?> )
-			return empty( ( List<Object> ) o );
-		else if ( o instanceof Map<?, ?> )
-			return empty( ( Map<Object, Object> ) o );
-		else if ( o instanceof String )
-			return empty( ( String ) o );
-		
 		return false;
+	}
+	
+	@SuppressWarnings( "rawtypes" )
+	boolean empty( Iterator list )
+	{
+		return ( list == null || list.hasNext() );
 	}
 	
 	boolean empty( List<Object> list )
