@@ -52,7 +52,7 @@ public class HttpRequestWrapper
 	protected Site currentSite;
 	protected SessionProvider sess = null;
 	protected HttpResponseWrapper response;
-	protected Map<String, String> getMap, postMap, rewriteMap = Maps.newLinkedHashMap();
+	protected final Map<String, String> getMap = Maps.newTreeMap(), postMap = Maps.newTreeMap(), rewriteMap = Maps.newTreeMap();
 	protected int requestTime = 0;
 	protected Map<String, UploadedFile> uploadedFiles = new HashMap<String, UploadedFile>();
 	protected String uri = null;
@@ -88,7 +88,6 @@ public class HttpRequestWrapper
 		if ( currentSite == null )
 			currentSite = Loader.getSiteManager().getSiteById( "framework" );
 		
-		getMap = Maps.newTreeMap();
 		QueryStringDecoder queryStringDecoder = new QueryStringDecoder( http.getUri() );
 		Map<String, List<String>> params = queryStringDecoder.parameters();
 		if ( !params.isEmpty() )
@@ -578,9 +577,6 @@ public class HttpRequestWrapper
 	
 	public Map<String, String> getPostMapRaw()
 	{
-		if ( postMap == null )
-			postMap = new HashMap<String, String>();
-		
 		if ( unmodifiableMaps )
 			return Collections.unmodifiableMap( postMap );
 		
@@ -594,9 +590,6 @@ public class HttpRequestWrapper
 	
 	public Map<String, String> getGetMapRaw()
 	{
-		if ( getMap == null )
-			getMap = new HashMap<String, String>();
-		
 		if ( unmodifiableMaps )
 			return Collections.unmodifiableMap( getMap );
 		
