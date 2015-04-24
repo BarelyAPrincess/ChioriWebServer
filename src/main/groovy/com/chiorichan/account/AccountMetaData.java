@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.chiorichan.util.ObjectUtil;
+import com.chiorichan.util.ObjectFunc;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 
@@ -55,7 +55,7 @@ public class AccountMetaData
 	
 	public String getString( String key, String def )
 	{
-		String val = ObjectUtil.castToString( metaData.get( key ) );
+		String val = ObjectFunc.castToString( metaData.get( key ) );
 		return ( val == null ) ? def : val;
 	}
 	
@@ -67,7 +67,7 @@ public class AccountMetaData
 	public Integer getInteger( String key, int def )
 	{
 		Object obj = metaData.get( key );
-		Integer val = ObjectUtil.castToInt( obj );
+		Integer val = ObjectFunc.castToInt( obj );
 		
 		return ( val == null ) ? def : val;
 	}

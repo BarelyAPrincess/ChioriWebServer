@@ -53,7 +53,7 @@ import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
 import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 
-public class WebUtils
+public class WebFunc
 {
 	public static String randomNum()
 	{
@@ -130,7 +130,7 @@ public class WebUtils
 		Map<String, Object> newArray = new LinkedHashMap<String, Object>();
 		
 		if ( !caseSensitive )
-			allowedKeys = StringUtil.toLowerCase( allowedKeys );
+			allowedKeys = StringFunc.toLowerCase( allowedKeys );
 		
 		for ( Entry<String, Object> e : data.entrySet() )
 			if ( ( !caseSensitive && allowedKeys.contains( e.getKey().toLowerCase() ) ) || allowedKeys.contains( e.getKey() ) )
@@ -161,7 +161,7 @@ public class WebUtils
 	
 	public static String createUUID() throws UnsupportedEncodingException
 	{
-		return createUUID( Common.getEpoch() + "-uuid" );
+		return createUUID( CommonFunc.getEpoch() + "-uuid" );
 	}
 	
 	public static String createUUID( String seed ) throws UnsupportedEncodingException
@@ -171,7 +171,7 @@ public class WebUtils
 	
 	public static String createGUID() throws UnsupportedEncodingException
 	{
-		return createGUID( Common.getEpoch() + "-guid" );
+		return createGUID( CommonFunc.getEpoch() + "-guid" );
 	}
 	
 	public static String createGUID( String seed )
@@ -310,10 +310,10 @@ public class WebUtils
 				for ( Entry<Object, Object> e : map.entrySet() )
 					try
 					{
-						if ( ObjectUtil.castToStringWithException( e.getKey() ).startsWith( ":" ) )
+						if ( ObjectFunc.castToStringWithException( e.getKey() ).startsWith( ":" ) )
 						{
 							map.remove( e.getKey() );
-							sb.append( " " + ObjectUtil.castToStringWithException( e.getKey() ).substring( 1 ) + "=\"" + ObjectUtil.castToStringWithException( e.getValue() ) + "\"" );
+							sb.append( " " + ObjectFunc.castToStringWithException( e.getKey() ).substring( 1 ) + "=\"" + ObjectFunc.castToStringWithException( e.getValue() ) + "\"" );
 						}
 					}
 					catch ( ClassCastException ex )
@@ -626,9 +626,9 @@ public class WebUtils
 			try
 			{
 				if ( pair.length > 1 )
-					result.put( URLDecoder.decode( StringUtil.trimEnd( pair[0], '%' ), "ISO-8859-1" ), URLDecoder.decode( StringUtil.trimEnd( pair[1], '%' ), "ISO-8859-1" ) );
+					result.put( URLDecoder.decode( StringFunc.trimEnd( pair[0], '%' ), "ISO-8859-1" ), URLDecoder.decode( StringFunc.trimEnd( pair[1], '%' ), "ISO-8859-1" ) );
 				else if ( pair.length == 1 )
-					result.put( URLDecoder.decode( StringUtil.trimEnd( pair[0], '%' ), "ISO-8859-1" ), "" );
+					result.put( URLDecoder.decode( StringFunc.trimEnd( pair[0], '%' ), "ISO-8859-1" ), "" );
 			}
 			catch ( IllegalArgumentException e )
 			{

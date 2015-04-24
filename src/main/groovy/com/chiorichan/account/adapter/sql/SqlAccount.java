@@ -15,7 +15,7 @@ import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountMetaData;
 import com.chiorichan.account.LoginException;
 import com.chiorichan.account.LoginExceptionReason;
-import com.chiorichan.util.Common;
+import com.chiorichan.util.CommonFunc;
 
 public class SqlAccount extends Account
 {
@@ -35,7 +35,7 @@ public class SqlAccount extends Account
 	public void preLoginCheck() throws LoginException
 	{
 		if ( metaData.getInteger( "numloginfail" ) > 5 )
-			if ( metaData.getInteger( "lastloginfail" ) > ( Common.getEpoch() - 1800 ) )
+			if ( metaData.getInteger( "lastloginfail" ) > ( CommonFunc.getEpoch() - 1800 ) )
 				throw new LoginException( LoginExceptionReason.underAttackPleaseWait );
 		
 		if ( !metaData.getString( "actnum" ).equals( "0" ) )
@@ -47,7 +47,7 @@ public class SqlAccount extends Account
 	{
 		try
 		{
-			lookupAdapter.sql.queryUpdate( "UPDATE `accounts` SET `lastActive` = '" + Common.getEpoch() + "', `lastLogin` = '" + Common.getEpoch() + "', `lastLoginFail` = 0, `numLoginFail` = 0 WHERE `accountID` = '" + getAcctId() + "'" );
+			lookupAdapter.sql.queryUpdate( "UPDATE `accounts` SET `lastActive` = '" + CommonFunc.getEpoch() + "', `lastLogin` = '" + CommonFunc.getEpoch() + "', `lastLoginFail` = 0, `numLoginFail` = 0 WHERE `accountID` = '" + getAcctId() + "'" );
 		}
 		catch ( SQLException e )
 		{

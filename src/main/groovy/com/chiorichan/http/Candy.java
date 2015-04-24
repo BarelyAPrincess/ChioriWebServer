@@ -13,7 +13,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-import com.chiorichan.util.Common;
+import com.chiorichan.util.CommonFunc;
 
 public class Candy
 {
@@ -85,7 +85,7 @@ public class Candy
 	public void setMaxAge( long defaultLife )
 	{
 		needsUpdating = true;
-		epoch = Common.getEpoch() + defaultLife;
+		epoch = CommonFunc.getEpoch() + defaultLife;
 	}
 	
 	public void setDomain( String domain )

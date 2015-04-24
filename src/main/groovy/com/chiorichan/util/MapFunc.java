@@ -30,8 +30,8 @@ public class MapFunc<K, V>
 		{
 			try
 			{
-				K k = ( K ) ( ( tK instanceof String ) ? ObjectUtil.castToStringWithException( e.getKey() ) : e.getKey() );
-				V v = ( V ) ( ( tV instanceof String ) ? ObjectUtil.castToStringWithException( e.getValue() ) : e.getValue() );
+				K k = ( K ) ( ( tK instanceof String ) ? ObjectFunc.castToStringWithException( e.getKey() ) : e.getKey() );
+				V v = ( V ) ( ( tV instanceof String ) ? ObjectFunc.castToStringWithException( e.getValue() ) : e.getValue() );
 				
 				newMap.put( k, v );
 			}

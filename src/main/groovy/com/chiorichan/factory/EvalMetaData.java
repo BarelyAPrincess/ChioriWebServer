@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.chiorichan.site.Site;
-import com.chiorichan.util.ObjectUtil;
+import com.chiorichan.util.ObjectFunc;
 import com.google.common.collect.Maps;
 
 public class EvalMetaData
@@ -63,7 +63,7 @@ public class EvalMetaData
 		for ( Entry<String, Object> e : params.entrySet() )
 			try
 			{
-				newParams.put( e.getKey(), ObjectUtil.castToStringWithException( e.getValue() ) );
+				newParams.put( e.getKey(), ObjectFunc.castToStringWithException( e.getValue() ) );
 			}
 			catch ( ClassCastException cce )
 			{

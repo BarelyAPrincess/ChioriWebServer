@@ -41,7 +41,7 @@ import com.chiorichan.http.Routes;
 import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.lang.SiteException;
 import com.chiorichan.lang.StartupException;
-import com.chiorichan.util.FileUtil;
+import com.chiorichan.util.FileFunc;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -128,7 +128,7 @@ public class Site
 			protectedFiles.add( "/" + sources );
 		}
 		
-		FileUtil.directoryHealthCheck( source );
+		FileFunc.directoryHealthCheck( source );
 		
 		// Load resources location
 		String resources = config.getString( "site.resource", "resource" );
@@ -147,7 +147,7 @@ public class Site
 			protectedFiles.add( "/" + resources );
 		}
 		
-		FileUtil.directoryHealthCheck( resource );
+		FileFunc.directoryHealthCheck( resource );
 		
 		// Load metatags
 		List<?> metatagsPre = config.getList( "metatags", new CopyOnWriteArrayList<String>() );

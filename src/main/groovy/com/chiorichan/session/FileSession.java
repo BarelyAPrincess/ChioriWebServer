@@ -21,8 +21,8 @@ import com.chiorichan.Loader;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.http.Candy;
 import com.chiorichan.permission.PermissionManager;
-import com.chiorichan.util.Common;
-import com.chiorichan.util.FileUtil;
+import com.chiorichan.util.CommonFunc;
+import com.chiorichan.util.FileFunc;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -86,7 +86,7 @@ public class FileSession extends Session
 			candyName = yaml.getString( "sessionName", candyName );
 		candyId = yaml.getString( "sessionId", candyId );
 		
-		if ( timeout > 0 && timeout < Common.getEpoch() )
+		if ( timeout > 0 && timeout < CommonFunc.getEpoch() )
 			SessionManager.getLogger().warning( "The session '" + getSessId() + "' expired at epoch '" + timeout + "', might have expired while offline or this is a bug!" );
 		
 		if ( yaml.getString( "sessionSite" ) == null || yaml.getString( "sessionSite" ).isEmpty() )
@@ -97,7 +97,7 @@ public class FileSession extends Session
 		List<Session> sessions = Loader.getSessionManager().getSessionsByIp( lastIpAddr );
 		if ( sessions.size() > Loader.getConfig().getInt( "sessions.maxSessionsPerIP" ) )
 		{
-			long oldestTime = Common.getEpoch();
+			long oldestTime = CommonFunc.getEpoch();
 			Session oldest = null;
 			
 			for ( Session s : sessions )
@@ -146,7 +146,7 @@ public class FileSession extends Session
 		if ( sessionsDirectory == null )
 			sessionsDirectory = new File( "sessions" );
 		
-		FileUtil.directoryHealthCheck( sessionsDirectory );
+		FileFunc.directoryHealthCheck( sessionsDirectory );
 		
 		return sessionsDirectory;
 	}

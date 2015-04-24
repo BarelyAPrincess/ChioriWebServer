@@ -11,8 +11,8 @@ package com.chiorichan.permission;
 
 import java.util.List;
 
-import com.chiorichan.util.Common;
-import com.chiorichan.util.ObjectUtil;
+import com.chiorichan.util.CommonFunc;
+import com.chiorichan.util.ObjectFunc;
 import com.google.common.collect.Lists;
 
 /**
@@ -27,7 +27,7 @@ public class PermissionResult
 	private Permission perm = null;
 	private String ref = "";
 	private ChildPermission childPerm = null;
-	protected int timecode = Common.getEpoch();
+	protected int timecode = CommonFunc.getEpoch();
 	
 	public PermissionResult()
 	{
@@ -168,12 +168,12 @@ public class PermissionResult
 	
 	public String getString()
 	{
-		return ObjectUtil.castToString( getValue().getValue() );
+		return ObjectFunc.castToString( getValue().getValue() );
 	}
 	
 	public int getInt()
 	{
-		return ObjectUtil.castToInt( getValue().getValue() );
+		return ObjectFunc.castToInt( getValue().getValue() );
 	}
 	
 	public PermissionValue<?> getDefaultValue()

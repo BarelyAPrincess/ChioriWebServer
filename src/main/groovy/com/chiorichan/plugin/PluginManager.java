@@ -43,7 +43,7 @@ import com.chiorichan.maven.MavenUtils;
 import com.chiorichan.plugin.loader.JavaPluginLoader;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.plugin.loader.PluginLoader;
-import com.chiorichan.util.FileUtil;
+import com.chiorichan.util.FileFunc;
 import com.google.common.collect.Maps;
 
 public class PluginManager extends BuiltinEventCreator implements Listener
@@ -458,7 +458,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 		}
 		
 		File updateFile = new File( updateDirectory, file.getName() );
-		if ( updateFile.isFile() && FileUtil.copy( updateFile, file ) )
+		if ( updateFile.isFile() && FileFunc.copy( updateFile, file ) )
 		{
 			updateFile.delete();
 		}

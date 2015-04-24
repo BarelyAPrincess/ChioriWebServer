@@ -17,8 +17,8 @@ import java.util.TimerTask;
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.permission.event.PermissibleEntityEvent;
-import com.chiorichan.util.Common;
-import com.chiorichan.util.PermissionUtil;
+import com.chiorichan.util.CommonFunc;
+import com.chiorichan.util.PermissionFunc;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -37,7 +37,7 @@ public abstract class PermissibleEntity
 		
 		public boolean isExpired()
 		{
-			return ( time - Common.getEpoch() < 0 );
+			return ( time - CommonFunc.getEpoch() < 0 );
 		}
 	}
 	
@@ -72,8 +72,8 @@ public abstract class PermissibleEntity
 		
 		ref = ref.toLowerCase();
 		
-		if ( !PermissionUtil.containsValidChars( ref ) )
-			ref = PermissionUtil.removeInvalidChars( ref );
+		if ( !PermissionFunc.containsValidChars( ref ) )
+			ref = PermissionFunc.removeInvalidChars( ref );
 		
 		for ( ChildPermission child : childPermissions )
 		{
@@ -184,7 +184,7 @@ public abstract class PermissibleEntity
 		if ( !timedPermissions.containsKey( ref ) )
 			return 0;
 		
-		return getTimedPermission( perm, ref ).time - Common.getEpoch();
+		return getTimedPermission( perm, ref ).time - CommonFunc.getEpoch();
 	}
 	
 	/**
@@ -203,7 +203,7 @@ public abstract class PermissibleEntity
 		if ( !timedPermissions.containsKey( ref ) )
 			this.timedPermissions.put( ref, new LinkedList<TimedPermission>() );
 		
-		timedPermissions.get( ref ).add( new TimedPermission( perm, Common.getEpoch() + lifeTime ) );
+		timedPermissions.get( ref ).add( new TimedPermission( perm, CommonFunc.getEpoch() + lifeTime ) );
 		
 		final String finalRef = ref;
 		
@@ -362,7 +362,7 @@ public abstract class PermissibleEntity
 		PermissionResult result = cachedResults.get( perm.getNamespace() + "-" + ref );
 		
 		if ( result != null )
-			if ( result.timecode > Common.getEpoch() - 150 ) // 150 Seconds = 2.5 Minutes
+			if ( result.timecode > CommonFunc.getEpoch() - 150 ) // 150 Seconds = 2.5 Minutes
 				return result;
 			else
 				cachedResults.remove( perm.getNamespace() + "-" + ref );

@@ -14,10 +14,10 @@ import java.io.IOException;
 import com.chiorichan.factory.EvalFactoryResult;
 import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.session.SessionProvider;
-import com.chiorichan.util.WebUtils;
+import com.chiorichan.util.WebFunc;
 
 @Deprecated
-public class HttpUtilsWrapper extends WebUtils
+public class HttpUtilsWrapper extends WebFunc
 {
 	SessionProvider sess;
 	

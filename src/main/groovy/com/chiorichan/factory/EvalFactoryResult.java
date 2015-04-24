@@ -12,7 +12,7 @@ import java.nio.charset.Charset;
 import java.util.List;
 
 import com.chiorichan.site.Site;
-import com.chiorichan.util.ObjectUtil;
+import com.chiorichan.util.ObjectFunc;
 import com.google.common.collect.Lists;
 
 /**
@@ -75,7 +75,7 @@ public class EvalFactoryResult
 	
 	public String getString( boolean includeObj )
 	{
-		return ( ( buf == null ) ? "" : buf.toString( Charset.defaultCharset() ) ) + ( ( includeObj ) ? ObjectUtil.castToString( obj ) : "" );
+		return ( ( buf == null ) ? "" : buf.toString( Charset.defaultCharset() ) ) + ( ( includeObj ) ? ObjectFunc.castToString( obj ) : "" );
 	}
 	
 	public Object getObject()

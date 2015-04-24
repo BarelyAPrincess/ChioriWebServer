@@ -16,7 +16,7 @@ import java.sql.SQLException;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.Loader;
-import com.chiorichan.util.ObjectUtil;
+import com.chiorichan.util.ObjectFunc;
 
 public abstract class SqlTable
 {
@@ -51,7 +51,7 @@ public abstract class SqlTable
 					Object obj = rs.getObject( sc.name() );
 					if ( f.getType().equals( String.class ) )
 					{
-						f.set( clz, ObjectUtil.castToString( obj ) );
+						f.set( clz, ObjectFunc.castToString( obj ) );
 					}
 					else if ( obj instanceof String && ( f.getType().equals( Long.class ) || f.getType().getSimpleName().equalsIgnoreCase( "long" ) ) )
 					{

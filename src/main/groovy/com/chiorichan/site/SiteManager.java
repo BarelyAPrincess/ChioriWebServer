@@ -26,7 +26,7 @@ import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.lang.SiteException;
 import com.chiorichan.lang.StartupException;
-import com.chiorichan.util.FileUtil;
+import com.chiorichan.util.FileFunc;
 import com.google.common.collect.Lists;
 
 public class SiteManager
@@ -48,7 +48,7 @@ public class SiteManager
 		// Load sites from YAML Filebase.
 		File siteFileBase = new File( "sites" );
 		
-		FileUtil.directoryHealthCheck( siteFileBase );
+		FileFunc.directoryHealthCheck( siteFileBase );
 		
 		File defaultSite = new File( siteFileBase, "000-default.yaml" );
 		
@@ -58,7 +58,7 @@ public class SiteManager
 			try
 			{
 				defaultSite.getParentFile().mkdirs();
-				FileUtil.putResource( "com/chiorichan/default-site.yaml", defaultSite );
+				FileFunc.putResource( "com/chiorichan/default-site.yaml", defaultSite );
 			}
 			catch ( IOException e )
 			{

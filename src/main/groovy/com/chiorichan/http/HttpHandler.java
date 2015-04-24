@@ -75,9 +75,9 @@ import com.chiorichan.permission.PermissionDefault;
 import com.chiorichan.permission.PermissionResult;
 import com.chiorichan.session.SessionProvider;
 import com.chiorichan.site.Site;
-import com.chiorichan.util.ObjectUtil;
+import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.Versioning;
-import com.chiorichan.util.WebUtils;
+import com.chiorichan.util.WebFunc;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -600,7 +600,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 					if ( result.getObject() != null && ! ( result.getObject() instanceof NullObject ) )
 						try
 						{
-							rendered.writeBytes( ObjectUtil.castToStringWithException( result.getObject() ).getBytes() );
+							rendered.writeBytes( ObjectFunc.castToStringWithException( result.getObject() ).getBytes() );
 						}
 						catch ( Exception e )
 						{
@@ -652,7 +652,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 					if ( result.getObject() != null && ! ( result.getObject() instanceof NullObject ) )
 						try
 						{
-							rendered.writeBytes( ObjectUtil.castToStringWithException( result.getObject() ).getBytes() );
+							rendered.writeBytes( ObjectFunc.castToStringWithException( result.getObject() ).getBytes() );
 						}
 						catch ( Exception e )
 						{
@@ -764,7 +764,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			tbl.add( l );
 		}
 		
-		sb.append( WebUtils.createTable( tbl, Arrays.asList( new String[] {"", "Name", "Last Modified", "Size", "Type"} ) ) );
+		sb.append( WebFunc.createTable( tbl, Arrays.asList( new String[] {"", "Name", "Last Modified", "Size", "Type"} ) ) );
 		sb.append( "<hr>" );
 		sb.append( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + "<br />" + Versioning.getCopyright() + "</small>" );
 		

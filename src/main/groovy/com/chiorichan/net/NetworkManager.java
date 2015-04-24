@@ -21,7 +21,7 @@ import com.chiorichan.http.HttpInitializer;
 import com.chiorichan.https.HttpsInitializer;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.net.query.QueryServerInitializer;
-import com.chiorichan.util.Common;
+import com.chiorichan.util.CommonFunc;
 
 /**
  * Works as the main Network Operating class
@@ -60,7 +60,7 @@ public class NetworkManager
 			return true;
 		
 		// If we are trying to use a Privilaged Port, We need to be running as root
-		return Common.isRoot();
+		return CommonFunc.isRoot();
 	}
 	
 	public static void shutdownHttpServer()

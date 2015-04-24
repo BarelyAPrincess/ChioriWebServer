@@ -29,7 +29,7 @@ import com.chiorichan.lang.StartupException;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissionDefault;
 import com.chiorichan.site.Site;
-import com.chiorichan.util.Common;
+import com.chiorichan.util.CommonFunc;
 import com.google.common.collect.Lists;
 
 public class AccountManager
@@ -316,7 +316,7 @@ public class AccountManager
 				for ( AccountHandler sh : acct.getHandlers() )
 					sh.kick( Loader.getConfig().getString( "accounts.singleLoginMessage", "You logged in from another location." ) );
 			
-			acct.getMetaData().set( "lastLoginTime", Common.getEpoch() );
+			acct.getMetaData().set( "lastLoginTime", CommonFunc.getEpoch() );
 			acct.getMetaData().set( "lastLoginIp", sess.getIpAddr() );
 			
 			AccountLoginEvent loginEvent = new AccountLoginEvent( sess );

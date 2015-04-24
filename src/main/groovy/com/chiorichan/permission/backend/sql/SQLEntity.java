@@ -22,7 +22,7 @@ import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionDefault;
 import com.chiorichan.permission.PermissionNamespace;
 import com.chiorichan.permission.PermissionValue;
-import com.chiorichan.util.ObjectUtil;
+import com.chiorichan.util.ObjectFunc;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 
@@ -109,7 +109,7 @@ public class SQLEntity extends PermissibleEntityProxy
 			db.queryUpdate( "DELETE FROM `permissions_entity` WHERE `owner` = '" + getId() + "' AND `type` = '0';" );
 			
 			for ( ChildPermission cp : getChildPermissions() )
-				db.queryUpdate( "INSERT INTO `permissions_entity` (`owner`,`type`,`ref`,`permission`,`value`) VALUES ('" + getId() + "','0','" + Joiner.on( "|" ).join( cp.getReferences() ) + "','" + cp.getPermission().getNamespace() + "','" + ObjectUtil.castToString( cp.getValue().getValue() ) + "');" );
+				db.queryUpdate( "INSERT INTO `permissions_entity` (`owner`,`type`,`ref`,`permission`,`value`) VALUES ('" + getId() + "','0','" + Joiner.on( "|" ).join( cp.getReferences() ) + "','" + cp.getPermission().getNamespace() + "','" + ObjectFunc.castToString( cp.getValue().getValue() ) + "');" );
 		}
 		catch ( SQLException e )
 		{

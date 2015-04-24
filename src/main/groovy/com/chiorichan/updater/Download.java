@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.io.IOUtils;
 
 import com.chiorichan.Loader;
-import com.chiorichan.util.WebUtils;
+import com.chiorichan.util.WebFunc;
 
 public class Download implements Runnable
 {
@@ -67,7 +67,7 @@ public class Download implements Runnable
 		FileOutputStream fos = null;
 		try
 		{
-			HttpURLConnection conn = WebUtils.openHttpConnection( url );
+			HttpURLConnection conn = WebFunc.openHttpConnection( url );
 			int response = conn.getResponseCode();
 			int responseFamily = response / 100;
 			

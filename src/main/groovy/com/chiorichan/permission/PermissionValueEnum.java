@@ -14,7 +14,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.chiorichan.util.ObjectUtil;
+import com.chiorichan.util.ObjectFunc;
 import com.google.common.collect.Sets;
 
 public class PermissionValueEnum extends PermissionValue<String>
@@ -68,7 +68,7 @@ public class PermissionValueEnum extends PermissionValue<String>
 		{
 			@SuppressWarnings( "unchecked" )
 			PermissionValue<String> newVal = ( PermissionValue<String> ) clone();
-			newVal.setValue( ObjectUtil.castToString( val ) );
+			newVal.setValue( ObjectFunc.castToString( val ) );
 			return newVal;
 		}
 		catch ( CloneNotSupportedException e )

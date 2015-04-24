@@ -32,9 +32,9 @@ import com.chiorichan.Loader;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.loader.Plugin;
-import com.chiorichan.util.Common;
-import com.chiorichan.util.ObjectUtil;
-import com.chiorichan.util.StringUtil;
+import com.chiorichan.util.CommonFunc;
+import com.chiorichan.util.ObjectFunc;
+import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -58,7 +58,7 @@ public abstract class ScriptingBaseJava extends Script
 				{
 					for ( Entry<Object, Object> e : ( ( Map<Object, Object> ) obj ).entrySet() )
 					{
-						String key = ObjectUtil.castToString( e.getKey() );
+						String key = ObjectFunc.castToString( e.getKey() );
 						if ( key == null )
 							key = e.getKey().toString();
 						children.put( key, e.getValue() );
@@ -77,7 +77,7 @@ public abstract class ScriptingBaseJava extends Script
 				
 				// boolean[], byte[], short[], char[], int[], long[], float[], double[], Object[]
 				
-				Object value = ObjectUtil.castToString( obj );
+				Object value = ObjectFunc.castToString( obj );
 				if ( value == null )
 					value = obj.toString();
 				
@@ -185,7 +185,7 @@ public abstract class ScriptingBaseJava extends Script
 	
 	int time()
 	{
-		return Common.getEpoch();
+		return CommonFunc.getEpoch();
 	}
 	
 	/**
@@ -234,7 +234,7 @@ public abstract class ScriptingBaseJava extends Script
 	
 	String date( String format, Object data, String def )
 	{
-		return date( format, ObjectUtil.castToString( data ), def );
+		return date( format, ObjectFunc.castToString( data ), def );
 	}
 	
 	String date( String format, Date date )
@@ -244,7 +244,7 @@ public abstract class ScriptingBaseJava extends Script
 	
 	String date( String format, Date date, String def )
 	{
-		return date( format, ObjectUtil.castToString( date.getTime() / 1000 ), def );
+		return date( format, ObjectFunc.castToString( date.getTime() / 1000 ), def );
 	}
 	
 	String date( String format, String data )
@@ -318,7 +318,7 @@ public abstract class ScriptingBaseJava extends Script
 	
 	String md5( String str )
 	{
-		return StringUtil.md5( str );
+		return StringFunc.md5( str );
 	}
 	
 	Integer strpos( String haystack, String needle )
@@ -361,7 +361,7 @@ public abstract class ScriptingBaseJava extends Script
 	
 	int getEpoch()
 	{
-		return Common.getEpoch();
+		return CommonFunc.getEpoch();
 	}
 	
 	List<String> explode( String limiter, String data )

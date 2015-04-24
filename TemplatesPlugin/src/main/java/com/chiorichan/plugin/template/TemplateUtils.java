@@ -18,9 +18,9 @@ import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.lang.EvalFactoryException;
-import com.chiorichan.util.FileUtil;
+import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.Versioning;
-import com.chiorichan.util.WebUtils;
+import com.chiorichan.util.WebFunc;
 
 public class TemplateUtils
 {
@@ -132,12 +132,12 @@ public class TemplateUtils
 		String fileUrl = className.replace( '.', '/' ).replace( "$1", "" ) + "." + InterpreterOverrides.getFileExtension( ste.getFileName() );
 		String finalUrl = gitHubGroovyUrl + fileUrl;
 		
-		byte[] result = WebUtils.readUrl( finalUrl );
+		byte[] result = WebFunc.readUrl( finalUrl );
 		
 		if ( result == null )
 		{
 			finalUrl = gitHubJavaUrl + fileUrl;
-			result = WebUtils.readUrl( finalUrl );
+			result = WebFunc.readUrl( finalUrl );
 		}
 		
 		String finalResult;
@@ -294,7 +294,7 @@ public class TemplateUtils
 	{
 		String pageMark = "<!-- PAGE DATA -->";
 		InputStream is = TemplateUtils.class.getClassLoader().getResourceAsStream( "BaseTemplate.html" );
-		String baseTemplate = ( is == null ) ? "" : new String( FileUtil.inputStream2Bytes( is ), "UTF-8" );
+		String baseTemplate = ( is == null ) ? "" : new String( FileFunc.inputStream2Bytes( is ), "UTF-8" );
 		
 		EvalMetaData meta = new EvalMetaData();
 		meta.shell = "html";

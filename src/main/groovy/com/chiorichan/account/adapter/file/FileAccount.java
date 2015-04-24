@@ -17,7 +17,7 @@ import com.chiorichan.account.AccountMetaData;
 import com.chiorichan.account.LoginException;
 import com.chiorichan.account.LoginExceptionReason;
 import com.chiorichan.configuration.file.YamlConfiguration;
-import com.chiorichan.util.Common;
+import com.chiorichan.util.CommonFunc;
 
 public class FileAccount extends Account
 {
@@ -36,7 +36,7 @@ public class FileAccount extends Account
 		AccountMetaData meta = getMetaData();
 		
 		if ( meta.getInteger( "numloginfail", 0 ) > 5 )
-			if ( meta.getInteger( "lastloginfail", 0 ) > ( Common.getEpoch() - 1800 ) )
+			if ( meta.getInteger( "lastloginfail", 0 ) > ( CommonFunc.getEpoch() - 1800 ) )
 				throw new LoginException( LoginExceptionReason.underAttackPleaseWait );
 		
 		if ( !meta.getString( "actnum", "0" ).equals( "0" ) )
@@ -59,8 +59,8 @@ public class FileAccount extends Account
 		if ( yser == null )
 			return;
 		
-		int lastactive = Common.getEpoch();
-		int lastlogin = Common.getEpoch();
+		int lastactive = CommonFunc.getEpoch();
+		int lastlogin = CommonFunc.getEpoch();
 		int lastloginfail = 0;
 		int numloginfail = 0;
 		

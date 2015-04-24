@@ -18,7 +18,7 @@ import org.apache.commons.codec.binary.Hex;
 
 import com.google.common.base.Strings;
 
-public class ObjectUtil
+public class ObjectFunc
 {
 	private static final String[] HEXDUMP_ROWPREFIXES = new String[65536 >>> 4];
 	private static final String NEWLINE = StringUtil.NEWLINE;

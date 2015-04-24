@@ -12,7 +12,7 @@ import com.chiorichan.account.Account;
 import com.chiorichan.console.Command;
 import com.chiorichan.console.CommandDispatch;
 import com.chiorichan.console.InteractiveConsole;
-import com.chiorichan.util.StringUtil;
+import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Joiner;
 
@@ -71,9 +71,9 @@ public abstract class BuiltinCommand extends Command
 			@Override
 			public boolean execute( InteractiveConsole handler, String command, String[] args )
 			{
-				String color = "" + ( ( args.length < 1 ) ? !StringUtil.isTrue( handler.getMetadata( "color", "true" ) ) : StringUtil.isTrue( args[0] ) );
+				String color = "" + ( ( args.length < 1 ) ? !StringFunc.isTrue( handler.getMetadata( "color", "true" ) ) : StringFunc.isTrue( args[0] ) );
 				handler.setMetadata( "color", color );
-				handler.sendMessage( ConsoleColor.AQUA + "Console color has been " + ( ( StringUtil.isTrue( color ) ) ? "enabled" : "disabled" ) + "." );
+				handler.sendMessage( ConsoleColor.AQUA + "Console color has been " + ( ( StringFunc.isTrue( color ) ) ? "enabled" : "disabled" ) + "." );
 				return true;
 			}
 		} );

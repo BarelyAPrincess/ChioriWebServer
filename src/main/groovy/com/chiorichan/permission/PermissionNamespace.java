@@ -14,7 +14,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import com.chiorichan.util.StringUtil;
+import com.chiorichan.util.StringFunc;
 import com.google.common.base.Joiner;
 
 public class PermissionNamespace
@@ -28,7 +28,7 @@ public class PermissionNamespace
 		if ( namespace.length < 1 )
 			namespace[0] = "";
 		
-		nodes = StringUtil.toLowerCase( namespace );
+		nodes = StringFunc.toLowerCase( namespace );
 	}
 	
 	public PermissionNamespace( String namespace )

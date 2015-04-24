@@ -23,7 +23,7 @@ import org.apache.http.impl.client.HttpClients;
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.plugin.PluginManager;
-import com.chiorichan.util.FileUtil;
+import com.chiorichan.util.FileFunc;
 import com.google.common.collect.Lists;
 
 /**
@@ -41,8 +41,8 @@ public class MavenUtils
 	
 	static
 	{
-		FileUtil.directoryHealthCheck( LIBRARY_DIR );
-		FileUtil.directoryHealthCheck( INCLUDES_DIR );
+		FileFunc.directoryHealthCheck( LIBRARY_DIR );
+		FileFunc.directoryHealthCheck( INCLUDES_DIR );
 		
 		loadedLibraries.add( "org.fusesource.jansi:jansi:1.11" );
 		loadedLibraries.add( "net.sf.jopt-simple:jopt-simple:4.7" );

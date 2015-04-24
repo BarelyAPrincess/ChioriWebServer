@@ -54,9 +54,9 @@ import com.chiorichan.session.SessionManager;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.updater.AutoUpdater;
 import com.chiorichan.updater.ChioriDLUpdaterService;
-import com.chiorichan.util.FileUtil;
+import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.Versioning;
-import com.chiorichan.util.WebUtils;
+import com.chiorichan.util.WebFunc;
 
 public class Loader extends BuiltinEventCreator implements Listener
 {
@@ -230,7 +230,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		{
 			try
 			{
-				FileUtil.putResource( internalConfigFile, getConfigFile() );
+				FileFunc.putResource( internalConfigFile, getConfigFile() );
 				firstRun = true;
 			}
 			catch ( IOException e1 )
@@ -288,7 +288,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		updater.getOnUpdate().addAll( configuration.getStringList( "auto-updater.on-update" ) );
 		
 		if ( !configuration.getBoolean( "server.disableTracking" ) )
-			WebUtils.sendTracking( "startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
+			WebFunc.sendTracking( "startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
 		
 		/*
 		 * try

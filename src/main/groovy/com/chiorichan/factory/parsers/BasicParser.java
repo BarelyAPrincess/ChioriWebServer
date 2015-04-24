@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.Loader;
-import com.chiorichan.util.StringUtil;
+import com.chiorichan.util.StringFunc;
 
 public abstract class BasicParser
 {
@@ -46,7 +46,7 @@ public abstract class BasicParser
 			
 			for ( int i = 0; i < args.length; i++ )
 			{
-				args2[i] = StringUtil.trimAll( args[i].trim(), '"' );
+				args2[i] = StringFunc.trimAll( args[i].trim(), '"' );
 			}
 			
 			String result = resolveMethod( args2 );

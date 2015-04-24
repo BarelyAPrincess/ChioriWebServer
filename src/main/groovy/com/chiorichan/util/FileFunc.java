@@ -25,7 +25,7 @@ import com.google.common.io.ByteStreams;
 /**
  * Class containing file utilities
  */
-public class FileUtil
+public class FileFunc
 {
 	public static byte[] inputStream2Bytes( InputStream is ) throws IOException
 	{

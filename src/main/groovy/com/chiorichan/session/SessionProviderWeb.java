@@ -34,8 +34,8 @@ import com.chiorichan.http.HttpResponseWrapper;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionResult;
 import com.chiorichan.site.Site;
-import com.chiorichan.util.Common;
-import com.chiorichan.util.ObjectUtil;
+import com.chiorichan.util.CommonFunc;
+import com.chiorichan.util.ObjectFunc;
 
 @SuppressWarnings( "deprecation" )
 public class SessionProviderWeb implements SessionProvider
@@ -44,7 +44,7 @@ public class SessionProviderWeb implements SessionProvider
 	protected EvalFactory factory = null;
 	protected HttpRequestWrapper request;
 	protected Session parentSession;
-	protected int created = Common.getEpoch();
+	protected int created = CommonFunc.getEpoch();
 	
 	protected SessionProviderWeb( HttpRequestWrapper request )
 	{
@@ -332,7 +332,7 @@ public class SessionProviderWeb implements SessionProvider
 			if ( variables.containsKey( "_SESSION" ) && variables.get( "_SESSION" ) instanceof Map )
 			{
 				for ( Entry<String, Object> e : ( ( Map<String, Object> ) variables.get( "_SESSION" ) ).entrySet() )
-					parentSession.data.put( e.getKey(), ObjectUtil.castToString( e.getValue() ) );
+					parentSession.data.put( e.getKey(), ObjectFunc.castToString( e.getValue() ) );
 				
 				parentSession.changesMade = true;
 			}

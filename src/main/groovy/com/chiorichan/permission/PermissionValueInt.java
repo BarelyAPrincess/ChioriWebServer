@@ -9,7 +9,7 @@
  */
 package com.chiorichan.permission;
 
-import com.chiorichan.util.ObjectUtil;
+import com.chiorichan.util.ObjectFunc;
 
 public class PermissionValueInt extends PermissionValue<Integer>
 {
@@ -25,7 +25,7 @@ public class PermissionValueInt extends PermissionValue<Integer>
 		{
 			@SuppressWarnings( "unchecked" )
 			PermissionValue<Integer> newVal = ( PermissionValue<Integer> ) clone();
-			newVal.setValue( ObjectUtil.castToLong( val ).intValue() );
+			newVal.setValue( ObjectFunc.castToLong( val ).intValue() );
 			return newVal;
 		}
 		catch ( CloneNotSupportedException e )

@@ -22,7 +22,7 @@ import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.http.Routes.RouteType;
 import com.chiorichan.site.Site;
-import com.chiorichan.util.StringUtil;
+import com.chiorichan.util.StringFunc;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -198,7 +198,7 @@ public class Route
 				
 				if ( props.get( i ).matches( "\\[([a-zA-Z0-9]+)=\\]" ) )
 				{
-					weight = StringUtil.replaceAt( weight, i, "Z" );
+					weight = StringFunc.replaceAt( weight, i, "Z" );
 					
 					String key = props.get( i ).replaceAll( "[\\[\\]=]", "" );
 					String value = uris.get( i );
@@ -210,7 +210,7 @@ public class Route
 				}
 				else if ( props.get( i ).equals( uris.get( i ) ) )
 				{
-					weight = StringUtil.replaceAt( weight, i, "A" );
+					weight = StringFunc.replaceAt( weight, i, "A" );
 					
 					Loader.getLogger().fine( "Found a match for " + prop + " on route " + this );
 					// MATCH

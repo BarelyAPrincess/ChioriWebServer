@@ -38,8 +38,8 @@ import com.chiorichan.Loader;
 import com.chiorichan.event.server.ServerVars;
 import com.chiorichan.session.SessionProvider;
 import com.chiorichan.site.Site;
-import com.chiorichan.util.Common;
-import com.chiorichan.util.StringUtil;
+import com.chiorichan.util.CommonFunc;
+import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
@@ -68,7 +68,7 @@ public class HttpRequestWrapper
 		this.http = http;
 		this.ssl = ssl;
 		
-		requestTime = Common.getEpoch();
+		requestTime = CommonFunc.getEpoch();
 		
 		response = new HttpResponseWrapper( this );
 		
@@ -114,7 +114,7 @@ public class HttpRequestWrapper
 	public Boolean getArgumentBoolean( String key )
 	{
 		String rtn = getArgument( key, "0" ).toLowerCase();
-		return StringUtil.isTrue( rtn );
+		return StringFunc.isTrue( rtn );
 	}
 	
 	public String getArgument( String key )
@@ -289,7 +289,7 @@ public class HttpRequestWrapper
 			if ( domain.startsWith( "." ) )
 				domain = domain.substring( 1 );
 			
-			if ( StringUtil.validateIpAddress( domain ) )
+			if ( StringFunc.validateIpAddress( domain ) )
 			{
 				// This should be an IP Address
 				parentDomainName = domain;

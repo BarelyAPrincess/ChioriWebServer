@@ -15,7 +15,7 @@ import java.util.Map;
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.net.NetworkPersistence;
-import com.chiorichan.util.FileUtil;
+import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.Versioning;
 import com.google.common.collect.Maps;
 
@@ -52,7 +52,7 @@ public class InteractiveConsole
 			{
 				is = Loader.class.getClassLoader().getResourceAsStream( "com/chiorichan/banner.txt" );
 				
-				String[] banner = new String( FileUtil.inputStream2Bytes( is ) ).split( "\\n" );
+				String[] banner = new String( FileFunc.inputStream2Bytes( is ) ).split( "\\n" );
 				
 				for ( String l : banner )
 				{

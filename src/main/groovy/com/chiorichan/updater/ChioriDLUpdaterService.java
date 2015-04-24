@@ -23,7 +23,7 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.chiorichan.util.WebUtils;
+import com.chiorichan.util.WebFunc;
 import com.google.gson.Gson;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
@@ -77,7 +77,7 @@ public class ChioriDLUpdaterService
 		try
 		{
 			URLConnection connection = url.openConnection();
-			connection.setRequestProperty( "User-Agent", WebUtils.getUserAgent() );
+			connection.setRequestProperty( "User-Agent", WebFunc.getUserAgent() );
 			reader = new InputStreamReader( connection.getInputStream() );
 			// Gson gson = new GsonBuilder().registerTypeAdapter( Date.class, dateDeserializer ).setFieldNamingPolicy( FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES ).create();
 			Gson gson = new Gson();
@@ -100,7 +100,7 @@ public class ChioriDLUpdaterService
 		try
 		{
 			URLConnection connection = url.openConnection();
-			connection.setRequestProperty( "User-Agent", WebUtils.getUserAgent() );
+			connection.setRequestProperty( "User-Agent", WebFunc.getUserAgent() );
 			reader = new InputStreamReader( connection.getInputStream() );
 			// Gson gson = new GsonBuilder().registerTypeAdapter( Date.class, dateDeserializer ).setFieldNamingPolicy( FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES ).create();
 			Gson gson = new Gson();
@@ -146,7 +146,7 @@ public class ChioriDLUpdaterService
 		try
 		{
 			URLConnection connection = url.openConnection();
-			connection.setRequestProperty( "User-Agent", WebUtils.getUserAgent() );
+			connection.setRequestProperty( "User-Agent", WebFunc.getUserAgent() );
 			reader = new InputStreamReader( connection.getInputStream() );
 			prop.load( reader );
 			;

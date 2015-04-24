@@ -5,6 +5,7 @@ import io.netty.buffer.Unpooled;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -21,9 +22,9 @@ import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.site.Site;
-import com.chiorichan.util.StringUtil;
+import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.Versioning;
-import com.chiorichan.util.WebUtils;
+import com.chiorichan.util.WebFunc;
 
 public class Template extends Plugin implements Listener
 {
@@ -160,7 +161,7 @@ public class Template extends Plugin implements Listener
 			if ( site == null )
 				site = Loader.getSiteManager().getFrameworkSite();
 			
-			if ( fwVals.get( "themeless" ) != null && StringUtil.isTrue( fwVals.get( "themeless" ) ) )
+			if ( fwVals.get( "themeless" ) != null && StringFunc.isTrue( fwVals.get( "themeless" ) ) )
 				return;
 			
 			String theme = fwVals.get( "theme" );
@@ -210,7 +211,7 @@ public class Template extends Plugin implements Listener
 			boolean showCommons = !getConfig().getBoolean( "config.noCommons" );
 			
 			if ( fwVals.get( "commons" ) != null )
-				showCommons = StringUtil.isTrue( fwVals.get( "commons" ) );
+				showCommons = StringFunc.isTrue( fwVals.get( "commons" ) );
 			
 			// Allow pages to disable the inclusion of common header
 			if ( showCommons )
@@ -226,7 +227,7 @@ public class Template extends Plugin implements Listener
 			String pageMark = "<!-- " + getConfig().getString( "config.defaultTag", "PAGE DATA" ) + " -->";
 			String pageData = "";
 			String viewData = "";
-			Map<String, String> params = fwVals;
+			Map<String, String> params = new HashMap<String, String>( fwVals );
 			
 			if ( !theme.isEmpty() )
 			{
@@ -234,7 +235,7 @@ public class Template extends Plugin implements Listener
 				if ( result.isSuccessful() )
 				{
 					pageData = result.getString();
-					params.putAll( result.getMeta().params );
+					params.putAll( result.getMeta().getParamStrings() );
 				}
 			}
 			
@@ -244,7 +245,7 @@ public class Template extends Plugin implements Listener
 				if ( result.isSuccessful() )
 				{
 					viewData = result.getString();
-					params.putAll( result.getMeta().params );
+					params.putAll( result.getMeta().getParamStrings() );
 				}
 			}
 			
@@ -257,9 +258,9 @@ public class Template extends Plugin implements Listener
 					pageData = pageData.replace( pageMark, viewData );
 			
 			if ( pageData.indexOf( pageMark ) < 0 )
-				pageData = pageData + StringUtil.byteBuf2String( event.getSource(), event.getEncoding() );
+				pageData = pageData + StringFunc.byteBuf2String( event.getSource(), event.getEncoding() );
 			else
-				pageData = pageData.replace( pageMark, StringUtil.byteBuf2String( event.getSource(), event.getEncoding() ) );
+				pageData = pageData.replace( pageMark, StringFunc.byteBuf2String( event.getSource(), event.getEncoding() ) );
 			
 			ob.append( pageData + "\n" );
 			
@@ -291,9 +292,9 @@ public class Template extends Plugin implements Listener
 		EvalFactory factory = event.getSession().getEvalFactory();
 		
 		if ( getConfig().getBoolean( "config.ignoreFileNotFound" ) )
-			return WebUtils.evalPackage( factory, event.getSite(), pack );
+			return WebFunc.evalPackage( factory, event.getSite(), pack );
 		
-		return WebUtils.evalPackageWithException( factory, event.getSite(), pack );
+		return WebFunc.evalPackageWithException( factory, event.getSite(), pack );
 	}
 	
 	public String getPackageParent( String pack )

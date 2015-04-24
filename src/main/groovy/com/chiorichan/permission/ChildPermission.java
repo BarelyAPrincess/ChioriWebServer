@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.chiorichan.util.StringUtil;
+import com.chiorichan.util.StringFunc;
 import com.google.common.collect.Lists;
 
 public class ChildPermission<T>
@@ -45,7 +45,7 @@ public class ChildPermission<T>
 		if ( refs == null )
 			refs = Lists.newArrayList();
 		
-		refs = StringUtil.toLowerCase( refs );
+		refs = StringFunc.toLowerCase( refs );
 		
 		this.perm = perm;
 		this.refs = refs;

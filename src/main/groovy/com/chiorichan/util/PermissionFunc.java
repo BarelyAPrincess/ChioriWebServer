@@ -11,7 +11,7 @@ package com.chiorichan.util;
 
 import org.apache.commons.lang3.StringUtils;
 
-public class PermissionUtil
+public class PermissionFunc
 {
 	public static String getLocalName( String permNamespace )
 	{

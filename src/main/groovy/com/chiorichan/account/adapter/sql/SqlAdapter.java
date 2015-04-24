@@ -28,7 +28,7 @@ import com.chiorichan.account.LookupAdapterException;
 import com.chiorichan.account.adapter.AccountLookupAdapter;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.site.Site;
-import com.chiorichan.util.Common;
+import com.chiorichan.util.CommonFunc;
 import com.google.common.collect.Lists;
 
 public class SqlAdapter implements AccountLookupAdapter
@@ -176,13 +176,13 @@ public class SqlAdapter implements AccountLookupAdapter
 	{
 		try
 		{
-			sql.queryUpdate( "UPDATE `" + table + "` SET `lastActive` = '" + Common.getEpoch() + "', `lastLoginFail` = 0, `numLoginFail` = 0 WHERE `acctID` = '" + meta.getAcctId() + "'" );
+			sql.queryUpdate( "UPDATE `" + table + "` SET `lastActive` = '" + CommonFunc.getEpoch() + "', `lastLoginFail` = 0, `numLoginFail` = 0 WHERE `acctID` = '" + meta.getAcctId() + "'" );
 		}
 		catch ( SQLException e )
 		{
 			e.printStackTrace();
 		}
-		meta.set( "lastActive", Common.getEpoch() );
+		meta.set( "lastActive", CommonFunc.getEpoch() );
 		meta.set( "lastLoginFail", 0 );
 		meta.set( "numLoginFail", 0 );
 	}

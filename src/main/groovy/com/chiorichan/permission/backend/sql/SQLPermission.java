@@ -25,7 +25,7 @@ import com.chiorichan.permission.PermissionValueEnum;
 import com.chiorichan.permission.PermissionValueInt;
 import com.chiorichan.permission.PermissionValueVar;
 import com.chiorichan.permission.PermissionValue.PermissionType;
-import com.chiorichan.util.ObjectUtil;
+import com.chiorichan.util.ObjectFunc;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 
@@ -142,7 +142,7 @@ public class SQLPermission extends Permission
 						maxLen = ( ( PermissionValueVar ) value ).getMaxLen();
 					}
 					
-					db.queryUpdate( "INSERT INTO `permissions` (`permission`, `default`, `value`, `type`, `enum`, `maxlen`, `description`) VALUES (?, ?, ?, ?, ?, ?, ?);", getNamespace(), ObjectUtil.castToString( value.getDefault() ), ObjectUtil.castToString( value.getValue() ), value.getType().toString(), enumArray, maxLen, getDescription() );
+					db.queryUpdate( "INSERT INTO `permissions` (`permission`, `default`, `value`, `type`, `enum`, `maxlen`, `description`) VALUES (?, ?, ?, ?, ?, ?, ?);", getNamespace(), ObjectFunc.castToString( value.getDefault() ), ObjectFunc.castToString( value.getValue() ), value.getType().toString(), enumArray, maxLen, getDescription() );
 				}
 			}
 			else
@@ -156,8 +156,8 @@ public class SQLPermission extends Permission
 					
 					if ( hasValue() )
 					{
-						updateDBValue( "default", ObjectUtil.castToString( value.getDefault() ) );
-						updateDBValue( "value", ObjectUtil.castToString( value.getValue() ) );
+						updateDBValue( "default", ObjectFunc.castToString( value.getDefault() ) );
+						updateDBValue( "value", ObjectFunc.castToString( value.getValue() ) );
 						updateDBValue( "type", value.getType().toString() );
 						
 						if ( value.getType() == PermissionType.ENUM )

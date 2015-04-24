@@ -20,9 +20,9 @@ import com.chiorichan.account.LoginException;
 import com.chiorichan.http.Candy;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.site.Site;
-import com.chiorichan.util.Common;
-import com.chiorichan.util.StringUtil;
-import com.chiorichan.util.WebUtils;
+import com.chiorichan.util.CommonFunc;
+import com.chiorichan.util.StringFunc;
+import com.chiorichan.util.WebFunc;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -43,7 +43,7 @@ public abstract class Session extends AccountHandler
 	protected Candy sessionCandy;
 	protected List<String> pendingMessages = Lists.newArrayList();
 	protected static String lastSession = "";
-	protected static long lastTime = Common.getEpoch();
+	protected static long lastTime = CommonFunc.getEpoch();
 	
 	protected Map<String, Candy> candies = Maps.newLinkedHashMap();
 	protected Site site;
@@ -99,7 +99,7 @@ public abstract class Session extends AccountHandler
 			int defaultLife = ( getSite().getYaml() != null ) ? getSite().getYaml().getInt( "sessions.default-life", 604800 ) : 604800;
 			
 			if ( candyId == null || candyId.isEmpty() )
-				candyId = StringUtil.md5( WebUtils.createGUID( "sessionGen" ) + System.currentTimeMillis() );
+				candyId = StringFunc.md5( WebFunc.createGUID( "sessionGen" ) + System.currentTimeMillis() );
 			
 			sessionCandy = new Candy( candyName, candyId );
 			
@@ -112,7 +112,7 @@ public abstract class Session extends AccountHandler
 			
 			candies.put( candyName, sessionCandy );
 			
-			timeout = Common.getEpoch() + Loader.getConfig().getInt( "sessions.defaultTimeout", 3600 );
+			timeout = CommonFunc.getEpoch() + Loader.getConfig().getInt( "sessions.defaultTimeout", 3600 );
 			
 			saveSession( true );
 		}
@@ -143,10 +143,10 @@ public abstract class Session extends AccountHandler
 			}
 		}
 		
-		if ( !lastSession.equals( getSessId() ) || Common.getEpoch() - lastTime > 5 )
+		if ( !lastSession.equals( getSessId() ) || CommonFunc.getEpoch() - lastTime > 5 )
 		{
 			lastSession = getSessId();
-			lastTime = Common.getEpoch();
+			lastTime = CommonFunc.getEpoch();
 			
 			if ( SessionManager.isDebug() )
 				if ( stale )
@@ -254,7 +254,7 @@ public abstract class Session extends AccountHandler
 	
 	public void destroy() throws SessionException
 	{
-		timeout = Common.getEpoch();
+		timeout = CommonFunc.getEpoch();
 		setCookieExpiry( 0 );
 		
 		SessionManager.destroySession( this );
@@ -272,14 +272,14 @@ public abstract class Session extends AccountHandler
 		{
 			defaultTimeout = Loader.getConfig().getInt( "sessions.defaultTimeoutWithLogin", 86400 );
 			
-			if ( StringUtil.isTrue( getVariable( "remember" ) ) )
+			if ( StringFunc.isTrue( getVariable( "remember" ) ) )
 				defaultTimeout = Loader.getConfig().getInt( "sessions.defaultTimeoutRememberMe", 604800 );
 			
 			if ( Loader.getConfig().getBoolean( "allowNoTimeoutPermission" ) && checkPermission( "com.chiorichan.noTimeout" ).isTrue() )
 				defaultTimeout = Integer.MAX_VALUE;
 		}
 		
-		timeout = Common.getEpoch() + defaultTimeout + ( Math.min( requestCnt, 6 ) * 600 );
+		timeout = CommonFunc.getEpoch() + defaultTimeout + ( Math.min( requestCnt, 6 ) * 600 );
 		sessionCandy.setExpiration( timeout );
 	}
 	

@@ -15,7 +15,7 @@ import java.io.IOException;
 import org.apache.commons.io.FileUtils;
 
 import com.chiorichan.ContentTypes;
-import com.chiorichan.util.StringUtil;
+import com.chiorichan.util.StringFunc;
 
 /**
  * Acts as the in between for uploaded files and web script
@@ -149,17 +149,17 @@ public class UploadedFile
 	public String getMD5() throws IOException
 	{
 		if ( isInMemory() || file == null )
-			return StringUtil.md5( cachedFileUpload.content().array() );
+			return StringFunc.md5( cachedFileUpload.content().array() );
 		else
-			return StringUtil.md5( FileUtils.readFileToByteArray( file ) );
+			return StringFunc.md5( FileUtils.readFileToByteArray( file ) );
 	}
 	
 	public String readToString() throws IOException
 	{
 		if ( isInMemory() || file == null )
-			return StringUtil.encodeBase64( cachedFileUpload.content().array() );
+			return StringFunc.encodeBase64( cachedFileUpload.content().array() );
 		else
-			return StringUtil.encodeBase64( FileUtils.readFileToByteArray( file ) );
+			return StringFunc.encodeBase64( FileUtils.readFileToByteArray( file ) );
 	}
 	
 	public byte[] readToBytes() throws IOException

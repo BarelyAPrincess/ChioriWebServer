@@ -25,10 +25,10 @@ import com.chiorichan.account.LoginException;
 import com.chiorichan.account.LoginExceptionReason;
 import com.chiorichan.account.adapter.AccountLookupAdapter;
 import com.chiorichan.configuration.file.YamlConfiguration;
-import com.chiorichan.util.Common;
-import com.chiorichan.util.FileUtil;
-import com.chiorichan.util.StringUtil;
-import com.chiorichan.util.WebUtils;
+import com.chiorichan.util.CommonFunc;
+import com.chiorichan.util.FileFunc;
+import com.chiorichan.util.StringFunc;
+import com.chiorichan.util.WebFunc;
 import com.google.common.collect.Maps;
 
 public class FileAdapter implements AccountLookupAdapter
@@ -42,7 +42,7 @@ public class FileAdapter implements AccountLookupAdapter
 		String fileBase = Loader.getConfig().getString( "accounts.lookupAdapter.filebase", "accounts" );
 		accountsDirectory = new File( fileBase );
 		
-		FileUtil.directoryHealthCheck( accountsDirectory );
+		FileFunc.directoryHealthCheck( accountsDirectory );
 		
 		accountFields = Loader.getConfig().getStringList( "accounts.lookupAdapter.fields", new ArrayList<String>() );
 		
@@ -162,7 +162,7 @@ public class FileAdapter implements AccountLookupAdapter
 		
 		yser.set( "accountId", acctId.toLowerCase() );
 		yser.set( "accountname", accountname );
-		yser.set( "actnum", WebUtils.randomNum( 8 ) );
+		yser.set( "actnum", WebFunc.randomNum( 8 ) );
 		
 		try
 		{
@@ -210,7 +210,7 @@ public class FileAdapter implements AccountLookupAdapter
 		meta = reloadAccount( meta );
 		
 		if ( meta.containsKey( "password" ) )
-			meta.set( "password", StringUtil.md5( meta.getString( "password" ) ) );
+			meta.set( "password", StringFunc.md5( meta.getString( "password" ) ) );
 		
 		return meta;
 	}
@@ -231,7 +231,7 @@ public class FileAdapter implements AccountLookupAdapter
 		if ( yser == null )
 			return;
 		
-		int lastloginfail = Common.getEpoch();
+		int lastloginfail = CommonFunc.getEpoch();
 		int numloginfail = meta.getInteger( "numloginfail", 0 ) + 1;
 		
 		meta.set( "lastloginfail", lastloginfail );

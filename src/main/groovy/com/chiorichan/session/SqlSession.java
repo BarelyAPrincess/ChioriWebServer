@@ -19,7 +19,7 @@ import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.http.Candy;
 import com.chiorichan.permission.PermissionManager;
-import com.chiorichan.util.Common;
+import com.chiorichan.util.CommonFunc;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -46,7 +46,7 @@ public class SqlSession extends Session
 				candyName = rs.getString( "sessionName" );
 			candyId = rs.getString( "sessionId" );
 			
-			if ( timeout > 0 && timeout < Common.getEpoch() )
+			if ( timeout > 0 && timeout < CommonFunc.getEpoch() )
 				SessionManager.getLogger().warning( "The session '" + getSessId() + "' expired at epoch '" + timeout + "', might have expired while offline or this is a bug!" );
 			
 			if ( rs.getString( "sessionSite" ) == null || rs.getString( "sessionSite" ).isEmpty() )

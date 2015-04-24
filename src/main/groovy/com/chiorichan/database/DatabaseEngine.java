@@ -31,8 +31,8 @@ import org.json.JSONException;
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.lang.StartupException;
-import com.chiorichan.util.ObjectUtil;
-import com.chiorichan.util.StringUtil;
+import com.chiorichan.util.ObjectFunc;
+import com.chiorichan.util.StringFunc;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mysql.jdbc.exceptions.jdbc4.CommunicationsException;
@@ -307,7 +307,7 @@ public class DatabaseEngine
 				try
 				{
 					x++;
-					stmt.setString( x, ObjectUtil.castToString( s ) );
+					stmt.setString( x, ObjectFunc.castToString( s ) );
 				}
 				catch ( SQLException e )
 				{
@@ -448,8 +448,8 @@ public class DatabaseEngine
 				try
 				{
 					x++;
-					Loader.getLogger().debug( x + " -> " + ObjectUtil.castToString( s ) );
-					stmt.setString( x, ObjectUtil.castToString( s ) );
+					Loader.getLogger().debug( x + " -> " + ObjectFunc.castToString( s ) );
+					stmt.setString( x, ObjectFunc.castToString( s ) );
 				}
 				catch ( SQLException e )
 				{
@@ -582,7 +582,7 @@ public class DatabaseEngine
 		
 		for ( Entry<String, Object> e : source.entrySet() )
 		{
-			String val = ObjectUtil.castToString( e.getValue() );
+			String val = ObjectFunc.castToString( e.getValue() );
 			if ( val != null )
 				result.put( e.getKey(), val );
 		}
@@ -813,7 +813,7 @@ public class DatabaseEngine
 		if ( options0 != null )
 			for ( Entry<String, Object> o : options0.entrySet() )
 			{
-				options.put( o.getKey().toLowerCase(), ObjectUtil.castToString( o.getValue() ) );
+				options.put( o.getKey().toLowerCase(), ObjectFunc.castToString( o.getValue() ) );
 			}
 		
 		if ( !options.containsKey( "limit" ) || ! ( options.get( "limit" ) instanceof String ) )
@@ -844,7 +844,7 @@ public class DatabaseEngine
 		
 		if ( rs == null )
 		{
-			if ( StringUtil.isTrue( options.get( "debug" ) ) )
+			if ( StringFunc.isTrue( options.get( "debug" ) ) )
 				Loader.getLogger().info( "Making SELECT query \"" + query + "\" which returned an error." );
 			else
 				Loader.getLogger().fine( "Making SELECT query \"" + query + "\" which returned an error." );
@@ -853,7 +853,7 @@ public class DatabaseEngine
 		
 		if ( getRowCount( rs ) < 1 )
 		{
-			if ( StringUtil.isTrue( options.get( "debug" ) ) )
+			if ( StringFunc.isTrue( options.get( "debug" ) ) )
 				Loader.getLogger().info( "Making SELECT query \"" + query + "\" which returned no results." );
 			else
 				Loader.getLogger().fine( "Making SELECT query \"" + query + "\" which returned no results." );
@@ -870,7 +870,7 @@ public class DatabaseEngine
 			e.printStackTrace();
 		}
 		
-		if ( StringUtil.isTrue( options.get( "debug" ) ) )
+		if ( StringFunc.isTrue( options.get( "debug" ) ) )
 			Loader.getLogger().info( "Making SELECT query \"" + query + "\" which returned " + getRowCount( rs ) + " row(s)." );
 		else
 			Loader.getLogger().fine( "Making SELECT query \"" + query + "\" which returned " + getRowCount( rs ) + " row(s)." );
@@ -1141,7 +1141,7 @@ public class DatabaseEngine
 			}
 			catch ( Exception ee )
 			{
-				value = ObjectUtil.castToString( e.getValue() );
+				value = ObjectFunc.castToString( e.getValue() );
 			}
 			
 			if ( keys.isEmpty() )

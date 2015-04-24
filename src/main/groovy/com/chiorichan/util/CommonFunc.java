@@ -10,7 +10,7 @@
 package com.chiorichan.util;
 
 
-public class Common
+public class CommonFunc
 {
 	/**
 	 * @return Epoch based on the current Timezone

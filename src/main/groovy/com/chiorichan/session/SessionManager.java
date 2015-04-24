@@ -21,7 +21,7 @@ import com.chiorichan.http.Candy;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.scheduler.TaskCreator;
-import com.chiorichan.util.Common;
+import com.chiorichan.util.CommonFunc;
 import com.google.common.collect.Lists;
 
 /**
@@ -64,7 +64,7 @@ public class SessionManager implements TaskCreator
 				{
 					Session var1 = sessions.next();
 					
-					if ( var1.getTimeout() > 0 && var1.getTimeout() < Common.getEpoch() )
+					if ( var1.getTimeout() > 0 && var1.getTimeout() < CommonFunc.getEpoch() )
 					{
 						destroySession( var1 );
 					}

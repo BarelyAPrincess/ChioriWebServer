@@ -14,7 +14,7 @@ import java.util.Map;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.util.WebUtils;
+import com.chiorichan.util.WebFunc;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -66,7 +66,7 @@ public class ShellFactory
 	
 	public Script makeScript( String scriptText, EvalMetaData metaData )
 	{
-		String scriptName = "GroovyScript" + WebUtils.randomNum( 8 ) + ".chi";
+		String scriptName = "GroovyScript" + WebFunc.randomNum( 8 ) + ".chi";
 		metaData.scriptName = scriptName;
 		
 		Script script = shell.parse( scriptText, scriptName );

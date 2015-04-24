@@ -24,7 +24,7 @@ import com.chiorichan.event.EventException;
 import com.chiorichan.event.query.QueryEvent;
 import com.chiorichan.event.query.QueryEvent.QueryType;
 import com.chiorichan.net.NetworkPersistence;
-import com.chiorichan.util.StringUtil;
+import com.chiorichan.util.StringFunc;
 
 /**
  * Handles the Query Server traffic
@@ -79,7 +79,7 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 	
 	private String parseColor( String text )
 	{
-		if ( !Loader.getConfig().getBoolean( "server.queryUseColor" ) || !StringUtil.isTrue( console.getMetadata( "color", "true" ) ) )
+		if ( !Loader.getConfig().getBoolean( "server.queryUseColor" ) || !StringFunc.isTrue( console.getMetadata( "color", "true" ) ) )
 			return ConsoleColor.removeAltColors( text );
 		else
 			return ConsoleColor.transAltColors( text );
