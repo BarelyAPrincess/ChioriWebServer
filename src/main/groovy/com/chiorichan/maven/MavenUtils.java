@@ -7,6 +7,7 @@
 package com.chiorichan.maven;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -20,6 +21,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClients;
 
 import com.chiorichan.ConsoleColor;
+import com.chiorichan.Loader;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.util.FileUtil;
 import com.google.common.collect.Lists;
@@ -32,13 +34,15 @@ import com.google.common.collect.Lists;
  */
 public class MavenUtils
 {
-	public static final File LIBRARY_DIR = new File( "libraries" );
+	public static final File LIBRARY_DIR = new File( Loader.getConfig().getString( "advanced.libraries.libPath", "libraries" ) );
+	public static final File INCLUDES_DIR = new File( LIBRARY_DIR, "local" );
 	public static final String BASE_MAVEN_URL = "http://search.maven.org/remotecontent?filepath=";
 	public static List<String> loadedLibraries = Lists.newArrayList();
 	
 	static
 	{
 		FileUtil.directoryHealthCheck( LIBRARY_DIR );
+		FileUtil.directoryHealthCheck( INCLUDES_DIR );
 		
 		loadedLibraries.add( "org.fusesource.jansi:jansi:1.11" );
 		loadedLibraries.add( "net.sf.jopt-simple:jopt-simple:4.7" );
@@ -59,6 +63,19 @@ public class MavenUtils
 		loadedLibraries.add( "com.googlecode.libphonenumber:libphonenumber:7.0.4" );
 		loadedLibraries.add( "com.google.code.gson:gson:2.3" );
 		loadedLibraries.add( "org.apache.httpcomponents:fluent-hc:4.3.5" );
+		
+		// Scans the 'libraries/local' folder for jar files that need to loaded into the classpath
+		for ( File f : INCLUDES_DIR.listFiles( new FilenameFilter()
+		{
+			@Override
+			public boolean accept( File dir, String name )
+			{
+				return name.toLowerCase().endsWith( "jar" );
+			}
+		} ) )
+		{
+			loadLibrary( f );
+		}
 	}
 	
 	public static String resolveMavenUrl( String group, String name, String version, String ext )
@@ -69,6 +86,26 @@ public class MavenUtils
 	public static File getLibraryDir()
 	{
 		return LIBRARY_DIR;
+	}
+	
+	public static boolean loadLibrary( File lib )
+	{
+		if ( lib == null || !lib.exists() )
+			return false;
+		
+		PluginManager.getLogger().info( ConsoleColor.GOLD + "Loading the library `" + lib.getName() + "` from `" + lib.getParent() + "`..." );
+		
+		try
+		{
+			MavenClassLoader.addFile( lib );
+		}
+		catch ( Throwable t )
+		{
+			t.printStackTrace();
+			return false;
+		}
+		
+		return true;
 	}
 	
 	public static boolean loadLibrary( MavenLibrary lib )
