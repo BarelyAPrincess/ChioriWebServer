@@ -626,6 +626,7 @@ public class EvalFactory
 		}
 		else
 		{
+			t.printStackTrace();
 			Loader.getLogger().warning( "Uncaught exception in EvalFactory for exception " + t.getClass().getName() );
 			throw new EvalFactoryException( t, shellFactory );
 		}

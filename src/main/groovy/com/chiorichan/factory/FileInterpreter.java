@@ -19,6 +19,8 @@ import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import joptsimple.internal.Strings;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.net.util.Charsets;
 
@@ -150,6 +152,7 @@ public class FileInterpreter
 				ByteBuf buf = Unpooled.wrappedBuffer( IOUtils.toByteArray( is ) );
 				boolean beginContent = false;
 				int lastInx;
+				int lineCnt = 0;
 				
 				data = Unpooled.buffer();
 				
@@ -163,6 +166,8 @@ public class FileInterpreter
 					if ( l.trim().startsWith( "@" ) )
 						try
 						{
+							lineCnt++;
+							
 							/* Only solution I could think of for CSS files since they use @annotations too, so we share them. */
 							if ( ContentTypes.getContentType( file ).equalsIgnoreCase( "text/css" ) )
 								data.writeBytes( ( l + "\n" ).getBytes() );
@@ -202,6 +207,7 @@ public class FileInterpreter
 						}
 					else if ( l.trim().isEmpty() )
 					{
+						lineCnt++;
 						// Continue reading, this line is empty.
 					}
 					else
@@ -212,6 +218,8 @@ public class FileInterpreter
 					}
 				}
 				while ( !beginContent );
+				
+				data.writeBytes( Strings.repeat( '\n', lineCnt ).getBytes() );
 				
 				data.writeBytes( buf );
 			}
