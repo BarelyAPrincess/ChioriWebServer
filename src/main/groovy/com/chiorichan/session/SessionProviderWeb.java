@@ -13,6 +13,8 @@ import groovy.lang.Binding;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -231,7 +233,13 @@ public class SessionProviderWeb implements SessionProvider
 	@Override
 	public EvalFactory getEvalFactory()
 	{
-		if ( factory == null )
+		return getEvalFactory( true );
+	}
+	
+	@Override
+	public EvalFactory getEvalFactory( boolean createIfNull )
+	{
+		if ( factory == null && createIfNull )
 			factory = EvalFactory.create( binding );
 		
 		return factory;
@@ -311,12 +319,16 @@ public class SessionProviderWeb implements SessionProvider
 		Map<String, Object> bindingMap = parentSession.bindingMap;
 		Map<String, Object> variables = binding.getVariables();
 		
+		List<String> disallowedKeys = Arrays.asList( new String[] {"out", "request", "response", "_REQUEST", "__FILE__", "_SESSION", "_REWRITE", "_GET", "_POST", "_SERVER", "_FILES"} );
+		
 		if ( bindingMap != null && variables != null )
 		{
+			// Copy all keys besides those in disallowedKeys list into the parent binding map
 			for ( Entry<String, Object> e : variables.entrySet() )
-				if ( !e.getKey().equals( "__FILE__" ) && !e.getKey().equals( "_REQUEST" ) && !e.getKey().equals( "_SESSION" ) && !e.getKey().equals( "_REWRITE" ) && !e.getKey().equals( "_GET" ) && !e.getKey().equals( "_POST" ) && !e.getKey().equals( "_SERVER" ) && !e.getKey().equals( "_FILES" ) )
+				if ( !disallowedKeys.contains( e.getKey() ) )
 					bindingMap.put( e.getKey(), e.getValue() );
 			
+			// Merge our _SESSION into parentSession's data map
 			if ( variables.containsKey( "_SESSION" ) && variables.get( "_SESSION" ) instanceof Map )
 			{
 				for ( Entry<String, Object> e : ( ( Map<String, Object> ) variables.get( "_SESSION" ) ).entrySet() )

@@ -95,7 +95,9 @@ public class SessionManager implements TaskCreator
 			{
 				for ( Session s : sessionList )
 				{
-					if ( s.getIpAddr() != null && s.getIpAddr().equals( request.getRemoteAddr() ) && !s.getUserState() )
+					// XXX Needs to evaluate the security risk behind doing this?
+					// Might just need removal
+					if ( s.getIpAddr() != null && s.getIpAddr().equals( request.getRemoteAddr() ) && !s.getUserState() ) 
 					{
 						sess = s.getSessionProvider( request );
 						break;

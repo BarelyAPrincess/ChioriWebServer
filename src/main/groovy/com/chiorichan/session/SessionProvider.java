@@ -11,6 +11,7 @@ package com.chiorichan.session;
 
 import com.chiorichan.account.Account;
 import com.chiorichan.factory.BindingProvider;
+import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.http.Candy;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.http.HttpResponseWrapper;

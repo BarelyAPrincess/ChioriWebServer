@@ -9,6 +9,8 @@
  */
 package com.chiorichan.session;
 
+import groovy.lang.Binding;
+
 import com.chiorichan.account.Account;
 import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.http.Candy;
@@ -18,10 +20,22 @@ import com.chiorichan.site.Site;
 
 public class SessionProviderNet implements SessionProvider
 {
+	EvalFactory factory = null;
+	Binding binding;
+	
 	@Override
 	public EvalFactory getEvalFactory()
 	{
-		return null;
+		return getEvalFactory( true );
+	}
+	
+	@Override
+	public EvalFactory getEvalFactory( boolean createIfNull )
+	{
+		if ( factory == null && createIfNull )
+			factory = EvalFactory.create( binding );
+		
+		return factory;
 	}
 	
 	@Override
@@ -155,13 +169,13 @@ public class SessionProviderNet implements SessionProvider
 	{
 		
 	}
-
+	
 	@Override
 	public void onNotify()
 	{
 		// TODO Auto-generated method stub
 	}
-
+	
 	@Override
 	public void sendMessage( String... msgs )
 	{
