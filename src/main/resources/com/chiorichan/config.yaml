@@ -108,3 +108,5 @@ advanced:
     groovyEnabled: true
   security:
     requestMapEnabled: true
+  libraries:
+    libPath: 'libraries'

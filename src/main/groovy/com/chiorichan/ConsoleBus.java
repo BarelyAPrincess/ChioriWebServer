@@ -66,7 +66,7 @@ public class ConsoleBus implements Runnable
 			boolean g = false;
 			long q = 0;
 			
-			for ( long j = 0L; Loader.isRunning(); g = true )
+			for ( long j = 0L; Loader.isRunning; g = true )
 			{
 				long k = System.currentTimeMillis();
 				long l = k - i;

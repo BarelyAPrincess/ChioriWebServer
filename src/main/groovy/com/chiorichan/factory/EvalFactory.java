@@ -35,6 +35,8 @@ import org.codehaus.groovy.control.CompilationFailedException;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
+import org.codehaus.groovy.syntax.SyntaxException;
+import org.ocpsoft.prettytime.PrettyTime;
 
 import com.chiorichan.ContentTypes;
 import com.chiorichan.Loader;
@@ -60,41 +62,10 @@ import com.google.common.collect.Sets;
 import com.google.common.reflect.ClassPath;
 import com.google.common.reflect.ClassPath.ClassInfo;
 
+@SuppressWarnings( "rawtypes" )
 public class EvalFactory
 {
-	public class GroovyShellTracker
-	{
-		private GroovyShell shell = null;
-		private boolean inUse = false;
-		
-		public GroovyShellTracker( GroovyShell shell )
-		{
-			this.shell = shell;
-		}
-		
-		public GroovyShell getShell()
-		{
-			return shell;
-		}
-		
-		public void setInUse( boolean inUse )
-		{
-			this.inUse = inUse;
-		}
-		
-		public boolean isInUse()
-		{
-			return inUse;
-		}
-		
-		@Override
-		public String toString()
-		{
-			return "GroovyShellTracker(shell=" + shell + ",inUse=" + inUse + ")";
-		}
-	}
-	
-	protected Charset encoding = Charsets.toCharset( Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" ) );
+	protected static Charset encoding = Charsets.toCharset( Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" ) );
 	
 	protected static List<PreProcessor> preProcessors = Lists.newCopyOnWriteArrayList();
 	protected static List<Interpreter> interpreters = Lists.newCopyOnWriteArrayList();
@@ -104,6 +75,19 @@ public class EvalFactory
 	protected Set<GroovyShellTracker> groovyShells = Sets.newLinkedHashSet();
 	protected ByteArrayOutputStream bs = new ByteArrayOutputStream();
 	protected Binding binding;
+	
+	/*
+	 * Groovy Sandbox Customization
+	 */
+	private static final ImportCustomizer imports = new ImportCustomizer();
+	private static final GroovySandbox secure = new GroovySandbox();
+	
+	/*
+	 * Groovy Imports :P
+	 */
+	private static final String[] dynImports = new String[] {"com.chiorichan.Loader"};
+	private static final String[] starImports = new String[] {"com.chiorichan.lang", "com.chiorichan.util", "org.apache.commons.lang3.text", "org.ocpsoft.prettytime", "java.util", "java.net"};
+	private static final String[] staticImports = new String[] {};
 	
 	static
 	{
@@ -134,6 +118,10 @@ public class EvalFactory
 			register( new JSMinPostProcessor() );
 		if ( Loader.getConfig().getBoolean( "advanced.processors.imageProcessorEnabled", true ) )
 			register( new ImagePostProcessor() );
+		
+		imports.addImports( dynImports );
+		imports.addStarImports( starImports );
+		imports.addStaticStars( staticImports );
 	}
 	
 	protected EvalFactory( Binding binding )
@@ -189,73 +177,6 @@ public class EvalFactory
 	protected GroovyShell getNewShell()
 	{
 		CompilerConfiguration configuration = new CompilerConfiguration();
-		
-		ImportCustomizer imports = new ImportCustomizer();
-		GroovySandbox secure = new GroovySandbox();
-		
-		// TODO Making the whitelist easier to work with is going to be a pain.
-		
-		/*
-		 * Groovy Imports :P
-		 */
-		String[] dynImports = new String[] {"com.chiorichan.Loader"};
-		String[] starImports = new String[] {"com.chiorichan.lang", "com.chiorichan.util", "org.apache.commons.lang3.text", "java.util", "java.net"};
-		String[] staticImports = new String[] {};
-		
-		imports.addImports( dynImports );
-		imports.addStarImports( starImports );
-		imports.addStaticStars( staticImports );
-		
-		secure.setImportsWhitelist( Arrays.asList( dynImports ) );
-		secure.setStarImportsWhitelist( Arrays.asList( starImports ) );
-		secure.setStaticImportsWhitelist( Arrays.asList( staticImports ) );
-		
-		List<Class> allowedReceivers = Lists.newArrayList();
-		
-		// Allowed Receivers
-		allowedReceivers.addAll( Arrays.asList( new Class[] {Arrays.class, Calendar.class, URLEncoder.class, Object.class, Boolean.class, boolean.class, String.class, Integer.class, Float.class, Long.class, Double.class, BigDecimal.class, Integer.TYPE, Long.TYPE, Float.TYPE, Double.TYPE} ) );
-		
-		for ( String i : dynImports )
-		{
-			try
-			{
-				allowedReceivers.add( Class.forName( i ) );
-			}
-			catch ( ClassNotFoundException e )
-			{
-				e.printStackTrace();
-			}
-		}
-		
-		for ( String i : starImports )
-		{
-			try
-			{
-				Set<ClassInfo> classes = ClassPath.from( ClassLoader.getSystemClassLoader() ).getTopLevelClassesRecursive( i );
-				
-				for ( ClassInfo c : classes )
-					allowedReceivers.add( c.load() );
-			}
-			catch ( IOException e )
-			{
-				e.printStackTrace();
-			}
-		}
-		
-		for ( String d : dynImports )
-			try
-			{
-				allowedReceivers.add( Class.forName( d ) );
-			}
-			catch ( ClassNotFoundException e )
-			{
-				e.printStackTrace();
-			}
-		
-		// Loader.getLogger().debug( "Allowed: " + allowedReceivers );
-		
-		secure.setConstantTypesClassesWhiteList( allowedReceivers );
-		secure.setReceiversClassesWhiteList( allowedReceivers );
 		
 		/*
 		 * Finalize Imports and implement Sandbox
@@ -682,6 +603,11 @@ public class EvalFactory
 				Loader.getLogger().debug( "Got Exception: " + e.getErrorCollector().getErrors() );
 				exceptionHandler( e.getErrorCollector().getException( 0 ), meta );
 			}
+		}
+		else if ( t instanceof SyntaxException ) // Parsing exception
+		{
+			SyntaxException e = ( SyntaxException ) t;
+			throw new EvalFactoryException( e, shellFactory, meta );
 		}
 		else if ( t instanceof CompilationFailedException ) // This is usually a parsing exception
 		{

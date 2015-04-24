@@ -70,9 +70,7 @@ public class ShellFactory
 		metaData.scriptName = scriptName;
 		
 		Script script = shell.parse( scriptText, scriptName );
-		
 		metaData.script = script;
-		
 		scriptHistory.put( scriptName, metaData );
 		
 		return script;
@@ -81,5 +79,6 @@ public class ShellFactory
 	void onFinished()
 	{
 		scriptHistory.clear();
+		shell = null;
 	}
 }

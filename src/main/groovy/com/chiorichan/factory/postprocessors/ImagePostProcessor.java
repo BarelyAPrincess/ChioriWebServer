@@ -30,10 +30,15 @@ import com.chiorichan.factory.EvalMetaData;
 
 public class ImagePostProcessor implements PostProcessor
 {
+	/**
+	 * A cached array of content types that start with image, e.g., image/jpeg
+	 */
+	private static final String[] types = ContentTypes.getAllTypes( "image" );
+	
 	@Override
 	public String[] getHandledTypes()
 	{
-		return ContentTypes.getAllTypes( "image" );
+		return types;
 	}
 	
 	@Override

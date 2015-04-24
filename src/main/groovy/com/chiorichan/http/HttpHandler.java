@@ -47,6 +47,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -356,8 +357,10 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		{
 			sess.saveSession( false );
 			sess.onFinished();
-			
-			sess.getEvalFactory().onFinished();
+
+			EvalFactory factory = sess.getEvalFactory( false );
+			if ( factory != null )
+				factory.onFinished();
 		}
 		
 		request = null;
@@ -513,14 +516,14 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		
 		request.putServerVar( ServerVars.DOCUMENT_ROOT, docRoot );
 		
-		sess.setGlobal( "_SERVER", request.getServerStrings() );
-		sess.setGlobal( "_POST", request.getPostMapParsed() );
-		sess.setGlobal( "_GET", request.getGetMapParsed() );
-		sess.setGlobal( "_REWRITE", request.getRewriteMap() );
-		sess.setGlobal( "_FILES", request.getUploadedFiles() );
+		sess.setGlobal( "_SERVER", Collections.unmodifiableMap( request.getServerStrings() ) );
+		sess.setGlobal( "_POST", Collections.unmodifiableMap( request.getPostMapParsed() ) );
+		sess.setGlobal( "_GET", Collections.unmodifiableMap( request.getGetMapParsed() ) );
+		sess.setGlobal( "_REWRITE", Collections.unmodifiableMap( request.getRewriteMap() ) );
+		sess.setGlobal( "_FILES", Collections.unmodifiableMap( request.getUploadedFiles() ) );
 		
 		if ( Loader.getConfig().getBoolean( "advanced.security.requestMapEnabled", true ) )
-			sess.setGlobal( "_REQUEST", request.getRequestMapParsed() );
+			sess.setGlobal( "_REQUEST", Collections.unmodifiableMap( request.getRequestMapParsed() ) );
 		
 		ByteBuf rendered = Unpooled.buffer();
 		EvalFactory factory = sess.getEvalFactory();

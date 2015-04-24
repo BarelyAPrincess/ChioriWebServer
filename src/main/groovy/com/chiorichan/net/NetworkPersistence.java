@@ -65,6 +65,15 @@ public class NetworkPersistence extends AccountHandler implements BindingProvide
 	@Override
 	public EvalFactory getEvalFactory()
 	{
+		return getEvalFactory( true );
+	}
+	
+	@Override
+	public EvalFactory getEvalFactory( boolean createIfNull )
+	{
+		if ( factory == null && createIfNull )
+			factory = EvalFactory.create( binding );
+		
 		return factory;
 	}
 	

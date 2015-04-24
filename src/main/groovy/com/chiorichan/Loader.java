@@ -87,7 +87,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	
 	private static String clientId;
 	private static boolean finishedStartup = false;
-	private static boolean isRunning = true;
+	static boolean isRunning = true;
 	private static String stopReason = null;
 	
 	protected static DatabaseEngine fwDatabase = null;
@@ -716,7 +716,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		StackTraceElement[] ste = Thread.currentThread().getStackTrace();
 		String clz = ste[2].getClassName().toLowerCase();
 		
-		//getLogger( "Debug" ).warning( clz );
+		// getLogger( "Debug" ).warning( clz );
 		
 		if ( clz.startsWith( "com.chiorichan" ) )
 		{
