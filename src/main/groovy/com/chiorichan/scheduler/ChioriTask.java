@@ -19,6 +19,7 @@ class ChioriTask implements IChioriTask, Runnable
 	 * -2 means cancel <br>
 	 * -3 means processing for Future <br>
 	 * -4 means done for Future <br>
+	 * -5 means it's creator is disabled - wait <br>
 	 * Never 0 <br>
 	 * >0 means number of ticks to wait between each execution
 	 */

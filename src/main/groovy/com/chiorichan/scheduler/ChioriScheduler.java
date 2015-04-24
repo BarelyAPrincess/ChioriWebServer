@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,6 +28,7 @@ import java.util.logging.Level;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.Loader;
+import com.google.common.collect.Maps;
 
 public class ChioriScheduler implements IChioriScheduler
 {
@@ -38,11 +41,15 @@ public class ChioriScheduler implements IChioriScheduler
 	 */
 	private volatile ChioriTask head = new ChioriTask();
 	/**
+	 * Holds tasks that are awaiting for there owners to be enabled
+	 */
+	private final Map<Long, ChioriTask> backlogTasks = Maps.newConcurrentMap();
+	/**
 	 * Tail of a linked-list. AtomicReference only matters when adding to queue
 	 */
 	private final AtomicReference<ChioriTask> tail = new AtomicReference<ChioriTask>( head );
 	/**
-	 * Mane thread logic only
+	 * Main thread logic only
 	 */
 	private final PriorityQueue<ChioriTask> pending = new PriorityQueue<ChioriTask>( 10, new Comparator<ChioriTask>()
 	{
@@ -52,7 +59,7 @@ public class ChioriScheduler implements IChioriScheduler
 		}
 	} );
 	/**
-	 * Mane thread logic only
+	 * Main thread logic only
 	 */
 	private final List<ChioriTask> temp = new ArrayList<ChioriTask>();
 	/**
@@ -125,6 +132,7 @@ public class ChioriScheduler implements IChioriScheduler
 	public ChioriTask runTaskTimer( TaskCreator creator, Runnable runnable, long delay, long period )
 	{
 		validate( creator, runnable );
+		
 		if ( delay < 0L )
 		{
 			delay = 0;
@@ -137,7 +145,13 @@ public class ChioriScheduler implements IChioriScheduler
 		{
 			period = -1L;
 		}
-		return handle( new ChioriTask( creator, runnable, nextId(), period ), delay );
+		
+		ChioriTask task = new ChioriTask( creator, runnable, nextId(), period );
+		
+		if ( creator.isEnabled() )
+			return handle( task, delay );
+		else
+			return backlog( task, delay );
 	}
 	
 	public int scheduleAsyncRepeatingTask( final TaskCreator creator, final Runnable runnable, long delay, long period )
@@ -148,6 +162,7 @@ public class ChioriScheduler implements IChioriScheduler
 	public ChioriTask runTaskTimerAsynchronously( TaskCreator creator, Runnable runnable, long delay, long period )
 	{
 		validate( creator, runnable );
+		
 		if ( delay < 0L )
 		{
 			delay = 0;
@@ -160,12 +175,21 @@ public class ChioriScheduler implements IChioriScheduler
 		{
 			period = -1L;
 		}
-		return handle( new ChioriAsyncTask( runners, creator, runnable, nextId(), period ), delay );
+		
+		ChioriTask task = new ChioriAsyncTask( runners, creator, runnable, nextId(), period );
+		
+		if ( !creator.isEnabled() )
+			return handle( task, delay );
+		else
+			return backlog( task, delay );
 	}
 	
 	public <T> Future<T> callSyncMethod( final TaskCreator creator, final Callable<T> task )
 	{
 		validate( creator, task );
+		if ( !creator.isEnabled() )
+			throw new IllegalTaskCreatorAccessException( "TaskCreator attempted to register task while disabled" );
+		
 		final ChioriFuture<T> future = new ChioriFuture<T>( task, creator, nextId() );
 		handle( future, 0L );
 		return future;
@@ -443,6 +467,22 @@ public class ChioriScheduler implements IChioriScheduler
 				runners.remove( task.getTaskId() );
 			}
 		}
+		
+		// Scans the backlog map for unscheduled tasks awaiting for their owner to become enabled
+		if ( !backlogTasks.isEmpty() )
+			for ( Entry<Long, ChioriTask> e : backlogTasks.entrySet() )
+			{
+				if ( e.getValue() == null || e.getValue().getOwner() == null )
+				{
+					backlogTasks.remove( e.getKey() );
+				}
+				else if ( e.getValue().getOwner().isEnabled() )
+				{
+					handle( e.getValue(), e.getKey() );
+					backlogTasks.remove( e.getKey() );
+				}
+			}
+		
 		pending.addAll( temp );
 		temp.clear();
 		debugHead = debugHead.getNextHead( currentTick );
@@ -459,6 +499,12 @@ public class ChioriScheduler implements IChioriScheduler
 		tailTask.setNext( task );
 	}
 	
+	private ChioriTask backlog( ChioriTask task, long delay )
+	{
+		backlogTasks.put( delay, task );
+		return task;
+	}
+	
 	private ChioriTask handle( final ChioriTask task, final long delay )
 	{
 		task.setNextRun( currentTick + delay );
@@ -466,13 +512,23 @@ public class ChioriScheduler implements IChioriScheduler
 		return task;
 	}
 	
+	/**
+	 * Checks in the provided creator and task are valid
+	 * 
+	 * @param creator
+	 *            The object owning this task
+	 * @param task
+	 *            The task to validate
+	 */
 	private static void validate( final TaskCreator creator, final Object task )
 	{
 		Validate.notNull( creator, "TaskCreator cannot be null" );
 		Validate.notNull( task, "Task cannot be null" );
+		
 		if ( !creator.isEnabled() )
 		{
-			throw new IllegalTaskCreatorAccessException( "TaskCreator attempted to register task while disabled" );
+			// Task Creator can now register while disabled but will not be called until enabled.
+			// throw new IllegalTaskCreatorAccessException( "TaskCreator attempted to register task while disabled" );
 		}
 	}
 	
