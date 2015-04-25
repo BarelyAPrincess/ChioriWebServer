@@ -18,28 +18,47 @@ public class HttpError extends Exception
 	private static final long serialVersionUID = 8116947267974772489L;
 	HttpResponseStatus status = HttpResponseStatus.OK;
 	String reason = null;
+	String msg;
+	
+	public HttpError( int i )
+	{
+		this( i, HttpCode.msg( i ), null );
+	}
+	
+	public HttpError( HttpResponseStatus status )
+	{
+		this( status, null );
+	}
+	
+	public HttpError( HttpResponseStatus status, String msg )
+	{
+		this.status = status;
+		this.reason = status.reasonPhrase();
+		this.msg = msg;
+	}
 	
 	public HttpError( int i, String reason )
+	{
+		this( i, reason, null );
+	}
+	
+	public HttpError( int i, String reason, String msg )
 	{
 		super( reason );
 		
 		status = HttpResponseStatus.valueOf( i );
 		this.reason = reason;
-	}
-	
-	public HttpError( int i )
-	{
-		this( i, HttpCode.msg( i ) );
-	}
-	
-	public HttpError( HttpResponseStatus status )
-	{
-		this.status = status;
+		this.msg = msg;
 	}
 	
 	public String getReason()
 	{
 		return reason;
+	}
+	
+	public String getMessage()
+	{
+		return msg;
 	}
 	
 	public int getHttpCode()
@@ -50,5 +69,10 @@ public class HttpError extends Exception
 	public String getHttpReason()
 	{
 		return status.reasonPhrase();
+	}
+	
+	public HttpResponseStatus getHttpResponseStatus()
+	{
+		return status;
 	}
 }
