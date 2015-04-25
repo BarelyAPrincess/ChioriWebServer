@@ -16,7 +16,6 @@ import java.math.BigDecimal;
 
 import org.apache.commons.codec.binary.Hex;
 
-import com.chiorichan.Loader;
 import com.google.common.base.Strings;
 
 public class ObjectFunc
@@ -235,7 +234,7 @@ public class ObjectFunc
 	public static Boolean castToBoolWithException( Object value )
 	{
 		if ( value == null )
-			throw new ClassCastException( "Uncaught Convertion to Boolean of Type: " + value.getClass().getName() );
+			throw new ClassCastException( "Can't Cast `null` to Boolean" );
 		
 		if ( value.getClass() == Boolean.class )
 			return ( Boolean ) value;
@@ -273,6 +272,42 @@ public class ObjectFunc
 		catch ( Exception e )
 		{
 			return false;
+		}
+	}
+	
+	public static Double castToDoubleWithException( Object value )
+	{
+		if ( value == null )
+			return null;
+		
+		switch ( value.getClass().getName() )
+		{
+			case "java.lang.Long":
+				return ( ( Long ) value ).doubleValue();
+			case "java.lang.String":
+				return Double.parseDouble( ( String ) value );
+			case "java.lang.Integer":
+				return ( ( Integer ) value ).doubleValue();
+			case "java.lang.Double":
+				return ( Double ) value;
+			case "java.lang.Boolean":
+				return ( ( boolean ) value ) ? 1D : 0D;
+			case "java.math.BigDecimal":
+				return ( ( BigDecimal ) value ).setScale( 0, BigDecimal.ROUND_HALF_UP ).doubleValue();
+			default:
+				throw new ClassCastException( "Uncaught Convertion to Integer of Type: " + value.getClass().getName() );
+		}
+	}
+	
+	public static Double castToDouble( Object value )
+	{
+		try
+		{
+			return castToDoubleWithException( value );
+		}
+		catch ( Exception e )
+		{
+			return 0D;
 		}
 	}
 	
@@ -395,14 +430,14 @@ public class ObjectFunc
 	@SuppressWarnings( "unchecked" )
 	public static <O> O castThis( Class<?> clz, Object o )
 	{
-		boolean debug = ( Thread.currentThread().getStackTrace()[3].getClassName().equals( "com.chiorichan.util.MapFunc$castTypes" ) );
-		
 		try
 		{
 			if ( clz == Integer.class )
 				return ( O ) castToIntWithException( o );
 			if ( clz == Long.class )
 				return ( O ) castToLongWithException( o );
+			if ( clz == Double.class )
+				return ( O ) castToDoubleWithException( o );
 			if ( clz == Boolean.class )
 				return ( O ) castToBoolWithException( o );
 			if ( clz == String.class )
