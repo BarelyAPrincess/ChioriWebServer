@@ -171,16 +171,15 @@ public class SessionProviderWeb implements SessionProvider
 				
 				parentSession.setVariable( "remember", remember );
 				
-				AccountManager.getLogger().info( ConsoleColor.GREEN + "Successful Login [acctId='" + username + "',password='" + password + "',displayName='" + acct.getDisplayName() + "']" );
+				AccountManager.getLogger().info( ConsoleColor.GREEN + "Successful Login [acctId='" + username + "',hasPassword='" + ( password != null && !password.isEmpty() ) + "',displayName='" + acct.getDisplayName() + "']" );
 				request.getResponse().sendRedirect( loginPost );
-				
 			}
 			catch ( LoginException l )
 			{
 				String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
 				
 				if ( l.getAccount() != null )
-					AccountManager.getLogger().warning( ConsoleColor.GREEN + "Failed Login [acctId='" + username + "',password='" + password + "',displayName='" + l.getAccount().getDisplayName() + "',reason='" + l.getMessage() + "']" );
+					AccountManager.getLogger().warning( ConsoleColor.GREEN + "Failed Login [acctId='" + username + "',hasPassword='" + ( password != null && !password.isEmpty() ) + "',displayName='" + l.getAccount().getDisplayName() + "',reason='" + l.getMessage() + "']" );
 				
 				parentSession.currentAccount = null;
 				parentSession.setVariable( "user", "" );
