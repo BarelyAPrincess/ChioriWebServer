@@ -27,7 +27,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
@@ -58,7 +57,6 @@ import com.chiorichan.lang.IgnorableEvalException;
 import com.chiorichan.lang.SandboxSecurityException;
 import com.chiorichan.site.Site;
 import com.chiorichan.util.MapFunc;
-import com.chiorichan.util.ObjectFunc;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -88,7 +86,7 @@ public class EvalFactory
 	 */
 	private static final String[] dynImports = new String[] {"com.chiorichan.Loader"};
 	private static final String[] starImports = new String[] {"com.chiorichan.lang", "com.chiorichan.util", "org.apache.commons.lang3.text", "org.ocpsoft.prettytime", "java.util", "java.net"};
-	private static final String[] staticImports = new String[] {};
+	private static final String[] staticImports = new String[] {"com.chiorichan.util.Looper"};
 	
 	static
 	{
@@ -126,8 +124,7 @@ public class EvalFactory
 		
 		// Transforms scripts to limit their execution to 30 seconds.
 		Map<String, Object> timedInterruptParams = Maps.newHashMap();
-		timedInterruptParams.put( "value", ObjectFunc.castToLong( Loader.getConfig().getInt( "advanced.security.defaultScriptTimeout", 30 ) ) );
-		timedInterruptParams.put( "unit", TimeUnit.SECONDS );
+		timedInterruptParams.put( "value", Loader.getConfig().getLong( "advanced.security.defaultScriptTimeout", 30L ) );
 		timedInterrupt.setAnnotationParameters( timedInterruptParams );
 	}
 	
@@ -394,9 +391,9 @@ public class EvalFactory
 			meta = new EvalMetaData();
 		
 		if ( fi instanceof WebInterpreter )
-			meta.params = new MapFunc<String, Object>().castTypes( ( ( WebInterpreter ) fi ).getRewriteParams() );
+			meta.params = new MapFunc<String, Object>( String.class, Object.class ).castTypes( ( ( WebInterpreter ) fi ).getRewriteParams() );
 		else
-			meta.params = new MapFunc<String, Object>().castTypes( fi.getParams() );
+			meta.params = new MapFunc<String, Object>( String.class, Object.class ).castTypes( fi.getParams() );
 		
 		meta.contentType = fi.getContentType();
 		meta.shell = fi.getParams().get( "shell" );

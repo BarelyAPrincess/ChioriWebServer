@@ -154,6 +154,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	@Override
 	public void exceptionCaught( ChannelHandlerContext ctx, Throwable cause ) throws Exception
 	{
+		// cause.printStackTrace();
+		
 		if ( cause instanceof HttpError )
 			response.sendError( ( HttpError ) cause );
 		else if ( cause instanceof IOException && cause.getCause() != null )
@@ -186,7 +188,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		}
 		catch ( Throwable t )
 		{
-			Loader.getLogger().debug( "Finish throw an exception!" );
+			Loader.getLogger().debug( "Finish has thrown an exception!" );
 			t.printStackTrace();
 		}
 	}
@@ -499,10 +501,11 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		if ( fi.getStatus() != HttpResponseStatus.OK )
 			throw new HttpError( fi.getStatus() );
 		
-		NetworkManager.getLogger().info( ConsoleColor.BLUE + "Http" + ( ( ssl ) ? "s" : "" ) + "Request{httpCode=" + response.getHttpCode() + ",httpMsg=" + response.getHttpMsg() + ",subdomain=" + subdomain + ",domain=" + domain + ",uri=" + uri + ",remoteIp=" + request.getRemoteAddr() + ",details=" + fi.toString() + "}" );
-		
+		// TODO Improve the result of have no content to display
 		if ( !fi.hasFile() && !fi.hasHTML() )
-			throw new HttpError( 500 );
+			throw new HttpError( 500, null, "This page appears to have no content to display" );
+		
+		NetworkManager.getLogger().info( ConsoleColor.BLUE + "Http" + ( ( ssl ) ? "s" : "" ) + "Request{httpCode=" + response.getHttpCode() + ",httpMsg=" + response.getHttpMsg() + ",subdomain=" + subdomain + ",domain=" + domain + ",uri=" + uri + ",remoteIp=" + request.getRemoteAddr() + ",details=" + fi.toString() + "}" );
 		
 		if ( fi.hasFile() )
 			htaccess.appendWithDir( fi.getFile().getParentFile() );

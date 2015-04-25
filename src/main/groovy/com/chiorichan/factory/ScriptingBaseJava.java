@@ -108,7 +108,7 @@ public abstract class ScriptingBaseJava extends Script
 			return "";
 		
 		return sb.substring( 1 ).toString();
-	}
+	}	
 	
 	String trim( String str )
 	{

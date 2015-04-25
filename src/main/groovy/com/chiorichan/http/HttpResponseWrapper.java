@@ -79,7 +79,7 @@ public class HttpResponseWrapper
 	public void sendError( Exception e ) throws IOException
 	{
 		if ( e instanceof HttpError )
-			sendError( ( ( HttpError ) e ).getHttpCode(), ( ( HttpError ) e ).getReason() );
+			sendError( ( ( HttpError ) e ).getHttpCode(), ( ( HttpError ) e ).getReason(), ( ( HttpError ) e ).getMessage() );
 		else
 			sendError( 500, e.getMessage() );
 	}

@@ -136,7 +136,7 @@ public class Route
 		
 		if ( prop == null )
 		{
-			Loader.getLogger().warning( "The `pattern` attibute was null for route '" + this + "'. Unusable!" );
+			Loader.getLogger().warning( "The `pattern` attribute was null for route '" + this + "'. Unusable!" );
 			return null;
 		}
 		

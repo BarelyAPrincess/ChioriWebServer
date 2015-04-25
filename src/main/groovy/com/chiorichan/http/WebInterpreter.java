@@ -23,6 +23,7 @@ import com.chiorichan.Loader;
 import com.chiorichan.factory.FileInterpreter;
 import com.chiorichan.lang.HttpError;
 import com.chiorichan.lang.SiteException;
+import com.chiorichan.net.NetworkManager;
 import com.chiorichan.site.Site;
 import com.google.common.collect.Maps;
 
@@ -190,6 +191,19 @@ public class WebInterpreter extends FileInterpreter
 		{
 			if ( dest != null && dest.exists() )
 				interpretParamsFromFile( dest );
+			if ( dest != null && !dest.exists() )
+			{
+				NetworkManager.getLogger().warning( "We tried to load the file `" + dest.getAbsolutePath() + "` but could not find it. Will throw a 404 error now." );
+				
+				if ( false ) // TODO Are we in development mode?
+				{
+					// Here we will give a detailed error about the missing file
+				}
+				else
+				{
+					status = HttpResponseStatus.NOT_FOUND;
+				}
+			}
 			else if ( !interpParams.containsKey( "shell" ) || interpParams.get( "shell" ) == null )
 				interpParams.put( "shell", "html" );
 		}
