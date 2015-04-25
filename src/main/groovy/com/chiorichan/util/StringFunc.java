@@ -159,14 +159,18 @@ public class StringFunc
 	
 	public static String md5( String str )
 	{
+		if ( str == null )
+			return null;
+		
 		return DigestUtils.md5Hex( str );
 	}
 	
-	public static boolean isTrue( String argument )
+	public static boolean isTrue( String arg )
 	{
-		Validate.notNull( argument );
-		argument = argument.toLowerCase();
-		return ( argument.equals( "true" ) || argument.equals( "1" ) );
+		if ( arg == null )
+			return false;
+		
+		return ( arg.equalsIgnoreCase( "true" ) || arg.equalsIgnoreCase( "1" ) );
 	}
 	
 	public static String replaceAt( String par, int at, String rep )

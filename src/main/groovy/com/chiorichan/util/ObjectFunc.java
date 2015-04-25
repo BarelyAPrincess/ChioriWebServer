@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 
 import org.apache.commons.codec.binary.Hex;
 
+import com.chiorichan.Loader;
 import com.google.common.base.Strings;
 
 public class ObjectFunc
@@ -231,18 +232,18 @@ public class ObjectFunc
 		return ( int ) l;
 	}
 	
-	public static Boolean castToBool( Object value )
+	public static Boolean castToBoolWithException( Object value )
 	{
 		if ( value == null )
-			return false;
+			throw new ClassCastException( "Uncaught Convertion to Boolean of Type: " + value.getClass().getName() );
 		
 		if ( value.getClass() == Boolean.class )
 			return ( Boolean ) value;
 		
-		String val = castToString( value );
+		String val = castToStringWithException( value );
 		
 		if ( val == null )
-			return false;
+			throw new ClassCastException( "Uncaught Convertion to Boolean of Type: " + value.getClass().getName() );
 		
 		switch ( val.trim().toLowerCase() )
 		{
@@ -259,7 +260,19 @@ public class ObjectFunc
 			case "0":
 				return false;
 			default:
-				return false;
+				throw new ClassCastException( "Uncaught Convertion to Boolean of Type: " + value.getClass().getName() );
+		}
+	}
+	
+	public static Boolean castToBool( Object value )
+	{
+		try
+		{
+			return castToBoolWithException( value );
+		}
+		catch ( Exception e )
+		{
+			return false;
 		}
 	}
 	
@@ -296,7 +309,7 @@ public class ObjectFunc
 		{
 			return castToIntWithException( value );
 		}
-		catch ( ClassCastException e )
+		catch ( Exception e )
 		{
 			return 0;
 		}
@@ -314,9 +327,9 @@ public class ObjectFunc
 			case "java.lang.String":
 				return Long.parseLong( ( String ) value );
 			case "java.lang.Integer":
-				return ( Long ) value;
+				return Long.parseLong( "" + value );
 			case "java.lang.Double":
-				return ( Long ) value;
+				return Long.parseLong( "" + value );
 			case "java.lang.Boolean":
 				return ( ( boolean ) value ) ? 1L : 0L;
 			case "java.math.BigDecimal":
@@ -334,6 +347,7 @@ public class ObjectFunc
 		}
 		catch ( ClassCastException e )
 		{
+			e.printStackTrace();
 			return 0L;
 		}
 	}
@@ -376,5 +390,54 @@ public class ObjectFunc
 		{
 			return null;
 		}
+	}
+	
+	@SuppressWarnings( "unchecked" )
+	public static <O> O castThis( Class<?> clz, Object o )
+	{
+		boolean debug = ( Thread.currentThread().getStackTrace()[3].getClassName().equals( "com.chiorichan.util.MapFunc$castTypes" ) );
+		
+		try
+		{
+			if ( clz == Integer.class )
+				return ( O ) castToIntWithException( o );
+			if ( clz == Long.class )
+				return ( O ) castToLongWithException( o );
+			if ( clz == Boolean.class )
+				return ( O ) castToBoolWithException( o );
+			if ( clz == String.class )
+				return ( O ) castToStringWithException( o );
+		}
+		catch ( Exception e1 )
+		{
+			try
+			{
+				return ( O ) o;
+			}
+			catch ( Exception e2 )
+			{
+				try
+				{
+					return ( O ) castToStringWithException( o );
+				}
+				catch ( Exception e3 )
+				{
+					try
+					{
+						/*
+						 * Last and final attempt to get something out of this
+						 * object even if it results in the toString() method.
+						 */
+						return ( O ) ( "" + o );
+					}
+					catch ( Exception e4 )
+					{
+						
+					}
+				}
+			}
+		}
+		
+		return null;
 	}
 }

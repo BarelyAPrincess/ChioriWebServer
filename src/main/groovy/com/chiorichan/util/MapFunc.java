@@ -17,28 +17,28 @@ import com.google.common.collect.Maps;
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-@SuppressWarnings( "unchecked" )
 public class MapFunc<K, V>
 {
+	Class<K> kClz;
+	Class<V> vClz;
+	
+	public MapFunc( Class<K> kClz, Class<V> vClz )
+	{
+		this.kClz = kClz;
+		this.vClz = vClz;
+	}
+	
 	public Map<K, V> castTypes( Map<?, ?> map )
 	{
-		K tK = null;
-		V tV = null;
 		Map<K, V> newMap = Maps.newHashMap();
 		
 		for ( Entry<?, ?> e : map.entrySet() )
 		{
-			try
-			{
-				K k = ( K ) ( ( tK instanceof String ) ? ObjectFunc.castToStringWithException( e.getKey() ) : e.getKey() );
-				V v = ( V ) ( ( tV instanceof String ) ? ObjectFunc.castToStringWithException( e.getValue() ) : e.getValue() );
-				
+			K k = ObjectFunc.castThis( kClz, e.getKey() );
+			V v = ObjectFunc.castThis( vClz, e.getValue() );
+			
+			if ( k != null && v != null )
 				newMap.put( k, v );
-			}
-			catch ( ClassCastException cce )
-			{
-				// Obviously key or value were not compatible with specified generic types
-			}
 		}
 		
 		return newMap;
