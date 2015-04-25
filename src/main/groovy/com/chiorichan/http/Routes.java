@@ -78,7 +78,8 @@ public class Routes
 						{
 							try
 							{
-								routes.add( new Route( l, site ) );
+								if ( !l.startsWith( "#" ) )
+									routes.add( new Route( l, site ) );
 							}
 							catch ( IOException e1 )
 							{
