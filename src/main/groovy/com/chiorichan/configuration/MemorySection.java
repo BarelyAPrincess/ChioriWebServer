@@ -19,6 +19,10 @@ import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
 
+import com.chiorichan.Loader;
+
+// TODO Implement the number type casting issues
+
 /**
  * A type of {@link ConfigurationSection} that is stored in memory.
  */
@@ -40,7 +44,7 @@ public class MemorySection implements ConfigurationSection
 	 */
 	protected MemorySection()
 	{
-		if ( !( this instanceof Configuration ) )
+		if ( ! ( this instanceof Configuration ) )
 		{
 			throw new IllegalStateException( "Cannot construct a root MemorySection when not a Configuration" );
 		}
@@ -397,7 +401,7 @@ public class MemorySection implements ConfigurationSection
 	public double getDouble( String path, double def )
 	{
 		Object val = get( path, def );
-		return ( val instanceof Number ) ? toDouble( val ) : def;
+		return ( val instanceof Number || val instanceof Integer ) ? toDouble( val ) : def;
 	}
 	
 	public boolean isDouble( String path )
@@ -409,13 +413,13 @@ public class MemorySection implements ConfigurationSection
 	public long getLong( String path )
 	{
 		Object def = getDefault( path );
-		return getLong( path, ( def instanceof Number ) ? toLong( def ) : 0 );
+		return getLong( path, ( def instanceof Number || def instanceof Integer ) ? toLong( def ) : 0 );
 	}
 	
 	public long getLong( String path, long def )
 	{
 		Object val = get( path, def );
-		return ( val instanceof Number ) ? toLong( val ) : def;
+		return ( val instanceof Number || val instanceof Integer ) ? toLong( val ) : def;
 	}
 	
 	public boolean isLong( String path )
@@ -511,7 +515,7 @@ public class MemorySection implements ConfigurationSection
 					result.add( Integer.valueOf( ( String ) object ) );
 				}
 				catch ( Exception ex )
-				{	
+				{
 					
 				}
 			}
@@ -585,7 +589,7 @@ public class MemorySection implements ConfigurationSection
 					result.add( Double.valueOf( ( String ) object ) );
 				}
 				catch ( Exception ex )
-				{	
+				{
 					
 				}
 			}
@@ -626,7 +630,7 @@ public class MemorySection implements ConfigurationSection
 					result.add( Float.valueOf( ( String ) object ) );
 				}
 				catch ( Exception ex )
-				{	
+				{
 					
 				}
 			}
@@ -667,7 +671,7 @@ public class MemorySection implements ConfigurationSection
 					result.add( Long.valueOf( ( String ) object ) );
 				}
 				catch ( Exception ex )
-				{	
+				{
 					
 				}
 			}
@@ -708,7 +712,7 @@ public class MemorySection implements ConfigurationSection
 					result.add( Byte.valueOf( ( String ) object ) );
 				}
 				catch ( Exception ex )
-				{	
+				{
 					
 				}
 			}
@@ -784,7 +788,7 @@ public class MemorySection implements ConfigurationSection
 					result.add( Short.valueOf( ( String ) object ) );
 				}
 				catch ( Exception ex )
-				{	
+				{
 					
 				}
 			}
@@ -1039,7 +1043,7 @@ public class MemorySection implements ConfigurationSection
 	{
 		try
 		{
-			return Long.parseLong( ( String ) def );
+			return Long.parseLong( "" + def );
 		}
 		catch ( Exception e )
 		{
