@@ -112,7 +112,7 @@ public class Site
 		}
 		
 		// Load sources location
-		String sources = config.getString( "site.source", "pages" );
+		String sources = config.getString( "site.source", "" );
 		
 		if ( sources == null || sources.isEmpty() )
 		{
@@ -140,6 +140,7 @@ public class Site
 		else if ( resources.startsWith( "." ) )
 		{
 			resource = new File( getAbsoluteRoot() + resources );
+			protectedFiles.add( "/" + resources );
 		}
 		else
 		{
