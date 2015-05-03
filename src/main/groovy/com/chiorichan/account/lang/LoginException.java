@@ -4,7 +4,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
  */
-package com.chiorichan.account;
+package com.chiorichan.account.lang;
+
+import com.chiorichan.account.Account;
 
 /**
  * Used to pass login errors to the requester.

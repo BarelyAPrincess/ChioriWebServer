@@ -13,8 +13,8 @@ import java.sql.SQLException;
 
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountMetaData;
-import com.chiorichan.account.LoginException;
-import com.chiorichan.account.LoginExceptionReason;
+import com.chiorichan.account.lang.LoginException;
+import com.chiorichan.account.lang.LoginExceptionReason;
 import com.chiorichan.util.CommonFunc;
 
 public class SqlAccount extends Account
@@ -74,7 +74,16 @@ public class SqlAccount extends Account
 	@Override
 	public String getDisplayName()
 	{
-		return ( getString( "fname" ).isEmpty() ) ? getString( "name" ) : getString( "fname" ) + " " + getString( "name" );
+		if ( getString( "fname" ) != null && !getString( "fname" ).isEmpty() && getString( "name" ) != null && !getString( "name" ).isEmpty() )
+			return getString( "fname" ) + " " + getString( "name" );
+		
+		if ( getString( "name" ) != null && !getString( "name" ).isEmpty() )
+			return getString( "name" );
+		
+		if ( getString( "email" ) != null && !getString( "email" ).isEmpty() )
+			return getString( "email" );
+		
+		return super.getDisplayName();
 	}
 	
 	@Override
@@ -92,6 +101,6 @@ public class SqlAccount extends Account
 	@Override
 	public SqlAdapter getLookupAdapter()
 	{
-		return null;
+		return lookupAdapter;
 	}
 }

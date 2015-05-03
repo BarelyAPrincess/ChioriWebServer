@@ -13,9 +13,9 @@ import java.util.List;
 
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountMetaData;
-import com.chiorichan.account.LoginException;
-import com.chiorichan.account.LoginExceptionReason;
 import com.chiorichan.account.adapter.AccountLookupAdapter;
+import com.chiorichan.account.lang.LoginException;
+import com.chiorichan.account.lang.LoginExceptionReason;
 import com.chiorichan.util.StringFunc;
 import com.google.common.collect.Lists;
 
@@ -53,13 +53,10 @@ public class MemoryAdapter implements AccountLookupAdapter
 		
 	}
 	
-	/**
-	 * Nothing to reload.
-	 */
 	@Override
-	public AccountMetaData reloadAccount( AccountMetaData meta )
+	public void reloadAccount( AccountMetaData meta )
 	{
-		return meta;
+		// Do Nothing
 	}
 	
 	@Override

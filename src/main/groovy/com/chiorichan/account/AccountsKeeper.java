@@ -12,6 +12,7 @@ package com.chiorichan.account;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -20,6 +21,9 @@ import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.account.adapter.AccountLookupAdapter;
 import com.chiorichan.account.adapter.memory.MemoryAccount;
+import com.chiorichan.account.lang.LoginException;
+import com.chiorichan.account.lang.LoginExceptionReason;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -100,7 +104,7 @@ public class AccountsKeeper
 	
 	public Account getAccountPartial( final String partial )
 	{
-		Validate.notNull( partial, "Partial Name cannot be null" );
+		Validate.notNull( partial );
 		
 		Account found = null;
 		String lowerName = partial.toLowerCase();
@@ -120,6 +124,62 @@ public class AccountsKeeper
 			}
 		}
 		return found;
+	}
+	
+	public Account[] getAccounts( String query )
+	{
+		Validate.notNull( query );
+		List<Account> results = Lists.newArrayList();
+		
+		if ( query.contains( "|" ) )
+		{
+			for ( String s : Splitter.on( "|" ).split( query ) )
+				if ( s != null && !s.isEmpty() )
+					results.addAll( Arrays.asList( getAccounts( s ) ) );
+			
+			return results.toArray( new Account[0] );
+		}
+		
+		boolean isLower = query.toLowerCase().equals( query ); // Is query string all lower case?
+		
+		for ( Entry<Account, AccountsKeeperOptions> e : accounts.entrySet() )
+		{
+			Account acct = e.getKey();
+			
+			String id = ( isLower ) ? acct.getAcctId().toLowerCase() : acct.getAcctId();
+			
+			if ( !id.isEmpty() && id.contains( query ) )
+			{
+				results.add( acct );
+				continue;
+			}
+			
+			id = ( isLower ) ? acct.getUsername().toLowerCase() : acct.getUsername();
+			
+			if ( !id.isEmpty() && id.contains( query ) )
+			{
+				results.add( acct );
+				continue;
+			}
+			
+			id = ( isLower ) ? acct.getDisplayName().toLowerCase() : acct.getDisplayName();
+			
+			if ( !id.isEmpty() && id.contains( query ) )
+			{
+				results.add( acct );
+				continue;
+			}
+			
+			id = ( isLower ) ? acct.getString( "email" ).toLowerCase() : acct.getString( "email" );
+			
+			if ( !id.isEmpty() && id.contains( query ) )
+			{
+				results.add( acct );
+				continue;
+			}
+		}
+		
+		return results.toArray( new Account[0] );
 	}
 	
 	public Account getAccount( String s ) throws LoginException
@@ -198,7 +258,14 @@ public class AccountsKeeper
 		for ( Account acct : accounts.keySet() )
 		{
 			if ( acct != null )
-				adapter.saveAccount( acct.getMetaData() );
+				try
+				{
+					adapter.saveAccount( acct.getMetaData() );
+				}
+				catch ( Exception e )
+				{
+					// Do Nothing
+				}
 		}
 	}
 	

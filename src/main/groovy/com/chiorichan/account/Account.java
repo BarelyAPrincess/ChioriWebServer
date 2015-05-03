@@ -15,6 +15,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 import com.chiorichan.Loader;
 import com.chiorichan.account.adapter.AccountLookupAdapter;
+import com.chiorichan.account.lang.LoginException;
+import com.chiorichan.account.lang.LoginExceptionReason;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionResult;
 import com.google.common.base.Joiner;
@@ -165,11 +167,17 @@ public abstract class Account implements InteractiveEntity
 		return checkPermission( perm ).isTrue();
 	}
 	
+	public abstract String getUsername();
+	
 	public abstract String getPassword();
 	
-	public abstract String getDisplayName();
-	
-	public abstract String getUsername();
+	public String getDisplayName()
+	{
+		if ( getUsername() != null && !getUsername().isEmpty() )
+			return getUsername();
+		
+		return getAcctId();
+	}
 	
 	public final boolean kick( final String kickMessage )
 	{
@@ -180,7 +188,7 @@ public abstract class Account implements InteractiveEntity
 		
 	}
 	
-	public final void save()
+	public final void save() throws Exception
 	{
 		getLookupAdapter().saveAccount( metaData );
 	}
@@ -232,9 +240,9 @@ public abstract class Account implements InteractiveEntity
 				h.sendMessage( msg );
 	}
 	
-	public final void reloadAndValidate() throws LoginException
+	public final void reloadAndValidate() throws Exception
 	{
-		metaData.mergeData( getLookupAdapter().reloadAccount( metaData ) );
+		getLookupAdapter().reloadAccount( metaData );
 	}
 	
 	public abstract AccountLookupAdapter getLookupAdapter();

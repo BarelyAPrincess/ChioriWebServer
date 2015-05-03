@@ -12,6 +12,7 @@ package com.chiorichan.account;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.ConsoleLogger;
@@ -20,6 +21,9 @@ import com.chiorichan.account.AccountsKeeper.AccountsKeeperOptions;
 import com.chiorichan.account.adapter.AccountLookupAdapter;
 import com.chiorichan.account.adapter.file.FileAdapter;
 import com.chiorichan.account.adapter.sql.SqlAdapter;
+import com.chiorichan.account.lang.LoginException;
+import com.chiorichan.account.lang.LoginExceptionReason;
+import com.chiorichan.account.lang.LookupAdapterException;
 import com.chiorichan.account.system.SystemAccounts;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.event.account.AccountLoginEvent;
@@ -189,6 +193,19 @@ public class AccountManager
 		return accounts.getAccountPartial( partial );
 	}
 	
+	// TODO Implement account permission safe guards. Don't want one site getting the users for another site.
+	public Account[] getAccounts( String query )
+	{
+		return accounts.getAccounts( query );
+	}
+	
+	public Account[] getAccounts( String query, int limit )
+	{
+		Account[] accts = accounts.getAccounts( query );
+		accts = ArrayUtils.subarray( accts, 0, limit );
+		return accts;
+	}
+	
 	public Account getAccount( String s )
 	{
 		try
@@ -197,7 +214,8 @@ public class AccountManager
 		}
 		catch ( LoginException e )
 		{
-			getLogger().warning( "LoginException was thrown in AccountsManager while trying to get account '" + s + "'. Message: '" + e.getMessage() + "'" );
+			if ( isDebug )
+				getLogger().warning( "LoginException was thrown in AccountsManager while trying to get account '" + s + "'. Message: '" + e.getMessage() + "'" );
 			return null;
 		}
 	}
@@ -277,6 +295,30 @@ public class AccountManager
 	public int getMaxAccounts()
 	{
 		return maxAccounts;
+	}
+	
+	public String generateLoginToken( String username ) throws LoginException
+	{
+		if ( !Loader.getConfig().getBoolean( "accounts.allowLoginTokens", true ) )
+			throw new LoginException( LoginExceptionReason.featureDisabled );
+		
+		if ( username == null || username.isEmpty() )
+			throw new LoginException( LoginExceptionReason.emptyUsername );
+		
+		Account acct = accounts.getAccount( username );
+		
+		
+	}
+	
+	public Account attemptLoginWithToken( AccountHandler sess, String username, String token ) throws LoginException
+	{
+		if ( !Loader.getConfig().getBoolean( "accounts.allowLoginTokens", true ) )
+			throw new LoginException( LoginExceptionReason.featureDisabled );
+		
+		if ( username == null || username.isEmpty() )
+			throw new LoginException( LoginExceptionReason.emptyUsername );
+		
+		Account acct = accounts.getAccount( username );
 	}
 	
 	public Account attemptLogin( AccountHandler sess, String username, String password ) throws LoginException

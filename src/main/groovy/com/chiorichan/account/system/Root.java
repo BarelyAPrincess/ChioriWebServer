@@ -9,9 +9,9 @@
  */
 package com.chiorichan.account.system;
 
-import com.chiorichan.account.LoginException;
 import com.chiorichan.account.adapter.AccountLookupAdapter;
 import com.chiorichan.account.adapter.memory.MemoryAccount;
+import com.chiorichan.account.lang.LoginException;
 
 public class Root extends MemoryAccount
 {

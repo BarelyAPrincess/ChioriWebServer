@@ -13,9 +13,9 @@ import java.util.List;
 
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountMetaData;
-import com.chiorichan.account.LoginException;
-import com.chiorichan.account.LoginExceptionReason;
 import com.chiorichan.account.adapter.memory.MemoryAdapter;
+import com.chiorichan.account.lang.LoginException;
+import com.chiorichan.account.lang.LoginExceptionReason;
 
 /**
  * Used to lookup Account MetaData from the adapters datastore
@@ -35,14 +35,12 @@ public interface AccountLookupAdapter
 	 * Attempt to serialize provided account.
 	 * Use of the account instance may continue.
 	 */
-	void saveAccount( AccountMetaData account );
+	void saveAccount( AccountMetaData account ) throws Exception;
 	
 	/**
 	 * Attempt to reload details regarding this account.
-	 * 
-	 * @return Same AccountMetaData that was provided as an argument
 	 */
-	AccountMetaData reloadAccount( AccountMetaData account );
+	void reloadAccount( AccountMetaData account ) throws Exception;
 	
 	/**
 	 * Attempt to load a account.

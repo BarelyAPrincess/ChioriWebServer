@@ -10,8 +10,8 @@
 package com.chiorichan.account.system;
 
 import com.chiorichan.Loader;
-import com.chiorichan.account.LoginException;
 import com.chiorichan.account.adapter.memory.MemoryAccount;
+import com.chiorichan.account.lang.LoginException;
 
 public class SystemAccounts
 {

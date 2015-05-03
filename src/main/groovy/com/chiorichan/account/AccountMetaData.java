@@ -9,11 +9,15 @@
  */
 package com.chiorichan.account;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.commons.lang3.Validate;
+
 import com.chiorichan.util.ObjectFunc;
+import com.chiorichan.util.StringFunc;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 
@@ -29,8 +33,13 @@ public class AccountMetaData
 	public AccountMetaData( String username, String password, String acctId )
 	{
 		metaData.put( "username", username );
-		metaData.put( "password", password );
+		metaData.put( "password", StringFunc.md5( password ) );
 		metaData.put( "acctId", acctId );
+	}
+	
+	public Map<String, Object> getMetaDataMap()
+	{
+		return Collections.unmodifiableMap( metaData );
 	}
 	
 	public boolean hasMinimumData()
@@ -45,6 +54,23 @@ public class AccountMetaData
 	
 	public void set( String key, Object obj )
 	{
+		Validate.notNull( key );
+		
+		if ( obj == null )
+		{
+			metaData.remove( key );
+			return;
+		}
+		
+		if ( "password".equalsIgnoreCase( key ) && obj instanceof String )
+			obj = StringFunc.md5( ( String ) obj );
+		
+		/*
+		 * Can't override the acctId associated with this account.
+		 */
+		if ( "acctId".equalsIgnoreCase( key ) )
+			return;
+		
 		metaData.put( key, obj );
 	}
 	

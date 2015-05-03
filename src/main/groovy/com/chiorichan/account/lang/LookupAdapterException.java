@@ -7,9 +7,24 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.account;
+package com.chiorichan.account.lang;
 
 public class LookupAdapterException extends Exception
 {
 	private static final long serialVersionUID = 4484558143431369641L;
+	
+	public LookupAdapterException()
+	{
+		
+	}
+	
+	public LookupAdapterException( String msg )
+	{
+		super( msg );
+	}
+	
+	public LookupAdapterException( String msg, Exception e )
+	{
+		super( msg, e );
+	}
 }

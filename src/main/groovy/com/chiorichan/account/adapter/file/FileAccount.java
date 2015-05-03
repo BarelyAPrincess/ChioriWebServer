@@ -14,8 +14,8 @@ import java.io.IOException;
 
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountMetaData;
-import com.chiorichan.account.LoginException;
-import com.chiorichan.account.LoginExceptionReason;
+import com.chiorichan.account.lang.LoginException;
+import com.chiorichan.account.lang.LoginExceptionReason;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.util.CommonFunc;
 

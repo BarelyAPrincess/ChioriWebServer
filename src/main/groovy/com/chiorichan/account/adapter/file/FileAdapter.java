@@ -21,9 +21,10 @@ import org.apache.commons.io.filefilter.FileFilterUtils;
 import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountMetaData;
-import com.chiorichan.account.LoginException;
-import com.chiorichan.account.LoginExceptionReason;
 import com.chiorichan.account.adapter.AccountLookupAdapter;
+import com.chiorichan.account.lang.LoginException;
+import com.chiorichan.account.lang.LoginExceptionReason;
+import com.chiorichan.account.lang.LookupAdapterException;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.util.CommonFunc;
 import com.chiorichan.util.FileFunc;
@@ -96,7 +97,7 @@ public class FileAdapter implements AccountLookupAdapter
 	}
 	
 	@Override
-	public void saveAccount( AccountMetaData meta )
+	public void saveAccount( AccountMetaData meta ) throws LookupAdapterException
 	{
 		if ( meta == null )
 			return;
@@ -120,22 +121,25 @@ public class FileAdapter implements AccountLookupAdapter
 	}
 	
 	@Override
-	public AccountMetaData reloadAccount( AccountMetaData meta )
+	public void reloadAccount( AccountMetaData meta ) throws LookupAdapterException
 	{
 		if ( meta == null || !meta.containsKey( "relPath" ) )
-			return meta;
+			throw new LookupAdapterException( "There appears to be a problem with this Account Meta Data. Missing the relPath key." );
 		
-		YamlConfiguration yser = YamlConfiguration.loadConfiguration( ( File ) meta.getObject( "relPath" ) );
-		
-		if ( yser == null )
-			return meta;
-		
-		for ( String key : yser.getKeys( false ) )
+		try
 		{
-			meta.set( key, yser.get( key ) );
+			YamlConfiguration yser = YamlConfiguration.loadConfiguration( ( File ) meta.getObject( "relPath" ) );
+			
+			if ( yser == null )
+				throw new LookupAdapterException( "The file for this Account Meta Data is missing. Might have been deleted." );
+			
+			for ( String key : yser.getKeys( false ) )
+				meta.set( key, yser.get( key ) );
 		}
-		
-		return meta;
+		catch ( Exception e )
+		{
+			throw new LookupAdapterException( "There was a problem loading the file for Account Meta Data.", e );
+		}
 	}
 	
 	public AccountMetaData createAccount( String accountname, String acctId ) throws LoginException
@@ -206,11 +210,6 @@ public class FileAdapter implements AccountLookupAdapter
 		
 		if ( meta == null )
 			throw new LoginException( LoginExceptionReason.incorrectLogin );
-		
-		meta = reloadAccount( meta );
-		
-		if ( meta.containsKey( "password" ) )
-			meta.set( "password", StringFunc.md5( meta.getString( "password" ) ) );
 		
 		return meta;
 	}

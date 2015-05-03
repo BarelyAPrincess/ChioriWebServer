@@ -11,7 +11,7 @@ package com.chiorichan.account.adapter.memory;
 
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountMetaData;
-import com.chiorichan.account.LoginException;
+import com.chiorichan.account.lang.LoginException;
 
 public class MemoryAccount extends Account
 {
