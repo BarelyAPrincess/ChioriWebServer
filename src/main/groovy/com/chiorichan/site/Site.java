@@ -42,6 +42,7 @@ import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.lang.SiteException;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.util.FileFunc;
+import com.chiorichan.util.RandomFunc;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -61,6 +62,7 @@ public class Site
 	protected File cacheDir = null;
 	protected List<String> cachePatterns = Lists.newArrayList();
 	protected Routes routes = null;
+	protected String encryptionKey = null;
 	
 	// Binding and evaling for use inside each site for executing site scripts outside of web requests.
 	Binding binding = new Binding();
@@ -79,6 +81,8 @@ public class Site
 		siteId = config.getString( "site.siteId", null );
 		title = config.getString( "site.title", Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Site" ) );
 		domain = config.getString( "site.domain", null );
+		
+		encryptionKey = config.getString( "site.encryptionKey" );
 		
 		String reason = null;
 		
@@ -206,6 +210,8 @@ public class Site
 			siteId = rs.getString( "siteId" );
 			title = rs.getString( "title" );
 			domain = rs.getString( "domain" );
+			
+			encryptionKey = rs.getString( "encryptionKey" );
 			
 			String reason = null;
 			
@@ -337,7 +343,12 @@ public class Site
 	
 	private void finishLoad() throws SiteException, StartupException
 	{
-		// Framework site always uses the Builtin SQL Connector. Ignore YAML FileBase on this one.
+		if ( encryptionKey == null )
+			encryptionKey = RandomFunc.randomize( "0x0000X" );
+		
+		/*
+		 * Framework site always uses the Builtin SQL Connector. Ignore YAML FileBase on this one.
+		 */
 		if ( siteId.equalsIgnoreCase( "framework" ) )
 		{
 			sql = Loader.getDatabase();
@@ -422,8 +433,11 @@ public class Site
 		if ( event.isCancelled() && !siteId.equalsIgnoreCase( "framework" ) )
 			throw new SiteException( "Loading of site '" + siteId + "' was cancelled by an internal event." );
 		
-		if ( new File( getAbsoluteRoot(), "fw" ).exists() && !siteId.equalsIgnoreCase( "framework" ) )
-			SiteManager.getLogger().warning( "It would appear that site '" + siteId + "' contains a subfolder by the name of 'fw', since this server uses the uri '/fw' for special functions, you will be unable to serve files from this folder!" );
+		/*
+		 * Warn the user that files can not be served from the `wisp`, a.k.a. Web Interface and Server Point, folder since the server uses it for internal requests.
+		 */
+		if ( new File( getAbsoluteRoot(), "wisp" ).exists() && !siteId.equalsIgnoreCase( "framework" ) )
+			SiteManager.getLogger().warning( "It would appear that site '" + siteId + "' contains a subfolder by the name of 'wisp', since this server uses the uri '/wisp' for internal requests, you will be unable to serve files from this folder!" );
 	}
 	
 	protected void save()
@@ -438,6 +452,9 @@ public class Site
 				break;
 			default: // DO NOTHING
 		}
+		
+		// TODO SAVE SITES ASAP
+		// EncryptionKey needs to be saved ASAP
 	}
 	
 	protected Site setDatabase( DatabaseEngine sql )
@@ -781,6 +798,11 @@ public class Site
 			SiteManager.getLogger().severe( "The temp directory specified in the server configs is not writable, File Uploads will FAIL until this problem is resolved." );
 		
 		return tmpFileDirectory;
+	}
+	
+	public String getEncryptionKey()
+	{
+		return encryptionKey;
 	}
 	
 	@Override

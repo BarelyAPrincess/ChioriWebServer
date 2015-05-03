@@ -108,7 +108,7 @@ public abstract class ScriptingBaseJava extends Script
 			return "";
 		
 		return sb.substring( 1 ).toString();
-	}	
+	}
 	
 	String trim( String str )
 	{
@@ -354,17 +354,23 @@ public abstract class ScriptingBaseJava extends Script
 	
 	String money_format( String amt )
 	{
-		if ( amt.isEmpty() )
+		if ( amt == null || amt.isEmpty() )
 			return "$0.00";
 		
-		return money_format( Integer.parseInt( amt ) );
+		return money_format( ObjectFunc.castToDouble( amt ) );
 	}
 	
 	String money_format( Integer amt )
 	{
-		if ( amt == 0 )
+		return money_format( amt.doubleValue() );
+	}
+	
+	String money_format( Double amt )
+	{
+		if ( amt == null || amt == 0 )
 			return "$0.00";
 		
+		// NumberFormat.getCurrencyInstance().format( amt );
 		DecimalFormat df = new DecimalFormat( "$###,###,###.00" );
 		return df.format( amt );
 	}
@@ -425,15 +431,6 @@ public abstract class ScriptingBaseJava extends Script
 	boolean isDarkColor( String hexdec )
 	{
 		return Integer.parseInt( hexdec, 16 ) > ( 0xffffff / 2 );
-	}
-	
-	String money_format( Double amt )
-	{
-		if ( amt == 0 )
-			return "$0.00";
-		
-		DecimalFormat df = new DecimalFormat( "$###,###,###.00" );
-		return df.format( amt );
 	}
 	
 	public boolean isNumeric( String str )

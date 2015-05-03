@@ -96,7 +96,8 @@ public class EvalFactoryResult
 	
 	public void addException( Exception exception )
 	{
-		caughtExceptions.add( exception );
+		if ( exception != null )
+			caughtExceptions.add( exception );
 	}
 	
 	public Exception[] getExceptions()

@@ -14,6 +14,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import com.chiorichan.permission.lang.PermissionBackendException;
+import com.chiorichan.permission.lang.PermissionException;
+
 public abstract class PermissionBackend
 {
 	/**

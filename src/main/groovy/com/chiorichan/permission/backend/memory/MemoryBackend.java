@@ -16,8 +16,8 @@ import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionBackend;
-import com.chiorichan.permission.PermissionBackendException;
-import com.chiorichan.permission.PermissionException;
+import com.chiorichan.permission.lang.PermissionBackendException;
+import com.chiorichan.permission.lang.PermissionException;
 import com.google.common.collect.Sets;
 
 /*

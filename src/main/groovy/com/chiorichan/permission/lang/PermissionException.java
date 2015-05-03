@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.permission;
+package com.chiorichan.permission.lang;
 
 import java.sql.SQLException;
 

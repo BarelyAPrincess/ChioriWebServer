@@ -20,6 +20,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,6 +31,7 @@ import org.json.JSONException;
 
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
+import com.chiorichan.database.DatabaseEngine.TypeCatcher.FoundException;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.StringFunc;
@@ -43,14 +45,14 @@ import com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException;
  */
 public class DatabaseEngine
 {
-	public enum DBType
+	public enum DatabaseType
 	{
 		SQLITE, MYSQL, UNKNOWN;
 	}
 	
 	private Connection con;
 	private String savedDb, savedUser, savedPass, savedHost, savedPort;
-	private DBType type = DBType.UNKNOWN;
+	private DatabaseType type = DatabaseType.UNKNOWN;
 	
 	public DatabaseEngine()
 	{
@@ -113,7 +115,7 @@ public class DatabaseEngine
 		con = DriverManager.getConnection( "jdbc:sqlite:" + sqliteDb.getAbsolutePath() );
 		
 		getLogger().info( "We succesully connected to the sqLite database using 'jdbc:sqlite:" + sqliteDb.getAbsolutePath() + "'" );
-		type = DBType.SQLITE;
+		type = DatabaseType.SQLITE;
 	}
 	
 	/**
@@ -165,7 +167,7 @@ public class DatabaseEngine
 		else
 			Loader.getLogger().warning( "There was a problem connecting to the sql database using 'jdbc:mysql://" + host + ":" + port + "/" + db + "'." );
 		
-		type = DBType.MYSQL;
+		type = DatabaseType.MYSQL;
 	}
 	
 	public LinkedHashMap<String, Object> selectOne( String table, List<String> keys, List<? extends Object> values ) throws SQLException
@@ -590,6 +592,107 @@ public class DatabaseEngine
 		return result;
 	}
 	
+	public void addColumn( String table, String columnName, Class<?> clz ) throws SQLException
+	{
+		addColumn( table, columnName, clz, -1L );
+	}
+	
+	public void addColumn( String table, String columnName, Class<?> clz, long maxLenReq ) throws SQLException
+	{
+		String type = "VARCHAR(255)";
+		
+		if ( maxLenReq < 1 )
+			maxLenReq = 255;
+		
+		if ( clz == String.class )
+			if ( maxLenReq < 256 )
+				type = "VARCHAR(255)";
+			else
+				type = "TEXT";
+		
+		if ( clz == Integer.class || clz == int.class || clz == Long.class || clz == long.class )
+		{
+			if ( maxLenReq < 256 )
+				type = "TINYINT(" + maxLenReq + ")";
+			if ( maxLenReq > 255 && maxLenReq < 65536 )
+				type = "SMALLINT(" + maxLenReq + ")";
+			if ( maxLenReq > 65535 && maxLenReq < 16777216 )
+				type = "MEDIUMINT(" + maxLenReq + ")";
+			if ( maxLenReq > 16777215 && maxLenReq < 4294967296L )
+				type = "INT(" + maxLenReq + ")";
+			if ( maxLenReq > 4294967295L )
+				type = "BIGINT(" + maxLenReq + ")";
+		}
+		
+		if ( clz == Boolean.class || clz == boolean.class )
+			type = "TINYINT(1)";
+		if ( clz == Float.class || clz == float.class )
+			type = "FLOAT(" + maxLenReq + ",2)";
+		if ( clz == Double.class || clz == double.class )
+			type = "DOUBLE(" + maxLenReq + ",2)";
+		
+		queryUpdate( "ALTER TABLE `" + table + "` ADD `" + columnName + "` " + type + ";" );
+	}
+	
+	public static int getColumnType( Class<?> clz )
+	{
+		TypeCatcher tc = new TypeCatcher( clz );
+		
+		try
+		{
+			tc.check( Integer.class, Types.INTEGER );
+			tc.check( int.class, Types.INTEGER );
+			tc.check( Boolean.class, Types.TINYINT );
+			tc.check( boolean.class, Types.TINYINT );
+			tc.check( float.class, Types.FLOAT );
+			tc.check( Float.class, Types.FLOAT );
+			tc.check( double.class, Types.DOUBLE );
+			tc.check( Double.class, Types.DOUBLE );
+			tc.check( String.class, Types.VARCHAR );
+		}
+		catch ( FoundException e )
+		{
+			return e.getType();
+		}
+		
+		return Types.NULL;
+	}
+	
+	/**
+	 * Provides an easy way to catch a matching type without tons of if...then statements
+	 */
+	static class TypeCatcher
+	{
+		@SuppressWarnings( "serial" )
+		public class FoundException extends Exception
+		{
+			int matchingType = 0;
+			
+			FoundException( int matchingType )
+			{
+				this.matchingType = matchingType;
+			}
+			
+			int getType()
+			{
+				return matchingType;
+			}
+		}
+		
+		Class<?> origType;
+		
+		public TypeCatcher( Class<?> origType )
+		{
+			this.origType = origType;
+		}
+		
+		public void check( Class<?> clz, int matchingType ) throws FoundException
+		{
+			if ( origType == clz )
+				throw new FoundException( matchingType );
+		}
+	}
+	
 	public static Map<String, Object> convertRow( ResultSet rs ) throws SQLException
 	{
 		Map<String, Object> result = Maps.newLinkedHashMap();
@@ -603,19 +706,19 @@ public class DatabaseEngine
 			
 			// Loader.getLogger().info( "Column: " + columnName + " <-> " + rsmd.getColumnTypeName( i ) );
 			
-			if ( rsmd.getColumnType( i ) == java.sql.Types.ARRAY )
+			if ( rsmd.getColumnType( i ) == Types.ARRAY )
 			{
-				result.put( columnName, rs.getArray( columnName ) );
+				result.put( columnName, rs.getArray( columnName ).getArray() );
 			}
-			else if ( rsmd.getColumnType( i ) == java.sql.Types.BIGINT )
-			{
-				result.put( columnName, rs.getInt( columnName ) );
-			}
-			else if ( rsmd.getColumnType( i ) == java.sql.Types.TINYINT )
+			else if ( rsmd.getColumnType( i ) == Types.BIGINT )
 			{
 				result.put( columnName, rs.getInt( columnName ) );
 			}
-			else if ( rsmd.getColumnType( i ) == java.sql.Types.BIT ) // Sometimes tinyints are read as bits
+			else if ( rsmd.getColumnType( i ) == Types.TINYINT )
+			{
+				result.put( columnName, rs.getInt( columnName ) );
+			}
+			else if ( rsmd.getColumnType( i ) == Types.BIT ) // Sometimes tinyints are read as bits
 			{
 				result.put( columnName, rs.getInt( columnName ) );
 			}
@@ -623,7 +726,7 @@ public class DatabaseEngine
 			{
 				result.put( columnName, rs.getBoolean( columnName ) );
 			}
-			else if ( rsmd.getColumnTypeName( i ).contains( "BLOB" ) || rsmd.getColumnType( i ) == java.sql.Types.BINARY )
+			else if ( rsmd.getColumnTypeName( i ).contains( "BLOB" ) || rsmd.getColumnType( i ) == Types.BINARY )
 			{
 				// BLOG = Max Length 65,535. Recommended that you use a LONGBLOG.
 				byte[] bytes = rs.getBytes( columnName );
@@ -639,11 +742,11 @@ public class DatabaseEngine
 				 * }
 				 */
 			}
-			else if ( rsmd.getColumnType( i ) == java.sql.Types.DOUBLE )
+			else if ( rsmd.getColumnType( i ) == Types.DOUBLE )
 			{
 				result.put( columnName, rs.getDouble( columnName ) );
 			}
-			else if ( rsmd.getColumnType( i ) == java.sql.Types.FLOAT )
+			else if ( rsmd.getColumnType( i ) == Types.FLOAT )
 			{
 				result.put( columnName, rs.getFloat( columnName ) );
 			}
@@ -651,7 +754,7 @@ public class DatabaseEngine
 			{
 				result.put( columnName, rs.getInt( columnName ) );
 			}
-			else if ( rsmd.getColumnType( i ) == java.sql.Types.NVARCHAR )
+			else if ( rsmd.getColumnType( i ) == Types.NVARCHAR )
 			{
 				result.put( columnName, rs.getNString( columnName ) );
 			}
@@ -659,15 +762,15 @@ public class DatabaseEngine
 			{
 				result.put( columnName, rs.getString( columnName ) );
 			}
-			else if ( rsmd.getColumnType( i ) == java.sql.Types.SMALLINT )
+			else if ( rsmd.getColumnType( i ) == Types.SMALLINT )
 			{
 				result.put( columnName, rs.getInt( columnName ) );
 			}
-			else if ( rsmd.getColumnType( i ) == java.sql.Types.DATE )
+			else if ( rsmd.getColumnType( i ) == Types.DATE )
 			{
 				result.put( columnName, rs.getDate( columnName ) );
 			}
-			else if ( rsmd.getColumnType( i ) == java.sql.Types.TIMESTAMP )
+			else if ( rsmd.getColumnType( i ) == Types.TIMESTAMP )
 			{
 				result.put( columnName, rs.getTimestamp( columnName ) );
 			}
@@ -686,7 +789,7 @@ public class DatabaseEngine
 		return rs.getMetaData();
 	}
 	
-	public List<String> getTableFieldNames( String table ) throws SQLException
+	public List<String> getTableColumnNames( String table ) throws SQLException
 	{
 		List<String> rtn = Lists.newArrayList();
 		
@@ -704,7 +807,7 @@ public class DatabaseEngine
 		return rtn;
 	}
 	
-	public List<String> getTableFieldTypes( String table ) throws SQLException
+	public List<String> getTableColumnTypes( String table ) throws SQLException
 	{
 		List<String> rtn = Lists.newArrayList();
 		
@@ -1243,7 +1346,7 @@ public class DatabaseEngine
 		return Loader.getLogger( "DBEngine" );
 	}
 	
-	public DBType getType()
+	public DatabaseType getType()
 	{
 		return type;
 	}

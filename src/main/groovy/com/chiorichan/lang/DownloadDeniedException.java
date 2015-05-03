@@ -7,28 +7,29 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.updater;
+package com.chiorichan.lang;
 
-public class PermissionDeniedException extends DownloadException
+
+public class DownloadDeniedException extends DownloadException
 {
 	private static final long serialVersionUID = 2L;
 	
-	public PermissionDeniedException( String message, Throwable cause )
+	public DownloadDeniedException( String message, Throwable cause )
 	{
 		super( message, cause );
 	}
 	
-	public PermissionDeniedException( Throwable cause )
+	public DownloadDeniedException( Throwable cause )
 	{
 		this( null, cause );
 	}
 	
-	public PermissionDeniedException( String message )
+	public DownloadDeniedException( String message )
 	{
 		this( message, null );
 	}
 	
-	public PermissionDeniedException()
+	public DownloadDeniedException()
 	{
 		this( null, null );
 	}

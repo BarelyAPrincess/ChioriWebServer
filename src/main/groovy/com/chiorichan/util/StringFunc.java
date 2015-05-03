@@ -41,6 +41,11 @@ public class StringFunc
 		return matcher.matches();
 	}
 	
+	public static boolean isValidMD5( String s )
+	{
+		return s.matches( "[a-fA-F0-9]{32}" );
+	}
+	
 	/**
 	 * Copies all elements from the iterable collection of originals to the collection provided.
 	 * 

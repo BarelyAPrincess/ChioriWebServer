@@ -16,6 +16,7 @@ import java.util.Set;
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.permission.backend.memory.MemoryPermission;
+import com.chiorichan.permission.lang.PermissionException;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -353,7 +354,7 @@ public abstract class Permission
 	}
 	
 	/**
-	 * Attempts to parse if a permission string is actually a reference to the EVERYBODY (-1, everybody, everyone), OP (0, op, root) or ADMIND (admin) permission nodes;
+	 * Attempts to parse if a permission string is actually a reference to the EVERYBODY (-1, everybody, everyone), OP (0, op, root) or ADMIN (admin) permission nodes;
 	 * 
 	 * @param perm
 	 *            The permission string to parse

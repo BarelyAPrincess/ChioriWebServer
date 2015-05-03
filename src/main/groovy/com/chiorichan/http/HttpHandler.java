@@ -69,8 +69,9 @@ import com.chiorichan.lang.HttpError;
 import com.chiorichan.lang.SiteException;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.net.NetworkSecurity;
-import com.chiorichan.permission.PermissionDefault;
-import com.chiorichan.permission.PermissionResult;
+import com.chiorichan.permission.lang.PermissionDeniedException;
+import com.chiorichan.permission.lang.PermissionDeniedException.PermissionDeniedReason;
+import com.chiorichan.permission.lang.PermissionException;
 import com.chiorichan.session.SessionProvider;
 import com.chiorichan.site.Site;
 import com.chiorichan.util.ObjectFunc;
@@ -154,32 +155,69 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	@Override
 	public void exceptionCaught( ChannelHandlerContext ctx, Throwable cause ) throws Exception
 	{
-		// cause.printStackTrace();
+		boolean evalFactoryException = false;
 		
+		/*
+		 * Unpackage the EvalFactoryException.
+		 * Not sure if exceptions from the EvalFactory should be handled differently or not.
+		 * XXX Maybe skip generating exception pages for errors that were caused internally and report them to Chiori-chan unless the server is in development mode?
+		 */
+		if ( cause instanceof EvalFactoryException && cause.getCause() != null )
+		{
+			cause = cause.getCause();
+			evalFactoryException = true;
+		}
+		
+		/*
+		 * TODO Proper Exception Handling. Consider the ability to have these exceptions cached and/or delivered by e-mail to developer and/or server administrator.
+		 */
 		if ( cause instanceof HttpError )
 			response.sendError( ( HttpError ) cause );
-		else if ( cause instanceof IOException && cause.getCause() != null )
+		else if ( cause instanceof PermissionDeniedException )
 		{
-			// cause.getCause().printStackTrace();
-			response.sendException( cause.getCause() );
+			PermissionDeniedException pde = ( PermissionDeniedException ) cause;
+			
+			if ( pde.getReason() == PermissionDeniedReason.LOGIN_PAGE )
+			{
+				/*
+				 * TODO: Come up with a better way to handle the URI used in the target, i.e., currently params are being lost in all redirects.
+				 */
+				String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
+				response.sendRedirect( loginForm + "?msg=You must be logged in to view that page!&target=http://" + request.getDomain() + request.getUri() );
+			}
+			else
+			{
+				/*
+				 * TODO generate a special permission denied page for these!!!
+				 */
+				response.sendError( ( ( PermissionDeniedException ) cause ).getHttpCode(), cause.getMessage() );
+			}
 		}
-		else if ( cause instanceof IndexOutOfBoundsException || cause instanceof NullPointerException || cause instanceof IOException || cause instanceof SiteException )
+		else if ( cause instanceof PermissionException || cause instanceof IndexOutOfBoundsException || cause instanceof NullPointerException || cause instanceof IOException || cause instanceof SiteException )
 		{
 			/*
-			 * TODO Proper Exception Handling. Consider the ability to have these exceptions cached and/or delivered by e-mail to developer and/or server administrator.
+			 * XXX Known exceptions
+			 * EvalFactoryException
+			 * PermissionException
+			 * IndexOutOfBoundsException
+			 * NullPointerException
+			 * IOException
+			 * SiteException
 			 */
-			// cause.getCause().printStackTrace();
+			
 			response.sendException( cause );
+			
+			if ( !evalFactoryException )
+				NetworkManager.getLogger().severe( "This exception was thrown from outside the EvalFactory and might be the result of a server programming bug.", cause );
 		}
 		else
 		{
 			response.sendException( cause );
 			
-			/*
-			 * XXX Temporary way of capturing exceptions that were unexpected by the server.
-			 * Exceptions caught here should have proper exception captures implemented.
-			 */
-			NetworkManager.getLogger().severe( "WARNING THIS IS AN UNCAUGHT EXCEPTION! WOULD YOU KINDLY REPORT THIS STACKTRACE TO THE DEVELOPER?", cause );
+			if ( !evalFactoryException )
+				NetworkManager.getLogger().severe( "This exception was thrown from outside the EvalFactory and might be the result of a server programming bug.", cause );
+			else
+				NetworkManager.getLogger().severe( "This exception was not expected and most likely needs to be properly caught or investiated. Would you kindly report this stacktrace to the appropriate developer?", cause );
 		}
 		
 		try
@@ -188,8 +226,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		}
 		catch ( Throwable t )
 		{
-			Loader.getLogger().debug( "Finish has thrown an exception!" );
 			t.printStackTrace();
+			Loader.getLogger().debug( "Finish() has thrown an exception!" );
 		}
 	}
 	
@@ -442,7 +480,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		ctx.write( response );
 	}
 	
-	public void handleHttp( HttpRequestWrapper request, HttpResponseWrapper response ) throws IOException, HttpError, SiteException
+	public void handleHttp( HttpRequestWrapper request, HttpResponseWrapper response ) throws IOException, HttpError, SiteException, PermissionException, EvalFactoryException
 	{
 		String uri = request.getUri();
 		String domain = request.getParentDomain();
@@ -538,133 +576,93 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		if ( req == null )
 			req = "-1";
 		
-		/**
-		 * -1, everybody, everyone = Allow All!
-		 * 0, op, root | sys.op = OP Only!
-		 * admin | sys.admin = Admin Only!
-		 */
+		sess.getParentSession().requirePermission( req );
 		
-		PermissionResult perm = sess.getParentSession().checkPermission( req );
-		
-		if ( perm.getPermission() != PermissionDefault.EVERYBODY.getNode() )
+		// Enhancement: Allow html to be ran under different shells. Default is embedded.
+		if ( fi.hasHTML() )
 		{
-			if ( perm.getEntity() == null )
+			EvalMetaData meta = new EvalMetaData();
+			meta.shell = "embedded";
+			meta.contentType = fi.getContentType();
+			meta.params = Maps.newHashMap();
+			meta.params.putAll( fi.getRewriteParams() );
+			meta.params.putAll( request.getGetMap() );
+			EvalFactoryResult result = factory.eval( fi.getHTML(), meta, currentSite );
+			
+			if ( result.hasExceptions() )
 			{
-				String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
-				// NetworkManager.getLogger().warning( "Requester of page '" + file + "' has been redirected to the login page." );
-				response.sendRedirect( loginForm + "?msg=You must be logged in to view that page!&target=http://" + request.getDomain() + request.getUri() );
-				// TODO: Come up with a better way to handle the URI used in the target, i.e., currently params are being lost in the redirect.
+				if ( Loader.getConfig().getBoolean( "server.throwInternalServerErrorOnWarnings", false ) )
+				{
+					throw new IOException( "Ignorable Exceptions were thrown, disable this behavior with the `throwInternalServerErrorOnWarnings` option in config.", result.getExceptions()[0] );
+				}
+				else
+				{
+					for ( Exception e : result.getExceptions() )
+					{
+						NetworkManager.getLogger().warning( e.getMessage() );
+						NetworkManager.getLogger().warning( "" + e.getStackTrace()[0] );
+					}
+				}
+			}
+			
+			if ( result.isSuccessful() )
+			{
+				rendered.writeBytes( result.getResult() );
+				if ( result.getObject() != null && ! ( result.getObject() instanceof NullObject ) )
+					try
+					{
+						rendered.writeBytes( ObjectFunc.castToStringWithException( result.getObject() ).getBytes() );
+					}
+					catch ( Exception e )
+					{
+						e.printStackTrace();
+					}
+			}
+		}
+		
+		if ( fi.hasFile() )
+		{
+			if ( fi.isDirectoryRequest() )
+			{
+				processDirectoryListing( fi );
 				return;
 			}
 			
-			if ( !perm.isTrue() )
+			EvalMetaData meta = new EvalMetaData();
+			meta.params = Maps.newHashMap();
+			meta.params.putAll( request.getRewriteMap() );
+			meta.params.putAll( request.getGetMap() );
+			EvalFactoryResult result = factory.eval( fi, meta, currentSite );
+			
+			if ( result.hasExceptions() )
 			{
-				if ( perm.getPermission() == PermissionDefault.OP.getNode() )
-					throw new HttpError( 401, "This page is limited to Operators only!" );
+				if ( Loader.getConfig().getBoolean( "server.throwInternalServerErrorOnWarnings", false ) )
+				{
+					throw new IOException( "Ignorable Exceptions were thrown, disable this behavior with the `throwInternalServerErrorOnWarnings` option in config.", result.getExceptions()[0] );
+				}
 				else
-					throw new HttpError( 401, "This page is limited to users with access to the \"" + perm.getPermission().getNamespace() + "\" permission." );
+				{
+					for ( Exception e : result.getExceptions() )
+					{
+						NetworkManager.getLogger().warning( e.getMessage() );
+						NetworkManager.getLogger().warning( "" + e.getStackTrace()[0] );
+					}
+				}
 			}
-		}
-		
-		try
-		{
-			// Enhancement: Allow html to be ran under different shells. Default is embedded.
-			if ( fi.hasHTML() )
+			
+			if ( result.isSuccessful() )
 			{
-				EvalMetaData meta = new EvalMetaData();
-				meta.shell = "embedded";
-				meta.contentType = fi.getContentType();
-				meta.params = Maps.newHashMap();
-				meta.params.putAll( fi.getRewriteParams() );
-				meta.params.putAll( request.getGetMap() );
-				EvalFactoryResult result = factory.eval( fi.getHTML(), meta, currentSite );
-				
-				if ( result.hasExceptions() )
-				{
-					if ( Loader.getConfig().getBoolean( "server.throwInternalServerErrorOnWarnings", false ) )
+				rendered.writeBytes( result.getResult() );
+				if ( result.getObject() != null && ! ( result.getObject() instanceof NullObject ) )
+					try
 					{
-						throw new IOException( "Ignorable Exceptions were thrown, disable this behavior with the `throwInternalServerErrorOnWarnings` option in config.", result.getExceptions()[0] );
+						rendered.writeBytes( ObjectFunc.castToStringWithException( result.getObject() ).getBytes() );
 					}
-					else
+					catch ( Exception e )
 					{
-						for ( Exception e : result.getExceptions() )
-						{
-							NetworkManager.getLogger().warning( e.getMessage() );
-							NetworkManager.getLogger().warning( "" + e.getStackTrace()[0] );
-						}
+						e.printStackTrace();
 					}
-				}
-				
-				if ( result.isSuccessful() )
-				{
-					rendered.writeBytes( result.getResult() );
-					if ( result.getObject() != null && ! ( result.getObject() instanceof NullObject ) )
-						try
-						{
-							rendered.writeBytes( ObjectFunc.castToStringWithException( result.getObject() ).getBytes() );
-						}
-						catch ( Exception e )
-						{
-							e.printStackTrace();
-						}
-				}
 			}
-		}
-		catch ( EvalFactoryException e )
-		{
-			throw new IOException( "Exception encountered during shell execution of requested file.", e );
-		}
-		
-		try
-		{
-			if ( fi.hasFile() )
-			{
-				if ( fi.isDirectoryRequest() )
-				{
-					processDirectoryListing( fi );
-					return;
-				}
-				
-				EvalMetaData meta = new EvalMetaData();
-				meta.params = Maps.newHashMap();
-				meta.params.putAll( request.getRewriteMap() );
-				meta.params.putAll( request.getGetMap() );
-				EvalFactoryResult result = factory.eval( fi, meta, currentSite );
-				
-				if ( result.hasExceptions() )
-				{
-					if ( Loader.getConfig().getBoolean( "server.throwInternalServerErrorOnWarnings", false ) )
-					{
-						throw new IOException( "Ignorable Exceptions were thrown, disable this behavior with the `throwInternalServerErrorOnWarnings` option in config.", result.getExceptions()[0] );
-					}
-					else
-					{
-						for ( Exception e : result.getExceptions() )
-						{
-							NetworkManager.getLogger().warning( e.getMessage() );
-							NetworkManager.getLogger().warning( "" + e.getStackTrace()[0] );
-						}
-					}
-				}
-				
-				if ( result.isSuccessful() )
-				{
-					rendered.writeBytes( result.getResult() );
-					if ( result.getObject() != null && ! ( result.getObject() instanceof NullObject ) )
-						try
-						{
-							rendered.writeBytes( ObjectFunc.castToStringWithException( result.getObject() ).getBytes() );
-						}
-						catch ( Exception e )
-						{
-							e.printStackTrace();
-						}
-				}
-			}
-		}
-		catch ( EvalFactoryException e )
-		{
-			throw new IOException( "Exception encountered during shell execution of requested file.", e );
 		}
 		
 		// TODO: Possible theme'ing of error pages.

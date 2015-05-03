@@ -7,7 +7,9 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.permission;
+package com.chiorichan.permission.lang;
+
+import com.chiorichan.permission.PermissibleEntity;
 
 public class RankingException extends PermissionException
 {

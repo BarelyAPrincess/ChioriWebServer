@@ -307,7 +307,7 @@ public class AccountManager
 		
 		Account acct = accounts.getAccount( username );
 		
-		
+		return null;
 	}
 	
 	public Account attemptLoginWithToken( AccountHandler sess, String username, String token ) throws LoginException
@@ -319,6 +319,8 @@ public class AccountManager
 			throw new LoginException( LoginExceptionReason.emptyUsername );
 		
 		Account acct = accounts.getAccount( username );
+		
+		return null;
 	}
 	
 	public Account attemptLogin( AccountHandler sess, String username, String password ) throws LoginException

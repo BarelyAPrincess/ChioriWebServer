@@ -81,6 +81,7 @@ sessions:
   adapterType: none
   debug: false
 accounts:
+  allowLoginTokens: true
   maxLogins: -1
   debug: false
   singleLogin: false

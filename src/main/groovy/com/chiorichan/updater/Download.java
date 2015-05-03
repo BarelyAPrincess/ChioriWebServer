@@ -27,6 +27,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.io.IOUtils;
 
 import com.chiorichan.Loader;
+import com.chiorichan.lang.DownloadException;
+import com.chiorichan.lang.DownloadDeniedException;
 import com.chiorichan.util.WebFunc;
 
 public class Download implements Runnable
@@ -112,7 +114,7 @@ public class Download implements Runnable
 			
 			stateDone();
 		}
-		catch ( PermissionDeniedException e )
+		catch ( DownloadDeniedException e )
 		{
 			exception = e;
 			result = Result.PERMISSION_DENIED;
@@ -159,7 +161,7 @@ public class Download implements Runnable
 			
 			if ( stream.permDenied.get() )
 			{
-				throw new PermissionDeniedException( "Permission denied!" );
+				throw new DownloadDeniedException( "Permission denied!" );
 			}
 			
 			if ( is.get() != null )

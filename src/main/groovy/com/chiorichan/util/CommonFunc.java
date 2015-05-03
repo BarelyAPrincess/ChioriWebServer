@@ -20,11 +20,6 @@ public class CommonFunc
 		return ( int ) ( System.currentTimeMillis() / 1000 );
 	}
 	
-	public static boolean isValidMD5( String s )
-	{
-		return s.matches( "[a-fA-F0-9]{32}" );
-	}
-	
 	public static boolean isRoot()
 	{
 		return System.getProperty( "user.name" ).equalsIgnoreCase( "root" );

@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.updater;
+package com.chiorichan.lang;
 
 import java.io.IOException;
 

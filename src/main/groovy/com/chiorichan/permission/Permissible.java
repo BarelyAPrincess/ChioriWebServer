@@ -10,6 +10,8 @@
 package com.chiorichan.permission;
 
 import com.chiorichan.Loader;
+import com.chiorichan.permission.lang.PermissionDeniedException;
+import com.chiorichan.permission.lang.PermissionDeniedException.PermissionDeniedReason;
 
 public abstract class Permissible
 {
@@ -82,6 +84,39 @@ public abstract class Permissible
 			return new PermissionResult( null, perm, "" );
 		
 		return getPermissibleEntity().checkPermission( perm );
+	}
+	
+	/**
+	 * -1, everybody, everyone = Allow All!
+	 * 0, op, root | sys.op = OP Only!
+	 * admin | sys.admin = Admin Only!
+	 */
+	public final PermissionResult requirePermission( String req ) throws PermissionDeniedException
+	{
+		req = Permission.parseNode( req );
+		return requirePermission( Permission.getNode( req ) );
+	}
+	
+	public final PermissionResult requirePermission( Permission req ) throws PermissionDeniedException
+	{
+		PermissionResult perm = checkPermission( req );
+		
+		if ( perm.getPermission() != PermissionDefault.EVERYBODY.getNode() )
+		{
+			if ( perm.getEntity() == null )
+			{
+				throw new PermissionDeniedException( PermissionDeniedReason.LOGIN_PAGE );
+			}
+			
+			if ( !perm.isTrue() )
+			{
+				if ( perm.getPermission() == PermissionDefault.OP.getNode() )
+					throw new PermissionDeniedException( PermissionDeniedReason.OP_ONLY );
+				throw new PermissionDeniedException( PermissionDeniedReason.DENIED );
+			}
+		}
+		
+		return perm;
 	}
 	
 	/**

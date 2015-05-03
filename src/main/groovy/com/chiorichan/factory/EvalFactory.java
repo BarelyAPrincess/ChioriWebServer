@@ -32,9 +32,11 @@ import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.codehaus.groovy.control.CompilerConfiguration;
+import org.codehaus.groovy.control.ErrorCollector;
 import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 import org.codehaus.groovy.control.customizers.ASTTransformationCustomizer;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
+import org.codehaus.groovy.control.messages.Message;
 import org.codehaus.groovy.syntax.SyntaxException;
 
 import com.chiorichan.ContentTypes;
@@ -55,6 +57,7 @@ import com.chiorichan.http.WebInterpreter;
 import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.lang.IgnorableEvalException;
 import com.chiorichan.lang.SandboxSecurityException;
+import com.chiorichan.permission.lang.PermissionException;
 import com.chiorichan.site.Site;
 import com.chiorichan.util.MapFunc;
 import com.google.common.collect.Lists;
@@ -85,7 +88,7 @@ public class EvalFactory
 	 * Groovy Imports :P
 	 */
 	private static final String[] dynImports = new String[] {"com.chiorichan.Loader"};
-	private static final String[] starImports = new String[] {"com.chiorichan.lang", "com.chiorichan.util", "org.apache.commons.lang3.text", "org.ocpsoft.prettytime", "java.util", "java.net"};
+	private static final String[] starImports = new String[] {"com.chiorichan.lang", "com.chiorichan.util", "org.apache.commons.lang3.text", "org.ocpsoft.prettytime", "java.util", "java.net", "com.google.common.base"};
 	private static final String[] staticImports = new String[] {"com.chiorichan.util.Looper"};
 	
 	static
@@ -490,7 +493,7 @@ public class EvalFactory
 						}
 						catch ( Throwable t )
 						{
-							exceptionHandler( t, meta );
+							exceptionHandler( t, meta, result );
 						}
 						
 						success = true;
@@ -543,6 +546,9 @@ public class EvalFactory
 	
 	private IgnorableEvalException ignorableExceptionHandler( Throwable t, EvalMetaData meta, String msg ) throws EvalFactoryException
 	{
+		if ( t == null )
+			return null;
+		
 		if ( t instanceof IgnorableEvalException )
 		{
 			return ( IgnorableEvalException ) t;
@@ -588,24 +594,30 @@ public class EvalFactory
 		}
 	}
 	
-	private void exceptionHandler( Throwable t, EvalMetaData meta ) throws EvalFactoryException
+	private void exceptionHandler( Throwable t, EvalMetaData meta, EvalFactoryResult result ) throws EvalFactoryException
 	{
+		if ( t == null )
+			return;
+		
 		if ( t instanceof EvalFactoryException )
 		{
 			throw ( EvalFactoryException ) t;
 		}
 		else if ( t instanceof MultipleCompilationErrorsException )
 		{
-			MultipleCompilationErrorsException e = ( MultipleCompilationErrorsException ) t;
+			MultipleCompilationErrorsException exp = ( MultipleCompilationErrorsException ) t;
+			ErrorCollector e = exp.getErrorCollector();
 			
-			if ( e.getErrorCollector().getErrorCount() > 0 )
+			for ( Object err : e.getErrors() )
 			{
-				if ( e.getErrorCollector().getErrorCount() == 1 )
-					exceptionHandler( e.getErrorCollector().getException( 0 ), meta );
+				Loader.getLogger().warning( "Got an error during eval: " + err );
 				
-				// TODO What should be do when there are more than one exceptions
-				Loader.getLogger().debug( "Got Exception: " + e.getErrorCollector().getErrors() );
-				exceptionHandler( e.getErrorCollector().getException( 0 ), meta );
+				if ( err instanceof Throwable )
+					exceptionHandler( ( Throwable ) err, meta, result );
+				else if ( err instanceof Message )
+				{
+					// result.addException( ignorableExceptionHandler( err, meta ) );
+				}
 			}
 		}
 		else if ( t instanceof SyntaxException ) // Parsing exception

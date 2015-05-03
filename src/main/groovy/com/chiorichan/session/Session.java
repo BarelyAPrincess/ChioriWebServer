@@ -18,7 +18,7 @@ import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountHandler;
 import com.chiorichan.account.AccountManager;
-import com.chiorichan.account.LoginException;
+import com.chiorichan.account.lang.LoginException;
 import com.chiorichan.http.Candy;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.site.Site;

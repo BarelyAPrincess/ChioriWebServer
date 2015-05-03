@@ -26,6 +26,7 @@ import com.chiorichan.permission.backend.sql.SQLBackend;
 import com.chiorichan.permission.event.PermissibleEntityEvent;
 import com.chiorichan.permission.event.PermissibleEvent;
 import com.chiorichan.permission.event.PermissibleSystemEvent;
+import com.chiorichan.permission.lang.PermissionBackendException;
 import com.chiorichan.scheduler.TaskCreator;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;

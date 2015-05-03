@@ -6,10 +6,6 @@
  */
 package com.chiorichan.factory
 
-import groovy.transform.TimedInterrupt
-
-import java.util.concurrent.TimeUnit
-
 import com.chiorichan.Loader
 import com.chiorichan.account.Account
 import com.chiorichan.database.DatabaseEngine
@@ -18,6 +14,8 @@ import com.chiorichan.framework.HttpUtilsWrapper
 import com.chiorichan.http.HttpCode
 import com.chiorichan.http.HttpRequestWrapper
 import com.chiorichan.http.HttpResponseWrapper
+import com.chiorichan.permission.Permission
+import com.chiorichan.permission.PermissionResult
 import com.chiorichan.session.SessionManager
 import com.chiorichan.session.SessionProvider
 import com.chiorichan.site.Site
@@ -109,6 +107,16 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 			result = Loader.getAccountManager().getAccountPartial( uid )
 		
 		return result
+	}
+	
+	Account[] getAccounts( String query )
+	{
+		return Loader.getAccountManager().getAccounts( query )
+	}
+	
+	Account[] getAccounts( String query, int limit )
+	{
+		return Loader.getAccountManager().getAccounts( query, limit )
 	}
 	
 	/**
@@ -323,5 +331,15 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 			print result.getString()
 			return result.getObject()
 		}
+	}
+	
+	PermissionResult requirePermission( String perm )
+	{
+		getSession().getParentSession().requirePermission( perm )
+	}
+	
+	PermissionResult requirePermission( Permission perm )
+	{
+		getSession().getParentSession().requirePermission( perm )
 	}
 }

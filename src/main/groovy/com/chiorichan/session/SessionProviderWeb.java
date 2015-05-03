@@ -26,7 +26,7 @@ import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountManager;
-import com.chiorichan.account.LoginException;
+import com.chiorichan.account.lang.LoginException;
 import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.framework.ConfigurationManagerWrapper;
 import com.chiorichan.http.Candy;
