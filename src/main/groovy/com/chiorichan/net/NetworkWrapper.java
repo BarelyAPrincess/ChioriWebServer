@@ -8,12 +8,17 @@ package com.chiorichan.net;
 
 import java.util.Set;
 
+import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
+import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountType;
 import com.chiorichan.account.auth.AccountAuthenticator;
+import com.chiorichan.account.auth.AccountCredentials;
 import com.chiorichan.account.lang.AccountException;
+import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.http.HttpCookie;
 import com.chiorichan.net.query.QueryServerHandler;
+import com.chiorichan.session.SessionException;
 import com.chiorichan.session.SessionWrapper;
 import com.chiorichan.site.Site;
 import com.chiorichan.util.ObjectFunc;
@@ -34,11 +39,11 @@ public class NetworkWrapper extends SessionWrapper
 		this.handler = handler;
 		try
 		{
-			throw new AccountException( getSession().login( getSession(), AccountAuthenticator.NULL.credentials( AccountType.ACCOUNT_NONE ) ) );
+			startSession();
 		}
-		catch ( AccountException e )
+		catch ( SessionException e )
 		{
-			// Log the AccountResult
+			e.printStackTrace();
 		}
 	}
 	
@@ -69,13 +74,30 @@ public class NetworkWrapper extends SessionWrapper
 	@Override
 	protected void sessionStarted()
 	{
-		
+		try
+		{
+			throw new AccountException( getSession().login( getSession(), AccountAuthenticator.NULL.credentials( AccountType.ACCOUNT_NONE ) ) );
+		}
+		catch ( AccountException e )
+		{
+			if ( e.getResult() != AccountResult.LOGIN_SUCCESS )
+			{
+				if ( e.getResult() == AccountResult.INTERNAL_ERROR )
+					e.getResult().getThrowable().printStackTrace();
+				AccountManager.getLogger().severe( e.getMessage() );
+			}
+			else
+				send( e.getResult().getMessage() );
+		}
 	}
 	
 	@Override
 	protected Site getSite()
 	{
-		return null;
+		/*
+		 * The NetworkWrapper dosn't really tie down to any one site, so we just use the Server One
+		 */
+		return Loader.getSiteManager().getFrameworkSite();
 	}
 	
 	@Override

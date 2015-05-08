@@ -66,7 +66,8 @@ public abstract class AccountPermissible extends Permissible implements Account
 						ap.kick( Loader.getConfig().getString( "accounts.singleLoginMessage", "You logged in from another location." ) );
 				
 				acct.metadata().set( "lastLoginTime", CommonFunc.getEpoch() );
-				acct.metadata().set( "lastLoginIp", getAcctId() );
+				
+				// acct.metadata().set( "lastLoginIp", getIpAddresses().toArray( new String[0] )[0] );
 				
 				acct.registerPermissible( via );
 				
@@ -74,8 +75,20 @@ public abstract class AccountPermissible extends Permissible implements Account
 				EventBus.INSTANCE.callEvent( new AccountSuccessfulLoginEvent( acct.metadata() ) );
 				
 				setVariable( "acctId", acct.getAcctId() );
-				setVariable( "token", creds.getToken() );
 				account = acct;
+				
+				try
+				{
+					/**
+					 * We try and get a relogin token, but not all authenticators support them.
+					 */
+					setVariable( "token", creds.getToken() );
+				}
+				catch ( AccountException e )
+				{
+					if ( e.getResult() != AccountResult.FEATURE_NOT_IMPLEMENTED )
+						throw e;
+				}
 			}
 			
 			return result.setAccount( acct );
@@ -156,6 +169,8 @@ public abstract class AccountPermissible extends Permissible implements Account
 	@Override
 	public AccountInstance instance()
 	{
+		if ( account == null )
+			throw new AccountException( AccountResult.ACCOUNT_NOT_INITIALIZED );
 		return account;
 	}
 	

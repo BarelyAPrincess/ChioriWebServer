@@ -392,12 +392,18 @@ public class DatabaseEngine
 		{
 			try
 			{
-				stmt = con.createStatement( ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
+				if ( type == DatabaseType.SQLITE )
+					stmt = con.createStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY );
+				else
+					stmt = con.createStatement( ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
 			}
 			catch ( CommunicationsException e )
 			{
 				if ( reconnect() )
-					stmt = con.createStatement( ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
+					if ( type == DatabaseType.SQLITE )
+						stmt = con.createStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY );
+					else
+						stmt = con.createStatement( ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
 			}
 			finally
 			{

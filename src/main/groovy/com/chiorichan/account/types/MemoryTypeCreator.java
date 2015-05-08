@@ -38,19 +38,19 @@ public class MemoryTypeCreator extends AccountTypeCreator
 	@EventHandler( )
 	public void onAccountLoadEvent( AccountLoadEvent event )
 	{
-		
+		// Do Nothing
 	}
 	
 	@Override
 	public void save( AccountMeta account )
 	{
-		// DO NOTHING!
+		// Do Nothing!
 	}
 	
 	@Override
 	public void reload( AccountMeta account )
 	{
-		// DO NOTHING!
+		// Do Nothing
 	}
 	
 	@Override
@@ -62,20 +62,19 @@ public class MemoryTypeCreator extends AccountTypeCreator
 	@Override
 	public void failedLogin( AccountMeta meta, AccountResult result )
 	{
-		// Never?
+		// Do Nothing
 	}
 	
 	@Override
 	public void successLogin( AccountMeta meta, AccountResult result )
 	{
-		// Never?
+		// Do Nothing
 	}
 	
 	@Override
 	public void preLogin( AccountMeta meta, AccountPermissible via, AccountCredentials creds )
 	{
-		// Never?
-		throw new AccountException( AccountResult.FEATURE_DISABLED );
+		// Called before the NONE Account logs in
 	}
 	
 	@Override
@@ -83,6 +82,4 @@ public class MemoryTypeCreator extends AccountTypeCreator
 	{
 		return null;
 	}
-	
-	// return new AccountMeta( account, StringFunc.md5( "9834h9fh3497ah4ea3a" + System.currentTimeMillis() ), account );
 }

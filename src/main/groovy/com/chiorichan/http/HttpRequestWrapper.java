@@ -178,9 +178,12 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		
 		// Decode Cookies
 		String var1 = http.headers().get( "Cookie" );
-		Set<Cookie> var2 = CookieDecoder.decode( var1 );
-		for ( Cookie cookie : var2 )
-			cookies.add( new HttpCookie( cookie.getName(), cookie.getValue() ) );
+		if ( var1 != null )
+		{
+			Set<Cookie> var2 = CookieDecoder.decode( var1 );
+			for ( Cookie cookie : var2 )
+				cookies.add( new HttpCookie( cookie.getName(), cookie.getValue() ) );
+		}
 	}
 	
 	@Override
@@ -191,7 +194,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		// String remember = getArgumentBoolean( "remember" ) ? "true" : "false"; -- Implement This
 		String target = getArgument( "target" );
 		
-		String loginPost = ( target.isEmpty() ) ? getSite().getYaml().getString( "scripts.login-post", "" ) : target;
+		String loginPost = ( target == null || target.isEmpty() ) ? getSite().getYaml().getString( "scripts.login-post", "" ) : target;
 		String loginForm = getSite().getYaml().getString( "scripts.login-form", "/login" );
 		
 		Session session = getSession();
@@ -207,7 +210,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			}
 		}
 		
-		if ( !username.isEmpty() && !password.isEmpty() )
+		if ( username != null && password != null )
 		{
 			AccountResult result;
 			try
@@ -951,13 +954,13 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	{
 		// Do Nothing
 	}
-
+	
 	@Override
 	public void send( Object obj )
 	{
 		// Do Nothing
 	}
-
+	
 	@Override
 	public void send( Account sender, Object obj )
 	{

@@ -63,8 +63,6 @@ public abstract class SessionWrapper implements BindingProvider
 	{
 		session = Loader.getSessionManager().startSession( this );
 		
-		sessionStarted();
-		
 		/*
 		 * Register with Wrapped Session
 		 */
@@ -121,6 +119,8 @@ public abstract class SessionWrapper implements BindingProvider
 		
 		// Reset __FILE__ Variable
 		binding.setVariable( "__FILE__", new File( "" ) );
+		
+		sessionStarted();
 	}
 	
 	/**
@@ -175,7 +175,7 @@ public abstract class SessionWrapper implements BindingProvider
 	
 	public String getSessionCookieName()
 	{
-		return getSite().getYaml().getString( "sessions.cookie-name", SessionManager.getDefaultCookieName() );
+		return ( getSite() == null || getSite().getYaml() == null ) ? SessionManager.getDefaultCookieName() : getSite().getYaml().getString( "sessions.cookie-name", SessionManager.getDefaultCookieName() );
 	}
 	
 	public abstract String getIpAddr();

@@ -25,7 +25,7 @@ public class AccountResult
 	
 	public static final AccountResult UNKNOWN_ERROR = new AccountResult( "Your login has failed due to an unknown internal error, Please try again." );
 	public static final AccountResult PERMISSION_ERROR = new AccountResult( "Fatal error was detected with your account permissions. Please notify an administrator ASAP." );
-	public static final AccountResult INTERNAL_ERROR = new AccountResult( "Internal Server Error was encountered while attempting to login account." );
+	public static final AccountResult INTERNAL_ERROR = new AccountResult( "Internal Server Error was encountered while attempting to process login." );
 	
 	public static final AccountResult ACCOUNT_NOT_INITIALIZED = new AccountResult( "Account was not initialized, i.e., no logins are present in this state." );
 	public static final AccountResult ACCOUNT_NOT_ACTIVATED = new AccountResult( "Account is not activated." );

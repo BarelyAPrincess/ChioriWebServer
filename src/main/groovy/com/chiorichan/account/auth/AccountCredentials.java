@@ -30,6 +30,16 @@ public abstract class AccountCredentials
 		return authenticator;
 	}
 	
+	/**
+	 * Implemented on an Authenticator by Authenticator bases,<br>
+	 * ideally we try and get a relogin token from the {@link OneTimeTokenAuthentictor}.<br>
+	 * Which means you would use said Authenticator for relogin.
+	 * 
+	 * @return
+	 *         A relogin token
+	 * @throws AccountException
+	 *             {@link AccountResult.FEATURE_NOT_IMPLEMENTED} if not implemented by authenticator
+	 */
 	public String getToken() throws AccountException
 	{
 		throw new AccountException( AccountResult.FEATURE_NOT_IMPLEMENTED );

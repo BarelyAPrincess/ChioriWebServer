@@ -75,7 +75,8 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 	@Override
 	public void channelInactive( ChannelHandlerContext ctx ) throws Exception
 	{
-		persistence.finish();
+		if ( persistence != null )
+			persistence.finish();
 	}
 	
 	private String parseColor( String text )
