@@ -36,6 +36,7 @@ import com.chiorichan.Warning.WarningState;
 import com.chiorichan.configuration.serialization.ConfigurationSerializable;
 import com.chiorichan.configuration.serialization.ConfigurationSerialization;
 import com.chiorichan.event.Event;
+import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.EventExecutor;
 import com.chiorichan.event.EventHandler;
@@ -301,7 +302,7 @@ public final class JavaPluginLoader implements PluginLoader
 		Validate.notNull( plugin, "Plugin can not be null" );
 		Validate.notNull( listener, "Listener can not be null" );
 		
-		boolean useTimings = Loader.getEventBus().useTimings();
+		boolean useTimings = EventBus.INSTANCE.useTimings();
 		Map<Class<? extends Event>, Set<RegisteredListener>> ret = new HashMap<Class<? extends Event>, Set<RegisteredListener>>();
 		Set<Method> methods;
 		try
@@ -425,7 +426,7 @@ public final class JavaPluginLoader implements PluginLoader
 			
 			// Perhaps abort here, rather than continue going, but as it stands,
 			// an abort is not possible the way it's currently written
-			Loader.getEventBus().callEvent( new PluginEnableEvent( plugin ) );
+			EventBus.INSTANCE.callEvent( new PluginEnableEvent( plugin ) );
 		}
 	}
 	
@@ -439,7 +440,7 @@ public final class JavaPluginLoader implements PluginLoader
 			String message = String.format( "Disabling %s", plugin.getDescription().getFullName() );
 			PluginManager.getLogger().info( message );
 			
-			Loader.getEventBus().callEvent( new PluginDisableEvent( plugin ) );
+			EventBus.INSTANCE.callEvent( new PluginDisableEvent( plugin ) );
 			
 			Plugin jPlugin = ( Plugin ) plugin;
 			ClassLoader cloader = jPlugin.getClassLoader();

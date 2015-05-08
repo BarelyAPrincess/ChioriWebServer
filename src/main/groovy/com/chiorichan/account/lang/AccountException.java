@@ -6,7 +6,8 @@
  */
 package com.chiorichan.account.lang;
 
-import com.chiorichan.account.Account;
+import com.chiorichan.account.AccountContext;
+import com.chiorichan.account.AccountMeta;
 
 /**
  * Used to pass login errors to the requester.
@@ -14,49 +15,88 @@ import com.chiorichan.account.Account;
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-public class LoginException extends Exception
+public class AccountException extends RuntimeException
 {
 	private static final long serialVersionUID = 5522301956671473324L;
 	
-	private Account acct = null;
-	private LoginExceptionReason reason = null;
+	private AccountResult result = AccountResult.UNKNOWN_ERROR;
+	private AccountMeta acct = null;
+	private AccountContext context = null;
 	
-	public LoginException( Exception e )
+	public AccountException()
 	{
-		super( e );
-		reason = LoginExceptionReason.customReason.setReason( e.getMessage() );
-	}
-	
-	public LoginException( LoginExceptionReason reason )
-	{
-		this( reason, null );
-	}
-	
-	public LoginException( LoginExceptionReason reason, Account acct )
-	{
-		super( reason.getReason() );
 		
-		this.reason = reason;
+	}
+	
+	public AccountException( String msg )
+	{
+		super( msg );
+	}
+	
+	public AccountException( String msg, Throwable cause )
+	{
+		super( cause );
+	}
+	
+	public AccountException( Throwable cause )
+	{
+		super( cause );
+	}
+	
+	public AccountException( Throwable cause, AccountMeta acct )
+	{
+		this( cause );
 		this.acct = acct;
 	}
 	
-	public static LoginExceptionReason customExceptionReason( String reason )
+	public AccountException( Throwable cause, AccountContext context )
 	{
-		return LoginExceptionReason.customReason.setReason( reason );
+		this( cause );
+		this.context = context;
 	}
 	
-	public LoginExceptionReason getReason()
+	public AccountException( AccountResult result )
 	{
-		return reason;
+		super( result.getMessage() );
+		this.result = result;
 	}
 	
-	public Account getAccount()
+	public AccountException( AccountResult result, AccountMeta acct )
+	{
+		this( result );
+		this.acct = acct;
+	}
+	
+	public AccountException( AccountResult result, AccountContext context )
+	{
+		this( result );
+		this.context = context;
+	}
+	
+	public AccountResult getResult()
+	{
+		return result;
+	}
+	
+	public AccountMeta getAccount()
 	{
 		return acct;
 	}
 	
-	public void setAccount( Account acct )
+	public AccountException setAccount( AccountMeta acct )
 	{
 		this.acct = acct;
+		return this;
+	}
+	
+	public AccountException setContext( AccountContext context )
+	{
+		this.context = context;
+		return this;
+	}
+	
+	public AccountContext getContext()
+	{
+		return context == null && acct != null ? acct.getContext() : context;
 	}
 }

@@ -7,9 +7,12 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.event.account;
+package com.chiorichan.account.event;
 
-import com.chiorichan.account.AccountHandler;
+import java.util.List;
+
+import com.chiorichan.account.AccountInstance;
+import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.event.Cancellable;
 import com.chiorichan.event.HandlerList;
 
@@ -23,9 +26,9 @@ public class AccountKickEvent extends AccountEvent implements Cancellable
 	private String kickReason;
 	private Boolean cancel;
 	
-	public AccountKickEvent( final AccountHandler userKicked, final String kickReason, final String leaveMessage )
+	public AccountKickEvent( AccountInstance acct, List<AccountPermissible> permissibles, String kickReason, String leaveMessage )
 	{
-		super( userKicked );
+		super( acct, permissibles );
 		this.kickReason = kickReason;
 		this.leaveMessage = leaveMessage;
 		this.cancel = false;
@@ -51,11 +54,13 @@ public class AccountKickEvent extends AccountEvent implements Cancellable
 		return leaveMessage;
 	}
 	
+	@Override
 	public boolean isCancelled()
 	{
 		return cancel;
 	}
 	
+	@Override
 	public void setCancelled( boolean cancel )
 	{
 		this.cancel = cancel;

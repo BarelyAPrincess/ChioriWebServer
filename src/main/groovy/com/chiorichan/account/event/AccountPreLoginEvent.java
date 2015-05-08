@@ -7,31 +7,50 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.event.account;
+package com.chiorichan.account.event;
 
-import com.chiorichan.account.AccountHandler;
+import com.chiorichan.account.AccountMeta;
+import com.chiorichan.account.AccountPermissible;
+import com.chiorichan.account.auth.AccountCredentials;
+import com.chiorichan.account.lang.AccountResult;
+import com.chiorichan.event.Conditional;
+import com.chiorichan.event.EventException;
 import com.chiorichan.event.HandlerList;
+import com.chiorichan.event.RegisteredListener;
 
 /**
  * Stores details for Users attempting to log in
  */
-public class PreAccountLoginEvent extends AccountEvent
+public class AccountPreLoginEvent extends AccountEvent implements Conditional
 {
 	private static final HandlerList handlers = new HandlerList();
-	private Result result = Result.ALLOWED;
-	private String message = "";
+	private AccountResult result = AccountResult.LOGIN_SUCCESS;
+	private final AccountPermissible perm;
+	private final AccountCredentials creds;
 	
-	public PreAccountLoginEvent( AccountHandler acct )
+	public AccountPreLoginEvent( AccountMeta meta, AccountPermissible perm, AccountCredentials creds )
 	{
-		super( acct );
+		super( meta, perm );
+		this.perm = perm;
+		this.creds = creds;
+	}
+	
+	public AccountPermissible getPermissible()
+	{
+		return perm;
+	}
+	
+	public AccountCredentials getCredentials()
+	{
+		return creds;
 	}
 	
 	/**
 	 * Gets the current result of the login, as an enum
 	 * 
-	 * @return Current Result of the login
+	 * @return Current AccountResult of the login
 	 */
-	public Result getResult()
+	public AccountResult getAccountResult()
 	{
 		return result;
 	}
@@ -42,39 +61,17 @@ public class PreAccountLoginEvent extends AccountEvent
 	 * @param result
 	 *            New result to set
 	 */
-	public void setResult( final Result result )
+	public void setAccountResult( final AccountResult result )
 	{
 		this.result = result;
 	}
 	
 	/**
-	 * Gets the current kick message that will be used if getResult() != Result.ALLOWED
-	 * 
-	 * @return Current kick message
-	 */
-	public String getKickMessage()
-	{
-		return message;
-	}
-	
-	/**
-	 * Sets the kick message to display if getResult() != Result.ALLOWED
-	 * 
-	 * @param message
-	 *            New kick message
-	 */
-	public void setKickMessage( final String message )
-	{
-		this.message = message;
-	}
-	
-	/**
 	 * Allows the User to log in
 	 */
-	public void allow()
+	public void success()
 	{
-		result = Result.ALLOWED;
-		message = "";
+		result = AccountResult.DEFAULT;
 	}
 	
 	/**
@@ -85,10 +82,9 @@ public class PreAccountLoginEvent extends AccountEvent
 	 * @param message
 	 *            Kick message to display to the user
 	 */
-	public void disallow( final Result result, final String message )
+	public void fail( final AccountResult result )
 	{
 		this.result = result;
-		this.message = message;
 	}
 	
 	@Override
@@ -102,34 +98,9 @@ public class PreAccountLoginEvent extends AccountEvent
 		return handlers;
 	}
 	
-	/**
-	 * Basic kick reasons for communicating to plugins
-	 */
-	public enum Result
+	@Override
+	public boolean conditional( RegisteredListener context ) throws EventException
 	{
-		/**
-		 * The User is allowed to log in
-		 */
-		ALLOWED,
-		/**
-		 * The User is not allowed to log in, due to the server being full
-		 */
-		KICK_FULL,
-		/**
-		 * The User is not allowed to log in, due to them being banned
-		 */
-		KICK_BANNED,
-		/**
-		 * The User is not allowed to log in, due to them not being on the white list
-		 */
-		KICK_WHITELIST,
-		/**
-		 * The User is not allowed to log in, for reasons undefined
-		 */
-		KICK_OTHER,
-		/**
-		 * The User had incorrect incorrect login
-		 */
-		DENIED
+		return result == AccountResult.DEFAULT;
 	}
 }

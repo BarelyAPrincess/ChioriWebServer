@@ -10,6 +10,8 @@
 package com.chiorichan.http;
 
 import io.netty.channel.Channel;
+import io.netty.handler.codec.http.Cookie;
+import io.netty.handler.codec.http.CookieDecoder;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpObject;
@@ -23,71 +25,142 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.net.UnknownHostException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 
+import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
+import com.chiorichan.account.Account;
+import com.chiorichan.account.AccountManager;
+import com.chiorichan.account.auth.AccountAuthenticator;
+import com.chiorichan.account.lang.AccountException;
+import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.event.server.ServerVars;
-import com.chiorichan.session.SessionProvider;
+import com.chiorichan.session.Session;
+import com.chiorichan.session.SessionContext;
+import com.chiorichan.session.SessionManager;
+import com.chiorichan.session.SessionWrapper;
 import com.chiorichan.site.Site;
 import com.chiorichan.util.CommonFunc;
 import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
-public class HttpRequestWrapper
+public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 {
-	protected static boolean unmodifiableMaps = Loader.getConfig().getBoolean( "advanced.security.unmodifiableMapsEnabled", true );
+	/**
+	 * Return maps as unmodifiable
+	 */
+	private static boolean unmodifiableMaps = Loader.getConfig().getBoolean( "advanced.security.unmodifiableMapsEnabled", true );
 	
-	protected Map<ServerVars, Object> serverVars = Maps.newLinkedHashMap();
-	protected Site currentSite;
-	protected SessionProvider sess = null;
-	protected HttpResponseWrapper response;
-	protected final Map<String, String> getMap = Maps.newTreeMap(), postMap = Maps.newTreeMap(), rewriteMap = Maps.newTreeMap();
-	protected int requestTime = 0;
-	protected Map<String, UploadedFile> uploadedFiles = new HashMap<String, UploadedFile>();
-	protected String uri = null;
-	protected int contentSize = 0;
-	protected boolean ssl;
+	/**
+	 * Server Variables
+	 */
+	Map<ServerVars, Object> serverVars = Maps.newLinkedHashMap();
 	
-	protected HttpRequest http;
-	protected Channel channel;
+	/**
+	 * The Site associated with this request
+	 */
+	Site site;
 	
-	protected HttpRequestWrapper( Channel channel, HttpRequest http, boolean ssl ) throws IOException
+	/**
+	 * The paired HttpResponseWrapper
+	 */
+	final HttpResponseWrapper response;
+	
+	/**
+	 * The Get Map
+	 */
+	final Map<String, String> getMap = Maps.newTreeMap();
+	
+	/**
+	 * The Post Map
+	 */
+	final Map<String, String> postMap = Maps.newTreeMap();
+	
+	/**
+	 * The URI Rewrite Map
+	 */
+	final Map<String, String> rewriteMap = Maps.newTreeMap();
+	
+	/**
+	 * Cookie Cache
+	 */
+	final Set<HttpCookie> cookies = Sets.newHashSet();
+	
+	/**
+	 * The time of this request
+	 */
+	final int requestTime;
+	
+	/**
+	 * Files uploaded with this request
+	 */
+	final Map<String, UploadedFile> uploadedFiles = new HashMap<String, UploadedFile>();
+	
+	/**
+	 * The requested URI
+	 */
+	private String uri = null;
+	
+	/**
+	 * The size of the posted content
+	 */
+	int contentSize = 0;
+	
+	/**
+	 * Is this a SSL request
+	 */
+	final boolean ssl;
+	
+	/**
+	 * The original Netty Http Request
+	 */
+	private final HttpRequest http;
+	
+	/**
+	 * The original Netty Channel
+	 */
+	private final Channel channel;
+	
+	HttpRequestWrapper( Channel channel, HttpRequest http, boolean ssl ) throws IOException
 	{
 		this.channel = channel;
 		this.http = http;
 		this.ssl = ssl;
 		
+		// Set Time of this Request
 		requestTime = CommonFunc.getEpoch();
 		
+		// Create a matching HttpResponseWrapper
 		response = new HttpResponseWrapper( this );
 		
+		// Get Site based on requested domain
 		String domain = getParentDomain();
+		site = Loader.getSiteManager().getSiteByDomain( domain );
 		
-		currentSite = Loader.getSiteManager().getSiteByDomain( domain );
-		
-		if ( currentSite == null )
+		if ( site == null )
 			if ( !domain.isEmpty() )
 			{
 				// Attempt to get the catch all default site. Will use the framework site is not configured or does not exist.
 				String defaultSite = Loader.getConfig().getString( "framework.sites.defaultSite", null );
 				if ( defaultSite != null && !defaultSite.isEmpty() )
-					currentSite = Loader.getSiteManager().getSiteById( defaultSite );
+					site = Loader.getSiteManager().getSiteById( defaultSite );
 			}
 		
-		if ( currentSite == null )
-			currentSite = Loader.getSiteManager().getSiteById( "framework" );
+		if ( site == null )
+			site = Loader.getSiteManager().getSiteById( "framework" );
 		
+		// Decode Get Map
 		QueryStringDecoder queryStringDecoder = new QueryStringDecoder( http.getUri() );
 		Map<String, List<String>> params = queryStringDecoder.parameters();
 		if ( !params.isEmpty() )
@@ -102,12 +175,102 @@ public class HttpRequestWrapper
 				}
 			}
 		}
+		
+		// Decode Cookies
+		String var1 = http.headers().get( "Cookie" );
+		Set<Cookie> var2 = CookieDecoder.decode( var1 );
+		for ( Cookie cookie : var2 )
+			cookies.add( new HttpCookie( cookie.getName(), cookie.getValue() ) );
 	}
 	
-	protected void initSession()
+	@Override
+	protected void sessionStarted()
 	{
-		sess = Loader.getSessionManager().find( this );
-		sess.handleUserProtocols();
+		String username = getArgument( "user" );
+		String password = getArgument( "pass" );
+		// String remember = getArgumentBoolean( "remember" ) ? "true" : "false"; -- Implement This
+		String target = getArgument( "target" );
+		
+		String loginPost = ( target.isEmpty() ) ? getSite().getYaml().getString( "scripts.login-post", "" ) : target;
+		String loginForm = getSite().getYaml().getString( "scripts.login-form", "/login" );
+		
+		Session session = getSession();
+		
+		if ( getArgument( "logout" ) != null )
+		{
+			AccountResult result = session.logout();
+			
+			if ( result == AccountResult.LOGOUT_SUCCESS )
+			{
+				getResponse().sendRedirect( loginForm + "?msg=" + result.getMessage() );
+				return;
+			}
+		}
+		
+		if ( !username.isEmpty() && !password.isEmpty() )
+		{
+			AccountResult result;
+			try
+			{
+				result = session.login( session, AccountAuthenticator.PASSWORD.credentials( username, password ) );
+			}
+			catch ( AccountException e )
+			{
+				result = e.getResult();
+			}
+			
+			if ( result == AccountResult.LOGIN_SUCCESS )
+			{
+				Account acct = result.getAccount();
+				SessionManager.getLogger().info( ConsoleColor.GREEN + "Successful Login: [id='" + acct.getAcctId() + "',siteId='" + acct.getSiteId() + "',displayName='" + acct.getHumanReadableName() + "',ipAddrs='" + acct.getIpAddresses() + "']" );
+				getResponse().sendRedirect( loginPost );
+			}
+			else
+			{
+				AccountManager.getLogger().warning( ConsoleColor.GREEN + "Failed Login [id='" + username + "',hasPassword='" + ( password != null && !password.isEmpty() ) + "',reason='" + result.getMessage( username ) + "']" );
+				getResponse().sendRedirect( loginForm + "?msg=" + result.getMessage() + "&target=" + target );
+			}
+		}
+		else if ( session.getAccountState() )
+		{
+			// XXX Should we revalidate existing logins with each request? - Something worth considering. Maybe a config option?
+			
+			/*
+			 * Maybe make this a server configuration option, e.g., sessions.revalidateLogins
+			 * 
+			 * try
+			 * {
+			 * session.currentAccount.reloadAndValidate(); // <- Is this being overly redundant?
+			 * Loader.getLogger().info( ChatColor.GREEN + "Current Login `Username \"" + session.currentAccount.getName() + "\", Password \"" + session.currentAccount.getMetaData().getPassword() + "\", UserId \"" +
+			 * session.currentAccount.getAccountId() + "\", Display Name \"" + session.currentAccount.getDisplayName() + "\"`" );
+			 * }
+			 * catch ( LoginException e )
+			 * {
+			 * session.currentAccount = null;
+			 * Loader.getLogger().warning( ChatColor.GREEN + "Login Failed `There was a login present but it failed validation with error: " + e.getMessage() + "`" );
+			 * }
+			 */
+		}
+		
+		// Will be ever be using a session on more than one domains?
+		session.getSessionCookie().setDomain( "." + getParentDomain() );
+		
+		if ( Loader.getConfig().getBoolean( "sessions.rearmTimeoutWithEachRequest" ) )
+			session.rearmTimeout();
+	}
+	
+	@Override
+	public HttpCookie getCookie( String key )
+	{
+		for ( HttpCookie cookie : cookies )
+			if ( cookie.getKey().equals( key ) )
+				return cookie;
+		return null;
+	}
+	
+	public Set<HttpCookie> getCookies()
+	{
+		return Collections.unmodifiableSet( cookies );
 	}
 	
 	public Boolean getArgumentBoolean( String key )
@@ -116,17 +279,13 @@ public class HttpRequestWrapper
 		return StringFunc.isTrue( rtn );
 	}
 	
-	public String getArgument( String key )
-	{
-		return getArgument( key, "" );
-	}
-	
 	public String getArgument( String key, String def )
 	{
-		return getArgument( key, def, false );
+		String val = getArgument( key );
+		return ( val == null ) ? def : val;
 	}
 	
-	public String getArgument( String key, String def, boolean rtnNull )
+	public String getArgument( String key )
 	{
 		String val = getMap.get( key );
 		
@@ -136,39 +295,12 @@ public class HttpRequestWrapper
 		if ( val == null && rewriteMap != null )
 			val = rewriteMap.get( key );
 		
-		if ( val == null && rtnNull )
-			return null;
-		
-		if ( val == null || val.isEmpty() )
-			return def;
-		
-		return val.trim();
-	}
-	
-	public Collection<Candy> getCandies()
-	{
-		if ( sess == null )
-			return new LinkedHashMap<String, Candy>().values();
-		
-		return getSession().getParentSession().getCandies().values();
+		return val;
 	}
 	
 	public HttpHeaders getHeaders()
 	{
 		return http.headers();
-	}
-	
-	public SessionProvider getSession()
-	{
-		return getSession( true );
-	}
-	
-	public SessionProvider getSession( boolean initIfNull )
-	{
-		if ( sess == null && initIfNull )
-			initSession();
-		
-		return sess;
 	}
 	
 	public HttpResponseWrapper getResponse()
@@ -179,39 +311,41 @@ public class HttpRequestWrapper
 	public String getUri()
 	{
 		if ( uri == null )
+		{
 			uri = http.getUri();
-		
-		try
-		{
-			uri = URLDecoder.decode( uri, Charsets.UTF_8.name() );
-		}
-		catch ( UnsupportedEncodingException e )
-		{
+			
 			try
 			{
-				uri = URLDecoder.decode( uri, Charsets.ISO_8859_1.name() );
+				uri = URLDecoder.decode( uri, Charsets.UTF_8.name() );
 			}
-			catch ( UnsupportedEncodingException e1 )
+			catch ( UnsupportedEncodingException e )
 			{
-				throw new Error();
+				try
+				{
+					uri = URLDecoder.decode( uri, Charsets.ISO_8859_1.name() );
+				}
+				catch ( UnsupportedEncodingException e1 )
+				{
+					throw new Error();
+				}
 			}
+			catch ( IllegalArgumentException e1 )
+			{
+				// [ni..up-3-1] 02-05 00:17:10.273 [WARNING] [HttpHdl] WARNING THIS IS AN UNCAUGHT EXCEPTION! CAN YOU KINDLY REPORT THIS STACKTRACE TO THE DEVELOPER?
+				// java.lang.IllegalArgumentException: URLDecoder: Illegal hex characters in escape (%) pattern - For input string: "im"
+			}
+			
+			// if ( uri.contains( File.separator + '.' ) || uri.contains( '.' + File.separator ) || uri.startsWith( "." ) || uri.endsWith( "." ) || INSECURE_URI.matcher( uri ).matches() )
+			// {
+			// return "/";
+			// }
+			
+			if ( uri.contains( "?" ) )
+				uri = uri.substring( 0, uri.indexOf( "?" ) );
+			
+			if ( !uri.startsWith( "/" ) )
+				uri = "/" + uri;
 		}
-		catch ( IllegalArgumentException e1 )
-		{
-			// [ni..up-3-1] 02-05 00:17:10.273 [WARNING] [HttpHdl] WARNING THIS IS AN UNCAUGHT EXCEPTION! CAN YOU KINDLY REPORT THIS STACKTRACE TO THE DEVELOPER?
-			// java.lang.IllegalArgumentException: URLDecoder: Illegal hex characters in escape (%) pattern - For input string: "im"
-		}
-		
-		// if ( uri.contains( File.separator + '.' ) || uri.contains( '.' + File.separator ) || uri.startsWith( "." ) || uri.endsWith( "." ) || INSECURE_URI.matcher( uri ).matches() )
-		// {
-		// return "/";
-		// }
-		
-		if ( uri.contains( "?" ) )
-			uri = uri.substring( 0, uri.indexOf( "?" ) );
-		
-		if ( !uri.startsWith( "/" ) )
-			uri = "/" + uri;
 		
 		return uri;
 	}
@@ -338,7 +472,7 @@ public class HttpRequestWrapper
 		return ( getHeader( "X-requested-with" ).equals( "XMLHttpRequest" ) );
 	}
 	
-	public String getRemoteHost()
+	public String getRemoteHostname()
 	{
 		return ( ( InetSocketAddress ) channel.remoteAddress() ).getHostName();
 	}
@@ -349,9 +483,9 @@ public class HttpRequestWrapper
 	 * @return
 	 *         the remote connections IP address as a string
 	 */
-	public String getRemoteAddr()
+	public String getIpAddr()
 	{
-		return getRemoteAddr( true );
+		return getIpAddr( true );
 	}
 	
 	/**
@@ -364,7 +498,7 @@ public class HttpRequestWrapper
 	 * @return
 	 *         the remote connections IP address as a string
 	 */
-	public String getRemoteAddr( boolean detectCDN )
+	public String getIpAddr( boolean detectCDN )
 	{
 		if ( detectCDN && http.headers().contains( "CF-Connecting-IP" ) )
 			return http.headers().get( "CF-Connecting-IP" );
@@ -378,9 +512,9 @@ public class HttpRequestWrapper
 	 * @return
 	 *         the remote connections IP address
 	 */
-	public InetAddress getRemoteInetAddr()
+	public InetAddress getInetAddr()
 	{
-		return getRemoteInetAddr( true );
+		return getInetAddr( true );
 	}
 	
 	/**
@@ -391,7 +525,7 @@ public class HttpRequestWrapper
 	 * @return
 	 *         the remote connections IP address
 	 */
-	public InetAddress getRemoteInetAddr( boolean detectCDN )
+	public InetAddress getInetAddr( boolean detectCDN )
 	{
 		if ( detectCDN && http.headers().contains( "CF-Connecting-IP" ) )
 			try
@@ -434,15 +568,13 @@ public class HttpRequestWrapper
 	
 	protected void setSite( Site site )
 	{
-		currentSite = site;
+		this.site = site;
 	}
 	
+	@Override
 	public Site getSite()
 	{
-		if ( currentSite == null )
-			return Loader.getSiteManager().getSiteById( "framework" );
-		
-		return currentSite;
+		return site;
 	}
 	
 	public String getAttribute( String string )
@@ -654,8 +786,8 @@ public class HttpRequestWrapper
 		putServerVarSafe( ServerVars.HTTP_ACCEPT_ENCODING, getHeader( "Accept-Encoding" ) );
 		putServerVarSafe( ServerVars.HTTP_ACCEPT_LANGUAGE, getHeader( "Accept-Language" ) );
 		putServerVarSafe( ServerVars.HTTP_X_REQUESTED_WITH, getHeader( "X-requested-with" ) );
-		putServerVarSafe( ServerVars.REMOTE_HOST, getRemoteHost() );
-		putServerVarSafe( ServerVars.REMOTE_ADDR, getRemoteAddr() );
+		putServerVarSafe( ServerVars.REMOTE_HOST, getRemoteHostname() );
+		putServerVarSafe( ServerVars.REMOTE_ADDR, getIpAddr() );
 		putServerVarSafe( ServerVars.REMOTE_PORT, getRemotePort() );
 		putServerVarSafe( ServerVars.REQUEST_TIME, getRequestTime() );
 		putServerVarSafe( ServerVars.REQUEST_URI, getUri() );
@@ -730,17 +862,12 @@ public class HttpRequestWrapper
 		return channel;
 	}
 	
-	protected void addContentLength( int size )
-	{
-		contentSize += size;
-	}
-	
 	public int getContentLength()
 	{
 		return contentSize;
 	}
 	
-	protected void setUri( String uri )
+	void setUri( String uri )
 	{
 		this.uri = uri;
 		
@@ -794,5 +921,46 @@ public class HttpRequestWrapper
 	protected void putAllGetMap( Map<String, String> map )
 	{
 		getMap.putAll( map );
+	}
+	
+	// XXX Better Implement
+	public void requireLogin() throws IOException
+	{
+		requireLogin( null );
+	}
+	
+	/**
+	 * First checks in an account is present, sends to login page if not.
+	 * Second checks if the present accounts has the specified permission.
+	 * 
+	 * @param permission
+	 * @throws IOException
+	 */
+	public void requireLogin( String permission ) throws IOException
+	{
+		if ( !getSession().getAccountState() )
+			getResponse().sendLoginPage();
+		
+		if ( permission != null )
+			if ( !getSession().checkPermission( permission ).isTrue() )
+				getResponse().sendError( HttpCode.HTTP_FORBIDDEN, "You must have the permission `" + permission + "` in order to view this page!" );
+	}
+	
+	@Override
+	protected void finish0()
+	{
+		// Do Nothing
+	}
+
+	@Override
+	public void send( Object obj )
+	{
+		// Do Nothing
+	}
+
+	@Override
+	public void send( Account sender, Object obj )
+	{
+		// Do Nothing
 	}
 }

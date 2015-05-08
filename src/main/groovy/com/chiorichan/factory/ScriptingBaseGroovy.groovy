@@ -7,7 +7,7 @@
 package com.chiorichan.factory
 
 import com.chiorichan.Loader
-import com.chiorichan.account.Account
+import com.chiorichan.account.AccountInstance
 import com.chiorichan.database.DatabaseEngine
 import com.chiorichan.framework.ConfigurationManagerWrapper
 import com.chiorichan.framework.HttpUtilsWrapper
@@ -16,8 +16,8 @@ import com.chiorichan.http.HttpRequestWrapper
 import com.chiorichan.http.HttpResponseWrapper
 import com.chiorichan.permission.Permission
 import com.chiorichan.permission.PermissionResult
+import com.chiorichan.session.Session
 import com.chiorichan.session.SessionManager
-import com.chiorichan.session.SessionProvider
 import com.chiorichan.site.Site
 import com.google.common.collect.Lists
 
@@ -76,7 +76,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 * @return
 	 *      current session
 	 */
-	SessionProvider getSession()
+	Session getSession()
 	{
 		return request.getSession()
 	}
@@ -99,9 +99,9 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 * @return
 	 *       The found account, will return null if none found
 	 */
-	Account getAccount( String uid )
+	AccountInstance getAccount( String uid )
 	{
-		Account result =  Loader.getAccountManager().getAccount( uid )
+		AccountInstance result =  Loader.getAccountManager().getAccount( uid )
 		
 		if ( result == null )
 			result = Loader.getAccountManager().getAccountPartial( uid )
@@ -109,12 +109,12 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 		return result
 	}
 	
-	Account[] getAccounts( String query )
+	AccountInstance[] getAccounts( String query )
 	{
 		return Loader.getAccountManager().getAccounts( query )
 	}
 	
-	Account[] getAccounts( String query, int limit )
+	AccountInstance[] getAccounts( String query, int limit )
 	{
 		return Loader.getAccountManager().getAccounts( query, limit )
 	}
@@ -124,7 +124,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 * @return
 	 *      The current account, will return null if no one is logged in
 	 */
-	Account getAccount()
+	AccountInstance getAccount()
 	{
 		return request.getSession().getAccount()
 	}

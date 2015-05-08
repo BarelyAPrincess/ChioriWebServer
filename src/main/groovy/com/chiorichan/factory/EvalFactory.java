@@ -9,7 +9,6 @@
  */
 package com.chiorichan.factory;
 
-import groovy.lang.Binding;
 import groovy.lang.GroovyRuntimeException;
 import groovy.lang.GroovyShell;
 import groovy.transform.TimedInterrupt;
@@ -57,7 +56,6 @@ import com.chiorichan.http.WebInterpreter;
 import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.lang.IgnorableEvalException;
 import com.chiorichan.lang.SandboxSecurityException;
-import com.chiorichan.permission.lang.PermissionException;
 import com.chiorichan.site.Site;
 import com.chiorichan.util.MapFunc;
 import com.google.common.collect.Lists;
@@ -66,16 +64,15 @@ import com.google.common.collect.Sets;
 
 public class EvalFactory
 {
-	protected static Charset encoding = Charsets.toCharset( Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" ) );
+	private static List<PreProcessor> preProcessors = Lists.newCopyOnWriteArrayList();
+	private static List<Interpreter> interpreters = Lists.newCopyOnWriteArrayList();
+	private static List<PostProcessor> postProcessors = Lists.newCopyOnWriteArrayList();
 	
-	protected static List<PreProcessor> preProcessors = Lists.newCopyOnWriteArrayList();
-	protected static List<Interpreter> interpreters = Lists.newCopyOnWriteArrayList();
-	protected static List<PostProcessor> postProcessors = Lists.newCopyOnWriteArrayList();
-	
-	protected ShellFactory shellFactory = new ShellFactory();
-	protected Set<GroovyShellTracker> groovyShells = Sets.newLinkedHashSet();
-	protected ByteArrayOutputStream bs = new ByteArrayOutputStream();
-	protected Binding binding;
+	private Charset encoding = Charsets.toCharset( Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" ) );
+	private ShellFactory shellFactory = new ShellFactory();
+	private Set<GroovyShellTracker> groovyShells = Sets.newLinkedHashSet();
+	private ByteArrayOutputStream bs = new ByteArrayOutputStream();
+	private EvalBinding binding;
 	
 	/*
 	 * Groovy Sandbox Customization
@@ -131,13 +128,13 @@ public class EvalFactory
 		timedInterrupt.setAnnotationParameters( timedInterruptParams );
 	}
 	
-	protected EvalFactory( Binding binding )
+	protected EvalFactory( EvalBinding binding )
 	{
 		this.binding = binding;
 		setOutputStream( bs );
 	}
 	
-	public static EvalFactory create( Binding binding )
+	public static EvalFactory create( EvalBinding binding )
 	{
 		return new EvalFactory( binding );
 	}
@@ -283,7 +280,6 @@ public class EvalFactory
 	public void setEncoding( Charset encoding )
 	{
 		this.encoding = encoding;
-		setOutputStream( bs );
 	}
 	
 	/**

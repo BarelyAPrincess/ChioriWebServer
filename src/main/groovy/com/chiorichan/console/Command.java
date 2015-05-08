@@ -9,8 +9,8 @@ package com.chiorichan.console;
 import java.util.List;
 
 import com.chiorichan.ConsoleColor;
-import com.chiorichan.account.InteractiveEntity;
-import com.chiorichan.account.InteractivePermissible;
+import com.chiorichan.account.Account;
+import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.permission.Permissible;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionNamespace;
@@ -102,14 +102,14 @@ public abstract class Command
 	 *            InteractiveConsoleHandler to test
 	 * @return {@link true} if they can use it, otherwise false
 	 */
-	public boolean testPermission( InteractivePermissible target )
+	public boolean testPermission( AccountPermissible target )
 	{
 		if ( target == null )
 			return false;
 		
-		if ( !target.isValid() )
+		if ( false )// !target.isValid() )
 		{
-			target.sendMessage( ConsoleColor.RED + "Your session is invalid, please try to relogin." );
+			target.send( ConsoleColor.RED + "Your session is invalid, please try to relogin." );
 			return false;
 		}
 		
@@ -117,12 +117,12 @@ public abstract class Command
 			return true;
 		
 		if ( permissionMessage == null )
-			target.sendMessage( ConsoleColor.RED + "I'm sorry, but you do not have permission to perform the command '" + name + "'." );
+			target.send( ConsoleColor.RED + "I'm sorry, but you do not have permission to perform the command '" + name + "'." );
 		else if ( permissionMessage.length() != 0 )
 		{
 			for ( String line : permissionMessage.replace( "<permission>", permission ).split( "\n" ) )
 			{
-				target.sendMessage( line );
+				target.send( line );
 			}
 		}
 		
@@ -244,12 +244,12 @@ public abstract class Command
 		return this;
 	}
 	
-	public static void broadcastCommandMessage( InteractiveEntity source, String message )
+	public static void broadcastCommandMessage( Account source, String message )
 	{
 		broadcastCommandMessage( source, message, true );
 	}
 	
-	public static void broadcastCommandMessage( InteractiveEntity source, String message, boolean sendToSource )
+	public static void broadcastCommandMessage( Account source, String message, boolean sendToSource )
 	{
 		/*
 		 * String result;

@@ -3,9 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 package com.chiorichan.scheduler;
 
@@ -28,10 +25,26 @@ import java.util.logging.Level;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.Loader;
+import com.chiorichan.ServerManager;
 import com.google.common.collect.Maps;
 
-public class ChioriScheduler implements IChioriScheduler
+/**
+ * Manages task scheduled in the main thread
+ * 
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
+ */
+public class ScheduleManager implements IChioriScheduler, ServerManager
 {
+	/**
+	 * Time delay constants for scheduling with the Manager<br>
+	 * Just multiply the unit by the needed number and TADA!
+	 */
+	public static final long DELAY_SECOND = 50;
+	public static final long DELAY_MINUTE = 3000;
+	public static final long DELAY_HOUR = 180000;
+	public static final long DELAY_DAY = 4320000;
+	
 	/**
 	 * Counter for IDs. Order doesn't matter, only uniqueness.
 	 */
@@ -210,9 +223,9 @@ public class ChioriScheduler implements IChioriScheduler
 		{
 			public void run()
 			{
-				if ( !check( ChioriScheduler.this.temp ) )
+				if ( !check( ScheduleManager.this.temp ) )
 				{
-					check( ChioriScheduler.this.pending );
+					check( ScheduleManager.this.pending );
 				}
 			}
 			
@@ -257,8 +270,8 @@ public class ChioriScheduler implements IChioriScheduler
 		{
 			public void run()
 			{
-				check( ChioriScheduler.this.pending );
-				check( ChioriScheduler.this.temp );
+				check( ScheduleManager.this.pending );
+				check( ScheduleManager.this.temp );
 			}
 			
 			void check( final Iterable<ChioriTask> collection )
@@ -306,7 +319,7 @@ public class ChioriScheduler implements IChioriScheduler
 		{
 			public void run()
 			{
-				Iterator<ChioriTask> it = ChioriScheduler.this.runners.values().iterator();
+				Iterator<ChioriTask> it = ScheduleManager.this.runners.values().iterator();
 				while ( it.hasNext() )
 				{
 					ChioriTask task = it.next();
@@ -316,8 +329,8 @@ public class ChioriScheduler implements IChioriScheduler
 						it.remove();
 					}
 				}
-				ChioriScheduler.this.pending.clear();
-				ChioriScheduler.this.temp.clear();
+				ScheduleManager.this.pending.clear();
+				ScheduleManager.this.temp.clear();
 			}
 		} );
 		handle( task, 0L );

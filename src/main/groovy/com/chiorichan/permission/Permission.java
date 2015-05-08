@@ -398,7 +398,7 @@ public abstract class Permission
 			{
 				try
 				{
-					curr = Loader.getPermissionManager().getBackend().createNode( nodes[0] );
+					curr = PermissionManager.INSTANCE.getBackend().createNode( nodes[0] );
 				}
 				catch ( PermissionException e )
 				{
@@ -422,7 +422,7 @@ public abstract class Permission
 				{
 					try
 					{
-						child = Loader.getPermissionManager().getBackend().createNode( node, curr );
+						child = PermissionManager.INSTANCE.getBackend().createNode( node, curr );
 					}
 					catch ( PermissionException e )
 					{

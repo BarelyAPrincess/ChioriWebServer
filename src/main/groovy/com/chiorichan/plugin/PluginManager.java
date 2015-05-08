@@ -29,7 +29,9 @@ import org.apache.commons.lang3.Validate;
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.RunLevel;
+import com.chiorichan.ServerManager;
 import com.chiorichan.event.BuiltinEventCreator;
+import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.HandlerList;
@@ -46,7 +48,7 @@ import com.chiorichan.plugin.loader.PluginLoader;
 import com.chiorichan.util.FileFunc;
 import com.google.common.collect.Maps;
 
-public class PluginManager extends BuiltinEventCreator implements Listener
+public class PluginManager extends BuiltinEventCreator implements Listener, ServerManager
 {
 	private final Map<Pattern, PluginLoader> fileAssociations = new HashMap<Pattern, PluginLoader>();
 	private final List<Plugin> plugins = new ArrayList<Plugin>();
@@ -71,7 +73,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener
 	 */
 	public void init()
 	{
-		Loader.getEventBus().registerEvents( this, this );
+		EventBus.INSTANCE.registerEvents( this, this );
 	}
 	
 	public void loadPlugins()

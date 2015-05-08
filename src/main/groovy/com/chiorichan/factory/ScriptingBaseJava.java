@@ -29,7 +29,6 @@ import java.util.Map.Entry;
 
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
-import com.chiorichan.event.EventBus;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.util.CommonFunc;
@@ -479,11 +478,6 @@ public abstract class ScriptingBaseJava extends Script
 	Plugin getPluginByName( String search )
 	{
 		return Loader.getPluginManager().getPluginbyName( search );
-	}
-	
-	EventBus getEventBus()
-	{
-		return Loader.getEventBus();
 	}
 	
 	ConsoleLogger getLogger()

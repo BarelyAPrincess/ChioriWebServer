@@ -9,47 +9,149 @@
  */
 package com.chiorichan.account;
 
+import java.lang.ref.WeakReference;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
 
+import com.chiorichan.permission.PermissibleEntity;
+import com.chiorichan.permission.PermissionManager;
+import com.chiorichan.site.Site;
 import com.chiorichan.util.ObjectFunc;
-import com.chiorichan.util.StringFunc;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 
-public class AccountMetaData
+public final class AccountMeta implements Account, Iterable<Entry<String, Object>>
 {
-	Map<String, Object> metaData = Maps.newTreeMap( String.CASE_INSENSITIVE_ORDER );
+	public static final List<String> IGNORED_KEYS = Arrays.asList( new String[] {"siteId", "acctId"} );
 	
-	public AccountMetaData()
+	/**
+	 * Used to store our Account Metadata besides the required builtin key names.
+	 */
+	private final Map<String, Object> metadata = Maps.newTreeMap( String.CASE_INSENSITIVE_ORDER );
+	
+	/**
+	 * Provides context into our existence
+	 */
+	private final AccountContext context;
+	
+	/**
+	 * Used as our reference to the Account Instance.<br>
+	 * We use a WeakReference so the account can be logged out automatically when no longer used.
+	 */
+	private WeakReference<AccountInstance> account = null;
+	
+	/**
+	 * Site Id
+	 */
+	private final String siteId;
+	
+	/**
+	 * Account Id
+	 */
+	private final String acctId;
+	
+	/**
+	 * Used to keep the Account Instance loaded in the memory when {@link #keepInMemory} is set to true<br>
+	 * This counters our weak reference of the {@link AccountInstance}
+	 */
+	@SuppressWarnings( "unused" )
+	private AccountInstance strongReference = null;
+	
+	/**
+	 * Weak references the {@link PermissibleEntity} over at the Permission Manager.<br>
+	 * Again, we use the {@link WeakReference} so it can be garbage collected when unused,<br>
+	 * we reload it from the Permission Manager once needed again.
+	 */
+	private WeakReference<PermissibleEntity> permissibleEntity = null;
+	
+	/**
+	 * Indicates if we should keep the Account Instance loaded in Memory
+	 */
+	private boolean keepInMemory = false;
+	
+	AccountMeta( AccountContext context )
 	{
+		this.context = context;
+		this.acctId = context.getAcctId();
+		this.siteId = context.getSiteId();
 		
+		metadata.putAll( context.getValues() );
+		
+		/**
+		 * Populate the PermissibleEntity for reasons...
+		 */
+		getPermissibleEntity();
 	}
 	
-	public AccountMetaData( String username, String password, String acctId )
+	private AccountInstance initAccount()
 	{
-		metaData.put( "username", username );
-		metaData.put( "password", StringFunc.md5( password ) );
-		metaData.put( "acctId", acctId );
+		AccountInstance account = new AccountInstance( this );
+		this.account = new WeakReference<AccountInstance>( account );
+		
+		if ( keepInMemory )
+			strongReference = account;
+		
+		AccountManager.INSTANCE.fireAccountLoad( this );
+		
+		return account;
 	}
 	
-	public Map<String, Object> getMetaDataMap()
+	/**
+	 * Sets if the Account should stay loaded in the VM memory
+	 * 
+	 * @param state
+	 *            Stay in memory?
+	 */
+	public void keepInMemory( boolean state )
 	{
-		return Collections.unmodifiableMap( metaData );
+		strongReference = ( state ) ? account.get() : null;
+		keepInMemory = state;
 	}
 	
-	public boolean hasMinimumData()
+	/**
+	 * Returns if the Account is being kept in memory
+	 * If you want to know if the Account will be kept in memory, See {@link #keepInMemory()}
+	 * 
+	 * @return
+	 *         Is being kept in memory? Will always return false if the Account is not initialized.
+	 */
+	public boolean keptInMemory()
 	{
-		return metaData.containsKey( "username" ) && metaData.containsKey( "password" ) && metaData.containsKey( "acctId" );
+		return this.isInitialized() ? keepInMemory : false;
+	}
+	
+	/**
+	 * Returns if the Account is will be kept in memory
+	 * If you want to know if the Account is currently being kept in memory, See {@link #keptInMemory()}
+	 * 
+	 * @return
+	 *         Will be kept in memory?
+	 */
+	public boolean keepInMemory()
+	{
+		return this.isInitialized() ? keepInMemory : false;
+	}
+	
+	public Map<String, Object> getMeta()
+	{
+		return Collections.unmodifiableMap( metadata );
+	}
+	
+	public Set<String> keySet()
+	{
+		return Collections.unmodifiableSet( metadata.keySet() );
 	}
 	
 	public Object getObject( String key )
 	{
-		return metaData.get( key );
+		return metadata.get( key );
 	}
 	
 	public void set( String key, Object obj )
@@ -57,21 +159,9 @@ public class AccountMetaData
 		Validate.notNull( key );
 		
 		if ( obj == null )
-		{
-			metaData.remove( key );
-			return;
-		}
-		
-		if ( "password".equalsIgnoreCase( key ) && obj instanceof String )
-			obj = StringFunc.md5( ( String ) obj );
-		
-		/*
-		 * Can't override the acctId associated with this account.
-		 */
-		if ( "acctId".equalsIgnoreCase( key ) )
-			return;
-		
-		metaData.put( key, obj );
+			metadata.remove( key );
+		else
+			metadata.put( key, obj );
 	}
 	
 	public String getString( String key )
@@ -81,7 +171,7 @@ public class AccountMetaData
 	
 	public String getString( String key, String def )
 	{
-		String val = ObjectFunc.castToString( metaData.get( key ) );
+		String val = ObjectFunc.castToString( metadata.get( key ) );
 		return ( val == null ) ? def : val;
 	}
 	
@@ -92,7 +182,7 @@ public class AccountMetaData
 	
 	public Integer getInteger( String key, int def )
 	{
-		Object obj = metaData.get( key );
+		Object obj = metadata.get( key );
 		Integer val = ObjectFunc.castToInt( obj );
 		
 		return ( val == null ) ? def : val;
@@ -100,7 +190,7 @@ public class AccountMetaData
 	
 	public Boolean getBoolean( String key )
 	{
-		Object obj = metaData.get( key );
+		Object obj = metadata.get( key );
 		
 		if ( obj instanceof String )
 			return Boolean.parseBoolean( ( String ) obj );
@@ -108,53 +198,144 @@ public class AccountMetaData
 			return ( Boolean ) obj;
 	}
 	
-	public void setAll( Map<String, Object> data )
-	{
-		metaData.putAll( data );
-	}
-	
 	public String toString()
 	{
-		return Joiner.on( "," ).withKeyValueSeparator( "=" ).join( metaData );
+		return "AccountMeta{acctId=" + acctId + ",siteId=" + siteId + "," + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( metadata ) + "}";
 	}
 	
 	public boolean containsKey( String key )
 	{
-		return metaData.containsKey( key );
+		return metadata.containsKey( key );
 	}
 	
+	@Override
 	public String getAcctId()
 	{
-		String uid = getString( "acctId" );
+		return acctId;
+	}
+	
+	@Override
+	public String getHumanReadableName()
+	{
+		String name = context.creator().getHumanReadableName( this );
+		return ( name == null ) ? getAcctId() : name;
+	}
+	
+	public String getSiteId()
+	{
+		return siteId;
+	}
+	
+	public String getLogoffMessage()
+	{
+		return this.getAcctId() + " has logged off the server";
+	}
+	
+	public PermissibleEntity getPermissibleEntity()
+	{
+		if ( permissibleEntity == null || permissibleEntity.get() == null )
+			permissibleEntity = new WeakReference<PermissibleEntity>( PermissionManager.INSTANCE.getEntity( getAcctId() ) );
 		
-		if ( uid == null )
-			uid = getString( "accountId" );
+		return permissibleEntity.get();
+	}
+	
+	public boolean isInitialized()
+	{
+		return account != null;
+	}
+	
+	@Override
+	public boolean isBanned()
+	{
+		return getPermissibleEntity().isBanned();
+	}
+	
+	@Override
+	public boolean isWhitelisted()
+	{
+		return getPermissibleEntity().isWhitelisted();
+	}
+	
+	@Override
+	public boolean isAdmin()
+	{
+		return getPermissibleEntity().isAdmin();
+	}
+	
+	@Override
+	public boolean isOp()
+	{
+		return getPermissibleEntity().isOp();
+	}
+	
+	@Override
+	public boolean kick( String msg )
+	{
+		return AccountManager.INSTANCE.kick( this, msg );
+	}
+	
+	@Override
+	public Set<String> getIpAddresses()
+	{
+		return instance().getIpAddresses();
+	}
+	
+	@Override
+	public AccountMeta metadata()
+	{
+		return this;
+	}
+	
+	@Override
+	public AccountInstance instance()
+	{
+		if ( !isInitialized() )
+			initAccount();
 		
-		/** TEMP START - MAYBE **/
-		if ( uid == null )
-			uid = getString( "userId" );
-		
-		if ( uid == null )
-			uid = getString( "userID" );
-		
-		if ( uid == null )
-			uid = getString( "id" );
-		/** TEMP END **/
-		
-		return uid;
+		return account.get();
+	}
+	
+	public void reload()
+	{
+		context.creator().reload( this );
+	}
+	
+	public void save()
+	{
+		context.creator().save( this );
+	}
+	
+	@Override
+	public Site getSite()
+	{
+		return null;
+	}
+	
+	public AccountContext getContext()
+	{
+		return context;
+	}
+	
+	@Override
+	public Iterator<Entry<String, Object>> iterator()
+	{
+		return Collections.unmodifiableMap( metadata ).entrySet().iterator();
 	}
 	
 	public Set<String> getKeys()
 	{
-		return metaData.keySet();
+		return metadata.keySet();
 	}
 	
-	public void mergeData( AccountMetaData data )
+	@Override
+	public void send( Object obj )
 	{
-		for ( Entry<String, Object> entry : metaData.entrySet() )
-			if ( !data.containsKey( entry.getKey() ) )
-				metaData.remove( entry.getKey() );
-		
-		metaData.putAll( data.metaData );
+		instance().send( obj );
+	}
+	
+	@Override
+	public void send( Account sender, Object obj )
+	{
+		instance().send( sender, obj );
 	}
 }

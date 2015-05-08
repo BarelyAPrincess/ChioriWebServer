@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.chiorichan.Loader;
+import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventCreator;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
@@ -35,7 +36,7 @@ public class NetworkSecurity implements Listener, EventCreator
 	
 	public NetworkSecurity()
 	{
-		Loader.getEventBus().registerEvents( this, this );
+		EventBus.INSTANCE.registerEvents( this, this );
 	}
 	
 	public static boolean isIPBanned( String remoteAddr )
@@ -70,19 +71,19 @@ public class NetworkSecurity implements Listener, EventCreator
 			
 		}
 	}
-
+	
 	@Override
 	public PluginDescriptionFile getDescription()
 	{
 		return null;
 	}
-
+	
 	@Override
 	public boolean isEnabled()
 	{
 		return true;
 	}
-
+	
 	@Override
 	public String getName()
 	{

@@ -12,6 +12,4 @@ package com.chiorichan.factory;
 public interface BindingProvider
 {
 	EvalFactory getEvalFactory();
-	
-	EvalFactory getEvalFactory( boolean createIfNull );
 }

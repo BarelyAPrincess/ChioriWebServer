@@ -20,10 +20,11 @@ import com.chiorichan.Loader;
 import com.chiorichan.console.CommandDispatch;
 import com.chiorichan.console.InteractiveConsole;
 import com.chiorichan.console.InteractiveConsoleHandler;
+import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.query.QueryEvent;
 import com.chiorichan.event.query.QueryEvent.QueryType;
-import com.chiorichan.net.NetworkPersistence;
+import com.chiorichan.net.NetworkWrapper;
 import com.chiorichan.util.StringFunc;
 
 /**
@@ -36,7 +37,7 @@ import com.chiorichan.util.StringFunc;
 public class QueryServerHandler extends SimpleChannelInboundHandler<String> implements InteractiveConsoleHandler
 {
 	private ChannelHandlerContext context;
-	private NetworkPersistence persistence;
+	private NetworkWrapper persistence;
 	private InteractiveConsole console;
 	
 	@Override
@@ -44,7 +45,7 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 	{
 		context = ctx;
 		
-		persistence = new NetworkPersistence( this );
+		persistence = new NetworkWrapper( this );
 		console = InteractiveConsole.createInstance( this, persistence );
 		
 		console.displayWelcomeMessage();
@@ -53,7 +54,7 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 		
 		try
 		{
-			Loader.getEventBus().callEventWithException( queryEvent );
+			EventBus.INSTANCE.callEventWithException( queryEvent );
 		}
 		catch ( EventException ex )
 		{
@@ -74,7 +75,7 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 	@Override
 	public void channelInactive( ChannelHandlerContext ctx ) throws Exception
 	{
-		persistence.reset();
+		persistence.finish();
 	}
 	
 	private String parseColor( String text )
@@ -133,7 +134,7 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 	}
 	
 	@Override
-	public NetworkPersistence getPersistence()
+	public NetworkWrapper getPersistence()
 	{
 		return persistence;
 	}

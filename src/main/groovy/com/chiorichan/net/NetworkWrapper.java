@@ -6,13 +6,18 @@
  */
 package com.chiorichan.net;
 
-import groovy.lang.Binding;
+import java.util.Set;
 
-import com.chiorichan.account.AccountHandler;
-import com.chiorichan.account.system.SystemAccounts;
-import com.chiorichan.factory.BindingProvider;
-import com.chiorichan.factory.EvalFactory;
+import com.chiorichan.account.Account;
+import com.chiorichan.account.AccountType;
+import com.chiorichan.account.auth.AccountAuthenticator;
+import com.chiorichan.account.lang.AccountException;
+import com.chiorichan.http.HttpCookie;
 import com.chiorichan.net.query.QueryServerHandler;
+import com.chiorichan.session.SessionWrapper;
+import com.chiorichan.site.Site;
+import com.chiorichan.util.ObjectFunc;
+import com.google.common.collect.Sets;
 
 /**
  * This class is used to make a connection between a TCP connection and it's Permissible.
@@ -20,40 +25,21 @@ import com.chiorichan.net.query.QueryServerHandler;
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-public class NetworkPersistence extends AccountHandler implements BindingProvider
+public class NetworkWrapper extends SessionWrapper
 {
-	protected final Binding binding = new Binding();
-	protected EvalFactory factory = null;
 	protected QueryServerHandler handler;
 	
-	public NetworkPersistence( QueryServerHandler handler )
+	public NetworkWrapper( QueryServerHandler handler )
 	{
 		this.handler = handler;
-		attachAccount( SystemAccounts.noLogin );
-	}
-	
-	protected Binding getBinding()
-	{
-		return binding;
-	}
-	
-	@Override
-	public void sendMessage( String... msgs )
-	{
-		handler.println( msgs );
-	}
-	
-	@Override
-	public boolean kick( String kickMessage )
-	{
-		handler.disconnect( kickMessage );
-		return true;
-	}
-	
-	@Override
-	public boolean isRemote()
-	{
-		return true;
+		try
+		{
+			throw new AccountException( getSession().login( getSession(), AccountAuthenticator.NULL.credentials( AccountType.ACCOUNT_NONE ) ) );
+		}
+		catch ( AccountException e )
+		{
+			// Log the AccountResult
+		}
 	}
 	
 	@Override
@@ -63,23 +49,59 @@ public class NetworkPersistence extends AccountHandler implements BindingProvide
 	}
 	
 	@Override
-	public EvalFactory getEvalFactory()
-	{
-		return getEvalFactory( true );
-	}
-	
-	@Override
-	public EvalFactory getEvalFactory( boolean createIfNull )
-	{
-		if ( factory == null && createIfNull )
-			factory = EvalFactory.create( binding );
-		
-		return factory;
-	}
-	
-	@Override
 	public String toString()
 	{
 		return "NetworkPersistence{ipAddr=" + getIpAddr() + "}";
 	}
+	
+	@Override
+	public HttpCookie getCookie( String key )
+	{
+		return null;
+	}
+	
+	@Override
+	public Set<HttpCookie> getCookies()
+	{
+		return Sets.newHashSet();
+	}
+	
+	@Override
+	protected void sessionStarted()
+	{
+		
+	}
+	
+	@Override
+	protected Site getSite()
+	{
+		return null;
+	}
+	
+	@Override
+	protected void finish0()
+	{
+		// Do Nothing
+	}
+	
+	@Override
+	public void send( Object obj )
+	{
+		handler.println( "Message: " + ObjectFunc.castToString( obj ) );
+	}
+	
+	@Override
+	public void send( Account sender, Object obj )
+	{
+		handler.println( "Message from " + sender.getAcctId() + ": " + ObjectFunc.castToString( obj ) );
+	}
+	
+	/*
+	 * @Override
+	 * public boolean kick( String kickMessage )
+	 * {
+	 * handler.disconnect( kickMessage );
+	 * return true;
+	 * }
+	 */
 }

@@ -11,146 +11,86 @@ package com.chiorichan.account;
 
 import java.util.Set;
 
-import org.apache.commons.codec.digest.DigestUtils;
-
-import com.chiorichan.Loader;
-import com.chiorichan.account.adapter.AccountLookupAdapter;
-import com.chiorichan.account.lang.LoginException;
-import com.chiorichan.account.lang.LoginExceptionReason;
+import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionResult;
+import com.chiorichan.site.Site;
+import com.chiorichan.util.WeakReferenceList;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Sets;
 
-public abstract class Account implements InteractiveEntity
+public final class AccountInstance implements Account
 {
 	/**
-	 * Set of AccountHandlers
+	 * Tracks permissibles that are referencing this account and is self garbage collecting
 	 */
-	protected volatile Set<AccountHandler> handlers = Sets.newHashSet();
+	private final WeakReferenceList<AccountPermissible> permissibles = new WeakReferenceList<AccountPermissible>();
 	
 	/**
 	 * Account MetaData
 	 */
-	protected final AccountMetaData metaData;
+	private final AccountMeta metadata;
 	
-	/**
-	 * Account Id
-	 */
-	protected final String acctId;
-	
-	public Account( String userId, AccountLookupAdapter adapter ) throws LoginException
+	AccountInstance( AccountMeta metadata ) throws AccountException
 	{
-		if ( userId.isEmpty() )
-			throw new LoginException( LoginExceptionReason.emptyUsername );
+		if ( metadata == null )
+			throw new AccountException( "The metadata can't be null!" );
 		
-		if ( adapter == null )
-			throw new LoginException( LoginExceptionReason.unknownError );
-		
-		metaData = adapter.readAccount( userId );
-		acctId = metaData.getAcctId();
+		this.metadata = metadata;
 	}
 	
-	public Account( AccountMetaData meta ) throws LoginException
+	void registerPermissible( AccountPermissible permissible )
 	{
-		if ( meta == null )
-			throw new LoginException( LoginExceptionReason.unknownError );
-		
-		metaData = meta;
-		acctId = meta.getAcctId();
+		permissibles.add( permissible );
 	}
 	
-	/**
-	 * Get the baked registered listeners associated with this handler list
-	 * 
-	 * @return the array of registered listeners
-	 */
-	public final AccountHandler[] getHandlers()
+	void unregisterPermissible( AccountPermissible permissible )
 	{
-		checkHandlers();
-		return handlers.toArray( new AccountHandler[0] );
+		permissibles.remove( permissible );
 	}
 	
-	public final void putHandler( AccountHandler handler )
+	public AccountPermissible[] getPermissibles()
 	{
-		if ( !handlers.contains( handler ) )
-			handlers.add( handler );
+		return permissibles.toSet().toArray( new AccountPermissible[0] );
 	}
 	
-	public final void removeHandler( AccountHandler handler )
+	int countPermissibles()
 	{
-		checkHandlers();
-		handlers.remove( handler );
-	}
-	
-	public final void clearHandlers()
-	{
-		checkHandlers();
-		handlers.clear();
-	}
-	
-	public final boolean hasHandler()
-	{
-		checkHandlers();
-		return !handlers.isEmpty();
-	}
-	
-	public final int countHandlers()
-	{
-		checkHandlers();
-		return handlers.size();
-	}
-	
-	private void checkHandlers()
-	{
-		// for ( AccountHandler h : handlers )
-		// if ( !h.isValid() )
-		// handlers.remove( h );
-	}
-	
-	public final AccountMetaData getMetaData()
-	{
-		return metaData;
-	}
-	
-	public final boolean validatePassword( String pass )
-	{
-		String password = getPassword();
-		return ( password.equals( pass ) || password.equals( DigestUtils.md5Hex( pass ) ) || DigestUtils.md5Hex( password ).equals( pass ) );
+		return permissibles.size();
 	}
 	
 	@Override
 	public boolean isBanned()
 	{
-		return Loader.getPermissionManager().getEntity( getAcctId() ).isBanned();
+		return metadata.isBanned();
 	}
 	
 	@Override
 	public boolean isWhitelisted()
 	{
-		return Loader.getPermissionManager().getEntity( getAcctId() ).isWhitelisted();
+		return metadata.isWhitelisted();
 	}
 	
 	@Override
 	public boolean isAdmin()
 	{
-		return Loader.getPermissionManager().getEntity( getAcctId() ).isAdmin();
+		return metadata.isAdmin();
 	}
 	
 	@Override
 	public boolean isOp()
 	{
-		return Loader.getPermissionManager().getEntity( getAcctId() ).isOp();
+		return metadata.isOp();
 	}
 	
-	public final PermissionResult checkPermission( String perm )
+	public PermissionResult checkPermission( String perm )
 	{
-		return Loader.getPermissionManager().getEntity( getAcctId() ).checkPermission( perm );
+		return metadata.getPermissibleEntity().checkPermission( perm );
 	}
 	
-	public final PermissionResult checkPermission( Permission perm )
+	public PermissionResult checkPermission( Permission perm )
 	{
-		return Loader.getPermissionManager().getEntity( getAcctId() ).checkPermission( perm );
+		return metadata.getPermissibleEntity().checkPermission( perm );
 	}
 	
 	/**
@@ -162,45 +102,32 @@ public abstract class Account implements InteractiveEntity
 	 *         The result of said check. Will always return false if permission value is not of type boolean.
 	 */
 	@Deprecated
-	public final boolean hasPermission( String perm )
+	public boolean hasPermission( String perm )
 	{
 		return checkPermission( perm ).isTrue();
 	}
 	
-	public abstract String getUsername();
-	
-	public abstract String getPassword();
-	
-	public String getDisplayName()
+	@Override
+	public String getHumanReadableName()
 	{
-		if ( getUsername() != null && !getUsername().isEmpty() )
-			return getUsername();
-		
-		return getAcctId();
+		return metadata.getHumanReadableName();
 	}
 	
-	public final boolean kick( final String kickMessage )
+	public boolean kick( String msg )
 	{
-		for ( AccountHandler h : handlers )
-			if ( !h.kick( kickMessage ) )
-				return false;
-		return true;
-		
+		return metadata.kick( msg );
 	}
 	
-	public final void save() throws Exception
-	{
-		getLookupAdapter().saveAccount( metaData );
-	}
-	
+	@Override
 	public String getAcctId()
 	{
-		return metaData.getAcctId();
+		return metadata.getAcctId();
 	}
 	
+	@Override
 	public String toString()
 	{
-		return "User{" + metaData.toString() + ",Handlers{" + Joiner.on( "," ).join( handlers ) + "}}";
+		return "Account{" + metadata.toString() + ",Permissibles{" + Joiner.on( "," ).join( getPermissibles() ) + "}}";
 	}
 	
 	/**
@@ -226,50 +153,54 @@ public abstract class Account implements InteractiveEntity
 	 */
 	public String getString( String key, String def )
 	{
-		if ( !metaData.containsKey( key ) )
+		if ( !metadata.containsKey( key ) )
 			return def;
 		
-		return metaData.getString( key );
+		return metadata.getString( key );
+	}
+	
+	public Site getSite()
+	{
+		return metadata.getSite();
+	}
+	
+	public String getSiteId()
+	{
+		return metadata.getSiteId();
 	}
 	
 	@Override
-	public final void sendMessage( String... msgs )
+	public Set<String> getIpAddresses()
 	{
-		for ( String msg : msgs )
-			for ( AccountHandler h : handlers )
-				h.sendMessage( msg );
+		Set<String> ips = Sets.newHashSet();
+		for ( AccountPermissible perm : getPermissibles() )
+			ips.addAll( perm.getIpAddresses() );
+		return ips;
 	}
 	
-	public final void reloadAndValidate() throws Exception
+	@Override
+	public AccountMeta metadata()
 	{
-		getLookupAdapter().reloadAccount( metaData );
+		return metadata;
 	}
 	
-	public abstract AccountLookupAdapter getLookupAdapter();
+	@Override
+	public AccountInstance instance()
+	{
+		return this;
+	}
 	
-	/**
-	 * Called before the AccountManager makes the login official.
-	 * 
-	 * @throws LoginException
-	 *             Throw this exception if you wish to interrupt the login
-	 */
-	public abstract void preLoginCheck() throws LoginException;
+	@Override
+	public void send( Object obj )
+	{
+		for ( AccountPermissible perm : permissibles )
+			perm.send( obj );
+	}
 	
-	/**
-	 * Called as the last line before account is returned.
-	 * 
-	 * @throws LoginException
-	 *             Throw this exception if you wish to interrupt the login
-	 */
-	public abstract void postLoginCheck() throws LoginException;
-	
-	/**
-	 * Called from AccountManager to match the account using an array of fields, e.g., email, phone, name, acctId
-	 * 
-	 * @param id
-	 *            The identifier to match against.
-	 * @return Boolean
-	 *         true if it matches.
-	 */
-	public abstract boolean isYou( String id );
+	@Override
+	public void send( Account sender, Object obj )
+	{
+		for ( AccountPermissible perm : permissibles )
+			perm.send( sender, obj );
+	}
 }

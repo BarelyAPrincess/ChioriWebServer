@@ -23,13 +23,14 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
+import com.chiorichan.ServerManager;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.lang.SiteException;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.util.FileFunc;
 import com.google.common.collect.Lists;
 
-public class SiteManager
+public class SiteManager implements ServerManager
 {
 	Map<String, Site> siteMap;
 	
@@ -148,6 +149,9 @@ public class SiteManager
 	
 	public Site getSiteById( String siteId )
 	{
+		if ( siteId == null )
+			return null;
+		
 		return siteMap.get( siteId );
 	}
 	

@@ -10,6 +10,7 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 
 import com.chiorichan.Loader;
+import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventCreator;
 import com.chiorichan.event.Listener;
 import com.chiorichan.plugin.PluginDescriptionFile;
@@ -33,8 +34,8 @@ public class Out implements Listener, EventCreator, TaskCreator, Runnable
 	
 	Out()
 	{
-		Loader.getScheduler().scheduleAsyncRepeatingTask( this, this, 5000L, 5000L );
-		Loader.getEventBus().registerEvents( this, this );
+		Loader.getScheduleManager().scheduleAsyncRepeatingTask( this, this, 5000L, 5000L );
+		EventBus.INSTANCE.registerEvents( this, this );
 	}
 	
 	public static LogEvent logEvent( String id )

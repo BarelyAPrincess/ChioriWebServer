@@ -15,7 +15,7 @@ import java.util.Set;
 import java.util.TimerTask;
 
 import com.chiorichan.ConsoleColor;
-import com.chiorichan.Loader;
+import com.chiorichan.event.EventBus;
 import com.chiorichan.permission.event.PermissibleEntityEvent;
 import com.chiorichan.util.CommonFunc;
 import com.chiorichan.util.PermissionFunc;
@@ -218,10 +218,10 @@ public abstract class PermissibleEntity
 				}
 			};
 			
-			Loader.getPermissionManager().registerTask( task, lifeTime );
+			PermissionManager.INSTANCE.registerTask( task, lifeTime );
 		}
 		
-		Loader.getEventBus().callEvent( new PermissibleEntityEvent( this, PermissibleEntityEvent.Action.PERMISSIONS_CHANGED ) );
+		EventBus.INSTANCE.callEvent( new PermissibleEntityEvent( this, PermissibleEntityEvent.Action.PERMISSIONS_CHANGED ) );
 	}
 	
 	/**
@@ -244,7 +244,7 @@ public abstract class PermissibleEntity
 				timedPermissions.get( ref ).remove( tp );
 		}
 		
-		Loader.getEventBus().callEvent( new PermissibleEntityEvent( this, PermissibleEntityEvent.Action.PERMISSIONS_CHANGED ) );
+		EventBus.INSTANCE.callEvent( new PermissibleEntityEvent( this, PermissibleEntityEvent.Action.PERMISSIONS_CHANGED ) );
 	}
 	
 	@Override
@@ -291,7 +291,7 @@ public abstract class PermissibleEntity
 	
 	public boolean isDebug()
 	{
-		return debugMode || Loader.getPermissionManager().isDebug();
+		return debugMode || PermissionManager.INSTANCE.isDebug();
 	}
 	
 	public void setDebug( boolean debug )
@@ -307,7 +307,7 @@ public abstract class PermissibleEntity
 	
 	public boolean isWhitelisted()
 	{
-		if ( !Loader.getPermissionManager().hasWhitelist )
+		if ( !PermissionManager.INSTANCE.hasWhitelist )
 			return true;
 		
 		PermissionResult result = checkPermission( PermissionDefault.WHITELISTED.getNode() );

@@ -3,377 +3,251 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 package com.chiorichan.account;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
-import com.chiorichan.account.AccountsKeeper.AccountsKeeperOptions;
-import com.chiorichan.account.adapter.AccountLookupAdapter;
-import com.chiorichan.account.adapter.file.FileAdapter;
-import com.chiorichan.account.adapter.sql.SqlAdapter;
-import com.chiorichan.account.lang.LoginException;
-import com.chiorichan.account.lang.LoginExceptionReason;
-import com.chiorichan.account.lang.LookupAdapterException;
-import com.chiorichan.account.system.SystemAccounts;
-import com.chiorichan.configuration.file.YamlConfiguration;
-import com.chiorichan.event.account.AccountLoginEvent;
-import com.chiorichan.event.account.PreAccountLoginEvent;
-import com.chiorichan.event.account.PreAccountLoginEvent.Result;
-import com.chiorichan.lang.StartupException;
-import com.chiorichan.permission.PermissibleEntity;
-import com.chiorichan.permission.PermissionDefault;
-import com.chiorichan.site.Site;
-import com.chiorichan.util.CommonFunc;
-import com.google.common.collect.Lists;
+import com.chiorichan.ServerManager;
+import com.chiorichan.account.lang.AccountException;
+import com.chiorichan.account.lang.AccountResult;
+import com.chiorichan.event.EventBus;
+import com.chiorichan.plugin.PluginDescriptionFile;
+import com.chiorichan.scheduler.TaskCreator;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Sets;
 
-public class AccountManager
+/**
+ * Provides Account Management to the Server
+ * 
+ * @author Chiori Greene
+ * @email chiorigreene@gmail.com
+ */
+public final class AccountManager extends AccountEvents implements ServerManager, TaskCreator
 {
-	protected static AccountManager instance;
-	protected static AccountsKeeper accounts = new AccountsKeeper();
-	protected AccountLookupAdapter accountLookupAdapter;
+	/**
+	 * Holds an instance of this Account Manager
+	 */
+	public static final AccountManager INSTANCE = new AccountManager();
 	
-	protected List<String> banByIp = new ArrayList<String>();
-	protected int maxAccounts = -1;
+	/**
+	 * Has this manager already been initialized?
+	 */
+	private static boolean isInitialized = false;
 	
-	private static boolean isDebug = false;
+	/**
+	 * References accounts meta data. We try and populate this list at load with all available accounts but this is not always guaranteed.
+	 */
+	final AccountList accounts = new AccountList();
 	
-	public AccountManager()
+	boolean isDebug = false;
+	int maxAccounts = -1;
+	
+	public static void init()
 	{
-		instance = this;
+		if ( isInitialized )
+			throw new IllegalStateException( "The Account Manager has already been initialized." );
+		
+		assert INSTANCE != null;
+		
+		INSTANCE.init0();
+		
+		isInitialized = true;
 	}
 	
-	public static AccountManager getInstance()
+	private AccountManager()
 	{
-		return instance;
+		
 	}
 	
-	public void init()
+	private void init0()
 	{
-		YamlConfiguration config = Loader.getConfig();
-		isDebug = config.getBoolean( "accounts.debug" );
+		isDebug = Loader.getConfig().getBoolean( "accounts.debug" );
+		maxAccounts = Loader.getConfig().getInt( "accounts.maxLogins", -1 );
 		
-		banByIp = config.getStringList( "accounts.banByIp", new ArrayList<String>() );
-		maxAccounts = config.getInt( "accounts.maxLogins", -1 );
+		EventBus.INSTANCE.registerEvents( AccountType.MEMORY.getCreator(), this );
+		EventBus.INSTANCE.registerEvents( AccountType.SQL.getCreator(), this );
+		EventBus.INSTANCE.registerEvents( AccountType.FILE.getCreator(), this );
+	}
+	
+	public AccountMeta getAccount( String acctId ) throws AccountException
+	{
+		AccountMeta acct = accounts.get( acctId );
 		
-		if ( config.getConfigurationSection( "accounts" ) != null )
+		if ( acct == null )
 		{
-			try
+			acct = fireAccountLookup( acctId );
+			
+			if ( acct == null )
+				throw AccountResult.INCORRECT_LOGIN.exception();
+			
+			accounts.put( acct );
+		}
+		
+		return acct;
+	}
+	
+	public AccountMeta getAccountPartial( String partial ) throws AccountException
+	{
+		Validate.notNull( partial );
+		
+		AccountMeta found = null;
+		String lowerName = partial.toLowerCase();
+		int delta = Integer.MAX_VALUE;
+		for ( AccountMeta meta : getAccounts() )
+		{
+			if ( meta.getAcctId().toLowerCase().startsWith( lowerName ) )
 			{
-				switch ( config.getString( "accounts.lookupAdapter.type", null ) )
+				int curDelta = meta.getAcctId().length() - lowerName.length();
+				if ( curDelta < delta )
 				{
-					case "sql":
-						if ( Loader.getDatabase() == null )
-							throw new StartupException( "AccountLookupAdapter is configured with a SQL AccountLookupAdapter but the server is missing a valid SQL Database, which is required for this adapter." );
-						
-						accountLookupAdapter = new SqlAdapter();
-						getLogger().info( "Initiated Sql AccountLookupAdapter `" + accountLookupAdapter + "` with sql '" + Loader.getDatabase() + "'" );
-						break;
-					case "file":
-						accountLookupAdapter = new FileAdapter();
-						getLogger().info( "Initiated File AccountLookupAdapter `" + accountLookupAdapter + "`" );
-						break;
-					case "shared":
-						if ( config.getString( "accounts.lookupAdapter.shareWith", null ) == null )
-							throw new StartupException( "The AccountLookupAdapter is configured to use another site's database, but the config section 'accounts.lookupAdapter.shareWith' is missing." );
-						
-						Site shared = Loader.getSiteManager().getSiteById( config.getString( "accounts.lookupAdapter.shareWith" ) );
-						
-						if ( shared == null )
-							throw new StartupException( "The AccountLookupAdapter is configured to use '" + config.getString( "accounts.shareWith" ) + "''s database, but there was no sites found by that id." );
-						
-						if ( shared.getDatabase() == null )
-							throw new StartupException( "The AccountLookupAdapter is configured to use '" + config.getString( "accounts.shareWith" ) + "''s database, but the found site has no Database configured." );
-						
-						accountLookupAdapter = new SqlAdapter( shared );
-						getLogger().info( "Initiated AccountLookupAdapter `" + accountLookupAdapter + "` to use '" + config.getString( "accounts.shareWith" ) + "''s database." );
-						break;
-					default: // TODO Create custom AccountLookupAdapters.
-						getLogger().warning( "The Accounts Manager is unconfigured. We will be unable to login any accounts. See config option 'accounts.lookupAdapter.type' in server config file." );
+					found = meta;
+					delta = curDelta;
 				}
+				if ( curDelta == 0 )
+					break;
 			}
-			catch ( LookupAdapterException e )
+		}
+		return found;
+	}
+	
+	public Set<Account> getInitializedAccounts()
+	{
+		Set<Account> accts = Sets.newHashSet();
+		for ( AccountMeta meta : accounts )
+			if ( meta.isInitialized() )
+				accts.add( meta );
+		return accts;
+	}
+	
+	/**
+	 * Gets all Account Permissibles by crawling the {@link AccountMeta} and {@link AccountInstance}
+	 * 
+	 * @return
+	 *         A set of AccountPermissibles
+	 */
+	public Set<AccountPermissible> getAccountPermissibles()
+	{
+		Set<AccountPermissible> accts = Sets.newHashSet();
+		for ( AccountMeta meta : accounts )
+			if ( meta.isInitialized() )
+				accts.addAll( Arrays.asList( meta.instance().getPermissibles() ) );
+		return accts;
+	}
+	
+	Set<AccountMeta> getAccounts0()
+	{
+		return accounts.toSet();
+	}
+	
+	public Set<AccountMeta> getAccounts()
+	{
+		return Collections.unmodifiableSet( getAccounts0() );
+	}
+	
+	public Set<AccountMeta> getAccounts( String query )
+	{
+		Validate.notNull( query );
+		
+		Set<AccountMeta> results = Sets.newHashSet();
+		
+		if ( query.contains( "|" ) )
+		{
+			for ( String s : Splitter.on( "|" ).split( query ) )
+				if ( s != null && !s.isEmpty() )
+					results.addAll( getAccounts( s ) );
+			
+			return results;
+		}
+		
+		boolean isLower = query.toLowerCase().equals( query ); // Is query string all lower case?
+		
+		for ( AccountMeta meta : accounts.toSet() )
+		{
+			String id = ( isLower ) ? meta.getAcctId().toLowerCase() : meta.getAcctId();
+			
+			if ( !id.isEmpty() && id.contains( query ) )
 			{
-				throw new StartupException( "There was an exception encoutered when attempting to create the AccountLookupAdapter. Please check and retry to start the server.", e );
+				results.add( meta );
+				continue;
 			}
-		}
-		else
-		{
-			throw new StartupException( "Your configuration seems to be missing the `accounts` section. Please check and retry to start the server." );
-		}
-		
-		accounts.setAdapter( accountLookupAdapter );
-		
-		// Create instance of System Accounts which loads them into memory, i.e., Root and NoLogin.
-		new SystemAccounts();
-	}
-	
-	public void loadAccount( Account acct )
-	{
-		loadAccount( acct, false, false, false );
-	}
-	
-	public void loadAccount( Account acct, boolean keepInMemory, boolean whitelistOverride, boolean opOverride )
-	{
-		AccountsKeeperOptions options = ( AccountsKeeperOptions ) accounts.putAccount( acct, keepInMemory );
-		
-		options.setWhitelisted( whitelistOverride || Loader.getPermissionManager().getEntity( acct.getAcctId() ).isWhitelisted() );
-		options.setOp( opOverride || Loader.getPermissionManager().getEntity( acct.getAcctId() ).isOp() );
-		options.setBanned( opOverride || Loader.getPermissionManager().getEntity( acct.getAcctId() ).isBanned() );
-	}
-	
-	public boolean isBanned( String id )
-	{
-		return banByIp.contains( id );
-	}
-	
-	public Account getOfflineAccount( String name )
-	{
-		return getOfflineAccount( name, true );
-	}
-	
-	public Account getOfflineAccount( String name, boolean search )
-	{
-		Validate.notNull( name, "Name cannot be null" );
-		
-		// TOOD: Fix Me
-		return null;
-	}
-	
-	public List<String> getIpBans()
-	{
-		return banByIp;
-	}
-	
-	public void banIp( String addr )
-	{
-		Validate.notNull( addr, "Ip Address cannot be null." );
-		
-		banByIp.add( addr );
-		Loader.getConfig().set( "accounts.banByIp", banByIp );
-	}
-	
-	public void unbanIp( String addr )
-	{
-		Validate.notNull( addr, "Ip Address cannot be null." );
-		
-		if ( banByIp.contains( addr ) )
-		{
-			banByIp.remove( addr );
-			Loader.getConfig().set( "accounts.banByIp", banByIp );
-		}
-	}
-	
-	public List<Account> getOnlineAccounts()
-	{
-		return accounts.getOnlineAccounts();
-	}
-	
-	public List<Account> getOfflineAccounts()
-	{
-		return accounts.getOfflineAccounts();
-	}
-	
-	public ArrayList<Account> getAccounts()
-	{
-		return accounts.getAccounts();
-	}
-	
-	public Account getAccountPartial( String partial )
-	{
-		return accounts.getAccountPartial( partial );
-	}
-	
-	// TODO Implement account permission safe guards. Don't want one site getting the users for another site.
-	public Account[] getAccounts( String query )
-	{
-		return accounts.getAccounts( query );
-	}
-	
-	public Account[] getAccounts( String query, int limit )
-	{
-		Account[] accts = accounts.getAccounts( query );
-		accts = ArrayUtils.subarray( accts, 0, limit );
-		return accts;
-	}
-	
-	public Account getAccount( String s )
-	{
-		try
-		{
-			return accounts.getAccount( s );
-		}
-		catch ( LoginException e )
-		{
-			if ( isDebug )
-				getLogger().warning( "LoginException was thrown in AccountsManager while trying to get account '" + s + "'. Message: '" + e.getMessage() + "'" );
-			return null;
-		}
-	}
-	
-	public Account getAccountWithException( String s ) throws LoginException
-	{
-		return accounts.getAccount( s );
-	}
-	
-	public List<Account> getBannedAccounts()
-	{
-		ArrayList<Account> accts = Lists.newArrayList();
-		
-		for ( String id : banByIp )
-		{
-			try
+			
+			id = ( isLower ) ? meta.getHumanReadableName().toLowerCase() : meta.getHumanReadableName();
+			
+			if ( !id.isEmpty() && id.contains( query ) )
 			{
-				Account acct = accounts.getAccount( id );
-				if ( acct != null )
-					accts.add( acct );
+				results.add( meta );
+				continue;
 			}
-			catch ( LoginException e )
-			{
-				
-			}
+			
+			// TODO Figure out how to further check these values.
+			// Maybe send the check into the Account Creator
 		}
 		
+		return results;
+	}
+	
+	public Set<Account> getBanned()
+	{
+		Set<Account> accts = Sets.newHashSet();
+		for ( AccountMeta meta : accounts )
+			if ( meta.isBanned() )
+				accts.add( meta );
 		return accts;
 	}
 	
-	public List<Account> getWhitelisted()
+	public Set<Account> getWhitelisted()
 	{
-		ArrayList<Account> accts = Lists.newArrayList();
-		
-		List<PermissibleEntity> entities = Loader.getPermissionManager().getEntitiesWithPermission( PermissionDefault.WHITELISTED.getNode() );
-		
-		// TODO Check if this PermissibleEntity is attached to an AccountHandler.
-		for ( PermissibleEntity entity : entities )
-			accts.add( getAccount( entity.getId() ) );
-		
+		Set<Account> accts = Sets.newHashSet();
+		for ( AccountMeta meta : accounts )
+			if ( meta.isWhitelisted() )
+				accts.add( meta );
 		return accts;
 	}
 	
-	public List<Account> getOperators()
+	public Set<Account> getOperators()
 	{
-		ArrayList<Account> accts = Lists.newArrayList();
-		
-		List<PermissibleEntity> entities = Loader.getPermissionManager().getEntitiesWithPermission( PermissionDefault.OP.getNode() );
-		
-		// TODO Check if this PermissibleEntity is attached to an AccountHandler.
-		for ( PermissibleEntity entity : entities )
-			accts.add( getAccount( entity.getId() ) );
-		
+		Set<Account> accts = Sets.newHashSet();
+		for ( AccountMeta meta : accounts )
+			if ( meta.isOp() )
+				accts.add( meta );
 		return accts;
 	}
 	
-	public void shutdown()
+	public void save()
 	{
-		accounts.saveAccounts();
-		accounts.clearAll();
-	}
-	
-	public void saveAccounts()
-	{
-		accounts.saveAccounts();
+		for ( AccountMeta meta : accounts )
+			meta.save();
 	}
 	
 	public void reload()
 	{
-		accounts.saveAccounts();
-		accounts.clearAll();
-		
-		banByIp = Loader.getConfig().getStringList( "accounts.banByIp", new ArrayList<String>() );
-		maxAccounts = Loader.getConfig().getInt( "accounts.maxLogins", maxAccounts );
+		save();
+		accounts.clear();
 	}
 	
-	public int getMaxAccounts()
+	@Override
+	public boolean isEnabled()
 	{
-		return maxAccounts;
+		return true;
 	}
 	
-	public String generateLoginToken( String username ) throws LoginException
+	@Override
+	public String getName()
 	{
-		if ( !Loader.getConfig().getBoolean( "accounts.allowLoginTokens", true ) )
-			throw new LoginException( LoginExceptionReason.featureDisabled );
-		
-		if ( username == null || username.isEmpty() )
-			throw new LoginException( LoginExceptionReason.emptyUsername );
-		
-		Account acct = accounts.getAccount( username );
-		
+		return "AccountManager";
+	}
+	
+	@Override
+	public PluginDescriptionFile getDescription()
+	{
 		return null;
-	}
-	
-	public Account attemptLoginWithToken( AccountHandler sess, String username, String token ) throws LoginException
-	{
-		if ( !Loader.getConfig().getBoolean( "accounts.allowLoginTokens", true ) )
-			throw new LoginException( LoginExceptionReason.featureDisabled );
-		
-		if ( username == null || username.isEmpty() )
-			throw new LoginException( LoginExceptionReason.emptyUsername );
-		
-		Account acct = accounts.getAccount( username );
-		
-		return null;
-	}
-	
-	public Account attemptLogin( AccountHandler sess, String username, String password ) throws LoginException
-	{
-		if ( username == null || username.isEmpty() )
-			throw new LoginException( LoginExceptionReason.emptyUsername );
-		
-		Account acct = accounts.getAccount( username );
-		
-		try
-		{
-			if ( password == null || password.isEmpty() )
-				throw new LoginException( LoginExceptionReason.emptyPassword );
-			
-			if ( !acct.validatePassword( password ) )
-				throw new LoginException( LoginExceptionReason.incorrectLogin );
-			
-			if ( Loader.getPermissionManager().hasWhitelist() && !acct.isWhitelisted() )
-				throw new LoginException( LoginExceptionReason.notWhiteListed );
-			
-			if ( acct.isBanned() )
-				throw new LoginException( LoginExceptionReason.banned );
-			
-			PreAccountLoginEvent preLoginEvent = new PreAccountLoginEvent( sess );
-			Loader.getEventBus().callEvent( preLoginEvent );
-			
-			if ( preLoginEvent.getResult() != Result.ALLOWED )
-				if ( preLoginEvent.getKickMessage().isEmpty() )
-					throw new LoginException( LoginExceptionReason.cancelledByEvent );
-				else
-					throw new LoginException( LoginExceptionReason.customReason.setReason( preLoginEvent.getKickMessage() ) );
-			
-			acct.putHandler( sess );
-			acct.preLoginCheck();
-			
-			if ( acct.countHandlers() > 1 && Loader.getConfig().getBoolean( "accounts.singleLogin" ) )
-				for ( AccountHandler sh : acct.getHandlers() )
-					sh.kick( Loader.getConfig().getString( "accounts.singleLoginMessage", "You logged in from another location." ) );
-			
-			acct.getMetaData().set( "lastLoginTime", CommonFunc.getEpoch() );
-			acct.getMetaData().set( "lastLoginIp", sess.getIpAddr() );
-			
-			AccountLoginEvent loginEvent = new AccountLoginEvent( sess );
-			Loader.getEventBus().callEvent( loginEvent );
-			
-			return acct;
-		}
-		catch ( LoginException l )
-		{
-			l.setAccount( acct );
-			accountLookupAdapter.failedLoginUpdate( acct.getMetaData(), l.getReason() );
-			throw l;
-		}
 	}
 	
 	public static ConsoleLogger getLogger()
@@ -381,13 +255,53 @@ public class AccountManager
 		return Loader.getLogger( "AcctMgr" );
 	}
 	
-	public static boolean isDebug()
+	public boolean isDebug()
 	{
 		return isDebug;
 	}
 	
-	public boolean isConfigured()
+	/**
+	 * Attempts to kick all logins of account
+	 * 
+	 * @param acct
+	 *            The Account to kick
+	 * @param msg
+	 *            The reason for kick
+	 * @return Was the kick successful
+	 */
+	public boolean kick( AccountInstance acct, String msg )
 	{
-		return accounts.isConfigured();
+		Validate.notNull( acct );
+		
+		return fireKick( acct, msg );
+	}
+	
+	/**
+	 * See {@link #kick(AccountInstance, String)}
+	 */
+	public boolean kick( AccountMeta acct, String msg )
+	{
+		Validate.notNull( acct );
+		
+		if ( !acct.isInitialized() )
+			throw AccountResult.ACCOUNT_NOT_INITIALIZED.exception( acct.getHumanReadableName() );
+		
+		return kick( acct.instance(), msg );
+	}
+	
+	/**
+	 * Attempts to only kick the provided instance of login
+	 * 
+	 * @param acct
+	 *            The instance to kick
+	 * @param msg
+	 *            The reason to kick
+	 * @return Was the kick successful
+	 */
+	public boolean kick( AccountPermissible acct, String msg )
+	{
+		Validate.notNull( acct );
+		
+		return fireKick( acct, msg );
 	}
 }

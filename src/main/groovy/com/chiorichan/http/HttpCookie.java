@@ -15,7 +15,7 @@ import java.util.TimeZone;
 
 import com.chiorichan.util.CommonFunc;
 
-public class Candy
+public class HttpCookie
 {
 	private String key, value, path = "/", domain = "";
 	private long epoch = 0;
@@ -25,18 +25,18 @@ public class Candy
 	 */
 	private Boolean needsUpdating = false;
 	
-	public Candy( String key, String value )
+	public HttpCookie( String key, String value )
 	{
 		this.key = key;
 		this.value = value;
 	}
 	
-	public boolean compareTo( Candy var1 )
+	public boolean compareTo( HttpCookie var1 )
 	{
 		return compareTo( var1, false );
 	}
 	
-	public boolean compareTo( Candy var1, boolean compareKey )
+	public boolean compareTo( HttpCookie var1, boolean compareKey )
 	{
 		if ( var1 == null )
 			return false;

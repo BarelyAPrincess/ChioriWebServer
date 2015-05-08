@@ -18,7 +18,7 @@ import java.util.Map;
 import com.chiorichan.Loader;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.database.DatabaseEngine;
-import com.chiorichan.session.SessionProvider;
+import com.chiorichan.session.SessionWrapper;
 
 /**
  * @deprecated Soon there will be no use for this class since the Permission system offers a better configuration solution for entities
@@ -27,9 +27,9 @@ import com.chiorichan.session.SessionProvider;
 @Deprecated
 public class ConfigurationManagerWrapper
 {
-	protected SessionProvider sess;
+	protected SessionWrapper sess;
 	
-	public ConfigurationManagerWrapper( SessionProvider sess )
+	public ConfigurationManagerWrapper( SessionWrapper sess )
 	{
 		this.sess = sess;
 	}
@@ -46,12 +46,12 @@ public class ConfigurationManagerWrapper
 	
 	public YamlConfiguration getSiteConfiguration()
 	{
-		return sess.getSite().getYaml();
+		return sess.getSession().getSite().getYaml();
 	}
 	
 	public DatabaseEngine getSiteDatabase()
 	{
-		return sess.getSite().getDatabase();
+		return sess.getSession().getSite().getDatabase();
 	}
 	
 	public boolean settingCompare( String settings )
@@ -163,11 +163,11 @@ public class ConfigurationManagerWrapper
 		
 		try
 		{
-			DatabaseEngine sql = sess.getSite().getDatabase();
+			DatabaseEngine sql = sess.getSession().getSite().getDatabase();
 			
 			if ( idenifier == null || idenifier.equals( "-1" ) )
 			{
-				idenifier = ( sess.getUserState() ) ? sess.getAccount().getAcctId() : "";
+				idenifier = ( sess.getSession().getAccountState() ) ? sess.getSession().getAcctId() : "";
 			}
 			
 			ResultSet defaultRs = sql.query( "SELECT * FROM `settings_default` WHERE `key` = '" + key + "';" );
@@ -215,7 +215,7 @@ public class ConfigurationManagerWrapper
 	{
 		try
 		{
-			DatabaseEngine sql = sess.getSite().getDatabase();
+			DatabaseEngine sql = sess.getSession().getSite().getDatabase();
 			
 			if ( idenifier == null || idenifier.equals( "-1" ) )
 			{

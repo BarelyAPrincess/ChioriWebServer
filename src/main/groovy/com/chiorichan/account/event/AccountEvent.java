@@ -7,9 +7,15 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.event.account;
+package com.chiorichan.account.event;
 
-import com.chiorichan.account.AccountHandler;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import com.chiorichan.account.Account;
+import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.event.Event;
 import com.chiorichan.event.HandlerList;
 
@@ -19,18 +25,40 @@ import com.chiorichan.event.HandlerList;
 public abstract class AccountEvent extends Event
 {
 	private static final HandlerList handlers = new HandlerList();
-	protected AccountHandler handler;
+	private Account acct;
+	private List<AccountPermissible> permissibles;
 	
-	public AccountEvent( final AccountHandler who )
+	public AccountEvent()
 	{
-		handler = who;
+		// New Sub Class?
 	}
 	
-	AccountEvent( final AccountHandler who, boolean async )
+	public AccountEvent( Account acct )
+	{
+		this( acct, new ArrayList<AccountPermissible>() );
+	}
+	
+	public AccountEvent( Account acct, boolean async )
+	{
+		this( acct, new ArrayList<AccountPermissible>(), async );
+	}
+	
+	public AccountEvent( Account acct, AccountPermissible permissible )
+	{
+		this( acct, Arrays.asList( permissible ) );
+	}
+	
+	public AccountEvent( Account acct, List<AccountPermissible> permissibles )
+	{
+		this.acct = acct;
+		this.permissibles = permissibles;
+	}
+	
+	AccountEvent( Account acct, List<AccountPermissible> permissibles, boolean async )
 	{
 		super( async );
-		handler = who;
-		
+		this.acct = acct;
+		this.permissibles = permissibles;
 	}
 	
 	/**
@@ -38,9 +66,14 @@ public abstract class AccountEvent extends Event
 	 * 
 	 * @return User who is involved in this event
 	 */
-	public final AccountHandler getHandler()
+	public final Account getAccount()
 	{
-		return handler;
+		return acct;
+	}
+	
+	public final List<AccountPermissible> getPermissibles()
+	{
+		return Collections.unmodifiableList( permissibles );
 	}
 	
 	@Override

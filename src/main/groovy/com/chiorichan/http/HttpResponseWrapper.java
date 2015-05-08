@@ -34,11 +34,13 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
+import com.chiorichan.event.EventBus;
 import com.chiorichan.event.http.ErrorEvent;
 import com.chiorichan.event.http.HttpExceptionEvent;
 import com.chiorichan.lang.ApacheParser;
 import com.chiorichan.lang.HttpError;
 import com.chiorichan.net.NetworkManager;
+import com.chiorichan.session.SessionException;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
@@ -110,13 +112,13 @@ public class HttpResponseWrapper
 		if ( httpMsg == null )
 			httpMsg = status.reasonPhrase();
 		
-		NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + status.code() + ",httpMsg=" + httpMsg + ",subdomain=" + request.getSubDomain() + ",domain=" + request.getDomain() + ",uri=" + request.getUri() + ",remoteIp=" + request.getRemoteAddr() + "}" );
+		NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + status.code() + ",httpMsg=" + httpMsg + ",subdomain=" + request.getSubDomain() + ",domain=" + request.getDomain() + ",uri=" + request.getUri() + ",remoteIp=" + request.getIpAddr() + "}" );
 		
 		resetBuffer();
 		
 		// Trigger an internal Error Event to notify plugins of a possible problem.
 		ErrorEvent event = new ErrorEvent( request, status.code(), httpMsg );
-		Loader.getEventBus().callEvent( event );
+		EventBus.INSTANCE.callEvent( event );
 		
 		// TODO Make these error pages a bit more creative and/or informational to developers.
 		
@@ -173,7 +175,7 @@ public class HttpResponseWrapper
 			throw new IllegalStateException( "You can't access sendException method within this HttpResponse because the connection has been closed." );
 		
 		HttpExceptionEvent event = new HttpExceptionEvent( request, cause, Loader.getConfig().getBoolean( "server.developmentMode" ) );
-		Loader.getEventBus().callEvent( event );
+		EventBus.INSTANCE.callEvent( event );
 		
 		int httpCode = event.getHttpCode();
 		
@@ -182,7 +184,7 @@ public class HttpResponseWrapper
 		
 		httpStatus = HttpResponseStatus.valueOf( httpCode );
 		
-		NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + httpCode + ",httpMsg=" + HttpCode.msg( httpCode ) + ",domain=" + request.getSubDomain() + "." + request.getDomain() + ",uri=" + request.getUri() + ",remoteIp=" + request.getRemoteAddr() + "}" );
+		NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + httpCode + ",httpMsg=" + HttpCode.msg( httpCode ) + ",domain=" + request.getSubDomain() + "." + request.getDomain() + ",uri=" + request.getUri() + ",remoteIp=" + request.getIpAddr() + "}" );
 		
 		if ( Loader.getConfig().getBoolean( "server.developmentMode" ) )
 		{
@@ -428,7 +430,7 @@ public class HttpResponseWrapper
 		FullHttpResponse response = new DefaultFullHttpResponse( HttpVersion.HTTP_1_1, httpStatus, output );
 		HttpHeaders h = response.headers();
 		
-		for ( Candy c : request.getCandies() )
+		for ( HttpCookie c : request.getCookies() )
 			if ( c.needsUpdating() )
 				h.add( "Set-Cookie", c.toHeaderValue() );
 		
@@ -498,9 +500,16 @@ public class HttpResponseWrapper
 			HttpResponse response = new DefaultHttpResponse( HttpVersion.HTTP_1_1, HttpResponseStatus.OK );
 			
 			HttpHeaders h = response.headers();
-			request.getSession().saveSession( false );
+			try
+			{
+				request.getSession().save();
+			}
+			catch ( SessionException e )
+			{
+				e.printStackTrace();
+			}
 			
-			for ( Candy c : request.getCandies() )
+			for ( HttpCookie c : request.getCookies() )
 			{
 				if ( c.needsUpdating() )
 					h.add( "Set-Cookie", c.toHeaderValue() );

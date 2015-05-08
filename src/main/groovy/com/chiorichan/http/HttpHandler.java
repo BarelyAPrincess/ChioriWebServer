@@ -56,6 +56,7 @@ import org.codehaus.groovy.runtime.NullObject;
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.ContentTypes;
 import com.chiorichan.Loader;
+import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.RenderEvent;
 import com.chiorichan.event.server.RequestEvent;
@@ -72,7 +73,8 @@ import com.chiorichan.net.NetworkSecurity;
 import com.chiorichan.permission.lang.PermissionDeniedException;
 import com.chiorichan.permission.lang.PermissionDeniedException.PermissionDeniedReason;
 import com.chiorichan.permission.lang.PermissionException;
-import com.chiorichan.session.SessionProvider;
+import com.chiorichan.session.Session;
+import com.chiorichan.session.SessionException;
 import com.chiorichan.site.Site;
 import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.Versioning;
@@ -193,11 +195,12 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				response.sendError( ( ( PermissionDeniedException ) cause ).getHttpCode(), cause.getMessage() );
 			}
 		}
-		else if ( cause instanceof PermissionException || cause instanceof IndexOutOfBoundsException || cause instanceof NullPointerException || cause instanceof IOException || cause instanceof SiteException )
+		else if ( cause instanceof SessionException || cause instanceof PermissionException || cause instanceof IndexOutOfBoundsException || cause instanceof NullPointerException || cause instanceof IOException || cause instanceof SiteException )
 		{
 			/*
 			 * XXX Known exceptions
 			 * EvalFactoryException
+			 * SessionException
 			 * PermissionException
 			 * IndexOutOfBoundsException
 			 * NullPointerException
@@ -220,15 +223,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				NetworkManager.getLogger().severe( "This exception was not expected and most likely needs to be properly caught or investiated. Would you kindly report this stacktrace to the appropriate developer?", cause );
 		}
 		
-		try
-		{
-			finish();
-		}
-		catch ( Throwable t )
-		{
-			t.printStackTrace();
-			Loader.getLogger().debug( "Finish() has thrown an exception!" );
-		}
+		finish();
 	}
 	
 	public static void setTempDirectory( File tmpDir )
@@ -274,7 +269,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			if ( is100ContinueExpected( ( HttpRequest ) msg ) )
 				send100Continue( ctx );
 			
-			if ( NetworkSecurity.isIPBanned( request.getRemoteAddr() ) )
+			if ( NetworkSecurity.isIPBanned( request.getIpAddr() ) )
 			{
 				response.sendError( 403 );
 				return;
@@ -323,7 +318,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				}
 			}
 			
-			request.addContentLength( requestOrig.content().readableBytes() );
+			request.contentSize += requestOrig.content().readableBytes();
 			
 			if ( decoder != null )
 			{
@@ -386,24 +381,32 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		}
 	}
 	
-	private void finish() throws IOException
+	private void finish()
 	{
-		if ( !response.isCommitted() )
-			response.sendResponse();
-		
-		SessionProvider sess;
-		if ( ( sess = request.getSession( false ) ) != null )
+		try
 		{
-			sess.onFinished();
-			sess.saveSession( false );
+			if ( !response.isCommitted() )
+				response.sendResponse();
 			
-			EvalFactory factory = sess.getEvalFactory( false );
-			if ( factory != null )
+			Session sess;
+			if ( ( sess = request.getSession() ) != null )
+			{
+				request.finish();
+				sess.save();
+			}
+			
+			EvalFactory factory;
+			if ( ( factory = request.getEvalFactory() ) != null )
 				factory.onFinished();
+			
+			request = null;
+			response = null;
 		}
-		
-		request = null;
-		response = null;
+		catch ( Exception e )
+		{
+			e.printStackTrace();
+			Loader.getLogger().debug( "Finish() has thrown an exception!" );
+		}
 	}
 	
 	private void readHttpDataChunkByChunk() throws IOException
@@ -480,15 +483,17 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		ctx.write( response );
 	}
 	
-	public void handleHttp( HttpRequestWrapper request, HttpResponseWrapper response ) throws IOException, HttpError, SiteException, PermissionException, EvalFactoryException
+	public void handleHttp( HttpRequestWrapper request, HttpResponseWrapper response ) throws IOException, HttpError, SiteException, PermissionException, EvalFactoryException, SessionException
 	{
 		String uri = request.getUri();
 		String domain = request.getParentDomain();
 		String subdomain = request.getSubDomain();
 		
+		request.startSession();
+		
 		request.initServerVars( staticServerVars );
 		
-		SessionProvider sess = request.getSession();
+		Session sess = request.getSession();
 		
 		if ( response.getStage() == HttpResponseStage.CLOSED )
 			return;
@@ -497,7 +502,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		
 		try
 		{
-			Loader.getEventBus().callEventWithException( requestEvent );
+			EventBus.INSTANCE.callEventWithException( requestEvent );
 		}
 		catch ( EventException ex )
 		{
@@ -529,7 +534,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		WebInterpreter fi = new WebInterpreter( request );
 		
 		Site currentSite = request.getSite();
-		sess.getParentSession().setSite( currentSite );
+		sess.setSite( currentSite );
 		File docRoot = currentSite.getAbsoluteRoot( subdomain );
 		
 		ApacheParser htaccess = new ApacheParser().appendWithDir( docRoot );
@@ -543,7 +548,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		if ( !fi.hasFile() && !fi.hasHTML() )
 			throw new HttpError( 500, null, "This page appears to have no content to display" );
 		
-		NetworkManager.getLogger().info( ConsoleColor.BLUE + "Http" + ( ( ssl ) ? "s" : "" ) + "Request{httpCode=" + response.getHttpCode() + ",httpMsg=" + response.getHttpMsg() + ",subdomain=" + subdomain + ",domain=" + domain + ",uri=" + uri + ",remoteIp=" + request.getRemoteAddr() + ",details=" + fi.toString() + "}" );
+		NetworkManager.getLogger().info( ConsoleColor.BLUE + "Http" + ( ( ssl ) ? "s" : "" ) + "Request{httpCode=" + response.getHttpCode() + ",httpMsg=" + response.getHttpMsg() + ",subdomain=" + subdomain + ",domain=" + domain + ",uri=" + uri + ",remoteIp=" + request.getIpAddr() + ",details=" + fi.toString() + "}" );
 		
 		if ( fi.hasFile() )
 			htaccess.appendWithDir( fi.getFile().getParentFile() );
@@ -566,7 +571,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			sess.setGlobal( "_REQUEST", request.getRequestMap() );
 		
 		ByteBuf rendered = Unpooled.buffer();
-		EvalFactory factory = sess.getEvalFactory();
+		
+		EvalFactory factory = request.getEvalFactory();
 		factory.setEncoding( fi.getEncoding() );
 		
 		NetworkSecurity.isForbidden( htaccess, currentSite, fi );
@@ -576,7 +582,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		if ( req == null )
 			req = "-1";
 		
-		sess.getParentSession().requirePermission( req );
+		sess.requirePermission( req );
 		
 		// Enhancement: Allow html to be ran under different shells. Default is embedded.
 		if ( fi.hasHTML() )
@@ -694,11 +700,11 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			fi.put( kv.getKey(), kv.getValue() );
 		}
 		
-		RenderEvent renderEvent = new RenderEvent( sess, rendered, fi.getEncoding(), fi.getParams() );
+		RenderEvent renderEvent = new RenderEvent( this, rendered, fi.getEncoding(), fi.getParams() );
 		
 		try
 		{
-			Loader.getEventBus().callEventWithException( renderEvent );
+			EventBus.INSTANCE.callEventWithException( renderEvent );
 			if ( renderEvent.getSource() != null )
 				rendered = renderEvent.getSource();
 		}
@@ -773,13 +779,18 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		// throw new HttpErrorException( 403, "Sorry, Directory Listing has not been implemented on this Server!" );
 	}
 	
-	protected HttpRequestWrapper getRequest()
+	public HttpRequestWrapper getRequest()
 	{
 		return request;
 	}
 	
-	protected HttpResponseWrapper getResponse()
+	public HttpResponseWrapper getResponse()
 	{
 		return response;
+	}
+	
+	public Session getSession()
+	{
+		return request.getSession();
 	}
 }

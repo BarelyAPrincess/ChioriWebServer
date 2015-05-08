@@ -93,7 +93,7 @@ public class ConsoleBus implements Runnable
 					j -= 50L;
 					
 					CommandDispatch.handleCommands();
-					Loader.getScheduler().mainThreadHeartbeat( currentTick );
+					Loader.getScheduleManager().mainThreadHeartbeat( currentTick );
 				}
 				
 				Thread.sleep( 1L );

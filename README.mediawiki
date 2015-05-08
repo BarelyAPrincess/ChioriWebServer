@@ -416,6 +416,11 @@ Added a build.xml file so the project can not be built with Apache Ant 1.8. Swit
 * ADDED! Dropbox Plugin
 * ADDED! Server delivers HttpCode 503 to client if server is not fully loaded up
 * NEW FEATURE! Added a Plugin Maven Library Downloader. See Dropbox plugin config for an example.
+====Build 1====
+
+===Subversion 2 (a.k.a. Milky Berry)
+====Build 0====
+* REWROTE! Accounts and Sessions
 
 =How To Build=
 You can either build Chiori Web Server with Eclipse IDE or using Gradle. It should be as simple as executing "./gradlew build" for linux users. Some plugins will also compile but you will have to execute "./gradlew :EmailPlugin:build" to build it. If built with Gradle, you will find the built files inside the "build/dest" folder.

@@ -33,8 +33,10 @@ import com.chiorichan.Loader;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.database.DatabaseEngine;
+import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.SiteLoadEvent;
+import com.chiorichan.factory.EvalBinding;
 import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.http.Routes;
@@ -65,7 +67,7 @@ public class Site
 	protected String encryptionKey = null;
 	
 	// Binding and evaling for use inside each site for executing site scripts outside of web requests.
-	Binding binding = new Binding();
+	EvalBinding binding = new EvalBinding();
 	EvalFactory factory = EvalFactory.create( binding );
 	
 	protected Site( File f ) throws SiteException, StartupException
@@ -422,7 +424,7 @@ public class Site
 		
 		try
 		{
-			Loader.getEventBus().callEventWithException( event );
+			EventBus.INSTANCE.callEventWithException( event );
 		}
 		catch ( EventException e )
 		{

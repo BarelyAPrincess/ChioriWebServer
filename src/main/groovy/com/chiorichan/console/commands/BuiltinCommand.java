@@ -8,7 +8,9 @@ package com.chiorichan.console.commands;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
-import com.chiorichan.account.Account;
+import com.chiorichan.account.AccountInstance;
+import com.chiorichan.account.AccountManager;
+import com.chiorichan.account.AccountMeta;
 import com.chiorichan.console.Command;
 import com.chiorichan.console.CommandDispatch;
 import com.chiorichan.console.InteractiveConsole;
@@ -31,7 +33,7 @@ public abstract class BuiltinCommand extends Command
 			@Override
 			public boolean execute( InteractiveConsole handler, String command, String[] args )
 			{
-				handler.getPersistence().sendMessage( ConsoleColor.AQUA + Versioning.getProduct() + " is running version " + Versioning.getVersion() + ( ( Versioning.getBuildNumber().equals( "0" ) ) ? " (dev)" : " (build #" + Versioning.getBuildNumber() + ")" ) );
+				handler.getPersistence().send( ConsoleColor.AQUA + Versioning.getProduct() + " is running version " + Versioning.getVersion() + ( ( Versioning.getBuildNumber().equals( "0" ) ) ? " (dev)" : " (build #" + Versioning.getBuildNumber() + ")" ) );
 				return true;
 			}
 		} );
@@ -41,7 +43,7 @@ public abstract class BuiltinCommand extends Command
 			@Override
 			public boolean execute( InteractiveConsole handler, String command, String[] args )
 			{
-				handler.getPersistence().sendMessage( Joiner.on( " " ).join( args ) );
+				handler.getPersistence().send( Joiner.on( " " ).join( args ) );
 				return true;
 			}
 		} );
@@ -51,7 +53,7 @@ public abstract class BuiltinCommand extends Command
 			@Override
 			public boolean execute( InteractiveConsole handler, String command, String[] args )
 			{
-				handler.getPersistence().sendMessage( ConsoleColor.YELLOW + "We're sorry, help has not been implemented as of yet, try again in a later version." );
+				handler.getPersistence().send( ConsoleColor.YELLOW + "We're sorry, help has not been implemented as of yet, try again in a later version." );
 				return true;
 			}
 		} );
@@ -61,7 +63,7 @@ public abstract class BuiltinCommand extends Command
 			@Override
 			public boolean execute( InteractiveConsole handler, String command, String[] args )
 			{
-				handler.getPersistence().sendMessage( handler.getPersistence().getAccount().getAcctId() );
+				handler.getPersistence().send( handler.getPersistence().getSession().account().getAcctId() );
 				return true;
 			}
 		} );
@@ -83,8 +85,8 @@ public abstract class BuiltinCommand extends Command
 			@Override
 			public boolean execute( InteractiveConsole handler, String command, String[] args )
 			{
-				if ( handler.getPersistence().isOp() )
-					Loader.stop( "The server is shutting down as requested by user " + handler.getPersistence().getEntityId() );
+				if ( handler.getPersistence().getSession().isOp() )
+					Loader.stop( "The server is shutting down as requested by user " + handler.getPersistence().getSession().getAcctId() );
 				else
 					handler.sendMessage( ConsoleColor.RED + "Only server operators can request the server to stop." );
 				
@@ -97,14 +99,14 @@ public abstract class BuiltinCommand extends Command
 			@Override
 			public boolean execute( InteractiveConsole handler, String command, String[] args )
 			{
-				if ( handler.getPersistence().isOp() )
+				if ( handler.getPersistence().getSession().isOp() )
 				{
 					if ( args.length < 1 )
 						handler.sendMessage( ConsoleColor.RED + "You must specify which account you wish to op." );
 					else
 					{
-						Account acct = Loader.getAccountManager().getAccount( args[0] );
-						acct.checkPermission( "sys.op" ).assign();
+						AccountMeta acct = AccountManager.INSTANCE.getAccount( args[0] );
+						acct.getPermissibleEntity().checkPermission( "sys.op" ).assign();
 						handler.sendMessage( ConsoleColor.AQUA + "We successfully op'ed the account " + acct.getAcctId() );
 					}
 				}
@@ -120,10 +122,10 @@ public abstract class BuiltinCommand extends Command
 			@Override
 			public boolean execute( InteractiveConsole handler, String command, String[] args )
 			{
-				Account acct = handler.getPersistence().getAccount();
+				AccountInstance acct = handler.getPersistence().getSession().account();
 				
-				for ( String s : acct.getMetaData().getKeys() )
-					handler.sendMessage( s + " => " + acct.getMetaData().getString( s ) );
+				for ( String s : acct.metadata().getKeys() )
+					handler.sendMessage( s + " => " + acct.metadata().getString( s ) );
 				
 				return true;
 			}

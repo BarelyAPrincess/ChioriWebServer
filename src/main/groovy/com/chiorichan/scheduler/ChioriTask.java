@@ -104,7 +104,7 @@ class ChioriTask implements IChioriTask, Runnable
 	
 	public void cancel()
 	{
-		Loader.getScheduler().cancelTask( id );
+		Loader.getScheduleManager().cancelTask( id );
 	}
 	
 	/**

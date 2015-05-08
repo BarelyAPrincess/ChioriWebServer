@@ -7,9 +7,9 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.event.account;
+package com.chiorichan.account.event;
 
-import com.chiorichan.account.AccountHandler;
+import com.chiorichan.account.AccountMeta;
 import com.chiorichan.event.HandlerList;
 
 /**
@@ -20,9 +20,9 @@ public class AccountLogoutEvent extends AccountEvent
 	private static final HandlerList handlers = new HandlerList();
 	private String quitMessage;
 	
-	public AccountLogoutEvent( final AccountHandler who, final String quitMessage )
+	public AccountLogoutEvent( final AccountMeta acct, final String quitMessage )
 	{
-		super( who );
+		super( acct );
 		this.quitMessage = quitMessage;
 	}
 	
@@ -31,7 +31,7 @@ public class AccountLogoutEvent extends AccountEvent
 	 * 
 	 * @return string quit message
 	 */
-	public String getQuitMessage()
+	public String getLeaveMessage()
 	{
 		return quitMessage;
 	}
@@ -42,7 +42,7 @@ public class AccountLogoutEvent extends AccountEvent
 	 * @param quitMessage
 	 *            quit message
 	 */
-	public void setQuitMessage( String quitMessage )
+	public void setLeaveMessage( String quitMessage )
 	{
 		this.quitMessage = quitMessage;
 	}
