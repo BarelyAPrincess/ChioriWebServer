@@ -9,17 +9,25 @@
  */
 package com.chiorichan.session;
 
+import java.io.IOException;
+import java.sql.SQLException;
+
 public class SessionException extends Exception
 {
-	public SessionException( String string )
-	{
-		super( string );
-	}
-	
-	public SessionException( Exception e )
-	{
-		super( e );
-	}
-	
 	private static final long serialVersionUID = -1665918782123029882L;
+	
+	public SessionException( String msg )
+	{
+		super( msg );
+	}
+	
+	public SessionException( Exception cause )
+	{
+		super( cause );
+	}
+	
+	public SessionException( String msg, Throwable cause )
+	{
+		super( msg, cause );
+	}
 }

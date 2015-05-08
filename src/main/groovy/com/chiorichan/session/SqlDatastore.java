@@ -14,182 +14,26 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
-import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
-import com.chiorichan.http.Candy;
 import com.chiorichan.permission.PermissionManager;
-import com.chiorichan.util.CommonFunc;
+import com.chiorichan.util.TimingFunc;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 
-public class SqlSession extends Session
+public class SqlDatastore extends SessionDatastore
 {
-	public SqlSession( ResultSet rs ) throws SessionException
-	{
-		try
-		{
-			stale = true;
-			
-			timeout = rs.getInt( "timeout" );
-			lastIpAddr = rs.getString( "ipAddr" );
-			
-			
-			if ( !rs.getString( "data" ).isEmpty() )
-			{
-				Map<String, String> tmpData = new Gson().fromJson( rs.getString( "data" ), new TypeToken<Map<String, String>>()
-				{
-					private static final long serialVersionUID = -1734352198651744570L;
-				}.getType() );
-				
-				if ( changesMade() )
-				{
-					tmpData.putAll( data );
-					data.clear();
-					data.putAll( tmpData );
-				}
-				else
-					data.putAll( tmpData );
-			}
-			
-			if ( rs.getString( "sessionName" ) != null && !rs.getString( "sessionName" ).isEmpty() )
-				candyName = rs.getString( "sessionName" );
-			candyId = rs.getString( "sessionId" );
-			
-			if ( timeout > 0 && timeout < CommonFunc.getEpoch() )
-				SessionManager.getLogger().warning( "The session '" + getSessId() + "' expired at epoch '" + timeout + "', might have expired while offline or this is a bug!" );
-			
-			if ( rs.getString( "sessionSite" ) == null || rs.getString( "sessionSite" ).isEmpty() )
-				setSite( Loader.getSiteManager().getFrameworkSite() );
-			else
-				setSite( Loader.getSiteManager().getSiteById( rs.getString( "sessionSite" ) ) );
-			
-			sessionCandy = new Candy( candyName, rs.getString( "sessionId" ) );
-			candies.put( candyName, sessionCandy );
-			
-			loginSessionUser();
-			
-			if ( SessionManager.isDebug() )
-				PermissionManager.getLogger().info( ConsoleColor.DARK_AQUA + "Session Restored `" + this + "`" );
-		}
-		catch ( SQLException e )
-		{
-			throw new SessionException( e );
-		}
-	}
-	
-	protected SqlSession()
-	{
-		
-	}
-	
 	@Override
-	public void reloadSession()
+	List<SessionData> getSessions() throws SessionException
 	{
-		ResultSet rs = null;
-		try
-		{
-			rs = Loader.getDatabase().query( "SELECT * FROM `sessions` WHERE `sessionId` = '" + sessionCandy.getValue() + "'" );
-		}
-		catch ( SQLException e1 )
-		{
-			e1.printStackTrace();
-		}
-		
-		if ( rs == null || Loader.getDatabase().getRowCount( rs ) < 1 )
-			sessionCandy = null;
-		else
-		{
-			try
-			{
-				if ( rs.getInt( "timeout" ) > timeout )
-					timeout = rs.getInt( "timeout" );
-				
-				if ( !rs.getString( "data" ).isEmpty() )
-				{
-					Map<String, String> tmpData = new Gson().fromJson( rs.getString( "data" ), new TypeToken<Map<String, String>>()
-					{
-						private static final long serialVersionUID = -1734352198651744570L;
-					}.getType() );
-					
-					if ( changesMade() )
-					{
-						tmpData.putAll( data );
-						data.clear();
-						data.putAll( tmpData );
-					}
-					else
-						data.putAll( tmpData );
-				}
-				
-				String ipAddr = rs.getString( "ipAddr" );
-				if ( ipAddr != null && !ipAddr.isEmpty() )
-				{
-					// Possible Session Hijacking! nullify!!!
-					if ( !ipAddr.equals( ipAddr ) && !Loader.getConfig().getBoolean( "sessions.allowIPChange" ) )
-					{
-						sessionCandy = null;
-					}
-					
-					this.lastIpAddr = ipAddr;
-				}
-			}
-			catch ( JsonSyntaxException | SQLException e )
-			{
-				e.printStackTrace();
-				sessionCandy = null;
-			}
-		}
-	}
-	
-	@Override
-	public void saveSession()
-	{
-		String dataJson = new Gson().toJson( data );
-		
+		List<SessionData> data = Lists.newArrayList();
 		DatabaseEngine sql = Loader.getDatabase();
 		
 		if ( sql == null )
-		{
-			Loader.getLogger().severe( "There was a problem saving a session because the Framework Database was NULL!" );
-			return;
-		}
+			throw new SessionException( "Sessions can't be stored in a SQL Database without a properly configured server database." );
 		
-		try
-		{
-			ResultSet rs = sql.query( "SELECT * FROM `sessions` WHERE `sessionId` = '" + getSessId() + "';" );
-			
-			if ( rs == null || sql.getRowCount( rs ) < 1 )
-				sql.queryUpdate( "INSERT INTO `sessions` (`sessionId`, `timeout`, `ipAddr`, `sessionName`, `sessionSite`, `data`)VALUES('" + sessionCandy.getValue() + "', '" + getTimeout() + "', '" + getIpAddr() + "', '" + sessionCandy.getKey() + "', '" + getSite().getName() + "', '" + dataJson + "');" );
-			else
-				sql.queryUpdate( "UPDATE `sessions` SET `data` = '" + dataJson + "', `timeout` = '" + getTimeout() + "', `sessionName` = '" + sessionCandy.getKey() + "', `ipAddr` = '" + getIpAddr() + "', `sessionSite` = '" + getSite().getName() + "' WHERE `sessionId` = '" + sessionCandy.getValue() + "';" );
-		}
-		catch ( SQLException e )
-		{
-			Loader.getLogger().severe( "There was an exception thorwn while trying to save the session.", e );
-		}
-	}
-	
-	@Override
-	protected void destroySession()
-	{
-		try
-		{
-			Loader.getDatabase().queryUpdate( "DELETE FROM `sessions` WHERE `sessionName` = '" + getName() + "' AND `sessionId` = '" + getSessId() + "';" );
-		}
-		catch ( SQLException e )
-		{
-			e.printStackTrace();
-		}
-	}
-	
-	protected static List<Session> getActiveSessions()
-	{
-		List<Session> sessionList = Lists.newCopyOnWriteArrayList();
-		DatabaseEngine sql = Loader.getDatabase();
-		long start = System.currentTimeMillis();
+		TimingFunc.start( this );
 		
 		try
 		{
@@ -200,14 +44,11 @@ public class SqlSession extends Session
 				{
 					try
 					{
-						sessionList.add( new SqlSession( rs ) );
+						data.add( new SqlSessionData( rs ) );
 					}
 					catch ( SessionException e )
 					{
-						if ( e.getMessage().contains( "expired" ) )
-							sql.queryUpdate( "DELETE FROM `sessions` WHERE `sessionId` = '" + rs.getString( "sessionId" ) + "' && `sessionName` = '" + rs.getString( "sessionName" ) + "';" );
-						else
-							e.printStackTrace();
+						e.printStackTrace();
 					}
 				}
 				while ( rs.next() );
@@ -217,8 +58,110 @@ public class SqlSession extends Session
 			Loader.getLogger().warning( "There was a problem reloading saved sessions.", e );
 		}
 		
-		PermissionManager.getLogger().info( "SqlSession loaded " + sessionList.size() + " sessions from the data store in " + ( System.currentTimeMillis() - start ) + "ms!" );
+		PermissionManager.getLogger().info( "SqlSession loaded " + data.size() + " sessions from the data store in " + TimingFunc.finish( this ) + "ms!" );
 		
-		return sessionList;
+		return data;
+	}
+	
+	@Override
+	public SessionData createSession() throws SessionException
+	{
+		return new SqlSessionData();
+	}
+	
+	class SqlSessionData extends SessionData
+	{
+		SqlSessionData( ResultSet rs ) throws SessionException
+		{
+			this();
+			
+			try
+			{
+				readSession( rs );
+			}
+			catch ( SQLException e )
+			{
+				throw new SessionException( e );
+			}
+		}
+		
+		SqlSessionData()
+		{
+			super( SqlDatastore.this );
+		}
+		
+		@Override
+		void reload() throws SessionException
+		{
+			ResultSet rs = null;
+			try
+			{
+				rs = Loader.getDatabase().query( "SELECT * FROM `sessions` WHERE `sessionId` = '" + sessionId + "'" );
+				if ( rs == null || Loader.getDatabase().getRowCount( rs ) < 1 )
+					return;
+				readSession( rs );
+			}
+			catch ( SQLException e )
+			{
+				throw new SessionException( e );
+			}
+		}
+		
+		private void readSession( ResultSet rs ) throws SQLException
+		{
+			timeout = rs.getInt( "timeout" );
+			ipAddr = rs.getString( "ipAddr" );
+			
+			if ( rs.getString( "sessionName" ) != null && !rs.getString( "sessionName" ).isEmpty() )
+				sessionName = rs.getString( "sessionName" );
+			sessionId = rs.getString( "sessionId" );
+			
+			site = Loader.getSiteManager().getSiteById( rs.getString( "sessionSite" ) );
+			
+			if ( !rs.getString( "data" ).isEmpty() )
+			{
+				data = new Gson().fromJson( rs.getString( "data" ), new TypeToken<Map<String, String>>()
+				{
+					private static final long serialVersionUID = -1734352198651744570L;
+				}.getType() );
+			}
+		}
+		
+		@Override
+		void save() throws SessionException
+		{
+			try
+			{
+				String dataJson = new Gson().toJson( data );
+				DatabaseEngine sql = Loader.getDatabase();
+				
+				if ( sql == null )
+					throw new SessionException( "Sessions can't be stored in a SQL Database without a properly configured server database." );
+				
+				ResultSet rs = sql.query( "SELECT * FROM `sessions` WHERE `sessionId` = '" + sessionId + "';" );
+				
+				if ( rs == null || sql.getRowCount( rs ) < 1 )
+					sql.queryUpdate( "INSERT INTO `sessions` (`sessionId`, `timeout`, `ipAddr`, `sessionName`, `sessionSite`, `data`) VALUES ('" + sessionId + "', '" + timeout + "', '" + ipAddr + "', '" + sessionName + "', '" + site.getSiteId() + "', '" + dataJson + "');" );
+				else
+					sql.queryUpdate( "UPDATE `sessions` SET `data` = '" + dataJson + "', `timeout` = '" + timeout + "', `sessionName` = '" + sessionName + "', `ipAddr` = '" + ipAddr + "', `sessionSite` = '" + site.getSiteId() + "' WHERE `sessionId` = '" + sessionId + "';" );
+			}
+			catch ( SQLException e )
+			{
+				throw new SessionException( "There was an exception thrown while trying to save the session.", e );
+			}
+		}
+		
+		@Override
+		void destroy() throws SessionException
+		{
+			try
+			{
+				Loader.getDatabase().queryUpdate( "DELETE FROM `sessions` WHERE `sessionId` = '" + sessionId + "';" );
+			}
+			catch ( SQLException e )
+			{
+				throw new SessionException( "There was an exception thrown while trying to save the session.", e );
+			}
+		}
 	}
 }

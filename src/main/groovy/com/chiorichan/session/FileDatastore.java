@@ -16,130 +16,52 @@ import java.util.Map;
 
 import org.apache.commons.io.filefilter.FileFilterUtils;
 
-import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.configuration.file.YamlConfiguration;
-import com.chiorichan.http.Candy;
 import com.chiorichan.permission.PermissionManager;
-import com.chiorichan.util.CommonFunc;
 import com.chiorichan.util.FileFunc;
+import com.chiorichan.util.TimingFunc;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
-public class FileSession extends Session
+public class FileDatastore extends SessionDatastore
 {
-	private File cachedFile = null;
 	private static File sessionsDirectory = null;
 	
-	public FileSession( File file ) throws SessionException
+	@Override
+	List<SessionData> getSessions() throws SessionException
 	{
-		cachedFile = file;
+		List<SessionData> data = Lists.newArrayList();
 		
-		readSessionFile();
+		File[] files = getSessionsDirectory().listFiles();
+		TimingFunc.start( this );
 		
-		stale = true;
+		if ( files == null )
+			return data;
 		
-		sessionCandy = new Candy( candyName, candyId );
-		candies.put( candyName, sessionCandy );
-		
-		loginSessionUser();
-		
-		if ( SessionManager.isDebug() )
-			PermissionManager.getLogger().info( ConsoleColor.DARK_AQUA + "Session Restored `" + this + "`" );
-	}
-	
-	private void readSessionFile() throws SessionException
-	{
-		if ( cachedFile == null || !cachedFile.exists() )
-		{
-			saveSession();
-			return;
-		}
-		
-		YamlConfiguration yaml = YamlConfiguration.loadConfiguration( cachedFile );
-		
-		// int defaultLife = ( getSite().getYaml() != null ) ? getSite().getYaml().getInt( "default-life", 604800 ) : 604800;
-		
-		if ( yaml.getInt( "timeout", 0 ) > timeout )
-			timeout = yaml.getInt( "timeout", timeout );
-		
-		lastIpAddr = yaml.getString( "ipAddr", lastIpAddr );
-		
-		if ( !yaml.getString( "data", "" ).isEmpty() )
-		{
-			Map<String, String> tmpData = new Gson().fromJson( yaml.getString( "data" ), new TypeToken<Map<String, String>>()
+		for ( File f : files )
+			if ( FileFilterUtils.and( FileFilterUtils.suffixFileFilter( "yaml" ), FileFilterUtils.fileFileFilter() ).accept( f ) )
 			{
-				private static final long serialVersionUID = -1734352198651744570L;
-			}.getType() );
-			
-			if ( changesMade() )
-			{
-				tmpData.putAll( data );
-				data.clear();
-				data.putAll( tmpData );
-			}
-			else
-				data.putAll( tmpData );
-		}
-		
-		if ( yaml.getString( "sessionName" ) != null && !yaml.getString( "sessionName" ).isEmpty() )
-			candyName = yaml.getString( "sessionName", candyName );
-		candyId = yaml.getString( "sessionId", candyId );
-		
-		if ( timeout > 0 && timeout < CommonFunc.getEpoch() )
-			SessionManager.getLogger().warning( "The session '" + getSessId() + "' expired at epoch '" + timeout + "', might have expired while offline or this is a bug!" );
-		
-		if ( yaml.getString( "sessionSite" ) == null || yaml.getString( "sessionSite" ).isEmpty() )
-			setSite( Loader.getSiteManager().getFrameworkSite() );
-		else
-			setSite( Loader.getSiteManager().getSiteById( yaml.getString( "sessionSite" ) ) );
-		
-		List<Session> sessions = Loader.getSessionManager().getSessionsByIp( lastIpAddr );
-		if ( sessions.size() > Loader.getConfig().getInt( "sessions.maxSessionsPerIP" ) )
-		{
-			long oldestTime = CommonFunc.getEpoch();
-			Session oldest = null;
-			
-			for ( Session s : sessions )
-			{
-				if ( s != this && s.getTimeout() < oldestTime )
+				try
 				{
-					oldest = s;
-					oldestTime = s.getTimeout();
+					data.add( new FileSessionData( f ) );
+				}
+				catch ( SessionException e )
+				{
+					e.printStackTrace();
 				}
 			}
-			
-			if ( oldest != null )
-				SessionManager.destroySession( oldest );
-		}
-	}
-	
-	protected FileSession()
-	{
 		
+		PermissionManager.getLogger().info( "FileSession loaded " + data.size() + " sessions from the datastore in " + TimingFunc.finish( this ) + "ms!" );
+		
+		return data;
 	}
 	
 	@Override
-	public void reloadSession()
+	SessionData createSession() throws SessionException
 	{
-		String origIpAddr = lastIpAddr;
-		
-		try
-		{
-			readSessionFile();
-		}
-		catch ( SessionException e )
-		{
-			e.printStackTrace();
-		}
-		
-		// Possible Session Hijacking! nullify!!!
-		if ( lastIpAddr != null && !lastIpAddr.equals( origIpAddr ) && !Loader.getConfig().getBoolean( "sessions.allowIPChange" ) )
-		{
-			sessionCandy = null;
-			lastIpAddr = origIpAddr;
-		}
+		return new FileSessionData();
 	}
 	
 	public static File getSessionsDirectory()
@@ -152,63 +74,87 @@ public class FileSession extends Session
 		return sessionsDirectory;
 	}
 	
-	@Override
-	public void saveSession()
+	class FileSessionData extends SessionData
 	{
-		String dataJson = new Gson().toJson( data );
+		File file;
 		
-		if ( cachedFile == null || !cachedFile.exists() )
-			cachedFile = new File( getSessionsDirectory(), candyId + ".yaml" );
-		
-		YamlConfiguration yaml = new YamlConfiguration();
-		
-		yaml.set( "sessionName", sessionCandy.getKey() );
-		yaml.set( "sessionId", sessionCandy.getValue() );
-		yaml.set( "timeout", getTimeout() );
-		yaml.set( "ipAddr", getIpAddr() );
-		yaml.set( "sessionSite", getSite().getName() );
-		yaml.set( "data", dataJson );
-		
-		try
+		FileSessionData( File file ) throws SessionException
 		{
-			yaml.save( cachedFile );
+			this();
+			this.file = file;
+			
+			readSession();
 		}
-		catch ( IOException e )
+		
+		FileSessionData()
 		{
-			Loader.getLogger().severe( "There was an exception thorwn while trying to save the session.", e );
+			super( FileDatastore.this );
 		}
-	}
-	
-	@Override
-	protected void destroySession()
-	{
-		cachedFile.delete();
-	}
-	
-	protected static List<Session> getActiveSessions()
-	{
-		List<Session> sessions = Lists.newCopyOnWriteArrayList();
-		File[] files = getSessionsDirectory().listFiles();
-		long start = System.currentTimeMillis();
 		
-		if ( files == null )
-			return sessions;
+		@Override
+		void reload() throws SessionException
+		{
+			readSession();
+		}
 		
-		for ( File f : files )
-			if ( FileFilterUtils.and( FileFilterUtils.suffixFileFilter( "yaml" ), FileFilterUtils.fileFileFilter() ).accept( f ) )
+		private void readSession() throws SessionException
+		{
+			if ( file == null || !file.exists() )
+				return;
+			
+			YamlConfiguration yaml = YamlConfiguration.loadConfiguration( file );
+			
+			if ( yaml.getInt( "timeout", 0 ) > timeout )
+				timeout = yaml.getInt( "timeout", timeout );
+			
+			ipAddr = yaml.getString( "ipAddr" );
+			
+			if ( yaml.getString( "sessionName" ) != null && !yaml.getString( "sessionName" ).isEmpty() )
+				sessionName = yaml.getString( "sessionName", sessionName );
+			sessionId = yaml.getString( "sessionId", sessionId );
+			
+			site = Loader.getSiteManager().getSiteById( yaml.getString( "site" ) );
+			
+			if ( !yaml.getString( "data", "" ).isEmpty() )
 			{
-				try
+				data = new Gson().fromJson( yaml.getString( "data" ), new TypeToken<Map<String, String>>()
 				{
-					sessions.add( new FileSession( f ) );
-				}
-				catch ( SessionException e )
-				{
-					e.printStackTrace();
-				}
+					private static final long serialVersionUID = -1734352198651744570L;
+				}.getType() );
 			}
+		}
 		
-		PermissionManager.getLogger().info( "FileSession loaded " + sessions.size() + " sessions from the data store in " + ( System.currentTimeMillis() - start ) + "ms!" );
+		@Override
+		void save() throws SessionException
+		{
+			String dataJson = new Gson().toJson( data );
+			
+			if ( file == null || !file.exists() )
+				file = new File( getSessionsDirectory(), sessionId + ".yaml" );
+			
+			YamlConfiguration yaml = new YamlConfiguration();
+			
+			yaml.set( "sessionName", sessionName );
+			yaml.set( "sessionId", sessionId );
+			yaml.set( "timeout", timeout );
+			yaml.set( "ipAddr", ipAddr );
+			yaml.set( "site", site );
+			yaml.set( "data", dataJson );
+			
+			try
+			{
+				yaml.save( file );
+			}
+			catch ( IOException e )
+			{
+				throw new SessionException( "There was an exception thrown while trying to save the session.", e );
+			}
+		}
 		
-		return sessions;
+		@Override
+		void destroy() throws SessionException
+		{
+			file.delete();
+		}
 	}
 }
