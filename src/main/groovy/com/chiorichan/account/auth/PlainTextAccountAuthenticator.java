@@ -8,6 +8,7 @@ package com.chiorichan.account.auth;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
+import com.chiorichan.Loader;
 import com.chiorichan.account.AccountInstance;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountMeta;

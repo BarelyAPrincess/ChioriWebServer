@@ -78,6 +78,8 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 	
 	AccountMeta( AccountContext context )
 	{
+		Validate.notNull( context );
+		
 		this.context = context;
 		this.acctId = context.getAcctId();
 		this.siteId = context.getSiteId();

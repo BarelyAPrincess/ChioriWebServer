@@ -442,7 +442,7 @@ public final class Session extends AccountPermissible implements Listener
 	{
 		if ( force || changesMade() )
 		{
-			save();
+			data.save();
 			dataChangeHistory.clear();
 		}
 	}

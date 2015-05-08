@@ -81,6 +81,14 @@ public class AccountContext
 		return acctId;
 	}
 	
+	public String getAcctIdWithoutException()
+	{
+		if ( acctId == null )
+			return "<Not Set>";
+		
+		return acctId;
+	}
+	
 	public String getSiteId()
 	{
 		if ( acctId == null || acctId.isEmpty() )

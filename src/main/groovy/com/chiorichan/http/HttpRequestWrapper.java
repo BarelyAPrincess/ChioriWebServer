@@ -230,6 +230,8 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			}
 			else
 			{
+				if ( result == AccountResult.INTERNAL_ERROR )
+					result.getThrowable().printStackTrace();
 				AccountManager.getLogger().warning( ConsoleColor.GREEN + "Failed Login [id='" + username + "',hasPassword='" + ( password != null && !password.isEmpty() ) + "',reason='" + result.getMessage( username ) + "']" );
 				getResponse().sendRedirect( loginForm + "?msg=" + result.getMessage() + "&target=" + target );
 			}

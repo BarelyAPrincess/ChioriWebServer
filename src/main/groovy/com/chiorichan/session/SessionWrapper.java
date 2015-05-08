@@ -36,8 +36,7 @@ import com.chiorichan.site.Site;
 @SuppressWarnings( "deprecation" )
 public abstract class SessionWrapper implements BindingProvider
 {
-	// XXX user, pass, remember - Revisit
-	private static final List<String> disallowedKeys = Arrays.asList( new String[] {"user", "pass", "remember", "out", "context", "_REQUEST", "__FILE__", "_SESSION", "_REWRITE", "_GET", "_POST", "_SERVER", "_FILES"} );
+	private static final List<String> disallowedKeys = Arrays.asList( new String[] {"acctId", "token", "out", "context", "_REQUEST", "__FILE__", "_SESSION", "_REWRITE", "_GET", "_POST", "_SERVER", "_FILES"} );
 	
 	/**
 	 * The binding specific to this request

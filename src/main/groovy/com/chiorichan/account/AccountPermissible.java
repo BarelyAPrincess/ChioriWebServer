@@ -95,8 +95,11 @@ public abstract class AccountPermissible extends Permissible implements Account
 		}
 		catch ( AccountException e )
 		{
-			acct.metadata().getContext().creator().failedLogin( acct.metadata(), e.getResult() );
-			EventBus.INSTANCE.callEvent( new AccountFailedLoginEvent( acct.metadata(), e.getResult() ) );
+			if ( acct != null )
+			{
+				acct.metadata().getContext().creator().failedLogin( acct.metadata(), e.getResult() );
+				EventBus.INSTANCE.callEvent( new AccountFailedLoginEvent( acct.metadata(), e.getResult() ) );
+			}
 			account = null;
 			return e.getResult().setAccount( acct );
 		}

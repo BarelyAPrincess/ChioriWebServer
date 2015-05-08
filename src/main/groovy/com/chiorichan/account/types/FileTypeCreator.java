@@ -55,8 +55,7 @@ public class FileTypeCreator extends AccountTypeCreator
 		
 		accountFields = Loader.getConfig().getStringList( "accounts.lookupAdapter.fields", new ArrayList<String>() );
 		
-		accountFields.add( "accountId" );
-		accountFields.add( "accountname" );
+		accountFields.add( "username" );
 		
 		checkForFiles();
 	}
@@ -243,6 +242,8 @@ public class FileTypeCreator extends AccountTypeCreator
 			contents.put( key, yser.get( key ) );
 		}
 		
+		context.setAcctId( yser.getString( "acctId" ) );
+		
 		context.setValues( contents );
 		
 		return context;
@@ -305,12 +306,20 @@ public class FileTypeCreator extends AccountTypeCreator
 		
 		for ( AccountContext context1 : preloaded.values() )
 		{
+			if ( acctId.equals( context1.getAcctIdWithoutException() ) )
+			{
+				context = context1;
+				break;
+			}
+			
 			for ( String f : accountFields )
-				if ( ( context1.getValues().get( f ) != null && ObjectFunc.castToString( context1.getValues().get( f ) ).equalsIgnoreCase( acctId ) ) || context1.getAcctId().equals( acctId ) )
+			{
+				if ( ( context1.getValues().get( f ) != null && ObjectFunc.castToString( context1.getValues().get( f ) ).equalsIgnoreCase( acctId ) ) )
 				{
 					context = context1;
 					break;
 				}
+			}
 		}
 		
 		if ( context == null )

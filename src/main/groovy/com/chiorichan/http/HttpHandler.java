@@ -534,7 +534,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		WebInterpreter fi = new WebInterpreter( request );
 		
 		Site currentSite = request.getSite();
-		sess.setSite( currentSite );
+		sess.setSite( currentSite ); // setSite?
 		File docRoot = currentSite.getAbsoluteRoot( subdomain );
 		
 		ApacheParser htaccess = new ApacheParser().appendWithDir( docRoot );
@@ -561,14 +561,15 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		
 		request.putServerVar( ServerVars.DOCUMENT_ROOT, docRoot );
 		
-		sess.setGlobal( "_SERVER", request.getServerStrings() );
-		sess.setGlobal( "_POST", request.getPostMap() );
-		sess.setGlobal( "_GET", request.getGetMap() );
-		sess.setGlobal( "_REWRITE", request.getRewriteMap() );
-		sess.setGlobal( "_FILES", request.getUploadedFiles() );
+		// Was Session
+		request.setGlobal( "_SERVER", request.getServerStrings() );
+		request.setGlobal( "_POST", request.getPostMap() );
+		request.setGlobal( "_GET", request.getGetMap() );
+		request.setGlobal( "_REWRITE", request.getRewriteMap() );
+		request.setGlobal( "_FILES", request.getUploadedFiles() );
 		
 		if ( Loader.getConfig().getBoolean( "advanced.security.requestMapEnabled", true ) )
-			sess.setGlobal( "_REQUEST", request.getRequestMap() );
+			request.setGlobal( "_REQUEST", request.getRequestMap() );
 		
 		ByteBuf rendered = Unpooled.buffer();
 		

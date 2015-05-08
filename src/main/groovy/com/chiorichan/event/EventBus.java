@@ -156,14 +156,20 @@ public class EventBus implements ServerManager
 			catch ( EventException ex )
 			{
 				if ( ex.getCause() == null )
-					Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getCreator().getDescription().getFullName() + "\nEvent Exception Reason: " + ex.getMessage() );
+				{
+					ex.printStackTrace();
+					Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getCreator().getName() + "\nEvent Exception Reason: " + ex.getMessage() );
+				}
 				else
-					Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getCreator().getDescription().getFullName() + "\nEvent Exception Reason: " + ex.getCause().getMessage() );
+				{
+					ex.getCause().printStackTrace();
+					Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getCreator().getName() + "\nEvent Exception Reason: " + ex.getCause().getMessage() );
+				}
 				throw ex;
 			}
 			catch ( Throwable ex )
 			{
-				Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getCreator().getDescription().getFullName(), ex );
+				Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getCreator().getName(), ex );
 			}
 		}
 	}

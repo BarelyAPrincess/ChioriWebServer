@@ -130,7 +130,14 @@ public class SqlTypeCreator extends AccountTypeCreator
 	@Override
 	public void reload( AccountMeta meta )
 	{
-		readAccount( meta.getAcctId() );
+		try
+		{
+			readAccount( meta.getAcctId() );
+		}
+		catch ( SQLException e )
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	@Override
@@ -207,53 +214,46 @@ public class SqlTypeCreator extends AccountTypeCreator
 		return rs;
 	}
 	
-	public AccountContext readAccount( String acctId ) throws AccountException
+	public AccountContext readAccount( String acctId ) throws AccountException, SQLException
 	{
 		AccountContext context = new AccountContext( this, AccountType.SQL );
 		
-		try
+		if ( acctId == null || acctId.isEmpty() )
+			throw new AccountException( AccountResult.EMPTY_ACCTID );
+		
+		context.setAcctId( acctId );
+		
+		Set<String> accountFieldSet = new HashSet<String>( accountFields );
+		Set<String> accountColumnSet = new HashSet<String>( sql.getTableColumnNames( table ) );
+		
+		accountFieldSet.add( "acctId" );
+		accountFieldSet.add( "username" );
+		
+		String additionalAccountFields = "";
+		for ( String f : accountFieldSet )
 		{
-			if ( acctId == null || acctId.isEmpty() )
-				throw new AccountException( AccountResult.EMPTY_ACCTID );
-			
-			context.setAcctId( acctId );
-			
-			Set<String> accountFieldSet = new HashSet<String>( accountFields );
-			Set<String> accountColumnSet = new HashSet<String>( sql.getTableColumnNames( table ) );
-			
-			accountFieldSet.add( "acctId" );
-			accountFieldSet.add( "username" );
-			
-			String additionalAccountFields = "";
-			for ( String f : accountFieldSet )
-			{
-				if ( !f.isEmpty() )
-					if ( accountColumnSet.contains( f ) )
-						additionalAccountFields += " OR `" + f + "` = '" + acctId + "'";
-					else
-						for ( String c : accountColumnSet )
+			if ( !f.isEmpty() )
+				if ( accountColumnSet.contains( f ) )
+					additionalAccountFields += " OR `" + f + "` = '" + acctId + "'";
+				else
+					for ( String c : accountColumnSet )
+					{
+						if ( c.equalsIgnoreCase( f ) )
 						{
-							if ( c.equalsIgnoreCase( f ) )
-							{
-								additionalAccountFields += " OR `" + c + "` = '" + acctId + "'";
-								break;
-							}
+							additionalAccountFields += " OR `" + c + "` = '" + acctId + "'";
+							break;
 						}
-			}
-			
-			ResultSet rs = sql.query( "SELECT * FROM `" + table + "` WHERE " + additionalAccountFields.substring( 4 ) + ";" );
-			
-			if ( rs == null || sql.getRowCount( rs ) < 1 )
-				throw new AccountException( AccountResult.INCORRECT_LOGIN, context );
-			
-			context.setValues( DatabaseEngine.convertRow( rs ) );
-			
-			return context;
+					}
 		}
-		catch ( SQLException e )
-		{
-			throw new AccountException( e, context );
-		}
+		
+		ResultSet rs = sql.query( "SELECT * FROM `" + table + "` WHERE " + additionalAccountFields.substring( 4 ) + ";" );
+		
+		if ( rs == null || sql.getRowCount( rs ) < 1 )
+			throw new AccountException( AccountResult.INCORRECT_LOGIN, context );
+		
+		context.setValues( DatabaseEngine.convertRow( rs ) );
+		
+		return context;
 	}
 	
 	@EventHandler
@@ -262,6 +262,10 @@ public class SqlTypeCreator extends AccountTypeCreator
 		try
 		{
 			event.setResult( readAccount( event.getAcctId() ), AccountResult.LOGIN_SUCCESS );
+		}
+		catch ( SQLException e )
+		{
+			//e.printStackTrace();
 		}
 		catch ( AccountException e )
 		{

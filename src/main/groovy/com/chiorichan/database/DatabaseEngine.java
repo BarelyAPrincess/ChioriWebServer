@@ -426,7 +426,7 @@ public class DatabaseEngine
 		}
 		catch ( Throwable t )
 		{
-			t.printStackTrace();
+			getLogger().warning( "SQL Exception: " + t.getMessage() );
 			throw t;
 		}
 		
@@ -799,7 +799,7 @@ public class DatabaseEngine
 	{
 		List<String> rtn = Lists.newArrayList();
 		
-		ResultSet rs = query( "SELECT * FROM " + table );
+		ResultSet rs = query( "SELECT * FROM `" + table + "`" );
 		
 		ResultSetMetaData rsmd = rs.getMetaData();
 		
