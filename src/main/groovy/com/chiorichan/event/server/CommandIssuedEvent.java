@@ -6,7 +6,7 @@
  */
 package com.chiorichan.event.server;
 
-import com.chiorichan.account.InteractivePermissible;
+import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.event.Cancellable;
 
 /**
@@ -17,11 +17,11 @@ import com.chiorichan.event.Cancellable;
  */
 public class CommandIssuedEvent extends ServerEvent implements Cancellable
 {
-	private final InteractivePermissible handler;
+	private final AccountPermissible handler;
 	private String command;
 	private boolean cancelled;
 	
-	public CommandIssuedEvent( final String command, final InteractivePermissible handler )
+	public CommandIssuedEvent( final String command, final AccountPermissible handler )
 	{
 		this.command = command;
 		this.handler = handler;
@@ -53,7 +53,7 @@ public class CommandIssuedEvent extends ServerEvent implements Cancellable
 	 * 
 	 * @return The sender
 	 */
-	public InteractivePermissible getPermissible()
+	public AccountPermissible getPermissible()
 	{
 		return handler;
 	}

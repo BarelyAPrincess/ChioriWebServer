@@ -73,6 +73,11 @@ public class RegisteredListener
 				return;
 			}
 		}
+		
+		if ( event instanceof Conditional )
+			if ( priority != EventPriority.MONITOR && !( ( Conditional ) event ).conditional( this ) )
+				return;
+		
 		executor.execute( listener, event );
 	}
 	
