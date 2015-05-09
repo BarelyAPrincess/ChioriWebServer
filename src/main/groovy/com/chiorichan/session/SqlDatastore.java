@@ -64,30 +64,26 @@ public class SqlDatastore extends SessionDatastore
 	}
 	
 	@Override
-	public SessionData createSession() throws SessionException
+	public SessionData createSession( String sessionId ) throws SessionException
 	{
-		return new SqlSessionData();
+		return new SqlSessionData( sessionId );
 	}
 	
 	class SqlSessionData extends SessionData
 	{
 		SqlSessionData( ResultSet rs ) throws SessionException
 		{
-			this();
+			super( SqlDatastore.this );
 			
-			try
-			{
-				readSession( rs );
-			}
-			catch ( SQLException e )
-			{
-				throw new SessionException( e );
-			}
+			readSession( rs );
 		}
 		
-		SqlSessionData()
+		SqlSessionData( String sessionId ) throws SessionException
 		{
 			super( SqlDatastore.this );
+			this.sessionId = sessionId;
+			
+			save();
 		}
 		
 		@Override
@@ -107,23 +103,30 @@ public class SqlDatastore extends SessionDatastore
 			}
 		}
 		
-		private void readSession( ResultSet rs ) throws SQLException
+		private void readSession( ResultSet rs ) throws SessionException
 		{
-			timeout = rs.getInt( "timeout" );
-			ipAddr = rs.getString( "ipAddr" );
-			
-			if ( rs.getString( "sessionName" ) != null && !rs.getString( "sessionName" ).isEmpty() )
-				sessionName = rs.getString( "sessionName" );
-			sessionId = rs.getString( "sessionId" );
-			
-			site = Loader.getSiteManager().getSiteById( rs.getString( "sessionSite" ) );
-			
-			if ( !rs.getString( "data" ).isEmpty() )
+			try
 			{
-				data = new Gson().fromJson( rs.getString( "data" ), new TypeToken<Map<String, String>>()
+				timeout = rs.getInt( "timeout" );
+				ipAddr = rs.getString( "ipAddr" );
+				
+				if ( rs.getString( "sessionName" ) != null && !rs.getString( "sessionName" ).isEmpty() )
+					sessionName = rs.getString( "sessionName" );
+				sessionId = rs.getString( "sessionId" );
+				
+				site = Loader.getSiteManager().getSiteById( rs.getString( "sessionSite" ) );
+				
+				if ( !rs.getString( "data" ).isEmpty() )
 				{
-					private static final long serialVersionUID = -1734352198651744570L;
-				}.getType() );
+					data = new Gson().fromJson( rs.getString( "data" ), new TypeToken<Map<String, String>>()
+					{
+						private static final long serialVersionUID = -1734352198651744570L;
+					}.getType() );
+				}
+			}
+			catch ( SQLException e )
+			{
+				throw new SessionException( e );
 			}
 		}
 		

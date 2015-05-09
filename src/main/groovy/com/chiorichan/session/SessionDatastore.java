@@ -17,6 +17,6 @@ import java.util.List;
 public abstract class SessionDatastore
 {
 	abstract List<SessionData> getSessions() throws SessionException;
-
-	abstract SessionData createSession() throws SessionException;
+	
+	abstract SessionData createSession( String sessionId ) throws SessionException;
 }

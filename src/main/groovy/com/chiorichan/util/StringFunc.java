@@ -347,4 +347,28 @@ public class StringFunc
 		buf.getBytes( readerIndex, bytes );
 		return bytes;
 	}
+	
+	/**
+	 * Determines if a string is all uppercase using the toUpperCase() method.
+	 * 
+	 * @param str
+	 *            The string to check
+	 * @return Is it all uppercase?
+	 */
+	public static boolean isUppercase( String str )
+	{
+		return str.toUpperCase().equals( str );
+	}
+	
+	/**
+	 * Determines if a string is all lowercase using the toLowerCase() method.
+	 * 
+	 * @param str
+	 *            The string to check
+	 * @return Is it all lowercase?
+	 */
+	public static boolean isLowercase( String str )
+	{
+		return str.toLowerCase().equals( str );
+	}
 }

@@ -9,6 +9,7 @@ package com.chiorichan.session;
 import java.util.Map;
 
 import com.chiorichan.site.Site;
+import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 
 /**
@@ -49,6 +50,12 @@ public abstract class SessionData
 		sessionId = null;
 		site = null;
 		newlyCreated = true;
+	}
+	
+	@Override
+	public String toString()
+	{
+		return "SessionData " + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( data );
 	}
 	
 	abstract void reload() throws SessionException;

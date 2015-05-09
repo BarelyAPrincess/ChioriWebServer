@@ -24,6 +24,7 @@ import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.query.QueryEvent;
 import com.chiorichan.event.query.QueryEvent.QueryType;
+import com.chiorichan.net.NetworkManager;
 import com.chiorichan.net.NetworkWrapper;
 import com.chiorichan.util.StringFunc;
 
@@ -48,6 +49,8 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 		persistence = new NetworkWrapper( this );
 		console = InteractiveConsole.createInstance( this, persistence );
 		
+		// TODO Implement the Security Manager
+		
 		console.displayWelcomeMessage();
 		
 		QueryEvent queryEvent = new QueryEvent( ctx, QueryType.CONNECTED, null );
@@ -63,11 +66,14 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 		
 		if ( queryEvent.isCancelled() )
 		{
-			ChannelFuture future = ctx.write( parseColor( ( queryEvent.getReason().isEmpty() ) ? "We're sorry, you've been disconnected from the server by a Cancelled Event." : queryEvent.getReason() ) );
+			ChannelFuture future = ctx.writeAndFlush( parseColor( ( queryEvent.getReason().isEmpty() ) ? "We're sorry, you've been disconnected from the server by a Cancelled Event." : queryEvent.getReason() ) );
 			future.addListener( ChannelFutureListener.CLOSE );
-			ctx.flush();
 			return;
 		}
+		
+		println( "Server Uptine: " + Loader.getUptime() );
+		println( "The last visit from IP " + persistence.getIpAddr() + " is unknown." );
+		// TODO Add more information here
 		
 		console.resetPrompt();
 	}
@@ -75,13 +81,16 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 	@Override
 	public void channelInactive( ChannelHandlerContext ctx ) throws Exception
 	{
-		if ( persistence != null )
+		if ( persistence != null && persistence.hasSession() )
 			persistence.finish();
 	}
 	
 	private String parseColor( String text )
 	{
-		if ( !Loader.getConfig().getBoolean( "server.queryUseColor" ) || !StringFunc.isTrue( console.getMetadata( "color", "true" ) ) )
+		if ( text == null || text.isEmpty() )
+			return "";
+		
+		if ( !Loader.getConfig().getBoolean( "server.queryUseColor" ) || ( console != null && !StringFunc.isTrue( console.getMetadata( "color", "true" ) ) ) )
 			return ConsoleColor.removeAltColors( text );
 		else
 			return ConsoleColor.transAltColors( text );
@@ -91,9 +100,10 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 	public void println( String... msgs )
 	{
 		for ( String msg : msgs )
-			context.write( parseColor( msg ) + "\r\n" );
+			context.write( "\r" + parseColor( msg ) + "\r\n" );
 		context.flush();
-		console.prompt();
+		if ( console != null )
+			console.prompt();
 	}
 	
 	@Override
@@ -106,12 +116,13 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 	
 	public void disconnect()
 	{
-		disconnect( ConsoleColor.RED + "The server is disconnecting you connection, good bye!" );
+		disconnect( ConsoleColor.RED + "The server is closing your connection, goodbye!" );
 	}
 	
 	public void disconnect( String msg )
 	{
-		ChannelFuture future = context.write( parseColor( msg ) );
+		NetworkManager.getLogger().info( ConsoleColor.YELLOW + "The connection to Query Client `" + persistence.getIpAddr() + "` is being disconnected with message `" + msg + "`." );
+		ChannelFuture future = context.writeAndFlush( "\r" + parseColor( msg ) + "\r\n" );
 		future.addListener( ChannelFutureListener.CLOSE );
 	}
 	

@@ -189,13 +189,19 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	@Override
 	protected void sessionStarted()
 	{
+		getBinding().setVariable( "request", this );
+		getBinding().setVariable( "response", getResponse() );
+		
 		String username = getArgument( "user" );
 		String password = getArgument( "pass" );
 		// String remember = getArgumentBoolean( "remember" ) ? "true" : "false"; -- Implement This
 		String target = getArgument( "target" );
 		
-		String loginPost = ( target == null || target.isEmpty() ) ? getSite().getYaml().getString( "scripts.login-post", "" ) : target;
+		String loginPost = ( target == null || target.isEmpty() ) ? getSite().getYaml().getString( "scripts.login-post", "/" ) : target;
 		String loginForm = getSite().getYaml().getString( "scripts.login-form", "/login" );
+		
+		if ( loginPost.isEmpty() )
+			loginPost = "/";
 		
 		Session session = getSession();
 		
@@ -233,7 +239,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 				if ( result == AccountResult.INTERNAL_ERROR )
 					result.getThrowable().printStackTrace();
 				AccountManager.getLogger().warning( ConsoleColor.GREEN + "Failed Login [id='" + username + "',hasPassword='" + ( password != null && !password.isEmpty() ) + "',reason='" + result.getMessage( username ) + "']" );
-				getResponse().sendRedirect( loginForm + "?msg=" + result.getMessage() + "&target=" + target );
+				getResponse().sendRedirect( loginForm + "?msg=" + result.getMessage() + ( ( target == null || target.isEmpty() ) ? "" : "&target=" + target ) );
 			}
 		}
 		else if ( session.getAccountState() )

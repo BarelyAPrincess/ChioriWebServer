@@ -130,6 +130,8 @@ public final class Session extends AccountPermissible implements Listener
 	Session( SessionManager manager, SessionData data ) throws SessionException
 	{
 		this.manager = manager;
+		// Session Keys?
+		this.sessionId = data.sessionId;
 		this.data = data;
 		this.variables.putAll( data.data );
 		

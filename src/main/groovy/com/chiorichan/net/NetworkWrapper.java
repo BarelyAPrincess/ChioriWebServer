@@ -13,7 +13,6 @@ import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountType;
 import com.chiorichan.account.auth.AccountAuthenticator;
-import com.chiorichan.account.auth.AccountCredentials;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.http.HttpCookie;
@@ -103,13 +102,13 @@ public class NetworkWrapper extends SessionWrapper
 	@Override
 	protected void finish0()
 	{
-		// Do Nothing
+		handler.disconnect();
 	}
 	
 	@Override
 	public void send( Object obj )
 	{
-		handler.println( "Message: " + ObjectFunc.castToString( obj ) );
+		handler.println( ObjectFunc.castToString( obj ) );
 	}
 	
 	@Override

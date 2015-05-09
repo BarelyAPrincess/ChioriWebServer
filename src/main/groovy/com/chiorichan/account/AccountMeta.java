@@ -20,6 +20,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
 
+import com.chiorichan.Loader;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.site.Site;
@@ -310,7 +311,7 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 	@Override
 	public Site getSite()
 	{
-		return null;
+		return Loader.getSiteManager().getSiteById( siteId );
 	}
 	
 	public AccountContext getContext()

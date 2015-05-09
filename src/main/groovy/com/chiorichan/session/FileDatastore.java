@@ -59,9 +59,9 @@ public class FileDatastore extends SessionDatastore
 	}
 	
 	@Override
-	SessionData createSession() throws SessionException
+	SessionData createSession( String sessionId ) throws SessionException
 	{
-		return new FileSessionData();
+		return new FileSessionData( sessionId );
 	}
 	
 	public static File getSessionsDirectory()
@@ -80,15 +80,18 @@ public class FileDatastore extends SessionDatastore
 		
 		FileSessionData( File file ) throws SessionException
 		{
-			this();
+			super( FileDatastore.this );
 			this.file = file;
 			
 			readSession();
 		}
 		
-		FileSessionData()
+		FileSessionData( String sessionId ) throws SessionException
 		{
 			super( FileDatastore.this );
+			this.sessionId = sessionId;
+			
+			save();
 		}
 		
 		@Override

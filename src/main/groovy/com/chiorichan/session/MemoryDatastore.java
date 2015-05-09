@@ -24,30 +24,31 @@ public class MemoryDatastore extends SessionDatastore
 	}
 	
 	@Override
-	SessionData createSession() throws SessionException
+	SessionData createSession( String sessionId ) throws SessionException
 	{
-		return new MemorySessionData();
+		return new MemorySessionData( sessionId );
 	}
 	
 	class MemorySessionData extends SessionData
 	{
-		MemorySessionData()
+		MemorySessionData( String sessionId )
 		{
 			super( MemoryDatastore.this );
+			this.sessionId = sessionId;
 		}
-
+		
 		@Override
 		void reload() throws SessionException
 		{
 			// Do Nothing
 		}
-
+		
 		@Override
 		void destroy() throws SessionException
 		{
 			// Do Nothing
 		}
-
+		
 		@Override
 		void save() throws SessionException
 		{

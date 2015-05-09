@@ -27,6 +27,7 @@ import com.google.common.collect.Lists
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
+@SuppressWarnings( "deprecation" )
 public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 {
 	List<ScriptTraceElement> getScriptTrace()
@@ -53,6 +54,8 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	
 	/**
 	 * Returns the current HttpRequestWrapper instance
+	 * XXX This is set inside the {@link HttpRequestWrapper#sessionStarted} and {@link SessionWrapper#startSession}, this needs looking over for other types
+	 * 
 	 * @return
 	 *      current instance
 	 */
@@ -63,6 +66,8 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	
 	/**
 	 * Returns the current HttpResponseWrapper instance
+	 * XXX This is set inside the {@link HttpRequestWrapper#sessionStarted} and {@link SessionWrapper#startSession}, this needs looking over for other types 
+	 * 
 	 * @return
 	 *      current instance
 	 */
@@ -73,6 +78,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	
 	/**
 	 * Return the current session for this request
+	 * 
 	 * @return
 	 *      current session
 	 */
@@ -129,7 +135,12 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 		return request.getSession().getAccount()
 	}
 	
-	// XXX These two deprecated methods will soon be replaced with new static classes
+	boolean getAccountState()
+	{
+		return request.getSession().getAccountState()
+	}
+	
+	// XXX These two deprecated methods will soon be replaced
 	
 	@Deprecated
 	ConfigurationManagerWrapper getConfigurationManager()

@@ -391,7 +391,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			Session sess;
 			if ( ( sess = request.getSession() ) != null )
 			{
-				request.finish();
+				sess.destroy();
 				sess.save();
 			}
 			
@@ -561,7 +561,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		
 		request.putServerVar( ServerVars.DOCUMENT_ROOT, docRoot );
 		
-		// Was Session
 		request.setGlobal( "_SERVER", request.getServerStrings() );
 		request.setGlobal( "_POST", request.getPostMap() );
 		request.setGlobal( "_GET", request.getGetMap() );

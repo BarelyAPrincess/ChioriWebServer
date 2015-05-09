@@ -25,6 +25,7 @@ import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.framework.ConfigurationManagerWrapper;
 import com.chiorichan.http.HttpCookie;
 import com.chiorichan.site.Site;
+import com.chiorichan.util.StringFunc;
 
 /**
  * Acts as a bridge between a Session and the User
@@ -36,8 +37,6 @@ import com.chiorichan.site.Site;
 @SuppressWarnings( "deprecation" )
 public abstract class SessionWrapper implements BindingProvider
 {
-	private static final List<String> disallowedKeys = Arrays.asList( new String[] {"acctId", "token", "out", "context", "_REQUEST", "__FILE__", "_SESSION", "_REWRITE", "_GET", "_POST", "_SERVER", "_FILES"} );
-	
 	/**
 	 * The binding specific to this request
 	 */
@@ -70,7 +69,7 @@ public abstract class SessionWrapper implements BindingProvider
 		/*
 		 * Create our Binding
 		 */
-		binding = new EvalBinding( new HashMap<String, Object>( session.getGlobals() ) ); // Referenced or cloned?
+		binding = new EvalBinding( new HashMap<String, Object>( session.getGlobals() ) );
 		
 		/**
 		 * Create EvalFacory
@@ -136,6 +135,11 @@ public abstract class SessionWrapper implements BindingProvider
 		return session;
 	}
 	
+	public final boolean hasSession()
+	{
+		return session != null;
+	}
+	
 	public void setGlobal( String key, Object val )
 	{
 		binding.setVariable( key, val );
@@ -185,22 +189,46 @@ public abstract class SessionWrapper implements BindingProvider
 	
 	protected abstract void finish0();
 	
+	/**
+	 * Used to nullify a SessionWrapper and prepare it for collection by the GC
+	 * something that should happen naturally but the simpler the better.
+	 * 
+	 * Sidenote: This is only for cleaning up a Session Wrapper, cleaning up an actual parent session is a whole different story.
+	 */
 	@SuppressWarnings( "unchecked" )
 	public void finish()
 	{
 		Map<String, Object> bindings = session.globals;
 		Map<String, Object> variables = binding.getVariables();
+		List<String> disallow = Arrays.asList( new String[] {"out", "request", "response", "context"} );
 		
+		/**
+		 * We transfer any global variables back into our parent session like so.
+		 * We also check to make sure keys like [out, _request, _response, _FILES, _REQUEST, etc...] are excluded.
+		 */
 		if ( bindings != null && variables != null )
 		{
-			// Copy all keys besides those in disallowedKeys list into the parent binding map
 			for ( Entry<String, Object> e : variables.entrySet() )
-				if ( !disallowedKeys.contains( e.getKey() ) )
+				if ( !disallow.contains( e.getKey() ) && ! ( e.getKey().startsWith( "_" ) && StringFunc.isUppercase( e.getKey() ) ) )
 					bindings.put( e.getKey(), e.getValue() );
 		}
 		
-		// Make sure we are GC'ed sooner rather than later
+		/**
+		 * Session Wrappers use a WeakReference but by doing this we are making sure we are GC'ed sooner rather than later
+		 */
 		session.wrappers.remove( this );
+		
+		/**
+		 * Clearing references to these classes, again for easier GC cleanup.
+		 */
+		session = null;
+		factory = null;
+		binding = null;
+		
+		/**
+		 * Active connections should be closed here
+		 */
+		finish0();
 	}
 	
 	protected abstract void sessionStarted();

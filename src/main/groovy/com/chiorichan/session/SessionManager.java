@@ -20,6 +20,8 @@ import com.chiorichan.lang.StartupException;
 import com.chiorichan.scheduler.ScheduleManager;
 import com.chiorichan.scheduler.TaskCreator;
 import com.chiorichan.util.CommonFunc;
+import com.chiorichan.util.RandomFunc;
+import com.chiorichan.util.StringFunc;
 import com.google.common.collect.Lists;
 
 /**
@@ -164,7 +166,8 @@ public class SessionManager implements TaskCreator, ServerManager
 	
 	public Session createSession() throws SessionException
 	{
-		return new Session( this, datastore.createSession() );
+		// Implement a solid session id generating method
+		return new Session( this, datastore.createSession( StringFunc.md5( RandomFunc.randomize( "ChioriWebServer000" ) ) ) );
 	}
 	
 	public static boolean isDebug()
