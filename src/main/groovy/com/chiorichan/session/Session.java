@@ -273,7 +273,7 @@ public final class Session extends AccountPermissible implements Listener
 		if ( site != null )
 			extra += ",site=" + site.getName();
 		
-		return sessionKey + "{id=" + sessionId + ",ipAddr=" + getIpAddresses() + ",timeout=" + timeout + ",data=" + data + ",requestCount=" + requestCnt + extra + "}";
+		return "Session{key=" + sessionKey + ",id=" + sessionId + ",ipAddr=" + getIpAddresses() + ",timeout=" + timeout + ",data=" + data + ",requestCount=" + requestCnt + extra + "}";
 	}
 	
 	/**

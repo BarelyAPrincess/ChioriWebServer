@@ -61,7 +61,6 @@ public class Site
 	protected DatabaseEngine sql;
 	protected SiteType siteType = SiteType.NOTSET;
 	protected File filePath = null;
-	protected File cacheDir = null;
 	protected List<String> cachePatterns = Lists.newArrayList();
 	protected Routes routes = null;
 	protected String encryptionKey = null;
@@ -618,16 +617,6 @@ public class Site
 			resource = new File( getAbsoluteRoot(), "resource" );
 		
 		return resource;
-	}
-	
-	public File getCacheDirectory()
-	{
-		if ( cacheDir == null )
-			cacheDir = new File( Loader.getTempFileDirectory(), this.getSiteId() );
-		
-		cacheDir.mkdirs();
-		
-		return cacheDir;
 	}
 	
 	public File getSourceDirectory()

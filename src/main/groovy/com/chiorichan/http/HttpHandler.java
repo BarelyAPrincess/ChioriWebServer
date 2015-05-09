@@ -454,6 +454,11 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			}
 			
 			request.putPostMap( attribute.getName(), value );
+			
+			/*
+			 * Should resolve the problem described in Issue #9 on our GitHub
+			 */
+			attribute.delete();
 		}
 		else if ( data.getHttpDataType() == HttpDataType.FileUpload )
 		{
