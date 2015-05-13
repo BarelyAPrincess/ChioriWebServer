@@ -13,6 +13,7 @@ import com.chiorichan.Loader;
 import com.chiorichan.account.AccountInstance;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountMeta;
+import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.console.Command;
 import com.chiorichan.console.CommandDispatch;
 import com.chiorichan.console.InteractiveConsole;
@@ -109,6 +110,8 @@ public abstract class BuiltinCommand extends Command
 					else
 					{
 						AccountMeta acct = AccountManager.INSTANCE.getAccount( args[0] );
+						if ( acct == null )
+							throw AccountResult.INCORRECT_LOGIN.exception();
 						acct.getPermissibleEntity().checkPermission( "sys.op" ).assign();
 						handler.sendMessage( ConsoleColor.AQUA + "We successfully op'ed the account " + acct.getAcctId() );
 					}

@@ -6,11 +6,14 @@
  */
 package com.chiorichan.account.types;
 
+import java.sql.SQLException;
+
 import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.AccountType;
 import com.chiorichan.account.auth.AccountCredentials;
 import com.chiorichan.account.event.AccountLoadEvent;
+import com.chiorichan.account.event.AccountLookupEvent;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.event.EventHandler;
@@ -33,6 +36,12 @@ public class MemoryTypeCreator extends AccountTypeCreator
 	public AccountType getType()
 	{
 		return AccountType.MEMORY;
+	}
+	
+	@EventHandler
+	public void onAccountLookupEvent( AccountLookupEvent event )
+	{
+		// Do Nothing
 	}
 	
 	@EventHandler( )
@@ -78,7 +87,7 @@ public class MemoryTypeCreator extends AccountTypeCreator
 	}
 	
 	@Override
-	public String getHumanReadableName( AccountMeta meta )
+	public String getDisplayName( AccountMeta meta )
 	{
 		return null;
 	}

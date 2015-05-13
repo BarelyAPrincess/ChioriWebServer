@@ -29,5 +29,5 @@ public interface AccountCreator
 	
 	void preLogin( AccountMeta meta, AccountPermissible via, AccountCredentials creds );
 	
-	String getHumanReadableName( AccountMeta meta );
+	String getDisplayName( AccountMeta meta );
 }

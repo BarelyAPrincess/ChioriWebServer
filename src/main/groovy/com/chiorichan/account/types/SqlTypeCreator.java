@@ -91,7 +91,6 @@ public class SqlTypeCreator extends AccountTypeCreator
 				
 				for ( String s : columnSet )
 				{
-					Loader.getLogger().debug( s + " --> " + key );
 					if ( s.equalsIgnoreCase( key ) )
 					{
 						toSave.put( s, e.getValue() );
@@ -184,7 +183,7 @@ public class SqlTypeCreator extends AccountTypeCreator
 	}
 	
 	@Override
-	public String getHumanReadableName( AccountMeta meta )
+	public String getDisplayName( AccountMeta meta )
 	{
 		if ( meta.getString( "fname" ) != null && !meta.getString( "fname" ).isEmpty() && meta.getString( "name" ) != null && !meta.getString( "name" ).isEmpty() )
 			return meta.getString( "fname" ) + " " + meta.getString( "name" );

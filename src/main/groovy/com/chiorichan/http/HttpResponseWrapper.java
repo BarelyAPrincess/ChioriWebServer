@@ -262,8 +262,11 @@ public class HttpResponseWrapper
 	 */
 	public void sendLoginPage( String msg )
 	{
-		String loginPage = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
-		sendRedirect( loginPage + "?msg=" + msg );
+		/*
+		 * TODO: Come up with a better way to handle the URI used in the target, i.e., currently params are being lost in all redirects.
+		 */
+		String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
+		sendRedirect( loginForm + "?msg=&target=http://" + request.getDomain() + request.getUri() );
 	}
 	
 	/**

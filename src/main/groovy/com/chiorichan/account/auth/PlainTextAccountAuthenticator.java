@@ -8,7 +8,6 @@ package com.chiorichan.account.auth;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
-import com.chiorichan.Loader;
 import com.chiorichan.account.AccountInstance;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountMeta;
@@ -64,7 +63,11 @@ public final class PlainTextAccountAuthenticator extends AccountAuthenticator
 		@Override
 		public AccountInstance authenticate() throws AccountException
 		{
-			AccountMeta meta = AccountManager.INSTANCE.getAccount( user );
+			AccountMeta meta = AccountManager.INSTANCE.getAccountWithException( user );
+			
+			if ( meta == null )
+				throw AccountResult.INCORRECT_LOGIN.exception();
+			
 			String password = meta.getString( "password" );
 			
 			if ( password == null )

@@ -63,6 +63,12 @@ public class AccountType
 	
 	private final AccountTypeCreator creator;
 	
+	static
+	{
+		AccountManager.INSTANCE.accounts.put( ACCOUNT_NONE );
+		AccountManager.INSTANCE.accounts.put( ACCOUNT_ROOT );
+	}
+	
 	/**
 	 * Registers a new non-builtin AccountType
 	 * 

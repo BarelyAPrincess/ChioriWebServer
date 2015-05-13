@@ -183,11 +183,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			
 			if ( pde.getReason() == PermissionDeniedReason.LOGIN_PAGE )
 			{
-				/*
-				 * TODO: Come up with a better way to handle the URI used in the target, i.e., currently params are being lost in all redirects.
-				 */
-				String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
-				response.sendRedirect( loginForm + "?msg=You must be logged in to view that page!&target=http://" + request.getDomain() + request.getUri() );
+				response.sendLoginPage( pde.getReason().getMessage() );
 			}
 			else
 			{

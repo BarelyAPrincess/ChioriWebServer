@@ -9,6 +9,7 @@ package com.chiorichan.factory
 import com.chiorichan.Loader
 import com.chiorichan.account.Account
 import com.chiorichan.account.AccountManager
+import com.chiorichan.account.lang.AccountException
 import com.chiorichan.database.DatabaseEngine
 import com.chiorichan.framework.ConfigurationManagerWrapper
 import com.chiorichan.framework.HttpUtilsWrapper

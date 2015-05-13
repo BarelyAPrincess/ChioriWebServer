@@ -46,10 +46,30 @@ public abstract class AccountEvents implements EventCreator
 		EventBus.INSTANCE.callEvent( event );
 		
 		if ( event.getContext() == null )
-			throw new AccountException( AccountResult.INCORRECT_LOGIN );
+			return null;
 		
 		if ( event.getResult() != AccountResult.LOGIN_SUCCESS )
-			throw new AccountException( event.getResult() );
+		{
+			AccountManager.getLogger().warning( event.getResult().getMessage() );
+			return null;
+		}
+		
+		AccountMeta acct = new AccountMeta( event.getContext() );
+		
+		return acct;
+	}
+	
+	AccountMeta fireAccountLookupWithException( String acctId )
+	{
+		AccountLookupEvent event = new AccountLookupEvent( acctId );
+		
+		EventBus.INSTANCE.callEvent( event );
+		
+		if ( event.getContext() == null )
+			throw AccountResult.INCORRECT_LOGIN.exception();
+		
+		if ( event.getResult() != AccountResult.LOGIN_SUCCESS )
+			throw event.getResult().exception();
 		
 		AccountMeta acct = new AccountMeta( event.getContext() );
 		

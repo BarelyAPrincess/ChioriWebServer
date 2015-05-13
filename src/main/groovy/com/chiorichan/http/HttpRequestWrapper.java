@@ -164,7 +164,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			}
 		
 		if ( site == null )
-			site = Loader.getSiteManager().getSiteById( "framework" );
+			site = Loader.getSiteManager().getSiteById( "default" );
 		
 		// Decode Get Map
 		QueryStringDecoder queryStringDecoder = new QueryStringDecoder( http.getUri() );

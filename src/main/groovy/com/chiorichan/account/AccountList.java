@@ -25,11 +25,21 @@ class AccountList implements Iterable<AccountMeta>
 	
 	void put( AccountMeta meta )
 	{
+		// Prevents the overriding of the builtin Accounts
+		if ( ( "none".equals( meta.getAcctId() ) || "default".equals( meta.getAcctId() ) || "root".equals( meta.getAcctId() ) ) && accounts.containsKey( meta.getAcctId() ) )
+			return;
+		
 		accounts.put( meta.getAcctId(), meta );
 	}
 	
 	AccountMeta get( String acctId )
 	{
+		if ( "none".equals( acctId ) || "default".equals( acctId ) )
+			return AccountType.ACCOUNT_NONE;
+		
+		if ( "root".equals( acctId ) )
+			return AccountType.ACCOUNT_ROOT;
+		
 		return accounts.get( acctId );
 	}
 	

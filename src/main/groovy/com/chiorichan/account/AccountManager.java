@@ -76,7 +76,7 @@ public final class AccountManager extends AccountEvents implements ServerManager
 		EventBus.INSTANCE.registerEvents( AccountType.FILE.getCreator(), this );
 	}
 	
-	public AccountMeta getAccount( String acctId ) throws AccountException
+	public AccountMeta getAccount( String acctId )
 	{
 		AccountMeta acct = accounts.get( acctId );
 		
@@ -85,7 +85,24 @@ public final class AccountManager extends AccountEvents implements ServerManager
 			acct = fireAccountLookup( acctId );
 			
 			if ( acct == null )
-				throw AccountResult.INCORRECT_LOGIN.exception();
+				return null;
+			
+			accounts.put( acct );
+		}
+		
+		return acct;
+	}
+	
+	public AccountMeta getAccountWithException( String acctId ) throws AccountException
+	{
+		AccountMeta acct = accounts.get( acctId );
+		
+		if ( acct == null )
+		{
+			acct = fireAccountLookupWithException( acctId );
+			
+			if ( acct == null )
+				return null;
 			
 			accounts.put( acct );
 		}

@@ -48,7 +48,11 @@ public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
 		@Override
 		public AccountInstance authenticate() throws AccountException
 		{
-			AccountMeta meta = AccountManager.INSTANCE.getAccount( acctId );
+			AccountMeta meta = AccountManager.INSTANCE.getAccountWithException( acctId );
+			
+			if ( meta == null )
+				throw AccountResult.INCORRECT_LOGIN.exception();
+			
 			String token0 = meta.getString( "token" );
 			
 			if ( token0 == null )
