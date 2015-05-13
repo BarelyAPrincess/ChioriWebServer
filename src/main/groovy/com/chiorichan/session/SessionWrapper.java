@@ -92,11 +92,25 @@ public abstract class SessionWrapper implements BindingProvider
 		 */
 		session.site = getSite();
 		
+		if ( session.site == null )
+			session.site = Loader.getSiteManager().getDefaultSite();
+		
 		for ( HttpCookie cookie : getCookies() )
 		{
-			session.sessionCookies.put( cookie.getKey(), cookie );
+			// Make sure not to override our session cookie
+			// TODO Possibly remove old session cookies, if we can identify them
+			if ( cookie.getKey() != session.sessionKey )
+				session.sessionCookies.put( cookie.getKey(), cookie );
 		}
 		
+		for ( HttpCookie cookie : session.getCookies().values() )
+		{
+			setCookie( cookie );
+		}
+		
+		/*
+		 * Session Key should be updated from the Parent Sessions point of view
+		 */
 		String sessionKey = "sessionId";
 		YamlConfiguration yaml = session.site.getYaml();
 		if ( yaml != null )
@@ -111,6 +125,8 @@ public abstract class SessionWrapper implements BindingProvider
 		session.sessionKey = sessionKey;
 		session.sessionCookie = session.sessionCookies.get( sessionKey );
 		session.processSessionCookie();
+		
+		/* End Parent Session Comment */
 		
 		// Reference Context
 		binding.setVariable( "context", this );
@@ -132,6 +148,18 @@ public abstract class SessionWrapper implements BindingProvider
 		if ( session == null )
 			throw new IllegalStateException( "getSession() was called before startSession()" );
 		
+		return session;
+	}
+	
+	/**
+	 * Gets the Session but without throwing an exception on null
+	 * Be sure to check if the session is null
+	 * 
+	 * @return
+	 *         The session
+	 */
+	public final Session getSessionWithoutException()
+	{
 		return session;
 	}
 	
@@ -182,6 +210,8 @@ public abstract class SessionWrapper implements BindingProvider
 	}
 	
 	public abstract String getIpAddr();
+	
+	protected abstract void setCookie( HttpCookie cookie );
 	
 	public abstract HttpCookie getCookie( String key );
 	

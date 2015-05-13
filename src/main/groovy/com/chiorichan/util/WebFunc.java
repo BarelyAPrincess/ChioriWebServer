@@ -570,7 +570,7 @@ public class WebFunc
 		File packFile = new File( file );
 		
 		if ( site == null )
-			site = Loader.getSiteManager().getFrameworkSite();
+			site = Loader.getSiteManager().getDefaultSite();
 		
 		if ( packFile == null || !packFile.exists() )
 			return new EvalFactoryResult( new EvalMetaData( file ), site );
@@ -600,7 +600,7 @@ public class WebFunc
 		File packFile = null;
 		
 		if ( site == null )
-			site = Loader.getSiteManager().getFrameworkSite();
+			site = Loader.getSiteManager().getDefaultSite();
 		
 		packFile = site.getResourceWithException( pack );
 		

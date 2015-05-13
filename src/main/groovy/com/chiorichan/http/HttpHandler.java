@@ -389,9 +389,9 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				response.sendResponse();
 			
 			Session sess;
-			if ( ( sess = request.getSession() ) != null )
+			if ( ( sess = request.getSessionWithoutException() ) != null )
 			{
-				sess.destroy();
+				// sess.destroy();
 				sess.save();
 			}
 			

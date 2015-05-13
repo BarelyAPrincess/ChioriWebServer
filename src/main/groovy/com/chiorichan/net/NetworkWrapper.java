@@ -59,6 +59,12 @@ public class NetworkWrapper extends SessionWrapper
 	}
 	
 	@Override
+	protected void setCookie( HttpCookie cookie )
+	{
+		// Do Nothing
+	}
+	
+	@Override
 	public HttpCookie getCookie( String key )
 	{
 		return null;
@@ -94,9 +100,9 @@ public class NetworkWrapper extends SessionWrapper
 	protected Site getSite()
 	{
 		/*
-		 * The NetworkWrapper dosn't really tie down to any one site, so we just use the Server One
+		 * The NetworkWrapper dosn't really tie down to any one site, so we just use the default one
 		 */
-		return Loader.getSiteManager().getFrameworkSite();
+		return Loader.getSiteManager().getDefaultSite();
 	}
 	
 	@Override

@@ -47,16 +47,16 @@ public class WebInterpreter extends FileInterpreter
 		String domain = request.getParentDomain();
 		String subdomain = request.getSubDomain();
 		
-		fwRequest = uri.startsWith( "/fw" );
+		fwRequest = uri.startsWith( "/wisp" );
 		if ( fwRequest )
 		{
-			Site fwSite = Loader.getSiteManager().getFrameworkSite();
+			Site fwSite = Loader.getSiteManager().getDefaultSite();
 			routes = fwSite.getRoutes();
 			request.setSite( fwSite );
 			// request.setUri( uri.substring( 3 ) );
 		}
 		
-		if ( uri.startsWith( "/fw/~" ) )
+		if ( uri.startsWith( "/wisp/~" ) )
 		{
 			int indexOf = uri.indexOf( "/", 5 );
 			

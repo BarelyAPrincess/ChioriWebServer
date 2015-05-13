@@ -19,6 +19,7 @@ public class HttpCookie
 {
 	private String key, value, path = "/", domain = "";
 	private long epoch = 0;
+	private boolean secure, httpOnly = true;
 	
 	/*
 	 * Tells the response writer if it needs to set this candy in the response headers.
@@ -71,33 +72,37 @@ public class HttpCookie
 	 * 
 	 * @param epoch
 	 */
-	public void setExpiration( long epoch )
+	public HttpCookie setExpiration( long epoch )
 	{
 		needsUpdating = true;
 		this.epoch = epoch;
+		return this;
 	}
 	
 	/**
-	 * Sets an explicit expiration time using the current epoch + timeSpecified
+	 * Sets an explicit expiration time using the current epoch + seconds specified
 	 * 
 	 * @param defaultLife
 	 */
-	public void setMaxAge( long defaultLife )
+	public HttpCookie setMaxAge( long defaultLife )
 	{
 		needsUpdating = true;
 		epoch = CommonFunc.getEpoch() + defaultLife;
+		return this;
 	}
 	
-	public void setDomain( String domain )
+	public HttpCookie setDomain( String domain )
 	{
 		needsUpdating = true;
-		this.domain = domain;
+		this.domain = domain.toLowerCase();
+		return this;
 	}
 	
-	public void setPath( String path )
+	public HttpCookie setPath( String path )
 	{
 		needsUpdating = true;
 		this.path = path;
+		return this;
 	}
 	
 	protected Boolean needsUpdating()
@@ -113,15 +118,40 @@ public class HttpCookie
 		{
 			SimpleDateFormat dateFormat = new SimpleDateFormat( "EE, dd-MMM-yyyy HH:mm:ss zz" );
 			dateFormat.setTimeZone( TimeZone.getTimeZone( "UTC" ) );
-			additional += "expires=" + dateFormat.format( new Date( epoch * 1000 ) ) + "; ";
+			additional += "; expires=" + dateFormat.format( new Date( epoch * 1000 ) );
 		}
 		
-		if ( !path.isEmpty() )
-			additional += "path=" + path + "; ";
+		if ( path != null && !path.isEmpty() )
+			additional += "; path=" + path;
+		else
+			additional += "; path=/";
 		
-		if ( !domain.isEmpty() )
-			additional += "domain=" + domain + "; ";
+		if ( domain != null && !domain.isEmpty() )
+			additional += "; domain=" + domain;
 		
-		return key + "=" + value + "; " + additional;
+		if ( secure )
+			additional += "; secure";
+		
+		if ( httpOnly )
+			additional += "; HttpOnly";
+		
+		return key + "=" + value + additional;
+	}
+	
+	public HttpCookie setSecure( boolean secure )
+	{
+		this.secure = secure;
+		return this;
+	}
+	
+	public HttpCookie setHttpOnly( boolean httpOnly )
+	{
+		this.httpOnly = httpOnly;
+		return this;
+	}
+
+	public String getDomain()
+	{
+		return domain;
 	}
 }

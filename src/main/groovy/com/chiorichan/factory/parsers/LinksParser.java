@@ -59,7 +59,7 @@ public class LinksParser extends HTMLCommentParser
 		if ( site != null )
 			url += site.getDomain() + "/";
 		else
-			url += Loader.getSiteManager().getFrameworkSite().getDomain() + "/";
+			url += Loader.getSiteManager().getDefaultSite().getDomain() + "/";
 		
 		return url;
 	}

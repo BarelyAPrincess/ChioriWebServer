@@ -53,7 +53,7 @@ public class SiteManager implements ServerManager
 		
 		File defaultSite = new File( siteFileBase, "000-default.yaml" );
 		
-		// We make sure the default framework YAML FileBase exists and if not we copy it from the Jar.
+		// We make sure the default default YAML FileBase exists and if not we copy it from the Jar.
 		if ( !defaultSite.exists() )
 		{
 			try
@@ -132,7 +132,7 @@ public class SiteManager implements ServerManager
 						}
 						catch ( SiteException e )
 						{
-							getLogger().severe( "Exception encountered while loading a site from SQL DataBase, Reason: " + e.getMessage() );
+							getLogger().severe( "Exception encountered while loading a site from SQL Database, Reason: " + e.getMessage() );
 							if ( e.getCause() != null )
 								e.getCause().printStackTrace();
 						}
@@ -170,9 +170,9 @@ public class SiteManager implements ServerManager
 		return new ArrayList<Site>( siteMap.values() );
 	}
 	
-	public Site getFrameworkSite()
+	public Site getDefaultSite()
 	{
-		return getSiteById( "framework" );
+		return getSiteById( "default" );
 	}
 	
 	public void reload()
@@ -183,8 +183,8 @@ public class SiteManager implements ServerManager
 	
 	public String remove( String siteId )
 	{
-		if ( siteId.equals( "framework" ) )
-			return "You can not delete the framework site.";
+		if ( siteId.equals( "default" ) )
+			return "You can not delete the default site.";
 		
 		if ( siteMap.containsKey( siteId ) )
 		{

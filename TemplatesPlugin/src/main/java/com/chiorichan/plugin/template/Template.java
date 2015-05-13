@@ -160,7 +160,7 @@ public class Template extends Plugin implements Listener
 			Map<String, String> fwVals = event.getParams();
 			
 			if ( site == null )
-				site = Loader.getSiteManager().getFrameworkSite();
+				site = Loader.getSiteManager().getDefaultSite();
 			
 			if ( fwVals.get( "themeless" ) != null && StringFunc.isTrue( fwVals.get( "themeless" ) ) )
 				return;

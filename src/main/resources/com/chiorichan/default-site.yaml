@@ -1,11 +1,17 @@
 # DO NOT EDIT THIS CONFIG!!!
 # FOR INTERNAL SERVER USE ONLY!!!
 site:
-  siteId: framework
-  title: Chiori Framework
-  domain: chiorichan.com
+  siteId: default
+  title: Chiori-chan's Web Server
   resource: resource
 sessions:
-  cookie-name: ChioriFramework
-  default-life: 604800
-  remember-life: 157680000
+  lifetimeDefault: 604800
+  lifetimeRemember: 157680000
+  lifetimeMax: -1
+  persistenceMethod: cookie
+cookies:
+  name: sessionId
+  path: /
+  domain: ""
+  secure: false
+  httpOnly: true

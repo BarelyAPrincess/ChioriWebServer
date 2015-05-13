@@ -208,15 +208,15 @@ public final class Session extends AccountPermissible implements Listener
 	{
 		if ( sessionCookie == null )
 		{
-			int defaultLife = ( getSite().getYaml() != null ) ? getSite().getYaml().getInt( "sessions.default-life", 604800 ) : 604800;
+			int defaultLife = ( getSite().getYaml() != null ) ? getSite().getYaml().getInt( "sessions.lifetimeDefault", 604800 ) : 604800;
 			timeout = CommonFunc.getEpoch() + Loader.getConfig().getInt( "sessions.defaultTimeout", 3600 );
 			
 			if ( sessionId == null || sessionId.isEmpty() )
 				sessionId = StringFunc.md5( RandomFunc.randomize( "$e$$i0n_R%ND0Mne$$" ) + System.currentTimeMillis() );
 			
-			sessionCookie = new HttpCookie( sessionKey, sessionId );
+			sessionCookie = getSite().createSessionCookie( sessionId );
+			
 			sessionCookie.setMaxAge( defaultLife );
-			sessionCookie.setPath( "/" );
 			
 			sessionCookies.put( sessionKey, sessionCookie );
 			
@@ -268,12 +268,7 @@ public final class Session extends AccountPermissible implements Listener
 	@Override
 	public String toString()
 	{
-		String extra = "";
-		
-		if ( site != null )
-			extra += ",site=" + site.getName();
-		
-		return "Session{key=" + sessionKey + ",id=" + sessionId + ",ipAddr=" + getIpAddresses() + ",timeout=" + timeout + ",data=" + data + ",requestCount=" + requestCnt + extra + "}";
+		return "Session{key=" + sessionKey + ",id=" + sessionId + ",ipAddr=" + getIpAddresses() + ",timeout=" + timeout + ",data=" + data + ",requestCount=" + requestCnt + ",site=" + site + "}";
 	}
 	
 	/**
@@ -380,7 +375,7 @@ public final class Session extends AccountPermissible implements Listener
 	public Site getSite()
 	{
 		if ( site == null )
-			return Loader.getSiteManager().getFrameworkSite();
+			return Loader.getSiteManager().getDefaultSite();
 		else
 			return site;
 	}

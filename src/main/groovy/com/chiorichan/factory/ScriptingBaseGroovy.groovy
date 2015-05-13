@@ -132,7 +132,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 */
 	AccountInstance getAccount()
 	{
-		return request.getSession().getAccount()
+		return request.getSession().account()
 	}
 	
 	boolean getAccountState()

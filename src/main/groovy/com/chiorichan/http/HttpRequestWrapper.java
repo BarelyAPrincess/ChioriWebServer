@@ -43,6 +43,7 @@ import com.chiorichan.account.auth.AccountAuthenticator;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.event.server.ServerVars;
+import com.chiorichan.net.NetworkManager;
 import com.chiorichan.session.Session;
 import com.chiorichan.session.SessionContext;
 import com.chiorichan.session.SessionManager;
@@ -205,6 +206,8 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		
 		Session session = getSession();
 		
+		Loader.getLogger().debug( "" + session );
+		
 		if ( getArgument( "logout" ) != null )
 		{
 			AccountResult result = session.logout();
@@ -232,7 +235,9 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			{
 				Account acct = result.getAccount();
 				SessionManager.getLogger().info( ConsoleColor.GREEN + "Successful Login: [id='" + acct.getAcctId() + "',siteId='" + acct.getSiteId() + "',displayName='" + acct.getHumanReadableName() + "',ipAddrs='" + acct.getIpAddresses() + "']" );
-				getResponse().sendRedirect( loginPost );
+				// getResponse().sendRedirect( loginPost );
+				
+				Loader.getLogger().debug( session.hashCode() + " --> " + session );
 			}
 			else
 			{
@@ -263,11 +268,23 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			 */
 		}
 		
-		// Will be ever be using a session on more than one domains?
-		session.getSessionCookie().setDomain( "." + getParentDomain() );
+		// Will we ever be using a session on more than one domains?
+		if ( !getParentDomain().isEmpty() && session.getSessionCookie() != null )
+		{
+			if ( !session.getSessionCookie().getDomain().endsWith( getParentDomain() ) )
+			{
+				NetworkManager.getLogger().warning( "The site `" + site.getSiteId() + "` specifies the session cookie domain as `" + session.getSessionCookie().getDomain() + "` but the request was made on parent domain `" + getParentDomain() + "`. The session will not remain persistent." );
+			}
+		}
 		
 		if ( Loader.getConfig().getBoolean( "sessions.rearmTimeoutWithEachRequest" ) )
 			session.rearmTimeout();
+	}
+	
+	@Override
+	protected void setCookie( HttpCookie cookie )
+	{
+		cookies.add( cookie );
 	}
 	
 	@Override

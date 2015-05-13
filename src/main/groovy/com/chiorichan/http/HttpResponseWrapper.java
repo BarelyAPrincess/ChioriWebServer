@@ -432,7 +432,10 @@ public class HttpResponseWrapper
 		
 		for ( HttpCookie c : request.getCookies() )
 			if ( c.needsUpdating() )
+			{
+				// Loader.getLogger().debug( "Setting Cookie: " + c.toHeaderValue() );
 				h.add( "Set-Cookie", c.toHeaderValue() );
+			}
 		
 		if ( h.get( "Server" ) == null )
 			h.add( "Server", Versioning.getProduct() + " Version " + Versioning.getVersion() );
