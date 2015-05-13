@@ -91,7 +91,7 @@ class LoginCommand extends BuiltinCommand
 					// if ( !handler.getPersistence().checkPermission( "sys.query" ).isTrue() )
 					// throw new LoginException( LoginExceptionReason.notAuthorized, acct );
 					
-					AccountManager.getLogger().info( ConsoleColor.GREEN + "Successful Console Login [username='" + user + "',password='" + pass + "',userId='" + result.getAccount().getAcctId() + "',displayName='" + result.getAccount().getHumanReadableName() + "']" );
+					AccountManager.getLogger().info( ConsoleColor.GREEN + "Successful Console Login [username='" + user + "',password='" + pass + "',userId='" + result.getAccount().getAcctId() + "',displayName='" + result.getAccount().getDisplayName() + "']" );
 					
 					handler.getPersistence().send( ConsoleColor.GREEN + "Welcome " + user + ", you have been successfully logged in." );
 				}
@@ -99,7 +99,7 @@ class LoginCommand extends BuiltinCommand
 			catch ( AccountException l )
 			{
 				if ( l.getAccount() != null )
-					AccountManager.getLogger().warning( ConsoleColor.GREEN + "Failed Console Login [username='" + user + "',password='" + pass + "',userId='" + l.getAccount().getAcctId() + "',displayName='" + l.getAccount().getHumanReadableName() + "',reason='" + l.getMessage() + "']" );
+					AccountManager.getLogger().warning( ConsoleColor.GREEN + "Failed Console Login [username='" + user + "',password='" + pass + "',userId='" + l.getAccount().getAcctId() + "',displayName='" + l.getAccount().getDisplayName() + "',reason='" + l.getMessage() + "']" );
 				
 				handler.getPersistence().send( ConsoleColor.YELLOW + l.getMessage() );
 				

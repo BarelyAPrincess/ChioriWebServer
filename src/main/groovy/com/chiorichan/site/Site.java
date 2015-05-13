@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.apache.commons.lang3.text.WordUtils;
 import org.json.JSONObject;
 
 import com.chiorichan.Loader;
@@ -44,6 +45,7 @@ import com.chiorichan.http.Routes;
 import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.lang.SiteException;
 import com.chiorichan.lang.StartupException;
+import com.chiorichan.session.SessionManager;
 import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.RandomFunc;
 import com.google.common.collect.Lists;
@@ -824,10 +826,24 @@ public class Site
 		}
 	}
 	
+	/**
+	 * Gets the site configured Session Key from config.
+	 * 
+	 * @return
+	 *         The Session Key
+	 */
+	public String getSessionKey()
+	{
+		String key = config.getString( "cookies.name" );
+		if ( key == null )
+			return SessionManager.getDefaultSessionName();
+		return "_ws" + WordUtils.capitalize( key );
+	}
+	
 	@Override
 	public String toString()
 	{
-		return getSiteId() + "(Name:" + getName() + ",Title:" + title + ",Domain:" + getDomain() + ",SiteType:" + siteType + ",SourceDir:" + source + ")";
+		return getSiteId() + "Site{name=" + getName() + ",title=" + title + ",domain=" + getDomain() + ",type=" + siteType + ",source=" + source + ",resource=" + resource + "}";
 	}
 	
 	public enum SessionPersistenceMethod
@@ -840,6 +856,6 @@ public class Site
 		String domain = config.getString( "cookies.domain" );
 		String path = config.getString( "cookies.path" );
 		
-		return new HttpCookie( config.getString( "cookies.name", "sessionId" ), sessionId ).setDomain( domain ).setPath( path ).setSecure( config.getBoolean( "cookies.secure" ) ).setHttpOnly( config.getBoolean( "cookies.httpOnly" ) );
+		return new HttpCookie( getSessionKey(), sessionId ).setDomain( domain ).setPath( path ).setSecure( config.getBoolean( "cookies.secure" ) ).setHttpOnly( config.getBoolean( "cookies.httpOnly" ) );
 	}
 }

@@ -40,6 +40,7 @@ import com.chiorichan.event.http.HttpExceptionEvent;
 import com.chiorichan.lang.ApacheParser;
 import com.chiorichan.lang.HttpError;
 import com.chiorichan.net.NetworkManager;
+import com.chiorichan.session.Session;
 import com.chiorichan.session.SessionException;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Charsets;
@@ -430,12 +431,19 @@ public class HttpResponseWrapper
 		FullHttpResponse response = new DefaultFullHttpResponse( HttpVersion.HTTP_1_1, httpStatus, output );
 		HttpHeaders h = response.headers();
 		
-		for ( HttpCookie c : request.getCookies() )
-			if ( c.needsUpdating() )
-			{
-				// Loader.getLogger().debug( "Setting Cookie: " + c.toHeaderValue() );
-				h.add( "Set-Cookie", c.toHeaderValue() );
-			}
+		Session session = request.getSessionWithoutException();
+		if ( session != null )
+		{
+			for ( HttpCookie c : request.getSession().getCookies().values() )
+				if ( c.needsUpdating() )
+				{
+					// Loader.getLogger().debug( "Setting Cookie: " + c.toHeaderValue() );
+					h.add( "Set-Cookie", c.toHeaderValue() );
+				}
+			
+			if ( session.getSessionCookie().needsUpdating() )
+				h.add( "Set-Cookie", session.getSessionCookie().toHeaderValue() );
+		}
 		
 		if ( h.get( "Server" ) == null )
 			h.add( "Server", Versioning.getProduct() + " Version " + Versioning.getVersion() );

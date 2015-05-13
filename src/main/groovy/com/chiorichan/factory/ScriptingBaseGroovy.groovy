@@ -7,7 +7,8 @@
 package com.chiorichan.factory
 
 import com.chiorichan.Loader
-import com.chiorichan.account.AccountInstance
+import com.chiorichan.account.Account
+import com.chiorichan.account.AccountManager
 import com.chiorichan.database.DatabaseEngine
 import com.chiorichan.framework.ConfigurationManagerWrapper
 import com.chiorichan.framework.HttpUtilsWrapper
@@ -105,24 +106,24 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 * @return
 	 *       The found account, will return null if none found
 	 */
-	AccountInstance getAccount( String uid )
+	Account getAccount( String uid )
 	{
-		AccountInstance result =  Loader.getAccountManager().getAccount( uid )
+		Account result = AccountManager.INSTANCE.getAccount( uid )
 		
 		if ( result == null )
-			result = Loader.getAccountManager().getAccountPartial( uid )
+			result = AccountManager.INSTANCE.getAccountPartial( uid )
 		
 		return result
 	}
 	
-	AccountInstance[] getAccounts( String query )
+	Account[] getAccounts( String query )
 	{
-		return Loader.getAccountManager().getAccounts( query )
+		return AccountManager.INSTANCE.getAccounts( query )
 	}
 	
-	AccountInstance[] getAccounts( String query, int limit )
+	Account[] getAccounts( String query, int limit )
 	{
-		return Loader.getAccountManager().getAccounts( query, limit )
+		return AccountManager.INSTANCE.getAccounts( query, limit )
 	}
 	
 	/**
@@ -130,7 +131,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 * @return
 	 *      The current account, will return null if no one is logged in
 	 */
-	AccountInstance getAccount()
+	Account getAccount()
 	{
 		return request.getSession().account()
 	}
@@ -145,13 +146,13 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	@Deprecated
 	ConfigurationManagerWrapper getConfigurationManager()
 	{
-		return new ConfigurationManagerWrapper( request.getSession() )
+		return new ConfigurationManagerWrapper( request )
 	}
 	
 	@Deprecated
 	HttpUtilsWrapper getHttpUtils()
 	{
-		return new HttpUtilsWrapper( request.getSession() )
+		return new HttpUtilsWrapper( request )
 	}
 	
 	/**
@@ -245,7 +246,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 		if ( request.getSite() != null )
 			url += request.getSite().getDomain() + "/"
 		else
-			url += Loader.getSiteManager().getFrameworkSite().getDomain() + "/"
+			url += Loader.getSiteManager().getDefaultSite().getDomain() + "/"
 		
 		return url
 	}
@@ -346,11 +347,11 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	
 	PermissionResult requirePermission( String perm )
 	{
-		getSession().getParentSession().requirePermission( perm )
+		getSession().requirePermission( perm )
 	}
 	
 	PermissionResult requirePermission( Permission perm )
 	{
-		getSession().getParentSession().requirePermission( perm )
+		getSession().requirePermission( perm )
 	}
 }

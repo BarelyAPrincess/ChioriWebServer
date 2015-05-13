@@ -18,7 +18,6 @@ import java.util.Set;
 
 import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
-import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.factory.BindingProvider;
 import com.chiorichan.factory.EvalBinding;
 import com.chiorichan.factory.EvalFactory;
@@ -88,7 +87,7 @@ public abstract class SessionWrapper implements BindingProvider
 		
 		/*
 		 * Update our site
-		 * XXX
+		 * XXX Can and will a session be used on multiple sites? Maybe? If not HTTP, maybe?
 		 */
 		session.site = getSite();
 		
@@ -96,37 +95,7 @@ public abstract class SessionWrapper implements BindingProvider
 			session.site = Loader.getSiteManager().getDefaultSite();
 		
 		for ( HttpCookie cookie : getCookies() )
-		{
-			// Make sure not to override our session cookie
-			// TODO Possibly remove old session cookies, if we can identify them
-			if ( cookie.getKey() != session.sessionKey )
-				session.sessionCookies.put( cookie.getKey(), cookie );
-		}
-		
-		for ( HttpCookie cookie : session.getCookies().values() )
-		{
-			setCookie( cookie );
-		}
-		
-		/*
-		 * Session Key should be updated from the Parent Sessions point of view
-		 */
-		String sessionKey = "sessionId";
-		YamlConfiguration yaml = session.site.getYaml();
-		if ( yaml != null )
-			sessionKey = yaml.getString( "sessions.cookie-name", sessionKey );
-		
-		if ( !sessionKey.equals( session.sessionKey ) && session.sessionCookies.containsKey( session.sessionKey ) )
-		{
-			session.sessionCookies.put( sessionKey, session.sessionCookies.get( session.sessionKey ) );
-			session.sessionCookies.remove( session.sessionKey );
-		}
-		
-		session.sessionKey = sessionKey;
-		session.sessionCookie = session.sessionCookies.get( sessionKey );
-		session.processSessionCookie();
-		
-		/* End Parent Session Comment */
+			session.sessionCookies.put( cookie.getKey(), cookie );
 		
 		// Reference Context
 		binding.setVariable( "context", this );
@@ -204,18 +173,13 @@ public abstract class SessionWrapper implements BindingProvider
 		return factory;
 	}
 	
-	public String getSessionCookieName()
-	{
-		return ( getSite() == null || getSite().getYaml() == null ) ? SessionManager.getDefaultCookieName() : getSite().getYaml().getString( "sessions.cookie-name", SessionManager.getDefaultCookieName() );
-	}
-	
 	public abstract String getIpAddr();
-	
-	protected abstract void setCookie( HttpCookie cookie );
 	
 	public abstract HttpCookie getCookie( String key );
 	
 	public abstract Set<HttpCookie> getCookies();
+	
+	protected abstract HttpCookie getServerCookie( String key );
 	
 	protected abstract void finish0();
 	

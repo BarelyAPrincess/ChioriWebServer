@@ -13,9 +13,12 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.lang3.text.WordUtils;
+
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.ServerManager;
+import com.chiorichan.http.HttpCookie;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.scheduler.ScheduleManager;
 import com.chiorichan.scheduler.TaskCreator;
@@ -62,7 +65,21 @@ public class SessionManager implements TaskCreator, ServerManager
 			
 			for ( SessionData data : datastore.getSessions() )
 			{
-				sessions.add( new Session( this, data ) );
+				try
+				{
+					sessions.add( new Session( this, data ) );
+				}
+				catch ( SessionException e )
+				{
+					// If there is a problem with the session we sent alert and destroy the offending session
+					getLogger().warning( e.getMessage() );
+					data.destroy();
+				}
+				catch ( Throwable t )
+				{
+					t.printStackTrace();
+					data.destroy();
+				}
 			}
 		}
 		catch ( Throwable t )
@@ -98,14 +115,22 @@ public class SessionManager implements TaskCreator, ServerManager
 	
 	public Session startSession( SessionWrapper wrapper ) throws SessionException
 	{
-		String sessionKey = wrapper.getSessionCookieName();
-		
 		synchronized ( sessions )
 		{
-			for ( Session s : sessions )
-				if ( wrapper.getCookie( sessionKey ) != null )
-					if ( s.getSessionCookie().compareTo( wrapper.getCookie( sessionKey ) ) )
-						return s;
+			String sessionKey = wrapper.getSite().getSessionKey();
+			
+			HttpCookie cookie = wrapper.getServerCookie( sessionKey );
+			
+			if ( cookie == null )
+				cookie = wrapper.getServerCookie( getDefaultSessionName() );
+			
+			if ( cookie != null )
+				for ( Session sess : sessions )
+					if ( sess.sessionId.equals( cookie.getValue() ) )
+					{
+						sess.processSessionCookie();
+						return sess;
+					}
 			
 			/*
 			 * XXX We need to evaluate the security risk behind doing this? Might just need removal.
@@ -116,14 +141,15 @@ public class SessionManager implements TaskCreator, ServerManager
 			 */
 			
 			Session sess = createSession();
+			sess.processSessionCookie();
 			sessions.add( sess );
 			return sess;
 		}
 	}
 	
-	public static String getDefaultCookieName()
+	public static String getDefaultSessionName()
 	{
-		return Loader.getConfig().getString( "sessions.defaultCookieName", "sessionId" );
+		return "_ws" + WordUtils.capitalize( Loader.getConfig().getString( "sessions.defaultCookieName", "sessionId" ) );
 	}
 	
 	public List<Session> getSessions()
@@ -166,8 +192,13 @@ public class SessionManager implements TaskCreator, ServerManager
 	
 	public Session createSession() throws SessionException
 	{
-		// Implement a solid session id generating method
-		return new Session( this, datastore.createSession( StringFunc.md5( RandomFunc.randomize( "ChioriWebServer000" ) ) ) );
+		return new Session( this, datastore.createSession( sessionIdBaker() ) );
+	}
+	
+	public String sessionIdBaker()
+	{
+		// TODO Implement a solid session id generating method
+		return StringFunc.md5( RandomFunc.randomize( "$e$$i0n_R%ND0Mne$$" ) + System.currentTimeMillis() );
 	}
 	
 	public static boolean isDebug()

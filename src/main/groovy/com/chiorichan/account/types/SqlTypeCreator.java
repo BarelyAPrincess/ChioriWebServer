@@ -90,11 +90,14 @@ public class SqlTypeCreator extends AccountTypeCreator
 					continue;
 				
 				for ( String s : columnSet )
+				{
+					Loader.getLogger().debug( s + " --> " + key );
 					if ( s.equalsIgnoreCase( key ) )
 					{
 						toSave.put( s, e.getValue() );
 						continue;
 					}
+				}
 				
 				// There is no column for this key
 				columnSet.add( key );
@@ -156,7 +159,7 @@ public class SqlTypeCreator extends AccountTypeCreator
 	{
 		try
 		{
-			sql.queryUpdate( "UPDATE `accounts` SET `lastActive` = '" + CommonFunc.getEpoch() + "', `lastLogin` = '" + CommonFunc.getEpoch() + "', `lastLoginFail` = 0, `numLoginFail` = 0 WHERE `accountID` = '" + meta.getAcctId() + "'" );
+			sql.queryUpdate( "UPDATE `accounts` SET `lastActive` = '" + CommonFunc.getEpoch() + "', `lastLogin` = '" + CommonFunc.getEpoch() + "', `lastLoginFail` = 0, `numLoginFail` = 0 WHERE `acctId` = '" + meta.getAcctId() + "'" );
 		}
 		catch ( SQLException e )
 		{
@@ -221,8 +224,6 @@ public class SqlTypeCreator extends AccountTypeCreator
 		if ( acctId == null || acctId.isEmpty() )
 			throw new AccountException( AccountResult.EMPTY_ACCTID );
 		
-		context.setAcctId( acctId );
-		
 		Set<String> accountFieldSet = new HashSet<String>( accountFields );
 		Set<String> accountColumnSet = new HashSet<String>( sql.getTableColumnNames( table ) );
 		
@@ -251,6 +252,7 @@ public class SqlTypeCreator extends AccountTypeCreator
 		if ( rs == null || sql.getRowCount( rs ) < 1 )
 			throw new AccountException( AccountResult.INCORRECT_LOGIN, context );
 		
+		context.setAcctId( rs.getString( "acctId" ) );
 		context.setValues( DatabaseEngine.convertRow( rs ) );
 		
 		return context;
@@ -265,7 +267,7 @@ public class SqlTypeCreator extends AccountTypeCreator
 		}
 		catch ( SQLException e )
 		{
-			//e.printStackTrace();
+			// e.printStackTrace();
 		}
 		catch ( AccountException e )
 		{

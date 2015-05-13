@@ -218,7 +218,7 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 	}
 	
 	@Override
-	public String getHumanReadableName()
+	public String getDisplayName()
 	{
 		String name = context.creator().getHumanReadableName( this );
 		return ( name == null ) ? getAcctId() : name;

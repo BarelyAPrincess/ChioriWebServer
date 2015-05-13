@@ -26,7 +26,6 @@ import com.chiorichan.event.Listener;
 import com.chiorichan.http.HttpCookie;
 import com.chiorichan.site.Site;
 import com.chiorichan.util.CommonFunc;
-import com.chiorichan.util.RandomFunc;
 import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.WeakReferenceList;
 import com.google.common.collect.Lists;
@@ -91,7 +90,7 @@ public final class Session extends AccountPermissible implements Listener
 	/**
 	 * The sessionKey of this session
 	 */
-	String sessionKey = SessionManager.getDefaultCookieName();
+	String sessionKey = SessionManager.getDefaultSessionName();
 	
 	/**
 	 * The sessionId of this session
@@ -139,9 +138,6 @@ public final class Session extends AccountPermissible implements Listener
 		
 		if ( timeout > 0 && timeout < CommonFunc.getEpoch() )
 			throw new SessionException( "The session '" + sessionId + "' expired at epoch '" + timeout + "', might have expired while offline or this is a bug!" );
-		
-		sessionCookie = new HttpCookie( sessionKey, sessionId );
-		sessionCookies.put( sessionKey, sessionCookie );
 		
 		/*
 		 * TODO Figure out how to track if a particular wrapper's IP changes
@@ -206,19 +202,19 @@ public final class Session extends AccountPermissible implements Listener
 	
 	public void processSessionCookie()
 	{
+		// TODO Serialize the Session Cookie better
+		
 		if ( sessionCookie == null )
 		{
 			int defaultLife = ( getSite().getYaml() != null ) ? getSite().getYaml().getInt( "sessions.lifetimeDefault", 604800 ) : 604800;
 			timeout = CommonFunc.getEpoch() + Loader.getConfig().getInt( "sessions.defaultTimeout", 3600 );
 			
 			if ( sessionId == null || sessionId.isEmpty() )
-				sessionId = StringFunc.md5( RandomFunc.randomize( "$e$$i0n_R%ND0Mne$$" ) + System.currentTimeMillis() );
+				sessionId = Loader.getSessionManager().sessionIdBaker();
 			
 			sessionCookie = getSite().createSessionCookie( sessionId );
 			
 			sessionCookie.setMaxAge( defaultLife );
-			
-			sessionCookies.put( sessionKey, sessionCookie );
 			
 			try
 			{
@@ -230,8 +226,12 @@ public final class Session extends AccountPermissible implements Listener
 			}
 		}
 		
-		sessionKey = sessionCookie.getKey();
-		sessionId = sessionCookie.getValue();
+		if ( !sessionCookie.getKey().equals( getSite().getSessionKey() ) )
+		{
+			String oldKey = sessionCookie.getKey();
+			sessionCookie.setKey( getSite().getSessionKey() );
+			sessionCookies.put( oldKey, new HttpCookie( oldKey, "" ).setExpiration( 0 ) ); // We do this so the invalid Session Key is expired and removed from the browser
+		}
 	}
 	
 	public SessionManager manager()
@@ -464,7 +464,7 @@ public final class Session extends AccountPermissible implements Listener
 	{
 		Set<String> ips = Sets.newHashSet();
 		for ( SessionWrapper sp : wrappers )
-			if ( sp.getSession() == this )
+			if ( sp.getSession() != null && sp.getSession() == this )
 			{
 				String ipAddr = sp.getIpAddr();
 				if ( ipAddr != null && !ipAddr.isEmpty() && !ips.contains( ipAddr ) )
@@ -512,9 +512,9 @@ public final class Session extends AccountPermissible implements Listener
 	}
 	
 	@Override
-	public String getHumanReadableName()
+	public String getDisplayName()
 	{
-		return account.getHumanReadableName();
+		return account.getDisplayName();
 	}
 	
 	@Override

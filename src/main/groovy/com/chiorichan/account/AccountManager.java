@@ -178,7 +178,7 @@ public final class AccountManager extends AccountEvents implements ServerManager
 				continue;
 			}
 			
-			id = ( isLower ) ? meta.getHumanReadableName().toLowerCase() : meta.getHumanReadableName();
+			id = ( isLower ) ? meta.getDisplayName().toLowerCase() : meta.getDisplayName();
 			
 			if ( !id.isEmpty() && id.contains( query ) )
 			{
@@ -284,7 +284,7 @@ public final class AccountManager extends AccountEvents implements ServerManager
 		Validate.notNull( acct );
 		
 		if ( !acct.isInitialized() )
-			throw AccountResult.ACCOUNT_NOT_INITIALIZED.exception( acct.getHumanReadableName() );
+			throw AccountResult.ACCOUNT_NOT_INITIALIZED.exception( acct.getDisplayName() );
 		
 		return kick( acct.instance(), msg );
 	}

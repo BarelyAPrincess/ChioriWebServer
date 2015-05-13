@@ -75,6 +75,12 @@ public class AccountException extends RuntimeException
 	
 	public AccountResult getResult()
 	{
+		if ( result == null )
+			result = AccountResult.UNKNOWN_ERROR;
+		
+		if ( result == AccountResult.UNKNOWN_ERROR || result == AccountResult.INTERNAL_ERROR )
+			result.setThrowable( this );
+		
 		return result;
 	}
 	

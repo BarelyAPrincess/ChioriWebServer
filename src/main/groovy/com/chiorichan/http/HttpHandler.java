@@ -9,6 +9,7 @@ package com.chiorichan.http;
 import static io.netty.handler.codec.http.HttpHeaders.is100ContinueExpected;
 import static io.netty.handler.codec.http.HttpResponseStatus.CONTINUE;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+import groovy.lang.MissingMethodException;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -56,6 +57,7 @@ import org.codehaus.groovy.runtime.NullObject;
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.ContentTypes;
 import com.chiorichan.Loader;
+import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.RenderEvent;
@@ -157,7 +159,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	@Override
 	public void exceptionCaught( ChannelHandlerContext ctx, Throwable cause ) throws Exception
 	{
-		boolean evalFactoryException = false;
+		EvalFactoryException evalOrig = null;
 		
 		/*
 		 * Unpackage the EvalFactoryException.
@@ -166,8 +168,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		 */
 		if ( cause instanceof EvalFactoryException && cause.getCause() != null )
 		{
+			evalOrig = ( EvalFactoryException ) cause;
 			cause = cause.getCause();
-			evalFactoryException = true;
 		}
 		
 		/*
@@ -195,32 +197,43 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				response.sendError( ( ( PermissionDeniedException ) cause ).getHttpCode(), cause.getMessage() );
 			}
 		}
-		else if ( cause instanceof SessionException || cause instanceof PermissionException || cause instanceof IndexOutOfBoundsException || cause instanceof NullPointerException || cause instanceof IOException || cause instanceof SiteException )
+		else if ( cause instanceof SessionException || cause instanceof PermissionException || cause instanceof AccountException || cause instanceof SiteException || cause instanceof MissingMethodException || cause instanceof IndexOutOfBoundsException || cause instanceof NullPointerException || cause instanceof IOException )
 		{
 			/*
 			 * XXX Known exceptions
+			 * TODO Seperate Groovy Exceptions from Java ones
 			 * EvalFactoryException
 			 * SessionException
 			 * PermissionException
+			 * AccountException
+			 * SiteException
+			 * 
+			 * MissingMethodException
 			 * IndexOutOfBoundsException
 			 * NullPointerException
 			 * IOException
-			 * SiteException
 			 */
 			
-			response.sendException( cause );
-			
-			if ( !evalFactoryException )
+			if ( evalOrig == null )
+				response.sendException( cause );
+			else
+			{
+				response.sendException( evalOrig );
 				NetworkManager.getLogger().severe( "This exception was thrown from outside the EvalFactory and might be the result of a server programming bug.", cause );
+			}
 		}
 		else
 		{
-			response.sendException( cause );
-			
-			if ( !evalFactoryException )
-				NetworkManager.getLogger().severe( "This exception was thrown from outside the EvalFactory and might be the result of a server programming bug.", cause );
-			else
+			if ( evalOrig == null )
+			{
+				response.sendException( cause );
 				NetworkManager.getLogger().severe( "This exception was not expected and most likely needs to be properly caught or investiated. Would you kindly report this stacktrace to the appropriate developer?", cause );
+			}
+			else
+			{
+				response.sendException( evalOrig );
+				NetworkManager.getLogger().severe( "This exception was thrown from outside the EvalFactory and might be the result of a server programming bug.", cause );
+			}
 		}
 		
 		finish();
@@ -587,7 +600,20 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		if ( req == null )
 			req = "-1";
 		
-		sess.requirePermission( req );
+		try
+		{
+			sess.requirePermission( req );
+		}
+		catch ( PermissionDeniedException e )
+		{
+			if ( e.getReason() == PermissionDeniedReason.LOGIN_PAGE )
+			{
+				response.sendLoginPage( e.getMessage() );
+				return;
+			}
+			else
+				throw e;
+		}
 		
 		// Enhancement: Allow html to be ran under different shells. Default is embedded.
 		if ( fi.hasHTML() )

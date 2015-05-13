@@ -107,7 +107,7 @@ public interface Account
 	 * @return
 	 *         A human readable display name
 	 */
-	String getHumanReadableName();
+	String getDisplayName();
 	
 	void send( Object obj );
 	

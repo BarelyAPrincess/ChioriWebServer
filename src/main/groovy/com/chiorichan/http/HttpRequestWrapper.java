@@ -99,6 +99,11 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	final Set<HttpCookie> cookies = Sets.newHashSet();
 	
 	/**
+	 * Server Cookie Cache
+	 */
+	final Set<HttpCookie> serverCookies = Sets.newHashSet();
+	
+	/**
 	 * The time of this request
 	 */
 	final int requestTime;
@@ -183,7 +188,12 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		{
 			Set<Cookie> var2 = CookieDecoder.decode( var1 );
 			for ( Cookie cookie : var2 )
-				cookies.add( new HttpCookie( cookie.getName(), cookie.getValue() ) );
+			{
+				if ( cookie.getName().startsWith( "_ws" ) )
+					serverCookies.add( new HttpCookie( cookie ) );
+				else
+					cookies.add( new HttpCookie( cookie ) );
+			}
 		}
 	}
 	
@@ -205,8 +215,6 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			loginPost = "/";
 		
 		Session session = getSession();
-		
-		Loader.getLogger().debug( "" + session );
 		
 		if ( getArgument( "logout" ) != null )
 		{
@@ -234,16 +242,20 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			if ( result == AccountResult.LOGIN_SUCCESS )
 			{
 				Account acct = result.getAccount();
-				SessionManager.getLogger().info( ConsoleColor.GREEN + "Successful Login: [id='" + acct.getAcctId() + "',siteId='" + acct.getSiteId() + "',displayName='" + acct.getHumanReadableName() + "',ipAddrs='" + acct.getIpAddresses() + "']" );
-				// getResponse().sendRedirect( loginPost );
-				
-				Loader.getLogger().debug( session.hashCode() + " --> " + session );
+				SessionManager.getLogger().info( ConsoleColor.GREEN + "Successful Login: [id='" + acct.getAcctId() + "',siteId='" + acct.getSiteId() + "',displayName='" + acct.getDisplayName() + "',ipAddrs='" + acct.getIpAddresses() + "']" );
+				getResponse().sendRedirect( loginPost );
 			}
 			else
 			{
-				if ( result == AccountResult.INTERNAL_ERROR )
+				String msg = result.getMessage( username );
+				
+				if ( ( result == AccountResult.INTERNAL_ERROR || result == AccountResult.UNKNOWN_ERROR ) && result.getThrowable() != null )
+				{
 					result.getThrowable().printStackTrace();
-				AccountManager.getLogger().warning( ConsoleColor.GREEN + "Failed Login [id='" + username + "',hasPassword='" + ( password != null && !password.isEmpty() ) + "',reason='" + result.getMessage( username ) + "']" );
+					msg = result.getThrowable().getMessage();
+				}
+				
+				AccountManager.getLogger().warning( ConsoleColor.GREEN + "Failed Login [id='" + username + "',hasPassword='" + ( password != null && !password.isEmpty() ) + "',reason='" + msg + "']" );
 				getResponse().sendRedirect( loginForm + "?msg=" + result.getMessage() + ( ( target == null || target.isEmpty() ) ? "" : "&target=" + target ) );
 			}
 		}
@@ -269,7 +281,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		}
 		
 		// Will we ever be using a session on more than one domains?
-		if ( !getParentDomain().isEmpty() && session.getSessionCookie() != null )
+		if ( !getParentDomain().isEmpty() && session.getSessionCookie() != null && !session.getSessionCookie().getDomain().isEmpty() )
 		{
 			if ( !session.getSessionCookie().getDomain().endsWith( getParentDomain() ) )
 			{
@@ -279,12 +291,6 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		
 		if ( Loader.getConfig().getBoolean( "sessions.rearmTimeoutWithEachRequest" ) )
 			session.rearmTimeout();
-	}
-	
-	@Override
-	protected void setCookie( HttpCookie cookie )
-	{
-		cookies.add( cookie );
 	}
 	
 	@Override
@@ -299,6 +305,15 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	public Set<HttpCookie> getCookies()
 	{
 		return Collections.unmodifiableSet( cookies );
+	}
+	
+	@Override
+	protected HttpCookie getServerCookie( String key )
+	{
+		for ( HttpCookie cookie : serverCookies )
+			if ( cookie.getKey().equals( key ) )
+				return cookie;
+		return null;
 	}
 	
 	public Boolean getArgumentBoolean( String key )

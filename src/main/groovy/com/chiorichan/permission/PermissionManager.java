@@ -159,8 +159,8 @@ public class PermissionManager implements ServerManager, TaskCreator, EventCreat
 		if ( permissible == null )
 			throw new IllegalArgumentException( "Null entity passed! Name must not be empty" );
 		
-		// if ( !permissible.isValid() )
-		// return null;
+		if ( permissible.getEntityId() == null )
+			return null;
 		
 		if ( permissible.entity == null )
 		{

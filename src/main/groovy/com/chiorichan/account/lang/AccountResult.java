@@ -88,7 +88,7 @@ public class AccountResult
 	public AccountException exception( AccountMeta acct )
 	{
 		String ip = ( acct.getIpAddresses().size() > 0 ) ? acct.getIpAddresses().toArray( new String[0] )[0] : null;
-		return exception( acct.getHumanReadableName(), ip );
+		return exception( acct.getDisplayName(), ip );
 	}
 	
 	public AccountException exception( Object... args )

@@ -59,12 +59,6 @@ public class NetworkWrapper extends SessionWrapper
 	}
 	
 	@Override
-	protected void setCookie( HttpCookie cookie )
-	{
-		// Do Nothing
-	}
-	
-	@Override
 	public HttpCookie getCookie( String key )
 	{
 		return null;
@@ -121,6 +115,12 @@ public class NetworkWrapper extends SessionWrapper
 	public void send( Account sender, Object obj )
 	{
 		handler.println( "Message from " + sender.getAcctId() + ": " + ObjectFunc.castToString( obj ) );
+	}
+
+	@Override
+	protected HttpCookie getServerCookie( String key )
+	{
+		return null; // Do Nothing
 	}
 	
 	/*

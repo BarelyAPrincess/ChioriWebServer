@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.Set;
 
+import com.chiorichan.Loader;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Chars;
 
@@ -111,7 +112,7 @@ public class RandomFunc
 		if ( chr > 47 && chr < 58 ) // Numeric
 			return randomize( 48, 57 );
 		
-		return randomCharMap[new Random().nextInt( allowedCharMap.length )];
+		return randomCharMap[new Random().nextInt( randomCharMap.length )];
 	}
 	
 	/**

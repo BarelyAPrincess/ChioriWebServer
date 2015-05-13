@@ -9,6 +9,8 @@
  */
 package com.chiorichan.http;
 
+import io.netty.handler.codec.http.Cookie;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
@@ -24,12 +26,23 @@ public class HttpCookie
 	/*
 	 * Tells the response writer if it needs to set this candy in the response headers.
 	 */
-	private Boolean needsUpdating = false;
+	private boolean needsUpdating = false;
 	
 	public HttpCookie( String key, String value )
 	{
 		this.key = key;
 		this.value = value;
+	}
+	
+	public HttpCookie( Cookie cookie )
+	{
+		this( cookie.getName(), cookie.getValue() );
+		setDomain( cookie.getDomain() );
+		// setMaxAge( cookie.getMaxAge() );
+		setExpiration( cookie.getMaxAge() ); // Which is better?
+		setPath( cookie.getPath() );
+		needsUpdating = false;
+		
 	}
 	
 	public boolean compareTo( HttpCookie var1 )
@@ -67,6 +80,12 @@ public class HttpCookie
 		return key;
 	}
 	
+	public void setKey( String key )
+	{
+		needsUpdating = true;
+		this.key = key;
+	}
+	
 	/**
 	 * Sets an explicit expiration time using an epoch.
 	 * 
@@ -94,18 +113,18 @@ public class HttpCookie
 	public HttpCookie setDomain( String domain )
 	{
 		needsUpdating = true;
-		this.domain = domain.toLowerCase();
+		this.domain = domain == null ? "" : domain.toLowerCase();
 		return this;
 	}
 	
 	public HttpCookie setPath( String path )
 	{
 		needsUpdating = true;
-		this.path = path;
+		this.path = path == null ? "" : path;
 		return this;
 	}
 	
-	protected Boolean needsUpdating()
+	protected boolean needsUpdating()
 	{
 		return needsUpdating;
 	}
@@ -149,7 +168,7 @@ public class HttpCookie
 		this.httpOnly = httpOnly;
 		return this;
 	}
-
+	
 	public String getDomain()
 	{
 		return domain;

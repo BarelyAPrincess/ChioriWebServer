@@ -108,9 +108,9 @@ public final class AccountInstance implements Account
 	}
 	
 	@Override
-	public String getHumanReadableName()
+	public String getDisplayName()
 	{
-		return metadata.getHumanReadableName();
+		return metadata.getDisplayName();
 	}
 	
 	public boolean kick( String msg )

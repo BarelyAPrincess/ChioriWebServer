@@ -16,7 +16,6 @@ import com.chiorichan.account.AccountMeta;
 import com.chiorichan.console.Command;
 import com.chiorichan.console.CommandDispatch;
 import com.chiorichan.console.InteractiveConsole;
-import com.chiorichan.session.Session;
 import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Joiner;
@@ -56,10 +55,7 @@ public abstract class BuiltinCommand extends Command
 			@Override
 			public boolean execute( InteractiveConsole handler, String command, String[] args )
 			{
-				// handler.getPersistence().send( ConsoleColor.YELLOW + "We're sorry, help has not been implemented as of yet, try again in a later version." );
-				
-				for ( Session s : Loader.getSessionManager().getSessions() )
-					handler.getPersistence().send( "Session: " + s );
+				handler.getPersistence().send( ConsoleColor.YELLOW + "We're sorry, help has not been implemented as of yet, try again in a later version." );
 				
 				return true;
 			}

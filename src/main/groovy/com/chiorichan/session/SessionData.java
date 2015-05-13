@@ -55,7 +55,7 @@ public abstract class SessionData
 	@Override
 	public String toString()
 	{
-		return "SessionData{" + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( data ) + "}";
+		return "SessionData{" + Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "<null>" ).join( data ) + "}";
 	}
 	
 	abstract void reload() throws SessionException;

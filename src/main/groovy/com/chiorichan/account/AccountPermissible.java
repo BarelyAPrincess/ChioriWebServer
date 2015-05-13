@@ -101,7 +101,7 @@ public abstract class AccountPermissible extends Permissible implements Account
 				EventBus.INSTANCE.callEvent( new AccountFailedLoginEvent( acct.metadata(), e.getResult() ) );
 			}
 			account = null;
-			return e.getResult().setAccount( acct );
+			return e.getResult().setAccount( acct ).setThrowable( e );
 		}
 		catch ( Throwable t )
 		{
@@ -131,7 +131,7 @@ public abstract class AccountPermissible extends Permissible implements Account
 			if ( result == AccountResult.LOGIN_SUCCESS )
 			{
 				Account acct = result.getAccount();
-				SessionManager.getLogger().info( ConsoleColor.GREEN + "Restored Login: [id='" + acct.getAcctId() + "',siteId='" + acct.getSiteId() + "',displayName='" + acct.getHumanReadableName() + "',ipAddrs='" + acct.getIpAddresses() + "']" );
+				SessionManager.getLogger().info( ConsoleColor.GREEN + "Restored Login: [id='" + acct.getAcctId() + "',siteId='" + acct.getSiteId() + "',displayName='" + acct.getDisplayName() + "',ipAddrs='" + acct.getIpAddresses() + "']" );
 			}
 			else
 				SessionManager.getLogger().info( ConsoleColor.YELLOW + "Failed Login: [id='" + acctId + "',reason='" + result.getMessage( acctId ) + "']" );
@@ -140,7 +140,7 @@ public abstract class AccountPermissible extends Permissible implements Account
 	public AccountResult logout()
 	{
 		if ( account != null )
-			SessionManager.getLogger().info( ConsoleColor.GREEN + "Successful Logout: [id='" + account.getAcctId() + "',siteId='" + account.getSiteId() + "',displayName='" + account.getHumanReadableName() + "',ipAddrs='" + account.getIpAddresses() + "']" );
+			SessionManager.getLogger().info( ConsoleColor.GREEN + "Successful Logout: [id='" + account.getAcctId() + "',siteId='" + account.getSiteId() + "',displayName='" + account.getDisplayName() + "',ipAddrs='" + account.getIpAddresses() + "']" );
 		
 		setVariable( "acctId", null );
 		setVariable( "token", null );
