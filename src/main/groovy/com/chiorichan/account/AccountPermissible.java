@@ -50,6 +50,7 @@ public abstract class AccountPermissible extends Permissible implements Account
 		try
 		{
 			acct = creds.authenticate();
+			acct.credentials = creds;
 			
 			acct.metadata().getContext().creator().preLogin( acct.metadata(), via, creds );
 			AccountPreLoginEvent event = new AccountPreLoginEvent( acct.metadata(), via, creds );
@@ -77,18 +78,7 @@ public abstract class AccountPermissible extends Permissible implements Account
 				setVariable( "acctId", acct.getAcctId() );
 				account = acct;
 				
-				try
-				{
-					/**
-					 * We try and get a relogin token, but not all authenticators support them.
-					 */
-					setVariable( "token", creds.getToken() );
-				}
-				catch ( AccountException e )
-				{
-					if ( e.getResult() != AccountResult.FEATURE_NOT_IMPLEMENTED )
-						throw e;
-				}
+				creds.remember( this );
 			}
 			
 			return result.setAccount( acct );
@@ -114,27 +104,42 @@ public abstract class AccountPermissible extends Permissible implements Account
 	 */
 	protected void initialized()
 	{
+		String authName = getVariable( "auth" );
 		String acctId = getVariable( "acctId" );
-		String token = getVariable( "token" );
 		
-		AccountResult result;
-		try
+		if ( authName != null && !authName.isEmpty() )
 		{
-			result = login( this, AccountAuthenticator.TOKEN.credentials( acctId, token ) );
-		}
-		catch ( AccountException e )
-		{
-			result = e.getResult();
-		}
-		
-		if ( AccountManager.INSTANCE.isDebug() )
-			if ( result == AccountResult.LOGIN_SUCCESS )
+			AccountAuthenticator auth = AccountAuthenticator.byName( authName );
+			
+			Loader.getLogger().debug( "Auth Name: " + authName );
+			
+			AccountResult result;
+			try
 			{
-				Account acct = result.getAccount();
-				SessionManager.getLogger().info( ConsoleColor.GREEN + "Restored Login: [id='" + acct.getAcctId() + "',siteId='" + acct.getSiteId() + "',displayName='" + acct.getDisplayName() + "',ipAddrs='" + acct.getIpAddresses() + "']" );
+				if ( auth == null )
+					return;
+				
+				AccountCredentials creds = auth.resume( this );
+				
+				if ( creds == null )
+					result = AccountResult.FEATURE_NOT_IMPLEMENTED;
+				
+				result = login( this, creds );
 			}
-			else
-				SessionManager.getLogger().info( ConsoleColor.YELLOW + "Failed Login: [id='" + acctId + "',reason='" + result.getMessage( acctId ) + "']" );
+			catch ( AccountException e )
+			{
+				result = e.getResult();
+			}
+			
+			if ( AccountManager.INSTANCE.isDebug() )
+				if ( result == AccountResult.LOGIN_SUCCESS )
+				{
+					Account acct = result.getAccount();
+					SessionManager.getLogger().info( ConsoleColor.GREEN + "Restored Login: [id='" + acct.getAcctId() + "',siteId='" + acct.getSiteId() + "',displayName='" + acct.getDisplayName() + "',ipAddrs='" + acct.getIpAddresses() + "']" );
+				}
+				else
+					SessionManager.getLogger().info( ConsoleColor.YELLOW + "Failed Login: [id='" + acctId + "',reason='" + result.getMessage( acctId ) + "']" );
+		}
 	}
 	
 	public AccountResult logout()
@@ -142,6 +147,7 @@ public abstract class AccountPermissible extends Permissible implements Account
 		if ( account != null )
 			SessionManager.getLogger().info( ConsoleColor.GREEN + "Successful Logout: [id='" + account.getAcctId() + "',siteId='" + account.getSiteId() + "',displayName='" + account.getDisplayName() + "',ipAddrs='" + account.getIpAddresses() + "']" );
 		
+		setVariable( "auth", null );
 		setVariable( "acctId", null );
 		setVariable( "token", null );
 		account = null;

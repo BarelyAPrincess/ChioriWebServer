@@ -7,6 +7,7 @@
 package com.chiorichan.account.auth;
 
 import com.chiorichan.account.AccountInstance;
+import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 
@@ -45,5 +46,18 @@ public abstract class AccountCredentials
 		throw new AccountException( AccountResult.FEATURE_NOT_IMPLEMENTED );
 	}
 	
+	/**
+	 * Used by Authenticators to attempt an Account login
+	 * 
+	 * @return
+	 *         The Account Instance
+	 * @throws AccountException
+	 *             thrown when there was problems
+	 */
 	public abstract AccountInstance authenticate() throws AccountException;
+	
+	/**
+	 * Saves persistent variables into the session for later
+	 */
+	public abstract void remember( AccountPermissible perm );
 }

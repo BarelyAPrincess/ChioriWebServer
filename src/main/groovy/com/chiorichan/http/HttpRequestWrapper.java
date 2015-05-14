@@ -203,16 +203,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		getBinding().setVariable( "request", this );
 		getBinding().setVariable( "response", getResponse() );
 		
-		String username = getArgument( "user" );
-		String password = getArgument( "pass" );
-		// String remember = getArgumentBoolean( "remember" ) ? "true" : "false"; -- Implement This
-		String target = getArgument( "target" );
-		
-		String loginPost = ( target == null || target.isEmpty() ) ? getSite().getYaml().getString( "scripts.login-post", "/" ) : target;
 		String loginForm = getSite().getYaml().getString( "scripts.login-form", "/login" );
-		
-		if ( loginPost.isEmpty() )
-			loginPost = "/";
 		
 		Session session = getSession();
 		
@@ -226,6 +217,18 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 				return;
 			}
 		}
+		
+		// TODO Implement One Time Tokens
+		
+		String username = getArgument( "user" );
+		String password = getArgument( "pass" );
+		// String remember = getArgumentBoolean( "remember" ) ? "true" : "false"; -- Implement This
+		String target = getArgument( "target" );
+		
+		String loginPost = ( target == null || target.isEmpty() ) ? getSite().getYaml().getString( "scripts.login-post", "/" ) : target;
+		
+		if ( loginPost.isEmpty() )
+			loginPost = "/";
 		
 		if ( username != null && password != null )
 		{
@@ -288,9 +291,6 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 				NetworkManager.getLogger().warning( "The site `" + site.getSiteId() + "` specifies the session cookie domain as `" + session.getSessionCookie().getDomain() + "` but the request was made on parent domain `" + getParentDomain() + "`. The session will not remain persistent." );
 			}
 		}
-		
-		if ( Loader.getConfig().getBoolean( "sessions.rearmTimeoutWithEachRequest" ) )
-			session.rearmTimeout();
 	}
 	
 	@Override

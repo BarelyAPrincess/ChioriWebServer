@@ -9,6 +9,7 @@ package com.chiorichan.account.auth;
 import com.chiorichan.account.AccountInstance;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountMeta;
+import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.util.CommonFunc;
@@ -19,12 +20,28 @@ public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
 {
 	OnetimeTokenAccountAuthenticator()
 	{
+		super( "token" );
+	}
+	
+	@Override
+	public AccountCredentials resume( AccountPermissible perm )
+	{
+		String acctId = perm.getVariable( "acctId" );
+		String token = perm.getVariable( "token" );
 		
+		return credentials( acctId, token );
 	}
 	
 	public AccountCredentials credentials( String acctId, String token )
 	{
 		return new OnetimeTokenAccountCredentials( acctId, token );
+	}
+	
+	public String issueToken( AccountInstance acct )
+	{
+		String token = RandomFunc.randomize( acct.getAcctId() ) + CommonFunc.getEpoch();
+		acct.metadata().set( "token", token );
+		return token;
 	}
 	
 	class OnetimeTokenAccountCredentials extends AccountCredentials
@@ -42,7 +59,7 @@ public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
 		@Override
 		public String getToken()
 		{
-			return null;
+			return token;
 		}
 		
 		@Override
@@ -66,10 +83,19 @@ public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
 			else
 				throw new AccountException( AccountResult.INCORRECT_LOGIN );
 		}
-	}
-	
-	public String issueToken( AccountInstance acct )
-	{
-		return RandomFunc.randomize( acct.getAcctId() ) + CommonFunc.getEpoch();
+		
+		@Override
+		public void remember( AccountPermissible perm )
+		{
+			try
+			{
+				perm.setVariable( "auth", "token" );
+				perm.setVariable( "token", getToken() );
+			}
+			catch ( AccountException e )
+			{
+				throw e;
+			}
+		}
 	}
 }

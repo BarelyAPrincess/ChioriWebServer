@@ -11,6 +11,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import com.chiorichan.account.AccountInstance;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountMeta;
+import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 
@@ -24,7 +25,13 @@ public final class PlainTextAccountAuthenticator extends AccountAuthenticator
 {
 	PlainTextAccountAuthenticator()
 	{
-		
+		super( "plaintext" );
+	}
+	
+	@Override
+	public AccountCredentials resume( AccountPermissible perm )
+	{
+		return AccountAuthenticator.TOKEN.resume( perm );
 	}
 	
 	public AccountCredentials credentials( String user, String pass )
@@ -79,6 +86,20 @@ public final class PlainTextAccountAuthenticator extends AccountAuthenticator
 				throw new AccountException( AccountResult.INCORRECT_LOGIN );
 			
 			return acct;
+		}
+		
+		@Override
+		public void remember( AccountPermissible perm )
+		{
+			try
+			{
+				perm.setVariable( "auth", "token" );
+				perm.setVariable( "token", getToken() );
+			}
+			catch ( AccountException e )
+			{
+				throw e;
+			}
 		}
 	}
 }

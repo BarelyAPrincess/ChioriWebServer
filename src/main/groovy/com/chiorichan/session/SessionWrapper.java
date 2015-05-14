@@ -18,11 +18,14 @@ import java.util.Set;
 
 import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
+import com.chiorichan.account.auth.AccountAuthenticator;
+import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.factory.BindingProvider;
 import com.chiorichan.factory.EvalBinding;
 import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.framework.ConfigurationManagerWrapper;
 import com.chiorichan.http.HttpCookie;
+import com.chiorichan.net.NetworkManager;
 import com.chiorichan.site.Site;
 import com.chiorichan.util.StringFunc;
 
@@ -102,6 +105,9 @@ public abstract class SessionWrapper implements BindingProvider
 		
 		// Reset __FILE__ Variable
 		binding.setVariable( "__FILE__", new File( "" ) );
+		
+		if ( Loader.getConfig().getBoolean( "sessions.rearmTimeoutWithEachRequest" ) )
+			session.rearmTimeout();
 		
 		sessionStarted();
 	}

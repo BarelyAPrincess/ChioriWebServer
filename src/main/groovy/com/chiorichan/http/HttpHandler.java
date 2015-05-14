@@ -159,80 +159,102 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	@Override
 	public void exceptionCaught( ChannelHandlerContext ctx, Throwable cause ) throws Exception
 	{
-		EvalFactoryException evalOrig = null;
-		
-		/*
-		 * Unpackage the EvalFactoryException.
-		 * Not sure if exceptions from the EvalFactory should be handled differently or not.
-		 * XXX Maybe skip generating exception pages for errors that were caused internally and report them to Chiori-chan unless the server is in development mode?
-		 */
-		if ( cause instanceof EvalFactoryException && cause.getCause() != null )
+		try
 		{
-			evalOrig = ( EvalFactoryException ) cause;
-			cause = cause.getCause();
-		}
-		
-		/*
-		 * TODO Proper Exception Handling. Consider the ability to have these exceptions cached and/or delivered by e-mail to developer and/or server administrator.
-		 */
-		if ( cause instanceof HttpError )
-			response.sendError( ( HttpError ) cause );
-		else if ( cause instanceof PermissionDeniedException )
-		{
-			PermissionDeniedException pde = ( PermissionDeniedException ) cause;
-			
-			if ( pde.getReason() == PermissionDeniedReason.LOGIN_PAGE )
+			if ( response == null )
 			{
-				response.sendLoginPage( pde.getReason().getMessage() );
+				if ( cause.getMessage().equals( "Connection reset by peer" ) )
+					NetworkManager.getLogger().warning( ConsoleColor.RED + "The connection was closed before we could finish the request, if this IP continues to abuse the system it WILL BE BANNED!" ); // TODO Add connection resets to
+																																																			// record so we can ban continually
+																																																			// abusive IP addresses.
+				else
+					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "We got an unexpected exception:", cause );
+				
+				NetworkManager.getLogger().debug( "Test! " + request.getIpAddr() );
+				
+				return;
 			}
-			else
+			
+			EvalFactoryException evalOrig = null;
+			
+			/*
+			 * Unpackage the EvalFactoryException.
+			 * Not sure if exceptions from the EvalFactory should be handled differently or not.
+			 * XXX Maybe skip generating exception pages for errors that were caused internally and report them to Chiori-chan unless the server is in development mode?
+			 */
+			if ( cause instanceof EvalFactoryException && cause.getCause() != null )
+			{
+				evalOrig = ( EvalFactoryException ) cause;
+				cause = cause.getCause();
+			}
+			
+			/*
+			 * TODO Proper Exception Handling. Consider the ability to have these exceptions cached and/or delivered by e-mail to developer and/or server administrator.
+			 */
+			if ( cause instanceof HttpError )
+				response.sendError( ( HttpError ) cause );
+			else if ( cause instanceof PermissionDeniedException )
+			{
+				PermissionDeniedException pde = ( PermissionDeniedException ) cause;
+				
+				if ( pde.getReason() == PermissionDeniedReason.LOGIN_PAGE )
+				{
+					response.sendLoginPage( pde.getReason().getMessage() );
+				}
+				else
+				{
+					/*
+					 * TODO generate a special permission denied page for these!!!
+					 */
+					response.sendError( ( ( PermissionDeniedException ) cause ).getHttpCode(), cause.getMessage() );
+				}
+			}
+			else if ( cause instanceof SessionException || cause instanceof PermissionException || cause instanceof AccountException || cause instanceof SiteException || cause instanceof MissingMethodException || cause instanceof IndexOutOfBoundsException || cause instanceof NullPointerException || cause instanceof IOException )
 			{
 				/*
-				 * TODO generate a special permission denied page for these!!!
+				 * XXX Known exceptions
+				 * TODO Seperate Groovy Exceptions from Java ones
+				 * EvalFactoryException
+				 * SessionException
+				 * PermissionException
+				 * AccountException
+				 * SiteException
+				 * 
+				 * MissingMethodException
+				 * IndexOutOfBoundsException
+				 * NullPointerException
+				 * IOException
 				 */
-				response.sendError( ( ( PermissionDeniedException ) cause ).getHttpCode(), cause.getMessage() );
+				
+				if ( evalOrig == null )
+					response.sendException( cause );
+				else
+				{
+					response.sendException( evalOrig );
+					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "This exception was thrown from outside the EvalFactory and might be the result of a server programming bug:", cause );
+				}
 			}
-		}
-		else if ( cause instanceof SessionException || cause instanceof PermissionException || cause instanceof AccountException || cause instanceof SiteException || cause instanceof MissingMethodException || cause instanceof IndexOutOfBoundsException || cause instanceof NullPointerException || cause instanceof IOException )
-		{
-			/*
-			 * XXX Known exceptions
-			 * TODO Seperate Groovy Exceptions from Java ones
-			 * EvalFactoryException
-			 * SessionException
-			 * PermissionException
-			 * AccountException
-			 * SiteException
-			 * 
-			 * MissingMethodException
-			 * IndexOutOfBoundsException
-			 * NullPointerException
-			 * IOException
-			 */
+			else
+			{
+				if ( evalOrig == null )
+				{
+					response.sendException( cause );
+					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "This exception was not expected and most likely needs to be properly caught or investiated. Would you kindly report this stacktrace to the appropriate developer?", cause );
+				}
+				else
+				{
+					response.sendException( evalOrig );
+					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "This exception was thrown from outside the EvalFactory and might be the result of a server programming bug:", cause );
+				}
+			}
 			
-			if ( evalOrig == null )
-				response.sendException( cause );
-			else
-			{
-				response.sendException( evalOrig );
-				NetworkManager.getLogger().severe( "This exception was thrown from outside the EvalFactory and might be the result of a server programming bug.", cause );
-			}
+			finish();
 		}
-		else
+		catch ( Throwable t )
 		{
-			if ( evalOrig == null )
-			{
-				response.sendException( cause );
-				NetworkManager.getLogger().severe( "This exception was not expected and most likely needs to be properly caught or investiated. Would you kindly report this stacktrace to the appropriate developer?", cause );
-			}
-			else
-			{
-				response.sendException( evalOrig );
-				NetworkManager.getLogger().severe( "This exception was thrown from outside the EvalFactory and might be the result of a server programming bug.", cause );
-			}
+			Loader.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "This is an uncaught exception from the exceptionCaught() method:", t );
+			// ctx.fireExceptionCaught( t );
 		}
-		
-		finish();
 	}
 	
 	public static void setTempDirectory( File tmpDir )
@@ -562,7 +584,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		if ( !fi.hasFile() && !fi.hasHTML() )
 			throw new HttpError( 500, null, "This page appears to have no content to display" );
 		
-		NetworkManager.getLogger().info( ConsoleColor.BLUE + "Http" + ( ( ssl ) ? "s" : "" ) + "Request{httpCode=" + response.getHttpCode() + ",httpMsg=" + response.getHttpMsg() + ",subdomain=" + subdomain + ",domain=" + domain + ",uri=" + uri + ",remoteIp=" + request.getIpAddr() + ",details=" + fi.toString() + "}" );
+		NetworkManager.getLogger().info( ConsoleColor.BLUE + "Http" + ( ( ssl ) ? "s" : "" ) + "Request{httpCode=" + response.getHttpCode() + ",httpMsg=" + response.getHttpMsg() + ",subdomain=" + subdomain + ",domain=" + domain + ",uri=" + uri + ",remoteIp=" + request.getIpAddr() + ",sessionId=" + sess.getSessId() + ",acct=" + sess.getAccountState() + ( sess.getAccountState() ? "(" + sess.getAcctId() + ")" : "" ) + ",details=" + fi.toString() + "}" );
 		
 		if ( fi.hasFile() )
 			htaccess.appendWithDir( fi.getFile().getParentFile() );

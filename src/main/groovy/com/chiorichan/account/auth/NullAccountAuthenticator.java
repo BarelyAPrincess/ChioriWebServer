@@ -8,6 +8,7 @@ package com.chiorichan.account.auth;
 
 import com.chiorichan.account.AccountInstance;
 import com.chiorichan.account.AccountMeta;
+import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.AccountType;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
@@ -22,7 +23,7 @@ public final class NullAccountAuthenticator extends AccountAuthenticator
 {
 	NullAccountAuthenticator()
 	{
-		
+		super( "null" );
 	}
 	
 	public AccountCredentials credentials( AccountMeta meta )
@@ -45,5 +46,17 @@ public final class NullAccountAuthenticator extends AccountAuthenticator
 		{
 			return AccountType.ACCOUNT_NONE.instance();
 		}
+
+		@Override
+		public void remember( AccountPermissible perm )
+		{
+			
+		}
+	}
+
+	@Override
+	public AccountCredentials resume( AccountPermissible perm )
+	{
+		return null;
 	}
 }
