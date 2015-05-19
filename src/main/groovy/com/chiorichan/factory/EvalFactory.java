@@ -19,6 +19,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
@@ -36,6 +38,7 @@ import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 import org.codehaus.groovy.control.customizers.ASTTransformationCustomizer;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
 import org.codehaus.groovy.control.messages.Message;
+import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
 import org.codehaus.groovy.syntax.SyntaxException;
 
 import com.chiorichan.ContentTypes;
@@ -606,12 +609,22 @@ public class EvalFactory
 			
 			for ( Object err : e.getErrors() )
 			{
-				Loader.getLogger().warning( "Got an error during eval: " + err );
-				
 				if ( err instanceof Throwable )
+				{
+					Loader.getLogger().warning( "Received this exception while trying to eval: ", ( Throwable ) err );
 					exceptionHandler( ( Throwable ) err, meta, result );
+				}
+				else if ( err instanceof SyntaxErrorMessage )
+				{
+					Loader.getLogger().warning( "Received this exception while trying to eval: ", ( ( SyntaxErrorMessage ) err ).getCause() );
+					exceptionHandler( ( ( SyntaxErrorMessage ) err ).getCause(), meta, result );
+				}
 				else if ( err instanceof Message )
 				{
+					StringWriter writer = new StringWriter();
+					( ( Message ) err ).write( new PrintWriter( writer, true ) );
+					Loader.getLogger().warning( "Received this error while trying to eval: " + writer.toString() );
+					
 					// result.addException( ignorableExceptionHandler( err, meta ) );
 				}
 			}

@@ -102,6 +102,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	private FullHttpRequest requestOrig;
 	private HttpRequestWrapper request;
 	private boolean ssl;
+	private boolean requestFinished = false;
 	
 	static
 	{
@@ -161,16 +162,15 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	{
 		try
 		{
-			if ( response == null )
+			String ip = request.getIpAddr();
+			
+			if ( requestFinished )
 			{
-				if ( cause.getMessage().equals( "Connection reset by peer" ) )
-					NetworkManager.getLogger().warning( ConsoleColor.RED + "The connection was closed before we could finish the request, if this IP continues to abuse the system it WILL BE BANNED!" ); // TODO Add connection resets to
-																																																			// record so we can ban continually
-																																																			// abusive IP addresses.
+				if ( "Connection reset by peer".equals( cause.getMessage() ) )
+					// TODO Cache abusive IP addresses for possible banning.
+					NetworkManager.getLogger().warning( ConsoleColor.RED + " [" + ip + "] The connection was closed before we could finish the request, if this IP continues to abuse the system it WILL BE BANNED!" );
 				else
 					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "We got an unexpected exception:", cause );
-				
-				NetworkManager.getLogger().debug( "Test! " + request.getIpAddr() );
 				
 				return;
 			}
@@ -231,7 +231,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				else
 				{
 					response.sendException( evalOrig );
-					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "This exception was thrown from outside the EvalFactory and might be the result of a server programming bug:", cause );
+					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + " [" + ip + "] This exception was not caught by the EvalFactory and might be the result of a server programming bug:", cause );
 				}
 			}
 			else
@@ -239,12 +239,12 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				if ( evalOrig == null )
 				{
 					response.sendException( cause );
-					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "This exception was not expected and most likely needs to be properly caught or investiated. Would you kindly report this stacktrace to the appropriate developer?", cause );
+					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + " [" + ip + "] This exception was not expected and most likely needs to be properly caught or investiated. Would you kindly report this stacktrace to the appropriate developer?", cause );
 				}
 				else
 				{
 					response.sendException( evalOrig );
-					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "This exception was thrown from outside the EvalFactory and might be the result of a server programming bug:", cause );
+					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + " [" + ip + "] This exception was not caught by the EvalFactory and might be the result of a server programming bug:", cause );
 				}
 			}
 			
@@ -430,8 +430,10 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			if ( ( factory = request.getEvalFactory() ) != null )
 				factory.onFinished();
 			
-			request = null;
-			response = null;
+			requestFinished = true;
+			
+			// request = null;
+			// response = null;
 		}
 		catch ( Exception e )
 		{

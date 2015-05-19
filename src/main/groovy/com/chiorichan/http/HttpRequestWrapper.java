@@ -508,11 +508,14 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	}
 	
 	/**
+	 * Tries to check the "X-requested-with" header.
 	 * Not a guaranteed method to determined if a request was made with AJAX since this header is not always set.
+	 * 
+	 * @return Was the request made with AJAX
 	 */
 	public boolean isAjaxRequest()
 	{
-		return ( getHeader( "X-requested-with" ).equals( "XMLHttpRequest" ) );
+		return getHeader( "X-requested-with" ) == null ? false : getHeader( "X-requested-with" ).equals( "XMLHttpRequest" );
 	}
 	
 	public String getRemoteHostname()

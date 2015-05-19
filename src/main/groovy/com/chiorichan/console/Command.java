@@ -17,6 +17,7 @@ import com.chiorichan.permission.PermissionNamespace;
 import com.google.common.collect.Lists;
 
 /**
+ * The base class for Console Commands
  * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com

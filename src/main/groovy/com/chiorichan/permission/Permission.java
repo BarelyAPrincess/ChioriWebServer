@@ -452,7 +452,7 @@ public abstract class Permission
 	
 	public String toString()
 	{
-		return "Permission[name=" + getLocalName() + ",parent=" + getParent() + ( ( value != null ) ? ",value=" + value.toString() : "" ) + "]";
+		return "Permission{name=" + getLocalName() + ",parent=" + getParent() + ( ( value != null ) ? ",value=" + value.toString() : "" ) + "}";
 	}
 	
 	public static List<Permission> getRootNodes()

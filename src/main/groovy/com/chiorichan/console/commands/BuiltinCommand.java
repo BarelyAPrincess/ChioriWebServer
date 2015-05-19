@@ -41,6 +41,16 @@ public abstract class BuiltinCommand extends Command
 			}
 		} );
 		
+		CommandDispatch.registerCommand( new BuiltinCommand( "uptime" )
+		{
+			@Override
+			public boolean execute( InteractiveConsole handler, String command, String[] args )
+			{
+				handler.getPersistence().send( "Server Uptime: " + Loader.getUptime() );
+				return true;
+			}
+		} );
+		
 		CommandDispatch.registerCommand( new BuiltinCommand( "echo" )
 		{
 			@Override
