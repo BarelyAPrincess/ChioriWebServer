@@ -24,8 +24,7 @@ import com.google.common.base.Joiner;
 /**
  * Used for builtin server commands
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public abstract class BuiltinCommand extends Command
 {

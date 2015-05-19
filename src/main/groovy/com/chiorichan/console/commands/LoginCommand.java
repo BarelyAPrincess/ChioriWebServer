@@ -19,12 +19,10 @@ import com.chiorichan.console.CommandDispatch;
 import com.chiorichan.console.InteractiveConsole;
 import com.chiorichan.console.Interviewer;
 
-
 /**
  * Used to login an account to the console
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 class LoginCommand extends BuiltinCommand
 {

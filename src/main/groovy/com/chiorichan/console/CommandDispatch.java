@@ -28,8 +28,7 @@ import com.google.common.collect.Maps;
 /**
  * This is the Command Dispatch for executing a command from a console.
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public final class CommandDispatch
 {
