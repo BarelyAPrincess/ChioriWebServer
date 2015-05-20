@@ -27,7 +27,7 @@ import com.google.common.collect.Maps;
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-public class AccountType
+public final class AccountType
 {
 	private static final Map<String, AccountType> types = Maps.newConcurrentMap();
 	
@@ -135,12 +135,12 @@ public class AccountType
 		if ( this == AccountType.MEMORY )
 			return true;
 		
-		Object obj = Loader.getConfig().get( "accounts." + getName() + "Enabled" );
+		Object obj = Loader.getConfig().get( "accounts." + getName() + "Type.enabled" );
 		
 		if ( obj instanceof Boolean )
 			return ( Boolean ) obj;
 		
-		Loader.getConfig().set( "accounts." + getName() + "Enabled", true );
+		Loader.getConfig().set( "accounts." + getName() + "Type.enabled", true );
 		Loader.saveConfig();
 		
 		/**

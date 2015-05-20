@@ -6,96 +6,136 @@
  */
 package com.chiorichan.account.auth;
 
-import com.chiorichan.account.AccountInstance;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import com.chiorichan.Loader;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
+import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.util.CommonFunc;
 import com.chiorichan.util.RandomFunc;
 
-
+/**
+ * Used to authenticate an account using an Account Id and Token combination
+ * 
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
+ */
 public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
 {
+	private final DatabaseEngine db = Loader.getDatabase();
+	
 	OnetimeTokenAccountAuthenticator()
 	{
 		super( "token" );
+		
+		if ( !db.tableExist( "accounts_token" ) )
+		{
+			try
+			{
+				db.queryUpdate( "CREATE TABLE `accounts_token` ( `acctId` varchar(255) NOT NULL, `token` varchar(255) NOT NULL, `expires` int(12) NOT NULL);" );
+			}
+			catch ( SQLException e )
+			{
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	@Override
-	public AccountCredentials resume( AccountPermissible perm )
+	public AccountCredentials authorize( String acctId, AccountPermissible perm )
 	{
-		String acctId = perm.getVariable( "acctId" );
 		String token = perm.getVariable( "token" );
 		
-		return credentials( acctId, token );
+		if ( token == null )
+			throw new AccountException( "The account, '" + acctId + "', was not made resumable using the token method." );
+		
+		return authorize( acctId, token );
 	}
 	
-	public AccountCredentials credentials( String acctId, String token )
+	@Override
+	public AccountCredentials authorize( String acctId, Object... creds )
 	{
-		return new OnetimeTokenAccountCredentials( acctId, token );
-	}
-	
-	public String issueToken( AccountInstance acct )
-	{
-		String token = RandomFunc.randomize( acct.getAcctId() ) + CommonFunc.getEpoch();
-		acct.metadata().set( "token", token );
-		return token;
-	}
-	
-	class OnetimeTokenAccountCredentials extends AccountCredentials
-	{
-		private String acctId;
-		private String token;
+		if ( creds.length < 1 || ! ( creds[0] instanceof String ) )
+			throw AccountResult.INTERNAL_ERROR.exception();
 		
-		OnetimeTokenAccountCredentials( String acctId, String token )
-		{
-			super( OnetimeTokenAccountAuthenticator.this );
-			this.acctId = acctId;
-			this.token = token;
-		}
+		String token = ( String ) creds[0];
 		
-		@Override
-		public String getToken()
+		try
 		{
-			return token;
-		}
-		
-		@Override
-		public AccountInstance authenticate() throws AccountException
-		{
+			// TODO Getting Account Meta is not always required. We should implement it that Meta is auto got before hand.
 			AccountMeta meta = AccountManager.INSTANCE.getAccountWithException( acctId );
 			
 			if ( meta == null )
 				throw AccountResult.INCORRECT_LOGIN.exception();
 			
-			String token0 = meta.getString( "token" );
+			ResultSet rs = db.query( "SELECT * FROM `accounts_token` WHERE `acctId` = '" + acctId + "' AND `token` = '" + token + "';" );
 			
-			if ( token0 == null )
-				throw new AccountException( AccountResult.UNCONFIGURED );
+			if ( rs == null || db.getRowCount( rs ) < 1 )
+				throw AccountResult.INCORRECT_LOGIN.exception();
+			
+			if ( rs.getInt( "expires" ) > 0 && rs.getInt( "expires" ) < CommonFunc.getEpoch() )
+				throw AccountResult.EXPIRED_LOGIN.exception();
+			
+			String token0 = rs.getString( "token" );
+			
+			if ( token0 == null || token0.isEmpty() )
+				throw AccountResult.INCORRECT_LOGIN.exception();
 			
 			if ( token0.equals( token ) )
 			{
-				meta.set( "token", null );
-				return meta.instance();
+				db.queryUpdate( "DELETE FROM `accounts_token` WHERE `acctId` = '" + acctId + "' AND `token` = '" + token + "';" );
+				return new OnetimeTokenAccountCredentials( AccountResult.LOGIN_SUCCESS, meta, token );
 			}
 			else
-				throw new AccountException( AccountResult.INCORRECT_LOGIN );
+				throw AccountResult.INCORRECT_LOGIN.exception();
+		}
+		catch ( SQLException e )
+		{
+			throw AccountResult.INTERNAL_ERROR.setThrowable( e ).exception( acctId );
 		}
 		
-		@Override
-		public void remember( AccountPermissible perm )
+		
+	}
+	
+	/**
+	 * Used to issue new Login Tokens not only to resume our logins but to resume other Authenticator's logins.
+	 * 
+	 * @param acct
+	 *            The Account to issue a Token to
+	 * @return The issued token, be sure to save the token the authenticate using this Authenticator later
+	 */
+	public String issueToken( AccountMeta acct )
+	{
+		String token = RandomFunc.randomize( acct.getAcctId() ) + CommonFunc.getEpoch();
+		try
 		{
-			try
-			{
-				perm.setVariable( "auth", "token" );
-				perm.setVariable( "token", getToken() );
-			}
-			catch ( AccountException e )
-			{
-				throw e;
-			}
+			db.queryUpdate( "INSERT INTO `accounts_token` (`acctId`,`token`,`expires`) VALUES ('" + acct.getAcctId() + "','" + token + "','" + ( CommonFunc.getEpoch() + ( 60 * 60 * 24 * 7 ) ) + "');" );
+		}
+		catch ( SQLException e )
+		{
+			e.printStackTrace();
+			return null;
+		}
+		return token;
+	}
+	
+	class OnetimeTokenAccountCredentials extends AccountCredentials
+	{
+		private String token;
+		
+		OnetimeTokenAccountCredentials( AccountResult result, AccountMeta meta, String token )
+		{
+			super( OnetimeTokenAccountAuthenticator.this, result, meta );
+			this.token = token;
+		}
+		
+		public String getToken()
+		{
+			return token;
 		}
 	}
 }

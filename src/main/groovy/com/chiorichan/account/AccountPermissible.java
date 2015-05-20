@@ -34,76 +34,11 @@ public abstract class AccountPermissible extends Permissible implements Account
 	protected AccountInstance account = null;
 	
 	/**
-	 * Attempts to authenticate the {@link AccountCredentials} onto the {@link AccountPermissible}
-	 * 
-	 * @param via
-	 *            The {@link AccountPermissible}
-	 * @param creds
-	 *            The {@link AccountCredentials}
-	 * @return The authenticated {@link AccountResult}
+	 * Attempts to authenticate using saved Account Credentials
 	 */
-	public AccountResult login( AccountPermissible via, AccountCredentials creds )
+	public void login()
 	{
-		AccountResult result;
-		AccountInstance acct = null;
-		
-		try
-		{
-			acct = creds.authenticate();
-			acct.credentials = creds;
-			
-			acct.metadata().getContext().creator().preLogin( acct.metadata(), via, creds );
-			AccountPreLoginEvent event = new AccountPreLoginEvent( acct.metadata(), via, creds );
-			
-			EventBus.INSTANCE.callEvent( event );
-			
-			result = event.getAccountResult();
-			
-			if ( result == AccountResult.LOGIN_SUCCESS )
-			{
-				// TODO Single login per via method checks?
-				if ( acct.countPermissibles() > 1 && Loader.getConfig().getBoolean( "accounts.singleLogin" ) )
-					for ( AccountPermissible ap : acct.getPermissibles() )
-						ap.kick( Loader.getConfig().getString( "accounts.singleLoginMessage", "You logged in from another location." ) );
-				
-				acct.metadata().set( "lastLoginTime", CommonFunc.getEpoch() );
-				
-				// acct.metadata().set( "lastLoginIp", getIpAddresses().toArray( new String[0] )[0] );
-				
-				acct.registerPermissible( via );
-				
-				acct.metadata().getContext().creator().successLogin( acct.metadata(), AccountResult.LOGIN_SUCCESS );
-				EventBus.INSTANCE.callEvent( new AccountSuccessfulLoginEvent( acct.metadata() ) );
-				
-				setVariable( "acctId", acct.getAcctId() );
-				account = acct;
-				
-				creds.remember( this );
-			}
-			
-			return result.setAccount( acct );
-		}
-		catch ( AccountException e )
-		{
-			if ( acct != null )
-			{
-				acct.metadata().getContext().creator().failedLogin( acct.metadata(), e.getResult() );
-				EventBus.INSTANCE.callEvent( new AccountFailedLoginEvent( acct.metadata(), e.getResult() ) );
-			}
-			account = null;
-			return e.getResult().setAccount( acct ).setThrowable( e );
-		}
-		catch ( Throwable t )
-		{
-			return AccountResult.INTERNAL_ERROR.setAccount( acct ).setThrowable( t );
-		}
-	}
-	
-	/**
-	 * Called from subclass once subclass is finished loading
-	 */
-	protected void initialized()
-	{
+		AccountResult result = AccountResult.DEFAULT;
 		String authName = getVariable( "auth" );
 		String acctId = getVariable( "acctId" );
 		
@@ -111,35 +46,153 @@ public abstract class AccountPermissible extends Permissible implements Account
 		{
 			AccountAuthenticator auth = AccountAuthenticator.byName( authName );
 			
-			Loader.getLogger().debug( "Auth Name: " + authName );
+			if ( auth == null )
+				throw new AccountException( "The Authenticator is null" );
 			
-			AccountResult result;
 			try
 			{
-				if ( auth == null )
-					return;
+				AccountMeta meta = AccountManager.INSTANCE.getAccountWithException( acctId );
 				
-				AccountCredentials creds = auth.resume( this );
-				
-				if ( creds == null )
-					result = AccountResult.FEATURE_NOT_IMPLEMENTED;
-				
-				result = login( this, creds );
+				if ( meta != null )
+				{
+					AccountCredentials creds = auth.authorize( acctId, this );
+					meta.context().credentials = creds;
+					
+					if ( !creds.getResult().isError() )
+					{
+						result = AccountResult.LOGIN_SUCCESS;
+						login0( meta );
+					}
+					
+					result.setAccount( meta );
+					
+					if ( result.isError() )
+					{
+						failedLogin( result );
+						meta.context().creator().failedLogin( meta, result );
+						EventBus.INSTANCE.callEvent( new AccountFailedLoginEvent( meta, result ) );
+					}
+				}
 			}
 			catch ( AccountException e )
 			{
 				result = e.getResult();
 			}
+			catch ( Throwable t )
+			{
+				result = AccountResult.INTERNAL_ERROR.setThrowable( t );
+			}
 			
 			if ( AccountManager.INSTANCE.isDebug() )
-				if ( result == AccountResult.LOGIN_SUCCESS )
-				{
-					Account acct = result.getAccount();
-					SessionManager.getLogger().info( ConsoleColor.GREEN + "Restored Login: [id='" + acct.getAcctId() + "',siteId='" + acct.getSiteId() + "',displayName='" + acct.getDisplayName() + "',ipAddrs='" + acct.getIpAddresses() + "']" );
-				}
-				else
-					SessionManager.getLogger().info( ConsoleColor.YELLOW + "Failed Login: [id='" + acctId + "',reason='" + result.getMessage( acctId ) + "']" );
+			{
+				if ( result.isError() && result.getThrowable() != null )
+					result.getThrowable().printStackTrace();
+				
+				SessionManager.getLogger().info( ( ( result == AccountResult.LOGIN_SUCCESS ) ? ConsoleColor.GREEN : ConsoleColor.YELLOW ) + "Session Login: [id='" + acctId + "',reason='" + result.getMessage( acctId ) + "']" );
+			}
 		}
+	}
+	
+	/**
+	 * Attempts to authenticate the Account Id using the specified {@link AccountAuthenticator} and Credentials
+	 * 
+	 * @param auth
+	 *            The {@link AccountAuthenticator}
+	 * @param acctId
+	 *            The Account Id
+	 * @param credObjs
+	 *            The Account Credentials
+	 * @return
+	 *         The {@link AccountResult}
+	 */
+	public AccountResult login( AccountAuthenticator auth, String acctId, Object... credObjs )
+	{
+		try
+		{
+			AccountResult result = AccountResult.DEFAULT;
+			AccountMeta meta = AccountManager.INSTANCE.getAccountWithException( acctId );
+			
+			if ( meta == null )
+				return AccountResult.INCORRECT_LOGIN;
+			
+			try
+			{
+				meta.context().creator().preLogin( meta, this, acctId, credObjs );
+				AccountPreLoginEvent event = new AccountPreLoginEvent( meta, this, acctId, credObjs );
+				
+				EventBus.INSTANCE.callEvent( event );
+				
+				if ( event.getAccountResult().isError() )
+					return event.getAccountResult().setAccount( meta );
+				
+				AccountCredentials creds = auth.authorize( meta.getAcctId(), credObjs );
+				meta.context().credentials = creds;
+				
+				if ( creds.getResult().isError() )
+					return creds.getResult();
+				
+				result = AccountResult.LOGIN_SUCCESS;
+				login0( meta );
+			}
+			catch ( AccountException e )
+			{
+				result = e.getResult();
+			}
+			catch ( Throwable t )
+			{
+				return AccountResult.INTERNAL_ERROR.setAccount( meta ).setThrowable( t );
+			}
+			
+			result.setAccount( meta );
+			
+			if ( result.isError() )
+			{
+				failedLogin( result );
+				meta.context().creator().failedLogin( meta, result );
+				EventBus.INSTANCE.callEvent( new AccountFailedLoginEvent( meta, result ) );
+			}
+			
+			return result;
+		}
+		catch ( AccountException e )
+		{
+			return e.getResult();
+		}
+	}
+	
+	/**
+	 * Handles the common final login procedures
+	 * 
+	 * @param meta
+	 *            The {@link AccountMeta}
+	 */
+	private void login0( AccountMeta meta )
+	{
+		AccountInstance acct = meta.instance();
+		acct.registerPermissible( this );
+		
+		// TODO Single login per via method checks?
+		if ( acct.countPermissibles() > 1 && Loader.getConfig().getBoolean( "accounts.singleLogin" ) )
+			for ( AccountPermissible ap : acct.getPermissibles() )
+				ap.kick( Loader.getConfig().getString( "accounts.singleLoginMessage", "You logged in from another location." ) );
+		
+		meta.set( "lastLoginTime", CommonFunc.getEpoch() );
+		meta.set( "lastLoginIp", getIpAddresses() );
+		setVariable( "acctId", meta.getAcctId() );
+		
+		account = acct;
+		
+		successfulLogin();
+		meta.context().creator().successLogin( meta );
+		EventBus.INSTANCE.callEvent( new AccountSuccessfulLoginEvent( meta ) );
+	}
+	
+	/**
+	 * Called from subclass once subclass has finished loading
+	 */
+	protected void initialized()
+	{
+		login();
 	}
 	
 	public AccountResult logout()

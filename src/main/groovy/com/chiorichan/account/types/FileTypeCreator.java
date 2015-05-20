@@ -19,7 +19,6 @@ import com.chiorichan.account.AccountContext;
 import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.AccountType;
-import com.chiorichan.account.auth.AccountCredentials;
 import com.chiorichan.account.event.AccountLookupEvent;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
@@ -33,8 +32,7 @@ import com.google.common.collect.Maps;
 /**
  * Handles Accounts that are loaded from File
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class FileTypeCreator extends AccountTypeCreator
 {
@@ -48,12 +46,12 @@ public class FileTypeCreator extends AccountTypeCreator
 	
 	public FileTypeCreator()
 	{
-		String fileBase = Loader.getConfig().getString( "accounts.lookupAdapter.filebase", "accounts" );
+		String fileBase = Loader.getConfig().getString( "accounts.fileType.filebase", "accounts" );
 		accountsDirectory = new File( fileBase );
 		
 		FileFunc.directoryHealthCheck( accountsDirectory );
 		
-		accountFields = Loader.getConfig().getStringList( "accounts.lookupAdapter.fields", new ArrayList<String>() );
+		accountFields = Loader.getConfig().getStringList( "accounts.fileType.fields", new ArrayList<String>() );
 		
 		accountFields.add( "username" );
 		
@@ -100,7 +98,7 @@ public class FileTypeCreator extends AccountTypeCreator
 	}
 	
 	@Override
-	public void preLogin( AccountMeta meta, AccountPermissible via, AccountCredentials creds )
+	public void preLogin( AccountMeta meta, AccountPermissible via, String acctId, Object... creds )
 	{
 		if ( meta.getInteger( "numloginfail" ) > 5 )
 			if ( meta.getInteger( "lastloginfail" ) > ( CommonFunc.getEpoch() - 1800 ) )
@@ -111,7 +109,7 @@ public class FileTypeCreator extends AccountTypeCreator
 	}
 	
 	@Override
-	public void successLogin( AccountMeta meta, AccountResult result )
+	public void successLogin( AccountMeta meta )
 	{
 		if ( !meta.containsKey( "file" ) )
 			return;
@@ -222,7 +220,7 @@ public class FileTypeCreator extends AccountTypeCreator
 	
 	public AccountContext loadFromFile( File absoluteFilePath )
 	{
-		AccountContext context = new AccountContext( this, AccountType.FILE );
+		AccountContextImpl context = new AccountContextImpl( this, AccountType.FILE );
 		
 		if ( !absoluteFilePath.exists() )
 			return null;
@@ -339,6 +337,12 @@ public class FileTypeCreator extends AccountTypeCreator
 		{
 			event.setResult( e.getContext(), e.getResult() );
 		}
+	}
+	
+	@Override
+	public List<String> getLoginKeys()
+	{
+		return accountFields;
 	}
 	
 	/*

@@ -637,6 +637,7 @@ public class DatabaseEngine
 		if ( clz == Double.class || clz == double.class )
 			type = "DOUBLE(" + maxLenReq + ",2)";
 		
+		Loader.getLogger().debug( "Query: " + "ALTER TABLE `" + table + "` ADD `" + columnName + "` " + type + ";" );
 		queryUpdate( "ALTER TABLE `" + table + "` ADD `" + columnName + "` " + type + ";" );
 	}
 	

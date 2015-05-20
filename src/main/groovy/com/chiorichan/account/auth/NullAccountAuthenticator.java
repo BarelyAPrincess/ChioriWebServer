@@ -6,7 +6,7 @@
  */
 package com.chiorichan.account.auth;
 
-import com.chiorichan.account.AccountInstance;
+import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.AccountType;
@@ -26,37 +26,33 @@ public final class NullAccountAuthenticator extends AccountAuthenticator
 		super( "null" );
 	}
 	
-	public AccountCredentials credentials( AccountMeta meta )
+	@Override
+	public AccountCredentials authorize( String acctId, AccountPermissible perm )
 	{
+		AccountMeta meta = AccountManager.INSTANCE.getAccountWithException( acctId );
+		
 		if ( meta != AccountType.ACCOUNT_NONE )
 			throw new AccountException( AccountResult.INCORRECT_LOGIN );
 		
-		return new NullAccountCredentials();
+		return new NullAccountCredentials( meta );
+	}
+	
+	@Override
+	public AccountCredentials authorize( String acctId, Object... creds )
+	{
+		AccountMeta meta = AccountManager.INSTANCE.getAccountWithException( acctId );
+		
+		if ( meta != AccountType.ACCOUNT_NONE )
+			throw new AccountException( AccountResult.INCORRECT_LOGIN );
+		
+		return new NullAccountCredentials( meta );
 	}
 	
 	class NullAccountCredentials extends AccountCredentials
 	{
-		NullAccountCredentials()
+		NullAccountCredentials( AccountMeta meta )
 		{
-			super( NullAccountAuthenticator.this );
+			super( NullAccountAuthenticator.this, AccountResult.LOGIN_SUCCESS, meta );
 		}
-		
-		@Override
-		public AccountInstance authenticate() throws AccountException
-		{
-			return AccountType.ACCOUNT_NONE.instance();
-		}
-
-		@Override
-		public void remember( AccountPermissible perm )
-		{
-			
-		}
-	}
-
-	@Override
-	public AccountCredentials resume( AccountPermissible perm )
-	{
-		return null;
 	}
 }

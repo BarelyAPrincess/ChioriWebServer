@@ -58,30 +58,32 @@ public class SqlDatastore extends SessionDatastore
 			Loader.getLogger().warning( "There was a problem reloading saved sessions.", e );
 		}
 		
-		PermissionManager.getLogger().info( "SqlSession loaded " + data.size() + " sessions from the data store in " + TimingFunc.finish( this ) + "ms!" );
+		PermissionManager.getLogger().info( "SqlSession loaded " + data.size() + " sessions from the datastore in " + TimingFunc.finish( this ) + "ms!" );
 		
 		return data;
 	}
 	
 	@Override
-	public SessionData createSession( String sessionId ) throws SessionException
+	public SessionData createSession( String sessionId, SessionWrapper wrapper ) throws SessionException
 	{
-		return new SqlSessionData( sessionId );
+		return new SqlSessionData( sessionId, wrapper );
 	}
 	
 	class SqlSessionData extends SessionData
 	{
 		SqlSessionData( ResultSet rs ) throws SessionException
 		{
-			super( SqlDatastore.this );
-			
+			super( SqlDatastore.this, true );
 			readSession( rs );
 		}
 		
-		SqlSessionData( String sessionId ) throws SessionException
+		SqlSessionData( String sessionId, SessionWrapper wrapper ) throws SessionException
 		{
-			super( SqlDatastore.this );
+			super( SqlDatastore.this, false );
 			this.sessionId = sessionId;
+			
+			ipAddr = wrapper.getIpAddr();
+			site = wrapper.getSite().getSiteId();
 			
 			save();
 		}
@@ -114,7 +116,7 @@ public class SqlDatastore extends SessionDatastore
 					sessionName = rs.getString( "sessionName" );
 				sessionId = rs.getString( "sessionId" );
 				
-				site = Loader.getSiteManager().getSiteById( rs.getString( "sessionSite" ) );
+				site = rs.getString( "sessionSite" );
 				
 				if ( !rs.getString( "data" ).isEmpty() )
 				{
@@ -144,9 +146,9 @@ public class SqlDatastore extends SessionDatastore
 				ResultSet rs = sql.query( "SELECT * FROM `sessions` WHERE `sessionId` = '" + sessionId + "';" );
 				
 				if ( rs == null || sql.getRowCount( rs ) < 1 )
-					sql.queryUpdate( "INSERT INTO `sessions` (`sessionId`, `timeout`, `ipAddr`, `sessionName`, `sessionSite`, `data`) VALUES ('" + sessionId + "', '" + timeout + "', '" + ipAddr + "', '" + sessionName + "', '" + site.getSiteId() + "', '" + dataJson + "');" );
+					sql.queryUpdate( "INSERT INTO `sessions` (`sessionId`, `timeout`, `ipAddr`, `sessionName`, `sessionSite`, `data`) VALUES ('" + sessionId + "', '" + timeout + "', '" + ipAddr + "', '" + sessionName + "', '" + site + "', '" + dataJson + "');" );
 				else
-					sql.queryUpdate( "UPDATE `sessions` SET `data` = '" + dataJson + "', `timeout` = '" + timeout + "', `sessionName` = '" + sessionName + "', `ipAddr` = '" + ipAddr + "', `sessionSite` = '" + site.getSiteId() + "' WHERE `sessionId` = '" + sessionId + "';" );
+					sql.queryUpdate( "UPDATE `sessions` SET `data` = '" + dataJson + "', `timeout` = '" + timeout + "', `sessionName` = '" + sessionName + "', `ipAddr` = '" + ipAddr + "', `sessionSite` = '" + site + "' WHERE `sessionId` = '" + sessionId + "';" );
 			}
 			catch ( SQLException e )
 			{

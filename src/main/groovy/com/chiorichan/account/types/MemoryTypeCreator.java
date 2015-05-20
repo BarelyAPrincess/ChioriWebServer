@@ -6,23 +6,21 @@
  */
 package com.chiorichan.account.types;
 
-import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
 
 import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.AccountType;
-import com.chiorichan.account.auth.AccountCredentials;
 import com.chiorichan.account.event.AccountLoadEvent;
 import com.chiorichan.account.event.AccountLookupEvent;
-import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.event.EventHandler;
 
 /**
  * Handles Memory Accounts, e.g., Root and None
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class MemoryTypeCreator extends AccountTypeCreator
 {
@@ -75,13 +73,13 @@ public class MemoryTypeCreator extends AccountTypeCreator
 	}
 	
 	@Override
-	public void successLogin( AccountMeta meta, AccountResult result )
+	public void successLogin( AccountMeta meta )
 	{
 		// Do Nothing
 	}
 	
 	@Override
-	public void preLogin( AccountMeta meta, AccountPermissible via, AccountCredentials creds )
+	public void preLogin( AccountMeta meta, AccountPermissible via, String acctId, Object... creds )
 	{
 		// Called before the NONE Account logs in
 	}
@@ -90,5 +88,11 @@ public class MemoryTypeCreator extends AccountTypeCreator
 	public String getDisplayName( AccountMeta meta )
 	{
 		return null;
+	}
+	
+	@Override
+	public List<String> getLoginKeys()
+	{
+		return Arrays.asList( new String[] {} );
 	}
 }

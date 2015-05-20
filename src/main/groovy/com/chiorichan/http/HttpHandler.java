@@ -123,7 +123,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		
 		// Initialize static server variables
 		staticServerVars.put( ServerVars.SERVER_SOFTWARE, Versioning.getProduct() );
-		staticServerVars.put( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "webmaster@example.com" ) );
+		staticServerVars.put( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "me@chiorichan.com" ) );
 		staticServerVars.put( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Versioning.getVersion() );
 	}
 	
@@ -166,9 +166,18 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			
 			if ( requestFinished )
 			{
+				if ( cause instanceof HttpError )
+				{
+					if ( response.getStage() != HttpResponseStage.CLOSED )
+						response.sendError( ( HttpError ) cause );
+					else
+						NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + " [" + ip + "] For reasons unknown, we caught the HttpError exception but the connection was already closed.", cause );
+					return;
+				}
+				
 				if ( "Connection reset by peer".equals( cause.getMessage() ) )
 					// TODO Cache abusive IP addresses for possible banning.
-					NetworkManager.getLogger().warning( ConsoleColor.RED + " [" + ip + "] The connection was closed before we could finish the request, if this IP continues to abuse the system it WILL BE BANNED!" );
+					NetworkManager.getLogger().warning( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + " [" + ip + "] The connection was closed before we could finish the request, if the IP continues to abuse the system it WILL BE BANNED!" );
 				else
 					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "We got an unexpected exception:", cause );
 				
@@ -395,7 +404,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			
 			if ( ! ( frame instanceof TextWebSocketFrame ) )
 			{
-				throw new UnsupportedOperationException( String.format( "%s frame types not supported", frame.getClass().getName() ) );
+				throw new UnsupportedOperationException( String.format( "%s frame types are not supported", frame.getClass().getName() ) );
 			}
 			
 			String request = ( ( TextWebSocketFrame ) frame ).text();
@@ -421,19 +430,13 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			
 			Session sess;
 			if ( ( sess = request.getSessionWithoutException() ) != null )
-			{
-				// sess.destroy();
 				sess.save();
-			}
 			
 			EvalFactory factory;
 			if ( ( factory = request.getEvalFactory() ) != null )
 				factory.onFinished();
 			
 			requestFinished = true;
-			
-			// request = null;
-			// response = null;
 		}
 		catch ( Exception e )
 		{

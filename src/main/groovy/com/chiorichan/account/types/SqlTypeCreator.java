@@ -21,21 +21,18 @@ import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.AccountType;
-import com.chiorichan.account.auth.AccountCredentials;
 import com.chiorichan.account.event.AccountLookupEvent;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.util.CommonFunc;
-import com.chiorichan.util.StringFunc;
 import com.google.common.collect.Maps;
 
 /**
  * Handles Accounts that are loaded from SQL
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class SqlTypeCreator extends AccountTypeCreator
 {
@@ -61,8 +58,8 @@ public class SqlTypeCreator extends AccountTypeCreator
 		// TODO Check if the database has the right tables.
 		// TODO Add the ability to select which database to use for logins
 		
-		table = Loader.getConfig().getString( "accounts.lookupAdapter.table", "accounts" );
-		accountFields = Loader.getConfig().getStringList( "accounts.lookupAdapter.fields", new ArrayList<String>() );
+		table = Loader.getConfig().getString( "accounts.sqlType.table", "accounts" );
+		accountFields = Loader.getConfig().getStringList( "accounts.sqlType.fields", new ArrayList<String>() );
 	}
 	
 	
@@ -80,29 +77,26 @@ public class SqlTypeCreator extends AccountTypeCreator
 			{
 				String key = e.getKey();
 				
-				if ( "acctId".equalsIgnoreCase( key ) )
-					continue;
-				
-				/*
-				 * Temp until all passwords are stored with encryption
-				 */
-				if ( "password".equalsIgnoreCase( key ) && StringFunc.isValidMD5( ( String ) e.getValue() ) )
-					continue;
-				
-				for ( String s : columnSet )
+				if ( !"acctId".equalsIgnoreCase( key ) && !"password".equalsIgnoreCase( key ) )
 				{
-					if ( s.equalsIgnoreCase( key ) )
+					boolean found = false;
+					
+					for ( String s : columnSet )
+						if ( s.equalsIgnoreCase( key ) )
+							found = true;
+					
+					if ( !found )
 					{
-						toSave.put( s, e.getValue() );
-						continue;
+						// There is no column for this key
+						columnSet.add( key );
+						newColumns.put( key, e.getValue().getClass() );
 					}
+					
+					toSave.put( key, e.getValue() );
 				}
-				
-				// There is no column for this key
-				columnSet.add( key );
-				newColumns.put( key, e.getValue().getClass() );
-				toSave.put( key, e.getValue() );
 			}
+			
+			Loader.getLogger().debug( "To Save: " + toSave );
 			
 			if ( newColumns.size() > 0 )
 				for ( Entry<String, Class<?>> c : newColumns.entrySet() )
@@ -127,6 +121,10 @@ public class SqlTypeCreator extends AccountTypeCreator
 		{
 			throw new AccountException( e, meta );
 		}
+		catch ( Throwable t )
+		{
+			t.printStackTrace();
+		}
 	}
 	
 	@Override
@@ -143,7 +141,7 @@ public class SqlTypeCreator extends AccountTypeCreator
 	}
 	
 	@Override
-	public void preLogin( AccountMeta meta, AccountPermissible via, AccountCredentials creds )
+	public void preLogin( AccountMeta meta, AccountPermissible via, String acctId, Object... creds )
 	{
 		if ( meta.getInteger( "numloginfail" ) > 5 )
 			if ( meta.getInteger( "lastloginfail" ) > ( CommonFunc.getEpoch() - 1800 ) )
@@ -154,7 +152,7 @@ public class SqlTypeCreator extends AccountTypeCreator
 	}
 	
 	@Override
-	public void successLogin( AccountMeta meta, AccountResult result )
+	public void successLogin( AccountMeta meta )
 	{
 		try
 		{
@@ -218,7 +216,7 @@ public class SqlTypeCreator extends AccountTypeCreator
 	
 	public AccountContext readAccount( String acctId ) throws AccountException, SQLException
 	{
-		AccountContext context = new AccountContext( this, AccountType.SQL );
+		AccountContextImpl context = new AccountContextImpl( this, AccountType.SQL );
 		
 		if ( acctId == null || acctId.isEmpty() )
 			throw new AccountException( AccountResult.EMPTY_ACCTID );
@@ -272,6 +270,12 @@ public class SqlTypeCreator extends AccountTypeCreator
 		{
 			event.setResult( e.getContext(), e.getResult() );
 		}
+	}
+	
+	@Override
+	public List<String> getLoginKeys()
+	{
+		return accountFields;
 	}
 	
 	/*

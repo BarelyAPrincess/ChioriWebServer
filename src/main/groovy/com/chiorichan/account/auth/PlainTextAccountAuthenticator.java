@@ -8,7 +8,6 @@ package com.chiorichan.account.auth;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
-import com.chiorichan.account.AccountInstance;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
@@ -18,8 +17,7 @@ import com.chiorichan.account.lang.AccountResult;
 /**
  * Used to authenticate an account using a Username and Password combination
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public final class PlainTextAccountAuthenticator extends AccountAuthenticator
 {
@@ -29,77 +27,51 @@ public final class PlainTextAccountAuthenticator extends AccountAuthenticator
 	}
 	
 	@Override
-	public AccountCredentials resume( AccountPermissible perm )
+	public AccountCredentials authorize( String acctId, AccountPermissible perm )
 	{
-		return AccountAuthenticator.TOKEN.resume( perm );
+		/**
+		 * Session Logins are not resumed using plain text. See {@link AccountCredentials#makeResumable}
+		 */
+		throw AccountResult.FEATURE_NOT_IMPLEMENTED.exception();
 	}
 	
-	public AccountCredentials credentials( String user, String pass )
+	@Override
+	public AccountCredentials authorize( String acctId, Object... creds )
 	{
-		if ( user == null || user.isEmpty() )
+		if ( creds.length < 1 || ! ( creds[0] instanceof String ) )
+			throw AccountResult.INTERNAL_ERROR.exception();
+		
+		String pass = ( String ) creds[0];
+		
+		if ( acctId == null || acctId.isEmpty() )
 			throw new AccountException( AccountResult.EMPTY_USERNAME );
 		
 		if ( pass == null || pass.isEmpty() )
 			throw new AccountException( AccountResult.EMPTY_PASSWORD );
 		
-		return new PlainTextAccountCredentials( user, pass );
+		AccountMeta meta = AccountManager.INSTANCE.getAccountWithException( acctId );
+		
+		if ( meta == null )
+			throw AccountResult.INCORRECT_LOGIN.exception();
+		
+		// TODO Save passwords elsewhere
+		String password = meta.getString( "password" );
+		
+		if ( password == null )
+			throw new AccountException( AccountResult.UNCONFIGURED );
+		
+		// TODO Encrypt all passwords
+		if ( password.equals( pass ) || password.equals( DigestUtils.md5Hex( pass ) ) || DigestUtils.md5Hex( password ).equals( pass ) )
+			return new PlainTextAccountCredentials( AccountResult.LOGIN_SUCCESS, meta );
+		else
+			throw new AccountException( AccountResult.INCORRECT_LOGIN );
 	}
 	
 	class PlainTextAccountCredentials extends AccountCredentials
 	{
-		private String user;
-		private String pass;
-		private AccountInstance acct;
-		
-		PlainTextAccountCredentials( String user, String pass )
+		PlainTextAccountCredentials( AccountResult result, AccountMeta meta )
 		{
-			super( PlainTextAccountAuthenticator.this );
-			this.user = user;
-			this.pass = pass;
-		}
-		
-		@Override
-		public String getToken() throws AccountException
-		{
-			if ( acct == null )
-				throw new AccountException( "You can't getToken() until you authenticate()" );
-			
-			return AccountAuthenticator.TOKEN.issueToken( acct );
-		}
-		
-		@Override
-		public AccountInstance authenticate() throws AccountException
-		{
-			AccountMeta meta = AccountManager.INSTANCE.getAccountWithException( user );
-			
-			if ( meta == null )
-				throw AccountResult.INCORRECT_LOGIN.exception();
-			
-			String password = meta.getString( "password" );
-			
-			if ( password == null )
-				throw new AccountException( AccountResult.UNCONFIGURED );
-			
-			if ( password.equals( pass ) || password.equals( DigestUtils.md5Hex( pass ) ) || DigestUtils.md5Hex( password ).equals( pass ) )
-				acct = meta.instance();
-			else
-				throw new AccountException( AccountResult.INCORRECT_LOGIN );
-			
-			return acct;
-		}
-		
-		@Override
-		public void remember( AccountPermissible perm )
-		{
-			try
-			{
-				perm.setVariable( "auth", "token" );
-				perm.setVariable( "token", getToken() );
-			}
-			catch ( AccountException e )
-			{
-				throw e;
-			}
+			super( PlainTextAccountAuthenticator.this, result, meta );
 		}
 	}
 }

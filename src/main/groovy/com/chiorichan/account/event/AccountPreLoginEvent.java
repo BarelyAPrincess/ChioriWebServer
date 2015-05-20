@@ -11,8 +11,8 @@ package com.chiorichan.account.event;
 
 import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
-import com.chiorichan.account.auth.AccountCredentials;
 import com.chiorichan.account.lang.AccountResult;
+import com.chiorichan.event.Cancellable;
 import com.chiorichan.event.Conditional;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.HandlerList;
@@ -20,27 +20,29 @@ import com.chiorichan.event.RegisteredListener;
 
 /**
  * Stores details for Users attempting to log in
+ * 
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
-public class AccountPreLoginEvent extends AccountEvent implements Conditional
+public class AccountPreLoginEvent extends AccountEvent implements Conditional, Cancellable
 {
 	private static final HandlerList handlers = new HandlerList();
-	private AccountResult result = AccountResult.LOGIN_SUCCESS;
-	private final AccountPermissible perm;
-	private final AccountCredentials creds;
+	private AccountResult result = AccountResult.DEFAULT;
+	private final AccountPermissible via;
+	private final Object[] creds;
 	
-	public AccountPreLoginEvent( AccountMeta meta, AccountPermissible perm, AccountCredentials creds )
+	public AccountPreLoginEvent( AccountMeta meta, AccountPermissible via, String acctId, Object[] creds )
 	{
-		super( meta, perm );
-		this.perm = perm;
+		super( meta, via );
+		this.via = via;
 		this.creds = creds;
 	}
 	
 	public AccountPermissible getPermissible()
 	{
-		return perm;
+		return via;
 	}
 	
-	public AccountCredentials getCredentials()
+	public Object[] getCredentials()
 	{
 		return creds;
 	}
@@ -101,6 +103,19 @@ public class AccountPreLoginEvent extends AccountEvent implements Conditional
 	@Override
 	public boolean conditional( RegisteredListener context ) throws EventException
 	{
-		return result == AccountResult.DEFAULT;
+		// If the result returned is an error then we skip the remaining EventListeners
+		return !result.isError();
+	}
+	
+	@Override
+	public boolean isCancelled()
+	{
+		return result == AccountResult.CANCELLED_BY_EVENT;
+	}
+	
+	@Override
+	public void setCancelled( boolean cancel )
+	{
+		result = AccountResult.CANCELLED_BY_EVENT;
 	}
 }

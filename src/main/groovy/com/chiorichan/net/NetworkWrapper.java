@@ -75,7 +75,7 @@ public class NetworkWrapper extends SessionWrapper
 	{
 		try
 		{
-			throw new AccountException( getSession().login( getSession(), AccountAuthenticator.NULL.credentials( AccountType.ACCOUNT_NONE ) ) );
+			throw new AccountException( getSession().login( AccountAuthenticator.NULL, AccountType.ACCOUNT_NONE.getAcctId() ) );
 		}
 		catch ( AccountException e )
 		{
@@ -116,7 +116,7 @@ public class NetworkWrapper extends SessionWrapper
 	{
 		handler.println( "Message from " + sender.getAcctId() + ": " + ObjectFunc.castToString( obj ) );
 	}
-
+	
 	@Override
 	protected HttpCookie getServerCookie( String key )
 	{

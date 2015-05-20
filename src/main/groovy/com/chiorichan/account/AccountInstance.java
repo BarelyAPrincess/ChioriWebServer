@@ -11,7 +11,6 @@ package com.chiorichan.account;
 
 import java.util.Set;
 
-import com.chiorichan.account.auth.AccountCredentials;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionResult;
@@ -31,11 +30,6 @@ public final class AccountInstance implements Account
 	 * Account MetaData
 	 */
 	private final AccountMeta metadata;
-	
-	/**
-	 * Used to remember the last instance of AccountCredentuals used
-	 */
-	AccountCredentials credentials = null;
 	
 	AccountInstance( AccountMeta metadata ) throws AccountException
 	{
@@ -58,11 +52,6 @@ public final class AccountInstance implements Account
 	public AccountPermissible[] getPermissibles()
 	{
 		return permissibles.toSet().toArray( new AccountPermissible[0] );
-	}
-	
-	public AccountCredentials getCredentials()
-	{
-		return credentials;
 	}
 	
 	int countPermissibles()

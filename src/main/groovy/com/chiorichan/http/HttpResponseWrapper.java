@@ -175,6 +175,12 @@ public class HttpResponseWrapper
 		if ( stage == HttpResponseStage.CLOSED )
 			throw new IllegalStateException( "You can't access sendException method within this HttpResponse because the connection has been closed." );
 		
+		if ( cause instanceof HttpError )
+		{
+			sendError( ( HttpError ) cause );
+			return;
+		}
+		
 		HttpExceptionEvent event = new HttpExceptionEvent( request, cause, Loader.getConfig().getBoolean( "server.developmentMode" ) );
 		EventBus.INSTANCE.callEvent( event );
 		

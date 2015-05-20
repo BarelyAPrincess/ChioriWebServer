@@ -6,8 +6,6 @@
  */
 package com.chiorichan.session;
 
-import groovy.lang.Binding;
-
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -18,14 +16,11 @@ import java.util.Set;
 
 import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
-import com.chiorichan.account.auth.AccountAuthenticator;
-import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.factory.BindingProvider;
 import com.chiorichan.factory.EvalBinding;
 import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.framework.ConfigurationManagerWrapper;
 import com.chiorichan.http.HttpCookie;
-import com.chiorichan.net.NetworkManager;
 import com.chiorichan.site.Site;
 import com.chiorichan.util.StringFunc;
 
@@ -42,7 +37,7 @@ public abstract class SessionWrapper implements BindingProvider
 	/**
 	 * The binding specific to this request
 	 */
-	private EvalBinding binding;
+	private EvalBinding binding = new EvalBinding();
 	
 	/**
 	 * The EvalFactory used to process scripts of this request
@@ -73,32 +68,25 @@ public abstract class SessionWrapper implements BindingProvider
 		 */
 		binding = new EvalBinding( new HashMap<String, Object>( session.getGlobals() ) );
 		
-		/**
-		 * Create EvalFacory
+		/*
+		 * Create our EvalFactory
 		 */
 		factory = EvalFactory.create( this );
 		
 		/*
 		 * Reference Session Variables
 		 */
-		binding.setVariable( "_SESSION", session.variables );
+		binding.setVariable( "_SESSION", session.data.data );
 		
-		/*
-		 * Create our EvalFactory
-		 */
-		factory = EvalFactory.create( binding );
+		Site site = getSite();
 		
-		/*
-		 * Update our site
-		 * XXX Can and will a session be used on multiple sites? Maybe? If not HTTP, maybe?
-		 */
-		session.site = getSite();
+		if ( site == null )
+			site = Loader.getSiteManager().getDefaultSite();
 		
-		if ( session.site == null )
-			session.site = Loader.getSiteManager().getDefaultSite();
+		session.setSite( site );
 		
 		for ( HttpCookie cookie : getCookies() )
-			session.sessionCookies.put( cookie.getKey(), cookie );
+			session.putSessionCookie( cookie.getKey(), cookie );
 		
 		// Reference Context
 		binding.setVariable( "context", this );
@@ -163,7 +151,8 @@ public abstract class SessionWrapper implements BindingProvider
 		return session.getVariable( key );
 	}
 	
-	protected Binding getBinding()
+	@Override
+	public EvalBinding getBinding()
 	{
 		return binding;
 	}
@@ -216,7 +205,7 @@ public abstract class SessionWrapper implements BindingProvider
 		/**
 		 * Session Wrappers use a WeakReference but by doing this we are making sure we are GC'ed sooner rather than later
 		 */
-		session.wrappers.remove( this );
+		session.removeWrapper( this );
 		
 		/**
 		 * Clearing references to these classes, again for easier GC cleanup.

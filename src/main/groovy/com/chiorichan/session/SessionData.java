@@ -8,7 +8,7 @@ package com.chiorichan.session;
 
 import java.util.Map;
 
-import com.chiorichan.site.Site;
+import com.chiorichan.util.CommonFunc;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 
@@ -20,20 +20,25 @@ import com.google.common.collect.Maps;
  */
 public abstract class SessionData
 {
+	/**
+	 * Persistent session variables<br>
+	 * Session variables will live outside of the sessions's life
+	 */
 	Map<String, String> data = Maps.newHashMap();
 	
 	int timeout;
 	String ipAddr;
 	String sessionName;
 	String sessionId;
-	Site site;
-	boolean newlyCreated;
+	String site;
+	boolean stale;
 	
 	private final SessionDatastore datastore;
 	
-	SessionData( SessionDatastore datastore )
+	SessionData( SessionDatastore datastore, boolean stale )
 	{
 		this.datastore = datastore;
+		this.stale = stale;
 		defaults();
 	}
 	
@@ -44,18 +49,17 @@ public abstract class SessionData
 	
 	void defaults()
 	{
-		timeout = 0;
-		ipAddr = "";
-		sessionName = null;
+		timeout = CommonFunc.getEpoch() + SessionManager.getDefaultTimeout();
+		ipAddr = null;
+		sessionName = SessionManager.getDefaultSessionName();
 		sessionId = null;
-		site = null;
-		newlyCreated = true;
+		site = "default";
 	}
 	
 	@Override
 	public String toString()
 	{
-		return "SessionData{" + Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "<null>" ).join( data ) + "}";
+		return "SessionData{name=" + sessionName + ",id=" + sessionId + ",ip=" + ipAddr + ",timeout=" + timeout + ",site=" + site + "," + Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "<null>" ).join( data ) + "}";
 	}
 	
 	abstract void reload() throws SessionException;

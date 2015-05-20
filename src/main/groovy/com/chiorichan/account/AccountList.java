@@ -40,7 +40,20 @@ class AccountList implements Iterable<AccountMeta>
 		if ( "root".equals( acctId ) )
 			return AccountType.ACCOUNT_ROOT;
 		
-		return accounts.get( acctId );
+		AccountMeta meta = accounts.get( acctId );
+		
+		if ( meta == null )
+			for ( AccountMeta am : accounts.values() )
+			{
+				for ( String key : am.context().loginKeys )
+					if ( acctId.equals( am.getString( key ) ) )
+					{
+						meta = am;
+						break;
+					}
+			}
+		
+		return meta;
 	}
 	
 	AccountMeta remove( String acctId )

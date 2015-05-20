@@ -44,7 +44,7 @@ public class SessionManager implements TaskCreator, ServerManager
 			
 			String datastoreType = Loader.getConfig().getString( "sessions.datastore", "file" );
 			
-			if ( "db".equalsIgnoreCase( datastoreType ) || "database".equalsIgnoreCase( datastoreType ) )
+			if ( "db".equalsIgnoreCase( datastoreType ) || "database".equalsIgnoreCase( datastoreType ) || "sql".equalsIgnoreCase( datastoreType ) )
 			{
 				if ( Loader.getDatabase() == null )
 					getLogger().severe( "Session Manager's datastore is configured to use database but the server's database is unconfigured. Falling back to the file datastore." );
@@ -71,7 +71,7 @@ public class SessionManager implements TaskCreator, ServerManager
 				}
 				catch ( SessionException e )
 				{
-					// If there is a problem with the session we sent alert and destroy the offending session
+					// If there is a problem with the session, make warning and destroy
 					getLogger().warning( e.getMessage() );
 					data.destroy();
 				}
@@ -103,6 +103,7 @@ public class SessionManager implements TaskCreator, ServerManager
 						try
 						{
 							var1.destroy();
+							sessions.remove( var1 );
 						}
 						catch ( SessionException e )
 						{
@@ -126,7 +127,7 @@ public class SessionManager implements TaskCreator, ServerManager
 			
 			if ( cookie != null )
 				for ( Session sess : sessions )
-					if ( sess.sessionId.equals( cookie.getValue() ) )
+					if ( sess != null && cookie.getValue().equals( sess.getSessId() ) )
 					{
 						sess.processSessionCookie();
 						return sess;
@@ -140,9 +141,9 @@ public class SessionManager implements TaskCreator, ServerManager
 			 * return s;
 			 */
 			
-			Session sess = createSession();
-			sess.processSessionCookie();
+			Session sess = createSession( wrapper );
 			sessions.add( sess );
+			sess.registerWrapper( wrapper );
 			return sess;
 		}
 	}
@@ -190,9 +191,9 @@ public class SessionManager implements TaskCreator, ServerManager
 		return lst;
 	}
 	
-	public Session createSession() throws SessionException
+	public Session createSession( SessionWrapper wrapper ) throws SessionException
 	{
-		return new Session( this, datastore.createSession( sessionIdBaker() ) );
+		return new Session( this, datastore.createSession( sessionIdBaker(), wrapper ) );
 	}
 	
 	public String sessionIdBaker()
@@ -222,4 +223,22 @@ public class SessionManager implements TaskCreator, ServerManager
 	{
 		return "SessionManager";
 	}
+	
+	public static int getDefaultTimeout()
+	{
+		return Loader.getConfig().getInt( "sessions.defaultTimeout", 3600 );
+	}
+	
+	public static int getDefaultTimeoutWithLogin()
+	{
+		return Loader.getConfig().getInt( "sessions.defaultTimeoutWithLogin", 86400 );
+	}
+	
+	public static int getDefaultTimeoutWithRememberMe()
+	{
+		return Loader.getConfig().getInt( "sessions.defaultTimeoutRememberMe", 604800 );
+	}
+	
+	// int defaultLife = ( getSite().getYaml() != null ) ? getSite().getYaml().getInt( "sessions.lifetimeDefault", 604800 ) : 604800;
+	// timeout = CommonFunc.getEpoch() + Loader.getConfig().getInt( "sessions.defaultTimeout", 3600 );
 }

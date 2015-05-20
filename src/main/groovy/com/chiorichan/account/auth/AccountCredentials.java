@@ -6,7 +6,7 @@
  */
 package com.chiorichan.account.auth;
 
-import com.chiorichan.account.AccountInstance;
+import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
@@ -14,50 +14,56 @@ import com.chiorichan.account.lang.AccountResult;
 /**
  * Provides login credentials to the {@link AccountAuthenticator}
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public abstract class AccountCredentials
 {
-	private final AccountAuthenticator authenticator;
+	protected final AccountAuthenticator authenticator;
+	protected final AccountResult result;
+	protected final AccountMeta meta;
 	
-	AccountCredentials( AccountAuthenticator authenticator )
+	AccountCredentials( AccountAuthenticator authenticator, AccountResult result, AccountMeta meta )
 	{
 		this.authenticator = authenticator;
+		this.result = result;
+		this.meta = meta;
 	}
 	
-	public AccountAuthenticator getAuthenticator()
+	public final AccountAuthenticator getAuthenticator()
 	{
 		return authenticator;
 	}
 	
-	/**
-	 * Implemented on an Authenticator by Authenticator bases,<br>
-	 * ideally we try and get a relogin token from the {@link OneTimeTokenAuthentictor}.<br>
-	 * Which means you would use said Authenticator for relogin.
-	 * 
-	 * @return
-	 *         A relogin token
-	 * @throws AccountException
-	 *             {@link AccountResult.FEATURE_NOT_IMPLEMENTED} if not implemented by authenticator
-	 */
-	public String getToken() throws AccountException
+	public final AccountResult getResult()
 	{
-		throw new AccountException( AccountResult.FEATURE_NOT_IMPLEMENTED );
+		return result;
+	}
+	
+	public final AccountMeta getAccount()
+	{
+		return meta;
 	}
 	
 	/**
-	 * Used by Authenticators to attempt an Account login
+	 * Saves persistent variables into the session for later resuming
 	 * 
-	 * @return
-	 *         The Account Instance
-	 * @throws AccountException
-	 *             thrown when there was problems
+	 * @param perm
+	 *            The AccountPermissible to store the login credentials
 	 */
-	public abstract AccountInstance authenticate() throws AccountException;
-	
-	/**
-	 * Saves persistent variables into the session for later
-	 */
-	public abstract void remember( AccountPermissible perm );
+	public void makeResumable( AccountPermissible perm )
+	{
+		if ( result != AccountResult.LOGIN_SUCCESS )
+			throw new AccountException( "You can't make a login resumable if it failed login." ).setAccount( meta );
+		
+		try
+		{
+			perm.setVariable( "auth", "token" );
+			perm.setVariable( "acctId", meta.getAcctId() );
+			perm.setVariable( "token", AccountAuthenticator.TOKEN.issueToken( meta ) );
+		}
+		catch ( AccountException e )
+		{
+			throw e;
+		}
+	}
 }

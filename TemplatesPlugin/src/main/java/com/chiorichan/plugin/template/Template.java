@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.Validate;
+
 import com.chiorichan.Loader;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventHandler;
@@ -45,7 +47,13 @@ public class Template extends Plugin implements Listener
 	{
 		try
 		{
-			event.setErrorHtml( generateExceptionPage( event.getThrowable(), event.getRequest().getEvalFactory() ) );
+			EvalFactory factory = event.getRequest().getEvalFactory();
+			
+			// We initialize a temporary EvalFactory if the request did not contain one
+			if ( factory == null )
+				factory = EvalFactory.create( event.getRequest() );
+			
+			event.setErrorHtml( generateExceptionPage( event.getThrowable(), factory ) );
 		}
 		catch ( Exception e )
 		{
@@ -55,6 +63,9 @@ public class Template extends Plugin implements Listener
 	
 	public String generateExceptionPage( Throwable t, EvalFactory factory )
 	{
+		Validate.notNull( t );
+		Validate.notNull( factory );
+		
 		StringBuilder ob = new StringBuilder();
 		
 		String fileName = "";

@@ -31,6 +31,7 @@ import java.util.Set;
 
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.Validate;
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.ErrorCollector;
@@ -131,8 +132,10 @@ public class EvalFactory
 		timedInterrupt.setAnnotationParameters( timedInterruptParams );
 	}
 	
-	protected EvalFactory( EvalBinding binding )
+	private EvalFactory( EvalBinding binding )
 	{
+		Validate.notNull( binding, "The EvalBinding can't be null" );
+		
 		this.binding = binding;
 		setOutputStream( bs );
 	}
@@ -144,7 +147,7 @@ public class EvalFactory
 	
 	public static EvalFactory create( BindingProvider provider )
 	{
-		return provider.getEvalFactory();
+		return new EvalFactory( provider.getBinding() );
 	}
 	
 	public void setVariable( String key, Object val )

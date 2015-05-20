@@ -6,14 +6,14 @@
  */
 package com.chiorichan.account;
 
-import com.chiorichan.account.auth.AccountCredentials;
+import java.util.List;
+
 import com.chiorichan.account.lang.AccountResult;
 
 /**
  * Specifies which methods are required for a class to manage accounts
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public interface AccountCreator
 {
@@ -25,9 +25,11 @@ public interface AccountCreator
 	
 	void failedLogin( AccountMeta meta, AccountResult result );
 	
-	void successLogin( AccountMeta meta, AccountResult result );
+	void successLogin( AccountMeta meta );
 	
-	void preLogin( AccountMeta meta, AccountPermissible via, AccountCredentials creds );
+	void preLogin( AccountMeta meta, AccountPermissible via, String acctId, Object... creds );
 	
 	String getDisplayName( AccountMeta meta );
+	
+	List<String> getLoginKeys();
 }

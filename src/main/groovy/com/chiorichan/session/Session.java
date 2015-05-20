@@ -28,6 +28,8 @@ import com.chiorichan.site.Site;
 import com.chiorichan.util.CommonFunc;
 import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.WeakReferenceList;
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -36,8 +38,7 @@ import com.google.common.collect.Sets;
  * This class is used to carry data that is to be persistent from request to request.
  * If you need to sync data across requests then we recommend using Session Vars for Security.
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public final class Session extends AccountPermissible implements Listener
 {
@@ -59,85 +60,95 @@ public final class Session extends AccountPermissible implements Listener
 	final Map<String, Object> globals = Maps.newLinkedHashMap();
 	
 	/**
-	 * Persistent session variables<br>
-	 * Session variables will live outside of the sessions's life
-	 */
-	final Map<String, String> variables = Maps.newLinkedHashMap();
-	
-	/**
 	 * History of changes made to the variables since last {@link #save()}
 	 */
-	Set<String> dataChangeHistory = Sets.newHashSet();
+	private Set<String> dataChangeHistory = Sets.newHashSet();
 	
+	/**
+	 * Holds a set of known IP Addresses
+	 */
+	private Set<String> knownIps = Sets.newHashSet();
 	
 	/**
 	 * Reference to each wrapper that is utilizing this session<br>
 	 * We use a WeakReference so they can still be reclaimed by the GC
 	 */
-	final WeakReferenceList<SessionWrapper> wrappers = new WeakReferenceList<SessionWrapper>();
+	private final WeakReferenceList<SessionWrapper> wrappers = new WeakReferenceList<SessionWrapper>();
 	
 	/**
 	 * The epoch for when this session is to be destroyed
 	 */
-	int timeout = 0;
+	private int timeout = 0;
 	
 	/**
 	 * Number of times this session has been requested<br>
 	 * More requests mean longer TTL
 	 */
-	int requestCnt = 0;
+	private int requestCnt = 0;
 	
 	/**
 	 * The sessionKey of this session
 	 */
-	String sessionKey = SessionManager.getDefaultSessionName();
+	private String sessionKey = SessionManager.getDefaultSessionName();
 	
 	/**
 	 * The sessionId of this session
 	 */
-	String sessionId = "";
+	private String sessionId = "";
 	
 	/**
 	 * The Session Cookie
 	 */
-	HttpCookie sessionCookie;
+	private HttpCookie sessionCookie;
 	
 	/**
 	 * Limits the number of times a session is logged by tracking the last session
 	 * XXX This might be obsolete once new Log Engine is implemented
 	 */
-	static String lastSession = "";
+	private static String lastSession = "";
 	
 	/**
 	 * Limits the number of times a session is logged by tracking the time since last logging
 	 * XXX This might be obsolete once new Log Engine is implemented
 	 */
-	static long lastTime = CommonFunc.getEpoch();
+	private static long lastTime = CommonFunc.getEpoch();
 	
 	/**
 	 * Tracks session sessionCookies
 	 */
-	Map<String, HttpCookie> sessionCookies = Maps.newLinkedHashMap();
+	private Map<String, HttpCookie> sessionCookies = Maps.newLinkedHashMap();
 	
 	/**
 	 * The site this session is bound to
 	 */
-	Site site;
-	
-	boolean isValid = true;
+	private Site site = Loader.getSiteManager().getDefaultSite();
 	
 	Session( SessionManager manager, SessionData data ) throws SessionException
 	{
 		this.manager = manager;
-		// Session Keys?
-		this.sessionId = data.sessionId;
 		this.data = data;
-		this.variables.putAll( data.data );
+		
+		this.sessionId = data.sessionId;
+		
+		sessionKey = data.sessionName;
+		timeout = data.timeout;
+		knownIps.addAll( Splitter.on( "|" ).splitToList( data.ipAddr ) );
+		site = Loader.getSiteManager().getSiteById( data.site );
+		
+		if ( site == null )
+		{
+			site = Loader.getSiteManager().getDefaultSite();
+			data.site = site.getSiteId();
+		}
 		
 		timeout = data.timeout;
 		
 		if ( timeout > 0 && timeout < CommonFunc.getEpoch() )
-			throw new SessionException( "The session '" + sessionId + "' expired at epoch '" + timeout + "', might have expired while offline or this is a bug!" );
+		{
+			SessionManager.getLogger().warning( "The session '" + sessionId + "' expired at epoch '" + timeout + "', might have expired while offline or this is a bug!" );
+			data.destroy();
+			return;
+		}
 		
 		/*
 		 * TODO Figure out how to track if a particular wrapper's IP changes
@@ -155,26 +166,30 @@ public final class Session extends AccountPermissible implements Listener
 		 * }
 		 */
 		
-		List<Session> sessions = Loader.getSessionManager().getSessionsByIp( data.ipAddr );
-		if ( sessions.size() > Loader.getConfig().getInt( "sessions.maxSessionsPerIP" ) )
-		{
-			long oldestTime = CommonFunc.getEpoch();
-			Session oldest = null;
-			
-			for ( Session s : sessions )
+		if ( knownIps != null && !knownIps.isEmpty() )
+			for ( String ip : knownIps )
 			{
-				if ( s != this && s.getTimeout() < oldestTime )
+				List<Session> sessions = Loader.getSessionManager().getSessionsByIp( ip );
+				if ( sessions.size() > Loader.getConfig().getInt( "sessions.maxSessionsPerIP" ) )
 				{
-					oldest = s;
-					oldestTime = s.getTimeout();
+					long oldestTime = CommonFunc.getEpoch();
+					Session oldest = null;
+					
+					for ( Session s : sessions )
+					{
+						if ( s != this && s.getTimeout() < oldestTime )
+						{
+							oldest = s;
+							oldestTime = s.getTimeout();
+						}
+					}
+					
+					if ( oldest != null )
+						oldest.destroy();
 				}
 			}
-			
-			if ( oldest != null )
-				oldest.destroy();
-		}
 		
-		if ( !lastSession.equals( getSessId() ) || CommonFunc.getEpoch() - lastTime > 5 )
+		if ( lastSession == null || !lastSession.equals( getSessId() ) || CommonFunc.getEpoch() - lastTime > 5 )
 		{
 			lastSession = getSessId();
 			lastTime = CommonFunc.getEpoch();
@@ -186,12 +201,16 @@ public final class Session extends AccountPermissible implements Listener
 		}
 		
 		initialized();
+		
+		processSessionCookie();
 	}
 	
 	@Override
 	public void successfulLogin()
 	{
-		
+		account.metadata().context().credentials().makeResumable( this );
+		rearmTimeout();
+		saveWithoutException();
 	}
 	
 	@Override
@@ -206,15 +225,12 @@ public final class Session extends AccountPermissible implements Listener
 		
 		if ( sessionCookie == null )
 		{
-			int defaultLife = ( getSite().getYaml() != null ) ? getSite().getYaml().getInt( "sessions.lifetimeDefault", 604800 ) : 604800;
-			timeout = CommonFunc.getEpoch() + Loader.getConfig().getInt( "sessions.defaultTimeout", 3600 );
-			
 			if ( sessionId == null || sessionId.isEmpty() )
 				sessionId = Loader.getSessionManager().sessionIdBaker();
 			
 			sessionCookie = getSite().createSessionCookie( sessionId );
 			
-			sessionCookie.setMaxAge( defaultLife );
+			rearmTimeout();
 			
 			try
 			{
@@ -247,6 +263,7 @@ public final class Session extends AccountPermissible implements Listener
 	public void setSite( Site site )
 	{
 		this.site = site;
+		data.site = site.getSiteId();
 	}
 	
 	/**
@@ -321,7 +338,7 @@ public final class Session extends AccountPermissible implements Listener
 	
 	public void rearmTimeout()
 	{
-		int defaultTimeout = Loader.getConfig().getInt( "sessions.defaultTimeout", 3600 );
+		int defaultTimeout = SessionManager.getDefaultTimeout();
 		
 		// Grant the timeout an additional 10 minutes per request, capped at one hour or 6 requests.
 		requestCnt++;
@@ -329,17 +346,21 @@ public final class Session extends AccountPermissible implements Listener
 		// Grant the timeout an additional 2 hours for having a user logged in.
 		if ( getAccountState() )
 		{
-			defaultTimeout = Loader.getConfig().getInt( "sessions.defaultTimeoutWithLogin", 86400 );
+			defaultTimeout = SessionManager.getDefaultTimeoutWithLogin();
 			
 			if ( StringFunc.isTrue( getVariable( "remember" ) ) )
-				defaultTimeout = Loader.getConfig().getInt( "sessions.defaultTimeoutRememberMe", 604800 );
+				defaultTimeout = SessionManager.getDefaultTimeoutWithRememberMe();
 			
 			if ( Loader.getConfig().getBoolean( "allowNoTimeoutPermission" ) && checkPermission( "com.chiorichan.noTimeout" ).isTrue() )
 				defaultTimeout = Integer.MAX_VALUE;
 		}
 		
 		timeout = CommonFunc.getEpoch() + defaultTimeout + ( Math.min( requestCnt, 6 ) * 600 );
-		sessionCookie.setExpiration( timeout );
+		
+		data.timeout = timeout;
+		
+		if ( sessionCookie != null )
+			sessionCookie.setExpiration( timeout );
 	}
 	
 	public long getTimeout()
@@ -348,12 +369,12 @@ public final class Session extends AccountPermissible implements Listener
 	}
 	
 	/**
-	 * This method is only to be used to make this session unremovable from memory by the session garbage collector. Be
-	 * sure that you rearm the timeout at some point to prevent build ups in memory.
+	 * Removes the session expiration and prevents the Session Manager from unloading or destroying sessions
 	 */
-	public void infiniTimeout()
+	public void noTimeout()
 	{
 		timeout = 0;
+		data.timeout = 0;
 	}
 	
 	/**
@@ -416,7 +437,7 @@ public final class Session extends AccountPermissible implements Listener
 	
 	public Map<String, String> getDataMap()
 	{
-		return variables;
+		return data.data;
 	}
 	
 	// TODO Make abstract
@@ -430,6 +451,18 @@ public final class Session extends AccountPermissible implements Listener
 		data.reload();
 	}
 	
+	public void saveWithoutException()
+	{
+		try
+		{
+			save();
+		}
+		catch ( SessionException e )
+		{
+			SessionManager.getLogger().severe( "We had a problem saving the current session, changes were not saved to the datastore!", e );
+		}
+	}
+	
 	public void save() throws SessionException
 	{
 		save( false );
@@ -439,6 +472,11 @@ public final class Session extends AccountPermissible implements Listener
 	{
 		if ( force || changesMade() )
 		{
+			data.sessionName = sessionKey;
+			data.sessionId = sessionId;
+			
+			data.ipAddr = Joiner.on( "|" ).join( knownIps );
+			
 			data.save();
 			dataChangeHistory.clear();
 		}
@@ -454,6 +492,8 @@ public final class Session extends AccountPermissible implements Listener
 		wrappers.clear();
 		
 		timeout = CommonFunc.getEpoch();
+		data.timeout = CommonFunc.getEpoch();
+		
 		sessionCookie.setMaxAge( 0 );
 		
 		data.destroy();
@@ -497,6 +537,8 @@ public final class Session extends AccountPermissible implements Listener
 		assert wrapper.getSession() == this : "SessionWrapper does not contain proper reference to this Session";
 		
 		wrappers.add( wrapper );
+		
+		knownIps.add( wrapper.getIpAddr() );
 	}
 	
 	@Override
@@ -529,5 +571,31 @@ public final class Session extends AccountPermissible implements Listener
 	{
 		for ( SessionWrapper sw : wrappers )
 			sw.send( sender, obj );
+	}
+	
+	// TODO Sessions can outlive a login.
+	// TODO Sessions can have an expiration in 7 days and a login can have an expiration of 24 hours.
+	// TODO Remember should probably make it so logins last as long as the session does. Hmmmmmm
+	
+	/**
+	 * Sets if the user login should be remembered for a longer amount of time
+	 * 
+	 * @param remember
+	 *            Should we?
+	 */
+	public void remember( boolean remember )
+	{
+		setVariable( "remember", remember ? "true" : "false" );
+		rearmTimeout();
+	}
+	
+	public void removeWrapper( SessionWrapper wrapper )
+	{
+		wrappers.remove( wrapper );
+	}
+	
+	void putSessionCookie( String key, HttpCookie cookie )
+	{
+		sessionCookies.put( key, cookie );
 	}
 }

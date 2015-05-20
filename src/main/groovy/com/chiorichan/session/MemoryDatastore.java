@@ -24,17 +24,20 @@ public class MemoryDatastore extends SessionDatastore
 	}
 	
 	@Override
-	SessionData createSession( String sessionId ) throws SessionException
+	SessionData createSession( String sessionId, SessionWrapper wrapper ) throws SessionException
 	{
-		return new MemorySessionData( sessionId );
+		return new MemorySessionData( sessionId, wrapper );
 	}
 	
 	class MemorySessionData extends SessionData
 	{
-		MemorySessionData( String sessionId )
+		MemorySessionData( String sessionId, SessionWrapper wrapper )
 		{
-			super( MemoryDatastore.this );
+			super( MemoryDatastore.this, false );
 			this.sessionId = sessionId;
+			
+			site = wrapper.getSite().getSiteId();
+			ipAddr = wrapper.getIpAddr();
 		}
 		
 		@Override

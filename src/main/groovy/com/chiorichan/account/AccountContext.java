@@ -6,10 +6,12 @@
  */
 package com.chiorichan.account;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
+import com.chiorichan.account.auth.AccountCredentials;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.google.common.collect.Maps;
@@ -22,40 +24,49 @@ import com.google.common.collect.Maps;
  */
 public class AccountContext
 {
-	private final Map<String, Object> rawMeta = Maps.newHashMap();
-	private final AccountCreator creator;
-	private final AccountType type;
-	private boolean keepLoaded = false;
-	private String acctId = null;
-	private String siteId = null;
+	/**
+	 * Contains a list of keys that can be used to match logins
+	 */
+	protected final List<String> loginKeys;
 	
-	public AccountContext( AccountCreator creator, AccountType type, String acctId, String siteId, boolean keepLoaded )
+	/**
+	 * Used to remember the last instance of AccountCredentuals used
+	 */
+	AccountCredentials credentials = null;
+	
+	protected final Map<String, Object> rawMeta = Maps.newHashMap();
+	protected final AccountCreator creator;
+	protected final AccountType type;
+	protected boolean keepLoaded = false;
+	protected String acctId = null;
+	protected String siteId = null;
+	
+	protected AccountContext( AccountCreator creator, AccountType type, String acctId, String siteId, boolean keepLoaded )
 	{
 		this( creator, type, acctId, siteId );
 		this.keepLoaded = keepLoaded;
 	}
 	
-	public AccountContext( AccountCreator creator, AccountType type, String acctId, String siteId )
+	protected AccountContext( AccountCreator creator, AccountType type, String acctId, String siteId )
 	{
 		this( creator, type );
 		this.acctId = acctId;
 		this.siteId = siteId;
 	}
 	
-	public AccountContext( AccountCreator creator, AccountType type )
+	protected AccountContext( AccountCreator creator, AccountType type )
 	{
 		this.creator = creator;
 		this.type = type;
+		
+		loginKeys = new ArrayList<String>( creator.getLoginKeys() );
+		
+		loginKeys.add( "acctId" );
 	}
 	
-	public void setAcctId( String acctId )
+	public AccountCredentials credentials()
 	{
-		this.acctId = acctId;
-	}
-	
-	public void setSiteId( String siteId )
-	{
-		this.siteId = siteId;
+		return credentials;
 	}
 	
 	public void setKeepLoaded( boolean keepLoaded )
@@ -100,13 +111,6 @@ public class AccountContext
 	public boolean keepLoaded()
 	{
 		return keepLoaded;
-	}
-	
-	public void setValues( Map<String, Object> meta )
-	{
-		for ( Entry<String, Object> entry : meta.entrySet() )
-			if ( !AccountMeta.IGNORED_KEYS.contains( entry.getKey() ) )
-				rawMeta.put( entry.getKey(), entry.getValue() );
 	}
 	
 	public Map<String, Object> getValues()

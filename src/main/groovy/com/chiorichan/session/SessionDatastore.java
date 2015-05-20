@@ -18,5 +18,5 @@ public abstract class SessionDatastore
 {
 	abstract List<SessionData> getSessions() throws SessionException;
 	
-	abstract SessionData createSession( String sessionId ) throws SessionException;
+	abstract SessionData createSession( String sessionId, SessionWrapper wrapper ) throws SessionException;
 }

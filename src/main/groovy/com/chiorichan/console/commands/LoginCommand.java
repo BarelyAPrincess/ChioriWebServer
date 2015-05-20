@@ -81,7 +81,7 @@ class LoginCommand extends BuiltinCommand
 			{
 				if ( user != null && pass != null )
 				{
-					AccountResult result = handler.getPersistence().getSession().login( handler.getPersistence().getSession(), AccountAuthenticator.PASSWORD.credentials( user, pass ) );
+					AccountResult result = handler.getPersistence().getSession().login( AccountAuthenticator.PASSWORD, user, pass );
 					
 					if ( result != AccountResult.LOGIN_SUCCESS )
 						throw new AccountException( result );
@@ -102,9 +102,7 @@ class LoginCommand extends BuiltinCommand
 				handler.getPersistence().send( ConsoleColor.YELLOW + l.getMessage() );
 				
 				if ( handler.getPersistence().getSession().account() == null || handler.getPersistence().getSession().account().metadata() != AccountType.ACCOUNT_NONE )
-				{
-					handler.getPersistence().getSession().login( handler.getPersistence().getSession(), AccountAuthenticator.NULL.credentials( AccountType.ACCOUNT_NONE ) );
-				}
+					handler.getPersistence().getSession().login( AccountAuthenticator.NULL, AccountType.ACCOUNT_NONE.getAcctId() );
 				
 				return true;
 			}

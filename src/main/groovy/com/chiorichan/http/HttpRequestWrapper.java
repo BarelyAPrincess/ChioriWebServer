@@ -56,6 +56,11 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+/**
+ * Wraps the Netty HttpRequest and provides shortcut methods
+ * 
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
+ */
 public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 {
 	/**
@@ -222,7 +227,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		
 		String username = getArgument( "user" );
 		String password = getArgument( "pass" );
-		// String remember = getArgumentBoolean( "remember" ) ? "true" : "false"; -- Implement This
+		boolean remember = getArgumentBoolean( "remember" );
 		String target = getArgument( "target" );
 		
 		String loginPost = ( target == null || target.isEmpty() ) ? getSite().getYaml().getString( "scripts.login-post", "/" ) : target;
@@ -235,7 +240,8 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			AccountResult result;
 			try
 			{
-				result = session.login( session, AccountAuthenticator.PASSWORD.credentials( username, password ) );
+				result = session.login( AccountAuthenticator.PASSWORD, username, password );
+				
 			}
 			catch ( AccountException e )
 			{
@@ -245,7 +251,10 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			if ( result == AccountResult.LOGIN_SUCCESS )
 			{
 				Account acct = result.getAccount();
-				SessionManager.getLogger().info( ConsoleColor.GREEN + "Successful Login: [id='" + acct.getAcctId() + "',siteId='" + acct.getSiteId() + "',displayName='" + acct.getDisplayName() + "',ipAddrs='" + acct.getIpAddresses() + "']" );
+				
+				session.remember( remember );
+				
+				SessionManager.getLogger().info( ConsoleColor.GREEN + "Successful Login: [id='" + acct.getAcctId() + "',siteId='" + acct.getSiteId() + "',authenticator='plaintext',ipAddrs='" + acct.getIpAddresses() + "']" );
 				getResponse().sendRedirect( loginPost );
 			}
 			else
@@ -258,7 +267,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 					msg = result.getThrowable().getMessage();
 				}
 				
-				AccountManager.getLogger().warning( ConsoleColor.GREEN + "Failed Login [id='" + username + "',hasPassword='" + ( password != null && !password.isEmpty() ) + "',reason='" + msg + "']" );
+				AccountManager.getLogger().warning( ConsoleColor.GREEN + "Failed Login [id='" + username + "',hasPassword='" + ( password != null && !password.isEmpty() ) + "',authenticator='plaintext'`,reason='" + msg + "']" );
 				getResponse().sendRedirect( loginForm + "?msg=" + result.getMessage() + ( ( target == null || target.isEmpty() ) ? "" : "&target=" + target ) );
 			}
 		}

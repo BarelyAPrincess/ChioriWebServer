@@ -16,7 +16,6 @@ import java.util.Map;
 
 import org.apache.commons.io.filefilter.FileFilterUtils;
 
-import com.chiorichan.Loader;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.util.FileFunc;
@@ -59,9 +58,9 @@ public class FileDatastore extends SessionDatastore
 	}
 	
 	@Override
-	SessionData createSession( String sessionId ) throws SessionException
+	SessionData createSession( String sessionId, SessionWrapper wrapper ) throws SessionException
 	{
-		return new FileSessionData( sessionId );
+		return new FileSessionData( sessionId, wrapper );
 	}
 	
 	public static File getSessionsDirectory()
@@ -80,16 +79,19 @@ public class FileDatastore extends SessionDatastore
 		
 		FileSessionData( File file ) throws SessionException
 		{
-			super( FileDatastore.this );
+			super( FileDatastore.this, true );
 			this.file = file;
 			
 			readSession();
 		}
 		
-		FileSessionData( String sessionId ) throws SessionException
+		FileSessionData( String sessionId, SessionWrapper wrapper ) throws SessionException
 		{
-			super( FileDatastore.this );
+			super( FileDatastore.this, false );
 			this.sessionId = sessionId;
+			
+			ipAddr = wrapper.getIpAddr();
+			site = wrapper.getSite().getSiteId();
 			
 			save();
 		}
@@ -116,7 +118,7 @@ public class FileDatastore extends SessionDatastore
 				sessionName = yaml.getString( "sessionName", sessionName );
 			sessionId = yaml.getString( "sessionId", sessionId );
 			
-			site = Loader.getSiteManager().getSiteById( yaml.getString( "site" ) );
+			site = yaml.getString( "site" );
 			
 			if ( !yaml.getString( "data", "" ).isEmpty() )
 			{

@@ -55,8 +55,10 @@ public abstract class AccountAuthenticator
 		Validate.notEmpty( name );
 		
 		for ( AccountAuthenticator aa : authenticators )
+		{
 			if ( name.equalsIgnoreCase( aa.name ) )
 				return ( T ) aa;
+		}
 		return null;
 	}
 	
@@ -65,13 +67,28 @@ public abstract class AccountAuthenticator
 	AccountAuthenticator( String name )
 	{
 		this.name = name;
+		authenticators.add( this );
 	}
 	
 	/**
-	 * Attempts to resume an Account Login using an auth method saved by this Authenticator
+	 * Used to resume a saved session login
 	 * 
-	 * @param accountPermissible
-	 *            The permissible holding the needs variables to resume
+	 * @param acctId
+	 *            The Account Id
+	 * @param perm
+	 *            An instance of the {@link AccountPermissible}
+	 * @return
 	 */
-	public abstract AccountCredentials resume( AccountPermissible perm );
+	public abstract AccountCredentials authorize( String acctId, AccountPermissible perm );
+	
+	/**
+	 * Used to check Account Credentials prior to creating the Account Instance
+	 * 
+	 * @param acctId
+	 *            The Account Id
+	 * @param creds
+	 *            The Credentials to use for authentication
+	 * @return An instance of the Account Credentials
+	 */
+	public abstract AccountCredentials authorize( String acctId, Object... creds );
 }

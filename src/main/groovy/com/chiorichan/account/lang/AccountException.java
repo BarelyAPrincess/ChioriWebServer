@@ -103,6 +103,6 @@ public class AccountException extends RuntimeException
 	
 	public AccountContext getContext()
 	{
-		return context == null && acct != null ? acct.getContext() : context;
+		return context == null && acct != null ? acct.context() : context;
 	}
 }

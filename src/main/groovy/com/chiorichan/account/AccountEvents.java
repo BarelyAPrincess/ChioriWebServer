@@ -15,7 +15,6 @@ import com.chiorichan.account.event.AccountKickEvent;
 import com.chiorichan.account.event.AccountLoadEvent;
 import com.chiorichan.account.event.AccountLookupEvent;
 import com.chiorichan.account.event.AccountMessageEvent;
-import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventCreator;

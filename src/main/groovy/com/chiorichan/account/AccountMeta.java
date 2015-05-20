@@ -314,7 +314,13 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 		return Loader.getSiteManager().getSiteById( siteId );
 	}
 	
-	public AccountContext getContext()
+	/**
+	 * Returns the {@link AccountContext} responsible for our existence
+	 * 
+	 * @return
+	 *         Instance of AccountContext
+	 */
+	public AccountContext context()
 	{
 		return context;
 	}

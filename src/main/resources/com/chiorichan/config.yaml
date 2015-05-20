@@ -85,8 +85,20 @@ accounts:
   singleLogin: false
   singleLoginMessage: You logged in from another location.
   debug: false
-  sqlEnabled: false
-  fileEnabled: true
+  sqlType:
+    enabled: false
+    table: accounts
+    fields:
+      - username
+      - email
+      - phone
+  fileType:
+    enabled: true
+    filebase: accounts
+    fields:
+      - username
+      - email
+      - phone
 framework:
   sites:
     defaultTitle: Unnamed Site
