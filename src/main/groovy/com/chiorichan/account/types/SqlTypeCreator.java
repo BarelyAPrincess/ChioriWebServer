@@ -96,8 +96,6 @@ public class SqlTypeCreator extends AccountTypeCreator
 				}
 			}
 			
-			Loader.getLogger().debug( "To Save: " + toSave );
-			
 			if ( newColumns.size() > 0 )
 				for ( Entry<String, Class<?>> c : newColumns.entrySet() )
 					try

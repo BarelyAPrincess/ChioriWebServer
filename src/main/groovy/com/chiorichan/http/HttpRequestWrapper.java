@@ -322,6 +322,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		for ( HttpCookie cookie : serverCookies )
 			if ( cookie.getKey().equals( key ) )
 				return cookie;
+		
 		return null;
 	}
 	

@@ -83,11 +83,13 @@ public final class AccountInstance implements Account
 		return metadata.isOp();
 	}
 	
+	@Override
 	public PermissionResult checkPermission( String perm )
 	{
 		return metadata.getPermissibleEntity().checkPermission( perm );
 	}
 	
+	@Override
 	public PermissionResult checkPermission( Permission perm )
 	{
 		return metadata.getPermissibleEntity().checkPermission( perm );

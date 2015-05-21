@@ -9,9 +9,4 @@ sessions:
   lifetimeRemember: 157680000
   lifetimeMax: -1
   persistenceMethod: cookie
-cookies:
-  name: sessionId
-  path: /
-  domain: ""
-  secure: false
-  httpOnly: true
+  keyName: sessionId

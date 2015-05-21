@@ -39,6 +39,7 @@ import com.chiorichan.event.Listener;
 import com.chiorichan.event.server.ServerRunLevelEvent;
 import com.chiorichan.lang.InvalidDescriptionException;
 import com.chiorichan.lang.InvalidPluginException;
+import com.chiorichan.lang.PluginNotFoundException;
 import com.chiorichan.lang.UnknownDependencyException;
 import com.chiorichan.maven.MavenLibrary;
 import com.chiorichan.maven.MavenUtils;
@@ -566,7 +567,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 		return plugins.toArray( new Plugin[0] );
 	}
 	
-	public Plugin getPluginbyClassname( String className )
+	public Plugin getPluginByClassname( String className ) throws PluginNotFoundException
 	{
 		try
 		{
@@ -581,16 +582,29 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 			e.printStackTrace();
 		}
 		
-		return null;
+		throw new PluginNotFoundException( "We could not find a plugin with the classname '" + className + "', maybe it's not loaded." );
 	}
 	
-	public Plugin getPluginbyName( String pluginPath )
+	public Plugin getPluginByClassnameWithoutException( String className )
+	{
+		try
+		{
+			return getPluginByClassname( className );
+		}
+		catch ( PluginNotFoundException e )
+		{
+			getLogger().warning( e.getMessage() );
+			return null;
+		}
+	}
+	
+	public Plugin getPluginByName( String pluginName ) throws PluginNotFoundException
 	{
 		try
 		{
 			for ( Plugin plugin1 : getPlugins() )
 			{
-				if ( plugin1.getClass().getCanonicalName().equals( pluginPath ) || plugin1.getName().equalsIgnoreCase( pluginPath ) )
+				if ( plugin1.getClass().getCanonicalName().equals( pluginName ) || plugin1.getName().equalsIgnoreCase( pluginName ) )
 					return plugin1;
 			}
 		}
@@ -599,7 +613,20 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 			e.printStackTrace();
 		}
 		
-		return null;
+		throw new PluginNotFoundException( "We could not find a plugin by the name '" + pluginName + "', maybe it's not loaded." );
+	}
+	
+	public Plugin getPluginByNameWithoutException( String pluginName )
+	{
+		try
+		{
+			return getPluginByName( pluginName );
+		}
+		catch ( PluginNotFoundException e )
+		{
+			getLogger().warning( e.getMessage() );
+			return null;
+		}
 	}
 	
 	private void loadPlugin( Plugin plugin )

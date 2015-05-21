@@ -788,7 +788,7 @@ public class Site
 	}
 	
 	/**
-	 * TODO Make it so site config can change the location the the temp directory.
+	 * TODO Make it so site configuration can change the location the the temp directory.
 	 * 
 	 * @return The temp directory for this site.
 	 */
@@ -827,14 +827,14 @@ public class Site
 	}
 	
 	/**
-	 * Gets the site configured Session Key from config.
+	 * Gets the site configured Session Key from configuration.
 	 * 
 	 * @return
 	 *         The Session Key
 	 */
 	public String getSessionKey()
 	{
-		String key = config.getString( "cookies.name" );
+		String key = config.getString( "sessions.keyName" );
 		if ( key == null )
 			return SessionManager.getDefaultSessionName();
 		return "_ws" + WordUtils.capitalize( key );
@@ -853,9 +853,6 @@ public class Site
 	
 	public HttpCookie createSessionCookie( String sessionId )
 	{
-		String domain = config.getString( "cookies.domain" );
-		String path = config.getString( "cookies.path" );
-		
-		return new HttpCookie( getSessionKey(), sessionId ).setDomain( domain ).setPath( path ).setSecure( config.getBoolean( "cookies.secure" ) ).setHttpOnly( config.getBoolean( "cookies.httpOnly" ) );
+		return new HttpCookie( getSessionKey(), sessionId ).setDomain( "." + getDomain() ).setPath( "/" ).setHttpOnly( true );
 	}
 }

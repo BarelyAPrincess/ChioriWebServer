@@ -22,7 +22,9 @@ import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.Loader;
 import com.chiorichan.permission.PermissibleEntity;
+import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionManager;
+import com.chiorichan.permission.PermissionResult;
 import com.chiorichan.site.Site;
 import com.chiorichan.util.ObjectFunc;
 import com.google.common.base.Joiner;
@@ -346,5 +348,17 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 	public void send( Account sender, Object obj )
 	{
 		instance().send( sender, obj );
+	}
+	
+	@Override
+	public PermissionResult checkPermission( String perm )
+	{
+		return getPermissibleEntity().checkPermission( perm );
+	}
+	
+	@Override
+	public PermissionResult checkPermission( Permission perm )
+	{
+		return getPermissibleEntity().checkPermission( perm );
 	}
 }

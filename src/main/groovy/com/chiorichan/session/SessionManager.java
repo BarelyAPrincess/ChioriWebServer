@@ -67,7 +67,7 @@ public class SessionManager implements TaskCreator, ServerManager
 			{
 				try
 				{
-					sessions.add( new Session( this, data ) );
+					sessions.add( new Session( data ) );
 				}
 				catch ( SessionException e )
 				{
@@ -103,7 +103,6 @@ public class SessionManager implements TaskCreator, ServerManager
 						try
 						{
 							var1.destroy();
-							sessions.remove( var1 );
 						}
 						catch ( SessionException e )
 						{
@@ -193,7 +192,7 @@ public class SessionManager implements TaskCreator, ServerManager
 	
 	public Session createSession( SessionWrapper wrapper ) throws SessionException
 	{
-		return new Session( this, datastore.createSession( sessionIdBaker(), wrapper ) );
+		return new Session( datastore.createSession( sessionIdBaker(), wrapper ) );
 	}
 	
 	public String sessionIdBaker()

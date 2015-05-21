@@ -8,6 +8,8 @@ package com.chiorichan.account;
 
 import java.util.Set;
 
+import com.chiorichan.permission.Permission;
+import com.chiorichan.permission.PermissionResult;
 import com.chiorichan.site.Site;
 
 /**
@@ -112,4 +114,14 @@ public interface Account
 	void send( Object obj );
 	
 	void send( Account sender, Object obj );
+	
+	/**
+	 * Checks the current permission of this {@link AccountPermissible} to the {@link Permission}
+	 */
+	PermissionResult checkPermission( String perm );
+	
+	/**
+	 * Checks the current permission of this {@link AccountPermissible} to the {@link Permission}
+	 */
+	PermissionResult checkPermission( Permission perm );
 }

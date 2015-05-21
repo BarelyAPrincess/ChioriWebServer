@@ -43,11 +43,6 @@ import com.google.common.collect.Sets;
 public final class Session extends AccountPermissible implements Listener
 {
 	/**
-	 * The session manager, DUH!
-	 */
-	SessionManager manager;
-	
-	/**
 	 * The underlying data for this session<br>
 	 * Preserves access to the datastore and it's methods {@link SessionData#save()}, {@link SessionData#reload()}, {@link SessionData#destroy()}
 	 */
@@ -123,9 +118,8 @@ public final class Session extends AccountPermissible implements Listener
 	 */
 	private Site site = Loader.getSiteManager().getDefaultSite();
 	
-	Session( SessionManager manager, SessionData data ) throws SessionException
+	Session( SessionData data ) throws SessionException
 	{
-		this.manager = manager;
 		this.data = data;
 		
 		this.sessionId = data.sessionId;
@@ -248,11 +242,6 @@ public final class Session extends AccountPermissible implements Listener
 			sessionCookie.setKey( getSite().getSessionKey() );
 			sessionCookies.put( oldKey, new HttpCookie( oldKey, "" ).setExpiration( 0 ) ); // We do this so the invalid Session Key is expired and removed from the browser
 		}
-	}
-	
-	public SessionManager manager()
-	{
-		return manager;
 	}
 	
 	public AccountInstance account()
@@ -378,6 +367,14 @@ public final class Session extends AccountPermissible implements Listener
 	}
 	
 	/**
+	 * See {@link #getAccountState()}
+	 */
+	public boolean getAcctState()
+	{
+		return getAccountState();
+	}
+	
+	/**
 	 * Reports if the state of the Account login
 	 * 
 	 * @return Is there an Account logged in?
@@ -497,6 +494,8 @@ public final class Session extends AccountPermissible implements Listener
 		sessionCookie.setMaxAge( 0 );
 		
 		data.destroy();
+		
+		SessionManager.sessions.remove( this );
 	}
 	
 	@Override

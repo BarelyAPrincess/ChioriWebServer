@@ -445,10 +445,7 @@ public class HttpResponseWrapper
 		{
 			for ( HttpCookie c : request.getSession().getCookies().values() )
 				if ( c.needsUpdating() )
-				{
-					// Loader.getLogger().debug( "Setting Cookie: " + c.toHeaderValue() );
 					h.add( "Set-Cookie", c.toHeaderValue() );
-				}
 			
 			if ( session.getSessionCookie().needsUpdating() )
 				h.add( "Set-Cookie", session.getSessionCookie().toHeaderValue() );
@@ -456,10 +453,6 @@ public class HttpResponseWrapper
 		
 		if ( h.get( "Server" ) == null )
 			h.add( "Server", Versioning.getProduct() + " Version " + Versioning.getVersion() );
-		
-		// NOTE: Why did I make it check this again?
-		// if ( h.get( "Content-Type" ) == null )
-		// h.add( "Content-Type", httpContentType );
 		
 		// This might be a temporary measure - TODO Properly set the charset for each request.
 		h.set( "Content-Type", httpContentType + "; charset=" + encoding.name() );

@@ -38,11 +38,9 @@ public class HttpCookie
 	{
 		this( cookie.getName(), cookie.getValue() );
 		setDomain( cookie.getDomain() );
-		// setMaxAge( cookie.getMaxAge() );
-		setExpiration( cookie.getMaxAge() ); // Which is better?
+		setExpiration( cookie.getMaxAge() );
 		setPath( cookie.getPath() );
 		needsUpdating = false;
-		
 	}
 	
 	public boolean compareTo( HttpCookie var1 )
@@ -110,11 +108,21 @@ public class HttpCookie
 		return this;
 	}
 	
+	public boolean isDomainSet()
+	{
+		return domain != null || !domain.isEmpty();
+	}
+	
 	public HttpCookie setDomain( String domain )
 	{
 		needsUpdating = true;
 		this.domain = domain == null ? "" : domain.toLowerCase();
 		return this;
+	}
+	
+	public boolean isPathSet()
+	{
+		return path != null || !path.isEmpty();
 	}
 	
 	public HttpCookie setPath( String path )
@@ -155,6 +163,11 @@ public class HttpCookie
 			additional += "; HttpOnly";
 		
 		return key + "=" + value + additional;
+	}
+	
+	public boolean isSecure()
+	{
+		return secure;
 	}
 	
 	public HttpCookie setSecure( boolean secure )
