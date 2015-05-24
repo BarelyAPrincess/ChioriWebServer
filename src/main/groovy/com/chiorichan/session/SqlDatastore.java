@@ -161,11 +161,12 @@ public class SqlDatastore extends SessionDatastore
 		{
 			try
 			{
-				Loader.getDatabase().queryUpdate( "DELETE FROM `sessions` WHERE `sessionId` = '" + sessionId + "';" );
+				if ( Loader.getDatabase().queryUpdate( "DELETE FROM `sessions` WHERE `sessionId` = '" + sessionId + "';" ) < 1 )
+					Loader.getLogger().severe( "We could not remove the session '" + sessionId + "' from the database." );
 			}
 			catch ( SQLException e )
 			{
-				throw new SessionException( "There was an exception thrown while trying to save the session.", e );
+				throw new SessionException( "There was an exception thrown while trying to destroy the session.", e );
 			}
 		}
 	}

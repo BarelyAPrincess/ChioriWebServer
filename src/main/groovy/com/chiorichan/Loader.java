@@ -289,7 +289,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		if ( !configuration.getBoolean( "server.disableTracking" ) )
 			WebFunc.sendTracking( "startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
 		
-		/*
+		/**
 		 * try
 		 * {
 		 * String fwZip = "com/chiorichan/framework.zip";

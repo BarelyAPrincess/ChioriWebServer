@@ -78,7 +78,9 @@ import com.chiorichan.permission.lang.PermissionException;
 import com.chiorichan.session.Session;
 import com.chiorichan.session.SessionException;
 import com.chiorichan.site.Site;
+import com.chiorichan.util.CommonFunc;
 import com.chiorichan.util.ObjectFunc;
+import com.chiorichan.util.TimingFunc;
 import com.chiorichan.util.Versioning;
 import com.chiorichan.util.WebFunc;
 import com.google.common.base.Charsets;
@@ -88,8 +90,7 @@ import com.google.common.collect.Maps;
 /**
  * Handles both HTTP and HTTPS connections for Netty.
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class HttpHandler extends SimpleChannelInboundHandler<Object>
 {
@@ -279,6 +280,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	@Override
 	protected void messageReceived( ChannelHandlerContext ctx, Object msg ) throws Exception
 	{
+		// TimingFunc.start( this );
+		
 		if ( msg instanceof FullHttpRequest )
 		{
 			if ( !Loader.hasFinishedStartup() )
@@ -419,6 +422,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		{
 			NetworkManager.getLogger().warning( "Received Object '" + msg.getClass() + "' and had nothing to do with it, is this a bug?" );
 		}
+		
+		// Loader.getLogger().debug( "Request Finished in " + TimingFunc.finish( this ) + "ms!" );
 	}
 	
 	private void finish()
@@ -428,15 +433,17 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			if ( !response.isCommitted() )
 				response.sendResponse();
 			
-			Session sess;
-			if ( ( sess = request.getSessionWithoutException() ) != null )
-				sess.save();
-			
 			EvalFactory factory;
 			if ( ( factory = request.getEvalFactory() ) != null )
 				factory.onFinished();
 			
+			Session sess;
+			if ( ( sess = request.getSessionWithoutException() ) != null )
+				sess.save();
+			
 			requestFinished = true;
+			
+			Loader.getDatabase().queryUpdate( "INSERT INTO `testing` (`epoch`, `time`, `uri`, `result`, ip) VALUES ('" + CommonFunc.getEpoch() + "', '" + TimingFunc.mark( this ) + "', 'http://" + request.getDomain() + request.getUri() + "', '" + response.getHttpCode() + "', '" + request.getIpAddr() + "');" );
 		}
 		catch ( Exception e )
 		{
@@ -692,6 +699,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			meta.params = Maps.newHashMap();
 			meta.params.putAll( request.getRewriteMap() );
 			meta.params.putAll( request.getGetMap() );
+			
 			EvalFactoryResult result = factory.eval( fi, meta, currentSite );
 			
 			if ( result.hasExceptions() )
@@ -725,7 +733,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			}
 		}
 		
-		// TODO: Possible theme'ing of error pages.
 		// if the connection was in a MultiPart mode, wait for the mode to change then return gracefully.
 		if ( response.stage == HttpResponseStage.MULTIPART )
 		{

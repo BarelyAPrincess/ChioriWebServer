@@ -120,7 +120,7 @@ public class WeakReferenceList<V> implements Iterable<V>
 		{
 			setPriority( Thread.MAX_PRIORITY );
 			setName( "GarbageCollectingList-cleanupthread" );
-			setDaemon( true );
+			// setDaemon( true );
 		}
 		
 		public void run()

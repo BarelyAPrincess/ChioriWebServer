@@ -443,6 +443,12 @@ public class HttpResponseWrapper
 		Session session = request.getSessionWithoutException();
 		if ( session != null )
 		{
+			/**
+			 * Initiate the Session Persistence Method.
+			 * This is usually done with a cookie but we should make a param optional
+			 */
+			session.processSessionCookie();
+			
 			for ( HttpCookie c : request.getSession().getCookies().values() )
 				if ( c.needsUpdating() )
 					h.add( "Set-Cookie", c.toHeaderValue() );

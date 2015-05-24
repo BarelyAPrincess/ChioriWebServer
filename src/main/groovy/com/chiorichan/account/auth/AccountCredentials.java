@@ -52,6 +52,9 @@ public abstract class AccountCredentials
 	 */
 	public void makeResumable( AccountPermissible perm )
 	{
+		if ( perm.metadata() != meta )
+			throw new AccountException( "You can't make an Account resumable on a Permissible it's not logged into." ).setAccount( meta );
+		
 		if ( result != AccountResult.LOGIN_SUCCESS )
 			throw new AccountException( "You can't make a login resumable if it failed login." ).setAccount( meta );
 		

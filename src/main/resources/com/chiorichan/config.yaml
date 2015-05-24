@@ -54,6 +54,7 @@ console:
   dateFormat: MM-dd
   timeFormat: HH:mm:ss.SSS
   hideLoggerName: false
+  developerMode: true
 auto-updater:
   enabled: true
   on-broken:

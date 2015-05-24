@@ -429,8 +429,15 @@ public class WebFunc
 		}
 	}
 	
+	/**
+	 * TODO The server was lagging with this! WHY???
+	 * Maybe we should change our metrics system
+	 */
 	public static boolean sendTracking( String category, String action, String label )
 	{
+		if ( true )
+			return false; // Temp Disabled!
+		
 		String url = "http://www.google-analytics.com/collect";
 		try
 		{

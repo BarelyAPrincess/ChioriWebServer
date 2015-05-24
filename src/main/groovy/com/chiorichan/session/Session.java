@@ -160,29 +160,6 @@ public final class Session extends AccountPermissible implements Listener
 		 * }
 		 */
 		
-		if ( knownIps != null && !knownIps.isEmpty() )
-			for ( String ip : knownIps )
-			{
-				List<Session> sessions = Loader.getSessionManager().getSessionsByIp( ip );
-				if ( sessions.size() > Loader.getConfig().getInt( "sessions.maxSessionsPerIP" ) )
-				{
-					long oldestTime = CommonFunc.getEpoch();
-					Session oldest = null;
-					
-					for ( Session s : sessions )
-					{
-						if ( s != this && s.getTimeout() < oldestTime )
-						{
-							oldest = s;
-							oldestTime = s.getTimeout();
-						}
-					}
-					
-					if ( oldest != null )
-						oldest.destroy();
-				}
-			}
-		
 		if ( lastSession == null || !lastSession.equals( getSessId() ) || CommonFunc.getEpoch() - lastTime > 5 )
 		{
 			lastSession = getSessId();
@@ -191,12 +168,10 @@ public final class Session extends AccountPermissible implements Listener
 			// XXX New Session, Requested Session, Loaded Session
 			
 			if ( SessionManager.isDebug() )
-				SessionManager.getLogger().info( ConsoleColor.DARK_AQUA + "Session Constructed `" + this + "`" );
+				SessionManager.getLogger().info( ConsoleColor.DARK_AQUA + "Session " + ( data.stale ? "Loaded" : "Created" ) + " `" + this + "`" );
 		}
 		
 		initialized();
-		
-		processSessionCookie();
 	}
 	
 	@Override
@@ -215,32 +190,32 @@ public final class Session extends AccountPermissible implements Listener
 	
 	public void processSessionCookie()
 	{
-		// TODO Serialize the Session Cookie better
+		// TODO Session Cookies and Session expire at the same time. - Basically, as long as a Session might become called, we keep the session in existence.
+		// TODO Unload a session once it has but been used for a while but might still be called upon at anytime.
 		
+		/**
+		 * Has a Session Cookie been produced yet?
+		 * If not we try and create a new one from scratch
+		 */
 		if ( sessionCookie == null )
 		{
-			if ( sessionId == null || sessionId.isEmpty() )
-				sessionId = Loader.getSessionManager().sessionIdBaker();
+			assert sessionId != null && !sessionId.isEmpty();
 			
+			sessionKey = getSite().getSessionKey();
 			sessionCookie = getSite().createSessionCookie( sessionId );
-			
 			rearmTimeout();
-			
-			try
-			{
-				save( true );
-			}
-			catch ( SessionException e )
-			{
-				SessionManager.getLogger().severe( "We had a problem saving the session `" + sessionId + "`", e );
-			}
 		}
 		
+		/**
+		 * Check if our current session cookie key does not match the key used by the Site.
+		 * If so, we move the old session to the general cookie array and set it as expired.
+		 * This usually forces the browser to delete the old session cookie.
+		 */
 		if ( !sessionCookie.getKey().equals( getSite().getSessionKey() ) )
 		{
 			String oldKey = sessionCookie.getKey();
 			sessionCookie.setKey( getSite().getSessionKey() );
-			sessionCookies.put( oldKey, new HttpCookie( oldKey, "" ).setExpiration( 0 ) ); // We do this so the invalid Session Key is expired and removed from the browser
+			sessionCookies.put( oldKey, new HttpCookie( oldKey, "" ).setExpiration( 0 ) );
 		}
 	}
 	
@@ -259,7 +234,7 @@ public final class Session extends AccountPermissible implements Listener
 	 * Get the present data change history
 	 * 
 	 * @return
-	 *         A clone of the dataChangeHistory set for comparison later
+	 *         A unmodifiable copy of dataChangeHistory.
 	 */
 	Set<String> getChangeHistory()
 	{
@@ -484,6 +459,8 @@ public final class Session extends AccountPermissible implements Listener
 		if ( SessionManager.isDebug() )
 			Loader.getLogger().info( ConsoleColor.DARK_AQUA + "Session Destroyed `" + this + "`" );
 		
+		SessionManager.sessions.remove( this );
+		
 		for ( SessionWrapper wrap : wrappers )
 			wrap.finish();
 		wrappers.clear();
@@ -494,8 +471,7 @@ public final class Session extends AccountPermissible implements Listener
 		sessionCookie.setMaxAge( 0 );
 		
 		data.destroy();
-		
-		SessionManager.sessions.remove( this );
+		data = null;
 	}
 	
 	@Override
@@ -503,7 +479,7 @@ public final class Session extends AccountPermissible implements Listener
 	{
 		Set<String> ips = Sets.newHashSet();
 		for ( SessionWrapper sp : wrappers )
-			if ( sp.getSession() != null && sp.getSession() == this )
+			if ( sp.getSessionWithoutException() != null && sp.getSessionWithoutException() == this )
 			{
 				String ipAddr = sp.getIpAddr();
 				if ( ipAddr != null && !ipAddr.isEmpty() && !ips.contains( ipAddr ) )

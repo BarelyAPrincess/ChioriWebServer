@@ -9,12 +9,13 @@
  */
 package com.chiorichan.session;
 
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.text.WordUtils;
 
+import com.chiorichan.ConsoleColor;
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.ServerManager;
@@ -26,6 +27,8 @@ import com.chiorichan.util.CommonFunc;
 import com.chiorichan.util.RandomFunc;
 import com.chiorichan.util.StringFunc;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 /**
  * Persistence manager handles sessions kept in memory. It also manages when to unload the session to free memory.
@@ -95,56 +98,96 @@ public class SessionManager implements TaskCreator, ServerManager
 			@Override
 			public void run()
 			{
-				Iterator<Session> iterator = sessions.iterator();
-				while ( iterator.hasNext() )
-				{
-					Session var1 = iterator.next();
-					if ( var1.getTimeout() > 0 && var1.getTimeout() < CommonFunc.getEpoch() )
+				int cleanupCount = 0;
+				
+				Set<String> knownIps = Sets.newHashSet();
+				
+				for ( Session sess : sessions )
+					if ( sess.getTimeout() > 0 && sess.getTimeout() < CommonFunc.getEpoch() )
 						try
 						{
-							var1.destroy();
+							sess.destroy();
+							cleanupCount++;
 						}
 						catch ( SessionException e )
 						{
-							e.printStackTrace();
+							getLogger().severe( "SessionException: " + e.getMessage() );
 						}
+					else
+						knownIps.addAll( sess.getIpAddresses() );
+				
+				int maxPerIp = Loader.getConfig().getInt( "sessions.maxSessionsPerIP" );
+				
+				for ( String ip : knownIps )
+				{
+					List<Session> sessions = Loader.getSessionManager().getSessionsByIp( ip );
+					if ( sessions.size() > maxPerIp )
+					{
+						Map<Long, Session> sorted = Maps.newTreeMap();
+						
+						for ( Session s : sessions )
+						{
+							long key = s.getTimeout();
+							while ( sorted.containsKey( key ) )
+								key++;
+							sorted.put( key, s );
+						}
+						
+						Session[] sortedArray = sorted.values().toArray( new Session[0] );
+						
+						for ( int i = 0; i < sortedArray.length - maxPerIp; i++ )
+							try
+							{
+								sortedArray[i].destroy();
+								cleanupCount++;
+							}
+							catch ( SessionException e )
+							{
+								getLogger().severe( "SessionException: " + e.getMessage() );
+							}
+					}
 				}
+				
+				if ( cleanupCount > 0 && SessionManager.isDebug() )
+					getLogger().info( ConsoleColor.DARK_AQUA + "The cleanup cycle destroyed " + cleanupCount + " sessions." );
 			}
 		}, 0L, ScheduleManager.DELAY_MINUTE * Loader.getConfig().getInt( "sessions.cleanupInterval", 5 ) );
 	}
 	
 	public Session startSession( SessionWrapper wrapper ) throws SessionException
 	{
-		synchronized ( sessions )
-		{
-			String sessionKey = wrapper.getSite().getSessionKey();
-			
-			HttpCookie cookie = wrapper.getServerCookie( sessionKey );
-			
-			if ( cookie == null )
-				cookie = wrapper.getServerCookie( getDefaultSessionName() );
-			
-			if ( cookie != null )
-				for ( Session sess : sessions )
-					if ( sess != null && cookie.getValue().equals( sess.getSessId() ) )
-					{
-						sess.processSessionCookie();
-						return sess;
-					}
-			
-			/*
-			 * XXX We need to evaluate the security risk behind doing this? Might just need removal.
-			 * if ( Loader.getConfig().getBoolean( "sessions.reuseVacantSessions", true ) )
-			 * for ( Session s : sessions )
-			 * if ( s.getIpAddr() != null && s.getIpAddr().equals( wrapper.getIpAddr() ) && !s.getUserState() )
-			 * return s;
-			 */
-			
-			Session sess = createSession( wrapper );
-			sessions.add( sess );
-			sess.registerWrapper( wrapper );
-			return sess;
-		}
+		String sessionKey = wrapper.getSite().getSessionKey();
+		Session session = null;
+		
+		HttpCookie cookie = wrapper.getServerCookie( sessionKey );
+		
+		if ( cookie == null )
+			cookie = wrapper.getServerCookie( getDefaultSessionName() );
+		
+		if ( cookie != null )
+			for ( Session sess : sessions )
+				if ( sess != null && cookie.getValue().equals( sess.getSessId() ) )
+				{
+					session = sess;
+					break;
+				}
+		
+		/*
+		 * XXX We need to evaluate the security risk behind doing this? Might just need removal.
+		 * if ( Loader.getConfig().getBoolean( "sessions.reuseVacantSessions", true ) )
+		 * for ( Session s : sessions )
+		 * if ( s.getIpAddr() != null && s.getIpAddr().equals( wrapper.getIpAddr() ) && !s.getUserState() )
+		 * return s;
+		 */
+		
+		if ( session == null )
+			session = createSession( wrapper );
+		
+		session.registerWrapper( wrapper );
+		
+		// getLogger().debug( "Debug: IpAddr " + wrapper.getIpAddr() + " | Loaded? " + session.data.stale + " | Expires " + ( session.getTimeout() - CommonFunc.getEpoch() ) );
+		
+		return session;
 	}
 	
 	public static String getDefaultSessionName()
@@ -182,17 +225,17 @@ public class SessionManager implements TaskCreator, ServerManager
 		List<Session> lst = Lists.newArrayList();
 		
 		for ( Session sess : sessions )
-		{
-			if ( sess.getIpAddresses() != null && Arrays.asList( sess.getIpAddresses() ).contains( ipAddr ) )
+			if ( sess != null && sess.getIpAddresses() != null && sess.getIpAddresses().contains( ipAddr ) )
 				lst.add( sess );
-		}
 		
 		return lst;
 	}
 	
 	public Session createSession( SessionWrapper wrapper ) throws SessionException
 	{
-		return new Session( datastore.createSession( sessionIdBaker(), wrapper ) );
+		Session session = new Session( datastore.createSession( sessionIdBaker(), wrapper ) );
+		sessions.add( session );
+		return session;
 	}
 	
 	public String sessionIdBaker()

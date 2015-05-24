@@ -59,11 +59,6 @@ public abstract class SessionWrapper implements BindingProvider
 		session = Loader.getSessionManager().startSession( this );
 		
 		/*
-		 * Register with Wrapped Session
-		 */
-		session.registerWrapper( this );
-		
-		/*
 		 * Create our Binding
 		 */
 		binding = new EvalBinding( new HashMap<String, Object>( session.getGlobals() ) );
