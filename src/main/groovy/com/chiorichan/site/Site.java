@@ -3,9 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 package com.chiorichan.site;
 
@@ -54,6 +51,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
+/**
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
+ */
 public class Site
 {
 	String siteId = null, title = null, domain = null;
@@ -109,7 +109,7 @@ public class Site
 		else
 			domain = domain.toLowerCase();
 		
-		if ( Loader.getSiteManager().getSiteById( siteId ) != null )
+		if ( SiteManager.INSTANCE.getSiteById( siteId ) != null )
 			reason = "there already exists a site by the provided Site Id '" + siteId + "'";
 		
 		if ( reason != null )
@@ -241,7 +241,7 @@ public class Site
 			else
 				domain = domain.toLowerCase();
 			
-			if ( Loader.getSiteManager().getSiteById( siteId ) != null )
+			if ( SiteManager.INSTANCE.getSiteById( siteId ) != null )
 				reason = "there already exists a site by the provided Site Id '" + siteId + "'";
 			
 			if ( reason != null )

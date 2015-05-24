@@ -25,6 +25,7 @@ import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
 import com.chiorichan.http.HttpCookie;
 import com.chiorichan.site.Site;
+import com.chiorichan.site.SiteManager;
 import com.chiorichan.util.CommonFunc;
 import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.WeakReferenceList;
@@ -116,7 +117,7 @@ public final class Session extends AccountPermissible implements Listener
 	/**
 	 * The site this session is bound to
 	 */
-	private Site site = Loader.getSiteManager().getDefaultSite();
+	private Site site = SiteManager.INSTANCE.getDefaultSite();
 	
 	Session( SessionData data ) throws SessionException
 	{
@@ -127,11 +128,11 @@ public final class Session extends AccountPermissible implements Listener
 		sessionKey = data.sessionName;
 		timeout = data.timeout;
 		knownIps.addAll( Splitter.on( "|" ).splitToList( data.ipAddr ) );
-		site = Loader.getSiteManager().getSiteById( data.site );
+		site = SiteManager.INSTANCE.getSiteById( data.site );
 		
 		if ( site == null )
 		{
-			site = Loader.getSiteManager().getDefaultSite();
+			site = SiteManager.INSTANCE.getDefaultSite();
 			data.site = site.getSiteId();
 		}
 		
@@ -368,7 +369,7 @@ public final class Session extends AccountPermissible implements Listener
 	public Site getSite()
 	{
 		if ( site == null )
-			return Loader.getSiteManager().getDefaultSite();
+			return SiteManager.INSTANCE.getDefaultSite();
 		else
 			return site;
 	}

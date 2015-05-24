@@ -3,9 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 package com.chiorichan.factory.parsers;
 
@@ -16,7 +13,11 @@ import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.FileInterpreter;
 import com.chiorichan.site.Site;
+import com.chiorichan.site.SiteManager;
 
+/**
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
+ */
 public class IncludesParser extends HTMLCommentParser
 {
 	Site site;
@@ -46,7 +47,7 @@ public class IncludesParser extends HTMLCommentParser
 		File res = site.getResource( args[0] );
 		
 		if ( res == null )
-			res = Loader.getSiteManager().getDefaultSite().getResource( args[0] );
+			res = SiteManager.INSTANCE.getDefaultSite().getResource( args[0] );
 		
 		String result = "";
 		

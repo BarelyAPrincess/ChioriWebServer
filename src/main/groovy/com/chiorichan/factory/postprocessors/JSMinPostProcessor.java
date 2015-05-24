@@ -3,9 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 package com.chiorichan.factory.postprocessors;
 
@@ -18,7 +15,6 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.chiorichan.Loader;
 import com.chiorichan.factory.EvalMetaData;
 import com.google.common.collect.Lists;
 import com.google.javascript.jscomp.CompilationLevel;
@@ -26,6 +22,9 @@ import com.google.javascript.jscomp.Compiler;
 import com.google.javascript.jscomp.CompilerOptions;
 import com.google.javascript.jscomp.SourceFile;
 
+/**
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
+ */
 public class JSMinPostProcessor implements PostProcessor
 {
 	@Override

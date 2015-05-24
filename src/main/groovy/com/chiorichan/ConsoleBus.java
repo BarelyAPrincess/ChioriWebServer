@@ -19,6 +19,7 @@ import joptsimple.OptionSet;
 
 import com.chiorichan.console.CommandDispatch;
 import com.chiorichan.lang.StartupException;
+import com.chiorichan.scheduler.ScheduleManager;
 import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Joiner;
@@ -36,7 +37,12 @@ public class ConsoleBus implements Runnable
 	
 	public Loader loader;
 	
-	public void init( Loader parent, OptionSet optionSet )
+	ConsoleBus()
+	{
+		
+	}
+	
+	void init( Loader parent, OptionSet optionSet )
 	{
 		loader = parent;
 		options = optionSet;
@@ -93,7 +99,7 @@ public class ConsoleBus implements Runnable
 					j -= 50L;
 					
 					CommandDispatch.handleCommands();
-					Loader.getScheduleManager().mainThreadHeartbeat( currentTick );
+					ScheduleManager.INSTANCE.heartbeat( currentTick );
 				}
 				
 				Thread.sleep( 1L );

@@ -80,7 +80,6 @@ import org.codehaus.groovy.control.SourceUnit;
 import org.codehaus.groovy.control.customizers.CompilationCustomizer;
 import org.codehaus.groovy.syntax.Token;
 
-import com.chiorichan.Loader;
 import com.chiorichan.lang.SandboxSecurityException;
 
 /**
@@ -90,6 +89,7 @@ import com.chiorichan.lang.SandboxSecurityException;
  * @author Chiori Greene
  * @since 1.8.0
  */
+@SuppressWarnings( "rawtypes" )
 public class GroovySandbox extends CompilationCustomizer
 {
 	private boolean isPackageAllowed = true;

@@ -10,15 +10,13 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.Set;
 
-import com.chiorichan.Loader;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Chars;
 
 /**
  * Provides basic encryption and randomizing functions
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class RandomFunc
 {

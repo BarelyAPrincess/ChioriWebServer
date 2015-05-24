@@ -51,30 +51,39 @@ import com.google.common.collect.Maps;
 
 public class PluginManager extends BuiltinEventCreator implements Listener, ServerManager
 {
+	public static final PluginManager INSTANCE = new PluginManager();
+	private static boolean isInitialized = false;
+	
 	private final Map<Pattern, PluginLoader> fileAssociations = new HashMap<Pattern, PluginLoader>();
 	private final List<Plugin> plugins = new ArrayList<Plugin>();
 	private final Map<String, Plugin> lookupNames = new HashMap<String, Plugin>();
 	private static File updateDirectory = null;
 	private Set<String> loadedPlugins = new HashSet<String>();
 	
-	private static PluginManager instance;
-	
-	public PluginManager()
+	public static void init()
 	{
-		instance = this;
-	}
-	
-	public static PluginManager getInstance()
-	{
-		return instance;
+		if ( isInitialized )
+			throw new IllegalStateException( "The Plugin Manager has already been initialized." );
+		
+		assert INSTANCE != null;
+		
+		INSTANCE.init0();
+		
+		isInitialized = true;
+		
 	}
 	
 	/**
 	 * Registers with the event bus to we can load plugins in their correct order.
 	 */
-	public void init()
+	private void init0()
 	{
 		EventBus.INSTANCE.registerEvents( this, this );
+	}
+	
+	private PluginManager()
+	{
+		
 	}
 	
 	public void loadPlugins()

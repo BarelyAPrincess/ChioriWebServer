@@ -3,9 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 package com.chiorichan.updater;
 
@@ -22,10 +19,14 @@ import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
+import com.chiorichan.scheduler.ScheduleManager;
 import com.chiorichan.scheduler.TaskCreator;
 import com.chiorichan.updater.BuildArtifact.ChangeSet.ChangeSetDetails;
 import com.chiorichan.util.Versioning;
 
+/**
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
+ */
 public class AutoUpdater extends BuiltinEventCreator implements Listener, TaskCreator
 {
 	public static final String WARN_CONSOLE = "warn-console";
@@ -50,7 +51,7 @@ public class AutoUpdater extends BuiltinEventCreator implements Listener, TaskCr
 		/*
 		 * This schedules the Auto Updater with the Scheduler to run every 30 minutes (by default).
 		 */
-		Loader.getScheduleManager().scheduleAsyncRepeatingTask( this, new Runnable()
+		ScheduleManager.INSTANCE.scheduleAsyncRepeatingTask( this, new Runnable()
 		{
 			@Override
 			public void run()

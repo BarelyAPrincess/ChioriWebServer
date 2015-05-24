@@ -78,11 +78,6 @@ public class Loader extends BuiltinEventCreator implements Listener
 	
 	static final ConsoleBus console = new ConsoleBus();
 	
-	static final ScheduleManager scheduler = new ScheduleManager();
-	static final PluginManager plugins = new PluginManager();
-	static final SessionManager sessionManager = new SessionManager();
-	static final SiteManager sites = new SiteManager();
-	
 	private static String clientId;
 	private static boolean finishedStartup = false;
 	static boolean isRunning = true;
@@ -359,11 +354,11 @@ public class Loader extends BuiltinEventCreator implements Listener
 	public boolean start() throws StartupException
 	{
 		EventBus.INSTANCE.registerEvents( this, this );
-		plugins.init();
+		PluginManager.init();
 		
 		changeRunLevel( RunLevel.INITIALIZATION );
 		
-		plugins.loadPlugins();
+		PluginManager.INSTANCE.loadPlugins();
 		
 		changeRunLevel( RunLevel.STARTUP );
 		
@@ -399,13 +394,13 @@ public class Loader extends BuiltinEventCreator implements Listener
 		}
 		
 		getLogger().info( "Initalizing the Site Manager..." );
-		sites.init();
+		SiteManager.init();
 		
 		getLogger().info( "Initalizing the Accounts Manager..." );
 		AccountManager.init();
 		
 		getLogger().info( "Initalizing the Session Manager..." );
-		sessionManager.init();
+		SessionManager.init();
 		
 		changeRunLevel( RunLevel.INITIALIZED );
 		
@@ -550,19 +545,19 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return instance;
 	}
 	
-	// TOOD: Reload seems to be broken. This needs some serious reworking.
+	// TODO: Reload seems to be broken. This needs some serious reworking.
 	public void reload()
 	{
 		configuration = YamlConfiguration.loadConfiguration( getConfigFile() );
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
 		
-		plugins.clearPlugins();
+		PluginManager.INSTANCE.clearPlugins();
 		// ModuleBus.getCommandMap().clearCommands();
 		
 		int pollCount = 0;
 		
 		// Wait for at most 2.5 seconds for plugins to close their threads
-		while ( pollCount < 50 && getScheduleManager().getActiveWorkers().size() > 0 )
+		while ( pollCount < 50 && ScheduleManager.INSTANCE.getActiveWorkers().size() > 0 )
 		{
 			try
 			{
@@ -574,7 +569,8 @@ public class Loader extends BuiltinEventCreator implements Listener
 			}
 			pollCount++;
 		}
-		List<ChioriWorker> overdueWorkers = getScheduleManager().getActiveWorkers();
+		
+		List<ChioriWorker> overdueWorkers = ScheduleManager.INSTANCE.getActiveWorkers();
 		for ( ChioriWorker worker : overdueWorkers )
 		{
 			TaskCreator creator = worker.getOwner();
@@ -584,14 +580,14 @@ public class Loader extends BuiltinEventCreator implements Listener
 			getLogger().log( Level.SEVERE, String.format( "Nag author: '%s' of '%s' about the following: %s", author, creator.getName(), "This plugin is not properly shutting down its async tasks when it is being reloaded.  This may cause conflicts with the newly loaded version of the plugin" ) );
 		}
 		
-		plugins.loadPlugins();
+		PluginManager.INSTANCE.loadPlugins();
 		changeRunLevel( RunLevel.RELOAD );
 		
 		getLogger().info( "Reinitalizing the Persistence Manager..." );
 		
 		try
 		{
-			sessionManager.reload();
+			SessionManager.INSTANCE.reload();
 		}
 		catch ( SessionException e )
 		{
@@ -600,7 +596,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		
 		getLogger().info( "Reinitalizing the Site Manager..." );
 		
-		sites.reload();
+		SiteManager.INSTANCE.reload();
 		
 		getLogger().info( "Reinitalizing the Accounts Manager..." );
 		AccountManager.INSTANCE.reload();
@@ -644,7 +640,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	{
 		try
 		{
-			getSessionManager().shutdown();
+			SessionManager.INSTANCE.shutdown();
 		}
 		catch ( SessionException e )
 		{
@@ -668,7 +664,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	{
 		try
 		{
-			sessionManager.shutdown();
+			SessionManager.INSTANCE.shutdown();
 		}
 		catch ( SessionException e )
 		{
@@ -676,7 +672,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		}
 		
 		AccountManager.INSTANCE.save();
-		plugins.shutdown();
+		PluginManager.INSTANCE.shutdown();
 		NetworkManager.cleanup();
 		
 		isRunning = false;
@@ -819,16 +815,6 @@ public class Loader extends BuiltinEventCreator implements Listener
 	}
 	
 	/**
-	 * Gets an instance of the SiteManager which is used to manage the various domains.
-	 * 
-	 * @return SiteManager
-	 */
-	public static SiteManager getSiteManager()
-	{
-		return sites;
-	}
-	
-	/**
 	 * Gets an instance of the AutoUpdater.
 	 * 
 	 * @return AutoUpdater
@@ -836,16 +822,6 @@ public class Loader extends BuiltinEventCreator implements Listener
 	public static AutoUpdater getAutoUpdater()
 	{
 		return updater;
-	}
-	
-	/**
-	 * Gets an instance of the SessionManager
-	 * 
-	 * @return SessionManager
-	 */
-	public static SessionManager getSessionManager()
-	{
-		return sessionManager;
 	}
 	
 	public static File getTempFileDirectory()
@@ -865,26 +841,6 @@ public class Loader extends BuiltinEventCreator implements Listener
 	public static File getWebRoot()
 	{
 		return webroot;
-	}
-	
-	/**
-	 * Gets an instance of the Scheduler. Which is used to schedule tasks at a set tick interval.
-	 * 
-	 * @return ChioriScheduler
-	 */
-	public static ScheduleManager getScheduleManager()
-	{
-		return scheduler;
-	}
-	
-	/**
-	 * Gets an instance of the Plugin Manager.
-	 * 
-	 * @return PluginManager
-	 */
-	public static PluginManager getPluginManager()
-	{
-		return plugins;
 	}
 	
 	@Override

@@ -3,9 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 package com.chiorichan.util;
 
@@ -47,12 +44,16 @@ import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.FileInterpreter;
 import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.site.Site;
+import com.chiorichan.site.SiteManager;
 import com.google.common.collect.Maps;
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
 import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 
+/**
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
+ */
 public class WebFunc
 {
 	public static String randomNum()
@@ -435,12 +436,10 @@ public class WebFunc
 	 */
 	public static boolean sendTracking( String category, String action, String label )
 	{
-		if ( true )
-			return false; // Temp Disabled!
-		
-		String url = "http://www.google-analytics.com/collect";
 		try
 		{
+			String url = "http://www.google-analytics.com/collect";
+			
 			URL urlObj = new URL( url );
 			HttpURLConnection con = ( HttpURLConnection ) urlObj.openConnection();
 			con.setRequestMethod( "POST" );
@@ -577,7 +576,7 @@ public class WebFunc
 		File packFile = new File( file );
 		
 		if ( site == null )
-			site = Loader.getSiteManager().getDefaultSite();
+			site = SiteManager.INSTANCE.getDefaultSite();
 		
 		if ( packFile == null || !packFile.exists() )
 			return new EvalFactoryResult( new EvalMetaData( file ), site );
@@ -607,7 +606,7 @@ public class WebFunc
 		File packFile = null;
 		
 		if ( site == null )
-			site = Loader.getSiteManager().getDefaultSite();
+			site = SiteManager.INSTANCE.getDefaultSite();
 		
 		packFile = site.getResourceWithException( pack );
 		

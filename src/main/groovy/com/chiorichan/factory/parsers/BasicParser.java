@@ -3,9 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 package com.chiorichan.factory.parsers;
 
@@ -14,9 +11,13 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.Loader;
 import com.chiorichan.util.StringFunc;
 
+/**
+ * Used for basic parsing of code blocks, e.g., < !-- this_is_a_method(argument) -->
+ * 
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
+ */
 public abstract class BasicParser
 {
 	private Pattern p1;

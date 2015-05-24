@@ -3,9 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 package com.chiorichan.permission.backend.file;
 
@@ -36,10 +33,14 @@ import com.chiorichan.permission.PermissionValueVar;
 import com.chiorichan.permission.lang.PermissionBackendException;
 import com.chiorichan.permission.lang.PermissionException;
 import com.chiorichan.site.Site;
+import com.chiorichan.site.SiteManager;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Sets;
 
+/**
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
+ */
 public class FileBackend extends PermissionBackend
 {
 	public static final char PATH_SEPARATOR = '/';
@@ -285,6 +286,7 @@ public class FileBackend extends PermissionBackend
 		return section.getKeys( false );
 	}
 	
+	@SuppressWarnings( "unused" )
 	@Override
 	public void loadPermissionTree()
 	{
@@ -335,7 +337,7 @@ public class FileBackend extends PermissionBackend
 					{
 						Permission perm = Permission.getNode( permission.getString( "permission" ).toLowerCase(), true );
 						
-						List<Site> sites = Loader.getSiteManager().parseSites( ( permission.getString( "sites" ) == null ) ? "" : permission.getString( "sites" ) );
+						List<Site> sites = SiteManager.INSTANCE.parseSites( ( permission.getString( "sites" ) == null ) ? "" : permission.getString( "sites" ) );
 						
 						PermissionValue<?> value = null;
 						if ( permission.getString( "value" ) != null )
@@ -364,7 +366,7 @@ public class FileBackend extends PermissionBackend
 						
 						Permission perm = Permission.getNode( permission.getString( "permission" ).toLowerCase(), true );
 						
-						List<Site> sites = Loader.getSiteManager().parseSites( ( permission.getString( "sites" ) == null ) ? "" : permission.getString( "sites" ) );
+						List<Site> sites = SiteManager.INSTANCE.parseSites( ( permission.getString( "sites" ) == null ) ? "" : permission.getString( "sites" ) );
 						
 						PermissionValue<?> value = null;
 						if ( permission.getString( "value" ) != null )

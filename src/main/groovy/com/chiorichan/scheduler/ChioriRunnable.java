@@ -3,16 +3,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 package com.chiorichan.scheduler;
 
-import com.chiorichan.Loader;
 
 /**
  * This class is provided as an easy way to handle scheduling tasks.
+ * 
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public abstract class ChioriRunnable implements Runnable
 {
@@ -26,7 +24,7 @@ public abstract class ChioriRunnable implements Runnable
 	 */
 	public synchronized void cancel() throws IllegalStateException
 	{
-		Loader.getScheduleManager().cancelTask( getTaskId() );
+		ScheduleManager.INSTANCE.cancelTask( getTaskId() );
 	}
 	
 	/**
@@ -44,7 +42,7 @@ public abstract class ChioriRunnable implements Runnable
 	public synchronized IChioriTask runTask( TaskCreator creator ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
-		return setupId( Loader.getScheduleManager().runTask( creator, this ) );
+		return setupId( ScheduleManager.INSTANCE.runTask( creator, this ) );
 	}
 	
 	/**
@@ -65,7 +63,7 @@ public abstract class ChioriRunnable implements Runnable
 	public synchronized IChioriTask runTaskAsynchronously( TaskCreator creator ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
-		return setupId( Loader.getScheduleManager().runTaskAsynchronously( creator, this ) );
+		return setupId( ScheduleManager.INSTANCE.runTaskAsynchronously( creator, this ) );
 	}
 	
 	/**
@@ -85,7 +83,7 @@ public abstract class ChioriRunnable implements Runnable
 	public synchronized IChioriTask runTaskLater( TaskCreator creator, long delay ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
-		return setupId( Loader.getScheduleManager().runTaskLater( creator, this, delay ) );
+		return setupId( ScheduleManager.INSTANCE.runTaskLater( creator, this, delay ) );
 	}
 	
 	/**
@@ -108,7 +106,7 @@ public abstract class ChioriRunnable implements Runnable
 	public synchronized IChioriTask runTaskLaterAsynchronously( TaskCreator creator, long delay ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
-		return setupId( Loader.getScheduleManager().runTaskLaterAsynchronously( creator, this, delay ) );
+		return setupId( ScheduleManager.INSTANCE.runTaskLaterAsynchronously( creator, this, delay ) );
 	}
 	
 	/**
@@ -130,7 +128,7 @@ public abstract class ChioriRunnable implements Runnable
 	public synchronized IChioriTask runTaskTimer( TaskCreator creator, long delay, long period ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
-		return setupId( Loader.getScheduleManager().runTaskTimer( creator, this, delay, period ) );
+		return setupId( ScheduleManager.INSTANCE.runTaskTimer( creator, this, delay, period ) );
 	}
 	
 	/**
@@ -156,7 +154,7 @@ public abstract class ChioriRunnable implements Runnable
 	public synchronized IChioriTask runTaskTimerAsynchronously( TaskCreator creator, long delay, long period ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
-		return setupId( Loader.getScheduleManager().runTaskTimerAsynchronously( creator, this, delay, period ) );
+		return setupId( ScheduleManager.INSTANCE.runTaskTimerAsynchronously( creator, this, delay, period ) );
 	}
 	
 	/**

@@ -14,7 +14,10 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * http://java.dzone.com/articles/letting-garbage-collector-do-c
+ * 
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
+@SuppressWarnings( {"rawtypes", "unchecked"} )
 public class GarbageCollectingMap<K, V>
 {
 	private static final ReferenceQueue<Object> referenceQueue = new ReferenceQueue<Object>();
@@ -82,7 +85,7 @@ public class GarbageCollectingMap<K, V>
 		{
 			setPriority( Thread.MAX_PRIORITY );
 			setName( "GarbageCollectingConcurrentMap-cleanupthread" );
-			setDaemon( true );
+			// setDaemon( true );
 		}
 		
 		public void run()

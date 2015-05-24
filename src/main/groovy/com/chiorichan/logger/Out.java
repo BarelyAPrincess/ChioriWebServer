@@ -9,19 +9,18 @@ package com.chiorichan.logger;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-import com.chiorichan.Loader;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventCreator;
 import com.chiorichan.event.Listener;
 import com.chiorichan.plugin.PluginDescriptionFile;
+import com.chiorichan.scheduler.ScheduleManager;
 import com.chiorichan.scheduler.TaskCreator;
 import com.google.common.collect.Lists;
 
 /**
  * Provides the direct log output for the server.
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class Out implements Listener, EventCreator, TaskCreator, Runnable
 {
@@ -34,7 +33,7 @@ public class Out implements Listener, EventCreator, TaskCreator, Runnable
 	
 	Out()
 	{
-		Loader.getScheduleManager().scheduleAsyncRepeatingTask( this, this, 5000L, 5000L );
+		ScheduleManager.INSTANCE.scheduleAsyncRepeatingTask( this, this, 5000L, 5000L );
 		EventBus.INSTANCE.registerEvents( this, this );
 	}
 	

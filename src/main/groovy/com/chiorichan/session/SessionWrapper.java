@@ -22,6 +22,7 @@ import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.framework.ConfigurationManagerWrapper;
 import com.chiorichan.http.HttpCookie;
 import com.chiorichan.site.Site;
+import com.chiorichan.site.SiteManager;
 import com.chiorichan.util.StringFunc;
 
 /**
@@ -56,8 +57,7 @@ public abstract class SessionWrapper implements BindingProvider
 	 */
 	public void startSession() throws SessionException
 	{
-		session = Loader.getSessionManager().startSession( this );
-		
+		session = SessionManager.INSTANCE.startSession( this );
 		/*
 		 * Create our Binding
 		 */
@@ -76,7 +76,7 @@ public abstract class SessionWrapper implements BindingProvider
 		Site site = getSite();
 		
 		if ( site == null )
-			site = Loader.getSiteManager().getDefaultSite();
+			site = SiteManager.INSTANCE.getDefaultSite();
 		
 		session.setSite( site );
 		

@@ -3,14 +3,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 package com.chiorichan.scheduler;
 
-import com.chiorichan.Loader;
 
+/**
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
+ */
 class ChioriTask implements IChioriTask, Runnable
 {
 	private volatile ChioriTask next = null;
@@ -104,7 +103,7 @@ class ChioriTask implements IChioriTask, Runnable
 	
 	public void cancel()
 	{
-		Loader.getScheduleManager().cancelTask( id );
+		ScheduleManager.INSTANCE.cancelTask( id );
 	}
 	
 	/**

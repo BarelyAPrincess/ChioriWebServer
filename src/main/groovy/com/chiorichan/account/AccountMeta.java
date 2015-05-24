@@ -20,12 +20,12 @@ import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.Loader;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.PermissionResult;
 import com.chiorichan.site.Site;
+import com.chiorichan.site.SiteManager;
 import com.chiorichan.util.ObjectFunc;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
@@ -313,7 +313,7 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 	@Override
 	public Site getSite()
 	{
-		return Loader.getSiteManager().getSiteById( siteId );
+		return SiteManager.INSTANCE.getSiteById( siteId );
 	}
 	
 	/**

@@ -3,9 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 package com.chiorichan.http;
 
@@ -25,8 +22,12 @@ import com.chiorichan.lang.HttpError;
 import com.chiorichan.lang.SiteException;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.site.Site;
+import com.chiorichan.site.SiteManager;
 import com.google.common.collect.Maps;
 
+/**
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
+ */
 public class WebInterpreter extends FileInterpreter
 {
 	protected Map<String, String> rewriteParams = Maps.newTreeMap();
@@ -50,7 +51,7 @@ public class WebInterpreter extends FileInterpreter
 		fwRequest = uri.startsWith( "/wisp" );
 		if ( fwRequest )
 		{
-			Site fwSite = Loader.getSiteManager().getDefaultSite();
+			Site fwSite = SiteManager.INSTANCE.getDefaultSite();
 			routes = fwSite.getRoutes();
 			request.setSite( fwSite );
 			// request.setUri( uri.substring( 3 ) );
@@ -65,7 +66,7 @@ public class WebInterpreter extends FileInterpreter
 			
 			String siteId = uri.substring( 5, indexOf );
 			
-			Site fwSite = Loader.getSiteManager().getSiteById( siteId );
+			Site fwSite = SiteManager.INSTANCE.getSiteById( siteId );
 			
 			if ( fwSite != null )
 			{
@@ -195,14 +196,17 @@ public class WebInterpreter extends FileInterpreter
 			{
 				NetworkManager.getLogger().warning( "We tried to load the file `" + dest.getAbsolutePath() + "` but could not find it. Will throw a 404 error now." );
 				
-				if ( false ) // TODO Are we in development mode?
-				{
-					// Here we will give a detailed error about the missing file
-				}
-				else
-				{
-					status = HttpResponseStatus.NOT_FOUND;
-				}
+				/*
+				 * if ( false ) // TODO Are we in development mode?
+				 * {
+				 * // Here we will give a detailed error about the missing file
+				 * }
+				 * else
+				 * {
+				 * status = HttpResponseStatus.NOT_FOUND;
+				 * }
+				 */
+				status = HttpResponseStatus.NOT_FOUND;
 			}
 			else if ( !interpParams.containsKey( "shell" ) || interpParams.get( "shell" ) == null )
 				interpParams.put( "shell", "html" );

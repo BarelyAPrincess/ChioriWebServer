@@ -21,8 +21,7 @@ import com.google.common.base.Charsets;
 /**
  * Used to parse Apache conf files, e.g., .htaccess.
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class ApacheParser extends ApacheConfContainer
 {
@@ -101,7 +100,7 @@ public class ApacheParser extends ApacheConfContainer
 				if ( l == null || l.isEmpty() || l.startsWith( "#" ) )
 					continue;
 				
-				ApacheConfElement e = new ApacheConfElement( l );
+				// ApacheConfElement e = new ApacheConfElement( l );
 			}
 		}
 		

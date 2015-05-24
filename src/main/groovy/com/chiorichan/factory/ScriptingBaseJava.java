@@ -471,29 +471,24 @@ public abstract class ScriptingBaseJava extends Script
 		return amt.round( new MathContext( dec, RoundingMode.HALF_DOWN ) );
 	}
 	
-	PluginManager getPluginManager()
-	{
-		return Loader.getPluginManager();
-	}
-	
 	Plugin getPluginbyClassname( String search ) throws PluginNotFoundException
 	{
-		return Loader.getPluginManager().getPluginByClassname( search );
+		return PluginManager.INSTANCE.getPluginByClassname( search );
 	}
 	
 	Plugin getPluginbyClassnameWithoutException( String search )
 	{
-		return Loader.getPluginManager().getPluginByClassnameWithoutException( search );
+		return PluginManager.INSTANCE.getPluginByClassnameWithoutException( search );
 	}
 	
 	Plugin getPluginByName( String search ) throws PluginNotFoundException
 	{
-		return Loader.getPluginManager().getPluginByName( search );
+		return PluginManager.INSTANCE.getPluginByName( search );
 	}
 	
 	Plugin getPluginByNameWithoutException( String search )
 	{
-		return Loader.getPluginManager().getPluginByNameWithoutException( search );
+		return PluginManager.INSTANCE.getPluginByNameWithoutException( search );
 	}
 	
 	ConsoleLogger getLogger()

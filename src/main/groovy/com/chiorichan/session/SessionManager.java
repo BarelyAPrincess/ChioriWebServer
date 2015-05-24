@@ -3,12 +3,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 package com.chiorichan.session;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,14 +30,38 @@ import com.google.common.collect.Sets;
 
 /**
  * Persistence manager handles sessions kept in memory. It also manages when to unload the session to free memory.
+ * 
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class SessionManager implements TaskCreator, ServerManager
 {
+	public static final SessionManager INSTANCE = new SessionManager();
+	private static boolean isInitialized = false;
+	
 	static List<Session> sessions = Lists.newCopyOnWriteArrayList();
 	static boolean isDebug = false;
 	SessionDatastore datastore = null;
 	
-	public void init() throws StartupException
+	public static void init() throws StartupException
+	{
+		if ( isInitialized )
+			throw new IllegalStateException( "The Session Manager has already been initialized." );
+		
+		assert INSTANCE != null;
+		
+		INSTANCE.init0();
+		
+		isInitialized = true;
+		
+	}
+	
+	/**
+	 * Initializes the Session Manager
+	 * 
+	 * @throws StartupException
+	 *             If there was any problems
+	 */
+	private void init0() throws StartupException
 	{
 		try
 		{
@@ -93,65 +115,75 @@ public class SessionManager implements TaskCreator, ServerManager
 		/*
 		 * This schedules the Session Manager with the Scheduler to run every 5 minutes (by default) to cleanup sessions.
 		 */
-		Loader.getScheduleManager().scheduleAsyncRepeatingTask( this, new Runnable()
+		ScheduleManager.INSTANCE.scheduleAsyncRepeatingTask( this, new Runnable()
 		{
 			@Override
 			public void run()
 			{
-				int cleanupCount = 0;
-				
-				Set<String> knownIps = Sets.newHashSet();
-				
-				for ( Session sess : sessions )
-					if ( sess.getTimeout() > 0 && sess.getTimeout() < CommonFunc.getEpoch() )
-						try
-						{
-							sess.destroy();
-							cleanupCount++;
-						}
-						catch ( SessionException e )
-						{
-							getLogger().severe( "SessionException: " + e.getMessage() );
-						}
-					else
-						knownIps.addAll( sess.getIpAddresses() );
-				
-				int maxPerIp = Loader.getConfig().getInt( "sessions.maxSessionsPerIP" );
-				
-				for ( String ip : knownIps )
-				{
-					List<Session> sessions = Loader.getSessionManager().getSessionsByIp( ip );
-					if ( sessions.size() > maxPerIp )
-					{
-						Map<Long, Session> sorted = Maps.newTreeMap();
-						
-						for ( Session s : sessions )
-						{
-							long key = s.getTimeout();
-							while ( sorted.containsKey( key ) )
-								key++;
-							sorted.put( key, s );
-						}
-						
-						Session[] sortedArray = sorted.values().toArray( new Session[0] );
-						
-						for ( int i = 0; i < sortedArray.length - maxPerIp; i++ )
-							try
-							{
-								sortedArray[i].destroy();
-								cleanupCount++;
-							}
-							catch ( SessionException e )
-							{
-								getLogger().severe( "SessionException: " + e.getMessage() );
-							}
-					}
-				}
-				
-				if ( cleanupCount > 0 && SessionManager.isDebug() )
-					getLogger().info( ConsoleColor.DARK_AQUA + "The cleanup cycle destroyed " + cleanupCount + " sessions." );
+				sessionCleanup();
 			}
 		}, 0L, ScheduleManager.DELAY_MINUTE * Loader.getConfig().getInt( "sessions.cleanupInterval", 5 ) );
+	}
+	
+	private SessionManager()
+	{
+		
+	}
+	
+	public void sessionCleanup()
+	{
+		int cleanupCount = 0;
+		
+		Set<String> knownIps = Sets.newHashSet();
+		
+		for ( Session sess : sessions )
+			if ( sess.getTimeout() > 0 && sess.getTimeout() < CommonFunc.getEpoch() )
+				try
+				{
+					sess.destroy();
+					cleanupCount++;
+				}
+				catch ( SessionException e )
+				{
+					getLogger().severe( "SessionException: " + e.getMessage() );
+				}
+			else
+				knownIps.addAll( sess.getIpAddresses() );
+		
+		int maxPerIp = Loader.getConfig().getInt( "sessions.maxSessionsPerIP" );
+		
+		for ( String ip : knownIps )
+		{
+			List<Session> sessions = getSessionsByIp( ip );
+			if ( sessions.size() > maxPerIp )
+			{
+				Map<Long, Session> sorted = Maps.newTreeMap();
+				
+				for ( Session s : sessions )
+				{
+					long key = s.getTimeout();
+					while ( sorted.containsKey( key ) )
+						key++;
+					sorted.put( key, s );
+				}
+				
+				Session[] sortedArray = sorted.values().toArray( new Session[0] );
+				
+				for ( int i = 0; i < sortedArray.length - maxPerIp; i++ )
+					try
+					{
+						sortedArray[i].destroy();
+						cleanupCount++;
+					}
+					catch ( SessionException e )
+					{
+						getLogger().severe( "SessionException: " + e.getMessage() );
+					}
+			}
+		}
+		
+		if ( cleanupCount > 0 )
+			getLogger().info( ConsoleColor.DARK_AQUA + "The cleanup cycle destroyed " + cleanupCount + " sessions." );
 	}
 	
 	public Session startSession( SessionWrapper wrapper ) throws SessionException
@@ -190,36 +222,62 @@ public class SessionManager implements TaskCreator, ServerManager
 		return session;
 	}
 	
-	public static String getDefaultSessionName()
-	{
-		return "_ws" + WordUtils.capitalize( Loader.getConfig().getString( "sessions.defaultCookieName", "sessionId" ) );
-	}
-	
+	/**
+	 * Gets an unmodifiable list of currently loaded {@link Session}s
+	 * 
+	 * @return A unmodifiable list of sessions
+	 */
 	public List<Session> getSessions()
 	{
-		return sessions;
+		return Collections.unmodifiableList( sessions );
 	}
 	
+	/**
+	 * Reloads the currently loaded sessions from their Datastore
+	 * 
+	 * @throws SessionException
+	 *             If there was problems
+	 */
 	public void reload() throws SessionException
 	{
 		synchronized ( sessions )
 		{
+			// Run session cleanup before saving sessions
+			sessionCleanup();
+			
+			// XXX Are we sure we want to override existing sessions without saving?
 			for ( Session session : sessions )
 				session.reload();
 		}
 	}
 	
+	/**
+	 * Finalizes the Session Manager for Shutdown
+	 * 
+	 * @throws SessionException
+	 *             If there was problems
+	 */
 	public void shutdown() throws SessionException
 	{
 		synchronized ( sessions )
 		{
+			// Run session cleanup before saving sessions
+			sessionCleanup();
+			
 			for ( Session sess : sessions )
 				sess.save();
+			
+			sessions.clear();
 		}
-		
-		sessions.clear();
 	}
 	
+	/**
+	 * Retrieves a list of {@link Sessions} based on the Ip Address provided.
+	 * 
+	 * @param ipAddr
+	 *            The Ip Address to check for
+	 * @return A List of Sessions that matched
+	 */
 	public List<Session> getSessionsByIp( String ipAddr )
 	{
 		List<Session> lst = Lists.newArrayList();
@@ -231,6 +289,15 @@ public class SessionManager implements TaskCreator, ServerManager
 		return lst;
 	}
 	
+	/**
+	 * Creates a fresh {@link Session} and saves it's reference.
+	 * 
+	 * @param wrapper
+	 *            The {@link SessionWrapper} to reference
+	 * @return The hot out of the oven Session
+	 * @throws SessionException
+	 *             If there was a problem - seriously!
+	 */
 	public Session createSession( SessionWrapper wrapper ) throws SessionException
 	{
 		Session session = new Session( datastore.createSession( sessionIdBaker(), wrapper ) );
@@ -238,20 +305,76 @@ public class SessionManager implements TaskCreator, ServerManager
 		return session;
 	}
 	
+	/**
+	 * Generates a random Session Id based on total randomness.
+	 * 
+	 * @return Random Session Id as a string
+	 */
 	public String sessionIdBaker()
 	{
 		// TODO Implement a solid session id generating method
 		return StringFunc.md5( RandomFunc.randomize( "$e$$i0n_R%ND0Mne$$" ) + System.currentTimeMillis() );
 	}
 	
+	/**
+	 * Is the Session Manager is debug mode, i.e., mean more debug will output to the console
+	 * 
+	 * @return
+	 *         True if we are
+	 */
 	public static boolean isDebug()
 	{
 		return isDebug;
 	}
 	
+	/**
+	 * Get the {@link ConsoleLogger} instance for this SessionManager
+	 * 
+	 * @return ConsoleLogger instance
+	 */
 	public static ConsoleLogger getLogger()
 	{
 		return Loader.getLogger( "SessMgr" );
+	}
+	
+	/**
+	 * Gets the Default Session Name
+	 * 
+	 * @return Session Name as string
+	 */
+	public static String getDefaultSessionName()
+	{
+		return "_ws" + WordUtils.capitalize( Loader.getConfig().getString( "sessions.defaultCookieName", "sessionId" ) );
+	}
+	
+	/**
+	 * Gets the Default Session Timeout in seconds.
+	 * 
+	 * @return Session timeout in seconds
+	 */
+	public static int getDefaultTimeout()
+	{
+		return Loader.getConfig().getInt( "sessions.defaultTimeout", 3600 );
+	}
+	
+	/**
+	 * Gets the Default Timeout in seconds with additional time added for a login being present
+	 * 
+	 * @return Session timeout in seconds
+	 */
+	public static int getDefaultTimeoutWithLogin()
+	{
+		return Loader.getConfig().getInt( "sessions.defaultTimeoutWithLogin", 86400 );
+	}
+	
+	/**
+	 * Gets the Default Timeout in second with additional time added for a login being present and the user checking the "Remember Me" checkbox
+	 * 
+	 * @return Session timeout in seconds
+	 */
+	public static int getDefaultTimeoutWithRememberMe()
+	{
+		return Loader.getConfig().getInt( "sessions.defaultTimeoutRememberMe", 604800 );
 	}
 	
 	@Override
@@ -264,21 +387,6 @@ public class SessionManager implements TaskCreator, ServerManager
 	public String getName()
 	{
 		return "SessionManager";
-	}
-	
-	public static int getDefaultTimeout()
-	{
-		return Loader.getConfig().getInt( "sessions.defaultTimeout", 3600 );
-	}
-	
-	public static int getDefaultTimeoutWithLogin()
-	{
-		return Loader.getConfig().getInt( "sessions.defaultTimeoutWithLogin", 86400 );
-	}
-	
-	public static int getDefaultTimeoutWithRememberMe()
-	{
-		return Loader.getConfig().getInt( "sessions.defaultTimeoutRememberMe", 604800 );
 	}
 	
 	// int defaultLife = ( getSite().getYaml() != null ) ? getSite().getYaml().getInt( "sessions.lifetimeDefault", 604800 ) : 604800;

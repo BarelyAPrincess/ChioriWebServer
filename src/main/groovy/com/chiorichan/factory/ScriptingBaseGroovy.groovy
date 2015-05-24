@@ -9,7 +9,6 @@ package com.chiorichan.factory
 import com.chiorichan.Loader
 import com.chiorichan.account.Account
 import com.chiorichan.account.AccountManager
-import com.chiorichan.account.lang.AccountException
 import com.chiorichan.database.DatabaseEngine
 import com.chiorichan.framework.ConfigurationManagerWrapper
 import com.chiorichan.framework.HttpUtilsWrapper
@@ -19,22 +18,21 @@ import com.chiorichan.http.HttpResponseWrapper
 import com.chiorichan.permission.Permission
 import com.chiorichan.permission.PermissionResult
 import com.chiorichan.session.Session
-import com.chiorichan.session.SessionManager
 import com.chiorichan.site.Site
+import com.chiorichan.site.SiteManager
 import com.google.common.collect.Lists
 
 /**
  * Used as the Groovy Scripting Base and provides scripts with custom builtin methods
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 @SuppressWarnings( "deprecation" )
 public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 {
 	List<ScriptTraceElement> getScriptTrace()
 	{
-		return getSession().getCodeFactory().getScriptTrace()
+		return getRequest().getEvalFactory().getScriptTrace()
 	}
 	
 	/**
@@ -172,7 +170,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 		DatabaseEngine engine = Loader.getDatabase()
 		
 		if ( engine == null )
-			throw new IllegalStateException( "The framework database is unconfigured. This will need to be setup in order for you to use the getServerDatabase() method." )
+			throw new IllegalStateException( "The server database is unconfigured. It will need to be setup in order for you to use the getServerDatabase() method." )
 		
 		return engine
 	}
@@ -188,7 +186,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 		DatabaseEngine engine = getSite().getDatabase()
 		
 		if ( engine == null )
-			throw new IllegalStateException( "The site database is unconfigured. This will need to be setup in order for you to use the getSiteDatabase() method." )
+			throw new IllegalStateException( "The site database is unconfigured. It will need to be setup in order for you to use the getSiteDatabase() method." )
 		
 		return engine
 	}
@@ -213,16 +211,6 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	String getStatusDescription( int errNo )
 	{
 		return HttpCode.msg( errNo )
-	}
-	
-	/**
-	 * Returns the server session manager
-	 * @return
-	 *       Server session manager
-	 */
-	SessionManager getSessionManager()
-	{
-		return Loader.getSessionManager()
 	}
 	
 	/**
@@ -252,7 +240,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 		if ( request.getSite() != null )
 			url += request.getSite().getDomain() + "/"
 		else
-			url += Loader.getSiteManager().getDefaultSite().getDomain() + "/"
+			url += SiteManager.INSTANCE.getDefaultSite().getDomain() + "/"
 		
 		return url
 	}

@@ -89,7 +89,7 @@ public class EvalFactory
 	/*
 	 * Groovy Imports :P
 	 */
-	private static final String[] dynImports = new String[] {"com.chiorichan.Loader"};
+	private static final String[] dynImports = new String[] {"com.chiorichan.Loader", "com.chiorichan.account.AccountManager", "com.chiorichan.event.EventBus", "com.chiorichan.permission.PermissionManager", "com.chiorichan.plugin.PluginManager", "com.chiorichan.scheduler.ScheduleManager", "com.chiorichan.session.SessionManager", "com.chiorichan.site.SiteManager"};
 	private static final String[] starImports = new String[] {"com.chiorichan.lang", "com.chiorichan.util", "org.apache.commons.lang3.text", "org.ocpsoft.prettytime", "java.util", "java.net", "com.google.common.base"};
 	private static final String[] staticImports = new String[] {"com.chiorichan.util.Looper"};
 	

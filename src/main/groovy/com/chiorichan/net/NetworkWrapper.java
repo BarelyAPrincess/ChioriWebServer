@@ -8,7 +8,6 @@ package com.chiorichan.net;
 
 import java.util.Set;
 
-import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountType;
@@ -20,6 +19,7 @@ import com.chiorichan.net.query.QueryServerHandler;
 import com.chiorichan.session.SessionException;
 import com.chiorichan.session.SessionWrapper;
 import com.chiorichan.site.Site;
+import com.chiorichan.site.SiteManager;
 import com.chiorichan.util.ObjectFunc;
 import com.google.common.collect.Sets;
 
@@ -96,7 +96,7 @@ public class NetworkWrapper extends SessionWrapper
 		/*
 		 * The NetworkWrapper dosn't really tie down to any one site, so we just use the default one
 		 */
-		return Loader.getSiteManager().getDefaultSite();
+		return SiteManager.INSTANCE.getDefaultSite();
 	}
 	
 	@Override

@@ -3,9 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 package com.chiorichan.http;
 
@@ -49,6 +46,7 @@ import com.chiorichan.session.SessionContext;
 import com.chiorichan.session.SessionManager;
 import com.chiorichan.session.SessionWrapper;
 import com.chiorichan.site.Site;
+import com.chiorichan.site.SiteManager;
 import com.chiorichan.util.CommonFunc;
 import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.Versioning;
@@ -157,7 +155,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		
 		// Get Site based on requested domain
 		String domain = getParentDomain();
-		site = Loader.getSiteManager().getSiteByDomain( domain );
+		site = SiteManager.INSTANCE.getSiteByDomain( domain );
 		
 		if ( site == null )
 			if ( !domain.isEmpty() )
@@ -165,11 +163,11 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 				// Attempt to get the catch all default site. Will use the framework site is not configured or does not exist.
 				String defaultSite = Loader.getConfig().getString( "framework.sites.defaultSite", null );
 				if ( defaultSite != null && !defaultSite.isEmpty() )
-					site = Loader.getSiteManager().getSiteById( defaultSite );
+					site = SiteManager.INSTANCE.getSiteById( defaultSite );
 			}
 		
 		if ( site == null )
-			site = Loader.getSiteManager().getSiteById( "default" );
+			site = SiteManager.INSTANCE.getSiteById( "default" );
 		
 		// Decode Get Map
 		QueryStringDecoder queryStringDecoder = new QueryStringDecoder( http.getUri() );

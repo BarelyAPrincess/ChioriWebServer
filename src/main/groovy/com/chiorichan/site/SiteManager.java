@@ -3,9 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 package com.chiorichan.site;
 
@@ -30,16 +27,32 @@ import com.chiorichan.lang.StartupException;
 import com.chiorichan.util.FileFunc;
 import com.google.common.collect.Lists;
 
+/**
+ * Manages and Loads Sites
+ * 
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
+ */
 public class SiteManager implements ServerManager
 {
-	Map<String, Site> siteMap;
+	public static final SiteManager INSTANCE = new SiteManager();
+	private static boolean isInitialized = false;
 	
-	public SiteManager()
+	Map<String, Site> siteMap = new LinkedHashMap<String, Site>();
+	
+	public static void init()
 	{
-		siteMap = new LinkedHashMap<String, Site>();
+		if ( isInitialized )
+			throw new IllegalStateException( "The Site Manager has already been initialized." );
+		
+		assert INSTANCE != null;
+		
+		INSTANCE.init0();
+		
+		isInitialized = true;
+		
 	}
 	
-	public void init() throws StartupException
+	private void init0() throws StartupException
 	{
 		if ( siteMap.size() > 0 )
 			throw new StartupException( "Site manager already has sites loaded. Please unload the existing sites first." );
@@ -145,6 +158,11 @@ public class SiteManager implements ServerManager
 			{
 				getLogger().warning( "Exception encountered while loading a sites from Database", e );
 			}
+	}
+	
+	private SiteManager()
+	{
+		
 	}
 	
 	public Site getSiteById( String siteId )

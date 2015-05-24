@@ -9,14 +9,11 @@ package com.chiorichan.factory;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.chiorichan.Loader;
-
 
 /**
  * Similar to StackTraceElement except only used for Groovy Scripts
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class ScriptTraceElement
 {

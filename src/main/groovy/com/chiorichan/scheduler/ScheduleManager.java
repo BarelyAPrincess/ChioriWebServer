@@ -31,11 +31,13 @@ import com.google.common.collect.Maps;
 /**
  * Manages task scheduled in the main thread
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class ScheduleManager implements IChioriScheduler, ServerManager
 {
+	public static final ScheduleManager INSTANCE = new ScheduleManager();
+	private static boolean isInitialized = false;
+	
 	/**
 	 * Time delay constants for scheduling with the Manager<br>
 	 * Just multiply the unit by the needed number and TADA!
@@ -95,6 +97,29 @@ public class ScheduleManager implements IChioriScheduler, ServerManager
 	static
 	{
 		RECENT_TICKS = 20;
+	}
+	
+	public static void init()
+	{
+		if ( isInitialized )
+			throw new IllegalStateException( "The Schedule Manager has already been initialized." );
+		
+		assert INSTANCE != null;
+		
+		INSTANCE.init0();
+		
+		isInitialized = true;
+		
+	}
+	
+	private void init0()
+	{
+		
+	}
+	
+	private ScheduleManager()
+	{
+		
 	}
 	
 	public int scheduleSyncDelayedTask( final TaskCreator creator, final Runnable task )
@@ -433,8 +458,11 @@ public class ScheduleManager implements IChioriScheduler, ServerManager
 	/**
 	 * This method is designed to never block or wait for locks; an immediate execution of all current tasks.
 	 */
-	public void mainThreadHeartbeat( final int currentTick )
+	public void heartbeat( final int currentTick )
 	{
+		if ( Thread.currentThread() != Loader.getConsole().primaryThread )
+			throw new IllegalStateException( "We detected that the heartbeat method was called on a thread other than the ConsoleBus thread. This is a really bad thing and could cause concurrency issues if left unchecked." );
+		
 		this.currentTick = currentTick;
 		final List<ChioriTask> temp = this.temp;
 		parsePending();
