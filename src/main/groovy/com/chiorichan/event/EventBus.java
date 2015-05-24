@@ -21,16 +21,37 @@ import java.util.logging.Level;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.Loader;
+import com.chiorichan.ServerManager;
 import com.chiorichan.Warning;
 import com.chiorichan.Warning.WarningState;
 import com.chiorichan.lang.AuthorNagException;
 import com.chiorichan.plugin.PluginBase;
 
-public class EventBus
+public class EventBus implements ServerManager
 {
+	public static final EventBus INSTANCE = new EventBus();
+	private static boolean isInitialized = false;
+	
 	private boolean useTimings = false;
 	
-	public EventBus()
+	public static void init( boolean useTimings )
+	{
+		if ( isInitialized )
+			throw new IllegalStateException( "The Event Bus has already been initialized." );
+		
+		assert INSTANCE != null;
+		
+		INSTANCE.init0( useTimings );
+		
+		isInitialized = true;
+	}
+	
+	private void init0( boolean useTimings )
+	{
+		this.useTimings = useTimings;
+	}
+	
+	private EventBus()
 	{
 		
 	}
@@ -135,14 +156,20 @@ public class EventBus
 			catch ( EventException ex )
 			{
 				if ( ex.getCause() == null )
-					Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getCreator().getDescription().getFullName() + "\nEvent Exception Reason: " + ex.getMessage() );
+				{
+					ex.printStackTrace();
+					Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getCreator().getName() + "\nEvent Exception Reason: " + ex.getMessage() );
+				}
 				else
-					Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getCreator().getDescription().getFullName() + "\nEvent Exception Reason: " + ex.getCause().getMessage() );
+				{
+					ex.getCause().printStackTrace();
+					Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getCreator().getName() + "\nEvent Exception Reason: " + ex.getCause().getMessage() );
+				}
 				throw ex;
 			}
 			catch ( Throwable ex )
 			{
-				Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getCreator().getDescription().getFullName(), ex );
+				Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getCreator().getName(), ex );
 			}
 		}
 	}

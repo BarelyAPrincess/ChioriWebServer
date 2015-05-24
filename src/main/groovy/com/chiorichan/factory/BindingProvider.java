@@ -13,5 +13,5 @@ public interface BindingProvider
 {
 	EvalFactory getEvalFactory();
 	
-	EvalFactory getEvalFactory( boolean createIfNull );
+	EvalBinding getBinding();
 }

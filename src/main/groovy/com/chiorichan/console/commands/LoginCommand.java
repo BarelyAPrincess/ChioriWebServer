@@ -10,21 +10,19 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 import com.chiorichan.ConsoleColor;
-import com.chiorichan.Loader;
-import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountManager;
-import com.chiorichan.account.lang.LoginException;
-import com.chiorichan.account.system.SystemAccounts;
+import com.chiorichan.account.AccountType;
+import com.chiorichan.account.auth.AccountAuthenticator;
+import com.chiorichan.account.lang.AccountException;
+import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.console.CommandDispatch;
 import com.chiorichan.console.InteractiveConsole;
 import com.chiorichan.console.Interviewer;
 
-
 /**
  * Used to login an account to the console
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 class LoginCommand extends BuiltinCommand
 {
@@ -83,29 +81,28 @@ class LoginCommand extends BuiltinCommand
 			{
 				if ( user != null && pass != null )
 				{
-					Account acct = Loader.getAccountManager().attemptLogin( handler.getPersistence(), user, pass );
+					AccountResult result = handler.getPersistence().getSession().login( AccountAuthenticator.PASSWORD, user, pass );
 					
-					//if ( !handler.getPersistence().checkPermission( "sys.query" ).isTrue() )
-						//throw new LoginException( LoginExceptionReason.notAuthorized, acct );
+					if ( result != AccountResult.LOGIN_SUCCESS )
+						throw new AccountException( result );
 					
-					AccountManager.getLogger().info( ConsoleColor.GREEN + "Successful Console Login [username='" + user + "',password='" + pass + "',userId='" + acct.getAcctId() + "',displayName='" + acct.getDisplayName() + "']" );
+					// if ( !handler.getPersistence().checkPermission( "sys.query" ).isTrue() )
+					// throw new LoginException( LoginExceptionReason.notAuthorized, acct );
 					
-					handler.getPersistence().attachAccount( acct );
-					handler.getPersistence().sendMessage( ConsoleColor.GREEN + "Welcome " + user + ", you have been successfully logged in." );
+					AccountManager.getLogger().info( ConsoleColor.GREEN + "Successful Console Login [username='" + user + "',password='" + pass + "',userId='" + result.getAccount().getAcctId() + "',displayName='" + result.getAccount().getDisplayName() + "']" );
+					
+					handler.getPersistence().send( ConsoleColor.GREEN + "Welcome " + user + ", you have been successfully logged in." );
 				}
 			}
-			catch ( LoginException l )
+			catch ( AccountException l )
 			{
 				if ( l.getAccount() != null )
 					AccountManager.getLogger().warning( ConsoleColor.GREEN + "Failed Console Login [username='" + user + "',password='" + pass + "',userId='" + l.getAccount().getAcctId() + "',displayName='" + l.getAccount().getDisplayName() + "',reason='" + l.getMessage() + "']" );
 				
-				handler.getPersistence().sendMessage( ConsoleColor.YELLOW + l.getMessage() );
+				handler.getPersistence().send( ConsoleColor.YELLOW + l.getMessage() );
 				
-				if ( handler.getPersistence().getAccount() == null || handler.getPersistence().getAccount() != SystemAccounts.noLogin )
-				{
-					handler.getPersistence().reset();
-					handler.getPersistence().attachAccount( SystemAccounts.noLogin );
-				}
+				if ( handler.getPersistence().getSession().account() == null || handler.getPersistence().getSession().account().metadata() != AccountType.ACCOUNT_NONE )
+					handler.getPersistence().getSession().login( AccountAuthenticator.NULL, AccountType.ACCOUNT_NONE.getAcctId() );
 				
 				return true;
 			}
@@ -129,13 +126,8 @@ class LoginCommand extends BuiltinCommand
 	@Override
 	public boolean execute( InteractiveConsole handler, String command, String[] args )
 	{
-		if ( Loader.getAccountManager().isConfigured() )
-		{
-			CommandDispatch.addInterviewer( handler, new LoginInterviewerUser( handler ) );
-			CommandDispatch.addInterviewer( handler, new LoginInterviewerPass( handler ) );
-		}
-		else
-			handler.getPersistence().sendMessage( ConsoleColor.RED + "The Account Manager is unconfigured, we can not process logins until this problem is resolved." );
+		CommandDispatch.addInterviewer( handler, new LoginInterviewerUser( handler ) );
+		CommandDispatch.addInterviewer( handler, new LoginInterviewerPass( handler ) );
 		
 		return true;
 	}

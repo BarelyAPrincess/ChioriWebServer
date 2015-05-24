@@ -84,7 +84,6 @@ public abstract class Event
 	
 	public enum Result
 	{
-		
 		/**
 		 * Deny the event. Depending on the event, the action indicated by the event will either not take place or will be
 		 * reverted. Some actions may not be denied.

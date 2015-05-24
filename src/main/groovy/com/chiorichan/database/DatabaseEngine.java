@@ -392,12 +392,18 @@ public class DatabaseEngine
 		{
 			try
 			{
-				stmt = con.createStatement( ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
+				if ( type == DatabaseType.SQLITE )
+					stmt = con.createStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY );
+				else
+					stmt = con.createStatement( ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
 			}
 			catch ( CommunicationsException e )
 			{
 				if ( reconnect() )
-					stmt = con.createStatement( ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
+					if ( type == DatabaseType.SQLITE )
+						stmt = con.createStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY );
+					else
+						stmt = con.createStatement( ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
 			}
 			finally
 			{
@@ -420,7 +426,7 @@ public class DatabaseEngine
 		}
 		catch ( Throwable t )
 		{
-			t.printStackTrace();
+			getLogger().warning( "SQL Exception: " + t.getMessage() );
 			throw t;
 		}
 		
@@ -631,6 +637,7 @@ public class DatabaseEngine
 		if ( clz == Double.class || clz == double.class )
 			type = "DOUBLE(" + maxLenReq + ",2)";
 		
+		Loader.getLogger().debug( "Query: " + "ALTER TABLE `" + table + "` ADD `" + columnName + "` " + type + ";" );
 		queryUpdate( "ALTER TABLE `" + table + "` ADD `" + columnName + "` " + type + ";" );
 	}
 	
@@ -793,7 +800,7 @@ public class DatabaseEngine
 	{
 		List<String> rtn = Lists.newArrayList();
 		
-		ResultSet rs = query( "SELECT * FROM " + table );
+		ResultSet rs = query( "SELECT * FROM `" + table + "`" );
 		
 		ResultSetMetaData rsmd = rs.getMetaData();
 		

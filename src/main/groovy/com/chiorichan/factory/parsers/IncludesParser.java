@@ -46,7 +46,7 @@ public class IncludesParser extends HTMLCommentParser
 		File res = site.getResource( args[0] );
 		
 		if ( res == null )
-			res = Loader.getSiteManager().getFrameworkSite().getResource( args[0] );
+			res = Loader.getSiteManager().getDefaultSite().getResource( args[0] );
 		
 		String result = "";
 		

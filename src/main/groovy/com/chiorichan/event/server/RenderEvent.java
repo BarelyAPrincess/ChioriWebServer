@@ -14,22 +14,23 @@ import io.netty.buffer.ByteBuf;
 import java.nio.charset.Charset;
 import java.util.Map;
 
+import com.chiorichan.http.HttpHandler;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.http.HttpResponseWrapper;
-import com.chiorichan.session.SessionProvider;
+import com.chiorichan.session.Session;
 import com.chiorichan.site.Site;
 import com.google.common.base.Charsets;
 
 public class RenderEvent extends ServerEvent
 {
 	private ByteBuf source;
-	private final SessionProvider sess;
+	private final HttpHandler handler;
 	private final Map<String, String> params;
 	private Charset encoding = Charsets.UTF_8;
 	
-	public RenderEvent( SessionProvider sess, ByteBuf source, Charset encoding, Map<String, String> params )
+	public RenderEvent( HttpHandler handler, ByteBuf source, Charset encoding, Map<String, String> params )
 	{
-		this.sess = sess;
+		this.handler = handler;
 		this.source = source;
 		this.encoding = encoding;
 		this.params = params;
@@ -42,30 +43,30 @@ public class RenderEvent extends ServerEvent
 	
 	public Site getSite()
 	{
-		if ( sess == null || sess.getRequest() == null )
+		if ( handler == null || handler.getRequest() == null )
 			return null;
 		
-		return sess.getRequest().getSite();
+		return handler.getRequest().getSite();
 	}
 	
 	public String getRequestId()
 	{
-		return sess.getParentSession().getSessId();
+		return handler.getSession().getSessId();
 	}
 	
-	public SessionProvider getSession()
+	public Session getSession()
 	{
-		return sess;
+		return handler.getSession();
 	}
 	
 	public HttpRequestWrapper getRequest()
 	{
-		return sess.getRequest();
+		return handler.getRequest();
 	}
 	
 	public HttpResponseWrapper getResponse()
 	{
-		return sess.getResponse();
+		return handler.getResponse();
 	}
 	
 	public ByteBuf getSource()

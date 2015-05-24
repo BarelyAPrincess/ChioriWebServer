@@ -30,8 +30,8 @@ import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 
 import com.chiorichan.Warning.WarningState;
-import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountManager;
+import com.chiorichan.account.AccountMeta;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.event.BuiltinEventCreator;
@@ -47,9 +47,10 @@ import com.chiorichan.net.NetworkManager;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.lang.PermissionBackendException;
 import com.chiorichan.plugin.PluginManager;
-import com.chiorichan.scheduler.ChioriScheduler;
 import com.chiorichan.scheduler.ChioriWorker;
+import com.chiorichan.scheduler.ScheduleManager;
 import com.chiorichan.scheduler.TaskCreator;
+import com.chiorichan.session.SessionException;
 import com.chiorichan.session.SessionManager;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.updater.AutoUpdater;
@@ -75,15 +76,12 @@ public class Loader extends BuiltinEventCreator implements Listener
 	private WarningState warningState = WarningState.DEFAULT;
 	private final ServerRunLevelEvent runLevelEvent = new ServerRunLevelEventImpl();
 	
-	protected static final ConsoleBus console = new ConsoleBus();
-	protected static final EventBus events = new EventBus();
+	static final ConsoleBus console = new ConsoleBus();
 	
-	protected static final ChioriScheduler scheduler = new ChioriScheduler();
-	protected static final PermissionManager permissions = new PermissionManager();
-	protected static final PluginManager plugins = new PluginManager();
-	protected static final AccountManager accounts = new AccountManager();
-	protected static final SessionManager sessionManager = new SessionManager();
-	protected static final SiteManager sites = new SiteManager();
+	static final ScheduleManager scheduler = new ScheduleManager();
+	static final PluginManager plugins = new PluginManager();
+	static final SessionManager sessionManager = new SessionManager();
+	static final SiteManager sites = new SiteManager();
 	
 	private static String clientId;
 	private static boolean finishedStartup = false;
@@ -255,7 +253,8 @@ public class Loader extends BuiltinEventCreator implements Listener
 		if ( console.useColors )
 			console.useColors = Loader.getConfig().getBoolean( "console.color", true );
 		
-		events.useTimings( configuration.getBoolean( "plugins.useTimings" ) );
+		EventBus.init( configuration.getBoolean( "plugins.useTimings" ) );
+		
 		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
 		
 		webroot = new File( configuration.getString( "server.webFileDirectory", "webroot" ) );
@@ -290,7 +289,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		if ( !configuration.getBoolean( "server.disableTracking" ) )
 			WebFunc.sendTracking( "startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
 		
-		/*
+		/**
 		 * try
 		 * {
 		 * String fwZip = "com/chiorichan/framework.zip";
@@ -341,10 +340,10 @@ public class Loader extends BuiltinEventCreator implements Listener
 		}
 	}
 	
-	protected void changeRunLevel( RunLevel level )
+	void changeRunLevel( RunLevel level )
 	{
 		( ( ServerRunLevelEventImpl ) runLevelEvent ).setRunLevel( level );
-		events.callEvent( runLevelEvent );
+		EventBus.INSTANCE.callEvent( runLevelEvent );
 	}
 	
 	public RunLevel getRunLevel()
@@ -359,7 +358,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	
 	public boolean start() throws StartupException
 	{
-		Loader.getEventBus().registerEvents( this, this );
+		EventBus.INSTANCE.registerEvents( this, this );
 		plugins.init();
 		
 		changeRunLevel( RunLevel.INITIALIZATION );
@@ -392,7 +391,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		getLogger().info( "Initalizing the Permissions Manager..." );
 		try
 		{
-			permissions.init();
+			PermissionManager.init();
 		}
 		catch ( PermissionBackendException e )
 		{
@@ -403,7 +402,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		sites.init();
 		
 		getLogger().info( "Initalizing the Accounts Manager..." );
-		accounts.init();
+		AccountManager.init();
 		
 		getLogger().info( "Initalizing the Session Manager..." );
 		sessionManager.init();
@@ -563,7 +562,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		int pollCount = 0;
 		
 		// Wait for at most 2.5 seconds for plugins to close their threads
-		while ( pollCount < 50 && getScheduler().getActiveWorkers().size() > 0 )
+		while ( pollCount < 50 && getScheduleManager().getActiveWorkers().size() > 0 )
 		{
 			try
 			{
@@ -575,7 +574,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 			}
 			pollCount++;
 		}
-		List<ChioriWorker> overdueWorkers = getScheduler().getActiveWorkers();
+		List<ChioriWorker> overdueWorkers = getScheduleManager().getActiveWorkers();
 		for ( ChioriWorker worker : overdueWorkers )
 		{
 			TaskCreator creator = worker.getOwner();
@@ -590,14 +589,21 @@ public class Loader extends BuiltinEventCreator implements Listener
 		
 		getLogger().info( "Reinitalizing the Persistence Manager..." );
 		
-		sessionManager.reload();
+		try
+		{
+			sessionManager.reload();
+		}
+		catch ( SessionException e )
+		{
+			e.printStackTrace();
+		}
 		
 		getLogger().info( "Reinitalizing the Site Manager..." );
 		
 		sites.reload();
 		
 		getLogger().info( "Reinitalizing the Accounts Manager..." );
-		accounts.reload();
+		AccountManager.INSTANCE.reload();
 		
 		changeRunLevel( RunLevel.RUNNING );
 	}
@@ -615,7 +621,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	public static void gracefullyShutdownServer( String reason )
 	{
 		if ( !reason.isEmpty() )
-			for ( Account user : accounts.getOnlineAccounts() )
+			for ( AccountMeta user : AccountManager.INSTANCE.getAccounts() )
 			{
 				user.kick( reason );
 			}
@@ -636,7 +642,14 @@ public class Loader extends BuiltinEventCreator implements Listener
 	
 	public static void unloadServer( String reason )
 	{
-		getSessionManager().shutdown();
+		try
+		{
+			getSessionManager().shutdown();
+		}
+		catch ( SessionException e )
+		{
+			e.printStackTrace();
+		}
 		/*
 		 * if ( !reason.isEmpty() )
 		 * for ( Account User : accounts.getOnlineAccounts() )
@@ -644,7 +657,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		 * User.kick( reason );
 		 * }
 		 */
-		getAccountManager().shutdown();
+		AccountManager.INSTANCE.save();
 		NetworkManager.cleanup();
 	}
 	
@@ -653,8 +666,16 @@ public class Loader extends BuiltinEventCreator implements Listener
 	 */
 	public static void shutdown()
 	{
-		sessionManager.shutdown();
-		accounts.shutdown();
+		try
+		{
+			sessionManager.shutdown();
+		}
+		catch ( SessionException e )
+		{
+			e.printStackTrace();
+		}
+		
+		AccountManager.INSTANCE.save();
 		plugins.shutdown();
 		NetworkManager.cleanup();
 		
@@ -680,20 +701,22 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return warningState;
 	}
 	
-	private File getConfigFile()
+	private static File getConfigFile()
 	{
 		return ( File ) options.valueOf( "config" );
 	}
 	
-	private void saveConfig()
+	public static void saveConfig()
 	{
+		// TODO Targeted key path saves, allow it so only a specified path can be saved to file.
+		
 		try
 		{
 			configuration.save( getConfigFile() );
 		}
 		catch ( IOException ex )
 		{
-			Logger.getLogger( Loader.class.getName() ).log( Level.SEVERE, "Could not save " + getConfigFile(), ex );
+			getLogger().severe( "Could not save " + getConfigFile(), ex );
 		}
 	}
 	
@@ -703,11 +726,11 @@ public class Loader extends BuiltinEventCreator implements Listener
 	}
 	
 	/**
-	 * Gets an instance of the system logger so requester can log information to both the screen and
-	 * log file with ease.
-	 * The auto selection of named loggers might be temporary feature until most of system can be
-	 * manually programmed to
+	 * Gets an instance of the system logger so requester can log information to both the screen and log file with ease.
+	 * The auto selection of named loggers might be temporary feature until most of system can be manually programmed to
 	 * use named loggers since it's a relatively new feature.
+	 * 
+	 * This might be deprecated once the new and improved Logger is implemented
 	 * 
 	 * @return The system logger
 	 */
@@ -825,16 +848,6 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return sessionManager;
 	}
 	
-	/**
-	 * Gets an instance of the AccountManager
-	 * 
-	 * @return AccountManager
-	 */
-	public static AccountManager getAccountManager()
-	{
-		return accounts;
-	}
-	
 	public static File getTempFileDirectory()
 	{
 		if ( !tmpFileDirectory.exists() )
@@ -855,33 +868,11 @@ public class Loader extends BuiltinEventCreator implements Listener
 	}
 	
 	/**
-	 * Gets an instance of the EventBus. Used to notify the server and plugins of events that take
-	 * place, e.g., AccountLoginEvent .
-	 * 
-	 * @return EventBus
-	 */
-	public static EventBus getEventBus()
-	{
-		return events;
-	}
-	
-	/**
-	 * Gets an instance of the PermissionManager. Used to track and check the various permissions on
-	 * this server.
-	 * 
-	 * @return PermissionManager
-	 */
-	public static PermissionManager getPermissionManager()
-	{
-		return permissions;
-	}
-	
-	/**
 	 * Gets an instance of the Scheduler. Which is used to schedule tasks at a set tick interval.
 	 * 
 	 * @return ChioriScheduler
 	 */
-	public static ChioriScheduler getScheduler()
+	public static ScheduleManager getScheduleManager()
 	{
 		return scheduler;
 	}

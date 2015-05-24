@@ -9,7 +9,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.Validate;
+
 import com.chiorichan.Loader;
+import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
@@ -31,7 +34,7 @@ public class Template extends Plugin implements Listener
 	public void onEnable()
 	{
 		saveDefaultConfig();
-		Loader.getEventBus().registerEvents( this, this );
+		EventBus.INSTANCE.registerEvents( this, this );
 	}
 	
 	public void onDisable()
@@ -44,7 +47,13 @@ public class Template extends Plugin implements Listener
 	{
 		try
 		{
-			event.setErrorHtml( generateExceptionPage( event.getThrowable(), event.getRequest().getSession().getEvalFactory() ) );
+			EvalFactory factory = event.getRequest().getEvalFactory();
+			
+			// We initialize a temporary EvalFactory if the request did not contain one
+			if ( factory == null )
+				factory = EvalFactory.create( event.getRequest() );
+			
+			event.setErrorHtml( generateExceptionPage( event.getThrowable(), factory ) );
 		}
 		catch ( Exception e )
 		{
@@ -54,6 +63,9 @@ public class Template extends Plugin implements Listener
 	
 	public String generateExceptionPage( Throwable t, EvalFactory factory )
 	{
+		Validate.notNull( t );
+		Validate.notNull( factory );
+		
 		StringBuilder ob = new StringBuilder();
 		
 		String fileName = "";
@@ -159,7 +171,7 @@ public class Template extends Plugin implements Listener
 			Map<String, String> fwVals = event.getParams();
 			
 			if ( site == null )
-				site = Loader.getSiteManager().getFrameworkSite();
+				site = Loader.getSiteManager().getDefaultSite();
 			
 			if ( fwVals.get( "themeless" ) != null && StringFunc.isTrue( fwVals.get( "themeless" ) ) )
 				return;
@@ -274,7 +286,7 @@ public class Template extends Plugin implements Listener
 		}
 		catch ( IOException | EvalFactoryException e )
 		{
-			event.setSource( Unpooled.buffer().writeBytes( generateExceptionPage( e, event.getSession().getEvalFactory() ).getBytes() ) );
+			event.setSource( Unpooled.buffer().writeBytes( generateExceptionPage( e, event.getRequest().getEvalFactory() ).getBytes() ) );
 			event.getResponse().setStatus( 500 );
 		}
 	}
@@ -289,7 +301,7 @@ public class Template extends Plugin implements Listener
 	
 	private EvalFactoryResult doInclude0( String pack, RenderEvent event ) throws IOException, EvalFactoryException
 	{
-		EvalFactory factory = event.getSession().getEvalFactory();
+		EvalFactory factory = event.getRequest().getEvalFactory();
 		
 		if ( getConfig().getBoolean( "config.ignoreFileNotFound" ) )
 			return WebFunc.evalPackage( factory, event.getSite(), pack );

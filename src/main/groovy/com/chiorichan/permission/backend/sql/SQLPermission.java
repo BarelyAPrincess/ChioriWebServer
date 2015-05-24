@@ -233,8 +233,8 @@ public class SQLPermission extends Permission
 	{
 		if ( backend == null )
 		{
-			if ( Loader.getPermissionManager().getBackend() instanceof SQLBackend )
-				backend = ( SQLBackend ) Loader.getPermissionManager().getBackend();
+			if ( PermissionManager.INSTANCE.getBackend() instanceof SQLBackend )
+				backend = ( SQLBackend ) PermissionManager.INSTANCE.getBackend();
 			else
 				backend = ( SQLBackend ) PermissionBackend.getBackend( "sql" );
 		}

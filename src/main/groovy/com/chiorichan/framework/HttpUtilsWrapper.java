@@ -13,15 +13,15 @@ import java.io.IOException;
 
 import com.chiorichan.factory.EvalFactoryResult;
 import com.chiorichan.lang.EvalFactoryException;
-import com.chiorichan.session.SessionProvider;
+import com.chiorichan.session.SessionWrapper;
 import com.chiorichan.util.WebFunc;
 
 @Deprecated
 public class HttpUtilsWrapper extends WebFunc
 {
-	SessionProvider sess;
+	SessionWrapper sess;
 	
-	public HttpUtilsWrapper( SessionProvider sess )
+	public HttpUtilsWrapper( SessionWrapper sess )
 	{
 		this.sess = sess;
 	}
@@ -30,41 +30,41 @@ public class HttpUtilsWrapper extends WebFunc
 	
 	public EvalFactoryResult evalFile( String file ) throws IOException, EvalFactoryException
 	{
-		return evalFile( sess.getEvalFactory(), sess.getParentSession().getSite(), file );
+		return evalFile( sess.getEvalFactory(), sess.getSession().getSite(), file );
 	}
 	
 	public EvalFactoryResult evalPackage( String pack ) throws EvalFactoryException
 	{
-		return evalPackage( sess.getEvalFactory(), sess.getParentSession().getSite(), pack );
+		return evalPackage( sess.getEvalFactory(), sess.getSession().getSite(), pack );
 	}
 	
 	public EvalFactoryResult evalPackageWithException( String pack, Object... global ) throws IOException, EvalFactoryException
 	{
-		return evalPackageWithException( sess.getEvalFactory(), sess.getParentSession().getSite(), pack );
+		return evalPackageWithException( sess.getEvalFactory(), sess.getSession().getSite(), pack );
 	}
 	
 	public EvalFactoryResult evalPackageWithException( String pack ) throws IOException, EvalFactoryException
 	{
-		return evalPackageWithException( sess.getEvalFactory(), sess.getParentSession().getSite(), pack );
+		return evalPackageWithException( sess.getEvalFactory(), sess.getSession().getSite(), pack );
 	}
 	
 	public String readFile( String file ) throws IOException, EvalFactoryException
 	{
-		return evalFile( sess.getEvalFactory(), sess.getParentSession().getSite(), file ).getString();
+		return evalFile( sess.getEvalFactory(), sess.getSession().getSite(), file ).getString();
 	}
 	
 	public String readPackage( String pack ) throws EvalFactoryException
 	{
-		return evalPackage( sess.getEvalFactory(), sess.getParentSession().getSite(), pack ).getString();
+		return evalPackage( sess.getEvalFactory(), sess.getSession().getSite(), pack ).getString();
 	}
 	
 	public String readPackageWithException( String pack, Object... global ) throws IOException, EvalFactoryException
 	{
-		return evalPackageWithException( sess.getEvalFactory(), sess.getParentSession().getSite(), pack ).getString();
+		return evalPackageWithException( sess.getEvalFactory(), sess.getSession().getSite(), pack ).getString();
 	}
 	
 	public String readPackageWithException( String pack ) throws IOException, EvalFactoryException
 	{
-		return evalPackageWithException( sess.getEvalFactory(), sess.getParentSession().getSite(), pack ).getString();
+		return evalPackageWithException( sess.getEvalFactory(), sess.getSession().getSite(), pack ).getString();
 	}
 }

@@ -6,7 +6,7 @@
  */
 package com.chiorichan.console;
 
-import com.chiorichan.net.NetworkPersistence;
+import com.chiorichan.net.NetworkWrapper;
 
 /**
  * Used to interface InteractiveConsole with it's creator
@@ -20,5 +20,5 @@ public interface InteractiveConsoleHandler
 	
 	void print( String... msg );
 	
-	NetworkPersistence getPersistence();
+	NetworkWrapper getPersistence();
 }

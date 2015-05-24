@@ -14,7 +14,7 @@ import java.util.Map;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
-import com.chiorichan.net.NetworkPersistence;
+import com.chiorichan.net.NetworkWrapper;
 import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.Versioning;
 import com.google.common.collect.Maps;
@@ -29,16 +29,16 @@ public class InteractiveConsole
 {
 	private Map<String, String> metadata = Maps.newConcurrentMap();
 	private InteractiveConsoleHandler handler;
-	private NetworkPersistence persistence;
+	private NetworkWrapper persistence;
 	private String prompt = "";
 	
-	private InteractiveConsole( InteractiveConsoleHandler handler, NetworkPersistence persistence )
+	private InteractiveConsole( InteractiveConsoleHandler handler, NetworkWrapper persistence )
 	{
 		this.handler = handler;
 		this.persistence = persistence;
 	}
 	
-	public static InteractiveConsole createInstance( InteractiveConsoleHandler handler, NetworkPersistence persistence )
+	public static InteractiveConsole createInstance( InteractiveConsoleHandler handler, NetworkWrapper persistence )
 	{
 		return new InteractiveConsole( handler, persistence );
 	}
@@ -79,7 +79,7 @@ public class InteractiveConsole
 		return handler;
 	}
 	
-	public NetworkPersistence getPersistence()
+	public NetworkWrapper getPersistence()
 	{
 		return persistence;
 	}
@@ -123,11 +123,11 @@ public class InteractiveConsole
 	{
 		try
 		{
-			prompt = ConsoleColor.GREEN + persistence.getAccount().getAcctId() + "@" + InetAddress.getLocalHost().getHostName() + ConsoleColor.RESET + ":" + ConsoleColor.BLUE + "~" + ConsoleColor.RESET + "$ ";
+			prompt = ConsoleColor.GREEN + persistence.getSession().account().getAcctId() + "@" + InetAddress.getLocalHost().getHostName() + ConsoleColor.RESET + ":" + ConsoleColor.BLUE + "~" + ConsoleColor.RESET + "$ ";
 		}
 		catch ( UnknownHostException e )
 		{
-			prompt = ConsoleColor.GREEN + persistence.getAccount().getAcctId() + "@localhost ~$ ";
+			prompt = ConsoleColor.GREEN + persistence.getSession().account().getAcctId() + "@localhost ~$ ";
 		}
 		
 		prompt();

@@ -25,7 +25,9 @@
     <module name="DefaultComesLast"/>
     <module name="RedundantModifier"/>
     <module name="RedundantImport"/>
-    <module name="UnusedImports"/>
+    <module name="UnusedImports">
+      <property name="severity" value="info"/>
+    </module>
     <module name="IllegalTokenText">
       <property name="tokens" value="STRING_LITERAL, CHAR_LITERAL"/>
       <property name="format" value="\\u00(08|09|0(a|A)|0(c|C)|0(d|D)|22|27|5(C|c))|\\(0(10|11|12|14|15|42|47)|134)"/>

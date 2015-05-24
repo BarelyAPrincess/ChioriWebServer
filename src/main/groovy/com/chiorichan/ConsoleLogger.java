@@ -166,6 +166,9 @@ public class ConsoleLogger
 	
 	public void debug( String... var1 )
 	{
+		if ( !Loader.getConfig().getBoolean( "console.developerMode", true ) )
+			return;
+		
 		for ( String var2 : var1 )
 			info( ConsoleColor.NEGATIVE + "" + ConsoleColor.YELLOW + " >>>>   " + var2 + "   <<<< " );
 	}

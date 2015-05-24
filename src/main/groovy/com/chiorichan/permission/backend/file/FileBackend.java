@@ -103,7 +103,7 @@ public class FileBackend extends PermissionBackend
 				
 				if ( groupSection.getBoolean( defaultGroupProperty, false ) )
 				{
-					return Loader.getPermissionManager().getGroup( entry.getKey() );
+					return PermissionManager.INSTANCE.getGroup( entry.getKey() );
 				}
 			}
 		}
@@ -164,7 +164,7 @@ public class FileBackend extends PermissionBackend
 		
 		for ( String groupName : groupsSection.getKeys( false ) )
 		{
-			groups.add( Loader.getPermissionManager().getGroup( groupName ) );
+			groups.add( PermissionManager.INSTANCE.getGroup( groupName ) );
 		}
 		
 		Collections.sort( groups );
@@ -323,7 +323,7 @@ public class FileBackend extends PermissionBackend
 		if ( section != null )
 			for ( String s : section.getKeys( false ) )
 			{
-				PermissibleEntity entity = Loader.getPermissionManager().getEntity( s );
+				PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( s );
 				
 				ConfigurationSection result = section.getConfigurationSection( s );
 				ConfigurationSection permissions = result.getConfigurationSection( "permissions" );
@@ -353,7 +353,7 @@ public class FileBackend extends PermissionBackend
 			{
 				ConfigurationSection result = section.getConfigurationSection( s );
 				
-				PermissibleEntity group = Loader.getPermissionManager().getGroup( s );
+				PermissibleEntity group = PermissionManager.INSTANCE.getGroup( s );
 				
 				ConfigurationSection permissions = result.getConfigurationSection( "permissions" );
 				

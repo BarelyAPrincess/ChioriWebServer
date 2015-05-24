@@ -27,20 +27,25 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.apache.commons.lang3.text.WordUtils;
 import org.json.JSONObject;
 
 import com.chiorichan.Loader;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.database.DatabaseEngine;
+import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.SiteLoadEvent;
+import com.chiorichan.factory.EvalBinding;
 import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalMetaData;
+import com.chiorichan.http.HttpCookie;
 import com.chiorichan.http.Routes;
 import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.lang.SiteException;
 import com.chiorichan.lang.StartupException;
+import com.chiorichan.session.SessionManager;
 import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.RandomFunc;
 import com.google.common.collect.Lists;
@@ -51,21 +56,21 @@ import com.google.gson.reflect.TypeToken;
 
 public class Site
 {
-	protected String siteId = null, title = null, domain = null;
-	protected File source, resource;
-	protected Map<String, String> subdomains = Maps.newConcurrentMap(), aliases = Maps.newConcurrentMap();
-	protected List<String> metatags = Lists.newCopyOnWriteArrayList(), protectedFiles = Lists.newCopyOnWriteArrayList();
-	protected YamlConfiguration config;
-	protected DatabaseEngine sql;
-	protected SiteType siteType = SiteType.NOTSET;
-	protected File filePath = null;
-	protected File cacheDir = null;
-	protected List<String> cachePatterns = Lists.newArrayList();
-	protected Routes routes = null;
-	protected String encryptionKey = null;
+	String siteId = null, title = null, domain = null;
+	File source, resource;
+	Map<String, String> subdomains = Maps.newConcurrentMap(), aliases = Maps.newConcurrentMap();
+	List<String> metatags = Lists.newCopyOnWriteArrayList(), protectedFiles = Lists.newCopyOnWriteArrayList();
+	YamlConfiguration config;
+	DatabaseEngine sql;
+	SiteType siteType = SiteType.NOTSET;
+	File filePath = null;
+	List<String> cachePatterns = Lists.newArrayList();
+	Routes routes = null;
+	String encryptionKey = null;
+	String sessionPersistence = "cookie";
 	
 	// Binding and evaling for use inside each site for executing site scripts outside of web requests.
-	Binding binding = new Binding();
+	EvalBinding binding = new EvalBinding();
 	EvalFactory factory = EvalFactory.create( binding );
 	
 	protected Site( File f ) throws SiteException, StartupException
@@ -90,6 +95,14 @@ public class Site
 			reason = "the provided Site Id is NULL. Check configs";
 		else
 			siteId = siteId.toLowerCase();
+		
+		// XXX Temp for old default siteId
+		if ( "framework".equals( siteId ) )
+			siteId = "default";
+		
+		// Default site is universal and accepts any domain
+		if ( "default".equals( siteId ) )
+			domain = "";
 		
 		if ( domain == null )
 			reason = "the provided domain is NULL. Check configs";
@@ -347,9 +360,9 @@ public class Site
 			encryptionKey = RandomFunc.randomize( "0x0000X" );
 		
 		/*
-		 * Framework site always uses the Builtin SQL Connector. Ignore YAML FileBase on this one.
+		 * Default site always uses the Builtin SQL Connector. Ignore YAML FileBase on this one.
 		 */
-		if ( siteId.equalsIgnoreCase( "framework" ) )
+		if ( siteId.equalsIgnoreCase( "default" ) )
 		{
 			sql = Loader.getDatabase();
 		}
@@ -384,6 +397,11 @@ public class Site
 					throw new SiteException( e.getMessage() );
 			}
 		}
+		
+		sessionPersistence = config.getString( "sessions.persistenceMethod", sessionPersistence ).toLowerCase();
+		
+		if ( !"cookie".equals( sessionPersistence ) && !"param".equals( sessionPersistence ) )
+			throw new SiteException( "Session Perssitence of either 'cookie' or 'param' are supported." );
 		
 		if ( config != null )
 		{
@@ -422,21 +440,21 @@ public class Site
 		
 		try
 		{
-			Loader.getEventBus().callEventWithException( event );
+			EventBus.INSTANCE.callEventWithException( event );
 		}
 		catch ( EventException e )
 		{
 			throw new SiteException( e );
 		}
 		
-		// Plugins are not permitted to cancel the loading of the framework site
-		if ( event.isCancelled() && !siteId.equalsIgnoreCase( "framework" ) )
+		// Plugins are not permitted to cancel the loading of the default site
+		if ( event.isCancelled() && !siteId.equalsIgnoreCase( "default" ) )
 			throw new SiteException( "Loading of site '" + siteId + "' was cancelled by an internal event." );
 		
 		/*
 		 * Warn the user that files can not be served from the `wisp`, a.k.a. Web Interface and Server Point, folder since the server uses it for internal requests.
 		 */
-		if ( new File( getAbsoluteRoot(), "wisp" ).exists() && !siteId.equalsIgnoreCase( "framework" ) )
+		if ( new File( getAbsoluteRoot(), "wisp" ).exists() && !siteId.equalsIgnoreCase( "default" ) )
 			SiteManager.getLogger().warning( "It would appear that site '" + siteId + "' contains a subfolder by the name of 'wisp', since this server uses the uri '/wisp' for internal requests, you will be unable to serve files from this folder!" );
 	}
 	
@@ -618,16 +636,6 @@ public class Site
 		return resource;
 	}
 	
-	public File getCacheDirectory()
-	{
-		if ( cacheDir == null )
-			cacheDir = new File( Loader.getTempFileDirectory(), this.getSiteId() );
-		
-		cacheDir.mkdirs();
-		
-		return cacheDir;
-	}
-	
 	public File getSourceDirectory()
 	{
 		if ( source == null )
@@ -780,7 +788,7 @@ public class Site
 	}
 	
 	/**
-	 * TODO Make it so site config can change the location the the temp directory.
+	 * TODO Make it so site configuration can change the location the the temp directory.
 	 * 
 	 * @return The temp directory for this site.
 	 */
@@ -805,9 +813,46 @@ public class Site
 		return encryptionKey;
 	}
 	
+	public SessionPersistenceMethod getSessionPersistenceMethod()
+	{
+		switch ( sessionPersistence )
+		{
+			case "cookie":
+				return SessionPersistenceMethod.COOKIE;
+			case "param":
+				return SessionPersistenceMethod.PARAM;
+			default:
+				return null;
+		}
+	}
+	
+	/**
+	 * Gets the site configured Session Key from configuration.
+	 * 
+	 * @return
+	 *         The Session Key
+	 */
+	public String getSessionKey()
+	{
+		String key = config.getString( "sessions.keyName" );
+		if ( key == null )
+			return SessionManager.getDefaultSessionName();
+		return "_ws" + WordUtils.capitalize( key );
+	}
+	
 	@Override
 	public String toString()
 	{
-		return getSiteId() + "(Name:" + getName() + ",Title:" + title + ",Domain:" + getDomain() + ",SiteType:" + siteType + ",SourceDir:" + source + ")";
+		return getSiteId() + "Site{name=" + getName() + ",title=" + title + ",domain=" + getDomain() + ",type=" + siteType + ",source=" + source + ",resource=" + resource + "}";
+	}
+	
+	public enum SessionPersistenceMethod
+	{
+		COOKIE, PARAM
+	}
+	
+	public HttpCookie createSessionCookie( String sessionId )
+	{
+		return new HttpCookie( getSessionKey(), sessionId ).setDomain( "." + getDomain() ).setPath( "/" ).setHttpOnly( true );
 	}
 }

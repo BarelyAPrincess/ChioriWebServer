@@ -34,11 +34,14 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
+import com.chiorichan.event.EventBus;
 import com.chiorichan.event.http.ErrorEvent;
 import com.chiorichan.event.http.HttpExceptionEvent;
 import com.chiorichan.lang.ApacheParser;
 import com.chiorichan.lang.HttpError;
 import com.chiorichan.net.NetworkManager;
+import com.chiorichan.session.Session;
+import com.chiorichan.session.SessionException;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
@@ -110,13 +113,13 @@ public class HttpResponseWrapper
 		if ( httpMsg == null )
 			httpMsg = status.reasonPhrase();
 		
-		NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + status.code() + ",httpMsg=" + httpMsg + ",subdomain=" + request.getSubDomain() + ",domain=" + request.getDomain() + ",uri=" + request.getUri() + ",remoteIp=" + request.getRemoteAddr() + "}" );
+		NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + status.code() + ",httpMsg=" + httpMsg + ",subdomain=" + request.getSubDomain() + ",domain=" + request.getDomain() + ",uri=" + request.getUri() + ",remoteIp=" + request.getIpAddr() + "}" );
 		
 		resetBuffer();
 		
 		// Trigger an internal Error Event to notify plugins of a possible problem.
 		ErrorEvent event = new ErrorEvent( request, status.code(), httpMsg );
-		Loader.getEventBus().callEvent( event );
+		EventBus.INSTANCE.callEvent( event );
 		
 		// TODO Make these error pages a bit more creative and/or informational to developers.
 		
@@ -172,8 +175,14 @@ public class HttpResponseWrapper
 		if ( stage == HttpResponseStage.CLOSED )
 			throw new IllegalStateException( "You can't access sendException method within this HttpResponse because the connection has been closed." );
 		
+		if ( cause instanceof HttpError )
+		{
+			sendError( ( HttpError ) cause );
+			return;
+		}
+		
 		HttpExceptionEvent event = new HttpExceptionEvent( request, cause, Loader.getConfig().getBoolean( "server.developmentMode" ) );
-		Loader.getEventBus().callEvent( event );
+		EventBus.INSTANCE.callEvent( event );
 		
 		int httpCode = event.getHttpCode();
 		
@@ -182,7 +191,7 @@ public class HttpResponseWrapper
 		
 		httpStatus = HttpResponseStatus.valueOf( httpCode );
 		
-		NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + httpCode + ",httpMsg=" + HttpCode.msg( httpCode ) + ",domain=" + request.getSubDomain() + "." + request.getDomain() + ",uri=" + request.getUri() + ",remoteIp=" + request.getRemoteAddr() + "}" );
+		NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + httpCode + ",httpMsg=" + HttpCode.msg( httpCode ) + ",domain=" + request.getSubDomain() + "." + request.getDomain() + ",uri=" + request.getUri() + ",remoteIp=" + request.getIpAddr() + "}" );
 		
 		if ( Loader.getConfig().getBoolean( "server.developmentMode" ) )
 		{
@@ -259,8 +268,11 @@ public class HttpResponseWrapper
 	 */
 	public void sendLoginPage( String msg )
 	{
-		String loginPage = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
-		sendRedirect( loginPage + "?msg=" + msg );
+		/*
+		 * TODO: Come up with a better way to handle the URI used in the target, i.e., currently params are being lost in all redirects.
+		 */
+		String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
+		sendRedirect( loginForm + "?msg=&target=http://" + request.getDomain() + request.getUri() );
 	}
 	
 	/**
@@ -428,16 +440,25 @@ public class HttpResponseWrapper
 		FullHttpResponse response = new DefaultFullHttpResponse( HttpVersion.HTTP_1_1, httpStatus, output );
 		HttpHeaders h = response.headers();
 		
-		for ( Candy c : request.getCandies() )
-			if ( c.needsUpdating() )
-				h.add( "Set-Cookie", c.toHeaderValue() );
+		Session session = request.getSessionWithoutException();
+		if ( session != null )
+		{
+			/**
+			 * Initiate the Session Persistence Method.
+			 * This is usually done with a cookie but we should make a param optional
+			 */
+			session.processSessionCookie();
+			
+			for ( HttpCookie c : request.getSession().getCookies().values() )
+				if ( c.needsUpdating() )
+					h.add( "Set-Cookie", c.toHeaderValue() );
+			
+			if ( session.getSessionCookie().needsUpdating() )
+				h.add( "Set-Cookie", session.getSessionCookie().toHeaderValue() );
+		}
 		
 		if ( h.get( "Server" ) == null )
 			h.add( "Server", Versioning.getProduct() + " Version " + Versioning.getVersion() );
-		
-		// NOTE: Why did I make it check this again?
-		// if ( h.get( "Content-Type" ) == null )
-		// h.add( "Content-Type", httpContentType );
 		
 		// This might be a temporary measure - TODO Properly set the charset for each request.
 		h.set( "Content-Type", httpContentType + "; charset=" + encoding.name() );
@@ -498,9 +519,16 @@ public class HttpResponseWrapper
 			HttpResponse response = new DefaultHttpResponse( HttpVersion.HTTP_1_1, HttpResponseStatus.OK );
 			
 			HttpHeaders h = response.headers();
-			request.getSession().saveSession( false );
+			try
+			{
+				request.getSession().save();
+			}
+			catch ( SessionException e )
+			{
+				e.printStackTrace();
+			}
 			
-			for ( Candy c : request.getCandies() )
+			for ( HttpCookie c : request.getCookies() )
 			{
 				if ( c.needsUpdating() )
 					h.add( "Set-Cookie", c.toHeaderValue() );

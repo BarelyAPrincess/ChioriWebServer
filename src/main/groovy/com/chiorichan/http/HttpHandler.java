@@ -9,6 +9,7 @@ package com.chiorichan.http;
 import static io.netty.handler.codec.http.HttpHeaders.is100ContinueExpected;
 import static io.netty.handler.codec.http.HttpResponseStatus.CONTINUE;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+import groovy.lang.MissingMethodException;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -56,6 +57,8 @@ import org.codehaus.groovy.runtime.NullObject;
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.ContentTypes;
 import com.chiorichan.Loader;
+import com.chiorichan.account.lang.AccountException;
+import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.RenderEvent;
 import com.chiorichan.event.server.RequestEvent;
@@ -72,9 +75,12 @@ import com.chiorichan.net.NetworkSecurity;
 import com.chiorichan.permission.lang.PermissionDeniedException;
 import com.chiorichan.permission.lang.PermissionDeniedException.PermissionDeniedReason;
 import com.chiorichan.permission.lang.PermissionException;
-import com.chiorichan.session.SessionProvider;
+import com.chiorichan.session.Session;
+import com.chiorichan.session.SessionException;
 import com.chiorichan.site.Site;
+import com.chiorichan.util.CommonFunc;
 import com.chiorichan.util.ObjectFunc;
+import com.chiorichan.util.TimingFunc;
 import com.chiorichan.util.Versioning;
 import com.chiorichan.util.WebFunc;
 import com.google.common.base.Charsets;
@@ -84,8 +90,7 @@ import com.google.common.collect.Maps;
 /**
  * Handles both HTTP and HTTPS connections for Netty.
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class HttpHandler extends SimpleChannelInboundHandler<Object>
 {
@@ -98,6 +103,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	private FullHttpRequest requestOrig;
 	private HttpRequestWrapper request;
 	private boolean ssl;
+	private boolean requestFinished = false;
 	
 	static
 	{
@@ -118,7 +124,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		
 		// Initialize static server variables
 		staticServerVars.put( ServerVars.SERVER_SOFTWARE, Versioning.getProduct() );
-		staticServerVars.put( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "webmaster@example.com" ) );
+		staticServerVars.put( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "me@chiorichan.com" ) );
 		staticServerVars.put( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Versioning.getVersion() );
 	}
 	
@@ -155,79 +161,109 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	@Override
 	public void exceptionCaught( ChannelHandlerContext ctx, Throwable cause ) throws Exception
 	{
-		boolean evalFactoryException = false;
-		
-		/*
-		 * Unpackage the EvalFactoryException.
-		 * Not sure if exceptions from the EvalFactory should be handled differently or not.
-		 * XXX Maybe skip generating exception pages for errors that were caused internally and report them to Chiori-chan unless the server is in development mode?
-		 */
-		if ( cause instanceof EvalFactoryException && cause.getCause() != null )
-		{
-			cause = cause.getCause();
-			evalFactoryException = true;
-		}
-		
-		/*
-		 * TODO Proper Exception Handling. Consider the ability to have these exceptions cached and/or delivered by e-mail to developer and/or server administrator.
-		 */
-		if ( cause instanceof HttpError )
-			response.sendError( ( HttpError ) cause );
-		else if ( cause instanceof PermissionDeniedException )
-		{
-			PermissionDeniedException pde = ( PermissionDeniedException ) cause;
-			
-			if ( pde.getReason() == PermissionDeniedReason.LOGIN_PAGE )
-			{
-				/*
-				 * TODO: Come up with a better way to handle the URI used in the target, i.e., currently params are being lost in all redirects.
-				 */
-				String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
-				response.sendRedirect( loginForm + "?msg=You must be logged in to view that page!&target=http://" + request.getDomain() + request.getUri() );
-			}
-			else
-			{
-				/*
-				 * TODO generate a special permission denied page for these!!!
-				 */
-				response.sendError( ( ( PermissionDeniedException ) cause ).getHttpCode(), cause.getMessage() );
-			}
-		}
-		else if ( cause instanceof PermissionException || cause instanceof IndexOutOfBoundsException || cause instanceof NullPointerException || cause instanceof IOException || cause instanceof SiteException )
-		{
-			/*
-			 * XXX Known exceptions
-			 * EvalFactoryException
-			 * PermissionException
-			 * IndexOutOfBoundsException
-			 * NullPointerException
-			 * IOException
-			 * SiteException
-			 */
-			
-			response.sendException( cause );
-			
-			if ( !evalFactoryException )
-				NetworkManager.getLogger().severe( "This exception was thrown from outside the EvalFactory and might be the result of a server programming bug.", cause );
-		}
-		else
-		{
-			response.sendException( cause );
-			
-			if ( !evalFactoryException )
-				NetworkManager.getLogger().severe( "This exception was thrown from outside the EvalFactory and might be the result of a server programming bug.", cause );
-			else
-				NetworkManager.getLogger().severe( "This exception was not expected and most likely needs to be properly caught or investiated. Would you kindly report this stacktrace to the appropriate developer?", cause );
-		}
-		
 		try
 		{
+			String ip = request.getIpAddr();
+			
+			if ( requestFinished )
+			{
+				if ( cause instanceof HttpError )
+				{
+					if ( response.getStage() != HttpResponseStage.CLOSED )
+						response.sendError( ( HttpError ) cause );
+					else
+						NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + " [" + ip + "] For reasons unknown, we caught the HttpError exception but the connection was already closed.", cause );
+					return;
+				}
+				
+				if ( "Connection reset by peer".equals( cause.getMessage() ) )
+					// TODO Cache abusive IP addresses for possible banning.
+					NetworkManager.getLogger().warning( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + " [" + ip + "] The connection was closed before we could finish the request, if the IP continues to abuse the system it WILL BE BANNED!" );
+				else
+					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "We got an unexpected exception:", cause );
+				
+				return;
+			}
+			
+			EvalFactoryException evalOrig = null;
+			
+			/*
+			 * Unpackage the EvalFactoryException.
+			 * Not sure if exceptions from the EvalFactory should be handled differently or not.
+			 * XXX Maybe skip generating exception pages for errors that were caused internally and report them to Chiori-chan unless the server is in development mode?
+			 */
+			if ( cause instanceof EvalFactoryException && cause.getCause() != null )
+			{
+				evalOrig = ( EvalFactoryException ) cause;
+				cause = cause.getCause();
+			}
+			
+			/*
+			 * TODO Proper Exception Handling. Consider the ability to have these exceptions cached and/or delivered by e-mail to developer and/or server administrator.
+			 */
+			if ( cause instanceof HttpError )
+				response.sendError( ( HttpError ) cause );
+			else if ( cause instanceof PermissionDeniedException )
+			{
+				PermissionDeniedException pde = ( PermissionDeniedException ) cause;
+				
+				if ( pde.getReason() == PermissionDeniedReason.LOGIN_PAGE )
+				{
+					response.sendLoginPage( pde.getReason().getMessage() );
+				}
+				else
+				{
+					/*
+					 * TODO generate a special permission denied page for these!!!
+					 */
+					response.sendError( ( ( PermissionDeniedException ) cause ).getHttpCode(), cause.getMessage() );
+				}
+			}
+			else if ( cause instanceof SessionException || cause instanceof PermissionException || cause instanceof AccountException || cause instanceof SiteException || cause instanceof MissingMethodException || cause instanceof IndexOutOfBoundsException || cause instanceof NullPointerException || cause instanceof IOException )
+			{
+				/*
+				 * XXX Known exceptions
+				 * TODO Seperate Groovy Exceptions from Java ones
+				 * EvalFactoryException
+				 * SessionException
+				 * PermissionException
+				 * AccountException
+				 * SiteException
+				 * 
+				 * MissingMethodException
+				 * IndexOutOfBoundsException
+				 * NullPointerException
+				 * IOException
+				 */
+				
+				if ( evalOrig == null )
+					response.sendException( cause );
+				else
+				{
+					response.sendException( evalOrig );
+					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + " [" + ip + "] This exception was not caught by the EvalFactory and might be the result of a server programming bug:", cause );
+				}
+			}
+			else
+			{
+				if ( evalOrig == null )
+				{
+					response.sendException( cause );
+					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + " [" + ip + "] This exception was not expected and most likely needs to be properly caught or investiated. Would you kindly report this stacktrace to the appropriate developer?", cause );
+				}
+				else
+				{
+					response.sendException( evalOrig );
+					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + " [" + ip + "] This exception was not caught by the EvalFactory and might be the result of a server programming bug:", cause );
+				}
+			}
+			
 			finish();
 		}
 		catch ( Throwable t )
 		{
-			t.printStackTrace();
-			Loader.getLogger().debug( "Finish() has thrown an exception!" );
+			Loader.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "This is an uncaught exception from the exceptionCaught() method:", t );
+			// ctx.fireExceptionCaught( t );
 		}
 	}
 	
@@ -244,6 +280,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	@Override
 	protected void messageReceived( ChannelHandlerContext ctx, Object msg ) throws Exception
 	{
+		// TimingFunc.start( this );
+		
 		if ( msg instanceof FullHttpRequest )
 		{
 			if ( !Loader.hasFinishedStartup() )
@@ -274,7 +312,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			if ( is100ContinueExpected( ( HttpRequest ) msg ) )
 				send100Continue( ctx );
 			
-			if ( NetworkSecurity.isIPBanned( request.getRemoteAddr() ) )
+			if ( NetworkSecurity.isIPBanned( request.getIpAddr() ) )
 			{
 				response.sendError( 403 );
 				return;
@@ -323,7 +361,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				}
 			}
 			
-			request.addContentLength( requestOrig.content().readableBytes() );
+			request.contentSize += requestOrig.content().readableBytes();
 			
 			if ( decoder != null )
 			{
@@ -369,7 +407,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			
 			if ( ! ( frame instanceof TextWebSocketFrame ) )
 			{
-				throw new UnsupportedOperationException( String.format( "%s frame types not supported", frame.getClass().getName() ) );
+				throw new UnsupportedOperationException( String.format( "%s frame types are not supported", frame.getClass().getName() ) );
 			}
 			
 			String request = ( ( TextWebSocketFrame ) frame ).text();
@@ -384,26 +422,34 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		{
 			NetworkManager.getLogger().warning( "Received Object '" + msg.getClass() + "' and had nothing to do with it, is this a bug?" );
 		}
+		
+		// Loader.getLogger().debug( "Request Finished in " + TimingFunc.finish( this ) + "ms!" );
 	}
 	
-	private void finish() throws IOException
+	private void finish()
 	{
-		if ( !response.isCommitted() )
-			response.sendResponse();
-		
-		SessionProvider sess;
-		if ( ( sess = request.getSession( false ) ) != null )
+		try
 		{
-			sess.onFinished();
-			sess.saveSession( false );
+			if ( !response.isCommitted() )
+				response.sendResponse();
 			
-			EvalFactory factory = sess.getEvalFactory( false );
-			if ( factory != null )
+			EvalFactory factory;
+			if ( ( factory = request.getEvalFactory() ) != null )
 				factory.onFinished();
+			
+			Session sess;
+			if ( ( sess = request.getSessionWithoutException() ) != null )
+				sess.save();
+			
+			requestFinished = true;
+			
+			Loader.getDatabase().queryUpdate( "INSERT INTO `testing` (`epoch`, `time`, `uri`, `result`, ip) VALUES ('" + CommonFunc.getEpoch() + "', '" + TimingFunc.mark( this ) + "', 'http://" + request.getDomain() + request.getUri() + "', '" + response.getHttpCode() + "', '" + request.getIpAddr() + "');" );
 		}
-		
-		request = null;
-		response = null;
+		catch ( Exception e )
+		{
+			e.printStackTrace();
+			Loader.getLogger().debug( "Finish() has thrown an exception!" );
+		}
 	}
 	
 	private void readHttpDataChunkByChunk() throws IOException
@@ -451,6 +497,11 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			}
 			
 			request.putPostMap( attribute.getName(), value );
+			
+			/*
+			 * Should resolve the problem described in Issue #9 on our GitHub
+			 */
+			attribute.delete();
 		}
 		else if ( data.getHttpDataType() == HttpDataType.FileUpload )
 		{
@@ -480,15 +531,17 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		ctx.write( response );
 	}
 	
-	public void handleHttp( HttpRequestWrapper request, HttpResponseWrapper response ) throws IOException, HttpError, SiteException, PermissionException, EvalFactoryException
+	public void handleHttp( HttpRequestWrapper request, HttpResponseWrapper response ) throws IOException, HttpError, SiteException, PermissionException, EvalFactoryException, SessionException
 	{
 		String uri = request.getUri();
 		String domain = request.getParentDomain();
 		String subdomain = request.getSubDomain();
 		
+		request.startSession();
+		
 		request.initServerVars( staticServerVars );
 		
-		SessionProvider sess = request.getSession();
+		Session sess = request.getSession();
 		
 		if ( response.getStage() == HttpResponseStage.CLOSED )
 			return;
@@ -497,7 +550,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		
 		try
 		{
-			Loader.getEventBus().callEventWithException( requestEvent );
+			EventBus.INSTANCE.callEventWithException( requestEvent );
 		}
 		catch ( EventException ex )
 		{
@@ -529,7 +582,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		WebInterpreter fi = new WebInterpreter( request );
 		
 		Site currentSite = request.getSite();
-		sess.getParentSession().setSite( currentSite );
+		sess.setSite( currentSite ); // setSite?
 		File docRoot = currentSite.getAbsoluteRoot( subdomain );
 		
 		ApacheParser htaccess = new ApacheParser().appendWithDir( docRoot );
@@ -543,7 +596,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		if ( !fi.hasFile() && !fi.hasHTML() )
 			throw new HttpError( 500, null, "This page appears to have no content to display" );
 		
-		NetworkManager.getLogger().info( ConsoleColor.BLUE + "Http" + ( ( ssl ) ? "s" : "" ) + "Request{httpCode=" + response.getHttpCode() + ",httpMsg=" + response.getHttpMsg() + ",subdomain=" + subdomain + ",domain=" + domain + ",uri=" + uri + ",remoteIp=" + request.getRemoteAddr() + ",details=" + fi.toString() + "}" );
+		NetworkManager.getLogger().info( ConsoleColor.BLUE + "Http" + ( ( ssl ) ? "s" : "" ) + "Request{httpCode=" + response.getHttpCode() + ",httpMsg=" + response.getHttpMsg() + ",subdomain=" + subdomain + ",domain=" + domain + ",uri=" + uri + ",remoteIp=" + request.getIpAddr() + ",sessionId=" + sess.getSessId() + ",acct=" + sess.getAccountState() + ( sess.getAccountState() ? "(" + sess.getAcctId() + ")" : "" ) + ",details=" + fi.toString() + "}" );
 		
 		if ( fi.hasFile() )
 			htaccess.appendWithDir( fi.getFile().getParentFile() );
@@ -556,17 +609,18 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		
 		request.putServerVar( ServerVars.DOCUMENT_ROOT, docRoot );
 		
-		sess.setGlobal( "_SERVER", request.getServerStrings() );
-		sess.setGlobal( "_POST", request.getPostMap() );
-		sess.setGlobal( "_GET", request.getGetMap() );
-		sess.setGlobal( "_REWRITE", request.getRewriteMap() );
-		sess.setGlobal( "_FILES", request.getUploadedFiles() );
+		request.setGlobal( "_SERVER", request.getServerStrings() );
+		request.setGlobal( "_POST", request.getPostMap() );
+		request.setGlobal( "_GET", request.getGetMap() );
+		request.setGlobal( "_REWRITE", request.getRewriteMap() );
+		request.setGlobal( "_FILES", request.getUploadedFiles() );
 		
 		if ( Loader.getConfig().getBoolean( "advanced.security.requestMapEnabled", true ) )
-			sess.setGlobal( "_REQUEST", request.getRequestMap() );
+			request.setGlobal( "_REQUEST", request.getRequestMap() );
 		
 		ByteBuf rendered = Unpooled.buffer();
-		EvalFactory factory = sess.getEvalFactory();
+		
+		EvalFactory factory = request.getEvalFactory();
 		factory.setEncoding( fi.getEncoding() );
 		
 		NetworkSecurity.isForbidden( htaccess, currentSite, fi );
@@ -576,7 +630,20 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		if ( req == null )
 			req = "-1";
 		
-		sess.getParentSession().requirePermission( req );
+		try
+		{
+			sess.requirePermission( req );
+		}
+		catch ( PermissionDeniedException e )
+		{
+			if ( e.getReason() == PermissionDeniedReason.LOGIN_PAGE )
+			{
+				response.sendLoginPage( e.getMessage() );
+				return;
+			}
+			else
+				throw e;
+		}
 		
 		// Enhancement: Allow html to be ran under different shells. Default is embedded.
 		if ( fi.hasHTML() )
@@ -632,6 +699,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			meta.params = Maps.newHashMap();
 			meta.params.putAll( request.getRewriteMap() );
 			meta.params.putAll( request.getGetMap() );
+			
 			EvalFactoryResult result = factory.eval( fi, meta, currentSite );
 			
 			if ( result.hasExceptions() )
@@ -665,7 +733,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			}
 		}
 		
-		// TODO: Possible theme'ing of error pages.
 		// if the connection was in a MultiPart mode, wait for the mode to change then return gracefully.
 		if ( response.stage == HttpResponseStage.MULTIPART )
 		{
@@ -694,11 +761,11 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			fi.put( kv.getKey(), kv.getValue() );
 		}
 		
-		RenderEvent renderEvent = new RenderEvent( sess, rendered, fi.getEncoding(), fi.getParams() );
+		RenderEvent renderEvent = new RenderEvent( this, rendered, fi.getEncoding(), fi.getParams() );
 		
 		try
 		{
-			Loader.getEventBus().callEventWithException( renderEvent );
+			EventBus.INSTANCE.callEventWithException( renderEvent );
 			if ( renderEvent.getSource() != null )
 				rendered = renderEvent.getSource();
 		}
@@ -773,13 +840,18 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		// throw new HttpErrorException( 403, "Sorry, Directory Listing has not been implemented on this Server!" );
 	}
 	
-	protected HttpRequestWrapper getRequest()
+	public HttpRequestWrapper getRequest()
 	{
 		return request;
 	}
 	
-	protected HttpResponseWrapper getResponse()
+	public HttpResponseWrapper getResponse()
 	{
 		return response;
+	}
+	
+	public Session getSession()
+	{
+		return request.getSession();
 	}
 }

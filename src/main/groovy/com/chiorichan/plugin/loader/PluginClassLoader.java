@@ -55,7 +55,7 @@ final class PluginClassLoader extends URLClassLoader
 			}
 			catch ( ClassNotFoundException ex )
 			{
-				throw new InvalidPluginException( "Cannot find mane class `" + description.getMain() + "'", ex );
+				throw new InvalidPluginException( "Cannot find main class `" + description.getMain() + "'", ex );
 			}
 			
 			Class<? extends Plugin> pluginClass;
@@ -127,13 +127,14 @@ final class PluginClassLoader extends URLClassLoader
 	{
 		Validate.notNull( javaPlugin, "Initializing plugin cannot be null" );
 		Validate.isTrue( javaPlugin.getClass().getClassLoader() == this, "Cannot initialize plugin outside of this class loader" );
-		if ( this.plugin != null || this.pluginInit != null )
+		
+		if ( plugin != null || pluginInit != null )
 		{
 			throw new IllegalArgumentException( "Plugin already initialized!", pluginState );
 		}
 		
 		pluginState = new IllegalStateException( "Initial initialization" );
-		this.pluginInit = javaPlugin;
+		pluginInit = javaPlugin;
 		
 		javaPlugin.init( loader, description, dataFolder, file, this );
 	}

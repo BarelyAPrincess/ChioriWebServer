@@ -429,8 +429,15 @@ public class WebFunc
 		}
 	}
 	
+	/**
+	 * TODO The server was lagging with this! WHY???
+	 * Maybe we should change our metrics system
+	 */
 	public static boolean sendTracking( String category, String action, String label )
 	{
+		if ( true )
+			return false; // Temp Disabled!
+		
 		String url = "http://www.google-analytics.com/collect";
 		try
 		{
@@ -570,7 +577,7 @@ public class WebFunc
 		File packFile = new File( file );
 		
 		if ( site == null )
-			site = Loader.getSiteManager().getFrameworkSite();
+			site = Loader.getSiteManager().getDefaultSite();
 		
 		if ( packFile == null || !packFile.exists() )
 			return new EvalFactoryResult( new EvalMetaData( file ), site );
@@ -600,7 +607,7 @@ public class WebFunc
 		File packFile = null;
 		
 		if ( site == null )
-			site = Loader.getSiteManager().getFrameworkSite();
+			site = Loader.getSiteManager().getDefaultSite();
 		
 		packFile = site.getResourceWithException( pack );
 		

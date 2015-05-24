@@ -292,6 +292,8 @@ public class TemplateUtils
 	
 	public static String wrapAndEval( EvalFactory factory, String html ) throws IOException, EvalFactoryException
 	{
+		Validate.notNull( factory );
+		
 		String pageMark = "<!-- PAGE DATA -->";
 		InputStream is = TemplateUtils.class.getClassLoader().getResourceAsStream( "BaseTemplate.html" );
 		String baseTemplate = ( is == null ) ? "" : new String( FileFunc.inputStream2Bytes( is ), "UTF-8" );
@@ -299,6 +301,6 @@ public class TemplateUtils
 		EvalMetaData meta = new EvalMetaData();
 		meta.shell = "html";
 		
-		return factory.eval( baseTemplate.replace( pageMark, html ), meta, Loader.getSiteManager().getFrameworkSite() ).getString();
+		return factory.eval( baseTemplate.replace( pageMark, html ), meta, Loader.getSiteManager().getDefaultSite() ).getString();
 	}
 }

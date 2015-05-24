@@ -19,16 +19,16 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
-import com.chiorichan.account.InteractivePermissible;
+import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.console.commands.BuiltinCommand;
+import com.chiorichan.event.EventBus;
 import com.chiorichan.event.server.CommandIssuedEvent;
 import com.google.common.collect.Maps;
 
 /**
  * This is the Command Dispatch for executing a command from a console.
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public final class CommandDispatch
 {
@@ -91,7 +91,7 @@ public final class CommandDispatch
 			try
 			{
 				Interviewer i = activeInterviewer.get( command.handler );
-				InteractivePermissible permissible = command.handler.getPersistence();
+				AccountPermissible permissible = command.handler.getPersistence().getSession();
 				
 				if ( i != null )
 				{
@@ -104,11 +104,11 @@ public final class CommandDispatch
 				{
 					CommandIssuedEvent event = new CommandIssuedEvent( command.command, permissible );
 					
-					Loader.getEventBus().callEvent( event );
+					EventBus.INSTANCE.callEvent( event );
 					
 					if ( event.isCancelled() )
 					{
-						permissible.sendMessage( ConsoleColor.RED + "Your entry was cancelled by the event system." );
+						permissible.send( ConsoleColor.RED + "Your entry was cancelled by the event system." );
 						return;
 					}
 					
@@ -141,7 +141,7 @@ public final class CommandDispatch
 						}
 					}
 					
-					permissible.sendMessage( ConsoleColor.YELLOW + "Your entry was unrecognized, type \"help\" for help." );
+					permissible.send( ConsoleColor.YELLOW + "Your entry was unrecognized, type \"help\" for help." );
 				}
 			}
 			catch ( Exception ex )

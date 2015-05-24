@@ -20,6 +20,7 @@ import com.chiorichan.permission.PermissibleEntityProxy;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionDefault;
+import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.PermissionNamespace;
 import com.chiorichan.permission.PermissionValue;
 import com.chiorichan.util.ObjectFunc;
@@ -89,7 +90,7 @@ public class SQLEntity extends PermissibleEntityProxy
 			if ( rs.next() )
 				do
 				{
-					PermissibleGroup grp = Loader.getPermissionManager().getGroup( rs.getString( "child" ) );
+					PermissibleGroup grp = PermissionManager.INSTANCE.getGroup( rs.getString( "child" ) );
 					groups.put( grp.getId(), grp );
 				}
 				while ( rs.next() );

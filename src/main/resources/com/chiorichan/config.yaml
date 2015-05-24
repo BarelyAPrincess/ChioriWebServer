@@ -54,6 +54,7 @@ console:
   dateFormat: MM-dd
   timeFormat: HH:mm:ss.SSS
   hideLoggerName: false
+  developerMode: true
 auto-updater:
   enabled: true
   on-broken:
@@ -68,7 +69,7 @@ auto-updater:
   check-interval: 30
   console-only: true
 sessions:
-  defaultSessionName: sessionId
+  defaultCookieName: SessionId
   defaultTimeout: 3600
   defaultTimeoutWithLogin: 86400
   defaultTimeoutRememberMe: 604800
@@ -78,19 +79,27 @@ sessions:
   maxSessionsPerIP: 6
   allowIPChange: false
   cleanupInterval: 5
-  adapterType: none
+  datastore: file
   debug: false
 accounts:
   allowLoginTokens: true
-  maxLogins: -1
-  debug: false
   singleLogin: false
-  singleLoginMessage: 'You logged in from another location.'
-  lookupAdapter:
-    type: none
-    table: ''
-    fields: {
-      }
+  singleLoginMessage: You logged in from another location.
+  debug: false
+  sqlType:
+    enabled: false
+    table: accounts
+    fields:
+      - username
+      - email
+      - phone
+  fileType:
+    enabled: true
+    filebase: accounts
+    fields:
+      - username
+      - email
+      - phone
 framework:
   sites:
     defaultTitle: Unnamed Site
@@ -112,4 +121,4 @@ advanced:
     requestMapEnabled: true
     defaultScriptTimeout: 30
   libraries:
-    libPath: 'libraries'
+    libPath: libraries

@@ -16,6 +16,7 @@ import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionBackend;
+import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.lang.PermissionBackendException;
 import com.chiorichan.permission.lang.PermissionException;
 import com.google.common.collect.Sets;
@@ -53,7 +54,7 @@ public class MemoryBackend extends PermissionBackend
 	@Override
 	public PermissibleGroup getDefaultGroup( String siteName )
 	{
-		return Loader.getPermissionManager().getGroup( "Default" );
+		return PermissionManager.INSTANCE.getGroup( "Default" );
 	}
 	
 	@Override

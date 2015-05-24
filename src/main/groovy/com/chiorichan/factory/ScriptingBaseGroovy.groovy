@@ -8,6 +8,8 @@ package com.chiorichan.factory
 
 import com.chiorichan.Loader
 import com.chiorichan.account.Account
+import com.chiorichan.account.AccountManager
+import com.chiorichan.account.lang.AccountException
 import com.chiorichan.database.DatabaseEngine
 import com.chiorichan.framework.ConfigurationManagerWrapper
 import com.chiorichan.framework.HttpUtilsWrapper
@@ -16,8 +18,8 @@ import com.chiorichan.http.HttpRequestWrapper
 import com.chiorichan.http.HttpResponseWrapper
 import com.chiorichan.permission.Permission
 import com.chiorichan.permission.PermissionResult
+import com.chiorichan.session.Session
 import com.chiorichan.session.SessionManager
-import com.chiorichan.session.SessionProvider
 import com.chiorichan.site.Site
 import com.google.common.collect.Lists
 
@@ -27,6 +29,7 @@ import com.google.common.collect.Lists
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
+@SuppressWarnings( "deprecation" )
 public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 {
 	List<ScriptTraceElement> getScriptTrace()
@@ -53,6 +56,8 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	
 	/**
 	 * Returns the current HttpRequestWrapper instance
+	 * XXX This is set inside the {@link HttpRequestWrapper#sessionStarted} and {@link SessionWrapper#startSession}, this needs looking over for other types
+	 * 
 	 * @return
 	 *      current instance
 	 */
@@ -63,6 +68,8 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	
 	/**
 	 * Returns the current HttpResponseWrapper instance
+	 * XXX This is set inside the {@link HttpRequestWrapper#sessionStarted} and {@link SessionWrapper#startSession}, this needs looking over for other types 
+	 * 
 	 * @return
 	 *      current instance
 	 */
@@ -73,10 +80,11 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	
 	/**
 	 * Return the current session for this request
+	 * 
 	 * @return
 	 *      current session
 	 */
-	SessionProvider getSession()
+	Session getSession()
 	{
 		return request.getSession()
 	}
@@ -101,22 +109,22 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 */
 	Account getAccount( String uid )
 	{
-		Account result =  Loader.getAccountManager().getAccount( uid )
+		Account result = AccountManager.INSTANCE.getAccount( uid )
 		
 		if ( result == null )
-			result = Loader.getAccountManager().getAccountPartial( uid )
+			result = AccountManager.INSTANCE.getAccountPartial( uid )
 		
 		return result
 	}
 	
 	Account[] getAccounts( String query )
 	{
-		return Loader.getAccountManager().getAccounts( query )
+		return AccountManager.INSTANCE.getAccounts( query )
 	}
 	
 	Account[] getAccounts( String query, int limit )
 	{
-		return Loader.getAccountManager().getAccounts( query, limit )
+		return AccountManager.INSTANCE.getAccounts( query, limit )
 	}
 	
 	/**
@@ -126,21 +134,31 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 */
 	Account getAccount()
 	{
-		return request.getSession().getAccount()
+		return request.getSession().account()
 	}
 	
-	// XXX These two deprecated methods will soon be replaced with new static classes
+	boolean getAcctState()
+	{
+		return request.getSession().getAccountState()
+	}
+	
+	boolean getAccountState()
+	{
+		return request.getSession().getAccountState()
+	}
+	
+	// XXX These two deprecated methods will soon be replaced
 	
 	@Deprecated
 	ConfigurationManagerWrapper getConfigurationManager()
 	{
-		return new ConfigurationManagerWrapper( request.getSession() )
+		return new ConfigurationManagerWrapper( request )
 	}
 	
 	@Deprecated
 	HttpUtilsWrapper getHttpUtils()
 	{
-		return new HttpUtilsWrapper( request.getSession() )
+		return new HttpUtilsWrapper( request )
 	}
 	
 	/**
@@ -234,7 +252,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 		if ( request.getSite() != null )
 			url += request.getSite().getDomain() + "/"
 		else
-			url += Loader.getSiteManager().getFrameworkSite().getDomain() + "/"
+			url += Loader.getSiteManager().getDefaultSite().getDomain() + "/"
 		
 		return url
 	}
@@ -335,11 +353,11 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	
 	PermissionResult requirePermission( String perm )
 	{
-		getSession().getParentSession().requirePermission( perm )
+		getSession().requirePermission( perm )
 	}
 	
 	PermissionResult requirePermission( Permission perm )
 	{
-		getSession().getParentSession().requirePermission( perm )
+		getSession().requirePermission( perm )
 	}
 }

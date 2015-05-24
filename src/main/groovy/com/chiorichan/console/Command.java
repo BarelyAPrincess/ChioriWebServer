@@ -6,25 +6,27 @@
  */
 package com.chiorichan.console;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.chiorichan.ConsoleColor;
-import com.chiorichan.account.InteractiveEntity;
-import com.chiorichan.account.InteractivePermissible;
+import com.chiorichan.account.Account;
+import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.permission.Permissible;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionNamespace;
-import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 /**
+ * The base class for Console Commands
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public abstract class Command
 {
 	private final String name;
-	private List<String> aliases = Lists.newArrayList();
+	private Set<String> aliases = Sets.newHashSet();
 	private String description = "";
 	private String usageMessage = null;
 	private String permission = null;
@@ -102,27 +104,21 @@ public abstract class Command
 	 *            InteractiveConsoleHandler to test
 	 * @return {@link true} if they can use it, otherwise false
 	 */
-	public boolean testPermission( InteractivePermissible target )
+	public boolean testPermission( AccountPermissible target )
 	{
 		if ( target == null )
 			return false;
-		
-		if ( !target.isValid() )
-		{
-			target.sendMessage( ConsoleColor.RED + "Your session is invalid, please try to relogin." );
-			return false;
-		}
 		
 		if ( testPermissionSilent( target ) )
 			return true;
 		
 		if ( permissionMessage == null )
-			target.sendMessage( ConsoleColor.RED + "I'm sorry, but you do not have permission to perform the command '" + name + "'." );
+			target.send( ConsoleColor.RED + "I'm sorry, but you do not have permission to perform the command '" + name + "'." );
 		else if ( permissionMessage.length() != 0 )
 		{
 			for ( String line : permissionMessage.replace( "<permission>", permission ).split( "\n" ) )
 			{
-				target.sendMessage( line );
+				target.send( line );
 			}
 		}
 		
@@ -157,7 +153,7 @@ public abstract class Command
 		return false;
 	}
 	
-	public List<String> getAliases()
+	public Set<String> getAliases()
 	{
 		return aliases;
 	}
@@ -196,12 +192,25 @@ public abstract class Command
 	 * Sets the list of aliases to request on registration for this command.
 	 * 
 	 * @param aliases
-	 *            aliases to register to this command
+	 *            aliases to register
+	 * @return this command object, for chaining
+	 */
+	public Command setAliases( Set<String> aliases )
+	{
+		this.aliases = aliases;
+		return this;
+	}
+	
+	/**
+	 * Sets the list of aliases to request on registration for this command.
+	 * 
+	 * @param aliases
+	 *            aliases to register
 	 * @return this command object, for chaining
 	 */
 	public Command setAliases( List<String> aliases )
 	{
-		this.aliases = aliases;
+		this.aliases = new HashSet<String>( aliases );
 		return this;
 	}
 	
@@ -244,12 +253,12 @@ public abstract class Command
 		return this;
 	}
 	
-	public static void broadcastCommandMessage( InteractiveEntity source, String message )
+	public static void broadcastCommandMessage( Account source, String message )
 	{
 		broadcastCommandMessage( source, message, true );
 	}
 	
-	public static void broadcastCommandMessage( InteractiveEntity source, String message, boolean sendToSource )
+	public static void broadcastCommandMessage( Account source, String message, boolean sendToSource )
 	{
 		/*
 		 * String result;

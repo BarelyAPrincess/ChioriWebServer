@@ -10,21 +10,26 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
-import com.chiorichan.account.AccountHandler;
-import com.chiorichan.account.AccountManager;
-import com.chiorichan.account.lang.LoginException;
-import com.chiorichan.http.Candy;
-import com.chiorichan.http.HttpRequestWrapper;
+import com.chiorichan.account.AccountInstance;
+import com.chiorichan.account.AccountMeta;
+import com.chiorichan.account.AccountPermissible;
+import com.chiorichan.account.event.AccountMessageEvent;
+import com.chiorichan.account.lang.AccountResult;
+import com.chiorichan.event.EventHandler;
+import com.chiorichan.event.EventPriority;
+import com.chiorichan.event.Listener;
+import com.chiorichan.http.HttpCookie;
 import com.chiorichan.site.Site;
 import com.chiorichan.util.CommonFunc;
 import com.chiorichan.util.StringFunc;
-import com.chiorichan.util.WebFunc;
+import com.chiorichan.util.WeakReferenceList;
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -33,132 +38,205 @@ import com.google.common.collect.Sets;
  * This class is used to carry data that is to be persistent from request to request.
  * If you need to sync data across requests then we recommend using Session Vars for Security.
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
-public abstract class Session extends AccountHandler
+public final class Session extends AccountPermissible implements Listener
 {
-	protected final Map<String, String> data = Maps.newLinkedHashMap();
-	protected final Set<String> dataChangeHistory = Sets.newHashSet();
-	protected int timeout = 0;
-	protected int requestCnt = 0;
-	protected String candyId = "", candyName = "sessionId", lastIpAddr = null;
-	protected Candy sessionCandy;
-	protected List<String> pendingMessages = Lists.newArrayList();
-	protected static String lastSession = "";
-	protected static long lastTime = CommonFunc.getEpoch();
+	/**
+	 * The underlying data for this session<br>
+	 * Preserves access to the datastore and it's methods {@link SessionData#save()}, {@link SessionData#reload()}, {@link SessionData#destroy()}
+	 */
+	SessionData data;
 	
-	protected Map<String, Candy> candies = Maps.newLinkedHashMap();
-	protected Site site;
-	protected boolean stale = false;
-	protected boolean isValid = true;
+	/**
+	 * Global session variables<br>
+	 * Globals will not live outside of the session's life
+	 */
+	final Map<String, Object> globals = Maps.newLinkedHashMap();
 	
-	protected final Map<String, Object> bindingMap = Maps.newLinkedHashMap();
-	protected final Set<SessionProvider> sessionProviders = Sets.newHashSet();
+	/**
+	 * History of changes made to the variables since last {@link #save()}
+	 */
+	private Set<String> dataChangeHistory = Sets.newHashSet();
 	
-	protected Session()
+	/**
+	 * Holds a set of known IP Addresses
+	 */
+	private Set<String> knownIps = Sets.newHashSet();
+	
+	/**
+	 * Reference to each wrapper that is utilizing this session<br>
+	 * We use a WeakReference so they can still be reclaimed by the GC
+	 */
+	private final WeakReferenceList<SessionWrapper> wrappers = new WeakReferenceList<SessionWrapper>();
+	
+	/**
+	 * The epoch for when this session is to be destroyed
+	 */
+	private int timeout = 0;
+	
+	/**
+	 * Number of times this session has been requested<br>
+	 * More requests mean longer TTL
+	 */
+	private int requestCnt = 0;
+	
+	/**
+	 * The sessionKey of this session
+	 */
+	private String sessionKey = SessionManager.getDefaultSessionName();
+	
+	/**
+	 * The sessionId of this session
+	 */
+	private String sessionId = "";
+	
+	/**
+	 * The Session Cookie
+	 */
+	private HttpCookie sessionCookie;
+	
+	/**
+	 * Limits the number of times a session is logged by tracking the last session
+	 * XXX This might be obsolete once new Log Engine is implemented
+	 */
+	private static String lastSession = "";
+	
+	/**
+	 * Limits the number of times a session is logged by tracking the time since last logging
+	 * XXX This might be obsolete once new Log Engine is implemented
+	 */
+	private static long lastTime = CommonFunc.getEpoch();
+	
+	/**
+	 * Tracks session sessionCookies
+	 */
+	private Map<String, HttpCookie> sessionCookies = Maps.newLinkedHashMap();
+	
+	/**
+	 * The site this session is bound to
+	 */
+	private Site site = Loader.getSiteManager().getDefaultSite();
+	
+	Session( SessionData data ) throws SessionException
+	{
+		this.data = data;
+		
+		this.sessionId = data.sessionId;
+		
+		sessionKey = data.sessionName;
+		timeout = data.timeout;
+		knownIps.addAll( Splitter.on( "|" ).splitToList( data.ipAddr ) );
+		site = Loader.getSiteManager().getSiteById( data.site );
+		
+		if ( site == null )
+		{
+			site = Loader.getSiteManager().getDefaultSite();
+			data.site = site.getSiteId();
+		}
+		
+		timeout = data.timeout;
+		
+		if ( timeout > 0 && timeout < CommonFunc.getEpoch() )
+		{
+			SessionManager.getLogger().warning( "The session '" + sessionId + "' expired at epoch '" + timeout + "', might have expired while offline or this is a bug!" );
+			data.destroy();
+			return;
+		}
+		
+		/*
+		 * TODO Figure out how to track if a particular wrapper's IP changes
+		 * Maybe check the original IP the wrapper was authenticated with
+		 * TCP IP: ?
+		 * HTTP IP: ?
+		 * 
+		 * String origIpAddr = lastIpAddr;
+		 * 
+		 * // Possible Session Hijacking! nullify!!!
+		 * if ( lastIpAddr != null && !lastIpAddr.equals( origIpAddr ) && !Loader.getConfig().getBoolean( "sessions.allowIPChange" ) )
+		 * {
+		 * sessionCookie = null;
+		 * lastIpAddr = origIpAddr;
+		 * }
+		 */
+		
+		if ( lastSession == null || !lastSession.equals( getSessId() ) || CommonFunc.getEpoch() - lastTime > 5 )
+		{
+			lastSession = getSessId();
+			lastTime = CommonFunc.getEpoch();
+			
+			// XXX New Session, Requested Session, Loaded Session
+			
+			if ( SessionManager.isDebug() )
+				SessionManager.getLogger().info( ConsoleColor.DARK_AQUA + "Session " + ( data.stale ? "Loaded" : "Created" ) + " `" + this + "`" );
+		}
+		
+		initialized();
+	}
+	
+	@Override
+	public void successfulLogin()
+	{
+		account.metadata().context().credentials().makeResumable( this );
+		rearmTimeout();
+		saveWithoutException();
+	}
+	
+	@Override
+	public void failedLogin( AccountResult result )
 	{
 		
+	}
+	
+	public void processSessionCookie()
+	{
+		// TODO Session Cookies and Session expire at the same time. - Basically, as long as a Session might become called, we keep the session in existence.
+		// TODO Unload a session once it has but been used for a while but might still be called upon at anytime.
+		
+		/**
+		 * Has a Session Cookie been produced yet?
+		 * If not we try and create a new one from scratch
+		 */
+		if ( sessionCookie == null )
+		{
+			assert sessionId != null && !sessionId.isEmpty();
+			
+			sessionKey = getSite().getSessionKey();
+			sessionCookie = getSite().createSessionCookie( sessionId );
+			rearmTimeout();
+		}
+		
+		/**
+		 * Check if our current session cookie key does not match the key used by the Site.
+		 * If so, we move the old session to the general cookie array and set it as expired.
+		 * This usually forces the browser to delete the old session cookie.
+		 */
+		if ( !sessionCookie.getKey().equals( getSite().getSessionKey() ) )
+		{
+			String oldKey = sessionCookie.getKey();
+			sessionCookie.setKey( getSite().getSessionKey() );
+			sessionCookies.put( oldKey, new HttpCookie( oldKey, "" ).setExpiration( 0 ) );
+		}
+	}
+	
+	public AccountInstance account()
+	{
+		return account;
 	}
 	
 	public void setSite( Site site )
 	{
 		this.site = site;
+		data.site = site.getSiteId();
 	}
 	
-	protected void loginSessionUser()
-	{
-		String username = getVariable( "user" );
-		String password = getVariable( "pass" );
-		
-		try
-		{
-			Account user = Loader.getAccountManager().attemptLogin( this, username, password );
-			currentAccount = user;
-			
-			if ( AccountManager.isDebug() )
-				SessionManager.getLogger().info( ConsoleColor.GREEN + "Login Restored `Username \"" + username + "\", Password \"" + password + "\", UserId \"" + user.getAcctId() + "\", Display Name \"" + user.getDisplayName() + "\"`" );
-		}
-		catch ( LoginException l )
-		{
-			if ( AccountManager.isDebug() )
-				SessionManager.getLogger().info( ConsoleColor.YELLOW + "No Valid Login Present" );
-		}
-	}
-	
-	protected void initSession( String parentDomain ) throws SessionException
-	{
-		if ( sessionCandy != null )
-		{
-			candyName = sessionCandy.getKey();
-			candyId = sessionCandy.getValue();
-			
-			reloadSession();
-		}
-		
-		if ( sessionCandy == null )
-		{
-			int defaultLife = ( getSite().getYaml() != null ) ? getSite().getYaml().getInt( "sessions.default-life", 604800 ) : 604800;
-			
-			if ( candyId == null || candyId.isEmpty() )
-				candyId = StringFunc.md5( WebFunc.createGUID( "sessionGen" ) + System.currentTimeMillis() );
-			
-			sessionCandy = new Candy( candyName, candyId );
-			
-			sessionCandy.setMaxAge( defaultLife );
-			
-			if ( parentDomain != null && !parentDomain.isEmpty() )
-				sessionCandy.setDomain( "." + parentDomain );
-			
-			sessionCandy.setPath( "/" );
-			
-			candies.put( candyName, sessionCandy );
-			
-			timeout = CommonFunc.getEpoch() + Loader.getConfig().getInt( "sessions.defaultTimeout", 3600 );
-			
-			saveSession( true );
-		}
-		
-		List<Session> sessions = Loader.getSessionManager().getSessionsByIp( getIpAddr() );
-		int maxPerIp = Loader.getConfig().getInt( "sessions.maxSessionsPerIP" );
-		if ( sessions.size() > maxPerIp )
-		{
-			Map<Long, Session> sortedSessionMap = Maps.newTreeMap();
-			
-			for ( Session s : sessions )
-				sortedSessionMap.put( s.getTimeout(), s );
-			
-			if ( sortedSessionMap.size() > maxPerIp )
-			{
-				int stopIndex = sortedSessionMap.size() - maxPerIp;
-				int curIndex = 0;
-				
-				for ( Entry<Long, Session> e : sortedSessionMap.entrySet() )
-				{
-					curIndex++;
-					
-					if ( curIndex > stopIndex )
-						break;
-					
-					SessionManager.destroySession( e.getValue() );
-				}
-			}
-		}
-		
-		if ( !lastSession.equals( getSessId() ) || CommonFunc.getEpoch() - lastTime > 5 )
-		{
-			lastSession = getSessId();
-			lastTime = CommonFunc.getEpoch();
-			
-			if ( SessionManager.isDebug() )
-				if ( stale )
-					SessionManager.getLogger().info( ConsoleColor.DARK_AQUA + "Session Requested `" + this + "`" );
-				else
-					SessionManager.getLogger().info( ConsoleColor.DARK_AQUA + "Session Created `" + this + "`" );
-		}
-	}
-	
-	public Set<String> getChangeHistory()
+	/**
+	 * Get the present data change history
+	 * 
+	 * @return
+	 *         A unmodifiable copy of dataChangeHistory.
+	 */
+	Set<String> getChangeHistory()
 	{
 		return Collections.unmodifiableSet( new HashSet<String>( dataChangeHistory ) );
 	}
@@ -168,131 +246,85 @@ public abstract class Session extends AccountHandler
 		return dataChangeHistory.size() > 0;
 	}
 	
-	public void saveSession( boolean force )
-	{
-		if ( force || changesMade() )
-		{
-			saveSession();
-			dataChangeHistory.clear();
-		}
-	}
-	
 	@Override
 	public String toString()
 	{
-		String extra = "";
-		
-		if ( site != null )
-			extra += ",site=" + site.getName();
-		
-		return candyName + "{id=" + candyId + ",ipAddr=" + getIpAddr() + ",timeout=" + timeout + ",data=" + data + ",stale=" + stale + ",requestCount=" + requestCnt + extra + "}";
+		return "Session{key=" + sessionKey + ",id=" + sessionId + ",ipAddr=" + getIpAddresses() + ",timeout=" + timeout + ",data=" + data + ",requestCount=" + requestCnt + ",site=" + site + "}";
 	}
 	
 	/**
-	 * Determines if this session belongs to the supplied HttpRequest based on the SessionId cookie.
-	 * 
-	 * @param candyName
-	 *            The candyName to use in this request
-	 * @param requestCandies
-	 *            A map of poled candies
-	 * @return
-	 *         true is this session matches the request
-	 */
-	protected boolean matchClient( String candyName, Map<String, Candy> requestCandies )
-	{
-		return ( requestCandies.containsKey( candyName ) && getCandy( this.candyName ).compareTo( requestCandies.get( candyName ) ) );
-	}
-	
-	/**
-	 * Returns a cookie if existent in the session.
+	 * Returns a sessionCookie if existent in the session.
 	 * 
 	 * @param key
 	 * @return Candy
 	 */
-	public Candy getCandy( String key )
+	public HttpCookie getCookie( String key )
 	{
-		return ( candies.containsKey( key ) ) ? candies.get( key ) : new Candy( key, null );
+		return ( sessionCookies.containsKey( key ) ) ? sessionCookies.get( key ) : new HttpCookie( key, null );
 	}
 	
-	public Candy getSessionCandy()
+	public HttpCookie getSessionCookie()
 	{
-		return sessionCandy;
-	}
-	
-	/**
-	 * Indicates if this session was previously used in a prior request
-	 * 
-	 * @return boolean
-	 */
-	public boolean isStale()
-	{
-		return stale;
+		return sessionCookie;
 	}
 	
 	public String getSessId()
 	{
-		return candyId;
+		return sessionId;
 	}
 	
+	@Override
 	public void setVariable( String key, String value )
 	{
 		if ( value == null )
-			data.remove( key );
+			data.data.remove( key );
 		
-		data.put( key, value );
+		data.data.put( key, value );
 		dataChangeHistory.add( key );
 	}
 	
+	@Override
 	public String getVariable( String key )
 	{
-		if ( !data.containsKey( key ) )
+		if ( !data.data.containsKey( key ) )
 			return "";
 		
-		if ( data.get( key ) == null )
+		if ( data.data.get( key ) == null )
 			return "";
 		
-		return data.get( key );
+		return data.data.get( key );
 	}
 	
 	public boolean isSet( String key )
 	{
-		return data.containsKey( key );
-	}
-	
-	public void setCookieExpiry( int valid )
-	{
-		sessionCandy.setMaxAge( valid );
-	}
-	
-	public void destroy() throws SessionException
-	{
-		timeout = CommonFunc.getEpoch();
-		setCookieExpiry( 0 );
-		
-		SessionManager.destroySession( this );
+		return data.data.containsKey( key );
 	}
 	
 	public void rearmTimeout()
 	{
-		int defaultTimeout = Loader.getConfig().getInt( "sessions.defaultTimeout", 3600 );
+		int defaultTimeout = SessionManager.getDefaultTimeout();
 		
 		// Grant the timeout an additional 10 minutes per request, capped at one hour or 6 requests.
 		requestCnt++;
 		
 		// Grant the timeout an additional 2 hours for having a user logged in.
-		if ( getUserState() )
+		if ( getAccountState() )
 		{
-			defaultTimeout = Loader.getConfig().getInt( "sessions.defaultTimeoutWithLogin", 86400 );
+			defaultTimeout = SessionManager.getDefaultTimeoutWithLogin();
 			
 			if ( StringFunc.isTrue( getVariable( "remember" ) ) )
-				defaultTimeout = Loader.getConfig().getInt( "sessions.defaultTimeoutRememberMe", 604800 );
+				defaultTimeout = SessionManager.getDefaultTimeoutWithRememberMe();
 			
 			if ( Loader.getConfig().getBoolean( "allowNoTimeoutPermission" ) && checkPermission( "com.chiorichan.noTimeout" ).isTrue() )
 				defaultTimeout = Integer.MAX_VALUE;
 		}
 		
 		timeout = CommonFunc.getEpoch() + defaultTimeout + ( Math.min( requestCnt, 6 ) * 600 );
-		sessionCandy.setExpiration( timeout );
+		
+		data.timeout = timeout;
+		
+		if ( sessionCookie != null )
+			sessionCookie.setExpiration( timeout );
 	}
 	
 	public long getTimeout()
@@ -301,110 +333,83 @@ public abstract class Session extends AccountHandler
 	}
 	
 	/**
-	 * This method is only to be used to make this session unremovable from memory by the session garbage collector. Be
-	 * sure that you rearm the timeout at some point to prevent build ups in memory.
+	 * Removes the session expiration and prevents the Session Manager from unloading or destroying sessions
 	 */
-	public void infiniTimeout()
+	public void noTimeout()
 	{
 		timeout = 0;
-	}
-	
-	public boolean getUserState()
-	{
-		return ( currentAccount != null );
+		data.timeout = 0;
 	}
 	
 	/**
-	 * Logout the current logged in user.
+	 * See {@link #getAccountState()}
 	 */
-	public void logoutAccount()
+	public boolean getAcctState()
 	{
-		if ( currentAccount != null )
-			AccountManager.getLogger().info( ConsoleColor.GREEN + "Successful Logout [acctId='" + currentAccount.getAcctId() + "',hasPassword='" + ( !currentAccount.getPassword().isEmpty() ) + "',displayName='" + currentAccount.getDisplayName() + "']" );
-		
-		setVariable( "remember", null );
-		setVariable( "user", null );
-		setVariable( "pass", null );
-		currentAccount = null;
-		
-		for ( Account u : Loader.getAccountManager().getOnlineAccounts() )
-			u.removeHandler( this );
+		return getAccountState();
 	}
 	
-	@Override
-	public boolean kick( String kickMessage )
+	/**
+	 * Reports if the state of the Account login
+	 * 
+	 * @return Is there an Account logged in?
+	 */
+	public boolean getAccountState()
 	{
-		logoutAccount();
-		pendingMessages.add( kickMessage );
+		return ( account != null );
+	}
+	
+	@EventHandler( priority = EventPriority.NORMAL )
+	public void onAccountMessageEvent( AccountMessageEvent event )
+	{
 		
-		return true;
-	}
-	
-	@Override
-	public void sendMessage( String... msgs )
-	{
-		for ( String msg : msgs )
-			pendingMessages.add( msg );
-		notifyProviders();
-	}
-	
-	public void notifyProviders()
-	{
-		for ( SessionProvider p : sessionProviders )
-			p.onNotify();
 	}
 	
 	public Site getSite()
 	{
 		if ( site == null )
-			return Loader.getSiteManager().getFrameworkSite();
+			return Loader.getSiteManager().getDefaultSite();
 		else
 			return site;
 	}
 	
-	/**
-	 * Creates a new SessionProvider for the provided HttpRequest instance.
-	 * 
-	 * @param request
-	 *            instance
-	 * @return a new SessionProviderWeb
-	 */
-	public SessionProvider getSessionProvider( HttpRequestWrapper request )
+	@Override
+	public String getSiteId()
 	{
-		return new SessionProviderWeb( this, request );
+		return getSite().getName();
 	}
 	
 	/**
 	 * @return A set of active SessionProviders for this session.
 	 */
-	public Set<SessionProvider> getSessionProviders()
+	public Set<SessionWrapper> getSessionWrappers()
 	{
-		return sessionProviders;
+		return wrappers.toSet();
 	}
 	
-	public Map<String, Candy> getCandies()
+	public Map<String, HttpCookie> getCookies()
 	{
-		return candies;
+		return Collections.unmodifiableMap( sessionCookies );
 	}
 	
 	public void setGlobal( String key, Object val )
 	{
-		bindingMap.put( key, val );
+		globals.put( key, val );
 	}
 	
 	public Object getGlobal( String key )
 	{
-		return bindingMap.get( key );
+		return globals.get( key );
 	}
 	
 	public Map<String, Object> getGlobals()
 	{
-		return bindingMap;
+		return Collections.unmodifiableMap( globals );
 	}
 	
 	public Map<String, String> getDataMap()
 	{
-		return data;
+		return data.data;
 	}
 	
 	// TODO Make abstract
@@ -413,46 +418,159 @@ public abstract class Session extends AccountHandler
 		return Lists.newCopyOnWriteArrayList();
 	}
 	
-	public abstract void reloadSession();
+	public void reload() throws SessionException
+	{
+		data.reload();
+	}
 	
-	public abstract void saveSession();
+	public void saveWithoutException()
+	{
+		try
+		{
+			save();
+		}
+		catch ( SessionException e )
+		{
+			SessionManager.getLogger().severe( "We had a problem saving the current session, changes were not saved to the datastore!", e );
+		}
+	}
 	
-	protected abstract void destroySession();
+	public void save() throws SessionException
+	{
+		save( false );
+	}
 	
-	public Set<String> getIpAddrs()
+	public void save( boolean force ) throws SessionException
+	{
+		if ( force || changesMade() )
+		{
+			data.sessionName = sessionKey;
+			data.sessionId = sessionId;
+			
+			data.ipAddr = Joiner.on( "|" ).join( knownIps );
+			
+			data.save();
+			dataChangeHistory.clear();
+		}
+	}
+	
+	public void destroy() throws SessionException
+	{
+		if ( SessionManager.isDebug() )
+			Loader.getLogger().info( ConsoleColor.DARK_AQUA + "Session Destroyed `" + this + "`" );
+		
+		SessionManager.sessions.remove( this );
+		
+		for ( SessionWrapper wrap : wrappers )
+			wrap.finish();
+		wrappers.clear();
+		
+		timeout = CommonFunc.getEpoch();
+		data.timeout = CommonFunc.getEpoch();
+		
+		sessionCookie.setMaxAge( 0 );
+		
+		data.destroy();
+		data = null;
+	}
+	
+	@Override
+	public Set<String> getIpAddresses()
 	{
 		Set<String> ips = Sets.newHashSet();
-		
-		synchronized ( sessionProviders )
-		{
-			for ( SessionProvider sp : sessionProviders )
-				if ( sp.getParentSession() == this && sp.getRequest() != null )
+		for ( SessionWrapper sp : wrappers )
+			if ( sp.getSessionWithoutException() != null && sp.getSessionWithoutException() == this )
+			{
+				String ipAddr = sp.getIpAddr();
+				if ( ipAddr != null && !ipAddr.isEmpty() && !ips.contains( ipAddr ) )
 				{
-					String ipAddr = sp.getRequest().getRemoteAddr();
-					if ( ipAddr != null && !ipAddr.isEmpty() && !ips.contains( ipAddr ) )
-					{
-						ips.add( ipAddr );
-					}
+					ips.add( ipAddr );
 				}
-		}
-		
+			}
 		return ips;
-	}
-	
-	@Override
-	public String getIpAddr()
-	{
-		return lastIpAddr;
-	}
-	
-	@Override
-	public boolean isRemote()
-	{
-		return true;
 	}
 	
 	public String getName()
 	{
-		return candyName;
+		return sessionKey;
+	}
+	
+	@Override
+	public String getEntityId()
+	{
+		return account == null ? null : account.getAcctId();
+	}
+	
+	/**
+	 * Registers a newly created wrapper with our session
+	 * 
+	 * @param wrapper
+	 *            The newly created wrapper
+	 */
+	public void registerWrapper( SessionWrapper wrapper )
+	{
+		assert wrapper.getSession() == this : "SessionWrapper does not contain proper reference to this Session";
+		
+		wrappers.add( wrapper );
+		
+		knownIps.add( wrapper.getIpAddr() );
+	}
+	
+	@Override
+	public AccountMeta metadata()
+	{
+		return instance().metadata();
+	}
+	
+	@Override
+	public AccountInstance instance()
+	{
+		return account;
+	}
+	
+	@Override
+	public String getDisplayName()
+	{
+		return account.getDisplayName();
+	}
+	
+	@Override
+	public void send( Object obj )
+	{
+		for ( SessionWrapper sw : wrappers )
+			sw.send( obj );
+	}
+	
+	@Override
+	public void send( Account sender, Object obj )
+	{
+		for ( SessionWrapper sw : wrappers )
+			sw.send( sender, obj );
+	}
+	
+	// TODO Sessions can outlive a login.
+	// TODO Sessions can have an expiration in 7 days and a login can have an expiration of 24 hours.
+	// TODO Remember should probably make it so logins last as long as the session does. Hmmmmmm
+	
+	/**
+	 * Sets if the user login should be remembered for a longer amount of time
+	 * 
+	 * @param remember
+	 *            Should we?
+	 */
+	public void remember( boolean remember )
+	{
+		setVariable( "remember", remember ? "true" : "false" );
+		rearmTimeout();
+	}
+	
+	public void removeWrapper( SessionWrapper wrapper )
+	{
+		wrappers.remove( wrapper );
+	}
+	
+	void putSessionCookie( String key, HttpCookie cookie )
+	{
+		sessionCookies.put( key, cookie );
 	}
 }

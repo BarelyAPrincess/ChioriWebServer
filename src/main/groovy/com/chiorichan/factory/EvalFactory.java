@@ -9,7 +9,6 @@
  */
 package com.chiorichan.factory;
 
-import groovy.lang.Binding;
 import groovy.lang.GroovyRuntimeException;
 import groovy.lang.GroovyShell;
 import groovy.transform.TimedInterrupt;
@@ -20,6 +19,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
@@ -27,9 +28,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.Validate;
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.ErrorCollector;
@@ -37,6 +40,7 @@ import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 import org.codehaus.groovy.control.customizers.ASTTransformationCustomizer;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
 import org.codehaus.groovy.control.messages.Message;
+import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
 import org.codehaus.groovy.syntax.SyntaxException;
 
 import com.chiorichan.ContentTypes;
@@ -57,7 +61,6 @@ import com.chiorichan.http.WebInterpreter;
 import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.lang.IgnorableEvalException;
 import com.chiorichan.lang.SandboxSecurityException;
-import com.chiorichan.permission.lang.PermissionException;
 import com.chiorichan.site.Site;
 import com.chiorichan.util.MapFunc;
 import com.google.common.collect.Lists;
@@ -66,16 +69,15 @@ import com.google.common.collect.Sets;
 
 public class EvalFactory
 {
-	protected static Charset encoding = Charsets.toCharset( Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" ) );
+	private static List<PreProcessor> preProcessors = Lists.newCopyOnWriteArrayList();
+	private static List<Interpreter> interpreters = Lists.newCopyOnWriteArrayList();
+	private static List<PostProcessor> postProcessors = Lists.newCopyOnWriteArrayList();
 	
-	protected static List<PreProcessor> preProcessors = Lists.newCopyOnWriteArrayList();
-	protected static List<Interpreter> interpreters = Lists.newCopyOnWriteArrayList();
-	protected static List<PostProcessor> postProcessors = Lists.newCopyOnWriteArrayList();
-	
-	protected ShellFactory shellFactory = new ShellFactory();
-	protected Set<GroovyShellTracker> groovyShells = Sets.newLinkedHashSet();
-	protected ByteArrayOutputStream bs = new ByteArrayOutputStream();
-	protected Binding binding;
+	private Charset encoding = Charsets.toCharset( Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" ) );
+	private ShellFactory shellFactory = new ShellFactory();
+	private Set<GroovyShellTracker> groovyShells = Sets.newLinkedHashSet();
+	private ByteArrayOutputStream bs = new ByteArrayOutputStream();
+	private EvalBinding binding;
 	
 	/*
 	 * Groovy Sandbox Customization
@@ -131,20 +133,22 @@ public class EvalFactory
 		timedInterrupt.setAnnotationParameters( timedInterruptParams );
 	}
 	
-	protected EvalFactory( Binding binding )
+	private EvalFactory( EvalBinding binding )
 	{
+		Validate.notNull( binding, "The EvalBinding can't be null" );
+		
 		this.binding = binding;
 		setOutputStream( bs );
 	}
 	
-	public static EvalFactory create( Binding binding )
+	public static EvalFactory create( EvalBinding binding )
 	{
 		return new EvalFactory( binding );
 	}
 	
 	public static EvalFactory create( BindingProvider provider )
 	{
-		return provider.getEvalFactory();
+		return new EvalFactory( provider.getBinding() );
 	}
 	
 	public void setVariable( String key, Object val )
@@ -283,7 +287,6 @@ public class EvalFactory
 	public void setEncoding( Charset encoding )
 	{
 		this.encoding = encoding;
-		setOutputStream( bs );
 	}
 	
 	/**
@@ -610,15 +613,30 @@ public class EvalFactory
 			
 			for ( Object err : e.getErrors() )
 			{
-				Loader.getLogger().warning( "Got an error during eval: " + err );
-				
 				if ( err instanceof Throwable )
+				{
+					Loader.getLogger().warning( "Received this exception while trying to eval: ", ( Throwable ) err );
 					exceptionHandler( ( Throwable ) err, meta, result );
+				}
+				else if ( err instanceof SyntaxErrorMessage )
+				{
+					Loader.getLogger().warning( "Received this exception while trying to eval: ", ( ( SyntaxErrorMessage ) err ).getCause() );
+					exceptionHandler( ( ( SyntaxErrorMessage ) err ).getCause(), meta, result );
+				}
 				else if ( err instanceof Message )
 				{
+					StringWriter writer = new StringWriter();
+					( ( Message ) err ).write( new PrintWriter( writer, true ) );
+					Loader.getLogger().warning( "Received this error while trying to eval: " + writer.toString() );
+					
 					// result.addException( ignorableExceptionHandler( err, meta ) );
 				}
 			}
+		}
+		else if ( t instanceof TimeoutException ) // Timeout exception
+		{
+			TimeoutException e = ( TimeoutException ) t;
+			throw new EvalFactoryException( e, shellFactory, meta );
 		}
 		else if ( t instanceof SyntaxException ) // Parsing exception
 		{

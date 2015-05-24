@@ -17,14 +17,13 @@ public abstract class Permissible
 {
 	/**
 	 * Used to reference the PermissibleEntity for the Permissible object.
-	 * Referencing the entity here allows the Trash Collector to destroy this instance if the Permissible is no longer used.
 	 */
 	protected PermissibleEntity entity = null;
 	
 	public final boolean checkEntity()
 	{
 		if ( entity == null )
-			entity = Loader.getPermissionManager().getEntity( this );
+			entity = PermissionManager.INSTANCE.getEntity( this );
 		
 		return entity != null;
 	}
@@ -120,26 +119,10 @@ public abstract class Permissible
 	}
 	
 	/**
-	 * Web users id will be in the form of `siteId`_`acctId`.
+	 * Get the unique identifier for this Permissible
 	 * 
 	 * @return String
 	 *         a unique identifier
 	 */
 	public abstract String getEntityId();
-	
-	/**
-	 * @return boolean
-	 *         is the connection remote
-	 */
-	public abstract boolean isRemote();
-	
-	/**
-	 * If the entity is connected remotely then return the Remote Address.
-	 * 
-	 * @return String
-	 *         an IPv4/IPv6 Address or null if no remote handlers
-	 */
-	public abstract String getIpAddr();
-	
-	public abstract boolean isValid();
 }

@@ -11,7 +11,7 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.List;
 
-import com.chiorichan.Loader;
+import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventCreator;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
@@ -26,8 +26,7 @@ import com.chiorichan.site.Site;
 /**
  * Maintains the network security for all protocols, e.g., TCP, HTTP and HTTPS.
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class NetworkSecurity implements Listener, EventCreator
 {
@@ -35,7 +34,7 @@ public class NetworkSecurity implements Listener, EventCreator
 	
 	public NetworkSecurity()
 	{
-		Loader.getEventBus().registerEvents( this, this );
+		EventBus.INSTANCE.registerEvents( this, this );
 	}
 	
 	public static boolean isIPBanned( String remoteAddr )
@@ -67,22 +66,22 @@ public class NetworkSecurity implements Listener, EventCreator
 	{
 		if ( event.getStatus() == 404 )
 		{
-			
+			// Nothing
 		}
 	}
-
+	
 	@Override
 	public PluginDescriptionFile getDescription()
 	{
 		return null;
 	}
-
+	
 	@Override
 	public boolean isEnabled()
 	{
 		return true;
 	}
-
+	
 	@Override
 	public String getName()
 	{

@@ -18,8 +18,16 @@ import java.util.TimerTask;
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
-import com.chiorichan.account.Account;
+import com.chiorichan.ServerManager;
+import com.chiorichan.account.AccountInstance;
+import com.chiorichan.account.event.AccountPreLoginEvent;
+import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.configuration.file.YamlConfiguration;
+import com.chiorichan.event.EventBus;
+import com.chiorichan.event.EventCreator;
+import com.chiorichan.event.EventHandler;
+import com.chiorichan.event.EventPriority;
+import com.chiorichan.event.Listener;
 import com.chiorichan.permission.backend.file.FileBackend;
 import com.chiorichan.permission.backend.memory.MemoryBackend;
 import com.chiorichan.permission.backend.sql.SQLBackend;
@@ -27,25 +35,53 @@ import com.chiorichan.permission.event.PermissibleEntityEvent;
 import com.chiorichan.permission.event.PermissibleEvent;
 import com.chiorichan.permission.event.PermissibleSystemEvent;
 import com.chiorichan.permission.lang.PermissionBackendException;
+import com.chiorichan.plugin.PluginDescriptionFile;
 import com.chiorichan.scheduler.TaskCreator;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-public class PermissionManager implements TaskCreator
+public class PermissionManager implements ServerManager, TaskCreator, EventCreator, Listener
 {
-	protected Map<String, PermissibleGroup> defaultGroups = new HashMap<String, PermissibleGroup>();
-	protected Map<String, PermissibleGroup> groups = new HashMap<String, PermissibleGroup>();
-	protected Map<String, PermissibleEntity> entities = Maps.newHashMap();
-	protected Set<Permission> roots = Sets.newConcurrentHashSet();
-	protected PermissionBackend backend = null;
-	protected YamlConfiguration config;
-	protected boolean hasWhitelist = false;
+	/**
+	 * Holds the OFFICAL instance of Permission Manager.
+	 */
+	public static final PermissionManager INSTANCE = new PermissionManager();
 	
-	protected static boolean debugMode = false;
-	protected static boolean allowOps = true;
+	/**
+	 * Has this manager already been initialized?
+	 */
+	private static boolean isInitialized = false;
 	
-	public void init() throws PermissionBackendException
+	Map<String, PermissibleGroup> defaultGroups = new HashMap<String, PermissibleGroup>();
+	Map<String, PermissibleGroup> groups = new HashMap<String, PermissibleGroup>();
+	Map<String, PermissibleEntity> entities = Maps.newHashMap();
+	Set<Permission> roots = Sets.newConcurrentHashSet();
+	PermissionBackend backend = null;
+	YamlConfiguration config;
+	boolean hasWhitelist = false;
+	
+	static boolean debugMode = false;
+	static boolean allowOps = true;
+	
+	private PermissionManager()
+	{
+		
+	}
+	
+	public static void init() throws PermissionBackendException
+	{
+		if ( isInitialized )
+			throw new IllegalStateException( "The Permission Manager has already been initialized." );
+		
+		assert INSTANCE != null;
+		
+		INSTANCE.init0();
+		
+		isInitialized = true;
+	}
+	
+	public void init0() throws PermissionBackendException
 	{
 		config = Loader.getConfig();
 		debugMode = config.getBoolean( "permissions.debug", debugMode );
@@ -123,7 +159,7 @@ public class PermissionManager implements TaskCreator
 		if ( permissible == null )
 			throw new IllegalArgumentException( "Null entity passed! Name must not be empty" );
 		
-		if ( !permissible.isValid() )
+		if ( permissible.getEntityId() == null )
 			return null;
 		
 		if ( permissible.entity == null )
@@ -438,7 +474,7 @@ public class PermissionManager implements TaskCreator
 	 */
 	protected void registerTask( TimerTask task, int delay )
 	{
-		Loader.getScheduler().scheduleAsyncDelayedTask( this, task, delay * 50 );
+		Loader.getScheduleManager().scheduleAsyncDelayedTask( this, task, delay * 50 );
 	}
 	
 	/**
@@ -477,7 +513,7 @@ public class PermissionManager implements TaskCreator
 	
 	protected static void callEvent( PermissibleEvent event )
 	{
-		Loader.getEventBus().callEvent( event );
+		EventBus.INSTANCE.callEvent( event );
 	}
 	
 	protected static void callEvent( PermissibleSystemEvent.Action action )
@@ -510,7 +546,7 @@ public class PermissionManager implements TaskCreator
 	 *            ref used for this perm
 	 * @return true on success false otherwise
 	 */
-	public PermissionResult checkPermission( Account entity, String perm, String ref )
+	public PermissionResult checkPermission( AccountInstance entity, String perm, String ref )
 	{
 		return this.checkPermission( entity.getAcctId(), perm, ref );
 	}
@@ -551,5 +587,30 @@ public class PermissionManager implements TaskCreator
 	public String getName()
 	{
 		return "PermissionsManager";
+	}
+	
+	@Override
+	public PluginDescriptionFile getDescription()
+	{
+		return null;
+	}
+	
+	// TODO Make more checks
+	@EventHandler( priority = EventPriority.HIGHEST )
+	public void onAccountLoginEvent( AccountPreLoginEvent event )
+	{
+		PermissibleEntity entity = getEntity( event.getAccount().getAcctId() );
+		
+		if ( hasWhitelist() && entity.isWhitelisted() )
+		{
+			event.fail( AccountResult.ACCOUNT_NOT_WHITELISTED );
+			return;
+		}
+		
+		if ( entity.isBanned() )
+		{
+			event.fail( AccountResult.ACCOUNT_BANNED );
+			return;
+		}
 	}
 }
