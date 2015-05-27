@@ -25,6 +25,7 @@ import com.chiorichan.account.event.AccountLookupEvent;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.database.DatabaseEngine;
+import com.chiorichan.database.DatabaseEngine.SQLColumn;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.util.CommonFunc;
 import com.google.common.collect.Maps;
@@ -64,12 +65,12 @@ public class SqlTypeCreator extends AccountTypeCreator
 	
 	
 	@Override
-	public void save( AccountMeta meta )
+	public void save( AccountContext context )
 	{
 		try
 		{
-			Set<String> columnSet = new HashSet<String>( sql.getTableColumnNames( table ) );
-			Map<String, Object> metaData = meta.getMeta();
+			List<SQLColumn> columnSet = sql.getTableColumns( table );
+			Map<String, Object> metaData = context.meta() == null ? context.getValues() : context.meta().getMeta();
 			Map<String, Object> toSave = Maps.newTreeMap();
 			Map<String, Class<?>> newColumns = Maps.newHashMap();
 			
@@ -77,20 +78,17 @@ public class SqlTypeCreator extends AccountTypeCreator
 			{
 				String key = e.getKey();
 				
-				if ( !"acctId".equalsIgnoreCase( key ) && !"password".equalsIgnoreCase( key ) )
+				if ( !"acctId".equalsIgnoreCase( key ) && !"siteId".equalsIgnoreCase( key ) && !"password".equalsIgnoreCase( key ) )
 				{
 					boolean found = false;
 					
-					for ( String s : columnSet )
-						if ( s.equalsIgnoreCase( key ) )
+					for ( SQLColumn s : columnSet )
+						if ( s.name.equalsIgnoreCase( key ) || newColumns.containsKey( key ) )
 							found = true;
 					
+					// There is no column for this key
 					if ( !found )
-					{
-						// There is no column for this key
-						columnSet.add( key );
 						newColumns.put( key, e.getValue().getClass() );
-					}
 					
 					toSave.put( key, e.getValue() );
 				}
@@ -108,16 +106,28 @@ public class SqlTypeCreator extends AccountTypeCreator
 						toSave.remove( c.getKey() );
 					}
 			
-			ResultSet rs = sql.query( "SELECT * FROM `" + table + "` WHERE `acctId` = '" + meta.getAcctId() + "' LIMIT 1;" );
+			toSave.put( "acctId", context.getAcctId() );
+			toSave.put( "siteId", context.getSiteId() );
+			
+			for ( SQLColumn s : columnSet )
+				if ( !toSave.containsKey( s.name ) )
+				{
+					AccountManager.getLogger().severe( "SQLTypeCreator detected that the database contains the unset key '" + s.name + "'" );
+					// return;
+				}
+			
+			ResultSet rs = sql.query( "SELECT * FROM `" + table + "` WHERE `acctId` = '" + context.getAcctId() + "' LIMIT 1;" );
+			
+			Loader.getLogger().debug( "Saving Context: " + context.getAcctId() + " --> " + toSave );
 			
 			if ( sql.getRowCount( rs ) > 0 )
-				sql.update( table, toSave, "`acctId` = '" + meta.getAcctId() + "'", 1 );
+				sql.update( table, toSave, "`acctId` = '" + context.getAcctId() + "'", 1 );
 			else
 				sql.insert( table, toSave );
 		}
 		catch ( SQLException e )
 		{
-			throw new AccountException( e, meta );
+			throw new AccountException( e, context.meta() );
 		}
 		catch ( Throwable t )
 		{
@@ -214,8 +224,6 @@ public class SqlTypeCreator extends AccountTypeCreator
 	
 	public AccountContext readAccount( String acctId ) throws AccountException, SQLException
 	{
-		AccountContextImpl context = new AccountContextImpl( this, AccountType.SQL );
-		
 		if ( acctId == null || acctId.isEmpty() )
 			throw new AccountException( AccountResult.EMPTY_ACCTID );
 		
@@ -244,12 +252,29 @@ public class SqlTypeCreator extends AccountTypeCreator
 		
 		ResultSet rs = sql.query( "SELECT * FROM `" + table + "` WHERE " + additionalAccountFields.substring( 4 ) + ";" );
 		
+		AccountContextImpl context = new AccountContextImpl( this, AccountType.SQL, acctId, "%" );
+		
 		if ( rs == null || sql.getRowCount( rs ) < 1 )
 			throw new AccountException( AccountResult.INCORRECT_LOGIN, context );
 		
 		context.setAcctId( rs.getString( "acctId" ) );
+		context.setSiteId( rs.getString( "siteId" ) );
 		context.setValues( DatabaseEngine.convertRow( rs ) );
 		
+		return context;
+	}
+	
+	@Override
+	public AccountContext createAccount( String acctId, String siteId )
+	{
+		AccountContext context = new AccountContextImpl( this, AccountType.SQL, acctId, siteId );
+		
+		context.setValue( "date", CommonFunc.getEpoch() );
+		context.setValue( "numloginfailed", 0 );
+		context.setValue( "lastloginfail", 0 );
+		context.setValue( "actnum", "0" );
+		
+		save( context );
 		return context;
 	}
 	
@@ -274,6 +299,20 @@ public class SqlTypeCreator extends AccountTypeCreator
 	public List<String> getLoginKeys()
 	{
 		return accountFields;
+	}
+	
+	
+	@Override
+	public boolean exists( String acctId )
+	{
+		try
+		{
+			return sql.getRowCount( sql.query( "SELECT * FROM `" + table + "` WHERE `acctId`='" + acctId + "';" ) ) > 0;
+		}
+		catch ( SQLException e )
+		{
+			return false;
+		}
 	}
 	
 	/*

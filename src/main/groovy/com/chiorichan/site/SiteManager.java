@@ -11,7 +11,8 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +50,6 @@ public class SiteManager implements ServerManager
 		INSTANCE.init0();
 		
 		isInitialized = true;
-		
 	}
 	
 	private void init0() throws StartupException
@@ -79,6 +79,12 @@ public class SiteManager implements ServerManager
 				e.printStackTrace();
 			}
 		}
+		
+		/**
+		 * Add the dummy all sites site
+		 * Used by the AccountManager to identify accounts that can belong to any site
+		 */
+		siteMap.put( "%", new Site( "%" ) );
 		
 		FileFilter fileFilter = new WildcardFileFilter( "*.yaml" );
 		File[] files = siteFileBase.listFiles( fileFilter );
@@ -170,22 +176,25 @@ public class SiteManager implements ServerManager
 		if ( siteId == null )
 			return null;
 		
-		return siteMap.get( siteId );
+		return siteMap.get( siteId.toLowerCase().trim() );
 	}
 	
 	public Site getSiteByDomain( String domain )
 	{
+		if ( domain == null )
+			domain = "default";
+		
 		for ( Site site : siteMap.values() )
-			if ( site != null )
+			if ( site != null && site.getDomain() != null )
 				if ( site.getDomain().equalsIgnoreCase( domain.trim() ) )
 					return site;
 		
 		return null;
 	}
 	
-	public List<Site> getSites()
+	public Collection<Site> getSites()
 	{
-		return new ArrayList<Site>( siteMap.values() );
+		return Collections.unmodifiableCollection( siteMap.values() );
 	}
 	
 	public Site getDefaultSite()

@@ -101,6 +101,16 @@ public final class AccountType
 		this.builtin = builtin;
 	}
 	
+	public static AccountType getDefaultType()
+	{
+		for ( AccountType type : getAccountTypes() )
+			if ( type.isEnabled() && type.isDefault() )
+				return type;
+		
+		AccountManager.getLogger().warning( "We could not find a default AccountType, please check the server configuration." );
+		return MEMORY;
+	}
+	
 	/**
 	 * Is this a builtin AccountType, i.e., SQL, FILE, or MEMORY
 	 * 
@@ -124,10 +134,10 @@ public final class AccountType
 	}
 	
 	/**
-	 * Checks if this type was enabled in the server config
+	 * Checks if this type was enabled in the server configuration
 	 * 
 	 * @return
-	 *         Is this type enabled?
+	 *         True if it is enabled
 	 */
 	public boolean isEnabled()
 	{
@@ -135,19 +145,31 @@ public final class AccountType
 		if ( this == AccountType.MEMORY )
 			return true;
 		
-		Object obj = Loader.getConfig().get( "accounts." + getName() + "Type.enabled" );
-		
-		if ( obj instanceof Boolean )
-			return ( Boolean ) obj;
-		
-		Loader.getConfig().set( "accounts." + getName() + "Type.enabled", true );
-		Loader.saveConfig();
-		
-		/**
+		/*
 		 * Lastly we ask the AccountCreator directly if it's enabled.
 		 * Returning false would be the answer if there was a problem enabling the creator.
 		 */
-		return getCreator().isEnabled();
+		return Loader.getConfig().getBoolean( "accounts." + getName() + "Type.enabled", true ) && getCreator().isEnabled();
+	}
+	
+	/**
+	 * Checks if this type is default per server configuration
+	 * 
+	 * @return
+	 *         True if it is default
+	 */
+	public boolean isDefault()
+	{
+		// Memory accounts are never default
+		if ( this == AccountType.MEMORY )
+			return false;
+		
+		boolean def = Loader.getConfig().getBoolean( "accounts." + getName() + "Type.default", true );
+		
+		if ( def && !isEnabled() )
+			AccountManager.getLogger().warning( "Your default Account Type is '" + getName() + "' and it's not enabled, possibly due to failure to start, account creation will most likely fail." );
+		
+		return def;
 	}
 	
 	public AccountTypeCreator getCreator()

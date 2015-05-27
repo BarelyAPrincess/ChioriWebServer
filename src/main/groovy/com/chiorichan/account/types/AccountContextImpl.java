@@ -19,7 +19,7 @@ import com.chiorichan.account.AccountType;
  * 
  * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
-class AccountContextImpl extends AccountContext
+final class AccountContextImpl extends AccountContext
 {
 	AccountContextImpl( AccountCreator creator, AccountType type, String acctId, String siteId, boolean keepLoaded )
 	{

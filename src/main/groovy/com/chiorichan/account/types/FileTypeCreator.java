@@ -59,22 +59,24 @@ public class FileTypeCreator extends AccountTypeCreator
 	}
 	
 	@Override
-	public void save( AccountMeta meta )
+	public void save( AccountContext context )
 	{
-		if ( meta == null )
+		if ( context == null )
 			return;
 		
+		Map<String, Object> meta = context.meta() == null ? context.getValues() : context.meta().getMeta();
+		
 		if ( !meta.containsKey( "file" ) )
-			meta.set( "file", meta.getAcctId() + ".yaml" );
+			meta.put( "file", context.getAcctId() + ".yaml" );
 		
 		YamlConfiguration yser = new YamlConfiguration();
 		
-		for ( String key : meta.getKeys() )
-			yser.set( key, meta.getObject( key ) );
+		for ( String key : meta.keySet() )
+			yser.set( key, meta.get( key ) );
 		
 		try
 		{
-			yser.save( ( String ) meta.getObject( "file" ) );
+			yser.save( ( String ) meta.get( "file" ) );
 		}
 		catch ( IOException e )
 		{
@@ -241,6 +243,7 @@ public class FileTypeCreator extends AccountTypeCreator
 		}
 		
 		context.setAcctId( yser.getString( "acctId" ) );
+		context.setSiteId( yser.getString( "siteId" ) );
 		
 		context.setValues( contents );
 		
@@ -326,6 +329,20 @@ public class FileTypeCreator extends AccountTypeCreator
 		return context;
 	}
 	
+	@Override
+	public AccountContext createAccount( String acctId, String siteId )
+	{
+		AccountContext context = new AccountContextImpl( this, AccountType.SQL, acctId, siteId );
+		
+		context.setValue( "date", CommonFunc.getEpoch() );
+		context.setValue( "numloginfailed", 0 );
+		context.setValue( "lastloginfail", 0 );
+		context.setValue( "actnum", "0" );
+		
+		save( context );
+		return context;
+	}
+	
 	@EventHandler
 	public void onAccountLookupEvent( AccountLookupEvent event )
 	{
@@ -343,6 +360,14 @@ public class FileTypeCreator extends AccountTypeCreator
 	public List<String> getLoginKeys()
 	{
 		return accountFields;
+	}
+	
+	@Override
+	public boolean exists( String acctId )
+	{
+		checkForFiles();
+		
+		return preloaded.containsKey( acctId );
 	}
 	
 	/*

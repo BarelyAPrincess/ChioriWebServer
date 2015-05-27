@@ -163,6 +163,24 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	{
 		try
 		{
+			if ( request == null || response == null )
+			{
+				NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "We got an unexpected exception before the connection was processed:", cause );
+				
+				StringBuilder sb = new StringBuilder();
+				sb.append( "<h1>500 - Internal Server Error</h1>\n" );
+				sb.append( "<p>The server had encountered an unexpected exception before it could process your request, so no debug information is available.</p>\n" );
+				sb.append( "<p>The exception has been logged to the console, we can only hope the exception is noticed and resolved. We apoligize for any inconvenience.</p>\n" );
+				sb.append( "<p><i>You have a good day now and we will see you again soon. :)</i></p>\n" );
+				sb.append( "<hr>\n" );
+				sb.append( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")<br />" + Versioning.getCopyright() + "</small>" );
+				
+				FullHttpResponse response = new DefaultFullHttpResponse( HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf( 500 ), Unpooled.wrappedBuffer( sb.toString().getBytes() ) );
+				ctx.write( response );
+				
+				return;
+			}
+			
 			String ip = request.getIpAddr();
 			
 			if ( requestFinished )
@@ -223,7 +241,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			{
 				/*
 				 * XXX Known exceptions
-				 * TODO Seperate Groovy Exceptions from Java ones
+				 * TODO Seperate Groovy Exceptions from Java Exceptions
 				 * EvalFactoryException
 				 * SessionException
 				 * PermissionException
@@ -237,12 +255,12 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				 */
 				
 				if ( evalOrig == null )
-					response.sendException( cause );
-				else
 				{
-					response.sendException( evalOrig );
+					response.sendException( cause );
 					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + " [" + ip + "] This exception was not caught by the EvalFactory and might be the result of a server programming bug:", cause );
 				}
+				else
+					response.sendException( evalOrig );
 			}
 			else
 			{

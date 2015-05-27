@@ -42,14 +42,14 @@ public class NetworkSecurity implements Listener, EventCreator
 		try
 		{
 			// Checks if the provided address is valid.
-			InetAddress.getByName( remoteAddr );
+			InetAddress addr = InetAddress.getByName( remoteAddr );
+			
+			return bannedIps.contains( addr.getHostAddress() );
 		}
 		catch ( UnknownHostException e )
 		{
 			return false;
 		}
-		
-		return bannedIps.contains( remoteAddr );
 	}
 	
 	public static void isForbidden( ApacheParser htaccess, Site site, WebInterpreter fi ) throws HttpError

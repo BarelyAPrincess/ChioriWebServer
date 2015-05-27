@@ -37,6 +37,7 @@ public class AccountContext
 	protected final Map<String, Object> rawMeta = Maps.newHashMap();
 	protected final AccountCreator creator;
 	protected final AccountType type;
+	private AccountMeta acct;
 	protected boolean keepLoaded = false;
 	protected String acctId = null;
 	protected String siteId = null;
@@ -84,6 +85,11 @@ public class AccountContext
 		return creator;
 	}
 	
+	public AccountMeta meta()
+	{
+		return acct;
+	}
+	
 	public String getAcctId()
 	{
 		if ( acctId == null || acctId.isEmpty() )
@@ -116,5 +122,25 @@ public class AccountContext
 	public Map<String, Object> getValues()
 	{
 		return Collections.unmodifiableMap( rawMeta );
+	}
+	
+	public void setValue( String key, Object value )
+	{
+		rawMeta.put( key, value );
+	}
+	
+	public Object getValue( String key )
+	{
+		return rawMeta.get( key );
+	}
+	
+	public void save()
+	{
+		creator.save( this );
+	}
+	
+	void setAccount( AccountMeta acct )
+	{
+		this.acct = acct;
 	}
 }

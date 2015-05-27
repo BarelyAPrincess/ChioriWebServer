@@ -15,9 +15,10 @@ import java.net.URLClassLoader;
 /**
  * Acts as the classloader for downloaded Maven Libraries
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
+
+@SuppressWarnings( {"unchecked", "rawtypes"} )
 public class MavenClassLoader
 {
 	private static final Class[] parameters = new Class[] {URL.class};

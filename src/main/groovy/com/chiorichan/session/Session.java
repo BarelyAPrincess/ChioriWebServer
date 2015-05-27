@@ -138,12 +138,14 @@ public final class Session extends AccountPermissible implements Listener
 		
 		timeout = data.timeout;
 		
-		if ( timeout > 0 && timeout < CommonFunc.getEpoch() )
-		{
-			SessionManager.getLogger().warning( "The session '" + sessionId + "' expired at epoch '" + timeout + "', might have expired while offline or this is a bug!" );
-			data.destroy();
-			return;
-		}
+		/*
+		 * if ( timeout > 0 && timeout < CommonFunc.getEpoch() )
+		 * {
+		 * SessionManager.getLogger().warning( "The session '" + sessionId + "' expired at epoch '" + timeout + "', might have expired while offline or this is a bug!" );
+		 * data.destroy();
+		 * return;
+		 * }
+		 */
 		
 		/*
 		 * TODO Figure out how to track if a particular wrapper's IP changes
@@ -469,7 +471,8 @@ public final class Session extends AccountPermissible implements Listener
 		timeout = CommonFunc.getEpoch();
 		data.timeout = CommonFunc.getEpoch();
 		
-		sessionCookie.setMaxAge( 0 );
+		if ( sessionCookie != null )
+			sessionCookie.setMaxAge( 0 );
 		
 		data.destroy();
 		data = null;

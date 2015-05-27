@@ -73,7 +73,12 @@ public class Site
 	EvalBinding binding = new EvalBinding();
 	EvalFactory factory = EvalFactory.create( binding );
 	
-	protected Site( File f ) throws SiteException, StartupException
+	Site( String siteId )
+	{
+		this.siteId = siteId;
+	}
+	
+	Site( File f ) throws SiteException, StartupException
 	{
 		siteType = SiteType.FILE;
 		filePath = f;
@@ -210,7 +215,7 @@ public class Site
 	}
 	
 	@SuppressWarnings( "unchecked" )
-	protected Site( ResultSet rs ) throws SiteException, StartupException
+	Site( ResultSet rs ) throws SiteException, StartupException
 	{
 		siteType = SiteType.SQL;
 		
@@ -843,7 +848,7 @@ public class Site
 	@Override
 	public String toString()
 	{
-		return getSiteId() + "Site{name=" + getName() + ",title=" + title + ",domain=" + getDomain() + ",type=" + siteType + ",source=" + source + ",resource=" + resource + "}";
+		return "Site{id=" + getSiteId() + "name=" + getName() + ",title=" + title + ",domain=" + getDomain() + ",type=" + siteType + ",source=" + source + ",resource=" + resource + "}";
 	}
 	
 	public enum SessionPersistenceMethod

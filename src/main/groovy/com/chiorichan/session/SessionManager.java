@@ -137,11 +137,15 @@ public class SessionManager implements TaskCreator, ServerManager
 		Set<String> knownIps = Sets.newHashSet();
 		
 		for ( Session sess : sessions )
+		{
+			// Loader.getLogger().debug( sess.getSessId() + " --> " + sess.getTimeout() + " (-) " + CommonFunc.getEpoch() + " (=) " + ( sess.getTimeout() - CommonFunc.getEpoch() ) + " | " + CommonFunc.readoutDuration( ( sess.getTimeout() -
+			// CommonFunc.getEpoch() ) * 1000 ) + " To Be Destroyed? " + ( sess.getTimeout() > 0 && sess.getTimeout() < CommonFunc.getEpoch() ) );
+			
 			if ( sess.getTimeout() > 0 && sess.getTimeout() < CommonFunc.getEpoch() )
 				try
 				{
-					sess.destroy();
 					cleanupCount++;
+					sess.destroy();
 				}
 				catch ( SessionException e )
 				{
@@ -149,6 +153,7 @@ public class SessionManager implements TaskCreator, ServerManager
 				}
 			else
 				knownIps.addAll( sess.getIpAddresses() );
+		}
 		
 		int maxPerIp = Loader.getConfig().getInt( "sessions.maxSessionsPerIP" );
 		
@@ -172,8 +177,8 @@ public class SessionManager implements TaskCreator, ServerManager
 				for ( int i = 0; i < sortedArray.length - maxPerIp; i++ )
 					try
 					{
-						sortedArray[i].destroy();
 						cleanupCount++;
+						sortedArray[i].destroy();
 					}
 					catch ( SessionException e )
 					{

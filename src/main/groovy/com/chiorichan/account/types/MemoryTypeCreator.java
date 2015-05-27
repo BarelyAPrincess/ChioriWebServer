@@ -9,6 +9,7 @@ package com.chiorichan.account.types;
 import java.util.Arrays;
 import java.util.List;
 
+import com.chiorichan.account.AccountContext;
 import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.AccountType;
@@ -16,6 +17,7 @@ import com.chiorichan.account.event.AccountLoadEvent;
 import com.chiorichan.account.event.AccountLookupEvent;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.event.EventHandler;
+import com.chiorichan.util.CommonFunc;
 
 /**
  * Handles Memory Accounts, e.g., Root and None
@@ -49,7 +51,7 @@ public class MemoryTypeCreator extends AccountTypeCreator
 	}
 	
 	@Override
-	public void save( AccountMeta account )
+	public void save( AccountContext context )
 	{
 		// Do Nothing!
 	}
@@ -94,5 +96,21 @@ public class MemoryTypeCreator extends AccountTypeCreator
 	public List<String> getLoginKeys()
 	{
 		return Arrays.asList( new String[] {} );
+	}
+	
+	@Override
+	public boolean exists( String acctId )
+	{
+		return "none".equals( acctId ) || "root".equals( acctId );
+	}
+	
+	@Override
+	public AccountContext createAccount( String acctId, String siteId )
+	{
+		AccountContext context = new AccountContextImpl( this, AccountType.SQL, acctId, siteId );
+		
+		context.setValue( "date", CommonFunc.getEpoch() );
+		
+		return context;
 	}
 }

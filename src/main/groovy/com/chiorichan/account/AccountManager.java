@@ -20,6 +20,9 @@ import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.plugin.PluginDescriptionFile;
 import com.chiorichan.scheduler.TaskCreator;
+import com.chiorichan.site.Site;
+import com.chiorichan.site.SiteManager;
+import com.chiorichan.util.RandomFunc;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Sets;
 
@@ -74,6 +77,74 @@ public final class AccountManager extends AccountEvents implements ServerManager
 		EventBus.INSTANCE.registerEvents( AccountType.MEMORY.getCreator(), this );
 		EventBus.INSTANCE.registerEvents( AccountType.SQL.getCreator(), this );
 		EventBus.INSTANCE.registerEvents( AccountType.FILE.getCreator(), this );
+	}
+	
+	public AccountMeta createAccount( String acctId, String siteId )
+	{
+		return createAccount( acctId, siteId, AccountType.getDefaultType() );
+	}
+	
+	public AccountMeta createAccount( String acctId, String siteId, AccountType type )
+	{
+		if ( !type.isEnabled() )
+			throw AccountResult.FEATURE_DISABLED.exception();
+		
+		AccountContext context = type.getCreator().createAccount( acctId, siteId );
+		
+		return new AccountMeta( context );
+	}
+	
+	public String generateAcctId( String seed )
+	{
+		String acctId = "";
+		
+		if ( seed == null || seed.isEmpty() )
+			acctId = RandomFunc.randomize( "ab123C" );
+		else
+		{
+			if ( seed.contains( " " ) || seed.contains( "|" ) )
+			{
+				String[] split = seed.split( " |\\|" );
+				acctId += ( split.length < 1 || split[0].isEmpty() ? "" + RandomFunc.randomize( 'a' ) : split[0].substring( 0, 1 ) ).toLowerCase();
+				acctId += ( split.length < 2 || split[1].isEmpty() ? "" + RandomFunc.randomize( 'b' ) : split[1].substring( 0, 1 ) ).toLowerCase();
+				acctId += "123";
+				acctId += ( split.length < 3 || split[2].isEmpty() ? "" + RandomFunc.randomize( 'C' ) : split[2].substring( 0, 1 ) ).toUpperCase();
+			}
+		}
+		
+		assert acctId.length() == 6;
+		assert acctId.matches( "[a-z]{2}[0-9]{3}[A-Z]" );
+		
+		int tries = 1;
+		
+		do
+		{
+			// When our tries are divisible by 25 we attempt to randomize the last letter for more chances.
+			if ( tries % 25 == 0 )
+				acctId = acctId.substring( 0, 5 ) + RandomFunc.randomize( acctId.substring( 5 ) );
+			
+			acctId = acctId.substring( 0, 2 ) + RandomFunc.randomize( "123" ) + acctId.substring( acctId.length() - 1 );
+			
+			tries++;
+		}
+		while ( exists( acctId ) );
+		
+		return acctId;
+	}
+	
+	private boolean exists( String acctId )
+	{
+		if ( accounts.keySet().contains( acctId ) )
+			return true;
+		
+		for ( AccountType type : AccountType.getAccountTypes() )
+		{
+			if ( type.getCreator().exists( acctId ) )
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	public AccountMeta getAccount( String acctId )
@@ -166,6 +237,56 @@ public final class AccountManager extends AccountEvents implements ServerManager
 	public Set<AccountMeta> getAccounts()
 	{
 		return Collections.unmodifiableSet( getAccounts0() );
+	}
+	
+	public Set<AccountMeta> getAccounts( String key, String value )
+	{
+		Validate.notNull( key );
+		Validate.notNull( value );
+		
+		Set<AccountMeta> results = Sets.newHashSet();
+		
+		if ( value.contains( "|" ) )
+		{
+			for ( String s : Splitter.on( "|" ).split( value ) )
+				if ( s != null && !s.isEmpty() )
+					results.addAll( getAccounts( key, s ) );
+			
+			return results;
+		}
+		
+		boolean isLower = value.toLowerCase().equals( value ); // Is query string all lower case?
+		
+		for ( AccountMeta meta : accounts.toSet() )
+		{
+			String str = ( isLower ) ? meta.getString( key ).toLowerCase() : meta.getString( key );
+			
+			if ( str != null && !str.isEmpty() && str.contains( value ) )
+			{
+				results.add( meta );
+				continue;
+			}
+		}
+		
+		return results;
+	}
+	
+	public Set<AccountMeta> getAccountsBySite( String site )
+	{
+		return getAccountsBySite( SiteManager.INSTANCE.getSiteById( site ) );
+	}
+	
+	public Set<AccountMeta> getAccountsBySite( Site site )
+	{
+		Validate.notNull( site );
+		
+		Set<AccountMeta> results = Sets.newHashSet();
+		
+		for ( AccountMeta meta : accounts.toSet() )
+			if ( meta.getSite() == site )
+				results.add( meta );
+		
+		return results;
 	}
 	
 	public Set<AccountMeta> getAccounts( String query )

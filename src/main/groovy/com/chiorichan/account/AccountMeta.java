@@ -83,6 +83,8 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 	{
 		Validate.notNull( context );
 		
+		context.setAccount( this );
+		
 		this.context = context;
 		this.acctId = context.getAcctId();
 		this.siteId = context.getSiteId();
@@ -195,12 +197,14 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 	
 	public Boolean getBoolean( String key )
 	{
-		Object obj = metadata.get( key );
-		
-		if ( obj instanceof String )
-			return Boolean.parseBoolean( ( String ) obj );
-		else
-			return ( Boolean ) obj;
+		try
+		{
+			return ObjectFunc.castToBoolWithException( metadata.get( key ) );
+		}
+		catch ( ClassCastException e )
+		{
+			return false;
+		}
 	}
 	
 	public String toString()

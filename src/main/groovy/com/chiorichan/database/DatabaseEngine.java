@@ -796,20 +796,50 @@ public class DatabaseEngine
 		return rs.getMetaData();
 	}
 	
-	public List<String> getTableColumnNames( String table ) throws SQLException
+	public class SQLColumn
 	{
-		List<String> rtn = Lists.newArrayList();
+		public final String name;
+		public final int type;
+		public final String label;
+		public final String className;
 		
-		ResultSet rs = query( "SELECT * FROM `" + table + "`" );
+		SQLColumn( ResultSetMetaData rsmd, int index ) throws SQLException
+		{
+			name = rsmd.getColumnName( index );
+			type = rsmd.getColumnType( index );
+			label = rsmd.getColumnLabel( index );
+			className = rsmd.getColumnClassName( index );
+		}
+	}
+	
+	public List<SQLColumn> getTableColumns( String table ) throws SQLException
+	{
+		List<SQLColumn> rtn = Lists.newLinkedList();
+		
+		ResultSet rs = query( "SELECT * FROM `" + table + "` LIMIT 1;" );
 		
 		ResultSetMetaData rsmd = rs.getMetaData();
 		
 		int numColumns = rsmd.getColumnCount();
 		
 		for ( int i = 1; i < numColumns + 1; i++ )
-		{
+			rtn.add( new SQLColumn( rsmd, i ) );
+		
+		return rtn;
+	}
+	
+	public List<String> getTableColumnNames( String table ) throws SQLException
+	{
+		List<String> rtn = Lists.newArrayList();
+		
+		ResultSet rs = query( "SELECT * FROM `" + table + "` LIMIT 1" );
+		
+		ResultSetMetaData rsmd = rs.getMetaData();
+		
+		int numColumns = rsmd.getColumnCount();
+		
+		for ( int i = 1; i < numColumns + 1; i++ )
 			rtn.add( rsmd.getColumnName( i ) );
-		}
 		
 		return rtn;
 	}
@@ -1010,9 +1040,10 @@ public class DatabaseEngine
 		}
 		
 		if ( !safe )
+		{
+			Loader.getLogger().warning( "SQL Injection was detected for query '" + query + "', if this is a false positive then it might need reporting to the developers." );
 			return false;
-		// GetFramework()->getServer()->Panic(400, "SQL Injection Detected! Notify administrators ASAP. Debug \"" .
-		// $QueryString . "\".");
+		}
 		
 		splice = query.substring( 6 );
 		for ( String word : unSafeWords )
@@ -1024,8 +1055,6 @@ public class DatabaseEngine
 		}
 		
 		return safe;
-		// GetFramework()->getServer()->Panic(400, "SQL Injection Detected! Notify administrators ASAP. Debug \"" .
-		// $QueryString . "\".");
 	}
 	
 	public boolean update( String table, Map<String, Object> data )

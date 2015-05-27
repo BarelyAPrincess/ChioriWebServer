@@ -6,6 +6,7 @@
  */
 package com.chiorichan.account;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -75,6 +76,11 @@ class AccountList implements Iterable<AccountMeta>
 	public Set<AccountMeta> toSet()
 	{
 		return new HashSet<AccountMeta>( accounts.values() );
+	}
+	
+	public Set<String> keySet()
+	{
+		return Collections.unmodifiableSet( accounts.keySet() );
 	}
 	
 }
