@@ -14,7 +14,6 @@ import org.apache.commons.lang3.Validate;
 import com.chiorichan.account.AccountPermissible;
 import com.google.common.collect.Lists;
 
-
 /**
  * References available Account Authenticators
  * 
