@@ -142,7 +142,14 @@ public abstract class PluginBase implements EventCreator, TaskCreator
 	@Override
 	public final int hashCode()
 	{
-		return getName().hashCode();
+		try
+		{
+			return getName().hashCode();
+		}
+		catch ( NullPointerException e )
+		{
+			return super.hashCode();
+		}
 	}
 	
 	@Override

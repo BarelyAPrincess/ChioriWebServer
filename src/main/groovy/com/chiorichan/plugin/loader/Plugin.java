@@ -40,23 +40,20 @@ public abstract class Plugin extends PluginBase
 	
 	public Plugin()
 	{
-		final ClassLoader classLoader = this.getClass().getClassLoader();
-		if ( ! ( classLoader instanceof PluginClassLoader ) )
-		{
-			throw new IllegalStateException( "Plugin requires " + PluginClassLoader.class.getName() );
-		}
-		( ( PluginClassLoader ) classLoader ).initialize( this );
+		PluginClassLoader.initalize( this );
 	}
 	
-	protected Plugin( final PluginLoader loader, final PluginDescriptionFile description, final File dataFolder, final File file )
-	{
-		final ClassLoader classLoader = this.getClass().getClassLoader();
-		if ( classLoader instanceof PluginClassLoader )
-		{
-			throw new IllegalStateException( "Cannot use initialization constructor at runtime" );
-		}
-		init( loader, description, dataFolder, file, classLoader );
-	}
+	/*
+	 * protected Plugin( final PluginLoader loader, final PluginDescriptionFile description, final File dataFolder, final File file )
+	 * {
+	 * final ClassLoader classLoader = this.getClass().getClassLoader();
+	 * if ( classLoader instanceof PluginClassLoader )
+	 * {
+	 * throw new IllegalStateException( "Cannot use initialization constructor at runtime" );
+	 * }
+	 * init( loader, description, dataFolder, file, classLoader );
+	 * }
+	 */
 	
 	/**
 	 * Returns the folder that the plugin data's files are located in. The

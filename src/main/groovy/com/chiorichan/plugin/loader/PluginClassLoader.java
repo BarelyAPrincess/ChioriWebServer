@@ -16,6 +16,7 @@ import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 
 import org.apache.commons.lang3.Validate;
 
@@ -24,21 +25,25 @@ import com.chiorichan.plugin.PluginDescriptionFile;
 
 /**
  * A ClassLoader for plugins, to allow shared classes across multiple plugins
+ *
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 final class PluginClassLoader extends URLClassLoader
 {
+	private static final Map<Class<?>, PluginClassLoader> loaders = new WeakHashMap<Class<?>, PluginClassLoader>();
+	
 	private final JavaPluginLoader loader;
 	private final Map<String, Class<?>> classes = new HashMap<String, Class<?>>();
 	private final PluginDescriptionFile description;
 	private final File dataFolder;
 	private final File file;
 	final Plugin plugin;
-	private Plugin pluginInit;
-	private IllegalStateException pluginState;
+	private boolean initalized = false;
 	
 	PluginClassLoader( final JavaPluginLoader loader, final ClassLoader parent, final PluginDescriptionFile description, final File dataFolder, final File file ) throws InvalidPluginException, MalformedURLException
 	{
 		super( new URL[] {file.toURI().toURL()}, parent );
+		
 		Validate.notNull( loader, "Loader cannot be null" );
 		
 		this.loader = loader;
@@ -67,6 +72,8 @@ final class PluginClassLoader extends URLClassLoader
 			{
 				throw new InvalidPluginException( "main class `" + description.getMain() + "' does not extend Plugin", ex );
 			}
+			
+			loaders.put( jarClass, this );
 			
 			plugin = pluginClass.newInstance();
 		}
@@ -123,19 +130,19 @@ final class PluginClassLoader extends URLClassLoader
 		return classes.keySet();
 	}
 	
-	synchronized void initialize( Plugin javaPlugin )
+	static synchronized void initalize( Plugin javaPlugin )
 	{
 		Validate.notNull( javaPlugin, "Initializing plugin cannot be null" );
-		Validate.isTrue( javaPlugin.getClass().getClassLoader() == this, "Cannot initialize plugin outside of this class loader" );
 		
-		if ( plugin != null || pluginInit != null )
-		{
-			throw new IllegalArgumentException( "Plugin already initialized!", pluginState );
-		}
+		PluginClassLoader loader = loaders.get( javaPlugin.getClass() );
 		
-		pluginState = new IllegalStateException( "Initial initialization" );
-		pluginInit = javaPlugin;
+		if ( loader == null )
+			throw new IllegalStateException( "Plugin was not properly initalized: '" + javaPlugin.getClass().getName() + "'." );
 		
-		javaPlugin.init( loader, description, dataFolder, file, this );
+		if ( loader.initalized )
+			throw new IllegalArgumentException( "Plugin already initialized: '" + javaPlugin.getClass().getName() + "'." );
+		
+		javaPlugin.init( loader.loader, loader.description, loader.dataFolder, loader.file, loader );
+		loader.initalized = true;
 	}
 }
