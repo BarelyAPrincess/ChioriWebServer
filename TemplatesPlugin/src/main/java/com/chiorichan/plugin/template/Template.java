@@ -25,10 +25,16 @@ import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.site.Site;
+import com.chiorichan.site.SiteManager;
 import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.Versioning;
 import com.chiorichan.util.WebFunc;
 
+/**
+ * Chiori-chan's Web Server Template Plugin
+ * 
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
+ */
 public class Template extends Plugin implements Listener
 {
 	public void onEnable()
@@ -171,7 +177,7 @@ public class Template extends Plugin implements Listener
 			Map<String, String> fwVals = event.getParams();
 			
 			if ( site == null )
-				site = Loader.getSiteManager().getDefaultSite();
+				site = SiteManager.INSTANCE.getDefaultSite();
 			
 			if ( fwVals.get( "themeless" ) != null && StringFunc.isTrue( fwVals.get( "themeless" ) ) )
 				return;

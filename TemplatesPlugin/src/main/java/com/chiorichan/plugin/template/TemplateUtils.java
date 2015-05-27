@@ -13,15 +13,20 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.InterpreterOverrides;
-import com.chiorichan.Loader;
 import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.lang.EvalFactoryException;
+import com.chiorichan.site.SiteManager;
 import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.Versioning;
 import com.chiorichan.util.WebFunc;
 
+/**
+ * Chiori-chan's Web Server Template Plugin
+ * 
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
+ */
 public class TemplateUtils
 {
 	private static final String GITHUB_BRANCH = Versioning.getGitHubBranch();
@@ -301,6 +306,6 @@ public class TemplateUtils
 		EvalMetaData meta = new EvalMetaData();
 		meta.shell = "html";
 		
-		return factory.eval( baseTemplate.replace( pageMark, html ), meta, Loader.getSiteManager().getDefaultSite() ).getString();
+		return factory.eval( baseTemplate.replace( pageMark, html ), meta, SiteManager.INSTANCE.getDefaultSite() ).getString();
 	}
 }
