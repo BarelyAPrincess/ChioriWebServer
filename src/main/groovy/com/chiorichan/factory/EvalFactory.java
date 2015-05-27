@@ -11,6 +11,7 @@ package com.chiorichan.factory;
 
 import groovy.lang.GroovyRuntimeException;
 import groovy.lang.GroovyShell;
+import groovy.lang.MissingMethodException;
 import groovy.transform.TimedInterrupt;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -89,7 +90,7 @@ public class EvalFactory
 	/*
 	 * Groovy Imports :P
 	 */
-	private static final String[] dynImports = new String[] {"com.chiorichan.Loader", "com.chiorichan.account.AccountManager", "com.chiorichan.event.EventBus", "com.chiorichan.permission.PermissionManager", "com.chiorichan.plugin.PluginManager", "com.chiorichan.scheduler.ScheduleManager", "com.chiorichan.session.SessionManager", "com.chiorichan.site.SiteManager"};
+	private static final String[] dynImports = new String[] {"com.chiorichan.Loader", "com.chiorichan.account.AccountManager", "com.chiorichan.account.AccountType", "com.chiorichan.event.EventBus", "com.chiorichan.permission.PermissionManager", "com.chiorichan.plugin.PluginManager", "com.chiorichan.scheduler.ScheduleManager", "com.chiorichan.session.SessionManager", "com.chiorichan.site.SiteManager"};
 	private static final String[] starImports = new String[] {"com.chiorichan.lang", "com.chiorichan.util", "org.apache.commons.lang3.text", "org.ocpsoft.prettytime", "java.util", "java.net", "com.google.common.base"};
 	private static final String[] staticImports = new String[] {"com.chiorichan.util.Looper"};
 	
@@ -638,7 +639,22 @@ public class EvalFactory
 			TimeoutException e = ( TimeoutException ) t;
 			throw new EvalFactoryException( e, shellFactory, meta );
 		}
-		else if ( t instanceof SyntaxException ) // Parsing exception
+		else if ( t instanceof MissingMethodException ) // Coding Problems
+		{
+			MissingMethodException e = ( MissingMethodException ) t;
+			throw new EvalFactoryException( e, shellFactory, meta );
+		}
+		else if ( t instanceof NullPointerException ) // Coding Problems
+		{
+			NullPointerException e = ( NullPointerException ) t;
+			throw new EvalFactoryException( e, shellFactory, meta );
+		}
+		else if ( t instanceof ArrayIndexOutOfBoundsException ) // Coding Problems
+		{
+			ArrayIndexOutOfBoundsException e = ( ArrayIndexOutOfBoundsException ) t;
+			throw new EvalFactoryException( e, shellFactory, meta );
+		}
+		else if ( t instanceof SyntaxException ) // Code Parsing Problems
 		{
 			SyntaxException e = ( SyntaxException ) t;
 			throw new EvalFactoryException( e, shellFactory, meta );

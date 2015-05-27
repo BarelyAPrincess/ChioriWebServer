@@ -29,9 +29,11 @@ import java.util.Map.Entry;
 
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
+import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.lang.PluginNotFoundException;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.loader.Plugin;
+import com.chiorichan.site.Site;
 import com.chiorichan.util.CommonFunc;
 import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.StringFunc;
@@ -110,53 +112,81 @@ public abstract class ScriptingBaseJava extends Script
 		return sb.substring( 1 ).toString();
 	}
 	
+	/**
+	 * See {@link String#trim()} but is safe for use on a null {@link String}
+	 */
 	String trim( String str )
 	{
-		if ( str == null )
-			return null;
-		
-		return str.trim();
+		return ( str == null ) ? null : str.trim();
 	}
 	
+	/**
+	 * See {@link String#toUpperCase()} but is safe for use on a null {@link String}
+	 */
+	String toUpperCase( String str )
+	{
+		return ( str == null ) ? null : str.toUpperCase();
+	}
+	
+	/**
+	 * See {@link #toUpperCase(String)}<br>
+	 * Based on PHP's strtoupper() method
+	 */
 	String strtoupper( String str )
 	{
-		if ( str == null )
-			return null;
-		
-		return str.toUpperCase();
+		return ( str == null ) ? null : str.toUpperCase();
 	}
 	
+	/**
+	 * See {@link String#toLowerCase()} but is safe for use on a null {@link String}
+	 */
+	String toLowerCase( String str )
+	{
+		return ( str == null ) ? null : str.toLowerCase();
+	}
+	
+	/**
+	 * See {@link #toLowerCase(String)}<br>
+	 * Based on PHP's strtolower() method
+	 */
 	String strtolower( String str )
 	{
-		if ( str == null )
-			return null;
-		
-		return str.toLowerCase();
+		return ( str == null ) ? null : str.toLowerCase();
 	}
 	
 	int count( Map<Object, Object> maps )
 	{
-		return maps.size();
+		return ( maps == null ) ? 0 : maps.size();
 	}
 	
 	int count( List<Object> list )
 	{
-		return list.size();
+		return ( list == null ) ? 0 : list.size();
+	}
+	
+	int count( Object[] var )
+	{
+		return ( var == null ) ? 0 : var.length;
 	}
 	
 	int count( String var )
 	{
-		return var.length();
+		return ( var == null ) ? 0 : var.length();
 	}
 	
-	int count( String[] var )
-	{
-		return var.length;
-	}
-	
+	/**
+	 * Deprecated because {@link #count(String)} makes for a more consistent replacement.<br>
+	 * But remains since it's based on PHP's strlen() method.
+	 */
+	@Deprecated
 	int strlen( String var )
 	{
-		return var.length();
+		return ( var == null ) ? 0 : var.length();
+	}
+	
+	boolean notNull( Object o )
+	{
+		return o != null;
 	}
 	
 	boolean empty( Object o )
@@ -527,4 +557,55 @@ public abstract class ScriptingBaseJava extends Script
 	{
 		return Versioning.getCopyright();
 	}
+	
+	/**
+	 * Returns an instance of the server database
+	 * 
+	 * @return
+	 *         The server database engine
+	 * @throws IllegalStateException
+	 *             thrown if the requested database is unconfigured
+	 */
+	DatabaseEngine getServerDatabase()
+	{
+		DatabaseEngine engine = Loader.getDatabase();
+		
+		if ( engine == null )
+			throw new IllegalStateException( "The server database is unconfigured. It will need to be setup in order for you to use the getServerDatabase() method." );
+		
+		return engine;
+	}
+	
+	/**
+	 * See {@link #getDatabase()}
+	 */
+	@Deprecated
+	DatabaseEngine getSiteDatabase()
+	{
+		return getDatabase();
+	}
+	
+	/**
+	 * Returns an instance of the current site database
+	 * 
+	 * @return
+	 *         The site database engine
+	 * @throws IllegalStateException
+	 *             thrown if the requested database is unconfigured
+	 */
+	DatabaseEngine getDatabase()
+	{
+		DatabaseEngine engine = getSite().getDatabase();
+		
+		if ( engine == null )
+			throw new IllegalStateException( "The site database is unconfigured. It will need to be setup in order for you to use the getDatabase() method." );
+		
+		return engine;
+	}
+	
+	/*
+	 * Abstract Methods
+	 */
+	
+	abstract Site getSite();
 }

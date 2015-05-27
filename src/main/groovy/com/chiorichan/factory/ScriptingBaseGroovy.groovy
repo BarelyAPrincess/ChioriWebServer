@@ -160,45 +160,24 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	}
 	
 	/**
-	 * Returns an instance of the server database
-	 * @return
-	 *       The server database engine
-	 * @throws IllegalStateException if database is unconfigured
-	 */
-	DatabaseEngine getServerDatabase()
-	{
-		DatabaseEngine engine = Loader.getDatabase()
-		
-		if ( engine == null )
-			throw new IllegalStateException( "The server database is unconfigured. It will need to be setup in order for you to use the getServerDatabase() method." )
-		
-		return engine
-	}
-	
-	/**
-	 * Returns an instance of the current site database
-	 * @return
-	 *       The site database engine
-	 * @throws IllegalStateException if database is unconfigured
-	 */
-	DatabaseEngine getSiteDatabase()
-	{
-		DatabaseEngine engine = getSite().getDatabase()
-		
-		if ( engine == null )
-			throw new IllegalStateException( "The site database is unconfigured. It will need to be setup in order for you to use the getSiteDatabase() method." )
-		
-		return engine
-	}
-	
-	/**
 	 * Returns an instance of the current site
 	 * @return
 	 *       The current site
 	 */
+	@Override
 	Site getSite()
 	{
 		return getRequest().getSite()
+	}
+	
+	/**
+	 * Return the unique Id for the current site
+	 * 
+	 * @return The current site Id
+	 */
+	String getSiteId()
+	{
+		return getSite().getSiteId()
 	}
 	
 	/**
