@@ -26,8 +26,8 @@ public class AccountResult
 	public static final AccountResult PERMISSION_ERROR = new AccountResult( "Fatal error was detected with your account permissions. Please notify an administrator ASAP.", true );
 	public static final AccountResult INTERNAL_ERROR = new AccountResult( "Internal Server Error was encountered while attempting to process login.", true );
 	
-	public static final AccountResult ACCOUNT_NOT_INITIALIZED = new AccountResult( "Account was not initialized, i.e., no logins are present in this state." );
-	public static final AccountResult ACCOUNT_NOT_ACTIVATED = new AccountResult( "Account is not activated.", true );
+	public static final AccountResult ACCOUNT_NOT_INITIALIZED = new AccountResult( "That Account was not initialized, i.e., no logins are present in this state." );
+	public static final AccountResult ACCOUNT_NOT_ACTIVATED = new AccountResult( "That account is not activated.", true );
 	public static final AccountResult ACCOUNT_NOT_WHITELISTED = new AccountResult( "You are not whitelisted on this server.", true );
 	public static final AccountResult ACCOUNT_BANNED = new AccountResult( "You are banned on this server. THE BAN HAMMER HAS SPOKEN!", true );
 	public static final AccountResult ACCOUNT_EXISTS = new AccountResult( "The username specified is already in use. Please try a different username." );
@@ -45,6 +45,7 @@ public class AccountResult
 	
 	public static final AccountResult INCORRECT_LOGIN = new AccountResult( "Username and/or Password provided did not match any accounts on file.", true );
 	public static final AccountResult EXPIRED_LOGIN = new AccountResult( "The provided login credentials were marked as expired.", true );
+	public static final AccountResult PASSWORD_UNSET = new AccountResult( "The specified Account has no password set, either the password was never set or the account uses another form of authentication." );
 	
 	public static final AccountResult DEFAULT = new AccountResult( "There was no offical result returned." );
 	

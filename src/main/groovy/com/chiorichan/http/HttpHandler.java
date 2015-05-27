@@ -183,23 +183,19 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			
 			String ip = request.getIpAddr();
 			
-			if ( requestFinished )
+			if ( requestFinished && cause instanceof HttpError )
 			{
-				if ( cause instanceof HttpError )
-				{
-					if ( response.getStage() != HttpResponseStage.CLOSED )
-						response.sendError( ( HttpError ) cause );
-					else
-						NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + " [" + ip + "] For reasons unknown, we caught the HttpError exception but the connection was already closed.", cause );
-					return;
-				}
-				
-				if ( "Connection reset by peer".equals( cause.getMessage() ) )
-					// TODO Cache abusive IP addresses for possible banning.
-					NetworkManager.getLogger().warning( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + " [" + ip + "] The connection was closed before we could finish the request, if the IP continues to abuse the system it WILL BE BANNED!" );
+				if ( response.getStage() != HttpResponseStage.CLOSED )
+					response.sendError( ( HttpError ) cause );
 				else
-					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "We got an unexpected exception:", cause );
-				
+					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + " [" + ip + "] For reasons unknown, we caught the HttpError but the connection was already closed.", cause );
+				return;
+			}
+			
+			if ( requestFinished && "Connection reset by peer".equals( cause.getMessage() ) )
+			{
+				// TODO Cache abusive IP addresses for possible banning.
+				NetworkManager.getLogger().warning( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + " [" + ip + "] The connection was closed before we could finish the request, if the IP continues to abuse the system it WILL BE BANNED!" );
 				return;
 			}
 			
@@ -614,7 +610,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		if ( !fi.hasFile() && !fi.hasHTML() )
 			throw new HttpError( 500, null, "This page appears to have no content to display" );
 		
-		NetworkManager.getLogger().info( ConsoleColor.BLUE + "Http" + ( ( ssl ) ? "s" : "" ) + "Request{httpCode=" + response.getHttpCode() + ",httpMsg=" + response.getHttpMsg() + ",subdomain=" + subdomain + ",domain=" + domain + ",uri=" + uri + ",remoteIp=" + request.getIpAddr() + ",sessionId=" + sess.getSessId() + ",acct=" + sess.getAccountState() + ( sess.getAccountState() ? "(" + sess.getAcctId() + ")" : "" ) + ",details=" + fi.toString() + "}" );
+		NetworkManager.getLogger().info( ConsoleColor.BLUE + "Http" + ( ( ssl ) ? "s" : "" ) + "Request{httpCode=" + response.getHttpCode() + ",httpMsg=" + response.getHttpMsg() + ",subdomain=" + subdomain + ",domain=" + domain + ",uri=" + uri + ",remoteIp=" + request.getIpAddr() + ",sessionId=" + sess.getSessId() + ",acct=" + sess.isLoginPresent() + ( sess.isLoginPresent() ? "(" + sess.getAcctId() + ")" : "" ) + ",details=" + fi.toString() + "}" );
 		
 		if ( fi.hasFile() )
 			htaccess.appendWithDir( fi.getFile().getParentFile() );
@@ -648,20 +644,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		if ( req == null )
 			req = "-1";
 		
-		try
-		{
-			sess.requirePermission( req );
-		}
-		catch ( PermissionDeniedException e )
-		{
-			if ( e.getReason() == PermissionDeniedReason.LOGIN_PAGE )
-			{
-				response.sendLoginPage( e.getMessage() );
-				return;
-			}
-			else
-				throw e;
-		}
+		sess.requirePermission( req );
 		
 		// Enhancement: Allow html to be ran under different shells. Default is embedded.
 		if ( fi.hasHTML() )

@@ -152,7 +152,7 @@ public class PermissionResult
 	public boolean isTrueWithException() throws IllegalAccessException
 	{
 		if ( getValue().getType() != PermissionValue.PermissionType.BOOL )
-			throw new IllegalAccessException( "This Permission Node is not type Boolean and can not be checked if true." );
+			throw new IllegalAccessException( "This Permission Node is not type boolean and can not be checked if true." );
 		
 		if ( !PermissionDefault.isDefault( perm ) && PermissionManager.allowOps && entity.isOp() )
 			return true;

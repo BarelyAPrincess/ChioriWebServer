@@ -9,7 +9,6 @@
  */
 package com.chiorichan.permission;
 
-import com.chiorichan.Loader;
 import com.chiorichan.permission.lang.PermissionDeniedException;
 import com.chiorichan.permission.lang.PermissionDeniedException.PermissionDeniedReason;
 

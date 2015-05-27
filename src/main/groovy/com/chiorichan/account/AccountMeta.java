@@ -27,6 +27,7 @@ import com.chiorichan.permission.PermissionResult;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.util.ObjectFunc;
+import com.chiorichan.util.RandomFunc;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 
@@ -238,6 +239,11 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 	public String getLogoffMessage()
 	{
 		return this.getAcctId() + " has logged off the server";
+	}
+	
+	public void requireActivation()
+	{
+		metadata.put( "actnum", RandomFunc.randomize( "z154f98wfjascvc" ) );
 	}
 	
 	public PermissibleEntity getPermissibleEntity()

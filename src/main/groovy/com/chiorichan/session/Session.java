@@ -311,7 +311,7 @@ public final class Session extends AccountPermissible implements Listener
 		requestCnt++;
 		
 		// Grant the timeout an additional 2 hours for having a user logged in.
-		if ( getAccountState() )
+		if ( isLoginPresent() )
 		{
 			defaultTimeout = SessionManager.getDefaultTimeoutWithLogin();
 			
@@ -345,19 +345,11 @@ public final class Session extends AccountPermissible implements Listener
 	}
 	
 	/**
-	 * See {@link #getAccountState()}
-	 */
-	public boolean getAcctState()
-	{
-		return getAccountState();
-	}
-	
-	/**
-	 * Reports if the state of the Account login
+	 * Reports if there is an Account logged in
 	 * 
-	 * @return Is there an Account logged in?
+	 * @return True is there is
 	 */
-	public boolean getAccountState()
+	public boolean isLoginPresent()
 	{
 		return ( account != null );
 	}

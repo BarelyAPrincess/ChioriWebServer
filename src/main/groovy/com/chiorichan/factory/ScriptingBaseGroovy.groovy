@@ -135,14 +135,21 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 		return request.getSession().account()
 	}
 	
-	boolean getAcctState()
+	boolean isLoginPresent()
 	{
-		return request.getSession().getAccountState()
+		return request.getSession().isLoginPresent()
 	}
 	
+	@Deprecated
+	boolean getAcctState()
+	{
+		return request.getSession().isLoginPresent()
+	}
+	
+	@Deprecated
 	boolean getAccountState()
 	{
-		return request.getSession().getAccountState()
+		return request.getSession().isLoginPresent()
 	}
 	
 	// XXX These two deprecated methods will soon be replaced

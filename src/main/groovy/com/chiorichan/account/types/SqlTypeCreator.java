@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.chiorichan.Loader;
 import com.chiorichan.account.AccountContext;
@@ -25,7 +27,7 @@ import com.chiorichan.account.event.AccountLookupEvent;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.database.DatabaseEngine;
-import com.chiorichan.database.DatabaseEngine.SQLColumn;
+import com.chiorichan.database.DatabaseEngine.SqlTableColumns;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.util.CommonFunc;
 import com.google.common.collect.Maps;
@@ -69,7 +71,7 @@ public class SqlTypeCreator extends AccountTypeCreator
 	{
 		try
 		{
-			List<SQLColumn> columnSet = sql.getTableColumns( table );
+			SqlTableColumns columns = sql.getTableColumns( table );
 			Map<String, Object> metaData = context.meta() == null ? context.getValues() : context.meta().getMeta();
 			Map<String, Object> toSave = Maps.newTreeMap();
 			Map<String, Class<?>> newColumns = Maps.newHashMap();
@@ -82,8 +84,8 @@ public class SqlTypeCreator extends AccountTypeCreator
 				{
 					boolean found = false;
 					
-					for ( SQLColumn s : columnSet )
-						if ( s.name.equalsIgnoreCase( key ) || newColumns.containsKey( key ) )
+					for ( String s : columns )
+						if ( s.equalsIgnoreCase( key ) || newColumns.containsKey( key ) )
 							found = true;
 					
 					// There is no column for this key
@@ -109,21 +111,39 @@ public class SqlTypeCreator extends AccountTypeCreator
 			toSave.put( "acctId", context.getAcctId() );
 			toSave.put( "siteId", context.getSiteId() );
 			
-			for ( SQLColumn s : columnSet )
-				if ( !toSave.containsKey( s.name ) )
-				{
-					AccountManager.getLogger().severe( "SQLTypeCreator detected that the database contains the unset key '" + s.name + "'" );
-					// return;
-				}
-			
 			ResultSet rs = sql.query( "SELECT * FROM `" + table + "` WHERE `acctId` = '" + context.getAcctId() + "' LIMIT 1;" );
-			
-			Loader.getLogger().debug( "Saving Context: " + context.getAcctId() + " --> " + toSave );
 			
 			if ( sql.getRowCount( rs ) > 0 )
 				sql.update( table, toSave, "`acctId` = '" + context.getAcctId() + "'", 1 );
 			else
-				sql.insert( table, toSave );
+			{
+				SQLException exp;
+				while ( ( exp = save0( toSave ) ) != null )
+				{
+					Pattern p = Pattern.compile( "Field '(.*)' doesn't have a default value" );
+					Matcher m = p.matcher( exp.getMessage() );
+					
+					if ( m.matches() )
+					{
+						boolean found = false;
+						for ( String s : columns )
+							if ( s.equals( m.group( 1 ) ) )
+							{
+								toSave.put( s, columns.get( s ).newType() );
+								found = true;
+							}
+						if ( !found )
+						{
+							AccountManager.getLogger().warning( "We could not save AccountContext (" + context.getAcctId() + ") because " + exp.getMessage().toLowerCase() );
+							break;
+						}
+					}
+					else
+					{
+						throw exp;
+					}
+				}
+			}
 		}
 		catch ( SQLException e )
 		{
@@ -132,6 +152,19 @@ public class SqlTypeCreator extends AccountTypeCreator
 		catch ( Throwable t )
 		{
 			t.printStackTrace();
+		}
+	}
+	
+	private SQLException save0( Map<String, Object> toSave )
+	{
+		try
+		{
+			sql.insert( table, toSave );
+			return null;
+		}
+		catch ( SQLException e )
+		{
+			return e;
 		}
 	}
 	

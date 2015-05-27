@@ -269,7 +269,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 				getResponse().sendRedirect( loginForm + "?msg=" + result.getMessage() + ( ( target == null || target.isEmpty() ) ? "" : "&target=" + target ) );
 			}
 		}
-		else if ( session.getAccountState() )
+		else if ( session.isLoginPresent() )
 		{
 			// XXX Should we revalidate existing logins with each request? - Something worth considering. Maybe a config option?
 			
@@ -992,7 +992,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	 */
 	public void requireLogin( String permission ) throws IOException
 	{
-		if ( !getSession().getAccountState() )
+		if ( !getSession().isLoginPresent() )
 			getResponse().sendLoginPage();
 		
 		if ( permission != null )

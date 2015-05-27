@@ -22,6 +22,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -796,34 +797,80 @@ public class DatabaseEngine
 		return rs.getMetaData();
 	}
 	
-	public class SQLColumn
+	public class SqlTableColumns implements Iterable<String>
 	{
-		public final String name;
-		public final int type;
-		public final String label;
-		public final String className;
-		
-		SQLColumn( ResultSetMetaData rsmd, int index ) throws SQLException
+		public class SqlColumn
 		{
-			name = rsmd.getColumnName( index );
-			type = rsmd.getColumnType( index );
-			label = rsmd.getColumnLabel( index );
-			className = rsmd.getColumnClassName( index );
+			public final String name;
+			public final int type;
+			public final String label;
+			public final String className;
+			
+			SqlColumn( String name, int type, String label, String className )
+			{
+				this.name = name;
+				this.type = type;
+				this.label = label;
+				this.className = className;
+			}
+			
+			public Object newType()
+			{
+				switch ( className )
+				{
+					case "java.lang.String":
+						return "";
+					case "java.lang.Integer":
+						return 0;
+					case "java.lang.Boolean":
+						return false;
+					default:
+						Loader.getLogger().debug( "Column Class: " + className );
+						throw new IllegalArgumentException( "We could not instigate the proper column type " + className + " for column " + name + ", this might need to be inplemented." );
+				}
+			}
+		}
+		
+		private final List<SqlColumn> columns = Lists.newArrayList();
+		
+		private void add( ResultSetMetaData rsmd, int index ) throws SQLException
+		{
+			columns.add( new SqlColumn( rsmd.getColumnName( index ), rsmd.getColumnType( index ), rsmd.getColumnLabel( index ), rsmd.getColumnClassName( index ) ) );
+		}
+		
+		public int count()
+		{
+			return columns.size();
+		}
+		
+		public SqlColumn get( String name )
+		{
+			for ( SqlColumn c : columns )
+				if ( c.name.equals( name ) )
+					return c;
+			return null;
+		}
+		
+		@Override
+		public Iterator<String> iterator()
+		{
+			List<String> rtn = Lists.newArrayList();
+			for ( SqlColumn m : columns )
+				rtn.add( m.name );
+			return rtn.iterator();
 		}
 	}
 	
-	public List<SQLColumn> getTableColumns( String table ) throws SQLException
+	public SqlTableColumns getTableColumns( String table ) throws SQLException
 	{
-		List<SQLColumn> rtn = Lists.newLinkedList();
+		SqlTableColumns rtn = new SqlTableColumns();
 		
 		ResultSet rs = query( "SELECT * FROM `" + table + "` LIMIT 1;" );
 		
 		ResultSetMetaData rsmd = rs.getMetaData();
 		
-		int numColumns = rsmd.getColumnCount();
-		
-		for ( int i = 1; i < numColumns + 1; i++ )
-			rtn.add( new SQLColumn( rsmd, i ) );
+		for ( int i = 1; i < rsmd.getColumnCount() + 1; i++ )
+			rtn.add( rsmd, i );
 		
 		return rtn;
 	}
@@ -1057,23 +1104,23 @@ public class DatabaseEngine
 		return safe;
 	}
 	
-	public boolean update( String table, Map<String, Object> data )
+	public boolean update( String table, Map<String, Object> data ) throws SQLException
 	{
 		return update( table, data, "", 1, false );
 	}
 	
-	public boolean update( String table, Map<String, Object> data, Object where )
+	public boolean update( String table, Map<String, Object> data, Object where ) throws SQLException
 	{
 		return update( table, data, where, 1, false );
 	}
 	
-	public boolean update( String table, Map<String, Object> data, Object where, int lmt )
+	public boolean update( String table, Map<String, Object> data, Object where, int lmt ) throws SQLException
 	{
 		return update( table, data, where, lmt, false );
 	}
 	
 	@SuppressWarnings( "unchecked" )
-	public boolean update( String table, Map<String, Object> data, Object where, int lmt, boolean disableInjectionCheck )
+	public boolean update( String table, Map<String, Object> data, Object where, int lmt, boolean disableInjectionCheck ) throws SQLException
 	{
 		String subWhere = "";
 		
@@ -1153,15 +1200,7 @@ public class DatabaseEngine
 		if ( !disableInjectionCheck )
 			sqlInjectionDetection( query );
 		
-		int result = 0;
-		try
-		{
-			result = queryUpdate( query );
-		}
-		catch ( SQLException e )
-		{
-			e.printStackTrace();
-		}
+		int result = queryUpdate( query );
 		
 		if ( result > 0 )
 		{
@@ -1259,12 +1298,12 @@ public class DatabaseEngine
 		return true;
 	}
 	
-	public boolean insert( String table, Map<String, Object> data )
+	public boolean insert( String table, Map<String, Object> data ) throws SQLException
 	{
 		return insert( table, data, false );
 	}
 	
-	public boolean insert( String table, Map<String, Object> where, boolean disableInjectionCheck )
+	public boolean insert( String table, Map<String, Object> where, boolean disableInjectionCheck ) throws SQLException
 	{
 		String keys = "";
 		String values = "";
@@ -1307,15 +1346,7 @@ public class DatabaseEngine
 		if ( !disableInjectionCheck && query.length() < 255 )
 			sqlInjectionDetection( query );
 		
-		int result = 0;
-		try
-		{
-			result = queryUpdate( query );
-		}
-		catch ( SQLException e )
-		{
-			e.printStackTrace();
-		}
+		int result = queryUpdate( query );
 		
 		if ( result > 0 )
 		{
