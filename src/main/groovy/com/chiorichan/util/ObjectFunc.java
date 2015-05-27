@@ -231,13 +231,13 @@ public class ObjectFunc
 		return ( int ) l;
 	}
 	
-	public static Boolean castToBoolWithException( Object value )
+	public static Boolean castToBoolWithException( Object value ) throws ClassCastException
 	{
 		if ( value == null )
 			throw new ClassCastException( "Can't Cast `null` to Boolean" );
 		
-		if ( value.getClass() == Boolean.class )
-			return ( Boolean ) value;
+		if ( value.getClass() == boolean.class || value.getClass() == Boolean.class )
+			return ( boolean ) value;
 		
 		String val = castToStringWithException( value );
 		

@@ -9,15 +9,43 @@
  */
 package com.chiorichan.util;
 
+import org.joda.time.Duration;
+import org.joda.time.format.PeriodFormatter;
+import org.joda.time.format.PeriodFormatterBuilder;
+
 
 public class CommonFunc
 {
 	/**
-	 * @return Epoch based on the current Timezone
+	 * Gets Epoch
+	 * 
+	 * @return The precise epoch
 	 */
 	public static int getEpoch()
 	{
 		return ( int ) ( System.currentTimeMillis() / 1000 );
+	}
+	
+	/**
+	 * See {@link #readoutDuration(Number)}
+	 */
+	public static String readoutDuration( String seconds )
+	{
+		return readoutDuration( ObjectFunc.castToInt( seconds ) );
+	}
+	
+	/**
+	 * Converts the input value into a human readable string, e.g., 0 Day(s) 3 Hour(s) 13 Minutes(s) 42 Second(s).
+	 * 
+	 * @param seconds
+	 *            The duration in seconds
+	 * @return Human readable duration string
+	 */
+	public static String readoutDuration( Number seconds )
+	{
+		Duration duration = new Duration( seconds );
+		PeriodFormatter formatter = new PeriodFormatterBuilder().appendDays().appendSuffix( " Day(s) " ).appendHours().appendSuffix( " Hour(s) " ).appendMinutes().appendSuffix( " Minute(s) " ).appendSeconds().appendSuffix( " Second(s)" ).toFormatter();
+		return formatter.print( duration.toPeriod() );
 	}
 	
 	public static boolean isRoot()
