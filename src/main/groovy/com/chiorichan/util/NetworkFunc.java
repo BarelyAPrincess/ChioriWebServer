@@ -32,6 +32,9 @@ import com.chiorichan.Loader;
  */
 public class NetworkFunc
 {
+	public static final String REGEX_IPV4 = "^([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\.([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\.([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\.([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])$";
+	public static final String REGEX_IPV6 = "^((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4}))*::((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4}))*|((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4})){7}$";
+	
 	/**
 	 * Establishes an HttpURLConnection from a URL, with the correct configuration to receive content from the given URL.
 	 * 
@@ -231,5 +234,21 @@ public class NetworkFunc
 	public static String getUserAgent()
 	{
 		return Versioning.getProductSimple() + "/" + Versioning.getVersion() + "/" + Versioning.getJavaVersion();
+	}
+	
+	public static boolean isValidIPv4( String ip )
+	{
+		if ( ip == null )
+			return false;
+		
+		return ip.matches( REGEX_IPV4 );
+	}
+	
+	public static boolean isValidIPv6( String ip )
+	{
+		if ( ip == null )
+			return false;
+		
+		return ip.matches( REGEX_IPV6 );
 	}
 }

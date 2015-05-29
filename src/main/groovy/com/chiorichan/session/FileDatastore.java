@@ -18,8 +18,8 @@ import org.apache.commons.io.filefilter.FileFilterUtils;
 
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.permission.PermissionManager;
+import com.chiorichan.scheduler.Timings;
 import com.chiorichan.util.FileFunc;
-import com.chiorichan.util.TimingFunc;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -34,7 +34,7 @@ public class FileDatastore extends SessionDatastore
 		List<SessionData> data = Lists.newArrayList();
 		
 		File[] files = getSessionsDirectory().listFiles();
-		TimingFunc.start( this );
+		Timings.start( this );
 		
 		if ( files == null )
 			return data;
@@ -52,7 +52,7 @@ public class FileDatastore extends SessionDatastore
 				}
 			}
 		
-		PermissionManager.getLogger().info( "FileSession loaded " + data.size() + " sessions from the datastore in " + TimingFunc.finish( this ) + "ms!" );
+		PermissionManager.getLogger().info( "FileSession loaded " + data.size() + " sessions from the datastore in " + Timings.finish( this ) + "ms!" );
 		
 		return data;
 	}

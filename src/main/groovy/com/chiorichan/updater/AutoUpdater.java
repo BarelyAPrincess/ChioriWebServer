@@ -19,7 +19,7 @@ import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
-import com.chiorichan.scheduler.ScheduleManager;
+import com.chiorichan.scheduler.TaskManager;
 import com.chiorichan.scheduler.TaskCreator;
 import com.chiorichan.updater.BuildArtifact.ChangeSet.ChangeSetDetails;
 import com.chiorichan.util.Versioning;
@@ -51,7 +51,7 @@ public class AutoUpdater extends BuiltinEventCreator implements Listener, TaskCr
 		/*
 		 * This schedules the Auto Updater with the Scheduler to run every 30 minutes (by default).
 		 */
-		ScheduleManager.INSTANCE.scheduleAsyncRepeatingTask( this, new Runnable()
+		TaskManager.INSTANCE.scheduleAsyncRepeatingTask( this, new Runnable()
 		{
 			@Override
 			public void run()

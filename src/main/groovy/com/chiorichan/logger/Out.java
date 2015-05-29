@@ -13,7 +13,7 @@ import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventCreator;
 import com.chiorichan.event.Listener;
 import com.chiorichan.plugin.PluginDescriptionFile;
-import com.chiorichan.scheduler.ScheduleManager;
+import com.chiorichan.scheduler.TaskManager;
 import com.chiorichan.scheduler.TaskCreator;
 import com.google.common.collect.Lists;
 
@@ -33,7 +33,7 @@ public class Out implements Listener, EventCreator, TaskCreator, Runnable
 	
 	Out()
 	{
-		ScheduleManager.INSTANCE.scheduleAsyncRepeatingTask( this, this, 5000L, 5000L );
+		TaskManager.INSTANCE.scheduleAsyncRepeatingTask( this, this, 5000L, 5000L );
 		EventBus.INSTANCE.registerEvents( this, this );
 	}
 	

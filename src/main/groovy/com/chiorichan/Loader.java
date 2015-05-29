@@ -48,7 +48,7 @@ import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.lang.PermissionBackendException;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.scheduler.ChioriWorker;
-import com.chiorichan.scheduler.ScheduleManager;
+import com.chiorichan.scheduler.TaskManager;
 import com.chiorichan.scheduler.TaskCreator;
 import com.chiorichan.session.SessionException;
 import com.chiorichan.session.SessionManager;
@@ -557,7 +557,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		int pollCount = 0;
 		
 		// Wait for at most 2.5 seconds for plugins to close their threads
-		while ( pollCount < 50 && ScheduleManager.INSTANCE.getActiveWorkers().size() > 0 )
+		while ( pollCount < 50 && TaskManager.INSTANCE.getActiveWorkers().size() > 0 )
 		{
 			try
 			{
@@ -570,7 +570,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 			pollCount++;
 		}
 		
-		List<ChioriWorker> overdueWorkers = ScheduleManager.INSTANCE.getActiveWorkers();
+		List<ChioriWorker> overdueWorkers = TaskManager.INSTANCE.getActiveWorkers();
 		for ( ChioriWorker worker : overdueWorkers )
 		{
 			TaskCreator creator = worker.getOwner();

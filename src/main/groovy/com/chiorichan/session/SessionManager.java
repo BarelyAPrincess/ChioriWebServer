@@ -19,7 +19,7 @@ import com.chiorichan.Loader;
 import com.chiorichan.ServerManager;
 import com.chiorichan.http.HttpCookie;
 import com.chiorichan.lang.StartupException;
-import com.chiorichan.scheduler.ScheduleManager;
+import com.chiorichan.scheduler.TaskManager;
 import com.chiorichan.scheduler.TaskCreator;
 import com.chiorichan.util.CommonFunc;
 import com.chiorichan.util.RandomFunc;
@@ -115,14 +115,14 @@ public class SessionManager implements TaskCreator, ServerManager
 		/*
 		 * This schedules the Session Manager with the Scheduler to run every 5 minutes (by default) to cleanup sessions.
 		 */
-		ScheduleManager.INSTANCE.scheduleAsyncRepeatingTask( this, new Runnable()
+		TaskManager.INSTANCE.scheduleAsyncRepeatingTask( this, new Runnable()
 		{
 			@Override
 			public void run()
 			{
 				sessionCleanup();
 			}
-		}, 0L, ScheduleManager.DELAY_MINUTE * Loader.getConfig().getInt( "sessions.cleanupInterval", 5 ) );
+		}, 0L, TaskManager.DELAY_MINUTE * Loader.getConfig().getInt( "sessions.cleanupInterval", 5 ) );
 	}
 	
 	private SessionManager()

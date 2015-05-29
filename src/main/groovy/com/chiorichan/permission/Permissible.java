@@ -110,7 +110,7 @@ public abstract class Permissible
 			{
 				if ( perm.getPermission() == PermissionDefault.OP.getNode() )
 					throw new PermissionDeniedException( PermissionDeniedReason.OP_ONLY );
-				throw new PermissionDeniedException( PermissionDeniedReason.DENIED );
+				throw new PermissionDeniedException( PermissionDeniedReason.DENIED.setPermission( req ) );
 			}
 		}
 		

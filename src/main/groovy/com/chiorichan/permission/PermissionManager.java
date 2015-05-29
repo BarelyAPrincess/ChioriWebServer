@@ -36,7 +36,7 @@ import com.chiorichan.permission.event.PermissibleEvent;
 import com.chiorichan.permission.event.PermissibleSystemEvent;
 import com.chiorichan.permission.lang.PermissionBackendException;
 import com.chiorichan.plugin.PluginDescriptionFile;
-import com.chiorichan.scheduler.ScheduleManager;
+import com.chiorichan.scheduler.TaskManager;
 import com.chiorichan.scheduler.TaskCreator;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -475,7 +475,7 @@ public class PermissionManager implements ServerManager, TaskCreator, EventCreat
 	 */
 	protected void registerTask( TimerTask task, int delay )
 	{
-		ScheduleManager.INSTANCE.scheduleAsyncDelayedTask( this, task, delay * 50 );
+		TaskManager.INSTANCE.scheduleAsyncDelayedTask( this, task, delay * 50 );
 	}
 	
 	/**

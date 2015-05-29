@@ -19,7 +19,7 @@ import joptsimple.OptionSet;
 
 import com.chiorichan.console.CommandDispatch;
 import com.chiorichan.lang.StartupException;
-import com.chiorichan.scheduler.ScheduleManager;
+import com.chiorichan.scheduler.TaskManager;
 import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Joiner;
@@ -99,7 +99,7 @@ public class ConsoleBus implements Runnable
 					j -= 50L;
 					
 					CommandDispatch.handleCommands();
-					ScheduleManager.INSTANCE.heartbeat( currentTick );
+					TaskManager.INSTANCE.heartbeat( currentTick );
 				}
 				
 				Thread.sleep( 1L );

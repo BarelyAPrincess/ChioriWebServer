@@ -17,7 +17,7 @@ import java.util.Map;
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.permission.PermissionManager;
-import com.chiorichan.util.TimingFunc;
+import com.chiorichan.scheduler.Timings;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -33,7 +33,7 @@ public class SqlDatastore extends SessionDatastore
 		if ( sql == null )
 			throw new SessionException( "Sessions can't be stored in a SQL Database without a properly configured server database." );
 		
-		TimingFunc.start( this );
+		Timings.start( this );
 		
 		try
 		{
@@ -58,7 +58,7 @@ public class SqlDatastore extends SessionDatastore
 			Loader.getLogger().warning( "There was a problem reloading saved sessions.", e );
 		}
 		
-		PermissionManager.getLogger().info( "SqlSession loaded " + data.size() + " sessions from the datastore in " + TimingFunc.finish( this ) + "ms!" );
+		PermissionManager.getLogger().info( "SqlSession loaded " + data.size() + " sessions from the datastore in " + Timings.finish( this ) + "ms!" );
 		
 		return data;
 	}
