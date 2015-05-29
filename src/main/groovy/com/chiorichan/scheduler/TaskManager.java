@@ -192,7 +192,30 @@ public class TaskManager implements IChioriScheduler, ServerManager
 			return backlog( task, delay );
 	}
 	
+	/**
+	 * Deprecated for a new preferred argument order
+	 * See {@link #scheduleAsyncRepeatingTask(TaskCreator, long, long, Runnable)}
+	 */
+	@Deprecated
 	public int scheduleAsyncRepeatingTask( final TaskCreator creator, final Runnable runnable, long delay, long period )
+	{
+		return this.scheduleAsyncRepeatingTask( creator, runnable, delay, period );
+	}
+	
+	/**
+	 * Schedules a repeating runnable task
+	 * 
+	 * @param creator
+	 *            The {@link TaskCreator} responsible
+	 * @param delay
+	 *            The required delay before first execute
+	 * @param period
+	 *            The required delay in between executes
+	 * @param runnable
+	 *            The runnable to execute on each delayed tick
+	 * @return Integer referencing the scheduled task, calling {@link #cancelTask(int)} will cancel it
+	 */
+	public int scheduleAsyncRepeatingTask( final TaskCreator creator, long delay, long period, final Runnable runnable )
 	{
 		return runTaskTimerAsynchronously( creator, runnable, delay, period ).getTaskId();
 	}
