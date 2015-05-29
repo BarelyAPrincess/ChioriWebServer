@@ -103,7 +103,7 @@ class ChioriTask implements IChioriTask, Runnable
 	
 	public void cancel()
 	{
-		ScheduleManager.INSTANCE.cancelTask( id );
+		TaskManager.INSTANCE.cancelTask( id );
 	}
 	
 	/**

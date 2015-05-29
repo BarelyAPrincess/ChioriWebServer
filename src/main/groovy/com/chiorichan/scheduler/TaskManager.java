@@ -33,9 +33,9 @@ import com.google.common.collect.Maps;
  * 
  * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
-public class ScheduleManager implements IChioriScheduler, ServerManager
+public class TaskManager implements IChioriScheduler, ServerManager
 {
-	public static final ScheduleManager INSTANCE = new ScheduleManager();
+	public static final TaskManager INSTANCE = new TaskManager();
 	private static boolean isInitialized = false;
 	
 	/**
@@ -117,7 +117,7 @@ public class ScheduleManager implements IChioriScheduler, ServerManager
 		
 	}
 	
-	private ScheduleManager()
+	private TaskManager()
 	{
 		
 	}
@@ -248,9 +248,9 @@ public class ScheduleManager implements IChioriScheduler, ServerManager
 		{
 			public void run()
 			{
-				if ( !check( ScheduleManager.this.temp ) )
+				if ( !check( TaskManager.this.temp ) )
 				{
-					check( ScheduleManager.this.pending );
+					check( TaskManager.this.pending );
 				}
 			}
 			
@@ -295,8 +295,8 @@ public class ScheduleManager implements IChioriScheduler, ServerManager
 		{
 			public void run()
 			{
-				check( ScheduleManager.this.pending );
-				check( ScheduleManager.this.temp );
+				check( TaskManager.this.pending );
+				check( TaskManager.this.temp );
 			}
 			
 			void check( final Iterable<ChioriTask> collection )
@@ -344,7 +344,7 @@ public class ScheduleManager implements IChioriScheduler, ServerManager
 		{
 			public void run()
 			{
-				Iterator<ChioriTask> it = ScheduleManager.this.runners.values().iterator();
+				Iterator<ChioriTask> it = TaskManager.this.runners.values().iterator();
 				while ( it.hasNext() )
 				{
 					ChioriTask task = it.next();
@@ -354,8 +354,8 @@ public class ScheduleManager implements IChioriScheduler, ServerManager
 						it.remove();
 					}
 				}
-				ScheduleManager.this.pending.clear();
-				ScheduleManager.this.temp.clear();
+				TaskManager.this.pending.clear();
+				TaskManager.this.temp.clear();
 			}
 		} );
 		handle( task, 0L );
