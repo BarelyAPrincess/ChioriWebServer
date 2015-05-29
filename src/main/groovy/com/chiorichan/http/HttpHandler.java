@@ -71,6 +71,7 @@ import com.chiorichan.lang.ApacheParser;
 import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.lang.HttpError;
 import com.chiorichan.lang.SiteException;
+import com.chiorichan.net.IpStrikeRecord;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.net.NetworkSecurity;
 import com.chiorichan.permission.lang.PermissionDeniedException;
@@ -186,6 +187,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			
 			if ( requestFinished && cause instanceof HttpError )
 			{
+				NetworkSecurity.addStrikeToIp( ip, IpStrikeRecord.HTTP_ERROR.setCode( ( ( HttpError ) cause ).getHttpCode() ) );
+				
 				if ( response.getStage() != HttpResponseStage.CLOSED )
 					response.sendError( ( HttpError ) cause );
 				else
@@ -195,8 +198,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			
 			if ( requestFinished && "Connection reset by peer".equals( cause.getMessage() ) )
 			{
-				// TODO Cache abusive IP addresses for possible banning.
 				NetworkManager.getLogger().warning( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + " [" + ip + "] The connection was closed before we could finish the request, if the IP continues to abuse the system it WILL BE BANNED!" );
+				NetworkSecurity.addStrikeToIp( ip, IpStrikeRecord.CLOSED_EARLY );
 				return;
 			}
 			
@@ -327,7 +330,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			if ( is100ContinueExpected( ( HttpRequest ) msg ) )
 				send100Continue( ctx );
 			
-			if ( NetworkSecurity.isIPBanned( request.getIpAddr() ) )
+			if ( NetworkSecurity.isIpBanned( request.getIpAddr() ) )
 			{
 				response.sendError( 403 );
 				return;
@@ -708,7 +711,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			{
 				if ( Loader.getConfig().getBoolean( "server.throwInternalServerErrorOnWarnings", false ) )
 				{
-					throw new IOException( "Ignorable Exceptions were thrown, disable this behavior with the `throwInternalServerErrorOnWarnings` option in config.", result.getExceptions()[0] );
+					// Disable this behavior with the `throwInternalServerErrorOnWarnings` option in configuration.
+					throw new HttpError( "Ignorable exceptions were thrown within the evalFactory but server is configured to halt on all exceptions", result.getExceptions()[0] );
 				}
 				else
 				{
