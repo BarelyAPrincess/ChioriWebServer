@@ -71,18 +71,17 @@ import com.chiorichan.lang.ApacheParser;
 import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.lang.HttpError;
 import com.chiorichan.lang.SiteException;
-import com.chiorichan.net.IpStrikeRecord;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.net.NetworkSecurity;
+import com.chiorichan.net.NetworkSecurity.IpStrikeType;
 import com.chiorichan.permission.lang.PermissionDeniedException;
 import com.chiorichan.permission.lang.PermissionDeniedException.PermissionDeniedReason;
 import com.chiorichan.permission.lang.PermissionException;
+import com.chiorichan.scheduler.Timings;
 import com.chiorichan.session.Session;
 import com.chiorichan.session.SessionException;
 import com.chiorichan.site.Site;
-import com.chiorichan.util.CommonFunc;
 import com.chiorichan.util.ObjectFunc;
-import com.chiorichan.util.TimingFunc;
 import com.chiorichan.util.Versioning;
 import com.chiorichan.util.WebFunc;
 import com.google.common.base.Charsets;
@@ -187,7 +186,12 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			
 			if ( requestFinished && cause instanceof HttpError )
 			{
-				NetworkSecurity.addStrikeToIp( ip, IpStrikeRecord.HTTP_ERROR.setCode( ( ( HttpError ) cause ).getHttpCode() ) );
+				int code = ( ( HttpError ) cause ).getHttpCode();
+				
+				if ( code >= 400 && code <= 499 )
+					NetworkSecurity.addStrikeToIp( ip, IpStrikeType.HTTP_ERROR_400 );
+				if ( code >= 500 && code <= 599 )
+					NetworkSecurity.addStrikeToIp( ip, IpStrikeType.HTTP_ERROR_500 );
 				
 				if ( response.getStage() != HttpResponseStage.CLOSED )
 					response.sendError( ( HttpError ) cause );
@@ -199,7 +203,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			if ( requestFinished && "Connection reset by peer".equals( cause.getMessage() ) )
 			{
 				NetworkManager.getLogger().warning( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + " [" + ip + "] The connection was closed before we could finish the request, if the IP continues to abuse the system it WILL BE BANNED!" );
-				NetworkSecurity.addStrikeToIp( ip, IpStrikeRecord.CLOSED_EARLY );
+				NetworkSecurity.addStrikeToIp( ip, IpStrikeType.CLOSED_EARLY );
 				return;
 			}
 			
@@ -461,7 +465,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			
 			requestFinished = true;
 			
-			Loader.getDatabase().queryUpdate( "INSERT INTO `testing` (`epoch`, `time`, `uri`, `result`, ip) VALUES ('" + CommonFunc.getEpoch() + "', '" + TimingFunc.mark( this ) + "', 'http://" + request.getDomain() + request.getUri() + "', '" + response.getHttpCode() + "', '" + request.getIpAddr() + "');" );
+			Loader.getDatabase().queryUpdate( "INSERT INTO `testing` (`epoch`, `time`, `uri`, `result`, ip) VALUES ('" + Timings.epoch() + "', '" + Timings.mark( this ) + "', 'http://" + request.getDomain() + request.getUri() + "', '" + response.getHttpCode() + "', '" + request.getIpAddr() + "');" );
 		}
 		catch ( Exception e )
 		{

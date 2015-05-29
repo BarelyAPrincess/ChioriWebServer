@@ -14,6 +14,7 @@ server:
   allowDirectoryListing: false
   haltOnSevereError: false
   throwInternalServerErrorOnWarnings: false
+  defaultBanReason: The Ban Hammer Has Spoken
   enableWebServer: true
   enableTcpServer: true
   allowQuery: false
@@ -91,17 +92,17 @@ accounts:
     default: false
     table: accounts
     fields:
-      - username
-      - email
-      - phone
+    - username
+    - email
+    - phone
   fileType:
     enabled: true
     default: true
     filebase: accounts
     fields:
-      - username
-      - email
-      - phone
+    - username
+    - email
+    - phone
 framework:
   sites:
     defaultTitle: Unnamed Site
