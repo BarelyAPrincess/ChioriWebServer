@@ -34,7 +34,7 @@ import com.chiorichan.lang.PluginNotFoundException;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.site.Site;
-import com.chiorichan.util.CommonFunc;
+import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.Versioning;
@@ -225,7 +225,7 @@ public abstract class ScriptingBaseJava extends Script
 	
 	int time()
 	{
-		return CommonFunc.getEpoch();
+		return Timings.epoch();
 	}
 	
 	/**
@@ -405,9 +405,9 @@ public abstract class ScriptingBaseJava extends Script
 		return df.format( amt );
 	}
 	
-	int getEpoch()
+	int epoch()
 	{
-		return CommonFunc.getEpoch();
+		return Timings.epoch();
 	}
 	
 	List<String> explode( String limiter, String data )

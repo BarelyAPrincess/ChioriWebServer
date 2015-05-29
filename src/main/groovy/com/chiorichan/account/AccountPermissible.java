@@ -18,7 +18,7 @@ import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.permission.Permissible;
 import com.chiorichan.session.SessionManager;
-import com.chiorichan.util.CommonFunc;
+import com.chiorichan.tasks.Timings;
 import com.google.common.base.Joiner;
 
 /**
@@ -177,7 +177,7 @@ public abstract class AccountPermissible extends Permissible implements Account
 			for ( AccountPermissible ap : acct.getPermissibles() )
 				ap.kick( Loader.getConfig().getString( "accounts.singleLoginMessage", "You logged in from another location." ) );
 		
-		meta.set( "lastLoginTime", CommonFunc.getEpoch() );
+		meta.set( "lastLoginTime", Timings.epoch() );
 		meta.set( "lastLoginIp", Joiner.on( "|" ).join( getIpAddresses() ) );
 		setVariable( "acctId", meta.getAcctId() );
 		

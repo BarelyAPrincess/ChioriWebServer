@@ -18,7 +18,7 @@ import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.database.DatabaseEngine;
-import com.chiorichan.util.CommonFunc;
+import com.chiorichan.tasks.Timings;
 
 /**
  * Used to authenticate an account using a Username and Password combination
@@ -82,7 +82,7 @@ public final class PlainTextAccountAuthenticator extends AccountAuthenticator
 			if ( rs == null || db.getRowCount( rs ) < 1 )
 				throw AccountResult.PASSWORD_UNSET.exception( meta );
 			
-			if ( rs.getInt( "expires" ) > -1 && rs.getInt( "expires" ) < CommonFunc.getEpoch() )
+			if ( rs.getInt( "expires" ) > -1 && rs.getInt( "expires" ) < Timings.epoch() )
 				throw AccountResult.EXPIRED_LOGIN.exception( meta );
 			
 			password = rs.getString( "password" );

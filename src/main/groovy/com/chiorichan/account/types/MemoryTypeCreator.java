@@ -17,7 +17,7 @@ import com.chiorichan.account.event.AccountLoadEvent;
 import com.chiorichan.account.event.AccountLookupEvent;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.event.EventHandler;
-import com.chiorichan.util.CommonFunc;
+import com.chiorichan.tasks.Timings;
 
 /**
  * Handles Memory Accounts, e.g., Root and None
@@ -109,7 +109,7 @@ public class MemoryTypeCreator extends AccountTypeCreator
 	{
 		AccountContext context = new AccountContextImpl( this, AccountType.SQL, acctId, siteId );
 		
-		context.setValue( "date", CommonFunc.getEpoch() );
+		context.setValue( "date", Timings.epoch() );
 		
 		return context;
 	}

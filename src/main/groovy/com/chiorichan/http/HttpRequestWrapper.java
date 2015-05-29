@@ -47,7 +47,7 @@ import com.chiorichan.session.SessionManager;
 import com.chiorichan.session.SessionWrapper;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
-import com.chiorichan.util.CommonFunc;
+import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Charsets;
@@ -148,7 +148,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		this.ssl = ssl;
 		
 		// Set Time of this Request
-		requestTime = CommonFunc.getEpoch();
+		requestTime = Timings.epoch();
 		
 		// Create a matching HttpResponseWrapper
 		response = new HttpResponseWrapper( this );

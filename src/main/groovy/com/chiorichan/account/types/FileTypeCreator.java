@@ -24,7 +24,7 @@ import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.event.EventHandler;
-import com.chiorichan.util.CommonFunc;
+import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.ObjectFunc;
 import com.google.common.collect.Maps;
@@ -103,7 +103,7 @@ public class FileTypeCreator extends AccountTypeCreator
 	public void preLogin( AccountMeta meta, AccountPermissible via, String acctId, Object... creds )
 	{
 		if ( meta.getInteger( "numloginfail" ) > 5 )
-			if ( meta.getInteger( "lastloginfail" ) > ( CommonFunc.getEpoch() - 1800 ) )
+			if ( meta.getInteger( "lastloginfail" ) > ( Timings.epoch() - 1800 ) )
 				throw new AccountException( AccountResult.UNDER_ATTACK );
 		
 		if ( !meta.getString( "actnum" ).equals( "0" ) )
@@ -126,8 +126,8 @@ public class FileTypeCreator extends AccountTypeCreator
 		if ( yser == null )
 			return;
 		
-		int lastactive = CommonFunc.getEpoch();
-		int lastlogin = CommonFunc.getEpoch();
+		int lastactive = Timings.epoch();
+		int lastlogin = Timings.epoch();
 		int lastloginfail = 0;
 		int numloginfail = 0;
 		
@@ -167,7 +167,7 @@ public class FileTypeCreator extends AccountTypeCreator
 		if ( yser == null )
 			return;
 		
-		int lastloginfail = CommonFunc.getEpoch();
+		int lastloginfail = Timings.epoch();
 		int numloginfail = meta.getInteger( "numloginfail", 0 ) + 1;
 		
 		meta.set( "lastloginfail", lastloginfail );
@@ -334,7 +334,7 @@ public class FileTypeCreator extends AccountTypeCreator
 	{
 		AccountContext context = new AccountContextImpl( this, AccountType.SQL, acctId, siteId );
 		
-		context.setValue( "date", CommonFunc.getEpoch() );
+		context.setValue( "date", Timings.epoch() );
 		context.setValue( "numloginfailed", 0 );
 		context.setValue( "lastloginfail", 0 );
 		context.setValue( "actnum", "0" );

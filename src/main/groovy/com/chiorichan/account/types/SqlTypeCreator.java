@@ -29,7 +29,7 @@ import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.database.DatabaseEngine.SqlTableColumns;
 import com.chiorichan.event.EventHandler;
-import com.chiorichan.util.CommonFunc;
+import com.chiorichan.tasks.Timings;
 import com.google.common.collect.Maps;
 
 /**
@@ -185,7 +185,7 @@ public class SqlTypeCreator extends AccountTypeCreator
 	public void preLogin( AccountMeta meta, AccountPermissible via, String acctId, Object... creds )
 	{
 		if ( meta.getInteger( "numloginfail" ) > 5 )
-			if ( meta.getInteger( "lastloginfail" ) > ( CommonFunc.getEpoch() - 1800 ) )
+			if ( meta.getInteger( "lastloginfail" ) > ( Timings.epoch() - 1800 ) )
 				throw new AccountException( AccountResult.UNDER_ATTACK );
 		
 		if ( !meta.getString( "actnum" ).equals( "0" ) )
@@ -197,7 +197,7 @@ public class SqlTypeCreator extends AccountTypeCreator
 	{
 		try
 		{
-			sql.queryUpdate( "UPDATE `accounts` SET `lastActive` = '" + CommonFunc.getEpoch() + "', `lastLogin` = '" + CommonFunc.getEpoch() + "', `lastLoginFail` = 0, `numLoginFail` = 0 WHERE `acctId` = '" + meta.getAcctId() + "'" );
+			sql.queryUpdate( "UPDATE `accounts` SET `lastActive` = '" + Timings.epoch() + "', `lastLogin` = '" + Timings.epoch() + "', `lastLoginFail` = 0, `numLoginFail` = 0 WHERE `acctId` = '" + meta.getAcctId() + "'" );
 		}
 		catch ( SQLException e )
 		{
@@ -210,13 +210,13 @@ public class SqlTypeCreator extends AccountTypeCreator
 	{
 		try
 		{
-			sql.queryUpdate( "UPDATE `" + table + "` SET `lastActive` = '" + CommonFunc.getEpoch() + "', `lastLoginFail` = 0, `numLoginFail` = 0 WHERE `acctID` = '" + meta.getAcctId() + "'" );
+			sql.queryUpdate( "UPDATE `" + table + "` SET `lastActive` = '" + Timings.epoch() + "', `lastLoginFail` = 0, `numLoginFail` = 0 WHERE `acctID` = '" + meta.getAcctId() + "'" );
 		}
 		catch ( SQLException e )
 		{
 			e.printStackTrace();
 		}
-		meta.set( "lastActive", CommonFunc.getEpoch() );
+		meta.set( "lastActive", Timings.epoch() );
 		meta.set( "lastLoginFail", 0 );
 		meta.set( "numLoginFail", 0 );
 	}
@@ -302,7 +302,7 @@ public class SqlTypeCreator extends AccountTypeCreator
 	{
 		AccountContext context = new AccountContextImpl( this, AccountType.SQL, acctId, siteId );
 		
-		context.setValue( "date", CommonFunc.getEpoch() );
+		context.setValue( "date", Timings.epoch() );
 		context.setValue( "numloginfailed", 0 );
 		context.setValue( "lastloginfail", 0 );
 		context.setValue( "actnum", "0" );

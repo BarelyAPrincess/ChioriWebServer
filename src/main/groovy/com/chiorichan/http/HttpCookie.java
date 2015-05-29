@@ -15,7 +15,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-import com.chiorichan.util.CommonFunc;
+import com.chiorichan.tasks.Timings;
 
 public class HttpCookie
 {
@@ -104,7 +104,7 @@ public class HttpCookie
 	public HttpCookie setMaxAge( long defaultLife )
 	{
 		needsUpdating = true;
-		epoch = CommonFunc.getEpoch() + defaultLife;
+		epoch = Timings.epoch() + defaultLife;
 		return this;
 	}
 	

@@ -19,8 +19,8 @@ import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.util.FileFunc;
+import com.chiorichan.util.NetworkFunc;
 import com.chiorichan.util.Versioning;
-import com.chiorichan.util.WebFunc;
 
 /**
  * Chiori-chan's Web Server Template Plugin
@@ -137,12 +137,12 @@ public class TemplateUtils
 		String fileUrl = className.replace( '.', '/' ).replace( "$1", "" ) + "." + InterpreterOverrides.getFileExtension( ste.getFileName() );
 		String finalUrl = gitHubGroovyUrl + fileUrl;
 		
-		byte[] result = WebFunc.readUrl( finalUrl );
+		byte[] result = NetworkFunc.readUrl( finalUrl );
 		
 		if ( result == null )
 		{
 			finalUrl = gitHubJavaUrl + fileUrl;
-			result = WebFunc.readUrl( finalUrl );
+			result = NetworkFunc.readUrl( finalUrl );
 		}
 		
 		String finalResult;

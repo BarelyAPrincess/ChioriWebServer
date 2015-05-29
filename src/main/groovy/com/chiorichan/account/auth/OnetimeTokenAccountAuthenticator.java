@@ -16,7 +16,7 @@ import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.database.DatabaseEngine;
-import com.chiorichan.util.CommonFunc;
+import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.RandomFunc;
 
 /**
@@ -77,7 +77,7 @@ public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
 			if ( rs == null || db.getRowCount( rs ) < 1 )
 				throw AccountResult.INCORRECT_LOGIN.exception();
 			
-			if ( rs.getInt( "expires" ) > 0 && rs.getInt( "expires" ) < CommonFunc.getEpoch() )
+			if ( rs.getInt( "expires" ) > 0 && rs.getInt( "expires" ) < Timings.epoch() )
 				throw AccountResult.EXPIRED_LOGIN.exception();
 			
 			String token0 = rs.getString( "token" );
@@ -110,10 +110,10 @@ public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
 	 */
 	public String issueToken( AccountMeta acct )
 	{
-		String token = RandomFunc.randomize( acct.getAcctId() ) + CommonFunc.getEpoch();
+		String token = RandomFunc.randomize( acct.getAcctId() ) + Timings.epoch();
 		try
 		{
-			db.queryUpdate( "INSERT INTO `accounts_token` (`acctId`,`token`,`expires`) VALUES ('" + acct.getAcctId() + "','" + token + "','" + ( CommonFunc.getEpoch() + ( 60 * 60 * 24 * 7 ) ) + "');" );
+			db.queryUpdate( "INSERT INTO `accounts_token` (`acctId`,`token`,`expires`) VALUES ('" + acct.getAcctId() + "','" + token + "','" + ( Timings.epoch() + ( 60 * 60 * 24 * 7 ) ) + "');" );
 		}
 		catch ( SQLException e )
 		{
