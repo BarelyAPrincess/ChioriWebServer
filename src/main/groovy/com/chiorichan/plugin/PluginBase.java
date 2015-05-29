@@ -16,7 +16,7 @@ import com.chiorichan.configuration.file.FileConfiguration;
 import com.chiorichan.event.EventCreator;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.plugin.loader.PluginLoader;
-import com.chiorichan.scheduler.TaskCreator;
+import com.chiorichan.tasks.TaskCreator;
 
 public abstract class PluginBase implements EventCreator, TaskCreator
 {

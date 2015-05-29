@@ -7,14 +7,14 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.scheduler;
+package com.chiorichan.tasks;
 
 
 /**
  * Represents a task being executed by the scheduler
  */
 
-public interface IChioriTask
+public interface ITask
 {
 	
 	/**

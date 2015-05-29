@@ -26,7 +26,7 @@ import com.chiorichan.event.Listener;
 import com.chiorichan.http.HttpCookie;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
-import com.chiorichan.util.CommonFunc;
+import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.WeakReferenceList;
 import com.google.common.base.Joiner;
@@ -107,7 +107,7 @@ public final class Session extends AccountPermissible implements Listener
 	 * Limits the number of times a session is logged by tracking the time since last logging
 	 * XXX This might be obsolete once new Log Engine is implemented
 	 */
-	private static long lastTime = CommonFunc.getEpoch();
+	private static long lastTime = Timings.epoch();
 	
 	/**
 	 * Tracks session sessionCookies
@@ -163,10 +163,10 @@ public final class Session extends AccountPermissible implements Listener
 		 * }
 		 */
 		
-		if ( lastSession == null || !lastSession.equals( getSessId() ) || CommonFunc.getEpoch() - lastTime > 5 )
+		if ( lastSession == null || !lastSession.equals( getSessId() ) || Timings.epoch() - lastTime > 5 )
 		{
 			lastSession = getSessId();
-			lastTime = CommonFunc.getEpoch();
+			lastTime = Timings.epoch();
 			
 			// XXX New Session, Requested Session, Loaded Session
 			
@@ -322,7 +322,7 @@ public final class Session extends AccountPermissible implements Listener
 				defaultTimeout = Integer.MAX_VALUE;
 		}
 		
-		timeout = CommonFunc.getEpoch() + defaultTimeout + ( Math.min( requestCnt, 6 ) * 600 );
+		timeout = Timings.epoch() + defaultTimeout + ( Math.min( requestCnt, 6 ) * 600 );
 		
 		data.timeout = timeout;
 		
@@ -460,8 +460,8 @@ public final class Session extends AccountPermissible implements Listener
 			wrap.finish();
 		wrappers.clear();
 		
-		timeout = CommonFunc.getEpoch();
-		data.timeout = CommonFunc.getEpoch();
+		timeout = Timings.epoch();
+		data.timeout = Timings.epoch();
 		
 		if ( sessionCookie != null )
 			sessionCookie.setMaxAge( 0 );

@@ -32,6 +32,7 @@ import com.chiorichan.factory.FileInterpreter;
 import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
+import com.chiorichan.tasks.Timings;
 import com.google.common.collect.Maps;
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
@@ -149,7 +150,7 @@ public class WebFunc
 	
 	public static String createUUID() throws UnsupportedEncodingException
 	{
-		return createUUID( CommonFunc.getEpoch() + "-uuid" );
+		return createUUID( Timings.epoch() + "-uuid" );
 	}
 	
 	public static String createUUID( String seed ) throws UnsupportedEncodingException
@@ -159,7 +160,7 @@ public class WebFunc
 	
 	public static String createGUID() throws UnsupportedEncodingException
 	{
-		return createGUID( CommonFunc.getEpoch() + "-guid" );
+		return createGUID( Timings.epoch() + "-guid" );
 	}
 	
 	public static String createGUID( String seed )

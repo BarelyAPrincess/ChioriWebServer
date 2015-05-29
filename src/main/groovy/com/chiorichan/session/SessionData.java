@@ -8,7 +8,7 @@ package com.chiorichan.session;
 
 import java.util.Map;
 
-import com.chiorichan.util.CommonFunc;
+import com.chiorichan.tasks.Timings;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 
@@ -49,7 +49,7 @@ public abstract class SessionData
 	
 	void defaults()
 	{
-		timeout = CommonFunc.getEpoch() + SessionManager.getDefaultTimeout();
+		timeout = Timings.epoch() + SessionManager.getDefaultTimeout();
 		ipAddr = null;
 		sessionName = SessionManager.getDefaultSessionName();
 		sessionId = null;

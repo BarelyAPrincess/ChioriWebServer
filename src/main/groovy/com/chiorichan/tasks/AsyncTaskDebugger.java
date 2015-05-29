@@ -7,17 +7,17 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.scheduler;
+package com.chiorichan.tasks;
 
 
-class ChioriAsyncDebugger
+class AsyncTaskDebugger
 {
-	private ChioriAsyncDebugger next = null;
+	private AsyncTaskDebugger next = null;
 	private final int expiry;
 	private final TaskCreator creator;
 	private final Class<? extends Runnable> clazz;
 	
-	ChioriAsyncDebugger( final int expiry, final TaskCreator creator, final Class<? extends Runnable> clazz )
+	AsyncTaskDebugger( final int expiry, final TaskCreator creator, final Class<? extends Runnable> clazz )
 	{
 		this.expiry = expiry;
 		this.creator = creator;
@@ -25,9 +25,9 @@ class ChioriAsyncDebugger
 		
 	}
 	
-	final ChioriAsyncDebugger getNextHead( final int time )
+	final AsyncTaskDebugger getNextHead( final int time )
 	{
-		ChioriAsyncDebugger next, current = this;
+		AsyncTaskDebugger next, current = this;
 		while ( time > current.expiry && ( next = current.next ) != null )
 		{
 			current = next;
@@ -35,14 +35,14 @@ class ChioriAsyncDebugger
 		return current;
 	}
 	
-	final ChioriAsyncDebugger setNext( final ChioriAsyncDebugger next )
+	final AsyncTaskDebugger setNext( final AsyncTaskDebugger next )
 	{
 		return this.next = next;
 	}
 	
 	StringBuilder debugTo( final StringBuilder string )
 	{
-		for ( ChioriAsyncDebugger next = this; next != null; next = next.next )
+		for ( AsyncTaskDebugger next = this; next != null; next = next.next )
 		{
 			string.append( next.creator.getName() ).append( ':' ).append( next.clazz.getName() ).append( '@' ).append( next.expiry ).append( ',' );
 		}

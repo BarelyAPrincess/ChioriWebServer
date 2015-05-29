@@ -7,13 +7,13 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.scheduler;
+package com.chiorichan.tasks;
 
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
-interface IChioriScheduler
+interface ITaskManager
 {
 	/**
 	 * Schedules a once off task to occur after a delay. This task will be executed by the main server thread.
@@ -173,14 +173,14 @@ interface IChioriScheduler
 	 * 
 	 * @return Active workers
 	 */
-	List<ChioriWorker> getActiveWorkers();
+	List<Worker> getActiveWorkers();
 	
 	/**
 	 * Returns a list of all pending tasks. The ordering of the tasks is not related to their order of execution.
 	 * 
 	 * @return Active workers
 	 */
-	List<ChioriTask> getPendingTasks();
+	List<Task> getPendingTasks();
 	
 	/**
 	 * Returns a task that will run on the next server tick.
@@ -195,7 +195,7 @@ interface IChioriScheduler
 	 * @throws IllegalArgumentException
 	 *             if task is null
 	 */
-	IChioriTask runTask( TaskCreator creator, Runnable task ) throws IllegalArgumentException;
+	ITask runTask( TaskCreator creator, Runnable task ) throws IllegalArgumentException;
 	
 	/**
 	 * <b>Asynchronous tasks should never access any API in Main. Great care should be taken to assure the thread-safety
@@ -213,7 +213,7 @@ interface IChioriScheduler
 	 * @throws IllegalArgumentException
 	 *             if task is null
 	 */
-	IChioriTask runTaskAsynchronously( TaskCreator creator, Runnable task ) throws IllegalArgumentException;
+	ITask runTaskAsynchronously( TaskCreator creator, Runnable task ) throws IllegalArgumentException;
 	
 	/**
 	 * Returns a task that will run after the specified number of server ticks.
@@ -230,7 +230,7 @@ interface IChioriScheduler
 	 * @throws IllegalArgumentException
 	 *             if task is null
 	 */
-	IChioriTask runTaskLater( TaskCreator creator, Runnable task, long delay ) throws IllegalArgumentException;
+	ITask runTaskLater( TaskCreator creator, Runnable task, long delay ) throws IllegalArgumentException;
 	
 	/**
 	 * <b>Asynchronous tasks should never access any API in Main. Great care should be taken to assure the thread-safety
@@ -250,7 +250,7 @@ interface IChioriScheduler
 	 * @throws IllegalArgumentException
 	 *             if task is null
 	 */
-	IChioriTask runTaskLaterAsynchronously( TaskCreator creator, Runnable task, long delay ) throws IllegalArgumentException;
+	ITask runTaskLaterAsynchronously( TaskCreator creator, Runnable task, long delay ) throws IllegalArgumentException;
 	
 	/**
 	 * Returns a task that will repeatedly run until cancelled, starting after the specified number of server ticks.
@@ -269,7 +269,7 @@ interface IChioriScheduler
 	 * @throws IllegalArgumentException
 	 *             if task is null
 	 */
-	IChioriTask runTaskTimer( TaskCreator creator, Runnable task, long delay, long period ) throws IllegalArgumentException;
+	ITask runTaskTimer( TaskCreator creator, Runnable task, long delay, long period ) throws IllegalArgumentException;
 	
 	/**
 	 * <b>Asynchronous tasks should never access any API in Main. Great care should be taken to assure the thread-safety
@@ -292,5 +292,5 @@ interface IChioriScheduler
 	 * @throws IllegalArgumentException
 	 *             if task is null
 	 */
-	IChioriTask runTaskTimerAsynchronously( TaskCreator creator, Runnable task, long delay, long period ) throws IllegalArgumentException;
+	ITask runTaskTimerAsynchronously( TaskCreator creator, Runnable task, long delay, long period ) throws IllegalArgumentException;
 }

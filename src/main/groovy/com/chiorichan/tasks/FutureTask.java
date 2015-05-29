@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.scheduler;
+package com.chiorichan.tasks;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
@@ -16,14 +16,14 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-class ChioriFuture<T> extends ChioriTask implements Future<T>
+class FutureTask<T> extends Task implements Future<T>
 {
 	
 	private final Callable<T> callable;
 	private T value;
 	private Exception exception = null;
 	
-	ChioriFuture( final Callable<T> callable, final TaskCreator creator, final int id )
+	FutureTask( final Callable<T> callable, final TaskCreator creator, final int id )
 	{
 		super( creator, null, id, -1L );
 		this.callable = callable;

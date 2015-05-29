@@ -4,7 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
  */
-package com.chiorichan.scheduler;
+package com.chiorichan.tasks;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -33,7 +33,7 @@ import com.google.common.collect.Maps;
  * 
  * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
-public class TaskManager implements IChioriScheduler, ServerManager
+public class TaskManager implements ITaskManager, ServerManager
 {
 	public static final TaskManager INSTANCE = new TaskManager();
 	private static boolean isInitialized = false;
@@ -52,23 +52,23 @@ public class TaskManager implements IChioriScheduler, ServerManager
 	 */
 	private final AtomicInteger ids = new AtomicInteger( 1 );
 	/**
-	 * Current head of linked-list. This reference is always stale, {@link ChioriTask#next} is the live reference.
+	 * Current head of linked-list. This reference is always stale, {@link Task#next} is the live reference.
 	 */
-	private volatile ChioriTask head = new ChioriTask();
+	private volatile Task head = new Task();
 	/**
 	 * Holds tasks that are awaiting for there owners to be enabled
 	 */
-	private final Map<Long, ChioriTask> backlogTasks = Maps.newConcurrentMap();
+	private final Map<Long, Task> backlogTasks = Maps.newConcurrentMap();
 	/**
 	 * Tail of a linked-list. AtomicReference only matters when adding to queue
 	 */
-	private final AtomicReference<ChioriTask> tail = new AtomicReference<ChioriTask>( head );
+	private final AtomicReference<Task> tail = new AtomicReference<Task>( head );
 	/**
 	 * Main thread logic only
 	 */
-	private final PriorityQueue<ChioriTask> pending = new PriorityQueue<ChioriTask>( 10, new Comparator<ChioriTask>()
+	private final PriorityQueue<Task> pending = new PriorityQueue<Task>( 10, new Comparator<Task>()
 	{
-		public int compare( final ChioriTask o1, final ChioriTask o2 )
+		public int compare( final Task o1, final Task o2 )
 		{
 			return ( int ) ( o1.getNextRun() - o2.getNextRun() );
 		}
@@ -76,14 +76,14 @@ public class TaskManager implements IChioriScheduler, ServerManager
 	/**
 	 * Main thread logic only
 	 */
-	private final List<ChioriTask> temp = new ArrayList<ChioriTask>();
+	private final List<Task> temp = new ArrayList<Task>();
 	/**
 	 * These are tasks that are currently active. It's provided for 'viewing' the current state.
 	 */
-	private final ConcurrentHashMap<Integer, ChioriTask> runners = new ConcurrentHashMap<Integer, ChioriTask>();
+	private final ConcurrentHashMap<Integer, Task> runners = new ConcurrentHashMap<Integer, Task>();
 	private volatile int currentTick = -1;
 	private final Executor executor = Executors.newCachedThreadPool();
-	private ChioriAsyncDebugger debugHead = new ChioriAsyncDebugger( -1, null, null )
+	private AsyncTaskDebugger debugHead = new AsyncTaskDebugger( -1, null, null )
 	{
 		@Override
 		StringBuilder debugTo( StringBuilder string )
@@ -91,7 +91,7 @@ public class TaskManager implements IChioriScheduler, ServerManager
 			return string;
 		}
 	};
-	private ChioriAsyncDebugger debugTail = debugHead;
+	private AsyncTaskDebugger debugTail = debugHead;
 	private static final int RECENT_TICKS;
 	
 	static
@@ -127,7 +127,7 @@ public class TaskManager implements IChioriScheduler, ServerManager
 		return this.scheduleSyncDelayedTask( creator, task, 0L );
 	}
 	
-	public ChioriTask runTask( TaskCreator creator, Runnable runnable )
+	public Task runTask( TaskCreator creator, Runnable runnable )
 	{
 		return runTaskLater( creator, runnable, 0L );
 	}
@@ -137,7 +137,7 @@ public class TaskManager implements IChioriScheduler, ServerManager
 		return this.scheduleAsyncDelayedTask( creator, task, 0L );
 	}
 	
-	public ChioriTask runTaskAsynchronously( TaskCreator creator, Runnable runnable )
+	public Task runTaskAsynchronously( TaskCreator creator, Runnable runnable )
 	{
 		return runTaskLaterAsynchronously( creator, runnable, 0L );
 	}
@@ -147,7 +147,7 @@ public class TaskManager implements IChioriScheduler, ServerManager
 		return this.scheduleSyncRepeatingTask( creator, task, delay, -1L );
 	}
 	
-	public ChioriTask runTaskLater( TaskCreator creator, Runnable runnable, long delay )
+	public Task runTaskLater( TaskCreator creator, Runnable runnable, long delay )
 	{
 		return runTaskTimer( creator, runnable, delay, -1L );
 	}
@@ -157,7 +157,7 @@ public class TaskManager implements IChioriScheduler, ServerManager
 		return this.scheduleAsyncRepeatingTask( creator, task, delay, -1L );
 	}
 	
-	public ChioriTask runTaskLaterAsynchronously( TaskCreator creator, Runnable runnable, long delay )
+	public Task runTaskLaterAsynchronously( TaskCreator creator, Runnable runnable, long delay )
 	{
 		return runTaskTimerAsynchronously( creator, runnable, delay, -1L );
 	}
@@ -167,7 +167,7 @@ public class TaskManager implements IChioriScheduler, ServerManager
 		return runTaskTimer( creator, runnable, delay, period ).getTaskId();
 	}
 	
-	public ChioriTask runTaskTimer( TaskCreator creator, Runnable runnable, long delay, long period )
+	public Task runTaskTimer( TaskCreator creator, Runnable runnable, long delay, long period )
 	{
 		validate( creator, runnable );
 		
@@ -184,7 +184,7 @@ public class TaskManager implements IChioriScheduler, ServerManager
 			period = -1L;
 		}
 		
-		ChioriTask task = new ChioriTask( creator, runnable, nextId(), period );
+		Task task = new Task( creator, runnable, nextId(), period );
 		
 		if ( creator.isEnabled() )
 			return handle( task, delay );
@@ -220,7 +220,7 @@ public class TaskManager implements IChioriScheduler, ServerManager
 		return runTaskTimerAsynchronously( creator, runnable, delay, period ).getTaskId();
 	}
 	
-	public ChioriTask runTaskTimerAsynchronously( TaskCreator creator, Runnable runnable, long delay, long period )
+	public Task runTaskTimerAsynchronously( TaskCreator creator, Runnable runnable, long delay, long period )
 	{
 		validate( creator, runnable );
 		
@@ -237,7 +237,7 @@ public class TaskManager implements IChioriScheduler, ServerManager
 			period = -1L;
 		}
 		
-		ChioriTask task = new ChioriAsyncTask( runners, creator, runnable, nextId(), period );
+		Task task = new AsyncTask( runners, creator, runnable, nextId(), period );
 		
 		if ( !creator.isEnabled() )
 			return handle( task, delay );
@@ -251,7 +251,7 @@ public class TaskManager implements IChioriScheduler, ServerManager
 		if ( !creator.isEnabled() )
 			throw new IllegalTaskCreatorAccessException( "TaskCreator attempted to register task while disabled" );
 		
-		final ChioriFuture<T> future = new ChioriFuture<T>( task, creator, nextId() );
+		final FutureTask<T> future = new FutureTask<T>( task, creator, nextId() );
 		handle( future, 0L );
 		return future;
 	}
@@ -262,12 +262,12 @@ public class TaskManager implements IChioriScheduler, ServerManager
 		{
 			return;
 		}
-		ChioriTask task = runners.get( taskId );
+		Task task = runners.get( taskId );
 		if ( task != null )
 		{
 			task.cancel0();
 		}
-		task = new ChioriTask( new Runnable()
+		task = new Task( new Runnable()
 		{
 			public void run()
 			{
@@ -277,12 +277,12 @@ public class TaskManager implements IChioriScheduler, ServerManager
 				}
 			}
 			
-			private boolean check( final Iterable<ChioriTask> collection )
+			private boolean check( final Iterable<Task> collection )
 			{
-				final Iterator<ChioriTask> tasks = collection.iterator();
+				final Iterator<Task> tasks = collection.iterator();
 				while ( tasks.hasNext() )
 				{
-					final ChioriTask task = tasks.next();
+					final Task task = tasks.next();
 					if ( task.getTaskId() == taskId )
 					{
 						task.cancel0();
@@ -298,7 +298,7 @@ public class TaskManager implements IChioriScheduler, ServerManager
 			}
 		} );
 		handle( task, 0L );
-		for ( ChioriTask taskPending = head.getNext(); taskPending != null; taskPending = taskPending.getNext() )
+		for ( Task taskPending = head.getNext(); taskPending != null; taskPending = taskPending.getNext() )
 		{
 			if ( taskPending == task )
 			{
@@ -314,7 +314,7 @@ public class TaskManager implements IChioriScheduler, ServerManager
 	public void cancelTasks( final TaskCreator creator )
 	{
 		Validate.notNull( creator, "Cannot cancel tasks of null creator" );
-		final ChioriTask task = new ChioriTask( new Runnable()
+		final Task task = new Task( new Runnable()
 		{
 			public void run()
 			{
@@ -322,12 +322,12 @@ public class TaskManager implements IChioriScheduler, ServerManager
 				check( TaskManager.this.temp );
 			}
 			
-			void check( final Iterable<ChioriTask> collection )
+			void check( final Iterable<Task> collection )
 			{
-				final Iterator<ChioriTask> tasks = collection.iterator();
+				final Iterator<Task> tasks = collection.iterator();
 				while ( tasks.hasNext() )
 				{
-					final ChioriTask task = tasks.next();
+					final Task task = tasks.next();
 					if ( task.getOwner().equals( creator ) )
 					{
 						task.cancel0();
@@ -341,7 +341,7 @@ public class TaskManager implements IChioriScheduler, ServerManager
 			}
 		} );
 		handle( task, 0L );
-		for ( ChioriTask taskPending = head.getNext(); taskPending != null; taskPending = taskPending.getNext() )
+		for ( Task taskPending = head.getNext(); taskPending != null; taskPending = taskPending.getNext() )
 		{
 			if ( taskPending == task )
 			{
@@ -352,7 +352,7 @@ public class TaskManager implements IChioriScheduler, ServerManager
 				taskPending.cancel0();
 			}
 		}
-		for ( ChioriTask runner : runners.values() )
+		for ( Task runner : runners.values() )
 		{
 			if ( runner.getOwner().equals( creator ) )
 			{
@@ -363,14 +363,14 @@ public class TaskManager implements IChioriScheduler, ServerManager
 	
 	public void cancelAllTasks()
 	{
-		final ChioriTask task = new ChioriTask( new Runnable()
+		final Task task = new Task( new Runnable()
 		{
 			public void run()
 			{
-				Iterator<ChioriTask> it = TaskManager.this.runners.values().iterator();
+				Iterator<Task> it = TaskManager.this.runners.values().iterator();
 				while ( it.hasNext() )
 				{
-					ChioriTask task = it.next();
+					Task task = it.next();
 					task.cancel0();
 					if ( task.isSync() )
 					{
@@ -382,7 +382,7 @@ public class TaskManager implements IChioriScheduler, ServerManager
 			}
 		} );
 		handle( task, 0L );
-		for ( ChioriTask taskPending = head.getNext(); taskPending != null; taskPending = taskPending.getNext() )
+		for ( Task taskPending = head.getNext(); taskPending != null; taskPending = taskPending.getNext() )
 		{
 			if ( taskPending == task )
 			{
@@ -390,7 +390,7 @@ public class TaskManager implements IChioriScheduler, ServerManager
 			}
 			taskPending.cancel0();
 		}
-		for ( ChioriTask runner : runners.values() )
+		for ( Task runner : runners.values() )
 		{
 			runner.cancel0();
 		}
@@ -398,12 +398,12 @@ public class TaskManager implements IChioriScheduler, ServerManager
 	
 	public boolean isCurrentlyRunning( final int taskId )
 	{
-		final ChioriTask task = runners.get( taskId );
+		final Task task = runners.get( taskId );
 		if ( task == null || task.isSync() )
 		{
 			return false;
 		}
-		final ChioriAsyncTask asyncTask = ( ChioriAsyncTask ) task;
+		final AsyncTask asyncTask = ( AsyncTask ) task;
 		synchronized ( asyncTask.getWorkers() )
 		{
 			return asyncTask.getWorkers().isEmpty();
@@ -416,28 +416,28 @@ public class TaskManager implements IChioriScheduler, ServerManager
 		{
 			return false;
 		}
-		for ( ChioriTask task = head.getNext(); task != null; task = task.getNext() )
+		for ( Task task = head.getNext(); task != null; task = task.getNext() )
 		{
 			if ( task.getTaskId() == taskId )
 			{
 				return task.getPeriod() >= -1L; // The task will run
 			}
 		}
-		ChioriTask task = runners.get( taskId );
+		Task task = runners.get( taskId );
 		return task != null && task.getPeriod() >= -1L;
 	}
 	
-	public List<ChioriWorker> getActiveWorkers()
+	public List<Worker> getActiveWorkers()
 	{
-		final ArrayList<ChioriWorker> workers = new ArrayList<ChioriWorker>();
-		for ( final ChioriTask taskObj : runners.values() )
+		final ArrayList<Worker> workers = new ArrayList<Worker>();
+		for ( final Task taskObj : runners.values() )
 		{
 			// Iterator will be a best-effort (may fail to grab very new values) if called from an async thread
 			if ( taskObj.isSync() )
 			{
 				continue;
 			}
-			final ChioriAsyncTask task = ( ChioriAsyncTask ) taskObj;
+			final AsyncTask task = ( AsyncTask ) taskObj;
 			synchronized ( task.getWorkers() )
 			{
 				// This will never have an issue with stale threads; it's state-safe
@@ -447,10 +447,10 @@ public class TaskManager implements IChioriScheduler, ServerManager
 		return workers;
 	}
 	
-	public List<ChioriTask> getPendingTasks()
+	public List<Task> getPendingTasks()
 	{
-		final ArrayList<ChioriTask> truePending = new ArrayList<ChioriTask>();
-		for ( ChioriTask task = head.getNext(); task != null; task = task.getNext() )
+		final ArrayList<Task> truePending = new ArrayList<Task>();
+		for ( Task task = head.getNext(); task != null; task = task.getNext() )
 		{
 			if ( task.getTaskId() != -1 )
 			{
@@ -459,8 +459,8 @@ public class TaskManager implements IChioriScheduler, ServerManager
 			}
 		}
 		
-		final ArrayList<ChioriTask> pending = new ArrayList<ChioriTask>();
-		for ( ChioriTask task : runners.values() )
+		final ArrayList<Task> pending = new ArrayList<Task>();
+		for ( Task task : runners.values() )
 		{
 			if ( task.getPeriod() >= -1L )
 			{
@@ -468,7 +468,7 @@ public class TaskManager implements IChioriScheduler, ServerManager
 			}
 		}
 		
-		for ( final ChioriTask task : truePending )
+		for ( final Task task : truePending )
 		{
 			if ( task.getPeriod() >= -1L && !pending.contains( task ) )
 			{
@@ -487,11 +487,11 @@ public class TaskManager implements IChioriScheduler, ServerManager
 			throw new IllegalStateException( "We detected that the heartbeat method was called on a thread other than the ConsoleBus thread. This is a really bad thing and could cause concurrency issues if left unchecked." );
 		
 		this.currentTick = currentTick;
-		final List<ChioriTask> temp = this.temp;
+		final List<Task> temp = this.temp;
 		parsePending();
 		while ( isReady( currentTick ) )
 		{
-			final ChioriTask task = pending.remove();
+			final Task task = pending.remove();
 			if ( task.getPeriod() < -1L )
 			{
 				if ( task.isSync() )
@@ -515,7 +515,7 @@ public class TaskManager implements IChioriScheduler, ServerManager
 			}
 			else
 			{
-				debugTail = debugTail.setNext( new ChioriAsyncDebugger( currentTick + RECENT_TICKS, task.getOwner(), task.getTaskClass() ) );
+				debugTail = debugTail.setNext( new AsyncTaskDebugger( currentTick + RECENT_TICKS, task.getOwner(), task.getTaskClass() ) );
 				executor.execute( task );
 				// We don't need to parse pending
 				// (async tasks must live with race-conditions if they attempt to cancel between these few lines of code)
@@ -534,7 +534,7 @@ public class TaskManager implements IChioriScheduler, ServerManager
 		
 		// Scans the backlog map for unscheduled tasks awaiting for their owner to become enabled
 		if ( !backlogTasks.isEmpty() )
-			for ( Entry<Long, ChioriTask> e : backlogTasks.entrySet() )
+			for ( Entry<Long, Task> e : backlogTasks.entrySet() )
 			{
 				if ( e.getValue() == null || e.getValue().getOwner() == null )
 				{
@@ -552,10 +552,10 @@ public class TaskManager implements IChioriScheduler, ServerManager
 		debugHead = debugHead.getNextHead( currentTick );
 	}
 	
-	private void addTask( final ChioriTask task )
+	private void addTask( final Task task )
 	{
-		final AtomicReference<ChioriTask> tail = this.tail;
-		ChioriTask tailTask = tail.get();
+		final AtomicReference<Task> tail = this.tail;
+		Task tailTask = tail.get();
 		while ( !tail.compareAndSet( tailTask, task ) )
 		{
 			tailTask = tail.get();
@@ -563,13 +563,13 @@ public class TaskManager implements IChioriScheduler, ServerManager
 		tailTask.setNext( task );
 	}
 	
-	private ChioriTask backlog( ChioriTask task, long delay )
+	private Task backlog( Task task, long delay )
 	{
 		backlogTasks.put( delay, task );
 		return task;
 	}
 	
-	private ChioriTask handle( final ChioriTask task, final long delay )
+	private Task handle( final Task task, final long delay )
 	{
 		task.setNextRun( currentTick + delay );
 		addTask( task );
@@ -603,9 +603,9 @@ public class TaskManager implements IChioriScheduler, ServerManager
 	
 	private void parsePending()
 	{
-		ChioriTask head = this.head;
-		ChioriTask task = head.getNext();
-		ChioriTask lastTask = head;
+		Task head = this.head;
+		Task task = head.getNext();
+		Task lastTask = head;
 		for ( ; task != null; task = ( lastTask = task ).getNext() )
 		{
 			if ( task.getTaskId() == -1 )

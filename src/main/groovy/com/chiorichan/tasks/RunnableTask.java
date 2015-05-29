@@ -4,7 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
  */
-package com.chiorichan.scheduler;
+package com.chiorichan.tasks;
 
 
 /**
@@ -12,7 +12,7 @@ package com.chiorichan.scheduler;
  * 
  * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
-public abstract class ChioriRunnable implements Runnable
+public abstract class RunnableTask implements Runnable
 {
 	private int taskId = -1;
 	
@@ -37,9 +37,9 @@ public abstract class ChioriRunnable implements Runnable
 	 *             if plugin is null
 	 * @throws IllegalStateException
 	 *             if this was already scheduled
-	 * @see IChioriScheduler#runTask(TaskCreator, Runnable)
+	 * @see ITaskManager#runTask(TaskCreator, Runnable)
 	 */
-	public synchronized IChioriTask runTask( TaskCreator creator ) throws IllegalArgumentException, IllegalStateException
+	public synchronized ITask runTask( TaskCreator creator ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
 		return setupId( TaskManager.INSTANCE.runTask( creator, this ) );
@@ -58,9 +58,9 @@ public abstract class ChioriRunnable implements Runnable
 	 *             if plugin is null
 	 * @throws IllegalStateException
 	 *             if this was already scheduled
-	 * @see IChioriScheduler#runTaskAsynchronously(TaskCreator, Runnable)
+	 * @see ITaskManager#runTaskAsynchronously(TaskCreator, Runnable)
 	 */
-	public synchronized IChioriTask runTaskAsynchronously( TaskCreator creator ) throws IllegalArgumentException, IllegalStateException
+	public synchronized ITask runTaskAsynchronously( TaskCreator creator ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
 		return setupId( TaskManager.INSTANCE.runTaskAsynchronously( creator, this ) );
@@ -78,9 +78,9 @@ public abstract class ChioriRunnable implements Runnable
 	 *             if plugin is null
 	 * @throws IllegalStateException
 	 *             if this was already scheduled
-	 * @see IChioriScheduler#runTaskLater(TaskCreator, Runnable, long)
+	 * @see ITaskManager#runTaskLater(TaskCreator, Runnable, long)
 	 */
-	public synchronized IChioriTask runTaskLater( TaskCreator creator, long delay ) throws IllegalArgumentException, IllegalStateException
+	public synchronized ITask runTaskLater( TaskCreator creator, long delay ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
 		return setupId( TaskManager.INSTANCE.runTaskLater( creator, this, delay ) );
@@ -101,9 +101,9 @@ public abstract class ChioriRunnable implements Runnable
 	 *             if plugin is null
 	 * @throws IllegalStateException
 	 *             if this was already scheduled
-	 * @see IChioriScheduler#runTaskLaterAsynchronously(TaskCreator, Runnable, long)
+	 * @see ITaskManager#runTaskLaterAsynchronously(TaskCreator, Runnable, long)
 	 */
-	public synchronized IChioriTask runTaskLaterAsynchronously( TaskCreator creator, long delay ) throws IllegalArgumentException, IllegalStateException
+	public synchronized ITask runTaskLaterAsynchronously( TaskCreator creator, long delay ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
 		return setupId( TaskManager.INSTANCE.runTaskLaterAsynchronously( creator, this, delay ) );
@@ -123,9 +123,9 @@ public abstract class ChioriRunnable implements Runnable
 	 *             if plugin is null
 	 * @throws IllegalStateException
 	 *             if this was already scheduled
-	 * @see IChioriScheduler#runTaskTimer(TaskCreator, Runnable, long, long)
+	 * @see ITaskManager#runTaskTimer(TaskCreator, Runnable, long, long)
 	 */
-	public synchronized IChioriTask runTaskTimer( TaskCreator creator, long delay, long period ) throws IllegalArgumentException, IllegalStateException
+	public synchronized ITask runTaskTimer( TaskCreator creator, long delay, long period ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
 		return setupId( TaskManager.INSTANCE.runTaskTimer( creator, this, delay, period ) );
@@ -149,9 +149,9 @@ public abstract class ChioriRunnable implements Runnable
 	 *             if plugin is null
 	 * @throws IllegalStateException
 	 *             if this was already scheduled
-	 * @see IChioriScheduler#runTaskTimerAsynchronously(TaskCreator, Runnable, long, long)
+	 * @see ITaskManager#runTaskTimerAsynchronously(TaskCreator, Runnable, long, long)
 	 */
-	public synchronized IChioriTask runTaskTimerAsynchronously( TaskCreator creator, long delay, long period ) throws IllegalArgumentException, IllegalStateException
+	public synchronized ITask runTaskTimerAsynchronously( TaskCreator creator, long delay, long period ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
 		return setupId( TaskManager.INSTANCE.runTaskTimerAsynchronously( creator, this, delay, period ) );
@@ -182,7 +182,7 @@ public abstract class ChioriRunnable implements Runnable
 		}
 	}
 	
-	private IChioriTask setupId( final IChioriTask task )
+	private ITask setupId( final ITask task )
 	{
 		this.taskId = task.getTaskId();
 		return task;

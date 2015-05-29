@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.scheduler;
+package com.chiorichan.tasks;
 
 
 /**
@@ -15,7 +15,7 @@ package com.chiorichan.scheduler;
  * the task and the taskId. </p> Workers are used to execute async tasks.
  */
 
-public interface ChioriWorker
+public interface Worker
 {
 	
 	/**

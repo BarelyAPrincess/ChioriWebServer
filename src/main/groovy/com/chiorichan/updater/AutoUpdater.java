@@ -19,8 +19,8 @@ import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
-import com.chiorichan.scheduler.TaskManager;
-import com.chiorichan.scheduler.TaskCreator;
+import com.chiorichan.tasks.TaskCreator;
+import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.updater.BuildArtifact.ChangeSet.ChangeSetDetails;
 import com.chiorichan.util.Versioning;
 
@@ -51,14 +51,14 @@ public class AutoUpdater extends BuiltinEventCreator implements Listener, TaskCr
 		/*
 		 * This schedules the Auto Updater with the Scheduler to run every 30 minutes (by default).
 		 */
-		TaskManager.INSTANCE.scheduleAsyncRepeatingTask( this, new Runnable()
+		TaskManager.INSTANCE.scheduleAsyncRepeatingTask( this, 0L, Loader.getConfig().getInt( "auto-updater.check-interval", 30 ) * 3000, new Runnable()
 		{
 			@Override
 			public void run()
 			{
 				check();
 			}
-		}, 0L, Loader.getConfig().getInt( "auto-updater.check-interval", 30 ) * 3000 ); // 3000 ticks = 1 minute
+		} ); // 3000 ticks = 1 minute
 	}
 	
 	public String getChannel()

@@ -19,7 +19,7 @@ import joptsimple.OptionSet;
 
 import com.chiorichan.console.CommandDispatch;
 import com.chiorichan.lang.StartupException;
-import com.chiorichan.scheduler.TaskManager;
+import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Joiner;

@@ -47,12 +47,12 @@ import com.chiorichan.net.NetworkManager;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.lang.PermissionBackendException;
 import com.chiorichan.plugin.PluginManager;
-import com.chiorichan.scheduler.ChioriWorker;
-import com.chiorichan.scheduler.TaskManager;
-import com.chiorichan.scheduler.TaskCreator;
 import com.chiorichan.session.SessionException;
 import com.chiorichan.session.SessionManager;
 import com.chiorichan.site.SiteManager;
+import com.chiorichan.tasks.Worker;
+import com.chiorichan.tasks.TaskCreator;
+import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.updater.AutoUpdater;
 import com.chiorichan.updater.DownloadUpdaterService;
 import com.chiorichan.util.FileFunc;
@@ -570,8 +570,8 @@ public class Loader extends BuiltinEventCreator implements Listener
 			pollCount++;
 		}
 		
-		List<ChioriWorker> overdueWorkers = TaskManager.INSTANCE.getActiveWorkers();
-		for ( ChioriWorker worker : overdueWorkers )
+		List<Worker> overdueWorkers = TaskManager.INSTANCE.getActiveWorkers();
+		for ( Worker worker : overdueWorkers )
 		{
 			TaskCreator creator = worker.getOwner();
 			String author = "<AuthorUnknown>";

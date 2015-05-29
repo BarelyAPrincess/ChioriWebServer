@@ -19,9 +19,9 @@ import com.chiorichan.Loader;
 import com.chiorichan.ServerManager;
 import com.chiorichan.http.HttpCookie;
 import com.chiorichan.lang.StartupException;
-import com.chiorichan.scheduler.TaskManager;
-import com.chiorichan.scheduler.TaskCreator;
-import com.chiorichan.util.CommonFunc;
+import com.chiorichan.tasks.TaskCreator;
+import com.chiorichan.tasks.TaskManager;
+import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.RandomFunc;
 import com.chiorichan.util.StringFunc;
 import com.google.common.collect.Lists;
@@ -115,14 +115,14 @@ public class SessionManager implements TaskCreator, ServerManager
 		/*
 		 * This schedules the Session Manager with the Scheduler to run every 5 minutes (by default) to cleanup sessions.
 		 */
-		TaskManager.INSTANCE.scheduleAsyncRepeatingTask( this, new Runnable()
+		TaskManager.INSTANCE.scheduleAsyncRepeatingTask( this, 0L, TaskManager.DELAY_MINUTE * Loader.getConfig().getInt( "sessions.cleanupInterval", 5 ), new Runnable()
 		{
 			@Override
 			public void run()
 			{
 				sessionCleanup();
 			}
-		}, 0L, TaskManager.DELAY_MINUTE * Loader.getConfig().getInt( "sessions.cleanupInterval", 5 ) );
+		} );
 	}
 	
 	private SessionManager()
@@ -141,7 +141,7 @@ public class SessionManager implements TaskCreator, ServerManager
 			// Loader.getLogger().debug( sess.getSessId() + " --> " + sess.getTimeout() + " (-) " + CommonFunc.getEpoch() + " (=) " + ( sess.getTimeout() - CommonFunc.getEpoch() ) + " | " + CommonFunc.readoutDuration( ( sess.getTimeout() -
 			// CommonFunc.getEpoch() ) * 1000 ) + " To Be Destroyed? " + ( sess.getTimeout() > 0 && sess.getTimeout() < CommonFunc.getEpoch() ) );
 			
-			if ( sess.getTimeout() > 0 && sess.getTimeout() < CommonFunc.getEpoch() )
+			if ( sess.getTimeout() > 0 && sess.getTimeout() < Timings.epoch() )
 				try
 				{
 					cleanupCount++;

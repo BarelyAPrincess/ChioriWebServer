@@ -13,8 +13,8 @@ import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventCreator;
 import com.chiorichan.event.Listener;
 import com.chiorichan.plugin.PluginDescriptionFile;
-import com.chiorichan.scheduler.TaskManager;
-import com.chiorichan.scheduler.TaskCreator;
+import com.chiorichan.tasks.TaskCreator;
+import com.chiorichan.tasks.TaskManager;
 import com.google.common.collect.Lists;
 
 /**

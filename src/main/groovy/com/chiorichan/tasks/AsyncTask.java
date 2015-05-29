@@ -7,18 +7,18 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.scheduler;
+package com.chiorichan.tasks;
 
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 
-class ChioriAsyncTask extends ChioriTask
+class AsyncTask extends Task
 {
-	private final LinkedList<ChioriWorker> workers = new LinkedList<ChioriWorker>();
-	private final Map<Integer, ChioriTask> runners;
+	private final LinkedList<Worker> workers = new LinkedList<Worker>();
+	private final Map<Integer, Task> runners;
 	
-	ChioriAsyncTask( final Map<Integer, ChioriTask> runners, final TaskCreator creator, final Runnable task, final int id, final long delay )
+	AsyncTask( final Map<Integer, Task> runners, final TaskCreator creator, final Runnable task, final int id, final long delay )
 	{
 		super( creator, task, id, delay );
 		this.runners = runners;
@@ -42,7 +42,7 @@ class ChioriAsyncTask extends ChioriTask
 				// Checking this with the lock is important!
 				return;
 			}
-			workers.add( new ChioriWorker()
+			workers.add( new Worker()
 			{
 				public Thread getThread()
 				{
@@ -51,12 +51,12 @@ class ChioriAsyncTask extends ChioriTask
 				
 				public int getTaskId()
 				{
-					return ChioriAsyncTask.this.getTaskId();
+					return AsyncTask.this.getTaskId();
 				}
 				
 				public TaskCreator getOwner()
 				{
-					return ChioriAsyncTask.this.getOwner();
+					return AsyncTask.this.getOwner();
 				}
 			} );
 		}
@@ -77,7 +77,7 @@ class ChioriAsyncTask extends ChioriTask
 			{
 				try
 				{
-					final Iterator<ChioriWorker> workers = this.workers.iterator();
+					final Iterator<Worker> workers = this.workers.iterator();
 					boolean removed = false;
 					while ( workers.hasNext() )
 					{
@@ -115,7 +115,7 @@ class ChioriAsyncTask extends ChioriTask
 		}
 	}
 	
-	LinkedList<ChioriWorker> getWorkers()
+	LinkedList<Worker> getWorkers()
 	{
 		return workers;
 	}

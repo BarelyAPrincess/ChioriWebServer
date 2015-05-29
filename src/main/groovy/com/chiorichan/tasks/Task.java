@@ -4,15 +4,15 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
  */
-package com.chiorichan.scheduler;
+package com.chiorichan.tasks;
 
 
 /**
  * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
-class ChioriTask implements IChioriTask, Runnable
+class Task implements ITask, Runnable
 {
-	private volatile ChioriTask next = null;
+	private volatile Task next = null;
 	/**
 	 * -1 means no repeating <br>
 	 * -2 means cancel <br>
@@ -28,17 +28,17 @@ class ChioriTask implements IChioriTask, Runnable
 	private final TaskCreator creator;
 	private final int id;
 	
-	ChioriTask()
+	Task()
 	{
 		this( null, null, -1, -1 );
 	}
 	
-	ChioriTask( final Runnable task )
+	Task( final Runnable task )
 	{
 		this( null, task, -1, -1 );
 	}
 	
-	ChioriTask( final TaskCreator creator, final Runnable task, final int id, final long period )
+	Task( final TaskCreator creator, final Runnable task, final int id, final long period )
 	{
 		this.creator = creator;
 		this.task = task;
@@ -86,12 +86,12 @@ class ChioriTask implements IChioriTask, Runnable
 		this.nextRun = nextRun;
 	}
 	
-	ChioriTask getNext()
+	Task getNext()
 	{
 		return next;
 	}
 	
-	void setNext( ChioriTask next )
+	void setNext( Task next )
 	{
 		this.next = next;
 	}

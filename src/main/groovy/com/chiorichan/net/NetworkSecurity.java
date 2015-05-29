@@ -23,8 +23,8 @@ import com.chiorichan.http.WebInterpreter;
 import com.chiorichan.lang.ApacheParser;
 import com.chiorichan.lang.HttpError;
 import com.chiorichan.plugin.PluginDescriptionFile;
-import com.chiorichan.scheduler.Timings;
 import com.chiorichan.site.Site;
+import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.NetworkFunc;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -125,12 +125,12 @@ public class NetworkSecurity implements Listener, EventCreator
 		
 		void addStrike( IpStrikeType type, String... args )
 		{
-			Validate.notNull( type );
-			Validate.notNull( args );
-			
 			// If already banned there is no need to track reasons to ban
 			if ( banned )
 				return;
+			
+			Validate.notNull( type );
+			Validate.notNull( args );
 			
 			Record r = strikes.containsKey( type ) ? strikes.get( type ) : new Record();
 			
@@ -141,7 +141,7 @@ public class NetworkSecurity implements Listener, EventCreator
 			
 			if ( r.count >= type.countToBan )
 			{
-				NetworkManager.getLogger().info( ConsoleColor.GOLD + "The IP '" + ipAddr + "' has been banned for reason '" + type.getReason() + "'" );
+				NetworkManager.getLogger().info( ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "The IP '" + ipAddr + "' has been banned for reason '" + type.getReason() + "'" );
 				banned = true;
 				banReason = type.getReason();
 				banWhen = Timings.epoch();

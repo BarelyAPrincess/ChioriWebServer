@@ -17,7 +17,7 @@ import java.util.Map;
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.permission.PermissionManager;
-import com.chiorichan.scheduler.Timings;
+import com.chiorichan.tasks.Timings;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
