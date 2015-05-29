@@ -54,10 +54,10 @@ import com.chiorichan.session.SessionException;
 import com.chiorichan.session.SessionManager;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.updater.AutoUpdater;
-import com.chiorichan.updater.ChioriDLUpdaterService;
+import com.chiorichan.updater.DownloadUpdaterService;
 import com.chiorichan.util.FileFunc;
+import com.chiorichan.util.NetworkFunc;
 import com.chiorichan.util.Versioning;
-import com.chiorichan.util.WebFunc;
 
 public class Loader extends BuiltinEventCreator implements Listener
 {
@@ -274,15 +274,15 @@ public class Loader extends BuiltinEventCreator implements Listener
 		if ( !tmpFileDirectory.canWrite() )
 			Loader.getLogger().warning( "The `server.tmpFileDirectory` in config, specifies a directory that is not writable to the server. File uploads and other similar operations that need the temp directory will fail to function correctly." );
 		
-		updater = new AutoUpdater( new ChioriDLUpdaterService( configuration.getString( "auto-updater.host" ) ), configuration.getString( "auto-updater.preferred-channel" ) );
+		updater = new AutoUpdater( new DownloadUpdaterService( configuration.getString( "auto-updater.host" ) ), configuration.getString( "auto-updater.preferred-channel" ) );
 		
 		updater.setEnabled( configuration.getBoolean( "auto-updater.enabled" ) );
 		updater.setSuggestChannels( configuration.getBoolean( "auto-updater.suggest-channels" ) );
 		updater.getOnBroken().addAll( configuration.getStringList( "auto-updater.on-broken" ) );
 		updater.getOnUpdate().addAll( configuration.getStringList( "auto-updater.on-update" ) );
 		
-		if ( !configuration.getBoolean( "server.disableTracking" ) )
-			WebFunc.sendTracking( "startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
+		if ( !configuration.getBoolean( "server.disableTracking" ) && !Versioning.isDevelopment() )
+			NetworkFunc.sendTracking( "startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
 		
 		/**
 		 * try

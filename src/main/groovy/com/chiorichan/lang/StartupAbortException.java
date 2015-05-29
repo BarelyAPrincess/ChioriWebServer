@@ -9,7 +9,11 @@
  */
 package com.chiorichan.lang;
 
-
+/**
+ * Used to gracefully abort a server startup, e.g., by user interaction.
+ * 
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
+ */
 public class StartupAbortException extends StartupException
 {
 	private static final long serialVersionUID = -4937198089020390887L;

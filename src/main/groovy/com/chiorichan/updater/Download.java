@@ -27,9 +27,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.io.IOUtils;
 
 import com.chiorichan.Loader;
-import com.chiorichan.lang.DownloadException;
 import com.chiorichan.lang.DownloadDeniedException;
-import com.chiorichan.util.WebFunc;
+import com.chiorichan.lang.DownloadException;
+import com.chiorichan.util.NetworkFunc;
 
 public class Download implements Runnable
 {
@@ -69,7 +69,7 @@ public class Download implements Runnable
 		FileOutputStream fos = null;
 		try
 		{
-			HttpURLConnection conn = WebFunc.openHttpConnection( url );
+			HttpURLConnection conn = NetworkFunc.openHttpConnection( url );
 			int response = conn.getResponseCode();
 			int responseFamily = response / 100;
 			

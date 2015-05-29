@@ -47,9 +47,4 @@ public class CommonFunc
 		PeriodFormatter formatter = new PeriodFormatterBuilder().appendDays().appendSuffix( " Day(s) " ).appendHours().appendSuffix( " Hour(s) " ).appendMinutes().appendSuffix( " Minute(s) " ).appendSeconds().appendSuffix( " Second(s)" ).toFormatter();
 		return formatter.print( duration.toPeriod() );
 	}
-	
-	public static boolean isRoot()
-	{
-		return System.getProperty( "user.name" ).equalsIgnoreCase( "root" );
-	}
 }

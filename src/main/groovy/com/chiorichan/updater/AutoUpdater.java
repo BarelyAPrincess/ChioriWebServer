@@ -33,7 +33,7 @@ public class AutoUpdater extends BuiltinEventCreator implements Listener, TaskCr
 	public static final String WARN_OPERATORS = "warn-ops";
 	
 	private static AutoUpdater instance = null;
-	private final ChioriDLUpdaterService service;
+	private final DownloadUpdaterService service;
 	private final List<String> onUpdate = new ArrayList<String>();
 	private final List<String> onBroken = new ArrayList<String>();
 	private final String channel;
@@ -42,7 +42,7 @@ public class AutoUpdater extends BuiltinEventCreator implements Listener, TaskCr
 	private BuildArtifact latest = null;
 	private boolean suggestChannels = true;
 	
-	public AutoUpdater( ChioriDLUpdaterService service, String channel )
+	public AutoUpdater( DownloadUpdaterService service, String channel )
 	{
 		instance = this;
 		this.service = service;
@@ -285,7 +285,7 @@ public class AutoUpdater extends BuiltinEventCreator implements Listener, TaskCr
 		}.start();
 	}
 	
-	protected static ChioriDLUpdaterService getService()
+	protected static DownloadUpdaterService getService()
 	{
 		return ( instance == null ) ? null : instance.service;
 	}

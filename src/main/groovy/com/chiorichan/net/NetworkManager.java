@@ -21,14 +21,12 @@ import com.chiorichan.http.HttpInitializer;
 import com.chiorichan.https.HttpsInitializer;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.net.query.QueryServerInitializer;
-import com.chiorichan.util.CommonFunc;
+import com.chiorichan.util.Versioning;
 
 /**
- * Works as the main Network Operating class
- * and implements methods used to control such systems
+ * Works as the main network managing class for netty implementations, e.g., Http, Https, and Query
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class NetworkManager
 {
@@ -39,29 +37,6 @@ public class NetworkManager
 	public static Channel httpsChannel = null;
 	public static Channel queryChannel = null;
 	public static Channel tcpChannel = null;
-	
-	/**
-	 * Only effects Unix-like OS'es (Linux and Mac OS X)
-	 * Will return false if the port is under 1024 and we are not running as root.
-	 * It's possible to give non-root users access to Privileged Ports but it's
-	 * complicated for Java Apps and a Security Risk.
-	 *
-	 * @param port
-	 * @return Is this a privileged port?
-	 */
-	public static boolean checkPrivilegedPort( int port )
-	{
-		// Privilaged Ports only exist on Linux, Unix, and Mac OS X (I know I'm missing some)
-		if ( !System.getProperty( "os.name" ).equalsIgnoreCase( "linux" ) || !System.getProperty( "os.name" ).equalsIgnoreCase( "unix" ) || !System.getProperty( "os.name" ).equalsIgnoreCase( "mac os x" ) )
-			return true;
-		
-		// Privilaged Port range from 0 to 1024
-		if ( port > 1024 )
-			return true;
-		
-		// If we are trying to use a Privilaged Port, We need to be running as root
-		return CommonFunc.isRoot();
-	}
 	
 	public static void shutdownHttpServer()
 	{
@@ -100,7 +75,7 @@ public class NetworkManager
 			
 			if ( httpPort > 0 )
 			{
-				if ( !checkPrivilegedPort( httpPort ) )
+				if ( Versioning.isPrivilegedPort( httpPort ) )
 				{
 					Loader.getLogger().warning( "It would seem that you are trying to start ChioriWebServer's Web Server on a privileged port without root access." );
 					Loader.getLogger().warning( "Most likely you will see an exception thrown below this. http://www.w3.org/Daemon/User/Installation/PrivilegedPorts.html" );
@@ -172,7 +147,7 @@ public class NetworkManager
 			
 			if ( httpsPort >= 1 )
 			{
-				if ( !checkPrivilegedPort( httpsPort ) )
+				if ( Versioning.isPrivilegedPort( httpsPort ) )
 				{
 					Loader.getLogger().warning( "It would seem that you are trying to start ChioriWebServer's Web Server on a privileged port without root access." );
 					Loader.getLogger().warning( "Most likely you will see an exception thrown below this. http://www.w3.org/Daemon/User/Installation/PrivilegedPorts.html" );
@@ -244,11 +219,11 @@ public class NetworkManager
 		{
 			InetSocketAddress socket;
 			String queryHost = Loader.getConfig().getString( "server.queryHost", "" );
-			int queryPort = Loader.getConfig().getInt( "server.queryPort", 4443 );
+			int queryPort = Loader.getConfig().getInt( "server.queryPort", 8992 );
 			
 			if ( queryPort >= 1 && Loader.getConfig().getBoolean( "server.queryEnabled" ) )
 			{
-				if ( !checkPrivilegedPort( queryPort ) )
+				if ( Versioning.isPrivilegedPort( queryPort ) )
 				{
 					Loader.getLogger().warning( "It would seem that you are trying to start the Query Server on a privileged port without root access." );
 					Loader.getLogger().warning( "Most likely you will see an exception thrown below this. http://www.w3.org/Daemon/User/Installation/PrivilegedPorts.html" );

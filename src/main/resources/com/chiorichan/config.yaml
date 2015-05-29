@@ -21,7 +21,7 @@ server:
   disableTracking: false
   defaultTextEncoding: UTF-8
   defaultBinaryEncoding: ISO-8859-1
-  developmentMode: true
+  developmentMode: false
   maxFileUploadKb: 5120
   tmpFileDirectory: tmp
   webFileDirectory: webroot

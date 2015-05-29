@@ -53,6 +53,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.codehaus.groovy.runtime.NullObject;
+import org.codehaus.groovy.syntax.SyntaxException;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.ContentTypes;
@@ -233,7 +234,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 					response.sendError( ( ( PermissionDeniedException ) cause ).getHttpCode(), cause.getMessage() );
 				}
 			}
-			else if ( cause instanceof SessionException || cause instanceof PermissionException || cause instanceof AccountException || cause instanceof SiteException || cause instanceof MissingMethodException || cause instanceof IndexOutOfBoundsException || cause instanceof NullPointerException || cause instanceof IOException )
+			else if ( cause instanceof SessionException || cause instanceof PermissionException || cause instanceof SyntaxException || cause instanceof AccountException || cause instanceof SiteException || cause instanceof MissingMethodException || cause instanceof IndexOutOfBoundsException || cause instanceof NullPointerException || cause instanceof IOException )
 			{
 				/*
 				 * XXX Known exceptions
@@ -262,13 +263,13 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			{
 				if ( evalOrig == null )
 				{
+					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + " [" + ip + "] This exception was not caught by the EvalFactory and might be the result of a server programming bug:", cause );
 					response.sendException( cause );
-					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + " [" + ip + "] This exception was not expected and most likely needs to be properly caught or investiated. Would you kindly report this stacktrace to the appropriate developer?", cause );
 				}
 				else
 				{
+					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + " [" + ip + "] This exception was not expected and most likely needs to be properly caught or investiated. Would you kindly report this stacktrace to the appropriate developer?", cause );
 					response.sendException( evalOrig );
-					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + " [" + ip + "] This exception was not caught by the EvalFactory and might be the result of a server programming bug:", cause );
 				}
 			}
 			
