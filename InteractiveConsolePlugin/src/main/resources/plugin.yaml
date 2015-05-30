@@ -1,0 +1,7 @@
+name: Interactive Console Plugin
+author: Chiori Greene
+main: com.chiorichan.plugin.console.ConsolePlugin
+version: '1.0'
+depends: []
+libraries:
+  - "com.baulsupp.kolja:jcurses:0.9.5.3"
