@@ -6,15 +6,15 @@
  */
 package com.chiorichan.logger;
 
+import com.chiorichan.logger.LogManager.LogRecord;
 
 /**
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class LogEvent
 {
-	protected void finalize() throws Throwable
+	public LogEvent( LogRecord r )
 	{
 		
 	}

@@ -6,12 +6,29 @@
  */
 package com.chiorichan.logger;
 
+import com.chiorichan.util.GarbageCollectingMap;
+
 /**
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class LogManager
 {
+	static class LogRecord
+	{
+		
+	}
 	
+	/**
+	 * This map allows our manager to know when the object is done being used by detecting when the LogEvent is GC'ed
+	 */
+	private static final GarbageCollectingMap<String, LogRecord> logs = new GarbageCollectingMap<String, LogRecord>();
+	
+	public static LogEvent logEvent( String id )
+	{
+		LogRecord r = new LogRecord();
+		LogEvent e = new LogEvent( r );
+		logs.put( id, r, e );
+		return e;
+	}
 }

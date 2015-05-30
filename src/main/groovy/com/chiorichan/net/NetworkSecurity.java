@@ -117,7 +117,7 @@ public class NetworkSecurity implements Listener, EventCreator
 		
 		IpTracker( String ipAddr )
 		{
-			if ( !NetworkFunc.isValidIPv4( ipAddr ) || !NetworkFunc.isValidIPv6( ipAddr ) )
+			if ( !NetworkFunc.isValidIPv4( ipAddr ) && !NetworkFunc.isValidIPv6( ipAddr ) )
 				throw new IllegalArgumentException( "The provided IP '" + ipAddr + "' is not a valid IPv4 or IPv6 address." );
 			
 			this.ipAddr = ipAddr;

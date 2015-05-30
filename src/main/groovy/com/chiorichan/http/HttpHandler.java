@@ -260,8 +260,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				
 				if ( evalOrig == null )
 				{
-					response.sendException( cause );
 					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + " [" + ip + "] This exception was not caught by the EvalFactory and might be the result of a server programming bug:", cause );
+					response.sendException( cause );
 				}
 				else
 					response.sendException( evalOrig );
