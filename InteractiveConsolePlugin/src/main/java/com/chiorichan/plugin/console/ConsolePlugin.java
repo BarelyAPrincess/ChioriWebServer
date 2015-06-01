@@ -15,5 +15,10 @@ import com.chiorichan.plugin.loader.Plugin;
  */
 public class ConsolePlugin extends Plugin
 {
-	
+	@Override
+	public void onEnable()
+	{
+		TestWindow window = new TestWindow( 30, 20 );
+		window.init();
+	}
 }
