@@ -23,8 +23,8 @@ import com.chiorichan.account.AccountInstance;
 import com.chiorichan.account.event.AccountPreLoginEvent;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.configuration.file.YamlConfiguration;
+import com.chiorichan.event.BuiltinEventCreator;
 import com.chiorichan.event.EventBus;
-import com.chiorichan.event.EventCreator;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
@@ -35,14 +35,13 @@ import com.chiorichan.permission.event.PermissibleEntityEvent;
 import com.chiorichan.permission.event.PermissibleEvent;
 import com.chiorichan.permission.event.PermissibleSystemEvent;
 import com.chiorichan.permission.lang.PermissionBackendException;
-import com.chiorichan.plugin.PluginDescriptionFile;
 import com.chiorichan.tasks.TaskCreator;
 import com.chiorichan.tasks.TaskManager;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-public class PermissionManager implements ServerManager, TaskCreator, EventCreator, Listener
+public class PermissionManager extends BuiltinEventCreator implements ServerManager, TaskCreator, Listener
 {
 	/**
 	 * Holds the OFFICAL instance of Permission Manager.
@@ -579,21 +578,9 @@ public class PermissionManager implements ServerManager, TaskCreator, EventCreat
 	}
 	
 	@Override
-	public boolean isEnabled()
-	{
-		return true;
-	}
-	
-	@Override
 	public String getName()
 	{
 		return "PermissionsManager";
-	}
-	
-	@Override
-	public PluginDescriptionFile getDescription()
-	{
-		return null;
 	}
 	
 	// TODO Make more checks

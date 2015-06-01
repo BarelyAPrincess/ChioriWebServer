@@ -16,8 +16,8 @@ import com.chiorichan.account.event.AccountLoadEvent;
 import com.chiorichan.account.event.AccountLookupEvent;
 import com.chiorichan.account.event.AccountMessageEvent;
 import com.chiorichan.account.lang.AccountResult;
+import com.chiorichan.event.BuiltinEventCreator;
 import com.chiorichan.event.EventBus;
-import com.chiorichan.event.EventCreator;
 
 /**
  * Handles the task and events between the {@link EventBus} and {@link AccountManager}
@@ -25,7 +25,7 @@ import com.chiorichan.event.EventCreator;
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-public abstract class AccountEvents implements EventCreator
+public abstract class AccountEvents extends BuiltinEventCreator
 {
 	private final EventBus events = EventBus.INSTANCE;
 	

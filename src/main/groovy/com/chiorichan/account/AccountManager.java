@@ -18,7 +18,6 @@ import com.chiorichan.ServerManager;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.event.EventBus;
-import com.chiorichan.plugin.PluginDescriptionFile;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.TaskCreator;
@@ -371,21 +370,9 @@ public final class AccountManager extends AccountEvents implements ServerManager
 	}
 	
 	@Override
-	public boolean isEnabled()
-	{
-		return true;
-	}
-	
-	@Override
 	public String getName()
 	{
 		return "AccountManager";
-	}
-	
-	@Override
-	public PluginDescriptionFile getDescription()
-	{
-		return null;
 	}
 	
 	public static ConsoleLogger getLogger()

@@ -603,6 +603,22 @@ public abstract class ScriptingBaseJava extends Script
 		return engine;
 	}
 	
+	/**
+	 * Provides an easy array collections method.
+	 * Not sure if this is counterintuitive since technically Groovy provides an easier array of [], so what, i.e., def val = array( "obj1", "ovj2", "obj3" );
+	 * Comparable to PHP's array function, http://www.w3schools.com/php/func_array.asp
+	 * 
+	 * @param vals
+	 *            Elements of the array separated as an argument
+	 * @return
+	 *         The array of elements
+	 */
+	@SuppressWarnings( "unchecked" )
+	public static <T> T[] array( T... vals )
+	{
+		return vals;
+	}
+	
 	/*
 	 * Abstract Methods
 	 */

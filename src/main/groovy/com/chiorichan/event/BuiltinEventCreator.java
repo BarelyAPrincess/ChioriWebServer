@@ -17,6 +17,7 @@ public abstract class BuiltinEventCreator implements EventCreator
 {
 	private YamlConfiguration yaml = new YamlConfiguration();
 	
+	@Override
 	public final PluginDescriptionFile getDescription()
 	{
 		try
@@ -30,6 +31,7 @@ public abstract class BuiltinEventCreator implements EventCreator
 		}
 	}
 	
+	@Override
 	public boolean isEnabled()
 	{
 		return true;

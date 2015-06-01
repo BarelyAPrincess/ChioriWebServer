@@ -13,8 +13,8 @@ import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
+import com.chiorichan.event.BuiltinEventCreator;
 import com.chiorichan.event.EventBus;
-import com.chiorichan.event.EventCreator;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
@@ -22,7 +22,6 @@ import com.chiorichan.event.http.ErrorEvent;
 import com.chiorichan.http.WebInterpreter;
 import com.chiorichan.lang.ApacheParser;
 import com.chiorichan.lang.HttpError;
-import com.chiorichan.plugin.PluginDescriptionFile;
 import com.chiorichan.site.Site;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.NetworkFunc;
@@ -34,7 +33,7 @@ import com.google.common.collect.Maps;
  * 
  * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
-public class NetworkSecurity implements Listener, EventCreator
+public class NetworkSecurity extends BuiltinEventCreator implements Listener
 {
 	public static enum IpStrikeType
 	{
@@ -243,18 +242,6 @@ public class NetworkSecurity implements Listener, EventCreator
 		{
 			// Nothing
 		}
-	}
-	
-	@Override
-	public PluginDescriptionFile getDescription()
-	{
-		return null;
-	}
-	
-	@Override
-	public boolean isEnabled()
-	{
-		return true;
 	}
 	
 	@Override
