@@ -26,7 +26,7 @@ import com.chiorichan.Loader;
 import com.chiorichan.RunLevel;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.lang.InvalidDescriptionException;
-import com.chiorichan.maven.MavenLibrary;
+import com.chiorichan.libraries.MavenReference;
 import com.google.common.collect.ImmutableList;
 
 /**
@@ -34,7 +34,7 @@ import com.google.common.collect.ImmutableList;
  * plugin.yaml. For plugins written in java using the standard plugin loader, this file must be in the root of the jar
  * file.
  * <p>
- * When Bukkit loads a plugin, it needs to know some basic information about it. It reads this information from a YAML file, 'plugin.yaml'. This file consists of a set of attributes, each defined on a new line and with no indentation.
+ * When the server loads a plugin, it needs to know some basic information about it. It reads this information from a YAML file, 'plugin.yaml'. This file consists of a set of attributes, each defined on a new line and with no indentation.
  * <p>
  * Every (almost* every) method corresponds with a specific entry in the plugin.yaml. These are the <b>required</b> entries for every plugin.yaml:
  * <ul>
@@ -145,7 +145,7 @@ public class PluginDescriptionFile
 	private String main = null;
 	private String classLoaderOf = null;
 	private List<String> depend = null;
-	private List<MavenLibrary> libraries = null;
+	private List<MavenReference> libraries = null;
 	private List<String> softDepend = null;
 	private List<String> loadBefore = null;
 	private String version = null;
@@ -452,7 +452,7 @@ public class PluginDescriptionFile
 	 * 
 	 * @return immutable list of the plugin's dependencies
 	 */
-	public List<MavenLibrary> getLibraries()
+	public List<MavenReference> getLibraries()
 	{
 		return libraries;
 	}
@@ -640,18 +640,18 @@ public class PluginDescriptionFile
 		
 		if ( map.get( "libraries" ) != null )
 		{
-			ImmutableList.Builder<MavenLibrary> libraryBuilder = ImmutableList.<MavenLibrary> builder();
+			ImmutableList.Builder<MavenReference> libraryBuilder = ImmutableList.<MavenReference> builder();
 			try
 			{
 				for ( Object library : ( Iterable<?> ) map.get( "libraries" ) )
 				{
 					try
 					{
-						libraryBuilder.add( new MavenLibrary( library.toString() ) );
+						libraryBuilder.add( new MavenReference( name, library.toString() ) );
 					}
-					catch ( IllegalAccessException e )
+					catch ( IllegalArgumentException e )
 					{
-						Loader.getLogger().severe( "Could not parse the library '" + library.toString() + "' for plugin '" + name + "', it will be ignored:" );
+						Loader.getLogger().severe( "Could not parse the library '" + library.toString() + "' for plugin '" + name + "', expected pattern 'group:name:version' unless fixed, it will be ignored." );
 						Loader.getLogger().severe( e.getMessage() );
 					}
 				}

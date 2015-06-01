@@ -41,8 +41,8 @@ import com.chiorichan.lang.InvalidDescriptionException;
 import com.chiorichan.lang.InvalidPluginException;
 import com.chiorichan.lang.PluginNotFoundException;
 import com.chiorichan.lang.UnknownDependencyException;
-import com.chiorichan.maven.MavenLibrary;
-import com.chiorichan.maven.MavenUtils;
+import com.chiorichan.libraries.MavenReference;
+import com.chiorichan.libraries.Libraries;
 import com.chiorichan.plugin.loader.JavaPluginLoader;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.plugin.loader.PluginLoader;
@@ -195,7 +195,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 		}
 		
 		Map<String, File> plugins = new HashMap<String, File>();
-		Map<String, Collection<MavenLibrary>> libraries = Maps.newHashMap();
+		Map<String, Collection<MavenReference>> libraries = Maps.newHashMap();
 		Map<String, Collection<String>> dependencies = Maps.newHashMap();
 		Map<String, Collection<String>> softDependencies = Maps.newHashMap();
 		
@@ -234,9 +234,9 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 				else
 					softDependencies.put( description.getName(), new LinkedList<String>( softDependencySet ) );
 			
-			Collection<MavenLibrary> librariesSet = description.getLibraries();
+			Collection<MavenReference> librariesSet = description.getLibraries();
 			if ( librariesSet != null )
-				libraries.put( description.getName(), new LinkedList<MavenLibrary>( librariesSet ) );
+				libraries.put( description.getName(), new LinkedList<MavenReference>( librariesSet ) );
 			
 			Collection<String> dependencySet = description.getDepend();
 			if ( dependencySet != null )
@@ -267,19 +267,19 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 				
 				if ( libraries.containsKey( plugin ) )
 				{
-					Iterator<MavenLibrary> librariesIterator = libraries.get( plugin ).iterator();
+					Iterator<MavenReference> librariesIterator = libraries.get( plugin ).iterator();
 					
 					while ( librariesIterator.hasNext() )
 					{
-						MavenLibrary library = librariesIterator.next();
+						MavenReference library = librariesIterator.next();
 						
-						if ( MavenUtils.loadedLibraries.contains( library.getGroup() + ":" + library.getName() ) )
+						if ( Libraries.isLoaded( library ) )
 						{
 							librariesIterator.remove();
 						}
 						else
 						{
-							if ( !MavenUtils.loadLibrary( library ) )
+							if ( !Libraries.loadLibrary( library ) )
 							{
 								missingDependency = false;
 								File file = plugins.get( plugin );

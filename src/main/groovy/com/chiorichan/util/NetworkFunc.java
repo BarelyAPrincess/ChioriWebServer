@@ -9,6 +9,7 @@ package com.chiorichan.util;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -19,11 +20,19 @@ import java.net.URLConnection;
 import java.util.Date;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.TimeInfo;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.HttpClients;
 
 import com.chiorichan.Loader;
+import com.chiorichan.plugin.PluginManager;
 
 /**
  * Provides Network Utilities
@@ -229,6 +238,27 @@ public class NetworkFunc
 		is.close();
 		
 		return out.toByteArray();
+	}
+	
+	public static boolean downloadFile( String url, File dest ) throws ClientProtocolException, IOException
+	{
+		HttpClient httpclient = HttpClients.createDefault();
+		HttpGet httpget = new HttpGet( url );
+		
+		HttpResponse response = httpclient.execute( httpget );
+		HttpEntity entity = response.getEntity();
+		
+		if ( response.getStatusLine().getStatusCode() != 200 )
+		{
+			PluginManager.getLogger().severe( "Could not download the file `" + url + "`, webserver returned `" + response.getStatusLine().getStatusCode() + " - " + response.getStatusLine().getReasonPhrase() + "`" );
+			return false;
+		}
+		
+		InputStream instream = entity.getContent();
+		
+		FileUtils.copyInputStreamToFile( instream, dest );
+		
+		return true;
 	}
 	
 	public static String getUserAgent()

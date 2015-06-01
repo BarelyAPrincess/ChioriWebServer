@@ -14,11 +14,12 @@ import java.io.InputStream;
 
 import com.chiorichan.configuration.file.FileConfiguration;
 import com.chiorichan.event.EventCreator;
+import com.chiorichan.libraries.LibrarySource;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.plugin.loader.PluginLoader;
 import com.chiorichan.tasks.TaskCreator;
 
-public abstract class PluginBase implements EventCreator, TaskCreator
+public abstract class PluginBase implements EventCreator, TaskCreator, LibrarySource
 {
 	/**
 	 * Returns the folder that the plugin data's files are located in. The folder may not yet exist.

@@ -16,17 +16,410 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLDecoder;
 import java.nio.channels.FileChannel;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
+import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
+import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.site.Site;
 import com.google.common.io.ByteStreams;
 
 /**
- * Class containing file utilities
+ * Class containing file and jni utilities
  */
 public class FileFunc
 {
+	/**
+	 * Separate class for native platform ID which is only loaded when native libs are loaded.
+	 */
+	static class Identification
+	{
+		static final String OS_ID;
+		static final String CPU_ID;
+		static final String ARCH_NAME;
+		static final String[] NATIVE_SEARCH_PATHS;
+		
+		static
+		{
+			final Object[] strings = AccessController.doPrivileged( new PrivilegedAction<Object[]>()
+			{
+				public Object[] run()
+				{
+					// First, identify the operating system.
+					boolean knownOs = true;
+					String osName;
+					// let the user override it.
+					osName = System.getProperty( "chiori.os-name" );
+					if ( osName == null )
+					{
+						String sysOs = System.getProperty( "os.name" );
+						if ( sysOs == null )
+						{
+							osName = "unknown";
+							knownOs = false;
+						}
+						else
+						{
+							sysOs = sysOs.toUpperCase( Locale.US );
+							if ( sysOs.startsWith( "LINUX" ) )
+							{
+								osName = "linux";
+							}
+							else if ( sysOs.startsWith( "MAC OS" ) )
+							{
+								osName = "macosx";
+							}
+							else if ( sysOs.startsWith( "WINDOWS" ) )
+							{
+								osName = "win";
+							}
+							else if ( sysOs.startsWith( "OS/2" ) )
+							{
+								osName = "os2";
+							}
+							else if ( sysOs.startsWith( "SOLARIS" ) || sysOs.startsWith( "SUNOS" ) )
+							{
+								osName = "solaris";
+							}
+							else if ( sysOs.startsWith( "MPE/IX" ) )
+							{
+								osName = "mpeix";
+							}
+							else if ( sysOs.startsWith( "HP-UX" ) )
+							{
+								osName = "hpux";
+							}
+							else if ( sysOs.startsWith( "AIX" ) )
+							{
+								osName = "aix";
+							}
+							else if ( sysOs.startsWith( "OS/390" ) )
+							{
+								osName = "os390";
+							}
+							else if ( sysOs.startsWith( "OS/400" ) )
+							{
+								osName = "os400";
+							}
+							else if ( sysOs.startsWith( "FREEBSD" ) )
+							{
+								osName = "freebsd";
+							}
+							else if ( sysOs.startsWith( "OPENBSD" ) )
+							{
+								osName = "openbsd";
+							}
+							else if ( sysOs.startsWith( "NETBSD" ) )
+							{
+								osName = "netbsd";
+							}
+							else if ( sysOs.startsWith( "IRIX" ) )
+							{
+								osName = "irix";
+							}
+							else if ( sysOs.startsWith( "DIGITAL UNIX" ) )
+							{
+								osName = "digitalunix";
+							}
+							else if ( sysOs.startsWith( "OSF1" ) )
+							{
+								osName = "osf1";
+							}
+							else if ( sysOs.startsWith( "OPENVMS" ) )
+							{
+								osName = "openvms";
+							}
+							else if ( sysOs.startsWith( "IOS" ) )
+							{
+								osName = "iOS";
+							}
+							else
+							{
+								osName = "unknown";
+								knownOs = false;
+							}
+						}
+					}
+					// Next, our CPU ID and its compatible variants.
+					boolean knownCpu = true;
+					ArrayList<String> cpuNames = new ArrayList<>();
+					
+					String cpuName = System.getProperty( "jboss.modules.cpu-name" );
+					if ( cpuName == null )
+					{
+						String sysArch = System.getProperty( "os.arch" );
+						if ( sysArch == null )
+						{
+							cpuName = "unknown";
+							knownCpu = false;
+						}
+						else
+						{
+							boolean hasEndian = false;
+							boolean hasHardFloatABI = false;
+							sysArch = sysArch.toUpperCase( Locale.US );
+							if ( sysArch.startsWith( "SPARCV9" ) || sysArch.startsWith( "SPARC64" ) )
+							{
+								cpuName = "sparcv9";
+							}
+							else if ( sysArch.startsWith( "SPARC" ) )
+							{
+								cpuName = "sparc";
+							}
+							else if ( sysArch.startsWith( "X86_64" ) || sysArch.startsWith( "AMD64" ) )
+							{
+								cpuName = "x86_64";
+							}
+							else if ( sysArch.startsWith( "I386" ) )
+							{
+								cpuName = "i386";
+							}
+							else if ( sysArch.startsWith( "I486" ) )
+							{
+								cpuName = "i486";
+							}
+							else if ( sysArch.startsWith( "I586" ) )
+							{
+								cpuName = "i586";
+							}
+							else if ( sysArch.startsWith( "I686" ) || sysArch.startsWith( "X86" ) || sysArch.contains( "IA32" ) )
+							{
+								cpuName = "i686";
+							}
+							else if ( sysArch.startsWith( "X32" ) )
+							{
+								cpuName = "x32";
+							}
+							else if ( sysArch.startsWith( "PPC64" ) )
+							{
+								cpuName = "ppc64";
+							}
+							else if ( sysArch.startsWith( "PPC" ) || sysArch.startsWith( "POWER" ) )
+							{
+								cpuName = "ppc";
+							}
+							else if ( sysArch.startsWith( "ARMV7A" ) || sysArch.contains( "AARCH32" ) )
+							{
+								hasEndian = true;
+								hasHardFloatABI = true;
+								cpuName = "armv7a";
+							}
+							else if ( sysArch.startsWith( "AARCH64" ) || sysArch.startsWith( "ARM64" ) || sysArch.startsWith( "ARMV8" ) || sysArch.startsWith( "PXA9" ) || sysArch.startsWith( "PXA10" ) )
+							{
+								hasEndian = true;
+								cpuName = "aarch64";
+							}
+							else if ( sysArch.startsWith( "PXA27" ) )
+							{
+								hasEndian = true;
+								cpuName = "armv5t-iwmmx";
+							}
+							else if ( sysArch.startsWith( "PXA3" ) )
+							{
+								hasEndian = true;
+								cpuName = "armv5t-iwmmx2";
+							}
+							else if ( sysArch.startsWith( "ARMV4T" ) || sysArch.startsWith( "EP93" ) )
+							{
+								hasEndian = true;
+								cpuName = "armv4t";
+							}
+							else if ( sysArch.startsWith( "ARMV4" ) || sysArch.startsWith( "EP73" ) )
+							{
+								hasEndian = true;
+								cpuName = "armv4";
+							}
+							else if ( sysArch.startsWith( "ARMV5T" ) || sysArch.startsWith( "PXA" ) || sysArch.startsWith( "IXC" ) || sysArch.startsWith( "IOP" ) || sysArch.startsWith( "IXP" ) || sysArch.startsWith( "CE" ) )
+							{
+								hasEndian = true;
+								String isaList = System.getProperty( "sun.arch.isalist" );
+								if ( isaList != null )
+								{
+									if ( isaList.toUpperCase( Locale.US ).contains( "MMX2" ) )
+									{
+										cpuName = "armv5t-iwmmx2";
+									}
+									else if ( isaList.toUpperCase( Locale.US ).contains( "MMX" ) )
+									{
+										cpuName = "armv5t-iwmmx";
+									}
+									else
+									{
+										cpuName = "armv5t";
+									}
+								}
+								else
+								{
+									cpuName = "armv5t";
+								}
+							}
+							else if ( sysArch.startsWith( "ARMV5" ) )
+							{
+								hasEndian = true;
+								cpuName = "armv5";
+							}
+							else if ( sysArch.startsWith( "ARMV6" ) )
+							{
+								hasEndian = true;
+								hasHardFloatABI = true;
+								cpuName = "armv6";
+							}
+							else if ( sysArch.startsWith( "PA_RISC2.0W" ) )
+							{
+								cpuName = "parisc64";
+							}
+							else if ( sysArch.startsWith( "PA_RISC" ) || sysArch.startsWith( "PA-RISC" ) )
+							{
+								cpuName = "parisc";
+							}
+							else if ( sysArch.startsWith( "IA64" ) )
+							{
+								// HP-UX reports IA64W for 64-bit Itanium and IA64N when running
+								// in 32-bit mode.
+								cpuName = sysArch.toLowerCase( Locale.US );
+							}
+							else if ( sysArch.startsWith( "ALPHA" ) )
+							{
+								cpuName = "alpha";
+							}
+							else if ( sysArch.startsWith( "MIPS" ) )
+							{
+								cpuName = "mips";
+							}
+							else
+							{
+								knownCpu = false;
+								cpuName = "unknown";
+							}
+							
+							boolean be = false;
+							boolean hf = false;
+							
+							if ( knownCpu && hasEndian && "big".equals( System.getProperty( "sun.cpu.endian", "little" ) ) )
+							{
+								be = true;
+							}
+							
+							if ( knownCpu && hasHardFloatABI )
+							{
+								String archAbi = System.getProperty( "sun.arch.abi" );
+								if ( archAbi != null )
+								{
+									if ( archAbi.toUpperCase( Locale.US ).contains( "HF" ) )
+									{
+										hf = true;
+									}
+								}
+								else
+								{
+									String libPath = System.getProperty( "java.library.path" );
+									if ( libPath != null && libPath.toUpperCase( Locale.US ).contains( "GNUEABIHF" ) )
+									{
+										hf = true;
+									}
+								}
+								if ( hf )
+									cpuName += "-hf";
+							}
+							
+							if ( knownCpu )
+							{
+								switch ( cpuName )
+								{
+									case "i686":
+										cpuNames.add( "i686" );
+									case "i586":
+										cpuNames.add( "i586" );
+									case "i486":
+										cpuNames.add( "i486" );
+									case "i386":
+										cpuNames.add( "i386" );
+										break;
+									case "armv7a":
+										cpuNames.add( "armv7a" );
+										if ( hf )
+											break;
+									case "armv6":
+										cpuNames.add( "armv6" );
+										if ( hf )
+											break;
+									case "armv5t":
+										cpuNames.add( "armv5t" );
+									case "armv5":
+										cpuNames.add( "armv5" );
+									case "armv4t":
+										cpuNames.add( "armv4t" );
+									case "armv4":
+										cpuNames.add( "armv4" );
+										break;
+									case "armv5t-iwmmx2":
+										cpuNames.add( "armv5t-iwmmx2" );
+									case "armv5t-iwmmx":
+										cpuNames.add( "armv5t-iwmmx" );
+										cpuNames.add( "armv5t" );
+										cpuNames.add( "armv5" );
+										cpuNames.add( "armv4t" );
+										cpuNames.add( "armv4" );
+										break;
+									default:
+										cpuNames.add( cpuName );
+										break;
+								}
+								if ( hf || be )
+									for ( int i = 0; i < cpuNames.size(); i++ )
+									{
+										String name = cpuNames.get( i );
+										if ( be )
+											name += "-be";
+										if ( hf )
+											name += "-hf";
+										cpuNames.set( i, name );
+									}
+								cpuName = cpuNames.get( 0 );
+							}
+						}
+					}
+					
+					// Finally, search paths.
+					final int cpuCount = cpuNames.size();
+					String[] searchPaths = new String[cpuCount];
+					if ( knownOs && knownCpu )
+					{
+						for ( int i = 0; i < cpuCount; i++ )
+						{
+							final String name = cpuNames.get( i );
+							searchPaths[i] = osName + "-" + name;
+						}
+					}
+					else
+					{
+						searchPaths = new String[0];
+					}
+					
+					return new Object[] {osName, cpuName, osName + "-" + cpuName, searchPaths};
+				}
+			} );
+			OS_ID = strings[0].toString();
+			CPU_ID = strings[1].toString();
+			ARCH_NAME = strings[2].toString();
+			NATIVE_SEARCH_PATHS = ( String[] ) strings[3];
+		}
+	}
+	
 	public static byte[] inputStream2Bytes( InputStream is ) throws IOException
 	{
 		return inputStream2ByteArray( is ).toByteArray();
@@ -151,9 +544,14 @@ public class FileFunc
 	
 	public static void putResource( String resource, File file ) throws IOException
 	{
+		putResource( Loader.class, resource, file );
+	}
+	
+	public static void putResource( Class<?> clz, String resource, File file ) throws IOException
+	{
 		try
 		{
-			InputStream is = Loader.class.getClassLoader().getResourceAsStream( resource );
+			InputStream is = clz.getClassLoader().getResourceAsStream( resource );
 			FileOutputStream os = new FileOutputStream( file );
 			ByteStreams.copy( is, os );
 			is.close();
@@ -163,5 +561,142 @@ public class FileFunc
 		{
 			throw new IOException( e );
 		}
+	}
+	
+	/**
+	 * List directory contents for a resource folder. Not recursive.
+	 * This is basically a brute-force implementation.
+	 * Works for regular files and also JARs.
+	 * 
+	 * @author Greg Briggs
+	 * @param clazz
+	 *            Any java class that lives in the same place as the resources you want.
+	 * @param path
+	 *            Should end with "/", but not start with one.
+	 * @return Just the name of each member item, not the full paths.
+	 * @throws URISyntaxException
+	 * @throws IOException
+	 */
+	String[] getResourceListing( Class<?> clazz, String path ) throws URISyntaxException, IOException
+	{
+		URL dirURL = clazz.getClassLoader().getResource( path );
+		
+		if ( dirURL == null )
+		{
+			/*
+			 * In case of a jar file, we can't actually find a directory.
+			 * Have to assume the same jar as clazz.
+			 */
+			String me = clazz.getName().replace( ".", "/" ) + ".class";
+			dirURL = clazz.getClassLoader().getResource( me );
+		}
+		
+		if ( dirURL.getProtocol().equals( "file" ) )
+		{
+			/* A file path: easy enough */
+			return new File( dirURL.toURI() ).list();
+		}
+		
+		if ( dirURL.getProtocol().equals( "jar" ) )
+		{
+			/* A JAR path */
+			String jarPath = dirURL.getPath().substring( 5, dirURL.getPath().indexOf( "!" ) ); // strip out only the JAR file
+			JarFile jar = new JarFile( URLDecoder.decode( jarPath, "UTF-8" ) );
+			Enumeration<JarEntry> entries = jar.entries(); // gives ALL entries in jar
+			Set<String> result = new HashSet<String>(); // avoid duplicates in case it is a subdirectory
+			while ( entries.hasMoreElements() )
+			{
+				String name = entries.nextElement().getName();
+				if ( name.startsWith( path ) )
+				{ // filter according to the path
+					String entry = name.substring( path.length() );
+					int checkSubdir = entry.indexOf( "/" );
+					if ( checkSubdir >= 0 )
+					{
+						// if it is a subdirectory, we just return the directory name
+						entry = entry.substring( 0, checkSubdir );
+					}
+					result.add( entry );
+				}
+			}
+			jar.close();
+			return result.toArray( new String[result.size()] );
+		}
+		
+		throw new UnsupportedOperationException( "Cannot list files for URL " + dirURL );
+	}
+	
+	public static boolean extractNatives( File libFile, File baseDir ) throws IOException
+	{
+		boolean nativesExtracted = false;
+		boolean foundArchMatchingNative = false;
+		
+		baseDir = new File( baseDir, "natives" );
+		FileFunc.directoryHealthCheck( baseDir );
+		
+		if ( libFile == null || !libFile.exists() || !libFile.getName().endsWith( ".jar" ) )
+			throw new IOException( "There was a problem with the provided jar file, it was either null, not existent or did not end with jar." );
+		
+		JarFile jar = new JarFile( libFile );
+		Enumeration<JarEntry> entries = jar.entries();
+		
+		while ( entries.hasMoreElements() )
+		{
+			JarEntry entry = entries.nextElement();
+			
+			if ( !entry.isDirectory() && ( entry.getName().endsWith( ".so" ) || entry.getName().endsWith( ".dll" ) || entry.getName().endsWith( ".jnilib" ) ) ) // Linux - .so | Windows - .dll | Mac OS X - .jnilib
+			{
+				try
+				{
+					File internal = new File( entry.getName() );
+					File parent = internal.getParentFile();
+					if ( Arrays.asList( Identification.NATIVE_SEARCH_PATHS ).contains( parent.getName() ) )
+						foundArchMatchingNative = true;
+					
+					String newName = ( parent != null && !parent.getName().equals( "META-INF" ) ) ? internal.getParentFile().getName() + "/" + internal.getName() : internal.getName();
+					File lib = new File( baseDir, newName );
+					
+					if ( !lib.exists() )
+					{
+						PluginManager.getLogger().info( ConsoleColor.GOLD + "Extracting native library '" + entry.getName() + "' to '" + lib.getAbsolutePath() + "'." );
+						lib.mkdirs();
+						InputStream is = jar.getInputStream( entry );
+						FileOutputStream os = new FileOutputStream( lib );
+						ByteStreams.copy( is, os );
+						is.close();
+						os.close();
+					}
+					nativesExtracted = true;
+				}
+				catch ( FileNotFoundException e )
+				{
+					jar.close();
+					throw new IOException( "We had a problem extracting native library '" + entry.getName() + "' from jar file '" + libFile.getAbsolutePath() + "'", e );
+				}
+			}
+		}
+		
+		jar.close();
+		
+		if ( nativesExtracted )
+		{
+			if ( !foundArchMatchingNative )
+				PluginManager.getLogger().warning( "We found native libraries contained within jar '" + libFile.getAbsolutePath() + "' but according to convensions none of them had the required architecture, the dependency may fail to load the required native if our theory is correct." );
+			
+			System.setProperty( "java.library.path", System.getProperty( "java.library.path" ) + ":" + baseDir.getAbsolutePath() );
+			
+			try
+			{
+				Field fieldSysPath = ClassLoader.class.getDeclaredField( "sys_paths" );
+				fieldSysPath.setAccessible( true );
+				fieldSysPath.set( null, null );
+			}
+			catch ( NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e )
+			{
+				PluginManager.getLogger().severe( "We could not force the ClassLoader to reinitalize the LD_LIBRARY_PATH variable. You may need to set '-Djava.library.path=" + baseDir.getAbsolutePath() + "' on next load because one or more dependencies may fail to load their native libraries.", e );
+			}
+		}
+		
+		return nativesExtracted;
 	}
 }

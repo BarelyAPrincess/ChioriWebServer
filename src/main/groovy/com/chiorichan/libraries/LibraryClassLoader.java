@@ -4,7 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
  */
-package com.chiorichan.maven;
+package com.chiorichan.libraries;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,7 +19,7 @@ import java.net.URLClassLoader;
  */
 
 @SuppressWarnings( {"unchecked", "rawtypes"} )
-public class MavenClassLoader
+public class LibraryClassLoader
 {
 	private static final Class[] parameters = new Class[] {URL.class};
 	
