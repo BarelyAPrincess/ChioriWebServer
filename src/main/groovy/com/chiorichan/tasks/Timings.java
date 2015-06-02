@@ -27,6 +27,8 @@ public class Timings
 	 * Epoch Add-able Seconds
 	 */
 	public static final int SECOND = 1;
+	public static final int SECOND_15 = 15;
+	public static final int SECOND_30 = 30;
 	public static final int MINUTE = 60;
 	public static final int HOUR = MINUTE * 60;
 	public static final int DAY = HOUR * 24;
@@ -38,6 +40,26 @@ public class Timings
 	public static final int DAYS_30 = DAY * 30;
 	public static final int DAYS_31 = DAY * 31;
 	public static final int YEAR = DAY * 365;
+	
+	/*
+	 * Just multiply the unit by the needed value and TADA!
+	 */
+	public static final int TICK_SECOND = 50;
+	public static final int TICK_SECOND_5 = TICK_SECOND * 5;
+	public static final int TICK_SECOND_10 = TICK_SECOND * 10;
+	public static final int TICK_SECOND_15 = TICK_SECOND * 15;
+	public static final int TICK_SECOND_30 = TICK_SECOND * 30;
+	public static final int TICK_MINUTE = TICK_SECOND * 60;
+	public static final int TICK_HOUR = TICK_MINUTE * 60;
+	public static final int TICK_DAY = TICK_HOUR * 24;
+	public static final int TICK_DAYS_3 = TICK_DAY * 3;
+	public static final int TICK_DAYS_7 = TICK_DAY * 7;
+	public static final int TICK_DAYS_14 = TICK_DAY * 14;
+	public static final int TICK_DAYS_21 = TICK_DAY * 3;
+	public static final int TICK_DAYS_28 = TICK_DAY * 28;
+	public static final int TICK_DAYS_30 = TICK_DAY * 30;
+	public static final int TICK_DAYS_31 = TICK_DAY * 31;
+	public static final int TICK_YEAR = TICK_DAY * 365;
 	
 	/**
 	 * The current epoch since 1970

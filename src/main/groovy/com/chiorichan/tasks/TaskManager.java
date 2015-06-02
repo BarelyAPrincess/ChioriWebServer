@@ -39,15 +39,6 @@ public class TaskManager implements ServerManager
 	private static boolean isInitialized = false;
 	
 	/**
-	 * Time delay constants for scheduling with the Manager<br>
-	 * Just multiply the unit by the needed number and TADA!
-	 */
-	public static final long DELAY_SECOND = 50;
-	public static final long DELAY_MINUTE = 3000;
-	public static final long DELAY_HOUR = 180000;
-	public static final long DELAY_DAY = 4320000;
-	
-	/**
 	 * Counter for IDs. Order doesn't matter, only uniqueness.
 	 */
 	private final AtomicInteger ids = new AtomicInteger( 1 );
