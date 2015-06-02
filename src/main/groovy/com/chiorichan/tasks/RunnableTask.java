@@ -83,7 +83,7 @@ public abstract class RunnableTask implements Runnable
 	public synchronized ITask runTaskLater( TaskCreator creator, long delay ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
-		return setupId( TaskManager.INSTANCE.runTaskLater( creator, this, delay ) );
+		return setupId( TaskManager.INSTANCE.runTaskLater( creator, delay, this ) );
 	}
 	
 	/**
@@ -106,7 +106,7 @@ public abstract class RunnableTask implements Runnable
 	public synchronized ITask runTaskLaterAsynchronously( TaskCreator creator, long delay ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
-		return setupId( TaskManager.INSTANCE.runTaskLaterAsynchronously( creator, this, delay ) );
+		return setupId( TaskManager.INSTANCE.runTaskLaterAsynchronously( creator, delay, this ) );
 	}
 	
 	/**
@@ -128,7 +128,7 @@ public abstract class RunnableTask implements Runnable
 	public synchronized ITask runTaskTimer( TaskCreator creator, long delay, long period ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
-		return setupId( TaskManager.INSTANCE.runTaskTimer( creator, this, delay, period ) );
+		return setupId( TaskManager.INSTANCE.runTaskTimer( creator, delay, period, this ) );
 	}
 	
 	/**
@@ -154,7 +154,7 @@ public abstract class RunnableTask implements Runnable
 	public synchronized ITask runTaskTimerAsynchronously( TaskCreator creator, long delay, long period ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
-		return setupId( TaskManager.INSTANCE.runTaskTimerAsynchronously( creator, this, delay, period ) );
+		return setupId( TaskManager.INSTANCE.runTaskTimerAsynchronously( creator, delay, period, this ) );
 	}
 	
 	/**
