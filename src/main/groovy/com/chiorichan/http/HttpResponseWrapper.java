@@ -481,7 +481,7 @@ public class HttpResponseWrapper
 		
 		stage = HttpResponseStage.WRITTEN;
 		
-		request.getChannel().write( response );
+		request.getChannel().writeAndFlush( response );
 	}
 	
 	public void close()

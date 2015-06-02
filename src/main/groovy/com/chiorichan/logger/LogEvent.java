@@ -6,16 +6,43 @@
  */
 package com.chiorichan.logger;
 
-import com.chiorichan.logger.LogManager.LogRecord;
+import java.util.logging.Level;
 
 /**
  * 
  * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
-public class LogEvent
+public class LogEvent implements ILogEvent
 {
-	public LogEvent( LogRecord r )
+	final String id;
+	final LogRecord record;
+	
+	LogEvent( String id, LogRecord record )
 	{
-		
+		this.id = id;
+		this.record = record;
+	}
+	
+	@Override
+	public void log( Level level, String msg, Object... objs )
+	{
+		record.log( level, msg, objs );
+	}
+	
+	public void flushAndClose()
+	{
+		flush();
+		close();
+	}
+	
+	@Override
+	public void flush()
+	{
+		record.flush();
+	}
+	
+	public void close()
+	{
+		LogManager.close( this );
 	}
 }

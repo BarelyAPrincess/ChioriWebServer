@@ -48,6 +48,7 @@ import com.chiorichan.session.SessionWrapper;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.Timings;
+import com.chiorichan.util.NetworkFunc;
 import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Charsets;
@@ -459,7 +460,9 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		
 		if ( http.headers().get( "Host" ) != null )
 		{
-			String domain = http.headers().get( "Host" );
+			String domain = http.headers().get( "Host" ).toLowerCase();
+			
+			assert ( domain != null );
 			
 			if ( domain.contains( ":" ) )
 				domain = domain.substring( 0, domain.indexOf( ":" ) ).trim(); // Remove port number.
@@ -473,9 +476,9 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			if ( domain.startsWith( "." ) )
 				domain = domain.substring( 1 );
 			
-			if ( StringFunc.validateIpAddress( domain ) )
+			if ( NetworkFunc.isValidIPv4( domain ) || NetworkFunc.isValidIPv6( domain ) )
 			{
-				// This should be an IP Address
+				// We can't get subdomains from IPv4 or IPv6 addresses.
 				parentDomainName = domain;
 			}
 			else
@@ -782,7 +785,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		return getMap;
 	}
 	
-	public Map<String, UploadedFile> getUploadMap()
+	Map<String, UploadedFile> getUploadedFilesRaw()
 	{
 		return uploadedFiles;
 	}

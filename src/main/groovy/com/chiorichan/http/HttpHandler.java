@@ -51,6 +51,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
 
 import org.codehaus.groovy.runtime.NullObject;
 import org.codehaus.groovy.syntax.SyntaxException;
@@ -71,6 +72,8 @@ import com.chiorichan.lang.ApacheParser;
 import com.chiorichan.lang.EvalFactoryException;
 import com.chiorichan.lang.HttpError;
 import com.chiorichan.lang.SiteException;
+import com.chiorichan.logger.LogEvent;
+import com.chiorichan.logger.LogManager;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.net.NetworkSecurity;
 import com.chiorichan.net.NetworkSecurity.IpStrikeType;
@@ -85,6 +88,7 @@ import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.Versioning;
 import com.chiorichan.util.WebFunc;
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -105,6 +109,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	private HttpRequestWrapper request;
 	private boolean ssl;
 	private boolean requestFinished = false;
+	private LogEvent log;
 	
 	static
 	{
@@ -132,8 +137,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	public HttpHandler( boolean ssl )
 	{
 		this.ssl = ssl;
-		
-		
+		log = LogManager.logEvent( "" + hashCode() );
 	}
 	
 	@Override
@@ -145,18 +149,20 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			decoder.destroy();
 			decoder = null;
 		}
-	}
-	
-	@Override
-	public void channelReadComplete( ChannelHandlerContext ctx ) throws Exception
-	{
-		ctx.flush();
-	}
-	
-	@Override
-	public void channelActive( final ChannelHandlerContext ctx ) throws Exception
-	{
 		
+		// Nullify references
+		handshaker = null;
+		response = null;
+		requestOrig = null;
+		request = null;
+		log = null;
+		requestFinished = false;
+	}
+	
+	public void flush( ChannelHandlerContext ctx ) throws Exception
+	{
+		log.flushAndClose();
+		ctx.flush();
 	}
 	
 	@Override
@@ -302,7 +308,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	@Override
 	protected void messageReceived( ChannelHandlerContext ctx, Object msg ) throws Exception
 	{
-		// TimingFunc.start( this );
+		Timings.start( this );
 		
 		if ( msg instanceof FullHttpRequest )
 		{
@@ -326,10 +332,12 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				return;
 			}
 			
-			
+			requestFinished = false;
 			requestOrig = ( FullHttpRequest ) msg;
 			request = new HttpRequestWrapper( ctx.channel(), requestOrig, ssl );
 			response = request.getResponse();
+			
+			log.log( Level.INFO, "Remote %s (%s:%s)", request.getRemoteHostname(), request.getIpAddr(), request.getRemotePort() );
 			
 			if ( is100ContinueExpected( ( HttpRequest ) msg ) )
 				send100Continue( ctx );
@@ -444,14 +452,267 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		{
 			NetworkManager.getLogger().warning( "Received Object '" + msg.getClass() + "' and had nothing to do with it, is this a bug?" );
 		}
+	}
+	
+	public void handleHttp( HttpRequestWrapper request, HttpResponseWrapper response ) throws IOException, HttpError, SiteException, PermissionException, EvalFactoryException, SessionException
+	{
+		String uri = request.getUri();
+		String domain = request.getParentDomain();
+		String subdomain = request.getSubDomain();
 		
-		// Loader.getLogger().debug( "Request Finished in " + TimingFunc.finish( this ) + "ms!" );
+		log.log( Level.INFO, request.getMethodString() + " " + ( request.isSecure() ? "https://" : "http://" ) + request.getDomain() + request.getUri() );
+		
+		request.startSession();
+		
+		request.initServerVars( staticServerVars );
+		
+		Session sess = request.getSession();
+		
+		log.log( Level.INFO, "Session {Id=%s}", sess.getSessId() );
+		
+		if ( sess.isLoginPresent() )
+			log.log( Level.INFO, "Account {Id=%s,Name=%s}", sess.getAcctId(), sess.getDisplayName() );
+		
+		if ( response.getStage() == HttpResponseStage.CLOSED )
+			return;
+		
+		RequestEvent requestEvent = new RequestEvent( request );
+		
+		try
+		{
+			EventBus.INSTANCE.callEventWithException( requestEvent );
+		}
+		catch ( EventException ex )
+		{
+			throw new IOException( "Exception encountered during request event call, most likely the fault of a plugin.", ex );
+		}
+		
+		response.setStatus( requestEvent.getStatus() );
+		
+		if ( requestEvent.isCancelled() )
+		{
+			int status = requestEvent.getStatus();
+			String reason = requestEvent.getReason();
+			
+			if ( status == 200 )
+			{
+				status = 502;
+				reason = "Navigation Cancelled by Plugin Event";
+			}
+			
+			NetworkManager.getLogger().warning( "Navigation was cancelled by Plugin Event" );
+			
+			throw new HttpError( status, reason );
+		}
+		
+		if ( response.isCommitted() )
+			return;
+		
+		// Throws IOException and HttpError
+		WebInterpreter fi = new WebInterpreter( request );
+		
+		Site currentSite = request.getSite();
+		sess.setSite( currentSite ); // setSite?
+		File docRoot = currentSite.getAbsoluteRoot( subdomain );
+		
+		ApacheParser htaccess = new ApacheParser().appendWithDir( docRoot );
+		
+		response.setApacheParser( htaccess );
+		
+		if ( fi.getStatus() != HttpResponseStatus.OK )
+			throw new HttpError( fi.getStatus() );
+		
+		// TODO Improve the result of have no content to display
+		if ( !fi.hasFile() && !fi.hasHTML() )
+			throw new HttpError( 500, null, "This page appears to have no content to display" );
+		
+		NetworkManager.getLogger().info( ConsoleColor.BLUE + "Http" + ( ( ssl ) ? "s" : "" ) + "Request{httpCode=" + response.getHttpCode() + ",httpMsg=" + response.getHttpMsg() + ",subdomain=" + subdomain + ",domain=" + domain + ",uri=" + uri + ",remoteIp=" + request.getIpAddr() + ",sessionId=" + sess.getSessId() + ",acct=" + sess.isLoginPresent() + ( sess.isLoginPresent() ? "(" + sess.getAcctId() + ")" : "" ) + ",details=" + fi.toString() + "}" );
+		
+		if ( fi.hasFile() )
+			htaccess.appendWithDir( fi.getFile().getParentFile() );
+		
+		sess.setGlobal( "__FILE__", fi.getFile() );
+		
+		request.putRewriteParams( fi.getRewriteParams() );
+		response.setContentType( fi.getContentType() );
+		response.setEncoding( fi.getEncoding() );
+		
+		request.putServerVar( ServerVars.DOCUMENT_ROOT, docRoot );
+		
+		request.setGlobal( "_SERVER", request.getServerStrings() );
+		request.setGlobal( "_POST", request.getPostMap() );
+		request.setGlobal( "_GET", request.getGetMap() );
+		request.setGlobal( "_REWRITE", request.getRewriteMap() );
+		request.setGlobal( "_FILES", request.getUploadedFiles() );
+		
+		if ( !request.getUploadedFiles().isEmpty() )
+			log.log( Level.INFO, "Uploads {" + Joiner.on( "," ).join( request.getUploadedFiles().values() ) + "}" );
+		
+		if ( !request.getRequestMap().isEmpty() )
+			log.log( Level.INFO, "Request Params {" + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( request.getRequestMap() ) + "}" );
+		
+		if ( Loader.getConfig().getBoolean( "advanced.security.requestMapEnabled", true ) )
+			request.setGlobal( "_REQUEST", request.getRequestMap() );
+		
+		ByteBuf rendered = Unpooled.buffer();
+		
+		EvalFactory factory = request.getEvalFactory();
+		factory.setEncoding( fi.getEncoding() );
+		
+		NetworkSecurity.isForbidden( htaccess, currentSite, fi );
+		
+		String req = fi.get( "reqperm" );
+		
+		if ( req == null )
+			req = "-1";
+		
+		sess.requirePermission( req );
+		
+		// Enhancement: Allow html to be ran under different shells. Default is embedded.
+		if ( fi.hasHTML() )
+		{
+			EvalMetaData meta = new EvalMetaData();
+			meta.shell = "embedded";
+			meta.contentType = fi.getContentType();
+			meta.params = Maps.newHashMap();
+			meta.params.putAll( fi.getRewriteParams() );
+			meta.params.putAll( request.getGetMap() );
+			EvalFactoryResult result = factory.eval( fi.getHTML(), meta, currentSite );
+			
+			if ( result.hasExceptions() )
+			{
+				if ( Loader.getConfig().getBoolean( "server.throwInternalServerErrorOnWarnings", false ) )
+				{
+					throw new IOException( "Ignorable Exceptions were thrown, disable this behavior with the `throwInternalServerErrorOnWarnings` option in config.", result.getExceptions()[0] );
+				}
+				else
+				{
+					for ( Exception e : result.getExceptions() )
+					{
+						NetworkManager.getLogger().warning( e.getMessage() );
+						NetworkManager.getLogger().warning( "" + e.getStackTrace()[0] );
+					}
+				}
+			}
+			
+			if ( result.isSuccessful() )
+			{
+				rendered.writeBytes( result.getResult() );
+				if ( result.getObject() != null && ! ( result.getObject() instanceof NullObject ) )
+					try
+					{
+						rendered.writeBytes( ObjectFunc.castToStringWithException( result.getObject() ).getBytes() );
+					}
+					catch ( Exception e )
+					{
+						e.printStackTrace();
+					}
+			}
+			
+			log.log( Level.INFO, "EvalHtml {file=%s,timing=%sms}", fi.getHTML(), Timings.mark( this ) );
+		}
+		
+		if ( fi.hasFile() )
+		{
+			if ( fi.isDirectoryRequest() )
+			{
+				processDirectoryListing( fi );
+				return;
+			}
+			
+			EvalMetaData meta = new EvalMetaData();
+			meta.params = Maps.newHashMap();
+			meta.params.putAll( request.getRewriteMap() );
+			meta.params.putAll( request.getGetMap() );
+			
+			EvalFactoryResult result = factory.eval( fi, meta, currentSite );
+			
+			if ( result.hasExceptions() )
+			{
+				if ( Loader.getConfig().getBoolean( "server.throwInternalServerErrorOnWarnings", false ) )
+				{
+					// Disable this behavior with the `throwInternalServerErrorOnWarnings` option in configuration.
+					throw new HttpError( "Ignorable exceptions were thrown within the evalFactory but server is configured to halt on all exceptions", result.getExceptions()[0] );
+				}
+				else
+				{
+					for ( Exception e : result.getExceptions() )
+					{
+						NetworkManager.getLogger().warning( e.getMessage() );
+						NetworkManager.getLogger().warning( "" + e.getStackTrace()[0] );
+					}
+				}
+			}
+			
+			if ( result.isSuccessful() )
+			{
+				rendered.writeBytes( result.getResult() );
+				if ( result.getObject() != null && ! ( result.getObject() instanceof NullObject ) )
+					try
+					{
+						rendered.writeBytes( ObjectFunc.castToStringWithException( result.getObject() ).getBytes() );
+					}
+					catch ( Exception e )
+					{
+						e.printStackTrace();
+					}
+			}
+			
+			log.log( Level.INFO, "EvalFile {file=%s,timing=%sms}", fi.getFilePath(), Timings.mark( this ) );
+		}
+		
+		// if the connection was in a MultiPart mode, wait for the mode to change then return gracefully.
+		if ( response.stage == HttpResponseStage.MULTIPART )
+		{
+			while ( response.stage == HttpResponseStage.MULTIPART )
+			{
+				// I wonder if there is a better way to handle an on going multipart response.
+				try
+				{
+					Thread.sleep( 100 );
+				}
+				catch ( InterruptedException e )
+				{
+					throw new HttpError( 500, "Internal Server Error encountered during multipart execution." );
+				}
+			}
+			
+			return;
+		}
+		// If the connection was closed from page redirect, return gracefully.
+		else if ( response.stage == HttpResponseStage.CLOSED || response.stage == HttpResponseStage.WRITTEN )
+			return;
+		
+		// Allows scripts to directly override interpreter values. For example: Themes, Views, Titles
+		for ( Entry<String, String> kv : response.pageDataOverrides.entrySet() )
+		{
+			fi.put( kv.getKey(), kv.getValue() );
+		}
+		
+		RenderEvent renderEvent = new RenderEvent( this, rendered, fi.getEncoding(), fi.getParams() );
+		
+		try
+		{
+			EventBus.INSTANCE.callEventWithException( renderEvent );
+			if ( renderEvent.getSource() != null )
+				rendered = renderEvent.getSource();
+		}
+		catch ( EventException ex )
+		{
+			throw new IOException( "Exception encountered during render event call, most likely the fault of a plugin.", ex );
+		}
+		
+		log.log( Level.INFO, "Written {bytes=%s,total_timing=%sms}", rendered.readableBytes(), Timings.finish( this ) );
+		
+		response.write( rendered );
 	}
 	
 	private void finish()
 	{
 		try
 		{
+			log.log( Level.INFO, "Committed! {code=%s,msg=%s}", response.getHttpCode(), response.getHttpMsg() );
+			
 			if ( !response.isCommitted() )
 				response.sendResponse();
 			
@@ -465,12 +726,12 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			
 			requestFinished = true;
 			
-			Loader.getDatabase().queryUpdate( "INSERT INTO `testing` (`epoch`, `time`, `uri`, `result`, ip) VALUES ('" + Timings.epoch() + "', '" + Timings.mark( this ) + "', 'http://" + request.getDomain() + request.getUri() + "', '" + response.getHttpCode() + "', '" + request.getIpAddr() + "');" );
+			// Loader.getDatabase().queryUpdate( "INSERT INTO `testing` (`epoch`, `time`, `uri`, `result`, ip) VALUES ('" + Timings.epoch() + "', '" + Timings.mark( this ) + "', 'http://" + request.getDomain() + request.getUri() + "', '" +
+			// response.getHttpCode() + "', '" + request.getIpAddr() + "');" );
 		}
-		catch ( Exception e )
+		catch ( Throwable t )
 		{
-			e.printStackTrace();
-			Loader.getLogger().debug( "Finish() has thrown an exception!" );
+			t.printStackTrace();
 		}
 	}
 	
@@ -551,240 +812,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	{
 		FullHttpResponse response = new DefaultFullHttpResponse( HTTP_1_1, CONTINUE );
 		ctx.write( response );
-	}
-	
-	public void handleHttp( HttpRequestWrapper request, HttpResponseWrapper response ) throws IOException, HttpError, SiteException, PermissionException, EvalFactoryException, SessionException
-	{
-		String uri = request.getUri();
-		String domain = request.getParentDomain();
-		String subdomain = request.getSubDomain();
-		
-		request.startSession();
-		
-		request.initServerVars( staticServerVars );
-		
-		Session sess = request.getSession();
-		
-		if ( response.getStage() == HttpResponseStage.CLOSED )
-			return;
-		
-		RequestEvent requestEvent = new RequestEvent( request );
-		
-		try
-		{
-			EventBus.INSTANCE.callEventWithException( requestEvent );
-		}
-		catch ( EventException ex )
-		{
-			throw new IOException( "Exception encountered during request event call, most likely the fault of a plugin.", ex );
-		}
-		
-		response.setStatus( requestEvent.getStatus() );
-		
-		if ( requestEvent.isCancelled() )
-		{
-			int status = requestEvent.getStatus();
-			String reason = requestEvent.getReason();
-			
-			if ( status == 200 )
-			{
-				status = 502;
-				reason = "Navigation Cancelled by Plugin Event";
-			}
-			
-			NetworkManager.getLogger().warning( "Navigation was cancelled by Plugin Event" );
-			
-			throw new HttpError( status, reason );
-		}
-		
-		if ( response.isCommitted() )
-			return;
-		
-		// Throws IOException and HttpError
-		WebInterpreter fi = new WebInterpreter( request );
-		
-		Site currentSite = request.getSite();
-		sess.setSite( currentSite ); // setSite?
-		File docRoot = currentSite.getAbsoluteRoot( subdomain );
-		
-		ApacheParser htaccess = new ApacheParser().appendWithDir( docRoot );
-		
-		response.setApacheParser( htaccess );
-		
-		if ( fi.getStatus() != HttpResponseStatus.OK )
-			throw new HttpError( fi.getStatus() );
-		
-		// TODO Improve the result of have no content to display
-		if ( !fi.hasFile() && !fi.hasHTML() )
-			throw new HttpError( 500, null, "This page appears to have no content to display" );
-		
-		NetworkManager.getLogger().info( ConsoleColor.BLUE + "Http" + ( ( ssl ) ? "s" : "" ) + "Request{httpCode=" + response.getHttpCode() + ",httpMsg=" + response.getHttpMsg() + ",subdomain=" + subdomain + ",domain=" + domain + ",uri=" + uri + ",remoteIp=" + request.getIpAddr() + ",sessionId=" + sess.getSessId() + ",acct=" + sess.isLoginPresent() + ( sess.isLoginPresent() ? "(" + sess.getAcctId() + ")" : "" ) + ",details=" + fi.toString() + "}" );
-		
-		if ( fi.hasFile() )
-			htaccess.appendWithDir( fi.getFile().getParentFile() );
-		
-		sess.setGlobal( "__FILE__", fi.getFile() );
-		
-		request.putRewriteParams( fi.getRewriteParams() );
-		response.setContentType( fi.getContentType() );
-		response.setEncoding( fi.getEncoding() );
-		
-		request.putServerVar( ServerVars.DOCUMENT_ROOT, docRoot );
-		
-		request.setGlobal( "_SERVER", request.getServerStrings() );
-		request.setGlobal( "_POST", request.getPostMap() );
-		request.setGlobal( "_GET", request.getGetMap() );
-		request.setGlobal( "_REWRITE", request.getRewriteMap() );
-		request.setGlobal( "_FILES", request.getUploadedFiles() );
-		
-		if ( Loader.getConfig().getBoolean( "advanced.security.requestMapEnabled", true ) )
-			request.setGlobal( "_REQUEST", request.getRequestMap() );
-		
-		ByteBuf rendered = Unpooled.buffer();
-		
-		EvalFactory factory = request.getEvalFactory();
-		factory.setEncoding( fi.getEncoding() );
-		
-		NetworkSecurity.isForbidden( htaccess, currentSite, fi );
-		
-		String req = fi.get( "reqperm" );
-		
-		if ( req == null )
-			req = "-1";
-		
-		sess.requirePermission( req );
-		
-		// Enhancement: Allow html to be ran under different shells. Default is embedded.
-		if ( fi.hasHTML() )
-		{
-			EvalMetaData meta = new EvalMetaData();
-			meta.shell = "embedded";
-			meta.contentType = fi.getContentType();
-			meta.params = Maps.newHashMap();
-			meta.params.putAll( fi.getRewriteParams() );
-			meta.params.putAll( request.getGetMap() );
-			EvalFactoryResult result = factory.eval( fi.getHTML(), meta, currentSite );
-			
-			if ( result.hasExceptions() )
-			{
-				if ( Loader.getConfig().getBoolean( "server.throwInternalServerErrorOnWarnings", false ) )
-				{
-					throw new IOException( "Ignorable Exceptions were thrown, disable this behavior with the `throwInternalServerErrorOnWarnings` option in config.", result.getExceptions()[0] );
-				}
-				else
-				{
-					for ( Exception e : result.getExceptions() )
-					{
-						NetworkManager.getLogger().warning( e.getMessage() );
-						NetworkManager.getLogger().warning( "" + e.getStackTrace()[0] );
-					}
-				}
-			}
-			
-			if ( result.isSuccessful() )
-			{
-				rendered.writeBytes( result.getResult() );
-				if ( result.getObject() != null && ! ( result.getObject() instanceof NullObject ) )
-					try
-					{
-						rendered.writeBytes( ObjectFunc.castToStringWithException( result.getObject() ).getBytes() );
-					}
-					catch ( Exception e )
-					{
-						e.printStackTrace();
-					}
-			}
-		}
-		
-		if ( fi.hasFile() )
-		{
-			if ( fi.isDirectoryRequest() )
-			{
-				processDirectoryListing( fi );
-				return;
-			}
-			
-			EvalMetaData meta = new EvalMetaData();
-			meta.params = Maps.newHashMap();
-			meta.params.putAll( request.getRewriteMap() );
-			meta.params.putAll( request.getGetMap() );
-			
-			EvalFactoryResult result = factory.eval( fi, meta, currentSite );
-			
-			if ( result.hasExceptions() )
-			{
-				if ( Loader.getConfig().getBoolean( "server.throwInternalServerErrorOnWarnings", false ) )
-				{
-					// Disable this behavior with the `throwInternalServerErrorOnWarnings` option in configuration.
-					throw new HttpError( "Ignorable exceptions were thrown within the evalFactory but server is configured to halt on all exceptions", result.getExceptions()[0] );
-				}
-				else
-				{
-					for ( Exception e : result.getExceptions() )
-					{
-						NetworkManager.getLogger().warning( e.getMessage() );
-						NetworkManager.getLogger().warning( "" + e.getStackTrace()[0] );
-					}
-				}
-			}
-			
-			if ( result.isSuccessful() )
-			{
-				rendered.writeBytes( result.getResult() );
-				if ( result.getObject() != null && ! ( result.getObject() instanceof NullObject ) )
-					try
-					{
-						rendered.writeBytes( ObjectFunc.castToStringWithException( result.getObject() ).getBytes() );
-					}
-					catch ( Exception e )
-					{
-						e.printStackTrace();
-					}
-			}
-		}
-		
-		// if the connection was in a MultiPart mode, wait for the mode to change then return gracefully.
-		if ( response.stage == HttpResponseStage.MULTIPART )
-		{
-			while ( response.stage == HttpResponseStage.MULTIPART )
-			{
-				// I wonder if there is a better way to handle an on going multipart response.
-				try
-				{
-					Thread.sleep( 100 );
-				}
-				catch ( InterruptedException e )
-				{
-					throw new HttpError( 500, "Internal Server Error encountered during multipart execution." );
-				}
-			}
-			
-			return;
-		}
-		// If the connection was closed from page redirect, return gracefully.
-		else if ( response.stage == HttpResponseStage.CLOSED || response.stage == HttpResponseStage.WRITTEN )
-			return;
-		
-		// Allows scripts to directly override interpreter values. For example: Themes, Views, Titles
-		for ( Entry<String, String> kv : response.pageDataOverrides.entrySet() )
-		{
-			fi.put( kv.getKey(), kv.getValue() );
-		}
-		
-		RenderEvent renderEvent = new RenderEvent( this, rendered, fi.getEncoding(), fi.getParams() );
-		
-		try
-		{
-			EventBus.INSTANCE.callEventWithException( renderEvent );
-			if ( renderEvent.getSource() != null )
-				rendered = renderEvent.getSource();
-		}
-		catch ( EventException ex )
-		{
-			throw new IOException( "Exception encountered during render event call, most likely the fault of a plugin.", ex );
-		}
-		
-		response.write( rendered );
 	}
 	
 	public void processDirectoryListing( WebInterpreter fi ) throws HttpError, IOException

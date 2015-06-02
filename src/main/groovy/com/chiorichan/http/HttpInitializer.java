@@ -17,8 +17,15 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
 
+import java.lang.ref.WeakReference;
+import java.util.List;
+
+import com.google.common.collect.Lists;
+
 public class HttpInitializer extends ChannelInitializer<SocketChannel>
 {
+	public static final List<WeakReference<SocketChannel>> activeChannels = Lists.newCopyOnWriteArrayList();
+	
 	@Override
 	protected void initChannel( SocketChannel ch ) throws Exception
 	{
@@ -30,5 +37,7 @@ public class HttpInitializer extends ChannelInitializer<SocketChannel>
 		p.addLast( "encoder", new HttpResponseEncoder() );
 		p.addLast( "deflater", new HttpContentCompressor() );
 		p.addLast( "handler", new HttpHandler( false ) );
+		
+		activeChannels.add( new WeakReference<SocketChannel>( ch ) );
 	}
 }

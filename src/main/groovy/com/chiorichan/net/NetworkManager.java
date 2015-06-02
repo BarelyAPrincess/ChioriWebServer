@@ -10,9 +10,11 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 
 import java.io.File;
+import java.lang.ref.WeakReference;
 import java.net.InetSocketAddress;
 
 import com.chiorichan.ConsoleLogger;
@@ -21,6 +23,9 @@ import com.chiorichan.http.HttpInitializer;
 import com.chiorichan.https.HttpsInitializer;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.net.query.QueryServerInitializer;
+import com.chiorichan.tasks.TaskCreator;
+import com.chiorichan.tasks.TaskManager;
+import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.Versioning;
 
 /**
@@ -28,8 +33,11 @@ import com.chiorichan.util.Versioning;
  * 
  * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
-public class NetworkManager
+public class NetworkManager implements TaskCreator
 {
+	@SuppressWarnings( "unused" )
+	private static final NetworkManager SELF = new NetworkManager();
+	
 	public static EventLoopGroup bossGroup = new NioEventLoopGroup( 1 );
 	public static EventLoopGroup workerGroup = new NioEventLoopGroup( 100 );
 	
@@ -37,6 +45,27 @@ public class NetworkManager
 	public static Channel httpsChannel = null;
 	public static Channel queryChannel = null;
 	public static Channel tcpChannel = null;
+	
+	private NetworkManager()
+	{
+		TaskManager.INSTANCE.scheduleAsyncRepeatingTask( this, Timings.TICK_SECOND_15, Timings.TICK_SECOND_15, new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				for ( WeakReference<SocketChannel> ref : HttpInitializer.activeChannels )
+				{
+					if ( ref.get() == null )
+						HttpInitializer.activeChannels.remove( ref );
+					else
+					{
+						// SocketChannel ch = ref.get();
+						// Loader.getLogger().debug( "Got Active Channel: " + ch + " -- " + ch.isOpen() + " -- " + ch.config().isKeepAlive() );
+					}
+				}
+			}
+		} );
+	}
 	
 	public static void shutdownHttpServer()
 	{
@@ -307,5 +336,17 @@ public class NetworkManager
 	public static ConsoleLogger getLogger()
 	{
 		return Loader.getLogger( "NetMgr" );
+	}
+	
+	@Override
+	public boolean isEnabled()
+	{
+		return true;
+	}
+	
+	@Override
+	public String getName()
+	{
+		return "NetMgr";
 	}
 }

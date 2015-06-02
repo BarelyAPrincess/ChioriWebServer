@@ -6,29 +6,91 @@
  */
 package com.chiorichan.logger;
 
-import com.chiorichan.util.GarbageCollectingMap;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
+import java.util.concurrent.ConcurrentMap;
+
+import com.chiorichan.tasks.TaskCreator;
+import com.chiorichan.tasks.TaskManager;
+import com.google.common.collect.Maps;
 
 /**
  * 
  * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
-public class LogManager
+public class LogManager implements TaskCreator
 {
-	static class LogRecord
-	{
-		
-	}
+	private static final ReferenceQueue<Object> referenceQueue = new ReferenceQueue<Object>();
+	private static final ConcurrentMap<String, LogReference> activeLogs = Maps.newConcurrentMap();
 	
-	/**
-	 * This map allows our manager to know when the object is done being used by detecting when the LogEvent is GC'ed
-	 */
-	private static final GarbageCollectingMap<String, LogRecord> logs = new GarbageCollectingMap<String, LogRecord>();
+	public static final LogManager INSTANCE = new LogManager();
+	
+	private LogManager()
+	{
+		TaskManager.INSTANCE.runTaskAsynchronously( this, new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				for ( ;; )
+				{
+					try
+					{
+						LogReference ref = ( LogReference ) referenceQueue.remove();
+						for ( ;; )
+						{
+							activeLogs.remove( ref.key );
+							ref.record.flush();
+							ref = ( LogReference ) referenceQueue.remove();
+						}
+					}
+					catch ( InterruptedException e )
+					{
+						// Do Nothing
+					}
+				}
+			}
+		} );
+	}
 	
 	public static LogEvent logEvent( String id )
 	{
+		if ( activeLogs.containsKey( id ) )
+			return ( LogEvent ) activeLogs.get( id ).get();
+		
 		LogRecord r = new LogRecord();
-		LogEvent e = new LogEvent( r );
-		logs.put( id, r, e );
+		LogEvent e = new LogEvent( id, r );
+		activeLogs.put( id, new LogReference( id, r, e ) );
 		return e;
+	}
+	
+	public static void close( LogEvent log )
+	{
+		activeLogs.remove( log.id );
+	}
+	
+	@Override
+	public boolean isEnabled()
+	{
+		return true;
+	}
+	
+	@Override
+	public String getName()
+	{
+		return "LogManager";
+	}
+	
+	static class LogReference extends WeakReference<Object>
+	{
+		final String key;
+		final LogRecord record;
+		
+		LogReference( String key, LogRecord record, Object garbage )
+		{
+			super( garbage, referenceQueue );
+			this.key = key;
+			this.record = record;
+		}
 	}
 }
