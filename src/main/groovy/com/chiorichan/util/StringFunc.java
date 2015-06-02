@@ -32,14 +32,14 @@ import com.google.common.collect.Lists;
  */
 public class StringFunc
 {
-	private static final String IPADDRESS_PATTERN = "^([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])$";
+	// private static final String IPADDRESS_PATTERN = "^([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])$";
 	
-	public static boolean validateIpAddress( final String ipAddress )
-	{
-		Pattern pattern = Pattern.compile( IPADDRESS_PATTERN );
-		Matcher matcher = pattern.matcher( ipAddress );
-		return matcher.matches();
-	}
+	// public static boolean validateIpAddress( final String ipAddress )
+	// {
+	// Pattern pattern = Pattern.compile( IPADDRESS_PATTERN );
+	// Matcher matcher = pattern.matcher( ipAddress );
+	// return matcher.matches();
+	// }
 	
 	public static boolean isValidMD5( String s )
 	{

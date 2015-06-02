@@ -90,7 +90,7 @@ public class GarbageCollectingMap<K, V>
 		
 		public void run()
 		{
-			while ( true )
+			for ( ;; )
 			{
 				try
 				{

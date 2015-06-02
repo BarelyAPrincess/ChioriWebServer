@@ -20,7 +20,7 @@ public class ConsolePlugin extends Plugin
 	{
 		// Loader.getLogger().debug( System.getProperty( "java.library.path" ) );
 		
-		TestWindow window = new TestWindow( 30, 20 );
-		window.init();
+		// TestWindow window = new TestWindow( 30, 20 );
+		// window.init();
 	}
 }

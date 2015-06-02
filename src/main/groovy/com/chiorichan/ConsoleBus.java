@@ -68,11 +68,14 @@ public class ConsoleBus implements Runnable
 		{
 			long i = System.currentTimeMillis();
 			
-			@SuppressWarnings( "unused" )
-			boolean g = false;
-			long q = 0;
+			// @SuppressWarnings( "unused" )
+			// boolean g = false;
 			
-			for ( long j = 0L; Loader.isRunning; g = true )
+			// long j = 0L; Loader.isRunning; g = true
+			
+			long q = 0L;
+			long j = 0L;
+			for ( ;; )
 			{
 				long k = System.currentTimeMillis();
 				long l = k - i;
@@ -80,7 +83,7 @@ public class ConsoleBus implements Runnable
 				if ( l > 2000L && i - q >= 15000L )
 				{
 					if ( loader.getWarnOnOverload() )
-						getLogger().warning( "Can\'t keep up! Did the system time change, or is the server overloaded?" );
+						getLogger().warning( "Can't keep up! Did the system time change, or is the server overloaded?" );
 					l = 2000L;
 					q = i;
 				}
@@ -102,12 +105,15 @@ public class ConsoleBus implements Runnable
 					TaskManager.INSTANCE.heartbeat( currentTick );
 				}
 				
+				if ( !Loader.isRunning() )
+					break;
+				
 				Thread.sleep( 1L );
 			}
 		}
 		catch ( Throwable t )
 		{
-			t.printStackTrace();
+			getLogger().severe( "There was a severe exception thrown by the main tick loop", t );
 			// Crash report generate here
 		}
 		finally
