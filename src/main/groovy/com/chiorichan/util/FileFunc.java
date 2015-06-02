@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.jar.JarEntry;
@@ -36,6 +37,7 @@ import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.site.Site;
+import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
 
 /**
@@ -46,12 +48,12 @@ public class FileFunc
 	/**
 	 * Separate class for native platform ID which is only loaded when native libs are loaded.
 	 */
-	static class Identification
+	public static class OSInfo
 	{
-		static final String OS_ID;
-		static final String CPU_ID;
-		static final String ARCH_NAME;
-		static final String[] NATIVE_SEARCH_PATHS;
+		public static final String OS_ID;
+		public static final String CPU_ID;
+		public static final String ARCH_NAME;
+		public static final String[] NATIVE_SEARCH_PATHS;
 		
 		static
 		{
@@ -628,7 +630,7 @@ public class FileFunc
 	
 	public static boolean extractNatives( File libFile, File baseDir ) throws IOException
 	{
-		boolean nativesExtracted = false;
+		List<String> nativesExtracted = Lists.newArrayList();
 		boolean foundArchMatchingNative = false;
 		
 		baseDir = new File( baseDir, "natives" );
@@ -644,29 +646,46 @@ public class FileFunc
 		{
 			JarEntry entry = entries.nextElement();
 			
-			if ( !entry.isDirectory() && ( entry.getName().endsWith( ".so" ) || entry.getName().endsWith( ".dll" ) || entry.getName().endsWith( ".jnilib" ) ) ) // Linux - .so | Windows - .dll | Mac OS X - .jnilib
+			if ( !entry.isDirectory() && ( entry.getName().endsWith( ".so" ) || entry.getName().endsWith( ".dll" ) || entry.getName().endsWith( ".jnilib" ) || entry.getName().endsWith( ".dylib" ) ) ) // Linux - .so | Windows - .dll | Mac OS
+																																																		// X - .jnilib|.dylib
 			{
 				try
 				{
 					File internal = new File( entry.getName() );
-					File parent = internal.getParentFile();
-					if ( Arrays.asList( Identification.NATIVE_SEARCH_PATHS ).contains( parent.getName() ) )
+					String newName = internal.getName();
+					
+					String os = System.getProperty( "os.name" );
+					if ( os.contains( " " ) )
+						os = os.substring( 0, os.indexOf( " " ) );
+					os = os.replaceAll( "\\W", "" );
+					os = os.toLowerCase();
+					
+					String parent = internal.getParentFile().getName();
+					
+					if ( parent.startsWith( os ) || parent.startsWith( "windows" ) || parent.startsWith( "linux" ) || parent.startsWith( "darwin" ) || parent.startsWith( "osx" ) || parent.startsWith( "solaris" ) || parent.startsWith( "cygwin" ) || parent.startsWith( "mingw" ) || parent.startsWith( "msys" ) )
+						newName = parent + "/" + newName;
+					
+					if ( Arrays.asList( OSInfo.NATIVE_SEARCH_PATHS ).contains( parent ) )
 						foundArchMatchingNative = true;
 					
-					String newName = ( parent != null && !parent.getName().equals( "META-INF" ) ) ? internal.getParentFile().getName() + "/" + internal.getName() : internal.getName();
 					File lib = new File( baseDir, newName );
+					
+					if ( lib.exists() && nativesExtracted.contains( lib.getAbsolutePath() ) )
+						PluginManager.getLogger().warning( ConsoleColor.GOLD + "We detected more than one file with the destination '" + lib.getAbsolutePath() + "', if these files from for different architectures, you might need to seperate them into their seperate folders, i.e., windows, linux-x86, linux-x86_64, etc." );
 					
 					if ( !lib.exists() )
 					{
+						lib.getParentFile().mkdirs();
 						PluginManager.getLogger().info( ConsoleColor.GOLD + "Extracting native library '" + entry.getName() + "' to '" + lib.getAbsolutePath() + "'." );
-						lib.mkdirs();
 						InputStream is = jar.getInputStream( entry );
-						FileOutputStream os = new FileOutputStream( lib );
-						ByteStreams.copy( is, os );
+						FileOutputStream out = new FileOutputStream( lib );
+						ByteStreams.copy( is, out );
 						is.close();
-						os.close();
+						out.close();
 					}
-					nativesExtracted = true;
+					
+					if ( !nativesExtracted.contains( lib.getAbsolutePath() ) )
+						nativesExtracted.add( lib.getAbsolutePath() );
 				}
 				catch ( FileNotFoundException e )
 				{
@@ -678,12 +697,13 @@ public class FileFunc
 		
 		jar.close();
 		
-		if ( nativesExtracted )
+		if ( nativesExtracted.size() > 0 )
 		{
 			if ( !foundArchMatchingNative )
-				PluginManager.getLogger().warning( "We found native libraries contained within jar '" + libFile.getAbsolutePath() + "' but according to convensions none of them had the required architecture, the dependency may fail to load the required native if our theory is correct." );
+				PluginManager.getLogger().warning( ConsoleColor.DARK_GRAY + "We found native libraries contained within jar '" + libFile.getAbsolutePath() + "' but according to conventions none of them had the required architecture, the dependency may fail to load the required native if our theory is correct." );
 			
-			System.setProperty( "java.library.path", System.getProperty( "java.library.path" ) + ":" + baseDir.getAbsolutePath() );
+			String path = ( baseDir.getAbsolutePath().contains( " " ) ) ? "\"" + baseDir.getAbsolutePath() + "\"" : baseDir.getAbsolutePath();
+			System.setProperty( "java.library.path", System.getProperty( "java.library.path" ) + ":" + path );
 			
 			try
 			{
@@ -697,6 +717,6 @@ public class FileFunc
 			}
 		}
 		
-		return nativesExtracted;
+		return nativesExtracted.size() > 0;
 	}
 }

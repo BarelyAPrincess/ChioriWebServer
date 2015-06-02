@@ -27,6 +27,7 @@ import com.chiorichan.RunLevel;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.lang.InvalidDescriptionException;
 import com.chiorichan.libraries.MavenReference;
+import com.chiorichan.util.ObjectFunc;
 import com.google.common.collect.ImmutableList;
 
 /**
@@ -153,6 +154,7 @@ public class PluginDescriptionFile
 	private List<String> authors = null;
 	private String website = null;
 	private String prefix = null;
+	private boolean natives = false;
 	private RunLevel order = RunLevel.INITIALIZED;
 	
 	public PluginDescriptionFile( final File file ) throws InvalidDescriptionException, FileNotFoundException
@@ -433,9 +435,9 @@ public class PluginDescriptionFile
 	 * Gives a list of java libraries required by this plugin.
 	 * <ul>
 	 * <li>Use the maven group:name:version string to specify the library.
-	 * <li>If any libraries listed here are not found, your plugin will fail to load at startup.
-	 * <li><code>libraries</code> must be in must be in <a href="http://en.wikipedia.org/wiki/YAML#Lists">YAML list format</a>.
-	 * <li>For the time being, libraries are downloaded from the Central Maven Repository. We have plans to implement to ability to specify libraries.
+	 * <li>If any libraries listed here are not found or can't be parsed, your plugin will fail to load at startup.
+	 * <li><code>libraries</code> must be in <a href="http://en.wikipedia.org/wiki/YAML#Lists">YAML list format</a>.
+	 * <li>For the time being, libraries are downloaded from the Central Maven Repository. We have plans to implement the ability to specify repositories, maybe even upload your libraries and plugins to our own central download server.
 	 * </ul>
 	 * <p>
 	 * In the plugin.yaml, this entry is named <code>libraries</code>.
@@ -536,6 +538,28 @@ public class PluginDescriptionFile
 	public String getPrefix()
 	{
 		return prefix;
+	}
+	
+	/**
+	 * Indicates if this plugin has native libraries that need extraction
+	 * 
+	 * <p>
+	 * In the plugin.yaml, this entry is named <code>natives</code>.
+	 * <p>
+	 * Example:<blockquote>
+	 * 
+	 * <pre>
+	 * natives: true
+	 * </pre>
+	 * 
+	 * </blockquote>
+	 * 
+	 * @return
+	 *         True is this statement is so
+	 */
+	public boolean hasNatives()
+	{
+		return natives;
 	}
 	
 	/**
@@ -769,9 +793,10 @@ public class PluginDescriptionFile
 		}
 		
 		if ( map.get( "prefix" ) != null )
-		{
 			prefix = map.get( "prefix" ).toString();
-		}
+		
+		if ( map.get( "natives" ) != null )
+			natives = ObjectFunc.castToBool( map.get( "natives" ) );
 	}
 	
 	private Map<String, Object> saveMap()

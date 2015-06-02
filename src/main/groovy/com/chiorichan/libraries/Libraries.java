@@ -194,7 +194,7 @@ public class Libraries implements LibrarySource
 		}
 		catch ( IOException e )
 		{
-			PluginManager.getLogger().severe( "We had a problem trying to extracting native libraries from jar '" + lib.jarFile() + "', regardless if they existed or not:", e );
+			PluginManager.getLogger().severe( "We had a problem trying to extract native libraries from jar file '" + lib.jarFile() + "', regardless if they existed or not:", e );
 		}
 		
 		return true;

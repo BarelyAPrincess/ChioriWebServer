@@ -18,6 +18,8 @@ public class ConsolePlugin extends Plugin
 	@Override
 	public void onEnable()
 	{
+		// Loader.getLogger().debug( System.getProperty( "java.library.path" ) );
+		
 		TestWindow window = new TestWindow( 30, 20 );
 		window.init();
 	}

@@ -288,7 +288,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 								softDependencies.remove( plugin );
 								dependencies.remove( plugin );
 								
-								getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "' due to load issue with library '" + library + "'." );
+								getLogger().severe( "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "' due to issue with library '" + library + "'." );
 								break;
 							}
 						}
@@ -319,7 +319,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 							softDependencies.remove( plugin );
 							dependencies.remove( plugin );
 							
-							getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", new UnknownDependencyException( dependency ) );
+							getLogger().severe( "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", new UnknownDependencyException( dependency ) );
 							break;
 						}
 					}
@@ -364,7 +364,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 					}
 					catch ( InvalidPluginException ex )
 					{
-						getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", ex );
+						getLogger().severe( "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", ex );
 					}
 				}
 			}
@@ -394,7 +394,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 						}
 						catch ( InvalidPluginException ex )
 						{
-							getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", ex );
+							getLogger().severe( "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", ex );
 						}
 					}
 				}
@@ -409,7 +409,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 					{
 						File file = failedPluginIterator.next();
 						failedPluginIterator.remove();
-						getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "': circular dependency detected" );
+						getLogger().severe( "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "': circular dependency detected" );
 					}
 				}
 			}

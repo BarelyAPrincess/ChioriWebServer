@@ -52,6 +52,7 @@ import com.chiorichan.lang.PluginUnconfiguredException;
 import com.chiorichan.lang.UnknownDependencyException;
 import com.chiorichan.plugin.PluginDescriptionFile;
 import com.chiorichan.plugin.PluginManager;
+import com.chiorichan.util.FileFunc;
 import com.google.common.collect.ImmutableList;
 
 /**
@@ -82,31 +83,8 @@ public final class JavaPluginLoader implements PluginLoader
 			throw new InvalidPluginException( ex );
 		}
 		
-		File dataFolder = new File( file.getParentFile(), description.getName() );
-		File oldDataFolder = getDataFolder( file );
-		
-		// Found old data folder
-		if ( dataFolder.equals( oldDataFolder ) )
-		{
-			// They are equal -- nothing needs to be done!
-		}
-		else if ( dataFolder.isDirectory() && oldDataFolder.isDirectory() )
-		{
-			PluginManager.getLogger().log( Level.INFO, String.format( "While loading %s (%s) found old-data folder: %s next to the new one: %s", description.getName(), file, oldDataFolder, dataFolder ) );
-		}
-		else if ( oldDataFolder.isDirectory() && !dataFolder.exists() )
-		{
-			if ( !oldDataFolder.renameTo( dataFolder ) )
-			{
-				throw new InvalidPluginException( "Unable to rename old data folder: '" + oldDataFolder + "' to: '" + dataFolder + "'" );
-			}
-			PluginManager.getLogger().log( Level.INFO, String.format( "While loading %s (%s) renamed data folder: '%s' to '%s'", description.getName(), file, oldDataFolder, dataFolder ) );
-		}
-		
-		if ( dataFolder.exists() && !dataFolder.isDirectory() )
-		{
-			throw new InvalidPluginException( String.format( "Projected datafolder: '%s' for %s (%s) exists and is not a directory", dataFolder, description.getName(), file ) );
-		}
+		File dataFolder = new File( file.getParentFile(), description.getName().replaceAll( "\\W", "" ) );
+		// File dataFolderOption2 = getDataFolder( file );
 		
 		List<String> depend = description.getDepend();
 		if ( depend == null )
@@ -144,9 +122,20 @@ public final class JavaPluginLoader implements PluginLoader
 		
 		loaders.put( description.getName(), loader );
 		
+		if ( description.hasNatives() )
+			try
+			{
+				FileFunc.extractNatives( file, dataFolder );
+			}
+			catch ( IOException e )
+			{
+				PluginManager.getLogger().severe( "We had a problem trying to extract native libraries from plugin file '" + file + "':", e );
+			}
+		
 		return loader.plugin;
 	}
 	
+	@SuppressWarnings( "unused" )
 	private File getDataFolder( File file )
 	{
 		File dataFolder = null;

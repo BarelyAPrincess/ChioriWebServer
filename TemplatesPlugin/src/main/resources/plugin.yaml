@@ -1,4 +1,4 @@
-name: Template Plugin
+name: Templates Plugin
 author: Chiori Greene
 main: com.chiorichan.plugin.template.Template
 version: '1.2'
