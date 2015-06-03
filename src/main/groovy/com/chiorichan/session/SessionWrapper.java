@@ -19,7 +19,6 @@ import com.chiorichan.account.Account;
 import com.chiorichan.factory.BindingProvider;
 import com.chiorichan.factory.EvalBinding;
 import com.chiorichan.factory.EvalFactory;
-import com.chiorichan.framework.ConfigurationManagerWrapper;
 import com.chiorichan.http.HttpCookie;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
@@ -32,7 +31,6 @@ import com.chiorichan.util.StringFunc;
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-@SuppressWarnings( "deprecation" )
 public abstract class SessionWrapper implements BindingProvider
 {
 	/**
@@ -150,11 +148,6 @@ public abstract class SessionWrapper implements BindingProvider
 	public EvalBinding getBinding()
 	{
 		return binding;
-	}
-	
-	public ConfigurationManagerWrapper getConfigurationManager()
-	{
-		return new ConfigurationManagerWrapper( this );
 	}
 	
 	@Override

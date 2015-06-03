@@ -6,15 +6,12 @@
  */
 package com.chiorichan.factory
 
-import com.chiorichan.Loader
 import com.chiorichan.account.Account
 import com.chiorichan.account.AccountManager
-import com.chiorichan.database.DatabaseEngine
-import com.chiorichan.framework.ConfigurationManagerWrapper
-import com.chiorichan.framework.HttpUtilsWrapper
 import com.chiorichan.http.HttpCode
 import com.chiorichan.http.HttpRequestWrapper
 import com.chiorichan.http.HttpResponseWrapper
+import com.chiorichan.lang.EvalFactoryException
 import com.chiorichan.permission.Permission
 import com.chiorichan.permission.PermissionResult
 import com.chiorichan.session.Session
@@ -27,7 +24,6 @@ import com.google.common.collect.Lists
  * 
  * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
-@SuppressWarnings( "deprecation" )
 public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 {
 	List<ScriptTraceElement> getScriptTrace()
@@ -150,20 +146,6 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	boolean getAccountState()
 	{
 		return request.getSession().isLoginPresent()
-	}
-	
-	// XXX These two deprecated methods will soon be replaced
-	
-	@Deprecated
-	ConfigurationManagerWrapper getConfigurationManager()
-	{
-		return new ConfigurationManagerWrapper( request )
-	}
-	
-	@Deprecated
-	HttpUtilsWrapper getHttpUtils()
-	{
-		return new HttpUtilsWrapper( request )
 	}
 	
 	/**
@@ -333,5 +315,52 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	PermissionResult requirePermission( Permission perm )
 	{
 		getSession().requirePermission( perm )
+	}
+	
+	EvalFactory getEvalFactory()
+	{
+		return getRequest().getEvalFactory()
+	}
+	
+	// Old Http Utils Methods - needs restructuring
+	
+	EvalFactoryResult evalFile( String file ) throws IOException, EvalFactoryException
+	{
+		return evalFile( getEvalFactory(), getSession().getSite(), file )
+	}
+	
+	EvalFactoryResult evalPackage( String pack ) throws EvalFactoryException
+	{
+		return evalPackage( getRequest().getEvalFactory(), getSession().getSite(), pack )
+	}
+	
+	EvalFactoryResult evalPackageWithException( String pack, Object... global ) throws IOException, EvalFactoryException
+	{
+		return evalPackageWithException( getRequest().getEvalFactory(), getSession().getSite(), pack )
+	}
+	
+	EvalFactoryResult evalPackageWithException( String pack ) throws IOException, EvalFactoryException
+	{
+		return evalPackageWithException( getRequest().getEvalFactory(), getSession().getSite(), pack )
+	}
+	
+	String readFile( String file ) throws IOException, EvalFactoryException
+	{
+		return evalFile( getRequest().getEvalFactory(), getSession().getSite(), file ).getString()
+	}
+	
+	String readPackage( String pack ) throws EvalFactoryException
+	{
+		return evalPackage( getRequest().getEvalFactory(), getSession().getSite(), pack ).getString()
+	}
+	
+	String readPackageWithException( String pack, Object... global ) throws IOException, EvalFactoryException
+	{
+		return evalPackageWithException( getRequest().getEvalFactory(), getSession().getSite(), pack ).getString()
+	}
+	
+	String readPackageWithException( String pack ) throws IOException, EvalFactoryException
+	{
+		return evalPackageWithException( getRequest().getEvalFactory(), getSession().getSite(), pack ).getString()
 	}
 }
