@@ -343,16 +343,19 @@ public enum ConsoleColor
 		}
 	}
 	
-	public static ConsoleColor fromLevel( Level level )
+	public static ConsoleColor fromLevel( Level var1 )
 	{
-		if ( level == Level.INFO )
-			return WHITE;
-		if ( level == Level.CONFIG || level == Level.WARNING )
-			return GOLD;
-		if ( level == Level.SEVERE )
-			return RED;
-		if ( level == Level.FINE || level == Level.FINER || level == Level.FINEST )
+		if ( var1 == Level.FINEST || var1 == Level.FINER || var1 == Level.FINE )
 			return DARK_GRAY;
-		return ConsoleColor.WHITE;
+		else if ( var1 == Level.INFO )
+			return WHITE;
+		else if ( var1 == Level.WARNING )
+			return GOLD;
+		else if ( var1 == Level.SEVERE )
+			return RED;
+		else if ( var1 == Level.CONFIG )
+			return GRAY;
+		else
+			return WHITE;
 	}
 }

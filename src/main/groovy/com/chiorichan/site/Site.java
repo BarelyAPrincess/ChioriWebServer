@@ -606,7 +606,7 @@ public class Site
 	
 	public String getRoot( String subdomain ) throws SiteException
 	{
-		String target = siteId;
+		String target = siteId.replaceAll( " ", "" );
 		
 		if ( subdomains != null && subdomain != null && !subdomain.isEmpty() )
 		{
@@ -615,7 +615,7 @@ public class Site
 			if ( sub != null )
 				target = siteId + "/" + sub;
 			else if ( Loader.getConfig().getBoolean( "framework.sites.autoCreateSubdomains", true ) )
-				target = siteId + "/" + subdomain;
+				target = siteId + "/" + FileFunc.nameSpaceToPath( subdomain, true );
 			else if ( !Loader.getConfig().getBoolean( "framework.sites.subdomainsDefaultToRoot" ) )
 				throw new SiteException( "This subdomain was not found on this server. If your the website owner, please check documentation." );
 		}

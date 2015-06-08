@@ -13,7 +13,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.logging.Formatter;
-import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
 import com.google.common.base.Strings;
@@ -38,22 +37,6 @@ public class ConsoleLogFormatter extends Formatter
 		dateFormat = new SimpleDateFormat( "MM-dd" );
 		timeFormat = new SimpleDateFormat( "HH:mm:ss.SSS" );
 		this.useColor = useColor;
-	}
-	
-	public ConsoleColor getLevelColor( Level var1 )
-	{
-		if ( var1 == Level.FINEST || var1 == Level.FINER || var1 == Level.FINE )
-			return ConsoleColor.WHITE;
-		else if ( var1 == Level.INFO )
-			return ConsoleColor.AQUA;
-		else if ( var1 == Level.WARNING )
-			return ConsoleColor.GOLD;
-		else if ( var1 == Level.SEVERE )
-			return ConsoleColor.RED;
-		else if ( var1 == Level.CONFIG )
-			return ConsoleColor.WHITE;
-		else
-			return ConsoleColor.WHITE;
 	}
 	
 	@Override
@@ -107,7 +90,7 @@ public class ConsoleLogFormatter extends Formatter
 		}
 		
 		if ( style.contains( "%lv" ) )
-			style = style.replaceAll( "%lv", getLevelColor( record.getLevel() ) + record.getLevel().getLocalizedName().toUpperCase() );
+			style = style.replaceAll( "%lv", ConsoleColor.fromLevel( record.getLevel() ) + record.getLevel().getLocalizedName().toUpperCase() );
 		
 		style += " " + formatMessage( record );
 		

@@ -37,6 +37,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
@@ -50,6 +51,8 @@ import com.google.common.io.ByteStreams;
  */
 public class FileFunc
 {
+	public static final String PATH_SEPERATOR = File.separator;
+	
 	/**
 	 * Separate class for native platform ID which is only loaded when native libs are loaded.
 	 */
@@ -560,18 +563,20 @@ public class FileFunc
 	
 	public static DirectoryInfo directoryHealthCheck( File file )
 	{
+		Validate.notNull( file );
+		
 		if ( file.isFile() )
 			if ( !file.delete() )
 				return DirectoryInfo.DELETE_FAILED;
 		
-		if ( file.getParentFile().exists() && file.getParentFile().canWrite() )
+		if ( file.getParentFile() != null && file.getParentFile().exists() && file.getParentFile().canWrite() )
 			return DirectoryInfo.PERMISSION_FAILED;
 		
 		if ( !file.exists() )
 			if ( !file.mkdirs() )
 				return DirectoryInfo.CREATE_FAILED;
 		
-		if ( file.canWrite() )
+		if ( !file.canWrite() )
 			return DirectoryInfo.PERMISSION_FAILED;
 		
 		return DirectoryInfo.DIRECTORY_HEALTHY;
@@ -579,6 +584,8 @@ public class FileFunc
 	
 	public static File fileHealthCheck( File file ) throws IOException
 	{
+		Validate.notNull( file );
+		
 		if ( file.exists() && file.isDirectory() )
 			file = new File( file, "default" );
 		
@@ -705,16 +712,10 @@ public class FileFunc
 	
 	public static boolean extractZipResource( String path, File dest, Class<?> clz ) throws IOException
 	{
-		directoryHealthCheck( dest );
+		File temp = new File( "temp.zip" );
+		putResource( clz, path, temp );
 		
-		URL resUrl = clz.getClassLoader().getResource( path );
-		
-		if ( resUrl == null )
-			return false;
-		
-		String resource = resUrl.getPath();
-		
-		ZipFile zip = new ZipFile( URLDecoder.decode( resource, "UTF-8" ) );
+		ZipFile zip = new ZipFile( temp );
 		
 		try
 		{
@@ -723,12 +724,23 @@ public class FileFunc
 			while ( entries.hasMoreElements() )
 			{
 				ZipEntry entry = entries.nextElement();
-				FileUtils.copyInputStreamToFile( zip.getInputStream( entry ), new File( dest, entry.getName() ) );
+				File save = new File( dest, entry.getName() );
+				if ( entry.isDirectory() )
+					save.mkdirs();
+				else
+				{
+					if ( save.getParentFile() != null )
+					{
+						save.getParentFile().mkdirs();
+						FileUtils.copyInputStreamToFile( zip.getInputStream( entry ), save );
+					}
+				}
 			}
 		}
 		finally
 		{
 			zip.close();
+			temp.delete();
 		}
 		
 		return true;
@@ -839,5 +851,21 @@ public class FileFunc
 		}
 		
 		return nativesExtracted.size() > 0;
+	}
+	
+	public static String nameSpaceToPath( String namespace )
+	{
+		return nameSpaceToPath( namespace, false );
+	}
+	
+	public static String nameSpaceToPath( String namespace, boolean flip )
+	{
+		String output = "";
+		
+		if ( flip )
+			for ( String s : namespace.split( "\\." ) )
+				output = s + "." + output;
+		
+		return output.replaceAll( "\\.", PATH_SEPERATOR );
 	}
 }
