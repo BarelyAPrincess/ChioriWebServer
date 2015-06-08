@@ -16,6 +16,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -32,6 +33,10 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+
+import org.apache.commons.io.FileUtils;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
@@ -524,13 +529,52 @@ public class FileFunc
 		return calculateFileBase( path, null );
 	}
 	
-	public static void directoryHealthCheck( File file )
+	public static void directoryHealthCheckWithException( File file ) throws IOException
+	{
+		DirectoryInfo info = directoryHealthCheck( file );
+		
+		if ( info != DirectoryInfo.DIRECTORY_HEALTHY )
+			throw new IOException( info.getDescription( file ) );
+	}
+	
+	public enum DirectoryInfo
+	{
+		DELETE_FAILED, PERMISSION_FAILED, CREATE_FAILED, DIRECTORY_HEALTHY;
+		
+		public String getDescription( File file )
+		{
+			switch ( this )
+			{
+				case CREATE_FAILED:
+					return "The directory '" + file.getAbsolutePath() + "' does not exist, we tried to create the directory but failed.";
+				case DELETE_FAILED:
+					return "There was a problem trying to delete the directory '" + file.getAbsolutePath() + "'.";
+				case DIRECTORY_HEALTHY:
+					return "The directory '" + file.getAbsolutePath() + "' health and should the server should experience no issues.";
+				case PERMISSION_FAILED:
+					return "There was no permission to either create, delete or access the directory '" + file.getAbsolutePath() + "'.";
+			}
+			return null;
+		}
+	}
+	
+	public static DirectoryInfo directoryHealthCheck( File file )
 	{
 		if ( file.isFile() )
-			file.delete();
+			if ( !file.delete() )
+				return DirectoryInfo.DELETE_FAILED;
+		
+		if ( file.getParentFile().exists() && file.getParentFile().canWrite() )
+			return DirectoryInfo.PERMISSION_FAILED;
 		
 		if ( !file.exists() )
-			file.mkdirs();
+			if ( !file.mkdirs() )
+				return DirectoryInfo.CREATE_FAILED;
+		
+		if ( file.canWrite() )
+			return DirectoryInfo.PERMISSION_FAILED;
+		
+		return DirectoryInfo.DIRECTORY_HEALTHY;
 	}
 	
 	public static File fileHealthCheck( File file ) throws IOException
@@ -625,7 +669,84 @@ public class FileFunc
 			return result.toArray( new String[result.size()] );
 		}
 		
+		if ( dirURL.getProtocol().equals( "zip" ) )
+		{
+			/* A ZIP path */
+			String zipPath = dirURL.getPath().substring( 5, dirURL.getPath().indexOf( "!" ) ); // strip out only the JAR file
+			ZipFile zip = new ZipFile( URLDecoder.decode( zipPath, "UTF-8" ) );
+			Enumeration<? extends ZipEntry> entries = zip.entries(); // gives ALL entries in jar
+			Set<String> result = new HashSet<String>(); // avoid duplicates in case it is a subdirectory
+			while ( entries.hasMoreElements() )
+			{
+				String name = entries.nextElement().getName();
+				if ( name.startsWith( path ) )
+				{ // filter according to the path
+					String entry = name.substring( path.length() );
+					int checkSubdir = entry.indexOf( "/" );
+					if ( checkSubdir >= 0 )
+					{
+						// if it is a subdirectory, we just return the directory name
+						entry = entry.substring( 0, checkSubdir );
+					}
+					result.add( entry );
+				}
+			}
+			zip.close();
+			return result.toArray( new String[result.size()] );
+		}
+		
 		throw new UnsupportedOperationException( "Cannot list files for URL " + dirURL );
+	}
+	
+	public static boolean extractZipResource( String path, File dest ) throws IOException
+	{
+		return extractZipResource( path, dest, Loader.class );
+	}
+	
+	public static boolean extractZipResource( String path, File dest, Class<?> clz ) throws IOException
+	{
+		directoryHealthCheck( dest );
+		
+		URL resUrl = clz.getClassLoader().getResource( path );
+		
+		if ( resUrl == null )
+			return false;
+		
+		String resource = resUrl.getPath();
+		
+		ZipFile zip = new ZipFile( URLDecoder.decode( resource, "UTF-8" ) );
+		
+		try
+		{
+			Enumeration<? extends ZipEntry> entries = zip.entries();
+			
+			while ( entries.hasMoreElements() )
+			{
+				ZipEntry entry = entries.nextElement();
+				FileUtils.copyInputStreamToFile( zip.getInputStream( entry ), new File( dest, entry.getName() ) );
+			}
+		}
+		finally
+		{
+			zip.close();
+		}
+		
+		return true;
+	}
+	
+	public static String resourceToString( String resource ) throws UnsupportedEncodingException, IOException
+	{
+		return resourceToString( resource, Loader.class );
+	}
+	
+	public static String resourceToString( String resource, Class<?> clz ) throws UnsupportedEncodingException, IOException
+	{
+		InputStream is = clz.getClassLoader().getResourceAsStream( resource );
+		
+		if ( is == null )
+			return null;
+		
+		return new String( inputStream2Bytes( is ), "UTF-8" );
 	}
 	
 	public static boolean extractNatives( File libFile, File baseDir ) throws IOException
