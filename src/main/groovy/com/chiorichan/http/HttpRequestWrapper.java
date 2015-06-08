@@ -39,7 +39,6 @@ import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.auth.AccountAuthenticator;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
-import com.chiorichan.event.server.ServerVars;
 import com.chiorichan.logger.LogEvent;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.session.Session;
