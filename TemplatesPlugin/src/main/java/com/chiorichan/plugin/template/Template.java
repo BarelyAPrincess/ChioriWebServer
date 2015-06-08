@@ -220,6 +220,8 @@ public class Template extends Plugin implements Listener
 			
 			if ( title == null || title.isEmpty() )
 				ob.append( "<title>" + siteTitle + "</title>\n" );
+			if ( title.startsWith( "!" ) )
+				ob.append( "<title>" + title.substring( 1 ) + "</title>\n" );
 			else
 				ob.append( "<title>" + title + " - " + siteTitle + "</title>\n" );
 			
