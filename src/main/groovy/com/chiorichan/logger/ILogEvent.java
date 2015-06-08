@@ -16,4 +16,6 @@ public interface ILogEvent
 	void log( Level level, String msg, Object... objs );
 	
 	void flush();
+
+	void header( String msg, Object... objs );
 }

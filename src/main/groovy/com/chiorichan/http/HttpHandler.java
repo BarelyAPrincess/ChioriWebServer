@@ -45,6 +45,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -109,6 +110,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	private HttpRequestWrapper request;
 	private boolean ssl;
 	private boolean requestFinished = false;
+	private boolean usedHandler = false;
 	private LogEvent log;
 	
 	static
@@ -163,6 +165,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	{
 		log.flushAndClose();
 		ctx.flush();
+		usedHandler = true;
 	}
 	
 	@Override
@@ -334,10 +337,10 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			
 			requestFinished = false;
 			requestOrig = ( FullHttpRequest ) msg;
-			request = new HttpRequestWrapper( ctx.channel(), requestOrig, ssl );
+			request = new HttpRequestWrapper( ctx.channel(), requestOrig, ssl, log );
 			response = request.getResponse();
 			
-			log.log( Level.INFO, "Remote %s (%s:%s)", request.getRemoteHostname(), request.getIpAddr(), request.getRemotePort() );
+			log.header( "[id: %s, new: %s, %s:%s => %s:%s]", hashCode(), !usedHandler, request.getIpAddr(), request.getRemotePort(), request.getLocalIpAddr(), request.getLocalPort() );
 			
 			if ( is100ContinueExpected( ( HttpRequest ) msg ) )
 				send100Continue( ctx );
@@ -456,8 +459,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	
 	public void handleHttp( HttpRequestWrapper request, HttpResponseWrapper response ) throws IOException, HttpError, SiteException, PermissionException, EvalFactoryException, SessionException
 	{
-		String uri = request.getUri();
-		String domain = request.getParentDomain();
+		// String uri = request.getUri();
+		// String domain = request.getParentDomain();
 		String subdomain = request.getSubDomain();
 		
 		log.log( Level.INFO, request.getMethodString() + " " + ( request.isSecure() ? "https://" : "http://" ) + request.getDomain() + request.getUri() );
@@ -526,7 +529,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		if ( !fi.hasFile() && !fi.hasHTML() )
 			throw new HttpError( 500, null, "This page appears to have no content to display" );
 		
-		NetworkManager.getLogger().info( ConsoleColor.BLUE + "Http" + ( ( ssl ) ? "s" : "" ) + "Request{httpCode=" + response.getHttpCode() + ",httpMsg=" + response.getHttpMsg() + ",subdomain=" + subdomain + ",domain=" + domain + ",uri=" + uri + ",remoteIp=" + request.getIpAddr() + ",sessionId=" + sess.getSessId() + ",acct=" + sess.isLoginPresent() + ( sess.isLoginPresent() ? "(" + sess.getAcctId() + ")" : "" ) + ",details=" + fi.toString() + "}" );
+		// NetworkManager.getLogger().info( ConsoleColor.BLUE + "Http" + ( ( ssl ) ? "s" : "" ) + "Request{httpCode=" + response.getHttpCode() + ",httpMsg=" + response.getHttpMsg() + ",subdomain=" + subdomain + ",domain=" + domain + ",uri="
+		// + uri + ",remoteIp=" + request.getIpAddr() + ",sessionId=" + sess.getSessId() + ",acct=" + sess.isLoginPresent() + ( sess.isLoginPresent() ? "(" + sess.getAcctId() + ")" : "" ) + ",details=" + fi.toString() + "}" );
 		
 		if ( fi.hasFile() )
 			htaccess.appendWithDir( fi.getFile().getParentFile() );

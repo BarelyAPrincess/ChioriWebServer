@@ -40,6 +40,7 @@ import com.chiorichan.account.auth.AccountAuthenticator;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.event.server.ServerVars;
+import com.chiorichan.logger.LogEvent;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.session.Session;
 import com.chiorichan.session.SessionContext;
@@ -133,6 +134,11 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	final boolean ssl;
 	
 	/**
+	 * Instance of LogEvent used by this request
+	 */
+	final LogEvent log;
+	
+	/**
 	 * The original Netty Http Request
 	 */
 	private final HttpRequest http;
@@ -142,17 +148,18 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	 */
 	private final Channel channel;
 	
-	HttpRequestWrapper( Channel channel, HttpRequest http, boolean ssl ) throws IOException
+	HttpRequestWrapper( Channel channel, HttpRequest http, boolean ssl, LogEvent log ) throws IOException
 	{
 		this.channel = channel;
 		this.http = http;
 		this.ssl = ssl;
+		this.log = log;
 		
 		// Set Time of this Request
 		requestTime = Timings.epoch();
 		
 		// Create a matching HttpResponseWrapper
-		response = new HttpResponseWrapper( this );
+		response = new HttpResponseWrapper( this, log );
 		
 		// Get Site based on requested domain
 		String domain = getParentDomain();
@@ -467,7 +474,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			if ( domain.contains( ":" ) )
 				domain = domain.substring( 0, domain.indexOf( ":" ) ).trim(); // Remove port number.
 				
-			if ( domain.toLowerCase().endsWith( "localhost" ) || domain.equalsIgnoreCase( "127.0.0.1" ) || domain.equalsIgnoreCase( getLocalAddr() ) || domain.toLowerCase().endsWith( getLocalHost() ) )
+			if ( domain.toLowerCase().endsWith( "localhost" ) || domain.equalsIgnoreCase( "127.0.0.1" ) || domain.equalsIgnoreCase( getLocalIpAddr() ) || domain.toLowerCase().endsWith( getLocalHostName() ) )
 				domain = "";
 			
 			if ( domain == null || domain.isEmpty() )
@@ -563,6 +570,11 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		return ( ( InetSocketAddress ) channel.remoteAddress() ).getAddress().getHostAddress();
 	}
 	
+	public boolean isCDN()
+	{
+		return http.headers().contains( "CF-Connecting-IP" );
+	}
+	
 	/**
 	 * Similar to {@link #getRemoteAddr()}
 	 * 
@@ -608,12 +620,17 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		return ( channel.pipeline().get( SslHandler.class ) != null );
 	}
 	
-	public int getServerPort()
+	public int getLocalPort()
 	{
 		return ( ( InetSocketAddress ) channel.localAddress() ).getPort();
 	}
 	
-	public String getServerName()
+	public String getLocalIpAddr()
+	{
+		return ( ( InetSocketAddress ) channel.localAddress() ).getAddress().getHostAddress();
+	}
+	
+	public String getLocalHostName()
 	{
 		return ( ( InetSocketAddress ) channel.localAddress() ).getHostName();
 	}
@@ -805,16 +822,6 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		return getHeader( "Host" );
 	}
 	
-	public String getLocalHost()
-	{
-		return ( ( InetSocketAddress ) channel.localAddress() ).getHostName();
-	}
-	
-	public String getLocalAddr()
-	{
-		return ( ( InetSocketAddress ) channel.localAddress() ).getAddress().getHostAddress();
-	}
-	
 	public String getUserAgent()
 	{
 		return getHeader( "User-Agent" );
@@ -839,7 +846,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		putServerVarSafe( ServerVars.HTTP_ACCEPT, getHeader( "Accept" ) );
 		putServerVarSafe( ServerVars.HTTP_USER_AGENT, getUserAgent() );
 		putServerVarSafe( ServerVars.HTTP_CONNECTION, getHeader( "Connection" ) );
-		putServerVarSafe( ServerVars.HTTP_HOST, getLocalHost() );
+		putServerVarSafe( ServerVars.HTTP_HOST, getLocalHostName() );
 		putServerVarSafe( ServerVars.HTTP_ACCEPT_ENCODING, getHeader( "Accept-Encoding" ) );
 		putServerVarSafe( ServerVars.HTTP_ACCEPT_LANGUAGE, getHeader( "Accept-Language" ) );
 		putServerVarSafe( ServerVars.HTTP_X_REQUESTED_WITH, getHeader( "X-requested-with" ) );
@@ -850,13 +857,14 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		putServerVarSafe( ServerVars.REQUEST_URI, getUri() );
 		putServerVarSafe( ServerVars.CONTENT_LENGTH, getContentLength() );
 		// putServerVarSafe( ServerVars.AUTH_TYPE, getAuthType() );
-		putServerVarSafe( ServerVars.SERVER_NAME, getServerName() );
-		putServerVarSafe( ServerVars.SERVER_PORT, getServerPort() );
+		putServerVarSafe( ServerVars.SERVER_IP, getLocalIpAddr() );
+		putServerVarSafe( ServerVars.SERVER_NAME, Versioning.getProductSimple() );
+		putServerVarSafe( ServerVars.SERVER_PORT, getLocalPort() );
 		putServerVarSafe( ServerVars.HTTPS, isSecure() );
 		putServerVarSafe( ServerVars.SESSION, getSession() );
 		putServerVarSafe( ServerVars.SERVER_SOFTWARE, Versioning.getProduct() );
 		putServerVarSafe( ServerVars.SERVER_VERSION, Versioning.getVersion() );
-		putServerVarSafe( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "webmaster@" + getDomain() ) );
+		putServerVarSafe( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "owner@" + getDomain() ) );
 		putServerVarSafe( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Versioning.getVersion() );
 	}
 	
@@ -872,9 +880,9 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		// Adds server variables to map in default, lower case, and upper case variations.
 		for ( Map.Entry<ServerVars, Object> en : serverVars.entrySet() )
 		{
-			server.put( en.getKey().getName().toLowerCase(), en.getValue() );
-			server.put( en.getKey().getName().toUpperCase(), en.getValue() );
-			server.put( en.getKey().getName(), en.getValue() );
+			server.put( en.getKey().name().toLowerCase(), en.getValue() );
+			server.put( en.getKey().name().toUpperCase(), en.getValue() );
+			server.put( en.getKey().name(), en.getValue() );
 		}
 		
 		if ( unmodifiableMaps )

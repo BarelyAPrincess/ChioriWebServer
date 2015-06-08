@@ -24,6 +24,12 @@ public class LogEvent implements ILogEvent
 	}
 	
 	@Override
+	public void header( String msg, Object... objs )
+	{
+		record.header( msg, objs );
+	}
+	
+	@Override
 	public void log( Level level, String msg, Object... objs )
 	{
 		record.log( level, msg, objs );

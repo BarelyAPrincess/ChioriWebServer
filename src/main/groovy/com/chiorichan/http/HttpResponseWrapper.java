@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
@@ -39,6 +40,7 @@ import com.chiorichan.event.http.ErrorEvent;
 import com.chiorichan.event.http.HttpExceptionEvent;
 import com.chiorichan.lang.ApacheParser;
 import com.chiorichan.lang.HttpError;
+import com.chiorichan.logger.LogEvent;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.session.Session;
 import com.chiorichan.session.SessionException;
@@ -54,19 +56,21 @@ import com.google.common.collect.Maps;
  */
 public class HttpResponseWrapper
 {
-	protected HttpRequestWrapper request;
-	protected ByteBuf output = Unpooled.buffer();
-	protected HttpResponseStatus httpStatus = HttpResponseStatus.OK;
-	protected String httpContentType = "text/html";
-	protected Charset encoding = Charsets.UTF_8;
-	protected HttpResponseStage stage = HttpResponseStage.READING;
-	protected Map<String, String> pageDataOverrides = Maps.newHashMap();
-	protected Map<String, String> headers = Maps.newHashMap();
-	protected ApacheParser htaccess = null;
+	final HttpRequestWrapper request;
+	ByteBuf output = Unpooled.buffer();
+	HttpResponseStatus httpStatus = HttpResponseStatus.OK;
+	String httpContentType = "text/html";
+	Charset encoding = Charsets.UTF_8;
+	HttpResponseStage stage = HttpResponseStage.READING;
+	final Map<String, String> pageDataOverrides = Maps.newHashMap();
+	final Map<String, String> headers = Maps.newHashMap();
+	ApacheParser htaccess = null;
+	final LogEvent log;
 	
-	protected HttpResponseWrapper( HttpRequestWrapper request )
+	protected HttpResponseWrapper( HttpRequestWrapper request, LogEvent log )
 	{
 		this.request = request;
+		this.log = log;
 	}
 	
 	public void mergeOverrides( Map<String, String> overrides )
@@ -113,7 +117,13 @@ public class HttpResponseWrapper
 		if ( httpMsg == null )
 			httpMsg = status.reasonPhrase();
 		
-		NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + status.code() + ",httpMsg=" + httpMsg + ",subdomain=" + request.getSubDomain() + ",domain=" + request.getDomain() + ",uri=" + request.getUri() + ",remoteIp=" + request.getIpAddr() + "}" );
+		// NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + status.code() + ",httpMsg=" + httpMsg + ",subdomain=" + request.getSubDomain() + ",domain=" + request.getDomain() + ",uri=" + request.getUri() +
+		// ",remoteIp=" + request.getIpAddr() + "}" );
+		
+		if ( msg == null )
+			log.log( Level.SEVERE, "%s {code=%s}", httpMsg, status.code() );
+		else
+			log.log( Level.SEVERE, "%s {code=%s,reason=%s}", httpMsg, status.code(), msg );
 		
 		resetBuffer();
 		

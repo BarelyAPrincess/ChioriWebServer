@@ -6,12 +6,13 @@
  */
 package com.chiorichan.logger;
 
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.logging.Level;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
-import com.chiorichan.util.Versioning;
+import com.chiorichan.tasks.Timings;
 import com.google.common.collect.Lists;
 
 /**
@@ -19,11 +20,14 @@ import com.google.common.collect.Lists;
  */
 class LogRecord implements ILogEvent
 {
+	String header = null;
+	
 	static class LogElement
 	{
 		Level level;
 		String msg;
 		ConsoleColor color;
+		long time = Timings.epoch();
 		
 		LogElement( Level level, String msg, ConsoleColor color )
 		{
@@ -37,7 +41,13 @@ class LogRecord implements ILogEvent
 	
 	public LogRecord()
 	{
-		Loader.getLogger().debug( "Start LogRecord" );
+		
+	}
+	
+	@Override
+	public void header( String msg, Object... objs )
+	{
+		header = String.format( msg, objs );
 	}
 	
 	@Override
@@ -49,17 +59,15 @@ class LogRecord implements ILogEvent
 	@Override
 	public void flush()
 	{
-		if ( Versioning.isDevelopment() )
-		{
-			// [id: 0x1e21deab, /173.245.53.148:61025 => /66.45.240.230:8080] WRITE: 4B
-			
-			StringBuilder sb = new StringBuilder();
-			
-			for ( LogElement e : elements )
-				sb.append( e.color + "\n|-->" + e.msg );
-			
-			Loader.getLogger().log( Level.INFO, sb.toString() );
-		}
+		StringBuilder sb = new StringBuilder();
+		
+		if ( header != null )
+			sb.append( ConsoleColor.GOLD + header );
+		
+		for ( LogElement e : elements )
+			sb.append( ConsoleColor.GRAY + "\n  |-> " + new SimpleDateFormat( "HH:mm:ss.SSS" ).format( e.time ) + " " + e.color + e.msg );
+		
+		Loader.getLogger().log( Level.INFO, "\r" + sb.toString() );
 		
 		elements.clear();
 	}

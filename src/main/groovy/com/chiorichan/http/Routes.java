@@ -18,6 +18,7 @@ import org.apache.commons.io.FileUtils;
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.site.Site;
+import com.chiorichan.util.FileFunc;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -63,7 +64,7 @@ public class Routes
 	{
 		synchronized ( this )
 		{
-			File routesFile = new File( Loader.getWebRoot() + Loader.PATH_SEPERATOR + site.getRoot() + Loader.PATH_SEPERATOR + "routes" );
+			File routesFile = new File( Loader.getWebRoot() + FileFunc.PATH_SEPERATOR + site.getRoot() + FileFunc.PATH_SEPERATOR + "routes" );
 			
 			if ( routes.size() < 1 || System.currentTimeMillis() - lastRequest > 2500 )
 			{
