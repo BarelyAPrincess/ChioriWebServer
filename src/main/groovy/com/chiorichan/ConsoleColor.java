@@ -11,6 +11,7 @@ package com.chiorichan;
 
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.Validate;
@@ -340,5 +341,18 @@ public enum ConsoleColor
 			BY_ID.put( color.intCode, color );
 			BY_CHAR.put( color.code, color );
 		}
+	}
+	
+	public static ConsoleColor fromLevel( Level level )
+	{
+		if ( level == Level.INFO )
+			return WHITE;
+		if ( level == Level.CONFIG || level == Level.WARNING )
+			return GOLD;
+		if ( level == Level.SEVERE )
+			return RED;
+		if ( level == Level.FINE || level == Level.FINER || level == Level.FINEST )
+			return DARK_GRAY;
+		return ConsoleColor.WHITE;
 	}
 }

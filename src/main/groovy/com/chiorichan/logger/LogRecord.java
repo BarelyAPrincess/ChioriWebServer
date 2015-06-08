@@ -9,7 +9,9 @@ package com.chiorichan.logger;
 import java.util.List;
 import java.util.logging.Level;
 
+import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
+import com.chiorichan.util.Versioning;
 import com.google.common.collect.Lists;
 
 /**
@@ -21,11 +23,13 @@ class LogRecord implements ILogEvent
 	{
 		Level level;
 		String msg;
+		ConsoleColor color;
 		
-		LogElement( Level level, String msg )
+		LogElement( Level level, String msg, ConsoleColor color )
 		{
 			this.level = level;
 			this.msg = msg;
+			this.color = color;
 		}
 	}
 	
@@ -39,20 +43,24 @@ class LogRecord implements ILogEvent
 	@Override
 	public void log( Level level, String msg, Object... objs )
 	{
-		elements.add( new LogElement( level, String.format( msg, objs ) ) );
+		elements.add( new LogElement( level, String.format( msg, objs ), ConsoleColor.fromLevel( level ) ) );
 	}
 	
 	@Override
 	public void flush()
 	{
-		// [id: 0x1e21deab, /173.245.53.148:61025 => /66.45.240.230:8080] WRITE: 4B
+		if ( Versioning.isDevelopment() )
+		{
+			// [id: 0x1e21deab, /173.245.53.148:61025 => /66.45.240.230:8080] WRITE: 4B
+			
+			StringBuilder sb = new StringBuilder();
+			
+			for ( LogElement e : elements )
+				sb.append( e.color + "\n|-->" + e.msg );
+			
+			Loader.getLogger().log( Level.INFO, sb.toString() );
+		}
 		
-		StringBuilder sb = new StringBuilder();
-		
-		for ( LogElement e : elements )
-			sb.append( "\n|-->" + e.msg );
-		
-		Loader.getLogger().log( Level.INFO, sb.toString() );
 		elements.clear();
 	}
 }

@@ -11,6 +11,7 @@ package com.chiorichan;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.ConnectException;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
@@ -24,6 +25,7 @@ import java.util.logging.Logger;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.joda.time.Duration;
 import org.joda.time.format.PeriodFormatter;
@@ -50,12 +52,13 @@ import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.session.SessionException;
 import com.chiorichan.session.SessionManager;
 import com.chiorichan.site.SiteManager;
-import com.chiorichan.tasks.Worker;
 import com.chiorichan.tasks.TaskCreator;
 import com.chiorichan.tasks.TaskManager;
+import com.chiorichan.tasks.Worker;
 import com.chiorichan.updater.AutoUpdater;
 import com.chiorichan.updater.DownloadUpdaterService;
 import com.chiorichan.util.FileFunc;
+import com.chiorichan.util.FileFunc.DirectoryInfo;
 import com.chiorichan.util.NetworkFunc;
 import com.chiorichan.util.Versioning;
 
@@ -155,6 +158,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 				acceptsAll( Arrays.asList( "wp", "web-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
 				acceptsAll( Arrays.asList( "h", "tcp-ip" ), "Host for Web to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
 				acceptsAll( Arrays.asList( "tp", "tcp-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
+				acceptsAll( Arrays.asList( "i", "install" ), "Runs the server just long enough to create the required configuration files, then terminates." );
 				acceptsAll( Arrays.asList( "web-disable" ), "Disable the internal Web Server" );
 				acceptsAll( Arrays.asList( "tcp-disable" ), "Disable the internal TCP Server" );
 				acceptsAll( Arrays.asList( "query-disable" ), "Disable the internal TCP Server" );
@@ -219,16 +223,73 @@ public class Loader extends BuiltinEventCreator implements Listener
 			getLogger().warning( "There was an exception thrown trying to create the 'InterpreterOverrides.properties' file.", e );
 		}
 		
-		if ( !getConfigFile().exists() )
+		boolean install = false;
+		
+		if ( options.has( "install" ) )
+		{
+			install = true;
+			
+			if ( getConfigFile().exists() )
+			{
+				// Warning the user they are about to override the server installation
+				getLogger().info( ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "                      WARNING!!! WARNING!!! WARNING!!!" );
+				getLogger().info( ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "------------------------------------------------------------------------------------" );
+				getLogger().info( ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "| You've supplied the --install argument which instructs the server to (re)install |" );
+				getLogger().info( ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "| the files and configurations required to run Chiori-chan's Web Server, this is   |" );
+				getLogger().info( ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "| a WARNING that this will DELETE any existing configuration and web files!!!      |" );
+				getLogger().info( ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "------------------------------------------------------------------------------------" );
+				String key = Loader.getConsole().prompt( "Are you sure you wish to continue? This can not be undone! Press 'Y' for Yes, 'N' for No or 'C' to Continue.", "Y", "N", "C" );
+				
+				if ( key.equals( "N" ) )
+				{
+					getLogger().info( "The server will now stop, please wait..." );
+					throw new StartupAbortException();
+				}
+				
+				if ( key.equals( "C" ) )
+				{
+					install = false;
+				}
+			}
+		}
+		
+		if ( !getConfigFile().exists() || install )
 		{
 			try
 			{
-				FileFunc.putResource( internalConfigFile, getConfigFile() );
 				firstRun = true;
+				String fwZip = "com/chiorichan/framework.zip";
+				String zipMD5 = FileFunc.resourceToString( fwZip + ".md5" );
+				
+				if ( zipMD5 == null )
+				{
+					InputStream is = getClass().getClassLoader().getResourceAsStream( fwZip );
+					
+					if ( is == null )
+						throw new IOException();
+					zipMD5 = DigestUtils.md5Hex( is );
+				}
+				
+				File fwRoot = new File( webroot, "framework" );
+				File curMD5 = new File( fwRoot, "version.md5" );
+				if ( firstRun || !curMD5.exists() || !zipMD5.equals( FileUtils.readFileToString( curMD5 ) ) )
+				{
+					getLogger().info( "Extracting the Web UI to the Framework Webroot... Please wait..." );
+					FileUtils.deleteDirectory( fwRoot );
+					FileFunc.extractZipResource( fwZip, fwRoot );
+					FileUtils.write( new File( fwRoot, "version.md5" ), zipMD5 );
+					getLogger().info( "Finished with no errors!!" );
+				}
+				
+				
+				if ( getConfigFile().exists() )
+					getConfigFile().delete();
+				
+				FileFunc.putResource( internalConfigFile, getConfigFile() );
 			}
-			catch ( IOException e1 )
+			catch ( IOException e )
 			{
-				e1.printStackTrace();
+				getLogger().severe( "It would appear we had problem installing " + Versioning.getProduct() + " for the first time, see exception for details.", e );
 			}
 		}
 		
@@ -254,25 +315,50 @@ public class Loader extends BuiltinEventCreator implements Listener
 		
 		webroot = new File( configuration.getString( "server.webFileDirectory", "webroot" ) );
 		
-		if ( !webroot.exists() )
-			webroot.mkdirs();
+		if ( install )
+			FileUtils.deleteQuietly( webroot );
 		
-		if ( !webroot.isDirectory() )
-			Loader.getLogger().severe( "The `server.webFileDirectory` in config, specifies a directory that is not a directory. The server will be unable to serve files unless you correct this issue." );
+		DirectoryInfo info = FileFunc.directoryHealthCheck( webroot );
 		
-		if ( !webroot.canWrite() )
-			Loader.getLogger().warning( "The `server.webFileDirectory` in config, specifies a directory that is not writable. Though the server itself will NEVER need to write to this directory, any scripts that need write permissions will fail. You can ignore this if you did this to improve security." );
+		if ( info == DirectoryInfo.PERMISSION_FAILED )
+			Loader.getLogger().warning( "The `server.webFileDirectory` in config, specifies a directory that is not writable to the server. File uploads and other similar operations that need the temp directory will fail to function correctly." );
+		
+		if ( info == DirectoryInfo.CREATE_FAILED )
+			Loader.getLogger().warning( "The `server.webFileDirectory` in config, specifies a directory that we are having trouble properly using. File uploads and other similar operations that need the temp directory will fail to function correctly." );
 		
 		tmpFileDirectory = new File( configuration.getString( "server.tmpFileDirectory", "tmp" ) );
 		
-		if ( !tmpFileDirectory.exists() )
-			tmpFileDirectory.mkdirs();
+		info = FileFunc.directoryHealthCheck( tmpFileDirectory );
 		
-		if ( !tmpFileDirectory.isDirectory() )
-			Loader.getLogger().warning( "The `server.tmpFileDirectory` in config, specifies a directory that is not a directory. File uploads and other similar operations that need the temp directory will fail to function correctly." );
-		
-		if ( !tmpFileDirectory.canWrite() )
+		if ( info == DirectoryInfo.PERMISSION_FAILED )
 			Loader.getLogger().warning( "The `server.tmpFileDirectory` in config, specifies a directory that is not writable to the server. File uploads and other similar operations that need the temp directory will fail to function correctly." );
+		
+		if ( info == DirectoryInfo.CREATE_FAILED )
+			Loader.getLogger().warning( "The `server.tmpFileDirectory` in config, specifies a directory that we are having trouble properly using. File uploads and other similar operations that need the temp directory will fail to function correctly." );
+		
+		if ( install )
+		{
+			getLogger().info( "Installation was successful, please wait..." );
+			throw new StartupAbortException();
+		}
+		
+		if ( firstRun )
+		{
+			getLogger().highlight( "                        ATTENSION! ATTENSION! ATTENSION!" );
+			getLogger().highlight( "--------------------------------------------------------------------------------------" );
+			getLogger().highlight( "| It appears that this is your first time running Chiori-chan's Web Server.          |" );
+			getLogger().highlight( "| All the needed files have been created and extracted from the server jar file.     |" );
+			getLogger().highlight( "| We highly recommended that you stop the server, review configuration, and restart. |" );
+			getLogger().highlight( "| You can find documentation and guides on our Github for more help.                 |" );
+			getLogger().highlight( "--------------------------------------------------------------------------------------" );
+			String key = Loader.getConsole().prompt( "Would you like to stop and review configuration? Press 'Y' for Yes or 'N' for No.", "Y", "N" );
+			
+			if ( key.equals( "Y" ) )
+			{
+				getLogger().info( "The server will now stop, please wait..." );
+				throw new StartupAbortException();
+			}
+		}
 		
 		updater = new AutoUpdater( new DownloadUpdaterService( configuration.getString( "auto-updater.host" ) ), configuration.getString( "auto-updater.preferred-channel" ) );
 		
@@ -283,56 +369,6 @@ public class Loader extends BuiltinEventCreator implements Listener
 		
 		if ( !configuration.getBoolean( "server.disableTracking" ) && !Versioning.isDevelopment() )
 			NetworkFunc.sendTracking( "startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
-		
-		/**
-		 * try
-		 * {
-		 * String fwZip = "com/chiorichan/framework.zip";
-		 * InputStream is = getClass().getClassLoader().getResourceAsStream( fwZip );
-		 * if ( is != null )
-		 * {
-		 * File fwRoot = new File( webroot, "framework" );
-		 * String zipMD5 = DigestUtils.md5Hex( is );
-		 * File curMD5 = new File( fwRoot, "version.md5" );
-		 * if ( firstRun || !curMD5.exists() || !zipMD5.equals( FileUtils.readFileToString( curMD5 ) ) )
-		 * {
-		 * getLogger().info( "Extracting the Web UI to the Framework Webroot... Please wait..." );
-		 * ZipFile zipFile = new ZipFile( getClass().getClassLoader().getResource( fwZip ).getPath() );
-		 * zipFile.extractAll( fwRoot.getAbsolutePath() );
-		 * FileUtils.write( new File( fwRoot, "version.md5" ), zipMD5 );
-		 * getLogger().info( "Finished with no errors!!" );
-		 * }
-		 * }
-		 * else
-		 * {
-		 * getLogger().severe( "There seems to be a problem with your server jar. We had a problem getting the WebUI zip file which is compiled internally." );
-		 * }
-		 * }
-		 * catch ( ZipException | IOException e )
-		 * {
-		 * e.printStackTrace();
-		 * }
-		 */
-		if ( firstRun )
-		{
-			getLogger().highlight( "It appears that this is your first time running Chiori-chan's Web Server." );
-			getLogger().highlight( "All the needed files have been created or extracted from the jar file." );
-			getLogger().highlight( "We highly recommended that you stop the server, review configuration," );
-			getLogger().highlight( "and restart. You can find documentation and guides on our Github for more help." );
-			getLogger().highlight( "-------------------------------------------------------------------------------" );
-			String key = Loader.getConsole().prompt( "Would you like to stop and review configuration? Press 'Y' for Yes or 'N' for No.", "Y", "N", "C" );
-			
-			if ( key.equals( "C" ) )
-			{
-				// TODO Implement configuration interview
-			}
-			
-			if ( key.equals( "Y" ) )
-			{
-				getLogger().info( "The server will now stop, please wait..." );
-				throw new StartupAbortException();
-			}
-		}
 	}
 	
 	void changeRunLevel( RunLevel level )

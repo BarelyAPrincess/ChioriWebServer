@@ -468,10 +468,10 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		
 		Session sess = request.getSession();
 		
-		log.log( Level.INFO, "Session {Id=%s}", sess.getSessId() );
+		log.log( Level.FINE, "Session {id=%s}", sess.getSessId() );
 		
 		if ( sess.isLoginPresent() )
-			log.log( Level.INFO, "Account {Id=%s,Name=%s}", sess.getAcctId(), sess.getDisplayName() );
+			log.log( Level.FINE, "Account {id=%s,displayName=%s}", sess.getAcctId(), sess.getDisplayName() );
 		
 		if ( response.getStage() == HttpResponseStage.CLOSED )
 			return;
@@ -711,7 +711,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	{
 		try
 		{
-			log.log( Level.INFO, "Committed! {code=%s,msg=%s}", response.getHttpCode(), response.getHttpMsg() );
+			log.log( Level.INFO, "%s {code=%s}", response.getHttpMsg(), response.getHttpCode() );
 			
 			if ( !response.isCommitted() )
 				response.sendResponse();

@@ -56,7 +56,7 @@ public class ConsoleBus implements Runnable
 		System.setOut( new PrintStream( new LoggerOutputStream( getLogger( "SysOut" ).getLogger(), Level.INFO ), true ) );
 		System.setErr( new PrintStream( new LoggerOutputStream( getLogger( "SysErr" ).getLogger(), Level.SEVERE ), true ) );
 		
-		Runtime.getRuntime().addShutdownHook( new ServerShutdownThread() );
+		new ShutdownHook();
 		
 		primaryThread = new Thread( this, "Server Thread" );
 	}

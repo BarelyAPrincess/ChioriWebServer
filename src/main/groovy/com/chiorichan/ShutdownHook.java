@@ -9,8 +9,13 @@
  */
 package com.chiorichan;
 
-public class ServerShutdownThread extends Thread
+public class ShutdownHook extends Thread
 {
+	ShutdownHook()
+	{
+		Runtime.getRuntime().addShutdownHook( this );
+	}
+	
 	@Override
 	public void run()
 	{
