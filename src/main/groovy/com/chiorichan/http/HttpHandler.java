@@ -567,8 +567,11 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		if ( !request.getUploadedFiles().isEmpty() )
 			log.log( Level.INFO, "Uploads {" + Joiner.on( "," ).join( request.getUploadedFiles().values() ) + "}" );
 		
-		if ( !request.getRequestMap().isEmpty() )
-			log.log( Level.INFO, "Params {" + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( request.getRequestMap() ) + "}" );
+		if ( !request.getGetMap().isEmpty() )
+			log.log( Level.INFO, "Params GET {" + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( request.getGetMap() ) + "}" );
+		
+		if ( !request.getPostMap().isEmpty() )
+			log.log( Level.INFO, "Params POST {" + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( request.getPostMap() ) + "}" );
 		
 		if ( !request.getRewriteMap().isEmpty() )
 			log.log( Level.INFO, "Rewrite Params {" + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( request.getRewriteMap() ) + "}" );
@@ -715,7 +718,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		}
 		catch ( EventException ex )
 		{
-			throw new IOException( "Exception encountered during render event call, most likely the fault of a plugin.", ex );
+			throw new EvalException( ErrorReporting.E_ERROR, "Caught EventException while trying to fire the RenderEvent", ex.getCause(), factory.getShellFactory() );
 		}
 		
 		log.log( Level.INFO, "Written {bytes=%s,total_timing=%sms}", rendered.readableBytes(), Timings.finish( this ) );

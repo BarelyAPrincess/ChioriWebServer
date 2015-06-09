@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import com.chiorichan.Loader;
 import com.chiorichan.event.EventBus;
@@ -22,7 +23,9 @@ import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalFactoryResult;
 import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.ScriptTraceElement;
+import com.chiorichan.lang.ErrorReporting;
 import com.chiorichan.lang.EvalException;
+import com.chiorichan.lang.MultipleEvalExceptions;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
@@ -53,6 +56,10 @@ public class Template extends Plugin implements Listener
 	{
 		try
 		{
+			// We check if this exception was thrown from inside our plugin
+			if ( ExceptionUtils.indexOfThrowable( event.getThrowable(), Template.class ) > -1 )
+				return;
+			
 			EvalFactory factory = event.getRequest().getEvalFactory();
 			
 			// We initialize a temporary EvalFactory if the request did not contain one
@@ -67,7 +74,7 @@ public class Template extends Plugin implements Listener
 		}
 	}
 	
-	public String generateExceptionPage( Throwable t, EvalFactory factory )
+	public String generateExceptionPage( Throwable t, EvalFactory factory ) throws EvalException, MultipleEvalExceptions, IOException
 	{
 		Validate.notNull( t );
 		Validate.notNull( factory );
@@ -155,19 +162,16 @@ public class Template extends Plugin implements Listener
 		ob.append( "\n" );
 		ob.append( "<div class=\"version\">Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + "<br />" + Versioning.getCopyright() + "</div>\n" );
 		
-		try
-		{
-			return TemplateUtils.wrapAndEval( factory, ob.toString() );
-		}
-		catch ( IOException | EvalException e )
-		{
-			e.printStackTrace();
-			return e.getMessage();
-		}
+		EvalFactoryResult result = TemplateUtils.wrapAndEval( factory, ob.toString() );
+		
+		if ( result.hasExceptions() )
+			ErrorReporting.throwExceptions( result.getExceptions() );
+		
+		return result.getString();
 	}
 	
 	@EventHandler( priority = EventPriority.NORMAL )
-	public void onRenderEvent( RenderEvent event )
+	public void onRenderEvent( RenderEvent event ) throws IOException
 	{
 		try
 		{
@@ -218,7 +222,7 @@ public class Template extends Plugin implements Listener
 			
 			if ( title == null || title.isEmpty() )
 				ob.append( "<title>" + siteTitle + "</title>\n" );
-			if ( title.startsWith( "!" ) )
+			else if ( title.startsWith( "!" ) )
 				ob.append( "<title>" + title.substring( 1 ) + "</title>\n" );
 			else
 				ob.append( "<title>" + title + " - " + siteTitle + "</title>\n" );
@@ -292,8 +296,14 @@ public class Template extends Plugin implements Listener
 		}
 		catch ( IOException | EvalException e )
 		{
-			event.setSource( Unpooled.buffer().writeBytes( generateExceptionPage( e, event.getRequest().getEvalFactory() ).getBytes() ) );
-			event.getResponse().setStatus( 500 );
+			try
+			{
+				event.setSource( Unpooled.buffer().writeBytes( generateExceptionPage( e, event.getRequest().getEvalFactory() ).getBytes() ) );
+			}
+			catch ( EvalException | MultipleEvalExceptions e1 )
+			{
+				event.getResponse().sendException( e1 );
+			}
 		}
 	}
 	

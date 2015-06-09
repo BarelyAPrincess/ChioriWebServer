@@ -41,10 +41,11 @@ import com.chiorichan.lang.InvalidDescriptionException;
 import com.chiorichan.lang.InvalidPluginException;
 import com.chiorichan.lang.PluginNotFoundException;
 import com.chiorichan.lang.UnknownDependencyException;
-import com.chiorichan.libraries.MavenReference;
 import com.chiorichan.libraries.Libraries;
+import com.chiorichan.libraries.MavenReference;
 import com.chiorichan.plugin.loader.JavaPluginLoader;
 import com.chiorichan.plugin.loader.Plugin;
+import com.chiorichan.plugin.loader.PluginClassLoader;
 import com.chiorichan.plugin.loader.PluginLoader;
 import com.chiorichan.util.FileFunc;
 import com.google.common.collect.Maps;
@@ -574,6 +575,36 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 	public synchronized Plugin[] getPlugins()
 	{
 		return plugins.toArray( new Plugin[0] );
+	}
+	
+	public Plugin getPluginByClass( Class<?> clz ) throws PluginNotFoundException
+	{
+		try
+		{
+			if ( clz.getClassLoader() instanceof PluginClassLoader )
+				for ( Plugin plugin : getPlugins() )
+					if ( plugin == ( ( PluginClassLoader ) clz.getClassLoader() ).getPlugin() )
+						return plugin;
+		}
+		catch ( Exception e )
+		{
+			e.printStackTrace();
+		}
+		
+		throw new PluginNotFoundException( "We could not find a plugin with the class '" + clz + "', maybe it's not loaded." );
+	}
+	
+	public Plugin getPluginByClassWithoutException( Class<?> clz )
+	{
+		try
+		{
+			return getPluginByClass( clz );
+		}
+		catch ( PluginNotFoundException e )
+		{
+			getLogger().warning( e.getMessage() );
+			return null;
+		}
 	}
 	
 	public Plugin getPluginByClassname( String className ) throws PluginNotFoundException

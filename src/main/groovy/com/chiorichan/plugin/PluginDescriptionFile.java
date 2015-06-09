@@ -144,7 +144,6 @@ public class PluginDescriptionFile
 	private static final Yaml yaml = new Yaml( new SafeConstructor() );
 	private String name = null;
 	private String main = null;
-	private String classLoaderOf = null;
 	private List<String> depend = null;
 	private List<MavenReference> libraries = null;
 	private List<String> softDepend = null;
@@ -154,6 +153,7 @@ public class PluginDescriptionFile
 	private List<String> authors = null;
 	private String website = null;
 	private String prefix = null;
+	private String gitHubBaseUrl = null;
 	private boolean natives = false;
 	private RunLevel order = RunLevel.INITIALIZED;
 	
@@ -572,9 +572,9 @@ public class PluginDescriptionFile
 		return name + " v" + version;
 	}
 	
-	public String getClassLoaderOf()
+	public String getGitHubBaseUrl()
 	{
-		return classLoaderOf;
+		return gitHubBaseUrl;
 	}
 	
 	/**
@@ -634,11 +634,6 @@ public class PluginDescriptionFile
 		catch ( ClassCastException ex )
 		{
 			throw new InvalidDescriptionException( ex, "main is of wrong type" );
-		}
-		
-		if ( map.get( "class-loader-of" ) != null )
-		{
-			classLoaderOf = map.get( "class-loader-of" ).toString();
 		}
 		
 		if ( map.get( "depend" ) != null )
@@ -792,6 +787,9 @@ public class PluginDescriptionFile
 			authors = ImmutableList.<String> of();
 		}
 		
+		if ( map.get( "gitHubBaseUrl" ) != null )
+			gitHubBaseUrl = map.get( "gitHubBaseUrl" ).toString();
+		
 		if ( map.get( "prefix" ) != null )
 			prefix = map.get( "prefix" ).toString();
 		
@@ -809,44 +807,30 @@ public class PluginDescriptionFile
 		map.put( "order", order.toString() );
 		
 		if ( depend != null )
-		{
 			map.put( "depend", depend );
-		}
+		
 		if ( libraries != null )
-		{
 			map.put( "libraries", libraries );
-		}
+		
 		if ( softDepend != null )
-		{
 			map.put( "softdepend", softDepend );
-		}
+		
 		if ( website != null )
-		{
 			map.put( "website", website );
-		}
+		
 		if ( description != null )
-		{
 			map.put( "description", description );
-		}
 		
 		if ( authors.size() == 1 )
-		{
 			map.put( "author", authors.get( 0 ) );
-		}
 		else if ( authors.size() > 1 )
-		{
 			map.put( "authors", authors );
-		}
 		
-		if ( classLoaderOf != null )
-		{
-			map.put( "class-loader-of", classLoaderOf );
-		}
+		if ( gitHubBaseUrl != null )
+			map.put( "gitHubBaseUrl", prefix );
 		
 		if ( prefix != null )
-		{
 			map.put( "prefix", prefix );
-		}
 		
 		return map;
 	}

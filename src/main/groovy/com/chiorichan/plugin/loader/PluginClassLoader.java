@@ -28,7 +28,7 @@ import com.chiorichan.plugin.PluginDescriptionFile;
  *
  * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
-final class PluginClassLoader extends URLClassLoader
+public final class PluginClassLoader extends URLClassLoader
 {
 	private static final Map<Class<?>, PluginClassLoader> loaders = new WeakHashMap<Class<?>, PluginClassLoader>();
 	
@@ -144,5 +144,15 @@ final class PluginClassLoader extends URLClassLoader
 		
 		javaPlugin.init( loader.loader, loader.description, loader.dataFolder, loader.file, loader );
 		loader.initalized = true;
+	}
+	
+	public PluginLoader getPluginLoader()
+	{
+		return loader;
+	}
+	
+	public Plugin getPlugin()
+	{
+		return plugin;
 	}
 }

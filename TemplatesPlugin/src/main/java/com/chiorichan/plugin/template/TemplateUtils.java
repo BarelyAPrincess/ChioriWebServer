@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -14,9 +15,13 @@ import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.InterpreterOverrides;
 import com.chiorichan.factory.EvalFactory;
+import com.chiorichan.factory.EvalFactoryResult;
 import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.lang.EvalException;
+import com.chiorichan.lang.PluginNotFoundException;
+import com.chiorichan.plugin.PluginManager;
+import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.NetworkFunc;
@@ -32,6 +37,8 @@ public class TemplateUtils
 	private static final String GITHUB_BRANCH = Versioning.getGitHubBranch();
 	private static final String GITHUB_SERVER_URL = "https://raw.githubusercontent.com/ChioriGreene/ChioriWebServer/";
 	private static final String SERVER_PLUGIN_NAMESPACE = "com.chiorichan.plugin.";
+	
+	private static String baseTemplate = null;
 	
 	public static String formatStackTrace( StackTraceElement[] stackTrace, ScriptTraceElement[] scriptTrace )
 	{
@@ -120,16 +127,21 @@ public class TemplateUtils
 		String url = GITHUB_SERVER_URL + GITHUB_BRANCH + "/";
 		int lineNum = ste.getLineNumber();
 		
-		// Determines if the repository for this piece of code is located at another Github URL, e.g., Plugins
-		// TODO Match classname with loaded plugins and query actual plugin for it's Github URL.
-		switch ( className )
+		if ( className.startsWith( SERVER_PLUGIN_NAMESPACE + "email" ) )
+			url += "EmailPlugin/";
+		if ( className.startsWith( SERVER_PLUGIN_NAMESPACE + "template" ) )
+			url += "TemplatesPlugin/";
+		
+		try
 		{
-			case SERVER_PLUGIN_NAMESPACE + ".email":
-				url += "EmailPlugin/";
-				break;
-			case SERVER_PLUGIN_NAMESPACE + ".template":
-				url += "TemplatesPlugin/";
-				break;
+			Plugin plugin = PluginManager.INSTANCE.getPluginByClass( Class.forName( ste.getClassName() ) );
+			
+			if ( plugin != null && plugin.getDescription() != null && plugin.getDescription().getGitHubBaseUrl() != null )
+				url = plugin.getDescription().getGitHubBaseUrl();
+		}
+		catch ( PluginNotFoundException | ClassNotFoundException e )
+		{
+			// Do Nothing
 		}
 		
 		String gitHubGroovyUrl = url + "src/main/groovy/";
@@ -289,17 +301,21 @@ public class TemplateUtils
 		return StringUtils.replaceEach( l, new String[] {"&", "\"", "<", ">"}, new String[] {"&amp;", "&quot;", "&lt;", "&gt;"} );
 	}
 	
-	public static String wrapAndEval( EvalFactory factory, String html ) throws IOException, EvalException
+	public static EvalFactoryResult wrapAndEval( EvalFactory factory, String html ) throws UnsupportedEncodingException, IOException
 	{
 		Validate.notNull( factory );
 		
 		String pageMark = "<!-- PAGE DATA -->";
-		InputStream is = TemplateUtils.class.getClassLoader().getResourceAsStream( "BaseTemplate.html" );
-		String baseTemplate = ( is == null ) ? "" : new String( FileFunc.inputStream2Bytes( is ), "UTF-8" );
+		
+		if ( baseTemplate == null )
+		{
+			InputStream is = TemplateUtils.class.getClassLoader().getResourceAsStream( "BaseTemplate.html" );
+			baseTemplate = ( is == null ) ? "" : new String( FileFunc.inputStream2Bytes( is ), "UTF-8" );
+		}
 		
 		EvalMetaData meta = new EvalMetaData();
 		meta.shell = "html";
 		
-		return factory.eval( baseTemplate.replace( pageMark, html ), meta, SiteManager.INSTANCE.getDefaultSite() ).getString();
+		return factory.eval( baseTemplate.replace( pageMark, html ), meta, SiteManager.INSTANCE.getDefaultSite() );
 	}
 }
