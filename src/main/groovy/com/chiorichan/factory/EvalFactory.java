@@ -9,9 +9,7 @@
  */
 package com.chiorichan.factory;
 
-import groovy.lang.GroovyRuntimeException;
 import groovy.lang.GroovyShell;
-import groovy.lang.MissingMethodException;
 import groovy.transform.TimedInterrupt;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -20,8 +18,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
@@ -29,20 +25,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.Validate;
-import org.codehaus.groovy.control.CompilationFailedException;
 import org.codehaus.groovy.control.CompilerConfiguration;
-import org.codehaus.groovy.control.ErrorCollector;
-import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 import org.codehaus.groovy.control.customizers.ASTTransformationCustomizer;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
-import org.codehaus.groovy.control.messages.Message;
-import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
-import org.codehaus.groovy.syntax.SyntaxException;
 
 import com.chiorichan.ContentTypes;
 import com.chiorichan.Loader;
@@ -59,9 +48,8 @@ import com.chiorichan.factory.preprocessors.CoffeePreProcessor;
 import com.chiorichan.factory.preprocessors.LessPreProcessor;
 import com.chiorichan.factory.preprocessors.PreProcessor;
 import com.chiorichan.http.WebInterpreter;
-import com.chiorichan.lang.EvalFactoryException;
-import com.chiorichan.lang.IgnorableEvalException;
-import com.chiorichan.lang.SandboxSecurityException;
+import com.chiorichan.lang.ErrorReporting;
+import com.chiorichan.lang.EvalException;
 import com.chiorichan.site.Site;
 import com.chiorichan.util.MapFunc;
 import com.google.common.collect.Lists;
@@ -234,7 +222,7 @@ public class EvalFactory
 		if ( scriptTrace.size() < 1 )
 			return -1;
 		
-		return scriptTrace.get( scriptTrace.size() - 1 ).lineNum;
+		return scriptTrace.get( scriptTrace.size() - 1 ).getLineNumber();
 	}
 	
 	public String getFileName()
@@ -244,7 +232,7 @@ public class EvalFactory
 		if ( scriptTrace.size() < 1 )
 			return "<unknown>";
 		
-		String fileName = scriptTrace.get( scriptTrace.size() - 1 ).metaData.fileName;
+		String fileName = scriptTrace.get( scriptTrace.size() - 1 ).getMetaData().fileName;
 		
 		if ( fileName == null || fileName.isEmpty() )
 			return "<unknown>";
@@ -365,7 +353,7 @@ public class EvalFactory
 		postProcessors.add( postProcessor );
 	}
 	
-	public EvalFactoryResult eval( File fi, Site site ) throws EvalFactoryException
+	public EvalFactoryResult eval( File fi, Site site )
 	{
 		EvalMetaData codeMeta = new EvalMetaData();
 		
@@ -375,7 +363,7 @@ public class EvalFactory
 		return eval( fi, codeMeta, site );
 	}
 	
-	public EvalFactoryResult eval( File fi, EvalMetaData meta, Site site ) throws EvalFactoryException
+	public EvalFactoryResult eval( File fi, EvalMetaData meta, Site site )
 	{
 		try
 		{
@@ -383,24 +371,27 @@ public class EvalFactory
 		}
 		catch ( IOException e )
 		{
-			throw new EvalFactoryException( e, shellFactory );
+			EvalFactoryResult result = new EvalFactoryResult( meta, site );
+			EvalException.exceptionHandler( e, shellFactory, result, ErrorReporting.E_WARNING, String.format( "Exception caught while trying to read file '%s' from disk", fi.getAbsolutePath() ) );
+			return result;
 		}
 	}
 	
-	public EvalFactoryResult eval( FileInterpreter fi, Site site ) throws EvalFactoryException
+	public EvalFactoryResult eval( FileInterpreter fi, Site site )
 	{
 		return eval( fi, null, site );
 	}
 	
-	public EvalFactoryResult eval( FileInterpreter fi, EvalMetaData meta, Site site ) throws EvalFactoryException
+	public EvalFactoryResult eval( FileInterpreter fi, EvalMetaData meta, Site site )
 	{
 		if ( meta == null )
 			meta = new EvalMetaData();
 		
+		meta.params.clear();
 		if ( fi instanceof WebInterpreter )
-			meta.params = new MapFunc<String, Object>( String.class, Object.class ).castTypes( ( ( WebInterpreter ) fi ).getRewriteParams() );
+			meta.params.putAll( new MapFunc<String, Object>( String.class, Object.class ).castTypes( ( ( WebInterpreter ) fi ).getRewriteParams() ) );
 		else
-			meta.params = new MapFunc<String, Object>( String.class, Object.class ).castTypes( fi.getParams() );
+			meta.params.putAll( new MapFunc<String, Object>( String.class, Object.class ).castTypes( fi.getParams() ) );
 		
 		meta.contentType = fi.getContentType();
 		meta.shell = fi.getParams().get( "shell" );
@@ -409,7 +400,7 @@ public class EvalFactory
 		return eval( fi.consumeString(), meta, site );
 	}
 	
-	public EvalFactoryResult eval( String code, Site site ) throws EvalFactoryException
+	public EvalFactoryResult eval( String code, Site site )
 	{
 		EvalMetaData codeMeta = new EvalMetaData();
 		
@@ -418,11 +409,11 @@ public class EvalFactory
 		return eval( code, codeMeta, site );
 	}
 	
-	public EvalFactoryResult eval( String code, EvalMetaData meta, Site site ) throws EvalFactoryException
+	public EvalFactoryResult eval( String source, EvalMetaData meta, Site site )
 	{
 		EvalFactoryResult result = new EvalFactoryResult( meta, site );
 		
-		if ( code == null || code.isEmpty() )
+		if ( source == null || source.isEmpty() )
 			return result.setReason( "Code Block was null or empty!" );
 		
 		if ( meta.contentType == null )
@@ -431,17 +422,20 @@ public class EvalFactory
 			else
 				meta.contentType = ContentTypes.getContentType( meta.fileName );
 		
-		meta.source = code;
+		meta.source = source;
 		meta.site = site;
 		
 		try
 		{
 			if ( site != null )
-				code = runParsers( code, site, meta );
+			{
+				source = new IncludesParser().runParser( source, site, meta, this );
+				source = new LinksParser().runParser( source, site );
+			}
 		}
-		catch ( Exception e )
+		catch ( Throwable t )
 		{
-			result.addException( ignorableExceptionHandler( e, meta, "Exception caught while executing runParsers" ) );
+			EvalException.exceptionHandler( t, shellFactory, result, ErrorReporting.E_WARNING, "Exception caught while trying to run source parsers" );
 		}
 		
 		for ( PreProcessor p : preProcessors )
@@ -453,16 +447,16 @@ public class EvalFactory
 				{
 					try
 					{
-						String evaled = p.process( meta, code );
+						String evaled = p.process( meta, source );
 						if ( evaled != null )
 						{
-							code = evaled;
+							source = evaled;
 							break;
 						}
 					}
-					catch ( Exception e )
+					catch ( Throwable tt )
 					{
-						result.addException( ignorableExceptionHandler( e, meta, "Exception caught while running PreProcessor `" + p.getClass().getSimpleName() + "`" ) );
+						EvalException.exceptionHandler( tt, shellFactory, result, ErrorReporting.E_WARNING, "Exception caught while running PreProcessor `" + p.getClass().getSimpleName() + "`" );
 					}
 				}
 		}
@@ -477,7 +471,7 @@ public class EvalFactory
 		
 		synchronized ( tracker )
 		{
-			Loader.getLogger().fine( "Locking GroovyShell '" + shell.toString() + "' for execution of '" + meta.fileName + "', length '" + code.length() + "'" );
+			Loader.getLogger().fine( "Locking GroovyShell '" + shell.toString() + "' for execution of '" + meta.fileName + "', length '" + source.length() + "'" );
 			tracker.setInUse( true );
 			
 			byte[] saved = bs.toByteArray();
@@ -493,11 +487,13 @@ public class EvalFactory
 					{
 						try
 						{
-							result.obj = s.eval( meta, code, shellFactory.setShell( shell ), bs );
+							result.obj = s.eval( meta, source, shellFactory.setShell( shell ), bs );
 						}
 						catch ( Throwable t )
 						{
-							exceptionHandler( t, meta, result );
+							EvalException.exceptionHandler( t, shellFactory, result );
+							success = false;
+							return result;
 						}
 						
 						success = true;
@@ -508,7 +504,7 @@ public class EvalFactory
 			
 			try
 			{
-				output.writeBytes( ( success ) ? bs.toByteArray() : code.getBytes( encoding ) );
+				output.writeBytes( ( success ) ? bs.toByteArray() : source.getBytes( encoding ) );
 				
 				bs.reset();
 				bs.write( saved );
@@ -518,7 +514,7 @@ public class EvalFactory
 				e.printStackTrace();
 			}
 			
-			Loader.getLogger().fine( "Unlocking GroovyShell '" + shell.toString() + "' for execution of '" + meta.fileName + "', length '" + code.length() + "'" );
+			Loader.getLogger().fine( "Unlocking GroovyShell '" + shell.toString() + "' for execution of '" + meta.fileName + "', length '" + source.length() + "'" );
 			tracker.setInUse( false );
 		}
 		
@@ -538,156 +534,14 @@ public class EvalFactory
 							break;
 						}
 					}
-					catch ( Exception e )
+					catch ( Throwable tt )
 					{
-						result.addException( ignorableExceptionHandler( e, meta, "Exception caught while running PreProcessor `" + p.getClass().getSimpleName() + "`" ) );
+						EvalException.exceptionHandler( tt, shellFactory, result, ErrorReporting.E_WARNING, "Exception caught while running PostProcessor `" + p.getClass().getSimpleName() + "`" );
 					}
 				}
 		}
 		
 		return result.setResult( output, true );
-	}
-	
-	private IgnorableEvalException ignorableExceptionHandler( Throwable t, EvalMetaData meta, String msg ) throws EvalFactoryException
-	{
-		if ( t == null )
-			return null;
-		
-		if ( t instanceof IgnorableEvalException )
-		{
-			return ( IgnorableEvalException ) t;
-		}
-		else if ( t instanceof EvalFactoryException )
-		{
-			return ignorableExceptionHandler( t.getCause(), meta, msg );
-		}
-		else if ( t instanceof MultipleCompilationErrorsException )
-		{
-			MultipleCompilationErrorsException e = ( MultipleCompilationErrorsException ) t;
-			
-			if ( e.getErrorCollector().getErrorCount() > 0 )
-			{
-				if ( e.getErrorCollector().getErrorCount() == 1 )
-					return ignorableExceptionHandler( e.getErrorCollector().getException( 0 ), meta, msg );
-				
-				// TODO What should be do when there are more than one exceptions
-				Loader.getLogger().debug( "Got Exception: " + e.getErrorCollector().getErrors() );
-				return ignorableExceptionHandler( e.getErrorCollector().getException( 0 ), meta, msg );
-			}
-			
-			return null;
-		}
-		else if ( t instanceof CompilationFailedException ) // This is usually a parsing exception
-		{
-			CompilationFailedException e = ( CompilationFailedException ) t;
-			throw new EvalFactoryException( e, shellFactory );
-		}
-		else if ( t instanceof SandboxSecurityException ) // This usually happens when the script tries to use a blacklisted feature
-		{
-			SandboxSecurityException e = ( SandboxSecurityException ) t;
-			throw new EvalFactoryException( e, shellFactory, meta );
-		}
-		else if ( t instanceof GroovyRuntimeException )
-		{
-			GroovyRuntimeException e = ( GroovyRuntimeException ) t;
-			throw new EvalFactoryException( e, shellFactory );
-		}
-		else
-		{
-			return new IgnorableEvalException( msg, t );
-		}
-	}
-	
-	private void exceptionHandler( Throwable t, EvalMetaData meta, EvalFactoryResult result ) throws EvalFactoryException
-	{
-		if ( t == null )
-			return;
-		
-		if ( t instanceof EvalFactoryException )
-		{
-			throw ( EvalFactoryException ) t;
-		}
-		else if ( t instanceof MultipleCompilationErrorsException )
-		{
-			MultipleCompilationErrorsException exp = ( MultipleCompilationErrorsException ) t;
-			ErrorCollector e = exp.getErrorCollector();
-			
-			for ( Object err : e.getErrors() )
-			{
-				if ( err instanceof Throwable )
-				{
-					Loader.getLogger().warning( "Received this exception while trying to eval: ", ( Throwable ) err );
-					exceptionHandler( ( Throwable ) err, meta, result );
-				}
-				else if ( err instanceof SyntaxErrorMessage )
-				{
-					Loader.getLogger().warning( "Received this exception while trying to eval: ", ( ( SyntaxErrorMessage ) err ).getCause() );
-					exceptionHandler( ( ( SyntaxErrorMessage ) err ).getCause(), meta, result );
-				}
-				else if ( err instanceof Message )
-				{
-					StringWriter writer = new StringWriter();
-					( ( Message ) err ).write( new PrintWriter( writer, true ) );
-					Loader.getLogger().warning( "Received this error while trying to eval: " + writer.toString() );
-					
-					// result.addException( ignorableExceptionHandler( err, meta ) );
-				}
-			}
-		}
-		else if ( t instanceof TimeoutException ) // Timeout exception
-		{
-			TimeoutException e = ( TimeoutException ) t;
-			throw new EvalFactoryException( e, shellFactory, meta );
-		}
-		else if ( t instanceof MissingMethodException ) // Coding Problems
-		{
-			MissingMethodException e = ( MissingMethodException ) t;
-			throw new EvalFactoryException( e, shellFactory, meta );
-		}
-		else if ( t instanceof NullPointerException ) // Coding Problems
-		{
-			NullPointerException e = ( NullPointerException ) t;
-			throw new EvalFactoryException( e, shellFactory, meta );
-		}
-		else if ( t instanceof ArrayIndexOutOfBoundsException ) // Coding Problems
-		{
-			ArrayIndexOutOfBoundsException e = ( ArrayIndexOutOfBoundsException ) t;
-			throw new EvalFactoryException( e, shellFactory, meta );
-		}
-		else if ( t instanceof SyntaxException ) // Code Parsing Problems
-		{
-			SyntaxException e = ( SyntaxException ) t;
-			throw new EvalFactoryException( e, shellFactory, meta );
-		}
-		else if ( t instanceof CompilationFailedException ) // This is usually a parsing exception
-		{
-			CompilationFailedException e = ( CompilationFailedException ) t;
-			throw new EvalFactoryException( e, shellFactory, meta );
-		}
-		else if ( t instanceof SandboxSecurityException ) // This usually happens when the script tries to use a blacklisted feature
-		{
-			SandboxSecurityException e = ( SandboxSecurityException ) t;
-			throw new EvalFactoryException( e, shellFactory, meta );
-		}
-		else if ( t instanceof GroovyRuntimeException )
-		{
-			GroovyRuntimeException e = ( GroovyRuntimeException ) t;
-			throw new EvalFactoryException( e, shellFactory );
-		}
-		else
-		{
-			t.printStackTrace();
-			Loader.getLogger().warning( "Uncaught exception in EvalFactory for exception " + t.getClass().getName() );
-			throw new EvalFactoryException( t, shellFactory );
-		}
-	}
-	
-	private String runParsers( String source, Site site, EvalMetaData meta ) throws Exception
-	{
-		source = new IncludesParser().runParser( source, site, meta, this );
-		source = new LinksParser().runParser( source, site );
-		
-		return source;
 	}
 	
 	/**

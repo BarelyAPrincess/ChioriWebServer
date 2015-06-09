@@ -18,7 +18,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.ShellFactory;
-import com.chiorichan.lang.EvalFactoryException;
+import com.chiorichan.lang.ErrorReporting;
+import com.chiorichan.lang.EvalException;
 
 /**
  * SeaShell for handling GSP files.
@@ -62,7 +63,7 @@ public class GSPInterpreter implements Interpreter
 				int endIndex = fullFile.indexOf( MARKER_END, Math.max( startIndex, fullFileIndex ) );
 				
 				if ( endIndex == -1 )
-					throw new EvalFactoryException( new IOException( "Marker `<%` was not closed after line " + ( StringUtils.countMatches( output.toString(), "\n" ) + 1 ) + ", please check your source file and try again." ), shellFactory );
+					throw new EvalException( ErrorReporting.E_PARSE, new IOException( "Marker `<%` was not closed after line " + ( StringUtils.countMatches( output.toString(), "\n" ) + 1 ) + ", please check your source file and try again." ), shellFactory );
 				
 				fragment = fullFile.substring( startIndex + MARKER_START.length(), endIndex );
 				

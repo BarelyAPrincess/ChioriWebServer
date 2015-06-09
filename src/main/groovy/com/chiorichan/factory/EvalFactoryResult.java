@@ -11,6 +11,8 @@ import io.netty.buffer.ByteBuf;
 import java.nio.charset.Charset;
 import java.util.List;
 
+import com.chiorichan.lang.ErrorReporting;
+import com.chiorichan.lang.EvalException;
 import com.chiorichan.site.Site;
 import com.chiorichan.util.ObjectFunc;
 import com.google.common.collect.Lists;
@@ -23,13 +25,13 @@ import com.google.common.collect.Lists;
  */
 public class EvalFactoryResult
 {
-	List<Exception> caughtExceptions = Lists.newArrayList();
-	boolean success = false;
-	String reason = null;
-	ByteBuf buf = null;
+	private final List<EvalException> caughtExceptions = Lists.newArrayList();
+	private boolean success = false;
+	private String reason = null;
+	private ByteBuf buf = null;
 	Object obj = null;
-	EvalMetaData meta;
-	Site site;
+	private final EvalMetaData meta;
+	private final Site site;
 	
 	public EvalFactoryResult( EvalMetaData meta, Site site )
 	{
@@ -94,15 +96,38 @@ public class EvalFactoryResult
 		return "EvalFactoryResult{success=" + success + ",reason=" + reason + ",size=" + buf.writerIndex() + ",obj=" + obj + ",meta=" + meta + ",site=" + site + "}";
 	}
 	
-	public void addException( Exception exception )
+	public void addException( EvalException exception )
 	{
 		if ( exception != null )
 			caughtExceptions.add( exception );
 	}
 	
-	public Exception[] getExceptions()
+	public void addException( ErrorReporting level, Throwable throwable, ShellFactory factory )
 	{
-		return caughtExceptions.toArray( new Exception[0] );
+		if ( throwable != null )
+			caughtExceptions.add( new EvalException( level, throwable, factory ) );
+	}
+	
+	public EvalException[] getIgnorableExceptions()
+	{
+		List<EvalException> exs = Lists.newArrayList();
+		for ( EvalException e : caughtExceptions )
+			if ( e.isIgnorable() )
+				exs.add( e );
+		return exs.toArray( new EvalException[0] );
+	}
+	
+	public EvalException[] getExceptions()
+	{
+		return caughtExceptions.toArray( new EvalException[0] );
+	}
+	
+	public boolean hasIgnorableExceptions()
+	{
+		for ( EvalException e : caughtExceptions )
+			if ( e.isIgnorable() )
+				return true;
+		return false;
 	}
 	
 	public boolean hasExceptions()

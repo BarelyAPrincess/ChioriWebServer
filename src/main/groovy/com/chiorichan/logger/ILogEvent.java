@@ -8,14 +8,20 @@ package com.chiorichan.logger;
 
 import java.util.logging.Level;
 
+import com.chiorichan.lang.EvalException;
+
 /**
+ * Interface for {@link LogEvent} and {@link LogRecord}
+ * 
  * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public interface ILogEvent
 {
+	void exceptions( EvalException... exceptions );
+	
 	void log( Level level, String msg, Object... objs );
 	
 	void flush();
-
+	
 	void header( String msg, Object... objs );
 }

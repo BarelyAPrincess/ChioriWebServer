@@ -27,6 +27,7 @@ server:
   tmpFileDirectory: tmp
   webFileDirectory: webroot
   fileUploadMinInMemory: 0
+  errorReporting: E_ALL ~E_NOTICE ~E_STRICT ~E_DEPRECATED
   database:
     database: chiorifw
     type: sqlite
@@ -46,7 +47,6 @@ permissions:
   preloadEntities: true
 settings:
   update-folder: update
-  deprecated-verbose: default
   shutdown-message: Server Shutdown
   whitelist: false
 console:

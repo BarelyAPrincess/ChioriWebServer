@@ -36,10 +36,12 @@ import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.SiteLoadEvent;
 import com.chiorichan.factory.EvalBinding;
 import com.chiorichan.factory.EvalFactory;
+import com.chiorichan.factory.EvalFactoryResult;
 import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.http.HttpCookie;
 import com.chiorichan.http.Routes;
-import com.chiorichan.lang.EvalFactoryException;
+import com.chiorichan.lang.ErrorReporting;
+import com.chiorichan.lang.EvalException;
 import com.chiorichan.lang.SiteException;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.session.SessionManager;
@@ -52,6 +54,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 /**
+ * Holds the Site Instance
+ * 
  * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class Site
@@ -422,16 +426,15 @@ public class Site
 						meta.shell = "groovy";
 						
 						File file = getResourceWithException( script );
-						String result = factory.eval( file, meta, this ).getString();
+						EvalFactoryResult result = factory.eval( file, meta, this );
 						
-						if ( result == null || result.isEmpty() )
-							Loader.getLogger().info( "Finsihed evaling onLoadScript '" + script + "' for site '" + siteId + "'" );
+						if ( result.hasExceptions() )
+						{
+							SiteManager.getLogger().severe( String.format( "Exception caught while evaling onLoadScript '%s' for site '%s'", script, siteId ) );
+							SiteManager.getLogger().exceptions( result.getExceptions() );
+						}
 						else
-							Loader.getLogger().info( "Finsihed evaling onLoadScript '" + script + "' for site '" + siteId + "' with result: " + result );
-					}
-					catch ( EvalFactoryException e )
-					{
-						SiteManager.getLogger().warning( "There was an exception encountered while evaling onLoadScript '" + script + "' for site '" + siteId + "'.", e );
+							Loader.getLogger().info( "Finsihed evaling onLoadScript '" + script + "' for site '" + siteId + "' with result: " + result.getString( true ) );
 					}
 					catch ( FileNotFoundException e )
 					{
@@ -728,13 +731,13 @@ public class Site
 		{
 			return readResourceWithException( pack );
 		}
-		catch ( EvalFactoryException e )
+		catch ( EvalException e )
 		{
 			return "";
 		}
 	}
 	
-	public String readResourceWithException( String pack ) throws EvalFactoryException
+	public String readResourceWithException( String pack ) throws EvalException
 	{
 		EvalMetaData codeMeta = new EvalMetaData();
 		
@@ -749,7 +752,7 @@ public class Site
 		}
 		catch ( IOException e )
 		{
-			throw new EvalFactoryException( e, factory.getShellFactory() );
+			throw new EvalException( ErrorReporting.E_WARNING, e, factory.getShellFactory() );
 		}
 	}
 	

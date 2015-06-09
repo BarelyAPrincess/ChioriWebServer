@@ -54,12 +54,8 @@ public class ShellFactory
 		List<ScriptTraceElement> scriptTrace = Lists.newLinkedList();
 		
 		for ( StackTraceElement ste : stackTrace )
-		{
 			if ( ste.getFileName() != null && ste.getFileName().matches( "GroovyScript\\d*\\.chi" ) )
-			{
 				scriptTrace.add( new ScriptTraceElement( scriptHistory.get( ste.getFileName() ), ste ) );
-			}
-		}
 		
 		return scriptTrace;
 	}

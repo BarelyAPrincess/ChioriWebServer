@@ -29,7 +29,7 @@ import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalFactoryResult;
 import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.FileInterpreter;
-import com.chiorichan.lang.EvalFactoryException;
+import com.chiorichan.lang.EvalException;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.Timings;
@@ -355,7 +355,7 @@ public class WebFunc
 		return StringEscapeUtils.escapeHtml4( l );
 	}
 	
-	public static EvalFactoryResult evalFile( EvalFactory factory, Site site, String file ) throws IOException, EvalFactoryException
+	public static EvalFactoryResult evalFile( EvalFactory factory, Site site, String file ) throws IOException, EvalException
 	{
 		if ( file == null || file.isEmpty() )
 			return new EvalFactoryResult( new EvalMetaData( file ), site );
@@ -376,7 +376,7 @@ public class WebFunc
 		return factory.eval( packFile, codeMeta, site );
 	}
 	
-	public static EvalFactoryResult evalPackage( EvalFactory factory, Site site, String pack ) throws EvalFactoryException
+	public static EvalFactoryResult evalPackage( EvalFactory factory, Site site, String pack ) throws EvalException
 	{
 		try
 		{
@@ -388,7 +388,7 @@ public class WebFunc
 		}
 	}
 	
-	public static EvalFactoryResult evalPackageWithException( EvalFactory factory, Site site, String pack ) throws IOException, EvalFactoryException
+	public static EvalFactoryResult evalPackageWithException( EvalFactory factory, Site site, String pack ) throws IOException, EvalException
 	{
 		File packFile = null;
 		

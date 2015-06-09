@@ -9,7 +9,6 @@ package com.chiorichan.http;
 import static io.netty.handler.codec.http.HttpHeaders.is100ContinueExpected;
 import static io.netty.handler.codec.http.HttpResponseStatus.CONTINUE;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
-import groovy.lang.MissingMethodException;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -45,7 +44,6 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetSocketAddress;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -55,12 +53,10 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 
 import org.codehaus.groovy.runtime.NullObject;
-import org.codehaus.groovy.syntax.SyntaxException;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.ContentTypes;
 import com.chiorichan.Loader;
-import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.RenderEvent;
@@ -68,9 +64,12 @@ import com.chiorichan.event.server.RequestEvent;
 import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalFactoryResult;
 import com.chiorichan.factory.EvalMetaData;
+import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.lang.ApacheParser;
-import com.chiorichan.lang.EvalFactoryException;
+import com.chiorichan.lang.ErrorReporting;
+import com.chiorichan.lang.EvalException;
 import com.chiorichan.lang.HttpError;
+import com.chiorichan.lang.MultipleEvalExceptions;
 import com.chiorichan.lang.SiteException;
 import com.chiorichan.logger.LogEvent;
 import com.chiorichan.logger.LogManager;
@@ -109,7 +108,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	private HttpRequestWrapper request;
 	private boolean ssl;
 	private boolean requestFinished = false;
-	private boolean usedHandler = false;
 	private LogEvent log;
 	
 	static
@@ -164,7 +162,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	{
 		log.flushAndClose();
 		ctx.flush();
-		usedHandler = true;
 	}
 	
 	@Override
@@ -215,17 +212,34 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				return;
 			}
 			
-			EvalFactoryException evalOrig = null;
+			EvalException evalOrig = null;
 			
 			/*
 			 * Unpackage the EvalFactoryException.
 			 * Not sure if exceptions from the EvalFactory should be handled differently or not.
 			 * XXX Maybe skip generating exception pages for errors that were caused internally and report them to Chiori-chan unless the server is in development mode?
 			 */
-			if ( cause instanceof EvalFactoryException && cause.getCause() != null )
+			if ( cause instanceof EvalException && cause.getCause() != null )
 			{
-				evalOrig = ( EvalFactoryException ) cause;
+				evalOrig = ( EvalException ) cause;
 				cause = cause.getCause();
+			}
+			
+			/*
+			 * Presently we can only send one exception to the client
+			 * So for now we only send the most severe one
+			 */
+			if ( cause instanceof MultipleEvalExceptions )
+			{
+				EvalException most = null;
+				
+				// The lower the intValue() to more important it became
+				for ( EvalException e : ( ( MultipleEvalExceptions ) cause ).getExceptions() )
+					if ( most == null || most.errorLevel().intValue() > e.errorLevel().intValue() )
+						most = e;
+				
+				evalOrig = most;
+				cause = most.getCause();
 			}
 			
 			/*
@@ -249,7 +263,9 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 					response.sendError( ( ( PermissionDeniedException ) cause ).getHttpCode(), cause.getMessage() );
 				}
 			}
-			else if ( cause instanceof SessionException || cause instanceof PermissionException || cause instanceof SyntaxException || cause instanceof AccountException || cause instanceof SiteException || cause instanceof MissingMethodException || cause instanceof IndexOutOfBoundsException || cause instanceof NullPointerException || cause instanceof IOException )
+			else
+			// if ( cause instanceof SessionException || cause instanceof PermissionException || cause instanceof SyntaxException || cause instanceof AccountException || cause instanceof SiteException || cause instanceof
+			// MissingMethodException || cause instanceof IndexOutOfBoundsException || cause instanceof NullPointerException || cause instanceof IOException )
 			{
 				/*
 				 * XXX Known exceptions
@@ -268,25 +284,25 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				
 				if ( evalOrig == null )
 				{
-					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + " [" + ip + "] This exception was not caught by the EvalFactory and might be the result of a server programming bug:", cause );
-					response.sendException( cause );
-				}
-				else
-					response.sendException( evalOrig );
-			}
-			else
-			{
-				if ( evalOrig == null )
-				{
-					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + " [" + ip + "] This exception was not caught by the EvalFactory and might be the result of a server programming bug:", cause );
+					// Was not caught by EvalFactory
+					log.log( Level.SEVERE, ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s, message '%s'", cause.getClass().getName(), cause.getStackTrace()[0].getFileName(), cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
 					response.sendException( cause );
 				}
 				else
 				{
-					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + " [" + ip + "] This exception was not expected and most likely needs to be properly caught or investiated. Would you kindly report this stacktrace to the appropriate developer?", cause );
+					if ( evalOrig.isScriptingException() )
+					{
+						ScriptTraceElement element = evalOrig.getScriptTrace()[0];
+						log.log( Level.SEVERE, ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s:%s, message '%s'", cause.getClass().getName(), element.getMetaData().fileName, element.getLineNumber(), ( element.getColumnNumber() > 0 ) ? element.getColumnNumber() : 0, cause.getMessage() );
+					}
+					else
+						log.log( Level.SEVERE, ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s, message '%s'", cause.getClass().getName(), cause.getStackTrace()[0].getFileName(), cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
+					
 					response.sendException( evalOrig );
 				}
 			}
+			
+			// Loader.getLogger().warning( "Could not run file '" + fileName + "' because of error '" + t.getMessage() + "'" );
 			
 			finish();
 		}
@@ -339,7 +355,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			request = new HttpRequestWrapper( ctx.channel(), requestOrig, ssl, log );
 			response = request.getResponse();
 			
-			log.header( "[id: %s, new: %s, %s:%s => %s:%s]", hashCode(), !usedHandler, request.getIpAddr(), request.getRemotePort(), request.getLocalIpAddr(), request.getLocalPort() );
+			log.header( "[id: %s, %s:%s => %s:%s]", hashCode(), request.getIpAddr(), request.getRemotePort(), request.getLocalIpAddr(), request.getLocalPort() );
 			
 			if ( is100ContinueExpected( ( HttpRequest ) msg ) )
 				send100Continue( ctx );
@@ -456,7 +472,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		}
 	}
 	
-	public void handleHttp( HttpRequestWrapper request, HttpResponseWrapper response ) throws IOException, HttpError, SiteException, PermissionException, EvalFactoryException, SessionException
+	public void handleHttp( HttpRequestWrapper request, HttpResponseWrapper response ) throws IOException, HttpError, SiteException, PermissionException, MultipleEvalExceptions, EvalException, SessionException
 	{
 		// String uri = request.getUri();
 		// String domain = request.getParentDomain();
@@ -470,7 +486,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		
 		Session sess = request.getSession();
 		
-		log.log( Level.FINE, "Session {id=%s}", sess.getSessId() );
+		log.log( Level.FINE, "Session {id=%s,timeout=%s,new=%s}", sess.getSessId(), sess.getTimeout(), sess.isNew() );
 		
 		if ( sess.isLoginPresent() )
 			log.log( Level.FINE, "Account {id=%s,displayName=%s}", sess.getAcctId(), sess.getDisplayName() );
@@ -524,9 +540,9 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		if ( fi.getStatus() != HttpResponseStatus.OK )
 			throw new HttpError( fi.getStatus() );
 		
-		// TODO Improve the result of have no content to display
+		// TODO Improve the result of having no content to display, maybe empty page and log it to console.
 		if ( !fi.hasFile() && !fi.hasHTML() )
-			throw new HttpError( 500, null, "This page appears to have no content to display" );
+			throw new HttpError( 500, null, "We found what appears to be a mapping for your request but it contained no content to display, deffinite bug." );
 		
 		// NetworkManager.getLogger().info( ConsoleColor.BLUE + "Http" + ( ( ssl ) ? "s" : "" ) + "Request{httpCode=" + response.getHttpCode() + ",httpMsg=" + response.getHttpMsg() + ",subdomain=" + subdomain + ",domain=" + domain + ",uri="
 		// + uri + ",remoteIp=" + request.getIpAddr() + ",sessionId=" + sess.getSessId() + ",acct=" + sess.isLoginPresent() + ( sess.isLoginPresent() ? "(" + sess.getAcctId() + ")" : "" ) + ",details=" + fi.toString() + "}" );
@@ -552,7 +568,10 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			log.log( Level.INFO, "Uploads {" + Joiner.on( "," ).join( request.getUploadedFiles().values() ) + "}" );
 		
 		if ( !request.getRequestMap().isEmpty() )
-			log.log( Level.INFO, "Request Params {" + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( request.getRequestMap() ) + "}" );
+			log.log( Level.INFO, "Params {" + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( request.getRequestMap() ) + "}" );
+		
+		if ( !request.getRewriteMap().isEmpty() )
+			log.log( Level.INFO, "Rewrite Params {" + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( request.getRewriteMap() ) + "}" );
 		
 		if ( Loader.getConfig().getBoolean( "advanced.security.requestMapEnabled", true ) )
 			request.setGlobal( "_REQUEST", request.getRequestMap() );
@@ -571,30 +590,28 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		
 		sess.requirePermission( req );
 		
-		// Enhancement: Allow html to be ran under different shells. Default is embedded.
+		// Enhancement: Allow HTML to be ran under different shells. Default is embedded.
 		if ( fi.hasHTML() )
 		{
 			EvalMetaData meta = new EvalMetaData();
 			meta.shell = "embedded";
 			meta.contentType = fi.getContentType();
-			meta.params = Maps.newHashMap();
+			meta.params.clear();
 			meta.params.putAll( fi.getRewriteParams() );
 			meta.params.putAll( request.getGetMap() );
+			
 			EvalFactoryResult result = factory.eval( fi.getHTML(), meta, currentSite );
 			
 			if ( result.hasExceptions() )
 			{
-				if ( Loader.getConfig().getBoolean( "server.throwInternalServerErrorOnWarnings", false ) )
+				// TODO Print notices to output like PHP does
+				for ( EvalException e : result.getExceptions() )
 				{
-					throw new IOException( "Ignorable Exceptions were thrown, disable this behavior with the `throwInternalServerErrorOnWarnings` option in config.", result.getExceptions()[0] );
-				}
-				else
-				{
-					for ( Exception e : result.getExceptions() )
-					{
-						NetworkManager.getLogger().warning( e.getMessage() );
-						NetworkManager.getLogger().warning( "" + e.getStackTrace()[0] );
-					}
+					ErrorReporting.throwExceptions( e );
+					
+					log.exceptions( e );
+					if ( e.errorLevel().isEnabledLevel() )
+						rendered.writeBytes( e.getMessage().getBytes() );
 				}
 			}
 			
@@ -612,7 +629,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 					}
 			}
 			
-			log.log( Level.INFO, "EvalHtml {file=%s,timing=%sms}", fi.getHTML(), Timings.mark( this ) );
+			log.log( Level.INFO, "EvalHtml {file=%s,timing=%sms,success=%s}", fi.getFilePath(), Timings.mark( this ), result.isSuccessful() );
 		}
 		
 		if ( fi.hasFile() )
@@ -624,7 +641,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			}
 			
 			EvalMetaData meta = new EvalMetaData();
-			meta.params = Maps.newHashMap();
+			meta.params.clear();
 			meta.params.putAll( request.getRewriteMap() );
 			meta.params.putAll( request.getGetMap() );
 			
@@ -632,18 +649,14 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			
 			if ( result.hasExceptions() )
 			{
-				if ( Loader.getConfig().getBoolean( "server.throwInternalServerErrorOnWarnings", false ) )
+				// TODO Print notices to output like PHP does
+				for ( EvalException e : result.getExceptions() )
 				{
-					// Disable this behavior with the `throwInternalServerErrorOnWarnings` option in configuration.
-					throw new HttpError( "Ignorable exceptions were thrown within the evalFactory but server is configured to halt on all exceptions", result.getExceptions()[0] );
-				}
-				else
-				{
-					for ( Exception e : result.getExceptions() )
-					{
-						NetworkManager.getLogger().warning( e.getMessage() );
-						NetworkManager.getLogger().warning( "" + e.getStackTrace()[0] );
-					}
+					ErrorReporting.throwExceptions( e );
+					
+					log.exceptions( e );
+					if ( e.errorLevel().isEnabledLevel() )
+						rendered.writeBytes( e.getMessage().getBytes() );
 				}
 			}
 			
@@ -661,7 +674,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 					}
 			}
 			
-			log.log( Level.INFO, "EvalFile {file=%s,timing=%sms}", fi.getFilePath(), Timings.mark( this ) );
+			log.log( Level.INFO, "EvalFile {file=%s,timing=%sms,success=%s}", fi.getFilePath(), Timings.mark( this ), result.isSuccessful() );
 		}
 		
 		// if the connection was in a MultiPart mode, wait for the mode to change then return gracefully.
@@ -669,7 +682,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		{
 			while ( response.stage == HttpResponseStage.MULTIPART )
 			{
-				// I wonder if there is a better way to handle an on going multipart response.
+				// I wonder if there is a better way to handle on going multipart response.
 				try
 				{
 					Thread.sleep( 100 );

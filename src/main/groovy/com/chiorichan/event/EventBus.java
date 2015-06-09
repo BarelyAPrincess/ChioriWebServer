@@ -22,10 +22,11 @@ import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.Loader;
 import com.chiorichan.ServerManager;
-import com.chiorichan.Warning;
-import com.chiorichan.Warning.WarningState;
 import com.chiorichan.lang.AuthorNagException;
+import com.chiorichan.lang.DeprecatedDetail;
+import com.chiorichan.lang.ErrorReporting;
 import com.chiorichan.plugin.PluginBase;
+import com.chiorichan.plugin.PluginManager;
 
 public class EventBus implements ServerManager
 {
@@ -337,21 +338,23 @@ public class EventBus implements ServerManager
 				ret.put( eventClass, eventSet );
 			}
 			
-			for ( Class<?> clazz = eventClass; Event.class.isAssignableFrom( clazz ); clazz = clazz.getSuperclass() )
-			{
-				// This loop checks for extending deprecated events
-				if ( clazz.getAnnotation( Deprecated.class ) != null )
+			if ( ErrorReporting.E_DEPRECATED.isEnabledLevel() )
+				for ( Class<?> clazz = eventClass; Event.class.isAssignableFrom( clazz ); clazz = clazz.getSuperclass() )
 				{
-					Warning warning = clazz.getAnnotation( Warning.class );
-					WarningState warningState = Loader.getInstance().getWarningState();
-					if ( !warningState.printFor( warning ) )
+					if ( clazz.isAnnotationPresent( DeprecatedDetail.class ) )
 					{
+						DeprecatedDetail deprecated = clazz.getAnnotation( DeprecatedDetail.class );
+						
+						PluginManager.getLogger().warning( String.format( "The plugin '%s' has registered a listener for %s on method '%s', but the event is Deprecated for reason '%s'; please notify the authors %s.", plugin.getDescription().getFullName(), clazz.getName(), method.toGenericString(), deprecated.reason(), Arrays.toString( plugin.getDescription().getAuthors().toArray() ) ) );
 						break;
 					}
-					Loader.getLogger().log( Level.WARNING, String.format( "\"%s\" has registered a listener for %s on method \"%s\", but the event is Deprecated." + " \"%s\"; please notify the authors %s.", plugin.getDescription().getFullName(), clazz.getName(), method.toGenericString(), ( warning != null && warning.reason().length() != 0 ) ? warning.reason() : "Server performance will be affected", Arrays.toString( plugin.getDescription().getAuthors().toArray() ) ), warningState == WarningState.ON ? new AuthorNagException( null ) : null );
-					break;
+					
+					if ( clazz.isAnnotationPresent( Deprecated.class ) )
+					{
+						PluginManager.getLogger().warning( String.format( "The plugin '%s' has registered a listener for %s on method '%s', but the event is Deprecated! Please notify the authors %s.", plugin.getDescription().getFullName(), clazz.getName(), method.toGenericString(), Arrays.toString( plugin.getDescription().getAuthors().toArray() ) ) );
+						break;
+					}
 				}
-			}
 			
 			EventExecutor executor = new EventExecutor()
 			{

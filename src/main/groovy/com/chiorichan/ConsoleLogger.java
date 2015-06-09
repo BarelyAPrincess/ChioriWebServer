@@ -13,6 +13,8 @@ import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
+import com.chiorichan.factory.ScriptTraceElement;
+import com.chiorichan.lang.EvalException;
 import com.google.common.base.Strings;
 
 public class ConsoleLogger
@@ -176,5 +178,18 @@ public class ConsoleLogger
 	protected Logger getLogger()
 	{
 		return logger;
+	}
+	
+	public void exceptions( EvalException... exceptions )
+	{
+		for ( EvalException e : exceptions )
+			if ( e.errorLevel().isEnabledLevel() )
+				if ( e.isScriptingException() )
+				{
+					ScriptTraceElement element = e.getScriptTrace()[0];
+					severe( String.format( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s:%s, message '%s'", e.getClass().getName(), element.getMetaData().fileName, element.getLineNumber(), ( element.getColumnNumber() > 0 ) ? element.getColumnNumber() : 0, e.getMessage() ) );
+				}
+				else
+					severe( String.format( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s, message '%s'", e.getClass().getName(), e.getStackTrace()[0].getFileName(), e.getStackTrace()[0].getLineNumber(), e.getMessage() ) );
 	}
 }

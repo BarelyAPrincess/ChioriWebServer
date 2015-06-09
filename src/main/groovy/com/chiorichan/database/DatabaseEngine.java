@@ -457,7 +457,7 @@ public class DatabaseEngine
 				try
 				{
 					x++;
-					Loader.getLogger().debug( x + " -> " + ObjectFunc.castToString( s ) );
+					// Loader.getLogger().debug( x + " -> " + ObjectFunc.castToString( s ) );
 					stmt.setString( x, ObjectFunc.castToString( s ) );
 				}
 				catch ( SQLException e )
@@ -638,7 +638,7 @@ public class DatabaseEngine
 		if ( clz == Double.class || clz == double.class )
 			type = "DOUBLE(" + maxLenReq + ",2)";
 		
-		Loader.getLogger().debug( "Query: " + "ALTER TABLE `" + table + "` ADD `" + columnName + "` " + type + ";" );
+		// Loader.getLogger().debug( "Query: " + "ALTER TABLE `" + table + "` ADD `" + columnName + "` " + type + ";" );
 		queryUpdate( "ALTER TABLE `" + table + "` ADD `" + columnName + "` " + type + ";" );
 	}
 	
@@ -825,7 +825,7 @@ public class DatabaseEngine
 					case "java.lang.Boolean":
 						return false;
 					default:
-						Loader.getLogger().debug( "Column Class: " + className );
+						// Loader.getLogger().debug( "Column Class: " + className );
 						throw new IllegalArgumentException( "We could not instigate the proper column type " + className + " for column " + name + ", this might need to be inplemented." );
 				}
 			}

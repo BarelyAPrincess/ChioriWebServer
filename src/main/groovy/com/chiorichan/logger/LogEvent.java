@@ -8,6 +8,8 @@ package com.chiorichan.logger;
 
 import java.util.logging.Level;
 
+import com.chiorichan.lang.EvalException;
+
 /**
  * 
  * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
@@ -50,5 +52,11 @@ public class LogEvent implements ILogEvent
 	public void close()
 	{
 		LogManager.close( this );
+	}
+	
+	@Override
+	public void exceptions( EvalException... exceptions )
+	{
+		record.exceptions( exceptions );
 	}
 }

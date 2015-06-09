@@ -120,7 +120,7 @@ public class HttpResponseWrapper
 		// NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + status.code() + ",httpMsg=" + httpMsg + ",subdomain=" + request.getSubDomain() + ",domain=" + request.getDomain() + ",uri=" + request.getUri() +
 		// ",remoteIp=" + request.getIpAddr() + "}" );
 		
-		if ( msg == null )
+		if ( msg == null || msg.length() > 100 )
 			log.log( Level.SEVERE, "%s {code=%s}", httpMsg, status.code() );
 		else
 			log.log( Level.SEVERE, "%s {code=%s,reason=%s}", httpMsg, status.code(), msg );
@@ -201,12 +201,15 @@ public class HttpResponseWrapper
 		
 		httpStatus = HttpResponseStatus.valueOf( httpCode );
 		
-		NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + httpCode + ",httpMsg=" + HttpCode.msg( httpCode ) + ",domain=" + request.getSubDomain() + "." + request.getDomain() + ",uri=" + request.getUri() + ",remoteIp=" + request.getIpAddr() + "}" );
+		// NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + httpCode + ",httpMsg=" + HttpCode.msg( httpCode ) + ",domain=" + request.getSubDomain() + "." + request.getDomain() + ",uri=" + request.getUri() +
+		// ",remoteIp=" + request.getIpAddr() + "}" );
 		
 		if ( Loader.getConfig().getBoolean( "server.developmentMode" ) )
 		{
 			if ( event.getErrorHtml() != null )
 			{
+				log.log( Level.SEVERE, "%s {code=500}", HttpCode.msg( 500 ) );
+				
 				resetBuffer();
 				print( event.getErrorHtml() );
 				sendResponse();

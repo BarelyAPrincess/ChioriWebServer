@@ -14,7 +14,8 @@ import java.io.IOException;
 
 import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.ShellFactory;
-import com.chiorichan.lang.EvalFactoryException;
+import com.chiorichan.lang.ErrorReporting;
+import com.chiorichan.lang.EvalException;
 
 /**
  * Simple HTML SeaShell.
@@ -29,7 +30,7 @@ public class HTMLInterpreter implements Interpreter
 	}
 	
 	@Override
-	public String eval( EvalMetaData meta, String code, ShellFactory shellFactory, ByteArrayOutputStream bs ) throws EvalFactoryException
+	public String eval( EvalMetaData meta, String code, ShellFactory shellFactory, ByteArrayOutputStream bs ) throws EvalException
 	{
 		try
 		{
@@ -37,7 +38,7 @@ public class HTMLInterpreter implements Interpreter
 		}
 		catch ( IOException e )
 		{
-			throw new EvalFactoryException( e, shellFactory );
+			throw new EvalException( ErrorReporting.E_PARSE, e, shellFactory );
 		}
 		return "";
 	}

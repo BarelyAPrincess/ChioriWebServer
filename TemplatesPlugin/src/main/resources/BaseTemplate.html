@@ -47,7 +47,6 @@
 		}
 		
 		pre span.error {
-			white-space: pre-wrap;
 			display: block;
 			background: #fce3e3;
 		}
@@ -55,11 +54,21 @@
 		pre span.ln {
 			color: #999;
 			padding-right: 0.5em;
-			border-right: 1px solid #ccc;
+			margin-left: -46px;
 		}
 		
 		pre span.error-ln {
 			font-weight: bold;
+		}
+		
+		.code pre {
+			background-color: #ffe;
+			line-height: 125%;
+			margin: 0.5em 0 0.5em 46px;
+			padding: 0.5em;
+			border: 1px solid #eee;
+			border-left: 1px solid #ccc;
+			white-space: pre-wrap;
 		}
 		
 		.container {
@@ -87,18 +96,11 @@
 			border-radius: 10px;
 			margin-bottom: 1em;
 			line-height: 160%;
+			white-space: pre-wrap;
 		}
 		
 		.source {
 			margin-bottom: 1em;
-		}
-		
-		.code pre {
-			background-color: #ffe;
-			margin: 0.5em 0;
-			padding: 0.5em;
-			line-height: 125%;
-			border: 1px solid #eee;
 		}
 		
 		.source .file {

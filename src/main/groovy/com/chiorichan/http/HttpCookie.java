@@ -153,7 +153,7 @@ public class HttpCookie
 		else
 			additional += "; path=/";
 		
-		if ( domain != null && !domain.isEmpty() )
+		if ( domain != null && !domain.isEmpty() && !".".equals( domain ) )
 			additional += "; domain=" + domain;
 		
 		if ( secure )

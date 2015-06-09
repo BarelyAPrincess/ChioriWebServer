@@ -3,9 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 package com.chiorichan.factory;
 
@@ -27,9 +24,9 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.UUID;
-import java.util.Map.Entry;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -38,6 +35,7 @@ import org.ocpsoft.prettytime.PrettyTime;
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
+import com.chiorichan.lang.ErrorReporting;
 import com.chiorichan.lang.PluginNotFoundException;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.loader.Plugin;
@@ -57,6 +55,19 @@ import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 
 public abstract class ScriptingBaseJava extends Script
 {
+	public static final ErrorReporting E_ERROR = ErrorReporting.E_ERROR;
+	public static final ErrorReporting E_WARNING = ErrorReporting.E_WARNING;
+	public static final ErrorReporting E_PARSE = ErrorReporting.E_PARSE;
+	public static final ErrorReporting E_NOTICE = ErrorReporting.E_NOTICE;
+	public static final ErrorReporting E_USER_ERROR = ErrorReporting.E_USER_ERROR;
+	public static final ErrorReporting E_USER_WARNING = ErrorReporting.E_USER_WARNING;
+	public static final ErrorReporting E_USER_NOTICE = ErrorReporting.E_USER_NOTICE;
+	public static final ErrorReporting E_STRICT = ErrorReporting.E_STRICT;
+	public static final ErrorReporting E_IGNORABLE = ErrorReporting.E_IGNORABLE;
+	public static final ErrorReporting E_DEPRECATED = ErrorReporting.E_DEPRECATED;
+	public static final ErrorReporting E_USER_DEPRECATED = ErrorReporting.E_USER_DEPRECATED;
+	public static final ErrorReporting E_ALL = ErrorReporting.E_ALL;
+	
 	@SuppressWarnings( "unchecked" )
 	String var_export( Object... objs )
 	{

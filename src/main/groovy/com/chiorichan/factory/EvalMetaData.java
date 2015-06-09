@@ -22,7 +22,7 @@ import com.google.common.collect.Maps;
 
 public class EvalMetaData
 {
-	public Map<String, Object> params = Maps.newLinkedHashMap();
+	public final Map<String, Object> params = Maps.newLinkedHashMap();
 	public String contentType;
 	public String fileName;
 	public String scriptName;
@@ -76,6 +76,6 @@ public class EvalMetaData
 	@Override
 	public String toString()
 	{
-		return "EvalMetaData{fileName=" + fileName + ",scriptName=" + scriptName + ",script=" + script + ",shell=" + shell + ",sourceSize=" + source.length() + ",site=" + site + ",contentType=" + contentType + ",params=[" + params + "]}";
+		return String.format( "EvalMetaData {fileName=%s,scriptName=%s,script=%s,shell=%s,sourceSize=%s,site=%s,contentType=%s,params=[%s]}", fileName, scriptName, script, shell, source.length(), site, contentType, params );
 	}
 }

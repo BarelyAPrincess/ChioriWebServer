@@ -32,7 +32,6 @@ import org.joda.time.Duration;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 
-import com.chiorichan.Warning.WarningState;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountMeta;
 import com.chiorichan.configuration.file.YamlConfiguration;
@@ -44,6 +43,7 @@ import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
 import com.chiorichan.event.server.ServerRunLevelEvent;
 import com.chiorichan.event.server.ServerRunLevelEventImpl;
+import com.chiorichan.lang.ErrorReporting;
 import com.chiorichan.lang.StartupAbortException;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.net.NetworkManager;
@@ -76,7 +76,6 @@ public class Loader extends BuiltinEventCreator implements Listener
 	
 	public static File tmpFileDirectory;
 	public static File webroot = new File( "" );
-	private WarningState warningState = WarningState.DEFAULT;
 	private final ServerRunLevelEvent runLevelEvent = new ServerRunLevelEventImpl();
 	
 	static final ConsoleBus console = new ConsoleBus();
@@ -291,7 +290,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		
 		EventBus.init( configuration.getBoolean( "plugins.useTimings" ) );
 		
-		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
+		ErrorReporting.enableErrorLevelOnly( ErrorReporting.parse( configuration.getString( "server.errorReporting", "E_ALL ~E_NOTICE ~E_STRICT ~E_DEPRECATED" ) ) );
 		
 		webroot = new File( configuration.getString( "server.webFileDirectory", "webroot" ) );
 		
@@ -622,7 +621,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	public void reload()
 	{
 		configuration = YamlConfiguration.loadConfiguration( getConfigFile() );
-		warningState = WarningState.value( configuration.getString( "settings.deprecated-verbose" ) );
+		ErrorReporting.enableErrorLevelOnly( ErrorReporting.parse( configuration.getString( "server.errorReporting", "E_ALL ~E_NOTICE ~E_STRICT ~E_DEPRECATED" ) ) );
 		
 		PluginManager.INSTANCE.clearPlugins();
 		// ModuleBus.getCommandMap().clearCommands();
@@ -763,11 +762,6 @@ public class Loader extends BuiltinEventCreator implements Listener
 	public static boolean isRunning()
 	{
 		return isRunning;
-	}
-	
-	public WarningState getWarningState()
-	{
-		return warningState;
 	}
 	
 	private static File getConfigFile()

@@ -16,7 +16,7 @@ import com.chiorichan.InterpreterOverrides;
 import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.ScriptTraceElement;
-import com.chiorichan.lang.EvalFactoryException;
+import com.chiorichan.lang.EvalException;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.NetworkFunc;
@@ -43,7 +43,7 @@ public class TemplateUtils
 		
 		for ( StackTraceElement ste : stackTrace )
 		{
-			String fileName = ( ste.getFileName() == null ) ? "Unknown Source" : ste.getFileName() + ( ( ste.getLineNumber() > -1 ) ? "(" + ste.getLineNumber() + ")" : "" );
+			String fileName = ( ste.getFileName() == null ) ? "<Unknown Source>" : ste.getFileName() + ( ( ste.getLineNumber() > -1 ) ? "(" + ste.getLineNumber() + ")" : "" );
 			
 			String previewType = "core";
 			
@@ -101,9 +101,9 @@ public class TemplateUtils
 	
 	public static String generateCodePreview( Throwable t )
 	{
-		if ( t instanceof EvalFactoryException )
+		if ( t instanceof EvalException )
 		{
-			ScriptTraceElement[] ste = ( ( EvalFactoryException ) t ).getScriptTrace();
+			ScriptTraceElement[] ste = ( ( EvalException ) t ).getScriptTrace();
 			
 			if ( ste != null && ste.length > 0 )
 				return generateCodePreview( ste[0] );
@@ -222,22 +222,16 @@ public class TemplateUtils
 				cLine++;
 				
 				if ( cLine > lineNum - 5 && cLine < lineNum + 5 )
-				{
 					if ( cLine == lineNum )
-					{
-						sb.append( "<span class=\"error\"><span class=\"ln error-ln\">" + cLine + "</span> " + l + "</span>" );
-					}
+						sb.append( String.format( "<span class=\"error\"><span class=\"ln error-ln\">%4s</span> %s</span>", cLine, l ) );
 					else
-					{
-						sb.append( "<span class=\"ln\">" + cLine + "</span> " + l + "\n" );
-					}
-				}
+						sb.append( String.format( "<span class=\"ln\">%4s</span> %s\n", cLine, l ) );
 			}
 			
 			is.close();
 			
 			if ( cLine < lineNum )
-				sb.append( "<span class=\"error\"><span class=\"ln error-ln\">" + lineNum + "</span> Unexpected EOF!</span>" );
+				sb.append( String.format( "<span class=\"error\"><span class=\"ln error-ln\">%4s</span> Unexpected EOF!</span>", lineNum ) );
 		}
 		catch ( IOException e )
 		{
@@ -278,11 +272,11 @@ public class TemplateUtils
 						l = l.substring( 0, colNum ) + "<span style=\"background-color: red; font-weight: bolder;\">" + l.substring( colNum, colNum + 1 ) + "</span>" + l.substring( colNum + 1 );
 					}
 					
-					sb.append( "<span class=\"error\"><span class=\"ln error-ln\">" + cLine + "</span> " + l + "</span>" );
+					sb.append( String.format( "<span class=\"error\"><span class=\"ln error-ln\">%4s</span> %s</span>", cLine, l ) );
 				}
 				else
 				{
-					sb.append( "<span class=\"ln\">" + cLine + "</span> " + l + "\n" );
+					sb.append( String.format( "<span class=\"ln\">%4s</span> %s\n", cLine, l ) );
 				}
 			}
 		}
@@ -295,7 +289,7 @@ public class TemplateUtils
 		return StringUtils.replaceEach( l, new String[] {"&", "\"", "<", ">"}, new String[] {"&amp;", "&quot;", "&lt;", "&gt;"} );
 	}
 	
-	public static String wrapAndEval( EvalFactory factory, String html ) throws IOException, EvalFactoryException
+	public static String wrapAndEval( EvalFactory factory, String html ) throws IOException, EvalException
 	{
 		Validate.notNull( factory );
 		

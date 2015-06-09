@@ -188,7 +188,7 @@ public class SessionManager implements TaskCreator, ServerManager
 		}
 		
 		if ( cleanupCount > 0 )
-			getLogger().info( ConsoleColor.DARK_AQUA + "The cleanup cycle destroyed " + cleanupCount + " sessions." );
+			getLogger().info( ConsoleColor.DARK_AQUA + "The cleanup task recycled " + cleanupCount + " sessions." );
 	}
 	
 	public Session startSession( SessionWrapper wrapper ) throws SessionException
@@ -306,6 +306,7 @@ public class SessionManager implements TaskCreator, ServerManager
 	public Session createSession( SessionWrapper wrapper ) throws SessionException
 	{
 		Session session = new Session( datastore.createSession( sessionIdBaker(), wrapper ) );
+		session.newSession = true;
 		sessions.add( session );
 		return session;
 	}

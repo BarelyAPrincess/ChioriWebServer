@@ -17,12 +17,12 @@ import java.util.regex.Pattern;
  */
 public class ScriptTraceElement
 {
-	String fileName = "<unknown>";
-	String methodName;
-	String className;
-	int lineNum = -1;
-	int colNum = -1;
-	EvalMetaData metaData;
+	private final String fileName;
+	private final String methodName;
+	private final String className;
+	private final int lineNum;
+	private final int colNum;
+	private final EvalMetaData metaData;
 	
 	public ScriptTraceElement( EvalMetaData metaData, int lineNum, int colNum )
 	{
@@ -31,7 +31,9 @@ public class ScriptTraceElement
 	
 	public ScriptTraceElement( EvalMetaData metaData, int lineNum, int colNum, String methodName, String className )
 	{
-		this( metaData );
+		this.metaData = metaData;
+		fileName = metaData.scriptName;
+		
 		this.lineNum = lineNum;
 		this.colNum = colNum;
 		
@@ -47,7 +49,10 @@ public class ScriptTraceElement
 	
 	public ScriptTraceElement( EvalMetaData metaData, String msg )
 	{
-		this( metaData );
+		this.metaData = metaData;
+		fileName = metaData.scriptName;
+		methodName = "run";
+		className = ( metaData.scriptName == null || metaData.scriptName.isEmpty() ) ? "<Unknown Class>" : metaData.scriptName.substring( 0, metaData.scriptName.lastIndexOf( "." ) );
 		
 		msg = msg.replaceAll( "\n", "" );
 		
@@ -62,34 +67,25 @@ public class ScriptTraceElement
 		
 		if ( m1.find() )
 		{
-			try
-			{
-				lineNum = Integer.parseInt( m1.group( 1 ) );
-				colNum = Integer.parseInt( m1.group( 2 ) );
-				// methodName = m1.group( 3 ).trim();
-			}
-			catch ( IndexOutOfBoundsException e )
-			{
-				e.printStackTrace();
-			}
+			lineNum = Integer.parseInt( m1.group( 1 ) );
+			colNum = Integer.parseInt( m1.group( 2 ) );
+			// methodName = m1.group( 3 ).trim();
+		}
+		else
+		{
+			lineNum = -1;
+			colNum = -1;
 		}
 	}
 	
 	public ScriptTraceElement( EvalMetaData metaData, StackTraceElement ste )
 	{
-		this( metaData );
+		this.metaData = metaData;
 		fileName = ste.getFileName();
 		methodName = ste.getMethodName();
 		className = ste.getClassName();
 		lineNum = ste.getLineNumber();
-	}
-	
-	ScriptTraceElement( EvalMetaData metaData )
-	{
-		this.metaData = metaData;
-		fileName = metaData.scriptName;
-		methodName = "run";
-		className = metaData.scriptName;
+		colNum = -1;
 	}
 	
 	public String getFileName()
@@ -125,6 +121,6 @@ public class ScriptTraceElement
 	@Override
 	public String toString()
 	{
-		return fileName + "(" + lineNum + ")" + ":" + className + "." + methodName;
+		return String.format( "%s.%s(%s:%s)", className, methodName, fileName, lineNum );
 	}
 }

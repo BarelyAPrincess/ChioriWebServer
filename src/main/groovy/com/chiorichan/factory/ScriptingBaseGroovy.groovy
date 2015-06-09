@@ -11,13 +11,15 @@ import com.chiorichan.account.AccountManager
 import com.chiorichan.http.HttpCode
 import com.chiorichan.http.HttpRequestWrapper
 import com.chiorichan.http.HttpResponseWrapper
-import com.chiorichan.lang.EvalFactoryException
+import com.chiorichan.lang.EvalException
 import com.chiorichan.permission.Permission
 import com.chiorichan.permission.PermissionResult
 import com.chiorichan.session.Session
 import com.chiorichan.site.Site
 import com.chiorichan.site.SiteManager
+import com.chiorichan.util.WebFunc
 import com.google.common.collect.Lists
+
 
 /**
  * Used as the Groovy Scripting Base and provides scripts with custom builtin methods
@@ -245,7 +247,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 */
 	Object include( String pack )
 	{
-		EvalFactoryResult result = getHttpUtils().evalPackage( pack )
+		EvalFactoryResult result = evalPackage( pack )
 		print result.getString()
 		return result.getObject()
 	}
@@ -263,7 +265,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 		if ( !includedPackages.contains( pack ) )
 		{
 			includedPackages.add( pack )
-			EvalFactoryResult result = getHttpUtils().evalPackage( pack )
+			EvalFactoryResult result = evalPackage( pack )
 			print result.getString()
 			return result.getObject()
 		}
@@ -281,7 +283,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 */
 	Object require( String pack )
 	{
-		EvalFactoryResult result = getHttpUtils().evalPackageWithException( pack )
+		EvalFactoryResult result = evalPackageWithException( pack )
 		print result.getString()
 		return result.getObject()
 	}
@@ -301,7 +303,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 		if ( !includedPackages.contains( pack ) )
 		{
 			includedPackages.add( pack )
-			EvalFactoryResult result = getHttpUtils().evalPackageWithException( pack )
+			EvalFactoryResult result = evalPackageWithException( pack )
 			print result.getString()
 			return result.getObject()
 		}
@@ -324,43 +326,43 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	
 	// Old Http Utils Methods - needs restructuring
 	
-	EvalFactoryResult evalFile( String file ) throws IOException, EvalFactoryException
+	EvalFactoryResult evalFile( String file ) throws IOException, EvalException
 	{
-		return evalFile( getEvalFactory(), getSession().getSite(), file )
+		return WebFunc.evalFile( getEvalFactory(), getSession().getSite(), file )
 	}
 	
-	EvalFactoryResult evalPackage( String pack ) throws EvalFactoryException
+	EvalFactoryResult evalPackage( String pack ) throws EvalException
 	{
-		return evalPackage( getRequest().getEvalFactory(), getSession().getSite(), pack )
+		return WebFunc.evalPackage( getRequest().getEvalFactory(), getSession().getSite(), pack )
 	}
 	
-	EvalFactoryResult evalPackageWithException( String pack, Object... global ) throws IOException, EvalFactoryException
+	EvalFactoryResult evalPackageWithException( String pack, Object... global ) throws IOException, EvalException
 	{
-		return evalPackageWithException( getRequest().getEvalFactory(), getSession().getSite(), pack )
+		return WebFunc.evalPackageWithException( getRequest().getEvalFactory(), getSession().getSite(), pack )
 	}
 	
-	EvalFactoryResult evalPackageWithException( String pack ) throws IOException, EvalFactoryException
+	EvalFactoryResult evalPackageWithException( String pack ) throws IOException, EvalException
 	{
-		return evalPackageWithException( getRequest().getEvalFactory(), getSession().getSite(), pack )
+		return WebFunc.evalPackageWithException( getRequest().getEvalFactory(), getSession().getSite(), pack )
 	}
 	
-	String readFile( String file ) throws IOException, EvalFactoryException
+	String readFile( String file ) throws IOException, EvalException
 	{
-		return evalFile( getRequest().getEvalFactory(), getSession().getSite(), file ).getString()
+		return WebFunc.evalFile( getRequest().getEvalFactory(), getSession().getSite(), file ).getString()
 	}
 	
-	String readPackage( String pack ) throws EvalFactoryException
+	String readPackage( String pack ) throws EvalException
 	{
-		return evalPackage( getRequest().getEvalFactory(), getSession().getSite(), pack ).getString()
+		return WebFunc.evalPackage( getRequest().getEvalFactory(), getSession().getSite(), pack ).getString()
 	}
 	
-	String readPackageWithException( String pack, Object... global ) throws IOException, EvalFactoryException
+	String readPackageWithException( String pack, Object... global ) throws IOException, EvalException
 	{
-		return evalPackageWithException( getRequest().getEvalFactory(), getSession().getSite(), pack ).getString()
+		return WebFunc.evalPackageWithException( getRequest().getEvalFactory(), getSession().getSite(), pack ).getString()
 	}
 	
-	String readPackageWithException( String pack ) throws IOException, EvalFactoryException
+	String readPackageWithException( String pack ) throws IOException, EvalException
 	{
-		return evalPackageWithException( getRequest().getEvalFactory(), getSession().getSite(), pack ).getString()
+		return WebFunc.evalPackageWithException( getRequest().getEvalFactory(), getSession().getSite(), pack ).getString()
 	}
 }

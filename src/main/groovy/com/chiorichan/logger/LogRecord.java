@@ -12,7 +12,8 @@ import java.util.logging.Level;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
-import com.chiorichan.tasks.Timings;
+import com.chiorichan.factory.ScriptTraceElement;
+import com.chiorichan.lang.EvalException;
 import com.google.common.collect.Lists;
 
 /**
@@ -27,7 +28,7 @@ class LogRecord implements ILogEvent
 		Level level;
 		String msg;
 		ConsoleColor color;
-		long time = Timings.epoch();
+		long time = System.currentTimeMillis();
 		
 		LogElement( Level level, String msg, ConsoleColor color )
 		{
@@ -65,10 +66,28 @@ class LogRecord implements ILogEvent
 			sb.append( ConsoleColor.GOLD + header );
 		
 		for ( LogElement e : elements )
-			sb.append( ConsoleColor.GRAY + "\n  |-> " + new SimpleDateFormat( "HH:mm:ss.SSS" ).format( e.time ) + " " + e.color + e.msg );
+			sb.append( ConsoleColor.RESET + "" + ConsoleColor.GRAY + "\n  |-> " + new SimpleDateFormat( "ss.SSS" ).format( e.time ) + " " + e.color + e.msg );
 		
 		Loader.getLogger().log( Level.INFO, "\r" + sb.toString() );
 		
 		elements.clear();
+	}
+	
+	@Override
+	public void exceptions( EvalException... exceptions )
+	{
+		for ( EvalException e : exceptions )
+			if ( e.errorLevel().isEnabledLevel() )
+				if ( e.isScriptingException() )
+				{
+					ScriptTraceElement element = e.getScriptTrace()[0];
+					Throwable t = e.getCause();
+					log( Level.SEVERE, ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s:%s, message '%s'", t.getClass().getName(), element.getMetaData().fileName, element.getLineNumber(), ( element.getColumnNumber() > 0 ) ? element.getColumnNumber() : 0, e.getMessage() );
+				}
+				else
+				{
+					Throwable t = e.getCause();
+					log( Level.SEVERE, ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s, message '%s'", t.getClass().getName(), t.getStackTrace()[0].getFileName(), t.getStackTrace()[0].getLineNumber(), t.getMessage() );
+				}
 	}
 }

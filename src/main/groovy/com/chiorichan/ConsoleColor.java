@@ -346,7 +346,7 @@ public enum ConsoleColor
 	public static ConsoleColor fromLevel( Level var1 )
 	{
 		if ( var1 == Level.FINEST || var1 == Level.FINER || var1 == Level.FINE )
-			return DARK_GRAY;
+			return GRAY;
 		else if ( var1 == Level.INFO )
 			return WHITE;
 		else if ( var1 == Level.WARNING )
@@ -354,7 +354,7 @@ public enum ConsoleColor
 		else if ( var1 == Level.SEVERE )
 			return RED;
 		else if ( var1 == Level.CONFIG )
-			return GRAY;
+			return DARK_PURPLE;
 		else
 			return WHITE;
 	}

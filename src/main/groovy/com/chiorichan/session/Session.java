@@ -43,6 +43,8 @@ import com.google.common.collect.Sets;
  */
 public final class Session extends AccountPermissible implements Listener
 {
+	boolean newSession = false;
+	
 	/**
 	 * The underlying data for this session<br>
 	 * Preserves access to the datastore and it's methods {@link SessionData#save()}, {@link SessionData#reload()}, {@link SessionData#destroy()}
@@ -568,5 +570,10 @@ public final class Session extends AccountPermissible implements Listener
 	void putSessionCookie( String key, HttpCookie cookie )
 	{
 		sessionCookies.put( key, cookie );
+	}
+
+	public boolean isNew()
+	{
+		return newSession;
 	}
 }
