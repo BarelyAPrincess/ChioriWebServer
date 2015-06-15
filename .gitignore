@@ -30,5 +30,6 @@
 /sessions/
 /plugins
 /.gradle/
+/.groovy/
 /accounts
 /tmp

@@ -277,7 +277,7 @@ public class SessionManager implements TaskCreator, ServerManager
 	}
 	
 	/**
-	 * Retrieves a list of {@link Sessions} based on the Ip Address provided.
+	 * Retrieves a list of {@link com.session.Session}s based on the Ip Address provided.
 	 * 
 	 * @param ipAddr
 	 *            The Ip Address to check for

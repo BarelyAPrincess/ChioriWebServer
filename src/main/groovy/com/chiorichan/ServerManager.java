@@ -8,10 +8,9 @@ package com.chiorichan;
 
 /**
  * Acts as the base interface to all manager classes.<br>
- * {@link com.chiorichan.account.PermissionManager}, {@link com.chiorichan.account.PluginManager}, {@link com.chiorichan.account.AccountManager}, {@link com.chiorichan.account.SessionManager}, {@link com.chiorichan.account.SiteManager}
+ * {@link com.chiorichan.permission.PermissionManager}, {@link com.chiorichan.plugin.PluginManager}, {@link com.chiorichan.account.AccountManager}, {@link com.chiorichan.session.SessionManager}, {@link com.chiorichan.site.SiteManager}
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public interface ServerManager
 {

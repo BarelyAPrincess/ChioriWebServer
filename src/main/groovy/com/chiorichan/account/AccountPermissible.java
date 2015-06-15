@@ -22,10 +22,9 @@ import com.chiorichan.tasks.Timings;
 import com.google.common.base.Joiner;
 
 /**
- * Used on classes that can support Account Logins, e.g., {@link Sessions}
+ * Used on classes that can support Account Logins, e.g., {@link com.session.Session}
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public abstract class AccountPermissible extends Permissible implements Account
 {
