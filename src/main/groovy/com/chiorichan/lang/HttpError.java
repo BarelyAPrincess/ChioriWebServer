@@ -33,7 +33,7 @@ public class HttpError extends Exception
 	{
 		super( msg );
 		
-		this.reason = status.reasonPhrase();
+		this.reason = status.reasonPhrase().toString();
 		this.status = status;
 	}
 	
@@ -55,7 +55,7 @@ public class HttpError extends Exception
 		super( msg, cause );
 		
 		status = HttpResponseStatus.valueOf( 500 );
-		reason = status.reasonPhrase();
+		reason = status.reasonPhrase().toString();
 	}
 	
 	public String getReason()
@@ -70,7 +70,7 @@ public class HttpError extends Exception
 	
 	public String getHttpReason()
 	{
-		return status.reasonPhrase();
+		return status.reasonPhrase().toString();
 	}
 	
 	public HttpResponseStatus getHttpResponseStatus()

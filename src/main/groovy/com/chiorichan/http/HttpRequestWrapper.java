@@ -8,12 +8,12 @@ package com.chiorichan.http;
 
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.Cookie;
-import io.netty.handler.codec.http.CookieDecoder;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import io.netty.handler.codec.http.ServerCookieDecoder;
 import io.netty.handler.ssl.SslHandler;
 
 import java.io.IOException;
@@ -177,7 +177,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			site = SiteManager.INSTANCE.getSiteById( "default" );
 		
 		// Decode Get Map
-		QueryStringDecoder queryStringDecoder = new QueryStringDecoder( http.getUri() );
+		QueryStringDecoder queryStringDecoder = new QueryStringDecoder( http.uri() );
 		Map<String, List<String>> params = queryStringDecoder.parameters();
 		if ( !params.isEmpty() )
 		{
@@ -193,13 +193,13 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		}
 		
 		// Decode Cookies
-		String var1 = http.headers().get( "Cookie" );
+		String var1 = http.headers().getAndConvert( "Cookie" );
 		if ( var1 != null )
 		{
-			Set<Cookie> var2 = CookieDecoder.decode( var1 );
+			Set<Cookie> var2 = ServerCookieDecoder.decode( var1 );
 			for ( Cookie cookie : var2 )
 			{
-				if ( cookie.getName().startsWith( "_ws" ) )
+				if ( cookie.name().startsWith( "_ws" ) )
 					serverCookies.add( new HttpCookie( cookie ) );
 				else
 					cookies.add( new HttpCookie( cookie ) );
@@ -370,7 +370,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	{
 		if ( uri == null )
 		{
-			uri = http.getUri();
+			uri = http.uri();
 			
 			try
 			{
@@ -410,7 +410,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	
 	public String getHost()
 	{
-		return http.headers().get( "Host" );
+		return http.headers().getAndConvert( "Host" );
 	}
 	
 	// Cached domain names.
@@ -421,7 +421,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	{
 		try
 		{
-			String domain = http.headers().get( "Host" );
+			String domain = http.headers().getAndConvert( "Host" );
 			domain = domain.split( "\\:" )[0];
 			
 			return domain;
@@ -466,7 +466,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		
 		if ( http.headers().get( "Host" ) != null )
 		{
-			String domain = http.headers().get( "Host" ).toLowerCase();
+			String domain = http.headers().getAndConvert( "Host" ).toLowerCase();
 			
 			assert ( domain != null );
 			
@@ -504,19 +504,19 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	
 	public String getMethodString()
 	{
-		return http.getMethod().toString();
+		return http.method().toString();
 	}
 	
 	public HttpMethod getMethod()
 	{
-		return http.getMethod();
+		return http.method();
 	}
 	
 	public String getHeader( String key )
 	{
 		try
 		{
-			return http.headers().get( key );
+			return http.headers().getAndConvert( key );
 		}
 		catch ( NullPointerException | IndexOutOfBoundsException e )
 		{
@@ -564,7 +564,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	public String getIpAddr( boolean detectCDN )
 	{
 		if ( detectCDN && http.headers().contains( "CF-Connecting-IP" ) )
-			return http.headers().get( "CF-Connecting-IP" );
+			return http.headers().getAndConvert( "CF-Connecting-IP" );
 		
 		return ( ( InetSocketAddress ) channel.remoteAddress() ).getAddress().getHostAddress();
 	}
@@ -598,7 +598,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		if ( detectCDN && http.headers().contains( "CF-Connecting-IP" ) )
 			try
 			{
-				return InetAddress.getByName( http.headers().get( "CF-Connecting-IP" ) );
+				return InetAddress.getByName( http.headers().getAndConvert( "CF-Connecting-IP" ) );
 			}
 			catch ( UnknownHostException e )
 			{

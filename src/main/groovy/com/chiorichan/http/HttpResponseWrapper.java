@@ -15,6 +15,8 @@ import io.netty.channel.ChannelProgressiveFutureListener;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponse;
@@ -114,7 +116,7 @@ public class HttpResponseWrapper
 			throw new IllegalStateException( "You can't access sendError method within this HttpResponse because the connection has been closed." );
 		
 		if ( httpMsg == null )
-			httpMsg = status.reasonPhrase();
+			httpMsg = status.reasonPhrase().toString();
 		
 		// NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + status.code() + ",httpMsg=" + httpMsg + ",subdomain=" + request.getSubDomain() + ",domain=" + request.getDomain() + ",uri=" + request.getUri() +
 		// ",remoteIp=" + request.getIpAddr() + "}" );
@@ -489,8 +491,8 @@ public class HttpResponseWrapper
 		// h.set( HttpHeaders.Names.EXPIRES, formatter.print( DateTime.now( DateTimeZone.UTC ).plusDays( 1 ) ) );
 		// h.set( HttpHeaders.Names.CACHE_CONTROL, "public, max-age=86400" );
 		
-		h.set( HttpHeaders.Names.CONTENT_LENGTH, response.content().readableBytes() );
-		h.set( HttpHeaders.Names.CONNECTION, HttpHeaders.Values.KEEP_ALIVE );
+		h.setInt( HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes() );
+		h.set( HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE );
 		
 		stage = HttpResponseStage.WRITTEN;
 		

@@ -22,7 +22,7 @@ import com.chiorichan.tasks.Timings;
 import com.google.common.base.Joiner;
 
 /**
- * Used on classes that can support Account Logins, e.g., {@link com.session.Session}
+ * Used on classes that can support Account Logins, e.g., {@link com.chiorichan.session.Session}
  * 
  * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */

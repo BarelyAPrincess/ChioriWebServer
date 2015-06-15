@@ -161,7 +161,7 @@ dependencies
 	compile group: 'org.reflections', name: 'reflections', version: '0.9.9'
 	
 	// Used for Networking HTTP and TCP
-	compile group: 'io.netty', name: 'netty-all', version: '5.0.0.Alpha1'
+	compile group: 'io.netty', name: 'netty-all', version: '5.0.0.Alpha2'
 	
 	// Used to Make Database Connections
 	compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.35'

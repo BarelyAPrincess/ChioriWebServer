@@ -36,10 +36,10 @@ public class HttpCookie
 	
 	public HttpCookie( Cookie cookie )
 	{
-		this( cookie.getName(), cookie.getValue() );
-		setDomain( cookie.getDomain() );
-		setExpiration( cookie.getMaxAge() );
-		setPath( cookie.getPath() );
+		this( cookie.name(), cookie.value() );
+		setDomain( cookie.domain() );
+		setExpiration( cookie.maxAge() );
+		setPath( cookie.path() );
 		needsUpdating = false;
 	}
 	

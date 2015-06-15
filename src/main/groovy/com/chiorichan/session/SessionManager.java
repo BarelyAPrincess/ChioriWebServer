@@ -277,7 +277,7 @@ public class SessionManager implements TaskCreator, ServerManager
 	}
 	
 	/**
-	 * Retrieves a list of {@link com.session.Session}s based on the Ip Address provided.
+	 * Retrieves a list of {@link Session}s based on the Ip Address provided.
 	 * 
 	 * @param ipAddr
 	 *            The Ip Address to check for
@@ -334,7 +334,7 @@ public class SessionManager implements TaskCreator, ServerManager
 	}
 	
 	/**
-	 * Get the {@link ConsoleLogger} instance for this SessionManager
+	 * Get the {@link com.chiorichan.ConsoleLogger} instance for this SessionManager
 	 * 
 	 * @return ConsoleLogger instance
 	 */

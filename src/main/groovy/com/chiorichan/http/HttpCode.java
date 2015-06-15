@@ -157,7 +157,7 @@ public class HttpCode
 			case HTTP_BLUE_BOX:
 				return "Time and Relative Dimensions in Space. Yes, that's it. Names are funny. It's me. I'm the TARDIS.";
 			default:
-				return HttpResponseStatus.valueOf( code ).reasonPhrase();
+				return HttpResponseStatus.valueOf( code ).reasonPhrase().toString();
 		}
 	}
 }

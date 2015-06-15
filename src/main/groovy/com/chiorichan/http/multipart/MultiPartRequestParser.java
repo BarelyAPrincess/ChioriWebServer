@@ -29,13 +29,13 @@ public class MultiPartRequestParser
 	
 	public static boolean isMultipart( HttpRequestWrapper request )
 	{
-		String requestType = request.getOriginal().headers().get( "Content-Type" );
+		String requestType = request.getOriginal().headers().getAndConvert( "Content-Type" );
 		return requestType.toLowerCase().startsWith( "multipart/form-data" );
 	}
 	
 	public MultiPartRequestParser( HttpRequestWrapper request ) throws IOException, HttpError
 	{
-		String requestType = request.getOriginal().headers().get( "Content-Type" );
+		String requestType = request.getOriginal().headers().getAndConvert( "Content-Type" );
 		int maxUpload = Loader.getConfig().getInt( "server.maxFileUploadKb", 5120 );
 		
 		if ( request.getContentLength() > maxUpload )

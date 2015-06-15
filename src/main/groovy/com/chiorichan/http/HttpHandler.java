@@ -6,7 +6,6 @@
  */
 package com.chiorichan.http;
 
-import static io.netty.handler.codec.http.HttpHeaders.is100ContinueExpected;
 import static io.netty.handler.codec.http.HttpResponseStatus.CONTINUE;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import io.netty.buffer.ByteBuf;
@@ -17,6 +16,7 @@ import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpHeaderUtil;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -357,7 +357,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			
 			log.header( "[id: %s, %s:%s => %s:%s]", hashCode(), request.getIpAddr(), request.getRemotePort(), request.getLocalIpAddr(), request.getLocalPort() );
 			
-			if ( is100ContinueExpected( ( HttpRequest ) msg ) )
+			if ( HttpHeaderUtil.is100ContinueExpected( ( HttpRequest ) msg ) )
 				send100Continue( ctx );
 			
 			if ( NetworkSecurity.isIpBanned( request.getIpAddr() ) )
@@ -380,7 +380,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 					handshaker = wsFactory.newHandshaker( requestOrig );
 					if ( handshaker == null )
 					{
-						WebSocketServerHandshakerFactory.sendUnsupportedWebSocketVersionResponse( ctx.channel() );
+						WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse( ctx.channel() );
 					}
 					else
 					{
