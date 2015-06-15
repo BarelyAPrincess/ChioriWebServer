@@ -33,7 +33,6 @@ import java.util.logging.Level;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
-import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.http.ErrorEvent;
@@ -325,7 +324,8 @@ public class HttpResponseWrapper
 	 */
 	private void sendRedirect( String target, int httpStatus, boolean insteadRedirect )
 	{
-		NetworkManager.getLogger().info( ConsoleColor.DARK_GRAY + "Sending page redirect to `" + target + "` using httpCode `" + httpStatus + " - " + HttpCode.msg( httpStatus ) + "`" );
+		// NetworkManager.getLogger().info( ConsoleColor.DARK_GRAY + "Sending page redirect to `" + target + "` using httpCode `" + httpStatus + " - " + HttpCode.msg( httpStatus ) + "`" );
+		log.log( Level.INFO, "Redirect {uri=%s,httpCode=%s,status=%s}", target, httpStatus, HttpCode.msg( httpStatus ) );
 		
 		if ( stage == HttpResponseStage.CLOSED )
 			throw new IllegalStateException( "You can't access sendRedirect method within this HttpResponse because the connection has been closed." );
