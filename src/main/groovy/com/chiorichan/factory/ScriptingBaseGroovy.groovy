@@ -37,7 +37,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 * Holds history of included packages
 	 * Used by include_once and require_once methods.
 	 */
-	private List<String> includedPackages = Lists.newArrayList()
+	private final List<String> includedPackages = Lists.newArrayList()
 	
 	/**
 	 * Same as @link ScriptingBaseJava:var_export(obj) but instead prints the result to the buffer

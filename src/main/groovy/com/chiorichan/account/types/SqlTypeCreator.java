@@ -27,7 +27,7 @@ import com.chiorichan.account.event.AccountLookupEvent;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.database.DatabaseEngine;
-import com.chiorichan.database.DatabaseEngine.SqlTableColumns;
+import com.chiorichan.database.SqlTableColumns;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.tasks.Timings;
 import com.google.common.collect.Maps;

@@ -11,12 +11,11 @@ package com.chiorichan.util
  * Provides do... until/while ability to groovy scripts
  * Which as of Jan 2014 was not implemented into groovy
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class Looper
 {
-	private Closure code
+	private final Closure code
 	
 	public static Looper go( Closure code )
 	{

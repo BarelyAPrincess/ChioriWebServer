@@ -65,27 +65,27 @@ import com.chiorichan.util.Versioning;
 
 public class Loader extends BuiltinEventCreator implements Listener
 {
-	public static final String BROADCAST_CHANNEL_ADMINISTRATIVE = "chiori.broadcast.admin";
-	public static final String BROADCAST_CHANNEL_USERS = "chiori.broadcast.user";
+	public static final String BROADCAST_CHANNEL_ADMINISTRATIVE = "com.chiorichan.broadcast.admin";
+	public static final String BROADCAST_CHANNEL_USERS = "com.chiorichan.broadcast.user";
 	
-	private static AutoUpdater updater = null;
-	private static YamlConfiguration configuration;
 	private static Loader instance;
+	private static AutoUpdater updater;
 	private static OptionSet options;
+	private static String clientId;
+	
+	private static YamlConfiguration configuration;
 	protected static long startTime = System.currentTimeMillis();
 	
 	public static File tmpFileDirectory;
 	public static File webroot = new File( "" );
 	private final ServerRunLevelEvent runLevelEvent = new ServerRunLevelEventImpl();
 	
-	static final ConsoleBus console = new ConsoleBus();
-	
-	private static String clientId;
 	private static boolean finishedStartup = false;
 	static boolean isRunning = true;
 	private static String stopReason = null;
 	
-	protected static DatabaseEngine fwDatabase = null;
+	private static final ConsoleBus console = new ConsoleBus();
+	private static DatabaseEngine fwDatabase = null;
 	
 	public static void main( String... args ) throws Exception
 	{
@@ -179,7 +179,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return parser;
 	}
 	
-	public Loader( OptionSet options0 ) throws StartupException
+	private Loader( OptionSet options0 ) throws StartupException
 	{
 		instance = this;
 		options = options0;
@@ -423,7 +423,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return runLevelEvent.getLastRunLevel();
 	}
 	
-	public boolean start() throws StartupException
+	private boolean start() throws StartupException
 	{
 		EventBus.INSTANCE.registerEvents( this, this );
 		PluginManager.init();

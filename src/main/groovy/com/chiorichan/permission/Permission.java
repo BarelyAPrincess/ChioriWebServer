@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Set;
 
 import com.chiorichan.ConsoleColor;
-import com.chiorichan.Loader;
 import com.chiorichan.permission.backend.memory.MemoryPermission;
 import com.chiorichan.permission.lang.PermissionException;
 import com.google.common.base.Strings;

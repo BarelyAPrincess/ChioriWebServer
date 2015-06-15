@@ -27,9 +27,9 @@ import com.google.common.io.CharStreams;
 
 public class ResourceLoader
 {
-	private File resourcePath = null;
-	private ZipFile zipLib = null;
-	private boolean isZipFile = false;
+	private final File resourcePath;
+	private final ZipFile zipLib;
+	private final boolean isZipFile;
 	
 	public ResourceLoader( File path ) throws IOException
 	{
@@ -38,6 +38,8 @@ public class ResourceLoader
 		
 		if ( isZipFile )
 			zipLib = new ZipFile( resourcePath );
+		else
+			zipLib = null;
 	}
 	
 	/*

@@ -11,7 +11,7 @@ package com.chiorichan.permission;
 
 import java.util.List;
 
-import com.chiorichan.util.CommonFunc;
+import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.ObjectFunc;
 import com.google.common.collect.Lists;
 
@@ -27,7 +27,7 @@ public class PermissionResult
 	private Permission perm = null;
 	private String ref = "";
 	private ChildPermission childPerm = null;
-	protected int timecode = CommonFunc.getEpoch();
+	protected int timecode = Timings.epoch();
 	
 	public PermissionResult()
 	{

@@ -35,11 +35,11 @@ public class Download implements Runnable
 {
 	private static final long TIMEOUT = 30000;
 	
-	private URL url;
+	private final URL url;
 	private long size = -1;
 	private long downloaded = 0;
-	private String outPath;
-	private String name;
+	private final String outPath;
+	private final String name;
 	private DownloadListener listener;
 	private Result result = Result.FAILURE;
 	private File outFile = null;

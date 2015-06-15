@@ -11,12 +11,11 @@ import groovy.lang.GroovyShell;
 /**
  * Helps the EvalFactory keep track of it's GroovyShells
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class GroovyShellTracker
 {
-	private GroovyShell shell = null;
+	private final GroovyShell shell;
 	private boolean inUse = false;
 	
 	public GroovyShellTracker( GroovyShell shell )

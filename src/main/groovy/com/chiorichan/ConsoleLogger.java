@@ -20,8 +20,8 @@ import com.google.common.base.Strings;
 public class ConsoleLogger
 {
 	private int lineCount = 999;
-	private Logger logger = null;
-	private String id;
+	private final Logger logger;
+	private final String id;
 	
 	/**
 	 * Attempts to find a logger based on the id provided.
@@ -31,17 +31,18 @@ public class ConsoleLogger
 	 * 
 	 * @param loggerId
 	 */
-	protected ConsoleLogger( String loggerId )
+	protected ConsoleLogger( String id )
 	{
-		logger = LogManager.getLogManager().getLogger( loggerId );
+		Logger logger = LogManager.getLogManager().getLogger( id );
 		
 		if ( logger == null )
-			logger = new ConsoleSubLogger( loggerId );
-		
-		id = loggerId;
+			logger = new ConsoleSubLogger( id );
 		
 		logger.setParent( Loader.getLogManager().getParent() );
 		logger.setLevel( Level.ALL );
+		
+		this.id = id;
+		this.logger = logger;
 	}
 	
 	public String getId()

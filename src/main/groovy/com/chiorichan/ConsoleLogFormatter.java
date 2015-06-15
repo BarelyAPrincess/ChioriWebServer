@@ -22,7 +22,7 @@ public class ConsoleLogFormatter extends Formatter
 	private SimpleDateFormat dateFormat;
 	private SimpleDateFormat timeFormat;
 	private boolean formatConfigLoaded = false;
-	private boolean useColor;
+	private final boolean useColor;
 	
 	public static boolean debugMode = false;
 	public static int debugModeHowDeep = 1;

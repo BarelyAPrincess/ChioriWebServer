@@ -18,10 +18,10 @@ import com.chiorichan.plugin.PluginManager;
  */
 public class MavenReference
 {
-	private String group;
-	private String name;
-	private String version;
-	private String source;
+	private final String group;
+	private final String name;
+	private final String version;
+	private final String source;
 	
 	public MavenReference( String sourceName, String group, String name, String version )
 	{

@@ -17,12 +17,11 @@ import com.google.common.collect.Sets;
 /**
  * Our own binding extended so we can better track if and when a binding variable is changed
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class EvalBinding extends Binding
 {
-	private Set<String> history = Sets.newHashSet();
+	private final Set<String> history = Sets.newHashSet();
 	
 	public EvalBinding()
 	{

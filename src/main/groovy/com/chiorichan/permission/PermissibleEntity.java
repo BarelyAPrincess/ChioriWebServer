@@ -17,6 +17,7 @@ import java.util.TimerTask;
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.permission.event.PermissibleEntityEvent;
+import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.CommonFunc;
 import com.chiorichan.util.PermissionFunc;
 import com.google.common.collect.Maps;
@@ -37,7 +38,7 @@ public abstract class PermissibleEntity
 		
 		public boolean isExpired()
 		{
-			return ( time - CommonFunc.getEpoch() < 0 );
+			return ( time - Timings.epoch() < 0 );
 		}
 	}
 	

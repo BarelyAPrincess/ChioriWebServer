@@ -60,12 +60,12 @@ public final class Session extends AccountPermissible implements Listener
 	/**
 	 * History of changes made to the variables since last {@link #save()}
 	 */
-	private Set<String> dataChangeHistory = Sets.newHashSet();
+	private final Set<String> dataChangeHistory = Sets.newHashSet();
 	
 	/**
 	 * Holds a set of known IP Addresses
 	 */
-	private Set<String> knownIps = Sets.newHashSet();
+	private final Set<String> knownIps = Sets.newHashSet();
 	
 	/**
 	 * Reference to each wrapper that is utilizing this session<br>
@@ -92,24 +92,12 @@ public final class Session extends AccountPermissible implements Listener
 	/**
 	 * The sessionId of this session
 	 */
-	private String sessionId = "";
+	private final String sessionId;
 	
 	/**
 	 * The Session Cookie
 	 */
 	private HttpCookie sessionCookie;
-	
-	/**
-	 * Limits the number of times a session is logged by tracking the last session
-	 * XXX This might be obsolete once new Log Engine is implemented
-	 */
-	private static String lastSession = "";
-	
-	/**
-	 * Limits the number of times a session is logged by tracking the time since last logging
-	 * XXX This might be obsolete once new Log Engine is implemented
-	 */
-	private static long lastTime = Timings.epoch();
 	
 	/**
 	 * Tracks session sessionCookies
@@ -165,16 +153,10 @@ public final class Session extends AccountPermissible implements Listener
 		 * }
 		 */
 		
-		if ( lastSession == null || !lastSession.equals( getSessId() ) || Timings.epoch() - lastTime > 5 )
-		{
-			lastSession = getSessId();
-			lastTime = Timings.epoch();
-			
-			// XXX New Session, Requested Session, Loaded Session
-			
-			if ( SessionManager.isDebug() )
-				SessionManager.getLogger().info( ConsoleColor.DARK_AQUA + "Session " + ( data.stale ? "Loaded" : "Created" ) + " `" + this + "`" );
-		}
+		// XXX New Session, Requested Session, Loaded Session
+		
+		if ( SessionManager.isDebug() )
+			SessionManager.getLogger().info( ConsoleColor.DARK_AQUA + "Session " + ( data.stale ? "Loaded" : "Created" ) + " `" + this + "`" );
 		
 		initialized();
 	}
@@ -571,7 +553,7 @@ public final class Session extends AccountPermissible implements Listener
 	{
 		sessionCookies.put( key, cookie );
 	}
-
+	
 	public boolean isNew()
 	{
 		return newSession;

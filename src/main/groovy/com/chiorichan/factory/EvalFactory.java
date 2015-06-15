@@ -58,15 +58,15 @@ import com.google.common.collect.Sets;
 
 public class EvalFactory
 {
-	private static List<PreProcessor> preProcessors = Lists.newCopyOnWriteArrayList();
-	private static List<Interpreter> interpreters = Lists.newCopyOnWriteArrayList();
-	private static List<PostProcessor> postProcessors = Lists.newCopyOnWriteArrayList();
+	private static final List<PreProcessor> preProcessors = Lists.newCopyOnWriteArrayList();
+	private static final List<Interpreter> interpreters = Lists.newCopyOnWriteArrayList();
+	private static final List<PostProcessor> postProcessors = Lists.newCopyOnWriteArrayList();
 	
 	private Charset encoding = Charsets.toCharset( Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" ) );
-	private ShellFactory shellFactory = new ShellFactory();
-	private Set<GroovyShellTracker> groovyShells = Sets.newLinkedHashSet();
-	private ByteArrayOutputStream bs = new ByteArrayOutputStream();
-	private EvalBinding binding;
+	private final ShellFactory shellFactory = new ShellFactory();
+	private final Set<GroovyShellTracker> groovyShells = Sets.newLinkedHashSet();
+	private final ByteArrayOutputStream bs = new ByteArrayOutputStream();
+	private final EvalBinding binding;
 	
 	/*
 	 * Groovy Sandbox Customization

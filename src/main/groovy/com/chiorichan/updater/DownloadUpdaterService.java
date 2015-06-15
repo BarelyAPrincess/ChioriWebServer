@@ -12,23 +12,15 @@ package com.chiorichan.updater;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Type;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.UnknownHostException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.chiorichan.util.NetworkFunc;
 import com.google.gson.Gson;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParseException;
 
 public class DownloadUpdaterService
 {
@@ -160,23 +152,5 @@ public class DownloadUpdaterService
 		}
 		
 		return prop;
-	}
-	
-	@SuppressWarnings( "rawtypes" )
-	static class DateDeserializer implements JsonDeserializer
-	{
-		private static final SimpleDateFormat format = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" );
-		
-		public Date deserialize( JsonElement je, Type type, JsonDeserializationContext jdc ) throws JsonParseException
-		{
-			try
-			{
-				return format.parse( je.getAsString() );
-			}
-			catch ( ParseException ex )
-			{
-				throw new JsonParseException( "Date is not formatted correctly", ex );
-			}
-		}
 	}
 }

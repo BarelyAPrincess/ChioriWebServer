@@ -20,10 +20,10 @@ import com.google.common.collect.Sets;
 
 public class ConsoleLogManager
 {
-	private static Set<ConsoleLogger> loggers = Sets.newHashSet();
-	private static Logger logger = Logger.getLogger( "" );
+	private static final Set<ConsoleLogger> loggers = Sets.newHashSet();
+	private static final Logger logger = Logger.getLogger( "" );
 	
-	public void init()
+	void init()
 	{
 		for ( Handler h : logger.getHandlers() )
 			logger.removeHandler( h );
