@@ -16,13 +16,13 @@ import com.google.common.collect.Lists;
  * 
  * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
-public class MultipleEvalExceptions extends Exception
+public class EvalMultipleException extends Exception
 {
 	private static final long serialVersionUID = -659541886519281396L;
 	
 	private final List<EvalException> exceptions = Lists.newArrayList();
 	
-	public MultipleEvalExceptions( List<EvalException> exceptions )
+	public EvalMultipleException( List<EvalException> exceptions )
 	{
 		this.exceptions.addAll( exceptions );
 	}

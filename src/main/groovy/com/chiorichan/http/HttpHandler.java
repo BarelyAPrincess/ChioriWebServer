@@ -69,7 +69,7 @@ import com.chiorichan.lang.ApacheParser;
 import com.chiorichan.lang.ErrorReporting;
 import com.chiorichan.lang.EvalException;
 import com.chiorichan.lang.HttpError;
-import com.chiorichan.lang.MultipleEvalExceptions;
+import com.chiorichan.lang.EvalMultipleException;
 import com.chiorichan.lang.SiteException;
 import com.chiorichan.logger.LogEvent;
 import com.chiorichan.logger.LogManager;
@@ -229,12 +229,12 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			 * Presently we can only send one exception to the client
 			 * So for now we only send the most severe one
 			 */
-			if ( cause instanceof MultipleEvalExceptions )
+			if ( cause instanceof EvalMultipleException )
 			{
 				EvalException most = null;
 				
 				// The lower the intValue() to more important it became
-				for ( EvalException e : ( ( MultipleEvalExceptions ) cause ).getExceptions() )
+				for ( EvalException e : ( ( EvalMultipleException ) cause ).getExceptions() )
 					if ( most == null || most.errorLevel().intValue() > e.errorLevel().intValue() )
 						most = e;
 				
@@ -472,7 +472,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		}
 	}
 	
-	public void handleHttp( HttpRequestWrapper request, HttpResponseWrapper response ) throws IOException, HttpError, SiteException, PermissionException, MultipleEvalExceptions, EvalException, SessionException
+	public void handleHttp( HttpRequestWrapper request, HttpResponseWrapper response ) throws IOException, HttpError, SiteException, PermissionException, EvalMultipleException, EvalException, SessionException
 	{
 		// String uri = request.getUri();
 		// String domain = request.getParentDomain();

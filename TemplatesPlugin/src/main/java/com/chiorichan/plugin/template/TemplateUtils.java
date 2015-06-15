@@ -1,12 +1,10 @@
 package com.chiorichan.plugin.template;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 
 import org.apache.commons.io.IOUtils;
@@ -50,7 +48,7 @@ public class TemplateUtils
 		
 		for ( StackTraceElement ste : stackTrace )
 		{
-			String fileName = ( ste.getFileName() == null ) ? "<Unknown Source>" : ste.getFileName() + ( ( ste.getLineNumber() > -1 ) ? "(" + ste.getLineNumber() + ")" : "" );
+			String fileName = ste.getFileName() == null ? "<Unknown Source>" : ste.getFileName() + ( ( ste.getLineNumber() > -1 ) ? String.format( "(%s)", ste.getLineNumber() ) : "" );
 			
 			String previewType = "core";
 			
@@ -74,16 +72,17 @@ public class TemplateUtils
 						if ( st.getFileName() != null && ste.getFileName() != null && st.getFileName().equals( ste.getFileName() ) && st.getLineNumber() == ste.getLineNumber() )
 						{
 							codePreview = generateCodePreview( st );
+							if ( st.getMetaData() != null )
+								fileName = st.getMetaData().fileName + ( ste.getLineNumber() > -1 ? String.format( "(%s)", ste.getLineNumber() ) : "" );
 							break;
 						}
 					}
 				}
 				
-				if ( codePreview != null )
-					expanded = true;
-				
 				if ( codePreview == null )
 					codePreview = "There was a problem getting this code preview, either the file is non-existent or could not be read.";
+				else
+					expanded = true;
 			}
 			
 			sb.append( "<tr class=\"trace " + previewType + ( expanded ? " expanded" : " collapsed" ) + "\">\n" );
@@ -91,7 +90,7 @@ public class TemplateUtils
 			sb.append( "	<td class=\"content\">\n" );
 			sb.append( "		<div class=\"trace-file\">\n" );
 			sb.append( "			<div class=\"plus\">+</div>\n" );
-			sb.append( "			<div class=\"minus\">–</div>\n" );
+			sb.append( "			<div class=\"minus\">&#8259;</div>\n" );
 			sb.append( "			" + fileName + ": <strong>" + ste.getClassName() + "." + ste.getMethodName() + "</strong>\n" );
 			sb.append( "		</div>\n" );
 			sb.append( "		<div class=\"code\">\n" );
@@ -157,17 +156,10 @@ public class TemplateUtils
 			result = NetworkFunc.readUrl( finalUrl );
 		}
 		
-		String finalResult;
-		
 		if ( result == null )
-			finalResult = "Could not read file '" + fileUrl + "' from the GitHub repository.\nYou could be running a mismatching version to the repository or this file belongs to another repository.";
+			return String.format( "Could not read file '%s' from the GitHub repository.\nYou could be running a mismatching version to the repository or this file belongs to another repository.", fileUrl );
 		else
-		{
-			finalResult = generateCodePreview( new String( result ), lineNum );
-			finalResult += "<br /><a target=\"_blank\" href=\"" + finalUrl + "\">View this file on our GitHub!</a>";
-		}
-		
-		return finalResult;
+			return String.format( "%s<br /><a target=\"_blank\" href=\"%s\">View this file on our GitHub!</a>", generateCodePreview( new String( result ), lineNum ), finalUrl );
 	}
 	
 	public static String generateCodePreview( ScriptTraceElement ste )
@@ -190,7 +182,7 @@ public class TemplateUtils
 		Validate.notNull( file );
 		
 		if ( !file.exists() )
-			return "Could not find the file '" + file.getAbsolutePath() + "'";
+			return String.format( "Could not find the file '%s'", file.getAbsolutePath() );
 		
 		FileInputStream is;
 		try
@@ -202,60 +194,21 @@ public class TemplateUtils
 			return e.getMessage();
 		}
 		
-		if ( true )
-		{
-			try
-			{
-				byte[] bytes = new byte[is.available()];
-				
-				IOUtils.readFully( is, bytes );
-				
-				String source = new String( bytes );
-				
-				return generateCodePreview( source, lineNum, colNum );
-			}
-			catch ( IOException e )
-			{
-				e.printStackTrace();
-			}
-		}
-		
-		StringBuilder sb = new StringBuilder();
 		try
 		{
-			BufferedReader br = new BufferedReader( new InputStreamReader( is, "ISO-8859-1" ) );
+			byte[] bytes = new byte[is.available()];
 			
-			int cLine = 0;
-			String l;
-			while ( ( l = br.readLine() ) != null )
-			{
-				l = escapeHTML( l );
-				
-				cLine++;
-				
-				if ( cLine > lineNum - 5 && cLine < lineNum + 5 )
-					if ( cLine == lineNum )
-						sb.append( String.format( "<span class=\"error\"><span class=\"ln error-ln\">%4s</span> %s</span>", cLine, l ) );
-					else
-						sb.append( String.format( "<span class=\"ln\">%4s</span> %s\n", cLine, l ) );
-			}
+			IOUtils.readFully( is, bytes );
 			
-			is.close();
+			String source = new String( bytes );
 			
-			if ( cLine < lineNum )
-				sb.append( String.format( "<span class=\"error\"><span class=\"ln error-ln\">%4s</span> Unexpected EOF!</span>", lineNum ) );
+			return generateCodePreview( source, lineNum, colNum );
 		}
 		catch ( IOException e )
 		{
 			e.printStackTrace();
+			return String.format( "<We had a problem: %s>", e.getMessage() );
 		}
-		
-		String rtn = sb.toString();
-		
-		if ( rtn.endsWith( "\n" ) )
-			rtn = sb.toString().substring( 0, sb.toString().length() - 1 );
-		
-		return rtn;
 	}
 	
 	public static String generateCodePreview( String source, int lineNum )

@@ -15,7 +15,7 @@ package com.chiorichan.util
  */
 public class Looper
 {
-	private final Closure code
+	private Closure code
 	
 	public static Looper go( Closure code )
 	{

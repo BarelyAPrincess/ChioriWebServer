@@ -25,7 +25,7 @@ import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.lang.ErrorReporting;
 import com.chiorichan.lang.EvalException;
-import com.chiorichan.lang.MultipleEvalExceptions;
+import com.chiorichan.lang.EvalMultipleException;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
@@ -74,7 +74,7 @@ public class Template extends Plugin implements Listener
 		}
 	}
 	
-	public String generateExceptionPage( Throwable t, EvalFactory factory ) throws EvalException, MultipleEvalExceptions, IOException
+	public String generateExceptionPage( Throwable t, EvalFactory factory ) throws EvalException, EvalMultipleException, IOException
 	{
 		Validate.notNull( t );
 		Validate.notNull( factory );
@@ -300,7 +300,7 @@ public class Template extends Plugin implements Listener
 			{
 				event.setSource( Unpooled.buffer().writeBytes( generateExceptionPage( e, event.getRequest().getEvalFactory() ).getBytes() ) );
 			}
-			catch ( EvalException | MultipleEvalExceptions e1 )
+			catch ( EvalException | EvalMultipleException e1 )
 			{
 				event.getResponse().sendException( e1 );
 			}

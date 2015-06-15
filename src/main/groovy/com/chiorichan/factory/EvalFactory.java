@@ -117,9 +117,13 @@ public class EvalFactory
 		imports.addStaticStars( staticImports );
 		
 		// Transforms scripts to limit their execution to 30 seconds.
-		Map<String, Object> timedInterruptParams = Maps.newHashMap();
-		timedInterruptParams.put( "value", Loader.getConfig().getLong( "advanced.security.defaultScriptTimeout", 30L ) );
-		timedInterrupt.setAnnotationParameters( timedInterruptParams );
+		long timeout = Loader.getConfig().getLong( "advanced.security.defaultScriptTimeout", 30L );
+		if ( timeout > 0 )
+		{
+			Map<String, Object> timedInterruptParams = Maps.newHashMap();
+			timedInterruptParams.put( "value", timeout );
+			timedInterrupt.setAnnotationParameters( timedInterruptParams );
+		}
 	}
 	
 	private EvalFactory( EvalBinding binding )

@@ -119,7 +119,7 @@ public enum ErrorReporting
 		return level;
 	}
 	
-	public static void throwExceptions( EvalException... exceptions ) throws EvalException, MultipleEvalExceptions
+	public static void throwExceptions( EvalException... exceptions ) throws EvalException, EvalMultipleException
 	{
 		List<EvalException> exps = Lists.newArrayList();
 		
@@ -130,6 +130,6 @@ public enum ErrorReporting
 		if ( exps.size() == 1 )
 			throw exps.get( 0 );
 		else if ( exps.size() > 0 )
-			throw new MultipleEvalExceptions( exps );
+			throw new EvalMultipleException( exps );
 	}
 }
