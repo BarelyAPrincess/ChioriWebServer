@@ -31,10 +31,14 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.Validate;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ASTTransformationCustomizer;
-import org.codehaus.groovy.control.customizers.ImportCustomizer;
 
 import com.chiorichan.ContentTypes;
 import com.chiorichan.Loader;
+import com.chiorichan.account.Account;
+import com.chiorichan.account.AccountManager;
+import com.chiorichan.account.AccountType;
+import com.chiorichan.account.auth.AccountAuthenticator;
+import com.chiorichan.event.EventBus;
 import com.chiorichan.factory.interpreters.GSPInterpreter;
 import com.chiorichan.factory.interpreters.GroovyInterpreter;
 import com.chiorichan.factory.interpreters.HTMLInterpreter;
@@ -50,7 +54,13 @@ import com.chiorichan.factory.preprocessors.PreProcessor;
 import com.chiorichan.http.WebInterpreter;
 import com.chiorichan.lang.ErrorReporting;
 import com.chiorichan.lang.EvalException;
+import com.chiorichan.permission.PermissionManager;
+import com.chiorichan.plugin.PluginManager;
+import com.chiorichan.session.SessionManager;
 import com.chiorichan.site.Site;
+import com.chiorichan.site.SiteManager;
+import com.chiorichan.tasks.TaskManager;
+import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.MapFunc;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -72,13 +82,13 @@ public class EvalFactory
 	 * Groovy Sandbox Customization
 	 */
 	private static final ASTTransformationCustomizer timedInterrupt = new ASTTransformationCustomizer( TimedInterrupt.class );
-	private static final ImportCustomizer imports = new ImportCustomizer();
+	private static final GroovyImportCustomizer imports = new GroovyImportCustomizer();
 	private static final GroovySandbox secure = new GroovySandbox();
 	
 	/*
 	 * Groovy Imports :P
 	 */
-	private static final String[] dynImports = new String[] {Loader.class.getName(), "com.chiorichan.account.AccountManager", "com.chiorichan.account.AccountType", "com.chiorichan.account.auth.AccountAuthenticator", "com.chiorichan.event.EventBus", "com.chiorichan.permission.PermissionManager", "com.chiorichan.plugin.PluginManager", "com.chiorichan.tasks.TaskManager", "com.chiorichan.tasks.Timings", "com.chiorichan.session.SessionManager", "com.chiorichan.site.SiteManager"};
+	private static final Class<?>[] classImports = new Class<?>[] {Loader.class, AccountManager.class, AccountType.class, Account.class, AccountAuthenticator.class, EventBus.class, PermissionManager.class, PluginManager.class, TaskManager.class, Timings.class, SessionManager.class, SiteManager.class, Site.class};
 	private static final String[] starImports = new String[] {"com.chiorichan.lang", "com.chiorichan.util", "org.apache.commons.lang3.text", "org.ocpsoft.prettytime", "java.util", "java.net", "com.google.common.base"};
 	private static final String[] staticImports = new String[] {"com.chiorichan.util.Looper"};
 	
@@ -112,7 +122,7 @@ public class EvalFactory
 		if ( Loader.getConfig().getBoolean( "advanced.processors.imageProcessorEnabled", true ) )
 			register( new ImagePostProcessor() );
 		
-		imports.addImports( dynImports );
+		imports.addImports( classImports );
 		imports.addStarImports( starImports );
 		imports.addStaticStars( staticImports );
 		
