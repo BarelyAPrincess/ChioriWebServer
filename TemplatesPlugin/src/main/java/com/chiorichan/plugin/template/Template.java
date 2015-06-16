@@ -74,7 +74,7 @@ public class Template extends Plugin implements Listener
 		}
 	}
 	
-	public String generateExceptionPage( Throwable t, EvalFactory factory ) throws EvalException, EvalMultipleException, IOException
+	private String generateExceptionPage( Throwable t, EvalFactory factory ) throws EvalException, EvalMultipleException, IOException
 	{
 		Validate.notNull( t );
 		Validate.notNull( factory );
@@ -325,17 +325,7 @@ public class Template extends Plugin implements Listener
 		return WebFunc.evalPackageWithException( factory, event.getSite(), pack );
 	}
 	
-	public String getPackageParent( String pack )
-	{
-		if ( pack.indexOf( "." ) < 0 )
-			return pack;
-		
-		String[] packs = pack.split( "\\.(?=[^.]*$)" );
-		
-		return packs[0];
-	}
-	
-	public String getPackageName( String pack )
+	private String getPackageName( String pack )
 	{
 		if ( pack.indexOf( "." ) < 0 )
 			return pack;
@@ -345,7 +335,7 @@ public class Template extends Plugin implements Listener
 		return packs[1];
 	}
 	
-	public String domainToPackage( String domain )
+	private String domainToPackage( String domain )
 	{
 		if ( domain == null || domain.isEmpty() )
 			return "";

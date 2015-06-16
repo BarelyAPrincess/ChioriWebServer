@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
+import java.util.Map;
 
 import com.google.zxing.EncodeHintType;
 import com.google.zxing.Writer;
@@ -36,7 +37,7 @@ public class QRCode
 	private int height = 125;
 	private final String text;
 	private ImageType imageType = ImageType.PNG;
-	private final HashMap<EncodeHintType, Object> hints = new HashMap<EncodeHintType, Object>();
+	private final Map<EncodeHintType, Object> hints = new HashMap<EncodeHintType, Object>();
 	
 	protected QRCode( String text )
 	{

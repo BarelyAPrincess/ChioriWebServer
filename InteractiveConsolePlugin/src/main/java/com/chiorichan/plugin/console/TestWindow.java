@@ -29,16 +29,16 @@ import jcurses.widgets.Window;
  */
 public class TestWindow extends Window implements ItemListener, ActionListener, ValueChangedListener, WindowListener, WidgetsConstants
 {
-	static TestWindow window = null;
-	static TextField textfield = null;
-	static Button button = null;
+	private static TestWindow window = null;
+	private static TextField textfield = null;
+	private static Button button = null;
 	
-	public TestWindow( int width, int height )
+	TestWindow( int width, int height )
 	{
 		super( width, height, true, "JCurses Test" );
 	}
 	
-	public void init()
+	void init()
 	{
 		DefaultLayoutManager mgr = new DefaultLayoutManager();
 		mgr.bindToContainer( window.getRootPanel() );
@@ -56,6 +56,7 @@ public class TestWindow extends Window implements ItemListener, ActionListener, 
 		window.show();
 	}
 	
+	@Override
 	public void actionPerformed( ActionEvent event )
 	{
 		Widget w = event.getSource();
@@ -66,14 +67,17 @@ public class TestWindow extends Window implements ItemListener, ActionListener, 
 		}
 	}
 	
+	@Override
 	public void stateChanged( ItemEvent e )
 	{
 	}
 	
+	@Override
 	public void valueChanged( ValueChangedEvent e )
 	{
 	}
 	
+	@Override
 	public void windowChanged( WindowEvent event )
 	{
 		if ( event.getType() == WindowEvent.CLOSING )

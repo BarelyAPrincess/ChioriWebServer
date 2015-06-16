@@ -21,17 +21,16 @@ import com.dropbox.core.DbxWebAuthNoRedirect;
 /**
  * Provides the Dropbox Code API to the server
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class Dropbox extends Plugin
 {
-	String dbxApiKey = null;
-	String dbxApiSecret = null;
-	DbxAppInfo dbxAppInfo = null;
-	DbxRequestConfig dbxAppConfig = null;
-	DbxWebAuthNoRedirect dbxWebAuth = null;
-	DbxAuthFinish dbxAuthFinish = null;
+	private String dbxApiKey = null;
+	private String dbxApiSecret = null;
+	private DbxAppInfo dbxAppInfo = null;
+	private DbxRequestConfig dbxAppConfig = null;
+	private DbxWebAuthNoRedirect dbxWebAuth = null;
+	private DbxAuthFinish dbxAuthFinish = null;
 	
 	@Override
 	public void onEnable()

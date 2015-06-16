@@ -8,7 +8,6 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.InterpreterOverrides;
@@ -24,6 +23,7 @@ import com.chiorichan.site.SiteManager;
 import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.NetworkFunc;
 import com.chiorichan.util.Versioning;
+import com.chiorichan.util.WebFunc;
 
 /**
  * Chiori-chan's Web Server Template Plugin
@@ -38,7 +38,7 @@ public class TemplateUtils
 	
 	private static String baseTemplate = null;
 	
-	public static String formatStackTrace( StackTraceElement[] stackTrace, ScriptTraceElement[] scriptTrace )
+	static String formatStackTrace( StackTraceElement[] stackTrace, ScriptTraceElement[] scriptTrace )
 	{
 		Validate.notEmpty( stackTrace );
 		
@@ -105,7 +105,7 @@ public class TemplateUtils
 		return sb.toString();
 	}
 	
-	public static String generateCodePreview( Throwable t )
+	static String generateCodePreview( Throwable t )
 	{
 		if ( t instanceof EvalException )
 		{
@@ -118,7 +118,7 @@ public class TemplateUtils
 		return generateCodePreview( t.getStackTrace()[0] );
 	}
 	
-	public static String generateCodePreview( StackTraceElement ste )
+	static String generateCodePreview( StackTraceElement ste )
 	{
 		// TODO Match the server version to the correct commit on the github. The closer the better.
 		
@@ -162,7 +162,7 @@ public class TemplateUtils
 			return String.format( "%s<br /><a target=\"_blank\" href=\"%s\">View this file on our GitHub!</a>", generateCodePreview( new String( result ), lineNum ), finalUrl );
 	}
 	
-	public static String generateCodePreview( ScriptTraceElement ste )
+	static String generateCodePreview( ScriptTraceElement ste )
 	{
 		EvalMetaData metaData = ste.getMetaData();
 		File file = new File( metaData.fileName );
@@ -172,12 +172,12 @@ public class TemplateUtils
 		return generateCodePreview( file, lineNum, colNum );
 	}
 	
-	public static String generateCodePreview( File file, int lineNum )
+	static String generateCodePreview( File file, int lineNum )
 	{
 		return generateCodePreview( file, lineNum, -1 );
 	}
 	
-	public static String generateCodePreview( File file, int lineNum, int colNum )
+	static String generateCodePreview( File file, int lineNum, int colNum )
 	{
 		Validate.notNull( file );
 		
@@ -211,19 +211,19 @@ public class TemplateUtils
 		}
 	}
 	
-	public static String generateCodePreview( String source, int lineNum )
+	static String generateCodePreview( String source, int lineNum )
 	{
 		return generateCodePreview( source, lineNum, -1 );
 	}
 	
-	public static String generateCodePreview( String source, int lineNum, int colNum )
+	static String generateCodePreview( String source, int lineNum, int colNum )
 	{
 		StringBuilder sb = new StringBuilder();
 		
 		int cLine = 0;
 		for ( String l : source.split( "\n" ) )
 		{
-			l = escapeHTML( l );
+			l = WebFunc.escapeHTML( l );
 			
 			cLine++;
 			
@@ -249,12 +249,7 @@ public class TemplateUtils
 		return sb.toString();
 	}
 	
-	public static String escapeHTML( String l )
-	{
-		return StringUtils.replaceEach( l, new String[] {"&", "\"", "<", ">"}, new String[] {"&amp;", "&quot;", "&lt;", "&gt;"} );
-	}
-	
-	public static EvalFactoryResult wrapAndEval( EvalFactory factory, String html ) throws UnsupportedEncodingException, IOException
+	static EvalFactoryResult wrapAndEval( EvalFactory factory, String html ) throws UnsupportedEncodingException, IOException
 	{
 		Validate.notNull( factory );
 		

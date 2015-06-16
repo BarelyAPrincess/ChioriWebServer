@@ -274,7 +274,7 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 	@Override
 	public boolean isAdmin()
 	{
-		return getPermissibleEntity().isAdmin();
+		return getPermissibleEntity().isAdmin() || isOp();
 	}
 	
 	@Override

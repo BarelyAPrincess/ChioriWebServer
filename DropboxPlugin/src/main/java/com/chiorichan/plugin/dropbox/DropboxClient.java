@@ -13,18 +13,17 @@ import com.dropbox.core.DbxRequestConfig;
  * Used to link between Dropbox and end requester
  * Also stores Dropbox Client instance
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class DropboxClient
 {
-	String accessToken;
-	DbxClient client;
+	// private final String accessToken;
+	private final DbxClient client;
 	
 	public DropboxClient( DbxRequestConfig dbxAppConfig, String accessToken )
 	{
 		client = new DbxClient( dbxAppConfig, accessToken );
-		this.accessToken = accessToken;
+		// this.accessToken = accessToken;
 	}
 	
 	public DbxClient getDbxClient()

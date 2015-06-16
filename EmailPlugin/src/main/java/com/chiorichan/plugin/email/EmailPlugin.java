@@ -24,9 +24,25 @@ public class EmailPlugin extends Plugin
 		getConfig().options().copyDefaults( true );
 	}
 	
+	/**
+	 * Provides an easy way to send e-mail
+	 * 
+	 * @param sendTo
+	 *            The destination address to send the e-mail, e.g., someone@example.com
+	 * @param subject
+	 *            The e-mail subject
+	 * @param message
+	 *            The message content, HTML is preferable
+	 * @throws MessagingException
+	 *             If there was a problem dispatching the e-mail
+	 */
 	public void mail( String sendTo, String subject, String message ) throws MessagingException
 	{
 		String host = getConfig().getString( "mail.host" );
+		
+		if ( host == null || "mail.example.com".equals( host ) )
+			throw new MessagingException( "It would appear that e-mail plugin is configed to use the default host, configuration must be updated before you can use this plugin." );
+		
 		int port = getConfig().getInt( "mail.smtpport", 25 );
 		String user = getConfig().getString( "mail.login" );
 		String pass = getConfig().getString( "mail.password" );
