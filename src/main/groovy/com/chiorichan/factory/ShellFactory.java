@@ -21,12 +21,11 @@ import com.google.common.collect.Maps;
 /**
  * Sits as an interface between GroovyShell and Interpreters
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class ShellFactory
 {
-	Map<String, EvalMetaData> scriptHistory = Maps.newLinkedHashMap();
+	Map<String, EvalExecutionContext> scriptHistory = Maps.newLinkedHashMap();
 	GroovyShell shell = null;
 	
 	ShellFactory setShell( GroovyShell shell )
@@ -60,14 +59,19 @@ public class ShellFactory
 		return scriptTrace;
 	}
 	
-	public Script makeScript( String scriptText, EvalMetaData metaData )
+	public Script makeScript( EvalExecutionContext context )
+	{
+		return makeScript( context.readString(), context );
+	}
+	
+	public Script makeScript( String source, EvalExecutionContext context )
 	{
 		String scriptName = "GroovyScript" + WebFunc.randomNum( 8 ) + ".chi";
-		metaData.scriptName = scriptName;
+		Script script = shell.parse( source, scriptName );
 		
-		Script script = shell.parse( scriptText, scriptName );
-		metaData.script = script;
-		scriptHistory.put( scriptName, metaData );
+		context.script( scriptName, script );
+		
+		scriptHistory.put( scriptName, context );
 		
 		return script;
 	}

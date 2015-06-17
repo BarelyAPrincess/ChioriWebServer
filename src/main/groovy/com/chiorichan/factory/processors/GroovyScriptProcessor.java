@@ -7,20 +7,18 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.factory.interpreters;
+package com.chiorichan.factory.processors;
 
 import groovy.lang.Script;
 
-import java.io.ByteArrayOutputStream;
-
-import com.chiorichan.factory.EvalMetaData;
+import com.chiorichan.factory.EvalExecutionContext;
 import com.chiorichan.factory.ShellFactory;
 
 /**
  * Groovy SeaShell.
  * More of another dummy SeaShell to evaluate groovy files.
  */
-public class GroovyInterpreter implements Interpreter
+public class GroovyScriptProcessor implements ScriptingProcessor
 {
 	@Override
 	public String[] getHandledTypes()
@@ -29,13 +27,10 @@ public class GroovyInterpreter implements Interpreter
 	}
 	
 	@Override
-	public Object eval( EvalMetaData meta, String scriptText, ShellFactory shell, ByteArrayOutputStream bs ) throws Exception
+	public boolean eval( EvalExecutionContext context, ShellFactory shell ) throws Exception
 	{
-		Script script = shell.makeScript( scriptText, meta );
-		
-		Object o = script.run();
-		
-		// Object o = shell.evaluate( code );
-		return ( o == null ) ? "" : o;
+		Script script = shell.makeScript( context );
+		context.result().object( script.run() );
+		return true;
 	}
 }

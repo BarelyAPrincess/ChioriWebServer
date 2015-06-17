@@ -188,7 +188,7 @@ public class ConsoleLogger
 				if ( e.isScriptingException() )
 				{
 					ScriptTraceElement element = e.getScriptTrace()[0];
-					severe( String.format( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s:%s, message '%s'", e.getClass().getName(), element.getMetaData().fileName, element.getLineNumber(), ( element.getColumnNumber() > 0 ) ? element.getColumnNumber() : 0, e.getMessage() ) );
+					severe( String.format( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s:%s, message '%s'", e.getClass().getName(), element.context().filename(), element.getLineNumber(), ( element.getColumnNumber() > 0 ) ? element.getColumnNumber() : 0, e.getMessage() ) );
 				}
 				else
 					severe( String.format( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s, message '%s'", e.getClass().getName(), e.getStackTrace()[0].getFileName(), e.getStackTrace()[0].getLineNumber(), e.getMessage() ) );

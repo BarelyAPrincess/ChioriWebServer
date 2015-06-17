@@ -15,6 +15,7 @@ import java.io.IOException;
 import org.apache.commons.io.FileUtils;
 
 import com.chiorichan.Loader;
+import com.chiorichan.site.Site;
 
 public class LessImportParser extends BasicParser
 {
@@ -28,7 +29,7 @@ public class LessImportParser extends BasicParser
 	public String runParser( String source, File rootDir ) throws Exception
 	{
 		this.rootDir = rootDir;
-		return runParser( source );
+		return runParser( source, ( Site ) null );
 	}
 	
 	@Override

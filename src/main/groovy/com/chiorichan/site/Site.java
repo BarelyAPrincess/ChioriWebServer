@@ -35,9 +35,9 @@ import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.SiteLoadEvent;
 import com.chiorichan.factory.EvalBinding;
+import com.chiorichan.factory.EvalExecutionContext;
 import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalFactoryResult;
-import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.http.HttpCookie;
 import com.chiorichan.http.Routes;
 import com.chiorichan.lang.ErrorReporting;
@@ -422,11 +422,8 @@ public class Site
 				{
 					try
 					{
-						EvalMetaData meta = new EvalMetaData();
-						meta.shell = "groovy";
-						
 						File file = getResourceWithException( script );
-						EvalFactoryResult result = factory.eval( file, meta, this );
+						EvalFactoryResult result = factory.eval( EvalExecutionContext.fromFile( file ).shell( "groovy" ).site( this ) );
 						
 						if ( result.hasExceptions() )
 						{
@@ -436,7 +433,7 @@ public class Site
 						else
 							Loader.getLogger().info( "Finsihed evaling onLoadScript '" + script + "' for site '" + siteId + "' with result: " + result.getString( true ) );
 					}
-					catch ( FileNotFoundException e )
+					catch ( IOException e )
 					{
 						SiteManager.getLogger().warning( "The onLoadScript '" + script + "' was not found for site '" + siteId + "'." );
 					}
@@ -739,16 +736,11 @@ public class Site
 	
 	public String readResourceWithException( String pack ) throws EvalException
 	{
-		EvalMetaData codeMeta = new EvalMetaData();
-		
 		try
 		{
 			File file = getResourceWithException( pack );
 			
-			codeMeta.shell = "text";// FileInterpreter.determineShellFromName( file.getName() );
-			codeMeta.fileName = file.getAbsolutePath();
-			
-			return factory.eval( file, this ).getString();
+			return factory.eval( EvalExecutionContext.fromFile( file ).shell( "text" ).site( this ) ).getString();
 		}
 		catch ( IOException e )
 		{

@@ -13,30 +13,27 @@ import java.util.List;
 
 import com.chiorichan.lang.ErrorReporting;
 import com.chiorichan.lang.EvalException;
-import com.chiorichan.site.Site;
 import com.chiorichan.util.ObjectFunc;
 import com.google.common.collect.Lists;
 
 /**
- * Holds the result after evaling block of code or a file
+ * Contains the end result of {@link EvalFactory#eval(EvalExecutionContext)}
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class EvalFactoryResult
 {
 	private final List<EvalException> caughtExceptions = Lists.newArrayList();
 	private boolean success = false;
 	private String reason = null;
-	private ByteBuf buf = null;
-	Object obj = null;
-	private final EvalMetaData meta;
-	private final Site site;
+	private ByteBuf content;
+	private Object obj = null;
+	private final EvalExecutionContext context;
 	
-	public EvalFactoryResult( EvalMetaData meta, Site site )
+	EvalFactoryResult( EvalExecutionContext context, ByteBuf content )
 	{
-		this.meta = meta;
-		this.site = site;
+		this.context = context;
+		this.content = content;
 	}
 	
 	public EvalFactoryResult setReason( String reason )
@@ -53,16 +50,15 @@ public class EvalFactoryResult
 		return reason;
 	}
 	
-	public EvalFactoryResult setResult( ByteBuf buf, boolean success )
+	public EvalFactoryResult success( boolean success )
 	{
-		this.buf = buf;
 		this.success = success;
 		return this;
 	}
 	
-	public EvalMetaData getMeta()
+	public EvalExecutionContext context()
 	{
-		return meta;
+		return context;
 	}
 	
 	public boolean isSuccessful()
@@ -77,7 +73,7 @@ public class EvalFactoryResult
 	
 	public String getString( boolean includeObj )
 	{
-		return ( ( buf == null ) ? "" : buf.toString( Charset.defaultCharset() ) ) + ( ( includeObj ) ? ObjectFunc.castToString( obj ) : "" );
+		return ( ( content == null ) ? "" : content.toString( Charset.defaultCharset() ) ) + ( ( includeObj ) ? ObjectFunc.castToString( obj ) : "" );
 	}
 	
 	public Object getObject()
@@ -85,15 +81,20 @@ public class EvalFactoryResult
 		return obj;
 	}
 	
-	public ByteBuf getResult()
+	public ByteBuf content()
 	{
-		return buf;
+		return content;
+	}
+	
+	public void object( Object obj )
+	{
+		this.obj = obj;
 	}
 	
 	@Override
 	public String toString()
 	{
-		return "EvalFactoryResult{success=" + success + ",reason=" + reason + ",size=" + buf.writerIndex() + ",obj=" + obj + ",meta=" + meta + ",site=" + site + "}";
+		return String.format( "EvalFactoryResult{success=%s,reason=%s,size=%s,obj=%s,context=%s}", success, reason, content.writerIndex(), obj, context );
 	}
 	
 	public void addException( EvalException exception )

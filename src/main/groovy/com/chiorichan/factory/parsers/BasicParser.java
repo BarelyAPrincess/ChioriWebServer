@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.Validate;
 
+import com.chiorichan.site.Site;
 import com.chiorichan.util.StringFunc;
 
 /**
@@ -32,7 +33,7 @@ public abstract class BasicParser
 		p2 = Pattern.compile( patternTwo );
 	}
 	
-	public String runParser( String source ) throws Exception
+	public String runParser( String source, Site site ) throws Exception
 	{
 		if ( source == null || source.isEmpty() )
 			return "";

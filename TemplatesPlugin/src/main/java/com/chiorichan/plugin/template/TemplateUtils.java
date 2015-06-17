@@ -11,9 +11,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.InterpreterOverrides;
+import com.chiorichan.factory.EvalExecutionContext;
 import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalFactoryResult;
-import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.lang.EvalException;
 import com.chiorichan.lang.PluginNotFoundException;
@@ -72,8 +72,8 @@ public class TemplateUtils
 						if ( st.getFileName() != null && ste.getFileName() != null && st.getFileName().equals( ste.getFileName() ) && st.getLineNumber() == ste.getLineNumber() )
 						{
 							codePreview = generateCodePreview( st );
-							if ( st.getMetaData() != null )
-								fileName = st.getMetaData().fileName + ( ste.getLineNumber() > -1 ? String.format( "(%s)", ste.getLineNumber() ) : "" );
+							if ( st.context() != null )
+								fileName = st.context().filename() + ( ste.getLineNumber() > -1 ? String.format( "(%s)", ste.getLineNumber() ) : "" );
 							break;
 						}
 					}
@@ -164,8 +164,8 @@ public class TemplateUtils
 	
 	static String generateCodePreview( ScriptTraceElement ste )
 	{
-		EvalMetaData metaData = ste.getMetaData();
-		File file = new File( metaData.fileName );
+		EvalExecutionContext context = ste.context();
+		File file = new File( context.filename() );
 		int lineNum = ste.getLineNumber();
 		int colNum = ste.getColumnNumber();
 		
@@ -261,9 +261,6 @@ public class TemplateUtils
 			baseTemplate = ( is == null ) ? "" : new String( FileFunc.inputStream2Bytes( is ), "UTF-8" );
 		}
 		
-		EvalMetaData meta = new EvalMetaData();
-		meta.shell = "html";
-		
-		return factory.eval( baseTemplate.replace( pageMark, html ), meta, SiteManager.INSTANCE.getDefaultSite() );
+		return factory.eval( EvalExecutionContext.fromSource( baseTemplate.replace( pageMark, html ) ).shell( "html" ).site( SiteManager.INSTANCE.getDefaultSite() ) );
 	}
 }

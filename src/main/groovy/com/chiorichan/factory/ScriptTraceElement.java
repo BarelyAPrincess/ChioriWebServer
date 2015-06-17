@@ -22,37 +22,41 @@ public class ScriptTraceElement
 	private final String className;
 	private final int lineNum;
 	private final int colNum;
-	private final EvalMetaData metaData;
+	private final EvalExecutionContext context;
 	
-	public ScriptTraceElement( EvalMetaData metaData, int lineNum, int colNum )
+	public ScriptTraceElement( EvalExecutionContext context, int lineNum, int colNum )
 	{
-		this( metaData, lineNum, colNum, "", "" );
+		this( context, lineNum, colNum, "", "" );
 	}
 	
-	public ScriptTraceElement( EvalMetaData metaData, int lineNum, int colNum, String methodName, String className )
+	public ScriptTraceElement( EvalExecutionContext context, int lineNum, int colNum, String methodName, String className )
 	{
-		this.metaData = metaData;
-		fileName = metaData.scriptName;
+		assert ( context.script() != null );
+		
+		this.context = context;
+		fileName = context.scriptName();
 		
 		this.lineNum = lineNum;
 		this.colNum = colNum;
 		
-		if ( ( className == null || className.isEmpty() ) && metaData.scriptName != null )
-			if ( metaData.scriptName.contains( "." ) )
-				className = metaData.scriptName.substring( 0, metaData.scriptName.indexOf( "." ) );
+		if ( ( className == null || className.isEmpty() ) && context.scriptName() != null )
+			if ( context.scriptName().contains( "." ) )
+				className = context.scriptName().substring( 0, context.scriptName().indexOf( "." ) );
 			else
-				className = metaData.scriptName;
+				className = context.scriptName();
 		
 		this.methodName = methodName;
 		this.className = className;
 	}
 	
-	public ScriptTraceElement( EvalMetaData metaData, String msg )
+	public ScriptTraceElement( EvalExecutionContext context, String msg )
 	{
-		this.metaData = metaData;
-		fileName = metaData.scriptName;
+		assert ( context.script() != null );
+		
+		this.context = context;
+		fileName = context.scriptName();
 		methodName = "run";
-		className = ( metaData.scriptName == null || metaData.scriptName.isEmpty() ) ? "<Unknown Class>" : metaData.scriptName.substring( 0, metaData.scriptName.lastIndexOf( "." ) );
+		className = ( context.scriptName() == null || context.scriptName().isEmpty() ) ? "<Unknown Class>" : context.scriptName().substring( 0, context.scriptName().lastIndexOf( "." ) );
 		
 		msg = msg.replaceAll( "\n", "" );
 		
@@ -78,9 +82,11 @@ public class ScriptTraceElement
 		}
 	}
 	
-	public ScriptTraceElement( EvalMetaData metaData, StackTraceElement ste )
+	public ScriptTraceElement( EvalExecutionContext context, StackTraceElement ste )
 	{
-		this.metaData = metaData;
+		assert ( context.script() != null );
+		
+		this.context = context;
 		fileName = ste.getFileName();
 		methodName = ste.getMethodName();
 		className = ste.getClassName();
@@ -113,9 +119,9 @@ public class ScriptTraceElement
 		return colNum;
 	}
 	
-	public EvalMetaData getMetaData()
+	public EvalExecutionContext context()
 	{
-		return metaData;
+		return context;
 	}
 	
 	@Override

@@ -19,9 +19,9 @@ import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
 import com.chiorichan.event.http.HttpExceptionEvent;
 import com.chiorichan.event.server.RenderEvent;
+import com.chiorichan.factory.EvalExecutionContext;
 import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalFactoryResult;
-import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.lang.ErrorReporting;
 import com.chiorichan.lang.EvalException;
@@ -112,13 +112,13 @@ public class Template extends Plugin implements Listener
 				if ( className.isEmpty() )
 					className = null;
 				
-				EvalMetaData metaData = ste.getMetaData();
-				fileName = metaData.fileName;
+				EvalExecutionContext context = ste.context();
+				fileName = context.filename();
 				
 				if ( lineNum > -1 )
 				{
-					if ( metaData.source != null && !metaData.source.isEmpty() )
-						codeSample += "<p>Pre-evaluated Code:</p><pre>" + TemplateUtils.generateCodePreview( metaData.source, lineNum, colNum ) + "</pre>";
+					if ( context.baseSource() != null && !context.baseSource().isEmpty() )
+						codeSample += "<p>Pre-evaluated Code:</p><pre>" + TemplateUtils.generateCodePreview( context.baseSource(), lineNum, colNum ) + "</pre>";
 					
 					codeSample += "<p>Source Code:</p><pre>" + TemplateUtils.generateCodePreview( ste ) + "</pre>";
 				}
@@ -257,7 +257,14 @@ public class Template extends Plugin implements Listener
 				if ( result.isSuccessful() )
 				{
 					pageData = result.getString();
-					params.putAll( result.getMeta().getParamStrings() );
+					params.putAll( result.context().request().getRequestMapRaw() );
+				}
+				else if ( result.hasExceptions() )
+				{
+					for ( EvalException e : result.getExceptions() )
+					{
+						ErrorReporting.throwExceptions( e );
+					}
 				}
 			}
 			
@@ -267,7 +274,14 @@ public class Template extends Plugin implements Listener
 				if ( result.isSuccessful() )
 				{
 					viewData = result.getString();
-					params.putAll( result.getMeta().getParamStrings() );
+					params.putAll( result.context().request().getRequestMapRaw() );
+				}
+				else if ( result.hasExceptions() )
+				{
+					for ( EvalException e : result.getExceptions() )
+					{
+						ErrorReporting.throwExceptions( e );
+					}
 				}
 			}
 			
@@ -294,16 +308,10 @@ public class Template extends Plugin implements Listener
 			
 			event.setSource( Unpooled.buffer().writeBytes( ob.toString().getBytes() ) );
 		}
-		catch ( IOException | EvalException e )
+		catch ( IOException | EvalException | EvalMultipleException e )
 		{
-			try
-			{
-				event.setSource( Unpooled.buffer().writeBytes( generateExceptionPage( e, event.getRequest().getEvalFactory() ).getBytes() ) );
-			}
-			catch ( EvalException | EvalMultipleException e1 )
-			{
-				event.getResponse().sendException( e1 );
-			}
+			// event.setSource( Unpooled.buffer().writeBytes( generateExceptionPage( e, event.getRequest().getEvalFactory() ).getBytes() ) );
+			event.getResponse().sendException( e );
 		}
 	}
 	
@@ -317,12 +325,10 @@ public class Template extends Plugin implements Listener
 	
 	private EvalFactoryResult doInclude0( String pack, RenderEvent event ) throws IOException, EvalException
 	{
-		EvalFactory factory = event.getRequest().getEvalFactory();
-		
 		if ( getConfig().getBoolean( "config.ignoreFileNotFound" ) )
-			return WebFunc.evalPackage( factory, event.getSite(), pack );
+			return WebFunc.evalPackage( event.getRequest(), event.getSite(), pack );
 		
-		return WebFunc.evalPackageWithException( factory, event.getSite(), pack );
+		return WebFunc.evalPackageWithException( event.getRequest(), event.getSite(), pack );
 	}
 	
 	private String getPackageName( String pack )

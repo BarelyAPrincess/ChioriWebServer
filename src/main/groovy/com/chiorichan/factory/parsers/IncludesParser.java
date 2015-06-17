@@ -9,8 +9,8 @@ package com.chiorichan.factory.parsers;
 import java.io.File;
 
 import com.chiorichan.Loader;
+import com.chiorichan.factory.EvalExecutionContext;
 import com.chiorichan.factory.EvalFactory;
-import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.FileInterpreter;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
@@ -22,20 +22,20 @@ public class IncludesParser extends HTMLCommentParser
 {
 	Site site;
 	EvalFactory factory;
-	EvalMetaData meta;
+	EvalExecutionContext context;
 	
 	public IncludesParser()
 	{
 		super( "include" );
 	}
 	
-	public String runParser( String source, Site site, EvalMetaData meta, EvalFactory factory ) throws Exception
+	public String runParser( String source, Site site, EvalExecutionContext context, EvalFactory factory ) throws Exception
 	{
 		this.site = site;
 		this.factory = factory;
-		this.meta = meta;
+		this.context = context;
 		
-		return runParser( source );
+		return runParser( source, site );
 	}
 	
 	@Override
@@ -55,7 +55,7 @@ public class IncludesParser extends HTMLCommentParser
 		{
 			FileInterpreter fi = new FileInterpreter( res );
 			// TODO Prevent this from going into an infinite loop!
-			result = factory.eval( fi, site ).getString();
+			result = factory.eval( EvalExecutionContext.fromFile( fi ).request( context.request() ).site( site ) ).getString();
 		}
 		else if ( !res.exists() )
 		{

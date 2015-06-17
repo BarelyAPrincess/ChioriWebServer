@@ -7,16 +7,15 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.factory.interpreters;
+package com.chiorichan.factory.processors;
 
 import groovy.lang.Script;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.chiorichan.factory.EvalMetaData;
+import com.chiorichan.factory.EvalExecutionContext;
 import com.chiorichan.factory.ShellFactory;
 import com.chiorichan.lang.ErrorReporting;
 import com.chiorichan.lang.EvalException;
@@ -30,7 +29,7 @@ import com.chiorichan.lang.EvalException;
  * This is plain html<% print ", with a twist of groovy. Today's date: " + date("") %>.
  * </p>
  */
-public class GSPInterpreter implements Interpreter
+public class EmbeddedGroovyScriptProcessor implements ScriptingProcessor
 {
 	private static final String MARKER_START = "<%";
 	private static final String MARKER_END = "%>";
@@ -42,30 +41,32 @@ public class GSPInterpreter implements Interpreter
 	}
 	
 	@Override
-	public Object eval( EvalMetaData meta, String fullFile, ShellFactory shellFactory, ByteArrayOutputStream bs ) throws Exception
+	public boolean eval( EvalExecutionContext context, ShellFactory shellFactory ) throws Exception
 	{
+		String source = context.readString();
+		
 		int fullFileIndex = 0;
 		String[] dontStartWith = new String[] {"println", "print", "echo", "def", "import", "if", "for", "do", "}", "else", "//", "/*", "\n", "\r"};
 		
 		StringBuilder output = new StringBuilder();
 		
-		while ( fullFileIndex < fullFile.length() )
+		while ( fullFileIndex < source.length() )
 		{
-			int startIndex = fullFile.indexOf( MARKER_START, fullFileIndex );
+			int startIndex = source.indexOf( MARKER_START, fullFileIndex );
 			if ( -1 != startIndex )
 			{
 				// Append all the simple text until the marker
 				
-				String fragment = escapeFragment( fullFile.substring( fullFileIndex, startIndex ) );
+				String fragment = escapeFragment( source.substring( fullFileIndex, startIndex ) );
 				if ( !fragment.isEmpty() )
 					output.append( fragment );
 				
-				int endIndex = fullFile.indexOf( MARKER_END, Math.max( startIndex, fullFileIndex ) );
+				int endIndex = source.indexOf( MARKER_END, Math.max( startIndex, fullFileIndex ) );
 				
 				if ( endIndex == -1 )
 					throw new EvalException( ErrorReporting.E_PARSE, new IOException( "Marker `<%` was not closed after line " + ( StringUtils.countMatches( output.toString(), "\n" ) + 1 ) + ", please check your source file and try again." ), shellFactory );
 				
-				fragment = fullFile.substring( startIndex + MARKER_START.length(), endIndex );
+				fragment = source.substring( startIndex + MARKER_START.length(), endIndex );
 				
 				boolean appendPrint = true;
 				
@@ -84,19 +85,19 @@ public class GSPInterpreter implements Interpreter
 			}
 			else
 			{
-				String fragment = escapeFragment( fullFile.substring( fullFileIndex ) );
+				String fragment = escapeFragment( source.substring( fullFileIndex ) );
 				
 				if ( !fragment.isEmpty() )
 					output.append( fragment );
 				
 				// Position index after the end of the file
-				fullFileIndex = fullFile.length() + 1;
+				fullFileIndex = source.length() + 1;
 			}
 		}
 		
-		meta.source = output.toString();
-		
-		return interpret( shellFactory, output.toString(), meta );
+		context.baseSource( output.toString() );
+		context.result().object( interpret( context, shellFactory, output.toString() ) );
+		return true;
 	}
 	
 	public String escapeFragment( String fragment )
@@ -112,9 +113,9 @@ public class GSPInterpreter implements Interpreter
 		return "print " + brackets + fragment + brackets + "; ";
 	}
 	
-	private Object interpret( ShellFactory shellFactory, String scriptText, EvalMetaData meta )
+	private Object interpret( EvalExecutionContext context, ShellFactory shellFactory, String scriptText )
 	{
-		Script script = shellFactory.makeScript( scriptText, meta );
+		Script script = shellFactory.makeScript( scriptText, context );
 		
 		Object o = script.run();
 		

@@ -7,11 +7,9 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.factory.postprocessors;
+package com.chiorichan.factory.event;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
-import io.netty.buffer.Unpooled;
 
 import java.awt.Graphics2D;
 import java.awt.Image;
@@ -27,34 +25,31 @@ import javax.imageio.ImageIO;
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.ContentTypes;
 import com.chiorichan.Loader;
-import com.chiorichan.factory.EvalMetaData;
+import com.chiorichan.event.EventHandler;
+import com.chiorichan.event.Listener;
+import com.chiorichan.factory.EvalExecutionContext;
+import com.chiorichan.http.HttpRequestWrapper;
 
-public class ImagePostProcessor implements PostProcessor
+public class ImagePostProcessor implements Listener
 {
-	/**
-	 * A cached array of content types that start with image, e.g., image/jpeg
-	 */
-	private static final String[] types = ContentTypes.getAllTypes( "image" );
-	
-	@Override
-	public String[] getHandledTypes()
+	@EventHandler( )
+	public void onEvent( EvalFactoryPostEvent event )
 	{
-		return types;
-	}
-	
-	@Override
-	public ByteBuf process( EvalMetaData meta, ByteBuf buf ) throws Exception
-	{
+		if ( !Arrays.asList( ContentTypes.getAllTypes( "image" ) ).contains( event.context().contentType() ) )
+			return;
+		
 		float x = 0;
 		float y = 0;
 		
-		Map<String, String> paramsRaw = meta.getParamStrings();
+		EvalExecutionContext context = event.context();
+		HttpRequestWrapper request = context.request();
+		Map<String, String> rewrite = request.getRewriteMap();
 		
-		if ( paramsRaw != null )
+		if ( rewrite != null )
 		{
-			if ( paramsRaw.get( "serverSideOptions" ) != null )
+			if ( rewrite.get( "serverSideOptions" ) != null )
 			{
-				String[] params = paramsRaw.get( "serverSideOptions" ).trim().split( "_" );
+				String[] params = rewrite.get( "serverSideOptions" ).trim().split( "_" );
 				
 				for ( String p : params )
 				{
@@ -75,19 +70,19 @@ public class ImagePostProcessor implements PostProcessor
 				}
 			}
 			
-			if ( meta.params.get( "width" ) != null )
-				x = Integer.parseInt( paramsRaw.get( "width" ) );
+			if ( request.getArgument( "width" ) != null )
+				x = request.getArgumentInt( "width" );
 			
-			if ( meta.params.get( "height" ) != null )
-				y = Integer.parseInt( paramsRaw.get( "height" ) );
+			if ( request.getArgument( "height" ) != null )
+				y = request.getArgumentInt( "height" );
 			
-			if ( meta.params.get( "w" ) != null )
-				x = Integer.parseInt( paramsRaw.get( "w" ) );
+			if ( request.getArgument( "w" ) != null )
+				x = request.getArgumentInt( "w" );
 			
-			if ( meta.params.get( "h" ) != null )
-				y = Integer.parseInt( paramsRaw.get( "h" ) );
+			if ( request.getArgument( "h" ) != null )
+				y = request.getArgumentInt( "h" );
 			
-			if ( meta.params.get( "thumb" ) != null )
+			if ( request.getArgument( "thumb" ) != null )
 			{
 				x = 150;
 				y = 0;
@@ -97,14 +92,12 @@ public class ImagePostProcessor implements PostProcessor
 		// Tests if our Post Processor can process the current image.
 		List<String> readerFormats = Arrays.asList( ImageIO.getReaderFormatNames() );
 		List<String> writerFormats = Arrays.asList( ImageIO.getWriterFormatNames() );
-		if ( meta.contentType != null && !readerFormats.contains( meta.contentType.split( "/" )[1].toLowerCase() ) )
-			return null;
+		if ( context.contentType() != null && !readerFormats.contains( context.contentType().split( "/" )[1].toLowerCase() ) )
+			return;
 		
 		try
 		{
-			int inx = buf.readerIndex();
-			BufferedImage img = ImageIO.read( new ByteBufInputStream( buf ) );
-			buf.readerIndex( inx );
+			BufferedImage img = ImageIO.read( new ByteBufInputStream( event.context().buffer() ) );
 			
 			if ( img != null )
 			{
@@ -135,7 +128,7 @@ public class ImagePostProcessor implements PostProcessor
 				}
 				
 				if ( w1 < 1 || h1 < 1 || ( w1 == w && h1 == h ) )
-					return null;
+					return;
 				
 				Image image = img.getScaledInstance( Math.round( w1 ), Math.round( h1 ), Loader.getConfig().getBoolean( "advanced.processors.useFastGraphics", true ) ? Image.SCALE_FAST : Image.SCALE_SMOOTH );
 				
@@ -150,12 +143,12 @@ public class ImagePostProcessor implements PostProcessor
 				{
 					ByteArrayOutputStream bs = new ByteArrayOutputStream();
 					
-					if ( meta.contentType != null && writerFormats.contains( meta.contentType.split( "/" )[1].toLowerCase() ) )
-						ImageIO.write( rtn, meta.contentType.split( "/" )[1].toLowerCase(), bs );
+					if ( context.contentType() != null && writerFormats.contains( context.contentType().split( "/" )[1].toLowerCase() ) )
+						ImageIO.write( rtn, context.contentType().split( "/" )[1].toLowerCase(), bs );
 					else
 						ImageIO.write( rtn, "png", bs );
 					
-					return Unpooled.buffer().writeBytes( bs.toByteArray() );
+					event.context().resetAndWrite( bs.toByteArray() );
 				}
 			}
 		}
@@ -164,6 +157,6 @@ public class ImagePostProcessor implements PostProcessor
 			e.printStackTrace();
 		}
 		
-		return null;
+		return;
 	}
 }

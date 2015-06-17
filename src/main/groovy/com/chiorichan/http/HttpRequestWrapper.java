@@ -49,6 +49,7 @@ import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.NetworkFunc;
+import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Charsets;
@@ -331,7 +332,25 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		return null;
 	}
 	
-	public Boolean getArgumentBoolean( String key )
+	public double getArgumentDouble( String key )
+	{
+		Object obj = getArgument( key, "-1.0" );
+		return ObjectFunc.castToDouble( obj );
+	}
+	
+	public long getArgumentLong( String key )
+	{
+		Object obj = getArgument( key, "-1" );
+		return ObjectFunc.castToLong( obj );
+	}
+	
+	public int getArgumentInt( String key )
+	{
+		Object obj = getArgument( key, "-1" );
+		return ObjectFunc.castToInt( obj );
+	}
+	
+	public boolean getArgumentBoolean( String key )
 	{
 		String rtn = getArgument( key, "0" ).toLowerCase();
 		return StringFunc.isTrue( rtn );
@@ -648,11 +667,6 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	public Site getSite()
 	{
 		return site;
-	}
-	
-	public String getAttribute( String string )
-	{
-		return null;
 	}
 	
 	public HttpRequest getOriginal()

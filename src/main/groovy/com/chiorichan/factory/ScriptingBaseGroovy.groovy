@@ -328,41 +328,41 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	
 	EvalFactoryResult evalFile( String file ) throws IOException, EvalException
 	{
-		return WebFunc.evalFile( getEvalFactory(), getSession().getSite(), file )
+		return WebFunc.evalFile( getRequest(), getSession().getSite(), file )
 	}
 	
 	EvalFactoryResult evalPackage( String pack ) throws EvalException
 	{
-		return WebFunc.evalPackage( getRequest().getEvalFactory(), getSession().getSite(), pack )
+		return WebFunc.evalPackage( getRequest(), getSession().getSite(), pack )
 	}
 	
 	EvalFactoryResult evalPackageWithException( String pack, Object... global ) throws IOException, EvalException
 	{
-		return WebFunc.evalPackageWithException( getRequest().getEvalFactory(), getSession().getSite(), pack )
+		return WebFunc.evalPackageWithException( getRequest(), getSession().getSite(), pack )
 	}
 	
 	EvalFactoryResult evalPackageWithException( String pack ) throws IOException, EvalException
 	{
-		return WebFunc.evalPackageWithException( getRequest().getEvalFactory(), getSession().getSite(), pack )
+		return WebFunc.evalPackageWithException( getRequest(), getSession().getSite(), pack )
 	}
 	
 	String readFile( String file ) throws IOException, EvalException
 	{
-		return WebFunc.evalFile( getRequest().getEvalFactory(), getSession().getSite(), file ).getString()
+		return WebFunc.evalFile( getRequest(), getSession().getSite(), file ).getString()
 	}
 	
 	String readPackage( String pack ) throws EvalException
 	{
-		return WebFunc.evalPackage( getRequest().getEvalFactory(), getSession().getSite(), pack ).getString()
+		return WebFunc.evalPackage( getRequest(), getSession().getSite(), pack ).getString()
 	}
 	
 	String readPackageWithException( String pack, Object... global ) throws IOException, EvalException
 	{
-		return WebFunc.evalPackageWithException( getRequest().getEvalFactory(), getSession().getSite(), pack ).getString()
+		return WebFunc.evalPackageWithException( getRequest(), getSession().getSite(), pack ).getString()
 	}
 	
 	String readPackageWithException( String pack ) throws IOException, EvalException
 	{
-		return WebFunc.evalPackageWithException( getRequest().getEvalFactory(), getSession().getSite(), pack ).getString()
+		return WebFunc.evalPackageWithException( getRequest(), getSession().getSite(), pack ).getString()
 	}
 }

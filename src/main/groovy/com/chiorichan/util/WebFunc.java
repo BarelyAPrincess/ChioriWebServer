@@ -25,10 +25,10 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.ocpsoft.prettytime.PrettyTime;
 
 import com.chiorichan.Loader;
-import com.chiorichan.factory.EvalFactory;
+import com.chiorichan.factory.EvalExecutionContext;
 import com.chiorichan.factory.EvalFactoryResult;
-import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.FileInterpreter;
+import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.lang.EvalException;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
@@ -355,10 +355,10 @@ public class WebFunc
 		return StringEscapeUtils.escapeHtml4( l );
 	}
 	
-	public static EvalFactoryResult evalFile( EvalFactory factory, Site site, String file ) throws IOException, EvalException
+	public static EvalFactoryResult evalFile( HttpRequestWrapper request, Site site, String file ) throws IOException, EvalException
 	{
 		if ( file == null || file.isEmpty() )
-			return new EvalFactoryResult( new EvalMetaData( file ), site );
+			return EvalExecutionContext.fromSource( "", "<no file>" ).result();
 		
 		File packFile = new File( file );
 		
@@ -366,29 +366,24 @@ public class WebFunc
 			site = SiteManager.INSTANCE.getDefaultSite();
 		
 		if ( packFile == null || !packFile.exists() )
-			return new EvalFactoryResult( new EvalMetaData( file ), site );
+			return EvalExecutionContext.fromSource( "", "<no file>" ).result();
 		
-		EvalMetaData codeMeta = new EvalMetaData();
-		
-		codeMeta.shell = FileInterpreter.determineShellFromName( packFile.getName() );
-		codeMeta.fileName = packFile.getAbsolutePath();
-		
-		return factory.eval( packFile, codeMeta, site );
+		return request.getEvalFactory().eval( EvalExecutionContext.fromFile( packFile ).request( request ).shell( FileInterpreter.determineShellFromName( packFile.getName() ) ).site( site ) );
 	}
 	
-	public static EvalFactoryResult evalPackage( EvalFactory factory, Site site, String pack ) throws EvalException
+	public static EvalFactoryResult evalPackage( HttpRequestWrapper request, Site site, String pack ) throws EvalException
 	{
 		try
 		{
-			return evalPackageWithException( factory, site, pack );
+			return evalPackageWithException( request, site, pack );
 		}
 		catch ( IOException e )
 		{
-			return new EvalFactoryResult( new EvalMetaData(), site );
+			return EvalExecutionContext.fromSource( "", "<no file>" ).result();
 		}
 	}
 	
-	public static EvalFactoryResult evalPackageWithException( EvalFactory factory, Site site, String pack ) throws IOException, EvalException
+	public static EvalFactoryResult evalPackageWithException( HttpRequestWrapper request, Site site, String pack ) throws IOException, EvalException
 	{
 		File packFile = null;
 		
@@ -398,12 +393,13 @@ public class WebFunc
 		packFile = site.getResourceWithException( pack );
 		
 		FileInterpreter fi = new FileInterpreter( packFile );
-		EvalMetaData codeMeta = new EvalMetaData( fi );
 		
 		if ( packFile == null || !packFile.exists() )
-			return new EvalFactoryResult( codeMeta, site );
+			return EvalExecutionContext.fromSource( "", "<no file>" ).result();
 		
-		return factory.eval( fi, codeMeta, site );
+		EvalFactoryResult result = request.getEvalFactory().eval( EvalExecutionContext.fromFile( fi ).request( request ).site( site ) );
+		
+		return result;
 	}
 	
 	public static Map<String, String> queryToMap( String query ) throws UnsupportedEncodingException

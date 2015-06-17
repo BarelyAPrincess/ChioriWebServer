@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.factory.preprocessors;
+package com.chiorichan.factory.event;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,21 +22,19 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
 import com.chiorichan.Loader;
-import com.chiorichan.factory.EvalMetaData;
+import com.chiorichan.event.EventHandler;
+import com.chiorichan.event.Listener;
 import com.google.common.collect.Maps;
 import com.google.gson.GsonBuilder;
 
-public class LessPreProcessor implements PreProcessor
+public class LessPreProcessor implements Listener
 {
-	@Override
-	public String[] getHandledTypes()
+	@EventHandler( )
+	public void onEvent( EvalFactoryPreEvent event )
 	{
-		return new String[] {"less", "stylesheet/less"};
-	}
-	
-	@Override
-	public String process( EvalMetaData meta, String code ) throws Exception
-	{
+		if ( !event.context().contentType().equals( "stylesheet/less" ) || !event.context().shell().equals( "less" ) )
+			return;
+		
 		ClassLoader classLoader = getClass().getClassLoader();
 		InputStream inputStream = classLoader.getResourceAsStream( "com/chiorichan/less-rhino-1.7.4.js" );
 		
@@ -55,12 +53,12 @@ public class LessPreProcessor implements PreProcessor
 				
 				Scriptable compileScope = context.newObject( globalScope );
 				compileScope.setParentScope( globalScope );
-				compileScope.put( "lessSource", compileScope, code );
+				compileScope.put( "lessSource", compileScope, event.context().readString() );
 				
-				String fileName = "dummyFile.less";
+				String filename = "dummyFile.less";
 				
-				if ( meta.fileName != null && !meta.fileName.isEmpty() )
-					fileName = new File( meta.fileName ).getName();
+				if ( event.context().filename() != null && !event.context().filename().isEmpty() )
+					filename = new File( event.context().filename() ).getName();
 				
 				/*
 				 * try
@@ -75,7 +73,7 @@ public class LessPreProcessor implements PreProcessor
 				
 				Map<String, Object> compilerOptions = Maps.newHashMap();
 				
-				compilerOptions.put( "filename", fileName );
+				compilerOptions.put( "filename", filename );
 				compilerOptions.put( "compress", true );
 				
 				String json = new GsonBuilder().create().toJson( compilerOptions );
@@ -89,11 +87,9 @@ public class LessPreProcessor implements PreProcessor
 				Loader.getLogger().debug( "" + globalScope.get( "source" ) );
 				
 				if ( globalScope.get( "source" ) != null && globalScope.get( "source" ) instanceof String )
-					code = ( String ) globalScope.get( "source" );
+					event.context().resetAndWrite( ( String ) globalScope.get( "source" ) );
 				else if ( globalScope.get( "source" ) != null )
 					Loader.getLogger().warning( "We did not get what we expected back from Less.js: " + globalScope.get( "source" ) );
-				
-				return code;
 			}
 			finally
 			{
@@ -104,12 +100,10 @@ public class LessPreProcessor implements PreProcessor
 		catch ( JavaScriptException e )
 		{
 			e.printStackTrace();
-			return null;
 		}
 		catch ( IOException e )
 		{
 			e.printStackTrace();
-			return null;
 		}
 	}
 }

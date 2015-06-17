@@ -40,7 +40,7 @@ public class LinksParser extends HTMLCommentParser
 			source = source.replace( "%" + entry.getKey() + "%", entry.getValue() );
 		}
 		
-		return runParser( source );
+		return super.runParser( source, site );
 	}
 	
 	/**

@@ -54,7 +54,10 @@ class LogRecord implements ILogEvent
 	@Override
 	public void log( Level level, String msg, Object... objs )
 	{
-		elements.add( new LogElement( level, String.format( msg, objs ), ConsoleColor.fromLevel( level ) ) );
+		if ( objs.length < 1 )
+			elements.add( new LogElement( level, msg, ConsoleColor.fromLevel( level ) ) );
+		else
+			elements.add( new LogElement( level, String.format( msg, objs ), ConsoleColor.fromLevel( level ) ) );
 	}
 	
 	@Override
@@ -82,7 +85,7 @@ class LogRecord implements ILogEvent
 				{
 					ScriptTraceElement element = e.getScriptTrace()[0];
 					Throwable t = e.getCause();
-					log( Level.SEVERE, ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s:%s, message '%s'", t.getClass().getName(), element.getMetaData().fileName, element.getLineNumber(), ( element.getColumnNumber() > 0 ) ? element.getColumnNumber() : 0, e.getMessage() );
+					log( Level.SEVERE, ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s:%s, message '%s'", t.getClass().getName(), element.context().filename(), element.getLineNumber(), ( element.getColumnNumber() > 0 ) ? element.getColumnNumber() : 0, e.getMessage() );
 				}
 				else
 				{

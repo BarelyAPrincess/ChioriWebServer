@@ -61,15 +61,15 @@ import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.RenderEvent;
 import com.chiorichan.event.server.RequestEvent;
+import com.chiorichan.factory.EvalExecutionContext;
 import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalFactoryResult;
-import com.chiorichan.factory.EvalMetaData;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.lang.ApacheParser;
 import com.chiorichan.lang.ErrorReporting;
 import com.chiorichan.lang.EvalException;
-import com.chiorichan.lang.HttpError;
 import com.chiorichan.lang.EvalMultipleException;
+import com.chiorichan.lang.HttpError;
 import com.chiorichan.lang.SiteException;
 import com.chiorichan.logger.LogEvent;
 import com.chiorichan.logger.LogManager;
@@ -293,7 +293,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 					if ( evalOrig.isScriptingException() )
 					{
 						ScriptTraceElement element = evalOrig.getScriptTrace()[0];
-						log.log( Level.SEVERE, ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s:%s, message '%s'", cause.getClass().getName(), element.getMetaData().fileName, element.getLineNumber(), ( element.getColumnNumber() > 0 ) ? element.getColumnNumber() : 0, cause.getMessage() );
+						log.log( Level.SEVERE, ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s:%s, message '%s'", cause.getClass().getName(), element.context().filename(), element.getLineNumber(), ( element.getColumnNumber() > 0 ) ? element.getColumnNumber() : 0, cause.getMessage() );
 					}
 					else
 						log.log( Level.SEVERE, ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s, message '%s'", cause.getClass().getName(), cause.getStackTrace()[0].getFileName(), cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
@@ -596,14 +596,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		// Enhancement: Allow HTML to be ran under different shells. Default is embedded.
 		if ( fi.hasHTML() )
 		{
-			EvalMetaData meta = new EvalMetaData();
-			meta.shell = "embedded";
-			meta.contentType = fi.getContentType();
-			meta.params.clear();
-			meta.params.putAll( fi.getRewriteParams() );
-			meta.params.putAll( request.getGetMap() );
-			
-			EvalFactoryResult result = factory.eval( fi.getHTML(), meta, currentSite );
+			EvalFactoryResult result = factory.eval( EvalExecutionContext.fromSource( fi.getHTML(), "<html>" ).request( request ).site( currentSite ) );
 			
 			if ( result.hasExceptions() )
 			{
@@ -620,7 +613,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			
 			if ( result.isSuccessful() )
 			{
-				rendered.writeBytes( result.getResult() );
+				rendered.writeBytes( result.content() );
 				if ( result.getObject() != null && ! ( result.getObject() instanceof NullObject ) )
 					try
 					{
@@ -643,12 +636,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				return;
 			}
 			
-			EvalMetaData meta = new EvalMetaData();
-			meta.params.clear();
-			meta.params.putAll( request.getRewriteMap() );
-			meta.params.putAll( request.getGetMap() );
-			
-			EvalFactoryResult result = factory.eval( fi, meta, currentSite );
+			EvalFactoryResult result = factory.eval( EvalExecutionContext.fromFile( fi ).request( request ).site( currentSite ) );
 			
 			if ( result.hasExceptions() )
 			{
@@ -665,7 +653,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			
 			if ( result.isSuccessful() )
 			{
-				rendered.writeBytes( result.getResult() );
+				rendered.writeBytes( result.content() );
 				if ( result.getObject() != null && ! ( result.getObject() instanceof NullObject ) )
 					try
 					{

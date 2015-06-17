@@ -11,47 +11,42 @@ package com.chiorichan.factory;
 
 import groovy.lang.GroovyShell;
 import groovy.transform.TimedInterrupt;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.Charsets;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.Validate;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ASTTransformationCustomizer;
 
-import com.chiorichan.ContentTypes;
 import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountType;
 import com.chiorichan.account.auth.AccountAuthenticator;
 import com.chiorichan.event.EventBus;
-import com.chiorichan.factory.interpreters.GSPInterpreter;
-import com.chiorichan.factory.interpreters.GroovyInterpreter;
-import com.chiorichan.factory.interpreters.HTMLInterpreter;
-import com.chiorichan.factory.interpreters.Interpreter;
+import com.chiorichan.event.EventException;
+import com.chiorichan.event.Listener;
+import com.chiorichan.factory.event.CoffeePreProcessor;
+import com.chiorichan.factory.event.EvalFactoryPostEvent;
+import com.chiorichan.factory.event.EvalFactoryPreEvent;
+import com.chiorichan.factory.event.ImagePostProcessor;
+import com.chiorichan.factory.event.JSMinPostProcessor;
+import com.chiorichan.factory.event.LessPreProcessor;
+import com.chiorichan.factory.event.ParseWrapper;
 import com.chiorichan.factory.parsers.IncludesParser;
 import com.chiorichan.factory.parsers.LinksParser;
-import com.chiorichan.factory.postprocessors.ImagePostProcessor;
-import com.chiorichan.factory.postprocessors.JSMinPostProcessor;
-import com.chiorichan.factory.postprocessors.PostProcessor;
-import com.chiorichan.factory.preprocessors.CoffeePreProcessor;
-import com.chiorichan.factory.preprocessors.LessPreProcessor;
-import com.chiorichan.factory.preprocessors.PreProcessor;
-import com.chiorichan.http.WebInterpreter;
+import com.chiorichan.factory.processors.EmbeddedGroovyScriptProcessor;
+import com.chiorichan.factory.processors.GroovyScriptProcessor;
+import com.chiorichan.factory.processors.ScriptingProcessor;
 import com.chiorichan.lang.ErrorReporting;
 import com.chiorichan.lang.EvalException;
 import com.chiorichan.permission.PermissionManager;
@@ -61,18 +56,15 @@ import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.util.MapFunc;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 public class EvalFactory
 {
-	private static final List<PreProcessor> preProcessors = Lists.newCopyOnWriteArrayList();
-	private static final List<Interpreter> interpreters = Lists.newCopyOnWriteArrayList();
-	private static final List<PostProcessor> postProcessors = Lists.newCopyOnWriteArrayList();
+	private static final List<ScriptingProcessor> processors = Lists.newCopyOnWriteArrayList();
 	
-	private Charset encoding = Charsets.toCharset( Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" ) );
+	private Charset charset = Charsets.toCharset( Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" ) );
 	private final ShellFactory shellFactory = new ShellFactory();
 	private final Set<GroovyShellTracker> groovyShells = Sets.newLinkedHashSet();
 	private final ByteArrayOutputStream bs = new ByteArrayOutputStream();
@@ -94,11 +86,10 @@ public class EvalFactory
 	
 	static
 	{
-		// TODO Allow to override and/or extending of Pre-Processors, Interpreters and Post-Processors.
-		
 		/**
 		 * Register Pre-Processors
 		 */
+		register( new ParseWrapper( new LinksParser(), new IncludesParser() ) );
 		if ( Loader.getConfig().getBoolean( "advanced.processors.coffeeProcessorEnabled", true ) )
 			register( new CoffeePreProcessor() );
 		if ( Loader.getConfig().getBoolean( "advanced.processors.lessProcessorEnabled", true ) )
@@ -106,13 +97,12 @@ public class EvalFactory
 		// register( new SassPreProcessor() );
 		
 		/**
-		 * Register Interpreters
+		 * Register Script-Processors
 		 */
 		if ( Loader.getConfig().getBoolean( "advanced.interpreters.gspEnabled", true ) )
-			register( new GSPInterpreter() );
+			register( new EmbeddedGroovyScriptProcessor() );
 		if ( Loader.getConfig().getBoolean( "advanced.interpreters.groovyEnabled", true ) )
-			register( new GroovyInterpreter() );
-		register( new HTMLInterpreter() );
+			register( new GroovyScriptProcessor() );
 		
 		/**
 		 * Register Post-Processors
@@ -134,6 +124,16 @@ public class EvalFactory
 			timedInterruptParams.put( "value", timeout );
 			timedInterrupt.setAnnotationParameters( timedInterruptParams );
 		}
+	}
+	
+	public static void register( Listener listener )
+	{
+		EventBus.INSTANCE.registerEvents( listener, Loader.getInstance() );
+	}
+	
+	public static void register( ScriptingProcessor processor )
+	{
+		processors.add( processor );
 	}
 	
 	private EvalFactory( EvalBinding binding )
@@ -205,7 +205,7 @@ public class EvalFactory
 		/*
 		 * Set default encoding
 		 */
-		configuration.setSourceEncoding( encoding.name() );
+		configuration.setSourceEncoding( charset.name() );
 		
 		return new GroovyShell( Loader.class.getClassLoader(), binding, configuration );
 	}
@@ -246,7 +246,7 @@ public class EvalFactory
 		if ( scriptTrace.size() < 1 )
 			return "<unknown>";
 		
-		String fileName = scriptTrace.get( scriptTrace.size() - 1 ).getMetaData().fileName;
+		String fileName = scriptTrace.get( scriptTrace.size() - 1 ).context().filename();
 		
 		if ( fileName == null || fileName.isEmpty() )
 			return "<unknown>";
@@ -279,7 +279,7 @@ public class EvalFactory
 	{
 		try
 		{
-			binding.setProperty( "out", new PrintStream( bs, true, encoding.name() ) );
+			binding.setProperty( "out", new PrintStream( bs, true, charset.name() ) );
 		}
 		catch ( UnsupportedEncodingException e )
 		{
@@ -287,275 +287,84 @@ public class EvalFactory
 		}
 	}
 	
-	public void setEncoding( Charset encoding )
+	public void setEncoding( Charset charset )
 	{
-		this.encoding = encoding;
+		this.charset = charset;
 	}
 	
-	/**
-	 * 
-	 * @param orig
-	 *            , The original class you would like to override.
-	 * @param replace
-	 *            , An instance of the class you are overriding with. Must extend the original class.
-	 */
-	public static boolean overrideProcessor( Class<? extends PreProcessor> orig, PreProcessor replace )
+	public EvalFactoryResult eval( EvalExecutionContext context )
 	{
-		if ( !orig.isAssignableFrom( replace.getClass() ) )
-			return false;
-		
-		for ( PreProcessor p : preProcessors )
-			if ( p.getClass().equals( orig ) )
-				preProcessors.remove( p );
-		register( replace );
-		
-		return true;
-	}
-	
-	/**
-	 * 
-	 * @param orig
-	 *            , The original class you would like to override.
-	 * @param replace
-	 *            , An instance of the class you are overriding with. Must extend the original class.
-	 */
-	public static boolean overrideInterpreter( Class<? extends Interpreter> orig, Interpreter replace )
-	{
-		if ( !orig.isAssignableFrom( replace.getClass() ) )
-			return false;
-		
-		for ( Interpreter p : interpreters )
-			if ( p.getClass().equals( orig ) )
-				interpreters.remove( p );
-		register( replace );
-		
-		return true;
-	}
-	
-	/**
-	 * 
-	 * @param orig
-	 *            The original class you would like to override.
-	 * @param replace
-	 *            An instance of the class you are overriding with. Must extend the original class.
-	 */
-	public static boolean overrideProcessor( Class<? extends PostProcessor> orig, PostProcessor replace )
-	{
-		if ( !orig.isAssignableFrom( replace.getClass() ) )
-			return false;
-		
-		for ( PostProcessor p : postProcessors )
-			if ( p.getClass().equals( orig ) )
-				postProcessors.remove( p );
-		register( replace );
-		
-		return true;
-	}
-	
-	public static void register( PreProcessor preProcessor )
-	{
-		preProcessors.add( preProcessor );
-	}
-	
-	public static void register( Interpreter interpreter )
-	{
-		interpreters.add( interpreter );
-	}
-	
-	public static void register( PostProcessor postProcessor )
-	{
-		postProcessors.add( postProcessor );
-	}
-	
-	public EvalFactoryResult eval( File fi, Site site )
-	{
-		EvalMetaData codeMeta = new EvalMetaData();
-		
-		codeMeta.shell = FileInterpreter.determineShellFromName( fi.getName() );
-		codeMeta.fileName = fi.getAbsolutePath();
-		
-		return eval( fi, codeMeta, site );
-	}
-	
-	public EvalFactoryResult eval( File fi, EvalMetaData meta, Site site )
-	{
-		try
-		{
-			return eval( FileUtils.readFileToString( fi, encoding ), meta, site );
-		}
-		catch ( IOException e )
-		{
-			EvalFactoryResult result = new EvalFactoryResult( meta, site );
-			EvalException.exceptionHandler( e, shellFactory, result, ErrorReporting.E_WARNING, String.format( "Exception caught while trying to read file '%s' from disk", fi.getAbsolutePath() ) );
-			return result;
-		}
-	}
-	
-	public EvalFactoryResult eval( FileInterpreter fi, Site site )
-	{
-		return eval( fi, null, site );
-	}
-	
-	public EvalFactoryResult eval( FileInterpreter fi, EvalMetaData meta, Site site )
-	{
-		if ( meta == null )
-			meta = new EvalMetaData();
-		
-		meta.params.clear();
-		if ( fi instanceof WebInterpreter )
-			meta.params.putAll( new MapFunc<String, Object>( String.class, Object.class ).castTypes( ( ( WebInterpreter ) fi ).getRewriteParams() ) );
-		else
-			meta.params.putAll( new MapFunc<String, Object>( String.class, Object.class ).castTypes( fi.getParams() ) );
-		
-		meta.contentType = fi.getContentType();
-		meta.shell = fi.getParams().get( "shell" );
-		meta.fileName = ( fi.getFile() != null ) ? fi.getFile().getAbsolutePath() : fi.getParams().get( "file" );
-		
-		return eval( fi.consumeString(), meta, site );
-	}
-	
-	public EvalFactoryResult eval( String code, Site site )
-	{
-		EvalMetaData codeMeta = new EvalMetaData();
-		
-		codeMeta.shell = "html";
-		
-		return eval( code, codeMeta, site );
-	}
-	
-	public EvalFactoryResult eval( String source, EvalMetaData meta, Site site )
-	{
-		EvalFactoryResult result = new EvalFactoryResult( meta, site );
-		
-		if ( source == null || source.isEmpty() )
-			return result.setReason( "Code Block was null or empty!" );
-		
-		if ( meta.contentType == null )
-			if ( meta.fileName == null )
-				meta.contentType = meta.shell;
-			else
-				meta.contentType = ContentTypes.getContentType( meta.fileName );
-		
-		meta.source = source;
-		meta.site = site;
-		
-		try
-		{
-			if ( site != null )
-			{
-				source = new IncludesParser().runParser( source, site, meta, this );
-				source = new LinksParser().runParser( source, site );
-			}
-		}
-		catch ( Throwable t )
-		{
-			EvalException.exceptionHandler( t, shellFactory, result, ErrorReporting.E_WARNING, "Exception caught while trying to run source parsers" );
-		}
-		
-		for ( PreProcessor p : preProcessors )
-		{
-			Set<String> handledTypes = new HashSet<String>( Arrays.asList( p.getHandledTypes() ) );
-			
-			for ( String t : handledTypes )
-				if ( t.equalsIgnoreCase( meta.shell ) || meta.contentType.toLowerCase().contains( t.toLowerCase() ) || t.equalsIgnoreCase( "all" ) )
-				{
-					try
-					{
-						String evaled = p.process( meta, source );
-						if ( evaled != null )
-						{
-							source = evaled;
-							break;
-						}
-					}
-					catch ( Throwable tt )
-					{
-						EvalException.exceptionHandler( tt, shellFactory, result, ErrorReporting.E_WARNING, "Exception caught while running PreProcessor `" + p.getClass().getSimpleName() + "`" );
-					}
-				}
-		}
-		
+		EvalFactoryResult result = context.result();
 		GroovyShellTracker tracker = getUnusedShellTracker();
-		GroovyShell shell = tracker.getShell();
 		
-		shell.setVariable( "__FILE__", meta.fileName );
-		
-		ByteBuf output = Unpooled.buffer();
-		boolean success = false;
+		context.charset( charset );
+		context.baseSource( new String( context.readBytes(), charset ) );
 		
 		synchronized ( tracker )
 		{
-			Loader.getLogger().fine( "Locking GroovyShell '" + shell.toString() + "' for execution of '" + meta.fileName + "', length '" + source.length() + "'" );
-			tracker.setInUse( true );
-			
-			byte[] saved = bs.toByteArray();
-			bs.reset();
-			
-			for ( Interpreter s : interpreters )
-			{
-				Set<String> handledTypes = new HashSet<String>( Arrays.asList( s.getHandledTypes() ) );
-				
-				for ( String she : handledTypes )
-				{
-					if ( she.equalsIgnoreCase( meta.shell ) || she.equalsIgnoreCase( "all" ) )
-					{
-						try
-						{
-							result.obj = s.eval( meta, source, shellFactory.setShell( shell ), bs );
-						}
-						catch ( Throwable t )
-						{
-							EvalException.exceptionHandler( t, shellFactory, result );
-							success = false;
-							return result;
-						}
-						
-						success = true;
-						break;
-					}
-				}
-			}
-			
 			try
 			{
-				output.writeBytes( ( success ) ? bs.toByteArray() : source.getBytes( encoding ) );
+				tracker.setInUse( true );
+				GroovyShell shell = tracker.getShell();
+				Loader.getLogger().fine( "Locking GroovyShell '" + shell.toString() + "' for execution of '" + context.filename() + "'" );
 				
-				bs.reset();
-				bs.write( saved );
-			}
-			catch ( IOException e )
-			{
-				e.printStackTrace();
-			}
-			
-			Loader.getLogger().fine( "Unlocking GroovyShell '" + shell.toString() + "' for execution of '" + meta.fileName + "', length '" + source.length() + "'" );
-			tracker.setInUse( false );
-		}
-		
-		for ( PostProcessor p : postProcessors )
-		{
-			Set<String> handledTypes = new HashSet<String>( Arrays.asList( p.getHandledTypes() ) );
-			
-			for ( String t : handledTypes )
-				if ( t.equalsIgnoreCase( meta.shell ) || meta.contentType.toLowerCase().contains( t.toLowerCase() ) || t.equalsIgnoreCase( "all" ) )
+				if ( !context.prepare( shell ) )
+					return result;
+				
+				// Loader.getLogger().debug( Hex.encodeHexString( context.baseSource().getBytes( charset ) ).substring( 0, 255 ) + " <--> " + Hex.encodeHexString( context.readBytes() ).substring( 0, 255 ) );
+				
+				EvalFactoryPreEvent preEvent = new EvalFactoryPreEvent( context );
+				try
 				{
-					try
+					EventBus.INSTANCE.callEventWithException( preEvent );
+				}
+				catch ( EventException e )
+				{
+					EvalException.exceptionHandler( e.getCause() == null ? e : e.getCause(), shellFactory, result, ErrorReporting.E_WARNING, "Exception caught while running PreEvent" );
+				}
+				
+				for ( ScriptingProcessor s : processors )
+				{
+					List<String> handledTypes = Arrays.asList( s.getHandledTypes() );
+					
+					for ( String she : handledTypes )
 					{
-						ByteBuf finished = p.process( meta, output );
-						if ( finished != null )
+						if ( she.equalsIgnoreCase( context.shell() ) || she.equalsIgnoreCase( "all" ) )
 						{
-							output = finished;
-							break;
+							try
+							{
+								context.internalEvalBegin( bs );
+								s.eval( context, shellFactory.setShell( shell ) );
+								context.internalEvalEnd( bs );
+								break;
+							}
+							catch ( Throwable t )
+							{
+								EvalException.exceptionHandler( t, shellFactory, result );
+								return result;
+							}
 						}
 					}
-					catch ( Throwable tt )
-					{
-						EvalException.exceptionHandler( tt, shellFactory, result, ErrorReporting.E_WARNING, "Exception caught while running PostProcessor `" + p.getClass().getSimpleName() + "`" );
-					}
 				}
+				
+				EvalFactoryPostEvent postEvent = new EvalFactoryPostEvent( context );
+				try
+				{
+					EventBus.INSTANCE.callEventWithException( postEvent );
+				}
+				catch ( EventException e )
+				{
+					EvalException.exceptionHandler( e.getCause() == null ? e : e.getCause(), shellFactory, result, ErrorReporting.E_WARNING, "Exception caught while running PostEvent" );
+				}
+				
+				return result.success( true );
+			}
+			finally
+			{
+				Loader.getLogger().fine( "Unlocking GroovyShell '" + context.toString() + "' for execution of '" + context.filename() + "'" );
+				tracker.setInUse( false );
+			}
 		}
-		
-		return result.setResult( output, true );
 	}
 	
 	/**
@@ -570,5 +379,10 @@ public class EvalFactory
 	public ShellFactory getShellFactory()
 	{
 		return shellFactory;
+	}
+	
+	public Charset charset()
+	{
+		return charset;
 	}
 }

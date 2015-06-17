@@ -7,7 +7,7 @@
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-package com.chiorichan.factory.preprocessors;
+package com.chiorichan.factory.event;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,20 +18,17 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.Scriptable;
 
-import com.chiorichan.factory.EvalMetaData;
+import com.chiorichan.event.EventHandler;
+import com.chiorichan.event.Listener;
 
-public class CoffeePreProcessor implements PreProcessor
+public class CoffeePreProcessor implements Listener
 {
-	@Override
-	public String[] getHandledTypes()
+	@EventHandler( )
+	public void onEvent( EvalFactoryPreEvent event )
 	{
-		return new String[] {"coffee", "litcoffee", "coffee.md"};
-		// XXX Is coffee.md a markdown type?
-	}
-	
-	@Override
-	public String process( EvalMetaData meta, String code ) throws Exception
-	{
+		if ( !event.context().contentType().endsWith( "coffee" ) && !event.context().contentType().endsWith( "litcoffee" ) && !event.context().contentType().endsWith( "coffee.md" ) )
+			return;
+		
 		ClassLoader classLoader = getClass().getClassLoader();
 		InputStream inputStream = classLoader.getResourceAsStream( "com/chiorichan/coffee-script.js" );
 		
@@ -49,9 +46,9 @@ public class CoffeePreProcessor implements PreProcessor
 				
 				Scriptable compileScope = context.newObject( globalScope );
 				compileScope.setParentScope( globalScope );
-				compileScope.put( "coffeeScriptSource", compileScope, code );
+				compileScope.put( "coffeeScriptSource", compileScope, event.context().readString() );
 				
-				return ( String ) context.evaluateString( compileScope, String.format( "CoffeeScript.compile(coffeeScriptSource, %s);", String.format( "{bare: %s, filename: '%s'}", true, meta.fileName ) ), "CoffeeScriptCompiler-" + meta.fileName, 0, null );
+				event.context().resetAndWrite( ( ( String ) context.evaluateString( compileScope, String.format( "CoffeeScript.compile(coffeeScriptSource, %s);", String.format( "{bare: %s, filename: '%s'}", true, event.context().filename() ) ), "CoffeeScriptCompiler-" + event.context().filename(), 0, null ) ).getBytes() );
 			}
 			finally
 			{
@@ -61,11 +58,11 @@ public class CoffeePreProcessor implements PreProcessor
 		}
 		catch ( JavaScriptException e )
 		{
-			return null;
+			return;
 		}
 		catch ( IOException e )
 		{
-			return null;
+			return;
 		}
 	}
 }

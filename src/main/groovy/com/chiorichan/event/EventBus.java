@@ -314,7 +314,7 @@ public class EventBus implements ServerManager
 		}
 		catch ( NoClassDefFoundError e )
 		{
-			Loader.getLogger().severe( "Plugin " + plugin.getDescription().getFullName() + " has failed to register events for " + listener.getClass() + " because " + e.getMessage() + " does not exist." );
+			Loader.getLogger().severe( String.format( "Plugin %s has failed to register events for %s because %s does not exist.", plugin.getDescription().getFullName(), listener.getClass(), e.getMessage() ) );
 			return ret;
 		}
 		
