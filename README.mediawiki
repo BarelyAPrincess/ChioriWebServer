@@ -413,14 +413,41 @@ Added a build.xml file so the project can not be built with Apache Ant 1.8. Swit
 * UPDATED! EvalFactory now returns EvalFactoryResult
 ===Subversion 1 (a.k.a. Milky Way)===
 ====Build 0====
-* ADDED! Dropbox Plugin
-* ADDED! Server delivers HttpCode 503 to client if server is not fully loaded up
-* NEW FEATURE! Added a Plugin Maven Library Downloader. See Dropbox plugin config for an example.
+* ADDED: Dropbox Plugin
+* ADDED: Server delivers HttpCode 503 to client if server is not fully loaded up
+* NEW FEATURE: Added a Plugin Maven Library Downloader. See Dropbox plugin config for an example.
 ====Build 1====
-
+* ADDED: Route file can now contain comment lines, starting #
+* CHANGE: Default source directory changed from pages to root of the site
+* ADDED: Groovy Script Timeout
+* TWEAK: Missing Rewrite File result
+* TWEAK: ObjectFunc class
+* TWEAK: SessionManager and AutoUpdater
 ===Subversion 2 (a.k.a. Milky Berry)
 ====Build 0====
-* REWROTE! Accounts and Sessions
+* REWROTE: Complete overhaul of Accounts and Sessions systems
+* CHANGE: Session Cookie params are not unchangable
+====Build 1====
+* REWRITE: Huge overhaul of ErrorReporting, Exceptions and Logging subsystems [WIP]
+* ADDED: New --install argument
+* CHANGE: Reenabled the Web UI extraction on install and tweaked the boot orders
+* REMOVED: ConfigurationManager and HttpUtils finally removed per deprecation
+* ADDED: Timing Constraints and Moved methods from CommonFunc to Timings class
+* CHANGE: Task Argument Orders
+* CHANGE: Removed "Chiori" from task class names
+* ADDED: Plugins and Dependencies can now load Native Libraries. WOOHOO! No more ClassPath crap. [WIP]
+* ADDED: Steps taken to further implement automatic ban system [WIP]
+* CHANGE: Improvement to HttpError exception
+* CHANGE: Renamed ScheduleManager to TaskManager
+* ADDED: Plaintext passwords now stored in seperate table
+* REWRITE: Plugin initalize subroutine
+* TWEAK: TemplatesPlugin per changes to server base
+====Build 2====
+* DEPENDS: Offically updated Netty to 5.0.0.Alpha2 and Groovy to 2.4.3
+* TWEAK: Performance and Coding Standard Improvments per suggested by JARchitect
+====Build 3====
+* REWROTE: EvalFactory Handling and Processing, Noticable Speed Improvment!!!
+* ADDED: Cache, BWFilter, ARGBFilter to PostImageProcessor
 
 =How To Build=
 You can either build Chiori Web Server with Eclipse IDE or using Gradle. It should be as simple as executing "./gradlew build" for linux users. Some plugins will also compile but you will have to execute "./gradlew :EmailPlugin:build" to build it. If built with Gradle, you will find the built files inside the "build/dest" folder.
