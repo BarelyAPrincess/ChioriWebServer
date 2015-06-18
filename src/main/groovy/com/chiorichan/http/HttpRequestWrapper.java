@@ -53,6 +53,7 @@ import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -210,6 +211,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			{
 				NetworkManager.getLogger().warning( "There was a problem decoding the request cookie.", e );
 				NetworkManager.getLogger().debug( "Cookie: " + var1 );
+				NetworkManager.getLogger().debug( "Headers: " + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( http.headers() ) );
 			}
 	}
 	

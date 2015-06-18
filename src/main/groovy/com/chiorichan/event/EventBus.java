@@ -35,6 +35,11 @@ public class EventBus implements ServerManager
 	
 	private boolean useTimings = false;
 	
+	private EventBus()
+	{
+		
+	}
+	
 	public static void init( boolean useTimings )
 	{
 		if ( isInitialized )
@@ -45,16 +50,6 @@ public class EventBus implements ServerManager
 		INSTANCE.init0( useTimings );
 		
 		isInitialized = true;
-	}
-	
-	private void init0( boolean useTimings )
-	{
-		this.useTimings = useTimings;
-	}
-	
-	private EventBus()
-	{
-		
 	}
 	
 	/**
@@ -71,22 +66,16 @@ public class EventBus implements ServerManager
 			if ( event.isAsynchronous() )
 			{
 				if ( Thread.holdsLock( this ) )
-				{
 					throw new IllegalStateException( event.getEventName() + " cannot be triggered asynchronously from inside synchronized code." );
-				}
 				if ( Loader.getConsole().isPrimaryThread() )
-				{
 					throw new IllegalStateException( event.getEventName() + " cannot be triggered asynchronously from primary server thread." );
-				}
 				fireEvent( event );
 			}
 			else
-			{
 				synchronized ( this )
 				{
 					fireEvent( event );
 				}
-			}
 		}
 		catch ( EventException ex )
 		{
@@ -107,189 +96,16 @@ public class EventBus implements ServerManager
 		if ( event.isAsynchronous() )
 		{
 			if ( Thread.holdsLock( this ) )
-			{
 				throw new IllegalStateException( event.getEventName() + " cannot be triggered asynchronously from inside synchronized code." );
-			}
 			if ( Loader.getConsole().isPrimaryThread() )
-			{
 				throw new IllegalStateException( event.getEventName() + " cannot be triggered asynchronously from primary server thread." );
-			}
 			fireEvent( event );
 		}
 		else
-		{
 			synchronized ( this )
 			{
 				fireEvent( event );
 			}
-		}
-	}
-	
-	private void fireEvent( Event event ) throws EventException
-	{
-		HandlerList handlers = event.getHandlers();
-		RegisteredListener[] listeners = handlers.getRegisteredListeners();
-		
-		for ( RegisteredListener registration : listeners )
-		{
-			if ( !registration.getCreator().isEnabled() )
-			{
-				continue;
-			}
-			
-			try
-			{
-				registration.callEvent( event );
-			}
-			catch ( AuthorNagException ex )
-			{
-				if ( registration.getCreator() instanceof PluginBase )
-				{
-					PluginBase plugin = ( PluginBase ) registration.getCreator();
-					
-					if ( plugin.isNaggable() )
-					{
-						plugin.setNaggable( false );
-						Loader.getLogger().log( Level.SEVERE, String.format( "Nag author(s): '%s' of '%s' about the following: %s", plugin.getDescription().getAuthors(), plugin.getDescription().getFullName(), ex.getMessage() ) );
-					}
-				}
-			}
-			catch ( EventException ex )
-			{
-				if ( ex.getCause() == null )
-				{
-					ex.printStackTrace();
-					Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getCreator().getName() + "\nEvent Exception Reason: " + ex.getMessage() );
-				}
-				else
-				{
-					ex.getCause().printStackTrace();
-					Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getCreator().getName() + "\nEvent Exception Reason: " + ex.getCause().getMessage() );
-				}
-				throw ex;
-			}
-			catch ( Throwable ex )
-			{
-				Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getCreator().getName(), ex );
-			}
-		}
-	}
-	
-	public void unregisterEvents( EventCreator creator )
-	{
-		HandlerList.unregisterAll( creator );
-	}
-	
-	public void unregisterEvents( Listener listener )
-	{
-		HandlerList.unregisterAll( listener );
-	}
-	
-	public void registerEvents( Listener listener, EventCreator creator )
-	{
-		if ( !creator.isEnabled() )
-		{
-			throw new IllegalCreatorAccessException( "Creator attempted to register " + listener + " while not enabled" );
-		}
-		
-		for ( Map.Entry<Class<? extends Event>, Set<RegisteredListener>> entry : createRegisteredListeners( listener, creator ).entrySet() )
-		{
-			getEventListeners( getRegistrationClass( entry.getKey() ) ).registerAll( entry.getValue() );
-		}
-	}
-	
-	public void registerEvent( Class<? extends Event> event, Listener listener, EventPriority priority, EventExecutor executor, EventCreator creator )
-	{
-		registerEvent( event, listener, priority, executor, creator, false );
-	}
-	
-	/**
-	 * Registers the given event to the specified listener using a directly passed EventExecutor
-	 * 
-	 * @param event
-	 *            Event class to register
-	 * @param listener
-	 *            Listener to register
-	 * @param priority
-	 *            Priority of this event
-	 * @param executor
-	 *            EventExecutor to register
-	 * @param creator
-	 *            Creator to register
-	 * @param ignoreCancelled
-	 *            Do not call executor if event was already cancelled
-	 */
-	public void registerEvent( Class<? extends Event> event, Listener listener, EventPriority priority, EventExecutor executor, EventCreator creator, boolean ignoreCancelled )
-	{
-		Validate.notNull( listener, "Listener cannot be null" );
-		Validate.notNull( priority, "Priority cannot be null" );
-		Validate.notNull( executor, "Executor cannot be null" );
-		Validate.notNull( creator, "Creator cannot be null" );
-		
-		if ( !creator.isEnabled() )
-		{
-			throw new IllegalCreatorAccessException( "Creator attempted to register " + event + " while not enabled" );
-		}
-		
-		if ( useTimings )
-		{
-			getEventListeners( event ).register( new TimedRegisteredListener( listener, executor, priority, creator, ignoreCancelled ) );
-		}
-		else
-		{
-			getEventListeners( event ).register( new RegisteredListener( listener, executor, priority, creator, ignoreCancelled ) );
-		}
-	}
-	
-	private HandlerList getEventListeners( Class<? extends Event> type )
-	{
-		try
-		{
-			Method method = getRegistrationClass( type ).getDeclaredMethod( "getHandlerList" );
-			method.setAccessible( true );
-			return ( HandlerList ) method.invoke( null );
-		}
-		catch ( Exception e )
-		{
-			throw new IllegalCreatorAccessException( e.toString() );
-		}
-	}
-	
-	private Class<? extends Event> getRegistrationClass( Class<? extends Event> clazz )
-	{
-		try
-		{
-			clazz.getDeclaredMethod( "getHandlerList" );
-			return clazz;
-		}
-		catch ( NoSuchMethodException e )
-		{
-			if ( clazz.getSuperclass() != null && !clazz.getSuperclass().equals( Event.class ) && Event.class.isAssignableFrom( clazz.getSuperclass() ) )
-			{
-				return getRegistrationClass( clazz.getSuperclass().asSubclass( Event.class ) );
-			}
-			else
-			{
-				Loader.getLogger().warning( "Unable to find handler list for event " + clazz.getName() );
-				return Event.class;
-			}
-		}
-	}
-	
-	/**
-	 * Sets whether or not per event timing code should be used
-	 * 
-	 * @param use
-	 *            True if per event timing code should be used
-	 */
-	public void useTimings( boolean use )
-	{
-		useTimings = use;
-	}
-	
-	public boolean useTimings()
-	{
-		return useTimings;
 	}
 	
 	public Map<Class<? extends Event>, Set<RegisteredListener>> createRegisteredListeners( Listener listener, final EventCreator plugin )
@@ -304,13 +120,9 @@ public class EventBus implements ServerManager
 			Method[] publicMethods = listener.getClass().getMethods();
 			methods = new HashSet<Method>( publicMethods.length, Float.MAX_VALUE );
 			for ( Method method : publicMethods )
-			{
 				methods.add( method );
-			}
 			for ( Method method : listener.getClass().getDeclaredMethods() )
-			{
 				methods.add( method );
-			}
 		}
 		catch ( NoClassDefFoundError e )
 		{
@@ -358,14 +170,13 @@ public class EventBus implements ServerManager
 			
 			EventExecutor executor = new EventExecutor()
 			{
+				@Override
 				public void execute( Listener listener, Event event ) throws EventException
 				{
 					try
 					{
 						if ( !eventClass.isAssignableFrom( event.getClass() ) )
-						{
 							return;
-						}
 						method.invoke( listener, event );
 					}
 					catch ( InvocationTargetException ex )
@@ -379,14 +190,168 @@ public class EventBus implements ServerManager
 				}
 			};
 			if ( useTimings )
-			{
 				eventSet.add( new TimedRegisteredListener( listener, executor, eh.priority(), plugin, eh.ignoreCancelled() ) );
-			}
 			else
-			{
 				eventSet.add( new RegisteredListener( listener, executor, eh.priority(), plugin, eh.ignoreCancelled() ) );
-			}
 		}
 		return ret;
+	}
+	
+	private void fireEvent( Event event ) throws EventException
+	{
+		HandlerList handlers = event.getHandlers();
+		RegisteredListener[] listeners = handlers.getRegisteredListeners();
+		
+		for ( RegisteredListener registration : listeners )
+		{
+			if ( !registration.getCreator().isEnabled() )
+				continue;
+			
+			try
+			{
+				registration.callEvent( event );
+			}
+			catch ( AuthorNagException ex )
+			{
+				if ( registration.getCreator() instanceof PluginBase )
+				{
+					PluginBase plugin = ( PluginBase ) registration.getCreator();
+					
+					if ( plugin.isNaggable() )
+					{
+						plugin.setNaggable( false );
+						Loader.getLogger().log( Level.SEVERE, String.format( "Nag author(s): '%s' of '%s' about the following: %s", plugin.getDescription().getAuthors(), plugin.getDescription().getFullName(), ex.getMessage() ) );
+					}
+				}
+			}
+			catch ( EventException ex )
+			{
+				if ( ex.getCause() == null )
+				{
+					ex.printStackTrace();
+					Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getCreator().getName() + "\nEvent Exception Reason: " + ex.getMessage() );
+				}
+				else
+				{
+					ex.getCause().printStackTrace();
+					Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getCreator().getName() + "\nEvent Exception Reason: " + ex.getCause().getMessage() );
+				}
+				throw ex;
+			}
+			catch ( Throwable ex )
+			{
+				Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getCreator().getName(), ex );
+			}
+		}
+	}
+	
+	private HandlerList getEventListeners( Class<? extends Event> type )
+	{
+		try
+		{
+			Method method = getRegistrationClass( type ).getDeclaredMethod( "getHandlerList" );
+			method.setAccessible( true );
+			return ( HandlerList ) method.invoke( null );
+		}
+		catch ( Exception e )
+		{
+			throw new IllegalCreatorAccessException( e.toString() );
+		}
+	}
+	
+	private Class<? extends Event> getRegistrationClass( Class<? extends Event> clazz )
+	{
+		try
+		{
+			clazz.getDeclaredMethod( "getHandlerList" );
+			return clazz;
+		}
+		catch ( NoSuchMethodException e )
+		{
+			if ( clazz.getSuperclass() != null && !clazz.getSuperclass().equals( Event.class ) && Event.class.isAssignableFrom( clazz.getSuperclass() ) )
+				return getRegistrationClass( clazz.getSuperclass().asSubclass( Event.class ) );
+			else
+			{
+				Loader.getLogger().warning( "Unable to find handler list for event " + clazz.getName() );
+				return Event.class;
+			}
+		}
+	}
+	
+	private void init0( boolean useTimings )
+	{
+		this.useTimings = useTimings;
+	}
+	
+	public void registerEvent( Class<? extends Event> event, Listener listener, EventPriority priority, EventExecutor executor, EventCreator creator )
+	{
+		registerEvent( event, listener, priority, executor, creator, false );
+	}
+	
+	/**
+	 * Registers the given event to the specified listener using a directly passed EventExecutor
+	 * 
+	 * @param event
+	 *            Event class to register
+	 * @param listener
+	 *            Listener to register
+	 * @param priority
+	 *            Priority of this event
+	 * @param executor
+	 *            EventExecutor to register
+	 * @param creator
+	 *            Creator to register
+	 * @param ignoreCancelled
+	 *            Do not call executor if event was already cancelled
+	 */
+	public void registerEvent( Class<? extends Event> event, Listener listener, EventPriority priority, EventExecutor executor, EventCreator creator, boolean ignoreCancelled )
+	{
+		Validate.notNull( listener, "Listener cannot be null" );
+		Validate.notNull( priority, "Priority cannot be null" );
+		Validate.notNull( executor, "Executor cannot be null" );
+		Validate.notNull( creator, "Creator cannot be null" );
+		
+		if ( !creator.isEnabled() )
+			throw new IllegalCreatorAccessException( "Creator attempted to register " + event + " while not enabled" );
+		
+		if ( useTimings )
+			getEventListeners( event ).register( new TimedRegisteredListener( listener, executor, priority, creator, ignoreCancelled ) );
+		else
+			getEventListeners( event ).register( new RegisteredListener( listener, executor, priority, creator, ignoreCancelled ) );
+	}
+	
+	public void registerEvents( Listener listener, EventCreator creator )
+	{
+		if ( !creator.isEnabled() )
+			throw new IllegalCreatorAccessException( "Creator attempted to register " + listener + " while not enabled" );
+		
+		for ( Map.Entry<Class<? extends Event>, Set<RegisteredListener>> entry : createRegisteredListeners( listener, creator ).entrySet() )
+			getEventListeners( getRegistrationClass( entry.getKey() ) ).registerAll( entry.getValue() );
+	}
+	
+	public void unregisterEvents( EventCreator creator )
+	{
+		HandlerList.unregisterAll( creator );
+	}
+	
+	public void unregisterEvents( Listener listener )
+	{
+		HandlerList.unregisterAll( listener );
+	}
+	
+	public boolean useTimings()
+	{
+		return useTimings;
+	}
+	
+	/**
+	 * Sets whether or not per event timing code should be used
+	 * 
+	 * @param use
+	 *            True if per event timing code should be used
+	 */
+	public void useTimings( boolean use )
+	{
+		useTimings = use;
 	}
 }

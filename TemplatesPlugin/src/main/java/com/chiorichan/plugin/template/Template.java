@@ -40,38 +40,37 @@ import com.chiorichan.util.WebFunc;
  */
 public class Template extends Plugin implements Listener
 {
-	public void onEnable()
+	private String doInclude( String pack, RenderEvent event ) throws IOException, EvalException
 	{
-		saveDefaultConfig();
-		EventBus.INSTANCE.registerEvents( this, this );
+		EvalFactoryResult result = doInclude0( pack, event );
+		if ( result.isSuccessful() )
+			return result.getString();
+		return "";
 	}
 	
-	public void onDisable()
+	private EvalFactoryResult doInclude0( String pack, RenderEvent event ) throws IOException, EvalException
 	{
+		if ( getConfig().getBoolean( "config.ignoreFileNotFound" ) )
+			return WebFunc.evalPackage( event.getRequest(), event.getSite(), pack );
 		
+		return WebFunc.evalPackageWithException( event.getRequest(), event.getSite(), pack );
 	}
 	
-	@EventHandler( priority = EventPriority.NORMAL )
-	public void onHttpExceptionEvent( HttpExceptionEvent event )
+	private String domainToPackage( String domain )
 	{
-		try
-		{
-			// We check if this exception was thrown from inside our plugin
-			if ( ExceptionUtils.indexOfThrowable( event.getThrowable(), Template.class ) > -1 )
-				return;
-			
-			EvalFactory factory = event.getRequest().getEvalFactory();
-			
-			// We initialize a temporary EvalFactory if the request did not contain one
-			if ( factory == null )
-				factory = EvalFactory.create( event.getRequest() );
-			
-			event.setErrorHtml( generateExceptionPage( event.getThrowable(), factory ) );
-		}
-		catch ( Exception e )
-		{
-			e.printStackTrace();
-		}
+		if ( domain == null || domain.isEmpty() )
+			return "";
+		
+		String[] packs = domain.split( "\\." );
+		
+		List<String> lst = Arrays.asList( packs );
+		Collections.reverse( lst );
+		
+		String pack = "";
+		for ( String s : lst )
+			pack += "." + s;
+		
+		return pack.substring( 1 );
 	}
 	
 	private String generateExceptionPage( Throwable t, EvalFactory factory ) throws EvalException, EvalMultipleException, IOException
@@ -170,6 +169,52 @@ public class Template extends Plugin implements Listener
 		return result.getString();
 	}
 	
+	private String getPackageName( String pack )
+	{
+		if ( pack.indexOf( "." ) < 0 )
+			return pack;
+		
+		String[] packs = pack.split( "\\.(?=[^.]*$)" );
+		
+		return packs[1];
+	}
+	
+	@Override
+	public void onDisable()
+	{
+		
+	}
+	
+	@Override
+	public void onEnable()
+	{
+		saveDefaultConfig();
+		EventBus.INSTANCE.registerEvents( this, this );
+	}
+	
+	@EventHandler( priority = EventPriority.NORMAL )
+	public void onHttpExceptionEvent( HttpExceptionEvent event )
+	{
+		try
+		{
+			// We check if this exception was thrown from inside our plugin
+			if ( ExceptionUtils.indexOfThrowable( event.getThrowable(), Template.class ) > -1 )
+				return;
+			
+			EvalFactory factory = event.getRequest().getEvalFactory();
+			
+			// We initialize a temporary EvalFactory if the request did not contain one
+			if ( factory == null )
+				factory = EvalFactory.create( event.getRequest() );
+			
+			event.setErrorHtml( generateExceptionPage( event.getThrowable(), factory ) );
+		}
+		catch ( Exception e )
+		{
+			e.printStackTrace();
+		}
+	}
+	
 	@EventHandler( priority = EventPriority.NORMAL )
 	public void onRenderEvent( RenderEvent event ) throws IOException
 	{
@@ -260,12 +305,7 @@ public class Template extends Plugin implements Listener
 					params.putAll( result.context().request().getRequestMapRaw() );
 				}
 				else if ( result.hasExceptions() )
-				{
-					for ( EvalException e : result.getExceptions() )
-					{
-						ErrorReporting.throwExceptions( e );
-					}
-				}
+					ErrorReporting.throwExceptions( result.getExceptions() );
 			}
 			
 			if ( !view.isEmpty() )
@@ -277,12 +317,7 @@ public class Template extends Plugin implements Listener
 					params.putAll( result.context().request().getRequestMapRaw() );
 				}
 				else if ( result.hasExceptions() )
-				{
-					for ( EvalException e : result.getExceptions() )
-					{
-						ErrorReporting.throwExceptions( e );
-					}
-				}
+					ErrorReporting.throwExceptions( result.getExceptions() );
 			}
 			
 			ob.append( "<body" + ( ( params == null ) ? " " + params.get( "bodyArgs" ) : "" ) + ">\n" );
@@ -313,50 +348,5 @@ public class Template extends Plugin implements Listener
 			// event.setSource( Unpooled.buffer().writeBytes( generateExceptionPage( e, event.getRequest().getEvalFactory() ).getBytes() ) );
 			event.getResponse().sendException( e );
 		}
-	}
-	
-	private String doInclude( String pack, RenderEvent event ) throws IOException, EvalException
-	{
-		EvalFactoryResult result = doInclude0( pack, event );
-		if ( result.isSuccessful() )
-			return result.getString();
-		return "";
-	}
-	
-	private EvalFactoryResult doInclude0( String pack, RenderEvent event ) throws IOException, EvalException
-	{
-		if ( getConfig().getBoolean( "config.ignoreFileNotFound" ) )
-			return WebFunc.evalPackage( event.getRequest(), event.getSite(), pack );
-		
-		return WebFunc.evalPackageWithException( event.getRequest(), event.getSite(), pack );
-	}
-	
-	private String getPackageName( String pack )
-	{
-		if ( pack.indexOf( "." ) < 0 )
-			return pack;
-		
-		String[] packs = pack.split( "\\.(?=[^.]*$)" );
-		
-		return packs[1];
-	}
-	
-	private String domainToPackage( String domain )
-	{
-		if ( domain == null || domain.isEmpty() )
-			return "";
-		
-		String[] packs = domain.split( "\\." );
-		
-		List<String> lst = Arrays.asList( packs );
-		Collections.reverse( lst );
-		
-		String pack = "";
-		for ( String s : lst )
-		{
-			pack += "." + s;
-		}
-		
-		return pack.substring( 1 );
 	}
 }

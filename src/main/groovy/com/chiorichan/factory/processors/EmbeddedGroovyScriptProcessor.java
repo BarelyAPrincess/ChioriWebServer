@@ -14,6 +14,7 @@ import groovy.lang.Script;
 import java.io.IOException;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import com.chiorichan.factory.EvalExecutionContext;
 import com.chiorichan.factory.ShellFactory;
@@ -31,13 +32,20 @@ import com.chiorichan.lang.EvalException;
  */
 public class EmbeddedGroovyScriptProcessor implements ScriptingProcessor
 {
-	private static final String MARKER_START = "<%";
 	private static final String MARKER_END = "%>";
+	private static final String MARKER_START = "<%";
 	
-	@Override
-	public String[] getHandledTypes()
+	public String escapeFragment( String fragment )
 	{
-		return new String[] {"embedded", "gsp", "jsp", "chi"};
+		String brackets = "\"\"\"";
+		
+		fragment = fragment.replace( "\\$", "$" );
+		fragment = fragment.replace( "$", "\\$" );
+		
+		if ( fragment.endsWith( "\"" ) )
+			brackets = "'''";
+		
+		return "print " + brackets + fragment + brackets + "; ";
 	}
 	
 	@Override
@@ -96,29 +104,29 @@ public class EmbeddedGroovyScriptProcessor implements ScriptingProcessor
 		}
 		
 		context.baseSource( output.toString() );
-		context.result().object( interpret( context, shellFactory, output.toString() ) );
+		try
+		{
+			context.result().object( interpret( context, shellFactory, output.toString() ) );
+		}
+		catch ( Throwable t )
+		{
+			// Clear the input source code and replace it with the exception stack trace
+			context.resetAndWrite( ExceptionUtils.getStackTrace( t ) );
+			throw t;
+		}
 		return true;
 	}
 	
-	public String escapeFragment( String fragment )
+	@Override
+	public String[] getHandledTypes()
 	{
-		String brackets = "\"\"\"";
-		
-		fragment = fragment.replace( "\\$", "$" );
-		fragment = fragment.replace( "$", "\\$" );
-		
-		if ( fragment.endsWith( "\"" ) )
-			brackets = "'''";
-		
-		return "print " + brackets + fragment + brackets + "; ";
+		return new String[] {"embedded", "gsp", "jsp", "chi"};
 	}
 	
 	private Object interpret( EvalExecutionContext context, ShellFactory shellFactory, String scriptText )
 	{
 		Script script = shellFactory.makeScript( scriptText, context );
-		
 		Object o = script.run();
-		
 		return ( o == null ) ? "" : o;
 	}
 }

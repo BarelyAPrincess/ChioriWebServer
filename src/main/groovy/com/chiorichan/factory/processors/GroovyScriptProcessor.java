@@ -9,6 +9,8 @@
  */
 package com.chiorichan.factory.processors;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
 import groovy.lang.Script;
 
 import com.chiorichan.factory.EvalExecutionContext;
@@ -21,16 +23,25 @@ import com.chiorichan.factory.ShellFactory;
 public class GroovyScriptProcessor implements ScriptingProcessor
 {
 	@Override
-	public String[] getHandledTypes()
-	{
-		return new String[] {"groovy"};
-	}
-	
-	@Override
 	public boolean eval( EvalExecutionContext context, ShellFactory shell ) throws Exception
 	{
 		Script script = shell.makeScript( context );
-		context.result().object( script.run() );
+		try
+		{
+			context.result().object( script.run() );
+		}
+		catch ( Throwable t )
+		{
+			// Clear the input source code and replace it with the exception stack trace
+			context.resetAndWrite( ExceptionUtils.getStackTrace( t ) );
+			throw t;
+		}
 		return true;
+	}
+	
+	@Override
+	public String[] getHandledTypes()
+	{
+		return new String[] {"groovy"};
 	}
 }

@@ -6,16 +6,17 @@
  */
 package com.chiorichan.factory.parsers;
 
-import java.io.File;
-
 import com.chiorichan.Loader;
 import com.chiorichan.factory.EvalExecutionContext;
 import com.chiorichan.factory.EvalFactory;
-import com.chiorichan.factory.FileInterpreter;
+import com.chiorichan.factory.EvalFactoryResult;
+import com.chiorichan.lang.ErrorReporting;
 import com.chiorichan.site.Site;
-import com.chiorichan.site.SiteManager;
+import com.chiorichan.util.WebFunc;
 
 /**
+ * Using the {@link HTMLCommentParser} we attempt to parse the source for include comments, i.e., {@literal <!-- include(com.chiorichan.widget.menu) -->}
+ * 
  * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class IncludesParser extends HTMLCommentParser
@@ -35,23 +36,15 @@ public class IncludesParser extends HTMLCommentParser
 		if ( args.length > 1 )
 			Loader.getLogger().warning( "CodeEvalFactory: include() method only accepts one argument, ignored." );
 		
-		File res = site.getResource( args[0] );
+		// TODO Prevent infinite loops!
+		EvalFactoryResult result = WebFunc.evalPackageWithException( context.request(), site, args[0] );
 		
-		if ( res == null )
-			res = SiteManager.INSTANCE.getDefaultSite().getResource( args[0] );
+		if ( result.isSuccessful() )
+			return result.getString();
+		else if ( result.hasExceptions() )
+			ErrorReporting.throwExceptions( result.getExceptions() );
 		
-		String result = "";
-		
-		if ( res != null && res.exists() )
-		{
-			FileInterpreter fi = new FileInterpreter( res );
-			// TODO Prevent this from going into an infinite loop!
-			result = factory.eval( EvalExecutionContext.fromFile( fi ).request( context.request() ).site( site ) ).getString();
-		}
-		else if ( !res.exists() )
-			Loader.getLogger().warning( "We had a problem finding the include file `" + res.getAbsolutePath() + "`" );
-		
-		return result;
+		return "";
 	}
 	
 	public String runParser( String source, Site site, EvalExecutionContext context, EvalFactory factory ) throws Exception

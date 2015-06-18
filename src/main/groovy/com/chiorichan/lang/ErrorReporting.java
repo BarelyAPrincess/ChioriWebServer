@@ -20,16 +20,63 @@ import com.google.common.collect.Lists;
  */
 public enum ErrorReporting
 {
-	E_ERROR, E_WARNING, E_PARSE, E_NOTICE, E_USER_ERROR, E_USER_WARNING, E_USER_NOTICE, E_STRICT, E_IGNORABLE, E_DEPRECATED, E_USER_DEPRECATED, E_ALL;
+	E_ALL, E_DEPRECATED, E_ERROR, E_IGNORABLE, E_NOTICE, E_PARSE, E_STRICT, E_USER_DEPRECATED, E_USER_ERROR, E_USER_NOTICE, E_USER_WARNING, E_WARNING;
 	
 	private static final List<ErrorReporting> enabledErrorLevels = new ArrayList<ErrorReporting>( Arrays.asList( parse( "E_ALL ~E_NOTICE ~E_STRICT ~E_DEPRECATED" ) ) );
 	
-	final int level;
 	private int lastLevel = 0;
+	final int level;
 	
 	ErrorReporting()
 	{
-		this.level = lastLevel++;
+		level = lastLevel++;
+	}
+	
+	public static boolean disableErrorLevel( ErrorReporting... level )
+	{
+		return enabledErrorLevels.removeAll( Arrays.asList( parse( level ) ) );
+	}
+	
+	public static boolean enableErrorLevel( ErrorReporting... level )
+	{
+		return enabledErrorLevels.addAll( Arrays.asList( parse( level ) ) );
+	}
+	
+	public static boolean enableErrorLevelOnly( ErrorReporting... level )
+	{
+		enabledErrorLevels.clear();
+		return enableErrorLevel( level );
+	}
+	
+	public static List<ErrorReporting> getEnabledErrorLevels()
+	{
+		return Collections.unmodifiableList( enabledErrorLevels );
+	}
+	
+	public static boolean isEnabledLevel( ErrorReporting level )
+	{
+		return enabledErrorLevels.contains( level );
+	}
+	
+	public static ErrorReporting[] parse( ErrorReporting... level )
+	{
+		List<ErrorReporting> levels = Lists.newArrayList();
+		for ( ErrorReporting er : level )
+			levels.addAll( Arrays.asList( parse( er ) ) );
+		return levels.toArray( new ErrorReporting[0] );
+	}
+	
+	public static ErrorReporting[] parse( ErrorReporting level )
+	{
+		switch ( level )
+		{
+			case E_ALL:
+				return new ErrorReporting[] {E_ERROR, E_WARNING, E_PARSE, E_NOTICE, E_USER_ERROR, E_USER_WARNING, E_USER_NOTICE, E_STRICT, E_IGNORABLE, E_DEPRECATED, E_USER_DEPRECATED};
+			case E_IGNORABLE:
+				return new ErrorReporting[] {E_WARNING, E_NOTICE, E_USER_WARNING, E_USER_NOTICE, E_IGNORABLE, E_DEPRECATED, E_USER_DEPRECATED};
+			default:
+				return new ErrorReporting[] {level};
+		}
 	}
 	
 	public static ErrorReporting[] parse( int level )
@@ -54,69 +101,10 @@ public enum ErrorReporting
 					}
 				else
 					for ( ErrorReporting er : values() )
-					{
 						if ( er.name().equalsIgnoreCase( s ) )
 							levels.addAll( Arrays.asList( parse( er ) ) );
-					}
 		
 		return levels.toArray( new ErrorReporting[0] );
-	}
-	
-	public static ErrorReporting[] parse( ErrorReporting... level )
-	{
-		List<ErrorReporting> levels = Lists.newArrayList();
-		for ( ErrorReporting er : level )
-			levels.addAll( Arrays.asList( parse( er ) ) );
-		return levels.toArray( new ErrorReporting[0] );
-	}
-	
-	public static ErrorReporting[] parse( ErrorReporting level )
-	{
-		switch ( level )
-		{
-			case E_ALL:
-				return new ErrorReporting[] {E_ERROR, E_WARNING, E_PARSE, E_NOTICE, E_USER_ERROR, E_USER_WARNING, E_USER_NOTICE, E_STRICT, E_IGNORABLE, E_DEPRECATED, E_USER_DEPRECATED};
-			case E_IGNORABLE:
-				return new ErrorReporting[] {E_WARNING, E_NOTICE, E_USER_WARNING, E_USER_NOTICE, E_IGNORABLE, E_DEPRECATED, E_USER_DEPRECATED};
-			default:
-				return new ErrorReporting[] {level};
-		}
-	}
-	
-	public static List<ErrorReporting> getEnabledErrorLevels()
-	{
-		return Collections.unmodifiableList( enabledErrorLevels );
-	}
-	
-	public static boolean disableErrorLevel( ErrorReporting... level )
-	{
-		return enabledErrorLevels.removeAll( Arrays.asList( parse( level ) ) );
-	}
-	
-	public static boolean enableErrorLevel( ErrorReporting... level )
-	{
-		return enabledErrorLevels.addAll( Arrays.asList( parse( level ) ) );
-	}
-	
-	public static boolean enableErrorLevelOnly( ErrorReporting... level )
-	{
-		enabledErrorLevels.clear();
-		return enableErrorLevel( level );
-	}
-	
-	public static boolean isEnabledLevel( ErrorReporting level )
-	{
-		return enabledErrorLevels.contains( level );
-	}
-	
-	public boolean isEnabledLevel()
-	{
-		return isEnabledLevel( this );
-	}
-	
-	public int intValue()
-	{
-		return level;
 	}
 	
 	public static void throwExceptions( EvalException... exceptions ) throws EvalException, EvalMultipleException
@@ -131,5 +119,15 @@ public enum ErrorReporting
 			throw exps.get( 0 );
 		else if ( exps.size() > 0 )
 			throw new EvalMultipleException( exps );
+	}
+	
+	public int intValue()
+	{
+		return level;
+	}
+	
+	public boolean isEnabledLevel()
+	{
+		return isEnabledLevel( this );
 	}
 }

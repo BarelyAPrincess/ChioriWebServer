@@ -195,7 +195,10 @@ public class EvalFactory
 				}
 				catch ( EventException e )
 				{
-					EvalException.exceptionHandler( e.getCause() == null ? e : e.getCause(), shellFactory, result, ErrorReporting.E_WARNING, "Exception caught while running PreEvent" );
+					boolean abort = e.getCause() != null && e.getCause() instanceof EvalException && ! ( ( EvalException ) e.getCause() ).isIgnorable();
+					EvalException.exceptionHandler( e.getCause() == null ? e : e.getCause(), shellFactory, result, abort ? ErrorReporting.E_ERROR : ErrorReporting.E_WARNING, "Exception caught while running PreEvent" );
+					if ( abort )
+						return result;
 				}
 				
 				for ( ScriptingProcessor s : processors )
@@ -228,7 +231,10 @@ public class EvalFactory
 				}
 				catch ( EventException e )
 				{
-					EvalException.exceptionHandler( e.getCause() == null ? e : e.getCause(), shellFactory, result, ErrorReporting.E_WARNING, "Exception caught while running PostEvent" );
+					boolean abort = e.getCause() != null && e.getCause() instanceof EvalException && ! ( ( EvalException ) e.getCause() ).isIgnorable();
+					EvalException.exceptionHandler( e.getCause() == null ? e : e.getCause(), shellFactory, result, abort ? ErrorReporting.E_ERROR : ErrorReporting.E_WARNING, "Exception caught while running PostEvent" );
+					if ( abort )
+						return result;
 				}
 				
 				return result.success( true );
