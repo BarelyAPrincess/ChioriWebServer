@@ -423,7 +423,7 @@ Added a build.xml file so the project can not be built with Apache Ant 1.8. Swit
 * TWEAK: Missing Rewrite File result
 * TWEAK: ObjectFunc class
 * TWEAK: SessionManager and AutoUpdater
-===Subversion 2 (a.k.a. Milky Berry)
+===Subversion 2 (a.k.a. Milky Berry)===
 ====Build 0====
 * REWROTE: Complete overhaul of Accounts and Sessions systems
 * CHANGE: Session Cookie params are not unchangable
