@@ -11,7 +11,6 @@ import groovy.lang.Script;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -19,6 +18,7 @@ import java.nio.charset.Charset;
 import org.apache.commons.io.FileUtils;
 
 import com.chiorichan.ContentTypes;
+import com.chiorichan.Loader;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
@@ -51,12 +51,10 @@ public class EvalExecutionContext
 	
 	public static EvalExecutionContext fromFile( final FileInterpreter fi )
 	{
-		EvalExecutionContext request = fromSource( fi.consumeBytes(), fi.getFilePath() );
-		
-		request.contentType = fi.getContentType();
-		request.shell = fi.getParams().get( "shell" );
-		
-		return request;
+		EvalExecutionContext context = fromSource( fi.consumeBytes(), fi.getFilePath() );
+		context.contentType = fi.getContentType();
+		context.shell = fi.getParams().get( "shell" );
+		return context;
 	}
 	
 	public static EvalExecutionContext fromFile( final File file ) throws IOException
@@ -131,19 +129,33 @@ public class EvalExecutionContext
 		content.writeBytes( bytes );
 	}
 	
+	public void write( ByteBuf source )
+	{
+		content.writeBytes( source );
+	}
+	
+	public void resetAndWrite( ByteBuf source )
+	{
+		reset();
+		if ( source == null )
+			return;
+		write( source );
+	}
+	
 	public void resetAndWrite( byte... bytes )
 	{
+		reset();
 		if ( bytes.length < 1 )
 			return;
-		reset();
 		write( bytes );
 	}
 	
 	public void resetAndWrite( String str )
 	{
+		reset();
 		if ( str == null )
 			return;
-		resetAndWrite( str.getBytes( charset ) );
+		write( str.getBytes( charset ) );
 	}
 	
 	public String filename()
@@ -188,8 +200,6 @@ public class EvalExecutionContext
 	{
 		if ( contentType() == null && filename() != null )
 			contentType( ContentTypes.getContentType( filename() ) );
-		else
-			contentType( shell() );
 		
 		shell.setVariable( "__FILE__", filename );
 		
@@ -245,31 +255,6 @@ public class EvalExecutionContext
 	public String baseSource()
 	{
 		return source;
-	}
-	
-	/**
-	 * Used internally to preserve previously evaluated output without redirecting the output stream
-	 */
-	private byte[] saved;
-	
-	/**
-	 * Used internally to preserve previously evaluated output without redirecting the output stream
-	 */
-	void internalEvalBegin( ByteArrayOutputStream bs )
-	{
-		saved = bs.toByteArray();
-		bs.reset();
-	}
-	
-	/**
-	 * Used internally to preserve previously evaluated output without redirecting the output stream
-	 */
-	void internalEvalEnd( ByteArrayOutputStream bs ) throws IOException
-	{
-		resetAndWrite( bs.toByteArray() );
-		bs.reset();
-		bs.write( saved );
-		saved = null;
 	}
 	
 	void charset( Charset charset )

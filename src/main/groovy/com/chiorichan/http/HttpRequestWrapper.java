@@ -197,13 +197,21 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		String var1 = http.headers().getAndConvert( "Cookie" );
 		if ( var1 != null )
 		{
-			Set<Cookie> var2 = ServerCookieDecoder.decode( var1 );
-			for ( Cookie cookie : var2 )
+			try
 			{
-				if ( cookie.name().startsWith( "_ws" ) )
-					serverCookies.add( new HttpCookie( cookie ) );
-				else
-					cookies.add( new HttpCookie( cookie ) );
+				Set<Cookie> var2 = ServerCookieDecoder.decode( var1 );
+				for ( Cookie cookie : var2 )
+				{
+					if ( cookie.name().startsWith( "_ws" ) )
+						serverCookies.add( new HttpCookie( cookie ) );
+					else
+						cookies.add( new HttpCookie( cookie ) );
+				}
+			}
+			catch ( IllegalArgumentException e )
+			{
+				NetworkManager.getLogger().warning( "There was a problem decoding the request cookie.", e );
+				NetworkManager.getLogger().debug( "Cookie: " + var1 );
 			}
 		}
 	}
@@ -907,7 +915,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	public Map<String, String> getRewriteMap()
 	{
 		if ( unmodifiableMaps )
-			Collections.unmodifiableMap( rewriteMap );
+			return Collections.unmodifiableMap( rewriteMap );
 		
 		return rewriteMap;
 	}

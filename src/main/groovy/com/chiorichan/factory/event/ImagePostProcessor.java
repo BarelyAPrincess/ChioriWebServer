@@ -23,7 +23,6 @@ import java.util.Map;
 import javax.imageio.ImageIO;
 
 import com.chiorichan.ConsoleColor;
-import com.chiorichan.ContentTypes;
 import com.chiorichan.Loader;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.Listener;
@@ -35,7 +34,7 @@ public class ImagePostProcessor implements Listener
 	@EventHandler( )
 	public void onEvent( EvalFactoryPostEvent event )
 	{
-		if ( !Arrays.asList( ContentTypes.getAllTypes( "image" ) ).contains( event.context().contentType() ) )
+		if ( !event.context().contentType().toLowerCase().startsWith( "image" ) )
 			return;
 		
 		float x = 0;

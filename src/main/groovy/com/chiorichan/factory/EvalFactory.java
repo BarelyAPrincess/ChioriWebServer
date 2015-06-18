@@ -11,8 +11,10 @@ package com.chiorichan.factory;
 
 import groovy.lang.GroovyShell;
 import groovy.transform.TimedInterrupt;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufOutputStream;
+import io.netty.buffer.Unpooled;
 
-import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
@@ -21,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.lang3.Validate;
 import org.codehaus.groovy.control.CompilerConfiguration;
@@ -67,8 +68,10 @@ public class EvalFactory
 	private Charset charset = Charsets.toCharset( Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" ) );
 	private final ShellFactory shellFactory = new ShellFactory();
 	private final Set<GroovyShellTracker> groovyShells = Sets.newLinkedHashSet();
-	private final ByteArrayOutputStream bs = new ByteArrayOutputStream();
 	private final EvalBinding binding;
+	
+	private final List<ByteBuf> bufferStack = Lists.newLinkedList();
+	private final ByteBuf output = Unpooled.buffer();
 	
 	/*
 	 * Groovy Sandbox Customization
@@ -141,7 +144,7 @@ public class EvalFactory
 		Validate.notNull( binding, "The EvalBinding can't be null" );
 		
 		this.binding = binding;
-		setOutputStream( bs );
+		setOutputStream( output );
 	}
 	
 	public static EvalFactory create( EvalBinding binding )
@@ -275,11 +278,11 @@ public class EvalFactory
 			tracker.setInUse( false );
 	}
 	
-	public void setOutputStream( ByteArrayOutputStream bs )
+	public void setOutputStream( ByteBuf buffer )
 	{
 		try
 		{
-			binding.setProperty( "out", new PrintStream( bs, true, charset.name() ) );
+			binding.setProperty( "out", new PrintStream( new ByteBufOutputStream( buffer ), true, charset.name() ) );
 		}
 		catch ( UnsupportedEncodingException e )
 		{
@@ -333,9 +336,12 @@ public class EvalFactory
 						{
 							try
 							{
-								context.internalEvalBegin( bs );
+								bufferStack.add( output.copy() );
+								output.clear();
 								s.eval( context, shellFactory.setShell( shell ) );
-								context.internalEvalEnd( bs );
+								context.resetAndWrite( output );
+								output.clear();
+								output.writeBytes( bufferStack.remove( bufferStack.size() - 1 ) );
 								break;
 							}
 							catch ( Throwable t )

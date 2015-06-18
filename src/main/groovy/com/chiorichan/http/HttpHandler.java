@@ -574,7 +574,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			log.log( Level.INFO, "Params POST {" + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( request.getPostMap() ) + "}" );
 		
 		if ( !request.getRewriteMap().isEmpty() )
-			log.log( Level.INFO, "Rewrite Params {" + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( request.getRewriteMap() ) + "}" );
+			log.log( Level.INFO, "Params REWRITE {" + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( request.getRewriteMap() ) + "}" );
 		
 		if ( Loader.getConfig().getBoolean( "advanced.security.requestMapEnabled", true ) )
 			request.setGlobal( "_REQUEST", request.getRequestMap() );
