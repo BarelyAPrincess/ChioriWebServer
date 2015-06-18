@@ -18,7 +18,6 @@ import java.nio.charset.Charset;
 import org.apache.commons.io.FileUtils;
 
 import com.chiorichan.ContentTypes;
-import com.chiorichan.Loader;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
@@ -30,31 +29,31 @@ import com.chiorichan.site.SiteManager;
  */
 public class EvalExecutionContext
 {
-	private EvalFactoryResult result = null;
-	private HttpRequestWrapper request = null;
-	private ByteBuf content = Unpooled.buffer();
 	private Charset charset = Charset.defaultCharset();
 	
+	private ByteBuf content = Unpooled.buffer();
+	
 	private String contentType;
+	
 	private String filename;
-	private String scriptName;
+	
+	private HttpRequestWrapper request = null;
+	
+	private EvalFactoryResult result = null;
+	
 	private Script script;
-	private String source = null;
+	
+	private String scriptName;
 	
 	private String shell = "embedded";
+	
 	private Site site;
+	
+	private String source = null;
 	
 	private EvalExecutionContext()
 	{
 		
-	}
-	
-	public static EvalExecutionContext fromFile( final FileInterpreter fi )
-	{
-		EvalExecutionContext context = fromSource( fi.consumeBytes(), fi.getFilePath() );
-		context.contentType = fi.getContentType();
-		context.shell = fi.getParams().get( "shell" );
-		return context;
 	}
 	
 	public static EvalExecutionContext fromFile( final File file ) throws IOException
@@ -63,15 +62,11 @@ public class EvalExecutionContext
 		// EvalException.exceptionHandler( e, shellFactory, result, ErrorReporting.E_WARNING, String.format( "Exception caught while trying to read file '%s' from disk", fi.getAbsolutePath() ) );
 	}
 	
-	public static EvalExecutionContext fromSource( String source )
+	public static EvalExecutionContext fromFile( final FileInterpreter fi )
 	{
-		return fromSource( source, "" );
-	}
-	
-	public static EvalExecutionContext fromSource( final String source, final String filename )
-	{
-		EvalExecutionContext context = fromSource( new byte[0], filename );
-		context.write( source.getBytes( context.charset ) );
+		EvalExecutionContext context = fromSource( fi.consumeBytes(), fi.getFilePath() );
+		context.contentType = fi.getContentType();
+		context.shell = fi.getParams().get( "shell" );
 		return context;
 	}
 	
@@ -89,9 +84,77 @@ public class EvalExecutionContext
 		return context;
 	}
 	
+	public static EvalExecutionContext fromSource( String source )
+	{
+		return fromSource( source, "" );
+	}
+	
+	public static EvalExecutionContext fromSource( final String source, final String filename )
+	{
+		EvalExecutionContext context = fromSource( new byte[0], filename );
+		context.write( source.getBytes( context.charset ) );
+		return context;
+	}
+	
+	public String baseSource()
+	{
+		return source;
+	}
+	
+	public EvalExecutionContext baseSource( String source )
+	{
+		this.source = source;
+		return this;
+	}
+	
 	public ByteBuf buffer()
 	{
 		return content;
+	}
+	
+	Charset charset()
+	{
+		return charset;
+	}
+	
+	void charset( Charset charset )
+	{
+		this.charset = charset;
+	}
+	
+	public String contentType()
+	{
+		return contentType;
+	}
+	
+	public EvalExecutionContext contentType( final String contentType )
+	{
+		this.contentType = contentType;
+		return this;
+	}
+	
+	public String filename()
+	{
+		return filename;
+	}
+	
+	public boolean prepare( GroovyShell shell )
+	{
+		if ( contentType() == null && filename() != null )
+			contentType( ContentTypes.getContentType( filename() ) );
+		
+		shell.setVariable( "__FILE__", filename );
+		
+		return true;
+	}
+	
+	public byte[] readBytes()
+	{
+		int inx = content.readerIndex();
+		byte[] bytes = new byte[content.readableBytes()];
+		content.readBytes( bytes );
+		content.readerIndex( inx );
+		return bytes;
 	}
 	
 	public String readString()
@@ -104,13 +167,15 @@ public class EvalExecutionContext
 		return content.toString( charset );
 	}
 	
-	public byte[] readBytes()
+	public HttpRequestWrapper request()
 	{
-		int inx = content.readerIndex();
-		byte[] bytes = new byte[content.readableBytes()];
-		content.readBytes( bytes );
-		content.readerIndex( inx );
-		return bytes;
+		return request;
+	}
+	
+	public EvalExecutionContext request( HttpRequestWrapper request )
+	{
+		this.request = request;
+		return this;
 	}
 	
 	/**
@@ -124,14 +189,12 @@ public class EvalExecutionContext
 		content.clear();
 	}
 	
-	public void write( byte... bytes )
+	public void resetAndWrite( byte... bytes )
 	{
-		content.writeBytes( bytes );
-	}
-	
-	public void write( ByteBuf source )
-	{
-		content.writeBytes( source );
+		reset();
+		if ( bytes.length < 1 )
+			return;
+		write( bytes );
 	}
 	
 	public void resetAndWrite( ByteBuf source )
@@ -142,14 +205,6 @@ public class EvalExecutionContext
 		write( source );
 	}
 	
-	public void resetAndWrite( byte... bytes )
-	{
-		reset();
-		if ( bytes.length < 1 )
-			return;
-		write( bytes );
-	}
-	
 	public void resetAndWrite( String str )
 	{
 		reset();
@@ -158,19 +213,37 @@ public class EvalExecutionContext
 		write( str.getBytes( charset ) );
 	}
 	
-	public String filename()
+	public EvalFactoryResult result()
 	{
-		return filename;
+		if ( result == null )
+			result = new EvalFactoryResult( this, content );
+		return result;
 	}
 	
-	public String contentType()
+	public Script script()
 	{
-		return contentType;
+		return script;
 	}
 	
-	public EvalExecutionContext contentType( final String contentType )
+	public void script( String scriptName, Script script )
 	{
-		this.contentType = contentType;
+		this.scriptName = scriptName;
+		this.script = script;
+	}
+	
+	public String scriptName()
+	{
+		return scriptName;
+	}
+	
+	public String shell()
+	{
+		return shell;
+	}
+	
+	public EvalExecutionContext shell( final String shell )
+	{
+		this.shell = shell;
 		return this;
 	}
 	
@@ -185,85 +258,19 @@ public class EvalExecutionContext
 		return this;
 	}
 	
-	public EvalExecutionContext shell( final String shell )
-	{
-		this.shell = shell;
-		return this;
-	}
-	
-	public String shell()
-	{
-		return shell;
-	}
-	
-	public boolean prepare( GroovyShell shell )
-	{
-		if ( contentType() == null && filename() != null )
-			contentType( ContentTypes.getContentType( filename() ) );
-		
-		shell.setVariable( "__FILE__", filename );
-		
-		return true;
-	}
-	
 	@Override
 	public String toString()
 	{
 		return String.format( "EvalExecutionContext {filename=%s,scriptName=%s,script=%s,shell=%s,sourceSize=%s,contentType=%s}", filename, scriptName, script, shell, content.readableBytes(), contentType );
 	}
 	
-	public EvalExecutionContext request( HttpRequestWrapper request )
+	public void write( byte... bytes )
 	{
-		this.request = request;
-		return this;
+		content.writeBytes( bytes );
 	}
 	
-	public HttpRequestWrapper request()
+	public void write( ByteBuf source )
 	{
-		return request;
-	}
-	
-	public void script( String scriptName, Script script )
-	{
-		this.scriptName = scriptName;
-		this.script = script;
-	}
-	
-	public Script script()
-	{
-		return script;
-	}
-	
-	public String scriptName()
-	{
-		return scriptName;
-	}
-	
-	public EvalFactoryResult result()
-	{
-		if ( result == null )
-			result = new EvalFactoryResult( this, content );
-		return result;
-	}
-	
-	public EvalExecutionContext baseSource( String source )
-	{
-		this.source = source;
-		return this;
-	}
-	
-	public String baseSource()
-	{
-		return source;
-	}
-	
-	void charset( Charset charset )
-	{
-		this.charset = charset;
-	}
-	
-	Charset charset()
-	{
-		return charset;
+		content.writeBytes( source );
 	}
 }

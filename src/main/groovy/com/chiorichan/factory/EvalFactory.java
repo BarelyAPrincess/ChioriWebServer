@@ -36,13 +36,13 @@ import com.chiorichan.account.auth.AccountAuthenticator;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.Listener;
-import com.chiorichan.factory.event.CoffeePreProcessor;
-import com.chiorichan.factory.event.EvalFactoryPostEvent;
-import com.chiorichan.factory.event.EvalFactoryPreEvent;
-import com.chiorichan.factory.event.ImagePostProcessor;
-import com.chiorichan.factory.event.JSMinPostProcessor;
-import com.chiorichan.factory.event.LessPreProcessor;
-import com.chiorichan.factory.event.ParseWrapper;
+import com.chiorichan.factory.event.PreCoffeeProcessor;
+import com.chiorichan.factory.event.PostEvalEvent;
+import com.chiorichan.factory.event.PreEvalEvent;
+import com.chiorichan.factory.event.PostImageProcessor;
+import com.chiorichan.factory.event.PostJSMinProcessor;
+import com.chiorichan.factory.event.PreLessProcessor;
+import com.chiorichan.factory.event.PreParseWrapper;
 import com.chiorichan.factory.parsers.IncludesParser;
 import com.chiorichan.factory.parsers.LinksParser;
 import com.chiorichan.factory.processors.EmbeddedGroovyScriptProcessor;
@@ -63,57 +63,49 @@ import com.google.common.collect.Sets;
 
 public class EvalFactory
 {
-	private static final List<ScriptingProcessor> processors = Lists.newCopyOnWriteArrayList();
-	
-	private Charset charset = Charsets.toCharset( Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" ) );
-	private final ShellFactory shellFactory = new ShellFactory();
-	private final Set<GroovyShellTracker> groovyShells = Sets.newLinkedHashSet();
-	private final EvalBinding binding;
-	
-	private final List<ByteBuf> bufferStack = Lists.newLinkedList();
-	private final ByteBuf output = Unpooled.buffer();
-	
-	/*
-	 * Groovy Sandbox Customization
-	 */
-	private static final ASTTransformationCustomizer timedInterrupt = new ASTTransformationCustomizer( TimedInterrupt.class );
-	private static final GroovyImportCustomizer imports = new GroovyImportCustomizer();
-	private static final GroovySandbox secure = new GroovySandbox();
-	
 	/*
 	 * Groovy Imports :P
 	 */
 	private static final Class<?>[] classImports = new Class<?>[] {Loader.class, AccountManager.class, AccountType.class, Account.class, AccountAuthenticator.class, EventBus.class, PermissionManager.class, PluginManager.class, TaskManager.class, Timings.class, SessionManager.class, SiteManager.class, Site.class};
+	
+	private static final GroovyImportCustomizer imports = new GroovyImportCustomizer();
+	private static final List<ScriptingProcessor> processors = Lists.newCopyOnWriteArrayList();
+	private static final GroovySandbox secure = new GroovySandbox();
 	private static final String[] starImports = new String[] {"com.chiorichan.lang", "com.chiorichan.util", "org.apache.commons.lang3.text", "org.ocpsoft.prettytime", "java.util", "java.net", "com.google.common.base"};
+	
 	private static final String[] staticImports = new String[] {"com.chiorichan.util.Looper"};
+	/*
+	 * Groovy Sandbox Customization
+	 */
+	private static final ASTTransformationCustomizer timedInterrupt = new ASTTransformationCustomizer( TimedInterrupt.class );
 	
 	static
 	{
 		/**
 		 * Register Pre-Processors
 		 */
-		register( new ParseWrapper( new LinksParser(), new IncludesParser() ) );
+		register( new PreParseWrapper( new LinksParser(), new IncludesParser() ) );
 		if ( Loader.getConfig().getBoolean( "advanced.processors.coffeeProcessorEnabled", true ) )
-			register( new CoffeePreProcessor() );
+			register( new PreCoffeeProcessor() );
 		if ( Loader.getConfig().getBoolean( "advanced.processors.lessProcessorEnabled", true ) )
-			register( new LessPreProcessor() );
+			register( new PreLessProcessor() );
 		// register( new SassPreProcessor() );
 		
 		/**
 		 * Register Script-Processors
 		 */
-		if ( Loader.getConfig().getBoolean( "advanced.interpreters.gspEnabled", true ) )
+		if ( Loader.getConfig().getBoolean( "advanced.scripting.gspEnabled", true ) )
 			register( new EmbeddedGroovyScriptProcessor() );
-		if ( Loader.getConfig().getBoolean( "advanced.interpreters.groovyEnabled", true ) )
+		if ( Loader.getConfig().getBoolean( "advanced.scripting.groovyEnabled", true ) )
 			register( new GroovyScriptProcessor() );
 		
 		/**
 		 * Register Post-Processors
 		 */
 		if ( Loader.getConfig().getBoolean( "advanced.processors.minifierJSProcessorEnabled", true ) )
-			register( new JSMinPostProcessor() );
+			register( new PostJSMinProcessor() );
 		if ( Loader.getConfig().getBoolean( "advanced.processors.imageProcessorEnabled", true ) )
-			register( new ImagePostProcessor() );
+			register( new PostImageProcessor() );
 		
 		imports.addImports( classImports );
 		imports.addStarImports( starImports );
@@ -129,6 +121,36 @@ public class EvalFactory
 		}
 	}
 	
+	private final EvalBinding binding;
+	
+	private final List<ByteBuf> bufferStack = Lists.newLinkedList();
+	
+	private Charset charset = Charsets.toCharset( Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" ) );
+	
+	private final Set<GroovyShellTracker> groovyShells = Sets.newLinkedHashSet();
+	
+	private final ByteBuf output = Unpooled.buffer();
+	
+	private final ShellFactory shellFactory = new ShellFactory();
+	
+	private EvalFactory( EvalBinding binding )
+	{
+		Validate.notNull( binding, "The EvalBinding can't be null" );
+		
+		this.binding = binding;
+		setOutputStream( output );
+	}
+	
+	public static EvalFactory create( BindingProvider provider )
+	{
+		return new EvalFactory( provider.getBinding() );
+	}
+	
+	public static EvalFactory create( EvalBinding binding )
+	{
+		return new EvalFactory( binding );
+	}
+	
 	public static void register( Listener listener )
 	{
 		EventBus.INSTANCE.registerEvents( listener, Loader.getInstance() );
@@ -139,50 +161,113 @@ public class EvalFactory
 		processors.add( processor );
 	}
 	
-	private EvalFactory( EvalBinding binding )
+	public Charset charset()
 	{
-		Validate.notNull( binding, "The EvalBinding can't be null" );
+		return charset;
+	}
+	
+	public EvalFactoryResult eval( EvalExecutionContext context )
+	{
+		EvalFactoryResult result = context.result();
+		GroovyShellTracker tracker = getUnusedShellTracker();
 		
-		this.binding = binding;
-		setOutputStream( output );
-	}
-	
-	public static EvalFactory create( EvalBinding binding )
-	{
-		return new EvalFactory( binding );
-	}
-	
-	public static EvalFactory create( BindingProvider provider )
-	{
-		return new EvalFactory( provider.getBinding() );
-	}
-	
-	public void setVariable( String key, Object val )
-	{
-		binding.setVariable( key, val );
-	}
-	
-	protected GroovyShellTracker getUnusedShellTracker()
-	{
-		for ( GroovyShellTracker tracker : groovyShells )
-			if ( !tracker.isInUse() )
-				return tracker;
+		context.charset( charset );
+		context.baseSource( new String( context.readBytes(), charset ) );
 		
-		GroovyShell shell = getNewShell();
-		GroovyShellTracker tracker = new GroovyShellTracker( shell );
-		groovyShells.add( tracker );
-		return tracker;
+		synchronized ( tracker )
+		{
+			try
+			{
+				tracker.setInUse( true );
+				GroovyShell shell = tracker.getShell();
+				Loader.getLogger().fine( "Locking GroovyShell '" + shell.toString() + "' for execution of '" + context.filename() + "'" );
+				
+				if ( !context.prepare( shell ) )
+					return result;
+				
+				// Loader.getLogger().debug( Hex.encodeHexString( context.baseSource().getBytes( charset ) ).substring( 0, 255 ) + " <--> " + Hex.encodeHexString( context.readBytes() ).substring( 0, 255 ) );
+				
+				PreEvalEvent preEvent = new PreEvalEvent( context );
+				try
+				{
+					EventBus.INSTANCE.callEventWithException( preEvent );
+				}
+				catch ( EventException e )
+				{
+					EvalException.exceptionHandler( e.getCause() == null ? e : e.getCause(), shellFactory, result, ErrorReporting.E_WARNING, "Exception caught while running PreEvent" );
+				}
+				
+				for ( ScriptingProcessor s : processors )
+				{
+					List<String> handledTypes = Arrays.asList( s.getHandledTypes() );
+					
+					for ( String she : handledTypes )
+						if ( she.equalsIgnoreCase( context.shell() ) || she.equalsIgnoreCase( "all" ) )
+							try
+							{
+								bufferStack.add( output.copy() );
+								output.clear();
+								s.eval( context, shellFactory.setShell( shell ) );
+								context.resetAndWrite( output );
+								output.clear();
+								output.writeBytes( bufferStack.remove( bufferStack.size() - 1 ) );
+								break;
+							}
+							catch ( Throwable t )
+							{
+								EvalException.exceptionHandler( t, shellFactory, result );
+								return result;
+							}
+				}
+				
+				PostEvalEvent postEvent = new PostEvalEvent( context );
+				try
+				{
+					EventBus.INSTANCE.callEventWithException( postEvent );
+				}
+				catch ( EventException e )
+				{
+					EvalException.exceptionHandler( e.getCause() == null ? e : e.getCause(), shellFactory, result, ErrorReporting.E_WARNING, "Exception caught while running PostEvent" );
+				}
+				
+				return result.success( true );
+			}
+			finally
+			{
+				Loader.getLogger().fine( "Unlocking GroovyShell '" + context.toString() + "' for execution of '" + context.filename() + "'" );
+				tracker.setInUse( false );
+			}
+		}
 	}
 	
-	protected GroovyShell getUnusedShell()
+	public String getFileName()
 	{
-		for ( GroovyShellTracker tracker : groovyShells )
-			if ( !tracker.isInUse() )
-				return tracker.getShell();
+		List<ScriptTraceElement> scriptTrace = getScriptTrace();
 		
-		GroovyShell shell = getNewShell();
-		groovyShells.add( new GroovyShellTracker( shell ) );
-		return shell;
+		if ( scriptTrace.size() < 1 )
+			return "<unknown>";
+		
+		String fileName = scriptTrace.get( scriptTrace.size() - 1 ).context().filename();
+		
+		if ( fileName == null || fileName.isEmpty() )
+			return "<unknown>";
+		
+		return fileName;
+	}
+	
+	/**
+	 * Attempts to find the current line number for the current groovy script.
+	 * 
+	 * @return The current line number. Returns -1 if no there was a problem getting the current line number.
+	 */
+	public int getLineNumber()
+	{
+		List<ScriptTraceElement> scriptTrace = getScriptTrace();
+		
+		if ( scriptTrace.size() < 1 )
+			return -1;
+		
+		return scriptTrace.get( scriptTrace.size() - 1 ).getLineNumber();
 	}
 	
 	/**
@@ -213,6 +298,16 @@ public class EvalFactory
 		return new GroovyShell( Loader.class.getClassLoader(), binding, configuration );
 	}
 	
+	public List<ScriptTraceElement> getScriptTrace()
+	{
+		return shellFactory.examineStackTrace( Thread.currentThread().getStackTrace() );
+	}
+	
+	public ShellFactory getShellFactory()
+	{
+		return shellFactory;
+	}
+	
 	protected GroovyShellTracker getTracker( GroovyShell shell )
 	{
 		for ( GroovyShellTracker t : groovyShells )
@@ -222,39 +317,27 @@ public class EvalFactory
 		return null;
 	}
 	
-	public List<ScriptTraceElement> getScriptTrace()
+	protected GroovyShell getUnusedShell()
 	{
-		return shellFactory.examineStackTrace( Thread.currentThread().getStackTrace() );
+		for ( GroovyShellTracker tracker : groovyShells )
+			if ( !tracker.isInUse() )
+				return tracker.getShell();
+		
+		GroovyShell shell = getNewShell();
+		groovyShells.add( new GroovyShellTracker( shell ) );
+		return shell;
 	}
 	
-	/**
-	 * Attempts to find the current line number for the current groovy script.
-	 * 
-	 * @return The current line number. Returns -1 if no there was a problem getting the current line number.
-	 */
-	public int getLineNumber()
+	protected GroovyShellTracker getUnusedShellTracker()
 	{
-		List<ScriptTraceElement> scriptTrace = getScriptTrace();
+		for ( GroovyShellTracker tracker : groovyShells )
+			if ( !tracker.isInUse() )
+				return tracker;
 		
-		if ( scriptTrace.size() < 1 )
-			return -1;
-		
-		return scriptTrace.get( scriptTrace.size() - 1 ).getLineNumber();
-	}
-	
-	public String getFileName()
-	{
-		List<ScriptTraceElement> scriptTrace = getScriptTrace();
-		
-		if ( scriptTrace.size() < 1 )
-			return "<unknown>";
-		
-		String fileName = scriptTrace.get( scriptTrace.size() - 1 ).context().filename();
-		
-		if ( fileName == null || fileName.isEmpty() )
-			return "<unknown>";
-		
-		return fileName;
+		GroovyShell shell = getNewShell();
+		GroovyShellTracker tracker = new GroovyShellTracker( shell );
+		groovyShells.add( tracker );
+		return tracker;
 	}
 	
 	protected void lock( GroovyShell shell )
@@ -270,12 +353,18 @@ public class EvalFactory
 		tracker.setInUse( true );
 	}
 	
-	protected void unlock( GroovyShell shell )
+	/**
+	 * Called when each request is finished
+	 * This method is mostly used to clear cache from the request
+	 */
+	public void onFinished()
 	{
-		GroovyShellTracker tracker = getTracker( shell );
-		
-		if ( tracker != null )
-			tracker.setInUse( false );
+		shellFactory.onFinished();
+	}
+	
+	public void setEncoding( Charset charset )
+	{
+		this.charset = charset;
 	}
 	
 	public void setOutputStream( ByteBuf buffer )
@@ -290,105 +379,16 @@ public class EvalFactory
 		}
 	}
 	
-	public void setEncoding( Charset charset )
+	public void setVariable( String key, Object val )
 	{
-		this.charset = charset;
+		binding.setVariable( key, val );
 	}
 	
-	public EvalFactoryResult eval( EvalExecutionContext context )
+	protected void unlock( GroovyShell shell )
 	{
-		EvalFactoryResult result = context.result();
-		GroovyShellTracker tracker = getUnusedShellTracker();
+		GroovyShellTracker tracker = getTracker( shell );
 		
-		context.charset( charset );
-		context.baseSource( new String( context.readBytes(), charset ) );
-		
-		synchronized ( tracker )
-		{
-			try
-			{
-				tracker.setInUse( true );
-				GroovyShell shell = tracker.getShell();
-				Loader.getLogger().fine( "Locking GroovyShell '" + shell.toString() + "' for execution of '" + context.filename() + "'" );
-				
-				if ( !context.prepare( shell ) )
-					return result;
-				
-				// Loader.getLogger().debug( Hex.encodeHexString( context.baseSource().getBytes( charset ) ).substring( 0, 255 ) + " <--> " + Hex.encodeHexString( context.readBytes() ).substring( 0, 255 ) );
-				
-				EvalFactoryPreEvent preEvent = new EvalFactoryPreEvent( context );
-				try
-				{
-					EventBus.INSTANCE.callEventWithException( preEvent );
-				}
-				catch ( EventException e )
-				{
-					EvalException.exceptionHandler( e.getCause() == null ? e : e.getCause(), shellFactory, result, ErrorReporting.E_WARNING, "Exception caught while running PreEvent" );
-				}
-				
-				for ( ScriptingProcessor s : processors )
-				{
-					List<String> handledTypes = Arrays.asList( s.getHandledTypes() );
-					
-					for ( String she : handledTypes )
-					{
-						if ( she.equalsIgnoreCase( context.shell() ) || she.equalsIgnoreCase( "all" ) )
-						{
-							try
-							{
-								bufferStack.add( output.copy() );
-								output.clear();
-								s.eval( context, shellFactory.setShell( shell ) );
-								context.resetAndWrite( output );
-								output.clear();
-								output.writeBytes( bufferStack.remove( bufferStack.size() - 1 ) );
-								break;
-							}
-							catch ( Throwable t )
-							{
-								EvalException.exceptionHandler( t, shellFactory, result );
-								return result;
-							}
-						}
-					}
-				}
-				
-				EvalFactoryPostEvent postEvent = new EvalFactoryPostEvent( context );
-				try
-				{
-					EventBus.INSTANCE.callEventWithException( postEvent );
-				}
-				catch ( EventException e )
-				{
-					EvalException.exceptionHandler( e.getCause() == null ? e : e.getCause(), shellFactory, result, ErrorReporting.E_WARNING, "Exception caught while running PostEvent" );
-				}
-				
-				return result.success( true );
-			}
-			finally
-			{
-				Loader.getLogger().fine( "Unlocking GroovyShell '" + context.toString() + "' for execution of '" + context.filename() + "'" );
-				tracker.setInUse( false );
-			}
-		}
-	}
-	
-	/**
-	 * Called when each request is finished
-	 * This method is mostly used to clear cache from the request
-	 */
-	public void onFinished()
-	{
-		shellFactory.onFinished();
-	}
-	
-	public ShellFactory getShellFactory()
-	{
-		return shellFactory;
-	}
-	
-	public Charset charset()
-	{
-		return charset;
+		if ( tracker != null )
+			tracker.setInUse( false );
 	}
 }

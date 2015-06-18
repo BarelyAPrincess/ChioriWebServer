@@ -112,11 +112,12 @@ framework:
 advanced:
   processors:
     imageProcessorEnabled: true
+    imageProcessorCache: true
     useFastGraphics: false
     minifierJSProcessorEnabled: true
     lessProcessorEnabled: true
     coffeeProcessorEnabled: true
-  interpreters:
+  scripting:
     gspEnabled: true
     groovyEnabled: true
   security:

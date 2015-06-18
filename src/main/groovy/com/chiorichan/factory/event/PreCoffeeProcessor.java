@@ -21,10 +21,10 @@ import org.mozilla.javascript.Scriptable;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.Listener;
 
-public class CoffeePreProcessor implements Listener
+public class PreCoffeeProcessor implements Listener
 {
 	@EventHandler( )
-	public void onEvent( EvalFactoryPreEvent event )
+	public void onEvent( PreEvalEvent event )
 	{
 		if ( !event.context().contentType().endsWith( "coffee" ) && !event.context().contentType().endsWith( "litcoffee" ) && !event.context().contentType().endsWith( "coffee.md" ) )
 			return;

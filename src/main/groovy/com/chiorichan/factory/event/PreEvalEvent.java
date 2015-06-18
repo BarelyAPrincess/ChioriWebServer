@@ -14,12 +14,12 @@ import com.chiorichan.factory.EvalExecutionContext;
 /**
  * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
-public class EvalFactoryPostEvent extends Event implements Cancellable
+public class PreEvalEvent extends Event implements Cancellable
 {
-	private EvalExecutionContext context;
+	private final EvalExecutionContext context;
 	private boolean cancelled;
 	
-	public EvalFactoryPostEvent( EvalExecutionContext context )
+	public PreEvalEvent( EvalExecutionContext context )
 	{
 		this.context = context;
 	}

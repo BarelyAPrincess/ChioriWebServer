@@ -22,10 +22,10 @@ import com.google.javascript.jscomp.SourceFile;
 /**
  * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
-public class JSMinPostProcessor implements Listener
+public class PostJSMinProcessor implements Listener
 {
 	@EventHandler( )
-	public void onEvent( EvalFactoryPostEvent event )
+	public void onEvent( PostEvalEvent event )
 	{
 		if ( !event.context().contentType().equals( "application/javascript-x" ) || !event.context().filename().endsWith( "js" ) )
 			return;

@@ -27,10 +27,10 @@ import com.chiorichan.event.Listener;
 import com.google.common.collect.Maps;
 import com.google.gson.GsonBuilder;
 
-public class LessPreProcessor implements Listener
+public class PreLessProcessor implements Listener
 {
 	@EventHandler( )
-	public void onEvent( EvalFactoryPreEvent event )
+	public void onEvent( PreEvalEvent event )
 	{
 		if ( !event.context().contentType().equals( "stylesheet/less" ) || !event.context().shell().equals( "less" ) )
 			return;

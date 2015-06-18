@@ -98,18 +98,9 @@ import com.google.common.collect.Maps;
  */
 public class HttpHandler extends SimpleChannelInboundHandler<Object>
 {
-	protected static Map<ServerVars, Object> staticServerVars = Maps.newLinkedHashMap();
-	
-	private WebSocketServerHandshaker handshaker = null;
 	private static HttpDataFactory factory;
-	private HttpPostRequestDecoder decoder;
-	private HttpResponseWrapper response;
-	private FullHttpRequest requestOrig;
-	private HttpRequestWrapper request;
-	private boolean ssl;
-	private boolean requestFinished = false;
-	private LogEvent log;
 	
+	protected static Map<ServerVars, Object> staticServerVars = Maps.newLinkedHashMap();
 	static
 	{
 		/**
@@ -133,10 +124,38 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		staticServerVars.put( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Versioning.getVersion() );
 	}
 	
+	private HttpPostRequestDecoder decoder;
+	
+	private WebSocketServerHandshaker handshaker = null;
+	
+	private LogEvent log;
+	private HttpRequestWrapper request;
+	private boolean requestFinished = false;
+	private FullHttpRequest requestOrig;
+	private HttpResponseWrapper response;
+	
+	private boolean ssl;
+	
 	public HttpHandler( boolean ssl )
 	{
 		this.ssl = ssl;
 		log = LogManager.logEvent( "" + hashCode() );
+	}
+	
+	private static void send100Continue( ChannelHandlerContext ctx )
+	{
+		FullHttpResponse response = new DefaultFullHttpResponse( HTTP_1_1, CONTINUE );
+		ctx.write( response );
+	}
+	
+	public static void setTempDirectory( File tmpDir )
+	{
+		// TODO Config option to delete temporary files on exit?
+		// DiskFileUpload.deleteOnExitTemporaryFile = true;
+		// DiskAttribute.deleteOnExitTemporaryFile = true;
+		
+		DiskFileUpload.baseDirectory = tmpDir.getAbsolutePath();
+		DiskAttribute.baseDirectory = tmpDir.getAbsolutePath();
 	}
 	
 	@Override
@@ -156,12 +175,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		request = null;
 		log = null;
 		requestFinished = false;
-	}
-	
-	public void flush( ChannelHandlerContext ctx ) throws Exception
-	{
-		log.flushAndClose();
-		ctx.flush();
 	}
 	
 	@Override
@@ -252,54 +265,30 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				PermissionDeniedException pde = ( PermissionDeniedException ) cause;
 				
 				if ( pde.getReason() == PermissionDeniedReason.LOGIN_PAGE )
-				{
 					response.sendLoginPage( pde.getReason().getMessage() );
-				}
 				else
-				{
 					/*
 					 * TODO generate a special permission denied page for these!!!
 					 */
 					response.sendError( ( ( PermissionDeniedException ) cause ).getHttpCode(), cause.getMessage() );
-				}
+			}
+			else if ( evalOrig == null )
+			{
+				// Was not caught by EvalFactory
+				log.log( Level.SEVERE, ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s, message '%s'", cause.getClass().getName(), cause.getStackTrace()[0].getFileName(), cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
+				response.sendException( cause );
 			}
 			else
-			// if ( cause instanceof SessionException || cause instanceof PermissionException || cause instanceof SyntaxException || cause instanceof AccountException || cause instanceof SiteException || cause instanceof
-			// MissingMethodException || cause instanceof IndexOutOfBoundsException || cause instanceof NullPointerException || cause instanceof IOException )
 			{
-				/*
-				 * XXX Known exceptions
-				 * TODO Seperate Groovy Exceptions from Java Exceptions
-				 * EvalFactoryException
-				 * SessionException
-				 * PermissionException
-				 * AccountException
-				 * SiteException
-				 * 
-				 * MissingMethodException
-				 * IndexOutOfBoundsException
-				 * NullPointerException
-				 * IOException
-				 */
-				
-				if ( evalOrig == null )
+				if ( evalOrig.isScriptingException() )
 				{
-					// Was not caught by EvalFactory
-					log.log( Level.SEVERE, ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s, message '%s'", cause.getClass().getName(), cause.getStackTrace()[0].getFileName(), cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
-					response.sendException( cause );
+					ScriptTraceElement element = evalOrig.getScriptTrace()[0];
+					log.log( Level.SEVERE, ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s:%s, message '%s'", cause.getClass().getName(), element.context().filename(), element.getLineNumber(), ( element.getColumnNumber() > 0 ) ? element.getColumnNumber() : 0, cause.getMessage() );
 				}
 				else
-				{
-					if ( evalOrig.isScriptingException() )
-					{
-						ScriptTraceElement element = evalOrig.getScriptTrace()[0];
-						log.log( Level.SEVERE, ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s:%s, message '%s'", cause.getClass().getName(), element.context().filename(), element.getLineNumber(), ( element.getColumnNumber() > 0 ) ? element.getColumnNumber() : 0, cause.getMessage() );
-					}
-					else
-						log.log( Level.SEVERE, ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s, message '%s'", cause.getClass().getName(), cause.getStackTrace()[0].getFileName(), cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
-					
-					response.sendException( evalOrig );
-				}
+					log.log( Level.SEVERE, ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s, message '%s'", cause.getClass().getName(), cause.getStackTrace()[0].getFileName(), cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
+				
+				response.sendException( evalOrig );
 			}
 			
 			// Loader.getLogger().warning( "Could not run file '" + fileName + "' because of error '" + t.getMessage() + "'" );
@@ -313,163 +302,54 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		}
 	}
 	
-	public static void setTempDirectory( File tmpDir )
+	private void finish()
 	{
-		// TODO Config option to delete temporary files on exit?
-		// DiskFileUpload.deleteOnExitTemporaryFile = true;
-		// DiskAttribute.deleteOnExitTemporaryFile = true;
-		
-		DiskFileUpload.baseDirectory = tmpDir.getAbsolutePath();
-		DiskAttribute.baseDirectory = tmpDir.getAbsolutePath();
+		try
+		{
+			log.log( Level.INFO, "%s {code=%s}", response.getHttpMsg(), response.getHttpCode() );
+			
+			if ( !response.isCommitted() )
+				response.sendResponse();
+			
+			EvalFactory factory;
+			if ( ( factory = request.getEvalFactory() ) != null )
+				factory.onFinished();
+			
+			Session sess;
+			if ( ( sess = request.getSessionWithoutException() ) != null )
+				sess.save();
+			
+			requestFinished = true;
+			
+			// Loader.getDatabase().queryUpdate( "INSERT INTO `testing` (`epoch`, `time`, `uri`, `result`, ip) VALUES ('" + Timings.epoch() + "', '" + Timings.mark( this ) + "', 'http://" + request.getDomain() + request.getUri() + "', '" +
+			// response.getHttpCode() + "', '" + request.getIpAddr() + "');" );
+		}
+		catch ( Throwable t )
+		{
+			t.printStackTrace();
+		}
 	}
 	
 	@Override
-	protected void messageReceived( ChannelHandlerContext ctx, Object msg ) throws Exception
+	public void flush( ChannelHandlerContext ctx ) throws Exception
 	{
-		Timings.start( this );
-		
-		if ( msg instanceof FullHttpRequest )
-		{
-			if ( !Loader.hasFinishedStartup() )
-			{
-				// Outputs a very crude raw message if we are running in a low level mode a.k.a. Startup or Reload.
-				// Much of the server API is unavailable while the server is in this mode, that is why we do this.
-				
-				StringBuilder sb = new StringBuilder();
-				sb.append( "<h1>503 - Service Unavailable</h1>\n" );
-				sb.append( "<p>I'm sorry to have to be the one to tell you this but the server is currently unavailable.</p>\n" );
-				sb.append( "<p>This is most likely due to many possibilities, most commonly being it's currently booting up. Which would be great news because it means your request should succeed if you try again.</p>\n" );
-				sb.append( "<p>But it is also possible that the server is actually running in a low level mode or could be offline for some other reason. If you feel this is a mistake, might I suggest you talk with the server admin.</p>\n" );
-				sb.append( "<p><i>You have a good day now and we will see you again soon. :)</i></p>\n" );
-				sb.append( "<hr>\n" );
-				sb.append( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")<br />" + Versioning.getCopyright() + "</small>" );
-				
-				FullHttpResponse response = new DefaultFullHttpResponse( HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf( 503 ), Unpooled.wrappedBuffer( sb.toString().getBytes() ) );
-				ctx.write( response );
-				
-				return;
-			}
-			
-			requestFinished = false;
-			requestOrig = ( FullHttpRequest ) msg;
-			request = new HttpRequestWrapper( ctx.channel(), requestOrig, ssl, log );
-			response = request.getResponse();
-			
-			log.header( "[id: %s, %s:%s => %s:%s]", hashCode(), request.getIpAddr(), request.getRemotePort(), request.getLocalIpAddr(), request.getLocalPort() );
-			
-			if ( HttpHeaderUtil.is100ContinueExpected( ( HttpRequest ) msg ) )
-				send100Continue( ctx );
-			
-			if ( NetworkSecurity.isIpBanned( request.getIpAddr() ) )
-			{
-				response.sendError( 403 );
-				return;
-			}
-			
-			Site currentSite = request.getSite();
-			
-			File tmpFileDirectory = ( currentSite != null ) ? currentSite.getTempFileDirectory() : Loader.getTempFileDirectory();
-			
-			setTempDirectory( tmpFileDirectory );
-			
-			if ( request.isWebsocketRequest() )
-			{
-				try
-				{
-					WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory( request.getWebSocketLocation( requestOrig ), null, true );
-					handshaker = wsFactory.newHandshaker( requestOrig );
-					if ( handshaker == null )
-					{
-						WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse( ctx.channel() );
-					}
-					else
-					{
-						handshaker.handshake( ctx.channel(), requestOrig );
-					}
-				}
-				catch ( WebSocketHandshakeException e )
-				{
-					NetworkManager.getLogger().severe( "A request was made on the websocket uri '/fw/websocket' but it failed to handshake for reason '" + e.getMessage() + "'." );
-					response.sendError( 500, null, "This URI is for websocket requests only<br />" + e.getMessage() );
-				}
-				return;
-			}
-			
-			if ( !request.getMethod().equals( HttpMethod.GET ) )
-			{
-				try
-				{
-					decoder = new HttpPostRequestDecoder( factory, requestOrig );
-				}
-				catch ( ErrorDataDecoderException e )
-				{
-					e.printStackTrace();
-					response.sendException( e );
-					return;
-				}
-			}
-			
-			request.contentSize += requestOrig.content().readableBytes();
-			
-			if ( decoder != null )
-			{
-				try
-				{
-					decoder.offer( requestOrig );
-				}
-				catch ( ErrorDataDecoderException e )
-				{
-					e.printStackTrace();
-					response.sendError( e );
-					// ctx.channel().close();
-					return;
-				}
-				catch ( IllegalArgumentException e )
-				{
-					// TODO Handle this further? maybe?
-					// java.lang.IllegalArgumentException: empty name
-				}
-				readHttpDataChunkByChunk();
-			}
-			
-			handleHttp( request, response );
-			
-			finish();
-		}
-		else if ( msg instanceof WebSocketFrame )
-		{
-			WebSocketFrame frame = ( WebSocketFrame ) msg;
-			
-			// Check for closing frame
-			if ( frame instanceof CloseWebSocketFrame )
-			{
-				handshaker.close( ctx.channel(), ( CloseWebSocketFrame ) frame.retain() );
-				return;
-			}
-			
-			if ( frame instanceof PingWebSocketFrame )
-			{
-				ctx.channel().write( new PongWebSocketFrame( frame.content().retain() ) );
-				return;
-			}
-			
-			if ( ! ( frame instanceof TextWebSocketFrame ) )
-			{
-				throw new UnsupportedOperationException( String.format( "%s frame types are not supported", frame.getClass().getName() ) );
-			}
-			
-			String request = ( ( TextWebSocketFrame ) frame ).text();
-			NetworkManager.getLogger().fine( "Received '" + request + "' over WebSocket connection '" + ctx.channel() + "'" );
-			ctx.channel().write( new TextWebSocketFrame( request.toUpperCase() ) );
-		}
-		else if ( msg instanceof DefaultHttpRequest )
-		{
-			// Do Nothing!
-		}
-		else
-		{
-			NetworkManager.getLogger().warning( "Received Object '" + msg.getClass() + "' and had nothing to do with it, is this a bug?" );
-		}
+		log.flushAndClose();
+		ctx.flush();
+	}
+	
+	public HttpRequestWrapper getRequest()
+	{
+		return request;
+	}
+	
+	public HttpResponseWrapper getResponse()
+	{
+		return response;
+	}
+	
+	public Session getSession()
+	{
+		return request.getSession();
 	}
 	
 	public void handleHttp( HttpRequestWrapper request, HttpResponseWrapper response ) throws IOException, HttpError, SiteException, PermissionException, EvalMultipleException, EvalException, SessionException
@@ -478,7 +358,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		// String domain = request.getParentDomain();
 		String subdomain = request.getSubDomain();
 		
-		log.log( Level.INFO, request.getMethodString() + " " + ( request.isSecure() ? "https://" : "http://" ) + request.getDomain() + request.getUri() );
+		log.log( Level.INFO, request.getMethodString() + " " + request.getFullUrl() );
 		
 		request.startSession();
 		
@@ -599,7 +479,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			EvalFactoryResult result = factory.eval( EvalExecutionContext.fromSource( fi.getHTML(), "<html>" ).request( request ).site( currentSite ) );
 			
 			if ( result.hasExceptions() )
-			{
 				// TODO Print notices to output like PHP does
 				for ( EvalException e : result.getExceptions() )
 				{
@@ -609,7 +488,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 					if ( e.errorLevel().isEnabledLevel() )
 						rendered.writeBytes( e.getMessage().getBytes() );
 				}
-			}
 			
 			if ( result.isSuccessful() )
 			{
@@ -639,7 +517,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			EvalFactoryResult result = factory.eval( EvalExecutionContext.fromFile( fi ).request( request ).site( currentSite ) );
 			
 			if ( result.hasExceptions() )
-			{
 				// TODO Print notices to output like PHP does
 				for ( EvalException e : result.getExceptions() )
 				{
@@ -649,7 +526,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 					if ( e.errorLevel().isEnabledLevel() )
 						rendered.writeBytes( e.getMessage().getBytes() );
 				}
-			}
 			
 			if ( result.isSuccessful() )
 			{
@@ -672,7 +548,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		if ( response.stage == HttpResponseStage.MULTIPART )
 		{
 			while ( response.stage == HttpResponseStage.MULTIPART )
-			{
 				// I wonder if there is a better way to handle on going multipart response.
 				try
 				{
@@ -682,7 +557,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				{
 					throw new HttpError( 500, "Internal Server Error encountered during multipart execution." );
 				}
-			}
 			
 			return;
 		}
@@ -692,9 +566,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		
 		// Allows scripts to directly override interpreter values. For example: Themes, Views, Titles
 		for ( Entry<String, String> kv : response.pageDataOverrides.entrySet() )
-		{
 			fi.put( kv.getKey(), kv.getValue() );
-		}
 		
 		RenderEvent renderEvent = new RenderEvent( this, rendered, fi.getEncoding(), fi.getParams() );
 		
@@ -714,32 +586,204 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		response.write( rendered );
 	}
 	
-	private void finish()
+	@Override
+	protected void messageReceived( ChannelHandlerContext ctx, Object msg ) throws Exception
 	{
-		try
+		Timings.start( this );
+		
+		if ( msg instanceof FullHttpRequest )
 		{
-			log.log( Level.INFO, "%s {code=%s}", response.getHttpMsg(), response.getHttpCode() );
+			if ( !Loader.hasFinishedStartup() )
+			{
+				// Outputs a very crude raw message if we are running in a low level mode a.k.a. Startup or Reload.
+				// Much of the server API is unavailable while the server is in this mode, that is why we do this.
+				
+				StringBuilder sb = new StringBuilder();
+				sb.append( "<h1>503 - Service Unavailable</h1>\n" );
+				sb.append( "<p>I'm sorry to have to be the one to tell you this but the server is currently unavailable.</p>\n" );
+				sb.append( "<p>This is most likely due to many possibilities, most commonly being it's currently booting up. Which would be great news because it means your request should succeed if you try again.</p>\n" );
+				sb.append( "<p>But it is also possible that the server is actually running in a low level mode or could be offline for some other reason. If you feel this is a mistake, might I suggest you talk with the server admin.</p>\n" );
+				sb.append( "<p><i>You have a good day now and we will see you again soon. :)</i></p>\n" );
+				sb.append( "<hr>\n" );
+				sb.append( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")<br />" + Versioning.getCopyright() + "</small>" );
+				
+				FullHttpResponse response = new DefaultFullHttpResponse( HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf( 503 ), Unpooled.wrappedBuffer( sb.toString().getBytes() ) );
+				ctx.write( response );
+				
+				return;
+			}
 			
-			if ( !response.isCommitted() )
-				response.sendResponse();
+			requestFinished = false;
+			requestOrig = ( FullHttpRequest ) msg;
+			request = new HttpRequestWrapper( ctx.channel(), requestOrig, ssl, log );
+			response = request.getResponse();
 			
-			EvalFactory factory;
-			if ( ( factory = request.getEvalFactory() ) != null )
-				factory.onFinished();
+			log.header( "[id: %s, %s:%s => %s:%s]", hashCode(), request.getIpAddr(), request.getRemotePort(), request.getLocalIpAddr(), request.getLocalPort() );
 			
-			Session sess;
-			if ( ( sess = request.getSessionWithoutException() ) != null )
-				sess.save();
+			if ( HttpHeaderUtil.is100ContinueExpected( ( HttpRequest ) msg ) )
+				send100Continue( ctx );
 			
-			requestFinished = true;
+			if ( NetworkSecurity.isIpBanned( request.getIpAddr() ) )
+			{
+				response.sendError( 403 );
+				return;
+			}
 			
-			// Loader.getDatabase().queryUpdate( "INSERT INTO `testing` (`epoch`, `time`, `uri`, `result`, ip) VALUES ('" + Timings.epoch() + "', '" + Timings.mark( this ) + "', 'http://" + request.getDomain() + request.getUri() + "', '" +
-			// response.getHttpCode() + "', '" + request.getIpAddr() + "');" );
+			Site currentSite = request.getSite();
+			
+			File tmpFileDirectory = ( currentSite != null ) ? currentSite.getTempFileDirectory() : Loader.getTempFileDirectory();
+			
+			setTempDirectory( tmpFileDirectory );
+			
+			if ( request.isWebsocketRequest() )
+			{
+				try
+				{
+					WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory( request.getWebSocketLocation( requestOrig ), null, true );
+					handshaker = wsFactory.newHandshaker( requestOrig );
+					if ( handshaker == null )
+						WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse( ctx.channel() );
+					else
+						handshaker.handshake( ctx.channel(), requestOrig );
+				}
+				catch ( WebSocketHandshakeException e )
+				{
+					NetworkManager.getLogger().severe( "A request was made on the websocket uri '/fw/websocket' but it failed to handshake for reason '" + e.getMessage() + "'." );
+					response.sendError( 500, null, "This URI is for websocket requests only<br />" + e.getMessage() );
+				}
+				return;
+			}
+			
+			if ( !request.getMethod().equals( HttpMethod.GET ) )
+				try
+				{
+					decoder = new HttpPostRequestDecoder( factory, requestOrig );
+				}
+				catch ( ErrorDataDecoderException e )
+				{
+					e.printStackTrace();
+					response.sendException( e );
+					return;
+				}
+			
+			request.contentSize += requestOrig.content().readableBytes();
+			
+			if ( decoder != null )
+			{
+				try
+				{
+					decoder.offer( requestOrig );
+				}
+				catch ( ErrorDataDecoderException e )
+				{
+					e.printStackTrace();
+					response.sendError( e );
+					// ctx.channel().close();
+					return;
+				}
+				catch ( IllegalArgumentException e )
+				{
+					// TODO Handle this further? maybe?
+					// java.lang.IllegalArgumentException: empty name
+				}
+				readHttpDataChunkByChunk();
+			}
+			
+			handleHttp( request, response );
+			
+			finish();
 		}
-		catch ( Throwable t )
+		else if ( msg instanceof WebSocketFrame )
 		{
-			t.printStackTrace();
+			WebSocketFrame frame = ( WebSocketFrame ) msg;
+			
+			// Check for closing frame
+			if ( frame instanceof CloseWebSocketFrame )
+			{
+				handshaker.close( ctx.channel(), ( CloseWebSocketFrame ) frame.retain() );
+				return;
+			}
+			
+			if ( frame instanceof PingWebSocketFrame )
+			{
+				ctx.channel().write( new PongWebSocketFrame( frame.content().retain() ) );
+				return;
+			}
+			
+			if ( ! ( frame instanceof TextWebSocketFrame ) )
+				throw new UnsupportedOperationException( String.format( "%s frame types are not supported", frame.getClass().getName() ) );
+			
+			String request = ( ( TextWebSocketFrame ) frame ).text();
+			NetworkManager.getLogger().fine( "Received '" + request + "' over WebSocket connection '" + ctx.channel() + "'" );
+			ctx.channel().write( new TextWebSocketFrame( request.toUpperCase() ) );
 		}
+		else if ( msg instanceof DefaultHttpRequest )
+		{
+			// Do Nothing!
+		}
+		else
+			NetworkManager.getLogger().warning( "Received Object '" + msg.getClass() + "' and had nothing to do with it, is this a bug?" );
+	}
+	
+	public void processDirectoryListing( WebInterpreter fi ) throws HttpError, IOException
+	{
+		File dir = fi.getFile();
+		
+		if ( !dir.exists() || !dir.isDirectory() )
+			throw new HttpError( 500 );
+		
+		response.setContentType( "text/html" );
+		response.setEncoding( Charsets.UTF_8 );
+		
+		File[] files = dir.listFiles();
+		List<Object> tbl = Lists.newArrayList();
+		StringBuilder sb = new StringBuilder();
+		SimpleDateFormat sdf = new SimpleDateFormat( "dd-MMM-yyyy HH:mm:ss" );
+		
+		sb.append( "<style>.altrowstable { border-spacing: 12px; }</style>" );
+		sb.append( "<h1>Index of " + request.getUri() + "</h1>" );
+		
+		for ( File f : files )
+		{
+			List<String> l = Lists.newArrayList();
+			String type = ContentTypes.getContentType( f );
+			String mainType = ( type.contains( "/" ) ) ? type.substring( 0, type.indexOf( "/" ) ) : type;
+			
+			l.add( "<img src=\"/fw/icons/" + mainType + "\" />" );
+			l.add( "<a href=\"" + request.getUri() + "/" + f.getName() + "\">" + f.getName() + "</a>" );
+			l.add( sdf.format( f.lastModified() ) );
+			
+			if ( f.isDirectory() )
+				l.add( "-" );
+			else
+			{
+				InputStream stream = null;
+				try
+				{
+					URL url = f.toURI().toURL();
+					stream = url.openStream();
+					l.add( String.valueOf( stream.available() ) + "kb" );
+				}
+				finally
+				{
+					if ( stream != null )
+						stream.close();
+				}
+			}
+			
+			l.add( type );
+			
+			tbl.add( l );
+		}
+		
+		sb.append( WebFunc.createTable( tbl, Arrays.asList( new String[] {"", "Name", "Last Modified", "Size", "Type"} ) ) );
+		sb.append( "<hr>" );
+		sb.append( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + "<br />" + Versioning.getCopyright() + "</small>" );
+		
+		response.print( sb.toString() );
+		response.sendResponse();
+		
+		// throw new HttpErrorException( 403, "Sorry, Directory Listing has not been implemented on this Server!" );
 	}
 	
 	private void readHttpDataChunkByChunk() throws IOException
@@ -750,7 +794,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			{
 				InterfaceHttpData data = decoder.next();
 				if ( data != null )
-				{
 					try
 					{
 						writeHttpData( data );
@@ -760,7 +803,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 						// This method deletes the temp file from disk!
 						// data.release();
 					}
-				}
 			}
 		}
 		catch ( EndOfDataDecoderException e )
@@ -797,7 +839,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		{
 			FileUpload fileUpload = ( FileUpload ) data;
 			if ( fileUpload.isCompleted() )
-			{
 				try
 				{
 					request.putUpload( fileUpload.getName(), new UploadedFile( fileUpload ) );
@@ -807,95 +848,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 					e.printStackTrace();
 					response.sendException( e );
 				}
-			}
 			else
-			{
 				NetworkManager.getLogger().warning( "File to be continued but should not!" );
-			}
 		}
-	}
-	
-	private static void send100Continue( ChannelHandlerContext ctx )
-	{
-		FullHttpResponse response = new DefaultFullHttpResponse( HTTP_1_1, CONTINUE );
-		ctx.write( response );
-	}
-	
-	public void processDirectoryListing( WebInterpreter fi ) throws HttpError, IOException
-	{
-		File dir = fi.getFile();
-		
-		if ( !dir.exists() || !dir.isDirectory() )
-			throw new HttpError( 500 );
-		
-		response.setContentType( "text/html" );
-		response.setEncoding( Charsets.UTF_8 );
-		
-		File[] files = dir.listFiles();
-		List<Object> tbl = Lists.newArrayList();
-		StringBuilder sb = new StringBuilder();
-		SimpleDateFormat sdf = new SimpleDateFormat( "dd-MMM-yyyy HH:mm:ss" );
-		
-		sb.append( "<style>.altrowstable { border-spacing: 12px; }</style>" );
-		sb.append( "<h1>Index of " + request.getUri() + "</h1>" );
-		
-		for ( File f : files )
-		{
-			List<String> l = Lists.newArrayList();
-			String type = ContentTypes.getContentType( f );
-			String mainType = ( type.contains( "/" ) ) ? type.substring( 0, type.indexOf( "/" ) ) : type;
-			
-			l.add( "<img src=\"/fw/icons/" + mainType + "\" />" );
-			l.add( "<a href=\"" + request.getUri() + "/" + f.getName() + "\">" + f.getName() + "</a>" );
-			l.add( sdf.format( f.lastModified() ) );
-			
-			if ( f.isDirectory() )
-			{
-				l.add( "-" );
-			}
-			else
-			{
-				InputStream stream = null;
-				try
-				{
-					URL url = f.toURI().toURL();
-					stream = url.openStream();
-					l.add( String.valueOf( stream.available() ) + "kb" );
-				}
-				finally
-				{
-					if ( stream != null )
-						stream.close();
-				}
-			}
-			
-			l.add( type );
-			
-			tbl.add( l );
-		}
-		
-		sb.append( WebFunc.createTable( tbl, Arrays.asList( new String[] {"", "Name", "Last Modified", "Size", "Type"} ) ) );
-		sb.append( "<hr>" );
-		sb.append( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + "<br />" + Versioning.getCopyright() + "</small>" );
-		
-		response.print( sb.toString() );
-		response.sendResponse();
-		
-		// throw new HttpErrorException( 403, "Sorry, Directory Listing has not been implemented on this Server!" );
-	}
-	
-	public HttpRequestWrapper getRequest()
-	{
-		return request;
-	}
-	
-	public HttpResponseWrapper getResponse()
-	{
-		return response;
-	}
-	
-	public Session getSession()
-	{
-		return request.getSession();
 	}
 }

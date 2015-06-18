@@ -16,17 +16,17 @@ import com.chiorichan.factory.parsers.BasicParser;
  * 
  * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
-public class ParseWrapper implements Listener
+public class PreParseWrapper implements Listener
 {
 	private final BasicParser[] parsers;
 	
-	public ParseWrapper( BasicParser... parsers )
+	public PreParseWrapper( BasicParser... parsers )
 	{
 		this.parsers = parsers;
 	}
 	
 	@EventHandler( priority = EventPriority.LOWEST )
-	public void onEvent( EvalFactoryPreEvent event ) throws Exception
+	public void onEvent( PreEvalEvent event ) throws Exception
 	{
 		for ( BasicParser parser : parsers )
 			event.context().resetAndWrite( parser.runParser( event.context().readString(), event.context().site() ) );
