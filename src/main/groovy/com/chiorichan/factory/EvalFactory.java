@@ -36,15 +36,14 @@ import com.chiorichan.account.auth.AccountAuthenticator;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.Listener;
-import com.chiorichan.factory.event.PreCoffeeProcessor;
 import com.chiorichan.factory.event.PostEvalEvent;
-import com.chiorichan.factory.event.PreEvalEvent;
 import com.chiorichan.factory.event.PostImageProcessor;
 import com.chiorichan.factory.event.PostJSMinProcessor;
+import com.chiorichan.factory.event.PreCoffeeProcessor;
+import com.chiorichan.factory.event.PreEvalEvent;
 import com.chiorichan.factory.event.PreLessProcessor;
-import com.chiorichan.factory.event.PreParseWrapper;
-import com.chiorichan.factory.parsers.IncludesParser;
-import com.chiorichan.factory.parsers.LinksParser;
+import com.chiorichan.factory.parsers.PreIncludesParserWrapper;
+import com.chiorichan.factory.parsers.PreLinksParserWrapper;
 import com.chiorichan.factory.processors.EmbeddedGroovyScriptProcessor;
 import com.chiorichan.factory.processors.GroovyScriptProcessor;
 import com.chiorichan.factory.processors.ScriptingProcessor;
@@ -79,12 +78,25 @@ public class EvalFactory
 	 */
 	private static final ASTTransformationCustomizer timedInterrupt = new ASTTransformationCustomizer( TimedInterrupt.class );
 	
+	private final EvalBinding binding;
+	
+	private final List<ByteBuf> bufferStack = Lists.newLinkedList();
+	
+	private Charset charset = Charsets.toCharset( Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" ) );
+	
+	private final Set<GroovyShellTracker> groovyShells = Sets.newLinkedHashSet();
+	
+	private final ByteBuf output = Unpooled.buffer();
+	
+	private final ShellFactory shellFactory = new ShellFactory();
+	
 	static
 	{
 		/**
 		 * Register Pre-Processors
 		 */
-		register( new PreParseWrapper( new LinksParser(), new IncludesParser() ) );
+		register( new PreLinksParserWrapper() );
+		register( new PreIncludesParserWrapper() );
 		if ( Loader.getConfig().getBoolean( "advanced.processors.coffeeProcessorEnabled", true ) )
 			register( new PreCoffeeProcessor() );
 		if ( Loader.getConfig().getBoolean( "advanced.processors.lessProcessorEnabled", true ) )
@@ -120,18 +132,6 @@ public class EvalFactory
 			timedInterrupt.setAnnotationParameters( timedInterruptParams );
 		}
 	}
-	
-	private final EvalBinding binding;
-	
-	private final List<ByteBuf> bufferStack = Lists.newLinkedList();
-	
-	private Charset charset = Charsets.toCharset( Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" ) );
-	
-	private final Set<GroovyShellTracker> groovyShells = Sets.newLinkedHashSet();
-	
-	private final ByteBuf output = Unpooled.buffer();
-	
-	private final ShellFactory shellFactory = new ShellFactory();
 	
 	private EvalFactory( EvalBinding binding )
 	{
@@ -171,6 +171,7 @@ public class EvalFactory
 		EvalFactoryResult result = context.result();
 		GroovyShellTracker tracker = getUnusedShellTracker();
 		
+		context.factory( this );
 		context.charset( charset );
 		context.baseSource( new String( context.readBytes(), charset ) );
 		

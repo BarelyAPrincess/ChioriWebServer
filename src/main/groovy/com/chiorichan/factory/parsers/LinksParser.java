@@ -24,25 +24,6 @@ public class LinksParser extends HTMLCommentParser
 		super( "url_to" );
 	}
 	
-	public String runParser( String source, Site site ) throws Exception
-	{
-		this.site = site;
-		Map<String, String> aliases = site.getAliases();
-		
-		if ( source.isEmpty() )
-			return "";
-		
-		if ( aliases == null || aliases.size() < 1 )
-			return source;
-		
-		for ( Entry<String, String> entry : aliases.entrySet() )
-		{
-			source = source.replace( "%" + entry.getKey() + "%", entry.getValue() );
-		}
-		
-		return super.runParser( source, site );
-	}
-	
 	/**
 	 * args: [] = http://example.com/
 	 * args: [subdomain] = http://subdomain.example.com/
@@ -62,6 +43,23 @@ public class LinksParser extends HTMLCommentParser
 			url += SiteManager.INSTANCE.getDefaultSite().getDomain() + "/";
 		
 		return url;
+	}
+	
+	public String runParser( String source, Site site ) throws Exception
+	{
+		this.site = site;
+		Map<String, String> aliases = site.getAliases();
+		
+		if ( source.isEmpty() )
+			return "";
+		
+		if ( aliases == null || aliases.size() < 1 )
+			return source;
+		
+		for ( Entry<String, String> entry : aliases.entrySet() )
+			source = source.replace( "%" + entry.getKey() + "%", entry.getValue() );
+		
+		return super.runParser( source );
 	}
 	
 }

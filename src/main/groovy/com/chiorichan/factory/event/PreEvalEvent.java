@@ -16,12 +16,17 @@ import com.chiorichan.factory.EvalExecutionContext;
  */
 public class PreEvalEvent extends Event implements Cancellable
 {
-	private final EvalExecutionContext context;
 	private boolean cancelled;
+	private final EvalExecutionContext context;
 	
 	public PreEvalEvent( EvalExecutionContext context )
 	{
 		this.context = context;
+	}
+	
+	public static HandlerList getHandlerList()
+	{
+		return handlers;
 	}
 	
 	public EvalExecutionContext context()
@@ -39,10 +44,5 @@ public class PreEvalEvent extends Event implements Cancellable
 	public void setCancelled( boolean cancelled )
 	{
 		this.cancelled = cancelled;
-	}
-	
-	public static HandlerList getHandlerList()
-	{
-		return handlers;
 	}
 }

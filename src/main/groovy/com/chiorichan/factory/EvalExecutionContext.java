@@ -35,6 +35,8 @@ public class EvalExecutionContext
 	
 	private String contentType;
 	
+	private EvalFactory factory;
+	
 	private String filename;
 	
 	private HttpRequestWrapper request = null;
@@ -130,6 +132,17 @@ public class EvalExecutionContext
 	public EvalExecutionContext contentType( final String contentType )
 	{
 		this.contentType = contentType;
+		return this;
+	}
+	
+	public EvalFactory factory()
+	{
+		return factory;
+	}
+	
+	EvalExecutionContext factory( final EvalFactory factory )
+	{
+		this.factory = factory;
 		return this;
 	}
 	

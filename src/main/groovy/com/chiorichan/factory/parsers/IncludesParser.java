@@ -20,22 +20,13 @@ import com.chiorichan.site.SiteManager;
  */
 public class IncludesParser extends HTMLCommentParser
 {
-	Site site;
-	EvalFactory factory;
 	EvalExecutionContext context;
+	EvalFactory factory;
+	Site site;
 	
 	public IncludesParser()
 	{
 		super( "include" );
-	}
-	
-	public String runParser( String source, Site site, EvalExecutionContext context, EvalFactory factory ) throws Exception
-	{
-		this.site = site;
-		this.factory = factory;
-		this.context = context;
-		
-		return runParser( source, site );
 	}
 	
 	@Override
@@ -58,10 +49,17 @@ public class IncludesParser extends HTMLCommentParser
 			result = factory.eval( EvalExecutionContext.fromFile( fi ).request( context.request() ).site( site ) ).getString();
 		}
 		else if ( !res.exists() )
-		{
 			Loader.getLogger().warning( "We had a problem finding the include file `" + res.getAbsolutePath() + "`" );
-		}
 		
 		return result;
+	}
+	
+	public String runParser( String source, Site site, EvalExecutionContext context, EvalFactory factory ) throws Exception
+	{
+		this.site = site;
+		this.factory = factory;
+		this.context = context;
+		
+		return runParser( source );
 	}
 }

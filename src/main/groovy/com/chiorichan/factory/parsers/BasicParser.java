@@ -11,7 +11,6 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.site.Site;
 import com.chiorichan.util.StringFunc;
 
 /**
@@ -33,7 +32,7 @@ public abstract class BasicParser
 		p2 = Pattern.compile( patternTwo );
 	}
 	
-	public String runParser( String source, Site site ) throws Exception
+	public String runParser( String source ) throws Exception
 	{
 		if ( source == null || source.isEmpty() )
 			return "";
@@ -47,9 +46,7 @@ public abstract class BasicParser
 			String[] args2 = new String[args.length];
 			
 			for ( int i = 0; i < args.length; i++ )
-			{
 				args2[i] = StringFunc.trimAll( args[i].trim(), '"' );
-			}
 			
 			String result = resolveMethod( args2 );
 			
