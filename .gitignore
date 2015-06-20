@@ -32,4 +32,5 @@
 /.gradle/
 /.groovy/
 /accounts
+/libraries
 /tmp

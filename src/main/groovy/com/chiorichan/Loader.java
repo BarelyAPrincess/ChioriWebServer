@@ -223,9 +223,9 @@ public class Loader extends BuiltinEventCreator implements Listener
 		if ( firstRun || install )
 			try
 			{
-				// Check and Extract Factory WebUI Interface
+				// Check and Extract WebUI Interface
 				
-				String fwZip = "com/chiorichan/framework.zip";
+				String fwZip = "com/chiorichan/framework.archive";
 				String zipMD5 = FileFunc.resourceToString( fwZip + ".md5" );
 				
 				if ( zipMD5 == null )
@@ -237,7 +237,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 					zipMD5 = DigestUtils.md5Hex( is );
 				}
 				
-				File fwRoot = new File( webroot, "framework" );
+				File fwRoot = new File( webroot, "default" );
 				File curMD5 = new File( fwRoot, "version.md5" );
 				if ( firstRun || !curMD5.exists() || !zipMD5.equals( FileUtils.readFileToString( curMD5 ) ) )
 				{
@@ -283,12 +283,13 @@ public class Loader extends BuiltinEventCreator implements Listener
 		
 		if ( firstRun )
 		{
-			getLogger().highlight( "                        ATTENTION! ATTENTION! ATTENTION!" );
+			getLogger().highlight( "                          ATTENTION! ATTENTION! ATTENTION!" );
 			getLogger().highlight( "--------------------------------------------------------------------------------------" );
 			getLogger().highlight( "| It appears that this is your first time running Chiori-chan's Web Server.          |" );
 			getLogger().highlight( "| All the needed files have been created and extracted from the server jar file.     |" );
 			getLogger().highlight( "| We highly recommended that you stop the server, review configuration, and restart. |" );
-			getLogger().highlight( "| You can find documentation and guides on our Github for more help.                 |" );
+			getLogger().highlight( "| You can find documentation and guides on our Github at:                            |" );
+			getLogger().highlight( "|                   https://github.com/ChioriGreene/ChioriWebServer                  |" );
 			getLogger().highlight( "--------------------------------------------------------------------------------------" );
 			String key = Loader.getConsole().prompt( "Would you like to stop and review configuration? Press 'Y' for Yes or 'N' for No.", "Y", "N" );
 			

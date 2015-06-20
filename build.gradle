@@ -1,6 +1,6 @@
-import java.text.SimpleDateFormat;
+import java.text.SimpleDateFormat
 
-defaultTasks 'clean', 'writePropertiesFile', 'shadowJar', ':TemplatesPlugin:build', 'javadocArchive', 'sourcesArchive'
+defaultTasks 'clean', 'build'
 
 apply plugin: 'eclipse'
 apply plugin: 'groovy'
@@ -29,7 +29,7 @@ buildscript
 	
 	dependencies
 	{
-		classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.0'
+		classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.1'
 		classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.10.0'
 	}
 }
@@ -57,14 +57,14 @@ def getVersionNumber()
 {
 	try
 	{
-		Properties props = new Properties();
-		props.load( new FileInputStream( new File( "./src/main/resources/com/chiorichan/metadata.properties" ) ) );
+		Properties props = new Properties()
+		props.load( new FileInputStream( new File( "./src/main/resources/com/chiorichan/build.properties" ) ) )
 		
-		return props.getProperty( "project.version" );
+		return props.getProperty( "project.version" )
 	}
 	catch ( e )
 	{
-		return 0;
+		return 0
 	}
 }
 
@@ -74,26 +74,26 @@ targetCompatibility = '1.7'
 def rawVersion = getVersionNumber() + '-' + gitDescribe()
 def jenkins_build = System.getenv("BUILD_NUMBER")
 def travis_build = System.getenv("TRAVIS_BUILD_NUMBER")
-def buildNumber = '0';
+def buildNumber = '0'
 
 group = 'com.chiorichan'
 description = 'Chiori-chan\'s Web Server is a Java Based HTTP/TCP Server featuring Groovy Shell and a feature rich Plugin System'
 
 if ( System.getenv("releaseBuild") != null )
 {
-	version = getVersionNumber();
+	version = getVersionNumber()
 }
 else
 {
 	if ( jenkins_build != null )
 	{
 		version = rawVersion + '-jenkins-' + jenkins_build
-		buildNumber = jenkins_build;
+		buildNumber = jenkins_build
 	}
 	else if ( travis_build != null )
 	{
 		version = rawVersion + '-travis-' + travis_build
-		buildNumber = travis_build;
+		buildNumber = travis_build
 	}
 	else
 		version = rawVersion + '-dev'
@@ -136,12 +136,12 @@ subprojects
 	apply plugin: 'java'
 	apply plugin: 'groovy'
 	apply plugin: 'eclipse'
-
+	
 	repositories
 	{ mavenCentral() }
-
+	
 	libsDirName = '../../build/dist'
-
+	
 	artifacts
 	{ archives jar }
 }
@@ -190,12 +190,17 @@ dependencies
 	
 	// Used to format Phone Numbers
 	compile group: 'com.googlecode.libphonenumber', name: 'libphonenumber', version: '7.0.4'
-
+	
 	// Used for serilization within Sites and Autoupdater
 	compile group: 'com.google.code.gson', name: 'gson', version: '2.3'
 	
 	// Used by MavenUtils and some scripts
 	compile group: 'org.apache.httpcomponents', name: 'fluent-hc', version: '4.3.5'
+}
+
+shadowJar
+{
+	include("**/*");
 }
 
 jar
@@ -204,8 +209,8 @@ jar
 	{
 		attributes 'Implementation-Title': 'Chiori-chan\'s Web Server'
 		attributes 'Implementation-Version': version
-		attributes 'Implementation-Vendor': 'Chiori Greene'
-		attributes 'Implementation-Vendor-Id': 'chiorigreene@gmail.com'
+		attributes 'Implementation-Vendor': 'Chiori Greene a.k.a. Chiori-chan'
+		attributes 'Implementation-Vendor-Id': 'me@chiorichan.com'
 		attributes 'Main-Class': 'com.chiorichan.Loader'
 	}
 }
@@ -220,21 +225,28 @@ task javadocArchive(type: Zip, dependsOn: 'javadoc'){
 	from javadoc.destinationDir
 }
 
-task writePropertiesFile << {
-	SimpleDateFormat sdf = new SimpleDateFormat( "EEE, d MMM yyyy HH:mm:ss Z" );
-	
-	Properties props = new Properties();
-	props.load( new FileInputStream( new File( "./src/main/resources/com/chiorichan/metadata.properties" ) ) );
-	props.setProperty("project.builtOn", sdf.format( new Date() ));
-	props.setProperty("project.build", buildNumber);
-	props.setProperty("project.version", version);
-	
-	File f2 = new File("./build/dist/build.properties");
-	f2.parentFile.mkdirs();
-	OutputStream out2 = new FileOutputStream( f2 );
-	props.store(out2, "Chiori-chan's Web Server Metadata Properties File - Used by the auto updater and Jenkins Build Server.");
-	
+task writePropertiesFile {
+	doFirst {
+		SimpleDateFormat sdf = new SimpleDateFormat( "EEE, d MMM yyyy HH:mm:ss Z" )
+		
+		Properties props = new Properties()
+		props.load( new FileInputStream( new File( "./src/main/resources/com/chiorichan/build.properties" ) ) )
+		props.setProperty("project.builtOn", sdf.format( new Date() ))
+		props.setProperty("project.build", buildNumber)
+		props.setProperty("project.version", version)
+		
+		File f2 = new File("./build/dist/build.properties")
+		File f3 = new File("./build/resources/main/com/chiorichan/build.properties")
+		f2.parentFile.mkdirs()
+		f3.parentFile.mkdirs()
+		OutputStream out2 = new FileOutputStream( f2 )
+		OutputStream out3 = new FileOutputStream( f3 )
+		props.store(out2, "Chiori-chan's Web Server Build Properties File - Used by our auto updater and Jenkins build server.")
+		props.store(out3, "Chiori-chan's Web Server Build Properties File - Used by our auto updater and Jenkins build server.")
+	}
 }
+
+jar.dependsOn writePropertiesFile
 
 artifacts
 { archives shadowJar, sourcesArchive, javadocArchive }

@@ -572,7 +572,7 @@ public class FileFunc
 	
 	public static boolean extractZipResource( String path, File dest, Class<?> clz ) throws IOException
 	{
-		File temp = new File( "temp.zip" );
+		File temp = new File( Loader.getTempFileDirectory(), "temp.zip" );
 		putResource( clz, path, temp );
 		
 		ZipFile zip = new ZipFile( temp );
@@ -656,6 +656,8 @@ public class FileFunc
 		try
 		{
 			InputStream is = clz.getClassLoader().getResourceAsStream( resource );
+			if ( is == null )
+				throw new IOException( String.format( "The resource %s does not exist.", resource ) );
 			FileOutputStream os = new FileOutputStream( file );
 			ByteStreams.copy( is, os );
 			is.close();

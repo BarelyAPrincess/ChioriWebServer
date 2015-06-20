@@ -33,45 +33,30 @@ public class Versioning
 	}
 	
 	/**
-	 * Loads the server metadata from the file {@value "com/chiorichan/metadata.properties"},
-	 * which is usually updated by our Gradle build script
+	 * Get the server build number
+	 * The build number is only set when the server is built on our Jenkins Build Server or by Travis,
+	 * meaning this will be 0 for all development builds
 	 * 
-	 * @param force
-	 *            Force a metadata reload
+	 * @return The server build number
 	 */
-	private static void loadMetaData( boolean force )
+	public static String getBuildNumber()
 	{
-		if ( metadata != null && !metadata.isEmpty() && !force )
-			return;
-		
-		metadata = new Properties();
-		
-		InputStream is = null;
-		try
-		{
-			is = Loader.class.getClassLoader().getResourceAsStream( "com/chiorichan/metadata.properties" );
-			metadata.load( is );
-		}
-		catch ( IOException e )
-		{
-			e.printStackTrace();
-		}
-		finally
-		{
-			try
-			{
-				if ( is != null )
-					is.close();
-			}
-			catch ( IOException e )
-			{
-			}
-		}
+		return metadata.getProperty( "project.build", "0" );
 	}
 	
 	/*
 	 * Server and Software Methods
 	 */
+	
+	/**
+	 * Get the server copyright, e.g., Copyright (c) 2015 Chiori-chan
+	 * 
+	 * @return The server copyright
+	 */
+	public static String getCopyright()
+	{
+		return metadata.getProperty( "project.copyright", "Copyright &copy; 2015 Chiori-chan" );
+	}
 	
 	/**
 	 * Get the GitHub Branch this was built from, e.g., master
@@ -85,45 +70,24 @@ public class Versioning
 	}
 	
 	/**
-	 * Get the server version number, e.g., 9.2.1
+	 * Get the Java version, e.g., 1.7.0_80
 	 * 
-	 * @return The server version number
+	 * @return The Java version number
 	 */
-	public static String getVersionNumber()
+	public static String getJavaVersion()
 	{
-		return metadata.getProperty( "project.version", "Unknown-Version" );
+		return System.getProperty( "java.version" );
 	}
 	
 	/**
-	 * Get the server build number
-	 * The build number is only set when the server is built on our Jenkins Build Server or by Travis,
-	 * meaning this will be 0 for all development builds
+	 * Get the JVM name
 	 * 
-	 * @return The server build number
+	 * @return The JVM name
 	 */
-	public static String getBuildNumber()
+	public static String getJVMName()
 	{
-		return metadata.getProperty( "project.build", "0" );
-	}
-	
-	/**
-	 * Get the server version, e.g., 9.2.1 (Milky Berry)
-	 * 
-	 * @return The server version with code name
-	 */
-	public static String getVersion()
-	{
-		return metadata.getProperty( "project.version", "Unknown-Version" ) + " (" + metadata.getProperty( "project.codename" ) + ")";
-	}
-	
-	/**
-	 * Get the server copyright, e.g., Copyright (c) 2015 Chiori-chan
-	 * 
-	 * @return The server copyright
-	 */
-	public static String getCopyright()
-	{
-		return metadata.getProperty( "project.copyright", "Copyright &copy; 2015 Chiori-chan" );
+		// System.getProperty("java.vm.name");
+		return ManagementFactory.getRuntimeMXBean().getVmName();
 	}
 	
 	/**
@@ -147,6 +111,54 @@ public class Versioning
 	}
 	
 	/**
+	 * Get the system username
+	 * 
+	 * @return The username
+	 */
+	public static String getUser()
+	{
+		return System.getProperty( "user.name" );
+	}
+	
+	/**
+	 * Get the server version, e.g., 9.2.1 (Milky Berry)
+	 * 
+	 * @return The server version with code name
+	 */
+	public static String getVersion()
+	{
+		return metadata.getProperty( "project.version", "Unknown-Version" ) + " (" + metadata.getProperty( "project.codename" ) + ")";
+	}
+	
+	/*
+	 * Java and JVM Methods
+	 */
+	
+	/**
+	 * Get the server version number, e.g., 9.2.1
+	 * 
+	 * @return The server version number
+	 */
+	public static String getVersionNumber()
+	{
+		return metadata.getProperty( "project.version", "Unknown-Version" );
+	}
+	
+	/**
+	 * Indicates if we are running as either the root user for Unix-like or Administrator user for Windows
+	 * 
+	 * @return True if Administrator or root
+	 */
+	public static boolean isAdminUser()
+	{
+		return "root".equalsIgnoreCase( System.getProperty( "user.name" ) ) || "administrator".equalsIgnoreCase( System.getProperty( "user.name" ) );
+	}
+	
+	/*
+	 * Operating System Methods
+	 */
+	
+	/**
 	 * Indicates if we are running a development build of the server
 	 * 
 	 * @return True is we are running in development mode
@@ -155,35 +167,6 @@ public class Versioning
 	{
 		return "0".equals( getBuildNumber() ) || Loader.getConfig().getBoolean( "server.developmentMode" );
 	}
-	
-	/*
-	 * Java and JVM Methods
-	 */
-	
-	/**
-	 * Get the JVM name
-	 * 
-	 * @return The JVM name
-	 */
-	public static String getJVMName()
-	{
-		// System.getProperty("java.vm.name");
-		return ManagementFactory.getRuntimeMXBean().getVmName();
-	}
-	
-	/**
-	 * Get the Java version, e.g., 1.7.0_80
-	 * 
-	 * @return The Java version number
-	 */
-	public static String getJavaVersion()
-	{
-		return System.getProperty( "java.version" );
-	}
-	
-	/*
-	 * Operating System Methods
-	 */
 	
 	/**
 	 * Only effects Unix-like OS'es (Linux and Mac OS X)
@@ -223,22 +206,39 @@ public class Versioning
 	}
 	
 	/**
-	 * Indicates if we are running as either the root user for Unix-like or Administrator user for Windows
+	 * Loads the server metadata from the file {@value "com/chiorichan/build.properties"},
+	 * which is usually updated by our Gradle build script
 	 * 
-	 * @return True if Administrator or root
+	 * @param force
+	 *            Force a metadata reload
 	 */
-	public static boolean isAdminUser()
+	private static void loadMetaData( boolean force )
 	{
-		return "root".equalsIgnoreCase( System.getProperty( "user.name" ) ) || "administrator".equalsIgnoreCase( System.getProperty( "user.name" ) );
-	}
-	
-	/**
-	 * Get the system username
-	 * 
-	 * @return The username
-	 */
-	public static String getUser()
-	{
-		return System.getProperty( "user.name" );
+		if ( metadata != null && !metadata.isEmpty() && !force )
+			return;
+		
+		metadata = new Properties();
+		
+		InputStream is = null;
+		try
+		{
+			is = Loader.class.getClassLoader().getResourceAsStream( "com/chiorichan/build.properties" );
+			metadata.load( is );
+		}
+		catch ( IOException e )
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+			try
+			{
+				if ( is != null )
+					is.close();
+			}
+			catch ( IOException e )
+			{
+			}
+		}
 	}
 }
