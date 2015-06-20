@@ -12,8 +12,8 @@ package com.chiorichan.plugin.loader;
 import java.io.File;
 import java.util.regex.Pattern;
 
-import com.chiorichan.lang.InvalidDescriptionException;
-import com.chiorichan.lang.InvalidPluginException;
+import com.chiorichan.lang.PluginDescriptionInvalidException;
+import com.chiorichan.lang.PluginInvalidException;
 import com.chiorichan.lang.UnknownDependencyException;
 import com.chiorichan.plugin.PluginDescriptionFile;
 
@@ -30,14 +30,14 @@ public interface PluginLoader
 	 *            File to attempt to load
 	 * @return Plugin that was contained in the specified file, or null if
 	 *         unsuccessful
-	 * @throws InvalidPluginException
+	 * @throws PluginInvalidException
 	 *             Thrown when the specified file is not a
 	 *             plugin
 	 * @throws UnknownDependencyException
 	 *             If a required dependency could not
 	 *             be found
 	 */
-	Plugin loadPlugin( File file ) throws InvalidPluginException, UnknownDependencyException;
+	Plugin loadPlugin( File file ) throws PluginInvalidException, UnknownDependencyException;
 	
 	/**
 	 * Loads a PluginDescriptionFile from the specified file
@@ -46,11 +46,11 @@ public interface PluginLoader
 	 *            File to attempt to load from
 	 * @return A new PluginDescriptionFile loaded from the plugin.yml in the
 	 *         specified file
-	 * @throws InvalidDescriptionException
+	 * @throws PluginDescriptionInvalidException
 	 *             If the plugin description file
 	 *             could not be created
 	 */
-	PluginDescriptionFile getPluginDescription( File file ) throws InvalidDescriptionException;
+	PluginDescriptionFile getPluginDescription( File file ) throws PluginDescriptionInvalidException;
 	
 	/**
 	 * Returns a list of all filename filters expected by this PluginLoader

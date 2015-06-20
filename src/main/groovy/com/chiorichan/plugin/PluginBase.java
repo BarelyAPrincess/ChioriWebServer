@@ -14,6 +14,7 @@ import java.io.InputStream;
 
 import com.chiorichan.configuration.file.FileConfiguration;
 import com.chiorichan.event.EventCreator;
+import com.chiorichan.lang.PluginException;
 import com.chiorichan.libraries.LibrarySource;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.plugin.loader.PluginLoader;
@@ -21,6 +22,34 @@ import com.chiorichan.tasks.TaskCreator;
 
 public abstract class PluginBase implements EventCreator, TaskCreator, LibrarySource
 {
+	@Override
+	public final boolean equals( Object obj )
+	{
+		if ( this == obj )
+			return true;
+		if ( obj == null )
+			return false;
+		if ( ! ( obj instanceof Plugin ) )
+			return false;
+		try
+		{
+			return getName().equals( ( ( Plugin ) obj ).getName() );
+		}
+		catch ( NullPointerException e )
+		{
+			return false;
+		}
+	}
+	
+	/**
+	 * Gets a {@link FileConfiguration} for this plugin, read through "config.yml"
+	 * <p>
+	 * If there is a default config.yml embedded in this plugin, it will be provided as a default for this Configuration.
+	 * 
+	 * @return Plugin configuration
+	 */
+	public abstract FileConfiguration getConfig();
+	
 	/**
 	 * Returns the folder that the plugin data's files are located in. The folder may not yet exist.
 	 * 
@@ -33,16 +62,28 @@ public abstract class PluginBase implements EventCreator, TaskCreator, LibrarySo
 	 * 
 	 * @return Contents of the plugin.yaml file
 	 */
+	@Override
 	public abstract PluginDescriptionFile getDescription();
 	
 	/**
-	 * Gets a {@link FileConfiguration} for this plugin, read through "config.yml"
+	 * Returns the name of the plugin.
 	 * <p>
-	 * If there is a default config.yml embedded in this plugin, it will be provided as a default for this Configuration.
+	 * This should return the bare name of the plugin and should be used for comparison.
 	 * 
-	 * @return Plugin configuration
+	 * @return name of the plugin
 	 */
-	public abstract FileConfiguration getConfig();
+	@Override
+	public final String getName()
+	{
+		return getDescription().getName();
+	}
+	
+	/**
+	 * Gets the associated PluginLoader responsible for this plugin
+	 * 
+	 * @return PluginLoader that controls this plugin
+	 */
+	public abstract PluginLoader getPluginLoader();
 	
 	/**
 	 * Gets an embedded resource in this plugin
@@ -52,6 +93,55 @@ public abstract class PluginBase implements EventCreator, TaskCreator, LibrarySo
 	 * @return File if found, otherwise null
 	 */
 	public abstract InputStream getResource( String filename );
+	
+	@Override
+	public final int hashCode()
+	{
+		try
+		{
+			return getName().hashCode();
+		}
+		catch ( NullPointerException e )
+		{
+			return super.hashCode();
+		}
+	}
+	
+	/**
+	 * Returns a value indicating whether or not this plugin is currently enabled
+	 * 
+	 * @return true if this plugin is enabled, otherwise false
+	 */
+	@Override
+	public abstract boolean isEnabled();
+	
+	/**
+	 * Simple boolean if we can still nag to the logs about things
+	 * 
+	 * @return boolean whether we can nag
+	 */
+	public abstract boolean isNaggable();
+	
+	/**
+	 * Called when this plugin is disabled
+	 */
+	public abstract void onDisable() throws PluginException;
+	
+	/**
+	 * Called when this plugin is enabled
+	 */
+	public abstract void onEnable() throws PluginException;
+	
+	/**
+	 * Called after a plugin is loaded but before it has been enabled. When mulitple plugins are loaded, the onLoad() for
+	 * all plugins is called before any onEnable() is called.
+	 */
+	public abstract void onLoad() throws PluginException;
+	
+	/**
+	 * Discards any data in {@link #getConfig()} and reloads from disk.
+	 */
+	public abstract void reloadConfig();
 	
 	/**
 	 * Saves the {@link FileConfiguration} retrievable by {@link #getConfig()}.
@@ -79,102 +169,10 @@ public abstract class PluginBase implements EventCreator, TaskCreator, LibrarySo
 	public abstract void saveResource( String resourcePath, boolean replace );
 	
 	/**
-	 * Discards any data in {@link #getConfig()} and reloads from disk.
-	 */
-	public abstract void reloadConfig();
-	
-	/**
-	 * Gets the associated PluginLoader responsible for this plugin
-	 * 
-	 * @return PluginLoader that controls this plugin
-	 */
-	public abstract PluginLoader getPluginLoader();
-	
-	/**
-	 * Returns a value indicating whether or not this plugin is currently enabled
-	 * 
-	 * @return true if this plugin is enabled, otherwise false
-	 */
-	public abstract boolean isEnabled();
-	
-	/**
-	 * Called when this plugin is disabled
-	 */
-	public abstract void onDisable();
-	
-	/**
-	 * Called after a plugin is loaded but before it has been enabled. When mulitple plugins are loaded, the onLoad() for
-	 * all plugins is called before any onEnable() is called.
-	 */
-	public abstract void onLoad();
-	
-	/**
-	 * Called when this plugin is enabled
-	 */
-	public abstract void onEnable();
-	
-	/**
-	 * Simple boolean if we can still nag to the logs about things
-	 * 
-	 * @return boolean whether we can nag
-	 */
-	public abstract boolean isNaggable();
-	
-	/**
 	 * Set naggable state
 	 * 
 	 * @param canNag
 	 *            is this plugin still naggable?
 	 */
 	public abstract void setNaggable( boolean canNag );
-	
-	/**
-	 * Returns the name of the plugin.
-	 * <p>
-	 * This should return the bare name of the plugin and should be used for comparison.
-	 * 
-	 * @return name of the plugin
-	 */
-	public final String getName()
-	{
-		return getDescription().getName();
-	}
-	
-	@Override
-	public final int hashCode()
-	{
-		try
-		{
-			return getName().hashCode();
-		}
-		catch ( NullPointerException e )
-		{
-			return super.hashCode();
-		}
-	}
-	
-	@Override
-	public final boolean equals( Object obj )
-	{
-		if ( this == obj )
-		{
-			return true;
-		}
-		if ( obj == null )
-		{
-			return false;
-		}
-		if ( ! ( obj instanceof Plugin ) )
-		{
-			return false;
-		}
-		try
-		{
-			return getName().equals( ( ( Plugin ) obj ).getName() );
-		}
-		catch ( NullPointerException e )
-		{
-			return false;
-		}
-	}
 }

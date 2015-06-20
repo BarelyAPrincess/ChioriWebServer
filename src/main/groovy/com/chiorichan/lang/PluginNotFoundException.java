@@ -12,20 +12,9 @@ package com.chiorichan.lang;
 /**
  * Thrown when attempting to load an invalid Plugin file
  */
-public class PluginNotFoundException extends Exception
+public class PluginNotFoundException extends PluginException
 {
 	private static final long serialVersionUID = -8242141640709409544L;
-	
-	/**
-	 * Constructs a new InvalidPluginException based on the given Exception
-	 * 
-	 * @param cause
-	 *            Exception that triggered this Exception
-	 */
-	public PluginNotFoundException( final Throwable cause )
-	{
-		super( cause );
-	}
 	
 	/**
 	 * Constructs a new InvalidPluginException
@@ -33,6 +22,17 @@ public class PluginNotFoundException extends Exception
 	public PluginNotFoundException()
 	{
 		
+	}
+	
+	/**
+	 * Constructs a new InvalidPluginException with the specified detail message
+	 * 
+	 * @param message
+	 *            TThe detail message is saved for later retrieval by the getMessage() method.
+	 */
+	public PluginNotFoundException( final String message )
+	{
+		super( message );
 	}
 	
 	/**
@@ -50,13 +50,13 @@ public class PluginNotFoundException extends Exception
 	}
 	
 	/**
-	 * Constructs a new InvalidPluginException with the specified detail message
+	 * Constructs a new InvalidPluginException based on the given Exception
 	 * 
-	 * @param message
-	 *            TThe detail message is saved for later retrieval by the getMessage() method.
+	 * @param cause
+	 *            Exception that triggered this Exception
 	 */
-	public PluginNotFoundException( final String message )
+	public PluginNotFoundException( final Throwable cause )
 	{
-		super( message );
+		super( cause );
 	}
 }

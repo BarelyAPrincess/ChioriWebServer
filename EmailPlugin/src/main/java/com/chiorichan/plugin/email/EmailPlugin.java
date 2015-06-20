@@ -14,16 +14,11 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 
+import com.chiorichan.lang.PluginException;
 import com.chiorichan.plugin.loader.Plugin;
 
 public class EmailPlugin extends Plugin
 {
-	public void onEnable()
-	{
-		saveDefaultConfig();
-		getConfig().options().copyDefaults( true );
-	}
-	
 	/**
 	 * Provides an easy way to send e-mail
 	 * 
@@ -81,6 +76,25 @@ public class EmailPlugin extends Plugin
 			System.out.println( "send failed, exception: " + mex );
 			throw mex;
 		}
+	}
+	
+	@Override
+	public void onDisable() throws PluginException
+	{
+		
+	}
+	
+	@Override
+	public void onEnable() throws PluginException
+	{
+		saveDefaultConfig();
+		getConfig().options().copyDefaults( true );
+	}
+	
+	@Override
+	public void onLoad() throws PluginException
+	{
+		
 	}
 }
 

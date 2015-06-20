@@ -11,7 +11,7 @@ package com.chiorichan.lang;
  * @author Chiori Greene
  * @email chiorigreene@gmail.com
  */
-public class PluginUnconfiguredException extends RuntimeException
+public class PluginUnconfiguredException extends PluginException
 {
 	private static final long serialVersionUID = 4789128239905660393L;
 	

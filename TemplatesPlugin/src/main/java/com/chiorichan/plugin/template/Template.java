@@ -26,6 +26,7 @@ import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.lang.ErrorReporting;
 import com.chiorichan.lang.EvalException;
 import com.chiorichan.lang.EvalMultipleException;
+import com.chiorichan.lang.PluginException;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
@@ -180,13 +181,13 @@ public class Template extends Plugin implements Listener
 	}
 	
 	@Override
-	public void onDisable()
+	public void onDisable() throws PluginException
 	{
 		
 	}
 	
 	@Override
-	public void onEnable()
+	public void onEnable() throws PluginException
 	{
 		saveDefaultConfig();
 		EventBus.INSTANCE.registerEvents( this, this );
@@ -213,6 +214,12 @@ public class Template extends Plugin implements Listener
 		{
 			e.printStackTrace();
 		}
+	}
+	
+	@Override
+	public void onLoad() throws PluginException
+	{
+		
 	}
 	
 	@EventHandler( priority = EventPriority.NORMAL )

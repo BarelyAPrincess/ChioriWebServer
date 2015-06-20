@@ -6,6 +6,7 @@
  */
 package com.chiorichan.plugin.console;
 
+import com.chiorichan.lang.PluginException;
 import com.chiorichan.plugin.loader.Plugin;
 
 /**
@@ -16,11 +17,23 @@ import com.chiorichan.plugin.loader.Plugin;
 public class ConsolePlugin extends Plugin
 {
 	@Override
-	public void onEnable()
+	public void onDisable() throws PluginException
+	{
+		
+	}
+	
+	@Override
+	public void onEnable() throws PluginException
 	{
 		// Loader.getLogger().debug( System.getProperty( "java.library.path" ) );
 		
 		// TestWindow window = new TestWindow( 30, 20 );
 		// window.init();
+	}
+	
+	@Override
+	public void onLoad() throws PluginException
+	{
+		
 	}
 }

@@ -10,7 +10,7 @@
 package com.chiorichan.event;
 
 import com.chiorichan.configuration.file.YamlConfiguration;
-import com.chiorichan.lang.InvalidDescriptionException;
+import com.chiorichan.lang.PluginDescriptionInvalidException;
 import com.chiorichan.plugin.PluginDescriptionFile;
 
 public abstract class BuiltinEventCreator implements EventCreator
@@ -24,7 +24,7 @@ public abstract class BuiltinEventCreator implements EventCreator
 		{
 			return new PluginDescriptionFile( yaml );
 		}
-		catch ( InvalidDescriptionException e )
+		catch ( PluginDescriptionInvalidException e )
 		{
 			e.printStackTrace();
 			return null;

@@ -10,6 +10,7 @@ import java.io.IOException;
 
 import org.apache.commons.lang3.Validate;
 
+import com.chiorichan.lang.PluginException;
 import com.chiorichan.plugin.loader.Plugin;
 
 /**
@@ -62,5 +63,23 @@ public class ZxingPlugin extends Plugin
 		Validate.notEmpty( code );
 		
 		return new String( createQRCode( code ).withSize( size, size ).setMargin( 1 ).to( ImageType.PNG ).stream().toByteArray(), "ISO-8859-1" );
+	}
+	
+	@Override
+	public void onDisable() throws PluginException
+	{
+		
+	}
+	
+	@Override
+	public void onEnable() throws PluginException
+	{
+		
+	}
+	
+	@Override
+	public void onLoad() throws PluginException
+	{
+		
 	}
 }

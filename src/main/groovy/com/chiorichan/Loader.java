@@ -44,6 +44,7 @@ import com.chiorichan.event.Listener;
 import com.chiorichan.event.server.ServerRunLevelEvent;
 import com.chiorichan.event.server.ServerRunLevelEventImpl;
 import com.chiorichan.lang.ErrorReporting;
+import com.chiorichan.lang.PluginException;
 import com.chiorichan.lang.StartupAbortException;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.net.NetworkManager;
@@ -68,116 +69,24 @@ public class Loader extends BuiltinEventCreator implements Listener
 	public static final String BROADCAST_CHANNEL_ADMINISTRATIVE = "com.chiorichan.broadcast.admin";
 	public static final String BROADCAST_CHANNEL_USERS = "com.chiorichan.broadcast.user";
 	
-	private static Loader instance;
-	private static AutoUpdater updater;
-	private static OptionSet options;
 	private static String clientId;
-	
 	private static YamlConfiguration configuration;
+	private static final ConsoleBus console = new ConsoleBus();
+	private static boolean finishedStartup = false;
+	
+	private static DatabaseEngine fwDatabase = null;
+	private static Loader instance;
+	
+	static boolean isRunning = true;
+	private static OptionSet options;
 	protected static long startTime = System.currentTimeMillis();
 	
+	private static String stopReason = null;
 	public static File tmpFileDirectory;
+	private static AutoUpdater updater;
+	
 	public static File webroot = new File( "" );
 	private final ServerRunLevelEvent runLevelEvent = new ServerRunLevelEventImpl();
-	
-	private static boolean finishedStartup = false;
-	static boolean isRunning = true;
-	private static String stopReason = null;
-	
-	private static final ConsoleBus console = new ConsoleBus();
-	private static DatabaseEngine fwDatabase = null;
-	
-	public static void main( String... args ) throws Exception
-	{
-		System.setProperty( "file.encoding", "utf-8" );
-		OptionSet options = null;
-		
-		try
-		{
-			OptionParser parser = getOptionParser();
-			
-			try
-			{
-				options = parser.parse( args );
-			}
-			catch ( joptsimple.OptionException ex )
-			{
-				Logger.getLogger( Loader.class.getName() ).log( Level.SEVERE, ex.getLocalizedMessage() );
-			}
-			
-			if ( ( options == null ) || ( options.has( "?" ) ) )
-				try
-				{
-					parser.printHelpOn( System.out );
-				}
-				catch ( IOException ex )
-				{
-					Logger.getLogger( Loader.class.getName() ).log( Level.SEVERE, null, ex );
-				}
-			else if ( options.has( "v" ) )
-				System.out.println( Versioning.getVersion() );
-			else
-			{
-				isRunning = new Loader( options ).start();
-			}
-		}
-		catch ( StartupAbortException e )
-		{
-			// Graceful Shutdown
-			NetworkManager.cleanup();
-			isRunning = false;
-		}
-		catch ( Throwable t )
-		{
-			ConsoleBus.handleException( t );
-			
-			if ( Loader.getConfig() != null && Loader.getConfig().getBoolean( "server.haltOnSevereError" ) )
-			{
-				System.out.println( "Press enter to exit..." );
-				System.in.read();
-			}
-			
-			NetworkManager.cleanup();
-			isRunning = false;
-		}
-		
-		if ( isRunning )
-			getLogger().info( ConsoleColor.YELLOW + "" + ConsoleColor.NEGATIVE + "Finished Initalizing " + Versioning.getProduct() + "! It took " + ( System.currentTimeMillis() - startTime ) + "ms!" );
-	}
-	
-	public static OptionParser getOptionParser()
-	{
-		OptionParser parser = new OptionParser()
-		{
-			{
-				acceptsAll( Arrays.asList( "?", "help" ), "Show the help" );
-				acceptsAll( Arrays.asList( "c", "config", "b", "settings" ), "File for chiori settings" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "server.yaml" ) ).describedAs( "Yml file" );
-				acceptsAll( Arrays.asList( "P", "plugins" ), "Plugin directory to use" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "plugins" ) ).describedAs( "Plugin directory" );
-				acceptsAll( Arrays.asList( "h", "web-ip" ), "Host for Web to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
-				acceptsAll( Arrays.asList( "wp", "web-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
-				acceptsAll( Arrays.asList( "h", "tcp-ip" ), "Host for Web to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
-				acceptsAll( Arrays.asList( "tp", "tcp-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
-				acceptsAll( Arrays.asList( "i", "install" ), "Runs the server just long enough to create the required configuration files, then terminates." );
-				acceptsAll( Arrays.asList( "web-disable" ), "Disable the internal Web Server" );
-				acceptsAll( Arrays.asList( "tcp-disable" ), "Disable the internal TCP Server" );
-				acceptsAll( Arrays.asList( "query-disable" ), "Disable the internal TCP Server" );
-				acceptsAll( Arrays.asList( "s", "size", "max-users" ), "Maximum amount of users" ).withRequiredArg().ofType( Integer.class ).describedAs( "Server size" );
-				acceptsAll( Arrays.asList( "d", "date-format" ), "Format of the date to display in the console (for log entries)" ).withRequiredArg().ofType( SimpleDateFormat.class ).describedAs( "Log date format" );
-				acceptsAll( Arrays.asList( "log-pattern" ), "Specfies the log filename pattern" ).withRequiredArg().ofType( String.class ).defaultsTo( "server.log" ).describedAs( "Log filename" );
-				acceptsAll( Arrays.asList( "log-limit" ), "Limits the maximum size of the log file (0 = unlimited)" ).withRequiredArg().ofType( Integer.class ).defaultsTo( 0 ).describedAs( "Max log size" );
-				acceptsAll( Arrays.asList( "log-count" ), "Specified how many log files to cycle through" ).withRequiredArg().ofType( Integer.class ).defaultsTo( 1 ).describedAs( "Log count" );
-				acceptsAll( Arrays.asList( "log-append" ), "Whether to append to the log file" ).withRequiredArg().ofType( Boolean.class ).defaultsTo( true ).describedAs( "Log append" );
-				acceptsAll( Arrays.asList( "log-strip-color" ), "Strips color codes from log file" );
-				acceptsAll( Arrays.asList( "nojline" ), "Disables jline and emulates the vanilla console" );
-				acceptsAll( Arrays.asList( "noconsole" ), "Disables the console" );
-				acceptsAll( Arrays.asList( "nobanner" ), "Disables the banner" );
-				acceptsAll( Arrays.asList( "nocolor" ), "Disables the console color formatting" );
-				acceptsAll( Arrays.asList( "v", "version" ), "Show the Version" );
-			}
-		};
-		
-		return parser;
-	}
 	
 	private Loader( OptionSet options0 ) throws StartupException
 	{
@@ -246,9 +155,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 				}
 				
 				if ( key.equals( "C" ) )
-				{
 					install = false;
-				}
 			}
 		}
 		
@@ -256,7 +163,6 @@ public class Loader extends BuiltinEventCreator implements Listener
 			firstRun = true;
 		
 		if ( firstRun || install )
-		{
 			try
 			{
 				// Delete Existing Configuration
@@ -270,7 +176,6 @@ public class Loader extends BuiltinEventCreator implements Listener
 			{
 				getLogger().severe( "It would appear we had problem installing " + Versioning.getProduct() + " for the first time, see exception for details.", e );
 			}
-		}
 		
 		configuration = YamlConfiguration.loadConfiguration( getConfigFile() );
 		configuration.options().copyDefaults( true );
@@ -316,7 +221,6 @@ public class Loader extends BuiltinEventCreator implements Listener
 			Loader.getLogger().warning( "The `server.tmpFileDirectory` in config, specifies a directory that we are having trouble properly using. File uploads and other similar operations that need the temp directory will fail to function correctly." );
 		
 		if ( firstRun || install )
-		{
 			try
 			{
 				// Check and Extract Factory WebUI Interface
@@ -356,7 +260,6 @@ public class Loader extends BuiltinEventCreator implements Listener
 			{
 				getLogger().severe( "It would appear we had problem installing " + Versioning.getProduct() + " for the first time, see exception for details.", e );
 			}
-		}
 		
 		if ( install )
 		{
@@ -407,149 +310,19 @@ public class Loader extends BuiltinEventCreator implements Listener
 			NetworkFunc.sendTracking( "startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
 	}
 	
-	void changeRunLevel( RunLevel level )
+	/**
+	 * Gets an instance of the AutoUpdater.
+	 * 
+	 * @return AutoUpdater
+	 */
+	public static AutoUpdater getAutoUpdater()
 	{
-		( ( ServerRunLevelEventImpl ) runLevelEvent ).setRunLevel( level );
-		EventBus.INSTANCE.callEvent( runLevelEvent );
+		return updater;
 	}
 	
-	public RunLevel getRunLevel()
+	public static String getClientId()
 	{
-		return runLevelEvent.getRunLevel();
-	}
-	
-	public RunLevel getLastRunLevel()
-	{
-		return runLevelEvent.getLastRunLevel();
-	}
-	
-	private boolean start() throws StartupException
-	{
-		EventBus.INSTANCE.registerEvents( this, this );
-		PluginManager.init();
-		
-		changeRunLevel( RunLevel.INITIALIZATION );
-		
-		PluginManager.INSTANCE.loadPlugins();
-		
-		changeRunLevel( RunLevel.STARTUP );
-		
-		if ( !options.has( "tcp-disable" ) && configuration.getBoolean( "server.enableTcpServer", true ) )
-			NetworkManager.startTcpServer();
-		else
-			getLogger().warning( "The integrated tcp server has been disabled per the configuration. Change server.enableTcpServer to true to reenable it." );
-		
-		if ( !options.has( "web-disable" ) && configuration.getBoolean( "server.enableWebServer", true ) )
-		{
-			NetworkManager.startHttpServer();
-			NetworkManager.startHttpsServer();
-		}
-		else
-			getLogger().warning( "The integrated web server has been disabled per the configuration. Change server.enableWebServer to true to reenable it." );
-		
-		if ( !options.has( "query-disable" ) && configuration.getBoolean( "server.queryEnabled", true ) )
-			NetworkManager.startQueryServer();
-		
-		changeRunLevel( RunLevel.POSTSERVER );
-		
-		getLogger().info( "Initalizing the Framework Database..." );
-		initDatabase();
-		
-		getLogger().info( "Initalizing the Permissions Manager..." );
-		try
-		{
-			PermissionManager.init();
-		}
-		catch ( PermissionBackendException e )
-		{
-			throw new StartupException( e );
-		}
-		
-		getLogger().info( "Initalizing the Site Manager..." );
-		SiteManager.init();
-		
-		getLogger().info( "Initalizing the Accounts Manager..." );
-		AccountManager.init();
-		
-		getLogger().info( "Initalizing the Session Manager..." );
-		SessionManager.init();
-		
-		changeRunLevel( RunLevel.INITIALIZED );
-		
-		console.primaryThread.start();
-		
-		changeRunLevel( RunLevel.RUNNING );
-		
-		updater.check();
-		
-		finishedStartup = true;
-		return true;
-	}
-	
-	public static DatabaseEngine getDatabase()
-	{
-		return fwDatabase;
-	}
-	
-	public void initDatabase()
-	{
-		switch ( configuration.getString( "server.database.type", "sqlite" ).toLowerCase() )
-		{
-			case "sqlite":
-				fwDatabase = new DatabaseEngine();
-				String filename = configuration.getString( "server.database.dbfile", "server.db" );
-				
-				try
-				{
-					fwDatabase.init( filename );
-				}
-				catch ( SQLException e )
-				{
-					if ( e.getCause() instanceof ConnectException )
-					{
-						throw new StartupException( "We had a problem connecting to database '" + filename + "'. Reason: " + e.getCause().getMessage() );
-					}
-					else
-					{
-						throw new StartupException( e );
-					}
-				}
-				
-				break;
-			case "mysql":
-				fwDatabase = new DatabaseEngine();
-				String host = configuration.getString( "server.database.host", "localhost" );
-				String port = configuration.getString( "server.database.port", "3306" );
-				String database = configuration.getString( "server.database.database", "chiorifw" );
-				String username = configuration.getString( "server.database.username", "fwuser" );
-				String password = configuration.getString( "server.database.password", "fwpass" );
-				
-				try
-				{
-					fwDatabase.init( database, username, password, host, port );
-				}
-				catch ( SQLException e )
-				{
-					// e.printStackTrace();
-					
-					if ( e.getCause() instanceof ConnectException )
-					{
-						throw new StartupException( "We had a problem connecting to database '" + host + "'. Reason: " + e.getCause().getMessage() );
-					}
-					else
-					{
-						throw new StartupException( e );
-					}
-				}
-				
-				break;
-			case "none":
-			case "":
-				DatabaseEngine.getLogger().warning( "The Server Database is unconfigured, some features maybe not function as expected. See config option 'server.database.type' in server config 'server.yaml'." );
-				break;
-			default:
-				DatabaseEngine.getLogger().severe( "We are sorry, Database Engine currently only supports mysql and sqlite but we found '" + configuration.getString( "server.database.type", "sqlite" ).toLowerCase() + "', please change 'server.database.type' to 'mysql' or 'sqlite' in server config 'server.yaml'" );
-		}
+		return clientId;
 	}
 	
 	public static YamlConfiguration getConfig()
@@ -557,235 +330,24 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return configuration;
 	}
 	
-	public int getPort()
-	{
-		return this.getConfigInt( "server-port", 80 );
-	}
-	
-	public String getIp()
-	{
-		return this.getConfigString( "server-ip", "" );
-	}
-	
-	public String getServerName()
-	{
-		return this.getConfigString( "server-name", "Unknown Server" );
-	}
-	
-	public String getServerId()
-	{
-		return this.getConfigString( "server-id", "unnamed" );
-	}
-	
-	public boolean getQueryPlugins()
-	{
-		return configuration.getBoolean( "plugins.allowQuery" );
-	}
-	
-	public boolean hasWhitelist()
-	{
-		return this.getConfigBoolean( "white-list", false );
-	}
-	
-	private String getConfigString( String variable, String defaultValue )
-	{
-		return configuration.getString( variable, defaultValue );
-	}
-	
-	private int getConfigInt( String variable, int defaultValue )
-	{
-		return configuration.getInt( variable, defaultValue );
-	}
-	
-	private boolean getConfigBoolean( String variable, boolean defaultValue )
-	{
-		return configuration.getBoolean( variable, defaultValue );
-	}
-	
-	public String getUpdateFolder()
-	{
-		return configuration.getString( "settings.update-folder", "update" );
-	}
-	
-	public File getUpdateFolderFile()
-	{
-		return new File( ( File ) options.valueOf( "plugins" ), configuration.getString( "settings.update-folder", "update" ) );
-	}
-	
-	public static Loader getInstance()
-	{
-		return instance;
-	}
-	
-	// TODO: Reload seems to be broken. This needs some serious reworking.
-	public void reload()
-	{
-		configuration = YamlConfiguration.loadConfiguration( getConfigFile() );
-		ErrorReporting.enableErrorLevelOnly( ErrorReporting.parse( configuration.getString( "server.errorReporting", "E_ALL ~E_NOTICE ~E_STRICT ~E_DEPRECATED" ) ) );
-		
-		PluginManager.INSTANCE.clearPlugins();
-		// ModuleBus.getCommandMap().clearCommands();
-		
-		int pollCount = 0;
-		
-		// Wait for at most 2.5 seconds for plugins to close their threads
-		while ( pollCount < 50 && TaskManager.INSTANCE.getActiveWorkers().size() > 0 )
-		{
-			try
-			{
-				Thread.sleep( 50 );
-			}
-			catch ( InterruptedException e )
-			{
-				
-			}
-			pollCount++;
-		}
-		
-		List<Worker> overdueWorkers = TaskManager.INSTANCE.getActiveWorkers();
-		for ( Worker worker : overdueWorkers )
-		{
-			TaskCreator creator = worker.getOwner();
-			String author = "<AuthorUnknown>";
-			// if ( creator.getDescription().getAuthors().size() > 0 )
-			// author = plugin.getDescription().getAuthors().get( 0 );
-			getLogger().log( Level.SEVERE, String.format( "Nag author: '%s' of '%s' about the following: %s", author, creator.getName(), "This plugin is not properly shutting down its async tasks when it is being reloaded.  This may cause conflicts with the newly loaded version of the plugin" ) );
-		}
-		
-		PluginManager.INSTANCE.loadPlugins();
-		changeRunLevel( RunLevel.RELOAD );
-		
-		getLogger().info( "Reinitalizing the Persistence Manager..." );
-		
-		try
-		{
-			SessionManager.INSTANCE.reload();
-		}
-		catch ( SessionException e )
-		{
-			e.printStackTrace();
-		}
-		
-		getLogger().info( "Reinitalizing the Site Manager..." );
-		
-		SiteManager.INSTANCE.reload();
-		
-		getLogger().info( "Reinitalizing the Accounts Manager..." );
-		AccountManager.INSTANCE.reload();
-		
-		changeRunLevel( RunLevel.RUNNING );
-	}
-	
-	public String toString()
-	{
-		return Versioning.getProduct() + " " + Versioning.getVersion();
-	}
-	
-	public String getShutdownMessage()
-	{
-		return configuration.getString( "settings.shutdown-message" );
-	}
-	
-	public static void gracefullyShutdownServer( String reason )
-	{
-		if ( !reason.isEmpty() )
-			for ( AccountMeta user : AccountManager.INSTANCE.getAccounts() )
-			{
-				user.kick( reason );
-			}
-		
-		stop( reason );
-	}
-	
-	public static void stop( String stopReason )
-	{
-		if ( stopReason == null )
-			getLogger().highlight( "Stopping the server... Goodbye!" );
-		else if ( !stopReason.isEmpty() )
-			getLogger().highlight( "Server Stopping for Reason: " + stopReason );
-		
-		Loader.stopReason = stopReason;
-		isRunning = false;
-	}
-	
-	public static void unloadServer( String reason )
-	{
-		try
-		{
-			SessionManager.INSTANCE.shutdown();
-		}
-		catch ( SessionException e )
-		{
-			e.printStackTrace();
-		}
-		/*
-		 * if ( !reason.isEmpty() )
-		 * for ( Account User : accounts.getOnlineAccounts() )
-		 * {
-		 * User.kick( reason );
-		 * }
-		 */
-		AccountManager.INSTANCE.save();
-		NetworkManager.cleanup();
-	}
-	
-	/**
-	 * If you wish to shutdown the server, we recommend you use the stop() method instead.
-	 */
-	public static void shutdown()
-	{
-		try
-		{
-			SessionManager.INSTANCE.shutdown();
-		}
-		catch ( SessionException e )
-		{
-			e.printStackTrace();
-		}
-		
-		AccountManager.INSTANCE.save();
-		PluginManager.INSTANCE.shutdown();
-		NetworkManager.cleanup();
-		
-		isRunning = false;
-		
-		if ( stopReason != null )
-			System.err.println( "The server was stopped for reason: " + stopReason );
-		else
-		{
-			System.err.println( "The server was stopped for an unknown reason" );
-			for ( StackTraceElement se : Thread.currentThread().getStackTrace() )
-				System.err.println( se );
-		}
-	}
-	
-	public static boolean isRunning()
-	{
-		return isRunning;
-	}
-	
 	private static File getConfigFile()
 	{
 		return ( File ) options.valueOf( "config" );
 	}
 	
-	public static void saveConfig()
-	{
-		// TODO Targeted key path saves, allow it so only a specified path can be saved to file.
-		
-		try
-		{
-			configuration.save( getConfigFile() );
-		}
-		catch ( IOException ex )
-		{
-			getLogger().severe( "Could not save " + getConfigFile(), ex );
-		}
-	}
-	
 	public static ConsoleBus getConsole()
 	{
 		return console;
+	}
+	
+	public static DatabaseEngine getDatabase()
+	{
+		return fwDatabase;
+	}
+	
+	public static Loader getInstance()
+	{
+		return instance;
 	}
 	
 	/**
@@ -861,6 +423,40 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return console.getLogManager();
 	}
 	
+	public static OptionParser getOptionParser()
+	{
+		OptionParser parser = new OptionParser()
+		{
+			{
+				acceptsAll( Arrays.asList( "?", "help" ), "Show the help" );
+				acceptsAll( Arrays.asList( "c", "config", "b", "settings" ), "File for chiori settings" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "server.yaml" ) ).describedAs( "Yml file" );
+				acceptsAll( Arrays.asList( "P", "plugins" ), "Plugin directory to use" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "plugins" ) ).describedAs( "Plugin directory" );
+				acceptsAll( Arrays.asList( "h", "web-ip" ), "Host for Web to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
+				acceptsAll( Arrays.asList( "wp", "web-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
+				acceptsAll( Arrays.asList( "h", "tcp-ip" ), "Host for Web to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
+				acceptsAll( Arrays.asList( "tp", "tcp-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
+				acceptsAll( Arrays.asList( "i", "install" ), "Runs the server just long enough to create the required configuration files, then terminates." );
+				acceptsAll( Arrays.asList( "web-disable" ), "Disable the internal Web Server" );
+				acceptsAll( Arrays.asList( "tcp-disable" ), "Disable the internal TCP Server" );
+				acceptsAll( Arrays.asList( "query-disable" ), "Disable the internal TCP Server" );
+				acceptsAll( Arrays.asList( "s", "size", "max-users" ), "Maximum amount of users" ).withRequiredArg().ofType( Integer.class ).describedAs( "Server size" );
+				acceptsAll( Arrays.asList( "d", "date-format" ), "Format of the date to display in the console (for log entries)" ).withRequiredArg().ofType( SimpleDateFormat.class ).describedAs( "Log date format" );
+				acceptsAll( Arrays.asList( "log-pattern" ), "Specfies the log filename pattern" ).withRequiredArg().ofType( String.class ).defaultsTo( "server.log" ).describedAs( "Log filename" );
+				acceptsAll( Arrays.asList( "log-limit" ), "Limits the maximum size of the log file (0 = unlimited)" ).withRequiredArg().ofType( Integer.class ).defaultsTo( 0 ).describedAs( "Max log size" );
+				acceptsAll( Arrays.asList( "log-count" ), "Specified how many log files to cycle through" ).withRequiredArg().ofType( Integer.class ).defaultsTo( 1 ).describedAs( "Log count" );
+				acceptsAll( Arrays.asList( "log-append" ), "Whether to append to the log file" ).withRequiredArg().ofType( Boolean.class ).defaultsTo( true ).describedAs( "Log append" );
+				acceptsAll( Arrays.asList( "log-strip-color" ), "Strips color codes from log file" );
+				acceptsAll( Arrays.asList( "nojline" ), "Disables jline and emulates the vanilla console" );
+				acceptsAll( Arrays.asList( "noconsole" ), "Disables the console" );
+				acceptsAll( Arrays.asList( "nobanner" ), "Disables the banner" );
+				acceptsAll( Arrays.asList( "nocolor" ), "Disables the console color formatting" );
+				acceptsAll( Arrays.asList( "v", "version" ), "Show the Version" );
+			}
+		};
+		
+		return parser;
+	}
+	
 	/**
 	 * Gets the OptionSet used to start the server.
 	 * 
@@ -869,57 +465,6 @@ public class Loader extends BuiltinEventCreator implements Listener
 	public static OptionSet getOptions()
 	{
 		return options;
-	}
-	
-	/**
-	 * Should the server print a warning in console when the ticks are less then 20.
-	 * 
-	 * @return boolean
-	 */
-	public boolean getWarnOnOverload()
-	{
-		return configuration.getBoolean( "settings.warn-on-overload" );
-	}
-	
-	/**
-	 * Gets an instance of the AutoUpdater.
-	 * 
-	 * @return AutoUpdater
-	 */
-	public static AutoUpdater getAutoUpdater()
-	{
-		return updater;
-	}
-	
-	public static File getTempFileDirectory()
-	{
-		if ( !tmpFileDirectory.exists() )
-			tmpFileDirectory.mkdirs();
-		
-		if ( !tmpFileDirectory.isDirectory() )
-			SiteManager.getLogger().severe( "The temp directory specified in the server configs is not a directory, File Uploads will FAIL until this problem is resolved." );
-		
-		if ( !tmpFileDirectory.canWrite() )
-			SiteManager.getLogger().severe( "The temp directory specified in the server configs is not writable, File Uploads will FAIL until this problem is resolved." );
-		
-		return tmpFileDirectory;
-	}
-	
-	public static File getWebRoot()
-	{
-		return webroot;
-	}
-	
-	@Override
-	public String getName()
-	{
-		return Versioning.getProduct() + " " + Versioning.getVersion();
-	}
-	
-	@EventHandler( priority = EventPriority.NORMAL )
-	public void onServerRunLevelEvent( ServerRunLevelEvent event )
-	{
-		// getLogger().debug( "Got RunLevel Event: " + event.getRunLevel() );
 	}
 	
 	public static String getRandomGag()
@@ -951,6 +496,20 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return "";
 	}
 	
+	public static File getTempFileDirectory()
+	{
+		if ( !tmpFileDirectory.exists() )
+			tmpFileDirectory.mkdirs();
+		
+		if ( !tmpFileDirectory.isDirectory() )
+			SiteManager.getLogger().severe( "The temp directory specified in the server configs is not a directory, File Uploads will FAIL until this problem is resolved." );
+		
+		if ( !tmpFileDirectory.canWrite() )
+			SiteManager.getLogger().severe( "The temp directory specified in the server configs is not writable, File Uploads will FAIL until this problem is resolved." );
+		
+		return tmpFileDirectory;
+	}
+	
 	public static String getUptime()
 	{
 		Duration duration = new Duration( System.currentTimeMillis() - startTime );
@@ -958,13 +517,453 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return formatter.print( duration.toPeriod() );
 	}
 	
+	public static File getWebRoot()
+	{
+		return webroot;
+	}
+	
+	public static void gracefullyShutdownServer( String reason )
+	{
+		if ( !reason.isEmpty() )
+			for ( AccountMeta user : AccountManager.INSTANCE.getAccounts() )
+				user.kick( reason );
+		
+		stop( reason );
+	}
+	
 	public static boolean hasFinishedStartup()
 	{
 		return finishedStartup;
 	}
 	
-	public static String getClientId()
+	public static boolean isRunning()
 	{
-		return clientId;
+		return isRunning;
+	}
+	
+	public static void main( String... args ) throws Exception
+	{
+		System.setProperty( "file.encoding", "utf-8" );
+		OptionSet options = null;
+		
+		try
+		{
+			OptionParser parser = getOptionParser();
+			
+			try
+			{
+				options = parser.parse( args );
+			}
+			catch ( joptsimple.OptionException ex )
+			{
+				Logger.getLogger( Loader.class.getName() ).log( Level.SEVERE, ex.getLocalizedMessage() );
+			}
+			
+			if ( ( options == null ) || ( options.has( "?" ) ) )
+				try
+				{
+					parser.printHelpOn( System.out );
+				}
+				catch ( IOException ex )
+				{
+					Logger.getLogger( Loader.class.getName() ).log( Level.SEVERE, null, ex );
+				}
+			else if ( options.has( "v" ) )
+				System.out.println( Versioning.getVersion() );
+			else
+				isRunning = new Loader( options ).start();
+		}
+		catch ( StartupAbortException e )
+		{
+			// Graceful Shutdown
+			NetworkManager.cleanup();
+			isRunning = false;
+		}
+		catch ( Throwable t )
+		{
+			ConsoleBus.handleException( t );
+			
+			if ( Loader.getConfig() != null && Loader.getConfig().getBoolean( "server.haltOnSevereError" ) )
+			{
+				System.out.println( "Press enter to exit..." );
+				System.in.read();
+			}
+			
+			NetworkManager.cleanup();
+			isRunning = false;
+		}
+		
+		if ( isRunning )
+			getLogger().info( ConsoleColor.YELLOW + "" + ConsoleColor.NEGATIVE + "Finished Initalizing " + Versioning.getProduct() + "! It took " + ( System.currentTimeMillis() - startTime ) + "ms!" );
+	}
+	
+	public static void saveConfig()
+	{
+		// TODO Targeted key path saves, allow it so only a specified path can be saved to file.
+		
+		try
+		{
+			configuration.save( getConfigFile() );
+		}
+		catch ( IOException ex )
+		{
+			getLogger().severe( "Could not save " + getConfigFile(), ex );
+		}
+	}
+	
+	/**
+	 * If you wish to shutdown the server, we recommend you use the stop() method instead.
+	 */
+	public static void shutdown()
+	{
+		try
+		{
+			SessionManager.INSTANCE.shutdown();
+		}
+		catch ( SessionException e )
+		{
+			e.printStackTrace();
+		}
+		
+		AccountManager.INSTANCE.save();
+		PluginManager.INSTANCE.shutdown();
+		NetworkManager.cleanup();
+		
+		isRunning = false;
+		
+		if ( stopReason != null )
+			System.err.println( "The server was stopped for reason: " + stopReason );
+		else
+		{
+			System.err.println( "The server was stopped for an unknown reason" );
+			for ( StackTraceElement se : Thread.currentThread().getStackTrace() )
+				System.err.println( se );
+		}
+	}
+	
+	public static void stop( String stopReason )
+	{
+		if ( stopReason == null )
+			getLogger().highlight( "Stopping the server... Goodbye!" );
+		else if ( !stopReason.isEmpty() )
+			getLogger().highlight( "Server Stopping for Reason: " + stopReason );
+		
+		Loader.stopReason = stopReason;
+		isRunning = false;
+	}
+	
+	public static void unloadServer( String reason )
+	{
+		try
+		{
+			SessionManager.INSTANCE.shutdown();
+		}
+		catch ( SessionException e )
+		{
+			e.printStackTrace();
+		}
+		/*
+		 * if ( !reason.isEmpty() )
+		 * for ( Account User : accounts.getOnlineAccounts() )
+		 * {
+		 * User.kick( reason );
+		 * }
+		 */
+		AccountManager.INSTANCE.save();
+		NetworkManager.cleanup();
+	}
+	
+	void changeRunLevel( RunLevel level )
+	{
+		( ( ServerRunLevelEventImpl ) runLevelEvent ).setRunLevel( level );
+		EventBus.INSTANCE.callEvent( runLevelEvent );
+	}
+	
+	private boolean getConfigBoolean( String variable, boolean defaultValue )
+	{
+		return configuration.getBoolean( variable, defaultValue );
+	}
+	
+	private int getConfigInt( String variable, int defaultValue )
+	{
+		return configuration.getInt( variable, defaultValue );
+	}
+	
+	private String getConfigString( String variable, String defaultValue )
+	{
+		return configuration.getString( variable, defaultValue );
+	}
+	
+	public String getIp()
+	{
+		return getConfigString( "server-ip", "" );
+	}
+	
+	public RunLevel getLastRunLevel()
+	{
+		return runLevelEvent.getLastRunLevel();
+	}
+	
+	@Override
+	public String getName()
+	{
+		return Versioning.getProduct() + " " + Versioning.getVersion();
+	}
+	
+	public int getPort()
+	{
+		return getConfigInt( "server-port", 80 );
+	}
+	
+	public boolean getQueryPlugins()
+	{
+		return configuration.getBoolean( "plugins.allowQuery" );
+	}
+	
+	public RunLevel getRunLevel()
+	{
+		return runLevelEvent.getRunLevel();
+	}
+	
+	public String getServerId()
+	{
+		return getConfigString( "server-id", "unnamed" );
+	}
+	
+	public String getServerName()
+	{
+		return getConfigString( "server-name", "Unknown Server" );
+	}
+	
+	public String getShutdownMessage()
+	{
+		return configuration.getString( "settings.shutdown-message" );
+	}
+	
+	public String getUpdateFolder()
+	{
+		return configuration.getString( "settings.update-folder", "update" );
+	}
+	
+	public File getUpdateFolderFile()
+	{
+		return new File( ( File ) options.valueOf( "plugins" ), configuration.getString( "settings.update-folder", "update" ) );
+	}
+	
+	/**
+	 * Should the server print a warning in console when the ticks are less then 20.
+	 * 
+	 * @return boolean
+	 */
+	public boolean getWarnOnOverload()
+	{
+		return configuration.getBoolean( "settings.warn-on-overload" );
+	}
+	
+	public boolean hasWhitelist()
+	{
+		return getConfigBoolean( "white-list", false );
+	}
+	
+	public void initDatabase()
+	{
+		switch ( configuration.getString( "server.database.type", "sqlite" ).toLowerCase() )
+		{
+			case "sqlite":
+				fwDatabase = new DatabaseEngine();
+				String filename = configuration.getString( "server.database.dbfile", "server.db" );
+				
+				try
+				{
+					fwDatabase.init( filename );
+				}
+				catch ( SQLException e )
+				{
+					if ( e.getCause() instanceof ConnectException )
+						throw new StartupException( "We had a problem connecting to database '" + filename + "'. Reason: " + e.getCause().getMessage() );
+					else
+						throw new StartupException( e );
+				}
+				
+				break;
+			case "mysql":
+				fwDatabase = new DatabaseEngine();
+				String host = configuration.getString( "server.database.host", "localhost" );
+				String port = configuration.getString( "server.database.port", "3306" );
+				String database = configuration.getString( "server.database.database", "chiorifw" );
+				String username = configuration.getString( "server.database.username", "fwuser" );
+				String password = configuration.getString( "server.database.password", "fwpass" );
+				
+				try
+				{
+					fwDatabase.init( database, username, password, host, port );
+				}
+				catch ( SQLException e )
+				{
+					// e.printStackTrace();
+					
+					if ( e.getCause() instanceof ConnectException )
+						throw new StartupException( "We had a problem connecting to database '" + host + "'. Reason: " + e.getCause().getMessage() );
+					else
+						throw new StartupException( e );
+				}
+				
+				break;
+			case "none":
+			case "":
+				DatabaseEngine.getLogger().warning( "The Server Database is unconfigured, some features maybe not function as expected. See config option 'server.database.type' in server config 'server.yaml'." );
+				break;
+			default:
+				DatabaseEngine.getLogger().severe( "We are sorry, Database Engine currently only supports mysql and sqlite but we found '" + configuration.getString( "server.database.type", "sqlite" ).toLowerCase() + "', please change 'server.database.type' to 'mysql' or 'sqlite' in server config 'server.yaml'" );
+		}
+	}
+	
+	@EventHandler( priority = EventPriority.NORMAL )
+	public void onServerRunLevelEvent( ServerRunLevelEvent event )
+	{
+		// getLogger().debug( "Got RunLevel Event: " + event.getRunLevel() );
+	}
+	
+	// TODO: Reload seems to be broken. This needs some serious reworking.
+	public void reload()
+	{
+		configuration = YamlConfiguration.loadConfiguration( getConfigFile() );
+		ErrorReporting.enableErrorLevelOnly( ErrorReporting.parse( configuration.getString( "server.errorReporting", "E_ALL ~E_NOTICE ~E_STRICT ~E_DEPRECATED" ) ) );
+		
+		PluginManager.INSTANCE.clearPlugins();
+		// ModuleBus.getCommandMap().clearCommands();
+		
+		int pollCount = 0;
+		
+		// Wait for at most 2.5 seconds for plugins to close their threads
+		while ( pollCount < 50 && TaskManager.INSTANCE.getActiveWorkers().size() > 0 )
+		{
+			try
+			{
+				Thread.sleep( 50 );
+			}
+			catch ( InterruptedException e )
+			{
+				
+			}
+			pollCount++;
+		}
+		
+		List<Worker> overdueWorkers = TaskManager.INSTANCE.getActiveWorkers();
+		for ( Worker worker : overdueWorkers )
+		{
+			TaskCreator creator = worker.getOwner();
+			String author = "<AuthorUnknown>";
+			// if ( creator.getDescription().getAuthors().size() > 0 )
+			// author = plugin.getDescription().getAuthors().get( 0 );
+			getLogger().log( Level.SEVERE, String.format( "Nag author: '%s' of '%s' about the following: %s", author, creator.getName(), "This plugin is not properly shutting down its async tasks when it is being reloaded.  This may cause conflicts with the newly loaded version of the plugin" ) );
+		}
+		
+		try
+		{
+			PluginManager.INSTANCE.loadPlugins();
+		}
+		catch ( PluginException e )
+		{
+			getLogger().severe( "We had a problem reloading the plugins.", e );
+		}
+		
+		changeRunLevel( RunLevel.RELOAD );
+		
+		getLogger().info( "Reinitalizing the Persistence Manager..." );
+		
+		try
+		{
+			SessionManager.INSTANCE.reload();
+		}
+		catch ( SessionException e )
+		{
+			e.printStackTrace();
+		}
+		
+		getLogger().info( "Reinitalizing the Site Manager..." );
+		
+		SiteManager.INSTANCE.reload();
+		
+		getLogger().info( "Reinitalizing the Accounts Manager..." );
+		AccountManager.INSTANCE.reload();
+		
+		changeRunLevel( RunLevel.RUNNING );
+	}
+	
+	private boolean start() throws StartupException
+	{
+		EventBus.INSTANCE.registerEvents( this, this );
+		PluginManager.init();
+		
+		changeRunLevel( RunLevel.INITIALIZATION );
+		
+		try
+		{
+			PluginManager.INSTANCE.loadPlugins();
+		}
+		catch ( PluginException e )
+		{
+			throw new StartupException( e );
+		}
+		
+		changeRunLevel( RunLevel.STARTUP );
+		
+		if ( !options.has( "tcp-disable" ) && configuration.getBoolean( "server.enableTcpServer", true ) )
+			NetworkManager.startTcpServer();
+		else
+			getLogger().warning( "The integrated tcp server has been disabled per the configuration. Change server.enableTcpServer to true to reenable it." );
+		
+		if ( !options.has( "web-disable" ) && configuration.getBoolean( "server.enableWebServer", true ) )
+		{
+			NetworkManager.startHttpServer();
+			NetworkManager.startHttpsServer();
+		}
+		else
+			getLogger().warning( "The integrated web server has been disabled per the configuration. Change server.enableWebServer to true to reenable it." );
+		
+		if ( !options.has( "query-disable" ) && configuration.getBoolean( "server.queryEnabled", true ) )
+			NetworkManager.startQueryServer();
+		
+		changeRunLevel( RunLevel.POSTSERVER );
+		
+		getLogger().info( "Initalizing the Framework Database..." );
+		initDatabase();
+		
+		getLogger().info( "Initalizing the Permissions Manager..." );
+		try
+		{
+			PermissionManager.init();
+		}
+		catch ( PermissionBackendException e )
+		{
+			throw new StartupException( e );
+		}
+		
+		getLogger().info( "Initalizing the Site Manager..." );
+		SiteManager.init();
+		
+		getLogger().info( "Initalizing the Accounts Manager..." );
+		AccountManager.init();
+		
+		getLogger().info( "Initalizing the Session Manager..." );
+		SessionManager.init();
+		
+		changeRunLevel( RunLevel.INITIALIZED );
+		
+		console.primaryThread.start();
+		
+		changeRunLevel( RunLevel.RUNNING );
+		
+		updater.check();
+		
+		finishedStartup = true;
+		return true;
+	}
+	
+	@Override
+	public String toString()
+	{
+		return Versioning.getProduct() + " " + Versioning.getVersion();
 	}
 }

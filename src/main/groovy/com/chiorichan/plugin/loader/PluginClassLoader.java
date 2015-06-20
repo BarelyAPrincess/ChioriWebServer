@@ -20,7 +20,7 @@ import java.util.WeakHashMap;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.lang.InvalidPluginException;
+import com.chiorichan.lang.PluginInvalidException;
 import com.chiorichan.plugin.PluginDescriptionFile;
 
 /**
@@ -40,7 +40,7 @@ public final class PluginClassLoader extends URLClassLoader
 	final Plugin plugin;
 	private boolean initalized = false;
 	
-	PluginClassLoader( final JavaPluginLoader loader, final ClassLoader parent, final PluginDescriptionFile description, final File dataFolder, final File file ) throws InvalidPluginException, MalformedURLException
+	PluginClassLoader( final JavaPluginLoader loader, final ClassLoader parent, final PluginDescriptionFile description, final File dataFolder, final File file ) throws PluginInvalidException, MalformedURLException
 	{
 		super( new URL[] {file.toURI().toURL()}, parent );
 		
@@ -60,7 +60,7 @@ public final class PluginClassLoader extends URLClassLoader
 			}
 			catch ( ClassNotFoundException ex )
 			{
-				throw new InvalidPluginException( "Cannot find main class `" + description.getMain() + "'", ex );
+				throw new PluginInvalidException( "Cannot find main class `" + description.getMain() + "'", ex );
 			}
 			
 			Class<? extends Plugin> pluginClass;
@@ -70,7 +70,7 @@ public final class PluginClassLoader extends URLClassLoader
 			}
 			catch ( ClassCastException ex )
 			{
-				throw new InvalidPluginException( "main class `" + description.getMain() + "' does not extend Plugin", ex );
+				throw new PluginInvalidException( "main class `" + description.getMain() + "' does not extend Plugin", ex );
 			}
 			
 			loaders.put( jarClass, this );
@@ -79,11 +79,11 @@ public final class PluginClassLoader extends URLClassLoader
 		}
 		catch ( IllegalAccessException ex )
 		{
-			throw new InvalidPluginException( "No public constructor", ex );
+			throw new PluginInvalidException( "No public constructor", ex );
 		}
 		catch ( InstantiationException ex )
 		{
-			throw new InvalidPluginException( "Abnormal plugin type", ex );
+			throw new PluginInvalidException( "Abnormal plugin type", ex );
 		}
 	}
 	

@@ -17,8 +17,10 @@ import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
+import com.chiorichan.lang.StartupException;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.util.FileFunc;
+import com.chiorichan.util.FileFunc.DirectoryInfo;
 import com.chiorichan.util.NetworkFunc;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -30,17 +32,24 @@ import com.google.common.collect.Maps;
  */
 public class Libraries implements LibrarySource
 {
-	public static final File LIBRARY_DIR = new File( Loader.getConfig().getString( "advanced.libraries.libPath", "libraries" ) );
-	public static final File INCLUDES_DIR = new File( LIBRARY_DIR, "local" );
 	public static final String BASE_MAVEN_URL = "http://search.maven.org/remotecontent?filepath=";
-	public static final Libraries SELF = new Libraries();
-	
+	public static final File INCLUDES_DIR;
+	public static final File LIBRARY_DIR;
 	public static Map<String, MavenReference> loadedLibraries = Maps.newHashMap();
+	
+	public static final Libraries SELF = new Libraries();
 	
 	static
 	{
-		FileFunc.directoryHealthCheck( LIBRARY_DIR );
-		FileFunc.directoryHealthCheck( INCLUDES_DIR );
+		LIBRARY_DIR = new File( Loader.getConfig().getString( "advanced.libraries.libPath", "libraries" ) );
+		INCLUDES_DIR = new File( LIBRARY_DIR, "local" );
+		
+		DirectoryInfo result = FileFunc.directoryHealthCheck( LIBRARY_DIR );
+		if ( result != DirectoryInfo.DIRECTORY_HEALTHY )
+			throw new StartupException( result.getDescription( LIBRARY_DIR ) );
+		result = FileFunc.directoryHealthCheck( INCLUDES_DIR );
+		if ( result != DirectoryInfo.DIRECTORY_HEALTHY )
+			throw new StartupException( result.getDescription( INCLUDES_DIR ) );
 		
 		addLoaded( "org.fusesource.jansi:jansi:1.11" );
 		addLoaded( "net.sf.jopt-simple:jopt-simple:4.7" );
@@ -71,9 +80,12 @@ public class Libraries implements LibrarySource
 				return name.toLowerCase().endsWith( "jar" );
 			}
 		} ) )
-		{
 			loadLibrary( f );
-		}
+	}
+	
+	private Libraries()
+	{
+		
 	}
 	
 	private static void addLoaded( String library )
@@ -92,26 +104,6 @@ public class Libraries implements LibrarySource
 	public static File getLibraryDir()
 	{
 		return LIBRARY_DIR;
-	}
-	
-	public static boolean loadLibrary( File lib )
-	{
-		if ( lib == null || !lib.exists() )
-			return false;
-		
-		PluginManager.getLogger().info( ConsoleColor.GRAY + "Loading the library `" + lib.getName() + "`" );
-		
-		try
-		{
-			LibraryClassLoader.addFile( lib );
-		}
-		catch ( Throwable t )
-		{
-			t.printStackTrace();
-			return false;
-		}
-		
-		return true;
 	}
 	
 	public static List<MavenReference> getLoadedLibraries()
@@ -151,6 +143,26 @@ public class Libraries implements LibrarySource
 	public static boolean isLoaded( MavenReference lib )
 	{
 		return loadedLibraries.containsKey( lib.getKey() );
+	}
+	
+	public static boolean loadLibrary( File lib )
+	{
+		if ( lib == null || !lib.exists() )
+			return false;
+		
+		PluginManager.getLogger().info( ConsoleColor.GRAY + "Loading the library `" + lib.getName() + "`" );
+		
+		try
+		{
+			LibraryClassLoader.addFile( lib );
+		}
+		catch ( Throwable t )
+		{
+			t.printStackTrace();
+			return false;
+		}
+		
+		return true;
 	}
 	
 	public static boolean loadLibrary( MavenReference lib )
@@ -198,11 +210,6 @@ public class Libraries implements LibrarySource
 		}
 		
 		return true;
-	}
-	
-	private Libraries()
-	{
-		
 	}
 	
 	@Override

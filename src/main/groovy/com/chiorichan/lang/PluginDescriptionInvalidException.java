@@ -12,32 +12,16 @@ package com.chiorichan.lang;
 /**
  * Thrown when attempting to load an invalid PluginDescriptionFile
  */
-public class InvalidDescriptionException extends Exception
+public class PluginDescriptionInvalidException extends PluginException
 {
 	private static final long serialVersionUID = 5721389122281775896L;
 	
 	/**
-	 * Constructs a new InvalidDescriptionException based on the given Exception
-	 * 
-	 * @param message
-	 *            Brief message explaining the cause of the exception
-	 * @param cause
-	 *            Exception that triggered this Exception
+	 * Constructs a new InvalidDescriptionException
 	 */
-	public InvalidDescriptionException( final Throwable cause, final String message )
+	public PluginDescriptionInvalidException()
 	{
-		super( message, cause );
-	}
-	
-	/**
-	 * Constructs a new InvalidDescriptionException based on the given Exception
-	 * 
-	 * @param cause
-	 *            Exception that triggered this Exception
-	 */
-	public InvalidDescriptionException( final Throwable cause )
-	{
-		super( "Invalid plugin.yaml", cause );
+		super( "Invalid plugin.yaml" );
 	}
 	
 	/**
@@ -46,16 +30,32 @@ public class InvalidDescriptionException extends Exception
 	 * @param message
 	 *            Brief message explaining the cause of the exception
 	 */
-	public InvalidDescriptionException( final String message )
+	public PluginDescriptionInvalidException( final String message )
 	{
 		super( message );
 	}
 	
 	/**
-	 * Constructs a new InvalidDescriptionException
+	 * Constructs a new InvalidDescriptionException based on the given Exception
+	 * 
+	 * @param cause
+	 *            Exception that triggered this Exception
 	 */
-	public InvalidDescriptionException()
+	public PluginDescriptionInvalidException( final Throwable cause )
 	{
-		super( "Invalid plugin.yaml" );
+		super( "Invalid plugin.yaml", cause );
+	}
+	
+	/**
+	 * Constructs a new InvalidDescriptionException based on the given Exception
+	 * 
+	 * @param message
+	 *            Brief message explaining the cause of the exception
+	 * @param cause
+	 *            Exception that triggered this Exception
+	 */
+	public PluginDescriptionInvalidException( final Throwable cause, final String message )
+	{
+		super( message, cause );
 	}
 }

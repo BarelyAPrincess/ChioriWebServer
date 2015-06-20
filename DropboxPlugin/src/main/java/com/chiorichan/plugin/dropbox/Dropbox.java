@@ -8,6 +8,7 @@ package com.chiorichan.plugin.dropbox;
 
 import java.util.Locale;
 
+import com.chiorichan.lang.PluginException;
 import com.chiorichan.lang.PluginUnconfiguredException;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.util.Versioning;
@@ -27,13 +28,43 @@ public class Dropbox extends Plugin
 {
 	private String dbxApiKey = null;
 	private String dbxApiSecret = null;
-	private DbxAppInfo dbxAppInfo = null;
 	private DbxRequestConfig dbxAppConfig = null;
-	private DbxWebAuthNoRedirect dbxWebAuth = null;
+	private DbxAppInfo dbxAppInfo = null;
 	private DbxAuthFinish dbxAuthFinish = null;
+	private DbxWebAuthNoRedirect dbxWebAuth = null;
+	
+	public String finishDropBoxAuth( String authCode ) throws DbxException
+	{
+		dbxAuthFinish = dbxWebAuth.finish( authCode );
+		return dbxAuthFinish.accessToken;
+	}
+	
+	public String getDropboxAuthUrl()
+	{
+		return dbxWebAuth.start();
+	}
+	
+	/**
+	 * Creates a new DbxClient
+	 * 
+	 * @param accessToken
+	 *            The Access Token you wish to use
+	 * @return
+	 *         An instance of DbxClient
+	 */
+	public DbxClient getDropboxInstance( String accessToken )
+	{
+		return new DbxClient( dbxAppConfig, accessToken );
+	}
 	
 	@Override
-	public void onEnable()
+	public void onDisable() throws PluginException
+	{
+		
+	}
+	
+	@Override
+	public void onEnable() throws PluginException
 	{
 		saveDefaultConfig();
 		
@@ -49,27 +80,9 @@ public class Dropbox extends Plugin
 		dbxWebAuth = new DbxWebAuthNoRedirect( dbxAppConfig, dbxAppInfo );
 	}
 	
-	public String getDropboxAuthUrl()
+	@Override
+	public void onLoad() throws PluginException
 	{
-		return dbxWebAuth.start();
-	}
-	
-	public String finishDropBoxAuth( String authCode ) throws DbxException
-	{
-		dbxAuthFinish = dbxWebAuth.finish( authCode );
-		return dbxAuthFinish.accessToken;
-	}
-	
-	/**
-	 * Creates a new DbxClient
-	 * 
-	 * @param accessToken
-	 *            The Access Token you wish to use
-	 * @return
-	 *         An instance of DbxClient
-	 */
-	public DbxClient getDropboxInstance( String accessToken )
-	{
-		return new DbxClient( dbxAppConfig, accessToken );
+		
 	}
 }

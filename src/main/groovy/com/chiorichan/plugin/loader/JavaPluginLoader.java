@@ -44,8 +44,9 @@ import com.chiorichan.event.server.PluginDisableEvent;
 import com.chiorichan.event.server.PluginEnableEvent;
 import com.chiorichan.lang.DeprecatedDetail;
 import com.chiorichan.lang.ErrorReporting;
-import com.chiorichan.lang.InvalidDescriptionException;
-import com.chiorichan.lang.InvalidPluginException;
+import com.chiorichan.lang.PluginDescriptionInvalidException;
+import com.chiorichan.lang.PluginException;
+import com.chiorichan.lang.PluginInvalidException;
 import com.chiorichan.lang.PluginUnconfiguredException;
 import com.chiorichan.lang.UnknownDependencyException;
 import com.chiorichan.plugin.PluginDescriptionFile;
@@ -58,231 +59,9 @@ import com.google.common.collect.ImmutableList;
  */
 public final class JavaPluginLoader implements PluginLoader
 {
-	private final Pattern[] fileFilters = new Pattern[] {Pattern.compile( "\\.jar$" )};
 	private final Map<String, Class<?>> classes = new HashMap<String, Class<?>>();
+	private final Pattern[] fileFilters = new Pattern[] {Pattern.compile( "\\.jar$" )};
 	private final Map<String, PluginClassLoader> loaders = new LinkedHashMap<String, PluginClassLoader>();
-	
-	public Plugin loadPlugin( File file ) throws InvalidPluginException
-	{
-		Validate.notNull( file, "File cannot be null" );
-		
-		if ( !file.exists() )
-		{
-			throw new InvalidPluginException( new FileNotFoundException( file.getPath() + " does not exist" ) );
-		}
-		
-		PluginDescriptionFile description;
-		try
-		{
-			description = getPluginDescription( file );
-		}
-		catch ( InvalidDescriptionException ex )
-		{
-			throw new InvalidPluginException( ex );
-		}
-		
-		File dataFolder = new File( file.getParentFile(), description.getName().replaceAll( "\\W", "" ) );
-		// File dataFolderOption2 = getDataFolder( file );
-		
-		List<String> depend = description.getDepend();
-		if ( depend == null )
-		{
-			depend = ImmutableList.<String> of();
-		}
-		
-		for ( String pluginName : depend )
-		{
-			if ( loaders == null )
-			{
-				throw new UnknownDependencyException( pluginName );
-			}
-			PluginClassLoader current = loaders.get( pluginName );
-			
-			if ( current == null )
-			{
-				throw new UnknownDependencyException( pluginName );
-			}
-		}
-		
-		PluginClassLoader loader;
-		try
-		{
-			loader = new PluginClassLoader( this, getClass().getClassLoader(), description, dataFolder, file );
-		}
-		catch ( InvalidPluginException ex )
-		{
-			throw ex;
-		}
-		catch ( Throwable ex )
-		{
-			throw new InvalidPluginException( ex );
-		}
-		
-		loaders.put( description.getName(), loader );
-		
-		if ( description.hasNatives() )
-			try
-			{
-				FileFunc.extractNatives( file, dataFolder );
-			}
-			catch ( IOException e )
-			{
-				PluginManager.getLogger().severe( "We had a problem trying to extract native libraries from plugin file '" + file + "':", e );
-			}
-		
-		return loader.plugin;
-	}
-	
-	@SuppressWarnings( "unused" )
-	private File getDataFolder( File file )
-	{
-		File dataFolder = null;
-		
-		String filename = file.getName();
-		int index = file.getName().lastIndexOf( "." );
-		
-		if ( index != -1 )
-		{
-			String name = filename.substring( 0, index );
-			
-			dataFolder = new File( file.getParentFile(), name );
-		}
-		else
-		{
-			// This is if there is no extension, which should not happen
-			// Using _ to prevent name collision
-			
-			dataFolder = new File( file.getParentFile(), filename + "_" );
-		}
-		
-		return dataFolder;
-	}
-	
-	public PluginDescriptionFile getPluginDescription( File file ) throws InvalidDescriptionException
-	{
-		Validate.notNull( file, "File cannot be null" );
-		
-		JarFile jar = null;
-		InputStream stream = null;
-		
-		try
-		{
-			jar = new JarFile( file );
-			JarEntry entry = jar.getJarEntry( "plugin.yaml" );
-			
-			if ( entry == null )
-				entry = jar.getJarEntry( "plugin.yml" );
-			
-			if ( entry == null )
-			{
-				throw new InvalidDescriptionException( new FileNotFoundException( "Jar does not contain plugin.yaml" ) );
-			}
-			
-			stream = jar.getInputStream( entry );
-			
-			return new PluginDescriptionFile( stream );
-			
-		}
-		catch ( IOException ex )
-		{
-			throw new InvalidDescriptionException( ex );
-		}
-		catch ( YAMLException ex )
-		{
-			throw new InvalidDescriptionException( ex );
-		}
-		finally
-		{
-			if ( jar != null )
-			{
-				try
-				{
-					jar.close();
-				}
-				catch ( IOException e )
-				{
-				}
-			}
-			if ( stream != null )
-			{
-				try
-				{
-					stream.close();
-				}
-				catch ( IOException e )
-				{
-				}
-			}
-		}
-	}
-	
-	public Pattern[] getPluginFileFilters()
-	{
-		return fileFilters.clone();
-	}
-	
-	Class<?> getClassByName( final String name )
-	{
-		Class<?> cachedClass = classes.get( name );
-		
-		if ( cachedClass != null )
-		{
-			return cachedClass;
-		}
-		else
-		{
-			for ( String current : loaders.keySet() )
-			{
-				PluginClassLoader loader = loaders.get( current );
-				
-				try
-				{
-					cachedClass = loader.findClass( name, false );
-				}
-				catch ( ClassNotFoundException cnfe )
-				{
-				}
-				if ( cachedClass != null )
-				{
-					return cachedClass;
-				}
-			}
-		}
-		return null;
-	}
-	
-	void setClass( final String name, final Class<?> clazz )
-	{
-		if ( !classes.containsKey( name ) )
-		{
-			classes.put( name, clazz );
-			
-			if ( ConfigurationSerializable.class.isAssignableFrom( clazz ) )
-			{
-				Class<? extends ConfigurationSerializable> serializable = clazz.asSubclass( ConfigurationSerializable.class );
-				ConfigurationSerialization.registerClass( serializable );
-			}
-		}
-	}
-	
-	private void removeClass( String name )
-	{
-		Class<?> clazz = classes.remove( name );
-		
-		try
-		{
-			if ( ( clazz != null ) && ( ConfigurationSerializable.class.isAssignableFrom( clazz ) ) )
-			{
-				Class<? extends ConfigurationSerializable> serializable = clazz.asSubclass( ConfigurationSerializable.class );
-				ConfigurationSerialization.unregisterClass( serializable );
-			}
-		}
-		catch ( NullPointerException ex )
-		{
-			// Boggle!
-			// (Native methods throwing NPEs is not fun when you can't stop it before-hoof)
-		}
-	}
 	
 	public Map<Class<? extends Event>, Set<RegisteredListener>> createRegisteredListeners( Listener listener, final Plugin plugin )
 	{
@@ -297,13 +76,9 @@ public final class JavaPluginLoader implements PluginLoader
 			Method[] publicMethods = listener.getClass().getMethods();
 			methods = new HashSet<Method>( publicMethods.length, Float.MAX_VALUE );
 			for ( Method method : publicMethods )
-			{
 				methods.add( method );
-			}
 			for ( Method method : listener.getClass().getDeclaredMethods() )
-			{
 				methods.add( method );
-			}
 		}
 		catch ( NoClassDefFoundError e )
 		{
@@ -350,14 +125,13 @@ public final class JavaPluginLoader implements PluginLoader
 			
 			EventExecutor executor = new EventExecutor()
 			{
+				@Override
 				public void execute( Listener listener, Event event ) throws EventException
 				{
 					try
 					{
 						if ( !eventClass.isAssignableFrom( event.getClass() ) )
-						{
 							return;
-						}
 						method.invoke( listener, event );
 					}
 					catch ( InvocationTargetException ex )
@@ -371,53 +145,14 @@ public final class JavaPluginLoader implements PluginLoader
 				}
 			};
 			if ( useTimings )
-			{
 				eventSet.add( new TimedRegisteredListener( listener, executor, eh.priority(), plugin, eh.ignoreCancelled() ) );
-			}
 			else
-			{
 				eventSet.add( new RegisteredListener( listener, executor, eh.priority(), plugin, eh.ignoreCancelled() ) );
-			}
 		}
 		return ret;
 	}
 	
-	public void enablePlugin( final Plugin plugin )
-	{
-		Validate.isTrue( plugin instanceof Plugin, "Plugin is not associated with this PluginLoader" );
-		
-		if ( !plugin.isEnabled() )
-		{
-			PluginManager.getLogger().info( "Enabling " + plugin.getDescription().getFullName() );
-			
-			Plugin jPlugin = ( Plugin ) plugin;
-			
-			String pluginName = jPlugin.getDescription().getName();
-			
-			if ( !loaders.containsKey( pluginName ) )
-			{
-				loaders.put( pluginName, ( PluginClassLoader ) jPlugin.getClassLoader() );
-			}
-			
-			try
-			{
-				jPlugin.setEnabled( true );
-			}
-			catch ( PluginUnconfiguredException ex )
-			{
-				PluginManager.getLogger().severe( "The plugin " + plugin.getDescription().getFullName() + " has reported that it's unconfigured. The plugin wil be unavailable until this is resolved", ex );
-			}
-			catch ( Throwable ex )
-			{
-				PluginManager.getLogger().severe( "Error occurred while enabling " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
-			}
-			
-			// Perhaps abort here, rather than continue going, but as it stands,
-			// an abort is not possible the way it's currently written
-			EventBus.INSTANCE.callEvent( new PluginEnableEvent( plugin ) );
-		}
-	}
-	
+	@Override
 	@SuppressWarnings( "resource" )
 	public void disablePlugin( Plugin plugin )
 	{
@@ -430,7 +165,7 @@ public final class JavaPluginLoader implements PluginLoader
 			
 			EventBus.INSTANCE.callEvent( new PluginDisableEvent( plugin ) );
 			
-			Plugin jPlugin = ( Plugin ) plugin;
+			Plugin jPlugin = plugin;
 			ClassLoader cloader = jPlugin.getClassLoader();
 			
 			try
@@ -450,9 +185,249 @@ public final class JavaPluginLoader implements PluginLoader
 				Set<String> names = loader.getClasses();
 				
 				for ( String name : names )
-				{
 					removeClass( name );
+			}
+		}
+	}
+	
+	@Override
+	public void enablePlugin( final Plugin plugin )
+	{
+		Validate.isTrue( plugin instanceof Plugin, "Plugin is not associated with this PluginLoader" );
+		
+		if ( !plugin.isEnabled() )
+		{
+			PluginManager.getLogger().info( "Enabling " + plugin.getDescription().getFullName() );
+			
+			Plugin jPlugin = plugin;
+			
+			String pluginName = jPlugin.getDescription().getName();
+			
+			if ( !loaders.containsKey( pluginName ) )
+				loaders.put( pluginName, ( PluginClassLoader ) jPlugin.getClassLoader() );
+			
+			try
+			{
+				jPlugin.setEnabled( true );
+			}
+			catch ( PluginUnconfiguredException ex )
+			{
+				// Manually thrown by plugins to convey when they are unconfigured
+				PluginManager.getLogger().severe( String.format( "The plugin %s has reported that it's unconfigured, the plugin has been disabled until this is resolved.", plugin.getDescription().getFullName() ), ex );
+			}
+			catch ( PluginException ex )
+			{
+				// Manually thrown by plugins to convey an issue
+				PluginManager.getLogger().severe( String.format( "The plugin %s has thrown the internal PluginException, the plugin has been disabled until this is resolved.", plugin.getDescription().getFullName() ), ex );
+			}
+			catch ( Throwable ex )
+			{
+				// Thrown for unexpected internal plugin problems
+				PluginManager.getLogger().severe( String.format( "Error occurred while enabling %s (Is it up to date?)", plugin.getDescription().getFullName() ), ex );
+			}
+			
+			// Perhaps abort here, rather than continue going, but as it stands,
+			// an abort is not possible the way it's currently written
+			EventBus.INSTANCE.callEvent( new PluginEnableEvent( plugin ) );
+		}
+	}
+	
+	Class<?> getClassByName( final String name )
+	{
+		Class<?> cachedClass = classes.get( name );
+		
+		if ( cachedClass != null )
+			return cachedClass;
+		else
+			for ( String current : loaders.keySet() )
+			{
+				PluginClassLoader loader = loaders.get( current );
+				
+				try
+				{
+					cachedClass = loader.findClass( name, false );
 				}
+				catch ( ClassNotFoundException cnfe )
+				{
+				}
+				if ( cachedClass != null )
+					return cachedClass;
+			}
+		return null;
+	}
+	
+	@SuppressWarnings( "unused" )
+	private File getDataFolder( File file )
+	{
+		File dataFolder = null;
+		
+		String filename = file.getName();
+		int index = file.getName().lastIndexOf( "." );
+		
+		if ( index != -1 )
+		{
+			String name = filename.substring( 0, index );
+			
+			dataFolder = new File( file.getParentFile(), name );
+		}
+		else
+			dataFolder = new File( file.getParentFile(), filename + "_" );
+		
+		return dataFolder;
+	}
+	
+	@Override
+	public PluginDescriptionFile getPluginDescription( File file ) throws PluginDescriptionInvalidException
+	{
+		Validate.notNull( file, "File cannot be null" );
+		
+		JarFile jar = null;
+		InputStream stream = null;
+		
+		try
+		{
+			jar = new JarFile( file );
+			JarEntry entry = jar.getJarEntry( "plugin.yaml" );
+			
+			if ( entry == null )
+				entry = jar.getJarEntry( "plugin.yml" );
+			
+			if ( entry == null )
+				throw new PluginDescriptionInvalidException( new FileNotFoundException( "Jar does not contain plugin.yaml" ) );
+			
+			stream = jar.getInputStream( entry );
+			
+			return new PluginDescriptionFile( stream );
+			
+		}
+		catch ( IOException ex )
+		{
+			throw new PluginDescriptionInvalidException( ex );
+		}
+		catch ( YAMLException ex )
+		{
+			throw new PluginDescriptionInvalidException( ex );
+		}
+		finally
+		{
+			if ( jar != null )
+				try
+				{
+					jar.close();
+				}
+				catch ( IOException e )
+				{
+				}
+			if ( stream != null )
+				try
+				{
+					stream.close();
+				}
+				catch ( IOException e )
+				{
+				}
+		}
+	}
+	
+	@Override
+	public Pattern[] getPluginFileFilters()
+	{
+		return fileFilters.clone();
+	}
+	
+	@Override
+	public Plugin loadPlugin( File file ) throws PluginInvalidException
+	{
+		Validate.notNull( file, "File cannot be null" );
+		
+		if ( !file.exists() )
+			throw new PluginInvalidException( new FileNotFoundException( file.getPath() + " does not exist" ) );
+		
+		PluginDescriptionFile description;
+		try
+		{
+			description = getPluginDescription( file );
+		}
+		catch ( PluginDescriptionInvalidException ex )
+		{
+			throw new PluginInvalidException( ex );
+		}
+		
+		File dataFolder = new File( file.getParentFile(), description.getName().replaceAll( "\\W", "" ) );
+		// File dataFolderOption2 = getDataFolder( file );
+		
+		List<String> depend = description.getDepend();
+		if ( depend == null )
+			depend = ImmutableList.<String> of();
+		
+		for ( String pluginName : depend )
+		{
+			if ( loaders == null )
+				throw new UnknownDependencyException( pluginName );
+			PluginClassLoader current = loaders.get( pluginName );
+			
+			if ( current == null )
+				throw new UnknownDependencyException( pluginName );
+		}
+		
+		PluginClassLoader loader;
+		try
+		{
+			loader = new PluginClassLoader( this, getClass().getClassLoader(), description, dataFolder, file );
+		}
+		catch ( PluginInvalidException ex )
+		{
+			throw ex;
+		}
+		catch ( Throwable ex )
+		{
+			throw new PluginInvalidException( ex );
+		}
+		
+		loaders.put( description.getName(), loader );
+		
+		if ( description.hasNatives() )
+			try
+			{
+				FileFunc.extractNatives( file, dataFolder );
+			}
+			catch ( IOException e )
+			{
+				PluginManager.getLogger().severe( "We had a problem trying to extract native libraries from plugin file '" + file + "':", e );
+			}
+		
+		return loader.plugin;
+	}
+	
+	private void removeClass( String name )
+	{
+		Class<?> clazz = classes.remove( name );
+		
+		try
+		{
+			if ( ( clazz != null ) && ( ConfigurationSerializable.class.isAssignableFrom( clazz ) ) )
+			{
+				Class<? extends ConfigurationSerializable> serializable = clazz.asSubclass( ConfigurationSerializable.class );
+				ConfigurationSerialization.unregisterClass( serializable );
+			}
+		}
+		catch ( NullPointerException ex )
+		{
+			// Boggle!
+			// (Native methods throwing NPEs is not fun when you can't stop it before-hoof)
+		}
+	}
+	
+	void setClass( final String name, final Class<?> clazz )
+	{
+		if ( !classes.containsKey( name ) )
+		{
+			classes.put( name, clazz );
+			
+			if ( ConfigurationSerializable.class.isAssignableFrom( clazz ) )
+			{
+				Class<? extends ConfigurationSerializable> serializable = clazz.asSubclass( ConfigurationSerializable.class );
+				ConfigurationSerialization.registerClass( serializable );
 			}
 		}
 	}

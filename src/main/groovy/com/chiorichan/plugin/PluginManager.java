@@ -37,8 +37,9 @@ import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.HandlerList;
 import com.chiorichan.event.Listener;
 import com.chiorichan.event.server.ServerRunLevelEvent;
-import com.chiorichan.lang.InvalidDescriptionException;
-import com.chiorichan.lang.InvalidPluginException;
+import com.chiorichan.lang.PluginDescriptionInvalidException;
+import com.chiorichan.lang.PluginInvalidException;
+import com.chiorichan.lang.PluginException;
 import com.chiorichan.lang.PluginNotFoundException;
 import com.chiorichan.lang.UnknownDependencyException;
 import com.chiorichan.libraries.Libraries;
@@ -55,11 +56,21 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 	public static final PluginManager INSTANCE = new PluginManager();
 	private static boolean isInitialized = false;
 	
-	private final Map<Pattern, PluginLoader> fileAssociations = new HashMap<Pattern, PluginLoader>();
-	private final List<Plugin> plugins = new ArrayList<Plugin>();
-	private final Map<String, Plugin> lookupNames = new HashMap<String, Plugin>();
 	private static File updateDirectory = null;
+	private final Map<Pattern, PluginLoader> fileAssociations = new HashMap<Pattern, PluginLoader>();
 	private Set<String> loadedPlugins = new HashSet<String>();
+	private final Map<String, Plugin> lookupNames = new HashMap<String, Plugin>();
+	private final List<Plugin> plugins = new ArrayList<Plugin>();
+	
+	private PluginManager()
+	{
+		
+	}
+	
+	public static ConsoleLogger getLogger()
+	{
+		return Loader.getLogger( "PluginMgr" );
+	}
 	
 	public static void init()
 	{
@@ -74,432 +85,25 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 		
 	}
 	
-	/**
-	 * Registers with the event bus to we can load plugins in their correct order.
-	 */
-	private void init0()
-	{
-		EventBus.INSTANCE.registerEvents( this, this );
-	}
-	
-	private PluginManager()
-	{
-		
-	}
-	
-	public void loadPlugins()
-	{
-		registerInterface( JavaPluginLoader.class );
-		// registerInterface( GroovyPluginLoader.class );
-		
-		File pluginFolder = ( File ) Loader.getOptions().valueOf( "plugins" );
-		
-		if ( pluginFolder.exists() )
-		{
-			Plugin[] plugins = loadPlugins( pluginFolder );
-			for ( Plugin plugin : plugins )
-			{
-				try
-				{
-					String message = String.format( "Loading %s", plugin.getDescription().getFullName() );
-					PluginManager.getLogger().info( message );
-					plugin.onLoad();
-				}
-				catch ( Throwable ex )
-				{
-					getLogger().log( Level.SEVERE, ex.getMessage() + " initializing " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
-				}
-			}
-		}
-		else
-			pluginFolder.mkdir();
-	}
-	
-	/**
-	 * Registers the specified plugin loader
-	 * 
-	 * @param loader
-	 *            Class name of the PluginLoader to register
-	 * @throws IllegalArgumentException
-	 *             Thrown when the given Class is not a valid PluginLoader
-	 */
-	public void registerInterface( Class<? extends PluginLoader> loader ) throws IllegalArgumentException
-	{
-		PluginLoader instance;
-		
-		if ( PluginLoader.class.isAssignableFrom( loader ) )
-		{
-			Constructor<? extends PluginLoader> constructor;
-			
-			try
-			{
-				constructor = loader.getConstructor();
-				instance = constructor.newInstance();
-			}
-			catch ( NoSuchMethodException ex )
-			{
-				try
-				{
-					constructor = loader.getConstructor( Loader.class );
-					instance = constructor.newInstance( Loader.getInstance() );
-				}
-				catch ( NoSuchMethodException ex1 )
-				{
-					String className = loader.getName();
-					
-					throw new IllegalArgumentException( String.format( "Class %s does not have a public %s(Server) constructor", className, className ), ex1 );
-				}
-				catch ( Exception ex1 )
-				{
-					throw new IllegalArgumentException( String.format( "Unexpected exception %s while attempting to construct a new instance of %s", ex.getClass().getName(), loader.getName() ), ex1 );
-				}
-			}
-			catch ( Exception ex )
-			{
-				throw new IllegalArgumentException( String.format( "Unexpected exception %s while attempting to construct a new instance of %s", ex.getClass().getName(), loader.getName() ), ex );
-			}
-		}
-		else
-		{
-			throw new IllegalArgumentException( String.format( "Class %s does not implement interface PluginLoader", loader.getName() ) );
-		}
-		
-		Pattern[] patterns = instance.getPluginFileFilters();
-		
-		synchronized ( this )
-		{
-			for ( Pattern pattern : patterns )
-			{
-				fileAssociations.put( pattern, instance );
-			}
-		}
-	}
-	
-	/**
-	 * Loads the plugins contained within the specified directory
-	 * 
-	 * @param directory
-	 *            Directory to check for plugins
-	 * @return A list of all plugins loaded
-	 */
-	public Plugin[] loadPlugins( File directory )
-	{
-		Validate.notNull( directory, "Directory cannot be null" );
-		Validate.isTrue( directory.isDirectory(), "Directory must be a directory" );
-		
-		List<Plugin> result = new ArrayList<Plugin>();
-		Set<Pattern> filters = fileAssociations.keySet();
-		
-		if ( ! ( Loader.getInstance().getUpdateFolder().equals( "" ) ) )
-		{
-			updateDirectory = new File( directory, Loader.getInstance().getUpdateFolder() );
-		}
-		
-		Map<String, File> plugins = new HashMap<String, File>();
-		Map<String, Collection<MavenReference>> libraries = Maps.newHashMap();
-		Map<String, Collection<String>> dependencies = Maps.newHashMap();
-		Map<String, Collection<String>> softDependencies = Maps.newHashMap();
-		
-		// This is where it figures out all possible plugins
-		for ( File file : directory.listFiles() )
-		{
-			PluginLoader loader = null;
-			for ( Pattern filter : filters )
-			{
-				Matcher match = filter.matcher( file.getName() );
-				if ( match.find() )
-					loader = fileAssociations.get( filter );
-			}
-			
-			if ( loader == null )
-				continue;
-			
-			PluginDescriptionFile description = null;
-			try
-			{
-				description = loader.getPluginDescription( file );
-			}
-			catch ( InvalidDescriptionException ex )
-			{
-				getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", ex );
-				continue;
-			}
-			
-			plugins.put( description.getName(), file );
-			
-			Collection<String> softDependencySet = description.getSoftDepend();
-			if ( softDependencySet != null )
-				if ( softDependencies.containsKey( description.getName() ) )
-					// Duplicates do not matter, they will be removed together if applicable
-					softDependencies.get( description.getName() ).addAll( softDependencySet );
-				else
-					softDependencies.put( description.getName(), new LinkedList<String>( softDependencySet ) );
-			
-			Collection<MavenReference> librariesSet = description.getLibraries();
-			if ( librariesSet != null )
-				libraries.put( description.getName(), new LinkedList<MavenReference>( librariesSet ) );
-			
-			Collection<String> dependencySet = description.getDepend();
-			if ( dependencySet != null )
-				dependencies.put( description.getName(), new LinkedList<String>( dependencySet ) );
-			
-			Collection<String> loadBeforeSet = description.getLoadBefore();
-			if ( loadBeforeSet != null )
-				for ( String loadBeforeTarget : loadBeforeSet )
-					if ( softDependencies.containsKey( loadBeforeTarget ) )
-						softDependencies.get( loadBeforeTarget ).add( description.getName() );
-					else
-					{
-						// softDependencies is never iterated, so 'ghost' plugins aren't an issue
-						Collection<String> shortSoftDependency = new LinkedList<String>();
-						shortSoftDependency.add( description.getName() );
-						softDependencies.put( loadBeforeTarget, shortSoftDependency );
-					}
-		}
-		
-		while ( !plugins.isEmpty() )
-		{
-			boolean missingDependency = true;
-			Iterator<String> pluginIterator = plugins.keySet().iterator();
-			
-			while ( pluginIterator.hasNext() )
-			{
-				String plugin = pluginIterator.next();
-				
-				if ( libraries.containsKey( plugin ) )
-				{
-					Iterator<MavenReference> librariesIterator = libraries.get( plugin ).iterator();
-					
-					while ( librariesIterator.hasNext() )
-					{
-						MavenReference library = librariesIterator.next();
-						
-						if ( Libraries.isLoaded( library ) )
-						{
-							librariesIterator.remove();
-						}
-						else
-						{
-							if ( !Libraries.loadLibrary( library ) )
-							{
-								missingDependency = false;
-								File file = plugins.get( plugin );
-								pluginIterator.remove();
-								libraries.remove( plugin );
-								softDependencies.remove( plugin );
-								dependencies.remove( plugin );
-								
-								getLogger().severe( "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "' due to issue with library '" + library + "'." );
-								break;
-							}
-						}
-					}
-				}
-				
-				if ( dependencies.containsKey( plugin ) )
-				{
-					Iterator<String> dependencyIterator = dependencies.get( plugin ).iterator();
-					
-					while ( dependencyIterator.hasNext() )
-					{
-						String dependency = dependencyIterator.next();
-						
-						// Dependency loaded
-						if ( loadedPlugins.contains( dependency ) )
-						{
-							dependencyIterator.remove();
-							
-							// We have a dependency not found
-						}
-						else if ( !plugins.containsKey( dependency ) )
-						{
-							missingDependency = false;
-							File file = plugins.get( plugin );
-							pluginIterator.remove();
-							libraries.remove( plugin );
-							softDependencies.remove( plugin );
-							dependencies.remove( plugin );
-							
-							getLogger().severe( "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", new UnknownDependencyException( dependency ) );
-							break;
-						}
-					}
-					
-					if ( dependencies.containsKey( plugin ) && dependencies.get( plugin ).isEmpty() )
-					{
-						dependencies.remove( plugin );
-					}
-				}
-				if ( softDependencies.containsKey( plugin ) )
-				{
-					Iterator<String> softDependencyIterator = softDependencies.get( plugin ).iterator();
-					
-					while ( softDependencyIterator.hasNext() )
-					{
-						String softDependency = softDependencyIterator.next();
-						
-						// Soft depend is no longer around
-						if ( !plugins.containsKey( softDependency ) )
-						{
-							softDependencyIterator.remove();
-						}
-					}
-					
-					if ( softDependencies.get( plugin ).isEmpty() )
-					{
-						softDependencies.remove( plugin );
-					}
-				}
-				if ( ! ( dependencies.containsKey( plugin ) || softDependencies.containsKey( plugin ) ) && plugins.containsKey( plugin ) )
-				{
-					// We're clear to load, no more soft or hard dependencies left
-					File file = plugins.get( plugin );
-					pluginIterator.remove();
-					missingDependency = false;
-					
-					try
-					{
-						result.add( loadPlugin( file ) );
-						loadedPlugins.add( plugin );
-						continue;
-					}
-					catch ( InvalidPluginException ex )
-					{
-						getLogger().severe( "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", ex );
-					}
-				}
-			}
-			
-			if ( missingDependency )
-			{
-				// We now iterate over plugins until something loads
-				// This loop will ignore soft dependencies
-				pluginIterator = plugins.keySet().iterator();
-				
-				while ( pluginIterator.hasNext() )
-				{
-					String plugin = pluginIterator.next();
-					
-					if ( !dependencies.containsKey( plugin ) )
-					{
-						softDependencies.remove( plugin );
-						missingDependency = false;
-						File file = plugins.get( plugin );
-						pluginIterator.remove();
-						
-						try
-						{
-							result.add( loadPlugin( file ) );
-							loadedPlugins.add( plugin );
-							break;
-						}
-						catch ( InvalidPluginException ex )
-						{
-							getLogger().severe( "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", ex );
-						}
-					}
-				}
-				// We have no plugins left without a depend
-				if ( missingDependency )
-				{
-					softDependencies.clear();
-					dependencies.clear();
-					Iterator<File> failedPluginIterator = plugins.values().iterator();
-					
-					while ( failedPluginIterator.hasNext() )
-					{
-						File file = failedPluginIterator.next();
-						failedPluginIterator.remove();
-						getLogger().severe( "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "': circular dependency detected" );
-					}
-				}
-			}
-		}
-		
-		return result.toArray( new Plugin[result.size()] );
-	}
-	
-	/**
-	 * Loads the plugin in the specified file
-	 * <p>
-	 * File must be valid according to the current enabled Plugin interfaces
-	 * 
-	 * @param file
-	 *            File containing the plugin to load
-	 * @return The Plugin loaded, or null if it was invalid
-	 * @throws InvalidPluginException
-	 *             Thrown when the specified file is not a valid plugin
-	 * @throws UnknownDependencyException
-	 *             If a required dependency could not be found
-	 */
-	public synchronized Plugin loadPlugin( File file ) throws InvalidPluginException, UnknownDependencyException
-	{
-		Validate.notNull( file, "File cannot be null" );
-		
-		checkUpdate( file );
-		
-		Set<Pattern> filters = fileAssociations.keySet();
-		Plugin result = null;
-		
-		for ( Pattern filter : filters )
-		{
-			String name = file.getName();
-			Matcher match = filter.matcher( name );
-			
-			if ( match.find() )
-			{
-				PluginLoader loader = fileAssociations.get( filter );
-				
-				result = loader.loadPlugin( file );
-			}
-		}
-		
-		if ( result != null )
-		{
-			plugins.add( result );
-			lookupNames.put( result.getDescription().getName(), result );
-		}
-		
-		return result;
-	}
-	
 	private void checkUpdate( File file )
 	{
 		if ( updateDirectory == null || !updateDirectory.isDirectory() )
-		{
 			return;
-		}
 		
 		File updateFile = new File( updateDirectory, file.getName() );
 		if ( updateFile.isFile() && FileFunc.copy( updateFile, file ) )
-		{
 			updateFile.delete();
-		}
 	}
 	
-	public void enablePlugin( final Plugin plugin )
+	public void clearPlugins()
 	{
-		if ( !plugin.isEnabled() )
+		synchronized ( this )
 		{
-			try
-			{
-				plugin.getPluginLoader().enablePlugin( plugin );
-			}
-			catch ( Throwable ex )
-			{
-				getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while enabling " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
-			}
-			
-			HandlerList.bakeAll();
-		}
-	}
-	
-	public void disablePlugins()
-	{
-		Plugin[] plugins = getPlugins();
-		for ( int i = plugins.length - 1; i >= 0; i-- )
-		{
-			disablePlugin( plugins[i] );
+			disablePlugins();
+			plugins.clear();
+			lookupNames.clear();
+			HandlerList.unregisterAll();
+			fileAssociations.clear();
 		}
 	}
 	
@@ -555,26 +159,34 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 		}
 	}
 	
-	public void clearPlugins()
+	public void disablePlugins()
 	{
-		synchronized ( this )
+		Plugin[] plugins = getPlugins();
+		for ( int i = plugins.length - 1; i >= 0; i-- )
+			disablePlugin( plugins[i] );
+	}
+	
+	public void enablePlugin( final Plugin plugin )
+	{
+		if ( !plugin.isEnabled() )
 		{
-			disablePlugins();
-			plugins.clear();
-			lookupNames.clear();
-			HandlerList.unregisterAll();
-			fileAssociations.clear();
+			try
+			{
+				plugin.getPluginLoader().enablePlugin( plugin );
+			}
+			catch ( Throwable ex )
+			{
+				getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while enabling " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
+			}
+			
+			HandlerList.bakeAll();
 		}
 	}
 	
-	public void shutdown()
+	@Override
+	public String getName()
 	{
-		clearPlugins();
-	}
-	
-	public synchronized Plugin[] getPlugins()
-	{
-		return plugins.toArray( new Plugin[0] );
+		return "Plugins Manager";
 	}
 	
 	public Plugin getPluginByClass( Class<?> clz ) throws PluginNotFoundException
@@ -594,28 +206,13 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 		throw new PluginNotFoundException( "We could not find a plugin with the class '" + clz + "', maybe it's not loaded." );
 	}
 	
-	public Plugin getPluginByClassWithoutException( Class<?> clz )
-	{
-		try
-		{
-			return getPluginByClass( clz );
-		}
-		catch ( PluginNotFoundException e )
-		{
-			getLogger().warning( e.getMessage() );
-			return null;
-		}
-	}
-	
 	public Plugin getPluginByClassname( String className ) throws PluginNotFoundException
 	{
 		try
 		{
 			for ( Plugin plugin1 : getPlugins() )
-			{
 				if ( plugin1.getClass().getName().startsWith( className ) )
 					return plugin1;
-			}
 		}
 		catch ( Exception e )
 		{
@@ -638,15 +235,26 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 		}
 	}
 	
+	public Plugin getPluginByClassWithoutException( Class<?> clz )
+	{
+		try
+		{
+			return getPluginByClass( clz );
+		}
+		catch ( PluginNotFoundException e )
+		{
+			getLogger().warning( e.getMessage() );
+			return null;
+		}
+	}
+	
 	public Plugin getPluginByName( String pluginName ) throws PluginNotFoundException
 	{
 		try
 		{
 			for ( Plugin plugin1 : getPlugins() )
-			{
 				if ( plugin1.getClass().getCanonicalName().equals( pluginName ) || plugin1.getName().equalsIgnoreCase( pluginName ) )
 					return plugin1;
-			}
 		}
 		catch ( Exception e )
 		{
@@ -669,6 +277,63 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 		}
 	}
 	
+	public synchronized Plugin[] getPlugins()
+	{
+		return plugins.toArray( new Plugin[0] );
+	}
+	
+	/**
+	 * Registers with the event bus to we can load plugins in their correct order.
+	 */
+	private void init0()
+	{
+		EventBus.INSTANCE.registerEvents( this, this );
+	}
+	
+	/**
+	 * Loads the plugin in the specified file
+	 * <p>
+	 * File must be valid according to the current enabled Plugin interfaces
+	 * 
+	 * @param file
+	 *            File containing the plugin to load
+	 * @return The Plugin loaded, or null if it was invalid
+	 * @throws PluginInvalidException
+	 *             Thrown when the specified file is not a valid plugin
+	 * @throws UnknownDependencyException
+	 *             If a required dependency could not be found
+	 */
+	public synchronized Plugin loadPlugin( File file ) throws PluginInvalidException, UnknownDependencyException
+	{
+		Validate.notNull( file, "File cannot be null" );
+		
+		checkUpdate( file );
+		
+		Set<Pattern> filters = fileAssociations.keySet();
+		Plugin result = null;
+		
+		for ( Pattern filter : filters )
+		{
+			String name = file.getName();
+			Matcher match = filter.matcher( name );
+			
+			if ( match.find() )
+			{
+				PluginLoader loader = fileAssociations.get( filter );
+				
+				result = loader.loadPlugin( file );
+			}
+		}
+		
+		if ( result != null )
+		{
+			plugins.add( result );
+			lookupNames.put( result.getDescription().getName(), result );
+		}
+		
+		return result;
+	}
+	
 	private void loadPlugin( Plugin plugin )
 	{
 		try
@@ -681,15 +346,257 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 		}
 	}
 	
-	public static ConsoleLogger getLogger()
+	public void loadPlugins() throws PluginException
 	{
-		return Loader.getLogger( "PluginMgr" );
+		registerInterface( JavaPluginLoader.class );
+		// registerInterface( GroovyPluginLoader.class );
+		
+		File pluginFolder = ( File ) Loader.getOptions().valueOf( "plugins" );
+		
+		if ( pluginFolder.exists() )
+		{
+			Plugin[] plugins = loadPlugins( pluginFolder );
+			for ( Plugin plugin : plugins )
+				try
+				{
+					String message = String.format( "Loading %s", plugin.getDescription().getFullName() );
+					PluginManager.getLogger().info( message );
+					plugin.onLoad();
+				}
+				catch ( Throwable ex )
+				{
+					getLogger().log( Level.SEVERE, ex.getMessage() + " initializing " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
+				}
+		}
+		else
+			pluginFolder.mkdir();
 	}
 	
-	@Override
-	public String getName()
+	/**
+	 * Loads the plugins contained within the specified directory
+	 * 
+	 * @param directory
+	 *            Directory to check for plugins
+	 * @return A list of all plugins loaded
+	 */
+	public Plugin[] loadPlugins( File directory )
 	{
-		return "Plugins Manager";
+		Validate.notNull( directory, "Directory cannot be null" );
+		Validate.isTrue( directory.isDirectory(), "Directory must be a directory" );
+		
+		List<Plugin> result = new ArrayList<Plugin>();
+		Set<Pattern> filters = fileAssociations.keySet();
+		
+		if ( ! ( Loader.getInstance().getUpdateFolder().equals( "" ) ) )
+			updateDirectory = new File( directory, Loader.getInstance().getUpdateFolder() );
+		
+		Map<String, File> plugins = new HashMap<String, File>();
+		Map<String, Collection<MavenReference>> libraries = Maps.newHashMap();
+		Map<String, Collection<String>> dependencies = Maps.newHashMap();
+		Map<String, Collection<String>> softDependencies = Maps.newHashMap();
+		
+		// This is where it figures out all possible plugins
+		for ( File file : directory.listFiles() )
+		{
+			PluginLoader loader = null;
+			for ( Pattern filter : filters )
+			{
+				Matcher match = filter.matcher( file.getName() );
+				if ( match.find() )
+					loader = fileAssociations.get( filter );
+			}
+			
+			if ( loader == null )
+				continue;
+			
+			PluginDescriptionFile description = null;
+			try
+			{
+				description = loader.getPluginDescription( file );
+			}
+			catch ( PluginDescriptionInvalidException ex )
+			{
+				getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", ex );
+				continue;
+			}
+			
+			plugins.put( description.getName(), file );
+			
+			Collection<String> softDependencySet = description.getSoftDepend();
+			if ( softDependencySet != null )
+				if ( softDependencies.containsKey( description.getName() ) )
+					// Duplicates do not matter, they will be removed together if applicable
+					softDependencies.get( description.getName() ).addAll( softDependencySet );
+				else
+					softDependencies.put( description.getName(), new LinkedList<String>( softDependencySet ) );
+			
+			Collection<MavenReference> librariesSet = description.getLibraries();
+			if ( librariesSet != null )
+				libraries.put( description.getName(), new LinkedList<MavenReference>( librariesSet ) );
+			
+			Collection<String> dependencySet = description.getDepend();
+			if ( dependencySet != null )
+				dependencies.put( description.getName(), new LinkedList<String>( dependencySet ) );
+			
+			Collection<String> loadBeforeSet = description.getLoadBefore();
+			if ( loadBeforeSet != null )
+				for ( String loadBeforeTarget : loadBeforeSet )
+					if ( softDependencies.containsKey( loadBeforeTarget ) )
+						softDependencies.get( loadBeforeTarget ).add( description.getName() );
+					else
+					{
+						// softDependencies is never iterated, so 'ghost' plugins aren't an issue
+						Collection<String> shortSoftDependency = new LinkedList<String>();
+						shortSoftDependency.add( description.getName() );
+						softDependencies.put( loadBeforeTarget, shortSoftDependency );
+					}
+		}
+		
+		while ( !plugins.isEmpty() )
+		{
+			boolean missingDependency = true;
+			Iterator<String> pluginIterator = plugins.keySet().iterator();
+			
+			while ( pluginIterator.hasNext() )
+			{
+				String plugin = pluginIterator.next();
+				
+				if ( libraries.containsKey( plugin ) )
+				{
+					Iterator<MavenReference> librariesIterator = libraries.get( plugin ).iterator();
+					
+					while ( librariesIterator.hasNext() )
+					{
+						MavenReference library = librariesIterator.next();
+						
+						if ( Libraries.isLoaded( library ) )
+							librariesIterator.remove();
+						else if ( !Libraries.loadLibrary( library ) )
+						{
+							missingDependency = false;
+							File file = plugins.get( plugin );
+							pluginIterator.remove();
+							libraries.remove( plugin );
+							softDependencies.remove( plugin );
+							dependencies.remove( plugin );
+							
+							getLogger().severe( "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "' due to issue with library '" + library + "'." );
+							break;
+						}
+					}
+				}
+				
+				if ( dependencies.containsKey( plugin ) )
+				{
+					Iterator<String> dependencyIterator = dependencies.get( plugin ).iterator();
+					
+					while ( dependencyIterator.hasNext() )
+					{
+						String dependency = dependencyIterator.next();
+						
+						// Dependency loaded
+						if ( loadedPlugins.contains( dependency ) )
+							dependencyIterator.remove();
+						else if ( !plugins.containsKey( dependency ) )
+						{
+							missingDependency = false;
+							File file = plugins.get( plugin );
+							pluginIterator.remove();
+							libraries.remove( plugin );
+							softDependencies.remove( plugin );
+							dependencies.remove( plugin );
+							
+							getLogger().severe( "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", new UnknownDependencyException( dependency ) );
+							break;
+						}
+					}
+					
+					if ( dependencies.containsKey( plugin ) && dependencies.get( plugin ).isEmpty() )
+						dependencies.remove( plugin );
+				}
+				if ( softDependencies.containsKey( plugin ) )
+				{
+					Iterator<String> softDependencyIterator = softDependencies.get( plugin ).iterator();
+					
+					while ( softDependencyIterator.hasNext() )
+					{
+						String softDependency = softDependencyIterator.next();
+						
+						// Soft depend is no longer around
+						if ( !plugins.containsKey( softDependency ) )
+							softDependencyIterator.remove();
+					}
+					
+					if ( softDependencies.get( plugin ).isEmpty() )
+						softDependencies.remove( plugin );
+				}
+				if ( ! ( dependencies.containsKey( plugin ) || softDependencies.containsKey( plugin ) ) && plugins.containsKey( plugin ) )
+				{
+					// We're clear to load, no more soft or hard dependencies left
+					File file = plugins.get( plugin );
+					pluginIterator.remove();
+					missingDependency = false;
+					
+					try
+					{
+						result.add( loadPlugin( file ) );
+						loadedPlugins.add( plugin );
+						continue;
+					}
+					catch ( PluginInvalidException ex )
+					{
+						getLogger().severe( "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", ex );
+					}
+				}
+			}
+			
+			if ( missingDependency )
+			{
+				// We now iterate over plugins until something loads
+				// This loop will ignore soft dependencies
+				pluginIterator = plugins.keySet().iterator();
+				
+				while ( pluginIterator.hasNext() )
+				{
+					String plugin = pluginIterator.next();
+					
+					if ( !dependencies.containsKey( plugin ) )
+					{
+						softDependencies.remove( plugin );
+						missingDependency = false;
+						File file = plugins.get( plugin );
+						pluginIterator.remove();
+						
+						try
+						{
+							result.add( loadPlugin( file ) );
+							loadedPlugins.add( plugin );
+							break;
+						}
+						catch ( PluginInvalidException ex )
+						{
+							getLogger().severe( "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", ex );
+						}
+					}
+				}
+				// We have no plugins left without a depend
+				if ( missingDependency )
+				{
+					softDependencies.clear();
+					dependencies.clear();
+					Iterator<File> failedPluginIterator = plugins.values().iterator();
+					
+					while ( failedPluginIterator.hasNext() )
+					{
+						File file = failedPluginIterator.next();
+						failedPluginIterator.remove();
+						getLogger().severe( "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "': circular dependency detected" );
+					}
+				}
+			}
+		}
+		
+		return result.toArray( new Plugin[result.size()] );
 	}
 	
 	/**
@@ -703,9 +610,68 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 		Plugin[] plugins = getPlugins();
 		
 		for ( Plugin plugin : plugins )
-		{
 			if ( ( !plugin.isEnabled() ) && ( plugin.getDescription().getLoad() == level ) )
 				loadPlugin( plugin );
+	}
+	
+	/**
+	 * Registers the specified plugin loader
+	 * 
+	 * @param loader
+	 *            Class name of the PluginLoader to register
+	 * @throws IllegalArgumentException
+	 *             Thrown when the given Class is not a valid PluginLoader
+	 */
+	public void registerInterface( Class<? extends PluginLoader> loader ) throws IllegalArgumentException
+	{
+		PluginLoader instance;
+		
+		if ( PluginLoader.class.isAssignableFrom( loader ) )
+		{
+			Constructor<? extends PluginLoader> constructor;
+			
+			try
+			{
+				constructor = loader.getConstructor();
+				instance = constructor.newInstance();
+			}
+			catch ( NoSuchMethodException ex )
+			{
+				try
+				{
+					constructor = loader.getConstructor( Loader.class );
+					instance = constructor.newInstance( Loader.getInstance() );
+				}
+				catch ( NoSuchMethodException ex1 )
+				{
+					String className = loader.getName();
+					
+					throw new IllegalArgumentException( String.format( "Class %s does not have a public %s(Server) constructor", className, className ), ex1 );
+				}
+				catch ( Exception ex1 )
+				{
+					throw new IllegalArgumentException( String.format( "Unexpected exception %s while attempting to construct a new instance of %s", ex.getClass().getName(), loader.getName() ), ex1 );
+				}
+			}
+			catch ( Exception ex )
+			{
+				throw new IllegalArgumentException( String.format( "Unexpected exception %s while attempting to construct a new instance of %s", ex.getClass().getName(), loader.getName() ), ex );
+			}
 		}
+		else
+			throw new IllegalArgumentException( String.format( "Class %s does not implement interface PluginLoader", loader.getName() ) );
+		
+		Pattern[] patterns = instance.getPluginFileFilters();
+		
+		synchronized ( this )
+		{
+			for ( Pattern pattern : patterns )
+				fileAssociations.put( pattern, instance );
+		}
+	}
+	
+	public void shutdown()
+	{
+		clearPlugins();
 	}
 }

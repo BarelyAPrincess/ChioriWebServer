@@ -12,7 +12,7 @@ package com.chiorichan.lang;
 /**
  * Thrown when attempting to load an invalid Plugin file
  */
-public class InvalidPluginException extends Exception
+public class PluginInvalidException extends Exception
 {
 	private static final long serialVersionUID = -8242141640709409544L;
 	
@@ -22,7 +22,7 @@ public class InvalidPluginException extends Exception
 	 * @param cause
 	 *            Exception that triggered this Exception
 	 */
-	public InvalidPluginException( final Throwable cause )
+	public PluginInvalidException( final Throwable cause )
 	{
 		super( cause );
 	}
@@ -30,7 +30,7 @@ public class InvalidPluginException extends Exception
 	/**
 	 * Constructs a new InvalidPluginException
 	 */
-	public InvalidPluginException()
+	public PluginInvalidException()
 	{
 		
 	}
@@ -44,7 +44,7 @@ public class InvalidPluginException extends Exception
 	 *            the cause (which is saved for later retrieval by the getCause() method). (A null value is permitted, and
 	 *            indicates that the cause is nonexistent or unknown.)
 	 */
-	public InvalidPluginException( final String message, final Throwable cause )
+	public PluginInvalidException( final String message, final Throwable cause )
 	{
 		super( message, cause );
 	}
@@ -55,7 +55,7 @@ public class InvalidPluginException extends Exception
 	 * @param message
 	 *            TThe detail message is saved for later retrieval by the getMessage() method.
 	 */
-	public InvalidPluginException( final String message )
+	public PluginInvalidException( final String message )
 	{
 		super( message );
 	}
