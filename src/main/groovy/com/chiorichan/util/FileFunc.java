@@ -51,22 +51,42 @@ import com.google.common.io.ByteStreams;
  */
 public class FileFunc
 {
-	public static final String PATH_SEPERATOR = File.separator;
+	public enum DirectoryInfo
+	{
+		CREATE_FAILED, DELETE_FAILED, DIRECTORY_HEALTHY, PERMISSION_FAILED;
+		
+		public String getDescription( File file )
+		{
+			switch ( this )
+			{
+				case CREATE_FAILED:
+					return String.format( "The directory '%s' does not exist, we tried to create the directory but failed for an unknown reason.", file.getAbsolutePath() );
+				case DELETE_FAILED:
+					return String.format( "There was a problem trying to delete the directory '%s'.", file.getAbsolutePath() );
+				case DIRECTORY_HEALTHY:
+					return String.format( "The directory '%s' is existent and accessible.", file.getAbsolutePath() );
+				case PERMISSION_FAILED:
+					return String.format( "We have no permission to either create, delete or access the directory '%s'.", file.getAbsolutePath() );
+			}
+			return null;
+		}
+	}
 	
 	/**
 	 * Separate class for native platform ID which is only loaded when native libs are loaded.
 	 */
 	public static class OSInfo
 	{
-		public static final String OS_ID;
-		public static final String CPU_ID;
 		public static final String ARCH_NAME;
+		public static final String CPU_ID;
 		public static final String[] NATIVE_SEARCH_PATHS;
+		public static final String OS_ID;
 		
 		static
 		{
 			final Object[] strings = AccessController.doPrivileged( new PrivilegedAction<Object[]>()
 			{
+				@Override
 				public Object[] run()
 				{
 					// First, identify the operating system.
@@ -86,77 +106,41 @@ public class FileFunc
 						{
 							sysOs = sysOs.toUpperCase( Locale.US );
 							if ( sysOs.startsWith( "LINUX" ) )
-							{
 								osName = "linux";
-							}
 							else if ( sysOs.startsWith( "MAC OS" ) )
-							{
 								osName = "macosx";
-							}
 							else if ( sysOs.startsWith( "WINDOWS" ) )
-							{
 								osName = "win";
-							}
 							else if ( sysOs.startsWith( "OS/2" ) )
-							{
 								osName = "os2";
-							}
 							else if ( sysOs.startsWith( "SOLARIS" ) || sysOs.startsWith( "SUNOS" ) )
-							{
 								osName = "solaris";
-							}
 							else if ( sysOs.startsWith( "MPE/IX" ) )
-							{
 								osName = "mpeix";
-							}
 							else if ( sysOs.startsWith( "HP-UX" ) )
-							{
 								osName = "hpux";
-							}
 							else if ( sysOs.startsWith( "AIX" ) )
-							{
 								osName = "aix";
-							}
 							else if ( sysOs.startsWith( "OS/390" ) )
-							{
 								osName = "os390";
-							}
 							else if ( sysOs.startsWith( "OS/400" ) )
-							{
 								osName = "os400";
-							}
 							else if ( sysOs.startsWith( "FREEBSD" ) )
-							{
 								osName = "freebsd";
-							}
 							else if ( sysOs.startsWith( "OPENBSD" ) )
-							{
 								osName = "openbsd";
-							}
 							else if ( sysOs.startsWith( "NETBSD" ) )
-							{
 								osName = "netbsd";
-							}
 							else if ( sysOs.startsWith( "IRIX" ) )
-							{
 								osName = "irix";
-							}
 							else if ( sysOs.startsWith( "DIGITAL UNIX" ) )
-							{
 								osName = "digitalunix";
-							}
 							else if ( sysOs.startsWith( "OSF1" ) )
-							{
 								osName = "osf1";
-							}
 							else if ( sysOs.startsWith( "OPENVMS" ) )
-							{
 								osName = "openvms";
-							}
 							else if ( sysOs.startsWith( "IOS" ) )
-							{
 								osName = "iOS";
-							}
 							else
 							{
 								osName = "unknown";
@@ -183,45 +167,25 @@ public class FileFunc
 							boolean hasHardFloatABI = false;
 							sysArch = sysArch.toUpperCase( Locale.US );
 							if ( sysArch.startsWith( "SPARCV9" ) || sysArch.startsWith( "SPARC64" ) )
-							{
 								cpuName = "sparcv9";
-							}
 							else if ( sysArch.startsWith( "SPARC" ) )
-							{
 								cpuName = "sparc";
-							}
 							else if ( sysArch.startsWith( "X86_64" ) || sysArch.startsWith( "AMD64" ) )
-							{
 								cpuName = "x86_64";
-							}
 							else if ( sysArch.startsWith( "I386" ) )
-							{
 								cpuName = "i386";
-							}
 							else if ( sysArch.startsWith( "I486" ) )
-							{
 								cpuName = "i486";
-							}
 							else if ( sysArch.startsWith( "I586" ) )
-							{
 								cpuName = "i586";
-							}
 							else if ( sysArch.startsWith( "I686" ) || sysArch.startsWith( "X86" ) || sysArch.contains( "IA32" ) )
-							{
 								cpuName = "i686";
-							}
 							else if ( sysArch.startsWith( "X32" ) )
-							{
 								cpuName = "x32";
-							}
 							else if ( sysArch.startsWith( "PPC64" ) )
-							{
 								cpuName = "ppc64";
-							}
 							else if ( sysArch.startsWith( "PPC" ) || sysArch.startsWith( "POWER" ) )
-							{
 								cpuName = "ppc";
-							}
 							else if ( sysArch.startsWith( "ARMV7A" ) || sysArch.contains( "AARCH32" ) )
 							{
 								hasEndian = true;
@@ -260,22 +224,14 @@ public class FileFunc
 								if ( isaList != null )
 								{
 									if ( isaList.toUpperCase( Locale.US ).contains( "MMX2" ) )
-									{
 										cpuName = "armv5t-iwmmx2";
-									}
 									else if ( isaList.toUpperCase( Locale.US ).contains( "MMX" ) )
-									{
 										cpuName = "armv5t-iwmmx";
-									}
 									else
-									{
 										cpuName = "armv5t";
-									}
 								}
 								else
-								{
 									cpuName = "armv5t";
-								}
 							}
 							else if ( sysArch.startsWith( "ARMV5" ) )
 							{
@@ -289,27 +245,17 @@ public class FileFunc
 								cpuName = "armv6";
 							}
 							else if ( sysArch.startsWith( "PA_RISC2.0W" ) )
-							{
 								cpuName = "parisc64";
-							}
 							else if ( sysArch.startsWith( "PA_RISC" ) || sysArch.startsWith( "PA-RISC" ) )
-							{
 								cpuName = "parisc";
-							}
 							else if ( sysArch.startsWith( "IA64" ) )
-							{
 								// HP-UX reports IA64W for 64-bit Itanium and IA64N when running
 								// in 32-bit mode.
 								cpuName = sysArch.toLowerCase( Locale.US );
-							}
 							else if ( sysArch.startsWith( "ALPHA" ) )
-							{
 								cpuName = "alpha";
-							}
 							else if ( sysArch.startsWith( "MIPS" ) )
-							{
 								cpuName = "mips";
-							}
 							else
 							{
 								knownCpu = false;
@@ -320,9 +266,7 @@ public class FileFunc
 							boolean hf = false;
 							
 							if ( knownCpu && hasEndian && "big".equals( System.getProperty( "sun.cpu.endian", "little" ) ) )
-							{
 								be = true;
-							}
 							
 							if ( knownCpu && hasHardFloatABI )
 							{
@@ -330,17 +274,13 @@ public class FileFunc
 								if ( archAbi != null )
 								{
 									if ( archAbi.toUpperCase( Locale.US ).contains( "HF" ) )
-									{
 										hf = true;
-									}
 								}
 								else
 								{
 									String libPath = System.getProperty( "java.library.path" );
 									if ( libPath != null && libPath.toUpperCase( Locale.US ).contains( "GNUEABIHF" ) )
-									{
 										hf = true;
-									}
 								}
 								if ( hf )
 									cpuName += "-hf";
@@ -408,17 +348,13 @@ public class FileFunc
 					final int cpuCount = cpuNames.size();
 					String[] searchPaths = new String[cpuCount];
 					if ( knownOs && knownCpu )
-					{
 						for ( int i = 0; i < cpuCount; i++ )
 						{
 							final String name = cpuNames.get( i );
 							searchPaths[i] = osName + "-" + name;
 						}
-					}
 					else
-					{
 						searchPaths = new String[0];
-					}
 					
 					return new Object[] {osName, cpuName, osName + "-" + cpuName, searchPaths};
 				}
@@ -430,25 +366,34 @@ public class FileFunc
 		}
 	}
 	
-	public static byte[] inputStream2Bytes( InputStream is ) throws IOException
+	public static final String PATH_SEPERATOR = File.separator;
+	
+	public static File calculateFileBase( String path )
 	{
-		return inputStream2ByteArray( is ).toByteArray();
+		return calculateFileBase( path, null );
 	}
 	
-	public static ByteArrayOutputStream inputStream2ByteArray( InputStream is ) throws IOException
+	/**
+	 * Calculate a file location
+	 * 
+	 * @param path
+	 *            Base file path
+	 * @param site
+	 *            Site that is used in relative
+	 * @return A File object calculated
+	 */
+	public static File calculateFileBase( String path, Site site )
 	{
-		int nRead;
-		byte[] data = new byte[16384];
-		ByteArrayOutputStream bs = new ByteArrayOutputStream();
-		
-		while ( ( nRead = is.read( data, 0, data.length ) ) != -1 )
+		if ( path.startsWith( "[" ) )
 		{
-			bs.write( data, 0, nRead );
+			path = path.replace( "[pwd]", new File( "" ).getAbsolutePath() );
+			path = path.replace( "[web]", Loader.getWebRoot().getAbsolutePath() );
+			
+			if ( site != null )
+				path = path.replace( "[site]", site.getAbsoluteRoot().getAbsolutePath() );
 		}
 		
-		bs.flush();
-		
-		return bs;
+		return new File( path );
 	}
 	
 	/**
@@ -478,9 +423,7 @@ public class FileFunc
 			long size = in.size();
 			
 			while ( pos < size )
-			{
 				pos += in.transferTo( pos, 10 * 1024 * 1024, out );
-			}
 		}
 		catch ( IOException ioe )
 		{
@@ -504,63 +447,6 @@ public class FileFunc
 		return true;
 	}
 	
-	/**
-	 * Calculate a file location
-	 * 
-	 * @param path
-	 *            Base file path
-	 * @param site
-	 *            Site that is used in relative
-	 * @return A File object calculated
-	 */
-	public static File calculateFileBase( String path, Site site )
-	{
-		if ( path.startsWith( "[" ) )
-		{
-			path = path.replace( "[pwd]", new File( "" ).getAbsolutePath() );
-			path = path.replace( "[web]", Loader.getWebRoot().getAbsolutePath() );
-			
-			if ( site != null )
-				path = path.replace( "[site]", site.getAbsoluteRoot().getAbsolutePath() );
-		}
-		
-		return new File( path );
-	}
-	
-	public static File calculateFileBase( String path )
-	{
-		return calculateFileBase( path, null );
-	}
-	
-	public static void directoryHealthCheckWithException( File file ) throws IOException
-	{
-		DirectoryInfo info = directoryHealthCheck( file );
-		
-		if ( info != DirectoryInfo.DIRECTORY_HEALTHY )
-			throw new IOException( info.getDescription( file ) );
-	}
-	
-	public enum DirectoryInfo
-	{
-		DELETE_FAILED, PERMISSION_FAILED, CREATE_FAILED, DIRECTORY_HEALTHY;
-		
-		public String getDescription( File file )
-		{
-			switch ( this )
-			{
-				case CREATE_FAILED:
-					return "The directory '" + file.getAbsolutePath() + "' does not exist, we tried to create the directory but failed.";
-				case DELETE_FAILED:
-					return "There was a problem trying to delete the directory '" + file.getAbsolutePath() + "'.";
-				case DIRECTORY_HEALTHY:
-					return "The directory '" + file.getAbsolutePath() + "' health and should the server should experience no issues.";
-				case PERMISSION_FAILED:
-					return "There was no permission to either create, delete or access the directory '" + file.getAbsolutePath() + "'.";
-			}
-			return null;
-		}
-	}
-	
 	public static DirectoryInfo directoryHealthCheck( File file )
 	{
 		Validate.notNull( file );
@@ -569,7 +455,7 @@ public class FileFunc
 			if ( !file.delete() )
 				return DirectoryInfo.DELETE_FAILED;
 		
-		if ( file.getParentFile() != null && file.getParentFile().exists() && file.getParentFile().canWrite() )
+		if ( file.getParentFile() != null && file.getParentFile().exists() && !file.getParentFile().canWrite() )
 			return DirectoryInfo.PERMISSION_FAILED;
 		
 		if ( !file.exists() )
@@ -582,183 +468,12 @@ public class FileFunc
 		return DirectoryInfo.DIRECTORY_HEALTHY;
 	}
 	
-	public static File fileHealthCheck( File file ) throws IOException
+	public static void directoryHealthCheckWithException( File file ) throws IOException
 	{
-		Validate.notNull( file );
+		DirectoryInfo info = directoryHealthCheck( file );
 		
-		if ( file.exists() && file.isDirectory() )
-			file = new File( file, "default" );
-		
-		if ( !file.exists() )
-			file.createNewFile();
-		
-		return file;
-	}
-	
-	public static void putResource( String resource, File file ) throws IOException
-	{
-		putResource( Loader.class, resource, file );
-	}
-	
-	public static void putResource( Class<?> clz, String resource, File file ) throws IOException
-	{
-		try
-		{
-			InputStream is = clz.getClassLoader().getResourceAsStream( resource );
-			FileOutputStream os = new FileOutputStream( file );
-			ByteStreams.copy( is, os );
-			is.close();
-			os.close();
-		}
-		catch ( FileNotFoundException e )
-		{
-			throw new IOException( e );
-		}
-	}
-	
-	/**
-	 * List directory contents for a resource folder. Not recursive.
-	 * This is basically a brute-force implementation.
-	 * Works for regular files and also JARs.
-	 * 
-	 * @author Greg Briggs
-	 * @param clazz
-	 *            Any java class that lives in the same place as the resources you want.
-	 * @param path
-	 *            Should end with "/", but not start with one.
-	 * @return Just the name of each member item, not the full paths.
-	 * @throws URISyntaxException
-	 * @throws IOException
-	 */
-	String[] getResourceListing( Class<?> clazz, String path ) throws URISyntaxException, IOException
-	{
-		URL dirURL = clazz.getClassLoader().getResource( path );
-		
-		if ( dirURL == null )
-		{
-			/*
-			 * In case of a jar file, we can't actually find a directory.
-			 * Have to assume the same jar as clazz.
-			 */
-			String me = clazz.getName().replace( ".", "/" ) + ".class";
-			dirURL = clazz.getClassLoader().getResource( me );
-		}
-		
-		if ( dirURL.getProtocol().equals( "file" ) )
-		{
-			/* A file path: easy enough */
-			return new File( dirURL.toURI() ).list();
-		}
-		
-		if ( dirURL.getProtocol().equals( "jar" ) )
-		{
-			/* A JAR path */
-			String jarPath = dirURL.getPath().substring( 5, dirURL.getPath().indexOf( "!" ) ); // strip out only the JAR file
-			JarFile jar = new JarFile( URLDecoder.decode( jarPath, "UTF-8" ) );
-			Enumeration<JarEntry> entries = jar.entries(); // gives ALL entries in jar
-			Set<String> result = new HashSet<String>(); // avoid duplicates in case it is a subdirectory
-			while ( entries.hasMoreElements() )
-			{
-				String name = entries.nextElement().getName();
-				if ( name.startsWith( path ) )
-				{ // filter according to the path
-					String entry = name.substring( path.length() );
-					int checkSubdir = entry.indexOf( "/" );
-					if ( checkSubdir >= 0 )
-					{
-						// if it is a subdirectory, we just return the directory name
-						entry = entry.substring( 0, checkSubdir );
-					}
-					result.add( entry );
-				}
-			}
-			jar.close();
-			return result.toArray( new String[result.size()] );
-		}
-		
-		if ( dirURL.getProtocol().equals( "zip" ) )
-		{
-			/* A ZIP path */
-			String zipPath = dirURL.getPath().substring( 5, dirURL.getPath().indexOf( "!" ) ); // strip out only the JAR file
-			ZipFile zip = new ZipFile( URLDecoder.decode( zipPath, "UTF-8" ) );
-			Enumeration<? extends ZipEntry> entries = zip.entries(); // gives ALL entries in jar
-			Set<String> result = new HashSet<String>(); // avoid duplicates in case it is a subdirectory
-			while ( entries.hasMoreElements() )
-			{
-				String name = entries.nextElement().getName();
-				if ( name.startsWith( path ) )
-				{ // filter according to the path
-					String entry = name.substring( path.length() );
-					int checkSubdir = entry.indexOf( "/" );
-					if ( checkSubdir >= 0 )
-					{
-						// if it is a subdirectory, we just return the directory name
-						entry = entry.substring( 0, checkSubdir );
-					}
-					result.add( entry );
-				}
-			}
-			zip.close();
-			return result.toArray( new String[result.size()] );
-		}
-		
-		throw new UnsupportedOperationException( "Cannot list files for URL " + dirURL );
-	}
-	
-	public static boolean extractZipResource( String path, File dest ) throws IOException
-	{
-		return extractZipResource( path, dest, Loader.class );
-	}
-	
-	public static boolean extractZipResource( String path, File dest, Class<?> clz ) throws IOException
-	{
-		File temp = new File( "temp.zip" );
-		putResource( clz, path, temp );
-		
-		ZipFile zip = new ZipFile( temp );
-		
-		try
-		{
-			Enumeration<? extends ZipEntry> entries = zip.entries();
-			
-			while ( entries.hasMoreElements() )
-			{
-				ZipEntry entry = entries.nextElement();
-				File save = new File( dest, entry.getName() );
-				if ( entry.isDirectory() )
-					save.mkdirs();
-				else
-				{
-					if ( save.getParentFile() != null )
-					{
-						save.getParentFile().mkdirs();
-						FileUtils.copyInputStreamToFile( zip.getInputStream( entry ), save );
-					}
-				}
-			}
-		}
-		finally
-		{
-			zip.close();
-			temp.delete();
-		}
-		
-		return true;
-	}
-	
-	public static String resourceToString( String resource ) throws UnsupportedEncodingException, IOException
-	{
-		return resourceToString( resource, Loader.class );
-	}
-	
-	public static String resourceToString( String resource, Class<?> clz ) throws UnsupportedEncodingException, IOException
-	{
-		InputStream is = clz.getClassLoader().getResourceAsStream( resource );
-		
-		if ( is == null )
-			return null;
-		
-		return new String( inputStream2Bytes( is ), "UTF-8" );
+		if ( info != DirectoryInfo.DIRECTORY_HEALTHY )
+			throw new IOException( info.getDescription( file ) );
 	}
 	
 	public static boolean extractNatives( File libFile, File baseDir ) throws IOException
@@ -779,9 +494,7 @@ public class FileFunc
 		{
 			JarEntry entry = entries.nextElement();
 			
-			if ( !entry.isDirectory() && ( entry.getName().endsWith( ".so" ) || entry.getName().endsWith( ".dll" ) || entry.getName().endsWith( ".jnilib" ) || entry.getName().endsWith( ".dylib" ) ) ) // Linux - .so | Windows - .dll | Mac OS
-																																																		// X - .jnilib|.dylib
-			{
+			if ( !entry.isDirectory() && ( entry.getName().endsWith( ".so" ) || entry.getName().endsWith( ".dll" ) || entry.getName().endsWith( ".jnilib" ) || entry.getName().endsWith( ".dylib" ) ) )
 				try
 				{
 					File internal = new File( entry.getName() );
@@ -825,7 +538,6 @@ public class FileFunc
 					jar.close();
 					throw new IOException( "We had a problem extracting native library '" + entry.getName() + "' from jar file '" + libFile.getAbsolutePath() + "'", e );
 				}
-			}
 		}
 		
 		jar.close();
@@ -853,6 +565,76 @@ public class FileFunc
 		return nativesExtracted.size() > 0;
 	}
 	
+	public static boolean extractZipResource( String path, File dest ) throws IOException
+	{
+		return extractZipResource( path, dest, Loader.class );
+	}
+	
+	public static boolean extractZipResource( String path, File dest, Class<?> clz ) throws IOException
+	{
+		File temp = new File( "temp.zip" );
+		putResource( clz, path, temp );
+		
+		ZipFile zip = new ZipFile( temp );
+		
+		try
+		{
+			Enumeration<? extends ZipEntry> entries = zip.entries();
+			
+			while ( entries.hasMoreElements() )
+			{
+				ZipEntry entry = entries.nextElement();
+				File save = new File( dest, entry.getName() );
+				if ( entry.isDirectory() )
+					save.mkdirs();
+				else if ( save.getParentFile() != null )
+				{
+					save.getParentFile().mkdirs();
+					FileUtils.copyInputStreamToFile( zip.getInputStream( entry ), save );
+				}
+			}
+		}
+		finally
+		{
+			zip.close();
+			temp.delete();
+		}
+		
+		return true;
+	}
+	
+	public static File fileHealthCheck( File file ) throws IOException
+	{
+		Validate.notNull( file );
+		
+		if ( file.exists() && file.isDirectory() )
+			file = new File( file, "default" );
+		
+		if ( !file.exists() )
+			file.createNewFile();
+		
+		return file;
+	}
+	
+	public static ByteArrayOutputStream inputStream2ByteArray( InputStream is ) throws IOException
+	{
+		int nRead;
+		byte[] data = new byte[16384];
+		ByteArrayOutputStream bs = new ByteArrayOutputStream();
+		
+		while ( ( nRead = is.read( data, 0, data.length ) ) != -1 )
+			bs.write( data, 0, nRead );
+		
+		bs.flush();
+		
+		return bs;
+	}
+	
+	public static byte[] inputStream2Bytes( InputStream is ) throws IOException
+	{
+		return inputStream2ByteArray( is ).toByteArray();
+	}
+	
 	public static String nameSpaceToPath( String namespace )
 	{
 		return nameSpaceToPath( namespace, false );
@@ -867,5 +649,124 @@ public class FileFunc
 				output = s + "." + output;
 		
 		return output.replaceAll( "\\.", PATH_SEPERATOR );
+	}
+	
+	public static void putResource( Class<?> clz, String resource, File file ) throws IOException
+	{
+		try
+		{
+			InputStream is = clz.getClassLoader().getResourceAsStream( resource );
+			FileOutputStream os = new FileOutputStream( file );
+			ByteStreams.copy( is, os );
+			is.close();
+			os.close();
+		}
+		catch ( FileNotFoundException e )
+		{
+			throw new IOException( e );
+		}
+	}
+	
+	public static void putResource( String resource, File file ) throws IOException
+	{
+		putResource( Loader.class, resource, file );
+	}
+	
+	public static String resourceToString( String resource ) throws UnsupportedEncodingException, IOException
+	{
+		return resourceToString( resource, Loader.class );
+	}
+	
+	public static String resourceToString( String resource, Class<?> clz ) throws UnsupportedEncodingException, IOException
+	{
+		InputStream is = clz.getClassLoader().getResourceAsStream( resource );
+		
+		if ( is == null )
+			return null;
+		
+		return new String( inputStream2Bytes( is ), "UTF-8" );
+	}
+	
+	/**
+	 * List directory contents for a resource folder. Not recursive.
+	 * This is basically a brute-force implementation.
+	 * Works for regular files and also JARs.
+	 * 
+	 * @author Greg Briggs
+	 * @param clazz
+	 *            Any java class that lives in the same place as the resources you want.
+	 * @param path
+	 *            Should end with "/", but not start with one.
+	 * @return Just the name of each member item, not the full paths.
+	 * @throws URISyntaxException
+	 * @throws IOException
+	 */
+	String[] getResourceListing( Class<?> clazz, String path ) throws URISyntaxException, IOException
+	{
+		URL dirURL = clazz.getClassLoader().getResource( path );
+		
+		if ( dirURL == null )
+		{
+			/*
+			 * In case of a jar file, we can't actually find a directory.
+			 * Have to assume the same jar as clazz.
+			 */
+			String me = clazz.getName().replace( ".", "/" ) + ".class";
+			dirURL = clazz.getClassLoader().getResource( me );
+		}
+		
+		if ( dirURL.getProtocol().equals( "file" ) )
+			/* A file path: easy enough */
+			return new File( dirURL.toURI() ).list();
+		
+		if ( dirURL.getProtocol().equals( "jar" ) )
+		{
+			/* A JAR path */
+			String jarPath = dirURL.getPath().substring( 5, dirURL.getPath().indexOf( "!" ) ); // strip out only the JAR file
+			JarFile jar = new JarFile( URLDecoder.decode( jarPath, "UTF-8" ) );
+			Enumeration<JarEntry> entries = jar.entries(); // gives ALL entries in jar
+			Set<String> result = new HashSet<String>(); // avoid duplicates in case it is a subdirectory
+			while ( entries.hasMoreElements() )
+			{
+				String name = entries.nextElement().getName();
+				if ( name.startsWith( path ) )
+				{ // filter according to the path
+					String entry = name.substring( path.length() );
+					int checkSubdir = entry.indexOf( "/" );
+					if ( checkSubdir >= 0 )
+						// if it is a subdirectory, we just return the directory name
+						entry = entry.substring( 0, checkSubdir );
+					result.add( entry );
+				}
+			}
+			jar.close();
+			return result.toArray( new String[result.size()] );
+		}
+		
+		if ( dirURL.getProtocol().equals( "zip" ) )
+		{
+			/* A ZIP path */
+			String zipPath = dirURL.getPath().substring( 5, dirURL.getPath().indexOf( "!" ) ); // strip out only the JAR file
+			ZipFile zip = new ZipFile( URLDecoder.decode( zipPath, "UTF-8" ) );
+			Enumeration<? extends ZipEntry> entries = zip.entries(); // gives ALL entries in jar
+			Set<String> result = new HashSet<String>(); // avoid duplicates in case it is a subdirectory
+			while ( entries.hasMoreElements() )
+			{
+				String name = entries.nextElement().getName();
+				if ( name.startsWith( path ) )
+				{ // filter according to the path
+					String entry = name.substring( path.length() );
+					int checkSubdir = entry.indexOf( "/" );
+					if ( checkSubdir >= 0 )
+						// if it is a subdirectory, we just return the directory name
+						entry = entry.substring( 0, checkSubdir );
+					result.add( entry );
+				}
+			}
+			zip.close();
+			return result.toArray( new String[result.size()] );
+		}
+		
+		throw new UnsupportedOperationException( "Cannot list files for URL " + dirURL );
 	}
 }
