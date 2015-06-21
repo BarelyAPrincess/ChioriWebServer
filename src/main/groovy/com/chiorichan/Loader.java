@@ -254,6 +254,16 @@ public class Loader extends BuiltinEventCreator implements Listener
 				{
 					String startString = "#!/bin/bash\necho \"Starting " + Versioning.getProduct() + " " + Versioning.getVersion() + " [ hit CTRL-C to stop ]\"\njava -Xmx2G -Xms2G -jar " + new File( Loader.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath() ).getAbsolutePath();
 					FileUtils.writeStringToFile( startSh, startString );
+					startSh.setExecutable( true, true );
+				}
+				
+				// Create 'debugstart.sh' Script for Unix-like Systems and if we are in development mode
+				startSh = new File( "debug.sh" );
+				if ( Versioning.isDevelopment() && Versioning.isUnixLikeOS() && !startSh.exists() )
+				{
+					String startString = "#!/bin/bash\necho \"Starting " + Versioning.getProduct() + " " + Versioning.getVersion() + " in debug mode [ hit CTRL-C to stop ]\"\njava -Xmx2G -Xms2G -server -XX:+DisableExplicitGC -Xdebug -Xrunjdwp:transport=dt_socket,address=8686,server=y,suspend=n -jar " + new File( Loader.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath() ).getAbsolutePath();
+					FileUtils.writeStringToFile( startSh, startString );
+					startSh.setExecutable( true, true );
 				}
 			}
 			catch ( IOException | URISyntaxException e )
