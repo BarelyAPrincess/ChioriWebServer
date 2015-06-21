@@ -9,6 +9,7 @@ package com.chiorichan.account.types;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,11 +39,11 @@ public class FileTypeCreator extends AccountTypeCreator
 {
 	public static final AccountTypeCreator INSTANCE = new FileTypeCreator();
 	
-	private File accountsDirectory = null;
 	private List<String> accountFields;
-	private Map<String, AccountContext> preloaded = Maps.newHashMap();
-	
+	private File accountsDirectory = null;
 	private boolean enabled = true;
+	
+	private Map<String, AccountContext> preloaded = Maps.newHashMap();
 	
 	public FileTypeCreator()
 	{
@@ -58,97 +59,39 @@ public class FileTypeCreator extends AccountTypeCreator
 		checkForFiles();
 	}
 	
-	@Override
-	public void save( AccountContext context )
+	public void checkForFiles()
 	{
-		if ( context == null )
+		File[] files = accountsDirectory.listFiles();
+		
+		if ( files == null )
 			return;
 		
-		Map<String, Object> meta = context.meta() == null ? context.getValues() : context.meta().getMeta();
-		
-		if ( !meta.containsKey( "file" ) )
-			meta.put( "file", context.getAcctId() + ".yaml" );
-		
-		YamlConfiguration yser = new YamlConfiguration();
-		
-		for ( String key : meta.keySet() )
-			yser.set( key, meta.get( key ) );
-		
-		try
-		{
-			yser.save( ( String ) meta.get( "file" ) );
-		}
-		catch ( IOException e )
-		{
-			e.printStackTrace();
-		}
+		for ( File f : files )
+			if ( FileFilterUtils.and( FileFilterUtils.suffixFileFilter( "yaml" ), FileFilterUtils.fileFileFilter() ).accept( f ) )
+				if ( !preloaded.containsKey( f.getName() ) )
+					preloaded.put( f.getName(), loadFromFile( f ) );
 	}
 	
 	@Override
-	public void reload( AccountMeta meta )
+	public AccountContext createAccount( String acctId, String siteId )
 	{
-		if ( meta == null || !meta.containsKey( "file" ) )
-			throw new AccountException( "There appears to be a problem with this Account Metadata. Missing the `file` key." );
+		AccountContext context = new AccountContextImpl( this, AccountType.SQL, acctId, siteId );
 		
-		YamlConfiguration yser = YamlConfiguration.loadConfiguration( ( File ) meta.getObject( "file" ) );
+		context.setValue( "date", Timings.epoch() );
+		context.setValue( "numloginfailed", 0 );
+		context.setValue( "lastloginfail", 0 );
+		context.setValue( "actnum", "0" );
 		
-		if ( yser == null )
-			throw new AccountException( "The file for this Account Meta Data is missing. Might have been deleted." );
-		
-		for ( String key : yser.getKeys( false ) )
-			meta.set( key, yser.get( key ) );
+		save( context );
+		return context;
 	}
 	
 	@Override
-	public void preLogin( AccountMeta meta, AccountPermissible via, String acctId, Object... creds )
+	public boolean exists( String acctId )
 	{
-		if ( meta.getInteger( "numloginfail" ) > 5 )
-			if ( meta.getInteger( "lastloginfail" ) > ( Timings.epoch() - 1800 ) )
-				throw new AccountException( AccountResult.UNDER_ATTACK );
+		checkForFiles();
 		
-		if ( !meta.getString( "actnum" ).equals( "0" ) )
-			throw new AccountException( AccountResult.ACCOUNT_NOT_ACTIVATED );
-	}
-	
-	@Override
-	public void successLogin( AccountMeta meta )
-	{
-		if ( !meta.containsKey( "file" ) )
-			return;
-		
-		File file = ( File ) meta.getObject( "file" );
-		
-		if ( file == null )
-			return;
-		
-		YamlConfiguration yser = YamlConfiguration.loadConfiguration( file );
-		
-		if ( yser == null )
-			return;
-		
-		int lastactive = Timings.epoch();
-		int lastlogin = Timings.epoch();
-		int lastloginfail = 0;
-		int numloginfail = 0;
-		
-		meta.set( "lastactive", lastactive );
-		meta.set( "lastlogin", lastlogin );
-		meta.set( "lastloginfail", lastloginfail );
-		meta.set( "numloginfail", numloginfail );
-		
-		yser.set( "lastactive", lastactive );
-		yser.set( "lastlogin", lastlogin );
-		yser.set( "lastloginfail", lastloginfail );
-		yser.set( "numloginfail", numloginfail );
-		
-		try
-		{
-			yser.save( file );
-		}
-		catch ( IOException e )
-		{
-			e.printStackTrace();
-		}
+		return preloaded.containsKey( acctId );
 	}
 	
 	@Override
@@ -202,22 +145,15 @@ public class FileTypeCreator extends AccountTypeCreator
 	}
 	
 	@Override
+	public List<String> getLoginKeys()
+	{
+		return accountFields;
+	}
+	
+	@Override
 	public boolean isEnabled()
 	{
 		return enabled;
-	}
-	
-	public void checkForFiles()
-	{
-		File[] files = accountsDirectory.listFiles();
-		
-		if ( files == null )
-			return;
-		
-		for ( File f : files )
-			if ( FileFilterUtils.and( FileFilterUtils.suffixFileFilter( "yaml" ), FileFilterUtils.fileFileFilter() ).accept( f ) )
-				if ( !preloaded.containsKey( f.getName() ) )
-					preloaded.put( f.getName(), loadFromFile( f ) );
 	}
 	
 	public AccountContext loadFromFile( File absoluteFilePath )
@@ -238,9 +174,7 @@ public class FileTypeCreator extends AccountTypeCreator
 		contents.put( "file", absoluteFilePath );
 		
 		for ( String key : yser.getKeys( false ) )
-		{
 			contents.put( key, yser.get( key ) );
-		}
 		
 		context.setAcctId( yser.getString( "acctId" ) );
 		context.setSiteId( yser.getString( "siteId" ) );
@@ -248,6 +182,19 @@ public class FileTypeCreator extends AccountTypeCreator
 		context.setValues( contents );
 		
 		return context;
+	}
+	
+	@EventHandler
+	public void onAccountLookupEvent( AccountLookupEvent event )
+	{
+		try
+		{
+			event.setResult( readAccount( event.getAcctId() ), AccountResult.LOGIN_SUCCESS );
+		}
+		catch ( AccountException e )
+		{
+			event.setResult( e.getContext(), e.getResult() );
+		}
 	}
 	
 	/*
@@ -296,6 +243,17 @@ public class FileTypeCreator extends AccountTypeCreator
 	 * }
 	 */
 	
+	@Override
+	public void preLogin( AccountMeta meta, AccountPermissible via, String acctId, Object... creds )
+	{
+		if ( meta.getInteger( "numloginfail" ) > 5 )
+			if ( meta.getInteger( "lastloginfail" ) > ( Timings.epoch() - 1800 ) )
+				throw new AccountException( AccountResult.UNDER_ATTACK );
+		
+		if ( !meta.getString( "actnum" ).equals( "0" ) )
+			throw new AccountException( AccountResult.ACCOUNT_NOT_ACTIVATED );
+	}
+	
 	public AccountContext readAccount( String acctId ) throws AccountException
 	{
 		AccountContext context = null;
@@ -314,13 +272,11 @@ public class FileTypeCreator extends AccountTypeCreator
 			}
 			
 			for ( String f : accountFields )
-			{
 				if ( ( context1.getValues().get( f ) != null && ObjectFunc.castToString( context1.getValues().get( f ) ).equalsIgnoreCase( acctId ) ) )
 				{
 					context = context1;
 					break;
 				}
-			}
 		}
 		
 		if ( context == null )
@@ -330,44 +286,85 @@ public class FileTypeCreator extends AccountTypeCreator
 	}
 	
 	@Override
-	public AccountContext createAccount( String acctId, String siteId )
+	public void reload( AccountMeta meta )
 	{
-		AccountContext context = new AccountContextImpl( this, AccountType.SQL, acctId, siteId );
+		if ( meta == null || !meta.containsKey( "file" ) )
+			throw new AccountException( "There appears to be a problem with this Account Metadata. Missing the `file` key." );
 		
-		context.setValue( "date", Timings.epoch() );
-		context.setValue( "numloginfailed", 0 );
-		context.setValue( "lastloginfail", 0 );
-		context.setValue( "actnum", "0" );
+		YamlConfiguration yser = YamlConfiguration.loadConfiguration( ( File ) meta.getObject( "file" ) );
 		
-		save( context );
-		return context;
+		if ( yser == null )
+			throw new AccountException( "The file for this Account Meta Data is missing. Might have been deleted." );
+		
+		for ( String key : yser.getKeys( false ) )
+			meta.set( key, yser.get( key ) );
 	}
 	
-	@EventHandler
-	public void onAccountLookupEvent( AccountLookupEvent event )
+	@Override
+	public void save( AccountContext context )
 	{
+		if ( context == null )
+			return;
+		
+		Map<String, Object> meta = new HashMap<String, Object>( context.meta() == null ? context.getValues() : context.meta().getMeta() );
+		
+		if ( !meta.containsKey( "file" ) )
+			meta.put( "file", context.getAcctId() + ".yaml" );
+		
+		YamlConfiguration yser = new YamlConfiguration();
+		
+		for ( String key : meta.keySet() )
+			yser.set( key, meta.get( key ) );
+		
 		try
 		{
-			event.setResult( readAccount( event.getAcctId() ), AccountResult.LOGIN_SUCCESS );
+			yser.save( new File( accountsDirectory, ( String ) meta.get( "file" ) ) );
 		}
-		catch ( AccountException e )
+		catch ( IOException e )
 		{
-			event.setResult( e.getContext(), e.getResult() );
+			e.printStackTrace();
 		}
 	}
 	
 	@Override
-	public List<String> getLoginKeys()
+	public void successLogin( AccountMeta meta )
 	{
-		return accountFields;
-	}
-	
-	@Override
-	public boolean exists( String acctId )
-	{
-		checkForFiles();
+		if ( !meta.containsKey( "file" ) )
+			return;
 		
-		return preloaded.containsKey( acctId );
+		File file = ( File ) meta.getObject( "file" );
+		
+		if ( file == null )
+			return;
+		
+		YamlConfiguration yser = YamlConfiguration.loadConfiguration( file );
+		
+		if ( yser == null )
+			return;
+		
+		int lastactive = Timings.epoch();
+		int lastlogin = Timings.epoch();
+		int lastloginfail = 0;
+		int numloginfail = 0;
+		
+		meta.set( "lastactive", lastactive );
+		meta.set( "lastlogin", lastlogin );
+		meta.set( "lastloginfail", lastloginfail );
+		meta.set( "numloginfail", numloginfail );
+		
+		yser.set( "lastactive", lastactive );
+		yser.set( "lastlogin", lastlogin );
+		yser.set( "lastloginfail", lastloginfail );
+		yser.set( "numloginfail", numloginfail );
+		
+		try
+		{
+			yser.save( file );
+		}
+		catch ( IOException e )
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	/*
