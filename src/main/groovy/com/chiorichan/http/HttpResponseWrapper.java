@@ -52,21 +52,20 @@ import com.google.common.collect.Maps;
 /**
  * Wraps the Netty HttpResponse to provide easy methods for manipulating the result of each request
  * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class HttpResponseWrapper
 {
-	final HttpRequestWrapper request;
-	ByteBuf output = Unpooled.buffer();
-	HttpResponseStatus httpStatus = HttpResponseStatus.OK;
-	String httpContentType = "text/html";
 	Charset encoding = Charsets.UTF_8;
-	HttpResponseStage stage = HttpResponseStage.READING;
-	final Map<String, String> pageDataOverrides = Maps.newHashMap();
 	final Map<String, String> headers = Maps.newHashMap();
 	ApacheParser htaccess = null;
+	String httpContentType = "text/html";
+	HttpResponseStatus httpStatus = HttpResponseStatus.OK;
 	final LogEvent log;
+	ByteBuf output = Unpooled.buffer();
+	final Map<String, String> pageDataOverrides = Maps.newHashMap();
+	final HttpRequestWrapper request;
+	HttpResponseStage stage = HttpResponseStage.READING;
 	
 	protected HttpResponseWrapper( HttpRequestWrapper request, LogEvent log )
 	{
@@ -74,14 +73,111 @@ public class HttpResponseWrapper
 		this.log = log;
 	}
 	
+	public void close()
+	{
+		request.getChannel().close();
+		stage = HttpResponseStage.CLOSED;
+	}
+	
+	public void finishMultipart() throws IOException
+	{
+		if ( stage == HttpResponseStage.CLOSED )
+			throw new IllegalStateException( "You can't access closeMultipart unless you start MULTIPART with sendMultipart." );
+		
+		stage = HttpResponseStage.CLOSED;
+		
+		// Write the end marker
+		ChannelFuture lastContentFuture = request.getChannel().writeAndFlush( LastHttpContent.EMPTY_LAST_CONTENT );
+		
+		// Decide whether to close the connection or not.
+		// if ( !isKeepAlive( request ) )
+		{
+			// Close the connection when the whole content is written out.
+			lastContentFuture.addListener( ChannelFutureListener.CLOSE );
+		}
+	}
+	
+	public int getHttpCode()
+	{
+		return httpStatus.code();
+	}
+	
+	public String getHttpMsg()
+	{
+		return HttpCode.msg( httpStatus.code() );
+	}
+	
+	public ByteBuf getOutput()
+	{
+		return output;
+	}
+	
+	public byte[] getOutputBytes()
+	{
+		byte[] bytes = new byte[output.writerIndex()];
+		int inx = output.readerIndex();
+		output.readerIndex( 0 );
+		output.readBytes( bytes );
+		output.readerIndex( inx );
+		return bytes;
+	}
+	
+	/**
+	 * 
+	 * @return HttpResponseStage
+	 */
+	public HttpResponseStage getStage()
+	{
+		return stage;
+	}
+	
+	public boolean isCommitted()
+	{
+		return stage == HttpResponseStage.CLOSED || stage == HttpResponseStage.WRITTEN;
+	}
+	
 	public void mergeOverrides( Map<String, String> overrides )
 	{
 		pageDataOverrides.putAll( overrides );
 	}
 	
-	public void setOverride( String key, String val )
+	@Deprecated
+	public void print( byte[] bytes ) throws IOException
 	{
-		pageDataOverrides.put( key, val );
+		write( bytes );
+	}
+	
+	/**
+	 * Prints a single string of text to the buffered output
+	 * 
+	 * @param var1
+	 *            string of text.
+	 * @throws IOException
+	 *             if there was a problem with the output buffer.
+	 */
+	public void print( String var ) throws IOException
+	{
+		if ( var != null && !var.isEmpty() )
+			write( var.getBytes( encoding ) );
+	}
+	
+	/**
+	 * Prints a single string of text with a line return to the buffered output
+	 * 
+	 * @param var1
+	 *            string of text.
+	 * @throws IOException
+	 *             if there was a problem with the output buffer.
+	 */
+	public void println( String var ) throws IOException
+	{
+		if ( var != null && !var.isEmpty() )
+			write( ( var + "\n" ).getBytes( encoding ) );
+	}
+	
+	public void resetBuffer()
+	{
+		output = Unpooled.buffer();
 	}
 	
 	public void sendError( Exception e ) throws IOException
@@ -90,24 +186,6 @@ public class HttpResponseWrapper
 			sendError( ( ( HttpError ) e ).getHttpCode(), ( ( HttpError ) e ).getReason(), ( ( HttpError ) e ).getMessage() );
 		else
 			sendError( 500, e.getMessage() );
-	}
-	
-	public void sendError( int httpCode ) throws IOException
-	{
-		sendError( httpCode, null );
-	}
-	
-	public void sendError( int httpCode, String httpMsg ) throws IOException
-	{
-		sendError( httpCode, httpMsg, null );
-	}
-	
-	public void sendError( int status, String httpMsg, String msg ) throws IOException
-	{
-		if ( status < 1 )
-			status = 500;
-		
-		sendError( HttpResponseStatus.valueOf( status ), httpMsg, msg );
 	}
 	
 	public void sendError( HttpResponseStatus status, String httpMsg, String msg ) throws IOException
@@ -141,7 +219,7 @@ public class HttpResponseWrapper
 		}
 		else
 		{
-			boolean contin = true;
+			boolean printHtml = true;
 			
 			if ( htaccess != null && htaccess.getErrorDocument( status.code() ) != null )
 			{
@@ -150,19 +228,20 @@ public class HttpResponseWrapper
 				if ( resp.startsWith( "/" ) )
 				{
 					sendRedirect( request.getBaseUrl() + resp );
-					contin = false;
+					printHtml = false;
 				}
 				else if ( resp.startsWith( "http" ) )
 				{
 					sendRedirect( resp );
-					contin = false;
+					printHtml = false;
 				}
 				else
 					httpMsg = resp;
 			}
 			
-			if ( contin )
+			if ( printHtml )
 			{
+				println( "<html><head><title>" + status.code() + " - " + httpMsg + "</title></head><body>" );
 				println( "<h1>" + status.code() + " - " + httpMsg + "</h1>" );
 				
 				if ( msg != null && !msg.isEmpty() )
@@ -170,15 +249,29 @@ public class HttpResponseWrapper
 				
 				println( "<hr>" );
 				println( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")<br />" + Versioning.getCopyright() + "</small>" );
+				println( "</body></html>" );
 				
 				sendResponse();
 			}
 		}
 	}
 	
-	public void resetBuffer()
+	public void sendError( int httpCode ) throws IOException
 	{
-		output = Unpooled.buffer();
+		sendError( httpCode, null );
+	}
+	
+	public void sendError( int httpCode, String httpMsg ) throws IOException
+	{
+		sendError( httpCode, httpMsg, null );
+	}
+	
+	public void sendError( int status, String httpMsg, String msg ) throws IOException
+	{
+		if ( status < 1 )
+			status = 500;
+		
+		sendError( HttpResponseStatus.valueOf( status ), httpMsg, msg );
 	}
 	
 	public void sendException( Throwable cause ) throws IOException
@@ -219,51 +312,7 @@ public class HttpResponseWrapper
 				sendError( httpStatus, null, "<pre>" + ExceptionUtils.getStackTrace( cause ) + "</pre>" );
 		}
 		else
-		{
 			sendError( 500, null, "<pre>" + ExceptionUtils.getStackTrace( cause ) + "</pre>" );
-		}
-	}
-	
-	public ByteBuf getOutput()
-	{
-		return output;
-	}
-	
-	public byte[] getOutputBytes()
-	{
-		byte[] bytes = new byte[output.writerIndex()];
-		int inx = output.readerIndex();
-		output.readerIndex( 0 );
-		output.readBytes( bytes );
-		output.readerIndex( inx );
-		return bytes;
-	}
-	
-	public boolean isCommitted()
-	{
-		return stage == HttpResponseStage.CLOSED || stage == HttpResponseStage.WRITTEN;
-	}
-	
-	/**
-	 * 
-	 * @return HttpResponseStage
-	 */
-	public HttpResponseStage getStage()
-	{
-		return stage;
-	}
-	
-	public void setStatus( int status )
-	{
-		setStatus( HttpResponseStatus.valueOf( status ) );
-	}
-	
-	public void setStatus( HttpResponseStatus httpStatus )
-	{
-		if ( stage == HttpResponseStage.CLOSED )
-			throw new IllegalStateException( "You can't access setStatus method within this HttpResponse because the connection has been closed." );
-		
-		this.httpStatus = httpStatus;
 	}
 	
 	/**
@@ -287,6 +336,85 @@ public class HttpResponseWrapper
 		 */
 		String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
 		sendRedirect( loginForm + "?msg=&target=http://" + request.getDomain() + request.getUri() );
+	}
+	
+	public void sendMultipart( byte[] bytesToWrite ) throws IOException
+	{
+		if ( request.getMethod().equals( HttpMethod.HEAD ) )
+			throw new IllegalStateException( "You can't start MULTIPART mode on a HEAD Request." );
+		
+		if ( stage != HttpResponseStage.MULTIPART )
+		{
+			stage = HttpResponseStage.MULTIPART;
+			HttpResponse response = new DefaultHttpResponse( HttpVersion.HTTP_1_1, HttpResponseStatus.OK );
+			
+			HttpHeaders h = response.headers();
+			try
+			{
+				request.getSession().save();
+			}
+			catch ( SessionException e )
+			{
+				e.printStackTrace();
+			}
+			
+			for ( HttpCookie c : request.getCookies() )
+				if ( c.needsUpdating() )
+					h.add( "Set-Cookie", c.toHeaderValue() );
+			
+			if ( h.get( "Server" ) == null )
+				h.add( "Server", Versioning.getProduct() + " Version " + Versioning.getVersion() );
+			
+			h.add( "Access-Control-Allow-Origin", request.getSite().getYaml().getString( "web.allowed-origin", "*" ) );
+			h.add( "Connection", "close" );
+			h.add( "Cache-Control", "no-cache" );
+			h.add( "Cache-Control", "private" );
+			h.add( "Pragma", "no-cache" );
+			h.set( "Content-Type", "multipart/x-mixed-replace; boundary=--cwsframe" );
+			
+			// if ( isKeepAlive( request ) )
+			{
+				// response.headers().set( CONNECTION, HttpHeaders.Values.KEEP_ALIVE );
+			}
+			
+			request.getChannel().write( response );
+		}
+		else
+		{
+			StringBuilder sb = new StringBuilder();
+			
+			sb.append( "--cwsframe\r\n" );
+			sb.append( "Content-Type: " + httpContentType + "\r\n" );
+			sb.append( "Content-Length: " + bytesToWrite.length + "\r\n\r\n" );
+			
+			ByteArrayOutputStream ba = new ByteArrayOutputStream();
+			
+			ba.write( sb.toString().getBytes( encoding ) );
+			ba.write( bytesToWrite );
+			ba.flush();
+			
+			ChannelFuture sendFuture = request.getChannel().write( new ChunkedStream( new ByteArrayInputStream( ba.toByteArray() ) ), request.getChannel().newProgressivePromise() );
+			
+			ba.close();
+			
+			sendFuture.addListener( new ChannelProgressiveFutureListener()
+			{
+				@Override
+				public void operationComplete( ChannelProgressiveFuture future ) throws Exception
+				{
+					NetworkManager.getLogger().info( "Transfer complete." );
+				}
+				
+				@Override
+				public void operationProgressed( ChannelProgressiveFuture future, long progress, long total )
+				{
+					if ( total < 0 )
+						NetworkManager.getLogger().info( "Transfer progress: " + progress );
+					else
+						NetworkManager.getLogger().info( "Transfer progress: " + progress + " / " + total );
+				}
+			} );
+		}
 	}
 	
 	/**
@@ -362,86 +490,6 @@ public class HttpResponseWrapper
 	}
 	
 	/**
-	 * Writes a ByteBuf to the buffered output
-	 * 
-	 * @param var
-	 *            byte buffer to print
-	 * @throws IOException
-	 *             if there was a problem with the output buffer.
-	 */
-	public void write( ByteBuf buf ) throws IOException
-	{
-		if ( stage != HttpResponseStage.MULTIPART )
-			stage = HttpResponseStage.WRITTING;
-		
-		output.writeBytes( buf );
-	}
-	
-	/**
-	 * Writes a byte array to the buffered output.
-	 * 
-	 * @param var
-	 *            byte array to print
-	 * @throws IOException
-	 *             if there was a problem with the output buffer.
-	 */
-	public void write( byte[] bytes ) throws IOException
-	{
-		if ( stage != HttpResponseStage.MULTIPART )
-			stage = HttpResponseStage.WRITTING;
-		
-		output.writeBytes( bytes );
-	}
-	
-	@Deprecated
-	public void print( byte[] bytes ) throws IOException
-	{
-		write( bytes );
-	}
-	
-	/**
-	 * Prints a single string of text to the buffered output
-	 * 
-	 * @param var1
-	 *            string of text.
-	 * @throws IOException
-	 *             if there was a problem with the output buffer.
-	 */
-	public void print( String var ) throws IOException
-	{
-		if ( var != null && !var.isEmpty() )
-			write( var.getBytes( encoding ) );
-	}
-	
-	/**
-	 * Prints a single string of text with a line return to the buffered output
-	 * 
-	 * @param var1
-	 *            string of text.
-	 * @throws IOException
-	 *             if there was a problem with the output buffer.
-	 */
-	public void println( String var ) throws IOException
-	{
-		if ( var != null && !var.isEmpty() )
-			write( ( var + "\n" ).getBytes( encoding ) );
-	}
-	
-	/**
-	 * Sets the ContentType header.
-	 * 
-	 * @param type
-	 *            e.g., text/html or application/xml
-	 */
-	public void setContentType( String type )
-	{
-		if ( type == null || type.isEmpty() )
-			type = "text/html";
-		
-		httpContentType = type;
-	}
-	
-	/**
 	 * Sends the data to the client. Internal Use.
 	 * 
 	 * @throws IOException
@@ -481,9 +529,7 @@ public class HttpResponseWrapper
 		h.add( "Access-Control-Allow-Origin", request.getSite().getYaml().getString( "web.allowed-origin", "*" ) );
 		
 		for ( Entry<String, String> header : headers.entrySet() )
-		{
 			h.add( header.getKey(), header.getValue() );
-		}
 		
 		// Expires: Wed, 08 Apr 2015 02:32:24 GMT
 		// DateTimeFormatter formatter = DateTimeFormat.forPattern( "EE, dd-MMM-yyyy HH:mm:ss zz" );
@@ -499,118 +545,23 @@ public class HttpResponseWrapper
 		request.getChannel().writeAndFlush( response );
 	}
 	
-	public void close()
+	public void setApacheParser( ApacheParser htaccess )
 	{
-		request.getChannel().close();
-		stage = HttpResponseStage.CLOSED;
+		this.htaccess = htaccess;
 	}
 	
-	public void finishMultipart() throws IOException
+	/**
+	 * Sets the ContentType header.
+	 * 
+	 * @param type
+	 *            e.g., text/html or application/xml
+	 */
+	public void setContentType( String type )
 	{
-		if ( stage == HttpResponseStage.CLOSED )
-			throw new IllegalStateException( "You can't access closeMultipart unless you start MULTIPART with sendMultipart." );
+		if ( type == null || type.isEmpty() )
+			type = "text/html";
 		
-		stage = HttpResponseStage.CLOSED;
-		
-		// Write the end marker
-		ChannelFuture lastContentFuture = request.getChannel().writeAndFlush( LastHttpContent.EMPTY_LAST_CONTENT );
-		
-		// Decide whether to close the connection or not.
-		// if ( !isKeepAlive( request ) )
-		{
-			// Close the connection when the whole content is written out.
-			lastContentFuture.addListener( ChannelFutureListener.CLOSE );
-		}
-	}
-	
-	public void sendMultipart( byte[] bytesToWrite ) throws IOException
-	{
-		if ( request.getMethod().equals( HttpMethod.HEAD ) )
-			throw new IllegalStateException( "You can't start MULTIPART mode on a HEAD Request." );
-		
-		if ( stage != HttpResponseStage.MULTIPART )
-		{
-			stage = HttpResponseStage.MULTIPART;
-			HttpResponse response = new DefaultHttpResponse( HttpVersion.HTTP_1_1, HttpResponseStatus.OK );
-			
-			HttpHeaders h = response.headers();
-			try
-			{
-				request.getSession().save();
-			}
-			catch ( SessionException e )
-			{
-				e.printStackTrace();
-			}
-			
-			for ( HttpCookie c : request.getCookies() )
-			{
-				if ( c.needsUpdating() )
-					h.add( "Set-Cookie", c.toHeaderValue() );
-			}
-			
-			if ( h.get( "Server" ) == null )
-				h.add( "Server", Versioning.getProduct() + " Version " + Versioning.getVersion() );
-			
-			h.add( "Access-Control-Allow-Origin", request.getSite().getYaml().getString( "web.allowed-origin", "*" ) );
-			h.add( "Connection", "close" );
-			h.add( "Cache-Control", "no-cache" );
-			h.add( "Cache-Control", "private" );
-			h.add( "Pragma", "no-cache" );
-			h.set( "Content-Type", "multipart/x-mixed-replace; boundary=--cwsframe" );
-			
-			// if ( isKeepAlive( request ) )
-			{
-				// response.headers().set( CONNECTION, HttpHeaders.Values.KEEP_ALIVE );
-			}
-			
-			request.getChannel().write( response );
-		}
-		else
-		{
-			StringBuilder sb = new StringBuilder();
-			
-			sb.append( "--cwsframe\r\n" );
-			sb.append( "Content-Type: " + httpContentType + "\r\n" );
-			sb.append( "Content-Length: " + bytesToWrite.length + "\r\n\r\n" );
-			
-			ByteArrayOutputStream ba = new ByteArrayOutputStream();
-			
-			ba.write( sb.toString().getBytes( encoding ) );
-			ba.write( bytesToWrite );
-			ba.flush();
-			
-			ChannelFuture sendFuture = request.getChannel().write( new ChunkedStream( new ByteArrayInputStream( ba.toByteArray() ) ), request.getChannel().newProgressivePromise() );
-			
-			ba.close();
-			
-			sendFuture.addListener( new ChannelProgressiveFutureListener()
-			{
-				@Override
-				public void operationProgressed( ChannelProgressiveFuture future, long progress, long total )
-				{
-					if ( total < 0 )
-					{ // total unknown
-						NetworkManager.getLogger().info( "Transfer progress: " + progress );
-					}
-					else
-					{
-						NetworkManager.getLogger().info( "Transfer progress: " + progress + " / " + total );
-					}
-				}
-				
-				@Override
-				public void operationComplete( ChannelProgressiveFuture future ) throws Exception
-				{
-					NetworkManager.getLogger().info( "Transfer complete." );
-				}
-			} );
-		}
-	}
-	
-	public void setEncoding( String encoding )
-	{
-		this.encoding = Charset.forName( encoding );
+		httpContentType = type;
 	}
 	
 	public void setEncoding( Charset encoding )
@@ -618,23 +569,63 @@ public class HttpResponseWrapper
 		this.encoding = encoding;
 	}
 	
+	public void setEncoding( String encoding )
+	{
+		this.encoding = Charset.forName( encoding );
+	}
+	
 	public void setHeader( String key, String val )
 	{
 		headers.put( key, val );
 	}
 	
-	public int getHttpCode()
+	public void setOverride( String key, String val )
 	{
-		return httpStatus.code();
+		pageDataOverrides.put( key, val );
 	}
 	
-	public String getHttpMsg()
+	public void setStatus( HttpResponseStatus httpStatus )
 	{
-		return HttpCode.msg( httpStatus.code() );
+		if ( stage == HttpResponseStage.CLOSED )
+			throw new IllegalStateException( "You can't access setStatus method within this HttpResponse because the connection has been closed." );
+		
+		this.httpStatus = httpStatus;
 	}
 	
-	public void setApacheParser( ApacheParser htaccess )
+	public void setStatus( int status )
 	{
-		this.htaccess = htaccess;
+		setStatus( HttpResponseStatus.valueOf( status ) );
+	}
+	
+	/**
+	 * Writes a byte array to the buffered output.
+	 * 
+	 * @param var
+	 *            byte array to print
+	 * @throws IOException
+	 *             if there was a problem with the output buffer.
+	 */
+	public void write( byte[] bytes ) throws IOException
+	{
+		if ( stage != HttpResponseStage.MULTIPART )
+			stage = HttpResponseStage.WRITTING;
+		
+		output.writeBytes( bytes );
+	}
+	
+	/**
+	 * Writes a ByteBuf to the buffered output
+	 * 
+	 * @param var
+	 *            byte buffer to print
+	 * @throws IOException
+	 *             if there was a problem with the output buffer.
+	 */
+	public void write( ByteBuf buf ) throws IOException
+	{
+		if ( stage != HttpResponseStage.MULTIPART )
+			stage = HttpResponseStage.WRITTING;
+		
+		output.writeBytes( buf );
 	}
 }
