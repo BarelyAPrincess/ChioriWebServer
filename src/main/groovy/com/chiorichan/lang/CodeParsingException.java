@@ -17,9 +17,6 @@ import org.codehaus.groovy.control.CompilationFailedException;
 
 import com.chiorichan.util.WebFunc;
 
-/**
- * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
- */
 public class CodeParsingException extends Exception
 {
 	private static final long serialVersionUID = 6622374555743321786L;

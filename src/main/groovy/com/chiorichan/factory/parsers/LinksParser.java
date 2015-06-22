@@ -14,9 +14,6 @@ import java.util.Map.Entry;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 
-/**
- * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
- */
 public class LinksParser extends HTMLCommentParser
 {
 	Site site;

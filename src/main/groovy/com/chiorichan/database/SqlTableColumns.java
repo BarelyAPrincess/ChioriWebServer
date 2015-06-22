@@ -15,9 +15,6 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 
-/**
- * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
- */
 public class SqlTableColumns implements Iterable<String>
 {
 	public class SqlColumn

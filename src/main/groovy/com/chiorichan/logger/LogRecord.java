@@ -18,9 +18,6 @@ import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.lang.EvalException;
 import com.google.common.collect.Lists;
 
-/**
- * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
- */
 class LogRecord implements ILogEvent
 {
 	String header = null;

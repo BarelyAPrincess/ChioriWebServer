@@ -13,9 +13,6 @@ import com.chiorichan.event.Event;
 import com.chiorichan.event.HandlerList;
 import com.chiorichan.factory.EvalExecutionContext;
 
-/**
- * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
- */
 public class PostEvalEvent extends Event implements Cancellable
 {
 	private EvalExecutionContext context;

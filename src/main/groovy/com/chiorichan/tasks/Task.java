@@ -9,9 +9,6 @@
 package com.chiorichan.tasks;
 
 
-/**
- * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
- */
 class Task implements ITask, Runnable
 {
 	private volatile Task next = null;

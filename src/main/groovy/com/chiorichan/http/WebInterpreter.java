@@ -27,9 +27,6 @@ import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.google.common.collect.Maps;
 
-/**
- * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
- */
 public class WebInterpreter extends FileInterpreter
 {
 	protected Map<String, String> rewriteParams = Maps.newTreeMap();

@@ -26,9 +26,6 @@ import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.updater.BuildArtifact.ChangeSet.ChangeSetDetails;
 import com.chiorichan.util.Versioning;
 
-/**
- * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
- */
 public class AutoUpdater extends BuiltinEventCreator implements Listener, TaskCreator
 {
 	public static final String WARN_CONSOLE = "warn-console";
