@@ -8,9 +8,6 @@
  */
 package com.chiorichan.permission.lang;
 
-/**
- * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
- */
 public class PermissionValueException extends PermissionException
 {
 	private static final long serialVersionUID = -4762649378128218189L;

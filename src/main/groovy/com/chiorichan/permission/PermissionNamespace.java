@@ -38,9 +38,46 @@ public class PermissionNamespace
 		nodes = namespace.toLowerCase().split( "\\." );
 	}
 	
-	public int getNodeCount()
+	/**
+	 * Checks is namespace only contains valid characters.
+	 * 
+	 * @return True if namespace contains only valid characters
+	 */
+	public boolean containsOnlyValidChars()
 	{
-		return nodes.length;
+		boolean isValid = true;
+		
+		for ( String n : nodes )
+			if ( !n.matches( "[a-z0-9_]*" ) )
+				isValid = false;
+		
+		return isValid;
+	}
+	
+	public boolean containsRegex()
+	{
+		boolean containsRegex = false;
+		
+		for ( String s : nodes )
+			if ( s.contains( "*" ) || s.matches( ".*[0-9]+-[0-9]+.*" ) )
+				containsRegex = true;
+		
+		return containsRegex;
+	}
+	
+	/**
+	 * Filters out invalid characters from namespace.
+	 * 
+	 * @return The fixed PermissionNamespace.
+	 */
+	public PermissionNamespace fixInvalidChars()
+	{
+		String[] result = new String[nodes.length];
+		
+		for ( int i = 0; i < nodes.length; i++ )
+			result[i] = nodes[i].replaceAll( "[^a-z0-9_]", "" );
+		
+		return new PermissionNamespace( result );
 	}
 	
 	public String getLocalName()
@@ -48,14 +85,19 @@ public class PermissionNamespace
 		return nodes[nodes.length - 1];
 	}
 	
-	public String getRootName()
-	{
-		return nodes[0];
-	}
-	
 	public String getNamespace()
 	{
 		return Joiner.on( "." ).join( nodes );
+	}
+	
+	public int getNodeCount()
+	{
+		return nodes.length;
+	}
+	
+	public String[] getNodes()
+	{
+		return nodes;
 	}
 	
 	public String getParent()
@@ -74,75 +116,9 @@ public class PermissionNamespace
 		return new PermissionNamespace( getParent() );
 	}
 	
-	public int matchPercentage( String namespace )
+	public String getRootName()
 	{
-		if ( namespace == null )
-			namespace = "";
-		
-		String[] dest = namespace.toLowerCase().split( "\\." );
-		
-		int total = 0;
-		int perNode = 99 / nodes.length;
-		
-		for ( int i = 0; i < Math.min( nodes.length, dest.length ); i++ )
-		{
-			if ( nodes[i].equals( dest[i] ) )
-				total += perNode;
-			else
-				break;
-		}
-		
-		if ( nodes.length == dest.length )
-			total += 1;
-		
-		return total;
-	}
-	
-	/**
-	 * Checks is namespace only contains valid characters.
-	 * 
-	 * @return True if namespace contains only valid characters
-	 */
-	public boolean containsOnlyValidChars()
-	{
-		boolean isValid = true;
-		
-		for ( String n : nodes )
-			if ( !n.matches( "[a-z0-9_]*" ) )
-				isValid = false;
-		
-		return isValid;
-	}
-	
-	/**
-	 * Filters out invalid characters from namespace.
-	 * 
-	 * @return The fixed PermissionNamespace.
-	 */
-	public PermissionNamespace fixInvalidChars()
-	{
-		String[] result = new String[nodes.length];
-		
-		for ( int i = 0; i < nodes.length; i++ )
-			result[i] = nodes[i].replaceAll( "[^a-z0-9_]", "" );
-		
-		return new PermissionNamespace( result );
-	}
-	
-	public String[] getNodes()
-	{
-		return nodes;
-	}
-	
-	public boolean containsRegex()
-	{
-		boolean containsRegex = false;
-		
-		for ( String s : nodes )
-			if ( s.contains( "*" ) || s.matches( ".*[0-9]+-[0-9]+.*" ) )
-				containsRegex = true;
-		
-		return containsRegex;
+		return nodes[0];
 	}
 	
 	public boolean matches( Permission perm )
@@ -160,6 +136,28 @@ public class PermissionNamespace
 			return false;
 		
 		return prepareRegexp().matcher( perm ).matches();
+	}
+	
+	public int matchPercentage( String namespace )
+	{
+		if ( namespace == null )
+			namespace = "";
+		
+		String[] dest = namespace.toLowerCase().split( "\\." );
+		
+		int total = 0;
+		int perNode = 99 / nodes.length;
+		
+		for ( int i = 0; i < Math.min( nodes.length, dest.length ); i++ )
+			if ( nodes[i].equals( dest[i] ) )
+				total += perNode;
+			else
+				break;
+		
+		if ( nodes.length == dest.length )
+			total += 1;
+		
+		return total;
 	}
 	
 	/**
@@ -187,9 +185,7 @@ public class PermissionNamespace
 				{
 					range.append( i );
 					if ( i < Math.max( from, to ) )
-					{
 						range.append( "|" );
-					}
 				}
 				
 				range.append( ")" );
@@ -209,5 +205,11 @@ public class PermissionNamespace
 		{
 			return Pattern.compile( Pattern.quote( regexpOrig.replace( "*", "(.*)" ) ), Pattern.CASE_INSENSITIVE );
 		}
+	}
+	
+	@Override
+	public String toString()
+	{
+		return getNamespace();
 	}
 }

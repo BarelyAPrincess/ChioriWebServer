@@ -68,7 +68,7 @@ public class MemoryBackend extends PermissionBackend
 	@Override
 	public void initialize() throws PermissionBackendException
 	{
-		
+		// Nothing to do here!
 	}
 	
 	@Override
@@ -86,13 +86,13 @@ public class MemoryBackend extends PermissionBackend
 	@Override
 	public void nodeDestroy( Permission perm )
 	{
-		
+		// Nothing to do here!
 	}
 
 	@Override
 	public void nodeReload( Permission perm )
 	{
-		// TODO Auto-generated method stub
+		// Nothing to do here!
 	}
 
 	@Override
@@ -104,6 +104,6 @@ public class MemoryBackend extends PermissionBackend
 	@Override
 	public void setDefaultGroup( String child, String... site )
 	{
-		
+		// Nothing to do here!
 	}
 }

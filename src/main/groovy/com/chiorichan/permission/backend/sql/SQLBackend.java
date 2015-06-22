@@ -233,12 +233,6 @@ public class SQLBackend extends PermissionBackend
 		{
 			DatabaseEngine db = getSQL();
 			
-			if ( !PermissionManager.isInitialized() )
-			{
-				Loader.getLogger().warning( "There was an attempt to commit() changes made to a permission node before we finished loading." );
-				return;
-			}
-			
 			PermissionModelValue model = perm.getModel();
 			
 			ResultSet rs = db.query( "SELECT * FROM `permissions` WHERE `permission` = '" + perm.getNamespace() + "';" );

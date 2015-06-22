@@ -15,9 +15,6 @@ import java.util.List;
 import com.chiorichan.util.StringFunc;
 import com.google.common.collect.Lists;
 
-/**
- * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
- */
 public class ChildPermission
 {
 	private boolean isInherited;

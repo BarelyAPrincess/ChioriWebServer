@@ -25,9 +25,6 @@ import com.chiorichan.util.ObjectFunc;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 
-/**
- * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
- */
 public class SQLEntity extends PermissibleEntityProxy
 {
 	public SQLEntity( String id, SQLBackend sql )

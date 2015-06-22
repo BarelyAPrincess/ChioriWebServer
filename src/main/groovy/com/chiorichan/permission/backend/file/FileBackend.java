@@ -306,12 +306,6 @@ public class FileBackend extends PermissionBackend
 	@Override
 	public void nodeCommit( Permission perm )
 	{
-		if ( !PermissionManager.isInitialized() )
-		{
-			Loader.getLogger().warning( "There was an attempt to commit() changes made to a permission node before we finished loading." );
-			return;
-		}
-		
 		PermissionModelValue model = perm.getModel();
 		
 		ConfigurationSection permissionsSection = permissions.getConfigurationSection( "permissions", true );
