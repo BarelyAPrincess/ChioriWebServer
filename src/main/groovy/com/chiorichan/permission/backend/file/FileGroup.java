@@ -12,13 +12,19 @@ import com.chiorichan.permission.PermissibleGroup;
 
 public class FileGroup extends PermissibleGroup
 {
-	public FileGroup( String name, FileBackend backend )
+	public FileGroup( String name )
 	{
-		super( name, backend );
+		super( name );
 	}
 	
 	@Override
-	public void save()
+	public void reloadGroups()
+	{
+		
+	}
+	
+	@Override
+	public void reloadPermissions()
 	{
 		
 	}
@@ -28,16 +34,10 @@ public class FileGroup extends PermissibleGroup
 	{
 		
 	}
-
+	
 	@Override
-	public void reloadPermissions()
+	public void save()
 	{
-		// TODO Auto-generated method stub
-	}
-
-	@Override
-	public void reloadGroups()
-	{
-		// TODO Auto-generated method stub
+		
 	}
 }

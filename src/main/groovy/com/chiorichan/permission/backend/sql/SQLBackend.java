@@ -42,9 +42,17 @@ import com.google.common.collect.Sets;
  */
 public class SQLBackend extends PermissionBackend
 {
+	private static SQLBackend backend;
+	
 	public SQLBackend()
 	{
 		super();
+		backend = this;
+	}
+	
+	public static SQLBackend getBackend()
+	{
+		return backend;
 	}
 	
 	@Override
@@ -96,7 +104,7 @@ public class SQLBackend extends PermissionBackend
 	@Override
 	public PermissibleEntity getEntity( String id )
 	{
-		return new SQLEntity( id, this );
+		return new SQLEntity( id );
 	}
 	
 	@Override
@@ -126,7 +134,7 @@ public class SQLBackend extends PermissionBackend
 	@Override
 	public PermissibleGroup getGroup( String id )
 	{
-		return new SQLGroup( id, this );
+		return new SQLGroup( id );
 	}
 	
 	@Override

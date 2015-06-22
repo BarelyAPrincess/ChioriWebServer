@@ -26,15 +26,15 @@ import com.google.common.base.Joiner;
 
 public class SQLEntity extends PermissibleEntityProxy
 {
-	public SQLEntity( String id, SQLBackend sql )
+	public SQLEntity( String id )
 	{
-		super( id, sql );
+		super( id );
 	}
 	
 	@Override
 	public void reloadGroups()
 	{
-		DatabaseEngine db = ( ( SQLBackend ) backend ).getSQL();
+		DatabaseEngine db = SQLBackend.getBackend().getSQL();
 		
 		clearGroups();
 		try
@@ -58,7 +58,7 @@ public class SQLEntity extends PermissibleEntityProxy
 	@Override
 	public void reloadPermissions()
 	{
-		DatabaseEngine db = ( ( SQLBackend ) backend ).getSQL();
+		DatabaseEngine db = SQLBackend.getBackend().getSQL();
 		
 		detachAllPermissions();
 		try
@@ -99,7 +99,7 @@ public class SQLEntity extends PermissibleEntityProxy
 	@Override
 	public void remove()
 	{
-		DatabaseEngine db = ( ( SQLBackend ) backend ).getSQL();
+		DatabaseEngine db = SQLBackend.getBackend().getSQL();
 		try
 		{
 			db.queryUpdate( "DELETE FROM `permissions_entity` WHERE `owner` = '" + getId() + "' AND `type` = '0';" );
@@ -113,7 +113,7 @@ public class SQLEntity extends PermissibleEntityProxy
 	@Override
 	public void save()
 	{
-		DatabaseEngine db = ( ( SQLBackend ) backend ).getSQL();
+		DatabaseEngine db = SQLBackend.getBackend().getSQL();
 		try
 		{
 			db.queryUpdate( "DELETE FROM `permissions_entity` WHERE `owner` = '" + getId() + "' AND `type` = '0';" );

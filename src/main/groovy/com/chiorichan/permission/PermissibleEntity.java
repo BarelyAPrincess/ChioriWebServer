@@ -43,30 +43,26 @@ public abstract class PermissibleEntity
 		}
 	}
 	
-	protected PermissionBackend backend;
-	protected Map<String, PermissionResult> cachedResults = Maps.newConcurrentMap();
+	private Map<String, PermissionResult> cachedResults = Maps.newConcurrentMap();
 	protected Set<ChildPermission> childPermissions = Sets.newConcurrentHashSet();
-	
 	protected boolean debugMode = false;
 	protected Map<String, PermissibleGroup> groups = Maps.newConcurrentMap();
 	private String id;
 	protected Map<String, LinkedList<TimedPermission>> timedPermissions = Maps.newConcurrentMap();
 	
-	public PermissibleEntity( String id, PermissionBackend permBackend )
+	public PermissibleEntity( String id )
 	{
 		this.id = id;
-		backend = permBackend;
-		
 		reload();
 	}
 	
 	/**
-	 * Adds timed permission to specified ref in seconds
+	 * Adds timed permission to specified reference in seconds
 	 * 
 	 * @param permission
 	 * @param ref
 	 * @param lifeTime
-	 *            Lifetime of permission in seconds. 0 for transient permission (ref disappear only after server reload)
+	 *            Lifetime of permission in seconds. 0 for transient permission (reference disappear only after server reload)
 	 */
 	public void addTimedPermission( final Permission perm, String ref, int lifeTime )
 	{

@@ -45,12 +45,14 @@ import com.google.common.collect.Sets;
  */
 public class FileBackend extends PermissionBackend
 {
+	private static FileBackend backend;
 	public FileConfiguration permissions;
 	public File permissionsFile;
 	
 	public FileBackend()
 	{
 		super();
+		backend = this;
 	}
 	
 	public static String buildPath( String... path )
@@ -74,6 +76,11 @@ public class FileBackend extends PermissionBackend
 		}
 		
 		return builder.toString();
+	}
+	
+	public static FileBackend getBackend()
+	{
+		return backend;
 	}
 	
 	public void commit()
@@ -124,7 +131,7 @@ public class FileBackend extends PermissionBackend
 	@Override
 	public PermissibleEntity getEntity( String id )
 	{
-		return new FileEntity( id, this );
+		return new FileEntity( id );
 	}
 	
 	@Override
@@ -141,7 +148,7 @@ public class FileBackend extends PermissionBackend
 	@Override
 	public PermissibleGroup getGroup( String groupName )
 	{
-		return new FileGroup( groupName, this );
+		return new FileGroup( groupName );
 	}
 	
 	@Override

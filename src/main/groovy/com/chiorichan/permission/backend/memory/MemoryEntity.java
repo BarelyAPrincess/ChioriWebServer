@@ -12,13 +12,19 @@ import com.chiorichan.permission.PermissibleEntityProxy;
 
 public class MemoryEntity extends PermissibleEntityProxy
 {
-	public MemoryEntity( String userName, MemoryBackend backend )
+	public MemoryEntity( String userName )
 	{
-		super( userName, backend );
+		super( userName );
 	}
 	
 	@Override
-	public void save()
+	public void reloadGroups()
+	{
+		
+	}
+	
+	@Override
+	public void reloadPermissions()
 	{
 		
 	}
@@ -30,14 +36,8 @@ public class MemoryEntity extends PermissibleEntityProxy
 	}
 	
 	@Override
-	public void reloadPermissions()
+	public void save()
 	{
-		// TODO Auto-generated method stub
-	}
-
-	@Override
-	public void reloadGroups()
-	{
-		// TODO Auto-generated method stub
+		
 	}
 }

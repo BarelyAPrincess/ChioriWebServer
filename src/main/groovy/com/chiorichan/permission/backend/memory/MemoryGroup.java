@@ -12,12 +12,19 @@ import com.chiorichan.permission.PermissibleGroup;
 
 public class MemoryGroup extends PermissibleGroup
 {
-	public MemoryGroup( String name, MemoryBackend backend )
+	public MemoryGroup( String name )
 	{
-		super( name, backend );
+		super( name );
 	}
+	
 	@Override
-	public void save()
+	public void reloadGroups()
+	{
+		
+	}
+	
+	@Override
+	public void reloadPermissions()
 	{
 		
 	}
@@ -29,14 +36,8 @@ public class MemoryGroup extends PermissibleGroup
 	}
 	
 	@Override
-	public void reloadPermissions()
+	public void save()
 	{
-		// TODO Auto-generated method stub
-	}
-
-	@Override
-	public void reloadGroups()
-	{
-		// TODO Auto-generated method stub
+		
 	}
 }

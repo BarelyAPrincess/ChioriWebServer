@@ -12,13 +12,19 @@ import com.chiorichan.permission.PermissibleEntityProxy;
 
 public class FileEntity extends PermissibleEntityProxy
 {
-	public FileEntity( String userName, FileBackend backend )
+	public FileEntity( String userName )
 	{
-		super( userName, backend );
+		super( userName );
 	}
 	
 	@Override
-	public void save()
+	public void reloadGroups()
+	{
+		
+	}
+	
+	@Override
+	public void reloadPermissions()
 	{
 		
 	}
@@ -28,16 +34,10 @@ public class FileEntity extends PermissibleEntityProxy
 	{
 		
 	}
-
+	
 	@Override
-	public void reloadPermissions()
+	public void save()
 	{
-		// TODO Auto-generated method stub
-	}
-
-	@Override
-	public void reloadGroups()
-	{
-		// TODO Auto-generated method stub
+		
 	}
 }

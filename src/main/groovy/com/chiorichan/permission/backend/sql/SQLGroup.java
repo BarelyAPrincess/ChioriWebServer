@@ -12,13 +12,19 @@ import com.chiorichan.permission.PermissibleGroup;
 
 public class SQLGroup extends PermissibleGroup
 {
-	public SQLGroup( String id, SQLBackend sql )
+	public SQLGroup( String id )
 	{
-		super( id, sql );
+		super( id );
 	}
 	
 	@Override
-	public void save()
+	public void reloadGroups()
+	{
+		
+	}
+	
+	@Override
+	public void reloadPermissions()
 	{
 		
 	}
@@ -28,16 +34,10 @@ public class SQLGroup extends PermissibleGroup
 	{
 		
 	}
-
+	
 	@Override
-	public void reloadPermissions()
+	public void save()
 	{
-		// TODO Auto-generated method stub
-	}
-
-	@Override
-	public void reloadGroups()
-	{
-		// TODO Auto-generated method stub
+		
 	}
 }

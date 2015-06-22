@@ -14,9 +14,15 @@ public abstract class PermissibleGroup extends PermissibleEntity implements Comp
 {
 	protected int weight = 0;
 	
-	public PermissibleGroup( String groupName, PermissionBackend backend )
+	public PermissibleGroup( String groupName )
 	{
-		super( groupName, backend );
+		super( groupName );
+	}
+	
+	@Override
+	public int compareTo( PermissibleGroup o )
+	{
+		return getWeight() - o.getWeight();
 	}
 	
 	public int getWeight()
@@ -28,11 +34,5 @@ public abstract class PermissibleGroup extends PermissibleEntity implements Comp
 	{
 		this.weight = weight;
 		PermissionManager.callEvent( new PermissibleEntityEvent( this, PermissibleEntityEvent.Action.WEIGHT_CHANGED ) );
-	}
-	
-	@Override
-	public int compareTo( PermissibleGroup o )
-	{
-		return this.getWeight() - o.getWeight();
 	}
 }

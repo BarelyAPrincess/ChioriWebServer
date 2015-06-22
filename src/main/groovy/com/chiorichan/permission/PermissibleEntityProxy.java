@@ -11,38 +11,38 @@ package com.chiorichan.permission;
 
 public abstract class PermissibleEntityProxy extends PermissibleEntity
 {
-	public PermissibleEntityProxy( String id, PermissionBackend permBackend )
+	public PermissibleEntityProxy( String id )
 	{
-		super( id, permBackend );
+		super( id );
 	}
 	
-	public void attachPermission( ChildPermission perm )
+	public final void attachPermission( ChildPermission perm )
 	{
 		childPermissions.add( perm );
 	}
 	
-	public void detachPermission( ChildPermission perm )
+	public final void clearGroups()
 	{
-		detachPermission( perm.getPermission().getNamespace() );
+		groups.clear();
 	}
 	
-	public void detachPermission( String perm )
-	{
-		childPermissions.remove( perm );
-	}
-	
-	public void detachAllPermissions()
+	public final void detachAllPermissions()
 	{
 		childPermissions.clear();
 	}
 	
-	public ChildPermission[] getChildPermissions()
+	public final void detachPermission( ChildPermission perm )
 	{
-		return childPermissions.toArray( new ChildPermission[0] );
+		detachPermission( perm.getPermission().getNamespace() );
 	}
 	
-	public void clearGroups()
+	public final void detachPermission( String perm )
 	{
-		groups.clear();
+		childPermissions.remove( perm );
+	}
+	
+	public final ChildPermission[] getChildPermissions()
+	{
+		return childPermissions.toArray( new ChildPermission[0] );
 	}
 }

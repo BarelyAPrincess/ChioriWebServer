@@ -24,9 +24,17 @@ import com.google.common.collect.Sets;
  */
 public class MemoryBackend extends PermissionBackend
 {
+	private static MemoryBackend backend;
+	
 	public MemoryBackend()
 	{
 		super();
+		backend = this;
+	}
+	
+	public static MemoryBackend getBackend()
+	{
+		return backend;
 	}
 	
 	@Override
@@ -44,7 +52,7 @@ public class MemoryBackend extends PermissionBackend
 	@Override
 	public PermissibleEntity getEntity( String name )
 	{
-		return new MemoryEntity( name, this );
+		return new MemoryEntity( name );
 	}
 	
 	@Override
@@ -56,7 +64,7 @@ public class MemoryBackend extends PermissionBackend
 	@Override
 	public PermissibleGroup getGroup( String name )
 	{
-		return new MemoryGroup( name, this );
+		return new MemoryGroup( name );
 	}
 	
 	@Override
@@ -88,19 +96,19 @@ public class MemoryBackend extends PermissionBackend
 	{
 		// Nothing to do here!
 	}
-
+	
 	@Override
 	public void nodeReload( Permission perm )
 	{
 		// Nothing to do here!
 	}
-
+	
 	@Override
 	public void reload() throws PermissionBackendException
 	{
 		// Nothing to do here!
 	}
-
+	
 	@Override
 	public void setDefaultGroup( String child, String... site )
 	{
