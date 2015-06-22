@@ -8,9 +8,9 @@
  */
 package com.chiorichan.permission.backend.memory;
 
-import com.chiorichan.permission.PermissibleEntityProxy;
+import com.chiorichan.permission.PermissibleEntity;
 
-public class MemoryEntity extends PermissibleEntityProxy
+public class MemoryEntity extends PermissibleEntity
 {
 	public MemoryEntity( String userName )
 	{

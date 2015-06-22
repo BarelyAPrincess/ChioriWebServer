@@ -8,9 +8,9 @@
  */
 package com.chiorichan.permission.backend.file;
 
-import com.chiorichan.permission.PermissibleEntityProxy;
+import com.chiorichan.permission.PermissibleEntity;
 
-public class FileEntity extends PermissibleEntityProxy
+public class FileEntity extends PermissibleEntity
 {
 	public FileEntity( String userName )
 	{

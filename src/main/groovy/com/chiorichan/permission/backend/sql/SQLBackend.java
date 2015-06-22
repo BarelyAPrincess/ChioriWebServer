@@ -19,7 +19,7 @@ import java.util.Set;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
-import com.chiorichan.permission.PermissibleEntity;
+import com.chiorichan.permission.PermissibleBase;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionBackend;
@@ -90,19 +90,19 @@ public class SQLBackend extends PermissionBackend
 	}
 	
 	@Override
-	public PermissibleEntity[] getEntities()
+	public PermissibleBase[] getEntities()
 	{
 		Set<String> entityNames = getEntityNames( ENTITY );
-		List<PermissibleEntity> entities = Lists.newArrayList();
+		List<PermissibleBase> entities = Lists.newArrayList();
 		
 		for ( String entityName : entityNames )
 			entities.add( getEntity( entityName ) );
 		
-		return entities.toArray( new PermissibleEntity[0] );
+		return entities.toArray( new PermissibleBase[0] );
 	}
 	
 	@Override
-	public PermissibleEntity getEntity( String id )
+	public PermissibleBase getEntity( String id )
 	{
 		return new SQLEntity( id );
 	}

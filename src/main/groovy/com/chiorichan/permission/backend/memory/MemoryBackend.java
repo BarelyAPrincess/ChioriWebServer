@@ -10,7 +10,7 @@ package com.chiorichan.permission.backend.memory;
 
 import java.util.Set;
 
-import com.chiorichan.permission.PermissibleEntity;
+import com.chiorichan.permission.PermissibleBase;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionBackend;
@@ -44,13 +44,13 @@ public class MemoryBackend extends PermissionBackend
 	}
 	
 	@Override
-	public PermissibleEntity[] getEntities()
+	public PermissibleBase[] getEntities()
 	{
-		return new PermissibleEntity[0];
+		return new PermissibleBase[0];
 	}
 	
 	@Override
-	public PermissibleEntity getEntity( String name )
+	public PermissibleBase getEntity( String name )
 	{
 		return new MemoryEntity( name );
 	}

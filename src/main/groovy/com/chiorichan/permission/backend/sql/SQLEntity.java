@@ -14,7 +14,7 @@ import java.util.List;
 
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.permission.ChildPermission;
-import com.chiorichan.permission.PermissibleEntityProxy;
+import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionDefault;
@@ -24,7 +24,7 @@ import com.chiorichan.permission.PermissionValue;
 import com.chiorichan.util.ObjectFunc;
 import com.google.common.base.Joiner;
 
-public class SQLEntity extends PermissibleEntityProxy
+public class SQLEntity extends PermissibleEntity
 {
 	public SQLEntity( String id )
 	{

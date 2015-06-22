@@ -43,7 +43,7 @@ public abstract class PermissionBackend
 	 * @param id
 	 * @return PermissibleEntity for specified id, or null on error.
 	 */
-	public abstract PermissibleEntity getEntity( String id );
+	public abstract PermissibleBase getEntity( String id );
 	
 	/**
 	 * Returns new PermissibleGroup object for specified id
@@ -74,7 +74,7 @@ public abstract class PermissionBackend
 	 * 
 	 * @return Array of PermissibleEntity
 	 */
-	public abstract PermissibleEntity[] getEntities();
+	public abstract PermissibleBase[] getEntities();
 	
 	public abstract Set<String> getEntityNames( int type );
 	

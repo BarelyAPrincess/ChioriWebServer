@@ -10,7 +10,7 @@ package com.chiorichan.permission;
 
 import com.chiorichan.permission.event.PermissibleEntityEvent;
 
-public abstract class PermissibleGroup extends PermissibleEntity implements Comparable<PermissibleGroup>
+public abstract class PermissibleGroup extends PermissibleBase implements Comparable<PermissibleGroup>
 {
 	protected int weight = 0;
 	

@@ -16,7 +16,7 @@ public abstract class Permissible
 	/**
 	 * Used to reference the PermissibleEntity for the Permissible object.
 	 */
-	protected PermissibleEntity entity = null;
+	protected PermissibleBase entity = null;
 	
 	public final boolean checkEntity()
 	{
@@ -26,7 +26,7 @@ public abstract class Permissible
 		return entity != null;
 	}
 	
-	public final PermissibleEntity getPermissibleEntity()
+	public final PermissibleBase getPermissibleEntity()
 	{
 		checkEntity();
 		return entity;

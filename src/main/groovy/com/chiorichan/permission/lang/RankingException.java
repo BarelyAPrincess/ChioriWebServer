@@ -8,28 +8,28 @@
  */
 package com.chiorichan.permission.lang;
 
-import com.chiorichan.permission.PermissibleEntity;
+import com.chiorichan.permission.PermissibleBase;
 
 public class RankingException extends PermissionException
 {
 	private static final long serialVersionUID = -328357153481259189L;
 	
-	protected PermissibleEntity target = null;
-	protected PermissibleEntity promoter = null;
+	protected PermissibleBase target = null;
+	protected PermissibleBase promoter = null;
 	
-	public RankingException( String message, PermissibleEntity target, PermissibleEntity promoter )
+	public RankingException( String message, PermissibleBase target, PermissibleBase promoter )
 	{
 		super( message );
 		this.target = target;
 		this.promoter = promoter;
 	}
 	
-	public PermissibleEntity getTarget()
+	public PermissibleBase getTarget()
 	{
 		return target;
 	}
 	
-	public PermissibleEntity getPromoter()
+	public PermissibleBase getPromoter()
 	{
 		return promoter;
 	}

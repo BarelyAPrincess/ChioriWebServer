@@ -23,7 +23,7 @@ import com.chiorichan.Loader;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.configuration.file.FileConfiguration;
 import com.chiorichan.configuration.file.YamlConfiguration;
-import com.chiorichan.permission.PermissibleEntity;
+import com.chiorichan.permission.PermissibleBase;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionBackend;
@@ -123,13 +123,13 @@ public class FileBackend extends PermissionBackend
 	}
 	
 	@Override
-	public PermissibleEntity[] getEntities()
+	public PermissibleBase[] getEntities()
 	{
-		return new PermissibleEntity[0];
+		return new PermissibleBase[0];
 	}
 	
 	@Override
-	public PermissibleEntity getEntity( String id )
+	public PermissibleBase getEntity( String id )
 	{
 		return new FileEntity( id );
 	}
@@ -258,7 +258,7 @@ public class FileBackend extends PermissionBackend
 		if ( section != null )
 			for ( String s : section.getKeys( false ) )
 			{
-				PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( s );
+				PermissibleBase entity = PermissionManager.INSTANCE.getEntity( s );
 				
 				ConfigurationSection result = section.getConfigurationSection( s );
 				ConfigurationSection permissions = result.getConfigurationSection( "permissions" );
@@ -288,7 +288,7 @@ public class FileBackend extends PermissionBackend
 			{
 				ConfigurationSection result = section.getConfigurationSection( s );
 				
-				PermissibleEntity group = PermissionManager.INSTANCE.getGroup( s );
+				PermissibleBase group = PermissionManager.INSTANCE.getGroup( s );
 				
 				ConfigurationSection permissions = result.getConfigurationSection( "permissions" );
 				

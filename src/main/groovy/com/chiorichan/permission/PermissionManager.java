@@ -59,7 +59,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	private PermissionBackend backend = null;
 	private YamlConfiguration config;
 	private Map<String, PermissibleGroup> defaultGroups = new HashMap<String, PermissibleGroup>();
-	private Map<String, PermissibleEntity> entities = Maps.newHashMap();
+	private Map<String, PermissibleBase> entities = Maps.newHashMap();
 	private Map<String, PermissibleGroup> groups = new HashMap<String, PermissibleGroup>();
 	private boolean hasWhitelist = false;
 	
@@ -163,7 +163,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	 */
 	public PermissionResult checkPermission( String entityId, String permission, String ref )
 	{
-		PermissibleEntity entity = getEntity( entityId );
+		PermissibleBase entity = getEntity( entityId );
 		
 		if ( entity == null )
 			throw new RuntimeException( "Entity returned null! This is a bug and needs to be reported to the developers." );
@@ -241,9 +241,9 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	 * 
 	 * @return PermissibleEntity array
 	 */
-	public PermissibleEntity[] getEntities()
+	public PermissibleBase[] getEntities()
 	{
-		return entities.values().toArray( new PermissibleEntity[0] );
+		return entities.values().toArray( new PermissibleBase[0] );
 	}
 	
 	/**
@@ -254,11 +254,11 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	 *            The permission to check for.
 	 * @return a list of permissibles that have that permission assigned to them.
 	 */
-	public List<PermissibleEntity> getEntitiesWithPermission( Permission perm )
+	public List<PermissibleBase> getEntitiesWithPermission( Permission perm )
 	{
-		List<PermissibleEntity> result = Lists.newArrayList();
+		List<PermissibleBase> result = Lists.newArrayList();
 		
-		for ( PermissibleEntity entity : entities.values() )
+		for ( PermissibleBase entity : entities.values() )
 			if ( entity.checkPermission( perm ).isAssigned() )
 				result.add( entity );
 		
@@ -273,7 +273,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	 * @return a list of permissibles that have that permission assigned to them.
 	 * @see PermissionManager#getEntitiesWithPermission(Permission)
 	 */
-	public List<PermissibleEntity> getEntitiesWithPermission( String perm )
+	public List<PermissibleBase> getEntitiesWithPermission( String perm )
 	{
 		return getEntitiesWithPermission( getNode( perm ) );
 	}
@@ -285,7 +285,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	 *            get PermissibleEntity with given name
 	 * @return PermissibleEntity instance
 	 */
-	public PermissibleEntity getEntity( Permissible permissible )
+	public PermissibleBase getEntity( Permissible permissible )
 	{
 		if ( permissible == null )
 			throw new IllegalArgumentException( "Null entity passed! Name must not be empty" );
@@ -298,7 +298,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 				permissible.entity = entities.get( permissible.getEntityId() );
 			else
 			{
-				PermissibleEntity entity = backend.getEntity( permissible.getEntityId() );
+				PermissibleBase entity = backend.getEntity( permissible.getEntityId() );
 				entities.put( permissible.getEntityId(), entity );
 				permissible.entity = entity;
 			}
@@ -306,7 +306,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 		return permissible.entity;
 	}
 	
-	public PermissibleEntity getEntity( String permissible )
+	public PermissibleBase getEntity( String permissible )
 	{
 		if ( permissible == null )
 			throw new IllegalArgumentException( "Null entity passed! Name must not be empty" );
@@ -315,7 +315,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 			return entities.get( permissible );
 		else
 		{
-			PermissibleEntity entity = backend.getEntity( permissible );
+			PermissibleBase entity = backend.getEntity( permissible );
 			entities.put( permissible, entity );
 			return entity;
 		}
@@ -601,7 +601,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 		{
 			if ( isDebug() )
 				getLogger().info( ConsoleColor.YELLOW + "Preloading entities from backend!" );
-			for ( PermissibleEntity entity : backend.getEntities() )
+			for ( PermissibleBase entity : backend.getEntities() )
 				entities.put( entity.getId(), entity );
 		}
 	}
@@ -610,7 +610,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	@EventHandler( priority = EventPriority.HIGHEST )
 	public void onAccountLoginEvent( AccountPreLoginEvent event )
 	{
-		PermissibleEntity entity = getEntity( event.getAccount().getAcctId() );
+		PermissibleBase entity = getEntity( event.getAccount().getAcctId() );
 		
 		if ( hasWhitelist() && entity.isWhitelisted() )
 		{

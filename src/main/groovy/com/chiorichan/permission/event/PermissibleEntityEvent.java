@@ -9,15 +9,15 @@
 package com.chiorichan.permission.event;
 
 import com.chiorichan.event.HandlerList;
-import com.chiorichan.permission.PermissibleEntity;
+import com.chiorichan.permission.PermissibleBase;
 
 public class PermissibleEntityEvent extends PermissibleEvent
 {
 	private static final HandlerList handlers = new HandlerList();
-	protected PermissibleEntity entity;
+	protected PermissibleBase entity;
 	protected Action action;
 	
-	public PermissibleEntityEvent( PermissibleEntity entity, Action action )
+	public PermissibleEntityEvent( PermissibleBase entity, Action action )
 	{
 		super( action.toString() );
 		
@@ -30,7 +30,7 @@ public class PermissibleEntityEvent extends PermissibleEvent
 		return this.action;
 	}
 	
-	public PermissibleEntity getEntity()
+	public PermissibleBase getEntity()
 	{
 		return entity;
 	}
