@@ -18,9 +18,6 @@ import io.netty.handler.codec.string.StringEncoder;
 
 /**
  * Initializes the Query Server for Netty
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class QueryServerInitializer extends ChannelInitializer<SocketChannel>
 {

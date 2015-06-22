@@ -23,9 +23,6 @@ import com.chiorichan.event.EventBus;
 
 /**
  * Handles the task and events between the {@link EventBus} and {@link AccountManager}
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public abstract class AccountEvents extends BuiltinEventCreator
 {

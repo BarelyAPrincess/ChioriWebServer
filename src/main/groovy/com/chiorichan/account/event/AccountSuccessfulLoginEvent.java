@@ -13,9 +13,6 @@ import com.chiorichan.account.lang.AccountResult;
 
 /**
  * Fired when the Account was successfully logged in
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class AccountSuccessfulLoginEvent extends AccountFailedLoginEvent
 {

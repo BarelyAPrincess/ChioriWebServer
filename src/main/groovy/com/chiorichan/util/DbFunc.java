@@ -14,9 +14,6 @@ import java.util.TreeMap;
 
 /**
  * Provides basic methods for database convenience
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class DbFunc
 {

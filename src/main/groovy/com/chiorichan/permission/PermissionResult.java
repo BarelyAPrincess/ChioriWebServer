@@ -8,13 +8,12 @@
  */
 package com.chiorichan.permission;
 
-import java.util.List;
-
+import com.chiorichan.account.AccountType;
 import com.chiorichan.permission.lang.PermissionException;
 import com.chiorichan.permission.lang.PermissionValueException;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.ObjectFunc;
-import com.google.common.collect.Lists;
+import com.chiorichan.util.StringFunc;
 
 /**
  * Is returned when {@link Permissible#getPermission()} is called
@@ -22,42 +21,31 @@ import com.google.common.collect.Lists;
  */
 public class PermissionResult
 {
-	public static final PermissionResult DUMMY = new PermissionResult();
+	public static final PermissionResult DUMMY = new PermissionResult( AccountType.ACCOUNT_NONE.getPermissibleEntity(), PermissionDefault.DEFAULT.getNode() );
 	
 	private ChildPermission childPerm = null;
-	private PermissibleEntity entity = null;
-	
-	/**
-	 * Used as a constant tracker for already checked groups, prevents infinite looping.
-	 * e.g., User -> Group1 -> Group2 -> Group3 -> Group1
-	 */
-	private List<PermissibleGroup> groupStackTrace = null;
-	private Permission perm = null;
-	private String ref = "";
+	private final PermissibleEntity entity;
+	private final Permission perm;
+	private final String ref;
 	
 	protected int timecode = Timings.epoch();
 	
-	public PermissionResult()
-	{
-		
-	}
-	
-	public PermissionResult( PermissibleEntity entity, Permission perm )
+	PermissionResult( PermissibleEntity entity, Permission perm )
 	{
 		this( entity, perm, "" );
 	}
 	
-	public PermissionResult( PermissibleEntity entity, Permission perm, String ref )
+	PermissionResult( PermissibleEntity entity, Permission perm, String ref )
 	{
-		if ( ref == null )
-			ref = "";
+		ref = StringFunc.formatReference( ref );
+		
+		assert ( entity != null );
+		assert ( perm != null );
 		
 		this.entity = entity;
 		this.perm = perm;
 		this.ref = ref;
-		
-		if ( entity != null )
-			childPerm = recursiveEntityScan( entity );
+		childPerm = entity.findChildPermission( perm, ref );
 	}
 	
 	public PermissionResult assign()
@@ -224,39 +212,6 @@ public class PermissionResult
 			return true;
 		
 		return ( getValueObject() == null ) ? false : ObjectFunc.castToBool( getValueObject() );
-	}
-	
-	private ChildPermission recursiveEntityScan( PermissibleEntity pe )
-	{
-		ChildPermission result = pe.getChildPermission( perm.getNamespace(), ref );
-		
-		if ( result != null )
-			return result;
-		
-		boolean isFirst = false;
-		
-		if ( groupStackTrace == null )
-		{
-			groupStackTrace = Lists.newArrayList();
-			isFirst = true;
-		}
-		
-		for ( PermissibleGroup group : pe.groups.values() )
-			if ( !groupStackTrace.contains( group ) )
-			{
-				groupStackTrace.add( group );
-				ChildPermission childPerm = recursiveEntityScan( group );
-				if ( childPerm != null )
-				{
-					result = childPerm;
-					break;
-				}
-			}
-		
-		if ( isFirst )
-			groupStackTrace = null;
-		
-		return result;
 	}
 	
 	@Override

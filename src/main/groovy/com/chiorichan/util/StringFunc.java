@@ -15,7 +15,9 @@ import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,9 +30,6 @@ import com.google.common.collect.Lists;
 
 /**
  * Provides Chiori-chan Web Server specific helper methods
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class StringFunc
 {
@@ -43,9 +42,31 @@ public class StringFunc
 	// return matcher.matches();
 	// }
 	
-	public static boolean isValidMD5( String s )
+	public static byte[] byteBuf2Bytes( ByteBuf buf )
 	{
-		return s.matches( "[a-fA-F0-9]{32}" );
+		byte[] bytes = new byte[buf.readableBytes()];
+		int readerIndex = buf.readerIndex();
+		buf.getBytes( readerIndex, bytes );
+		return bytes;
+	}
+	
+	public static String byteBuf2String( ByteBuf buf, Charset charset )
+	{
+		return new String( byteBuf2Bytes( buf ), charset );
+	}
+	
+	public static String bytesToStringUTFNIO( byte[] bytes )
+	{
+		if ( bytes == null )
+			return null;
+		
+		CharBuffer cBuffer = ByteBuffer.wrap( bytes ).asCharBuffer();
+		return cBuffer.toString();
+	}
+	
+	public static boolean containsValidChars( String ref )
+	{
+		return ref.matches( "[a-z0-9_]*" );
 	}
 	
 	/**
@@ -73,80 +94,10 @@ public class StringFunc
 		Validate.notNull( originals, "Originals cannot be null" );
 		
 		for ( String string : originals )
-		{
 			if ( startsWithIgnoreCase( string, token ) )
-			{
 				collection.add( string );
-			}
-		}
 		
 		return collection;
-	}
-	
-	/**
-	 * This method uses a substring to check case-insensitive equality. This means the internal array does not need to be
-	 * copied like a toLowerCase() call would.
-	 * 
-	 * @param string
-	 *            String to check
-	 * @param prefix
-	 *            Prefix of string to compare
-	 * @return true if provided string starts with, ignoring case, the prefix provided
-	 * @throws NullPointerException
-	 *             if prefix is null
-	 * @throws IllegalArgumentException
-	 *             if string is null
-	 */
-	public static boolean startsWithIgnoreCase( final String string, final String prefix ) throws IllegalArgumentException, NullPointerException
-	{
-		Validate.notNull( string, "Cannot check a null string for a match" );
-		if ( string.length() < prefix.length() )
-		{
-			return false;
-		}
-		return string.substring( 0, prefix.length() ).equalsIgnoreCase( prefix );
-	}
-	
-	public static byte[] stringToBytesASCII( String str )
-	{
-		byte[] b = new byte[str.length()];
-		for ( int i = 0; i < b.length; i++ )
-		{
-			b[i] = ( byte ) str.charAt( i );
-		}
-		return b;
-	}
-	
-	public static byte[] stringToBytesUTF( String str )
-	{
-		byte[] b = new byte[str.length() << 1];
-		for ( int i = 0; i < str.length(); i++ )
-		{
-			char strChar = str.charAt( i );
-			int bpos = i << 1;
-			b[bpos] = ( byte ) ( ( strChar & 0xFF00 ) >> 8 );
-			b[bpos + 1] = ( byte ) ( strChar & 0x00FF );
-		}
-		return b;
-	}
-	
-	public static String bytesToStringUTFNIO( byte[] bytes )
-	{
-		if ( bytes == null )
-			return null;
-		
-		CharBuffer cBuffer = ByteBuffer.wrap( bytes ).asCharBuffer();
-		return cBuffer.toString();
-	}
-	
-	public static String encodeBase64( String var )
-	{
-		return encodeBase64( var.getBytes() );
-	}
-	
-	public static String encodeBase64( byte[] bytes )
-	{
-		return Base64.encodeBase64String( bytes );
 	}
 	
 	public static byte[] decodeBase64( byte[] bytes )
@@ -157,6 +108,60 @@ public class StringFunc
 	public static byte[] decodeBase64( String var )
 	{
 		return Base64.decodeBase64( var );
+	}
+	
+	public static String encodeBase64( byte[] bytes )
+	{
+		return Base64.encodeBase64String( bytes );
+	}
+	
+	public static String encodeBase64( String var )
+	{
+		return encodeBase64( var.getBytes() );
+	}
+	
+	public static String formatReference( String ref )
+	{
+		if ( ref == null )
+			return "";
+		return removeInvalidChars( ref.trim() );
+	}
+	
+	/**
+	 * Determines if a string is all lowercase using the toLowerCase() method.
+	 * 
+	 * @param str
+	 *            The string to check
+	 * @return Is it all lowercase?
+	 */
+	public static boolean isLowercase( String str )
+	{
+		return str.toLowerCase().equals( str );
+	}
+	
+	public static boolean isTrue( String arg )
+	{
+		if ( arg == null )
+			return false;
+		
+		return ( arg.equalsIgnoreCase( "true" ) || arg.equalsIgnoreCase( "1" ) );
+	}
+	
+	/**
+	 * Determines if a string is all uppercase using the toUpperCase() method.
+	 * 
+	 * @param str
+	 *            The string to check
+	 * @return Is it all uppercase?
+	 */
+	public static boolean isUppercase( String str )
+	{
+		return str.toUpperCase().equals( str );
+	}
+	
+	public static boolean isValidMD5( String s )
+	{
+		return s.matches( "[a-fA-F0-9]{32}" );
 	}
 	
 	public static String md5( byte[] bytes )
@@ -170,21 +175,6 @@ public class StringFunc
 			return null;
 		
 		return DigestUtils.md5Hex( str );
-	}
-	
-	public static boolean isTrue( String arg )
-	{
-		if ( arg == null )
-			return false;
-		
-		return ( arg.equalsIgnoreCase( "true" ) || arg.equalsIgnoreCase( "1" ) );
-	}
-	
-	public static String replaceAt( String par, int at, String rep )
-	{
-		StringBuilder sb = new StringBuilder( par );
-		sb.setCharAt( at, rep.toCharArray()[0] );
-		return sb.toString();
 	}
 	
 	public static Color parseColor( String color )
@@ -218,65 +208,137 @@ public class StringFunc
 		return null;
 	}
 	
-	/**
-	 * Trim specified charcater from front of string
-	 * 
-	 * @param text
-	 *            Text
-	 * @param character
-	 *            Character to remove
-	 * @return Trimmed text
-	 */
-	public static String trimFront( String text, char character )
+	public static String removeInvalidChars( String ref )
 	{
-		String normalizedText;
-		int index;
-		
-		if ( text == null || text.isEmpty() )
-		{
-			return text;
-		}
-		
-		normalizedText = text.trim();
-		index = 0;
-		
-		while ( normalizedText.charAt( index ) == character )
-		{
-			index++;
-		}
-		return normalizedText.substring( index ).trim();
+		return ref.replaceAll( "[^a-z0-9_]", "" );
+	}
+	
+	public static String replaceAt( String par, int at, String rep )
+	{
+		StringBuilder sb = new StringBuilder( par );
+		sb.setCharAt( at, rep.toCharArray()[0] );
+		return sb.toString();
 	}
 	
 	/**
-	 * Trim specified character from end of string
+	 * This method uses a substring to check case-insensitive equality. This means the internal array does not need to be
+	 * copied like a toLowerCase() call would.
 	 * 
-	 * @param text
-	 *            Text
-	 * @param character
-	 *            Character to remove
-	 * @return Trimmed text
+	 * @param string
+	 *            String to check
+	 * @param prefix
+	 *            Prefix of string to compare
+	 * @return true if provided string starts with, ignoring case, the prefix provided
+	 * @throws NullPointerException
+	 *             if prefix is null
+	 * @throws IllegalArgumentException
+	 *             if string is null
 	 */
-	public static String trimEnd( String text, char character )
+	public static boolean startsWithIgnoreCase( final String string, final String prefix ) throws IllegalArgumentException, NullPointerException
 	{
-		String normalizedText;
-		int index;
-		
-		if ( text == null || text.isEmpty() )
+		Validate.notNull( string, "Cannot check a null string for a match" );
+		if ( string.length() < prefix.length() )
+			return false;
+		return string.substring( 0, prefix.length() ).equalsIgnoreCase( prefix );
+	}
+	
+	public static byte[] stringToBytesASCII( String str )
+	{
+		byte[] b = new byte[str.length()];
+		for ( int i = 0; i < b.length; i++ )
+			b[i] = ( byte ) str.charAt( i );
+		return b;
+	}
+	
+	public static byte[] stringToBytesUTF( String str )
+	{
+		byte[] b = new byte[str.length() << 1];
+		for ( int i = 0; i < str.length(); i++ )
 		{
-			return text;
+			char strChar = str.charAt( i );
+			int bpos = i << 1;
+			b[bpos] = ( byte ) ( ( strChar & 0xFF00 ) >> 8 );
+			b[bpos + 1] = ( byte ) ( strChar & 0x00FF );
 		}
+		return b;
+	}
+	
+	/**
+	 * Scans a string list for entries that are not lower case.
+	 * 
+	 * @param strings
+	 *            The original list to check.
+	 * @return Lowercased string array.
+	 */
+	public static String[] toLowerCase( Iterator<String> strings )
+	{
+		List<String> result = Lists.newArrayList();
 		
-		normalizedText = text.trim();
-		index = normalizedText.length() - 1;
+		while ( strings.hasNext() )
+			result.add( strings.next().toLowerCase() );
 		
-		while ( normalizedText.charAt( index ) == character )
-		{
-			if ( --index < 0 )
-			{
-				return "";
-			}
-		}
-		return normalizedText.substring( 0, index + 1 ).trim();
+		return result.toArray( new String[0] );
+	}
+	
+	public static String[] toLowerCase( List<String> strings )
+	{
+		List<String> result = Lists.newArrayList();
+		
+		for ( String string : strings )
+			result.add( string.toLowerCase() );
+		
+		return result.toArray( new String[0] );
+	}
+	
+	/**
+	 * Scans a string array for entries that are not lower case.
+	 * 
+	 * @param stringList
+	 *            The original array to check.
+	 * @return The corrected string array.
+	 */
+	public static String[] toLowerCase( String... array )
+	{
+		return toLowerCase( Arrays.asList( array ).iterator() );
+	}
+	
+	/**
+	 * Scans a string list for entries that are not lower case.
+	 * 
+	 * @param strings
+	 *            The original list to check.
+	 * @return Lowercased string array.
+	 */
+	public static List<String> toLowerCaseList( Iterator<String> strings )
+	{
+		List<String> result = Lists.newArrayList();
+		
+		while ( strings.hasNext() )
+			result.add( strings.next().toLowerCase() );
+		
+		return result;
+	}
+	
+	public static List<String> toLowerCaseList( List<String> strings )
+	{
+		List<String> result = Lists.newArrayList();
+		
+		for ( String string : strings )
+			result.add( string.toLowerCase() );
+		
+		return result;
+	}
+	
+	/**
+	 * Scans a string array for entries that are not lower case.
+	 * 
+	 * @param stringList
+	 *            The original array to check.
+	 * @return The corrected string array.
+	 */
+	public static List<String> toLowerCaseList( String... array )
+	{
+		return toLowerCaseList( Arrays.asList( array ).iterator() );
 	}
 	
 	/**
@@ -296,81 +358,53 @@ public class StringFunc
 	}
 	
 	/**
-	 * Scans a string list for entries that are not lower case.
+	 * Trim specified character from end of string
 	 * 
-	 * @param stringList
-	 *            The original list to check.
-	 * @return The corrected string list.
+	 * @param text
+	 *            Text
+	 * @param character
+	 *            Character to remove
+	 * @return Trimmed text
 	 */
-	public static List<String> toLowerCase( List<String> stringList )
+	public static String trimEnd( String text, char character )
 	{
-		String[] array = toLowerCase( stringList.toArray( new String[0] ) );
+		String normalizedText;
+		int index;
 		
-		try
-		{
-			stringList.clear();
-		}
-		catch ( UnsupportedOperationException e )
-		{
-			// In this case we can't preserve the original list type.
-			stringList = Lists.newArrayList();
-		}
+		if ( text == null || text.isEmpty() )
+			return text;
 		
-		for ( String s : array )
-			stringList.add( s );
+		normalizedText = text.trim();
+		index = normalizedText.length() - 1;
 		
-		return stringList;
+		while ( normalizedText.charAt( index ) == character )
+			if ( --index < 0 )
+				return "";
+		return normalizedText.substring( 0, index + 1 ).trim();
 	}
 	
 	/**
-	 * Scans a string array for entries that are not lower case.
+	 * Trim specified charcater from front of string
 	 * 
-	 * @param stringList
-	 *            The original array to check.
-	 * @return The corrected string array.
+	 * @param text
+	 *            Text
+	 * @param character
+	 *            Character to remove
+	 * @return Trimmed text
 	 */
-	public static String[] toLowerCase( String... array )
+	public static String trimFront( String text, char character )
 	{
-		for ( int i = 0; i < array.length; i++ )
-			array[i] = array[i].toLowerCase();
+		String normalizedText;
+		int index;
 		
-		return array;
-	}
-	
-	public static String byteBuf2String( ByteBuf buf, Charset charset )
-	{
-		return new String( byteBuf2Bytes( buf ), charset );
-	}
-	
-	public static byte[] byteBuf2Bytes( ByteBuf buf )
-	{
-		byte[] bytes = new byte[buf.readableBytes()];
-		int readerIndex = buf.readerIndex();
-		buf.getBytes( readerIndex, bytes );
-		return bytes;
-	}
-	
-	/**
-	 * Determines if a string is all uppercase using the toUpperCase() method.
-	 * 
-	 * @param str
-	 *            The string to check
-	 * @return Is it all uppercase?
-	 */
-	public static boolean isUppercase( String str )
-	{
-		return str.toUpperCase().equals( str );
-	}
-	
-	/**
-	 * Determines if a string is all lowercase using the toLowerCase() method.
-	 * 
-	 * @param str
-	 *            The string to check
-	 * @return Is it all lowercase?
-	 */
-	public static boolean isLowercase( String str )
-	{
-		return str.toLowerCase().equals( str );
+		if ( text == null || text.isEmpty() )
+			return text;
+		
+		normalizedText = text.trim();
+		index = 0;
+		
+		while ( normalizedText.charAt( index ) == character )
+			index++;
+		return normalizedText.substring( index ).trim();
 	}
 }

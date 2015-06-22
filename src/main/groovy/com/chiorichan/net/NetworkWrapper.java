@@ -27,9 +27,6 @@ import com.google.common.collect.Sets;
 
 /**
  * This class is used to make a connection between a TCP connection and it's Permissible.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class NetworkWrapper extends SessionWrapper
 {

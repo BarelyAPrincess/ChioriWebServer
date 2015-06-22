@@ -19,9 +19,6 @@ import com.chiorichan.event.Cancellable;
 import com.google.common.collect.Lists;
 
 /**
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class AccountMessageEvent extends AccountEvent implements Cancellable
 {

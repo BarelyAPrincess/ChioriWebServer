@@ -13,9 +13,6 @@ import com.chiorichan.account.AccountMeta;
 /**
  * Provides easy exception reasons for account and session issues.
  * TODO Format the messages for use with the format method
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class AccountResult
 {

@@ -10,9 +10,6 @@ package com.chiorichan.console;
 
 /**
  * Used to receive user input from console
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public interface Interviewer
 {

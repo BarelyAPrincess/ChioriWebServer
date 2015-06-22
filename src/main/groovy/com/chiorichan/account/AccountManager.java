@@ -29,29 +29,24 @@ import com.google.common.collect.Sets;
 
 /**
  * Provides Account Management to the Server
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public final class AccountManager extends AccountEvents implements ServerManager, TaskCreator
 {
-	/**
-	 * Holds an instance of this Account Manager
-	 */
 	public static final AccountManager INSTANCE = new AccountManager();
-	
-	/**
-	 * Has this manager already been initialized?
-	 */
 	private static boolean isInitialized = false;
-	
-	/**
-	 * References accounts meta data. We try and populate this list at load with all available accounts but this is not always guaranteed.
-	 */
 	final AccountList accounts = new AccountList();
-	
 	boolean isDebug = false;
 	int maxAccounts = -1;
+	
+	private AccountManager()
+	{
+		
+	}
+	
+	public static ConsoleLogger getLogger()
+	{
+		return Loader.getLogger( "AcctMgr" );
+	}
 	
 	public static void init()
 	{
@@ -65,19 +60,14 @@ public final class AccountManager extends AccountEvents implements ServerManager
 		isInitialized = true;
 	}
 	
-	private AccountManager()
+	/**
+	 * Has this manager already been initialized?
+	 * 
+	 * @return isInitialized
+	 */
+	public static boolean isInitialized()
 	{
-		
-	}
-	
-	private void init0()
-	{
-		isDebug = Loader.getConfig().getBoolean( "accounts.debug" );
-		maxAccounts = Loader.getConfig().getInt( "accounts.maxLogins", -1 );
-		
-		EventBus.INSTANCE.registerEvents( AccountType.MEMORY.getCreator(), this );
-		EventBus.INSTANCE.registerEvents( AccountType.SQL.getCreator(), this );
-		EventBus.INSTANCE.registerEvents( AccountType.FILE.getCreator(), this );
+		return isInitialized;
 	}
 	
 	public AccountMeta createAccount( String acctId, String siteId )
@@ -95,22 +85,30 @@ public final class AccountManager extends AccountEvents implements ServerManager
 		return new AccountMeta( context );
 	}
 	
+	private boolean exists( String acctId )
+	{
+		if ( accounts.keySet().contains( acctId ) )
+			return true;
+		
+		for ( AccountType type : AccountType.getAccountTypes() )
+			if ( type.getCreator().exists( acctId ) )
+				return true;
+		return false;
+	}
+	
 	public String generateAcctId( String seed )
 	{
 		String acctId = "";
 		
 		if ( seed == null || seed.isEmpty() )
 			acctId = RandomFunc.randomize( "ab123C" );
-		else
+		else if ( seed.contains( " " ) || seed.contains( "|" ) )
 		{
-			if ( seed.contains( " " ) || seed.contains( "|" ) )
-			{
-				String[] split = seed.split( " |\\|" );
-				acctId += ( split.length < 1 || split[0].isEmpty() ? "" + RandomFunc.randomize( 'a' ) : split[0].substring( 0, 1 ) ).toLowerCase();
-				acctId += ( split.length < 2 || split[1].isEmpty() ? "" + RandomFunc.randomize( 'b' ) : split[1].substring( 0, 1 ) ).toLowerCase();
-				acctId += "123";
-				acctId += ( split.length < 3 || split[2].isEmpty() ? "" + RandomFunc.randomize( 'C' ) : split[2].substring( 0, 1 ) ).toUpperCase();
-			}
+			String[] split = seed.split( " |\\|" );
+			acctId += ( split.length < 1 || split[0].isEmpty() ? "" + RandomFunc.randomize( 'a' ) : split[0].substring( 0, 1 ) ).toLowerCase();
+			acctId += ( split.length < 2 || split[1].isEmpty() ? "" + RandomFunc.randomize( 'b' ) : split[1].substring( 0, 1 ) ).toLowerCase();
+			acctId += "123";
+			acctId += ( split.length < 3 || split[2].isEmpty() ? "" + RandomFunc.randomize( 'C' ) : split[2].substring( 0, 1 ) ).toUpperCase();
 		}
 		
 		assert acctId.length() == 6;
@@ -133,21 +131,6 @@ public final class AccountManager extends AccountEvents implements ServerManager
 		return acctId;
 	}
 	
-	private boolean exists( String acctId )
-	{
-		if ( accounts.keySet().contains( acctId ) )
-			return true;
-		
-		for ( AccountType type : AccountType.getAccountTypes() )
-		{
-			if ( type.getCreator().exists( acctId ) )
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-	
 	public AccountMeta getAccount( String acctId )
 	{
 		AccountMeta acct = accounts.get( acctId );
@@ -155,23 +138,6 @@ public final class AccountManager extends AccountEvents implements ServerManager
 		if ( acct == null )
 		{
 			acct = fireAccountLookup( acctId );
-			
-			if ( acct == null )
-				return null;
-			
-			accounts.put( acct );
-		}
-		
-		return acct;
-	}
-	
-	public AccountMeta getAccountWithException( String acctId ) throws AccountException
-	{
-		AccountMeta acct = accounts.get( acctId );
-		
-		if ( acct == null )
-		{
-			acct = fireAccountLookupWithException( acctId );
 			
 			if ( acct == null )
 				return null;
@@ -190,7 +156,6 @@ public final class AccountManager extends AccountEvents implements ServerManager
 		String lowerName = partial.toLowerCase();
 		int delta = Integer.MAX_VALUE;
 		for ( AccountMeta meta : getAccounts() )
-		{
 			if ( meta.getAcctId().toLowerCase().startsWith( lowerName ) )
 			{
 				int curDelta = meta.getAcctId().length() - lowerName.length();
@@ -202,17 +167,7 @@ public final class AccountManager extends AccountEvents implements ServerManager
 				if ( curDelta == 0 )
 					break;
 			}
-		}
 		return found;
-	}
-	
-	public Set<Account> getInitializedAccounts()
-	{
-		Set<Account> accts = Sets.newHashSet();
-		for ( AccountMeta meta : accounts )
-			if ( meta.isInitialized() )
-				accts.add( meta );
-		return accts;
 	}
 	
 	/**
@@ -230,64 +185,9 @@ public final class AccountManager extends AccountEvents implements ServerManager
 		return accts;
 	}
 	
-	Set<AccountMeta> getAccounts0()
-	{
-		return accounts.toSet();
-	}
-	
 	public Set<AccountMeta> getAccounts()
 	{
 		return Collections.unmodifiableSet( getAccounts0() );
-	}
-	
-	public Set<AccountMeta> getAccounts( String key, String value )
-	{
-		Validate.notNull( key );
-		Validate.notNull( value );
-		
-		Set<AccountMeta> results = Sets.newHashSet();
-		
-		if ( value.contains( "|" ) )
-		{
-			for ( String s : Splitter.on( "|" ).split( value ) )
-				if ( s != null && !s.isEmpty() )
-					results.addAll( getAccounts( key, s ) );
-			
-			return results;
-		}
-		
-		boolean isLower = value.toLowerCase().equals( value ); // Is query string all lower case?
-		
-		for ( AccountMeta meta : accounts.toSet() )
-		{
-			String str = ( isLower ) ? meta.getString( key ).toLowerCase() : meta.getString( key );
-			
-			if ( str != null && !str.isEmpty() && str.contains( value ) )
-			{
-				results.add( meta );
-				continue;
-			}
-		}
-		
-		return results;
-	}
-	
-	public Set<AccountMeta> getAccountsBySite( String site )
-	{
-		return getAccountsBySite( SiteManager.INSTANCE.getSiteById( site ) );
-	}
-	
-	public Set<AccountMeta> getAccountsBySite( Site site )
-	{
-		Validate.notNull( site );
-		
-		Set<AccountMeta> results = Sets.newHashSet();
-		
-		for ( AccountMeta meta : accounts.toSet() )
-			if ( meta.getSite() == site )
-				results.add( meta );
-		
-		return results;
 	}
 	
 	public Set<AccountMeta> getAccounts( String query )
@@ -332,11 +232,107 @@ public final class AccountManager extends AccountEvents implements ServerManager
 		return results;
 	}
 	
+	public Set<AccountMeta> getAccounts( String key, String value )
+	{
+		Validate.notNull( key );
+		Validate.notNull( value );
+		
+		Set<AccountMeta> results = Sets.newHashSet();
+		
+		if ( value.contains( "|" ) )
+		{
+			for ( String s : Splitter.on( "|" ).split( value ) )
+				if ( s != null && !s.isEmpty() )
+					results.addAll( getAccounts( key, s ) );
+			
+			return results;
+		}
+		
+		boolean isLower = value.toLowerCase().equals( value ); // Is query string all lower case?
+		
+		for ( AccountMeta meta : accounts.toSet() )
+		{
+			String str = ( isLower ) ? meta.getString( key ).toLowerCase() : meta.getString( key );
+			
+			if ( str != null && !str.isEmpty() && str.contains( value ) )
+			{
+				results.add( meta );
+				continue;
+			}
+		}
+		
+		return results;
+	}
+	
+	Set<AccountMeta> getAccounts0()
+	{
+		return accounts.toSet();
+	}
+	
+	public Set<AccountMeta> getAccountsBySite( Site site )
+	{
+		Validate.notNull( site );
+		
+		Set<AccountMeta> results = Sets.newHashSet();
+		
+		for ( AccountMeta meta : accounts.toSet() )
+			if ( meta.getSite() == site )
+				results.add( meta );
+		
+		return results;
+	}
+	
+	public Set<AccountMeta> getAccountsBySite( String site )
+	{
+		return getAccountsBySite( SiteManager.INSTANCE.getSiteById( site ) );
+	}
+	
+	public AccountMeta getAccountWithException( String acctId ) throws AccountException
+	{
+		AccountMeta acct = accounts.get( acctId );
+		
+		if ( acct == null )
+		{
+			acct = fireAccountLookupWithException( acctId );
+			
+			if ( acct == null )
+				return null;
+			
+			accounts.put( acct );
+		}
+		
+		return acct;
+	}
+	
 	public Set<Account> getBanned()
 	{
 		Set<Account> accts = Sets.newHashSet();
 		for ( AccountMeta meta : accounts )
 			if ( meta.isBanned() )
+				accts.add( meta );
+		return accts;
+	}
+	
+	public Set<Account> getInitializedAccounts()
+	{
+		Set<Account> accts = Sets.newHashSet();
+		for ( AccountMeta meta : accounts )
+			if ( meta.isInitialized() )
+				accts.add( meta );
+		return accts;
+	}
+	
+	@Override
+	public String getName()
+	{
+		return "AccountManager";
+	}
+	
+	public Set<Account> getOperators()
+	{
+		Set<Account> accts = Sets.newHashSet();
+		for ( AccountMeta meta : accounts )
+			if ( meta.isOp() )
 				accts.add( meta );
 		return accts;
 	}
@@ -350,36 +346,14 @@ public final class AccountManager extends AccountEvents implements ServerManager
 		return accts;
 	}
 	
-	public Set<Account> getOperators()
+	private void init0()
 	{
-		Set<Account> accts = Sets.newHashSet();
-		for ( AccountMeta meta : accounts )
-			if ( meta.isOp() )
-				accts.add( meta );
-		return accts;
-	}
-	
-	public void save()
-	{
-		for ( AccountMeta meta : accounts )
-			meta.save();
-	}
-	
-	public void reload()
-	{
-		save();
-		accounts.clear();
-	}
-	
-	@Override
-	public String getName()
-	{
-		return "AccountManager";
-	}
-	
-	public static ConsoleLogger getLogger()
-	{
-		return Loader.getLogger( "AcctMgr" );
+		isDebug = Loader.getConfig().getBoolean( "accounts.debug" );
+		maxAccounts = Loader.getConfig().getInt( "accounts.maxLogins", -1 );
+		
+		EventBus.INSTANCE.registerEvents( AccountType.MEMORY.getCreator(), this );
+		EventBus.INSTANCE.registerEvents( AccountType.SQL.getCreator(), this );
+		EventBus.INSTANCE.registerEvents( AccountType.FILE.getCreator(), this );
 	}
 	
 	public boolean isDebug()
@@ -430,5 +404,17 @@ public final class AccountManager extends AccountEvents implements ServerManager
 		Validate.notNull( acct );
 		
 		return fireKick( acct, msg );
+	}
+	
+	public void reload()
+	{
+		save();
+		accounts.clear();
+	}
+	
+	public void save()
+	{
+		for ( AccountMeta meta : accounts )
+			meta.save();
 	}
 }

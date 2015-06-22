@@ -11,9 +11,6 @@ package com.chiorichan.event;
 /**
  * Used when an event can finish early based on a conditional check<br>
  * Keep in mind that {@link EventPriority#MONITOR} will still fire regardless
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public interface Conditional
 {

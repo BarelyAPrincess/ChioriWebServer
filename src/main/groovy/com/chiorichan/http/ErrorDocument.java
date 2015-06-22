@@ -10,9 +10,6 @@ package com.chiorichan.http;
 
 /**
  * Used to override default error pages
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class ErrorDocument
 {

@@ -10,9 +10,6 @@ package com.chiorichan.util;
 
 /**
  * Provides a desired Sorting Strategy to utility classes
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 enum SortStrategy
 {

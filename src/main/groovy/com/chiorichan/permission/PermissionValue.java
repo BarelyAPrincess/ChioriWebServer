@@ -11,10 +11,10 @@ package com.chiorichan.permission;
 /**
  * References child values of assigned permissions
  */
-public class PermissionValue implements Cloneable
+public class PermissionValue
 {
-	private PermissionModelValue model;
-	private Object value;
+	private final PermissionModelValue model;
+	private final Object value;
 	
 	public PermissionValue( final PermissionModelValue model, final Object value )
 	{

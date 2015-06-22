@@ -18,9 +18,6 @@ import com.google.common.collect.Lists;
 
 /**
  * References available Account Authenticators
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public abstract class AccountAuthenticator
 {

@@ -23,9 +23,6 @@ import com.google.common.collect.Maps;
 
 /**
  * Used to interact with commands and logs
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class InteractiveConsole
 {

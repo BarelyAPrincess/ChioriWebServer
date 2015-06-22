@@ -20,9 +20,6 @@ import com.google.common.collect.Maps;
 
 /**
  * Provides context to an Accounts existence
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class AccountContext
 {

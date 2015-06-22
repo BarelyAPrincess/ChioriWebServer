@@ -15,9 +15,6 @@ import com.google.common.collect.Maps;
 
 /**
  * Holds configuration read from a Apache Configuration File
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class ApacheConfContainer
 {

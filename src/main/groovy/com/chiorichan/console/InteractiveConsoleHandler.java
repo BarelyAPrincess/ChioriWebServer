@@ -12,9 +12,6 @@ import com.chiorichan.net.NetworkWrapper;
 
 /**
  * Used to interface InteractiveConsole with it's creator
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public interface InteractiveConsoleHandler
 {

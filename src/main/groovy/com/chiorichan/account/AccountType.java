@@ -25,9 +25,6 @@ import com.google.common.collect.Maps;
 
 /**
  * Tracks AccountsTypes available on this server and their handler classes
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public final class AccountType
 {

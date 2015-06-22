@@ -37,7 +37,9 @@ public class NetworkSecurity extends BuiltinEventCreator implements Listener
 {
 	public static enum IpStrikeType
 	{
-		HTTP_ERROR_400( 6, 2000, Timings.DAY ), HTTP_ERROR_500( 24, 1000, Timings.MINUTE * 15 ), CLOSED_EARLY( 3, 1000, Timings.DAY * 3 ), IGNORING_COOKIES( 12, 1000, Timings.DAY );
+		CLOSED_EARLY( 3, 1000, Timings.DAY * 3 ), HTTP_ERROR_400( 6, 2000, Timings.DAY ), HTTP_ERROR_500( 24, 1000, Timings.MINUTE * 15 ), IGNORING_COOKIES( 12, 1000, Timings.DAY );
+		
+		public final int banFor;
 		
 		/**
 		 * Indicates that after x strikes the IP Should be banned
@@ -48,8 +50,6 @@ public class NetworkSecurity extends BuiltinEventCreator implements Listener
 		 * Indicates the maximum amount of time between strikes to count to a ban
 		 */
 		public final int dropOffTime;
-		
-		public final int banFor;
 		
 		/**
 		 * Constructor for a new IP Strike Type
@@ -99,6 +99,7 @@ public class NetworkSecurity extends BuiltinEventCreator implements Listener
 		}
 	}
 	
+	@SuppressWarnings( "unused" )
 	private static class IpTracker
 	{
 		static class Record
@@ -107,11 +108,11 @@ public class NetworkSecurity extends BuiltinEventCreator implements Listener
 			int time = 0;
 		}
 		
-		private final String ipAddr;
 		private boolean banned = false;
 		private String banReason = null;
 		private int banTill = -1;
 		private int banWhen = -1;
+		private final String ipAddr;
 		private final Map<IpStrikeType, Record> strikes = Maps.newConcurrentMap();
 		
 		IpTracker( String ipAddr )
@@ -175,6 +176,21 @@ public class NetworkSecurity extends BuiltinEventCreator implements Listener
 		ips.add( new IpTracker( "222.91.96.117" ).setBanned() );
 	}
 	
+	public NetworkSecurity()
+	{
+		EventBus.INSTANCE.registerEvents( this, this );
+	}
+	
+	public static void addStrikeToIp( String ip, IpStrikeType type, String... args )
+	{
+		get( ip ).addStrike( type, args );
+	}
+	
+	public static void banIp( String ip )
+	{
+		get( ip ).banned = true;
+	}
+	
 	private static IpTracker get( String ip )
 	{
 		for ( IpTracker t : ips )
@@ -186,9 +202,13 @@ public class NetworkSecurity extends BuiltinEventCreator implements Listener
 		return it;
 	}
 	
-	public NetworkSecurity()
+	public static void isForbidden( ApacheParser htaccess, Site site, WebInterpreter fi ) throws HttpError
 	{
-		EventBus.INSTANCE.registerEvents( this, this );
+		// String[] allowed = htaccess.getAllowed();
+		
+		
+		if ( fi.hasFile() && site.protectCheck( fi.getFilePath() ) )
+			throw new HttpError( 401, "Loading of this page (" + fi.getFilePath() + ") is not allowed since its hard protected in the configs." );
 	}
 	
 	public static boolean isIpBanned( String ipAddr )
@@ -211,28 +231,15 @@ public class NetworkSecurity extends BuiltinEventCreator implements Listener
 		return get( ip ).banned;
 	}
 	
-	public static void banIp( String ip )
-	{
-		get( ip ).banned = true;
-	}
-	
 	public static void unbanIp( String ip )
 	{
 		get( ip ).banned = false;
 	}
 	
-	public static void addStrikeToIp( String ip, IpStrikeType type, String... args )
+	@Override
+	public String getName()
 	{
-		get( ip ).addStrike( type, args );
-	}
-	
-	public static void isForbidden( ApacheParser htaccess, Site site, WebInterpreter fi ) throws HttpError
-	{
-		// String[] allowed = htaccess.getAllowed();
-		
-		
-		if ( fi.hasFile() && site.protectCheck( fi.getFilePath() ) )
-			throw new HttpError( 401, "Loading of this page (" + fi.getFilePath() + ") is not allowed since its hard protected in the configs." );
+		return "NetworkSecurity";
 	}
 	
 	@EventHandler( priority = EventPriority.MONITOR )
@@ -242,11 +249,5 @@ public class NetworkSecurity extends BuiltinEventCreator implements Listener
 		{
 			// Nothing
 		}
-	}
-	
-	@Override
-	public String getName()
-	{
-		return "NetworkSecurity";
 	}
 }

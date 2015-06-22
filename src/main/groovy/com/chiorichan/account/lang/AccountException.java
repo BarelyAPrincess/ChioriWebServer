@@ -13,9 +13,6 @@ import com.chiorichan.account.AccountMeta;
 
 /**
  * Used to pass login errors to the requester.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class AccountException extends RuntimeException
 {

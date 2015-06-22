@@ -17,9 +17,6 @@ import com.chiorichan.account.lang.AccountResult;
 
 /**
  * Usually only used to authenticate the NONE login
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public final class NullAccountAuthenticator extends AccountAuthenticator
 {

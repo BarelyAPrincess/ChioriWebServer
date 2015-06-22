@@ -13,9 +13,6 @@ import com.chiorichan.event.Cancellable;
 
 /**
  * Command Issued Event
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class CommandIssuedEvent extends ServerEvent implements Cancellable
 {

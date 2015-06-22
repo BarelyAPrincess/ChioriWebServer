@@ -16,9 +16,6 @@ import com.chiorichan.event.RegisteredListener;
 
 /**
  * Used to lookup accounts
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class AccountLookupEvent extends AccountEvent implements Conditional
 {

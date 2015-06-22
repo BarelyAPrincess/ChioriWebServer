@@ -23,9 +23,6 @@ import com.google.common.collect.Maps;
 /**
  * Loader Content-Types from ContentTypes.properties file.
  * FileInterpreter uses this class to find the correct Content-Type based on file extension.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class ContentTypes
 {

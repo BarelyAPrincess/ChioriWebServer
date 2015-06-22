@@ -10,9 +10,6 @@ package com.chiorichan.lang;
 
 /**
  * Used for server features that are not implemented as of yet
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class NotImplementedException extends RuntimeException
 {

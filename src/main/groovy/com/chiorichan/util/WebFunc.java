@@ -306,7 +306,7 @@ public class WebFunc
 		Map<String, Object> newArray = new LinkedHashMap<String, Object>();
 		
 		if ( !caseSensitive )
-			allowedKeys = StringFunc.toLowerCase( allowedKeys );
+			allowedKeys = StringFunc.toLowerCaseList( allowedKeys );
 		
 		for ( Entry<String, Object> e : data.entrySet() )
 			if ( ( !caseSensitive && allowedKeys.contains( e.getKey().toLowerCase() ) ) || allowedKeys.contains( e.getKey() ) )

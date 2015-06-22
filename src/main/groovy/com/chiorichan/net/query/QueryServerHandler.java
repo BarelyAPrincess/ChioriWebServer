@@ -32,9 +32,6 @@ import com.chiorichan.util.StringFunc;
 
 /**
  * Handles the Query Server traffic
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 @Sharable
 public class QueryServerHandler extends SimpleChannelInboundHandler<String> implements InteractiveConsoleHandler

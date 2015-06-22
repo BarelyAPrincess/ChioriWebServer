@@ -15,9 +15,6 @@ import com.google.common.collect.Maps;
 
 /**
  * Provides some basic Map utils to the server
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class MapFunc<K, V>
 {

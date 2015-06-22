@@ -14,12 +14,6 @@ import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionResult;
 import com.chiorichan.site.Site;
 
-/**
- * 
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
- */
 public interface Account
 {
 	/**

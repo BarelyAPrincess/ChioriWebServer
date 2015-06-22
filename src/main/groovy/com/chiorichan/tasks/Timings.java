@@ -19,9 +19,6 @@ import com.chiorichan.util.ObjectFunc;
 
 /**
  * Provides basic code timings
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class Timings
 {

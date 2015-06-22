@@ -21,9 +21,6 @@ import com.chiorichan.util.StringFunc;
 
 /**
  * Acts as the in between for uploaded files and web script
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class UploadedFile
 {

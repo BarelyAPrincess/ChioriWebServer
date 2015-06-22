@@ -20,9 +20,6 @@ import com.google.common.collect.Maps;
 /**
  * Loads InterpreterOverrides from InterpreterOverrides.properties file.
  * This file is used to override what Interpreter will handle a particular file extension.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class InterpreterOverrides
 {

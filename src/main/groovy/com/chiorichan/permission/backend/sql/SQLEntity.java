@@ -23,7 +23,6 @@ import com.chiorichan.permission.PermissionNamespace;
 import com.chiorichan.permission.PermissionValue;
 import com.chiorichan.util.ObjectFunc;
 import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 
 public class SQLEntity extends PermissibleEntityProxy
 {
@@ -77,10 +76,10 @@ public class SQLEntity extends PermissibleEntityProxy
 						perms.add( PermissionManager.INSTANCE.getNode( ns.fixInvalidChars().getNamespace() ) );
 					
 					for ( Permission perm : perms )
-						if ( getChildPermission( perm.getNamespace() ) == null )
+						if ( getChildPermission( perm ) == null )
 						{
 							PermissionValue childValue = ( rs.getString( "value" ) == null || rs.getString( "value" ).isEmpty() ) ? null : perm.getModel().createValue( rs.getString( "value" ) );
-							attachPermission( new ChildPermission( perm, childValue, false, Splitter.on( "|" ).splitToList( rs.getString( "ref" ) ) ) );
+							attachPermission( new ChildPermission( perm, childValue, false, rs.getString( "ref" ).split( "|" ) ) );
 						}
 				}
 				while ( rs.next() );

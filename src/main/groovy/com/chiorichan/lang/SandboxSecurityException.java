@@ -12,9 +12,6 @@ import org.apache.commons.lang3.Validate;
 
 /**
  * Used to track line and column numbers for SecurityExceptions thrown from GroovySandbox
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class SandboxSecurityException extends SecurityException
 {

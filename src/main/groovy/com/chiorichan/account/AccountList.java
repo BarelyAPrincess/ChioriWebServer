@@ -18,9 +18,6 @@ import com.google.common.collect.Maps;
 
 /**
  * Provides an easy to use Account
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 class AccountList implements Iterable<AccountMeta>
 {

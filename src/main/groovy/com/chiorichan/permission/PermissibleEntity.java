@@ -8,7 +8,9 @@
  */
 package com.chiorichan.permission;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimerTask;
@@ -17,7 +19,7 @@ import com.chiorichan.ConsoleColor;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.permission.event.PermissibleEntityEvent;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.util.PermissionFunc;
+import com.chiorichan.util.StringFunc;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -168,25 +170,69 @@ public abstract class PermissibleEntity
 		return !expression.startsWith( "-" ); // If expression have - (minus) before then that mean expression are negative
 	}
 	
-	protected ChildPermission getChildPermission( String namespace )
+	private ChildPermission findChildPermission( List<PermissibleGroup> groups, Permission perm, String ref )
 	{
-		return getChildPermission( namespace, "" );
+		ref = StringFunc.formatReference( ref );
+		
+		// First we try checking this PermissibleEntity
+		ChildPermission result = getChildPermission( perm, ref );
+		
+		if ( result != null )
+			return result;
+		
+		// Next we check each group recursively
+		for ( PermissibleGroup group : groups )
+			if ( !groups.contains( group ) )
+			{
+				groups.add( group );
+				result = findChildPermission( groups, perm, ref );
+				if ( result != null )
+					break;
+			}
+		
+		return result;
 	}
 	
-	protected ChildPermission getChildPermission( String namespace, String ref )
+	/**
+	 * Check it's self and each {@link PermissibleEntity} group until it finds the {@link ChildPermission} associated with {@link Permission}
+	 * 
+	 * @param perm
+	 *            The {@link Permission} we associate with
+	 * @return The resulting {@link ChildPermission}
+	 */
+	public ChildPermission findChildPermission( Permission perm )
 	{
-		PermissionNamespace ns = new PermissionNamespace( namespace ).fixInvalidChars();
-		
-		if ( ref == null )
-			ref = "";
-		
-		ref = ref.toLowerCase();
-		
-		if ( !PermissionFunc.containsValidChars( ref ) )
-			ref = PermissionFunc.removeInvalidChars( ref );
-		
+		return findChildPermission( perm, "" );
+	}
+	
+	/**
+	 * Check it's self and each {@link PermissibleEntity} group until it finds the {@link ChildPermission} associated with {@link Permission}
+	 * 
+	 * @param perm
+	 *            The {@link Permission} we associate with
+	 * @param ref
+	 *            Reference string, e.g., site name
+	 * @return The resulting {@link ChildPermission}
+	 */
+	public ChildPermission findChildPermission( Permission perm, String ref )
+	{
+		/**
+		 * Used as a constant tracker for already checked groups, prevents infinite looping.
+		 * e.g., User -> Group1 -> Group2 -> Group3 -> Group1
+		 */
+		return findChildPermission( new ArrayList<PermissibleGroup>(), perm, ref );
+	}
+	
+	protected ChildPermission getChildPermission( Permission perm )
+	{
+		return getChildPermission( perm, "" );
+	}
+	
+	protected ChildPermission getChildPermission( Permission perm, String ref )
+	{
+		ref = StringFunc.formatReference( ref );
 		for ( ChildPermission child : childPermissions )
-			if ( ns.matches( child.getPermission() ) && ( ( child.getReferences().isEmpty() && ref.isEmpty() ) || child.getReferences().contains( ref ) ) )
+			if ( perm == child.getPermission() && ( ( child.getReferences().isEmpty() && ref.isEmpty() ) || child.getReferences().contains( ref ) ) )
 				return child;
 		
 		return null;

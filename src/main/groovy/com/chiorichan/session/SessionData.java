@@ -16,9 +16,6 @@ import com.google.common.collect.Maps;
 
 /**
  * Stores arbitrary data for sessions being loaded from their datastore.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public abstract class SessionData
 {

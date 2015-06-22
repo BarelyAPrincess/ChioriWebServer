@@ -10,9 +10,6 @@ package com.chiorichan.lang;
 
 /**
  * Usually thrown for site loading errors 
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class SiteException extends Exception
 {

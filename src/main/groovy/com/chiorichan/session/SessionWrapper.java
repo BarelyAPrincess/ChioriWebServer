@@ -29,9 +29,6 @@ import com.chiorichan.util.StringFunc;
 /**
  * Acts as a bridge between a Session and the User
  * TODO If Session is nullified, we need to start a new one
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public abstract class SessionWrapper implements BindingProvider
 {

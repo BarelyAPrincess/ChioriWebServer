@@ -10,9 +10,6 @@ package com.chiorichan.console;
 
 /**
  * References an issued command.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class CommandRef
 {

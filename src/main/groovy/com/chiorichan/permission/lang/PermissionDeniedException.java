@@ -12,9 +12,6 @@ import com.chiorichan.permission.Permission;
 
 /**
  * Used to communicate Permission Denied back to a calling EvalFactory.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class PermissionDeniedException extends PermissionException
 {

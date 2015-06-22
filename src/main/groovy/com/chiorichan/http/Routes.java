@@ -26,9 +26,6 @@ import com.google.common.collect.Sets;
 
 /**
  * Keeps track of routes
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class Routes
 {

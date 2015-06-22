@@ -12,9 +12,6 @@ import com.chiorichan.site.Site;
 
 /**
  * Provides a context to when a session is created
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public interface SessionContext
 {

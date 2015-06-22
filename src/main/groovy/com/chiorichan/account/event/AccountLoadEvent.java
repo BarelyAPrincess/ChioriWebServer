@@ -12,9 +12,6 @@ import com.chiorichan.account.Account;
 
 /**
  * Fired when an Account is being loaded into memory
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class AccountLoadEvent extends AccountEvent
 {

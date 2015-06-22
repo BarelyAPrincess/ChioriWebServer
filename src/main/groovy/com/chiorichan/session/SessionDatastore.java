@@ -12,9 +12,6 @@ import java.util.List;
 
 /**
  * Base class for Session Storage
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public abstract class SessionDatastore
 {

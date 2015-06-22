@@ -9,9 +9,6 @@
 package com.chiorichan.serialization;
 
 /**
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class DataStore
 {

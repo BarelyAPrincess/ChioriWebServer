@@ -13,14 +13,13 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.chiorichan.util.StringFunc;
-import com.google.common.collect.Lists;
 
-public class ChildPermission
+public final class ChildPermission
 {
-	private boolean isInherited;
-	private Permission parent;
-	private List<String> refs;
-	private PermissionValue value;
+	private final boolean isInherited;
+	private final Permission perm;
+	private final List<String> refs;
+	private final PermissionValue value;
 	
 	/**
 	 * References a permission state/value against an entity
@@ -34,22 +33,12 @@ public class ChildPermission
 	 * @param isInherited
 	 *            Was this value given to the entity because it was a member of a group?
 	 */
-	public ChildPermission( Permission parent, PermissionValue value, boolean isInherited, List<String> refs )
-	{
-		if ( refs == null )
-			refs = Lists.newArrayList();
-		
-		refs = StringFunc.toLowerCase( refs );
-		
-		this.parent = parent;
-		this.refs = refs;
-		this.value = value;
-		this.isInherited = isInherited;
-	}
-	
 	public ChildPermission( Permission perm, PermissionValue value, boolean isInherited, String... refs )
 	{
-		this( perm, value, isInherited, new ArrayList<String>( Arrays.asList( refs ) ) );
+		this.perm = perm;
+		this.value = value;
+		this.isInherited = isInherited;
+		this.refs = new ArrayList<String>( Arrays.asList( StringFunc.toLowerCase( refs ) ) );
 	}
 	
 	public Boolean getBoolean()
@@ -75,7 +64,7 @@ public class ChildPermission
 	
 	public Permission getPermission()
 	{
-		return parent;
+		return perm;
 	}
 	
 	public List<String> getReferences()
@@ -93,7 +82,7 @@ public class ChildPermission
 	
 	public PermissionType getType()
 	{
-		return parent.getType();
+		return perm.getType();
 	}
 	
 	public PermissionValue getValue()
@@ -104,19 +93,5 @@ public class ChildPermission
 	public boolean isInherited()
 	{
 		return isInherited;
-	}
-	
-	/**
-	 * Sets the custom value for the entity specified.
-	 * Empty or null will set value to Permission default.
-	 */
-	public void setValue( Object val )
-	{
-		if ( val == null || val.equals( "" ) )
-			value = parent.getModel().getModelValue(); // Use Parent Value
-		else
-			setValue( val );
-		
-		// TODO Save custom value to backend
 	}
 }

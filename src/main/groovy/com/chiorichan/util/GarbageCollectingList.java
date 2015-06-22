@@ -21,9 +21,6 @@ import com.google.common.collect.Sets;
 
 /**
  * Implements a self garbage collecting List, that is Thread-safe
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class GarbageCollectingList<V, G> implements Iterable<V>
 {

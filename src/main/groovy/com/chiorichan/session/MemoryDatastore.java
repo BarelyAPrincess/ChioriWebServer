@@ -13,9 +13,6 @@ import java.util.List;
 import com.google.common.collect.Lists;
 
 /**
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 public class MemoryDatastore extends SessionDatastore
 {

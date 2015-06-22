@@ -76,13 +76,11 @@ public abstract class ScriptingBaseJava extends Script
 		StringBuilder sb = new StringBuilder();
 		
 		for ( Object obj : objs )
-		{
 			if ( obj != null )
 			{
 				Map<String, Object> children = Maps.newLinkedHashMap();
 				
 				if ( obj instanceof Map )
-				{
 					for ( Entry<Object, Object> e : ( ( Map<Object, Object> ) obj ).entrySet() )
 					{
 						String key = ObjectFunc.castToString( e.getKey() );
@@ -90,17 +88,12 @@ public abstract class ScriptingBaseJava extends Script
 							key = e.getKey().toString();
 						children.put( key, e.getValue() );
 					}
-				}
 				else if ( obj instanceof List )
-				{
 					for ( int i = 0; i < ( ( List<Object> ) obj ).size(); i++ )
 						children.put( "" + i, ( ( List<Object> ) obj ).get( i ) );
-				}
 				else if ( obj instanceof Object[] )
-				{
 					for ( int i = 0; i < ( ( Object[] ) obj ).length; i++ )
 						children.put( "" + i, ( ( Object[] ) obj )[i] );
-				}
 				
 				// boolean[], byte[], short[], char[], int[], long[], float[], double[], Object[]
 				
@@ -126,10 +119,7 @@ public abstract class ScriptingBaseJava extends Script
 				}
 			}
 			else
-			{
 				sb.append( "\nnull" );
-			}
-		}
 		
 		if ( sb.length() < 1 )
 			return "";
@@ -343,9 +333,7 @@ public abstract class ScriptingBaseJava extends Script
 			format = "MMM dx YYYY";
 		
 		if ( format.contains( "U" ) )
-		{
 			format = format.replaceAll( "U", ( date.getTime() / 1000 ) + "" );
-		}
 		
 		if ( format.contains( "x" ) )
 		{
@@ -355,9 +343,7 @@ public abstract class ScriptingBaseJava extends Script
 			String suffix = "";
 			
 			if ( day >= 11 && day <= 13 )
-			{
 				suffix = "'th'";
-			}
 			else
 				switch ( day % 10 )
 				{
@@ -680,9 +666,7 @@ public abstract class ScriptingBaseJava extends Script
 		
 		String rtn = "";
 		for ( int i = 0; i < length; i++ )
-		{
 			rtn += allowedChars[new Random().nextInt( allowedChars.length )];
-		}
 		
 		return rtn;
 	}
@@ -716,7 +700,7 @@ public abstract class ScriptingBaseJava extends Script
 		Map<String, Object> newArray = new LinkedHashMap<String, Object>();
 		
 		if ( !caseSensitive )
-			allowedKeys = StringFunc.toLowerCase( allowedKeys );
+			allowedKeys = StringFunc.toLowerCaseList( allowedKeys );
 		
 		for ( Entry<String, Object> e : data.entrySet() )
 			if ( ( !caseSensitive && allowedKeys.contains( e.getKey().toLowerCase() ) ) || allowedKeys.contains( e.getKey() ) )
@@ -855,20 +839,14 @@ public abstract class ScriptingBaseJava extends Script
 		{
 			sb.append( "<tr>\n" );
 			for ( String col : headerArray )
-			{
 				sb.append( "<th>" + col + "</th>\n" );
-			}
 			sb.append( "</tr>\n" );
 		}
 		
 		int colLength = ( headerArray != null ) ? headerArray.size() : tableData.size();
 		for ( Object row : tableData.values() )
-		{
 			if ( row instanceof Map )
-			{
 				colLength = Math.max( ( ( Map<String, Object> ) row ).size(), colLength );
-			}
-		}
 		
 		for ( Object row : tableData.values() )
 		{
@@ -910,32 +888,24 @@ public abstract class ScriptingBaseJava extends Script
 				sb.append( " class=\"" + clss + "\">\n" );
 				
 				if ( map.size() == 1 )
-				{
 					sb.append( "<td style=\"text-align: center; font-weight: bold;\" class=\"\" colspan=\"" + colLength + "\">" + map.get( 0 ) + "</td>\n" );
-				}
 				else
 				{
 					int cc = 0;
 					for ( Object col : map.values() )
-					{
 						if ( col != null )
 						{
 							String subclass = ( col instanceof String && ( ( String ) col ).isEmpty() ) ? " emptyCol" : "";
 							sb.append( "<td id=\"col_" + cc + "\" class=\"" + subclass + "\">" + col + "</td>\n" );
 							cc++;
 						}
-					}
 				}
 				sb.append( "</tr>\n" );
 			}
 			else if ( row instanceof String )
-			{
 				sb.append( "<tr><td class=\"" + clss + "\" colspan=\"" + colLength + "\"><b><center>" + ( ( String ) row ) + "</b></center></td></tr>\n" );
-			}
 			else
-			{
 				sb.append( "<tr><td class=\"" + clss + "\" colspan=\"" + colLength + "\"><b><center>" + row.toString() + "</b></center></td></tr>\n" );
-			}
 		}
 		sb.append( "</table>\n" );
 		
