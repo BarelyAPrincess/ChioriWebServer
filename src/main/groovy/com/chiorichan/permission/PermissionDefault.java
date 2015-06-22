@@ -12,7 +12,7 @@ package com.chiorichan.permission;
 
 public enum PermissionDefault
 {
-	DEFAULT( "default" ), EVERYBODY( "" ), OP( "sys.op" ), ADMIN( "sys.admin" ), BANNED( "sys.banned" ), WHITELISTED( "sys.whitelisted" );
+	ADMIN( "sys.admin" ), BANNED( "sys.banned" ), DEFAULT( "default" ), EVERYBODY( "" ), OP( "sys.op" ), WHITELISTED( "sys.whitelisted" );
 	
 	private String nameSpace = "";
 	
@@ -21,14 +21,13 @@ public enum PermissionDefault
 		this.nameSpace = nameSpace;
 	}
 	
-	public String toString()
+	public static boolean isDefault( Permission perm )
 	{
-		return this.name() + "(nameSpace=" + nameSpace + ")";
-	}
-	
-	public String getNameSpace()
-	{
-		return nameSpace;
+		for ( PermissionDefault pd : PermissionDefault.values() )
+			if ( pd.getNameSpace().equalsIgnoreCase( perm.getNamespace() ) )
+				return true;
+		
+		return false;
 	}
 	
 	public String getLocalName()
@@ -36,44 +35,55 @@ public enum PermissionDefault
 		return ( nameSpace.contains( "." ) ) ? nameSpace.substring( nameSpace.indexOf( "." ) + 1 ) : nameSpace;
 	}
 	
+	public String getNameSpace()
+	{
+		return nameSpace;
+	}
+	
 	public Permission getNode()
 	{
 		Permission result = Permission.getNode( nameSpace, false );
 		
 		if ( result == null )
+		{
+			if ( this == EVERYBODY )
+			{
+				result = Permission.getNode( getNameSpace(), PermissionType.BOOL );
+				result.getModel().setValue( true );
+				result.getModel().setValueDefault( true );
+			}
+			else
+				result = Permission.getNode( getNameSpace(), true );
+			
 			switch ( this )
 			{
 				case DEFAULT:
-					result = Permission.createNode( getNameSpace(), new PermissionValueBoolean( getLocalName(), true, false ), "Used as the default permission node if one does not exist. (DO NOT EDIT!)" );
+					result.getModel().setDescription( "Used as the default permission node if one does not exist. (DO NOT EDIT!)" );
 					break;
 				case EVERYBODY:
-					result = Permission.createNode( getNameSpace(), new PermissionValueBoolean( getLocalName(), true, true ), "This node is used for the 'everyone' permission check. (DO NOT EDIT!)" );
+					result.getModel().setDescription( "This node is used for the 'everyone' permission. (DO NOT EDIT!)" );
 					break;
 				case OP:
-					result = Permission.createNode( getNameSpace(), new PermissionValueBoolean( getLocalName(), true, false ), "Indicates OP entities. (DO NOT EDIT!)" );
+					result.getModel().setDescription( "Indicates OP entities. (DO NOT EDIT!)" );
 					break;
 				case ADMIN:
-					result = Permission.createNode( getNameSpace(), new PermissionValueBoolean( getLocalName(), true, false ), "Indicates ADMIN entities. (DO NOT EDIT!)" );
+					result.getModel().setDescription( "Indicates ADMIN entities. (DO NOT EDIT!)" );
 					break;
 				case BANNED:
-					result = Permission.createNode( getNameSpace(), new PermissionValueBoolean( getLocalName(), true, false ), "Indicates BANNED entities. (DO NOT EDIT!)" );
+					result.getModel().setDescription( "Indicates BANNED entities. (DO NOT EDIT!)" );
 					break;
 				case WHITELISTED:
-					result = Permission.createNode( getNameSpace(), new PermissionValueBoolean( getLocalName(), true, false ), "Indicates WHITELISTED entities. (DO NOT EDIT!)" );
+					result.getModel().setDescription( "Indicates WHITELISTED entities. (DO NOT EDIT!)" );
 					break;
 			}
+		}
 		
 		return result;
 	}
 	
-	public static boolean isDefault( Permission perm )
+	@Override
+	public String toString()
 	{
-		for ( PermissionDefault pd : PermissionDefault.values() )
-		{
-			if ( pd.getNameSpace().equalsIgnoreCase( perm.getNamespace() ) )
-				return true;
-		}
-		
-		return false;
+		return name() + "(nameSpace=" + nameSpace + ")";
 	}
 }

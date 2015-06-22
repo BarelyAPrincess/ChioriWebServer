@@ -24,11 +24,9 @@ public class FileConfig extends YamlConfiguration
 	{
 		super();
 		
-		this.options().pathSeparator( FileBackend.PATH_SEPARATOR );
-		
 		this.file = file;
 		
-		this.reload();
+		reload();
 	}
 	
 	public File getFile()

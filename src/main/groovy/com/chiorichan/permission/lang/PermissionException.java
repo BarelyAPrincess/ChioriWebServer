@@ -11,17 +11,17 @@ package com.chiorichan.permission.lang;
 
 import java.sql.SQLException;
 
-public class PermissionException extends Exception
+public class PermissionException extends RuntimeException
 {
 	private static final long serialVersionUID = -7126640838300697969L;
-	
-	public PermissionException( String message )
-	{
-		super( message );
-	}
 	
 	public PermissionException( SQLException e )
 	{
 		super( e );
+	}
+	
+	public PermissionException( String message )
+	{
+		super( message );
 	}
 }

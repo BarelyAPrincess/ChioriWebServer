@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -25,11 +26,10 @@ import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionBackend;
 import com.chiorichan.permission.PermissionManager;
+import com.chiorichan.permission.PermissionModelValue;
+import com.chiorichan.permission.PermissionNamespace;
+import com.chiorichan.permission.PermissionType;
 import com.chiorichan.permission.PermissionValue;
-import com.chiorichan.permission.PermissionValueBoolean;
-import com.chiorichan.permission.PermissionValueEnum;
-import com.chiorichan.permission.PermissionValueInt;
-import com.chiorichan.permission.PermissionValueVar;
 import com.chiorichan.permission.lang.PermissionBackendException;
 import com.chiorichan.permission.lang.PermissionException;
 import com.chiorichan.site.Site;
@@ -39,17 +39,126 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.Sets;
 
 /**
+ * Provides the File Permission Backend
+ * 
  * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class FileBackend extends PermissionBackend
 {
-	public static final char PATH_SEPARATOR = '/';
 	public FileConfiguration permissions;
 	public File permissionsFile;
 	
 	public FileBackend()
 	{
 		super();
+	}
+	
+	public static String buildPath( String... path )
+	{
+		StringBuilder builder = new StringBuilder();
+		
+		boolean first = true;
+		char separator = File.pathSeparatorChar;
+		
+		for ( String node : path )
+		{
+			if ( node.isEmpty() )
+				continue;
+			
+			if ( !first )
+				builder.append( separator );
+			
+			builder.append( node );
+			
+			first = false;
+		}
+		
+		return builder.toString();
+	}
+	
+	public void commit()
+	{
+		try
+		{
+			permissions.save( permissionsFile );
+		}
+		catch ( IOException e )
+		{
+			Logger.getLogger( "" ).severe( "[PermissionsEx] Error during saving permissions file: " + e.getMessage() );
+		}
+	}
+	
+	@Override
+	public PermissibleGroup getDefaultGroup( String siteName )
+	{
+		ConfigurationSection groups = permissions.getConfigurationSection( "groups" );
+		
+		if ( groups == null )
+			throw new RuntimeException( "No groups defined. Check your permissions file." );
+		
+		String defaultGroupProperty = "default";
+		if ( siteName != null )
+			defaultGroupProperty = buildPath( "sites", siteName, defaultGroupProperty );
+		
+		for ( Map.Entry<String, Object> entry : groups.getValues( false ).entrySet() )
+			if ( entry.getValue() instanceof ConfigurationSection )
+			{
+				ConfigurationSection groupSection = ( ConfigurationSection ) entry.getValue();
+				
+				if ( groupSection.getBoolean( defaultGroupProperty, false ) )
+					return PermissionManager.INSTANCE.getGroup( entry.getKey() );
+			}
+		
+		if ( siteName == null )
+			throw new RuntimeException( "Default user group is not defined. Please select one using the \"default: true\" property" );
+		
+		return null;
+	}
+	
+	@Override
+	public PermissibleEntity[] getEntities()
+	{
+		return new PermissibleEntity[0];
+	}
+	
+	@Override
+	public PermissibleEntity getEntity( String id )
+	{
+		return new FileEntity( id, this );
+	}
+	
+	@Override
+	public Set<String> getEntityNames( int type )
+	{
+		ConfigurationSection section = permissions.getConfigurationSection( ( type == 1 ) ? "groups" : "entities" );
+		
+		if ( section == null )
+			return Sets.newHashSet();
+		
+		return section.getKeys( false );
+	}
+	
+	@Override
+	public PermissibleGroup getGroup( String groupName )
+	{
+		return new FileGroup( groupName, this );
+	}
+	
+	@Override
+	public PermissibleGroup[] getGroups()
+	{
+		List<PermissibleGroup> groups = new LinkedList<PermissibleGroup>();
+		ConfigurationSection groupsSection = permissions.getConfigurationSection( "groups" );
+		
+		if ( groupsSection == null )
+			return new PermissibleGroup[0];
+		
+		for ( String groupName : groupsSection.getKeys( false ) )
+			groups.add( PermissionManager.INSTANCE.getGroup( groupName ) );
+		
+		Collections.sort( groups );
+		
+		return groups.toArray( new PermissibleGroup[0] );
 	}
 	
 	@Override
@@ -68,167 +177,6 @@ public class FileBackend extends PermissionBackend
 		reload();
 	}
 	
-	@Override
-	public PermissibleEntity getEntity( String id )
-	{
-		return new FileEntity( id, this );
-	}
-	
-	@Override
-	public PermissibleGroup getGroup( String groupName )
-	{
-		return new FileGroup( groupName, this );
-	}
-	
-	@Override
-	public PermissibleGroup getDefaultGroup( String siteName )
-	{
-		ConfigurationSection groups = permissions.getConfigurationSection( "groups" );
-		
-		if ( groups == null )
-		{
-			throw new RuntimeException( "No groups defined. Check your permissions file." );
-		}
-		
-		String defaultGroupProperty = "default";
-		if ( siteName != null )
-		{
-			defaultGroupProperty = buildPath( "sites", siteName, defaultGroupProperty );
-		}
-		
-		for ( Map.Entry<String, Object> entry : groups.getValues( false ).entrySet() )
-		{
-			if ( entry.getValue() instanceof ConfigurationSection )
-			{
-				ConfigurationSection groupSection = ( ConfigurationSection ) entry.getValue();
-				
-				if ( groupSection.getBoolean( defaultGroupProperty, false ) )
-				{
-					return PermissionManager.INSTANCE.getGroup( entry.getKey() );
-				}
-			}
-		}
-		
-		if ( siteName == null )
-		{
-			throw new RuntimeException( "Default user group is not defined. Please select one using the \"default: true\" property" );
-		}
-		
-		return null;
-	}
-	
-	@Override
-	public void setDefaultGroup( String group, String... site )
-	{
-		String siteName = Joiner.on( "|" ).join( site );
-		
-		ConfigurationSection groups = permissions.getConfigurationSection( "groups" );
-		
-		String defaultGroupProperty = "default";
-		if ( siteName != null )
-		{
-			defaultGroupProperty = buildPath( "sites", siteName, defaultGroupProperty );
-		}
-		
-		for ( Map.Entry<String, Object> entry : groups.getValues( false ).entrySet() )
-		{
-			if ( entry.getValue() instanceof ConfigurationSection )
-			{
-				ConfigurationSection groupSection = ( ConfigurationSection ) entry.getValue();
-				
-				groupSection.set( defaultGroupProperty, false );
-				
-				if ( !groupSection.getName().equals( group ) )
-				{
-					groupSection.set( defaultGroupProperty, null );
-				}
-				else
-				{
-					groupSection.set( defaultGroupProperty, true );
-				}
-			}
-		}
-		
-		save();
-	}
-	
-	@Override
-	public PermissibleGroup[] getGroups()
-	{
-		List<PermissibleGroup> groups = new LinkedList<PermissibleGroup>();
-		ConfigurationSection groupsSection = permissions.getConfigurationSection( "groups" );
-		
-		if ( groupsSection == null )
-		{
-			return new PermissibleGroup[0];
-		}
-		
-		for ( String groupName : groupsSection.getKeys( false ) )
-		{
-			groups.add( PermissionManager.INSTANCE.getGroup( groupName ) );
-		}
-		
-		Collections.sort( groups );
-		
-		return groups.toArray( new PermissibleGroup[0] );
-	}
-	
-	public static String buildPath( String... path )
-	{
-		StringBuilder builder = new StringBuilder();
-		
-		boolean first = true;
-		char separator = PATH_SEPARATOR; // permissions.options().pathSeparator();
-		
-		for ( String node : path )
-		{
-			if ( node.isEmpty() )
-			{
-				continue;
-			}
-			
-			if ( !first )
-			{
-				builder.append( separator );
-			}
-			
-			builder.append( node );
-			
-			first = false;
-		}
-		
-		return builder.toString();
-	}
-	
-	@Override
-	public void reload() throws PermissionBackendException
-	{
-		FileConfiguration newPermissions = new YamlConfiguration();
-		newPermissions.options().pathSeparator( PATH_SEPARATOR );
-		try
-		{
-			
-			newPermissions.load( permissionsFile );
-			
-			PermissionManager.getLogger().info( "Permissions file successfully loaded" );
-			
-			permissions = newPermissions;
-		}
-		catch ( FileNotFoundException e )
-		{
-			if ( permissions == null )
-			{
-				// First load, load even if the file doesn't exist
-				permissions = newPermissions;
-				initNewConfiguration();
-			}
-		}
-		catch ( Throwable e )
-		{
-			throw new PermissionBackendException( "Error loading permissions file!", e );
-		}
-	}
-	
 	/**
 	 * This method is called when the file the permissions config is supposed to save to
 	 * does not exist yet,This adds default permissions & stuff
@@ -236,7 +184,6 @@ public class FileBackend extends PermissionBackend
 	private void initNewConfiguration() throws PermissionBackendException
 	{
 		if ( !permissionsFile.exists() )
-		{
 			try
 			{
 				permissionsFile.createNewFile();
@@ -248,42 +195,12 @@ public class FileBackend extends PermissionBackend
 				
 				permissions.set( "groups/default/permissions", defaultPermissions );
 				
-				save();
+				commit();
 			}
 			catch ( IOException e )
 			{
 				throw new PermissionBackendException( e );
 			}
-		}
-	}
-	
-	public void save()
-	{
-		try
-		{
-			permissions.save( permissionsFile );
-		}
-		catch ( IOException e )
-		{
-			Logger.getLogger( "" ).severe( "[PermissionsEx] Error during saving permissions file: " + e.getMessage() );
-		}
-	}
-	
-	@Override
-	public PermissibleEntity[] getEntities()
-	{
-		return new PermissibleEntity[0];
-	}
-	
-	@Override
-	public Set<String> getEntityNames( int type )
-	{
-		ConfigurationSection section = permissions.getConfigurationSection( ( type == 1 ) ? "groups" : "entities" );
-		
-		if ( section == null )
-			return Sets.newHashSet();
-		
-		return section.getKeys( false );
 	}
 	
 	@SuppressWarnings( "unused" )
@@ -295,29 +212,16 @@ public class FileBackend extends PermissionBackend
 		if ( section != null )
 			for ( String s : section.getKeys( false ) )
 			{
-				String permName = s.toLowerCase();
 				ConfigurationSection result = section.getConfigurationSection( s );
-				Permission perm = Permission.getNode( permName, true );
 				
-				if ( result.getString( "type" ) != null )
-					switch ( result.getString( "type" ) )
-					{
-						case "BOOL":
-							perm.setValue( new PermissionValueBoolean( permName, result.getBoolean( "value" ), result.getBoolean( "default" ) ), false );
-							break;
-						case "ENUM":
-							perm.setValue( new PermissionValueEnum( permName, result.getString( "value", "" ), result.getString( "default" ), result.getInt( "maxlen", -1 ), Splitter.on( "|" ).splitToList( result.getString( "enum", "" ) ) ), false );
-							break;
-						case "VAR":
-							perm.setValue( new PermissionValueVar( permName, result.getString( "value", "" ), result.getString( "default" ), result.getInt( "maxlen", -1 ) ), false );
-							break;
-						case "INT":
-							perm.setValue( new PermissionValueInt( permName, result.getInt( "value" ), result.getInt( "default" ) ), false );
-							break;
-					}
-				
-				if ( result.getString( "description" ) != null )
-					perm.setDescription( result.getString( "description" ), false );
+				try
+				{
+					nodeCreate( result );
+				}
+				catch ( PermissionException e )
+				{
+					PermissionManager.getLogger().warning( e.getMessage() );
+				}
 			}
 		
 		section = permissions.getConfigurationSection( "entities" );
@@ -339,9 +243,9 @@ public class FileBackend extends PermissionBackend
 						
 						List<Site> sites = SiteManager.INSTANCE.parseSites( ( permission.getString( "sites" ) == null ) ? "" : permission.getString( "sites" ) );
 						
-						PermissionValue<?> value = null;
+						PermissionValue value = null;
 						if ( permission.getString( "value" ) != null )
-							value = perm.getValue().createChild( permission.getString( "value" ) );
+							value = perm.getModel().createValue( permission.getString( "value" ) );
 						
 						// entity.attachPermission( new ChildPermission( perm, sites, value ) );
 					}
@@ -368,9 +272,9 @@ public class FileBackend extends PermissionBackend
 						
 						List<Site> sites = SiteManager.INSTANCE.parseSites( ( permission.getString( "sites" ) == null ) ? "" : permission.getString( "sites" ) );
 						
-						PermissionValue<?> value = null;
+						PermissionValue value = null;
 						if ( permission.getString( "value" ) != null )
-							value = perm.getValue().createChild( permission.getString( "value" ) );
+							value = perm.getModel().createValue( permission.getString( "value" ) );
 						
 						// group.attachPermission( new ChildPermission( perm, sites, value ) );
 					}
@@ -378,14 +282,126 @@ public class FileBackend extends PermissionBackend
 	}
 	
 	@Override
-	public Permission createNode( String namespace ) throws PermissionException
+	public void nodeCommit( Permission perm )
 	{
-		return new FilePermission( namespace );
+		if ( !PermissionManager.isInitialized() )
+		{
+			Loader.getLogger().warning( "There was an attempt to commit() changes made to a permission node before we finished loading." );
+			return;
+		}
+		
+		PermissionModelValue model = perm.getModel();
+		
+		ConfigurationSection permissionsSection = permissions.getConfigurationSection( "permissions", true );
+		ConfigurationSection permission = permissionsSection.getConfigurationSection( perm.getNamespace(), true );
+		
+		permission.set( "type", perm.getType().name() );
+		
+		permission.set( "value", perm.getType() == PermissionType.DEFAULT ? null : model.getValue() );
+		permission.set( "default", perm.getType() == PermissionType.DEFAULT ? null : model.getValueDefault() );
+		
+		permission.set( "max", perm.getType().hasMax() ? model.getMaxLen() : null );
+		permission.set( "min", perm.getType().hasMin() ? 0 : null );
+		permission.set( "enum", perm.getType() == PermissionType.ENUM ? model.getEnumsString() : null );
+		permission.set( "description", model.hasDescription() ? model.getDescription() : null );
+		
+		commit();
+	}
+	
+	Permission nodeCreate( ConfigurationSection result ) throws PermissionException
+	{
+		PermissionNamespace ns = new PermissionNamespace( result.getString( "permission" ) );
+		
+		// TODO Remove invalid characters
+		if ( !ns.containsOnlyValidChars() )
+			throw new PermissionException( "The permission '" + ns.getNamespace() + "' contains invalid characters. Permission namespaces can only contain the characters a-z, 0-9, and _." );
+		
+		Permission parent = ( ns.getNodeCount() <= 1 ) ? null : Permission.getNode( ns.getParent(), true );
+		Permission perm = new Permission( ns.getLocalName(), PermissionType.valueOf( result.getString( "type" ) ), parent );
+		
+		PermissionModelValue model = perm.getModel();
+		
+		if ( result.get( "value" ) != null )
+			model.setValue( result.get( "value" ), false );
+		
+		if ( result.get( "default" ) != null )
+			model.setValueDefault( result.get( "default" ), false );
+		
+		if ( perm.getType().hasMax() )
+			model.setMaxLen( Math.min( result.getInt( "max" ), perm.getType().maxValue() ) );
+		
+		if ( perm.getType() == PermissionType.ENUM )
+			model.setEnums( new HashSet<String>( Splitter.on( "|" ).splitToList( result.getString( "enum" ) ) ) );
+		
+		model.setDescription( result.getString( "description" ), false );
+		
+		return perm;
 	}
 	
 	@Override
-	public Permission createNode( String namespace, Permission parent ) throws PermissionException
+	public void nodeDestroy( Permission perm )
 	{
-		return new FilePermission( namespace, parent );
+		
+	}
+	
+	@Override
+	public void nodeReload( Permission perm )
+	{
+		
+	}
+	
+	@Override
+	public void reload() throws PermissionBackendException
+	{
+		FileConfiguration newPermissions = new YamlConfiguration();
+		try
+		{
+			
+			newPermissions.load( permissionsFile );
+			
+			PermissionManager.getLogger().info( "Permissions file successfully loaded" );
+			
+			permissions = newPermissions;
+		}
+		catch ( FileNotFoundException e )
+		{
+			if ( permissions == null )
+			{
+				// First load, load even if the file doesn't exist
+				permissions = newPermissions;
+				initNewConfiguration();
+			}
+		}
+		catch ( Throwable e )
+		{
+			throw new PermissionBackendException( "Error loading permissions file!", e );
+		}
+	}
+	
+	@Override
+	public void setDefaultGroup( String group, String... site )
+	{
+		String siteName = Joiner.on( "|" ).join( site );
+		
+		ConfigurationSection groups = permissions.getConfigurationSection( "groups" );
+		
+		String defaultGroupProperty = "default";
+		if ( siteName != null )
+			defaultGroupProperty = buildPath( "sites", siteName, defaultGroupProperty );
+		
+		for ( Map.Entry<String, Object> entry : groups.getValues( false ).entrySet() )
+			if ( entry.getValue() instanceof ConfigurationSection )
+			{
+				ConfigurationSection groupSection = ( ConfigurationSection ) entry.getValue();
+				
+				groupSection.set( defaultGroupProperty, false );
+				
+				if ( !groupSection.getName().equals( group ) )
+					groupSection.set( defaultGroupProperty, null );
+				else
+					groupSection.set( defaultGroupProperty, true );
+			}
+		
+		commit();
 	}
 }

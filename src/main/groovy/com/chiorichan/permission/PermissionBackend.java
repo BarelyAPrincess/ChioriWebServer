@@ -3,9 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 package com.chiorichan.permission;
 
@@ -15,8 +12,12 @@ import java.util.Map;
 import java.util.Set;
 
 import com.chiorichan.permission.lang.PermissionBackendException;
-import com.chiorichan.permission.lang.PermissionException;
 
+/**
+ * Provides the basis of Permission Backend classes
+ * 
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
+ */
 public abstract class PermissionBackend
 {
 	/**
@@ -28,6 +29,8 @@ public abstract class PermissionBackend
 	public static final int ENTITY = 0;
 	
 	protected static final String defaultBackend = "file";
+	
+	// TODO Make it so node can be changed from one backend to another with ease and without restarting.
 	
 	/**
 	 * Backend initialization should be done here
@@ -85,9 +88,7 @@ public abstract class PermissionBackend
 	{
 		
 		if ( registedAliases.containsKey( alias ) )
-		{
 			return registedAliases.get( alias ).getName();
-		}
 		
 		return alias;
 	}
@@ -104,9 +105,7 @@ public abstract class PermissionBackend
 	public static Class<? extends PermissionBackend> getBackendClass( String alias ) throws ClassNotFoundException
 	{
 		if ( !registedAliases.containsKey( alias ) )
-		{
 			return ( Class<? extends PermissionBackend> ) Class.forName( alias );
-		}
 		
 		return registedAliases.get( alias );
 	}
@@ -120,9 +119,7 @@ public abstract class PermissionBackend
 	public static void registerBackendAlias( String alias, Class<? extends PermissionBackend> backendClass )
 	{
 		if ( !PermissionBackend.class.isAssignableFrom( backendClass ) )
-		{
 			throw new RuntimeException( "Provided class should be subclass of PermissionBackend" );
-		}
 		
 		registedAliases.put( alias, backendClass );
 		
@@ -140,69 +137,48 @@ public abstract class PermissionBackend
 	public static String getBackendAlias( Class<? extends PermissionBackend> backendClass )
 	{
 		if ( registedAliases.containsValue( backendClass ) )
-		{
 			for ( String alias : registedAliases.keySet() )
-			{ // Is there better way to find key by value?
 				if ( registedAliases.get( alias ).equals( backendClass ) )
-				{
 					return alias;
-				}
-			}
-		}
 		
 		return backendClass.getName();
 	}
 	
-	public static PermissionBackend getBackend( String backendName )
-	{
-		return getBackend( backendName, null );
-	}
-	
 	/**
-	 * Returns new Backend class instance for specified backendName
+	 * Return a specific Backend instance, be that the current backend or not.
 	 * 
 	 * @param backendName
 	 *            Class name or alias of backend
-	 * @param fallBackBackend
-	 *            name of backend that should be used if specified backend was not found or failed to initialize
-	 * @return new instance of PermissionBackend object
+	 * @return instance of PermissionBackend object
 	 */
-	public static PermissionBackend getBackend( String backendName, String fallBackBackend )
+	public static PermissionBackend getBackend( String backendName )
 	{
-		if ( backendName == null || backendName.isEmpty() )
-		{
-			backendName = defaultBackend;
-		}
-		
-		String className = getBackendClassName( backendName );
-		
 		try
 		{
-			Class<? extends PermissionBackend> backendClass = getBackendClass( backendName );
-			
-			PermissionManager.getLogger().info( "Initializing " + backendName + " backend" );
-			
-			Constructor<? extends PermissionBackend> constructor = backendClass.getConstructor();
-			return ( PermissionBackend ) constructor.newInstance();
+			return getBackendWithException( backendName );
 		}
 		catch ( ClassNotFoundException e )
 		{
-			
-			PermissionManager.getLogger().warning( "Specified backend \"" + backendName + "\" are not found." );
-			
-			if ( fallBackBackend == null )
-			{
-				throw new RuntimeException( e );
-			}
-			
-			if ( !className.equals( getBackendClassName( fallBackBackend ) ) )
-			{
-				return getBackend( fallBackBackend, null );
-			}
-			else
-			{
-				throw new RuntimeException( e );
-			}
+			return null;
+		}
+	}
+	
+	public static PermissionBackend getBackendWithException( String backendName ) throws ClassNotFoundException
+	{
+		Class<? extends PermissionBackend> backendClass = getBackendClass( backendName );
+		if ( PermissionManager.INSTANCE.getBackend() != null && PermissionManager.INSTANCE.getBackend().getClass() == backendClass )
+			return PermissionManager.INSTANCE.getBackend();
+		else
+			return getBackend( backendClass );
+	}
+	
+	private static PermissionBackend getBackend( Class<? extends PermissionBackend> backendClass )
+	{
+		try
+		{
+			PermissionManager.getLogger().info( "Initializing " + backendClass.getName() + " backend" );
+			Constructor<? extends PermissionBackend> constructor = backendClass.getConstructor();
+			return constructor.newInstance();
 		}
 		catch ( Exception e )
 		{
@@ -210,11 +186,68 @@ public abstract class PermissionBackend
 		}
 	}
 	
+	public static PermissionBackend getBackend( String backendName, String fallBackBackend )
+	{
+		try
+		{
+			return getBackendWithException( backendName, fallBackBackend );
+		}
+		catch ( ClassNotFoundException e )
+		{
+			return null;
+		}
+	}
+	
+	/**
+	 * Returns a new Backend class instance for specified backendName
+	 * 
+	 * @param backendName
+	 *            Class name or alias of backend
+	 * @param fallBackBackend
+	 *            name of backend that should be used if specified backend was not found or failed to initialize
+	 * @return new instance of PermissionBackend object
+	 */
+	public static PermissionBackend getBackendWithException( String backendName, String fallBackBackend ) throws ClassNotFoundException
+	{
+		if ( backendName == null || backendName.isEmpty() )
+			backendName = defaultBackend;
+		
+		try
+		{
+			return getBackendWithException( backendName );
+		}
+		catch ( ClassNotFoundException e )
+		{
+			PermissionManager.getLogger().warning( "Specified backend \"" + backendName + "\" was not found." );
+			
+			if ( fallBackBackend == null )
+				throw e;
+			
+			if ( !getBackendClassName( backendName ).equals( getBackendClassName( fallBackBackend ) ) )
+				return getBackend( fallBackBackend );
+			else
+				throw e;
+		}
+	}
+	
 	public abstract void reload() throws PermissionBackendException;
 	
 	public abstract void loadPermissionTree();
 	
-	public abstract Permission createNode( String namespace ) throws PermissionException;
+	/**
+	 * Disregards any changes made to the permission node and reloads from the backend
+	 */
+	public abstract void nodeReload( Permission perm );
 	
-	public abstract Permission createNode( String namespace, Permission parent ) throws PermissionException;
+	/**
+	 * Commits any changes made to the permission node to the backend for saving
+	 */
+	public abstract void nodeCommit( Permission perm );
+	
+	/**
+	 * Destroys the permission node and it's children, removing it from both the backend and memory.<br>
+	 * <br>
+	 * Warning: could be considered unsafe to destroy a permission node without first removing all child values
+	 */
+	public abstract void nodeDestroy( Permission perm );
 }

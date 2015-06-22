@@ -556,6 +556,19 @@ public interface ConfigurationSection
 	 * 
 	 * @param path
 	 *            Path of the ConfigurationSection to get.
+	 * @param create
+	 *            Should we create the section if it does not exist and regardless if a default value is specified
+	 * @return Requested ConfigurationSection.
+	 */
+	ConfigurationSection getConfigurationSection( String path, boolean create );
+	
+	/**
+	 * Gets the requested ConfigurationSection by path.
+	 * <p />
+	 * If the ConfigurationSection does not exist but a default value has been specified, this will return the default value. If the ConfigurationSection does not exist and no default value was specified, this will return null.
+	 * 
+	 * @param path
+	 *            Path of the ConfigurationSection to get.
 	 * @return Requested ConfigurationSection.
 	 */
 	ConfigurationSection getConfigurationSection( String path );

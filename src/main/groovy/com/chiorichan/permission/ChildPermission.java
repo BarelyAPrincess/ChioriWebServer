@@ -3,9 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Copyright 2015 Chiori-chan. All Right Reserved.
- * 
- * @author Chiori Greene
- * @email chiorigreene@gmail.com
  */
 package com.chiorichan.permission;
 
@@ -16,17 +13,15 @@ import java.util.List;
 import com.chiorichan.util.StringFunc;
 import com.google.common.collect.Lists;
 
-public class ChildPermission<T>
+/**
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
+ */
+public class ChildPermission
 {
-	public Permission perm;
-	public List<String> refs;
-	public PermissionValue<T> value;
-	public boolean isInherited;
-	
-	public ChildPermission( Permission perm, PermissionValue<T> value, boolean isInherited, String... refs )
-	{
-		this( perm, value, isInherited, new ArrayList<String>( Arrays.asList( refs ) ) );
-	}
+	private boolean isInherited;
+	private Permission parent;
+	private List<String> refs;
+	private PermissionValue value;
 	
 	/**
 	 * References a permission state/value against an entity
@@ -40,22 +35,48 @@ public class ChildPermission<T>
 	 * @param isInherited
 	 *            Was this value given to the entity because it was a member of a group?
 	 */
-	public ChildPermission( Permission perm, PermissionValue<T> value, boolean isInherited, List<String> refs )
+	public ChildPermission( Permission parent, PermissionValue value, boolean isInherited, List<String> refs )
 	{
 		if ( refs == null )
 			refs = Lists.newArrayList();
 		
 		refs = StringFunc.toLowerCase( refs );
 		
-		this.perm = perm;
+		this.parent = parent;
 		this.refs = refs;
 		this.value = value;
 		this.isInherited = isInherited;
 	}
 	
+	public ChildPermission( Permission perm, PermissionValue value, boolean isInherited, String... refs )
+	{
+		this( perm, value, isInherited, new ArrayList<String>( Arrays.asList( refs ) ) );
+	}
+	
+	public Boolean getBoolean()
+	{
+		if ( getType() == PermissionType.BOOL )
+			return ( Boolean ) value.getValue();
+		
+		return null;
+	}
+	
+	public Integer getInt()
+	{
+		if ( getType() == PermissionType.INT )
+			return ( Integer ) value.getValue();
+		
+		return null;
+	}
+	
+	public <T> T getObject()
+	{
+		return value.getValue();
+	}
+	
 	public Permission getPermission()
 	{
-		return perm;
+		return parent;
 	}
 	
 	public List<String> getReferences()
@@ -63,51 +84,40 @@ public class ChildPermission<T>
 		return refs;
 	}
 	
-	public PermissionValue<?> getValue()
+	public String getString()
+	{
+		if ( getType() == PermissionType.ENUM || getType() == PermissionType.VAR )
+			return ( String ) value.getValue();
+		
+		return null;
+	}
+	
+	public PermissionType getType()
+	{
+		return parent.getType();
+	}
+	
+	public PermissionValue getValue()
 	{
 		return value;
+	}
+	
+	public boolean isInherited()
+	{
+		return isInherited;
 	}
 	
 	/**
 	 * Sets the custom value for the entity specified.
 	 * Empty or null will set value to Permission default.
 	 */
-	public void setValue( T val )
+	public void setValue( Object val )
 	{
 		if ( val == null || val.equals( "" ) )
-			value = null;
+			value = parent.getModel().getModelValue(); // Use Parent Value
 		else
-			value.setValue( val );
+			setValue( val );
 		
 		// TODO Save custom value to backend
-	}
-	
-	public T getObject()
-	{
-		return value.getValue();
-	}
-	
-	public String getString()
-	{
-		if ( value.getType() == PermissionValue.PermissionType.ENUM || value.getType() == PermissionValue.PermissionType.VAR )
-			return ( String ) value.getValue();
-		
-		return null;
-	}
-	
-	public Integer getInt()
-	{
-		if ( value.getType() == PermissionValue.PermissionType.INT )
-			return ( Integer ) value.getValue();
-		
-		return null;
-	}
-	
-	public Boolean getBoolean()
-	{
-		if ( value.getType() == PermissionValue.PermissionType.BOOL )
-			return ( Boolean ) value.getValue();
-		
-		return null;
 	}
 }

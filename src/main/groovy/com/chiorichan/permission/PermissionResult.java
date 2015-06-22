@@ -11,22 +11,33 @@ package com.chiorichan.permission;
 
 import java.util.List;
 
+import com.chiorichan.permission.lang.PermissionException;
+import com.chiorichan.permission.lang.PermissionValueException;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.ObjectFunc;
 import com.google.common.collect.Lists;
 
 /**
- * Is returned when Permissible#getPermission() is called
+ * Is returned when {@link Permissible#getPermission()} is called
  * and symbolizes the unity of said permission and entity.
+ * 
+ * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class PermissionResult
 {
 	public static final PermissionResult DUMMY = new PermissionResult();
 	
+	private ChildPermission childPerm = null;
 	private PermissibleEntity entity = null;
+	
+	/**
+	 * Used as a constant tracker for already checked groups, prevents infinite looping.
+	 * e.g., User -> Group1 -> Group2 -> Group3 -> Group1
+	 */
+	private List<PermissibleGroup> groupStackTrace = null;
 	private Permission perm = null;
 	private String ref = "";
-	private ChildPermission childPerm = null;
+	
 	protected int timecode = Timings.epoch();
 	
 	public PermissionResult()
@@ -52,50 +63,101 @@ public class PermissionResult
 			childPerm = recursiveEntityScan( entity );
 	}
 	
-	/**
-	 * Used as a constant tracker for already checked groups, prevents infinite looping.
-	 * e.g., User -> Group1 -> Group2 -> Group3 -> Group1
-	 */
-	private List<PermissibleGroup> groupStackTrace = null;
-	
-	private ChildPermission recursiveEntityScan( PermissibleEntity pe )
+	public PermissionResult assign()
 	{
-		ChildPermission result = pe.getChildPermission( perm.getNamespace(), ref );
+		if ( perm.getType() != PermissionType.DEFAULT )
+			throw new PermissionException( String.format( "Can't assign the permission %s to entity %s, because the permission is of type %s, use assign(Object) with the appropriate value instead.", perm.getNamespace(), entity.getId(), perm.getType().name() ) );
 		
-		if ( result != null )
-			return result;
+		childPerm = new ChildPermission( perm, perm.getModel().createValue( true ), false );
+		entity.childPermissions.add( childPerm );
 		
-		boolean isFirst = false;
+		return this;
+	}
+	
+	public PermissionResult assign( Object val )
+	{
+		if ( perm.getType() == PermissionType.DEFAULT )
+			throw new PermissionException( String.format( "Can't assign the permission %s with value %s to entity %s, because the permission is of default type, which can't carry a value other than assigned or not.", perm.getNamespace(), val, entity.getId(), perm.getType().name() ) );
 		
-		if ( groupStackTrace == null )
-		{
-			groupStackTrace = Lists.newArrayList();
-			isFirst = true;
-		}
+		if ( val == null )
+			throw new PermissionValueException( "The assigned value must not be null." );
 		
-		for ( PermissibleGroup group : pe.groups.values() )
-		{
-			if ( !groupStackTrace.contains( group ) )
-			{
-				groupStackTrace.add( group );
-				ChildPermission childPerm = recursiveEntityScan( group );
-				if ( childPerm != null )
-				{
-					result = childPerm;
-					break;
-				}
-			}
-		}
+		childPerm = new ChildPermission( perm, perm.getModel().createValue( val ), false );
+		entity.childPermissions.add( childPerm );
 		
-		if ( isFirst )
-			groupStackTrace = null;
-		
-		return result;
+		return this;
+	}
+	
+	/**
+	 * See {@link Permission#commit()}<br>
+	 * Caution: will commit changes made to other child values of the same permission node
+	 * 
+	 * @return The {@link PermissionResult} for chaining
+	 */
+	public PermissionResult commit()
+	{
+		perm.commit();
+		return this;
+	}
+	
+	public PermissibleEntity getEntity()
+	{
+		return entity;
+	}
+	
+	public int getInt()
+	{
+		return ObjectFunc.castToInt( getValue().getValue() );
+	}
+	
+	public Permission getPermission()
+	{
+		return perm;
 	}
 	
 	public String getReference()
 	{
 		return ref;
+	}
+	
+	public String getString()
+	{
+		return ObjectFunc.castToString( getValue().getValue() );
+	}
+	
+	public PermissionValue getValue()
+	{
+		if ( childPerm == null || childPerm.getValue() == null || !isAssigned() )
+			return perm.getModel().getModelValue();
+		
+		return childPerm.getValue();
+	}
+	
+	/**
+	 * Returns a final object based on assignment of permission.
+	 * 
+	 * @return
+	 *         Unassigned will return the default value.
+	 */
+	public <T> T getValueObject()
+	{
+		if ( isAssigned() )
+		{
+			if ( childPerm == null || childPerm.getValue() == null )
+				return ( T ) perm.getModel().getModelValue();
+			else
+				return childPerm.getObject();
+		}
+		else
+			return ( T ) perm.getModel().getValueDefault();
+	}
+	
+	/**
+	 * @return was this entity assigned an custom value for this permission.
+	 */
+	public boolean hasValue()
+	{
+		return perm.getType() != PermissionType.DEFAULT && childPerm != null && childPerm.getValue() != null;
 	}
 	
 	/**
@@ -114,15 +176,7 @@ public class PermissionResult
 		if ( !isAssigned() )
 			return false;
 		
-		return childPerm.isInherited;
-	}
-	
-	/**
-	 * @return was this entity assigned an custom value for this permission.
-	 */
-	public boolean hasCustomValue()
-	{
-		return ( childPerm != null && childPerm.getValue() != null );
+		return childPerm.isInherited();
 	}
 	
 	/**
@@ -151,76 +205,54 @@ public class PermissionResult
 	 */
 	public boolean isTrueWithException() throws IllegalAccessException
 	{
-		if ( getValue().getType() != PermissionValue.PermissionType.BOOL )
-			throw new IllegalAccessException( "This Permission Node is not type boolean and can not be checked if true." );
+		if ( perm.getType() == PermissionType.DEFAULT )
+			return isAssigned();
+		
+		if ( perm.getType() != PermissionType.BOOL )
+			throw new PermissionValueException( String.format( "The permission %s is not of type boolean.", perm.getNamespace() ) );
 		
 		if ( !PermissionDefault.isDefault( perm ) && PermissionManager.allowOps && entity.isOp() )
 			return true;
 		
-		return ( getObject() == null ) ? false : ( Boolean ) getObject();
+		return ( getValueObject() == null ) ? false : ObjectFunc.castToBool( getValueObject() );
 	}
 	
-	public void assign()
+	private ChildPermission recursiveEntityScan( PermissibleEntity pe )
 	{
-		childPerm = new ChildPermission( perm, getValue().createChild( true ), false );
-		entity.childPermissions.add( childPerm );
-	}
-	
-	public String getString()
-	{
-		return ObjectFunc.castToString( getValue().getValue() );
-	}
-	
-	public int getInt()
-	{
-		return ObjectFunc.castToInt( getValue().getValue() );
-	}
-	
-	public PermissionValue<?> getDefaultValue()
-	{
-		return perm.getValue();
-	}
-	
-	public PermissionValue<?> getValue()
-	{
-		if ( childPerm == null || childPerm.getValue() == null )
-			return perm.getValue();
+		ChildPermission result = pe.getChildPermission( perm.getNamespace(), ref );
 		
-		return childPerm.getValue();
-	}
-	
-	/**
-	 * Returns a final object based on assignment state.
-	 * 
-	 * @return
-	 *         Unassigned will return the default value.
-	 */
-	public Object getObject()
-	{
-		if ( isAssigned() )
+		if ( result != null )
+			return result;
+		
+		boolean isFirst = false;
+		
+		if ( groupStackTrace == null )
 		{
-			if ( childPerm == null || childPerm.getValue() == null )
-				return perm.getValue().getValue();
-			else
-				return childPerm.getObject();
+			groupStackTrace = Lists.newArrayList();
+			isFirst = true;
 		}
-		else
-			return perm.getValue().getDefault();
-	}
-	
-	public PermissibleEntity getEntity()
-	{
-		return entity;
-	}
-	
-	public Permission getPermission()
-	{
-		return perm;
+		
+		for ( PermissibleGroup group : pe.groups.values() )
+			if ( !groupStackTrace.contains( group ) )
+			{
+				groupStackTrace.add( group );
+				ChildPermission childPerm = recursiveEntityScan( group );
+				if ( childPerm != null )
+				{
+					result = childPerm;
+					break;
+				}
+			}
+		
+		if ( isFirst )
+			groupStackTrace = null;
+		
+		return result;
 	}
 	
 	@Override
 	public String toString()
 	{
-		return "PermissionResult{value=" + getObject() + ",isAssigned=" + isAssigned() + ",permission=" + perm + "}";
+		return String.format( "PermissionResult{name=%s,value=%s,isAssigned=%s}", perm.getNamespace(), getValueObject(), isAssigned() );
 	}
 }
