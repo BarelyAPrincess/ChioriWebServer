@@ -72,7 +72,7 @@ public class MemoryBackend extends PermissionBackend
 	}
 	
 	@Override
-	public void loadPermissionTree()
+	public void loadData()
 	{
 		// Nothing to do here!
 	}

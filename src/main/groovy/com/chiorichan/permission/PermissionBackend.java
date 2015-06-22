@@ -232,7 +232,10 @@ public abstract class PermissionBackend
 	
 	public abstract void reload() throws PermissionBackendException;
 	
-	public abstract void loadPermissionTree();
+	/*
+	 * This method loads all permissions and groups from the backend data store.
+	 */
+	public abstract void loadData();
 	
 	/**
 	 * Disregards any changes made to the permission node and reloads from the backend

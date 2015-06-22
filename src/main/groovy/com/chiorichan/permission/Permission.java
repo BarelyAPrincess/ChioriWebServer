@@ -25,22 +25,27 @@ public final class Permission
 	protected PermissionModelValue model;
 	protected final Permission parent;
 	
-	public Permission( String localName )
+	public Permission( PermissionNamespace ns, PermissionType type )
+	{
+		this( ns.getLocalName(), type, ( ns.getNodeCount() <= 1 ) ? null : PermissionManager.INSTANCE.getNode( ns.getParent(), true ) );
+	}
+	
+	Permission( String localName )
 	{
 		this( localName, PermissionType.DEFAULT );
 	}
 	
-	public Permission( String localName, Permission parent )
+	Permission( String localName, Permission parent )
 	{
 		this( localName, PermissionType.DEFAULT, parent );
 	}
 	
-	public Permission( String localName, PermissionType type )
+	Permission( String localName, PermissionType type )
 	{
 		this( localName, type, null );
 	}
 	
-	public Permission( String localName, PermissionType type, Permission parent )
+	Permission( String localName, PermissionType type, Permission parent )
 	{
 		if ( localName.contains( "." ) )
 			throw new PermissionException( String.format( "The permission local name can not contain periods, %s", localName ) );
@@ -83,7 +88,7 @@ public final class Permission
 		PermissionManager.INSTANCE.getBackend().nodeCommit( this );
 	}
 	
-	public void debugPermissionStack( int deepth )
+	void debugPermissionStack( int deepth )
 	{
 		String spacing = ( deepth > 0 ) ? Strings.repeat( "      ", deepth - 1 ) + "|---> " : "";
 		

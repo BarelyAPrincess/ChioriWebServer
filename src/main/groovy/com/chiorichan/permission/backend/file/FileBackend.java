@@ -205,7 +205,7 @@ public class FileBackend extends PermissionBackend
 	
 	@SuppressWarnings( "unused" )
 	@Override
-	public void loadPermissionTree()
+	public void loadData()
 	{
 		ConfigurationSection section = permissions.getConfigurationSection( "permissions" );
 		
@@ -216,7 +216,29 @@ public class FileBackend extends PermissionBackend
 				
 				try
 				{
-					nodeCreate( result );
+					PermissionNamespace ns = new PermissionNamespace( result.getString( "permission" ) );
+					
+					// TODO Remove invalid characters
+					if ( !ns.containsOnlyValidChars() )
+						throw new PermissionException( "The permission '" + ns.getNamespace() + "' contains invalid characters. Permission namespaces can only contain the characters a-z, 0-9, and _." );
+					
+					Permission perm = new Permission( ns, PermissionType.valueOf( result.getString( "type" ) ) );
+					
+					PermissionModelValue model = perm.getModel();
+					
+					if ( result.get( "value" ) != null )
+						model.setValue( result.get( "value" ) );
+					
+					if ( result.get( "default" ) != null )
+						model.setValueDefault( result.get( "default" ) );
+					
+					if ( perm.getType().hasMax() )
+						model.setMaxLen( Math.min( result.getInt( "max" ), perm.getType().maxValue() ) );
+					
+					if ( perm.getType() == PermissionType.ENUM )
+						model.setEnums( new HashSet<String>( Splitter.on( "|" ).splitToList( result.getString( "enum" ) ) ) );
+					
+					model.setDescription( result.getString( "description" ) );
 				}
 				catch ( PermissionException e )
 				{
@@ -306,36 +328,6 @@ public class FileBackend extends PermissionBackend
 		permission.set( "description", model.hasDescription() ? model.getDescription() : null );
 		
 		commit();
-	}
-	
-	Permission nodeCreate( ConfigurationSection result ) throws PermissionException
-	{
-		PermissionNamespace ns = new PermissionNamespace( result.getString( "permission" ) );
-		
-		// TODO Remove invalid characters
-		if ( !ns.containsOnlyValidChars() )
-			throw new PermissionException( "The permission '" + ns.getNamespace() + "' contains invalid characters. Permission namespaces can only contain the characters a-z, 0-9, and _." );
-		
-		Permission parent = ( ns.getNodeCount() <= 1 ) ? null : PermissionManager.INSTANCE.getNode( ns.getParent(), true );
-		Permission perm = new Permission( ns.getLocalName(), PermissionType.valueOf( result.getString( "type" ) ), parent );
-		
-		PermissionModelValue model = perm.getModel();
-		
-		if ( result.get( "value" ) != null )
-			model.setValue( result.get( "value" ), false );
-		
-		if ( result.get( "default" ) != null )
-			model.setValueDefault( result.get( "default" ), false );
-		
-		if ( perm.getType().hasMax() )
-			model.setMaxLen( Math.min( result.getInt( "max" ), perm.getType().maxValue() ) );
-		
-		if ( perm.getType() == PermissionType.ENUM )
-			model.setEnums( new HashSet<String>( Splitter.on( "|" ).splitToList( result.getString( "enum" ) ) ) );
-		
-		model.setDescription( result.getString( "description" ), false );
-		
-		return perm;
 	}
 	
 	@Override

@@ -176,7 +176,7 @@ public class SQLBackend extends PermissionBackend
 	}
 	
 	@Override
-	public void loadPermissionTree()
+	public void loadData()
 	{
 		try
 		{
@@ -186,7 +186,29 @@ public class SQLBackend extends PermissionBackend
 				do
 					try
 					{
-						nodeCreate( result );
+						PermissionNamespace ns = new PermissionNamespace( result.getString( "permission" ) );
+						
+						// TODO Remove invalid characters
+						if ( !ns.containsOnlyValidChars() )
+							throw new PermissionException( "The permission '" + ns.getNamespace() + "' contains invalid characters. Permission namespaces can only contain the characters a-z, 0-9, and _." );
+						
+						Permission perm = new Permission( ns, PermissionType.valueOf( result.getString( "type" ) ) );
+						
+						PermissionModelValue model = perm.getModel();
+						
+						if ( result.getObject( "value" ) != null )
+							model.setValue( result.getObject( "value" ) );
+						
+						if ( result.getObject( "default" ) != null )
+							model.setValueDefault( result.getObject( "default" ) );
+						
+						if ( perm.getType().hasMax() )
+							model.setMaxLen( Math.min( result.getInt( "max" ), perm.getType().maxValue() ) );
+						
+						if ( perm.getType() == PermissionType.ENUM )
+							model.setEnums( new HashSet<String>( Splitter.on( "|" ).splitToList( result.getString( "enum" ) ) ) );
+						
+						model.setDescription( result.getString( "description" ) );
 					}
 					catch ( PermissionException e )
 					{
@@ -261,36 +283,6 @@ public class SQLBackend extends PermissionBackend
 		{
 			e.printStackTrace();
 		}
-	}
-	
-	private Permission nodeCreate( ResultSet result ) throws SQLException, PermissionException
-	{
-		PermissionNamespace ns = new PermissionNamespace( result.getString( "permission" ) );
-		
-		// TODO Remove invalid characters
-		if ( !ns.containsOnlyValidChars() )
-			throw new PermissionException( "The permission '" + ns.getNamespace() + "' contains invalid characters. Permission namespaces can only contain the characters a-z, 0-9, and _." );
-		
-		Permission parent = ( ns.getNodeCount() <= 1 ) ? null : PermissionManager.INSTANCE.getNode( ns.getParent(), true );
-		Permission perm = new Permission( ns.getLocalName(), PermissionType.valueOf( result.getString( "type" ) ), parent );
-		
-		PermissionModelValue model = perm.getModel();
-		
-		if ( result.getObject( "value" ) != null )
-			model.setValue( result.getObject( "value" ), false );
-		
-		if ( result.getObject( "default" ) != null )
-			model.setValueDefault( result.getObject( "default" ), false );
-		
-		if ( perm.getType().hasMax() )
-			model.setMaxLen( Math.min( result.getInt( "max" ), perm.getType().maxValue() ) );
-		
-		if ( perm.getType() == PermissionType.ENUM )
-			model.setEnums( new HashSet<String>( Splitter.on( "|" ).splitToList( result.getString( "enum" ) ) ) );
-		
-		model.setDescription( result.getString( "description" ), false );
-		
-		return perm;
 	}
 	
 	@Override

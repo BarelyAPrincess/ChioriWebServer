@@ -75,6 +75,8 @@ public enum PermissionDefault
 					result.getModel().setDescription( "Indicates WHITELISTED entities. (DO NOT EDIT!)" );
 					break;
 			}
+			
+			result.commit();
 		}
 		
 		return result;

@@ -565,18 +565,15 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 		if ( isDebug() )
 			getLogger().info( ConsoleColor.YELLOW + "Loading permissions from backend!" );
 		
-		/*
-		 * This method loads all permissions and groups from the backend data store.
-		 */
-		backend.loadPermissionTree();
+		backend.loadData();
 		
-		/*
+		/**
 		 * Calling all the default permissions from here initializes them.
-		 * They are created them if they were not loaded by the backend already.
+		 * They are created, if they were not loaded by the backend already.
 		 * 
 		 * Sidenote: Might be able to skip this but that might cause problems
-		 * if the first call is not to getPermissionNode() which is the method
-		 * that creates it if non-existent.
+		 * if the first call is not to {@link PermissionDefault#getNode()}
+		 * which is the method that creates non-existent nodes.
 		 */
 		PermissionDefault.DEFAULT.getNode();
 		PermissionDefault.EVERYBODY.getNode();

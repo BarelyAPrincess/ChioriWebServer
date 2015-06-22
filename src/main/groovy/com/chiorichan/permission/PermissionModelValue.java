@@ -123,11 +123,6 @@ public class PermissionModelValue
 		return description != null && !description.isEmpty();
 	}
 	
-	public PermissionModelValue setDescription( String description )
-	{
-		return setDescription( description, true );
-	}
-	
 	/**
 	 * Sets the description of this permission.
 	 * <p>
@@ -135,14 +130,10 @@ public class PermissionModelValue
 	 * 
 	 * @param description
 	 *            The new description to set
-	 * @param commit
-	 *            shall we make the call to the backend to save these changes?
 	 */
-	public PermissionModelValue setDescription( String description, boolean commit )
+	public PermissionModelValue setDescription( String description )
 	{
 		this.description = description == null ? "" : description;
-		if ( commit )
-			perm.commit();
 		return this;
 	}
 	
@@ -164,11 +155,6 @@ public class PermissionModelValue
 	
 	public PermissionModelValue setValue( Object value )
 	{
-		return setValue( value, true );
-	}
-	
-	public PermissionModelValue setValue( Object value, boolean commit )
-	{
 		if ( value == null )
 			value = getValueDefault();
 		
@@ -184,18 +170,10 @@ public class PermissionModelValue
 			throw new PermissionValueException( "Can't cast %s to type %s", value.getClass().getName(), type );
 		}
 		
-		if ( commit )
-			perm.commit();
-		
 		return this;
 	}
 	
 	public PermissionModelValue setValueDefault( Object valueDefault )
-	{
-		return setValueDefault( valueDefault, true );
-	}
-	
-	public PermissionModelValue setValueDefault( Object valueDefault, boolean commit )
 	{
 		if ( valueDefault == null )
 			valueDefault = type.getBlankValue();
@@ -211,9 +189,6 @@ public class PermissionModelValue
 		{
 			throw new PermissionValueException( "Can't cast %s to type %s", valueDefault.getClass().getName(), type );
 		}
-		
-		if ( commit )
-			perm.commit();
 		
 		return this;
 	}
