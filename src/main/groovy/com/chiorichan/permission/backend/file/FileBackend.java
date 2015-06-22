@@ -239,7 +239,7 @@ public class FileBackend extends PermissionBackend
 					ConfigurationSection permission = section.getConfigurationSection( ss );
 					if ( permission != null && permission.getString( "permission" ) != null )
 					{
-						Permission perm = Permission.getNode( permission.getString( "permission" ).toLowerCase(), true );
+						Permission perm = PermissionManager.INSTANCE.getNode( permission.getString( "permission" ).toLowerCase(), true );
 						
 						List<Site> sites = SiteManager.INSTANCE.parseSites( ( permission.getString( "sites" ) == null ) ? "" : permission.getString( "sites" ) );
 						
@@ -268,7 +268,7 @@ public class FileBackend extends PermissionBackend
 					{
 						ConfigurationSection permission = section.getConfigurationSection( ss );
 						
-						Permission perm = Permission.getNode( permission.getString( "permission" ).toLowerCase(), true );
+						Permission perm = PermissionManager.INSTANCE.getNode( permission.getString( "permission" ).toLowerCase(), true );
 						
 						List<Site> sites = SiteManager.INSTANCE.parseSites( ( permission.getString( "sites" ) == null ) ? "" : permission.getString( "sites" ) );
 						
@@ -316,7 +316,7 @@ public class FileBackend extends PermissionBackend
 		if ( !ns.containsOnlyValidChars() )
 			throw new PermissionException( "The permission '" + ns.getNamespace() + "' contains invalid characters. Permission namespaces can only contain the characters a-z, 0-9, and _." );
 		
-		Permission parent = ( ns.getNodeCount() <= 1 ) ? null : Permission.getNode( ns.getParent(), true );
+		Permission parent = ( ns.getNodeCount() <= 1 ) ? null : PermissionManager.INSTANCE.getNode( ns.getParent(), true );
 		Permission perm = new Permission( ns.getLocalName(), PermissionType.valueOf( result.getString( "type" ) ), parent );
 		
 		PermissionModelValue model = perm.getModel();

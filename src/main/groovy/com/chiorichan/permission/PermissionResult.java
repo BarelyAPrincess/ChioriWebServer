@@ -136,17 +136,29 @@ public class PermissionResult
 	 * @return
 	 *         Unassigned will return the default value.
 	 */
+	@SuppressWarnings( "unchecked" )
 	public <T> T getValueObject()
 	{
+		Object obj;
+		
 		if ( isAssigned() )
 		{
 			if ( childPerm == null || childPerm.getValue() == null )
-				return ( T ) perm.getModel().getModelValue();
+				obj = perm.getModel().getModelValue();
 			else
-				return childPerm.getObject();
+				obj = childPerm.getObject();
 		}
 		else
-			return ( T ) perm.getModel().getValueDefault();
+			obj = perm.getModel().getValueDefault();
+		
+		try
+		{
+			return ( T ) obj;
+		}
+		catch ( ClassCastException e )
+		{
+			throw new PermissionValueException( String.format( "Can't cast %s to type", obj.getClass().getName() ), e );
+		}
 	}
 	
 	/**

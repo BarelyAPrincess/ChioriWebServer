@@ -271,7 +271,7 @@ public class SQLBackend extends PermissionBackend
 		if ( !ns.containsOnlyValidChars() )
 			throw new PermissionException( "The permission '" + ns.getNamespace() + "' contains invalid characters. Permission namespaces can only contain the characters a-z, 0-9, and _." );
 		
-		Permission parent = ( ns.getNodeCount() <= 1 ) ? null : Permission.getNode( ns.getParent(), true );
+		Permission parent = ( ns.getNodeCount() <= 1 ) ? null : PermissionManager.INSTANCE.getNode( ns.getParent(), true );
 		Permission perm = new Permission( ns.getLocalName(), PermissionType.valueOf( result.getString( "type" ) ), parent );
 		
 		PermissionModelValue model = perm.getModel();

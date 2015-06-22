@@ -41,18 +41,18 @@ public enum PermissionDefault
 	
 	public Permission getNode()
 	{
-		Permission result = Permission.getNode( nameSpace, false );
+		Permission result = PermissionManager.INSTANCE.getNode( nameSpace, false );
 		
 		if ( result == null )
 		{
 			if ( this == EVERYBODY )
 			{
-				result = Permission.getNode( getNameSpace(), PermissionType.BOOL );
+				result = PermissionManager.INSTANCE.getNode( getNameSpace(), PermissionType.BOOL );
 				result.getModel().setValue( true );
 				result.getModel().setValueDefault( true );
 			}
 			else
-				result = Permission.getNode( getNameSpace(), true );
+				result = PermissionManager.INSTANCE.getNode( getNameSpace(), true );
 			
 			switch ( this )
 			{

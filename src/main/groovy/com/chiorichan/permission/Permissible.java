@@ -71,8 +71,8 @@ public abstract class Permissible
 	
 	public final PermissionResult checkPermission( String perm )
 	{
-		perm = Permission.parseNode( perm );
-		return checkPermission( Permission.getNode( perm ) );
+		perm = PermissionManager.INSTANCE.parseNode( perm );
+		return checkPermission( PermissionManager.INSTANCE.getNode( perm ) );
 	}
 	
 	public final PermissionResult checkPermission( Permission perm )
@@ -90,8 +90,8 @@ public abstract class Permissible
 	 */
 	public final PermissionResult requirePermission( String req ) throws PermissionDeniedException
 	{
-		req = Permission.parseNode( req );
-		return requirePermission( Permission.getNode( req ) );
+		req = PermissionManager.INSTANCE.parseNode( req );
+		return requirePermission( PermissionManager.INSTANCE.getNode( req ) );
 	}
 	
 	public final PermissionResult requirePermission( Permission req ) throws PermissionDeniedException
@@ -101,9 +101,7 @@ public abstract class Permissible
 		if ( perm.getPermission() != PermissionDefault.EVERYBODY.getNode() )
 		{
 			if ( perm.getEntity() == null )
-			{
 				throw new PermissionDeniedException( PermissionDeniedReason.LOGIN_PAGE );
-			}
 			
 			if ( !perm.isTrue() )
 			{

@@ -138,9 +138,9 @@ public abstract class PermissibleEntity
 		if ( ref == null )
 			ref = "";
 		
-		perm = Permission.parseNode( perm );
+		perm = PermissionManager.INSTANCE.parseNode( perm );
 		
-		Permission permission = Permission.getNode( perm, true );
+		Permission permission = PermissionManager.INSTANCE.getNode( perm, true );
 		result = checkPermission( permission, ref );
 		
 		return result;

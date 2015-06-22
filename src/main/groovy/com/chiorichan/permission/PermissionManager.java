@@ -8,6 +8,7 @@
  */
 package com.chiorichan.permission;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +51,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	 * Holds the OFFICAL instance of Permission Manager.
 	 */
 	public static final PermissionManager INSTANCE = new PermissionManager();
+	
 	/**
 	 * Has this manager already been initialized?
 	 */
@@ -59,9 +61,9 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	private Map<String, PermissibleGroup> defaultGroups = new HashMap<String, PermissibleGroup>();
 	private Map<String, PermissibleEntity> entities = Maps.newHashMap();
 	private Map<String, PermissibleGroup> groups = new HashMap<String, PermissibleGroup>();
-	
 	private boolean hasWhitelist = false;
-	private Set<Permission> roots = Sets.newConcurrentHashSet();
+	
+	private final Set<Permission> permissions = Sets.newConcurrentHashSet();
 	
 	private PermissionManager()
 	{
@@ -112,6 +114,11 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 		callEvent( PermissibleSystemEvent.Action.DEBUGMODE_TOGGLE );
 	}
 	
+	public void addPermission( Permission permission )
+	{
+		permissions.add( permission );
+	}
+	
 	/**
 	 * Check if entity has specified permission in ref
 	 * 
@@ -128,6 +135,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 		return this.checkPermission( entity.getAcctId(), perm, ref );
 	}
 	
+	
 	/**
 	 * Check if specified entity has specified permission
 	 * 
@@ -141,7 +149,6 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	{
 		return checkPermission( entity.getEntityId(), perm, "" );
 	}
-	
 	
 	/**
 	 * Check if entity with name has permission in ref
@@ -268,7 +275,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	 */
 	public List<PermissibleEntity> getEntitiesWithPermission( String perm )
 	{
-		return getEntitiesWithPermission( Permission.getNode( perm ) );
+		return getEntitiesWithPermission( getNode( perm ) );
 	}
 	
 	/**
@@ -356,6 +363,151 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 		return "PermissionsManager";
 	}
 	
+	/**
+	 * Attempts to find a Permission Node.
+	 * Will not create the node if non-existent.
+	 * 
+	 * @param namespace
+	 *            The namespace to find, e.g., com.chiorichan.user
+	 * @return The found permission, null if non-existent
+	 */
+	public Permission getNode( String namespace )
+	{
+		String[] nodes = namespace.split( "\\." );
+		
+		if ( nodes.length < 1 )
+			return null;
+		
+		Permission curr = getRootNode( nodes[0] );
+		
+		if ( curr == null )
+			return null;
+		
+		if ( nodes.length == 1 )
+			return curr;
+		
+		for ( String node : Arrays.copyOfRange( nodes, 1, nodes.length ) )
+		{
+			Permission child = curr.getChild( node.toLowerCase() );
+			if ( child == null )
+				return null;
+			else
+				curr = child;
+		}
+		
+		return curr;
+	}
+	
+	public Permission getNode( String namespace, boolean createNode )
+	{
+		if ( createNode )
+			return getNode( namespace, PermissionType.DEFAULT );
+		else
+			return getNode( namespace );
+	}
+	
+	/**
+	 * Finds a registered permission node in the stack by crawling.
+	 * 
+	 * @param namespace
+	 *            The full name space we need to crawl for.
+	 * @param createChildren
+	 *            Indicates if we should create the child node if non-existent.
+	 * @return The child node based on the namespace. Will return NULL if non-existent and createChildren is false.
+	 */
+	public Permission getNode( String namespace, PermissionType type )
+	{
+		String[] nodes = namespace.split( "\\." );
+		
+		if ( nodes.length < 1 )
+			return null;
+		
+		Permission curr = getRootNode( nodes[0] );
+		
+		if ( curr == null )
+			curr = new Permission( nodes[0] );
+		curr.setType( type );
+		permissions.add( curr );
+		
+		if ( nodes.length == 1 )
+			return curr;
+		
+		for ( String node : Arrays.copyOfRange( nodes, 1, nodes.length ) )
+		{
+			Permission child = curr.getChild( node.toLowerCase() );
+			if ( child == null )
+			{
+				child = new Permission( node, curr );
+				child.setType( type );
+				curr.addChild( child );
+				curr = child;
+			}
+			else
+				curr = child;
+		}
+		
+		return curr;
+	}
+	
+	protected Permission getNodeByLocalName( String name )
+	{
+		for ( Permission perm : permissions )
+			if ( perm.getLocalName().equalsIgnoreCase( name ) )
+				return perm;
+		return null;
+	}
+	
+	/**
+	 * Finds registered permission nodes.
+	 * 
+	 * @param namespace
+	 *            The full name space we need to crawl for.
+	 * @return A list of permissions that matched the namespace. Will return more then one if namespace contained asterisk.
+	 */
+	public List<Permission> getNodes( PermissionNamespace ns )
+	{
+		if ( ns == null )
+			return Lists.newArrayList();
+		
+		if ( ns.getNodeCount() < 1 )
+			return Lists.newArrayList();
+		
+		List<Permission> matches = Lists.newArrayList();
+		
+		for ( Permission p : permissions )
+			if ( ns.matches( p ) )
+				matches.add( p );
+		
+		return matches;
+	}
+	
+	public List<Permission> getNodes( String ns )
+	{
+		return getNodes( new PermissionNamespace( ns ) );
+	}
+	
+	protected Permission getRootNode( String name )
+	{
+		for ( Permission perm : permissions )
+			if ( perm.parent == null && perm.getLocalName().equalsIgnoreCase( name ) )
+				return perm;
+		return null;
+	}
+	
+	public List<Permission> getRootNodes()
+	{
+		return getRootNodes( true );
+	}
+	
+	public List<Permission> getRootNodes( boolean ignoreSysNode )
+	{
+		List<Permission> rootNodes = Lists.newArrayList();
+		for ( Permission p : permissions )
+			if ( p.parent == null && !p.getNamespace().startsWith( "sys" ) && ignoreSysNode )
+				rootNodes.add( p );
+		return rootNodes;
+	}
+	
 	public boolean hasWhitelist()
 	{
 		return hasWhitelist;
@@ -436,7 +588,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 		if ( isDebug() )
 		{
 			getLogger().info( ConsoleColor.YELLOW + "Dumping Loaded Permissions:" );
-			for ( Permission root : Permission.getRootNodes( false ) )
+			for ( Permission root : getRootNodes( false ) )
 				root.debugPermissionStack( 0 );
 		}
 		
@@ -474,6 +626,46 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 			event.fail( AccountResult.ACCOUNT_BANNED );
 			return;
 		}
+	}
+	
+	/**
+	 * Attempts to parse if a permission string is actually a reference to the EVERYBODY (-1, everybody, everyone), OP (0, op, root) or ADMIN (admin) permission nodes;
+	 * 
+	 * @param perm
+	 *            The permission string to parse
+	 * @return A string for the permission node, will return the original string if no match was found.
+	 */
+	public String parseNode( String perm )
+	{
+		// Everyone
+		if ( perm == null || perm.isEmpty() || perm.equals( "-1" ) || perm.equals( "everybody" ) || perm.equals( "everyone" ) )
+			perm = PermissionDefault.EVERYBODY.getNameSpace();
+		
+		// OP Only
+		if ( perm.equals( "0" ) || perm.equalsIgnoreCase( "op" ) || perm.equalsIgnoreCase( "root" ) )
+			perm = PermissionDefault.OP.getNameSpace();
+		
+		if ( perm.equalsIgnoreCase( "admin" ) )
+			perm = PermissionDefault.ADMIN.getNameSpace();
+		return perm;
+	}
+	
+	/**
+	 * Attempts to move a permission from one namespace to another.
+	 * e.g., com.chiorichan.oldspace1.same.oldname -> com.chiorichan.newspace2.same.newname.
+	 * 
+	 * @param newNamespace
+	 *            The new namespace you wish to use.
+	 * @param appendLocalName
+	 *            Pass true if you wish the method to append the LocalName to the new namespace.
+	 *            If the localname of the new namespace is different then this permission will be renamed.
+	 * @return true is move/rename was successful.
+	 */
+	public boolean refactorNamespace( String newNamespace, boolean appendLocalName )
+	{
+		// PermissionNamespace ns = getNamespaceObj();
+		// TODO THIS!
+		return false;
 	}
 	
 	/**
