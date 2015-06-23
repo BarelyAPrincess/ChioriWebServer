@@ -8,6 +8,7 @@
  */
 package com.chiorichan.permission;
 
+import com.chiorichan.account.AccountType;
 import com.chiorichan.permission.lang.PermissionDeniedException;
 import com.chiorichan.permission.lang.PermissionDeniedException.PermissionDeniedReason;
 
@@ -71,16 +72,25 @@ public abstract class Permissible
 	
 	public final PermissionResult checkPermission( String perm )
 	{
-		perm = PermissionManager.INSTANCE.parseNode( perm );
+		perm = PermissionManager.parseNode( perm );
 		return checkPermission( PermissionManager.INSTANCE.getNode( perm ) );
+	}
+	
+	public final PermissionResult checkPermission( String perm, String ref )
+	{
+		perm = PermissionManager.parseNode( perm );
+		return checkPermission( PermissionManager.INSTANCE.getNode( perm ), ref );
+	}
+	
+	public final PermissionResult checkPermission( Permission perm, String ref )
+	{
+		PermissibleEntity entity = checkEntity() ? getPermissibleEntity() : AccountType.ACCOUNT_NONE.getPermissibleEntity();
+		return entity.checkPermission( perm, ref );
 	}
 	
 	public final PermissionResult checkPermission( Permission perm )
 	{
-		if ( !checkEntity() )
-			return new PermissionResult( null, perm, "" );
-		
-		return getPermissibleEntity().checkPermission( perm );
+		return checkPermission( perm, "" );
 	}
 	
 	/**
@@ -88,30 +98,39 @@ public abstract class Permissible
 	 * 0, op, root | sys.op = OP Only!
 	 * admin | sys.admin = Admin Only!
 	 */
-	public final PermissionResult requirePermission( String req ) throws PermissionDeniedException
+	public final PermissionResult requirePermission( String req, String... refs ) throws PermissionDeniedException
 	{
-		req = PermissionManager.INSTANCE.parseNode( req );
-		return requirePermission( PermissionManager.INSTANCE.getNode( req ) );
+		req = PermissionManager.parseNode( req );
+		return requirePermission( PermissionManager.INSTANCE.getNode( req ), refs );
 	}
 	
-	public final PermissionResult requirePermission( Permission req ) throws PermissionDeniedException
+	
+	public final PermissionResult requirePermission( Permission req, String... refs ) throws PermissionDeniedException
 	{
-		PermissionResult perm = checkPermission( req );
+		PermissionResult result = checkPermission( req );
 		
-		if ( perm.getPermission() != PermissionDefault.EVERYBODY.getNode() )
+		if ( result.getPermission() != PermissionDefault.EVERYBODY.getNode() )
 		{
-			if ( perm.getEntity() == null )
-				throw new PermissionDeniedException( PermissionDeniedReason.LOGIN_PAGE );
+			if ( result.getEntity() == null )
+				throw new PermissionDeniedException( PermissionDeniedReason.LOGIN_PAGE.setPermission( req ) );
 			
-			if ( !perm.isTrue() )
+			if ( !result.isTrue() )
 			{
-				if ( perm.getPermission() == PermissionDefault.OP.getNode() )
+				if ( result.getPermission() == PermissionDefault.OP.getNode() )
 					throw new PermissionDeniedException( PermissionDeniedReason.OP_ONLY );
+				
+				for ( String ref : refs )
+				{
+					result.recalculatePermissions( ref );
+					if ( result.isTrue() )
+						return result;
+				}
+				
 				throw new PermissionDeniedException( PermissionDeniedReason.DENIED.setPermission( req ) );
 			}
 		}
 		
-		return perm;
+		return result;
 	}
 	
 	/**

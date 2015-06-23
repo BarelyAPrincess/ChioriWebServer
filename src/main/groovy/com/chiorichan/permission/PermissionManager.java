@@ -103,6 +103,28 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	}
 	
 	/**
+	 * Attempts to parse if a permission string is actually a reference to the EVERYBODY (-1, everybody, everyone), OP (0, op, root) or ADMIN (admin) permission nodes;
+	 * 
+	 * @param perm
+	 *            The permission string to parse
+	 * @return A string for the permission node, will return the original string if no match was found.
+	 */
+	public static String parseNode( String perm )
+	{
+		// Everyone
+		if ( perm == null || perm.isEmpty() || perm.equals( "-1" ) || perm.equals( "everybody" ) || perm.equals( "everyone" ) )
+			perm = PermissionDefault.EVERYBODY.getNameSpace();
+		
+		// OP Only
+		if ( perm.equals( "0" ) || perm.equalsIgnoreCase( "op" ) || perm.equalsIgnoreCase( "root" ) )
+			perm = PermissionDefault.OP.getNameSpace();
+		
+		if ( perm.equalsIgnoreCase( "admin" ) )
+			perm = PermissionDefault.ADMIN.getNameSpace();
+		return perm;
+	}
+	
+	/**
 	 * Set debug mode
 	 * 
 	 * @param debug
@@ -119,6 +141,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 		permissions.add( permission );
 	}
 	
+	
 	/**
 	 * Check if entity has specified permission in ref
 	 * 
@@ -134,7 +157,6 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	{
 		return this.checkPermission( entity.getAcctId(), perm, ref );
 	}
-	
 	
 	/**
 	 * Check if specified entity has specified permission
@@ -612,28 +634,6 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 			event.fail( AccountResult.ACCOUNT_BANNED );
 			return;
 		}
-	}
-	
-	/**
-	 * Attempts to parse if a permission string is actually a reference to the EVERYBODY (-1, everybody, everyone), OP (0, op, root) or ADMIN (admin) permission nodes;
-	 * 
-	 * @param perm
-	 *            The permission string to parse
-	 * @return A string for the permission node, will return the original string if no match was found.
-	 */
-	public String parseNode( String perm )
-	{
-		// Everyone
-		if ( perm == null || perm.isEmpty() || perm.equals( "-1" ) || perm.equals( "everybody" ) || perm.equals( "everyone" ) )
-			perm = PermissionDefault.EVERYBODY.getNameSpace();
-		
-		// OP Only
-		if ( perm.equals( "0" ) || perm.equalsIgnoreCase( "op" ) || perm.equalsIgnoreCase( "root" ) )
-			perm = PermissionDefault.OP.getNameSpace();
-		
-		if ( perm.equalsIgnoreCase( "admin" ) )
-			perm = PermissionDefault.ADMIN.getNameSpace();
-		return perm;
 	}
 	
 	/**

@@ -12,7 +12,7 @@ import com.chiorichan.permission.event.PermissibleEntityEvent;
 
 public abstract class PermissibleGroup extends PermissibleEntity implements Comparable<PermissibleGroup>
 {
-	protected int weight = 0;
+	private int weight = 0;
 	
 	public PermissibleGroup( String groupName )
 	{
@@ -20,17 +20,23 @@ public abstract class PermissibleGroup extends PermissibleEntity implements Comp
 	}
 	
 	@Override
-	public int compareTo( PermissibleGroup o )
+	public final int compareTo( PermissibleGroup o )
 	{
 		return getWeight() - o.getWeight();
 	}
 	
-	public int getWeight()
+	public final int getWeight()
 	{
 		return weight;
 	}
 	
-	public void setWeight( int weight )
+	@Override
+	boolean isGroup()
+	{
+		return true;
+	}
+	
+	public final void setWeight( int weight )
 	{
 		this.weight = weight;
 		PermissionManager.callEvent( new PermissibleEntityEvent( this, PermissibleEntityEvent.Action.WEIGHT_CHANGED ) );

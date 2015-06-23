@@ -105,8 +105,7 @@ public abstract class PermissibleEntity
 	
 	public PermissionResult checkPermission( Permission perm, String ref )
 	{
-		if ( ref == null )
-			ref = "";
+		ref = StringFunc.formatReference( ref );
 		
 		/**
 		 * We cache the results to reduce lag when a permission is checked multiple times over.
@@ -141,7 +140,7 @@ public abstract class PermissibleEntity
 		if ( ref == null )
 			ref = "";
 		
-		perm = PermissionManager.INSTANCE.parseNode( perm );
+		perm = PermissionManager.parseNode( perm );
 		
 		Permission permission = PermissionManager.INSTANCE.getNode( perm, true );
 		result = checkPermission( permission, ref );
@@ -364,6 +363,11 @@ public abstract class PermissibleEntity
 	public boolean isDebug()
 	{
 		return debugMode || PermissionManager.INSTANCE.isDebug();
+	}
+	
+	boolean isGroup()
+	{
+		return false;
 	}
 	
 	public boolean isOp()

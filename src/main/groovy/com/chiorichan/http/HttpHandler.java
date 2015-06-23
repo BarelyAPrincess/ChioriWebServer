@@ -471,7 +471,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		if ( req == null )
 			req = "-1";
 		
-		sess.requirePermission( req );
+		sess.requirePermission( req, currentSite.getSiteId() );
 		
 		// Enhancement: Allow HTML to be ran under different shells. Default is embedded.
 		if ( fi.hasHTML() )

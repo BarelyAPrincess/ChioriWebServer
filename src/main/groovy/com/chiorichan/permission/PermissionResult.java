@@ -16,8 +16,8 @@ import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.StringFunc;
 
 /**
- * Is returned when {@link Permissible#getPermission()} is called
- * and symbolizes the unity of said permission and entity.
+ * Holds the union between {@link Permission} and {@link PermissibleEntity}<br>
+ * Also provides access to {@link #assign(String...)} and {@link #assign(Object, String...)}
  */
 public class PermissionResult
 {
@@ -26,7 +26,7 @@ public class PermissionResult
 	private ChildPermission childPerm = null;
 	private final PermissibleEntity entity;
 	private final Permission perm;
-	private final String ref;
+	private String ref;
 	
 	protected int timecode = Timings.epoch();
 	
@@ -48,18 +48,7 @@ public class PermissionResult
 		childPerm = entity.findChildPermission( perm, ref );
 	}
 	
-	public PermissionResult assign()
-	{
-		if ( perm.getType() != PermissionType.DEFAULT )
-			throw new PermissionException( String.format( "Can't assign the permission %s to entity %s, because the permission is of type %s, use assign(Object) with the appropriate value instead.", perm.getNamespace(), entity.getId(), perm.getType().name() ) );
-		
-		childPerm = new ChildPermission( perm, perm.getModel().createValue( true ), false );
-		entity.childPermissions.add( childPerm );
-		
-		return this;
-	}
-	
-	public PermissionResult assign( Object val )
+	public PermissionResult assign( Object val, String... refs )
 	{
 		if ( perm.getType() == PermissionType.DEFAULT )
 			throw new PermissionException( String.format( "Can't assign the permission %s with value %s to entity %s, because the permission is of default type, which can't carry a value other than assigned or not.", perm.getNamespace(), val, entity.getId(), perm.getType().name() ) );
@@ -67,8 +56,23 @@ public class PermissionResult
 		if ( val == null )
 			throw new PermissionValueException( "The assigned value must not be null." );
 		
-		childPerm = new ChildPermission( perm, perm.getModel().createValue( val ), false );
+		childPerm = new ChildPermission( perm, perm.getModel().createValue( val ), entity.isGroup(), refs );
 		entity.childPermissions.add( childPerm );
+		
+		recalculatePermissions();
+		
+		return this;
+	}
+	
+	public PermissionResult assign( String... refs )
+	{
+		if ( perm.getType() != PermissionType.DEFAULT )
+			throw new PermissionException( String.format( "Can't assign the permission %s to entity %s, because the permission is of type %s, use assign(Object) with the appropriate value instead.", perm.getNamespace(), entity.getId(), perm.getType().name() ) );
+		
+		childPerm = new ChildPermission( perm, perm.getModel().createValue( true ), entity.isGroup(), refs );
+		entity.childPermissions.add( childPerm );
+		
+		recalculatePermissions();
 		
 		return this;
 	}
@@ -213,6 +217,19 @@ public class PermissionResult
 			return true;
 		
 		return ( getValueObject() == null ) ? false : ObjectFunc.castToBool( getValueObject() );
+	}
+	
+	public PermissionResult recalculatePermissions()
+	{
+		return recalculatePermissions( "" );
+	}
+	
+	public PermissionResult recalculatePermissions( String ref )
+	{
+		ref = StringFunc.formatReference( ref );
+		this.ref = ref;
+		childPerm = entity.findChildPermission( perm, ref );
+		return this;
 	}
 	
 	@Override

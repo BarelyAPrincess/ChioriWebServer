@@ -8,7 +8,12 @@
  */
 package com.chiorichan.permission.backend.file;
 
+import com.chiorichan.configuration.ConfigurationSection;
+import com.chiorichan.permission.ChildPermission;
 import com.chiorichan.permission.PermissibleEntity;
+import com.chiorichan.permission.Permission;
+import com.chiorichan.permission.PermissionType;
+import com.google.common.base.Joiner;
 
 public class FileEntity extends PermissibleEntity
 {
@@ -32,12 +37,23 @@ public class FileEntity extends PermissibleEntity
 	@Override
 	public void remove()
 	{
-		
+		FileBackend.getBackend().permissions.getConfigurationSection( "entities", true ).set( getId(), null );
 	}
 	
 	@Override
 	public void save()
 	{
+		ConfigurationSection entity = FileBackend.getBackend().permissions.getConfigurationSection( "entities", true ).getConfigurationSection( getId(), true );
+		ConfigurationSection permissions = entity.getConfigurationSection( "permissions", true );
 		
+		for ( ChildPermission child : getChildPermissions() )
+		{
+			Permission perm = child.getPermission();
+			ConfigurationSection sub = permissions.getConfigurationSection( perm.getLocalName(), true );
+			sub.set( "permission", perm.getNamespace() );
+			if ( perm.getType() != PermissionType.DEFAULT )
+				sub.set( "value", child.getObject() );
+			sub.set( "refs", Joiner.on( "|" ).join( child.getReferences() ) );
+		}
 	}
 }

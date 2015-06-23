@@ -8,11 +8,17 @@
  */
 package com.chiorichan.permission.backend.sql;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.permission.ChildPermission;
 import com.chiorichan.permission.PermissibleGroup;
+import com.chiorichan.permission.Permission;
+import com.chiorichan.permission.PermissionManager;
+import com.chiorichan.permission.PermissionNamespace;
+import com.chiorichan.permission.PermissionValue;
 import com.chiorichan.util.ObjectFunc;
 import com.google.common.base.Joiner;
 
@@ -26,13 +32,60 @@ public class SQLGroup extends PermissibleGroup
 	@Override
 	public void reloadGroups()
 	{
+		DatabaseEngine db = SQLBackend.getBackend().getSQL();
 		
+		clearGroups();
+		try
+		{
+			ResultSet rs = db.query( "SELECT * FROM `permissions_groups` WHERE `parent` = '" + getId() + "' AND `type` = '1';" );
+			
+			if ( rs.next() )
+				do
+				{
+					PermissibleGroup grp = PermissionManager.INSTANCE.getGroup( rs.getString( "child" ) );
+					groups.put( grp.getId(), grp );
+				}
+				while ( rs.next() );
+		}
+		catch ( SQLException e )
+		{
+			throw new RuntimeException( e );
+		}
 	}
 	
 	@Override
 	public void reloadPermissions()
 	{
+		DatabaseEngine db = SQLBackend.getBackend().getSQL();
 		
+		detachAllPermissions();
+		try
+		{
+			ResultSet rs = db.query( "SELECT * FROM `permissions_entity` WHERE `owner` = '" + getId() + "' AND `type` = '1';" );
+			
+			if ( rs.next() )
+				do
+				{
+					PermissionNamespace ns = new PermissionNamespace( rs.getString( "permission" ) );
+					
+					List<Permission> perms = PermissionManager.INSTANCE.getNodes( ns );
+					
+					if ( perms.isEmpty() && !ns.containsRegex() )
+						perms.add( PermissionManager.INSTANCE.getNode( ns.fixInvalidChars().getNamespace() ) );
+					
+					for ( Permission perm : perms )
+						if ( getChildPermission( perm ) == null )
+						{
+							PermissionValue childValue = ( rs.getString( "value" ) == null || rs.getString( "value" ).isEmpty() ) ? null : perm.getModel().createValue( rs.getString( "value" ) );
+							attachPermission( new ChildPermission( perm, childValue, true, rs.getString( "ref" ).split( "|" ) ) );
+						}
+				}
+				while ( rs.next() );
+		}
+		catch ( SQLException e )
+		{
+			throw new RuntimeException( e );
+		}
 	}
 	
 	@Override

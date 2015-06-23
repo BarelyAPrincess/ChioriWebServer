@@ -218,9 +218,9 @@ public class FileBackend extends PermissionBackend
 			for ( String s : section.getKeys( false ) )
 			{
 				PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( s );
-				
 				ConfigurationSection result = section.getConfigurationSection( s );
-				ConfigurationSection permissions = result.getConfigurationSection( "permissions" );
+				
+				ConfigurationSection permissions = result.getConfigurationSection( "permissions", true );
 				
 				for ( String ss : permissions.getKeys( false ) )
 				{
@@ -265,7 +265,7 @@ public class FileBackend extends PermissionBackend
 							value = perm.getModel().createValue( permission.getString( "value" ) );
 						
 						String refs = permission.isString( "refs" ) ? permission.getString( "refs" ) : "";
-						group.attachPermission( new ChildPermission( perm, value, false, refs.split( "|" ) ) );
+						group.attachPermission( new ChildPermission( perm, value, true, refs.split( "|" ) ) );
 					}
 			}
 	}

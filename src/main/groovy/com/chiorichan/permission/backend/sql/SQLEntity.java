@@ -17,7 +17,6 @@ import com.chiorichan.permission.ChildPermission;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
-import com.chiorichan.permission.PermissionDefault;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.PermissionNamespace;
 import com.chiorichan.permission.PermissionValue;
@@ -83,12 +82,6 @@ public class SQLEntity extends PermissibleEntity
 						}
 				}
 				while ( rs.next() );
-			
-			/*
-			 * Adds the EVERYBODY Permission Node to all entities.
-			 */
-			Permission perm = PermissionDefault.EVERYBODY.getNode();
-			attachPermission( new ChildPermission( perm, null, false, "" ) );
 		}
 		catch ( SQLException e )
 		{
