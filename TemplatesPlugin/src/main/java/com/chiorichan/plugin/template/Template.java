@@ -210,9 +210,9 @@ public class Template extends Plugin implements Listener
 			
 			event.setErrorHtml( generateExceptionPage( event.getThrowable(), factory ) );
 		}
-		catch ( Exception e )
+		catch ( Throwable t )
 		{
-			e.printStackTrace();
+			t.printStackTrace();
 		}
 	}
 	

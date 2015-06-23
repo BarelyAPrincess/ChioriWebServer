@@ -298,7 +298,7 @@ public class HttpResponseWrapper
 		// NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + httpCode + ",httpMsg=" + HttpCode.msg( httpCode ) + ",domain=" + request.getSubDomain() + "." + request.getDomain() + ",uri=" + request.getUri() +
 		// ",remoteIp=" + request.getIpAddr() + "}" );
 		
-		if ( Loader.getConfig().getBoolean( "server.developmentMode" ) )
+		if ( Versioning.isDevelopment() )
 		{
 			if ( event.getErrorHtml() != null )
 			{
@@ -312,7 +312,12 @@ public class HttpResponseWrapper
 				sendError( httpStatus, null, "<pre>" + ExceptionUtils.getStackTrace( cause ) + "</pre>" );
 		}
 		else
-			sendError( 500, null, "<pre>" + ExceptionUtils.getStackTrace( cause ) + "</pre>" );
+		{
+			StringBuilder sb = new StringBuilder();
+			sb.append( "<p>The server encountered an exception and unforchantly the server is not in development mode, so no debug information is available.</p>\n" );
+			sb.append( "<p>If you are the server owner or developer, you can turn development on by changing 'server.developmentMode' to true in the config file.</p>\n" );
+			sendError( 500, null, sb.toString() );
+		}
 	}
 	
 	/**

@@ -101,6 +101,18 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	private static HttpDataFactory factory;
 	
 	protected static Map<ServerVars, Object> staticServerVars = Maps.newLinkedHashMap();
+	private HttpPostRequestDecoder decoder;
+	
+	private WebSocketServerHandshaker handshaker = null;
+	
+	private LogEvent log;
+	
+	private HttpRequestWrapper request;
+	private boolean requestFinished = false;
+	private FullHttpRequest requestOrig;
+	private HttpResponseWrapper response;
+	private boolean ssl;
+	
 	static
 	{
 		/**
@@ -123,18 +135,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		staticServerVars.put( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "me@chiorichan.com" ) );
 		staticServerVars.put( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Versioning.getVersion() );
 	}
-	
-	private HttpPostRequestDecoder decoder;
-	
-	private WebSocketServerHandshaker handshaker = null;
-	
-	private LogEvent log;
-	private HttpRequestWrapper request;
-	private boolean requestFinished = false;
-	private FullHttpRequest requestOrig;
-	private HttpResponseWrapper response;
-	
-	private boolean ssl;
 	
 	public HttpHandler( boolean ssl )
 	{
@@ -241,6 +241,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			/*
 			 * Presently we can only send one exception to the client
 			 * So for now we only send the most severe one
+			 * 
+			 * Enhancement: Make it so each exception is printed out.
 			 */
 			if ( cause instanceof EvalMultipleException )
 			{
@@ -290,8 +292,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				
 				response.sendException( evalOrig );
 			}
-			
-			// Loader.getLogger().warning( "Could not run file '" + fileName + "' because of error '" + t.getMessage() + "'" );
 			
 			finish();
 		}
