@@ -43,7 +43,7 @@ public abstract class PermissionBackend
 	 * @param id
 	 * @return PermissibleEntity for specified id, or null on error.
 	 */
-	public abstract PermissibleBase getEntity( String id );
+	public abstract PermissibleEntity getEntity( String id );
 	
 	/**
 	 * Returns new PermissibleGroup object for specified id
@@ -74,7 +74,7 @@ public abstract class PermissionBackend
 	 * 
 	 * @return Array of PermissibleEntity
 	 */
-	public abstract PermissibleBase[] getEntities();
+	public abstract PermissibleEntity[] getEntities();
 	
 	public abstract Set<String> getEntityNames( int type );
 	
@@ -230,13 +230,6 @@ public abstract class PermissionBackend
 		}
 	}
 	
-	public abstract void reload() throws PermissionBackendException;
-	
-	/*
-	 * This method loads all permissions and groups from the backend data store.
-	 */
-	public abstract void loadData();
-	
 	/**
 	 * Disregards any changes made to the permission node and reloads from the backend
 	 */
@@ -253,4 +246,19 @@ public abstract class PermissionBackend
 	 * Warning: could be considered unsafe to destroy a permission node without first removing all child values
 	 */
 	public abstract void nodeDestroy( Permission perm );
+	
+	/*
+	 * This method loads all permissions from the backend data store.
+	 */
+	public abstract void loadPermissions();
+	
+	/*
+	 * This method loads all entities from the backend data store.
+	 */
+	public abstract void loadEntities();
+	
+	/*
+	 * This method loads all groups from the backend data store.
+	 */
+	public abstract void loadGroups();
 }

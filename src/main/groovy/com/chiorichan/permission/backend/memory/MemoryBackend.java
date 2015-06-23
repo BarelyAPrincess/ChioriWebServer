@@ -10,7 +10,7 @@ package com.chiorichan.permission.backend.memory;
 
 import java.util.Set;
 
-import com.chiorichan.permission.PermissibleBase;
+import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionBackend;
@@ -38,19 +38,19 @@ public class MemoryBackend extends PermissionBackend
 	}
 	
 	@Override
-	public PermissibleGroup getDefaultGroup( String siteName )
+	public PermissibleGroup getDefaultGroup( String refs )
 	{
 		return PermissionManager.INSTANCE.getGroup( "Default" );
 	}
 	
 	@Override
-	public PermissibleBase[] getEntities()
+	public PermissibleEntity[] getEntities()
 	{
-		return new PermissibleBase[0];
+		return new PermissibleEntity[0];
 	}
 	
 	@Override
-	public PermissibleBase getEntity( String name )
+	public PermissibleEntity getEntity( String name )
 	{
 		return new MemoryEntity( name );
 	}
@@ -80,7 +80,19 @@ public class MemoryBackend extends PermissionBackend
 	}
 	
 	@Override
-	public void loadData()
+	public void loadEntities()
+	{
+		// Nothing to do here!
+	}
+	
+	@Override
+	public void loadGroups()
+	{
+		// Nothing to do here!
+	}
+	
+	@Override
+	public void loadPermissions()
 	{
 		// Nothing to do here!
 	}
@@ -104,13 +116,7 @@ public class MemoryBackend extends PermissionBackend
 	}
 	
 	@Override
-	public void reload() throws PermissionBackendException
-	{
-		// Nothing to do here!
-	}
-	
-	@Override
-	public void setDefaultGroup( String child, String... site )
+	public void setDefaultGroup( String child, String... ref )
 	{
 		// Nothing to do here!
 	}

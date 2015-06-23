@@ -8,7 +8,13 @@
  */
 package com.chiorichan.permission.backend.sql;
 
+import java.sql.SQLException;
+
+import com.chiorichan.database.DatabaseEngine;
+import com.chiorichan.permission.ChildPermission;
 import com.chiorichan.permission.PermissibleGroup;
+import com.chiorichan.util.ObjectFunc;
+import com.google.common.base.Joiner;
 
 public class SQLGroup extends PermissibleGroup
 {
@@ -32,12 +38,30 @@ public class SQLGroup extends PermissibleGroup
 	@Override
 	public void remove()
 	{
-		
+		DatabaseEngine db = SQLBackend.getBackend().getSQL();
+		try
+		{
+			db.queryUpdate( String.format( "DELETE FROM `permissions_entity` WHERE `owner` = '%s' AND `type` = '1';", getId() ) );
+		}
+		catch ( SQLException e )
+		{
+			throw new RuntimeException( e );
+		}
 	}
 	
 	@Override
 	public void save()
 	{
-		
+		DatabaseEngine db = SQLBackend.getBackend().getSQL();
+		try
+		{
+			remove();
+			for ( ChildPermission cp : getChildPermissions() )
+				db.queryUpdate( String.format( "INSERT INTO `permissions_entity` (`owner`,`type`,`ref`,`permission`,`value`) VALUES ('%s','1','%s','%s','%s');", getId(), Joiner.on( "|" ).join( cp.getReferences() ), cp.getPermission().getNamespace(), ObjectFunc.castToString( cp.getValue().getValue() ) ) );
+		}
+		catch ( SQLException e )
+		{
+			throw new RuntimeException( e );
+		}
 	}
 }

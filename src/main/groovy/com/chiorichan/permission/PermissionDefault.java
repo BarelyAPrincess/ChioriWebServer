@@ -20,6 +20,19 @@ public enum PermissionDefault
 		this.nameSpace = nameSpace;
 	}
 	
+	/**
+	 * By calling each Permission node we forces it's creation if non-existent
+	 */
+	public static void initNodes()
+	{
+		ADMIN.getNode();
+		BANNED.getNode();
+		DEFAULT.getNode();
+		EVERYBODY.getNode();
+		OP.getNode();
+		WHITELISTED.getNode();
+	}
+	
 	public static boolean isDefault( Permission perm )
 	{
 		for ( PermissionDefault pd : PermissionDefault.values() )

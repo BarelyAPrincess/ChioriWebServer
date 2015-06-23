@@ -19,7 +19,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.permission.PermissibleBase;
+import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.PermissionResult;
@@ -68,11 +68,11 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 	private AccountInstance strongReference = null;
 	
 	/**
-	 * Weak references the {@link PermissibleBase} over at the Permission Manager.<br>
+	 * Weak references the {@link PermissibleEntity} over at the Permission Manager.<br>
 	 * Again, we use the {@link WeakReference} so it can be garbage collected when unused,<br>
 	 * we reload it from the Permission Manager once needed again.
 	 */
-	private WeakReference<PermissibleBase> permissibleEntity = null;
+	private WeakReference<PermissibleEntity> permissibleEntity = null;
 	
 	/**
 	 * Indicates if we should keep the Account Instance loaded in Memory
@@ -245,10 +245,10 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 		metadata.put( "actnum", RandomFunc.randomize( "z154f98wfjascvc" ) );
 	}
 	
-	public PermissibleBase getPermissibleEntity()
+	public PermissibleEntity getPermissibleEntity()
 	{
 		if ( permissibleEntity == null || permissibleEntity.get() == null )
-			permissibleEntity = new WeakReference<PermissibleBase>( PermissionManager.INSTANCE.getEntity( getAcctId() ) );
+			permissibleEntity = new WeakReference<PermissibleEntity>( PermissionManager.INSTANCE.getEntity( getAcctId() ) );
 		
 		return permissibleEntity.get();
 	}

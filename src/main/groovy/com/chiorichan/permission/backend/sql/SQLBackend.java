@@ -19,7 +19,7 @@ import java.util.Set;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngine;
-import com.chiorichan.permission.PermissibleBase;
+import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionBackend;
@@ -90,19 +90,19 @@ public class SQLBackend extends PermissionBackend
 	}
 	
 	@Override
-	public PermissibleBase[] getEntities()
+	public PermissibleEntity[] getEntities()
 	{
 		Set<String> entityNames = getEntityNames( ENTITY );
-		List<PermissibleBase> entities = Lists.newArrayList();
+		List<PermissibleEntity> entities = Lists.newArrayList();
 		
 		for ( String entityName : entityNames )
 			entities.add( getEntity( entityName ) );
 		
-		return entities.toArray( new PermissibleBase[0] );
+		return entities.toArray( new PermissibleEntity[0] );
 	}
 	
 	@Override
-	public PermissibleBase getEntity( String id )
+	public PermissibleEntity getEntity( String id )
 	{
 		return new SQLEntity( id );
 	}
@@ -184,7 +184,19 @@ public class SQLBackend extends PermissionBackend
 	}
 	
 	@Override
-	public void loadData()
+	public void loadEntities()
+	{
+		
+	}
+	
+	@Override
+	public void loadGroups()
+	{
+		
+	}
+	
+	@Override
+	public void loadPermissions()
 	{
 		try
 		{
@@ -196,9 +208,12 @@ public class SQLBackend extends PermissionBackend
 					{
 						PermissionNamespace ns = new PermissionNamespace( result.getString( "permission" ) );
 						
-						// TODO Remove invalid characters
 						if ( !ns.containsOnlyValidChars() )
-							throw new PermissionException( "The permission '" + ns.getNamespace() + "' contains invalid characters. Permission namespaces can only contain the characters a-z, 0-9, and _." );
+						{
+							PermissionManager.getLogger().warning( String.format( "The permission '%s' contains invalid characters, namespaces can only contain the characters a-z, 0-9, and _, this will be fixed automatically.", ns ) );
+							ns.fixInvalidChars();
+							this.updateDBValue( ns, "permission", ns.getNamespace() );
+						}
 						
 						Permission perm = new Permission( ns, PermissionType.valueOf( result.getString( "type" ) ) );
 						
@@ -259,25 +274,27 @@ public class SQLBackend extends PermissionBackend
 					PermissionManager.getLogger().warning( "The SQLBackend failed to remove the permission node '" + perm.getNamespace() + "' from the database. " + Loader.getRandomGag() );
 				else
 				{
-					updateDBValue( perm, "type", perm.getType().name() );
+					PermissionNamespace ns = perm.getPermissionNamespace();
+					
+					updateDBValue( ns, "type", perm.getType().name() );
 					
 					if ( perm.getType() != PermissionType.DEFAULT )
 					{
-						updateDBValue( perm, "value", model.getValue() );
-						updateDBValue( perm, "default", model.getValueDefault() );
+						updateDBValue( ns, "value", model.getValue() );
+						updateDBValue( ns, "default", model.getValueDefault() );
 					}
 					
 					if ( perm.getType().hasMax() )
-						updateDBValue( perm, "max", model.getMaxLen() );
+						updateDBValue( ns, "max", model.getMaxLen() );
 					
 					if ( perm.getType().hasMin() )
-						updateDBValue( perm, "min", 0 );
+						updateDBValue( ns, "min", 0 );
 					
 					if ( perm.getType() == PermissionType.ENUM )
-						updateDBValue( perm, "enum", model.getEnumsString() );
+						updateDBValue( ns, "enum", model.getEnumsString() );
 					
 					if ( model.hasDescription() )
-						updateDBValue( perm, "description", model.getDescription() );
+						updateDBValue( ns, "description", model.getDescription() );
 				}
 			}
 		}
@@ -290,7 +307,8 @@ public class SQLBackend extends PermissionBackend
 	@Override
 	public void nodeDestroy( Permission perm )
 	{
-		
+		DatabaseEngine db = getSQL();
+		db.delete( "permissions", String.format( "`permission` = '%s'", perm.getNamespace() ) );
 	}
 	
 	@Override
@@ -311,12 +329,6 @@ public class SQLBackend extends PermissionBackend
 		{
 			e.printStackTrace();
 		}
-	}
-	
-	@Override
-	public void reload() throws PermissionBackendException
-	{
-		
 	}
 	
 	@Override
@@ -374,11 +386,11 @@ public class SQLBackend extends PermissionBackend
 		}
 	}
 	
-	private int updateDBValue( Permission perm, String key, Object val ) throws SQLException, PermissionValueException
+	private int updateDBValue( PermissionNamespace ns, String key, Object val ) throws SQLException, PermissionValueException
 	{
 		try
 		{
-			return updateDBValue( perm, key, ObjectFunc.castToStringWithException( val ) );
+			return updateDBValue( ns, key, ObjectFunc.castToStringWithException( val ) );
 		}
 		catch ( ClassCastException e )
 		{
@@ -386,7 +398,7 @@ public class SQLBackend extends PermissionBackend
 		}
 	}
 	
-	private int updateDBValue( Permission perm, String key, String val ) throws SQLException
+	private int updateDBValue( PermissionNamespace ns, String key, String val ) throws SQLException
 	{
 		DatabaseEngine db = getSQL();
 		
@@ -396,6 +408,6 @@ public class SQLBackend extends PermissionBackend
 		if ( val == null )
 			val = "";
 		
-		return db.queryUpdate( "UPDATE `permissions` SET `" + key + "` = ? WHERE `permission` = ?;", val, perm.getNamespace() );
+		return db.queryUpdate( "UPDATE `permissions` SET `" + key + "` = ? WHERE `permission` = ?;", val, ns.getNamespace() );
 	}
 }

@@ -102,7 +102,7 @@ public class SQLEntity extends PermissibleEntity
 		DatabaseEngine db = SQLBackend.getBackend().getSQL();
 		try
 		{
-			db.queryUpdate( "DELETE FROM `permissions_entity` WHERE `owner` = '" + getId() + "' AND `type` = '0';" );
+			db.queryUpdate( String.format( "DELETE FROM `permissions_entity` WHERE `owner` = '%s' AND `type` = '0';", getId() ) );
 		}
 		catch ( SQLException e )
 		{
@@ -116,10 +116,9 @@ public class SQLEntity extends PermissibleEntity
 		DatabaseEngine db = SQLBackend.getBackend().getSQL();
 		try
 		{
-			db.queryUpdate( "DELETE FROM `permissions_entity` WHERE `owner` = '" + getId() + "' AND `type` = '0';" );
-			
+			remove();
 			for ( ChildPermission cp : getChildPermissions() )
-				db.queryUpdate( "INSERT INTO `permissions_entity` (`owner`,`type`,`ref`,`permission`,`value`) VALUES ('" + getId() + "','0','" + Joiner.on( "|" ).join( cp.getReferences() ) + "','" + cp.getPermission().getNamespace() + "','" + ObjectFunc.castToString( cp.getValue().getValue() ) + "');" );
+				db.queryUpdate( String.format( "INSERT INTO `permissions_entity` (`owner`,`type`,`ref`,`permission`,`value`) VALUES ('%s','0','%s','%s','%s');", getId(), Joiner.on( "|" ).join( cp.getReferences() ), cp.getPermission().getNamespace(), ObjectFunc.castToString( cp.getValue().getValue() ) ) );
 		}
 		catch ( SQLException e )
 		{

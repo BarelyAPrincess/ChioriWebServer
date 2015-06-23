@@ -23,7 +23,8 @@ import com.chiorichan.Loader;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.configuration.file.FileConfiguration;
 import com.chiorichan.configuration.file.YamlConfiguration;
-import com.chiorichan.permission.PermissibleBase;
+import com.chiorichan.permission.ChildPermission;
+import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionBackend;
@@ -34,8 +35,7 @@ import com.chiorichan.permission.PermissionType;
 import com.chiorichan.permission.PermissionValue;
 import com.chiorichan.permission.lang.PermissionBackendException;
 import com.chiorichan.permission.lang.PermissionException;
-import com.chiorichan.site.Site;
-import com.chiorichan.site.SiteManager;
+import com.chiorichan.util.FileFunc;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Sets;
@@ -53,29 +53,6 @@ public class FileBackend extends PermissionBackend
 	{
 		super();
 		backend = this;
-	}
-	
-	public static String buildPath( String... path )
-	{
-		StringBuilder builder = new StringBuilder();
-		
-		boolean first = true;
-		char separator = File.pathSeparatorChar;
-		
-		for ( String node : path )
-		{
-			if ( node.isEmpty() )
-				continue;
-			
-			if ( !first )
-				builder.append( separator );
-			
-			builder.append( node );
-			
-			first = false;
-		}
-		
-		return builder.toString();
 	}
 	
 	public static FileBackend getBackend()
@@ -96,7 +73,7 @@ public class FileBackend extends PermissionBackend
 	}
 	
 	@Override
-	public PermissibleGroup getDefaultGroup( String siteName )
+	public PermissibleGroup getDefaultGroup( String refs )
 	{
 		ConfigurationSection groups = permissions.getConfigurationSection( "groups" );
 		
@@ -104,8 +81,8 @@ public class FileBackend extends PermissionBackend
 			throw new RuntimeException( "No groups defined. Check your permissions file." );
 		
 		String defaultGroupProperty = "default";
-		if ( siteName != null )
-			defaultGroupProperty = buildPath( "sites", siteName, defaultGroupProperty );
+		if ( refs != null )
+			defaultGroupProperty = FileFunc.buildPath( "refs", refs, defaultGroupProperty );
 		
 		for ( Map.Entry<String, Object> entry : groups.getValues( false ).entrySet() )
 			if ( entry.getValue() instanceof ConfigurationSection )
@@ -116,20 +93,20 @@ public class FileBackend extends PermissionBackend
 					return PermissionManager.INSTANCE.getGroup( entry.getKey() );
 			}
 		
-		if ( siteName == null )
+		if ( refs == null )
 			throw new RuntimeException( "Default user group is not defined. Please select one using the \"default: true\" property" );
 		
 		return null;
 	}
 	
 	@Override
-	public PermissibleBase[] getEntities()
+	public PermissibleEntity[] getEntities()
 	{
-		return new PermissibleBase[0];
+		return new PermissibleEntity[0];
 	}
 	
 	@Override
-	public PermissibleBase getEntity( String id )
+	public PermissibleEntity getEntity( String id )
 	{
 		return new FileEntity( id );
 	}
@@ -181,12 +158,34 @@ public class FileBackend extends PermissionBackend
 		
 		permissionsFile = new File( permissionFilename );
 		
-		reload();
+		FileConfiguration newPermissions = new YamlConfiguration();
+		try
+		{
+			
+			newPermissions.load( permissionsFile );
+			
+			PermissionManager.getLogger().info( "Permissions file successfully loaded" );
+			
+			permissions = newPermissions;
+		}
+		catch ( FileNotFoundException e )
+		{
+			if ( permissions == null )
+			{
+				// First load, load even if the file doesn't exist
+				permissions = newPermissions;
+				initNewConfiguration();
+			}
+		}
+		catch ( Throwable e )
+		{
+			throw new PermissionBackendException( "Error loading permissions file!", e );
+		}
 	}
 	
 	/**
-	 * This method is called when the file the permissions config is supposed to save to
-	 * does not exist yet,This adds default permissions & stuff
+	 * This method is called when the permissions config file does not exist
+	 * and needs to be created, this also adds the defaults.
 	 */
 	private void initNewConfiguration() throws PermissionBackendException
 	{
@@ -195,7 +194,7 @@ public class FileBackend extends PermissionBackend
 			{
 				permissionsFile.createNewFile();
 				
-				permissions.set( "groups/default/default", true );
+				setDefaultGroup( "default" );
 				
 				List<String> defaultPermissions = new LinkedList<String>();
 				defaultPermissions.add( "com.chiorichan.*" );
@@ -210,9 +209,69 @@ public class FileBackend extends PermissionBackend
 			}
 	}
 	
-	@SuppressWarnings( "unused" )
 	@Override
-	public void loadData()
+	public void loadEntities()
+	{
+		ConfigurationSection section = permissions.getConfigurationSection( "entities" );
+		
+		if ( section != null )
+			for ( String s : section.getKeys( false ) )
+			{
+				PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( s );
+				
+				ConfigurationSection result = section.getConfigurationSection( s );
+				ConfigurationSection permissions = result.getConfigurationSection( "permissions" );
+				
+				for ( String ss : permissions.getKeys( false ) )
+				{
+					ConfigurationSection permission = section.getConfigurationSection( ss );
+					if ( permission != null && permission.getString( "permission" ) != null )
+					{
+						Permission perm = PermissionManager.INSTANCE.getNode( permission.getString( "permission" ).toLowerCase(), true );
+						
+						PermissionValue value = null;
+						if ( permission.getString( "value" ) != null )
+							value = perm.getModel().createValue( permission.getString( "value" ) );
+						
+						String refs = permission.isString( "refs" ) ? permission.getString( "refs" ) : "";
+						entity.attachPermission( new ChildPermission( perm, value, false, refs.split( "|" ) ) );
+					}
+				}
+			}
+	}
+	
+	@Override
+	public void loadGroups()
+	{
+		ConfigurationSection section = permissions.getConfigurationSection( "groups" );
+		
+		if ( section != null )
+			for ( String s : section.getKeys( false ) )
+			{
+				PermissibleGroup group = PermissionManager.INSTANCE.getGroup( s );
+				
+				ConfigurationSection result = section.getConfigurationSection( s );
+				ConfigurationSection permissions = result.getConfigurationSection( "permissions" );
+				
+				if ( permissions != null )
+					for ( String ss : permissions.getKeys( false ) )
+					{
+						ConfigurationSection permission = section.getConfigurationSection( ss );
+						
+						Permission perm = PermissionManager.INSTANCE.getNode( permission.getString( "permission" ).toLowerCase(), true );
+						
+						PermissionValue value = null;
+						if ( permission.getString( "value" ) != null )
+							value = perm.getModel().createValue( permission.getString( "value" ) );
+						
+						String refs = permission.isString( "refs" ) ? permission.getString( "refs" ) : "";
+						group.attachPermission( new ChildPermission( perm, value, false, refs.split( "|" ) ) );
+					}
+			}
+	}
+	
+	@Override
+	public void loadPermissions()
 	{
 		ConfigurationSection section = permissions.getConfigurationSection( "permissions" );
 		
@@ -225,9 +284,12 @@ public class FileBackend extends PermissionBackend
 				{
 					PermissionNamespace ns = new PermissionNamespace( result.getString( "permission" ) );
 					
-					// TODO Remove invalid characters
 					if ( !ns.containsOnlyValidChars() )
-						throw new PermissionException( "The permission '" + ns.getNamespace() + "' contains invalid characters. Permission namespaces can only contain the characters a-z, 0-9, and _." );
+					{
+						PermissionManager.getLogger().warning( String.format( "The permission '%s' contains invalid characters, namespaces can only contain the characters a-z, 0-9, and _, this will be fixed automatically.", ns ) );
+						ns.fixInvalidChars();
+						result.set( "permission", ns.getNamespace() );
+					}
 					
 					Permission perm = new Permission( ns, PermissionType.valueOf( result.getString( "type" ) ) );
 					
@@ -251,62 +313,6 @@ public class FileBackend extends PermissionBackend
 				{
 					PermissionManager.getLogger().warning( e.getMessage() );
 				}
-			}
-		
-		section = permissions.getConfigurationSection( "entities" );
-		
-		if ( section != null )
-			for ( String s : section.getKeys( false ) )
-			{
-				PermissibleBase entity = PermissionManager.INSTANCE.getEntity( s );
-				
-				ConfigurationSection result = section.getConfigurationSection( s );
-				ConfigurationSection permissions = result.getConfigurationSection( "permissions" );
-				
-				for ( String ss : permissions.getKeys( false ) )
-				{
-					ConfigurationSection permission = section.getConfigurationSection( ss );
-					if ( permission != null && permission.getString( "permission" ) != null )
-					{
-						Permission perm = PermissionManager.INSTANCE.getNode( permission.getString( "permission" ).toLowerCase(), true );
-						
-						List<Site> sites = SiteManager.INSTANCE.parseSites( ( permission.getString( "sites" ) == null ) ? "" : permission.getString( "sites" ) );
-						
-						PermissionValue value = null;
-						if ( permission.getString( "value" ) != null )
-							value = perm.getModel().createValue( permission.getString( "value" ) );
-						
-						// entity.attachPermission( new ChildPermission( perm, sites, value ) );
-					}
-				}
-			}
-		
-		section = permissions.getConfigurationSection( "groups" );
-		
-		if ( section != null )
-			for ( String s : section.getKeys( false ) )
-			{
-				ConfigurationSection result = section.getConfigurationSection( s );
-				
-				PermissibleBase group = PermissionManager.INSTANCE.getGroup( s );
-				
-				ConfigurationSection permissions = result.getConfigurationSection( "permissions" );
-				
-				if ( permissions != null )
-					for ( String ss : permissions.getKeys( false ) )
-					{
-						ConfigurationSection permission = section.getConfigurationSection( ss );
-						
-						Permission perm = PermissionManager.INSTANCE.getNode( permission.getString( "permission" ).toLowerCase(), true );
-						
-						List<Site> sites = SiteManager.INSTANCE.parseSites( ( permission.getString( "sites" ) == null ) ? "" : permission.getString( "sites" ) );
-						
-						PermissionValue value = null;
-						if ( permission.getString( "value" ) != null )
-							value = perm.getModel().createValue( permission.getString( "value" ) );
-						
-						// group.attachPermission( new ChildPermission( perm, sites, value ) );
-					}
 			}
 	}
 	
@@ -334,7 +340,8 @@ public class FileBackend extends PermissionBackend
 	@Override
 	public void nodeDestroy( Permission perm )
 	{
-		
+		ConfigurationSection permissionsSection = permissions.getConfigurationSection( "permissions", true );
+		permissionsSection.set( perm.getNamespace(), null );
 	}
 	
 	@Override
@@ -344,43 +351,15 @@ public class FileBackend extends PermissionBackend
 	}
 	
 	@Override
-	public void reload() throws PermissionBackendException
+	public void setDefaultGroup( String group, String... ref )
 	{
-		FileConfiguration newPermissions = new YamlConfiguration();
-		try
-		{
-			
-			newPermissions.load( permissionsFile );
-			
-			PermissionManager.getLogger().info( "Permissions file successfully loaded" );
-			
-			permissions = newPermissions;
-		}
-		catch ( FileNotFoundException e )
-		{
-			if ( permissions == null )
-			{
-				// First load, load even if the file doesn't exist
-				permissions = newPermissions;
-				initNewConfiguration();
-			}
-		}
-		catch ( Throwable e )
-		{
-			throw new PermissionBackendException( "Error loading permissions file!", e );
-		}
-	}
-	
-	@Override
-	public void setDefaultGroup( String group, String... site )
-	{
-		String siteName = Joiner.on( "|" ).join( site );
+		String refs = Joiner.on( "|" ).join( ref );
 		
 		ConfigurationSection groups = permissions.getConfigurationSection( "groups" );
 		
 		String defaultGroupProperty = "default";
-		if ( siteName != null )
-			defaultGroupProperty = buildPath( "sites", siteName, defaultGroupProperty );
+		if ( refs != null )
+			defaultGroupProperty = FileFunc.buildPath( "refs", refs, defaultGroupProperty );
 		
 		for ( Map.Entry<String, Object> entry : groups.getValues( false ).entrySet() )
 			if ( entry.getValue() instanceof ConfigurationSection )

@@ -891,6 +891,15 @@ public class Loader extends BuiltinEventCreator implements Listener
 			e.printStackTrace();
 		}
 		
+		try
+		{
+			PermissionManager.INSTANCE.reload();
+		}
+		catch ( PermissionBackendException e )
+		{
+			e.printStackTrace();
+		}
+		
 		getLogger().info( "Reinitalizing the Site Manager..." );
 		
 		SiteManager.INSTANCE.reload();

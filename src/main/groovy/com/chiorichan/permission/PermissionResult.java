@@ -24,18 +24,18 @@ public class PermissionResult
 	public static final PermissionResult DUMMY = new PermissionResult( AccountType.ACCOUNT_NONE.getPermissibleEntity(), PermissionDefault.DEFAULT.getNode() );
 	
 	private ChildPermission childPerm = null;
-	private final PermissibleBase entity;
+	private final PermissibleEntity entity;
 	private final Permission perm;
 	private final String ref;
 	
 	protected int timecode = Timings.epoch();
 	
-	PermissionResult( PermissibleBase entity, Permission perm )
+	PermissionResult( PermissibleEntity entity, Permission perm )
 	{
 		this( entity, perm, "" );
 	}
 	
-	PermissionResult( PermissibleBase entity, Permission perm, String ref )
+	PermissionResult( PermissibleEntity entity, Permission perm, String ref )
 	{
 		ref = StringFunc.formatReference( ref );
 		
@@ -82,10 +82,11 @@ public class PermissionResult
 	public PermissionResult commit()
 	{
 		perm.commit();
+		entity.save();
 		return this;
 	}
 	
-	public PermissibleBase getEntity()
+	public PermissibleEntity getEntity()
 	{
 		return entity;
 	}
