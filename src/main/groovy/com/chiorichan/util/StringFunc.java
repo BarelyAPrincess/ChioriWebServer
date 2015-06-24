@@ -17,7 +17,6 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -287,25 +286,14 @@ public class StringFunc
 	 * 
 	 * @param strings
 	 *            The original list to check.
-	 * @return Lowercased string array.
+	 * @return Lowercase string array.
 	 */
-	public static String[] toLowerCase( Iterator<String> strings )
+	public static String[] toLowerCase( Collection<String> strings )
 	{
 		List<String> result = Lists.newArrayList();
-		
-		while ( strings.hasNext() )
-			result.add( strings.next().toLowerCase() );
-		
-		return result.toArray( new String[0] );
-	}
-	
-	public static String[] toLowerCase( List<String> strings )
-	{
-		List<String> result = Lists.newArrayList();
-		
 		for ( String string : strings )
-			result.add( string.toLowerCase() );
-		
+			if ( string != null )
+				result.add( string.toLowerCase() );
 		return result.toArray( new String[0] );
 	}
 	
@@ -318,27 +306,10 @@ public class StringFunc
 	 */
 	public static String[] toLowerCase( String... array )
 	{
-		return toLowerCase( Arrays.asList( array ).iterator() );
+		return toLowerCase( Arrays.asList( array ) );
 	}
 	
-	/**
-	 * Scans a string list for entries that are not lower case.
-	 * 
-	 * @param strings
-	 *            The original list to check.
-	 * @return Lowercased string array.
-	 */
-	public static List<String> toLowerCaseList( Iterator<String> strings )
-	{
-		List<String> result = Lists.newArrayList();
-		
-		while ( strings.hasNext() )
-			result.add( strings.next().toLowerCase() );
-		
-		return result;
-	}
-	
-	public static List<String> toLowerCaseList( List<String> strings )
+	public static Collection<String> toLowerCaseList( Collection<String> strings )
 	{
 		List<String> result = Lists.newArrayList();
 		
@@ -355,9 +326,9 @@ public class StringFunc
 	 *            The original array to check.
 	 * @return The corrected string array.
 	 */
-	public static List<String> toLowerCaseList( String... array )
+	public static Collection<String> toLowerCaseList( String... array )
 	{
-		return toLowerCaseList( Arrays.asList( array ).iterator() );
+		return toLowerCaseList( Arrays.asList( array ) );
 	}
 	
 	/**

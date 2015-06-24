@@ -10,6 +10,10 @@ package com.chiorichan.permission;
 
 import com.chiorichan.console.commands.AdvancedCommand;
 import com.chiorichan.permission.commands.GroupCommands;
+import com.chiorichan.permission.commands.PromotionCommands;
+import com.chiorichan.permission.commands.ReferenceCommands;
+import com.chiorichan.permission.commands.UserCommands;
+import com.chiorichan.permission.commands.UtilityCommands;
 
 public class PermissionCommand extends AdvancedCommand
 {
@@ -19,9 +23,9 @@ public class PermissionCommand extends AdvancedCommand
 		setAliases( "perms" );
 		
 		register( new GroupCommands() );
-		// register( new PromotionCommands() );
-		// register( new UserCommands() );
-		// register( new UtilityCommands() );
-		// register( new SiteCommands() );
+		register( new PromotionCommands() );
+		register( new UserCommands() );
+		register( new UtilityCommands() );
+		register( new ReferenceCommands() );
 	}
 }

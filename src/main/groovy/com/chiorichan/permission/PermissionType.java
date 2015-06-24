@@ -71,7 +71,7 @@ public abstract class PermissionType
 			return 0;
 		}
 	};
-	public static final PermissionType DEFAULT = new PermissionType( "Permission", "Perm", "Default", "none", "" )
+	public static final PermissionType DEFAULT = new PermissionType( "Default", "Permission", "Perm", "none", "" )
 	{
 		@Override
 		Boolean cast( Object obj ) throws ClassCastException

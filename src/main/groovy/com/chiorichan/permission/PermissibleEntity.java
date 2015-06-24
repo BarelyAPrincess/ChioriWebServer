@@ -23,6 +23,7 @@ import com.chiorichan.event.EventBus;
 import com.chiorichan.permission.event.PermissibleEntityEvent;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.StringFunc;
+import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -127,6 +128,8 @@ public abstract class PermissibleEntity
 	
 	public final void attachPermission( ChildPermission perm )
 	{
+		if ( isDebug() )
+			PermissionManager.getLogger().info( String.format( "%sThe permission `%s` with reference `%s` was attached to entity `%s`.", ConsoleColor.YELLOW, perm.getPermission().getNamespace(), Joiner.on( ", " ).join( perm.getReferences() ), getId() ) );
 		childPermissions.add( perm );
 	}
 	
@@ -173,7 +176,6 @@ public abstract class PermissibleEntity
 			ref = "";
 		
 		perm = PermissionManager.parseNode( perm );
-		
 		Permission permission = PermissionManager.INSTANCE.getNode( perm, true );
 		result = checkPermission( permission, ref );
 		
@@ -512,7 +514,7 @@ public abstract class PermissibleEntity
 	
 	public boolean isDebug()
 	{
-		return debugMode || PermissionManager.INSTANCE.isDebug();
+		return debugMode || PermissionManager.isDebug();
 	}
 	
 	public final boolean isGroup()
@@ -540,16 +542,10 @@ public abstract class PermissibleEntity
 		return null;// TODO Auto-generated method stub
 	}
 	
-	public void recalculateChildPermissions()
-	{
-		
-	}
-	
 	public void reload()
 	{
 		reloadPermissions();
 		reloadGroups();
-		recalculateChildPermissions();
 	}
 	
 	public abstract void reloadGroups();

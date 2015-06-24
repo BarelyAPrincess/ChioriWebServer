@@ -91,7 +91,7 @@ public class InteractiveConsole
 	
 	public String getName()
 	{
-		return persistence.getSession().getDisplayName();
+		return persistence.getSession().getDisplayName() + " (" + persistence.getSession().getAcctId() + ")";
 	}
 	
 	public NetworkWrapper getPersistence()

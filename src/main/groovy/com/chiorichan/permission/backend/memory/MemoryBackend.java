@@ -116,6 +116,12 @@ public class MemoryBackend extends PermissionBackend
 	}
 	
 	@Override
+	public void reloadBackend() throws PermissionBackendException
+	{
+		// TODO Auto-generated method stub
+	}
+
+	@Override
 	public void setDefaultGroup( String child, String... ref )
 	{
 		// Nothing to do here!

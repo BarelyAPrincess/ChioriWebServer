@@ -19,6 +19,7 @@ import com.chiorichan.permission.Permissible;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.PermissionNamespace;
+import com.chiorichan.util.StringFunc;
 import com.google.common.collect.Sets;
 
 /**
@@ -35,11 +36,13 @@ public abstract class Command
 	
 	public Command( String name )
 	{
-		this.name = name;
+		this.name = name.toLowerCase();
 	}
 	
 	public Command( String name, String permission )
 	{
+		this( name );
+		
 		if ( permission != null )
 		{
 			PermissionNamespace ns = new PermissionNamespace( permission );
@@ -49,8 +52,6 @@ public abstract class Command
 			
 			this.permission = ns.getNamespace();
 		}
-		
-		this.name = name;
 	}
 	
 	public static void broadcastCommandMessage( Account source, String message )
@@ -90,6 +91,11 @@ public abstract class Command
 		 */
 	}
 	
+	public void addAliases( String... alias )
+	{
+		aliases.addAll( Arrays.asList( alias ) );
+	}
+	
 	/**
 	 * Executes the command, returning its success
 	 * 
@@ -103,7 +109,7 @@ public abstract class Command
 	 */
 	public abstract boolean execute( InteractiveConsole handler, String command, String[] args );
 	
-	public Set<String> getAliases()
+	public Collection<String> getAliases()
 	{
 		return aliases;
 	}
@@ -178,7 +184,7 @@ public abstract class Command
 	public Command setAliases( Collection<String> aliases )
 	{
 		this.aliases.clear();
-		this.aliases.addAll( aliases );
+		this.aliases.addAll( StringFunc.toLowerCaseList( aliases ) );
 		return this;
 	}
 	

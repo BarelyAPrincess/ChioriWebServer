@@ -408,6 +408,8 @@ public interface ConfigurationSection
 	 */
 	List<String> getStringList( String path );
 	
+	List<String> getStringList( String path, List<String> def );
+	
 	/**
 	 * Gets the requested List of Integer by path.
 	 * <p />

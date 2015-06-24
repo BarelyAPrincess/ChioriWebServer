@@ -79,7 +79,7 @@ public class AdvancedCommand extends Command
 				if ( !selectedBinding.checkPermissions( handler.getPersistence().getSession().getPermissibleEntity() ) )
 				{
 					PermissionManager.getLogger().warning( "Entity " + handler.getName() + " tried to access command \"" + command + " " + arguments + "\", but doesn't have permission to do this." );
-					handler.sendMessage( ConsoleColor.RED + "Sorry, you don't have enough permissions." );
+					handler.sendMessage( ConsoleColor.RED + "Sorry, you don't have the required permissions." );
 					return true;
 				}
 				
@@ -110,7 +110,7 @@ public class AdvancedCommand extends Command
 				return true;
 			}
 			else
-				return false;
+				return false; // TODO Print which subcommands are available
 		}
 		catch ( Throwable t )
 		{
@@ -140,11 +140,14 @@ public class AdvancedCommand extends Command
 			
 			CommandHandler cmdAnnotation = method.getAnnotation( CommandHandler.class );
 			
-			Map<CommandSyntax, CommandBinding> commandListeners = listeners.get( cmdAnnotation.name() );
+			if ( !getName().equals( cmdAnnotation.name() ) || !getAliases().contains( cmdAnnotation.name() ) )
+				addAliases( cmdAnnotation.name() );
+			
+			Map<CommandSyntax, CommandBinding> commandListeners = listeners.get( cmdAnnotation.name().toLowerCase() );
 			if ( commandListeners == null )
 			{
 				commandListeners = new LinkedHashMap<CommandSyntax, CommandBinding>();
-				listeners.put( cmdAnnotation.name(), commandListeners );
+				listeners.put( cmdAnnotation.name().toLowerCase(), commandListeners );
 			}
 			
 			commandListeners.put( new CommandSyntax( cmdAnnotation.syntax() ), new CommandBinding( listener, method ) );

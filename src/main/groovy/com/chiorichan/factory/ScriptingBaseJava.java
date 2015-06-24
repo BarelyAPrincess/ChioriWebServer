@@ -21,10 +21,10 @@ import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
@@ -88,12 +88,18 @@ public abstract class ScriptingBaseJava extends Script
 							key = e.getKey().toString();
 						children.put( key, e.getValue() );
 					}
-				else if ( obj instanceof List )
-					for ( int i = 0; i < ( ( List<Object> ) obj ).size(); i++ )
-						children.put( "" + i, ( ( List<Object> ) obj ).get( i ) );
+				else if ( obj instanceof Collection )
+				{
+					int i = 0;
+					for ( Object o : ( Collection<Object> ) obj )
+					{
+						children.put( Integer.toString( i ), o );
+						i++;
+					}
+				}
 				else if ( obj instanceof Object[] )
 					for ( int i = 0; i < ( ( Object[] ) obj ).length; i++ )
-						children.put( "" + i, ( ( Object[] ) obj )[i] );
+						children.put( Integer.toString( i ), ( ( Object[] ) obj )[i] );
 				
 				// boolean[], byte[], short[], char[], int[], long[], float[], double[], Object[]
 				
@@ -174,7 +180,7 @@ public abstract class ScriptingBaseJava extends Script
 		return ( maps == null ) ? 0 : maps.size();
 	}
 	
-	int count( List<Object> list )
+	int count( Collection<Object> list )
 	{
 		return ( list == null ) ? 0 : list.size();
 	}
@@ -217,7 +223,7 @@ public abstract class ScriptingBaseJava extends Script
 		return ( list == null || list.hasNext() );
 	}
 	
-	boolean empty( List<Object> list )
+	boolean empty( Collection<Object> list )
 	{
 		return ( list == null || list.size() < 1 );
 	}
@@ -421,7 +427,7 @@ public abstract class ScriptingBaseJava extends Script
 		return Timings.epoch();
 	}
 	
-	List<String> explode( String limiter, String data )
+	Collection<String> explode( String limiter, String data )
 	{
 		if ( data == null || data.isEmpty() )
 			return Lists.newArrayList();
@@ -678,7 +684,7 @@ public abstract class ScriptingBaseJava extends Script
 		return p.format( date );
 	}
 	
-	public static Map<String, Object> filter( Map<String, Object> data, List<String> allowedKeys )
+	public static Map<String, Object> filter( Map<String, Object> data, Collection<String> allowedKeys )
 	{
 		return filter( data, allowedKeys, false );
 	}
@@ -695,7 +701,7 @@ public abstract class ScriptingBaseJava extends Script
 	 *            Will the key match be case sensitive or not
 	 * @return The resulting map of filtered data
 	 */
-	public static Map<String, Object> filter( Map<String, Object> data, List<String> allowedKeys, boolean caseSensitive )
+	public static Map<String, Object> filter( Map<String, Object> data, Collection<String> allowedKeys, boolean caseSensitive )
 	{
 		Map<String, Object> newArray = new LinkedHashMap<String, Object>();
 		
@@ -775,22 +781,22 @@ public abstract class ScriptingBaseJava extends Script
 		return "{" + UUID.nameUUIDFromBytes( bytesScrambled ).toString() + "}";
 	}
 	
-	public static String createTable( List<Object> tableData )
+	public static String createTable( Collection<Object> tableData )
 	{
 		return createTable( tableData, null, null );
 	}
 	
-	public static String createTable( List<Object> tableData, List<String> headerArray )
+	public static String createTable( Collection<Object> tableData, Collection<String> headerArray )
 	{
 		return createTable( tableData, headerArray, null, null );
 	}
 	
-	public static String createTable( List<Object> tableData, List<String> headerArray, String tableId )
+	public static String createTable( Collection<Object> tableData, Collection<String> headerArray, String tableId )
 	{
 		return createTable( tableData, headerArray, tableId, null );
 	}
 	
-	public static String createTable( List<Object> tableData, List<String> headerArray, String tableId, String altTableClass )
+	public static String createTable( Collection<Object> tableData, Collection<String> headerArray, String tableId, String altTableClass )
 	{
 		Map<Object, Object> newData = Maps.newLinkedHashMap();
 		
@@ -809,18 +815,18 @@ public abstract class ScriptingBaseJava extends Script
 		return createTable( tableData, null, "" );
 	}
 	
-	public static String createTable( Map<Object, Object> tableData, List<String> headerArray )
+	public static String createTable( Map<Object, Object> tableData, Collection<String> headerArray )
 	{
 		return createTable( tableData, headerArray, "" );
 	}
 	
-	public static String createTable( Map<Object, Object> tableData, List<String> headerArray, String tableId )
+	public static String createTable( Map<Object, Object> tableData, Collection<String> headerArray, String tableId )
 	{
 		return createTable( tableData, headerArray, tableId, null );
 	}
 	
 	@SuppressWarnings( "unchecked" )
-	public static String createTable( Map<Object, Object> tableData, List<String> headerArray, String tableId, String altTableClass )
+	public static String createTable( Map<Object, Object> tableData, Collection<String> headerArray, String tableId, String altTableClass )
 	{
 		if ( tableId == null )
 			tableId = "";
@@ -853,7 +859,7 @@ public abstract class ScriptingBaseJava extends Script
 			String clss = ( x % 2 == 0 ) ? "evenrowcolor" : "oddrowcolor";
 			x++;
 			
-			if ( row instanceof Map || row instanceof List )
+			if ( row instanceof Map || row instanceof Collection )
 			{
 				Map<Object, Object> map = Maps.newLinkedHashMap();
 				
@@ -862,7 +868,7 @@ public abstract class ScriptingBaseJava extends Script
 				else
 				{
 					int y = 0;
-					for ( Object o : ( List<Object> ) row )
+					for ( Object o : ( Collection<Object> ) row )
 					{
 						map.put( Integer.toString( y ), o );
 						y++;

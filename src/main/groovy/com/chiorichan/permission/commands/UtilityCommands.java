@@ -22,6 +22,9 @@ import com.chiorichan.configuration.file.FileConfiguration;
 import com.chiorichan.console.InteractiveConsole;
 import com.chiorichan.console.commands.advanced.CommandBinding;
 import com.chiorichan.console.commands.advanced.CommandHandler;
+import com.chiorichan.permission.PermissibleEntity;
+import com.chiorichan.permission.PermissibleGroup;
+import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionBackend;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.lang.PermissionBackendException;
@@ -41,6 +44,50 @@ public class UtilityCommands extends PermissionsCommand
 		{
 			sender.sendMessage( ConsoleColor.RED + "Invalid " + key + " entered; must be an integer but was '" + args.get( key ) + "'" );
 			return Integer.MIN_VALUE;
+		}
+	}
+	
+	@CommandHandler( name = "pex", syntax = "commit [type] [id]", permission = "permissions.manage.commit", description = "Commit all permission changes to the backend" )
+	public void commit( InteractiveConsole sender, Map<String, String> args )
+	{
+		if ( args.containsKey( "type" ) && args.containsKey( "id" ) )
+			switch ( args.get( "type" ) )
+			{
+				case "entity":
+					PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( args.get( "id" ) );
+					if ( entity == null )
+						sender.sendMessage( ConsoleColor.RED + "We could not find an entity with id `" + args.get( "id" ) + "`!" );
+					else
+					{
+						entity.save();
+						sender.sendMessage( ConsoleColor.AQUA + "Wonderful news, we successfully committed changes made to entity `" + entity.getId() + "` successfully!" );
+					}
+					break;
+				case "group":
+					PermissibleGroup group = PermissionManager.INSTANCE.getGroup( args.get( "id" ) );
+					if ( group == null )
+						sender.sendMessage( ConsoleColor.RED + "We could not find a group with id `" + args.get( "id" ) + "`!" );
+					else
+					{
+						group.save();
+						sender.sendMessage( ConsoleColor.AQUA + "Wonderful news, we successfully committed changes made to group `" + group.getId() + "` successfully!" );
+					}
+					break;
+				case "permission":
+					Permission perm = PermissionManager.INSTANCE.getNode( args.get( "id" ), false );
+					if ( perm == null )
+						sender.sendMessage( ConsoleColor.RED + "We could not find a permission with namespace `" + args.get( "id" ) + "`!" );
+					else
+					{
+						perm.commit();
+						sender.sendMessage( ConsoleColor.AQUA + "Wonderful news, we successfully committed changes made to permission `" + perm.getNamespace() + "` successfully!" );
+					}
+					break;
+			}
+		else
+		{
+			PermissionManager.INSTANCE.saveData();
+			sender.sendMessage( ConsoleColor.AQUA + "Wonderful news, we successfully committed any changes to the backend successfully!" );
 		}
 	}
 	
@@ -180,7 +227,7 @@ public class UtilityCommands extends PermissionsCommand
 	{
 		List<CommandBinding> commands = command.getCommands();
 		
-		int count = tryGetInt( sender, args, "count", 4 );
+		int count = tryGetInt( sender, args, "count", 8 );
 		int page = tryGetInt( sender, args, "page", 1 );
 		
 		if ( page == Integer.MIN_VALUE || count == Integer.MIN_VALUE )

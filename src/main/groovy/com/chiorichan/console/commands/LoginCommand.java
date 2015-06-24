@@ -26,42 +26,6 @@ import com.chiorichan.console.Interviewer;
  */
 class LoginCommand extends BuiltinCommand
 {
-	class LoginInterviewerUser implements Interviewer
-	{
-		private InteractiveConsole handler;
-		
-		public LoginInterviewerUser( InteractiveConsole handler )
-		{
-			this.handler = handler;
-		}
-		
-		@Override
-		public boolean handleInput( String input )
-		{
-			if ( input == null || input.isEmpty() )
-			{
-				handler.sendMessage( "Username can't be empty!" );
-				return true;
-			}
-			
-			handler.setMetadata( "user", input );
-			return true;
-		}
-		
-		@Override
-		public String getPrompt()
-		{
-			try
-			{
-				return InetAddress.getLocalHost().getHostName() + " login: ";
-			}
-			catch ( UnknownHostException e )
-			{
-				return "login: ";
-			}
-		}
-	}
-	
 	class LoginInterviewerPass implements Interviewer
 	{
 		private InteractiveConsole handler;
@@ -69,6 +33,12 @@ class LoginCommand extends BuiltinCommand
 		public LoginInterviewerPass( InteractiveConsole handler )
 		{
 			this.handler = handler;
+		}
+		
+		@Override
+		public String getPrompt()
+		{
+			return "Password for " + handler.getMetadata( "user" ) + ": ";
 		}
 		
 		@Override
@@ -84,7 +54,13 @@ class LoginCommand extends BuiltinCommand
 					AccountResult result = handler.getPersistence().getSession().login( AccountAuthenticator.PASSWORD, user, pass );
 					
 					if ( result != AccountResult.LOGIN_SUCCESS )
-						throw new AccountException( result );
+						if ( result == AccountResult.INTERNAL_ERROR )
+						{
+							result.getThrowable().printStackTrace();
+							throw new AccountException( result );
+						}
+						else
+							throw new AccountException( result );
 					
 					// if ( !handler.getPersistence().checkPermission( "sys.query" ).isTrue() )
 					// throw new LoginException( LoginExceptionReason.notAuthorized, acct );
@@ -110,11 +86,41 @@ class LoginCommand extends BuiltinCommand
 			handler.setMetadata( "user", null );
 			return true;
 		}
+	}
+	
+	class LoginInterviewerUser implements Interviewer
+	{
+		private InteractiveConsole handler;
+		
+		public LoginInterviewerUser( InteractiveConsole handler )
+		{
+			this.handler = handler;
+		}
 		
 		@Override
 		public String getPrompt()
 		{
-			return "Password for " + handler.getMetadata( "user" ) + ": ";
+			try
+			{
+				return InetAddress.getLocalHost().getHostName() + " login: ";
+			}
+			catch ( UnknownHostException e )
+			{
+				return "login: ";
+			}
+		}
+		
+		@Override
+		public boolean handleInput( String input )
+		{
+			if ( input == null || input.isEmpty() )
+			{
+				handler.sendMessage( "Username can't be empty!" );
+				return true;
+			}
+			
+			handler.setMetadata( "user", input );
+			return true;
 		}
 	}
 	

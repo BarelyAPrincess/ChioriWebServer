@@ -312,6 +312,12 @@ public class SQLBackend extends PermissionBackend
 	}
 	
 	@Override
+	public void reloadBackend() throws PermissionBackendException
+	{
+		// TODO Auto-generated method stub
+	}
+	
+	@Override
 	public void setDefaultGroup( String child, String... ref )
 	{
 		try
@@ -377,7 +383,7 @@ public class SQLBackend extends PermissionBackend
 			throw new PermissionValueException( "We could not cast the Object %s for key %s.", val.getClass().getName(), key );
 		}
 	}
-	
+
 	private int updateDBValue( PermissionNamespace ns, String key, String val ) throws SQLException
 	{
 		DatabaseEngine db = getSQL();

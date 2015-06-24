@@ -20,7 +20,7 @@ public class AccountFailedLoginEvent extends AccountEvent
 	
 	public AccountFailedLoginEvent( AccountMeta acct, AccountResult result )
 	{
-		super( acct, true );
+		super( acct );
 		this.result = result;
 	}
 	

@@ -12,10 +12,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
@@ -44,7 +44,7 @@ import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 public class WebFunc
 {
 	@Deprecated
-	public static Map<String, Object> cleanArray( Map<String, Object> data, List<String> allowedKeys )
+	public static Map<String, Object> cleanArray( Map<String, Object> data, Collection<String> allowedKeys )
 	{
 		return filter( data, allowedKeys );
 	}
@@ -85,22 +85,22 @@ public class WebFunc
 		return "{" + UUID.nameUUIDFromBytes( bytesScrambled ).toString() + "}";
 	}
 	
-	public static String createTable( List<Object> tableData )
+	public static String createTable( Collection<Object> tableData )
 	{
 		return createTable( tableData, null, null );
 	}
 	
-	public static String createTable( List<Object> tableData, List<String> headerArray )
+	public static String createTable( Collection<Object> tableData, Collection<String> headerArray )
 	{
 		return createTable( tableData, headerArray, null, null );
 	}
 	
-	public static String createTable( List<Object> tableData, List<String> headerArray, String tableId )
+	public static String createTable( Collection<Object> tableData, Collection<String> headerArray, String tableId )
 	{
 		return createTable( tableData, headerArray, tableId, null );
 	}
 	
-	public static String createTable( List<Object> tableData, List<String> headerArray, String tableId, String altTableClass )
+	public static String createTable( Collection<Object> tableData, Collection<String> headerArray, String tableId, String altTableClass )
 	{
 		Map<Object, Object> newData = Maps.newLinkedHashMap();
 		
@@ -119,18 +119,18 @@ public class WebFunc
 		return createTable( tableData, null, "" );
 	}
 	
-	public static String createTable( Map<Object, Object> tableData, List<String> headerArray )
+	public static String createTable( Map<Object, Object> tableData, Collection<String> headerArray )
 	{
 		return createTable( tableData, headerArray, "" );
 	}
 	
-	public static String createTable( Map<Object, Object> tableData, List<String> headerArray, String tableId )
+	public static String createTable( Map<Object, Object> tableData, Collection<String> headerArray, String tableId )
 	{
 		return createTable( tableData, headerArray, tableId, null );
 	}
 	
 	@SuppressWarnings( "unchecked" )
-	public static String createTable( Map<Object, Object> tableData, List<String> headerArray, String tableId, String altTableClass )
+	public static String createTable( Map<Object, Object> tableData, Collection<String> headerArray, String tableId, String altTableClass )
 	{
 		if ( tableId == null )
 			tableId = "";
@@ -163,7 +163,7 @@ public class WebFunc
 			String clss = ( x % 2 == 0 ) ? "evenrowcolor" : "oddrowcolor";
 			x++;
 			
-			if ( row instanceof Map || row instanceof List )
+			if ( row instanceof Map || row instanceof Collection )
 			{
 				Map<Object, Object> map = Maps.newLinkedHashMap();
 				
@@ -172,7 +172,7 @@ public class WebFunc
 				else
 				{
 					int y = 0;
-					for ( Object o : ( List<Object> ) row )
+					for ( Object o : ( Collection<Object> ) row )
 					{
 						map.put( Integer.toString( y ), o );
 						y++;
@@ -284,7 +284,7 @@ public class WebFunc
 		return result;
 	}
 	
-	public static Map<String, Object> filter( Map<String, Object> data, List<String> allowedKeys )
+	public static Map<String, Object> filter( Map<String, Object> data, Collection<String> allowedKeys )
 	{
 		return filter( data, allowedKeys, false );
 	}
@@ -301,7 +301,7 @@ public class WebFunc
 	 *            Will the key match be case sensitive or not
 	 * @return The resulting map of filtered data
 	 */
-	public static Map<String, Object> filter( Map<String, Object> data, List<String> allowedKeys, boolean caseSensitive )
+	public static Map<String, Object> filter( Map<String, Object> data, Collection<String> allowedKeys, boolean caseSensitive )
 	{
 		Map<String, Object> newArray = new LinkedHashMap<String, Object>();
 		

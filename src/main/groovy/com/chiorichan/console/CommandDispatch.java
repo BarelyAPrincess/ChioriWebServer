@@ -56,9 +56,8 @@ public final class CommandDispatch
 	private static Command getCommand( String sentCommandLabel )
 	{
 		for ( Command command : registeredCommands )
-			if ( command.getName().equals( sentCommandLabel ) )
+			if ( command.getName().equals( sentCommandLabel.toLowerCase() ) || command.getAliases().contains( sentCommandLabel.toLowerCase() ) )
 				return command;
-		
 		return null;
 	}
 	

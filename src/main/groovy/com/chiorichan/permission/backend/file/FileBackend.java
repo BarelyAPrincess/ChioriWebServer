@@ -11,7 +11,6 @@ package com.chiorichan.permission.backend.file;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -22,6 +21,7 @@ import java.util.logging.Logger;
 
 import com.chiorichan.Loader;
 import com.chiorichan.configuration.ConfigurationSection;
+import com.chiorichan.configuration.InvalidConfigurationException;
 import com.chiorichan.configuration.file.FileConfiguration;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.permission.ChildPermission;
@@ -29,6 +29,7 @@ import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionBackend;
+import com.chiorichan.permission.PermissionDefault;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.PermissionModelValue;
 import com.chiorichan.permission.PermissionNamespace;
@@ -200,42 +201,17 @@ public class FileBackend extends PermissionBackend
 	}
 	
 	@Override
-	public void loadEntities()
+	public void loadEntities() throws PermissionBackendException
 	{
 		ConfigurationSection section = permissions.getConfigurationSection( "entities" );
 		
 		if ( section != null )
 			for ( String s : section.getKeys( false ) )
-			{
-				PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( s );
-				ConfigurationSection result = section.getConfigurationSection( s );
-				
-				ConfigurationSection permissions = result.getConfigurationSection( "permissions" );
-				
-				if ( permissions != null )
-					for ( String ss : permissions.getKeys( false ) )
-					{
-						ConfigurationSection permission = section.getConfigurationSection( ss );
-						if ( permission != null && permission.getString( "permission" ) != null )
-						{
-							Permission perm = PermissionManager.INSTANCE.getNode( permission.getString( "permission" ).toLowerCase(), true );
-							
-							PermissionValue value = null;
-							if ( permission.getString( "value" ) != null )
-								value = perm.getModel().createValue( permission.getString( "value" ) );
-							
-							String refs = permission.isString( "refs" ) ? permission.getString( "refs" ) : "";
-							entity.attachPermission( new ChildPermission( perm, value, -1, refs.split( "|" ) ) );
-						}
-					}
-				
-				for ( String group : result.getStringList( "groups" ) )
-					entity.addGroup( PermissionManager.INSTANCE.getGroup( group ) );
-			}
+				PermissionManager.INSTANCE.getEntity( s );
 	}
 	
 	@Override
-	public void loadGroups()
+	public void loadGroups() throws PermissionBackendException
 	{
 		ConfigurationSection section = permissions.getConfigurationSection( "groups" );
 		
@@ -272,75 +248,64 @@ public class FileBackend extends PermissionBackend
 	}
 	
 	@Override
-	public void loadPermissions()
+	public void loadPermissions() throws PermissionBackendException
 	{
 		ConfigurationSection section = permissions.getConfigurationSection( "permissions" );
-		
-		try
-		{
-			loadPermissions( section, new PermissionNamespace( "" ) );
-		}
-		catch ( PermissionException e )
-		{
-			PermissionManager.getLogger().warning( e.getMessage() );
-		}
-	}
-	
-	public void loadPermissions( ConfigurationSection section, PermissionNamespace ns )
-	{
 		if ( section == null )
 			return;
 		
-		Set<String> keys = section.getKeys( false );
-		
-		if ( ns.getNodeCount() > 0 )
+		try
 		{
-			Permission perm = new Permission( ns, PermissionType.valueOf( section.getString( "type" ) ) );
-			
-			PermissionModelValue model = perm.getModel();
-			
-			if ( section.get( "value" ) != null )
-				model.setValue( section.get( "value" ) );
-			
-			if ( section.get( "default" ) != null )
-				model.setValueDefault( section.get( "default" ) );
-			
-			if ( perm.getType().hasMax() )
-				model.setMaxLen( Math.min( section.getInt( "max" ), perm.getType().maxValue() ) );
-			
-			if ( perm.getType() == PermissionType.ENUM )
-				model.setEnums( new HashSet<String>( Splitter.on( "|" ).splitToList( section.getString( "enum" ) ) ) );
-			
-			model.setDescription( section.getString( "description" ) );
-		}
-		
-		keys.removeAll( Arrays.asList( new String[] {"type", "value", "default", "max", "min", "enum", "description"} ) );
-		
-		for ( String s : keys )
-		{
-			PermissionNamespace pns = ns.append( s );
-			ConfigurationSection next = section.getConfigurationSection( s );
-			
-			if ( !pns.containsOnlyValidChars() )
+			Set<String> keys = section.getKeys( false );
+			for ( String s : keys )
 			{
-				PermissionManager.getLogger().warning( String.format( "The permission '%s' contains invalid characters, namespaces can only contain the characters a-z, 0-9, and _, this will be fixed automatically.", pns ) );
-				pns.fixInvalidChars();
-				section.set( s, null );
-				section.set( pns.getLocalName(), next );
+				ConfigurationSection node = section.getConfigurationSection( s );
+				PermissionNamespace ns = new PermissionNamespace( s.replaceAll( "/", "." ) );
+				
+				if ( !ns.containsOnlyValidChars() )
+				{
+					PermissionManager.getLogger().warning( String.format( "The permission '%s' contains invalid characters, namespaces can only contain the characters a-z, 0-9, and _, this will be fixed automatically.", ns ) );
+					ns.fixInvalidChars();
+					section.set( s, null );
+					section.set( ns.getLocalName(), node );
+				}
+				
+				Permission perm = new Permission( ns, PermissionType.valueOf( section.getString( "type" ) ) );
+				PermissionModelValue model = perm.getModel();
+				
+				if ( section.get( "value" ) != null )
+					model.setValue( section.get( "value" ) );
+				
+				if ( section.get( "default" ) != null )
+					model.setValueDefault( section.get( "default" ) );
+				
+				if ( perm.getType().hasMax() )
+					model.setMaxLen( Math.min( section.getInt( "max" ), perm.getType().maxValue() ) );
+				
+				if ( perm.getType() == PermissionType.ENUM )
+					model.setEnums( new HashSet<String>( Splitter.on( "|" ).splitToList( section.getString( "enum" ) ) ) );
+				
+				model.setDescription( section.getString( "description" ) );
 			}
-			
-			if ( next != null )
-				loadPermissions( next, pns );
+		}
+		catch ( PermissionException e )
+		{
+			e.printStackTrace();
+			PermissionManager.getLogger().warning( e.getMessage() );
 		}
 	}
 	
 	@Override
 	public void nodeCommit( Permission perm )
 	{
-		PermissionModelValue model = perm.getModel();
+		if ( PermissionDefault.isDefault( perm ) )
+			return;
 		
-		ConfigurationSection permissionsSection = permissions.getConfigurationSection( "permissions", true );
-		ConfigurationSection permission = permissionsSection.getConfigurationSection( perm.getNamespace(), true );
+		if ( perm.getType() == PermissionType.DEFAULT && perm.hasChildren() && !perm.getModel().hasDescription() )
+			return;
+		
+		PermissionModelValue model = perm.getModel();
+		ConfigurationSection permission = permissions.getConfigurationSection( "permissions." + perm.getNamespace().replaceAll( "\\.", "/" ), true );
 		
 		permission.set( "type", perm.getType().name() );
 		
@@ -366,6 +331,19 @@ public class FileBackend extends PermissionBackend
 	public void nodeReload( Permission perm )
 	{
 		
+	}
+	
+	@Override
+	public void reloadBackend() throws PermissionBackendException
+	{
+		try
+		{
+			permissions.load( permissionsFile );
+		}
+		catch ( IOException | InvalidConfigurationException e )
+		{
+			throw new PermissionBackendException( e );
+		}
 	}
 	
 	@Override

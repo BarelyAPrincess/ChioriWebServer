@@ -197,7 +197,7 @@ public class PermissionResult
 		{
 			return isTrueWithException();
 		}
-		catch ( IllegalAccessException e )
+		catch ( PermissionException e )
 		{
 			return false;
 		}
@@ -210,16 +210,18 @@ public class PermissionResult
 	 * @throws IllegalAccessException
 	 *             Thrown if this permission node is not of type Boolean
 	 */
-	public boolean isTrueWithException() throws IllegalAccessException
+	public boolean isTrueWithException() throws PermissionException
 	{
-		if ( perm.getType() == PermissionType.DEFAULT )
-			return isAssigned();
-		
-		if ( perm.getType() != PermissionType.BOOL )
+		// Can't check true on anything but these types
+		if ( perm.getType() != PermissionType.BOOL && perm.getType() != PermissionType.DEFAULT )
 			throw new PermissionValueException( String.format( "The permission %s is not of type boolean.", perm.getNamespace() ) );
 		
+		// We can check and allow OPs but ONLY if we are not checking a PermissionDefault node, for one 'sys.op' is the node we check for OPs.
 		if ( !PermissionDefault.isDefault( perm ) && PermissionManager.allowOps && entity.isOp() )
 			return true;
+		
+		if ( perm.getType() == PermissionType.DEFAULT )
+			return isAssigned();
 		
 		return ( getValueObject() == null ) ? false : ObjectFunc.castToBool( getValueObject() );
 	}

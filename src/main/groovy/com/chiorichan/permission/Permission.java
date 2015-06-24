@@ -65,14 +65,7 @@ public final class Permission
 	
 	public void addChild( Permission node )
 	{
-		addChild( node, true );
-	}
-	
-	public void addChild( Permission node, boolean saveChanges )
-	{
 		children.add( node );
-		if ( saveChanges )
-			PermissionManager.INSTANCE.getBackend().nodeCommit( this );
 	}
 	
 	public void commit()

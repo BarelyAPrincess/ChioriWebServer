@@ -232,18 +232,24 @@ public abstract class PermissionBackend
 	
 	/**
 	 * This method loads all entities from the backend.
+	 * 
+	 * @throws PermissionBackendException
 	 */
-	public abstract void loadEntities();
+	public abstract void loadEntities() throws PermissionBackendException;
 	
 	/**
 	 * This method loads all groups from the backend.
+	 * 
+	 * @throws PermissionBackendException
 	 */
-	public abstract void loadGroups();
+	public abstract void loadGroups() throws PermissionBackendException;
 	
 	/**
 	 * This method loads all permissions from the backend.
+	 * 
+	 * @throws PermissionBackendException
 	 */
-	public abstract void loadPermissions();
+	public abstract void loadPermissions() throws PermissionBackendException;
 	
 	/**
 	 * Commits any changes made to the permission node to the backend for saving
@@ -261,9 +267,11 @@ public abstract class PermissionBackend
 	 * Disregards any changes made to the permission node and reloads from the backend
 	 */
 	public abstract void nodeReload( Permission perm );
-
+	
 	/**
 	 * Sets the default group
 	 */
 	public abstract void setDefaultGroup( String child, String... site );
+	
+	public abstract void reloadBackend() throws PermissionBackendException;
 }

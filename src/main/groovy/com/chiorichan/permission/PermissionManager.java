@@ -504,6 +504,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 				child = new Permission( node, curr );
 				child.setType( type );
 				curr.addChild( child );
+				curr.commit();
 				curr = child;
 			}
 			else
@@ -618,8 +619,10 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	
 	/**
 	 * Loads all groups and entities from the backend data source.
+	 * 
+	 * @throws PermissionBackendException
 	 */
-	public void loadData()
+	public void loadData() throws PermissionBackendException
 	{
 		if ( isDebug() )
 			getLogger().warning( ConsoleColor.YELLOW + "Permission debug is enabled!" );
@@ -702,6 +705,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	public void reload() throws PermissionBackendException
 	{
 		reset();
+		backend.reloadBackend();
 		
 		backend.loadEntities();
 		backend.loadGroups();
@@ -752,10 +756,10 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 		for ( Permission p : permissions )
 			p.commit();
 		
-		for ( PermissibleEntity entity : entities.values() )
+		for ( PermissibleGroup entity : groups.values() )
 			entity.save();
 		
-		for ( PermissibleGroup entity : groups.values() )
+		for ( PermissibleEntity entity : entities.values() )
 			entity.save();
 	}
 	
