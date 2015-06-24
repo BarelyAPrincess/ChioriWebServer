@@ -117,10 +117,11 @@ public class Template extends Plugin implements Listener
 				
 				if ( lineNum > -1 )
 				{
-					if ( context.baseSource() != null && !context.baseSource().isEmpty() )
-						codeSample += "<p>Pre-evaluated Code:</p><pre>" + TemplateUtils.generateCodePreview( context.baseSource(), lineNum, colNum ) + "</pre>";
+					String preview = TemplateUtils.generateCodePreview( ste );
+					codeSample += "<p>Source Code:</p><pre>" + preview + "</pre>";
 					
-					codeSample += "<p>Source Code:</p><pre>" + TemplateUtils.generateCodePreview( ste ) + "</pre>";
+					if ( context.baseSource() != null && !context.baseSource().isEmpty() && !context.baseSource().contains( preview ) )
+						codeSample += "<p>Pre-evaluated Code:</p><pre>" + TemplateUtils.generateCodePreview( context.baseSource(), lineNum, colNum ) + "</pre>";
 				}
 			}
 		}
