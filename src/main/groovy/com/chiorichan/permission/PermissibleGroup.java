@@ -8,10 +8,19 @@
  */
 package com.chiorichan.permission;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.chiorichan.permission.event.PermissibleEntityEvent;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 public abstract class PermissibleGroup extends PermissibleEntity implements Comparable<PermissibleGroup>
 {
+	private int rank = -1;
 	private int weight = 0;
 	
 	public PermissibleGroup( String groupName )
@@ -25,15 +34,97 @@ public abstract class PermissibleGroup extends PermissibleEntity implements Comp
 		return getWeight() - o.getWeight();
 	}
 	
+	// XXX THIS!!! New Ref Groups
+	public Map<String, Collection<PermissibleGroup>> getAllParentGroups()
+	{
+		return Maps.newHashMap();
+		// return Collections.unmodifiableMap( groups );
+	}
+	
+	// TODO Prevent StackOverflow
+	public Collection<PermissibleEntity> getChildEntities( boolean recursive, String... refs )
+	{
+		List<PermissibleEntity> children = Lists.newArrayList();
+		for ( PermissibleEntity entity : PermissionManager.INSTANCE.getEntities() )
+			if ( entity.getParentGroups( refs ).contains( this ) )
+				children.add( entity );
+		if ( recursive )
+			for ( PermissibleGroup group : getChildGroups( true, refs ) )
+				children.addAll( group.getChildEntities( true, refs ) );
+		return children;
+	}
+	
+	public Collection<PermissibleEntity> getChildEntities( String... refs )
+	{
+		return getChildEntities( false, refs );
+	}
+	
+	// TODO Prevent StackOverflow
+	public Collection<PermissibleGroup> getChildGroups( boolean recursive, String... refs )
+	{
+		List<PermissibleGroup> children = Lists.newArrayList();
+		for ( PermissibleGroup group : PermissionManager.INSTANCE.getGroups() )
+			if ( group.getParentGroups( refs ).contains( this ) )
+			{
+				children.add( group );
+				if ( recursive )
+					children.addAll( group.getChildGroups( true, refs ) );
+			}
+		return children;
+	}
+	
+	public Collection<PermissibleGroup> getChildGroups( String... refs )
+	{
+		return getChildGroups( false, refs );
+	}
+	
+	// XXX THIS TOO!
+	public Map<String, String> getOptions()
+	{
+		return Maps.newHashMap();
+	}
+	
+	public Collection<String> getParentGroupsNames( String... ref )
+	{
+		Set<String> result = Sets.newHashSet();
+		for ( PermissibleGroup group : getParentGroups( ref ) )
+			result.add( group.getId() );
+		return result;
+	}
+	
+	public int getRank()
+	{
+		return rank;
+	}
+	
+	public String getRankLadder()
+	{
+		return null;// TODO Auto-generated method stub
+	}
+	
 	public final int getWeight()
 	{
 		return weight;
 	}
 	
-	@Override
-	boolean isGroup()
+	public boolean isRanked()
 	{
-		return true;
+		return rank >= 0;
+	}
+	
+	public void setDefault( boolean isDef )
+	{
+		// TODO Auto-generated method stub
+	}
+	
+	public void setRank( int rank )
+	{
+		this.rank = rank;
+	}
+	
+	public void setRankLadder( String string )
+	{
+		// TODO Auto-generated method stub
 	}
 	
 	public final void setWeight( int weight )

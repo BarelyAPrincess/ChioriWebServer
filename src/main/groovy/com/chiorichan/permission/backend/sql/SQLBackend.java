@@ -10,9 +10,8 @@ package com.chiorichan.permission.backend.sql;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -33,7 +32,6 @@ import com.chiorichan.permission.lang.PermissionValueException;
 import com.chiorichan.util.ObjectFunc;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -90,25 +88,19 @@ public class SQLBackend extends PermissionBackend
 	}
 	
 	@Override
-	public PermissibleEntity[] getEntities()
-	{
-		Set<String> entityNames = getEntityNames( ENTITY );
-		List<PermissibleEntity> entities = Lists.newArrayList();
-		
-		for ( String entityName : entityNames )
-			entities.add( getEntity( entityName ) );
-		
-		return entities.toArray( new PermissibleEntity[0] );
-	}
-	
-	@Override
 	public PermissibleEntity getEntity( String id )
 	{
 		return new SQLEntity( id );
 	}
 	
 	@Override
-	public Set<String> getEntityNames( int type )
+	public Collection<String> getEntityNames()
+	{
+		return getEntityNames( 0 );
+	}
+	
+	@Override
+	public Collection<String> getEntityNames( int type )
 	{
 		try
 		{
@@ -116,12 +108,8 @@ public class SQLBackend extends PermissionBackend
 			
 			ResultSet result = getSQL().query( "SELECT * FROM `permissions_entity` WHERE `type` = " + type + ";" );
 			
-			if ( !result.next() )
-				return Sets.newHashSet();
-			
-			do
+			while ( result.next() )
 				entities.add( result.getString( "owner" ) );
-			while ( result.next() );
 			
 			return entities;
 		}
@@ -138,17 +126,9 @@ public class SQLBackend extends PermissionBackend
 	}
 	
 	@Override
-	public PermissibleGroup[] getGroups()
+	public Collection<String> getGroupNames()
 	{
-		Set<String> groupNames = getEntityNames( GROUP );
-		List<PermissibleGroup> groups = Lists.newArrayList();
-		
-		for ( String groupName : groupNames )
-			groups.add( getGroup( groupName ) );
-		
-		Collections.sort( groups );
-		
-		return groups.toArray( new PermissibleGroup[0] );
+		return getEntityNames( 1 );
 	}
 	
 	public DatabaseEngine getSQL()

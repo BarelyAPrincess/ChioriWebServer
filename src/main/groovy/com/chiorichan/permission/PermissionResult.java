@@ -56,7 +56,7 @@ public class PermissionResult
 		if ( val == null )
 			throw new PermissionValueException( "The assigned value must not be null." );
 		
-		childPerm = new ChildPermission( perm, perm.getModel().createValue( val ), entity.isGroup(), refs );
+		childPerm = new ChildPermission( perm, perm.getModel().createValue( val ), entity.isGroup() ? ( ( PermissibleGroup ) entity ).getWeight() : -1, refs );
 		entity.childPermissions.add( childPerm );
 		
 		recalculatePermissions();
@@ -69,7 +69,7 @@ public class PermissionResult
 		if ( perm.getType() != PermissionType.DEFAULT )
 			throw new PermissionException( String.format( "Can't assign the permission %s to entity %s, because the permission is of type %s, use assign(Object) with the appropriate value instead.", perm.getNamespace(), entity.getId(), perm.getType().name() ) );
 		
-		childPerm = new ChildPermission( perm, perm.getModel().createValue( true ), entity.isGroup(), refs );
+		childPerm = new ChildPermission( perm, perm.getModel().createValue( true ), entity.isGroup() ? ( ( PermissibleGroup ) entity ).getWeight() : -1, refs );
 		entity.childPermissions.add( childPerm );
 		
 		recalculatePermissions();
@@ -152,6 +152,11 @@ public class PermissionResult
 		{
 			throw new PermissionValueException( String.format( "Can't cast %s to type", obj.getClass().getName() ), e );
 		}
+	}
+	
+	public int getWeight()
+	{
+		return childPerm == null ? 9999 : childPerm.getWeight();
 	}
 	
 	/**

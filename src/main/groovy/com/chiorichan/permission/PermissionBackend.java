@@ -8,10 +8,11 @@
  */
 package com.chiorichan.permission;
 
+import java.io.OutputStreamWriter;
 import java.lang.reflect.Constructor;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import com.chiorichan.permission.lang.PermissionBackendException;
 
@@ -20,128 +21,30 @@ import com.chiorichan.permission.lang.PermissionBackendException;
  */
 public abstract class PermissionBackend
 {
+	protected static final String defaultBackend = "file";
+	
+	public static final int ENTITY = 0;
+	public static final int GROUP = 1;
+	
 	/**
 	 * Array of backend aliases
 	 */
 	protected static Map<String, Class<? extends PermissionBackend>> registedAliases = new HashMap<String, Class<? extends PermissionBackend>>();
 	
-	public static final int GROUP = 1;
-	public static final int ENTITY = 0;
-	
-	protected static final String defaultBackend = "file";
-	
 	// TODO Make it so node can be changed from one backend to another with ease and without restarting.
 	
-	/**
-	 * Backend initialization should be done here
-	 */
-	public abstract void initialize() throws PermissionBackendException;
-	
-	/**
-	 * Returns new PermissibleEntity object for specified id
-	 * 
-	 * @param id
-	 * @return PermissibleEntity for specified id, or null on error.
-	 */
-	public abstract PermissibleEntity getEntity( String id );
-	
-	/**
-	 * Returns new PermissibleGroup object for specified id
-	 * 
-	 * @param id
-	 * @return PermissibleGroup object, or null on error
-	 */
-	public abstract PermissibleGroup getGroup( String id );
-	
-	public abstract void setDefaultGroup( String child, String... site );
-	
-	/**
-	 * Returns default group, a group that is assigned to a entity without a group set
-	 * 
-	 * @return Default group instance
-	 */
-	public abstract PermissibleGroup getDefaultGroup( String siteName );
-	
-	/**
-	 * Return all registered groups
-	 * 
-	 * @return Array of PermissibleGroup
-	 */
-	public abstract PermissibleGroup[] getGroups();
-	
-	/**
-	 * Return all registered and online entities
-	 * 
-	 * @return Array of PermissibleEntity
-	 */
-	public abstract PermissibleEntity[] getEntities();
-	
-	public abstract Set<String> getEntityNames( int type );
-	
-	/**
-	 * Return class name for alias
-	 * 
-	 * @param alias
-	 * @return Class name if found or alias if there is no such class name present
-	 */
-	public static String getBackendClassName( String alias )
+	private static PermissionBackend getBackend( Class<? extends PermissionBackend> backendClass )
 	{
-		
-		if ( registedAliases.containsKey( alias ) )
-			return registedAliases.get( alias ).getName();
-		
-		return alias;
-	}
-	
-	/**
-	 * Returns Class object for specified alias, if there is no alias registered
-	 * then try to find it using Class.forName(alias)
-	 * 
-	 * @param alias
-	 * @return PermissionBackend Class for alias provided
-	 * @throws ClassNotFoundException
-	 */
-	@SuppressWarnings( "unchecked" )
-	public static Class<? extends PermissionBackend> getBackendClass( String alias ) throws ClassNotFoundException
-	{
-		if ( !registedAliases.containsKey( alias ) )
-			return ( Class<? extends PermissionBackend> ) Class.forName( alias );
-		
-		return registedAliases.get( alias );
-	}
-	
-	/**
-	 * Register new alias for specified backend class
-	 * 
-	 * @param alias
-	 * @param backendClass
-	 */
-	public static void registerBackendAlias( String alias, Class<? extends PermissionBackend> backendClass )
-	{
-		if ( !PermissionBackend.class.isAssignableFrom( backendClass ) )
-			throw new RuntimeException( "Provided class should be subclass of PermissionBackend" );
-		
-		registedAliases.put( alias, backendClass );
-		
-		PermissionManager.getLogger().fine( alias + " backend registered!" );
-	}
-	
-	/**
-	 * Return alias for specified backend class
-	 * If there is no such class registered the fullname of this class would
-	 * be returned using backendClass.getName();
-	 * 
-	 * @param backendClass
-	 * @return alias or class fullname when not found using backendClass.getName()
-	 */
-	public static String getBackendAlias( Class<? extends PermissionBackend> backendClass )
-	{
-		if ( registedAliases.containsValue( backendClass ) )
-			for ( String alias : registedAliases.keySet() )
-				if ( registedAliases.get( alias ).equals( backendClass ) )
-					return alias;
-		
-		return backendClass.getName();
+		try
+		{
+			PermissionManager.getLogger().info( "Initializing " + backendClass.getName() + " backend" );
+			Constructor<? extends PermissionBackend> constructor = backendClass.getConstructor();
+			return constructor.newInstance();
+		}
+		catch ( Exception e )
+		{
+			throw new RuntimeException( e );
+		}
 	}
 	
 	/**
@@ -163,29 +66,6 @@ public abstract class PermissionBackend
 		}
 	}
 	
-	public static PermissionBackend getBackendWithException( String backendName ) throws ClassNotFoundException
-	{
-		Class<? extends PermissionBackend> backendClass = getBackendClass( backendName );
-		if ( PermissionManager.INSTANCE.getBackend() != null && PermissionManager.INSTANCE.getBackend().getClass() == backendClass )
-			return PermissionManager.INSTANCE.getBackend();
-		else
-			return getBackend( backendClass );
-	}
-	
-	private static PermissionBackend getBackend( Class<? extends PermissionBackend> backendClass )
-	{
-		try
-		{
-			PermissionManager.getLogger().info( "Initializing " + backendClass.getName() + " backend" );
-			Constructor<? extends PermissionBackend> constructor = backendClass.getConstructor();
-			return constructor.newInstance();
-		}
-		catch ( Exception e )
-		{
-			throw new RuntimeException( e );
-		}
-	}
-	
 	public static PermissionBackend getBackend( String backendName, String fallBackBackend )
 	{
 		try
@@ -196,6 +76,65 @@ public abstract class PermissionBackend
 		{
 			return null;
 		}
+	}
+	
+	/**
+	 * Return alias for specified backend class
+	 * If there is no such class registered the fullname of this class would
+	 * be returned using backendClass.getName();
+	 * 
+	 * @param backendClass
+	 * @return alias or class fullname when not found using backendClass.getName()
+	 */
+	public static String getBackendAlias( Class<? extends PermissionBackend> backendClass )
+	{
+		if ( registedAliases.containsValue( backendClass ) )
+			for ( String alias : registedAliases.keySet() )
+				if ( registedAliases.get( alias ).equals( backendClass ) )
+					return alias;
+		
+		return backendClass.getName();
+	}
+	
+	/**
+	 * Returns Class object for specified alias, if there is no alias registered
+	 * then try to find it using Class.forName(alias)
+	 * 
+	 * @param alias
+	 * @return PermissionBackend Class for alias provided
+	 * @throws ClassNotFoundException
+	 */
+	@SuppressWarnings( "unchecked" )
+	public static Class<? extends PermissionBackend> getBackendClass( String alias ) throws ClassNotFoundException
+	{
+		if ( !registedAliases.containsKey( alias ) )
+			return ( Class<? extends PermissionBackend> ) Class.forName( alias );
+		
+		return registedAliases.get( alias );
+	}
+	
+	/**
+	 * Return class name for alias
+	 * 
+	 * @param alias
+	 * @return Class name if found or alias if there is no such class name present
+	 */
+	public static String getBackendClassName( String alias )
+	{
+		
+		if ( registedAliases.containsKey( alias ) )
+			return registedAliases.get( alias ).getName();
+		
+		return alias;
+	}
+	
+	public static PermissionBackend getBackendWithException( String backendName ) throws ClassNotFoundException
+	{
+		Class<? extends PermissionBackend> backendClass = getBackendClass( backendName );
+		if ( PermissionManager.INSTANCE.getBackend() != null && PermissionManager.INSTANCE.getBackend().getClass() == backendClass )
+			return PermissionManager.INSTANCE.getBackend();
+		else
+			return getBackend( backendClass );
 	}
 	
 	/**
@@ -231,9 +170,80 @@ public abstract class PermissionBackend
 	}
 	
 	/**
-	 * Disregards any changes made to the permission node and reloads from the backend
+	 * Register new alias for specified backend class
+	 * 
+	 * @param alias
+	 * @param backendClass
 	 */
-	public abstract void nodeReload( Permission perm );
+	public static void registerBackendAlias( String alias, Class<? extends PermissionBackend> backendClass )
+	{
+		if ( !PermissionBackend.class.isAssignableFrom( backendClass ) )
+			throw new RuntimeException( "Provided class should be subclass of PermissionBackend" );
+		
+		registedAliases.put( alias, backendClass );
+		
+		PermissionManager.getLogger().fine( alias + " backend registered!" );
+	}
+	
+	public void dumpData( OutputStreamWriter outputStreamWriter )
+	{
+		// TODO Auto-generated method stub
+	}
+	
+	/**
+	 * Returns default group, a group that is assigned to a entity without a group set
+	 * 
+	 * @return Default group instance
+	 */
+	public abstract PermissibleGroup getDefaultGroup( String siteName );
+	
+	/**
+	 * Returns new PermissibleEntity object for specified id
+	 * 
+	 * @param id
+	 * @return PermissibleEntity for specified id, or null on error.
+	 */
+	public abstract PermissibleEntity getEntity( String id );
+	
+	/**
+	 * This method loads all entity names from the backend.
+	 */
+	public abstract Collection<String> getEntityNames();
+	
+	public abstract Collection<String> getEntityNames( int type );
+	
+	/**
+	 * Returns new PermissibleGroup object for specified id
+	 * 
+	 * @param id
+	 * @return PermissibleGroup object, or null on error
+	 */
+	public abstract PermissibleGroup getGroup( String id );
+	
+	/**
+	 * This method loads all group names from the backend.
+	 */
+	public abstract Collection<String> getGroupNames();
+	
+	/**
+	 * Backend initialization should be done here
+	 */
+	public abstract void initialize() throws PermissionBackendException;
+	
+	/**
+	 * This method loads all entities from the backend.
+	 */
+	public abstract void loadEntities();
+	
+	/**
+	 * This method loads all groups from the backend.
+	 */
+	public abstract void loadGroups();
+	
+	/**
+	 * This method loads all permissions from the backend.
+	 */
+	public abstract void loadPermissions();
 	
 	/**
 	 * Commits any changes made to the permission node to the backend for saving
@@ -247,18 +257,13 @@ public abstract class PermissionBackend
 	 */
 	public abstract void nodeDestroy( Permission perm );
 	
-	/*
-	 * This method loads all permissions from the backend data store.
+	/**
+	 * Disregards any changes made to the permission node and reloads from the backend
 	 */
-	public abstract void loadPermissions();
-	
-	/*
-	 * This method loads all entities from the backend data store.
+	public abstract void nodeReload( Permission perm );
+
+	/**
+	 * Sets the default group
 	 */
-	public abstract void loadEntities();
-	
-	/*
-	 * This method loads all groups from the backend data store.
-	 */
-	public abstract void loadGroups();
+	public abstract void setDefaultGroup( String child, String... site );
 }

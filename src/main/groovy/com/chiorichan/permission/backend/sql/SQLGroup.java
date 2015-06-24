@@ -77,7 +77,7 @@ public class SQLGroup extends PermissibleGroup
 						if ( getChildPermission( perm ) == null )
 						{
 							PermissionValue childValue = ( rs.getString( "value" ) == null || rs.getString( "value" ).isEmpty() ) ? null : perm.getModel().createValue( rs.getString( "value" ) );
-							attachPermission( new ChildPermission( perm, childValue, true, rs.getString( "ref" ).split( "|" ) ) );
+							attachPermission( new ChildPermission( perm, childValue, getWeight(), rs.getString( "ref" ).split( "|" ) ) );
 						}
 				}
 				while ( rs.next() );

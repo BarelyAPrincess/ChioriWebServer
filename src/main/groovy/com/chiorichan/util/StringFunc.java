@@ -24,6 +24,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.Validate;
 
 import com.google.common.collect.Lists;
@@ -62,6 +63,17 @@ public class StringFunc
 		
 		CharBuffer cBuffer = ByteBuffer.wrap( bytes ).asCharBuffer();
 		return cBuffer.toString();
+	}
+	
+	/**
+	 * Returns true if either array contains elements from the other
+	 */
+	public static boolean comparable( Object[] array1, Object[] array2 )
+	{
+		for ( Object obj : array1 )
+			if ( ArrayUtils.contains( array2, obj ) )
+				return true;
+		return false;
 	}
 	
 	public static boolean containsValidChars( String ref )
@@ -118,6 +130,13 @@ public class StringFunc
 	public static String encodeBase64( String var )
 	{
 		return encodeBase64( var.getBytes() );
+	}
+	
+	public static String[] formatReference( String... refs )
+	{
+		for ( int i = 0; i < refs.length; i++ )
+			refs[i] = formatReference( refs[i] );
+		return refs;
 	}
 	
 	public static String formatReference( String ref )

@@ -78,7 +78,7 @@ public class SQLEntity extends PermissibleEntity
 						if ( getChildPermission( perm ) == null )
 						{
 							PermissionValue childValue = ( rs.getString( "value" ) == null || rs.getString( "value" ).isEmpty() ) ? null : perm.getModel().createValue( rs.getString( "value" ) );
-							attachPermission( new ChildPermission( perm, childValue, false, rs.getString( "ref" ).split( "|" ) ) );
+							attachPermission( new ChildPermission( perm, childValue, -1, rs.getString( "ref" ).split( "|" ) ) );
 						}
 				}
 				while ( rs.next() );

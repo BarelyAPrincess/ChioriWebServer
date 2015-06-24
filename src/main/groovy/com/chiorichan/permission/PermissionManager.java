@@ -9,7 +9,9 @@
 package com.chiorichan.permission;
 
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,16 +39,13 @@ import com.chiorichan.permission.event.PermissibleSystemEvent;
 import com.chiorichan.permission.lang.PermissionBackendException;
 import com.chiorichan.tasks.TaskCreator;
 import com.chiorichan.tasks.TaskManager;
+import com.chiorichan.util.StringFunc;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 public class PermissionManager extends BuiltinEventCreator implements ServerManager, TaskCreator, Listener
 {
-	static boolean allowOps = true;
-	
-	static boolean debugMode = false;
-	
 	/**
 	 * Holds the OFFICAL instance of Permission Manager.
 	 */
@@ -56,14 +55,22 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	 * Has this manager already been initialized?
 	 */
 	private static boolean isInitialized = false;
+	
+	static boolean allowOps = true;
+	static boolean debugMode = false;
+	
 	private PermissionBackend backend = null;
 	private YamlConfiguration config;
-	private Map<String, PermissibleGroup> defaultGroups = new HashMap<String, PermissibleGroup>();
+	private Map<String, PermissibleGroup> defaultGroups = Maps.newHashMap();
 	private Map<String, PermissibleEntity> entities = Maps.newHashMap();
-	private Map<String, PermissibleGroup> groups = new HashMap<String, PermissibleGroup>();
+	private Map<String, PermissibleGroup> groups = Maps.newHashMap();
 	private boolean hasWhitelist = false;
 	
+	private RegExpMatcher matcher = null;
+	
 	private final Set<Permission> permissions = Sets.newConcurrentHashSet();
+	
+	private Map<String, Collection<String>> refInheritance = Maps.newConcurrentMap();
 	
 	private PermissionManager()
 	{
@@ -95,6 +102,16 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 		INSTANCE.init0();
 		
 		isInitialized = true;
+	}
+	
+	/**
+	 * Return current state of debug mode
+	 * 
+	 * @return true debug is enabled, false if disabled
+	 */
+	public static boolean isDebug()
+	{
+		return debugMode;
 	}
 	
 	public static boolean isInitialized()
@@ -136,11 +153,11 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 		callEvent( PermissibleSystemEvent.Action.DEBUGMODE_TOGGLE );
 	}
 	
+	
 	public void addPermission( Permission permission )
 	{
 		permissions.add( permission );
 	}
-	
 	
 	/**
 	 * Check if entity has specified permission in ref
@@ -263,9 +280,18 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	 * 
 	 * @return PermissibleEntity array
 	 */
-	public PermissibleEntity[] getEntities()
+	public Collection<PermissibleEntity> getEntities()
 	{
-		return entities.values().toArray( new PermissibleEntity[0] );
+		return Collections.unmodifiableCollection( entities.values() );
+	}
+	
+	public Collection<PermissibleEntity> getEntities( String query )
+	{
+		Set<PermissibleEntity> result = Sets.newHashSet();
+		for ( PermissibleEntity entity : entities.values() )
+			if ( entity.getId().toLowerCase().startsWith( query.toLowerCase() ) )
+				result.add( entity );
+		return result;
 	}
 	
 	/**
@@ -374,9 +400,25 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	 * 
 	 * @return PermissibleGroup array
 	 */
-	public PermissibleGroup[] getGroups()
+	public Collection<PermissibleGroup> getGroups()
 	{
-		return backend.getGroups();
+		return Collections.unmodifiableCollection( groups.values() );
+	}
+	
+	public Collection<PermissibleGroup> getGroups( String query )
+	{
+		Set<PermissibleGroup> result = Sets.newHashSet();
+		for ( PermissibleGroup group : groups.values() )
+			if ( group.getId().toLowerCase().startsWith( query.toLowerCase() ) )
+				result.add( group );
+		return result;
+	}
+	
+	public RegExpMatcher getMatcher()
+	{
+		if ( matcher == null )
+			matcher = new RegExpMatcher();
+		return matcher;
 	}
 	
 	@Override
@@ -508,6 +550,17 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 		return getNodes( new PermissionNamespace( ns ) );
 	}
 	
+	public Collection<String> getReferences()
+	{
+		return refInheritance.keySet();
+	}
+	
+	public Collection<String> getRefInheritance( String ref )
+	{
+		ref = StringFunc.formatReference( ref );
+		return refInheritance.containsKey( ref ) ? refInheritance.get( ref ) : new HashSet<String>();
+	}
+	
 	protected Permission getRootNode( String name )
 	{
 		for ( Permission perm : permissions )
@@ -564,16 +617,6 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	}
 	
 	/**
-	 * Return current state of debug mode
-	 * 
-	 * @return true debug is enabled, false if disabled
-	 */
-	public boolean isDebug()
-	{
-		return debugMode;
-	}
-	
-	/**
 	 * Loads all groups and entities from the backend data source.
 	 */
 	public void loadData()
@@ -581,39 +624,28 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 		if ( isDebug() )
 			getLogger().warning( ConsoleColor.YELLOW + "Permission debug is enabled!" );
 		
-		entities.clear();
 		groups.clear();
+		entities.clear();
 		
 		if ( isDebug() )
 			getLogger().info( ConsoleColor.YELLOW + "Loading permissions from backend!" );
 		
 		backend.loadPermissions();
-		backend.loadEntities();
+		PermissionDefault.initNodes();
+		
+		if ( isDebug() )
+			getLogger().info( ConsoleColor.YELLOW + "Loading groups from backend!" );
 		backend.loadGroups();
 		
-		PermissionDefault.initNodes();
+		if ( isDebug() )
+			getLogger().info( ConsoleColor.YELLOW + "Loading entities from backend!" );
+		backend.loadEntities();
 		
 		if ( isDebug() )
 		{
 			getLogger().info( ConsoleColor.YELLOW + "Dumping Loaded Permissions:" );
 			for ( Permission root : getRootNodes( false ) )
 				root.debugPermissionStack( 0 );
-		}
-		
-		if ( config.getBoolean( "permissions.preloadGroups", true ) )
-		{
-			if ( isDebug() )
-				getLogger().info( ConsoleColor.YELLOW + "Preloading groups from backend!" );
-			for ( PermissibleGroup group : backend.getGroups() )
-				groups.put( group.getId(), group );
-		}
-		
-		if ( config.getBoolean( "permissions.preloadEntities", true ) )
-		{
-			if ( isDebug() )
-				getLogger().info( ConsoleColor.YELLOW + "Preloading entities from backend!" );
-			for ( PermissibleEntity entity : backend.getEntities() )
-				entities.put( entity.getId(), entity );
 		}
 	}
 	
@@ -770,6 +802,14 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 		
 		callEvent( PermissibleSystemEvent.Action.DEFAULTGROUP_CHANGED );
 		callEvent( new PermissibleEntityEvent( group, PermissibleEntityEvent.Action.DEFAULTGROUP_CHANGED ) );
+	}
+	
+	public void setRefInheritance( String ref, Collection<String> heir )
+	{
+		ref = StringFunc.formatReference( ref );
+		Collection<String> cur = getRefInheritance( ref );
+		cur.addAll( heir );
+		refInheritance.put( ref, cur );
 	}
 	
 	public void setWhitelist( boolean value )

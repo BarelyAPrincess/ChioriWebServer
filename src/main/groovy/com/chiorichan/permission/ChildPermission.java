@@ -14,31 +14,43 @@ import java.util.List;
 
 import com.chiorichan.util.StringFunc;
 
-public final class ChildPermission
+public final class ChildPermission implements Comparable<ChildPermission>
 {
-	private final boolean isInherited;
 	private final Permission perm;
 	private final List<String> refs;
 	private final PermissionValue value;
+	private final int weight;
 	
 	/**
 	 * References a permission state/value against an entity
 	 * 
 	 * @param parent
 	 *            The permission this value ordains to
-	 * @param refList
-	 *            A list of references such as connection or ip this permission would apply
 	 * @param childValue
 	 *            The custom value assigned to this permission. Can be null to use default assigned value.
-	 * @param isInherited
-	 *            Was this value given to the entity because it was a member of a group?
+	 * @param weight
+	 *            The sorting weight of this ChildPermission
+	 * @param refs
+	 *            Array so references that apply
 	 */
-	public ChildPermission( Permission perm, PermissionValue value, boolean isInherited, String... refs )
+	public ChildPermission( Permission perm, PermissionValue value, int weight, String... refs )
 	{
 		this.perm = perm;
 		this.value = value;
-		this.isInherited = isInherited;
+		this.weight = weight;
 		this.refs = new ArrayList<String>( Arrays.asList( StringFunc.toLowerCase( refs ) ) );
+	}
+	
+	@Override
+	public int compareTo( ChildPermission child )
+	{
+		if ( getWeight() == -1 && child.getWeight() == -1 )
+			return 0;
+		if ( getWeight() == -1 )
+			return -1;
+		if ( child.getWeight() == -1 )
+			return 1;
+		return getWeight() - child.getWeight();
 	}
 	
 	public Boolean getBoolean()
@@ -90,8 +102,13 @@ public final class ChildPermission
 		return value;
 	}
 	
+	public int getWeight()
+	{
+		return weight;
+	}
+	
 	public boolean isInherited()
 	{
-		return isInherited;
+		return weight >= 0;
 	}
 }

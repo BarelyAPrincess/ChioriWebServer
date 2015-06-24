@@ -13,6 +13,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import com.chiorichan.util.StringFunc;
 import com.google.common.base.Joiner;
 
@@ -36,6 +38,11 @@ public class PermissionNamespace
 			namespace = "";
 		
 		nodes = namespace.toLowerCase().split( "\\." );
+	}
+	
+	public PermissionNamespace append( String s )
+	{
+		return new PermissionNamespace( ArrayUtils.addAll( nodes, s ) );
 	}
 	
 	/**

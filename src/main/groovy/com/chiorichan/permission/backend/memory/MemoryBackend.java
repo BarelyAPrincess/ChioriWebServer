@@ -8,7 +8,7 @@
  */
 package com.chiorichan.permission.backend.memory;
 
-import java.util.Set;
+import java.util.Collection;
 
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
@@ -16,7 +16,7 @@ import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionBackend;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.lang.PermissionBackendException;
-import com.google.common.collect.Sets;
+import com.google.common.collect.Lists;
 
 /*
  * Memory Backend
@@ -44,21 +44,21 @@ public class MemoryBackend extends PermissionBackend
 	}
 	
 	@Override
-	public PermissibleEntity[] getEntities()
-	{
-		return new PermissibleEntity[0];
-	}
-	
-	@Override
 	public PermissibleEntity getEntity( String name )
 	{
 		return new MemoryEntity( name );
 	}
 	
 	@Override
-	public Set<String> getEntityNames( int type )
+	public Collection<String> getEntityNames()
 	{
-		return Sets.newHashSet();
+		return Lists.newArrayList();
+	}
+	
+	@Override
+	public Collection<String> getEntityNames( int type )
+	{
+		return Lists.newArrayList();
 	}
 	
 	@Override
@@ -68,9 +68,9 @@ public class MemoryBackend extends PermissionBackend
 	}
 	
 	@Override
-	public PermissibleGroup[] getGroups()
+	public Collection<String> getGroupNames()
 	{
-		return new PermissibleGroup[0];
+		return Lists.newArrayList();
 	}
 	
 	@Override

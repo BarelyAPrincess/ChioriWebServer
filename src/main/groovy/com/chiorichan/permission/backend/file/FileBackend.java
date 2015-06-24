@@ -11,7 +11,8 @@ package com.chiorichan.permission.backend.file;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -100,19 +101,19 @@ public class FileBackend extends PermissionBackend
 	}
 	
 	@Override
-	public PermissibleEntity[] getEntities()
-	{
-		return new PermissibleEntity[0];
-	}
-	
-	@Override
 	public PermissibleEntity getEntity( String id )
 	{
 		return new FileEntity( id );
 	}
 	
 	@Override
-	public Set<String> getEntityNames( int type )
+	public Collection<String> getEntityNames()
+	{
+		return getEntityNames( 0 );
+	}
+	
+	@Override
+	public Collection<String> getEntityNames( int type )
 	{
 		ConfigurationSection section = permissions.getConfigurationSection( ( type == 1 ) ? "groups" : "entities" );
 		
@@ -129,20 +130,9 @@ public class FileBackend extends PermissionBackend
 	}
 	
 	@Override
-	public PermissibleGroup[] getGroups()
+	public Collection<String> getGroupNames()
 	{
-		List<PermissibleGroup> groups = new LinkedList<PermissibleGroup>();
-		ConfigurationSection groupsSection = permissions.getConfigurationSection( "groups" );
-		
-		if ( groupsSection == null )
-			return new PermissibleGroup[0];
-		
-		for ( String groupName : groupsSection.getKeys( false ) )
-			groups.add( PermissionManager.INSTANCE.getGroup( groupName ) );
-		
-		Collections.sort( groups );
-		
-		return groups.toArray( new PermissibleGroup[0] );
+		return getEntityNames( 1 );
 	}
 	
 	@Override
@@ -220,23 +210,27 @@ public class FileBackend extends PermissionBackend
 				PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( s );
 				ConfigurationSection result = section.getConfigurationSection( s );
 				
-				ConfigurationSection permissions = result.getConfigurationSection( "permissions", true );
+				ConfigurationSection permissions = result.getConfigurationSection( "permissions" );
 				
-				for ( String ss : permissions.getKeys( false ) )
-				{
-					ConfigurationSection permission = section.getConfigurationSection( ss );
-					if ( permission != null && permission.getString( "permission" ) != null )
+				if ( permissions != null )
+					for ( String ss : permissions.getKeys( false ) )
 					{
-						Permission perm = PermissionManager.INSTANCE.getNode( permission.getString( "permission" ).toLowerCase(), true );
-						
-						PermissionValue value = null;
-						if ( permission.getString( "value" ) != null )
-							value = perm.getModel().createValue( permission.getString( "value" ) );
-						
-						String refs = permission.isString( "refs" ) ? permission.getString( "refs" ) : "";
-						entity.attachPermission( new ChildPermission( perm, value, false, refs.split( "|" ) ) );
+						ConfigurationSection permission = section.getConfigurationSection( ss );
+						if ( permission != null && permission.getString( "permission" ) != null )
+						{
+							Permission perm = PermissionManager.INSTANCE.getNode( permission.getString( "permission" ).toLowerCase(), true );
+							
+							PermissionValue value = null;
+							if ( permission.getString( "value" ) != null )
+								value = perm.getModel().createValue( permission.getString( "value" ) );
+							
+							String refs = permission.isString( "refs" ) ? permission.getString( "refs" ) : "";
+							entity.attachPermission( new ChildPermission( perm, value, -1, refs.split( "|" ) ) );
+						}
 					}
-				}
+				
+				for ( String group : result.getStringList( "groups" ) )
+					entity.addGroup( PermissionManager.INSTANCE.getGroup( group ) );
 			}
 	}
 	
@@ -248,25 +242,32 @@ public class FileBackend extends PermissionBackend
 		if ( section != null )
 			for ( String s : section.getKeys( false ) )
 			{
-				PermissibleGroup group = PermissionManager.INSTANCE.getGroup( s );
-				
 				ConfigurationSection result = section.getConfigurationSection( s );
 				ConfigurationSection permissions = result.getConfigurationSection( "permissions" );
+				
+				PermissibleGroup group = PermissionManager.INSTANCE.getGroup( s );
+				
+				group.setRank( result.getInt( "options/rank", -1 ) );
+				group.setDefault( result.getBoolean( "options/default", false ) );
+				group.setPrefix( result.getString( "options/prefix", "" ) );
 				
 				if ( permissions != null )
 					for ( String ss : permissions.getKeys( false ) )
 					{
 						ConfigurationSection permission = section.getConfigurationSection( ss );
 						
-						Permission perm = PermissionManager.INSTANCE.getNode( permission.getString( "permission" ).toLowerCase(), true );
+						Permission perm = PermissionManager.INSTANCE.getNode( permission.getString( "permission" ), true );
 						
 						PermissionValue value = null;
 						if ( permission.getString( "value" ) != null )
 							value = perm.getModel().createValue( permission.getString( "value" ) );
 						
 						String refs = permission.isString( "refs" ) ? permission.getString( "refs" ) : "";
-						group.attachPermission( new ChildPermission( perm, value, true, refs.split( "|" ) ) );
+						group.attachPermission( new ChildPermission( perm, value, group.getWeight(), refs.split( "|" ) ) );
 					}
+				
+				for ( String subGroup : result.getStringList( "groups" ) )
+					group.addGroup( PermissionManager.INSTANCE.getGroup( subGroup ) );
 			}
 	}
 	
@@ -275,45 +276,62 @@ public class FileBackend extends PermissionBackend
 	{
 		ConfigurationSection section = permissions.getConfigurationSection( "permissions" );
 		
-		if ( section != null )
-			for ( String s : section.getKeys( false ) )
+		try
+		{
+			loadPermissions( section, new PermissionNamespace( "" ) );
+		}
+		catch ( PermissionException e )
+		{
+			PermissionManager.getLogger().warning( e.getMessage() );
+		}
+	}
+	
+	public void loadPermissions( ConfigurationSection section, PermissionNamespace ns )
+	{
+		if ( section == null )
+			return;
+		
+		Set<String> keys = section.getKeys( false );
+		
+		if ( ns.getNodeCount() > 0 )
+		{
+			Permission perm = new Permission( ns, PermissionType.valueOf( section.getString( "type" ) ) );
+			
+			PermissionModelValue model = perm.getModel();
+			
+			if ( section.get( "value" ) != null )
+				model.setValue( section.get( "value" ) );
+			
+			if ( section.get( "default" ) != null )
+				model.setValueDefault( section.get( "default" ) );
+			
+			if ( perm.getType().hasMax() )
+				model.setMaxLen( Math.min( section.getInt( "max" ), perm.getType().maxValue() ) );
+			
+			if ( perm.getType() == PermissionType.ENUM )
+				model.setEnums( new HashSet<String>( Splitter.on( "|" ).splitToList( section.getString( "enum" ) ) ) );
+			
+			model.setDescription( section.getString( "description" ) );
+		}
+		
+		keys.removeAll( Arrays.asList( new String[] {"type", "value", "default", "max", "min", "enum", "description"} ) );
+		
+		for ( String s : keys )
+		{
+			PermissionNamespace pns = ns.append( s );
+			ConfigurationSection next = section.getConfigurationSection( s );
+			
+			if ( !pns.containsOnlyValidChars() )
 			{
-				ConfigurationSection result = section.getConfigurationSection( s );
-				
-				try
-				{
-					PermissionNamespace ns = new PermissionNamespace( result.getString( "permission" ) );
-					
-					if ( !ns.containsOnlyValidChars() )
-					{
-						PermissionManager.getLogger().warning( String.format( "The permission '%s' contains invalid characters, namespaces can only contain the characters a-z, 0-9, and _, this will be fixed automatically.", ns ) );
-						ns.fixInvalidChars();
-						result.set( "permission", ns.getNamespace() );
-					}
-					
-					Permission perm = new Permission( ns, PermissionType.valueOf( result.getString( "type" ) ) );
-					
-					PermissionModelValue model = perm.getModel();
-					
-					if ( result.get( "value" ) != null )
-						model.setValue( result.get( "value" ) );
-					
-					if ( result.get( "default" ) != null )
-						model.setValueDefault( result.get( "default" ) );
-					
-					if ( perm.getType().hasMax() )
-						model.setMaxLen( Math.min( result.getInt( "max" ), perm.getType().maxValue() ) );
-					
-					if ( perm.getType() == PermissionType.ENUM )
-						model.setEnums( new HashSet<String>( Splitter.on( "|" ).splitToList( result.getString( "enum" ) ) ) );
-					
-					model.setDescription( result.getString( "description" ) );
-				}
-				catch ( PermissionException e )
-				{
-					PermissionManager.getLogger().warning( e.getMessage() );
-				}
+				PermissionManager.getLogger().warning( String.format( "The permission '%s' contains invalid characters, namespaces can only contain the characters a-z, 0-9, and _, this will be fixed automatically.", pns ) );
+				pns.fixInvalidChars();
+				section.set( s, null );
+				section.set( pns.getLocalName(), next );
 			}
+			
+			if ( next != null )
+				loadPermissions( next, pns );
+		}
 	}
 	
 	@Override
@@ -355,11 +373,13 @@ public class FileBackend extends PermissionBackend
 	{
 		String refs = Joiner.on( "|" ).join( ref );
 		
-		ConfigurationSection groups = permissions.getConfigurationSection( "groups" );
+		ConfigurationSection groups = permissions.getConfigurationSection( "groups", true );
 		
 		String defaultGroupProperty = "default";
 		if ( refs != null )
 			defaultGroupProperty = FileFunc.buildPath( "refs", refs, defaultGroupProperty );
+		
+		boolean success = false;
 		
 		for ( Map.Entry<String, Object> entry : groups.getValues( false ).entrySet() )
 			if ( entry.getValue() instanceof ConfigurationSection )
@@ -371,8 +391,18 @@ public class FileBackend extends PermissionBackend
 				if ( !groupSection.getName().equals( group ) )
 					groupSection.set( defaultGroupProperty, null );
 				else
+				{
 					groupSection.set( defaultGroupProperty, true );
+					success = true;
+				}
 			}
+		
+		if ( !success )
+		{
+			PermissibleGroup pGroup = PermissionManager.INSTANCE.getGroup( group );
+			pGroup.setDefault( true );
+			pGroup.save();
+		}
 		
 		commit();
 	}

@@ -9,9 +9,12 @@
 package com.chiorichan.permission;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TimerTask;
 
@@ -20,6 +23,7 @@ import com.chiorichan.event.EventBus;
 import com.chiorichan.permission.event.PermissibleEntityEvent;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.StringFunc;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -44,7 +48,8 @@ public abstract class PermissibleEntity
 	}
 	
 	private Map<String, PermissionResult> cachedResults = Maps.newConcurrentMap();
-	protected Set<ChildPermission> childPermissions = Sets.newConcurrentHashSet();
+	
+	protected List<ChildPermission> childPermissions = Lists.newArrayList();
 	protected boolean debugMode = false;
 	protected Map<String, PermissibleGroup> groups = Maps.newConcurrentMap();
 	private String id;
@@ -54,6 +59,28 @@ public abstract class PermissibleEntity
 	{
 		this.id = id;
 		reload();
+	}
+	
+	public void addGroup( PermissibleGroup group, int lifetime, String refName )
+	{
+		// TODO Timed Groups
+	}
+	
+	public void addGroup( PermissibleGroup group, String... refs )
+	{
+		// TODO THIS!
+		
+		groups.put( group.getId(), group );
+	}
+	
+	public void addPermission( Permission perm, Object val, String ref )
+	{
+		attachPermission( new ChildPermission( perm, perm.getModel().createValue( val ), isGroup() ? ( ( PermissibleGroup ) this ).getWeight() : -1, ref ) );
+	}
+	
+	public void addPermission( String node, Object val, String ref )
+	{
+		addPermission( PermissionManager.INSTANCE.getNode( node ), val, ref );
 	}
 	
 	/**
@@ -91,6 +118,11 @@ public abstract class PermissibleEntity
 		}
 		
 		EventBus.INSTANCE.callEvent( new PermissibleEntityEvent( this, PermissibleEntityEvent.Action.PERMISSIONS_CHANGED ) );
+	}
+	
+	public void addTimedPermission( String perm, String ref, int lifeTime )
+	{
+		addTimedPermission( PermissionManager.INSTANCE.getNode( perm, true ), ref, lifeTime );
 	}
 	
 	public final void attachPermission( ChildPermission perm )
@@ -153,19 +185,32 @@ public abstract class PermissibleEntity
 		groups.clear();
 	}
 	
+	public PermissibleGroup demote( PermissibleEntity demoter, String string )
+	{
+		return null;// TODO Auto-generated method stub
+	}
+	
 	public final void detachAllPermissions()
 	{
 		childPermissions.clear();
 	}
 	
-	public final void detachPermission( ChildPermission perm )
+	public final void detachPermission( ChildPermission perm, String... refs )
 	{
-		detachPermission( perm.getPermission().getNamespace() );
+		detachPermission( perm.getPermission().getNamespace(), refs );
 	}
 	
-	public final void detachPermission( String perm )
+	public final void detachPermission( Permission perm, String... refs )
 	{
-		childPermissions.remove( perm );
+		detachPermission( perm.getNamespace(), refs );
+	}
+	
+	public final void detachPermission( String perm, String... refs )
+	{
+		refs = StringFunc.formatReference( refs );
+		for ( ChildPermission child : childPermissions )
+			if ( child.getPermission().getNamespace().equals( perm ) && ( ( refs.length == 0 && child.getReferences().size() == 0 ) || StringFunc.comparable( child.getReferences().toArray( new String[0] ), refs ) ) )
+				childPermissions.remove( child );
 	}
 	
 	@Override
@@ -254,13 +299,24 @@ public abstract class PermissibleEntity
 		for ( ChildPermission child : childPermissions )
 			if ( perm == child.getPermission() && ( ( child.getReferences().isEmpty() && ref.isEmpty() ) || child.getReferences().contains( ref ) ) )
 				return child;
-		
 		return null;
 	}
 	
-	public final ChildPermission[] getChildPermissions()
+	public final Collection<ChildPermission> getChildPermissions( String... refs )
 	{
-		return childPermissions.toArray( new ChildPermission[0] );
+		if ( refs.length == 0 )
+		{
+			Collections.sort( childPermissions );
+			return childPermissions;
+		}
+		
+		List<ChildPermission> children = Lists.newLinkedList();
+		refs = StringFunc.formatReference( refs );
+		for ( ChildPermission child : childPermissions )
+			if ( ( child.getReferences().isEmpty() && refs.length == 0 ) || StringFunc.comparable( refs, child.getReferences().toArray( new String[0] ) ) )
+				children.add( child );
+		Collections.sort( children );
+		return children;
 	}
 	
 	/**
@@ -272,6 +328,94 @@ public abstract class PermissibleEntity
 	public String getId()
 	{
 		return id;
+	}
+	
+	private String getMatchingExpression( Collection<Permission> permissions, String permission )
+	{
+		for ( Permission exp : permissions )
+			if ( PermissionManager.INSTANCE.getMatcher().isMatches( exp, permission ) )
+				return exp.getNamespace();
+		return null;
+	}
+	
+	public String getMatchingExpression( String permission, String ref )
+	{
+		return getMatchingExpression( getPermissions( ref ), permission );
+	}
+	
+	public <T> T getOption( String key, String ref, T def )
+	{
+		return def;// TODO Auto-generated method stub
+	}
+	
+	public Map<String, String> getOptions( String ref )
+	{
+		return null;// TODO Auto-generated method stub
+	}
+	
+	public Collection<String> getParentGroupNames( String... refs )
+	{
+		List<String> result = Lists.newArrayList();
+		for ( PermissibleGroup group : getParentGroups( refs ) )
+			result.add( group.getId() );
+		return result;
+	}
+	
+	public final Collection<PermissibleGroup> getParentGroups( String... refs )
+	{
+		refs = StringFunc.formatReference( refs );
+		if ( refs.length == 0 )
+			return Collections.unmodifiableCollection( groups.values() );
+		Set<PermissibleGroup> result = Sets.newHashSet();
+		for ( Entry<String, PermissibleGroup> group : groups.entrySet() )
+			for ( String ref : refs )
+				if ( group.getKey().equalsIgnoreCase( ref ) )
+				{
+					result.add( group.getValue() );
+					break;
+				}
+		return result;
+	}
+	
+	public Collection<String> getPermissionNodes( String... refs )
+	{
+		List<String> result = Lists.newArrayList();
+		for ( Permission p : getPermissions( refs ) )
+			result.add( p.getNamespace() );
+		return result;
+	}
+	
+	public Collection<Permission> getPermissions( String... refs )
+	{
+		List<Permission> perms = Lists.newArrayList();
+		for ( ChildPermission child : getChildPermissions( refs ) )
+			perms.add( child.getPermission() );
+		return perms;
+	}
+	
+	public String getPrefix()
+	{
+		return null;
+	}
+	
+	public String getPrefix( String ref )
+	{
+		return null;// TODO Auto-generated method stub
+	}
+	
+	public Collection<String> getReferences()
+	{
+		return groups.keySet();
+	}
+	
+	public String getSuffix()
+	{
+		return null;
+	}
+	
+	public String getSuffix( String ref )
+	{
+		return null;// TODO Auto-generated method stub
 	}
 	
 	public TimedPermission getTimedPermission( Permission perm, String ref )
@@ -360,14 +504,20 @@ public abstract class PermissibleEntity
 		return result.isTrue();
 	}
 	
+	public boolean isCommitted()
+	{
+		// Future, was it committed to backend?
+		return true;
+	}
+	
 	public boolean isDebug()
 	{
 		return debugMode || PermissionManager.INSTANCE.isDebug();
 	}
 	
-	boolean isGroup()
+	public final boolean isGroup()
 	{
-		return false;
+		return this instanceof PermissibleGroup;
 	}
 	
 	public boolean isOp()
@@ -383,6 +533,11 @@ public abstract class PermissibleEntity
 		
 		PermissionResult result = checkPermission( PermissionDefault.WHITELISTED.getNode() );
 		return result.isTrue();
+	}
+	
+	public PermissibleGroup promote( PermissibleEntity promoter, String ladder )
+	{
+		return null;// TODO Auto-generated method stub
 	}
 	
 	public void recalculateChildPermissions()
@@ -406,6 +561,12 @@ public abstract class PermissibleEntity
 	 */
 	public abstract void remove();
 	
+	public void removeGroup( String groupName, String ref )
+	{
+		// TODO THIS!
+		groups.remove( groupName );
+	}
+	
 	/**
 	 * Removes specified timed permission for ref
 	 * 
@@ -427,6 +588,11 @@ public abstract class PermissibleEntity
 		EventBus.INSTANCE.callEvent( new PermissibleEntityEvent( this, PermissibleEntityEvent.Action.PERMISSIONS_CHANGED ) );
 	}
 	
+	public void removeTimedPermission( String perm, String ref )
+	{
+		removeTimedPermission( PermissionManager.INSTANCE.getNode( perm, true ), ref );
+	}
+	
 	/**
 	 * Save entity data to backend
 	 */
@@ -435,6 +601,33 @@ public abstract class PermissibleEntity
 	public void setDebug( boolean debug )
 	{
 		debugMode = debug;
+	}
+	
+	public void setOption( String key, String value, String ref )
+	{
+		// TODO Auto-generated method stub
+	}
+	
+	// TODO Store groups by reference
+	public void setParentGroups( Collection<PermissibleGroup> groups, String ref )
+	{
+		for ( PermissibleGroup group : groups )
+			this.groups.put( group.getId(), group );
+	}
+	
+	public void setPrefix( String prefix )
+	{
+		// TODO Auto-generated method stub
+	}
+	
+	public void setPrefix( String prefix, String ref )
+	{
+		// TODO Auto-generated method stub
+	}
+	
+	public void setSuffix( String string, String ref )
+	{
+		// TODO Auto-generated method stub
 	}
 	
 	@Override

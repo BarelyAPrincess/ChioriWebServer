@@ -101,7 +101,7 @@ public abstract class Permissible
 	public final PermissionResult requirePermission( String req, String... refs ) throws PermissionDeniedException
 	{
 		req = PermissionManager.parseNode( req );
-		return requirePermission( PermissionManager.INSTANCE.getNode( req ), refs );
+		return requirePermission( PermissionManager.INSTANCE.getNode( req, true ), refs );
 	}
 	
 	

@@ -42,6 +42,9 @@ public class PermissionModelValue
 		if ( value == null )
 			return null;
 		
+		if ( value instanceof PermissionValue )
+			value = ( ( PermissionValue ) value ).getValue();
+		
 		try
 		{
 			Object obj = type.cast( value );
@@ -110,6 +113,8 @@ public class PermissionModelValue
 	
 	public <T> T getValueDefault()
 	{
+		assert ( ! ( valueDefault instanceof PermissionValue ) );
+		
 		if ( value == null && this != PermissionDefault.DEFAULT.getNode().getModel() )
 			return ( T ) PermissionDefault.DEFAULT.getNode().getModel().getValue();
 		else if ( value == null )
@@ -183,7 +188,7 @@ public class PermissionModelValue
 			Object obj = type.cast( valueDefault );
 			if ( obj == null )
 				throw new ClassCastException();
-			this.valueDefault = new PermissionValue( this, obj );
+			this.valueDefault = obj;
 		}
 		catch ( ClassCastException e )
 		{
