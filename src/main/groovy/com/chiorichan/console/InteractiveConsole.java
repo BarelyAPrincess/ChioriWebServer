@@ -26,8 +26,8 @@ import com.google.common.collect.Maps;
  */
 public class InteractiveConsole
 {
-	private Map<String, String> metadata = Maps.newConcurrentMap();
 	private InteractiveConsoleHandler handler;
+	private Map<String, String> metadata = Maps.newConcurrentMap();
 	private NetworkWrapper persistence;
 	private String prompt = "";
 	
@@ -54,9 +54,7 @@ public class InteractiveConsole
 				String[] banner = new String( FileFunc.inputStream2Bytes( is ) ).split( "\\n" );
 				
 				for ( String l : banner )
-				{
 					handler.println( ConsoleColor.GOLD + l );
-				}
 				
 				handler.println( ConsoleColor.NEGATIVE + "" + ConsoleColor.GOLD + "Welcome to " + Versioning.getProduct() + " Version " + Versioning.getVersion() + "!" );
 				handler.println( ConsoleColor.NEGATIVE + "" + ConsoleColor.GOLD + Versioning.getCopyright() );
@@ -78,25 +76,6 @@ public class InteractiveConsole
 		return handler;
 	}
 	
-	public NetworkWrapper getPersistence()
-	{
-		return persistence;
-	}
-	
-	public void sendMessage( String... msgs )
-	{
-		for ( String msg : msgs )
-			handler.println( msg );
-	}
-	
-	public void setMetadata( String key, String val )
-	{
-		if ( val == null )
-			metadata.remove( key );
-		else
-			metadata.put( key, val );
-	}
-	
 	public String getMetadata( String key )
 	{
 		return getMetadata( key, null );
@@ -110,12 +89,19 @@ public class InteractiveConsole
 		return metadata.get( key );
 	}
 	
-	public void setPrompt( String prompt )
+	public String getName()
 	{
-		if ( prompt != null )
-			this.prompt = prompt;
-		
-		prompt();
+		return persistence.getSession().getDisplayName();
+	}
+	
+	public NetworkWrapper getPersistence()
+	{
+		return persistence;
+	}
+	
+	public void prompt()
+	{
+		handler.print( "\r" + prompt );
 	}
 	
 	public void resetPrompt()
@@ -132,8 +118,25 @@ public class InteractiveConsole
 		prompt();
 	}
 	
-	public void prompt()
+	public void sendMessage( String... msgs )
 	{
-		handler.print( "\r" + prompt );
+		for ( String msg : msgs )
+			handler.println( msg );
+	}
+	
+	public void setMetadata( String key, String val )
+	{
+		if ( val == null )
+			metadata.remove( key );
+		else
+			metadata.put( key, val );
+	}
+	
+	public void setPrompt( String prompt )
+	{
+		if ( prompt != null )
+			this.prompt = prompt;
+		
+		prompt();
 	}
 }

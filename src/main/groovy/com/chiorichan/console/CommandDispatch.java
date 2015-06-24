@@ -25,6 +25,7 @@ import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.console.commands.BuiltinCommand;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.server.CommandIssuedEvent;
+import com.chiorichan.permission.PermissionCommand;
 import com.google.common.collect.Maps;
 
 /**
@@ -32,44 +33,39 @@ import com.google.common.collect.Maps;
  */
 public final class CommandDispatch
 {
+	private static Map<InteractiveConsole, Interviewer> activeInterviewer = Maps.newConcurrentMap();
+	private static Map<InteractiveConsole, List<Interviewer>> interviewers = Maps.newConcurrentMap();
+	private static final Pattern PATTERN_ON_SPACE = Pattern.compile( " ", Pattern.LITERAL );
 	private static List<CommandRef> pendingCommands = Collections.synchronizedList( new ArrayList<CommandRef>() );
 	private static List<Command> registeredCommands = Collections.synchronizedList( new ArrayList<Command>() );
-	private static final Pattern PATTERN_ON_SPACE = Pattern.compile( " ", Pattern.LITERAL );
-	private static Map<InteractiveConsole, List<Interviewer>> interviewers = Maps.newConcurrentMap();
-	private static Map<InteractiveConsole, Interviewer> activeInterviewer = Maps.newConcurrentMap();
 	
 	static
 	{
 		BuiltinCommand.registerBuiltinCommands();
+		CommandDispatch.registerCommand( new PermissionCommand() );
 	}
 	
-	protected static void reg( Command command )
+	public static void addInterviewer( InteractiveConsole handler, Interviewer interviewer )
 	{
-		registerCommand( command );
+		if ( interviewers.get( handler ) == null )
+			interviewers.put( handler, new ArrayList<Interviewer>( Arrays.asList( interviewer ) ) );
+		else
+			interviewers.get( handler ).add( interviewer );
 	}
 	
-	public static void registerCommand( Command command )
+	private static Command getCommand( String sentCommandLabel )
 	{
-		if ( getCommand( command.getName() ) == null )
-			registeredCommands.add( command );
-	}
-	
-	public static void issueCommand( InteractiveConsole handler, String command )
-	{
-		Validate.notNull( handler, "Handler cannot be null" );
-		Validate.notNull( command, "CommandLine cannot be null" );
+		for ( Command command : registeredCommands )
+			if ( command.getName().equals( sentCommandLabel ) )
+				return command;
 		
-		Loader.getLogger().fine( "The remote connection '" + handler + "' issued the command '" + command + "'." );
-		
-		pendingCommands.add( new CommandRef( handler, command ) );
+		return null;
 	}
 	
 	public static void handleCommands()
 	{
 		for ( Entry<InteractiveConsole, List<Interviewer>> entry : interviewers.entrySet() )
-		{
 			if ( activeInterviewer.get( entry.getKey() ) == null )
-			{
 				if ( entry.getValue().isEmpty() )
 				{
 					interviewers.remove( entry.getKey() );
@@ -81,8 +77,6 @@ public final class CommandDispatch
 					activeInterviewer.put( entry.getKey(), i );
 					entry.getKey().setPrompt( i.getPrompt() );
 				}
-			}
-		}
 		
 		while ( !pendingCommands.isEmpty() )
 		{
@@ -120,7 +114,6 @@ public final class CommandDispatch
 						Command target = getCommand( sentCommandLabel );
 						
 						if ( target != null )
-						{
 							try
 							{
 								if ( target.testPermission( permissible ) )
@@ -138,7 +131,6 @@ public final class CommandDispatch
 								
 								throw new CommandException( "Unhandled exception executing '" + command.command + "' in " + target, ex );
 							}
-						}
 					}
 					
 					permissible.send( ConsoleColor.YELLOW + "Your entry was unrecognized, type \"help\" for help." );
@@ -151,26 +143,19 @@ public final class CommandDispatch
 		}
 	}
 	
-	private static Command getCommand( String sentCommandLabel )
+	public static void issueCommand( InteractiveConsole handler, String command )
 	{
-		for ( Command command : registeredCommands )
-		{
-			if ( command.getName().equals( sentCommandLabel ) )
-				return command;
-		}
+		Validate.notNull( handler, "Handler cannot be null" );
+		Validate.notNull( command, "CommandLine cannot be null" );
 		
-		return null;
+		Loader.getLogger().fine( "The remote connection '" + handler + "' issued the command '" + command + "'." );
+		
+		pendingCommands.add( new CommandRef( handler, command ) );
 	}
 	
-	public static void addInterviewer( InteractiveConsole handler, Interviewer interviewer )
+	public static void registerCommand( Command command )
 	{
-		if ( interviewers.get( handler ) == null )
-		{
-			interviewers.put( handler, new ArrayList<Interviewer>( Arrays.asList( interviewer ) ) );
-		}
-		else
-		{
-			interviewers.get( handler ).add( interviewer );
-		}
+		if ( getCommand( command.getName() ) == null )
+			registeredCommands.add( command );
 	}
 }

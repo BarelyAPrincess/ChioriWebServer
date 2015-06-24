@@ -8,8 +8,8 @@
  */
 package com.chiorichan.console;
 
-import java.util.HashSet;
-import java.util.List;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Set;
 
 import com.chiorichan.ConsoleColor;
@@ -26,7 +26,7 @@ import com.google.common.collect.Sets;
  */
 public abstract class Command
 {
-	private Set<String> aliases = Sets.newHashSet();
+	private final Set<String> aliases = Sets.newHashSet();
 	private String description = "";
 	private final String name;
 	private String permission = null;
@@ -175,23 +175,16 @@ public abstract class Command
 	 *            aliases to register
 	 * @return this command object, for chaining
 	 */
-	public Command setAliases( List<String> aliases )
+	public Command setAliases( Collection<String> aliases )
 	{
-		this.aliases = new HashSet<String>( aliases );
+		this.aliases.clear();
+		this.aliases.addAll( aliases );
 		return this;
 	}
 	
-	/**
-	 * Sets the list of aliases to request on registration for this command.
-	 * 
-	 * @param aliases
-	 *            aliases to register
-	 * @return this command object, for chaining
-	 */
-	public Command setAliases( Set<String> aliases )
+	public Command setAliases( String... aliases )
 	{
-		this.aliases = aliases;
-		return this;
+		return setAliases( Arrays.asList( aliases ) );
 	}
 	
 	/**
