@@ -26,7 +26,7 @@ import com.chiorichan.tasks.Timings;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 
-public class UserCommands extends PermissionsCommand
+public class EntityCommands extends PermissionsCommand
 {
 	@CommandHandler( name = "pex", syntax = "entity <entity> group add <group> [ref] [lifetime]", permission = "permissions.manage.membership.<group>", description = "Add <entity> to <group>" )
 	public void entityAddGroup( InteractiveConsole sender, Map<String, String> args )

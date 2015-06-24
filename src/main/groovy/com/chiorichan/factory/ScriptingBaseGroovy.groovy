@@ -32,13 +32,13 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	{
 		return getRequest().getEvalFactory().getScriptTrace()
 	}
-	
+
 	/**
 	 * Holds history of included packages
 	 * Used by include_once and require_once methods.
 	 */
 	private final List<String> includedPackages = Lists.newArrayList()
-	
+
 	/**
 	 * Same as @link ScriptingBaseJava:var_export(obj) but instead prints the result to the buffer
 	 * Based on method of same name in PHP
@@ -49,11 +49,11 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	{
 		println var_export( obj )
 	}
-	
+
 	/**
 	 * Returns the current HttpRequestWrapper instance
 	 * XXX This is set inside the {@link HttpRequestWrapper#sessionStarted} and {@link SessionWrapper#startSession}, this needs looking over for other types
-	 * 
+	 *
 	 * @return
 	 *      current instance
 	 */
@@ -61,11 +61,11 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	{
 		return request
 	}
-	
+
 	/**
 	 * Returns the current HttpResponseWrapper instance
-	 * XXX This is set inside the {@link HttpRequestWrapper#sessionStarted} and {@link SessionWrapper#startSession}, this needs looking over for other types 
-	 * 
+	 * XXX This is set inside the {@link HttpRequestWrapper#sessionStarted} and {@link SessionWrapper#startSession}, this needs looking over for other types
+	 *
 	 * @return
 	 *      current instance
 	 */
@@ -73,10 +73,10 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	{
 		return response
 	}
-	
+
 	/**
 	 * Return the current session for this request
-	 * 
+	 *
 	 * @return
 	 *      current session
 	 */
@@ -84,7 +84,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	{
 		return request.getSession()
 	}
-	
+
 	/**
 	 * Alias for println
 	 * Based on method of same name in PHP
@@ -95,7 +95,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	{
 		println var
 	}
-	
+
 	/**
 	 * Get the account matching specified uid
 	 * @param uid
@@ -106,23 +106,23 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	Account getAccount( String uid )
 	{
 		Account result = AccountManager.INSTANCE.getAccount( uid )
-		
+
 		if ( result == null )
 			result = AccountManager.INSTANCE.getAccountPartial( uid )
-		
+
 		return result
 	}
-	
+
 	Account[] getAccounts( String query )
 	{
 		return AccountManager.INSTANCE.getAccounts( query )
 	}
-	
+
 	Account[] getAccounts( String query, int limit )
 	{
 		return AccountManager.INSTANCE.getAccounts( query, limit )
 	}
-	
+
 	/**
 	 * Returns the current logged in account
 	 * @return
@@ -132,24 +132,24 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	{
 		return request.getSession().account()
 	}
-	
+
 	boolean isLoginPresent()
 	{
 		return request.getSession().isLoginPresent()
 	}
-	
+
 	@Deprecated
 	boolean getAcctState()
 	{
 		return request.getSession().isLoginPresent()
 	}
-	
+
 	@Deprecated
 	boolean getAccountState()
 	{
 		return request.getSession().isLoginPresent()
 	}
-	
+
 	/**
 	 * Returns an instance of the current site
 	 * @return
@@ -160,17 +160,17 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	{
 		return getRequest().getSite()
 	}
-	
+
 	/**
 	 * Return the unique Id for the current site
-	 * 
+	 *
 	 * @return The current site Id
 	 */
 	String getSiteId()
 	{
 		return getSite().getSiteId()
 	}
-	
+
 	/**
 	 * Converts the specified http status code to a message
 	 * @param errNo
@@ -182,7 +182,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	{
 		return HttpCode.msg( errNo )
 	}
-	
+
 	/**
 	 * Same as @link url_to( null )
 	 */
@@ -190,7 +190,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	{
 		return url_to( null )
 	}
-	
+
 	/**
 	 * Returns a valid http url address
 	 * Used to produce absolute uri's within scripts
@@ -203,18 +203,18 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	String url_to( String subdomain )
 	{
 		String url = "http://"
-		
+
 		if ( subdomain != null && !subdomain.isEmpty() )
 			url += subdomain + "."
-		
+
 		if ( request.getSite() != null )
 			url += request.getSite().getDomain() + "/"
 		else
 			url += SiteManager.INSTANCE.getDefaultSite().getDomain() + "/"
-		
+
 		return url
 	}
-	
+
 	/**
 	 * Returns the uri to the login page
 	 * @return
@@ -224,10 +224,10 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	{
 		if ( request.getSite() == null )
 			return "/login"
-		
+
 		return request.getSite().getYaml().getString( "scripts.login-form", "/login" )
 	}
-	
+
 	/**
 	 * Returns the to log current account out
 	 * @return
@@ -237,7 +237,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	{
 		return url_to_login + "?logout"
 	}
-	
+
 	/**
 	 * Used to execute package file within script
 	 * @param pack
@@ -251,7 +251,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 		print result.getString()
 		return result.getObject()
 	}
-	
+
 	/**
 	 * Similar to @link include( pack ) but will only include once.
 	 * Nothing happens if included more than once.
@@ -270,7 +270,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 			return result.getObject()
 		}
 	}
-	
+
 	/**
 	 * Used to execute package files within script.
 	 * Will throw an exception if there is a problem.
@@ -287,7 +287,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 		print result.getString()
 		return result.getObject()
 	}
-	
+
 	/**
 	 * Similar to @link require( pack ) but will only require once.
 	 * Nothing happens if included more than once.
@@ -308,59 +308,79 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 			return result.getObject()
 		}
 	}
-	
+
+	boolean isAdmin()
+	{
+		getSession().isAdmin()
+	}
+
+	boolean isOp()
+	{
+		getSession().isOp()
+	}
+
+	PermissionResult checkPermission( String perm )
+	{
+		getSession().checkPermission( perm )
+	}
+
+	PermissionResult checkPermission( Permission perm )
+	{
+		getSession().checkPermission( perm )
+	}
+
 	PermissionResult requirePermission( String perm )
 	{
 		getSession().requirePermission( perm )
 	}
-	
+
 	PermissionResult requirePermission( Permission perm )
 	{
 		getSession().requirePermission( perm )
 	}
-	
+
 	EvalFactory getEvalFactory()
 	{
 		return getRequest().getEvalFactory()
 	}
-	
+
 	// Old Http Utils Methods - needs restructuring
-	
+
 	EvalFactoryResult evalFile( String file ) throws IOException, EvalException
 	{
 		return WebFunc.evalFile( getRequest(), getSession().getSite(), file )
 	}
-	
+
 	EvalFactoryResult evalPackage( String pack ) throws EvalException
 	{
 		return WebFunc.evalPackage( getRequest(), getSession().getSite(), pack )
 	}
-	
+
 	EvalFactoryResult evalPackageWithException( String pack, Object... global ) throws IOException, EvalException
 	{
 		return WebFunc.evalPackageWithException( getRequest(), getSession().getSite(), pack )
 	}
-	
+
 	EvalFactoryResult evalPackageWithException( String pack ) throws IOException, EvalException
 	{
 		return WebFunc.evalPackageWithException( getRequest(), getSession().getSite(), pack )
 	}
-	
+
 	String readFile( String file ) throws IOException, EvalException
 	{
 		return WebFunc.evalFile( getRequest(), getSession().getSite(), file ).getString()
 	}
-	
+
 	String readPackage( String pack ) throws EvalException
 	{
 		return WebFunc.evalPackage( getRequest(), getSession().getSite(), pack ).getString()
 	}
-	
+
 	String readPackageWithException( String pack, Object... global ) throws IOException, EvalException
 	{
 		return WebFunc.evalPackageWithException( getRequest(), getSession().getSite(), pack ).getString()
 	}
-	
+
 	String readPackageWithException( String pack ) throws IOException, EvalException
 	{
 		return WebFunc.evalPackageWithException( getRequest(), getSession().getSite(), pack ).getString()

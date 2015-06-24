@@ -91,6 +91,7 @@ public class UtilityCommands extends PermissionsCommand
 		}
 	}
 	
+	@SuppressWarnings( "unchecked" )
 	@CommandHandler( name = "pex", syntax = "config <node> [value]", permission = "permissions.manage.config", description = "Print or set <node> [value]" )
 	public void config( InteractiveConsole sender, Map<String, String> args )
 	{

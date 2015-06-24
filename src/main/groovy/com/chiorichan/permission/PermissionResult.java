@@ -228,7 +228,7 @@ public class PermissionResult
 	
 	public PermissionResult recalculatePermissions()
 	{
-		return recalculatePermissions( "" );
+		return recalculatePermissions( ref );
 	}
 	
 	public PermissionResult recalculatePermissions( String ref )

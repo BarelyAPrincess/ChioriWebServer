@@ -62,9 +62,11 @@ public abstract class PermissibleEntity
 		reload();
 	}
 	
-	public void addGroup( PermissibleGroup group, int lifetime, String refName )
+	public void addGroup( PermissibleGroup group, int lifetime, String... refs )
 	{
 		// TODO Timed Groups
+		
+		this.addGroup( group, refs );
 	}
 	
 	public void addGroup( PermissibleGroup group, String... refs )
@@ -72,6 +74,7 @@ public abstract class PermissibleEntity
 		// TODO THIS!
 		
 		groups.put( group.getId(), group );
+		recalculatePermissions();
 	}
 	
 	public void addPermission( Permission perm, Object val, String ref )
@@ -118,7 +121,7 @@ public abstract class PermissibleEntity
 			PermissionManager.INSTANCE.registerTask( task, lifeTime );
 		}
 		
-		EventBus.INSTANCE.callEvent( new PermissibleEntityEvent( this, PermissibleEntityEvent.Action.PERMISSIONS_CHANGED ) );
+		recalculatePermissions();
 	}
 	
 	public void addTimedPermission( String perm, String ref, int lifeTime )
@@ -131,6 +134,7 @@ public abstract class PermissibleEntity
 		if ( isDebug() )
 			PermissionManager.getLogger().info( String.format( "%sThe permission `%s` with reference `%s` was attached to entity `%s`.", ConsoleColor.YELLOW, perm.getPermission().getNamespace(), Joiner.on( ", " ).join( perm.getReferences() ), getId() ) );
 		childPermissions.add( perm );
+		recalculatePermissions();
 	}
 	
 	public PermissionResult checkPermission( Permission perm )
@@ -148,7 +152,7 @@ public abstract class PermissibleEntity
 		PermissionResult result = cachedResults.get( perm.getNamespace() + "-" + ref );
 		
 		if ( result != null )
-			if ( result.timecode > Timings.epoch() - 150 ) // 150 Seconds = 2.5 Minutes
+			if ( result.timecode > Timings.epoch() - 600 ) // 600 Seconds = 10 Minutes
 				return result;
 			else
 				cachedResults.remove( perm.getNamespace() + "-" + ref );
@@ -185,6 +189,7 @@ public abstract class PermissibleEntity
 	public final void clearGroups()
 	{
 		groups.clear();
+		recalculatePermissions();
 	}
 	
 	public PermissibleGroup demote( PermissibleEntity demoter, String string )
@@ -195,6 +200,7 @@ public abstract class PermissibleEntity
 	public final void detachAllPermissions()
 	{
 		childPermissions.clear();
+		recalculatePermissions();
 	}
 	
 	public final void detachPermission( ChildPermission perm, String... refs )
@@ -213,6 +219,7 @@ public abstract class PermissibleEntity
 		for ( ChildPermission child : childPermissions )
 			if ( child.getPermission().getNamespace().equals( perm ) && ( ( refs.length == 0 && child.getReferences().size() == 0 ) || StringFunc.comparable( child.getReferences().toArray( new String[0] ), refs ) ) )
 				childPermissions.remove( child );
+		recalculatePermissions();
 	}
 	
 	@Override
@@ -352,7 +359,7 @@ public abstract class PermissibleEntity
 	
 	public Map<String, String> getOptions( String ref )
 	{
-		return null;// TODO Auto-generated method stub
+		return Maps.newHashMap();// TODO Auto-generated method stub
 	}
 	
 	public Collection<String> getParentGroupNames( String... refs )
@@ -542,6 +549,13 @@ public abstract class PermissibleEntity
 		return null;// TODO Auto-generated method stub
 	}
 	
+	public void recalculatePermissions()
+	{
+		for ( PermissionResult cache : cachedResults.values() )
+			cache.recalculatePermissions();
+		EventBus.INSTANCE.callEvent( new PermissibleEntityEvent( this, PermissibleEntityEvent.Action.PERMISSIONS_CHANGED ) );
+	}
+	
 	public void reload()
 	{
 		reloadPermissions();
@@ -560,7 +574,9 @@ public abstract class PermissibleEntity
 	public void removeGroup( String groupName, String ref )
 	{
 		// TODO THIS!
+		
 		groups.remove( groupName );
+		recalculatePermissions();
 	}
 	
 	/**
@@ -581,7 +597,7 @@ public abstract class PermissibleEntity
 			if ( tp.permission == perm )
 				timedPermissions.get( ref ).remove( tp );
 		
-		EventBus.INSTANCE.callEvent( new PermissibleEntityEvent( this, PermissibleEntityEvent.Action.PERMISSIONS_CHANGED ) );
+		recalculatePermissions();
 	}
 	
 	public void removeTimedPermission( String perm, String ref )
@@ -609,6 +625,7 @@ public abstract class PermissibleEntity
 	{
 		for ( PermissibleGroup group : groups )
 			this.groups.put( group.getId(), group );
+		recalculatePermissions();
 	}
 	
 	public void setPrefix( String prefix )
