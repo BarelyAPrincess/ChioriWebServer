@@ -113,7 +113,7 @@ public final class Session extends AccountPermissible implements Listener
 	{
 		this.data = data;
 		
-		this.sessionId = data.sessionId;
+		sessionId = data.sessionId;
 		
 		sessionKey = data.sessionName;
 		timeout = data.timeout;
@@ -161,16 +161,215 @@ public final class Session extends AccountPermissible implements Listener
 		initialized();
 	}
 	
-	@Override
-	public void successfulLogin()
+	// TODO Make abstract
+	protected static List<Session> getActiveSessions() throws SessionException
 	{
-		account.metadata().context().credentials().makeResumable( this );
-		rearmTimeout();
-		saveWithoutException();
+		return Lists.newCopyOnWriteArrayList();
+	}
+	
+	public AccountInstance account()
+	{
+		return account;
+	}
+	
+	public boolean changesMade()
+	{
+		return dataChangeHistory.size() > 0;
+	}
+	
+	public void destroy() throws SessionException
+	{
+		if ( SessionManager.isDebug() )
+			Loader.getLogger().info( ConsoleColor.DARK_AQUA + "Session Destroyed `" + this + "`" );
+		
+		SessionManager.sessions.remove( this );
+		
+		for ( SessionWrapper wrap : wrappers )
+			wrap.finish();
+		wrappers.clear();
+		
+		timeout = Timings.epoch();
+		data.timeout = Timings.epoch();
+		
+		if ( sessionCookie != null )
+			sessionCookie.setMaxAge( 0 );
+		
+		data.destroy();
+		data = null;
 	}
 	
 	@Override
 	public void failedLogin( AccountResult result )
+	{
+		
+	}
+	
+	/**
+	 * Get the present data change history
+	 * 
+	 * @return
+	 *         A unmodifiable copy of dataChangeHistory.
+	 */
+	Set<String> getChangeHistory()
+	{
+		return Collections.unmodifiableSet( new HashSet<String>( dataChangeHistory ) );
+	}
+	
+	/**
+	 * Returns a sessionCookie if existent in the session.
+	 * 
+	 * @param key
+	 * @return Candy
+	 */
+	public HttpCookie getCookie( String key )
+	{
+		return ( sessionCookies.containsKey( key ) ) ? sessionCookies.get( key ) : new HttpCookie( key, null );
+	}
+	
+	public Map<String, HttpCookie> getCookies()
+	{
+		return Collections.unmodifiableMap( sessionCookies );
+	}
+	
+	public Map<String, String> getDataMap()
+	{
+		return data.data;
+	}
+	
+	@Override
+	public String getDisplayName()
+	{
+		return account.getDisplayName();
+	}
+	
+	@Override
+	public String getEntityId()
+	{
+		return account == null ? null : account.getAcctId();
+	}
+	
+	public Object getGlobal( String key )
+	{
+		return globals.get( key );
+	}
+	
+	public Map<String, Object> getGlobals()
+	{
+		return Collections.unmodifiableMap( globals );
+	}
+	
+	@Override
+	public Set<String> getIpAddresses()
+	{
+		Set<String> ips = Sets.newHashSet();
+		for ( SessionWrapper sp : wrappers )
+			if ( sp.getSessionWithoutException() != null && sp.getSessionWithoutException() == this )
+			{
+				String ipAddr = sp.getIpAddr();
+				if ( ipAddr != null && !ipAddr.isEmpty() && !ips.contains( ipAddr ) )
+					ips.add( ipAddr );
+			}
+		return ips;
+	}
+	
+	public String getName()
+	{
+		return sessionKey;
+	}
+	
+	public String getSessId()
+	{
+		return sessionId;
+	}
+	
+	public HttpCookie getSessionCookie()
+	{
+		return sessionCookie;
+	}
+	
+	/**
+	 * @return A set of active SessionProviders for this session.
+	 */
+	public Set<SessionWrapper> getSessionWrappers()
+	{
+		return wrappers.toSet();
+	}
+	
+	@Override
+	public Site getSite()
+	{
+		if ( site == null )
+			return SiteManager.INSTANCE.getDefaultSite();
+		else
+			return site;
+	}
+	
+	@Override
+	public String getSiteId()
+	{
+		return getSite().getName();
+	}
+	
+	public long getTimeout()
+	{
+		return timeout;
+	}
+	
+	@Override
+	public String getVariable( String key )
+	{
+		if ( !data.data.containsKey( key ) )
+			return "";
+		
+		if ( data.data.get( key ) == null )
+			return "";
+		
+		return data.data.get( key );
+	}
+	
+	@Override
+	public AccountInstance instance()
+	{
+		return account;
+	}
+	
+	/**
+	 * Reports if there is an Account logged in
+	 * 
+	 * @return True is there is
+	 */
+	public boolean isLoginPresent()
+	{
+		return ( account != null );
+	}
+	
+	public boolean isNew()
+	{
+		return newSession;
+	}
+	
+	public boolean isSet( String key )
+	{
+		return data.data.containsKey( key );
+	}
+	
+	@Override
+	public AccountMeta metadata()
+	{
+		return instance().metadata();
+	}
+	
+	/**
+	 * Removes the session expiration and prevents the Session Manager from unloading or destroying sessions
+	 */
+	public void noTimeout()
+	{
+		timeout = 0;
+		data.timeout = 0;
+	}
+	
+	@EventHandler( priority = EventPriority.NORMAL )
+	public void onAccountMessageEvent( AccountMessageEvent event )
 	{
 		
 	}
@@ -206,85 +405,9 @@ public final class Session extends AccountPermissible implements Listener
 		}
 	}
 	
-	public AccountInstance account()
+	void putSessionCookie( String key, HttpCookie cookie )
 	{
-		return account;
-	}
-	
-	public void setSite( Site site )
-	{
-		this.site = site;
-		data.site = site.getSiteId();
-	}
-	
-	/**
-	 * Get the present data change history
-	 * 
-	 * @return
-	 *         A unmodifiable copy of dataChangeHistory.
-	 */
-	Set<String> getChangeHistory()
-	{
-		return Collections.unmodifiableSet( new HashSet<String>( dataChangeHistory ) );
-	}
-	
-	public boolean changesMade()
-	{
-		return dataChangeHistory.size() > 0;
-	}
-	
-	@Override
-	public String toString()
-	{
-		return "Session{key=" + sessionKey + ",id=" + sessionId + ",ipAddr=" + getIpAddresses() + ",timeout=" + timeout + ",data=" + data + ",requestCount=" + requestCnt + ",site=" + site + "}";
-	}
-	
-	/**
-	 * Returns a sessionCookie if existent in the session.
-	 * 
-	 * @param key
-	 * @return Candy
-	 */
-	public HttpCookie getCookie( String key )
-	{
-		return ( sessionCookies.containsKey( key ) ) ? sessionCookies.get( key ) : new HttpCookie( key, null );
-	}
-	
-	public HttpCookie getSessionCookie()
-	{
-		return sessionCookie;
-	}
-	
-	public String getSessId()
-	{
-		return sessionId;
-	}
-	
-	@Override
-	public void setVariable( String key, String value )
-	{
-		if ( value == null )
-			data.data.remove( key );
-		
-		data.data.put( key, value );
-		dataChangeHistory.add( key );
-	}
-	
-	@Override
-	public String getVariable( String key )
-	{
-		if ( !data.data.containsKey( key ) )
-			return "";
-		
-		if ( data.data.get( key ) == null )
-			return "";
-		
-		return data.data.get( key );
-	}
-	
-	public boolean isSet( String key )
-	{
-		return data.data.containsKey( key );
+		sessionCookies.put( key, cookie );
 	}
 	
 	public void rearmTimeout()
@@ -314,87 +437,19 @@ public final class Session extends AccountPermissible implements Listener
 			sessionCookie.setExpiration( timeout );
 	}
 	
-	public long getTimeout()
-	{
-		return timeout;
-	}
-	
 	/**
-	 * Removes the session expiration and prevents the Session Manager from unloading or destroying sessions
-	 */
-	public void noTimeout()
-	{
-		timeout = 0;
-		data.timeout = 0;
-	}
-	
-	/**
-	 * Reports if there is an Account logged in
+	 * Registers a newly created wrapper with our session
 	 * 
-	 * @return True is there is
+	 * @param wrapper
+	 *            The newly created wrapper
 	 */
-	public boolean isLoginPresent()
+	public void registerWrapper( SessionWrapper wrapper )
 	{
-		return ( account != null );
-	}
-	
-	@EventHandler( priority = EventPriority.NORMAL )
-	public void onAccountMessageEvent( AccountMessageEvent event )
-	{
+		assert wrapper.getSession() == this : "SessionWrapper does not contain proper reference to this Session";
 		
-	}
-	
-	public Site getSite()
-	{
-		if ( site == null )
-			return SiteManager.INSTANCE.getDefaultSite();
-		else
-			return site;
-	}
-	
-	@Override
-	public String getSiteId()
-	{
-		return getSite().getName();
-	}
-	
-	/**
-	 * @return A set of active SessionProviders for this session.
-	 */
-	public Set<SessionWrapper> getSessionWrappers()
-	{
-		return wrappers.toSet();
-	}
-	
-	public Map<String, HttpCookie> getCookies()
-	{
-		return Collections.unmodifiableMap( sessionCookies );
-	}
-	
-	public void setGlobal( String key, Object val )
-	{
-		globals.put( key, val );
-	}
-	
-	public Object getGlobal( String key )
-	{
-		return globals.get( key );
-	}
-	
-	public Map<String, Object> getGlobals()
-	{
-		return Collections.unmodifiableMap( globals );
-	}
-	
-	public Map<String, String> getDataMap()
-	{
-		return data.data;
-	}
-	
-	// TODO Make abstract
-	protected static List<Session> getActiveSessions() throws SessionException
-	{
-		return Lists.newCopyOnWriteArrayList();
+		wrappers.add( wrapper );
+		
+		knownIps.add( wrapper.getIpAddr() );
 	}
 	
 	public void reload() throws SessionException
@@ -402,16 +457,21 @@ public final class Session extends AccountPermissible implements Listener
 		data.reload();
 	}
 	
-	public void saveWithoutException()
+	/**
+	 * Sets if the user login should be remembered for a longer amount of time
+	 * 
+	 * @param remember
+	 *            Should we?
+	 */
+	public void remember( boolean remember )
 	{
-		try
-		{
-			save();
-		}
-		catch ( SessionException e )
-		{
-			SessionManager.getLogger().severe( "We had a problem saving the current session, changes were not saved to the datastore!", e );
-		}
+		setVariable( "remember", remember ? "true" : "false" );
+		rearmTimeout();
+	}
+	
+	public void removeWrapper( SessionWrapper wrapper )
+	{
+		wrappers.remove( wrapper );
 	}
 	
 	public void save() throws SessionException
@@ -433,92 +493,16 @@ public final class Session extends AccountPermissible implements Listener
 		}
 	}
 	
-	public void destroy() throws SessionException
+	public void saveWithoutException()
 	{
-		if ( SessionManager.isDebug() )
-			Loader.getLogger().info( ConsoleColor.DARK_AQUA + "Session Destroyed `" + this + "`" );
-		
-		SessionManager.sessions.remove( this );
-		
-		for ( SessionWrapper wrap : wrappers )
-			wrap.finish();
-		wrappers.clear();
-		
-		timeout = Timings.epoch();
-		data.timeout = Timings.epoch();
-		
-		if ( sessionCookie != null )
-			sessionCookie.setMaxAge( 0 );
-		
-		data.destroy();
-		data = null;
-	}
-	
-	@Override
-	public Set<String> getIpAddresses()
-	{
-		Set<String> ips = Sets.newHashSet();
-		for ( SessionWrapper sp : wrappers )
-			if ( sp.getSessionWithoutException() != null && sp.getSessionWithoutException() == this )
-			{
-				String ipAddr = sp.getIpAddr();
-				if ( ipAddr != null && !ipAddr.isEmpty() && !ips.contains( ipAddr ) )
-				{
-					ips.add( ipAddr );
-				}
-			}
-		return ips;
-	}
-	
-	public String getName()
-	{
-		return sessionKey;
-	}
-	
-	@Override
-	public String getEntityId()
-	{
-		return account == null ? null : account.getAcctId();
-	}
-	
-	/**
-	 * Registers a newly created wrapper with our session
-	 * 
-	 * @param wrapper
-	 *            The newly created wrapper
-	 */
-	public void registerWrapper( SessionWrapper wrapper )
-	{
-		assert wrapper.getSession() == this : "SessionWrapper does not contain proper reference to this Session";
-		
-		wrappers.add( wrapper );
-		
-		knownIps.add( wrapper.getIpAddr() );
-	}
-	
-	@Override
-	public AccountMeta metadata()
-	{
-		return instance().metadata();
-	}
-	
-	@Override
-	public AccountInstance instance()
-	{
-		return account;
-	}
-	
-	@Override
-	public String getDisplayName()
-	{
-		return account.getDisplayName();
-	}
-	
-	@Override
-	public void send( Object obj )
-	{
-		for ( SessionWrapper sw : wrappers )
-			sw.send( obj );
+		try
+		{
+			save();
+		}
+		catch ( SessionException e )
+		{
+			SessionManager.getLogger().severe( "We had a problem saving the current session, changes were not saved to the datastore!", e );
+		}
 	}
 	
 	@Override
@@ -528,34 +512,49 @@ public final class Session extends AccountPermissible implements Listener
 			sw.send( sender, obj );
 	}
 	
+	@Override
+	public void send( Object obj )
+	{
+		for ( SessionWrapper sw : wrappers )
+			sw.send( obj );
+	}
+	
+	public void setGlobal( String key, Object val )
+	{
+		globals.put( key, val );
+	}
+	
 	// TODO Sessions can outlive a login.
 	// TODO Sessions can have an expiration in 7 days and a login can have an expiration of 24 hours.
 	// TODO Remember should probably make it so logins last as long as the session does. Hmmmmmm
 	
-	/**
-	 * Sets if the user login should be remembered for a longer amount of time
-	 * 
-	 * @param remember
-	 *            Should we?
-	 */
-	public void remember( boolean remember )
+	public void setSite( Site site )
 	{
-		setVariable( "remember", remember ? "true" : "false" );
+		this.site = site;
+		data.site = site.getSiteId();
+	}
+	
+	@Override
+	public void setVariable( String key, String value )
+	{
+		if ( value == null )
+			data.data.remove( key );
+		
+		data.data.put( key, value );
+		dataChangeHistory.add( key );
+	}
+	
+	@Override
+	public void successfulLogin()
+	{
+		account.metadata().context().credentials().makeResumable( this );
 		rearmTimeout();
+		saveWithoutException();
 	}
 	
-	public void removeWrapper( SessionWrapper wrapper )
+	@Override
+	public String toString()
 	{
-		wrappers.remove( wrapper );
-	}
-	
-	void putSessionCookie( String key, HttpCookie cookie )
-	{
-		sessionCookies.put( key, cookie );
-	}
-	
-	public boolean isNew()
-	{
-		return newSession;
+		return "Session{key=" + sessionKey + ",id=" + sessionId + ",ipAddr=" + getIpAddresses() + ",timeout=" + timeout + ",data=" + data + ",requestCount=" + requestCnt + ",site=" + site + "}";
 	}
 }

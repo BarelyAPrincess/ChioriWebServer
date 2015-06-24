@@ -18,7 +18,6 @@ import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.PermissionType;
 import com.chiorichan.permission.PermissionValue;
-import com.google.common.base.Joiner;
 
 public class FileEntity extends PermissibleEntity
 {
@@ -33,10 +32,10 @@ public class FileEntity extends PermissibleEntity
 		if ( isDebug() )
 			PermissionManager.getLogger().info( ConsoleColor.YELLOW + "Groups being loaded for entity " + getId() );
 		
-		ConfigurationSection result = FileBackend.getBackend().permissions.getConfigurationSection( "entities/" + getId(), true );
+		ConfigurationSection section = FileBackend.getBackend().permissions.getConfigurationSection( "entities." + getId() );
 		groups.clear();
 		
-		for ( String group : result.getStringList( "groups", new ArrayList<String>() ) )
+		for ( String group : section.getStringList( "groups", new ArrayList<String>() ) )
 			addGroup( PermissionManager.INSTANCE.getGroup( group ) );
 	}
 	
@@ -46,8 +45,7 @@ public class FileEntity extends PermissibleEntity
 		if ( isDebug() )
 			PermissionManager.getLogger().info( ConsoleColor.YELLOW + "Permissions being loaded for entity " + getId() );
 		
-		ConfigurationSection result = FileBackend.getBackend().permissions.getConfigurationSection( "entities." + getId(), true );
-		ConfigurationSection permissions = result.getConfigurationSection( "permissions" );
+		ConfigurationSection permissions = FileBackend.getBackend().permissions.getConfigurationSection( "entities." + getId() + ".permissions" );
 		childPermissions.clear();
 		
 		if ( permissions != null )
@@ -60,8 +58,7 @@ public class FileEntity extends PermissibleEntity
 				if ( permission.getString( "value" ) != null )
 					value = perm.getModel().createValue( permission.getString( "value" ) );
 				
-				String refs = permission.isString( "refs" ) ? permission.getString( "refs" ) : "";
-				attachPermission( new ChildPermission( perm, value, -1, refs.split( "|" ) ) );
+				attachPermission( new ChildPermission( perm, value, -1, permission.getStringList( "refs", new ArrayList<String>() ).toArray( new String[0] ) ) );
 			}
 	}
 	
@@ -74,17 +71,30 @@ public class FileEntity extends PermissibleEntity
 	@Override
 	public void save()
 	{
-		ConfigurationSection entity = FileBackend.getBackend().permissions.getConfigurationSection( "entities." + getId(), true );
-		ConfigurationSection permissions = entity.getConfigurationSection( "permissions", true );
+		if ( isVirtual() )
+			return;
 		
-		for ( ChildPermission child : getChildPermissions() )
+		if ( isDebug() )
+			PermissionManager.getLogger().info( ConsoleColor.YELLOW + "Entity " + getId() + " being saved to backend" );
+		
+		ConfigurationSection root = FileBackend.getBackend().permissions.getConfigurationSection( "entities." + getId(), true );
+		
+		if ( getChildPermissions().size() > 0 )
 		{
-			Permission perm = child.getPermission();
-			ConfigurationSection sub = permissions.getConfigurationSection( perm.getNamespace().replaceAll( "\\.", "/" ), true );
-			sub.set( "permission", perm.getNamespace() );
-			if ( perm.getType() != PermissionType.DEFAULT )
-				sub.set( "value", child.getObject() );
-			sub.set( "refs", Joiner.on( "|" ).join( child.getReferences() ) );
+			ConfigurationSection permissions = root.getConfigurationSection( "entities." + getId(), true );
+			
+			for ( ChildPermission child : getChildPermissions() )
+			{
+				Permission perm = child.getPermission();
+				ConfigurationSection sub = permissions.getConfigurationSection( perm.getNamespace().replaceAll( "\\.", "/" ), true );
+				if ( perm.getType() != PermissionType.DEFAULT )
+					sub.set( "value", child.getObject() );
+				
+				sub.set( "refs", child.getReferences().isEmpty() ? null : child.getReferences() );
+			}
 		}
+		
+		if ( groups.size() > 0 )
+			root.set( "groups", groups.values() );
 	}
 }

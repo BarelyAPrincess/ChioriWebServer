@@ -22,7 +22,9 @@ public abstract class Permissible
 	public final boolean checkEntity()
 	{
 		if ( entity == null )
-			entity = PermissionManager.INSTANCE.getEntity( this );
+			PermissionManager.INSTANCE.getEntity( this );
+		
+		entity.setVirtual( isVirtual() );
 		
 		return entity != null;
 	}
@@ -140,4 +142,11 @@ public abstract class Permissible
 	 *         a unique identifier
 	 */
 	public abstract String getEntityId();
+	
+	/**
+	 * Indicates if the permissible entity should be allowed to save, i.e., keep it's groups and permissions persistent between restarts
+	 * 
+	 * @return True if so
+	 */
+	public abstract boolean isVirtual();
 }

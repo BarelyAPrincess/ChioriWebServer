@@ -54,6 +54,7 @@ public abstract class PermissibleEntity
 	protected boolean debugMode = false;
 	protected Map<String, PermissibleGroup> groups = Maps.newConcurrentMap();
 	private String id;
+	private boolean virtual = false;
 	protected Map<String, LinkedList<TimedPermission>> timedPermissions = Maps.newConcurrentMap();
 	
 	public PermissibleEntity( String id )
@@ -535,6 +536,11 @@ public abstract class PermissibleEntity
 		return result.isTrue();
 	}
 	
+	public final boolean isVirtual()
+	{
+		return virtual;
+	}
+	
 	public boolean isWhitelisted()
 	{
 		if ( !PermissionManager.INSTANCE.hasWhitelist() )
@@ -641,6 +647,11 @@ public abstract class PermissibleEntity
 	public void setSuffix( String string, String ref )
 	{
 		// TODO Auto-generated method stub
+	}
+	
+	void setVirtual( boolean virtual )
+	{
+		this.virtual = virtual;
 	}
 	
 	@Override

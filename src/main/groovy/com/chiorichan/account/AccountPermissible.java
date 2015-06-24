@@ -17,6 +17,7 @@ import com.chiorichan.account.event.AccountPreLoginEvent;
 import com.chiorichan.account.event.AccountSuccessfulLoginEvent;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
+import com.chiorichan.account.types.MemoryTypeCreator;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.permission.Permissible;
 import com.chiorichan.session.SessionManager;
@@ -32,6 +33,50 @@ public abstract class AccountPermissible extends Permissible implements Account
 	 * The logged in account associated with this session
 	 */
 	protected AccountInstance account = null;
+	
+	protected abstract void failedLogin( AccountResult result );
+	
+	@Override
+	public String getAcctId()
+	{
+		return instance().getAcctId();
+	}
+	
+	@Override
+	public String getEntityId()
+	{
+		return instance().getAcctId();
+	}
+	
+	public abstract String getVariable( String key );
+	
+	/**
+	 * Called from subclass once subclass has finished loading
+	 */
+	protected void initialized()
+	{
+		login();
+	}
+	
+	@Override
+	public AccountInstance instance()
+	{
+		if ( account == null )
+			throw new AccountException( AccountResult.ACCOUNT_NOT_INITIALIZED );
+		return account;
+	}
+	
+	@Override
+	public boolean isVirtual()
+	{
+		return metadata().context().creator() instanceof MemoryTypeCreator;
+	}
+	
+	@Override
+	public boolean kick( String msg )
+	{
+		return instance().kick( msg );
+	}
 	
 	/**
 	 * Attempts to authenticate using saved Account Credentials
@@ -189,14 +234,6 @@ public abstract class AccountPermissible extends Permissible implements Account
 		EventBus.INSTANCE.callEvent( new AccountSuccessfulLoginEvent( meta ) );
 	}
 	
-	/**
-	 * Called from subclass once subclass has finished loading
-	 */
-	protected void initialized()
-	{
-		login();
-	}
-	
 	public AccountResult logout()
 	{
 		if ( account != null )
@@ -210,43 +247,13 @@ public abstract class AccountPermissible extends Permissible implements Account
 		return AccountResult.LOGOUT_SUCCESS;
 	}
 	
-	protected abstract void successfulLogin();
-	
-	protected abstract void failedLogin( AccountResult result );
-	
-	public abstract void setVariable( String key, String value );
-	
-	public abstract String getVariable( String key );
-	
-	@Override
-	public boolean kick( String msg )
-	{
-		return instance().kick( msg );
-	}
-	
 	@Override
 	public AccountMeta metadata()
 	{
 		return instance().metadata();
 	}
 	
-	@Override
-	public AccountInstance instance()
-	{
-		if ( account == null )
-			throw new AccountException( AccountResult.ACCOUNT_NOT_INITIALIZED );
-		return account;
-	}
+	public abstract void setVariable( String key, String value );
 	
-	@Override
-	public String getAcctId()
-	{
-		return instance().getAcctId();
-	}
-	
-	@Override
-	public String getEntityId()
-	{
-		return instance().getAcctId();
-	}
+	protected abstract void successfulLogin();
 }

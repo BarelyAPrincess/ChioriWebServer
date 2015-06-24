@@ -84,33 +84,10 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 			persistence.finish();
 	}
 	
-	private String parseColor( String text )
-	{
-		if ( text == null || text.isEmpty() )
-			return "";
-		
-		if ( !Loader.getConfig().getBoolean( "server.queryUseColor" ) || ( console != null && !StringFunc.isTrue( console.getMetadata( "color", "true" ) ) ) )
-			return ConsoleColor.removeAltColors( text );
-		else
-			return ConsoleColor.transAltColors( text );
-	}
-	
 	@Override
-	public void println( String... msgs )
+	public void channelReadComplete( ChannelHandlerContext ctx )
 	{
-		for ( String msg : msgs )
-			context.write( "\r" + parseColor( msg ) + "\r\n" );
-		context.flush();
-		if ( console != null )
-			console.prompt();
-	}
-	
-	@Override
-	public void print( String... msgs )
-	{
-		for ( String msg : msgs )
-			context.write( parseColor( msg ) );
-		context.flush();
+		ctx.flush();
 	}
 	
 	public void disconnect()
@@ -126,22 +103,15 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 	}
 	
 	@Override
-	public void messageReceived( ChannelHandlerContext ctx, String msg )
-	{
-		CommandDispatch.issueCommand( console, msg );
-	}
-	
-	@Override
-	public void channelReadComplete( ChannelHandlerContext ctx )
-	{
-		ctx.flush();
-	}
-	
-	@Override
 	public void exceptionCaught( ChannelHandlerContext ctx, Throwable cause )
 	{
 		cause.printStackTrace();
 		ctx.close();
+	}
+	
+	public String getIpAddr()
+	{
+		return ( ( InetSocketAddress ) context.channel().remoteAddress() ).getAddress().getHostAddress();
 	}
 	
 	@Override
@@ -150,8 +120,38 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 		return persistence;
 	}
 	
-	public String getIpAddr()
+	@Override
+	public void messageReceived( ChannelHandlerContext ctx, String msg )
 	{
-		return ( ( InetSocketAddress ) context.channel().remoteAddress() ).getAddress().getHostAddress();
+		CommandDispatch.issueCommand( console, msg );
+	}
+	
+	private String parseColor( String text )
+	{
+		if ( text == null || text.isEmpty() )
+			return "";
+		
+		if ( !Loader.getConfig().getBoolean( "server.queryUseColor" ) || ( console != null && !StringFunc.isTrue( console.getMetadata( "color", "true" ) ) ) )
+			return ConsoleColor.removeAltColors( text );
+		else
+			return ConsoleColor.transAltColors( text );
+	}
+	
+	@Override
+	public void print( String... msgs )
+	{
+		for ( String msg : msgs )
+			context.write( parseColor( msg ) );
+		context.flush();
+	}
+	
+	@Override
+	public void println( String... msgs )
+	{
+		for ( String msg : msgs )
+			context.write( "\r" + parseColor( msg ) + "                   " + "\r\n" );
+		context.flush();
+		if ( console != null )
+			console.prompt();
 	}
 }
