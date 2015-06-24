@@ -11,6 +11,7 @@ package com.chiorichan.account;
 import java.util.List;
 
 import com.chiorichan.account.lang.AccountResult;
+import com.chiorichan.permission.PermissibleEntity;
 
 /**
  * Specifies which methods are required for a class to manage accounts
@@ -66,6 +67,16 @@ public interface AccountCreator
 	 *            The {@link AccountMeta} involved in the login
 	 */
 	void successLogin( AccountMeta meta );
+	
+	/**
+	 * Called by {@link AccountMeta#AccountMeta(AccountContext)} when it finishes constructing it's class and getting reference to it's {@link PermissibleEntity}
+	 * 
+	 * @param meta
+	 *            The {@link AccountMeta} involved in the login
+	 * @param permissibleEntity
+	 *            The new {@link AccountPermissible} instance
+	 */
+	void successInit( AccountMeta meta, PermissibleEntity entity );
 	
 	/**
 	 * Called by {@link AccountPermissible#login()} and {@link AccountPermissible#login(com.chiorichan.account.auth.AccountAuthenticator, String, Object...)} before the login is validated for an {@link AccountResult}

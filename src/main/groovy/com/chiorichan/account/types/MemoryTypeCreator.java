@@ -19,6 +19,8 @@ import com.chiorichan.account.event.AccountLoadEvent;
 import com.chiorichan.account.event.AccountLookupEvent;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.event.EventHandler;
+import com.chiorichan.permission.PermissibleEntity;
+import com.chiorichan.permission.PermissionDefault;
 import com.chiorichan.tasks.Timings;
 
 /**
@@ -33,57 +35,26 @@ public class MemoryTypeCreator extends AccountTypeCreator
 		super();
 	}
 	
-	public AccountType getType()
+	@Override
+	public AccountContext createAccount( String acctId, String siteId )
 	{
-		return AccountType.MEMORY;
-	}
-	
-	@EventHandler
-	public void onAccountLookupEvent( AccountLookupEvent event )
-	{
-		// Do Nothing
-	}
-	
-	@EventHandler( )
-	public void onAccountLoadEvent( AccountLoadEvent event )
-	{
-		// Do Nothing
+		AccountContext context = new AccountContextImpl( this, AccountType.SQL, acctId, siteId );
+		
+		context.setValue( "date", Timings.epoch() );
+		
+		return context;
 	}
 	
 	@Override
-	public void save( AccountContext context )
+	public boolean exists( String acctId )
 	{
-		// Do Nothing!
-	}
-	
-	@Override
-	public void reload( AccountMeta account )
-	{
-		// Do Nothing
-	}
-	
-	@Override
-	public boolean isEnabled()
-	{
-		return true; // Always
+		return "none".equals( acctId ) || "root".equals( acctId );
 	}
 	
 	@Override
 	public void failedLogin( AccountMeta meta, AccountResult result )
 	{
 		// Do Nothing
-	}
-	
-	@Override
-	public void successLogin( AccountMeta meta )
-	{
-		// Do Nothing
-	}
-	
-	@Override
-	public void preLogin( AccountMeta meta, AccountPermissible via, String acctId, Object... creds )
-	{
-		// Called before the NONE Account logs in
 	}
 	
 	@Override
@@ -98,19 +69,57 @@ public class MemoryTypeCreator extends AccountTypeCreator
 		return Arrays.asList( new String[] {} );
 	}
 	
-	@Override
-	public boolean exists( String acctId )
+	public AccountType getType()
 	{
-		return "none".equals( acctId ) || "root".equals( acctId );
+		return AccountType.MEMORY;
 	}
 	
 	@Override
-	public AccountContext createAccount( String acctId, String siteId )
+	public boolean isEnabled()
 	{
-		AccountContext context = new AccountContextImpl( this, AccountType.SQL, acctId, siteId );
-		
-		context.setValue( "date", Timings.epoch() );
-		
-		return context;
+		return true; // Always
+	}
+	
+	@EventHandler( )
+	public void onAccountLoadEvent( AccountLoadEvent event )
+	{
+		// Do Nothing
+	}
+	
+	@EventHandler
+	public void onAccountLookupEvent( AccountLookupEvent event )
+	{
+		// Do Nothing
+	}
+	
+	@Override
+	public void preLogin( AccountMeta meta, AccountPermissible via, String acctId, Object... creds )
+	{
+		// Called before the NONE and ROOT Account logs in
+	}
+	
+	@Override
+	public void reload( AccountMeta account )
+	{
+		// Do Nothing
+	}
+	
+	@Override
+	public void save( AccountContext context )
+	{
+		// Do Nothing!
+	}
+	
+	@Override
+	public void successInit( AccountMeta meta, PermissibleEntity entity )
+	{
+		if ( meta.context().creator() == this && meta.getAcctId().equalsIgnoreCase( "root" ) )
+			entity.addPermission( PermissionDefault.OP.getNode(), true, null );
+	}
+	
+	@Override
+	public void successLogin( AccountMeta meta )
+	{
+		// Do Nothing
 	}
 }

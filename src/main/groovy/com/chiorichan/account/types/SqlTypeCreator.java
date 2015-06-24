@@ -31,6 +31,7 @@ import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.database.SqlTableColumns;
 import com.chiorichan.event.EventHandler;
+import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.tasks.Timings;
 import com.google.common.collect.Maps;
 
@@ -65,6 +66,168 @@ public class SqlTypeCreator extends AccountTypeCreator
 		accountFields = Loader.getConfig().getStringList( "accounts.sqlType.fields", new ArrayList<String>() );
 	}
 	
+	
+	@Override
+	public AccountContext createAccount( String acctId, String siteId )
+	{
+		AccountContext context = new AccountContextImpl( this, AccountType.SQL, acctId, siteId );
+		
+		context.setValue( "date", Timings.epoch() );
+		context.setValue( "numloginfailed", 0 );
+		context.setValue( "lastloginfail", 0 );
+		context.setValue( "actnum", "0" );
+		
+		save( context );
+		return context;
+	}
+	
+	@Override
+	public boolean exists( String acctId )
+	{
+		try
+		{
+			return sql.getRowCount( sql.query( "SELECT * FROM `" + table + "` WHERE `acctId`='" + acctId + "';" ) ) > 0;
+		}
+		catch ( SQLException e )
+		{
+			return false;
+		}
+	}
+	
+	@Override
+	public void failedLogin( AccountMeta meta, AccountResult result )
+	{
+		try
+		{
+			sql.queryUpdate( "UPDATE `" + table + "` SET `lastActive` = '" + Timings.epoch() + "', `lastLoginFail` = 0, `numLoginFail` = 0 WHERE `acctID` = '" + meta.getAcctId() + "'" );
+		}
+		catch ( SQLException e )
+		{
+			e.printStackTrace();
+		}
+		meta.set( "lastActive", Timings.epoch() );
+		meta.set( "lastLoginFail", 0 );
+		meta.set( "numLoginFail", 0 );
+	}
+	
+	@Override
+	public String getDisplayName( AccountMeta meta )
+	{
+		if ( meta.getString( "fname" ) != null && !meta.getString( "fname" ).isEmpty() && meta.getString( "name" ) != null && !meta.getString( "name" ).isEmpty() )
+			return meta.getString( "fname" ) + " " + meta.getString( "name" );
+		
+		if ( meta.getString( "name" ) != null && !meta.getString( "name" ).isEmpty() )
+			return meta.getString( "name" );
+		
+		if ( meta.getString( "email" ) != null && !meta.getString( "email" ).isEmpty() )
+			return meta.getString( "email" );
+		
+		return null;
+	}
+	
+	@Override
+	public List<String> getLoginKeys()
+	{
+		return accountFields;
+	}
+	
+	public ResultSet getResultSet( String uid ) throws SQLException
+	{
+		if ( uid == null || uid.isEmpty() )
+			return null;
+		
+		ResultSet rs = sql.query( "SELECT * FROM `accounts` WHERE `acctID` = '" + uid + "' LIMIT 1;" );
+		
+		if ( rs == null || sql.getRowCount( rs ) < 1 )
+			return null;
+		
+		return rs;
+	}
+	
+	@Override
+	public boolean isEnabled()
+	{
+		return enabled;
+	}
+	
+	@EventHandler
+	public void onAccountLookupEvent( AccountLookupEvent event )
+	{
+		try
+		{
+			event.setResult( readAccount( event.getAcctId() ), AccountResult.LOGIN_SUCCESS );
+		}
+		catch ( SQLException e )
+		{
+			// e.printStackTrace();
+		}
+		catch ( AccountException e )
+		{
+			event.setResult( e.getContext(), e.getResult() );
+		}
+	}
+	
+	@Override
+	public void preLogin( AccountMeta meta, AccountPermissible via, String acctId, Object... creds )
+	{
+		if ( meta.getInteger( "numloginfail" ) > 5 )
+			if ( meta.getInteger( "lastloginfail" ) > ( Timings.epoch() - 1800 ) )
+				throw new AccountException( AccountResult.UNDER_ATTACK );
+		
+		if ( !meta.getString( "actnum" ).equals( "0" ) )
+			throw new AccountException( AccountResult.ACCOUNT_NOT_ACTIVATED );
+	}
+	
+	public AccountContext readAccount( String acctId ) throws AccountException, SQLException
+	{
+		if ( acctId == null || acctId.isEmpty() )
+			throw new AccountException( AccountResult.EMPTY_ACCTID );
+		
+		Set<String> accountFieldSet = new HashSet<String>( accountFields );
+		Set<String> accountColumnSet = new HashSet<String>( sql.getTableColumnNames( table ) );
+		
+		accountFieldSet.add( "acctId" );
+		accountFieldSet.add( "username" );
+		
+		String additionalAccountFields = "";
+		for ( String f : accountFieldSet )
+			if ( !f.isEmpty() )
+				if ( accountColumnSet.contains( f ) )
+					additionalAccountFields += " OR `" + f + "` = '" + acctId + "'";
+				else
+					for ( String c : accountColumnSet )
+						if ( c.equalsIgnoreCase( f ) )
+						{
+							additionalAccountFields += " OR `" + c + "` = '" + acctId + "'";
+							break;
+						}
+		
+		ResultSet rs = sql.query( "SELECT * FROM `" + table + "` WHERE " + additionalAccountFields.substring( 4 ) + ";" );
+		
+		AccountContextImpl context = new AccountContextImpl( this, AccountType.SQL, acctId, "%" );
+		
+		if ( rs == null || sql.getRowCount( rs ) < 1 )
+			throw new AccountException( AccountResult.INCORRECT_LOGIN, context );
+		
+		context.setAcctId( rs.getString( "acctId" ) );
+		context.setSiteId( rs.getString( "siteId" ) );
+		context.setValues( DatabaseEngine.convertRow( rs ) );
+		
+		return context;
+	}
+	
+	@Override
+	public void reload( AccountMeta meta )
+	{
+		try
+		{
+			readAccount( meta.getAcctId() );
+		}
+		catch ( SQLException e )
+		{
+			e.printStackTrace();
+		}
+	}
 	
 	@Override
 	public void save( AccountContext context )
@@ -139,9 +302,7 @@ public class SqlTypeCreator extends AccountTypeCreator
 						}
 					}
 					else
-					{
 						throw exp;
-					}
 				}
 			}
 		}
@@ -168,28 +329,11 @@ public class SqlTypeCreator extends AccountTypeCreator
 		}
 	}
 	
-	@Override
-	public void reload( AccountMeta meta )
-	{
-		try
-		{
-			readAccount( meta.getAcctId() );
-		}
-		catch ( SQLException e )
-		{
-			e.printStackTrace();
-		}
-	}
 	
 	@Override
-	public void preLogin( AccountMeta meta, AccountPermissible via, String acctId, Object... creds )
+	public void successInit( AccountMeta meta, PermissibleEntity entity )
 	{
-		if ( meta.getInteger( "numloginfail" ) > 5 )
-			if ( meta.getInteger( "lastloginfail" ) > ( Timings.epoch() - 1800 ) )
-				throw new AccountException( AccountResult.UNDER_ATTACK );
-		
-		if ( !meta.getString( "actnum" ).equals( "0" ) )
-			throw new AccountException( AccountResult.ACCOUNT_NOT_ACTIVATED );
+		// Do Nothing
 	}
 	
 	@Override
@@ -202,149 +346,6 @@ public class SqlTypeCreator extends AccountTypeCreator
 		catch ( SQLException e )
 		{
 			throw new AccountException( e );
-		}
-	}
-	
-	@Override
-	public void failedLogin( AccountMeta meta, AccountResult result )
-	{
-		try
-		{
-			sql.queryUpdate( "UPDATE `" + table + "` SET `lastActive` = '" + Timings.epoch() + "', `lastLoginFail` = 0, `numLoginFail` = 0 WHERE `acctID` = '" + meta.getAcctId() + "'" );
-		}
-		catch ( SQLException e )
-		{
-			e.printStackTrace();
-		}
-		meta.set( "lastActive", Timings.epoch() );
-		meta.set( "lastLoginFail", 0 );
-		meta.set( "numLoginFail", 0 );
-	}
-	
-	@Override
-	public String getDisplayName( AccountMeta meta )
-	{
-		if ( meta.getString( "fname" ) != null && !meta.getString( "fname" ).isEmpty() && meta.getString( "name" ) != null && !meta.getString( "name" ).isEmpty() )
-			return meta.getString( "fname" ) + " " + meta.getString( "name" );
-		
-		if ( meta.getString( "name" ) != null && !meta.getString( "name" ).isEmpty() )
-			return meta.getString( "name" );
-		
-		if ( meta.getString( "email" ) != null && !meta.getString( "email" ).isEmpty() )
-			return meta.getString( "email" );
-		
-		return null;
-	}
-	
-	@Override
-	public boolean isEnabled()
-	{
-		return enabled;
-	}
-	
-	public ResultSet getResultSet( String uid ) throws SQLException
-	{
-		if ( uid == null || uid.isEmpty() )
-			return null;
-		
-		ResultSet rs = sql.query( "SELECT * FROM `accounts` WHERE `acctID` = '" + uid + "' LIMIT 1;" );
-		
-		if ( rs == null || sql.getRowCount( rs ) < 1 )
-			return null;
-		
-		return rs;
-	}
-	
-	public AccountContext readAccount( String acctId ) throws AccountException, SQLException
-	{
-		if ( acctId == null || acctId.isEmpty() )
-			throw new AccountException( AccountResult.EMPTY_ACCTID );
-		
-		Set<String> accountFieldSet = new HashSet<String>( accountFields );
-		Set<String> accountColumnSet = new HashSet<String>( sql.getTableColumnNames( table ) );
-		
-		accountFieldSet.add( "acctId" );
-		accountFieldSet.add( "username" );
-		
-		String additionalAccountFields = "";
-		for ( String f : accountFieldSet )
-		{
-			if ( !f.isEmpty() )
-				if ( accountColumnSet.contains( f ) )
-					additionalAccountFields += " OR `" + f + "` = '" + acctId + "'";
-				else
-					for ( String c : accountColumnSet )
-					{
-						if ( c.equalsIgnoreCase( f ) )
-						{
-							additionalAccountFields += " OR `" + c + "` = '" + acctId + "'";
-							break;
-						}
-					}
-		}
-		
-		ResultSet rs = sql.query( "SELECT * FROM `" + table + "` WHERE " + additionalAccountFields.substring( 4 ) + ";" );
-		
-		AccountContextImpl context = new AccountContextImpl( this, AccountType.SQL, acctId, "%" );
-		
-		if ( rs == null || sql.getRowCount( rs ) < 1 )
-			throw new AccountException( AccountResult.INCORRECT_LOGIN, context );
-		
-		context.setAcctId( rs.getString( "acctId" ) );
-		context.setSiteId( rs.getString( "siteId" ) );
-		context.setValues( DatabaseEngine.convertRow( rs ) );
-		
-		return context;
-	}
-	
-	@Override
-	public AccountContext createAccount( String acctId, String siteId )
-	{
-		AccountContext context = new AccountContextImpl( this, AccountType.SQL, acctId, siteId );
-		
-		context.setValue( "date", Timings.epoch() );
-		context.setValue( "numloginfailed", 0 );
-		context.setValue( "lastloginfail", 0 );
-		context.setValue( "actnum", "0" );
-		
-		save( context );
-		return context;
-	}
-	
-	@EventHandler
-	public void onAccountLookupEvent( AccountLookupEvent event )
-	{
-		try
-		{
-			event.setResult( readAccount( event.getAcctId() ), AccountResult.LOGIN_SUCCESS );
-		}
-		catch ( SQLException e )
-		{
-			// e.printStackTrace();
-		}
-		catch ( AccountException e )
-		{
-			event.setResult( e.getContext(), e.getResult() );
-		}
-	}
-	
-	@Override
-	public List<String> getLoginKeys()
-	{
-		return accountFields;
-	}
-	
-	
-	@Override
-	public boolean exists( String acctId )
-	{
-		try
-		{
-			return sql.getRowCount( sql.query( "SELECT * FROM `" + table + "` WHERE `acctId`='" + acctId + "';" ) ) > 0;
-		}
-		catch ( SQLException e )
-		{
-			return false;
 		}
 	}
 	

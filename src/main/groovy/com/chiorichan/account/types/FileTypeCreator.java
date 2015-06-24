@@ -27,6 +27,7 @@ import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.event.EventHandler;
+import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.ObjectFunc;
@@ -324,6 +325,12 @@ public class FileTypeCreator extends AccountTypeCreator
 		{
 			e.printStackTrace();
 		}
+	}
+	
+	@Override
+	public void successInit( AccountMeta meta, PermissibleEntity entity )
+	{
+		// Do Nothing
 	}
 	
 	@Override

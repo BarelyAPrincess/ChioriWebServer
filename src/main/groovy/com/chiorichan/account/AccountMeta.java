@@ -86,15 +86,138 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 		context.setAccount( this );
 		
 		this.context = context;
-		this.acctId = context.getAcctId();
-		this.siteId = context.getSiteId();
+		acctId = context.getAcctId();
+		siteId = context.getSiteId();
 		
 		metadata.putAll( context.getValues() );
 		
 		/**
-		 * Populate the PermissibleEntity for reasons...
+		 * Populate the PermissibleEntity for reasons... and notify the Account Creator
 		 */
-		getPermissibleEntity();
+		context.creator().successInit( this, getPermissibleEntity() );
+	}
+	
+	@Override
+	public PermissionResult checkPermission( Permission perm )
+	{
+		return getPermissibleEntity().checkPermission( perm );
+	}
+	
+	@Override
+	public PermissionResult checkPermission( String perm )
+	{
+		return getPermissibleEntity().checkPermission( perm );
+	}
+	
+	public boolean containsKey( String key )
+	{
+		return metadata.containsKey( key );
+	}
+	
+	/**
+	 * Returns the {@link AccountContext} responsible for our existence
+	 * 
+	 * @return
+	 *         Instance of AccountContext
+	 */
+	public AccountContext context()
+	{
+		return context;
+	}
+	
+	@Override
+	public String getAcctId()
+	{
+		return acctId;
+	}
+	
+	public Boolean getBoolean( String key )
+	{
+		try
+		{
+			return ObjectFunc.castToBoolWithException( metadata.get( key ) );
+		}
+		catch ( ClassCastException e )
+		{
+			return false;
+		}
+	}
+	
+	@Override
+	public String getDisplayName()
+	{
+		String name = context.creator().getDisplayName( this );
+		return ( name == null ) ? getAcctId() : name;
+	}
+	
+	public Integer getInteger( String key )
+	{
+		return getInteger( key, 0 );
+	}
+	
+	public Integer getInteger( String key, int def )
+	{
+		Object obj = metadata.get( key );
+		Integer val = ObjectFunc.castToInt( obj );
+		
+		return ( val == null ) ? def : val;
+	}
+	
+	@Override
+	public Set<String> getIpAddresses()
+	{
+		return instance().getIpAddresses();
+	}
+	
+	public Set<String> getKeys()
+	{
+		return metadata.keySet();
+	}
+	
+	public String getLogoffMessage()
+	{
+		return getAcctId() + " has logged off the server";
+	}
+	
+	public Map<String, Object> getMeta()
+	{
+		return Collections.unmodifiableMap( metadata );
+	}
+	
+	public Object getObject( String key )
+	{
+		return metadata.get( key );
+	}
+	
+	public PermissibleEntity getPermissibleEntity()
+	{
+		if ( permissibleEntity == null || permissibleEntity.get() == null )
+			permissibleEntity = new WeakReference<PermissibleEntity>( PermissionManager.INSTANCE.getEntity( getAcctId() ) );
+		
+		return permissibleEntity.get();
+	}
+	
+	@Override
+	public Site getSite()
+	{
+		return SiteManager.INSTANCE.getSiteById( siteId );
+	}
+	
+	@Override
+	public String getSiteId()
+	{
+		return siteId;
+	}
+	
+	public String getString( String key )
+	{
+		return getString( key, null );
+	}
+	
+	public String getString( String key, String def )
+	{
+		String val = ObjectFunc.castToString( metadata.get( key ) );
+		return ( val == null ) ? def : val;
 	}
 	
 	private AccountInstance initAccount()
@@ -108,6 +231,62 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 		AccountManager.INSTANCE.fireAccountLoad( this );
 		
 		return account;
+	}
+	
+	@Override
+	public AccountInstance instance()
+	{
+		if ( !isInitialized() )
+			initAccount();
+		
+		return account.get();
+	}
+	
+	@Override
+	public boolean isAdmin()
+	{
+		return getPermissibleEntity().isAdmin() || isOp();
+	}
+	
+	@Override
+	public boolean isBanned()
+	{
+		return getPermissibleEntity().isBanned();
+	}
+	
+	public boolean isInitialized()
+	{
+		return account != null;
+	}
+	
+	@Override
+	public boolean isOp()
+	{
+		return getPermissibleEntity().isOp();
+	}
+	
+	@Override
+	public boolean isWhitelisted()
+	{
+		return getPermissibleEntity().isWhitelisted();
+	}
+	
+	@Override
+	public Iterator<Entry<String, Object>> iterator()
+	{
+		return Collections.unmodifiableMap( metadata ).entrySet().iterator();
+	}
+	
+	/**
+	 * Returns if the Account is will be kept in memory
+	 * If you want to know if the Account is currently being kept in memory, See {@link #keptInMemory()}
+	 * 
+	 * @return
+	 *         Will be kept in memory?
+	 */
+	public boolean keepInMemory()
+	{
+		return isInitialized() ? keepInMemory : false;
 	}
 	
 	/**
@@ -131,24 +310,7 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 	 */
 	public boolean keptInMemory()
 	{
-		return this.isInitialized() ? keepInMemory : false;
-	}
-	
-	/**
-	 * Returns if the Account is will be kept in memory
-	 * If you want to know if the Account is currently being kept in memory, See {@link #keptInMemory()}
-	 * 
-	 * @return
-	 *         Will be kept in memory?
-	 */
-	public boolean keepInMemory()
-	{
-		return this.isInitialized() ? keepInMemory : false;
-	}
-	
-	public Map<String, Object> getMeta()
-	{
-		return Collections.unmodifiableMap( metadata );
+		return isInitialized() ? keepInMemory : false;
 	}
 	
 	public Set<String> keySet()
@@ -156,9 +318,43 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 		return Collections.unmodifiableSet( metadata.keySet() );
 	}
 	
-	public Object getObject( String key )
+	@Override
+	public boolean kick( String msg )
 	{
-		return metadata.get( key );
+		return AccountManager.INSTANCE.kick( this, msg );
+	}
+	
+	@Override
+	public AccountMeta metadata()
+	{
+		return this;
+	}
+	
+	public void reload()
+	{
+		context.creator().reload( this );
+	}
+	
+	public void requireActivation()
+	{
+		metadata.put( "actnum", RandomFunc.randomize( "z154f98wfjascvc" ) );
+	}
+	
+	public void save()
+	{
+		context.creator().save( this );
+	}
+	
+	@Override
+	public void send( Account sender, Object obj )
+	{
+		instance().send( sender, obj );
+	}
+	
+	@Override
+	public void send( Object obj )
+	{
+		instance().send( obj );
 	}
 	
 	public void set( String key, Object obj )
@@ -171,203 +367,9 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 			metadata.put( key, obj );
 	}
 	
-	public String getString( String key )
-	{
-		return getString( key, null );
-	}
-	
-	public String getString( String key, String def )
-	{
-		String val = ObjectFunc.castToString( metadata.get( key ) );
-		return ( val == null ) ? def : val;
-	}
-	
-	public Integer getInteger( String key )
-	{
-		return getInteger( key, 0 );
-	}
-	
-	public Integer getInteger( String key, int def )
-	{
-		Object obj = metadata.get( key );
-		Integer val = ObjectFunc.castToInt( obj );
-		
-		return ( val == null ) ? def : val;
-	}
-	
-	public Boolean getBoolean( String key )
-	{
-		try
-		{
-			return ObjectFunc.castToBoolWithException( metadata.get( key ) );
-		}
-		catch ( ClassCastException e )
-		{
-			return false;
-		}
-	}
-	
+	@Override
 	public String toString()
 	{
 		return "AccountMeta{acctId=" + acctId + ",siteId=" + siteId + "," + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( metadata ) + "}";
-	}
-	
-	public boolean containsKey( String key )
-	{
-		return metadata.containsKey( key );
-	}
-	
-	@Override
-	public String getAcctId()
-	{
-		return acctId;
-	}
-	
-	@Override
-	public String getDisplayName()
-	{
-		String name = context.creator().getDisplayName( this );
-		return ( name == null ) ? getAcctId() : name;
-	}
-	
-	public String getSiteId()
-	{
-		return siteId;
-	}
-	
-	public String getLogoffMessage()
-	{
-		return this.getAcctId() + " has logged off the server";
-	}
-	
-	public void requireActivation()
-	{
-		metadata.put( "actnum", RandomFunc.randomize( "z154f98wfjascvc" ) );
-	}
-	
-	public PermissibleEntity getPermissibleEntity()
-	{
-		if ( permissibleEntity == null || permissibleEntity.get() == null )
-			permissibleEntity = new WeakReference<PermissibleEntity>( PermissionManager.INSTANCE.getEntity( getAcctId() ) );
-		
-		return permissibleEntity.get();
-	}
-	
-	public boolean isInitialized()
-	{
-		return account != null;
-	}
-	
-	@Override
-	public boolean isBanned()
-	{
-		return getPermissibleEntity().isBanned();
-	}
-	
-	@Override
-	public boolean isWhitelisted()
-	{
-		return getPermissibleEntity().isWhitelisted();
-	}
-	
-	@Override
-	public boolean isAdmin()
-	{
-		return getPermissibleEntity().isAdmin() || isOp();
-	}
-	
-	@Override
-	public boolean isOp()
-	{
-		return getPermissibleEntity().isOp();
-	}
-	
-	@Override
-	public boolean kick( String msg )
-	{
-		return AccountManager.INSTANCE.kick( this, msg );
-	}
-	
-	@Override
-	public Set<String> getIpAddresses()
-	{
-		return instance().getIpAddresses();
-	}
-	
-	@Override
-	public AccountMeta metadata()
-	{
-		return this;
-	}
-	
-	@Override
-	public AccountInstance instance()
-	{
-		if ( !isInitialized() )
-			initAccount();
-		
-		return account.get();
-	}
-	
-	public void reload()
-	{
-		context.creator().reload( this );
-	}
-	
-	public void save()
-	{
-		context.creator().save( this );
-	}
-	
-	@Override
-	public Site getSite()
-	{
-		return SiteManager.INSTANCE.getSiteById( siteId );
-	}
-	
-	/**
-	 * Returns the {@link AccountContext} responsible for our existence
-	 * 
-	 * @return
-	 *         Instance of AccountContext
-	 */
-	public AccountContext context()
-	{
-		return context;
-	}
-	
-	@Override
-	public Iterator<Entry<String, Object>> iterator()
-	{
-		return Collections.unmodifiableMap( metadata ).entrySet().iterator();
-	}
-	
-	public Set<String> getKeys()
-	{
-		return metadata.keySet();
-	}
-	
-	@Override
-	public void send( Object obj )
-	{
-		instance().send( obj );
-	}
-	
-	@Override
-	public void send( Account sender, Object obj )
-	{
-		instance().send( sender, obj );
-	}
-	
-	@Override
-	public PermissionResult checkPermission( String perm )
-	{
-		return getPermissibleEntity().checkPermission( perm );
-	}
-	
-	@Override
-	public PermissionResult checkPermission( Permission perm )
-	{
-		return getPermissibleEntity().checkPermission( perm );
 	}
 }
