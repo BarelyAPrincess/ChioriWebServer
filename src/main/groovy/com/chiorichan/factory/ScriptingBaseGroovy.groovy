@@ -133,6 +133,11 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 		return request.getSession().account()
 	}
 
+	String getAcctId()
+	{
+		return isLoginPresent() ?: getAccount().getAcctId()
+	}
+
 	boolean isLoginPresent()
 	{
 		return request.getSession().isLoginPresent()

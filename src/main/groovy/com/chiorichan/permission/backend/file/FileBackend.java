@@ -24,7 +24,6 @@ import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.configuration.InvalidConfigurationException;
 import com.chiorichan.configuration.file.FileConfiguration;
 import com.chiorichan.configuration.file.YamlConfiguration;
-import com.chiorichan.permission.ChildPermission;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
@@ -34,11 +33,10 @@ import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.PermissionModelValue;
 import com.chiorichan.permission.PermissionNamespace;
 import com.chiorichan.permission.PermissionType;
-import com.chiorichan.permission.PermissionValue;
+import com.chiorichan.permission.References;
 import com.chiorichan.permission.lang.PermissionBackendException;
 import com.chiorichan.permission.lang.PermissionException;
 import com.chiorichan.util.FileFunc;
-import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Sets;
 
@@ -62,6 +60,7 @@ public class FileBackend extends PermissionBackend
 		return backend;
 	}
 	
+	@Override
 	public void commit()
 	{
 		try
@@ -70,12 +69,12 @@ public class FileBackend extends PermissionBackend
 		}
 		catch ( IOException e )
 		{
-			Logger.getLogger( "" ).severe( "[PermissionsEx] Error during saving permissions file: " + e.getMessage() );
+			Logger.getLogger( "" ).severe( "[Permissions] Error during saving permissions file: " + e.getMessage() );
 		}
 	}
 	
 	@Override
-	public PermissibleGroup getDefaultGroup( String refs )
+	public PermissibleGroup getDefaultGroup( References refs )
 	{
 		ConfigurationSection groups = permissions.getConfigurationSection( "groups" );
 		
@@ -83,19 +82,21 @@ public class FileBackend extends PermissionBackend
 			throw new RuntimeException( "No groups defined. Check your permissions file." );
 		
 		String defaultGroupProperty = "default";
-		if ( refs != null )
-			defaultGroupProperty = FileFunc.buildPath( "refs", refs, defaultGroupProperty );
+		for ( String ref : refs )
+		{
+			defaultGroupProperty = FileFunc.buildPath( "refs", ref, defaultGroupProperty );
+			
+			for ( Map.Entry<String, Object> entry : groups.getValues( false ).entrySet() )
+				if ( entry.getValue() instanceof ConfigurationSection )
+				{
+					ConfigurationSection groupSection = ( ConfigurationSection ) entry.getValue();
+					
+					if ( groupSection.getBoolean( defaultGroupProperty, false ) )
+						return PermissionManager.INSTANCE.getGroup( entry.getKey() );
+				}
+		}
 		
-		for ( Map.Entry<String, Object> entry : groups.getValues( false ).entrySet() )
-			if ( entry.getValue() instanceof ConfigurationSection )
-			{
-				ConfigurationSection groupSection = ( ConfigurationSection ) entry.getValue();
-				
-				if ( groupSection.getBoolean( defaultGroupProperty, false ) )
-					return PermissionManager.INSTANCE.getGroup( entry.getKey() );
-			}
-		
-		if ( refs == null )
+		if ( refs.isEmpty() )
 			throw new RuntimeException( "Default user group is not defined. Please select one using the \"default: true\" property" );
 		
 		return null;
@@ -185,7 +186,7 @@ public class FileBackend extends PermissionBackend
 			{
 				permissionsFile.createNewFile();
 				
-				setDefaultGroup( "default" );
+				setDefaultGroup( "default", References.format( "" ) );
 				
 				List<String> defaultPermissions = new LinkedList<String>();
 				defaultPermissions.add( "com.chiorichan.*" );
@@ -217,34 +218,7 @@ public class FileBackend extends PermissionBackend
 		
 		if ( section != null )
 			for ( String s : section.getKeys( false ) )
-			{
-				ConfigurationSection result = section.getConfigurationSection( s );
-				ConfigurationSection permissions = result.getConfigurationSection( "permissions" );
-				
-				PermissibleGroup group = PermissionManager.INSTANCE.getGroup( s );
-				
-				group.setRank( result.getInt( "options/rank", -1 ) );
-				group.setDefault( result.getBoolean( "options/default", false ) );
-				group.setPrefix( result.getString( "options/prefix", "" ) );
-				
-				if ( permissions != null )
-					for ( String ss : permissions.getKeys( false ) )
-					{
-						ConfigurationSection permission = section.getConfigurationSection( ss );
-						
-						Permission perm = PermissionManager.INSTANCE.getNode( permission.getString( "permission" ), true );
-						
-						PermissionValue value = null;
-						if ( permission.getString( "value" ) != null )
-							value = perm.getModel().createValue( permission.getString( "value" ) );
-						
-						String refs = permission.isString( "refs" ) ? permission.getString( "refs" ) : "";
-						group.attachPermission( new ChildPermission( perm, value, group.getWeight(), refs.split( "|" ) ) );
-					}
-				
-				for ( String subGroup : result.getStringList( "groups" ) )
-					group.addGroup( PermissionManager.INSTANCE.getGroup( subGroup ) );
-			}
+				PermissionManager.INSTANCE.getGroup( s );
 	}
 	
 	@Override
@@ -273,10 +247,10 @@ public class FileBackend extends PermissionBackend
 				Permission perm = new Permission( ns, PermissionType.valueOf( section.getString( "type" ) ) );
 				PermissionModelValue model = perm.getModel();
 				
-				if ( section.get( "value" ) != null )
+				if ( section.get( "value" ) != null && !section.isConfigurationSection( "value" ) )
 					model.setValue( section.get( "value" ) );
 				
-				if ( section.get( "default" ) != null )
+				if ( section.get( "default" ) != null && !section.isConfigurationSection( "default" ) )
 					model.setValueDefault( section.get( "default" ) );
 				
 				if ( perm.getType().hasMax() )
@@ -347,9 +321,9 @@ public class FileBackend extends PermissionBackend
 	}
 	
 	@Override
-	public void setDefaultGroup( String group, String... ref )
+	public void setDefaultGroup( String group, References ref )
 	{
-		String refs = Joiner.on( "|" ).join( ref );
+		String refs = ref.join();
 		
 		ConfigurationSection groups = permissions.getConfigurationSection( "groups", true );
 		

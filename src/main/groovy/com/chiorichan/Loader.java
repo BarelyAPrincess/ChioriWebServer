@@ -946,27 +946,28 @@ public class Loader extends BuiltinEventCreator implements Listener
 		
 		changeRunLevel( RunLevel.POSTSERVER );
 		
-		getLogger().info( "Initalizing the Framework Database..." );
-		initDatabase();
-		
-		getLogger().info( "Initalizing the Permissions Manager..." );
 		try
 		{
+			getLogger().info( "Initalizing the Database Subsystem..." );
+			initDatabase();
+			
+			getLogger().info( "Initalizing the Permission Subsystem..." );
 			PermissionManager.init();
+			
+			getLogger().info( "Initalizing the Site Subsystem..." );
+			SiteManager.init();
+			
+			getLogger().info( "Initalizing the Account Subsystem..." );
+			AccountManager.init();
+			
+			getLogger().info( "Initalizing the Session Subsystem..." );
+			SessionManager.init();
+			
 		}
-		catch ( PermissionBackendException e )
+		catch ( Throwable e )
 		{
-			throw new StartupException( e );
+			throw new StartupException( "There was a problem initalizing one of the Server Subsystems", e );
 		}
-		
-		getLogger().info( "Initalizing the Site Manager..." );
-		SiteManager.init();
-		
-		getLogger().info( "Initalizing the Accounts Manager..." );
-		AccountManager.init();
-		
-		getLogger().info( "Initalizing the Session Manager..." );
-		SessionManager.init();
 		
 		changeRunLevel( RunLevel.INITIALIZED );
 		

@@ -114,7 +114,13 @@ public class MemoryTypeCreator extends AccountTypeCreator
 	public void successInit( AccountMeta meta, PermissibleEntity entity )
 	{
 		if ( meta.context().creator() == this && meta.getAcctId().equalsIgnoreCase( "root" ) )
+		{
 			entity.addPermission( PermissionDefault.OP.getNode(), true, null );
+			entity.setVirtual( true );
+		}
+		
+		if ( meta.context().creator() == this && meta.getAcctId().equalsIgnoreCase( "none" ) )
+			entity.setVirtual( true );
 	}
 	
 	@Override

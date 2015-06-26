@@ -23,13 +23,9 @@ class AccountList implements Iterable<AccountMeta>
 {
 	private volatile Map<String, AccountMeta> accounts = Maps.newConcurrentMap();
 	
-	void put( AccountMeta meta )
+	void clear()
 	{
-		// Prevents the overriding of the builtin Accounts
-		if ( ( "none".equals( meta.getAcctId() ) || "default".equals( meta.getAcctId() ) || "root".equals( meta.getAcctId() ) ) && accounts.containsKey( meta.getAcctId() ) )
-			return;
-		
-		accounts.put( meta.getAcctId(), meta );
+		accounts.clear();
 	}
 	
 	AccountMeta get( String acctId )
@@ -44,21 +40,14 @@ class AccountList implements Iterable<AccountMeta>
 		
 		if ( meta == null )
 			for ( AccountMeta am : accounts.values() )
-			{
 				for ( String key : am.context().loginKeys )
 					if ( acctId.equals( am.getString( key ) ) )
 					{
 						meta = am;
 						break;
 					}
-			}
 		
 		return meta;
-	}
-	
-	AccountMeta remove( String acctId )
-	{
-		return accounts.remove( acctId );
 	}
 	
 	@Override
@@ -67,19 +56,28 @@ class AccountList implements Iterable<AccountMeta>
 		return accounts.values().iterator();
 	}
 	
-	void clear()
+	public Set<String> keySet()
 	{
-		accounts.clear();
+		return Collections.unmodifiableSet( accounts.keySet() );
+	}
+	
+	void put( AccountMeta meta )
+	{
+		// Prevents the overriding of the builtin Accounts
+		if ( ( "none".equals( meta.getAcctId() ) || "default".equals( meta.getAcctId() ) || "root".equals( meta.getAcctId() ) ) && accounts.containsKey( meta.getAcctId() ) )
+			return;
+		
+		accounts.put( meta.getAcctId(), meta );
+	}
+	
+	AccountMeta remove( String acctId )
+	{
+		return accounts.remove( acctId );
 	}
 	
 	public Set<AccountMeta> toSet()
 	{
 		return new HashSet<AccountMeta>( accounts.values() );
-	}
-	
-	public Set<String> keySet()
-	{
-		return Collections.unmodifiableSet( accounts.keySet() );
 	}
 	
 }

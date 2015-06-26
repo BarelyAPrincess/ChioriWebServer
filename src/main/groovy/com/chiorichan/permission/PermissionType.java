@@ -26,7 +26,14 @@ public abstract class PermissionType
 		@Override
 		Boolean cast( Object obj ) throws ClassCastException
 		{
-			return ObjectFunc.castToBoolWithException( obj );
+			try
+			{
+				return ObjectFunc.castToBoolWithException( obj );
+			}
+			catch ( ClassCastException e )
+			{
+				return true;
+			}
 		}
 		
 		@Override
@@ -76,7 +83,14 @@ public abstract class PermissionType
 		@Override
 		Boolean cast( Object obj ) throws ClassCastException
 		{
-			return ObjectFunc.castToBoolWithException( obj );
+			try
+			{
+				return ObjectFunc.castToBoolWithException( obj );
+			}
+			catch ( ClassCastException e )
+			{
+				return true;
+			}
 		}
 		
 		@Override

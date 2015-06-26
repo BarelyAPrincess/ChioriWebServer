@@ -107,7 +107,7 @@ public class AccountContext
 	
 	public String getSiteId()
 	{
-		if ( acctId == null || acctId.isEmpty() )
+		if ( siteId == null || siteId.isEmpty() )
 			return "%";
 		
 		return siteId;

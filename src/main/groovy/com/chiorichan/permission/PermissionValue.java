@@ -36,6 +36,6 @@ public class PermissionValue
 	@Override
 	public String toString()
 	{
-		return String.format( "[model=%s,value=%s]", model, value );
+		return String.format( "PermissionValue{model=%s,value=%s}", model, value );
 	}
 }

@@ -8,22 +8,27 @@
  */
 package com.chiorichan.permission.backend.file;
 
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map.Entry;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.permission.ChildPermission;
 import com.chiorichan.permission.PermissibleEntity;
+import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionManager;
+import com.chiorichan.permission.PermissionNamespace;
 import com.chiorichan.permission.PermissionType;
 import com.chiorichan.permission.PermissionValue;
+import com.chiorichan.permission.References;
 
 public class FileEntity extends PermissibleEntity
 {
-	public FileEntity( String userName )
+	public FileEntity( String entityId )
 	{
-		super( userName );
+		super( entityId );
 	}
 	
 	@Override
@@ -32,11 +37,13 @@ public class FileEntity extends PermissibleEntity
 		if ( isDebug() )
 			PermissionManager.getLogger().info( ConsoleColor.YELLOW + "Groups being loaded for entity " + getId() );
 		
-		ConfigurationSection section = FileBackend.getBackend().permissions.getConfigurationSection( "entities." + getId() );
-		groups.clear();
+		clearGroups();
+		clearTimedGroups();
 		
-		for ( String group : section.getStringList( "groups", new ArrayList<String>() ) )
-			addGroup( PermissionManager.INSTANCE.getGroup( group ) );
+		ConfigurationSection groups = FileBackend.getBackend().permissions.getConfigurationSection( "entities." + getId() + ".groups" );
+		if ( groups != null )
+			for ( String key : groups.getKeys( false ) )
+				addGroup0( PermissionManager.INSTANCE.getGroup( key ), References.format( groups.getString( key ) ) );
 	}
 	
 	@Override
@@ -46,19 +53,31 @@ public class FileEntity extends PermissibleEntity
 			PermissionManager.getLogger().info( ConsoleColor.YELLOW + "Permissions being loaded for entity " + getId() );
 		
 		ConfigurationSection permissions = FileBackend.getBackend().permissions.getConfigurationSection( "entities." + getId() + ".permissions" );
-		childPermissions.clear();
+		clearPermissions();
+		clearTimedPermissions();
 		
 		if ( permissions != null )
 			for ( String ss : permissions.getKeys( false ) )
 			{
 				ConfigurationSection permission = permissions.getConfigurationSection( ss );
-				Permission perm = PermissionManager.INSTANCE.getNode( ss.replaceAll( "/", "." ).toLowerCase(), true );
+				PermissionNamespace ns = new PermissionNamespace( ss.replaceAll( "/", "." ) );
 				
-				PermissionValue value = null;
-				if ( permission.getString( "value" ) != null )
-					value = perm.getModel().createValue( permission.getString( "value" ) );
+				if ( !ns.containsOnlyValidChars() )
+				{
+					PermissionManager.getLogger().warning( "We failed to add the permission %s to entity %s because it contained invalid characters, namespaces can only contain 0-9, a-z and _." );
+					continue;
+				}
 				
-				attachPermission( new ChildPermission( perm, value, -1, permission.getStringList( "refs", new ArrayList<String>() ).toArray( new String[0] ) ) );
+				Collection<Permission> perms = ns.containsRegex() ? PermissionManager.INSTANCE.getNodes( ns ) : Arrays.asList( new Permission[] {PermissionManager.INSTANCE.getNode( ns, true )} );
+				
+				for ( Permission perm : perms )
+				{
+					PermissionValue value = null;
+					if ( permission.getString( "value" ) != null )
+						value = perm.getModel().createValue( permission.getString( "value" ) );
+					
+					addPermission( new ChildPermission( this, perm, value, -1 ), References.format( permission.getString( "refs" ) ) );
+				}
 			}
 	}
 	
@@ -79,22 +98,19 @@ public class FileEntity extends PermissibleEntity
 		
 		ConfigurationSection root = FileBackend.getBackend().permissions.getConfigurationSection( "entities." + getId(), true );
 		
-		if ( getChildPermissions().size() > 0 )
+		Collection<ChildPermission> children = getChildPermissions( null );
+		for ( ChildPermission child : children )
 		{
-			ConfigurationSection permissions = root.getConfigurationSection( "entities." + getId(), true );
+			Permission perm = child.getPermission();
+			ConfigurationSection sub = root.getConfigurationSection( "permissions." + perm.getNamespace().replaceAll( "\\.", "/" ), true );
+			if ( perm.getType() != PermissionType.DEFAULT )
+				sub.set( "value", child.getObject() );
 			
-			for ( ChildPermission child : getChildPermissions() )
-			{
-				Permission perm = child.getPermission();
-				ConfigurationSection sub = permissions.getConfigurationSection( perm.getNamespace().replaceAll( "\\.", "/" ), true );
-				if ( perm.getType() != PermissionType.DEFAULT )
-					sub.set( "value", child.getObject() );
-				
-				sub.set( "refs", child.getReferences().isEmpty() ? null : child.getReferences() );
-			}
+			sub.set( "refs", child.getReferences().isEmpty() ? null : child.getReferences().join() );
 		}
 		
-		if ( groups.size() > 0 )
-			root.set( "groups", groups.values() );
+		Collection<Entry<PermissibleGroup, References>> groups = getGroupEntrys( null );
+		for ( Entry<PermissibleGroup, References> entry : groups )
+			root.set( "groups." + entry.getKey().getId(), entry.getValue().join() );
 	}
 }

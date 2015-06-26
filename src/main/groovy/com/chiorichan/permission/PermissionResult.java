@@ -13,7 +13,6 @@ import com.chiorichan.permission.lang.PermissionException;
 import com.chiorichan.permission.lang.PermissionValueException;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.ObjectFunc;
-import com.chiorichan.util.StringFunc;
 
 /**
  * Holds the union between {@link Permission} and {@link PermissibleEntity}<br>
@@ -26,55 +25,45 @@ public class PermissionResult
 	private ChildPermission childPerm = null;
 	private final PermissibleEntity entity;
 	private final Permission perm;
-	private String ref;
+	private References refs;
 	
 	protected int timecode = Timings.epoch();
 	
 	PermissionResult( PermissibleEntity entity, Permission perm )
 	{
-		this( entity, perm, "" );
+		this( entity, perm, References.format( "" ) );
 	}
 	
-	PermissionResult( PermissibleEntity entity, Permission perm, String ref )
+	PermissionResult( PermissibleEntity entity, Permission perm, References refs )
 	{
-		ref = StringFunc.formatReference( ref );
-		
 		assert ( entity != null );
 		assert ( perm != null );
 		
 		this.entity = entity;
 		this.perm = perm;
-		this.ref = ref;
-		childPerm = entity.findChildPermission( perm, ref );
+		this.refs = refs;
+		childPerm = entity.getChildPermissionRecursive( perm, refs );
 	}
 	
-	public PermissionResult assign( Object val, String... refs )
+	public PermissionResult assign()
 	{
-		if ( perm.getType() == PermissionType.DEFAULT )
-			throw new PermissionException( String.format( "Can't assign the permission %s with value %s to entity %s, because the permission is of default type, which can't carry a value other than assigned or not.", perm.getNamespace(), val, entity.getId(), perm.getType().name() ) );
+		return assign( null );
+	}
+	
+	public PermissionResult assign( Object val, References refs )
+	{
+		if ( refs == null )
+			refs = References.format();
 		
-		if ( val == null )
-			throw new PermissionValueException( "The assigned value must not be null." );
-		
-		childPerm = new ChildPermission( perm, perm.getModel().createValue( val ), entity.isGroup() ? ( ( PermissibleGroup ) entity ).getWeight() : -1, refs );
-		entity.childPermissions.add( childPerm );
+		entity.addPermission( perm, val, refs );
 		
 		recalculatePermissions();
-		
 		return this;
 	}
 	
-	public PermissionResult assign( String... refs )
+	public PermissionResult assign( References refs )
 	{
-		if ( perm.getType() != PermissionType.DEFAULT )
-			throw new PermissionException( String.format( "Can't assign the permission %s to entity %s, because the permission is of type %s, use assign(Object) with the appropriate value instead.", perm.getNamespace(), entity.getId(), perm.getType().name() ) );
-		
-		childPerm = new ChildPermission( perm, perm.getModel().createValue( true ), entity.isGroup() ? ( ( PermissibleGroup ) entity ).getWeight() : -1, refs );
-		entity.childPermissions.add( childPerm );
-		
-		recalculatePermissions();
-		
-		return this;
+		return assign( null, refs );
 	}
 	
 	/**
@@ -105,9 +94,9 @@ public class PermissionResult
 		return perm;
 	}
 	
-	public String getReference()
+	public References getReference()
 	{
-		return ref;
+		return refs;
 	}
 	
 	public String getString()
@@ -228,14 +217,13 @@ public class PermissionResult
 	
 	public PermissionResult recalculatePermissions()
 	{
-		return recalculatePermissions( ref );
+		return recalculatePermissions( refs );
 	}
 	
-	public PermissionResult recalculatePermissions( String ref )
+	public PermissionResult recalculatePermissions( References refs )
 	{
-		ref = StringFunc.formatReference( ref );
-		this.ref = ref;
-		childPerm = entity.findChildPermission( perm, ref );
+		this.refs = refs;
+		childPerm = entity.getChildPermissionRecursive( perm, refs );
 		return this;
 	}
 	

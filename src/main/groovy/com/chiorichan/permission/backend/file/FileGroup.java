@@ -8,30 +8,76 @@
  */
 package com.chiorichan.permission.backend.file;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map.Entry;
+
+import com.chiorichan.ConsoleColor;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.permission.ChildPermission;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
+import com.chiorichan.permission.PermissionManager;
+import com.chiorichan.permission.PermissionNamespace;
 import com.chiorichan.permission.PermissionType;
-import com.google.common.base.Joiner;
+import com.chiorichan.permission.PermissionValue;
+import com.chiorichan.permission.References;
 
 public class FileGroup extends PermissibleGroup
 {
-	public FileGroup( String name )
+	public FileGroup( String groupName )
 	{
-		super( name );
+		super( groupName );
 	}
 	
 	@Override
 	public void reloadGroups()
 	{
+		if ( isDebug() )
+			PermissionManager.getLogger().info( ConsoleColor.YELLOW + "Groups being loaded for group " + getId() );
 		
+		clearGroups();
+		clearTimedGroups();
+		
+		ConfigurationSection groups = FileBackend.getBackend().permissions.getConfigurationSection( "entities." + getId() + ".groups" );
+		if ( groups != null )
+			for ( String key : groups.getKeys( false ) )
+				addGroup0( PermissionManager.INSTANCE.getGroup( key ), References.format( groups.getString( key ) ) );
 	}
 	
 	@Override
 	public void reloadPermissions()
 	{
+		if ( isDebug() )
+			PermissionManager.getLogger().info( ConsoleColor.YELLOW + "Permissions being loaded for entity " + getId() );
 		
+		ConfigurationSection permissions = FileBackend.getBackend().permissions.getConfigurationSection( "entities." + getId() + ".permissions" );
+		clearPermissions();
+		clearTimedPermissions();
+		
+		if ( permissions != null )
+			for ( String ss : permissions.getKeys( false ) )
+			{
+				ConfigurationSection permission = permissions.getConfigurationSection( ss );
+				PermissionNamespace ns = new PermissionNamespace( ss.replaceAll( "/", "." ) );
+				
+				if ( !ns.containsOnlyValidChars() )
+				{
+					PermissionManager.getLogger().warning( "We failed to add the permission %s to entity %s because it contained invalid characters, namespaces can only contain 0-9, a-z and _." );
+					continue;
+				}
+				
+				Collection<Permission> perms = ns.containsRegex() ? PermissionManager.INSTANCE.getNodes( ns ) : Arrays.asList( new Permission[] {PermissionManager.INSTANCE.getNode( ns, true )} );
+				
+				for ( Permission perm : perms )
+				{
+					PermissionValue value = null;
+					if ( permission.getString( "value" ) != null )
+						value = perm.getModel().createValue( permission.getString( "value" ) );
+					
+					addPermission( new ChildPermission( this, perm, value, getWeight() ), References.format( permission.getString( "refs" ) ) );
+				}
+			}
 	}
 	
 	@Override
@@ -43,17 +89,27 @@ public class FileGroup extends PermissibleGroup
 	@Override
 	public void save()
 	{
-		ConfigurationSection entity = FileBackend.getBackend().permissions.getConfigurationSection( "groups", true ).getConfigurationSection( getId(), true );
-		ConfigurationSection permissions = entity.getConfigurationSection( "permissions", true );
+		if ( isVirtual() )
+			return;
 		
-		for ( ChildPermission child : getChildPermissions() )
+		if ( isDebug() )
+			PermissionManager.getLogger().info( ConsoleColor.YELLOW + "Group " + getId() + " being saved to backend" );
+		
+		ConfigurationSection root = FileBackend.getBackend().permissions.getConfigurationSection( "entities." + getId(), true );
+		
+		Collection<ChildPermission> children = getChildPermissions( null );
+		for ( ChildPermission child : children )
 		{
 			Permission perm = child.getPermission();
-			ConfigurationSection sub = permissions.getConfigurationSection( perm.getLocalName(), true );
-			sub.set( "permission", perm.getNamespace() );
+			ConfigurationSection sub = root.getConfigurationSection( "permissions." + perm.getNamespace().replaceAll( "\\.", "/" ), true );
 			if ( perm.getType() != PermissionType.DEFAULT )
 				sub.set( "value", child.getObject() );
-			sub.set( "refs", Joiner.on( "|" ).join( child.getReferences() ) );
+			
+			sub.set( "refs", child.getReferences().isEmpty() ? null : child.getReferences().join() );
 		}
+		
+		Collection<Entry<PermissibleGroup, References>> groups = getGroupEntrys( null );
+		for ( Entry<PermissibleGroup, References> entry : groups )
+			root.set( "groups." + entry.getKey().getId(), entry.getValue().join() );
 	}
 }

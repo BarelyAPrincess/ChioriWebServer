@@ -11,351 +11,25 @@ package com.chiorichan.permission.commands;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.chiorichan.ConsoleColor;
-import com.chiorichan.account.AccountManager;
-import com.chiorichan.account.AccountMeta;
 import com.chiorichan.console.InteractiveConsole;
 import com.chiorichan.console.commands.advanced.CommandHandler;
-import com.chiorichan.permission.ChildPermission;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionManager;
+import com.chiorichan.permission.PermissionValue;
+import com.chiorichan.permission.References;
 import com.chiorichan.tasks.Timings;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 
 public class EntityCommands extends PermissionsCommand
 {
-	@CommandHandler( name = "pex", syntax = "entity <entity> group add <group> [ref] [lifetime]", permission = "permissions.manage.membership.<group>", description = "Add <entity> to <group>" )
-	public void entityAddGroup( InteractiveConsole sender, Map<String, String> args )
-	{
-		String entityName = autoCompleteAccount( args.get( "entity" ) );
-		String groupName = autoCompleteGroupName( args.get( "group" ) );
-		String refName = autoCompleteRef( args.get( "ref" ) );
-		
-		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
-		
-		if ( entity == null )
-		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
-			return;
-		}
-		
-		if ( args.containsKey( "lifetime" ) )
-			try
-			{
-				int lifetime = Timings.parseInterval( args.get( "lifetime" ) );
-				entity.addGroup( PermissionManager.INSTANCE.getGroup( groupName ), lifetime, refName );
-			}
-			catch ( NumberFormatException e )
-			{
-				sender.sendMessage( ConsoleColor.RED + "Group lifetime should be number!" );
-				return;
-			}
-		else
-			entity.addGroup( PermissionManager.INSTANCE.getGroup( groupName ), refName );
-		
-		
-		sender.sendMessage( ConsoleColor.WHITE + "User added to group \"" + groupName + "\"!" );
-		informEntity( entityName, "You are assigned to \"" + groupName + "\" group" );
-	}
-	
-	@CommandHandler( name = "pex", syntax = "entity <entity> add <permission> [ref]", permission = "permissions.manage.entitys.permissions.<entity>", description = "Add <permission> to <entity> in [ref]" )
-	public void entityAddPermission( InteractiveConsole sender, Map<String, String> args )
-	{
-		String entityName = autoCompleteAccount( args.get( "entity" ) );
-		String refName = autoCompleteRef( args.get( "ref" ) );
-		
-		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
-		
-		if ( entity == null )
-		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
-			return;
-		}
-		
-		entity.addPermission( args.get( "permission" ), true, refName );
-		
-		sender.sendMessage( ConsoleColor.WHITE + "Permission \"" + args.get( "permission" ) + "\" added!" );
-		
-		informEntity( entityName, "Your permissions have been changed!" );
-	}
-	
-	@CommandHandler( name = "pex", syntax = "entity <entity> timed add <permission> [lifetime] [ref]", permission = "permissions.manage.entitys.permissions.timed.<entity>", description = "Add timed <permissions> to <entity> for [lifetime] seconds in [ref]" )
-	public void entityAddTimedPermission( InteractiveConsole sender, Map<String, String> args )
-	{
-		String entityName = autoCompleteAccount( args.get( "entity" ) );
-		String refName = autoCompleteRef( args.get( "ref" ) );
-		
-		int lifetime = 0;
-		
-		if ( args.containsKey( "lifetime" ) )
-			lifetime = Timings.parseInterval( args.get( "lifetime" ) );
-		
-		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
-		
-		if ( entity == null )
-		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
-			return;
-		}
-		
-		String permission = args.get( "permission" );
-		
-		entity.addTimedPermission( permission, refName, lifetime );
-		
-		sender.sendMessage( ConsoleColor.WHITE + "Timed permission \"" + permission + "\" added!" );
-		informEntity( entityName, "Your permissions have been changed!" );
-		
-		PermissionManager.getLogger().info( "User " + entityName + " get timed permission \"" + args.get( "permission" ) + "\" " + ( lifetime > 0 ? "for " + lifetime + " seconds " : " " ) + "from " + getSenderName( sender ) );
-	}
-	
-	@CommandHandler( name = "pex", syntax = "entity <entity> check <permission> [ref]", permission = "permissions.manage.<entity>", description = "Checks meta for <permission>" )
-	public void entityCheckPermission( InteractiveConsole sender, Map<String, String> args )
-	{
-		String entityName = autoCompleteAccount( args.get( "entity" ) );
-		String refName = autoCompleteRef( args.get( "ref" ) );
-		
-		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
-		
-		if ( entity == null )
-		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
-			return;
-		}
-		
-		refName = getSafeSite( refName, entityName );
-		
-		String permission = entity.getMatchingExpression( args.get( "permission" ), refName );
-		
-		if ( permission == null )
-			sender.sendMessage( "Account \"" + entityName + "\" don't such have no permission" );
-		else
-			sender.sendMessage( "Account \"" + entityName + "\" have \"" + permission + "\" = " + entity.explainExpression( permission ) );
-	}
-	
-	@CommandHandler( name = "pex", syntax = "entity <entity> get <option> [ref]", permission = "permissions.manage.<entity>", description = "Toggle debug only for <entity>" )
-	public void entityGetOption( InteractiveConsole sender, Map<String, String> args )
-	{
-		String entityName = autoCompleteAccount( args.get( "entity" ) );
-		String refName = autoCompleteRef( args.get( "ref" ) );
-		
-		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
-		
-		if ( entity == null )
-		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
-			return;
-		}
-		
-		refName = getSafeSite( refName, entityName );
-		
-		String value = entity.getOption( args.get( "option" ), refName, null );
-		
-		sender.sendMessage( "AccountMeta " + entityName + " @ " + refName + " option \"" + args.get( "option" ) + "\" = \"" + value + "\"" );
-	}
-	
-	@CommandHandler( name = "pex", syntax = "entitys", permission = "permissions.manage.entitys", description = "List all registered entitys (alias)", isPrimary = true )
-	public void entityListAlias( InteractiveConsole sender, Map<String, String> args )
-	{
-		entitysList( sender, args );
-	}
-	
-	/**
-	 * User permission management
-	 */
-	@CommandHandler( name = "pex", syntax = "entity <entity>", permission = "permissions.manage.entitys.permissions.<entity>", description = "List entity permissions (list alias)" )
-	public void entityListAliasPermissions( InteractiveConsole sender, Map<String, String> args )
-	{
-		String entityName = autoCompleteAccount( args.get( "entity" ) );
-		String refName = autoCompleteRef( args.get( "ref" ) );
-		
-		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
-		
-		if ( entity == null )
-		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
-			return;
-		}
-		
-		sender.sendMessage( "'" + entityName + "' is a member of:" );
-		printEntityInheritance( sender, entity.getParentGroups() );
-		
-		for ( String ref : entity.getReferences() )
-		{
-			if ( ref == null )
-				continue;
-			
-			sender.sendMessage( "  @" + ref + ":" );
-			printEntityInheritance( sender, entity.getParentGroups( ref ) );
-		}
-		
-		sender.sendMessage( entityName + "'s permissions:" );
-		
-		sendMessage( sender, mapPermissions( refName, entity, 0 ) );
-		
-		sender.sendMessage( entityName + "'s options:" );
-		for ( Map.Entry<String, String> option : entity.getOptions( refName ).entrySet() )
-			sender.sendMessage( "  " + option.getKey() + " = \"" + option.getValue() + "\"" );
-	}
-	
-	@CommandHandler( name = "pex", syntax = "entity", permission = "permissions.manage.entitys", description = "List all registered entitys (alias)" )
-	public void entityListAnotherAlias( InteractiveConsole sender, Map<String, String> args )
-	{
-		entitysList( sender, args );
-	}
-	
-	/**
-	 * User's groups management
-	 */
-	@CommandHandler( name = "pex", syntax = "entity <entity> group list [ref]", permission = "permissions.manage.membership.<entity>", description = "List all <entity> groups" )
-	public void entityListGroup( InteractiveConsole sender, Map<String, String> args )
-	{
-		String entityName = autoCompleteAccount( args.get( "entity" ) );
-		String refName = autoCompleteRef( args.get( "ref" ) );
-		
-		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
-		
-		if ( entity == null )
-		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
-			return;
-		}
-		
-		sender.sendMessage( "User " + args.get( "entity" ) + " @" + refName + " currently in:" );
-		for ( PermissibleGroup group : entity.getParentGroups( refName ) )
-			sender.sendMessage( "  " + group.getId() );
-	}
-	
-	@CommandHandler( name = "pex", syntax = "entity <entity> list [ref]", permission = "permissions.manage.entitys.permissions.<entity>", description = "List entity permissions" )
-	public void entityListPermissions( InteractiveConsole sender, Map<String, String> args )
-	{
-		String entityName = autoCompleteAccount( args.get( "entity" ) );
-		String refName = autoCompleteRef( args.get( "ref" ) );
-		
-		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
-		
-		if ( entity == null )
-		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
-			return;
-		}
-		
-		sender.sendMessage( entityName + "'s permissions:" );
-		
-		for ( String permission : entity.getPermissionNodes( refName ) )
-			sender.sendMessage( "  " + permission );
-		
-	}
-	
-	@CommandHandler( name = "pex", syntax = "entity <entity> superperms", permission = "permissions.manage.entitys.permissions.<entity>", description = "List entity actual superperms" )
-	public void entityListSuperPermissions( InteractiveConsole sender, Map<String, String> args )
-	{
-		String entityName = autoCompleteAccount( args.get( "entity" ) );
-		
-		AccountMeta meta = AccountManager.INSTANCE.getAccount( entityName );
-		if ( meta == null )
-		{
-			sender.sendMessage( ConsoleColor.RED + "Account not found!" );
-			return;
-		}
-		
-		sender.sendMessage( entityName + "'s superperms:" );
-		
-		for ( ChildPermission info : meta.getPermissibleEntity().getChildPermissions() )
-			sender.sendMessage( " '" + ConsoleColor.GREEN + info.getPermission() + ConsoleColor.WHITE + "' = " + ConsoleColor.BLUE + info.getValue() );
-	}
-	
-	@CommandHandler( name = "pex", syntax = "entity <entity> prefix [newprefix] [ref]", permission = "permissions.manage.entitys.prefix.<entity>", description = "Get or set <entity> prefix" )
-	public void entityPrefix( InteractiveConsole sender, Map<String, String> args )
-	{
-		String entityName = autoCompleteAccount( args.get( "entity" ) );
-		String refName = autoCompleteRef( args.get( "ref" ) );
-		
-		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
-		
-		if ( entity == null )
-		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
-			return;
-		}
-		
-		if ( args.containsKey( "newprefix" ) )
-			entity.setPrefix( args.get( "newprefix" ), refName );
-		
-		sender.sendMessage( entity.getId() + "'s prefix = \"" + entity.getPrefix() + "\"" );
-	}
-	
-	@CommandHandler( name = "pex", syntax = "entity <entity> group remove <group> [ref]", permission = "permissions.manage.membership.<group>", description = "Remove <entity> from <group>" )
-	public void entityRemoveGroup( InteractiveConsole sender, Map<String, String> args )
-	{
-		String entityName = autoCompleteAccount( args.get( "entity" ) );
-		String groupName = autoCompleteGroupName( args.get( "group" ) );
-		String refName = autoCompleteRef( args.get( "ref" ) );
-		
-		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
-		
-		if ( entity == null )
-		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
-			return;
-		}
-		
-		entity.removeGroup( groupName, refName );
-		
-		sender.sendMessage( ConsoleColor.WHITE + "User removed from group " + groupName + "!" );
-		
-		informEntity( entityName, "You were removed from \"" + groupName + "\" group" );
-	}
-	
-	@CommandHandler( name = "pex", syntax = "entity <entity> remove <permission> [ref]", permission = "permissions.manage.entitys.permissions.<entity>", description = "Remove permission from <entity> in [ref]" )
-	public void entityRemovePermission( InteractiveConsole sender, Map<String, String> args )
-	{
-		String entityName = autoCompleteAccount( args.get( "entity" ) );
-		String refName = autoCompleteRef( args.get( "ref" ) );
-		
-		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
-		
-		if ( entity == null )
-		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
-			return;
-		}
-		
-		String permission = autoCompletePermission( entity, args.get( "permission" ), refName );
-		
-		entity.detachPermission( permission, refName );
-		entity.removeTimedPermission( permission, refName );
-		
-		sender.sendMessage( ConsoleColor.WHITE + "Permission \"" + permission + "\" removed!" );
-		informEntity( entityName, "Your permissions have been changed!" );
-	}
-	
-	@CommandHandler( name = "pex", syntax = "entity <entity> timed remove <permission> [ref]", permission = "permissions.manage.entitys.permissions.timed.<entity>", description = "Remove timed <permission> from <entity> in [ref]" )
-	public void entityRemoveTimedPermission( InteractiveConsole sender, Map<String, String> args )
-	{
-		String entityName = autoCompleteAccount( args.get( "entity" ) );
-		String refName = autoCompleteRef( args.get( "ref" ) );
-		String permission = args.get( "permission" );
-		
-		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
-		
-		if ( entity == null )
-		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
-			return;
-		}
-		
-		entity.removeTimedPermission( args.get( "permission" ), refName );
-		
-		sender.sendMessage( ConsoleColor.WHITE + "Timed permission \"" + permission + "\" removed!" );
-		informEntity( entityName, "Your permissions have been changed!" );
-	}
-	
-	@CommandHandler( name = "pex", syntax = "entitys cleanup <group> [threshold]", permission = "permissions.manage.entitys.cleanup", description = "Clean entitys of specified group, which last login was before threshold (in days). By default threshold is 30 days." )
-	public void entitysCleanup( InteractiveConsole sender, Map<String, String> args )
+	@CommandHandler( name = "pex", syntax = "entities cleanup <group> [threshold]", permission = "permissions.manage.entities.cleanup", description = "Clean entities of specified group, which last login was before threshold (in days). By default threshold is 30 days." )
+	public void entitiesCleanup( InteractiveConsole sender, Map<String, String> args )
 	{
 		long threshold = 2304000;
 		
@@ -375,8 +49,9 @@ public class EntityCommands extends PermissionsCommand
 		int removed = 0;
 		
 		Long deadline = ( System.currentTimeMillis() / 1000L ) - threshold;
-		for ( PermissibleEntity entity : group.getChildEntities() )
+		for ( PermissibleEntity entity : group.getChildEntities( true, References.format() ) )
 		{
+			// XXX Check last login from account, maybe make a last use option
 			int lastLogin = entity.getOption( "last-login-time", null, 0 );
 			
 			if ( lastLogin > 0 && lastLogin < deadline )
@@ -386,7 +61,318 @@ public class EntityCommands extends PermissionsCommand
 			}
 		}
 		
-		sender.sendMessage( "Cleaned " + removed + " entitys" );
+		sender.sendMessage( "Cleaned " + removed + " entities" );
+	}
+	
+	@CommandHandler( name = "pex", syntax = "entities list", permission = "permissions.manage.entities", description = "List all registered entities" )
+	public void entitiesList( InteractiveConsole sender, Map<String, String> args )
+	{
+		Collection<PermissibleEntity> entities = PermissionManager.INSTANCE.getEntities();
+		
+		sender.sendMessage( ConsoleColor.WHITE + "Currently registered entities: " );
+		for ( PermissibleEntity entity : entities )
+			sender.sendMessage( " " + entity.getId() + " " + ConsoleColor.DARK_GREEN + "[" + Joiner.on( ", " ).join( entity.getGroupNames( References.format() ) ) + "]" );
+	}
+	
+	@CommandHandler( name = "pex", syntax = "entity <entity> group add <group> [ref] [lifetime]", permission = "permissions.manage.membership.<group>", description = "Add <entity> to <group>" )
+	public void entityAddGroup( InteractiveConsole sender, Map<String, String> args )
+	{
+		String entityName = autoCompleteAccount( args.get( "entity" ) );
+		String groupName = autoCompleteGroupName( args.get( "group" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
+		
+		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
+		
+		if ( entity == null )
+		{
+			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
+			return;
+		}
+		
+		if ( args.containsKey( "lifetime" ) )
+			try
+			{
+				int lifetime = Timings.parseInterval( args.get( "lifetime" ) );
+				entity.addTimedGroup( PermissionManager.INSTANCE.getGroup( groupName ), lifetime, refs );
+			}
+			catch ( NumberFormatException e )
+			{
+				sender.sendMessage( ConsoleColor.RED + "Group lifetime should be number!" );
+				return;
+			}
+		else
+			entity.addGroup( PermissionManager.INSTANCE.getGroup( groupName ), refs );
+		
+		
+		sender.sendMessage( ConsoleColor.WHITE + "User added to group \"" + groupName + "\"!" );
+		informEntity( entityName, "You are assigned to \"" + groupName + "\" group" );
+	}
+	
+	@CommandHandler( name = "pex", syntax = "entity <entity> add <permission> [ref]", permission = "permissions.manage.entities.permissions.<entity>", description = "Add <permission> to <entity> in [ref]" )
+	public void entityAddPermission( InteractiveConsole sender, Map<String, String> args )
+	{
+		String entityName = autoCompleteAccount( args.get( "entity" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
+		
+		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
+		
+		if ( entity == null )
+		{
+			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
+			return;
+		}
+		
+		entity.addPermission( args.get( "permission" ), true, refs );
+		
+		sender.sendMessage( ConsoleColor.WHITE + "Permission \"" + args.get( "permission" ) + "\" added!" );
+		
+		informEntity( entityName, "Your permissions have been changed!" );
+	}
+	
+	@CommandHandler( name = "pex", syntax = "entity <entity> timed add <permission> [lifetime] [ref]", permission = "permissions.manage.entities.permissions.timed.<entity>", description = "Add timed <permissions> to <entity> for [lifetime] seconds in [ref]" )
+	public void entityAddTimedPermission( InteractiveConsole sender, Map<String, String> args )
+	{
+		String entityName = autoCompleteAccount( args.get( "entity" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
+		
+		int lifetime = 0;
+		
+		if ( args.containsKey( "lifetime" ) )
+			lifetime = Timings.parseInterval( args.get( "lifetime" ) );
+		
+		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
+		
+		if ( entity == null )
+		{
+			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
+			return;
+		}
+		
+		String permission = args.get( "permission" );
+		
+		entity.addTimedPermission( permission, true, refs, lifetime );
+		
+		sender.sendMessage( ConsoleColor.WHITE + "Timed permission \"" + permission + "\" added!" );
+		informEntity( entityName, "Your permissions have been changed!" );
+		
+		PermissionManager.getLogger().info( "User " + entityName + " get timed permission \"" + args.get( "permission" ) + "\" " + ( lifetime > 0 ? "for " + lifetime + " seconds " : " " ) + "from " + getSenderName( sender ) );
+	}
+	
+	@CommandHandler( name = "pex", syntax = "entity <entity> check <permission> [ref]", permission = "permissions.manage.<entity>", description = "Checks meta for <permission>" )
+	public void entityCheckPermission( InteractiveConsole sender, Map<String, String> args )
+	{
+		String entityName = autoCompleteAccount( args.get( "entity" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
+		
+		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
+		
+		if ( entity == null )
+		{
+			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
+			return;
+		}
+		
+		refs = getSafeSite( refs, entityName );
+		
+		String permission = entity.getMatchingExpression( args.get( "permission" ), refs );
+		
+		if ( permission == null )
+			sender.sendMessage( "Account \"" + entityName + "\" don't such have no permission" );
+		else
+			sender.sendMessage( "Account \"" + entityName + "\" have \"" + permission + "\" = " + entity.explainExpression( permission ) );
+	}
+	
+	@CommandHandler( name = "pex", syntax = "entity <entity> get <option> [ref]", permission = "permissions.manage.<entity>", description = "Toggle debug only for <entity>" )
+	public void entityGetOption( InteractiveConsole sender, Map<String, String> args )
+	{
+		String entityName = autoCompleteAccount( args.get( "entity" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
+		
+		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
+		
+		if ( entity == null )
+		{
+			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
+			return;
+		}
+		
+		refs = getSafeSite( refs, entityName );
+		
+		String value = entity.getOption( args.get( "option" ), refs, null );
+		
+		sender.sendMessage( "AccountMeta " + entityName + " @ " + refs + " option \"" + args.get( "option" ) + "\" = \"" + value + "\"" );
+	}
+	
+	@CommandHandler( name = "pex", syntax = "entities", permission = "permissions.manage.entities", description = "List all registered entities (alias)", isPrimary = true )
+	public void entityListAlias( InteractiveConsole sender, Map<String, String> args )
+	{
+		entitiesList( sender, args );
+	}
+	
+	/**
+	 * User permission management
+	 */
+	@CommandHandler( name = "pex", syntax = "entity <entity>", permission = "permissions.manage.entities.permissions.<entity>", description = "List entity permissions (list alias)" )
+	public void entityListAliasPermissions( InteractiveConsole sender, Map<String, String> args )
+	{
+		String entityName = autoCompleteAccount( args.get( "entity" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
+		
+		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
+		
+		if ( entity == null )
+		{
+			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
+			return;
+		}
+		
+		sender.sendMessage( "'" + entityName + "' is a member of:" );
+		printEntityInheritance( sender, entity.getGroups( refs ) );
+		
+		sender.sendMessage( "  @" + refs.toString() + ":" );
+		printEntityInheritance( sender, entity.getGroups( refs ) );
+		
+		sender.sendMessage( entityName + "'s permissions:" );
+		
+		sendMessage( sender, mapPermissions( refs, entity, 0 ) );
+		
+		sender.sendMessage( entityName + "'s options:" );
+		for ( Map.Entry<String, String> option : entity.getOptions( refs ).entrySet() )
+			sender.sendMessage( "  " + option.getKey() + " = \"" + option.getValue() + "\"" );
+	}
+	
+	@CommandHandler( name = "pex", syntax = "entity", permission = "permissions.manage.entities", description = "List all registered entities (alias)" )
+	public void entityListAnotherAlias( InteractiveConsole sender, Map<String, String> args )
+	{
+		entitiesList( sender, args );
+	}
+	
+	/**
+	 * User's groups management
+	 */
+	@CommandHandler( name = "pex", syntax = "entity <entity> group list [ref]", permission = "permissions.manage.membership.<entity>", description = "List all <entity> groups" )
+	public void entityListGroup( InteractiveConsole sender, Map<String, String> args )
+	{
+		String entityName = autoCompleteAccount( args.get( "entity" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
+		
+		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
+		
+		if ( entity == null )
+		{
+			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
+			return;
+		}
+		
+		sender.sendMessage( "User " + args.get( "entity" ) + " @" + refs + " currently in:" );
+		for ( PermissibleGroup group : entity.getGroups( refs ) )
+			sender.sendMessage( "  " + group.getId() );
+	}
+	
+	@CommandHandler( name = "pex", syntax = "entity <entity> list [ref]", permission = "permissions.manage.entities.permissions.<entity>", description = "List entity permissions" )
+	public void entityListPermissions( InteractiveConsole sender, Map<String, String> args )
+	{
+		String entityName = autoCompleteAccount( args.get( "entity" ) );
+		// References refs = autoCompleteRef( args.get( "ref" ) );
+		
+		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
+		if ( entity == null )
+		{
+			sender.sendMessage( ConsoleColor.RED + "Entity not found!" );
+			return;
+		}
+		
+		sender.sendMessage( entityName + "'s permissions:" );
+		
+		for ( Entry<Permission, PermissionValue> perm : entity.getPermissionValues( References.format() ) )
+			sender.sendMessage( " '" + ConsoleColor.GREEN + perm.getKey() + ConsoleColor.WHITE + "' = " + ConsoleColor.BLUE + perm.getValue() );
+		
+	}
+	
+	@CommandHandler( name = "pex", syntax = "entity <entity> prefix [newprefix] [ref]", permission = "permissions.manage.entities.prefix.<entity>", description = "Get or set <entity> prefix" )
+	public void entityPrefix( InteractiveConsole sender, Map<String, String> args )
+	{
+		String entityName = autoCompleteAccount( args.get( "entity" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
+		
+		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
+		
+		if ( entity == null )
+		{
+			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
+			return;
+		}
+		
+		if ( args.containsKey( "newprefix" ) )
+			entity.setPrefix( args.get( "newprefix" ), refs );
+		
+		sender.sendMessage( entity.getId() + "'s prefix = \"" + entity.getPrefix() + "\"" );
+	}
+	
+	@CommandHandler( name = "pex", syntax = "entity <entity> group remove <group> [ref]", permission = "permissions.manage.membership.<group>", description = "Remove <entity> from <group>" )
+	public void entityRemoveGroup( InteractiveConsole sender, Map<String, String> args )
+	{
+		String entityName = autoCompleteAccount( args.get( "entity" ) );
+		String groupName = autoCompleteGroupName( args.get( "group" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
+		
+		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
+		
+		if ( entity == null )
+		{
+			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
+			return;
+		}
+		
+		entity.removeGroup( groupName, refs );
+		
+		sender.sendMessage( ConsoleColor.WHITE + "User removed from group " + groupName + "!" );
+		
+		informEntity( entityName, "You were removed from \"" + groupName + "\" group" );
+	}
+	
+	@CommandHandler( name = "pex", syntax = "entity <entity> remove <permission> [ref]", permission = "permissions.manage.entities.permissions.<entity>", description = "Remove permission from <entity> in [ref]" )
+	public void entityRemovePermission( InteractiveConsole sender, Map<String, String> args )
+	{
+		String entityName = autoCompleteAccount( args.get( "entity" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
+		
+		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
+		
+		if ( entity == null )
+		{
+			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
+			return;
+		}
+		
+		String permission = autoCompletePermission( entity, args.get( "permission" ), refs );
+		
+		entity.removePermission( permission, refs );
+		entity.removeTimedPermission( permission, refs );
+		
+		sender.sendMessage( ConsoleColor.WHITE + "Permission \"" + permission + "\" removed!" );
+		informEntity( entityName, "Your permissions have been changed!" );
+	}
+	
+	@CommandHandler( name = "pex", syntax = "entity <entity> timed remove <permission> [ref]", permission = "permissions.manage.entities.permissions.timed.<entity>", description = "Remove timed <permission> from <entity> in [ref]" )
+	public void entityRemoveTimedPermission( InteractiveConsole sender, Map<String, String> args )
+	{
+		String entityName = autoCompleteAccount( args.get( "entity" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
+		String permission = args.get( "permission" );
+		
+		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
+		
+		if ( entity == null )
+		{
+			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
+			return;
+		}
+		
+		entity.removeTimedPermission( args.get( "permission" ), refs );
+		
+		sender.sendMessage( ConsoleColor.WHITE + "Timed permission \"" + permission + "\" removed!" );
+		informEntity( entityName, "Your permissions have been changed!" );
 	}
 	
 	@CommandHandler( name = "pex", syntax = "entity <entity> group set <group> [ref]", permission = "", description = "Set <group> for <entity>" )
@@ -395,7 +381,7 @@ public class EntityCommands extends PermissionsCommand
 		PermissionManager manager = PermissionManager.INSTANCE;
 		
 		PermissibleEntity entity = manager.getEntity( autoCompleteAccount( args.get( "entity" ) ) );
-		String refName = autoCompleteRef( args.get( "ref" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
 		
 		if ( entity == null )
 		{
@@ -445,7 +431,7 @@ public class EntityCommands extends PermissionsCommand
 		
 		if ( groups.size() > 0 )
 		{
-			entity.setParentGroups( groups, refName );
+			entity.setGroups( groups, refs );
 			sender.sendMessage( ConsoleColor.WHITE + "User groups set!" );
 		}
 		else
@@ -454,11 +440,11 @@ public class EntityCommands extends PermissionsCommand
 		informEntity( entity.getId(), "You are now only in \"" + groupName + "\" group" );
 	}
 	
-	@CommandHandler( name = "pex", syntax = "entity <entity> set <option> <value> [ref]", permission = "permissions.manage.entitys.permissions.<entity>", description = "Set <option> to <value> in [ref]" )
+	@CommandHandler( name = "pex", syntax = "entity <entity> set <option> <value> [ref]", permission = "permissions.manage.entities.permissions.<entity>", description = "Set <option> to <value> in [ref]" )
 	public void entitySetOption( InteractiveConsole sender, Map<String, String> args )
 	{
 		String entityName = autoCompleteAccount( args.get( "entity" ) );
-		String refName = autoCompleteRef( args.get( "ref" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
 		
 		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
 		
@@ -468,7 +454,7 @@ public class EntityCommands extends PermissionsCommand
 			return;
 		}
 		
-		entity.setOption( args.get( "option" ), args.get( "value" ), refName );
+		entity.setOption( args.get( "option" ), args.get( "value" ), refs );
 		
 		
 		if ( args.containsKey( "value" ) && args.get( "value" ).isEmpty() )
@@ -479,21 +465,11 @@ public class EntityCommands extends PermissionsCommand
 		informEntity( entityName, "Your permissions have been changed!" );
 	}
 	
-	@CommandHandler( name = "pex", syntax = "entitys list", permission = "permissions.manage.entitys", description = "List all registered entitys" )
-	public void entitysList( InteractiveConsole sender, Map<String, String> args )
-	{
-		Collection<PermissibleEntity> entitys = PermissionManager.INSTANCE.getEntities();
-		
-		sender.sendMessage( ConsoleColor.WHITE + "Currently registered entitys: " );
-		for ( PermissibleEntity entity : entitys )
-			sender.sendMessage( " " + entity.getId() + " " + ConsoleColor.DARK_GREEN + "[" + Joiner.on( ", " ).join( entity.getParentGroupNames() ) + "]" );
-	}
-	
-	@CommandHandler( name = "pex", syntax = "entity <entity> suffix [newsuffix] [ref]", permission = "permissions.manage.entitys.suffix.<entity>", description = "Get or set <entity> suffix" )
+	@CommandHandler( name = "pex", syntax = "entity <entity> suffix [newsuffix] [ref]", permission = "permissions.manage.entities.suffix.<entity>", description = "Get or set <entity> suffix" )
 	public void entitySuffix( InteractiveConsole sender, Map<String, String> args )
 	{
 		String entityName = autoCompleteAccount( args.get( "entity" ) );
-		String refName = autoCompleteRef( args.get( "ref" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
 		
 		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
 		
@@ -504,16 +480,16 @@ public class EntityCommands extends PermissionsCommand
 		}
 		
 		if ( args.containsKey( "newsuffix" ) )
-			entity.setSuffix( args.get( "newsuffix" ), refName );
+			entity.setSuffix( args.get( "newsuffix" ), refs );
 		
 		sender.sendMessage( entity.getId() + "'s suffix = \"" + entity.getSuffix() + "\"" );
 	}
 	
-	@CommandHandler( name = "pex", syntax = "entity <entity> swap <permission> <targetPermission> [ref]", permission = "permissions.manage.entitys.permissions.<entity>", description = "Swap <permission> and <targetPermission> in permission list. Could be number or permission itself" )
+	@CommandHandler( name = "pex", syntax = "entity <entity> swap <permission> <targetPermission> [ref]", permission = "permissions.manage.entities.permissions.<entity>", description = "Swap <permission> and <targetPermission> in permission list. Could be number or permission itself" )
 	public void entitySwapPermission( InteractiveConsole sender, Map<String, String> args )
 	{
 		String entityName = autoCompleteAccount( args.get( "entity" ) );
-		String refName = autoCompleteRef( args.get( "ref" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
 		
 		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
 		
@@ -523,19 +499,19 @@ public class EntityCommands extends PermissionsCommand
 			return;
 		}
 		
-		Permission[] permissions = entity.getPermissions( refName ).toArray( new Permission[0] );
+		Permission[] permissions = entity.getPermissions( refs ).toArray( new Permission[0] );
 		
 		try
 		{
-			int sourceIndex = getPosition( autoCompletePermission( entity, args.get( "permission" ), refName, "permission" ), permissions );
-			int targetIndex = getPosition( autoCompletePermission( entity, args.get( "targetPermission" ), refName, "targetPermission" ), permissions );
+			int sourceIndex = getPosition( autoCompletePermission( entity, args.get( "permission" ), refs, "permission" ), permissions );
+			int targetIndex = getPosition( autoCompletePermission( entity, args.get( "targetPermission" ), refs, "targetPermission" ), permissions );
 			
 			Permission targetPermission = permissions[targetIndex];
 			
 			permissions[targetIndex] = permissions[sourceIndex];
 			permissions[sourceIndex] = targetPermission;
 			
-			// entity.setPermissions( permissions, refName );
+			// entity.setPermissions( permissions, refs );
 			
 			sender.sendMessage( "Permissions swapped!" );
 		}

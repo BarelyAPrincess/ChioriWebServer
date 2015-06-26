@@ -185,6 +185,8 @@ public abstract class PermissionBackend
 		PermissionManager.getLogger().fine( alias + " backend registered!" );
 	}
 	
+	public abstract void commit();
+	
 	public void dumpData( OutputStreamWriter outputStreamWriter )
 	{
 		// TODO Auto-generated method stub
@@ -195,7 +197,7 @@ public abstract class PermissionBackend
 	 * 
 	 * @return Default group instance
 	 */
-	public abstract PermissibleGroup getDefaultGroup( String siteName );
+	public abstract PermissibleGroup getDefaultGroup( References refs );
 	
 	/**
 	 * Returns new PermissibleEntity object for specified id
@@ -268,10 +270,10 @@ public abstract class PermissionBackend
 	 */
 	public abstract void nodeReload( Permission perm );
 	
+	public abstract void reloadBackend() throws PermissionBackendException;
+	
 	/**
 	 * Sets the default group
 	 */
-	public abstract void setDefaultGroup( String child, String... site );
-	
-	public abstract void reloadBackend() throws PermissionBackendException;
+	public abstract void setDefaultGroup( String child, References refs );
 }

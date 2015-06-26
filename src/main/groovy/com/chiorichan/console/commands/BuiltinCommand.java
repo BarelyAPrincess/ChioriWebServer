@@ -13,12 +13,13 @@ import java.util.Arrays;
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.AccountInstance;
-import com.chiorichan.account.AccountManager;
-import com.chiorichan.account.AccountMeta;
-import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.console.Command;
 import com.chiorichan.console.CommandDispatch;
 import com.chiorichan.console.InteractiveConsole;
+import com.chiorichan.permission.PermissibleEntity;
+import com.chiorichan.permission.PermissionDefault;
+import com.chiorichan.permission.PermissionManager;
+import com.chiorichan.permission.References;
 import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Joiner;
@@ -28,6 +29,16 @@ import com.google.common.base.Joiner;
  */
 public abstract class BuiltinCommand extends Command
 {
+	BuiltinCommand( String name )
+	{
+		super( name );
+	}
+	
+	BuiltinCommand( String name, String permission )
+	{
+		super( name, permission );
+	}
+	
 	public static void registerBuiltinCommands()
 	{
 		CommandDispatch.registerCommand( new BuiltinCommand( "version" )
@@ -107,6 +118,31 @@ public abstract class BuiltinCommand extends Command
 			}
 		} );
 		
+		CommandDispatch.registerCommand( new BuiltinCommand( "deop" )
+		{
+			@Override
+			public boolean execute( InteractiveConsole handler, String command, String[] args )
+			{
+				if ( handler.getPersistence().getSession().isOp() )
+				{
+					if ( args.length < 1 )
+						handler.sendMessage( ConsoleColor.RED + "You must specify which account you wish to deop." );
+					else
+					{
+						PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( args[0], false );
+						if ( entity == null )
+							handler.sendMessage( ConsoleColor.RED + "We could not find an entity by that id." );
+						entity.removePermission( PermissionDefault.OP.getNode(), References.format() );
+						handler.sendMessage( ConsoleColor.AQUA + "We successfully deop'ed entity " + entity.getId() );
+					}
+				}
+				else
+					handler.sendMessage( ConsoleColor.RED + "Only server operators can demote entities from server operator." );
+				
+				return true;
+			}
+		} );
+		
 		CommandDispatch.registerCommand( new BuiltinCommand( "op" )
 		{
 			@Override
@@ -118,15 +154,15 @@ public abstract class BuiltinCommand extends Command
 						handler.sendMessage( ConsoleColor.RED + "You must specify which account you wish to op." );
 					else
 					{
-						AccountMeta acct = AccountManager.INSTANCE.getAccount( args[0] );
-						if ( acct == null )
-							throw AccountResult.INCORRECT_LOGIN.exception();
-						acct.getPermissibleEntity().checkPermission( "sys.op" ).assign();
-						handler.sendMessage( ConsoleColor.AQUA + "We successfully op'ed the account " + acct.getAcctId() );
+						PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( args[0], false );
+						if ( entity == null )
+							handler.sendMessage( ConsoleColor.RED + "We could not find an entity by that id." );
+						entity.addPermission( PermissionDefault.OP.getNode(), true, null );
+						handler.sendMessage( ConsoleColor.AQUA + "We successfully op'ed entity " + entity.getId() );
 					}
 				}
 				else
-					handler.sendMessage( ConsoleColor.RED + "Only server operators can promote other accounts to server operator." );
+					handler.sendMessage( ConsoleColor.RED + "Only server operators can promote entities to server operator." );
 				
 				return true;
 			}
@@ -158,15 +194,5 @@ public abstract class BuiltinCommand extends Command
 		}.setAliases( Arrays.asList( new String[] {"quit", "end", "leave", "logout"} ) ) );
 		
 		CommandDispatch.registerCommand( new LoginCommand() );
-	}
-	
-	BuiltinCommand( String name )
-	{
-		super( name );
-	}
-	
-	BuiltinCommand( String name, String permission )
-	{
-		super( name, permission );
 	}
 }

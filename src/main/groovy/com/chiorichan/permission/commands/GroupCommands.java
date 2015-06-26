@@ -21,6 +21,7 @@ import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionManager;
+import com.chiorichan.permission.References;
 import com.chiorichan.tasks.Timings;
 import com.google.common.base.Joiner;
 
@@ -30,7 +31,7 @@ public class GroupCommands extends PermissionsCommand
 	public void entitySwapPermission( InteractiveConsole sender, Map<String, String> args )
 	{
 		String groupName = autoCompleteGroupName( args.get( "group" ) );
-		String ref = autoCompleteRef( args.get( "ref" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
 		
 		PermissibleGroup group = PermissionManager.INSTANCE.getGroup( groupName );
 		
@@ -41,12 +42,12 @@ public class GroupCommands extends PermissionsCommand
 		}
 		
 		
-		Permission[] permissions = group.getPermissions( ref ).toArray( new Permission[0] );
+		Permission[] permissions = group.getPermissions( refs ).toArray( new Permission[0] );
 		
 		try
 		{
-			int sourceIndex = getPosition( autoCompletePermission( group, args.get( "permission" ), ref, "permission" ), permissions );
-			int targetIndex = getPosition( autoCompletePermission( group, args.get( "targetPermission" ), ref, "targetPermission" ), permissions );
+			int sourceIndex = getPosition( autoCompletePermission( group, args.get( "permission" ), refs, "permission" ), permissions );
+			int targetIndex = getPosition( autoCompletePermission( group, args.get( "targetPermission" ), refs, "targetPermission" ), permissions );
 			
 			Permission targetPermission = permissions[targetIndex];
 			
@@ -69,7 +70,7 @@ public class GroupCommands extends PermissionsCommand
 	public void groupAddParents( AdvancedCommand command, InteractiveConsole sender, Map<String, String> args )
 	{
 		String groupName = autoCompleteGroupName( args.get( "group" ) );
-		String ref = autoCompleteRef( args.get( "ref" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
 		
 		PermissibleGroup group = PermissionManager.INSTANCE.getGroup( groupName );
 		
@@ -82,7 +83,7 @@ public class GroupCommands extends PermissionsCommand
 		if ( args.get( "parents" ) != null )
 		{
 			String[] parents = args.get( "parents" ).split( "," );
-			Collection<PermissibleGroup> groups = group.getParentGroups( ref );
+			Collection<PermissibleGroup> groups = group.getGroups( refs );
 			
 			for ( String parent : parents )
 			{
@@ -92,7 +93,7 @@ public class GroupCommands extends PermissionsCommand
 					groups.add( parentGroup );
 			}
 			
-			group.setParentGroups( groups, ref );
+			group.setGroups( groups, refs );
 			
 			sender.sendMessage( ConsoleColor.WHITE + "Group " + group.getId() + " inheritance updated!" );
 			
@@ -104,7 +105,7 @@ public class GroupCommands extends PermissionsCommand
 	public void groupAddPermission( InteractiveConsole sender, Map<String, String> args )
 	{
 		String groupName = autoCompleteGroupName( args.get( "group" ) );
-		String ref = autoCompleteRef( args.get( "ref" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
 		
 		PermissibleGroup group = PermissionManager.INSTANCE.getGroup( groupName );
 		
@@ -114,7 +115,7 @@ public class GroupCommands extends PermissionsCommand
 			return;
 		}
 		
-		group.checkPermission( args.get( "permission" ) ).assign( ref );
+		group.addPermission( args.get( "permission" ), true, refs );
 		
 		sender.sendMessage( ConsoleColor.WHITE + "Permission \"" + args.get( "permission" ) + "\" added to " + group.getId() + " !" );
 		
@@ -125,7 +126,7 @@ public class GroupCommands extends PermissionsCommand
 	public void groupAddTimedPermission( InteractiveConsole sender, Map<String, String> args )
 	{
 		String groupName = autoCompleteGroupName( args.get( "group" ) );
-		String ref = autoCompleteRef( args.get( "ref" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
 		
 		int lifetime = 0;
 		
@@ -140,7 +141,7 @@ public class GroupCommands extends PermissionsCommand
 			return;
 		}
 		
-		group.addTimedPermission( args.get( "permission" ), ref, lifetime );
+		group.addTimedPermission( args.get( "permission" ), true, refs, lifetime );
 		
 		sender.sendMessage( ConsoleColor.WHITE + "Timed permission added!" );
 		informGroup( group, "Your permissions have been changed!" );
@@ -173,7 +174,7 @@ public class GroupCommands extends PermissionsCommand
 			for ( String parent : parents )
 				groups.add( PermissionManager.INSTANCE.getGroup( parent ) );
 			
-			group.setParentGroups( groups, null );
+			group.setGroups( groups, References.format() );
 		}
 		
 		sender.sendMessage( ConsoleColor.WHITE + "Group " + group.getId() + " created!" );
@@ -184,18 +185,18 @@ public class GroupCommands extends PermissionsCommand
 	@CommandHandler( name = "pex", syntax = "default group [ref]", permission = "permissions.manage.groups.inheritance", description = "Print default group for specified ref" )
 	public void groupDefaultCheck( InteractiveConsole sender, Map<String, String> args )
 	{
-		String ref = autoCompleteRef( args.get( "ref" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
 		
 		
-		PermissibleGroup defaultGroup = PermissionManager.INSTANCE.getDefaultGroup( ref );
-		sender.sendMessage( "Default group in " + ref + " ref is " + defaultGroup.getId() + " group" );
+		PermissibleGroup defaultGroup = PermissionManager.INSTANCE.getDefaultGroup( refs );
+		sender.sendMessage( "Default group in " + refs + " ref is " + defaultGroup.getId() + " group" );
 	}
 	
 	@CommandHandler( name = "pex", syntax = "set default group <group> [ref]", permission = "permissions.manage.groups.inheritance", description = "Set default group for specified ref" )
 	public void groupDefaultSet( InteractiveConsole sender, Map<String, String> args )
 	{
 		String groupName = autoCompleteGroupName( args.get( "group" ) );
-		String ref = autoCompleteRef( args.get( "ref" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
 		
 		PermissibleGroup group = PermissionManager.INSTANCE.getGroup( groupName );
 		
@@ -205,8 +206,8 @@ public class GroupCommands extends PermissionsCommand
 			return;
 		}
 		
-		PermissionManager.INSTANCE.setDefaultGroup( group, ref );
-		sender.sendMessage( "New default group in " + ref + " ref is " + group.getId() + " group" );
+		PermissionManager.INSTANCE.setDefaultGroup( group, refs );
+		sender.sendMessage( "New default group in " + refs + " ref is " + group.getId() + " group" );
 	}
 	
 	@CommandHandler( name = "pex", syntax = "group <group> delete", permission = "permissions.manage.groups.remove.<group>", description = "Remove <group>" )
@@ -233,16 +234,16 @@ public class GroupCommands extends PermissionsCommand
 	public void groupEntitysAdd( InteractiveConsole sender, Map<String, String> args )
 	{
 		String groupName = autoCompleteGroupName( args.get( "group" ) );
-		String ref = autoCompleteRef( args.get( "ref" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
 		
-		String[] entitys;
+		String[] entities;
 		
 		if ( !args.get( "entity" ).contains( "," ) )
-			entitys = new String[] {args.get( "entity" )};
+			entities = new String[] {args.get( "entity" )};
 		else
-			entitys = args.get( "entity" ).split( "," );
+			entities = args.get( "entity" ).split( "," );
 		
-		for ( String entityName : entitys )
+		for ( String entityName : entities )
 		{
 			entityName = autoCompleteAccount( entityName );
 			PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
@@ -253,7 +254,7 @@ public class GroupCommands extends PermissionsCommand
 				return;
 			}
 			
-			entity.addGroup( PermissionManager.INSTANCE.getGroup( groupName ), ref );
+			entity.addGroup( PermissionManager.INSTANCE.getGroup( groupName ), refs );
 			
 			sender.sendMessage( ConsoleColor.WHITE + "Entity " + entity.getId() + " added to " + groupName + " !" );
 			informEntity( entityName, "You are assigned to \"" + groupName + "\" group" );
@@ -261,21 +262,21 @@ public class GroupCommands extends PermissionsCommand
 	}
 	
 	/**
-	 * Group entitys management
+	 * Group entities management
 	 */
-	@CommandHandler( name = "pex", syntax = "group <group> entitys", permission = "permissions.manage.membership.<group>", description = "List all entitys in <group>" )
+	@CommandHandler( name = "pex", syntax = "group <group> entities", permission = "permissions.manage.membership.<group>", description = "List all entities in <group>" )
 	public void groupEntitysList( InteractiveConsole sender, Map<String, String> args )
 	{
 		String groupName = autoCompleteGroupName( args.get( "group" ) );
 		
-		Collection<PermissibleGroup> entitys = PermissionManager.INSTANCE.getGroups( groupName );
+		Collection<PermissibleGroup> entities = PermissionManager.INSTANCE.getGroups( groupName );
 		
-		if ( entitys == null || entitys.size() == 0 )
+		if ( entities == null || entities.size() == 0 )
 			sender.sendMessage( ConsoleColor.RED + "Group doesn't exist or empty" );
 		
-		sender.sendMessage( "Group " + groupName + " entitys:" );
+		sender.sendMessage( "Group " + groupName + " entities:" );
 		
-		for ( PermissibleEntity entity : entitys )
+		for ( PermissibleEntity entity : entities )
 			sender.sendMessage( "   " + entity.getId() );
 	}
 	
@@ -283,16 +284,16 @@ public class GroupCommands extends PermissionsCommand
 	public void groupEntitysRemove( InteractiveConsole sender, Map<String, String> args )
 	{
 		String groupName = autoCompleteGroupName( args.get( "group" ) );
-		String ref = autoCompleteRef( args.get( "ref" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
 		
-		String[] entitys;
+		String[] entities;
 		
 		if ( !args.get( "entity" ).contains( "," ) )
-			entitys = new String[] {args.get( "entity" )};
+			entities = new String[] {args.get( "entity" )};
 		else
-			entitys = args.get( "entity" ).split( "," );
+			entities = args.get( "entity" ).split( "," );
 		
-		for ( String entityName : entitys )
+		for ( String entityName : entities )
 		{
 			entityName = autoCompleteAccount( entityName );
 			PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
@@ -303,7 +304,7 @@ public class GroupCommands extends PermissionsCommand
 				return;
 			}
 			
-			entity.removeGroup( groupName, ref );
+			entity.removeGroup( groupName, refs );
 			
 			sender.sendMessage( ConsoleColor.WHITE + "Entity " + entity.getId() + " removed from " + args.get( "group" ) + " !" );
 			informEntity( entityName, "You were removed from \"" + groupName + "\" group" );
@@ -323,7 +324,7 @@ public class GroupCommands extends PermissionsCommand
 	public void groupListParents( InteractiveConsole sender, Map<String, String> args )
 	{
 		String groupName = autoCompleteGroupName( args.get( "group" ) );
-		String ref = autoCompleteRef( args.get( "ref" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
 		
 		PermissibleGroup group = PermissionManager.INSTANCE.getGroup( groupName );
 		
@@ -333,7 +334,7 @@ public class GroupCommands extends PermissionsCommand
 			return;
 		}
 		
-		if ( group.getParentGroups( ref ).size() == 0 )
+		if ( group.getGroups( refs ).size() == 0 )
 		{
 			sender.sendMessage( ConsoleColor.RED + "Group " + group.getId() + " doesn't have parents" );
 			return;
@@ -341,7 +342,7 @@ public class GroupCommands extends PermissionsCommand
 		
 		sender.sendMessage( "Group " + group.getId() + " parents:" );
 		
-		for ( PermissibleGroup parent : group.getParentGroups( ref ) )
+		for ( PermissibleGroup parent : group.getGroups( refs ) )
 			sender.sendMessage( "  " + parent.getId() );
 		
 	}
@@ -359,7 +360,7 @@ public class GroupCommands extends PermissionsCommand
 	public void groupListPermissions( InteractiveConsole sender, Map<String, String> args )
 	{
 		String groupName = autoCompleteGroupName( args.get( "group" ) );
-		String ref = autoCompleteRef( args.get( "ref" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
 		
 		PermissibleGroup group = PermissionManager.INSTANCE.getGroup( groupName );
 		
@@ -370,19 +371,14 @@ public class GroupCommands extends PermissionsCommand
 		}
 		
 		sender.sendMessage( "'" + groupName + "' inherits the following groups:" );
-		printEntityInheritance( sender, group.getParentGroups() );
+		printEntityInheritance( sender, group.getGroups( References.format( "" ) ) );
 		
-		for ( String ref1 : group.getAllParentGroups().keySet() )
-		{
-			if ( ref1 == null )
-				continue;
-			
-			sender.sendMessage( "  @" + ref1 + ":" );
-			printEntityInheritance( sender, group.getAllParentGroups().get( ref1 ) );
-		}
+		References ref = group.getGroupReferences();
+		sender.sendMessage( "  @" + ref + ":" );
+		printEntityInheritance( sender, group.getGroups( ref ) );
 		
 		sender.sendMessage( "Group " + group.getId() + "'s permissions:" );
-		sendMessage( sender, mapPermissions( ref, group, 0 ) );
+		sendMessage( sender, mapPermissions( refs, group, 0 ) );
 		
 		sender.sendMessage( "Group " + group.getId() + "'s Options: " );
 		for ( Map.Entry<String, String> option : group.getOptions().entrySet() )
@@ -393,7 +389,7 @@ public class GroupCommands extends PermissionsCommand
 	public void groupPrefix( InteractiveConsole sender, Map<String, String> args )
 	{
 		// String groupName = autoCompleteGroupName( args.get( "group" ) );
-		String ref = autoCompleteRef( args.get( "ref" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
 		
 		PermissibleGroup group = PermissionManager.INSTANCE.getGroup( args.get( "group" ) );
 		
@@ -404,9 +400,9 @@ public class GroupCommands extends PermissionsCommand
 		}
 		
 		if ( args.containsKey( "newprefix" ) )
-			group.setPrefix( args.get( "newprefix" ), ref );
+			group.setPrefix( args.get( "newprefix" ), refs );
 		
-		sender.sendMessage( group.getId() + "'s prefix = \"" + group.getPrefix( ref ) + "\"" );
+		sender.sendMessage( group.getId() + "'s prefix = \"" + group.getPrefix( refs ) + "\"" );
 	}
 	
 	@CommandHandler( name = "pex", syntax = "group <group> weight [weight]", permission = "permissions.manage.groups.weight.<group>", description = "Print or set group weight" )
@@ -440,7 +436,7 @@ public class GroupCommands extends PermissionsCommand
 	public void groupRemoveParents( InteractiveConsole sender, Map<String, String> args )
 	{
 		String groupName = autoCompleteGroupName( args.get( "group" ) );
-		String ref = autoCompleteRef( args.get( "ref" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
 		
 		PermissibleGroup group = PermissionManager.INSTANCE.getGroup( groupName );
 		
@@ -453,7 +449,7 @@ public class GroupCommands extends PermissionsCommand
 		if ( args.get( "parents" ) != null )
 		{
 			String[] parents = args.get( "parents" ).split( "," );
-			Collection<PermissibleGroup> groups = group.getParentGroups( ref );
+			Collection<PermissibleGroup> groups = group.getGroups( refs );
 			
 			for ( String parent : parents )
 			{
@@ -462,7 +458,7 @@ public class GroupCommands extends PermissionsCommand
 				groups.remove( parentGroup );
 			}
 			
-			group.setParentGroups( groups, ref );
+			group.setGroups( groups, refs );
 			
 			sender.sendMessage( ConsoleColor.WHITE + "Group " + group.getId() + " inheritance updated!" );
 			
@@ -474,7 +470,7 @@ public class GroupCommands extends PermissionsCommand
 	public void groupRemovePermission( InteractiveConsole sender, Map<String, String> args )
 	{
 		String groupName = autoCompleteGroupName( args.get( "group" ) );
-		String ref = autoCompleteRef( args.get( "ref" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
 		
 		PermissibleGroup group = PermissionManager.INSTANCE.getGroup( groupName );
 		
@@ -484,10 +480,10 @@ public class GroupCommands extends PermissionsCommand
 			return;
 		}
 		
-		String permission = autoCompletePermission( group, args.get( "permission" ), ref );
+		String permission = autoCompletePermission( group, args.get( "permission" ), refs );
 		
-		group.detachPermission( permission, ref );
-		group.removeTimedPermission( permission, ref );
+		group.removePermission( permission, refs );
+		group.removeTimedPermission( permission, refs );
 		
 		sender.sendMessage( ConsoleColor.WHITE + "Permission \"" + permission + "\" removed from " + group.getId() + " !" );
 		
@@ -498,7 +494,7 @@ public class GroupCommands extends PermissionsCommand
 	public void groupRemoveTimedPermission( InteractiveConsole sender, Map<String, String> args )
 	{
 		String groupName = autoCompleteGroupName( args.get( "group" ) );
-		String ref = autoCompleteRef( args.get( "ref" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
 		
 		PermissibleGroup group = PermissionManager.INSTANCE.getGroup( groupName );
 		
@@ -508,7 +504,7 @@ public class GroupCommands extends PermissionsCommand
 			return;
 		}
 		
-		group.removeTimedPermission( args.get( "permission" ), ref );
+		group.removeTimedPermission( args.get( "permission" ), refs );
 		
 		sender.sendMessage( ConsoleColor.WHITE + "Timed permission \"" + args.get( "permission" ) + "\" removed!" );
 		informGroup( group, "Your permissions have been changed!" );
@@ -518,7 +514,7 @@ public class GroupCommands extends PermissionsCommand
 	public void groupSetOption( InteractiveConsole sender, Map<String, String> args )
 	{
 		String groupName = autoCompleteGroupName( args.get( "group" ) );
-		String ref = autoCompleteRef( args.get( "ref" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
 		
 		PermissibleGroup group = PermissionManager.INSTANCE.getGroup( groupName );
 		
@@ -528,7 +524,7 @@ public class GroupCommands extends PermissionsCommand
 			return;
 		}
 		
-		group.setOption( args.get( "option" ), args.get( "value" ), ref );
+		group.setOption( args.get( "option" ), args.get( "value" ), refs );
 		
 		if ( args.containsKey( "value" ) && args.get( "value" ).isEmpty() )
 			sender.sendMessage( ConsoleColor.WHITE + "Option \"" + args.get( "option" ) + "\" cleared!" );
@@ -542,7 +538,7 @@ public class GroupCommands extends PermissionsCommand
 	public void groupSetParents( InteractiveConsole sender, Map<String, String> args )
 	{
 		String groupName = autoCompleteGroupName( args.get( "group" ) );
-		String ref = autoCompleteRef( args.get( "ref" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
 		
 		PermissibleGroup group = PermissionManager.INSTANCE.getGroup( groupName );
 		
@@ -565,7 +561,7 @@ public class GroupCommands extends PermissionsCommand
 					groups.add( parentGroup );
 			}
 			
-			group.setParentGroups( groups, ref );
+			group.setGroups( groups, refs );
 			
 			sender.sendMessage( ConsoleColor.WHITE + "Group " + group.getId() + " inheritance updated!" );
 			
@@ -577,7 +573,7 @@ public class GroupCommands extends PermissionsCommand
 	public void groupsList( InteractiveConsole sender, Map<String, String> args )
 	{
 		Collection<PermissibleGroup> groups = PermissionManager.INSTANCE.getGroups();
-		String ref = autoCompleteRef( args.get( "ref" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
 		
 		sender.sendMessage( ConsoleColor.WHITE + "Registered groups: " );
 		for ( PermissibleGroup group : groups )
@@ -586,7 +582,7 @@ public class GroupCommands extends PermissionsCommand
 			if ( group.isRanked() )
 				rank = " (rank: " + group.getRank() + "@";// TODO + group.getRankLadder() + ") ";
 				
-			sender.sendMessage( String.format( "  %s %s %s %s[%s]", group.getId(), " #" + group.getWeight(), rank, ConsoleColor.DARK_GREEN, Joiner.on( ", " ).join( group.getParentGroupsNames( ref ) ) ) );
+			sender.sendMessage( String.format( "  %s %s %s %s[%s]", group.getId(), " #" + group.getWeight(), rank, ConsoleColor.DARK_GREEN, Joiner.on( ", " ).join( group.getParentGroupsNames( refs ) ) ) );
 		}
 	}
 	
@@ -606,7 +602,7 @@ public class GroupCommands extends PermissionsCommand
 	public void groupSuffix( InteractiveConsole sender, Map<String, String> args )
 	{
 		// String groupName = autoCompleteGroupName( args.get( "group" ) );
-		String ref = autoCompleteRef( args.get( "ref" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
 		
 		PermissibleGroup group = PermissionManager.INSTANCE.getGroup( args.get( "group" ) );
 		
@@ -617,9 +613,9 @@ public class GroupCommands extends PermissionsCommand
 		}
 		
 		if ( args.containsKey( "newsuffix" ) )
-			group.setSuffix( args.get( "newsuffix" ), ref );
+			group.setSuffix( args.get( "newsuffix" ), refs );
 		
-		sender.sendMessage( group.getId() + "'s suffix is = \"" + group.getSuffix( ref ) + "\"" );
+		sender.sendMessage( group.getId() + "'s suffix is = \"" + group.getSuffix( refs ) + "\"" );
 	}
 	
 	@CommandHandler( name = "pex", syntax = "group <group> toggle debug", permission = "permissions.manage.groups.debug.<group>", description = "Toggle debug mode for group" )

@@ -10,8 +10,11 @@ package com.chiorichan.permission.backend.sql;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map.Entry;
 
+import com.chiorichan.ConsoleColor;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.permission.ChildPermission;
 import com.chiorichan.permission.PermissibleEntity;
@@ -20,8 +23,7 @@ import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.PermissionNamespace;
 import com.chiorichan.permission.PermissionValue;
-import com.chiorichan.util.ObjectFunc;
-import com.google.common.base.Joiner;
+import com.chiorichan.permission.References;
 
 public class SQLEntity extends PermissibleEntity
 {
@@ -44,7 +46,7 @@ public class SQLEntity extends PermissibleEntity
 				do
 				{
 					PermissibleGroup grp = PermissionManager.INSTANCE.getGroup( rs.getString( "child" ) );
-					groups.put( grp.getId(), grp );
+					addGroup( grp, References.format( rs.getString( "refs" ) ) );
 				}
 				while ( rs.next() );
 		}
@@ -59,7 +61,8 @@ public class SQLEntity extends PermissibleEntity
 	{
 		DatabaseEngine db = SQLBackend.getBackend().getSQL();
 		
-		detachAllPermissions();
+		clearPermissions();
+		clearTimedPermissions();
 		try
 		{
 			ResultSet rs = db.query( "SELECT * FROM `permissions_entity` WHERE `owner` = '" + getId() + "' AND `type` = '0';" );
@@ -69,17 +72,22 @@ public class SQLEntity extends PermissibleEntity
 				{
 					PermissionNamespace ns = new PermissionNamespace( rs.getString( "permission" ) );
 					
-					List<Permission> perms = PermissionManager.INSTANCE.getNodes( ns );
+					if ( !ns.containsOnlyValidChars() )
+					{
+						PermissionManager.getLogger().warning( "We failed to add the permission %s to entity %s because it contained invalid characters, namespaces can only contain 0-9, a-z and _." );
+						continue;
+					}
 					
-					if ( perms.isEmpty() && !ns.containsRegex() )
-						perms.add( PermissionManager.INSTANCE.getNode( ns.fixInvalidChars().getNamespace() ) );
+					Collection<Permission> perms = ns.containsRegex() ? PermissionManager.INSTANCE.getNodes( ns ) : Arrays.asList( new Permission[] {PermissionManager.INSTANCE.getNode( ns, true )} );
 					
 					for ( Permission perm : perms )
-						if ( getChildPermission( perm ) == null )
-						{
-							PermissionValue childValue = ( rs.getString( "value" ) == null || rs.getString( "value" ).isEmpty() ) ? null : perm.getModel().createValue( rs.getString( "value" ) );
-							attachPermission( new ChildPermission( perm, childValue, -1, rs.getString( "ref" ).split( "|" ) ) );
-						}
+					{
+						PermissionValue value = null;
+						if ( rs.getString( "value" ) != null )
+							value = perm.getModel().createValue( rs.getString( "value" ) );
+						
+						addPermission( new ChildPermission( this, perm, value, -1 ), References.format( rs.getString( "refs" ) ) );
+					}
 				}
 				while ( rs.next() );
 		}
@@ -106,12 +114,27 @@ public class SQLEntity extends PermissibleEntity
 	@Override
 	public void save()
 	{
-		DatabaseEngine db = SQLBackend.getBackend().getSQL();
+		if ( isVirtual() )
+			return;
+		
+		if ( isDebug() )
+			PermissionManager.getLogger().info( ConsoleColor.YELLOW + "Entity " + getId() + " being saved to backend" );
+		
 		try
 		{
+			DatabaseEngine db = SQLBackend.getBackend().getSQL();
 			remove();
-			for ( ChildPermission cp : getChildPermissions() )
-				db.queryUpdate( String.format( "INSERT INTO `permissions_entity` (`owner`,`type`,`ref`,`permission`,`value`) VALUES ('%s','0','%s','%s','%s');", getId(), Joiner.on( "|" ).join( cp.getReferences() ), cp.getPermission().getNamespace(), ObjectFunc.castToString( cp.getValue().getValue() ) ) );
+			
+			Collection<ChildPermission> children = getChildPermissions( null );
+			for ( ChildPermission child : children )
+			{
+				Permission perm = child.getPermission();
+				db.queryUpdate( String.format( "INSERT INTO `permissions_entity` (`owner`,`type`,`refs`,`permission`,`value`) VALUES ('%s','0','%s','%s','%s');", getId(), child.getReferences().join(), perm.getNamespace(), child.getObject() ) );
+			}
+			
+			Collection<Entry<PermissibleGroup, References>> groups = getGroupEntrys( null );
+			for ( Entry<PermissibleGroup, References> entry : groups )
+				db.queryUpdate( String.format( "INSERT INTO `permissions_groups` (`child`, `parent`, `type`, `refs`) VALUES ('', '', '0', '');", entry.getKey().getId(), getId(), entry.getValue().join() ) );
 		}
 		catch ( SQLException e )
 		{

@@ -39,22 +39,21 @@ public class PermissionModelValue
 	
 	public PermissionValue createValue( Object value )
 	{
-		if ( value == null )
-			return null;
-		
 		if ( value instanceof PermissionValue )
 			value = ( ( PermissionValue ) value ).getValue();
 		
 		try
 		{
 			Object obj = type.cast( value );
+			if ( obj == null && value == null )
+				throw new PermissionValueException( "The assigned value must not be null." );
 			if ( obj == null )
 				throw new ClassCastException();
 			return new PermissionValue( this, obj );
 		}
 		catch ( ClassCastException e )
 		{
-			throw new PermissionValueException( "Can't cast %s to type %s", value.getClass().getName(), type );
+			throw new PermissionValueException( String.format( "Can't cast %s to type %s for permission %s.", value.getClass(), type, perm.getNamespace() ) );
 		}
 	}
 	

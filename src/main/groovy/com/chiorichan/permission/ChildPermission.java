@@ -8,16 +8,10 @@
  */
 package com.chiorichan.permission;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import com.chiorichan.util.StringFunc;
-
 public final class ChildPermission implements Comparable<ChildPermission>
 {
+	private final PermissibleEntity entity;
 	private final Permission perm;
-	private final List<String> refs;
 	private final PermissionValue value;
 	private final int weight;
 	
@@ -31,14 +25,14 @@ public final class ChildPermission implements Comparable<ChildPermission>
 	 * @param weight
 	 *            The sorting weight of this ChildPermission
 	 * @param refs
-	 *            Array so references that apply
+	 *            Instance of References
 	 */
-	public ChildPermission( Permission perm, PermissionValue value, int weight, String... refs )
+	public ChildPermission( PermissibleEntity entity, Permission perm, PermissionValue value, int weight )
 	{
+		this.entity = entity;
 		this.perm = perm;
 		this.value = value;
 		this.weight = weight;
-		this.refs = new ArrayList<String>( Arrays.asList( StringFunc.toLowerCase( refs ) ) );
 	}
 	
 	@Override
@@ -79,9 +73,9 @@ public final class ChildPermission implements Comparable<ChildPermission>
 		return perm;
 	}
 	
-	public List<String> getReferences()
+	public References getReferences()
 	{
-		return refs;
+		return entity.getPermissionReferences( perm );
 	}
 	
 	public String getString()

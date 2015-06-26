@@ -26,6 +26,7 @@ import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.PermissionModelValue;
 import com.chiorichan.permission.PermissionNamespace;
 import com.chiorichan.permission.PermissionType;
+import com.chiorichan.permission.References;
 import com.chiorichan.permission.lang.PermissionBackendException;
 import com.chiorichan.permission.lang.PermissionException;
 import com.chiorichan.permission.lang.PermissionValueException;
@@ -54,11 +55,17 @@ public class SQLBackend extends PermissionBackend
 	}
 	
 	@Override
-	public PermissibleGroup getDefaultGroup( String ref )
+	public void commit()
+	{
+		// Nothing to do here!
+	}
+	
+	@Override
+	public PermissibleGroup getDefaultGroup( References refs )
 	{
 		try
 		{
-			Map<String, String> defaults = Maps.newHashMap();
+			Map<References, String> defaults = Maps.newHashMap();
 			
 			ResultSet result = getSQL().query( "SELECT * FROM `permissions_groups` WHERE `parent` = 'default' AND `type` = '1';" );
 			
@@ -67,19 +74,18 @@ public class SQLBackend extends PermissionBackend
 			
 			do
 			{
-				String refs = result.getString( "ref" );
-				if ( refs == null || refs.isEmpty() )
-					defaults.put( "", result.getString( "child" ) );
+				References ref = References.format( result.getString( "ref" ) );
+				if ( ref.isEmpty() )
+					defaults.put( References.format( "" ), result.getString( "child" ) );
 				else
-					for ( String r : refs.split( "|" ) )
-						defaults.put( r.toLowerCase(), result.getString( "child" ) );
+					defaults.put( ref, result.getString( "child" ) );
 			}
 			while ( result.next() );
 			
 			if ( defaults.isEmpty() )
 				throw new RuntimeException( "There is no default group set. New entities will not have any groups." );
 			
-			return getGroup( ( ref == null || ref.isEmpty() ) ? defaults.get( "" ) : defaults.get( ref.toLowerCase() ) );
+			return getGroup( ( refs == null || refs.isEmpty() ) ? defaults.get( "" ) : defaults.get( refs ) );
 		}
 		catch ( SQLException e )
 		{
@@ -318,7 +324,7 @@ public class SQLBackend extends PermissionBackend
 	}
 	
 	@Override
-	public void setDefaultGroup( String child, String... ref )
+	public void setDefaultGroup( String child, References ref )
 	{
 		try
 		{
@@ -383,7 +389,7 @@ public class SQLBackend extends PermissionBackend
 			throw new PermissionValueException( "We could not cast the Object %s for key %s.", val.getClass().getName(), key );
 		}
 	}
-
+	
 	private int updateDBValue( PermissionNamespace ns, String key, String val ) throws SQLException
 	{
 		DatabaseEngine db = getSQL();

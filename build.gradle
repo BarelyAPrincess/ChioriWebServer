@@ -130,7 +130,7 @@ license
 	strictCheck true
 	mapping 'yaml', 'SCRIPT_STYLE'
 	mapping 'yml', 'SCRIPT_STYLE'
-	excludes (['**/*.archive', '**/*.md5', '**/less-rhino-1.7.4.js', '**/coffee-script.js', '**/banner.txt'])
+	excludes (['**/*.archive', '**/*.md5', '**/less-rhino-1.7.4.js', '**/coffee-script.js', '**/banner.txt', '**/config.yaml'])
 	ext.year = Calendar.getInstance().get(Calendar.YEAR)
 	ext.name = 'Chiori Greene a.k.a. Chiori-chan'
 	ext.email = 'me@chiorichan.com'

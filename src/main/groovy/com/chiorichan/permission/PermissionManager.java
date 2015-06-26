@@ -39,7 +39,6 @@ import com.chiorichan.permission.event.PermissibleSystemEvent;
 import com.chiorichan.permission.lang.PermissionBackendException;
 import com.chiorichan.tasks.TaskCreator;
 import com.chiorichan.tasks.TaskManager;
-import com.chiorichan.util.StringFunc;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -196,25 +195,18 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	 *            entity name
 	 * @param permission
 	 *            permission as string to check against
-	 * @param ref
-	 *            ref's name as string
+	 * @param refs
+	 *            References
 	 * @return true on success false otherwise
 	 */
-	public PermissionResult checkPermission( String entityId, String permission, String ref )
+	public PermissionResult checkPermission( String entityId, String permission, String... refs )
 	{
 		PermissibleEntity entity = getEntity( entityId );
 		
 		if ( entity == null )
 			throw new RuntimeException( "Entity returned null! This is a bug and needs to be reported to the developers." );
 		
-		return entity.checkPermission( permission, ref );
-	}
-	
-	protected void clearCache()
-	{
-		entities.clear();
-		groups.clear();
-		defaultGroups.clear();
+		return entity.checkPermission( permission, References.format( refs ) );
 	}
 	
 	public void end()
@@ -249,21 +241,21 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	 * 
 	 * @return default group object. null if not specified
 	 */
-	public PermissibleGroup getDefaultGroup( String refName )
+	public PermissibleGroup getDefaultGroup( References refs )
 	{
-		String refIndex = refName != null ? refName : "";
+		String refIndex = ""; // refs != null ? refs : "";
 		
 		if ( !defaultGroups.containsKey( refIndex ) )
-			defaultGroups.put( refIndex, this.getDefaultGroup( refName, this.getDefaultGroup( null, null ) ) );
+			defaultGroups.put( refIndex, this.getDefaultGroup( refs, this.getDefaultGroup( null, null ) ) );
 		
 		return defaultGroups.get( refIndex );
 	}
 	
-	private PermissibleGroup getDefaultGroup( String refName, PermissibleGroup fallback )
+	private PermissibleGroup getDefaultGroup( References refs, PermissibleGroup fallback )
 	{
-		PermissibleGroup defaultGroup = backend.getDefaultGroup( refName );
+		PermissibleGroup defaultGroup = backend.getDefaultGroup( refs );
 		
-		if ( defaultGroup == null && refName == null )
+		if ( defaultGroup == null && refs == null )
 		{
 			getLogger().warning( "No default group defined. Use \"perm set default group <group> [ref]\" to define default group." );
 			return fallback;
@@ -356,17 +348,24 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	
 	public PermissibleEntity getEntity( String permissible )
 	{
+		return getEntity( permissible, true );
+	}
+	
+	public PermissibleEntity getEntity( String permissible, boolean create )
+	{
 		if ( permissible == null )
 			throw new IllegalArgumentException( "Null entity passed! Name must not be empty" );
 		
 		if ( entities.containsKey( permissible ) )
 			return entities.get( permissible );
-		else
+		else if ( create )
 		{
 			PermissibleEntity entity = backend.getEntity( permissible );
 			entities.put( permissible, entity );
 			return entity;
 		}
+		else
+			return null;
 	}
 	
 	/**
@@ -425,6 +424,11 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	public String getName()
 	{
 		return "PermissionsManager";
+	}
+	
+	public Permission getNode( PermissionNamespace ns, boolean createNode )
+	{
+		return getNode( ns.getNamespace(), createNode );
 	}
 	
 	/**
@@ -558,7 +562,6 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	
 	public Collection<String> getRefInheritance( String ref )
 	{
-		ref = StringFunc.formatReference( ref );
 		return refInheritance.containsKey( ref ) ? refInheritance.get( ref ) : new HashSet<String>();
 	}
 	
@@ -718,8 +721,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	 */
 	public void reset() throws PermissionBackendException
 	{
-		clearCache();
-		
+		defaultGroups.clear();
 		entities.clear();
 		groups.clear();
 		
@@ -774,7 +776,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	{
 		synchronized ( this )
 		{
-			clearCache();
+			reset();
 			backend = PermissionBackend.getBackend( backendName );
 			backend.initialize();
 			
@@ -795,12 +797,12 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	 * @param group
 	 *            PermissibleGroup group object
 	 */
-	public void setDefaultGroup( PermissibleGroup group, String refName )
+	public void setDefaultGroup( PermissibleGroup group, References refs )
 	{
 		if ( group == null || group.equals( defaultGroups ) )
 			return;
 		
-		backend.setDefaultGroup( group.getId(), refName );
+		backend.setDefaultGroup( group.getId(), refs );
 		
 		defaultGroups.clear();
 		
@@ -810,7 +812,6 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	
 	public void setRefInheritance( String ref, Collection<String> heir )
 	{
-		ref = StringFunc.formatReference( ref );
 		Collection<String> cur = getRefInheritance( ref );
 		cur.addAll( heir );
 		refInheritance.put( ref, cur );

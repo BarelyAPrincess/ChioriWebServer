@@ -69,6 +69,8 @@ public class StringFunc
 	 */
 	public static boolean comparable( Object[] array1, Object[] array2 )
 	{
+		if ( array1.length == 0 && array2.length == 0 )
+			return true;
 		for ( Object obj : array1 )
 			if ( ArrayUtils.contains( array2, obj ) )
 				return true;
@@ -129,20 +131,6 @@ public class StringFunc
 	public static String encodeBase64( String var )
 	{
 		return encodeBase64( var.getBytes() );
-	}
-	
-	public static String[] formatReference( String... refs )
-	{
-		for ( int i = 0; i < refs.length; i++ )
-			refs[i] = formatReference( refs[i] );
-		return refs;
-	}
-	
-	public static String formatReference( String ref )
-	{
-		if ( ref == null )
-			return "";
-		return removeInvalidChars( ref.trim() );
 	}
 	
 	/**

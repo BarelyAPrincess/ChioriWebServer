@@ -11,6 +11,7 @@ package com.chiorichan.permission.commands;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
@@ -23,14 +24,13 @@ import com.chiorichan.console.InteractiveConsole;
 import com.chiorichan.console.commands.AdvancedCommand;
 import com.chiorichan.console.commands.advanced.AutoCompleteChoicesException;
 import com.chiorichan.console.commands.advanced.CommandListener;
-import com.chiorichan.permission.ChildPermission;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionManager;
+import com.chiorichan.permission.References;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
-import com.chiorichan.util.StringFunc;
 import com.google.common.collect.Sets;
 
 public abstract class PermissionsCommand implements CommandListener
@@ -99,18 +99,18 @@ public abstract class PermissionsCommand implements CommandListener
 		return groupName;
 	}
 	
-	protected String autoCompletePermission( PermissibleEntity entity, String permission, String ref )
+	protected String autoCompletePermission( PermissibleEntity entity, String permission, References refs )
 	{
-		return this.autoCompletePermission( entity, permission, ref, "permission" );
+		return this.autoCompletePermission( entity, permission, refs, "permission" );
 	}
 	
-	protected String autoCompletePermission( PermissibleEntity entity, String permission, String ref, String argName )
+	protected String autoCompletePermission( PermissibleEntity entity, String permission, References refs, String argName )
 	{
 		if ( permission == null )
 			return permission;
 		
 		Set<String> permissions = Sets.newHashSet();
-		for ( Permission perm : entity.getPermissions( ref ) )
+		for ( Permission perm : entity.getPermissions( refs ) )
 		{
 			if ( perm.getNamespace().equalsIgnoreCase( permission ) )
 				return perm.getLocalName();
@@ -132,12 +132,12 @@ public abstract class PermissionsCommand implements CommandListener
 		return permission;
 	}
 	
-	protected String autoCompleteRef( String ref )
+	protected References autoCompleteRef( String ref )
 	{
 		return autoCompleteRef( ref, "default" );
 	}
 	
-	protected String autoCompleteRef( String ref, String argName )
+	protected References autoCompleteRef( String ref, String argName )
 	{
 		if ( ref == null || ref.isEmpty() || "*".equals( ref ) )
 			return null;
@@ -160,34 +160,33 @@ public abstract class PermissionsCommand implements CommandListener
 		if ( refs.size() > 1 )
 			throw new AutoCompleteChoicesException( refs.toArray( new String[0] ), argName );
 		else if ( refs.size() == 1 )
-			return refs.toArray( new String[0] )[0];
+			return References.format( refs.toArray( new String[0] )[0] );
 		
-		return ref;
+		return References.format( ref );
 	}
 	
-	protected List<String> getPermissionsTree( PermissibleEntity entity, String ref, int level )
+	protected List<String> getPermissionsTree( PermissibleEntity entity, References refs, int level )
 	{
 		// Thing might need some help!
 		
 		List<String> permissions = new LinkedList<String>();
 		Set<String> refPermissions = Sets.newHashSet();
 		Set<String> commonPermissions = Sets.newHashSet();
-		ref = StringFunc.formatReference( ref );
 		
-		for ( ChildPermission child : entity.getChildPermissions() )
-			if ( ref == null || ref.isEmpty() || child.getReferences().contains( ref ) )
-				refPermissions.add( child.getPermission().getNamespace() );
-			else if ( child.getReferences().contains( "" ) )
-				commonPermissions.add( child.getPermission().getNamespace() );
+		for ( Entry<Permission, References> perm : entity.getPermissionEntrys( refs ) )
+			if ( perm.getValue().isEmpty() )
+				commonPermissions.add( perm.getKey().getNamespace() );
+			else
+				refPermissions.add( perm.getKey().getNamespace() );
 		
-		permissions.addAll( sprintPermissions( ref, refPermissions.toArray( new String[0] ) ) );
+		permissions.addAll( sprintPermissions( refs, refPermissions.toArray( new String[0] ) ) );
 		
 		// for ( String parentSite : Permissions.getPermissionManager().getSiteInheritance( ref ) )
 		// if ( parentSite != null && !parentSite.isEmpty() )
 		// permissions.addAll( getPermissionsTree( entity, parentSite, level + 1 ) );
 		
 		if ( level == 0 && commonPermissions.size() > 0 )
-			permissions.addAll( sprintPermissions( "common", commonPermissions.toArray( new String[0] ) ) );
+			permissions.addAll( sprintPermissions( References.format(), commonPermissions.toArray( new String[0] ) ) );
 		
 		return permissions;
 	}
@@ -214,16 +213,16 @@ public abstract class PermissionsCommand implements CommandListener
 		throw new RuntimeException( "Specified permission not found" );
 	}
 	
-	protected String getSafeSite( String ref, String acctId )
+	protected References getSafeSite( References ref, String acctId )
 	{
 		if ( ref == null )
 		{
 			AccountMeta meta = AccountManager.INSTANCE.getAccount( acctId );
 			
 			if ( meta == null )
-				ref = SiteManager.INSTANCE.getDefaultSite().getSiteId();
+				ref = References.format( SiteManager.INSTANCE.getDefaultSite().getSiteId() );
 			else
-				ref = meta.getSite().getSiteId();
+				ref = References.format( meta.getSite().getSiteId() );
 		}
 		
 		return ref;
@@ -248,16 +247,16 @@ public abstract class PermissionsCommand implements CommandListener
 	
 	protected void informGroup( PermissibleGroup group, String message )
 	{
-		for ( PermissibleEntity entity : group.getChildEntities() )
+		for ( PermissibleEntity entity : group.getChildEntities( true, References.format() ) )
 			informEntity( entity.getId(), message );
 	}
 	
-	protected String mapPermissions( String ref, PermissibleEntity entity, int level )
+	protected String mapPermissions( References refs, PermissibleEntity entity, int level )
 	{
 		StringBuilder builder = new StringBuilder();
 		
 		int index = 1;
-		for ( String permission : getPermissionsTree( entity, ref, 0 ) )
+		for ( String permission : getPermissionsTree( entity, refs, 0 ) )
 		{
 			if ( level > 0 )
 				builder.append( "   " );
@@ -272,7 +271,7 @@ public abstract class PermissionsCommand implements CommandListener
 			builder.append( "\n" );
 		}
 		
-		entity.getParentGroups( ref );
+		// entity.getGroups( refs );
 		
 		level++; // Just increment level once
 		return builder.toString();
@@ -323,23 +322,23 @@ public abstract class PermissionsCommand implements CommandListener
 		}
 	}
 	
-	protected String printHierarchy( PermissibleGroup parent, String ref, int level )
+	protected String printHierarchy( PermissibleGroup parent, References refs, int level )
 	{
 		StringBuilder buffer = new StringBuilder();
 		
-		Collection<PermissibleGroup> groups = parent == null ? PermissionManager.INSTANCE.getGroups() : parent.getChildGroups( ref );
+		Collection<PermissibleGroup> groups = parent == null ? PermissionManager.INSTANCE.getGroups() : parent.getChildGroups( refs );
 		
 		for ( PermissibleGroup group : groups )
 		{
-			if ( parent == null && group.getParentGroups( ref ).size() > 0 )
+			if ( parent == null && group.getGroups( refs ).size() > 0 )
 				continue;
 			
 			buffer.append( StringUtils.repeat( "  ", level ) ).append( " - " ).append( group.getId() ).append( "\n" );
 			
 			// Groups
-			buffer.append( printHierarchy( group, ref, level + 1 ) );
+			buffer.append( printHierarchy( group, refs, level + 1 ) );
 			
-			for ( PermissibleEntity user : group.getChildEntities( ref ) )
+			for ( PermissibleEntity user : group.getChildEntities( refs ) )
 				buffer.append( StringUtils.repeat( "  ", level + 1 ) ).append( " + " ).append( user.getId() ).append( "\n" );
 		}
 		
@@ -352,7 +351,7 @@ public abstract class PermissionsCommand implements CommandListener
 			sender.sendMessage( messagePart );
 	}
 	
-	protected List<String> sprintPermissions( String ref, String[] permissions )
+	protected List<String> sprintPermissions( References refs, String[] permissions )
 	{
 		List<String> permissionList = new LinkedList<String>();
 		
@@ -360,7 +359,7 @@ public abstract class PermissionsCommand implements CommandListener
 			return permissionList;
 		
 		for ( String permission : permissions )
-			permissionList.add( permission + ( ref != null ? " @" + ref : "" ) );
+			permissionList.add( permission + ( refs != null ? " @" + refs.toString() : "" ) );
 		
 		return permissionList;
 	}

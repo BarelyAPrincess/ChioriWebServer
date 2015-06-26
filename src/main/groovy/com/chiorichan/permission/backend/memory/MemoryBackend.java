@@ -15,6 +15,7 @@ import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionBackend;
 import com.chiorichan.permission.PermissionManager;
+import com.chiorichan.permission.References;
 import com.chiorichan.permission.lang.PermissionBackendException;
 import com.google.common.collect.Lists;
 
@@ -38,7 +39,13 @@ public class MemoryBackend extends PermissionBackend
 	}
 	
 	@Override
-	public PermissibleGroup getDefaultGroup( String refs )
+	public void commit()
+	{
+		// Nothing to do here!
+	}
+	
+	@Override
+	public PermissibleGroup getDefaultGroup( References refs )
 	{
 		return PermissionManager.INSTANCE.getGroup( "Default" );
 	}
@@ -120,9 +127,9 @@ public class MemoryBackend extends PermissionBackend
 	{
 		// TODO Auto-generated method stub
 	}
-
+	
 	@Override
-	public void setDefaultGroup( String child, String... ref )
+	public void setDefaultGroup( String child, References refs )
 	{
 		// Nothing to do here!
 	}

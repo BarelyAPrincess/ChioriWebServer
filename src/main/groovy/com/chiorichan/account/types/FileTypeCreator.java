@@ -314,6 +314,8 @@ public class FileTypeCreator extends AccountTypeCreator
 		
 		YamlConfiguration yser = new YamlConfiguration();
 		
+		yser.set( "acctId", context.getAcctId() );
+		
 		for ( String key : meta.keySet() )
 			yser.set( key, meta.get( key ) );
 		

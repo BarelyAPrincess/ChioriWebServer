@@ -42,11 +42,11 @@ public abstract class PermissibleGroup extends PermissibleEntity implements Comp
 	}
 	
 	// TODO Prevent StackOverflow
-	public Collection<PermissibleEntity> getChildEntities( boolean recursive, String... refs )
+	public Collection<PermissibleEntity> getChildEntities( boolean recursive, References refs )
 	{
 		List<PermissibleEntity> children = Lists.newArrayList();
 		for ( PermissibleEntity entity : PermissionManager.INSTANCE.getEntities() )
-			if ( entity.getParentGroups( refs ).contains( this ) )
+			if ( entity.getGroups( refs ).contains( this ) )
 				children.add( entity );
 		if ( recursive )
 			for ( PermissibleGroup group : getChildGroups( true, refs ) )
@@ -54,17 +54,17 @@ public abstract class PermissibleGroup extends PermissibleEntity implements Comp
 		return children;
 	}
 	
-	public Collection<PermissibleEntity> getChildEntities( String... refs )
+	public Collection<PermissibleEntity> getChildEntities( References refs )
 	{
 		return getChildEntities( false, refs );
 	}
 	
 	// TODO Prevent StackOverflow
-	public Collection<PermissibleGroup> getChildGroups( boolean recursive, String... refs )
+	public Collection<PermissibleGroup> getChildGroups( boolean recursive, References refs )
 	{
 		List<PermissibleGroup> children = Lists.newArrayList();
 		for ( PermissibleGroup group : PermissionManager.INSTANCE.getGroups() )
-			if ( group.getParentGroups( refs ).contains( this ) )
+			if ( group.getGroups( refs ).contains( this ) )
 			{
 				children.add( group );
 				if ( recursive )
@@ -73,7 +73,7 @@ public abstract class PermissibleGroup extends PermissibleEntity implements Comp
 		return children;
 	}
 	
-	public Collection<PermissibleGroup> getChildGroups( String... refs )
+	public Collection<PermissibleGroup> getChildGroups( References refs )
 	{
 		return getChildGroups( false, refs );
 	}
@@ -84,10 +84,10 @@ public abstract class PermissibleGroup extends PermissibleEntity implements Comp
 		return Maps.newHashMap();
 	}
 	
-	public Collection<String> getParentGroupsNames( String... ref )
+	public Collection<String> getParentGroupsNames( References refs )
 	{
 		Set<String> result = Sets.newHashSet();
-		for ( PermissibleGroup group : getParentGroups( ref ) )
+		for ( PermissibleGroup group : getGroups( refs ) )
 			result.add( group.getId() );
 		return result;
 	}
@@ -122,7 +122,7 @@ public abstract class PermissibleGroup extends PermissibleEntity implements Comp
 		this.rank = rank;
 	}
 	
-	public void setRankLadder( String string )
+	public void setRankLadder( String rank )
 	{
 		// TODO Auto-generated method stub
 	}

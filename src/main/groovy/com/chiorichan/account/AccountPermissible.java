@@ -17,7 +17,6 @@ import com.chiorichan.account.event.AccountPreLoginEvent;
 import com.chiorichan.account.event.AccountSuccessfulLoginEvent;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
-import com.chiorichan.account.types.MemoryTypeCreator;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.permission.Permissible;
 import com.chiorichan.session.SessionManager;
@@ -64,12 +63,6 @@ public abstract class AccountPermissible extends Permissible implements Account
 		if ( account == null )
 			throw new AccountException( AccountResult.ACCOUNT_NOT_INITIALIZED );
 		return account;
-	}
-	
-	@Override
-	public boolean isVirtual()
-	{
-		return metadata().context().creator() instanceof MemoryTypeCreator;
 	}
 	
 	@Override

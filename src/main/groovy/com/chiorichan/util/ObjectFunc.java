@@ -154,7 +154,7 @@ public class ObjectFunc
 	public static Boolean castToBoolWithException( Object value ) throws ClassCastException
 	{
 		if ( value == null )
-			throw new ClassCastException( "Can't Cast `null` to Boolean" );
+			throw new ClassCastException( "Can't cast `null` to Boolean" );
 		
 		if ( value.getClass() == boolean.class || value.getClass() == Boolean.class )
 			return ( boolean ) value;

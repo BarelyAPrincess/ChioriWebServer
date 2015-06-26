@@ -8,54 +8,37 @@
  */
 package com.chiorichan.permission;
 
-import java.util.ArrayList;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TimerTask;
+import java.util.concurrent.ConcurrentSkipListMap;
+
+import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.permission.event.PermissibleEntityEvent;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.util.StringFunc;
-import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 public abstract class PermissibleEntity
 {
-	protected class TimedPermission
-	{
-		Permission permission;
-		
-		int time;
-		
-		public TimedPermission( Permission perm, int lifeTime )
-		{
-			permission = perm;
-			time = lifeTime;
-		}
-		
-		public boolean isExpired()
-		{
-			return ( time - Timings.epoch() < 0 );
-		}
-	}
-	
 	private Map<String, PermissionResult> cachedResults = Maps.newConcurrentMap();
 	
-	protected List<ChildPermission> childPermissions = Lists.newArrayList();
+	private Map<ChildPermission, References> permissions = new ConcurrentSkipListMap<ChildPermission, References>();
+	private Map<ChildPermission, TimedReferences> timedPermissions = new ConcurrentSkipListMap<ChildPermission, TimedReferences>();
+	private Map<PermissibleGroup, References> groups = new ConcurrentSkipListMap<PermissibleGroup, References>();
+	private Map<PermissibleGroup, TimedReferences> timedGroups = new ConcurrentSkipListMap<PermissibleGroup, TimedReferences>();
+	
 	protected boolean debugMode = false;
-	protected Map<String, PermissibleGroup> groups = Maps.newConcurrentMap();
 	private String id;
 	private boolean virtual = false;
-	protected Map<String, LinkedList<TimedPermission>> timedPermissions = Maps.newConcurrentMap();
 	
 	public PermissibleEntity( String id )
 	{
@@ -63,178 +46,155 @@ public abstract class PermissibleEntity
 		reload();
 	}
 	
-	public void addGroup( PermissibleGroup group, int lifetime, String... refs )
+	public void addGroup( PermissibleGroup group, References refs )
 	{
-		// TODO Timed Groups
-		
-		this.addGroup( group, refs );
-	}
-	
-	public void addGroup( PermissibleGroup group, String... refs )
-	{
-		// TODO THIS!
-		
-		groups.put( group.getId(), group );
+		addGroup0( group, refs );
 		recalculatePermissions();
 	}
 	
-	public void addPermission( Permission perm, Object val, String ref )
+	protected void addGroup0( PermissibleGroup group, References refs )
 	{
-		attachPermission( new ChildPermission( perm, perm.getModel().createValue( val ), isGroup() ? ( ( PermissibleGroup ) this ).getWeight() : -1, ref ) );
+		References ref = groups.get( group );
+		if ( ref == null )
+			ref = refs;
+		else
+			ref.add( refs );
+		groups.put( group, ref );
+		removeTimedGroup( group, ref );
 	}
 	
-	public void addPermission( String node, Object val, String ref )
+	protected final void addPermission( ChildPermission perm, References refs )
 	{
-		addPermission( PermissionManager.INSTANCE.getNode( node ), val, ref );
+		Validate.notNull( perm );
+		
+		if ( refs == null )
+			refs = References.format();
+		
+		References oldRefs = getPermissionReferences( perm.getPermission() );
+		if ( oldRefs != null )
+			refs.add( oldRefs );
+		permissions.put( perm, refs );
+		
+		if ( isDebug() )
+			PermissionManager.getLogger().info( String.format( "%sThe permission `%s` with reference `%s` was attached to entity `%s`.", ConsoleColor.YELLOW, perm.getPermission().getNamespace(), refs.toString(), getId() ) );
+		
+		recalculatePermissions();
+	}
+	
+	public void addPermission( Permission perm, Object val, References refs )
+	{
+		addPermission( new ChildPermission( this, perm, perm.getModel().createValue( val ), isGroup() ? ( ( PermissibleGroup ) this ).getWeight() : -1 ), refs );
+	}
+	
+	public void addPermission( String node, Object val, References refs )
+	{
+		addPermission( PermissionManager.INSTANCE.getNode( node ), val, refs );
+	}
+	
+	public void addTimedGroup( PermissibleGroup group, int lifetime, References refs )
+	{
+		if ( refs == null )
+			refs = References.format();
+		timedGroups.put( group, new TimedReferences( lifetime ).add( refs ) );
+	}
+	
+	protected final void addTimedPermission( ChildPermission perm, TimedReferences refs )
+	{
+		permissions.put( perm, refs );
+		if ( isDebug() )
+			PermissionManager.getLogger().info( String.format( "%sThe permission `%s` with reference `%s` was attached to entity `%s`.", ConsoleColor.YELLOW, perm.getPermission().getNamespace(), refs.toString(), getId() ) );
+		recalculatePermissions();
 	}
 	
 	/**
-	 * Adds timed permission to specified reference in seconds
+	 * Adds timed permission with specified references and a lifetime to live
 	 * 
 	 * @param permission
-	 * @param ref
+	 *            The Permission Node
+	 * @param refs
+	 *            The References
 	 * @param lifeTime
 	 *            Lifetime of permission in seconds. 0 for transient permission (reference disappear only after server reload)
 	 */
-	public void addTimedPermission( final Permission perm, String ref, int lifeTime )
+	public void addTimedPermission( final Permission perm, Object val, References refs, int lifeTime )
 	{
-		if ( ref == null )
-			ref = "";
-		
-		if ( !timedPermissions.containsKey( ref ) )
-			timedPermissions.put( ref, new LinkedList<TimedPermission>() );
-		
-		timedPermissions.get( ref ).add( new TimedPermission( perm, Timings.epoch() + lifeTime ) );
-		
-		final String finalRef = ref;
-		
-		if ( lifeTime > 0 )
-		{
-			TimerTask task = new TimerTask()
-			{
-				@Override
-				public void run()
-				{
-					removeTimedPermission( perm, finalRef );
-				}
-			};
-			
-			PermissionManager.INSTANCE.registerTask( task, lifeTime );
-		}
-		
-		recalculatePermissions();
+		addTimedPermission( new ChildPermission( this, perm, perm.getModel().createValue( val ), isGroup() ? ( ( PermissibleGroup ) this ).getWeight() : -1 ), new TimedReferences( lifeTime ).add( refs ) );
 	}
 	
-	public void addTimedPermission( String perm, String ref, int lifeTime )
+	public void addTimedPermission( String perm, Object val, References refs, int lifeTime )
 	{
-		addTimedPermission( PermissionManager.INSTANCE.getNode( perm, true ), ref, lifeTime );
-	}
-	
-	public final void attachPermission( ChildPermission perm )
-	{
-		if ( isDebug() )
-			PermissionManager.getLogger().info( String.format( "%sThe permission `%s` with reference `%s` was attached to entity `%s`.", ConsoleColor.YELLOW, perm.getPermission().getNamespace(), Joiner.on( ", " ).join( perm.getReferences() ), getId() ) );
-		childPermissions.add( perm );
-		recalculatePermissions();
+		addTimedPermission( PermissionManager.INSTANCE.getNode( perm, true ), val, refs, lifeTime );
 	}
 	
 	public PermissionResult checkPermission( Permission perm )
 	{
-		return checkPermission( perm, "" );
+		return checkPermission( perm, References.format( "" ) );
 	}
 	
-	public PermissionResult checkPermission( Permission perm, String ref )
+	public PermissionResult checkPermission( Permission perm, References refs )
 	{
-		ref = StringFunc.formatReference( ref );
-		
 		/**
 		 * We cache the results to reduce lag when a permission is checked multiple times over.
 		 */
-		PermissionResult result = cachedResults.get( perm.getNamespace() + "-" + ref );
+		PermissionResult result = cachedResults.get( perm.getNamespace() + "-" + refs.hash() );
 		
 		if ( result != null )
 			if ( result.timecode > Timings.epoch() - 600 ) // 600 Seconds = 10 Minutes
 				return result;
 			else
-				cachedResults.remove( perm.getNamespace() + "-" + ref );
+				cachedResults.remove( perm.getNamespace() + "-" + refs.hash() );
 		
-		result = new PermissionResult( this, perm, ref );
+		result = new PermissionResult( this, perm, refs );
 		
-		cachedResults.put( perm.getNamespace() + "-" + ref, result );
+		cachedResults.put( perm.getNamespace() + "-" + refs.hash(), result );
 		
-		if ( !perm.getNamespace().equalsIgnoreCase( PermissionDefault.OP.getNameSpace() ) && isDebug() )
-			PermissionManager.getLogger().info( ConsoleColor.YELLOW + "Entity `" + getId() + "` checked for permission `" + perm.getNamespace() + "`" + ( ( ref.isEmpty() ) ? "" : " with reference `" + ref + "`" ) + " with result `" + result + "`" );
+		if ( isDebug() && !perm.getNamespace().equalsIgnoreCase( PermissionDefault.OP.getNameSpace() ) )
+			PermissionManager.getLogger().info( ConsoleColor.YELLOW + "Entity `" + getId() + "` checked for permission `" + perm.getNamespace() + "`" + ( ( refs.isEmpty() ) ? "" : " with reference `" + refs.toString() + "`" ) + " with result `" + result + "`" );
 		
 		return result;
 	}
 	
 	public PermissionResult checkPermission( String perm )
 	{
-		return checkPermission( perm, "" );
+		return checkPermission( perm, References.format( "" ) );
 	}
 	
-	public PermissionResult checkPermission( String perm, String ref )
+	public PermissionResult checkPermission( String perm, References ref )
 	{
-		PermissionResult result = null;
-		
-		if ( ref == null )
-			ref = "";
-		
 		perm = PermissionManager.parseNode( perm );
 		Permission permission = PermissionManager.INSTANCE.getNode( perm, true );
-		result = checkPermission( permission, ref );
+		PermissionResult result = checkPermission( permission, ref );
 		
 		return result;
 	}
 	
-	public final void clearGroups()
+	protected void clearGroups()
 	{
 		groups.clear();
+		recalculatePermissions();
+	}
+	
+	protected void clearPermissions()
+	{
+		permissions.clear();
+		recalculatePermissions();
+	}
+	
+	protected void clearTimedGroups()
+	{
+		timedGroups.clear();
+		recalculatePermissions();
+	}
+	
+	protected void clearTimedPermissions()
+	{
+		timedPermissions.clear();
 		recalculatePermissions();
 	}
 	
 	public PermissibleGroup demote( PermissibleEntity demoter, String string )
 	{
 		return null;// TODO Auto-generated method stub
-	}
-	
-	public final void detachAllPermissions()
-	{
-		childPermissions.clear();
-		recalculatePermissions();
-	}
-	
-	public final void detachPermission( ChildPermission perm, String... refs )
-	{
-		detachPermission( perm.getPermission().getNamespace(), refs );
-	}
-	
-	public final void detachPermission( Permission perm, String... refs )
-	{
-		detachPermission( perm.getNamespace(), refs );
-	}
-	
-	public final void detachPermission( String perm, String... refs )
-	{
-		refs = StringFunc.formatReference( refs );
-		for ( ChildPermission child : childPermissions )
-			if ( child.getPermission().getNamespace().equals( perm ) && ( ( refs.length == 0 && child.getReferences().size() == 0 ) || StringFunc.comparable( child.getReferences().toArray( new String[0] ), refs ) ) )
-				childPermissions.remove( child );
-		recalculatePermissions();
-	}
-	
-	@Override
-	public boolean equals( Object obj )
-	{
-		if ( obj == null )
-			return false;
-		if ( !getClass().equals( obj.getClass() ) )
-			return false;
-		if ( this == obj )
-			return true;
-		
-		final PermissibleEntity other = ( PermissibleEntity ) obj;
-		return id.equals( other.id );
 	}
 	
 	public boolean explainExpression( String expression )
@@ -245,22 +205,62 @@ public abstract class PermissibleEntity
 		return !expression.startsWith( "-" ); // If expression have - (minus) before then that mean expression are negative
 	}
 	
-	private ChildPermission findChildPermission( List<PermissibleGroup> groups, Permission perm, String ref )
+	protected ChildPermission getChildPermission( Permission perm, References refs )
 	{
-		ref = StringFunc.formatReference( ref );
-		
+		for ( ChildPermission child : getChildPermissions( refs ) )
+			if ( child.getPermission() == perm )
+				return child;
+		return null;
+	}
+	
+	protected Entry<ChildPermission, References> getChildPermissionEntry( Permission perm, References refs )
+	{
+		for ( Entry<ChildPermission, References> entry : permissions.entrySet() )
+			if ( entry.getKey().getPermission() == perm && entry.getValue().match( refs ) )
+				return entry;
+		return null;
+	}
+	
+	protected Entry<ChildPermission, References> getChildPermissionEntry( References refs )
+	{
+		for ( Entry<ChildPermission, References> entry : permissions.entrySet() )
+			if ( entry.getValue().match( refs ) )
+				return entry;
+		return null;
+	}
+	
+	/**
+	 * Check it's self and each {@link PermissibleEntity} group until it finds the {@link ChildPermission} associated with {@link Permission}
+	 * 
+	 * @param perm
+	 *            The {@link Permission} we associate with
+	 * @param refs
+	 *            Reference to be looking for
+	 * @return The resulting {@link ChildPermission}
+	 */
+	protected ChildPermission getChildPermissionRecursive( Permission perm, References refs )
+	{
+		/**
+		 * Used as a constant tracker for already checked groups, prevents infinite looping.
+		 * e.g., User -> Group1 -> Group2 -> Group3 -> Group1
+		 */
+		return getChildPermissionRecursive( new HashSet<PermissibleGroup>(), perm, refs );
+	}
+	
+	protected ChildPermission getChildPermissionRecursive( Set<PermissibleGroup> stacker, Permission perm, References refs )
+	{
 		// First we try checking this PermissibleEntity
-		ChildPermission result = getChildPermission( perm, ref );
+		ChildPermission result = getChildPermission( perm, refs );
 		
 		if ( result != null )
 			return result;
 		
 		// Next we check each group recursively
-		for ( PermissibleGroup group : groups )
-			if ( !groups.contains( group ) )
+		for ( PermissibleGroup group : getGroups( refs ) )
+			if ( !stacker.contains( group ) )
 			{
-				groups.add( group );
-				result = findChildPermission( groups, perm, ref );
+				stacker.add( group );
+				result = group.getChildPermissionRecursive( stacker, perm, refs );
 				if ( result != null )
 					break;
 			}
@@ -268,69 +268,68 @@ public abstract class PermissibleEntity
 		return result;
 	}
 	
-	/**
-	 * Check it's self and each {@link PermissibleEntity} group until it finds the {@link ChildPermission} associated with {@link Permission}
-	 * 
-	 * @param perm
-	 *            The {@link Permission} we associate with
-	 * @return The resulting {@link ChildPermission}
-	 */
-	public ChildPermission findChildPermission( Permission perm )
+	protected Collection<ChildPermission> getChildPermissions( References refs )
 	{
-		return findChildPermission( perm, "" );
+		Set<ChildPermission> result = Sets.newHashSet();
+		for ( Entry<ChildPermission, References> entry : permissions.entrySet() )
+			if ( entry.getValue().match( refs ) )
+				result.add( entry.getKey() );
+		return result;
+	}
+	
+	public Collection<Entry<PermissibleGroup, References>> getGroupEntrys( References refs )
+	{
+		Set<Entry<PermissibleGroup, References>> result = Sets.newHashSet();
+		for ( Entry<PermissibleGroup, References> entry : groups.entrySet() )
+			if ( entry.getValue().match( refs ) )
+				result.add( entry );
+		return result;
+	}
+	
+	public Collection<String> getGroupNames( References refs )
+	{
+		List<String> result = Lists.newArrayList();
+		for ( PermissibleGroup group : getGroups( refs ) )
+			result.add( group.getId() );
+		return result;
+	}
+	
+	public References getGroupReferences()
+	{
+		References refs = new References();
+		for ( References ref : timedGroups.values() )
+			refs.add( ref );
+		for ( References ref : groups.values() )
+			refs.add( ref );
+		return refs;
+	}
+	
+	public References getGroupReferences( PermissibleGroup group )
+	{
+		References refs = new References();
+		for ( Entry<PermissibleGroup, References> entry : groups.entrySet() )
+			if ( entry.getKey() == group )
+				refs.add( entry.getValue() );
+		for ( Entry<PermissibleGroup, TimedReferences> entry : timedGroups.entrySet() )
+			if ( entry.getKey() == group )
+				refs.add( entry.getValue() );
+		return refs;
+	}
+	
+	public final Collection<PermissibleGroup> getGroups( References refs )
+	{
+		Set<PermissibleGroup> result = Sets.newHashSet();
+		for ( Entry<PermissibleGroup, References> entry : groups.entrySet() )
+			if ( entry.getValue().match( refs ) )
+				result.add( entry.getKey() );
+		for ( Entry<PermissibleGroup, TimedReferences> entry : timedGroups.entrySet() )
+			if ( entry.getValue().match( refs ) && !entry.getValue().isExpired() )
+				result.add( entry.getKey() );
+		return result;
 	}
 	
 	/**
-	 * Check it's self and each {@link PermissibleEntity} group until it finds the {@link ChildPermission} associated with {@link Permission}
-	 * 
-	 * @param perm
-	 *            The {@link Permission} we associate with
-	 * @param ref
-	 *            Reference string, e.g., site name
-	 * @return The resulting {@link ChildPermission}
-	 */
-	public ChildPermission findChildPermission( Permission perm, String ref )
-	{
-		/**
-		 * Used as a constant tracker for already checked groups, prevents infinite looping.
-		 * e.g., User -> Group1 -> Group2 -> Group3 -> Group1
-		 */
-		return findChildPermission( new ArrayList<PermissibleGroup>(), perm, ref );
-	}
-	
-	protected ChildPermission getChildPermission( Permission perm )
-	{
-		return getChildPermission( perm, "" );
-	}
-	
-	protected ChildPermission getChildPermission( Permission perm, String ref )
-	{
-		ref = StringFunc.formatReference( ref );
-		for ( ChildPermission child : childPermissions )
-			if ( perm == child.getPermission() && ( ( child.getReferences().isEmpty() && ref.isEmpty() ) || child.getReferences().contains( ref ) ) )
-				return child;
-		return null;
-	}
-	
-	public final Collection<ChildPermission> getChildPermissions( String... refs )
-	{
-		if ( refs.length == 0 )
-		{
-			Collections.sort( childPermissions );
-			return childPermissions;
-		}
-		
-		List<ChildPermission> children = Lists.newLinkedList();
-		refs = StringFunc.formatReference( refs );
-		for ( ChildPermission child : childPermissions )
-			if ( ( child.getReferences().isEmpty() && refs.length == 0 ) || StringFunc.comparable( refs, child.getReferences().toArray( new String[0] ) ) )
-				children.add( child );
-		Collections.sort( children );
-		return children;
-	}
-	
-	/**
-	 * Return id of permission entity (User or Group)
+	 * Return id of permission entity (Entity or Group)
 	 * User should be equal to User's id on the server
 	 * 
 	 * @return id
@@ -348,59 +347,90 @@ public abstract class PermissibleEntity
 		return null;
 	}
 	
-	public String getMatchingExpression( String permission, String ref )
+	public String getMatchingExpression( String permission, References refs )
 	{
-		return getMatchingExpression( getPermissions( ref ), permission );
+		return getMatchingExpression( getPermissions( refs ), permission );
 	}
 	
-	public <T> T getOption( String key, String ref, T def )
+	public <T> T getOption( String key, References refs, T def )
 	{
 		return def;// TODO Auto-generated method stub
 	}
 	
-	public Map<String, String> getOptions( String ref )
+	public Map<String, String> getOptions( References refs )
 	{
 		return Maps.newHashMap();// TODO Auto-generated method stub
 	}
 	
-	public Collection<String> getParentGroupNames( String... refs )
+	public Collection<Entry<Permission, References>> getPermissionEntrys( References refs )
+	{
+		Set<Entry<Permission, References>> result = Sets.newHashSet();
+		for ( Entry<ChildPermission, References> entry : permissions.entrySet() )
+			if ( entry.getValue().match( refs ) )
+				result.add( new SimpleEntry<Permission, References>( entry.getKey().getPermission(), entry.getValue() ) );
+		return result;
+	}
+	
+	public Collection<String> getPermissionNames( References refs )
 	{
 		List<String> result = Lists.newArrayList();
-		for ( PermissibleGroup group : getParentGroups( refs ) )
-			result.add( group.getId() );
+		for ( Permission perm : getPermissions( refs ) )
+			result.add( perm.getNamespace() );
 		return result;
 	}
 	
-	public final Collection<PermissibleGroup> getParentGroups( String... refs )
+	public References getPermissionReferences()
 	{
-		refs = StringFunc.formatReference( refs );
-		if ( refs.length == 0 )
-			return Collections.unmodifiableCollection( groups.values() );
-		Set<PermissibleGroup> result = Sets.newHashSet();
-		for ( Entry<String, PermissibleGroup> group : groups.entrySet() )
-			for ( String ref : refs )
-				if ( group.getKey().equalsIgnoreCase( ref ) )
-				{
-					result.add( group.getValue() );
-					break;
-				}
+		References refs = new References();
+		for ( References ref : timedPermissions.values() )
+			refs.add( ref );
+		for ( References ref : permissions.values() )
+			refs.add( ref );
+		return refs;
+	}
+	
+	public References getPermissionReferences( Permission perm )
+	{
+		References refs = new References();
+		for ( Entry<ChildPermission, References> entry : permissions.entrySet() )
+			if ( entry.getKey().getPermission() == perm )
+				refs.add( entry.getValue() );
+		for ( Entry<ChildPermission, TimedReferences> entry : timedPermissions.entrySet() )
+			if ( entry.getKey().getPermission() == perm )
+				refs.add( entry.getValue() );
+		return refs;
+	}
+	
+	public Collection<Permission> getPermissions( References refs )
+	{
+		Set<Permission> result = Sets.newHashSet();
+		for ( Entry<ChildPermission, References> entry : permissions.entrySet() )
+			if ( entry.getValue().match( refs ) )
+				result.add( entry.getKey().getPermission() );
 		return result;
 	}
 	
-	public Collection<String> getPermissionNodes( String... refs )
+	public Entry<Permission, PermissionValue> getPermissionValue( Permission perm, References refs )
 	{
-		List<String> result = Lists.newArrayList();
-		for ( Permission p : getPermissions( refs ) )
-			result.add( p.getNamespace() );
-		return result;
+		for ( Entry<ChildPermission, References> entry : permissions.entrySet() )
+			if ( entry.getKey().getPermission() == perm && entry.getValue().match( refs ) )
+				return new SimpleEntry<Permission, PermissionValue>( entry.getKey().getPermission(), entry.getKey().getValue() );
+		for ( Entry<ChildPermission, TimedReferences> entry : timedPermissions.entrySet() )
+			if ( !entry.getValue().isExpired() && entry.getKey().getPermission() == perm && entry.getValue().match( refs ) )
+				return new SimpleEntry<Permission, PermissionValue>( entry.getKey().getPermission(), entry.getKey().getValue() );
+		return null;
 	}
 	
-	public Collection<Permission> getPermissions( String... refs )
+	public Collection<Entry<Permission, PermissionValue>> getPermissionValues( References refs )
 	{
-		List<Permission> perms = Lists.newArrayList();
-		for ( ChildPermission child : getChildPermissions( refs ) )
-			perms.add( child.getPermission() );
-		return perms;
+		Set<Entry<Permission, PermissionValue>> result = Sets.newHashSet();
+		for ( Entry<ChildPermission, References> entry : permissions.entrySet() )
+			if ( entry.getValue().match( refs ) )
+				result.add( new SimpleEntry<Permission, PermissionValue>( entry.getKey().getPermission(), entry.getKey().getValue() ) );
+		for ( Entry<ChildPermission, TimedReferences> entry : timedPermissions.entrySet() )
+			if ( !entry.getValue().isExpired() && entry.getValue().match( refs ) )
+				result.add( new SimpleEntry<Permission, PermissionValue>( entry.getKey().getPermission(), entry.getKey().getValue() ) );
+		return result;
 	}
 	
 	public String getPrefix()
@@ -408,14 +438,9 @@ public abstract class PermissibleEntity
 		return null;
 	}
 	
-	public String getPrefix( String ref )
+	public String getPrefix( References refs )
 	{
 		return null;// TODO Auto-generated method stub
-	}
-	
-	public Collection<String> getReferences()
-	{
-		return groups.keySet();
 	}
 	
 	public String getSuffix()
@@ -423,39 +448,9 @@ public abstract class PermissibleEntity
 		return null;
 	}
 	
-	public String getSuffix( String ref )
+	public String getSuffix( References refs )
 	{
 		return null;// TODO Auto-generated method stub
-	}
-	
-	public TimedPermission getTimedPermission( Permission perm, String ref )
-	{
-		if ( ref == null )
-			ref = "";
-		
-		if ( !timedPermissions.containsKey( ref ) )
-			return null;
-		
-		for ( TimedPermission tp : timedPermissions.get( ref ) )
-			if ( tp.permission == perm )
-				return tp;
-		
-		return null;
-	}
-	
-	public TimedPermission getTimedPermission( String perm, String ref )
-	{
-		if ( ref == null )
-			ref = "";
-		
-		if ( !timedPermissions.containsKey( ref ) )
-			return null;
-		
-		for ( TimedPermission tp : timedPermissions.get( ref ) )
-			if ( tp.permission.getLocalName().equals( perm ) || tp.permission.getNamespace().equals( perm ) )
-				return tp;
-		
-		return null;
 	}
 	
 	/**
@@ -466,40 +461,43 @@ public abstract class PermissibleEntity
 	 * @param ref
 	 * @return remaining lifetime in seconds of timed permission. 0 if permission is transient
 	 */
-	public int getTimedPermissionLifetime( String perm, String ref )
+	public int getTimedPermissionLifetime( Permission perm, References refs )
 	{
-		if ( ref == null )
-			ref = "";
-		
-		if ( !timedPermissions.containsKey( ref ) )
-			return 0;
-		
-		return getTimedPermission( perm, ref ).time - Timings.epoch();
+		for ( Entry<ChildPermission, TimedReferences> entry : timedPermissions.entrySet() )
+			if ( entry.getValue().match( refs ) && entry.getKey().getPermission() == perm )
+				return Timings.epoch() - entry.getValue().lifeTime;
+		return -1;
+	}
+	
+	public Collection<Permission> getTimedPermissions()
+	{
+		return getTimedPermissions( null );
 	}
 	
 	/**
-	 * Return entity timed (temporary) permission for ref
+	 * Return entity timed (temporary) permission
 	 * 
 	 * @param ref
-	 * @return Array of timed permissions in that ref
+	 *            The Reference to check
+	 * @return Collection of timed permissions
 	 */
-	public TimedPermission[] getTimedPermissions( String ref )
+	public Collection<Permission> getTimedPermissions( References refs )
 	{
-		if ( ref == null )
-			ref = "";
-		
-		if ( !timedPermissions.containsKey( ref ) )
-			return new TimedPermission[0];
-		
-		return timedPermissions.get( ref ).toArray( new TimedPermission[0] );
+		Set<Permission> result = Sets.newHashSet();
+		for ( Entry<ChildPermission, TimedReferences> entry : timedPermissions.entrySet() )
+			if ( entry.getValue().match( refs ) && !entry.getValue().isExpired() )
+				result.add( entry.getKey().getPermission() );
+		return result;
 	}
 	
-	@Override
-	public int hashCode()
+	public boolean hasGroup( PermissibleGroup group )
 	{
-		int hash = 7;
-		hash = 89 * hash + ( id != null ? id.hashCode() : 0 );
-		return hash;
+		return groups.containsKey( group );
+	}
+	
+	public boolean hasTimedGroup( PermissibleGroup group )
+	{
+		return timedGroups.containsKey( group );
 	}
 	
 	public boolean isAdmin()
@@ -516,7 +514,7 @@ public abstract class PermissibleEntity
 	
 	public boolean isCommitted()
 	{
-		// Future, was it committed to backend?
+		// XXX Future, was it committed to backend?
 		return true;
 	}
 	
@@ -543,7 +541,7 @@ public abstract class PermissibleEntity
 	
 	public boolean isWhitelisted()
 	{
-		if ( !PermissionManager.INSTANCE.hasWhitelist() )
+		if ( !PermissionManager.INSTANCE.hasWhitelist() || isOp() )
 			return true;
 		
 		PermissionResult result = checkPermission( PermissionDefault.WHITELISTED.getNode() );
@@ -552,11 +550,23 @@ public abstract class PermissibleEntity
 	
 	public PermissibleGroup promote( PermissibleEntity promoter, String ladder )
 	{
-		return null;// TODO Auto-generated method stub
+		return null;
 	}
 	
 	public void recalculatePermissions()
 	{
+		for ( Entry<PermissibleGroup, TimedReferences> entry : timedGroups.entrySet() )
+			if ( entry.getValue().isExpired() )
+			{
+				timedGroups.remove( entry.getKey() );
+				EventBus.INSTANCE.callEvent( new PermissibleEntityEvent( this, PermissibleEntityEvent.Action.TIMEDGROUP_EXPIRED ) );
+			}
+		for ( Entry<ChildPermission, TimedReferences> entry : timedPermissions.entrySet() )
+			if ( entry.getValue().isExpired() )
+			{
+				timedPermissions.remove( entry.getKey() );
+				EventBus.INSTANCE.callEvent( new PermissibleEntityEvent( this, PermissibleEntityEvent.Action.TIMEDPERMISSION_EXPIRED ) );
+			}
 		for ( PermissionResult cache : cachedResults.values() )
 			cache.recalculatePermissions();
 		EventBus.INSTANCE.callEvent( new PermissibleEntityEvent( this, PermissibleEntityEvent.Action.PERMISSIONS_CHANGED ) );
@@ -577,12 +587,39 @@ public abstract class PermissibleEntity
 	 */
 	public abstract void remove();
 	
-	public void removeGroup( String groupName, String ref )
+	public final void removeAllPermissions()
 	{
-		// TODO THIS!
-		
-		groups.remove( groupName );
+		permissions.clear();
 		recalculatePermissions();
+	}
+	
+	public void removeGroup( PermissibleGroup group, References refs )
+	{
+		References current = groups.get( group );
+		if ( current == null )
+			return;
+		current.remove( refs );
+		if ( current.isEmpty() )
+			groups.remove( group );
+		recalculatePermissions();
+	}
+	
+	public void removeGroup( String group, References refs )
+	{
+		removeGroup( PermissionManager.INSTANCE.getGroup( group ), refs );
+	}
+	
+	public final void removePermission( Permission perm, References refs )
+	{
+		for ( Entry<ChildPermission, References> entry : permissions.entrySet() )
+			if ( entry.getKey().getPermission() == perm && entry.getValue().match( refs ) )
+				permissions.remove( perm );
+		recalculatePermissions();
+	}
+	
+	public void removePermission( String permission, References refs )
+	{
+		removePermission( PermissionManager.INSTANCE.getNode( permission ), refs );
 	}
 	
 	/**
@@ -591,24 +628,27 @@ public abstract class PermissibleEntity
 	 * @param permission
 	 * @param ref
 	 */
-	public void removeTimedPermission( Permission perm, String ref )
+	public void removeTimedGroup( PermissibleGroup group, References refs )
 	{
-		if ( ref == null )
-			ref = "";
-		
-		if ( !timedPermissions.containsKey( ref ) )
+		References current = timedGroups.get( group );
+		if ( current == null )
 			return;
-		
-		for ( TimedPermission tp : timedPermissions.get( ref ) )
-			if ( tp.permission == perm )
-				timedPermissions.get( ref ).remove( tp );
-		
+		current.remove( refs );
+		if ( current.isEmpty() )
+			timedGroups.remove( group );
 		recalculatePermissions();
 	}
 	
-	public void removeTimedPermission( String perm, String ref )
+	public void removeTimedPermission( Permission perm, References refs )
 	{
-		removeTimedPermission( PermissionManager.INSTANCE.getNode( perm, true ), ref );
+		for ( Entry<ChildPermission, TimedReferences> entry : timedPermissions.entrySet() )
+			if ( entry.getKey().getPermission() == perm && entry.getValue().match( refs ) )
+				timedPermissions.remove( entry.getKey() );
+	}
+	
+	public void removeTimedPermission( String perm, References refs )
+	{
+		removeTimedPermission( PermissionManager.INSTANCE.getNode( perm ), refs );
 	}
 	
 	/**
@@ -621,17 +661,22 @@ public abstract class PermissibleEntity
 		debugMode = debug;
 	}
 	
-	public void setOption( String key, String value, String ref )
+	public void setGroups( Collection<PermissibleGroup> groups, References refs )
 	{
-		// TODO Auto-generated method stub
+		setGroups0( groups, refs );
+		recalculatePermissions();
 	}
 	
-	// TODO Store groups by reference
-	public void setParentGroups( Collection<PermissibleGroup> groups, String ref )
+	protected void setGroups0( Collection<PermissibleGroup> groups, References refs )
 	{
+		clearGroups();
 		for ( PermissibleGroup group : groups )
-			this.groups.put( group.getId(), group );
-		recalculatePermissions();
+			addGroup0( group, refs );
+	}
+	
+	public void setOption( String key, String value, References ref )
+	{
+		// TODO Auto-generated method stub
 	}
 	
 	public void setPrefix( String prefix )
@@ -639,17 +684,17 @@ public abstract class PermissibleEntity
 		// TODO Auto-generated method stub
 	}
 	
-	public void setPrefix( String prefix, String ref )
+	public void setPrefix( String prefix, References ref )
 	{
 		// TODO Auto-generated method stub
 	}
 	
-	public void setSuffix( String string, String ref )
+	public void setSuffix( String string, References refs )
 	{
 		// TODO Auto-generated method stub
 	}
 	
-	void setVirtual( boolean virtual )
+	public void setVirtual( boolean virtual )
 	{
 		this.virtual = virtual;
 	}
@@ -657,6 +702,6 @@ public abstract class PermissibleEntity
 	@Override
 	public String toString()
 	{
-		return this.getClass().getSimpleName() + "(" + getId() + ")";
+		return this.getClass().getSimpleName() + "{" + getId() + "}";
 	}
 }

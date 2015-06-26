@@ -17,6 +17,7 @@ import com.chiorichan.ConsoleColor;
 import com.chiorichan.console.InteractiveConsole;
 import com.chiorichan.console.commands.advanced.CommandHandler;
 import com.chiorichan.permission.PermissionManager;
+import com.chiorichan.permission.References;
 import com.google.common.base.Joiner;
 
 public class ReferenceCommands extends PermissionsCommand
@@ -24,16 +25,16 @@ public class ReferenceCommands extends PermissionsCommand
 	@CommandHandler( name = "pex", syntax = "ref <ref>", description = "Print <ref> inheritance info", permission = "permissions.manage.refs" )
 	public void refPrintInheritance( InteractiveConsole sender, Map<String, String> args )
 	{
-		String refName = autoCompleteRef( args.get( "ref" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
 		PermissionManager manager = PermissionManager.INSTANCE;
-		Collection<String> parentReferences = manager.getRefInheritance( refName );
+		Collection<String> parentReferences = manager.getRefInheritance( refs.join() );
 		if ( parentReferences == null )
 		{
 			sender.sendMessage( "Specified ref \"" + args.get( "ref" ) + "\" not found." );
 			return;
 		}
 		
-		sender.sendMessage( "Reference " + refName + " inherit:" );
+		sender.sendMessage( "Reference " + refs + " inherit:" );
 		if ( parentReferences.size() == 0 )
 		{
 			sender.sendMessage( "nothing :3" );
@@ -54,10 +55,10 @@ public class ReferenceCommands extends PermissionsCommand
 	@CommandHandler( name = "pex", syntax = "ref <ref> inherit <parentReferences>", description = "Set <parentReferences> for <ref>", permission = "permissions.manage.refs.inheritance" )
 	public void refSetInheritance( InteractiveConsole sender, Map<String, String> args )
 	{
-		String refName = autoCompleteRef( args.get( "ref" ) );
+		References refs = autoCompleteRef( args.get( "ref" ) );
 		PermissionManager manager = PermissionManager.INSTANCE;
 		/*
-		 * if ( ReferenceManager.INSTANCE.getReferenceById( refName ) == null )
+		 * if ( ReferenceManager.INSTANCE.getReferenceById( refs ) == null )
 		 * {
 		 * sender.sendMessage( "Specified ref \"" + args.get( "ref" ) + "\" not found." );
 		 * return;
@@ -71,16 +72,16 @@ public class ReferenceCommands extends PermissionsCommand
 		if ( parentReferences.contains( "," ) )
 			for ( String ref : parentReferences.split( "," ) )
 			{
-				ref = autoCompleteRef( ref, "parentReferences" );
+				// ref = autoCompleteRef( ref, "parentReferences" );
 				if ( !parents.contains( ref ) )
 					parents.add( ref.trim() );
 			}
 		else
 			parents.add( parentReferences.trim() );
 		
-		manager.setRefInheritance( refName, parents );
+		manager.setRefInheritance( refs.join(), parents );
 		
-		sender.sendMessage( "Reference " + refName + " inherits " + Joiner.on( ", " ).join( parents ) );
+		sender.sendMessage( "Reference " + refs + " inherits " + Joiner.on( ", " ).join( parents ) );
 	}
 	
 	@CommandHandler( name = "pex", syntax = "refs", description = "Print loaded refs", isPrimary = true, permission = "permissions.manage.refs" )

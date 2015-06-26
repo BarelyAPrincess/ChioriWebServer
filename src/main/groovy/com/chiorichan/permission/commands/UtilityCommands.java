@@ -89,6 +89,9 @@ public class UtilityCommands extends PermissionsCommand
 			PermissionManager.INSTANCE.saveData();
 			sender.sendMessage( ConsoleColor.AQUA + "Wonderful news, we successfully committed any changes to the backend successfully!" );
 		}
+		
+		// Force backend to finally flush changes
+		PermissionManager.INSTANCE.getBackend().commit();
 	}
 	
 	@SuppressWarnings( "unchecked" )

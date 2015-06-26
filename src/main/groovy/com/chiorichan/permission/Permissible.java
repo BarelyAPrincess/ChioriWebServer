@@ -24,8 +24,6 @@ public abstract class Permissible
 		if ( entity == null )
 			PermissionManager.INSTANCE.getEntity( this );
 		
-		entity.setVirtual( isVirtual() );
-		
 		return entity != null;
 	}
 	
@@ -78,21 +76,31 @@ public abstract class Permissible
 		return checkPermission( PermissionManager.INSTANCE.getNode( perm ) );
 	}
 	
-	public final PermissionResult checkPermission( String perm, String ref )
+	public final PermissionResult checkPermission( String perm, References refs )
 	{
 		perm = PermissionManager.parseNode( perm );
-		return checkPermission( PermissionManager.INSTANCE.getNode( perm ), ref );
+		return checkPermission( PermissionManager.INSTANCE.getNode( perm ), refs );
 	}
 	
-	public final PermissionResult checkPermission( Permission perm, String ref )
+	public final PermissionResult checkPermission( Permission perm, References refs )
 	{
 		PermissibleEntity entity = checkEntity() ? getPermissibleEntity() : AccountType.ACCOUNT_NONE.getPermissibleEntity();
-		return entity.checkPermission( perm, ref );
+		return entity.checkPermission( perm, refs );
+	}
+	
+	public final PermissionResult checkPermission( String perm, String... refs )
+	{
+		return checkPermission( perm, References.format( refs ) );
+	}
+	
+	public final PermissionResult checkPermission( Permission perm, String... refs )
+	{
+		return checkPermission( perm, References.format( refs ) );
 	}
 	
 	public final PermissionResult checkPermission( Permission perm )
 	{
-		return checkPermission( perm, "" );
+		return checkPermission( perm, References.format( "" ) );
 	}
 	
 	/**
@@ -100,14 +108,24 @@ public abstract class Permissible
 	 * 0, op, root | sys.op = OP Only!
 	 * admin | sys.admin = Admin Only!
 	 */
-	public final PermissionResult requirePermission( String req, String... refs ) throws PermissionDeniedException
+	public final PermissionResult requirePermission( String req, References refs ) throws PermissionDeniedException
 	{
 		req = PermissionManager.parseNode( req );
 		return requirePermission( PermissionManager.INSTANCE.getNode( req, true ), refs );
 	}
 	
+	public final PermissionResult requirePermission( String req, String... refs ) throws PermissionDeniedException
+	{
+		req = PermissionManager.parseNode( req );
+		return requirePermission( PermissionManager.INSTANCE.getNode( req, true ), References.format( refs ) );
+	}
 	
 	public final PermissionResult requirePermission( Permission req, String... refs ) throws PermissionDeniedException
+	{
+		return requirePermission( req, References.format( refs ) );
+	}
+	
+	public final PermissionResult requirePermission( Permission req, References refs ) throws PermissionDeniedException
 	{
 		PermissionResult result = checkPermission( req );
 		
@@ -121,12 +139,9 @@ public abstract class Permissible
 				if ( result.getPermission() == PermissionDefault.OP.getNode() )
 					throw new PermissionDeniedException( PermissionDeniedReason.OP_ONLY );
 				
-				for ( String ref : refs )
-				{
-					result.recalculatePermissions( ref );
-					if ( result.isTrue() )
-						return result;
-				}
+				result.recalculatePermissions( refs );
+				if ( result.isTrue() )
+					return result;
 				
 				throw new PermissionDeniedException( PermissionDeniedReason.DENIED.setPermission( req ) );
 			}
@@ -142,11 +157,4 @@ public abstract class Permissible
 	 *         a unique identifier
 	 */
 	public abstract String getEntityId();
-	
-	/**
-	 * Indicates if the permissible entity should be allowed to save, i.e., keep it's groups and permissions persistent between restarts
-	 * 
-	 * @return True if so
-	 */
-	public abstract boolean isVirtual();
 }
