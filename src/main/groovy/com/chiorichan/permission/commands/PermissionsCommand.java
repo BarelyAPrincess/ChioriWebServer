@@ -140,7 +140,7 @@ public abstract class PermissionsCommand implements CommandListener
 	protected References autoCompleteRef( String ref, String argName )
 	{
 		if ( ref == null || ref.isEmpty() || "*".equals( ref ) )
-			return null;
+			return References.format();
 		
 		Set<String> refs = Sets.newHashSet();
 		

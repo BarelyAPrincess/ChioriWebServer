@@ -21,10 +21,13 @@ public abstract class Permissible
 	
 	public final boolean checkEntity()
 	{
-		if ( entity == null )
+		if ( entity == null || AccountType.isNoneAccount( entity ) )
 			PermissionManager.INSTANCE.getEntity( this );
 		
-		return entity != null;
+		if ( entity == null )
+			entity = AccountType.ACCOUNT_NONE.getPermissibleEntity();
+		
+		return entity != null && !AccountType.isNoneAccount( entity );
 	}
 	
 	public final PermissibleEntity getPermissibleEntity()
@@ -84,7 +87,7 @@ public abstract class Permissible
 	
 	public final PermissionResult checkPermission( Permission perm, References refs )
 	{
-		PermissibleEntity entity = checkEntity() ? getPermissibleEntity() : AccountType.ACCOUNT_NONE.getPermissibleEntity();
+		PermissibleEntity entity = getPermissibleEntity();
 		return entity.checkPermission( perm, refs );
 	}
 	
@@ -131,7 +134,7 @@ public abstract class Permissible
 		
 		if ( result.getPermission() != PermissionDefault.EVERYBODY.getNode() )
 		{
-			if ( result.getEntity() == null )
+			if ( result.getEntity() == null || AccountType.isNoneAccount( result.getEntity() ) )
 				throw new PermissionDeniedException( PermissionDeniedReason.LOGIN_PAGE.setPermission( req ) );
 			
 			if ( !result.isTrue() )

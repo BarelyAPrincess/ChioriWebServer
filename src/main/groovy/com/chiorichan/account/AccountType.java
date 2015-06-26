@@ -21,6 +21,7 @@ import com.chiorichan.account.types.AccountTypeCreator;
 import com.chiorichan.account.types.FileTypeCreator;
 import com.chiorichan.account.types.MemoryTypeCreator;
 import com.chiorichan.account.types.SqlTypeCreator;
+import com.chiorichan.permission.PermissibleEntity;
 import com.google.common.collect.Maps;
 
 /**
@@ -56,17 +57,17 @@ public final class AccountType
 	 */
 	public static final AccountMeta ACCOUNT_ROOT = new AccountMeta( new AccountContext( MemoryTypeCreator.INSTANCE, MEMORY, "root", "%", true ) );
 	
-	private final boolean builtin;
-	
-	private final String name;
-	
-	private final AccountTypeCreator creator;
-	
 	static
 	{
 		AccountManager.INSTANCE.accounts.put( ACCOUNT_NONE );
 		AccountManager.INSTANCE.accounts.put( ACCOUNT_ROOT );
 	}
+	
+	private final boolean builtin;
+	
+	private final String name;
+	
+	private final AccountTypeCreator creator;
 	
 	/**
 	 * Registers a new non-builtin AccountType
@@ -100,6 +101,11 @@ public final class AccountType
 		this.builtin = builtin;
 	}
 	
+	public static Collection<AccountType> getAccountTypes()
+	{
+		return Collections.unmodifiableCollection( types.values() );
+	}
+	
 	public static AccountType getDefaultType()
 	{
 		for ( AccountType type : getAccountTypes() )
@@ -110,15 +116,42 @@ public final class AccountType
 		return MEMORY;
 	}
 	
-	/**
-	 * Is this a builtin AccountType, i.e., SQL, FILE, or MEMORY
-	 * 
-	 * @return
-	 *         Is it builtin?
-	 */
-	public boolean isBuiltin()
+	public static Set<AccountType> getEnabledAccountTypes()
 	{
-		return builtin;
+		Set<AccountType> typesAll = new HashSet<AccountType>( types.values() );
+		for ( AccountType at : typesAll )
+			if ( !at.isEnabled() )
+				typesAll.remove( at );
+		return Collections.unmodifiableSet( typesAll );
+	}
+	
+	/**
+	 * Tries to find an AccountType based on name alone<br>
+	 * Handy for non-builtin types that register with the AccountPipeline
+	 * 
+	 * @param name
+	 *            The name to find
+	 * @return
+	 *         The matching AccountType, null if none exist
+	 */
+	public static AccountType getTypeByName( String name )
+	{
+		return types.get( name.toLowerCase() );
+	}
+	
+	public static boolean isNoneAccount( Account acct )
+	{
+		return acct == null || acct.getAcctId().equalsIgnoreCase( "none" );
+	}
+	
+	public static boolean isNoneAccount( PermissibleEntity entity )
+	{
+		return entity == null || entity.getId().equalsIgnoreCase( "none" );
+	}
+	
+	public AccountTypeCreator getCreator()
+	{
+		return creator;
 	}
 	
 	/**
@@ -133,22 +166,14 @@ public final class AccountType
 	}
 	
 	/**
-	 * Checks if this type was enabled in the server configuration
+	 * Is this a builtin AccountType, i.e., SQL, FILE, or MEMORY
 	 * 
 	 * @return
-	 *         True if it is enabled
+	 *         Is it builtin?
 	 */
-	public boolean isEnabled()
+	public boolean isBuiltin()
 	{
-		// Memory accounts are always enabled
-		if ( this == AccountType.MEMORY )
-			return true;
-		
-		/*
-		 * Lastly we ask the AccountCreator directly if it's enabled.
-		 * Returning false would be the answer if there was a problem enabling the creator.
-		 */
-		return Loader.getConfig().getBoolean( "accounts." + getName() + "Type.enabled", true ) && getCreator().isEnabled();
+		return builtin;
 	}
 	
 	/**
@@ -171,36 +196,22 @@ public final class AccountType
 		return def;
 	}
 	
-	public AccountTypeCreator getCreator()
-	{
-		return creator;
-	}
-	
 	/**
-	 * Tries to find an AccountType based on name alone<br>
-	 * Handy for non-builtin types that register with the AccountPipeline
+	 * Checks if this type was enabled in the server configuration
 	 * 
-	 * @param name
-	 *            The name to find
 	 * @return
-	 *         The matching AccountType, null if none exist
+	 *         True if it is enabled
 	 */
-	public static AccountType getTypeByName( String name )
+	public boolean isEnabled()
 	{
-		return types.get( name.toLowerCase() );
-	}
-	
-	public static Set<AccountType> getEnabledAccountTypes()
-	{
-		Set<AccountType> typesAll = new HashSet<AccountType>( types.values() );
-		for ( AccountType at : typesAll )
-			if ( !at.isEnabled() )
-				typesAll.remove( at );
-		return Collections.unmodifiableSet( typesAll );
-	}
-	
-	public static Collection<AccountType> getAccountTypes()
-	{
-		return Collections.unmodifiableCollection( types.values() );
+		// Memory accounts are always enabled
+		if ( this == AccountType.MEMORY )
+			return true;
+		
+		/*
+		 * Lastly we ask the AccountCreator directly if it's enabled.
+		 * Returning false would be the answer if there was a problem enabling the creator.
+		 */
+		return Loader.getConfig().getBoolean( "accounts." + getName() + "Type.enabled", true ) && getCreator().isEnabled();
 	}
 }

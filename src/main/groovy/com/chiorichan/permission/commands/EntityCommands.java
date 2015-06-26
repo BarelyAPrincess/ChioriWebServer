@@ -229,7 +229,7 @@ public class EntityCommands extends PermissionsCommand
 		sender.sendMessage( "'" + entityName + "' is a member of:" );
 		printEntityInheritance( sender, entity.getGroups( refs ) );
 		
-		sender.sendMessage( "  @" + refs.toString() + ":" );
+		sender.sendMessage( "  @" + refs.join() + ":" );
 		printEntityInheritance( sender, entity.getGroups( refs ) );
 		
 		sender.sendMessage( entityName + "'s permissions:" );
