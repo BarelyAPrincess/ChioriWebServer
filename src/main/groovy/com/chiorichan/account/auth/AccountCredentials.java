@@ -29,6 +29,11 @@ public abstract class AccountCredentials
 		this.meta = meta;
 	}
 	
+	public final AccountMeta getAccount()
+	{
+		return meta;
+	}
+	
 	public final AccountAuthenticator getAuthenticator()
 	{
 		return authenticator;
@@ -39,11 +44,6 @@ public abstract class AccountCredentials
 		return result;
 	}
 	
-	public final AccountMeta getAccount()
-	{
-		return meta;
-	}
-	
 	/**
 	 * Saves persistent variables into the session for later resuming
 	 * 
@@ -52,7 +52,7 @@ public abstract class AccountCredentials
 	 */
 	public void makeResumable( AccountPermissible perm )
 	{
-		if ( perm.metadata() != meta )
+		if ( perm.meta() != meta )
 			throw new AccountException( "You can't make an Account resumable on a Permissible it's not logged into." ).setAccount( meta );
 		
 		if ( result != AccountResult.LOGIN_SUCCESS )
@@ -61,7 +61,7 @@ public abstract class AccountCredentials
 		try
 		{
 			perm.setVariable( "auth", "token" );
-			perm.setVariable( "acctId", meta.getAcctId() );
+			perm.setVariable( "acctId", meta.getId() );
 			perm.setVariable( "token", AccountAuthenticator.TOKEN.issueToken( meta ) );
 		}
 		catch ( AccountException e )

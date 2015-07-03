@@ -13,7 +13,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.account.AccountPermissible;
+import com.chiorichan.account.AccountAttachment;
 import com.google.common.collect.Lists;
 
 /**
@@ -74,10 +74,10 @@ public abstract class AccountAuthenticator
 	 * @param acctId
 	 *            The Account Id
 	 * @param perm
-	 *            An instance of the {@link AccountPermissible}
+	 *            An instance of the {@link AccountAttachment}
 	 * @return
 	 */
-	public abstract AccountCredentials authorize( String acctId, AccountPermissible perm );
+	public abstract AccountCredentials authorize( String acctId, AccountAttachment perm );
 	
 	/**
 	 * Used to check Account Credentials prior to creating the Account Instance

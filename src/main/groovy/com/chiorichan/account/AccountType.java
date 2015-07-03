@@ -21,6 +21,7 @@ import com.chiorichan.account.types.AccountTypeCreator;
 import com.chiorichan.account.types.FileTypeCreator;
 import com.chiorichan.account.types.MemoryTypeCreator;
 import com.chiorichan.account.types.SqlTypeCreator;
+import com.chiorichan.messaging.MessageSender;
 import com.chiorichan.permission.PermissibleEntity;
 import com.google.common.collect.Maps;
 
@@ -139,14 +140,34 @@ public final class AccountType
 		return types.get( name.toLowerCase() );
 	}
 	
-	public static boolean isNoneAccount( Account acct )
+	public static boolean isNoneAccount( Account account )
 	{
-		return acct == null || acct.getAcctId().equalsIgnoreCase( "none" );
+		return account == null || account.getId().equalsIgnoreCase( "none" );
+	}
+	
+	public static boolean isNoneAccount( MessageSender sender )
+	{
+		return sender == null || sender.getId().equalsIgnoreCase( "none" );
 	}
 	
 	public static boolean isNoneAccount( PermissibleEntity entity )
 	{
 		return entity == null || entity.getId().equalsIgnoreCase( "none" );
+	}
+	
+	public static boolean isRootAccount( Account account )
+	{
+		return account.getId().equalsIgnoreCase( "root" );
+	}
+	
+	public static boolean isRootAccount( MessageSender sender )
+	{
+		return sender.getId().equalsIgnoreCase( "root" );
+	}
+	
+	public static boolean isRootAccount( PermissibleEntity entity )
+	{
+		return entity.getId().equalsIgnoreCase( "root" );
 	}
 	
 	public AccountTypeCreator getCreator()

@@ -6,14 +6,18 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.account;
+package com.chiorichan.messaging;
 
-import com.chiorichan.messaging.MessageReceiver;
-import com.chiorichan.terminal.CommandSender;
+import com.chiorichan.permission.PermissibleEntity;
 
-public interface AccountAttachment extends Account, MessageReceiver, CommandSender
+/**
+ * Represents entities with the ability to send messages thru the {@link MessageDispatch}
+ */
+public interface MessageSender
 {
-	String getIpAddr();
+	String getDisplayName();
 	
-	AccountPermissible getPermissible();
+	String getId();
+	
+	PermissibleEntity getEntity();
 }

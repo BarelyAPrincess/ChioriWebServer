@@ -8,24 +8,24 @@
  */
 package com.chiorichan.session;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
-import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountInstance;
 import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
-import com.chiorichan.account.event.AccountMessageEvent;
+import com.chiorichan.account.Kickable;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
-import com.chiorichan.event.Listener;
+import com.chiorichan.event.server.MessageEvent;
 import com.chiorichan.http.HttpCookie;
+import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.Timings;
@@ -33,7 +33,6 @@ import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.WeakReferenceList;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -41,7 +40,7 @@ import com.google.common.collect.Sets;
  * This class is used to carry data that is to be persistent from request to request.
  * If you need to sync data across requests then we recommend using Session Vars for Security.
  */
-public final class Session extends AccountPermissible implements Listener
+public final class Session extends AccountPermissible implements Kickable
 {
 	boolean newSession = false;
 	
@@ -161,12 +160,6 @@ public final class Session extends AccountPermissible implements Listener
 		initialized();
 	}
 	
-	// TODO Make abstract
-	protected static List<Session> getActiveSessions() throws SessionException
-	{
-		return Lists.newCopyOnWriteArrayList();
-	}
-	
 	public AccountInstance account()
 	{
 		return account;
@@ -185,7 +178,10 @@ public final class Session extends AccountPermissible implements Listener
 		SessionManager.sessions.remove( this );
 		
 		for ( SessionWrapper wrap : wrappers )
+		{
 			wrap.finish();
+			unregisterAttachment( wrap );
+		}
 		wrappers.clear();
 		
 		timeout = Timings.epoch();
@@ -199,9 +195,9 @@ public final class Session extends AccountPermissible implements Listener
 	}
 	
 	@Override
-	public void failedLogin( AccountResult result )
+	protected void failedLogin( AccountResult result )
 	{
-		
+		// Do Nothing
 	}
 	
 	/**
@@ -243,9 +239,9 @@ public final class Session extends AccountPermissible implements Listener
 	}
 	
 	@Override
-	public String getEntityId()
+	public PermissibleEntity getEntity()
 	{
-		return account == null ? null : account.getAcctId();
+		return account.getEntity();
 	}
 	
 	public Object getGlobal( String key )
@@ -259,7 +255,15 @@ public final class Session extends AccountPermissible implements Listener
 	}
 	
 	@Override
-	public Set<String> getIpAddresses()
+	public String getId()
+	{
+		if ( account == null )
+			return null;
+		return account.getId();
+	}
+	
+	@Override
+	public Collection<String> getIpAddresses()
 	{
 		Set<String> ips = Sets.newHashSet();
 		for ( SessionWrapper sp : wrappers )
@@ -318,11 +322,20 @@ public final class Session extends AccountPermissible implements Listener
 	@Override
 	public String getVariable( String key )
 	{
-		if ( !data.data.containsKey( key ) )
-			return "";
+		return getVariable( key, "" );
+	}
+	
+	public String getVariable( String key, String def )
+	{
+		if ( !data.data.containsKey( key ) || data.data.get( key ) == null )
+		{
+			if ( SessionManager.isDebug )
+				SessionManager.getLogger().info( String.format( "%sGetting variable key `%s` which resulted in default value '%s'", ConsoleColor.GRAY, key, def ) );
+			return def;
+		}
 		
-		if ( data.data.get( key ) == null )
-			return "";
+		if ( SessionManager.isDebug )
+			SessionManager.getLogger().info( String.format( "%sGetting variable key `%s` with value '%s' and default value '%s'", ConsoleColor.GRAY, key, data.data.get( key ), def ) );
 		
 		return data.data.get( key );
 	}
@@ -331,16 +344,6 @@ public final class Session extends AccountPermissible implements Listener
 	public AccountInstance instance()
 	{
 		return account;
-	}
-	
-	/**
-	 * Reports if there is an Account logged in
-	 * 
-	 * @return True is there is
-	 */
-	public boolean isLoginPresent()
-	{
-		return ( account != null );
 	}
 	
 	public boolean isNew()
@@ -354,9 +357,15 @@ public final class Session extends AccountPermissible implements Listener
 	}
 	
 	@Override
-	public AccountMeta metadata()
+	public AccountResult kick( String reason )
 	{
-		return instance().metadata();
+		return logout();
+	}
+	
+	@Override
+	public AccountMeta meta()
+	{
+		return account.meta();
 	}
 	
 	/**
@@ -369,7 +378,7 @@ public final class Session extends AccountPermissible implements Listener
 	}
 	
 	@EventHandler( priority = EventPriority.NORMAL )
-	public void onAccountMessageEvent( AccountMessageEvent event )
+	public void onAccountMessageEvent( MessageEvent event )
 	{
 		
 	}
@@ -437,6 +446,10 @@ public final class Session extends AccountPermissible implements Listener
 			sessionCookie.setExpiration( timeout );
 	}
 	
+	// TODO Sessions can outlive a login.
+	// TODO Sessions can have an expiration in 7 days and a login can have an expiration of 24 hours.
+	// TODO Remember should probably make it so logins last as long as the session does. Hmmmmmm
+	
 	/**
 	 * Registers a newly created wrapper with our session
 	 * 
@@ -447,8 +460,8 @@ public final class Session extends AccountPermissible implements Listener
 	{
 		assert wrapper.getSession() == this : "SessionWrapper does not contain proper reference to this Session";
 		
+		registerAttachment( wrapper );
 		wrappers.add( wrapper );
-		
 		knownIps.add( wrapper.getIpAddr() );
 	}
 	
@@ -472,6 +485,7 @@ public final class Session extends AccountPermissible implements Listener
 	public void removeWrapper( SessionWrapper wrapper )
 	{
 		wrappers.remove( wrapper );
+		unregisterAttachment( wrapper );
 	}
 	
 	public void save() throws SessionException
@@ -505,28 +519,10 @@ public final class Session extends AccountPermissible implements Listener
 		}
 	}
 	
-	@Override
-	public void send( Account sender, Object obj )
-	{
-		for ( SessionWrapper sw : wrappers )
-			sw.send( sender, obj );
-	}
-	
-	@Override
-	public void send( Object obj )
-	{
-		for ( SessionWrapper sw : wrappers )
-			sw.send( obj );
-	}
-	
 	public void setGlobal( String key, Object val )
 	{
 		globals.put( key, val );
 	}
-	
-	// TODO Sessions can outlive a login.
-	// TODO Sessions can have an expiration in 7 days and a login can have an expiration of 24 hours.
-	// TODO Remember should probably make it so logins last as long as the session does. Hmmmmmm
 	
 	public void setSite( Site site )
 	{
@@ -537,6 +533,8 @@ public final class Session extends AccountPermissible implements Listener
 	@Override
 	public void setVariable( String key, String value )
 	{
+		SessionManager.getLogger().info( String.format( "Setting session valiable `%s` with value '%s'", key, value ) );
+		
 		if ( value == null )
 			data.data.remove( key );
 		
@@ -547,7 +545,10 @@ public final class Session extends AccountPermissible implements Listener
 	@Override
 	public void successfulLogin()
 	{
-		account.metadata().context().credentials().makeResumable( this );
+		for ( SessionWrapper wrapper : wrappers )
+			registerAttachment( wrapper );
+		
+		account().meta().context().credentials().makeResumable( this );
 		rearmTimeout();
 		saveWithoutException();
 	}

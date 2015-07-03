@@ -8,12 +8,21 @@
  */
 package com.chiorichan.account;
 
-import com.chiorichan.messaging.MessageReceiver;
-import com.chiorichan.terminal.CommandSender;
+import com.chiorichan.account.lang.AccountResult;
 
-public interface AccountAttachment extends Account, MessageReceiver, CommandSender
+/**
+ * Indicates kickable account logins
+ */
+public interface Kickable
 {
-	String getIpAddr();
+	/**
+	 * Attempts to kick Account from server
+	 * 
+	 * @param reason
+	 *            The reason for kick
+	 * @return Result of said kick attempt
+	 */
+	AccountResult kick( String reason );
 	
-	AccountPermissible getPermissible();
+	String getId();
 }

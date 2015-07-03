@@ -8,6 +8,7 @@
  */
 package com.chiorichan.account.lang;
 
+import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountMeta;
 
 /**
@@ -46,11 +47,13 @@ public class AccountResult
 	public static final AccountResult EXPIRED_LOGIN = new AccountResult( "The provided login credentials were marked as expired.", true );
 	public static final AccountResult PASSWORD_UNSET = new AccountResult( "The specified Account has no password set, either the password was never set or the account uses another form of authentication." );
 	
+	public static final AccountResult SUCCESS = new AccountResult( "The requested action was completed successfully!" );
+	
 	public static final AccountResult DEFAULT = new AccountResult( "There was no offical result returned." );
 	
 	private String msg;
 	private boolean error;
-	private AccountMeta acct = null;
+	private Account acct = null;
 	private Throwable cause = null;
 	
 	AccountResult( String msg )
@@ -70,42 +73,14 @@ public class AccountResult
 		this.error = error;
 	}
 	
-	public boolean isError()
+	public AccountException exception()
 	{
-		return error;
-	}
-	
-	public String getMessage()
-	{
-		return msg;
-	}
-	
-	public AccountResult setAccount( AccountMeta acct )
-	{
-		this.acct = acct;
-		return this;
-	}
-	
-	public AccountMeta getAccount()
-	{
-		return acct;
-	}
-	
-	public String format( Object... args )
-	{
-		msg = String.format( msg, args );
-		return msg;
-	}
-	
-	public AccountException exception( String msg )
-	{
-		this.msg = msg;
 		return new AccountException( this );
 	}
 	
 	public AccountException exception( AccountMeta acct )
 	{
-		String ip = ( acct.getIpAddresses().size() > 0 ) ? acct.getIpAddresses().toArray( new String[0] )[0] : null;
+		String ip = ( acct.instance().getIpAddresses().size() > 0 ) ? acct.instance().getIpAddresses().toArray( new String[0] )[0] : null;
 		return exception( acct.getDisplayName(), ip );
 	}
 	
@@ -115,13 +90,24 @@ public class AccountResult
 		return new AccountException( this );
 	}
 	
-	public AccountException exception()
+	public AccountException exception( String msg )
 	{
+		this.msg = msg;
 		return new AccountException( this );
 	}
 	
-	@Override
-	public String toString()
+	public String format( Object... args )
+	{
+		msg = String.format( msg, args );
+		return msg;
+	}
+	
+	public Account getAccount()
+	{
+		return acct;
+	}
+	
+	public String getMessage()
 	{
 		return msg;
 	}
@@ -131,10 +117,9 @@ public class AccountResult
 		return String.format( msg, args );
 	}
 	
-	public AccountResult setThrowable( Throwable cause )
+	public Throwable getThrowable()
 	{
-		this.cause = cause;
-		return this;
+		return cause;
 	}
 	
 	public boolean hasCause()
@@ -142,8 +127,26 @@ public class AccountResult
 		return cause != null;
 	}
 	
-	public Throwable getThrowable()
+	public boolean isError()
 	{
-		return cause;
+		return error;
+	}
+	
+	public AccountResult setAccount( Account acct )
+	{
+		this.acct = acct;
+		return this;
+	}
+	
+	public AccountResult setThrowable( Throwable cause )
+	{
+		this.cause = cause;
+		return this;
+	}
+	
+	@Override
+	public String toString()
+	{
+		return msg;
 	}
 }

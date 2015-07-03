@@ -18,6 +18,7 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -31,8 +32,10 @@ import org.joda.time.Duration;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 
+import com.chiorichan.account.AccountAttachment;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountMeta;
+import com.chiorichan.account.Kickable;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.event.BuiltinEventCreator;
@@ -40,6 +43,7 @@ import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
+import com.chiorichan.event.server.KickEvent;
 import com.chiorichan.event.server.ServerRunLevelEvent;
 import com.chiorichan.event.server.ServerRunLevelEventImpl;
 import com.chiorichan.lang.ErrorReporting;
@@ -62,11 +66,12 @@ import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.FileFunc.DirectoryInfo;
 import com.chiorichan.util.NetworkFunc;
 import com.chiorichan.util.Versioning;
+import com.google.common.collect.Sets;
 
 public class Loader extends BuiltinEventCreator implements Listener
 {
-	public static final String BROADCAST_CHANNEL_ADMINISTRATIVE = "com.chiorichan.broadcast.admin";
-	public static final String BROADCAST_CHANNEL_USERS = "com.chiorichan.broadcast.user";
+	public static final String BROADCAST_CHANNEL_ADMINISTRATIVE = "sys.broadcast.admin";
+	public static final String BROADCAST_CHANNEL_USERS = "sys.broadcast.user";
 	
 	private static String clientId;
 	private static YamlConfiguration configuration;
@@ -76,6 +81,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	private static DatabaseEngine fwDatabase = null;
 	private static Loader instance;
 	
+	static boolean willRestart = false;
 	static boolean isRunning = true;
 	private static OptionSet options;
 	protected static long startTime = System.currentTimeMillis();
@@ -532,15 +538,6 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return webroot;
 	}
 	
-	public static void gracefullyShutdownServer( String reason )
-	{
-		if ( !reason.isEmpty() )
-			for ( AccountMeta user : AccountManager.INSTANCE.getAccounts() )
-				user.kick( reason );
-		
-		stop( reason );
-	}
-	
 	public static boolean hasFinishedStartup()
 	{
 		return finishedStartup;
@@ -607,6 +604,18 @@ public class Loader extends BuiltinEventCreator implements Listener
 			getLogger().info( ConsoleColor.YELLOW + "" + ConsoleColor.NEGATIVE + "Finished Initalizing " + Versioning.getProduct() + "! It took " + ( System.currentTimeMillis() - startTime ) + "ms!" );
 	}
 	
+	public static void restart( String restartReason )
+	{
+		if ( stopReason == null )
+			getLogger().highlight( "The server is restarting, be back soon... :D" );
+		else if ( !stopReason.isEmpty() )
+			getLogger().highlight( "Server Stopping for Reason: " + stopReason );
+		
+		Loader.stopReason = restartReason;
+		willRestart = true;
+		isRunning = false;
+	}
+	
 	public static void saveConfig()
 	{
 		// TODO Targeted key path saves, allow it so only a specified path can be saved to file.
@@ -621,11 +630,10 @@ public class Loader extends BuiltinEventCreator implements Listener
 		}
 	}
 	
-	/**
-	 * If you wish to shutdown the server, we recommend you use the stop() method instead.
-	 */
-	public static void shutdown()
+	static void shutdown()
 	{
+		isRunning = false;
+		
 		try
 		{
 			SessionManager.INSTANCE.shutdown();
@@ -637,28 +645,82 @@ public class Loader extends BuiltinEventCreator implements Listener
 		
 		AccountManager.INSTANCE.save();
 		PluginManager.INSTANCE.shutdown();
+		PermissionManager.INSTANCE.saveData();
 		NetworkManager.cleanup();
 		
-		isRunning = false;
+		saveConfig();
 		
-		if ( stopReason != null )
-			System.err.println( "The server was stopped for reason: " + stopReason );
-		else
+		if ( stopReason == null )
 		{
-			System.err.println( "The server was stopped for an unknown reason" );
-			for ( StackTraceElement se : Thread.currentThread().getStackTrace() )
-				System.err.println( se );
+			System.err.println( "The server was stopped for an unknown reason." );
+			System.err.println( "Maybe a stacktrace will make you feel better:" );
+			new IOException().printStackTrace();
+		}
+		
+		if ( willRestart )
+		{
+			/*
+			 * TODO It would be nice if the server could automatically restart
+			 * But there has been problems with this sadly
+			 */
+			
+			/*
+			 * ProcessBuilder processBuilder = new ProcessBuilder();
+			 * List<String> commands = new ArrayList<String>();
+			 * if ( OperatingSystem.getOperatingSystem().equals( OperatingSystem.WINDOWS ) )
+			 * {
+			 * commands.add( "javaw" );
+			 * }
+			 * else
+			 * {
+			 * commands.add( "java" );
+			 * }
+			 * commands.add( "-Xmx256m" );
+			 * commands.add( "-cp" );
+			 * commands.add( updatedJar.getAbsolutePath() );
+			 * commands.add( UpdateInstaller.class.getName() );
+			 * commands.add( currentJar.getAbsolutePath() );
+			 * commands.add( "" + Runtime.getRuntime().maxMemory() );
+			 * // commands.addAll( Arrays.asList( args ) );
+			 * processBuilder.command( commands );
+			 * try
+			 * {
+			 * Process process = processBuilder.start();
+			 * process.exitValue();
+			 * Loader.getLogger().severe( "The Auto Updater failed to start. You can find the new Server Version at \"update.jar\"" );
+			 * }
+			 * catch ( IllegalThreadStateException e )
+			 * {
+			 * Loader.stop( "The server is now going down to apply the latest version." );
+			 * }
+			 * catch ( Exception e )
+			 * {
+			 * e.printStackTrace();
+			 * }
+			 */
 		}
 	}
 	
 	public static void stop( String stopReason )
 	{
+		Set<Kickable> kickables = Sets.newHashSet();
+		for ( AccountMeta acct : AccountManager.INSTANCE.getAccounts() )
+			if ( acct.isInitialized() )
+				for ( AccountAttachment attachment : acct.instance().getAttachments() )
+					if ( attachment.getPermissible() instanceof Kickable )
+						kickables.add( ( Kickable ) attachment.getPermissible() );
+					else if ( attachment instanceof Kickable )
+						kickables.add( ( Kickable ) attachment );
+		
+		KickEvent.kick( kickables ).setReason( stopReason ).fire();
+		
 		if ( stopReason == null )
 			getLogger().highlight( "Stopping the server... Goodbye!" );
 		else if ( !stopReason.isEmpty() )
 			getLogger().highlight( "Server Stopping for Reason: " + stopReason );
 		
 		Loader.stopReason = stopReason;
+		willRestart = false;
 		isRunning = false;
 	}
 	

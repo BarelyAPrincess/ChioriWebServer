@@ -9,6 +9,7 @@
 package com.chiorichan.account.event;
 
 import com.chiorichan.account.AccountMeta;
+import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.lang.AccountResult;
 
 /**
@@ -16,8 +17,16 @@ import com.chiorichan.account.lang.AccountResult;
  */
 public class AccountSuccessfulLoginEvent extends AccountFailedLoginEvent
 {
-	public AccountSuccessfulLoginEvent( AccountMeta meta )
+	AccountPermissible via;
+	
+	public AccountSuccessfulLoginEvent( AccountMeta meta, AccountPermissible via )
 	{
-		super( meta, AccountResult.LOGIN_SUCCESS );
+		super( meta, via, AccountResult.LOGIN_SUCCESS );
+		this.via = via;
+	}
+	
+	public AccountPermissible getAccountPermissible()
+	{
+		return via;
 	}
 }

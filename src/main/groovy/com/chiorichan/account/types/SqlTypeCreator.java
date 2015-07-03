@@ -99,7 +99,7 @@ public class SqlTypeCreator extends AccountTypeCreator
 	{
 		try
 		{
-			sql.queryUpdate( "UPDATE `" + table + "` SET `lastActive` = '" + Timings.epoch() + "', `lastLoginFail` = 0, `numLoginFail` = 0 WHERE `acctID` = '" + meta.getAcctId() + "'" );
+			sql.queryUpdate( "UPDATE `" + table + "` SET `lastActive` = '" + Timings.epoch() + "', `lastLoginFail` = 0, `numLoginFail` = 0 WHERE `acctID` = '" + meta.getId() + "'" );
 		}
 		catch ( SQLException e )
 		{
@@ -221,7 +221,7 @@ public class SqlTypeCreator extends AccountTypeCreator
 	{
 		try
 		{
-			readAccount( meta.getAcctId() );
+			readAccount( meta.getId() );
 		}
 		catch ( SQLException e )
 		{
@@ -341,7 +341,7 @@ public class SqlTypeCreator extends AccountTypeCreator
 	{
 		try
 		{
-			sql.queryUpdate( "UPDATE `accounts` SET `lastActive` = '" + Timings.epoch() + "', `lastLogin` = '" + Timings.epoch() + "', `lastLoginFail` = 0, `numLoginFail` = 0 WHERE `acctId` = '" + meta.getAcctId() + "'" );
+			sql.queryUpdate( "UPDATE `accounts` SET `lastActive` = '" + Timings.epoch() + "', `lastLogin` = '" + Timings.epoch() + "', `lastLoginFail` = 0, `numLoginFail` = 0 WHERE `acctId` = '" + meta.getId() + "'" );
 		}
 		catch ( SQLException e )
 		{

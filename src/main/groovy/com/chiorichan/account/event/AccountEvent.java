@@ -10,8 +10,8 @@ package com.chiorichan.account.event;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountPermissible;
@@ -25,7 +25,7 @@ public abstract class AccountEvent extends Event
 {
 	private static final HandlerList handlers = new HandlerList();
 	private Account acct;
-	private List<AccountPermissible> permissibles;
+	private Collection<AccountPermissible> permissibles;
 	
 	public AccountEvent()
 	{
@@ -37,27 +37,32 @@ public abstract class AccountEvent extends Event
 		this( acct, new ArrayList<AccountPermissible>() );
 	}
 	
-	public AccountEvent( Account acct, boolean async )
-	{
-		this( acct, new ArrayList<AccountPermissible>(), async );
-	}
-	
 	public AccountEvent( Account acct, AccountPermissible permissible )
 	{
 		this( acct, Arrays.asList( permissible ) );
 	}
 	
-	public AccountEvent( Account acct, List<AccountPermissible> permissibles )
+	public AccountEvent( Account acct, boolean async )
+	{
+		this( acct, new ArrayList<AccountPermissible>(), async );
+	}
+	
+	public AccountEvent( Account acct, Collection<AccountPermissible> permissibles )
 	{
 		this.acct = acct;
 		this.permissibles = permissibles;
 	}
 	
-	AccountEvent( Account acct, List<AccountPermissible> permissibles, boolean async )
+	AccountEvent( Account acct, Collection<AccountPermissible> permissibles, boolean async )
 	{
 		super( async );
 		this.acct = acct;
 		this.permissibles = permissibles;
+	}
+	
+	public static HandlerList getHandlerList()
+	{
+		return handlers;
 	}
 	
 	/**
@@ -70,19 +75,14 @@ public abstract class AccountEvent extends Event
 		return acct;
 	}
 	
-	public final List<AccountPermissible> getPermissibles()
-	{
-		return Collections.unmodifiableList( permissibles );
-	}
-	
 	@Override
 	public HandlerList getHandlers()
 	{
 		return handlers;
 	}
 	
-	public static HandlerList getHandlerList()
+	public final Collection<AccountPermissible> getPermissibles()
 	{
-		return handlers;
+		return Collections.unmodifiableCollection( permissibles );
 	}
 }

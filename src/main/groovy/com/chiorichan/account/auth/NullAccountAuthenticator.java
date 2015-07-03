@@ -10,7 +10,7 @@ package com.chiorichan.account.auth;
 
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountMeta;
-import com.chiorichan.account.AccountPermissible;
+import com.chiorichan.account.AccountAttachment;
 import com.chiorichan.account.AccountType;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
@@ -26,7 +26,7 @@ public final class NullAccountAuthenticator extends AccountAuthenticator
 	}
 	
 	@Override
-	public AccountCredentials authorize( String acctId, AccountPermissible perm )
+	public AccountCredentials authorize( String acctId, AccountAttachment perm )
 	{
 		AccountMeta meta = AccountManager.INSTANCE.getAccountWithException( acctId );
 		

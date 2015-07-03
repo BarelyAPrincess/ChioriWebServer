@@ -27,50 +27,23 @@ public class AccountPreLoginEvent extends AccountEvent implements Conditional, C
 	private final AccountPermissible via;
 	private final Object[] creds;
 	
-	public AccountPreLoginEvent( AccountMeta meta, AccountPermissible via, String acctId, Object[] creds )
+	public AccountPreLoginEvent( AccountMeta meta, AccountPermissible accountPermissible, String acctId, Object[] creds )
 	{
-		super( meta, via );
-		this.via = via;
+		super( meta, accountPermissible );
+		via = accountPermissible;
 		this.creds = creds;
 	}
 	
-	public AccountPermissible getPermissible()
+	public static HandlerList getHandlerList()
 	{
-		return via;
+		return handlers;
 	}
 	
-	public Object[] getCredentials()
+	@Override
+	public boolean conditional( RegisteredListener context ) throws EventException
 	{
-		return creds;
-	}
-	
-	/**
-	 * Gets the current result of the login, as an enum
-	 * 
-	 * @return Current AccountResult of the login
-	 */
-	public AccountResult getAccountResult()
-	{
-		return result;
-	}
-	
-	/**
-	 * Sets the new result of the login, as an enum
-	 * 
-	 * @param result
-	 *            New result to set
-	 */
-	public void setAccountResult( final AccountResult result )
-	{
-		this.result = result;
-	}
-	
-	/**
-	 * Allows the User to log in
-	 */
-	public void success()
-	{
-		result = AccountResult.DEFAULT;
+		// If the result returned is an error then we skip the remaining EventListeners
+		return !result.isError();
 	}
 	
 	/**
@@ -86,22 +59,30 @@ public class AccountPreLoginEvent extends AccountEvent implements Conditional, C
 		this.result = result;
 	}
 	
+	/**
+	 * Gets the current result of the login, as an enum
+	 * 
+	 * @return Current AccountResult of the login
+	 */
+	public AccountResult getAccountResult()
+	{
+		return result;
+	}
+	
+	public AccountPermissible getAttachment()
+	{
+		return via;
+	}
+	
+	public Object[] getCredentials()
+	{
+		return creds;
+	}
+	
 	@Override
 	public HandlerList getHandlers()
 	{
 		return handlers;
-	}
-	
-	public static HandlerList getHandlerList()
-	{
-		return handlers;
-	}
-	
-	@Override
-	public boolean conditional( RegisteredListener context ) throws EventException
-	{
-		// If the result returned is an error then we skip the remaining EventListeners
-		return !result.isError();
 	}
 	
 	@Override
@@ -110,9 +91,28 @@ public class AccountPreLoginEvent extends AccountEvent implements Conditional, C
 		return result == AccountResult.CANCELLED_BY_EVENT;
 	}
 	
+	/**
+	 * Sets the new result of the login, as an enum
+	 * 
+	 * @param result
+	 *            New result to set
+	 */
+	public void setAccountResult( final AccountResult result )
+	{
+		this.result = result;
+	}
+	
 	@Override
 	public void setCancelled( boolean cancel )
 	{
 		result = AccountResult.CANCELLED_BY_EVENT;
+	}
+	
+	/**
+	 * Allows the User to log in
+	 */
+	public void success()
+	{
+		result = AccountResult.DEFAULT;
 	}
 }

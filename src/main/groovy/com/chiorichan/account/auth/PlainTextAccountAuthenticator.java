@@ -16,7 +16,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import com.chiorichan.Loader;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountMeta;
-import com.chiorichan.account.AccountPermissible;
+import com.chiorichan.account.AccountAttachment;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.database.DatabaseEngine;
@@ -27,6 +27,14 @@ import com.chiorichan.tasks.Timings;
  */
 public final class PlainTextAccountAuthenticator extends AccountAuthenticator
 {
+	class PlainTextAccountCredentials extends AccountCredentials
+	{
+		PlainTextAccountCredentials( AccountResult result, AccountMeta meta )
+		{
+			super( PlainTextAccountAuthenticator.this, result, meta );
+		}
+	}
+	
 	private final DatabaseEngine db = Loader.getDatabase();
 	
 	PlainTextAccountAuthenticator()
@@ -34,7 +42,6 @@ public final class PlainTextAccountAuthenticator extends AccountAuthenticator
 		super( "plaintext" );
 		
 		if ( !db.tableExist( "accounts_plaintext" ) )
-		{
 			try
 			{
 				db.queryUpdate( "CREATE TABLE `accounts_plaintext` ( `acctId` varchar(255) NOT NULL, `password` varchar(255) NOT NULL, `expires` int(12) NOT NULL);" );
@@ -43,11 +50,10 @@ public final class PlainTextAccountAuthenticator extends AccountAuthenticator
 			{
 				e.printStackTrace();
 			}
-		}
 	}
 	
 	@Override
-	public AccountCredentials authorize( String acctId, AccountPermissible perm )
+	public AccountCredentials authorize( String acctId, AccountAttachment perm )
 	{
 		/**
 		 * Session Logins are not resumed using plain text. See {@link AccountCredentials#makeResumable}
@@ -133,21 +139,13 @@ public final class PlainTextAccountAuthenticator extends AccountAuthenticator
 	{
 		try
 		{
-			db.queryUpdate( "INSERT INTO `accounts_plaintext` (`acctId`,`password`,`expires`) VALUES ('" + acct.getAcctId() + "','" + password + "','" + expires + "');" );
+			db.queryUpdate( "INSERT INTO `accounts_plaintext` (`acctId`,`password`,`expires`) VALUES ('" + acct.getId() + "','" + password + "','" + expires + "');" );
 			return true;
 		}
 		catch ( SQLException e )
 		{
 			e.printStackTrace();
 			return false;
-		}
-	}
-	
-	class PlainTextAccountCredentials extends AccountCredentials
-	{
-		PlainTextAccountCredentials( AccountResult result, AccountMeta meta )
-		{
-			super( PlainTextAccountAuthenticator.this, result, meta );
 		}
 	}
 }

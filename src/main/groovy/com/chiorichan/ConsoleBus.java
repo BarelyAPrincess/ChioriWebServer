@@ -11,25 +11,43 @@ package com.chiorichan;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.Collection;
 import java.util.Scanner;
 import java.util.logging.Level;
 
 import joptsimple.OptionSet;
 
-import com.chiorichan.console.CommandDispatch;
+import com.chiorichan.account.AccountAttachment;
+import com.chiorichan.account.AccountInstance;
+import com.chiorichan.account.AccountMeta;
+import com.chiorichan.account.AccountPermissible;
+import com.chiorichan.account.AccountType;
+import com.chiorichan.account.auth.AccountAuthenticator;
+import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.lang.StartupException;
+import com.chiorichan.messaging.MessageSender;
+import com.chiorichan.permission.PermissibleEntity;
+import com.chiorichan.site.Site;
 import com.chiorichan.tasks.TaskManager;
+import com.chiorichan.terminal.CommandDispatch;
 import com.chiorichan.util.FileFunc;
+import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
 
-public class ConsoleBus implements Runnable
+/**
+ * Provides the console output of the server.
+ * We also attach the Root Account here
+ */
+public class ConsoleBus extends AccountPermissible implements Runnable, AccountAttachment
 {
-	private ConsoleLogManager logManager;
-	
-	private OptionSet options;
 	public static int lastFiveTick = -1;
+	
 	public static int currentTick = ( int ) ( System.currentTimeMillis() / 50 );
+	private ConsoleLogManager logManager;
+	private OptionSet options;
+	
 	public Thread primaryThread;
 	
 	public boolean useColors = true;
@@ -39,6 +57,122 @@ public class ConsoleBus implements Runnable
 	ConsoleBus()
 	{
 		
+	}
+	
+	protected static void handleException( StartupException t )
+	{
+		if ( t.getCause() != null )
+			t.getCause().printStackTrace();
+		else
+			t.printStackTrace();
+		
+		// TODO Make it so this exception (and possibly other critical exceptions) are reported to
+		// us without user interaction. Should also find a way that the log can be sent along with it.
+		
+		safeLog( Level.SEVERE, ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "THE SERVER FAILED TO START, CHECK THE LOGS AND TRY AGAIN (" + ( System.currentTimeMillis() - Loader.startTime ) + "ms)!" );
+	}
+	
+	protected static void handleException( Throwable t )
+	{
+		t.printStackTrace();
+		safeLog( Level.WARNING, ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "**** WE ENCOUNTERED AN UNEXPECTED EXCEPTION ****" );
+	}
+	
+	protected static void safeLog( Level l, String msg )
+	{
+		if ( Loader.getLogger() != null )
+			Loader.getLogger().log( l, msg );
+		else
+		{
+			msg = msg.replaceAll( "&.", "" );
+			msg = msg.replaceAll( "§.", "" );
+			
+			if ( l.intValue() >= Level.WARNING.intValue() )
+				System.err.println( msg );
+			else
+				System.out.println( msg );
+		}
+	}
+	
+	@Override
+	protected void failedLogin( AccountResult result )
+	{
+		// Do Nothing
+	}
+	
+	@Override
+	public String getDisplayName()
+	{
+		return "Console";
+	}
+	
+	@Override
+	public PermissibleEntity getEntity()
+	{
+		return AccountType.ACCOUNT_ROOT.getEntity();
+	}
+	
+	@Override
+	public String getId()
+	{
+		return AccountType.ACCOUNT_ROOT.getId();
+	}
+	
+	@Override
+	public String getIpAddr()
+	{
+		return null;
+	}
+	
+	@Override
+	public Collection<String> getIpAddresses()
+	{
+		return Lists.newArrayList();
+	}
+	
+	public ConsoleLogger getLogger()
+	{
+		return logManager.getLogger();
+	}
+	
+	public ConsoleLogger getLogger( String loggerId )
+	{
+		return logManager.getLogger( loggerId );
+	}
+	
+	public ConsoleLogManager getLogManager()
+	{
+		return logManager;
+	}
+	
+	@Override
+	public AccountPermissible getPermissible()
+	{
+		return this;
+	}
+	
+	@Override
+	public Site getSite()
+	{
+		return AccountType.ACCOUNT_ROOT.getSite();
+	}
+	
+	@Override
+	public String getSiteId()
+	{
+		return AccountType.ACCOUNT_ROOT.getSiteId();
+	}
+	
+	@Override
+	public String getVariable( String string )
+	{
+		return null;// TODO New Empty Method
+	}
+	
+	@Override
+	public String getVariable( String key, String def )
+	{
+		return def;
 	}
 	
 	void init( Loader parent, OptionSet optionSet )
@@ -58,6 +192,86 @@ public class ConsoleBus implements Runnable
 		new ShutdownHook();
 		
 		primaryThread = new Thread( this, "Server Thread" );
+	}
+	
+	@Override
+	public AccountInstance instance()
+	{
+		return AccountType.ACCOUNT_ROOT.instance();
+	}
+	
+	public boolean isPrimaryThread()
+	{
+		return Thread.currentThread().equals( primaryThread );
+	}
+	
+	@Override
+	public void login()
+	{
+		// Disabled!
+	}
+	
+	@Override
+	public AccountResult login( AccountAuthenticator auth, String acctId, Object... credObjs )
+	{
+		return AccountResult.FEATURE_DISABLED;
+	}
+	
+	@Override
+	public AccountResult logout()
+	{
+		return AccountResult.FEATURE_DISABLED;
+	}
+	
+	@Override
+	public AccountMeta meta()
+	{
+		return AccountType.ACCOUNT_ROOT;
+	}
+	
+	public void pause( String msg, int timeout )
+	{
+		int last = 100;
+		do
+		{
+			if ( timeout / 1000 < last )
+			{
+				getLogger().info( ConsoleColor.GOLD + "" + ConsoleColor.NEGATIVE + String.format( msg, ( ( timeout / 1000 ) + 1 ) + " seconds" ).toUpperCase() + "/r" );
+				last = timeout / 1000;
+			}
+			
+			try
+			{
+				timeout = timeout - 250;
+				Thread.sleep( 250 );
+			}
+			catch ( InterruptedException e )
+			{
+				e.printStackTrace();
+			}
+		}
+		while ( timeout > 0 );
+	}
+	
+	public String prompt( String msg, String... keys )
+	{
+		Scanner scanner = new Scanner( System.in );
+		
+		getLogger().highlight( msg );
+		
+		while ( true )
+		{
+			String key = scanner.next();
+			
+			for ( String s : keys )
+				if ( key.equalsIgnoreCase( s ) || key.toUpperCase().startsWith( s.toUpperCase() ) )
+				{
+					scanner.close();
+					return s;
+				}
+			
+			Loader.getLogger().warning( key + " is not an available option, please press " + Joiner.on( "," ).join( keys ) + " to continue." );
+		}
 	}
 	
 	@Override
@@ -128,24 +342,38 @@ public class ConsoleBus implements Runnable
 		}
 	}
 	
-	public ConsoleLogger getLogger()
+	@Override
+	public void sendMessage( MessageSender sender, Object... objs )
 	{
-		return logManager.getLogger();
+		for ( Object obj : objs )
+			try
+			{
+				logManager.getLogger().info( sender.getDisplayName() + ": " + ObjectFunc.castToStringWithException( obj ) );
+			}
+			catch ( ClassCastException e )
+			{
+				logManager.getLogger().info( sender.getDisplayName() + " sent object " + obj.getClass().getName() + " but we had no idea how to properly output it to your terminal." );
+			}
 	}
 	
-	public ConsoleLogger getLogger( String loggerId )
+	@Override
+	public void sendMessage( Object... objs )
 	{
-		return logManager.getLogger( loggerId );
+		for ( Object obj : objs )
+			try
+			{
+				logManager.getLogger().info( ObjectFunc.castToStringWithException( obj ) );
+			}
+			catch ( ClassCastException e )
+			{
+				logManager.getLogger().info( "Received object " + obj.getClass().getName() + " but we had no idea how to properly output it to your terminal." );
+			}
 	}
 	
-	public ConsoleLogManager getLogManager()
+	@Override
+	public void setVariable( String key, String value )
 	{
-		return logManager;
-	}
-	
-	public boolean isPrimaryThread()
-	{
-		return Thread.currentThread().equals( primaryThread );
+		// TODO New Empty Method
 	}
 	
 	public void showBanner()
@@ -160,9 +388,7 @@ public class ConsoleBus implements Runnable
 				String[] banner = new String( FileFunc.inputStream2Bytes( is ) ).split( "\\n" );
 				
 				for ( String l : banner )
-				{
 					getLogger().info( ConsoleColor.GOLD + l );
-				}
 				
 				getLogger().info( ConsoleColor.NEGATIVE + "" + ConsoleColor.GOLD + "Starting " + Versioning.getProduct() + " Version " + Versioning.getVersion() );
 				getLogger().info( ConsoleColor.NEGATIVE + "" + ConsoleColor.GOLD + Versioning.getCopyright() );
@@ -179,83 +405,9 @@ public class ConsoleBus implements Runnable
 		}
 	}
 	
-	public void pause( String msg, int timeout )
+	@Override
+	protected void successfulLogin()
 	{
-		int last = 100;
-		do
-		{
-			if ( timeout / 1000 < last )
-			{
-				getLogger().info( ConsoleColor.GOLD + "" + ConsoleColor.NEGATIVE + String.format( msg, ( ( timeout / 1000 ) + 1 ) + " seconds" ).toUpperCase() + "/r" );
-				last = timeout / 1000;
-			}
-			
-			try
-			{
-				timeout = timeout - 250;
-				Thread.sleep( 250 );
-			}
-			catch ( InterruptedException e )
-			{
-				e.printStackTrace();
-			}
-		}
-		while ( timeout > 0 );
-	}
-	
-	public String prompt( String msg, String... keys )
-	{
-		Scanner scanner = new Scanner( System.in );
-		
-		getLogger().highlight( msg );
-		
-		while ( true )
-		{
-			String key = scanner.next();
-			
-			for ( String s : keys )
-				if ( key.equalsIgnoreCase( s ) || key.toUpperCase().startsWith( s.toUpperCase() ) )
-				{
-					scanner.close();
-					return s;
-				}
-			
-			Loader.getLogger().warning( key + " is not an available option, please press " + Joiner.on( "," ).join( keys ) + " to continue." );
-		}
-	}
-	
-	protected static void handleException( StartupException t )
-	{
-		if ( t.getCause() != null )
-			t.getCause().printStackTrace();
-		else
-			t.printStackTrace();
-		
-		// TODO Make it so this exception (and possibly other critical exceptions) are reported to
-		// us without user interaction. Should also find a way that the log can be sent along with it.
-		
-		safeLog( Level.SEVERE, ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "THE SERVER FAILED TO START, CHECK THE LOGS AND TRY AGAIN (" + ( System.currentTimeMillis() - Loader.startTime ) + "ms)!" );
-	}
-	
-	protected static void handleException( Throwable t )
-	{
-		t.printStackTrace();
-		safeLog( Level.WARNING, ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "**** WE ENCOUNTERED AN UNEXPECTED EXCEPTION ****" );
-	}
-	
-	protected static void safeLog( Level l, String msg )
-	{
-		if ( Loader.getLogger() != null )
-			Loader.getLogger().log( l, msg );
-		else
-		{
-			msg = msg.replaceAll( "&.", "" );
-			msg = msg.replaceAll( "§.", "" );
-			
-			if ( l.intValue() >= Level.WARNING.intValue() )
-				System.err.println( msg );
-			else
-				System.out.println( msg );
-		}
+		// Do Nothing
 	}
 }

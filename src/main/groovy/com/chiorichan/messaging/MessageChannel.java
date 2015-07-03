@@ -6,14 +6,12 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.account;
+package com.chiorichan.messaging;
 
-import com.chiorichan.messaging.MessageReceiver;
-import com.chiorichan.terminal.CommandSender;
-
-public interface AccountAttachment extends Account, MessageReceiver, CommandSender
+/**
+ * Represents a collection of MessageReceivers
+ */
+public interface MessageChannel
 {
-	String getIpAddr();
 	
-	AccountPermissible getPermissible();
 }

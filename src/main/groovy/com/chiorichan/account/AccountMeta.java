@@ -20,9 +20,7 @@ import java.util.Set;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.permission.PermissibleEntity;
-import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionManager;
-import com.chiorichan.permission.PermissionResult;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.util.ObjectFunc;
@@ -94,19 +92,7 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 		/**
 		 * Populate the PermissibleEntity for reasons... and notify the Account Creator
 		 */
-		context.creator().successInit( this, getPermissibleEntity() );
-	}
-	
-	@Override
-	public PermissionResult checkPermission( Permission perm )
-	{
-		return getPermissibleEntity().checkPermission( perm );
-	}
-	
-	@Override
-	public PermissionResult checkPermission( String perm )
-	{
-		return getPermissibleEntity().checkPermission( perm );
+		context.creator().successInit( this, getEntity() );
 	}
 	
 	public boolean containsKey( String key )
@@ -125,12 +111,6 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 		return context;
 	}
 	
-	@Override
-	public String getAcctId()
-	{
-		return acctId;
-	}
-	
 	public Boolean getBoolean( String key )
 	{
 		try
@@ -147,7 +127,22 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 	public String getDisplayName()
 	{
 		String name = context.creator().getDisplayName( this );
-		return ( name == null ) ? getAcctId() : name;
+		return ( name == null ) ? getId() : name;
+	}
+	
+	@Override
+	public PermissibleEntity getEntity()
+	{
+		if ( permissibleEntity == null || permissibleEntity.get() == null )
+			permissibleEntity = new WeakReference<PermissibleEntity>( PermissionManager.INSTANCE.getEntity( getId() ) );
+		
+		return permissibleEntity.get();
+	}
+	
+	@Override
+	public String getId()
+	{
+		return acctId;
 	}
 	
 	public Integer getInteger( String key )
@@ -163,12 +158,6 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 		return ( val == null ) ? def : val;
 	}
 	
-	@Override
-	public Set<String> getIpAddresses()
-	{
-		return instance().getIpAddresses();
-	}
-	
 	public Set<String> getKeys()
 	{
 		return metadata.keySet();
@@ -176,7 +165,7 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 	
 	public String getLogoffMessage()
 	{
-		return getAcctId() + " has logged off the server";
+		return getId() + " has logged off the server";
 	}
 	
 	public Map<String, Object> getMeta()
@@ -187,14 +176,6 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 	public Object getObject( String key )
 	{
 		return metadata.get( key );
-	}
-	
-	public PermissibleEntity getPermissibleEntity()
-	{
-		if ( permissibleEntity == null || permissibleEntity.get() == null )
-			permissibleEntity = new WeakReference<PermissibleEntity>( PermissionManager.INSTANCE.getEntity( getAcctId() ) );
-		
-		return permissibleEntity.get();
 	}
 	
 	@Override
@@ -243,32 +224,9 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 	}
 	
 	@Override
-	public boolean isAdmin()
-	{
-		return getPermissibleEntity().isAdmin() || isOp();
-	}
-	
-	@Override
-	public boolean isBanned()
-	{
-		return getPermissibleEntity().isBanned();
-	}
-	
 	public boolean isInitialized()
 	{
 		return account != null;
-	}
-	
-	@Override
-	public boolean isOp()
-	{
-		return getPermissibleEntity().isOp();
-	}
-	
-	@Override
-	public boolean isWhitelisted()
-	{
-		return getPermissibleEntity().isWhitelisted();
 	}
 	
 	@Override
@@ -319,13 +277,7 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 	}
 	
 	@Override
-	public boolean kick( String msg )
-	{
-		return AccountManager.INSTANCE.kick( this, msg );
-	}
-	
-	@Override
-	public AccountMeta metadata()
+	public AccountMeta meta()
 	{
 		return this;
 	}
@@ -343,18 +295,6 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 	public void save()
 	{
 		context.creator().save( this );
-	}
-	
-	@Override
-	public void send( Account sender, Object obj )
-	{
-		instance().send( sender, obj );
-	}
-	
-	@Override
-	public void send( Object obj )
-	{
-		instance().send( obj );
 	}
 	
 	public void set( String key, Object obj )

@@ -8,22 +8,23 @@
  */
 package com.chiorichan.account;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
+import java.util.WeakHashMap;
 
 import com.chiorichan.account.lang.AccountException;
-import com.chiorichan.permission.Permission;
-import com.chiorichan.permission.PermissionResult;
+import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.site.Site;
-import com.chiorichan.util.WeakReferenceList;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Sets;
 
 public final class AccountInstance implements Account
 {
 	/**
-	 * Tracks permissibles that are referencing this account and is self garbage collecting
+	 * Tracks permissibles that are referencing this account
 	 */
-	private final WeakReferenceList<AccountPermissible> permissibles = new WeakReferenceList<AccountPermissible>();
+	private final Set<AccountAttachment> permissibles = Collections.newSetFromMap( new WeakHashMap<AccountAttachment, Boolean>() );
 	
 	/**
 	 * Account MetaData
@@ -38,74 +39,14 @@ public final class AccountInstance implements Account
 		this.metadata = metadata;
 	}
 	
-	void registerPermissible( AccountPermissible permissible )
-	{
-		permissibles.add( permissible );
-	}
-	
-	void unregisterPermissible( AccountPermissible permissible )
-	{
-		permissibles.remove( permissible );
-	}
-	
-	public AccountPermissible[] getPermissibles()
-	{
-		return permissibles.toSet().toArray( new AccountPermissible[0] );
-	}
-	
-	int countPermissibles()
+	int countAttachments()
 	{
 		return permissibles.size();
 	}
 	
-	@Override
-	public boolean isBanned()
+	public Collection<AccountAttachment> getAttachments()
 	{
-		return metadata.isBanned();
-	}
-	
-	@Override
-	public boolean isWhitelisted()
-	{
-		return metadata.isWhitelisted();
-	}
-	
-	@Override
-	public boolean isAdmin()
-	{
-		return metadata.isAdmin();
-	}
-	
-	@Override
-	public boolean isOp()
-	{
-		return metadata.isOp();
-	}
-	
-	@Override
-	public PermissionResult checkPermission( String perm )
-	{
-		return metadata.getPermissibleEntity().checkPermission( perm );
-	}
-	
-	@Override
-	public PermissionResult checkPermission( Permission perm )
-	{
-		return metadata.getPermissibleEntity().checkPermission( perm );
-	}
-	
-	/**
-	 * @deprecated
-	 *             {@link #checkPermission(String)} is to replace this method since it provides more options to the requester
-	 * @param perm
-	 *            The permission node, e.g., com.chiorichan.permission.node
-	 * @return
-	 *         The result of said check. Will always return false if permission value is not of type boolean.
-	 */
-	@Deprecated
-	public boolean hasPermission( String perm )
-	{
-		return checkPermission( perm ).isTrue();
+		return Collections.unmodifiableSet( permissibles );
 	}
 	
 	@Override
@@ -114,21 +55,36 @@ public final class AccountInstance implements Account
 		return metadata.getDisplayName();
 	}
 	
-	public boolean kick( String msg )
+	@Override
+	public PermissibleEntity getEntity()
 	{
-		return metadata.kick( msg );
+		return meta().getEntity();
 	}
 	
 	@Override
-	public String getAcctId()
+	public String getId()
 	{
-		return metadata.getAcctId();
+		return metadata.getId();
+	}
+	
+	public Collection<String> getIpAddresses()
+	{
+		Set<String> ips = Sets.newHashSet();
+		for ( AccountAttachment perm : getAttachments() )
+			ips.add( perm.getIpAddr() );
+		return ips;
 	}
 	
 	@Override
-	public String toString()
+	public Site getSite()
 	{
-		return "Account{" + metadata.toString() + ",Permissibles{" + Joiner.on( "," ).join( getPermissibles() ) + "}}";
+		return metadata.getSite();
+	}
+	
+	@Override
+	public String getSiteId()
+	{
+		return metadata.getSiteId();
 	}
 	
 	/**
@@ -161,48 +117,37 @@ public final class AccountInstance implements Account
 	}
 	
 	@Override
-	public Site getSite()
-	{
-		return metadata.getSite();
-	}
-	
-	public String getSiteId()
-	{
-		return metadata.getSiteId();
-	}
-	
-	@Override
-	public Set<String> getIpAddresses()
-	{
-		Set<String> ips = Sets.newHashSet();
-		for ( AccountPermissible perm : getPermissibles() )
-			ips.addAll( perm.getIpAddresses() );
-		return ips;
-	}
-	
-	@Override
-	public AccountMeta metadata()
-	{
-		return metadata;
-	}
-	
-	@Override
 	public AccountInstance instance()
 	{
 		return this;
 	}
 	
 	@Override
-	public void send( Object obj )
+	public boolean isInitialized()
 	{
-		for ( AccountPermissible perm : permissibles )
-			perm.send( obj );
+		return true;
 	}
 	
 	@Override
-	public void send( Account sender, Object obj )
+	public AccountMeta meta()
 	{
-		for ( AccountPermissible perm : permissibles )
-			perm.send( sender, obj );
+		return metadata;
+	}
+	
+	public void registerAttachment( AccountAttachment attachment )
+	{
+		if ( !permissibles.contains( attachment ) )
+			permissibles.add( attachment );
+	}
+	
+	@Override
+	public String toString()
+	{
+		return "Account{" + metadata.toString() + ",Attachments{" + Joiner.on( "," ).join( getAttachments() ) + "}}";
+	}
+	
+	public void unregisterAttachment( AccountAttachment attachment )
+	{
+		permissibles.remove( attachment );
 	}
 }

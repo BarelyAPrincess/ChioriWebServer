@@ -64,10 +64,10 @@ class AccountList implements Iterable<AccountMeta>
 	void put( AccountMeta meta )
 	{
 		// Prevents the overriding of the builtin Accounts
-		if ( ( "none".equals( meta.getAcctId() ) || "default".equals( meta.getAcctId() ) || "root".equals( meta.getAcctId() ) ) && accounts.containsKey( meta.getAcctId() ) )
+		if ( ( "none".equals( meta.getId() ) || "default".equals( meta.getId() ) || "root".equals( meta.getId() ) ) && accounts.containsKey( meta.getId() ) )
 			return;
 		
-		accounts.put( meta.getAcctId(), meta );
+		accounts.put( meta.getId(), meta );
 	}
 	
 	AccountMeta remove( String acctId )

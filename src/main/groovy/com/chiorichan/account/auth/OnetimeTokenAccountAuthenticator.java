@@ -14,7 +14,7 @@ import java.sql.SQLException;
 import com.chiorichan.Loader;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountMeta;
-import com.chiorichan.account.AccountPermissible;
+import com.chiorichan.account.AccountAttachment;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.database.DatabaseEngine;
@@ -26,6 +26,22 @@ import com.chiorichan.util.RandomFunc;
  */
 public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
 {
+	class OnetimeTokenAccountCredentials extends AccountCredentials
+	{
+		private String token;
+		
+		OnetimeTokenAccountCredentials( AccountResult result, AccountMeta meta, String token )
+		{
+			super( OnetimeTokenAccountAuthenticator.this, result, meta );
+			this.token = token;
+		}
+		
+		public String getToken()
+		{
+			return token;
+		}
+	}
+	
 	private final DatabaseEngine db = Loader.getDatabase();
 	
 	OnetimeTokenAccountAuthenticator()
@@ -33,7 +49,6 @@ public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
 		super( "token" );
 		
 		if ( !db.tableExist( "accounts_token" ) )
-		{
 			try
 			{
 				db.queryUpdate( "CREATE TABLE `accounts_token` ( `acctId` varchar(255) NOT NULL, `token` varchar(255) NOT NULL, `expires` int(12) NOT NULL);" );
@@ -42,11 +57,10 @@ public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
 			{
 				e.printStackTrace();
 			}
-		}
 	}
 	
 	@Override
-	public AccountCredentials authorize( String acctId, AccountPermissible perm )
+	public AccountCredentials authorize( String acctId, AccountAttachment perm )
 	{
 		String token = perm.getVariable( "token" );
 		
@@ -110,10 +124,10 @@ public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
 	 */
 	public String issueToken( AccountMeta acct )
 	{
-		String token = RandomFunc.randomize( acct.getAcctId() ) + Timings.epoch();
+		String token = RandomFunc.randomize( acct.getId() ) + Timings.epoch();
 		try
 		{
-			db.queryUpdate( "INSERT INTO `accounts_token` (`acctId`,`token`,`expires`) VALUES ('" + acct.getAcctId() + "','" + token + "','" + ( Timings.epoch() + ( 60 * 60 * 24 * 7 ) ) + "');" );
+			db.queryUpdate( "INSERT INTO `accounts_token` (`acctId`,`token`,`expires`) VALUES ('" + acct.getId() + "','" + token + "','" + ( Timings.epoch() + ( 60 * 60 * 24 * 7 ) ) + "');" );
 		}
 		catch ( SQLException e )
 		{
@@ -121,21 +135,5 @@ public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
 			return null;
 		}
 		return token;
-	}
-	
-	class OnetimeTokenAccountCredentials extends AccountCredentials
-	{
-		private String token;
-		
-		OnetimeTokenAccountCredentials( AccountResult result, AccountMeta meta, String token )
-		{
-			super( OnetimeTokenAccountAuthenticator.this, result, meta );
-			this.token = token;
-		}
-		
-		public String getToken()
-		{
-			return token;
-		}
 	}
 }

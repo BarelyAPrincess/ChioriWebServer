@@ -8,7 +8,7 @@
  */
 package com.chiorichan.account;
 
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
@@ -24,6 +24,7 @@ import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.TaskCreator;
 import com.chiorichan.util.RandomFunc;
+import com.chiorichan.util.Versioning;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Sets;
 
@@ -156,9 +157,9 @@ public final class AccountManager extends AccountEvents implements ServerManager
 		String lowerName = partial.toLowerCase();
 		int delta = Integer.MAX_VALUE;
 		for ( AccountMeta meta : getAccounts() )
-			if ( meta.getAcctId().toLowerCase().startsWith( lowerName ) )
+			if ( meta.getId().toLowerCase().startsWith( lowerName ) )
 			{
-				int curDelta = meta.getAcctId().length() - lowerName.length();
+				int curDelta = meta.getId().length() - lowerName.length();
 				if ( curDelta < delta )
 				{
 					found = meta;
@@ -168,21 +169,6 @@ public final class AccountManager extends AccountEvents implements ServerManager
 					break;
 			}
 		return found;
-	}
-	
-	/**
-	 * Gets all Account Permissibles by crawling the {@link AccountMeta} and {@link AccountInstance}
-	 * 
-	 * @return
-	 *         A set of AccountPermissibles
-	 */
-	public Set<AccountPermissible> getAccountPermissibles()
-	{
-		Set<AccountPermissible> accts = Sets.newHashSet();
-		for ( AccountMeta meta : accounts )
-			if ( meta.isInitialized() )
-				accts.addAll( Arrays.asList( meta.instance().getPermissibles() ) );
-		return accts;
 	}
 	
 	public Set<AccountMeta> getAccounts()
@@ -209,7 +195,7 @@ public final class AccountManager extends AccountEvents implements ServerManager
 		
 		for ( AccountMeta meta : accounts.toSet() )
 		{
-			String id = ( isLower ) ? meta.getAcctId().toLowerCase() : meta.getAcctId();
+			String id = ( isLower ) ? meta.getId().toLowerCase() : meta.getId();
 			
 			if ( !id.isEmpty() && id.contains( query ) )
 			{
@@ -308,7 +294,7 @@ public final class AccountManager extends AccountEvents implements ServerManager
 	{
 		Set<Account> accts = Sets.newHashSet();
 		for ( AccountMeta meta : accounts )
-			if ( meta.isBanned() )
+			if ( meta.getEntity().isBanned() )
 				accts.add( meta );
 		return accts;
 	}
@@ -332,8 +318,23 @@ public final class AccountManager extends AccountEvents implements ServerManager
 	{
 		Set<Account> accts = Sets.newHashSet();
 		for ( AccountMeta meta : accounts )
-			if ( meta.isOp() )
+			if ( meta.getEntity().isOp() )
 				accts.add( meta );
+		return accts;
+	}
+	
+	/**
+	 * Gets all Account Permissibles by crawling the {@link AccountMeta} and {@link AccountInstance}
+	 * 
+	 * @return
+	 *         A set of AccountPermissibles
+	 */
+	public Collection<AccountAttachment> getPermissibles()
+	{
+		Set<AccountAttachment> accts = Sets.newHashSet();
+		for ( AccountMeta meta : accounts )
+			if ( meta.isInitialized() )
+				accts.addAll( meta.instance().getAttachments() );
 		return accts;
 	}
 	
@@ -341,7 +342,7 @@ public final class AccountManager extends AccountEvents implements ServerManager
 	{
 		Set<Account> accts = Sets.newHashSet();
 		for ( AccountMeta meta : accounts )
-			if ( meta.isWhitelisted() )
+			if ( meta.getEntity().isWhitelisted() )
 				accts.add( meta );
 		return accts;
 	}
@@ -358,52 +359,7 @@ public final class AccountManager extends AccountEvents implements ServerManager
 	
 	public boolean isDebug()
 	{
-		return isDebug;
-	}
-	
-	/**
-	 * Attempts to kick all logins of account
-	 * 
-	 * @param acct
-	 *            The Account to kick
-	 * @param msg
-	 *            The reason for kick
-	 * @return Was the kick successful
-	 */
-	public boolean kick( AccountInstance acct, String msg )
-	{
-		Validate.notNull( acct );
-		
-		return fireKick( acct, msg );
-	}
-	
-	/**
-	 * See {@link #kick(AccountInstance, String)}
-	 */
-	public boolean kick( AccountMeta acct, String msg )
-	{
-		Validate.notNull( acct );
-		
-		if ( !acct.isInitialized() )
-			throw AccountResult.ACCOUNT_NOT_INITIALIZED.exception( acct.getDisplayName() );
-		
-		return kick( acct.instance(), msg );
-	}
-	
-	/**
-	 * Attempts to only kick the provided instance of login
-	 * 
-	 * @param acct
-	 *            The instance to kick
-	 * @param msg
-	 *            The reason to kick
-	 * @return Was the kick successful
-	 */
-	public boolean kick( AccountPermissible acct, String msg )
-	{
-		Validate.notNull( acct );
-		
-		return fireKick( acct, msg );
+		return isDebug || Versioning.isDevelopment();
 	}
 	
 	public void reload()

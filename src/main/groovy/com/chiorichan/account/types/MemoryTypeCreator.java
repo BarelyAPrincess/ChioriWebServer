@@ -11,6 +11,7 @@ package com.chiorichan.account.types;
 import java.util.Arrays;
 import java.util.List;
 
+import com.chiorichan.Loader;
 import com.chiorichan.account.AccountContext;
 import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
@@ -113,13 +114,14 @@ public class MemoryTypeCreator extends AccountTypeCreator
 	@Override
 	public void successInit( AccountMeta meta, PermissibleEntity entity )
 	{
-		if ( meta.context().creator() == this && meta.getAcctId().equalsIgnoreCase( "root" ) )
+		if ( meta.context().creator() == this && meta.getId().equalsIgnoreCase( "root" ) )
 		{
 			entity.addPermission( PermissionDefault.OP.getNode(), true, null );
 			entity.setVirtual( true );
+			meta.instance().registerAttachment( Loader.getConsole() );
 		}
 		
-		if ( meta.context().creator() == this && meta.getAcctId().equalsIgnoreCase( "none" ) )
+		if ( meta.context().creator() == this && meta.getId().equalsIgnoreCase( "none" ) )
 			entity.setVirtual( true );
 	}
 	

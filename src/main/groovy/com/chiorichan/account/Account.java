@@ -8,66 +8,19 @@
  */
 package com.chiorichan.account;
 
-import java.util.Set;
-
-import com.chiorichan.permission.Permission;
-import com.chiorichan.permission.PermissionResult;
+import com.chiorichan.messaging.MessageChannel;
+import com.chiorichan.messaging.MessageSender;
+import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.site.Site;
 
-public interface Account
+public interface Account extends MessageSender, MessageChannel
 {
-	/**
-	 * Checks is this Account is banned on this server
-	 * 
-	 * @return is banned?
-	 */
-	boolean isBanned();
-	
-	/**
-	 * Checks if this Account is whitelisted on this server
-	 * 
-	 * @return is whitelisted?
-	 */
-	boolean isWhitelisted();
-	
-	/**
-	 * Check if the Account is an administrator of the server
-	 * 
-	 * @return is Server Administrator?
-	 */
-	boolean isAdmin();
-	
-	/**
-	 * Checks if the Account is an operator of the server
-	 * 
-	 * @return is Server Operator?
-	 */
-	boolean isOp();
-	
-	/**
-	 * Kicks the Account from the server
-	 * If called on {@link AccountPermissible} only that instance will be kicked.
-	 * If called on {@link AccountInstance} or {@link AccountMeta} all accounts will be kicked.
-	 * 
-	 * @param msg
-	 *            The kick message you wish to has delivered
-	 * @return Was the kick successfully executed
-	 */
-	boolean kick( String msg );
-	
-	/**
-	 * Gets an array of known IP Addresses currently in use
-	 * 
-	 * @return an array of IPv4/IPv6 Addresses
-	 */
-	Set<String> getIpAddresses();
-	
 	/**
 	 * Returns the exact instance of AccountMeta
 	 * 
 	 * @return {@link AccountMeta} instance of this Account
 	 */
-	AccountMeta metadata();
+	AccountMeta meta();
 	
 	/**
 	 * Returns the exact instance of AccountMeta
@@ -81,43 +34,38 @@ public interface Account
 	 * 
 	 * @return The AcctId
 	 */
-	String getAcctId();
+	@Override
+	String getId();
 	
 	/**
 	 * Returns the SiteId associated with this account
 	 * 
-	 * @return
-	 *         The associated SiteId
+	 * @return The associated SiteId
 	 */
 	String getSiteId();
 	
 	/**
 	 * Returns the {@link Site} associated with this account
 	 * 
-	 * @return
-	 *         The associated {@link Site}
+	 * @return The associated {@link Site}
 	 */
 	Site getSite();
 	
 	/**
-	 * Produces an Account Display Name, e.g., John Smith
+	 * Compiles a human readable display name, e.g., John Smith
 	 * 
-	 * @return
-	 *         A human readable display name
+	 * @return A human readable display name
 	 */
+	@Override
 	String getDisplayName();
 	
-	void send( Object obj );
-	
-	void send( Account sender, Object obj );
-	
 	/**
-	 * Checks the current permission of this {@link AccountPermissible} to the {@link Permission}
+	 * Returns the PermissibleEntity for this Account
+	 * 
+	 * @return The PermissibleEntity
 	 */
-	PermissionResult checkPermission( String perm );
-	
-	/**
-	 * Checks the current permission of this {@link AccountPermissible} to the {@link Permission}
-	 */
-	PermissionResult checkPermission( Permission perm );
+	@Override
+	PermissibleEntity getEntity();
+
+	boolean isInitialized();
 }
