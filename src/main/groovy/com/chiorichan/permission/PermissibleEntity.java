@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.ConcurrentSkipListMap;
 
 import org.apache.commons.lang3.Validate;
 
@@ -31,10 +30,10 @@ public abstract class PermissibleEntity
 {
 	private Map<String, PermissionResult> cachedResults = Maps.newConcurrentMap();
 	
-	private Map<ChildPermission, References> permissions = new ConcurrentSkipListMap<ChildPermission, References>();
-	private Map<ChildPermission, TimedReferences> timedPermissions = new ConcurrentSkipListMap<ChildPermission, TimedReferences>();
-	private Map<PermissibleGroup, References> groups = new ConcurrentSkipListMap<PermissibleGroup, References>();
-	private Map<PermissibleGroup, TimedReferences> timedGroups = new ConcurrentSkipListMap<PermissibleGroup, TimedReferences>();
+	private Map<ChildPermission, References> permissions = Maps.newConcurrentMap();
+	private Map<ChildPermission, TimedReferences> timedPermissions = Maps.newConcurrentMap();
+	private Map<PermissibleGroup, References> groups = Maps.newConcurrentMap();
+	private Map<PermissibleGroup, TimedReferences> timedGroups = Maps.newConcurrentMap();
 	
 	protected boolean debugMode = false;
 	private String id;
@@ -69,8 +68,8 @@ public abstract class PermissibleEntity
 		
 		if ( refs == null )
 			refs = References.format();
-		
 		References oldRefs = getPermissionReferences( perm.getPermission() );
+		
 		if ( oldRefs != null )
 			refs.add( oldRefs );
 		permissions.put( perm, refs );
@@ -207,10 +206,15 @@ public abstract class PermissibleEntity
 	
 	protected ChildPermission getChildPermission( Permission perm, References refs )
 	{
+		ChildPermission result = null;
 		for ( ChildPermission child : getChildPermissions( refs ) )
 			if ( child.getPermission() == perm )
-				return child;
-		return null;
+			{
+				result = child;
+				break;
+			}
+		// Loader.getLogger().debug( "Get PermissionChild on " + ( isGroup() ? "group" : "entity" ) + " " + getId() + " with result " + ( result != null ) );
+		return result;
 	}
 	
 	protected Entry<ChildPermission, References> getChildPermissionEntry( Permission perm, References refs )

@@ -105,4 +105,10 @@ public final class ChildPermission implements Comparable<ChildPermission>
 	{
 		return weight >= 0;
 	}
+	
+	@Override
+	public String toString()
+	{
+		return String.format( "ChildPermission{entity=%s,node=%s,value=%s,weight=%s}", entity.getId(), perm.getNamespace(), value.getValue(), weight );
+	}
 }

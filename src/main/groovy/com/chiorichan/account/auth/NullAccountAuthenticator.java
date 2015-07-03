@@ -10,7 +10,7 @@ package com.chiorichan.account.auth;
 
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountMeta;
-import com.chiorichan.account.AccountAttachment;
+import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.AccountType;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
@@ -20,13 +20,21 @@ import com.chiorichan.account.lang.AccountResult;
  */
 public final class NullAccountAuthenticator extends AccountAuthenticator
 {
+	class NullAccountCredentials extends AccountCredentials
+	{
+		NullAccountCredentials( AccountMeta meta )
+		{
+			super( NullAccountAuthenticator.this, AccountResult.LOGIN_SUCCESS, meta );
+		}
+	}
+	
 	NullAccountAuthenticator()
 	{
 		super( "null" );
 	}
 	
 	@Override
-	public AccountCredentials authorize( String acctId, AccountAttachment perm )
+	public AccountCredentials authorize( String acctId, AccountPermissible perm )
 	{
 		AccountMeta meta = AccountManager.INSTANCE.getAccountWithException( acctId );
 		
@@ -45,13 +53,5 @@ public final class NullAccountAuthenticator extends AccountAuthenticator
 			throw new AccountException( AccountResult.INCORRECT_LOGIN );
 		
 		return new NullAccountCredentials( meta );
-	}
-	
-	class NullAccountCredentials extends AccountCredentials
-	{
-		NullAccountCredentials( AccountMeta meta )
-		{
-			super( NullAccountAuthenticator.this, AccountResult.LOGIN_SUCCESS, meta );
-		}
 	}
 }

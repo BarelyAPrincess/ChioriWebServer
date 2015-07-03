@@ -703,16 +703,23 @@ public class Loader extends BuiltinEventCreator implements Listener
 	
 	public static void stop( String stopReason )
 	{
-		Set<Kickable> kickables = Sets.newHashSet();
-		for ( AccountMeta acct : AccountManager.INSTANCE.getAccounts() )
-			if ( acct.isInitialized() )
-				for ( AccountAttachment attachment : acct.instance().getAttachments() )
-					if ( attachment.getPermissible() instanceof Kickable )
-						kickables.add( ( Kickable ) attachment.getPermissible() );
-					else if ( attachment instanceof Kickable )
-						kickables.add( ( Kickable ) attachment );
-		
-		KickEvent.kick( kickables ).setReason( stopReason ).fire();
+		try
+		{
+			Set<Kickable> kickables = Sets.newHashSet();
+			for ( AccountMeta acct : AccountManager.INSTANCE.getAccounts() )
+				if ( acct.isInitialized() )
+					for ( AccountAttachment attachment : acct.instance().getAttachments() )
+						if ( attachment.getPermissible() instanceof Kickable )
+							kickables.add( ( Kickable ) attachment.getPermissible() );
+						else if ( attachment instanceof Kickable )
+							kickables.add( ( Kickable ) attachment );
+			
+			KickEvent.kick( kickables ).setReason( stopReason ).fire();
+		}
+		catch ( Throwable t )
+		{
+			// Ignore
+		}
 		
 		if ( stopReason == null )
 			getLogger().highlight( "Stopping the server... Goodbye!" );

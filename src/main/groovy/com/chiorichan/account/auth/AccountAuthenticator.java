@@ -14,6 +14,7 @@ import java.util.List;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.account.AccountAttachment;
+import com.chiorichan.account.AccountPermissible;
 import com.google.common.collect.Lists;
 
 /**
@@ -53,10 +54,8 @@ public abstract class AccountAuthenticator
 		Validate.notEmpty( name );
 		
 		for ( AccountAuthenticator aa : authenticators )
-		{
 			if ( name.equalsIgnoreCase( aa.name ) )
 				return ( T ) aa;
-		}
 		return null;
 	}
 	
@@ -77,7 +76,7 @@ public abstract class AccountAuthenticator
 	 *            An instance of the {@link AccountAttachment}
 	 * @return
 	 */
-	public abstract AccountCredentials authorize( String acctId, AccountAttachment perm );
+	public abstract AccountCredentials authorize( String acctId, AccountPermissible perm );
 	
 	/**
 	 * Used to check Account Credentials prior to creating the Account Instance

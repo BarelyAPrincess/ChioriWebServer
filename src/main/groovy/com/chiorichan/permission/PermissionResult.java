@@ -224,6 +224,9 @@ public class PermissionResult
 	{
 		this.refs = refs;
 		childPerm = entity.getChildPermissionRecursive( perm, refs );
+		
+		// Loader.getLogger().debug( "Recalculating permission " + perm.getNamespace() + " for " + entity.getId() + " with result " + ( childPerm != null ) );
+		
 		return this;
 	}
 	

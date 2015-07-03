@@ -166,8 +166,12 @@ public class TerminalEntity extends AccountPermissible implements Terminal, Bind
 		return getVariable( key, null );
 	}
 	
+	@Override
 	public String getVariable( String key, String def )
 	{
+		if ( !binding.hasVariable( key ) )
+			return def;
+		
 		// This is suppose to be persistent data, i.e., login. But we will use the metadata until something else can be made
 		Object obj = binding.getVariable( key );
 		
@@ -189,6 +193,7 @@ public class TerminalEntity extends AccountPermissible implements Terminal, Bind
 		handler.print( "\r" + prompt );
 	}
 	
+	@Override
 	public void resetPrompt()
 	{
 		try
@@ -231,6 +236,7 @@ public class TerminalEntity extends AccountPermissible implements Terminal, Bind
 			}
 	}
 	
+	@Override
 	public void setPrompt( String prompt )
 	{
 		if ( prompt != null )
