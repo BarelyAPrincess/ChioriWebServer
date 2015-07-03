@@ -8,6 +8,7 @@
  */
 package com.chiorichan.util;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
@@ -64,6 +65,24 @@ public class Versioning
 	public static String getGitHubBranch()
 	{
 		return metadata.getProperty( "project.branch", "master" );
+	}
+	
+	/**
+	 * Get the Java Binary
+	 * 
+	 * @return
+	 */
+	public static String getJavaBinary()
+	{
+		String path = System.getProperty( "java.home" ) + File.pathSeparator + "bin" + File.pathSeparator;
+		
+		if ( Versioning.isWindows() )
+			if ( new File( path + "javaw.exe" ).isFile() )
+				return path + "javaw.exe";
+			else if ( new File( path + "java.exe" ).isFile() )
+				return path + "java.exe";
+		
+		return path + "java";
 	}
 	
 	/**
@@ -192,7 +211,7 @@ public class Versioning
 	/**
 	 * Indicates if we are running on an Unix-like Operating System, e.g., Linux or Max OS X
 	 * 
-	 * @return True we are running on an Unix-like OS.
+	 * @return True if we are running on an Unix-like OS.
 	 */
 	public static boolean isUnixLikeOS()
 	{
@@ -200,6 +219,16 @@ public class Versioning
 		// return "linux".equalsIgnoreCase( os ) || "unix".equalsIgnoreCase( os ) || "mac os x".equalsIgnoreCase( os );
 		
 		return SystemUtils.IS_OS_UNIX;
+	}
+	
+	/**
+	 * Indicates if we are running on a Windows Operating System
+	 * 
+	 * @return True if we are running on Windows OS
+	 */
+	public static boolean isWindows()
+	{
+		return SystemUtils.IS_OS_WINDOWS;
 	}
 	
 	/**

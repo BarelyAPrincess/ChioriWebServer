@@ -26,6 +26,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.Validate;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 
 /**
@@ -168,6 +169,27 @@ public class StringFunc
 	public static boolean isValidMD5( String s )
 	{
 		return s.matches( "[a-fA-F0-9]{32}" );
+	}
+	
+	public static String join( String[] args )
+	{
+		return Joiner.on( " " ).join( args );
+	}
+	
+	/**
+	 * See {@link Arrays#copyOfRange(Object[], int, int)}
+	 */
+	public static String join( String[] args, int start )
+	{
+		return join( Arrays.copyOfRange( args, start, args.length ) );
+	}
+	
+	/**
+	 * See {@link Arrays#copyOfRange(Object[], int, int)}
+	 */
+	public static String join( String[] args, int start, int end )
+	{
+		return join( Arrays.copyOfRange( args, start, end ) );
 	}
 	
 	public static String md5( byte[] bytes )
