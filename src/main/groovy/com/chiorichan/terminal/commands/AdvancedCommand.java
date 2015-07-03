@@ -6,7 +6,7 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.console.commands;
+package com.chiorichan.terminal.commands;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -17,14 +17,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.chiorichan.ConsoleColor;
-import com.chiorichan.console.Command;
-import com.chiorichan.console.InteractiveConsole;
-import com.chiorichan.console.commands.advanced.AutoCompleteChoicesException;
-import com.chiorichan.console.commands.advanced.CommandBinding;
-import com.chiorichan.console.commands.advanced.CommandHandler;
-import com.chiorichan.console.commands.advanced.CommandListener;
-import com.chiorichan.console.commands.advanced.CommandSyntax;
+import com.chiorichan.account.AccountAttachment;
 import com.chiorichan.permission.PermissionManager;
+import com.chiorichan.terminal.Command;
+import com.chiorichan.terminal.commands.advanced.AutoCompleteChoicesException;
+import com.chiorichan.terminal.commands.advanced.CommandBinding;
+import com.chiorichan.terminal.commands.advanced.CommandHandler;
+import com.chiorichan.terminal.commands.advanced.CommandListener;
+import com.chiorichan.terminal.commands.advanced.CommandSyntax;
 import com.google.common.base.Joiner;
 
 public class AdvancedCommand extends Command
@@ -42,7 +42,7 @@ public class AdvancedCommand extends Command
 	}
 	
 	@Override
-	public boolean execute( InteractiveConsole handler, String command, String[] args )
+	public boolean execute( AccountAttachment handler, String command, String[] args )
 	{
 		try
 		{
@@ -76,9 +76,9 @@ public class AdvancedCommand extends Command
 					return true;
 				}
 				
-				if ( !selectedBinding.checkPermissions( handler.getPersistence().getSession().getPermissibleEntity() ) )
+				if ( !selectedBinding.checkPermissions( handler.getEntity() ) )
 				{
-					PermissionManager.getLogger().warning( "Entity " + handler.getName() + " tried to access command \"" + command + " " + arguments + "\", but doesn't have permission to do this." );
+					PermissionManager.getLogger().warning( "Entity " + handler.getId() + " tried to access command \"" + command + " " + arguments + "\", but doesn't have permission to do this." );
 					handler.sendMessage( ConsoleColor.RED + "Sorry, you don't have the required permissions." );
 					return true;
 				}
@@ -116,7 +116,7 @@ public class AdvancedCommand extends Command
 		{
 			// TODO Make it so log messages can be sent to InteractiveConsoles, like a getLogger() for consoles
 			handler.sendMessage( "Sorry, there was a severe exception encountered while executing this command. :(" );
-			PermissionManager.getLogger().severe( String.format( "Exception encountered while %s was executing %s %s", handler.getName(), command, Joiner.on( " " ).join( args ) ), t );
+			PermissionManager.getLogger().severe( String.format( "Exception encountered while %s was executing %s %s", handler.getDisplayName(), command, Joiner.on( " " ).join( args ) ), t );
 			return true;
 		}
 	}

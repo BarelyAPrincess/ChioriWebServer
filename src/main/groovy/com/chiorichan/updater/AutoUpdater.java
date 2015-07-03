@@ -13,20 +13,20 @@ import java.util.List;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
-import com.chiorichan.account.Account;
-import com.chiorichan.account.AccountType;
-import com.chiorichan.account.event.AccountPreLoginEvent;
-import com.chiorichan.event.BuiltinEventCreator;
+import com.chiorichan.account.AccountAttachment;
+import com.chiorichan.account.event.AccountSuccessfulLoginEvent;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
+import com.chiorichan.messaging.MessageReceiver;
 import com.chiorichan.tasks.TaskCreator;
 import com.chiorichan.tasks.TaskManager;
+import com.chiorichan.tasks.Timings;
 import com.chiorichan.updater.BuildArtifact.ChangeSet.ChangeSetDetails;
 import com.chiorichan.util.Versioning;
 
-public class AutoUpdater extends BuiltinEventCreator implements Listener, TaskCreator
+public class AutoUpdater implements Listener, TaskCreator
 {
 	public static final String WARN_CONSOLE = "warn-console";
 	public static final String WARN_OPERATORS = "warn-ops";
@@ -50,92 +50,35 @@ public class AutoUpdater extends BuiltinEventCreator implements Listener, TaskCr
 		/*
 		 * This schedules the Auto Updater with the Scheduler to run every 30 minutes (by default).
 		 */
-		TaskManager.INSTANCE.scheduleAsyncRepeatingTask( this, 0L, Loader.getConfig().getInt( "auto-updater.check-interval", 30 ) * 3000, new Runnable()
+		TaskManager.INSTANCE.scheduleAsyncRepeatingTask( this, 0L, Loader.getConfig().getInt( "auto-updater.check-interval", 30 ) * Timings.TICK_MINUTE, new Runnable()
 		{
 			@Override
 			public void run()
 			{
 				check();
 			}
-		} ); // 3000 ticks = 1 minute
+		} );
 	}
 	
-	public String getChannel()
+	protected static DownloadUpdaterService getService()
 	{
-		return channel;
-	}
-	
-	public boolean isEnabled()
-	{
-		return enabled;
-	}
-	
-	public void setEnabled( boolean isEnabled )
-	{
-		enabled = isEnabled;
-		
-		if ( enabled )
-			EventBus.INSTANCE.registerEvents( this, this );
-		// else
-		// EventBus.INSTANCE.unregisterEvents( this );
-	}
-	
-	public boolean shouldSuggestChannels()
-	{
-		return suggestChannels;
-	}
-	
-	public void setSuggestChannels( boolean suggestChannels )
-	{
-		this.suggestChannels = suggestChannels;
-	}
-	
-	public List<String> getOnBroken()
-	{
-		return onBroken;
-	}
-	
-	public List<String> getOnUpdate()
-	{
-		return onUpdate;
-	}
-	
-	public boolean isUpdateAvailable()
-	{
-		if ( ( latest == null ) || ( current == null ) || ( !isEnabled() ) )
-		{
-			return false;
-		}
-		else
-		{
-			return latest.timestamp > current.timestamp;
-		}
-	}
-	
-	public BuildArtifact getCurrent()
-	{
-		return current;
-	}
-	
-	public BuildArtifact getLatest()
-	{
-		return latest;
+		return ( instance == null ) ? null : instance.service;
 	}
 	
 	public void check()
 	{
-		// Makes an anonymous update check. Unless sys.updater.allow is granted to the noLogin account, the update will fail silently.
-		check( AccountType.ACCOUNT_NONE, true );
+		check( Loader.getConsole(), true );
 	}
 	
-	public void check( final Account sender, final boolean automatic )
+	public void check( final AccountAttachment sender, final boolean automatic )
 	{
 		final String currentSlug = Versioning.getBuildNumber();
 		
-		if ( !isEnabled() || Versioning.getBuildNumber().equals( "0" ) )
-		{
+		if ( !isEnabled() || "0".equals( currentSlug ) )
 			return;
-		}
+		
+		if ( !sender.getEntity().checkPermission( "sys.update" ).isTrue() && !sender.getEntity().isOp() )
+			return;
 		
 		new Thread()
 		{
@@ -151,87 +94,61 @@ public class AutoUpdater extends BuiltinEventCreator implements Listener, TaskCr
 					{
 						if ( ( current.isBroken() ) && ( onBroken.contains( WARN_CONSOLE ) ) )
 						{
-							sender.send( ConsoleColor.RED + "----- Chiori Auto Updater -----" );
-							sender.send( ConsoleColor.RED + "Your version of " + Versioning.getProduct() + " is known to be broken. It is strongly advised that you update to a more recent version ASAP." );
-							sender.send( ConsoleColor.RED + "Known issues with your version:" );
+							sender.sendMessage( ConsoleColor.RED + "----- Chiori Auto Updater -----" );
+							sender.sendMessage( ConsoleColor.RED + "Your version of " + Versioning.getProduct() + " is known to be broken. It is strongly advised that you update to a more recent version ASAP." );
+							sender.sendMessage( ConsoleColor.RED + "Known issues with your version:" );
 							
 							for ( String line : current.getBrokenReason().split( "\n" ) )
-							{
-								sender.send( ConsoleColor.RED + "> " + line );
-							}
+								sender.sendMessage( ConsoleColor.RED + "> " + line );
 							
-							sender.send( ConsoleColor.RED + "Newer version " + latest.getVersion() + " (build #" + latest.getBuildNumber() + ") was released on " + latest.getCreated() + "." );
-							sender.send( ConsoleColor.RED + "Details: " + latest.getHtmlUrl() );
-							sender.send( ConsoleColor.RED + "Download: " + latest.getJar() );
-							sender.send( ConsoleColor.RED + "----- ------------------- -----" );
+							sender.sendMessage( ConsoleColor.RED + "Newer version " + latest.getVersion() + " (build #" + latest.getBuildNumber() + ") was released on " + latest.getCreated() + "." );
+							sender.sendMessage( ConsoleColor.RED + "Details: " + latest.getHtmlUrl() );
+							sender.sendMessage( ConsoleColor.RED + "Download: " + latest.getJar() );
+							sender.sendMessage( ConsoleColor.RED + "----- ------------------- -----" );
 						}
 						else if ( onUpdate.contains( WARN_CONSOLE ) )
 						{
-							sender.send( ConsoleColor.YELLOW + "----- Chiori Auto Updater -----" );
-							sender.send( ConsoleColor.YELLOW + "Your version of " + Versioning.getProduct() + " is out of date. Version " + latest.getVersion() + " (build #" + latest.getBuildNumber() + ") was released on " + latest.getCreated() + "." );
-							sender.send( ConsoleColor.YELLOW + "Details: " + latest.getHtmlUrl() );
-							sender.send( ConsoleColor.YELLOW + "Download: " + latest.getJar() );
-							sender.send( ConsoleColor.YELLOW + "----- ------------------- -----" );
+							sender.sendMessage( ConsoleColor.YELLOW + "----- Chiori Auto Updater -----" );
+							sender.sendMessage( ConsoleColor.YELLOW + "Your version of " + Versioning.getProduct() + " is out of date. Version " + latest.getVersion() + " (build #" + latest.getBuildNumber() + ") was released on " + latest.getCreated() + "." );
+							sender.sendMessage( ConsoleColor.YELLOW + "Details: " + latest.getHtmlUrl() );
+							sender.sendMessage( ConsoleColor.YELLOW + "Download: " + latest.getJar() );
+							sender.sendMessage( ConsoleColor.YELLOW + "----- ------------------- -----" );
 						}
 					}
 					else if ( ( current != null ) && ( current.isBroken() ) && ( onBroken.contains( WARN_CONSOLE ) ) )
 					{
-						sender.send( ConsoleColor.RED + "----- Chiori Auto Updater -----" );
-						sender.send( ConsoleColor.RED + "Your version of " + Versioning.getProduct() + " is known to be broken. It is strongly advised that you update to a more recent (or older) version ASAP." );
-						sender.send( ConsoleColor.RED + "Known issues with your version:" );
+						sender.sendMessage( ConsoleColor.RED + "----- Chiori Auto Updater -----" );
+						sender.sendMessage( ConsoleColor.RED + "Your version of " + Versioning.getProduct() + " is known to be broken. It is strongly advised that you update to a more recent (or older) version ASAP." );
+						sender.sendMessage( ConsoleColor.RED + "Known issues with your version:" );
 						
 						for ( String line : current.getBrokenReason().split( "\n" ) )
-						{
-							sender.send( ConsoleColor.RED + "> " + line );
-						}
+							sender.sendMessage( ConsoleColor.RED + "> " + line );
 						
-						sender.send( ConsoleColor.RED + "Unfortunately, there is not yet a newer version suitable for your server. We would advise you wait an hour or two, or try out a dev build." );
-						sender.send( ConsoleColor.RED + "----- ------------------- -----" );
+						sender.sendMessage( ConsoleColor.RED + "Unfortunately, there is not yet a newer version suitable for your server. We would advise you wait an hour or two, or try out a dev build." );
+						sender.sendMessage( ConsoleColor.RED + "----- ------------------- -----" );
 					}
 					else if ( current == null && latest != null )
 					{
-						sender.send( ConsoleColor.YELLOW + "----- Chiori Auto Updater -----" );
-						sender.send( ConsoleColor.YELLOW + "It appears that we could not find any information regarding your current build of Chiori Web Server. This could either be due to your" );
-						sender.send( ConsoleColor.YELLOW + "version being so out of date that our Build Server has no information or you self compiled this build, in which case you should have disabled" );
-						sender.send( ConsoleColor.YELLOW + "the auto updates. For the sake of fair warning below is our latest release. Please run \"update latest\" if you like us to auto update." );
-						sender.send( ConsoleColor.YELLOW + "" );
-						sender.send( ConsoleColor.YELLOW + "Latest Version " + latest.getVersion() + " (build #" + latest.getBuildNumber() + ") was released on " + latest.getCreated() + "." );
-						sender.send( ConsoleColor.YELLOW + "Details: " + latest.getHtmlUrl() );
-						sender.send( ConsoleColor.YELLOW + "Download: " + latest.getJar() );
-						sender.send( ConsoleColor.YELLOW + "----- ------------------- -----" );
+						sender.sendMessage( ConsoleColor.YELLOW + "----- Chiori Auto Updater -----" );
+						sender.sendMessage( ConsoleColor.YELLOW + "It appears that we could not find any information regarding your current build of Chiori Web Server. This could either be due to your" );
+						sender.sendMessage( ConsoleColor.YELLOW + "version being so out of date that our Build Server has no information or you self compiled this build, in which case you should have disabled" );
+						sender.sendMessage( ConsoleColor.YELLOW + "the auto updates. For the sake of fair warning below is our latest release. Please run \"update latest\" if you like us to auto update." );
+						sender.sendMessage( ConsoleColor.YELLOW + "" );
+						sender.sendMessage( ConsoleColor.YELLOW + "Latest Version " + latest.getVersion() + " (build #" + latest.getBuildNumber() + ") was released on " + latest.getCreated() + "." );
+						sender.sendMessage( ConsoleColor.YELLOW + "Details: " + latest.getHtmlUrl() );
+						sender.sendMessage( ConsoleColor.YELLOW + "Download: " + latest.getJar() );
+						sender.sendMessage( ConsoleColor.YELLOW + "----- ------------------- -----" );
 					}
-					
-					/*
-					 * else if ( ( current != null ) && ( shouldSuggestChannels() ) )
-					 * {
-					 * ArtifactDetails.ChannelDetails prefChan = service.getChannel( channel, "preferred channel details" );
-					 * if ( ( prefChan != null ) && ( current.getChannel().getPriority() < prefChan.getPriority() ) )
-					 * {
-					 * sender.send( ChatColor.AQUA + "----- Chiori Auto Updater -----" );
-					 * sender.send( ChatColor.AQUA + "It appears that you're running a " + current.getChannel().getName() + ", when you've specified in chiori.yml that you prefer to run " + prefChan.getName() + "s." );
-					 * sender.send( ChatColor.AQUA + "If you would like to be kept informed about new " + current.getChannel().getName() +
-					 * " releases, it is recommended that you change 'preferred-channel' in your chiori.yml to '" +
-					 * current.getChannel().getSlug() + "'." );
-					 * sender.send( ChatColor.AQUA + "With that set, you will be told whenever a new version is available for download, so that you can always keep up to date and secure with the latest fixes." );
-					 * sender.send( ChatColor.AQUA + "If you would like to disable this warning, simply set 'suggest-channels' to false in chiori.yml." );
-					 * sender.send( ChatColor.AQUA + "----- ------------------- -----" );
-					 * }
-					 * }
-					 */
-					else
-					// if ( !( sender instanceof ConsoleCommandSender ) )
+					else if ( !automatic )
 					{
-						if ( !automatic )
-						{
-							sender.send( ConsoleColor.YELLOW + "----- Chiori Auto Updater -----" );
-							
-							if ( current == null && latest == null )
-								sender.send( ConsoleColor.YELLOW + "There seems to have been a problem checking for updates!" );
-							else
-								sender.send( ConsoleColor.YELLOW + "You are already running the latest version of " + Versioning.getProduct() + "!" );
-							
-							sender.send( ConsoleColor.YELLOW + "----- ------------------- -----" );
-						}
+						sender.sendMessage( ConsoleColor.YELLOW + "----- Chiori Auto Updater -----" );
+						
+						if ( current == null && latest == null )
+							sender.sendMessage( ConsoleColor.YELLOW + "There seems to have been a problem checking for updates!" );
+						else
+							sender.sendMessage( ConsoleColor.YELLOW + "You are already running the latest version of " + Versioning.getProduct() + "!" );
+						
+						sender.sendMessage( ConsoleColor.YELLOW + "----- ------------------- -----" );
 					}
 				}
 				catch ( Throwable t )
@@ -242,7 +159,7 @@ public class AutoUpdater extends BuiltinEventCreator implements Listener, TaskCr
 		}.start();
 	}
 	
-	public void forceUpdate( final Account sender )
+	public void forceUpdate( final AccountAttachment sender )
 	{
 		new Thread()
 		{
@@ -254,39 +171,49 @@ public class AutoUpdater extends BuiltinEventCreator implements Listener, TaskCr
 				
 				if ( latest == null )
 				{
-					sender.send( ConsoleColor.YELLOW + "----- Chiori Auto Updater -----" );
-					sender.send( ConsoleColor.YELLOW + "There seems to have been a problem checking for updates!" );
-					sender.send( ConsoleColor.YELLOW + "----- ------------------- -----" );
+					sender.sendMessage( ConsoleColor.YELLOW + "----- Chiori Auto Updater -----" );
+					sender.sendMessage( ConsoleColor.YELLOW + "There seems to have been a problem checking for updates!" );
+					sender.sendMessage( ConsoleColor.YELLOW + "----- ------------------- -----" );
 				}
 				else
 				{
-					sender.send( ConsoleColor.YELLOW + "----- Chiori Auto Updater -----" );
+					sender.sendMessage( ConsoleColor.YELLOW + "----- Chiori Auto Updater -----" );
 					
 					if ( current != null )
-						sender.send( ConsoleColor.YELLOW + "Your Version " + current.getVersion() + " (build #" + current.getBuildNumber() + ") was released on " + current.getCreated() + "." );
+						sender.sendMessage( ConsoleColor.YELLOW + "Your Version " + current.getVersion() + " (build #" + current.getBuildNumber() + ") was released on " + current.getCreated() + "." );
 					
-					sender.send( ConsoleColor.YELLOW + "Latest Version " + latest.getVersion() + " (build #" + latest.getBuildNumber() + ") was released on " + latest.getCreated() + "." );
-					sender.send( ConsoleColor.YELLOW + "Details: " + latest.getHtmlUrl() );
-					sender.send( ConsoleColor.YELLOW + "Download: " + latest.getJar() );
-					sender.send( "" );
+					sender.sendMessage( ConsoleColor.YELLOW + "Latest Version " + latest.getVersion() + " (build #" + latest.getBuildNumber() + ") was released on " + latest.getCreated() + "." );
+					sender.sendMessage( ConsoleColor.YELLOW + "Details: " + latest.getHtmlUrl() );
+					sender.sendMessage( ConsoleColor.YELLOW + "Download: " + latest.getJar() );
+					sender.sendMessage( "" );
 					
 					for ( ChangeSetDetails l : latest.getChanges() )
 						for ( String ll : l.toString().split( "\n" ) )
-							sender.send( ConsoleColor.AQUA + "[CHANGES] " + ConsoleColor.WHITE + ll );
+							sender.sendMessage( ConsoleColor.AQUA + "[CHANGES] " + ConsoleColor.WHITE + ll );
 					
-					sender.send( "" );
-					sender.send( ConsoleColor.YELLOW + "If you would like " + Versioning.getProduct() + " to update to the latest version run \"update latest force\"" );
-					sender.send( ConsoleColor.RED + "WARNING: Chiori Auto Updater currently can't auto update any installed plugins." );
-					sender.send( ConsoleColor.RED + "You can obtain updated offical plugins from the Details URL above or you will need to contact the original developer." );
-					sender.send( ConsoleColor.RED + "Quite frankly, If there has been no changes to the Plugin API (See Change Log) then even outdated plugins should still work." );
+					sender.sendMessage( "" );
+					sender.sendMessage( ConsoleColor.YELLOW + "If you would like " + Versioning.getProduct() + " to update to the latest version run \"update latest force\"" );
+					sender.sendMessage( ConsoleColor.RED + "WARNING: Chiori Auto Updater currently can't auto update any installed plugins." );
+					sender.sendMessage( ConsoleColor.RED + "You can obtain updated offical plugins from the Details URL above or you will need to contact the original developer." );
+					sender.sendMessage( ConsoleColor.RED + "Quite frankly, If there has been no changes to the Plugin API (See Change Log) then even outdated plugins should still work." );
 				}
 			}
 		}.start();
 	}
 	
-	protected static DownloadUpdaterService getService()
+	public String getChannel()
 	{
-		return ( instance == null ) ? null : instance.service;
+		return channel;
+	}
+	
+	public BuildArtifact getCurrent()
+	{
+		return current;
+	}
+	
+	public BuildArtifact getLatest()
+	{
+		return latest;
 	}
 	
 	@Override
@@ -295,13 +222,60 @@ public class AutoUpdater extends BuiltinEventCreator implements Listener, TaskCr
 		return "Auto Updater";
 	}
 	
-	@EventHandler( priority = EventPriority.NORMAL )
-	public void onAccountLoginEvent( AccountPreLoginEvent event )
+	public List<String> getOnBroken()
 	{
-		if ( ( Loader.getAutoUpdater().isEnabled() ) && ( Loader.getAutoUpdater().getCurrent() != null ) && ( event.getAccount().instance().checkPermission( Loader.BROADCAST_CHANNEL_ADMINISTRATIVE ).isTrue() ) )
-			if ( ( Loader.getAutoUpdater().getCurrent().isBroken() ) && ( getOnBroken().contains( AutoUpdater.WARN_OPERATORS ) ) )
-				event.getAccount().send( ConsoleColor.DARK_RED + "The version of " + Versioning.getProduct() + " that this server is running is known to be broken. Please consider updating to the latest version at jenkins.chiorichan.com." );
-			else if ( ( Loader.getAutoUpdater().isUpdateAvailable() ) && ( getOnUpdate().contains( AutoUpdater.WARN_OPERATORS ) ) )
-				event.getAccount().send( ConsoleColor.DARK_PURPLE + "The version of " + Versioning.getProduct() + " that this server is running is out of date. Please consider updating to the latest version at jenkins.chiorichan.com." );
+		return onBroken;
+	}
+	
+	public List<String> getOnUpdate()
+	{
+		return onUpdate;
+	}
+	
+	@Override
+	public boolean isEnabled()
+	{
+		return enabled;
+	}
+	
+	public boolean isUpdateAvailable()
+	{
+		if ( ( latest == null ) || ( current == null ) || ( !isEnabled() ) )
+			return false;
+		else
+			return latest.timestamp > current.timestamp;
+	}
+	
+	@EventHandler( priority = EventPriority.NORMAL )
+	public void onAccountLoginEvent( AccountSuccessfulLoginEvent event )
+	{
+		if ( event.getAccountPermissible() instanceof MessageReceiver )
+		{
+			MessageReceiver receiver = ( MessageReceiver ) event.getAccountPermissible();
+			if ( Loader.getAutoUpdater().isEnabled() && Loader.getAutoUpdater().getCurrent() != null && event.getAccount().getEntity().checkPermission( Loader.BROADCAST_CHANNEL_ADMINISTRATIVE ).isTrue() )
+				if ( ( Loader.getAutoUpdater().getCurrent().isBroken() ) && ( getOnBroken().contains( AutoUpdater.WARN_OPERATORS ) ) )
+					receiver.sendMessage( ConsoleColor.DARK_RED + "The version of " + Versioning.getProduct() + " that this server is running is known to be broken. Please consider updating to the latest version available from http://jenkins.chiorichan.com/." );
+				else if ( ( Loader.getAutoUpdater().isUpdateAvailable() ) && ( getOnUpdate().contains( AutoUpdater.WARN_OPERATORS ) ) )
+					receiver.sendMessage( ConsoleColor.DARK_PURPLE + "The version of " + Versioning.getProduct() + " that this server is running is out of date. Please consider updating to the latest version available from http://jenkins.chiorichan.com/." );
+		}
+	}
+	
+	public void setEnabled( boolean isEnabled )
+	{
+		enabled = isEnabled;
+		if ( enabled )
+			EventBus.INSTANCE.registerEvents( this, Loader.getInstance() );
+		else
+			EventBus.INSTANCE.unregisterEvents( this );
+	}
+	
+	public void setSuggestChannels( boolean suggestChannels )
+	{
+		this.suggestChannels = suggestChannels;
+	}
+	
+	public boolean shouldSuggestChannels()
+	{
+		return suggestChannels;
 	}
 }

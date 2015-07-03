@@ -6,11 +6,16 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.console.commands.advanced;
+package com.chiorichan.terminal;
 
-import com.chiorichan.console.commands.AdvancedCommand;
+import com.chiorichan.account.AccountAttachment;
+import com.chiorichan.account.Kickable;
 
-public interface CommandListener
+public interface Terminal extends AccountAttachment, Kickable
 {
-	void onRegistered( AdvancedCommand command );
+	void prompt();
+	
+	void resetPrompt();
+	
+	void setPrompt( String prompt );
 }

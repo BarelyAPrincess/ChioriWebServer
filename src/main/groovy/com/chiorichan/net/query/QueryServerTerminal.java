@@ -19,38 +19,36 @@ import java.net.InetSocketAddress;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
-import com.chiorichan.console.CommandDispatch;
-import com.chiorichan.console.InteractiveConsole;
-import com.chiorichan.console.InteractiveConsoleHandler;
+import com.chiorichan.account.Kickable;
+import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.query.QueryEvent;
 import com.chiorichan.event.query.QueryEvent.QueryType;
 import com.chiorichan.net.NetworkManager;
-import com.chiorichan.net.NetworkWrapper;
+import com.chiorichan.terminal.CommandDispatch;
+import com.chiorichan.terminal.TerminalEntity;
+import com.chiorichan.terminal.TerminalHandler;
 import com.chiorichan.util.StringFunc;
 
 /**
  * Handles the Query Server traffic
  */
 @Sharable
-public class QueryServerHandler extends SimpleChannelInboundHandler<String> implements InteractiveConsoleHandler
+public class QueryServerTerminal extends SimpleChannelInboundHandler<String> implements TerminalHandler, Kickable
 {
 	private ChannelHandlerContext context;
-	private NetworkWrapper persistence;
-	private InteractiveConsole console;
+	private TerminalEntity terminal;
 	
 	@Override
 	public void channelActive( ChannelHandlerContext ctx ) throws Exception
 	{
 		context = ctx;
-		
-		persistence = new NetworkWrapper( this );
-		console = InteractiveConsole.createInstance( this, persistence );
+		terminal = new TerminalEntity( this );
 		
 		// TODO Implement the Security Manager
 		
-		console.displayWelcomeMessage();
+		terminal.displayWelcomeMessage();
 		
 		QueryEvent queryEvent = new QueryEvent( ctx, QueryType.CONNECTED, null );
 		
@@ -71,17 +69,17 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 		}
 		
 		println( "Server Uptine: " + Loader.getUptime() );
-		println( "The last visit from IP " + persistence.getIpAddr() + " is unknown." );
+		println( "The last visit from IP " + terminal.getIpAddr() + " is unknown." );
 		// TODO Add more information here
 		
-		console.resetPrompt();
+		terminal.resetPrompt();
 	}
 	
 	@Override
 	public void channelInactive( ChannelHandlerContext ctx ) throws Exception
 	{
-		if ( persistence != null && persistence.hasSession() )
-			persistence.finish();
+		if ( terminal != null )
+			terminal.finish();
 	}
 	
 	@Override
@@ -90,16 +88,18 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 		ctx.flush();
 	}
 	
-	public void disconnect()
+	@Override
+	public boolean disconnect()
 	{
-		disconnect( ConsoleColor.RED + "The server is closing your connection, goodbye!" );
+		return disconnect( ConsoleColor.RED + "The server is closing your connection, goodbye!" );
 	}
 	
-	public void disconnect( String msg )
+	public boolean disconnect( String msg )
 	{
-		NetworkManager.getLogger().info( ConsoleColor.YELLOW + "The connection to Query Client `" + persistence.getIpAddr() + "` is being disconnected with message `" + msg + "`." );
+		NetworkManager.getLogger().info( ConsoleColor.YELLOW + "The connection to Query Client `" + getIpAddr() + "` is being disconnected with message `" + msg + "`." );
 		ChannelFuture future = context.writeAndFlush( "\r" + parseColor( msg ) + "\r\n" );
 		future.addListener( ChannelFutureListener.CLOSE );
+		return true;
 	}
 	
 	@Override
@@ -109,21 +109,29 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 		ctx.close();
 	}
 	
+	@Override
+	public String getId()
+	{
+		return terminal.getId();
+	}
+	
+	@Override
 	public String getIpAddr()
 	{
 		return ( ( InetSocketAddress ) context.channel().remoteAddress() ).getAddress().getHostAddress();
 	}
 	
 	@Override
-	public NetworkWrapper getPersistence()
+	public AccountResult kick( String reason )
 	{
-		return persistence;
+		disconnect( reason );
+		return AccountResult.SUCCESS;
 	}
 	
 	@Override
 	public void messageReceived( ChannelHandlerContext ctx, String msg )
 	{
-		CommandDispatch.issueCommand( console, msg );
+		CommandDispatch.issueCommand( terminal, msg );
 	}
 	
 	private String parseColor( String text )
@@ -131,7 +139,7 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 		if ( text == null || text.isEmpty() )
 			return "";
 		
-		if ( !Loader.getConfig().getBoolean( "server.queryUseColor" ) || ( console != null && !StringFunc.isTrue( console.getMetadata( "color", "true" ) ) ) )
+		if ( !Loader.getConfig().getBoolean( "server.queryUseColor" ) || ( terminal != null && !StringFunc.isTrue( terminal.getVariable( "color", "true" ) ) ) )
 			return ConsoleColor.removeAltColors( text );
 		else
 			return ConsoleColor.transAltColors( text );
@@ -151,7 +159,13 @@ public class QueryServerHandler extends SimpleChannelInboundHandler<String> impl
 		for ( String msg : msgs )
 			context.write( "\r" + parseColor( msg ) + "                   " + "\r\n" );
 		context.flush();
-		if ( console != null )
-			console.prompt();
+		if ( terminal != null )
+			terminal.prompt();
+	}
+	
+	@Override
+	public TerminalType type()
+	{
+		return TerminalType.TELNET;
 	}
 }

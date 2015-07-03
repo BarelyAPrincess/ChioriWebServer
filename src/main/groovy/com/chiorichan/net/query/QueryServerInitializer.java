@@ -24,7 +24,7 @@ public class QueryServerInitializer extends ChannelInitializer<SocketChannel>
 	private static final StringDecoder DECODER = new StringDecoder();
 	private static final StringEncoder ENCODER = new StringEncoder();
 	
-	private static final QueryServerHandler SERVER_HANDLER = new QueryServerHandler();
+	private static final QueryServerTerminal SERVER_HANDLER = new QueryServerTerminal();
 	
 	@Override
 	public void initChannel( SocketChannel ch ) throws Exception

@@ -6,7 +6,7 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.console.commands.advanced;
+package com.chiorichan.terminal.commands.advanced;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

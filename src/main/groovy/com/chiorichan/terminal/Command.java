@@ -6,16 +6,15 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.console;
+package com.chiorichan.terminal;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
 import com.chiorichan.ConsoleColor;
-import com.chiorichan.account.Account;
-import com.chiorichan.account.AccountPermissible;
-import com.chiorichan.permission.Permissible;
+import com.chiorichan.account.AccountAttachment;
+import com.chiorichan.messaging.MessageReceiver;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.PermissionNamespace;
@@ -27,12 +26,12 @@ import com.google.common.collect.Sets;
  */
 public abstract class Command
 {
-	private final Set<String> aliases = Sets.newHashSet();
-	private String description = "";
-	private final String name;
+	protected final Set<String> aliases = Sets.newHashSet();
+	protected String description = "";
+	protected final String name;
 	private String permission = null;
-	private String permissionMessage = null;
-	private String usageMessage = null;
+	protected String permissionMessage = null;
+	protected String usageMessage = null;
 	
 	public Command( String name )
 	{
@@ -54,43 +53,6 @@ public abstract class Command
 		}
 	}
 	
-	public static void broadcastCommandMessage( Account source, String message )
-	{
-		broadcastCommandMessage( source, message, true );
-	}
-	
-	public static void broadcastCommandMessage( Account source, String message, boolean sendToSource )
-	{
-		/*
-		 * String result;
-		 * if ( source.getSentient() == null )
-		 * result = source + ": " + message;
-		 * else
-		 * result = source.getSentient().getName() + ": " + message;
-		 * 
-		 * Set<Permissible> subscribed = Loader.getPermissionManager().getPermissionSubscriptions( Loader.BROADCAST_CHANNEL_ADMINISTRATIVE );
-		 * String colored = ChatColor.GRAY + "" + ChatColor.ITALIC + "[" + result + "]";
-		 * 
-		 * if ( sendToSource )
-		 * {
-		 * source.sendMessage( message );
-		 * }
-		 * 
-		 * for ( Permissible obj : subscribed )
-		 * {
-		 * if ( obj instanceof InteractiveEntity )
-		 * {
-		 * InteractiveEntity target = ( InteractiveEntity ) obj;
-		 * 
-		 * if ( target != source )
-		 * {
-		 * target.sendMessage( colored );
-		 * }
-		 * }
-		 * }
-		 */
-	}
-	
 	public void addAliases( String... alias )
 	{
 		aliases.addAll( Arrays.asList( alias ) );
@@ -107,7 +69,7 @@ public abstract class Command
 	 *            All arguments passed to the command, split via ' '
 	 * @return true if the command was successful, otherwise false
 	 */
-	public abstract boolean execute( InteractiveConsole handler, String command, String[] args );
+	public abstract boolean execute( AccountAttachment sender, String command, String[] args );
 	
 	public Collection<String> getAliases()
 	{
@@ -233,7 +195,7 @@ public abstract class Command
 	}
 	
 	/**
-	 * Tests the given {@link InteractiveConsoleHandler} to see if they can perform this command.
+	 * Tests the given {@link TerminalHandler} to see if they can perform this command.
 	 * <p>
 	 * If they do not have permission, they will be informed that they cannot do this.
 	 * 
@@ -241,7 +203,7 @@ public abstract class Command
 	 *            InteractiveConsoleHandler to test
 	 * @return {@link true} if they can use it, otherwise false
 	 */
-	public boolean testPermission( AccountPermissible target )
+	public boolean testPermission( AccountAttachment target )
 	{
 		if ( target == null )
 			return false;
@@ -249,17 +211,18 @@ public abstract class Command
 		if ( testPermissionSilent( target ) )
 			return true;
 		
-		if ( permissionMessage == null )
-			target.send( ConsoleColor.RED + "I'm sorry, but you do not have permission to perform the command '" + name + "'." );
-		else if ( permissionMessage.length() != 0 )
-			for ( String line : permissionMessage.replace( "<permission>", permission ).split( "\n" ) )
-				target.send( line );
+		if ( target instanceof MessageReceiver )
+			if ( permissionMessage == null )
+				( ( MessageReceiver ) target ).sendMessage( ConsoleColor.RED + "I'm sorry, but you do not have permission to perform the command '" + name + "'." );
+			else if ( permissionMessage.length() != 0 )
+				for ( String line : permissionMessage.replace( "<permission>", permission ).split( "\n" ) )
+					( ( MessageReceiver ) target ).sendMessage( line );
 		
 		return false;
 	}
 	
 	/**
-	 * Tests the given {@link InteractiveConsoleHandler} to see if they can perform this command.
+	 * Tests the given {@link TerminalHandler} to see if they can perform this command.
 	 * <p>
 	 * No error is sent to the sender.
 	 * 
@@ -267,14 +230,14 @@ public abstract class Command
 	 *            User to test
 	 * @return true if they can use it, otherwise false
 	 */
-	public boolean testPermissionSilent( Permissible target )
+	public boolean testPermissionSilent( AccountAttachment target )
 	{
 		if ( ( permission == null ) || ( permission.length() == 0 ) )
 			return true;
 		
 		// TODO split permissions
 		for ( String p : permission.split( ";" ) )
-			if ( target.checkPermission( p ).isTrue() )
+			if ( target.getEntity().checkPermission( p ).isTrue() )
 				return true;
 		
 		return false;

@@ -6,19 +6,11 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.console;
+package com.chiorichan.terminal.commands.advanced;
 
-/**
- * References an issued command.
- */
-public class CommandRef
+import com.chiorichan.terminal.commands.AdvancedCommand;
+
+public interface CommandListener
 {
-	protected final String command;
-	protected final InteractiveConsole handler;
-	
-	public CommandRef( InteractiveConsole handler, String command )
-	{
-		this.handler = handler;
-		this.command = command;
-	}
+	void onRegistered( AdvancedCommand command );
 }

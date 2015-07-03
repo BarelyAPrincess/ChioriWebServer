@@ -6,7 +6,7 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.console;
+package com.chiorichan.terminal;
 
 /**
  * Thrown when an unhandled exception occurs during the execution of a Command

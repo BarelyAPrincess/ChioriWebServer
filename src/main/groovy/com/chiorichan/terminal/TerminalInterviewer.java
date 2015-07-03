@@ -6,18 +6,14 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.console;
-
-import com.chiorichan.net.NetworkWrapper;
+package com.chiorichan.terminal;
 
 /**
- * Used to interface InteractiveConsole with it's creator
+ * Used to receive user input from console
  */
-public interface InteractiveConsoleHandler
+public interface TerminalInterviewer
 {
-	void println( String... msg );
+	boolean handleInput( String command );
 	
-	void print( String... msg );
-	
-	NetworkWrapper getPersistence();
+	String getPrompt();
 }

@@ -6,14 +6,16 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.console;
+package com.chiorichan.terminal;
 
 /**
- * Used to receive user input from console
+ * Represents entities with the ability to execute commands thru the {@link CommandDispatch}
  */
-public interface Interviewer
+public interface CommandSender
 {
-	boolean handleInput( String command );
+	String getVariable( String key );
 	
-	String getPrompt();
+	String getVariable( String key, String def );
+	
+	void setVariable( String key, String val );
 }
