@@ -21,13 +21,13 @@ public abstract class Permissible
 	
 	public final boolean checkEntity()
 	{
-		if ( entity == null || AccountType.isNoneAccount( entity ) )
+		if ( AccountType.isNoneAccount( entity ) )
 			PermissionManager.INSTANCE.getEntity( this );
 		
 		if ( entity == null )
-			entity = AccountType.ACCOUNT_NONE.getPermissibleEntity();
+			entity = AccountType.ACCOUNT_NONE.getEntity();
 		
-		return entity != null && !AccountType.isNoneAccount( entity );
+		return !AccountType.isNoneAccount( entity );
 	}
 	
 	public final PermissibleEntity getPermissibleEntity()
@@ -159,5 +159,5 @@ public abstract class Permissible
 	 * @return String
 	 *         a unique identifier
 	 */
-	public abstract String getEntityId();
+	public abstract String getId();
 }

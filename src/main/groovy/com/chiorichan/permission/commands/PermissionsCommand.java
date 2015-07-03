@@ -18,12 +18,12 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
+import com.chiorichan.account.AccountAttachment;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountMeta;
-import com.chiorichan.console.InteractiveConsole;
-import com.chiorichan.console.commands.AdvancedCommand;
-import com.chiorichan.console.commands.advanced.AutoCompleteChoicesException;
-import com.chiorichan.console.commands.advanced.CommandListener;
+import com.chiorichan.messaging.MessageBuilder;
+import com.chiorichan.messaging.MessageDispatch;
+import com.chiorichan.messaging.MessageException;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
@@ -31,6 +31,10 @@ import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.References;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
+import com.chiorichan.terminal.TerminalEntity;
+import com.chiorichan.terminal.commands.AdvancedCommand;
+import com.chiorichan.terminal.commands.advanced.AutoCompleteChoicesException;
+import com.chiorichan.terminal.commands.advanced.CommandListener;
 import com.google.common.collect.Sets;
 
 public abstract class PermissionsCommand implements CommandListener
@@ -54,8 +58,8 @@ public abstract class PermissionsCommand implements CommandListener
 		
 		for ( AccountMeta account : AccountManager.INSTANCE.getAccounts() )
 		{
-			if ( account.getAcctId().toLowerCase().startsWith( query.toLowerCase() ) )
-				accounts.add( account.getAcctId() );
+			if ( account.getId().toLowerCase().startsWith( query.toLowerCase() ) )
+				accounts.add( account.getId() );
 			
 			if ( account.getDisplayName().toLowerCase().startsWith( query.toLowerCase() ) )
 				accounts.add( account.getDisplayName() );
@@ -228,12 +232,19 @@ public abstract class PermissionsCommand implements CommandListener
 		return ref;
 	}
 	
-	protected String getSenderName( InteractiveConsole sender )
+	protected void informEntity( String entityId, String message )
 	{
-		return sender.getPersistence().getSession().getDisplayName();
+		try
+		{
+			informEntityWithException( entityId, message );
+		}
+		catch ( MessageException e )
+		{
+			e.printStackTrace();
+		}
 	}
 	
-	protected void informEntity( String entityId, String message )
+	protected void informEntityWithException( String entityId, String message ) throws MessageException
 	{
 		if ( !Loader.getConfig().getBoolean( "permissions.informEntities.changes", false ) )
 			return; // User informing is disabled
@@ -242,10 +253,22 @@ public abstract class PermissionsCommand implements CommandListener
 		if ( meta == null )
 			return;
 		
-		meta.send( ConsoleColor.BLUE + "[Permissions] " + ConsoleColor.WHITE + message );
+		MessageDispatch.sendMessage( MessageBuilder.msg( ConsoleColor.BLUE + "[Permissions] " + ConsoleColor.WHITE + message ).from( meta ) );
 	}
 	
 	protected void informGroup( PermissibleGroup group, String message )
+	{
+		try
+		{
+			informGroupWithException( group, message );
+		}
+		catch ( MessageException e )
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	protected void informGroupWithException( PermissibleGroup group, String message ) throws MessageException
 	{
 		for ( PermissibleEntity entity : group.getChildEntities( true, References.format() ) )
 			informEntity( entity.getId(), message );
@@ -310,7 +333,7 @@ public abstract class PermissionsCommand implements CommandListener
 		return value;
 	}
 	
-	protected void printEntityInheritance( InteractiveConsole sender, Collection<PermissibleGroup> collection )
+	protected void printEntityInheritance( AccountAttachment sender, Collection<PermissibleGroup> collection )
 	{
 		for ( PermissibleGroup group : collection )
 		{
@@ -345,7 +368,7 @@ public abstract class PermissionsCommand implements CommandListener
 		return buffer.toString();
 	}
 	
-	protected void sendMessage( InteractiveConsole sender, String message )
+	protected void sendMessage( TerminalEntity sender, String message )
 	{
 		for ( String messagePart : message.split( "\n" ) )
 			sender.sendMessage( messagePart );

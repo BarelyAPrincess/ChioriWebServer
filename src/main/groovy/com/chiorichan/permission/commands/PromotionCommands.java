@@ -11,17 +11,17 @@ package com.chiorichan.permission.commands;
 import java.util.Map;
 
 import com.chiorichan.ConsoleColor;
-import com.chiorichan.console.InteractiveConsole;
-import com.chiorichan.console.commands.advanced.CommandHandler;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.lang.RankingException;
+import com.chiorichan.terminal.TerminalEntity;
+import com.chiorichan.terminal.commands.advanced.CommandHandler;
 
 public class PromotionCommands extends PermissionsCommand
 {
 	@CommandHandler( name = "pex", syntax = "demote <user> [ladder]", description = "Demotes <user> to previous group or [ladder]", isPrimary = true )
-	public void demoteUser( InteractiveConsole sender, Map<String, String> args )
+	public void demoteUser( TerminalEntity sender, Map<String, String> args )
 	{
 		String userName = autoCompleteAccount( args.get( "user" ) );
 		PermissibleEntity user = PermissionManager.INSTANCE.getEntity( userName );
@@ -37,8 +37,8 @@ public class PromotionCommands extends PermissionsCommand
 		if ( args.containsKey( "ladder" ) )
 			ladder = args.get( "ladder" );
 		
-		PermissibleEntity demoter = sender.getPersistence().getSession().getPermissibleEntity();
-		String demoterName = sender.getPersistence().getSession().getDisplayName();
+		PermissibleEntity demoter = sender.getEntity();
+		String demoterName = sender.getDisplayName();
 		
 		// TODO Get reference based on connection method, e.g., Telnet Query
 		if ( demoter == null || !demoter.checkPermission( "permissions.user.demote." + ladder ).isTrue() )
@@ -63,13 +63,13 @@ public class PromotionCommands extends PermissionsCommand
 	}
 	
 	@CommandHandler( name = "demote", syntax = "<user>", description = "Demotes <user> to previous group", isPrimary = true, permission = "permissions.user.rank.demote" )
-	public void demoteUserAlias( InteractiveConsole sender, Map<String, String> args )
+	public void demoteUserAlias( TerminalEntity sender, Map<String, String> args )
 	{
 		demoteUser( sender, args );
 	}
 	
 	@CommandHandler( name = "pex", syntax = "promote <user> [ladder]", description = "Promotes <user> to next group on [ladder]", isPrimary = true )
-	public void promoteUser( InteractiveConsole sender, Map<String, String> args )
+	public void promoteUser( TerminalEntity sender, Map<String, String> args )
 	{
 		String userName = autoCompleteAccount( args.get( "user" ) );
 		PermissibleEntity user = PermissionManager.INSTANCE.getEntity( userName );
@@ -85,8 +85,8 @@ public class PromotionCommands extends PermissionsCommand
 		if ( args.containsKey( "ladder" ) )
 			ladder = args.get( "ladder" );
 		
-		PermissibleEntity promoter = sender.getPersistence().getSession().getPermissibleEntity();
-		String promoterName = sender.getPersistence().getSession().getDisplayName();
+		PermissibleEntity promoter = sender.getEntity();
+		String promoterName = sender.getDisplayName();
 		
 		// TODO Get reference based on connection method, e.g., Telnet Query
 		if ( promoter == null || !promoter.checkPermission( "permissions.user.demote." + ladder ).isTrue() )
@@ -111,13 +111,13 @@ public class PromotionCommands extends PermissionsCommand
 	}
 	
 	@CommandHandler( name = "promote", syntax = "<user>", description = "Promotes <user> to next group", isPrimary = true, permission = "permissions.user.rank.promote" )
-	public void promoteUserAlias( InteractiveConsole sender, Map<String, String> args )
+	public void promoteUserAlias( TerminalEntity sender, Map<String, String> args )
 	{
 		promoteUser( sender, args );
 	}
 	
 	@CommandHandler( name = "pex", syntax = "group <group> rank [rank] [ladder]", description = "Get or set <group> [rank] [ladder]", isPrimary = true, permission = "permissions.groups.rank.<group>" )
-	public void rankGroup( InteractiveConsole sender, Map<String, String> args )
+	public void rankGroup( TerminalEntity sender, Map<String, String> args )
 	{
 		String groupName = this.autoCompleteGroupName( args.get( "group" ) );
 		

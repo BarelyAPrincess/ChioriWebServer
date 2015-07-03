@@ -14,8 +14,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.chiorichan.ConsoleColor;
-import com.chiorichan.console.InteractiveConsole;
-import com.chiorichan.console.commands.advanced.CommandHandler;
+import com.chiorichan.account.AccountAttachment;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
@@ -23,13 +22,14 @@ import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.PermissionValue;
 import com.chiorichan.permission.References;
 import com.chiorichan.tasks.Timings;
+import com.chiorichan.terminal.commands.advanced.CommandHandler;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 
 public class EntityCommands extends PermissionsCommand
 {
 	@CommandHandler( name = "pex", syntax = "entities cleanup <group> [threshold]", permission = "permissions.manage.entities.cleanup", description = "Clean entities of specified group, which last login was before threshold (in days). By default threshold is 30 days." )
-	public void entitiesCleanup( InteractiveConsole sender, Map<String, String> args )
+	public void entitiesCleanup( AccountAttachment sender, Map<String, String> args )
 	{
 		long threshold = 2304000;
 		
@@ -65,7 +65,7 @@ public class EntityCommands extends PermissionsCommand
 	}
 	
 	@CommandHandler( name = "pex", syntax = "entities list", permission = "permissions.manage.entities", description = "List all registered entities" )
-	public void entitiesList( InteractiveConsole sender, Map<String, String> args )
+	public void entitiesList( AccountAttachment sender, Map<String, String> args )
 	{
 		Collection<PermissibleEntity> entities = PermissionManager.INSTANCE.getEntities();
 		
@@ -75,7 +75,7 @@ public class EntityCommands extends PermissionsCommand
 	}
 	
 	@CommandHandler( name = "pex", syntax = "entity <entity> group add <group> [ref] [lifetime]", permission = "permissions.manage.membership.<group>", description = "Add <entity> to <group>" )
-	public void entityAddGroup( InteractiveConsole sender, Map<String, String> args )
+	public void entityAddGroup( AccountAttachment sender, Map<String, String> args )
 	{
 		String entityName = autoCompleteAccount( args.get( "entity" ) );
 		String groupName = autoCompleteGroupName( args.get( "group" ) );
@@ -109,7 +109,7 @@ public class EntityCommands extends PermissionsCommand
 	}
 	
 	@CommandHandler( name = "pex", syntax = "entity <entity> add <permission> [ref]", permission = "permissions.manage.entities.permissions.<entity>", description = "Add <permission> to <entity> in [ref]" )
-	public void entityAddPermission( InteractiveConsole sender, Map<String, String> args )
+	public void entityAddPermission( AccountAttachment sender, Map<String, String> args )
 	{
 		String entityName = autoCompleteAccount( args.get( "entity" ) );
 		References refs = autoCompleteRef( args.get( "ref" ) );
@@ -130,7 +130,7 @@ public class EntityCommands extends PermissionsCommand
 	}
 	
 	@CommandHandler( name = "pex", syntax = "entity <entity> timed add <permission> [lifetime] [ref]", permission = "permissions.manage.entities.permissions.timed.<entity>", description = "Add timed <permissions> to <entity> for [lifetime] seconds in [ref]" )
-	public void entityAddTimedPermission( InteractiveConsole sender, Map<String, String> args )
+	public void entityAddTimedPermission( AccountAttachment sender, Map<String, String> args )
 	{
 		String entityName = autoCompleteAccount( args.get( "entity" ) );
 		References refs = autoCompleteRef( args.get( "ref" ) );
@@ -155,11 +155,11 @@ public class EntityCommands extends PermissionsCommand
 		sender.sendMessage( ConsoleColor.WHITE + "Timed permission \"" + permission + "\" added!" );
 		informEntity( entityName, "Your permissions have been changed!" );
 		
-		PermissionManager.getLogger().info( "User " + entityName + " get timed permission \"" + args.get( "permission" ) + "\" " + ( lifetime > 0 ? "for " + lifetime + " seconds " : " " ) + "from " + getSenderName( sender ) );
+		PermissionManager.getLogger().info( "User " + entityName + " get timed permission \"" + args.get( "permission" ) + "\" " + ( lifetime > 0 ? "for " + lifetime + " seconds " : " " ) + "from " + sender.getDisplayName() );
 	}
 	
 	@CommandHandler( name = "pex", syntax = "entity <entity> check <permission> [ref]", permission = "permissions.manage.<entity>", description = "Checks meta for <permission>" )
-	public void entityCheckPermission( InteractiveConsole sender, Map<String, String> args )
+	public void entityCheckPermission( AccountAttachment sender, Map<String, String> args )
 	{
 		String entityName = autoCompleteAccount( args.get( "entity" ) );
 		References refs = autoCompleteRef( args.get( "ref" ) );
@@ -183,7 +183,7 @@ public class EntityCommands extends PermissionsCommand
 	}
 	
 	@CommandHandler( name = "pex", syntax = "entity <entity> get <option> [ref]", permission = "permissions.manage.<entity>", description = "Toggle debug only for <entity>" )
-	public void entityGetOption( InteractiveConsole sender, Map<String, String> args )
+	public void entityGetOption( AccountAttachment sender, Map<String, String> args )
 	{
 		String entityName = autoCompleteAccount( args.get( "entity" ) );
 		References refs = autoCompleteRef( args.get( "ref" ) );
@@ -204,7 +204,7 @@ public class EntityCommands extends PermissionsCommand
 	}
 	
 	@CommandHandler( name = "pex", syntax = "entities", permission = "permissions.manage.entities", description = "List all registered entities (alias)", isPrimary = true )
-	public void entityListAlias( InteractiveConsole sender, Map<String, String> args )
+	public void entityListAlias( AccountAttachment sender, Map<String, String> args )
 	{
 		entitiesList( sender, args );
 	}
@@ -213,7 +213,7 @@ public class EntityCommands extends PermissionsCommand
 	 * User permission management
 	 */
 	@CommandHandler( name = "pex", syntax = "entity <entity>", permission = "permissions.manage.entities.permissions.<entity>", description = "List entity permissions (list alias)" )
-	public void entityListAliasPermissions( InteractiveConsole sender, Map<String, String> args )
+	public void entityListAliasPermissions( AccountAttachment sender, Map<String, String> args )
 	{
 		String entityName = autoCompleteAccount( args.get( "entity" ) );
 		References refs = autoCompleteRef( args.get( "ref" ) );
@@ -234,7 +234,7 @@ public class EntityCommands extends PermissionsCommand
 		
 		sender.sendMessage( entityName + "'s permissions:" );
 		
-		sendMessage( sender, mapPermissions( refs, entity, 0 ) );
+		sender.sendMessage( mapPermissions( refs, entity, 0 ) );
 		
 		sender.sendMessage( entityName + "'s options:" );
 		for ( Map.Entry<String, String> option : entity.getOptions( refs ).entrySet() )
@@ -242,7 +242,7 @@ public class EntityCommands extends PermissionsCommand
 	}
 	
 	@CommandHandler( name = "pex", syntax = "entity", permission = "permissions.manage.entities", description = "List all registered entities (alias)" )
-	public void entityListAnotherAlias( InteractiveConsole sender, Map<String, String> args )
+	public void entityListAnotherAlias( AccountAttachment sender, Map<String, String> args )
 	{
 		entitiesList( sender, args );
 	}
@@ -251,7 +251,7 @@ public class EntityCommands extends PermissionsCommand
 	 * User's groups management
 	 */
 	@CommandHandler( name = "pex", syntax = "entity <entity> group list [ref]", permission = "permissions.manage.membership.<entity>", description = "List all <entity> groups" )
-	public void entityListGroup( InteractiveConsole sender, Map<String, String> args )
+	public void entityListGroup( AccountAttachment sender, Map<String, String> args )
 	{
 		String entityName = autoCompleteAccount( args.get( "entity" ) );
 		References refs = autoCompleteRef( args.get( "ref" ) );
@@ -270,7 +270,7 @@ public class EntityCommands extends PermissionsCommand
 	}
 	
 	@CommandHandler( name = "pex", syntax = "entity <entity> list [ref]", permission = "permissions.manage.entities.permissions.<entity>", description = "List entity permissions" )
-	public void entityListPermissions( InteractiveConsole sender, Map<String, String> args )
+	public void entityListPermissions( AccountAttachment sender, Map<String, String> args )
 	{
 		String entityName = autoCompleteAccount( args.get( "entity" ) );
 		// References refs = autoCompleteRef( args.get( "ref" ) );
@@ -290,7 +290,7 @@ public class EntityCommands extends PermissionsCommand
 	}
 	
 	@CommandHandler( name = "pex", syntax = "entity <entity> prefix [newprefix] [ref]", permission = "permissions.manage.entities.prefix.<entity>", description = "Get or set <entity> prefix" )
-	public void entityPrefix( InteractiveConsole sender, Map<String, String> args )
+	public void entityPrefix( AccountAttachment sender, Map<String, String> args )
 	{
 		String entityName = autoCompleteAccount( args.get( "entity" ) );
 		References refs = autoCompleteRef( args.get( "ref" ) );
@@ -310,7 +310,7 @@ public class EntityCommands extends PermissionsCommand
 	}
 	
 	@CommandHandler( name = "pex", syntax = "entity <entity> group remove <group> [ref]", permission = "permissions.manage.membership.<group>", description = "Remove <entity> from <group>" )
-	public void entityRemoveGroup( InteractiveConsole sender, Map<String, String> args )
+	public void entityRemoveGroup( AccountAttachment sender, Map<String, String> args )
 	{
 		String entityName = autoCompleteAccount( args.get( "entity" ) );
 		String groupName = autoCompleteGroupName( args.get( "group" ) );
@@ -332,7 +332,7 @@ public class EntityCommands extends PermissionsCommand
 	}
 	
 	@CommandHandler( name = "pex", syntax = "entity <entity> remove <permission> [ref]", permission = "permissions.manage.entities.permissions.<entity>", description = "Remove permission from <entity> in [ref]" )
-	public void entityRemovePermission( InteractiveConsole sender, Map<String, String> args )
+	public void entityRemovePermission( AccountAttachment sender, Map<String, String> args )
 	{
 		String entityName = autoCompleteAccount( args.get( "entity" ) );
 		References refs = autoCompleteRef( args.get( "ref" ) );
@@ -355,7 +355,7 @@ public class EntityCommands extends PermissionsCommand
 	}
 	
 	@CommandHandler( name = "pex", syntax = "entity <entity> timed remove <permission> [ref]", permission = "permissions.manage.entities.permissions.timed.<entity>", description = "Remove timed <permission> from <entity> in [ref]" )
-	public void entityRemoveTimedPermission( InteractiveConsole sender, Map<String, String> args )
+	public void entityRemoveTimedPermission( AccountAttachment sender, Map<String, String> args )
 	{
 		String entityName = autoCompleteAccount( args.get( "entity" ) );
 		References refs = autoCompleteRef( args.get( "ref" ) );
@@ -376,7 +376,7 @@ public class EntityCommands extends PermissionsCommand
 	}
 	
 	@CommandHandler( name = "pex", syntax = "entity <entity> group set <group> [ref]", permission = "", description = "Set <group> for <entity>" )
-	public void entitySetGroup( InteractiveConsole sender, Map<String, String> args )
+	public void entitySetGroup( AccountAttachment sender, Map<String, String> args )
 	{
 		PermissionManager manager = PermissionManager.INSTANCE;
 		
@@ -399,7 +399,7 @@ public class EntityCommands extends PermissionsCommand
 			
 			for ( int i = 0; i < groupsNames.length; i++ )
 			{
-				if ( !sender.getPersistence().getSession().isLoginPresent() || !sender.getPersistence().getSession().getPermissibleEntity().checkPermission( "permissions.manage.membership." + groupsNames[i].toLowerCase() ).isTrue() )
+				if ( !sender.getPermissible().isLoginPresent() || !sender.getEntity().checkPermission( "permissions.manage.membership." + groupsNames[i].toLowerCase() ).isTrue() )
 				{
 					sender.sendMessage( ConsoleColor.RED + "Don't have enough permission for group " + groupsNames[i] );
 					return;
@@ -415,7 +415,7 @@ public class EntityCommands extends PermissionsCommand
 			
 			if ( groupName != null )
 			{
-				if ( !sender.getPersistence().getSession().isLoginPresent() || !sender.getPersistence().getSession().getPermissibleEntity().checkPermission( "permissions.manage.membership." + groupName.toLowerCase() ).isTrue() )
+				if ( !sender.getPermissible().isLoginPresent() || !sender.getEntity().checkPermission( "permissions.manage.membership." + groupName.toLowerCase() ).isTrue() )
 				{
 					sender.sendMessage( ConsoleColor.RED + "Don't have enough permission for group " + groupName );
 					return;
@@ -441,7 +441,7 @@ public class EntityCommands extends PermissionsCommand
 	}
 	
 	@CommandHandler( name = "pex", syntax = "entity <entity> set <option> <value> [ref]", permission = "permissions.manage.entities.permissions.<entity>", description = "Set <option> to <value> in [ref]" )
-	public void entitySetOption( InteractiveConsole sender, Map<String, String> args )
+	public void entitySetOption( AccountAttachment sender, Map<String, String> args )
 	{
 		String entityName = autoCompleteAccount( args.get( "entity" ) );
 		References refs = autoCompleteRef( args.get( "ref" ) );
@@ -466,7 +466,7 @@ public class EntityCommands extends PermissionsCommand
 	}
 	
 	@CommandHandler( name = "pex", syntax = "entity <entity> suffix [newsuffix] [ref]", permission = "permissions.manage.entities.suffix.<entity>", description = "Get or set <entity> suffix" )
-	public void entitySuffix( InteractiveConsole sender, Map<String, String> args )
+	public void entitySuffix( AccountAttachment sender, Map<String, String> args )
 	{
 		String entityName = autoCompleteAccount( args.get( "entity" ) );
 		References refs = autoCompleteRef( args.get( "ref" ) );
@@ -486,7 +486,7 @@ public class EntityCommands extends PermissionsCommand
 	}
 	
 	@CommandHandler( name = "pex", syntax = "entity <entity> swap <permission> <targetPermission> [ref]", permission = "permissions.manage.entities.permissions.<entity>", description = "Swap <permission> and <targetPermission> in permission list. Could be number or permission itself" )
-	public void entitySwapPermission( InteractiveConsole sender, Map<String, String> args )
+	public void entitySwapPermission( AccountAttachment sender, Map<String, String> args )
 	{
 		String entityName = autoCompleteAccount( args.get( "entity" ) );
 		References refs = autoCompleteRef( args.get( "ref" ) );
@@ -522,7 +522,7 @@ public class EntityCommands extends PermissionsCommand
 	}
 	
 	@CommandHandler( name = "pex", syntax = "entity <entity> toggle debug", permission = "permissions.manage.<entity>", description = "Toggle debug only for <entity>" )
-	public void entityToggleDebug( InteractiveConsole sender, Map<String, String> args )
+	public void entityToggleDebug( AccountAttachment sender, Map<String, String> args )
 	{
 		String entityName = autoCompleteAccount( args.get( "entity" ) );
 		

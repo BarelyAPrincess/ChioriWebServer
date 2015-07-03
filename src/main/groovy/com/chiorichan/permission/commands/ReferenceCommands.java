@@ -14,16 +14,16 @@ import java.util.List;
 import java.util.Map;
 
 import com.chiorichan.ConsoleColor;
-import com.chiorichan.console.InteractiveConsole;
-import com.chiorichan.console.commands.advanced.CommandHandler;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.References;
+import com.chiorichan.terminal.TerminalEntity;
+import com.chiorichan.terminal.commands.advanced.CommandHandler;
 import com.google.common.base.Joiner;
 
 public class ReferenceCommands extends PermissionsCommand
 {
 	@CommandHandler( name = "pex", syntax = "ref <ref>", description = "Print <ref> inheritance info", permission = "permissions.manage.refs" )
-	public void refPrintInheritance( InteractiveConsole sender, Map<String, String> args )
+	public void refPrintInheritance( TerminalEntity sender, Map<String, String> args )
 	{
 		References refs = autoCompleteRef( args.get( "ref" ) );
 		PermissionManager manager = PermissionManager.INSTANCE;
@@ -53,7 +53,7 @@ public class ReferenceCommands extends PermissionsCommand
 	}
 	
 	@CommandHandler( name = "pex", syntax = "ref <ref> inherit <parentReferences>", description = "Set <parentReferences> for <ref>", permission = "permissions.manage.refs.inheritance" )
-	public void refSetInheritance( InteractiveConsole sender, Map<String, String> args )
+	public void refSetInheritance( TerminalEntity sender, Map<String, String> args )
 	{
 		References refs = autoCompleteRef( args.get( "ref" ) );
 		PermissionManager manager = PermissionManager.INSTANCE;
@@ -85,7 +85,7 @@ public class ReferenceCommands extends PermissionsCommand
 	}
 	
 	@CommandHandler( name = "pex", syntax = "refs", description = "Print loaded refs", isPrimary = true, permission = "permissions.manage.refs" )
-	public void refsTree( InteractiveConsole sender, Map<String, String> args )
+	public void refsTree( TerminalEntity sender, Map<String, String> args )
 	{
 		PermissionManager manager = PermissionManager.INSTANCE;
 		

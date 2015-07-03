@@ -20,7 +20,7 @@ import com.chiorichan.util.ObjectFunc;
  */
 public class PermissionResult
 {
-	public static final PermissionResult DUMMY = new PermissionResult( AccountType.ACCOUNT_NONE.getPermissibleEntity(), PermissionDefault.DEFAULT.getNode() );
+	public static final PermissionResult DUMMY = new PermissionResult( AccountType.ACCOUNT_NONE.getEntity(), PermissionDefault.DEFAULT.getNode() );
 	
 	private ChildPermission childPerm = null;
 	private final PermissibleEntity entity;

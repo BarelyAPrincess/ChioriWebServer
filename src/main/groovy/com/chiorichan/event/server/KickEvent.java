@@ -6,41 +6,73 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.account.event;
+package com.chiorichan.event.server;
 
-import java.util.List;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Set;
 
-import com.chiorichan.account.AccountInstance;
-import com.chiorichan.account.AccountPermissible;
+import org.apache.commons.lang3.Validate;
+
+import com.chiorichan.account.AccountManager;
+import com.chiorichan.account.Kickable;
+import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.event.Cancellable;
+import com.chiorichan.event.EventBus;
 import com.chiorichan.event.HandlerList;
+import com.chiorichan.event.SelfHandling;
+import com.google.common.collect.Sets;
 
 /**
  * Called when a User gets kicked from the server
  */
-public class AccountKickEvent extends AccountEvent implements Cancellable
+public class KickEvent extends ServerEvent implements Cancellable, SelfHandling
 {
 	private static final HandlerList handlers = new HandlerList();
 	private String leaveMessage;
 	private String kickReason;
-	private Boolean cancel;
+	private final Set<Kickable> kickables = Sets.newHashSet();
+	private AccountResult result = null;
+	private Boolean cancel = false;
 	
-	public AccountKickEvent( AccountInstance acct, List<AccountPermissible> permissibles, String kickReason, String leaveMessage )
+	private KickEvent()
 	{
-		super( acct, permissibles );
-		this.kickReason = kickReason;
-		this.leaveMessage = leaveMessage;
-		this.cancel = false;
+		
 	}
 	
-	/**
-	 * Gets the reason why the User is getting kicked
-	 * 
-	 * @return string kick reason
-	 */
-	public String getReason()
+	public static HandlerList getHandlerList()
 	{
-		return kickReason;
+		return handlers;
+	}
+	
+	public static KickEvent kick( Collection<Kickable> kickables )
+	{
+		Validate.notNull( kickables );
+		return new KickEvent().setKickables( kickables );
+	}
+	
+	public static KickEvent kick( Kickable... kickables )
+	{
+		return new KickEvent().setKickables( Arrays.asList( kickables ) );
+	}
+	
+	public KickEvent addKickables( Collection<Kickable> kickables )
+	{
+		Validate.notNull( kickables );
+		this.kickables.addAll( kickables );
+		return this;
+	}
+	
+	public AccountResult fire()
+	{
+		EventBus.INSTANCE.callEvent( this );
+		return result;
+	}
+	
+	@Override
+	public HandlerList getHandlers()
+	{
+		return handlers;
 	}
 	
 	/**
@@ -53,6 +85,41 @@ public class AccountKickEvent extends AccountEvent implements Cancellable
 		return leaveMessage;
 	}
 	
+	/**
+	 * Gets the reason why the User is getting kicked
+	 * 
+	 * @return string kick reason
+	 */
+	public String getReason()
+	{
+		return kickReason;
+	}
+	
+	public AccountResult getResult()
+	{
+		return result;
+	}
+	
+	@Override
+	public void handle()
+	{
+		if ( isCancelled() )
+			return;
+		
+		Set<String> kicked = Sets.newHashSet();
+		
+		for ( Kickable kickable : kickables )
+			if ( !kicked.contains( kickable.getId() ) )
+			{
+				kicked.add( kickable.getId() );
+				AccountResult outcome = kickable.kick( kickReason );
+				if ( outcome != AccountResult.SUCCESS )
+					AccountManager.getLogger().warning( String.format( "We failed to kick `%s` with reason `%s`", kickable.getId(), outcome.getMessage() ) );
+			}
+		
+		result = AccountResult.SUCCESS;
+	}
+	
 	@Override
 	public boolean isCancelled()
 	{
@@ -63,17 +130,16 @@ public class AccountKickEvent extends AccountEvent implements Cancellable
 	public void setCancelled( boolean cancel )
 	{
 		this.cancel = cancel;
+		if ( cancel )
+			result = AccountResult.CANCELLED_BY_EVENT;
 	}
 	
-	/**
-	 * Sets the reason why the User is getting kicked
-	 * 
-	 * @param kickReason
-	 *            kick reason
-	 */
-	public void setReason( String kickReason )
+	public KickEvent setKickables( Collection<Kickable> kickables )
 	{
-		this.kickReason = kickReason;
+		Validate.notNull( kickables );
+		this.kickables.clear();
+		addKickables( kickables );
+		return this;
 	}
 	
 	/**
@@ -82,19 +148,21 @@ public class AccountKickEvent extends AccountEvent implements Cancellable
 	 * @param leaveMessage
 	 *            leave message
 	 */
-	public void setLeaveMessage( String leaveMessage )
+	public KickEvent setLeaveMessage( String leaveMessage )
 	{
 		this.leaveMessage = leaveMessage;
+		return this;
 	}
 	
-	@Override
-	public HandlerList getHandlers()
+	/**
+	 * Sets the reason why the User is getting kicked
+	 * 
+	 * @param kickReason
+	 *            kick reason
+	 */
+	public KickEvent setReason( String kickReason )
 	{
-		return handlers;
-	}
-	
-	public static HandlerList getHandlerList()
-	{
-		return handlers;
+		this.kickReason = kickReason;
+		return this;
 	}
 }

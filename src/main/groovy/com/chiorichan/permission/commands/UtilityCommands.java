@@ -19,19 +19,19 @@ import java.util.logging.Level;
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.configuration.file.FileConfiguration;
-import com.chiorichan.console.InteractiveConsole;
-import com.chiorichan.console.commands.advanced.CommandBinding;
-import com.chiorichan.console.commands.advanced.CommandHandler;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionBackend;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.lang.PermissionBackendException;
+import com.chiorichan.terminal.TerminalEntity;
+import com.chiorichan.terminal.commands.advanced.CommandBinding;
+import com.chiorichan.terminal.commands.advanced.CommandHandler;
 
 public class UtilityCommands extends PermissionsCommand
 {
-	private static int tryGetInt( InteractiveConsole sender, Map<String, String> args, String key, int def )
+	private static int tryGetInt( TerminalEntity sender, Map<String, String> args, String key, int def )
 	{
 		if ( !args.containsKey( key ) )
 			return def;
@@ -48,7 +48,7 @@ public class UtilityCommands extends PermissionsCommand
 	}
 	
 	@CommandHandler( name = "pex", syntax = "commit [type] [id]", permission = "permissions.manage.commit", description = "Commit all permission changes to the backend" )
-	public void commit( InteractiveConsole sender, Map<String, String> args )
+	public void commit( TerminalEntity sender, Map<String, String> args )
 	{
 		if ( args.containsKey( "type" ) && args.containsKey( "id" ) )
 			switch ( args.get( "type" ) )
@@ -96,7 +96,7 @@ public class UtilityCommands extends PermissionsCommand
 	
 	@SuppressWarnings( "unchecked" )
 	@CommandHandler( name = "pex", syntax = "config <node> [value]", permission = "permissions.manage.config", description = "Print or set <node> [value]" )
-	public void config( InteractiveConsole sender, Map<String, String> args )
+	public void config( TerminalEntity sender, Map<String, String> args )
 	{
 		String nodeName = args.get( "node" );
 		if ( nodeName == null || nodeName.isEmpty() )
@@ -128,7 +128,7 @@ public class UtilityCommands extends PermissionsCommand
 	}
 	
 	@CommandHandler( name = "pex", syntax = "dump <backend> <filename>", permission = "permissions.dump", description = "Dump users/groups to selected <backend> format" )
-	public void dumpData( InteractiveConsole sender, Map<String, String> args )
+	public void dumpData( TerminalEntity sender, Map<String, String> args )
 	{
 		try
 		{
@@ -161,20 +161,20 @@ public class UtilityCommands extends PermissionsCommand
 	}
 	
 	@CommandHandler( name = "pex", syntax = "backend", permission = "permissions.manage.backend", description = "Print currently used backend" )
-	public void getBackend( InteractiveConsole sender, Map<String, String> args )
+	public void getBackend( TerminalEntity sender, Map<String, String> args )
 	{
 		sender.sendMessage( "Current backend: " + PermissionManager.INSTANCE.getBackend() );
 	}
 	
 	@CommandHandler( name = "pex", syntax = "hierarchy [world]", permission = "permissions.manage.users", description = "Print complete user/group hierarchy" )
-	public void printHierarchy( InteractiveConsole sender, Map<String, String> args )
+	public void printHierarchy( TerminalEntity sender, Map<String, String> args )
 	{
 		sender.sendMessage( "User/Group inheritance hierarchy:" );
 		sendMessage( sender, this.printHierarchy( null, autoCompleteRef( args.get( "world" ) ), 0 ) );
 	}
 	
 	@CommandHandler( name = "pex", syntax = "reload", permission = "permissions.manage.reload", description = "Reload environment" )
-	public void reload( InteractiveConsole sender, Map<String, String> args )
+	public void reload( TerminalEntity sender, Map<String, String> args )
 	{
 		try
 		{
@@ -184,12 +184,12 @@ public class UtilityCommands extends PermissionsCommand
 		catch ( PermissionBackendException e )
 		{
 			sender.sendMessage( ConsoleColor.RED + "Failed to reload permissions! Check configuration!\n" + ConsoleColor.RED + "Error (see console for full): " + e.getMessage() );
-			PermissionManager.getLogger().log( Level.WARNING, "Failed to reload permissions when " + sender.getName() + " ran `pex reload`", e );
+			PermissionManager.getLogger().log( Level.WARNING, "Failed to reload permissions when " + sender.getDisplayName() + " ran `pex reload`", e );
 		}
 	}
 	
 	@CommandHandler( name = "pex", syntax = "report", permission = "permissions.manage.reportbug", description = "Create an issue template to report an issue" )
-	public void report( InteractiveConsole sender, Map<String, String> args )
+	public void report( TerminalEntity sender, Map<String, String> args )
 	{
 		/*
 		 * ErrorReport report = ErrorReport.withException( "User-requested report", new Exception().fillInStackTrace() );
@@ -199,7 +199,7 @@ public class UtilityCommands extends PermissionsCommand
 	}
 	
 	@CommandHandler( name = "pex", syntax = "backend <backend>", permission = "permissions.manage.backend", description = "Change permission backend on the fly (Use with caution!)" )
-	public void setBackend( InteractiveConsole sender, Map<String, String> args )
+	public void setBackend( TerminalEntity sender, Map<String, String> args )
 	{
 		if ( args.get( "backend" ) == null )
 			return;
@@ -222,12 +222,12 @@ public class UtilityCommands extends PermissionsCommand
 		catch ( PermissionBackendException e )
 		{
 			sender.sendMessage( ConsoleColor.RED + "Backend initialization failed! Fix your configuration!\n" + ConsoleColor.RED + "Error (see console for more): " + e.getMessage() );
-			PermissionManager.getLogger().log( Level.WARNING, "Backend initialization failed when " + sender.getName() + " was initializing " + args.get( "backend" ), e );
+			PermissionManager.getLogger().log( Level.WARNING, "Backend initialization failed when " + sender.getDisplayName() + " was initializing " + args.get( "backend" ), e );
 		}
 	}
 	
 	@CommandHandler( name = "pex", syntax = "help [page] [count]", permission = "permissions.manage", description = "PermissionManager commands help" )
-	public void showHelp( InteractiveConsole sender, Map<String, String> args )
+	public void showHelp( TerminalEntity sender, Map<String, String> args )
 	{
 		List<CommandBinding> commands = command.getCommands();
 		
@@ -264,7 +264,7 @@ public class UtilityCommands extends PermissionsCommand
 	}
 	
 	@CommandHandler( name = "pex", syntax = "toggle debug", permission = "permissions.debug", description = "Enable/disable debug mode" )
-	public void toggleFeature( InteractiveConsole sender, Map<String, String> args )
+	public void toggleFeature( TerminalEntity sender, Map<String, String> args )
 	{
 		PermissionManager.setDebug( !PermissionManager.isDebug() );
 		

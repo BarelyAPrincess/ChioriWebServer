@@ -279,6 +279,9 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				// Was not caught by EvalFactory
 				log.log( Level.SEVERE, ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s, message '%s'", cause.getClass().getName(), cause.getStackTrace()[0].getFileName(), cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
 				response.sendException( cause );
+				
+				if ( Versioning.isDevelopment() )
+					cause.printStackTrace();
 			}
 			else
 			{
@@ -291,6 +294,9 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 					log.log( Level.SEVERE, ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s, message '%s'", cause.getClass().getName(), cause.getStackTrace()[0].getFileName(), cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
 				
 				response.sendException( evalOrig );
+				
+				if ( Versioning.isDevelopment() )
+					cause.printStackTrace();
 			}
 			
 			finish();
@@ -369,11 +375,11 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		log.log( Level.FINE, "Session {id=%s,timeout=%s,new=%s}", sess.getSessId(), sess.getTimeout(), sess.isNew() );
 		
 		if ( sess.isLoginPresent() )
-			log.log( Level.FINE, "Account {id=%s,displayName=%s}", sess.getAcctId(), sess.getDisplayName() );
+			log.log( Level.FINE, "Account {id=%s,displayName=%s}", sess.getId(), sess.getDisplayName() );
 		
 		if ( response.getStage() == HttpResponseStage.CLOSED )
-			return;
-		
+			throw new IOException( "Connection reset by peer" ); // This is not the only place 'Connection reset by peer' is thrown
+			
 		RequestEvent requestEvent = new RequestEvent( request );
 		
 		try

@@ -6,77 +6,60 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.account.event;
+package com.chiorichan.event.server;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import com.chiorichan.account.Account;
-import com.chiorichan.account.AccountPermissible;
-import com.chiorichan.account.AccountType;
 import com.chiorichan.event.Cancellable;
+import com.chiorichan.messaging.MessageReceiver;
+import com.chiorichan.messaging.MessageSender;
 import com.google.common.collect.Lists;
 
 /**
+ * Fired when a system message will be delivered
  */
-public class AccountMessageEvent extends AccountEvent implements Cancellable
+public class MessageEvent extends ServerEvent implements Cancellable
 {
-	private Set<AccountPermissible> recipients;
-	private List<Object> objs;
+	private final MessageSender sender;
+	private Collection<MessageReceiver> recipients;
+	private Collection<Object> objs;
 	private boolean cancelled = false;
 	
-	public AccountMessageEvent( final Account sender, final Set<AccountPermissible> recipients, final Object... objs )
+	public MessageEvent( final MessageSender sender, final Collection<MessageReceiver> recipients, final Object... objs )
 	{
-		super( ( sender == null ) ? AccountType.ACCOUNT_NONE : sender );
+		this.sender = sender;
 		this.recipients = recipients;
 		this.objs = Arrays.asList( objs );
 	}
 	
-	public boolean containsRecipient( Account acct )
+	public void addMessage( Object obj )
 	{
-		for ( Account acct1 : recipients )
-			if ( acct1.metadata() == acct.metadata() )
-				return true;
-		return false;
+		objs.add( obj );
 	}
 	
-	public boolean removeRecipient( Account acct )
-	{
-		for ( Account acct1 : recipients )
-			if ( acct1.metadata() == acct.metadata() )
-				return recipients.remove( acct1 );
-		return false;
-	}
-	
-	public void addRecipient( AccountPermissible acct )
+	public void addRecipient( MessageReceiver acct )
 	{
 		recipients.add( acct );
 	}
 	
-	public void addRecipient( Account acct )
+	public boolean containsRecipient( MessageReceiver acct )
 	{
-		for ( AccountPermissible perm : acct.instance().getPermissibles() )
-			recipients.add( perm );
+		for ( MessageReceiver acct1 : recipients )
+			if ( acct1.getId().equals( acct.getId() ) )
+				return true;
+		return false;
 	}
 	
-	public Set<AccountPermissible> getRecipients()
+	public Collection<Object> getMessages()
 	{
-		return recipients;
-	}
-	
-	public void setRecipients( Set<AccountPermissible> recipients )
-	{
-		this.recipients = recipients;
-	}
-	
-	public String[] getMessage()
-	{
-		return ( String[] ) getObject( String.class );
+		return objs;
 	}
 	
 	@SuppressWarnings( "unchecked" )
-	public <T> T[] getObject( Class<?> clz )
+	public <T> T[] getObjectMessages( Class<?> clz )
 	{
 		List<T> o = Lists.newArrayList();
 		for ( Object obj : objs )
@@ -85,9 +68,49 @@ public class AccountMessageEvent extends AccountEvent implements Cancellable
 		return ( T[] ) o.toArray();
 	}
 	
-	public List<Object> getMessages()
+	public Collection<MessageReceiver> getRecipients()
 	{
-		return objs;
+		return recipients;
+	}
+	
+	public MessageSender getSender()
+	{
+		return sender;
+	}
+	
+	public String[] getStringMessages()
+	{
+		return ( String[] ) getObjectMessages( String.class );
+	}
+	
+	@Override
+	public boolean isCancelled()
+	{
+		return cancelled;
+	}
+	
+	public Object removeMessage( int index )
+	{
+		return objs.remove( index );
+	}
+	
+	public boolean removeMessage( Object obj )
+	{
+		return objs.remove( obj );
+	}
+	
+	public boolean removeRecipient( MessageReceiver acct )
+	{
+		for ( MessageReceiver acct1 : recipients )
+			if ( acct1.getId().equals( acct.getId() ) )
+				return recipients.remove( acct1 );
+		return false;
+	}
+	
+	@Override
+	public void setCancelled( boolean cancel )
+	{
+		cancelled = cancel;
 	}
 	
 	/**
@@ -101,21 +124,6 @@ public class AccountMessageEvent extends AccountEvent implements Cancellable
 		this.objs = Lists.newArrayList( objs );
 	}
 	
-	public void addMessage( Object obj )
-	{
-		objs.add( obj );
-	}
-	
-	public Object removeMessage( int index )
-	{
-		return objs.remove( index );
-	}
-	
-	public boolean removeMessage( Object obj )
-	{
-		return objs.remove( obj );
-	}
-	
 	/**
 	 * WARNING! This will completely clear and reset the messages.
 	 * 
@@ -127,15 +135,8 @@ public class AccountMessageEvent extends AccountEvent implements Cancellable
 		this.objs = Arrays.asList( objs );
 	}
 	
-	@Override
-	public boolean isCancelled()
+	public void setRecipients( Set<MessageReceiver> recipients )
 	{
-		return cancelled;
-	}
-	
-	@Override
-	public void setCancelled( boolean cancel )
-	{
-		this.cancelled = cancel;
+		this.recipients = recipients;
 	}
 }

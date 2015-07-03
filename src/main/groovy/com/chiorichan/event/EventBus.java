@@ -242,6 +242,9 @@ public class EventBus implements ServerManager
 				Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getCreator().getName(), ex );
 			}
 		}
+		
+		if ( event instanceof SelfHandling )
+			( ( SelfHandling ) event ).handle();
 	}
 	
 	private HandlerList getEventListeners( Class<? extends Event> type )

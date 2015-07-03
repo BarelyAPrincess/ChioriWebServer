@@ -42,6 +42,7 @@ import com.chiorichan.account.auth.AccountAuthenticator;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.logger.LogEvent;
+import com.chiorichan.messaging.MessageSender;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.session.Session;
 import com.chiorichan.session.SessionContext;
@@ -924,13 +925,13 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	}
 	
 	@Override
-	public void send( Account sender, Object obj )
+	public void sendMessage( MessageSender sender, Object... objs )
 	{
 		// Do Nothing
 	}
 	
 	@Override
-	public void send( Object obj )
+	public void sendMessage( Object... objs )
 	{
 		// Do Nothing
 	}
@@ -947,7 +948,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		
 		if ( getArgument( "logout" ) != null )
 		{
-			AccountResult result = session.logout();
+			AccountResult result = getSession().logout();
 			
 			if ( result == AccountResult.LOGOUT_SUCCESS )
 			{
@@ -973,7 +974,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			AccountResult result;
 			try
 			{
-				result = session.login( AccountAuthenticator.PASSWORD, username, password );
+				result = getSession().login( AccountAuthenticator.PASSWORD, username, password );
 				
 			}
 			catch ( AccountException e )
@@ -987,7 +988,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 				
 				session.remember( remember );
 				
-				SessionManager.getLogger().info( ConsoleColor.GREEN + "Successful Login: [id='" + acct.getAcctId() + "',siteId='" + acct.getSiteId() + "',authenticator='plaintext',ipAddrs='" + acct.getIpAddresses() + "']" );
+				SessionManager.getLogger().info( ConsoleColor.GREEN + "Successful Login: [id='" + acct.getId() + "',siteId='" + acct.getSiteId() + "',authenticator='plaintext']" );
 				getResponse().sendRedirect( loginPost );
 			}
 			else

@@ -22,6 +22,7 @@ import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.ServerManager;
 import com.chiorichan.account.AccountInstance;
+import com.chiorichan.account.AccountType;
 import com.chiorichan.account.event.AccountPreLoginEvent;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.configuration.file.YamlConfiguration;
@@ -171,7 +172,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	 */
 	public PermissionResult checkPermission( AccountInstance entity, String perm, String ref )
 	{
-		return this.checkPermission( entity.getAcctId(), perm, ref );
+		return this.checkPermission( entity.getId(), perm, ref );
 	}
 	
 	/**
@@ -185,7 +186,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	 */
 	public PermissionResult checkPermission( Permissible entity, String perm )
 	{
-		return checkPermission( entity.getEntityId(), perm, "" );
+		return checkPermission( entity.getId(), perm, "" );
 	}
 	
 	/**
@@ -330,16 +331,16 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 		if ( permissible == null )
 			throw new IllegalArgumentException( "Null entity passed! Name must not be empty" );
 		
-		if ( permissible.getEntityId() == null )
+		if ( permissible.getId() == null )
 			return null;
 		
-		if ( permissible.entity == null )
-			if ( entities.containsKey( permissible.getEntityId() ) )
-				permissible.entity = entities.get( permissible.getEntityId() );
+		if ( AccountType.isNoneAccount( permissible.entity ) )
+			if ( entities.containsKey( permissible.getId() ) )
+				permissible.entity = entities.get( permissible.getId() );
 			else
 			{
-				PermissibleEntity entity = backend.getEntity( permissible.getEntityId() );
-				entities.put( permissible.getEntityId(), entity );
+				PermissibleEntity entity = backend.getEntity( permissible.getId() );
+				entities.put( permissible.getId(), entity );
 				permissible.entity = entity;
 			}
 		
@@ -659,7 +660,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	@EventHandler( priority = EventPriority.HIGHEST )
 	public void onAccountLoginEvent( AccountPreLoginEvent event )
 	{
-		PermissibleEntity entity = getEntity( event.getAccount().getAcctId() );
+		PermissibleEntity entity = getEntity( event.getAccount().getId() );
 		
 		if ( hasWhitelist() && entity.isWhitelisted() )
 		{
@@ -736,7 +737,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	 */
 	public void resetEntity( Permissible entity )
 	{
-		entities.remove( entity.getEntityId() );
+		entities.remove( entity.getId() );
 	}
 	
 	/**
