@@ -19,6 +19,22 @@ Disclaimer: Be sure to backup your existing installations, We can't be held resp
 * (Chiori-chan's Web Server v9.0.3 - Image Manipulation) http://youtu.be/rqu89LHH_r4
 * (Chiori-chan's Web Server v9.0.3 - Template Plugin - Part 1 of 2) http://youtu.be/RDM9G_z1Wcc
 
+=Official Plugins=
+* Dropbox Plugin
+  Implements the DropBox API into CWS API, allowing scripts to access dropbox files.
+  Also serves as a great example on how to use the Maven Dependency Download Feature, see config.yaml.
+* Email Plugin
+  Implements the Java Mail libraries into the CWS API, allowing scripts to send e-mail like a pro.
+* Interactive Console Plugin [WIP]
+  Reimplements the interactive console feature found in previous versions of CWS.
+  Also serves as a great example on how to load Native Libraries without changing the class-path, see config.yaml.
+* Lua Plugin - https://github.com/ChioriGreene/ChioriWebServer-LuaPlugin
+  Implements Lua as a web programming language for Chiori-chan's Web Server
+* Templates Plugin
+  Implements an easy to use web page template formatter, also make exception pages pretty.
+* ZXing Plugin
+  Implements the barcode XZing libraries into the CWS API, allowing scripts to dynamicly generate barcode images.
+
 =To Do=
 * Implement a Server Administration Web Interface.
 * Add better error handling and syntax debugging.
