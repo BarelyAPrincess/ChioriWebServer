@@ -510,8 +510,18 @@ public abstract class PermissibleEntity
 		return result.isTrue();
 	}
 	
+	public boolean isAdminOnly()
+	{
+		PermissionResult result = checkPermission( PermissionDefault.ADMIN.getNode() );
+		return result.isTrue( false );
+	}
+	
 	public boolean isBanned()
 	{
+		// You can't ban an OP entity
+		if ( PermissionManager.allowOps && isOp() )
+			return false;
+		
 		PermissionResult result = checkPermission( PermissionDefault.BANNED.getNode() );
 		return result.isTrue();
 	}
@@ -535,7 +545,7 @@ public abstract class PermissibleEntity
 	public boolean isOp()
 	{
 		PermissionResult result = checkPermission( PermissionDefault.OP.getNode() );
-		return result.isTrue();
+		return result.isTrue( false );
 	}
 	
 	public final boolean isVirtual()
@@ -545,7 +555,7 @@ public abstract class PermissibleEntity
 	
 	public boolean isWhitelisted()
 	{
-		if ( !PermissionManager.INSTANCE.hasWhitelist() || isOp() )
+		if ( !PermissionManager.INSTANCE.hasWhitelist() || ( PermissionManager.allowOps && isOp() ) )
 			return true;
 		
 		PermissionResult result = checkPermission( PermissionDefault.WHITELISTED.getNode() );

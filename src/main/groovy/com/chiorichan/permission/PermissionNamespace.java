@@ -97,6 +97,18 @@ public class PermissionNamespace
 		return Joiner.on( "." ).join( nodes );
 	}
 	
+	public String getNode( int inx )
+	{
+		try
+		{
+			return nodes[inx];
+		}
+		catch ( IndexOutOfBoundsException e )
+		{
+			return null;
+		}
+	}
+	
 	public int getNodeCount()
 	{
 		return nodes.length;
@@ -105,6 +117,11 @@ public class PermissionNamespace
 	public String[] getNodes()
 	{
 		return nodes;
+	}
+	
+	public String getNodeWithException( int inx )
+	{
+		return nodes[inx];
 	}
 	
 	public String getParent()

@@ -19,7 +19,7 @@ import com.google.common.collect.Lists;
 /**
  * Permission class for each permission node
  */
-public final class Permission
+public final class Permission implements Comparable<Permission>
 {
 	protected final List<Permission> children = Lists.newCopyOnWriteArrayList();
 	protected final String localName;
@@ -71,6 +71,24 @@ public final class Permission
 	public void commit()
 	{
 		PermissionManager.INSTANCE.getBackend().nodeCommit( this );
+	}
+	
+	@Override
+	public int compareTo( Permission perm )
+	{
+		if ( getNamespace().equals( perm.getNamespace() ) )
+			return 0;
+		
+		PermissionNamespace ns1 = getPermissionNamespace();
+		PermissionNamespace ns2 = perm.getPermissionNamespace();
+		
+		int ln = Math.min( ns1.getNodeCount(), ns2.getNodeCount() );
+		
+		for ( int i = 0; i < ln; i++ )
+			if ( !ns1.getNode( i ).equals( ns2.getNode( i ) ) )
+				return ns1.getNode( i ).compareTo( ns2.getNode( i ) );
+		
+		return ns1.getNodeCount() > ns2.getNodeCount() ? -1 : 1;
 	}
 	
 	void debugPermissionStack( int deepth )

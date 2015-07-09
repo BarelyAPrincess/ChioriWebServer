@@ -176,7 +176,7 @@ public class PermissionResult
 	}
 	
 	/**
-	 * A safe version of isTrue() in case you don't care to know if the permission is of type Boolean or not
+	 * A safe version of isTrueWithException() in case you don't care to know if the permission is of type Boolean or not
 	 * 
 	 * @return is this permission true
 	 */
@@ -193,6 +193,26 @@ public class PermissionResult
 	}
 	
 	/**
+	 * A safe version of isTrueWithException() in case you don't care to know if the permission is of type Boolean or not
+	 * 
+	 * @param allowOps
+	 *            Return true if the entity is a server operator
+	 * @return
+	 * @return is this permission true
+	 */
+	public boolean isTrue( boolean allowOps )
+	{
+		try
+		{
+			return isTrueWithException( allowOps );
+		}
+		catch ( PermissionException e )
+		{
+			return false;
+		}
+	}
+	
+	/**
 	 * Used strictly for BOOLEAN permission nodes.
 	 * 
 	 * @return is this permission true
@@ -201,13 +221,27 @@ public class PermissionResult
 	 */
 	public boolean isTrueWithException() throws PermissionException
 	{
+		return isTrueWithException( true );
+	}
+	
+	/**
+	 * Used strictly for BOOLEAN permission nodes.
+	 * 
+	 * @param allowOps
+	 *            Return true if the entity is a server operator
+	 * @return is this permission true
+	 * @throws IllegalAccessException
+	 *             Thrown if this permission node is not of type Boolean
+	 */
+	public boolean isTrueWithException( boolean allowOps ) throws PermissionException
+	{
 		// Can't check true on anything but these types
 		if ( perm.getType() != PermissionType.BOOL && perm.getType() != PermissionType.DEFAULT )
 			throw new PermissionValueException( String.format( "The permission %s is not of type boolean.", perm.getNamespace() ) );
 		
 		// We can check and allow OPs but ONLY if we are not checking a PermissionDefault node, for one 'sys.op' is the node we check for OPs.
-		if ( !PermissionDefault.isDefault( perm ) && PermissionManager.allowOps && entity.isOp() )
-			return true;
+		if ( allowOps && PermissionManager.allowOps && !perm.getNamespace().equals( PermissionDefault.OP.getNameSpace() ) && entity.isOp() )
+			return ( boolean ) ( perm.getType() == PermissionType.BOOL ? perm.getModel().getValue() : true );
 		
 		if ( perm.getType() == PermissionType.DEFAULT )
 			return isAssigned();
