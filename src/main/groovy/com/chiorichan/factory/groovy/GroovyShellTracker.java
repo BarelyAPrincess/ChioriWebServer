@@ -6,7 +6,7 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.factory;
+package com.chiorichan.factory.groovy;
 
 import groovy.lang.GroovyShell;
 

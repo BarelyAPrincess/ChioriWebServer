@@ -505,7 +505,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 					}
 					catch ( Exception e )
 					{
-						e.printStackTrace();
+						NetworkManager.getLogger().warning( e.getMessage() );
 					}
 			}
 			

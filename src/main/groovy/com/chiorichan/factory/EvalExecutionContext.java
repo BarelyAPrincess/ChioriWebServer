@@ -23,6 +23,7 @@ import com.chiorichan.ContentTypes;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
+import com.chiorichan.util.StringFunc;
 
 /**
  * Provides the context to a requested eval of the EvalFactory
@@ -112,6 +113,11 @@ public class EvalExecutionContext
 	public ByteBuf buffer()
 	{
 		return content;
+	}
+	
+	public String bufferHash()
+	{
+		return StringFunc.md5( readBytes() );
 	}
 	
 	Charset charset()

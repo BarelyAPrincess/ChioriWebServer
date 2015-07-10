@@ -8,36 +8,34 @@
  */
 package com.chiorichan.lang;
 
-import groovy.lang.GroovyRuntimeException;
-import groovy.lang.MissingMethodException;
-
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.List;
-import java.util.concurrent.TimeoutException;
-
-import org.codehaus.groovy.control.CompilationFailedException;
-import org.codehaus.groovy.control.ErrorCollector;
-import org.codehaus.groovy.control.MultipleCompilationErrorsException;
-import org.codehaus.groovy.control.messages.Message;
-import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
-import org.codehaus.groovy.syntax.SyntaxException;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import com.chiorichan.Loader;
+import com.chiorichan.factory.EvalExceptionCallback;
 import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalFactoryResult;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.factory.ShellFactory;
+import com.google.common.collect.Maps;
 
 /**
- * Carries extra information for debugging when an {@link Exception} are thrown by the {@link EvalFactory}
+ * Carries extra information for debugging when an {@link Exception} is thrown by the {@link EvalFactory}
  */
 public class EvalException extends Exception
 {
 	private static final long serialVersionUID = -1611181613618341914L;
+	private static final Map<Class<? extends Throwable>, EvalExceptionCallback> registered = Maps.newConcurrentMap();
 	
 	private final List<ScriptTraceElement> scriptTrace;
 	private final ErrorReporting level;
+	
+	public EvalException( ErrorReporting level, ShellFactory factory )
+	{
+		scriptTrace = factory.examineStackTrace( getStackTrace() );
+		this.level = level;
+	}
 	
 	public EvalException( ErrorReporting level, String message, ShellFactory factory )
 	{
@@ -60,27 +58,6 @@ public class EvalException extends Exception
 		scriptTrace = factory.examineStackTrace( cause.getStackTrace() );
 	}
 	
-	public EvalException( ErrorReporting level, ShellFactory factory )
-	{
-		scriptTrace = factory.examineStackTrace( getStackTrace() );
-		this.level = level;
-	}
-	
-	public ScriptTraceElement[] getScriptTrace()
-	{
-		return scriptTrace.toArray( new ScriptTraceElement[0] );
-	}
-	
-	public boolean isScriptingException()
-	{
-		return getCause() != null && getCause().getStackTrace().length > 0 && getCause().getStackTrace()[0].getClassName().startsWith( "org.codehaus.groovy.runtime" );
-	}
-	
-	public boolean isIgnorable()
-	{
-		return level == ErrorReporting.E_IGNORABLE || level == ErrorReporting.E_DEPRECATED || level == ErrorReporting.E_USER_DEPRECATED || level == ErrorReporting.E_NOTICE || level == ErrorReporting.E_USER_NOTICE || level == ErrorReporting.E_WARNING || level == ErrorReporting.E_USER_WARNING;
-	}
-	
 	public static void exceptionHandler( Throwable t, ShellFactory factory, EvalFactoryResult result )
 	{
 		exceptionHandler( t, factory, result, ErrorReporting.E_ERROR );
@@ -95,117 +72,67 @@ public class EvalException extends Exception
 	{
 		if ( t == null )
 			return;
+		
 		/**
 		 * We just forward {@link IgnorableEvalException} and {@link EvalFactoryException}
 		 */
 		if ( t instanceof EvalException )
 			result.addException( ( EvalException ) t );
-		/**
-		 * {@link MultipleCompilationErrorsException} need to be iterated to find the true exceptions
-		 */
-		else if ( t instanceof MultipleCompilationErrorsException )
-		{
-			MultipleCompilationErrorsException exp = ( MultipleCompilationErrorsException ) t;
-			ErrorCollector e = exp.getErrorCollector();
-			
-			for ( Object err : e.getErrors() )
-			{
-				if ( err instanceof Throwable )
-				{
-					exceptionHandler( ( Throwable ) err, factory, result, level, message );
-				}
-				else if ( err instanceof SyntaxErrorMessage )
-				{
-					exceptionHandler( ( ( SyntaxErrorMessage ) err ).getCause(), factory, result, level, message );
-				}
-				else if ( err instanceof Message )
-				{
-					StringWriter writer = new StringWriter();
-					( ( Message ) err ).write( new PrintWriter( writer, true ) );
-					Loader.getLogger().warning( "Received this error while trying to eval: " + writer.toString() );
-				}
-			}
-		}
-		/**
-		 * {@link TimeoutException} is thrown when a script does not exit within an alloted amount of time
-		 * This might need to be handled differently
-		 */
-		else if ( t instanceof TimeoutException )
-		{
-			TimeoutException e = ( TimeoutException ) t;
-			result.addException( message == null ? new EvalException( level, e, factory ) : new EvalException( level, message, e, factory ) );
-		}
-		/**
-		 * {@link MissingMethodException} is for missing methods
-		 * Only thrown for Groovy Scripts
-		 */
-		else if ( t instanceof MissingMethodException )
-		{
-			MissingMethodException e = ( MissingMethodException ) t;
-			result.addException( message == null ? new EvalException( level, e, factory ) : new EvalException( level, message, e, factory ) );
-		}
-		/**
-		 * {@link SyntaxException} is for when the user makes a syntax coding error
-		 * Only thrown for Groovy Scripts
-		 */
-		else if ( t instanceof SyntaxException )
-		{
-			SyntaxException e = ( SyntaxException ) t;
-			result.addException( message == null ? new EvalException( level, e, factory ) : new EvalException( level, message, e, factory ) );
-		}
-		/**
-		 * {@link CompilationFailedException} is for when compilation fails from source errors
-		 * Only thrown for Groovy Scripts
-		 */
-		else if ( t instanceof CompilationFailedException )
-		{
-			CompilationFailedException e = ( CompilationFailedException ) t;
-			result.addException( message == null ? new EvalException( level, e, factory ) : new EvalException( level, message, e, factory ) );
-		}
-		/**
-		 * {@link SandboxSecurityException} thrown when script attempts to access a blacklisted API
-		 * Only thrown for Groovy Scripts
-		 */
-		else if ( t instanceof SandboxSecurityException )
-		{
-			SandboxSecurityException e = ( SandboxSecurityException ) t;
-			result.addException( message == null ? new EvalException( level, e, factory ) : new EvalException( level, message, e, factory ) );
-		}
-		/**
-		 * {@link GroovyRuntimeException} thrown for basically all remaining Groovy exceptions not caught above
-		 * Only thrown for Groovy Scripts
-		 */
-		else if ( t instanceof GroovyRuntimeException )
-		{
-			GroovyRuntimeException e = ( GroovyRuntimeException ) t;
-			result.addException( message == null ? new EvalException( level, e, factory ) : new EvalException( level, message, e, factory ) );
-		}
-		/**
-		 * General Exception
-		 */
-		else if ( t instanceof NullPointerException )
-		{
-			NullPointerException e = ( NullPointerException ) t;
-			result.addException( message == null ? new EvalException( level, e, factory ) : new EvalException( level, message, e, factory ) );
-		}
-		/**
-		 * General Exception
-		 */
-		else if ( t instanceof ArrayIndexOutOfBoundsException )
-		{
-			ArrayIndexOutOfBoundsException e = ( ArrayIndexOutOfBoundsException ) t;
-			result.addException( message == null ? new EvalException( level, e, factory ) : new EvalException( level, message, e, factory ) );
-		}
+		else if ( t instanceof NullPointerException || t instanceof ArrayIndexOutOfBoundsException )
+			result.addException( message == null ? new EvalException( level, t, factory ) : new EvalException( level, message, t, factory ) );
 		else
 		{
-			t.printStackTrace();
-			Loader.getLogger().warning( "Uncaught exception in EvalFactory for exception " + t.getClass().getName() );
-			result.addException( message == null ? new EvalException( level, t, factory ) : new EvalException( level, message, t, factory ) );
+			boolean handled = false;
+			
+			for ( Entry<Class<? extends Throwable>, EvalExceptionCallback> entry : registered.entrySet() )
+				if ( entry.getKey().isAssignableFrom( t.getClass() ) )
+				{
+					handled = entry.getValue().callback( t, factory, result, level, message );
+					if ( handled )
+						break;
+				}
+			
+			if ( !handled )
+			{
+				t.printStackTrace();
+				Loader.getLogger().warning( "Uncaught exception in EvalFactory for exception " + t.getClass().getName() );
+				result.addException( message == null ? new EvalException( level, t, factory ) : new EvalException( level, message, t, factory ) );
+			}
 		}
+	}
+	
+	/**
+	 * Registers an expected exception to be thrown by any subsystem of {@link EvalFactory}
+	 * 
+	 * @param callback
+	 *            The Callback to call when such exception is thrown
+	 * @param clzs
+	 *            Classes to be registered
+	 */
+	@SafeVarargs
+	public static void registerException( EvalExceptionCallback callback, Class<? extends Throwable>... clzs )
+	{
+		for ( Class<? extends Throwable> clz : clzs )
+			registered.put( clz, callback );
 	}
 	
 	public ErrorReporting errorLevel()
 	{
 		return level;
+	}
+	
+	public ScriptTraceElement[] getScriptTrace()
+	{
+		return scriptTrace.toArray( new ScriptTraceElement[0] );
+	}
+	
+	public boolean isIgnorable()
+	{
+		return level == ErrorReporting.E_IGNORABLE || level == ErrorReporting.E_DEPRECATED || level == ErrorReporting.E_USER_DEPRECATED || level == ErrorReporting.E_NOTICE || level == ErrorReporting.E_USER_NOTICE || level == ErrorReporting.E_WARNING || level == ErrorReporting.E_USER_WARNING;
+	}
+	
+	public boolean isScriptingException()
+	{
+		return getCause() != null && getCause().getStackTrace().length > 0 && getCause().getStackTrace()[0].getClassName().startsWith( "org.codehaus.groovy.runtime" );
 	}
 }

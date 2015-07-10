@@ -46,7 +46,7 @@ public class ContentTypes
 				prop.load( is );
 				for ( Object o : prop.keySet() )
 					if ( o instanceof String )
-						types.put( ( String ) o, ( String ) prop.get( ( String ) o ) );
+						types.put( ( String ) o, ( String ) prop.get( o ) );
 			}
 			finally
 			{
@@ -70,30 +70,10 @@ public class ContentTypes
 		List<String> rtn = Lists.newArrayList();
 		
 		for ( Entry<String, String> e : types.entrySet() )
-		{
 			if ( e.getKey().toLowerCase().contains( search ) || e.getValue().toLowerCase().contains( search ) )
 				rtn.add( e.getValue() );
-		}
 		
 		return rtn.toArray( new String[0] );
-	}
-	
-	public static String getContentType( String fileName )
-	{
-		if ( fileName == null )
-			return "application/octet-stream";
-		
-		String[] exts = fileName.split( "\\." );
-		String ext = exts[exts.length - 1];
-		
-		if ( types != null && types.containsKey( ext ) )
-		{
-			return types.get( ext ).toLowerCase();
-		}
-		else
-		{
-			return "application/octet-stream";
-		}
 	}
 	
 	public static String getContentType( File file )
@@ -108,13 +88,28 @@ public class ContentTypes
 		String ext = exts[exts.length - 1];
 		
 		if ( types != null && types.containsKey( ext ) )
-		{
 			// XXX ContentTypes properties file contain multiple types, for now we are splitting until we can decide how to handle this better.
 			return types.get( ext ).toLowerCase().split( "," )[0];
-		}
 		else
-		{
 			return "application/octet-stream";
-		}
+	}
+	
+	public static String getContentType( String fileName )
+	{
+		if ( fileName == null )
+			return "application/octet-stream";
+		
+		String[] exts = fileName.split( "\\." );
+		String ext = exts[exts.length - 1];
+		
+		if ( types != null && types.containsKey( ext ) )
+			return types.get( ext ).toLowerCase();
+		else
+			return "application/octet-stream";
+	}
+	
+	public static void setType( String ext, String type )
+	{
+		types.put( ext, type );
 	}
 }

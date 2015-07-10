@@ -6,10 +6,13 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.factory
+package com.chiorichan.factory.groovy
 
 import com.chiorichan.account.Account
 import com.chiorichan.account.AccountManager
+import com.chiorichan.factory.EvalFactory;
+import com.chiorichan.factory.EvalFactoryResult;
+import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.http.HttpCode
 import com.chiorichan.http.HttpRequestWrapper
 import com.chiorichan.http.HttpResponseWrapper

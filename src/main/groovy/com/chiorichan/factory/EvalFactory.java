@@ -41,10 +41,13 @@ import com.chiorichan.factory.event.PostJSMinProcessor;
 import com.chiorichan.factory.event.PreCoffeeProcessor;
 import com.chiorichan.factory.event.PreEvalEvent;
 import com.chiorichan.factory.event.PreLessProcessor;
+import com.chiorichan.factory.groovy.GroovyImportCustomizer;
+import com.chiorichan.factory.groovy.GroovyRegistry;
+import com.chiorichan.factory.groovy.GroovySandbox;
+import com.chiorichan.factory.groovy.GroovyShellTracker;
+import com.chiorichan.factory.groovy.ScriptingBaseGroovy;
 import com.chiorichan.factory.parsers.PreIncludesParserWrapper;
 import com.chiorichan.factory.parsers.PreLinksParserWrapper;
-import com.chiorichan.factory.processors.EmbeddedGroovyScriptProcessor;
-import com.chiorichan.factory.processors.GroovyScriptProcessor;
 import com.chiorichan.factory.processors.ScriptingProcessor;
 import com.chiorichan.lang.ErrorReporting;
 import com.chiorichan.lang.EvalException;
@@ -77,20 +80,10 @@ public class EvalFactory
 	 */
 	private static final ASTTransformationCustomizer timedInterrupt = new ASTTransformationCustomizer( TimedInterrupt.class );
 	
-	private final EvalBinding binding;
-	
-	private final List<ByteBuf> bufferStack = Lists.newLinkedList();
-	
-	private Charset charset = Charsets.toCharset( Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" ) );
-	
-	private final Set<GroovyShellTracker> groovyShells = Sets.newLinkedHashSet();
-	
-	private final ByteBuf output = Unpooled.buffer();
-	
-	private final ShellFactory shellFactory = new ShellFactory();
-	
 	static
 	{
+		new GroovyRegistry();
+		
 		/**
 		 * Register Pre-Processors
 		 */
@@ -101,14 +94,6 @@ public class EvalFactory
 		if ( Loader.getConfig().getBoolean( "advanced.processors.lessProcessorEnabled", true ) )
 			register( new PreLessProcessor() );
 		// register( new SassPreProcessor() );
-		
-		/**
-		 * Register Script-Processors
-		 */
-		if ( Loader.getConfig().getBoolean( "advanced.scripting.gspEnabled", true ) )
-			register( new EmbeddedGroovyScriptProcessor() );
-		if ( Loader.getConfig().getBoolean( "advanced.scripting.groovyEnabled", true ) )
-			register( new GroovyScriptProcessor() );
 		
 		/**
 		 * Register Post-Processors
@@ -131,6 +116,18 @@ public class EvalFactory
 			timedInterrupt.setAnnotationParameters( timedInterruptParams );
 		}
 	}
+	
+	private final EvalBinding binding;
+	
+	private final List<ByteBuf> bufferStack = Lists.newLinkedList();
+	
+	private Charset charset = Charsets.toCharset( Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" ) );
+	
+	private final Set<GroovyShellTracker> groovyShells = Sets.newLinkedHashSet();
+	
+	private final ByteBuf output = Unpooled.buffer();
+	
+	private final ShellFactory shellFactory = new ShellFactory();
 	
 	private EvalFactory( EvalBinding binding )
 	{
@@ -210,8 +207,12 @@ public class EvalFactory
 							{
 								bufferStack.add( output.copy() );
 								output.clear();
+								String hash = context.bufferHash();
 								s.eval( context, shellFactory.setShell( shell ) );
-								context.resetAndWrite( output );
+								if ( context.bufferHash().equals( hash ) )
+									context.resetAndWrite( output );
+								else
+									context.write( output );
 								output.clear();
 								output.writeBytes( bufferStack.remove( bufferStack.size() - 1 ) );
 								break;
