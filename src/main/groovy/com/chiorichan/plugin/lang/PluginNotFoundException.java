@@ -6,32 +6,32 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.lang;
+package com.chiorichan.plugin.lang;
 
 /**
  * Thrown when attempting to load an invalid Plugin file
  */
-public class PluginInvalidException extends Exception
+public class PluginNotFoundException extends PluginException
 {
 	private static final long serialVersionUID = -8242141640709409544L;
 	
 	/**
-	 * Constructs a new InvalidPluginException based on the given Exception
-	 * 
-	 * @param cause
-	 *            Exception that triggered this Exception
+	 * Constructs a new InvalidPluginException
 	 */
-	public PluginInvalidException( final Throwable cause )
+	public PluginNotFoundException()
 	{
-		super( cause );
+		
 	}
 	
 	/**
-	 * Constructs a new InvalidPluginException
+	 * Constructs a new InvalidPluginException with the specified detail message
+	 * 
+	 * @param message
+	 *            TThe detail message is saved for later retrieval by the getMessage() method.
 	 */
-	public PluginInvalidException()
+	public PluginNotFoundException( final String message )
 	{
-		
+		super( message );
 	}
 	
 	/**
@@ -43,19 +43,19 @@ public class PluginInvalidException extends Exception
 	 *            the cause (which is saved for later retrieval by the getCause() method). (A null value is permitted, and
 	 *            indicates that the cause is nonexistent or unknown.)
 	 */
-	public PluginInvalidException( final String message, final Throwable cause )
+	public PluginNotFoundException( final String message, final Throwable cause )
 	{
 		super( message, cause );
 	}
 	
 	/**
-	 * Constructs a new InvalidPluginException with the specified detail message
+	 * Constructs a new InvalidPluginException based on the given Exception
 	 * 
-	 * @param message
-	 *            TThe detail message is saved for later retrieval by the getMessage() method.
+	 * @param cause
+	 *            Exception that triggered this Exception
 	 */
-	public PluginInvalidException( final String message )
+	public PluginNotFoundException( final Throwable cause )
 	{
-		super( message );
+		super( cause );
 	}
 }

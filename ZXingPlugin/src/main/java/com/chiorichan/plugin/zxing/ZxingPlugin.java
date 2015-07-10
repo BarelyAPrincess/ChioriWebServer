@@ -10,7 +10,7 @@ import java.io.IOException;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.lang.PluginException;
+import com.chiorichan.plugin.lang.PluginException;
 import com.chiorichan.plugin.loader.Plugin;
 
 /**

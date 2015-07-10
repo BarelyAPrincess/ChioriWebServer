@@ -6,32 +6,32 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.lang;
+package com.chiorichan.plugin.lang;
 
 /**
  * Thrown when attempting to load an invalid Plugin file
  */
-public class PluginNotFoundException extends PluginException
+public class PluginInvalidException extends Exception
 {
 	private static final long serialVersionUID = -8242141640709409544L;
 	
 	/**
-	 * Constructs a new InvalidPluginException
+	 * Constructs a new InvalidPluginException based on the given Exception
+	 * 
+	 * @param cause
+	 *            Exception that triggered this Exception
 	 */
-	public PluginNotFoundException()
+	public PluginInvalidException( final Throwable cause )
 	{
-		
+		super( cause );
 	}
 	
 	/**
-	 * Constructs a new InvalidPluginException with the specified detail message
-	 * 
-	 * @param message
-	 *            TThe detail message is saved for later retrieval by the getMessage() method.
+	 * Constructs a new InvalidPluginException
 	 */
-	public PluginNotFoundException( final String message )
+	public PluginInvalidException()
 	{
-		super( message );
+		
 	}
 	
 	/**
@@ -43,19 +43,19 @@ public class PluginNotFoundException extends PluginException
 	 *            the cause (which is saved for later retrieval by the getCause() method). (A null value is permitted, and
 	 *            indicates that the cause is nonexistent or unknown.)
 	 */
-	public PluginNotFoundException( final String message, final Throwable cause )
+	public PluginInvalidException( final String message, final Throwable cause )
 	{
 		super( message, cause );
 	}
 	
 	/**
-	 * Constructs a new InvalidPluginException based on the given Exception
+	 * Constructs a new InvalidPluginException with the specified detail message
 	 * 
-	 * @param cause
-	 *            Exception that triggered this Exception
+	 * @param message
+	 *            TThe detail message is saved for later retrieval by the getMessage() method.
 	 */
-	public PluginNotFoundException( final Throwable cause )
+	public PluginInvalidException( final String message )
 	{
-		super( cause );
+		super( message );
 	}
 }

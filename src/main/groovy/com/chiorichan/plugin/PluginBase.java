@@ -13,8 +13,8 @@ import java.io.InputStream;
 
 import com.chiorichan.configuration.file.FileConfiguration;
 import com.chiorichan.event.EventCreator;
-import com.chiorichan.lang.PluginException;
 import com.chiorichan.libraries.LibrarySource;
+import com.chiorichan.plugin.lang.PluginException;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.plugin.loader.PluginLoader;
 import com.chiorichan.tasks.TaskCreator;
@@ -62,7 +62,7 @@ public abstract class PluginBase implements EventCreator, TaskCreator, LibrarySo
 	 * @return Contents of the plugin.yaml file
 	 */
 	@Override
-	public abstract PluginDescriptionFile getDescription();
+	public abstract PluginInformation getDescription();
 	
 	/**
 	 * Returns the name of the plugin.

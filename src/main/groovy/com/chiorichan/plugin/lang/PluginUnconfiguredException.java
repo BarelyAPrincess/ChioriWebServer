@@ -6,16 +6,16 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.lang;
+package com.chiorichan.plugin.lang;
 
-public class UnhandledException extends Exception
+/**
+ */
+public class PluginUnconfiguredException extends PluginException
 {
-	private static final long serialVersionUID = -7820557499294033093L;
-	public String reason;
+	private static final long serialVersionUID = 4789128239905660393L;
 	
-	public UnhandledException( String format, Throwable thrown )
+	public PluginUnconfiguredException( String message )
 	{
-		super( thrown );
-		reason = format;
+		super( message );
 	}
 }

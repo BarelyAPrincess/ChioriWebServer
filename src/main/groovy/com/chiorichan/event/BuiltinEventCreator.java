@@ -9,21 +9,21 @@
 package com.chiorichan.event;
 
 import com.chiorichan.configuration.file.YamlConfiguration;
-import com.chiorichan.lang.PluginDescriptionInvalidException;
-import com.chiorichan.plugin.PluginDescriptionFile;
+import com.chiorichan.plugin.PluginInformation;
+import com.chiorichan.plugin.lang.PluginInformationException;
 
 public abstract class BuiltinEventCreator implements EventCreator
 {
 	private YamlConfiguration yaml = new YamlConfiguration();
 	
 	@Override
-	public final PluginDescriptionFile getDescription()
+	public final PluginInformation getDescription()
 	{
 		try
 		{
-			return new PluginDescriptionFile( yaml );
+			return new PluginInformation( yaml );
 		}
-		catch ( PluginDescriptionInvalidException e )
+		catch ( PluginInformationException e )
 		{
 			e.printStackTrace();
 			return null;

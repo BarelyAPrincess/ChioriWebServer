@@ -19,8 +19,8 @@ import java.util.WeakHashMap;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.lang.PluginInvalidException;
-import com.chiorichan.plugin.PluginDescriptionFile;
+import com.chiorichan.plugin.PluginInformation;
+import com.chiorichan.plugin.lang.PluginInvalidException;
 
 /**
  * A ClassLoader for plugins, to allow shared classes across multiple plugins
@@ -33,13 +33,13 @@ public final class PluginClassLoader extends URLClassLoader
 	
 	private final JavaPluginLoader loader;
 	private final Map<String, Class<?>> classes = new HashMap<String, Class<?>>();
-	private final PluginDescriptionFile description;
+	private final PluginInformation description;
 	private final File dataFolder;
 	private final File file;
 	final Plugin plugin;
 	private boolean initalized = false;
 	
-	PluginClassLoader( final JavaPluginLoader loader, final ClassLoader parent, final PluginDescriptionFile description, final File dataFolder, final File file ) throws PluginInvalidException, MalformedURLException
+	PluginClassLoader( final JavaPluginLoader loader, final ClassLoader parent, final PluginInformation description, final File dataFolder, final File file ) throws PluginInvalidException, MalformedURLException
 	{
 		super( new URL[] {file.toURI().toURL()}, parent );
 		

@@ -29,6 +29,7 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -42,6 +43,8 @@ import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.site.Site;
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
 
@@ -68,6 +71,35 @@ public class FileFunc
 					return String.format( "We have no permission to either create, delete or access the directory '%s'.", file.getAbsolutePath() );
 			}
 			return null;
+		}
+	}
+	
+	static class LibraryPath
+	{
+		private List<String> libPath;
+		
+		LibraryPath()
+		{
+			read();
+		}
+		
+		void add( String path )
+		{
+			if ( path.contains( " " ) )
+				path = "\"" + path + "\"";
+			if ( libPath.contains( path ) )
+				return;
+			libPath.add( path );
+		}
+		
+		void read()
+		{
+			libPath = new ArrayList<String>( Splitter.on( ":" ).splitToList( System.getProperty( "java.library.path" ) ) );
+		}
+		
+		void set()
+		{
+			System.setProperty( "java.library.path", Joiner.on( ":" ).join( libPath ) );
 		}
 	}
 	
@@ -571,6 +603,92 @@ public class FileFunc
 			
 			String path = ( baseDir.getAbsolutePath().contains( " " ) ) ? "\"" + baseDir.getAbsolutePath() + "\"" : baseDir.getAbsolutePath();
 			System.setProperty( "java.library.path", System.getProperty( "java.library.path" ) + ":" + path );
+			
+			try
+			{
+				Field fieldSysPath = ClassLoader.class.getDeclaredField( "sys_paths" );
+				fieldSysPath.setAccessible( true );
+				fieldSysPath.set( null, null );
+			}
+			catch ( NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e )
+			{
+				PluginManager.getLogger().severe( "We could not force the ClassLoader to reinitalize the LD_LIBRARY_PATH variable. You may need to set '-Djava.library.path=" + baseDir.getAbsolutePath() + "' on next load because one or more dependencies may fail to load their native libraries.", e );
+			}
+		}
+		
+		return nativesExtracted.size() > 0;
+	}
+	
+	public static boolean extractNatives( Map<String, List<String>> natives, File libFile, File baseDir ) throws IOException
+	{
+		if ( !MapFunc.containsKeys( natives, Arrays.asList( OSInfo.NATIVE_SEARCH_PATHS ) ) )
+			PluginManager.getLogger().warning( String.format( "%sWe were unable to locate any natives libraries that match architectures '%s' within plugin '%s'.", ConsoleColor.DARK_GRAY, Joiner.on( ", '" ).join( OSInfo.NATIVE_SEARCH_PATHS ), libFile.getAbsolutePath() ) );
+		
+		List<String> nativesExtracted = Lists.newArrayList();
+		baseDir = new File( baseDir, "natives" );
+		FileFunc.directoryHealthCheck( baseDir );
+		
+		if ( libFile == null || !libFile.exists() || !libFile.getName().endsWith( ".jar" ) )
+			throw new IOException( "There was a problem with the provided jar file, it was either null, not existent or did not end with jar." );
+		
+		JarFile jar = new JarFile( libFile );
+		
+		for ( String arch : OSInfo.NATIVE_SEARCH_PATHS )
+		{
+			List<String> libs = natives.get( arch.toLowerCase() );
+			if ( libs != null && !libs.isEmpty() )
+				for ( String lib : libs )
+					try
+					{
+						ZipEntry entry = jar.getEntry( lib );
+						
+						if ( entry == null || entry.isDirectory() )
+						{
+							entry = jar.getEntry( "natives/" + lib );
+							
+							if ( entry == null || entry.isDirectory() )
+								PluginManager.getLogger().warning( String.format( "We were unable to load the native lib '%s' for arch '%s' for it was non-existent (or it's a directory) within plugin '%s'.", lib, arch, libFile ) );
+						}
+						
+						if ( entry != null && !entry.isDirectory() )
+						{
+							if ( !entry.getName().endsWith( ".so" ) && !entry.getName().endsWith( ".dll" ) && !entry.getName().endsWith( ".jnilib" ) && !entry.getName().endsWith( ".dylib" ) )
+								PluginManager.getLogger().warning( String.format( "We found native lib '%s' for arch '%s' within plugin '%s', but it did not end with a known native library ext. We will extract it anyways but you may have problems.", lib, arch, libFile ) );
+							
+							File newNative = new File( baseDir + "/" + arch + "/" + new File( entry.getName() ).getName() );
+							
+							if ( !newNative.exists() )
+							{
+								newNative.getParentFile().mkdirs();
+								PluginManager.getLogger().info( String.format( "%sExtracting native library '%s' to '%s'.", ConsoleColor.GOLD, entry.getName(), newNative.getAbsolutePath() ) );
+								InputStream is = jar.getInputStream( entry );
+								FileOutputStream out = new FileOutputStream( newNative );
+								ByteStreams.copy( is, out );
+								is.close();
+								out.close();
+							}
+							
+							nativesExtracted.add( entry.getName() );
+							// PluginManager.getLogger().severe( String.format( "We were unable to load the native lib '%s' for arch '%s' within plugin '%s' for an unknown reason.", lib, arch, libFile ) );
+						}
+					}
+					catch ( FileNotFoundException e )
+					{
+						jar.close();
+						throw new IOException( String.format( "We had a problem extracting native library '%s' from jar file '%s'", lib, libFile.getAbsolutePath() ), e );
+					}
+		}
+		
+		// Enumeration<JarEntry> entries = jar.entries();
+		jar.close();
+		
+		if ( nativesExtracted.size() > 0 )
+		{
+			LibraryPath path = new LibraryPath();
+			path.add( baseDir.getAbsolutePath() );
+			for ( String arch : OSInfo.NATIVE_SEARCH_PATHS )
+				path.add( baseDir.getAbsolutePath() + "/" + arch );
+			path.set();
 			
 			try
 			{

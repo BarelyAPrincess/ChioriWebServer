@@ -11,10 +11,10 @@ package com.chiorichan.plugin.loader;
 import java.io.File;
 import java.util.regex.Pattern;
 
-import com.chiorichan.lang.PluginDescriptionInvalidException;
-import com.chiorichan.lang.PluginInvalidException;
-import com.chiorichan.lang.UnknownDependencyException;
-import com.chiorichan.plugin.PluginDescriptionFile;
+import com.chiorichan.plugin.PluginInformation;
+import com.chiorichan.plugin.lang.PluginInformationException;
+import com.chiorichan.plugin.lang.PluginInvalidException;
+import com.chiorichan.plugin.lang.UnknownDependencyException;
 
 /**
  * Represents a plugin loader, which handles direct access to specific types
@@ -45,11 +45,11 @@ public interface PluginLoader
 	 *            File to attempt to load from
 	 * @return A new PluginDescriptionFile loaded from the plugin.yml in the
 	 *         specified file
-	 * @throws PluginDescriptionInvalidException
+	 * @throws PluginInformationException
 	 *             If the plugin description file
 	 *             could not be created
 	 */
-	PluginDescriptionFile getPluginDescription( File file ) throws PluginDescriptionInvalidException;
+	PluginInformation getPluginDescription( File file ) throws PluginInformationException;
 	
 	/**
 	 * Returns a list of all filename filters expected by this PluginLoader

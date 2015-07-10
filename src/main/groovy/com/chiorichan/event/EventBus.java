@@ -21,11 +21,11 @@ import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.Loader;
 import com.chiorichan.ServerManager;
-import com.chiorichan.lang.AuthorNagException;
 import com.chiorichan.lang.DeprecatedDetail;
 import com.chiorichan.lang.ErrorReporting;
 import com.chiorichan.plugin.PluginBase;
 import com.chiorichan.plugin.PluginManager;
+import com.chiorichan.plugin.lang.AuthorNagException;
 
 public class EventBus implements ServerManager
 {

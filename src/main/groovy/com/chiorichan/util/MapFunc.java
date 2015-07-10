@@ -8,6 +8,7 @@
  */
 package com.chiorichan.util;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -25,6 +26,14 @@ public class MapFunc<K, V>
 	{
 		this.kClz = kClz;
 		this.vClz = vClz;
+	}
+	
+	public static boolean containsKeys( Map<String, ?> origMap, Collection<String> keys )
+	{
+		for ( String key : keys )
+			if ( origMap.containsKey( key ) )
+				return true;
+		return false;
 	}
 	
 	public Map<K, V> castTypes( Map<?, ?> map )

@@ -26,7 +26,7 @@ import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.lang.ErrorReporting;
 import com.chiorichan.lang.EvalException;
 import com.chiorichan.lang.EvalMultipleException;
-import com.chiorichan.lang.PluginException;
+import com.chiorichan.plugin.lang.PluginException;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;

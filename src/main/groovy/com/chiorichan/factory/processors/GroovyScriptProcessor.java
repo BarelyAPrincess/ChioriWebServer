@@ -16,8 +16,7 @@ import com.chiorichan.factory.EvalExecutionContext;
 import com.chiorichan.factory.ShellFactory;
 
 /**
- * Groovy SeaShell.
- * More of another dummy SeaShell to evaluate groovy files.
+ * Groovy Script Processor
  */
 public class GroovyScriptProcessor implements ScriptingProcessor
 {

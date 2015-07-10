@@ -36,13 +36,13 @@ import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.HandlerList;
 import com.chiorichan.event.Listener;
 import com.chiorichan.event.server.ServerRunLevelEvent;
-import com.chiorichan.lang.PluginDescriptionInvalidException;
-import com.chiorichan.lang.PluginInvalidException;
-import com.chiorichan.lang.PluginException;
-import com.chiorichan.lang.PluginNotFoundException;
-import com.chiorichan.lang.UnknownDependencyException;
 import com.chiorichan.libraries.Libraries;
 import com.chiorichan.libraries.MavenReference;
+import com.chiorichan.plugin.lang.PluginInformationException;
+import com.chiorichan.plugin.lang.PluginException;
+import com.chiorichan.plugin.lang.PluginInvalidException;
+import com.chiorichan.plugin.lang.PluginNotFoundException;
+import com.chiorichan.plugin.lang.UnknownDependencyException;
 import com.chiorichan.plugin.loader.JavaPluginLoader;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.plugin.loader.PluginClassLoader;
@@ -408,12 +408,12 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 			if ( loader == null )
 				continue;
 			
-			PluginDescriptionFile description = null;
+			PluginInformation description = null;
 			try
 			{
 				description = loader.getPluginDescription( file );
 			}
-			catch ( PluginDescriptionInvalidException ex )
+			catch ( PluginInformationException ex )
 			{
 				getLogger().log( Level.SEVERE, "Could not load '" + file.getPath() + "' in folder '" + directory.getPath() + "'", ex );
 				continue;

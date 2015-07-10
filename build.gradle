@@ -173,7 +173,7 @@ dependencies
 	compile group: 'org.xerial', name: 'sqlite-jdbc', version: '3.6.16'
 	
 	// Used for Programming Convinience
-	compile group: 'com.google.guava', name: 'guava', version: '17.0'
+	compile group: 'com.google.guava', name: 'guava', version: '18.0'
 	compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.3.2'
 	compile group: 'commons-io', name: 'commons-io', version: '2.4'
 	compile group: 'commons-net', name: 'commons-net', version: '3.3'
@@ -235,13 +235,13 @@ task writePropertiesFile {
 		SimpleDateFormat sdf = new SimpleDateFormat( "EEE, d MMM yyyy HH:mm:ss Z" )
 		
 		Properties props = new Properties()
-		props.load( new FileInputStream( new File( "./src/main/resources/com/chiorichan/build.properties" ) ) )
+		props.load( new FileInputStream( file( "src/main/resources/com/chiorichan/build.properties" ) ) )
 		props.setProperty("project.builtOn", sdf.format( new Date() ))
 		props.setProperty("project.build", buildNumber)
 		props.setProperty("project.version", version)
 		
-		File f2 = new File("./build/dist/build.properties")
-		File f3 = new File("./build/resources/main/com/chiorichan/build.properties")
+		File f2 = file("build/dist/build.properties")
+		File f3 = file("build/resources/main/com/chiorichan/build.properties")
 		f2.parentFile.mkdirs()
 		f3.parentFile.mkdirs()
 		OutputStream out2 = new FileOutputStream( f2 )

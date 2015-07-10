@@ -3,6 +3,8 @@ author: Chiori Greene
 main: com.chiorichan.plugin.console.ConsolePlugin
 version: '1.0'
 depends: []
-natives: true
+natives:
+  linux-x86_64: natives/linux-x86_64/libjcurses.so
+  linux-x86: natives/linux-x86/libjcurses.so
 libraries:
   - "com.baulsupp.kolja:jcurses:0.9.5.3"

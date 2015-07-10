@@ -22,16 +22,16 @@ import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.configuration.file.FileConfiguration;
 import com.chiorichan.configuration.file.YamlConfiguration;
-import com.chiorichan.lang.PluginException;
 import com.chiorichan.plugin.PluginBase;
-import com.chiorichan.plugin.PluginDescriptionFile;
+import com.chiorichan.plugin.PluginInformation;
+import com.chiorichan.plugin.lang.PluginException;
 
 public abstract class Plugin extends PluginBase
 {
 	private ClassLoader classLoader = null;
 	private File configFile = null;
 	private File dataFolder = null;
-	private PluginDescriptionFile description = null;
+	private PluginInformation description = null;
 	private File file = null;
 	private boolean isEnabled = false;
 	private PluginLoader loader = null;
@@ -153,7 +153,7 @@ public abstract class Plugin extends PluginBase
 	 * @return Contents of the plugin.yaml file
 	 */
 	@Override
-	public final PluginDescriptionFile getDescription()
+	public final PluginInformation getDescription()
 	{
 		return description;
 	}
@@ -207,7 +207,7 @@ public abstract class Plugin extends PluginBase
 		}
 	}
 	
-	final void init( PluginLoader loader, PluginDescriptionFile description, File dataFolder, File file, ClassLoader classLoader )
+	final void init( PluginLoader loader, PluginInformation description, File dataFolder, File file, ClassLoader classLoader )
 	{
 		this.loader = loader;
 		this.file = file;

@@ -9,25 +9,23 @@
 package com.chiorichan.plugin;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.Reader;
-import java.io.Writer;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.SafeConstructor;
-
 import com.chiorichan.Loader;
 import com.chiorichan.RunLevel;
+import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.configuration.file.YamlConfiguration;
-import com.chiorichan.lang.PluginDescriptionInvalidException;
 import com.chiorichan.libraries.MavenReference;
-import com.chiorichan.util.ObjectFunc;
+import com.chiorichan.plugin.lang.PluginInformationException;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 /**
  * This type is the runtime-container for the information in the plugin.yaml. All plugins must have a respective
@@ -140,45 +138,18 @@ import com.google.common.collect.ImmutableList;
  * 
  * XXX Rewrite the description file read process to make it easier to implement
  */
-public class PluginDescriptionFile
+public class PluginInformation
 {
-	private static final Yaml yaml = new Yaml( new SafeConstructor() );
-	private List<String> authors = null;
-	private List<String> depend = null;
-	private String description = null;
-	private String gitHubBaseUrl = null;
-	private List<MavenReference> libraries = null;
-	private List<String> loadBefore = null;
-	private String main = null;
-	private String name = null;
-	private boolean natives = false;
-	private RunLevel order = RunLevel.INITIALIZED;
-	private String prefix = null;
-	private List<String> softDepend = null;
-	private String version = null;
-	private String website = null;
+	private YamlConfiguration yaml;
 	
-	public PluginDescriptionFile( final File file ) throws PluginDescriptionInvalidException, FileNotFoundException
+	public PluginInformation( final File file ) throws PluginInformationException, FileNotFoundException
 	{
-		loadMap( asMap( yaml.load( new FileInputStream( file ) ) ) );
+		yaml = YamlConfiguration.loadConfiguration( file );
 	}
 	
-	public PluginDescriptionFile( final InputStream stream ) throws PluginDescriptionInvalidException
+	public PluginInformation( final InputStream stream ) throws PluginInformationException
 	{
-		loadMap( asMap( yaml.load( stream ) ) );
-	}
-	
-	/**
-	 * Loads a PluginDescriptionFile from the specified reader
-	 * 
-	 * @param reader
-	 *            The reader
-	 * @throws PluginDescriptionInvalidException
-	 *             If the PluginDescriptionFile is invalid
-	 */
-	public PluginDescriptionFile( final Reader reader ) throws PluginDescriptionInvalidException
-	{
-		loadMap( asMap( yaml.load( reader ) ) );
+		yaml = YamlConfiguration.loadConfiguration( stream );
 	}
 	
 	/**
@@ -190,24 +161,19 @@ public class PluginDescriptionFile
 	 *            Version of this plugin
 	 * @param mainClass
 	 *            Full location of the main class of this plugin
+	 * @throws PluginInformationException
 	 */
-	public PluginDescriptionFile( final String pluginName, final String pluginVersion, final String mainClass )
+	public PluginInformation( final String pluginName, final String pluginVersion, final String mainClass ) throws PluginInformationException
 	{
-		name = pluginName;
-		version = pluginVersion;
-		main = mainClass;
+		yaml = new YamlConfiguration();
+		setName( pluginName );
+		setPluginVersion( pluginVersion );
+		setMainClass( mainClass );
 	}
 	
-	public PluginDescriptionFile( final YamlConfiguration descYaml ) throws PluginDescriptionInvalidException
+	public PluginInformation( final YamlConfiguration yaml ) throws PluginInformationException
 	{
-		loadMap( asMap( descYaml ) );
-	}
-	
-	private Map<?, ?> asMap( Object object ) throws PluginDescriptionInvalidException
-	{
-		if ( object instanceof Map )
-			return ( Map<?, ?> ) object;
-		throw new PluginDescriptionInvalidException( object + " is not properly structured." );
+		this.yaml = yaml;
 	}
 	
 	/**
@@ -254,7 +220,15 @@ public class PluginDescriptionFile
 	 */
 	public List<String> getAuthors()
 	{
-		return authors;
+		if ( yaml.get( "authors" ) != null )
+			if ( yaml.isList( "authors" ) )
+				return yaml.getStringList( "authors" );
+			else
+				return ImmutableList.of( yaml.getString( "authors" ) );
+		
+		if ( yaml.getString( "author" ) != null )
+			return ImmutableList.of( yaml.getString( "author" ) );
+		return ImmutableList.of();
 	}
 	
 	/**
@@ -283,7 +257,7 @@ public class PluginDescriptionFile
 	 */
 	public List<String> getDepend()
 	{
-		return depend;
+		return yaml.getStringList( "depend" );
 	}
 	
 	/**
@@ -307,22 +281,23 @@ public class PluginDescriptionFile
 	 */
 	public String getDescription()
 	{
-		return description;
+		return yaml.getString( "description" );
 	}
 	
 	/**
 	 * Returns the name of a plugin, including the version. This method is provided for convenience; it uses the {@link #getName()} and {@link #getVersion()} entries.
 	 * 
 	 * @return a descriptive name of the plugin and respective version
+	 * @throws PluginInformationException
 	 */
 	public String getFullName()
 	{
-		return name + " v" + version;
+		return getName() + " v" + getVersion();
 	}
 	
 	public String getGitHubBaseUrl()
 	{
-		return gitHubBaseUrl;
+		return yaml.getString( "gitHubBaseUrl" );
 	}
 	
 	/**
@@ -347,10 +322,24 @@ public class PluginDescriptionFile
 	 * </blockquote>
 	 * 
 	 * @return immutable list of the plugin's dependencies
+	 * @throws PluginInformationException
 	 */
 	public List<MavenReference> getLibraries()
 	{
-		return libraries;
+		List<MavenReference> refs = Lists.newArrayList();
+		
+		for ( String mavenString : yaml.getStringList( "libraries" ) )
+			try
+			{
+				refs.add( new MavenReference( getName(), mavenString ) );
+			}
+			catch ( IllegalArgumentException e )
+			{
+				Loader.getLogger().severe( "Could not parse the library '" + mavenString + "' for plugin '" + getName() + "', expected pattern 'group:name:version' unless fixed, it will be ignored." );
+				Loader.getLogger().severe( e.getMessage() );
+			}
+		
+		return refs;
 	}
 	
 	/**
@@ -377,7 +366,14 @@ public class PluginDescriptionFile
 	 */
 	public RunLevel getLoad()
 	{
-		return order;
+		try
+		{
+			return RunLevel.valueOf( yaml.getString( "order" ) );
+		}
+		catch ( IllegalArgumentException | NullPointerException e )
+		{
+			return RunLevel.INITIALIZED;
+		}
 	}
 	
 	/**
@@ -405,7 +401,12 @@ public class PluginDescriptionFile
 	 */
 	public List<String> getLoadBefore()
 	{
-		return loadBefore;
+		return yaml.getStringList( "loadbefore" );
+	}
+	
+	public String getMain()
+	{
+		return yaml.getString( "main" );
 	}
 	
 	/**
@@ -428,10 +429,24 @@ public class PluginDescriptionFile
 	 * </blockquote>
 	 * 
 	 * @return the fully qualified main class for the plugin
+	 * @throws PluginInformationException
 	 */
-	public String getMain()
+	public String getMainWithException() throws PluginInformationException
 	{
+		String main = yaml.getString( "main" );
+		
+		if ( main == null )
+			throw new PluginInformationException( "Main is not defined." );
+		
+		if ( main.startsWith( "com.chiori" ) && !main.startsWith( "com.chiorichan.plugin" ) )
+			throw new PluginInformationException( "Plugin is forbidden from using the 'com.chiori' namespace due to a conflict of interest." );
+		
 		return main;
+	}
+	
+	public String getName()
+	{
+		return yaml.getString( "name" );
 	}
 	
 	/**
@@ -456,9 +471,35 @@ public class PluginDescriptionFile
 	 * 
 	 * @return the name of the plugin
 	 */
-	public String getName()
+	public String getNameWithException() throws PluginInformationException
 	{
+		String name = yaml.getString( "name" );
+		
+		if ( name == null )
+			throw new PluginInformationException( "Plugin name is not defined." );
+		
+		if ( !name.matches( "^[A-Za-z0-9 _.-]+$" ) )
+			throw new PluginInformationException( "name '" + name + "' contains invalid characters." );
+		
 		return name;
+	}
+	
+	public Map<String, List<String>> getNatives()
+	{
+		Map<String, List<String>> natives = Maps.newHashMap();
+		
+		ConfigurationSection section = yaml.getConfigurationSection( "natives" );
+		if ( section != null )
+			for ( String key : section.getKeys( false ) )
+				if ( section.isList( key ) )
+					natives.put( key, section.getStringList( key ) );
+				else if ( natives.containsKey( key ) )
+					natives.get( key ).add( section.getString( key ) );
+				else
+					natives.put( key, new ArrayList<String>( Arrays.asList( section.getString( key ) ) ) );
+		
+		return natives;
+		
 	}
 	
 	/**
@@ -483,7 +524,7 @@ public class PluginDescriptionFile
 	 */
 	public String getPrefix()
 	{
-		return prefix;
+		return yaml.getString( "prefix" );
 	}
 	
 	/**
@@ -511,7 +552,12 @@ public class PluginDescriptionFile
 	 */
 	public List<String> getSoftDepend()
 	{
-		return softDepend;
+		return yaml.getStringList( "softdepend" );
+	}
+	
+	public String getVersion()
+	{
+		return yaml.getString( "version" );
 	}
 	
 	/**
@@ -533,9 +579,15 @@ public class PluginDescriptionFile
 	 * </blockquote>
 	 * 
 	 * @return the version of the plugin
+	 * @throws PluginInformationException
 	 */
-	public String getVersion()
+	public String getVersionWithException() throws PluginInformationException
 	{
+		String version = yaml.getString( "version" );
+		
+		if ( version == null )
+			throw new PluginInformationException( "Plugin version is not defined." );
+		
 		return version;
 	}
 	
@@ -560,262 +612,45 @@ public class PluginDescriptionFile
 	 */
 	public String getWebsite()
 	{
-		return website;
+		return yaml.getString( "website" );
 	}
 	
 	/**
-	 * Indicates if this plugin has native libraries that need extraction
+	 * Saves this PluginInformation to the given file
 	 * 
-	 * <p>
-	 * In the plugin.yaml, this entry is named <code>natives</code>.
-	 * <p>
-	 * Example:<blockquote>
-	 * 
-	 * <pre>
-	 * natives: true
-	 * </pre>
-	 * 
-	 * </blockquote>
-	 * 
-	 * @return
-	 *         True is this statement is so
+	 * @param file
+	 *            File to output to
+	 * @throws IOException
 	 */
-	public boolean hasNatives()
+	public void save( File file ) throws IOException
 	{
-		return natives;
+		yaml.save( file );
 	}
 	
-	private void loadMap( Map<?, ?> map ) throws PluginDescriptionInvalidException
+	public String saveToString()
 	{
-		try
-		{
-			name = map.get( "name" ).toString();
-			
-			if ( !name.matches( "^[A-Za-z0-9 _.-]+$" ) )
-				throw new PluginDescriptionInvalidException( "name '" + name + "' contains invalid characters." );
-		}
-		catch ( NullPointerException ex )
-		{
-			throw new PluginDescriptionInvalidException( ex, "name is not defined" );
-		}
-		catch ( ClassCastException ex )
-		{
-			throw new PluginDescriptionInvalidException( ex, "name is of wrong type" );
-		}
-		
-		try
-		{
-			version = map.get( "version" ).toString();
-		}
-		catch ( NullPointerException ex )
-		{
-			throw new PluginDescriptionInvalidException( ex, "version is not defined" );
-		}
-		catch ( ClassCastException ex )
-		{
-			throw new PluginDescriptionInvalidException( ex, "version is of wrong type" );
-		}
-		
-		try
-		{
-			main = map.get( "main" ).toString();
-			if ( main.startsWith( "com.chiori" ) && !main.startsWith( "com.chiorichan.plugin" ) )
-				throw new PluginDescriptionInvalidException( "main may not be within the com.chiori namespace" );
-		}
-		catch ( NullPointerException ex )
-		{
-			throw new PluginDescriptionInvalidException( ex, "main is not defined" );
-		}
-		catch ( ClassCastException ex )
-		{
-			throw new PluginDescriptionInvalidException( ex, "main is of wrong type" );
-		}
-		
-		if ( map.get( "depend" ) != null )
-		{
-			ImmutableList.Builder<String> dependBuilder = ImmutableList.<String> builder();
-			try
-			{
-				for ( Object dependency : ( Iterable<?> ) map.get( "depend" ) )
-					dependBuilder.add( dependency.toString() );
-			}
-			catch ( ClassCastException ex )
-			{
-				throw new PluginDescriptionInvalidException( ex, "depend is of wrong type" );
-			}
-			catch ( NullPointerException e )
-			{
-				throw new PluginDescriptionInvalidException( e, "invalid dependency format" );
-			}
-			depend = dependBuilder.build();
-		}
-		
-		if ( map.get( "libraries" ) != null )
-		{
-			ImmutableList.Builder<MavenReference> libraryBuilder = ImmutableList.<MavenReference> builder();
-			try
-			{
-				for ( Object library : ( Iterable<?> ) map.get( "libraries" ) )
-					try
-					{
-						libraryBuilder.add( new MavenReference( name, library.toString() ) );
-					}
-					catch ( IllegalArgumentException e )
-					{
-						Loader.getLogger().severe( "Could not parse the library '" + library.toString() + "' for plugin '" + name + "', expected pattern 'group:name:version' unless fixed, it will be ignored." );
-						Loader.getLogger().severe( e.getMessage() );
-					}
-			}
-			catch ( ClassCastException ex )
-			{
-				throw new PluginDescriptionInvalidException( ex, "library is of wrong type" );
-			}
-			catch ( NullPointerException e )
-			{
-				throw new PluginDescriptionInvalidException( e, "invalid library format" );
-			}
-			libraries = libraryBuilder.build();
-		}
-		
-		if ( map.get( "softdepend" ) != null )
-		{
-			ImmutableList.Builder<String> softDependBuilder = ImmutableList.<String> builder();
-			try
-			{
-				for ( Object dependency : ( Iterable<?> ) map.get( "softdepend" ) )
-					softDependBuilder.add( dependency.toString() );
-			}
-			catch ( ClassCastException ex )
-			{
-				throw new PluginDescriptionInvalidException( ex, "softdepend is of wrong type" );
-			}
-			catch ( NullPointerException ex )
-			{
-				throw new PluginDescriptionInvalidException( ex, "invalid soft-dependency format" );
-			}
-			softDepend = softDependBuilder.build();
-		}
-		
-		if ( map.get( "loadbefore" ) != null )
-		{
-			ImmutableList.Builder<String> loadBeforeBuilder = ImmutableList.<String> builder();
-			try
-			{
-				for ( Object predependency : ( Iterable<?> ) map.get( "loadbefore" ) )
-					loadBeforeBuilder.add( predependency.toString() );
-			}
-			catch ( ClassCastException ex )
-			{
-				throw new PluginDescriptionInvalidException( ex, "loadbefore is of wrong type" );
-			}
-			catch ( NullPointerException ex )
-			{
-				throw new PluginDescriptionInvalidException( ex, "invalid load-before format" );
-			}
-			loadBefore = loadBeforeBuilder.build();
-		}
-		
-		if ( map.get( "website" ) != null )
-			website = map.get( "website" ).toString();
-		
-		if ( map.get( "description" ) != null )
-			description = map.get( "description" ).toString();
-		
-		if ( map.get( "load" ) != null )
-			try
-			{
-				order = RunLevel.valueOf( ( ( String ) map.get( "load" ) ).toUpperCase().replaceAll( "\\W", "" ) );
-			}
-			catch ( ClassCastException ex )
-			{
-				throw new PluginDescriptionInvalidException( ex, "load is of wrong type" );
-			}
-			catch ( IllegalArgumentException ex )
-			{
-				throw new PluginDescriptionInvalidException( ex, "load is not a valid choice" );
-			}
-		
-		if ( map.get( "authors" ) != null )
-		{
-			ImmutableList.Builder<String> authorsBuilder = ImmutableList.<String> builder();
-			if ( map.get( "author" ) != null )
-				authorsBuilder.add( map.get( "author" ).toString() );
-			try
-			{
-				for ( Object o : ( Iterable<?> ) map.get( "authors" ) )
-					authorsBuilder.add( o.toString() );
-			}
-			catch ( ClassCastException ex )
-			{
-				throw new PluginDescriptionInvalidException( ex, "authors are of wrong type" );
-			}
-			catch ( NullPointerException ex )
-			{
-				throw new PluginDescriptionInvalidException( ex, "authors are improperly defined" );
-			}
-			authors = authorsBuilder.build();
-		}
-		else if ( map.get( "author" ) != null )
-			authors = ImmutableList.of( map.get( "author" ).toString() );
-		else
-			authors = ImmutableList.<String> of();
-		
-		if ( map.get( "gitHubBaseUrl" ) != null )
-			gitHubBaseUrl = map.get( "gitHubBaseUrl" ).toString();
-		
-		if ( map.get( "prefix" ) != null )
-			prefix = map.get( "prefix" ).toString();
-		
-		if ( map.get( "natives" ) != null )
-			natives = ObjectFunc.castToBool( map.get( "natives" ) );
+		return yaml.saveToString();
 	}
 	
-	/**
-	 * Saves this PluginDescriptionFile to the given writer
-	 * 
-	 * @param writer
-	 *            Writer to output this file to
-	 */
-	public void save( Writer writer )
+	PluginInformation setMainClass( String main )
 	{
-		yaml.dump( saveMap(), writer );
+		yaml.set( "main", main );
+		return this;
 	}
 	
-	private Map<String, Object> saveMap()
+	PluginInformation setName( String name ) throws PluginInformationException
 	{
-		Map<String, Object> map = new HashMap<String, Object>();
+		if ( !name.matches( "^[A-Za-z0-9 _.-]+$" ) )
+			throw new PluginInformationException( "name '" + name + "' contains invalid characters." );
 		
-		map.put( "name", name );
-		map.put( "main", main );
-		map.put( "version", version );
-		map.put( "order", order.toString() );
+		yaml.set( "name", name );
 		
-		if ( depend != null )
-			map.put( "depend", depend );
-		
-		if ( libraries != null )
-			map.put( "libraries", libraries );
-		
-		if ( softDepend != null )
-			map.put( "softdepend", softDepend );
-		
-		if ( website != null )
-			map.put( "website", website );
-		
-		if ( description != null )
-			map.put( "description", description );
-		
-		if ( authors.size() == 1 )
-			map.put( "author", authors.get( 0 ) );
-		else if ( authors.size() > 1 )
-			map.put( "authors", authors );
-		
-		if ( gitHubBaseUrl != null )
-			map.put( "gitHubBaseUrl", prefix );
-		
-		if ( prefix != null )
-			map.put( "prefix", prefix );
-		
-		return map;
+		return this;
+	}
+	
+	PluginInformation setPluginVersion( String version )
+	{
+		yaml.set( "version", version );
+		return this;
 	}
 }

@@ -6,19 +6,19 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.lang;
+package com.chiorichan.plugin.lang;
 
 /**
  * Thrown when attempting to load an invalid PluginDescriptionFile
  */
-public class PluginDescriptionInvalidException extends PluginException
+public class PluginInformationException extends PluginException
 {
 	private static final long serialVersionUID = 5721389122281775896L;
 	
 	/**
 	 * Constructs a new InvalidDescriptionException
 	 */
-	public PluginDescriptionInvalidException()
+	public PluginInformationException()
 	{
 		super( "Invalid plugin.yaml" );
 	}
@@ -29,7 +29,7 @@ public class PluginDescriptionInvalidException extends PluginException
 	 * @param message
 	 *            Brief message explaining the cause of the exception
 	 */
-	public PluginDescriptionInvalidException( final String message )
+	public PluginInformationException( final String message )
 	{
 		super( message );
 	}
@@ -40,7 +40,7 @@ public class PluginDescriptionInvalidException extends PluginException
 	 * @param cause
 	 *            Exception that triggered this Exception
 	 */
-	public PluginDescriptionInvalidException( final Throwable cause )
+	public PluginInformationException( final Throwable cause )
 	{
 		super( "Invalid plugin.yaml", cause );
 	}
@@ -53,7 +53,7 @@ public class PluginDescriptionInvalidException extends PluginException
 	 * @param cause
 	 *            Exception that triggered this Exception
 	 */
-	public PluginDescriptionInvalidException( final Throwable cause, final String message )
+	public PluginInformationException( final Throwable cause, final String message )
 	{
 		super( message, cause );
 	}

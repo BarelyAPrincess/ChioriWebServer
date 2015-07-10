@@ -8,7 +8,7 @@
  */
 package com.chiorichan.event;
 
-import com.chiorichan.plugin.PluginDescriptionFile;
+import com.chiorichan.plugin.PluginInformation;
 
 public interface EventCreator
 {
@@ -17,7 +17,7 @@ public interface EventCreator
 	 * 
 	 * @return Contents of the plugin.yaml file
 	 */
-	PluginDescriptionFile getDescription();
+	PluginInformation getDescription();
 	
 	/**
 	 * Returns a value indicating whether or not this plugin is currently enabled

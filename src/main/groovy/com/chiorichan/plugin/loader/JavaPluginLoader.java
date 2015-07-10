@@ -43,13 +43,13 @@ import com.chiorichan.event.server.PluginDisableEvent;
 import com.chiorichan.event.server.PluginEnableEvent;
 import com.chiorichan.lang.DeprecatedDetail;
 import com.chiorichan.lang.ErrorReporting;
-import com.chiorichan.lang.PluginDescriptionInvalidException;
-import com.chiorichan.lang.PluginException;
-import com.chiorichan.lang.PluginInvalidException;
-import com.chiorichan.lang.PluginUnconfiguredException;
-import com.chiorichan.lang.UnknownDependencyException;
-import com.chiorichan.plugin.PluginDescriptionFile;
+import com.chiorichan.plugin.PluginInformation;
 import com.chiorichan.plugin.PluginManager;
+import com.chiorichan.plugin.lang.PluginInformationException;
+import com.chiorichan.plugin.lang.PluginException;
+import com.chiorichan.plugin.lang.PluginInvalidException;
+import com.chiorichan.plugin.lang.PluginUnconfiguredException;
+import com.chiorichan.plugin.lang.UnknownDependencyException;
 import com.chiorichan.util.FileFunc;
 import com.google.common.collect.ImmutableList;
 
@@ -276,7 +276,7 @@ public final class JavaPluginLoader implements PluginLoader
 	}
 	
 	@Override
-	public PluginDescriptionFile getPluginDescription( File file ) throws PluginDescriptionInvalidException
+	public PluginInformation getPluginDescription( File file ) throws PluginInformationException
 	{
 		Validate.notNull( file, "File cannot be null" );
 		
@@ -292,20 +292,20 @@ public final class JavaPluginLoader implements PluginLoader
 				entry = jar.getJarEntry( "plugin.yml" );
 			
 			if ( entry == null )
-				throw new PluginDescriptionInvalidException( new FileNotFoundException( "Jar does not contain plugin.yaml" ) );
+				throw new PluginInformationException( new FileNotFoundException( "Jar does not contain plugin.yaml" ) );
 			
 			stream = jar.getInputStream( entry );
 			
-			return new PluginDescriptionFile( stream );
+			return new PluginInformation( stream );
 			
 		}
 		catch ( IOException ex )
 		{
-			throw new PluginDescriptionInvalidException( ex );
+			throw new PluginInformationException( ex );
 		}
 		catch ( YAMLException ex )
 		{
-			throw new PluginDescriptionInvalidException( ex );
+			throw new PluginInformationException( ex );
 		}
 		finally
 		{
@@ -342,12 +342,12 @@ public final class JavaPluginLoader implements PluginLoader
 		if ( !file.exists() )
 			throw new PluginInvalidException( new FileNotFoundException( file.getPath() + " does not exist" ) );
 		
-		PluginDescriptionFile description;
+		PluginInformation description;
 		try
 		{
 			description = getPluginDescription( file );
 		}
-		catch ( PluginDescriptionInvalidException ex )
+		catch ( PluginInformationException ex )
 		{
 			throw new PluginInvalidException( ex );
 		}
@@ -385,10 +385,10 @@ public final class JavaPluginLoader implements PluginLoader
 		
 		loaders.put( description.getName(), loader );
 		
-		if ( description.hasNatives() )
+		if ( description.getNatives().size() > 0 )
 			try
 			{
-				FileFunc.extractNatives( file, dataFolder );
+				FileFunc.extractNatives( description.getNatives(), file, dataFolder );
 			}
 			catch ( IOException e )
 			{
