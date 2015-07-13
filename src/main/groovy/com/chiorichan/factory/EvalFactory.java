@@ -40,7 +40,6 @@ import com.chiorichan.factory.processors.ScriptingProcessor;
 import com.chiorichan.lang.ErrorReporting;
 import com.chiorichan.lang.EvalException;
 import com.chiorichan.util.WebFunc;
-import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 
 public class EvalFactory
@@ -179,10 +178,7 @@ public class EvalFactory
 						catch ( Throwable cause )
 						{
 							if ( EvalException.exceptionHandler( cause, context ) )
-							{
-								Loader.getLogger().debug( Joiner.on( ", " ).join( result.getExceptions() ) );
 								return result;
-							}
 						}
 			}
 			

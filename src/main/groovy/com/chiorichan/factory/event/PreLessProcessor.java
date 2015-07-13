@@ -79,11 +79,11 @@ public class PreLessProcessor implements Listener
 				
 				context.evaluateString( compileScope, "var parser = new less.Parser(" + json + ");", "less2css.js", 0, null );
 				
-				String script = "parser.parse(lessSource, function (e, tree) { source = 'Hello World'; } );";
+				// String script = "parser.parse(lessSource, function (e, tree) { source = 'Hello World'; } );";
 				
-				Loader.getLogger().debug( "" + context.evaluateString( compileScope, script, "less2css.js", 0, null ) );
+				// Loader.getLogger().debug( "" + context.evaluateString( compileScope, script, "less2css.js", 0, null ) );
 				
-				Loader.getLogger().debug( "" + globalScope.get( "source" ) );
+				// Loader.getLogger().debug( "" + globalScope.get( "source" ) );
 				
 				if ( globalScope.get( "source" ) != null && globalScope.get( "source" ) instanceof String )
 					event.context().resetAndWrite( ( String ) globalScope.get( "source" ) );

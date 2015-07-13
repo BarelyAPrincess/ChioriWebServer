@@ -86,6 +86,9 @@ public class Template extends Plugin implements Listener
 				
 				if ( lineNum < 0 )
 				{
+					/*
+					 * Sometimes the last ScriptTrace never gets properly formatted usually due to the exception being a parse problem
+					 */
 					ste.examineMessage( t.getMessage() );
 					lineNum = ste.getLineNumber();
 					colNum = ste.getColumnNumber();
@@ -101,7 +104,6 @@ public class Template extends Plugin implements Listener
 					className = null;
 				
 				EvalContext context = ste.context();
-				
 				Validate.notNull( context );
 				
 				fileName = context.filename();

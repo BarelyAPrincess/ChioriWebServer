@@ -9,7 +9,6 @@
 package com.chiorichan.factory;
 
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,20 +29,22 @@ public class StackFactory
 	{
 		Validate.notNull( stackTrace );
 		
-		Map<String, EvalContext> scriptStackDup = new LinkedHashMap<String, EvalContext>( scriptStack );
-		
 		List<ScriptTraceElement> scriptTrace = Lists.newLinkedList();
 		
 		for ( StackTraceElement ste : stackTrace )
 			if ( ste.getFileName() != null && ste.getFileName().matches( "EvalScript\\d*\\.chi" ) )
-				scriptTrace.add( new ScriptTraceElement( scriptStackDup.remove( ste.getFileName() ), ste ) );
+				scriptTrace.add( new ScriptTraceElement( scriptStackHistory.get( ste.getFileName() ), ste ) );
 		
-		/*
-		 * Put the remaining script stacks into the scriptTrace.
-		 * Parse exceptions usually end up here
-		 */
-		for ( EvalContext context : scriptStackDup.values() )
-			scriptTrace.add( 0, new ScriptTraceElement( context, "" ) );
+		EvalContext context = scriptStack.values().toArray( new EvalContext[0] )[scriptStack.size() - 1];
+		if ( context != null )
+		{
+			boolean contains = false;
+			for ( ScriptTraceElement ste : scriptTrace )
+				if ( ste.context().filename().equals( context.filename() ) )
+					contains = true;
+			if ( !contains )
+				scriptTrace.add( 0, new ScriptTraceElement( context, "" ) );
+		}
 		
 		return scriptTrace;
 	}
