@@ -11,9 +11,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.InterpreterOverrides;
-import com.chiorichan.factory.EvalExecutionContext;
+import com.chiorichan.factory.EvalContext;
 import com.chiorichan.factory.EvalFactory;
-import com.chiorichan.factory.EvalFactoryResult;
+import com.chiorichan.factory.EvalResult;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.lang.EvalException;
 import com.chiorichan.plugin.PluginManager;
@@ -27,8 +27,6 @@ import com.chiorichan.util.WebFunc;
 
 /**
  * Chiori-chan's Web Server Template Plugin
- * 
- * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class TemplateUtils
 {
@@ -66,9 +64,7 @@ public class TemplateUtils
 				codePreview = generateCodePreview( ste );
 				
 				if ( scriptTrace != null )
-				{
 					for ( ScriptTraceElement st : scriptTrace )
-					{
 						if ( st.getFileName() != null && ste.getFileName() != null && st.getFileName().equals( ste.getFileName() ) && st.getLineNumber() == ste.getLineNumber() )
 						{
 							codePreview = generateCodePreview( st );
@@ -76,8 +72,6 @@ public class TemplateUtils
 								fileName = st.context().filename() + ( ste.getLineNumber() > -1 ? String.format( "(%s)", ste.getLineNumber() ) : "" );
 							break;
 						}
-					}
-				}
 				
 				if ( codePreview == null )
 					codePreview = "There was a problem getting this code preview, either the file is non-existent or could not be read.";
@@ -105,17 +99,53 @@ public class TemplateUtils
 		return sb.toString();
 	}
 	
-	static String generateCodePreview( Throwable t )
+	static String generateCodePreview( File file, int lineNum )
 	{
-		if ( t instanceof EvalException )
+		return generateCodePreview( file, lineNum, -1 );
+	}
+	
+	static String generateCodePreview( File file, int lineNum, int colNum )
+	{
+		Validate.notNull( file );
+		
+		if ( !file.exists() )
+			return String.format( "Could not find the file '%s'", file.getAbsolutePath() );
+		
+		FileInputStream is;
+		try
 		{
-			ScriptTraceElement[] ste = ( ( EvalException ) t ).getScriptTrace();
-			
-			if ( ste != null && ste.length > 0 )
-				return generateCodePreview( ste[0] );
+			is = new FileInputStream( file );
+		}
+		catch ( FileNotFoundException e )
+		{
+			return e.getMessage();
 		}
 		
-		return generateCodePreview( t.getStackTrace()[0] );
+		try
+		{
+			byte[] bytes = new byte[is.available()];
+			
+			IOUtils.readFully( is, bytes );
+			
+			String source = new String( bytes );
+			
+			return generateCodePreview( source, lineNum, colNum );
+		}
+		catch ( IOException e )
+		{
+			e.printStackTrace();
+			return String.format( "<We had a problem: %s>", e.getMessage() );
+		}
+	}
+	
+	static String generateCodePreview( ScriptTraceElement ste )
+	{
+		EvalContext context = ste.context();
+		File file = new File( context.filename() );
+		int lineNum = ste.getLineNumber();
+		int colNum = ste.getColumnNumber();
+		
+		return generateCodePreview( file, lineNum, colNum );
 	}
 	
 	static String generateCodePreview( StackTraceElement ste )
@@ -162,55 +192,6 @@ public class TemplateUtils
 			return String.format( "%s<br /><a target=\"_blank\" href=\"%s\">View this file on our GitHub!</a>", generateCodePreview( new String( result ), lineNum ), finalUrl );
 	}
 	
-	static String generateCodePreview( ScriptTraceElement ste )
-	{
-		EvalExecutionContext context = ste.context();
-		File file = new File( context.filename() );
-		int lineNum = ste.getLineNumber();
-		int colNum = ste.getColumnNumber();
-		
-		return generateCodePreview( file, lineNum, colNum );
-	}
-	
-	static String generateCodePreview( File file, int lineNum )
-	{
-		return generateCodePreview( file, lineNum, -1 );
-	}
-	
-	static String generateCodePreview( File file, int lineNum, int colNum )
-	{
-		Validate.notNull( file );
-		
-		if ( !file.exists() )
-			return String.format( "Could not find the file '%s'", file.getAbsolutePath() );
-		
-		FileInputStream is;
-		try
-		{
-			is = new FileInputStream( file );
-		}
-		catch ( FileNotFoundException e )
-		{
-			return e.getMessage();
-		}
-		
-		try
-		{
-			byte[] bytes = new byte[is.available()];
-			
-			IOUtils.readFully( is, bytes );
-			
-			String source = new String( bytes );
-			
-			return generateCodePreview( source, lineNum, colNum );
-		}
-		catch ( IOException e )
-		{
-			e.printStackTrace();
-			return String.format( "<We had a problem: %s>", e.getMessage() );
-		}
-	}
-	
 	static String generateCodePreview( String source, int lineNum )
 	{
 		return generateCodePreview( source, lineNum, -1 );
@@ -228,7 +209,6 @@ public class TemplateUtils
 			cLine++;
 			
 			if ( cLine > lineNum - 5 && cLine < lineNum + 5 )
-			{
 				if ( cLine == lineNum )
 				{
 					if ( colNum > -1 && colNum <= l.length() )
@@ -240,16 +220,26 @@ public class TemplateUtils
 					sb.append( String.format( "<span class=\"error\"><span class=\"ln error-ln\">%4s</span> %s</span>", cLine, l ) );
 				}
 				else
-				{
 					sb.append( String.format( "<span class=\"ln\">%4s</span> %s\n", cLine, l ) );
-				}
-			}
 		}
 		
 		return sb.toString();
 	}
 	
-	static EvalFactoryResult wrapAndEval( EvalFactory factory, String html ) throws UnsupportedEncodingException, IOException
+	static String generateCodePreview( Throwable t )
+	{
+		if ( t instanceof EvalException )
+		{
+			ScriptTraceElement[] ste = ( ( EvalException ) t ).getScriptTrace();
+			
+			if ( ste != null && ste.length > 0 )
+				return generateCodePreview( ste[0] );
+		}
+		
+		return generateCodePreview( t.getStackTrace()[0] );
+	}
+	
+	static EvalResult wrapAndEval( EvalFactory factory, String html ) throws UnsupportedEncodingException, IOException
 	{
 		Validate.notNull( factory );
 		
@@ -261,6 +251,6 @@ public class TemplateUtils
 			baseTemplate = ( is == null ) ? "" : new String( FileFunc.inputStream2Bytes( is ), "UTF-8" );
 		}
 		
-		return factory.eval( EvalExecutionContext.fromSource( baseTemplate.replace( pageMark, html ) ).shell( "html" ).site( SiteManager.INSTANCE.getDefaultSite() ) );
+		return factory.eval( EvalContext.fromSource( baseTemplate.replace( pageMark, html ) ).shell( "html" ).site( SiteManager.INSTANCE.getDefaultSite() ) );
 	}
 }

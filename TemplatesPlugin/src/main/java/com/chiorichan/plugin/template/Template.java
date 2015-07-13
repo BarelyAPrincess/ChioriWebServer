@@ -19,9 +19,9 @@ import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
 import com.chiorichan.event.http.HttpExceptionEvent;
 import com.chiorichan.event.server.RenderEvent;
-import com.chiorichan.factory.EvalExecutionContext;
+import com.chiorichan.factory.EvalContext;
 import com.chiorichan.factory.EvalFactory;
-import com.chiorichan.factory.EvalFactoryResult;
+import com.chiorichan.factory.EvalResult;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.lang.ErrorReporting;
 import com.chiorichan.lang.EvalException;
@@ -32,31 +32,12 @@ import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.Versioning;
-import com.chiorichan.util.WebFunc;
 
 /**
  * Chiori-chan's Web Server Template Plugin
- * 
- * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
 public class Template extends Plugin implements Listener
 {
-	private String doInclude( String pack, RenderEvent event ) throws IOException, EvalException
-	{
-		EvalFactoryResult result = doInclude0( pack, event );
-		if ( result.isSuccessful() )
-			return result.getString();
-		return "";
-	}
-	
-	private EvalFactoryResult doInclude0( String pack, RenderEvent event ) throws IOException, EvalException
-	{
-		if ( getConfig().getBoolean( "config.ignoreFileNotFound" ) )
-			return WebFunc.evalPackage( event.getRequest(), event.getSite(), pack );
-		
-		return WebFunc.evalPackageWithException( event.getRequest(), event.getSite(), pack );
-	}
-	
 	private String domainToPackage( String domain )
 	{
 		if ( domain == null || domain.isEmpty() )
@@ -72,6 +53,12 @@ public class Template extends Plugin implements Listener
 			pack += "." + s;
 		
 		return pack.substring( 1 );
+	}
+	
+	private EvalResult eval( String pack, RenderEvent event ) throws EvalException, EvalMultipleException
+	{
+		EvalContext context = EvalContext.fromPackage( event.getSite(), pack ).request( event.getRequest() ).require();
+		return event.getRequest().getEvalFactory().eval( context );
 	}
 	
 	private String generateExceptionPage( Throwable t, EvalFactory factory ) throws EvalException, EvalMultipleException, IOException
@@ -112,7 +99,7 @@ public class Template extends Plugin implements Listener
 				if ( className.isEmpty() )
 					className = null;
 				
-				EvalExecutionContext context = ste.context();
+				EvalContext context = ste.context();
 				fileName = context.filename();
 				
 				if ( lineNum > -1 )
@@ -163,7 +150,7 @@ public class Template extends Plugin implements Listener
 		ob.append( "\n" );
 		ob.append( "<div class=\"version\">Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + "<br />" + Versioning.getCopyright() + "</div>\n" );
 		
-		EvalFactoryResult result = TemplateUtils.wrapAndEval( factory, ob.toString() );
+		EvalResult result = TemplateUtils.wrapAndEval( factory, ob.toString() );
 		
 		if ( result.hasExceptions() )
 			ErrorReporting.throwExceptions( result.getExceptions() );
@@ -290,12 +277,12 @@ public class Template extends Plugin implements Listener
 			
 			// Allow pages to disable the inclusion of common header
 			if ( showCommons )
-				ob.append( doInclude( domainToPackage( site.getDomain() ) + ".includes.common", event ) + "\n" );
+				ob.append( read( domainToPackage( site.getDomain() ) + ".includes.common", event ) + "\n" );
 			
-			ob.append( doInclude( domainToPackage( site.getDomain() ) + ".includes." + getPackageName( theme ), event ) + "\n" );
+			ob.append( read( domainToPackage( site.getDomain() ) + ".includes." + getPackageName( theme ), event ) + "\n" );
 			
 			if ( fwVals.get( "header" ) != null && !fwVals.get( "header" ).isEmpty() )
-				ob.append( doInclude( fwVals.get( "header" ), event ) + "\n" );
+				ob.append( read( fwVals.get( "header" ), event ) + "\n" );
 			
 			ob.append( "</head>\n" );
 			
@@ -306,26 +293,16 @@ public class Template extends Plugin implements Listener
 			
 			if ( !theme.isEmpty() )
 			{
-				EvalFactoryResult result = doInclude0( theme, event );
-				if ( result.isSuccessful() )
-				{
-					pageData = result.getString();
-					params.putAll( result.context().request().getRequestMapRaw() );
-				}
-				else if ( result.hasExceptions() )
-					ErrorReporting.throwExceptions( result.getExceptions() );
+				EvalResult result = eval( theme, event );
+				pageData = result.getString();
+				params.putAll( result.context().request().getRequestMapRaw() );
 			}
 			
 			if ( !view.isEmpty() )
 			{
-				EvalFactoryResult result = doInclude0( view, event );
-				if ( result.isSuccessful() )
-				{
-					viewData = result.getString();
-					params.putAll( result.context().request().getRequestMapRaw() );
-				}
-				else if ( result.hasExceptions() )
-					ErrorReporting.throwExceptions( result.getExceptions() );
+				EvalResult result = eval( view, event );
+				viewData = result.getString();
+				params.putAll( result.context().request().getRequestMapRaw() );
 			}
 			
 			ob.append( "<body" + ( ( params == null ) ? " " + params.get( "bodyArgs" ) : "" ) + ">\n" );
@@ -344,17 +321,24 @@ public class Template extends Plugin implements Listener
 			ob.append( pageData + "\n" );
 			
 			if ( fwVals.get( "footer" ) != null && !fwVals.get( "footer" ).isEmpty() )
-				ob.append( doInclude( fwVals.get( "footer" ), event ) + "\n" );
+				ob.append( read( fwVals.get( "footer" ), event ) + "\n" );
 			
 			ob.append( "</body>\n" );
 			ob.append( "</html>\n" );
 			
 			event.setSource( Unpooled.buffer().writeBytes( ob.toString().getBytes() ) );
 		}
-		catch ( IOException | EvalException | EvalMultipleException e )
+		catch ( EvalException | EvalMultipleException e )
 		{
 			// event.setSource( Unpooled.buffer().writeBytes( generateExceptionPage( e, event.getRequest().getEvalFactory() ).getBytes() ) );
 			event.getResponse().sendException( e );
 		}
+	}
+	
+	private String read( String pack, RenderEvent event ) throws EvalException, EvalMultipleException
+	{
+		EvalContext context = EvalContext.fromPackage( event.getSite(), pack ).request( event.getRequest() );
+		context.require( !getConfig().getBoolean( "config.ignoreFileNotFound" ) );
+		return context.read();
 	}
 }
