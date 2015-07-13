@@ -20,9 +20,11 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -432,7 +434,7 @@ public abstract class ScriptingBaseJava extends Script
 		if ( data == null || data.isEmpty() )
 			return Lists.newArrayList();
 		
-		return Splitter.on( limiter ).splitToList( data );
+		return new ArrayList<String>( Splitter.on( limiter ).splitToList( data ) );
 	}
 	
 	Map<String, String> explode( String limiter, String separator, String data )
@@ -440,7 +442,7 @@ public abstract class ScriptingBaseJava extends Script
 		if ( data == null || data.isEmpty() )
 			return Maps.newHashMap();
 		
-		return Splitter.on( limiter ).withKeyValueSeparator( separator ).split( data );
+		return new HashMap<String, String>( Splitter.on( limiter ).withKeyValueSeparator( separator ).split( data ) );
 	}
 	
 	String implode( String joiner, Map<String, String> data )
