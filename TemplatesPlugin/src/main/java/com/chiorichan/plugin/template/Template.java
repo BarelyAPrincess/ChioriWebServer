@@ -55,12 +55,6 @@ public class Template extends Plugin implements Listener
 		return pack.substring( 1 );
 	}
 	
-	private EvalResult eval( String pack, RenderEvent event ) throws EvalException, EvalMultipleException
-	{
-		EvalContext context = EvalContext.fromPackage( event.getSite(), pack ).request( event.getRequest() ).require();
-		return event.getRequest().getEvalFactory().eval( context );
-	}
-	
 	private String generateExceptionPage( Throwable t, EvalFactory factory ) throws EvalException, EvalMultipleException, IOException
 	{
 		Validate.notNull( t );
@@ -90,6 +84,13 @@ public class Template extends Plugin implements Listener
 				lineNum = ste.getLineNumber();
 				colNum = ste.getColumnNumber();
 				
+				if ( lineNum < 0 )
+				{
+					ste.examineMessage( t.getMessage() );
+					lineNum = ste.getLineNumber();
+					colNum = ste.getColumnNumber();
+				}
+				
 				className = ste.getClassName();
 				String methodName = ste.getMethodName();
 				
@@ -105,10 +106,10 @@ public class Template extends Plugin implements Listener
 				if ( lineNum > -1 )
 				{
 					String preview = TemplateUtils.generateCodePreview( ste );
-					codeSample += "<p>Source Code:</p><pre>" + preview + "</pre>";
+					codeSample += "<p>Original Source Code:</p><pre>" + preview + "</pre>";
 					
 					if ( context.baseSource() != null && !context.baseSource().isEmpty() && !context.baseSource().contains( preview ) )
-						codeSample += "<p>Pre-evaluated Code:</p><pre>" + TemplateUtils.generateCodePreview( context.baseSource(), lineNum, colNum ) + "</pre>";
+						codeSample += "<p>Evaluated Code:</p><pre>" + TemplateUtils.generateCodePreview( context.baseSource(), lineNum, colNum ) + "</pre>";
 				}
 			}
 		}
@@ -277,12 +278,12 @@ public class Template extends Plugin implements Listener
 			
 			// Allow pages to disable the inclusion of common header
 			if ( showCommons )
-				ob.append( read( domainToPackage( site.getDomain() ) + ".includes.common", event ) + "\n" );
+				ob.append( packageRead( domainToPackage( site.getDomain() ) + ".includes.common", event ) + "\n" );
 			
-			ob.append( read( domainToPackage( site.getDomain() ) + ".includes." + getPackageName( theme ), event ) + "\n" );
+			ob.append( packageRead( domainToPackage( site.getDomain() ) + ".includes." + getPackageName( theme ), event ) + "\n" );
 			
 			if ( fwVals.get( "header" ) != null && !fwVals.get( "header" ).isEmpty() )
-				ob.append( read( fwVals.get( "header" ), event ) + "\n" );
+				ob.append( packageRead( fwVals.get( "header" ), event ) + "\n" );
 			
 			ob.append( "</head>\n" );
 			
@@ -293,14 +294,14 @@ public class Template extends Plugin implements Listener
 			
 			if ( !theme.isEmpty() )
 			{
-				EvalResult result = eval( theme, event );
+				EvalResult result = packageEval( theme, event );
 				pageData = result.getString();
 				params.putAll( result.context().request().getRequestMapRaw() );
 			}
 			
 			if ( !view.isEmpty() )
 			{
-				EvalResult result = eval( view, event );
+				EvalResult result = packageEval( view, event );
 				viewData = result.getString();
 				params.putAll( result.context().request().getRequestMapRaw() );
 			}
@@ -321,7 +322,7 @@ public class Template extends Plugin implements Listener
 			ob.append( pageData + "\n" );
 			
 			if ( fwVals.get( "footer" ) != null && !fwVals.get( "footer" ).isEmpty() )
-				ob.append( read( fwVals.get( "footer" ), event ) + "\n" );
+				ob.append( packageRead( fwVals.get( "footer" ), event ) + "\n" );
 			
 			ob.append( "</body>\n" );
 			ob.append( "</html>\n" );
@@ -330,12 +331,17 @@ public class Template extends Plugin implements Listener
 		}
 		catch ( EvalException | EvalMultipleException e )
 		{
-			// event.setSource( Unpooled.buffer().writeBytes( generateExceptionPage( e, event.getRequest().getEvalFactory() ).getBytes() ) );
 			event.getResponse().sendException( e );
 		}
 	}
 	
-	private String read( String pack, RenderEvent event ) throws EvalException, EvalMultipleException
+	private EvalResult packageEval( String pack, RenderEvent event ) throws EvalException, EvalMultipleException
+	{
+		EvalContext context = EvalContext.fromPackage( event.getSite(), pack ).request( event.getRequest() ).require();
+		return event.getRequest().getEvalFactory().eval( context );
+	}
+	
+	private String packageRead( String pack, RenderEvent event ) throws EvalException, EvalMultipleException
 	{
 		EvalContext context = EvalContext.fromPackage( event.getSite(), pack ).request( event.getRequest() );
 		context.require( !getConfig().getBoolean( "config.ignoreFileNotFound" ) );

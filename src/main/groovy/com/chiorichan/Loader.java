@@ -87,10 +87,10 @@ public class Loader extends BuiltinEventCreator implements Listener
 	protected static long startTime = System.currentTimeMillis();
 	
 	private static String stopReason = null;
-	public static File tmpFileDirectory;
+	private static File tmpFileDirectory;
 	private static AutoUpdater updater;
 	
-	public static File webroot = new File( "" );
+	private static File webroot = new File( "" );
 	private final ServerRunLevelEvent runLevelEvent = new ServerRunLevelEventImpl();
 	
 	private Loader( OptionSet options0 ) throws StartupException

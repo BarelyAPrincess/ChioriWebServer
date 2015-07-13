@@ -26,7 +26,6 @@ import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.RandomFunc;
 import com.chiorichan.util.StringFunc;
-import com.chiorichan.util.Versioning;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -119,7 +118,7 @@ public class SessionManager implements TaskCreator, ServerManager
 	 */
 	public static boolean isDebug()
 	{
-		return isDebug || Versioning.isDevelopment();
+		return isDebug;// || Versioning.isDevelopment();
 	}
 	
 	/**

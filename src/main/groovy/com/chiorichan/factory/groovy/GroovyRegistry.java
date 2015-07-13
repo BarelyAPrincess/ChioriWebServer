@@ -61,7 +61,7 @@ public class GroovyRegistry
 	 * Groovy Imports :P
 	 */
 	private static final GroovyImportCustomizer imports = new GroovyImportCustomizer();
-	private static final Class<?>[] classImports = new Class<?>[] {Loader.class, AccountManager.class, AccountType.class, Account.class, AccountAuthenticator.class, EventBus.class, PermissionManager.class, PluginManager.class, TaskManager.class, Timings.class, SessionManager.class, SiteManager.class, Site.class};
+	private static final Class<?>[] classImports = new Class<?>[] {Loader.class, AccountManager.class, AccountType.class, Account.class, AccountAuthenticator.class, EventBus.class, PermissionManager.class, PluginManager.class, TaskManager.class, Timings.class, SessionManager.class, SiteManager.class, Site.class, EvalContext.class};
 	private static final String[] starImports = new String[] {"com.chiorichan.lang", "com.chiorichan.util", "org.apache.commons.lang3.text", "org.ocpsoft.prettytime", "java.util", "java.net", "com.google.common.base"};
 	private static final String[] staticImports = new String[] {"com.chiorichan.util.Looper"};
 	

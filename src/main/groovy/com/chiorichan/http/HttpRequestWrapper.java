@@ -56,7 +56,6 @@ import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -210,9 +209,10 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			}
 			catch ( IllegalArgumentException e )
 			{
-				NetworkManager.getLogger().warning( "There was a problem decoding the request cookie.", e );
-				NetworkManager.getLogger().debug( "Cookie: " + var1 );
-				NetworkManager.getLogger().debug( "Headers: " + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( http.headers() ) );
+				NetworkManager.getLogger().severe( "Failed to parse cookie for reason: " + e.getMessage() );
+				// NetworkManager.getLogger().warning( "There was a problem decoding the request cookie.", e );
+				// NetworkManager.getLogger().debug( "Cookie: " + var1 );
+				// NetworkManager.getLogger().debug( "Headers: " + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( http.headers() ) );
 			}
 		
 		initServerVars();

@@ -11,6 +11,8 @@ package com.chiorichan.factory;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.Validate;
+
 
 /**
  * Similar to StackTraceElement except only used for Groovy Scripts
@@ -20,8 +22,8 @@ public class ScriptTraceElement
 	private final String fileName;
 	private final String methodName;
 	private final String className;
-	private final int lineNum;
-	private final int colNum;
+	private int lineNum = -1;
+	private int colNum = -1;
 	private final EvalContext context;
 	
 	public ScriptTraceElement( EvalContext context, int lineNum, int colNum )
@@ -64,33 +66,30 @@ public class ScriptTraceElement
 		methodName = "run";
 		className = ( context.name() == null || context.name().isEmpty() ) ? "<Unknown Class>" : context.name().substring( 0, context.name().lastIndexOf( "." ) );
 		
-		msg = msg.replaceAll( "\n", "" );
-		
-		// org.codehaus.groovy.control.MultipleCompilationErrorsException: startup failed: GroovyScript44898378.chi: 69: expecting '}', found ':' @ line 69, column 20. instream.close(): ^ 1 error
-		// startup failed:GroovyScript26427446.chi: 7: unable to resolve class BASE64Decoder @ line 7, column 14. def data = new BASE64Decoder().decodeBuffer( file.data ); ^1 error
-		
-		// Pattern p1 = Pattern.compile( "line[: ]?([0-9]*), column[: ]?([0-9]*)\\. (.*)\\^" );
-		Pattern p1 = Pattern.compile( "line[: ]?([0-9]*), column[: ]?([0-9]*)" );
-		Matcher m1 = p1.matcher( msg );
-		
-		// Loader.getLogger().debug( msg );
-		
-		if ( m1.find() )
-		{
-			lineNum = Integer.parseInt( m1.group( 1 ) );
-			colNum = Integer.parseInt( m1.group( 2 ) );
-			// methodName = m1.group( 3 ).trim();
-		}
-		else
-		{
-			lineNum = -1;
-			colNum = -1;
-		}
+		if ( msg != null && !msg.isEmpty() )
+			examineMessage( msg );
 	}
 	
 	public EvalContext context()
 	{
 		return context;
+	}
+	
+	public ScriptTraceElement examineMessage( String msg )
+	{
+		Validate.notNull( msg );
+		
+		msg = msg.replaceAll( "\n", "" );
+		Pattern p1 = Pattern.compile( "line[: ]?([0-9]*), column[: ]?([0-9]*)" );
+		Matcher m1 = p1.matcher( msg );
+		
+		if ( m1.find() )
+		{
+			lineNum = Integer.parseInt( m1.group( 1 ) );
+			colNum = Integer.parseInt( m1.group( 2 ) );
+		}
+		
+		return this;
 	}
 	
 	public String getClassName()
