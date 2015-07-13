@@ -8,8 +8,6 @@
  */
 package com.chiorichan.util;
 
-import java.io.File;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.Collection;
@@ -27,13 +25,6 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.ocpsoft.prettytime.PrettyTime;
 
 import com.chiorichan.Loader;
-import com.chiorichan.factory.EvalExecutionContext;
-import com.chiorichan.factory.EvalFactoryResult;
-import com.chiorichan.factory.FileInterpreter;
-import com.chiorichan.http.HttpRequestWrapper;
-import com.chiorichan.lang.EvalException;
-import com.chiorichan.site.Site;
-import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.Timings;
 import com.google.common.collect.Maps;
 import com.google.i18n.phonenumbers.NumberParseException;
@@ -235,53 +226,6 @@ public class WebFunc
 	public static String escapeHTML( String l )
 	{
 		return StringEscapeUtils.escapeHtml4( l );
-	}
-	
-	public static EvalFactoryResult evalFile( HttpRequestWrapper request, Site site, String file ) throws IOException, EvalException
-	{
-		if ( file == null || file.isEmpty() )
-			return EvalExecutionContext.fromSource( "", "<no file>" ).result();
-		
-		File packFile = new File( file );
-		
-		if ( site == null )
-			site = SiteManager.INSTANCE.getDefaultSite();
-		
-		if ( packFile == null || !packFile.exists() )
-			return EvalExecutionContext.fromSource( "", "<no file>" ).result();
-		
-		return request.getEvalFactory().eval( EvalExecutionContext.fromFile( packFile ).request( request ).shell( FileInterpreter.determineShellFromName( packFile.getName() ) ).site( site ) );
-	}
-	
-	public static EvalFactoryResult evalPackage( HttpRequestWrapper request, Site site, String pack ) throws EvalException
-	{
-		try
-		{
-			return evalPackageWithException( request, site, pack );
-		}
-		catch ( IOException e )
-		{
-			return EvalExecutionContext.fromSource( "", "<no file>" ).result();
-		}
-	}
-	
-	public static EvalFactoryResult evalPackageWithException( HttpRequestWrapper request, Site site, String pack ) throws IOException, EvalException
-	{
-		File packFile = null;
-		
-		if ( site == null )
-			site = SiteManager.INSTANCE.getDefaultSite();
-		
-		packFile = site.getResourceWithException( pack );
-		
-		FileInterpreter fi = new FileInterpreter( packFile );
-		
-		if ( packFile == null || !packFile.exists() )
-			return EvalExecutionContext.fromSource( "", "<no file>" ).result();
-		
-		EvalFactoryResult result = request.getEvalFactory().eval( EvalExecutionContext.fromFile( fi ).request( request ).site( site ) );
-		
-		return result;
 	}
 	
 	public static Map<String, Object> filter( Map<String, Object> data, Collection<String> allowedKeys )
