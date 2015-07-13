@@ -101,6 +101,9 @@ public class Template extends Plugin implements Listener
 					className = null;
 				
 				EvalContext context = ste.context();
+				
+				Validate.notNull( context );
+				
 				fileName = context.filename();
 				
 				if ( lineNum > -1 )
@@ -187,7 +190,7 @@ public class Template extends Plugin implements Listener
 	{
 		try
 		{
-			// We check if this exception was thrown from inside our plugin
+			// We check if this exception was thrown from inside our plugin to prevent a fatal looping issue
 			if ( ExceptionUtils.indexOfThrowable( event.getThrowable(), Template.class ) > -1 )
 				return;
 			

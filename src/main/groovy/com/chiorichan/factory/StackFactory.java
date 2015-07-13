@@ -8,6 +8,7 @@
  */
 package com.chiorichan.factory;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,7 @@ import com.google.common.collect.Maps;
 public class StackFactory
 {
 	Map<String, EvalContext> scriptStack = Maps.newLinkedHashMap();
+	Map<String, EvalContext> scriptStackHistory = Maps.newLinkedHashMap();
 	
 	public List<ScriptTraceElement> examineStackTrace( StackTraceElement[] stackTrace )
 	{
@@ -46,8 +48,19 @@ public class StackFactory
 		return scriptTrace;
 	}
 	
+	public Map<String, EvalContext> getScriptTrace()
+	{
+		return Collections.unmodifiableMap( scriptStack );
+	}
+	
+	public Map<String, EvalContext> getScriptTraceHistory()
+	{
+		return Collections.unmodifiableMap( scriptStackHistory );
+	}
+	
 	public void stack( String scriptName, EvalContext context )
 	{
+		scriptStackHistory.put( scriptName, context );
 		scriptStack.put( scriptName, context );
 	}
 	

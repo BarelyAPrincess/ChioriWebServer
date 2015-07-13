@@ -41,6 +41,7 @@ import com.chiorichan.Loader;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.http.ErrorEvent;
 import com.chiorichan.event.http.HttpExceptionEvent;
+import com.chiorichan.factory.EvalContext;
 import com.chiorichan.lang.ApacheParser;
 import com.chiorichan.lang.HttpError;
 import com.chiorichan.logger.LogEvent;
@@ -309,7 +310,14 @@ public class HttpResponseWrapper
 				sendResponse();
 			}
 			else
-				sendError( httpStatus, null, "<pre>" + ExceptionUtils.getStackTrace( cause ) + "</pre>" );
+			{
+				String stackTrace = ExceptionUtils.getStackTrace( cause );
+				
+				for ( Entry<String, EvalContext> e : request.getEvalFactory().stack().getScriptTraceHistory().entrySet() )
+					stackTrace = stackTrace.replace( e.getKey(), e.getValue().filename() );
+				
+				sendError( httpStatus, null, "<pre>" + stackTrace + "</pre>" );
+			}
 		}
 		else
 		{
