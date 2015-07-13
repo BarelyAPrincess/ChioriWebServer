@@ -108,7 +108,7 @@ public class Template extends Plugin implements Listener
 					String preview = TemplateUtils.generateCodePreview( ste );
 					codeSample += "<p>Original Source Code:</p><pre>" + preview + "</pre>";
 					
-					if ( context.baseSource() != null && !context.baseSource().isEmpty() && !context.baseSource().contains( preview ) )
+					if ( context.baseSource() != null && !context.baseSource().isEmpty() && !context.baseSource().equals( preview ) )
 						codeSample += "<p>Evaluated Code:</p><pre>" + TemplateUtils.generateCodePreview( context.baseSource(), lineNum, colNum ) + "</pre>";
 				}
 			}
@@ -338,13 +338,18 @@ public class Template extends Plugin implements Listener
 	private EvalResult packageEval( String pack, RenderEvent event ) throws EvalException, EvalMultipleException
 	{
 		EvalContext context = EvalContext.fromPackage( event.getSite(), pack ).request( event.getRequest() ).require();
-		return event.getRequest().getEvalFactory().eval( context );
+		EvalResult result = event.getRequest().getEvalFactory().eval( context );
+		
+		if ( result.hasNotIgnorableExceptions() )
+			ErrorReporting.throwExceptions( result.getExceptions() );
+		
+		return result;
 	}
 	
 	private String packageRead( String pack, RenderEvent event ) throws EvalException, EvalMultipleException
 	{
 		EvalContext context = EvalContext.fromPackage( event.getSite(), pack ).request( event.getRequest() );
 		context.require( !getConfig().getBoolean( "config.ignoreFileNotFound" ) );
-		return context.read();
+		return context.read( false );
 	}
 }

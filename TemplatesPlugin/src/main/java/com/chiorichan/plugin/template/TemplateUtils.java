@@ -204,8 +204,6 @@ public class TemplateUtils
 		int cLine = 0;
 		for ( String l : source.split( "\n" ) )
 		{
-			l = WebFunc.escapeHTML( l );
-			
 			cLine++;
 			
 			if ( cLine > lineNum - 5 && cLine < lineNum + 5 )
@@ -214,13 +212,15 @@ public class TemplateUtils
 					if ( colNum > -1 && colNum <= l.length() )
 					{
 						colNum--;
-						l = l.substring( 0, colNum ) + "<span style=\"background-color: red; font-weight: bolder;\">" + l.substring( colNum, colNum + 1 ) + "</span>" + l.substring( colNum + 1 );
+						l = WebFunc.escapeHTML( l.substring( 0, colNum ) ) + "<span style=\"background-color: red; font-weight: bolder;\">" + WebFunc.escapeHTML( l.substring( colNum, colNum + 1 ) ) + "</span>" + WebFunc.escapeHTML( l.substring( colNum + 1 ) );
 					}
+					else
+						l = WebFunc.escapeHTML( l );
 					
 					sb.append( String.format( "<span class=\"error\"><span class=\"ln error-ln\">%4s</span> %s</span>", cLine, l ) );
 				}
 				else
-					sb.append( String.format( "<span class=\"ln\">%4s</span> %s\n", cLine, l ) );
+					sb.append( String.format( "<span class=\"ln\">%4s</span> %s\n", cLine, WebFunc.escapeHTML( l ) ) );
 		}
 		
 		return sb.toString();

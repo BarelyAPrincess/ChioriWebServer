@@ -11,8 +11,6 @@ package com.chiorichan.factory.processors;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
-
 import com.chiorichan.factory.EvalContext;
 import com.chiorichan.factory.groovy.GroovyRegistry;
 
@@ -35,7 +33,8 @@ public class GroovyScriptProcessor implements ScriptingProcessor
 		catch ( Throwable t )
 		{
 			// Clear the input source code and replace it with the exception stack trace
-			context.resetAndWrite( ExceptionUtils.getStackTrace( t ) );
+			// context.resetAndWrite( ExceptionUtils.getStackTrace( t ) );
+			context.reset();
 			throw t;
 		}
 		

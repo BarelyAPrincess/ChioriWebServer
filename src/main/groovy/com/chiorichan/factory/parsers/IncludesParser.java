@@ -39,7 +39,7 @@ public class IncludesParser extends HTMLCommentParser
 			Loader.getLogger().warning( "EvalFactory: include() method only accepts one argument, ignored." );
 		
 		// TODO Prevent infinite loops!
-		EvalResult result = factory.eval( EvalContext.fromAuto( site, args[1] ) );
+		EvalResult result = factory.eval( EvalContext.fromAuto( context.site(), args[1] ).request( context.request() ) );
 		
 		if ( result.hasNotIgnorableExceptions() )
 			ErrorReporting.throwExceptions( result.getExceptions() );

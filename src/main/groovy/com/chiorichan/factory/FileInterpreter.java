@@ -13,6 +13,7 @@ import io.netty.buffer.Unpooled;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Map;
@@ -34,40 +35,6 @@ public class FileInterpreter
 	protected Map<String, String> interpParams = Maps.newTreeMap();
 	protected ByteBuf data = Unpooled.buffer();
 	protected File cachedFile = null;
-	
-	public Charset getEncoding()
-	{
-		return encoding;
-	}
-	
-	public String getEncodingName()
-	{
-		return encoding.name();
-	}
-	
-	public void setEncoding( Charset encoding )
-	{
-		this.encoding = encoding;
-		interpParams.put( "encoding", encoding.name() );
-	}
-	
-	public File getFile()
-	{
-		return cachedFile;
-	}
-	
-	public String getFilePath()
-	{
-		if ( cachedFile == null )
-			return null;
-		
-		return cachedFile.getAbsolutePath();
-	}
-	
-	public boolean hasFile()
-	{
-		return cachedFile != null;
-	}
 	
 	public FileInterpreter()
 	{
@@ -121,10 +88,83 @@ public class FileInterpreter
 		return op;
 	}
 	
+	public byte[] consumeBytes()
+	{
+		byte[] bytes = new byte[data.readableBytes()];
+		int inx = data.readerIndex();
+		data.readBytes( bytes );
+		data.readerIndex( inx );
+		return bytes;
+	}
+	
+	public String consumeString()
+	{
+		return new String( consumeBytes(), encoding );
+	}
+	
+	public String get( String key )
+	{
+		if ( !interpParams.containsKey( key.toLowerCase() ) )
+			return null;
+		
+		return interpParams.get( key.toLowerCase() );
+	}
+	
+	public String getContentType()
+	{
+		if ( cachedFile == null )
+			return "text/html";
+		
+		String type = get( "contenttype" );
+		
+		if ( type == null || type.isEmpty() )
+			type = ContentTypes.getContentType( cachedFile.getAbsoluteFile() );
+		
+		if ( type.startsWith( "text" ) )
+			setEncoding( Charsets.toCharset( Loader.getConfig().getString( "server.defaultTextEncoding", "UTF-8" ) ) );
+		else
+			setEncoding( Charsets.toCharset( Loader.getConfig().getString( "server.defaultBinaryEncoding", "ISO-8859-1" ) ) );
+		
+		return type;
+	}
+	
+	public Charset getEncoding()
+	{
+		return encoding;
+	}
+	
+	public String getEncodingName()
+	{
+		return encoding.name();
+	}
+	
+	public File getFile()
+	{
+		return cachedFile;
+	}
+	
+	public String getFilePath()
+	{
+		if ( cachedFile == null )
+			return null;
+		
+		return cachedFile.getAbsolutePath();
+	}
+	
+	public Map<String, String> getParams()
+	{
+		return interpParams;
+	}
+	
+	public boolean hasFile()
+	{
+		return cachedFile != null;
+	}
+	
 	public final void interpretParamsFromFile( File file ) throws IOException
 	{
-		if ( file == null || !file.exists() )
-			return;
+		if ( file == null )
+			throw new FileNotFoundException( "File path was null" );
 		
 		FileInputStream is = null;
 		try
@@ -134,9 +174,7 @@ public class FileInterpreter
 			interpParams.put( "file", file.getAbsolutePath() );
 			
 			if ( file.isDirectory() )
-			{
 				interpParams.put( "shell", "embedded" );
-			}
 			else
 			{
 				if ( !interpParams.containsKey( "shell" ) || interpParams.get( "shell" ) == null )
@@ -193,22 +231,18 @@ public class FileInterpreter
 							Loader.getLogger().finer( "Setting param '" + key + "' to '" + val + "'" );
 							
 							if ( key.equals( "encoding" ) )
-							{
 								if ( Charset.isSupported( val ) )
 									setEncoding( Charsets.toCharset( val ) );
 								else
 									Loader.getLogger().severe( "The file '" + file.getAbsolutePath() + "' requested encoding '" + val + "' but it's not supported by the JVM!" );
-							}
 						}
 						catch ( NullPointerException | ArrayIndexOutOfBoundsException e )
 						{
 							
 						}
 					else if ( l.trim().isEmpty() )
-					{
 						lineCnt++;
-						// Continue reading, this line is empty.
-					}
+					// Continue reading, this line is empty.
 					else
 					{
 						// We encountered the beginning of the file content.
@@ -230,54 +264,15 @@ public class FileInterpreter
 		}
 	}
 	
-	public String getContentType()
-	{
-		if ( cachedFile == null )
-			return "text/html";
-		
-		String type = get( "contenttype" );
-		
-		if ( type == null || type.isEmpty() )
-			type = ContentTypes.getContentType( cachedFile.getAbsoluteFile() );
-		
-		if ( type.startsWith( "text" ) )
-			setEncoding( Charsets.toCharset( Loader.getConfig().getString( "server.defaultTextEncoding", "UTF-8" ) ) );
-		else
-			setEncoding( Charsets.toCharset( Loader.getConfig().getString( "server.defaultBinaryEncoding", "ISO-8859-1" ) ) );
-		
-		return type;
-	}
-	
-	public Map<String, String> getParams()
-	{
-		return interpParams;
-	}
-	
-	public String consumeString()
-	{
-		return new String( consumeBytes(), encoding );
-	}
-	
-	public byte[] consumeBytes()
-	{
-		byte[] bytes = new byte[data.readableBytes()];
-		int inx = data.readerIndex();
-		data.readBytes( bytes );
-		data.readerIndex( inx );
-		return bytes;
-	}
-	
-	public String get( String key )
-	{
-		if ( !interpParams.containsKey( key.toLowerCase() ) )
-			return null;
-		
-		return interpParams.get( key.toLowerCase() );
-	}
-	
 	public void put( String key, String value )
 	{
 		interpParams.put( key.toLowerCase(), value );
+	}
+	
+	public void setEncoding( Charset encoding )
+	{
+		this.encoding = encoding;
+		interpParams.put( "encoding", encoding.name() );
 	}
 	
 	@Override
@@ -286,9 +281,7 @@ public class FileInterpreter
 		String overrides = "";
 		
 		for ( Entry<String, String> o : interpParams.entrySet() )
-		{
 			overrides += "," + o.getKey() + "=" + o.getValue();
-		}
 		
 		if ( overrides.length() > 1 )
 			overrides = overrides.substring( 1 );

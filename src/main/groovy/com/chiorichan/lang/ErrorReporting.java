@@ -107,6 +107,15 @@ public enum ErrorReporting
 		return levels.toArray( new ErrorReporting[0] );
 	}
 	
+	public static String printExceptions( EvalException... exceptions )
+	{
+		// Might need some better handling for this!
+		StringBuilder sb = new StringBuilder();
+		for ( EvalException e : exceptions )
+			sb.append( e.getMessage() + "\n" );
+		return sb.toString();
+	}
+	
 	public static void throwExceptions( EvalException... exceptions ) throws EvalException, EvalMultipleException
 	{
 		List<EvalException> exps = Lists.newArrayList();

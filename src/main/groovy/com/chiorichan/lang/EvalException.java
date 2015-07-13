@@ -8,6 +8,7 @@
  */
 package com.chiorichan.lang;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -92,7 +93,7 @@ public class EvalException extends Exception
 					abort = true;
 			return abort;
 		}
-		else if ( cause instanceof NullPointerException || cause instanceof ArrayIndexOutOfBoundsException )
+		else if ( cause instanceof NullPointerException || cause instanceof ArrayIndexOutOfBoundsException || cause instanceof IOException )
 		{
 			result.addException( new EvalException( ErrorReporting.E_ERROR, cause ) );
 			return true;

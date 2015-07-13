@@ -75,7 +75,6 @@ public class EvalContext
 			EvalException.exceptionHandler( e, context );
 			return context;
 		}
-		// EvalException.exceptionHandler( e, shellFactory, result, ErrorReporting.E_WARNING, String.format( "Exception caught while trying to read file '%s' from disk", fi.getAbsolutePath() ) );
 	}
 	
 	public static EvalContext fromFile( final FileInterpreter fi )
@@ -205,10 +204,14 @@ public class EvalContext
 		
 		result = factory.eval( this );
 		
+		String str = result.getString( false );
+		
 		if ( required && result.hasNotIgnorableExceptions() )
 			ErrorReporting.throwExceptions( result.getExceptions() );
+		if ( result.hasIgnorableExceptions() )
+			str = ErrorReporting.printExceptions( result.getIgnorableExceptions() ) + "\n" + str;
 		
-		factory.print( result.getString() );
+		factory.print( str );
 		return result.getObject();
 	}
 	
@@ -245,10 +248,15 @@ public class EvalContext
 	
 	public String read() throws EvalException, EvalMultipleException
 	{
-		return read( false );
+		return read( false, true );
 	}
 	
-	public String read( boolean includeObj ) throws EvalException, EvalMultipleException
+	public String read( boolean printErrors ) throws EvalException, EvalMultipleException
+	{
+		return read( false, printErrors );
+	}
+	
+	public String read( boolean includeObj, boolean printErrors ) throws EvalException, EvalMultipleException
 	{
 		EvalResult result = null;
 		if ( request != null )
@@ -258,10 +266,14 @@ public class EvalContext
 		else
 			throw new IllegalArgumentException( "We can't read() this EvalContext until you provide either the request or the factory." );
 		
+		String str = result.getString( includeObj );
+		
 		if ( required && result.hasNotIgnorableExceptions() )
 			ErrorReporting.throwExceptions( result.getExceptions() );
+		if ( printErrors && result.hasIgnorableExceptions() )
+			str = ErrorReporting.printExceptions( result.getIgnorableExceptions() ) + "\n" + str;
 		
-		return result.getString( includeObj );
+		return str;
 	}
 	
 	public byte[] readBytes()
