@@ -13,11 +13,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.chiorichan.Loader;
-import com.chiorichan.factory.EvalExceptionCallback;
+import com.chiorichan.factory.EvalCallback;
+import com.chiorichan.factory.EvalContext;
 import com.chiorichan.factory.EvalFactory;
-import com.chiorichan.factory.EvalFactoryResult;
+import com.chiorichan.factory.EvalResult;
 import com.chiorichan.factory.ScriptTraceElement;
-import com.chiorichan.factory.ShellFactory;
+import com.chiorichan.factory.StackFactory;
 import com.google.common.collect.Maps;
 
 /**
@@ -26,79 +27,131 @@ import com.google.common.collect.Maps;
 public class EvalException extends Exception
 {
 	private static final long serialVersionUID = -1611181613618341914L;
-	private static final Map<Class<? extends Throwable>, EvalExceptionCallback> registered = Maps.newConcurrentMap();
+	private static final Map<Class<? extends Throwable>, EvalCallback> registered = Maps.newConcurrentMap();
 	
-	private final List<ScriptTraceElement> scriptTrace;
+	private List<ScriptTraceElement> scriptTrace = null;
 	private final ErrorReporting level;
 	
-	public EvalException( ErrorReporting level, ShellFactory factory )
+	public EvalException( ErrorReporting level )
 	{
-		scriptTrace = factory.examineStackTrace( getStackTrace() );
 		this.level = level;
 	}
 	
-	public EvalException( ErrorReporting level, String message, ShellFactory factory )
+	public EvalException( ErrorReporting level, String message )
 	{
 		super( message );
 		this.level = level;
-		scriptTrace = factory.examineStackTrace( getStackTrace() );
 	}
 	
-	public EvalException( ErrorReporting level, String message, Throwable cause, ShellFactory factory )
+	public EvalException( ErrorReporting level, String message, Throwable cause )
 	{
 		super( message, cause );
+		if ( cause instanceof EvalException )
+			throw new IllegalArgumentException( "The cause argument for EvalException can't be of it's own type." );
 		this.level = level;
-		scriptTrace = factory.examineStackTrace( cause.getStackTrace() );
 	}
 	
-	public EvalException( ErrorReporting level, Throwable cause, ShellFactory factory )
+	public EvalException( ErrorReporting level, Throwable cause )
 	{
 		super( cause );
+		if ( cause instanceof EvalException )
+			throw new IllegalArgumentException( "The cause argument for EvalException can't be of it's own type." );
 		this.level = level;
-		scriptTrace = factory.examineStackTrace( cause.getStackTrace() );
 	}
 	
-	public static void exceptionHandler( Throwable t, ShellFactory factory, EvalFactoryResult result )
+	/**
+	 * Processes and appends the input exception thrown to the context provided.
+	 * 
+	 * @param cause
+	 *            The exception thrown
+	 * @param context
+	 *            The EvalContext associated with the eval request
+	 * @return True if we should abort any further execution of code
+	 */
+	public static boolean exceptionHandler( Throwable cause, EvalContext context )
 	{
-		exceptionHandler( t, factory, result, ErrorReporting.E_ERROR );
-	}
-	
-	public static void exceptionHandler( Throwable t, ShellFactory factory, EvalFactoryResult result, ErrorReporting level )
-	{
-		exceptionHandler( t, factory, result, level, null );
-	}
-	
-	public static void exceptionHandler( Throwable t, ShellFactory factory, EvalFactoryResult result, ErrorReporting level, String message )
-	{
-		if ( t == null )
-			return;
+		if ( cause == null )
+			return false;
+		
+		EvalResult result = context.result();
 		
 		/**
-		 * We just forward {@link IgnorableEvalException} and {@link EvalFactoryException}
+		 * We just forward {@link EvalException}
 		 */
-		if ( t instanceof EvalException )
-			result.addException( ( EvalException ) t );
-		else if ( t instanceof NullPointerException || t instanceof ArrayIndexOutOfBoundsException )
-			result.addException( message == null ? new EvalException( level, t, factory ) : new EvalException( level, message, t, factory ) );
+		if ( cause instanceof EvalException )
+		{
+			result.addException( ( EvalException ) cause );
+			if ( ! ( ( EvalException ) cause ).isIgnorable() )
+				return true;
+		}
+		else if ( cause instanceof EvalMultipleException )
+		{
+			boolean abort = false;
+			for ( EvalException e : ( ( EvalMultipleException ) cause ).getExceptions() )
+				if ( EvalException.exceptionHandler( e, context ) )
+					abort = true;
+			return abort;
+		}
+		else if ( cause instanceof NullPointerException || cause instanceof ArrayIndexOutOfBoundsException )
+		{
+			result.addException( new EvalException( ErrorReporting.E_ERROR, cause ) );
+			return true;
+		}
 		else
 		{
 			boolean handled = false;
 			
-			for ( Entry<Class<? extends Throwable>, EvalExceptionCallback> entry : registered.entrySet() )
-				if ( entry.getKey().isAssignableFrom( t.getClass() ) )
+			Map<Class<? extends Throwable>, EvalCallback> assignable = Maps.newHashMap();
+			
+			for ( Entry<Class<? extends Throwable>, EvalCallback> entry : registered.entrySet() )
+				if ( cause.getClass().equals( entry.getKey() ) )
 				{
-					handled = entry.getValue().callback( t, factory, result, level, message );
-					if ( handled )
+					ErrorReporting e = entry.getValue().callback( cause, context );
+					if ( e == null )
+					{
+						handled = true;
 						break;
+					}
+					else
+						return !e.isIgnorable();
 				}
+				else if ( entry.getKey().isAssignableFrom( cause.getClass() ) )
+					assignable.put( entry.getKey(), entry.getValue() );
 			
 			if ( !handled )
-			{
-				t.printStackTrace();
-				Loader.getLogger().warning( "Uncaught exception in EvalFactory for exception " + t.getClass().getName() );
-				result.addException( message == null ? new EvalException( level, t, factory ) : new EvalException( level, message, t, factory ) );
-			}
+				if ( assignable.size() == 0 )
+				{
+					Loader.getLogger().severe( "Uncaught exception in EvalFactory for exception " + cause.getClass().getName(), cause );
+					result.addException( new EvalException( ErrorReporting.E_ERROR, "Uncaught exception in EvalFactory", cause ) );
+				}
+				else if ( assignable.size() == 1 )
+				{
+					ErrorReporting e = assignable.values().toArray( new EvalCallback[0] )[0].callback( cause, context );
+					if ( e == null )
+					{
+						result.addException( new EvalException( ErrorReporting.E_ERROR, cause ) );
+						return true;
+					}
+					else if ( !e.isIgnorable() )
+						return true;
+				}
+				else
+					for ( Entry<Class<? extends Throwable>, EvalCallback> entry : assignable.entrySet() )
+					{
+						boolean noAssignment = true;
+						for ( Class<? extends Throwable> sub : assignable.keySet() )
+							if ( sub != entry.getKey() )
+								if ( sub.isAssignableFrom( entry.getKey() ) )
+									noAssignment = false;
+						if ( noAssignment )
+						{
+							ErrorReporting e = entry.getValue().callback( cause, context );
+							return e != null && !e.isIgnorable();
+						}
+					}
 		}
+		
+		return false;
 	}
 	
 	/**
@@ -110,7 +163,7 @@ public class EvalException extends Exception
 	 *            Classes to be registered
 	 */
 	@SafeVarargs
-	public static void registerException( EvalExceptionCallback callback, Class<? extends Throwable>... clzs )
+	public static void registerException( EvalCallback callback, Class<? extends Throwable>... clzs )
 	{
 		for ( Class<? extends Throwable> clz : clzs )
 			registered.put( clz, callback );
@@ -126,13 +179,24 @@ public class EvalException extends Exception
 		return scriptTrace.toArray( new ScriptTraceElement[0] );
 	}
 	
+	public boolean hasScriptTrace()
+	{
+		return scriptTrace != null && scriptTrace.size() > 0;
+	}
+	
 	public boolean isIgnorable()
 	{
-		return level == ErrorReporting.E_IGNORABLE || level == ErrorReporting.E_DEPRECATED || level == ErrorReporting.E_USER_DEPRECATED || level == ErrorReporting.E_NOTICE || level == ErrorReporting.E_USER_NOTICE || level == ErrorReporting.E_WARNING || level == ErrorReporting.E_USER_WARNING;
+		return level.isIgnorable();
 	}
 	
 	public boolean isScriptingException()
 	{
 		return getCause() != null && getCause().getStackTrace().length > 0 && getCause().getStackTrace()[0].getClassName().startsWith( "org.codehaus.groovy.runtime" );
+	}
+	
+	public EvalException populateScriptTrace( StackFactory factory )
+	{
+		scriptTrace = factory.examineStackTrace( getCause() == null ? getStackTrace() : getCause().getStackTrace() );
+		return this;
 	}
 }

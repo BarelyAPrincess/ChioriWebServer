@@ -8,6 +8,7 @@
  */
 package com.chiorichan.factory.processors;
 
+import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 
 import java.io.IOException;
@@ -15,8 +16,8 @@ import java.io.IOException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
-import com.chiorichan.factory.EvalExecutionContext;
-import com.chiorichan.factory.ShellFactory;
+import com.chiorichan.factory.EvalContext;
+import com.chiorichan.factory.groovy.GroovyRegistry;
 import com.chiorichan.lang.ErrorReporting;
 import com.chiorichan.lang.EvalException;
 
@@ -48,7 +49,7 @@ public class EmbeddedGroovyScriptProcessor implements ScriptingProcessor
 	}
 	
 	@Override
-	public boolean eval( EvalExecutionContext context, ShellFactory shellFactory ) throws Exception
+	public boolean eval( EvalContext context ) throws Exception
 	{
 		String source = context.readString();
 		
@@ -71,7 +72,7 @@ public class EmbeddedGroovyScriptProcessor implements ScriptingProcessor
 				int endIndex = source.indexOf( MARKER_END, Math.max( startIndex, fullFileIndex ) );
 				
 				if ( endIndex == -1 )
-					throw new EvalException( ErrorReporting.E_PARSE, new IOException( "Marker `<%` was not closed after line " + ( StringUtils.countMatches( output.toString(), "\n" ) + 1 ) + ", please check your source file and try again." ), shellFactory );
+					throw new EvalException( ErrorReporting.E_PARSE, new IOException( "Marker `<%` was not closed after line " + ( StringUtils.countMatches( output.toString(), "\n" ) + 1 ) + ", please check your source file and try again." ) );
 				
 				fragment = source.substring( startIndex + MARKER_START.length(), endIndex );
 				
@@ -105,7 +106,10 @@ public class EmbeddedGroovyScriptProcessor implements ScriptingProcessor
 		context.baseSource( output.toString() );
 		try
 		{
-			context.result().object( interpret( context, shellFactory, output.toString() ) );
+			GroovyShell shell = GroovyRegistry.getNewShell( context );
+			Script script = GroovyRegistry.makeScript( shell, output.toString(), context );
+			
+			context.result().object( script.run() );
 		}
 		catch ( Throwable t )
 		{
@@ -120,12 +124,5 @@ public class EmbeddedGroovyScriptProcessor implements ScriptingProcessor
 	public String[] getHandledTypes()
 	{
 		return new String[] {"embedded", "gsp", "jsp", "chi"};
-	}
-	
-	private Object interpret( EvalExecutionContext context, ShellFactory shellFactory, String scriptText )
-	{
-		Script script = shellFactory.makeScript( scriptText, context );
-		Object o = script.run();
-		return ( o == null ) ? "" : o;
 	}
 }

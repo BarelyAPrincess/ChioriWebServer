@@ -10,12 +10,14 @@ package com.chiorichan.factory.groovy
 
 import com.chiorichan.account.Account
 import com.chiorichan.account.AccountManager
-import com.chiorichan.factory.EvalFactory;
-import com.chiorichan.factory.EvalFactoryResult;
-import com.chiorichan.factory.ScriptTraceElement;
+import com.chiorichan.factory.EvalContext
+import com.chiorichan.factory.EvalFactory
+import com.chiorichan.factory.EvalResult
+import com.chiorichan.factory.ScriptTraceElement
 import com.chiorichan.http.HttpCode
 import com.chiorichan.http.HttpRequestWrapper
 import com.chiorichan.http.HttpResponseWrapper
+import com.chiorichan.lang.ErrorReporting
 import com.chiorichan.lang.EvalException
 import com.chiorichan.permission.Permission
 import com.chiorichan.permission.PermissionResult
@@ -24,7 +26,6 @@ import com.chiorichan.site.Site
 import com.chiorichan.site.SiteManager
 import com.chiorichan.util.WebFunc
 import com.google.common.collect.Lists
-
 
 /**
  * Used as the Groovy Scripting Base and provides scripts with custom builtin methods
@@ -37,13 +38,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	}
 
 	/**
-	 * Holds history of included packages
-	 * Used by include_once and require_once methods.
-	 */
-	private final List<String> includedPackages = Lists.newArrayList()
-
-	/**
-	 * Same as @link ScriptingBaseJava:var_export(obj) but instead prints the result to the buffer
+	 * Same as {@link ScriptingBaseJava#var_export(obj)} but instead prints the result to the buffer
 	 * Based on method of same name in PHP
 	 * @param obj
 	 *       The object you wish to dump
@@ -247,74 +242,40 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	}
 
 	/**
-	 * Used to execute package file within script
+	 * Used to execute site file within the script.
+	 * FYI, Absolute and .. paths are disallowed for security reasons
+	 *
+	 * @param pack
+	 *       The file relative
+	 * @return
+	 *       The EvalContext ready for eval() or read()
+	 */
+	EvalContext fileContext( String file )
+	{
+		return EvalContext.fromFile( getSite(), file ).request( getRequest() )
+	}
+
+	/**
+	 * Used to execute package file within the script.
+	 *
 	 * @param pack
 	 *       The package, e.g, com.chiorichan.widgets.sidemenu
 	 * @return
-	 *       The object returned from the EvalFactory
+	 *       The EvalContext ready for eval() or read()
 	 */
+	EvalContext packageContext( String pack )
+	{
+		return EvalContext.fromPackage( getSite(), pack ).request( getRequest() )
+	}
+
 	Object include( String pack )
 	{
-		EvalFactoryResult result = evalPackage( pack )
-		print result.getString()
-		return result.getObject()
+		return packageContext( pack ).eval()
 	}
 
-	/**
-	 * Similar to @link include( pack ) but will only include once.
-	 * Nothing happens if included more than once.
-	 * @param pack
-	 *       The package, e.g, com.chiorichan.widgets.sidemenu
-	 * @return
-	 *       The object returned from the EvalFactory
-	 */
-	Object include_once( String pack )
-	{
-		if ( !includedPackages.contains( pack ) )
-		{
-			includedPackages.add( pack )
-			EvalFactoryResult result = evalPackage( pack )
-			print result.getString()
-			return result.getObject()
-		}
-	}
-
-	/**
-	 * Used to execute package files within script.
-	 * Will throw an exception if there is a problem.
-	 * @param pack
-	 *       The package, e.g, com.chiorichan.widgets.sidemenu
-	 * @return
-	 *       The object returned from the EvalFactory
-	 * @throws IOException if file not found
-	 * @throws ShellExecuteException if there was a EvalFactory exception.
-	 */
 	Object require( String pack )
 	{
-		EvalFactoryResult result = evalPackageWithException( pack )
-		print result.getString()
-		return result.getObject()
-	}
-
-	/**
-	 * Similar to @link require( pack ) but will only require once.
-	 * Nothing happens if included more than once.
-	 * @param pack
-	 *       The package, e.g, com.chiorichan.widgets.sidemenu
-	 * @return
-	 *       The object returned from the EvalFactory
-	 * @throws IOException if file not found
-	 * @throws ShellExecuteException if there was a EvalFactory exception.
-	 */
-	Object require_once( String pack )
-	{
-		if ( !includedPackages.contains( pack ) )
-		{
-			includedPackages.add( pack )
-			EvalFactoryResult result = evalPackageWithException( pack )
-			print result.getString()
-			return result.getObject()
-		}
+		return packageContext( pack ).require().eval()
 	}
 
 	boolean isAdmin()
@@ -350,47 +311,5 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	EvalFactory getEvalFactory()
 	{
 		return getRequest().getEvalFactory()
-	}
-
-	// Old Http Utils Methods - needs restructuring
-
-	EvalFactoryResult evalFile( String file ) throws IOException, EvalException
-	{
-		return WebFunc.evalFile( getRequest(), getSession().getSite(), file )
-	}
-
-	EvalFactoryResult evalPackage( String pack ) throws EvalException
-	{
-		return WebFunc.evalPackage( getRequest(), getSession().getSite(), pack )
-	}
-
-	EvalFactoryResult evalPackageWithException( String pack, Object... global ) throws IOException, EvalException
-	{
-		return WebFunc.evalPackageWithException( getRequest(), getSession().getSite(), pack )
-	}
-
-	EvalFactoryResult evalPackageWithException( String pack ) throws IOException, EvalException
-	{
-		return WebFunc.evalPackageWithException( getRequest(), getSession().getSite(), pack )
-	}
-
-	String readFile( String file ) throws IOException, EvalException
-	{
-		return WebFunc.evalFile( getRequest(), getSession().getSite(), file ).getString()
-	}
-
-	String readPackage( String pack ) throws EvalException
-	{
-		return WebFunc.evalPackage( getRequest(), getSession().getSite(), pack ).getString()
-	}
-
-	String readPackageWithException( String pack, Object... global ) throws IOException, EvalException
-	{
-		return WebFunc.evalPackageWithException( getRequest(), getSession().getSite(), pack ).getString()
-	}
-
-	String readPackageWithException( String pack ) throws IOException, EvalException
-	{
-		return WebFunc.evalPackageWithException( getRequest(), getSession().getSite(), pack ).getString()
 	}
 }

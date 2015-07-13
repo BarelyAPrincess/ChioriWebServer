@@ -63,9 +63,9 @@ import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.RenderEvent;
 import com.chiorichan.event.server.RequestEvent;
-import com.chiorichan.factory.EvalExecutionContext;
+import com.chiorichan.factory.EvalContext;
 import com.chiorichan.factory.EvalFactory;
-import com.chiorichan.factory.EvalFactoryResult;
+import com.chiorichan.factory.EvalResult;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.lang.ApacheParser;
 import com.chiorichan.lang.ErrorReporting;
@@ -119,9 +119,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		setTempDirectory( Loader.getTempFileDirectory() );
 		
 		// Initialize static server variables
-		staticServerVars.put( ServerVars.SERVER_SOFTWARE, Versioning.getProduct() );
-		staticServerVars.put( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "me@chiorichan.com" ) );
-		staticServerVars.put( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Versioning.getVersion() );
+		
 	}
 	
 	private HttpPostRequestDecoder decoder;
@@ -285,13 +283,19 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			}
 			else
 			{
-				if ( evalOrig.isScriptingException() )
+				if ( evalOrig.isScriptingException() && !evalOrig.hasScriptTrace() )
 				{
+					log.log( Level.WARNING, "We caught an EvalException which was determined to be related to a Scripting problem but the ScriptTrace was empty, this might be a combined internal and external problem.", ConsoleColor.NEGATIVE, ConsoleColor.RED );
+					log.log( Level.SEVERE, "%s%sException %s thrown in file '%s' at line %s, message '%s'", ConsoleColor.NEGATIVE, ConsoleColor.RED, cause.getClass().getName(), cause.getStackTrace()[0].getFileName(), cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
+				}
+				else if ( evalOrig.isScriptingException() )
+				{
+					
 					ScriptTraceElement element = evalOrig.getScriptTrace()[0];
-					log.log( Level.SEVERE, ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s:%s, message '%s'", cause.getClass().getName(), element.context().filename(), element.getLineNumber(), ( element.getColumnNumber() > 0 ) ? element.getColumnNumber() : 0, cause.getMessage() );
+					log.log( Level.SEVERE, "%s%sException %s thrown in file '%s' at line %s:%s, message '%s'", ConsoleColor.NEGATIVE, ConsoleColor.RED, cause.getClass().getName(), element.context().filename(), element.getLineNumber(), ( element.getColumnNumber() > 0 ) ? element.getColumnNumber() : 0, cause.getMessage() );
 				}
 				else
-					log.log( Level.SEVERE, ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s, message '%s'", cause.getClass().getName(), cause.getStackTrace()[0].getFileName(), cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
+					log.log( Level.SEVERE, "%s%sException %s thrown in file '%s' at line %s, message '%s'", ConsoleColor.NEGATIVE, ConsoleColor.RED, cause.getClass().getName(), cause.getStackTrace()[0].getFileName(), cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
 				
 				response.sendException( evalOrig );
 				
@@ -317,14 +321,11 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			if ( !response.isCommitted() )
 				response.sendResponse();
 			
-			EvalFactory factory;
-			if ( ( factory = request.getEvalFactory() ) != null )
-				factory.onFinished();
-			
 			Session sess;
 			if ( ( sess = request.getSessionWithoutException() ) != null )
 				sess.save();
 			
+			request.finish();
 			requestFinished = true;
 			
 			// Loader.getDatabase().queryUpdate( "INSERT INTO `testing` (`epoch`, `time`, `uri`, `result`, ip) VALUES ('" + Timings.epoch() + "', '" + Timings.mark( this ) + "', 'http://" + request.getDomain() + request.getUri() + "', '" +
@@ -360,17 +361,9 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	
 	public void handleHttp( HttpRequestWrapper request, HttpResponseWrapper response ) throws IOException, HttpError, SiteException, PermissionException, EvalMultipleException, EvalException, SessionException
 	{
-		// String uri = request.getUri();
-		// String domain = request.getParentDomain();
-		String subdomain = request.getSubDomain();
-		
 		log.log( Level.INFO, request.getMethodString() + " " + request.getFullUrl() );
 		
-		request.startSession();
-		
-		request.initServerVars( staticServerVars );
-		
-		Session sess = request.getSession();
+		Session sess = request.startSession();
 		
 		log.log( Level.FINE, "Session {id=%s,timeout=%s,new=%s}", sess.getSessId(), sess.getTimeout(), sess.isNew() );
 		
@@ -417,7 +410,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		
 		Site currentSite = request.getSite();
 		sess.setSite( currentSite ); // setSite?
-		File docRoot = currentSite.getAbsoluteRoot( subdomain );
+		File docRoot = currentSite.getAbsoluteRoot( request.getSubDomain() );
 		
 		ApacheParser htaccess = new ApacheParser().appendWithDir( docRoot );
 		
@@ -482,7 +475,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		// Enhancement: Allow HTML to be ran under different shells. Default is embedded.
 		if ( fi.hasHTML() )
 		{
-			EvalFactoryResult result = factory.eval( EvalExecutionContext.fromSource( fi.getHTML(), "<html>" ).request( request ).site( currentSite ) );
+			EvalResult result = factory.eval( EvalContext.fromSource( fi.getHTML(), "<html>" ).request( request ).site( currentSite ) );
 			
 			if ( result.hasExceptions() )
 				// TODO Print notices to output like PHP does
@@ -520,7 +513,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				return;
 			}
 			
-			EvalFactoryResult result = factory.eval( EvalExecutionContext.fromFile( fi ).request( request ).site( currentSite ) );
+			EvalResult result = factory.eval( EvalContext.fromFile( fi ).request( request ).site( currentSite ) );
 			
 			if ( result.hasExceptions() )
 				// TODO Print notices to output like PHP does
@@ -584,7 +577,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		}
 		catch ( EventException ex )
 		{
-			throw new EvalException( ErrorReporting.E_ERROR, "Caught EventException while trying to fire the RenderEvent", ex.getCause(), factory.getShellFactory() );
+			throw new EvalException( ErrorReporting.E_ERROR, "Caught EventException while trying to fire the RenderEvent", ex.getCause() );
 		}
 		
 		log.log( Level.INFO, "Written {bytes=%s,total_timing=%sms}", rendered.readableBytes(), Timings.finish( this ) );

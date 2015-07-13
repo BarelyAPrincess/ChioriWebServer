@@ -13,7 +13,6 @@ import groovy.lang.Binding;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.net.ConnectException;
@@ -37,13 +36,11 @@ import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.SiteLoadEvent;
 import com.chiorichan.factory.EvalBinding;
-import com.chiorichan.factory.EvalExecutionContext;
+import com.chiorichan.factory.EvalContext;
 import com.chiorichan.factory.EvalFactory;
-import com.chiorichan.factory.EvalFactoryResult;
+import com.chiorichan.factory.EvalResult;
 import com.chiorichan.http.HttpCookie;
 import com.chiorichan.http.Routes;
-import com.chiorichan.lang.ErrorReporting;
-import com.chiorichan.lang.EvalException;
 import com.chiorichan.lang.SiteException;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.session.SessionManager;
@@ -60,37 +57,37 @@ import com.google.gson.reflect.TypeToken;
  */
 public class Site
 {
-	String siteId = null, title = null, domain = null;
-	File source, resource;
-	Map<String, String> subdomains = Maps.newConcurrentMap(), aliases = Maps.newConcurrentMap();
-	List<String> metatags = Lists.newCopyOnWriteArrayList(), protectedFiles = Lists.newCopyOnWriteArrayList();
-	YamlConfiguration config;
-	DatabaseEngine sql;
-	SiteType siteType = SiteType.NOTSET;
-	File filePath = null;
-	List<String> cachePatterns = Lists.newArrayList();
-	Routes routes = null;
-	String encryptionKey = null;
-	String sessionPersistence = "cookie";
-	
-	// Binding and evaling for use inside each site for executing site scripts outside of web requests.
-	EvalBinding binding = new EvalBinding();
-	EvalFactory factory = EvalFactory.create( binding );
-	
-	Site( String siteId )
+	public enum SessionPersistenceMethod
 	{
-		this.siteId = siteId;
+		COOKIE, PARAM
 	}
 	
-	Site( File f ) throws SiteException, StartupException
+	private String siteId = null, title = null, domain = null;
+	private File source, resource;
+	private Map<String, String> subdomains = Maps.newConcurrentMap(), aliases = Maps.newConcurrentMap();
+	private List<String> metatags = Lists.newCopyOnWriteArrayList(), protectedFiles = Lists.newCopyOnWriteArrayList();
+	private YamlConfiguration config;
+	private DatabaseEngine sql;
+	private SiteType siteType = SiteType.NOTSET;
+	private File file;
+	private List<String> cachePatterns = Lists.newArrayList();
+	private Routes routes = null;
+	private String encryptionKey = null;
+	private String sessionPersistence = "cookie";
+	
+	// Binding and evaling for use inside each site for executing site scripts outside of web requests.
+	private final EvalBinding binding = new EvalBinding();
+	private final EvalFactory factory = EvalFactory.create( binding );
+	
+	Site( File file ) throws SiteException, StartupException
 	{
 		siteType = SiteType.FILE;
-		filePath = f;
+		this.file = file;
 		
-		config = YamlConfiguration.loadConfiguration( f );
+		config = YamlConfiguration.loadConfiguration( file );
 		
 		if ( config == null )
-			throw new SiteException( "Could not load site from YAML FileBase '" + f.getAbsolutePath() + "'" );
+			throw new SiteException( "Could not load site filerom YAML FileBase '" + file.getAbsolutePath() + "'" );
 		
 		siteId = config.getString( "site.siteId", null );
 		title = config.getString( "site.title", Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Site" ) );
@@ -105,7 +102,7 @@ public class Site
 		else
 			siteId = siteId.toLowerCase();
 		
-		// XXX Temp for old default siteId
+		// XXX Temp file or old default siteId
 		if ( "framework".equals( siteId ) )
 			siteId = "default";
 		
@@ -122,32 +119,26 @@ public class Site
 			reason = "there already exists a site by the provided Site Id '" + siteId + "'";
 		
 		if ( reason != null )
-			throw new SiteException( "Could not load site from YAML FileBase '" + f.getAbsolutePath() + "' because " + reason + "." );
+			throw new SiteException( "Could not load site filerom YAML FileBase '" + file.getAbsolutePath() + "' because " + reason + "." );
 		
-		Loader.getLogger().info( "Loading site '" + siteId + "' with title '" + title + "' from YAML FileBase '" + f.getAbsolutePath() + "'." );
+		Loader.getLogger().info( "Loading site '" + siteId + "' with title '" + title + "' filerom YAML FileBase '" + file.getAbsolutePath() + "'." );
 		
-		// Load protected files list
+		// Load protected fileiles list
 		List<?> protectedFilesPre = config.getList( "protected", new CopyOnWriteArrayList<String>() );
 		
 		for ( Object o : protectedFilesPre )
-		{
 			if ( o instanceof String )
 				protectedFiles.add( ( String ) o );
 			else
-				Loader.getLogger().warning( "Site '" + siteId + "' had an incorrect data object type under the YAML config for option 'protected', found type '" + o.getClass() + "'." );
-		}
+				Loader.getLogger().warning( "Site '" + siteId + "' had an incorrect data object type under the YAML config fileor option 'protected', fileound type '" + o.getClass() + "'." );
 		
 		// Load sources location
 		String sources = config.getString( "site.source", "" );
 		
 		if ( sources == null || sources.isEmpty() )
-		{
 			source = getAbsoluteRoot();
-		}
 		else if ( sources.startsWith( "." ) )
-		{
 			source = new File( getAbsoluteRoot() + sources );
-		}
 		else
 		{
 			source = new File( getAbsoluteRoot(), sources );
@@ -160,9 +151,7 @@ public class Site
 		String resources = config.getString( "site.resource", "resource" );
 		
 		if ( resources == null || resources.isEmpty() )
-		{
 			resource = getAbsoluteRoot();
-		}
 		else if ( resources.startsWith( "." ) )
 		{
 			resource = new File( getAbsoluteRoot() + resources );
@@ -180,12 +169,10 @@ public class Site
 		List<?> metatagsPre = config.getList( "metatags", new CopyOnWriteArrayList<String>() );
 		
 		for ( Object o : metatagsPre )
-		{
 			if ( o instanceof String )
 				metatags.add( ( String ) o );
 			else
-				Loader.getLogger().warning( "Site '" + siteId + "' had an incorrect data object type under the YAML config for option 'metatags', found type '" + o.getClass() + "'." );
-		}
+				Loader.getLogger().warning( "Site '" + siteId + "' had an incorrect data object type under the YAML config fileor option 'metatags', fileound type '" + o.getClass() + "'." );
 		
 		// Load aliases map
 		ConfigurationSection aliasesPre = config.getConfigurationSection( "aliases" );
@@ -195,10 +182,8 @@ public class Site
 			
 			if ( akeys != null )
 				for ( String k : akeys )
-				{
 					if ( aliasesPre.getString( k, null ) != null )
 						aliases.put( k, aliasesPre.getString( k ) );
-				}
 		}
 		
 		// Loader subdomains map
@@ -209,10 +194,8 @@ public class Site
 			
 			if ( skeys != null )
 				for ( String k : skeys )
-				{
 					if ( subdomainsPre.getString( k, null ) != null )
 						subdomains.put( k, subdomainsPre.getString( k ) );
-				}
 		}
 		
 		finishLoad();
@@ -222,6 +205,7 @@ public class Site
 	Site( ResultSet rs ) throws SiteException, StartupException
 	{
 		siteType = SiteType.SQL;
+		file = null;
 		
 		try
 		{
@@ -272,13 +256,9 @@ public class Site
 			String sources = rs.getString( "source" );
 			
 			if ( sources == null || sources.isEmpty() )
-			{
 				source = getAbsoluteRoot();
-			}
 			else if ( sources.startsWith( "." ) )
-			{
 				source = new File( getAbsoluteRoot() + sources );
-			}
 			else
 			{
 				source = new File( getAbsoluteRoot(), sources );
@@ -294,13 +274,9 @@ public class Site
 			String resources = rs.getString( "resource" );
 			
 			if ( resources == null || resources.isEmpty() )
-			{
 				resource = getAbsoluteRoot();
-			}
 			else if ( resources.startsWith( "." ) )
-			{
 				resource = new File( getAbsoluteRoot() + resources );
-			}
 			else
 			{
 				resource = new File( getAbsoluteRoot(), resources );
@@ -363,6 +339,42 @@ public class Site
 		}
 	}
 	
+	Site( String siteId )
+	{
+		this.siteId = siteId;
+	}
+	
+	public Site( String id, String title0, String domain0 )
+	{
+		siteId = id;
+		title = title0;
+		domain = domain0;
+		protectedFiles = Lists.newCopyOnWriteArrayList();
+		metatags = Lists.newCopyOnWriteArrayList();
+		aliases = Maps.newLinkedHashMap();
+		subdomains = Maps.newLinkedHashMap();
+		
+		source = getAbsoluteRoot();
+		resource = new File( getAbsoluteRoot(), "resource" );
+		
+		if ( !source.exists() )
+			source.mkdirs();
+		
+		if ( !resource.exists() )
+			resource.mkdirs();
+	}
+	
+	public void addToCachePatterns( String pattern )
+	{
+		if ( !cachePatterns.contains( pattern.toLowerCase() ) )
+			cachePatterns.add( pattern.toLowerCase() );
+	}
+	
+	public HttpCookie createSessionCookie( String sessionId )
+	{
+		return new HttpCookie( getSessionKey(), sessionId ).setDomain( "." + getDomain() ).setPath( "/" ).setHttpOnly( true );
+	}
+	
 	private void finishLoad() throws SiteException, StartupException
 	{
 		if ( encryptionKey == null )
@@ -372,9 +384,7 @@ public class Site
 		 * Default site always uses the Builtin SQL Connector. Ignore YAML FileBase on this one.
 		 */
 		if ( siteId.equalsIgnoreCase( "default" ) )
-		{
 			sql = Loader.getDatabase();
-		}
 		else if ( config != null && config.getConfigurationSection( "database" ) != null )
 		{
 			String type = config.getString( "database.type" );
@@ -417,28 +427,18 @@ public class Site
 			List<String> onLoadScripts = config.getStringList( "scripts.on-load" );
 			
 			if ( onLoadScripts != null )
-			{
 				for ( String script : onLoadScripts )
 				{
-					try
+					EvalResult result = factory.eval( EvalContext.fromFile( this, script ).shell( "groovy" ).site( this ) );
+					
+					if ( result.hasExceptions() )
 					{
-						File file = getResourceWithException( script );
-						EvalFactoryResult result = factory.eval( EvalExecutionContext.fromFile( file ).shell( "groovy" ).site( this ) );
-						
-						if ( result.hasExceptions() )
-						{
-							SiteManager.getLogger().severe( String.format( "Exception caught while evaling onLoadScript '%s' for site '%s'", script, siteId ) );
-							SiteManager.getLogger().exceptions( result.getExceptions() );
-						}
-						else
-							Loader.getLogger().info( "Finsihed evaling onLoadScript '" + script + "' for site '" + siteId + "' with result: " + result.getString( true ) );
+						SiteManager.getLogger().severe( String.format( "Exception caught while evaling onLoadScript '%s' for site '%s'", script, siteId ) );
+						SiteManager.getLogger().exceptions( result.getExceptions() );
 					}
-					catch ( IOException e )
-					{
-						SiteManager.getLogger().warning( "The onLoadScript '" + script + "' was not found for site '" + siteId + "'." );
-					}
+					else
+						Loader.getLogger().info( "Finsihed evaling onLoadScript '" + script + "' for site '" + siteId + "' with result: " + result.getString( true ) );
 				}
-			}
 		}
 		
 		SiteLoadEvent event = new SiteLoadEvent( this );
@@ -463,108 +463,6 @@ public class Site
 			SiteManager.getLogger().warning( "It would appear that site '" + siteId + "' contains a subfolder by the name of 'wisp', since this server uses the uri '/wisp' for internal requests, you will be unable to serve files from this folder!" );
 	}
 	
-	protected void save()
-	{
-		switch ( siteType )
-		{
-			case FILE:
-				
-				break;
-			case SQL:
-				
-				break;
-			default: // DO NOTHING
-		}
-		
-		// TODO SAVE SITES ASAP
-		// EncryptionKey needs to be saved ASAP
-	}
-	
-	protected Site setDatabase( DatabaseEngine sql )
-	{
-		this.sql = sql;
-		
-		return this;
-	}
-	
-	public YamlConfiguration getYaml()
-	{
-		if ( config == null )
-			config = new YamlConfiguration();
-		
-		return config;
-	}
-	
-	public List<String> getMetatags()
-	{
-		if ( metatags == null )
-			return new CopyOnWriteArrayList<String>();
-		
-		return metatags;
-	}
-	
-	public Map<String, String> getAliases()
-	{
-		return aliases;
-	}
-	
-	public Site( String id, String title0, String domain0 )
-	{
-		siteId = id;
-		title = title0;
-		domain = domain0;
-		protectedFiles = Lists.newCopyOnWriteArrayList();
-		metatags = Lists.newCopyOnWriteArrayList();
-		aliases = Maps.newLinkedHashMap();
-		subdomains = Maps.newLinkedHashMap();
-		
-		source = getAbsoluteRoot();
-		resource = new File( getAbsoluteRoot(), "resource" );
-		
-		if ( !source.exists() )
-			source.mkdirs();
-		
-		if ( !resource.exists() )
-			resource.mkdirs();
-	}
-	
-	public boolean protectCheck( String file )
-	{
-		if ( protectedFiles == null )
-			return false;
-		
-		// Does this file belong to our webroot
-		if ( file.startsWith( getRoot() ) )
-		{
-			// Strip our webroot from file
-			file = file.substring( getRoot().length() );
-			
-			for ( String n : protectedFiles )
-			{
-				if ( n != null && !n.isEmpty() )
-				{
-					// If the length is greater then 1 and file starts with this string.
-					if ( n.length() > 1 && file.startsWith( n ) )
-						return true;
-					
-					// Does our file end with this. ie: .php, .txt, .etc
-					if ( file.endsWith( n ) )
-						return true;
-					
-					// If the pattern does not start with a /, see if name contain this string.
-					if ( !n.startsWith( "/" ) && file.contains( n ) )
-						return true;
-					
-					// Lastly try the string as a RegEx pattern
-					if ( file.matches( n ) )
-						return true;
-				}
-			}
-		}
-		
-		return false;
-	}
-	
 	public File getAbsoluteRoot()
 	{
 		try
@@ -580,7 +478,7 @@ public class Site
 	
 	public File getAbsoluteRoot( String subdomain ) throws SiteException
 	{
-		File target = new File( Loader.webroot, getRoot( subdomain ) );
+		File target = new File( Loader.getWebRoot(), getRoot( subdomain ) );
 		
 		if ( target.isFile() )
 			target.delete();
@@ -589,6 +487,125 @@ public class Site
 			target.mkdirs();
 		
 		return target;
+	}
+	
+	public Map<String, String> getAliases()
+	{
+		return aliases;
+	}
+	
+	protected Binding getBinding()
+	{
+		return binding;
+	}
+	
+	public List<String> getCachePatterns()
+	{
+		return cachePatterns;
+	}
+	
+	public DatabaseEngine getDatabase()
+	{
+		return sql;
+	}
+	
+	public String getDomain()
+	{
+		return domain;
+	}
+	
+	public String getEncryptionKey()
+	{
+		return encryptionKey;
+	}
+	
+	public EvalFactory getEvalFactory()
+	{
+		return factory;
+	}
+	
+	public File getFile()
+	{
+		return file;
+	}
+	
+	public Object getGlobal( String key )
+	{
+		return binding.getVariable( key );
+	}
+	
+	@SuppressWarnings( "unchecked" )
+	public Map<String, Object> getGlobals()
+	{
+		return binding.getVariables();
+	}
+	
+	// TODO: Add methods to add protected files, metatags and aliases to site and save
+	
+	public List<String> getMetatags()
+	{
+		if ( metatags == null )
+			return new CopyOnWriteArrayList<String>();
+		
+		return metatags;
+	}
+	
+	public String getName()
+	{
+		return siteId;
+	}
+	
+	public File getResource( String packageNode )
+	{
+		try
+		{
+			return getResourceWithException( packageNode );
+		}
+		catch ( FileNotFoundException e )
+		{
+			if ( !packageNode.contains( ".includes." ) )
+				Loader.getLogger().warning( e.getMessage() );
+			return null;
+		}
+	}
+	
+	public File getResourceDirectory()
+	{
+		if ( resource == null )
+			resource = new File( getAbsoluteRoot(), "resource" );
+		
+		return resource;
+	}
+	
+	public File getResourceWithException( String pack ) throws FileNotFoundException
+	{
+		if ( pack == null || pack.isEmpty() )
+			throw new FileNotFoundException( "Package can't be empty!" );
+		
+		pack = pack.replace( ".", System.getProperty( "file.separator" ) );
+		
+		File root = getResourceDirectory();
+		
+		File packFile = new File( root, pack );
+		
+		if ( packFile.exists() )
+			return packFile;
+		
+		root = packFile.getParentFile();
+		
+		if ( root.exists() && root.isDirectory() )
+		{
+			File[] files = root.listFiles();
+			String[] exts = new String[] {"html", "htm", "groovy", "gsp", "jsp", "chi"};
+			
+			for ( File child : files )
+				if ( child.getName().startsWith( packFile.getName() ) )
+					for ( String ext : exts )
+						if ( child.getName().toLowerCase().endsWith( "." + ext ) )
+							return child;
+		}
+		
+		throw new FileNotFoundException( "Could not find the package `" + pack + "` file in site `" + getName() + "`." );
 	}
 	
 	public String getRoot()
@@ -623,128 +640,38 @@ public class Site
 		return target;
 	}
 	
-	public DatabaseEngine getDatabase()
+	public Routes getRoutes()
 	{
-		return sql;
-	}
-	
-	public String getName()
-	{
-		return siteId;
-	}
-	
-	public File getResourceDirectory()
-	{
-		if ( resource == null )
-			resource = new File( getAbsoluteRoot(), "resource" );
+		if ( routes == null )
+			routes = new Routes( this );
 		
-		return resource;
+		return routes;
 	}
 	
-	public File getSourceDirectory()
+	/**
+	 * Gets the site configured Session Key from configuration.
+	 * 
+	 * @return
+	 *         The Session Key
+	 */
+	public String getSessionKey()
 	{
-		if ( source == null )
-			source = getAbsoluteRoot();
-		
-		return source;
+		String key = config.getString( "sessions.keyName" );
+		if ( key == null )
+			return SessionManager.getDefaultSessionName();
+		return "_ws" + WordUtils.capitalize( key );
 	}
 	
-	public void setAutoSave( boolean b )
+	public SessionPersistenceMethod getSessionPersistenceMethod()
 	{
-		// TODO Auto-generated method stub
-	}
-	
-	// TODO: Add methods to add protected files, metatags and aliases to site and save
-	
-	public void setGlobal( String key, Object val )
-	{
-		binding.setVariable( key, val );
-	}
-	
-	public Object getGlobal( String key )
-	{
-		return binding.getVariable( key );
-	}
-	
-	@SuppressWarnings( "unchecked" )
-	public Map<String, Object> getGlobals()
-	{
-		return binding.getVariables();
-	}
-	
-	protected Binding getBinding()
-	{
-		return binding;
-	}
-	
-	public File getResource( String packageNode )
-	{
-		try
+		switch ( sessionPersistence )
 		{
-			return getResourceWithException( packageNode );
-		}
-		catch ( FileNotFoundException e )
-		{
-			if ( !packageNode.contains( ".includes." ) )
-				Loader.getLogger().warning( e.getMessage() );
-			return null;
-		}
-	}
-	
-	public File getResourceWithException( String pack ) throws FileNotFoundException
-	{
-		if ( pack == null || pack.isEmpty() )
-			throw new FileNotFoundException( "Package can't be empty!" );
-		
-		pack = pack.replace( ".", System.getProperty( "file.separator" ) );
-		
-		File root = getResourceDirectory();
-		
-		File packFile = new File( root, pack );
-		
-		if ( packFile.exists() )
-			return packFile;
-		
-		root = packFile.getParentFile();
-		
-		if ( root.exists() && root.isDirectory() )
-		{
-			File[] files = root.listFiles();
-			String[] exts = new String[] {"html", "htm", "groovy", "gsp", "jsp", "chi"};
-			
-			for ( File child : files )
-				if ( child.getName().startsWith( packFile.getName() ) )
-					for ( String ext : exts )
-						if ( child.getName().toLowerCase().endsWith( "." + ext ) )
-							return child;
-		}
-		
-		throw new FileNotFoundException( "Could not find the package `" + pack + "` file in site `" + getName() + "`." );
-	}
-	
-	public String readResource( String pack )
-	{
-		try
-		{
-			return readResourceWithException( pack );
-		}
-		catch ( EvalException e )
-		{
-			return "";
-		}
-	}
-	
-	public String readResourceWithException( String pack ) throws EvalException
-	{
-		try
-		{
-			File file = getResourceWithException( pack );
-			
-			return factory.eval( EvalExecutionContext.fromFile( file ).shell( "text" ).site( this ) ).getString();
-		}
-		catch ( IOException e )
-		{
-			throw new EvalException( ErrorReporting.E_WARNING, e, factory.getShellFactory() );
+			case "cookie":
+				return SessionPersistenceMethod.COOKIE;
+			case "param":
+				return SessionPersistenceMethod.PARAM;
+			default:
+				return null;
 		}
 	}
 	
@@ -753,38 +680,12 @@ public class Site
 		return siteId;
 	}
 	
-	public String getTitle()
+	public File getSourceDirectory()
 	{
-		return title;
-	}
-	
-	public String getDomain()
-	{
-		return domain;
-	}
-	
-	public File getFile()
-	{
-		return filePath;
-	}
-	
-	public void addToCachePatterns( String pattern )
-	{
-		if ( !cachePatterns.contains( pattern.toLowerCase() ) )
-			cachePatterns.add( pattern.toLowerCase() );
-	}
-	
-	public List<String> getCachePatterns()
-	{
-		return cachePatterns;
-	}
-	
-	public Routes getRoutes()
-	{
-		if ( routes == null )
-			routes = new Routes( this );
+		if ( source == null )
+			source = getAbsoluteRoot();
 		
-		return routes;
+		return source;
 	}
 	
 	/**
@@ -808,51 +709,99 @@ public class Site
 		return tmpFileDirectory;
 	}
 	
-	public String getEncryptionKey()
+	public String getTitle()
 	{
-		return encryptionKey;
+		return title;
 	}
 	
-	public SessionPersistenceMethod getSessionPersistenceMethod()
+	public YamlConfiguration getYaml()
 	{
-		switch ( sessionPersistence )
+		if ( config == null )
+			config = new YamlConfiguration();
+		return config;
+	}
+	
+	public boolean protectCheck( String file )
+	{
+		if ( protectedFiles == null )
+			return false;
+		
+		// Does this file belong to our webroot
+		if ( file.startsWith( getRoot() ) )
 		{
-			case "cookie":
-				return SessionPersistenceMethod.COOKIE;
-			case "param":
-				return SessionPersistenceMethod.PARAM;
-			default:
-				return null;
+			// Strip our webroot from file
+			file = file.substring( getRoot().length() );
+			
+			for ( String n : protectedFiles )
+				if ( n != null && !n.isEmpty() )
+				{
+					// If the length is greater then 1 and file starts with this string.
+					if ( n.length() > 1 && file.startsWith( n ) )
+						return true;
+					
+					// Does our file end with this. ie: .php, .txt, .etc
+					if ( file.endsWith( n ) )
+						return true;
+					
+					// If the pattern does not start with a /, see if name contain this string.
+					if ( !n.startsWith( "/" ) && file.contains( n ) )
+						return true;
+					
+					// Lastly try the string as a RegEx pattern
+					if ( file.matches( n ) )
+						return true;
+				}
 		}
+		
+		return false;
 	}
 	
-	/**
-	 * Gets the site configured Session Key from configuration.
-	 * 
-	 * @return
-	 *         The Session Key
-	 */
-	public String getSessionKey()
+	protected void save()
 	{
-		String key = config.getString( "sessions.keyName" );
-		if ( key == null )
-			return SessionManager.getDefaultSessionName();
-		return "_ws" + WordUtils.capitalize( key );
+		switch ( siteType )
+		{
+			case FILE:
+				
+				break;
+			case SQL:
+				
+				break;
+			default: // DO NOTHING
+		}
+		
+		// TODO SAVE SITES ASAP
+		// EncryptionKey needs to be saved ASAP
+	}
+	
+	public void setAutoSave( boolean b )
+	{
+		// TODO Auto-generated method stub
+	}
+	
+	protected Site setDatabase( DatabaseEngine sql )
+	{
+		this.sql = sql;
+		return this;
+	}
+	
+	public void setGlobal( String key, Object val )
+	{
+		binding.setVariable( key, val );
+	}
+	
+	public String siteId()
+	{
+		return siteId();
+	}
+	
+	public SiteType siteType()
+	{
+		return siteType();
 	}
 	
 	@Override
 	public String toString()
 	{
 		return "Site{id=" + getSiteId() + "name=" + getName() + ",title=" + title + ",domain=" + getDomain() + ",type=" + siteType + ",source=" + source + ",resource=" + resource + "}";
-	}
-	
-	public enum SessionPersistenceMethod
-	{
-		COOKIE, PARAM
-	}
-	
-	public HttpCookie createSessionCookie( String sessionId )
-	{
-		return new HttpCookie( getSessionKey(), sessionId ).setDomain( "." + getDomain() ).setPath( "/" ).setHttpOnly( true );
 	}
 }

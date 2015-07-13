@@ -214,6 +214,8 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 				NetworkManager.getLogger().debug( "Cookie: " + var1 );
 				NetworkManager.getLogger().debug( "Headers: " + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( http.headers() ) );
 			}
+		
+		initServerVars();
 	}
 	
 	/**
@@ -712,10 +714,15 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		return getMap.containsKey( key ) || postMap.containsKey( key ) || rewriteMap.containsKey( key );
 	}
 	
-	void initServerVars( Map<ServerVars, Object> staticServerVars )
+	/**
+	 * Initializes the serverVars with initial information from this request
+	 */
+	private void initServerVars()
 	{
-		serverVars = staticServerVars;
-		putServerVarSafe( ServerVars.DOCUMENT_ROOT, getSite().getAbsoluteRoot() );
+		putServerVarSafe( ServerVars.SERVER_SOFTWARE, Versioning.getProduct() );
+		putServerVarSafe( ServerVars.SERVER_VERSION, Versioning.getVersion() );
+		putServerVarSafe( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "me@chiorichan.com" ) );
+		putServerVarSafe( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Versioning.getVersion() );
 		putServerVarSafe( ServerVars.HTTP_ACCEPT, getHeader( "Accept" ) );
 		putServerVarSafe( ServerVars.HTTP_USER_AGENT, getUserAgent() );
 		putServerVarSafe( ServerVars.HTTP_CONNECTION, getHeader( "Connection" ) );
@@ -729,16 +736,15 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		putServerVarSafe( ServerVars.REQUEST_TIME, getRequestTime() );
 		putServerVarSafe( ServerVars.REQUEST_URI, getUri() );
 		putServerVarSafe( ServerVars.CONTENT_LENGTH, getContentLength() );
-		// putServerVarSafe( ServerVars.AUTH_TYPE, getAuthType() );
+		// putServerVarSafe( ServerVars.AUTH_TYPE, getAuthType() ); -- Implement Authentication
 		putServerVarSafe( ServerVars.SERVER_IP, getLocalIpAddr() );
 		putServerVarSafe( ServerVars.SERVER_NAME, Versioning.getProductSimple() );
 		putServerVarSafe( ServerVars.SERVER_PORT, getLocalPort() );
 		putServerVarSafe( ServerVars.HTTPS, isSecure() );
-		putServerVarSafe( ServerVars.SESSION, getSession() );
-		putServerVarSafe( ServerVars.SERVER_SOFTWARE, Versioning.getProduct() );
-		putServerVarSafe( ServerVars.SERVER_VERSION, Versioning.getVersion() );
-		putServerVarSafe( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "owner@" + getDomain() ) );
-		putServerVarSafe( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Versioning.getVersion() );
+		
+		// TODO These need initializing once known
+		putServerVarSafe( ServerVars.DOCUMENT_ROOT, Loader.getWebRoot() );
+		putServerVarSafe( ServerVars.SESSION, null );
 	}
 	
 	/**

@@ -40,6 +40,16 @@ public class SiteManager implements ServerManager
 	
 	Map<String, Site> siteMap = new LinkedHashMap<String, Site>();
 	
+	private SiteManager()
+	{
+		
+	}
+	
+	public static ConsoleLogger getLogger()
+	{
+		return Loader.getLogger( "SiteMgr" );
+	}
+	
 	public static void init()
 	{
 		if ( isInitialized )
@@ -50,6 +60,48 @@ public class SiteManager implements ServerManager
 		INSTANCE.init0();
 		
 		isInitialized = true;
+	}
+	
+	public String add( String siteId, String type )
+	{
+		if ( siteMap.containsKey( siteId ) )
+			return "There already exists a site by the id you provided.";
+		
+		if ( !type.equalsIgnoreCase( "sql" ) && !type.equalsIgnoreCase( "file" ) )
+			return "The only available site types are 'sql' and 'file'. '" + type + "' was not a valid option.";
+		
+		return "";
+	}
+	
+	public Site getDefaultSite()
+	{
+		return getSiteById( "default" );
+	}
+	
+	public Site getSiteByDomain( String domain )
+	{
+		if ( domain == null )
+			domain = "default";
+		
+		for ( Site site : siteMap.values() )
+			if ( site != null && site.getDomain() != null )
+				if ( site.getDomain().equalsIgnoreCase( domain.trim() ) )
+					return site;
+		
+		return null;
+	}
+	
+	public Site getSiteById( String siteId )
+	{
+		if ( siteId == null )
+			return null;
+		
+		return siteMap.get( siteId.toLowerCase().trim() );
+	}
+	
+	public Collection<Site> getSites()
+	{
+		return Collections.unmodifiableCollection( siteMap.values() );
 	}
 	
 	private void init0() throws StartupException
@@ -68,7 +120,6 @@ public class SiteManager implements ServerManager
 		
 		// We make sure the default default YAML FileBase exists and if not we copy it from the Jar.
 		if ( !defaultSite.exists() )
-		{
 			try
 			{
 				defaultSite.getParentFile().mkdirs();
@@ -78,7 +129,6 @@ public class SiteManager implements ServerManager
 			{
 				e.printStackTrace();
 			}
-		}
 		
 		/**
 		 * Add the dummy all sites site
@@ -91,15 +141,12 @@ public class SiteManager implements ServerManager
 		
 		if ( files != null && files.length > 0 )
 			for ( File f : files )
-			{
 				try
 				{
 					Site site = new Site( f );
 					
 					if ( site != null )
-					{
-						siteMap.put( site.siteId, site );
-					}
+						siteMap.put( site.getSiteId(), site );
 				}
 				catch ( SiteException e )
 				{
@@ -107,7 +154,6 @@ public class SiteManager implements ServerManager
 					if ( e.getCause() != null )
 						e.getCause().printStackTrace();
 				}
-			}
 		
 		// Load sites from Framework Database.
 		if ( sql != null && sql.isConnected() )
@@ -137,17 +183,13 @@ public class SiteManager implements ServerManager
 				ResultSet rs = sql.query( "SELECT * FROM `sites`;" );
 				
 				if ( sql.getRowCount( rs ) > 0 )
-				{
 					do
-					{
 						try
 						{
 							Site site = new Site( rs );
 							
 							if ( site != null )
-							{
-								siteMap.put( site.siteId, site );
-							}
+								siteMap.put( site.getSiteId(), site );
 						}
 						catch ( SiteException e )
 						{
@@ -155,10 +197,7 @@ public class SiteManager implements ServerManager
 							if ( e.getCause() != null )
 								e.getCause().printStackTrace();
 						}
-						
-					}
 					while ( rs.next() );
-				}
 			}
 			catch ( SQLException e )
 			{
@@ -166,40 +205,24 @@ public class SiteManager implements ServerManager
 			}
 	}
 	
-	private SiteManager()
+	public List<Site> parseSites( String sites )
 	{
-		
+		return parseSites( sites, "|" );
 	}
 	
-	public Site getSiteById( String siteId )
+	public List<Site> parseSites( String sites, String regExSplit )
 	{
-		if ( siteId == null )
-			return null;
+		List<Site> siteList = Lists.newArrayList();
+		String[] sitesArray = sites.split( regExSplit );
 		
-		return siteMap.get( siteId.toLowerCase().trim() );
-	}
-	
-	public Site getSiteByDomain( String domain )
-	{
-		if ( domain == null )
-			domain = "default";
+		for ( String siteId : sitesArray )
+		{
+			Site site = getSiteById( siteId );
+			if ( site != null )
+				siteList.add( site );
+		}
 		
-		for ( Site site : siteMap.values() )
-			if ( site != null && site.getDomain() != null )
-				if ( site.getDomain().equalsIgnoreCase( domain.trim() ) )
-					return site;
-		
-		return null;
-	}
-	
-	public Collection<Site> getSites()
-	{
-		return Collections.unmodifiableCollection( siteMap.values() );
-	}
-	
-	public Site getDefaultSite()
-	{
-		return getSiteById( "default" );
+		return siteList;
 	}
 	
 	public void reload()
@@ -219,7 +242,7 @@ public class SiteManager implements ServerManager
 			
 			// TODO Either confirm that someone want to delete a site or make it so they can be restored.
 			
-			switch ( site.siteType )
+			switch ( site.siteType() )
 			{
 				case SQL:
 					DatabaseEngine sql = Loader.getDatabase();
@@ -248,41 +271,5 @@ public class SiteManager implements ServerManager
 		}
 		else
 			return "The specified site was not found.";
-	}
-	
-	public String add( String siteId, String type )
-	{
-		if ( siteMap.containsKey( siteId ) )
-			return "There already exists a site by the id you provided.";
-		
-		if ( !type.equalsIgnoreCase( "sql" ) && !type.equalsIgnoreCase( "file" ) )
-			return "The only available site types are 'sql' and 'file'. '" + type + "' was not a valid option.";
-		
-		return "";
-	}
-	
-	public List<Site> parseSites( String sites )
-	{
-		return parseSites( sites, "|" );
-	}
-	
-	public List<Site> parseSites( String sites, String regExSplit )
-	{
-		List<Site> siteList = Lists.newArrayList();
-		String[] sitesArray = sites.split( regExSplit );
-		
-		for ( String siteId : sitesArray )
-		{
-			Site site = getSiteById( siteId );
-			if ( site != null )
-				siteList.add( site );
-		}
-		
-		return siteList;
-	}
-	
-	public static ConsoleLogger getLogger()
-	{
-		return Loader.getLogger( "SiteMgr" );
 	}
 }

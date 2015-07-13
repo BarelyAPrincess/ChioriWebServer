@@ -8,8 +8,7 @@
  */
 package com.chiorichan.factory.processors;
 
-import com.chiorichan.factory.EvalExecutionContext;
-import com.chiorichan.factory.ShellFactory;
+import com.chiorichan.factory.EvalContext;
 
 /**
  * Interpreters are commonly used to process commands and create dynamic content, most notably the groovy scripts.
@@ -26,5 +25,5 @@ public interface ScriptingProcessor
 	 */
 	String[] getHandledTypes();
 	
-	boolean eval( EvalExecutionContext context, ShellFactory shell ) throws Exception;
+	boolean eval( EvalContext context ) throws Exception;
 }

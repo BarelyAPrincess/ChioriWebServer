@@ -130,4 +130,9 @@ public enum ErrorReporting
 	{
 		return isEnabledLevel( this );
 	}
+	
+	public boolean isIgnorable()
+	{
+		return this == ErrorReporting.E_IGNORABLE || this == ErrorReporting.E_DEPRECATED || this == ErrorReporting.E_USER_DEPRECATED || this == ErrorReporting.E_NOTICE || this == ErrorReporting.E_USER_NOTICE || this == ErrorReporting.E_WARNING || this == ErrorReporting.E_USER_WARNING;
+	}
 }

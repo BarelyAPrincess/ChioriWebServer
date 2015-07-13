@@ -8,12 +8,13 @@
  */
 package com.chiorichan.factory.processors;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
-
+import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 
-import com.chiorichan.factory.EvalExecutionContext;
-import com.chiorichan.factory.ShellFactory;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
+import com.chiorichan.factory.EvalContext;
+import com.chiorichan.factory.groovy.GroovyRegistry;
 
 /**
  * Groovy Script Processor
@@ -21,12 +22,15 @@ import com.chiorichan.factory.ShellFactory;
 public class GroovyScriptProcessor implements ScriptingProcessor
 {
 	@Override
-	public boolean eval( EvalExecutionContext context, ShellFactory shell ) throws Exception
+	public boolean eval( EvalContext context ) throws Exception
 	{
-		Script script = shell.makeScript( context );
 		try
 		{
+			GroovyShell shell = GroovyRegistry.getNewShell( context );
+			Script script = GroovyRegistry.makeScript( shell, context );
+			
 			context.result().object( script.run() );
+			
 		}
 		catch ( Throwable t )
 		{
@@ -34,6 +38,7 @@ public class GroovyScriptProcessor implements ScriptingProcessor
 			context.resetAndWrite( ExceptionUtils.getStackTrace( t ) );
 			throw t;
 		}
+		
 		return true;
 	}
 	

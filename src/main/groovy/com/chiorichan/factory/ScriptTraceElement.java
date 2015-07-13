@@ -22,41 +22,47 @@ public class ScriptTraceElement
 	private final String className;
 	private final int lineNum;
 	private final int colNum;
-	private final EvalExecutionContext context;
+	private final EvalContext context;
 	
-	public ScriptTraceElement( EvalExecutionContext context, int lineNum, int colNum )
+	public ScriptTraceElement( EvalContext context, int lineNum, int colNum )
 	{
 		this( context, lineNum, colNum, "", "" );
 	}
 	
-	public ScriptTraceElement( EvalExecutionContext context, int lineNum, int colNum, String methodName, String className )
+	public ScriptTraceElement( EvalContext context, int lineNum, int colNum, String methodName, String className )
 	{
-		assert ( context.script() != null );
-		
 		this.context = context;
-		fileName = context.scriptName();
+		fileName = context.name();
 		
 		this.lineNum = lineNum;
 		this.colNum = colNum;
 		
-		if ( ( className == null || className.isEmpty() ) && context.scriptName() != null )
-			if ( context.scriptName().contains( "." ) )
-				className = context.scriptName().substring( 0, context.scriptName().indexOf( "." ) );
+		if ( ( className == null || className.isEmpty() ) && context.name() != null )
+			if ( context.name().contains( "." ) )
+				className = context.name().substring( 0, context.name().indexOf( "." ) );
 			else
-				className = context.scriptName();
+				className = context.name();
 		
 		this.methodName = methodName;
 		this.className = className;
 	}
 	
-	public ScriptTraceElement( EvalExecutionContext context, String msg )
+	public ScriptTraceElement( EvalContext context, StackTraceElement ste )
 	{
-		assert ( context.script() != null );
-		
 		this.context = context;
-		fileName = context.scriptName();
+		fileName = ste.getFileName();
+		methodName = ste.getMethodName();
+		className = ste.getClassName();
+		lineNum = ste.getLineNumber();
+		colNum = -1;
+	}
+	
+	public ScriptTraceElement( EvalContext context, String msg )
+	{
+		this.context = context;
+		fileName = context.name();
 		methodName = "run";
-		className = ( context.scriptName() == null || context.scriptName().isEmpty() ) ? "<Unknown Class>" : context.scriptName().substring( 0, context.scriptName().lastIndexOf( "." ) );
+		className = ( context.name() == null || context.name().isEmpty() ) ? "<Unknown Class>" : context.name().substring( 0, context.name().lastIndexOf( "." ) );
 		
 		msg = msg.replaceAll( "\n", "" );
 		
@@ -82,26 +88,9 @@ public class ScriptTraceElement
 		}
 	}
 	
-	public ScriptTraceElement( EvalExecutionContext context, StackTraceElement ste )
+	public EvalContext context()
 	{
-		assert ( context.script() != null );
-		
-		this.context = context;
-		fileName = ste.getFileName();
-		methodName = ste.getMethodName();
-		className = ste.getClassName();
-		lineNum = ste.getLineNumber();
-		colNum = -1;
-	}
-	
-	public String getFileName()
-	{
-		return fileName;
-	}
-	
-	public String getMethodName()
-	{
-		return methodName;
+		return context;
 	}
 	
 	public String getClassName()
@@ -109,19 +98,24 @@ public class ScriptTraceElement
 		return className;
 	}
 	
-	public int getLineNumber()
-	{
-		return lineNum;
-	}
-	
 	public int getColumnNumber()
 	{
 		return colNum;
 	}
 	
-	public EvalExecutionContext context()
+	public String getFileName()
 	{
-		return context;
+		return fileName;
+	}
+	
+	public int getLineNumber()
+	{
+		return lineNum;
+	}
+	
+	public String getMethodName()
+	{
+		return methodName;
 	}
 	
 	@Override

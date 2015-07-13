@@ -8,28 +8,25 @@
  */
 package com.chiorichan.factory.parsers;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
-
 import com.chiorichan.Loader;
 import com.chiorichan.factory.EvalContext;
 import com.chiorichan.factory.EvalFactory;
 import com.chiorichan.factory.EvalResult;
 import com.chiorichan.lang.ErrorReporting;
-import com.chiorichan.lang.EvalException;
 import com.chiorichan.site.Site;
 
 /**
  * Using the {@link HTMLCommentParser} we attempt to parse the source for include comments, i.e., {@literal <!-- include(com.chiorichan.widget.menu) -->}
  */
-public class IncludesParser extends HTMLCommentParser
+public class RequiresParser extends HTMLCommentParser
 {
 	EvalContext context;
 	EvalFactory factory;
 	Site site;
 	
-	public IncludesParser()
+	public RequiresParser()
 	{
-		super( "include" );
+		super( "require" );
 	}
 	
 	@Override
@@ -41,15 +38,8 @@ public class IncludesParser extends HTMLCommentParser
 		// TODO Prevent infinite loops!
 		EvalResult result = factory.eval( EvalContext.fromAuto( site, args[1] ) );
 		
-		if ( result.hasNotIgnorableExceptions() )
+		if ( result.hasExceptions() )
 			ErrorReporting.throwExceptions( result.getExceptions() );
-		else if ( result.hasIgnorableExceptions() )
-		{
-			StringBuilder sb = new StringBuilder();
-			for ( EvalException e : result.getExceptions() )
-				sb.append( ExceptionUtils.getStackTrace( e ) + "\n" );
-			return sb.toString();
-		}
 		
 		return result.getString();
 	}

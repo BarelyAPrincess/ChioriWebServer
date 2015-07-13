@@ -22,5 +22,6 @@ public class PreIncludesParserWrapper implements Listener
 	public void onEvent( PreEvalEvent event ) throws Exception
 	{
 		event.context().resetAndWrite( new IncludesParser().runParser( event.context().readString(), event.context().site(), event.context(), event.context().factory() ) );
+		event.context().resetAndWrite( new RequiresParser().runParser( event.context().readString(), event.context().site(), event.context(), event.context().factory() ) );
 	}
 }

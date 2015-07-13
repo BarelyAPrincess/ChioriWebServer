@@ -43,10 +43,12 @@ public abstract class BasicParser
 		while ( m1.find() && m2.find() )
 		{
 			String[] args = m1.group( 1 ).split( "[ ]?,[ ]?" );
-			String[] args2 = new String[args.length];
+			String[] args2 = new String[args.length + 1];
+			
+			args2[0] = m1.group( 0 );
 			
 			for ( int i = 0; i < args.length; i++ )
-				args2[i] = StringFunc.trimAll( args[i].trim(), '"' );
+				args2[i + 1] = StringFunc.trimAll( args[i].trim(), '"' );
 			
 			String result = resolveMethod( args2 );
 			

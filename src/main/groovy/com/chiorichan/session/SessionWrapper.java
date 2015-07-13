@@ -241,7 +241,7 @@ public abstract class SessionWrapper implements BindingProvider, AccountAttachme
 	 * 
 	 * @throws SessionException
 	 */
-	public void startSession() throws SessionException
+	public Session startSession() throws SessionException
 	{
 		session = SessionManager.INSTANCE.startSession( this );
 		/*
@@ -279,6 +279,8 @@ public abstract class SessionWrapper implements BindingProvider, AccountAttachme
 			session.rearmTimeout();
 		
 		sessionStarted();
+		
+		return session;
 	}
 	
 	// TODO: Future add of setDomain, setCookieName, setSecure (http verses https)
