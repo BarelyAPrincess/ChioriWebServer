@@ -395,6 +395,9 @@ public final class JavaPluginLoader implements PluginLoader
 				PluginManager.getLogger().severe( "We had a problem trying to extract native libraries from plugin file '" + file + "':", e );
 			}
 		
+		// Attempts to extract bundled library files
+		FileFunc.extractLibraries( file, dataFolder );
+		
 		return loader.plugin;
 	}
 	

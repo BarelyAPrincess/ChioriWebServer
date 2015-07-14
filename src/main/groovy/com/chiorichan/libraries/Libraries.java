@@ -162,6 +162,15 @@ public class Libraries implements LibrarySource
 			return false;
 		}
 		
+		try
+		{
+			FileFunc.extractNatives( lib, lib.getParentFile() );
+		}
+		catch ( IOException e )
+		{
+			PluginManager.getLogger().severe( "We had a problem trying to extract native libraries from jar file '" + lib.getAbsolutePath() + "'", e );
+		}
+		
 		return true;
 	}
 	
@@ -206,7 +215,7 @@ public class Libraries implements LibrarySource
 		}
 		catch ( IOException e )
 		{
-			PluginManager.getLogger().severe( "We had a problem trying to extract native libraries from jar file '" + lib.jarFile() + "', regardless if they existed or not:", e );
+			PluginManager.getLogger().severe( "We had a problem trying to extract native libraries from jar file '" + lib.jarFile() + "'", e );
 		}
 		
 		return true;

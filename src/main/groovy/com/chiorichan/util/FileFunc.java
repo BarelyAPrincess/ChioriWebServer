@@ -41,6 +41,7 @@ import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
+import com.chiorichan.libraries.Libraries;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.site.Site;
 import com.google.common.base.Joiner;
@@ -530,13 +531,66 @@ public class FileFunc
 			throw new IOException( info.getDescription( file ) );
 	}
 	
+	public static void extractLibraries( File jarFile, File baseDir )
+	{
+		try
+		{
+			baseDir = new File( baseDir, "libraries" );
+			// FileFunc.directoryHealthCheck( baseDir );
+			
+			if ( jarFile == null || !jarFile.exists() || !jarFile.getName().endsWith( ".jar" ) )
+				PluginManager.getLogger().severe( "There was a problem with the provided jar file, it was either null, not existent or did not end with jar." );
+			
+			JarFile jar = new JarFile( jarFile );
+			
+			try
+			{
+				ZipEntry libDir = jar.getEntry( "libraries" );
+				
+				if ( libDir != null ) // && libDir.isDirectory() )
+				{
+					Enumeration<JarEntry> entries = jar.entries();
+					while ( entries.hasMoreElements() )
+					{
+						JarEntry entry = entries.nextElement();
+						if ( entry.getName().startsWith( libDir.getName() ) && !entry.isDirectory() && entry.getName().endsWith( ".jar" ) )
+						{
+							File lib = new File( baseDir, entry.getName().substring( libDir.getName().length() + 1 ) );
+							
+							if ( !lib.exists() )
+							{
+								lib.getParentFile().mkdirs();
+								PluginManager.getLogger().info( ConsoleColor.GOLD + "Extracting bundled library '" + entry.getName() + "' to '" + lib.getAbsolutePath() + "'." );
+								InputStream is = jar.getInputStream( entry );
+								FileOutputStream out = new FileOutputStream( lib );
+								ByteStreams.copy( is, out );
+								is.close();
+								out.close();
+							}
+							
+							Libraries.loadLibrary( lib );
+						}
+					}
+				}
+			}
+			finally
+			{
+				jar.close();
+			}
+		}
+		catch ( Throwable t )
+		{
+			PluginManager.getLogger().severe( "We had a problem extracting bundled libraries from jar file '" + jarFile.getAbsolutePath() + "'", t );
+		}
+	}
+	
 	public static boolean extractNatives( File libFile, File baseDir ) throws IOException
 	{
 		List<String> nativesExtracted = Lists.newArrayList();
 		boolean foundArchMatchingNative = false;
 		
 		baseDir = new File( baseDir, "natives" );
-		FileFunc.directoryHealthCheck( baseDir );
+		// FileFunc.directoryHealthCheck( baseDir );
 		
 		if ( libFile == null || !libFile.exists() || !libFile.getName().endsWith( ".jar" ) )
 			throw new IOException( "There was a problem with the provided jar file, it was either null, not existent or did not end with jar." );
@@ -626,7 +680,7 @@ public class FileFunc
 		
 		List<String> nativesExtracted = Lists.newArrayList();
 		baseDir = new File( baseDir, "natives" );
-		FileFunc.directoryHealthCheck( baseDir );
+		// FileFunc.directoryHealthCheck( baseDir );
 		
 		if ( libFile == null || !libFile.exists() || !libFile.getName().endsWith( ".jar" ) )
 			throw new IOException( "There was a problem with the provided jar file, it was either null, not existent or did not end with jar." );
