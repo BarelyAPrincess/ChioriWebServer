@@ -4,3 +4,4 @@ config:
   alwaysRender: false
   noCommons: false
   ignoreFileNotFound: true
+  renderExceptionPages: true

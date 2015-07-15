@@ -3,8 +3,6 @@ package com.chiorichan.plugin.template;
 import io.netty.buffer.Unpooled;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,30 +28,34 @@ import com.chiorichan.plugin.lang.PluginException;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
+import com.chiorichan.util.Namespace;
 import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.Versioning;
+import com.google.common.collect.Lists;
 
 /**
  * Chiori-chan's Web Server Template Plugin
  */
 public class Template extends Plugin implements Listener
 {
-	private String domainToPackage( String domain )
-	{
-		if ( domain == null || domain.isEmpty() )
-			return "";
-		
-		String[] packs = domain.split( "\\." );
-		
-		List<String> lst = Arrays.asList( packs );
-		Collections.reverse( lst );
-		
-		String pack = "";
-		for ( String s : lst )
-			pack += "." + s;
-		
-		return pack.substring( 1 );
-	}
+	/*
+	 * private String domainToPackage( String domain )
+	 * {
+	 * if ( domain == null || domain.isEmpty() )
+	 * return "";
+	 * 
+	 * String[] packs = domain.split( "\\." );
+	 * 
+	 * List<String> lst = Arrays.asList( packs );
+	 * Collections.reverse( lst );
+	 * 
+	 * String pack = "";
+	 * for ( String s : lst )
+	 * pack += "." + s;
+	 * 
+	 * return pack.substring( 1 );
+	 * }
+	 */
 	
 	private String generateExceptionPage( Throwable t, EvalFactory factory ) throws EvalException, EvalMultipleException, IOException
 	{
@@ -164,15 +166,17 @@ public class Template extends Plugin implements Listener
 		return result.getString();
 	}
 	
-	private String getPackageName( String pack )
-	{
-		if ( pack.indexOf( "." ) < 0 )
-			return pack;
-		
-		String[] packs = pack.split( "\\.(?=[^.]*$)" );
-		
-		return packs[1];
-	}
+	/*
+	 * private String getPackageName( String pack )
+	 * {
+	 * if ( pack.indexOf( "." ) < 0 )
+	 * return pack;
+	 * 
+	 * String[] packs = pack.split( "\\.(?=[^.]*$)" );
+	 * 
+	 * return packs[1];
+	 * }
+	 */
 	
 	@Override
 	public void onDisable() throws PluginException
@@ -190,6 +194,9 @@ public class Template extends Plugin implements Listener
 	@EventHandler( priority = EventPriority.NORMAL )
 	public void onHttpExceptionEvent( HttpExceptionEvent event )
 	{
+		if ( !getConfig().getBoolean( "config.renderExceptionPages", true ) )
+			return;
+		
 		try
 		{
 			// We check if this exception was thrown from inside our plugin to prevent a fatal looping issue
@@ -278,17 +285,29 @@ public class Template extends Plugin implements Listener
 			
 			boolean showCommons = !getConfig().getBoolean( "config.noCommons" );
 			
-			if ( fwVals.get( "commons" ) != null )
-				showCommons = StringFunc.isTrue( fwVals.get( "commons" ) );
+			if ( fwVals.get( "noCommons" ) != null )
+				showCommons = !StringFunc.isTrue( fwVals.get( "noCommons" ) );
 			
-			// Allow pages to disable the inclusion of common header
-			if ( showCommons )
-				ob.append( packageRead( domainToPackage( site.getDomain() ) + ".includes.common", event ) + "\n" );
-			
-			ob.append( packageRead( domainToPackage( site.getDomain() ) + ".includes." + getPackageName( theme ), event ) + "\n" );
+			List<String> headers = Lists.newArrayList();
 			
 			if ( fwVals.get( "header" ) != null && !fwVals.get( "header" ).isEmpty() )
-				ob.append( packageRead( fwVals.get( "header" ), event ) + "\n" );
+				headers.add( fwVals.get( "header" ) );
+			
+			Namespace ns = new Namespace( theme );
+			
+			if ( showCommons )
+				headers.add( ns.getParentNamespace().getParentNamespace().append( "includes.common" ).getNamespace() );
+			headers.add( ns.getParentNamespace().getParentNamespace().append( "common." + ns.getLocalName() ).getNamespace() );
+			
+			for ( String pack : headers )
+				try
+				{
+					ob.append( packageRead( pack, event ) + "\n" );
+				}
+				catch ( Throwable t )
+				{
+					getLogger().warning( String.format( "There was a problem reading the header package '%s'", pack ) );
+				}
 			
 			ob.append( "</head>\n" );
 			

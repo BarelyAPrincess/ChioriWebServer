@@ -17,7 +17,7 @@ import com.chiorichan.account.AccountAttachment;
 import com.chiorichan.messaging.MessageReceiver;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionManager;
-import com.chiorichan.permission.PermissionNamespace;
+import com.chiorichan.util.Namespace;
 import com.chiorichan.util.StringFunc;
 import com.google.common.collect.Sets;
 
@@ -44,7 +44,7 @@ public abstract class Command
 		
 		if ( permission != null )
 		{
-			PermissionNamespace ns = new PermissionNamespace( permission );
+			Namespace ns = new Namespace( permission );
 			
 			if ( !ns.containsOnlyValidChars() )
 				throw new RuntimeException( "We detected that the required permission '" + ns.getNamespace() + "' for command '" + name + "' contains invalid characters, this is most likely a programmers bug." );

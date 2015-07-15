@@ -18,10 +18,10 @@ import com.chiorichan.permission.ChildPermission;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionManager;
-import com.chiorichan.permission.PermissionNamespace;
 import com.chiorichan.permission.PermissionType;
 import com.chiorichan.permission.PermissionValue;
 import com.chiorichan.permission.References;
+import com.chiorichan.util.Namespace;
 
 public class FileGroup extends PermissibleGroup
 {
@@ -59,7 +59,7 @@ public class FileGroup extends PermissibleGroup
 			for ( String ss : permissions.getKeys( false ) )
 			{
 				ConfigurationSection permission = permissions.getConfigurationSection( ss );
-				PermissionNamespace ns = new PermissionNamespace( ss.replaceAll( "/", "." ) );
+				Namespace ns = new Namespace( ss.replaceAll( "/", "." ) );
 				
 				if ( !ns.containsOnlyValidChars() )
 				{

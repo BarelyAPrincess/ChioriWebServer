@@ -24,12 +24,12 @@ import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionBackend;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.PermissionModelValue;
-import com.chiorichan.permission.PermissionNamespace;
 import com.chiorichan.permission.PermissionType;
 import com.chiorichan.permission.References;
 import com.chiorichan.permission.lang.PermissionBackendException;
 import com.chiorichan.permission.lang.PermissionException;
 import com.chiorichan.permission.lang.PermissionValueException;
+import com.chiorichan.util.Namespace;
 import com.chiorichan.util.ObjectFunc;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -192,7 +192,7 @@ public class SQLBackend extends PermissionBackend
 				do
 					try
 					{
-						PermissionNamespace ns = new PermissionNamespace( result.getString( "permission" ) );
+						Namespace ns = new Namespace( result.getString( "permission" ) );
 						
 						if ( !ns.containsOnlyValidChars() )
 						{
@@ -260,7 +260,7 @@ public class SQLBackend extends PermissionBackend
 					PermissionManager.getLogger().warning( "The SQLBackend failed to remove the permission node '" + perm.getNamespace() + "' from the database. " + Loader.getRandomGag() );
 				else
 				{
-					PermissionNamespace ns = perm.getPermissionNamespace();
+					Namespace ns = perm.getPermissionNamespace();
 					
 					updateDBValue( ns, "type", perm.getType().name() );
 					
@@ -378,7 +378,7 @@ public class SQLBackend extends PermissionBackend
 		}
 	}
 	
-	private int updateDBValue( PermissionNamespace ns, String key, Object val ) throws SQLException, PermissionValueException
+	private int updateDBValue( Namespace ns, String key, Object val ) throws SQLException, PermissionValueException
 	{
 		try
 		{
@@ -390,7 +390,7 @@ public class SQLBackend extends PermissionBackend
 		}
 	}
 	
-	private int updateDBValue( PermissionNamespace ns, String key, String val ) throws SQLException
+	private int updateDBValue( Namespace ns, String key, String val ) throws SQLException
 	{
 		DatabaseEngine db = getSQL();
 		

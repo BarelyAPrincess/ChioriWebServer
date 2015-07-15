@@ -20,9 +20,9 @@ import com.chiorichan.permission.ChildPermission;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionManager;
-import com.chiorichan.permission.PermissionNamespace;
 import com.chiorichan.permission.PermissionValue;
 import com.chiorichan.permission.References;
+import com.chiorichan.util.Namespace;
 
 public class SQLGroup extends PermissibleGroup
 {
@@ -69,7 +69,7 @@ public class SQLGroup extends PermissibleGroup
 			if ( rs.next() )
 				do
 				{
-					PermissionNamespace ns = new PermissionNamespace( rs.getString( "permission" ) );
+					Namespace ns = new Namespace( rs.getString( "permission" ) );
 					
 					if ( !ns.containsOnlyValidChars() )
 					{

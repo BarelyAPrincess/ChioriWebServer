@@ -21,9 +21,9 @@ import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionManager;
-import com.chiorichan.permission.PermissionNamespace;
 import com.chiorichan.permission.PermissionValue;
 import com.chiorichan.permission.References;
+import com.chiorichan.util.Namespace;
 
 public class SQLEntity extends PermissibleEntity
 {
@@ -70,7 +70,7 @@ public class SQLEntity extends PermissibleEntity
 			if ( rs.next() )
 				do
 				{
-					PermissionNamespace ns = new PermissionNamespace( rs.getString( "permission" ) );
+					Namespace ns = new Namespace( rs.getString( "permission" ) );
 					
 					if ( !ns.containsOnlyValidChars() )
 					{

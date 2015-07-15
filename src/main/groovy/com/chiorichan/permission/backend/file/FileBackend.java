@@ -31,12 +31,12 @@ import com.chiorichan.permission.PermissionBackend;
 import com.chiorichan.permission.PermissionDefault;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.PermissionModelValue;
-import com.chiorichan.permission.PermissionNamespace;
 import com.chiorichan.permission.PermissionType;
 import com.chiorichan.permission.References;
 import com.chiorichan.permission.lang.PermissionBackendException;
 import com.chiorichan.permission.lang.PermissionException;
 import com.chiorichan.util.FileFunc;
+import com.chiorichan.util.Namespace;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Sets;
 
@@ -234,7 +234,7 @@ public class FileBackend extends PermissionBackend
 			for ( String s : keys )
 			{
 				ConfigurationSection node = section.getConfigurationSection( s );
-				PermissionNamespace ns = new PermissionNamespace( s.replaceAll( "/", "." ) );
+				Namespace ns = new Namespace( s.replaceAll( "/", "." ) );
 				
 				if ( !ns.containsOnlyValidChars() )
 				{

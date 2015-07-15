@@ -6,25 +6,27 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.permission;
+package com.chiorichan.util;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 import org.apache.commons.lang3.ArrayUtils;
 
-import com.chiorichan.util.StringFunc;
+import com.chiorichan.permission.Permission;
 import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
 
-public class PermissionNamespace
+public class Namespace
 {
 	protected static Pattern rangeExpression = Pattern.compile( "(0-9+)-(0-9+)" );
 	
 	private String[] nodes;
 	
-	public PermissionNamespace( String... namespace )
+	public Namespace( String... namespace )
 	{
 		if ( namespace.length < 1 )
 			namespace[0] = "";
@@ -32,7 +34,7 @@ public class PermissionNamespace
 		nodes = StringFunc.toLowerCase( namespace );
 	}
 	
-	public PermissionNamespace( String namespace )
+	public Namespace( String namespace )
 	{
 		if ( namespace == null )
 			namespace = "";
@@ -40,9 +42,12 @@ public class PermissionNamespace
 		nodes = namespace.toLowerCase().split( "\\." );
 	}
 	
-	public PermissionNamespace append( String s )
+	public Namespace append( String... nodes )
 	{
-		return new PermissionNamespace( ArrayUtils.addAll( nodes, s ) );
+		List<String> nodeList = Lists.newArrayList();
+		for ( int i = 0; i < nodes.length; i++ )
+			nodeList.addAll( Arrays.asList( nodes[i].split( "\\||\\.|/|\\" ) ) );
+		return new Namespace( ArrayUtils.addAll( nodes, nodeList.toArray( new String[0] ) ) );
 	}
 	
 	/**
@@ -77,14 +82,14 @@ public class PermissionNamespace
 	 * 
 	 * @return The fixed PermissionNamespace.
 	 */
-	public PermissionNamespace fixInvalidChars()
+	public Namespace fixInvalidChars()
 	{
 		String[] result = new String[nodes.length];
 		
 		for ( int i = 0; i < nodes.length; i++ )
 			result[i] = nodes[i].replaceAll( "[^a-z0-9_]", "" );
 		
-		return new PermissionNamespace( result );
+		return new Namespace( result );
 	}
 	
 	public String getLocalName()
@@ -135,9 +140,9 @@ public class PermissionNamespace
 		return Joiner.on( "." ).join( Arrays.copyOf( nodes, nodes.length - 1 ) );
 	}
 	
-	public PermissionNamespace getParentNamespace()
+	public Namespace getParentNamespace()
 	{
-		return new PermissionNamespace( getParent() );
+		return new Namespace( getParent() );
 	}
 	
 	public String getRootName()

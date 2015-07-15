@@ -40,6 +40,7 @@ import com.chiorichan.permission.event.PermissibleSystemEvent;
 import com.chiorichan.permission.lang.PermissionBackendException;
 import com.chiorichan.tasks.TaskCreator;
 import com.chiorichan.tasks.TaskManager;
+import com.chiorichan.util.Namespace;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -427,7 +428,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 		return "PermissionsManager";
 	}
 	
-	public Permission getNode( PermissionNamespace ns, boolean createNode )
+	public Permission getNode( Namespace ns, boolean createNode )
 	{
 		return getNode( ns.getNamespace(), createNode );
 	}
@@ -534,7 +535,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	 *            The full name space we need to crawl for.
 	 * @return A list of permissions that matched the namespace. Will return more then one if namespace contained asterisk.
 	 */
-	public List<Permission> getNodes( PermissionNamespace ns )
+	public List<Permission> getNodes( Namespace ns )
 	{
 		if ( ns == null )
 			return Lists.newArrayList();
@@ -553,7 +554,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	
 	public List<Permission> getNodes( String ns )
 	{
-		return getNodes( new PermissionNamespace( ns ) );
+		return getNodes( new Namespace( ns ) );
 	}
 	
 	public Collection<String> getReferences()

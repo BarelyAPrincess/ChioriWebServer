@@ -13,6 +13,7 @@ import java.util.List;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.permission.lang.PermissionException;
+import com.chiorichan.util.Namespace;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 
@@ -26,12 +27,12 @@ public final class Permission implements Comparable<Permission>
 	protected PermissionModelValue model;
 	protected final Permission parent;
 	
-	public Permission( PermissionNamespace ns )
+	public Permission( Namespace ns )
 	{
 		this( ns.getLocalName(), PermissionType.DEFAULT, ( ns.getNodeCount() <= 1 ) ? null : PermissionManager.INSTANCE.getNode( ns.getParent(), true ) );
 	}
 	
-	public Permission( PermissionNamespace ns, PermissionType type )
+	public Permission( Namespace ns, PermissionType type )
 	{
 		this( ns.getLocalName(), type, ( ns.getNodeCount() <= 1 ) ? null : PermissionManager.INSTANCE.getNode( ns.getParent(), true ) );
 	}
@@ -79,8 +80,8 @@ public final class Permission implements Comparable<Permission>
 		if ( getNamespace().equals( perm.getNamespace() ) )
 			return 0;
 		
-		PermissionNamespace ns1 = getPermissionNamespace();
-		PermissionNamespace ns2 = perm.getPermissionNamespace();
+		Namespace ns1 = getPermissionNamespace();
+		Namespace ns2 = perm.getPermissionNamespace();
 		
 		int ln = Math.min( ns1.getNodeCount(), ns2.getNodeCount() );
 		
@@ -202,13 +203,13 @@ public final class Permission implements Comparable<Permission>
 	}
 	
 	/**
-	 * Returns the {@link PermissionNamespace} class instance
+	 * Returns the {@link Namespace} class instance
 	 * 
-	 * @return {@link PermissionNamespace} class instance
+	 * @return {@link Namespace} class instance
 	 */
-	public PermissionNamespace getPermissionNamespace()
+	public Namespace getPermissionNamespace()
 	{
-		return new PermissionNamespace( getNamespace() );
+		return new Namespace( getNamespace() );
 	}
 	
 	public PermissionType getType()
