@@ -8,9 +8,10 @@
  */
 package com.chiorichan.factory;
 
-public interface BindingProvider
+/**
+ * 
+ */
+public interface ScriptingRegistry
 {
-	ScriptingFactory getEvalFactory();
-	
-	ScriptBinding getBinding();
+	ScriptingEngine[] makeEngines( ScriptingContext context );
 }

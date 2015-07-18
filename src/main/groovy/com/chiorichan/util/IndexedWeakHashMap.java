@@ -34,11 +34,13 @@ public class IndexedWeakHashMap<V> extends WeakHashMap<Integer, V>
 	
 	public V getFirst()
 	{
+		collapse();
 		return get( 0 );
 	}
 	
 	public V getLast()
 	{
+		collapse();
 		return get( size() );
 	}
 	

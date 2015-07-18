@@ -22,8 +22,8 @@ import com.google.common.collect.Maps;
  */
 public class StackFactory
 {
-	Map<String, EvalContext> scriptStack = Maps.newLinkedHashMap();
-	Map<String, EvalContext> scriptStackHistory = Maps.newLinkedHashMap();
+	Map<String, ScriptingContext> scriptStack = Maps.newLinkedHashMap();
+	Map<String, ScriptingContext> scriptStackHistory = Maps.newLinkedHashMap();
 	
 	public List<ScriptTraceElement> examineStackTrace( StackTraceElement[] stackTrace )
 	{
@@ -35,7 +35,7 @@ public class StackFactory
 			if ( ste.getFileName() != null && ste.getFileName().matches( "EvalScript\\d*\\.chi" ) )
 				scriptTrace.add( new ScriptTraceElement( scriptStackHistory.get( ste.getFileName() ), ste ) );
 		
-		EvalContext context = scriptStack.values().toArray( new EvalContext[0] )[scriptStack.size() - 1];
+		ScriptingContext context = scriptStack.values().toArray( new ScriptingContext[0] )[scriptStack.size() - 1];
 		if ( context != null )
 		{
 			boolean contains = false;
@@ -49,24 +49,24 @@ public class StackFactory
 		return scriptTrace;
 	}
 	
-	public Map<String, EvalContext> getScriptTrace()
+	public Map<String, ScriptingContext> getScriptTrace()
 	{
 		return Collections.unmodifiableMap( scriptStack );
 	}
 	
-	public Map<String, EvalContext> getScriptTraceHistory()
+	public Map<String, ScriptingContext> getScriptTraceHistory()
 	{
 		return Collections.unmodifiableMap( scriptStackHistory );
 	}
 	
-	public void stack( String scriptName, EvalContext context )
+	public void stack( String scriptName, ScriptingContext context )
 	{
 		scriptStackHistory.put( scriptName, context );
 		scriptStack.put( scriptName, context );
 	}
 	
 	/**
-	 * Removes the last stacked {@link EvalContext} from the stack
+	 * Removes the last stacked {@link ScriptingContext} from the stack
 	 */
 	public void unstack()
 	{

@@ -41,7 +41,7 @@ import com.chiorichan.Loader;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.http.ErrorEvent;
 import com.chiorichan.event.http.HttpExceptionEvent;
-import com.chiorichan.factory.EvalContext;
+import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.lang.ApacheParser;
 import com.chiorichan.lang.HttpError;
 import com.chiorichan.logger.LogEvent;
@@ -313,7 +313,7 @@ public class HttpResponseWrapper
 			{
 				String stackTrace = ExceptionUtils.getStackTrace( cause );
 				
-				for ( Entry<String, EvalContext> e : request.getEvalFactory().stack().getScriptTraceHistory().entrySet() )
+				for ( Entry<String, ScriptingContext> e : request.getEvalFactory().stack().getScriptTraceHistory().entrySet() )
 					stackTrace = stackTrace.replace( e.getKey(), e.getValue().filename() );
 				
 				sendError( httpStatus, null, "<pre>" + stackTrace + "</pre>" );

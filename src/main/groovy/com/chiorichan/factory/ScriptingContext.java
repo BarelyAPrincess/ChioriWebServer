@@ -27,43 +27,43 @@ import com.chiorichan.util.StringFunc;
 /**
  * Provides the context to a requested eval of the EvalFactory
  */
-public class EvalContext
+public class ScriptingContext
 {
 	private Charset charset = Charset.defaultCharset();
 	private ByteBuf content = Unpooled.buffer();
 	private String contentType;
-	private EvalFactory factory;
+	private ScriptingFactory factory;
 	private String filename;
 	private HttpRequestWrapper request = null;
-	private EvalResult result = null;
+	private ScriptingResult result = null;
 	private String name;
 	private String shell = "embedded";
 	private Site site;
 	private String source = null;
 	private boolean required = false;
 	
-	private EvalContext()
+	private ScriptingContext()
 	{
 		
 	}
 	
-	public static EvalContext fromAuto( final Site site, final String res )
+	public static ScriptingContext fromAuto( final Site site, final String res )
 	{
 		// Might need a better attempt at auto determining file types
-		EvalContext context = fromFile( site, res );
+		ScriptingContext context = fromFile( site, res );
 		if ( context.result().hasExceptions() )
 		{
 			if ( res.contains( "." ) )
-				return EvalContext.fromPackage( site, res );
+				return ScriptingContext.fromPackage( site, res );
 			
-			context = new EvalContext();
+			context = new ScriptingContext();
 			context.result().addException( new EvalException( ErrorReporting.E_ERROR, String.format( "We chould not auto determine the resource type for '%s'", res ) ) );
 			return context;
 		}
 		return context;
 	}
 	
-	static EvalContext fromFile( final File file )
+	static ScriptingContext fromFile( final File file )
 	{
 		try
 		{
@@ -71,21 +71,21 @@ public class EvalContext
 		}
 		catch ( IOException e )
 		{
-			EvalContext context = new EvalContext();
+			ScriptingContext context = new ScriptingContext();
 			EvalException.exceptionHandler( e, context );
 			return context;
 		}
 	}
 	
-	public static EvalContext fromFile( final FileInterpreter fi )
+	public static ScriptingContext fromFile( final FileInterpreter fi )
 	{
-		EvalContext context = fromSource( fi.consumeBytes(), fi.getFilePath() );
+		ScriptingContext context = fromSource( fi.consumeBytes(), fi.getFilePath() );
 		context.contentType = fi.getContentType();
 		context.shell = fi.getParams().get( "shell" );
 		return context;
 	}
 	
-	public static EvalContext fromFile( final Site site, final String file )
+	public static ScriptingContext fromFile( final Site site, final String file )
 	{
 		// We block absolute file paths for both unix-like and windows
 		if ( file.startsWith( File.separator ) || file.matches( "[A-Za-z]:\\.*" ) )
@@ -95,20 +95,20 @@ public class EvalContext
 		return fromFile( new File( site.getAbsoluteRoot(), file ) );
 	}
 	
-	public static EvalContext fromPackage( final Site site, final String pack )
+	public static ScriptingContext fromPackage( final Site site, final String pack )
 	{
-		EvalContext context = null;
+		ScriptingContext context = null;
 		
 		try
 		{
 			File packFile = site.getResourceWithException( pack );
 			FileInterpreter fi = new FileInterpreter( packFile );
 			
-			context = EvalContext.fromFile( fi );
+			context = ScriptingContext.fromFile( fi );
 		}
 		catch ( IOException e )
 		{
-			context = EvalContext.fromSource( "", pack );
+			context = ScriptingContext.fromSource( "", pack );
 			context.result().addException( new EvalException( ErrorReporting.E_IGNORABLE, String.format( "Could not locate the package '%s' within site '%s'", pack, site.getSiteId() ) ) );
 		}
 		
@@ -117,38 +117,38 @@ public class EvalContext
 		return context;
 	}
 	
-	public static EvalContext fromSource( byte[] source )
+	public static ScriptingContext fromSource( byte[] source )
 	{
 		return fromSource( source, "<no file>" );
 	}
 	
-	public static EvalContext fromSource( final byte[] source, final File file )
+	public static ScriptingContext fromSource( final byte[] source, final File file )
 	{
 		return fromSource( source, file.getAbsolutePath() );
 	}
 	
-	public static EvalContext fromSource( final byte[] source, final String filename )
+	public static ScriptingContext fromSource( final byte[] source, final String filename )
 	{
-		EvalContext context = new EvalContext();
+		ScriptingContext context = new ScriptingContext();
 		context.filename = filename;
 		context.write( source );
 		context.baseSource( new String( source, context.charset ) );
 		return context;
 	}
 	
-	public static EvalContext fromSource( String source )
+	public static ScriptingContext fromSource( String source )
 	{
 		return fromSource( source, "" );
 	}
 	
-	public static EvalContext fromSource( final String source, final File file )
+	public static ScriptingContext fromSource( final String source, final File file )
 	{
 		return fromSource( source, file.getAbsolutePath() );
 	}
 	
-	public static EvalContext fromSource( final String source, final String filename )
+	public static ScriptingContext fromSource( final String source, final String filename )
 	{
-		EvalContext context = fromSource( new byte[0], filename );
+		ScriptingContext context = fromSource( new byte[0], filename );
 		context.write( source.getBytes( context.charset ) );
 		return context;
 	}
@@ -158,7 +158,7 @@ public class EvalContext
 		return source;
 	}
 	
-	public EvalContext baseSource( String source )
+	public ScriptingContext baseSource( String source )
 	{
 		this.source = source;
 		return this;
@@ -189,7 +189,7 @@ public class EvalContext
 		return contentType;
 	}
 	
-	public EvalContext contentType( final String contentType )
+	public ScriptingContext contentType( final String contentType )
 	{
 		this.contentType = contentType;
 		return this;
@@ -215,12 +215,12 @@ public class EvalContext
 		return result.getObject();
 	}
 	
-	public EvalFactory factory()
+	public ScriptingFactory factory()
 	{
 		return factory;
 	}
 	
-	EvalContext factory( final EvalFactory factory )
+	ScriptingContext factory( final ScriptingFactory factory )
 	{
 		this.factory = factory;
 		
@@ -240,7 +240,7 @@ public class EvalContext
 		return name;
 	}
 	
-	public EvalContext name( String name )
+	public ScriptingContext name( String name )
 	{
 		this.name = name;
 		return this;
@@ -258,7 +258,7 @@ public class EvalContext
 	
 	public String read( boolean includeObj, boolean printErrors ) throws EvalException, EvalMultipleException
 	{
-		EvalResult result = null;
+		ScriptingResult result = null;
 		if ( request != null )
 			result = request.getEvalFactory().eval( this );
 		else if ( factory != null )
@@ -300,19 +300,19 @@ public class EvalContext
 		return request;
 	}
 	
-	public EvalContext request( HttpRequestWrapper request )
+	public ScriptingContext request( HttpRequestWrapper request )
 	{
 		this.request = request;
 		return this;
 	}
 	
-	public EvalContext require()
+	public ScriptingContext require()
 	{
 		required = true;
 		return this;
 	}
 	
-	public EvalContext require( boolean required )
+	public ScriptingContext require( boolean required )
 	{
 		this.required = required;
 		return this;
@@ -353,10 +353,10 @@ public class EvalContext
 		write( str.getBytes( charset ) );
 	}
 	
-	public EvalResult result()
+	public ScriptingResult result()
 	{
 		if ( result == null )
-			result = new EvalResult( this, content );
+			result = new ScriptingResult( this, content );
 		return result;
 	}
 	
@@ -365,7 +365,7 @@ public class EvalContext
 		return shell;
 	}
 	
-	public EvalContext shell( String shell )
+	public ScriptingContext shell( String shell )
 	{
 		this.shell = shell;
 		return this;
@@ -376,7 +376,7 @@ public class EvalContext
 		return site == null ? SiteManager.INSTANCE.getDefaultSite() : site;
 	}
 	
-	public EvalContext site( Site site )
+	public ScriptingContext site( Site site )
 	{
 		this.site = site;
 		return this;

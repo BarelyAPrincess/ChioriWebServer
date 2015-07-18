@@ -32,13 +32,13 @@ import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.Listener;
-import com.chiorichan.factory.EvalContext;
-import com.chiorichan.factory.EvalFactory;
+import com.chiorichan.factory.ScriptingContext;
+import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.util.StringFunc;
 
 /**
- * Applies special builtin image filters post {@link EvalFactory} via {@link PostEvalEvent}
+ * Applies special builtin image filters post {@link ScriptingFactory} via {@link PostEvalEvent}
  *
  * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
@@ -75,7 +75,7 @@ public class PostImageProcessor implements Listener
 			boolean cacheEnabled = Loader.getConfig().getBoolean( "advanced.processors.imageProcessorCache", true );
 			boolean grayscale = false;
 			
-			EvalContext context = event.context();
+			ScriptingContext context = event.context();
 			HttpRequestWrapper request = context.request();
 			Map<String, String> rewrite = request.getRewriteMap();
 			

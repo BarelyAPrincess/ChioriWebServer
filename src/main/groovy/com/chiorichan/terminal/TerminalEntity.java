@@ -25,8 +25,8 @@ import com.chiorichan.account.auth.AccountAuthenticator;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.factory.BindingProvider;
-import com.chiorichan.factory.EvalBinding;
-import com.chiorichan.factory.EvalFactory;
+import com.chiorichan.factory.ScriptBinding;
+import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.messaging.MessageSender;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.site.Site;
@@ -44,15 +44,15 @@ public class TerminalEntity extends AccountPermissible implements Terminal, Bind
 	// private Map<String, String> metadata = Maps.newConcurrentMap();
 	private String prompt = "";
 	
-	private EvalBinding binding = new EvalBinding();
-	private EvalFactory factory;
+	private ScriptBinding binding = new ScriptBinding();
+	private ScriptingFactory factory;
 	
 	public TerminalEntity( TerminalHandler handler )
 	{
 		this.handler = handler;
 		
-		binding = new EvalBinding();
-		factory = EvalFactory.create( this );
+		binding = new ScriptBinding();
+		factory = ScriptingFactory.create( this );
 		binding.setVariable( "context", this );
 		binding.setVariable( "__FILE__", new File( "" ) );
 		
@@ -114,7 +114,7 @@ public class TerminalEntity extends AccountPermissible implements Terminal, Bind
 	}
 	
 	@Override
-	public EvalBinding getBinding()
+	public ScriptBinding getBinding()
 	{
 		return binding;
 	}
@@ -126,7 +126,7 @@ public class TerminalEntity extends AccountPermissible implements Terminal, Bind
 	}
 	
 	@Override
-	public EvalFactory getEvalFactory()
+	public ScriptingFactory getEvalFactory()
 	{
 		return factory;
 	}

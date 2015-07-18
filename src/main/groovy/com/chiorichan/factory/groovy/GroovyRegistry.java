@@ -8,6 +8,7 @@
  */
 package com.chiorichan.factory.groovy;
 
+import groovy.lang.Binding;
 import groovy.lang.GroovyRuntimeException;
 import groovy.lang.GroovyShell;
 import groovy.lang.MissingMethodException;
@@ -35,11 +36,11 @@ import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountType;
 import com.chiorichan.account.auth.AccountAuthenticator;
 import com.chiorichan.event.EventBus;
-import com.chiorichan.factory.EvalCallback;
-import com.chiorichan.factory.EvalContext;
-import com.chiorichan.factory.EvalFactory;
-import com.chiorichan.factory.processors.EmbeddedGroovyScriptProcessor;
-import com.chiorichan.factory.processors.GroovyScriptProcessor;
+import com.chiorichan.factory.ExceptionCallback;
+import com.chiorichan.factory.ScriptingContext;
+import com.chiorichan.factory.ScriptingEngine;
+import com.chiorichan.factory.ScriptingFactory;
+import com.chiorichan.factory.ScriptingRegistry;
 import com.chiorichan.lang.ErrorReporting;
 import com.chiorichan.lang.EvalException;
 import com.chiorichan.lang.SandboxSecurityException;
@@ -55,16 +56,16 @@ import com.google.common.collect.Maps;
 /**
  * Handles the registry of the Groovy related scripting language
  */
-public class GroovyRegistry
+public class GroovyRegistry implements ScriptingRegistry
 {
 	/*
 	 * Groovy Imports :P
 	 */
 	private static final GroovyImportCustomizer imports = new GroovyImportCustomizer();
-	private static final Class<?>[] classImports = new Class<?>[] {Loader.class, AccountManager.class, AccountType.class, Account.class, AccountAuthenticator.class, EventBus.class, PermissionManager.class, PluginManager.class, TaskManager.class, Timings.class, SessionManager.class, SiteManager.class, Site.class, EvalContext.class};
-	private static final String[] starImports = new String[] {"com.chiorichan.lang", "com.chiorichan.util", "org.apache.commons.lang3.text", "org.ocpsoft.prettytime", "java.util", "java.net", "com.google.common.base"};
-	private static final String[] staticImports = new String[] {"com.chiorichan.util.Looper"};
 	
+	private static final Class<?>[] classImports = new Class<?>[] {ScriptApi.class, Loader.class, AccountManager.class, AccountType.class, Account.class, AccountAuthenticator.class, EventBus.class, PermissionManager.class, PluginManager.class, TaskManager.class, Timings.class, SessionManager.class, SiteManager.class, Site.class, ScriptingContext.class};
+	private static final String[] starImports = new String[] {"com.chiorichan.lang", "com.chiorichan.factory.api", "com.chiorichan.util", "org.apache.commons.lang3.text", "org.ocpsoft.prettytime", "java.util", "java.net", "com.google.common.base"};
+	private static final String[] staticImports = new String[] {"com.chiorichan.util.Looper", "com.chiorichan.lang.ErrorReporting"};
 	private static final GroovySandbox secure = new GroovySandbox();
 	
 	/*
@@ -90,18 +91,17 @@ public class GroovyRegistry
 	
 	public GroovyRegistry()
 	{
-		/**
-		 * Register Script-Processors
-		 */
-		if ( Loader.getConfig().getBoolean( "advanced.scripting.gspEnabled", true ) )
-			EvalFactory.register( new EmbeddedGroovyScriptProcessor() );
-		if ( Loader.getConfig().getBoolean( "advanced.scripting.groovyEnabled", true ) )
-			EvalFactory.register( new GroovyScriptProcessor() );
+		// if ( Loader.getConfig().getBoolean( "advanced.scripting.gspEnabled", true ) )
+		// EvalFactory.register( new EmbeddedGroovyScriptProcessor() );
+		// if ( Loader.getConfig().getBoolean( "advanced.scripting.groovyEnabled", true ) )
+		// EvalFactory.register( new GroovyScriptProcessor() );
 		
-		EvalException.registerException( new EvalCallback()
+		ScriptingFactory.register( this );
+		
+		EvalException.registerException( new ExceptionCallback()
 		{
 			@Override
-			public ErrorReporting callback( Throwable cause, EvalContext context )
+			public ErrorReporting callback( Throwable cause, ScriptingContext context )
 			{
 				MultipleCompilationErrorsException exp = ( MultipleCompilationErrorsException ) cause;
 				ErrorCollector e = exp.getErrorCollector();
@@ -133,20 +133,20 @@ public class GroovyRegistry
 			}
 		}, MultipleCompilationErrorsException.class );
 		
-		EvalException.registerException( new EvalCallback()
+		EvalException.registerException( new ExceptionCallback()
 		{
 			@Override
-			public ErrorReporting callback( Throwable cause, EvalContext context )
+			public ErrorReporting callback( Throwable cause, ScriptingContext context )
 			{
 				context.result().addException( new EvalException( ErrorReporting.E_ERROR, cause ) );
 				return ErrorReporting.E_ERROR;
 			}
 		}, TimeoutException.class, MissingMethodException.class, CompilationFailedException.class, SandboxSecurityException.class, GroovyRuntimeException.class );
 		
-		EvalException.registerException( new EvalCallback()
+		EvalException.registerException( new ExceptionCallback()
 		{
 			@Override
-			public ErrorReporting callback( Throwable cause, EvalContext context )
+			public ErrorReporting callback( Throwable cause, ScriptingContext context )
 			{
 				context.result().addException( new EvalException( ErrorReporting.E_PARSE, cause ) );
 				return ErrorReporting.E_PARSE;
@@ -163,13 +163,8 @@ public class GroovyRegistry
 		 */
 	}
 	
-	/**
-	 * Attempts to create a new GroovyShell instance using our own CompilerConfigurations
-	 * 
-	 * @return
-	 *         new instance of GroovyShell
-	 */
-	public static GroovyShell getNewShell( EvalContext context )
+	@SuppressWarnings( "deprecation" )
+	public GroovyShell getNewShell( ScriptingContext context, Binding binding )
 	{
 		CompilerConfiguration configuration = new CompilerConfiguration();
 		
@@ -188,15 +183,23 @@ public class GroovyRegistry
 		 */
 		configuration.setSourceEncoding( context.factory().charset().name() );
 		
-		return new GroovyShell( Loader.class.getClassLoader(), context.factory().binding(), configuration );
+		configuration.setTargetDirectory( context.site().getRoot() );
+		
+		return new GroovyShell( Loader.class.getClassLoader(), binding, configuration );
 	}
 	
-	public static Script makeScript( GroovyShell shell, EvalContext context )
+	@Override
+	public ScriptingEngine[] makeEngines( ScriptingContext context )
+	{
+		return new ScriptingEngine[] {new GroovyEngine( this ), new EmbeddedGroovyEngine( this )};
+	}
+	
+	public Script makeScript( GroovyShell shell, ScriptingContext context )
 	{
 		return makeScript( shell, context.readString(), context );
 	}
 	
-	public static Script makeScript( GroovyShell shell, String source, EvalContext context )
+	public Script makeScript( GroovyShell shell, String source, ScriptingContext context )
 	{
 		return shell.parse( source, context.name() );
 	}

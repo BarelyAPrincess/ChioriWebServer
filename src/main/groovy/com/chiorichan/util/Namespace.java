@@ -17,7 +17,9 @@ import java.util.regex.PatternSyntaxException;
 import org.apache.commons.lang3.ArrayUtils;
 
 import com.chiorichan.permission.Permission;
+import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 
 public class Namespace
@@ -46,8 +48,15 @@ public class Namespace
 	{
 		List<String> nodeList = Lists.newArrayList();
 		for ( int i = 0; i < nodes.length; i++ )
-			nodeList.addAll( Arrays.asList( nodes[i].split( "\\||\\.|/|\\" ) ) );
-		return new Namespace( ArrayUtils.addAll( nodes, nodeList.toArray( new String[0] ) ) );
+			nodeList.addAll( Splitter.on( new CharMatcher()
+			{
+				@Override
+				public boolean matches( char c )
+				{
+					return ( c == '|' || c == '.' || c == '/' || c == '\\' );
+				}
+			} ).splitToList( nodes[i] ) );
+		return new Namespace( ArrayUtils.addAll( this.nodes, nodeList.toArray( new String[0] ) ) );
 	}
 	
 	/**

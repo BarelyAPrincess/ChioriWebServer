@@ -11,19 +11,19 @@ package com.chiorichan.factory.event;
 import com.chiorichan.event.Cancellable;
 import com.chiorichan.event.Event;
 import com.chiorichan.event.HandlerList;
-import com.chiorichan.factory.EvalContext;
+import com.chiorichan.factory.ScriptingContext;
 
 public class PostEvalEvent extends Event implements Cancellable
 {
-	private EvalContext context;
+	private ScriptingContext context;
 	private boolean cancelled;
 	
-	public PostEvalEvent( EvalContext context )
+	public PostEvalEvent( ScriptingContext context )
 	{
 		this.context = context;
 	}
 	
-	public EvalContext context()
+	public ScriptingContext context()
 	{
 		return context;
 	}

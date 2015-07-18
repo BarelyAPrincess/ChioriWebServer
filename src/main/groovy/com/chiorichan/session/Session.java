@@ -533,7 +533,7 @@ public final class Session extends AccountPermissible implements Kickable
 	@Override
 	public void setVariable( String key, String value )
 	{
-		SessionManager.getLogger().info( String.format( "Setting session valiable `%s` with value '%s'", key, value ) );
+		SessionManager.getLogger().info( String.format( "Setting session variable `%s` with value '%s'", key, value ) );
 		
 		if ( value == null )
 			data.data.remove( key );

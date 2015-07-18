@@ -22,8 +22,8 @@ import com.chiorichan.account.AccountInstance;
 import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.factory.BindingProvider;
-import com.chiorichan.factory.EvalBinding;
-import com.chiorichan.factory.EvalFactory;
+import com.chiorichan.factory.ScriptBinding;
+import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.http.HttpCookie;
 import com.chiorichan.messaging.MessageSender;
 import com.chiorichan.permission.PermissibleEntity;
@@ -40,12 +40,12 @@ public abstract class SessionWrapper implements BindingProvider, AccountAttachme
 	/**
 	 * The binding specific to this request
 	 */
-	private EvalBinding binding = new EvalBinding();
+	private ScriptBinding binding = new ScriptBinding();
 	
 	/**
 	 * The EvalFactory used to process scripts of this request
 	 */
-	private EvalFactory factory;
+	private ScriptingFactory factory;
 	
 	/**
 	 * The session associated with this request
@@ -58,7 +58,6 @@ public abstract class SessionWrapper implements BindingProvider, AccountAttachme
 	 * 
 	 * Sidenote: This is only for cleaning up a Session Wrapper, cleaning up an actual parent session is a whole different story.
 	 */
-	@SuppressWarnings( "unchecked" )
 	public void finish()
 	{
 		Map<String, Object> bindings = session.globals;
@@ -95,7 +94,7 @@ public abstract class SessionWrapper implements BindingProvider, AccountAttachme
 	protected abstract void finish0();
 	
 	@Override
-	public EvalBinding getBinding()
+	public ScriptBinding getBinding()
 	{
 		return binding;
 	}
@@ -117,7 +116,7 @@ public abstract class SessionWrapper implements BindingProvider, AccountAttachme
 	}
 	
 	@Override
-	public EvalFactory getEvalFactory()
+	public ScriptingFactory getEvalFactory()
 	{
 		return factory;
 	}
@@ -247,12 +246,12 @@ public abstract class SessionWrapper implements BindingProvider, AccountAttachme
 		/*
 		 * Create our Binding
 		 */
-		binding = new EvalBinding( new HashMap<String, Object>( session.getGlobals() ) );
+		binding = new ScriptBinding( new HashMap<String, Object>( session.getGlobals() ) );
 		
 		/*
 		 * Create our EvalFactory
 		 */
-		factory = EvalFactory.create( this );
+		factory = ScriptingFactory.create( this );
 		
 		/*
 		 * Reference Session Variables

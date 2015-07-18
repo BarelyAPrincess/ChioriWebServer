@@ -6,17 +6,26 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.factory.processors;
+package com.chiorichan.factory.groovy;
 
+import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufOutputStream;
 
 import java.io.IOException;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.chiorichan.factory.EvalContext;
-import com.chiorichan.factory.groovy.GroovyRegistry;
+import com.chiorichan.factory.ScriptBinding;
+import com.chiorichan.factory.ScriptingContext;
+import com.chiorichan.factory.ScriptingEngine;
 import com.chiorichan.lang.ErrorReporting;
 import com.chiorichan.lang.EvalException;
 
@@ -29,10 +38,18 @@ import com.chiorichan.lang.EvalException;
  * This is plain html<% print ", with a twist of groovy. Today's date: " + date("") %>.
  * </p>
  */
-public class EmbeddedGroovyScriptProcessor implements ScriptingProcessor
+public class EmbeddedGroovyEngine implements ScriptingEngine
 {
 	private static final String MARKER_END = "%>";
 	private static final String MARKER_START = "<%";
+	
+	private Binding binding = new Binding();
+	private GroovyRegistry registry;
+	
+	public EmbeddedGroovyEngine( GroovyRegistry registry )
+	{
+		this.registry = registry;
+	}
 	
 	public String escapeFragment( String fragment )
 	{
@@ -48,7 +65,7 @@ public class EmbeddedGroovyScriptProcessor implements ScriptingProcessor
 	}
 	
 	@Override
-	public boolean eval( EvalContext context ) throws Exception
+	public boolean eval( ScriptingContext context ) throws Exception
 	{
 		String source = context.readString();
 		
@@ -105,8 +122,8 @@ public class EmbeddedGroovyScriptProcessor implements ScriptingProcessor
 		context.baseSource( output.toString() );
 		try
 		{
-			GroovyShell shell = GroovyRegistry.getNewShell( context );
-			Script script = GroovyRegistry.makeScript( shell, output.toString(), context );
+			GroovyShell shell = registry.getNewShell( context, binding );
+			Script script = registry.makeScript( shell, output.toString(), context );
 			
 			context.result().object( script.run() );
 		}
@@ -121,8 +138,28 @@ public class EmbeddedGroovyScriptProcessor implements ScriptingProcessor
 	}
 	
 	@Override
-	public String[] getHandledTypes()
+	public List<String> getTypes()
 	{
-		return new String[] {"embedded", "gsp", "jsp", "chi"};
+		return Arrays.asList( "embedded", "gsp", "jsp", "chi" );
+	}
+	
+	@Override
+	public void setBinding( ScriptBinding binding )
+	{
+		// Groovy Binding will keep the original EvalBinding map updated automatically. YAY!
+		this.binding = new Binding( binding.getVariables() );
+	}
+	
+	@Override
+	public void setOutput( ByteBuf buffer, Charset charset )
+	{
+		try
+		{
+			binding.setProperty( "out", new PrintStream( new ByteBufOutputStream( buffer ), true, charset.name() ) );
+		}
+		catch ( UnsupportedEncodingException e )
+		{
+			e.printStackTrace();
+		}
 	}
 }

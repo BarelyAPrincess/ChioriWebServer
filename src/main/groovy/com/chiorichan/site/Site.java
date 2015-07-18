@@ -8,8 +8,6 @@
  */
 package com.chiorichan.site;
 
-import groovy.lang.Binding;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -35,10 +33,10 @@ import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.SiteLoadEvent;
-import com.chiorichan.factory.EvalBinding;
-import com.chiorichan.factory.EvalContext;
-import com.chiorichan.factory.EvalFactory;
-import com.chiorichan.factory.EvalResult;
+import com.chiorichan.factory.ScriptBinding;
+import com.chiorichan.factory.ScriptingContext;
+import com.chiorichan.factory.ScriptingFactory;
+import com.chiorichan.factory.ScriptingResult;
 import com.chiorichan.http.HttpCookie;
 import com.chiorichan.http.Routes;
 import com.chiorichan.lang.SiteException;
@@ -76,8 +74,8 @@ public class Site
 	private String sessionPersistence = "cookie";
 	
 	// Binding and evaling for use inside each site for executing site scripts outside of web requests.
-	private final EvalBinding binding = new EvalBinding();
-	private final EvalFactory factory = EvalFactory.create( binding );
+	private final ScriptBinding binding = new ScriptBinding();
+	private final ScriptingFactory factory = ScriptingFactory.create( binding );
 	
 	Site( File file ) throws SiteException, StartupException
 	{
@@ -429,7 +427,7 @@ public class Site
 			if ( onLoadScripts != null )
 				for ( String script : onLoadScripts )
 				{
-					EvalResult result = factory.eval( EvalContext.fromFile( this, script ).shell( "groovy" ).site( this ) );
+					ScriptingResult result = factory.eval( ScriptingContext.fromFile( this, script ).shell( "groovy" ).site( this ) );
 					
 					if ( result.hasExceptions() )
 					{
@@ -494,7 +492,7 @@ public class Site
 		return aliases;
 	}
 	
-	protected Binding getBinding()
+	protected ScriptBinding getBinding()
 	{
 		return binding;
 	}
@@ -519,7 +517,7 @@ public class Site
 		return encryptionKey;
 	}
 	
-	public EvalFactory getEvalFactory()
+	public ScriptingFactory getEvalFactory()
 	{
 		return factory;
 	}
@@ -534,7 +532,6 @@ public class Site
 		return binding.getVariable( key );
 	}
 	
-	@SuppressWarnings( "unchecked" )
 	public Map<String, Object> getGlobals()
 	{
 		return binding.getVariables();
@@ -621,6 +618,15 @@ public class Site
 		}
 	}
 	
+	/**
+	 * Returns the site webroot
+	 * 
+	 * @param subdomain
+	 *            The subdomain subdirectory
+	 * @return
+	 *         Directory absolute path
+	 * @throws SiteException
+	 */
 	public String getRoot( String subdomain ) throws SiteException
 	{
 		String target = siteId.replaceAll( " ", "" );

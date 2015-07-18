@@ -13,7 +13,7 @@ import com.chiorichan.lang.ErrorReporting;
 /**
  * Provides a callback to when a registered exception is thrown
  */
-public interface EvalCallback
+public interface ExceptionCallback
 {
 	/**
 	 * Called for each registered Exception Callback for handling.
@@ -21,9 +21,9 @@ public interface EvalCallback
 	 * @param cause
 	 *            The thrown exception
 	 * @param context
-	 *            The associated {@link EvalContext}
+	 *            The associated {@link ScriptingContext}
 	 * @return The resulting ErrorReporting level
 	 *         Returning NULL will, if possible, try the next best matching EvalCallback
 	 */
-	ErrorReporting callback( Throwable cause, EvalContext context );
+	ErrorReporting callback( Throwable cause, ScriptingContext context );
 }

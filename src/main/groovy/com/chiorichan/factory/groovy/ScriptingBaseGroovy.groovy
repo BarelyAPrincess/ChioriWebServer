@@ -10,33 +10,24 @@ package com.chiorichan.factory.groovy
 
 import com.chiorichan.account.Account
 import com.chiorichan.account.AccountManager
-import com.chiorichan.factory.EvalContext
-import com.chiorichan.factory.EvalFactory
-import com.chiorichan.factory.EvalResult
+import com.chiorichan.factory.ScriptingFactory
 import com.chiorichan.factory.ScriptTraceElement
+import com.chiorichan.factory.api.Server
 import com.chiorichan.http.HttpCode
 import com.chiorichan.http.HttpRequestWrapper
 import com.chiorichan.http.HttpResponseWrapper
-import com.chiorichan.lang.ErrorReporting
-import com.chiorichan.lang.EvalException
 import com.chiorichan.permission.Permission
 import com.chiorichan.permission.PermissionResult
 import com.chiorichan.session.Session
 import com.chiorichan.site.Site
 import com.chiorichan.site.SiteManager
-import com.chiorichan.util.WebFunc
-import com.google.common.collect.Lists
 
 /**
  * Used as the Groovy Scripting Base and provides scripts with custom builtin methods
  */
+@Deprecated
 public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 {
-	List<ScriptTraceElement> getScriptTrace()
-	{
-		return getRequest().getEvalFactory().getScriptTrace()
-	}
-
 	/**
 	 * Same as {@link ScriptingBaseJava#var_export(obj)} but instead prints the result to the buffer
 	 * Based on method of same name in PHP
@@ -158,7 +149,6 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 * @return
 	 *       The current site
 	 */
-	@Override
 	Site getSite()
 	{
 		return getRequest().getSite()
@@ -241,41 +231,14 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 		return url_to_login + "?logout"
 	}
 
-	/**
-	 * Used to execute site file within the script.
-	 * FYI, Absolute and .. paths are disallowed for security reasons
-	 *
-	 * @param pack
-	 *       The file relative
-	 * @return
-	 *       The EvalContext ready for eval() or read()
-	 */
-	EvalContext fileContext( String file )
-	{
-		return EvalContext.fromFile( getSite(), file ).request( getRequest() )
-	}
-
-	/**
-	 * Used to execute package file within the script.
-	 *
-	 * @param pack
-	 *       The package, e.g, com.chiorichan.widgets.sidemenu
-	 * @return
-	 *       The EvalContext ready for eval() or read()
-	 */
-	EvalContext packageContext( String pack )
-	{
-		return EvalContext.fromPackage( getSite(), pack ).request( getRequest() )
-	}
-
 	Object include( String pack )
 	{
-		return packageContext( pack ).eval()
+		return Server.packageContext( pack ).eval()
 	}
 
 	Object require( String pack )
 	{
-		return packageContext( pack ).require().eval()
+		return Server.packageContext( pack ).require().eval()
 	}
 
 	boolean isAdmin()
@@ -308,7 +271,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 		getSession().requirePermission( perm )
 	}
 
-	EvalFactory getEvalFactory()
+	ScriptingFactory getEvalFactory()
 	{
 		return getRequest().getEvalFactory()
 	}

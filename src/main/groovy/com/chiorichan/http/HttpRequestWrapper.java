@@ -20,6 +20,7 @@ import io.netty.handler.ssl.SslHandler;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.ref.WeakReference;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
@@ -64,6 +65,8 @@ import com.google.common.collect.Sets;
  */
 public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 {
+	private static final Map<Thread, WeakReference<HttpRequestWrapper>> references = Maps.newConcurrentMap();
+	
 	/**
 	 * Return maps as unmodifiable
 	 */
@@ -161,6 +164,8 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		this.ssl = ssl;
 		this.log = log;
 		
+		putRequest( this );
+		
 		// Set Time of this Request
 		requestTime = Timings.epoch();
 		
@@ -216,6 +221,18 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			}
 		
 		initServerVars();
+	}
+	
+	public static HttpRequestWrapper getRequest()
+	{
+		if ( !references.containsKey( Thread.currentThread() ) || references.get( Thread.currentThread() ).get() == null )
+			throw new IllegalStateException( "Thread '" + Thread.currentThread().getName() + "' does not seem to currently link to any existing http requests, please try again or notify an administrator." );
+		return references.get( Thread.currentThread() ).get();
+	}
+	
+	private static void putRequest( HttpRequestWrapper request )
+	{
+		references.put( Thread.currentThread(), new WeakReference<HttpRequestWrapper>( request ) );
 	}
 	
 	/**

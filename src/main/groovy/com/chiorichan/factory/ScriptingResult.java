@@ -19,31 +19,31 @@ import com.chiorichan.util.ObjectFunc;
 import com.google.common.collect.Lists;
 
 /**
- * Contains the end result of {@link EvalFactory#eval(EvalContext)}
+ * Contains the end result of {@link ScriptingFactory#eval(ScriptingContext)}
  */
-public class EvalResult
+public class ScriptingResult
 {
 	private final List<EvalException> caughtExceptions = Lists.newArrayList();
 	private boolean success = false;
 	private String reason = null;
 	private ByteBuf content;
 	private Object obj = null;
-	private final EvalContext context;
+	private final ScriptingContext context;
 	
-	EvalResult( EvalContext context, ByteBuf content )
+	ScriptingResult( ScriptingContext context, ByteBuf content )
 	{
 		this.context = context;
 		this.content = content;
 	}
 	
-	public EvalResult addException( ErrorReporting level, Throwable throwable )
+	public ScriptingResult addException( ErrorReporting level, Throwable throwable )
 	{
 		if ( throwable != null )
 			caughtExceptions.add( new EvalException( level, throwable ).populateScriptTrace( context.factory().stack() ) );
 		return this;
 	}
 	
-	public EvalResult addException( EvalException exception )
+	public ScriptingResult addException( EvalException exception )
 	{
 		if ( exception != null )
 		{
@@ -63,7 +63,7 @@ public class EvalResult
 		return content;
 	}
 	
-	public EvalContext context()
+	public ScriptingContext context()
 	{
 		return context;
 	}
@@ -145,13 +145,13 @@ public class EvalResult
 		this.obj = obj;
 	}
 	
-	public EvalResult setReason( String reason )
+	public ScriptingResult setReason( String reason )
 	{
 		this.reason = reason;
 		return this;
 	}
 	
-	public EvalResult success( boolean success )
+	public ScriptingResult success( boolean success )
 	{
 		this.success = success;
 		return this;

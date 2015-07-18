@@ -17,9 +17,9 @@ import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
 import com.chiorichan.event.http.HttpExceptionEvent;
 import com.chiorichan.event.server.RenderEvent;
-import com.chiorichan.factory.EvalContext;
-import com.chiorichan.factory.EvalFactory;
-import com.chiorichan.factory.EvalResult;
+import com.chiorichan.factory.ScriptingContext;
+import com.chiorichan.factory.ScriptingFactory;
+import com.chiorichan.factory.ScriptingResult;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.lang.ErrorReporting;
 import com.chiorichan.lang.EvalException;
@@ -57,7 +57,7 @@ public class Template extends Plugin implements Listener
 	 * }
 	 */
 	
-	private String generateExceptionPage( Throwable t, EvalFactory factory ) throws EvalException, EvalMultipleException, IOException
+	private String generateExceptionPage( Throwable t, ScriptingFactory factory ) throws EvalException, EvalMultipleException, IOException
 	{
 		Validate.notNull( t );
 		Validate.notNull( factory );
@@ -79,7 +79,7 @@ public class Template extends Plugin implements Listener
 			if ( t.getCause() != null )
 				t = t.getCause();
 			
-			if ( scriptTrace.length > 0 )
+			if ( scriptTrace != null && scriptTrace.length > 0 )
 			{
 				ScriptTraceElement ste = scriptTrace[0];
 				
@@ -105,7 +105,7 @@ public class Template extends Plugin implements Listener
 				if ( className.isEmpty() )
 					className = null;
 				
-				EvalContext context = ste.context();
+				ScriptingContext context = ste.context();
 				Validate.notNull( context );
 				
 				fileName = context.filename();
@@ -158,7 +158,7 @@ public class Template extends Plugin implements Listener
 		ob.append( "\n" );
 		ob.append( "<div class=\"version\">Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + "<br />" + Versioning.getCopyright() + "</div>\n" );
 		
-		EvalResult result = TemplateUtils.wrapAndEval( factory, ob.toString() );
+		ScriptingResult result = TemplateUtils.wrapAndEval( factory, ob.toString() );
 		
 		if ( result.hasExceptions() )
 			ErrorReporting.throwExceptions( result.getExceptions() );
@@ -203,11 +203,11 @@ public class Template extends Plugin implements Listener
 			if ( ExceptionUtils.indexOfThrowable( event.getThrowable(), Template.class ) > -1 )
 				return;
 			
-			EvalFactory factory = event.getRequest().getEvalFactory();
+			ScriptingFactory factory = event.getRequest().getEvalFactory();
 			
 			// We initialize a temporary EvalFactory if the request did not contain one
 			if ( factory == null )
-				factory = EvalFactory.create( event.getRequest() );
+				factory = ScriptingFactory.create( event.getRequest() );
 			
 			event.setErrorHtml( generateExceptionPage( event.getThrowable(), factory ) );
 		}
@@ -318,14 +318,14 @@ public class Template extends Plugin implements Listener
 			
 			if ( !theme.isEmpty() )
 			{
-				EvalResult result = packageEval( theme, event );
+				ScriptingResult result = packageEval( theme, event );
 				pageData = result.getString();
 				params.putAll( result.context().request().getRequestMapRaw() );
 			}
 			
 			if ( !view.isEmpty() )
 			{
-				EvalResult result = packageEval( view, event );
+				ScriptingResult result = packageEval( view, event );
 				viewData = result.getString();
 				params.putAll( result.context().request().getRequestMapRaw() );
 			}
@@ -359,10 +359,10 @@ public class Template extends Plugin implements Listener
 		}
 	}
 	
-	private EvalResult packageEval( String pack, RenderEvent event ) throws EvalException, EvalMultipleException
+	private ScriptingResult packageEval( String pack, RenderEvent event ) throws EvalException, EvalMultipleException
 	{
-		EvalContext context = EvalContext.fromPackage( event.getSite(), pack ).request( event.getRequest() ).require();
-		EvalResult result = event.getRequest().getEvalFactory().eval( context );
+		ScriptingContext context = ScriptingContext.fromPackage( event.getSite(), pack ).request( event.getRequest() ).require();
+		ScriptingResult result = event.getRequest().getEvalFactory().eval( context );
 		
 		if ( result.hasNotIgnorableExceptions() )
 			ErrorReporting.throwExceptions( result.getExceptions() );
@@ -372,7 +372,7 @@ public class Template extends Plugin implements Listener
 	
 	private String packageRead( String pack, RenderEvent event ) throws EvalException, EvalMultipleException
 	{
-		EvalContext context = EvalContext.fromPackage( event.getSite(), pack ).request( event.getRequest() );
+		ScriptingContext context = ScriptingContext.fromPackage( event.getSite(), pack ).request( event.getRequest() );
 		context.require( !getConfig().getBoolean( "config.ignoreFileNotFound" ) );
 		return context.read( false );
 	}

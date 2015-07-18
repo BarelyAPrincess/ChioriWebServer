@@ -8,20 +8,16 @@
  */
 package com.chiorichan.factory;
 
-import groovy.lang.Binding;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufOutputStream;
 import io.netty.buffer.Unpooled;
 
-import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.io.Charsets;
 import org.apache.commons.lang3.Validate;
-import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 
 import com.chiorichan.Loader;
 import com.chiorichan.event.EventBus;
@@ -36,16 +32,15 @@ import com.chiorichan.factory.event.PreLessProcessor;
 import com.chiorichan.factory.groovy.GroovyRegistry;
 import com.chiorichan.factory.parsers.PreIncludesParserWrapper;
 import com.chiorichan.factory.parsers.PreLinksParserWrapper;
-import com.chiorichan.factory.processors.ScriptingProcessor;
 import com.chiorichan.lang.ErrorReporting;
 import com.chiorichan.lang.EvalException;
 import com.chiorichan.util.WebFunc;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
-public class EvalFactory
+public class ScriptingFactory
 {
-	private static final List<ScriptingProcessor> processors = Lists.newCopyOnWriteArrayList();
-	
+	private static final List<ScriptingRegistry> scripting = Lists.newCopyOnWriteArrayList();
 	static
 	{
 		new GroovyRegistry();
@@ -70,7 +65,9 @@ public class EvalFactory
 			register( new PostImageProcessor() );
 	}
 	
-	private final EvalBinding binding;
+	private final Map<ScriptingEngine, List<String>> engines = Maps.newLinkedHashMap();
+	
+	private final ScriptBinding binding;
 	
 	private final List<ByteBuf> bufferStack = Lists.newLinkedList();
 	
@@ -80,24 +77,22 @@ public class EvalFactory
 	
 	private final StackFactory stackFactory = new StackFactory();
 	
-	private EvalFactory( EvalBinding binding )
+	private ScriptingFactory( ScriptBinding binding )
 	{
 		Validate.notNull( binding, "The EvalBinding can't be null" );
-		
 		this.binding = binding;
-		setOutputStream( output );
 	}
 	
 	// For Web Use
-	public static EvalFactory create( BindingProvider provider )
+	public static ScriptingFactory create( BindingProvider provider )
 	{
-		return new EvalFactory( provider.getBinding() );
+		return new ScriptingFactory( provider.getBinding() );
 	}
 	
 	// For General Use
-	public static EvalFactory create( EvalBinding binding )
+	public static ScriptingFactory create( ScriptBinding binding )
 	{
-		return new EvalFactory( binding );
+		return new ScriptingFactory( binding );
 	}
 	
 	public static void register( Listener listener )
@@ -105,12 +100,19 @@ public class EvalFactory
 		EventBus.INSTANCE.registerEvents( listener, Loader.getInstance() );
 	}
 	
-	public static void register( ScriptingProcessor processor )
+	/**
+	 * Registers the provided ScriptingProcessing with the EvalFactory
+	 *
+	 * @param registry
+	 *            The {@link ScriptingRegistry} instance to handle provided types
+	 */
+	public static void register( ScriptingRegistry registry )
 	{
-		processors.add( processor );
+		if ( !scripting.contains( registry ) )
+			scripting.add( registry );
 	}
 	
-	public Binding binding()
+	public ScriptBinding binding()
 	{
 		return binding;
 	}
@@ -120,9 +122,29 @@ public class EvalFactory
 		return charset;
 	}
 	
-	public EvalResult eval( EvalContext context )
+	private void compileEngines( ScriptingContext context )
 	{
-		EvalResult result = context.result();
+		for ( ScriptingRegistry registry : scripting )
+			for ( ScriptingEngine engine : registry.makeEngines( context ) )
+				if ( !contains( engine ) )
+				{
+					engine.setBinding( binding );
+					engine.setOutput( output, charset );
+					engines.put( engine, engine.getTypes() );
+				}
+	}
+	
+	private boolean contains( ScriptingEngine engine2 )
+	{
+		for ( ScriptingEngine engine1 : engines.keySet() )
+			if ( engine1.getClass() == engine2.getClass() )
+				return true;
+		return false;
+	}
+	
+	public ScriptingResult eval( ScriptingContext context )
+	{
+		ScriptingResult result = context.result();
 		
 		context.factory( this );
 		context.charset( charset );
@@ -155,18 +177,18 @@ public class EvalFactory
 				return result;
 			}
 			
-			for ( ScriptingProcessor s : processors )
-			{
-				List<String> handledTypes = Arrays.asList( s.getHandledTypes() );
-				
-				for ( String she : handledTypes )
-					if ( she.equalsIgnoreCase( context.shell() ) || she.equalsIgnoreCase( "all" ) )
+			if ( engines.isEmpty() )
+				compileEngines( context );
+			
+			if ( !engines.isEmpty() )
+				for ( Entry<ScriptingEngine, List<String>> entry : engines.entrySet() )
+					if ( entry.getValue() == null || entry.getValue().isEmpty() || entry.getValue().contains( context.shell().toLowerCase() ) )
 						try
 						{
 							bufferStack.add( output.copy() );
 							output.clear();
 							String hash = context.bufferHash();
-							s.eval( context );
+							entry.getKey().eval( context );
 							if ( context.bufferHash().equals( hash ) )
 								context.resetAndWrite( output );
 							else
@@ -180,7 +202,6 @@ public class EvalFactory
 							if ( EvalException.exceptionHandler( cause, context ) )
 								return result;
 						}
-			}
 			
 			PostEvalEvent postEvent = new PostEvalEvent( context );
 			try
@@ -199,6 +220,11 @@ public class EvalFactory
 		}
 		
 		return result.success( true );
+	}
+	
+	public Charset getCharset()
+	{
+		return charset;
 	}
 	
 	public String getFileName()
@@ -231,6 +257,11 @@ public class EvalFactory
 		return scriptTrace.get( scriptTrace.size() - 1 ).getLineNumber();
 	}
 	
+	public ByteBuf getOutputStream()
+	{
+		return output;
+	}
+	
 	public List<ScriptTraceElement> getScriptTrace()
 	{
 		return stackFactory.examineStackTrace( Thread.currentThread().getStackTrace() );
@@ -244,7 +275,7 @@ public class EvalFactory
 	 */
 	public void print( String text )
 	{
-		DefaultGroovyMethods.print( ( PrintStream ) binding.getProperty( "out" ), text );
+		output.writeBytes( text.getBytes( charset ) );
 	}
 	
 	/**
@@ -255,24 +286,12 @@ public class EvalFactory
 	 */
 	public void println( String text )
 	{
-		DefaultGroovyMethods.println( ( PrintStream ) binding.getProperty( "out" ), text );
+		output.writeBytes( ( text + "\n" ).getBytes( charset ) );
 	}
 	
 	public void setEncoding( Charset charset )
 	{
 		this.charset = charset;
-	}
-	
-	public void setOutputStream( ByteBuf buffer )
-	{
-		try
-		{
-			binding.setProperty( "out", new PrintStream( new ByteBufOutputStream( buffer ), true, charset.name() ) );
-		}
-		catch ( UnsupportedEncodingException e )
-		{
-			e.printStackTrace();
-		}
 	}
 	
 	public void setVariable( String key, Object val )

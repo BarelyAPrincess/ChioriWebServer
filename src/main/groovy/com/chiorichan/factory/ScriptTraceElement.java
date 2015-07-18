@@ -24,14 +24,14 @@ public class ScriptTraceElement
 	private final String className;
 	private int lineNum = -1;
 	private int colNum = -1;
-	private final EvalContext context;
+	private final ScriptingContext context;
 	
-	public ScriptTraceElement( EvalContext context, int lineNum, int colNum )
+	public ScriptTraceElement( ScriptingContext context, int lineNum, int colNum )
 	{
 		this( context, lineNum, colNum, "", "" );
 	}
 	
-	public ScriptTraceElement( EvalContext context, int lineNum, int colNum, String methodName, String className )
+	public ScriptTraceElement( ScriptingContext context, int lineNum, int colNum, String methodName, String className )
 	{
 		this.context = context;
 		fileName = context.name();
@@ -49,7 +49,7 @@ public class ScriptTraceElement
 		this.className = className;
 	}
 	
-	public ScriptTraceElement( EvalContext context, StackTraceElement ste )
+	public ScriptTraceElement( ScriptingContext context, StackTraceElement ste )
 	{
 		this.context = context;
 		fileName = ste.getFileName();
@@ -59,7 +59,7 @@ public class ScriptTraceElement
 		colNum = -1;
 	}
 	
-	public ScriptTraceElement( EvalContext context, String msg )
+	public ScriptTraceElement( ScriptingContext context, String msg )
 	{
 		this.context = context;
 		fileName = context.name();
@@ -70,7 +70,7 @@ public class ScriptTraceElement
 			examineMessage( msg );
 	}
 	
-	public EvalContext context()
+	public ScriptingContext context()
 	{
 		return context;
 	}

@@ -11,9 +11,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.InterpreterOverrides;
-import com.chiorichan.factory.EvalContext;
-import com.chiorichan.factory.EvalFactory;
-import com.chiorichan.factory.EvalResult;
+import com.chiorichan.factory.ScriptingContext;
+import com.chiorichan.factory.ScriptingFactory;
+import com.chiorichan.factory.ScriptingResult;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.lang.EvalException;
 import com.chiorichan.plugin.PluginManager;
@@ -140,7 +140,7 @@ public class TemplateUtils
 	
 	static String generateCodePreview( ScriptTraceElement ste )
 	{
-		EvalContext context = ste.context();
+		ScriptingContext context = ste.context();
 		File file = new File( context.filename() );
 		int lineNum = ste.getLineNumber();
 		int colNum = ste.getColumnNumber();
@@ -239,7 +239,7 @@ public class TemplateUtils
 		return generateCodePreview( t.getStackTrace()[0] );
 	}
 	
-	static EvalResult wrapAndEval( EvalFactory factory, String html ) throws UnsupportedEncodingException, IOException
+	static ScriptingResult wrapAndEval( ScriptingFactory factory, String html ) throws UnsupportedEncodingException, IOException
 	{
 		Validate.notNull( factory );
 		
@@ -251,6 +251,6 @@ public class TemplateUtils
 			baseTemplate = ( is == null ) ? "" : new String( FileFunc.inputStream2Bytes( is ), "UTF-8" );
 		}
 		
-		return factory.eval( EvalContext.fromSource( baseTemplate.replace( pageMark, html ) ).shell( "html" ).site( SiteManager.INSTANCE.getDefaultSite() ) );
+		return factory.eval( ScriptingContext.fromSource( baseTemplate.replace( pageMark, html ) ).shell( "html" ).site( SiteManager.INSTANCE.getDefaultSite() ) );
 	}
 }

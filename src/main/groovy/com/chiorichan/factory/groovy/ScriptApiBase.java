@@ -8,6 +8,7 @@
  */
 package com.chiorichan.factory.groovy;
 
+import groovy.lang.Binding;
 import groovy.lang.Script;
 
 import java.io.File;
@@ -36,35 +37,27 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.ocpsoft.prettytime.PrettyTime;
 
-import com.chiorichan.ConsoleLogger;
-import com.chiorichan.Loader;
-import com.chiorichan.database.DatabaseEngine;
-import com.chiorichan.plugin.PluginManager;
-import com.chiorichan.plugin.lang.PluginNotFoundException;
-import com.chiorichan.plugin.loader.Plugin;
-import com.chiorichan.site.Site;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.StringFunc;
-import com.chiorichan.util.Versioning;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.i18n.phonenumbers.NumberParseException;
-import com.google.i18n.phonenumbers.PhoneNumberUtil;
-import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
-import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 
-/*
- * XXX This deprecated class has already been ported to ScriptApiBase class
+/**
+ * The base Groovy API for Chiori-chan's Web Server
  */
-@Deprecated
-public abstract class ScriptingBaseJava extends Script
+public abstract class ScriptApiBase extends Script
 {
-	public String apache_get_version()
+	public ScriptApiBase()
 	{
-		return "THIS IS NOT APACHE YOU DUMMY!!!";
+		super();
+	}
+	
+	public ScriptApiBase( Binding binding )
+	{
+		super( binding );
 	}
 	
 	/**
@@ -74,8 +67,7 @@ public abstract class ScriptingBaseJava extends Script
 	 * 
 	 * @param vals
 	 *            Elements of the array separated as an argument
-	 * @return
-	 *         The array of elements
+	 * @return The array of elements
 	 */
 	@SuppressWarnings( "unchecked" )
 	public <T> T[] array( T... vals )
@@ -101,42 +93,6 @@ public abstract class ScriptingBaseJava extends Script
 	public int count( String var )
 	{
 		return ( var == null ) ? 0 : var.length();
-	}
-	
-	public String createGUID() throws UnsupportedEncodingException
-	{
-		return createGUID( Timings.epoch() + "-guid" );
-	}
-	
-	public String createGUID( String seed )
-	{
-		if ( seed == null )
-			seed = "";
-		
-		byte[] bytes;
-		try
-		{
-			bytes = seed.getBytes( "ISO-8859-1" );
-		}
-		catch ( UnsupportedEncodingException e )
-		{
-			bytes = new byte[0];
-		}
-		
-		byte[] bytesScrambled = new byte[0];
-		
-		for ( byte b : bytes )
-		{
-			byte[] tbyte = new byte[2];
-			new Random().nextBytes( bytes );
-			
-			tbyte[0] = ( byte ) ( b + tbyte[0] );
-			tbyte[1] = ( byte ) ( b + tbyte[1] );
-			
-			bytesScrambled = ArrayUtils.addAll( bytesScrambled, tbyte );
-		}
-		
-		return "{" + UUID.nameUUIDFromBytes( bytesScrambled ).toString() + "}";
 	}
 	
 	public String createTable( Collection<Object> tableData )
@@ -276,16 +232,6 @@ public abstract class ScriptingBaseJava extends Script
 		return sb.toString();
 	}
 	
-	public String createUUID() throws UnsupportedEncodingException
-	{
-		return createUUID( Timings.epoch() + "-uuid" );
-	}
-	
-	public String createUUID( String seed ) throws UnsupportedEncodingException
-	{
-		return DigestUtils.md5Hex( createGUID( seed ) );
-	}
-	
 	public String date()
 	{
 		return date( "" );
@@ -381,6 +327,12 @@ public abstract class ScriptingBaseJava extends Script
 		return new SimpleDateFormat( format ).format( date );
 	}
 	
+	public String date_ago( Date date )
+	{
+		PrettyTime p = new PrettyTime();
+		return p.format( date );
+	}
+	
 	/**
 	 * Default format is M/d/yyyy
 	 * 
@@ -388,12 +340,13 @@ public abstract class ScriptingBaseJava extends Script
 	 *            you wish to convert
 	 * @return Long containing the epoch of provided date
 	 */
-	public Long dateToEpoch( String date )
+	
+	public Long date_epoch( String date )
 	{
-		return dateToEpoch( date, null );
+		return date_epoch( date, null );
 	}
 	
-	public Long dateToEpoch( String date, String format )
+	public Long date_epoch( String date, String format )
 	{
 		try
 		{
@@ -516,130 +469,40 @@ public abstract class ScriptingBaseJava extends Script
 		return newArray;
 	}
 	
-	public String formatPhone( String phone )
+	public String guid() throws UnsupportedEncodingException
 	{
-		if ( phone == null || phone.isEmpty() )
-			return "";
+		return guid( Timings.epoch() + "-guid" );
+	}
+	
+	public String guid( String seed )
+	{
+		if ( seed == null )
+			seed = "";
 		
-		phone = phone.replaceAll( "[ -()\\.]", "" );
-		
-		PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
+		byte[] bytes;
 		try
 		{
-			PhoneNumber num = phoneUtil.parse( phone, "US" );
-			return phoneUtil.format( num, PhoneNumberFormat.NATIONAL );
+			bytes = seed.getBytes( "ISO-8859-1" );
 		}
-		catch ( NumberParseException e )
+		catch ( UnsupportedEncodingException e )
 		{
-			Loader.getLogger().warning( "NumberParseException was thrown: " + e.toString() );
-			return phone;
+			bytes = new byte[0];
 		}
-	}
-	
-	// This might change
-	public String formatTimeAgo( Date date )
-	{
-		PrettyTime p = new PrettyTime();
-		return p.format( date );
-	}
-	
-	/**
-	 * Returns the current server copyright string
-	 * 
-	 * @return
-	 *         Copyright string
-	 */
-	public String getCopyright()
-	{
-		return Versioning.getCopyright();
-	}
-	
-	/**
-	 * Returns an instance of the current site database
-	 * 
-	 * @return
-	 *         The site database engine
-	 * @throws IllegalStateException
-	 *             thrown if the requested database is unconfigured
-	 */
-	public DatabaseEngine getDatabase()
-	{
-		DatabaseEngine engine = getSite().getDatabase();
 		
-		if ( engine == null )
-			throw new IllegalStateException( "The site database is unconfigured. It will need to be setup in order for you to use the getDatabase() method." );
+		byte[] bytesScrambled = new byte[0];
 		
-		return engine;
-	}
-	
-	public ConsoleLogger getLogger()
-	{
-		return Loader.getLogger( getClass().getSimpleName() );
-	}
-	
-	public Plugin getPluginbyClassname( String search ) throws PluginNotFoundException
-	{
-		return PluginManager.INSTANCE.getPluginByClassname( search );
-	}
-	
-	public Plugin getPluginbyClassnameWithoutException( String search )
-	{
-		return PluginManager.INSTANCE.getPluginByClassnameWithoutException( search );
-	}
-	
-	public Plugin getPluginByName( String search ) throws PluginNotFoundException
-	{
-		return PluginManager.INSTANCE.getPluginByName( search );
-	}
-	
-	public Plugin getPluginByNameWithoutException( String search )
-	{
-		return PluginManager.INSTANCE.getPluginByNameWithoutException( search );
-	}
-	
-	/**
-	 * Returns the current server product string
-	 */
-	public String getProduct()
-	{
-		return Versioning.getProduct();
-	}
-	
-	/**
-	 * Returns an instance of the server database
-	 * 
-	 * @return
-	 *         The server database engine
-	 * @throws IllegalStateException
-	 *             thrown if the requested database is unconfigured
-	 */
-	public DatabaseEngine getServerDatabase()
-	{
-		DatabaseEngine engine = Loader.getDatabase();
+		for ( byte b : bytes )
+		{
+			byte[] tbyte = new byte[2];
+			new Random().nextBytes( bytes );
+			
+			tbyte[0] = ( byte ) ( b + tbyte[0] );
+			tbyte[1] = ( byte ) ( b + tbyte[1] );
+			
+			bytesScrambled = ArrayUtils.addAll( bytesScrambled, tbyte );
+		}
 		
-		if ( engine == null )
-			throw new IllegalStateException( "The server database is unconfigured. It will need to be setup in order for you to use the getServerDatabase() method." );
-		
-		return engine;
-	}
-	
-	public abstract Site getSite();
-	
-	/**
-	 * See {@link #getDatabase()}
-	 */
-	@Deprecated
-	public DatabaseEngine getSiteDatabase()
-	{
-		return getDatabase();
-	}
-	
-	/**
-	 * Returns the current server version string
-	 */
-	public String getVersion()
-	{
-		return Versioning.getVersion();
+		return "{" + UUID.nameUUIDFromBytes( bytesScrambled ).toString() + "}";
 	}
 	
 	public String implode( String joiner, Iterable<String> data )
@@ -667,11 +530,6 @@ public abstract class ScriptingBaseJava extends Script
 		return Joiner.on( joiner ).join( data );
 	}
 	
-	public boolean is_null( Object obj )
-	{
-		return ( obj == null );
-	}
-	
 	/**
 	 * Determines if the color hex is darker then 50%
 	 * 
@@ -679,12 +537,17 @@ public abstract class ScriptingBaseJava extends Script
 	 *            A hexdec color, e.g., #fff, #f3f3f3
 	 * @return True if color is darker then 50%
 	 */
-	public boolean isDarkColor( String hexdec )
+	public boolean is_darkcolor( String hexdec )
 	{
 		return Integer.parseInt( hexdec, 16 ) > ( 0xffffff / 2 );
 	}
 	
-	public boolean isNumeric( String str )
+	public boolean is_null( Object obj )
+	{
+		return ( obj == null );
+	}
+	
+	public boolean is_numeric( String str )
 	{
 		NumberFormat formatter = NumberFormat.getInstance();
 		ParsePosition pos = new ParsePosition( 0 );
@@ -725,30 +588,27 @@ public abstract class ScriptingBaseJava extends Script
 		return o != null;
 	}
 	
-	/*
-	 * Old WebFunc Methods
-	 */
-	public String randomNum()
+	public String random()
 	{
-		return randomNum( 8, true, false, new String[0] );
+		return random( 8, true, false, new String[0] );
 	}
 	
-	public String randomNum( int length )
+	public String random( int length )
 	{
-		return randomNum( length, true, false, new String[0] );
+		return random( length, true, false, new String[0] );
 	}
 	
-	public String randomNum( int length, boolean numbers )
+	public String random( int length, boolean numbers )
 	{
-		return randomNum( length, numbers, false, new String[0] );
+		return random( length, numbers, false, new String[0] );
 	}
 	
-	public String randomNum( int length, boolean numbers, boolean letters )
+	public String random( int length, boolean numbers, boolean letters )
 	{
-		return randomNum( length, numbers, letters, new String[0] );
+		return random( length, numbers, letters, new String[0] );
 	}
 	
-	public String randomNum( int length, boolean numbers, boolean letters, String[] allowedChars )
+	public String random( int length, boolean numbers, boolean letters, String[] allowedChars )
 	{
 		if ( allowedChars == null )
 			allowedChars = new String[0];
@@ -847,6 +707,28 @@ public abstract class ScriptingBaseJava extends Script
 	public String trim( String str )
 	{
 		return ( str == null ) ? null : str.trim();
+	}
+	
+	public String uuid() throws UnsupportedEncodingException
+	{
+		return uuid( Timings.epoch() + "-uuid" );
+	}
+	
+	public String uuid( String seed ) throws UnsupportedEncodingException
+	{
+		return DigestUtils.md5Hex( guid( seed ) );
+	}
+	
+	/**
+	 * Same as {@link ScriptingBaseJava#var_export(obj)} but instead prints the result to the buffer
+	 * Based on method of same name in PHP
+	 * 
+	 * @param obj
+	 *            The object you wish to dump
+	 */
+	public void var_dump( Object... obj )
+	{
+		println( var_export( obj ) );
 	}
 	
 	@SuppressWarnings( "unchecked" )

@@ -14,21 +14,21 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.chiorichan.Loader;
-import com.chiorichan.factory.EvalCallback;
-import com.chiorichan.factory.EvalContext;
-import com.chiorichan.factory.EvalFactory;
-import com.chiorichan.factory.EvalResult;
+import com.chiorichan.factory.ExceptionCallback;
+import com.chiorichan.factory.ScriptingContext;
+import com.chiorichan.factory.ScriptingFactory;
+import com.chiorichan.factory.ScriptingResult;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.factory.StackFactory;
 import com.google.common.collect.Maps;
 
 /**
- * Carries extra information for debugging when an {@link Exception} is thrown by the {@link EvalFactory}
+ * Carries extra information for debugging when an {@link Exception} is thrown by the {@link ScriptingFactory}
  */
 public class EvalException extends Exception
 {
 	private static final long serialVersionUID = -1611181613618341914L;
-	private static final Map<Class<? extends Throwable>, EvalCallback> registered = Maps.newConcurrentMap();
+	private static final Map<Class<? extends Throwable>, ExceptionCallback> registered = Maps.newConcurrentMap();
 	
 	private List<ScriptTraceElement> scriptTrace = null;
 	private final ErrorReporting level;
@@ -69,12 +69,12 @@ public class EvalException extends Exception
 	 *            The EvalContext associated with the eval request
 	 * @return True if we should abort any further execution of code
 	 */
-	public static boolean exceptionHandler( Throwable cause, EvalContext context )
+	public static boolean exceptionHandler( Throwable cause, ScriptingContext context )
 	{
 		if ( cause == null )
 			return false;
 		
-		EvalResult result = context.result();
+		ScriptingResult result = context.result();
 		
 		/**
 		 * We just forward {@link EvalException}
@@ -102,9 +102,9 @@ public class EvalException extends Exception
 		{
 			boolean handled = false;
 			
-			Map<Class<? extends Throwable>, EvalCallback> assignable = Maps.newHashMap();
+			Map<Class<? extends Throwable>, ExceptionCallback> assignable = Maps.newHashMap();
 			
-			for ( Entry<Class<? extends Throwable>, EvalCallback> entry : registered.entrySet() )
+			for ( Entry<Class<? extends Throwable>, ExceptionCallback> entry : registered.entrySet() )
 				if ( cause.getClass().equals( entry.getKey() ) )
 				{
 					ErrorReporting e = entry.getValue().callback( cause, context );
@@ -127,7 +127,7 @@ public class EvalException extends Exception
 				}
 				else if ( assignable.size() == 1 )
 				{
-					ErrorReporting e = assignable.values().toArray( new EvalCallback[0] )[0].callback( cause, context );
+					ErrorReporting e = assignable.values().toArray( new ExceptionCallback[0] )[0].callback( cause, context );
 					if ( e == null )
 					{
 						result.addException( new EvalException( ErrorReporting.E_ERROR, cause ) );
@@ -137,7 +137,7 @@ public class EvalException extends Exception
 						return true;
 				}
 				else
-					for ( Entry<Class<? extends Throwable>, EvalCallback> entry : assignable.entrySet() )
+					for ( Entry<Class<? extends Throwable>, ExceptionCallback> entry : assignable.entrySet() )
 					{
 						boolean noAssignment = true;
 						for ( Class<? extends Throwable> sub : assignable.keySet() )
@@ -156,7 +156,7 @@ public class EvalException extends Exception
 	}
 	
 	/**
-	 * Registers an expected exception to be thrown by any subsystem of {@link EvalFactory}
+	 * Registers an expected exception to be thrown by any subsystem of {@link ScriptingFactory}
 	 * 
 	 * @param callback
 	 *            The Callback to call when such exception is thrown
@@ -164,7 +164,7 @@ public class EvalException extends Exception
 	 *            Classes to be registered
 	 */
 	@SafeVarargs
-	public static void registerException( EvalCallback callback, Class<? extends Throwable>... clzs )
+	public static void registerException( ExceptionCallback callback, Class<? extends Throwable>... clzs )
 	{
 		for ( Class<? extends Throwable> clz : clzs )
 			registered.put( clz, callback );
@@ -177,7 +177,7 @@ public class EvalException extends Exception
 	
 	public ScriptTraceElement[] getScriptTrace()
 	{
-		return scriptTrace.toArray( new ScriptTraceElement[0] );
+		return scriptTrace == null ? null : scriptTrace.toArray( new ScriptTraceElement[0] );
 	}
 	
 	public boolean hasScriptTrace()

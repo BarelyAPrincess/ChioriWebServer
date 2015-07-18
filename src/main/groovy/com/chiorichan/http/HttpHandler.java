@@ -63,9 +63,9 @@ import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.RenderEvent;
 import com.chiorichan.event.server.RequestEvent;
-import com.chiorichan.factory.EvalContext;
-import com.chiorichan.factory.EvalFactory;
-import com.chiorichan.factory.EvalResult;
+import com.chiorichan.factory.ScriptingContext;
+import com.chiorichan.factory.ScriptingFactory;
+import com.chiorichan.factory.ScriptingResult;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.lang.ApacheParser;
 import com.chiorichan.lang.ErrorReporting;
@@ -460,7 +460,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		
 		ByteBuf rendered = Unpooled.buffer();
 		
-		EvalFactory factory = request.getEvalFactory();
+		ScriptingFactory factory = request.getEvalFactory();
 		factory.setEncoding( fi.getEncoding() );
 		
 		NetworkSecurity.isForbidden( htaccess, currentSite, fi );
@@ -475,7 +475,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		// Enhancement: Allow HTML to be ran under different shells. Default is embedded.
 		if ( fi.hasHTML() )
 		{
-			EvalResult result = factory.eval( EvalContext.fromSource( fi.getHTML(), "<html>" ).request( request ).site( currentSite ) );
+			ScriptingResult result = factory.eval( ScriptingContext.fromSource( fi.getHTML(), "<html>" ).request( request ).site( currentSite ) );
 			
 			if ( result.hasExceptions() )
 				// TODO Print notices to output like PHP does
@@ -513,7 +513,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				return;
 			}
 			
-			EvalResult result = factory.eval( EvalContext.fromFile( fi ).request( request ).site( currentSite ) );
+			ScriptingResult result = factory.eval( ScriptingContext.fromFile( fi ).request( request ).site( currentSite ) );
 			
 			if ( result.hasExceptions() )
 				// TODO Print notices to output like PHP does
