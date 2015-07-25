@@ -194,6 +194,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		if ( !params.isEmpty() )
 			for ( Entry<String, List<String>> p : params.entrySet() )
 			{
+				// XXX This is overriding the key, why would their there be multiple values???
 				String key = p.getKey();
 				List<String> vals = p.getValue();
 				for ( String val : vals )

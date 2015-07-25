@@ -13,9 +13,7 @@ import com.chiorichan.plugin.lang.PluginUnconfiguredException;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.util.Versioning;
 import com.dropbox.core.DbxAppInfo;
-import com.dropbox.core.DbxAuthFinish;
 import com.dropbox.core.DbxClient;
-import com.dropbox.core.DbxException;
 import com.dropbox.core.DbxRequestConfig;
 import com.dropbox.core.DbxWebAuthNoRedirect;
 
@@ -30,31 +28,25 @@ public class Dropbox extends Plugin
 	private String dbxApiSecret = null;
 	private DbxRequestConfig dbxAppConfig = null;
 	private DbxAppInfo dbxAppInfo = null;
-	private DbxAuthFinish dbxAuthFinish = null;
-	private DbxWebAuthNoRedirect dbxWebAuth = null;
 	
-	public String finishDropBoxAuth( String authCode ) throws DbxException
-	{
-		dbxAuthFinish = dbxWebAuth.finish( authCode );
-		return dbxAuthFinish.accessToken;
-	}
-	
-	public String getDropboxAuthUrl()
-	{
-		return dbxWebAuth.start();
-	}
-	
-	/**
-	 * Creates a new DbxClient
-	 * 
-	 * @param accessToken
-	 *            The Access Token you wish to use
-	 * @return
-	 *         An instance of DbxClient
-	 */
-	public DbxClient getDropboxInstance( String accessToken )
+	public DbxClient getClient( String accessToken )
 	{
 		return new DbxClient( dbxAppConfig, accessToken );
+	}
+	
+	public DropboxAuth getWebAuth()
+	{
+		return new DropboxAuth( dbxAppConfig, dbxAppInfo );
+	}
+	
+	public DropboxAuth getWebAuth( String redirectUri )
+	{
+		return new DropboxAuth( dbxAppConfig, dbxAppInfo, redirectUri );
+	}
+	
+	public DbxWebAuthNoRedirect getWebAuthNoRedirect()
+	{
+		return new DbxWebAuthNoRedirect( dbxAppConfig, dbxAppInfo );
 	}
 	
 	@Override
@@ -76,8 +68,6 @@ public class Dropbox extends Plugin
 		
 		dbxAppInfo = new DbxAppInfo( dbxApiKey, dbxApiSecret );
 		dbxAppConfig = new DbxRequestConfig( Versioning.getProduct() + "/" + Versioning.getVersion(), Locale.getDefault().toString() );
-		
-		dbxWebAuth = new DbxWebAuthNoRedirect( dbxAppConfig, dbxAppInfo );
 	}
 	
 	@Override

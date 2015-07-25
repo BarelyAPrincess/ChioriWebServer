@@ -11,11 +11,11 @@ package com.chiorichan.factory.groovy
 import com.chiorichan.account.Account
 import com.chiorichan.account.AccountManager
 import com.chiorichan.factory.ScriptingFactory
-import com.chiorichan.factory.ScriptTraceElement
 import com.chiorichan.factory.api.Server
 import com.chiorichan.http.HttpCode
 import com.chiorichan.http.HttpRequestWrapper
 import com.chiorichan.http.HttpResponseWrapper
+import com.chiorichan.permission.PermissibleEntity
 import com.chiorichan.permission.Permission
 import com.chiorichan.permission.PermissionResult
 import com.chiorichan.session.Session
@@ -83,6 +83,11 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	void echo( String var )
 	{
 		println var
+	}
+
+	PermissibleEntity getEntity()
+	{
+		getAccount().getEntity();
 	}
 
 	/**
