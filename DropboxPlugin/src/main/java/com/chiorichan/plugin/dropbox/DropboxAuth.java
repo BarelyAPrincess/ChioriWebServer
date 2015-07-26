@@ -15,6 +15,7 @@ import java.util.Map.Entry;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.plugin.PluginManager;
 import com.dropbox.core.DbxAppInfo;
+import com.dropbox.core.DbxAuthFinish;
 import com.dropbox.core.DbxClient;
 import com.dropbox.core.DbxException;
 import com.dropbox.core.DbxRequestConfig;
@@ -76,7 +77,9 @@ public class DropboxAuth
 		
 		try
 		{
-			return dbxWebAuth.finish( params ).accessToken;
+			DbxAuthFinish finish = dbxWebAuth.finish( params );
+			accessToken = finish.accessToken;
+			return finish.accessToken;
 		}
 		catch ( DbxWebAuth.BadRequestException ex )
 		{
@@ -120,7 +123,9 @@ public class DropboxAuth
 		
 		try
 		{
-			return dbxWebAuthNoRedirect.finish( authToken ).accessToken;
+			DbxAuthFinish finish = dbxWebAuthNoRedirect.finish( authToken );
+			accessToken = finish.accessToken;
+			return finish.accessToken;
 		}
 		catch ( DbxException ex )
 		{

@@ -85,7 +85,7 @@ public class Site
 		config = YamlConfiguration.loadConfiguration( file );
 		
 		if ( config == null )
-			throw new SiteException( "Could not load site filerom YAML FileBase '" + file.getAbsolutePath() + "'" );
+			throw new SiteException( "Could not load site file from YAML FileBase '" + file.getAbsolutePath() + "'" );
 		
 		siteId = config.getString( "site.siteId", null );
 		title = config.getString( "site.title", Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Site" ) );
@@ -117,11 +117,11 @@ public class Site
 			reason = "there already exists a site by the provided Site Id '" + siteId + "'";
 		
 		if ( reason != null )
-			throw new SiteException( "Could not load site filerom YAML FileBase '" + file.getAbsolutePath() + "' because " + reason + "." );
+			throw new SiteException( "Could not load site file from YAML FileBase '" + file.getAbsolutePath() + "' because " + reason + "." );
 		
 		Loader.getLogger().info( "Loading site '" + siteId + "' with title '" + title + "' filerom YAML FileBase '" + file.getAbsolutePath() + "'." );
 		
-		// Load protected fileiles list
+		// Load protected files list
 		List<?> protectedFilesPre = config.getList( "protected", new CopyOnWriteArrayList<String>() );
 		
 		for ( Object o : protectedFilesPre )
@@ -400,9 +400,11 @@ public class Site
 			try
 			{
 				if ( type.equalsIgnoreCase( "mysql" ) )
-					sql.init( database, username, password, host, port );
+					sql.initMySql( database, username, password, host, port );
 				else if ( type.equalsIgnoreCase( "sqlite" ) )
-					sql.init( filename );
+					sql.initSQLite( filename );
+				else if ( type.equalsIgnoreCase( "h2" ) )
+					sql.initH2( filename );
 				else
 					throw new SiteException( "The SqlConnector for site '" + siteId + "' can not support anything other then mySql or sqLite at the moment. Please change 'database.type' in the site config to 'mysql' or 'sqLite' and set the connection params." );
 			}

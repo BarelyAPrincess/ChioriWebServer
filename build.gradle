@@ -171,6 +171,7 @@ dependencies
 	// Used to Make Database Connections
 	compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.35'
 	compile group: 'org.xerial', name: 'sqlite-jdbc', version: '3.6.16'
+	compile group: 'com.h2database', name: 'h2', version: '1.4.187'
 	
 	// Used for Programming Convinience
 	compile group: 'com.google.guava', name: 'guava', version: '18.0'

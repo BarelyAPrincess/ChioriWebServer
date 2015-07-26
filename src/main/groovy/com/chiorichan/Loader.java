@@ -849,12 +849,13 @@ public class Loader extends BuiltinEventCreator implements Listener
 		switch ( configuration.getString( "server.database.type", "sqlite" ).toLowerCase() )
 		{
 			case "sqlite":
+			{
 				fwDatabase = new DatabaseEngine();
 				String filename = configuration.getString( "server.database.dbfile", "server.db" );
 				
 				try
 				{
-					fwDatabase.init( filename );
+					fwDatabase.initSQLite( filename );
 				}
 				catch ( SQLException e )
 				{
@@ -865,7 +866,9 @@ public class Loader extends BuiltinEventCreator implements Listener
 				}
 				
 				break;
+			}
 			case "mysql":
+			{
 				fwDatabase = new DatabaseEngine();
 				String host = configuration.getString( "server.database.host", "localhost" );
 				String port = configuration.getString( "server.database.port", "3306" );
@@ -875,7 +878,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 				
 				try
 				{
-					fwDatabase.init( database, username, password, host, port );
+					fwDatabase.initMySql( database, username, password, host, port );
 				}
 				catch ( SQLException e )
 				{
@@ -888,6 +891,26 @@ public class Loader extends BuiltinEventCreator implements Listener
 				}
 				
 				break;
+			}
+			case "h2":
+			{
+				fwDatabase = new DatabaseEngine();
+				String filename = configuration.getString( "server.database.dbfile", "server.db" );
+				
+				try
+				{
+					fwDatabase.initH2( filename );
+				}
+				catch ( SQLException e )
+				{
+					if ( e.getCause() instanceof ConnectException )
+						throw new StartupException( "We had a problem connecting to database '" + filename + "'. Reason: " + e.getCause().getMessage() );
+					else
+						throw new StartupException( e );
+				}
+				
+				break;
+			}
 			case "none":
 			case "":
 				DatabaseEngine.getLogger().warning( "The Server Database is unconfigured, some features maybe not function as expected. See config option 'server.database.type' in server config 'server.yaml'." );
