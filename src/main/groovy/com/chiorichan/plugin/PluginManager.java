@@ -47,6 +47,7 @@ import com.chiorichan.plugin.loader.JavaPluginLoader;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.plugin.loader.PluginClassLoader;
 import com.chiorichan.plugin.loader.PluginLoader;
+import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.util.FileFunc;
 import com.google.common.collect.Maps;
 
@@ -121,7 +122,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 			
 			try
 			{
-				// Loader.getScheduler().cancelTasks( plugin );
+				TaskManager.INSTANCE.cancelTasks( plugin );
 			}
 			catch ( Throwable ex )
 			{
