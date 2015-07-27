@@ -31,7 +31,7 @@ import org.yaml.snakeyaml.error.YAMLException;
 
 import com.chiorichan.configuration.serialization.ConfigurationSerializable;
 import com.chiorichan.configuration.serialization.ConfigurationSerialization;
-import com.chiorichan.event.Event;
+import com.chiorichan.event.AbstractEvent;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.EventExecutor;
@@ -62,13 +62,13 @@ public final class JavaPluginLoader implements PluginLoader
 	private final Pattern[] fileFilters = new Pattern[] {Pattern.compile( "\\.jar$" )};
 	private final Map<String, PluginClassLoader> loaders = new LinkedHashMap<String, PluginClassLoader>();
 	
-	public Map<Class<? extends Event>, Set<RegisteredListener>> createRegisteredListeners( Listener listener, final Plugin plugin )
+	public Map<Class<? extends AbstractEvent>, Set<RegisteredListener>> createRegisteredListeners( Listener listener, final Plugin plugin )
 	{
 		Validate.notNull( plugin, "Plugin can not be null" );
 		Validate.notNull( listener, "Listener can not be null" );
 		
 		boolean useTimings = EventBus.INSTANCE.useTimings();
-		Map<Class<? extends Event>, Set<RegisteredListener>> ret = new HashMap<Class<? extends Event>, Set<RegisteredListener>>();
+		Map<Class<? extends AbstractEvent>, Set<RegisteredListener>> ret = new HashMap<Class<? extends AbstractEvent>, Set<RegisteredListener>>();
 		Set<Method> methods;
 		try
 		{
@@ -91,12 +91,12 @@ public final class JavaPluginLoader implements PluginLoader
 			if ( eh == null )
 				continue;
 			final Class<?> checkClass;
-			if ( method.getParameterTypes().length != 1 || !Event.class.isAssignableFrom( checkClass = method.getParameterTypes()[0] ) )
+			if ( method.getParameterTypes().length != 1 || !AbstractEvent.class.isAssignableFrom( checkClass = method.getParameterTypes()[0] ) )
 			{
 				PluginManager.getLogger().severe( plugin.getDescription().getFullName() + " attempted to register an invalid EventHandler method signature \"" + method.toGenericString() + "\" in " + listener.getClass() );
 				continue;
 			}
-			final Class<? extends Event> eventClass = checkClass.asSubclass( Event.class );
+			final Class<? extends AbstractEvent> eventClass = checkClass.asSubclass( AbstractEvent.class );
 			method.setAccessible( true );
 			Set<RegisteredListener> eventSet = ret.get( eventClass );
 			if ( eventSet == null )
@@ -106,7 +106,7 @@ public final class JavaPluginLoader implements PluginLoader
 			}
 			
 			if ( ErrorReporting.E_DEPRECATED.isEnabledLevel() )
-				for ( Class<?> clazz = eventClass; Event.class.isAssignableFrom( clazz ); clazz = clazz.getSuperclass() )
+				for ( Class<?> clazz = eventClass; AbstractEvent.class.isAssignableFrom( clazz ); clazz = clazz.getSuperclass() )
 				{
 					if ( clazz.isAnnotationPresent( DeprecatedDetail.class ) )
 					{
@@ -125,7 +125,7 @@ public final class JavaPluginLoader implements PluginLoader
 			EventExecutor executor = new EventExecutor()
 			{
 				@Override
-				public void execute( Listener listener, Event event ) throws EventException
+				public void execute( Listener listener, AbstractEvent event ) throws EventException
 				{
 					try
 					{
@@ -416,7 +416,7 @@ public final class JavaPluginLoader implements PluginLoader
 		catch ( NullPointerException ex )
 		{
 			// Boggle!
-			// (Native methods throwing NPEs is not fun when you can't stop it before-hoof)
+			// (Native methods throwing NPEs is not fun when you can't stop it before-hand)
 		}
 	}
 	

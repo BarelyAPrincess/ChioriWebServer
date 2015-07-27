@@ -9,14 +9,12 @@
 package com.chiorichan.account.event;
 
 import com.chiorichan.account.AccountMeta;
-import com.chiorichan.event.HandlerList;
 
 /**
  * Called when a User leaves a server
  */
 public class AccountLogoutEvent extends AccountEvent
 {
-	private static final HandlerList handlers = new HandlerList();
 	private String quitMessage;
 	
 	public AccountLogoutEvent( final AccountMeta acct, final String quitMessage )
@@ -44,16 +42,5 @@ public class AccountLogoutEvent extends AccountEvent
 	public void setLeaveMessage( String quitMessage )
 	{
 		this.quitMessage = quitMessage;
-	}
-	
-	@Override
-	public HandlerList getHandlers()
-	{
-		return handlers;
-	}
-	
-	public static HandlerList getHandlerList()
-	{
-		return handlers;
 	}
 }

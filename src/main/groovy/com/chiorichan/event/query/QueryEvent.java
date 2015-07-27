@@ -12,6 +12,7 @@ import io.netty.channel.ChannelHandlerContext;
 
 import com.chiorichan.event.Cancellable;
 import com.chiorichan.event.server.ServerEvent;
+import com.chiorichan.net.query.QueryServerTerminal;
 
 public class QueryEvent extends ServerEvent implements Cancellable
 {
@@ -24,23 +25,20 @@ public class QueryEvent extends ServerEvent implements Cancellable
 	private String message;
 	private boolean cancelled = false;
 	private ChannelHandlerContext context;
+	private QueryServerTerminal terminal;
 	private QueryType type;
 	
-	public QueryEvent( ChannelHandlerContext context, QueryType type, String message )
+	public QueryEvent( QueryServerTerminal terminal, ChannelHandlerContext context, QueryType type, String message )
 	{
 		this.context = context;
 		this.type = type;
 		this.message = message;
+		this.terminal = terminal;
 	}
 	
-	public void setReason( String reason )
+	public ChannelHandlerContext getContext()
 	{
-		this.reason = reason;
-	}
-	
-	public String getReason()
-	{
-		return reason;
+		return context;
 	}
 	
 	public String getMessage()
@@ -48,9 +46,14 @@ public class QueryEvent extends ServerEvent implements Cancellable
 		return message;
 	}
 	
-	public ChannelHandlerContext getContext()
+	public String getReason()
 	{
-		return context;
+		return reason;
+	}
+	
+	public QueryServerTerminal getTerminal()
+	{
+		return terminal;
 	}
 	
 	public QueryType getType()
@@ -68,5 +71,10 @@ public class QueryEvent extends ServerEvent implements Cancellable
 	public void setCancelled( boolean cancel )
 	{
 		cancelled = cancel;
+	}
+	
+	public void setReason( String reason )
+	{
+		this.reason = reason;
 	}
 }

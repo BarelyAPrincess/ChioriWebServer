@@ -10,14 +10,11 @@ package com.chiorichan.event.server;
 
 import java.net.InetAddress;
 
-import com.chiorichan.event.HandlerList;
-
 /**
  * Called when a server list ping is coming in.
  */
 public class ServerPingEvent extends ServerEvent
 {
-	private static final HandlerList handlers = new HandlerList();
 	private final InetAddress address;
 	private String motd;
 	private final int numPlayers;
@@ -42,6 +39,16 @@ public class ServerPingEvent extends ServerEvent
 	}
 	
 	/**
+	 * Get the maximum number of players sent.
+	 * 
+	 * @return the maximum number of players
+	 */
+	public int getMaxPlayers()
+	{
+		return maxPlayers;
+	}
+	
+	/**
 	 * Get the message of the day message.
 	 * 
 	 * @return the message of the day
@@ -49,17 +56,6 @@ public class ServerPingEvent extends ServerEvent
 	public String getMotd()
 	{
 		return motd;
-	}
-	
-	/**
-	 * Change the message of the day message.
-	 * 
-	 * @param motd
-	 *            the message of the day
-	 */
-	public void setMotd( String motd )
-	{
-		this.motd = motd;
 	}
 	
 	/**
@@ -73,16 +69,6 @@ public class ServerPingEvent extends ServerEvent
 	}
 	
 	/**
-	 * Get the maximum number of players sent.
-	 * 
-	 * @return the maximum number of players
-	 */
-	public int getMaxPlayers()
-	{
-		return maxPlayers;
-	}
-	
-	/**
 	 * Set the maximum number of players sent.
 	 * 
 	 * @param maxPlayers
@@ -93,14 +79,14 @@ public class ServerPingEvent extends ServerEvent
 		this.maxPlayers = maxPlayers;
 	}
 	
-	@Override
-	public HandlerList getHandlers()
+	/**
+	 * Change the message of the day message.
+	 * 
+	 * @param motd
+	 *            the message of the day
+	 */
+	public void setMotd( String motd )
 	{
-		return handlers;
-	}
-	
-	public static HandlerList getHandlerList()
-	{
-		return handlers;
+		this.motd = motd;
 	}
 }

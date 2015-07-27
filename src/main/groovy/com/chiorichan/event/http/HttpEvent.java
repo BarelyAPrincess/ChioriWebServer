@@ -8,16 +8,12 @@
  */
 package com.chiorichan.event.http;
 
-import com.chiorichan.event.Event;
-import com.chiorichan.event.HandlerList;
+import com.chiorichan.event.AbstractEvent;
 
 /**
  * Miscellaneous server events
  */
-public abstract class HttpEvent extends Event
+public abstract class HttpEvent extends AbstractEvent
 {
-	public static HandlerList getHandlerList()
-	{
-		return handlers;
-	}
+
 }

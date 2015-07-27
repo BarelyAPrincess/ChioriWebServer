@@ -21,10 +21,7 @@ import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.Kickable;
 import com.chiorichan.account.lang.AccountResult;
-import com.chiorichan.event.EventBus;
-import com.chiorichan.event.EventException;
-import com.chiorichan.event.query.QueryEvent;
-import com.chiorichan.event.query.QueryEvent.QueryType;
+import com.chiorichan.event.EventFactory;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.terminal.CommandDispatch;
 import com.chiorichan.terminal.TerminalEntity;
@@ -50,29 +47,14 @@ public class QueryServerTerminal extends SimpleChannelInboundHandler<String> imp
 		
 		terminal.displayWelcomeMessage();
 		
-		QueryEvent queryEvent = new QueryEvent( ctx, QueryType.CONNECTED, null );
-		
-		try
+		if ( EventFactory.buildQueryConnected( this, ctx ) )
 		{
-			EventBus.INSTANCE.callEventWithException( queryEvent );
+			println( "Server Uptine: " + Loader.getUptime() );
+			println( "The last visit from IP " + terminal.getIpAddr() + " is unknown." );
+			// TODO Add more information here
+			
+			terminal.resetPrompt();
 		}
-		catch ( EventException ex )
-		{
-			throw new IOException( "Exception encountered during query event call, most likely the fault of a plugin.", ex );
-		}
-		
-		if ( queryEvent.isCancelled() )
-		{
-			ChannelFuture future = ctx.writeAndFlush( parseColor( ( queryEvent.getReason().isEmpty() ) ? "We're sorry, you've been disconnected from the server by a Cancelled Event." : queryEvent.getReason() ) );
-			future.addListener( ChannelFutureListener.CLOSE );
-			return;
-		}
-		
-		println( "Server Uptine: " + Loader.getUptime() );
-		println( "The last visit from IP " + terminal.getIpAddr() + " is unknown." );
-		// TODO Add more information here
-		
-		terminal.resetPrompt();
 	}
 	
 	@Override
@@ -129,9 +111,10 @@ public class QueryServerTerminal extends SimpleChannelInboundHandler<String> imp
 	}
 	
 	@Override
-	public void messageReceived( ChannelHandlerContext ctx, String msg )
+	public void messageReceived( ChannelHandlerContext ctx, String msg ) throws IOException
 	{
-		CommandDispatch.issueCommand( terminal, msg );
+		if ( EventFactory.buildQueryMessageReceived( this, ctx, msg ) )
+			CommandDispatch.issueCommand( terminal, msg );
 	}
 	
 	private String parseColor( String text )

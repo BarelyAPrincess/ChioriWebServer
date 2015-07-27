@@ -44,8 +44,6 @@ import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
 import com.chiorichan.event.server.KickEvent;
-import com.chiorichan.event.server.ServerRunLevelEvent;
-import com.chiorichan.event.server.ServerRunLevelEventImpl;
 import com.chiorichan.lang.ErrorReporting;
 import com.chiorichan.lang.StartupAbortException;
 import com.chiorichan.lang.StartupException;
@@ -91,7 +89,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	private static AutoUpdater updater;
 	
 	private static File webroot = new File( "" );
-	private final ServerRunLevelEvent runLevelEvent = new ServerRunLevelEventImpl();
+	private final ServerRunLevelEvent runLevelEvent = new ServerRunLevelEvent();
 	
 	private Loader( OptionSet options0 ) throws StartupException
 	{
@@ -754,7 +752,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	
 	void changeRunLevel( RunLevel level )
 	{
-		( ( ServerRunLevelEventImpl ) runLevelEvent ).setRunLevel( level );
+		runLevelEvent.setRunLevel( level );
 		EventBus.INSTANCE.callEvent( runLevelEvent );
 	}
 	

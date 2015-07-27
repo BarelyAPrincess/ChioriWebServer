@@ -63,7 +63,7 @@ public class RegisteredListener
 	 * @throws EventException
 	 *             If an event handler throws an exception.
 	 */
-	public void callEvent( final Event event ) throws EventException
+	public void callEvent( final AbstractEvent event ) throws EventException
 	{
 		if ( event instanceof Cancellable )
 		{

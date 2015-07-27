@@ -6,11 +6,11 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.event.server;
+package com.chiorichan;
 
-import com.chiorichan.RunLevel;
+import com.chiorichan.event.server.ServerEvent;
 
-public abstract class ServerRunLevelEvent extends ServerEvent
+public class ServerRunLevelEvent extends ServerEvent
 {
 	protected static RunLevel previousLevel;
 	protected static RunLevel currentLevel;
@@ -33,5 +33,13 @@ public abstract class ServerRunLevelEvent extends ServerEvent
 	public RunLevel getRunLevel()
 	{
 		return currentLevel;
+	}
+	
+	void setRunLevel( RunLevel level )
+	{
+		previousLevel = currentLevel;
+		currentLevel = level;
+		
+		Loader.getLogger().fine( "Server Runlevel has been changed to '" + level.name() + "'" );
 	}
 }

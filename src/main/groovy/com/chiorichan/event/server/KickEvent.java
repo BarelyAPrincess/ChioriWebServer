@@ -19,7 +19,6 @@ import com.chiorichan.account.Kickable;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.event.Cancellable;
 import com.chiorichan.event.EventBus;
-import com.chiorichan.event.HandlerList;
 import com.chiorichan.event.SelfHandling;
 import com.google.common.collect.Sets;
 
@@ -28,7 +27,6 @@ import com.google.common.collect.Sets;
  */
 public class KickEvent extends ServerEvent implements Cancellable, SelfHandling
 {
-	private static final HandlerList handlers = new HandlerList();
 	private String leaveMessage;
 	private String kickReason;
 	private final Set<Kickable> kickables = Sets.newHashSet();
@@ -38,11 +36,6 @@ public class KickEvent extends ServerEvent implements Cancellable, SelfHandling
 	private KickEvent()
 	{
 		
-	}
-	
-	public static HandlerList getHandlerList()
-	{
-		return handlers;
 	}
 	
 	public static KickEvent kick( Collection<Kickable> kickables )
@@ -67,12 +60,6 @@ public class KickEvent extends ServerEvent implements Cancellable, SelfHandling
 	{
 		EventBus.INSTANCE.callEvent( this );
 		return result;
-	}
-	
-	@Override
-	public HandlerList getHandlers()
-	{
-		return handlers;
 	}
 	
 	/**

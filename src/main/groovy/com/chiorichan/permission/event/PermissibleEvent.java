@@ -8,9 +8,9 @@
  */
 package com.chiorichan.permission.event;
 
-import com.chiorichan.event.Event;
+import com.chiorichan.event.AbstractEvent;
 
-public abstract class PermissibleEvent extends Event
+public abstract class PermissibleEvent extends AbstractEvent
 {
 	public PermissibleEvent( String name )
 	{

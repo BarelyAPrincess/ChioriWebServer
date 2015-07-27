@@ -9,28 +9,14 @@
 package com.chiorichan.event.server;
 
 import com.chiorichan.event.EventCreator;
-import com.chiorichan.event.HandlerList;
 
 /**
  * Called when a plugin is disabled.
  */
 public class PluginDisableEvent extends PluginEvent
 {
-	private static final HandlerList handlers = new HandlerList();
-	
 	public PluginDisableEvent( final EventCreator plugin )
 	{
 		super( plugin );
-	}
-	
-	@Override
-	public HandlerList getHandlers()
-	{
-		return handlers;
-	}
-	
-	public static HandlerList getHandlerList()
-	{
-		return handlers;
 	}
 }

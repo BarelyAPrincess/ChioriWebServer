@@ -15,15 +15,13 @@ import java.util.Collections;
 
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountPermissible;
-import com.chiorichan.event.Event;
-import com.chiorichan.event.HandlerList;
+import com.chiorichan.event.AbstractEvent;
 
 /**
  * Represents a account related event
  */
-public abstract class AccountEvent extends Event
+public abstract class AccountEvent extends AbstractEvent
 {
-	private static final HandlerList handlers = new HandlerList();
 	private Account acct;
 	private Collection<AccountPermissible> permissibles;
 	
@@ -60,11 +58,6 @@ public abstract class AccountEvent extends Event
 		this.permissibles = permissibles;
 	}
 	
-	public static HandlerList getHandlerList()
-	{
-		return handlers;
-	}
-	
 	/**
 	 * Returns the User involved in this event
 	 * 
@@ -73,12 +66,6 @@ public abstract class AccountEvent extends Event
 	public final Account getAccount()
 	{
 		return acct;
-	}
-	
-	@Override
-	public HandlerList getHandlers()
-	{
-		return handlers;
 	}
 	
 	public final Collection<AccountPermissible> getPermissibles()

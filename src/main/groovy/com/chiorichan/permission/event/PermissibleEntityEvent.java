@@ -8,7 +8,6 @@
  */
 package com.chiorichan.permission.event;
 
-import com.chiorichan.event.HandlerList;
 import com.chiorichan.permission.PermissibleEntity;
 
 public class PermissibleEntityEvent extends PermissibleEvent
@@ -17,9 +16,8 @@ public class PermissibleEntityEvent extends PermissibleEvent
 	{
 		PERMISSIONS_CHANGED, OPTIONS_CHANGED, INHERITANCE_CHANGED, INFO_CHANGED, TIMEDPERMISSION_EXPIRED, RANK_CHANGED, DEFAULTGROUP_CHANGED, WEIGHT_CHANGED, SAVED, REMOVED, TIMEDGROUP_EXPIRED,
 	}
-	private static final HandlerList handlers = new HandlerList();
-	protected PermissibleEntity entity;
 	
+	protected PermissibleEntity entity;
 	protected Action action;
 	
 	public PermissibleEntityEvent( PermissibleEntity entity, Action action )
@@ -30,11 +28,6 @@ public class PermissibleEntityEvent extends PermissibleEvent
 		this.action = action;
 	}
 	
-	public static HandlerList getHandlerList()
-	{
-		return handlers;
-	}
-	
 	public Action getAction()
 	{
 		return action;
@@ -43,11 +36,5 @@ public class PermissibleEntityEvent extends PermissibleEvent
 	public PermissibleEntity getEntity()
 	{
 		return entity;
-	}
-	
-	@Override
-	public HandlerList getHandlers()
-	{
-		return handlers;
 	}
 }

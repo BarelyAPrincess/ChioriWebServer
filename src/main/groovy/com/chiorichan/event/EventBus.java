@@ -26,13 +26,16 @@ import com.chiorichan.lang.ErrorReporting;
 import com.chiorichan.plugin.PluginBase;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.lang.AuthorNagException;
+import com.google.common.collect.Maps;
 
 public class EventBus implements ServerManager
 {
+	private static Map<Class<? extends AbstractEvent>, EventHandlers> handlers = Maps.newConcurrentMap();
+	
 	public static final EventBus INSTANCE = new EventBus();
 	private static boolean isInitialized = false;
-	
 	private boolean useTimings = false;
+	private Object lock = new Object();
 	
 	private EventBus()
 	{
@@ -58,20 +61,20 @@ public class EventBus implements ServerManager
 	 * @param event
 	 *            Event details
 	 */
-	public void callEvent( Event event )
+	public <T extends AbstractEvent> T callEvent( T event )
 	{
 		try
 		{
 			if ( event.isAsynchronous() )
 			{
-				if ( Thread.holdsLock( this ) )
+				if ( Thread.holdsLock( lock ) )
 					throw new IllegalStateException( event.getEventName() + " cannot be triggered asynchronously from inside synchronized code." );
 				if ( Loader.getConsole().isPrimaryThread() )
 					throw new IllegalStateException( event.getEventName() + " cannot be triggered asynchronously from primary server thread." );
 				fireEvent( event );
 			}
 			else
-				synchronized ( this )
+				synchronized ( lock )
 				{
 					fireEvent( event );
 				}
@@ -80,6 +83,8 @@ public class EventBus implements ServerManager
 		{
 			
 		}
+		
+		return event;
 	}
 	
 	/**
@@ -90,29 +95,31 @@ public class EventBus implements ServerManager
 	 *            Event details
 	 * @throws EventException
 	 */
-	public void callEventWithException( Event event ) throws EventException
+	public <T extends AbstractEvent> T callEventWithException( T event ) throws EventException
 	{
 		if ( event.isAsynchronous() )
 		{
-			if ( Thread.holdsLock( this ) )
+			if ( Thread.holdsLock( lock ) )
 				throw new IllegalStateException( event.getEventName() + " cannot be triggered asynchronously from inside synchronized code." );
 			if ( Loader.getConsole().isPrimaryThread() )
 				throw new IllegalStateException( event.getEventName() + " cannot be triggered asynchronously from primary server thread." );
 			fireEvent( event );
 		}
 		else
-			synchronized ( this )
+			synchronized ( lock )
 			{
 				fireEvent( event );
 			}
+		
+		return event;
 	}
 	
-	public Map<Class<? extends Event>, Set<RegisteredListener>> createRegisteredListeners( Listener listener, final EventCreator plugin )
+	public Map<Class<? extends AbstractEvent>, Set<RegisteredListener>> createRegisteredListeners( Listener listener, final EventCreator creator )
 	{
-		Validate.notNull( plugin, "Creator can not be null" );
+		Validate.notNull( creator, "Creator can not be null" );
 		Validate.notNull( listener, "Listener can not be null" );
 		
-		Map<Class<? extends Event>, Set<RegisteredListener>> ret = new HashMap<Class<? extends Event>, Set<RegisteredListener>>();
+		Map<Class<? extends AbstractEvent>, Set<RegisteredListener>> ret = new HashMap<Class<? extends AbstractEvent>, Set<RegisteredListener>>();
 		Set<Method> methods;
 		try
 		{
@@ -125,7 +132,7 @@ public class EventBus implements ServerManager
 		}
 		catch ( NoClassDefFoundError e )
 		{
-			Loader.getLogger().severe( String.format( "Plugin %s has failed to register events for %s because %s does not exist.", plugin.getDescription().getFullName(), listener.getClass(), e.getMessage() ) );
+			Loader.getLogger().severe( String.format( "Plugin %s has failed to register events for %s because %s does not exist.", creator.getDescription().getFullName(), listener.getClass(), e.getMessage() ) );
 			return ret;
 		}
 		
@@ -135,12 +142,12 @@ public class EventBus implements ServerManager
 			if ( eh == null )
 				continue;
 			final Class<?> checkClass;
-			if ( method.getParameterTypes().length != 1 || !Event.class.isAssignableFrom( checkClass = method.getParameterTypes()[0] ) )
+			if ( method.getParameterTypes().length != 1 || !AbstractEvent.class.isAssignableFrom( checkClass = method.getParameterTypes()[0] ) )
 			{
-				Loader.getLogger().severe( plugin.getDescription().getFullName() + " attempted to register an invalid EventHandler method signature \"" + method.toGenericString() + "\" in " + listener.getClass() );
+				Loader.getLogger().severe( creator.getDescription().getFullName() + " attempted to register an invalid EventHandler method signature \"" + method.toGenericString() + "\" in " + listener.getClass() );
 				continue;
 			}
-			final Class<? extends Event> eventClass = checkClass.asSubclass( Event.class );
+			final Class<? extends AbstractEvent> eventClass = checkClass.asSubclass( AbstractEvent.class );
 			method.setAccessible( true );
 			Set<RegisteredListener> eventSet = ret.get( eventClass );
 			if ( eventSet == null )
@@ -150,19 +157,19 @@ public class EventBus implements ServerManager
 			}
 			
 			if ( ErrorReporting.E_DEPRECATED.isEnabledLevel() )
-				for ( Class<?> clazz = eventClass; Event.class.isAssignableFrom( clazz ); clazz = clazz.getSuperclass() )
+				for ( Class<?> clazz = eventClass; AbstractEvent.class.isAssignableFrom( clazz ); clazz = clazz.getSuperclass() )
 				{
 					if ( clazz.isAnnotationPresent( DeprecatedDetail.class ) )
 					{
 						DeprecatedDetail deprecated = clazz.getAnnotation( DeprecatedDetail.class );
 						
-						PluginManager.getLogger().warning( String.format( "The plugin '%s' has registered a listener for %s on method '%s', but the event is Deprecated for reason '%s'; please notify the authors %s.", plugin.getDescription().getFullName(), clazz.getName(), method.toGenericString(), deprecated.reason(), Arrays.toString( plugin.getDescription().getAuthors().toArray() ) ) );
+						PluginManager.getLogger().warning( String.format( "The creator '%s' has registered a listener for %s on method '%s', but the event is Deprecated for reason '%s'; please notify the authors %s.", creator.getDescription().getFullName(), clazz.getName(), method.toGenericString(), deprecated.reason(), Arrays.toString( creator.getDescription().getAuthors().toArray() ) ) );
 						break;
 					}
 					
 					if ( clazz.isAnnotationPresent( Deprecated.class ) )
 					{
-						PluginManager.getLogger().warning( String.format( "The plugin '%s' has registered a listener for %s on method '%s', but the event is Deprecated! Please notify the authors %s.", plugin.getDescription().getFullName(), clazz.getName(), method.toGenericString(), Arrays.toString( plugin.getDescription().getAuthors().toArray() ) ) );
+						PluginManager.getLogger().warning( String.format( "The creator '%s' has registered a listener for %s on method '%s', but the event is Deprecated! Please notify the authors %s.", creator.getDescription().getFullName(), clazz.getName(), method.toGenericString(), Arrays.toString( creator.getDescription().getAuthors().toArray() ) ) );
 						break;
 					}
 				}
@@ -170,7 +177,7 @@ public class EventBus implements ServerManager
 			EventExecutor executor = new EventExecutor()
 			{
 				@Override
-				public void execute( Listener listener, Event event ) throws EventException
+				public void execute( Listener listener, AbstractEvent event ) throws EventException
 				{
 					try
 					{
@@ -189,19 +196,19 @@ public class EventBus implements ServerManager
 				}
 			};
 			if ( useTimings )
-				eventSet.add( new TimedRegisteredListener( listener, executor, eh.priority(), plugin, eh.ignoreCancelled() ) );
+				eventSet.add( new TimedRegisteredListener( listener, executor, eh.priority(), creator, eh.ignoreCancelled() ) );
 			else
-				eventSet.add( new RegisteredListener( listener, executor, eh.priority(), plugin, eh.ignoreCancelled() ) );
+				eventSet.add( new RegisteredListener( listener, executor, eh.priority(), creator, eh.ignoreCancelled() ) );
 		}
 		return ret;
 	}
 	
-	private void fireEvent( Event event ) throws EventException
+	private void fireEvent( AbstractEvent event ) throws EventException
 	{
-		HandlerList handlers = event.getHandlers();
-		RegisteredListener[] listeners = handlers.getRegisteredListeners();
+		// HandlerList handlers = event.getHandlers();
+		// RegisteredListener[] listeners = handlers.getRegisteredListeners();
 		
-		for ( RegisteredListener registration : listeners )
+		for ( RegisteredListener registration : handlers.get( event.getClass() ) )
 		{
 			if ( !registration.getCreator().isEnabled() )
 				continue;
@@ -214,12 +221,12 @@ public class EventBus implements ServerManager
 			{
 				if ( registration.getCreator() instanceof PluginBase )
 				{
-					PluginBase plugin = ( PluginBase ) registration.getCreator();
+					PluginBase creator = ( PluginBase ) registration.getCreator();
 					
-					if ( plugin.isNaggable() )
+					if ( creator.isNaggable() )
 					{
-						plugin.setNaggable( false );
-						Loader.getLogger().log( Level.SEVERE, String.format( "Nag author(s): '%s' of '%s' about the following: %s", plugin.getDescription().getAuthors(), plugin.getDescription().getFullName(), ex.getMessage() ) );
+						creator.setNaggable( false );
+						Loader.getLogger().log( Level.SEVERE, String.format( "Nag author(s): '%s' of '%s' about the following: %s", creator.getDescription().getAuthors(), creator.getDescription().getFullName(), ex.getMessage() ) );
 					}
 				}
 			}
@@ -247,37 +254,9 @@ public class EventBus implements ServerManager
 			( ( SelfHandling ) event ).handle();
 	}
 	
-	private HandlerList getEventListeners( Class<? extends Event> type )
+	private EventHandlers getEventListeners( Class<? extends AbstractEvent> event )
 	{
-		try
-		{
-			Method method = getRegistrationClass( type ).getDeclaredMethod( "getHandlerList" );
-			method.setAccessible( true );
-			return ( HandlerList ) method.invoke( null );
-		}
-		catch ( Exception e )
-		{
-			throw new IllegalCreatorAccessException( e.toString() );
-		}
-	}
-	
-	private Class<? extends Event> getRegistrationClass( Class<? extends Event> clazz )
-	{
-		try
-		{
-			clazz.getDeclaredMethod( "getHandlerList" );
-			return clazz;
-		}
-		catch ( NoSuchMethodException e )
-		{
-			if ( clazz.getSuperclass() != null && !clazz.getSuperclass().equals( Event.class ) && Event.class.isAssignableFrom( clazz.getSuperclass() ) )
-				return getRegistrationClass( clazz.getSuperclass().asSubclass( Event.class ) );
-			else
-			{
-				Loader.getLogger().warning( "Unable to find handler list for event " + clazz.getName() );
-				return Event.class;
-			}
-		}
+		return handlers.get( event );
 	}
 	
 	private void init0( boolean useTimings )
@@ -285,7 +264,7 @@ public class EventBus implements ServerManager
 		this.useTimings = useTimings;
 	}
 	
-	public void registerEvent( Class<? extends Event> event, Listener listener, EventPriority priority, EventExecutor executor, EventCreator creator )
+	public void registerEvent( Class<? extends AbstractEvent> event, Listener listener, EventPriority priority, EventExecutor executor, EventCreator creator )
 	{
 		registerEvent( event, listener, priority, executor, creator, false );
 	}
@@ -306,7 +285,7 @@ public class EventBus implements ServerManager
 	 * @param ignoreCancelled
 	 *            Do not call executor if event was already cancelled
 	 */
-	public void registerEvent( Class<? extends Event> event, Listener listener, EventPriority priority, EventExecutor executor, EventCreator creator, boolean ignoreCancelled )
+	public void registerEvent( Class<? extends AbstractEvent> event, Listener listener, EventPriority priority, EventExecutor executor, EventCreator creator, boolean ignoreCancelled )
 	{
 		Validate.notNull( listener, "Listener cannot be null" );
 		Validate.notNull( priority, "Priority cannot be null" );
@@ -325,20 +304,20 @@ public class EventBus implements ServerManager
 	public void registerEvents( Listener listener, EventCreator creator )
 	{
 		if ( !creator.isEnabled() )
-			throw new IllegalCreatorAccessException( "Creator attempted to register " + listener + " while not enabled" );
+			throw new IllegalCreatorAccessException( "EventCreator attempted to register " + listener + " while not enabled" );
 		
-		for ( Map.Entry<Class<? extends Event>, Set<RegisteredListener>> entry : createRegisteredListeners( listener, creator ).entrySet() )
-			getEventListeners( getRegistrationClass( entry.getKey() ) ).registerAll( entry.getValue() );
+		for ( Map.Entry<Class<? extends AbstractEvent>, Set<RegisteredListener>> entry : createRegisteredListeners( listener, creator ).entrySet() )
+			getEventListeners( entry.getKey() ).registerAll( entry.getValue() );
 	}
 	
 	public void unregisterEvents( EventCreator creator )
 	{
-		HandlerList.unregisterAll( creator );
+		EventHandlers.unregisterAll( creator );
 	}
 	
 	public void unregisterEvents( Listener listener )
 	{
-		HandlerList.unregisterAll( listener );
+		EventHandlers.unregisterAll( listener );
 	}
 	
 	public boolean useTimings()

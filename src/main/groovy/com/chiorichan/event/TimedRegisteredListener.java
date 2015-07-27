@@ -12,7 +12,7 @@ public class TimedRegisteredListener extends RegisteredListener
 {
 	private int count;
 	private long totalTime;
-	private Class<? extends Event> eventClass;
+	private Class<? extends AbstractEvent> eventClass;
 	private boolean multiple = false;
 	
 	public TimedRegisteredListener( final Listener pluginListener, final EventExecutor eventExecutor, final EventPriority eventPriority, final EventCreator registeredPlugin, final boolean listenCancelled )
@@ -21,7 +21,7 @@ public class TimedRegisteredListener extends RegisteredListener
 	}
 	
 	@Override
-	public void callEvent( Event event ) throws EventException
+	public void callEvent( AbstractEvent event ) throws EventException
 	{
 		if ( event.isAsynchronous() )
 		{
@@ -29,7 +29,7 @@ public class TimedRegisteredListener extends RegisteredListener
 			return;
 		}
 		count++;
-		Class<? extends Event> newEventClass = event.getClass();
+		Class<? extends AbstractEvent> newEventClass = event.getClass();
 		if ( this.eventClass == null )
 		{
 			this.eventClass = newEventClass;
@@ -37,7 +37,7 @@ public class TimedRegisteredListener extends RegisteredListener
 		else if ( !this.eventClass.equals( newEventClass ) )
 		{
 			multiple = true;
-			this.eventClass = getCommonSuperclass( newEventClass, this.eventClass ).asSubclass( Event.class );
+			this.eventClass = getCommonSuperclass( newEventClass, this.eventClass ).asSubclass( AbstractEvent.class );
 		}
 		long start = System.nanoTime();
 		super.callEvent( event );
@@ -90,7 +90,7 @@ public class TimedRegisteredListener extends RegisteredListener
 	 * 
 	 * @return the event class handled by this RegisteredListener
 	 */
-	public Class<? extends Event> getEventClass()
+	public Class<? extends AbstractEvent> getEventClass()
 	{
 		return eventClass;
 	}

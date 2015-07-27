@@ -14,7 +14,6 @@ import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.event.Cancellable;
 import com.chiorichan.event.Conditional;
 import com.chiorichan.event.EventException;
-import com.chiorichan.event.HandlerList;
 import com.chiorichan.event.RegisteredListener;
 
 /**
@@ -22,7 +21,6 @@ import com.chiorichan.event.RegisteredListener;
  */
 public class AccountPreLoginEvent extends AccountEvent implements Conditional, Cancellable
 {
-	private static final HandlerList handlers = new HandlerList();
 	private AccountResult result = AccountResult.DEFAULT;
 	private final AccountPermissible via;
 	private final Object[] creds;
@@ -32,11 +30,6 @@ public class AccountPreLoginEvent extends AccountEvent implements Conditional, C
 		super( meta, accountPermissible );
 		via = accountPermissible;
 		this.creds = creds;
-	}
-	
-	public static HandlerList getHandlerList()
-	{
-		return handlers;
 	}
 	
 	@Override
@@ -77,12 +70,6 @@ public class AccountPreLoginEvent extends AccountEvent implements Conditional, C
 	public Object[] getCredentials()
 	{
 		return creds;
-	}
-	
-	@Override
-	public HandlerList getHandlers()
-	{
-		return handlers;
 	}
 	
 	@Override

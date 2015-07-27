@@ -8,12 +8,11 @@
  */
 package com.chiorichan.factory.event;
 
+import com.chiorichan.event.AbstractEvent;
 import com.chiorichan.event.Cancellable;
-import com.chiorichan.event.Event;
-import com.chiorichan.event.HandlerList;
 import com.chiorichan.factory.ScriptingContext;
 
-public class PreEvalEvent extends Event implements Cancellable
+public class PreEvalEvent extends AbstractEvent implements Cancellable
 {
 	private boolean cancelled;
 	private final ScriptingContext context;
@@ -21,11 +20,6 @@ public class PreEvalEvent extends Event implements Cancellable
 	public PreEvalEvent( ScriptingContext context )
 	{
 		this.context = context;
-	}
-	
-	public static HandlerList getHandlerList()
-	{
-		return handlers;
 	}
 	
 	public ScriptingContext context()

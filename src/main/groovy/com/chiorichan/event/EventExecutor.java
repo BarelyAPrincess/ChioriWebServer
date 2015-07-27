@@ -10,5 +10,5 @@ package com.chiorichan.event;
 
 public interface EventExecutor
 {
-	void execute( Listener listener, Event event ) throws EventException;
+	void execute( Listener listener, AbstractEvent event ) throws EventException;
 }

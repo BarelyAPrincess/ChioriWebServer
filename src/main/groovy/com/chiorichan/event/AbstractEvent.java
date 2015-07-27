@@ -11,17 +11,33 @@ package com.chiorichan.event;
 /**
  * Represents an event.
  */
-public abstract class Event
+public abstract class AbstractEvent
 {
-	protected static final HandlerList handlers = new HandlerList();
-	
+	public enum Result
+	{
+		/**
+		 * Deny the event. Depending on the event, the action indicated by the event will either not take place or will be
+		 * reverted. Some actions may not be denied.
+		 */
+		DENY,
+		/**
+		 * Neither deny nor allow the event. The server will proceed with its normal handling.
+		 */
+		DEFAULT,
+		/**
+		 * Allow / Force the event. The action indicated by the event will take place if possible, even if the server
+		 * would not normally allow the action. Some actions may not be allowed.
+		 */
+		ALLOW;
+	}
 	private String name;
+	
 	private final boolean async;
 	
 	/**
 	 * The default constructor is defined for cleaner code. This constructor assumes the event is synchronous.
 	 */
-	public Event()
+	public AbstractEvent()
 	{
 		this( false );
 	}
@@ -32,9 +48,9 @@ public abstract class Event
 	 * @param isAsync
 	 *            true indicates the event will fire asynchronously, false by default from default constructor
 	 */
-	public Event( boolean isAsync )
+	public AbstractEvent( boolean isAsync )
 	{
-		this.async = isAsync;
+		async = isAsync;
 	}
 	
 	/**
@@ -45,20 +61,8 @@ public abstract class Event
 	public String getEventName()
 	{
 		if ( name == null )
-		{
 			name = getClass().getSimpleName();
-		}
 		return name;
-	}
-	
-	public HandlerList getHandlers()
-	{
-		return handlers;
-	}
-	
-	public static HandlerList getHandlerList()
-	{
-		return handlers;
 	}
 	
 	/**
@@ -79,23 +83,5 @@ public abstract class Event
 	public final boolean isAsynchronous()
 	{
 		return async;
-	}
-	
-	public enum Result
-	{
-		/**
-		 * Deny the event. Depending on the event, the action indicated by the event will either not take place or will be
-		 * reverted. Some actions may not be denied.
-		 */
-		DENY,
-		/**
-		 * Neither deny nor allow the event. The server will proceed with its normal handling.
-		 */
-		DEFAULT,
-		/**
-		 * Allow / Force the event. The action indicated by the event will take place if possible, even if the server
-		 * would not normally allow the action. Some actions may not be allowed.
-		 */
-		ALLOW;
 	}
 }

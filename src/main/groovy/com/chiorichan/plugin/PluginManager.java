@@ -29,17 +29,17 @@ import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.RunLevel;
 import com.chiorichan.ServerManager;
+import com.chiorichan.ServerRunLevelEvent;
 import com.chiorichan.event.BuiltinEventCreator;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventHandler;
+import com.chiorichan.event.EventHandlers;
 import com.chiorichan.event.EventPriority;
-import com.chiorichan.event.HandlerList;
 import com.chiorichan.event.Listener;
-import com.chiorichan.event.server.ServerRunLevelEvent;
 import com.chiorichan.libraries.Libraries;
 import com.chiorichan.libraries.MavenReference;
-import com.chiorichan.plugin.lang.PluginInformationException;
 import com.chiorichan.plugin.lang.PluginException;
+import com.chiorichan.plugin.lang.PluginInformationException;
 import com.chiorichan.plugin.lang.PluginInvalidException;
 import com.chiorichan.plugin.lang.PluginNotFoundException;
 import com.chiorichan.plugin.lang.UnknownDependencyException;
@@ -102,7 +102,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 			disablePlugins();
 			plugins.clear();
 			lookupNames.clear();
-			HandlerList.unregisterAll();
+			EventHandlers.unregisterAll();
 			fileAssociations.clear();
 		}
 	}
@@ -140,7 +140,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 			
 			try
 			{
-				HandlerList.unregisterAll( plugin );
+				EventHandlers.unregisterAll( plugin );
 			}
 			catch ( Throwable ex )
 			{
@@ -169,24 +169,20 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 	public void enablePlugin( final Plugin plugin )
 	{
 		if ( !plugin.isEnabled() )
-		{
 			try
 			{
 				plugin.getPluginLoader().enablePlugin( plugin );
 			}
 			catch ( Throwable ex )
 			{
-				getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while enabling " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
+				getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while enabling " + plugin.getDescription().getFullName() + " (Check for Version Mismatch)", ex );
 			}
-			
-			HandlerList.bakeAll();
-		}
 	}
 	
 	@Override
 	public String getName()
 	{
-		return "Plugins Manager";
+		return "Plugin Manager";
 	}
 	
 	public Plugin getPluginByClass( Class<?> clz ) throws PluginNotFoundException
@@ -297,7 +293,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 	 * 
 	 * @param file
 	 *            File containing the plugin to load
-	 * @return The Plugin loaded, or null if it was invalid
+	 * @return The Plugin instance
 	 * @throws PluginInvalidException
 	 *             Thrown when the specified file is not a valid plugin
 	 * @throws UnknownDependencyException
