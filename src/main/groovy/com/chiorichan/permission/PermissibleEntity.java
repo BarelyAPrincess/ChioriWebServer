@@ -21,6 +21,7 @@ import org.apache.commons.lang3.Validate;
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.permission.event.PermissibleEntityEvent;
+import com.chiorichan.permission.lang.PermissionException;
 import com.chiorichan.tasks.Timings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -41,6 +42,9 @@ public abstract class PermissibleEntity
 	
 	public PermissibleEntity( String id )
 	{
+		if ( PermissionManager.isDebug() )
+			PermissionManager.getLogger().info( String.format( "%sThe %s `%s` has been created.", ConsoleColor.YELLOW, isGroup() ? "group" : "entity", id ) );
+		
 		this.id = id;
 		reload();
 	}
@@ -60,6 +64,9 @@ public abstract class PermissibleEntity
 			ref.add( refs );
 		groups.put( group, ref );
 		removeTimedGroup( group, ref );
+		
+		if ( isDebug() )
+			PermissionManager.getLogger().info( String.format( "%sThe group `%s` with reference `%s` was attached to entity `%s`.", ConsoleColor.YELLOW, group.getId(), refs.join(), getId() ) );
 	}
 	
 	protected final void addPermission( ChildPermission perm, References refs )
@@ -75,7 +82,7 @@ public abstract class PermissibleEntity
 		permissions.put( perm, refs );
 		
 		if ( isDebug() )
-			PermissionManager.getLogger().info( String.format( "%sThe permission `%s` with reference `%s` was attached to entity `%s`.", ConsoleColor.YELLOW, perm.getPermission().getNamespace(), refs.toString(), getId() ) );
+			PermissionManager.getLogger().info( String.format( "%sThe permission `%s` with reference `%s` was attached to entity `%s`.", ConsoleColor.YELLOW, perm.getPermission().getNamespace(), refs.join(), getId() ) );
 		
 		recalculatePermissions();
 	}
@@ -87,7 +94,10 @@ public abstract class PermissibleEntity
 	
 	public void addPermission( String node, Object val, References refs )
 	{
-		addPermission( PermissionManager.INSTANCE.getNode( node ), val, refs );
+		Permission perm = PermissionManager.INSTANCE.getNode( node );
+		if ( perm == null )
+			throw new PermissionException( String.format( "The permission node %s is non-existent, you must create it first.", node ) );
+		addPermission( perm, val, refs );
 	}
 	
 	public void addTimedGroup( PermissibleGroup group, int lifetime, References refs )
@@ -122,7 +132,7 @@ public abstract class PermissibleEntity
 	
 	public void addTimedPermission( String perm, Object val, References refs, int lifeTime )
 	{
-		addTimedPermission( PermissionManager.INSTANCE.getNode( perm, true ), val, refs, lifeTime );
+		addTimedPermission( PermissionManager.INSTANCE.createNode( perm ), val, refs, lifeTime );
 	}
 	
 	public PermissionResult checkPermission( Permission perm )
@@ -161,7 +171,7 @@ public abstract class PermissibleEntity
 	public PermissionResult checkPermission( String perm, References ref )
 	{
 		perm = PermissionManager.parseNode( perm );
-		Permission permission = PermissionManager.INSTANCE.getNode( perm, true );
+		Permission permission = PermissionManager.INSTANCE.createNode( perm );
 		PermissionResult result = checkPermission( permission, ref );
 		
 		return result;
@@ -588,16 +598,22 @@ public abstract class PermissibleEntity
 	
 	public void reload()
 	{
-		reloadPermissions();
 		reloadGroups();
+		reloadPermissions();
 	}
 	
+	/**
+	 * Reload entity group references from backend
+	 */
 	public abstract void reloadGroups();
 	
+	/**
+	 * Reload entity permissions from backend
+	 */
 	public abstract void reloadPermissions();
 	
 	/**
-	 * Remove entity data from backend
+	 * Remove entity permission and group references from backend
 	 */
 	public abstract void remove();
 	

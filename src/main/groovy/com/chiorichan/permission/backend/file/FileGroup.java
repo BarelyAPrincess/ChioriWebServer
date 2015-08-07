@@ -21,7 +21,7 @@ import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.PermissionType;
 import com.chiorichan.permission.PermissionValue;
 import com.chiorichan.permission.References;
-import com.chiorichan.util.Namespace;
+import com.chiorichan.util.PermissionNamespace;
 
 public class FileGroup extends PermissibleGroup
 {
@@ -59,7 +59,7 @@ public class FileGroup extends PermissibleGroup
 			for ( String ss : permissions.getKeys( false ) )
 			{
 				ConfigurationSection permission = permissions.getConfigurationSection( ss );
-				Namespace ns = new Namespace( ss.replaceAll( "/", "." ) );
+				PermissionNamespace ns = new PermissionNamespace( ss.replaceAll( "/", "." ) );
 				
 				if ( !ns.containsOnlyValidChars() )
 				{
@@ -67,7 +67,7 @@ public class FileGroup extends PermissibleGroup
 					continue;
 				}
 				
-				Collection<Permission> perms = ns.containsRegex() ? PermissionManager.INSTANCE.getNodes( ns ) : Arrays.asList( new Permission[] {PermissionManager.INSTANCE.getNode( ns, true )} );
+				Collection<Permission> perms = ns.containsRegex() ? PermissionManager.INSTANCE.getNodes( ns ) : Arrays.asList( new Permission[] {ns.createPermission()} );
 				
 				for ( Permission perm : perms )
 				{

@@ -52,6 +52,8 @@ public final class PluginClassLoader extends URLClassLoader
 		
 		try
 		{
+			
+			
 			Class<?> jarClass;
 			try
 			{
@@ -86,49 +88,6 @@ public final class PluginClassLoader extends URLClassLoader
 		}
 	}
 	
-	@Override
-	protected Class<?> findClass( String name ) throws ClassNotFoundException
-	{
-		return findClass( name, true );
-	}
-	
-	Class<?> findClass( String name, boolean checkGlobal ) throws ClassNotFoundException
-	{
-		if ( name.startsWith( "com.chiorichan." ) && !name.startsWith( "com.chiorichan.plugin." ) )
-		{
-			throw new ClassNotFoundException( name );
-		}
-		
-		Class<?> result = classes.get( name );
-		
-		if ( result == null )
-		{
-			if ( checkGlobal )
-			{
-				result = loader.getClassByName( name );
-			}
-			
-			if ( result == null )
-			{
-				result = super.findClass( name );
-				
-				if ( result != null )
-				{
-					loader.setClass( name, result );
-				}
-			}
-			
-			classes.put( name, result );
-		}
-		
-		return result;
-	}
-	
-	Set<String> getClasses()
-	{
-		return classes.keySet();
-	}
-	
 	static synchronized void initalize( Plugin javaPlugin )
 	{
 		Validate.notNull( javaPlugin, "Initializing plugin cannot be null" );
@@ -145,13 +104,50 @@ public final class PluginClassLoader extends URLClassLoader
 		loader.initalized = true;
 	}
 	
-	public PluginLoader getPluginLoader()
+	@Override
+	protected Class<?> findClass( String name ) throws ClassNotFoundException
 	{
-		return loader;
+		return findClass( name, true );
+	}
+	
+	Class<?> findClass( String name, boolean checkGlobal ) throws ClassNotFoundException
+	{
+		if ( name.startsWith( "com.chiorichan." ) && !name.startsWith( "com.chiorichan.plugin." ) )
+			throw new ClassNotFoundException( name );
+		
+		Class<?> result = classes.get( name );
+		
+		if ( result == null )
+		{
+			if ( checkGlobal )
+				result = loader.getClassByName( name );
+			
+			if ( result == null )
+			{
+				result = super.findClass( name );
+				
+				if ( result != null )
+					loader.setClass( name, result );
+			}
+			
+			classes.put( name, result );
+		}
+		
+		return result;
+	}
+	
+	Set<String> getClasses()
+	{
+		return classes.keySet();
 	}
 	
 	public Plugin getPlugin()
 	{
 		return plugin;
+	}
+	
+	public PluginLoader getPluginLoader()
+	{
+		return loader;
 	}
 }

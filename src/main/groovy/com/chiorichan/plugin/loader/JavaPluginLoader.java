@@ -353,7 +353,6 @@ public final class JavaPluginLoader implements PluginLoader
 		}
 		
 		File dataFolder = new File( file.getParentFile(), description.getName().replaceAll( "\\W", "" ) );
-		// File dataFolderOption2 = getDataFolder( file );
 		
 		List<String> depend = description.getDepend();
 		if ( depend == null )

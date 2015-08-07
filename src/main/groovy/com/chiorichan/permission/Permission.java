@@ -12,6 +12,8 @@ import java.util.Collections;
 import java.util.List;
 
 import com.chiorichan.ConsoleColor;
+import com.chiorichan.Loader;
+import com.chiorichan.account.AccountAttachment;
 import com.chiorichan.permission.lang.PermissionException;
 import com.chiorichan.util.Namespace;
 import com.google.common.base.Strings;
@@ -29,12 +31,12 @@ public final class Permission implements Comparable<Permission>
 	
 	public Permission( Namespace ns )
 	{
-		this( ns.getLocalName(), PermissionType.DEFAULT, ( ns.getNodeCount() <= 1 ) ? null : PermissionManager.INSTANCE.getNode( ns.getParent(), true ) );
+		this( ns.getLocalName(), PermissionType.DEFAULT, ( ns.getNodeCount() <= 1 ) ? null : PermissionManager.INSTANCE.createNode( ns.getParent() ) );
 	}
 	
 	public Permission( Namespace ns, PermissionType type )
 	{
-		this( ns.getLocalName(), type, ( ns.getNodeCount() <= 1 ) ? null : PermissionManager.INSTANCE.getNode( ns.getParent(), true ) );
+		this( ns.getLocalName(), type, ( ns.getNodeCount() <= 1 ) ? null : PermissionManager.INSTANCE.createNode( ns.getParent() ) );
 	}
 	
 	public Permission( String localName )
@@ -92,15 +94,20 @@ public final class Permission implements Comparable<Permission>
 		return ns1.getNodeCount() > ns2.getNodeCount() ? -1 : 1;
 	}
 	
-	void debugPermissionStack( int deepth )
+	public void debugPermissionStack( AccountAttachment sender, int deepth )
 	{
 		String spacing = ( deepth > 0 ) ? Strings.repeat( "      ", deepth - 1 ) + "|---> " : "";
 		
-		PermissionManager.getLogger().info( String.format( "%s%s%s=%s", ConsoleColor.YELLOW, spacing, getLocalName(), model ) );
+		sender.sendMessage( String.format( "%s%s%s=%s", ConsoleColor.YELLOW, spacing, getLocalName(), model ) );
 		
 		deepth++;
 		for ( Permission p : children )
-			p.debugPermissionStack( deepth );
+			p.debugPermissionStack( sender, deepth );
+	}
+	
+	public void debugPermissionStack( int deepth )
+	{
+		debugPermissionStack( Loader.getConsole(), deepth );
 	}
 	
 	public Permission getChild( String name )

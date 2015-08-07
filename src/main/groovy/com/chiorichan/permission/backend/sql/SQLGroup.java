@@ -22,7 +22,7 @@ import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.PermissionValue;
 import com.chiorichan.permission.References;
-import com.chiorichan.util.Namespace;
+import com.chiorichan.util.PermissionNamespace;
 
 public class SQLGroup extends PermissibleGroup
 {
@@ -41,7 +41,7 @@ public class SQLGroup extends PermissibleGroup
 		{
 			ResultSet rs = db.query( "SELECT * FROM `permissions_groups` WHERE `parent` = '" + getId() + "' AND `type` = '1';" );
 			
-			if ( rs.next() )
+			if ( rs.first() )
 				do
 				{
 					PermissibleGroup grp = PermissionManager.INSTANCE.getGroup( rs.getString( "child" ) );
@@ -64,12 +64,12 @@ public class SQLGroup extends PermissibleGroup
 		clearTimedPermissions();
 		try
 		{
-			ResultSet rs = db.query( "SELECT * FROM `permissions_entity` WHERE `owner` = '" + getId() + "' AND `type` = '1';" );
+			ResultSet rs = db.query( "SELECT * FROM `permissions_entity` WHERE `owner` = ? AND `type` = '1';", getId() );
 			
-			if ( rs.next() )
+			if ( rs.first() )
 				do
 				{
-					Namespace ns = new Namespace( rs.getString( "permission" ) );
+					PermissionNamespace ns = new PermissionNamespace( rs.getString( "permission" ) );
 					
 					if ( !ns.containsOnlyValidChars() )
 					{
@@ -77,7 +77,7 @@ public class SQLGroup extends PermissibleGroup
 						continue;
 					}
 					
-					Collection<Permission> perms = ns.containsRegex() ? PermissionManager.INSTANCE.getNodes( ns ) : Arrays.asList( new Permission[] {PermissionManager.INSTANCE.getNode( ns, true )} );
+					Collection<Permission> perms = ns.containsRegex() ? PermissionManager.INSTANCE.getNodes( ns ) : Arrays.asList( new Permission[] {ns.createPermission()} );
 					
 					for ( Permission perm : perms )
 					{
@@ -103,6 +103,7 @@ public class SQLGroup extends PermissibleGroup
 		try
 		{
 			db.queryUpdate( String.format( "DELETE FROM `permissions_entity` WHERE `owner` = '%s' AND `type` = '1';", getId() ) );
+			db.queryUpdate( String.format( "DELETE FROM `permissions_groups` WHERE `parent` = '%s' AND `type` = '1';", getId() ) );
 		}
 		catch ( SQLException e )
 		{
@@ -133,7 +134,7 @@ public class SQLGroup extends PermissibleGroup
 			
 			Collection<Entry<PermissibleGroup, References>> groups = getGroupEntrys( null );
 			for ( Entry<PermissibleGroup, References> entry : groups )
-				db.queryUpdate( String.format( "INSERT INTO `permissions_groups` (`child`, `parent`, `type`, `refs`) VALUES ('', '', '1', '');", entry.getKey().getId(), getId(), entry.getValue().join() ) );
+				db.queryUpdate( String.format( "INSERT INTO `permissions_groups` (`child`, `parent`, `type`, `refs`) VALUES ('%s', '%s', '1', '%s');", entry.getKey().getId(), getId(), entry.getValue().join() ) );
 		}
 		catch ( SQLException e )
 		{

@@ -110,6 +110,6 @@ public class References implements Iterable<String>
 	@Override
 	public String toString()
 	{
-		return "References{" + Joiner.on( "," ).join( refs ) + "}";
+		return "References{" + join() + "}";
 	}
 }

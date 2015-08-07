@@ -8,10 +8,11 @@
  */
 package com.chiorichan.permission;
 
+import com.chiorichan.permission.commands.EntityCommands;
 import com.chiorichan.permission.commands.GroupCommands;
+import com.chiorichan.permission.commands.PermissionCommands;
 import com.chiorichan.permission.commands.PromotionCommands;
 import com.chiorichan.permission.commands.ReferenceCommands;
-import com.chiorichan.permission.commands.EntityCommands;
 import com.chiorichan.permission.commands.UtilityCommands;
 import com.chiorichan.terminal.commands.AdvancedCommand;
 
@@ -27,5 +28,6 @@ public class PermissionCommand extends AdvancedCommand
 		register( new EntityCommands() );
 		register( new UtilityCommands() );
 		register( new ReferenceCommands() );
+		register( new PermissionCommands() );
 	}
 }

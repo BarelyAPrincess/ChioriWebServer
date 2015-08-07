@@ -22,6 +22,7 @@ import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionBackend;
+import com.chiorichan.permission.PermissionDefault;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.PermissionModelValue;
 import com.chiorichan.permission.PermissionType;
@@ -248,7 +249,7 @@ public class SQLBackend extends PermissionBackend
 			
 			if ( db.getRowCount( rs ) < 1 )
 			{
-				if ( perm.getType() != PermissionType.DEFAULT )
+				if ( !PermissionDefault.isDefault( perm ) && ( perm.getType() != PermissionType.DEFAULT || !perm.hasChildren() || perm.getModel().hasDescription() ) )
 					db.queryUpdate( "INSERT INTO `permissions` (`permission`, `value`, `default`, `type`, `enum`, `maxlen`, `description`) VALUES (?, ?, ?, ?, ?, ?, ?);", perm.getNamespace(), model.getValue(), model.getValueDefault(), perm.getType().name(), model.getEnumsString(), model.getMaxLen(), model.getDescription() );
 			}
 			else
@@ -271,7 +272,7 @@ public class SQLBackend extends PermissionBackend
 					}
 					
 					if ( perm.getType().hasMax() )
-						updateDBValue( ns, "max", model.getMaxLen() );
+						updateDBValue( ns, "maxlen", model.getMaxLen() );
 					
 					if ( perm.getType().hasMin() )
 						updateDBValue( ns, "min", 0 );

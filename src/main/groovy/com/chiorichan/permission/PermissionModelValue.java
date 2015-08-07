@@ -200,6 +200,6 @@ public class PermissionModelValue
 	@Override
 	public String toString()
 	{
-		return String.format( "PermissionModelValue{name=%s,type=%s,value=%s,default=%s}", name, type, value, valueDefault );
+		return String.format( "PermissionModelValue{name=%s,type=%s,value=%s,default=%s}", name, type, value == null ? null : value.getValue(), valueDefault );
 	}
 }

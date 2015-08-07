@@ -114,13 +114,13 @@ public abstract class Permissible
 	public final PermissionResult requirePermission( String req, References refs ) throws PermissionDeniedException
 	{
 		req = PermissionManager.parseNode( req );
-		return requirePermission( PermissionManager.INSTANCE.getNode( req, true ), refs );
+		return requirePermission( PermissionManager.INSTANCE.createNode( req ), refs );
 	}
 	
 	public final PermissionResult requirePermission( String req, String... refs ) throws PermissionDeniedException
 	{
 		req = PermissionManager.parseNode( req );
-		return requirePermission( PermissionManager.INSTANCE.getNode( req, true ), References.format( refs ) );
+		return requirePermission( PermissionManager.INSTANCE.createNode( req ), References.format( refs ) );
 	}
 	
 	public final PermissionResult requirePermission( Permission req, String... refs ) throws PermissionDeniedException

@@ -40,7 +40,7 @@ import com.chiorichan.permission.event.PermissibleSystemEvent;
 import com.chiorichan.permission.lang.PermissionBackendException;
 import com.chiorichan.tasks.TaskCreator;
 import com.chiorichan.tasks.TaskManager;
-import com.chiorichan.util.Namespace;
+import com.chiorichan.util.PermissionNamespace;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -211,6 +211,62 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 		return entity.checkPermission( permission, References.format( refs ) );
 	}
 	
+	public Permission createNode( String namespace )
+	{
+		return createNode( namespace, PermissionType.DEFAULT );
+	}
+	
+	/**
+	 * Finds a registered permission node in the stack by crawling.
+	 * 
+	 * @param namespace
+	 *            The full name space we need to crawl for.
+	 * @param type
+	 *            What PermisisonType should the final node be
+	 * @return The child node based on the namespace. Will return NULL if non-existent and createChildren is false.
+	 */
+	public Permission createNode( String namespace, PermissionType type )
+	{
+		String[] nodes = namespace.split( "\\." );
+		
+		if ( nodes.length < 1 )
+			return null;
+		
+		Permission curr = getRootNode( nodes[0] );
+		
+		if ( curr == null )
+			curr = new Permission( nodes[0] );
+		
+		if ( nodes.length == 1 )
+			return curr;
+		
+		boolean createdLast = false;
+		
+		for ( String node : Arrays.copyOfRange( nodes, 1, nodes.length ) )
+		{
+			Permission child = curr.getChild( node.toLowerCase() );
+			if ( child == null )
+			{
+				child = new Permission( node, curr );
+				curr.addChild( child );
+				curr.commit();
+				curr = child;
+				createdLast = true;
+			}
+			else
+			{
+				curr = child;
+				createdLast = false;
+			}
+		}
+		
+		// If the last node was created then we set it to the desired PermissionType
+		if ( createdLast )
+			curr.setType( type );
+		
+		return curr;
+	}
+	
 	public void end()
 	{
 		try
@@ -330,9 +386,9 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	public PermissibleEntity getEntity( Permissible permissible )
 	{
 		if ( permissible == null )
-			throw new IllegalArgumentException( "Null entity passed! Name must not be empty" );
+			throw new IllegalArgumentException( "Null entity passed!" );
 		
-		if ( permissible.getId() == null )
+		if ( permissible.getId() == null || permissible.getId().isEmpty() )
 			return null;
 		
 		if ( AccountType.isNoneAccount( permissible.entity ) )
@@ -348,22 +404,22 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 		return permissible.entity;
 	}
 	
-	public PermissibleEntity getEntity( String permissible )
+	public PermissibleEntity getEntity( String id )
 	{
-		return getEntity( permissible, true );
+		return getEntity( id, true );
 	}
 	
-	public PermissibleEntity getEntity( String permissible, boolean create )
+	public PermissibleEntity getEntity( String id, boolean create )
 	{
-		if ( permissible == null )
-			throw new IllegalArgumentException( "Null entity passed! Name must not be empty" );
+		if ( id == null || id.isEmpty() )
+			throw new IllegalArgumentException( "Null id passed!" );
 		
-		if ( entities.containsKey( permissible ) )
-			return entities.get( permissible );
+		if ( entities.containsKey( id ) )
+			return entities.get( id );
 		else if ( create )
 		{
-			PermissibleEntity entity = backend.getEntity( permissible );
-			entities.put( permissible, entity );
+			PermissibleEntity entity = backend.getEntity( id );
+			entities.put( id, entity );
 			return entity;
 		}
 		else
@@ -377,23 +433,28 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	 *            group's name
 	 * @return PermissibleGroup object
 	 */
-	public PermissibleGroup getGroup( String groupname )
+	public PermissibleGroup getGroup( String id )
 	{
-		if ( groupname == null || groupname.isEmpty() )
-			return null;
+		return getGroup( id, true );
+	}
+	
+	public PermissibleGroup getGroup( String id, boolean create )
+	{
+		if ( id == null || id.isEmpty() )
+			throw new IllegalArgumentException( "Null id passed!" );
 		
-		PermissibleGroup group = groups.get( groupname.toLowerCase() );
+		id = id.toLowerCase();
 		
-		if ( group == null )
+		if ( groups.containsKey( id ) )
+			return groups.get( id );
+		else if ( create )
 		{
-			group = backend.getGroup( groupname );
-			if ( group != null )
-				groups.put( groupname.toLowerCase(), group );
-			else
-				throw new IllegalStateException( "Group " + groupname + " is null" );
+			PermissibleGroup group = backend.getGroup( id );
+			groups.put( id, group );
+			return group;
 		}
-		
-		return group;
+		else
+			return null;
 	}
 	
 	/**
@@ -426,11 +487,6 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	public String getName()
 	{
 		return "PermissionsManager";
-	}
-	
-	public Permission getNode( Namespace ns, boolean createNode )
-	{
-		return getNode( ns.getNamespace(), createNode );
 	}
 	
 	/**
@@ -468,58 +524,6 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 		return curr;
 	}
 	
-	public Permission getNode( String namespace, boolean createNode )
-	{
-		if ( createNode )
-			return getNode( namespace, PermissionType.DEFAULT );
-		else
-			return getNode( namespace );
-	}
-	
-	/**
-	 * Finds a registered permission node in the stack by crawling.
-	 * 
-	 * @param namespace
-	 *            The full name space we need to crawl for.
-	 * @param createChildren
-	 *            Indicates if we should create the child node if non-existent.
-	 * @return The child node based on the namespace. Will return NULL if non-existent and createChildren is false.
-	 */
-	public Permission getNode( String namespace, PermissionType type )
-	{
-		String[] nodes = namespace.split( "\\." );
-		
-		if ( nodes.length < 1 )
-			return null;
-		
-		Permission curr = getRootNode( nodes[0] );
-		
-		if ( curr == null )
-			curr = new Permission( nodes[0] );
-		curr.setType( type );
-		permissions.add( curr );
-		
-		if ( nodes.length == 1 )
-			return curr;
-		
-		for ( String node : Arrays.copyOfRange( nodes, 1, nodes.length ) )
-		{
-			Permission child = curr.getChild( node.toLowerCase() );
-			if ( child == null )
-			{
-				child = new Permission( node, curr );
-				child.setType( type );
-				curr.addChild( child );
-				curr.commit();
-				curr = child;
-			}
-			else
-				curr = child;
-		}
-		
-		return curr;
-	}
-	
 	protected Permission getNodeByLocalName( String name )
 	{
 		for ( Permission perm : permissions )
@@ -535,7 +539,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	 *            The full name space we need to crawl for.
 	 * @return A list of permissions that matched the namespace. Will return more then one if namespace contained asterisk.
 	 */
-	public List<Permission> getNodes( Namespace ns )
+	public List<Permission> getNodes( PermissionNamespace ns )
 	{
 		if ( ns == null )
 			return Lists.newArrayList();
@@ -554,7 +558,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	
 	public List<Permission> getNodes( String ns )
 	{
-		return getNodes( new Namespace( ns ) );
+		return getNodes( new PermissionNamespace( ns ) );
 	}
 	
 	public Collection<String> getReferences()
@@ -649,12 +653,14 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 			getLogger().info( ConsoleColor.YELLOW + "Loading entities from backend!" );
 		backend.loadEntities();
 		
-		if ( isDebug() )
-		{
-			getLogger().info( ConsoleColor.YELLOW + "Dumping Loaded Permissions:" );
-			for ( Permission root : getRootNodes( false ) )
-				root.debugPermissionStack( 0 );
-		}
+		/*
+		 * if ( isDebug() )
+		 * {
+		 * getLogger().info( ConsoleColor.YELLOW + "Dumping loaded permissions:" );
+		 * for ( Permission root : getRootNodes( false ) )
+		 * root.debugPermissionStack( 0 );
+		 * }
+		 */
 	}
 	
 	// TODO Make more checks
@@ -684,8 +690,8 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	 *            The new namespace you wish to use.
 	 * @param appendLocalName
 	 *            Pass true if you wish the method to append the LocalName to the new namespace.
-	 *            If the localname of the new namespace is different then this permission will be renamed.
-	 * @return true is move/rename was successful.
+	 *            If the local name of the new namespace is different then this permission will be renamed.
+	 * @return true if move/rename was successful.
 	 */
 	public boolean refactorNamespace( String newNamespace, boolean appendLocalName )
 	{

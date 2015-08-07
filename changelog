@@ -2,3 +2,8 @@
 	EventBus.callEvent now returns the AbstractEvent for stacking
 	EventBus locks using an object instead of self
 	EventHandlers are now tracked from inside EventBus instead of each Event
+	Tweaks and improvements to Permission Commands
+	Found a bug with not checking is WeakReference is unloaded
+	Bug Fixes to database logging and prepared statements
+	Huge bug with EventBus not creating new EventHandlers for each AbstractEvent
+	Several tweaks and improvements to permissions subsystem
