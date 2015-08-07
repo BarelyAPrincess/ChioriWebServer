@@ -25,9 +25,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.UnknownFormatConversionException;
 
 import org.json.JSONException;
 
+import com.chiorichan.ConsoleColor;
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.lang.StartupException;
@@ -82,6 +84,8 @@ public class DatabaseEngine
 				throw new FoundException( matchingType );
 		}
 	}
+	
+	private boolean debug = false;
 	
 	private Connection con;
 	private String savedDb, savedUser, savedPass, savedHost, savedPort;
@@ -355,7 +359,7 @@ public class DatabaseEngine
 			e.printStackTrace();
 		}
 		
-		Loader.getLogger().fine( "Deleting from table " + table + " where " + where + " " + i );
+		log( "Deleting from table " + table + " where " + where + " " + i );
 		
 		return true;
 	}
@@ -459,6 +463,7 @@ public class DatabaseEngine
 		File sqliteDb = new File( filename );
 		
 		con = DriverManager.getConnection( "jdbc:h2:" + sqliteDb.getAbsolutePath() );
+		con.setAutoCommit( false );
 		
 		getLogger().info( "We succesully connected to the H2 database using 'jdbc:h2:" + sqliteDb.getAbsolutePath() + "'" );
 		type = DatabaseType.H2;
@@ -502,6 +507,7 @@ public class DatabaseEngine
 		try
 		{
 			con = DriverManager.getConnection( "jdbc:mysql://" + host + ":" + port + "/" + db, user, pass );
+			con.setAutoCommit( false );
 		}
 		catch ( SQLException e )
 		{
@@ -550,6 +556,7 @@ public class DatabaseEngine
 		}
 		
 		con = DriverManager.getConnection( "jdbc:sqlite:" + sqliteDb.getAbsolutePath() );
+		con.setAutoCommit( false );
 		
 		getLogger().info( "We succesully connected to the sqLite database using 'jdbc:sqlite:" + sqliteDb.getAbsolutePath() + "'" );
 		type = DatabaseType.SQLITE;
@@ -599,12 +606,12 @@ public class DatabaseEngine
 		
 		if ( result > 0 )
 		{
-			Loader.getLogger().fine( "Making INSERT query \"" + query + "\" which affected " + result + " rows." );
+			log( "Making INSERT query \"" + query + "\" which affected " + result + " rows." );
 			return true;
 		}
 		else
 		{
-			Loader.getLogger().fine( "Making INSERT query \"" + query + "\" which had no effect on the database" );
+			log( "Making INSERT query \"" + query + "\" which had no effect on the database" );
 			return false;
 		}
 	}
@@ -630,6 +637,29 @@ public class DatabaseEngine
 			return true;
 		
 		return false;
+	}
+	
+	private void log( boolean force, String msg, Object... objs )
+	{
+		try
+		{
+			msg = String.format( msg, objs );
+		}
+		catch ( UnknownFormatConversionException e )
+		{
+			getLogger().warning( e.getMessage() );
+			return;
+		}
+		
+		if ( debug || force )
+			getLogger().info( ConsoleColor.GRAY + msg );
+		else
+			getLogger().fine( msg );
+	}
+	
+	private void log( String msg, Object... objs )
+	{
+		log( false, msg, objs );
 	}
 	
 	public ResultSet query( String query ) throws SQLException
@@ -670,7 +700,7 @@ public class DatabaseEngine
 			
 			result = stmt.executeQuery( query );
 			
-			Loader.getLogger().fine( "SQL Query `" + query + "` returned " + getRowCount( result ) + " rows!" );
+			log( "SQL Query `" + query + "` returned " + getRowCount( result ) + " rows!" );
 		}
 		catch ( CommunicationsException | MySQLNonTransientConnectionException e )
 		{
@@ -706,8 +736,7 @@ public class DatabaseEngine
 				try
 				{
 					x++;
-					// Loader.getLogger().debug( x + " -> " + ObjectFunc.castToString( s ) );
-					stmt.setString( x, ObjectFunc.castToString( s ) );
+					stmt.setObject( x, s );
 				}
 				catch ( SQLException e )
 				{
@@ -717,7 +746,7 @@ public class DatabaseEngine
 			
 			result = stmt.executeQuery();
 			
-			Loader.getLogger().fine( "SQL Query `" + stmt.toString() + "` returned " + getRowCount( result ) + " rows!" );
+			log( "SQL Query `" + stmt.toString() + "` returned " + getRowCount( result ) + " rows!" );
 		}
 		catch ( CommunicationsException | MySQLNonTransientConnectionException e )
 		{
@@ -772,7 +801,7 @@ public class DatabaseEngine
 			e.printStackTrace();
 		}
 		
-		Loader.getLogger().fine( "Update Query: \"" + query + "\" which affected " + cnt + " row(s)." );
+		log( "Update Query: \"" + query + "\" which affected " + cnt + " row(s)." );
 		return cnt;
 	}
 	
@@ -793,7 +822,7 @@ public class DatabaseEngine
 				try
 				{
 					x++;
-					stmt.setString( x, ObjectFunc.castToString( s ) );
+					stmt.setObject( x, s );
 				}
 				catch ( SQLException e )
 				{
@@ -803,7 +832,7 @@ public class DatabaseEngine
 			
 			stmt.execute();
 			
-			Loader.getLogger().fine( "Update Query: \"" + stmt.toString() + "\" which affected " + stmt.getUpdateCount() + " row(s)." );
+			log( "Update Query: \"" + stmt.toString() + "\" which affected " + stmt.getUpdateCount() + " row(s)." );
 		}
 		catch ( MySQLNonTransientConnectionException e )
 		{
@@ -947,19 +976,13 @@ public class DatabaseEngine
 		
 		if ( rs == null )
 		{
-			if ( StringFunc.isTrue( options.get( "debug" ) ) )
-				Loader.getLogger().info( "Making SELECT query \"" + query + "\" which returned an error." );
-			else
-				Loader.getLogger().fine( "Making SELECT query \"" + query + "\" which returned an error." );
+			log( StringFunc.isTrue( options.get( "debug" ) ), "Making SELECT query \"" + query + "\" which returned an error." );
 			return null;
 		}
 		
 		if ( getRowCount( rs ) < 1 )
 		{
-			if ( StringFunc.isTrue( options.get( "debug" ) ) )
-				Loader.getLogger().info( "Making SELECT query \"" + query + "\" which returned no results." );
-			else
-				Loader.getLogger().fine( "Making SELECT query \"" + query + "\" which returned no results." );
+			log( StringFunc.isTrue( options.get( "debug" ) ), "Making SELECT query \"" + query + "\" which returned no results." );
 			return new LinkedHashMap<String, Object>();
 		}
 		
@@ -976,7 +999,7 @@ public class DatabaseEngine
 		if ( StringFunc.isTrue( options.get( "debug" ) ) )
 			Loader.getLogger().info( "Making SELECT query \"" + query + "\" which returned " + getRowCount( rs ) + " row(s)." );
 		else
-			Loader.getLogger().fine( "Making SELECT query \"" + query + "\" which returned " + getRowCount( rs ) + " row(s)." );
+			log( "Making SELECT query \"" + query + "\" which returned " + getRowCount( rs ) + " row(s)." );
 		
 		return result;
 	}
@@ -1199,7 +1222,6 @@ public class DatabaseEngine
 	public boolean update( String table, Map<String, Object> data, Object where, int lmt, boolean disableInjectionCheck ) throws SQLException
 	{
 		String subWhere = "";
-		
 		String whr = "";
 		
 		if ( where instanceof String )
@@ -1208,7 +1230,7 @@ public class DatabaseEngine
 		{
 			Map<String, Object> whereMap = ( Map<String, Object> ) where;
 			
-			String tmp = "", opr = "";// , opr2 = "";
+			String tmp = "", opr = "";
 			
 			for ( Entry<String, Object> entry : whereMap.entrySet() )
 				if ( entry.getValue() instanceof Map )
@@ -1232,10 +1254,10 @@ public class DatabaseEngine
 						
 						String key = entry2.getKey().replace( "|", "" ).replace( "&", "" );
 						tmp2 = "`" + key + "` = '" + entry2.getValue() + "'";
-						tmp += ( tmp.isEmpty() ) ? tmp2 : subWhere + " " + opr + " " + tmp2;
+						tmp += ( tmp.isEmpty() ) ? tmp2 : String.format( "%s %s %s", subWhere, opr, tmp2 );
 					}
 					
-					whr = ( whr.isEmpty() ) ? "(" + tmp + ")" : whr + " " + opr + " (" + tmp + ")";
+					whr = ( whr.isEmpty() ) ? String.format( "(%s)", tmp ) : String.format( "%s %s (%s)", whr, opr, tmp );
 				}
 				else
 				{
@@ -1248,7 +1270,7 @@ public class DatabaseEngine
 					String key = entry.getKey().replace( "|", "" ).replace( "&", "" );
 					
 					tmp = "`" + key + "` = '" + entry.getValue() + "'";
-					whr = ( whr.isEmpty() ) ? tmp : whr + " " + opr + " " + tmp;
+					whr = ( whr.isEmpty() ) ? tmp : String.format( "%s %s %s", whr, opr, tmp );
 				}
 		}
 		else
@@ -1274,12 +1296,12 @@ public class DatabaseEngine
 		
 		if ( result > 0 )
 		{
-			Loader.getLogger().fine( "Making UPDATE query \"" + query + "\" which affected " + result + " rows." );
+			log( "Making UPDATE query \"" + query + "\" which affected " + result + " rows." );
 			return true;
 		}
 		else
 		{
-			Loader.getLogger().fine( "Making UPDATE query \"" + query + "\" which had no affect on the database." );
+			log( "Making UPDATE query \"" + query + "\" which had no affect on the database." );
 			return false;
 		}
 	}
