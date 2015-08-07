@@ -16,7 +16,6 @@ import java.util.regex.PatternSyntaxException;
 
 import org.apache.commons.lang3.ArrayUtils;
 
-import com.chiorichan.permission.Permission;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -157,11 +156,6 @@ public class Namespace
 	public String getRootName()
 	{
 		return nodes[0];
-	}
-	
-	public boolean matches( Permission perm )
-	{
-		return matches( perm.getNamespace() );
 	}
 	
 	public boolean matches( String perm )
