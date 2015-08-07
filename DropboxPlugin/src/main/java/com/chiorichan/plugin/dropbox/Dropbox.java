@@ -22,6 +22,7 @@ import com.dropbox.core.DbxWebAuthNoRedirect;
  * 
  * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
+@Plugin( name = "Dropbox Plugin", author = "Chiori Greene", version = "1.0" )
 public class Dropbox extends Plugin
 {
 	private String dbxApiKey = null;
