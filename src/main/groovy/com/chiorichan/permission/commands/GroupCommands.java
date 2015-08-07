@@ -19,13 +19,14 @@ import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.References;
+import com.chiorichan.permission.lang.PermissionException;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.terminal.TerminalEntity;
 import com.chiorichan.terminal.commands.AdvancedCommand;
 import com.chiorichan.terminal.commands.advanced.CommandHandler;
 import com.google.common.base.Joiner;
 
-public class GroupCommands extends PermissionsCommand
+public class GroupCommands extends PermissionBaseCommand
 {
 	@CommandHandler( name = "pex", syntax = "group <group> swap <permission> <targetPermission> [ref]", permission = "permissions.manage.groups.permissions.<group>", description = "Swap <permission> and <targetPermission> in permission list. Could be number or permission itself" )
 	public void entitySwapPermission( TerminalEntity sender, Map<String, String> args )
@@ -115,10 +116,17 @@ public class GroupCommands extends PermissionsCommand
 			return;
 		}
 		
-		group.addPermission( args.get( "permission" ), true, refs );
+		try
+		{
+			group.addPermission( args.get( "permission" ), true, refs );
+		}
+		catch ( PermissionException e )
+		{
+			sender.sendMessage( ConsoleColor.RED + e.getMessage() );
+			return;
+		}
 		
 		sender.sendMessage( ConsoleColor.WHITE + "Permission \"" + args.get( "permission" ) + "\" added to " + group.getId() + " !" );
-		
 		informGroup( group, "Your permissions have been changed" );
 	}
 	
@@ -430,6 +438,22 @@ public class GroupCommands extends PermissionsCommand
 			}
 		
 		sender.sendMessage( "Group " + group.getId() + " have " + group.getWeight() + " calories." );
+	}
+	
+	@CommandHandler( name = "pex", syntax = "group <group> reload", description = "Reload group from backend" )
+	public void groupReload( TerminalEntity sender, Map<String, String> args )
+	{
+		String groupName = autoCompleteGroupName( args.get( "group" ) );
+		PermissibleGroup group = PermissionManager.INSTANCE.getGroup( groupName );
+		
+		if ( group == null )
+		{
+			sender.sendMessage( ConsoleColor.RED + "Group doesn't exist" );
+			return;
+		}
+		
+		group.reload();
+		sender.sendMessage( ConsoleColor.WHITE + "Group `" + groupName + "` has been reloaded from backend!" );
 	}
 	
 	@CommandHandler( name = "pex", syntax = "group <group> parents remove <parents> [ref]", permission = "permissions.manage.groups.inheritance.<group>", description = "Set parent(s) for <group> (single or comma-separated list)" )

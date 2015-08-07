@@ -20,7 +20,7 @@ import com.chiorichan.terminal.TerminalEntity;
 import com.chiorichan.terminal.commands.advanced.CommandHandler;
 import com.google.common.base.Joiner;
 
-public class ReferenceCommands extends PermissionsCommand
+public class ReferenceCommands extends PermissionBaseCommand
 {
 	@CommandHandler( name = "pex", syntax = "ref <ref>", description = "Print <ref> inheritance info", permission = "permissions.manage.refs" )
 	public void refPrintInheritance( TerminalEntity sender, Map<String, String> args )

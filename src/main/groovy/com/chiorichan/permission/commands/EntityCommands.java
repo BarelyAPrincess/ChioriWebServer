@@ -26,7 +26,7 @@ import com.chiorichan.terminal.commands.advanced.CommandHandler;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 
-public class EntityCommands extends PermissionsCommand
+public class EntityCommands extends PermissionBaseCommand
 {
 	@CommandHandler( name = "pex", syntax = "entities cleanup <group> [threshold]", permission = "permissions.manage.entities.cleanup", description = "Clean entities of specified group, which last login was before threshold (in days). By default threshold is 30 days." )
 	public void entitiesCleanup( AccountAttachment sender, Map<String, String> args )
@@ -177,9 +177,9 @@ public class EntityCommands extends PermissionsCommand
 		String permission = entity.getMatchingExpression( args.get( "permission" ), refs );
 		
 		if ( permission == null )
-			sender.sendMessage( "Account \"" + entityName + "\" don't such have no permission" );
+			sender.sendMessage( "Account \"" + entityName + "\" does not have such permission" );
 		else
-			sender.sendMessage( "Account \"" + entityName + "\" have \"" + permission + "\" = " + entity.explainExpression( permission ) );
+			sender.sendMessage( "Account \"" + entityName + "\" has \"" + permission + "\" = " + entity.explainExpression( permission ) );
 	}
 	
 	@CommandHandler( name = "pex", syntax = "entity <entity> get <option> [ref]", permission = "permissions.manage.<entity>", description = "Toggle debug only for <entity>" )

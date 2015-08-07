@@ -18,7 +18,7 @@ import com.chiorichan.permission.lang.RankingException;
 import com.chiorichan.terminal.TerminalEntity;
 import com.chiorichan.terminal.commands.advanced.CommandHandler;
 
-public class PromotionCommands extends PermissionsCommand
+public class PromotionCommands extends PermissionBaseCommand
 {
 	@CommandHandler( name = "pex", syntax = "demote <user> [ladder]", description = "Demotes <user> to previous group or [ladder]", isPrimary = true )
 	public void demoteUser( TerminalEntity sender, Map<String, String> args )

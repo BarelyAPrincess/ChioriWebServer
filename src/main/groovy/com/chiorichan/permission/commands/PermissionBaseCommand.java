@@ -37,7 +37,7 @@ import com.chiorichan.terminal.commands.advanced.AutoCompleteChoicesException;
 import com.chiorichan.terminal.commands.advanced.CommandListener;
 import com.google.common.collect.Sets;
 
-public abstract class PermissionsCommand implements CommandListener
+public abstract class PermissionBaseCommand implements CommandListener
 {
 	protected AdvancedCommand command;
 	

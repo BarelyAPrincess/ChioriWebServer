@@ -29,7 +29,7 @@ import com.chiorichan.terminal.TerminalEntity;
 import com.chiorichan.terminal.commands.advanced.CommandBinding;
 import com.chiorichan.terminal.commands.advanced.CommandHandler;
 
-public class UtilityCommands extends PermissionsCommand
+public class UtilityCommands extends PermissionBaseCommand
 {
 	private static int tryGetInt( TerminalEntity sender, Map<String, String> args, String key, int def )
 	{
@@ -60,7 +60,7 @@ public class UtilityCommands extends PermissionsCommand
 					else
 					{
 						entity.save();
-						sender.sendMessage( ConsoleColor.AQUA + "Wonderful news, we successfully committed changes made to entity `" + entity.getId() + "` successfully!" );
+						sender.sendMessage( ConsoleColor.AQUA + "Wonderful news, we successfully committed changes made to entity `" + entity.getId() + "`!" );
 					}
 					break;
 				case "group":
@@ -70,24 +70,24 @@ public class UtilityCommands extends PermissionsCommand
 					else
 					{
 						group.save();
-						sender.sendMessage( ConsoleColor.AQUA + "Wonderful news, we successfully committed changes made to group `" + group.getId() + "` successfully!" );
+						sender.sendMessage( ConsoleColor.AQUA + "Wonderful news, we successfully committed changes made to group `" + group.getId() + "`!" );
 					}
 					break;
 				case "permission":
-					Permission perm = PermissionManager.INSTANCE.getNode( args.get( "id" ), false );
+					Permission perm = PermissionManager.INSTANCE.getNode( args.get( "id" ) );
 					if ( perm == null )
 						sender.sendMessage( ConsoleColor.RED + "We could not find a permission with namespace `" + args.get( "id" ) + "`!" );
 					else
 					{
 						perm.commit();
-						sender.sendMessage( ConsoleColor.AQUA + "Wonderful news, we successfully committed changes made to permission `" + perm.getNamespace() + "` successfully!" );
+						sender.sendMessage( ConsoleColor.AQUA + "Wonderful news, we successfully committed changes made to permission `" + perm.getNamespace() + "`!" );
 					}
 					break;
 			}
 		else
 		{
 			PermissionManager.INSTANCE.saveData();
-			sender.sendMessage( ConsoleColor.AQUA + "Wonderful news, we successfully committed any changes to the backend successfully!" );
+			sender.sendMessage( ConsoleColor.AQUA + "Wonderful news, we successfully committed any changes to the backend!" );
 		}
 		
 		// Force backend to finally flush changes
@@ -166,26 +166,49 @@ public class UtilityCommands extends PermissionsCommand
 		sender.sendMessage( "Current backend: " + PermissionManager.INSTANCE.getBackend() );
 	}
 	
-	@CommandHandler( name = "pex", syntax = "hierarchy [world]", permission = "permissions.manage.users", description = "Print complete user/group hierarchy" )
+	@CommandHandler( name = "pex", syntax = "hierarchy [ref]", permission = "permissions.manage.users", description = "Print complete user/group hierarchy" )
 	public void printHierarchy( TerminalEntity sender, Map<String, String> args )
 	{
-		sender.sendMessage( "User/Group inheritance hierarchy:" );
+		sender.sendMessage( "Entity/Group inheritance hierarchy:" );
 		sendMessage( sender, this.printHierarchy( null, autoCompleteRef( args.get( "world" ) ), 0 ) );
 	}
 	
-	@CommandHandler( name = "pex", syntax = "reload", permission = "permissions.manage.reload", description = "Reload environment" )
+	@CommandHandler( name = "pex", syntax = "reload [id]", permission = "permissions.manage.reload", description = "Reload permissions and groups from backend" )
 	public void reload( TerminalEntity sender, Map<String, String> args )
 	{
-		try
+		if ( args.containsKey( "id" ) )
 		{
-			PermissionManager.INSTANCE.reload();
-			sender.sendMessage( ConsoleColor.WHITE + "Permissions reloaded" );
+			PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( args.get( "id" ), false );
+			
+			if ( entity == null )
+			{
+				PermissibleGroup group = PermissionManager.INSTANCE.getGroup( args.get( "id" ), false );
+				
+				if ( group == null )
+					sender.sendMessage( ConsoleColor.RED + "We could not find anything with id `" + args.get( "id" ) + "`!" );
+				else
+				{
+					group.reload();
+					sender.sendMessage( ConsoleColor.AQUA + "Wonderful news, we successfully reloaded group `" + group.getId() + "` from backend!" );
+				}
+			}
+			else
+			{
+				entity.reload();
+				sender.sendMessage( ConsoleColor.AQUA + "Wonderful news, we successfully reloaded entity `" + entity.getId() + "` from backend!" );
+			}
 		}
-		catch ( PermissionBackendException e )
-		{
-			sender.sendMessage( ConsoleColor.RED + "Failed to reload permissions! Check configuration!\n" + ConsoleColor.RED + "Error (see console for full): " + e.getMessage() );
-			PermissionManager.getLogger().log( Level.WARNING, "Failed to reload permissions when " + sender.getDisplayName() + " ran `pex reload`", e );
-		}
+		else
+			try
+			{
+				PermissionManager.INSTANCE.reload();
+				sender.sendMessage( ConsoleColor.AQUA + "Wonderful news, we successfully reloaded all entities and groups from the backend!" );
+			}
+			catch ( PermissionBackendException e )
+			{
+				sender.sendMessage( ConsoleColor.RED + "Failed to reload! Check configuration!\n" + ConsoleColor.RED + "Error (see console for full): " + e.getMessage() );
+				PermissionManager.getLogger().log( Level.WARNING, "Failed to reload permissions when " + sender.getDisplayName() + " ran `pex reload`", e );
+			}
 	}
 	
 	@CommandHandler( name = "pex", syntax = "report", permission = "permissions.manage.reportbug", description = "Create an issue template to report an issue" )
