@@ -60,7 +60,7 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 	
 	/**
 	 * Used to keep the Account Instance loaded in the memory when {@link #keepInMemory} is set to true<br>
-	 * This counters our weak reference of the {@link AccountInstance}
+	 * This counters our weak reference for variable {@link #account}
 	 */
 	@SuppressWarnings( "unused" )
 	private AccountInstance strongReference = null;
@@ -226,7 +226,7 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 	@Override
 	public boolean isInitialized()
 	{
-		return account != null;
+		return account != null && account.get() != null;
 	}
 	
 	@Override
