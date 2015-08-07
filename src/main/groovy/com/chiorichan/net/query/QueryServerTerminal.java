@@ -49,7 +49,7 @@ public class QueryServerTerminal extends SimpleChannelInboundHandler<String> imp
 		
 		if ( EventFactory.buildQueryConnected( this, ctx ) )
 		{
-			println( "Server Uptine: " + Loader.getUptime() );
+			println( "Server Uptime: " + Loader.getUptime() );
 			println( "The last visit from IP " + terminal.getIpAddr() + " is unknown." );
 			// TODO Add more information here
 			

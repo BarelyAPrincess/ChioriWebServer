@@ -41,7 +41,6 @@ import com.chiorichan.util.Versioning;
 public class TerminalEntity extends AccountPermissible implements Terminal, BindingProvider
 {
 	private TerminalHandler handler;
-	// private Map<String, String> metadata = Maps.newConcurrentMap();
 	private String prompt = "";
 	
 	private ScriptBinding binding = new ScriptBinding();

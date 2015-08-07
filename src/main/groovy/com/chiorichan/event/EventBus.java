@@ -205,10 +205,7 @@ public class EventBus implements ServerManager
 	
 	private void fireEvent( AbstractEvent event ) throws EventException
 	{
-		// HandlerList handlers = event.getHandlers();
-		// RegisteredListener[] listeners = handlers.getRegisteredListeners();
-		
-		for ( RegisteredListener registration : handlers.get( event.getClass() ) )
+		for ( RegisteredListener registration : getEventListeners( event.getClass() ) )
 		{
 			if ( !registration.getCreator().isEnabled() )
 				continue;
@@ -256,7 +253,15 @@ public class EventBus implements ServerManager
 	
 	private EventHandlers getEventListeners( Class<? extends AbstractEvent> event )
 	{
-		return handlers.get( event );
+		EventHandlers eventHandlers = handlers.get( event );
+		
+		if ( eventHandlers == null )
+		{
+			eventHandlers = new EventHandlers();
+			handlers.put( event, eventHandlers );
+		}
+		
+		return eventHandlers;
 	}
 	
 	private void init0( boolean useTimings )
