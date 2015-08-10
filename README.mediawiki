@@ -16,8 +16,7 @@ Disclaimer: Be sure to backup your existing installations, We can't be held resp
 [[https://travis-ci.org/ChioriGreene/ChioriWebServer.svg?branch=master]]
 
 =Youtube Tutorial Videos=
-* (Chiori-chan's Web Server v9.0.3 - Image Manipulation) http://youtu.be/rqu89LHH_r4
-* (Chiori-chan's Web Server v9.0.3 - Template Plugin - Part 1 of 2) http://youtu.be/RDM9G_z1Wcc
+* (Playlist) https://www.youtube.com/playlist?list=PL5W-gdSkWP6TOBoL-YDEPZaadwBGXGOyO
 
 =Official Plugins=
 * Dropbox Plugin
