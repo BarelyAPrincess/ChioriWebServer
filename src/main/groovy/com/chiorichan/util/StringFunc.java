@@ -192,6 +192,13 @@ public class StringFunc
 		return join( Arrays.copyOfRange( args, start, end ) );
 	}
 	
+	public static String limitLength( String text, int max )
+	{
+		if ( text.length() <= max )
+			return text;
+		return text.substring( 0, max ) + "...";
+	}
+	
 	public static String md5( byte[] bytes )
 	{
 		return DigestUtils.md5Hex( bytes );
