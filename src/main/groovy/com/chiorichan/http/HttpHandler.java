@@ -63,10 +63,10 @@ import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.RenderEvent;
 import com.chiorichan.event.server.RequestEvent;
+import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.factory.ScriptingResult;
-import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.lang.ApacheParser;
 import com.chiorichan.lang.ErrorReporting;
 import com.chiorichan.lang.EvalException;
@@ -86,6 +86,7 @@ import com.chiorichan.session.SessionException;
 import com.chiorichan.site.Site;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.ObjectFunc;
+import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.Versioning;
 import com.chiorichan.util.WebFunc;
 import com.google.common.base.Charsets;
@@ -444,16 +445,16 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		request.setGlobal( "_FILES", request.getUploadedFiles() );
 		
 		if ( !request.getUploadedFiles().isEmpty() )
-			log.log( Level.INFO, "Uploads {" + Joiner.on( "," ).join( request.getUploadedFiles().values() ) + "}" );
+			log.log( Level.INFO, "Uploads {" + StringFunc.limitLength( Joiner.on( "," ).join( request.getUploadedFiles().values() ), 255 ) + "}" );
 		
 		if ( !request.getGetMap().isEmpty() )
-			log.log( Level.INFO, "Params GET {" + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( request.getGetMap() ) + "}" );
+			log.log( Level.INFO, "Params GET {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).join( request.getGetMap() ), 255 ) + "}" );
 		
 		if ( !request.getPostMap().isEmpty() )
-			log.log( Level.INFO, "Params POST {" + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( request.getPostMap() ) + "}" );
+			log.log( Level.INFO, "Params POST {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).join( request.getPostMap() ), 255 ) + "}" );
 		
 		if ( !request.getRewriteMap().isEmpty() )
-			log.log( Level.INFO, "Params REWRITE {" + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( request.getRewriteMap() ) + "}" );
+			log.log( Level.INFO, "Params REWRITE {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).join( request.getRewriteMap() ), 255 ) + "}" );
 		
 		if ( Loader.getConfig().getBoolean( "advanced.security.requestMapEnabled", true ) )
 			request.setGlobal( "_REQUEST", request.getRequestMap() );
@@ -498,7 +499,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 					}
 					catch ( Exception e )
 					{
-						NetworkManager.getLogger().warning( e.getMessage() );
+						log.log( Level.SEVERE, "Exception Excountered: %s", e.getMessage() );
 					}
 			}
 			
@@ -536,7 +537,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 					}
 					catch ( Exception e )
 					{
-						e.printStackTrace();
+						log.log( Level.SEVERE, "Exception Excountered: %s", e.getMessage() );
 					}
 			}
 			
