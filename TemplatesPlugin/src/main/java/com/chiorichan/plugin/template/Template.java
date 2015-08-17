@@ -297,7 +297,7 @@ public class Template extends Plugin implements Listener
 			
 			if ( showCommons )
 				headers.add( ns.getParentNamespace().getParentNamespace().append( "includes.common" ).getNamespace() );
-			headers.add( ns.getParentNamespace().getParentNamespace().append( "common." + ns.getLocalName() ).getNamespace() );
+			headers.add( ns.getParentNamespace().getParentNamespace().append( "includes." + ns.getLocalName() ).getNamespace() );
 			
 			for ( String pack : headers )
 				try
