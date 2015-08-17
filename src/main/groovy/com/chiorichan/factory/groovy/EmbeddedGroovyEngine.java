@@ -14,7 +14,6 @@ import groovy.lang.Script;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
 
-import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
@@ -88,8 +87,9 @@ public class EmbeddedGroovyEngine implements ScriptingEngine
 				int endIndex = source.indexOf( MARKER_END, Math.max( startIndex, fullFileIndex ) );
 				
 				if ( endIndex == -1 )
-					throw new EvalException( ErrorReporting.E_PARSE, new IOException( "Marker `<%` was not closed after line " + ( StringUtils.countMatches( output.toString(), "\n" ) + 1 ) + ", please check your source file and try again." ) );
+					throw new EvalException( ErrorReporting.E_PARSE, "Marker `<%` was not closed after line " + ( StringUtils.countMatches( output.toString(), "\n" ) + 1 ) + ", please check your source file and try again." );
 				
+				// Re gets the fragment?
 				fragment = source.substring( startIndex + MARKER_START.length(), endIndex );
 				
 				boolean appendPrint = true;
@@ -97,6 +97,13 @@ public class EmbeddedGroovyEngine implements ScriptingEngine
 				for ( String s : dontStartWith )
 					if ( fragment.trim().startsWith( s ) || fragment.startsWith( s ) || fragment.trim().isEmpty() )
 						appendPrint = false;
+				
+				// void will disable the print depend
+				if ( fragment.trim().startsWith( "void" ) )
+				{
+					appendPrint = false;
+					fragment = fragment.replace( " *void ?", "" );
+				}
 				
 				if ( appendPrint )
 					fragment = "print " + fragment;
