@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.MissingFormatArgumentException;
 import java.util.UnknownFormatConversionException;
 
 import org.json.JSONException;
@@ -369,6 +370,11 @@ public class DatabaseEngine
 		return delete( table, where, -1 );
 	}
 	
+	public boolean deleteAll( String table, String where )
+	{
+		return delete( table, where, -1 );
+	}
+	
 	public int getRowCount( ResultSet rs )
 	{
 		try
@@ -645,10 +651,9 @@ public class DatabaseEngine
 		{
 			msg = String.format( msg, objs );
 		}
-		catch ( UnknownFormatConversionException e )
+		catch ( UnknownFormatConversionException | MissingFormatArgumentException e )
 		{
-			getLogger().warning( e.getMessage() );
-			return;
+			getLogger().warning( "Following log entry throw an exception: " + e.getMessage() );
 		}
 		
 		if ( debug || force )
@@ -801,7 +806,7 @@ public class DatabaseEngine
 			e.printStackTrace();
 		}
 		
-		log( "Update Query: \"" + query + "\" which affected " + cnt + " row(s)." );
+		log( "Update Query: \"" + StringFunc.limitLength( query, 255 ) + "\" which affected " + cnt + " row(s)." );
 		return cnt;
 	}
 	
