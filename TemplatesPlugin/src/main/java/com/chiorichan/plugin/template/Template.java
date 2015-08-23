@@ -21,7 +21,7 @@ import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.factory.ScriptingResult;
 import com.chiorichan.factory.ScriptTraceElement;
-import com.chiorichan.lang.ErrorReporting;
+import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.EvalException;
 import com.chiorichan.lang.EvalMultipleException;
 import com.chiorichan.plugin.lang.PluginException;
@@ -161,7 +161,7 @@ public class Template extends Plugin implements Listener
 		ScriptingResult result = TemplateUtils.wrapAndEval( factory, ob.toString() );
 		
 		if ( result.hasExceptions() )
-			ErrorReporting.throwExceptions( result.getExceptions() );
+			ReportingLevel.throwExceptions( result.getExceptions() );
 		
 		return result.getString();
 	}
@@ -365,7 +365,7 @@ public class Template extends Plugin implements Listener
 		ScriptingResult result = event.getRequest().getEvalFactory().eval( context );
 		
 		if ( result.hasNotIgnorableExceptions() )
-			ErrorReporting.throwExceptions( result.getExceptions() );
+			ReportingLevel.throwExceptions( result.getExceptions() );
 		
 		return result;
 	}

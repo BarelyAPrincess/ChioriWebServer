@@ -639,6 +639,6 @@ public class HttpResponseWrapper
 		if ( stage != HttpResponseStage.MULTIPART )
 			stage = HttpResponseStage.WRITTING;
 		
-		output.writeBytes( buf );
+		output.writeBytes( buf.retain() );
 	}
 }

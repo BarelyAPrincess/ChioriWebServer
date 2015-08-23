@@ -32,7 +32,7 @@ import com.chiorichan.factory.event.PreLessProcessor;
 import com.chiorichan.factory.groovy.GroovyRegistry;
 import com.chiorichan.factory.parsers.PreIncludesParserWrapper;
 import com.chiorichan.factory.parsers.PreLinksParserWrapper;
-import com.chiorichan.lang.ErrorReporting;
+import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.EvalException;
 import com.chiorichan.util.WebFunc;
 import com.google.common.collect.Lists;
@@ -173,7 +173,7 @@ public class ScriptingFactory
 			
 			if ( preEvent.isCancelled() )
 			{
-				EvalException.exceptionHandler( new EvalException( ErrorReporting.E_ERROR, "Evaluation was cancelled by an internal event" ), context );
+				EvalException.exceptionHandler( new EvalException( ReportingLevel.E_ERROR, "Evaluation was cancelled by an internal event" ), context );
 				return result;
 			}
 			

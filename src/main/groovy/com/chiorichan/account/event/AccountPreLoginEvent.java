@@ -36,7 +36,7 @@ public class AccountPreLoginEvent extends AccountEvent implements Conditional, C
 	public boolean conditional( RegisteredListener context ) throws EventException
 	{
 		// If the result returned is an error then we skip the remaining EventListeners
-		return !result.isError();
+		return result.isSuccess();
 	}
 	
 	/**
@@ -75,7 +75,7 @@ public class AccountPreLoginEvent extends AccountEvent implements Conditional, C
 	@Override
 	public boolean isCancelled()
 	{
-		return result == AccountResult.CANCELLED_BY_EVENT;
+		return result.equals( AccountResult.CANCELLED_BY_EVENT );
 	}
 	
 	/**

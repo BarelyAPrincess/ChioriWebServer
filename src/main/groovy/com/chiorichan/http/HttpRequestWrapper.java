@@ -974,7 +974,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		{
 			AccountResult result = getSession().logout();
 			
-			if ( result == AccountResult.LOGOUT_SUCCESS )
+			if ( result.isSuccess() )
 			{
 				getResponse().sendRedirect( loginForm + "?msg=" + result.getMessage() );
 				return;
@@ -1006,9 +1006,12 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 				result = e.getResult();
 			}
 			
-			if ( result == AccountResult.LOGIN_SUCCESS )
+			if ( result.isSuccess() )
 			{
 				Account acct = result.getAccount();
+				
+				if ( acct == null )
+					throw AccountResult.INTERNAL_ERROR.setMessage( "Successful login but then something went wrong!" ).exception();
 				
 				session.remember( remember );
 				
@@ -1019,13 +1022,13 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			{
 				String msg = result.getMessage( username );
 				
-				if ( ( result == AccountResult.INTERNAL_ERROR || result == AccountResult.UNKNOWN_ERROR ) && result.getThrowable() != null )
+				if ( !result.isIgnorable() && result.hasCause() )
 				{
 					result.getThrowable().printStackTrace();
 					msg = result.getThrowable().getMessage();
 				}
 				
-				AccountManager.getLogger().warning( ConsoleColor.GREEN + "Failed Login [id='" + username + "',hasPassword='" + ( password != null && !password.isEmpty() ) + "',authenticator='plaintext'`,reason='" + msg + "']" );
+				AccountManager.getLogger().warning( ConsoleColor.RED + "Failed Login [id='" + username + "',hasPassword='" + ( password != null && !password.isEmpty() ) + "',authenticator='plaintext'`,reason='" + msg + "']" );
 				getResponse().sendRedirect( loginForm + "?msg=" + result.getMessage() + ( ( target == null || target.isEmpty() ) ? "" : "&target=" + target ) );
 			}
 		}

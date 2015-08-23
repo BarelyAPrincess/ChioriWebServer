@@ -225,6 +225,8 @@ public class SQLBackend extends PermissionBackend
 						PermissionManager.getLogger().warning( e.getMessage() );
 					}
 				while ( result.next() );
+			
+			result.close();
 		}
 		catch ( SQLException e )
 		{

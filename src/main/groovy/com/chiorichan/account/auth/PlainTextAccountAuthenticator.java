@@ -86,10 +86,10 @@ public final class PlainTextAccountAuthenticator extends AccountAuthenticator
 			ResultSet rs = db.query( "SELECT * FROM `accounts_plaintext` WHERE `acctId` = '" + acctId + "' LIMIT 1;" );
 			
 			if ( rs == null || db.getRowCount( rs ) < 1 )
-				throw AccountResult.PASSWORD_UNSET.exception( meta );
+				throw AccountResult.PASSWORD_UNSET.format( meta ).exception();
 			
 			if ( rs.getInt( "expires" ) > -1 && rs.getInt( "expires" ) < Timings.epoch() )
-				throw AccountResult.EXPIRED_LOGIN.exception( meta );
+				throw AccountResult.EXPIRED_LOGIN.format( meta ).exception();
 			
 			password = rs.getString( "password" );
 		}
@@ -106,7 +106,7 @@ public final class PlainTextAccountAuthenticator extends AccountAuthenticator
 		}
 		catch ( SQLException e )
 		{
-			throw AccountResult.INTERNAL_ERROR.setThrowable( e ).exception( meta );
+			throw AccountResult.INTERNAL_ERROR.setThrowable( e ).format( meta ).exception();
 		}
 		
 		// TODO Encrypt all passwords

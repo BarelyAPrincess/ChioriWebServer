@@ -17,7 +17,7 @@ import java.nio.charset.Charset;
 
 import com.chiorichan.ContentTypes;
 import com.chiorichan.http.HttpRequestWrapper;
-import com.chiorichan.lang.ErrorReporting;
+import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.EvalException;
 import com.chiorichan.lang.EvalMultipleException;
 import com.chiorichan.site.Site;
@@ -57,7 +57,7 @@ public class ScriptingContext
 				return ScriptingContext.fromPackage( site, res );
 			
 			context = new ScriptingContext();
-			context.result().addException( new EvalException( ErrorReporting.E_ERROR, String.format( "We chould not auto determine the resource type for '%s'", res ) ) );
+			context.result().addException( new EvalException( ReportingLevel.E_ERROR, String.format( "We chould not auto determine the resource type for '%s'", res ) ) );
 			return context;
 		}
 		return context;
@@ -109,7 +109,7 @@ public class ScriptingContext
 		catch ( IOException e )
 		{
 			context = ScriptingContext.fromSource( "", pack );
-			context.result().addException( new EvalException( ErrorReporting.E_IGNORABLE, String.format( "Could not locate the package '%s' within site '%s'", pack, site.getSiteId() ) ) );
+			context.result().addException( new EvalException( ReportingLevel.E_IGNORABLE, String.format( "Could not locate the package '%s' within site '%s'", pack, site.getSiteId() ) ) );
 		}
 		
 		context.site( site );
@@ -207,9 +207,9 @@ public class ScriptingContext
 		String str = result.getString( false );
 		
 		if ( required && result.hasNotIgnorableExceptions() )
-			ErrorReporting.throwExceptions( result.getExceptions() );
+			ReportingLevel.throwExceptions( result.getExceptions() );
 		if ( result.hasIgnorableExceptions() )
-			str = ErrorReporting.printExceptions( result.getIgnorableExceptions() ) + "\n" + str;
+			str = ReportingLevel.printExceptions( result.getIgnorableExceptions() ) + "\n" + str;
 		
 		factory.print( str );
 		return result.getObject();
@@ -269,9 +269,9 @@ public class ScriptingContext
 		String str = result.getString( includeObj );
 		
 		if ( required && result.hasNotIgnorableExceptions() )
-			ErrorReporting.throwExceptions( result.getExceptions() );
+			ReportingLevel.throwExceptions( result.getExceptions() );
 		if ( printErrors && result.hasIgnorableExceptions() )
-			str = ErrorReporting.printExceptions( result.getIgnorableExceptions() ) + "\n" + str;
+			str = ReportingLevel.printExceptions( result.getIgnorableExceptions() ) + "\n" + str;
 		
 		return str;
 	}

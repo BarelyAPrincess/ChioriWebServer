@@ -8,7 +8,7 @@
  */
 package com.chiorichan.factory;
 
-import com.chiorichan.lang.ErrorReporting;
+import com.chiorichan.lang.ReportingLevel;
 
 /**
  * Provides a callback to when a registered exception is thrown
@@ -25,5 +25,5 @@ public interface ExceptionCallback
 	 * @return The resulting ErrorReporting level
 	 *         Returning NULL will, if possible, try the next best matching EvalCallback
 	 */
-	ErrorReporting callback( Throwable cause, ScriptingContext context );
+	ReportingLevel callback( Throwable cause, ScriptingContext context );
 }

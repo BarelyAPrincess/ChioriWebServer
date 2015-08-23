@@ -134,6 +134,11 @@ public class StringFunc
 		return encodeBase64( var.getBytes() );
 	}
 	
+	public static String escapeFormat( String msg )
+	{
+		return msg.replaceAll( "%", "%%" );
+	}
+	
 	/**
 	 * Determines if a string is all lowercase using the toLowerCase() method.
 	 * 
@@ -391,7 +396,7 @@ public class StringFunc
 	}
 	
 	/**
-	 * Trim specified charcater from front of string
+	 * Trim specified character from front of string
 	 * 
 	 * @param text
 	 *            Text

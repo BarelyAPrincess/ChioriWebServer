@@ -90,6 +90,8 @@ public class SQLEntity extends PermissibleEntity
 					}
 				}
 				while ( rs.next() );
+			
+			rs.close();
 		}
 		catch ( SQLException e )
 		{

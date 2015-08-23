@@ -41,7 +41,7 @@ import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingEngine;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.factory.ScriptingRegistry;
-import com.chiorichan.lang.ErrorReporting;
+import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.EvalException;
 import com.chiorichan.lang.SandboxSecurityException;
 import com.chiorichan.permission.PermissionManager;
@@ -66,7 +66,7 @@ public class GroovyRegistry implements ScriptingRegistry
 	
 	private static final Class<?>[] classImports = new Class<?>[] {References.class, ScriptApi.class, Loader.class, AccountManager.class, AccountType.class, Account.class, AccountAuthenticator.class, EventBus.class, PermissionManager.class, PluginManager.class, TaskManager.class, Timings.class, SessionManager.class, SiteManager.class, Site.class, ScriptingContext.class};
 	private static final String[] starImports = new String[] {"com.chiorichan.lang", "com.chiorichan.factory.api", "com.chiorichan.util", "org.apache.commons.lang3.text", "org.ocpsoft.prettytime", "java.util", "java.net", "com.google.common.base"};
-	private static final String[] staticImports = new String[] {"com.chiorichan.util.Looper", "com.chiorichan.lang.ErrorReporting"};
+	private static final String[] staticImports = new String[] {"com.chiorichan.util.Looper", "com.chiorichan.lang.ReportingLevel"};
 	private static final GroovySandbox secure = new GroovySandbox();
 	
 	/*
@@ -102,7 +102,7 @@ public class GroovyRegistry implements ScriptingRegistry
 		EvalException.registerException( new ExceptionCallback()
 		{
 			@Override
-			public ErrorReporting callback( Throwable cause, ScriptingContext context )
+			public ReportingLevel callback( Throwable cause, ScriptingContext context )
 			{
 				MultipleCompilationErrorsException exp = ( MultipleCompilationErrorsException ) cause;
 				ErrorCollector e = exp.getErrorCollector();
@@ -128,29 +128,29 @@ public class GroovyRegistry implements ScriptingRegistry
 					{
 						StringWriter writer = new StringWriter();
 						( ( Message ) err ).write( new PrintWriter( writer, true ) );
-						EvalException.exceptionHandler( new EvalException( ErrorReporting.E_NOTICE, writer.toString() ), context );
+						EvalException.exceptionHandler( new EvalException( ReportingLevel.E_NOTICE, writer.toString() ), context );
 					}
-				return abort ? ErrorReporting.E_ERROR : ErrorReporting.E_IGNORABLE;
+				return abort ? ReportingLevel.E_ERROR : ReportingLevel.E_IGNORABLE;
 			}
 		}, MultipleCompilationErrorsException.class );
 		
 		EvalException.registerException( new ExceptionCallback()
 		{
 			@Override
-			public ErrorReporting callback( Throwable cause, ScriptingContext context )
+			public ReportingLevel callback( Throwable cause, ScriptingContext context )
 			{
-				context.result().addException( new EvalException( ErrorReporting.E_ERROR, cause ) );
-				return ErrorReporting.E_ERROR;
+				context.result().addException( new EvalException( ReportingLevel.E_ERROR, cause ) );
+				return ReportingLevel.E_ERROR;
 			}
 		}, TimeoutException.class, MissingMethodException.class, CompilationFailedException.class, SandboxSecurityException.class, GroovyRuntimeException.class );
 		
 		EvalException.registerException( new ExceptionCallback()
 		{
 			@Override
-			public ErrorReporting callback( Throwable cause, ScriptingContext context )
+			public ReportingLevel callback( Throwable cause, ScriptingContext context )
 			{
-				context.result().addException( new EvalException( ErrorReporting.E_PARSE, cause ) );
-				return ErrorReporting.E_PARSE;
+				context.result().addException( new EvalException( ReportingLevel.E_PARSE, cause ) );
+				return ReportingLevel.E_PARSE;
 			}
 		}, SyntaxException.class );
 		

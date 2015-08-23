@@ -44,7 +44,7 @@ import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
 import com.chiorichan.event.server.KickEvent;
-import com.chiorichan.lang.ErrorReporting;
+import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.StartupAbortException;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.net.NetworkManager;
@@ -198,7 +198,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		
 		EventBus.init( configuration.getBoolean( "plugins.useTimings" ) );
 		
-		ErrorReporting.enableErrorLevelOnly( ErrorReporting.parse( configuration.getString( "server.errorReporting", "E_ALL ~E_NOTICE ~E_STRICT ~E_DEPRECATED" ) ) );
+		ReportingLevel.enableErrorLevelOnly( ReportingLevel.parse( configuration.getString( "server.errorReporting", "E_ALL ~E_NOTICE ~E_STRICT ~E_DEPRECATED" ) ) );
 		
 		webroot = new File( configuration.getString( "server.webFileDirectory", "webroot" ) );
 		
@@ -928,7 +928,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	public void reload()
 	{
 		configuration = YamlConfiguration.loadConfiguration( getConfigFile() );
-		ErrorReporting.enableErrorLevelOnly( ErrorReporting.parse( configuration.getString( "server.errorReporting", "E_ALL ~E_NOTICE ~E_STRICT ~E_DEPRECATED" ) ) );
+		ReportingLevel.enableErrorLevelOnly( ReportingLevel.parse( configuration.getString( "server.errorReporting", "E_ALL ~E_NOTICE ~E_STRICT ~E_DEPRECATED" ) ) );
 		
 		PluginManager.INSTANCE.clearPlugins();
 		// ModuleBus.getCommandMap().clearCommands();

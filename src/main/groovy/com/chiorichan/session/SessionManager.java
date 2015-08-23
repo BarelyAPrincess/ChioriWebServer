@@ -314,7 +314,7 @@ public class SessionManager implements TaskCreator, ServerManager
 		}
 		
 		if ( cleanupCount > 0 )
-			getLogger().info( ConsoleColor.DARK_AQUA + "The cleanup task recycled " + cleanupCount + " sessions." );
+			getLogger().info( ConsoleColor.DARK_AQUA + "The cleanup task recycled " + cleanupCount + " session(s)." );
 	}
 	
 	/**

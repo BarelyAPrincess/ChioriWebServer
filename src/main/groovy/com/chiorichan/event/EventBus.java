@@ -22,7 +22,7 @@ import org.apache.commons.lang3.Validate;
 import com.chiorichan.Loader;
 import com.chiorichan.ServerManager;
 import com.chiorichan.lang.DeprecatedDetail;
-import com.chiorichan.lang.ErrorReporting;
+import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.plugin.PluginBase;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.lang.AuthorNagException;
@@ -156,7 +156,7 @@ public class EventBus implements ServerManager
 				ret.put( eventClass, eventSet );
 			}
 			
-			if ( ErrorReporting.E_DEPRECATED.isEnabledLevel() )
+			if ( ReportingLevel.E_DEPRECATED.isEnabledLevel() )
 				for ( Class<?> clazz = eventClass; AbstractEvent.class.isAssignableFrom( clazz ); clazz = clazz.getSuperclass() )
 				{
 					if ( clazz.isAnnotationPresent( DeprecatedDetail.class ) )

@@ -27,6 +27,24 @@ public class AccountException extends RuntimeException
 		
 	}
 	
+	public AccountException( AccountResult result )
+	{
+		super( result.getMessage() );
+		this.result = result;
+	}
+	
+	public AccountException( AccountResult result, AccountContext context )
+	{
+		this( result );
+		this.context = context;
+	}
+	
+	public AccountException( AccountResult result, AccountMeta acct )
+	{
+		this( result );
+		this.acct = acct;
+	}
+	
 	public AccountException( String msg )
 	{
 		super( msg );
@@ -42,34 +60,26 @@ public class AccountException extends RuntimeException
 		super( cause );
 	}
 	
-	public AccountException( Throwable cause, AccountMeta acct )
-	{
-		this( cause );
-		this.acct = acct;
-	}
-	
 	public AccountException( Throwable cause, AccountContext context )
 	{
 		this( cause );
 		this.context = context;
 	}
 	
-	public AccountException( AccountResult result )
+	public AccountException( Throwable cause, AccountMeta acct )
 	{
-		super( result.getMessage() );
-		this.result = result;
-	}
-	
-	public AccountException( AccountResult result, AccountMeta acct )
-	{
-		this( result );
+		this( cause );
 		this.acct = acct;
 	}
 	
-	public AccountException( AccountResult result, AccountContext context )
+	public AccountMeta getAccount()
 	{
-		this( result );
-		this.context = context;
+		return acct;
+	}
+	
+	public AccountContext getContext()
+	{
+		return context == null && acct != null ? acct.context() : context;
 	}
 	
 	public AccountResult getResult()
@@ -77,15 +87,10 @@ public class AccountException extends RuntimeException
 		if ( result == null )
 			result = AccountResult.UNKNOWN_ERROR;
 		
-		if ( result == AccountResult.UNKNOWN_ERROR || result == AccountResult.INTERNAL_ERROR )
+		if ( !result.isIgnorable() )
 			result.setThrowable( this );
 		
 		return result;
-	}
-	
-	public AccountMeta getAccount()
-	{
-		return acct;
 	}
 	
 	public AccountException setAccount( AccountMeta acct )
@@ -98,10 +103,5 @@ public class AccountException extends RuntimeException
 	{
 		this.context = context;
 		return this;
-	}
-	
-	public AccountContext getContext()
-	{
-		return context == null && acct != null ? acct.context() : context;
 	}
 }

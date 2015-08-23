@@ -42,7 +42,7 @@ import com.chiorichan.event.TimedRegisteredListener;
 import com.chiorichan.event.server.PluginDisableEvent;
 import com.chiorichan.event.server.PluginEnableEvent;
 import com.chiorichan.lang.DeprecatedDetail;
-import com.chiorichan.lang.ErrorReporting;
+import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.plugin.PluginInformation;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.lang.PluginInformationException;
@@ -105,7 +105,7 @@ public final class JavaPluginLoader implements PluginLoader
 				ret.put( eventClass, eventSet );
 			}
 			
-			if ( ErrorReporting.E_DEPRECATED.isEnabledLevel() )
+			if ( ReportingLevel.E_DEPRECATED.isEnabledLevel() )
 				for ( Class<?> clazz = eventClass; AbstractEvent.class.isAssignableFrom( clazz ); clazz = clazz.getSuperclass() )
 				{
 					if ( clazz.isAnnotationPresent( DeprecatedDetail.class ) )

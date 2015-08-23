@@ -33,6 +33,10 @@ import org.json.JSONException;
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
+import com.chiorichan.factory.ExceptionCallback;
+import com.chiorichan.factory.ScriptingContext;
+import com.chiorichan.lang.ReportingLevel;
+import com.chiorichan.lang.EvalException;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.StringFunc;
@@ -40,6 +44,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mysql.jdbc.exceptions.jdbc4.CommunicationsException;
 import com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException;
+import com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException;
 
 /**
  * Gives easy access to the SQL Database within Groovy scripts.
@@ -94,7 +99,15 @@ public class DatabaseEngine
 	
 	public DatabaseEngine()
 	{
-		
+		EvalException.registerException( new ExceptionCallback()
+		{
+			@Override
+			public ReportingLevel callback( Throwable cause, ScriptingContext context )
+			{
+				context.result().addException( new EvalException( ReportingLevel.E_ERROR, cause ) );
+				return ReportingLevel.E_ERROR;
+			}
+		}, SQLException.class );
 	}
 	
 	public static LinkedHashMap<String, Object> convert( ResultSet rs ) throws SQLException, JSONException
@@ -513,7 +526,7 @@ public class DatabaseEngine
 		try
 		{
 			con = DriverManager.getConnection( "jdbc:mysql://" + host + ":" + port + "/" + db, user, pass );
-			con.setAutoCommit( false );
+			con.setAutoCommit( true );
 		}
 		catch ( SQLException e )
 		{
@@ -562,7 +575,7 @@ public class DatabaseEngine
 		}
 		
 		con = DriverManager.getConnection( "jdbc:sqlite:" + sqliteDb.getAbsolutePath() );
-		con.setAutoCommit( false );
+		con.setAutoCommit( true );
 		
 		getLogger().info( "We succesully connected to the sqLite database using 'jdbc:sqlite:" + sqliteDb.getAbsolutePath() + "'" );
 		type = DatabaseType.SQLITE;
@@ -612,12 +625,12 @@ public class DatabaseEngine
 		
 		if ( result > 0 )
 		{
-			log( "Making INSERT query \"" + query + "\" which affected " + result + " rows." );
+			log( "INSERT query \"" + query + "\" which affected " + result + " rows." );
 			return true;
 		}
 		else
 		{
-			log( "Making INSERT query \"" + query + "\" which had no effect on the database" );
+			log( "INSERT query \"" + query + "\" which had no effect on the database" );
 			return false;
 		}
 	}
@@ -649,11 +662,12 @@ public class DatabaseEngine
 	{
 		try
 		{
-			msg = String.format( msg, objs );
+			if ( objs.length > 0 )
+				msg = String.format( msg, objs );
 		}
 		catch ( UnknownFormatConversionException | MissingFormatArgumentException e )
 		{
-			getLogger().warning( "Following log entry throw an exception: " + e.getMessage() );
+			getLogger().warning( "Following log entry throw an exception: '" + msg + "' Message: '" + e.getMessage() + "'" );
 		}
 		
 		if ( debug || force )
@@ -733,7 +747,8 @@ public class DatabaseEngine
 		
 		try
 		{
-			stmt = con.prepareStatement( query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
+			// stmt = con.prepareStatement( query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
+			stmt = con.prepareStatement( query );
 			
 			int x = 0;
 			
@@ -777,15 +792,16 @@ public class DatabaseEngine
 	public int queryUpdate( String query ) throws SQLException
 	{
 		int cnt = 0;
+		PreparedStatement stmt = null;
 		
 		if ( con == null )
 			throw new SQLException( "The SQL connection is closed or was never opened." );
 		
 		try
 		{
-			PreparedStatement statement = con.prepareStatement( query );
-			statement.execute();
-			cnt = statement.getUpdateCount();
+			stmt = con.prepareStatement( query );
+			stmt.execute();
+			cnt = stmt.getUpdateCount();
 		}
 		catch ( MySQLNonTransientConnectionException e )
 		{
@@ -805,21 +821,28 @@ public class DatabaseEngine
 		{
 			e.printStackTrace();
 		}
+		finally
+		{
+			if ( stmt != null )
+				stmt.close();
+		}
 		
-		log( "Update Query: \"" + StringFunc.limitLength( query, 255 ) + "\" which affected " + cnt + " row(s)." );
+		log( "SQL Query: \"%s\" which affected %s row(s).", StringFunc.limitLength( query, 512 ), cnt );
 		return cnt;
 	}
 	
 	public int queryUpdate( String query, Object... args ) throws SQLException
 	{
 		PreparedStatement stmt = null;
+		int updated = -1;
 		
 		if ( con == null )
 			throw new SQLException( "The SQL connection is closed or was never opened." );
 		
 		try
 		{
-			stmt = con.prepareStatement( query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
+			// stmt = con.prepareStatement( query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
+			stmt = con.prepareStatement( query );
 			
 			int x = 0;
 			
@@ -836,8 +859,9 @@ public class DatabaseEngine
 				}
 			
 			stmt.execute();
+			updated = stmt.getUpdateCount();
 			
-			log( "Update Query: \"" + stmt.toString() + "\" which affected " + stmt.getUpdateCount() + " row(s)." );
+			log( "SQL Query: \"%s\" which affected %s row(s).", StringFunc.limitLength( stmt.toString().substring( stmt.toString().indexOf( ": " ) + 2 ), 512 ), updated );
 		}
 		catch ( MySQLNonTransientConnectionException e )
 		{
@@ -853,8 +877,13 @@ public class DatabaseEngine
 		{
 			e.printStackTrace();
 		}
+		finally
+		{
+			if ( stmt != null )
+				stmt.close();
+		}
 		
-		return stmt.getUpdateCount();
+		return updated;
 	}
 	
 	public Boolean reconnect()
@@ -977,36 +1006,49 @@ public class DatabaseEngine
 		// TODO: Act on result!
 		sqlInjectionDetection( query );
 		
-		ResultSet rs = query( query );
-		
-		if ( rs == null )
-		{
-			log( StringFunc.isTrue( options.get( "debug" ) ), "Making SELECT query \"" + query + "\" which returned an error." );
-			return null;
-		}
-		
-		if ( getRowCount( rs ) < 1 )
-		{
-			log( StringFunc.isTrue( options.get( "debug" ) ), "Making SELECT query \"" + query + "\" which returned no results." );
-			return new LinkedHashMap<String, Object>();
-		}
-		
-		LinkedHashMap<String, Object> result = new LinkedHashMap<String, Object>();
 		try
 		{
-			result = convert( rs );
+			ResultSet rs = query( query );
+			
+			if ( rs == null )
+			{
+				log( StringFunc.isTrue( options.get( "debug" ) ), "SELECT query \"%s\" which returned an error.", query );
+				return null;
+			}
+			
+			if ( getRowCount( rs ) < 1 )
+			{
+				log( StringFunc.isTrue( options.get( "debug" ) ), "SELECT query \"%s\" which returned no results.", query );
+				return new LinkedHashMap<String, Object>();
+			}
+			
+			LinkedHashMap<String, Object> result = new LinkedHashMap<String, Object>();
+			try
+			{
+				result = convert( rs );
+			}
+			catch ( JSONException e )
+			{
+				e.printStackTrace();
+			}
+			
+			if ( StringFunc.isTrue( options.get( "debug" ) ) )
+				getLogger().info( "Making SELECT query \"" + query + "\" which returned " + getRowCount( rs ) + " row(s)." );
+			else
+				log( "Making SELECT query \"" + query + "\" which returned " + getRowCount( rs ) + " row(s)." );
+			
+			return result;
 		}
-		catch ( JSONException e )
+		catch ( MySQLSyntaxErrorException e )
 		{
-			e.printStackTrace();
+			getLogger().severe( String.format( "%s, Query: %s.", e.getMessage(), query ) );
+			throw e;
 		}
-		
-		if ( StringFunc.isTrue( options.get( "debug" ) ) )
-			Loader.getLogger().info( "Making SELECT query \"" + query + "\" which returned " + getRowCount( rs ) + " row(s)." );
-		else
-			log( "Making SELECT query \"" + query + "\" which returned " + getRowCount( rs ) + " row(s)." );
-		
-		return result;
+		catch ( SQLException e )
+		{
+			getLogger().severe( String.format( "Encountered a SQLException for query '%s' with message '%s'.", query, e.getMessage() ) );
+			throw e;
+		}
 	}
 	
 	public LinkedHashMap<String, Object> selectOne( String table, List<String> keys, List<? extends Object> values ) throws SQLException
@@ -1301,12 +1343,12 @@ public class DatabaseEngine
 		
 		if ( result > 0 )
 		{
-			log( "Making UPDATE query \"" + query + "\" which affected " + result + " rows." );
+			log( "UPDATE query \"" + query + "\" which affected " + result + " rows." );
 			return true;
 		}
 		else
 		{
-			log( "Making UPDATE query \"" + query + "\" which had no affect on the database." );
+			log( "UPDATE query \"" + query + "\" which had no affect on the database." );
 			return false;
 		}
 	}

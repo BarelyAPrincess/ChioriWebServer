@@ -13,7 +13,7 @@ import io.netty.buffer.ByteBuf;
 import java.nio.charset.Charset;
 import java.util.List;
 
-import com.chiorichan.lang.ErrorReporting;
+import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.EvalException;
 import com.chiorichan.util.ObjectFunc;
 import com.google.common.collect.Lists;
@@ -36,7 +36,7 @@ public class ScriptingResult
 		this.content = content;
 	}
 	
-	public ScriptingResult addException( ErrorReporting level, Throwable throwable )
+	public ScriptingResult addException( ReportingLevel level, Throwable throwable )
 	{
 		if ( throwable != null )
 			caughtExceptions.add( new EvalException( level, throwable ).populateScriptTrace( context.factory().stack() ) );

@@ -31,20 +31,20 @@ public class EvalException extends Exception
 	private static final Map<Class<? extends Throwable>, ExceptionCallback> registered = Maps.newConcurrentMap();
 	
 	private List<ScriptTraceElement> scriptTrace = null;
-	private final ErrorReporting level;
+	private final ReportingLevel level;
 	
-	public EvalException( ErrorReporting level )
+	public EvalException( ReportingLevel level )
 	{
 		this.level = level;
 	}
 	
-	public EvalException( ErrorReporting level, String message )
+	public EvalException( ReportingLevel level, String message )
 	{
 		super( message );
 		this.level = level;
 	}
 	
-	public EvalException( ErrorReporting level, String message, Throwable cause )
+	public EvalException( ReportingLevel level, String message, Throwable cause )
 	{
 		super( message, cause );
 		if ( cause instanceof EvalException )
@@ -52,7 +52,7 @@ public class EvalException extends Exception
 		this.level = level;
 	}
 	
-	public EvalException( ErrorReporting level, Throwable cause )
+	public EvalException( ReportingLevel level, Throwable cause )
 	{
 		super( cause );
 		if ( cause instanceof EvalException )
@@ -95,7 +95,7 @@ public class EvalException extends Exception
 		}
 		else if ( cause instanceof NullPointerException || cause instanceof ArrayIndexOutOfBoundsException || cause instanceof IOException )
 		{
-			result.addException( new EvalException( ErrorReporting.E_ERROR, cause ) );
+			result.addException( new EvalException( ReportingLevel.E_ERROR, cause ) );
 			return true;
 		}
 		else
@@ -107,7 +107,7 @@ public class EvalException extends Exception
 			for ( Entry<Class<? extends Throwable>, ExceptionCallback> entry : registered.entrySet() )
 				if ( cause.getClass().equals( entry.getKey() ) )
 				{
-					ErrorReporting e = entry.getValue().callback( cause, context );
+					ReportingLevel e = entry.getValue().callback( cause, context );
 					if ( e == null )
 					{
 						handled = true;
@@ -123,14 +123,14 @@ public class EvalException extends Exception
 				if ( assignable.size() == 0 )
 				{
 					Loader.getLogger().severe( "Uncaught exception in EvalFactory for exception " + cause.getClass().getName(), cause );
-					result.addException( new EvalException( ErrorReporting.E_ERROR, "Uncaught exception in EvalFactory", cause ) );
+					result.addException( new EvalException( ReportingLevel.E_ERROR, "Uncaught exception in EvalFactory", cause ) );
 				}
 				else if ( assignable.size() == 1 )
 				{
-					ErrorReporting e = assignable.values().toArray( new ExceptionCallback[0] )[0].callback( cause, context );
+					ReportingLevel e = assignable.values().toArray( new ExceptionCallback[0] )[0].callback( cause, context );
 					if ( e == null )
 					{
-						result.addException( new EvalException( ErrorReporting.E_ERROR, cause ) );
+						result.addException( new EvalException( ReportingLevel.E_ERROR, cause ) );
 						return true;
 					}
 					else if ( !e.isIgnorable() )
@@ -146,7 +146,7 @@ public class EvalException extends Exception
 									noAssignment = false;
 						if ( noAssignment )
 						{
-							ErrorReporting e = entry.getValue().callback( cause, context );
+							ReportingLevel e = entry.getValue().callback( cause, context );
 							return e != null && !e.isIgnorable();
 						}
 					}
@@ -170,7 +170,7 @@ public class EvalException extends Exception
 			registered.put( clz, callback );
 	}
 	
-	public ErrorReporting errorLevel()
+	public ReportingLevel errorLevel()
 	{
 		return level;
 	}

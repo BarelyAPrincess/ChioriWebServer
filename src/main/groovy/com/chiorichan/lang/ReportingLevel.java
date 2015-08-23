@@ -18,93 +18,115 @@ import com.google.common.collect.Lists;
 /**
  * Represents the current error reporting level
  */
-public enum ErrorReporting
+public enum ReportingLevel
 {
-	E_ALL, E_DEPRECATED, E_ERROR, E_IGNORABLE, E_NOTICE, E_PARSE, E_STRICT, E_USER_DEPRECATED, E_USER_ERROR, E_USER_NOTICE, E_USER_WARNING, E_WARNING;
+	E_ALL( 0xff, false ),
+	E_DEPRECATED( 0x09, true ),
+	E_ERROR( 0x00, false ),
+	E_IGNORABLE( 0x08, true ),
+	E_NOTICE( 0x03, true ),
+	E_PARSE( 0x02, false ),
+	E_STRICT( 0x07, false ),
+	E_USER_ERROR( 0x04, false ),
+	E_USER_NOTICE( 0x06, true ),
+	E_USER_WARNING( 0x05, true ),
+	E_WARNING( 0x01, true ),
+	L_DEFAULT( 0xf0, true ),
+	L_SECURITY( 0xf3, false ),
+	L_PERMISSION( 0xf2, false ),
+	L_SUCCESS( 0xf1, true ),
+	L_DENIED( 0xf5, false ),
+	L_ERROR( 0xf6, false ),
+	L_EXPIRED( 0xf4, false );
 	
-	private static final List<ErrorReporting> enabledErrorLevels = new ArrayList<ErrorReporting>( Arrays.asList( parse( "E_ALL ~E_NOTICE ~E_STRICT ~E_DEPRECATED" ) ) );
+	private static final List<ReportingLevel> enabledErrorLevels = new ArrayList<ReportingLevel>( Arrays.asList( parse( "E_ALL ~E_NOTICE ~E_STRICT ~E_DEPRECATED" ) ) );
 	
-	private int lastLevel = 0;
 	final int level;
+	final boolean ignorable;
 	
-	ErrorReporting()
+	ReportingLevel( int level, boolean ignorable )
 	{
-		level = lastLevel++;
+		this.level = level;
+		this.ignorable = ignorable;
 	}
 	
-	public static boolean disableErrorLevel( ErrorReporting... level )
+	public static boolean disableErrorLevel( ReportingLevel... level )
 	{
 		return enabledErrorLevels.removeAll( Arrays.asList( parse( level ) ) );
 	}
 	
-	public static boolean enableErrorLevel( ErrorReporting... level )
+	public static boolean enableErrorLevel( ReportingLevel... level )
 	{
 		return enabledErrorLevels.addAll( Arrays.asList( parse( level ) ) );
 	}
 	
-	public static boolean enableErrorLevelOnly( ErrorReporting... level )
+	public static boolean enableErrorLevelOnly( ReportingLevel... level )
 	{
 		enabledErrorLevels.clear();
 		return enableErrorLevel( level );
 	}
 	
-	public static List<ErrorReporting> getEnabledErrorLevels()
+	public static List<ReportingLevel> getEnabledErrorLevels()
 	{
 		return Collections.unmodifiableList( enabledErrorLevels );
 	}
 	
-	public static boolean isEnabledLevel( ErrorReporting level )
+	public static boolean isEnabledLevel( ReportingLevel level )
 	{
 		return enabledErrorLevels.contains( level );
 	}
 	
-	public static ErrorReporting[] parse( ErrorReporting... level )
+	public static ReportingLevel[] parse( int level )
 	{
-		List<ErrorReporting> levels = Lists.newArrayList();
-		for ( ErrorReporting er : level )
-			levels.addAll( Arrays.asList( parse( er ) ) );
-		return levels.toArray( new ErrorReporting[0] );
+		for ( ReportingLevel er : values() )
+			if ( er.level == level )
+				return new ReportingLevel[] {er};
+		return parse( E_ALL );
 	}
 	
-	public static ErrorReporting[] parse( ErrorReporting level )
+	public static ReportingLevel[] parse( ReportingLevel... level )
+	{
+		List<ReportingLevel> levels = Lists.newArrayList();
+		for ( ReportingLevel er : level )
+			levels.addAll( Arrays.asList( parse( er ) ) );
+		return levels.toArray( new ReportingLevel[0] );
+	}
+	
+	public static ReportingLevel[] parse( ReportingLevel level )
 	{
 		switch ( level )
 		{
 			case E_ALL:
-				return new ErrorReporting[] {E_ERROR, E_WARNING, E_PARSE, E_NOTICE, E_USER_ERROR, E_USER_WARNING, E_USER_NOTICE, E_STRICT, E_IGNORABLE, E_DEPRECATED, E_USER_DEPRECATED};
+				return ReportingLevel.values();
 			case E_IGNORABLE:
-				return new ErrorReporting[] {E_WARNING, E_NOTICE, E_USER_WARNING, E_USER_NOTICE, E_IGNORABLE, E_DEPRECATED, E_USER_DEPRECATED};
+				List<ReportingLevel> levels = Lists.newArrayList();
+				for ( ReportingLevel l : ReportingLevel.values() )
+					if ( l.isIgnorable() )
+						levels.add( l );
+				return levels.toArray( new ReportingLevel[0] );
 			default:
-				return new ErrorReporting[] {level};
+				return new ReportingLevel[] {level};
 		}
 	}
 	
-	public static ErrorReporting[] parse( int level )
+	public static ReportingLevel[] parse( String level )
 	{
-		for ( ErrorReporting er : values() )
-			if ( er.level == level )
-				return new ErrorReporting[] {er};
-		return parse( E_ALL );
-	}
-	
-	public static ErrorReporting[] parse( String level )
-	{
-		List<ErrorReporting> levels = Lists.newArrayList();
+		List<ReportingLevel> levels = Lists.newArrayList();
 		level = level.replaceAll( "&", "" );
 		for ( String s : level.split( " " ) )
 			if ( s != null )
 				if ( s.startsWith( "~" ) || s.startsWith( "!" ) )
-					for ( ErrorReporting er : values() )
+					for ( ReportingLevel er : values() )
 					{
 						if ( er.name().equalsIgnoreCase( s.substring( 1 ) ) )
 							levels.removeAll( Arrays.asList( parse( er ) ) );
 					}
 				else
-					for ( ErrorReporting er : values() )
+					for ( ReportingLevel er : values() )
 						if ( er.name().equalsIgnoreCase( s ) )
 							levels.addAll( Arrays.asList( parse( er ) ) );
 		
-		return levels.toArray( new ErrorReporting[0] );
+		return levels.toArray( new ReportingLevel[0] );
 	}
 	
 	public static String printExceptions( EvalException... exceptions )
@@ -142,6 +164,6 @@ public enum ErrorReporting
 	
 	public boolean isIgnorable()
 	{
-		return this == ErrorReporting.E_IGNORABLE || this == ErrorReporting.E_DEPRECATED || this == ErrorReporting.E_USER_DEPRECATED || this == ErrorReporting.E_NOTICE || this == ErrorReporting.E_USER_NOTICE || this == ErrorReporting.E_WARNING || this == ErrorReporting.E_USER_WARNING;
+		return ignorable;
 	}
 }

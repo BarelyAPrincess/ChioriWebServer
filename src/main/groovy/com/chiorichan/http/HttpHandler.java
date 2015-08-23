@@ -42,6 +42,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
+import io.netty.util.IllegalReferenceCountException;
 
 import java.io.File;
 import java.io.IOException;
@@ -68,7 +69,7 @@ import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.factory.ScriptingResult;
 import com.chiorichan.lang.ApacheParser;
-import com.chiorichan.lang.ErrorReporting;
+import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.EvalException;
 import com.chiorichan.lang.EvalMultipleException;
 import com.chiorichan.lang.HttpError;
@@ -91,6 +92,7 @@ import com.chiorichan.util.Versioning;
 import com.chiorichan.util.WebFunc;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -102,6 +104,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	private static HttpDataFactory factory;
 	
 	protected static Map<ServerVars, Object> staticServerVars = Maps.newLinkedHashMap();
+	
 	static
 	{
 		/**
@@ -122,6 +125,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		// Initialize static server variables
 		
 	}
+	SimpleDateFormat dateFormat = new SimpleDateFormat( Loader.getConfig().getString( "console.dateFormat", "MM-dd" ) );
+	SimpleDateFormat timeFormat = new SimpleDateFormat( Loader.getConfig().getString( "console.timeFormat", "HH:mm:ss.SSS" ) );
 	
 	private HttpPostRequestDecoder decoder;
 	
@@ -286,7 +291,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			{
 				if ( evalOrig.isScriptingException() && !evalOrig.hasScriptTrace() )
 				{
-					log.log( Level.WARNING, "We caught an EvalException which was determined to be related to a Scripting problem but the ScriptTrace was empty, this might be a combined internal and external problem.", ConsoleColor.NEGATIVE, ConsoleColor.RED );
+					log.log( Level.WARNING, "We caught an EvalException which was determined to be related to a scripting issue but the exception has no script trace, this might be a combined internal and external problem.", ConsoleColor.NEGATIVE, ConsoleColor.RED );
 					log.log( Level.SEVERE, "%s%sException %s thrown in file '%s' at line %s, message '%s'", ConsoleColor.NEGATIVE, ConsoleColor.RED, cause.getClass().getName(), cause.getStackTrace()[0].getFileName(), cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
 				}
 				else if ( evalOrig.isScriptingException() )
@@ -482,7 +487,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				// TODO Print notices to output like PHP does
 				for ( EvalException e : result.getExceptions() )
 				{
-					ErrorReporting.throwExceptions( e );
+					ReportingLevel.throwExceptions( e );
 					
 					log.exceptions( e );
 					if ( e.errorLevel().isEnabledLevel() )
@@ -500,6 +505,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 					catch ( Exception e )
 					{
 						log.log( Level.SEVERE, "Exception Excountered: %s", e.getMessage() );
+						if ( Versioning.isDevelopment() )
+							log.log( Level.SEVERE, e.getStackTrace()[0].toString() );
 					}
 			}
 			
@@ -520,7 +527,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				// TODO Print notices to output like PHP does
 				for ( EvalException e : result.getExceptions() )
 				{
-					ErrorReporting.throwExceptions( e );
+					ReportingLevel.throwExceptions( e );
 					
 					log.exceptions( e );
 					if ( e.errorLevel().isEnabledLevel() )
@@ -538,6 +545,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 					catch ( Exception e )
 					{
 						log.log( Level.SEVERE, "Exception Excountered: %s", e.getMessage() );
+						if ( Versioning.isDevelopment() )
+							log.log( Level.SEVERE, e.getStackTrace()[0].toString() );
 					}
 			}
 			
@@ -578,12 +587,19 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		}
 		catch ( EventException ex )
 		{
-			throw new EvalException( ErrorReporting.E_ERROR, "Caught EventException while trying to fire the RenderEvent", ex.getCause() );
+			throw new EvalException( ReportingLevel.E_ERROR, "Caught EventException while trying to fire the RenderEvent", ex.getCause() );
 		}
 		
 		log.log( Level.INFO, "Written {bytes=%s,total_timing=%sms}", rendered.readableBytes(), Timings.finish( this ) );
 		
-		response.write( rendered );
+		try
+		{
+			response.write( rendered );
+		}
+		catch ( IllegalReferenceCountException e )
+		{
+			log.log( Level.SEVERE, "Exception Excountered: %s", e.getMessage() );
+		}
 	}
 	
 	@Override
@@ -618,7 +634,14 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			request = new HttpRequestWrapper( ctx.channel(), requestOrig, ssl, log );
 			response = request.getResponse();
 			
-			log.header( "[id: %s, %s:%s => %s:%s]", hashCode(), request.getIpAddr(), request.getRemotePort(), request.getLocalIpAddr(), request.getLocalPort() );
+			String threadName = Thread.currentThread().getName();
+			
+			if ( threadName.length() > 10 )
+				threadName = threadName.substring( 0, 2 ) + ".." + threadName.substring( threadName.length() - 6 );
+			else if ( threadName.length() < 10 )
+				threadName = threadName + Strings.repeat( " ", 10 - threadName.length() );
+			
+			log.header( "&7[&d%s&7] %s %s [&9%s:%s&7] -> [&a%s:%s&7]", threadName, dateFormat.format( Timings.epoch() ), timeFormat.format( Timings.epoch() ), request.getIpAddr(), request.getRemotePort(), request.getLocalIpAddr(), request.getLocalPort() );
 			
 			if ( HttpHeaderUtil.is100ContinueExpected( ( HttpRequest ) msg ) )
 				send100Continue( ctx );

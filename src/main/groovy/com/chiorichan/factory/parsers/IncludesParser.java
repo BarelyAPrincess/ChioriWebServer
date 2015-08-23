@@ -14,7 +14,7 @@ import com.chiorichan.Loader;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.factory.ScriptingResult;
-import com.chiorichan.lang.ErrorReporting;
+import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.EvalException;
 import com.chiorichan.site.Site;
 
@@ -42,7 +42,7 @@ public class IncludesParser extends HTMLCommentParser
 		ScriptingResult result = factory.eval( ScriptingContext.fromAuto( context.site(), args[1] ).request( context.request() ) );
 		
 		if ( result.hasNotIgnorableExceptions() )
-			ErrorReporting.throwExceptions( result.getExceptions() );
+			ReportingLevel.throwExceptions( result.getExceptions() );
 		else if ( result.hasIgnorableExceptions() )
 		{
 			StringBuilder sb = new StringBuilder();

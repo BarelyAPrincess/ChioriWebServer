@@ -86,6 +86,14 @@ public abstract class AccountPermissible extends Permissible implements Account
 	public abstract String getVariable( String key );
 	
 	/**
+	 * See {@link #getVariable(String)}
+	 * 
+	 * @def
+	 *      Specifies a default value to return if the requested key is null
+	 */
+	public abstract String getVariable( String key, String def );
+	
+	/**
 	 * Called from subclass once subclass has finished loading
 	 */
 	protected void initialized()
@@ -132,16 +140,14 @@ public abstract class AccountPermissible extends Permissible implements Account
 					AccountCredentials creds = auth.authorize( acctId, this );
 					meta.context().credentials = creds;
 					
-					if ( !creds.getResult().isError() )
+					if ( creds.getResult().isSuccess() )
 					{
 						result = AccountResult.LOGIN_SUCCESS;
 						login0( meta );
 					}
-					
-					result.setAccount( meta );
-					
-					if ( result.isError() )
+					else
 					{
+						result = result.setAccount( meta );
 						failedLogin( result );
 						meta.context().creator().failedLogin( meta, result );
 						EventBus.INSTANCE.callEvent( new AccountFailedLoginEvent( meta, result ) );
@@ -159,10 +165,10 @@ public abstract class AccountPermissible extends Permissible implements Account
 			
 			if ( AccountManager.INSTANCE.isDebug() )
 			{
-				if ( result.isError() && result.getThrowable() != null )
+				if ( !result.isIgnorable() && result.hasCause() )
 					result.getThrowable().printStackTrace();
 				
-				SessionManager.getLogger().info( ( ( result == AccountResult.LOGIN_SUCCESS ) ? ConsoleColor.GREEN : ConsoleColor.YELLOW ) + "Session Login: [id='" + acctId + "',reason='" + result.getMessage( acctId ) + "']" );
+				SessionManager.getLogger().info( ( ( result.isSuccess() ) ? ConsoleColor.GREEN : ConsoleColor.YELLOW ) + "Session Login: [id='" + acctId + "',reason='" + result.getMessage( acctId ) + "']" );
 			}
 		}
 	}
@@ -196,13 +202,13 @@ public abstract class AccountPermissible extends Permissible implements Account
 				
 				EventBus.INSTANCE.callEvent( event );
 				
-				if ( event.getAccountResult().isError() )
+				if ( !event.getAccountResult().isIgnorable() )
 					return event.getAccountResult().setAccount( meta );
 				
 				AccountCredentials creds = auth.authorize( meta.getId(), credObjs );
 				meta.context().credentials = creds;
 				
-				if ( creds.getResult().isError() )
+				if ( !creds.getResult().isIgnorable() )
 					return creds.getResult();
 				
 				result = AccountResult.LOGIN_SUCCESS;
@@ -217,9 +223,9 @@ public abstract class AccountPermissible extends Permissible implements Account
 				return AccountResult.INTERNAL_ERROR.setAccount( meta ).setThrowable( t );
 			}
 			
-			result.setAccount( meta );
+			result = result.setAccount( meta );
 			
-			if ( result.isError() )
+			if ( !result.isIgnorable() )
 			{
 				failedLogin( result );
 				meta.context().creator().failedLogin( meta, result );

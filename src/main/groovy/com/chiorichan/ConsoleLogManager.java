@@ -22,6 +22,27 @@ public class ConsoleLogManager
 	private static final Set<ConsoleLogger> loggers = Sets.newHashSet();
 	private static final Logger logger = Logger.getLogger( "" );
 	
+	public ConsoleLogger getLogger()
+	{
+		return getLogger( "Core" );
+	}
+	
+	public ConsoleLogger getLogger( String loggerId )
+	{
+		for ( ConsoleLogger log : loggers )
+			if ( log.getId().equals( loggerId ) )
+				return log;
+		
+		ConsoleLogger log = new ConsoleLogger( loggerId );
+		loggers.add( log );
+		return log;
+	}
+	
+	public Logger getParent()
+	{
+		return logger;
+	}
+	
 	void init()
 	{
 		for ( Handler h : logger.getHandlers() )
@@ -31,20 +52,16 @@ public class ConsoleLogManager
 		{
 			String filename = ( String ) Loader.getOptions().valueOf( "log-pattern" );
 			
-			String tmpDir = System.getProperty( "java.io.tmpdir" );
+			String tmpDir = Loader.getTempFileDirectory().getAbsolutePath();// System.getProperty( "java.io.tmpdir" );
 			String homeDir = System.getProperty( "user.home" );
 			if ( tmpDir == null )
-			{
 				tmpDir = homeDir;
-			}
 			
 			File parent = new File( filename ).getParentFile();
 			StringBuilder fixedPattern = new StringBuilder();
 			String parentPath = "";
 			if ( parent != null )
-			{
 				parentPath = parent.getPath();
-			}
 			
 			int i = 0;
 			while ( i < parentPath.length() )
@@ -52,12 +69,9 @@ public class ConsoleLogManager
 				char ch = parentPath.charAt( i );
 				char ch2 = 0;
 				if ( i + 1 < parentPath.length() )
-				{
 					ch2 = Character.toLowerCase( filename.charAt( i + 1 ) );
-				}
 				
 				if ( ch == '%' )
-				{
 					if ( ch2 == 'h' )
 					{
 						i += 2;
@@ -78,10 +92,7 @@ public class ConsoleLogManager
 						continue;
 					}
 					else if ( ch2 != 0 )
-					{
 						throw new java.io.IOException( "log-pattern can only use %t and %h for directories, got %" + ch2 );
-					}
-				}
 				
 				fixedPattern.append( ch );
 				i++;
@@ -108,26 +119,5 @@ public class ConsoleLogManager
 		consoleHandler.setFormatter( new ConsoleLogFormatter( Loader.getConsole() ) );
 		
 		logger.addHandler( consoleHandler );
-	}
-	
-	public ConsoleLogger getLogger()
-	{
-		return getLogger( "Core" );
-	}
-	
-	public ConsoleLogger getLogger( String loggerId )
-	{
-		for ( ConsoleLogger log : loggers )
-			if ( log.getId().equals( loggerId ) )
-				return log;
-		
-		ConsoleLogger log = new ConsoleLogger( loggerId );
-		loggers.add( log );
-		return log;
-	}
-	
-	public Logger getParent()
-	{
-		return logger;
 	}
 }

@@ -8,8 +8,12 @@
  */
 package com.chiorichan.account.auth;
 
+import org.apache.commons.lang3.Validate;
+
+import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
+import com.chiorichan.account.AccountType;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 
@@ -52,14 +56,23 @@ public abstract class AccountCredentials
 	 */
 	public void makeResumable( AccountPermissible perm )
 	{
+		Validate.notNull( perm );
+		
 		if ( perm.meta() != meta )
-			throw new AccountException( "You can't make an Account resumable on a Permissible it's not logged into." ).setAccount( meta );
+			throw new AccountException( "You can't make an account resumable when it's not logged in." ).setAccount( meta );
 		
 		if ( result != AccountResult.LOGIN_SUCCESS )
-			throw new AccountException( "You can't make a login resumable if it failed login." ).setAccount( meta );
+			throw new AccountException( "You can't make an account resumable if it failed login." ).setAccount( meta );
+		
+		if ( AccountType.isNoneAccount( perm.meta() ) || AccountType.isRootAccount( perm.meta() ) )
+			throw new AccountException( "You can't make the 'none' nor 'root' accounts resumable." ).setAccount( meta );
 		
 		try
 		{
+			if ( "token".equals( perm.getVariable( "auth" ) ) && perm.getVariable( "token" ) != null )
+				if ( !AccountAuthenticator.TOKEN.deleteToken( perm.getVariable( "acctId" ), perm.getVariable( "token" ) ) )
+					AccountManager.getLogger().warning( "We had a problem deleting the login token '" + perm.getVariable( "token" ) + "'" );
+			
 			perm.setVariable( "auth", "token" );
 			perm.setVariable( "acctId", meta.getId() );
 			perm.setVariable( "token", AccountAuthenticator.TOKEN.issueToken( meta ) );

@@ -55,13 +55,11 @@ class LoginCommand extends BuiltinCommand
 					AccountResult result = sender.getPermissible().login( AccountAuthenticator.PASSWORD, user, pass );
 					
 					if ( result != AccountResult.LOGIN_SUCCESS )
-						if ( result == AccountResult.INTERNAL_ERROR )
-						{
+					{
+						if ( result.hasCause() )
 							result.getThrowable().printStackTrace();
-							throw new AccountException( result );
-						}
-						else
-							throw new AccountException( result );
+						throw new AccountException( result );
+					}
 					
 					// if ( !handler.getPersistence().checkPermission( "sys.query" ).isTrue() )
 					// throw new LoginException( LoginExceptionReason.notAuthorized, acct );

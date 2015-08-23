@@ -60,23 +60,26 @@ public abstract class SessionWrapper implements BindingProvider, AccountAttachme
 	 */
 	public void finish()
 	{
-		Map<String, Object> bindings = session.globals;
-		Map<String, Object> variables = binding.getVariables();
-		List<String> disallow = Arrays.asList( new String[] {"out", "request", "response", "context"} );
-		
-		/**
-		 * We transfer any global variables back into our parent session like so.
-		 * We also check to make sure keys like [out, _request, _response, _FILES, _REQUEST, etc...] are excluded.
-		 */
-		if ( bindings != null && variables != null )
-			for ( Entry<String, Object> e : variables.entrySet() )
-				if ( !disallow.contains( e.getKey() ) && ! ( e.getKey().startsWith( "_" ) && StringFunc.isUppercase( e.getKey() ) ) )
-					bindings.put( e.getKey(), e.getValue() );
-		
-		/**
-		 * Session Wrappers use a WeakReference but by doing this we are making sure we are GC'ed sooner rather than later
-		 */
-		session.removeWrapper( this );
+		if ( session != null )
+		{
+			Map<String, Object> bindings = session.globals;
+			Map<String, Object> variables = binding.getVariables();
+			List<String> disallow = Arrays.asList( new String[] {"out", "request", "response", "context"} );
+			
+			/**
+			 * We transfer any global variables back into our parent session like so.
+			 * We also check to make sure keys like [out, _request, _response, _FILES, _REQUEST, etc...] are excluded.
+			 */
+			if ( bindings != null && variables != null )
+				for ( Entry<String, Object> e : variables.entrySet() )
+					if ( !disallow.contains( e.getKey() ) && ! ( e.getKey().startsWith( "_" ) && StringFunc.isUppercase( e.getKey() ) ) )
+						bindings.put( e.getKey(), e.getValue() );
+			
+			/**
+			 * Session Wrappers use a WeakReference but by doing this we are making sure we are GC'ed sooner rather than later
+			 */
+			session.removeWrapper( this );
+		}
 		
 		/**
 		 * Clearing references to these classes, again for easier GC cleanup.

@@ -28,6 +28,20 @@ public class AccountLookupEvent extends AccountEvent implements Conditional
 		this.acctId = acctId;
 	}
 	
+	@Override
+	public boolean conditional( RegisteredListener context ) throws EventException
+	{
+		if ( result.equals( AccountResult.LOGIN_SUCCESS ) || result.equals( AccountResult.CANCELLED_BY_EVENT ) || result.equals( AccountResult.EMPTY_ACCTID ) || result.equals( AccountResult.EMPTY_USERNAME ) || result.equals( AccountResult.UNDER_ATTACK ) )
+			return false;
+		
+		return true;
+	}
+	
+	public String getAcctId()
+	{
+		return acctId;
+	}
+	
 	public AccountContext getContext()
 	{
 		return context;
@@ -38,23 +52,9 @@ public class AccountLookupEvent extends AccountEvent implements Conditional
 		return result;
 	}
 	
-	public String getAcctId()
-	{
-		return acctId;
-	}
-	
 	public void setResult( AccountContext context, AccountResult result )
 	{
 		this.context = context;
 		this.result = result;
-	}
-	
-	@Override
-	public boolean conditional( RegisteredListener context ) throws EventException
-	{
-		if ( result == AccountResult.LOGIN_SUCCESS || result == AccountResult.CANCELLED_BY_EVENT || result == AccountResult.EMPTY_ACCTID || result == AccountResult.EMPTY_USERNAME || result == AccountResult.UNDER_ATTACK )
-			return false;
-		
-		return true;
 	}
 }

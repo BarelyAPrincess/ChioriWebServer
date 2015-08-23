@@ -25,7 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.chiorichan.factory.ScriptBinding;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingEngine;
-import com.chiorichan.lang.ErrorReporting;
+import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.EvalException;
 
 /**
@@ -87,7 +87,7 @@ public class EmbeddedGroovyEngine implements ScriptingEngine
 				int endIndex = source.indexOf( MARKER_END, Math.max( startIndex, fullFileIndex ) );
 				
 				if ( endIndex == -1 )
-					throw new EvalException( ErrorReporting.E_PARSE, "Marker `<%` was not closed after line " + ( StringUtils.countMatches( output.toString(), "\n" ) + 1 ) + ", please check your source file and try again." );
+					throw new EvalException( ReportingLevel.E_PARSE, "Marker `<%` was not closed after line " + ( StringUtils.countMatches( output.toString(), "\n" ) + 1 ) + ", please check your source file and try again." );
 				
 				// Re gets the fragment?
 				fragment = source.substring( startIndex + MARKER_START.length(), endIndex );

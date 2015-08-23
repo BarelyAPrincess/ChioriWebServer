@@ -63,7 +63,7 @@ public class TerminalEntity extends AccountPermissible implements Terminal, Bind
 		{
 			if ( e.getResult() != AccountResult.LOGIN_SUCCESS )
 			{
-				if ( e.getResult() == AccountResult.INTERNAL_ERROR )
+				if ( e.getResult().hasCause() )
 					e.getResult().getThrowable().printStackTrace();
 				AccountManager.getLogger().severe( e.getMessage() );
 			}

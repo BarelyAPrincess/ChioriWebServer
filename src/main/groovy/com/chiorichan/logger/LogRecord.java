@@ -20,8 +20,6 @@ import com.google.common.collect.Lists;
 
 class LogRecord implements ILogEvent
 {
-	String header = null;
-	
 	static class LogElement
 	{
 		Level level;
@@ -37,42 +35,13 @@ class LogRecord implements ILogEvent
 		}
 	}
 	
+	String header = null;
+	
 	final List<LogElement> elements = Lists.newLinkedList();
 	
 	public LogRecord()
 	{
 		
-	}
-	
-	@Override
-	public void header( String msg, Object... objs )
-	{
-		header = String.format( msg, objs );
-	}
-	
-	@Override
-	public void log( Level level, String msg, Object... objs )
-	{
-		if ( objs.length < 1 )
-			elements.add( new LogElement( level, msg, ConsoleColor.fromLevel( level ) ) );
-		else
-			elements.add( new LogElement( level, String.format( msg, objs ), ConsoleColor.fromLevel( level ) ) );
-	}
-	
-	@Override
-	public void flush()
-	{
-		StringBuilder sb = new StringBuilder();
-		
-		if ( header != null )
-			sb.append( ConsoleColor.GOLD + header );
-		
-		for ( LogElement e : elements )
-			sb.append( ConsoleColor.RESET + "" + ConsoleColor.GRAY + "\n  |-> " + new SimpleDateFormat( "ss.SSS" ).format( e.time ) + " " + e.color + e.msg );
-		
-		Loader.getLogger().log( Level.INFO, "\r" + sb.toString() );
-		
-		elements.clear();
 	}
 	
 	@Override
@@ -91,5 +60,36 @@ class LogRecord implements ILogEvent
 					Throwable t = e.getCause();
 					log( Level.SEVERE, ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s, message '%s'", t.getClass().getName(), t.getStackTrace()[0].getFileName(), t.getStackTrace()[0].getLineNumber(), t.getMessage() );
 				}
+	}
+	
+	@Override
+	public void flush()
+	{
+		StringBuilder sb = new StringBuilder();
+		
+		if ( header != null )
+			sb.append( ConsoleColor.RESET + header );
+		
+		for ( LogElement e : elements )
+			sb.append( ConsoleColor.RESET + "" + ConsoleColor.GRAY + "\n  |-> " + new SimpleDateFormat( "ss.SSS" ).format( e.time ) + " " + e.color + e.msg );
+		
+		Loader.getLogger().log( Level.INFO, "\r" + sb.toString() );
+		
+		elements.clear();
+	}
+	
+	@Override
+	public void header( String msg, Object... objs )
+	{
+		header = String.format( msg, objs );
+	}
+	
+	@Override
+	public void log( Level level, String msg, Object... objs )
+	{
+		if ( objs.length < 1 )
+			elements.add( new LogElement( level, msg, ConsoleColor.fromLevel( level ) ) );
+		else
+			elements.add( new LogElement( level, String.format( msg, objs ), ConsoleColor.fromLevel( level ) ) );
 	}
 }

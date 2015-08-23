@@ -322,15 +322,17 @@ public final class Session extends AccountPermissible implements Kickable
 	@Override
 	public String getVariable( String key )
 	{
-		return getVariable( key, "" );
+		return getVariable( key, null );
 	}
 	
+	@Override
 	public String getVariable( String key, String def )
 	{
 		if ( !data.data.containsKey( key ) || data.data.get( key ) == null )
 		{
 			if ( SessionManager.isDebug )
 				SessionManager.getLogger().info( String.format( "%sGetting variable key `%s` which resulted in default value '%s'", ConsoleColor.GRAY, key, def ) );
+			
 			return def;
 		}
 		
@@ -431,7 +433,7 @@ public final class Session extends AccountPermissible implements Kickable
 		{
 			defaultTimeout = SessionManager.getDefaultTimeoutWithLogin();
 			
-			if ( StringFunc.isTrue( getVariable( "remember" ) ) )
+			if ( StringFunc.isTrue( getVariable( "remember", "false" ) ) )
 				defaultTimeout = SessionManager.getDefaultTimeoutWithRememberMe();
 			
 			if ( Loader.getConfig().getBoolean( "allowNoTimeoutPermission" ) && checkPermission( "com.chiorichan.noTimeout" ).isTrue() )
