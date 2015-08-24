@@ -17,6 +17,30 @@ import java.util.TreeMap;
  */
 public class DbFunc
 {
+	private static void moveNext( Map<Object, Map<String, Object>> result, int key )
+	{
+		if ( !result.containsKey( key ) )
+			return;
+		
+		Map<String, Object> row = result.remove( key );
+		int nextKey = key + 1;
+		if ( result.containsKey( nextKey ) )
+			moveNext( result, nextKey );
+		result.put( nextKey, row );
+	}
+	
+	private static void movePrevious( Map<Object, Map<String, Object>> result, int key )
+	{
+		if ( !result.containsKey( key ) )
+			return;
+		
+		Map<String, Object> row = result.remove( key );
+		int nextKey = key - 1;
+		if ( result.containsKey( nextKey ) )
+			movePrevious( result, nextKey );
+		result.put( nextKey, row );
+	}
+	
 	public static Map<Object, Map<String, Object>> sortByColumnValue( Map<String, Map<String, Object>> orig, String key )
 	{
 		return sortByColumnValue( orig, key, String.class );
@@ -41,7 +65,6 @@ public class DbFunc
 		{
 			Map<String, Object> row = e.getValue();
 			if ( row.containsKey( key ) )
-			{
 				if ( strategy == SortStrategy.Default )
 					result.put( ObjectFunc.castThis( keyType, row.get( key ) ), row );
 				else if ( strategy == SortStrategy.MoveNext )
@@ -62,33 +85,8 @@ public class DbFunc
 					
 					result.put( v, row );
 				}
-			}
 		}
 		
 		return result;
-	}
-	
-	private static void movePrevious( Map<Object, Map<String, Object>> result, int key )
-	{
-		if ( !result.containsKey( key ) )
-			return;
-		
-		Map<String, Object> row = result.remove( key );
-		int nextKey = key - 1;
-		if ( result.containsKey( nextKey ) )
-			movePrevious( result, nextKey );
-		result.put( nextKey, row );
-	}
-	
-	private static void moveNext( Map<Object, Map<String, Object>> result, int key )
-	{
-		if ( !result.containsKey( key ) )
-			return;
-		
-		Map<String, Object> row = result.remove( key );
-		int nextKey = key + 1;
-		if ( result.containsKey( nextKey ) )
-			moveNext( result, nextKey );
-		result.put( nextKey, row );
 	}
 }

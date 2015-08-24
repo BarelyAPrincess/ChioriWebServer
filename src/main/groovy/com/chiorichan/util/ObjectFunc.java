@@ -442,6 +442,14 @@ public class ObjectFunc
 		return dump.toString();
 	}
 	
+	public static Boolean isNull( Object o )
+	{
+		if ( o == null )
+			return true;
+		
+		return false;
+	}
+	
 	public static int safeLongToInt( long l )
 	{
 		if ( l < Integer.MIN_VALUE )

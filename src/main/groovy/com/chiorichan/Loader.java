@@ -38,6 +38,7 @@ import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.Kickable;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.database.DatabaseEngine;
+import com.chiorichan.datastore.DatastoreManager;
 import com.chiorichan.event.BuiltinEventCreator;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventHandler;
@@ -1040,6 +1041,9 @@ public class Loader extends BuiltinEventCreator implements Listener
 		{
 			getLogger().info( "Initalizing the Database Subsystem..." );
 			initDatabase();
+			
+			getLogger().info( "Initalizing the Datastore Subsystem..." );
+			DatastoreManager.init();
 			
 			getLogger().info( "Initalizing the Permission Subsystem..." );
 			PermissionManager.init();

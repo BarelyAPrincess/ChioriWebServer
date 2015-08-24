@@ -33,11 +33,8 @@ import org.json.JSONException;
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
-import com.chiorichan.factory.ExceptionCallback;
-import com.chiorichan.factory.ScriptingContext;
-import com.chiorichan.lang.ReportingLevel;
-import com.chiorichan.lang.EvalException;
 import com.chiorichan.lang.StartupException;
+import com.chiorichan.util.DatastoreFunc;
 import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.StringFunc;
 import com.google.common.collect.Lists;
@@ -99,15 +96,18 @@ public class DatabaseEngine
 	
 	public DatabaseEngine()
 	{
-		EvalException.registerException( new ExceptionCallback()
-		{
-			@Override
-			public ReportingLevel callback( Throwable cause, ScriptingContext context )
-			{
-				context.result().addException( new EvalException( ReportingLevel.E_ERROR, cause ) );
-				return ReportingLevel.E_ERROR;
-			}
-		}, SQLException.class );
+		/*
+		 * EvalException.registerException( new ExceptionCallback()
+		 * {
+		 * 
+		 * @Override
+		 * public ReportingLevel callback( Throwable cause, ScriptingContext context )
+		 * {
+		 * context.result().addException( new EvalException( ReportingLevel.E_ERROR, cause ) );
+		 * return ReportingLevel.E_ERROR;
+		 * }
+		 * }, SQLException.class );
+		 */
 	}
 	
 	public static LinkedHashMap<String, Object> convert( ResultSet rs ) throws SQLException, JSONException
@@ -187,26 +187,6 @@ public class DatabaseEngine
 		}
 		
 		return result;
-	}
-	
-	public static String escape( String str )
-	{
-		if ( str == null )
-			return null;
-		
-		if ( str.replaceAll( "[a-zA-Z0-9_!@#$%^&*()-=+~.;:,\\Q[\\E\\Q]\\E<>{}\\/? ]", "" ).length() < 1 )
-			return str;
-		
-		String cleanString = str;
-		cleanString = cleanString.replaceAll( "\\\\", "\\\\\\\\" );
-		cleanString = cleanString.replaceAll( "\\n", "\\\\n" );
-		cleanString = cleanString.replaceAll( "\\r", "\\\\r" );
-		cleanString = cleanString.replaceAll( "\\t", "\\\\t" );
-		cleanString = cleanString.replaceAll( "\\00", "\\\\0" );
-		cleanString = cleanString.replaceAll( "'", "\\\\'" );
-		cleanString = cleanString.replaceAll( "\\\"", "\\\\\"" );
-		
-		return cleanString;
 	}
 	
 	public static int getColumnType( Class<?> clz )
@@ -593,12 +573,12 @@ public class DatabaseEngine
 		
 		for ( Entry<String, Object> e : where.entrySet() )
 		{
-			String key = escape( e.getKey() );
+			String key = DatastoreFunc.escape( e.getKey() );
 			
 			String value;
 			try
 			{
-				value = escape( ( String ) e.getValue() );
+				value = DatastoreFunc.escape( ( String ) e.getValue() );
 			}
 			catch ( Exception ee )
 			{
@@ -648,14 +628,6 @@ public class DatabaseEngine
 		{
 			return false;
 		}
-	}
-	
-	public Boolean isNull( Object o )
-	{
-		if ( o == null )
-			return true;
-		
-		return false;
 	}
 	
 	private void log( boolean force, String msg, Object... objs )
@@ -1056,7 +1028,7 @@ public class DatabaseEngine
 		if ( con == null )
 			throw new SQLException( "The SQL connection is closed or was never opened." );
 		
-		if ( isNull( keys ) || isNull( values ) )
+		if ( ObjectFunc.isNull( keys ) || ObjectFunc.isNull( values ) )
 		{
 			Loader.getLogger().warning( "[DB ERROR] Either keys array or values array equals null!\n" );
 			return null;
@@ -1183,7 +1155,7 @@ public class DatabaseEngine
 	
 	public boolean update( String table, List<? extends Object> keys, List<? extends Object> list, List<? extends Object> keysW, List<? extends Object> valuesW )
 	{
-		if ( isNull( keys ) || isNull( list ) )
+		if ( ObjectFunc.isNull( keys ) || ObjectFunc.isNull( list ) )
 		{
 			System.err.print( "[DB ERROR] Either keys array or values array equals null!\n" );
 			return false;
@@ -1220,7 +1192,7 @@ public class DatabaseEngine
 			prefix = ", ";
 		}
 		
-		if ( !isNull( keysW ) && !isNull( valuesW ) && keysW.size() > 0 && valuesW.size() > 0 )
+		if ( !ObjectFunc.isNull( keysW ) && !ObjectFunc.isNull( valuesW ) && keysW.size() > 0 && valuesW.size() > 0 )
 		{
 			x = 0;
 			prefix = "";
