@@ -32,7 +32,8 @@ import com.google.common.collect.Maps;
  */
 public class Libraries implements LibrarySource
 {
-	public static final String BASE_MAVEN_URL = "http://search.maven.org/remotecontent?filepath=";
+	public static final String BASE_MAVEN_URL = "http://jcenter.bintray.com/";
+	public static final String BASE_MAVEN_URL_ALT = "http://search.maven.org/remotecontent?filepath=";
 	public static final File INCLUDES_DIR;
 	public static final File LIBRARY_DIR;
 	public static Map<String, MavenReference> loadedLibraries = Maps.newHashMap();
@@ -191,11 +192,29 @@ public class Libraries implements LibrarySource
 			{
 				PluginManager.getLogger().info( ConsoleColor.GOLD + "Downloading the library `" + lib.toString() + "` from url `" + urlJar + "`... Please Wait!" );
 				
-				if ( !NetworkFunc.downloadFile( urlPom, mavenLocalPom ) )
-					return false;
-				
-				if ( !NetworkFunc.downloadFile( urlJar, mavenLocalJar ) )
-					return false;
+				// Try download from JCenter Bintray Maven Repository
+				if ( NetworkFunc.downloadFile( urlPom, mavenLocalPom ) )
+				{
+					if ( !NetworkFunc.downloadFile( urlJar, mavenLocalJar ) )
+						return false;
+				}
+				else
+				{
+					// Try download from alternative Maven Central Repository
+					
+					String urlJarAlt = lib.mavenUrlAlt( "jar" );
+					String urlPomAlt = lib.mavenUrlAlt( "pom" );
+					
+					if ( urlJar == null || urlJar.isEmpty() || urlPom == null || urlPom.isEmpty() )
+						return false;
+					
+					PluginManager.getLogger().warning( ConsoleColor.GOLD + "Primary download location failed, trying alternative url `" + urlJarAlt + "`... Please Wait!" );
+					
+					if ( !NetworkFunc.downloadFile( urlPomAlt, mavenLocalPom ) )
+						return false;
+					if ( !NetworkFunc.downloadFile( urlJarAlt, mavenLocalJar ) )
+						return false;
+				}
 			}
 			
 			PluginManager.getLogger().info( ConsoleColor.DARK_GRAY + "Loading the library `" + lib.toString() + "` from file `" + mavenLocalJar + "`..." );
