@@ -54,7 +54,7 @@ class LoginCommand extends BuiltinCommand
 				{
 					AccountResult result = sender.getPermissible().login( AccountAuthenticator.PASSWORD, user, pass );
 					
-					if ( result != AccountResult.LOGIN_SUCCESS )
+					if ( !result.isSuccess() )
 					{
 						if ( result.hasCause() )
 							result.getThrowable().printStackTrace();

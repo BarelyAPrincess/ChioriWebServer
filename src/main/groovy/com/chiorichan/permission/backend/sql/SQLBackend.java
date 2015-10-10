@@ -17,7 +17,9 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.chiorichan.Loader;
-import com.chiorichan.database.DatabaseEngine;
+import com.chiorichan.datastore.sql.SQLExecute;
+import com.chiorichan.datastore.sql.bases.SQLDatastore;
+import com.chiorichan.datastore.sql.query.SQLQuerySelect;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
@@ -68,9 +70,10 @@ public class SQLBackend extends PermissionBackend
 		{
 			Map<References, String> defaults = Maps.newHashMap();
 			
-			ResultSet result = getSQL().query( "SELECT * FROM `permissions_groups` WHERE `parent` = 'default' AND `type` = '1';" );
+			SQLExecute<SQLQuerySelect> result = getSQL().table( "permissions_groups" ).select().where( "parent" ).matches( "default" ).and().where( "type" ).matches( 1 ).execute().result();
+			// ResultSet result = getSQL().query( "SELECT * FROM `permissions_groups` WHERE `parent` = 'default' AND `type` = '1';" );
 			
-			if ( !result.next() )
+			if ( result.rowCount() < 1 )
 				throw new RuntimeException( "There is no default group set. New entities will not have any groups." );
 			
 			do
@@ -113,10 +116,14 @@ public class SQLBackend extends PermissionBackend
 		{
 			Set<String> entities = Sets.newHashSet();
 			
-			ResultSet result = getSQL().query( "SELECT * FROM `permissions_entity` WHERE `type` = " + type + ";" );
+			SQLExecute<SQLQuerySelect> select = getSQL().table( "permissions_entity" ).select().where( "type" ).matches( type ).execute().result();
+			// ResultSet result = getSQL().query( "SELECT * FROM `permissions_entity` WHERE `type` = " + type + ";" );
 			
-			while ( result.next() )
-				entities.add( result.getString( "owner" ) );
+			for ( Map<String, String> row : select.resultToStringSet() )
+				entities.add( row.get( "owner" ) );
+			
+			// while ( result.next() )
+			// entities.add( result.getString( "owner" ) );
 			
 			return entities;
 		}
@@ -138,7 +145,7 @@ public class SQLBackend extends PermissionBackend
 		return getEntityNames( 1 );
 	}
 	
-	public DatabaseEngine getSQL()
+	public SQLDatastore getSQL()
 	{
 		return Loader.getDatabase();
 	}
@@ -146,21 +153,28 @@ public class SQLBackend extends PermissionBackend
 	@Override
 	public void initialize() throws PermissionBackendException
 	{
-		DatabaseEngine db = Loader.getDatabase();
+		SQLDatastore db = getSQL();
 		
 		if ( db == null )
 			throw new PermissionBackendException( "SQL connection is not configured, see config.yml" );
 		
 		Set<String> missingTables = Sets.newHashSet();
 		
-		if ( !db.tableExist( "permissions" ) )
-			missingTables.add( "permissions" );
-		
-		if ( !db.tableExist( "permissions_entity" ) )
-			missingTables.add( "permissions_entity" );
-		
-		if ( !db.tableExist( "permissions_groups" ) )
-			missingTables.add( "permissions_groups" );
+		try
+		{
+			if ( !db.table( "permissions" ).exists() )
+				missingTables.add( "permissions" );
+			
+			if ( !db.table( "permissions_entity" ).exists() )
+				missingTables.add( "permissions_entity" );
+			
+			if ( !db.table( "permissions_groups" ).exists() )
+				missingTables.add( "permissions_groups" );
+		}
+		catch ( SQLException e )
+		{
+			// Ignore
+		}
 		
 		if ( !missingTables.isEmpty() )
 			throw new PermissionBackendException( "SQL connection is configured but your missing tables: " + Joiner.on( "," ).join( missingTables ) + ", check the SQL Backend getting started guide for help." );
@@ -187,7 +201,8 @@ public class SQLBackend extends PermissionBackend
 	{
 		try
 		{
-			ResultSet result = getSQL().query( "SELECT * FROM `permissions`" );
+			ResultSet result = getSQL().table( "permissions" ).select().execute().result();
+			// ResultSet result = getSQL().query( "SELECT * FROM `permissions`" );
 			
 			if ( result.next() )
 				do
@@ -243,23 +258,26 @@ public class SQLBackend extends PermissionBackend
 	{
 		try
 		{
-			DatabaseEngine db = getSQL();
+			SQLDatastore db = getSQL();
 			
 			PermissionModelValue model = perm.getModel();
 			
-			ResultSet rs = db.query( "SELECT * FROM `permissions` WHERE `permission` = '" + perm.getNamespace() + "';" );
+			SQLQuerySelect select = db.table( "permissions" ).select().where( "permission" ).matches( perm.getNamespace() ).execute();
+			// ResultSet rs = db.query( "SELECT * FROM `permissions` WHERE `permission` = '" + perm.getNamespace() + "';" );
 			
-			if ( db.getRowCount( rs ) < 1 )
+			if ( select.rowCount() < 1 )
 			{
 				if ( !PermissionDefault.isDefault( perm ) && ( perm.getType() != PermissionType.DEFAULT || !perm.hasChildren() || perm.getModel().hasDescription() ) )
-					db.queryUpdate( "INSERT INTO `permissions` (`permission`, `value`, `default`, `type`, `enum`, `maxlen`, `description`) VALUES (?, ?, ?, ?, ?, ?, ?);", perm.getNamespace(), model.getValue(), model.getValueDefault(), perm.getType().name(), model.getEnumsString(), model.getMaxLen(), model.getDescription() );
+					db.table( "permissions" ).insert().values( new String[] {"permission", "value", "default", "type", "enum", "maxlen", "description"}, new Object[] {perm.getNamespace(), model.getValue(), model.getValueDefault(), perm.getType().name(), model.getEnumsString(), model.getMaxLen(), model.getDescription()} ).execute();
+				// db.queryUpdate( "INSERT INTO `permissions` (`permission`, `value`, `default`, `type`, `enum`, `maxlen`, `description`) VALUES (?, ?, ?, ?, ?, ?, ?);", );
 			}
 			else
 			{
-				if ( db.getRowCount( rs ) > 1 )
+				if ( select.rowCount() > 1 )
 					PermissionManager.getLogger().warning( String.format( "We found more then one permission node with the namespace '%s', please fix this, or you might experience unexpected behavior. %s", perm.getNamespace(), Loader.getRandomGag() ) );
 				
-				if ( perm.getType() == PermissionType.DEFAULT && !db.delete( "permissions", String.format( "`permission` = '%s'", perm.getNamespace() ), 1 ) )
+				if ( perm.getType() == PermissionType.DEFAULT && db.table( "permissions" ).delete().where( "permission" ).matches( perm.getNamespace() ).limit( 1 ).execute().rowCount() < 0 )
+					// !db.delete( "permissions", String.format( "`permission` = '%s'", perm.getNamespace() ), 1 ) )
 					PermissionManager.getLogger().warning( "The SQLBackend failed to remove the permission node '" + perm.getNamespace() + "' from the database. " + Loader.getRandomGag() );
 				else
 				{
@@ -296,20 +314,29 @@ public class SQLBackend extends PermissionBackend
 	@Override
 	public void nodeDestroy( Permission perm )
 	{
-		DatabaseEngine db = getSQL();
-		db.delete( "permissions", String.format( "`permission` = '%s'", perm.getNamespace() ) );
+		SQLDatastore db = getSQL();
+		// db.delete( "permissions", String.format( "`permission` = '%s'", perm.getNamespace() ) );
+		try
+		{
+			db.table( "permissions" ).delete().where( "permission" ).matches( perm.getNamespace() ).limit( 1 ).execute();
+		}
+		catch ( SQLException e )
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	@Override
 	public void nodeReload( Permission perm )
 	{
-		DatabaseEngine db = getSQL();
+		SQLDatastore db = getSQL();
 		
 		try
 		{
-			ResultSet rs = db.query( "SELECT * FROM `permissions` WHERE `permission` = '" + perm.getNamespace() + "';" );
+			SQLQuerySelect select = db.table( "permissions" ).select().where( "permission" ).matches( perm.getNamespace() ).execute();
+			// ResultSet rs = db.query( "SELECT * FROM `permissions` WHERE `permission` = '" + perm.getNamespace() + "';" );
 			
-			if ( db.getRowCount( rs ) > 0 )
+			if ( select.rowCount() > 0 )
 			{
 				// TODO RELOAD!
 			}
@@ -334,7 +361,8 @@ public class SQLBackend extends PermissionBackend
 			Map<String, String> defaults = Maps.newHashMap();
 			Set<String> children = Sets.newHashSet();
 			
-			ResultSet result = getSQL().query( "SELECT * FROM `permissions_groups` WHERE `parent` = 'default' AND `type` = '1';" );
+			ResultSet result = getSQL().table( "permissions_groups" ).select().where( "parent" ).matches( "default" ).and().where( "type" ).matches( "1" ).execute().result();
+			// ResultSet result = getSQL().query( "SELECT * FROM `permissions_groups` WHERE `parent` = 'default' AND `type` = '1';" );
 			
 			// throw new RuntimeException( "There is no default group set. New entities will not have any groups." );
 			if ( result.next() )
@@ -359,7 +387,8 @@ public class SQLBackend extends PermissionBackend
 					children.add( e.getKey() );
 			
 			// Delete old records
-			getSQL().queryUpdate( "DELETE FROM `permissions_groups` WHERE `parent` = 'default' AND `type` = '1';" );
+			// getSQL().queryUpdate( "DELETE FROM `permissions_groups` WHERE `parent` = 'default' AND `type` = '1';" );
+			getSQL().table( "permissions_groups" ).delete().where( "parent" ).matches( "default" ).and().where( "type" ).matches( "1" ).execute();
 			
 			// Save changes
 			for ( String c : children )
@@ -372,7 +401,8 @@ public class SQLBackend extends PermissionBackend
 				if ( refs.length() > 0 )
 					refs = refs.substring( 1 );
 				
-				getSQL().queryUpdate( "INSERT INTO `permissions_group` (`child`, `parent`, `type`, `ref`) VALUES ('" + c + "', 'default', '1', '" + refs + "');" );
+				getSQL().table( "permissions_group" ).insert().values( new String[] {"child", "parent", "type", "ref"}, new String[] {c, "default", "1", refs} ).execute();
+				// getSQL().queryUpdate( "INSERT INTO `permissions_group` (`child`, `parent`, `type`, `ref`) VALUES ('" + c + "', 'default', '1', '" + refs + "');" );
 			}
 		}
 		catch ( SQLException e )
@@ -395,7 +425,7 @@ public class SQLBackend extends PermissionBackend
 	
 	private int updateDBValue( Namespace ns, String key, String val ) throws SQLException
 	{
-		DatabaseEngine db = getSQL();
+		SQLDatastore db = getSQL();
 		
 		if ( key == null )
 			return 0;
@@ -403,6 +433,7 @@ public class SQLBackend extends PermissionBackend
 		if ( val == null )
 			val = "";
 		
-		return db.queryUpdate( "UPDATE `permissions` SET `" + key + "` = ? WHERE `permission` = ?;", val, ns.getNamespace() );
+		return db.table( "permissions" ).update().value( key, val ).where( "permission" ).matches( ns.getNamespace() ).execute().rowCount();
+		// return db.queryUpdate( "UPDATE `permissions` SET `" + key + "` = ? WHERE `permission` = ?;", val, ns.getNamespace() );
 	}
 }

@@ -8,7 +8,6 @@
  */
 package com.chiorichan.account.auth;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -19,7 +18,9 @@ import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
-import com.chiorichan.database.DatabaseEngine;
+import com.chiorichan.datastore.sql.SQLExecute;
+import com.chiorichan.datastore.sql.bases.SQLDatastore;
+import com.chiorichan.datastore.sql.query.SQLQuerySelect;
 import com.chiorichan.tasks.Timings;
 
 /**
@@ -35,21 +36,21 @@ public final class PlainTextAccountAuthenticator extends AccountAuthenticator
 		}
 	}
 	
-	private final DatabaseEngine db = Loader.getDatabase();
+	private final SQLDatastore db = Loader.getDatabase();
 	
 	PlainTextAccountAuthenticator()
 	{
 		super( "plaintext" );
 		
-		if ( !db.tableExist( "accounts_plaintext" ) )
-			try
-			{
-				db.queryUpdate( "CREATE TABLE `accounts_plaintext` ( `acctId` varchar(255) NOT NULL, `password` varchar(255) NOT NULL, `expires` int(12) NOT NULL);" );
-			}
-			catch ( SQLException e )
-			{
-				e.printStackTrace();
-			}
+		try
+		{
+			if ( !db.table( "accounts_plaintext" ).exists() )
+				db.table( "accounts_plaintext" ).addColumnVar( "acctId", 255 ).addColumnVar( "password", 255 ).addColumnInt( "expires", 12 );
+		}
+		catch ( SQLException e )
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	@Override
@@ -83,15 +84,16 @@ public final class PlainTextAccountAuthenticator extends AccountAuthenticator
 		String password = null;
 		try
 		{
-			ResultSet rs = db.query( "SELECT * FROM `accounts_plaintext` WHERE `acctId` = '" + acctId + "' LIMIT 1;" );
+			SQLExecute<SQLQuerySelect> select = db.table( "accounts_plaintext" ).select().where( "acctId" ).matches( acctId ).limit( 1 ).execute().result();
+			// ResultSet rs = db.query( "SELECT * FROM `accounts_plaintext` WHERE `acctId` = '" + acctId + "' LIMIT 1;" );
 			
-			if ( rs == null || db.getRowCount( rs ) < 1 )
+			if ( select.rowCount() < 1 )
 				throw AccountResult.PASSWORD_UNSET.format( meta ).exception();
 			
-			if ( rs.getInt( "expires" ) > -1 && rs.getInt( "expires" ) < Timings.epoch() )
+			if ( select.getInt( "expires" ) > -1 && select.getInt( "expires" ) < Timings.epoch() )
 				throw AccountResult.EXPIRED_LOGIN.format( meta ).exception();
 			
-			password = rs.getString( "password" );
+			password = select.getString( "password" );
 		}
 		catch ( AccountException e )
 		{
@@ -139,13 +141,19 @@ public final class PlainTextAccountAuthenticator extends AccountAuthenticator
 	{
 		try
 		{
-			db.queryUpdate( "INSERT INTO `accounts_plaintext` (`acctId`,`password`,`expires`) VALUES ('" + acct.getId() + "','" + password + "','" + expires + "');" );
-			return true;
+			if ( db.table( "accounts_plaintext" ).insert().value( "acctId", acct.getId() ).value( "password", password ).value( "expires", expires ).execute().rowCount() < 0 )
+			{
+				AccountManager.getLogger().severe( "We had an unknown issue inserting password for acctId '" + acct.getId() + "' into the database!" );
+				return false;
+			}
+			
+			// db.queryUpdate( "INSERT INTO `accounts_plaintext` (`acctId`,`password`,`expires`) VALUES ('" + acct.getId() + "','" + password + "','" + expires + "');" );
 		}
 		catch ( SQLException e )
 		{
 			e.printStackTrace();
 			return false;
 		}
+		return true;
 	}
 }

@@ -18,6 +18,8 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,6 +30,8 @@ import org.apache.commons.lang3.Validate;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 /**
  * Provides Chiori-chan Web Server specific helper methods
@@ -253,6 +257,14 @@ public class StringFunc
 		return ref.replaceAll( "[^a-z0-9_]", "" );
 	}
 	
+	public static List<String> repeatToList( String chr, int length )
+	{
+		List<String> list = Lists.newArrayList();
+		for ( int i = 0; i < length; i++ )
+			list.add( chr );
+		return list;
+	}
+	
 	public static String replaceAt( String par, int at, String rep )
 	{
 		StringBuilder sb = new StringBuilder( par );
@@ -354,7 +366,7 @@ public class StringFunc
 	}
 	
 	/**
-	 * Trim specified charcater from both ends of a String
+	 * Trim specified character from both ends of a String
 	 * 
 	 * @param text
 	 *            Text
@@ -413,10 +425,130 @@ public class StringFunc
 			return text;
 		
 		normalizedText = text.trim();
-		index = 0;
+		index = -1;
 		
-		while ( normalizedText.charAt( index ) == character )
+		do
 			index++;
+		while ( index < normalizedText.length() && normalizedText.charAt( index ) == character );
+		
 		return normalizedText.substring( index ).trim();
+	}
+	
+	public static Collection<String> wrap( Collection<String> col )
+	{
+		return wrap( col, '`' );
+	}
+	
+	public static Collection<String> wrap( Collection<String> col, char wrap )
+	{
+		synchronized ( col )
+		{
+			String[] strs = col.toArray( new String[0] );
+			col.clear();
+			for ( int i = 0; i < strs.length; i++ )
+				col.add( wrap( strs[i], wrap ) );
+		}
+		
+		return col;
+	}
+	
+	public static List<String> wrap( List<String> list )
+	{
+		return wrap( list, '`' );
+	}
+	
+	public static List<String> wrap( List<String> list, char wrap )
+	{
+		synchronized ( list )
+		{
+			String[] strs = list.toArray( new String[0] );
+			
+			try
+			{
+				list.add( "DUMMY ADD!" );
+			}
+			catch ( UnsupportedOperationException e )
+			{
+				list = Lists.newLinkedList();
+			}
+			
+			list.clear();
+			for ( int i = 0; i < strs.length; i++ )
+				list.add( wrap( strs[i], wrap ) );
+		}
+		
+		return list;
+	}
+	
+	public static Map<String, String> wrap( Map<String, String> map )
+	{
+		return wrap( map, '`', '\'' );
+	}
+	
+	public static Map<String, String> wrap( Map<String, String> map, char keyWrap, char valueWrap )
+	{
+		synchronized ( map )
+		{
+			String[] keys = map.keySet().toArray( new String[0] );
+			String[] values = map.values().toArray( new String[0] );
+			
+			try
+			{
+				map.put( "DUMMY KEY", "DUMMY VALUE" );
+			}
+			catch ( UnsupportedOperationException e )
+			{
+				map = Maps.newHashMap();
+			}
+			
+			map.clear();
+			for ( int i = 0; i < keys.length; i++ )
+				map.put( wrap( keys[i], keyWrap ), wrap( values[i], valueWrap ) );
+		}
+		
+		return map;
+		
+		/*
+		 * Map<String, String> newMap = Maps.newHashMap();
+		 * 
+		 * for ( Entry<String, String> e : map.entrySet() )
+		 * if ( e.getKey() != null && !e.getKey().isEmpty() )
+		 * newMap.put( keyWrap + e.getKey() + keyWrap, valueWrap + ( e.getValue() == null ? "" : e.getValue() ) + valueWrap );
+		 * 
+		 * return newMap;
+		 */
+	}
+	
+	public static Set<String> wrap( Set<String> set )
+	{
+		return wrap( set, '`' );
+	}
+	
+	public static Set<String> wrap( Set<String> set, char wrap )
+	{
+		synchronized ( set )
+		{
+			String[] strs = set.toArray( new String[0] );
+			
+			try
+			{
+				set.add( "DUMMY ADD!" );
+			}
+			catch ( UnsupportedOperationException e )
+			{
+				set = Sets.newLinkedHashSet();
+			}
+			
+			set.clear();
+			for ( int i = 0; i < strs.length; i++ )
+				set.add( wrap( strs[i], wrap ) );
+		}
+		
+		return set;
+	}
+	
+	public static String wrap( String str, char wrap )
+	{
+		return String.format( "%s%s%s", wrap, str, wrap );
 	}
 }

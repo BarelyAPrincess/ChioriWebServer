@@ -44,61 +44,26 @@ public class ConsoleLogger
 		this.logger = logger;
 	}
 	
-	public String getId()
+	public void debug( Object... var1 )
 	{
-		return id;
+		if ( !Loader.getConfig().getBoolean( "console.developerMode", true ) )
+			return;
+		
+		for ( Object var2 : var1 )
+			info( ConsoleColor.NEGATIVE + "" + ConsoleColor.YELLOW + " >>>>   " + var2.toString() + "   <<<< " );
 	}
 	
-	public void highlight( String msg )
+	public void exceptions( EvalException... exceptions )
 	{
-		log( Level.INFO, ConsoleColor.GOLD + "" + ConsoleColor.NEGATIVE + msg );
-	}
-	
-	public void info( String s )
-	{
-		log( Level.INFO, ConsoleColor.WHITE + s );
-	}
-	
-	public void warning( String s )
-	{
-		log( Level.WARNING, ConsoleColor.GOLD + s );
-	}
-	
-	public void warning( String s, Object... aobject )
-	{
-		logger.log( Level.WARNING, ConsoleColor.GOLD + s, aobject );
-	}
-	
-	public void warning( String s, Throwable throwable )
-	{
-		log( Level.WARNING, ConsoleColor.GOLD + s, throwable );
-	}
-	
-	public void severe( String s )
-	{
-		log( Level.SEVERE, ConsoleColor.RED + s );
-	}
-	
-	public void severe( Throwable t )
-	{
-		log( Level.SEVERE, ConsoleColor.RED + t.getMessage(), t );
-	}
-	
-	public void severe( String s, Throwable t )
-	{
-		log( Level.SEVERE, ConsoleColor.RED + s, t );
-	}
-	
-	public void panic( Throwable e )
-	{
-		severe( e );
-		Loader.stop( "The server is stopping due to a severe error!" );
-	}
-	
-	public void panic( String var1 )
-	{
-		severe( var1 );
-		Loader.stop( var1 );
+		for ( EvalException e : exceptions )
+			if ( e.errorLevel().isEnabledLevel() )
+				if ( e.isScriptingException() )
+				{
+					ScriptTraceElement element = e.getScriptTrace()[0];
+					severe( String.format( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s:%s, message '%s'", e.getClass().getName(), element.context().filename(), element.getLineNumber(), ( element.getColumnNumber() > 0 ) ? element.getColumnNumber() : 0, e.getMessage() ) );
+				}
+				else
+					severe( String.format( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s, message '%s'", e.getClass().getName(), e.getStackTrace()[0].getFileName(), e.getStackTrace()[0].getLineNumber(), e.getMessage() ) );
 	}
 	
 	public void fine( String var1 )
@@ -116,23 +81,35 @@ public class ConsoleLogger
 		logger.log( Level.FINEST, var1 );
 	}
 	
-	private void printHeader()
+	public String getId()
 	{
-		if ( lineCount > 40 )
-		{
-			lineCount = 0;
-			log( Level.FINE, ConsoleColor.GOLD + "<CLIENT ID>     <MESSAGE>" );
-		}
-		
-		lineCount++;
+		return id;
+	}
+	
+	protected Logger getLogger()
+	{
+		return logger;
+	}
+	
+	public void highlight( String msg )
+	{
+		log( Level.INFO, ConsoleColor.GOLD + "" + ConsoleColor.NEGATIVE + msg );
+	}
+	
+	public void info( String s )
+	{
+		log( Level.INFO, ConsoleColor.WHITE + s );
+	}
+	
+	public void log( Level l, String msg )
+	{
+		logger.log( l, msg );
 	}
 	
 	public void log( Level l, String client, String msg )
 	{
 		if ( client.length() < 15 )
-		{
 			client = client + Strings.repeat( " ", 15 - client.length() );
-		}
 		
 		printHeader();
 		
@@ -142,11 +119,6 @@ public class ConsoleLogger
 	public void log( Level l, String msg, Throwable t )
 	{
 		logger.log( l, msg, t );
-	}
-	
-	public void log( Level l, String msg )
-	{
-		logger.log( l, msg );
 	}
 	
 	public String[] multilineColorRepeater( String var1 )
@@ -159,37 +131,61 @@ public class ConsoleLogger
 		String color = ConsoleColor.getLastColors( var1[0] );
 		
 		for ( int l = 0; l < var1.length; l++ )
-		{
 			var1[l] = color + var1[l];
-		}
 		
 		return var1;
 	}
 	
-	public void debug( String... var1 )
+	public void panic( String var1 )
 	{
-		if ( !Loader.getConfig().getBoolean( "console.developerMode", true ) )
-			return;
+		severe( var1 );
+		Loader.stop( var1 );
+	}
+	
+	public void panic( Throwable e )
+	{
+		severe( e );
+		Loader.stop( "The server is stopping due to a severe error!" );
+	}
+	
+	private void printHeader()
+	{
+		if ( lineCount > 40 )
+		{
+			lineCount = 0;
+			log( Level.FINE, ConsoleColor.GOLD + "<CLIENT ID>     <MESSAGE>" );
+		}
 		
-		for ( String var2 : var1 )
-			info( ConsoleColor.NEGATIVE + "" + ConsoleColor.YELLOW + " >>>>   " + var2 + "   <<<< " );
+		lineCount++;
 	}
 	
-	protected Logger getLogger()
+	public void severe( String s )
 	{
-		return logger;
+		log( Level.SEVERE, ConsoleColor.RED + s );
 	}
 	
-	public void exceptions( EvalException... exceptions )
+	public void severe( String s, Throwable t )
 	{
-		for ( EvalException e : exceptions )
-			if ( e.errorLevel().isEnabledLevel() )
-				if ( e.isScriptingException() )
-				{
-					ScriptTraceElement element = e.getScriptTrace()[0];
-					severe( String.format( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s:%s, message '%s'", e.getClass().getName(), element.context().filename(), element.getLineNumber(), ( element.getColumnNumber() > 0 ) ? element.getColumnNumber() : 0, e.getMessage() ) );
-				}
-				else
-					severe( String.format( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s, message '%s'", e.getClass().getName(), e.getStackTrace()[0].getFileName(), e.getStackTrace()[0].getLineNumber(), e.getMessage() ) );
+		log( Level.SEVERE, ConsoleColor.RED + s, t );
+	}
+	
+	public void severe( Throwable t )
+	{
+		log( Level.SEVERE, ConsoleColor.RED + t.getMessage(), t );
+	}
+	
+	public void warning( String s )
+	{
+		log( Level.WARNING, ConsoleColor.GOLD + s );
+	}
+	
+	public void warning( String s, Object... aobject )
+	{
+		logger.log( Level.WARNING, ConsoleColor.GOLD + s, aobject );
+	}
+	
+	public void warning( String s, Throwable throwable )
+	{
+		log( Level.WARNING, ConsoleColor.GOLD + s, throwable );
 	}
 }

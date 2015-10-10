@@ -44,7 +44,7 @@ public abstract class AccountEvents extends BuiltinEventCreator
 		if ( event.getContext() == null )
 			return null;
 		
-		if ( event.getResult() != AccountResult.LOGIN_SUCCESS )
+		if ( !event.getResult().isSuccess() )
 		{
 			AccountManager.getLogger().warning( event.getResult().getMessage() );
 			return null;
@@ -64,7 +64,7 @@ public abstract class AccountEvents extends BuiltinEventCreator
 		if ( event.getContext() == null )
 			throw AccountResult.INCORRECT_LOGIN.exception();
 		
-		if ( event.getResult() != AccountResult.LOGIN_SUCCESS )
+		if ( !event.getResult().isSuccess() )
 			throw event.getResult().exception();
 		
 		AccountMeta acct = new AccountMeta( event.getContext() );

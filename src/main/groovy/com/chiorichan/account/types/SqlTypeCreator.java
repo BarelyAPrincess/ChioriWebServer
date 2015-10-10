@@ -8,7 +8,6 @@
  */
 package com.chiorichan.account.types;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -28,11 +27,13 @@ import com.chiorichan.account.AccountType;
 import com.chiorichan.account.event.AccountLookupEvent;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
-import com.chiorichan.database.DatabaseEngine;
-import com.chiorichan.database.SqlTableColumns;
+import com.chiorichan.datastore.sql.SqlTableColumns;
+import com.chiorichan.datastore.sql.bases.SQLDatastore;
+import com.chiorichan.datastore.sql.query.SQLQuerySelect;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.tasks.Timings;
+import com.chiorichan.util.Versioning;
 import com.google.common.collect.Maps;
 
 /**
@@ -42,7 +43,7 @@ public class SqlTypeCreator extends AccountTypeCreator
 {
 	public static final SqlTypeCreator INSTANCE = new SqlTypeCreator();
 	
-	final DatabaseEngine sql;
+	final SQLDatastore sql;
 	final String table;
 	final List<String> accountFields;
 	private boolean enabled = true;
@@ -86,7 +87,7 @@ public class SqlTypeCreator extends AccountTypeCreator
 	{
 		try
 		{
-			return sql.getRowCount( sql.query( "SELECT * FROM `" + table + "` WHERE `acctId`='" + acctId + "';" ) ) > 0;
+			return sql.table( table ).select().where( "acctId" ).matches( acctId ).execute().rowCount() > 0;
 		}
 		catch ( SQLException e )
 		{
@@ -99,7 +100,8 @@ public class SqlTypeCreator extends AccountTypeCreator
 	{
 		try
 		{
-			sql.queryUpdate( "UPDATE `" + table + "` SET `lastActive` = '" + Timings.epoch() + "', `lastLoginFail` = 0, `numLoginFail` = 0 WHERE `acctID` = '" + meta.getId() + "'" );
+			sql.table( table ).update().value( "lastActive", Timings.epoch() ).value( "lastLoginFail", 0 ).value( "numLoginFail", 0 ).where( "acctID" ).matches( meta.getId() ).execute();
+			// sql.queryUpdate( "UPDATE `" + table + "` SET `lastActive` = '" + Timings.epoch() + "', `lastLoginFail` = 0, `numLoginFail` = 0 WHERE `acctID` = '" + meta.getId() + "'" );
 		}
 		catch ( SQLException e )
 		{
@@ -131,18 +133,20 @@ public class SqlTypeCreator extends AccountTypeCreator
 		return accountFields;
 	}
 	
-	public ResultSet getResultSet( String uid ) throws SQLException
-	{
-		if ( uid == null || uid.isEmpty() )
-			return null;
-		
-		ResultSet rs = sql.query( "SELECT * FROM `accounts` WHERE `acctID` = '" + uid + "' LIMIT 1;" );
-		
-		if ( rs == null || sql.getRowCount( rs ) < 1 )
-			return null;
-		
-		return rs;
-	}
+	/*
+	 * public ResultSet getResultSet( String uid ) throws SQLException
+	 * {
+	 * if ( uid == null || uid.isEmpty() )
+	 * return null;
+	 * 
+	 * SQLExecute execute = sql.table( "accounts" ).select().where( "acctId" ).equals( uid ).limit( 1 ).execute();
+	 * 
+	 * if ( execute.rowCount() < 1 )
+	 * return null;
+	 * 
+	 * return execute.resultSet();
+	 * }
+	 */
 	
 	@Override
 	public boolean isEnabled()
@@ -159,7 +163,8 @@ public class SqlTypeCreator extends AccountTypeCreator
 		}
 		catch ( SQLException e )
 		{
-			// e.printStackTrace();
+			if ( Versioning.isDevelopment() )
+				e.printStackTrace();
 		}
 		catch ( AccountException e )
 		{
@@ -184,34 +189,40 @@ public class SqlTypeCreator extends AccountTypeCreator
 			throw new AccountException( AccountResult.EMPTY_ACCTID );
 		
 		Set<String> accountFieldSet = new HashSet<String>( accountFields );
-		Set<String> accountColumnSet = new HashSet<String>( sql.getTableColumnNames( table ) );
+		Set<String> accountColumnSet = new HashSet<String>( sql.table( table ).columnNames() );
 		
 		accountFieldSet.add( "acctId" );
 		accountFieldSet.add( "username" );
 		
-		String additionalAccountFields = "";
+		SQLQuerySelect select = sql.table( table ).select();
+		
+		// String additionalAccountFields = "";
 		for ( String f : accountFieldSet )
 			if ( !f.isEmpty() )
 				if ( accountColumnSet.contains( f ) )
-					additionalAccountFields += " OR `" + f + "` = '" + acctId + "'";
+					select.or().where( f ).matches( acctId );
 				else
 					for ( String c : accountColumnSet )
 						if ( c.equalsIgnoreCase( f ) )
 						{
-							additionalAccountFields += " OR `" + c + "` = '" + acctId + "'";
+							select.or().where( c ).matches( acctId );
 							break;
 						}
 		
-		ResultSet rs = sql.query( "SELECT * FROM `" + table + "` WHERE " + additionalAccountFields.substring( 4 ) + ";" );
+		select.execute();
+		
+		// ResultSet rs = sql.query( "SELECT * FROM `" + table + "` WHERE " + additionalAccountFields.substring( 4 ) + ";" );
 		
 		AccountContextImpl context = new AccountContextImpl( this, AccountType.SQL, acctId, "%" );
 		
-		if ( rs == null || sql.getRowCount( rs ) < 1 )
+		if ( select.rowCount() < 1 )
 			throw new AccountException( AccountResult.INCORRECT_LOGIN, context );
 		
-		context.setAcctId( rs.getString( "acctId" ) );
-		context.setSiteId( rs.getString( "siteId" ) );
-		context.setValues( DatabaseEngine.convertRow( rs ) );
+		Map<String, String> row = select.rowToStringMap();
+		
+		context.setAcctId( row.get( "acctId" ) );
+		context.setSiteId( row.get( "siteId" ) );
+		context.setValues( select.rowToMap() );
 		
 		return context;
 	}
@@ -234,7 +245,7 @@ public class SqlTypeCreator extends AccountTypeCreator
 	{
 		try
 		{
-			SqlTableColumns columns = sql.getTableColumns( table );
+			SqlTableColumns columns = sql.table( table ).columns();
 			Map<String, Object> metaData = context.meta() == null ? context.getValues() : context.meta().getMeta();
 			Map<String, Object> toSave = Maps.newTreeMap();
 			Map<String, Class<?>> newColumns = Maps.newHashMap();
@@ -263,7 +274,7 @@ public class SqlTypeCreator extends AccountTypeCreator
 				for ( Entry<String, Class<?>> c : newColumns.entrySet() )
 					try
 					{
-						sql.addColumn( table, c.getKey(), c.getValue() );
+						sql.table( table ).addColumn( c.getValue(), c.getKey(), 255 );
 					}
 					catch ( SQLException e )
 					{
@@ -274,10 +285,11 @@ public class SqlTypeCreator extends AccountTypeCreator
 			toSave.put( "acctId", context.getAcctId() );
 			toSave.put( "siteId", context.getSiteId() );
 			
-			ResultSet rs = sql.query( "SELECT * FROM `" + table + "` WHERE `acctId` = '" + context.getAcctId() + "' LIMIT 1;" );
+			SQLQuerySelect select = sql.table( table ).select().where( "acctId" ).matches( context.getAcctId() ).limit( 1 ).execute();
+			// ResultSet rs = sql.query( "SELECT * FROM `" + table + "` WHERE `acctId` = '" + context.getAcctId() + "' LIMIT 1;" );
 			
-			if ( sql.getRowCount( rs ) > 0 )
-				sql.update( table, toSave, "`acctId` = '" + context.getAcctId() + "'", 1 );
+			if ( select.rowCount() > 0 )
+				sql.table( table ).update().values( toSave ).where( "acctId" ).matches( context.getAcctId() ).limit( 1 ).execute();
 			else
 			{
 				SQLException exp;
@@ -320,7 +332,7 @@ public class SqlTypeCreator extends AccountTypeCreator
 	{
 		try
 		{
-			sql.insert( table, toSave );
+			sql.table( table ).insert().values( toSave ).execute();
 			return null;
 		}
 		catch ( SQLException e )
@@ -341,7 +353,7 @@ public class SqlTypeCreator extends AccountTypeCreator
 	{
 		try
 		{
-			sql.queryUpdate( "UPDATE `accounts` SET `lastActive` = '" + Timings.epoch() + "', `lastLogin` = '" + Timings.epoch() + "', `lastLoginFail` = 0, `numLoginFail` = 0 WHERE `acctId` = '" + meta.getId() + "'" );
+			sql.table( "accounts" ).update().value( "lastActive", Timings.epoch() ).value( "lastLogin", Timings.epoch() ).value( "lastLoginFail", 0 ).value( "numLoginFail", 0 ).where( "acctId" ).matches( meta.getId() ).execute();
 		}
 		catch ( SQLException e )
 		{

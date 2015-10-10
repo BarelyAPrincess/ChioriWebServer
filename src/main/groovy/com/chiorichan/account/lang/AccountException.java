@@ -85,10 +85,10 @@ public class AccountException extends RuntimeException
 	public AccountResult getResult()
 	{
 		if ( result == null )
-			result = AccountResult.UNKNOWN_ERROR;
+			result = AccountResult.DEFAULT;
 		
 		if ( !result.isIgnorable() )
-			result.setThrowable( this );
+			result = result.setThrowable( this );
 		
 		return result;
 	}

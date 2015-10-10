@@ -13,9 +13,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
-import java.net.ConnectException;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,7 +26,11 @@ import org.json.JSONObject;
 import com.chiorichan.Loader;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.configuration.file.YamlConfiguration;
-import com.chiorichan.database.DatabaseEngine;
+import com.chiorichan.datastore.DatastoreManager;
+import com.chiorichan.datastore.sql.bases.H2SQLDatastore;
+import com.chiorichan.datastore.sql.bases.MySQLDatastore;
+import com.chiorichan.datastore.sql.bases.SQLDatastore;
+import com.chiorichan.datastore.sql.bases.SQLiteDatastore;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.SiteLoadEvent;
@@ -65,7 +66,7 @@ public class Site
 	private Map<String, String> subdomains = Maps.newConcurrentMap(), aliases = Maps.newConcurrentMap();
 	private List<String> metatags = Lists.newCopyOnWriteArrayList(), protectedFiles = Lists.newCopyOnWriteArrayList();
 	private YamlConfiguration config;
-	private DatabaseEngine sql;
+	private SQLDatastore sql;
 	private SiteType siteType = SiteType.NOTSET;
 	private File file;
 	private List<String> cachePatterns = Lists.newArrayList();
@@ -200,141 +201,134 @@ public class Site
 	}
 	
 	@SuppressWarnings( "unchecked" )
-	Site( ResultSet rs ) throws SiteException, StartupException
+	Site( Map<String, String> data ) throws SiteException, StartupException
 	{
 		siteType = SiteType.SQL;
 		file = null;
 		
+		Type mapType = new TypeToken<HashMap<String, String>>()
+		{
+		}.getType();
+		
+		siteId = data.get( "siteId" );
+		title = data.get( "title" );
+		domain = data.get( "domain" );
+		
+		encryptionKey = data.get( "encryptionKey" );
+		
+		String reason = null;
+		
+		if ( siteId == null )
+			reason = "the provided Site Id is NULL. Check configs";
+		else
+			siteId = siteId.toLowerCase();
+		
+		if ( title == null )
+			title = Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Chiori-chan's Web Server Site" );
+		
+		if ( domain == null )
+			reason = "the provided domain is NULL. Check configs";
+		else
+			domain = domain.toLowerCase();
+		
+		if ( SiteManager.INSTANCE.getSiteById( siteId ) != null )
+			reason = "there already exists a site by the provided Site Id '" + siteId + "'";
+		
+		if ( reason != null )
+			throw new SiteException( "Could not load site from Database because " + reason + "." );
+		
+		Loader.getLogger().info( "Loading site '" + siteId + "' with title '" + title + "' from Database." );
+		
+		Gson gson = new GsonBuilder().create();
 		try
 		{
-			Type mapType = new TypeToken<HashMap<String, String>>()
-			{
-			}.getType();
-			
-			siteId = rs.getString( "siteId" );
-			title = rs.getString( "title" );
-			domain = rs.getString( "domain" );
-			
-			encryptionKey = rs.getString( "encryptionKey" );
-			
-			String reason = null;
-			
-			if ( siteId == null )
-				reason = "the provided Site Id is NULL. Check configs";
-			else
-				siteId = siteId.toLowerCase();
-			
-			if ( title == null )
-				title = Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Chiori-chan's Web Server Site" );
-			
-			if ( domain == null )
-				reason = "the provided domain is NULL. Check configs";
-			else
-				domain = domain.toLowerCase();
-			
-			if ( SiteManager.INSTANCE.getSiteById( siteId ) != null )
-				reason = "there already exists a site by the provided Site Id '" + siteId + "'";
-			
-			if ( reason != null )
-				throw new SiteException( "Could not load site from Database because " + reason + "." );
-			
-			Loader.getLogger().info( "Loading site '" + siteId + "' with title '" + title + "' from Database." );
-			
-			Gson gson = new GsonBuilder().create();
-			try
-			{
-				if ( !rs.getString( "protected" ).isEmpty() )
-					protectedFiles.addAll( gson.fromJson( new JSONObject( rs.getString( "protected" ) ).toString(), ArrayList.class ) );
-			}
-			catch ( Exception e )
-			{
-				Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'protected' field for site '" + siteId + "'" );
-			}
-			
-			String sources = rs.getString( "source" );
-			
-			if ( sources == null || sources.isEmpty() )
-				source = getAbsoluteRoot();
-			else if ( sources.startsWith( "." ) )
-				source = new File( getAbsoluteRoot() + sources );
-			else
-			{
-				source = new File( getAbsoluteRoot(), sources );
-				protectedFiles.add( "/" + sources );
-			}
-			
-			if ( source.isFile() )
-				source.delete();
-			
-			if ( !source.exists() )
-				source.mkdirs();
-			
-			String resources = rs.getString( "resource" );
-			
-			if ( resources == null || resources.isEmpty() )
-				resource = getAbsoluteRoot();
-			else if ( resources.startsWith( "." ) )
-				resource = new File( getAbsoluteRoot() + resources );
-			else
-			{
-				resource = new File( getAbsoluteRoot(), resources );
-				protectedFiles.add( "/" + resources );
-			}
-			
-			if ( resource.isFile() )
-				resource.delete();
-			
-			if ( !resource.exists() )
-				resource.mkdirs();
-			
-			try
-			{
-				if ( !rs.getString( "metatags" ).isEmpty() )
-					metatags.addAll( gson.fromJson( new JSONObject( rs.getString( "metatags" ) ).toString(), ArrayList.class ) );
-			}
-			catch ( Exception e )
-			{
-				Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'metatags' field for site '" + siteId + "'" );
-			}
-			
-			try
-			{
-				if ( !rs.getString( "aliases" ).isEmpty() )
-					aliases = gson.fromJson( new JSONObject( rs.getString( "aliases" ) ).toString(), mapType );
-			}
-			catch ( Exception e )
-			{
-				Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'aliases' field for site '" + siteId + "'" );
-			}
-			
-			try
-			{
-				if ( !rs.getString( "subdomains" ).isEmpty() )
-					subdomains = gson.fromJson( new JSONObject( rs.getString( "subdomains" ) ).toString(), mapType );
-			}
-			catch ( Exception e )
-			{
-				Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'subdomains' field for site '" + siteId + "'" );
-			}
-			
-			try
-			{
-				String yaml = rs.getString( "configYaml" );
-				InputStream is = new ByteArrayInputStream( yaml.getBytes( "ISO-8859-1" ) );
-				config = YamlConfiguration.loadConfiguration( is );
-			}
-			catch ( Exception e )
-			{
-				Loader.getLogger().warning( "MALFORMED YAML EXPRESSION for 'configYaml' field for site '" + siteId + "'" );
-				config = new YamlConfiguration();
-			}
-			
-			finishLoad();
+			if ( !data.get( "protected" ).isEmpty() )
+				protectedFiles.addAll( gson.fromJson( new JSONObject( data.get( "protected" ) ).toString(), ArrayList.class ) );
 		}
-		catch ( SQLException e )
+		catch ( Exception e )
 		{
-			throw new SiteException( e );
+			Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'protected' field for site '" + siteId + "'" );
 		}
+		
+		String sources = data.get( "source" );
+		
+		if ( sources == null || sources.isEmpty() )
+			source = getAbsoluteRoot();
+		else if ( sources.startsWith( "." ) )
+			source = new File( getAbsoluteRoot() + sources );
+		else
+		{
+			source = new File( getAbsoluteRoot(), sources );
+			protectedFiles.add( "/" + sources );
+		}
+		
+		if ( source.isFile() )
+			source.delete();
+		
+		if ( !source.exists() )
+			source.mkdirs();
+		
+		String resources = data.get( "resource" );
+		
+		if ( resources == null || resources.isEmpty() )
+			resource = getAbsoluteRoot();
+		else if ( resources.startsWith( "." ) )
+			resource = new File( getAbsoluteRoot() + resources );
+		else
+		{
+			resource = new File( getAbsoluteRoot(), resources );
+			protectedFiles.add( "/" + resources );
+		}
+		
+		if ( resource.isFile() )
+			resource.delete();
+		
+		if ( !resource.exists() )
+			resource.mkdirs();
+		
+		try
+		{
+			if ( !data.get( "metatags" ).isEmpty() )
+				metatags.addAll( gson.fromJson( new JSONObject( data.get( "metatags" ) ).toString(), ArrayList.class ) );
+		}
+		catch ( Exception e )
+		{
+			Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'metatags' field for site '" + siteId + "'" );
+		}
+		
+		try
+		{
+			if ( !data.get( "aliases" ).isEmpty() )
+				aliases = gson.fromJson( new JSONObject( data.get( "aliases" ) ).toString(), mapType );
+		}
+		catch ( Exception e )
+		{
+			Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'aliases' field for site '" + siteId + "'" );
+		}
+		
+		try
+		{
+			if ( !data.get( "subdomains" ).isEmpty() )
+				subdomains = gson.fromJson( new JSONObject( data.get( "subdomains" ) ).toString(), mapType );
+		}
+		catch ( Exception e )
+		{
+			Loader.getLogger().warning( "MALFORMED JSON EXPRESSION for 'subdomains' field for site '" + siteId + "'" );
+		}
+		
+		try
+		{
+			String yaml = data.get( "configYaml" );
+			InputStream is = new ByteArrayInputStream( yaml.getBytes( "ISO-8859-1" ) );
+			config = YamlConfiguration.loadConfiguration( is );
+		}
+		catch ( Exception e )
+		{
+			Loader.getLogger().warning( "MALFORMED YAML EXPRESSION for 'configYaml' field for site '" + siteId + "'" );
+			config = new YamlConfiguration();
+		}
+		
+		finishLoad();
 	}
 	
 	Site( String siteId )
@@ -384,38 +378,36 @@ public class Site
 		if ( siteId.equalsIgnoreCase( "default" ) )
 			sql = Loader.getDatabase();
 		else if ( config != null && config.getConfigurationSection( "database" ) != null )
-		{
-			String type = config.getString( "database.type" );
-			
-			String host = config.getString( "database.host" );
-			String port = config.getString( "database.port" );
-			String database = config.getString( "database.database" );
-			String username = config.getString( "database.username" );
-			String password = config.getString( "database.password" );
-			
-			String filename = config.getString( "database.filename" );
-			
-			sql = new DatabaseEngine();
-			
-			try
+			switch ( config.getString( "database.type", "sqlite" ).toLowerCase() )
 			{
-				if ( type.equalsIgnoreCase( "mysql" ) )
-					sql.initMySql( database, username, password, host, port );
-				else if ( type.equalsIgnoreCase( "sqlite" ) )
-					sql.initSQLite( filename );
-				else if ( type.equalsIgnoreCase( "h2" ) )
-					sql.initH2( filename );
-				else
-					throw new SiteException( "The SqlConnector for site '" + siteId + "' can not support anything other then mySql or sqLite at the moment. Please change 'database.type' in the site config to 'mysql' or 'sqLite' and set the connection params." );
+				case "sqlite":
+				{
+					sql = new SQLiteDatastore( config.getString( "database.dbfile", config.getString( "database.filename", "server.db" ) ) );
+					break;
+				}
+				case "mysql":
+				{
+					String host = config.getString( "database.host", "localhost" );
+					String port = config.getString( "database.port", "3306" );
+					String database = config.getString( "database.database", "chiorifw" );
+					String username = config.getString( "database.username", "fwuser" );
+					String password = config.getString( "database.password", "fwpass" );
+					
+					sql = new MySQLDatastore( database, username, password, host, port );
+					break;
+				}
+				case "h2":
+				{
+					sql = new H2SQLDatastore( config.getString( "database.dbfile", config.getString( "database.filename", "server.db" ) ) );
+					break;
+				}
+				case "none":
+				case "":
+					DatastoreManager.getLogger().warning( "The Database for site " + siteId + " is unconfigured, some features maybe not function as expected. See config option 'database.type' in the site config and set the connection params." );
+					break;
+				default:
+					DatastoreManager.getLogger().severe( "We are sorry, the Database Engine currently only supports mysql, sqlite, and h2 databases but we found '" + config.getString( "server.database.type", "sqlite" ).toLowerCase() + "', please change 'database.type' to 'mysql', 'sqlite', or 'h2' in the site config and set the connection params" );
 			}
-			catch ( SQLException e )
-			{
-				if ( e.getCause() instanceof ConnectException )
-					throw new SiteException( "We had a problem connecting to database '" + database + "'. Reason: " + e.getCause().getMessage() );
-				else
-					throw new SiteException( e.getMessage() );
-			}
-		}
 		
 		sessionPersistence = config.getString( "sessions.persistenceMethod", sessionPersistence ).toLowerCase();
 		
@@ -504,7 +496,7 @@ public class Site
 		return cachePatterns;
 	}
 	
-	public DatabaseEngine getDatabase()
+	public SQLDatastore getDatabase()
 	{
 		return sql;
 	}
@@ -786,7 +778,7 @@ public class Site
 		// TODO Auto-generated method stub
 	}
 	
-	protected Site setDatabase( DatabaseEngine sql )
+	protected Site setDatabase( SQLDatastore sql )
 	{
 		this.sql = sql;
 		return this;

@@ -12,17 +12,19 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.lang3.Validate;
+
 import com.google.common.collect.Maps;
 
 /**
- * Provides some basic Map utils to the server
+ * Used to cast a map of objects from an unknown type to a single target type
  */
-public class MapFunc<K, V>
+public class MapCaster<K, V>
 {
 	Class<K> kClz;
 	Class<V> vClz;
 	
-	public MapFunc( Class<K> kClz, Class<V> vClz )
+	public MapCaster( Class<K> kClz, Class<V> vClz )
 	{
 		this.kClz = kClz;
 		this.vClz = vClz;
@@ -38,7 +40,9 @@ public class MapFunc<K, V>
 	
 	public Map<K, V> castTypes( Map<?, ?> map )
 	{
-		Map<K, V> newMap = Maps.newHashMap();
+		Validate.notNull( map );
+		
+		Map<K, V> newMap = Maps.newLinkedHashMap();
 		
 		for ( Entry<?, ?> e : map.entrySet() )
 		{

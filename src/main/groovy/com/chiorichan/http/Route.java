@@ -18,7 +18,7 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 
 import com.chiorichan.Loader;
-import com.chiorichan.database.DatabaseEngine;
+import com.chiorichan.database.DatabaseEngineLegacy;
 import com.chiorichan.http.Routes.RouteType;
 import com.chiorichan.site.Site;
 import com.chiorichan.util.StringFunc;
@@ -32,16 +32,18 @@ public class Route
 	protected Map<String, String> rewrites = Maps.newHashMap();
 	protected Site site;
 	
+	protected Route( Map<String, String> params, Site site ) throws SQLException
+	{
+		this.site = site;
+		type = RouteType.SQL;
+		this.params = params;
+	}
+	
 	protected Route( ResultSet rs, Site site ) throws SQLException
 	{
 		this.site = site;
 		type = RouteType.SQL;
-		params = DatabaseEngine.toStringsMap( rs );
-	}
-	
-	public String toString()
-	{
-		return "Type: " + type + ", Params: " + params;
+		params = DatabaseEngineLegacy.toStringsMap( rs );
 	}
 	
 	/**
@@ -95,21 +97,6 @@ public class Route
 		params.put( "domain", site.getDomain() );
 	}
 	
-	public RouteType getRouteType()
-	{
-		return type;
-	}
-	
-	public Map<String, String> getRewrites()
-	{
-		return rewrites;
-	}
-	
-	public Map<String, String> getParams()
-	{
-		return params;
-	}
-	
 	public File getFile()
 	{
 		if ( params.get( "file" ) != null && !params.get( "file" ).isEmpty() )
@@ -124,6 +111,21 @@ public class Route
 			return params.get( "html" );
 		
 		return null;
+	}
+	
+	public Map<String, String> getParams()
+	{
+		return params;
+	}
+	
+	public Map<String, String> getRewrites()
+	{
+		return rewrites;
+	}
+	
+	public RouteType getRouteType()
+	{
+		return type;
 	}
 	
 	public String match( String domain, String subdomain, String uri )
@@ -190,7 +192,6 @@ public class Route
 		
 		boolean match = true;
 		for ( int i = 0; i < Math.max( props.size(), uris.size() ); i++ )
-		{
 			try
 			{
 				Loader.getLogger().fine( prop + " --> " + props.get( i ) + " == " + uris.get( i ) );
@@ -227,8 +228,13 @@ public class Route
 				match = false;
 				break;
 			}
-		}
 		
 		return ( match ) ? weight : null;
+	}
+	
+	@Override
+	public String toString()
+	{
+		return "Type: " + type + ", Params: " + params;
 	}
 }

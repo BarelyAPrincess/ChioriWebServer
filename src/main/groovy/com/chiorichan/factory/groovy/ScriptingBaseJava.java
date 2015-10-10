@@ -38,7 +38,7 @@ import org.ocpsoft.prettytime.PrettyTime;
 
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
-import com.chiorichan.database.DatabaseEngine;
+import com.chiorichan.database.DatabaseEngineLegacy;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.lang.PluginNotFoundException;
 import com.chiorichan.plugin.loader.Plugin;
@@ -562,9 +562,9 @@ public abstract class ScriptingBaseJava extends Script
 	 * @throws IllegalStateException
 	 *             thrown if the requested database is unconfigured
 	 */
-	public DatabaseEngine getDatabase()
+	public DatabaseEngineLegacy getDatabase()
 	{
-		DatabaseEngine engine = getSite().getDatabase();
+		DatabaseEngineLegacy engine = getSite().getDatabase().getLegacy();
 		
 		if ( engine == null )
 			throw new IllegalStateException( "The site database is unconfigured. It will need to be setup in order for you to use the getDatabase() method." );
@@ -613,9 +613,9 @@ public abstract class ScriptingBaseJava extends Script
 	 * @throws IllegalStateException
 	 *             thrown if the requested database is unconfigured
 	 */
-	public DatabaseEngine getServerDatabase()
+	public DatabaseEngineLegacy getServerDatabase()
 	{
-		DatabaseEngine engine = Loader.getDatabase();
+		DatabaseEngineLegacy engine = Loader.getDatabase().getLegacy();
 		
 		if ( engine == null )
 			throw new IllegalStateException( "The server database is unconfigured. It will need to be setup in order for you to use the getServerDatabase() method." );
@@ -629,7 +629,7 @@ public abstract class ScriptingBaseJava extends Script
 	 * See {@link #getDatabase()}
 	 */
 	@Deprecated
-	public DatabaseEngine getSiteDatabase()
+	public DatabaseEngineLegacy getSiteDatabase()
 	{
 		return getDatabase();
 	}

@@ -1022,11 +1022,14 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			{
 				String msg = result.getMessage( username );
 				
-				if ( !result.isIgnorable() && result.hasCause() )
-				{
-					result.getThrowable().printStackTrace();
-					msg = result.getThrowable().getMessage();
-				}
+				if ( !result.isIgnorable() )
+					if ( result.hasCause() )
+					{
+						result.getThrowable().printStackTrace();
+						msg = result.getThrowable().getMessage();
+					}
+					else
+						Loader.getLogger().warning( "There was an unavoidable exception thrown but we had no StackTrace to print. :(" );
 				
 				AccountManager.getLogger().warning( ConsoleColor.RED + "Failed Login [id='" + username + "',hasPassword='" + ( password != null && !password.isEmpty() ) + "',authenticator='plaintext'`,reason='" + msg + "']" );
 				getResponse().sendRedirect( loginForm + "?msg=" + result.getMessage() + ( ( target == null || target.isEmpty() ) ? "" : "&target=" + target ) );

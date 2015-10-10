@@ -8,7 +8,6 @@
  */
 package com.chiorichan.account.auth;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.apache.commons.lang3.Validate;
@@ -20,7 +19,9 @@ import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
-import com.chiorichan.database.DatabaseEngine;
+import com.chiorichan.datastore.sql.SQLExecute;
+import com.chiorichan.datastore.sql.bases.SQLDatastore;
+import com.chiorichan.datastore.sql.query.SQLQuerySelect;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.RandomFunc;
@@ -47,21 +48,22 @@ public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
 		}
 	}
 	
-	private final DatabaseEngine db = Loader.getDatabase();
+	private final SQLDatastore db = Loader.getDatabase();
 	
 	OnetimeTokenAccountAuthenticator()
 	{
 		super( "token" );
 		
-		if ( !db.tableExist( "accounts_token" ) )
-			try
-			{
-				db.queryUpdate( "CREATE TABLE `accounts_token` ( `acctId` varchar(255) NOT NULL, `token` varchar(255) NOT NULL, `expires` int(12) NOT NULL);" );
-			}
-			catch ( SQLException e )
-			{
-				e.printStackTrace();
-			}
+		try
+		{
+			if ( !db.table( "account_token" ).exists() )
+				db.table( "account_token" ).addColumnVar( "acctId", 255 ).addColumnVar( "token", 255 ).addColumnInt( "expires", 12 );
+			// db.queryUpdate( "CREATE TABLE `accounts_token` ( `acctId` varchar(255) NOT NULL, `token` varchar(255) NOT NULL, `expires` int(12) NOT NULL);" );
+		}
+		catch ( SQLException e )
+		{
+			e.printStackTrace();
+		}
 		
 		TaskManager.INSTANCE.scheduleAsyncRepeatingTask( AccountManager.INSTANCE, 0L, Timings.TICK_MINUTE * Loader.getConfig().getInt( "sessions.cleanupInterval", 5 ), new Runnable()
 		{
@@ -70,7 +72,8 @@ public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
 			{
 				try
 				{
-					int deleted = db.queryUpdate( "DELETE FROM `accounts_token` WHERE `expires` > 0 AND `expires` < ?", Timings.epoch() );
+					// int deleted = db.queryUpdate( "DELETE FROM `accounts_token` WHERE `expires` > 0 AND `expires` < ?", Timings.epoch() );
+					int deleted = db.table( "accounts_token" ).delete().where( "expires" ).moreThan( 0 ).and().where( "expires" ).lessThan( Timings.epoch() ).execute().rowCount();
 					if ( deleted > 0 )
 						AccountManager.getLogger().info( ConsoleColor.DARK_AQUA + "The cleanup task deleted " + deleted + " expired login token(s)." );
 				}
@@ -111,12 +114,15 @@ public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
 			if ( meta == null )
 				throw AccountResult.INCORRECT_LOGIN.exception();
 			
-			ResultSet rs = db.query( "SELECT * FROM `accounts_token` WHERE `acctId` = '" + acctId + "' AND `token` = '" + token + "' LIMIT 1;" );
+			SQLExecute<SQLQuerySelect> execute = db.table( "accounts_token" ).select().where( "acctId" ).matches( acctId ).and().where( "token" ).matches( token ).limit( 1 ).result();
 			
-			if ( rs == null || db.getRowCount( rs ) < 1 )
+			// ResultSet rs = db.query( "SELECT * FROM `accounts_token` WHERE `acctId` = '" + acctId + "' AND `token` = '" + token + "' LIMIT 1;" );
+			// if ( rs == null || db.getRowCount( rs ) < 1 )
+			
+			if ( execute.rowCount() == 0 )
 				throw AccountResult.INCORRECT_LOGIN.setMessage( "The provided token did not match any saved tokens" + ( Versioning.isDevelopment() ? ", token: " + token : "." ) ).exception();
 			
-			if ( rs.getInt( "expires" ) > 0 && rs.getInt( "expires" ) < Timings.epoch() )
+			if ( execute.getInt( "expires" ) > 0 && execute.getInt( "expires" ) < Timings.epoch() )
 				throw AccountResult.EXPIRED_LOGIN.exception();
 			
 			deleteToken( acctId, token );
@@ -143,7 +149,8 @@ public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
 		
 		try
 		{
-			return db.queryUpdate( "DELETE FROM `accounts_token` WHERE `acctId` = ? AND `token` = ? LIMIT 1;", acctId, token ) > 0;
+			return db.table( "accounts_token" ).delete().where( "acctId" ).matches( acctId ).and().where( "token" ).matches( token ).execute().rowCount() > 0;
+			// return db.queryUpdate( "DELETE FROM `accounts_token` WHERE `acctId` = ? AND `token` = ? LIMIT 1;", acctId, token ) > 0;
 		}
 		catch ( SQLException e )
 		{
@@ -166,9 +173,10 @@ public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
 		String token = RandomFunc.randomize( acct.getId() ) + Timings.epoch();
 		try
 		{
-			if ( db.queryUpdate( "INSERT INTO `accounts_token` (`acctId`,`token`,`expires`) VALUES (?,?,?);", acct.getId(), token, ( Timings.epoch() + ( 60 * 60 * 24 * 7 ) ) ) < 1 )
+			// if ( db.queryUpdate( "INSERT INTO `accounts_token` (`acctId`,`token`,`expires`) VALUES (?,?,?);", acct.getId(), token, ( Timings.epoch() + ( 60 * 60 * 24 * 7 ) ) ) < 1 )
+			if ( db.table( "accounts_token" ).insert().value( "acctId", acct.getId() ).value( "token", token ).value( "expires", ( Timings.epoch() + ( 60 * 60 * 24 * 7 ) ) ).execute().rowCount() < 0 )
 			{
-				AccountManager.getLogger().severe( "We had an unknown issue inserting token '" + token + "' in the database!" );
+				AccountManager.getLogger().severe( "We had an unknown issue inserting token '" + token + "' into the database!" );
 				return null;
 			}
 		}

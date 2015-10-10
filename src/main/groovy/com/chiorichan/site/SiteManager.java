@@ -11,7 +11,6 @@ package com.chiorichan.site;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
@@ -24,7 +23,8 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.ServerManager;
-import com.chiorichan.database.DatabaseEngine;
+import com.chiorichan.datastore.sql.bases.SQLDatastore;
+import com.chiorichan.datastore.sql.query.SQLQuerySelect;
 import com.chiorichan.lang.SiteException;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.util.FileFunc;
@@ -109,9 +109,9 @@ public class SiteManager implements ServerManager
 		if ( siteMap.size() > 0 )
 			throw new StartupException( "Site manager already has sites loaded. Please unload the existing sites first." );
 		
-		DatabaseEngine sql = Loader.getDatabase();
+		SQLDatastore sql = Loader.getDatabase();
 		
-		// Load sites from YAML Filebase.
+		// Load sites from YAML file base.
 		File siteFileBase = new File( "sites" );
 		
 		FileFunc.directoryHealthCheck( siteFileBase );
@@ -155,38 +155,18 @@ public class SiteManager implements ServerManager
 						e.getCause().printStackTrace();
 				}
 		
-		// Load sites from Framework Database.
-		if ( sql != null && sql.isConnected() )
 			try
 			{
-				if ( !sql.tableExist( "sites" ) )
-				{
-					DatabaseEngine.getLogger().info( "We detected the non-existence of table 'sites' in the server database, we will attempt to create it now." );
-					
-					String table = "CREATE TABLE `sites` (";
-					table += "`siteId` varchar(255) NOT NULL,";
-					table += " `title` varchar(255) NOT NULL DEFAULT 'Unnamed Chiori Framework Site',";
-					table += " `domain` varchar(255) NOT NULL,";
-					table += " `source` varchar(255) NOT NULL DEFAULT 'pages',";
-					table += " `resource` varchar(255) NOT NULL DEFAULT 'resources',";
-					table += " `subdomains` text NOT NULL,";
-					table += " `protected` text NOT NULL,";
-					table += " `metatags` text NOT NULL,";
-					table += " `aliases` text NOT NULL,";
-					table += " `configYaml` text NOT NULL";
-					table += ");";
-					
-					sql.queryUpdate( table );
-				}
+				if ( !sql.table( "sites" ).exists() )
+					sql.table( "sites" ).addColumnVar( "siteId", 255 ).addColumnVar( "title", 255, "Unnamed Chiori-chan Web Server Site" ).addColumnVar( "domain", 255 ).addColumnVar( "source", 255, "pages" ).addColumnVar( "resource", 255, "resources" ).addColumnVar( "subdomains", 255 ).addColumnVar( "protected", 255 ).addColumnVar( "metatags", 255 ).addColumnVar( "aliases", 255 ).addColumnVar( "configYaml", 255 );
 				
-				// Load sites from the database
-				ResultSet rs = sql.query( "SELECT * FROM `sites`;" );
-				
-				if ( sql.getRowCount( rs ) > 0 )
-					do
+				SQLQuerySelect select = sql.table( "sites" ).select().execute();
+					
+				if ( select.rowCount() > 0 )
+					for ( Map<String, String> row: select.resultToStringSet() )
 						try
 						{
-							Site site = new Site( rs );
+							Site site = new Site( row );
 							
 							if ( site != null )
 								siteMap.put( site.getSiteId(), site );
@@ -197,7 +177,6 @@ public class SiteManager implements ServerManager
 							if ( e.getCause() != null )
 								e.getCause().printStackTrace();
 						}
-					while ( rs.next() );
 			}
 			catch ( SQLException e )
 			{
@@ -245,15 +224,17 @@ public class SiteManager implements ServerManager
 			switch ( site.siteType() )
 			{
 				case SQL:
-					DatabaseEngine sql = Loader.getDatabase();
+					SQLDatastore sql = Loader.getDatabase();
 					
-					if ( sql != null && sql.isConnected() )
+					try
 					{
-						if ( !sql.delete( "sites", "`siteId` = '" + siteId + "'" ) )
-							return "There was an unknown reason the site could be deleted.";
+						if ( sql.table( "sites" ).delete().where( "siteId" ).matches( siteId ).execute().rowCount() < 0 )
+							return "There was a unknown reason the site could not be deleted.";
 					}
-					else
-						return "There was an unknown reason the site could be deleted.";
+					catch ( SQLException e )
+					{
+						return "There was a unknown reason the site could not be deleted.";
+					}
 					
 					break;
 				case FILE:

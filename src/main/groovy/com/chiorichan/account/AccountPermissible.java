@@ -181,7 +181,7 @@ public abstract class AccountPermissible extends Permissible implements Account
 	 * @param acctId
 	 *            The Account Id
 	 * @param credObjs
-	 *            The Account Credentials
+	 *            The Account Credentials. Exact credentials depend on what AccountAuthenticator was provided.
 	 * @return
 	 *         The {@link AccountResult}
 	 */

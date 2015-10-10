@@ -9,7 +9,7 @@
 package com.chiorichan.factory.api;
 
 import com.chiorichan.Loader;
-import com.chiorichan.database.DatabaseEngine;
+import com.chiorichan.database.DatabaseEngineLegacy;
 
 /**
  * 
@@ -24,9 +24,9 @@ public class DB
 	 * @throws IllegalStateException
 	 *             thrown if the requested database is unconfigured
 	 */
-	public static DatabaseEngine getServerDatabase()
+	public static DatabaseEngineLegacy getServerDatabase()
 	{
-		DatabaseEngine engine = Loader.getDatabase();
+		DatabaseEngineLegacy engine = Loader.getDatabase().getLegacy();
 		
 		if ( engine == null )
 			throw new IllegalStateException( "The server database is unconfigured. It will need to be setup in order for you to use the getServerDatabase() method." );

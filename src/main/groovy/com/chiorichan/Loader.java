@@ -11,9 +11,7 @@ package com.chiorichan;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.ConnectException;
 import java.net.URISyntaxException;
-import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
@@ -37,8 +35,11 @@ import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.Kickable;
 import com.chiorichan.configuration.file.YamlConfiguration;
-import com.chiorichan.database.DatabaseEngine;
 import com.chiorichan.datastore.DatastoreManager;
+import com.chiorichan.datastore.sql.bases.H2SQLDatastore;
+import com.chiorichan.datastore.sql.bases.MySQLDatastore;
+import com.chiorichan.datastore.sql.bases.SQLDatastore;
+import com.chiorichan.datastore.sql.bases.SQLiteDatastore;
 import com.chiorichan.event.BuiltinEventCreator;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventHandler;
@@ -77,7 +78,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	private static final ConsoleBus console = new ConsoleBus();
 	private static boolean finishedStartup = false;
 	
-	private static DatabaseEngine fwDatabase = null;
+	private static SQLDatastore fwDatabase = null;
 	private static Loader instance;
 	
 	static boolean willRestart = false;
@@ -355,8 +356,15 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return console;
 	}
 	
-	public static DatabaseEngine getDatabase()
+	public static SQLDatastore getDatabase()
 	{
+		return fwDatabase;
+	}
+	
+	public static SQLDatastore getDatabaseWithException()
+	{
+		if ( fwDatabase == null )
+			throw new IllegalStateException( "The Server Database is unconfigured. See config option 'server.database.type' in server config 'server.yaml'." );
 		return fwDatabase;
 	}
 	
@@ -849,73 +857,31 @@ public class Loader extends BuiltinEventCreator implements Listener
 		{
 			case "sqlite":
 			{
-				fwDatabase = new DatabaseEngine();
-				String filename = configuration.getString( "server.database.dbfile", "server.db" );
-				
-				try
-				{
-					fwDatabase.initSQLite( filename );
-				}
-				catch ( SQLException e )
-				{
-					if ( e.getCause() instanceof ConnectException )
-						throw new StartupException( "We had a problem connecting to database '" + filename + "'. Reason: " + e.getCause().getMessage() );
-					else
-						throw new StartupException( e );
-				}
-				
+				fwDatabase = new SQLiteDatastore( configuration.getString( "server.database.dbfile", "server.db" ) );
 				break;
 			}
 			case "mysql":
 			{
-				fwDatabase = new DatabaseEngine();
 				String host = configuration.getString( "server.database.host", "localhost" );
 				String port = configuration.getString( "server.database.port", "3306" );
 				String database = configuration.getString( "server.database.database", "chiorifw" );
 				String username = configuration.getString( "server.database.username", "fwuser" );
 				String password = configuration.getString( "server.database.password", "fwpass" );
 				
-				try
-				{
-					fwDatabase.initMySql( database, username, password, host, port );
-				}
-				catch ( SQLException e )
-				{
-					// e.printStackTrace();
-					
-					if ( e.getCause() instanceof ConnectException )
-						throw new StartupException( "We had a problem connecting to database '" + host + "'. Reason: " + e.getCause().getMessage() );
-					else
-						throw new StartupException( e );
-				}
-				
+				fwDatabase = new MySQLDatastore( database, username, password, host, port );
 				break;
 			}
 			case "h2":
 			{
-				fwDatabase = new DatabaseEngine();
-				String filename = configuration.getString( "server.database.dbfile", "server.db" );
-				
-				try
-				{
-					fwDatabase.initH2( filename );
-				}
-				catch ( SQLException e )
-				{
-					if ( e.getCause() instanceof ConnectException )
-						throw new StartupException( "We had a problem connecting to database '" + filename + "'. Reason: " + e.getCause().getMessage() );
-					else
-						throw new StartupException( e );
-				}
-				
+				fwDatabase = new H2SQLDatastore( configuration.getString( "server.database.dbfile", "server.db" ) );
 				break;
 			}
 			case "none":
 			case "":
-				DatabaseEngine.getLogger().warning( "The Server Database is unconfigured, some features maybe not function as expected. See config option 'server.database.type' in server config 'server.yaml'." );
+				DatastoreManager.getLogger().warning( "The Server Database is unconfigured, some features maybe not function as expected. See config option 'server.database.type' in server config 'server.yaml'." );
 				break;
 			default:
-				DatabaseEngine.getLogger().severe( "We are sorry, Database Engine currently only supports mysql and sqlite but we found '" + configuration.getString( "server.database.type", "sqlite" ).toLowerCase() + "', please change 'server.database.type' to 'mysql' or 'sqlite' in server config 'server.yaml'" );
+				DatastoreManager.getLogger().severe( "We are sorry, the Database Engine currently only supports mysql and sqlite but we found '" + configuration.getString( "server.database.type", "sqlite" ).toLowerCase() + "', please change 'server.database.type' to 'mysql' or 'sqlite' in server config 'server.yaml'" );
 		}
 	}
 	
@@ -1060,7 +1026,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		}
 		catch ( Throwable e )
 		{
-			throw new StartupException( "There was a problem initalizing one of the Server Subsystems", e );
+			throw new StartupException( "There was a problem initalizing one of the server subsystems", e );
 		}
 		
 		changeRunLevel( RunLevel.INITIALIZED );

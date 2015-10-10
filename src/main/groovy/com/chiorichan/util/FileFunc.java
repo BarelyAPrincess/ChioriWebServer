@@ -675,7 +675,7 @@ public class FileFunc
 	
 	public static boolean extractNatives( Map<String, List<String>> natives, File libFile, File baseDir ) throws IOException
 	{
-		if ( !MapFunc.containsKeys( natives, Arrays.asList( OSInfo.NATIVE_SEARCH_PATHS ) ) )
+		if ( !MapCaster.containsKeys( natives, Arrays.asList( OSInfo.NATIVE_SEARCH_PATHS ) ) )
 			PluginManager.getLogger().warning( String.format( "%sWe were unable to locate any natives libraries that match architectures '%s' within plugin '%s'.", ConsoleColor.DARK_GRAY, Joiner.on( ", '" ).join( OSInfo.NATIVE_SEARCH_PATHS ), libFile.getAbsolutePath() ) );
 		
 		List<String> nativesExtracted = Lists.newArrayList();

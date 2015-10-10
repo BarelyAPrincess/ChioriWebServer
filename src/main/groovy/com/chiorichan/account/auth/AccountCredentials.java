@@ -61,7 +61,7 @@ public abstract class AccountCredentials
 		if ( perm.meta() != meta )
 			throw new AccountException( "You can't make an account resumable when it's not logged in." ).setAccount( meta );
 		
-		if ( result != AccountResult.LOGIN_SUCCESS )
+		if ( !result.isSuccess() )
 			throw new AccountException( "You can't make an account resumable if it failed login." ).setAccount( meta );
 		
 		if ( AccountType.isNoneAccount( perm.meta() ) || AccountType.isRootAccount( perm.meta() ) )

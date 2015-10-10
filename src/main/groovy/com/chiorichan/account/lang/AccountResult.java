@@ -22,7 +22,7 @@ public class AccountResult
 	
 	public static final AccountResult IP_BANNED = new AccountResult( "You are not authorized to connect to this server using this method of entry!", ReportingLevel.L_SECURITY );
 	
-	public static final AccountResult UNKNOWN_ERROR = new AccountResult( "Your login has failed due to an unknown internal level, Please try again.", ReportingLevel.E_ERROR );
+	public static final AccountResult UNKNOWN_ERROR = new AccountResult( "Your login has failed due to an unknown internal error, please try again or contact an administrator ASAP.", ReportingLevel.E_ERROR );
 	public static final AccountResult PERMISSION_ERROR = new AccountResult( "Fatal level was detected with your account permissions. Please notify an administrator ASAP.", ReportingLevel.L_PERMISSION );
 	public static final AccountResult INTERNAL_ERROR = new AccountResult( "Internal Server Error was encountered while attempting to process login.", ReportingLevel.E_ERROR );
 	
