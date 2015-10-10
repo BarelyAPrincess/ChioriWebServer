@@ -8,12 +8,8 @@
  */
 package com.chiorichan.database;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.ConnectException;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -31,12 +27,11 @@ import java.util.UnknownFormatConversionException;
 import org.json.JSONException;
 
 import com.chiorichan.ConsoleColor;
-import com.chiorichan.ConsoleLogger;
-import com.chiorichan.Loader;
-import com.chiorichan.lang.StartupException;
-import com.chiorichan.util.DatastoreFunc;
+import com.chiorichan.datastore.DatastoreManager;
+import com.chiorichan.util.DbFunc;
 import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.StringFunc;
+import com.chiorichan.util.Versioning;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mysql.jdbc.exceptions.jdbc4.CommunicationsException;
@@ -44,15 +39,10 @@ import com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException;
 import com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException;
 
 /**
- * Gives easy access to the SQL Database within Groovy scripts.
+ * 
  */
-public class DatabaseEngine
+public class DatabaseEngineLegacy
 {
-	private enum DatabaseType
-	{
-		SQLITE, H2, MYSQL, UNKNOWN;
-	}
-	
 	@SuppressWarnings( "serial" )
 	private static class FoundException extends Exception
 	{
@@ -88,26 +78,11 @@ public class DatabaseEngine
 		}
 	}
 	
-	private boolean debug = false;
+	private Connection sql;
 	
-	private Connection con;
-	private String savedDb, savedUser, savedPass, savedHost, savedPort;
-	private DatabaseType type = DatabaseType.UNKNOWN;
-	
-	public DatabaseEngine()
+	public DatabaseEngineLegacy( Connection sql )
 	{
-		/*
-		 * EvalException.registerException( new ExceptionCallback()
-		 * {
-		 * 
-		 * @Override
-		 * public ReportingLevel callback( Throwable cause, ScriptingContext context )
-		 * {
-		 * context.result().addException( new EvalException( ReportingLevel.E_ERROR, cause ) );
-		 * return ReportingLevel.E_ERROR;
-		 * }
-		 * }, SQLException.class );
-		 */
+		this.sql = sql;
 	}
 	
 	public static LinkedHashMap<String, Object> convert( ResultSet rs ) throws SQLException, JSONException
@@ -138,7 +113,7 @@ public class DatabaseEngine
 		{
 			String columnName = rsmd.getColumnName( i );
 			
-			// Loader.getLogger().info( "Column: " + columnName + " <-> " + rsmd.getColumnTypeName( i ) );
+			// DatastoreManager.getLogger().info( "Column: " + columnName + " <-> " + rsmd.getColumnTypeName( i ) );
 			
 			if ( rsmd.getColumnType( i ) == Types.ARRAY )
 				result.put( columnName, rs.getArray( columnName ).getArray() );
@@ -213,11 +188,6 @@ public class DatabaseEngine
 		return Types.NULL;
 	}
 	
-	public static ConsoleLogger getLogger()
-	{
-		return Loader.getLogger( "DBEngine" );
-	}
-	
 	public static Map<String, String> toStringsMap( ResultSet rs ) throws SQLException
 	{
 		Map<String, Object> source = convertRow( rs );
@@ -272,7 +242,7 @@ public class DatabaseEngine
 		if ( clz == Double.class || clz == double.class )
 			type = "DOUBLE(" + maxLenReq + ",2)";
 		
-		// Loader.getLogger().debug( "Query: " + "ALTER TABLE `" + table + "` ADD `" + columnName + "` " + type + ";" );
+		// DatastoreManager.getLogger().debug( "Query: " + "ALTER TABLE `" + table + "` ADD `" + columnName + "` " + type + ";" );
 		queryUpdate( "ALTER TABLE `" + table + "` ADD `" + columnName + "` " + type + ";" );
 	}
 	
@@ -436,131 +406,6 @@ public class DatabaseEngine
 		return rs.getMetaData();
 	}
 	
-	public DatabaseType getType()
-	{
-		return type;
-	}
-	
-	/**
-	 * Initializes a sqLite connection.
-	 * 
-	 * @param filename
-	 * @throws SQLException
-	 * @throws ClassNotFoundException
-	 */
-	public void initH2( String filename ) throws SQLException
-	{
-		try
-		{
-			Class.forName( "org.h2.Driver" );
-		}
-		catch ( ClassNotFoundException e )
-		{
-			throw new StartupException( "We could not locate the 'org.h2.Driver' library, be sure to have this library in your build path." );
-		}
-		
-		File sqliteDb = new File( filename );
-		
-		con = DriverManager.getConnection( "jdbc:h2:" + sqliteDb.getAbsolutePath() );
-		con.setAutoCommit( false );
-		
-		getLogger().info( "We succesully connected to the H2 database using 'jdbc:h2:" + sqliteDb.getAbsolutePath() + "'" );
-		type = DatabaseType.H2;
-	}
-	
-	/**
-	 * Initializes a mySQL connection.
-	 * 
-	 * @param db
-	 * @param user
-	 * @param pass
-	 * @param host
-	 * @param port
-	 * @throws SQLException
-	 * @throws ClassNotFoundException
-	 * @throws ConnectException
-	 */
-	public void initMySql( String db, String user, String pass, String host, String port ) throws SQLException
-	{
-		if ( host == null )
-			host = "localhost";
-		
-		if ( port == null )
-			port = "3306";
-		
-		try
-		{
-			Class.forName( "com.mysql.jdbc.Driver" );
-		}
-		catch ( ClassNotFoundException e )
-		{
-			throw new StartupException( "We could not locate the 'com.mysql.jdbc.Driver' library, be sure to have this library in your build path." );
-		}
-		
-		savedDb = db;
-		savedUser = user;
-		savedPass = pass;
-		savedHost = host;
-		savedPort = port;
-		
-		try
-		{
-			con = DriverManager.getConnection( "jdbc:mysql://" + host + ":" + port + "/" + db, user, pass );
-			con.setAutoCommit( true );
-		}
-		catch ( SQLException e )
-		{
-			throw e;
-		}
-		
-		if ( con != null && !con.isClosed() )
-			Loader.getLogger().info( "We succesully connected to the sql database using 'jdbc:mysql://" + host + ":" + port + "/" + db + "'." );
-		else
-			Loader.getLogger().warning( "There was a problem connecting to the sql database using 'jdbc:mysql://" + host + ":" + port + "/" + db + "'." );
-		
-		type = DatabaseType.MYSQL;
-	}
-	
-	/**
-	 * Initializes a sqLite connection.
-	 * 
-	 * @param filename
-	 * @throws SQLException
-	 * @throws ClassNotFoundException
-	 */
-	public void initSQLite( String filename ) throws SQLException
-	{
-		try
-		{
-			Class.forName( "org.sqlite.JDBC" );
-		}
-		catch ( ClassNotFoundException e )
-		{
-			throw new StartupException( "We could not locate the 'org.sqlite.JDBC' library, be sure to have this library in your build path." );
-		}
-		
-		File sqliteDb = new File( filename );
-		
-		if ( !sqliteDb.exists() )
-		{
-			getLogger().warning( "The SQLite file '" + sqliteDb.getAbsolutePath() + "' did not exist, we will attempt to create a blank one now." );
-			try
-			{
-				sqliteDb.createNewFile();
-			}
-			catch ( IOException e )
-			{
-				throw new SQLException( "We had a problem creating the SQLite file, the exact exception message was: " + e.getMessage(), e );
-			}
-		}
-		
-		con = DriverManager.getConnection( "jdbc:sqlite:" + sqliteDb.getAbsolutePath() );
-		con.setAutoCommit( true );
-		
-		getLogger().info( "We succesully connected to the sqLite database using 'jdbc:sqlite:" + sqliteDb.getAbsolutePath() + "'" );
-		type = DatabaseType.SQLITE;
-	}
-	
 	public boolean insert( String table, Map<String, Object> data ) throws SQLException
 	{
 		return insert( table, data, false );
@@ -573,12 +418,12 @@ public class DatabaseEngine
 		
 		for ( Entry<String, Object> e : where.entrySet() )
 		{
-			String key = DatastoreFunc.escape( e.getKey() );
+			String key = DbFunc.escape( e.getKey() );
 			
 			String value;
 			try
 			{
-				value = DatastoreFunc.escape( ( String ) e.getValue() );
+				value = DbFunc.escape( ( String ) e.getValue() );
 			}
 			catch ( Exception ee )
 			{
@@ -617,12 +462,12 @@ public class DatabaseEngine
 	
 	public Boolean isConnected()
 	{
-		if ( con == null )
+		if ( sql == null )
 			return false;
 		
 		try
 		{
-			return !con.isClosed();
+			return !sql.isClosed();
 		}
 		catch ( SQLException e )
 		{
@@ -639,13 +484,13 @@ public class DatabaseEngine
 		}
 		catch ( UnknownFormatConversionException | MissingFormatArgumentException e )
 		{
-			getLogger().warning( "Following log entry throw an exception: '" + msg + "' Message: '" + e.getMessage() + "'" );
+			DatastoreManager.getLogger().warning( "Following log entry throw an exception: '" + msg + "' Message: '" + e.getMessage() + "'" );
 		}
 		
-		if ( debug || force )
-			getLogger().info( ConsoleColor.GRAY + msg );
+		if ( Versioning.isDevelopment() || force )
+			DatastoreManager.getLogger().info( ConsoleColor.GRAY + msg );
 		else
-			getLogger().fine( msg );
+			DatastoreManager.getLogger().fine( msg );
 	}
 	
 	private void log( String msg, Object... objs )
@@ -663,31 +508,35 @@ public class DatabaseEngine
 		Statement stmt = null;
 		ResultSet result = null;
 		
-		if ( con == null )
+		if ( sql == null )
 			throw new SQLException( "The SQL connection is closed or was never opened." );
 		
 		try
 		{
-			try
-			{
-				if ( type == DatabaseType.SQLITE )
-					stmt = con.createStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY );
-				else
-					stmt = con.createStatement( ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
-			}
-			catch ( CommunicationsException e )
-			{
-				if ( reconnect() )
-					if ( type == DatabaseType.SQLITE )
-						stmt = con.createStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY );
-					else
-						stmt = con.createStatement( ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
-			}
-			finally
-			{
-				if ( stmt == null )
-					stmt = con.createStatement();
-			}
+			/*
+			 * try
+			 * {
+			 * if ( type == DatabaseType.SQLITE )
+			 * stmt = sql.createStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY );
+			 * else
+			 * stmt = sql.createStatement( ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
+			 * }
+			 * catch ( CommunicationsException e )
+			 * {
+			 * if ( reconnect() )
+			 * if ( type == DatabaseType.SQLITE )
+			 * stmt = sql.createStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY );
+			 * else
+			 * stmt = sql.createStatement( ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
+			 * }
+			 * finally
+			 * {
+			 * if ( stmt == null )
+			 * stmt = sql.createStatement();
+			 * }
+			 */
+			
+			stmt = sql.createStatement();
 			
 			result = stmt.executeQuery( query );
 			
@@ -702,7 +551,7 @@ public class DatabaseEngine
 		}
 		catch ( Throwable t )
 		{
-			getLogger().warning( "SQL Exception: " + t.getMessage() );
+			DatastoreManager.getLogger().warning( "SQL Exception: " + t.getMessage() );
 			throw t;
 		}
 		
@@ -714,13 +563,13 @@ public class DatabaseEngine
 		PreparedStatement stmt = null;
 		ResultSet result = null;
 		
-		if ( con == null )
+		if ( sql == null )
 			throw new SQLException( "The SQL connection is closed or was never opened." );
 		
 		try
 		{
-			// stmt = con.prepareStatement( query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
-			stmt = con.prepareStatement( query );
+			// stmt = sql.prepareStatement( query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
+			stmt = sql.prepareStatement( query );
 			
 			int x = 0;
 			
@@ -766,12 +615,12 @@ public class DatabaseEngine
 		int cnt = 0;
 		PreparedStatement stmt = null;
 		
-		if ( con == null )
+		if ( sql == null )
 			throw new SQLException( "The SQL connection is closed or was never opened." );
 		
 		try
 		{
-			stmt = con.prepareStatement( query );
+			stmt = sql.prepareStatement( query );
 			stmt.execute();
 			cnt = stmt.getUpdateCount();
 		}
@@ -808,13 +657,13 @@ public class DatabaseEngine
 		PreparedStatement stmt = null;
 		int updated = -1;
 		
-		if ( con == null )
+		if ( sql == null )
 			throw new SQLException( "The SQL connection is closed or was never opened." );
 		
 		try
 		{
-			// stmt = con.prepareStatement( query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
-			stmt = con.prepareStatement( query );
+			// stmt = sql.prepareStatement( query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
+			stmt = sql.prepareStatement( query );
 			
 			int x = 0;
 			
@@ -860,23 +709,27 @@ public class DatabaseEngine
 	
 	public Boolean reconnect()
 	{
-		try
-		{
-			if ( savedHost == null || savedPort == null || savedDb == null )
-			{
-				Loader.getLogger().severe( "There was an error reconnection to the DB, unknown cause other then connection string are NULL." );
-				return false;
-			}
-			
-			con = DriverManager.getConnection( "jdbc:mysql://" + savedHost + ":" + savedPort + "/" + savedDb, savedUser, savedPass );
-			Loader.getLogger().info( "We succesully connected to the sql database." );
-		}
-		catch ( Exception e )
-		{
-			Loader.getLogger().severe( "There was an error reconnection to the DB, " + "jdbc:mysql://" + savedHost + ":" + savedPort + "/" + savedDb + ", " + savedUser + " " + savedPass, e );
-		}
+		/*
+		 * try
+		 * {
+		 * if ( savedHost == null || savedPort == null || savedDb == null )
+		 * {
+		 * DatastoreManager.getLogger().severe( "There was an error reconnection to the DB, unknown cause other then connection string are NULL." );
+		 * return false;
+		 * }
+		 * 
+		 * sql = DriverManager.getConnection( "jdbc:mysql://" + savedHost + ":" + savedPort + "/" + savedDb, savedUser, savedPass );
+		 * DatastoreManager.getLogger().info( "We succesully connected to the sql database." );
+		 * }
+		 * catch ( Exception e )
+		 * {
+		 * DatastoreManager.getLogger().severe( "There was an error reconnection to the DB, " + "jdbc:mysql://" + savedHost + ":" + savedPort + "/" + savedDb + ", " + savedUser + " " + savedPass, e );
+		 * }
+		 * 
+		 * return true;
+		 */
 		
-		return true;
+		return false;
 	}
 	
 	public LinkedHashMap<String, Object> select( String table ) throws SQLException
@@ -1005,7 +858,7 @@ public class DatabaseEngine
 			}
 			
 			if ( StringFunc.isTrue( options.get( "debug" ) ) )
-				getLogger().info( "Making SELECT query \"" + query + "\" which returned " + getRowCount( rs ) + " row(s)." );
+				DatastoreManager.getLogger().info( "Making SELECT query \"" + query + "\" which returned " + getRowCount( rs ) + " row(s)." );
 			else
 				log( "Making SELECT query \"" + query + "\" which returned " + getRowCount( rs ) + " row(s)." );
 			
@@ -1013,24 +866,24 @@ public class DatabaseEngine
 		}
 		catch ( MySQLSyntaxErrorException e )
 		{
-			getLogger().severe( String.format( "%s, Query: %s.", e.getMessage(), query ) );
+			DatastoreManager.getLogger().severe( String.format( "%s, Query: %s.", e.getMessage(), query ) );
 			throw e;
 		}
 		catch ( SQLException e )
 		{
-			getLogger().severe( String.format( "Encountered a SQLException for query '%s' with message '%s'.", query, e.getMessage() ) );
+			DatastoreManager.getLogger().severe( String.format( "Encountered a SQLException for query '%s' with message '%s'.", query, e.getMessage() ) );
 			throw e;
 		}
 	}
 	
 	public LinkedHashMap<String, Object> selectOne( String table, List<String> keys, List<? extends Object> values ) throws SQLException
 	{
-		if ( con == null )
+		if ( sql == null )
 			throw new SQLException( "The SQL connection is closed or was never opened." );
 		
 		if ( ObjectFunc.isNull( keys ) || ObjectFunc.isNull( values ) )
 		{
-			Loader.getLogger().warning( "[DB ERROR] Either keys array or values array equals null!\n" );
+			DatastoreManager.getLogger().warning( "[DB ERROR] Either keys array or values array equals null!\n" );
 			return null;
 		}
 		
@@ -1114,7 +967,7 @@ public class DatabaseEngine
 		
 		if ( !safe )
 		{
-			Loader.getLogger().warning( "SQL Injection was detected for query '" + query + "', if this is a false positive then it might need reporting to the developers." );
+			DatastoreManager.getLogger().warning( "SQL Injection was detected for query '" + query + "', if this is a false positive then it might need reporting to the developers." );
 			return false;
 		}
 		
@@ -1130,7 +983,7 @@ public class DatabaseEngine
 	{
 		try
 		{
-			DatabaseMetaData md = con.getMetaData();
+			DatabaseMetaData md = sql.getMetaData();
 			ResultSet rs = md.getTables( null, null, "%", null );
 			while ( rs.next() )
 				if ( rs.getString( 3 ).equalsIgnoreCase( table ) )

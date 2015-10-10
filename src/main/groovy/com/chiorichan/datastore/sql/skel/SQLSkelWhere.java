@@ -6,17 +6,19 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.datastore;
+package com.chiorichan.datastore.sql.skel;
 
-import com.chiorichan.ConsoleLogger;
 
 /**
- * Datastore
+ * Provides the Skeleton Interface for SQL Queries implementing the Where Methods
  */
-public class Datastore
+public interface SQLSkelWhere<B, P>
 {
-	public static ConsoleLogger getLogger()
-	{
-		return DatastoreManager.getLogger();
-	}
+	B or();
+	
+	B and();
+	
+	SQLWhereKeyValue<B> where( String key );
+	
+	SQLWhereGroup<B, P> group();
 }

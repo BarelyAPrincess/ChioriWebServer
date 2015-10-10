@@ -6,17 +6,18 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.database;
+package com.chiorichan.datastore.sql.skel;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.util.Collection;
 
-@Target( ElementType.FIELD )
-@Retention( RetentionPolicy.RUNTIME )
-public @interface SqlColumn
+/**
+ * 
+ */
+public interface SQLSkelOrderBy<T>
 {
-	String name();
+	T orderBy( Collection<String> columns );
 	
+	T orderBy( String... columns );
+	
+	T orderBy( String column );
 }

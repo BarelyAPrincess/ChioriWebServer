@@ -6,11 +6,25 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.serialization;
+package com.chiorichan.datastore.sql.skel;
 
 /**
+ * 
  */
-public class DataStore
+public enum KeyValueDivider
 {
+	EQUAL( "=" ), NOT( "NOT" ), LIKE( "LIKE" ), LESS( "<" ), MORE( ">" );
 	
+	private String seq;
+	
+	KeyValueDivider( String seq )
+	{
+		this.seq = seq;
+	}
+	
+	@Override
+	public String toString()
+	{
+		return seq;
+	}
 }

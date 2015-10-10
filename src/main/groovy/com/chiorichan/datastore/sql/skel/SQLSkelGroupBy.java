@@ -6,17 +6,18 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.datastore;
+package com.chiorichan.datastore.sql.skel;
 
-import com.chiorichan.ConsoleLogger;
+import java.util.Collection;
 
 /**
- * Datastore
+ * 
  */
-public class Datastore
+public interface SQLSkelGroupBy<T>
 {
-	public static ConsoleLogger getLogger()
-	{
-		return DatastoreManager.getLogger();
-	}
+	T groupBy( Collection<String> columns );
+	
+	T groupBy( String... columns );
+	
+	T groupBy( String column );
 }

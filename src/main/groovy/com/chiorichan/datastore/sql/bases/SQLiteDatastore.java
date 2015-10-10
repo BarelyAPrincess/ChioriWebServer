@@ -6,12 +6,14 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.datastore.sql;
+package com.chiorichan.datastore.sql.bases;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.sql.SQLException;
 
+import com.chiorichan.datastore.sql.SQLWrapper;
 import com.chiorichan.lang.StartupException;
 
 /**
@@ -21,7 +23,7 @@ public class SQLiteDatastore extends SQLDatastore
 {
 	String connection;
 	
-	public void initSQLite( String filename ) throws SQLException
+	public SQLiteDatastore( String filename ) throws StartupException
 	{
 		try
 		{
@@ -43,13 +45,23 @@ public class SQLiteDatastore extends SQLDatastore
 			}
 			catch ( IOException e )
 			{
-				throw new SQLException( "We had a problem creating the SQLite file, the exact exception message was: " + e.getMessage(), e );
+				throw new StartupException( "We had a problem creating the SQLite file, the exact exception message was: " + e.getMessage(), e );
 			}
 		}
 		
 		connection = "jdbc:sqlite:" + sqliteDb.getAbsolutePath();
 		
-		attemptConnection( connection );
+		try
+		{
+			sql = new SQLWrapper( connection );
+		}
+		catch ( SQLException e )
+		{
+			if ( e.getCause() instanceof ConnectException )
+				throw new StartupException( "We had a problem connecting to SQLite file '" + filename + "', exception: " + e.getCause().getMessage() );
+			else
+				throw new StartupException( e );
+		}
 		
 		getLogger().info( "We succesully connected to the sqLite database with connection string '" + connection + "'" );
 	}

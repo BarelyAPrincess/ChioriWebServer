@@ -3,7 +3,6 @@ SET foreign_key_checks = 0;
 SET time_zone = '-05:00';
 SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO';
 
-
 CREATE DATABASE `chiorifw` /*!40100 DEFAULT CHARACTER SET latin1 */;
 USE `chiorifw`;
 
@@ -20,7 +19,6 @@ CREATE TABLE `pages` (
   `file` varchar(255) COLLATE utf8_unicode_ci NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-
 DROP TABLE IF EXISTS `sessions`;
 CREATE TABLE `sessions` (
   `sessionId` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
@@ -30,7 +28,6 @@ CREATE TABLE `sessions` (
   `timeout` int(255) NOT NULL,
   `data` text COLLATE utf8_unicode_ci NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-
 
 DROP TABLE IF EXISTS `sites`;
 CREATE TABLE `sites` (

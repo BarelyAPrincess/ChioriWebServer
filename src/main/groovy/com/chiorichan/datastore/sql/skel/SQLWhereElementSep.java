@@ -6,12 +6,25 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.datastore.sql;
+package com.chiorichan.datastore.sql.skel;
 
 /**
  * 
  */
-public enum SQLWhereSeperator
+public enum SQLWhereElementSep
 {
-	AND, OR, NONE;
+	AND( "AND" ), OR( "OR" ), NONE( "" );
+	
+	private String seq;
+	
+	SQLWhereElementSep( String seq )
+	{
+		this.seq = seq;
+	}
+	
+	@Override
+	public String toString()
+	{
+		return seq;
+	}
 }

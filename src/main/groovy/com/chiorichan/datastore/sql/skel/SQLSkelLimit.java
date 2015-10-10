@@ -6,15 +6,21 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.datastore.sql;
+package com.chiorichan.datastore.sql.skel;
 
 
 /**
- * 
+ * Provides the Skeleton Interface for SQL Queries implementing the Limit Methods
  */
-public interface SQLWhereElement
+public interface SQLSkelLimit<T>
 {
-	SQLWhereSeperator seperator();
+	int limit();
 	
-	String toQuery();
+	T limit( int limit, int offset );
+	
+	T limit( int limit );
+	
+	int offset();
+	
+	T offset( int offset );
 }

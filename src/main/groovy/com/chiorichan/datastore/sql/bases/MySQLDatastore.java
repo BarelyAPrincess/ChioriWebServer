@@ -6,10 +6,12 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.datastore.sql;
+package com.chiorichan.datastore.sql.bases;
 
+import java.net.ConnectException;
 import java.sql.SQLException;
 
+import com.chiorichan.datastore.sql.SQLWrapper;
 import com.chiorichan.lang.StartupException;
 
 
@@ -20,7 +22,7 @@ public class MySQLDatastore extends SQLDatastore
 {
 	String user, pass, connection;
 	
-	public MySQLDatastore( String db, String user, String pass, String host, String port ) throws SQLException
+	public MySQLDatastore( String db, String user, String pass, String host, String port ) throws StartupException
 	{
 		if ( host == null )
 			host = "localhost";
@@ -41,10 +43,18 @@ public class MySQLDatastore extends SQLDatastore
 		this.pass = pass;
 		connection = "jdbc:mysql://" + host + ":" + port + "/" + db;
 		
-		attemptConnection( connection, user, pass );
+		try
+		{
+			sql = new SQLWrapper( connection, user, pass );
+		}
+		catch ( SQLException e )
+		{
+			if ( e.getCause() instanceof ConnectException )
+				throw new StartupException( "We had a problem connecting to MySQL database '" + db + "' at host '" + host + ":" + port + "', exception: " + e.getCause().getMessage() );
+			else
+				throw new StartupException( e );
+		}
 		
 		getLogger().info( "We succesully connected to the sql database using '" + connection + "'." );
-		
-		// Loader.getLogger().warning( "There was a problem connecting to the sql database using 'jdbc:mysql://" + host + ":" + port + "/" + db + "'." );
 	}
 }

@@ -6,17 +6,16 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.datastore;
+package com.chiorichan.datastore.sql;
 
-import com.chiorichan.ConsoleLogger;
 
 /**
- * Datastore
+ * 
  */
-public class Datastore
+public class SQLRawQuery
 {
-	public static ConsoleLogger getLogger()
+	public SQLRawQuery( SQLWrapper sql, String query )
 	{
-		return DatastoreManager.getLogger();
+		
 	}
 }

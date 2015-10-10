@@ -6,17 +6,18 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.datastore;
+package com.chiorichan.datastore.sql.skel;
 
-import com.chiorichan.ConsoleLogger;
+import java.util.Map;
 
 /**
- * Datastore
+ * Provides the Skeleton Interface for SQL Queries implementing the Values Methods
  */
-public class Datastore
+public interface SQLSkelValues<T>
 {
-	public static ConsoleLogger getLogger()
-	{
-		return DatastoreManager.getLogger();
-	}
+	T values( Map<String, Object> map );
+	
+	T value( String key, Object val );
+	
+	T values( String[] keys, Object[] valuesArray );
 }
