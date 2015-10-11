@@ -218,11 +218,11 @@ public class SqlTypeCreator extends AccountTypeCreator
 		if ( select.rowCount() < 1 )
 			throw new AccountException( AccountResult.INCORRECT_LOGIN, context );
 		
-		Map<String, String> row = select.rowToStringMap();
+		Map<String, String> row = select.stringRow();
 		
 		context.setAcctId( row.get( "acctId" ) );
 		context.setSiteId( row.get( "siteId" ) );
-		context.setValues( select.rowToMap() );
+		context.setValues( select.row() );
 		
 		return context;
 	}

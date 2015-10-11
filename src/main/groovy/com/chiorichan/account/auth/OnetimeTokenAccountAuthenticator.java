@@ -8,6 +8,7 @@
  */
 package com.chiorichan.account.auth;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.apache.commons.lang3.Validate;
@@ -19,7 +20,6 @@ import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
-import com.chiorichan.datastore.sql.SQLExecute;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.datastore.sql.query.SQLQuerySelect;
 import com.chiorichan.tasks.TaskManager;
@@ -114,18 +114,21 @@ public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
 			if ( meta == null )
 				throw AccountResult.INCORRECT_LOGIN.exception();
 			
-			SQLExecute<SQLQuerySelect> execute = db.table( "accounts_token" ).select().where( "acctId" ).matches( acctId ).and().where( "token" ).matches( token ).limit( 1 ).result();
+			SQLQuerySelect select = db.table( "accounts_token" ).select().where( "acctId" ).matches( acctId ).and().where( "token" ).matches( token ).limit( 1 ).execute();
 			
 			// ResultSet rs = db.query( "SELECT * FROM `accounts_token` WHERE `acctId` = '" + acctId + "' AND `token` = '" + token + "' LIMIT 1;" );
 			// if ( rs == null || db.getRowCount( rs ) < 1 )
 			
-			if ( execute.rowCount() == 0 )
+			if ( select.rowCount() == 0 )
 				throw AccountResult.INCORRECT_LOGIN.setMessage( "The provided token did not match any saved tokens" + ( Versioning.isDevelopment() ? ", token: " + token : "." ) ).exception();
 			
-			if ( execute.getInt( "expires" ) > 0 && execute.getInt( "expires" ) < Timings.epoch() )
+			ResultSet rs = select.result();
+			
+			if ( rs.getInt( "expires" ) >= 0 && rs.getInt( "expires" ) < Timings.epoch() )
 				throw AccountResult.EXPIRED_LOGIN.exception();
 			
-			deleteToken( acctId, token );
+			// deleteToken( acctId, token );
+			expireToken( acctId, token );
 			return new OnetimeTokenAccountCredentials( AccountResult.LOGIN_SUCCESS, meta, token );
 		}
 		catch ( SQLException e )
@@ -150,11 +153,32 @@ public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
 		try
 		{
 			return db.table( "accounts_token" ).delete().where( "acctId" ).matches( acctId ).and().where( "token" ).matches( token ).execute().rowCount() > 0;
-			// return db.queryUpdate( "DELETE FROM `accounts_token` WHERE `acctId` = ? AND `token` = ? LIMIT 1;", acctId, token ) > 0;
 		}
 		catch ( SQLException e )
 		{
-			e.printStackTrace();
+			return false;
+		}
+	}
+	
+	/**
+	 * Expires the provided token from database
+	 * 
+	 * @param acctId
+	 *            The acctId associated with Token
+	 * @param token
+	 *            The login token
+	 */
+	private boolean expireToken( String acctId, String token )
+	{
+		Validate.notNull( acctId );
+		Validate.notNull( token );
+		
+		try
+		{
+			return db.table( "accounts_token" ).update().value( "expires", 0 ).where( "acctId" ).matches( acctId ).and().where( "token" ).matches( token ).execute().rowCount() > 0;
+		}
+		catch ( SQLException e )
+		{
 			return false;
 		}
 	}

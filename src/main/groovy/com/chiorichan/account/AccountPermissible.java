@@ -9,6 +9,8 @@
 package com.chiorichan.account;
 
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.Set;
 
 import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
@@ -25,6 +27,8 @@ import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.session.SessionManager;
 import com.chiorichan.tasks.Timings;
 import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Sets;
 
 /**
  * Used on classes that can support Account Logins, e.g., {@link com.chiorichan.session.Session}
@@ -257,7 +261,15 @@ public abstract class AccountPermissible extends Permissible implements Account
 					( ( Kickable ) ap ).kick( Loader.getConfig().getString( "accounts.singleLoginMessage", "You logged in from another location." ) );
 		
 		meta.set( "lastLoginTime", Timings.epoch() );
-		meta.set( "lastLoginIp", Joiner.on( "|" ).join( getIpAddresses() ) );
+		// XXX Should we track all past IPs or only the current ones and what about local logins?
+		Set<String> ips = Sets.newLinkedHashSet();
+		ips.addAll( Splitter.on( "|" ).splitToList( meta.getString( "lastLoginIp" ) ) );
+		ips.addAll( getIpAddresses() );
+		
+		if ( ips.size() > 5 )
+			meta.set( "lastLoginIp", Joiner.on( "|" ).join( new LinkedList<String>( ips ).subList( ips.size() - 5, ips.size() ) ) );
+		else if ( ips.size() > 0 )
+			meta.set( "lastLoginIp", Joiner.on( "|" ).join( ips ) );
 		setVariable( "acctId", meta.getId() );
 		
 		meta.save();

@@ -10,7 +10,6 @@ package com.chiorichan.account.auth;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.AccountType;
@@ -70,8 +69,9 @@ public abstract class AccountCredentials
 		try
 		{
 			if ( "token".equals( perm.getVariable( "auth" ) ) && perm.getVariable( "token" ) != null )
-				if ( !AccountAuthenticator.TOKEN.deleteToken( perm.getVariable( "acctId" ), perm.getVariable( "token" ) ) )
-					AccountManager.getLogger().warning( "We had a problem deleting the login token '" + perm.getVariable( "token" ) + "'" );
+				AccountAuthenticator.TOKEN.deleteToken( perm.getVariable( "acctId" ), perm.getVariable( "token" ) );
+			// if ( ! )
+			// AccountManager.getLogger().warning( "We had a problem deleting the login token '" + perm.getVariable( "token" ) + "'" );
 			
 			perm.setVariable( "auth", "token" );
 			perm.setVariable( "acctId", meta.getId() );
