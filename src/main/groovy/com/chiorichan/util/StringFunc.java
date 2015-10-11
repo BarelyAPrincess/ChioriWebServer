@@ -9,17 +9,31 @@
 package com.chiorichan.util;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.util.internal.ConcurrentSet;
 
 import java.awt.Color;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,6 +42,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.Validate;
 
+import com.chiorichan.Loader;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -439,7 +454,7 @@ public class StringFunc
 		return wrap( col, '`' );
 	}
 	
-	public static Collection<String> wrap( Collection<String> col, char wrap )
+	public static Collection<String> wrap( final Collection<String> col, char wrap )
 	{
 		synchronized ( col )
 		{
@@ -457,27 +472,25 @@ public class StringFunc
 		return wrap( list, '`' );
 	}
 	
-	public static List<String> wrap( List<String> list, char wrap )
+	public static List<String> wrap( final List<String> list, char wrap )
 	{
-		synchronized ( list )
+		List<String> newList;
+		if ( list instanceof ArrayList )
+			newList = Lists.newArrayList();
+		else if ( list instanceof CopyOnWriteArrayList )
+			newList = Lists.newCopyOnWriteArrayList();
+		else if ( list instanceof LinkedList )
+			newList = Lists.newLinkedList();
+		else
 		{
-			String[] strs = list.toArray( new String[0] );
-			
-			try
-			{
-				list.add( "DUMMY ADD!" );
-			}
-			catch ( UnsupportedOperationException e )
-			{
-				list = Lists.newLinkedList();
-			}
-			
-			list.clear();
-			for ( int i = 0; i < strs.length; i++ )
-				list.add( wrap( strs[i], wrap ) );
+			Loader.getLogger().warning( "Could not find List type for class " + list.getClass() );
+			newList = Lists.newLinkedList();
 		}
 		
-		return list;
+		for ( String str : list )
+			newList.add( wrap( str, wrap ) );
+		
+		return newList;
 	}
 	
 	public static Map<String, String> wrap( Map<String, String> map )
@@ -485,38 +498,30 @@ public class StringFunc
 		return wrap( map, '`', '\'' );
 	}
 	
-	public static Map<String, String> wrap( Map<String, String> map, char keyWrap, char valueWrap )
+	public static Map<String, String> wrap( final Map<String, String> map, char keyWrap, char valueWrap )
 	{
-		synchronized ( map )
+		Map<String, String> newMap;
+		if ( map instanceof HashMap )
+			newMap = Maps.newHashMap();
+		if ( map instanceof ConcurrentMap )
+			newMap = Maps.newConcurrentMap();
+		if ( map instanceof IdentityHashMap )
+			newMap = Maps.newIdentityHashMap();
+		if ( map instanceof LinkedHashMap )
+			newMap = Maps.newLinkedHashMap();
+		if ( map instanceof TreeMap )
+			newMap = Maps.newTreeMap();
+		else
 		{
-			String[] keys = map.keySet().toArray( new String[0] );
-			String[] values = map.values().toArray( new String[0] );
-			
-			try
-			{
-				map.put( "DUMMY KEY", "DUMMY VALUE" );
-			}
-			catch ( UnsupportedOperationException e )
-			{
-				map = Maps.newHashMap();
-			}
-			
-			map.clear();
-			for ( int i = 0; i < keys.length; i++ )
-				map.put( wrap( keys[i], keyWrap ), wrap( values[i], valueWrap ) );
+			Loader.getLogger().warning( "Could not find Map type for class " + map.getClass() );
+			newMap = Maps.newLinkedHashMap();
 		}
 		
-		return map;
+		for ( Entry<String, String> e : map.entrySet() )
+			if ( e.getKey() != null && !e.getKey().isEmpty() )
+				newMap.put( keyWrap + e.getKey() + keyWrap, valueWrap + ( e.getValue() == null ? "" : e.getValue() ) + valueWrap );
 		
-		/*
-		 * Map<String, String> newMap = Maps.newHashMap();
-		 * 
-		 * for ( Entry<String, String> e : map.entrySet() )
-		 * if ( e.getKey() != null && !e.getKey().isEmpty() )
-		 * newMap.put( keyWrap + e.getKey() + keyWrap, valueWrap + ( e.getValue() == null ? "" : e.getValue() ) + valueWrap );
-		 * 
-		 * return newMap;
-		 */
+		return newMap;
 	}
 	
 	public static Set<String> wrap( Set<String> set )
@@ -524,27 +529,29 @@ public class StringFunc
 		return wrap( set, '`' );
 	}
 	
-	public static Set<String> wrap( Set<String> set, char wrap )
+	public static Set<String> wrap( final Set<String> set, char wrap )
 	{
-		synchronized ( set )
+		Set<String> newSet;
+		if ( set instanceof HashSet )
+			newSet = Sets.newHashSet();
+		else if ( set instanceof TreeSet )
+			newSet = Sets.newTreeSet();
+		else if ( set instanceof LinkedHashSet )
+			newSet = Sets.newLinkedHashSet();
+		else if ( set instanceof CopyOnWriteArraySet )
+			newSet = Sets.newCopyOnWriteArraySet();
+		else if ( set instanceof ConcurrentSet )
+			newSet = Sets.newConcurrentHashSet();
+		else
 		{
-			String[] strs = set.toArray( new String[0] );
-			
-			try
-			{
-				set.add( "DUMMY ADD!" );
-			}
-			catch ( UnsupportedOperationException e )
-			{
-				set = Sets.newLinkedHashSet();
-			}
-			
-			set.clear();
-			for ( int i = 0; i < strs.length; i++ )
-				set.add( wrap( strs[i], wrap ) );
+			Loader.getLogger().warning( "Could not find Set type for class " + set.getClass() );
+			newSet = Sets.newLinkedHashSet();
 		}
 		
-		return set;
+		for ( String str : set )
+			newSet.add( wrap( str, wrap ) );
+		
+		return newSet;
 	}
 	
 	public static String wrap( String str, char wrap )

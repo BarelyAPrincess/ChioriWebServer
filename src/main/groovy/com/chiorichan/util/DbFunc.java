@@ -79,15 +79,13 @@ public class DbFunc
 		if ( rs == null )
 			return result;
 		
-		if ( rs.getType() != ResultSet.TYPE_FORWARD_ONLY )
-			rs.first();
-		
-		do
+		boolean next = rs.isFirst() || rs.next();
+		while ( next )
 		{
-			result.put( "" + x, rowToMap( rs ) );
+			result.put( Integer.toString( x ), rowToMap( rs ) );
 			x++;
+			next = rs.next();
 		}
-		while ( rs.next() );
 		
 		return result;
 	}
@@ -99,15 +97,12 @@ public class DbFunc
 		if ( rs == null )
 			return result;
 		
-		if ( rs.isBeforeFirst() && !rs.next() )
-			return result;
-		
-		if ( !rs.isFirst() && rs.getType() != ResultSet.TYPE_FORWARD_ONLY )
-			rs.first();
-		
-		do
+		boolean next = rs.isFirst() || rs.next();
+		while ( next )
+		{
 			result.add( rowToMap( rs ) );
-		while ( rs.next() );
+			next = rs.next();
+		}
 		
 		return result;
 	}
@@ -120,15 +115,13 @@ public class DbFunc
 		if ( rs == null )
 			return result;
 		
-		if ( rs.getType() != ResultSet.TYPE_FORWARD_ONLY )
-			rs.first();
-		
-		do
+		boolean next = rs.isFirst() || rs.next();
+		while ( next )
 		{
 			result.put( "" + x, new MapCaster<String, String>( String.class, String.class ).castTypes( rowToMap( rs ) ) );
 			x++;
+			next = rs.next();
 		}
-		while ( rs.next() );
 		
 		return result;
 	}
@@ -140,12 +133,12 @@ public class DbFunc
 		if ( rs == null )
 			return result;
 		
-		if ( rs.getType() != ResultSet.TYPE_FORWARD_ONLY )
-			rs.first();
-		
-		do
+		boolean next = rs.isFirst() || rs.next();
+		while ( next )
+		{
 			result.add( rowToStringMap( rs ) );
-		while ( rs.next() );
+			next = rs.next();
+		}
 		
 		return result;
 	}
