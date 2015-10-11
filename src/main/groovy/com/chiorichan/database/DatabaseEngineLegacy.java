@@ -31,7 +31,6 @@ import com.chiorichan.datastore.DatastoreManager;
 import com.chiorichan.util.DbFunc;
 import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.StringFunc;
-import com.chiorichan.util.Versioning;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mysql.jdbc.exceptions.jdbc4.CommunicationsException;
@@ -487,7 +486,7 @@ public class DatabaseEngineLegacy
 			DatastoreManager.getLogger().warning( "Following log entry throw an exception: '" + msg + "' Message: '" + e.getMessage() + "'" );
 		}
 		
-		if ( Versioning.isDevelopment() || force )
+		if ( force )
 			DatastoreManager.getLogger().info( ConsoleColor.GRAY + msg );
 		else
 			DatastoreManager.getLogger().fine( msg );

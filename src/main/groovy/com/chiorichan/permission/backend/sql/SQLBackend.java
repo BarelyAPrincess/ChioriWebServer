@@ -119,7 +119,7 @@ public class SQLBackend extends PermissionBackend
 			SQLExecute<SQLQuerySelect> select = getSQL().table( "permissions_entity" ).select().where( "type" ).matches( type ).execute().result();
 			// ResultSet result = getSQL().query( "SELECT * FROM `permissions_entity` WHERE `type` = " + type + ";" );
 			
-			for ( Map<String, String> row : select.resultToStringSet() )
+			for ( Map<String, String> row : select.stringSet() )
 				entities.add( row.get( "owner" ) );
 			
 			// while ( result.next() )

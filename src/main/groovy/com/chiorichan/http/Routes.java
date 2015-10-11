@@ -138,7 +138,7 @@ public class Routes
 						
 						SQLQuerySelect result = sql.table( "pages" ).select().where( "domain" ).matches( domain ).or().where( "domain" ).matches( "" ).execute();
 						
-						for ( Map<String, Object> row : result.resultToSet() )
+						for ( Map<String, Object> row : result.set() )
 							routes.add( new Route( new MapCaster<String, String>( String.class, String.class ).castTypes( row ), site ) );
 						
 						// ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE domain = '" + domain + "' OR domain = '';" );

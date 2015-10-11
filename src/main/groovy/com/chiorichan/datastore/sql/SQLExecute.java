@@ -29,33 +29,21 @@ public class SQLExecute<P extends SQLBase> extends SQLResultSet implements SQLRe
 		this.parent = parent;
 	}
 	
+	@Override
+	public Map<String, Map<String, Object>> map() throws SQLException
+	{
+		return DbFunc.resultToMap( result );
+	}
+	
 	public P parent()
 	{
 		return parent;
 	}
 	
 	@Override
-	public Map<String, Map<String, Object>> resultToMap() throws SQLException
+	public Map<String, Object> row() throws SQLException
 	{
-		return DbFunc.resultToMap( result );
-	}
-	
-	@Override
-	public Set<Map<String, Object>> resultToSet() throws SQLException
-	{
-		return DbFunc.resultToSet( result );
-	}
-	
-	@Override
-	public Map<String, Map<String, String>> resultToStringMap() throws SQLException
-	{
-		return DbFunc.resultToStringMap( result );
-	}
-	
-	@Override
-	public Set<Map<String, String>> resultToStringSet() throws SQLException
-	{
-		return DbFunc.resultToStringSet( result );
+		return DbFunc.rowToMap( result );
 	}
 	
 	@Override
@@ -65,14 +53,26 @@ public class SQLExecute<P extends SQLBase> extends SQLResultSet implements SQLRe
 	}
 	
 	@Override
-	public Map<String, Object> rowToMap() throws SQLException
+	public Set<Map<String, Object>> set() throws SQLException
 	{
-		return DbFunc.rowToMap( result );
+		return DbFunc.resultToSet( result );
 	}
 	
 	@Override
-	public Map<String, String> rowToStringMap() throws SQLException
+	public Map<String, Map<String, String>> stringMap() throws SQLException
+	{
+		return DbFunc.resultToStringMap( result );
+	}
+	
+	@Override
+	public Map<String, String> stringRow() throws SQLException
 	{
 		return DbFunc.rowToStringMap( result );
+	}
+	
+	@Override
+	public Set<Map<String, String>> stringSet() throws SQLException
+	{
+		return DbFunc.resultToStringSet( result );
 	}
 }

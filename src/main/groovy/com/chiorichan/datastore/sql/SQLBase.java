@@ -17,8 +17,9 @@ import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.Loader;
+import com.chiorichan.datastore.Datastore;
 import com.chiorichan.util.DbFunc;
+import com.google.common.base.Joiner;
 import com.mysql.jdbc.exceptions.jdbc4.CommunicationsException;
 import com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException;
 
@@ -72,6 +73,18 @@ public abstract class SQLBase<T extends SQLBase> implements SQLResultSkel
 		return ( T ) this;
 	}
 	
+	public T debug()
+	{
+		debug = !debug;
+		return ( T ) this;
+	}
+	
+	public T debug( boolean debug )
+	{
+		this.debug = debug;
+		return ( T ) this;
+	}
+	
 	public abstract T execute() throws SQLException;
 	
 	public boolean isConnected()
@@ -87,6 +100,12 @@ public abstract class SQLBase<T extends SQLBase> implements SQLResultSkel
 	public SQLException lastException()
 	{
 		return lastException;
+	}
+	
+	@Override
+	public final Map<String, Map<String, Object>> map() throws SQLException
+	{
+		return DbFunc.resultToMap( resultSet() );
 	}
 	
 	private PreparedStatement query( String sqlQuery, boolean isUpdate, boolean save, boolean retry, Object... args ) throws SQLException
@@ -109,23 +128,34 @@ public abstract class SQLBase<T extends SQLBase> implements SQLResultSkel
 				catch ( SQLException e )
 				{
 					if ( e.getCause() instanceof NotSerializableException )
-						Loader.getLogger().severe( "The object " + s.getClass() + " (" + s.toString() + ") is not serializable!" );
+						Datastore.getLogger().severe( "The object " + s.getClass() + " (" + s.toString() + ") is not serializable!" );
 					// Ignore
 					// else
 					if ( !e.getMessage().startsWith( "Parameter index out of range" ) )
 						throw e;
 				}
 			
-			if ( isUpdate )
-				stmt.executeUpdate();
-			else
-				stmt.execute();
+			try
+			{
+				if ( isUpdate )
+					stmt.executeUpdate();
+				else
+					stmt.execute();
+			}
+			catch ( SQLException e )
+			{
+				Datastore.getLogger().severe( "SQL query failed \"" + sqlQuery + "\" with arguments '" + Joiner.on( ", " ).join( args ) + "'" );
+				throw e;
+			}
 			
 			if ( save )
 			{
 				this.stmt = stmt;
 				isFirstCall = true;
 			}
+			
+			if ( debug && save )
+				Datastore.getLogger().debug( "SQL query \"" + toString( stmt ) + "\" " + ( isUpdate ? "affected" : "returned" ) + " " + rowCount() + " results" );
 			
 			setPass();
 			return stmt;
@@ -185,49 +215,15 @@ public abstract class SQLBase<T extends SQLBase> implements SQLResultSkel
 	}
 	
 	@Override
-	public final Map<String, Map<String, Object>> resultToMap() throws SQLException
-	{
-		return DbFunc.resultToMap( resultSet() );
-	}
-	
-	@Override
-	public final Set<Map<String, Object>> resultToSet() throws SQLException
-	{
-		return DbFunc.resultToSet( resultSet() );
-	}
-	
-	@Override
-	public final Map<String, Map<String, String>> resultToStringMap() throws SQLException
-	{
-		return DbFunc.resultToStringMap( resultSet() );
-	}
-	
-	@Override
-	public Set<Map<String, String>> resultToStringSet() throws SQLException
-	{
-		return DbFunc.resultToStringSet( resultSet() );
-	}
-	
-	@Override
-	public final Map<String, Object> rowToMap() throws SQLException
+	public final Map<String, Object> row() throws SQLException
 	{
 		return DbFunc.rowToMap( resultSet() );
 	}
 	
 	@Override
-	public Map<String, String> rowToStringMap() throws SQLException
+	public final Set<Map<String, Object>> set() throws SQLException
 	{
-		return DbFunc.rowToStringMap( resultSet() );
-	}
-	
-	public void setDebug()
-	{
-		debug = !debug;
-	}
-	
-	public void setDebug( boolean debug )
-	{
-		this.debug = debug;
+		return DbFunc.resultToSet( resultSet() );
 	}
 	
 	protected void setFail( SQLException lastException )
@@ -270,6 +266,24 @@ public abstract class SQLBase<T extends SQLBase> implements SQLResultSkel
 		return stmt;
 	}
 	
+	@Override
+	public final Map<String, Map<String, String>> stringMap() throws SQLException
+	{
+		return DbFunc.resultToStringMap( resultSet() );
+	}
+	
+	@Override
+	public Map<String, String> stringRow() throws SQLException
+	{
+		return DbFunc.rowToStringMap( resultSet() );
+	}
+	
+	@Override
+	public Set<Map<String, String>> stringSet() throws SQLException
+	{
+		return DbFunc.resultToStringSet( resultSet() );
+	}
+	
 	public String toSqlQuery()
 	{
 		return null;
@@ -277,6 +291,11 @@ public abstract class SQLBase<T extends SQLBase> implements SQLResultSkel
 	
 	@Override
 	public String toString()
+	{
+		return toString( stmt );
+	}
+	
+	public String toString( PreparedStatement stmt )
 	{
 		if ( stmt == null )
 			return null;

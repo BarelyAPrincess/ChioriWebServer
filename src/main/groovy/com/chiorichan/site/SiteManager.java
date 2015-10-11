@@ -155,33 +155,33 @@ public class SiteManager implements ServerManager
 						e.getCause().printStackTrace();
 				}
 		
-			try
-			{
-				if ( !sql.table( "sites" ).exists() )
-					sql.table( "sites" ).addColumnVar( "siteId", 255 ).addColumnVar( "title", 255, "Unnamed Chiori-chan Web Server Site" ).addColumnVar( "domain", 255 ).addColumnVar( "source", 255, "pages" ).addColumnVar( "resource", 255, "resources" ).addColumnVar( "subdomains", 255 ).addColumnVar( "protected", 255 ).addColumnVar( "metatags", 255 ).addColumnVar( "aliases", 255 ).addColumnVar( "configYaml", 255 );
-				
-				SQLQuerySelect select = sql.table( "sites" ).select().execute();
-					
-				if ( select.rowCount() > 0 )
-					for ( Map<String, String> row: select.resultToStringSet() )
-						try
-						{
-							Site site = new Site( row );
-							
-							if ( site != null )
-								siteMap.put( site.getSiteId(), site );
-						}
-						catch ( SiteException e )
-						{
-							getLogger().severe( "Exception encountered while loading a site from SQL Database, Reason: " + e.getMessage() );
-							if ( e.getCause() != null )
-								e.getCause().printStackTrace();
-						}
-			}
-			catch ( SQLException e )
-			{
-				getLogger().warning( "Exception encountered while loading a sites from Database", e );
-			}
+		try
+		{
+			if ( !sql.table( "sites" ).exists() )
+				sql.table( "sites" ).addColumnVar( "siteId", 255 ).addColumnVar( "title", 255, "Unnamed Chiori-chan Web Server Site" ).addColumnVar( "domain", 255 ).addColumnVar( "source", 255, "pages" ).addColumnVar( "resource", 255, "resources" ).addColumnVar( "subdomains", 255 ).addColumnVar( "protected", 255 ).addColumnVar( "metatags", 255 ).addColumnVar( "aliases", 255 ).addColumnVar( "configYaml", 255 );
+			
+			SQLQuerySelect select = sql.table( "sites" ).select().execute();
+			
+			if ( select.rowCount() > 0 )
+				for ( Map<String, String> row : select.stringSet() )
+					try
+					{
+						Site site = new Site( row );
+						
+						if ( site != null )
+							siteMap.put( site.getSiteId(), site );
+					}
+					catch ( SiteException e )
+					{
+						getLogger().severe( "Exception encountered while loading a site from SQL Database, Reason: " + e.getMessage() );
+						if ( e.getCause() != null )
+							e.getCause().printStackTrace();
+					}
+		}
+		catch ( SQLException e )
+		{
+			getLogger().warning( "Exception encountered while loading a sites from Database", e );
+		}
 	}
 	
 	public List<Site> parseSites( String sites )

@@ -188,7 +188,6 @@ public final class SQLQuerySelect extends SQLBase<SQLQuerySelect> implements SQL
 	public SQLQuerySelect orderBy( Collection<String> columns )
 	{
 		orderBy.addAll( columns );
-		updateExecution();
 		needsUpdate = true;
 		return this;
 	}
@@ -197,7 +196,6 @@ public final class SQLQuerySelect extends SQLBase<SQLQuerySelect> implements SQL
 	public SQLQuerySelect orderBy( String... columns )
 	{
 		orderBy.addAll( Arrays.asList( columns ) );
-		updateExecution();
 		needsUpdate = true;
 		return this;
 	}
@@ -206,7 +204,6 @@ public final class SQLQuerySelect extends SQLBase<SQLQuerySelect> implements SQL
 	public SQLQuerySelect orderBy( String column )
 	{
 		orderBy.add( column );
-		updateExecution();
 		needsUpdate = true;
 		return this;
 	}

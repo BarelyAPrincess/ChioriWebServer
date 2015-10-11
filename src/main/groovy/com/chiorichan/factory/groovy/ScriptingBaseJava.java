@@ -39,6 +39,7 @@ import org.ocpsoft.prettytime.PrettyTime;
 import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngineLegacy;
+import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.lang.PluginNotFoundException;
 import com.chiorichan.plugin.loader.Plugin;
@@ -564,12 +565,12 @@ public abstract class ScriptingBaseJava extends Script
 	 */
 	public DatabaseEngineLegacy getDatabase()
 	{
-		DatabaseEngineLegacy engine = getSite().getDatabase().getLegacy();
+		SQLDatastore engine = getSite().getDatabase();
 		
 		if ( engine == null )
-			throw new IllegalStateException( "The site database is unconfigured. It will need to be setup in order for you to use the getDatabase() method." );
+			throw new IllegalStateException( "The site database is unconfigured. It will need to be setup in order for you to use the getSql() method." );
 		
-		return engine;
+		return engine.getLegacy();
 	}
 	
 	public ConsoleLogger getLogger()
@@ -632,6 +633,16 @@ public abstract class ScriptingBaseJava extends Script
 	public DatabaseEngineLegacy getSiteDatabase()
 	{
 		return getDatabase();
+	}
+	
+	public SQLDatastore getSql()
+	{
+		SQLDatastore sql = getSite().getDatabase();
+		
+		if ( sql == null )
+			throw new IllegalStateException( "The site database is unconfigured. It will need to be setup in order for you to use the getDatabase() method." );
+		
+		return sql;
 	}
 	
 	/**
