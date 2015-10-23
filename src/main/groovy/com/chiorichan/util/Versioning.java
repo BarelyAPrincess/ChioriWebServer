@@ -8,9 +8,11 @@
  */
 package com.chiorichan.util;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
 import java.util.Properties;
 
@@ -106,6 +108,18 @@ public class Versioning
 		return ManagementFactory.getRuntimeMXBean().getVmName();
 	}
 	
+	public static String getProcessID()
+	{
+		// Confirmed working on Debian Linux, Windows?
+		
+		String pid = ManagementFactory.getRuntimeMXBean().getName();
+		
+		if ( pid != null && pid.contains( "@" ) )
+			pid = pid.substring( 0, pid.indexOf( "@" ) );
+		
+		return pid;
+	}
+	
 	/**
 	 * Get the server product name, e.g., Chiori-chan's Web Server
 	 * 
@@ -136,6 +150,10 @@ public class Versioning
 		return System.getProperty( "user.name" );
 	}
 	
+	/*
+	 * Java and JVM Methods
+	 */
+	
 	/**
 	 * Get the server version, e.g., 9.2.1 (Milky Berry)
 	 * 
@@ -145,10 +163,6 @@ public class Versioning
 	{
 		return metadata.getProperty( "project.version", "Unknown-Version" ) + " (" + metadata.getProperty( "project.codename" ) + ")";
 	}
-	
-	/*
-	 * Java and JVM Methods
-	 */
 	
 	/**
 	 * Get the server version number, e.g., 9.2.1
@@ -160,6 +174,10 @@ public class Versioning
 		return metadata.getProperty( "project.version", "Unknown-Version" );
 	}
 	
+	/*
+	 * Operating System Methods
+	 */
+	
 	/**
 	 * Indicates if we are running as either the root user for Unix-like or Administrator user for Windows
 	 * 
@@ -170,10 +188,6 @@ public class Versioning
 		return "root".equalsIgnoreCase( System.getProperty( "user.name" ) ) || "administrator".equalsIgnoreCase( System.getProperty( "user.name" ) );
 	}
 	
-	/*
-	 * Operating System Methods
-	 */
-	
 	/**
 	 * Indicates if we are running a development build of the server
 	 * 
@@ -181,7 +195,35 @@ public class Versioning
 	 */
 	public static boolean isDevelopment()
 	{
-		return "0".equals( getBuildNumber() ) || Loader.getConfig().getBoolean( "server.developmentMode" );
+		return "0".equals( getBuildNumber() ) || ( Loader.getConfig() != null && Loader.getConfig().getBoolean( "server.developmentMode", false ) );
+	}
+	
+	/**
+	 * Indicates if the provided PID is still running, this method is setup to work with both Windows and Linux, might need tuning for other OS's
+	 * 
+	 * @param pid
+	 * @return
+	 */
+	public static boolean isPIDRunning( int pid ) throws IOException
+	{
+		String[] cmds;
+		if ( isUnixLikeOS() )
+			cmds = new String[] {"sh", "-c", "ps -ef | grep " + pid + " | grep -v grep"};
+		else
+			cmds = new String[] {"cmd", "/c", "tasklist /FI \"PID eq " + pid + "\""};
+		
+		Runtime runtime = Runtime.getRuntime();
+		Process proc = runtime.exec( cmds );
+		
+		InputStream inputstream = proc.getInputStream();
+		InputStreamReader inputstreamreader = new InputStreamReader( inputstream );
+		BufferedReader bufferedreader = new BufferedReader( inputstreamreader );
+		String line;
+		while ( ( line = bufferedreader.readLine() ) != null )
+			if ( line.contains( " " + pid + " " ) )
+				return true;
+		
+		return false;
 	}
 	
 	/**
@@ -196,7 +238,7 @@ public class Versioning
 	 */
 	public static boolean isPrivilegedPort( int port )
 	{
-		// Privileged Ports only exist on Linux, Unix, and Mac OS X (I know I'm missing some)
+		// Privileged Ports only exist on Linux, Unix, and Mac OS X (I might be missing some)
 		if ( !isUnixLikeOS() )
 			return false;
 		

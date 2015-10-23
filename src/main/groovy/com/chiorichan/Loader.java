@@ -9,15 +9,20 @@
 package com.chiorichan;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -70,8 +75,8 @@ import com.google.common.collect.Sets;
 
 public class Loader extends BuiltinEventCreator implements Listener
 {
-	public static final String BROADCAST_CHANNEL_ADMINISTRATIVE = "sys.broadcast.admin";
-	public static final String BROADCAST_CHANNEL_USERS = "sys.broadcast.user";
+	public static final String BROADCAST_CHANNEL_ADMINISTRATIVE = "sys.admin";
+	public static final String BROADCAST_CHANNEL_USERS = "sys.user";
 	
 	private static String clientId;
 	private static YamlConfiguration configuration;
@@ -88,6 +93,8 @@ public class Loader extends BuiltinEventCreator implements Listener
 	
 	private static String stopReason = null;
 	private static File tmpFileDirectory;
+	private static File logFileDirectory;
+	private static File lockFile;
 	private static AutoUpdater updater;
 	
 	private static File webroot = new File( "" );
@@ -106,8 +113,48 @@ public class Loader extends BuiltinEventCreator implements Listener
 		if ( !options0.has( "nobanner" ) )
 			console.showBanner();
 		
-		if ( Runtime.getRuntime().maxMemory() / 1024L / 1024L < 512L )
-			getLogger().warning( "To start the server with more ram, launch it as \"java -Xmx1024M -Xms1024M -jar server.jar\"" );
+		try
+		{
+			lockFile = new File( getServerJar() + ".lck" );
+			
+			// TODO check that the enclosed lock PID number is currently running
+			if ( lockFile.exists() )
+			{
+				int pid = Integer.parseInt( FileUtils.readFileToString( lockFile ).trim() );
+				
+				try
+				{
+					if ( Versioning.isPIDRunning( pid ) )
+						throw new StartupException( "We have detected the server jar is already running. Please terminate process ID " + pid + " or disregard this notice." );
+				}
+				catch ( IOException e )
+				{
+					throw new StartupException( "We have detected the server jar is already running. We were unable to verify if the PID " + pid + " is still running." );
+				}
+			}
+			
+			FileUtils.writeStringToFile( lockFile, Versioning.getProcessID() );
+			lockFile.deleteOnExit();
+		}
+		catch ( IOException e )
+		{
+			throw new StartupException( "We had a problem locking the running server jar", e );
+		}
+		
+		lockFile.deleteOnExit();
+		
+		if ( Versioning.isAdminUser() )
+			getLogger().warning( "We have detected that you are running " + Versioning.getProduct() + " with the system admin user (administrator/root), this is highly discuraged as it my compromise system security and/or screw up file permissions." );
+		
+		try
+		{
+			if ( Runtime.getRuntime().maxMemory() / 1024L / 1024L < 512L )
+				getLogger().warning( "To start the server with more ram, launch it as \"java -Xmx1024M -Xms1024M -jar " + new File( URLDecoder.decode( Loader.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8" ) ).getName() + "\"" );
+		}
+		catch ( UnsupportedEncodingException e1 )
+		{
+			// IGNORE!
+		}
 		
 		if ( getConfigFile() == null )
 			throw new StartupException( "We had problems loading the configuration file! Did you define the --config argument?" );
@@ -204,26 +251,88 @@ public class Loader extends BuiltinEventCreator implements Listener
 		
 		webroot = new File( configuration.getString( "server.webFileDirectory", "webroot" ) );
 		
-		if ( install )
-			FileUtils.deleteQuietly( webroot );
-		
-		DirectoryInfo info = FileFunc.directoryHealthCheck( webroot );
-		
-		if ( info == DirectoryInfo.PERMISSION_FAILED )
-			Loader.getLogger().warning( "The `server.webFileDirectory` in config, specifies a directory that is not writable to the server. This directory is required to host web files." );
-		
-		if ( info == DirectoryInfo.CREATE_FAILED )
-			Loader.getLogger().warning( "The `server.webFileDirectory` in config, specifies a directory that we are having trouble properly using. This directory is required to host web files." );
-		
 		tmpFileDirectory = new File( configuration.getString( "server.tmpFileDirectory", "tmp" ) );
 		
+		logFileDirectory = new File( configuration.getString( "server.logFileDirectory", "logs" ) );
+		
+		if ( install )
+		{
+			// TODO Add more files to be deleted on factory reset
+			FileUtils.deleteQuietly( webroot );
+			FileUtils.deleteQuietly( tmpFileDirectory );
+			FileUtils.deleteQuietly( logFileDirectory );
+		}
+		
+		// Check Webroot Directory
+		DirectoryInfo info = FileFunc.directoryHealthCheck( webroot );
+		getLogger().info( "Checking Webroot Directory: " + info.getDescription( webroot ) );
+		if ( info != DirectoryInfo.DIRECTORY_HEALTHY )
+			throw new StartupException( "We had a problem with webroot directory '" + webroot.getAbsolutePath() + "', if this is incorrect please check the config value for 'server.webFileDirectory'." );
+		
+		// Check Temp Directory
 		info = FileFunc.directoryHealthCheck( tmpFileDirectory );
+		getLogger().info( "Checking Temp Directory: " + info.getDescription( tmpFileDirectory ) );
+		if ( info != DirectoryInfo.DIRECTORY_HEALTHY )
+		{
+			tmpFileDirectory = new File( getServerRoot(), "tmp" );
+			info = FileFunc.directoryHealthCheck( tmpFileDirectory );
+			if ( info == DirectoryInfo.DIRECTORY_HEALTHY )
+				getLogger().warning( "We had a problem with the temp directory '" + tmpFileDirectory.getAbsolutePath() + "', if this is incorrect please check the config value for 'server.tmpFileDirectory'. The temp directory will now default to '" + tmpFileDirectory.getAbsolutePath() + "'." );
+			else
+				throw new StartupException( "We had a problem with temp directory '" + tmpFileDirectory.getAbsolutePath() + "', if this is incorrect please check the config value for 'server.tmpFileDirectory'." );
+		}
 		
-		if ( info == DirectoryInfo.PERMISSION_FAILED )
-			Loader.getLogger().warning( "The `server.tmpFileDirectory` in config, specifies a directory that is not writable to the server. File uploads and other similar operations that need the temp directory will fail to function correctly." );
+		// Check Logs Directory
+		info = FileFunc.directoryHealthCheck( logFileDirectory );
+		getLogger().info( "Checking Logs Directory: " + info.getDescription( logFileDirectory ) );
+		if ( info != DirectoryInfo.DIRECTORY_HEALTHY )
+		{
+			tmpFileDirectory = new File( getServerRoot(), "logs" );
+			info = FileFunc.directoryHealthCheck( logFileDirectory );
+			if ( info == DirectoryInfo.DIRECTORY_HEALTHY )
+				getLogger().warning( "We had a problem with the logs directory '" + logFileDirectory.getAbsolutePath() + "', if this is incorrect please check the config value for 'server.logFileDirectory'. The logs directory will now default to '" + logFileDirectory.getAbsolutePath() + "'." );
+			else
+				throw new StartupException( "We had a problem with logs directory '" + logFileDirectory.getAbsolutePath() + "', if this is incorrect please check the config value for 'server.logFileDirectory'." );
+		}
 		
-		if ( info == DirectoryInfo.CREATE_FAILED )
-			Loader.getLogger().warning( "The `server.tmpFileDirectory` in config, specifies a directory that we are having trouble properly using. File uploads and other similar operations that need the temp directory will fail to function correctly." );
+		try
+		{
+			File latest = new File( logFileDirectory, "latest.log" );
+			
+			if ( latest.exists() )
+			{
+				FileFunc.gzFile( latest, new File( logFileDirectory, new SimpleDateFormat( "yyyy-MM-dd_HH-mm-ss" ).format( new Date() ) + ".log.gz" ) );
+				latest.delete();
+			}
+			
+			File[] files = logFileDirectory.listFiles( new FilenameFilter()
+			{
+				@Override
+				public boolean accept( File dir, String name )
+				{
+					return name.toLowerCase().endsWith( ".gz" );
+				}
+			} );
+			FileFunc.SortableFile[] sfiles = new FileFunc.SortableFile[files.length];
+			
+			for ( int i = 0; i < files.length; i++ )
+				sfiles[i] = new FileFunc.SortableFile( files[i] );
+			
+			Arrays.sort( sfiles );
+			
+			if ( sfiles.length > 15 )
+				for ( int i = 0; i < sfiles.length - 15; i++ )
+					sfiles[i].f.delete();
+			
+			FileHandler fileHandler = new FileHandler( latest.getAbsolutePath() );
+			fileHandler.setFormatter( new ConsoleLogFormatter( Loader.getConsole(), false ) );
+			
+			console.getLogManager().addHandler( fileHandler );
+		}
+		catch ( Exception e )
+		{
+			getLogger().severe( "Failed to log to 'latest.log'", e );
+		}
 		
 		if ( firstRun || install )
 			try
@@ -446,6 +555,14 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return console.getLogManager();
 	}
 	
+	public static File getLogsFileDirectory()
+	{
+		if ( logFileDirectory == null )
+			throw new IllegalStateException( "Logs directory appears to be null, was getLogsFileDirectory() called before the server finished inialization?" );
+		
+		return logFileDirectory;
+	}
+	
 	public static OptionParser getOptionParser()
 	{
 		OptionParser parser = new OptionParser()
@@ -462,15 +579,15 @@ public class Loader extends BuiltinEventCreator implements Listener
 				acceptsAll( Arrays.asList( "web-disable" ), "Disable the internal Web Server" );
 				acceptsAll( Arrays.asList( "tcp-disable" ), "Disable the internal TCP Server" );
 				acceptsAll( Arrays.asList( "query-disable" ), "Disable the internal TCP Server" );
-				acceptsAll( Arrays.asList( "s", "size", "max-users" ), "Maximum amount of users" ).withRequiredArg().ofType( Integer.class ).describedAs( "Server size" );
+				// acceptsAll( Arrays.asList( "s", "size", "max-users" ), "Maximum amount of users" ).withRequiredArg().ofType( Integer.class ).describedAs( "Server size" );
 				acceptsAll( Arrays.asList( "d", "date-format" ), "Format of the date to display in the console (for log entries)" ).withRequiredArg().ofType( SimpleDateFormat.class ).describedAs( "Log date format" );
-				acceptsAll( Arrays.asList( "log-pattern" ), "Specfies the log filename pattern" ).withRequiredArg().ofType( String.class ).defaultsTo( "server.log" ).describedAs( "Log filename" );
-				acceptsAll( Arrays.asList( "log-limit" ), "Limits the maximum size of the log file (0 = unlimited)" ).withRequiredArg().ofType( Integer.class ).defaultsTo( 0 ).describedAs( "Max log size" );
-				acceptsAll( Arrays.asList( "log-count" ), "Specified how many log files to cycle through" ).withRequiredArg().ofType( Integer.class ).defaultsTo( 1 ).describedAs( "Log count" );
-				acceptsAll( Arrays.asList( "log-append" ), "Whether to append to the log file" ).withRequiredArg().ofType( Boolean.class ).defaultsTo( true ).describedAs( "Log append" );
-				acceptsAll( Arrays.asList( "log-strip-color" ), "Strips color codes from log file" );
-				acceptsAll( Arrays.asList( "nojline" ), "Disables jline and emulates the vanilla console" );
-				acceptsAll( Arrays.asList( "noconsole" ), "Disables the console" );
+				// acceptsAll( Arrays.asList( "log-pattern" ), "Specfies the log filename pattern" ).withRequiredArg().ofType( String.class ).defaultsTo( "server.log" ).describedAs( "Log filename" );
+				// acceptsAll( Arrays.asList( "log-limit" ), "Limits the maximum size of the log file (0 = unlimited)" ).withRequiredArg().ofType( Integer.class ).defaultsTo( 0 ).describedAs( "Max log size" );
+				// acceptsAll( Arrays.asList( "log-count" ), "Specified how many log files to cycle through" ).withRequiredArg().ofType( Integer.class ).defaultsTo( 1 ).describedAs( "Log count" );
+				// acceptsAll( Arrays.asList( "log-append" ), "Whether to append to the log file" ).withRequiredArg().ofType( Boolean.class ).defaultsTo( true ).describedAs( "Log append" );
+				// acceptsAll( Arrays.asList( "log-strip-color" ), "Strips color codes from log file" );
+				// acceptsAll( Arrays.asList( "nojline" ), "Disables jline and emulates the vanilla console" );
+				// acceptsAll( Arrays.asList( "noconsole" ), "Disables the console" );
 				acceptsAll( Arrays.asList( "nobanner" ), "Disables the banner" );
 				acceptsAll( Arrays.asList( "nocolor" ), "Disables the console color formatting" );
 				acceptsAll( Arrays.asList( "v", "version" ), "Show the Version" );
@@ -519,16 +636,34 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return "";
 	}
 	
+	/**
+	 * @return The server jar file
+	 */
+	private static File getServerJar()
+	{
+		try
+		{
+			return new File( URLDecoder.decode( Loader.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8" ) );
+		}
+		catch ( UnsupportedEncodingException e )
+		{
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	/**
+	 * @return The server jar file root directory
+	 */
+	public static File getServerRoot()
+	{
+		return getServerJar().getParentFile();
+	}
+	
 	public static File getTempFileDirectory()
 	{
-		if ( !tmpFileDirectory.exists() )
-			tmpFileDirectory.mkdirs();
-		
-		if ( !tmpFileDirectory.isDirectory() )
-			SiteManager.getLogger().severe( "The temp directory specified in the server configs is not a directory, File Uploads will FAIL until this problem is resolved." );
-		
-		if ( !tmpFileDirectory.canWrite() )
-			SiteManager.getLogger().severe( "The temp directory specified in the server configs is not writable, File Uploads will FAIL until this problem is resolved." );
+		if ( tmpFileDirectory == null )
+			throw new IllegalStateException( "Temp directory appears to be null, was getTempFileDirectory() called before the server finished inialization?" );
 		
 		return tmpFileDirectory;
 	}

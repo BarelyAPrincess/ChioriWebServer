@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -395,6 +396,25 @@ public class FileFunc
 			CPU_ID = strings[1].toString();
 			ARCH_NAME = strings[2].toString();
 			NATIVE_SEARCH_PATHS = ( String[] ) strings[3];
+		}
+	}
+	
+	public static class SortableFile implements Comparable<SortableFile>
+	{
+		public long t;
+		public File f;
+		
+		public SortableFile( File file )
+		{
+			f = file;
+			t = file.lastModified();
+		}
+		
+		@Override
+		public int compareTo( SortableFile o )
+		{
+			long u = o.t;
+			return t < u ? -1 : t == u ? 0 : 1;
 		}
 	}
 	
@@ -808,6 +828,29 @@ public class FileFunc
 			file.createNewFile();
 		
 		return file;
+	}
+	
+	public static void gzFile( File source ) throws IOException
+	{
+		gzFile( source, new File( source + ".gz" ) );
+	}
+	
+	public static void gzFile( File source, File dest ) throws IOException
+	{
+		byte[] buffer = new byte[1024];
+		
+		GZIPOutputStream gzos = new GZIPOutputStream( new FileOutputStream( dest ) );
+		
+		FileInputStream in = new FileInputStream( source );
+		
+		int len;
+		while ( ( len = in.read( buffer ) ) > 0 )
+			gzos.write( buffer, 0, len );
+		
+		in.close();
+		
+		gzos.finish();
+		gzos.close();
 	}
 	
 	public static ByteArrayOutputStream inputStream2ByteArray( InputStream is ) throws IOException

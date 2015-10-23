@@ -14,6 +14,7 @@ import java.util.logging.Logger;
 
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.lang.EvalException;
+import com.chiorichan.util.Versioning;
 import com.google.common.base.Strings;
 
 public class ConsoleLogger
@@ -46,7 +47,7 @@ public class ConsoleLogger
 	
 	public void debug( Object... var1 )
 	{
-		if ( !Loader.getConfig().getBoolean( "console.developerMode", true ) )
+		if ( !Versioning.isDevelopment() )
 			return;
 		
 		for ( Object var2 : var1 )

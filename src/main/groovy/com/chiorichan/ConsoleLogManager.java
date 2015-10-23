@@ -8,10 +8,7 @@
  */
 package com.chiorichan;
 
-import java.io.File;
 import java.util.Set;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Logger;
 
@@ -21,6 +18,17 @@ public class ConsoleLogManager
 {
 	private static final Set<ConsoleLogger> loggers = Sets.newHashSet();
 	private static final Logger logger = Logger.getLogger( "" );
+	
+	public ConsoleLogManager()
+	{
+		for ( Handler h : logger.getHandlers() )
+			logger.removeHandler( h );
+	}
+	
+	public void addHandler( Handler h )
+	{
+		logger.addHandler( h );
+	}
 	
 	public ConsoleLogger getLogger()
 	{
@@ -43,81 +51,8 @@ public class ConsoleLogManager
 		return logger;
 	}
 	
-	void init()
+	public void removeHandler( Handler h )
 	{
-		for ( Handler h : logger.getHandlers() )
-			logger.removeHandler( h );
-		
-		try
-		{
-			String filename = ( String ) Loader.getOptions().valueOf( "log-pattern" );
-			
-			String tmpDir = Loader.getTempFileDirectory().getAbsolutePath();// System.getProperty( "java.io.tmpdir" );
-			String homeDir = System.getProperty( "user.home" );
-			if ( tmpDir == null )
-				tmpDir = homeDir;
-			
-			File parent = new File( filename ).getParentFile();
-			StringBuilder fixedPattern = new StringBuilder();
-			String parentPath = "";
-			if ( parent != null )
-				parentPath = parent.getPath();
-			
-			int i = 0;
-			while ( i < parentPath.length() )
-			{
-				char ch = parentPath.charAt( i );
-				char ch2 = 0;
-				if ( i + 1 < parentPath.length() )
-					ch2 = Character.toLowerCase( filename.charAt( i + 1 ) );
-				
-				if ( ch == '%' )
-					if ( ch2 == 'h' )
-					{
-						i += 2;
-						fixedPattern.append( homeDir );
-						continue;
-					}
-					else if ( ch2 == 't' )
-					{
-						i += 2;
-						fixedPattern.append( tmpDir );
-						continue;
-					}
-					else if ( ch2 == '%' )
-					{
-						// Even though we don't care about this we have to skip it to avoid matching %%t
-						i += 2;
-						fixedPattern.append( "%%" );
-						continue;
-					}
-					else if ( ch2 != 0 )
-						throw new java.io.IOException( "log-pattern can only use %t and %h for directories, got %" + ch2 );
-				
-				fixedPattern.append( ch );
-				i++;
-			}
-			
-			parent = new File( fixedPattern.toString() );
-			if ( parent != null )
-				parent.mkdirs();
-			
-			int limit = ( Integer ) Loader.getOptions().valueOf( "log-limit" );
-			int count = ( Integer ) Loader.getOptions().valueOf( "log-count" );
-			boolean append = ( Boolean ) Loader.getOptions().valueOf( "log-append" );
-			FileHandler fileHandler = new FileHandler( filename, limit, count, append );
-			fileHandler.setFormatter( new ConsoleLogFormatter( Loader.getConsole(), false ) );
-			
-			logger.addHandler( fileHandler );
-		}
-		catch ( Exception exception )
-		{
-			getLogger().warning( "Failed to log to server.log", exception );
-		}
-		
-		ConsoleHandler consoleHandler = new ConsoleHandler();
-		consoleHandler.setFormatter( new ConsoleLogFormatter( Loader.getConsole() ) );
-		
-		logger.addHandler( consoleHandler );
+		logger.removeHandler( h );
 	}
 }

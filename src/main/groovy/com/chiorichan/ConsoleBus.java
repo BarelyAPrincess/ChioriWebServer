@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Scanner;
+import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 
 import joptsimple.OptionSet;
@@ -166,7 +167,7 @@ public class ConsoleBus extends AccountPermissible implements Runnable, AccountA
 	@Override
 	public String getVariable( String string )
 	{
-		return null;// TODO New Empty Method
+		return null;
 	}
 	
 	@Override
@@ -184,7 +185,10 @@ public class ConsoleBus extends AccountPermissible implements Runnable, AccountA
 			useColors = false;
 		
 		logManager = new ConsoleLogManager();
-		logManager.init();
+		
+		ConsoleHandler consoleHandler = new ConsoleHandler();
+		consoleHandler.setFormatter( new ConsoleLogFormatter( Loader.getConsole() ) );
+		logManager.addHandler( consoleHandler );
 		
 		System.setOut( new PrintStream( new LoggerOutputStream( getLogger( "SysOut" ).getLogger(), Level.INFO ), true ) );
 		System.setErr( new PrintStream( new LoggerOutputStream( getLogger( "SysErr" ).getLogger(), Level.SEVERE ), true ) );

@@ -24,8 +24,9 @@ server:
   defaultBinaryEncoding: ISO-8859-1
   developmentMode: false
   maxFileUploadKb: 5120
-  tmpFileDirectory: tmp
   webFileDirectory: webroot
+  tmpFileDirectory: tmp
+  logFileDirectory: logs
   fileUploadMinInMemory: 0
   errorReporting: E_ALL ~E_NOTICE ~E_STRICT ~E_DEPRECATED
   database:
