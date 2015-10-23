@@ -9,7 +9,7 @@
 package com.chiorichan.account.event;
 
 import com.chiorichan.account.AccountContext;
-import com.chiorichan.account.lang.AccountResult;
+import com.chiorichan.account.lang.AccountDescriptiveReason;
 import com.chiorichan.event.Conditional;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.RegisteredListener;
@@ -20,7 +20,8 @@ import com.chiorichan.event.RegisteredListener;
 public class AccountLookupEvent extends AccountEvent implements Conditional
 {
 	private AccountContext context = null;
-	private AccountResult result = AccountResult.DEFAULT;
+	private AccountDescriptiveReason reason = AccountDescriptiveReason.DEFAULT;
+	private Throwable cause = null;
 	private String acctId;
 	
 	public AccountLookupEvent( String acctId )
@@ -31,10 +32,10 @@ public class AccountLookupEvent extends AccountEvent implements Conditional
 	@Override
 	public boolean conditional( RegisteredListener context ) throws EventException
 	{
-		if ( result.equals( AccountResult.LOGIN_SUCCESS ) || result.equals( AccountResult.CANCELLED_BY_EVENT ) || result.equals( AccountResult.EMPTY_ACCTID ) || result.equals( AccountResult.EMPTY_USERNAME ) || result.equals( AccountResult.UNDER_ATTACK ) )
-			return false;
+		if ( cause != null )
+			reason = AccountDescriptiveReason.INTERNAL_ERROR;
 		
-		return true;
+		return !reason.getReportingLevel().isSuccess() && reason.getReportingLevel().isIgnorable();
 	}
 	
 	public String getAcctId()
@@ -42,19 +43,36 @@ public class AccountLookupEvent extends AccountEvent implements Conditional
 		return acctId;
 	}
 	
+	public Throwable getCause()
+	{
+		return cause;
+	}
+	
 	public AccountContext getContext()
 	{
 		return context;
 	}
 	
-	public AccountResult getResult()
+	public AccountDescriptiveReason getDescriptiveReason()
 	{
-		return result;
+		return reason;
 	}
 	
-	public void setResult( AccountContext context, AccountResult result )
+	public boolean hasCause()
+	{
+		return cause != null;
+	}
+	
+	public AccountLookupEvent setCause( Throwable cause )
+	{
+		this.cause = cause;
+		return this;
+	}
+	
+	public AccountLookupEvent setResult( AccountContext context, AccountDescriptiveReason reason )
 	{
 		this.context = context;
-		this.result = result;
+		this.reason = reason;
+		return this;
 	}
 }

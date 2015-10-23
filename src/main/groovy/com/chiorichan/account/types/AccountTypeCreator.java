@@ -10,6 +10,7 @@ package com.chiorichan.account.types;
 
 import com.chiorichan.account.AccountCreator;
 import com.chiorichan.account.AccountMeta;
+import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.event.Listener;
 
 /**
@@ -18,7 +19,7 @@ import com.chiorichan.event.Listener;
 public abstract class AccountTypeCreator implements Listener, AccountCreator
 {
 	@Override
-	public void save( AccountMeta meta )
+	public void save( AccountMeta meta ) throws AccountException
 	{
 		save( meta.context() );
 	}

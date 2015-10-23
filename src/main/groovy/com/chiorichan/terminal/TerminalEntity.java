@@ -57,18 +57,13 @@ public class TerminalEntity extends AccountPermissible implements Terminal, Bind
 		
 		try
 		{
-			throw new AccountException( login( AccountAuthenticator.NULL, AccountType.ACCOUNT_NONE.getId() ) );
+			loginWithException( AccountAuthenticator.NULL, AccountType.ACCOUNT_NONE.getId() );
 		}
 		catch ( AccountException e )
 		{
-			if ( !e.getResult().isSuccess() )
-			{
-				if ( e.getResult().hasCause() )
-					e.getResult().getThrowable().printStackTrace();
-				AccountManager.getLogger().severe( e.getMessage() );
-			}
-			else
-				sendMessage( e.getResult().getMessage() );
+			if ( e.getResult().hasCause() )
+				e.getResult().getCause().printStackTrace();
+			AccountManager.getLogger().severe( e.getMessage() );
 		}
 	}
 	

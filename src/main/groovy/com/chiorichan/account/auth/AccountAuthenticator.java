@@ -14,7 +14,9 @@ import java.util.List;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.account.AccountAttachment;
+import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
+import com.chiorichan.account.lang.AccountException;
 import com.google.common.collect.Lists;
 
 /**
@@ -70,22 +72,22 @@ public abstract class AccountAuthenticator
 	/**
 	 * Used to resume a saved session login
 	 * 
-	 * @param acctId
-	 *            The Account Id
+	 * @param acct
+	 *            The Account Meta
 	 * @param perm
 	 *            An instance of the {@link AccountAttachment}
 	 * @return
 	 */
-	public abstract AccountCredentials authorize( String acctId, AccountPermissible perm );
+	public abstract AccountCredentials authorize( AccountMeta acct, AccountPermissible perm ) throws AccountException;
 	
 	/**
 	 * Used to check Account Credentials prior to creating the Account Instance
 	 * 
-	 * @param acctId
-	 *            The Account Id
+	 * @param acct
+	 *            The Account Meta
 	 * @param creds
 	 *            The Credentials to use for authentication
 	 * @return An instance of the Account Credentials
 	 */
-	public abstract AccountCredentials authorize( String acctId, Object... creds );
+	public abstract AccountCredentials authorize( AccountMeta acct, Object... creds ) throws AccountException;
 }

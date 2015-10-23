@@ -13,7 +13,8 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.WeakHashMap;
 
-import com.chiorichan.account.lang.AccountException;
+import org.apache.commons.lang3.Validate;
+
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.site.Site;
 import com.google.common.base.Joiner;
@@ -31,11 +32,9 @@ public final class AccountInstance implements Account
 	 */
 	private final AccountMeta metadata;
 	
-	AccountInstance( AccountMeta metadata ) throws AccountException
+	AccountInstance( AccountMeta metadata )
 	{
-		if ( metadata == null )
-			throw new AccountException( "The metadata can't be null!" );
-		
+		Validate.notNull( metadata );
 		this.metadata = metadata;
 	}
 	

@@ -10,7 +10,8 @@ package com.chiorichan.account;
 
 import com.chiorichan.account.event.AccountLoadEvent;
 import com.chiorichan.account.event.AccountLookupEvent;
-import com.chiorichan.account.lang.AccountResult;
+import com.chiorichan.account.lang.AccountException;
+import com.chiorichan.account.lang.AccountDescriptiveReason;
 import com.chiorichan.event.BuiltinEventCreator;
 import com.chiorichan.event.EventBus;
 
@@ -41,31 +42,31 @@ public abstract class AccountEvents extends BuiltinEventCreator
 		
 		EventBus.INSTANCE.callEvent( event );
 		
-		if ( event.getContext() == null )
-			return null;
-		
-		if ( !event.getResult().isSuccess() )
+		if ( !event.getDescriptiveReason().getReportingLevel().isSuccess() )
 		{
-			AccountManager.getLogger().warning( event.getResult().getMessage() );
+			AccountManager.getLogger().warning( event.getDescriptiveReason().getMessage() );
 			return null;
 		}
+		
+		if ( event.getContext() == null )
+			return null;
 		
 		AccountMeta acct = new AccountMeta( event.getContext() );
 		
 		return acct;
 	}
 	
-	AccountMeta fireAccountLookupWithException( String acctId )
+	AccountMeta fireAccountLookupWithException( String acctId ) throws AccountException
 	{
 		AccountLookupEvent event = new AccountLookupEvent( acctId );
 		
 		EventBus.INSTANCE.callEvent( event );
 		
-		if ( event.getContext() == null )
-			throw AccountResult.INCORRECT_LOGIN.exception();
+		if ( !event.getDescriptiveReason().getReportingLevel().isSuccess() )
+			throw new AccountException( event.getDescriptiveReason(), acctId );
 		
-		if ( !event.getResult().isSuccess() )
-			throw event.getResult().exception();
+		if ( event.getContext() == null )
+			throw new AccountException( AccountDescriptiveReason.INCORRECT_LOGIN, acctId );
 		
 		AccountMeta acct = new AccountMeta( event.getContext() );
 		

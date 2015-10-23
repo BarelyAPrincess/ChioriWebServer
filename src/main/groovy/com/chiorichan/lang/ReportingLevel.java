@@ -166,4 +166,9 @@ public enum ReportingLevel
 	{
 		return ignorable;
 	}
+	
+	public boolean isSuccess()
+	{
+		return this == ReportingLevel.L_SUCCESS;
+	}
 }

@@ -15,8 +15,11 @@ import java.util.Set;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.account.AccountManager;
+import com.chiorichan.account.AccountMeta;
+import com.chiorichan.account.AccountType;
 import com.chiorichan.account.Kickable;
 import com.chiorichan.account.lang.AccountResult;
+import com.chiorichan.account.lang.AccountDescriptiveReason;
 import com.chiorichan.event.Cancellable;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.SelfHandling;
@@ -30,7 +33,7 @@ public class KickEvent extends ServerEvent implements Cancellable, SelfHandling
 	private String leaveMessage;
 	private String kickReason;
 	private final Set<Kickable> kickables = Sets.newHashSet();
-	private AccountResult result = null;
+	private AccountResult result = new AccountResult( AccountType.ACCOUNT_NONE );
 	private Boolean cancel = false;
 	
 	private KickEvent()
@@ -38,15 +41,15 @@ public class KickEvent extends ServerEvent implements Cancellable, SelfHandling
 		
 	}
 	
-	public static KickEvent kick( Collection<Kickable> kickables )
+	public static KickEvent kick( AccountMeta kicker, Collection<Kickable> kickables )
 	{
 		Validate.notNull( kickables );
-		return new KickEvent().setKickables( kickables );
+		return new KickEvent().setKicker( kicker ).setKickables( kickables );
 	}
 	
-	public static KickEvent kick( Kickable... kickables )
+	public static KickEvent kick( AccountMeta kicker, Kickable... kickables )
 	{
-		return new KickEvent().setKickables( Arrays.asList( kickables ) );
+		return new KickEvent().setKicker( kicker ).setKickables( Arrays.asList( kickables ) );
 	}
 	
 	public KickEvent addKickables( Collection<Kickable> kickables )
@@ -100,11 +103,11 @@ public class KickEvent extends ServerEvent implements Cancellable, SelfHandling
 			{
 				kicked.add( kickable.getId() );
 				AccountResult outcome = kickable.kick( kickReason );
-				if ( outcome != AccountResult.SUCCESS )
+				if ( !outcome.isSuccess() )
 					AccountManager.getLogger().warning( String.format( "We failed to kick `%s` with reason `%s`", kickable.getId(), outcome.getMessage() ) );
 			}
 		
-		result = AccountResult.SUCCESS;
+		result.setReason( AccountDescriptiveReason.SUCCESS );
 	}
 	
 	@Override
@@ -118,7 +121,7 @@ public class KickEvent extends ServerEvent implements Cancellable, SelfHandling
 	{
 		this.cancel = cancel;
 		if ( cancel )
-			result = AccountResult.CANCELLED_BY_EVENT;
+			result.setReason( AccountDescriptiveReason.CANCELLED_BY_EVENT );
 	}
 	
 	public KickEvent setKickables( Collection<Kickable> kickables )
@@ -126,6 +129,12 @@ public class KickEvent extends ServerEvent implements Cancellable, SelfHandling
 		Validate.notNull( kickables );
 		this.kickables.clear();
 		addKickables( kickables );
+		return this;
+	}
+	
+	private KickEvent setKicker( AccountMeta kicker )
+	{
+		result.setAccount( kicker );
 		return this;
 	}
 	

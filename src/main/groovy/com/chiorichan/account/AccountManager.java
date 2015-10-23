@@ -18,7 +18,7 @@ import com.chiorichan.ConsoleLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.ServerManager;
 import com.chiorichan.account.lang.AccountException;
-import com.chiorichan.account.lang.AccountResult;
+import com.chiorichan.account.lang.AccountDescriptiveReason;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
@@ -71,15 +71,15 @@ public final class AccountManager extends AccountEvents implements ServerManager
 		return isInitialized;
 	}
 	
-	public AccountMeta createAccount( String acctId, String siteId )
+	public AccountMeta createAccount( String acctId, String siteId ) throws AccountException
 	{
 		return createAccount( acctId, siteId, AccountType.getDefaultType() );
 	}
 	
-	public AccountMeta createAccount( String acctId, String siteId, AccountType type )
+	public AccountMeta createAccount( String acctId, String siteId, AccountType type ) throws AccountException
 	{
 		if ( !type.isEnabled() )
-			throw AccountResult.FEATURE_DISABLED.exception();
+			throw new AccountException( AccountDescriptiveReason.FEATURE_DISABLED, acctId );
 		
 		AccountContext context = type.getCreator().createAccount( acctId, siteId );
 		
@@ -281,9 +281,7 @@ public final class AccountManager extends AccountEvents implements ServerManager
 		{
 			acct = fireAccountLookupWithException( acctId );
 			
-			if ( acct == null )
-				return null;
-			
+			Validate.notNull( acct );
 			accounts.put( acct );
 		}
 		
@@ -371,6 +369,13 @@ public final class AccountManager extends AccountEvents implements ServerManager
 	public void save()
 	{
 		for ( AccountMeta meta : accounts )
-			meta.save();
+			try
+			{
+				meta.save();
+			}
+			catch ( AccountException e )
+			{
+				e.printStackTrace();
+			}
 	}
 }

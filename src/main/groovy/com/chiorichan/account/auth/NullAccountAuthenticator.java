@@ -8,12 +8,11 @@
  */
 package com.chiorichan.account.auth;
 
-import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.AccountType;
 import com.chiorichan.account.lang.AccountException;
-import com.chiorichan.account.lang.AccountResult;
+import com.chiorichan.account.lang.AccountDescriptiveReason;
 
 /**
  * Usually only used to authenticate the NONE login
@@ -24,7 +23,7 @@ public final class NullAccountAuthenticator extends AccountAuthenticator
 	{
 		NullAccountCredentials( AccountMeta meta )
 		{
-			super( NullAccountAuthenticator.this, AccountResult.LOGIN_SUCCESS, meta );
+			super( NullAccountAuthenticator.this, AccountDescriptiveReason.LOGIN_SUCCESS, meta );
 		}
 	}
 	
@@ -34,24 +33,20 @@ public final class NullAccountAuthenticator extends AccountAuthenticator
 	}
 	
 	@Override
-	public AccountCredentials authorize( String acctId, AccountPermissible perm )
+	public AccountCredentials authorize( AccountMeta acct, AccountPermissible perm ) throws AccountException
 	{
-		AccountMeta meta = AccountManager.INSTANCE.getAccountWithException( acctId );
+		if ( acct != AccountType.ACCOUNT_NONE )
+			throw new AccountException( AccountDescriptiveReason.INCORRECT_LOGIN, acct );
 		
-		if ( meta != AccountType.ACCOUNT_NONE )
-			throw new AccountException( AccountResult.INCORRECT_LOGIN );
-		
-		return new NullAccountCredentials( meta );
+		return new NullAccountCredentials( acct );
 	}
 	
 	@Override
-	public AccountCredentials authorize( String acctId, Object... creds )
+	public AccountCredentials authorize( AccountMeta acct, Object... creds ) throws AccountException
 	{
-		AccountMeta meta = AccountManager.INSTANCE.getAccountWithException( acctId );
+		if ( acct != AccountType.ACCOUNT_NONE )
+			throw new AccountException( AccountDescriptiveReason.INCORRECT_LOGIN, acct );
 		
-		if ( meta != AccountType.ACCOUNT_NONE )
-			throw new AccountException( AccountResult.INCORRECT_LOGIN );
-		
-		return new NullAccountCredentials( meta );
+		return new NullAccountCredentials( acct );
 	}
 }

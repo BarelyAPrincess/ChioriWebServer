@@ -174,6 +174,7 @@ public class NetworkSecurity extends BuiltinEventCreator implements Listener
 		ips.add( new IpTracker( "94.23.193.70" ).setBanned() );
 		ips.add( new IpTracker( "204.15.135.116" ).setBanned() );
 		ips.add( new IpTracker( "222.91.96.117" ).setBanned() );
+		ips.add( new IpTracker( "190.213.166.12" ).setBanned() );
 	}
 	
 	public NetworkSecurity()

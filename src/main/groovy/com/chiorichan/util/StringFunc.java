@@ -542,6 +542,8 @@ public class StringFunc
 			newSet = Sets.newCopyOnWriteArraySet();
 		else if ( set instanceof ConcurrentSet )
 			newSet = Sets.newConcurrentHashSet();
+		else if ( set.getClass() == new HashMap<Object, Object>().keySet().getClass() ) // Really nasty way of comparing it to a private class
+			newSet = Sets.newLinkedHashSet();
 		else
 		{
 			Loader.getLogger().warning( "Could not find Set type for class " + set.getClass() );

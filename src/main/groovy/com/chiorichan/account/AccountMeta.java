@@ -19,6 +19,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
 
+import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.site.Site;
@@ -282,7 +283,7 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 		return this;
 	}
 	
-	public void reload()
+	public void reload() throws AccountException
 	{
 		context.creator().reload( this );
 	}
@@ -292,7 +293,7 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 		metadata.put( "actnum", RandomFunc.randomize( "z154f98wfjascvc" ) );
 	}
 	
-	public void save()
+	public void save() throws AccountException
 	{
 		context.creator().save( this );
 	}

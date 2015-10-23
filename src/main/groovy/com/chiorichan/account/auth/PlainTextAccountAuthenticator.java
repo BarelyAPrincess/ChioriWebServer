@@ -16,8 +16,9 @@ import com.chiorichan.Loader;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
+import com.chiorichan.account.AccountType;
 import com.chiorichan.account.lang.AccountException;
-import com.chiorichan.account.lang.AccountResult;
+import com.chiorichan.account.lang.AccountDescriptiveReason;
 import com.chiorichan.datastore.sql.SQLExecute;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.datastore.sql.query.SQLQuerySelect;
@@ -30,7 +31,7 @@ public final class PlainTextAccountAuthenticator extends AccountAuthenticator
 {
 	class PlainTextAccountCredentials extends AccountCredentials
 	{
-		PlainTextAccountCredentials( AccountResult result, AccountMeta meta )
+		PlainTextAccountCredentials( AccountDescriptiveReason result, AccountMeta meta )
 		{
 			super( PlainTextAccountAuthenticator.this, result, meta );
 		}
@@ -54,33 +55,29 @@ public final class PlainTextAccountAuthenticator extends AccountAuthenticator
 	}
 	
 	@Override
-	public AccountCredentials authorize( String acctId, AccountPermissible perm )
+	public AccountCredentials authorize( AccountMeta acct, AccountPermissible perm ) throws AccountException
 	{
 		/**
 		 * Session Logins are not resumed using plain text. See {@link AccountCredentials#makeResumable}
 		 */
-		throw AccountResult.FEATURE_NOT_IMPLEMENTED.exception();
+		throw new AccountException( AccountDescriptiveReason.FEATURE_NOT_IMPLEMENTED, acct );
 	}
 	
 	@Override
-	public AccountCredentials authorize( String acctId, Object... creds )
+	public AccountCredentials authorize( AccountMeta acct, Object... creds ) throws AccountException
 	{
 		if ( creds.length < 1 || ! ( creds[0] instanceof String ) )
-			throw AccountResult.INTERNAL_ERROR.exception();
+			throw new AccountException( AccountDescriptiveReason.INTERNAL_ERROR, acct );
 		
 		String pass = ( String ) creds[0];
 		
-		if ( acctId == null || acctId.isEmpty() )
-			throw AccountResult.EMPTY_USERNAME.exception();
+		if ( acct == null )
+			throw new AccountException( AccountDescriptiveReason.INCORRECT_LOGIN, AccountType.ACCOUNT_NONE );
 		
 		if ( pass == null || pass.isEmpty() )
-			throw AccountResult.EMPTY_PASSWORD.exception();
+			throw new AccountException( AccountDescriptiveReason.EMPTY_CREDENTIALS, acct );
 		
-		AccountMeta meta = AccountManager.INSTANCE.getAccountWithException( acctId );
-		
-		if ( meta == null )
-			throw AccountResult.INCORRECT_LOGIN.exception();
-		
+		String acctId = acct.getId();
 		String password = null;
 		try
 		{
@@ -88,34 +85,35 @@ public final class PlainTextAccountAuthenticator extends AccountAuthenticator
 			// ResultSet rs = db.query( "SELECT * FROM `accounts_plaintext` WHERE `acctId` = '" + acctId + "' LIMIT 1;" );
 			
 			if ( select.rowCount() < 1 )
-				throw AccountResult.PASSWORD_UNSET.format( meta ).exception();
+				throw new AccountException( AccountDescriptiveReason.PASSWORD_UNSET, acct );
 			
 			if ( select.getInt( "expires" ) > -1 && select.getInt( "expires" ) < Timings.epoch() )
-				throw AccountResult.EXPIRED_LOGIN.format( meta ).exception();
+				throw new AccountException( AccountDescriptiveReason.EXPIRED_LOGIN, acct );
 			
 			password = select.getString( "password" );
 		}
 		catch ( AccountException e )
 		{
-			if ( meta.getString( "password" ) != null && !meta.getString( "password" ).isEmpty() )
+			if ( acct.getString( "password" ) != null && !acct.getString( "password" ).isEmpty() )
 			{
-				password = meta.getString( "password" );
-				setPassword( meta, password, -1 );
-				meta.set( "password", null );
+				// Compatibility with older versions, may soon get removed
+				password = acct.getString( "password" );
+				setPassword( acct, password, -1 );
+				acct.set( "password", null );
 			}
 			else
 				throw e;
 		}
 		catch ( SQLException e )
 		{
-			throw AccountResult.INTERNAL_ERROR.setThrowable( e ).format( meta ).exception();
+			throw new AccountException( AccountDescriptiveReason.INTERNAL_ERROR, e, acct );
 		}
 		
 		// TODO Encrypt all passwords
 		if ( password.equals( pass ) || password.equals( DigestUtils.md5Hex( pass ) ) || DigestUtils.md5Hex( password ).equals( pass ) )
-			return new PlainTextAccountCredentials( AccountResult.LOGIN_SUCCESS, meta );
+			return new PlainTextAccountCredentials( AccountDescriptiveReason.LOGIN_SUCCESS, acct );
 		else
-			throw new AccountException( AccountResult.INCORRECT_LOGIN );
+			throw new AccountException( AccountDescriptiveReason.INCORRECT_LOGIN, acct );
 	}
 	
 	/**

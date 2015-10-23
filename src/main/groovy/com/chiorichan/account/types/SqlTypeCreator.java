@@ -27,6 +27,7 @@ import com.chiorichan.account.AccountType;
 import com.chiorichan.account.event.AccountLookupEvent;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
+import com.chiorichan.account.lang.AccountDescriptiveReason;
 import com.chiorichan.datastore.sql.SqlTableColumns;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.datastore.sql.query.SQLQuerySelect;
@@ -69,7 +70,7 @@ public class SqlTypeCreator extends AccountTypeCreator
 	
 	
 	@Override
-	public AccountContext createAccount( String acctId, String siteId )
+	public AccountContext createAccount( String acctId, String siteId ) throws AccountException
 	{
 		AccountContext context = new AccountContextImpl( this, AccountType.SQL, acctId, siteId );
 		
@@ -159,34 +160,36 @@ public class SqlTypeCreator extends AccountTypeCreator
 	{
 		try
 		{
-			event.setResult( readAccount( event.getAcctId() ), AccountResult.LOGIN_SUCCESS );
+			event.setResult( readAccount( event.getAcctId() ), AccountDescriptiveReason.LOGIN_SUCCESS );
 		}
 		catch ( SQLException e )
 		{
 			if ( Versioning.isDevelopment() )
 				e.printStackTrace();
+			
+			event.setResult( null, AccountDescriptiveReason.INTERNAL_ERROR ).setCause( e );
 		}
 		catch ( AccountException e )
 		{
-			event.setResult( e.getContext(), e.getResult() );
+			event.setResult( null, e.getReason() );
 		}
 	}
 	
 	@Override
-	public void preLogin( AccountMeta meta, AccountPermissible via, String acctId, Object... creds )
+	public void preLogin( AccountMeta meta, AccountPermissible via, String acctId, Object... creds ) throws AccountException
 	{
 		if ( meta.getInteger( "numloginfail" ) > 5 )
 			if ( meta.getInteger( "lastloginfail" ) > ( Timings.epoch() - 1800 ) )
-				throw new AccountException( AccountResult.UNDER_ATTACK );
+				throw new AccountException( AccountDescriptiveReason.UNDER_ATTACK, meta );
 		
 		if ( !meta.getString( "actnum" ).equals( "0" ) )
-			throw new AccountException( AccountResult.ACCOUNT_NOT_ACTIVATED );
+			throw new AccountException( AccountDescriptiveReason.ACCOUNT_NOT_ACTIVATED, meta );
 	}
 	
 	public AccountContext readAccount( String acctId ) throws AccountException, SQLException
 	{
 		if ( acctId == null || acctId.isEmpty() )
-			throw new AccountException( AccountResult.EMPTY_ACCTID );
+			throw new AccountException( AccountDescriptiveReason.EMPTY_ACCTID, acctId );
 		
 		Set<String> accountFieldSet = new HashSet<String>( accountFields );
 		Set<String> accountColumnSet = new HashSet<String>( sql.table( table ).columnNames() );
@@ -216,7 +219,7 @@ public class SqlTypeCreator extends AccountTypeCreator
 		AccountContextImpl context = new AccountContextImpl( this, AccountType.SQL, acctId, "%" );
 		
 		if ( select.rowCount() < 1 )
-			throw new AccountException( AccountResult.INCORRECT_LOGIN, context );
+			throw new AccountException( AccountDescriptiveReason.INCORRECT_LOGIN, acctId );
 		
 		Map<String, String> row = select.stringRow();
 		
@@ -228,7 +231,7 @@ public class SqlTypeCreator extends AccountTypeCreator
 	}
 	
 	@Override
-	public void reload( AccountMeta meta )
+	public void reload( AccountMeta meta ) throws AccountException
 	{
 		try
 		{
@@ -241,7 +244,7 @@ public class SqlTypeCreator extends AccountTypeCreator
 	}
 	
 	@Override
-	public void save( AccountContext context )
+	public void save( AccountContext context ) throws AccountException
 	{
 		try
 		{
@@ -349,7 +352,7 @@ public class SqlTypeCreator extends AccountTypeCreator
 	}
 	
 	@Override
-	public void successLogin( AccountMeta meta )
+	public void successLogin( AccountMeta meta ) throws AccountException
 	{
 		try
 		{
@@ -357,7 +360,7 @@ public class SqlTypeCreator extends AccountTypeCreator
 		}
 		catch ( SQLException e )
 		{
-			throw new AccountException( e );
+			throw new AccountException( e, meta );
 		}
 	}
 	

@@ -19,13 +19,13 @@ import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.lang.AccountException;
-import com.chiorichan.account.lang.AccountResult;
+import com.chiorichan.account.lang.AccountDescriptiveReason;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.datastore.sql.query.SQLQuerySelect;
+import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.RandomFunc;
-import com.chiorichan.util.Versioning;
 
 /**
  * Used to authenticate an account using an Account Id and Token combination
@@ -36,9 +36,9 @@ public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
 	{
 		private String token;
 		
-		OnetimeTokenAccountCredentials( AccountResult result, AccountMeta meta, String token )
+		OnetimeTokenAccountCredentials( AccountDescriptiveReason reason, AccountMeta meta, String token )
 		{
-			super( OnetimeTokenAccountAuthenticator.this, result, meta );
+			super( OnetimeTokenAccountAuthenticator.this, reason, meta );
 			this.token = token;
 		}
 		
@@ -86,54 +86,57 @@ public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
 	}
 	
 	@Override
-	public AccountCredentials authorize( String acctId, AccountPermissible perm )
+	public AccountCredentials authorize( AccountMeta acct, AccountPermissible perm ) throws AccountException
 	{
+		if ( acct == null )
+			throw new AccountException( AccountDescriptiveReason.INCORRECT_LOGIN, acct );
+		
 		String token = perm.getVariable( "token" );
 		
 		if ( token == null )
-			throw new AccountException( "The account, '" + acctId + "', was not made resumable using the token method." );
+			throw new AccountException( new AccountDescriptiveReason( "The account '" + acct.getId() + "' has no resumable login using the token method.", ReportingLevel.L_ERROR ), acct );
 		
-		return authorize( acctId, token );
+		return authorize( acct, token );
 	}
 	
 	@Override
-	public AccountCredentials authorize( String acctId, Object... creds )
+	public AccountCredentials authorize( AccountMeta acct, Object... creds ) throws AccountException
 	{
-		if ( creds.length == 0 || ! ( creds[0] instanceof String ) )
-			throw AccountResult.INTERNAL_ERROR.exception();
+		if ( acct == null )
+			throw new AccountException( AccountDescriptiveReason.INCORRECT_LOGIN, acct );
 		
+		if ( creds[0] instanceof AccountPermissible )
+			return authorize( acct, ( AccountPermissible ) creds[0] );
+		
+		if ( creds.length == 0 || ! ( creds[0] instanceof String ) )
+			throw new AccountException( AccountDescriptiveReason.INTERNAL_ERROR, acct );
+		
+		String acctId = acct.getId();
 		String token = ( String ) creds[0];
 		
 		try
 		{
 			if ( token == null || token.isEmpty() )
-				throw AccountResult.INTERNAL_ERROR.format( "There was an internal error authorizing the provided token." ).exception();
-			
-			AccountMeta meta = AccountManager.INSTANCE.getAccountWithException( acctId );
-			
-			if ( meta == null )
-				throw AccountResult.INCORRECT_LOGIN.exception();
+				throw new AccountException( AccountDescriptiveReason.EMPTY_CREDENTIALS, acct );
 			
 			SQLQuerySelect select = db.table( "accounts_token" ).select().where( "acctId" ).matches( acctId ).and().where( "token" ).matches( token ).limit( 1 ).execute();
 			
-			// ResultSet rs = db.query( "SELECT * FROM `accounts_token` WHERE `acctId` = '" + acctId + "' AND `token` = '" + token + "' LIMIT 1;" );
-			// if ( rs == null || db.getRowCount( rs ) < 1 )
-			
 			if ( select.rowCount() == 0 )
-				throw AccountResult.INCORRECT_LOGIN.setMessage( "The provided token did not match any saved tokens" + ( Versioning.isDevelopment() ? ", token: " + token : "." ) ).exception();
+				throw new AccountException( AccountDescriptiveReason.INCORRECT_LOGIN, acct );
+			// throw AccountResult.INCORRECT_LOGIN.setMessage( "The provided token did not match any saved tokens" + ( Versioning.isDevelopment() ? ", token: " + token : "." ) ).exception();
 			
 			ResultSet rs = select.result();
 			
 			if ( rs.getInt( "expires" ) >= 0 && rs.getInt( "expires" ) < Timings.epoch() )
-				throw AccountResult.EXPIRED_LOGIN.exception();
+				throw new AccountException( AccountDescriptiveReason.EXPIRED_LOGIN, acct );
 			
 			// deleteToken( acctId, token );
 			expireToken( acctId, token );
-			return new OnetimeTokenAccountCredentials( AccountResult.LOGIN_SUCCESS, meta, token );
+			return new OnetimeTokenAccountCredentials( AccountDescriptiveReason.LOGIN_SUCCESS, acct, token );
 		}
 		catch ( SQLException e )
 		{
-			throw AccountResult.INTERNAL_ERROR.setThrowable( e ).format( acctId ).exception();
+			throw new AccountException( AccountDescriptiveReason.INTERNAL_ERROR, e, acct );
 		}
 	}
 	

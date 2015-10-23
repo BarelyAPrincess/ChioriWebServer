@@ -38,6 +38,7 @@ import org.joda.time.format.PeriodFormatterBuilder;
 import com.chiorichan.account.AccountAttachment;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountMeta;
+import com.chiorichan.account.AccountType;
 import com.chiorichan.account.Kickable;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.datastore.DatastoreManager;
@@ -856,7 +857,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 						else if ( attachment instanceof Kickable )
 							kickables.add( ( Kickable ) attachment );
 			
-			KickEvent.kick( kickables ).setReason( stopReason ).fire();
+			KickEvent.kick( AccountType.ACCOUNT_ROOT, kickables ).setReason( stopReason ).fire();
 		}
 		catch ( Throwable t )
 		{

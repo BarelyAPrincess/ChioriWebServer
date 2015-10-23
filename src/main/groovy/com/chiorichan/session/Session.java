@@ -20,6 +20,7 @@ import com.chiorichan.account.AccountInstance;
 import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.Kickable;
+import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
@@ -545,12 +546,20 @@ public final class Session extends AccountPermissible implements Kickable
 	}
 	
 	@Override
-	public void successfulLogin()
+	public void successfulLogin() throws AccountException
 	{
 		for ( SessionWrapper wrapper : wrappers )
 			registerAttachment( wrapper );
 		
-		account().meta().context().credentials().makeResumable( this );
+		try
+		{
+			account().meta().context().credentials().makeResumable( this );
+		}
+		catch ( AccountException e )
+		{
+			SessionManager.getLogger().severe( "We had a problem making the current login resumable!", e );
+		}
+		
 		rearmTimeout();
 		saveWithoutException();
 	}

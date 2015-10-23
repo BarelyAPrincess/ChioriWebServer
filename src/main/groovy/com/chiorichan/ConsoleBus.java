@@ -24,7 +24,9 @@ import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.AccountType;
 import com.chiorichan.account.auth.AccountAuthenticator;
+import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
+import com.chiorichan.account.lang.AccountDescriptiveReason;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.messaging.MessageSender;
 import com.chiorichan.permission.PermissibleEntity;
@@ -212,19 +214,25 @@ public class ConsoleBus extends AccountPermissible implements Runnable, AccountA
 	@Override
 	public void login()
 	{
-		// Disabled!
+		// Disabled and Ignored!
 	}
 	
 	@Override
 	public AccountResult login( AccountAuthenticator auth, String acctId, Object... credObjs )
 	{
-		return AccountResult.FEATURE_DISABLED;
+		return new AccountResult( acctId, AccountDescriptiveReason.FEATURE_DISABLED );
+	}
+	
+	@Override
+	public AccountResult loginWithException( AccountAuthenticator auth, String acctId, Object... credObjs ) throws AccountException
+	{
+		throw new AccountException( AccountDescriptiveReason.FEATURE_DISABLED, acctId );
 	}
 	
 	@Override
 	public AccountResult logout()
 	{
-		return AccountResult.FEATURE_DISABLED;
+		return new AccountResult( AccountType.ACCOUNT_NONE, AccountDescriptiveReason.FEATURE_DISABLED );
 	}
 	
 	@Override

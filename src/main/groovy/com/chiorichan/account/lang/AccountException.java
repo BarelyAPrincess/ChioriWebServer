@@ -8,100 +8,119 @@
  */
 package com.chiorichan.account.lang;
 
-import com.chiorichan.account.AccountContext;
+import org.apache.commons.lang3.Validate;
+
 import com.chiorichan.account.AccountMeta;
+import com.chiorichan.lang.ReportingLevel;
 
 /**
  * Used to pass login errors to the requester.
  */
-public class AccountException extends RuntimeException
+public class AccountException extends Exception
 {
 	private static final long serialVersionUID = 5522301956671473324L;
 	
-	private AccountResult result = AccountResult.UNKNOWN_ERROR;
-	private AccountMeta acct = null;
-	private AccountContext context = null;
+	private AccountDescriptiveReason reason;
+	private AccountResult result;
 	
-	public AccountException()
+	public AccountException( AccountDescriptiveReason reason, AccountMeta meta )
 	{
-		
+		this( reason, meta.getId() );
 	}
 	
-	public AccountException( AccountResult result )
+	public AccountException( AccountDescriptiveReason reason, AccountResult result )
 	{
-		super( result.getMessage() );
+		super( reason.getMessage() );
+		
+		Validate.notNull( reason );
+		Validate.notNull( result );
+		
+		result.setReason( reason );
+		this.reason = reason;
 		this.result = result;
 	}
 	
-	public AccountException( AccountResult result, AccountContext context )
+	public AccountException( AccountDescriptiveReason reason, String acctId )
 	{
-		this( result );
-		this.context = context;
+		super( reason.getMessage() );
+		this.reason = reason;
+		result = new AccountResult( acctId, reason );
 	}
 	
-	public AccountException( AccountResult result, AccountMeta acct )
+	public AccountException( AccountDescriptiveReason reason, Throwable cause, AccountMeta meta )
 	{
-		this( result );
-		this.acct = acct;
+		this( reason, cause, meta.getId() );
 	}
 	
-	public AccountException( String msg )
-	{
-		super( msg );
-	}
-	
-	public AccountException( String msg, Throwable cause )
+	public AccountException( AccountDescriptiveReason reason, Throwable cause, AccountResult result )
 	{
 		super( cause );
+		
+		if ( cause instanceof AccountException )
+			throw new IllegalStateException( "Stacking AccountException is not recommended!" );
+		
+		Validate.notNull( reason );
+		Validate.notNull( cause );
+		Validate.notNull( result );
+		
+		this.reason = reason;
+		this.result = result;
 	}
 	
-	public AccountException( Throwable cause )
+	public AccountException( AccountDescriptiveReason reason, Throwable cause, String acctId )
+	{
+		this( reason, cause, new AccountResult( acctId ) );
+	}
+	
+	public AccountException( Throwable cause, AccountMeta meta )
+	{
+		this( cause, meta.getId() );
+	}
+	
+	public AccountException( Throwable cause, AccountResult result )
 	{
 		super( cause );
+		
+		if ( cause instanceof AccountException )
+			throw new IllegalStateException( "Stacking AccountException is not recommended!" );
+		
+		Validate.notNull( cause );
+		Validate.notNull( result );
+		
+		reason = new AccountDescriptiveReason( cause.getMessage(), ReportingLevel.L_ERROR );
+		this.result = result;
 	}
 	
-	public AccountException( Throwable cause, AccountContext context )
+	public AccountException( Throwable cause, String acctId )
 	{
-		this( cause );
-		this.context = context;
-	}
-	
-	public AccountException( Throwable cause, AccountMeta acct )
-	{
-		this( cause );
-		this.acct = acct;
+		this( cause, new AccountResult( acctId ) );
 	}
 	
 	public AccountMeta getAccount()
 	{
-		return acct;
+		return result.getAccount();
 	}
 	
-	public AccountContext getContext()
+	public String getAcctId()
 	{
-		return context == null && acct != null ? acct.context() : context;
+		return result.getAcctId();
+	}
+	
+	public AccountDescriptiveReason getReason()
+	{
+		return reason;
 	}
 	
 	public AccountResult getResult()
 	{
-		if ( result == null )
-			result = AccountResult.DEFAULT;
-		
 		if ( !result.isIgnorable() )
-			result = result.setThrowable( this );
+			result = result.setCause( this );
 		
 		return result;
 	}
 	
-	public AccountException setAccount( AccountMeta acct )
+	public boolean hasCause()
 	{
-		this.acct = acct;
-		return this;
-	}
-	
-	public AccountException setContext( AccountContext context )
-	{
-		this.context = context;
-		return this;
+		return getCause() != null;
 	}
 }

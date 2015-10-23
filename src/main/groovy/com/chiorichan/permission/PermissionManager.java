@@ -24,7 +24,7 @@ import com.chiorichan.ServerManager;
 import com.chiorichan.account.AccountInstance;
 import com.chiorichan.account.AccountType;
 import com.chiorichan.account.event.AccountPreLoginEvent;
-import com.chiorichan.account.lang.AccountResult;
+import com.chiorichan.account.lang.AccountDescriptiveReason;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.event.BuiltinEventCreator;
 import com.chiorichan.event.EventBus;
@@ -671,13 +671,13 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 		
 		if ( hasWhitelist() && entity.isWhitelisted() )
 		{
-			event.fail( AccountResult.ACCOUNT_NOT_WHITELISTED );
+			event.fail( AccountDescriptiveReason.ACCOUNT_NOT_WHITELISTED );
 			return;
 		}
 		
 		if ( entity.isBanned() )
 		{
-			event.fail( AccountResult.ACCOUNT_BANNED );
+			event.fail( AccountDescriptiveReason.ACCOUNT_BANNED );
 			return;
 		}
 	}

@@ -10,6 +10,7 @@ package com.chiorichan.account;
 
 import java.util.List;
 
+import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.permission.PermissibleEntity;
 
@@ -23,24 +24,27 @@ public interface AccountCreator
 	 * 
 	 * @param account
 	 *            The {@link AccountMeta} to save
+	 * @throws AccountException
 	 */
-	void save( AccountMeta account );
+	void save( AccountMeta account ) throws AccountException;
 	
 	/**
 	 * Attempt to save the supplied {@link AccountContext}
 	 * 
 	 * @param accountContext
 	 *            The {@link AccountContext} to save
+	 * @throws AccountException
 	 */
-	void save( AccountContext accountContext );
+	void save( AccountContext accountContext ) throws AccountException;
 	
 	/**
 	 * Attempts to reload data for the supplied {@link AccountMeta}
 	 * 
 	 * @param account
 	 *            The {@link AccountMeta} to reload
+	 * @throws AccountException
 	 */
-	void reload( AccountMeta account );
+	void reload( AccountMeta account ) throws AccountException;
 	
 	/**
 	 * Check if this Account Creator is enabled and functioning
@@ -65,8 +69,9 @@ public interface AccountCreator
 	 * 
 	 * @param meta
 	 *            The {@link AccountMeta} involved in the login
+	 * @throws AccountException
 	 */
-	void successLogin( AccountMeta meta );
+	void successLogin( AccountMeta meta ) throws AccountException;
 	
 	/**
 	 * Called by {@link AccountMeta#AccountMeta(AccountContext)} when it finishes constructing it's class and getting reference to it's {@link PermissibleEntity}
@@ -89,8 +94,9 @@ public interface AccountCreator
 	 *            The Account Id
 	 * @param creds
 	 *            The credentials that are to be passed to the related {@link AccountCredentials}
+	 * @throws AccountException
 	 */
-	void preLogin( AccountMeta meta, AccountPermissible via, String acctId, Object... creds );
+	void preLogin( AccountMeta meta, AccountPermissible via, String acctId, Object... creds ) throws AccountException;
 	
 	/**
 	 * See {@link AccountMeta#getDisplayName()}
@@ -124,6 +130,7 @@ public interface AccountCreator
 	 * @param siteId
 	 *            The site Id associated with this new Account, e.g., % = All Sites
 	 * @return The new AccountContext
+	 * @throws AccountException
 	 */
-	AccountContext createAccount( String acctId, String siteId );
+	AccountContext createAccount( String acctId, String siteId ) throws AccountException;
 }

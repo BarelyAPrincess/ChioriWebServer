@@ -15,7 +15,7 @@ import java.util.Map;
 
 import com.chiorichan.account.auth.AccountCredentials;
 import com.chiorichan.account.lang.AccountException;
-import com.chiorichan.account.lang.AccountResult;
+import com.chiorichan.account.lang.AccountDescriptiveReason;
 import com.google.common.collect.Maps;
 
 /**
@@ -41,19 +41,6 @@ public class AccountContext
 	protected String acctId = null;
 	protected String siteId = null;
 	
-	protected AccountContext( AccountCreator creator, AccountType type, String acctId, String siteId, boolean keepLoaded )
-	{
-		this( creator, type, acctId, siteId );
-		this.keepLoaded = keepLoaded;
-	}
-	
-	protected AccountContext( AccountCreator creator, AccountType type, String acctId, String siteId )
-	{
-		this( creator, type );
-		this.acctId = acctId;
-		this.siteId = siteId;
-	}
-	
 	protected AccountContext( AccountCreator creator, AccountType type )
 	{
 		this.creator = creator;
@@ -64,19 +51,17 @@ public class AccountContext
 		loginKeys.add( "acctId" );
 	}
 	
-	public AccountCredentials credentials()
+	protected AccountContext( AccountCreator creator, AccountType type, String acctId, String siteId )
 	{
-		return credentials;
+		this( creator, type );
+		this.acctId = acctId;
+		this.siteId = siteId;
 	}
 	
-	public void setKeepLoaded( boolean keepLoaded )
+	protected AccountContext( AccountCreator creator, AccountType type, String acctId, String siteId, boolean keepLoaded )
 	{
+		this( creator, type, acctId, siteId );
 		this.keepLoaded = keepLoaded;
-	}
-	
-	public AccountType type()
-	{
-		return type;
 	}
 	
 	public AccountCreator creator()
@@ -84,23 +69,23 @@ public class AccountContext
 		return creator;
 	}
 	
-	public AccountMeta meta()
+	public AccountCredentials credentials()
 	{
-		return acct;
+		return credentials;
 	}
 	
 	public String getAcctId()
 	{
 		if ( acctId == null || acctId.isEmpty() )
-			throw new AccountException( AccountResult.EMPTY_ACCTID );
+			return "<Not Set>";
 		
 		return acctId;
 	}
 	
-	public String getAcctIdWithoutException()
+	public String getAcctIdWithException() throws AccountException
 	{
-		if ( acctId == null )
-			return "<Not Set>";
+		if ( acctId == null || acctId.isEmpty() )
+			throw new AccountException( AccountDescriptiveReason.EMPTY_ACCTID, AccountType.ACCOUNT_NONE );
 		
 		return acctId;
 	}
@@ -113,9 +98,9 @@ public class AccountContext
 		return siteId;
 	}
 	
-	public boolean keepLoaded()
+	public Object getValue( String key )
 	{
-		return keepLoaded;
+		return rawMeta.get( key );
 	}
 	
 	public Map<String, Object> getValues()
@@ -123,17 +108,17 @@ public class AccountContext
 		return Collections.unmodifiableMap( rawMeta );
 	}
 	
-	public void setValue( String key, Object value )
+	public boolean keepLoaded()
 	{
-		rawMeta.put( key, value );
+		return keepLoaded;
 	}
 	
-	public Object getValue( String key )
+	public AccountMeta meta()
 	{
-		return rawMeta.get( key );
+		return acct;
 	}
 	
-	public void save()
+	public void save() throws AccountException
 	{
 		creator.save( this );
 	}
@@ -141,5 +126,20 @@ public class AccountContext
 	void setAccount( AccountMeta acct )
 	{
 		this.acct = acct;
+	}
+	
+	public void setKeepLoaded( boolean keepLoaded )
+	{
+		this.keepLoaded = keepLoaded;
+	}
+	
+	public void setValue( String key, Object value )
+	{
+		rawMeta.put( key, value );
+	}
+	
+	public AccountType type()
+	{
+		return type;
 	}
 }

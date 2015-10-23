@@ -10,7 +10,7 @@ package com.chiorichan.account.event;
 
 import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
-import com.chiorichan.account.lang.AccountResult;
+import com.chiorichan.account.lang.AccountDescriptiveReason;
 import com.chiorichan.event.Cancellable;
 import com.chiorichan.event.Conditional;
 import com.chiorichan.event.EventException;
@@ -21,7 +21,7 @@ import com.chiorichan.event.RegisteredListener;
  */
 public class AccountPreLoginEvent extends AccountEvent implements Conditional, Cancellable
 {
-	private AccountResult result = AccountResult.DEFAULT;
+	private AccountDescriptiveReason reason = AccountDescriptiveReason.DEFAULT;
 	private final AccountPermissible via;
 	private final Object[] creds;
 	
@@ -36,7 +36,7 @@ public class AccountPreLoginEvent extends AccountEvent implements Conditional, C
 	public boolean conditional( RegisteredListener context ) throws EventException
 	{
 		// If the result returned is an error then we skip the remaining EventListeners
-		return result.isSuccess();
+		return reason.getReportingLevel().isSuccess();
 	}
 	
 	/**
@@ -47,19 +47,9 @@ public class AccountPreLoginEvent extends AccountEvent implements Conditional, C
 	 * @param message
 	 *            Kick message to display to the user
 	 */
-	public void fail( final AccountResult result )
+	public void fail( final AccountDescriptiveReason reason )
 	{
-		this.result = result;
-	}
-	
-	/**
-	 * Gets the current result of the login, as an enum
-	 * 
-	 * @return Current AccountResult of the login
-	 */
-	public AccountResult getAccountResult()
-	{
-		return result;
+		this.reason = reason;
 	}
 	
 	public AccountPermissible getAttachment()
@@ -72,10 +62,26 @@ public class AccountPreLoginEvent extends AccountEvent implements Conditional, C
 		return creds;
 	}
 	
+	/**
+	 * Gets the current result of the login, as an enum
+	 * 
+	 * @return Current AccountResult of the login
+	 */
+	public AccountDescriptiveReason getDescriptiveReason()
+	{
+		return reason;
+	}
+	
 	@Override
 	public boolean isCancelled()
 	{
-		return result.equals( AccountResult.CANCELLED_BY_EVENT );
+		return reason == AccountDescriptiveReason.CANCELLED_BY_EVENT;
+	}
+	
+	@Override
+	public void setCancelled( boolean cancel )
+	{
+		reason = AccountDescriptiveReason.CANCELLED_BY_EVENT;
 	}
 	
 	/**
@@ -84,15 +90,9 @@ public class AccountPreLoginEvent extends AccountEvent implements Conditional, C
 	 * @param result
 	 *            New result to set
 	 */
-	public void setAccountResult( final AccountResult result )
+	public void setDescriptiveReason( final AccountDescriptiveReason reason )
 	{
-		this.result = result;
-	}
-	
-	@Override
-	public void setCancelled( boolean cancel )
-	{
-		result = AccountResult.CANCELLED_BY_EVENT;
+		this.reason = reason;
 	}
 	
 	/**
@@ -100,6 +100,6 @@ public class AccountPreLoginEvent extends AccountEvent implements Conditional, C
 	 */
 	public void success()
 	{
-		result = AccountResult.DEFAULT;
+		reason = AccountDescriptiveReason.DEFAULT;
 	}
 }

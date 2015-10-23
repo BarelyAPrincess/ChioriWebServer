@@ -19,9 +19,9 @@ public class AccountSuccessfulLoginEvent extends AccountFailedLoginEvent
 {
 	AccountPermissible via;
 	
-	public AccountSuccessfulLoginEvent( AccountMeta meta, AccountPermissible via )
+	public AccountSuccessfulLoginEvent( AccountMeta meta, AccountPermissible via, AccountResult result )
 	{
-		super( meta, via, AccountResult.LOGIN_SUCCESS );
+		super( meta, via, result );
 		this.via = via;
 	}
 	

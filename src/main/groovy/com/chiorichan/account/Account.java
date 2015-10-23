@@ -8,6 +8,7 @@
  */
 package com.chiorichan.account;
 
+import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.messaging.MessageChannel;
 import com.chiorichan.messaging.MessageSender;
 import com.chiorichan.permission.PermissibleEntity;
@@ -26,6 +27,7 @@ public interface Account extends MessageSender, MessageChannel
 	 * Returns the exact instance of AccountMeta
 	 * 
 	 * @return {@link AccountInstance} instance of this Account
+	 * @throws AccountException
 	 */
 	AccountInstance instance();
 	
@@ -66,6 +68,6 @@ public interface Account extends MessageSender, MessageChannel
 	 */
 	@Override
 	PermissibleEntity getEntity();
-
+	
 	boolean isInitialized();
 }

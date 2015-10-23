@@ -994,50 +994,35 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			loginPost = "/";
 		
 		if ( username != null && password != null )
-		{
-			AccountResult result;
 			try
 			{
-				result = getSession().login( AccountAuthenticator.PASSWORD, username, password );
+				AccountResult result = getSession().loginWithException( AccountAuthenticator.PASSWORD, username, password );
 				
-			}
-			catch ( AccountException e )
-			{
-				result = e.getResult();
-			}
-			
-			if ( result.isSuccess() )
-			{
-				Account acct = result.getAccount();
-				
-				if ( acct == null )
-					throw AccountResult.INTERNAL_ERROR.setMessage( "Successful login but then something went wrong!" ).exception();
+				Account acct = result.getAccountWithException();
 				
 				session.remember( remember );
 				
 				SessionManager.getLogger().info( ConsoleColor.GREEN + "Successful Login: [id='" + acct.getId() + "',siteId='" + acct.getSiteId() + "',authenticator='plaintext']" );
 				getResponse().sendRedirect( loginPost );
 			}
-			else
+			catch ( AccountException e )
 			{
-				String msg = result.getMessage( username );
+				AccountResult result = e.getResult();
 				
-				if ( !result.isIgnorable() )
-					if ( result.hasCause() )
-					{
-						result.getThrowable().printStackTrace();
-						msg = result.getThrowable().getMessage();
-					}
-					else
-						Loader.getLogger().warning( "There was an unavoidable exception thrown but we had no StackTrace to print. :(" );
+				String msg = result.getFormattedMessage();
+				
+				if ( !result.isIgnorable() && result.hasCause() )
+				{
+					result.getCause().printStackTrace();
+					msg = result.getCause().getMessage();
+				}
 				
 				AccountManager.getLogger().warning( ConsoleColor.RED + "Failed Login [id='" + username + "',hasPassword='" + ( password != null && !password.isEmpty() ) + "',authenticator='plaintext'`,reason='" + msg + "']" );
 				getResponse().sendRedirect( loginForm + "?msg=" + result.getMessage() + ( ( target == null || target.isEmpty() ) ? "" : "&target=" + target ) );
 			}
-		}
 		else if ( session.isLoginPresent() )
 		{
-			// XXX Should we revalidate existing logins with each request? - Something worth considering. Maybe a config option?
+			// XXX Should we revalidate logins with each request? It could be something worth considering for extra security. Maybe a config option?
 			
 			/*
 			 * Maybe make this a server configuration option, e.g., sessions.revalidateLogins

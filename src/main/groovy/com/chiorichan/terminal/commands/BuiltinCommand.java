@@ -16,6 +16,7 @@ import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountAttachment;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.Kickable;
+import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.event.server.KickEvent;
 import com.chiorichan.messaging.MessageBuilder;
 import com.chiorichan.messaging.MessageDispatch;
@@ -26,6 +27,7 @@ import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.References;
 import com.chiorichan.terminal.Command;
 import com.chiorichan.terminal.CommandDispatch;
+import com.chiorichan.terminal.TerminalEntity;
 import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Joiner;
@@ -122,41 +124,49 @@ public abstract class BuiltinCommand extends Command
 			@Override
 			public boolean execute( AccountAttachment sender, String command, String[] args )
 			{
-				if ( !testPermission( sender ) )
-					return true;
-				if ( args.length < 1 || args[0].length() == 0 )
+				try
 				{
-					sender.sendMessage( ConsoleColor.RED + "Usage: " + usageMessage );
-					return false;
-				}
-				
-				Account user = AccountManager.INSTANCE.getAccountPartial( args[0] );
-				
-				if ( user != null )
-				{
-					String reason = "Kicked by an operator.";
-					
-					if ( args.length > 1 )
-						reason = StringFunc.join( args, 1 );
-					
-					if ( user instanceof Kickable )
+					if ( !testPermission( sender ) )
+						return true;
+					if ( args.length < 1 || args[0].length() == 0 )
 					{
-						KickEvent.kick( ( Kickable ) user ).setReason( reason ).fire();
+						sender.sendMessage( ConsoleColor.RED + "Usage: " + usageMessage );
+						return false;
+					}
+					
+					Account user = AccountManager.INSTANCE.getAccountPartial( args[0] );
+					
+					if ( user != null )
+					{
+						String reason = "Kicked by an operator.";
 						
-						try
+						if ( args.length > 1 )
+							reason = StringFunc.join( args, 1 );
+						
+						if ( user instanceof Kickable )
 						{
-							MessageDispatch.sendMessage( MessageBuilder.msg( String.format( "Kicked account %s with reason:%s", user.getDisplayName(), reason ) ).from( sender ) );
+							KickEvent.kick( sender.meta(), ( Kickable ) user ).setReason( reason ).fire();
+							
+							try
+							{
+								MessageDispatch.sendMessage( MessageBuilder.msg( String.format( "Kicked account %s with reason:%s", user.getDisplayName(), reason ) ).from( sender ) );
+							}
+							catch ( MessageException e )
+							{
+								e.printStackTrace();
+							}
 						}
-						catch ( MessageException e )
-						{
-							e.printStackTrace();
-						}
+						else
+							sender.sendMessage( String.format( "We found %s but it was not an instance of Kickable", args[0] ) );
 					}
 					else
-						sender.sendMessage( String.format( "We found %s but it was not an instance of Kickable", args[0] ) );
+						sender.sendMessage( String.format( "%s not found.", args[0] ) );
 				}
-				else
-					sender.sendMessage( String.format( "%s not found.", args[0] ) );
+				catch ( AccountException e )
+				{
+					e.printStackTrace();
+					sender.sendMessage( "We had a problem executing the kick command" );
+				}
 				
 				return true;
 			}
@@ -279,7 +289,7 @@ public abstract class BuiltinCommand extends Command
 			}
 		} );
 		
-		CommandDispatch.registerCommand( new BuiltinCommand( "exit" )
+		CommandDispatch.registerCommand( new BuiltinCommand( "logout" )
 		{
 			@Override
 			public boolean execute( AccountAttachment sender, String command, String[] args )
@@ -288,7 +298,24 @@ public abstract class BuiltinCommand extends Command
 				sender.getPermissible().logout();
 				return true;
 			}
-		}.setAliases( Arrays.asList( new String[] {"quit", "end", "leave", "logout"} ) ) );
+		} );
+		
+		CommandDispatch.registerCommand( new BuiltinCommand( "exit" )
+		{
+			@Override
+			public boolean execute( AccountAttachment sender, String command, String[] args )
+			{
+				if ( sender.getPermissible() instanceof TerminalEntity )
+				{
+					( ( TerminalEntity ) sender.getPermissible() ).getHandler().disconnect();
+					sender.sendMessage( ConsoleColor.AQUA + "Good bye!" );
+				}
+				else
+					sender.sendMessage( ConsoleColor.RED + "We're sorry, this connection can not be disconnected." );
+				
+				return true;
+			}
+		}.setAliases( Arrays.asList( new String[] {"quit", "end", "leave"} ) ) );
 		
 		CommandDispatch.registerCommand( new LoginCommand() );
 	}

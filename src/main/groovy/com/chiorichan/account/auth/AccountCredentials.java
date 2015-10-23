@@ -14,7 +14,8 @@ import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.AccountType;
 import com.chiorichan.account.lang.AccountException;
-import com.chiorichan.account.lang.AccountResult;
+import com.chiorichan.account.lang.AccountDescriptiveReason;
+import com.chiorichan.lang.ReportingLevel;
 
 /**
  * Provides login credentials to the {@link AccountAuthenticator}
@@ -22,13 +23,13 @@ import com.chiorichan.account.lang.AccountResult;
 public abstract class AccountCredentials
 {
 	protected final AccountAuthenticator authenticator;
-	protected final AccountResult result;
+	protected final AccountDescriptiveReason reason;
 	protected final AccountMeta meta;
 	
-	AccountCredentials( AccountAuthenticator authenticator, AccountResult result, AccountMeta meta )
+	AccountCredentials( AccountAuthenticator authenticator, AccountDescriptiveReason reason, AccountMeta meta )
 	{
 		this.authenticator = authenticator;
-		this.result = result;
+		this.reason = reason;
 		this.meta = meta;
 	}
 	
@@ -42,9 +43,9 @@ public abstract class AccountCredentials
 		return authenticator;
 	}
 	
-	public final AccountResult getResult()
+	public final AccountDescriptiveReason getDescriptiveReason()
 	{
-		return result;
+		return reason;
 	}
 	
 	/**
@@ -52,34 +53,26 @@ public abstract class AccountCredentials
 	 * 
 	 * @param perm
 	 *            The AccountPermissible to store the login credentials
+	 * @throws AccountException
 	 */
-	public void makeResumable( AccountPermissible perm )
+	public void makeResumable( AccountPermissible perm ) throws AccountException
 	{
 		Validate.notNull( perm );
 		
 		if ( perm.meta() != meta )
-			throw new AccountException( "You can't make an account resumable when it's not logged in." ).setAccount( meta );
+			throw new AccountException( new AccountDescriptiveReason( "You can't make an account resumable when it's not logged in.", ReportingLevel.L_DENIED ), meta );
 		
-		if ( !result.isSuccess() )
-			throw new AccountException( "You can't make an account resumable if it failed login." ).setAccount( meta );
+		if ( !reason.getReportingLevel().isSuccess() )
+			throw new AccountException( new AccountDescriptiveReason( "You can't make an account resumable if it failed login.", ReportingLevel.L_DENIED ), meta );
 		
 		if ( AccountType.isNoneAccount( perm.meta() ) || AccountType.isRootAccount( perm.meta() ) )
-			throw new AccountException( "You can't make the 'none' nor 'root' accounts resumable." ).setAccount( meta );
+			throw new AccountException( new AccountDescriptiveReason( "You can't make the 'none' nor 'root' accounts resumable.", ReportingLevel.L_SECURITY ), meta );
 		
-		try
-		{
-			if ( "token".equals( perm.getVariable( "auth" ) ) && perm.getVariable( "token" ) != null )
-				AccountAuthenticator.TOKEN.deleteToken( perm.getVariable( "acctId" ), perm.getVariable( "token" ) );
-			// if ( ! )
-			// AccountManager.getLogger().warning( "We had a problem deleting the login token '" + perm.getVariable( "token" ) + "'" );
-			
-			perm.setVariable( "auth", "token" );
-			perm.setVariable( "acctId", meta.getId() );
-			perm.setVariable( "token", AccountAuthenticator.TOKEN.issueToken( meta ) );
-		}
-		catch ( AccountException e )
-		{
-			throw e;
-		}
+		if ( "token".equals( perm.getVariable( "auth" ) ) && perm.getVariable( "token" ) != null )
+			AccountAuthenticator.TOKEN.deleteToken( perm.getVariable( "acctId" ), perm.getVariable( "token" ) );
+		
+		perm.setVariable( "auth", "token" );
+		perm.setVariable( "acctId", meta.getId() );
+		perm.setVariable( "token", AccountAuthenticator.TOKEN.issueToken( meta ) );
 	}
 }

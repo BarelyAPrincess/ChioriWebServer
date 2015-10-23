@@ -21,7 +21,9 @@ import com.chiorichan.account.event.AccountPreLoginEvent;
 import com.chiorichan.account.event.AccountSuccessfulLoginEvent;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
+import com.chiorichan.account.lang.AccountDescriptiveReason;
 import com.chiorichan.event.EventBus;
+import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.permission.Permissible;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.session.SessionManager;
@@ -92,8 +94,8 @@ public abstract class AccountPermissible extends Permissible implements Account
 	/**
 	 * See {@link #getVariable(String)}
 	 * 
-	 * @def
-	 *      Specifies a default value to return if the requested key is null
+	 * @param def
+	 *            Specifies a default value to return if the requested key is null
 	 */
 	public abstract String getVariable( String key, String def );
 	
@@ -108,8 +110,9 @@ public abstract class AccountPermissible extends Permissible implements Account
 	@Override
 	public AccountInstance instance()
 	{
-		if ( account == null )
-			throw new AccountException( AccountResult.ACCOUNT_NOT_INITIALIZED );
+		// if ( account == null )
+		// throw new AccountException( LoginDescriptiveReason.ACCOUNT_NOT_INITIALIZED, AccountType.ACCOUNT_NONE );
+		
 		return account;
 	}
 	
@@ -124,57 +127,24 @@ public abstract class AccountPermissible extends Permissible implements Account
 	 */
 	public void login()
 	{
-		AccountResult result = AccountResult.DEFAULT;
 		String authName = getVariable( "auth" );
 		String acctId = getVariable( "acctId" );
 		
 		if ( authName != null && !authName.isEmpty() )
 		{
 			AccountAuthenticator auth = AccountAuthenticator.byName( authName );
-			
-			if ( auth == null )
-				throw new AccountException( "The Authenticator is null" );
-			
-			try
-			{
-				AccountMeta meta = AccountManager.INSTANCE.getAccountWithException( acctId );
-				
-				if ( meta != null )
-				{
-					AccountCredentials creds = auth.authorize( acctId, this );
-					meta.context().credentials = creds;
-					
-					if ( creds.getResult().isSuccess() )
-					{
-						result = AccountResult.LOGIN_SUCCESS;
-						login0( meta );
-					}
-					else
-					{
-						result = result.setAccount( meta );
-						failedLogin( result );
-						meta.context().creator().failedLogin( meta, result );
-						EventBus.INSTANCE.callEvent( new AccountFailedLoginEvent( meta, result ) );
-					}
-				}
-			}
-			catch ( AccountException e )
-			{
-				result = e.getResult();
-			}
-			catch ( Throwable t )
-			{
-				result = AccountResult.INTERNAL_ERROR.setThrowable( t );
-			}
-			
-			if ( AccountManager.INSTANCE.isDebug() )
-			{
-				if ( !result.isIgnorable() && result.hasCause() )
-					result.getThrowable().printStackTrace();
-				
-				SessionManager.getLogger().info( ( ( result.isSuccess() ) ? ConsoleColor.GREEN : ConsoleColor.YELLOW ) + "Session Login: [id='" + acctId + "',reason='" + result.getMessage( acctId ) + "']" );
-			}
+			login( auth, acctId, this );
 		}
+	}
+	
+	public AccountResult loginWithException( AccountAuthenticator auth, String acctId, Object... credObjs ) throws AccountException
+	{
+		AccountResult result = login( auth, acctId, credObjs );
+		
+		if ( !result.isSuccess() )
+			throw new AccountException( result.getDescriptiveReason(), result );
+		
+		return result;
 	}
 	
 	/**
@@ -191,94 +161,109 @@ public abstract class AccountPermissible extends Permissible implements Account
 	 */
 	public AccountResult login( AccountAuthenticator auth, String acctId, Object... credObjs )
 	{
+		AccountResult result = new AccountResult( acctId );
+		AccountMeta meta = null;
+		
 		try
 		{
-			AccountResult result = AccountResult.DEFAULT;
-			AccountMeta meta = AccountManager.INSTANCE.getAccountWithException( acctId );
-			
-			if ( meta == null )
-				return AccountResult.INCORRECT_LOGIN;
-			
-			try
+			if ( auth != null )
 			{
+				meta = result.getAccountWithException();
+				
+				if ( meta == null )
+				{
+					result.setReason( AccountDescriptiveReason.INCORRECT_LOGIN );
+					return result;
+				}
+				
 				meta.context().creator().preLogin( meta, this, acctId, credObjs );
 				AccountPreLoginEvent event = new AccountPreLoginEvent( meta, this, acctId, credObjs );
 				
 				EventBus.INSTANCE.callEvent( event );
 				
-				if ( !event.getAccountResult().isIgnorable() )
-					return event.getAccountResult().setAccount( meta );
+				if ( !event.getDescriptiveReason().getReportingLevel().isIgnorable() )
+				{
+					result.setReason( event.getDescriptiveReason() );
+					return result;
+				}
 				
-				AccountCredentials creds = auth.authorize( meta.getId(), credObjs );
+				AccountCredentials creds = auth.authorize( meta, credObjs );
 				meta.context().credentials = creds;
 				
-				if ( !creds.getResult().isIgnorable() )
-					return creds.getResult();
-				
-				result = AccountResult.LOGIN_SUCCESS;
-				login0( meta );
+				if ( creds.getDescriptiveReason().getReportingLevel().isSuccess() )
+				{
+					result.setReason( AccountDescriptiveReason.LOGIN_SUCCESS );
+					
+					AccountInstance acct = meta.instance();
+					
+					// TODO Single login per via method checks?
+					if ( acct.countAttachments() > 1 && Loader.getConfig().getBoolean( "accounts.singleLogin" ) )
+						for ( AccountAttachment ap : acct.getAttachments() )
+							if ( ap instanceof Kickable )
+								( ( Kickable ) ap ).kick( Loader.getConfig().getString( "accounts.singleLoginMessage", "You logged in from another location." ) );
+					
+					meta.set( "lastLoginTime", Timings.epoch() );
+					
+					// XXX Should we track all past IPs or only the current ones and what about local logins?
+					Set<String> ips = Sets.newLinkedHashSet();
+					if ( meta.getString( "lastLoginIp" ) != null )
+						ips.addAll( Splitter.on( "|" ).splitToList( meta.getString( "lastLoginIp" ) ) );
+					ips.addAll( getIpAddresses() );
+					
+					if ( ips.size() > 5 )
+						meta.set( "lastLoginIp", Joiner.on( "|" ).join( new LinkedList<String>( ips ).subList( ips.size() - 5, ips.size() ) ) );
+					else if ( ips.size() > 0 )
+						meta.set( "lastLoginIp", Joiner.on( "|" ).join( ips ) );
+					setVariable( "acctId", meta.getId() );
+					
+					meta.save();
+					
+					account = acct;
+					
+					successfulLogin();
+					meta.context().creator().successLogin( meta );
+					EventBus.INSTANCE.callEvent( new AccountSuccessfulLoginEvent( meta, this, result ) );
+				}
+				else
+					result.setReason( creds.getDescriptiveReason() );
 			}
-			catch ( AccountException e )
-			{
-				result = e.getResult();
-			}
-			catch ( Throwable t )
-			{
-				return AccountResult.INTERNAL_ERROR.setAccount( meta ).setThrowable( t );
-			}
-			
-			result = result.setAccount( meta );
-			
-			if ( !result.isIgnorable() )
-			{
-				failedLogin( result );
-				meta.context().creator().failedLogin( meta, result );
-				EventBus.INSTANCE.callEvent( new AccountFailedLoginEvent( meta, result ) );
-			}
-			
-			return result;
+			else
+				result.setReason( new AccountDescriptiveReason( "The Authenticator was null!", ReportingLevel.L_ERROR ) );
 		}
 		catch ( AccountException e )
 		{
-			return e.getResult();
+			if ( e.getResult() == null )
+			{
+				result.setReason( e.getReason() );
+				if ( e.hasCause() )
+					result.setCause( e.getCause() );
+			}
+			else
+				result = e.getResult();
 		}
-	}
-	
-	/**
-	 * Handles the common final login procedures
-	 * 
-	 * @param meta
-	 *            The {@link AccountMeta}
-	 */
-	private void login0( AccountMeta meta )
-	{
-		AccountInstance acct = meta.instance();
+		catch ( Throwable t )
+		{
+			result.setReason( AccountDescriptiveReason.INTERNAL_ERROR );
+			result.setCause( t );
+		}
 		
-		// TODO Single login per via method checks?
-		if ( acct.countAttachments() > 1 && Loader.getConfig().getBoolean( "accounts.singleLogin" ) )
-			for ( AccountAttachment ap : acct.getAttachments() )
-				if ( ap instanceof Kickable )
-					( ( Kickable ) ap ).kick( Loader.getConfig().getString( "accounts.singleLoginMessage", "You logged in from another location." ) );
+		if ( !result.isSuccess() )
+		{
+			failedLogin( result );
+			if ( meta != null )
+				meta.context().creator().failedLogin( meta, result );
+			EventBus.INSTANCE.callEvent( new AccountFailedLoginEvent( meta, result ) );
+		}
 		
-		meta.set( "lastLoginTime", Timings.epoch() );
-		// XXX Should we track all past IPs or only the current ones and what about local logins?
-		Set<String> ips = Sets.newLinkedHashSet();
-		ips.addAll( Splitter.on( "|" ).splitToList( meta.getString( "lastLoginIp" ) ) );
-		ips.addAll( getIpAddresses() );
+		if ( AccountManager.INSTANCE.isDebug() )
+		{
+			if ( !result.isIgnorable() && result.hasCause() )
+				result.getCause().printStackTrace();
+			
+			SessionManager.getLogger().info( ( ( result.isSuccess() ) ? ConsoleColor.GREEN : ConsoleColor.YELLOW ) + "Session Login: [id='" + acctId + "',reason='" + result.getFormattedMessage() + "']" );
+		}
 		
-		if ( ips.size() > 5 )
-			meta.set( "lastLoginIp", Joiner.on( "|" ).join( new LinkedList<String>( ips ).subList( ips.size() - 5, ips.size() ) ) );
-		else if ( ips.size() > 0 )
-			meta.set( "lastLoginIp", Joiner.on( "|" ).join( ips ) );
-		setVariable( "acctId", meta.getId() );
-		
-		meta.save();
-		
-		account = acct;
-		
-		successfulLogin();
-		meta.context().creator().successLogin( meta );
-		EventBus.INSTANCE.callEvent( new AccountSuccessfulLoginEvent( meta, this ) );
+		return result;
 	}
 	
 	protected void registerAttachment( AccountAttachment attachment )
@@ -297,15 +282,19 @@ public abstract class AccountPermissible extends Permissible implements Account
 	
 	public AccountResult logout()
 	{
+		AccountResult result = new AccountResult( account == null ? AccountType.ACCOUNT_NONE : account.meta(), AccountDescriptiveReason.LOGOUT_SUCCESS );
+		
 		if ( account != null )
+		{
 			SessionManager.getLogger().info( ConsoleColor.GREEN + "Successful Logout: [id='" + account.getId() + "',siteId='" + account.getSiteId() + "',displayName='" + account.getDisplayName() + "',ipAddrs='" + account.getIpAddresses() + "']" );
+			account = null;
+		}
 		
 		setVariable( "auth", null );
 		setVariable( "acctId", null );
 		setVariable( "token", null );
-		account = null;
 		
-		return AccountResult.LOGOUT_SUCCESS;
+		return result;
 	}
 	
 	@Override
@@ -316,5 +305,5 @@ public abstract class AccountPermissible extends Permissible implements Account
 	
 	public abstract void setVariable( String key, String value );
 	
-	protected abstract void successfulLogin();
+	protected abstract void successfulLogin() throws AccountException;
 }

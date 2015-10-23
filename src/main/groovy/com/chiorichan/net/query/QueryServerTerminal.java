@@ -21,6 +21,7 @@ import com.chiorichan.ConsoleColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.Kickable;
 import com.chiorichan.account.lang.AccountResult;
+import com.chiorichan.account.lang.AccountDescriptiveReason;
 import com.chiorichan.event.EventFactory;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.terminal.CommandDispatch;
@@ -107,7 +108,7 @@ public class QueryServerTerminal extends SimpleChannelInboundHandler<String> imp
 	public AccountResult kick( String reason )
 	{
 		disconnect( reason );
-		return AccountResult.SUCCESS;
+		return new AccountResult( getId(), AccountDescriptiveReason.LOGOUT_SUCCESS );
 	}
 	
 	@Override

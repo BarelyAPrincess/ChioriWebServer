@@ -25,8 +25,10 @@ import com.chiorichan.account.AccountType;
 import com.chiorichan.account.event.AccountLookupEvent;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
+import com.chiorichan.account.lang.AccountDescriptiveReason;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.event.EventHandler;
+import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.FileFunc;
@@ -190,11 +192,11 @@ public class FileTypeCreator extends AccountTypeCreator
 	{
 		try
 		{
-			event.setResult( readAccount( event.getAcctId() ), AccountResult.LOGIN_SUCCESS );
+			event.setResult( readAccount( event.getAcctId() ), AccountDescriptiveReason.LOGIN_SUCCESS );
 		}
 		catch ( AccountException e )
 		{
-			event.setResult( e.getContext(), e.getResult() );
+			event.setResult( null, e.getReason() );
 		}
 	}
 	
@@ -245,14 +247,14 @@ public class FileTypeCreator extends AccountTypeCreator
 	 */
 	
 	@Override
-	public void preLogin( AccountMeta meta, AccountPermissible via, String acctId, Object... creds )
+	public void preLogin( AccountMeta meta, AccountPermissible via, String acctId, Object... creds ) throws AccountException
 	{
 		if ( meta.getInteger( "numloginfail" ) > 5 )
 			if ( meta.getInteger( "lastloginfail" ) > ( Timings.epoch() - 1800 ) )
-				throw new AccountException( AccountResult.UNDER_ATTACK );
+				throw new AccountException( AccountDescriptiveReason.UNDER_ATTACK, meta );
 		
 		if ( !meta.getString( "actnum" ).equals( "0" ) )
-			throw new AccountException( AccountResult.ACCOUNT_NOT_ACTIVATED );
+			throw new AccountException( AccountDescriptiveReason.ACCOUNT_NOT_ACTIVATED, meta );
 	}
 	
 	public AccountContext readAccount( String acctId ) throws AccountException
@@ -260,13 +262,13 @@ public class FileTypeCreator extends AccountTypeCreator
 		AccountContext context = null;
 		
 		if ( acctId == null || acctId.isEmpty() )
-			throw new AccountException( AccountResult.EMPTY_ACCTID );
+			throw new AccountException( AccountDescriptiveReason.EMPTY_ACCTID, AccountType.ACCOUNT_NONE );
 		
 		checkForFiles();
 		
 		for ( AccountContext context1 : preloaded.values() )
 		{
-			if ( acctId.equals( context1.getAcctIdWithoutException() ) )
+			if ( acctId.equals( context1.getAcctId() ) )
 			{
 				context = context1;
 				break;
@@ -281,21 +283,21 @@ public class FileTypeCreator extends AccountTypeCreator
 		}
 		
 		if ( context == null )
-			throw new AccountException( AccountResult.INCORRECT_LOGIN );
+			throw new AccountException( AccountDescriptiveReason.INCORRECT_LOGIN, acctId );
 		
 		return context;
 	}
 	
 	@Override
-	public void reload( AccountMeta meta )
+	public void reload( AccountMeta meta ) throws AccountException
 	{
 		if ( meta == null || !meta.containsKey( "file" ) )
-			throw new AccountException( "There appears to be a problem with this Account Metadata. Missing the `file` key." );
+			throw new AccountException( new AccountDescriptiveReason( "There appears to be a problem with this Account Metadata. Missing the `file` key.", ReportingLevel.L_ERROR ), meta );
 		
 		YamlConfiguration yser = YamlConfiguration.loadConfiguration( ( File ) meta.getObject( "file" ) );
 		
 		if ( yser == null )
-			throw new AccountException( "The file for this Account Meta Data is missing. Might have been deleted." );
+			throw new AccountException( new AccountDescriptiveReason( "The file for this Account Meta Data is missing. Might have been deleted.", ReportingLevel.L_ERROR ), meta );
 		
 		for ( String key : yser.getKeys( false ) )
 			meta.set( key, yser.get( key ) );
