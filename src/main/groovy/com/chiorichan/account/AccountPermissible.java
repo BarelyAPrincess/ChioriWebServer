@@ -12,7 +12,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Set;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.auth.AccountAuthenticator;
 import com.chiorichan.account.auth.AccountCredentials;
@@ -260,7 +260,7 @@ public abstract class AccountPermissible extends Permissible implements Account
 			if ( !result.isIgnorable() && result.hasCause() )
 				result.getCause().printStackTrace();
 			
-			SessionManager.getLogger().info( ( ( result.isSuccess() ) ? ConsoleColor.GREEN : ConsoleColor.YELLOW ) + "Session Login: [id='" + acctId + "',reason='" + result.getFormattedMessage() + "']" );
+			SessionManager.getLogger().info( ( ( result.isSuccess() ) ? LogColor.GREEN : LogColor.YELLOW ) + "Session Login: [id='" + acctId + "',reason='" + result.getFormattedMessage() + "']" );
 		}
 		
 		return result;
@@ -286,7 +286,7 @@ public abstract class AccountPermissible extends Permissible implements Account
 		
 		if ( account != null )
 		{
-			SessionManager.getLogger().info( ConsoleColor.GREEN + "Successful Logout: [id='" + account.getId() + "',siteId='" + account.getSiteId() + "',displayName='" + account.getDisplayName() + "',ipAddrs='" + account.getIpAddresses() + "']" );
+			SessionManager.getLogger().info( LogColor.GREEN + "Successful Logout: [id='" + account.getId() + "',siteId='" + account.getSiteId() + "',displayName='" + account.getDisplayName() + "',ipAddrs='" + account.getIpAddresses() + "']" );
 			account = null;
 		}
 		

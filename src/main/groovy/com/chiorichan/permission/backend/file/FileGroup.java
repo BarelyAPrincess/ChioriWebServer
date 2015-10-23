@@ -12,7 +12,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map.Entry;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.permission.ChildPermission;
 import com.chiorichan.permission.PermissibleGroup;
@@ -34,7 +34,7 @@ public class FileGroup extends PermissibleGroup
 	public void reloadGroups()
 	{
 		if ( isDebug() )
-			PermissionManager.getLogger().info( ConsoleColor.YELLOW + "Groups being loaded for group " + getId() );
+			PermissionManager.getLogger().info( LogColor.YELLOW + "Groups being loaded for group " + getId() );
 		
 		clearGroups();
 		clearTimedGroups();
@@ -49,7 +49,7 @@ public class FileGroup extends PermissibleGroup
 	public void reloadPermissions()
 	{
 		if ( isDebug() )
-			PermissionManager.getLogger().info( ConsoleColor.YELLOW + "Permissions being loaded for entity " + getId() );
+			PermissionManager.getLogger().info( LogColor.YELLOW + "Permissions being loaded for entity " + getId() );
 		
 		ConfigurationSection permissions = FileBackend.getBackend().permissions.getConfigurationSection( "entities." + getId() + ".permissions" );
 		clearPermissions();
@@ -93,7 +93,7 @@ public class FileGroup extends PermissibleGroup
 			return;
 		
 		if ( isDebug() )
-			PermissionManager.getLogger().info( ConsoleColor.YELLOW + "Group " + getId() + " being saved to backend" );
+			PermissionManager.getLogger().info( LogColor.YELLOW + "Group " + getId() + " being saved to backend" );
 		
 		ConfigurationSection root = FileBackend.getBackend().permissions.getConfigurationSection( "entities." + getId(), true );
 		

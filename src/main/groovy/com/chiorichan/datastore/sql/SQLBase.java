@@ -144,7 +144,9 @@ public abstract class SQLBase<T extends SQLBase> implements SQLResultSkel
 			}
 			catch ( SQLException e )
 			{
-				Datastore.getLogger().severe( "SQL query failed \"" + sqlQuery + "\" with arguments '" + Joiner.on( ", " ).join( args ) + "'" );
+				Datastore.getLogger().severe( "SQL query failed \"" + sqlQuery + "\" with arguments '" + Joiner.on( ", " ).join( args ) + "' with explaination '" + e.getMessage() + "'" );
+				if ( isDebug() )
+					e.printStackTrace();
 				throw e;
 			}
 			

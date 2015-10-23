@@ -17,7 +17,7 @@ import com.chiorichan.lang.EvalException;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Strings;
 
-public class ConsoleLogger
+public class ServerLogger
 {
 	private int lineCount = 999;
 	private final Logger logger;
@@ -31,12 +31,12 @@ public class ConsoleLogger
 	 * 
 	 * @param loggerId
 	 */
-	protected ConsoleLogger( String id )
+	protected ServerLogger( String id )
 	{
 		Logger logger = LogManager.getLogManager().getLogger( id );
 		
 		if ( logger == null )
-			logger = new ConsoleSubLogger( id );
+			logger = new ServerSubLogger( id );
 		
 		logger.setParent( Loader.getLogManager().getParent() );
 		logger.setLevel( Level.ALL );
@@ -51,7 +51,7 @@ public class ConsoleLogger
 			return;
 		
 		for ( Object var2 : var1 )
-			info( ConsoleColor.NEGATIVE + "" + ConsoleColor.YELLOW + " >>>>   " + var2.toString() + "   <<<< " );
+			info( LogColor.NEGATIVE + "" + LogColor.YELLOW + " >>>>   " + var2.toString() + "   <<<< " );
 	}
 	
 	public void exceptions( EvalException... exceptions )
@@ -61,10 +61,10 @@ public class ConsoleLogger
 				if ( e.isScriptingException() )
 				{
 					ScriptTraceElement element = e.getScriptTrace()[0];
-					severe( String.format( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s:%s, message '%s'", e.getClass().getName(), element.context().filename(), element.getLineNumber(), ( element.getColumnNumber() > 0 ) ? element.getColumnNumber() : 0, e.getMessage() ) );
+					severe( String.format( LogColor.NEGATIVE + "" + LogColor.RED + "Exception %s thrown in file '%s' at line %s:%s, message '%s'", e.getClass().getName(), element.context().filename(), element.getLineNumber(), ( element.getColumnNumber() > 0 ) ? element.getColumnNumber() : 0, e.getMessage() ) );
 				}
 				else
-					severe( String.format( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s, message '%s'", e.getClass().getName(), e.getStackTrace()[0].getFileName(), e.getStackTrace()[0].getLineNumber(), e.getMessage() ) );
+					severe( String.format( LogColor.NEGATIVE + "" + LogColor.RED + "Exception %s thrown in file '%s' at line %s, message '%s'", e.getClass().getName(), e.getStackTrace()[0].getFileName(), e.getStackTrace()[0].getLineNumber(), e.getMessage() ) );
 	}
 	
 	public void fine( String var1 )
@@ -94,12 +94,12 @@ public class ConsoleLogger
 	
 	public void highlight( String msg )
 	{
-		log( Level.INFO, ConsoleColor.GOLD + "" + ConsoleColor.NEGATIVE + msg );
+		log( Level.INFO, LogColor.GOLD + "" + LogColor.NEGATIVE + msg );
 	}
 	
 	public void info( String s )
 	{
-		log( Level.INFO, ConsoleColor.WHITE + s );
+		log( Level.INFO, LogColor.WHITE + s );
 	}
 	
 	public void log( Level l, String msg )
@@ -114,7 +114,7 @@ public class ConsoleLogger
 		
 		printHeader();
 		
-		log( l, ConsoleColor.LIGHT_PURPLE + client + " " + ConsoleColor.AQUA + msg );
+		log( l, LogColor.LIGHT_PURPLE + client + " " + LogColor.AQUA + msg );
 	}
 	
 	public void log( Level l, String msg, Throwable t )
@@ -129,7 +129,7 @@ public class ConsoleLogger
 	
 	public String[] multilineColorRepeater( String[] var1 )
 	{
-		String color = ConsoleColor.getLastColors( var1[0] );
+		String color = LogColor.getLastColors( var1[0] );
 		
 		for ( int l = 0; l < var1.length; l++ )
 			var1[l] = color + var1[l];
@@ -154,7 +154,7 @@ public class ConsoleLogger
 		if ( lineCount > 40 )
 		{
 			lineCount = 0;
-			log( Level.FINE, ConsoleColor.GOLD + "<CLIENT ID>     <MESSAGE>" );
+			log( Level.FINE, LogColor.GOLD + "<CLIENT ID>     <MESSAGE>" );
 		}
 		
 		lineCount++;
@@ -162,31 +162,31 @@ public class ConsoleLogger
 	
 	public void severe( String s )
 	{
-		log( Level.SEVERE, ConsoleColor.RED + s );
+		log( Level.SEVERE, LogColor.RED + s );
 	}
 	
 	public void severe( String s, Throwable t )
 	{
-		log( Level.SEVERE, ConsoleColor.RED + s, t );
+		log( Level.SEVERE, LogColor.RED + s, t );
 	}
 	
 	public void severe( Throwable t )
 	{
-		log( Level.SEVERE, ConsoleColor.RED + t.getMessage(), t );
+		log( Level.SEVERE, LogColor.RED + t.getMessage(), t );
 	}
 	
 	public void warning( String s )
 	{
-		log( Level.WARNING, ConsoleColor.GOLD + s );
+		log( Level.WARNING, LogColor.GOLD + s );
 	}
 	
 	public void warning( String s, Object... aobject )
 	{
-		logger.log( Level.WARNING, ConsoleColor.GOLD + s, aobject );
+		logger.log( Level.WARNING, LogColor.GOLD + s, aobject );
 	}
 	
 	public void warning( String s, Throwable throwable )
 	{
-		log( Level.WARNING, ConsoleColor.GOLD + s, throwable );
+		log( Level.WARNING, LogColor.GOLD + s, throwable );
 	}
 }

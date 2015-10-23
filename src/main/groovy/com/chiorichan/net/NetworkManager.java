@@ -19,7 +19,7 @@ import java.io.File;
 import java.lang.ref.WeakReference;
 import java.net.InetSocketAddress;
 
-import com.chiorichan.ConsoleLogger;
+import com.chiorichan.ServerLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.http.HttpInitializer;
 import com.chiorichan.https.HttpsInitializer;
@@ -333,7 +333,7 @@ public class NetworkManager implements TaskCreator
 		workerGroup.shutdownGracefully();
 	}
 	
-	public static ConsoleLogger getLogger()
+	public static ServerLogger getLogger()
 	{
 		return Loader.getLogger( "NetMgr" );
 	}

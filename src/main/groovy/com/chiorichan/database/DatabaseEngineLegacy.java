@@ -26,7 +26,7 @@ import java.util.UnknownFormatConversionException;
 
 import org.json.JSONException;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.datastore.DatastoreManager;
 import com.chiorichan.util.DbFunc;
 import com.chiorichan.util.ObjectFunc;
@@ -487,7 +487,7 @@ public class DatabaseEngineLegacy
 		}
 		
 		if ( force )
-			DatastoreManager.getLogger().info( ConsoleColor.GRAY + msg );
+			DatastoreManager.getLogger().info( LogColor.GRAY + msg );
 		else
 			DatastoreManager.getLogger().fine( msg );
 	}

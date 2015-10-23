@@ -17,8 +17,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimerTask;
 
-import com.chiorichan.ConsoleColor;
-import com.chiorichan.ConsoleLogger;
+import com.chiorichan.LogColor;
+import com.chiorichan.ServerLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.ServerManager;
 import com.chiorichan.account.AccountInstance;
@@ -88,7 +88,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 		callEvent( new PermissibleSystemEvent( action ) );
 	}
 	
-	public static ConsoleLogger getLogger()
+	public static ServerLogger getLogger()
 	{
 		return Loader.getLogger( "PermMgr" );
 	}
@@ -634,23 +634,23 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	public void loadData() throws PermissionBackendException
 	{
 		if ( isDebug() )
-			getLogger().warning( ConsoleColor.YELLOW + "Permission debug is enabled!" );
+			getLogger().warning( LogColor.YELLOW + "Permission debug is enabled!" );
 		
 		groups.clear();
 		entities.clear();
 		
 		if ( isDebug() )
-			getLogger().info( ConsoleColor.YELLOW + "Loading permissions from backend!" );
+			getLogger().info( LogColor.YELLOW + "Loading permissions from backend!" );
 		
 		backend.loadPermissions();
 		PermissionDefault.initNodes();
 		
 		if ( isDebug() )
-			getLogger().info( ConsoleColor.YELLOW + "Loading groups from backend!" );
+			getLogger().info( LogColor.YELLOW + "Loading groups from backend!" );
 		backend.loadGroups();
 		
 		if ( isDebug() )
-			getLogger().info( ConsoleColor.YELLOW + "Loading entities from backend!" );
+			getLogger().info( LogColor.YELLOW + "Loading entities from backend!" );
 		backend.loadEntities();
 		
 		/*

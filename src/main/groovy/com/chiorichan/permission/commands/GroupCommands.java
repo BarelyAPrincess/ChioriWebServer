@@ -13,7 +13,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.Permission;
@@ -38,7 +38,7 @@ public class GroupCommands extends PermissionBaseCommand
 		
 		if ( group == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Group doesn't exist" );
+			sender.sendMessage( LogColor.RED + "Group doesn't exist" );
 			return;
 		}
 		
@@ -63,7 +63,7 @@ public class GroupCommands extends PermissionBaseCommand
 		}
 		catch ( Throwable e )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Error: " + e.getMessage() );
+			sender.sendMessage( LogColor.RED + "Error: " + e.getMessage() );
 		}
 	}
 	
@@ -77,7 +77,7 @@ public class GroupCommands extends PermissionBaseCommand
 		
 		if ( group == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Group doesn't exist" );
+			sender.sendMessage( LogColor.RED + "Group doesn't exist" );
 			return;
 		}
 		
@@ -96,7 +96,7 @@ public class GroupCommands extends PermissionBaseCommand
 			
 			group.setGroups( groups, refs );
 			
-			sender.sendMessage( ConsoleColor.WHITE + "Group " + group.getId() + " inheritance updated!" );
+			sender.sendMessage( LogColor.WHITE + "Group " + group.getId() + " inheritance updated!" );
 			
 			group.save();
 		}
@@ -112,7 +112,7 @@ public class GroupCommands extends PermissionBaseCommand
 		
 		if ( group == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Group doesn't exist" );
+			sender.sendMessage( LogColor.RED + "Group doesn't exist" );
 			return;
 		}
 		
@@ -122,11 +122,11 @@ public class GroupCommands extends PermissionBaseCommand
 		}
 		catch ( PermissionException e )
 		{
-			sender.sendMessage( ConsoleColor.RED + e.getMessage() );
+			sender.sendMessage( LogColor.RED + e.getMessage() );
 			return;
 		}
 		
-		sender.sendMessage( ConsoleColor.WHITE + "Permission \"" + args.get( "permission" ) + "\" added to " + group.getId() + " !" );
+		sender.sendMessage( LogColor.WHITE + "Permission \"" + args.get( "permission" ) + "\" added to " + group.getId() + " !" );
 		informGroup( group, "Your permissions have been changed" );
 	}
 	
@@ -145,13 +145,13 @@ public class GroupCommands extends PermissionBaseCommand
 		
 		if ( group == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Group does not exist" );
+			sender.sendMessage( LogColor.RED + "Group does not exist" );
 			return;
 		}
 		
 		group.addTimedPermission( args.get( "permission" ), true, refs, lifetime );
 		
-		sender.sendMessage( ConsoleColor.WHITE + "Timed permission added!" );
+		sender.sendMessage( LogColor.WHITE + "Timed permission added!" );
 		informGroup( group, "Your permissions have been changed!" );
 		
 		PermissionManager.getLogger().info( "Group " + groupName + " get timed permission \"" + args.get( "permission" ) + "\" " + ( lifetime > 0 ? "for " + lifetime + " seconds " : " " ) + "from " + sender.getDisplayName() );
@@ -164,13 +164,13 @@ public class GroupCommands extends PermissionBaseCommand
 		
 		if ( group == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Group doesn't exist" );
+			sender.sendMessage( LogColor.RED + "Group doesn't exist" );
 			return;
 		}
 		
 		if ( !group.isCommitted() )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Group " + args.get( "group" ) + " already exists" );
+			sender.sendMessage( LogColor.RED + "Group " + args.get( "group" ) + " already exists" );
 			return;
 		}
 		
@@ -185,7 +185,7 @@ public class GroupCommands extends PermissionBaseCommand
 			group.setGroups( groups, References.format() );
 		}
 		
-		sender.sendMessage( ConsoleColor.WHITE + "Group " + group.getId() + " created!" );
+		sender.sendMessage( LogColor.WHITE + "Group " + group.getId() + " created!" );
 		
 		group.save();
 	}
@@ -210,7 +210,7 @@ public class GroupCommands extends PermissionBaseCommand
 		
 		if ( group == null || group.isCommitted() )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Specified group doesn't exist" );
+			sender.sendMessage( LogColor.RED + "Specified group doesn't exist" );
 			return;
 		}
 		
@@ -227,11 +227,11 @@ public class GroupCommands extends PermissionBaseCommand
 		
 		if ( group == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Group doesn't exist" );
+			sender.sendMessage( LogColor.RED + "Group doesn't exist" );
 			return;
 		}
 		
-		sender.sendMessage( ConsoleColor.WHITE + "Group " + group.getId() + " removed!" );
+		sender.sendMessage( LogColor.WHITE + "Group " + group.getId() + " removed!" );
 		
 		group.remove();
 		PermissionManager.INSTANCE.resetGroup( group.getId() );
@@ -258,13 +258,13 @@ public class GroupCommands extends PermissionBaseCommand
 			
 			if ( entity == null )
 			{
-				sender.sendMessage( ConsoleColor.RED + "Entity does not exist" );
+				sender.sendMessage( LogColor.RED + "Entity does not exist" );
 				return;
 			}
 			
 			entity.addGroup( PermissionManager.INSTANCE.getGroup( groupName ), refs );
 			
-			sender.sendMessage( ConsoleColor.WHITE + "Entity " + entity.getId() + " added to " + groupName + " !" );
+			sender.sendMessage( LogColor.WHITE + "Entity " + entity.getId() + " added to " + groupName + " !" );
 			informEntity( entityName, "You are assigned to \"" + groupName + "\" group" );
 		}
 	}
@@ -280,7 +280,7 @@ public class GroupCommands extends PermissionBaseCommand
 		Collection<PermissibleGroup> entities = PermissionManager.INSTANCE.getGroups( groupName );
 		
 		if ( entities == null || entities.size() == 0 )
-			sender.sendMessage( ConsoleColor.RED + "Group doesn't exist or empty" );
+			sender.sendMessage( LogColor.RED + "Group doesn't exist or empty" );
 		
 		sender.sendMessage( "Group " + groupName + " entities:" );
 		
@@ -308,13 +308,13 @@ public class GroupCommands extends PermissionBaseCommand
 			
 			if ( entity == null )
 			{
-				sender.sendMessage( ConsoleColor.RED + "Entity does not exist" );
+				sender.sendMessage( LogColor.RED + "Entity does not exist" );
 				return;
 			}
 			
 			entity.removeGroup( groupName, refs );
 			
-			sender.sendMessage( ConsoleColor.WHITE + "Entity " + entity.getId() + " removed from " + args.get( "group" ) + " !" );
+			sender.sendMessage( LogColor.WHITE + "Entity " + entity.getId() + " removed from " + args.get( "group" ) + " !" );
 			informEntity( entityName, "You were removed from \"" + groupName + "\" group" );
 		}
 	}
@@ -338,13 +338,13 @@ public class GroupCommands extends PermissionBaseCommand
 		
 		if ( group == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Group doesn't exist" );
+			sender.sendMessage( LogColor.RED + "Group doesn't exist" );
 			return;
 		}
 		
 		if ( group.getGroups( refs ).size() == 0 )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Group " + group.getId() + " doesn't have parents" );
+			sender.sendMessage( LogColor.RED + "Group " + group.getId() + " doesn't have parents" );
 			return;
 		}
 		
@@ -374,7 +374,7 @@ public class GroupCommands extends PermissionBaseCommand
 		
 		if ( group == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Group doesn't exist" );
+			sender.sendMessage( LogColor.RED + "Group doesn't exist" );
 			return;
 		}
 		
@@ -403,7 +403,7 @@ public class GroupCommands extends PermissionBaseCommand
 		
 		if ( group == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Group doesn't exist" );
+			sender.sendMessage( LogColor.RED + "Group doesn't exist" );
 			return;
 		}
 		
@@ -422,7 +422,7 @@ public class GroupCommands extends PermissionBaseCommand
 		
 		if ( group == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Group doesn't exist" );
+			sender.sendMessage( LogColor.RED + "Group doesn't exist" );
 			return;
 		}
 		
@@ -448,12 +448,12 @@ public class GroupCommands extends PermissionBaseCommand
 		
 		if ( group == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Group doesn't exist" );
+			sender.sendMessage( LogColor.RED + "Group doesn't exist" );
 			return;
 		}
 		
 		group.reload();
-		sender.sendMessage( ConsoleColor.WHITE + "Group `" + groupName + "` has been reloaded from backend!" );
+		sender.sendMessage( LogColor.WHITE + "Group `" + groupName + "` has been reloaded from backend!" );
 	}
 	
 	@CommandHandler( name = "pex", syntax = "group <group> parents remove <parents> [ref]", permission = "permissions.manage.groups.inheritance.<group>", description = "Set parent(s) for <group> (single or comma-separated list)" )
@@ -466,7 +466,7 @@ public class GroupCommands extends PermissionBaseCommand
 		
 		if ( group == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Group doesn't exist" );
+			sender.sendMessage( LogColor.RED + "Group doesn't exist" );
 			return;
 		}
 		
@@ -484,7 +484,7 @@ public class GroupCommands extends PermissionBaseCommand
 			
 			group.setGroups( groups, refs );
 			
-			sender.sendMessage( ConsoleColor.WHITE + "Group " + group.getId() + " inheritance updated!" );
+			sender.sendMessage( LogColor.WHITE + "Group " + group.getId() + " inheritance updated!" );
 			
 			group.save();
 		}
@@ -500,7 +500,7 @@ public class GroupCommands extends PermissionBaseCommand
 		
 		if ( group == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Group doesn't exist" );
+			sender.sendMessage( LogColor.RED + "Group doesn't exist" );
 			return;
 		}
 		
@@ -509,7 +509,7 @@ public class GroupCommands extends PermissionBaseCommand
 		group.removePermission( permission, refs );
 		group.removeTimedPermission( permission, refs );
 		
-		sender.sendMessage( ConsoleColor.WHITE + "Permission \"" + permission + "\" removed from " + group.getId() + " !" );
+		sender.sendMessage( LogColor.WHITE + "Permission \"" + permission + "\" removed from " + group.getId() + " !" );
 		
 		informGroup( group, "Your permissions have been changed" );
 	}
@@ -524,13 +524,13 @@ public class GroupCommands extends PermissionBaseCommand
 		
 		if ( group == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Group does not exist" );
+			sender.sendMessage( LogColor.RED + "Group does not exist" );
 			return;
 		}
 		
 		group.removeTimedPermission( args.get( "permission" ), refs );
 		
-		sender.sendMessage( ConsoleColor.WHITE + "Timed permission \"" + args.get( "permission" ) + "\" removed!" );
+		sender.sendMessage( LogColor.WHITE + "Timed permission \"" + args.get( "permission" ) + "\" removed!" );
 		informGroup( group, "Your permissions have been changed!" );
 	}
 	
@@ -544,16 +544,16 @@ public class GroupCommands extends PermissionBaseCommand
 		
 		if ( group == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Group doesn't exist" );
+			sender.sendMessage( LogColor.RED + "Group doesn't exist" );
 			return;
 		}
 		
 		group.setOption( args.get( "option" ), args.get( "value" ), refs );
 		
 		if ( args.containsKey( "value" ) && args.get( "value" ).isEmpty() )
-			sender.sendMessage( ConsoleColor.WHITE + "Option \"" + args.get( "option" ) + "\" cleared!" );
+			sender.sendMessage( LogColor.WHITE + "Option \"" + args.get( "option" ) + "\" cleared!" );
 		else
-			sender.sendMessage( ConsoleColor.WHITE + "Option \"" + args.get( "option" ) + "\" set!" );
+			sender.sendMessage( LogColor.WHITE + "Option \"" + args.get( "option" ) + "\" set!" );
 		
 		informGroup( group, "Your permissions has been changed" );
 	}
@@ -568,7 +568,7 @@ public class GroupCommands extends PermissionBaseCommand
 		
 		if ( group == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Group doesn't exist" );
+			sender.sendMessage( LogColor.RED + "Group doesn't exist" );
 			return;
 		}
 		
@@ -587,7 +587,7 @@ public class GroupCommands extends PermissionBaseCommand
 			
 			group.setGroups( groups, refs );
 			
-			sender.sendMessage( ConsoleColor.WHITE + "Group " + group.getId() + " inheritance updated!" );
+			sender.sendMessage( LogColor.WHITE + "Group " + group.getId() + " inheritance updated!" );
 			
 			group.save();
 		}
@@ -599,14 +599,14 @@ public class GroupCommands extends PermissionBaseCommand
 		Collection<PermissibleGroup> groups = PermissionManager.INSTANCE.getGroups();
 		References refs = autoCompleteRef( args.get( "ref" ) );
 		
-		sender.sendMessage( ConsoleColor.WHITE + "Registered groups: " );
+		sender.sendMessage( LogColor.WHITE + "Registered groups: " );
 		for ( PermissibleGroup group : groups )
 		{
 			String rank = "";
 			if ( group.isRanked() )
 				rank = " (rank: " + group.getRank() + "@";// TODO + group.getRankLadder() + ") ";
 				
-			sender.sendMessage( String.format( "  %s %s %s %s[%s]", group.getId(), " #" + group.getWeight(), rank, ConsoleColor.DARK_GREEN, Joiner.on( ", " ).join( group.getParentGroupsNames( refs ) ) ) );
+			sender.sendMessage( String.format( "  %s %s %s %s[%s]", group.getId(), " #" + group.getWeight(), rank, LogColor.DARK_GREEN, Joiner.on( ", " ).join( group.getParentGroupsNames( refs ) ) ) );
 		}
 	}
 	
@@ -632,7 +632,7 @@ public class GroupCommands extends PermissionBaseCommand
 		
 		if ( group == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Group doesn't exist" );
+			sender.sendMessage( LogColor.RED + "Group doesn't exist" );
 			return;
 		}
 		
@@ -651,7 +651,7 @@ public class GroupCommands extends PermissionBaseCommand
 		
 		if ( group == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Group doesn't exist" );
+			sender.sendMessage( LogColor.RED + "Group doesn't exist" );
 			return;
 		}
 		

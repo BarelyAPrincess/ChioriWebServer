@@ -21,7 +21,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.AccountAttachment;
 import com.chiorichan.terminal.Command;
@@ -46,7 +46,7 @@ public class UpdateCommand extends Command
 		@Override
 		public void stateChanged( String text, float progress )
 		{
-			sender.sendMessage( ConsoleColor.YELLOW + "" + ConsoleColor.NEGATIVE + text + " -> " + Math.round( progress ) + "% completed! " + ConsoleColor.DARK_AQUA + "[" + Strings.repeat( '=', Math.round( progress ) ) + Strings.repeat( ' ', Math.round( 100 - progress ) ) + "]\r" );
+			sender.sendMessage( LogColor.YELLOW + "" + LogColor.NEGATIVE + text + " -> " + Math.round( progress ) + "% completed! " + LogColor.DARK_AQUA + "[" + Strings.repeat( '=', Math.round( progress ) ) + Strings.repeat( ' ', Math.round( 100 - progress ) ) + "]\r" );
 		}
 		
 		@Override
@@ -69,13 +69,13 @@ public class UpdateCommand extends Command
 	{
 		if ( !Loader.getAutoUpdater().isEnabled() )
 		{
-			sender.sendMessage( ConsoleColor.RED + "I'm sorry but updates are disabled per configs!" );
+			sender.sendMessage( LogColor.RED + "I'm sorry but updates are disabled per configs!" );
 			return true;
 		}
 		
 		if ( Loader.getConfig().getBoolean( "auto-updater.console-only" ) && ! ( sender instanceof AccountAttachment ) )
 		{
-			sender.sendMessage( ConsoleColor.RED + "I'm sorry but updates can only be performed from the console!" );
+			sender.sendMessage( LogColor.RED + "I'm sorry but updates can only be performed from the console!" );
 			return true;
 		}
 		
@@ -91,10 +91,10 @@ public class UpdateCommand extends Command
 						BuildArtifact latest = Loader.getAutoUpdater().getLatest();
 						
 						if ( latest == null )
-							sender.sendMessage( ConsoleColor.RED + "Please review the latest version without \"force\" arg before updating." );
+							sender.sendMessage( LogColor.RED + "Please review the latest version without \"force\" arg before updating." );
 						else
 						{
-							sender.sendMessage( ConsoleColor.YELLOW + "Please wait as we download the latest version of Chiori Web Server..." );
+							sender.sendMessage( LogColor.YELLOW + "Please wait as we download the latest version of Chiori Web Server..." );
 							
 							File currentJar = new File( URLDecoder.decode( Loader.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8" ) );
 							File updatedJar = new File( "update.jar" );
@@ -110,10 +110,10 @@ public class UpdateCommand extends Command
 								String descMD5 = DigestUtils.md5Hex( new FileInputStream( updatedJar.getPath() ) ).trim();
 								
 								if ( descMD5.equals( origMD5 ) )
-									sender.sendMessage( ConsoleColor.AQUA + "SUCCESS: The downloaded jar and control MD5Checksum matched, '" + origMD5 + "'" );
+									sender.sendMessage( LogColor.AQUA + "SUCCESS: The downloaded jar and control MD5Checksum matched, '" + origMD5 + "'" );
 								else
 								{
-									sender.sendMessage( ConsoleColor.RED + "ERROR: The server said the downloaded jar should have a MD5Checksum of '" + origMD5 + "' but it had the MD5Checksum '" + descMD5 + "', UPDATE ABORTED!!!" );
+									sender.sendMessage( LogColor.RED + "ERROR: The server said the downloaded jar should have a MD5Checksum of '" + origMD5 + "' but it had the MD5Checksum '" + descMD5 + "', UPDATE ABORTED!!!" );
 									FileUtils.deleteQuietly( updatedJar );
 									return true;
 								}
@@ -144,20 +144,20 @@ public class UpdateCommand extends Command
 							
 							if ( origMD5 != null && !origMD5.isEmpty() && newMD5.equals( origMD5 ) )
 							{
-								sender.sendMessage( ConsoleColor.AQUA + "----- Chiori Auto Updater -----" );
-								sender.sendMessage( ConsoleColor.AQUA + "SUCCESS: The downloaded jar was successfully installed in the place of your old one." );
-								sender.sendMessage( ConsoleColor.AQUA + "You will need to restart " + Versioning.getProduct() + " for the changes to take effect." );
-								sender.sendMessage( ConsoleColor.AQUA + "Please type 'stop' and press enter to make this happen, otherwise you may encounter unexpected problems!" );
-								sender.sendMessage( ConsoleColor.AQUA + "----- ------------------- -----" );
+								sender.sendMessage( LogColor.AQUA + "----- Chiori Auto Updater -----" );
+								sender.sendMessage( LogColor.AQUA + "SUCCESS: The downloaded jar was successfully installed in the place of your old one." );
+								sender.sendMessage( LogColor.AQUA + "You will need to restart " + Versioning.getProduct() + " for the changes to take effect." );
+								sender.sendMessage( LogColor.AQUA + "Please type 'stop' and press enter to make this happen, otherwise you may encounter unexpected problems!" );
+								sender.sendMessage( LogColor.AQUA + "----- ------------------- -----" );
 							}
 							else
 							{
-								sender.sendMessage( ConsoleColor.YELLOW + "----- Chiori Auto Updater -----" );
-								sender.sendMessage( ConsoleColor.RED + "SEVERE: There was a problem installing the downloaded jar in the place of your old one." );
-								sender.sendMessage( ConsoleColor.RED + "Sorry about that because most likely your current jar is now currupt" );
-								sender.sendMessage( ConsoleColor.RED + "Try redownloading this version yourself from: " + latest.getJar() );
-								sender.sendMessage( ConsoleColor.RED + "Details: " + latest.getHtmlUrl() );
-								sender.sendMessage( ConsoleColor.YELLOW + "----- ------------------- -----" );
+								sender.sendMessage( LogColor.YELLOW + "----- Chiori Auto Updater -----" );
+								sender.sendMessage( LogColor.RED + "SEVERE: There was a problem installing the downloaded jar in the place of your old one." );
+								sender.sendMessage( LogColor.RED + "Sorry about that because most likely your current jar is now currupt" );
+								sender.sendMessage( LogColor.RED + "Try redownloading this version yourself from: " + latest.getJar() );
+								sender.sendMessage( LogColor.RED + "Details: " + latest.getHtmlUrl() );
+								sender.sendMessage( LogColor.YELLOW + "----- ------------------- -----" );
 							}
 							
 							// Disable updater until next boot.
@@ -168,7 +168,7 @@ public class UpdateCommand extends Command
 					}
 					else
 					{
-						sender.sendMessage( ConsoleColor.AQUA + "Please wait as we poll the Jenkins Build Server..." );
+						sender.sendMessage( LogColor.AQUA + "Please wait as we poll the Jenkins Build Server..." );
 						Loader.getAutoUpdater().forceUpdate( sender );
 					}
 				}
@@ -181,7 +181,7 @@ public class UpdateCommand extends Command
 		
 		if ( args.length == 0 )
 		{
-			sender.sendMessage( ConsoleColor.AQUA + "Please wait as we check for updates..." );
+			sender.sendMessage( LogColor.AQUA + "Please wait as we check for updates..." );
 			Loader.getAutoUpdater().check( sender, false );
 		}
 		

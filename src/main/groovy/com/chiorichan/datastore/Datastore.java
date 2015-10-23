@@ -8,14 +8,14 @@
  */
 package com.chiorichan.datastore;
 
-import com.chiorichan.ConsoleLogger;
+import com.chiorichan.ServerLogger;
 
 /**
  * Datastore
  */
 public class Datastore
 {
-	public static ConsoleLogger getLogger()
+	public static ServerLogger getLogger()
 	{
 		return DatastoreManager.getLogger();
 	}

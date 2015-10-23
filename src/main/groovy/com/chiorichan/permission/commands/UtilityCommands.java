@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.Loader;
 import com.chiorichan.configuration.file.FileConfiguration;
 import com.chiorichan.permission.PermissibleEntity;
@@ -42,7 +42,7 @@ public class UtilityCommands extends PermissionBaseCommand
 		}
 		catch ( NumberFormatException e )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Invalid " + key + " entered; must be an integer but was '" + args.get( key ) + "'" );
+			sender.sendMessage( LogColor.RED + "Invalid " + key + " entered; must be an integer but was '" + args.get( key ) + "'" );
 			return Integer.MIN_VALUE;
 		}
 	}
@@ -56,38 +56,38 @@ public class UtilityCommands extends PermissionBaseCommand
 				case "entity":
 					PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( args.get( "id" ) );
 					if ( entity == null )
-						sender.sendMessage( ConsoleColor.RED + "We could not find an entity with id `" + args.get( "id" ) + "`!" );
+						sender.sendMessage( LogColor.RED + "We could not find an entity with id `" + args.get( "id" ) + "`!" );
 					else
 					{
 						entity.save();
-						sender.sendMessage( ConsoleColor.AQUA + "Wonderful news, we successfully committed changes made to entity `" + entity.getId() + "`!" );
+						sender.sendMessage( LogColor.AQUA + "Wonderful news, we successfully committed changes made to entity `" + entity.getId() + "`!" );
 					}
 					break;
 				case "group":
 					PermissibleGroup group = PermissionManager.INSTANCE.getGroup( args.get( "id" ) );
 					if ( group == null )
-						sender.sendMessage( ConsoleColor.RED + "We could not find a group with id `" + args.get( "id" ) + "`!" );
+						sender.sendMessage( LogColor.RED + "We could not find a group with id `" + args.get( "id" ) + "`!" );
 					else
 					{
 						group.save();
-						sender.sendMessage( ConsoleColor.AQUA + "Wonderful news, we successfully committed changes made to group `" + group.getId() + "`!" );
+						sender.sendMessage( LogColor.AQUA + "Wonderful news, we successfully committed changes made to group `" + group.getId() + "`!" );
 					}
 					break;
 				case "permission":
 					Permission perm = PermissionManager.INSTANCE.getNode( args.get( "id" ) );
 					if ( perm == null )
-						sender.sendMessage( ConsoleColor.RED + "We could not find a permission with namespace `" + args.get( "id" ) + "`!" );
+						sender.sendMessage( LogColor.RED + "We could not find a permission with namespace `" + args.get( "id" ) + "`!" );
 					else
 					{
 						perm.commit();
-						sender.sendMessage( ConsoleColor.AQUA + "Wonderful news, we successfully committed changes made to permission `" + perm.getNamespace() + "`!" );
+						sender.sendMessage( LogColor.AQUA + "Wonderful news, we successfully committed changes made to permission `" + perm.getNamespace() + "`!" );
 					}
 					break;
 			}
 		else
 		{
 			PermissionManager.INSTANCE.saveData();
-			sender.sendMessage( ConsoleColor.AQUA + "Wonderful news, we successfully committed any changes to the backend!" );
+			sender.sendMessage( LogColor.AQUA + "Wonderful news, we successfully committed any changes to the backend!" );
 		}
 		
 		// Force backend to finally flush changes
@@ -142,19 +142,19 @@ public class UtilityCommands extends PermissionBaseCommand
 			
 			outStream.close();
 			
-			sender.sendMessage( ConsoleColor.WHITE + "[Permissions] Data dumped in \"" + dstFile.getName() + "\" " );
+			sender.sendMessage( LogColor.WHITE + "[Permissions] Data dumped in \"" + dstFile.getName() + "\" " );
 		}
 		catch ( IOException e )
 		{
-			sender.sendMessage( ConsoleColor.RED + "IO Error: " + e.getMessage() );
+			sender.sendMessage( LogColor.RED + "IO Error: " + e.getMessage() );
 		}
 		catch ( ClassNotFoundException e )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Specified backend not found!" );
+			sender.sendMessage( LogColor.RED + "Specified backend not found!" );
 		}
 		catch ( Throwable t )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Error: " + t.getMessage() );
+			sender.sendMessage( LogColor.RED + "Error: " + t.getMessage() );
 			PermissionManager.getLogger().severe( "Error: " + t.getMessage(), t );
 			// t.printStackTrace();
 		}
@@ -185,28 +185,28 @@ public class UtilityCommands extends PermissionBaseCommand
 				PermissibleGroup group = PermissionManager.INSTANCE.getGroup( args.get( "id" ), false );
 				
 				if ( group == null )
-					sender.sendMessage( ConsoleColor.RED + "We could not find anything with id `" + args.get( "id" ) + "`!" );
+					sender.sendMessage( LogColor.RED + "We could not find anything with id `" + args.get( "id" ) + "`!" );
 				else
 				{
 					group.reload();
-					sender.sendMessage( ConsoleColor.AQUA + "Wonderful news, we successfully reloaded group `" + group.getId() + "` from backend!" );
+					sender.sendMessage( LogColor.AQUA + "Wonderful news, we successfully reloaded group `" + group.getId() + "` from backend!" );
 				}
 			}
 			else
 			{
 				entity.reload();
-				sender.sendMessage( ConsoleColor.AQUA + "Wonderful news, we successfully reloaded entity `" + entity.getId() + "` from backend!" );
+				sender.sendMessage( LogColor.AQUA + "Wonderful news, we successfully reloaded entity `" + entity.getId() + "` from backend!" );
 			}
 		}
 		else
 			try
 			{
 				PermissionManager.INSTANCE.reload();
-				sender.sendMessage( ConsoleColor.AQUA + "Wonderful news, we successfully reloaded all entities and groups from the backend!" );
+				sender.sendMessage( LogColor.AQUA + "Wonderful news, we successfully reloaded all entities and groups from the backend!" );
 			}
 			catch ( PermissionBackendException e )
 			{
-				sender.sendMessage( ConsoleColor.RED + "Failed to reload! Check configuration!\n" + ConsoleColor.RED + "Error (see console for full): " + e.getMessage() );
+				sender.sendMessage( LogColor.RED + "Failed to reload! Check configuration!\n" + LogColor.RED + "Error (see console for full): " + e.getMessage() );
 				PermissionManager.getLogger().log( Level.WARNING, "Failed to reload permissions when " + sender.getDisplayName() + " ran `pex reload`", e );
 			}
 	}
@@ -230,21 +230,21 @@ public class UtilityCommands extends PermissionBaseCommand
 		try
 		{
 			PermissionManager.INSTANCE.setBackend( args.get( "backend" ) );
-			sender.sendMessage( ConsoleColor.WHITE + "Permission backend changed!" );
+			sender.sendMessage( LogColor.WHITE + "Permission backend changed!" );
 		}
 		catch ( RuntimeException e )
 		{
 			if ( e.getCause() instanceof ClassNotFoundException )
-				sender.sendMessage( ConsoleColor.RED + "Specified backend not found." );
+				sender.sendMessage( LogColor.RED + "Specified backend not found." );
 			else
 			{
-				sender.sendMessage( ConsoleColor.RED + "Error during backend initialization." );
+				sender.sendMessage( LogColor.RED + "Error during backend initialization." );
 				e.printStackTrace();
 			}
 		}
 		catch ( PermissionBackendException e )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Backend initialization failed! Fix your configuration!\n" + ConsoleColor.RED + "Error (see console for more): " + e.getMessage() );
+			sender.sendMessage( LogColor.RED + "Backend initialization failed! Fix your configuration!\n" + LogColor.RED + "Error (see console for more): " + e.getMessage() );
 			PermissionManager.getLogger().log( Level.WARNING, "Backend initialization failed when " + sender.getDisplayName() + " was initializing " + args.get( "backend" ), e );
 		}
 	}
@@ -262,13 +262,13 @@ public class UtilityCommands extends PermissionBaseCommand
 			
 		if ( page < 1 )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Page couldn't be lower than 1" );
+			sender.sendMessage( LogColor.RED + "Page couldn't be lower than 1" );
 			return;
 		}
 		
 		int totalPages = ( int ) Math.ceil( commands.size() / count );
 		
-		sender.sendMessage( ConsoleColor.BLUE + "PermissionManager" + ConsoleColor.WHITE + " commands (page " + ConsoleColor.GOLD + page + "/" + totalPages + ConsoleColor.WHITE + "): " );
+		sender.sendMessage( LogColor.BLUE + "PermissionManager" + LogColor.WHITE + " commands (page " + LogColor.GOLD + page + "/" + totalPages + LogColor.WHITE + "): " );
 		
 		int base = count * ( page - 1 );
 		
@@ -278,11 +278,11 @@ public class UtilityCommands extends PermissionBaseCommand
 				break;
 			
 			CommandHandler command = commands.get( i ).getMethodAnnotation();
-			String commandName = String.format( "/%s %s", command.name(), command.syntax() ).replace( "<", ConsoleColor.BOLD.toString() + ConsoleColor.RED + "<" ).replace( ">", ">" + ConsoleColor.RESET + ConsoleColor.GOLD.toString() ).replace( "[", ConsoleColor.BOLD.toString() + ConsoleColor.BLUE + "[" ).replace( "]", "]" + ConsoleColor.RESET + ConsoleColor.GOLD.toString() );
+			String commandName = String.format( "/%s %s", command.name(), command.syntax() ).replace( "<", LogColor.BOLD.toString() + LogColor.RED + "<" ).replace( ">", ">" + LogColor.RESET + LogColor.GOLD.toString() ).replace( "[", LogColor.BOLD.toString() + LogColor.BLUE + "[" ).replace( "]", "]" + LogColor.RESET + LogColor.GOLD.toString() );
 			
 			
-			sender.sendMessage( ConsoleColor.GOLD + commandName );
-			sender.sendMessage( ConsoleColor.AQUA + "    " + command.description() );
+			sender.sendMessage( LogColor.GOLD + commandName );
+			sender.sendMessage( LogColor.AQUA + "    " + command.description() );
 		}
 	}
 	

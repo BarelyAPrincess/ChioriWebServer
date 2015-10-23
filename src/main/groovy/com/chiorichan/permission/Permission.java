@@ -11,7 +11,7 @@ package com.chiorichan.permission;
 import java.util.Collections;
 import java.util.List;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.AccountAttachment;
 import com.chiorichan.permission.lang.PermissionException;
@@ -98,7 +98,7 @@ public final class Permission implements Comparable<Permission>
 	{
 		String spacing = ( deepth > 0 ) ? Strings.repeat( "      ", deepth - 1 ) + "|---> " : "";
 		
-		sender.sendMessage( String.format( "%s%s%s=%s", ConsoleColor.YELLOW, spacing, getLocalName(), model ) );
+		sender.sendMessage( String.format( "%s%s%s=%s", LogColor.YELLOW, spacing, getLocalName(), model ) );
 		
 		deepth++;
 		for ( Permission p : children )

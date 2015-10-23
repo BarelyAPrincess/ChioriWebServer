@@ -10,7 +10,7 @@ package com.chiorichan.permission.commands;
 
 import java.util.Map;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
 import com.chiorichan.permission.PermissionManager;
@@ -28,7 +28,7 @@ public class PromotionCommands extends PermissionBaseCommand
 		
 		if ( user == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Specified user \"" + args.get( "user" ) + "\" not found!" );
+			sender.sendMessage( LogColor.RED + "Specified user \"" + args.get( "user" ) + "\" not found!" );
 			return;
 		}
 		
@@ -43,7 +43,7 @@ public class PromotionCommands extends PermissionBaseCommand
 		// TODO Get reference based on connection method, e.g., Telnet Query
 		if ( demoter == null || !demoter.checkPermission( "permissions.user.demote." + ladder ).isTrue() )
 		{
-			sender.sendMessage( ConsoleColor.RED + "You don't have enough permissions to demote on this ladder" );
+			sender.sendMessage( LogColor.RED + "You don't have enough permissions to demote on this ladder" );
 			return;
 		}
 		
@@ -57,7 +57,7 @@ public class PromotionCommands extends PermissionBaseCommand
 		}
 		catch ( RankingException e )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Demotion error: " + e.getMessage() );
+			sender.sendMessage( LogColor.RED + "Demotion error: " + e.getMessage() );
 			PermissionManager.getLogger().severe( "Ranking Error (" + demoterName + " demotes " + e.getTarget().getId() + "): " + e.getMessage() );
 		}
 	}
@@ -91,7 +91,7 @@ public class PromotionCommands extends PermissionBaseCommand
 		// TODO Get reference based on connection method, e.g., Telnet Query
 		if ( promoter == null || !promoter.checkPermission( "permissions.user.demote." + ladder ).isTrue() )
 		{
-			sender.sendMessage( ConsoleColor.RED + "You don't have enough permissions to demote on this ladder" );
+			sender.sendMessage( LogColor.RED + "You don't have enough permissions to demote on this ladder" );
 			return;
 		}
 		
@@ -105,7 +105,7 @@ public class PromotionCommands extends PermissionBaseCommand
 		}
 		catch ( RankingException e )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Promotion error: " + e.getMessage() );
+			sender.sendMessage( LogColor.RED + "Promotion error: " + e.getMessage() );
 			PermissionManager.getLogger().severe( "Ranking Error (" + promoterName + " > " + e.getTarget().getId() + "): " + e.getMessage() );
 		}
 	}
@@ -125,7 +125,7 @@ public class PromotionCommands extends PermissionBaseCommand
 		
 		if ( group == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Group \"" + groupName + "\" not found" );
+			sender.sendMessage( LogColor.RED + "Group \"" + groupName + "\" not found" );
 			return;
 		}
 		

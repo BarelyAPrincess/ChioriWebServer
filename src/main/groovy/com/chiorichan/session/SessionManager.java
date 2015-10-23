@@ -15,8 +15,8 @@ import java.util.Set;
 
 import org.apache.commons.lang3.text.WordUtils;
 
-import com.chiorichan.ConsoleColor;
-import com.chiorichan.ConsoleLogger;
+import com.chiorichan.LogColor;
+import com.chiorichan.ServerLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.ServerManager;
 import com.chiorichan.http.HttpCookie;
@@ -88,11 +88,11 @@ public class SessionManager implements TaskCreator, ServerManager
 	}
 	
 	/**
-	 * Get the {@link com.chiorichan.ConsoleLogger} instance for this SessionManager
+	 * Get the {@link com.chiorichan.ServerLogger} instance for this SessionManager
 	 * 
 	 * @return ConsoleLogger instance
 	 */
-	public static ConsoleLogger getLogger()
+	public static ServerLogger getLogger()
 	{
 		return Loader.getLogger( "SessMgr" );
 	}
@@ -314,7 +314,7 @@ public class SessionManager implements TaskCreator, ServerManager
 		}
 		
 		if ( cleanupCount > 0 )
-			getLogger().info( ConsoleColor.DARK_AQUA + "The cleanup task recycled " + cleanupCount + " session(s)." );
+			getLogger().info( LogColor.DARK_AQUA + "The cleanup task recycled " + cleanupCount + " session(s)." );
 	}
 	
 	/**

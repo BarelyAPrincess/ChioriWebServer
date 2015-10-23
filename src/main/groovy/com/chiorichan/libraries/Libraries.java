@@ -17,7 +17,7 @@ import java.util.Map;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.Loader;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.plugin.PluginManager;
@@ -151,7 +151,7 @@ public class Libraries implements LibrarySource
 		if ( lib == null || !lib.exists() )
 			return false;
 		
-		PluginManager.getLogger().info( ConsoleColor.GRAY + "Loading the library `" + lib.getName() + "`" );
+		PluginManager.getLogger().info( LogColor.GRAY + "Loading the library `" + lib.getName() + "`" );
 		
 		try
 		{
@@ -190,7 +190,7 @@ public class Libraries implements LibrarySource
 		{
 			if ( !mavenLocalPom.exists() || !mavenLocalJar.exists() )
 			{
-				PluginManager.getLogger().info( ConsoleColor.GOLD + "Downloading the library `" + lib.toString() + "` from url `" + urlJar + "`... Please Wait!" );
+				PluginManager.getLogger().info( LogColor.GOLD + "Downloading the library `" + lib.toString() + "` from url `" + urlJar + "`... Please Wait!" );
 				
 				// Try download from JCenter Bintray Maven Repository
 				if ( NetworkFunc.downloadFile( urlPom, mavenLocalPom ) )
@@ -208,7 +208,7 @@ public class Libraries implements LibrarySource
 					if ( urlJar == null || urlJar.isEmpty() || urlPom == null || urlPom.isEmpty() )
 						return false;
 					
-					PluginManager.getLogger().warning( ConsoleColor.GOLD + "Primary download location failed, trying alternative url `" + urlJarAlt + "`... Please Wait!" );
+					PluginManager.getLogger().warning( LogColor.GOLD + "Primary download location failed, trying alternative url `" + urlJarAlt + "`... Please Wait!" );
 					
 					if ( !NetworkFunc.downloadFile( urlPomAlt, mavenLocalPom ) )
 						return false;
@@ -217,7 +217,7 @@ public class Libraries implements LibrarySource
 				}
 			}
 			
-			PluginManager.getLogger().info( ConsoleColor.DARK_GRAY + "Loading the library `" + lib.toString() + "` from file `" + mavenLocalJar + "`..." );
+			PluginManager.getLogger().info( LogColor.DARK_GRAY + "Loading the library `" + lib.toString() + "` from file `" + mavenLocalJar + "`..." );
 			
 			LibraryClassLoader.addFile( mavenLocalJar );
 		}

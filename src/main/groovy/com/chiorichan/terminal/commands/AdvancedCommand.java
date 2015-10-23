@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.account.AccountAttachment;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.terminal.Command;
@@ -72,14 +72,14 @@ public class AdvancedCommand extends Command
 				
 				if ( selectedBinding == null )
 				{
-					handler.sendMessage( ConsoleColor.RED + "Error in command syntax. Check command help." );
+					handler.sendMessage( LogColor.RED + "Error in command syntax. Check command help." );
 					return true;
 				}
 				
 				if ( !selectedBinding.checkPermissions( handler.getEntity() ) )
 				{
 					PermissionManager.getLogger().warning( "Entity " + handler.getId() + " tried to access command \"" + command + " " + arguments + "\", but doesn't have permission to do this." );
-					handler.sendMessage( ConsoleColor.RED + "Sorry, you don't have the required permissions." );
+					handler.sendMessage( LogColor.RED + "Sorry, you don't have the required permissions." );
 					return true;
 				}
 				

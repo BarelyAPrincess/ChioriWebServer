@@ -10,7 +10,7 @@ package com.chiorichan.terminal.commands;
 
 import java.util.Arrays;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountAttachment;
@@ -61,7 +61,7 @@ public abstract class BuiltinCommand extends Command
 			@Override
 			public boolean execute( AccountAttachment sender, String command, String[] args )
 			{
-				sender.sendMessage( ConsoleColor.AQUA + Versioning.getProduct() + " is running version " + Versioning.getVersion() + ( ( Versioning.getBuildNumber().equals( "0" ) ) ? " (dev)" : " (build #" + Versioning.getBuildNumber() + ")" ) );
+				sender.sendMessage( LogColor.AQUA + Versioning.getProduct() + " is running version " + Versioning.getVersion() + ( ( Versioning.getBuildNumber().equals( "0" ) ) ? " (dev)" : " (build #" + Versioning.getBuildNumber() + ")" ) );
 				return true;
 			}
 		} );
@@ -91,7 +91,7 @@ public abstract class BuiltinCommand extends Command
 			@Override
 			public boolean execute( AccountAttachment sender, String command, String[] args )
 			{
-				sender.sendMessage( ConsoleColor.YELLOW + "We're sorry, help has not been implemented as of yet, try again in a later version." );
+				sender.sendMessage( LogColor.YELLOW + "We're sorry, help has not been implemented as of yet, try again in a later version." );
 				
 				return true;
 			}
@@ -114,7 +114,7 @@ public abstract class BuiltinCommand extends Command
 			{
 				String color = "" + ( ( args.length < 1 ) ? !StringFunc.isTrue( sender.getVariable( "color", "true" ) ) : StringFunc.isTrue( args[0] ) );
 				sender.setVariable( "color", color );
-				sender.sendMessage( ConsoleColor.AQUA + "Console color has been " + ( ( StringFunc.isTrue( color ) ) ? "enabled" : "disabled" ) + "." );
+				sender.sendMessage( LogColor.AQUA + "Console color has been " + ( ( StringFunc.isTrue( color ) ) ? "enabled" : "disabled" ) + "." );
 				return true;
 			}
 		} );
@@ -130,7 +130,7 @@ public abstract class BuiltinCommand extends Command
 						return true;
 					if ( args.length < 1 || args[0].length() == 0 )
 					{
-						sender.sendMessage( ConsoleColor.RED + "Usage: " + usageMessage );
+						sender.sendMessage( LogColor.RED + "Usage: " + usageMessage );
 						return false;
 					}
 					
@@ -195,7 +195,7 @@ public abstract class BuiltinCommand extends Command
 				if ( sender.getEntity().isOp() )
 					Loader.restart( "The server is restarting by request of acct " + sender.getId() );
 				else
-					sender.sendMessage( ConsoleColor.RED + "Only server operators can request the server to restart." );
+					sender.sendMessage( LogColor.RED + "Only server operators can request the server to restart." );
 				return true;
 			}
 		} );
@@ -208,7 +208,7 @@ public abstract class BuiltinCommand extends Command
 				if ( sender.getEntity().isOp() )
 					Loader.stop( "The server is shutting down by request of acct " + sender.getId() );
 				else
-					sender.sendMessage( ConsoleColor.RED + "Only server operators can request the server to stop." );
+					sender.sendMessage( LogColor.RED + "Only server operators can request the server to stop." );
 				return true;
 			}
 		} );
@@ -221,18 +221,18 @@ public abstract class BuiltinCommand extends Command
 				if ( sender.getEntity().isOp() )
 				{
 					if ( args.length < 1 )
-						sender.sendMessage( ConsoleColor.RED + "You must specify which account you wish to deop." );
+						sender.sendMessage( LogColor.RED + "You must specify which account you wish to deop." );
 					else
 					{
 						PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( args[0], false );
 						if ( entity == null )
-							sender.sendMessage( ConsoleColor.RED + "We could not find an entity by that id." );
+							sender.sendMessage( LogColor.RED + "We could not find an entity by that id." );
 						entity.removePermission( PermissionDefault.OP.getNode(), References.format() );
-						sender.sendMessage( ConsoleColor.AQUA + "We successfully deop'ed entity " + entity.getId() );
+						sender.sendMessage( LogColor.AQUA + "We successfully deop'ed entity " + entity.getId() );
 					}
 				}
 				else
-					sender.sendMessage( ConsoleColor.RED + "Only server operators can demote entities from server operator." );
+					sender.sendMessage( LogColor.RED + "Only server operators can demote entities from server operator." );
 				
 				return true;
 			}
@@ -246,18 +246,18 @@ public abstract class BuiltinCommand extends Command
 				if ( sender.getEntity().isOp() )
 				{
 					if ( args.length < 1 )
-						sender.sendMessage( ConsoleColor.RED + "You must specify which account you wish to op." );
+						sender.sendMessage( LogColor.RED + "You must specify which account you wish to op." );
 					else
 					{
 						PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( args[0], false );
 						if ( entity == null )
-							sender.sendMessage( ConsoleColor.RED + "We could not find an entity by that id." );
+							sender.sendMessage( LogColor.RED + "We could not find an entity by that id." );
 						entity.addPermission( PermissionDefault.OP.getNode(), true, null );
-						sender.sendMessage( ConsoleColor.AQUA + "We successfully op'ed entity " + entity.getId() );
+						sender.sendMessage( LogColor.AQUA + "We successfully op'ed entity " + entity.getId() );
 					}
 				}
 				else
-					sender.sendMessage( ConsoleColor.RED + "Only server operators can promote entities to server operator." );
+					sender.sendMessage( LogColor.RED + "Only server operators can promote entities to server operator." );
 				
 				return true;
 			}
@@ -280,11 +280,11 @@ public abstract class BuiltinCommand extends Command
 			@Override
 			public boolean execute( AccountAttachment sender, String command, String[] args )
 			{
-				sender.sendMessage( ConsoleColor.AQUA + "Forcing Save..." );
+				sender.sendMessage( LogColor.AQUA + "Forcing Save..." );
 				AccountManager.INSTANCE.save();
 				PermissionManager.INSTANCE.saveData();
 				Loader.saveConfig();
-				sender.sendMessage( ConsoleColor.AQUA + "Complete." );
+				sender.sendMessage( LogColor.AQUA + "Complete." );
 				return true;
 			}
 		} );
@@ -294,7 +294,7 @@ public abstract class BuiltinCommand extends Command
 			@Override
 			public boolean execute( AccountAttachment sender, String command, String[] args )
 			{
-				sender.sendMessage( ConsoleColor.AQUA + "Thank you for visiting, please come back again." );
+				sender.sendMessage( LogColor.AQUA + "Thank you for visiting, please come back again." );
 				sender.getPermissible().logout();
 				return true;
 			}
@@ -306,12 +306,9 @@ public abstract class BuiltinCommand extends Command
 			public boolean execute( AccountAttachment sender, String command, String[] args )
 			{
 				if ( sender.getPermissible() instanceof TerminalEntity )
-				{
 					( ( TerminalEntity ) sender.getPermissible() ).getHandler().disconnect();
-					sender.sendMessage( ConsoleColor.AQUA + "Good bye!" );
-				}
 				else
-					sender.sendMessage( ConsoleColor.RED + "We're sorry, this connection can not be disconnected." );
+					sender.sendMessage( LogColor.RED + "We're sorry, this connection can not be disconnected." );
 				
 				return true;
 			}

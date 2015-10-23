@@ -40,7 +40,7 @@ import java.util.zip.ZipFile;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.Loader;
 import com.chiorichan.libraries.Libraries;
 import com.chiorichan.plugin.PluginManager;
@@ -580,7 +580,7 @@ public class FileFunc
 							if ( !lib.exists() )
 							{
 								lib.getParentFile().mkdirs();
-								PluginManager.getLogger().info( ConsoleColor.GOLD + "Extracting bundled library '" + entry.getName() + "' to '" + lib.getAbsolutePath() + "'." );
+								PluginManager.getLogger().info( LogColor.GOLD + "Extracting bundled library '" + entry.getName() + "' to '" + lib.getAbsolutePath() + "'." );
 								InputStream is = jar.getInputStream( entry );
 								FileOutputStream out = new FileOutputStream( lib );
 								ByteStreams.copy( is, out );
@@ -645,12 +645,12 @@ public class FileFunc
 					File lib = new File( baseDir, newName );
 					
 					if ( lib.exists() && nativesExtracted.contains( lib.getAbsolutePath() ) )
-						PluginManager.getLogger().warning( ConsoleColor.GOLD + "We detected more than one file with the destination '" + lib.getAbsolutePath() + "', if these files from for different architectures, you might need to seperate them into their seperate folders, i.e., windows, linux-x86, linux-x86_64, etc." );
+						PluginManager.getLogger().warning( LogColor.GOLD + "We detected more than one file with the destination '" + lib.getAbsolutePath() + "', if these files from for different architectures, you might need to seperate them into their seperate folders, i.e., windows, linux-x86, linux-x86_64, etc." );
 					
 					if ( !lib.exists() )
 					{
 						lib.getParentFile().mkdirs();
-						PluginManager.getLogger().info( ConsoleColor.GOLD + "Extracting native library '" + entry.getName() + "' to '" + lib.getAbsolutePath() + "'." );
+						PluginManager.getLogger().info( LogColor.GOLD + "Extracting native library '" + entry.getName() + "' to '" + lib.getAbsolutePath() + "'." );
 						InputStream is = jar.getInputStream( entry );
 						FileOutputStream out = new FileOutputStream( lib );
 						ByteStreams.copy( is, out );
@@ -673,7 +673,7 @@ public class FileFunc
 		if ( nativesExtracted.size() > 0 )
 		{
 			if ( !foundArchMatchingNative )
-				PluginManager.getLogger().warning( ConsoleColor.DARK_GRAY + "We found native libraries contained within jar '" + libFile.getAbsolutePath() + "' but according to conventions none of them had the required architecture, the dependency may fail to load the required native if our theory is correct." );
+				PluginManager.getLogger().warning( LogColor.DARK_GRAY + "We found native libraries contained within jar '" + libFile.getAbsolutePath() + "' but according to conventions none of them had the required architecture, the dependency may fail to load the required native if our theory is correct." );
 			
 			String path = ( baseDir.getAbsolutePath().contains( " " ) ) ? "\"" + baseDir.getAbsolutePath() + "\"" : baseDir.getAbsolutePath();
 			System.setProperty( "java.library.path", System.getProperty( "java.library.path" ) + ":" + path );
@@ -696,7 +696,7 @@ public class FileFunc
 	public static boolean extractNatives( Map<String, List<String>> natives, File libFile, File baseDir ) throws IOException
 	{
 		if ( !MapCaster.containsKeys( natives, Arrays.asList( OSInfo.NATIVE_SEARCH_PATHS ) ) )
-			PluginManager.getLogger().warning( String.format( "%sWe were unable to locate any natives libraries that match architectures '%s' within plugin '%s'.", ConsoleColor.DARK_GRAY, Joiner.on( ", '" ).join( OSInfo.NATIVE_SEARCH_PATHS ), libFile.getAbsolutePath() ) );
+			PluginManager.getLogger().warning( String.format( "%sWe were unable to locate any natives libraries that match architectures '%s' within plugin '%s'.", LogColor.DARK_GRAY, Joiner.on( ", '" ).join( OSInfo.NATIVE_SEARCH_PATHS ), libFile.getAbsolutePath() ) );
 		
 		List<String> nativesExtracted = Lists.newArrayList();
 		baseDir = new File( baseDir, "natives" );
@@ -734,7 +734,7 @@ public class FileFunc
 							if ( !newNative.exists() )
 							{
 								newNative.getParentFile().mkdirs();
-								PluginManager.getLogger().info( String.format( "%sExtracting native library '%s' to '%s'.", ConsoleColor.GOLD, entry.getName(), newNative.getAbsolutePath() ) );
+								PluginManager.getLogger().info( String.format( "%sExtracting native library '%s' to '%s'.", LogColor.GOLD, entry.getName(), newNative.getAbsolutePath() ) );
 								InputStream is = jar.getInputStream( entry );
 								FileOutputStream out = new FileOutputStream( newNative );
 								ByteStreams.copy( is, out );

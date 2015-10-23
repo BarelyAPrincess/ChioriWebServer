@@ -17,7 +17,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.Kickable;
 import com.chiorichan.account.lang.AccountResult;
@@ -74,12 +74,12 @@ public class QueryServerTerminal extends SimpleChannelInboundHandler<String> imp
 	@Override
 	public boolean disconnect()
 	{
-		return disconnect( ConsoleColor.RED + "The server is closing your connection, goodbye!" );
+		return disconnect( LogColor.RED + "The server is closing your connection, goodbye!" );
 	}
 	
 	public boolean disconnect( String msg )
 	{
-		NetworkManager.getLogger().info( ConsoleColor.YELLOW + "The connection to Query Client `" + getIpAddr() + "` is being disconnected with message `" + msg + "`." );
+		NetworkManager.getLogger().info( LogColor.YELLOW + "The connection to Query Client `" + getIpAddr() + "` is being disconnected with message `" + msg + "`." );
 		ChannelFuture future = context.writeAndFlush( "\r" + parseColor( msg ) + "\r\n" );
 		future.addListener( ChannelFutureListener.CLOSE );
 		return true;
@@ -124,9 +124,9 @@ public class QueryServerTerminal extends SimpleChannelInboundHandler<String> imp
 			return "";
 		
 		if ( !Loader.getConfig().getBoolean( "server.queryUseColor" ) || ( terminal != null && !StringFunc.isTrue( terminal.getVariable( "color", "true" ) ) ) )
-			return ConsoleColor.removeAltColors( text );
+			return LogColor.removeAltColors( text );
 		else
-			return ConsoleColor.transAltColors( text );
+			return LogColor.transAltColors( text );
 	}
 	
 	@Override

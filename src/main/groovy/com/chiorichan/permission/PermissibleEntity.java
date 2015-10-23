@@ -18,7 +18,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.permission.event.PermissibleEntityEvent;
 import com.chiorichan.permission.lang.PermissionException;
@@ -43,7 +43,7 @@ public abstract class PermissibleEntity
 	public PermissibleEntity( String id )
 	{
 		if ( PermissionManager.isDebug() )
-			PermissionManager.getLogger().info( String.format( "%sThe %s `%s` has been created.", ConsoleColor.YELLOW, isGroup() ? "group" : "entity", id ) );
+			PermissionManager.getLogger().info( String.format( "%sThe %s `%s` has been created.", LogColor.YELLOW, isGroup() ? "group" : "entity", id ) );
 		
 		this.id = id;
 		reload();
@@ -66,7 +66,7 @@ public abstract class PermissibleEntity
 		removeTimedGroup( group, ref );
 		
 		if ( isDebug() )
-			PermissionManager.getLogger().info( String.format( "%sThe group `%s` with reference `%s` was attached to entity `%s`.", ConsoleColor.YELLOW, group.getId(), refs.join(), getId() ) );
+			PermissionManager.getLogger().info( String.format( "%sThe group `%s` with reference `%s` was attached to entity `%s`.", LogColor.YELLOW, group.getId(), refs.join(), getId() ) );
 	}
 	
 	protected final void addPermission( ChildPermission perm, References refs )
@@ -82,7 +82,7 @@ public abstract class PermissibleEntity
 		permissions.put( perm, refs );
 		
 		if ( isDebug() )
-			PermissionManager.getLogger().info( String.format( "%sThe permission `%s` with reference `%s` was attached to entity `%s`.", ConsoleColor.YELLOW, perm.getPermission().getNamespace(), refs.join(), getId() ) );
+			PermissionManager.getLogger().info( String.format( "%sThe permission `%s` with reference `%s` was attached to entity `%s`.", LogColor.YELLOW, perm.getPermission().getNamespace(), refs.join(), getId() ) );
 		
 		recalculatePermissions();
 	}
@@ -111,7 +111,7 @@ public abstract class PermissibleEntity
 	{
 		permissions.put( perm, refs );
 		if ( isDebug() )
-			PermissionManager.getLogger().info( String.format( "%sThe permission `%s` with reference `%s` was attached to entity `%s`.", ConsoleColor.YELLOW, perm.getPermission().getNamespace(), refs.toString(), getId() ) );
+			PermissionManager.getLogger().info( String.format( "%sThe permission `%s` with reference `%s` was attached to entity `%s`.", LogColor.YELLOW, perm.getPermission().getNamespace(), refs.toString(), getId() ) );
 		recalculatePermissions();
 	}
 	
@@ -158,7 +158,7 @@ public abstract class PermissibleEntity
 		cachedResults.put( perm.getNamespace() + "-" + refs.hash(), result );
 		
 		if ( isDebug() && !perm.getNamespace().equalsIgnoreCase( PermissionDefault.OP.getNameSpace() ) )
-			PermissionManager.getLogger().info( ConsoleColor.YELLOW + "Entity `" + getId() + "` checked for permission `" + perm.getNamespace() + "`" + ( ( refs.isEmpty() ) ? "" : " with reference `" + refs.toString() + "`" ) + " with result `" + result + "`" );
+			PermissionManager.getLogger().info( LogColor.YELLOW + "Entity `" + getId() + "` checked for permission `" + perm.getNamespace() + "`" + ( ( refs.isEmpty() ) ? "" : " with reference `" + refs.toString() + "`" ) + " with result `" + result + "`" );
 		
 		return result;
 	}

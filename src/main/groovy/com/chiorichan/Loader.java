@@ -9,7 +9,6 @@
 package com.chiorichan;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -17,12 +16,10 @@ import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
-import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -40,6 +37,7 @@ import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountType;
 import com.chiorichan.account.Kickable;
+import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.datastore.DatastoreManager;
 import com.chiorichan.datastore.sql.bases.H2SQLDatastore;
@@ -81,7 +79,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	
 	private static String clientId;
 	private static YamlConfiguration configuration;
-	private static final ConsoleBus console = new ConsoleBus();
+	private static final ServerBus console = new ServerBus();
 	private static boolean finishedStartup = false;
 	
 	private static SQLDatastore fwDatabase = null;
@@ -193,13 +191,13 @@ public class Loader extends BuiltinEventCreator implements Listener
 			if ( getConfigFile().exists() )
 			{
 				// Warning the user they are about to override the server installation
-				getLogger().info( ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "                     WARNING!!! WARNING!!! WARNING!!!" );
-				getLogger().info( ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "--------------------------------------------------------------------------------" );
-				getLogger().info( ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "| You've supplied the --install argument which instructs the server to factory |" );
-				getLogger().info( ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "| reset all files and configurations required to run Chiori-chan's Web Server, |" );
-				getLogger().info( ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "| This includes databases and plugin configurations. This can not be undone!   |" );
-				getLogger().info( ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "--------------------------------------------------------------------------------" );
-				String key = Loader.getConsole().prompt( ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "Are you sure you wish to continue? Press 'Y' for Yes, 'N' for No or 'C' to Continue.", "Y", "N", "C" );
+				getLogger().info( LogColor.RED + "" + LogColor.NEGATIVE + "                     WARNING!!! WARNING!!! WARNING!!!" );
+				getLogger().info( LogColor.RED + "" + LogColor.NEGATIVE + "--------------------------------------------------------------------------------" );
+				getLogger().info( LogColor.RED + "" + LogColor.NEGATIVE + "| You've supplied the --install argument which instructs the server to factory |" );
+				getLogger().info( LogColor.RED + "" + LogColor.NEGATIVE + "| reset all files and configurations required to run Chiori-chan's Web Server, |" );
+				getLogger().info( LogColor.RED + "" + LogColor.NEGATIVE + "| This includes databases and plugin configurations. This can not be undone!   |" );
+				getLogger().info( LogColor.RED + "" + LogColor.NEGATIVE + "--------------------------------------------------------------------------------" );
+				String key = Loader.getConsole().prompt( LogColor.RED + "" + LogColor.NEGATIVE + "Are you sure you wish to continue? Press 'Y' for Yes, 'N' for No or 'C' to Continue.", "Y", "N", "C" );
 				
 				if ( key.equals( "N" ) )
 				{
@@ -254,7 +252,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		
 		tmpFileDirectory = new File( configuration.getString( "server.tmpFileDirectory", "tmp" ) );
 		
-		logFileDirectory = new File( configuration.getString( "server.logFileDirectory", "logs" ) );
+		logFileDirectory = new File( configuration.getString( "logs.directory", "logs" ) );
 		
 		if ( install )
 		{
@@ -288,7 +286,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		getLogger().info( "Checking Logs Directory: " + info.getDescription( logFileDirectory ) );
 		if ( info != DirectoryInfo.DIRECTORY_HEALTHY )
 		{
-			tmpFileDirectory = new File( getServerRoot(), "logs" );
+			logFileDirectory = new File( getServerRoot(), "logs" );
 			info = FileFunc.directoryHealthCheck( logFileDirectory );
 			if ( info == DirectoryInfo.DIRECTORY_HEALTHY )
 				getLogger().warning( "We had a problem with the logs directory '" + logFileDirectory.getAbsolutePath() + "', if this is incorrect please check the config value for 'server.logFileDirectory'. The logs directory will now default to '" + logFileDirectory.getAbsolutePath() + "'." );
@@ -296,44 +294,23 @@ public class Loader extends BuiltinEventCreator implements Listener
 				throw new StartupException( "We had a problem with logs directory '" + logFileDirectory.getAbsolutePath() + "', if this is incorrect please check the config value for 'server.logFileDirectory'." );
 		}
 		
-		try
-		{
-			File latest = new File( logFileDirectory, "latest.log" );
-			
-			if ( latest.exists() )
+		ConfigurationSection logs = configuration.getConfigurationSection( "logs.loggers", true );
+		
+		if ( logs != null )
+			for ( String key : logs.getKeys( false ) )
 			{
-				FileFunc.gzFile( latest, new File( logFileDirectory, new SimpleDateFormat( "yyyy-MM-dd_HH-mm-ss" ).format( new Date() ) + ".log.gz" ) );
-				latest.delete();
-			}
-			
-			File[] files = logFileDirectory.listFiles( new FilenameFilter()
-			{
-				@Override
-				public boolean accept( File dir, String name )
+				ConfigurationSection logger = logs.getConfigurationSection( key );
+				
+				switch ( logger.getString( "type", "file" ) )
 				{
-					return name.toLowerCase().endsWith( ".gz" );
+					case "file":
+						if ( logger.getBoolean( "enabled", true ) )
+							console.getLogManager().addFileHandler( key, logger.getBoolean( "color", false ), logger.getInt( "archiveLimit", 3 ) );
+						break;
+					default:
+						getLogger().warning( "We had no logger for type '" + logger.getString( "type" ) + "'" );
 				}
-			} );
-			FileFunc.SortableFile[] sfiles = new FileFunc.SortableFile[files.length];
-			
-			for ( int i = 0; i < files.length; i++ )
-				sfiles[i] = new FileFunc.SortableFile( files[i] );
-			
-			Arrays.sort( sfiles );
-			
-			if ( sfiles.length > 15 )
-				for ( int i = 0; i < sfiles.length - 15; i++ )
-					sfiles[i].f.delete();
-			
-			FileHandler fileHandler = new FileHandler( latest.getAbsolutePath() );
-			fileHandler.setFormatter( new ConsoleLogFormatter( Loader.getConsole(), false ) );
-			
-			console.getLogManager().addHandler( fileHandler );
-		}
-		catch ( Exception e )
-		{
-			getLogger().severe( "Failed to log to 'latest.log'", e );
-		}
+			}
 		
 		if ( firstRun || install )
 			try
@@ -461,7 +438,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return ( File ) options.valueOf( "config" );
 	}
 	
-	public static ConsoleBus getConsole()
+	public static ServerBus getConsole()
 	{
 		return console;
 	}
@@ -492,7 +469,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	 * 
 	 * @return The system logger
 	 */
-	public static ConsoleLogger getLogger()
+	public static ServerLogger getLogger()
 	{
 		StackTraceElement[] ste = Thread.currentThread().getStackTrace();
 		String clz = ste[2].getClassName().toLowerCase();
@@ -546,12 +523,12 @@ public class Loader extends BuiltinEventCreator implements Listener
 	 * @return ConsoleLogger
 	 *         An empty loggerId will return the System Logger.
 	 */
-	public static ConsoleLogger getLogger( String loggerId )
+	public static ServerLogger getLogger( String loggerId )
 	{
 		return console.getLogger( loggerId );
 	}
 	
-	public static ConsoleLogManager getLogManager()
+	public static ServerLogManager getLogManager()
 	{
 		return console.getLogManager();
 	}
@@ -731,7 +708,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		}
 		catch ( Throwable t )
 		{
-			ConsoleBus.handleException( t );
+			ServerBus.handleException( t );
 			
 			if ( Loader.getConfig() != null && Loader.getConfig().getBoolean( "server.haltOnSevereError" ) )
 			{
@@ -744,7 +721,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		}
 		
 		if ( isRunning )
-			getLogger().info( ConsoleColor.YELLOW + "" + ConsoleColor.NEGATIVE + "Finished Initalizing " + Versioning.getProduct() + "! It took " + ( System.currentTimeMillis() - startTime ) + "ms!" );
+			getLogger().info( LogColor.YELLOW + "" + LogColor.NEGATIVE + "Finished Initalizing " + Versioning.getProduct() + "! It took " + ( System.currentTimeMillis() - startTime ) + "ms!" );
 	}
 	
 	public static void restart( String restartReason )

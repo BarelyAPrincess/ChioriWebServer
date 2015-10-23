@@ -16,22 +16,22 @@ import java.util.logging.LogRecord;
 
 import com.google.common.base.Strings;
 
-public class ConsoleLogFormatter extends Formatter
+public class DefaultLogFormatter extends Formatter
 {
+	public static boolean debugMode = false;
+	public static int debugModeHowDeep = 1;
 	private SimpleDateFormat dateFormat;
 	private SimpleDateFormat timeFormat;
+	
 	private boolean formatConfigLoaded = false;
 	private final boolean useColor;
 	
-	public static boolean debugMode = false;
-	public static int debugModeHowDeep = 1;
-	
-	public ConsoleLogFormatter( ConsoleBus console )
+	public DefaultLogFormatter()
 	{
-		this( console, true );
+		this( true );
 	}
 	
-	public ConsoleLogFormatter( ConsoleBus console, boolean useColor )
+	public DefaultLogFormatter( boolean useColor )
 	{
 		dateFormat = new SimpleDateFormat( "MM-dd" );
 		timeFormat = new SimpleDateFormat( "HH:mm:ss.SSS" );
@@ -74,7 +74,6 @@ public class ConsoleLogFormatter extends Formatter
 			StackTraceElement[] var1 = Thread.currentThread().getStackTrace();
 			
 			for ( StackTraceElement var2 : var1 )
-			{
 				if ( !var2.getClassName().toLowerCase().contains( "java" ) && !var2.getClassName().toLowerCase().contains( "sun" ) && !var2.getClassName().toLowerCase().contains( "log" ) && !var2.getMethodName().equals( "sendMessage" ) && !var2.getMethodName().equals( "sendRawMessage" ) )
 				{
 					howDeep--;
@@ -85,11 +84,10 @@ public class ConsoleLogFormatter extends Formatter
 						break;
 					}
 				}
-			}
 		}
 		
 		if ( style.contains( "%lv" ) )
-			style = style.replaceAll( "%lv", ConsoleColor.fromLevel( record.getLevel() ) + record.getLevel().getLocalizedName().toUpperCase() );
+			style = style.replaceAll( "%lv", LogColor.fromLevel( record.getLevel() ) + record.getLevel().getLocalizedName().toUpperCase() );
 		
 		style += " " + formatMessage( record );
 		
@@ -104,8 +102,8 @@ public class ConsoleLogFormatter extends Formatter
 		}
 		
 		if ( !Loader.getConsole().useColors || !useColor )
-			return ConsoleColor.removeAltColors( style );
+			return LogColor.removeAltColors( style );
 		else
-			return ConsoleColor.transAltColors( style );
+			return LogColor.transAltColors( style );
 	}
 }

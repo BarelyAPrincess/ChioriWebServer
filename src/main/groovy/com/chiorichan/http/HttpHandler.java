@@ -57,7 +57,7 @@ import java.util.logging.Level;
 
 import org.codehaus.groovy.runtime.NullObject;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.ContentTypes;
 import com.chiorichan.Loader;
 import com.chiorichan.event.EventBus;
@@ -188,7 +188,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		{
 			if ( request == null || response == null )
 			{
-				NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "We got an unexpected exception before the connection was processed:", cause );
+				NetworkManager.getLogger().severe( LogColor.NEGATIVE + "" + LogColor.RED + "We got an unexpected exception before the connection was processed:", cause );
 				
 				StringBuilder sb = new StringBuilder();
 				sb.append( "<h1>500 - Internal Server Error</h1>\n" );
@@ -218,13 +218,13 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				if ( response.getStage() != HttpResponseStage.CLOSED )
 					response.sendError( ( HttpError ) cause );
 				else
-					NetworkManager.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + " [" + ip + "] For reasons unknown, we caught the HttpError but the connection was already closed.", cause );
+					NetworkManager.getLogger().severe( LogColor.NEGATIVE + "" + LogColor.RED + " [" + ip + "] For reasons unknown, we caught the HttpError but the connection was already closed.", cause );
 				return;
 			}
 			
 			if ( requestFinished && "Connection reset by peer".equals( cause.getMessage() ) )
 			{
-				NetworkManager.getLogger().warning( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + " [" + ip + "] The connection was closed before we could finish the request, if the IP continues to abuse the system it WILL BE BANNED!" );
+				NetworkManager.getLogger().warning( LogColor.NEGATIVE + "" + LogColor.RED + " [" + ip + "] The connection was closed before we could finish the request, if the IP continues to abuse the system it WILL BE BANNED!" );
 				NetworkSecurity.addStrikeToIp( ip, IpStrikeType.CLOSED_EARLY );
 				return;
 			}
@@ -281,7 +281,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			else if ( evalOrig == null )
 			{
 				// Was not caught by EvalFactory
-				log.log( Level.SEVERE, ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s, message '%s'", cause.getClass().getName(), cause.getStackTrace()[0].getFileName(), cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
+				log.log( Level.SEVERE, LogColor.NEGATIVE + "" + LogColor.RED + "Exception %s thrown in file '%s' at line %s, message '%s'", cause.getClass().getName(), cause.getStackTrace()[0].getFileName(), cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
 				response.sendException( cause );
 				
 				if ( Versioning.isDevelopment() )
@@ -291,17 +291,17 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			{
 				if ( evalOrig.isScriptingException() && !evalOrig.hasScriptTrace() )
 				{
-					log.log( Level.WARNING, "We caught an EvalException which was determined to be related to a scripting issue but the exception has no script trace, this might be a combined internal and external problem.", ConsoleColor.NEGATIVE, ConsoleColor.RED );
-					log.log( Level.SEVERE, "%s%sException %s thrown in file '%s' at line %s, message '%s'", ConsoleColor.NEGATIVE, ConsoleColor.RED, cause.getClass().getName(), cause.getStackTrace()[0].getFileName(), cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
+					log.log( Level.WARNING, "We caught an EvalException which was determined to be related to a scripting issue but the exception has no script trace, this might be a combined internal and external problem.", LogColor.NEGATIVE, LogColor.RED );
+					log.log( Level.SEVERE, "%s%sException %s thrown in file '%s' at line %s, message '%s'", LogColor.NEGATIVE, LogColor.RED, cause.getClass().getName(), cause.getStackTrace()[0].getFileName(), cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
 				}
 				else if ( evalOrig.isScriptingException() )
 				{
 					
 					ScriptTraceElement element = evalOrig.getScriptTrace()[0];
-					log.log( Level.SEVERE, "%s%sException %s thrown in file '%s' at line %s:%s, message '%s'", ConsoleColor.NEGATIVE, ConsoleColor.RED, cause.getClass().getName(), element.context().filename(), element.getLineNumber(), ( element.getColumnNumber() > 0 ) ? element.getColumnNumber() : 0, cause.getMessage() );
+					log.log( Level.SEVERE, "%s%sException %s thrown in file '%s' at line %s:%s, message '%s'", LogColor.NEGATIVE, LogColor.RED, cause.getClass().getName(), element.context().filename(), element.getLineNumber(), ( element.getColumnNumber() > 0 ) ? element.getColumnNumber() : 0, cause.getMessage() );
 				}
 				else
-					log.log( Level.SEVERE, "%s%sException %s thrown in file '%s' at line %s, message '%s'", ConsoleColor.NEGATIVE, ConsoleColor.RED, cause.getClass().getName(), cause.getStackTrace()[0].getFileName(), cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
+					log.log( Level.SEVERE, "%s%sException %s thrown in file '%s' at line %s, message '%s'", LogColor.NEGATIVE, LogColor.RED, cause.getClass().getName(), cause.getStackTrace()[0].getFileName(), cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
 				
 				response.sendException( evalOrig );
 				
@@ -313,7 +313,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		}
 		catch ( Throwable t )
 		{
-			Loader.getLogger().severe( ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "This is an uncaught exception from the exceptionCaught() method:", t );
+			Loader.getLogger().severe( LogColor.NEGATIVE + "" + LogColor.RED + "This is an uncaught exception from the exceptionCaught() method:", t );
 			// ctx.fireExceptionCaught( t );
 		}
 	}

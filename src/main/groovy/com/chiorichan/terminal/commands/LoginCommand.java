@@ -11,7 +11,7 @@ package com.chiorichan.terminal.commands;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.account.AccountAttachment;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountType;
@@ -58,17 +58,17 @@ class LoginCommand extends BuiltinCommand
 					// if ( !handler.getPersistence().checkPermission( "sys.query" ).isTrue() )
 					// throw new LoginException( LoginExceptionReason.notAuthorized, acct );
 					
-					AccountManager.getLogger().info( ConsoleColor.GREEN + "Successful Console Login [username='" + user + "',password='" + pass + "',userId='" + result.getAccount().getId() + "',displayName='" + result.getAccount().getDisplayName() + "']" );
+					AccountManager.getLogger().info( LogColor.GREEN + "Successful Console Login [username='" + user + "',password='" + pass + "',userId='" + result.getAccount().getId() + "',displayName='" + result.getAccount().getDisplayName() + "']" );
 					
-					sender.sendMessage( ConsoleColor.GREEN + "Welcome " + user + ", you have been successfully logged in." );
+					sender.sendMessage( LogColor.GREEN + "Welcome " + user + ", you have been successfully logged in." );
 				}
 			}
 			catch ( AccountException l )
 			{
 				if ( l.getAccount() != null )
-					AccountManager.getLogger().warning( ConsoleColor.GREEN + "Failed Console Login [username='" + user + "',password='" + pass + "',userId='" + l.getAccount().getId() + "',displayName='" + l.getAccount().getDisplayName() + "',reason='" + l.getMessage() + "']" );
+					AccountManager.getLogger().warning( LogColor.GREEN + "Failed Console Login [username='" + user + "',password='" + pass + "',userId='" + l.getAccount().getId() + "',displayName='" + l.getAccount().getDisplayName() + "',reason='" + l.getMessage() + "']" );
 				
-				sender.sendMessage( ConsoleColor.YELLOW + l.getMessage() );
+				sender.sendMessage( LogColor.YELLOW + l.getMessage() );
 				
 				if ( !AccountType.isNoneAccount( sender ) )
 					sender.getPermissible().login( AccountAuthenticator.NULL, AccountType.ACCOUNT_NONE.getId() );

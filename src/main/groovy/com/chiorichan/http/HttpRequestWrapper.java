@@ -35,7 +35,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountManager;
@@ -1002,7 +1002,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 				
 				session.remember( remember );
 				
-				SessionManager.getLogger().info( ConsoleColor.GREEN + "Successful Login: [id='" + acct.getId() + "',siteId='" + acct.getSiteId() + "',authenticator='plaintext']" );
+				SessionManager.getLogger().info( LogColor.GREEN + "Successful Login: [id='" + acct.getId() + "',siteId='" + acct.getSiteId() + "',authenticator='plaintext']" );
 				getResponse().sendRedirect( loginPost );
 			}
 			catch ( AccountException e )
@@ -1017,7 +1017,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 					msg = result.getCause().getMessage();
 				}
 				
-				AccountManager.getLogger().warning( ConsoleColor.RED + "Failed Login [id='" + username + "',hasPassword='" + ( password != null && !password.isEmpty() ) + "',authenticator='plaintext'`,reason='" + msg + "']" );
+				AccountManager.getLogger().warning( LogColor.RED + "Failed Login [id='" + username + "',hasPassword='" + ( password != null && !password.isEmpty() ) + "',authenticator='plaintext'`,reason='" + msg + "']" );
 				getResponse().sendRedirect( loginForm + "?msg=" + result.getMessage() + ( ( target == null || target.isEmpty() ) ? "" : "&target=" + target ) );
 			}
 		else if ( session.isLoginPresent() )

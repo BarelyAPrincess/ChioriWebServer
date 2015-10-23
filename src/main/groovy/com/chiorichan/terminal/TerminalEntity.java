@@ -16,7 +16,7 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountPermissible;
@@ -79,10 +79,10 @@ public class TerminalEntity extends AccountPermissible implements Terminal, Bind
 				String[] banner = new String( FileFunc.inputStream2Bytes( is ) ).split( "\\n" );
 				
 				for ( String l : banner )
-					handler.println( ConsoleColor.GOLD + l );
+					handler.println( LogColor.GOLD + l );
 				
-				handler.println( String.format( "%s%sWelcome to %s Version %s!", ConsoleColor.NEGATIVE, ConsoleColor.GOLD, Versioning.getProduct(), Versioning.getVersion() ) );
-				handler.println( String.format( "%s%s%s", ConsoleColor.NEGATIVE, ConsoleColor.GOLD, Versioning.getCopyright() ) );
+				handler.println( String.format( "%s%sWelcome to %s Version %s!", LogColor.NEGATIVE, LogColor.GOLD, Versioning.getProduct(), Versioning.getVersion() ) );
+				handler.println( String.format( "%s%s%s", LogColor.NEGATIVE, LogColor.GOLD, Versioning.getCopyright() ) );
 			}
 			finally
 			{
@@ -192,11 +192,11 @@ public class TerminalEntity extends AccountPermissible implements Terminal, Bind
 	{
 		try
 		{
-			prompt = ConsoleColor.GREEN + getId() + "@" + InetAddress.getLocalHost().getHostName() + ConsoleColor.RESET + ":" + ConsoleColor.BLUE + "~" + ConsoleColor.RESET + "$ ";
+			prompt = LogColor.GREEN + getId() + "@" + InetAddress.getLocalHost().getHostName() + LogColor.RESET + ":" + LogColor.BLUE + "~" + LogColor.RESET + "$ ";
 		}
 		catch ( UnknownHostException e )
 		{
-			prompt = ConsoleColor.GREEN + getId() + "@localhost ~$ ";
+			prompt = LogColor.GREEN + getId() + "@localhost ~$ ";
 		}
 		
 		prompt();

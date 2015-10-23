@@ -14,7 +14,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.ConsoleLogger;
+import com.chiorichan.ServerLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.ServerManager;
 import com.chiorichan.account.lang.AccountException;
@@ -44,7 +44,7 @@ public final class AccountManager extends AccountEvents implements ServerManager
 		
 	}
 	
-	public static ConsoleLogger getLogger()
+	public static ServerLogger getLogger()
 	{
 		return Loader.getLogger( "AcctMgr" );
 	}
@@ -112,18 +112,18 @@ public final class AccountManager extends AccountEvents implements ServerManager
 			acctId += ( split.length < 3 || split[2].isEmpty() ? "" + RandomFunc.randomize( 'C' ) : split[2].substring( 0, 1 ) ).toUpperCase();
 		}
 		
-		assert acctId.length() == 6;
-		assert acctId.matches( "[a-z]{2}[0-9]{3}[A-Z]" );
-		
 		int tries = 1;
 		
 		do
 		{
+			assert acctId.length() == 6;
+			assert acctId.matches( "[a-z]{2}[0-9]{3}[A-Z]" );
+			
 			// When our tries are divisible by 25 we attempt to randomize the last letter for more chances.
 			if ( tries % 25 == 0 )
 				acctId = acctId.substring( 0, 5 ) + RandomFunc.randomize( acctId.substring( 5 ) );
 			
-			acctId = acctId.substring( 0, 2 ) + RandomFunc.randomize( "123" ) + acctId.substring( acctId.length() - 1 );
+			acctId = acctId.substring( 0, 2 ) + RandomFunc.randomize( "123" ) + acctId.substring( 4 );
 			
 			tries++;
 		}

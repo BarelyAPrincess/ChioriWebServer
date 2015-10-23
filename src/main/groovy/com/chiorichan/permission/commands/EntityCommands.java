@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.account.AccountAttachment;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
@@ -42,7 +42,7 @@ public class EntityCommands extends PermissionBaseCommand
 			}
 			catch ( NumberFormatException e )
 			{
-				sender.sendMessage( ConsoleColor.RED + "Threshold should be number (in days)" );
+				sender.sendMessage( LogColor.RED + "Threshold should be number (in days)" );
 				return;
 			}
 		
@@ -69,9 +69,9 @@ public class EntityCommands extends PermissionBaseCommand
 	{
 		Collection<PermissibleEntity> entities = PermissionManager.INSTANCE.getEntities();
 		
-		sender.sendMessage( ConsoleColor.WHITE + "Currently registered entities: " );
+		sender.sendMessage( LogColor.WHITE + "Currently registered entities: " );
 		for ( PermissibleEntity entity : entities )
-			sender.sendMessage( " " + entity.getId() + " " + ConsoleColor.DARK_GREEN + "[" + Joiner.on( ", " ).join( entity.getGroupNames( References.format() ) ) + "]" );
+			sender.sendMessage( " " + entity.getId() + " " + LogColor.DARK_GREEN + "[" + Joiner.on( ", " ).join( entity.getGroupNames( References.format() ) ) + "]" );
 	}
 	
 	@CommandHandler( name = "pex", syntax = "entity <entity> group add <group> [ref] [lifetime]", permission = "permissions.manage.membership.<group>", description = "Add <entity> to <group>" )
@@ -85,7 +85,7 @@ public class EntityCommands extends PermissionBaseCommand
 		
 		if ( entity == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
+			sender.sendMessage( LogColor.RED + "User does not exist" );
 			return;
 		}
 		
@@ -97,14 +97,14 @@ public class EntityCommands extends PermissionBaseCommand
 			}
 			catch ( NumberFormatException e )
 			{
-				sender.sendMessage( ConsoleColor.RED + "Group lifetime should be number!" );
+				sender.sendMessage( LogColor.RED + "Group lifetime should be number!" );
 				return;
 			}
 		else
 			entity.addGroup( PermissionManager.INSTANCE.getGroup( groupName ), refs );
 		
 		
-		sender.sendMessage( ConsoleColor.WHITE + "User added to group \"" + groupName + "\"!" );
+		sender.sendMessage( LogColor.WHITE + "User added to group \"" + groupName + "\"!" );
 		informEntity( entityName, "You are assigned to \"" + groupName + "\" group" );
 	}
 	
@@ -118,13 +118,13 @@ public class EntityCommands extends PermissionBaseCommand
 		
 		if ( entity == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
+			sender.sendMessage( LogColor.RED + "User does not exist" );
 			return;
 		}
 		
 		entity.addPermission( args.get( "permission" ), true, refs );
 		
-		sender.sendMessage( ConsoleColor.WHITE + "Permission \"" + args.get( "permission" ) + "\" added!" );
+		sender.sendMessage( LogColor.WHITE + "Permission \"" + args.get( "permission" ) + "\" added!" );
 		
 		informEntity( entityName, "Your permissions have been changed!" );
 	}
@@ -144,7 +144,7 @@ public class EntityCommands extends PermissionBaseCommand
 		
 		if ( entity == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
+			sender.sendMessage( LogColor.RED + "User does not exist" );
 			return;
 		}
 		
@@ -152,7 +152,7 @@ public class EntityCommands extends PermissionBaseCommand
 		
 		entity.addTimedPermission( permission, true, refs, lifetime );
 		
-		sender.sendMessage( ConsoleColor.WHITE + "Timed permission \"" + permission + "\" added!" );
+		sender.sendMessage( LogColor.WHITE + "Timed permission \"" + permission + "\" added!" );
 		informEntity( entityName, "Your permissions have been changed!" );
 		
 		PermissionManager.getLogger().info( "User " + entityName + " get timed permission \"" + args.get( "permission" ) + "\" " + ( lifetime > 0 ? "for " + lifetime + " seconds " : " " ) + "from " + sender.getDisplayName() );
@@ -168,7 +168,7 @@ public class EntityCommands extends PermissionBaseCommand
 		
 		if ( entity == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
+			sender.sendMessage( LogColor.RED + "User does not exist" );
 			return;
 		}
 		
@@ -192,7 +192,7 @@ public class EntityCommands extends PermissionBaseCommand
 		
 		if ( entity == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
+			sender.sendMessage( LogColor.RED + "User does not exist" );
 			return;
 		}
 		
@@ -222,7 +222,7 @@ public class EntityCommands extends PermissionBaseCommand
 		
 		if ( entity == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
+			sender.sendMessage( LogColor.RED + "User does not exist" );
 			return;
 		}
 		
@@ -260,7 +260,7 @@ public class EntityCommands extends PermissionBaseCommand
 		
 		if ( entity == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
+			sender.sendMessage( LogColor.RED + "User does not exist" );
 			return;
 		}
 		
@@ -278,14 +278,14 @@ public class EntityCommands extends PermissionBaseCommand
 		PermissibleEntity entity = PermissionManager.INSTANCE.getEntity( entityName );
 		if ( entity == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Entity not found!" );
+			sender.sendMessage( LogColor.RED + "Entity not found!" );
 			return;
 		}
 		
 		sender.sendMessage( entityName + "'s permissions:" );
 		
 		for ( Entry<Permission, PermissionValue> perm : entity.getPermissionValues( References.format() ) )
-			sender.sendMessage( " '" + ConsoleColor.GREEN + perm.getKey() + ConsoleColor.WHITE + "' = " + ConsoleColor.BLUE + perm.getValue() );
+			sender.sendMessage( " '" + LogColor.GREEN + perm.getKey() + LogColor.WHITE + "' = " + LogColor.BLUE + perm.getValue() );
 		
 	}
 	
@@ -299,7 +299,7 @@ public class EntityCommands extends PermissionBaseCommand
 		
 		if ( entity == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
+			sender.sendMessage( LogColor.RED + "User does not exist" );
 			return;
 		}
 		
@@ -320,13 +320,13 @@ public class EntityCommands extends PermissionBaseCommand
 		
 		if ( entity == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
+			sender.sendMessage( LogColor.RED + "User does not exist" );
 			return;
 		}
 		
 		entity.removeGroup( groupName, refs );
 		
-		sender.sendMessage( ConsoleColor.WHITE + "User removed from group " + groupName + "!" );
+		sender.sendMessage( LogColor.WHITE + "User removed from group " + groupName + "!" );
 		
 		informEntity( entityName, "You were removed from \"" + groupName + "\" group" );
 	}
@@ -341,7 +341,7 @@ public class EntityCommands extends PermissionBaseCommand
 		
 		if ( entity == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
+			sender.sendMessage( LogColor.RED + "User does not exist" );
 			return;
 		}
 		
@@ -350,7 +350,7 @@ public class EntityCommands extends PermissionBaseCommand
 		entity.removePermission( permission, refs );
 		entity.removeTimedPermission( permission, refs );
 		
-		sender.sendMessage( ConsoleColor.WHITE + "Permission \"" + permission + "\" removed!" );
+		sender.sendMessage( LogColor.WHITE + "Permission \"" + permission + "\" removed!" );
 		informEntity( entityName, "Your permissions have been changed!" );
 	}
 	
@@ -365,13 +365,13 @@ public class EntityCommands extends PermissionBaseCommand
 		
 		if ( entity == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
+			sender.sendMessage( LogColor.RED + "User does not exist" );
 			return;
 		}
 		
 		entity.removeTimedPermission( args.get( "permission" ), refs );
 		
-		sender.sendMessage( ConsoleColor.WHITE + "Timed permission \"" + permission + "\" removed!" );
+		sender.sendMessage( LogColor.WHITE + "Timed permission \"" + permission + "\" removed!" );
 		informEntity( entityName, "Your permissions have been changed!" );
 	}
 	
@@ -385,7 +385,7 @@ public class EntityCommands extends PermissionBaseCommand
 		
 		if ( entity == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
+			sender.sendMessage( LogColor.RED + "User does not exist" );
 			return;
 		}
 		
@@ -401,7 +401,7 @@ public class EntityCommands extends PermissionBaseCommand
 			{
 				if ( !sender.getPermissible().isLoginPresent() || !sender.getEntity().checkPermission( "permissions.manage.membership." + groupsNames[i].toLowerCase() ).isTrue() )
 				{
-					sender.sendMessage( ConsoleColor.RED + "Don't have enough permission for group " + groupsNames[i] );
+					sender.sendMessage( LogColor.RED + "Don't have enough permission for group " + groupsNames[i] );
 					return;
 				}
 				
@@ -417,14 +417,14 @@ public class EntityCommands extends PermissionBaseCommand
 			{
 				if ( !sender.getPermissible().isLoginPresent() || !sender.getEntity().checkPermission( "permissions.manage.membership." + groupName.toLowerCase() ).isTrue() )
 				{
-					sender.sendMessage( ConsoleColor.RED + "Don't have enough permission for group " + groupName );
+					sender.sendMessage( LogColor.RED + "Don't have enough permission for group " + groupName );
 					return;
 				}
 				
 			}
 			else
 			{
-				sender.sendMessage( ConsoleColor.RED + "No groups set!" );
+				sender.sendMessage( LogColor.RED + "No groups set!" );
 				return;
 			}
 		}
@@ -432,10 +432,10 @@ public class EntityCommands extends PermissionBaseCommand
 		if ( groups.size() > 0 )
 		{
 			entity.setGroups( groups, refs );
-			sender.sendMessage( ConsoleColor.WHITE + "User groups set!" );
+			sender.sendMessage( LogColor.WHITE + "User groups set!" );
 		}
 		else
-			sender.sendMessage( ConsoleColor.RED + "No groups set!" );
+			sender.sendMessage( LogColor.RED + "No groups set!" );
 		
 		informEntity( entity.getId(), "You are now only in \"" + groupName + "\" group" );
 	}
@@ -450,7 +450,7 @@ public class EntityCommands extends PermissionBaseCommand
 		
 		if ( entity == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
+			sender.sendMessage( LogColor.RED + "User does not exist" );
 			return;
 		}
 		
@@ -458,9 +458,9 @@ public class EntityCommands extends PermissionBaseCommand
 		
 		
 		if ( args.containsKey( "value" ) && args.get( "value" ).isEmpty() )
-			sender.sendMessage( ConsoleColor.WHITE + "Option \"" + args.get( "option" ) + "\" cleared!" );
+			sender.sendMessage( LogColor.WHITE + "Option \"" + args.get( "option" ) + "\" cleared!" );
 		else
-			sender.sendMessage( ConsoleColor.WHITE + "Option \"" + args.get( "option" ) + "\" set!" );
+			sender.sendMessage( LogColor.WHITE + "Option \"" + args.get( "option" ) + "\" set!" );
 		
 		informEntity( entityName, "Your permissions have been changed!" );
 	}
@@ -475,7 +475,7 @@ public class EntityCommands extends PermissionBaseCommand
 		
 		if ( entity == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
+			sender.sendMessage( LogColor.RED + "User does not exist" );
 			return;
 		}
 		
@@ -495,7 +495,7 @@ public class EntityCommands extends PermissionBaseCommand
 		
 		if ( entity == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
+			sender.sendMessage( LogColor.RED + "User does not exist" );
 			return;
 		}
 		
@@ -517,7 +517,7 @@ public class EntityCommands extends PermissionBaseCommand
 		}
 		catch ( Throwable e )
 		{
-			sender.sendMessage( ConsoleColor.RED + "Error: " + e.getMessage() );
+			sender.sendMessage( LogColor.RED + "Error: " + e.getMessage() );
 		}
 	}
 	
@@ -530,7 +530,7 @@ public class EntityCommands extends PermissionBaseCommand
 		
 		if ( entity == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "User does not exist" );
+			sender.sendMessage( LogColor.RED + "User does not exist" );
 			return;
 		}
 		

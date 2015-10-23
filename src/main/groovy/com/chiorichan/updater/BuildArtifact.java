@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.updater.BuildArtifact.ChangeSet.ChangeSetDetails;
 
 public class BuildArtifact
@@ -114,7 +114,7 @@ public class BuildArtifact
 				
 				for ( Paths p : paths )
 				{
-					sb.append( "\n\t" + ConsoleColor.GREEN + "[" + p.editType + "] " + p.file );
+					sb.append( "\n\t" + LogColor.GREEN + "[" + p.editType + "] " + p.file );
 				}
 				
 				return msg + " (Commit: " + id + ")" + sb.toString();

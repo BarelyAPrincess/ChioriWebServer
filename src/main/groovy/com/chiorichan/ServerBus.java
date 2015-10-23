@@ -43,12 +43,12 @@ import com.google.common.collect.Lists;
  * Provides the console output of the server.
  * We also attach the Root Account here
  */
-public class ConsoleBus extends AccountPermissible implements Runnable, AccountAttachment
+public class ServerBus extends AccountPermissible implements Runnable, AccountAttachment
 {
 	public static int lastFiveTick = -1;
 	
 	public static int currentTick = ( int ) ( System.currentTimeMillis() / 50 );
-	private ConsoleLogManager logManager;
+	private ServerLogManager logManager;
 	private OptionSet options;
 	
 	public Thread primaryThread;
@@ -57,7 +57,7 @@ public class ConsoleBus extends AccountPermissible implements Runnable, AccountA
 	
 	public Loader loader;
 	
-	ConsoleBus()
+	ServerBus()
 	{
 		
 	}
@@ -72,13 +72,13 @@ public class ConsoleBus extends AccountPermissible implements Runnable, AccountA
 		// TODO Make it so this exception (and possibly other critical exceptions) are reported to
 		// us without user interaction. Should also find a way that the log can be sent along with it.
 		
-		safeLog( Level.SEVERE, ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "THE SERVER FAILED TO START, CHECK THE LOGS AND TRY AGAIN (" + ( System.currentTimeMillis() - Loader.startTime ) + "ms)!" );
+		safeLog( Level.SEVERE, LogColor.RED + "" + LogColor.NEGATIVE + "THE SERVER FAILED TO START, CHECK THE LOGS AND TRY AGAIN (" + ( System.currentTimeMillis() - Loader.startTime ) + "ms)!" );
 	}
 	
 	protected static void handleException( Throwable t )
 	{
 		t.printStackTrace();
-		safeLog( Level.WARNING, ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "**** WE ENCOUNTERED AN UNEXPECTED EXCEPTION ****" );
+		safeLog( Level.WARNING, LogColor.RED + "" + LogColor.NEGATIVE + "**** WE ENCOUNTERED AN UNEXPECTED EXCEPTION ****" );
 	}
 	
 	protected static void safeLog( Level l, String msg )
@@ -133,17 +133,17 @@ public class ConsoleBus extends AccountPermissible implements Runnable, AccountA
 		return Lists.newArrayList();
 	}
 	
-	public ConsoleLogger getLogger()
+	public ServerLogger getLogger()
 	{
 		return logManager.getLogger();
 	}
 	
-	public ConsoleLogger getLogger( String loggerId )
+	public ServerLogger getLogger( String loggerId )
 	{
 		return logManager.getLogger( loggerId );
 	}
 	
-	public ConsoleLogManager getLogManager()
+	public ServerLogManager getLogManager()
 	{
 		return logManager;
 	}
@@ -186,10 +186,10 @@ public class ConsoleBus extends AccountPermissible implements Runnable, AccountA
 		if ( options.has( "nocolor" ) )
 			useColors = false;
 		
-		logManager = new ConsoleLogManager();
+		logManager = new ServerLogManager();
 		
 		ConsoleHandler consoleHandler = new ConsoleHandler();
-		consoleHandler.setFormatter( new ConsoleLogFormatter( Loader.getConsole() ) );
+		consoleHandler.setFormatter( new DefaultLogFormatter() );
 		logManager.addHandler( consoleHandler );
 		
 		System.setOut( new PrintStream( new LoggerOutputStream( getLogger( "SysOut" ).getLogger(), Level.INFO ), true ) );
@@ -248,7 +248,7 @@ public class ConsoleBus extends AccountPermissible implements Runnable, AccountA
 		{
 			if ( timeout / 1000 < last )
 			{
-				getLogger().info( ConsoleColor.GOLD + "" + ConsoleColor.NEGATIVE + String.format( msg, ( ( timeout / 1000 ) + 1 ) + " seconds" ).toUpperCase() + "/r" );
+				getLogger().info( LogColor.GOLD + "" + LogColor.NEGATIVE + String.format( msg, ( ( timeout / 1000 ) + 1 ) + " seconds" ).toUpperCase() + "/r" );
 				last = timeout / 1000;
 			}
 			
@@ -400,10 +400,10 @@ public class ConsoleBus extends AccountPermissible implements Runnable, AccountA
 				String[] banner = new String( FileFunc.inputStream2Bytes( is ) ).split( "\\n" );
 				
 				for ( String l : banner )
-					getLogger().info( ConsoleColor.GOLD + l );
+					getLogger().info( LogColor.GOLD + l );
 				
-				getLogger().info( ConsoleColor.NEGATIVE + "" + ConsoleColor.GOLD + "Starting " + Versioning.getProduct() + " Version " + Versioning.getVersion() );
-				getLogger().info( ConsoleColor.NEGATIVE + "" + ConsoleColor.GOLD + Versioning.getCopyright() );
+				getLogger().info( LogColor.NEGATIVE + "" + LogColor.GOLD + "Starting " + Versioning.getProduct() + " Version " + Versioning.getVersion() );
+				getLogger().info( LogColor.NEGATIVE + "" + LogColor.GOLD + Versioning.getCopyright() );
 			}
 			finally
 			{

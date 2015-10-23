@@ -16,7 +16,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.AccountAttachment;
 import com.chiorichan.account.AccountManager;
@@ -253,7 +253,7 @@ public abstract class PermissionBaseCommand implements CommandListener
 		if ( meta == null )
 			return;
 		
-		MessageDispatch.sendMessage( MessageBuilder.msg( ConsoleColor.BLUE + "[Permissions] " + ConsoleColor.WHITE + message ).from( meta ) );
+		MessageDispatch.sendMessage( MessageBuilder.msg( LogColor.BLUE + "[Permissions] " + LogColor.WHITE + message ).from( meta ) );
 	}
 	
 	protected void informGroup( PermissibleGroup group, String message )

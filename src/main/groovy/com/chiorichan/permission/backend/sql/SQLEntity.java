@@ -14,7 +14,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map.Entry;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.permission.ChildPermission;
 import com.chiorichan.permission.PermissibleEntity;
@@ -130,7 +130,7 @@ public class SQLEntity extends PermissibleEntity
 			return;
 		
 		if ( isDebug() )
-			PermissionManager.getLogger().info( ConsoleColor.YELLOW + "Entity " + getId() + " being saved to backend" );
+			PermissionManager.getLogger().info( LogColor.YELLOW + "Entity " + getId() + " being saved to backend" );
 		
 		try
 		{

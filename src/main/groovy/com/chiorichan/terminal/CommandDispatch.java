@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.Loader;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.server.CommandIssuedEvent;
@@ -100,7 +100,7 @@ public final class CommandDispatch
 					
 					if ( event.isCancelled() )
 					{
-						permissible.sendMessage( ConsoleColor.RED + "Your entry was cancelled by the event system." );
+						permissible.sendMessage( LogColor.RED + "Your entry was cancelled by the event system." );
 						return;
 					}
 					
@@ -125,13 +125,13 @@ public final class CommandDispatch
 							}
 							catch ( Throwable ex )
 							{
-								command.terminal.sendMessage( ConsoleColor.RED + "Unhandled exception executing '" + command.command + "' in " + target + "\n" + ExceptionUtils.getStackTrace( ex ) );
+								command.terminal.sendMessage( LogColor.RED + "Unhandled exception executing '" + command.command + "' in " + target + "\n" + ExceptionUtils.getStackTrace( ex ) );
 								
 								throw new CommandException( "Unhandled exception executing '" + command.command + "' in " + target, ex );
 							}
 					}
 					
-					permissible.sendMessage( ConsoleColor.YELLOW + "Your entry was unrecognized, type \"help\" for help." );
+					permissible.sendMessage( LogColor.YELLOW + "Your entry was unrecognized, type \"help\" for help." );
 				}
 			}
 			catch ( Exception ex )

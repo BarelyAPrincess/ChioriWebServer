@@ -11,9 +11,9 @@ package com.chiorichan;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
-public class ConsoleSubLogger extends Logger
+public class ServerSubLogger extends Logger
 {
-	protected ConsoleSubLogger( String id )
+	protected ServerSubLogger( String id )
 	{
 		super( id, null );
 	}

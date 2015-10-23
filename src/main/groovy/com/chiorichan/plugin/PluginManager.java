@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.ConsoleLogger;
+import com.chiorichan.ServerLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.RunLevel;
 import com.chiorichan.ServerManager;
@@ -67,7 +67,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 		
 	}
 	
-	public static ConsoleLogger getLogger()
+	public static ServerLogger getLogger()
 	{
 		return Loader.getLogger( "PluginMgr" );
 	}

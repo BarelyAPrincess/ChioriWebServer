@@ -13,7 +13,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.References;
 import com.chiorichan.terminal.TerminalEntity;
@@ -46,7 +46,7 @@ public class ReferenceCommands extends PermissionBaseCommand
 			// Collection<String> parents = manager.getRefInheritance( parentReference );
 			String output = "  " + parentReference;
 			if ( parentReferences.size() > 0 )
-				output += ConsoleColor.GREEN + " [" + ConsoleColor.WHITE + Joiner.on( ", " ).join( parentReferences ) + ConsoleColor.GREEN + "]";
+				output += LogColor.GREEN + " [" + LogColor.WHITE + Joiner.on( ", " ).join( parentReferences ) + LogColor.GREEN + "]";
 			
 			sender.sendMessage( output );
 		}
@@ -95,7 +95,7 @@ public class ReferenceCommands extends PermissionBaseCommand
 			Collection<String> parentReferences = manager.getRefInheritance( ref );
 			String output = "  " + ref;
 			if ( parentReferences.size() > 0 )
-				output += ConsoleColor.GREEN + " [" + ConsoleColor.WHITE + Joiner.on( ", " ).join( parentReferences ) + ConsoleColor.GREEN + "]";
+				output += LogColor.GREEN + " [" + LogColor.WHITE + Joiner.on( ", " ).join( parentReferences ) + LogColor.GREEN + "]";
 			
 			sender.sendMessage( output );
 		}

@@ -13,7 +13,7 @@ import java.sql.SQLException;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountMeta;
@@ -75,7 +75,7 @@ public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
 					// int deleted = db.queryUpdate( "DELETE FROM `accounts_token` WHERE `expires` > 0 AND `expires` < ?", Timings.epoch() );
 					int deleted = db.table( "accounts_token" ).delete().where( "expires" ).moreThan( 0 ).and().where( "expires" ).lessThan( Timings.epoch() ).execute().rowCount();
 					if ( deleted > 0 )
-						AccountManager.getLogger().info( ConsoleColor.DARK_AQUA + "The cleanup task deleted " + deleted + " expired login token(s)." );
+						AccountManager.getLogger().info( LogColor.DARK_AQUA + "The cleanup task deleted " + deleted + " expired login token(s)." );
 				}
 				catch ( SQLException e )
 				{

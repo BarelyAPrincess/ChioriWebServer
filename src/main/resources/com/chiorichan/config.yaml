@@ -26,7 +26,6 @@ server:
   maxFileUploadKb: 5120
   webFileDirectory: webroot
   tmpFileDirectory: tmp
-  logFileDirectory: logs
   fileUploadMinInMemory: 0
   errorReporting: E_ALL ~E_NOTICE ~E_STRICT ~E_DEPRECATED
   database:
@@ -57,6 +56,19 @@ console:
   timeFormat: HH:mm:ss.SSS
   hideLoggerName: false
   developerMode: true
+logs:
+  directory: logs
+  loggers:
+    latest:
+      type: file
+      enabled: true
+      color: false
+      archiveLimit: 6
+    colored:
+      type: file
+      enabled: true
+      color: true
+      archiveLimit: 0
 auto-updater:
   enabled: true
   on-broken:

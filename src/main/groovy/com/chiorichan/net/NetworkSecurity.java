@@ -13,7 +13,7 @@ import java.util.Map;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.Loader;
 import com.chiorichan.event.BuiltinEventCreator;
 import com.chiorichan.event.EventBus;
@@ -141,7 +141,7 @@ public class NetworkSecurity extends BuiltinEventCreator implements Listener
 			
 			if ( r.count >= type.countToBan )
 			{
-				NetworkManager.getLogger().info( ConsoleColor.RED + "" + ConsoleColor.NEGATIVE + "The IP '" + ipAddr + "' has been banned for reason '" + type.getReason() + "'" );
+				NetworkManager.getLogger().info( LogColor.RED + "" + LogColor.NEGATIVE + "The IP '" + ipAddr + "' has been banned for reason '" + type.getReason() + "'" );
 				banned = true;
 				banReason = type.getReason();
 				banWhen = Timings.epoch();

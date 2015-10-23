@@ -11,7 +11,7 @@ package com.chiorichan.permission.commands;
 import java.util.Collection;
 import java.util.Map;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.account.AccountAttachment;
 import com.chiorichan.permission.Permission;
 import com.chiorichan.permission.PermissionManager;
@@ -29,7 +29,7 @@ public class PermissionCommands extends PermissionBaseCommand
 	{
 		if ( !args.containsKey( "node" ) || args.get( "node" ).isEmpty() )
 		{
-			sender.sendMessage( ConsoleColor.RED + "You must specify a permission node!" );
+			sender.sendMessage( LogColor.RED + "You must specify a permission node!" );
 			return;
 		}
 		
@@ -37,7 +37,7 @@ public class PermissionCommands extends PermissionBaseCommand
 		
 		if ( type == null )
 		{
-			sender.sendMessage( ConsoleColor.RED + "We could not find a permission type that matches '" + args.get( "type" ) + "'!" );
+			sender.sendMessage( LogColor.RED + "We could not find a permission type that matches '" + args.get( "type" ) + "'!" );
 			return;
 		}
 		
@@ -45,7 +45,7 @@ public class PermissionCommands extends PermissionBaseCommand
 		
 		ns.createPermission( type );
 		
-		sender.sendMessage( ConsoleColor.AQUA + "Good news everybody, we successfully created permission node '" + ns.getNamespace() + "' with type '" + type.name() + "'!" );
+		sender.sendMessage( LogColor.AQUA + "Good news everybody, we successfully created permission node '" + ns.getNamespace() + "' with type '" + type.name() + "'!" );
 	}
 	
 	@CommandHandler( name = "pex", syntax = "perm list [parent]", permission = "permissions.manage.permissions", description = "List all permissions" )
@@ -56,10 +56,10 @@ public class PermissionCommands extends PermissionBaseCommand
 			Permission root = PermissionManager.INSTANCE.getNode( args.get( "parent" ) );
 			
 			if ( root == null )
-				sender.sendMessage( ConsoleColor.RED + "There was no such permission '" + args.get( "parent" ) + "'!" );
+				sender.sendMessage( LogColor.RED + "There was no such permission '" + args.get( "parent" ) + "'!" );
 			else
 			{
-				sender.sendMessage( ConsoleColor.WHITE + "Permissions stack dump for '" + args.get( "parent" ) + "':" );
+				sender.sendMessage( LogColor.WHITE + "Permissions stack dump for '" + args.get( "parent" ) + "':" );
 				root.debugPermissionStack( 0 );
 			}
 		}
@@ -67,7 +67,7 @@ public class PermissionCommands extends PermissionBaseCommand
 		{
 			Collection<Permission> perms = PermissionManager.INSTANCE.getRootNodes();
 			
-			sender.sendMessage( ConsoleColor.WHITE + "Permissions stack dump:" );
+			sender.sendMessage( LogColor.WHITE + "Permissions stack dump:" );
 			for ( Permission root : perms )
 				root.debugPermissionStack( 0 );
 		}

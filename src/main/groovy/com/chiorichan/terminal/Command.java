@@ -12,7 +12,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.account.AccountAttachment;
 import com.chiorichan.messaging.MessageReceiver;
 import com.chiorichan.permission.Permission;
@@ -213,7 +213,7 @@ public abstract class Command
 		
 		if ( target instanceof MessageReceiver )
 			if ( permissionMessage == null )
-				( ( MessageReceiver ) target ).sendMessage( ConsoleColor.RED + "I'm sorry, but you do not have permission to perform the command '" + name + "'." );
+				( ( MessageReceiver ) target ).sendMessage( LogColor.RED + "I'm sorry, but you do not have permission to perform the command '" + name + "'." );
 			else if ( permissionMessage.length() != 0 )
 				for ( String line : permissionMessage.replace( "<permission>", permission ).split( "\n" ) )
 					( ( MessageReceiver ) target ).sendMessage( line );

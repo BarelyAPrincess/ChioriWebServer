@@ -22,7 +22,7 @@ import com.google.common.collect.Maps;
 /**
  * All supported color values for chat
  */
-public enum ConsoleColor
+public enum LogColor
 {
 	/**
 	 * Represents black
@@ -128,44 +128,44 @@ public enum ConsoleColor
 	private final char code;
 	private final boolean isFormat;
 	private final String toString;
-	private static final Map<Integer, ConsoleColor> BY_ID = Maps.newHashMap();
-	private static final Map<Character, ConsoleColor> BY_CHAR = Maps.newHashMap();
-	private static Map<ConsoleColor, String> replacements = new EnumMap<ConsoleColor, String>( ConsoleColor.class );
+	private static final Map<Integer, LogColor> BY_ID = Maps.newHashMap();
+	private static final Map<Character, LogColor> BY_CHAR = Maps.newHashMap();
+	private static Map<LogColor, String> replacements = new EnumMap<LogColor, String>( LogColor.class );
 	
 	static
 	{
-		replacements.put( ConsoleColor.BLACK, Ansi.ansi().fg( Ansi.Color.BLACK ).boldOff().toString() );
-		replacements.put( ConsoleColor.DARK_BLUE, Ansi.ansi().fg( Ansi.Color.BLUE ).boldOff().toString() );
-		replacements.put( ConsoleColor.DARK_GREEN, Ansi.ansi().fg( Ansi.Color.GREEN ).boldOff().toString() );
-		replacements.put( ConsoleColor.DARK_AQUA, Ansi.ansi().fg( Ansi.Color.CYAN ).boldOff().toString() );
-		replacements.put( ConsoleColor.DARK_RED, Ansi.ansi().fg( Ansi.Color.RED ).boldOff().toString() );
-		replacements.put( ConsoleColor.DARK_PURPLE, Ansi.ansi().fg( Ansi.Color.MAGENTA ).boldOff().toString() );
-		replacements.put( ConsoleColor.GOLD, Ansi.ansi().fg( Ansi.Color.YELLOW ).boldOff().toString() );
-		replacements.put( ConsoleColor.GRAY, Ansi.ansi().fg( Ansi.Color.WHITE ).boldOff().toString() );
-		replacements.put( ConsoleColor.DARK_GRAY, Ansi.ansi().fg( Ansi.Color.BLACK ).bold().toString() );
-		replacements.put( ConsoleColor.BLUE, Ansi.ansi().fg( Ansi.Color.BLUE ).bold().toString() );
-		replacements.put( ConsoleColor.GREEN, Ansi.ansi().fg( Ansi.Color.GREEN ).bold().toString() );
-		replacements.put( ConsoleColor.AQUA, Ansi.ansi().fg( Ansi.Color.CYAN ).bold().toString() );
-		replacements.put( ConsoleColor.RED, Ansi.ansi().fg( Ansi.Color.RED ).bold().toString() );
-		replacements.put( ConsoleColor.LIGHT_PURPLE, Ansi.ansi().fg( Ansi.Color.MAGENTA ).bold().toString() );
-		replacements.put( ConsoleColor.YELLOW, Ansi.ansi().fg( Ansi.Color.YELLOW ).bold().toString() );
-		replacements.put( ConsoleColor.WHITE, Ansi.ansi().fg( Ansi.Color.WHITE ).bold().toString() );
-		replacements.put( ConsoleColor.MAGIC, Ansi.ansi().a( Attribute.BLINK_SLOW ).toString() );
-		replacements.put( ConsoleColor.BOLD, Ansi.ansi().a( Attribute.INTENSITY_BOLD ).toString() );
-		replacements.put( ConsoleColor.STRIKETHROUGH, Ansi.ansi().a( Attribute.STRIKETHROUGH_ON ).toString() );
-		replacements.put( ConsoleColor.UNDERLINE, Ansi.ansi().a( Attribute.UNDERLINE ).toString() );
-		replacements.put( ConsoleColor.ITALIC, Ansi.ansi().a( Attribute.ITALIC ).toString() );
-		replacements.put( ConsoleColor.FAINT, Ansi.ansi().a( Attribute.INTENSITY_FAINT ).toString() );
-		replacements.put( ConsoleColor.NEGATIVE, Ansi.ansi().a( Attribute.NEGATIVE_ON ).toString() );
-		replacements.put( ConsoleColor.RESET, Ansi.ansi().a( Attribute.RESET ).fg( Ansi.Color.DEFAULT ).toString() );
+		replacements.put( LogColor.BLACK, Ansi.ansi().fg( Ansi.Color.BLACK ).boldOff().toString() );
+		replacements.put( LogColor.DARK_BLUE, Ansi.ansi().fg( Ansi.Color.BLUE ).boldOff().toString() );
+		replacements.put( LogColor.DARK_GREEN, Ansi.ansi().fg( Ansi.Color.GREEN ).boldOff().toString() );
+		replacements.put( LogColor.DARK_AQUA, Ansi.ansi().fg( Ansi.Color.CYAN ).boldOff().toString() );
+		replacements.put( LogColor.DARK_RED, Ansi.ansi().fg( Ansi.Color.RED ).boldOff().toString() );
+		replacements.put( LogColor.DARK_PURPLE, Ansi.ansi().fg( Ansi.Color.MAGENTA ).boldOff().toString() );
+		replacements.put( LogColor.GOLD, Ansi.ansi().fg( Ansi.Color.YELLOW ).boldOff().toString() );
+		replacements.put( LogColor.GRAY, Ansi.ansi().fg( Ansi.Color.WHITE ).boldOff().toString() );
+		replacements.put( LogColor.DARK_GRAY, Ansi.ansi().fg( Ansi.Color.BLACK ).bold().toString() );
+		replacements.put( LogColor.BLUE, Ansi.ansi().fg( Ansi.Color.BLUE ).bold().toString() );
+		replacements.put( LogColor.GREEN, Ansi.ansi().fg( Ansi.Color.GREEN ).bold().toString() );
+		replacements.put( LogColor.AQUA, Ansi.ansi().fg( Ansi.Color.CYAN ).bold().toString() );
+		replacements.put( LogColor.RED, Ansi.ansi().fg( Ansi.Color.RED ).bold().toString() );
+		replacements.put( LogColor.LIGHT_PURPLE, Ansi.ansi().fg( Ansi.Color.MAGENTA ).bold().toString() );
+		replacements.put( LogColor.YELLOW, Ansi.ansi().fg( Ansi.Color.YELLOW ).bold().toString() );
+		replacements.put( LogColor.WHITE, Ansi.ansi().fg( Ansi.Color.WHITE ).bold().toString() );
+		replacements.put( LogColor.MAGIC, Ansi.ansi().a( Attribute.BLINK_SLOW ).toString() );
+		replacements.put( LogColor.BOLD, Ansi.ansi().a( Attribute.INTENSITY_BOLD ).toString() );
+		replacements.put( LogColor.STRIKETHROUGH, Ansi.ansi().a( Attribute.STRIKETHROUGH_ON ).toString() );
+		replacements.put( LogColor.UNDERLINE, Ansi.ansi().a( Attribute.UNDERLINE ).toString() );
+		replacements.put( LogColor.ITALIC, Ansi.ansi().a( Attribute.ITALIC ).toString() );
+		replacements.put( LogColor.FAINT, Ansi.ansi().a( Attribute.INTENSITY_FAINT ).toString() );
+		replacements.put( LogColor.NEGATIVE, Ansi.ansi().a( Attribute.NEGATIVE_ON ).toString() );
+		replacements.put( LogColor.RESET, Ansi.ansi().a( Attribute.RESET ).fg( Ansi.Color.DEFAULT ).toString() );
 	}
 	
-	private ConsoleColor( char code, int intCode )
+	private LogColor( char code, int intCode )
 	{
 		this( code, intCode, false );
 	}
 	
-	private ConsoleColor( char code, int intCode, boolean isFormat )
+	private LogColor( char code, int intCode, boolean isFormat )
 	{
 		this.code = code;
 		this.intCode = intCode;
@@ -212,7 +212,7 @@ public enum ConsoleColor
 	 *            Code to check
 	 * @return Associative ConsoleColor with the given code, or null if it doesn't exist
 	 */
-	public static ConsoleColor getByChar( char code )
+	public static LogColor getByChar( char code )
 	{
 		return BY_CHAR.get( code );
 	}
@@ -224,7 +224,7 @@ public enum ConsoleColor
 	 *            Code to check
 	 * @return Associative ConsoleColor with the given code, or null if it doesn't exist
 	 */
-	public static ConsoleColor getByChar( String code )
+	public static LogColor getByChar( String code )
 	{
 		Validate.notNull( code, "Code cannot be null" );
 		Validate.isTrue( code.length() > 0, "Code must have at least one char" );
@@ -267,7 +267,7 @@ public enum ConsoleColor
 		{
 			if ( b[i] == altColorChar && "0123456789AaBbCcDdEeFfKkLlMmNnOoRr".indexOf( b[i + 1] ) > -1 )
 			{
-				b[i] = ConsoleColor.COLOR_CHAR;
+				b[i] = LogColor.COLOR_CHAR;
 				b[i + 1] = Character.toLowerCase( b[i + 1] );
 			}
 		}
@@ -283,9 +283,9 @@ public enum ConsoleColor
 	
 	public static String transAltColors( String var1 )
 	{
-		var1 = translateAlternateColorCodes( '&', var1 ) + ConsoleColor.RESET;
+		var1 = translateAlternateColorCodes( '&', var1 ) + LogColor.RESET;
 		
-		for ( ConsoleColor color : values() )
+		for ( LogColor color : values() )
 		{
 			if ( replacements.containsKey( color ) )
 				var1 = var1.replaceAll( "(?i)" + color.toString(), replacements.get( color ) );
@@ -315,7 +315,7 @@ public enum ConsoleColor
 			if ( section == COLOR_CHAR && index < length - 1 )
 			{
 				char c = input.charAt( index + 1 );
-				ConsoleColor color = getByChar( c );
+				LogColor color = getByChar( c );
 				
 				if ( color != null )
 				{
@@ -335,14 +335,14 @@ public enum ConsoleColor
 	
 	static
 	{
-		for ( ConsoleColor color : values() )
+		for ( LogColor color : values() )
 		{
 			BY_ID.put( color.intCode, color );
 			BY_CHAR.put( color.code, color );
 		}
 	}
 	
-	public static ConsoleColor fromLevel( Level var1 )
+	public static LogColor fromLevel( Level var1 )
 	{
 		if ( var1 == Level.FINEST || var1 == Level.FINER || var1 == Level.FINE )
 			return GRAY;

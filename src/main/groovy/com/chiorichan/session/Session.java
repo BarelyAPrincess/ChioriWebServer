@@ -14,7 +14,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.AccountInstance;
 import com.chiorichan.account.AccountMeta;
@@ -156,7 +156,7 @@ public final class Session extends AccountPermissible implements Kickable
 		// XXX New Session, Requested Session, Loaded Session
 		
 		if ( SessionManager.isDebug() )
-			SessionManager.getLogger().info( ConsoleColor.DARK_AQUA + "Session " + ( data.stale ? "Loaded" : "Created" ) + " `" + this + "`" );
+			SessionManager.getLogger().info( LogColor.DARK_AQUA + "Session " + ( data.stale ? "Loaded" : "Created" ) + " `" + this + "`" );
 		
 		initialized();
 	}
@@ -174,7 +174,7 @@ public final class Session extends AccountPermissible implements Kickable
 	public void destroy() throws SessionException
 	{
 		if ( SessionManager.isDebug() )
-			Loader.getLogger().info( ConsoleColor.DARK_AQUA + "Session Destroyed `" + this + "`" );
+			Loader.getLogger().info( LogColor.DARK_AQUA + "Session Destroyed `" + this + "`" );
 		
 		SessionManager.sessions.remove( this );
 		
@@ -332,13 +332,13 @@ public final class Session extends AccountPermissible implements Kickable
 		if ( !data.data.containsKey( key ) || data.data.get( key ) == null )
 		{
 			if ( SessionManager.isDebug )
-				SessionManager.getLogger().info( String.format( "%sGetting variable key `%s` which resulted in default value '%s'", ConsoleColor.GRAY, key, def ) );
+				SessionManager.getLogger().info( String.format( "%sGetting variable key `%s` which resulted in default value '%s'", LogColor.GRAY, key, def ) );
 			
 			return def;
 		}
 		
 		if ( SessionManager.isDebug )
-			SessionManager.getLogger().info( String.format( "%sGetting variable key `%s` with value '%s' and default value '%s'", ConsoleColor.GRAY, key, data.data.get( key ), def ) );
+			SessionManager.getLogger().info( String.format( "%sGetting variable key `%s` with value '%s' and default value '%s'", LogColor.GRAY, key, data.data.get( key ), def ) );
 		
 		return data.data.get( key );
 	}

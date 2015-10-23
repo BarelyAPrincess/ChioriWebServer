@@ -12,7 +12,7 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.logging.Level;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.Loader;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.lang.EvalException;
@@ -24,10 +24,10 @@ class LogRecord implements ILogEvent
 	{
 		Level level;
 		String msg;
-		ConsoleColor color;
+		LogColor color;
 		long time = System.currentTimeMillis();
 		
-		LogElement( Level level, String msg, ConsoleColor color )
+		LogElement( Level level, String msg, LogColor color )
 		{
 			this.level = level;
 			this.msg = msg;
@@ -53,12 +53,12 @@ class LogRecord implements ILogEvent
 				{
 					ScriptTraceElement element = e.getScriptTrace()[0];
 					Throwable t = e.getCause();
-					log( Level.SEVERE, ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s:%s, message '%s'", t.getClass().getName(), element.context().filename(), element.getLineNumber(), ( element.getColumnNumber() > 0 ) ? element.getColumnNumber() : 0, e.getMessage() );
+					log( Level.SEVERE, LogColor.NEGATIVE + "" + LogColor.RED + "Exception %s thrown in file '%s' at line %s:%s, message '%s'", t.getClass().getName(), element.context().filename(), element.getLineNumber(), ( element.getColumnNumber() > 0 ) ? element.getColumnNumber() : 0, e.getMessage() );
 				}
 				else
 				{
 					Throwable t = e.getCause();
-					log( Level.SEVERE, ConsoleColor.NEGATIVE + "" + ConsoleColor.RED + "Exception %s thrown in file '%s' at line %s, message '%s'", t.getClass().getName(), t.getStackTrace()[0].getFileName(), t.getStackTrace()[0].getLineNumber(), t.getMessage() );
+					log( Level.SEVERE, LogColor.NEGATIVE + "" + LogColor.RED + "Exception %s thrown in file '%s' at line %s, message '%s'", t.getClass().getName(), t.getStackTrace()[0].getFileName(), t.getStackTrace()[0].getLineNumber(), t.getMessage() );
 				}
 	}
 	
@@ -68,10 +68,10 @@ class LogRecord implements ILogEvent
 		StringBuilder sb = new StringBuilder();
 		
 		if ( header != null )
-			sb.append( ConsoleColor.RESET + header );
+			sb.append( LogColor.RESET + header );
 		
 		for ( LogElement e : elements )
-			sb.append( ConsoleColor.RESET + "" + ConsoleColor.GRAY + "\n  |-> " + new SimpleDateFormat( "ss.SSS" ).format( e.time ) + " " + e.color + e.msg );
+			sb.append( LogColor.RESET + "" + LogColor.GRAY + "\n  |-> " + new SimpleDateFormat( "ss.SSS" ).format( e.time ) + " " + e.color + e.msg );
 		
 		Loader.getLogger().log( Level.INFO, "\r" + sb.toString() );
 		
@@ -88,8 +88,8 @@ class LogRecord implements ILogEvent
 	public void log( Level level, String msg, Object... objs )
 	{
 		if ( objs.length < 1 )
-			elements.add( new LogElement( level, msg, ConsoleColor.fromLevel( level ) ) );
+			elements.add( new LogElement( level, msg, LogColor.fromLevel( level ) ) );
 		else
-			elements.add( new LogElement( level, String.format( msg, objs ), ConsoleColor.fromLevel( level ) ) );
+			elements.add( new LogElement( level, String.format( msg, objs ), LogColor.fromLevel( level ) ) );
 	}
 }

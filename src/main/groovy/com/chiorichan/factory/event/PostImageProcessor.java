@@ -28,7 +28,7 @@ import javax.imageio.ImageIO;
 
 import org.apache.commons.io.FileUtils;
 
-import com.chiorichan.ConsoleColor;
+import com.chiorichan.LogColor;
 import com.chiorichan.Loader;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.Listener;
@@ -204,7 +204,7 @@ public class PostImageProcessor implements Listener
 			}
 			
 			if ( resize )
-				Loader.getLogger().info( ConsoleColor.GRAY + "Resized image from " + Math.round( w ) + "px by " + Math.round( h ) + "px to " + Math.round( w1 ) + "px by " + Math.round( h1 ) + "px" );
+				Loader.getLogger().info( LogColor.GRAY + "Resized image from " + Math.round( w ) + "px by " + Math.round( h ) + "px to " + Math.round( w1 ) + "px by " + Math.round( h1 ) + "px" );
 			
 			if ( rtn != null )
 			{
