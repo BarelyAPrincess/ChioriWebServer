@@ -170,6 +170,11 @@ public class StringFunc
 		return str.toLowerCase().equals( str );
 	}
 	
+	public static boolean isNull( String var )
+	{
+		return var == null || var.toLowerCase().trim().equals( "null" );
+	}
+	
 	public static boolean isTrue( String arg )
 	{
 		if ( arg == null )

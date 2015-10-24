@@ -101,12 +101,18 @@ public class SQLTable extends SQLBase<SQLTable>
 	{
 		SqlTableColumns rtn = new SqlTableColumns();
 		
-		query( "SELECT * FROM `" + table + "` LIMIT 1;", false );
+		ResultSet columns = sql.getMetaData().getColumns( null, null, table, null );
 		
-		ResultSetMetaData rsmd = resultSet().getMetaData();
-		
-		for ( int i = 1; i < rsmd.getColumnCount() + 1; i++ )
-			rtn.add( rsmd, i );
+		while ( columns.next() )
+		{
+			String name = columns.getString( "COLUMN_NAME" );
+			int type = columns.getInt( "DATA_TYPE" );
+			int size = columns.getInt( "COLUMN_SIZE" );
+			String def = columns.getString( "COLUMN_DEF" );
+			boolean nullable = "YES".equals( columns.getString( "IS_NULLABLE" ) );
+			
+			rtn.add( name, size, type, def, nullable );
+		}
 		
 		return rtn;
 	}
@@ -179,7 +185,7 @@ public class SQLTable extends SQLBase<SQLTable>
 	{
 		return select().fields( fields );
 	}
-
+	
 	public SQLQueryUpdate update()
 	{
 		return new SQLQueryUpdate( sql, table );

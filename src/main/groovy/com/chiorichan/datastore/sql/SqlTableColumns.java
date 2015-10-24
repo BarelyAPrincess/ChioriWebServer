@@ -8,52 +8,80 @@
  */
 package com.chiorichan.datastore.sql;
 
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
 
+import com.chiorichan.util.StringFunc;
 import com.google.common.collect.Lists;
 
 public class SqlTableColumns implements Iterable<String>
 {
 	public class SqlColumn
 	{
-		public final String name;
-		public final int type;
-		public final String label;
-		public final String className;
+		private final String name;
+		private final int size;
+		private final int type;
+		private final String def;
+		private final boolean isNullable;
 		
-		SqlColumn( String name, int type, String label, String className )
+		SqlColumn( String name, int size, int type, String def, boolean isNullable )
 		{
 			this.name = name;
+			this.size = size;
 			this.type = type;
-			this.label = label;
-			this.className = className;
+			this.def = def;
+			this.isNullable = isNullable;
 		}
 		
-		public Object newType()
+		public String def()
 		{
-			switch ( className )
-			{
-				case "java.lang.String":
-					return "";
-				case "java.lang.Integer":
-					return 0;
-				case "java.lang.Boolean":
-					return false;
-				default:
-					// Loader.getLogger().debug( "Column Class: " + className );
-					throw new IllegalArgumentException( "We could not instigate the proper column type " + className + " for column " + name + ", this might need to be inplemented." );
-			}
+			return def;
+		}
+		
+		public boolean isNullable()
+		{
+			return isNullable;
+		}
+		
+		public String name()
+		{
+			return name;
+		}
+		
+		public int size()
+		{
+			return size;
+		}
+		
+		public int type()
+		{
+			return type;
 		}
 	}
 	
 	private final List<SqlColumn> columns = Lists.newArrayList();
 	
-	void add( ResultSetMetaData rsmd, int index ) throws SQLException
+	void add( String name, int size, int type, String def, boolean isNullable ) throws SQLException
 	{
-		columns.add( new SqlColumn( rsmd.getColumnName( index ), rsmd.getColumnType( index ), rsmd.getColumnLabel( index ), rsmd.getColumnClassName( index ) ) );
+		columns.add( new SqlColumn( name, size, type, def, isNullable ) );
+	}
+	
+	public List<String> columnNames()
+	{
+		List<String> rtn = Lists.newArrayList();
+		for ( SqlColumn m : columns )
+			rtn.add( m.name );
+		return rtn;
+	}
+	
+	public List<String> columnNamesRequired()
+	{
+		List<String> rtn = Lists.newArrayList();
+		for ( SqlColumn m : columns )
+			if ( StringFunc.isNull( m.def ) && !m.isNullable )
+				rtn.add( m.name );
+		return rtn;
 	}
 	
 	public int count()

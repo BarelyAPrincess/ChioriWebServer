@@ -8,9 +8,13 @@
  */
 package com.chiorichan.util;
 
+import java.math.BigDecimal;
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -19,6 +23,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
+import com.chiorichan.tasks.Timings;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -199,7 +204,7 @@ public class DbFunc
 				result.put( columnName, rs.getBoolean( columnName ) );
 			else if ( rsmd.getColumnTypeName( i ).contains( "BLOB" ) || rsmd.getColumnType( i ) == Types.BINARY )
 			{
-				// BLOG = Max Length 65,535. Recommended that you use a LONGBLOG.
+				// BLOB = Max Length 65,535. Recommended that you use a LONGBLOG.
 				byte[] bytes = rs.getBytes( columnName );
 				result.put( columnName, bytes );
 				/*
@@ -288,5 +293,93 @@ public class DbFunc
 		}
 		
 		return result;
+	}
+	
+	/**
+	 * Translates a data type from an integer (java.sql.Types value) to a string
+	 * that represents the corresponding class.
+	 * 
+	 * @param type
+	 *            The java.sql.Types value to convert to its corresponding class.
+	 * @return The class that corresponds to the given java.sql.Types
+	 *         value, or Object.class if the type has no known mapping.
+	 */
+	public static Class<?> sqlTypeToClass( int type )
+	{
+		switch ( type )
+		{
+			case Types.CHAR:
+			case Types.VARCHAR:
+			case Types.LONGVARCHAR:
+				return String.class;
+			case Types.NUMERIC:
+			case Types.DECIMAL:
+				return java.math.BigDecimal.class;
+			case Types.BIT:
+				return Boolean.class;
+			case Types.TINYINT:
+				return Byte.class;
+			case Types.SMALLINT:
+				return Short.class;
+			case Types.INTEGER:
+				return Integer.class;
+			case Types.BIGINT:
+				return Long.class;
+			case Types.REAL:
+			case Types.FLOAT:
+				return Float.class;
+			case Types.DOUBLE:
+				return Double.class;
+			case Types.BINARY:
+			case Types.VARBINARY:
+			case Types.LONGVARBINARY:
+				return Byte[].class;
+			case Types.DATE:
+				return java.sql.Date.class;
+			case Types.TIME:
+				return java.sql.Time.class;
+			case Types.TIMESTAMP:
+				return java.sql.Timestamp.class;
+			default:
+				return Object.class;
+		}
+	}
+	
+	public static Object sqlTypeToObject( int type )
+	{
+		switch ( type )
+		{
+			case Types.CHAR:
+			case Types.VARCHAR:
+			case Types.LONGVARCHAR:
+				return "";
+			case Types.NUMERIC:
+			case Types.DECIMAL:
+				return BigDecimal.ZERO;
+			case Types.BIT:
+				return false;
+			case Types.TINYINT:
+			case Types.SMALLINT:
+			case Types.INTEGER:
+			case Types.BIGINT:
+				return Integer.MIN_VALUE;
+			case Types.REAL:
+			case Types.FLOAT:
+				return Float.MIN_VALUE;
+			case Types.DOUBLE:
+				return Double.MIN_VALUE;
+			case Types.BINARY:
+			case Types.VARBINARY:
+			case Types.LONGVARBINARY:
+				return new Byte[0];
+			case Types.DATE:
+				return new Date( Timings.epoch() );
+			case Types.TIME:
+				return new Time( Timings.epoch() );
+			case Types.TIMESTAMP:
+				return new Timestamp( Timings.epoch() );
+			default:
+				return Object.class;
+		}
 	}
 }

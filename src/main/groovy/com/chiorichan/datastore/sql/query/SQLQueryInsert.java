@@ -14,7 +14,9 @@ import java.util.Map;
 
 import com.chiorichan.datastore.Datastore;
 import com.chiorichan.datastore.sql.SQLBase;
+import com.chiorichan.datastore.sql.SQLTable;
 import com.chiorichan.datastore.sql.SQLWrapper;
+import com.chiorichan.datastore.sql.SqlTableColumns;
 import com.chiorichan.datastore.sql.skel.SQLSkelValues;
 import com.chiorichan.util.StringFunc;
 import com.google.common.base.Joiner;
@@ -26,24 +28,37 @@ import com.google.common.collect.Maps;
  */
 public final class SQLQueryInsert extends SQLBase<SQLQueryInsert> implements SQLSkelValues<SQLQueryInsert>
 {
+	private List<String> requiredValues = Lists.newArrayList();
 	private Map<String, Object> values = Maps.newHashMap();
 	private String table;
 	
 	public SQLQueryInsert( SQLWrapper sql, String table )
 	{
-		super( sql, false );
-		this.table = table;
+		this( sql, table, false );
 	}
 	
 	public SQLQueryInsert( SQLWrapper sql, String table, boolean autoExecute )
 	{
 		super( sql, autoExecute );
 		this.table = table;
+		
+		try
+		{
+			SqlTableColumns sqlColumns = new SQLTable( sql, table ).columns();
+			requiredValues = sqlColumns.columnNamesRequired();
+		}
+		catch ( SQLException e )
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	@Override
 	public SQLQueryInsert execute() throws SQLException
 	{
+		if ( !values.keySet().containsAll( requiredValues ) )
+			throw new SQLException( "The required columns were not satisfied. Provided columns were '" + Joiner.on( "," ).join( values.keySet() ) + "', required columns are '" + Joiner.on( "," ).join( requiredValues ) + "'" );
+		
 		query( toSqlQuery(), true, sqlValues() );
 		return this;
 	}
