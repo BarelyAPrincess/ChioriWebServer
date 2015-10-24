@@ -141,6 +141,16 @@ public class Timings
 		return System.currentTimeMillis() - start;
 	}
 	
+	/**
+	 * The current millis since 1970
+	 * 
+	 * @return The current millis
+	 */
+	public static long millis()
+	{
+		return System.currentTimeMillis();
+	}
+	
 	/*
 	 * Timing Methods
 	 */

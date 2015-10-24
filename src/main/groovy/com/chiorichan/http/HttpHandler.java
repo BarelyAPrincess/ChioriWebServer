@@ -125,6 +125,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		// Initialize static server variables
 		
 	}
+	
 	SimpleDateFormat dateFormat = new SimpleDateFormat( Loader.getConfig().getString( "console.dateFormat", "MM-dd" ) );
 	SimpleDateFormat timeFormat = new SimpleDateFormat( Loader.getConfig().getString( "console.timeFormat", "HH:mm:ss.SSS" ) );
 	
@@ -641,7 +642,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			else if ( threadName.length() < 10 )
 				threadName = threadName + Strings.repeat( " ", 10 - threadName.length() );
 			
-			log.header( "&7[&d%s&7] %s %s [&9%s:%s&7] -> [&a%s:%s&7]", threadName, dateFormat.format( Timings.epoch() ), timeFormat.format( Timings.epoch() ), request.getIpAddr(), request.getRemotePort(), request.getLocalIpAddr(), request.getLocalPort() );
+			log.header( "&7[&d%s&7] %s %s [&9%s:%s&7] -> [&a%s:%s&7]", threadName, dateFormat.format( Timings.millis() ), timeFormat.format( Timings.millis() ), request.getIpAddr(), request.getRemotePort(), request.getLocalIpAddr(), request.getLocalPort() );
 			
 			if ( HttpHeaderUtil.is100ContinueExpected( ( HttpRequest ) msg ) )
 				send100Continue( ctx );
