@@ -12,9 +12,12 @@ import io.netty.buffer.ByteBuf;
 import io.netty.util.internal.StringUtil;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.codec.binary.Hex;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 
 public class ObjectFunc
@@ -199,24 +202,20 @@ public class ObjectFunc
 	{
 		if ( value == null )
 			return null;
+		if ( value instanceof Long )
+			return ( ( Long ) value ).doubleValue();
+		if ( value instanceof String )
+			return Double.parseDouble( ( String ) value );
+		if ( value instanceof Integer )
+			return ( ( Integer ) value ).doubleValue();
+		if ( value instanceof Double )
+			return ( Double ) value;
+		if ( value instanceof Boolean )
+			return ( ( boolean ) value ) ? 1D : 0D;
+		if ( value instanceof BigDecimal )
+			return ( ( BigDecimal ) value ).setScale( 0, BigDecimal.ROUND_HALF_UP ).doubleValue();
 		
-		switch ( value.getClass().getName() )
-		{
-			case "java.lang.Long":
-				return ( ( Long ) value ).doubleValue();
-			case "java.lang.String":
-				return Double.parseDouble( ( String ) value );
-			case "java.lang.Integer":
-				return ( ( Integer ) value ).doubleValue();
-			case "java.lang.Double":
-				return ( Double ) value;
-			case "java.lang.Boolean":
-				return ( ( boolean ) value ) ? 1D : 0D;
-			case "java.math.BigDecimal":
-				return ( ( BigDecimal ) value ).setScale( 0, BigDecimal.ROUND_HALF_UP ).doubleValue();
-			default:
-				throw new ClassCastException( "Uncaught Convertion to Integer of Type: " + value.getClass().getName() );
-		}
+		throw new ClassCastException( "Uncaught Convertion to Integer of Type: " + value.getClass().getName() );
 	}
 	
 	public static Integer castToInt( Object value )
@@ -235,27 +234,23 @@ public class ObjectFunc
 	{
 		if ( value == null )
 			return null;
+		if ( value instanceof Long )
+			if ( ( long ) value < Integer.MIN_VALUE || ( long ) value > Integer.MAX_VALUE )
+				return ( Integer ) value;
+			else
+				return null;
+		if ( value instanceof String )
+			return Integer.parseInt( ( String ) value );
+		if ( value instanceof Integer )
+			return ( Integer ) value;
+		if ( value instanceof Double )
+			return ( Integer ) value;
+		if ( value instanceof Boolean )
+			return ( ( boolean ) value ) ? 1 : 0;
+		if ( value instanceof BigDecimal )
+			return ( ( BigDecimal ) value ).setScale( 0, BigDecimal.ROUND_HALF_UP ).intValue();
 		
-		switch ( value.getClass().getName() )
-		{
-			case "java.lang.Long":
-				if ( ( long ) value < Integer.MIN_VALUE || ( long ) value > Integer.MAX_VALUE )
-					return ( Integer ) value;
-				else
-					return null;
-			case "java.lang.String":
-				return Integer.parseInt( ( String ) value );
-			case "java.lang.Integer":
-				return ( Integer ) value;
-			case "java.lang.Double":
-				return ( Integer ) value;
-			case "java.lang.Boolean":
-				return ( ( boolean ) value ) ? 1 : 0;
-			case "java.math.BigDecimal":
-				return ( ( BigDecimal ) value ).setScale( 0, BigDecimal.ROUND_HALF_UP ).intValue();
-			default:
-				throw new ClassCastException( "Uncaught Convertion to Integer of Type: " + value.getClass().getName() );
-		}
+		throw new ClassCastException( "Uncaught Convertion to Integer of Type: " + value.getClass().getName() );
 	}
 	
 	public static Long castToLong( Object value )
@@ -275,24 +270,20 @@ public class ObjectFunc
 	{
 		if ( value == null )
 			return null;
+		if ( value instanceof Long )
+			return ( Long ) value;
+		if ( value instanceof String )
+			return Long.parseLong( ( String ) value );
+		if ( value instanceof Integer )
+			return Long.parseLong( "" + value );
+		if ( value instanceof Double )
+			return Long.parseLong( "" + value );
+		if ( value instanceof Boolean )
+			return ( ( boolean ) value ) ? 1L : 0L;
+		if ( value instanceof BigDecimal )
+			return ( ( BigDecimal ) value ).setScale( 0, BigDecimal.ROUND_HALF_UP ).longValue();
 		
-		switch ( value.getClass().getName() )
-		{
-			case "java.lang.Long":
-				return ( Long ) value;
-			case "java.lang.String":
-				return Long.parseLong( ( String ) value );
-			case "java.lang.Integer":
-				return Long.parseLong( "" + value );
-			case "java.lang.Double":
-				return Long.parseLong( "" + value );
-			case "java.lang.Boolean":
-				return ( ( boolean ) value ) ? 1L : 0L;
-			case "java.math.BigDecimal":
-				return ( ( BigDecimal ) value ).setScale( 0, BigDecimal.ROUND_HALF_UP ).longValue();
-			default:
-				throw new ClassCastException( "Uncaught Convertion to Long of Type: " + value.getClass().getName() );
-		}
+		throw new ClassCastException( "Uncaught Convertion to Long of Type: " + value.getClass().getName() );
 	}
 	
 	public static String castToString( Object value )
@@ -307,32 +298,29 @@ public class ObjectFunc
 		}
 	}
 	
+	@SuppressWarnings( "rawtypes" )
 	public static String castToStringWithException( Object value ) throws ClassCastException
 	{
 		if ( value == null )
 			return null;
+		if ( value instanceof Long )
+			return Long.toString( ( long ) value );
+		if ( value instanceof String )
+			return ( String ) value;
+		if ( value instanceof Integer )
+			return Integer.toString( ( int ) value );
+		if ( value instanceof Double )
+			return Double.toString( ( double ) value );
+		if ( value instanceof Boolean )
+			return ( ( boolean ) value ) ? "true" : "false";
+		if ( value instanceof BigDecimal )
+			return ( ( BigDecimal ) value ).toString();
+		if ( value instanceof Map )
+			return Joiner.on( "," ).withKeyValueSeparator( "=" ).join( ( Map ) value );
+		if ( value instanceof List )
+			return Joiner.on( "," ).join( ( List ) value );
 		
-		switch ( value.getClass().getName() )
-		{
-			case "java.lang.Long":
-				return Long.toString( ( long ) value );
-			case "java.lang.String":
-				return ( String ) value;
-			case "java.lang.Integer":
-				return Integer.toString( ( int ) value );
-			case "java.lang.Double":
-				return Double.toString( ( double ) value );
-			case "java.lang.Boolean":
-				return ( ( boolean ) value ) ? "true" : "false";
-			case "java.math.BigDecimal":
-				return ( ( BigDecimal ) value ).toString();
-			case "java.util.Map":
-				return value.toString();
-			case "java.util.List":
-				return value.toString();
-			default:
-				throw new ClassCastException( "Uncaught Convertion to String of Type: " + value.getClass().getName() );
-		}
+		throw new ClassCastException( "Uncaught Convertion to String of Type: " + value.getClass().getName() );
 	}
 	
 	public static String hex2Readable( byte... elements )
