@@ -173,10 +173,10 @@ public class Routes
 				if ( matches.size() > 0 )
 					return ( Route ) matches.values().toArray()[0];
 				else
-					Loader.getLogger().finer( "Failed to find a page redirect for Rewrite... '" + subdomain + "." + domain + "' '" + uri + "'" );
+					Loader.getLogger().fine( "Failed to find a page redirect for Rewrite... '" + subdomain + "." + domain + "' '" + uri + "'" );
 			}
 			else
-				Loader.getLogger().finer( "Failed to find a page redirect for Rewrite... '" + subdomain + "." + domain + "' '" + uri + "'" );
+				Loader.getLogger().fine( "Failed to find a page redirect for Rewrite... '" + subdomain + "." + domain + "' '" + uri + "'" );
 			
 			return null;
 		}

@@ -152,7 +152,7 @@ public class Route
 		
 		if ( !StringUtils.trimToEmpty( params.get( "subdomain" ) ).equals( "*" ) && !subdomain.equals( params.get( "subdomain" ) ) )
 		{
-			Loader.getLogger().fine( "The subdomain does not match for " + uri + " on route " + this );
+			Loader.getLogger().finer( "The subdomain does not match for " + uri + " on route " + this );
 			return null;
 		}
 		
@@ -178,13 +178,13 @@ public class Route
 		
 		if ( props.size() > uris.size() )
 		{
-			Loader.getLogger().fine( "The length of elements in route " + this + " is LONGER then the length of elements on the uri; " + uris );
+			Loader.getLogger().finer( "The length of elements in route " + this + " is LONGER then the length of elements on the uri; " + uris );
 			return null;
 		}
 		
 		if ( props.size() < uris.size() )
 		{
-			Loader.getLogger().fine( "The length of elements in route " + this + " is SHORTER then the length of elements on the uri; " + uris );
+			Loader.getLogger().finer( "The length of elements in route " + this + " is SHORTER then the length of elements on the uri; " + uris );
 			return null;
 		}
 		
@@ -194,7 +194,7 @@ public class Route
 		for ( int i = 0; i < Math.max( props.size(), uris.size() ); i++ )
 			try
 			{
-				Loader.getLogger().fine( prop + " --> " + props.get( i ) + " == " + uris.get( i ) );
+				Loader.getLogger().finest( prop + " --> " + props.get( i ) + " == " + uris.get( i ) );
 				
 				if ( props.get( i ).matches( "\\[([a-zA-Z0-9]+)=\\]" ) )
 				{
@@ -206,19 +206,19 @@ public class Route
 					rewrites.put( key, value );
 					
 					// PREG MATCH
-					Loader.getLogger().fine( "Found a PREG match for " + prop + " on route " + this );
+					Loader.getLogger().finer( "Found a PREG match for " + prop + " on route " + this );
 				}
 				else if ( props.get( i ).equals( uris.get( i ) ) )
 				{
 					weight = StringFunc.replaceAt( weight, i, "A" );
 					
-					Loader.getLogger().fine( "Found a match for " + prop + " on route " + this );
+					Loader.getLogger().finer( "Found a match for " + prop + " on route " + this );
 					// MATCH
 				}
 				else
 				{
 					match = false;
-					Loader.getLogger().fine( "Found no match for " + prop + " on route " + this );
+					Loader.getLogger().finer( "Found no match for " + prop + " on route " + this );
 					break;
 					// NO MATCH
 				}

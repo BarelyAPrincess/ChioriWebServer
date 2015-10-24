@@ -63,11 +63,13 @@ logs:
       type: file
       enabled: true
       color: false
+      level: ALL
       archiveLimit: 6
     colored:
       type: file
       enabled: true
       color: true
+      level: FINE
       archiveLimit: 0
 auto-updater:
   enabled: true

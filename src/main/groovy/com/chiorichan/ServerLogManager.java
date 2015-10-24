@@ -16,6 +16,7 @@ import java.util.Date;
 import java.util.Set;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.chiorichan.util.FileFunc;
@@ -66,7 +67,7 @@ public class ServerLogManager
 				sfiles[i].f.delete();
 	}
 	
-	public void addFileHandler( String filename, boolean useColor, int archiveLimit )
+	public void addFileHandler( String filename, boolean useColor, int archiveLimit, Level level )
 	{
 		try
 		{
@@ -82,6 +83,7 @@ public class ServerLogManager
 			cleanupLogs( "-" + filename + ".log.gz", archiveLimit );
 			
 			FileHandler fileHandler = new FileHandler( log.getAbsolutePath() );
+			fileHandler.setLevel( level );
 			fileHandler.setFormatter( new DefaultLogFormatter( useColor ) );
 			
 			addHandler( fileHandler );

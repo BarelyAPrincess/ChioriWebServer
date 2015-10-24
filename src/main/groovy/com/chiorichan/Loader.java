@@ -305,7 +305,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 				{
 					case "file":
 						if ( logger.getBoolean( "enabled", true ) )
-							console.getLogManager().addFileHandler( key, logger.getBoolean( "color", false ), logger.getInt( "archiveLimit", 3 ) );
+							console.getLogManager().addFileHandler( key, logger.getBoolean( "color", false ), logger.getInt( "archiveLimit", 3 ), Level.parse( logger.getString( "level", "INFO" ).toUpperCase() ) );
 						break;
 					default:
 						getLogger().warning( "We had no logger for type '" + logger.getString( "type" ) + "'" );
