@@ -16,7 +16,7 @@ import com.chiorichan.datastore.Datastore;
 import com.chiorichan.datastore.sql.SQLBase;
 import com.chiorichan.datastore.sql.SQLTable;
 import com.chiorichan.datastore.sql.SQLWrapper;
-import com.chiorichan.datastore.sql.SqlTableColumns;
+import com.chiorichan.datastore.sql.SQLTableColumns;
 import com.chiorichan.datastore.sql.skel.SQLSkelValues;
 import com.chiorichan.util.StringFunc;
 import com.google.common.base.Joiner;
@@ -44,7 +44,7 @@ public final class SQLQueryInsert extends SQLBase<SQLQueryInsert> implements SQL
 		
 		try
 		{
-			SqlTableColumns sqlColumns = new SQLTable( sql, table ).columns();
+			SQLTableColumns sqlColumns = new SQLTable( sql, table ).columns();
 			requiredValues = sqlColumns.columnNamesRequired();
 		}
 		catch ( SQLException e )
@@ -56,11 +56,21 @@ public final class SQLQueryInsert extends SQLBase<SQLQueryInsert> implements SQL
 	@Override
 	public SQLQueryInsert execute() throws SQLException
 	{
-		if ( !values.keySet().containsAll( requiredValues ) )
+		if ( !hasRequiredColumnsBeenSatisfied() )
 			throw new SQLException( "The required columns were not satisfied. Provided columns were '" + Joiner.on( "," ).join( values.keySet() ) + "', required columns are '" + Joiner.on( "," ).join( requiredValues ) + "'" );
 		
 		query( toSqlQuery(), true, sqlValues() );
 		return this;
+	}
+	
+	public List<String> getRequiredColumns()
+	{
+		return requiredValues;
+	}
+	
+	public boolean hasRequiredColumnsBeenSatisfied()
+	{
+		return values.keySet().containsAll( requiredValues );
 	}
 	
 	@Override

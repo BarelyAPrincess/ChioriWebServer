@@ -76,6 +76,78 @@ public class DbFunc
 		result.put( nextKey, row );
 	}
 	
+	public static String objectToSqlType( Object obj )
+	{
+		if ( obj instanceof String )
+			if ( ( ( String ) obj ).length() < 256 )
+				return "VARCHAR(255)";
+			else if ( ( ( String ) obj ).length() < 65536 )
+				return "TEXT";
+			else if ( ( ( String ) obj ).length() < 16777216 )
+				return "MEDIUMTEXT";
+			else
+				return "LONGTEXT";
+		if ( obj instanceof BigDecimal )
+			return "DECIMAL(20,6)";
+		if ( obj instanceof Float )
+			return "REAL(24,2)";
+		if ( obj instanceof Double )
+			return "DOUBLE(24,2)";
+		if ( obj instanceof Boolean )
+			return "TINYINT(1)";
+		if ( obj instanceof Byte )
+			return "TINYINT(1)";
+		if ( obj instanceof Short )
+			return "SMALLINT(65535)";
+		if ( obj instanceof Long )
+			return "BIGINT(" + Integer.MAX_VALUE + ")";
+		if ( obj instanceof Integer )
+			return "INT(" + Integer.MAX_VALUE + ")";
+		if ( obj instanceof Date )
+			return "DATE";
+		if ( obj instanceof Time )
+			return "TIME";
+		if ( obj instanceof Timestamp )
+			return "TIMESTAMP";
+		return "BLOB";
+	}
+	
+	public static String objectToSqlType( Object obj, int size )
+	{
+		if ( obj instanceof String )
+			if ( ( ( String ) obj ).length() < 256 )
+				return "VARCHAR(" + ( size < 256 ? size : 255 ) + ")";
+			else if ( ( ( String ) obj ).length() < 65536 )
+				return "TEXT";
+			else if ( ( ( String ) obj ).length() < 16777216 )
+				return "MEDIUMTEXT";
+			else
+				return "LONGTEXT";
+		if ( obj instanceof BigDecimal )
+			return "DECIMAL(" + size + ",2)";
+		if ( obj instanceof Float )
+			return "REAL(" + size + ",2)";
+		if ( obj instanceof Double )
+			return "DOUBLE(" + size + ",2)";
+		if ( obj instanceof Boolean )
+			return "TINYINT(1)";
+		if ( obj instanceof Byte )
+			return "TINYINT(1)";
+		if ( obj instanceof Short )
+			return "SMALLINT(" + size + ")";
+		if ( obj instanceof Long )
+			return "BIGINT(" + size + ")";
+		if ( obj instanceof Integer )
+			return "INT(" + size + ")";
+		if ( obj instanceof Date )
+			return "DATE";
+		if ( obj instanceof Time )
+			return "TIME";
+		if ( obj instanceof Timestamp )
+			return "TIMESTAMP";
+		return "BLOB";
+	}
+	
 	public static Map<String, Map<String, Object>> resultToMap( ResultSet rs ) throws SQLException
 	{
 		LinkedHashMap<String, Map<String, Object>> result = Maps.newLinkedHashMap();
@@ -314,7 +386,7 @@ public class DbFunc
 				return String.class;
 			case Types.NUMERIC:
 			case Types.DECIMAL:
-				return java.math.BigDecimal.class;
+				return BigDecimal.class;
 			case Types.BIT:
 				return Boolean.class;
 			case Types.TINYINT:
@@ -379,7 +451,7 @@ public class DbFunc
 			case Types.TIMESTAMP:
 				return new Timestamp( Timings.epoch() );
 			default:
-				return Object.class;
+				return new Object();
 		}
 	}
 }

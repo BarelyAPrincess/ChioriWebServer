@@ -37,50 +37,60 @@ public class SQLTable extends SQLBase<SQLTable>
 		meta = sql.getMetaData();
 	}
 	
-	public void addColumn( Class<?> colType, String colName, int max ) throws SQLException
+	public SQLTable addColumn( String colType, String colName ) throws SQLException
 	{
-		// TODO New Empty Method
+		return addColumn( colType, colName, null );
 	}
 	
-	public SQLTable addColumn( String colType, String colName, int max ) throws SQLException
+	public SQLTable addColumn( String colType, String colName, Object def ) throws SQLException
 	{
-		/*
-		 * if ( exists() )
-		 * {
-		 * 
-		 * }
-		 * else
-		 * queryWithException( "CREATE TABLE `test` ( `reqlevel` varchar(255) NOT NULL DEFAULT '-1' );" );
-		 */
+		SQLTableColumns columns = columns();
+		
+		if ( columns.contains( colName ) )
+			throw new SQLException( "There already exists a column by the name of '" + colName + "'" );
+		
+		String defString = def == null ? "NULL" : "NOT NULL DEFAULT '?'";
+		
+		if ( exists() )
+			query( String.format( "ALTER TABLE `%s` ADD `%s` %s %s;", table, colName, colType, defString ), true, def );
+		else
+			query( String.format( "CREATE TABLE `%s` ( `%s` %s %s );", table, colName, colType, defString ), true, def );
 		
 		return this;
 	}
 	
 	public SQLTable addColumnInt( String colName, int i ) throws SQLException
 	{
-		return this;
+		return addColumn( "INT(" + i + ")", colName );
 	}
 	
 	public SQLTable addColumnInt( String colName, int i, int def ) throws SQLException
 	{
-		return this;
+		return addColumn( "INT(" + i + ")", colName, def );
 	}
 	
-	public SQLTable addColumnText( String colName, int i ) throws SQLException
+	public SQLTable addColumnText( String colName ) throws SQLException
 	{
-		return this;
+		return addColumn( "TEXT", colName );
+	}
+	
+	public SQLTable addColumnText( String colName, String def ) throws SQLException
+	{
+		return addColumnText( colName, def );
 	}
 	
 	public SQLTable addColumnVar( String colName, int i ) throws SQLException
 	{
-		
-		
-		return this;
+		return addColumnVar( colName, i, null );
 	}
 	
 	public SQLTable addColumnVar( String colName, int i, String def ) throws SQLException
 	{
-		return this;
+		if ( i > 256 )
+			throw new SQLException( "VARCHAR does not support more than 256 bytes" );
+		if ( def != null && def.length() > i )
+			throw new SQLException( "Default is more than max size" );
+		return addColumn( "VARCHAR(" + i + ")", colName, def );
 	}
 	
 	public Collection<String> columnNames() throws SQLException
@@ -97,24 +107,9 @@ public class SQLTable extends SQLBase<SQLTable>
 		return rtn;
 	}
 	
-	public SqlTableColumns columns() throws SQLException
+	public SQLTableColumns columns() throws SQLException
 	{
-		SqlTableColumns rtn = new SqlTableColumns();
-		
-		ResultSet columns = sql.getMetaData().getColumns( null, null, table, null );
-		
-		while ( columns.next() )
-		{
-			String name = columns.getString( "COLUMN_NAME" );
-			int type = columns.getInt( "DATA_TYPE" );
-			int size = columns.getInt( "COLUMN_SIZE" );
-			String def = columns.getString( "COLUMN_DEF" );
-			boolean nullable = "YES".equals( columns.getString( "IS_NULLABLE" ) );
-			
-			rtn.add( name, size, type, def, nullable );
-		}
-		
-		return rtn;
+		return new SQLTableColumns( sql, table );
 	}
 	
 	public SQLQueryDelete delete()
@@ -124,7 +119,13 @@ public class SQLTable extends SQLBase<SQLTable>
 	
 	public SQLTable drop() throws SQLException
 	{
-		// TODO Drop Table
+		query( String.format( "DROP TABLE `%s` IF EXISTS;", table ), true );
+		return this;
+	}
+	
+	public SQLTable dropColumn( String colName ) throws SQLException
+	{
+		query( String.format( "ALTER TABLE `%s` DROP `%s`;", table, colName ), true );
 		return this;
 	}
 	

@@ -608,7 +608,7 @@ public class Site
 		catch ( SiteException e )
 		{
 			return null;
-			// A SiteException will never be thrown when the subdomain is empty.
+			// A SiteException will never be thrown when the subdomain is null.
 		}
 	}
 	
@@ -634,7 +634,7 @@ public class Site
 			else if ( Loader.getConfig().getBoolean( "framework.sites.autoCreateSubdomains", true ) )
 				target = siteId + "/" + FileFunc.nameSpaceToPath( subdomain, true );
 			else if ( !Loader.getConfig().getBoolean( "framework.sites.subdomainsDefaultToRoot" ) )
-				throw new SiteException( "This subdomain was not found on this server. If your the website owner, please check documentation." );
+				throw new SiteException( "This subdomain was not found on this server, please check documentation." );
 		}
 		
 		return target;

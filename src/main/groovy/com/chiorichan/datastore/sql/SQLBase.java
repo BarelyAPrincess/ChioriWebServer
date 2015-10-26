@@ -120,20 +120,21 @@ public abstract class SQLBase<T extends SQLBase> implements SQLResultSkel
 			
 			int x = 0;
 			for ( Object s : args )
-				try
-				{
-					x++;
-					stmt.setObject( x, s );
-				}
-				catch ( SQLException e )
-				{
-					if ( e.getCause() instanceof NotSerializableException )
-						Datastore.getLogger().severe( "The object " + s.getClass() + " (" + s.toString() + ") is not serializable!" );
-					// Ignore
-					// else
-					if ( !e.getMessage().startsWith( "Parameter index out of range" ) )
-						throw e;
-				}
+				if ( s != null )
+					try
+					{
+						x++;
+						stmt.setObject( x, s );
+					}
+					catch ( SQLException e )
+					{
+						if ( e.getCause() instanceof NotSerializableException )
+							Datastore.getLogger().severe( "The object " + s.getClass() + " (" + s.toString() + ") is not serializable!" );
+						// Ignore
+						// else
+						if ( !e.getMessage().startsWith( "Parameter index out of range" ) )
+							throw e;
+					}
 			
 			try
 			{
