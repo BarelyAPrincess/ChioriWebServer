@@ -14,8 +14,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.chiorichan.account.auth.AccountCredentials;
-import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountDescriptiveReason;
+import com.chiorichan.account.lang.AccountException;
 import com.google.common.collect.Maps;
 
 /**
@@ -115,6 +115,8 @@ public class AccountContext
 	
 	public AccountMeta meta()
 	{
+		if ( acct == null )
+			acct = new AccountMeta( this );
 		return acct;
 	}
 	

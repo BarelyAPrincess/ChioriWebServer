@@ -10,13 +10,12 @@ package com.chiorichan.account.types;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import com.chiorichan.Loader;
 import com.chiorichan.account.AccountContext;
@@ -25,17 +24,19 @@ import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.AccountType;
 import com.chiorichan.account.event.AccountLookupEvent;
+import com.chiorichan.account.lang.AccountDescriptiveReason;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
-import com.chiorichan.account.lang.AccountDescriptiveReason;
-import com.chiorichan.datastore.sql.SqlTableColumns;
+import com.chiorichan.datastore.sql.SQLTable;
+import com.chiorichan.datastore.sql.SQLTableColumns;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.datastore.sql.query.SQLQuerySelect;
 import com.chiorichan.event.EventHandler;
+import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.tasks.Timings;
+import com.chiorichan.util.DbFunc;
 import com.chiorichan.util.Versioning;
-import com.google.common.collect.Maps;
 
 /**
  * Handles Accounts that are loaded from SQL
@@ -248,78 +249,50 @@ public class SqlTypeCreator extends AccountTypeCreator
 	{
 		try
 		{
-			SqlTableColumns columns = sql.table( table ).columns();
-			Map<String, Object> metaData = context.meta() == null ? context.getValues() : context.meta().getMeta();
-			Map<String, Object> toSave = Maps.newTreeMap();
-			Map<String, Class<?>> newColumns = Maps.newHashMap();
+			Map<String, Object> metaData = new HashMap<String, Object>( context.meta() == null ? context.getValues() : context.meta().getMeta() );
+			
+			metaData.put( "acctId", context.getAcctId() );
+			metaData.put( "siteId", context.getSiteId() );
+			
+			SQLTable table = sql.table( this.table );
+			SQLTableColumns columns = table.columns();
+			
+			if ( !columns.contains( "acctId" ) )
+				table.addColumnVar( "acctId", 255 );
+			if ( !columns.contains( "siteId" ) )
+				table.addColumnVar( "siteId", 255 );
+			
+			columns.refresh();
 			
 			for ( Entry<String, Object> e : metaData.entrySet() )
 			{
 				String key = e.getKey();
 				
-				if ( !"acctId".equalsIgnoreCase( key ) && !"siteId".equalsIgnoreCase( key ) && !"password".equalsIgnoreCase( key ) )
-				{
-					boolean found = false;
-					
-					for ( String s : columns )
-						if ( s.equalsIgnoreCase( key ) || newColumns.containsKey( key ) )
-							found = true;
-					
-					// There is no column for this key
-					if ( !found )
-						newColumns.put( key, e.getValue().getClass() );
-					
-					toSave.put( key, e.getValue() );
-				}
-			}
-			
-			if ( newColumns.size() > 0 )
-				for ( Entry<String, Class<?>> c : newColumns.entrySet() )
+				String type = DbFunc.objectToSqlType( e.getValue() );
+				if ( !columns.contains( key ) )
 					try
 					{
-						sql.table( table ).addColumn( c.getValue(), c.getKey(), 255 );
+						table.addColumn( type, key );
 					}
-					catch ( SQLException e )
+					catch ( SQLException se )
 					{
-						AccountManager.getLogger().severe( "Could not create a new column for key `" + c.getKey() + "` with class `" + c.getValue() + "`", e );
-						toSave.remove( c.getKey() );
+						throw new AccountException( new AccountDescriptiveReason( "Failed to create SQL column '" + key + "' with type '" + type + "' in the 'accounts' table", ReportingLevel.E_ERROR ), se, context.meta() );
 					}
+			}
 			
-			toSave.put( "acctId", context.getAcctId() );
-			toSave.put( "siteId", context.getSiteId() );
+			columns.refresh();
 			
-			SQLQuerySelect select = sql.table( table ).select().where( "acctId" ).matches( context.getAcctId() ).limit( 1 ).execute();
-			// ResultSet rs = sql.query( "SELECT * FROM `" + table + "` WHERE `acctId` = '" + context.getAcctId() + "' LIMIT 1;" );
+			for ( SQLTableColumns.SQLColumn col : columns.columnsRequired() )
+				if ( !metaData.containsKey( col.name() ) )
+					metaData.put( col.name(), DbFunc.sqlTypeToObject( col.type() ) );
+			
+			
+			SQLQuerySelect select = table.select().where( "acctId" ).matches( context.getAcctId() ).limit( 1 ).execute();
 			
 			if ( select.rowCount() > 0 )
-				sql.table( table ).update().values( toSave ).where( "acctId" ).matches( context.getAcctId() ).limit( 1 ).execute();
+				table.update().values( metaData ).where( "acctId" ).matches( context.getAcctId() ).limit( 1 ).execute();
 			else
-			{
-				SQLException exp;
-				while ( ( exp = save0( toSave ) ) != null )
-				{
-					Pattern p = Pattern.compile( "Field '(.*)' doesn't have a default value" );
-					Matcher m = p.matcher( exp.getMessage() );
-					
-					if ( m.matches() )
-					{
-						boolean found = false;
-						for ( String s : columns )
-							if ( s.equals( m.group( 1 ) ) )
-							{
-								toSave.put( s, columns.get( s ).newType() );
-								found = true;
-							}
-						if ( !found )
-						{
-							AccountManager.getLogger().warning( "We could not save AccountContext (" + context.getAcctId() + ") because " + exp.getMessage().toLowerCase() );
-							break;
-						}
-					}
-					else
-						throw exp;
-				}
-			}
+				table.insert().values( metaData ).execute();
 		}
 		catch ( SQLException e )
 		{
@@ -330,20 +303,6 @@ public class SqlTypeCreator extends AccountTypeCreator
 			t.printStackTrace();
 		}
 	}
-	
-	private SQLException save0( Map<String, Object> toSave )
-	{
-		try
-		{
-			sql.table( table ).insert().values( toSave ).execute();
-			return null;
-		}
-		catch ( SQLException e )
-		{
-			return e;
-		}
-	}
-	
 	
 	@Override
 	public void successInit( AccountMeta meta, PermissibleEntity entity )
