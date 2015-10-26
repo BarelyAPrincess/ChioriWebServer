@@ -184,7 +184,7 @@ public class GroovyRegistry implements ScriptingRegistry
 		 */
 		configuration.setSourceEncoding( context.factory().charset().name() );
 		
-		configuration.setTargetDirectory( context.site().getRoot() );
+		configuration.setTargetDirectory( context.site().getTempFileDirectory() );
 		
 		return new GroovyShell( Loader.class.getClassLoader(), binding, configuration );
 	}

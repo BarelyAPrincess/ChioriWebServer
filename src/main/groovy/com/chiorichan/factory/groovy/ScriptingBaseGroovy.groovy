@@ -22,6 +22,7 @@ import com.chiorichan.session.Session
 import com.chiorichan.site.Site
 import com.chiorichan.site.SiteManager
 
+
 /**
  * Used as the Groovy Scripting Base and provides scripts with custom builtin methods
  */
@@ -87,7 +88,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 
 	PermissibleEntity getEntity()
 	{
-		getAccount().getEntity();
+		getAccount().getEntity()
 	}
 
 	/**

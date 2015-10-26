@@ -129,7 +129,7 @@ public class Routes
 							table.addColumnVar( "reqlevel", 255, "-1" );
 							table.addColumnVar( "theme", 255 );
 							table.addColumnVar( "view", 255 );
-							table.addColumnText( "html", 255 );
+							table.addColumnText( "html" );
 							table.addColumnVar( "file", 255 );
 						}
 						

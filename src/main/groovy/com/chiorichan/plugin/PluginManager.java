@@ -82,7 +82,6 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 		INSTANCE.init0();
 		
 		isInitialized = true;
-		
 	}
 	
 	private void checkUpdate( File file )
@@ -347,7 +346,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 		registerInterface( JavaPluginLoader.class );
 		// registerInterface( GroovyPluginLoader.class );
 		
-		File pluginFolder = ( File ) Loader.getOptions().valueOf( "plugins" );
+		File pluginFolder = Loader.getPluginsDirectory();
 		
 		if ( pluginFolder.exists() )
 		{

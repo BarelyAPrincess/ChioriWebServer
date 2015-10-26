@@ -198,6 +198,7 @@ public class ServerBus extends AccountPermissible implements Runnable, AccountAt
 		new ShutdownHook();
 		
 		primaryThread = new Thread( this, "Server Thread" );
+		primaryThread.setPriority( Thread.MAX_PRIORITY );
 	}
 	
 	@Override

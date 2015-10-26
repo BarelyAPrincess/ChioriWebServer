@@ -46,7 +46,6 @@ public class GroovyEngine implements ScriptingEngine
 			Script script = registry.makeScript( shell, context );
 			
 			context.result().object( script.run() );
-			
 		}
 		catch ( Throwable t )
 		{

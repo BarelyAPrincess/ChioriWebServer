@@ -585,6 +585,14 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return options;
 	}
 	
+	/**
+	 * @return The plugins directory
+	 */
+	public static File getPluginsDirectory()
+	{
+		return ( File ) Loader.getOptions().valueOf( "plugins" );
+	}
+	
 	public static String getRandomGag()
 	{
 		switch ( new Random().nextInt( 25 ) )
@@ -1136,6 +1144,8 @@ public class Loader extends BuiltinEventCreator implements Listener
 			getLogger().info( "Initalizing the Session Subsystem..." );
 			SessionManager.init();
 			
+			getLogger().info( "Initalizing the File Watcher Subsystem..." );
+			ServerFileWatcher.init();
 		}
 		catch ( Throwable e )
 		{

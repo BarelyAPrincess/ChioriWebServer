@@ -40,6 +40,7 @@ import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.auth.AccountAuthenticator;
+import com.chiorichan.account.lang.AccountDescriptiveReason;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.logger.LogEvent;
@@ -1019,6 +1020,11 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 				
 				AccountManager.getLogger().warning( LogColor.RED + "Failed Login [id='" + username + "',hasPassword='" + ( password != null && !password.isEmpty() ) + "',authenticator='plaintext'`,reason='" + msg + "']" );
 				getResponse().sendRedirect( loginForm + "?msg=" + result.getMessage() + ( ( target == null || target.isEmpty() ) ? "" : "&target=" + target ) );
+			}
+			catch ( Throwable t )
+			{
+				AccountManager.getLogger().severe( "Login has thrown an internal server error", t );
+				getResponse().sendRedirect( loginForm + "?msg=" + AccountDescriptiveReason.INTERNAL_ERROR.getMessage() + ( ( target == null || target.isEmpty() ) ? "" : "&target=" + target ) );
 			}
 		else if ( session.isLoginPresent() )
 		{
