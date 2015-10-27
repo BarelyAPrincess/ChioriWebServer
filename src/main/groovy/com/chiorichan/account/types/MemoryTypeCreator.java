@@ -22,6 +22,8 @@ import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissionDefault;
+import com.chiorichan.permission.event.PermissibleEntityEvent;
+import com.chiorichan.permission.event.PermissibleEntityEvent.Action;
 import com.chiorichan.tasks.Timings;
 
 /**
@@ -93,6 +95,19 @@ public class MemoryTypeCreator extends AccountTypeCreator
 		// Do Nothing
 	}
 	
+	@EventHandler
+	public void onPermissibleEntityEvent( PermissibleEntityEvent event )
+	{
+		// We do this to prevent the root account from losing it's OP permission node
+		
+		if ( event.getAction() == Action.PERMISSIONS_CHANGED )
+			if ( AccountType.isRootAccount( event.getEntity() ) )
+			{
+				event.getEntity().addPermission( PermissionDefault.OP.getNode(), true, null );
+				event.getEntity().setVirtual( true );
+			}
+	}
+	
 	@Override
 	public void preLogin( AccountMeta meta, AccountPermissible via, String acctId, Object... creds )
 	{
@@ -114,14 +129,14 @@ public class MemoryTypeCreator extends AccountTypeCreator
 	@Override
 	public void successInit( AccountMeta meta, PermissibleEntity entity )
 	{
-		if ( meta.context().creator() == this && meta.getId().equalsIgnoreCase( "root" ) )
+		if ( meta.context().creator() == this && AccountType.isRootAccount( meta ) )
 		{
 			entity.addPermission( PermissionDefault.OP.getNode(), true, null );
 			entity.setVirtual( true );
 			meta.instance().registerAttachment( Loader.getServerBus() );
 		}
 		
-		if ( meta.context().creator() == this && meta.getId().equalsIgnoreCase( "none" ) )
+		if ( meta.context().creator() == this && AccountType.isNoneAccount( meta ) )
 			entity.setVirtual( true );
 	}
 	

@@ -120,7 +120,7 @@ public class Site
 		if ( reason != null )
 			throw new SiteException( "Could not load site file from YAML FileBase '" + file.getAbsolutePath() + "' because " + reason + "." );
 		
-		Loader.getLogger().info( "Loading site '" + siteId + "' with title '" + title + "' filerom YAML FileBase '" + file.getAbsolutePath() + "'." );
+		Loader.getLogger().info( "Loading site '" + siteId + "' with title '" + title + "' file from YAML FileBase '" + file.getAbsolutePath() + "'." );
 		
 		// Load protected files list
 		List<?> protectedFilesPre = config.getList( "protected", new CopyOnWriteArrayList<String>() );

@@ -251,4 +251,10 @@ public class TerminalEntity extends AccountPermissible implements Terminal, Bind
 	{
 		// Do Nothing
 	}
+	
+	@Override
+	public String toString()
+	{
+		return String.format( "TerminalEntity{AcctId=%s,ip=%s}", meta().getId(), getIpAddr() );
+	}
 }

@@ -73,6 +73,13 @@ public abstract class PermissibleEntity
 	{
 		Validate.notNull( perm );
 		
+		if ( checkPermission( perm.getPermission() ).isAssigned() )
+		{
+			if ( isDebug() )
+				PermissionManager.getLogger().info( String.format( "%sThe permission `%s` with reference `%s` is already attached to entity `%s`.", LogColor.YELLOW, perm.getPermission().getNamespace(), refs.join(), getId() ) );
+			return;
+		}
+		
 		if ( refs == null )
 			refs = References.format();
 		References oldRefs = getPermissionReferences( perm.getPermission() );
@@ -598,8 +605,15 @@ public abstract class PermissibleEntity
 	
 	public void reload()
 	{
+		if ( isVirtual() )
+			return;
+		
+		if ( isDebug() )
+			PermissionManager.getLogger().info( LogColor.YELLOW + "Entity '" + getId() + "' being reloaded from backend" );
+		
 		reloadGroups();
 		reloadPermissions();
+		recalculatePermissions();
 	}
 	
 	/**

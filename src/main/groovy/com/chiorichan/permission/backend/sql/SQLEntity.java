@@ -12,10 +12,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import com.chiorichan.LogColor;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
+import com.chiorichan.datastore.sql.query.SQLQuerySelect;
 import com.chiorichan.permission.ChildPermission;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.permission.PermissibleGroup;
@@ -41,7 +43,6 @@ public class SQLEntity extends PermissibleEntity
 		try
 		{
 			ResultSet rs = db.table( "permissions_groups" ).select().where( "parent" ).matches( getId() ).and().where( "type" ).matches( "0" ).execute().result();
-			// ResultSet rs = db.query( "SELECT * FROM `permissions_groups` WHERE `parent` = '" + getId() + "' AND `type` = '0';" );
 			
 			if ( rs != null && rs.first() )
 				do
@@ -69,13 +70,12 @@ public class SQLEntity extends PermissibleEntity
 		clearTimedPermissions();
 		try
 		{
-			ResultSet rs = db.table( "permissions_entity" ).select().where( "owner" ).matches( getId() ).and().where( "type" ).matches( "1" ).execute().result();
-			// ResultSet rs = db.query( "SELECT * FROM `permissions_entity` WHERE `owner` = ? AND `type` = '1';", getId() );
+			SQLQuerySelect select = db.table( "permissions_entity" ).select().where( "owner" ).matches( getId() ).and().where( "type" ).matches( "0" ).execute();
 			
-			if ( rs != null && rs.first() )
-				do
+			if ( select.rowCount() > 0 )
+				for ( Map<String, String> row : select.stringSet() )
 				{
-					PermissionNamespace ns = new PermissionNamespace( rs.getString( "permission" ) );
+					PermissionNamespace ns = new PermissionNamespace( row.get( "permission" ) );
 					
 					if ( !ns.containsOnlyValidChars() )
 					{
@@ -88,16 +88,14 @@ public class SQLEntity extends PermissibleEntity
 					for ( Permission perm : perms )
 					{
 						PermissionValue value = null;
-						if ( rs.getString( "value" ) != null )
-							value = perm.getModel().createValue( rs.getString( "value" ) );
+						if ( row.get( "value" ) != null )
+							value = perm.getModel().createValue( row.get( "value" ) );
 						
-						addPermission( new ChildPermission( this, perm, value, -1 ), References.format( rs.getString( "refs" ) ) );
+						addPermission( new ChildPermission( this, perm, value, -1 ), References.format( row.get( "refs" ) ) );
 					}
 				}
-				while ( rs.next() );
 			
-			if ( rs != null )
-				rs.close();
+			select.close();
 		}
 		catch ( SQLException e )
 		{
