@@ -386,8 +386,6 @@ public final class AccountManager extends AccountEvents implements ServerManager
 		{
 			Set<Kickable> kickables = Sets.newHashSet();
 			for ( AccountMeta acct : AccountManager.INSTANCE.getAccounts() )
-			{
-				Loader.getLogger().debug( "ID to kick: " + acct.getId() );
 				if ( acct.isInitialized() )
 					for ( AccountAttachment attachment : acct.instance().getAttachments() )
 					{
@@ -398,7 +396,6 @@ public final class AccountManager extends AccountEvents implements ServerManager
 						else if ( attachment instanceof Kickable )
 							kickables.add( ( Kickable ) attachment );
 					}
-			}
 			
 			KickEvent.kick( AccountType.ACCOUNT_ROOT, kickables ).setReason( reason ).fire();
 		}

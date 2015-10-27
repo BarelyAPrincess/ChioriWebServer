@@ -82,9 +82,8 @@ public final class PlainTextAccountAuthenticator extends AccountAuthenticator
 		try
 		{
 			SQLExecute<SQLQuerySelect> select = db.table( "accounts_plaintext" ).select().where( "acctId" ).matches( acctId ).limit( 1 ).execute().result();
-			// ResultSet rs = db.query( "SELECT * FROM `accounts_plaintext` WHERE `acctId` = '" + acctId + "' LIMIT 1;" );
 			
-			if ( select.rowCount() < 1 )
+			if ( select == null || select.rowCount() < 1 )
 				throw new AccountException( AccountDescriptiveReason.PASSWORD_UNSET, acct );
 			
 			if ( select.getInt( "expires" ) > -1 && select.getInt( "expires" ) < Timings.epoch() )

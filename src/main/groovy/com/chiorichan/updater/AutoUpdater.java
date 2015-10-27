@@ -69,18 +69,18 @@ public class AutoUpdater implements Listener, TaskCreator
 			}
 		} );
 		
-		if ( Loader.getServerJar().exists() && Loader.getServerJar().isFile() )
-			try
+		try
+		{
+			serverJarMD5 = StringFunc.md5( FileUtils.readFileToByteArray( Loader.getServerJar().exists() && Loader.getServerJar().isFile() ? Loader.getServerJar() : null ) );
+			
+			ServerFileWatcher.INSTANCE.register( Loader.getServerRoot(), new EventCallback()
 			{
-				serverJarMD5 = StringFunc.md5( FileUtils.readFileToByteArray( Loader.getServerJar() ) );
-				
-				ServerFileWatcher.INSTANCE.register( Loader.getServerRoot(), new EventCallback()
+				@Override
+				public void call( Kind<?> kind, File file, boolean isDirectory )
 				{
-					@Override
-					public void call( Kind<?> kind, File file, boolean isDirectory )
-					{
-						getLogger().debug( String.format( "%s: %s", kind.name(), file ) );
-						
+					getLogger().debug( String.format( "%s: %s", kind.name(), file ) );
+					
+					if ( Loader.getServerJar().exists() && Loader.getServerJar().isFile() )
 						if ( file.getAbsolutePath().equals( Loader.getServerJar().getAbsolutePath() ) && Loader.getConfig().getBoolean( "auto-updater.auto-restart", true ) )
 							if ( Loader.isWatchdogRunning() )
 							{
@@ -99,13 +99,19 @@ public class AutoUpdater implements Listener, TaskCreator
 							}
 							else
 								getLogger().warning( "We detected a change to the server jar, but the Watchdog process is not running." );
+					
+					if ( file.getAbsolutePath().equals( Loader.getConfigFile().getAbsolutePath() ) )
+					{
+						getLogger().info( "We detected a change in the server configuration file, reloading!" );
+						Loader.reloadConfig();
 					}
-				} );
-			}
-			catch ( IOException e )
-			{
-				e.printStackTrace();
-			}
+				}
+			} );
+		}
+		catch ( IOException e )
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	protected static DownloadUpdaterService getService()

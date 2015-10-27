@@ -36,6 +36,7 @@ import sun.misc.SignalHandler;
 
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.configuration.ConfigurationSection;
+import com.chiorichan.configuration.InvalidConfigurationException;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.datastore.DatastoreManager;
 import com.chiorichan.datastore.sql.bases.H2SQLDatastore;
@@ -444,24 +445,9 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return configuration;
 	}
 	
-	private static boolean getConfigBoolean( String variable, boolean defaultValue )
-	{
-		return configuration.getBoolean( variable, defaultValue );
-	}
-	
-	private static File getConfigFile()
+	public static File getConfigFile()
 	{
 		return ( File ) options.valueOf( "config" );
-	}
-	
-	private static int getConfigInt( String variable, int defaultValue )
-	{
-		return configuration.getInt( variable, defaultValue );
-	}
-	
-	private static String getConfigString( String variable, String defaultValue )
-	{
-		return configuration.getString( variable, defaultValue );
 	}
 	
 	public static SQLDatastore getDatabase()
@@ -483,7 +469,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	
 	public static String getIp()
 	{
-		return getConfigString( "server-ip", "" );
+		return getConfig().getString( "server-ip", "" );
 	}
 	
 	/**
@@ -570,7 +556,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	
 	public static int getPort()
 	{
-		return getConfigInt( "server-port", 80 );
+		return getConfig().getInt( "server-port", 80 );
 	}
 	
 	public static boolean getQueryPlugins()
@@ -614,7 +600,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	
 	public static String getServerId()
 	{
-		return getConfigString( "server-id", "unnamed" );
+		return getConfig().getString( "server-id", "unnamed" );
 	}
 	
 	/**
@@ -635,7 +621,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	
 	public static String getServerName()
 	{
-		return getConfigString( "server-name", "Unknown Server" );
+		return getConfig().getString( "server-name", "Unknown Server" );
 	}
 	
 	/**
@@ -759,6 +745,18 @@ public class Loader extends BuiltinEventCreator implements Listener
 			getLogger().info( LogColor.GOLD + "" + LogColor.NEGATIVE + "Finished Initalizing " + Versioning.getProduct() + "! It took " + ( System.currentTimeMillis() - startTime ) + "ms!" );
 	}
 	
+	public static void reloadConfig()
+	{
+		try
+		{
+			configuration.load( getConfigFile() );
+		}
+		catch ( IOException | InvalidConfigurationException e )
+		{
+			getLogger().severe( e.getMessage() );
+		}
+	}
+	
 	public static void saveConfig()
 	{
 		// TODO Targeted key path saves, allow it so only a specified path can be saved to file.
@@ -877,7 +875,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 	
 	public boolean hasWhitelist()
 	{
-		return getConfigBoolean( "white-list", false );
+		return getConfig().getBoolean( "white-list", false );
 	}
 	
 	public void initDatabase()
