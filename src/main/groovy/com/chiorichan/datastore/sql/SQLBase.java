@@ -130,10 +130,13 @@ public abstract class SQLBase<T extends SQLBase> implements SQLResultSkel
 					{
 						if ( e.getCause() instanceof NotSerializableException )
 							Datastore.getLogger().severe( "The object " + s.getClass() + " (" + s.toString() + ") is not serializable!" );
-						// Ignore
-						// else
+						
 						if ( !e.getMessage().startsWith( "Parameter index out of range" ) )
 							throw e;
+					}
+					catch ( ArrayIndexOutOfBoundsException e )
+					{
+						Datastore.getLogger().warning( String.format( "SQL Query '%s' is missing enough replace points (?) to satify the argument '%s', index '%s'", sqlQuery, s, x ) );
 					}
 			
 			try
@@ -145,7 +148,7 @@ public abstract class SQLBase<T extends SQLBase> implements SQLResultSkel
 			}
 			catch ( SQLException e )
 			{
-				Datastore.getLogger().severe( "SQL query failed \"" + sqlQuery + "\" with arguments '" + Joiner.on( ", " ).join( args ) + "' with explaination '" + e.getMessage() + "'" );
+				Datastore.getLogger().severe( "SQL query failed \"" + sqlQuery + "\" with arguments '" + Joiner.on( ", " ).join( args ) + "' with explanation '" + e.getMessage() + "'" );
 				if ( isDebug() )
 					e.printStackTrace();
 				throw e;
@@ -158,7 +161,9 @@ public abstract class SQLBase<T extends SQLBase> implements SQLResultSkel
 			}
 			
 			if ( debug && save )
-				Datastore.getLogger().debug( "SQL query \"" + toString( stmt ) + "\" " + ( isUpdate ? "affected" : "returned" ) + " " + rowCount() + " results" );
+				Datastore.getLogger().debug( "SQL query \"" + sqlQuery + "\" -> \"" + toString( stmt ) + "\" " + ( isUpdate ? "affected" : "returned" ) + " " + rowCount() + " results" );
+			else if ( debug )
+				Datastore.getLogger().debug( "SQL query \"" + sqlQuery + "\" -> \"" + toString( stmt ) + "\"" );
 			
 			setPass();
 			return stmt;

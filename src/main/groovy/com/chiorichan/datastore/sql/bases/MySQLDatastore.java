@@ -45,7 +45,7 @@ public class MySQLDatastore extends SQLDatastore
 		
 		try
 		{
-			sql = new SQLWrapper( connection, user, pass );
+			sql = new SQLWrapper( this, connection, user, pass );
 		}
 		catch ( SQLException e )
 		{

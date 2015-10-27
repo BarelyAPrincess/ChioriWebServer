@@ -15,10 +15,12 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Set;
 
+import com.chiorichan.datastore.sql.bases.SQLiteDatastore;
 import com.chiorichan.datastore.sql.query.SQLQueryDelete;
 import com.chiorichan.datastore.sql.query.SQLQueryInsert;
 import com.chiorichan.datastore.sql.query.SQLQuerySelect;
 import com.chiorichan.datastore.sql.query.SQLQueryUpdate;
+import com.chiorichan.util.ObjectFunc;
 import com.google.common.collect.Sets;
 import com.mysql.jdbc.exceptions.jdbc4.CommunicationsException;
 
@@ -49,24 +51,24 @@ public class SQLTable extends SQLBase<SQLTable>
 		if ( columns.contains( colName ) )
 			throw new SQLException( "There already exists a column by the name of '" + colName + "'" );
 		
-		String defString = def == null ? "NULL" : "NOT NULL DEFAULT '?'";
+		String defString = def == null ? "NULL" : "NOT NULL DEFAULT '" + ObjectFunc.castToString( def ) + "'";
 		
 		if ( exists() )
-			query( String.format( "ALTER TABLE `%s` ADD `%s` %s %s;", table, colName, colType, defString ), true, def );
+			query( String.format( "ALTER TABLE `%s` ADD `%s` %s %s;", table, colName, colType, defString ), true );
 		else
-			query( String.format( "CREATE TABLE `%s` ( `%s` %s %s );", table, colName, colType, defString ), true, def );
+			query( String.format( "CREATE TABLE `%s` ( `%s` %s %s );", table, colName, colType, defString ), true );
 		
 		return this;
 	}
 	
 	public SQLTable addColumnInt( String colName, int i ) throws SQLException
 	{
-		return addColumn( "INT(" + i + ")", colName );
+		return addColumn( "INTEGER(" + i + ")", colName );
 	}
 	
 	public SQLTable addColumnInt( String colName, int i, int def ) throws SQLException
 	{
-		return addColumn( "INT(" + i + ")", colName, def );
+		return addColumn( "INTEGER(" + i + ")", colName, def );
 	}
 	
 	public SQLTable addColumnText( String colName ) throws SQLException
@@ -90,7 +92,11 @@ public class SQLTable extends SQLBase<SQLTable>
 			throw new SQLException( "VARCHAR does not support more than 256 bytes" );
 		if ( def != null && def.length() > i )
 			throw new SQLException( "Default is more than max size" );
-		return addColumn( "VARCHAR(" + i + ")", colName, def );
+		
+		if ( sql.datastore() instanceof SQLiteDatastore )
+			return addColumn( "TEXT", colName, def );
+		else
+			return addColumn( "VARCHAR(" + i + ")", colName, def );
 	}
 	
 	public Collection<String> columnNames() throws SQLException
@@ -145,7 +151,7 @@ public class SQLTable extends SQLBase<SQLTable>
 		try
 		{
 			ResultSet rs = meta.getTables( null, null, null, null );
-			// return DbFunc.rowCount( rs ) > 0;
+			
 			while ( rs.next() )
 				if ( rs.getString( 3 ).equalsIgnoreCase( table ) )
 				{

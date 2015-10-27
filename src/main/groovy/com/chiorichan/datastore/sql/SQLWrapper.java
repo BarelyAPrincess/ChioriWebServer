@@ -17,6 +17,7 @@ import java.sql.SQLException;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.datastore.Datastore;
+import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.mysql.jdbc.CommunicationsException;
 import com.mysql.jdbc.exceptions.MySQLNonTransientConnectionException;
 
@@ -25,22 +26,26 @@ import com.mysql.jdbc.exceptions.MySQLNonTransientConnectionException;
  */
 public class SQLWrapper
 {
+	private SQLDatastore ds;
 	private Connection sql;
 	private String savedConnection, savedUser = null, savedPass = null;
 	
-	public SQLWrapper( Connection sql )
+	public SQLWrapper( SQLDatastore ds, Connection sql )
 	{
 		savedConnection = null;
+		this.ds = ds;
 		this.sql = sql;
 	}
 	
-	public SQLWrapper( String connection ) throws SQLException
+	public SQLWrapper( SQLDatastore ds, String connection ) throws SQLException
 	{
+		this.ds = ds;
 		connect( connection );
 	}
 	
-	public SQLWrapper( String connection, String user, String pass ) throws SQLException
+	public SQLWrapper( SQLDatastore ds, String connection, String user, String pass ) throws SQLException
 	{
+		this.ds = ds;
 		connect( connection, user, pass );
 	}
 	
@@ -77,6 +82,11 @@ public class SQLWrapper
 		savedPass = pass;
 		sql = DriverManager.getConnection( connection, user, pass );
 		sql.setAutoCommit( true );
+	}
+	
+	public SQLDatastore datastore()
+	{
+		return ds;
 	}
 	
 	public Connection direct()

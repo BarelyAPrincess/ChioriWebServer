@@ -53,7 +53,7 @@ public class SQLiteDatastore extends SQLDatastore
 		
 		try
 		{
-			sql = new SQLWrapper( connection );
+			sql = new SQLWrapper( this, connection );
 		}
 		catch ( SQLException e )
 		{

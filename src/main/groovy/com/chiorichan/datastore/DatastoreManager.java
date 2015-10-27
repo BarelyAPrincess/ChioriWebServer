@@ -11,7 +11,7 @@ package com.chiorichan.datastore;
 import java.sql.SQLException;
 import java.util.List;
 
-import com.chiorichan.ServerLogger;
+import com.chiorichan.APILogger;
 import com.chiorichan.Loader;
 import com.chiorichan.ServerManager;
 import com.chiorichan.factory.ExceptionCallback;
@@ -36,7 +36,7 @@ public class DatastoreManager implements ServerManager, TaskCreator
 		
 	}
 	
-	public static ServerLogger getLogger()
+	public static APILogger getLogger()
 	{
 		return Loader.getLogger( "DsMgr" );
 	}
