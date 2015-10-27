@@ -31,6 +31,9 @@ import org.joda.time.Duration;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
+
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.configuration.file.YamlConfiguration;
@@ -395,6 +398,21 @@ public class Loader extends BuiltinEventCreator implements Listener
 			}
 		}
 		
+		if ( Versioning.isUnixLikeOS() )
+		{
+			SignalHandler handler = new SignalHandler()
+			{
+				@Override
+				public void handle( Signal arg0 )
+				{
+					Loader.serverStop( "Received SIGTERM - Terminate" );
+				}
+			};
+			
+			Signal.handle( new Signal( "TERM" ), handler );
+			Signal.handle( new Signal( "INT" ), handler );
+		}
+		
 		updater = new AutoUpdater( new DownloadUpdaterService( configuration.getString( "auto-updater.host" ) ), configuration.getString( "auto-updater.preferred-channel" ) );
 		
 		updater.setEnabled( configuration.getBoolean( "auto-updater.enabled" ) );
@@ -747,7 +765,8 @@ public class Loader extends BuiltinEventCreator implements Listener
 		
 		try
 		{
-			configuration.save( getConfigFile() );
+			if ( configuration != null )
+				configuration.save( getConfigFile() );
 		}
 		catch ( IOException ex )
 		{
@@ -792,17 +811,17 @@ public class Loader extends BuiltinEventCreator implements Listener
 			if ( Loader.isRunning() )
 				Loader.isRunning = false;
 			
-			Loader.getLogger().info( "Shutting Down Session Manager..." );
-			SessionManager.INSTANCE.shutdown();
-			
-			Loader.getLogger().info( "Shutting Down Account Manager..." );
-			AccountManager.INSTANCE.shutdown( stopReason );
-			
 			Loader.getLogger().info( "Shutting Down Plugin Manager..." );
 			PluginManager.INSTANCE.shutdown();
 			
+			Loader.getLogger().info( "Shutting Down Session Manager..." );
+			SessionManager.INSTANCE.shutdown();
+			
 			Loader.getLogger().info( "Shutting Down Permission Manager..." );
 			PermissionManager.INSTANCE.saveData();
+			
+			Loader.getLogger().info( "Shutting Down Account Manager..." );
+			AccountManager.INSTANCE.shutdown( stopReason );
 			
 			Loader.getLogger().info( "Shutting Down Network Manager..." );
 			NetworkManager.shutdown();

@@ -11,10 +11,12 @@ package com.chiorichan;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -23,6 +25,8 @@ import java.util.concurrent.TimeoutException;
 
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
 
 import com.chiorichan.tasks.TaskCreator;
 import com.chiorichan.tasks.TaskManager;
@@ -36,15 +40,42 @@ import com.google.common.collect.Lists;
  */
 public class Watchdog implements Runnable, TaskCreator
 {
+	public static final int UNKNOWN = -1;
+	public static final int TERMINATE = 0;
+	public static final int RUNNING = 1;
+	public static final int RESTART = 2;
+	public static final int CRASHED = 3;
+	
+	private int state = -1;
+	
 	private int lastOutput = Timings.epoch();
 	private int lastRestart = Timings.epoch();
+	
+	private Future<String> future = null;
 	private ProcessBuilder processBuilder = null;
 	private Process process = null;
-	private Thread watchdogThread;
 	
-	boolean restart = false;
-	boolean crashed = false;
+	private Thread watchdogThread;
 	int crashCount = 0;
+	
+	public static int getPid( Process process )
+	{
+		if ( !process.getClass().getName().equals( "java.lang.UNIXProcess" ) )
+			return -1;
+		
+		try
+		{
+			Class<?> cProcessImpl = process.getClass();
+			Field fPid = cProcessImpl.getDeclaredField( "pid" );
+			if ( !fPid.isAccessible() )
+				fPid.setAccessible( true );
+			return fPid.getInt( process );
+		}
+		catch ( Exception e )
+		{
+			return -1;
+		}
+	}
 	
 	@Override
 	public String getName()
@@ -110,6 +141,35 @@ public class Watchdog implements Runnable, TaskCreator
 		watchdogThread = new Thread( this, "Watchdog Protection and Monitoring Thread" );
 		watchdogThread.setPriority( Thread.MAX_PRIORITY );
 		watchdogThread.start();
+		
+		if ( Versioning.isUnixLikeOS() )
+		{
+			Signal.handle( new Signal( "TERM" ), new SignalHandler()
+			{
+				@Override
+				public void handle( Signal arg0 )
+				{
+					log( "Received SIGTERM - Terminate" );
+					state = Watchdog.TERMINATE;
+					
+					if ( future != null )
+						future.cancel( true );
+				}
+			} );
+			
+			Signal.handle( new Signal( "INT" ), new SignalHandler()
+			{
+				@Override
+				public void handle( Signal arg0 )
+				{
+					log( "Received SIGINT - Restarting" );
+					state = Watchdog.RESTART;
+					
+					if ( future != null )
+						future.cancel( true );
+				}
+			} );
+		}
 	}
 	
 	@Override
@@ -130,6 +190,7 @@ public class Watchdog implements Runnable, TaskCreator
 		{
 			for ( ;; )
 			{
+				state = Watchdog.RUNNING;
 				process = processBuilder.start();
 				InputStream stdout = process.getInputStream();
 				
@@ -168,29 +229,31 @@ public class Watchdog implements Runnable, TaskCreator
 				for ( ;; )
 					try
 					{
-						Future<String> future = executor.submit( readTask );
-						String line = future.get( 1, TimeUnit.MINUTES );
+						if ( state != RUNNING )
+							break;
+						
+						future = executor.submit( readTask );
+						String line = future.get( 30, TimeUnit.SECONDS );
 						
 						if ( line != null )
 						{
 							lastOutput = Timings.epoch();
 							
-							if ( line.contains( "+watchdog:" ) )
-							{
-								String wd = line.substring( line.indexOf( "+watchdog:" ) + 10 ).trim();
-								
-								if ( wd.equals( "restart" ) )
-									restart = true;
-								else if ( wd.equals( "keepalive" ) )
-									log( "Keep Alive!" );
-								else
-									System.out.println( line );
-							}
-							else
-								System.out.println( line );
+							if ( line.contains( "+watchdog keepalive" ) )
+								log( "+watchdog stillalive" );
+							
+							System.out.println( line );
 						}
 						else
-							break;
+							state = TERMINATE;
+					}
+					catch ( CancellationException e )
+					{
+						if ( Versioning.isUnixLikeOS() && getPid( process ) > 0 )
+							Runtime.getRuntime().exec( "kill -SIGINT " + getPid( process ) );
+						else
+							process.destroy();
+						break;
 					}
 					catch ( TimeoutException e )
 					{
@@ -198,18 +261,16 @@ public class Watchdog implements Runnable, TaskCreator
 						if ( lastTotal > Timings.MINUTE_15 )
 						{
 							log( "No output detected for quite some time, it's assumed that the server has crashed. Server will now be restarted!" );
-							restart = true;
-							break;
+							state = RESTART;
 						}
 						else if ( lastTotal > Timings.MINUTE_5 )
 							log( "No output detected for the last 5 minutes." );
 					}
 				
 				reader.close();
-				
 				Thread.sleep( 2000 );
-				
 				long exitValue;
+				
 				try
 				{
 					exitValue = process.exitValue();
@@ -218,6 +279,7 @@ public class Watchdog implements Runnable, TaskCreator
 				{
 					process.destroy();
 					Thread.sleep( 3000 );
+					
 					try
 					{
 						exitValue = process.exitValue();
@@ -228,31 +290,35 @@ public class Watchdog implements Runnable, TaskCreator
 					}
 				}
 				
-				if ( exitValue != 0L )
-					if ( exitValue == 99L )
-						restart = true;
-					else
-					{
-						log( "The server has crashed with exit value " + exitValue + "!" );
-						
-						crashed = true;
-						crashCount++;
-						
-						if ( Timings.epoch() - lastRestart < 5 && crashCount > 3 )
-						{
-							log( "The server is crashing too frequently! This is obviously not going to succeed, we will quit now." );
-							System.exit( 0 );
-						}
-					}
+				if ( exitValue == 99L )
+					state = RESTART;
 				
-				if ( restart || crashed )
+				if ( exitValue == 143L )
+					log( "Child process was SIGTERM'd" );
+				
+				if ( exitValue != 0L && state == RUNNING )
+				{
+					log( "The server has crashed with exit value " + exitValue + "!" );
+					
+					state = CRASHED;
+					crashCount++;
+					
+					if ( Timings.epoch() - lastRestart < 5 && crashCount > 3 )
+					{
+						log( "The server is crashing too frequently! This is obviously not going to succeed, we will quit now." );
+						System.exit( 0 );
+					}
+				}
+				
+				if ( state == RESTART || state == CRASHED )
 				{
 					log( "Restarting " + Versioning.getProduct() + "!" );
 					lastRestart = Timings.epoch();
 				}
-				else
+				
+				if ( state == TERMINATE )
 				{
-					log( "The server shutdown without an problems, have a nice day! :D" );
+					log( "The server has terminated, have a nice day! :D" );
 					System.exit( 0 );
 				}
 			}
