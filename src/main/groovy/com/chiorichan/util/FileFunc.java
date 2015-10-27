@@ -68,7 +68,7 @@ public class FileFunc
 				case DELETE_FAILED:
 					return String.format( "There was a problem trying to delete the directory '%s'.", file.getAbsolutePath() );
 				case DIRECTORY_HEALTHY:
-					return String.format( "The directory '%s' is existent and accessible.", file.getAbsolutePath() );
+					return String.format( "The directory '%s' does exist and is accessible.", file.getAbsolutePath() );
 				case PERMISSION_FAILED:
 					return String.format( "We have no permission to either create, delete or access the directory '%s'.", file.getAbsolutePath() );
 			}

@@ -18,7 +18,6 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -32,11 +31,7 @@ import org.joda.time.Duration;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 
-import com.chiorichan.account.AccountAttachment;
 import com.chiorichan.account.AccountManager;
-import com.chiorichan.account.AccountMeta;
-import com.chiorichan.account.AccountType;
-import com.chiorichan.account.Kickable;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.datastore.DatastoreManager;
@@ -49,7 +44,6 @@ import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
-import com.chiorichan.event.server.KickEvent;
 import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.StartupAbortException;
 import com.chiorichan.lang.StartupException;
@@ -70,7 +64,6 @@ import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.FileFunc.DirectoryInfo;
 import com.chiorichan.util.NetworkFunc;
 import com.chiorichan.util.Versioning;
-import com.google.common.collect.Sets;
 
 public class Loader extends BuiltinEventCreator implements Listener
 {
@@ -79,24 +72,24 @@ public class Loader extends BuiltinEventCreator implements Listener
 	
 	private static String clientId;
 	private static YamlConfiguration configuration;
-	private static final ServerBus console = new ServerBus();
-	private static boolean finishedStartup = false;
+	private static final ServerBus serverBus = new ServerBus();
 	
 	private static SQLDatastore fwDatabase = null;
 	private static Loader instance;
 	
-	static boolean willRestart = false;
-	static boolean isRunning = true;
 	private static OptionSet options;
 	protected static long startTime = System.currentTimeMillis();
-	
-	private static String stopReason = null;
 	private static File tmpFileDirectory;
 	private static File logFileDirectory;
 	private static File lockFile;
 	private static AutoUpdater updater;
-	
 	private static File webroot = new File( "" );
+	
+	static Watchdog watchdog = null;
+	static String stopReason = null;
+	static boolean willRestart = false;
+	static boolean isRunning = false;
+	
 	private final ServerRunLevelEvent runLevelEvent = new ServerRunLevelEvent();
 	
 	private Loader( OptionSet options0 ) throws StartupException
@@ -107,10 +100,10 @@ public class Loader extends BuiltinEventCreator implements Listener
 		
 		String internalConfigFile = "com/chiorichan/config.yaml";
 		
-		console.init( this, options );
+		serverBus.init( this, options );
 		
 		if ( !options0.has( "nobanner" ) )
-			console.showBanner();
+			serverBus.showBanner();
 		
 		try
 		{
@@ -124,7 +117,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 				try
 				{
 					if ( Versioning.isPIDRunning( pid ) )
-						throw new StartupException( "We have detected the server jar is already running. Please terminate process ID " + pid + " or disregard this notice." );
+						throw new StartupException( "We have detected the server jar is already running. Please terminate process ID " + pid + " or disregard this notice and try again." );
 				}
 				catch ( IOException e )
 				{
@@ -197,7 +190,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 				getLogger().info( LogColor.RED + "" + LogColor.NEGATIVE + "| reset all files and configurations required to run Chiori-chan's Web Server, |" );
 				getLogger().info( LogColor.RED + "" + LogColor.NEGATIVE + "| This includes databases and plugin configurations. This can not be undone!   |" );
 				getLogger().info( LogColor.RED + "" + LogColor.NEGATIVE + "--------------------------------------------------------------------------------" );
-				String key = Loader.getConsole().prompt( LogColor.RED + "" + LogColor.NEGATIVE + "Are you sure you wish to continue? Press 'Y' for Yes, 'N' for No or 'C' to Continue.", "Y", "N", "C" );
+				String key = getServerBus().prompt( LogColor.RED + "" + LogColor.NEGATIVE + "Are you sure you wish to continue? Press 'Y' for Yes, 'N' for No or 'C' to Continue.", "Y", "N", "C" );
 				
 				if ( key.equals( "N" ) )
 				{
@@ -241,8 +234,8 @@ public class Loader extends BuiltinEventCreator implements Listener
 		
 		saveConfig();
 		
-		if ( console.useColors )
-			console.useColors = Loader.getConfig().getBoolean( "console.color", true );
+		if ( serverBus.useColors )
+			serverBus.useColors = Loader.getConfig().getBoolean( "serverBus.color", true );
 		
 		EventBus.init( configuration.getBoolean( "plugins.useTimings" ) );
 		
@@ -305,7 +298,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 				{
 					case "file":
 						if ( logger.getBoolean( "enabled", true ) )
-							console.getLogManager().addFileHandler( key, logger.getBoolean( "color", false ), logger.getInt( "archiveLimit", 3 ), Level.parse( logger.getString( "level", "INFO" ).toUpperCase() ) );
+							serverBus.getLogManager().addFileHandler( key, logger.getBoolean( "color", false ), logger.getInt( "archiveLimit", 3 ), Level.parse( logger.getString( "level", "INFO" ).toUpperCase() ) );
 						break;
 					default:
 						getLogger().warning( "We had no logger for type '" + logger.getString( "type" ) + "'" );
@@ -393,7 +386,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 			getLogger().highlight( "| You can find documentation and guides on our Github at:                            |" );
 			getLogger().highlight( "|                   https://github.com/ChioriGreene/ChioriWebServer                  |" );
 			getLogger().highlight( "--------------------------------------------------------------------------------------" );
-			String key = Loader.getConsole().prompt( "Would you like to stop and review configuration? Press 'Y' for Yes or 'N' for No.", "Y", "N" );
+			String key = getServerBus().prompt( "Would you like to stop and review configuration? Press 'Y' for Yes or 'N' for No.", "Y", "N" );
 			
 			if ( key.equals( "Y" ) )
 			{
@@ -433,14 +426,24 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return configuration;
 	}
 	
+	private static boolean getConfigBoolean( String variable, boolean defaultValue )
+	{
+		return configuration.getBoolean( variable, defaultValue );
+	}
+	
 	private static File getConfigFile()
 	{
 		return ( File ) options.valueOf( "config" );
 	}
 	
-	public static ServerBus getConsole()
+	private static int getConfigInt( String variable, int defaultValue )
 	{
-		return console;
+		return configuration.getInt( variable, defaultValue );
+	}
+	
+	private static String getConfigString( String variable, String defaultValue )
+	{
+		return configuration.getString( variable, defaultValue );
 	}
 	
 	public static SQLDatastore getDatabase()
@@ -460,6 +463,11 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return instance;
 	}
 	
+	public static String getIp()
+	{
+		return getConfigString( "server-ip", "" );
+	}
+	
 	/**
 	 * Gets an instance of the system logger so requester can log information to both the screen and log file with ease.
 	 * The auto selection of named loggers might be temporary feature until most of system can be manually programmed to
@@ -469,49 +477,9 @@ public class Loader extends BuiltinEventCreator implements Listener
 	 * 
 	 * @return The system logger
 	 */
-	public static ServerLogger getLogger()
+	public static APILogger getLogger()
 	{
-		StackTraceElement[] ste = Thread.currentThread().getStackTrace();
-		String clz = ste[2].getClassName().toLowerCase();
-		
-		// getLogger( "Debug" ).warning( clz );
-		
-		if ( clz.startsWith( "com.chiorichan" ) )
-		{
-			int ind = clz.indexOf( ".", 5 ) + 1;
-			int end = clz.indexOf( ".", ind );
-			clz = clz.substring( ind, ( end > ind ) ? end : clz.length() );
-		}
-		
-		switch ( clz )
-		{
-			case "http":
-				return getLogger( "HttpHdl" );
-			case "https":
-				return getLogger( "HttpsHdl" );
-			case "framework":
-				return getLogger( "Framework" );
-			case "net":
-				return getLogger( "NetMgr" );
-			case "account":
-				return getLogger( "AcctMgr" );
-			case "permission":
-				return getLogger( "PermMgr" );
-			case "factory":
-				return getLogger( "CodeEval" );
-			case "event":
-				return getLogger( "EvtMgr" );
-			case "database":
-				return getLogger( "DBEngine" );
-			case "plugin":
-				return getLogger( "PlgMgr" );
-			case "scheduler":
-				return getLogger( "TskSchd" );
-			case "updater":
-				return getLogger( "Updater" );
-		}
-		
-		return console.getLogger();
+		return serverBus.getLogger();
 	}
 	
 	/**
@@ -523,14 +491,9 @@ public class Loader extends BuiltinEventCreator implements Listener
 	 * @return ConsoleLogger
 	 *         An empty loggerId will return the System Logger.
 	 */
-	public static ServerLogger getLogger( String loggerId )
+	public static APILogger getLogger( String loggerId )
 	{
-		return console.getLogger( loggerId );
-	}
-	
-	public static ServerLogManager getLogManager()
-	{
-		return console.getLogManager();
+		return serverBus.getLogger( loggerId );
 	}
 	
 	public static File getLogsFileDirectory()
@@ -546,29 +509,23 @@ public class Loader extends BuiltinEventCreator implements Listener
 		OptionParser parser = new OptionParser()
 		{
 			{
-				acceptsAll( Arrays.asList( "?", "help" ), "Show the help" );
+				acceptsAll( Arrays.asList( "?", "h", "help" ), "Show the help" );
 				acceptsAll( Arrays.asList( "c", "config", "b", "settings" ), "File for chiori settings" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "server.yaml" ) ).describedAs( "Yml file" );
-				acceptsAll( Arrays.asList( "P", "plugins" ), "Plugin directory to use" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "plugins" ) ).describedAs( "Plugin directory" );
-				acceptsAll( Arrays.asList( "h", "web-ip" ), "Host for Web to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
-				acceptsAll( Arrays.asList( "wp", "web-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
-				acceptsAll( Arrays.asList( "h", "tcp-ip" ), "Host for Web to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
-				acceptsAll( Arrays.asList( "tp", "tcp-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
-				acceptsAll( Arrays.asList( "i", "install" ), "Runs the server just long enough to create the required configuration files, then terminates." );
+				acceptsAll( Arrays.asList( "p", "plugins" ), "Plugin directory to use" ).withRequiredArg().ofType( File.class ).defaultsTo( new File( "plugins" ) ).describedAs( "Plugin directory" );
+				acceptsAll( Arrays.asList( "web-ip" ), "Host for Web to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
+				acceptsAll( Arrays.asList( "web-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
+				acceptsAll( Arrays.asList( "tcp-ip" ), "Host for Web to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
+				acceptsAll( Arrays.asList( "tcp-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
+				acceptsAll( Arrays.asList( "install" ), "Runs the server just long enough to create the required configuration files, then terminates." );
 				acceptsAll( Arrays.asList( "web-disable" ), "Disable the internal Web Server" );
 				acceptsAll( Arrays.asList( "tcp-disable" ), "Disable the internal TCP Server" );
 				acceptsAll( Arrays.asList( "query-disable" ), "Disable the internal TCP Server" );
-				// acceptsAll( Arrays.asList( "s", "size", "max-users" ), "Maximum amount of users" ).withRequiredArg().ofType( Integer.class ).describedAs( "Server size" );
 				acceptsAll( Arrays.asList( "d", "date-format" ), "Format of the date to display in the console (for log entries)" ).withRequiredArg().ofType( SimpleDateFormat.class ).describedAs( "Log date format" );
-				// acceptsAll( Arrays.asList( "log-pattern" ), "Specfies the log filename pattern" ).withRequiredArg().ofType( String.class ).defaultsTo( "server.log" ).describedAs( "Log filename" );
-				// acceptsAll( Arrays.asList( "log-limit" ), "Limits the maximum size of the log file (0 = unlimited)" ).withRequiredArg().ofType( Integer.class ).defaultsTo( 0 ).describedAs( "Max log size" );
-				// acceptsAll( Arrays.asList( "log-count" ), "Specified how many log files to cycle through" ).withRequiredArg().ofType( Integer.class ).defaultsTo( 1 ).describedAs( "Log count" );
-				// acceptsAll( Arrays.asList( "log-append" ), "Whether to append to the log file" ).withRequiredArg().ofType( Boolean.class ).defaultsTo( true ).describedAs( "Log append" );
-				// acceptsAll( Arrays.asList( "log-strip-color" ), "Strips color codes from log file" );
-				// acceptsAll( Arrays.asList( "nojline" ), "Disables jline and emulates the vanilla console" );
-				// acceptsAll( Arrays.asList( "noconsole" ), "Disables the console" );
 				acceptsAll( Arrays.asList( "nobanner" ), "Disables the banner" );
 				acceptsAll( Arrays.asList( "nocolor" ), "Disables the console color formatting" );
 				acceptsAll( Arrays.asList( "v", "version" ), "Show the Version" );
+				acceptsAll( Arrays.asList( "child" ), "Watchdog Child Mode. DO NOT USE!" );
+				acceptsAll( Arrays.asList( "watchdog" ), "Launch the server with Watchdog protection, allows the server to restart itself. WARNING: May be buggy!" ).requiredIf( "child" );
 			}
 		};
 		
@@ -591,6 +548,16 @@ public class Loader extends BuiltinEventCreator implements Listener
 	public static File getPluginsDirectory()
 	{
 		return ( File ) Loader.getOptions().valueOf( "plugins" );
+	}
+	
+	public static int getPort()
+	{
+		return getConfigInt( "server-port", 80 );
+	}
+	
+	public static boolean getQueryPlugins()
+	{
+		return configuration.getBoolean( "plugins.allowQuery" );
 	}
 	
 	public static String getRandomGag()
@@ -622,10 +589,20 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return "";
 	}
 	
+	public static ServerBus getServerBus()
+	{
+		return serverBus;
+	}
+	
+	public static String getServerId()
+	{
+		return getConfigString( "server-id", "unnamed" );
+	}
+	
 	/**
 	 * @return The server jar file
 	 */
-	private static File getServerJar()
+	public static File getServerJar()
 	{
 		try
 		{
@@ -638,6 +615,11 @@ public class Loader extends BuiltinEventCreator implements Listener
 		}
 	}
 	
+	public static String getServerName()
+	{
+		return getConfigString( "server-name", "Unknown Server" );
+	}
+	
 	/**
 	 * @return The server jar file root directory
 	 */
@@ -646,12 +628,27 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return getServerJar().getParentFile();
 	}
 	
+	public static String getShutdownMessage()
+	{
+		return configuration.getString( "settings.shutdown-message" );
+	}
+	
 	public static File getTempFileDirectory()
 	{
 		if ( tmpFileDirectory == null )
 			throw new IllegalStateException( "Temp directory appears to be null, was getTempFileDirectory() called before the server finished inialization?" );
 		
 		return tmpFileDirectory;
+	}
+	
+	public static String getUpdateFolder()
+	{
+		return configuration.getString( "settings.update-folder", "update" );
+	}
+	
+	public static File getUpdateFolderFile()
+	{
+		return new File( getPluginsDirectory(), configuration.getString( "settings.update-folder", "update" ) );
 	}
 	
 	public static String getUptime()
@@ -666,14 +663,14 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return webroot;
 	}
 	
-	public static boolean hasFinishedStartup()
-	{
-		return finishedStartup;
-	}
-	
 	public static boolean isRunning()
 	{
 		return isRunning;
+	}
+	
+	public static boolean isWatchdogRunning()
+	{
+		return watchdog != null;
 	}
 	
 	public static void main( String... args ) throws Exception
@@ -704,15 +701,28 @@ public class Loader extends BuiltinEventCreator implements Listener
 					Logger.getLogger( Loader.class.getName() ).log( Level.SEVERE, null, ex );
 				}
 			else if ( options.has( "v" ) )
-				System.out.println( Versioning.getVersion() );
+				System.out.println( "Running " + Versioning.getProduct() + " version " + Versioning.getVersion() );
+			else if ( options.has( "watchdog" ) )
+			{
+				watchdog = new Watchdog();
+				
+				if ( options.has( "child" ) )
+				{
+					isRunning = true;
+					watchdog.initChild();
+				}
+				else
+					watchdog.initDaemon( args );
+			}
 			else
-				isRunning = new Loader( options ).start();
+				isRunning = true;
+			
+			if ( isRunning )
+				new Loader( options ).serverStart();
 		}
 		catch ( StartupAbortException e )
 		{
-			// Graceful Shutdown
-			NetworkManager.cleanup();
-			isRunning = false;
+			serverUnload();
 		}
 		catch ( Throwable t )
 		{
@@ -724,24 +734,11 @@ public class Loader extends BuiltinEventCreator implements Listener
 				System.in.read();
 			}
 			
-			NetworkManager.cleanup();
-			isRunning = false;
+			serverUnload();
 		}
 		
-		if ( isRunning )
-			getLogger().info( LogColor.YELLOW + "" + LogColor.NEGATIVE + "Finished Initalizing " + Versioning.getProduct() + "! It took " + ( System.currentTimeMillis() - startTime ) + "ms!" );
-	}
-	
-	public static void restart( String restartReason )
-	{
-		if ( stopReason == null )
-			getLogger().highlight( "The server is restarting, be back soon... :D" );
-		else if ( !stopReason.isEmpty() )
-			getLogger().highlight( "Server Stopping for Reason: " + stopReason );
-		
-		Loader.stopReason = restartReason;
-		willRestart = true;
-		isRunning = false;
+		if ( isRunning && getLogger() != null )
+			getLogger().info( LogColor.GOLD + "" + LogColor.NEGATIVE + "Finished Initalizing " + Versioning.getProduct() + "! It took " + ( System.currentTimeMillis() - startTime ) + "ms!" );
 	}
 	
 	public static void saveConfig()
@@ -758,97 +755,26 @@ public class Loader extends BuiltinEventCreator implements Listener
 		}
 	}
 	
-	static void shutdown()
+	public static void serverRestart( String restartReason )
 	{
+		if ( !isWatchdogRunning() )
+		{
+			Loader.getLogger().highlight( "Server can not be restarted without Watchdog running." );
+			return;
+		}
+		
+		if ( restartReason == null )
+			getLogger().highlight( "Server is restarting, be back soon... :D" );
+		else if ( !restartReason.isEmpty() )
+			getLogger().highlight( restartReason );
+		
+		Loader.stopReason = restartReason;
+		willRestart = true;
 		isRunning = false;
-		
-		try
-		{
-			SessionManager.INSTANCE.shutdown();
-		}
-		catch ( SessionException e )
-		{
-			e.printStackTrace();
-		}
-		
-		AccountManager.INSTANCE.save();
-		PluginManager.INSTANCE.shutdown();
-		PermissionManager.INSTANCE.saveData();
-		NetworkManager.cleanup();
-		
-		saveConfig();
-		
-		if ( stopReason == null )
-		{
-			System.err.println( "The server was stopped for an unknown reason." );
-			System.err.println( "Maybe a stacktrace will make you feel better:" );
-			new IOException().printStackTrace();
-		}
-		
-		if ( willRestart )
-		{
-			/*
-			 * TODO It would be nice if the server could automatically restart
-			 * But there has been problems with this sadly
-			 */
-			
-			/*
-			 * ProcessBuilder processBuilder = new ProcessBuilder();
-			 * List<String> commands = new ArrayList<String>();
-			 * if ( OperatingSystem.getOperatingSystem().equals( OperatingSystem.WINDOWS ) )
-			 * {
-			 * commands.add( "javaw" );
-			 * }
-			 * else
-			 * {
-			 * commands.add( "java" );
-			 * }
-			 * commands.add( "-Xmx256m" );
-			 * commands.add( "-cp" );
-			 * commands.add( updatedJar.getAbsolutePath() );
-			 * commands.add( UpdateInstaller.class.getName() );
-			 * commands.add( currentJar.getAbsolutePath() );
-			 * commands.add( "" + Runtime.getRuntime().maxMemory() );
-			 * // commands.addAll( Arrays.asList( args ) );
-			 * processBuilder.command( commands );
-			 * try
-			 * {
-			 * Process process = processBuilder.start();
-			 * process.exitValue();
-			 * Loader.getLogger().severe( "The Auto Updater failed to start. You can find the new Server Version at \"update.jar\"" );
-			 * }
-			 * catch ( IllegalThreadStateException e )
-			 * {
-			 * Loader.stop( "The server is now going down to apply the latest version." );
-			 * }
-			 * catch ( Exception e )
-			 * {
-			 * e.printStackTrace();
-			 * }
-			 */
-		}
 	}
 	
-	public static void stop( String stopReason )
+	public static void serverStop( String stopReason )
 	{
-		try
-		{
-			Set<Kickable> kickables = Sets.newHashSet();
-			for ( AccountMeta acct : AccountManager.INSTANCE.getAccounts() )
-				if ( acct.isInitialized() )
-					for ( AccountAttachment attachment : acct.instance().getAttachments() )
-						if ( attachment.getPermissible() instanceof Kickable )
-							kickables.add( ( Kickable ) attachment.getPermissible() );
-						else if ( attachment instanceof Kickable )
-							kickables.add( ( Kickable ) attachment );
-			
-			KickEvent.kick( AccountType.ACCOUNT_ROOT, kickables ).setReason( stopReason ).fire();
-		}
-		catch ( Throwable t )
-		{
-			// Ignore
-		}
-		
 		if ( stopReason == null )
 			getLogger().highlight( "Stopping the server... Goodbye!" );
 		else if ( !stopReason.isEmpty() )
@@ -859,51 +785,49 @@ public class Loader extends BuiltinEventCreator implements Listener
 		isRunning = false;
 	}
 	
-	public static void unloadServer( String reason )
+	static void serverUnload()
 	{
 		try
 		{
+			if ( Loader.isRunning() )
+				Loader.isRunning = false;
+			
+			Loader.getLogger().info( "Shutting Down Session Manager..." );
 			SessionManager.INSTANCE.shutdown();
+			
+			Loader.getLogger().info( "Shutting Down Account Manager..." );
+			AccountManager.INSTANCE.shutdown( stopReason );
+			
+			Loader.getLogger().info( "Shutting Down Plugin Manager..." );
+			PluginManager.INSTANCE.shutdown();
+			
+			Loader.getLogger().info( "Shutting Down Permission Manager..." );
+			PermissionManager.INSTANCE.saveData();
+			
+			Loader.getLogger().info( "Shutting Down Network Manager..." );
+			NetworkManager.shutdown();
+			
+			Loader.getLogger().info( "Shutting Down Task Manager..." );
+			TaskManager.INSTANCE.shutdown();
+			
+			Loader.getLogger().info( "Saving Configuration..." );
+			Loader.saveConfig();
 		}
-		catch ( SessionException e )
+		catch ( Throwable t )
 		{
-			e.printStackTrace();
+			t.printStackTrace();
 		}
-		/*
-		 * if ( !reason.isEmpty() )
-		 * for ( Account User : accounts.getOnlineAccounts() )
-		 * {
-		 * User.kick( reason );
-		 * }
-		 */
-		AccountManager.INSTANCE.save();
-		NetworkManager.cleanup();
+		
+		if ( willRestart )
+			System.exit( 99 );
+		else
+			System.exit( 0 );
 	}
 	
 	void changeRunLevel( RunLevel level )
 	{
 		runLevelEvent.setRunLevel( level );
 		EventBus.INSTANCE.callEvent( runLevelEvent );
-	}
-	
-	private boolean getConfigBoolean( String variable, boolean defaultValue )
-	{
-		return configuration.getBoolean( variable, defaultValue );
-	}
-	
-	private int getConfigInt( String variable, int defaultValue )
-	{
-		return configuration.getInt( variable, defaultValue );
-	}
-	
-	private String getConfigString( String variable, String defaultValue )
-	{
-		return configuration.getString( variable, defaultValue );
-	}
-	
-	public String getIp()
-	{
-		return getConfigString( "server-ip", "" );
 	}
 	
 	public RunLevel getLastRunLevel()
@@ -917,44 +841,9 @@ public class Loader extends BuiltinEventCreator implements Listener
 		return Versioning.getProduct() + " " + Versioning.getVersion();
 	}
 	
-	public int getPort()
-	{
-		return getConfigInt( "server-port", 80 );
-	}
-	
-	public boolean getQueryPlugins()
-	{
-		return configuration.getBoolean( "plugins.allowQuery" );
-	}
-	
 	public RunLevel getRunLevel()
 	{
 		return runLevelEvent.getRunLevel();
-	}
-	
-	public String getServerId()
-	{
-		return getConfigString( "server-id", "unnamed" );
-	}
-	
-	public String getServerName()
-	{
-		return getConfigString( "server-name", "Unknown Server" );
-	}
-	
-	public String getShutdownMessage()
-	{
-		return configuration.getString( "settings.shutdown-message" );
-	}
-	
-	public String getUpdateFolder()
-	{
-		return configuration.getString( "settings.update-folder", "update" );
-	}
-	
-	public File getUpdateFolderFile()
-	{
-		return new File( ( File ) options.valueOf( "plugins" ), configuration.getString( "settings.update-folder", "update" ) );
 	}
 	
 	/**
@@ -1088,7 +977,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		changeRunLevel( RunLevel.RUNNING );
 	}
 	
-	private boolean start() throws StartupException
+	private void serverStart() throws StartupException
 	{
 		EventBus.INSTANCE.registerEvents( this, this );
 		PluginManager.init();
@@ -1154,14 +1043,11 @@ public class Loader extends BuiltinEventCreator implements Listener
 		
 		changeRunLevel( RunLevel.INITIALIZED );
 		
-		console.primaryThread.start();
+		serverBus.primaryThread.start();
 		
 		changeRunLevel( RunLevel.RUNNING );
 		
 		updater.check();
-		
-		finishedStartup = true;
-		return true;
 	}
 	
 	@Override

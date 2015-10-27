@@ -17,7 +17,7 @@ import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -38,6 +38,11 @@ public class TaskManager implements ServerManager
 	public static final TaskManager INSTANCE = new TaskManager();
 	private static boolean isInitialized = false;
 	
+	private static final int RECENT_TICKS;
+	static
+	{
+		RECENT_TICKS = 20;
+	}
 	/**
 	 * Counter for IDs. Order doesn't matter, only uniqueness.
 	 */
@@ -59,6 +64,7 @@ public class TaskManager implements ServerManager
 	 */
 	private final PriorityQueue<Task> pending = new PriorityQueue<Task>( 10, new Comparator<Task>()
 	{
+		@Override
 		public int compare( final Task o1, final Task o2 )
 		{
 			return ( int ) ( o1.getNextRun() - o2.getNextRun() );
@@ -73,7 +79,7 @@ public class TaskManager implements ServerManager
 	 */
 	private final ConcurrentHashMap<Integer, Task> runners = new ConcurrentHashMap<Integer, Task>();
 	private volatile int currentTick = -1;
-	private final Executor executor = Executors.newCachedThreadPool();
+	private final ExecutorService executor = Executors.newCachedThreadPool();
 	private AsyncTaskDebugger debugHead = new AsyncTaskDebugger( -1, null, null )
 	{
 		@Override
@@ -82,12 +88,12 @@ public class TaskManager implements ServerManager
 			return string;
 		}
 	};
-	private AsyncTaskDebugger debugTail = debugHead;
-	private static final int RECENT_TICKS;
 	
-	static
+	private AsyncTaskDebugger debugTail = debugHead;
+	
+	private TaskManager()
 	{
-		RECENT_TICKS = 20;
+		
 	}
 	
 	public static void init()
@@ -103,290 +109,39 @@ public class TaskManager implements ServerManager
 		
 	}
 	
-	private void init0()
-	{
-		
-	}
-	
-	private TaskManager()
-	{
-		
-	}
-	
 	/**
-	 * Schedules a once off task to occur as soon as possible. This task will be executed by the main server thread.
+	 * Checks in the provided creator and task are valid
 	 * 
 	 * @param creator
-	 *            TaskCreator that owns the task
+	 *            The object owning this task
 	 * @param task
-	 *            Task to be executed
-	 * @return Task id number (-1 if scheduling failed)
+	 *            The task to validate
 	 */
-	public int scheduleSyncDelayedTask( final TaskCreator creator, final Runnable task )
+	private static void validate( final TaskCreator creator, final Object task )
 	{
-		return this.scheduleSyncDelayedTask( creator, task, 0L );
-	}
-	
-	/**
-	 * <b>Asynchronous tasks should never access any API in Main. Great care should be taken to assure the thread-safety
-	 * of asynchronous tasks.</b> <br>
-	 * <br>
-	 * Schedules a once off task to occur as soon as possible. This task will be executed by a thread managed by the
-	 * scheduler.
-	 * 
-	 * @param creator
-	 *            TaskCreator that owns the task
-	 * @param task
-	 *            Task to be executed
-	 * @return Task id number (-1 if scheduling failed)
-	 */
-	public int scheduleAsyncDelayedTask( final TaskCreator creator, final Runnable task )
-	{
-		return this.scheduleAsyncDelayedTask( creator, task, 0L );
-	}
-	
-	/**
-	 * Schedules a once off task to occur after a delay. This task will be executed by the main server thread.
-	 * 
-	 * @param creator
-	 *            TaskCreator that owns the task
-	 * @param task
-	 *            Task to be executed
-	 * @param delay
-	 *            Delay in server ticks before executing task
-	 * @return Task id number (-1 if scheduling failed)
-	 */
-	public int scheduleSyncDelayedTask( final TaskCreator creator, final Runnable task, final long delay )
-	{
-		return this.scheduleSyncRepeatingTask( creator, task, delay, -1L );
-	}
-	
-	/**
-	 * Returns a task that will run on the next server tick.
-	 * 
-	 * @param creator
-	 *            the reference to the creator scheduling task
-	 * @param runnable
-	 *            the task to be run
-	 * @return a {@link Task} that contains the id number
-	 * @throws IllegalArgumentException
-	 *             if creator is null
-	 * @throws IllegalArgumentException
-	 *             if task is null
-	 */
-	public Task runTask( TaskCreator creator, Runnable runnable )
-	{
-		return runTaskLater( creator, 0L, runnable );
-	}
-	
-	/**
-	 * Returns a task that will run after the specified number of server ticks.
-	 * 
-	 * @param creator
-	 *            the reference to the creator scheduling task
-	 * @param delay
-	 *            the ticks to wait before running the task
-	 * @param runnable
-	 *            the task to be run
-	 * @return a {@link Task} that contains the id number
-	 * @throws IllegalArgumentException
-	 *             if creator is null
-	 * @throws IllegalArgumentException
-	 *             if task is null
-	 */
-	public Task runTaskLater( TaskCreator creator, long delay, Runnable runnable )
-	{
-		return runTaskTimer( creator, delay, -1L, runnable );
-	}
-	
-	/**
-	 * <b>Asynchronous tasks should never access any API in Main. Great care should be taken to assure the thread-safety
-	 * of asynchronous tasks.</b> <br>
-	 * <br>
-	 * Schedules a once off task to occur after a delay. This task will be executed by a thread managed by the scheduler.
-	 * 
-	 * @param creator
-	 *            TaskCreator that owns the task
-	 * @param task
-	 *            Task to be executed
-	 * @param delay
-	 *            Delay in server ticks before executing task
-	 * @return Task id number (-1 if scheduling failed)
-	 */
-	public int scheduleAsyncDelayedTask( final TaskCreator creator, final Runnable task, final long delay )
-	{
-		return scheduleAsyncRepeatingTask( creator, delay, -1L, task );
-	}
-	
-	/**
-	 * <b>Asynchronous tasks should never access any API in Main. Great care should be taken to assure the thread-safety
-	 * of asynchronous tasks.</b> <br>
-	 * <br>
-	 * Returns a task that will run asynchronously.
-	 * 
-	 * @param creator
-	 *            the reference to the creator scheduling task
-	 * @param runnable
-	 *            the task to be run
-	 * @return a ChioriTask that contains the id number
-	 * @throws IllegalArgumentException
-	 *             if creator is null
-	 * @throws IllegalArgumentException
-	 *             if task is null
-	 */
-	public Task runTaskAsynchronously( TaskCreator creator, Runnable runnable )
-	{
-		return runTaskLaterAsynchronously( creator, 0L, runnable );
-	}
-	
-	/**
-	 * <b>Asynchronous tasks should never access any API in Main. Great care should be taken to assure the thread-safety
-	 * of asynchronous tasks.</b> <br>
-	 * <br>
-	 * Returns a task that will run asynchronously after the specified number of server ticks.
-	 * 
-	 * @param creator
-	 *            the reference to the creator scheduling task
-	 * @param task
-	 *            the task to be run
-	 * @param delay
-	 *            the ticks to wait before running the task
-	 * @return a ChioriTask that contains the id number
-	 * @throws IllegalArgumentException
-	 *             if creator is null
-	 * @throws IllegalArgumentException
-	 *             if task is null
-	 */
-	public Task runTaskLaterAsynchronously( TaskCreator creator, long delay, Runnable runnable )
-	{
-		return runTaskTimerAsynchronously( creator, delay, -1L, runnable );
-	}
-	
-	/**
-	 * Schedules a repeating task. This task will be executed by the main server thread.
-	 * 
-	 * @param creator
-	 *            TaskCreator that owns the task
-	 * @param task
-	 *            Task to be executed
-	 * @param delay
-	 *            Delay in server ticks before executing first repeat
-	 * @param period
-	 *            Period in server ticks of the task
-	 * @return Task id number (-1 if scheduling failed)
-	 */
-	public int scheduleSyncRepeatingTask( final TaskCreator creator, final Runnable runnable, long delay, long period )
-	{
-		return runTaskTimer( creator, delay, period, runnable ).getTaskId();
-	}
-	
-	/**
-	 * Returns a task that will repeatedly run until cancelled, starting after the specified number of server ticks.
-	 * 
-	 * @param creator
-	 *            the reference to the creator scheduling task
-	 * @param delay
-	 *            the ticks to wait before running the task
-	 * @param period
-	 *            the ticks to wait between runs
-	 * @param task
-	 *            the task to be run
-	 * @return a ChioriTask that contains the id number
-	 * @throws IllegalArgumentException
-	 *             if creator is null
-	 * @throws IllegalArgumentException
-	 *             if task is null
-	 */
-	public Task runTaskTimer( TaskCreator creator, long delay, long period, Runnable runnable )
-	{
-		validate( creator, runnable );
-		
-		if ( delay < 0L )
-		{
-			delay = 0;
-		}
-		if ( period == 0L )
-		{
-			period = 1L;
-		}
-		else if ( period < -1L )
-		{
-			period = -1L;
-		}
-		
-		Task task = new Task( creator, runnable, nextId(), period );
-		
-		if ( creator.isEnabled() )
-			return handle( task, delay );
-		else
-			return backlog( task, delay );
-	}
-	
-	/**
-	 * <b>Asynchronous tasks should never access any API in Main. Great care should be taken to assure the thread-safety
-	 * of asynchronous tasks.</b> <br>
-	 * <br>
-	 * Schedules a repeating task. This task will be executed by a thread managed by the scheduler.
-	 * 
-	 * @param creator
-	 *            TaskCreator that owns the task
-	 * @param task
-	 *            Task to be executed
-	 * @param delay
-	 *            Delay in server ticks before executing first repeat
-	 * @param period
-	 *            Period in server ticks of the task
-	 * @return Task id number (-1 if scheduling failed), calling {@link #cancelTask(int)} will cancel it
-	 */
-	public int scheduleAsyncRepeatingTask( final TaskCreator creator, long delay, long period, final Runnable runnable )
-	{
-		return runTaskTimerAsynchronously( creator, delay, period, runnable ).getTaskId();
-	}
-	
-	/**
-	 * <b>Asynchronous tasks should never access any API in Main. Great care should be taken to assure the thread-safety
-	 * of asynchronous tasks.</b> <br>
-	 * <br>
-	 * Returns a task that will repeatedly run asynchronously until cancelled, starting after the specified number of
-	 * server ticks.
-	 * 
-	 * @param creator
-	 *            the reference to the creator scheduling task
-	 * @param delay
-	 *            the ticks to wait before running the task for the first time
-	 * @param period
-	 *            the ticks to wait between runs
-	 * @param task
-	 *            the task to be run
-	 * @return a ChioriTask that contains the id number
-	 * @throws IllegalArgumentException
-	 *             if creator is null
-	 * @throws IllegalArgumentException
-	 *             if task is null
-	 */
-	public Task runTaskTimerAsynchronously( TaskCreator creator, long delay, long period, Runnable runnable )
-	{
-		validate( creator, runnable );
-		
-		if ( delay < 0L )
-		{
-			delay = 0;
-		}
-		if ( period == 0L )
-		{
-			period = 1L;
-		}
-		else if ( period < -1L )
-		{
-			period = -1L;
-		}
-		
-		Task task = new AsyncTask( runners, creator, runnable, nextId(), period );
+		Validate.notNull( creator, "TaskCreator cannot be null" );
+		Validate.notNull( task, "Task cannot be null" );
 		
 		if ( !creator.isEnabled() )
-			return handle( task, delay );
-		else
-			return backlog( task, delay );
+		{
+			// Task Creator can now register while disabled but will not be called until enabled.
+			// throw new IllegalTaskCreatorAccessException( "TaskCreator attempted to register task while disabled" );
+		}
+	}
+	
+	private void addTask( final Task task )
+	{
+		final AtomicReference<Task> tail = this.tail;
+		Task tailTask = tail.get();
+		while ( !tail.compareAndSet( tailTask, task ) )
+			tailTask = tail.get();
+		tailTask.setNext( task );
+	}
+	
+	private Task backlog( Task task, long delay )
+	{
+		backlogTasks.put( delay, task );
+		return task;
 	}
 	
 	/**
@@ -415,6 +170,39 @@ public class TaskManager implements ServerManager
 	}
 	
 	/**
+	 * Removes all tasks from the manager.
+	 */
+	public void cancelAllTasks()
+	{
+		final Task task = new Task( new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				Iterator<Task> it = runners.values().iterator();
+				while ( it.hasNext() )
+				{
+					Task task = it.next();
+					task.cancel0();
+					if ( task.isSync() )
+						it.remove();
+				}
+				pending.clear();
+				temp.clear();
+			}
+		} );
+		handle( task, 0L );
+		for ( Task taskPending = head.getNext(); taskPending != null; taskPending = taskPending.getNext() )
+		{
+			if ( taskPending == task )
+				break;
+			taskPending.cancel0();
+		}
+		for ( Task runner : runners.values() )
+			runner.cancel0();
+	}
+	
+	/**
 	 * Removes task from scheduler.
 	 * 
 	 * @param taskId
@@ -423,24 +211,12 @@ public class TaskManager implements ServerManager
 	public void cancelTask( final int taskId )
 	{
 		if ( taskId <= 0 )
-		{
 			return;
-		}
 		Task task = runners.get( taskId );
 		if ( task != null )
-		{
 			task.cancel0();
-		}
 		task = new Task( new Runnable()
 		{
-			public void run()
-			{
-				if ( !check( TaskManager.this.temp ) )
-				{
-					check( TaskManager.this.pending );
-				}
-			}
-			
 			private boolean check( final Iterable<Task> collection )
 			{
 				final Iterator<Task> tasks = collection.iterator();
@@ -452,26 +228,27 @@ public class TaskManager implements ServerManager
 						task.cancel0();
 						tasks.remove();
 						if ( task.isSync() )
-						{
 							runners.remove( taskId );
-						}
 						return true;
 					}
 				}
 				return false;
+			}
+			
+			@Override
+			public void run()
+			{
+				if ( !check( temp ) )
+					check( pending );
 			}
 		} );
 		handle( task, 0L );
 		for ( Task taskPending = head.getNext(); taskPending != null; taskPending = taskPending.getNext() )
 		{
 			if ( taskPending == task )
-			{
 				return;
-			}
 			if ( taskPending.getTaskId() == taskId )
-			{
 				taskPending.cancel0();
-			}
 		}
 	}
 	
@@ -486,12 +263,6 @@ public class TaskManager implements ServerManager
 		Validate.notNull( creator, "Cannot cancel tasks of null creator" );
 		final Task task = new Task( new Runnable()
 		{
-			public void run()
-			{
-				check( TaskManager.this.pending );
-				check( TaskManager.this.temp );
-			}
-			
 			void check( final Iterable<Task> collection )
 			{
 				final Iterator<Task> tasks = collection.iterator();
@@ -503,123 +274,29 @@ public class TaskManager implements ServerManager
 						task.cancel0();
 						tasks.remove();
 						if ( task.isSync() )
-						{
 							runners.remove( task.getTaskId() );
-						}
 					}
 				}
 			}
-		} );
-		handle( task, 0L );
-		for ( Task taskPending = head.getNext(); taskPending != null; taskPending = taskPending.getNext() )
-		{
-			if ( taskPending == task )
-			{
-				return;
-			}
-			if ( taskPending.getTaskId() != -1 && taskPending.getOwner().equals( creator ) )
-			{
-				taskPending.cancel0();
-			}
-		}
-		for ( Task runner : runners.values() )
-		{
-			if ( runner.getOwner().equals( creator ) )
-			{
-				runner.cancel0();
-			}
-		}
-	}
-	
-	/**
-	 * Removes all tasks from the manager.
-	 */
-	public void cancelAllTasks()
-	{
-		final Task task = new Task( new Runnable()
-		{
+			
+			@Override
 			public void run()
 			{
-				Iterator<Task> it = TaskManager.this.runners.values().iterator();
-				while ( it.hasNext() )
-				{
-					Task task = it.next();
-					task.cancel0();
-					if ( task.isSync() )
-					{
-						it.remove();
-					}
-				}
-				TaskManager.this.pending.clear();
-				TaskManager.this.temp.clear();
+				check( pending );
+				check( temp );
 			}
 		} );
 		handle( task, 0L );
 		for ( Task taskPending = head.getNext(); taskPending != null; taskPending = taskPending.getNext() )
 		{
 			if ( taskPending == task )
-			{
-				break;
-			}
-			taskPending.cancel0();
+				return;
+			if ( taskPending.getTaskId() != -1 && taskPending.getOwner().equals( creator ) )
+				taskPending.cancel0();
 		}
 		for ( Task runner : runners.values() )
-		{
-			runner.cancel0();
-		}
-	}
-	
-	/**
-	 * Check if the task currently running.
-	 * <p>
-	 * A repeating task might not be running currently, but will be running in the future. A task that has finished, and does not repeat, will not be running ever again.
-	 * <p>
-	 * Explicitly, a task is running if there exists a thread for it, and that thread is alive.
-	 * 
-	 * @param taskId
-	 *            The task to check.
-	 *            <p>
-	 * @return If the task is currently running.
-	 */
-	public boolean isCurrentlyRunning( final int taskId )
-	{
-		final Task task = runners.get( taskId );
-		if ( task == null || task.isSync() )
-		{
-			return false;
-		}
-		final AsyncTask asyncTask = ( AsyncTask ) task;
-		synchronized ( asyncTask.getWorkers() )
-		{
-			return asyncTask.getWorkers().isEmpty();
-		}
-	}
-	
-	/**
-	 * Check if the task queued to be run later.
-	 * <p>
-	 * If a repeating task is currently running, it might not be queued now but could be in the future. A task that is not queued, and not running, will not be queued again.
-	 * 
-	 * @param taskId
-	 *            The task to check.
-	 *            <p>
-	 * @return If the task is queued to be run.
-	 */
-	public boolean isQueued( final int taskId )
-	{
-		if ( taskId <= 0 )
-		{
-			return false;
-		}
-		for ( Task task = head.getNext(); task != null; task = task.getNext() )
-		{
-			if ( task.getTaskId() == taskId )
-			{
-				return task.getPeriod() >= -1L; // The task will run
-			}
-		}
-		Task task = runners.get( taskId );
-		return task != null && task.getPeriod() >= -1L;
+			if ( runner.getOwner().equals( creator ) )
+				runner.cancel0();
 	}
 	
 	/**
@@ -636,9 +313,7 @@ public class TaskManager implements ServerManager
 		{
 			// Iterator will be a best-effort (may fail to grab very new values) if called from an async thread
 			if ( taskObj.isSync() )
-			{
 				continue;
-			}
 			final AsyncTask task = ( AsyncTask ) taskObj;
 			synchronized ( task.getWorkers() )
 			{
@@ -658,31 +333,26 @@ public class TaskManager implements ServerManager
 	{
 		final ArrayList<Task> truePending = new ArrayList<Task>();
 		for ( Task task = head.getNext(); task != null; task = task.getNext() )
-		{
 			if ( task.getTaskId() != -1 )
-			{
 				// -1 is special code
 				truePending.add( task );
-			}
-		}
 		
 		final ArrayList<Task> pending = new ArrayList<Task>();
 		for ( Task task : runners.values() )
-		{
 			if ( task.getPeriod() >= -1L )
-			{
 				pending.add( task );
-			}
-		}
 		
 		for ( final Task task : truePending )
-		{
 			if ( task.getPeriod() >= -1L && !pending.contains( task ) )
-			{
 				pending.add( task );
-			}
-		}
 		return pending;
+	}
+	
+	private Task handle( final Task task, final long delay )
+	{
+		task.setNextRun( currentTick + delay );
+		addTask( task );
+		return task;
 	}
 	
 	/**
@@ -690,7 +360,7 @@ public class TaskManager implements ServerManager
 	 */
 	public void heartbeat( final int currentTick )
 	{
-		if ( Thread.currentThread() != Loader.getConsole().primaryThread )
+		if ( Thread.currentThread() != Loader.getServerBus().primaryThread )
 			throw new IllegalStateException( "We detected that the heartbeat method was called on a thread other than the ConsoleBus thread. This is a really bad thing and could cause concurrency issues if left unchecked." );
 		
 		this.currentTick = currentTick;
@@ -702,9 +372,7 @@ public class TaskManager implements ServerManager
 			if ( task.getPeriod() < -1L )
 			{
 				if ( task.isSync() )
-				{
 					runners.remove( task.getTaskId(), task );
-				}
 				parsePending();
 				continue;
 			}
@@ -734,73 +402,78 @@ public class TaskManager implements ServerManager
 				temp.add( task );
 			}
 			else if ( task.isSync() )
-			{
 				runners.remove( task.getTaskId() );
-			}
 		}
 		
 		// Scans the backlog map for unscheduled tasks awaiting for their owner to become enabled
 		if ( !backlogTasks.isEmpty() )
 			for ( Entry<Long, Task> e : backlogTasks.entrySet() )
-			{
 				if ( e.getValue() == null || e.getValue().getOwner() == null )
-				{
 					backlogTasks.remove( e.getKey() );
-				}
 				else if ( e.getValue().getOwner().isEnabled() )
 				{
 					handle( e.getValue(), e.getKey() );
 					backlogTasks.remove( e.getKey() );
 				}
-			}
 		
 		pending.addAll( temp );
 		temp.clear();
 		debugHead = debugHead.getNextHead( currentTick );
 	}
 	
-	private void addTask( final Task task )
+	private void init0()
 	{
-		final AtomicReference<Task> tail = this.tail;
-		Task tailTask = tail.get();
-		while ( !tail.compareAndSet( tailTask, task ) )
-		{
-			tailTask = tail.get();
-		}
-		tailTask.setNext( task );
-	}
-	
-	private Task backlog( Task task, long delay )
-	{
-		backlogTasks.put( delay, task );
-		return task;
-	}
-	
-	private Task handle( final Task task, final long delay )
-	{
-		task.setNextRun( currentTick + delay );
-		addTask( task );
-		return task;
+		
 	}
 	
 	/**
-	 * Checks in the provided creator and task are valid
+	 * Check if the task currently running.
+	 * <p>
+	 * A repeating task might not be running currently, but will be running in the future. A task that has finished, and does not repeat, will not be running ever again.
+	 * <p>
+	 * Explicitly, a task is running if there exists a thread for it, and that thread is alive.
 	 * 
-	 * @param creator
-	 *            The object owning this task
-	 * @param task
-	 *            The task to validate
+	 * @param taskId
+	 *            The task to check.
+	 *            <p>
+	 * @return If the task is currently running.
 	 */
-	private static void validate( final TaskCreator creator, final Object task )
+	public boolean isCurrentlyRunning( final int taskId )
 	{
-		Validate.notNull( creator, "TaskCreator cannot be null" );
-		Validate.notNull( task, "Task cannot be null" );
-		
-		if ( !creator.isEnabled() )
+		final Task task = runners.get( taskId );
+		if ( task == null || task.isSync() )
+			return false;
+		final AsyncTask asyncTask = ( AsyncTask ) task;
+		synchronized ( asyncTask.getWorkers() )
 		{
-			// Task Creator can now register while disabled but will not be called until enabled.
-			// throw new IllegalTaskCreatorAccessException( "TaskCreator attempted to register task while disabled" );
+			return asyncTask.getWorkers().isEmpty();
 		}
+	}
+	
+	/**
+	 * Check if the task queued to be run later.
+	 * <p>
+	 * If a repeating task is currently running, it might not be queued now but could be in the future. A task that is not queued, and not running, will not be queued again.
+	 * 
+	 * @param taskId
+	 *            The task to check.
+	 *            <p>
+	 * @return If the task is queued to be run.
+	 */
+	public boolean isQueued( final int taskId )
+	{
+		if ( taskId <= 0 )
+			return false;
+		for ( Task task = head.getNext(); task != null; task = task.getNext() )
+			if ( task.getTaskId() == taskId )
+				return task.getPeriod() >= -1L; // The task will run
+		Task task = runners.get( taskId );
+		return task != null && task.getPeriod() >= -1L;
+	}
+	
+	private boolean isReady( final int currentTick )
+	{
+		return !pending.isEmpty() && pending.peek().getNextRun() <= currentTick;
 	}
 	
 	private int nextId()
@@ -814,17 +487,13 @@ public class TaskManager implements ServerManager
 		Task task = head.getNext();
 		Task lastTask = head;
 		for ( ; task != null; task = ( lastTask = task ).getNext() )
-		{
 			if ( task.getTaskId() == -1 )
-			{
 				task.run();
-			}
 			else if ( task.getPeriod() >= -1L )
 			{
 				pending.add( task );
 				runners.put( task.getTaskId(), task );
 			}
-		}
 		// We split this because of the way things are ordered for all of the async calls in ChioriScheduler
 		// (it prevents race-conditions)
 		for ( task = head; task != lastTask; task = head )
@@ -835,9 +504,273 @@ public class TaskManager implements ServerManager
 		this.head = lastTask;
 	}
 	
-	private boolean isReady( final int currentTick )
+	/**
+	 * Returns a task that will run on the next server tick.
+	 * 
+	 * @param creator
+	 *            the reference to the creator scheduling task
+	 * @param runnable
+	 *            the task to be run
+	 * @return a {@link Task} that contains the id number
+	 * @throws IllegalArgumentException
+	 *             if creator is null
+	 * @throws IllegalArgumentException
+	 *             if task is null
+	 */
+	public Task runTask( TaskCreator creator, Runnable runnable )
 	{
-		return !pending.isEmpty() && pending.peek().getNextRun() <= currentTick;
+		return runTaskLater( creator, 0L, runnable );
+	}
+	
+	/**
+	 * <b>Asynchronous tasks should never access any API in Main. Great care should be taken to assure the thread-safety
+	 * of asynchronous tasks.</b> <br>
+	 * <br>
+	 * Returns a task that will run asynchronously.
+	 * 
+	 * @param creator
+	 *            the reference to the creator scheduling task
+	 * @param runnable
+	 *            the task to be run
+	 * @return a ChioriTask that contains the id number
+	 * @throws IllegalArgumentException
+	 *             if creator is null
+	 * @throws IllegalArgumentException
+	 *             if task is null
+	 */
+	public Task runTaskAsynchronously( TaskCreator creator, Runnable runnable )
+	{
+		return runTaskLaterAsynchronously( creator, 0L, runnable );
+	}
+	
+	/**
+	 * Returns a task that will run after the specified number of server ticks.
+	 * 
+	 * @param creator
+	 *            the reference to the creator scheduling task
+	 * @param delay
+	 *            the ticks to wait before running the task
+	 * @param runnable
+	 *            the task to be run
+	 * @return a {@link Task} that contains the id number
+	 * @throws IllegalArgumentException
+	 *             if creator is null
+	 * @throws IllegalArgumentException
+	 *             if task is null
+	 */
+	public Task runTaskLater( TaskCreator creator, long delay, Runnable runnable )
+	{
+		return runTaskTimer( creator, delay, -1L, runnable );
+	}
+	
+	/**
+	 * <b>Asynchronous tasks should never access any API in Main. Great care should be taken to assure the thread-safety
+	 * of asynchronous tasks.</b> <br>
+	 * <br>
+	 * Returns a task that will run asynchronously after the specified number of server ticks.
+	 * 
+	 * @param creator
+	 *            the reference to the creator scheduling task
+	 * @param task
+	 *            the task to be run
+	 * @param delay
+	 *            the ticks to wait before running the task
+	 * @return a ChioriTask that contains the id number
+	 * @throws IllegalArgumentException
+	 *             if creator is null
+	 * @throws IllegalArgumentException
+	 *             if task is null
+	 */
+	public Task runTaskLaterAsynchronously( TaskCreator creator, long delay, Runnable runnable )
+	{
+		return runTaskTimerAsynchronously( creator, delay, -1L, runnable );
+	}
+	
+	/**
+	 * Returns a task that will repeatedly run until cancelled, starting after the specified number of server ticks.
+	 * 
+	 * @param creator
+	 *            the reference to the creator scheduling task
+	 * @param delay
+	 *            the ticks to wait before running the task
+	 * @param period
+	 *            the ticks to wait between runs
+	 * @param task
+	 *            the task to be run
+	 * @return a ChioriTask that contains the id number
+	 * @throws IllegalArgumentException
+	 *             if creator is null
+	 * @throws IllegalArgumentException
+	 *             if task is null
+	 */
+	public Task runTaskTimer( TaskCreator creator, long delay, long period, Runnable runnable )
+	{
+		validate( creator, runnable );
+		
+		if ( delay < 0L )
+			delay = 0;
+		if ( period == 0L )
+			period = 1L;
+		else if ( period < -1L )
+			period = -1L;
+		
+		Task task = new Task( creator, runnable, nextId(), period );
+		
+		if ( creator.isEnabled() )
+			return handle( task, delay );
+		else
+			return backlog( task, delay );
+	}
+	
+	/**
+	 * <b>Asynchronous tasks should never access any API in Main. Great care should be taken to assure the thread-safety
+	 * of asynchronous tasks.</b> <br>
+	 * <br>
+	 * Returns a task that will repeatedly run asynchronously until cancelled, starting after the specified number of
+	 * server ticks.
+	 * 
+	 * @param creator
+	 *            the reference to the creator scheduling task
+	 * @param delay
+	 *            the ticks to wait before running the task for the first time
+	 * @param period
+	 *            the ticks to wait between runs
+	 * @param task
+	 *            the task to be run
+	 * @return a ChioriTask that contains the id number
+	 * @throws IllegalArgumentException
+	 *             if creator is null
+	 * @throws IllegalArgumentException
+	 *             if task is null
+	 */
+	public Task runTaskTimerAsynchronously( TaskCreator creator, long delay, long period, Runnable runnable )
+	{
+		validate( creator, runnable );
+		
+		if ( delay < 0L )
+			delay = 0;
+		if ( period == 0L )
+			period = 1L;
+		else if ( period < -1L )
+			period = -1L;
+		
+		Task task = new AsyncTask( runners, creator, runnable, nextId(), period );
+		
+		if ( !creator.isEnabled() )
+			return handle( task, delay );
+		else
+			return backlog( task, delay );
+	}
+	
+	/**
+	 * <b>Asynchronous tasks should never access any API in Main. Great care should be taken to assure the thread-safety
+	 * of asynchronous tasks.</b> <br>
+	 * <br>
+	 * Schedules a once off task to occur as soon as possible. This task will be executed by a thread managed by the
+	 * scheduler.
+	 * 
+	 * @param creator
+	 *            TaskCreator that owns the task
+	 * @param task
+	 *            Task to be executed
+	 * @return Task id number (-1 if scheduling failed)
+	 */
+	public int scheduleAsyncDelayedTask( final TaskCreator creator, final Runnable task )
+	{
+		return this.scheduleAsyncDelayedTask( creator, task, 0L );
+	}
+	
+	/**
+	 * <b>Asynchronous tasks should never access any API in Main. Great care should be taken to assure the thread-safety
+	 * of asynchronous tasks.</b> <br>
+	 * <br>
+	 * Schedules a once off task to occur after a delay. This task will be executed by a thread managed by the scheduler.
+	 * 
+	 * @param creator
+	 *            TaskCreator that owns the task
+	 * @param task
+	 *            Task to be executed
+	 * @param delay
+	 *            Delay in server ticks before executing task
+	 * @return Task id number (-1 if scheduling failed)
+	 */
+	public int scheduleAsyncDelayedTask( final TaskCreator creator, final Runnable task, final long delay )
+	{
+		return scheduleAsyncRepeatingTask( creator, delay, -1L, task );
+	}
+	
+	/**
+	 * <b>Asynchronous tasks should never access any API in Main. Great care should be taken to assure the thread-safety
+	 * of asynchronous tasks.</b> <br>
+	 * <br>
+	 * Schedules a repeating task. This task will be executed by a thread managed by the scheduler.
+	 * 
+	 * @param creator
+	 *            TaskCreator that owns the task
+	 * @param task
+	 *            Task to be executed
+	 * @param delay
+	 *            Delay in server ticks before executing first repeat
+	 * @param period
+	 *            Period in server ticks of the task
+	 * @return Task id number (-1 if scheduling failed), calling {@link #cancelTask(int)} will cancel it
+	 */
+	public int scheduleAsyncRepeatingTask( final TaskCreator creator, long delay, long period, final Runnable runnable )
+	{
+		return runTaskTimerAsynchronously( creator, delay, period, runnable ).getTaskId();
+	}
+	
+	/**
+	 * Schedules a once off task to occur as soon as possible. This task will be executed by the main server thread.
+	 * 
+	 * @param creator
+	 *            TaskCreator that owns the task
+	 * @param task
+	 *            Task to be executed
+	 * @return Task id number (-1 if scheduling failed)
+	 */
+	public int scheduleSyncDelayedTask( final TaskCreator creator, final Runnable task )
+	{
+		return this.scheduleSyncDelayedTask( creator, task, 0L );
+	}
+	
+	/**
+	 * Schedules a once off task to occur after a delay. This task will be executed by the main server thread.
+	 * 
+	 * @param creator
+	 *            TaskCreator that owns the task
+	 * @param task
+	 *            Task to be executed
+	 * @param delay
+	 *            Delay in server ticks before executing task
+	 * @return Task id number (-1 if scheduling failed)
+	 */
+	public int scheduleSyncDelayedTask( final TaskCreator creator, final Runnable task, final long delay )
+	{
+		return scheduleSyncRepeatingTask( creator, task, delay, -1L );
+	}
+	
+	/**
+	 * Schedules a repeating task. This task will be executed by the main server thread.
+	 * 
+	 * @param creator
+	 *            TaskCreator that owns the task
+	 * @param task
+	 *            Task to be executed
+	 * @param delay
+	 *            Delay in server ticks before executing first repeat
+	 * @param period
+	 *            Period in server ticks of the task
+	 * @return Task id number (-1 if scheduling failed)
+	 */
+	public int scheduleSyncRepeatingTask( final TaskCreator creator, final Runnable runnable, long delay, long period )
+	{
+		return runTaskTimer( creator, delay, period, runnable ).getTaskId();
+	}
+	
+	public void shutdown()
+	{
+		executor.shutdown();
 	}
 	
 	@Override

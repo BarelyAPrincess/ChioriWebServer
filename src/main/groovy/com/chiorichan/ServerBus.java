@@ -13,6 +13,8 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 
@@ -24,9 +26,9 @@ import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.AccountType;
 import com.chiorichan.account.auth.AccountAuthenticator;
+import com.chiorichan.account.lang.AccountDescriptiveReason;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
-import com.chiorichan.account.lang.AccountDescriptiveReason;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.messaging.MessageSender;
 import com.chiorichan.permission.PermissibleEntity;
@@ -46,15 +48,12 @@ import com.google.common.collect.Lists;
 public class ServerBus extends AccountPermissible implements Runnable, AccountAttachment
 {
 	public static int lastFiveTick = -1;
-	
 	public static int currentTick = ( int ) ( System.currentTimeMillis() / 50 );
+	private static final ExecutorService pool = Executors.newCachedThreadPool();
 	private ServerLogManager logManager;
 	private OptionSet options;
-	
 	public Thread primaryThread;
-	
 	public boolean useColors = true;
-	
 	public Loader loader;
 	
 	ServerBus()
@@ -81,14 +80,19 @@ public class ServerBus extends AccountPermissible implements Runnable, AccountAt
 		safeLog( Level.WARNING, LogColor.RED + "" + LogColor.NEGATIVE + "**** WE ENCOUNTERED AN UNEXPECTED EXCEPTION ****" );
 	}
 	
+	public static void registerRunnable( Runnable runnable )
+	{
+		if ( runnable != null )
+			pool.execute( runnable );
+	}
+	
 	protected static void safeLog( Level l, String msg )
 	{
 		if ( Loader.getLogger() != null )
 			Loader.getLogger().log( l, msg );
 		else
 		{
-			msg = msg.replaceAll( "&.", "" );
-			msg = msg.replaceAll( "§.", "" );
+			msg = LogColor.transAltColors( msg );
 			
 			if ( l.intValue() >= Level.WARNING.intValue() )
 				System.err.println( msg );
@@ -133,12 +137,14 @@ public class ServerBus extends AccountPermissible implements Runnable, AccountAt
 		return Lists.newArrayList();
 	}
 	
-	public ServerLogger getLogger()
+	public APILogger getLogger()
 	{
+		if ( logManager == null )
+			return null;
 		return logManager.getLogger();
 	}
 	
-	public ServerLogger getLogger( String loggerId )
+	public APILogger getLogger( String loggerId )
 	{
 		return logManager.getLogger( loggerId );
 	}
@@ -192,10 +198,8 @@ public class ServerBus extends AccountPermissible implements Runnable, AccountAt
 		consoleHandler.setFormatter( new DefaultLogFormatter() );
 		logManager.addHandler( consoleHandler );
 		
-		System.setOut( new PrintStream( new LoggerOutputStream( getLogger( "SysOut" ).getLogger(), Level.INFO ), true ) );
-		System.setErr( new PrintStream( new LoggerOutputStream( getLogger( "SysErr" ).getLogger(), Level.SEVERE ), true ) );
-		
-		new ShutdownHook();
+		System.setOut( new PrintStream( new LoggerOutputStream( ( ( ServerLogger ) getLogger( "SysOut" ) ).getLogger(), Level.INFO ), true ) );
+		System.setErr( new PrintStream( new LoggerOutputStream( ( ( ServerLogger ) getLogger( "SysErr" ) ).getLogger(), Level.SEVERE ), true ) );
 		
 		primaryThread = new Thread( this, "Server Thread" );
 		primaryThread.setPriority( Thread.MAX_PRIORITY );
@@ -294,11 +298,6 @@ public class ServerBus extends AccountPermissible implements Runnable, AccountAt
 		{
 			long i = System.currentTimeMillis();
 			
-			// @SuppressWarnings( "unused" )
-			// boolean g = false;
-			
-			// long j = 0L; Loader.isRunning; g = true
-			
 			long q = 0L;
 			long j = 0L;
 			for ( ;; )
@@ -322,6 +321,7 @@ public class ServerBus extends AccountPermissible implements Runnable, AccountAt
 				
 				j += l;
 				i = k;
+				
 				while ( j > 50L )
 				{
 					currentTick = ( int ) ( System.currentTimeMillis() / 50 );
@@ -340,18 +340,11 @@ public class ServerBus extends AccountPermissible implements Runnable, AccountAt
 		catch ( Throwable t )
 		{
 			getLogger().severe( "There was a severe exception thrown by the main tick loop", t );
-			// Crash report generate here
 		}
 		finally
 		{
-			try
-			{
-				Loader.shutdown();
-			}
-			catch ( Throwable throwable1 )
-			{
-				throwable1.printStackTrace();
-			}
+			pool.shutdown();
+			Loader.serverUnload();
 		}
 	}
 	

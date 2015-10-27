@@ -18,7 +18,7 @@ import java.util.Set;
 import java.util.TimerTask;
 
 import com.chiorichan.LogColor;
-import com.chiorichan.ServerLogger;
+import com.chiorichan.APILogger;
 import com.chiorichan.Loader;
 import com.chiorichan.ServerManager;
 import com.chiorichan.account.AccountInstance;
@@ -88,7 +88,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 		callEvent( new PermissibleSystemEvent( action ) );
 	}
 	
-	public static ServerLogger getLogger()
+	public static APILogger getLogger()
 	{
 		return Loader.getLogger( "PermMgr" );
 	}

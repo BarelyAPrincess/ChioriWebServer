@@ -14,12 +14,13 @@ import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.ServerLogger;
+import com.chiorichan.APILogger;
 import com.chiorichan.Loader;
 import com.chiorichan.ServerManager;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountDescriptiveReason;
 import com.chiorichan.event.EventBus;
+import com.chiorichan.event.server.KickEvent;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.TaskCreator;
@@ -44,7 +45,7 @@ public final class AccountManager extends AccountEvents implements ServerManager
 		
 	}
 	
-	public static ServerLogger getLogger()
+	public static APILogger getLogger()
 	{
 		return Loader.getLogger( "AcctMgr" );
 	}
@@ -377,5 +378,28 @@ public final class AccountManager extends AccountEvents implements ServerManager
 			{
 				e.printStackTrace();
 			}
+	}
+	
+	public void shutdown( String reason )
+	{
+		try
+		{
+			Set<Kickable> kickables = Sets.newHashSet();
+			for ( AccountMeta acct : AccountManager.INSTANCE.getAccounts() )
+				if ( acct.isInitialized() )
+					for ( AccountAttachment attachment : acct.instance().getAttachments() )
+						if ( attachment.getPermissible() instanceof Kickable )
+							kickables.add( ( Kickable ) attachment.getPermissible() );
+						else if ( attachment instanceof Kickable )
+							kickables.add( ( Kickable ) attachment );
+			
+			KickEvent.kick( AccountType.ACCOUNT_ROOT, kickables ).setReason( reason ).fire();
+		}
+		catch ( Throwable t )
+		{
+			// Ignore
+		}
+		
+		save();
 	}
 }

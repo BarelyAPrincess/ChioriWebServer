@@ -24,7 +24,7 @@ import com.google.common.collect.Sets;
 
 public class ServerLogManager
 {
-	private static final Set<ServerLogger> loggers = Sets.newHashSet();
+	private static final Set<APILogger> loggers = Sets.newHashSet();
 	private static final Logger logger = Logger.getLogger( "" );
 	
 	public ServerLogManager()
@@ -99,18 +99,18 @@ public class ServerLogManager
 		logger.addHandler( h );
 	}
 	
-	public ServerLogger getLogger()
+	public APILogger getLogger()
 	{
 		return getLogger( "Core" );
 	}
 	
-	public ServerLogger getLogger( String loggerId )
+	public APILogger getLogger( String loggerId )
 	{
-		for ( ServerLogger log : loggers )
+		for ( APILogger log : loggers )
 			if ( log.getId().equals( loggerId ) )
 				return log;
 		
-		ServerLogger log = new ServerLogger( loggerId );
+		APILogger log = new ServerLogger( loggerId );
 		loggers.add( log );
 		return log;
 	}

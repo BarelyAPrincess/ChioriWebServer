@@ -25,33 +25,65 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Map;
 
 import com.chiorichan.lang.StartupException;
-import com.chiorichan.plugin.PluginManager;
+import com.chiorichan.tasks.TaskCreator;
+import com.chiorichan.tasks.TaskManager;
+import com.chiorichan.tasks.Timings;
 import com.google.common.collect.Maps;
 
 /**
  * Provides a simple file watching service for the Server
  * Common detections will be the main jar and plugins
  */
-public class ServerFileWatcher implements Runnable, ServerManager
+public class ServerFileWatcher implements Runnable, ServerManager, TaskCreator
 {
-	private abstract class EventCallback
+	public interface EventCallback
 	{
-		abstract void call( Kind<?> kind, Path path );
+		void call( Kind<?> kind, File file, boolean isDirectory );
+	}
+	
+	private class TriggerRef
+	{
+		Kind<?> kind;
+		Path path;
+		boolean isDirectory;
+		EventCallback callback;
+		
+		int epoch = Timings.epoch();
+		boolean called = false;
+		
+		TriggerRef( Kind<?> kind, Path path, boolean isDirectory, EventCallback callback )
+		{
+			this.kind = kind;
+			this.path = path;
+			this.isDirectory = isDirectory;
+			this.callback = callback;
+		}
 	}
 	
 	private class WatchRef
 	{
 		WatchKey key;
 		Path path;
+		EventCallback callback;
+		boolean recursive;
 		
-		WatchRef( WatchKey key, Path path )
+		WatchRef( WatchKey key, Path path, EventCallback callback, boolean recursive )
 		{
 			this.key = key;
 			this.path = path;
+			this.callback = callback;
+			this.recursive = recursive;
 		}
 		
-		public void pollEvents( EventCallback callback )
+		public void pollEvents()
 		{
+			boolean allCalled = true;
+			for ( TriggerRef ref : triggerReferences.values() )
+				if ( !ref.called )
+					allCalled = false;
+			if ( allCalled )
+				triggerReferences.clear();
+			
 			for ( WatchEvent<?> event : key.pollEvents() )
 			{
 				if ( event.kind() == StandardWatchEventKinds.OVERFLOW )
@@ -61,28 +93,29 @@ public class ServerFileWatcher implements Runnable, ServerManager
 				Path name = ev.context();
 				Path child = path.resolve( name );
 				
+				boolean isDirectory = Files.isDirectory( child, LinkOption.NOFOLLOW_LINKS );
 				
-				callback.call( event.kind(), child );
+				if ( recursive && event.kind() == StandardWatchEventKinds.ENTRY_CREATE && isDirectory )
+					registerRecursive( child, callback );
 				
-				if ( event.kind() == StandardWatchEventKinds.ENTRY_CREATE )
-					try
-					{
-						if ( Files.isDirectory( child, LinkOption.NOFOLLOW_LINKS ) )
-							registerAll( child );
-					}
-					catch ( IOException x )
-					{
-						// Ignore
-					}
+				TriggerRef ref = triggerReferences.get( child.toString() + "--" + event.kind().name() );
+				
+				if ( ref == null )
+					triggerReferences.put( child.toString() + "--" + event.kind().name(), new TriggerRef( event.kind(), child, isDirectory, callback ) );
+				else
+				{
+					ref.epoch = Timings.epoch();
+					ref.called = false;
+				}
 			}
-			
-			Loader.getLogger().debug( "Timing Break" );
 		}
 	}
 	
 	public static final ServerFileWatcher INSTANCE = new ServerFileWatcher();
 	
 	private static boolean isInitialized = false;
+	
+	private final Map<String, TriggerRef> triggerReferences = Maps.newLinkedHashMap();
 	private final Thread watcherThread;
 	private final WatchService watcher;
 	
@@ -122,6 +155,12 @@ public class ServerFileWatcher implements Runnable, ServerManager
 		isInitialized = true;
 	}
 	
+	@Override
+	public String getName()
+	{
+		return "ServerFileWatcher";
+	}
+	
 	/**
 	 * Initializes the Server File Watcher
 	 * 
@@ -130,66 +169,83 @@ public class ServerFileWatcher implements Runnable, ServerManager
 	 */
 	private void init0() throws StartupException
 	{
-		try
+		TaskManager.INSTANCE.scheduleAsyncRepeatingTask( this, 25, 25, new Runnable()
 		{
-			register( Loader.getServerRoot() );
-			registerAll( Loader.getPluginsDirectory() );
-		}
-		catch ( IOException e )
-		{
-			throw new StartupException( e );
-		}
+			@Override
+			public void run()
+			{
+				int epoch = Timings.epoch();
+				for ( TriggerRef tr : triggerReferences.values().toArray( new TriggerRef[0] ) )
+					if ( epoch - tr.epoch > 0 && !tr.called )
+					{
+						tr.callback.call( tr.kind, tr.path.toFile(), tr.isDirectory );
+						tr.called = true;
+					}
+			}
+		} );
 	}
 	
-	private void register( File file ) throws IOException
+	@Override
+	public boolean isEnabled()
 	{
-		if ( !file.isDirectory() )
-			throw new IOException( "Path is not a directory" );
-		
+		return true;
+	}
+	
+	public void register( File file, EventCallback callback ) throws IOException
+	{
 		final Path path = FileSystems.getDefault().getPath( file.getAbsolutePath() );
-		register( path );
+		register( path, callback );
 	}
 	
 	/**
 	 * Register the given directory with the WatchService
 	 */
-	private void register( Path dir ) throws IOException
+	public void register( Path dir, EventCallback callback ) throws IOException
+	{
+		register( dir, callback, false );
+	}
+	
+	private void register( Path dir, EventCallback callback, boolean recursive ) throws IOException
 	{
 		WatchKey key = dir.register( watcher, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY );
-		WatchRef ref = new WatchRef( key, dir );
+		WatchRef ref = new WatchRef( key, dir, callback, recursive );
 		
 		WatchRef prev = keys.get( key );
 		if ( prev == null )
-			Loader.getLogger().fine( String.format( "Now watching directory '%s'", dir ) );
+			Loader.getLogger().fine( String.format( "Now watching directory '%s' for changes", dir ) );
 		else if ( !dir.equals( prev.path ) )
 			Loader.getLogger().fine( String.format( "Updated directory watch from '%s' to '%s'", prev.path, dir ) );
 		
 		keys.put( key, ref );
 	}
 	
-	private void registerAll( File file ) throws IOException
+	public void registerRecursive( File file, EventCallback callback )
 	{
-		if ( !file.isDirectory() )
-			throw new IOException( "Path is not a directory" );
-		
 		final Path path = FileSystems.getDefault().getPath( file.getAbsolutePath() );
-		registerAll( path );
+		registerRecursive( path, callback );
 	}
 	
 	/**
 	 * Register the given directory, and all its sub-directories, with the WatchService.
 	 */
-	private void registerAll( final Path start ) throws IOException
+	public void registerRecursive( final Path start, final EventCallback callback )
 	{
-		Files.walkFileTree( start, new SimpleFileVisitor<Path>()
+		try
 		{
-			@Override
-			public FileVisitResult preVisitDirectory( Path dir, BasicFileAttributes attrs ) throws IOException
+			Files.walkFileTree( start, new SimpleFileVisitor<Path>()
 			{
-				register( dir );
-				return FileVisitResult.CONTINUE;
-			}
-		} );
+				@Override
+				public FileVisitResult preVisitDirectory( Path dir, BasicFileAttributes attrs ) throws IOException
+				{
+					register( dir, callback, true );
+					return FileVisitResult.CONTINUE;
+				}
+			} );
+		}
+		catch ( IOException e )
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	@Override
@@ -212,14 +268,7 @@ public class ServerFileWatcher implements Runnable, ServerManager
 			if ( ref == null )
 				continue;
 			
-			ref.pollEvents( new EventCallback()
-			{
-				@Override
-				void call( Kind<?> kind, Path path )
-				{
-					Loader.getLogger().info( String.format( "%s: %s", kind.name(), path ) );
-				}
-			} );
+			ref.pollEvents();
 			
 			boolean valid = key.reset();
 			if ( !valid )

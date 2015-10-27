@@ -20,7 +20,7 @@ import java.util.Map;
 
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 
-import com.chiorichan.ServerLogger;
+import com.chiorichan.APILogger;
 import com.chiorichan.Loader;
 import com.chiorichan.ServerManager;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
@@ -45,7 +45,7 @@ public class SiteManager implements ServerManager
 		
 	}
 	
-	public static ServerLogger getLogger()
+	public static APILogger getLogger()
 	{
 		return Loader.getLogger( "SiteMgr" );
 	}

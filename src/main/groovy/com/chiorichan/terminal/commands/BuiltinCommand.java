@@ -193,7 +193,7 @@ public abstract class BuiltinCommand extends Command
 			public boolean execute( AccountAttachment sender, String command, String[] args )
 			{
 				if ( sender.getEntity().isOp() )
-					Loader.restart( "The server is restarting by request of acct " + sender.getId() );
+					Loader.serverRestart( "The server is restarting by request of acct " + sender.getId() );
 				else
 					sender.sendMessage( LogColor.RED + "Only server operators can request the server to restart." );
 				return true;
@@ -206,7 +206,7 @@ public abstract class BuiltinCommand extends Command
 			public boolean execute( AccountAttachment sender, String command, String[] args )
 			{
 				if ( sender.getEntity().isOp() )
-					Loader.stop( "The server is shutting down by request of acct " + sender.getId() );
+					Loader.serverStop( "The server is shutting down by request of acct " + sender.getId() );
 				else
 					sender.sendMessage( LogColor.RED + "Only server operators can request the server to stop." );
 				return true;

@@ -15,11 +15,9 @@ import java.util.logging.Logger;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.lang.EvalException;
 import com.chiorichan.util.Versioning;
-import com.google.common.base.Strings;
 
-public class ServerLogger
+public class ServerLogger implements APILogger
 {
-	private int lineCount = 999;
 	private final Logger logger;
 	private final String id;
 	
@@ -38,13 +36,14 @@ public class ServerLogger
 		if ( logger == null )
 			logger = new ServerSubLogger( id );
 		
-		logger.setParent( Loader.getLogManager().getParent() );
+		logger.setParent( Loader.getServerBus().getLogManager().getParent() );
 		logger.setLevel( Level.ALL );
 		
 		this.id = id;
 		this.logger = logger;
 	}
 	
+	@Override
 	public void debug( Object... var1 )
 	{
 		if ( !Versioning.isDevelopment() )
@@ -54,6 +53,7 @@ public class ServerLogger
 			info( LogColor.NEGATIVE + "" + LogColor.YELLOW + " >>>>   " + var2.toString() + "   <<<< " );
 	}
 	
+	@Override
 	public void exceptions( EvalException... exceptions )
 	{
 		for ( EvalException e : exceptions )
@@ -67,21 +67,25 @@ public class ServerLogger
 					severe( String.format( LogColor.NEGATIVE + "" + LogColor.RED + "Exception %s thrown in file '%s' at line %s, message '%s'", e.getClass().getName(), e.getStackTrace()[0].getFileName(), e.getStackTrace()[0].getLineNumber(), e.getMessage() ) );
 	}
 	
+	@Override
 	public void fine( String var1 )
 	{
 		logger.log( Level.FINE, var1 );
 	}
 	
+	@Override
 	public void finer( String var1 )
 	{
 		logger.log( Level.FINER, var1 );
 	}
 	
+	@Override
 	public void finest( String var1 )
 	{
 		logger.log( Level.FINEST, var1 );
 	}
 	
+	@Override
 	public String getId()
 	{
 		return id;
@@ -92,31 +96,31 @@ public class ServerLogger
 		return logger;
 	}
 	
+	@Override
 	public void highlight( String msg )
 	{
 		log( Level.INFO, LogColor.GOLD + "" + LogColor.NEGATIVE + msg );
 	}
 	
+	@Override
 	public void info( String s )
 	{
 		log( Level.INFO, LogColor.WHITE + s );
 	}
 	
+	@Override
 	public void log( Level l, String msg )
 	{
 		logger.log( l, msg );
 	}
 	
-	public void log( Level l, String client, String msg )
+	@Override
+	public void log( Level level, String msg, Object... params )
 	{
-		if ( client.length() < 15 )
-			client = client + Strings.repeat( " ", 15 - client.length() );
-		
-		printHeader();
-		
-		log( l, LogColor.LIGHT_PURPLE + client + " " + LogColor.AQUA + msg );
+		logger.log( level, msg, params );
 	}
 	
+	@Override
 	public void log( Level l, String msg, Throwable t )
 	{
 		logger.log( l, msg, t );
@@ -137,54 +141,51 @@ public class ServerLogger
 		return var1;
 	}
 	
+	@Override
 	public void panic( String var1 )
 	{
 		severe( var1 );
-		Loader.stop( var1 );
+		Loader.serverStop( var1 );
 	}
 	
+	@Override
 	public void panic( Throwable e )
 	{
 		severe( e );
-		Loader.stop( "The server is stopping due to a severe error!" );
+		Loader.serverStop( "The server is stopping due to a severe error!" );
 	}
 	
-	private void printHeader()
-	{
-		if ( lineCount > 40 )
-		{
-			lineCount = 0;
-			log( Level.FINE, LogColor.GOLD + "<CLIENT ID>     <MESSAGE>" );
-		}
-		
-		lineCount++;
-	}
-	
+	@Override
 	public void severe( String s )
 	{
 		log( Level.SEVERE, LogColor.RED + s );
 	}
 	
+	@Override
 	public void severe( String s, Throwable t )
 	{
 		log( Level.SEVERE, LogColor.RED + s, t );
 	}
 	
+	@Override
 	public void severe( Throwable t )
 	{
 		log( Level.SEVERE, LogColor.RED + t.getMessage(), t );
 	}
 	
+	@Override
 	public void warning( String s )
 	{
 		log( Level.WARNING, LogColor.GOLD + s );
 	}
 	
+	@Override
 	public void warning( String s, Object... aobject )
 	{
-		logger.log( Level.WARNING, LogColor.GOLD + s, aobject );
+		log( Level.WARNING, LogColor.GOLD + s, aobject );
 	}
 	
+	@Override
 	public void warning( String s, Throwable throwable )
 	{
 		log( Level.WARNING, LogColor.GOLD + s, throwable );

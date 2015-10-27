@@ -13,17 +13,18 @@ import java.sql.SQLException;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.LogColor;
 import com.chiorichan.Loader;
+import com.chiorichan.LogColor;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
-import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountDescriptiveReason;
+import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.datastore.sql.query.SQLQuerySelect;
 import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.tasks.TaskManager;
+import com.chiorichan.tasks.Ticks;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.RandomFunc;
 
@@ -65,14 +66,13 @@ public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
 			e.printStackTrace();
 		}
 		
-		TaskManager.INSTANCE.scheduleAsyncRepeatingTask( AccountManager.INSTANCE, 0L, Timings.TICK_MINUTE * Loader.getConfig().getInt( "sessions.cleanupInterval", 5 ), new Runnable()
+		TaskManager.INSTANCE.scheduleAsyncRepeatingTask( AccountManager.INSTANCE, 0L, Ticks.MINUTE * Loader.getConfig().getInt( "sessions.cleanupInterval", 5 ), new Runnable()
 		{
 			@Override
 			public void run()
 			{
 				try
 				{
-					// int deleted = db.queryUpdate( "DELETE FROM `accounts_token` WHERE `expires` > 0 AND `expires` < ?", Timings.epoch() );
 					int deleted = db.table( "accounts_token" ).delete().where( "expires" ).moreThan( 0 ).and().where( "expires" ).lessThan( Timings.epoch() ).execute().rowCount();
 					if ( deleted > 0 )
 						AccountManager.getLogger().info( LogColor.DARK_AQUA + "The cleanup task deleted " + deleted + " expired login token(s)." );

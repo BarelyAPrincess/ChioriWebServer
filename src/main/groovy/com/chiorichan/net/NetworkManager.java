@@ -19,15 +19,16 @@ import java.io.File;
 import java.lang.ref.WeakReference;
 import java.net.InetSocketAddress;
 
-import com.chiorichan.ServerLogger;
 import com.chiorichan.Loader;
+import com.chiorichan.ServerBus;
+import com.chiorichan.APILogger;
 import com.chiorichan.http.HttpInitializer;
 import com.chiorichan.https.HttpsInitializer;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.net.query.QueryServerInitializer;
 import com.chiorichan.tasks.TaskCreator;
 import com.chiorichan.tasks.TaskManager;
-import com.chiorichan.tasks.Timings;
+import com.chiorichan.tasks.Ticks;
 import com.chiorichan.util.Versioning;
 
 /**
@@ -48,13 +49,12 @@ public class NetworkManager implements TaskCreator
 	
 	private NetworkManager()
 	{
-		TaskManager.INSTANCE.scheduleAsyncRepeatingTask( this, Timings.TICK_SECOND_15, Timings.TICK_SECOND_15, new Runnable()
+		TaskManager.INSTANCE.scheduleAsyncRepeatingTask( this, Ticks.SECOND_15, Ticks.SECOND_15, new Runnable()
 		{
 			@Override
 			public void run()
 			{
 				for ( WeakReference<SocketChannel> ref : HttpInitializer.activeChannels )
-				{
 					if ( ref.get() == null )
 						HttpInitializer.activeChannels.remove( ref );
 					else
@@ -62,9 +62,37 @@ public class NetworkManager implements TaskCreator
 						// SocketChannel ch = ref.get();
 						// Loader.getLogger().debug( "Got Active Channel: " + ch + " -- " + ch.isOpen() + " -- " + ch.config().isKeepAlive() );
 					}
-				}
 			}
 		} );
+	}
+	
+	private static void close( Channel channel )
+	{
+		try
+		{
+			if ( channel != null && channel.isOpen() )
+				channel.close();
+		}
+		catch ( Throwable t )
+		{
+			// Ignore
+		}
+	}
+	
+	public static APILogger getLogger()
+	{
+		return Loader.getLogger( "NetMgr" );
+	}
+	
+	public static void shutdown()
+	{
+		bossGroup.shutdownGracefully();
+		workerGroup.shutdownGracefully();
+		
+		close( httpChannel );
+		close( httpsChannel );
+		close( tcpChannel );
+		close( queryChannel );
 	}
 	
 	public static void shutdownHttpServer()
@@ -79,16 +107,16 @@ public class NetworkManager implements TaskCreator
 			httpsChannel.close();
 	}
 	
-	public static void shutdownTcpServer()
-	{
-		if ( tcpChannel != null && tcpChannel.isOpen() )
-			tcpChannel.close();
-	}
-	
 	public static void shutdownQueryServer()
 	{
 		if ( queryChannel != null && queryChannel.isOpen() )
 			queryChannel.close();
+	}
+	
+	public static void shutdownTcpServer()
+	{
+		if ( tcpChannel != null && tcpChannel.isOpen() )
+			tcpChannel.close();
 	}
 	
 	public static void startHttpServer() throws StartupException
@@ -125,8 +153,10 @@ public class NetworkManager implements TaskCreator
 					
 					httpChannel = b.bind( socket ).sync().channel();
 					
-					Thread thread = new Thread( "HTTP Server Thread" )
+					// HTTP Server Thread
+					ServerBus.registerRunnable( new Runnable()
 					{
+						@Override
 						public void run()
 						{
 							try
@@ -140,8 +170,7 @@ public class NetworkManager implements TaskCreator
 							
 							Loader.getLogger().info( "The HTTP Server has been shutdown!" );
 						}
-					};
-					thread.start();
+					} );
 				}
 				catch ( NullPointerException e )
 				{
@@ -202,8 +231,10 @@ public class NetworkManager implements TaskCreator
 					
 					httpsChannel = b.bind( socket ).sync().channel();
 					
-					Thread thread = new Thread( "HTTPS Server Thread" )
+					// HTTPS Server Thread
+					ServerBus.registerRunnable( new Runnable()
 					{
+						@Override
 						public void run()
 						{
 							try
@@ -217,8 +248,7 @@ public class NetworkManager implements TaskCreator
 							
 							Loader.getLogger().info( "The HTTPS Server has been shutdown!" );
 						}
-					};
-					thread.start();
+					} );
 				}
 				catch ( NullPointerException e )
 				{
@@ -273,8 +303,10 @@ public class NetworkManager implements TaskCreator
 					
 					queryChannel = b.bind( socket ).sync().channel();
 					
-					Thread thread = new Thread( "Query Server Thread" )
+					// Query Server Thread
+					ServerBus.registerRunnable( new Runnable()
 					{
+						@Override
 						public void run()
 						{
 							try
@@ -288,8 +320,7 @@ public class NetworkManager implements TaskCreator
 							
 							Loader.getLogger().info( "The Query Server has been shutdown!" );
 						}
-					};
-					thread.start();
+					} );
 				}
 				catch ( NullPointerException e )
 				{
@@ -315,38 +346,15 @@ public class NetworkManager implements TaskCreator
 		// XXX TCP IS TEMPORARY REMOVED UNTIL IT CAN BE PORTED TO NETTY.
 	}
 	
-	public static void cleanup()
+	@Override
+	public String getName()
 	{
-		if ( httpChannel != null && httpChannel.isOpen() )
-			httpChannel.close();
-		
-		if ( httpsChannel != null && httpsChannel.isOpen() )
-			httpsChannel.close();
-		
-		if ( tcpChannel != null && tcpChannel.isOpen() )
-			tcpChannel.close();
-		
-		if ( queryChannel != null && queryChannel.isOpen() )
-			queryChannel.close();
-		
-		bossGroup.shutdownGracefully();
-		workerGroup.shutdownGracefully();
-	}
-	
-	public static ServerLogger getLogger()
-	{
-		return Loader.getLogger( "NetMgr" );
+		return "NetMgr";
 	}
 	
 	@Override
 	public boolean isEnabled()
 	{
 		return true;
-	}
-	
-	@Override
-	public String getName()
-	{
-		return "NetMgr";
 	}
 }

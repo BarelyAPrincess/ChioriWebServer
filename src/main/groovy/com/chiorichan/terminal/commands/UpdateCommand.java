@@ -163,7 +163,7 @@ public class UpdateCommand extends Command
 							// Disable updater until next boot.
 							Loader.getAutoUpdater().setEnabled( false );
 							
-							Loader.restart( "The update was successfully downloaded, restarting to apply it." );
+							Loader.serverRestart( "The update was successfully downloaded, restarting to apply it." );
 						}
 					}
 					else

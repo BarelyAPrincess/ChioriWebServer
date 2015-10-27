@@ -15,14 +15,15 @@ import java.util.Set;
 
 import org.apache.commons.lang3.text.WordUtils;
 
-import com.chiorichan.LogColor;
-import com.chiorichan.ServerLogger;
 import com.chiorichan.Loader;
+import com.chiorichan.LogColor;
+import com.chiorichan.APILogger;
 import com.chiorichan.ServerManager;
 import com.chiorichan.http.HttpCookie;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.tasks.TaskCreator;
 import com.chiorichan.tasks.TaskManager;
+import com.chiorichan.tasks.Ticks;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.RandomFunc;
 import com.chiorichan.util.StringFunc;
@@ -88,11 +89,11 @@ public class SessionManager implements TaskCreator, ServerManager
 	}
 	
 	/**
-	 * Get the {@link com.chiorichan.ServerLogger} instance for this SessionManager
+	 * Get the {@link com.chiorichan.APILogger} instance for this SessionManager
 	 * 
 	 * @return ConsoleLogger instance
 	 */
-	public static ServerLogger getLogger()
+	public static APILogger getLogger()
 	{
 		return Loader.getLogger( "SessMgr" );
 	}
@@ -226,7 +227,7 @@ public class SessionManager implements TaskCreator, ServerManager
 		/*
 		 * This schedules the Session Manager with the Scheduler to run every 5 minutes (by default) to cleanup sessions.
 		 */
-		TaskManager.INSTANCE.scheduleAsyncRepeatingTask( this, 0L, Timings.TICK_MINUTE * Loader.getConfig().getInt( "sessions.cleanupInterval", 5 ), new Runnable()
+		TaskManager.INSTANCE.scheduleAsyncRepeatingTask( this, 0L, Ticks.MINUTE * Loader.getConfig().getInt( "sessions.cleanupInterval", 5 ), new Runnable()
 		{
 			@Override
 			public void run()
@@ -330,11 +331,8 @@ public class SessionManager implements TaskCreator, ServerManager
 	
 	/**
 	 * Finalizes the Session Manager for Shutdown
-	 * 
-	 * @throws SessionException
-	 *             If there was problems
 	 */
-	public void shutdown() throws SessionException
+	public void shutdown()
 	{
 		synchronized ( sessions )
 		{
@@ -342,7 +340,14 @@ public class SessionManager implements TaskCreator, ServerManager
 			sessionCleanup();
 			
 			for ( Session sess : sessions )
-				sess.save();
+				try
+				{
+					sess.save();
+				}
+				catch ( SessionException e )
+				{
+					
+				}
 			
 			sessions.clear();
 		}

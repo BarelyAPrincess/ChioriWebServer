@@ -8,11 +8,19 @@
  */
 package com.chiorichan.updater;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.WatchEvent.Kind;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.chiorichan.LogColor;
+import org.apache.commons.io.FileUtils;
+
 import com.chiorichan.Loader;
+import com.chiorichan.LogColor;
+import com.chiorichan.ServerFileWatcher;
+import com.chiorichan.ServerFileWatcher.EventCallback;
+import com.chiorichan.APILogger;
 import com.chiorichan.account.AccountAttachment;
 import com.chiorichan.account.event.AccountSuccessfulLoginEvent;
 import com.chiorichan.event.EventBus;
@@ -22,8 +30,9 @@ import com.chiorichan.event.Listener;
 import com.chiorichan.messaging.MessageReceiver;
 import com.chiorichan.tasks.TaskCreator;
 import com.chiorichan.tasks.TaskManager;
-import com.chiorichan.tasks.Timings;
+import com.chiorichan.tasks.Ticks;
 import com.chiorichan.updater.BuildArtifact.ChangeSet.ChangeSetDetails;
+import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.Versioning;
 
 public class AutoUpdater implements Listener, TaskCreator
@@ -40,6 +49,7 @@ public class AutoUpdater implements Listener, TaskCreator
 	private BuildArtifact current = null;
 	private BuildArtifact latest = null;
 	private boolean suggestChannels = true;
+	private String serverJarMD5 = null;
 	
 	public AutoUpdater( DownloadUpdaterService service, String channel )
 	{
@@ -50,7 +60,7 @@ public class AutoUpdater implements Listener, TaskCreator
 		/*
 		 * This schedules the Auto Updater with the Scheduler to run every 30 minutes (by default).
 		 */
-		TaskManager.INSTANCE.scheduleAsyncRepeatingTask( this, 0L, Loader.getConfig().getInt( "auto-updater.check-interval", 30 ) * Timings.TICK_MINUTE, new Runnable()
+		TaskManager.INSTANCE.scheduleAsyncRepeatingTask( this, 0L, Loader.getConfig().getInt( "auto-updater.check-interval", 30 ) * Ticks.MINUTE, new Runnable()
 		{
 			@Override
 			public void run()
@@ -58,6 +68,44 @@ public class AutoUpdater implements Listener, TaskCreator
 				check();
 			}
 		} );
+		
+		if ( Loader.getServerJar().exists() && Loader.getServerJar().isFile() )
+			try
+			{
+				serverJarMD5 = StringFunc.md5( FileUtils.readFileToByteArray( Loader.getServerJar() ) );
+				
+				ServerFileWatcher.INSTANCE.register( Loader.getServerRoot(), new EventCallback()
+				{
+					@Override
+					public void call( Kind<?> kind, File file, boolean isDirectory )
+					{
+						getLogger().debug( String.format( "%s: %s", kind.name(), file ) );
+						
+						if ( file.getAbsolutePath().equals( Loader.getServerJar().getAbsolutePath() ) && Loader.getConfig().getBoolean( "auto-updater.auto-restart", true ) )
+							if ( Loader.isWatchdogRunning() )
+							{
+								String newServerJarMD5 = null;
+								try
+								{
+									newServerJarMD5 = StringFunc.md5( FileUtils.readFileToByteArray( Loader.getServerJar() ) );
+								}
+								catch ( IOException e )
+								{
+									e.printStackTrace();
+								}
+								
+								if ( serverJarMD5 == null || !serverJarMD5.equals( newServerJarMD5 ) )
+									Loader.serverRestart( "We detected modification to the server jar, the server will now restart to apply changes." );
+							}
+							else
+								getLogger().warning( "We detected a change to the server jar, but the Watchdog process is not running." );
+					}
+				} );
+			}
+			catch ( IOException e )
+			{
+				e.printStackTrace();
+			}
 	}
 	
 	protected static DownloadUpdaterService getService()
@@ -67,7 +115,7 @@ public class AutoUpdater implements Listener, TaskCreator
 	
 	public void check()
 	{
-		check( Loader.getConsole(), true );
+		check( Loader.getServerBus(), true );
 	}
 	
 	public void check( final AccountAttachment sender, final boolean automatic )
@@ -214,6 +262,11 @@ public class AutoUpdater implements Listener, TaskCreator
 	public BuildArtifact getLatest()
 	{
 		return latest;
+	}
+	
+	public APILogger getLogger()
+	{
+		return Loader.getLogger( "Updater" );
 	}
 	
 	@Override

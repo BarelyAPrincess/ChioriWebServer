@@ -84,6 +84,7 @@ auto-updater:
   suggest-channels: true
   check-interval: 30
   console-only: true
+  auto-restart: true;
 sessions:
   defaultCookieName: SessionId
   defaultTimeout: 3600

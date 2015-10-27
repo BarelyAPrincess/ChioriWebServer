@@ -101,7 +101,7 @@ public class DefaultLogFormatter extends Formatter
 			style += writer;
 		}
 		
-		if ( !Loader.getConsole().useColors || !useColor )
+		if ( !Loader.getServerBus().useColors || !useColor )
 			return LogColor.removeAltColors( style );
 		else
 			return LogColor.transAltColors( style );

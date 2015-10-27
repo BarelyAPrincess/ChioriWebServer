@@ -18,7 +18,7 @@ import java.net.URLConnection;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.ServerLogger;
+import com.chiorichan.APILogger;
 import com.chiorichan.Loader;
 import com.chiorichan.configuration.file.FileConfiguration;
 import com.chiorichan.configuration.file.YamlConfiguration;
@@ -168,7 +168,7 @@ public abstract class Plugin extends PluginBase
 		return file;
 	}
 	
-	public final ServerLogger getLogger()
+	public final APILogger getLogger()
 	{
 		return Loader.getLogger( getDescription().getName() );
 	}

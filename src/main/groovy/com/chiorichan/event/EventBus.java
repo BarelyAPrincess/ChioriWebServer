@@ -69,7 +69,7 @@ public class EventBus implements ServerManager
 			{
 				if ( Thread.holdsLock( lock ) )
 					throw new IllegalStateException( event.getEventName() + " cannot be triggered asynchronously from inside synchronized code." );
-				if ( Loader.getConsole().isPrimaryThread() )
+				if ( Loader.getServerBus().isPrimaryThread() )
 					throw new IllegalStateException( event.getEventName() + " cannot be triggered asynchronously from primary server thread." );
 				fireEvent( event );
 			}
@@ -101,7 +101,7 @@ public class EventBus implements ServerManager
 		{
 			if ( Thread.holdsLock( lock ) )
 				throw new IllegalStateException( event.getEventName() + " cannot be triggered asynchronously from inside synchronized code." );
-			if ( Loader.getConsole().isPrimaryThread() )
+			if ( Loader.getServerBus().isPrimaryThread() )
 				throw new IllegalStateException( event.getEventName() + " cannot be triggered asynchronously from primary server thread." );
 			fireEvent( event );
 		}

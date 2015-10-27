@@ -25,9 +25,9 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.ServerLogger;
 import com.chiorichan.Loader;
 import com.chiorichan.RunLevel;
+import com.chiorichan.APILogger;
 import com.chiorichan.ServerManager;
 import com.chiorichan.ServerRunLevelEvent;
 import com.chiorichan.event.BuiltinEventCreator;
@@ -67,7 +67,7 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 		
 	}
 	
-	public static ServerLogger getLogger()
+	public static APILogger getLogger()
 	{
 		return Loader.getLogger( "PluginMgr" );
 	}
@@ -382,8 +382,8 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 		List<Plugin> result = new ArrayList<Plugin>();
 		Set<Pattern> filters = fileAssociations.keySet();
 		
-		if ( ! ( Loader.getInstance().getUpdateFolder().equals( "" ) ) )
-			updateDirectory = new File( directory, Loader.getInstance().getUpdateFolder() );
+		if ( !Loader.getUpdateFolder().equals( "" ) )
+			updateDirectory = new File( directory, Loader.getUpdateFolder() );
 		
 		Map<String, File> plugins = new HashMap<String, File>();
 		Map<String, Collection<MavenReference>> libraries = Maps.newHashMap();

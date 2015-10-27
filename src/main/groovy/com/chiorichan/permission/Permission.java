@@ -107,7 +107,7 @@ public final class Permission implements Comparable<Permission>
 	
 	public void debugPermissionStack( int deepth )
 	{
-		debugPermissionStack( Loader.getConsole(), deepth );
+		debugPermissionStack( Loader.getServerBus(), deepth );
 	}
 	
 	public Permission getChild( String name )

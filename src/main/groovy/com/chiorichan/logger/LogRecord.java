@@ -39,7 +39,7 @@ class LogRecord implements ILogEvent
 	
 	final List<LogElement> elements = Lists.newLinkedList();
 	
-	public LogRecord()
+	LogRecord()
 	{
 		
 	}

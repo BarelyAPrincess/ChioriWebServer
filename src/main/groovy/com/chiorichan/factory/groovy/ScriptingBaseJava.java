@@ -36,7 +36,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.ocpsoft.prettytime.PrettyTime;
 
-import com.chiorichan.ServerLogger;
+import com.chiorichan.APILogger;
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngineLegacy;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
@@ -573,7 +573,7 @@ public abstract class ScriptingBaseJava extends Script
 		return engine.getLegacy();
 	}
 	
-	public ServerLogger getLogger()
+	public APILogger getLogger()
 	{
 		return Loader.getLogger( getClass().getSimpleName() );
 	}

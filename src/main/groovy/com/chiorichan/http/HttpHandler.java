@@ -57,9 +57,10 @@ import java.util.logging.Level;
 
 import org.codehaus.groovy.runtime.NullObject;
 
-import com.chiorichan.LogColor;
 import com.chiorichan.ContentTypes;
 import com.chiorichan.Loader;
+import com.chiorichan.LogColor;
+import com.chiorichan.RunLevel;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.RenderEvent;
@@ -69,10 +70,10 @@ import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.factory.ScriptingResult;
 import com.chiorichan.lang.ApacheParser;
-import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.EvalException;
 import com.chiorichan.lang.EvalMultipleException;
 import com.chiorichan.lang.HttpError;
+import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.SiteException;
 import com.chiorichan.logger.LogEvent;
 import com.chiorichan.logger.LogManager;
@@ -610,10 +611,10 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		
 		if ( msg instanceof FullHttpRequest )
 		{
-			if ( !Loader.hasFinishedStartup() )
+			if ( Loader.getInstance().getRunLevel() != RunLevel.RUNNING )
 			{
 				// Outputs a very crude raw message if we are running in a low level mode a.k.a. Startup or Reload.
-				// Much of the server API is unavailable while the server is in this mode, that is why we do this.
+				// While in the mode, much of the server API is potentially unavailable, that is why we do this.
 				
 				StringBuilder sb = new StringBuilder();
 				sb.append( "<h1>503 - Service Unavailable</h1>\n" );

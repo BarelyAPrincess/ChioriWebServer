@@ -118,7 +118,7 @@ public class MemoryTypeCreator extends AccountTypeCreator
 		{
 			entity.addPermission( PermissionDefault.OP.getNode(), true, null );
 			entity.setVirtual( true );
-			meta.instance().registerAttachment( Loader.getConsole() );
+			meta.instance().registerAttachment( Loader.getServerBus() );
 		}
 		
 		if ( meta.context().creator() == this && meta.getId().equalsIgnoreCase( "none" ) )
