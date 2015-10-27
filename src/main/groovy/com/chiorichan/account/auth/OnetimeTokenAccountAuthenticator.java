@@ -57,9 +57,8 @@ public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
 		
 		try
 		{
-			if ( !db.table( "account_token" ).exists() )
-				db.table( "account_token" ).addColumnVar( "acctId", 255 ).addColumnVar( "token", 255 ).addColumnInt( "expires", 12 );
-			// db.queryUpdate( "CREATE TABLE `accounts_token` ( `acctId` varchar(255) NOT NULL, `token` varchar(255) NOT NULL, `expires` int(12) NOT NULL);" );
+			if ( !db.table( "accounts_token" ).exists() )
+				db.table( "accounts_token" ).addColumnVar( "acctId", 255 ).addColumnVar( "token", 255 ).addColumnInt( "expires", 12 );
 		}
 		catch ( SQLException e )
 		{

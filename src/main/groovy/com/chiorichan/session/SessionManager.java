@@ -282,7 +282,7 @@ public class SessionManager implements TaskCreator, ServerManager
 			else
 				knownIps.addAll( sess.getIpAddresses() );
 		
-		int maxPerIp = Loader.getConfig().getInt( "sessions.maxSessionsPerIP" );
+		int maxPerIp = Loader.getConfig() == null ? 6 : Loader.getConfig().getInt( "sessions.maxSessionsPerIP", 6 );
 		
 		for ( String ip : knownIps )
 		{

@@ -13,12 +13,16 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import joptsimple.OptionSet;
+import joptsimple.OptionSpec;
 
 import com.chiorichan.tasks.TaskCreator;
 import com.chiorichan.tasks.TaskManager;
@@ -60,10 +64,10 @@ public class Watchdog implements Runnable, TaskCreator
 		} );
 	}
 	
-	public void initDaemon( String... args )
+	public void initDaemon( String childArgs, OptionSet options )
 	{
 		if ( !Loader.getServerJar().getName().endsWith( ".jar" ) )
-			throw new IllegalStateException( "Watchdog process can only run when the server is launched from a compiled jar" );
+			throw new IllegalStateException( "Watchdog process can only run from compiled jar files" );
 		
 		log( "Starting " + Versioning.getProduct() + " with Watchdog protection" );
 		
@@ -76,14 +80,29 @@ public class Watchdog implements Runnable, TaskCreator
 		
 		commands.add( "-Xmx" + ( Runtime.getRuntime().maxMemory() / 1000000 ) + "M" );
 		
+		if ( childArgs != null && !childArgs.isEmpty() )
+			commands.addAll( Arrays.asList( childArgs.trim().split( " " ) ) );
+		
 		commands.add( "-jar" );
 		commands.add( Loader.getServerJar().getAbsolutePath() );
 		
-		commands.addAll( Arrays.asList( args ) );
+		for ( Entry<OptionSpec<?>, List<?>> e : options.asMap().entrySet() )
+		{
+			String key = e.getKey().options().toArray( new String[0] )[0];
+			if ( key != null && !key.isEmpty() && !key.equals( "watchdog" ) )
+			{
+				String arg = ( key.length() == 1 ? "-" : "--" ) + key;
+				for ( Object v : e.getValue() )
+					if ( v != null && v instanceof String )
+					{
+						String value = ( ( String ) v );
+						commands.add( arg + "=" + ( value.contains( " " ) ? "\"" + value + "\"" : value ) );
+					}
+			}
+		}
 		
+		commands.add( "--watchdog" );
 		commands.add( "--child" );
-		
-		// -server -XX:+DisableExplicitGC -Xdebug -Xrunjdwp:transport=dt_socket,address=8686,server=y,suspend=n
 		
 		processBuilder = new ProcessBuilder( commands );
 		processBuilder.redirectErrorStream( true );

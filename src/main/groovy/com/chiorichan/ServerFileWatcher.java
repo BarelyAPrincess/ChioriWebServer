@@ -176,7 +176,7 @@ public class ServerFileWatcher implements Runnable, ServerManager, TaskCreator
 			{
 				int epoch = Timings.epoch();
 				for ( TriggerRef tr : triggerReferences.values().toArray( new TriggerRef[0] ) )
-					if ( epoch - tr.epoch > 0 && !tr.called )
+					if ( epoch - tr.epoch > 1 && !tr.called )
 					{
 						tr.callback.call( tr.kind, tr.path.toFile(), tr.isDirectory );
 						tr.called = true;

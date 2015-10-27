@@ -525,7 +525,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 				acceptsAll( Arrays.asList( "nocolor" ), "Disables the console color formatting" );
 				acceptsAll( Arrays.asList( "v", "version" ), "Show the Version" );
 				acceptsAll( Arrays.asList( "child" ), "Watchdog Child Mode. DO NOT USE!" );
-				acceptsAll( Arrays.asList( "watchdog" ), "Launch the server with Watchdog protection, allows the server to restart itself. WARNING: May be buggy!" ).requiredIf( "child" );
+				acceptsAll( Arrays.asList( "watchdog" ), "Launch the server with Watchdog protection, allows the server to restart itself. WARNING: May be buggy!" ).requiredIf( "child" ).withOptionalArg().ofType( String.class ).describedAs( "Child JVM launch arguments" ).defaultsTo( "" );
 			}
 		};
 		
@@ -712,7 +712,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 					watchdog.initChild();
 				}
 				else
-					watchdog.initDaemon( args );
+					watchdog.initDaemon( ( String ) options.valueOf( "watchdog" ), options );
 			}
 			else
 				isRunning = true;
