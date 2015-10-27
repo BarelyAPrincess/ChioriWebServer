@@ -1,9 +1,31 @@
 9.2.8:
-	EventBus.callEvent now returns the AbstractEvent for stacking
-	EventBus locks using an object instead of self
-	EventHandlers are now tracked from inside EventBus instead of each Event
-	Tweaks and improvements to Permission Commands
-	Found a bug with not checking is WeakReference is unloaded
-	Bug Fixes to database logging and prepared statements
-	Huge bug with EventBus not creating new EventHandlers for each AbstractEvent
-	Several tweaks and improvements to permissions subsystem
+	FIXED: Found a bug with not checking is WeakReference is unloaded
+	FIXED: Bug Fixes to database logging and prepared statements
+	FIXED: Huge bug with EventBus not creating new EventHandlers for each AbstractEvent
+	FIXED: Tasks not canceling on disable
+	FIXED: Token management was buggy
+	FIXED: TemplatesPlugin includes
+	UPDATED: EventBus.callEvent now returns the AbstractEvent for stacking
+	UPDATED: EventBus locks using an object instead of self
+	UPDATED: EventHandlers are now tracked from inside EventBus instead of each Event
+	UPDATED: Tweaks and improvements to Permission Commands
+	UPDATED: Several tweaks and improvements to permissions subsystem
+	UPDATED: various improvements to EventBus
+	UPDATED: Made updates to Dropbox Plugin
+	UPDATED: Changed maven download URL to JCenter Bintray, Maven Central used as a backup location
+	FEATURE: Added H2 Database support, files only
+	FEATURE: [WIP] Added datastores, currently only intended to replace SQL databases but will also implement file backends.
+9.3.0
+	FIXED: HTTP log routine was reporting incorrect date and time
+	FIXED: Issues with Account SQL Save
+	UPDATED: Deprecated old unused log arguments and implemented the use of a logs directory
+	UPDATED: Changed how Account Subsystem returns results
+	UPDATED: Changed routing log level from FINE to FINER
+	UPDATED: SQLQueryInsert (SQL Datastore) now checks that all required columns have been provided before executing query
+9.3.1:
+	FIXED: Compatibility issues with SQL Datastores and SQLite
+	UPDATED: Moved task ticks from Timings to new Ticks class for easier understanding
+	UPDATED: Refactored much of the startup, shutdown, and restart subroutines, streamlined for efficiency
+	UPDATED: AutoUpdater monitors server jar for modification and restarts to apply changes. (configurable)
+	FEATURE: [WIP] Added new Server File Watcher
+	FEATURE: Implemented optional Watchdog process that monitors a separate spawned JVM instance for crashes and restarts. (use --watchdog to enable) Only tested on Linux
