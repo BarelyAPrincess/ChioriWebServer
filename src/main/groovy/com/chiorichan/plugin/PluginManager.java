@@ -25,9 +25,9 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.Validate;
 
+import com.chiorichan.APILogger;
 import com.chiorichan.Loader;
 import com.chiorichan.RunLevel;
-import com.chiorichan.APILogger;
 import com.chiorichan.ServerManager;
 import com.chiorichan.ServerRunLevelEvent;
 import com.chiorichan.event.BuiltinEventCreator;
@@ -114,6 +114,10 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 			{
 				plugin.getPluginLoader().disablePlugin( plugin );
 			}
+			catch ( NoClassDefFoundError ex )
+			{
+				// Ignore
+			}
 			catch ( Throwable ex )
 			{
 				getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while disabling " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
@@ -122,6 +126,10 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 			try
 			{
 				TaskManager.INSTANCE.cancelTasks( plugin );
+			}
+			catch ( NoClassDefFoundError ex )
+			{
+				// Ignore
 			}
 			catch ( Throwable ex )
 			{
@@ -132,6 +140,10 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 			{
 				// Loader.getServicesManager().unregisterAll( plugin );
 			}
+			catch ( NoClassDefFoundError ex )
+			{
+				// Ignore
+			}
 			catch ( Throwable ex )
 			{
 				getLogger().log( Level.SEVERE, "Error occurred (in the plugin loader) while unregistering services for " + plugin.getDescription().getFullName() + " (Is it up to date?)", ex );
@@ -140,6 +152,10 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 			try
 			{
 				EventHandlers.unregisterAll( plugin );
+			}
+			catch ( NoClassDefFoundError ex )
+			{
+				// Ignore
 			}
 			catch ( Throwable ex )
 			{
@@ -150,6 +166,10 @@ public class PluginManager extends BuiltinEventCreator implements Listener, Serv
 			{
 				// Loader.getMessenger().unregisterIncomingPluginChannel( plugin );
 				// Loader.getMessenger().unregisterOutgoingPluginChannel( plugin );
+			}
+			catch ( NoClassDefFoundError ex )
+			{
+				// Ignore
 			}
 			catch ( Throwable ex )
 			{

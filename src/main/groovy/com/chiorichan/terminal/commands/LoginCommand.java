@@ -16,8 +16,10 @@ import com.chiorichan.account.AccountAttachment;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountType;
 import com.chiorichan.account.auth.AccountAuthenticator;
+import com.chiorichan.account.lang.AccountDescriptiveReason;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
+import com.chiorichan.permission.PermissionDefault;
 import com.chiorichan.terminal.CommandDispatch;
 import com.chiorichan.terminal.Terminal;
 import com.chiorichan.terminal.TerminalInterviewer;
@@ -52,11 +54,12 @@ class LoginCommand extends BuiltinCommand
 			{
 				if ( user != null && pass != null )
 				{
+					// TODO Unregister Terminal from NONE account, for that matter unregister before overriding any account
+					
 					AccountResult result = sender.getPermissible().loginWithException( AccountAuthenticator.PASSWORD, user, pass );
 					
-					// TODO Check if user is permitted to login over query or etc.
-					// if ( !handler.getPersistence().checkPermission( "sys.query" ).isTrue() )
-					// throw new LoginException( LoginExceptionReason.notAuthorized, acct );
+					if ( !sender.getPermissible().checkPermission( PermissionDefault.QUERY.getNode() ).isTrue() )
+						throw new AccountException( AccountDescriptiveReason.UNAUTHORIZED, sender.meta() );
 					
 					AccountManager.getLogger().info( LogColor.GREEN + "Successful Console Login [username='" + user + "',password='" + pass + "',userId='" + result.getAccount().getId() + "',displayName='" + result.getAccount().getDisplayName() + "']" );
 					

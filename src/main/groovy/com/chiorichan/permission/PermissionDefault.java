@@ -11,7 +11,7 @@ package com.chiorichan.permission;
 
 public enum PermissionDefault
 {
-	ADMIN( "sys.admin" ), BANNED( "sys.banned" ), DEFAULT( "default" ), EVERYBODY( "" ), OP( "sys.op" ), WHITELISTED( "sys.whitelisted" );
+	ADMIN( "sys.admin" ), BANNED( "sys.banned" ), DEFAULT( "default" ), EVERYBODY( "" ), OP( "sys.op" ), WHITELISTED( "sys.whitelisted" ), QUERY( "sys.query" );
 	
 	private String nameSpace = "";
 	
@@ -31,6 +31,7 @@ public enum PermissionDefault
 		EVERYBODY.getNode();
 		OP.getNode();
 		WHITELISTED.getNode();
+		QUERY.getNode();
 	}
 	
 	public static boolean isDefault( Permission perm )
@@ -86,6 +87,9 @@ public enum PermissionDefault
 					break;
 				case WHITELISTED:
 					result.getModel().setDescription( "Indicates WHITELISTED entities. (DO NOT EDIT!)" );
+					break;
+				case QUERY:
+					result.getModel().setDescription( "Indicates entities allowed to login thru QUERY server. (DO NOT EDIT!)" );
 					break;
 			}
 			

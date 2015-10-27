@@ -64,6 +64,8 @@ public class TerminalEntity extends AccountPermissible implements Terminal, Bind
 			if ( e.getResult().hasCause() )
 				e.getResult().getCause().printStackTrace();
 			AccountManager.getLogger().severe( e.getMessage() );
+			
+			handler.kick( "Internal Server Error: " + e.getMessage() );
 		}
 	}
 	
@@ -178,7 +180,7 @@ public class TerminalEntity extends AccountPermissible implements Terminal, Bind
 	@Override
 	public AccountResult kick( String reason )
 	{
-		return handler.kick( reason );
+		return handler.kick( LogColor.AQUA + "You are being kicked for reason: " + LogColor.RESET + reason );
 	}
 	
 	@Override
@@ -249,7 +251,11 @@ public class TerminalEntity extends AccountPermissible implements Terminal, Bind
 	@Override
 	protected void successfulLogin()
 	{
-		// Do Nothing
+		// TODO Unregister from old login, i.e., NONE Account
+		// Temp Fix until a better way is found, i.e., logout!
+		AccountType.ACCOUNT_NONE.instance().unregisterAttachment( this );
+		
+		registerAttachment( this );
 	}
 	
 	@Override

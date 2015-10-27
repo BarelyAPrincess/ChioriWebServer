@@ -29,12 +29,12 @@ import com.google.common.collect.Sets;
 
 public abstract class PermissibleEntity
 {
-	private Map<String, PermissionResult> cachedResults = Maps.newConcurrentMap();
+	private final Map<String, PermissionResult> cachedResults = Maps.newConcurrentMap();
 	
-	private Map<ChildPermission, References> permissions = Maps.newConcurrentMap();
-	private Map<ChildPermission, TimedReferences> timedPermissions = Maps.newConcurrentMap();
-	private Map<PermissibleGroup, References> groups = Maps.newConcurrentMap();
-	private Map<PermissibleGroup, TimedReferences> timedGroups = Maps.newConcurrentMap();
+	private final Map<ChildPermission, References> permissions = Maps.newConcurrentMap();
+	private final Map<ChildPermission, TimedReferences> timedPermissions = Maps.newConcurrentMap();
+	private final Map<PermissibleGroup, References> groups = Maps.newConcurrentMap();
+	private final Map<PermissibleGroup, TimedReferences> timedGroups = Maps.newConcurrentMap();
 	
 	protected boolean debugMode = false;
 	private String id;
@@ -149,6 +149,9 @@ public abstract class PermissibleEntity
 	
 	public PermissionResult checkPermission( Permission perm, References refs )
 	{
+		Validate.notNull( perm );
+		Validate.notNull( refs );
+		
 		/**
 		 * We cache the results to reduce lag when a permission is checked multiple times over.
 		 */

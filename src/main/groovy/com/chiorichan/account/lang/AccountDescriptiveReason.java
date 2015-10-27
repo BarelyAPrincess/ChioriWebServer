@@ -23,6 +23,7 @@ public class AccountDescriptiveReason
 	public static final AccountDescriptiveReason UNKNOWN_ERROR = new AccountDescriptiveReason( "Your login has failed due to an unknown internal error, please try again or contact an administrator ASAP.", ReportingLevel.E_ERROR );
 	public static final AccountDescriptiveReason PERMISSION_ERROR = new AccountDescriptiveReason( "Fatal level was detected with your account permissions. Please notify an administrator ASAP.", ReportingLevel.L_PERMISSION );
 	public static final AccountDescriptiveReason INTERNAL_ERROR = new AccountDescriptiveReason( "Internal Server Error was encountered while attempting to process login.", ReportingLevel.E_ERROR );
+	public static final AccountDescriptiveReason UNAUTHORIZED = new AccountDescriptiveReason( "You are unauthorized to access this server resource.", ReportingLevel.L_DENIED );
 	
 	public static final AccountDescriptiveReason ACCOUNT_NOT_INITIALIZED = new AccountDescriptiveReason( "That Account was not initialized, i.e., no logins are present in this state.", ReportingLevel.L_ERROR );
 	public static final AccountDescriptiveReason ACCOUNT_NOT_ACTIVATED = new AccountDescriptiveReason( "That account is not activated.", ReportingLevel.L_DENIED );
