@@ -311,7 +311,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				}
 				else
 					log.log( Level.SEVERE, "%s%sException %s thrown with message '%s'", LogColor.NEGATIVE, LogColor.RED, cause.getClass().getName(), cause.getMessage() );
-					// log.log( Level.SEVERE, "%s%sException %s thrown in file '%s' at line %s, message '%s'", LogColor.NEGATIVE, LogColor.RED, cause.getClass().getName(), cause.getStackTrace()[0].getFileName(), cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
+				// log.log( Level.SEVERE, "%s%sException %s thrown in file '%s' at line %s, message '%s'", LogColor.NEGATIVE, LogColor.RED, cause.getClass().getName(), cause.getStackTrace()[0].getFileName(),
+				// cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
 				
 				response.sendException( evalOrig );
 				
@@ -427,6 +428,29 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		Site currentSite = request.getSite();
 		sess.setSite( currentSite );
 		File docRoot = currentSite.getAbsoluteRoot( request.getSubDomain() );
+		
+		// Default SSL Option is IGNORE or empty.
+		// Options include IGNORE, REQUIRE, and DENY
+		String sslOption = fi.get( "ssl" );
+		if ( sslOption != null && !sslOption.isEmpty() )
+			if ( sslOption.equalsIgnoreCase( "require" ) || sslOption.equalsIgnoreCase( "required" ) )
+			{
+				if ( !ssl )
+					if ( !response.switchToSecure() )
+						response.sendError( HttpCode.HTTP_FORBIDDEN, "This page requires a secure connection." );
+			}
+			else if ( sslOption.equalsIgnoreCase( "deny" ) )
+			{
+				if ( ssl )
+					if ( !response.switchToUnsecure() )
+						response.sendError( HttpCode.HTTP_FORBIDDEN, "This page requires an unsecure connection." );
+			}
+			else if ( sslOption.equalsIgnoreCase( "ignore" ) )
+			{
+				// Ignore
+			}
+			else
+				log.log( Level.WARNING, "Invalid option set for annotation ssl, '" + sslOption + "'" );
 		
 		ApacheParser htaccess = new ApacheParser().appendWithDir( docRoot );
 		

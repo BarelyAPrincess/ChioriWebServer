@@ -387,6 +387,11 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	
 	public String getFullUrl()
 	{
+		return getFullUrl( ssl );
+	}
+	
+	public String getFullUrl( boolean ssl )
+	{
 		return ( ssl ? "https://" : "http://" ) + getDomain() + getUri();
 	}
 	

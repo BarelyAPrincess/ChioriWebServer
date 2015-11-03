@@ -439,7 +439,7 @@ public class HttpResponseWrapper
 	 */
 	public void sendRedirect( String target )
 	{
-		sendRedirect( target, 302, true );
+		sendRedirect( target, 307, true );
 	}
 	
 	/**
@@ -609,6 +609,42 @@ public class HttpResponseWrapper
 	public void setStatus( int status )
 	{
 		setStatus( HttpResponseStatus.valueOf( status ) );
+	}
+	
+	/**
+	 * Redirects the current page load to a secure HTTPS connection
+	 */
+	public boolean switchToSecure()
+	{
+		if ( !NetworkManager.isHttpsRunning() )
+		{
+			log.log( Level.SEVERE, "We were going to attempt to switch to a secure HTTPS connection and aborted due to the HTTPS server not running." );
+			return false;
+		}
+		
+		if ( request.isSecure() )
+			return true;
+		
+		sendRedirect( request.getFullUrl( true ) );
+		return true;
+	}
+	
+	/**
+	 * Redirects the current page load to an unsecure HTTP connection
+	 */
+	public boolean switchToUnsecure()
+	{
+		if ( !NetworkManager.isHttpRunning() )
+		{
+			log.log( Level.SEVERE, "We were going to attempt to switch to an unsecure HTTP connection and aborted due to the HTTP server not running." );
+			return false;
+		}
+		
+		if ( !request.isSecure() )
+			return true;
+		
+		sendRedirect( request.getFullUrl( false ) );
+		return true;
 	}
 	
 	/**

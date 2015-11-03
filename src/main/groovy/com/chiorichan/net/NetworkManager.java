@@ -57,11 +57,6 @@ public class NetworkManager implements TaskCreator
 				for ( WeakReference<SocketChannel> ref : HttpInitializer.activeChannels )
 					if ( ref.get() == null )
 						HttpInitializer.activeChannels.remove( ref );
-					else
-					{
-						// SocketChannel ch = ref.get();
-						// Loader.getLogger().debug( "Got Active Channel: " + ch + " -- " + ch.isOpen() + " -- " + ch.config().isKeepAlive() );
-					}
 			}
 		} );
 	}
@@ -82,6 +77,26 @@ public class NetworkManager implements TaskCreator
 	public static APILogger getLogger()
 	{
 		return Loader.getLogger( "NetMgr" );
+	}
+	
+	public static boolean isHttpRunning()
+	{
+		return httpChannel != null && httpChannel.isOpen();
+	}
+	
+	public static boolean isHttpsRunning()
+	{
+		return httpsChannel != null && httpsChannel.isOpen();
+	}
+	
+	public static boolean isQueryRunning()
+	{
+		return queryChannel != null && queryChannel.isOpen();
+	}
+	
+	public static boolean isTcpRunning()
+	{
+		return false;
 	}
 	
 	public static void shutdown()
