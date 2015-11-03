@@ -313,8 +313,9 @@ public class HttpResponseWrapper
 			{
 				String stackTrace = ExceptionUtils.getStackTrace( cause );
 				
-				for ( Entry<String, ScriptingContext> e : request.getEvalFactory().stack().getScriptTraceHistory().entrySet() )
-					stackTrace = stackTrace.replace( e.getKey(), e.getValue().filename() );
+				if ( request.getEvalFactory() != null )
+					for ( Entry<String, ScriptingContext> e : request.getEvalFactory().stack().getScriptTraceHistory().entrySet() )
+						stackTrace = stackTrace.replace( e.getKey(), e.getValue().filename() );
 				
 				sendError( httpStatus, null, "<pre>" + stackTrace + "</pre>" );
 			}

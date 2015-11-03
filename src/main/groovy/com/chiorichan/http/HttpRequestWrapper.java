@@ -15,7 +15,6 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.QueryStringDecoder;
-import io.netty.handler.codec.http.ServerCookieDecoder;
 import io.netty.handler.ssl.SslHandler;
 
 import java.io.IOException;
@@ -35,8 +34,8 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.LogColor;
 import com.chiorichan.Loader;
+import com.chiorichan.LogColor;
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.auth.AccountAuthenticator;
@@ -178,16 +177,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		site = SiteManager.INSTANCE.getSiteByDomain( domain );
 		
 		if ( site == null )
-			if ( !domain.isEmpty() )
-			{
-				// Attempt to get the catch all default site. Will use the framework site is not configured or does not exist.
-				String defaultSite = Loader.getConfig().getString( "framework.sites.defaultSite", null );
-				if ( defaultSite != null && !defaultSite.isEmpty() )
-					site = SiteManager.INSTANCE.getSiteById( defaultSite );
-			}
-		
-		if ( site == null )
-			site = SiteManager.INSTANCE.getSiteById( "default" );
+			site = SiteManager.INSTANCE.getDefaultSite();
 		
 		// Decode Get Map
 		QueryStringDecoder queryStringDecoder = new QueryStringDecoder( http.uri() );
@@ -203,19 +193,25 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			}
 		
 		// Decode Cookies
+		// String var1 = URLDecoder.decode( http.headers().getAndConvert( "Cookie" ), Charsets.UTF_8.displayName() );
 		String var1 = http.headers().getAndConvert( "Cookie" );
+		
+		// TODO Find a way to fix missing invalid stuff
+		
 		if ( var1 != null )
 			try
 			{
-				Set<Cookie> var2 = ServerCookieDecoder.decode( var1 );
+				Set<Cookie> var2 = CookieDecoder.decode( var1 );
 				for ( Cookie cookie : var2 )
 					if ( cookie.name().startsWith( "_ws" ) )
 						serverCookies.add( new HttpCookie( cookie ) );
 					else
 						cookies.add( new HttpCookie( cookie ) );
 			}
-			catch ( IllegalArgumentException e )
+			catch ( IllegalArgumentException | NullPointerException e )
 			{
+				Loader.getLogger().debug( var1 );
+				
 				NetworkManager.getLogger().severe( "Failed to parse cookie for reason: " + e.getMessage() );
 				// NetworkManager.getLogger().warning( "There was a problem decoding the request cookie.", e );
 				// NetworkManager.getLogger().debug( "Cookie: " + var1 );
@@ -647,6 +643,8 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	@Override
 	public Site getSite()
 	{
+		if ( site == null )
+			site = SiteManager.INSTANCE.getDefaultSite();
 		return site;
 	}
 	
@@ -1055,6 +1053,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	
 	protected void setSite( Site site )
 	{
+		Validate.notNull( site );
 		this.site = site;
 	}
 	

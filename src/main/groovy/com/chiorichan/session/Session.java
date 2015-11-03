@@ -14,6 +14,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.Validate;
+
 import com.chiorichan.LogColor;
 import com.chiorichan.Loader;
 import com.chiorichan.account.AccountInstance;
@@ -529,6 +531,7 @@ public final class Session extends AccountPermissible implements Kickable
 	
 	public void setSite( Site site )
 	{
+		Validate.notNull( site );
 		this.site = site;
 		data.site = site.getSiteId();
 	}

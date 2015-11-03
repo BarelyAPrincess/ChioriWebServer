@@ -280,6 +280,14 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 					 */
 					response.sendError( ( ( PermissionDeniedException ) cause ).getHttpCode(), cause.getMessage() );
 			}
+			else if ( cause instanceof OutOfMemoryError )
+			{
+				log.log( Level.SEVERE, LogColor.NEGATIVE + "" + LogColor.RED + "OutOfMemoryError! This is serious!!!" );
+				response.sendError( 500, "We have encountered an internal server error" );
+				
+				if ( Versioning.isDevelopment() )
+					cause.printStackTrace();
+			}
 			else if ( evalOrig == null )
 			{
 				// Was not caught by EvalFactory
@@ -298,12 +306,12 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				}
 				else if ( evalOrig.isScriptingException() )
 				{
-					
 					ScriptTraceElement element = evalOrig.getScriptTrace()[0];
 					log.log( Level.SEVERE, "%s%sException %s thrown in file '%s' at line %s:%s, message '%s'", LogColor.NEGATIVE, LogColor.RED, cause.getClass().getName(), element.context().filename(), element.getLineNumber(), ( element.getColumnNumber() > 0 ) ? element.getColumnNumber() : 0, cause.getMessage() );
 				}
 				else
-					log.log( Level.SEVERE, "%s%sException %s thrown in file '%s' at line %s, message '%s'", LogColor.NEGATIVE, LogColor.RED, cause.getClass().getName(), cause.getStackTrace()[0].getFileName(), cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
+					log.log( Level.SEVERE, "%s%sException %s thrown with message '%s'", LogColor.NEGATIVE, LogColor.RED, cause.getClass().getName(), cause.getMessage() );
+					// log.log( Level.SEVERE, "%s%sException %s thrown in file '%s' at line %s, message '%s'", LogColor.NEGATIVE, LogColor.RED, cause.getClass().getName(), cause.getStackTrace()[0].getFileName(), cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
 				
 				response.sendException( evalOrig );
 				
@@ -417,7 +425,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		WebInterpreter fi = new WebInterpreter( request );
 		
 		Site currentSite = request.getSite();
-		sess.setSite( currentSite ); // setSite?
+		sess.setSite( currentSite );
 		File docRoot = currentSite.getAbsoluteRoot( request.getSubDomain() );
 		
 		ApacheParser htaccess = new ApacheParser().appendWithDir( docRoot );

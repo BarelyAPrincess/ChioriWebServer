@@ -37,6 +37,8 @@ public class Ticks
 	public static final long SECOND_45 = SECOND * 45;
 	
 	public static final long MINUTE = SECOND * 60;
+	public static final long MINUTE_2 = MINUTE * 2;
+	public static final long MINUTE_3 = MINUTE * 3;
 	public static final long MINUTE_5 = MINUTE * 5;
 	public static final long MINUTE_10 = MINUTE * 10;
 	public static final long MINUTE_15 = MINUTE * 15;
