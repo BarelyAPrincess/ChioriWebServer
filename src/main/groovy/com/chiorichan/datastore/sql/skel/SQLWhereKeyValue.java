@@ -17,7 +17,7 @@ public final class SQLWhereKeyValue<T> extends SQLWhereElement
 {
 	enum Operands
 	{
-		EQUAL( "=" ), NOTEQUAL( "NOT EQUAL" ), LIKE( "LIKE" ), NOTLIKE( "NOT LIKE" ), GREATER( ">" ), LESSER( "<" ), REGEXP( "REGEXP" );
+		EQUAL( "=" ), NOTEQUAL( "!=" ), LIKE( "LIKE" ), NOTLIKE( "NOT LIKE" ), GREATER( ">" ), LESSER( "<" ), REGEXP( "REGEXP" );
 		
 		private String operator;
 		

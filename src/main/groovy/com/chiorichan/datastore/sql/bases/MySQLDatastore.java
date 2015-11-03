@@ -41,7 +41,7 @@ public class MySQLDatastore extends SQLDatastore
 		
 		this.user = user;
 		this.pass = pass;
-		connection = "jdbc:mysql://" + host + ":" + port + "/" + db;
+		connection = "jdbc:mysql://" + host + ":" + port + "/" + db + "?autoReconnect=true&useUnicode=yes";
 		
 		try
 		{
