@@ -28,15 +28,13 @@ public class SslContextFactory
 	{
 		String algorithm = Security.getProperty( "ssl.KeyManagerFactory.algorithm" );
 		if ( algorithm == null )
-		{
 			algorithm = "SunX509";
-		}
 		
 		SSLContext serverContext = null;
 		SSLContext clientContext = null;
 		try
 		{
-			final File sslCert = new File( Loader.getConfig().getString( "server.httpsKeystone", "server.keystone" ) );
+			final File sslCert = new File( Loader.getConfig().getString( "server.httpsKeystore", "server.keystore" ) );
 			// byte[] bytes = new byte[932];
 			// IOUtils.readFully( new FileInputStream( sslCert ), bytes );
 			// pkcs12Base64 = Base64Coder.encodeLines( bytes );
@@ -74,9 +72,9 @@ public class SslContextFactory
 		CLIENT_CONTEXT = clientContext;
 	}
 	
-	public static SSLContext getServerContext()
+	private SslContextFactory()
 	{
-		return SERVER_CONTEXT;
+		
 	}
 	
 	public static SSLContext getClientContext()
@@ -84,8 +82,8 @@ public class SslContextFactory
 		return CLIENT_CONTEXT;
 	}
 	
-	private SslContextFactory()
+	public static SSLContext getServerContext()
 	{
-		
+		return SERVER_CONTEXT;
 	}
 }
