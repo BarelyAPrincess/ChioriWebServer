@@ -207,7 +207,10 @@ public class Template extends Plugin implements Listener
 			
 			// We initialize a temporary EvalFactory if the request did not contain one
 			if ( factory == null )
-				factory = ScriptingFactory.create( event.getRequest() );
+				if ( event.getRequest().getBinding() == null )
+					factory = ScriptingFactory.create( new HashMap<String, Object>() );
+				else
+					factory = ScriptingFactory.create( event.getRequest() );
 			
 			event.setErrorHtml( generateExceptionPage( event.getThrowable(), factory ) );
 		}

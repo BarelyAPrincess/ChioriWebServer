@@ -86,6 +86,18 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 		println var
 	}
 
+	Object getPropertySafe( String name )
+	{
+		try
+		{
+			return getProperty( name );
+		}
+		catch ( MissingPropertyException e )
+		{
+			return null;
+		}
+	}
+
 	PermissibleEntity getEntity()
 	{
 		getAccount().getEntity()

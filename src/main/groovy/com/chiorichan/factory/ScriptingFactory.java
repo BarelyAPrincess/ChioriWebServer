@@ -89,6 +89,11 @@ public class ScriptingFactory
 		return new ScriptingFactory( provider.getBinding() );
 	}
 	
+	public static ScriptingFactory create( Map<String, Object> rawBinding )
+	{
+		return new ScriptingFactory( new ScriptBinding( rawBinding ) );
+	}
+	
 	// For General Use
 	public static ScriptingFactory create( ScriptBinding binding )
 	{
