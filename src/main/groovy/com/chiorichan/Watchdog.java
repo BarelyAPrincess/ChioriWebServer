@@ -12,7 +12,9 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
@@ -55,6 +57,8 @@ public class Watchdog implements Runnable, TaskCreator
 	private ProcessBuilder processBuilder = null;
 	private Process process = null;
 	
+	private SimpleDateFormat dateTimeFormat = new SimpleDateFormat( "MM-dd HH:mm:ss.SSS" );
+	
 	private Thread watchdogThread;
 	int crashCount = 0;
 	
@@ -85,12 +89,12 @@ public class Watchdog implements Runnable, TaskCreator
 	
 	public void initChild()
 	{
-		TaskManager.INSTANCE.scheduleAsyncRepeatingTask( this, Ticks.MINUTE * 3, Ticks.MINUTE_5, new Runnable()
+		TaskManager.INSTANCE.scheduleAsyncRepeatingTask( this, Ticks.MINUTE_3, Ticks.MINUTE_3, new Runnable()
 		{
 			@Override
 			public void run()
 			{
-				Loader.getLogger().info( "+watchdog: keepalive" );
+				Loader.getLogger().info( "Watchdog: keepalive" );
 			}
 		} );
 	}
@@ -180,7 +184,7 @@ public class Watchdog implements Runnable, TaskCreator
 	
 	public void log( String msg )
 	{
-		System.out.println( LogColor.transAltColors( LogColor.RESET + "" + LogColor.LIGHT_PURPLE + "[Watchdog] " + LogColor.YELLOW + msg ) );
+		System.out.println( LogColor.transAltColors( LogColor.RESET + "[" + LogColor.LIGHT_PURPLE + "Watchdog" + LogColor.RESET + "] " + LogColor.GRAY + dateTimeFormat.format( new Date() ) + " " + LogColor.GOLD + msg ) );
 	}
 	
 	@Override
@@ -239,10 +243,10 @@ public class Watchdog implements Runnable, TaskCreator
 						{
 							lastOutput = Timings.epoch();
 							
-							if ( line.contains( "+watchdog keepalive" ) )
-								log( "+watchdog stillalive" );
-							
 							System.out.println( line );
+							
+							if ( line.contains( "Watchdog: keepalive" ) )
+								log( "Watchdog: stillalive" );
 						}
 						else
 							state = TERMINATE;
@@ -250,7 +254,7 @@ public class Watchdog implements Runnable, TaskCreator
 					catch ( CancellationException e )
 					{
 						if ( Versioning.isUnixLikeOS() && getPid( process ) > 0 )
-							Runtime.getRuntime().exec( "kill -SIGINT " + getPid( process ) );
+							Runtime.getRuntime().exec( "kill -SIGTERM " + getPid( process ) );
 						else
 							process.destroy();
 						break;
@@ -260,11 +264,14 @@ public class Watchdog implements Runnable, TaskCreator
 						int lastTotal = Timings.epoch() - lastOutput;
 						if ( lastTotal > Timings.MINUTE_15 )
 						{
-							log( "No output detected for quite some time, it's assumed that the server has crashed. Server will now be restarted!" );
+							log( "No output detected, it's assumed that the server has crashed. Server will now be restarted!" );
 							state = RESTART;
 						}
 						else if ( lastTotal > Timings.MINUTE_5 )
-							log( "No output detected for the last 5 minutes." );
+						{
+							log( "No output detected for the last " + lastTotal + " seconds." );
+							lastOutput = Timings.epoch();
+						}
 					}
 				
 				reader.close();
