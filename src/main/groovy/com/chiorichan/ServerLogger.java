@@ -46,11 +46,12 @@ public class ServerLogger implements APILogger
 	@Override
 	public void debug( Object... var1 )
 	{
-		if ( !Versioning.isDevelopment() )
+		if ( !Versioning.isDevelopment() || var1 == null )
 			return;
 		
 		for ( Object var2 : var1 )
-			info( LogColor.NEGATIVE + "" + LogColor.YELLOW + " >>>>   " + var2.toString() + "   <<<< " );
+			if ( var2 != null )
+				info( LogColor.NEGATIVE + "" + LogColor.YELLOW + " >>>>   " + var2.toString() + "   <<<< " );
 	}
 	
 	@Override
