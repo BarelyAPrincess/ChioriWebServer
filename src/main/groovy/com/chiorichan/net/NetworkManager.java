@@ -15,15 +15,15 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 
-import java.io.File;
 import java.lang.ref.WeakReference;
 import java.net.InetSocketAddress;
 
+import com.chiorichan.APILogger;
 import com.chiorichan.Loader;
 import com.chiorichan.ServerBus;
-import com.chiorichan.APILogger;
 import com.chiorichan.http.HttpInitializer;
 import com.chiorichan.https.HttpsInitializer;
+import com.chiorichan.https.SslContextFactory;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.net.query.QueryServerInitializer;
 import com.chiorichan.tasks.TaskCreator;
@@ -234,10 +234,7 @@ public class NetworkManager implements TaskCreator
 				
 				Loader.getLogger().info( "Starting Secure Web Server on " + ( httpIp.isEmpty() ? "*" : httpIp ) + ":" + httpsPort );
 				
-				File sslCert = new File( Loader.getConfig().getString( "server.httpsKeystore", "server.keystore" ) );
-				
-				if ( !sslCert.exists() )
-					throw new StartupException( sslCert.getAbsolutePath() + " We could not start the HTTPS Server because the '" + sslCert.getName() + "' (aka. SSL Cert) file does not exist. Please generate one and reload the server, or disable SSL in the configs." );
+				SslContextFactory.init();
 				
 				try
 				{

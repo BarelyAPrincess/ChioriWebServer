@@ -2,8 +2,9 @@ server:
   httpHost: ''
   httpPort: 8080
   httpsPort: 0
-  httpsKeystore: server.keystore
-  httpsSecret: abcd1234
+  httpsSharedCert: server.crt
+  httpsSharedKey: server.key
+  httpsSharedSecret: ''
   tcpHost: ''
   tcpPort: 1024
   queryEnabled: false

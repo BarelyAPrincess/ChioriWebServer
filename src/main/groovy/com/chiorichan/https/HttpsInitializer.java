@@ -15,12 +15,7 @@ import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
-import io.netty.handler.ssl.SslHandler;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-
-import com.chiorichan.Loader;
 import com.chiorichan.http.HttpHandler;
 import com.chiorichan.net.NetworkManager;
 
@@ -33,19 +28,7 @@ public class HttpsInitializer extends ChannelInitializer<SocketChannel>
 		
 		try
 		{
-			SSLContext context = SslContextFactory.getServerContext();
-			
-			if ( context == null )
-			{
-				NetworkManager.shutdownHttpsServer();
-				Loader.getLogger().severe( "The SSL engine failed to initalize, possibly due to a missing certificate file" );
-				return;
-			}
-			
-			SSLEngine engine = context.createSSLEngine();
-			engine.setUseClientMode( false );
-			
-			p.addLast( "ssl", new SslHandler( engine ) );
+			p.addLast( SslContextFactory.getContext().newHandler( ch.alloc() ) );
 		}
 		catch ( Exception e )
 		{
