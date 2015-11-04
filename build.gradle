@@ -68,8 +68,8 @@ def getVersionNumber()
 	}
 }
 
-sourceCompatibility = '1.7'
-targetCompatibility = '1.7'
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
 
 def rawVersion = getVersionNumber() + '-' + gitDescribe()
 def jenkins_build = System.getenv("BUILD_NUMBER")
@@ -250,6 +250,10 @@ task writePropertiesFile {
 		props.store(out2, "Chiori-chan's Web Server Build Properties File - Used by our auto updater and Jenkins build server.")
 		props.store(out3, "Chiori-chan's Web Server Build Properties File - Used by our auto updater and Jenkins build server.")
 	}
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.8'
 }
 
 jar.dependsOn writePropertiesFile

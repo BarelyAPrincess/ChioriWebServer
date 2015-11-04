@@ -1,6 +1,6 @@
 sudo: false
 language: java
-jdk: oraclejdk7
+jdk: oraclejdk8
 install:
 - gradle clean writePropertiesFile shadowJar javadocArchive sourcesArchive
 script:
@@ -20,4 +20,4 @@ cache:
   - $HOME/.gradle/native
   - $HOME/.gradle/daemon
   - $HOME/.gradle/caches/jars-1
-  - $HOME/.gradle/caches/2.3
+  - $HOME/.gradle/caches/2.8
