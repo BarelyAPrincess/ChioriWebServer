@@ -85,11 +85,19 @@ public class WebInterpreter extends FileInterpreter
 			rewriteParams.putAll( route.getRewrites() );
 			interpParams.putAll( route.getParams() );
 			dest = route.getFile();
+			
+			if ( route.isRedirect() )
+			{
+				status = HttpResponseStatus.valueOf( route.httpCode() );
+				request.getResponse().sendRedirect( route.getRedirect().toLowerCase().startsWith( "http" ) ? route.getRedirect() : ( request.isSecure() ? "https://" : "http://" ) + request.getDomain() + route.getRedirect(), status.code() );
+				return;
+			}
+			
 			html = route.getHTML();
 			wasSuccessful = true;
 		}
 		
-		// Try to find the file on the local filesystem
+		// Try to find the file on the local file system
 		if ( !wasSuccessful )
 		{
 			dest = new File( request.getSite().getAbsoluteRoot( subdomain ), uri );
@@ -103,7 +111,6 @@ public class WebInterpreter extends FileInterpreter
 				
 				if ( files != null && files.length > 0 )
 					for ( File f : files )
-					{
 						if ( f.exists() )
 						{
 							String filename = f.getName().toLowerCase();
@@ -115,7 +122,6 @@ public class WebInterpreter extends FileInterpreter
 							else
 								selectedFile = f;
 						}
-					}
 				
 				if ( selectedFile != null )
 				{
@@ -138,7 +144,6 @@ public class WebInterpreter extends FileInterpreter
 					
 					if ( files != null && files.length > 0 )
 						for ( File f : files )
-						{
 							if ( f.exists() )
 							{
 								String filename = f.getName().toLowerCase();
@@ -150,7 +155,6 @@ public class WebInterpreter extends FileInterpreter
 								else
 									dest = f;
 							}
-						}
 					
 					// Attempt to determine is it's possible that the uri is a name without extension but it also contains server-side options
 					// For Example: uri(http://images.example.com/logo_x150.jpg) = file([root]/images/logo.jpg) and resize to 150 width.
@@ -159,7 +163,6 @@ public class WebInterpreter extends FileInterpreter
 					
 					if ( files != null && files.length > 0 )
 						for ( File f : files )
-						{
 							if ( f.exists() && !f.isDirectory() )
 							{
 								String destFileName = dest.getName();
@@ -181,7 +184,6 @@ public class WebInterpreter extends FileInterpreter
 										rewriteParams.put( "serverSideOptions", paramString );
 								}
 							}
-						}
 				}
 			
 			wasSuccessful = dest.exists();
@@ -191,27 +193,26 @@ public class WebInterpreter extends FileInterpreter
 		{
 			if ( dest != null && dest.exists() )
 				interpretParamsFromFile( dest );
+			
 			if ( dest != null && !dest.exists() )
 			{
-				NetworkManager.getLogger().warning( "We tried to load the file `" + dest.getAbsolutePath() + "` but could not find it. Will throw a 404 error now." );
-				
-				/*
-				 * if ( false ) // TODO Are we in development mode?
-				 * {
-				 * // Here we will give a detailed error about the missing file
-				 * }
-				 * else
-				 * {
-				 * status = HttpResponseStatus.NOT_FOUND;
-				 * }
-				 */
+				NetworkManager.getLogger().warning( "We tried to load the file `" + dest.getAbsolutePath() + "` but could not find it, will throw a 404 error now." );
+				// TODO Give detailed error about the missing file
 				status = HttpResponseStatus.NOT_FOUND;
 			}
-			else if ( !interpParams.containsKey( "shell" ) || interpParams.get( "shell" ) == null )
-				interpParams.put( "shell", "html" );
 		}
 		else
 			status = HttpResponseStatus.NOT_FOUND;
+	}
+	
+	public String getHTML()
+	{
+		return html;
+	}
+	
+	public Map<String, String> getRewriteParams()
+	{
+		return rewriteParams;
 	}
 	
 	public HttpResponseStatus getStatus()
@@ -219,9 +220,9 @@ public class WebInterpreter extends FileInterpreter
 		return status;
 	}
 	
-	public Map<String, String> getRewriteParams()
+	public boolean hasHTML()
 	{
-		return rewriteParams;
+		return html != null;
 	}
 	
 	public boolean isDirectoryRequest()
@@ -232,16 +233,6 @@ public class WebInterpreter extends FileInterpreter
 	public boolean isFrameworkRequest()
 	{
 		return fwRequest;
-	}
-	
-	public String getHTML()
-	{
-		return html;
-	}
-	
-	public boolean hasHTML()
-	{
-		return html != null;
 	}
 	
 	@Override
@@ -267,9 +258,7 @@ public class WebInterpreter extends FileInterpreter
 		String rewrites = "";
 		
 		for ( Entry<String, String> o : rewriteParams.entrySet() )
-		{
 			rewrites += "," + o.getKey() + "=" + o.getValue();
-		}
 		
 		if ( rewrites.length() > 1 )
 			rewrites = rewrites.substring( 1 );

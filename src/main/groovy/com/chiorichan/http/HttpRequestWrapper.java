@@ -14,6 +14,7 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.ssl.SslHandler;
 
@@ -385,6 +386,16 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		}
 	}
 	
+	public String getFullDomain()
+	{
+		return getFullDomain( ssl );
+	}
+	
+	public String getFullDomain( boolean ssl )
+	{
+		return ( ssl ? "https://" : "http://" ) + getDomain();
+	}
+	
 	public String getFullUrl()
 	{
 		return getFullUrl( ssl );
@@ -392,7 +403,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	
 	public String getFullUrl( boolean ssl )
 	{
-		return ( ssl ? "https://" : "http://" ) + getDomain() + getUri();
+		return getFullDomain( ssl ) + getUri();
 	}
 	
 	public Map<String, Object> getGetMap()
@@ -428,6 +439,11 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	public String getHost()
 	{
 		return http.headers().getAndConvert( "Host" );
+	}
+	
+	public HttpVersion getHttpVersion()
+	{
+		return http.protocolVersion();
 	}
 	
 	/**
@@ -642,6 +658,8 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	
 	public Map<ServerVars, Object> getServerVars()
 	{
+		if ( unmodifiableMaps )
+			return Collections.unmodifiableMap( serverVars );
 		return serverVars;
 	}
 	
@@ -745,6 +763,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		putServerVarSafe( ServerVars.SERVER_VERSION, Versioning.getVersion() );
 		putServerVarSafe( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "me@chiorichan.com" ) );
 		putServerVarSafe( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Versioning.getVersion() );
+		putServerVarSafe( ServerVars.HTTP_VERSION, http.protocolVersion() );
 		putServerVarSafe( ServerVars.HTTP_ACCEPT, getHeader( "Accept" ) );
 		putServerVarSafe( ServerVars.HTTP_USER_AGENT, getUserAgent() );
 		putServerVarSafe( ServerVars.HTTP_CONNECTION, getHeader( "Connection" ) );

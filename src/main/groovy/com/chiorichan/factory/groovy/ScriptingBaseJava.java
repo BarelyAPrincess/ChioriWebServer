@@ -15,6 +15,8 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -40,14 +42,18 @@ import com.chiorichan.APILogger;
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngineLegacy;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
+import com.chiorichan.http.HttpRequestWrapper;
+import com.chiorichan.http.HttpResponseWrapper;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.lang.PluginNotFoundException;
 import com.chiorichan.plugin.loader.Plugin;
+import com.chiorichan.session.Session;
 import com.chiorichan.site.Site;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.Versioning;
+import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
@@ -60,7 +66,6 @@ import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 /*
  * XXX This deprecated class has already been ported to ScriptApiBase class
  */
-@Deprecated
 public abstract class ScriptingBaseJava extends Script
 {
 	public String apache_get_version()
@@ -606,6 +611,10 @@ public abstract class ScriptingBaseJava extends Script
 		return Versioning.getProduct();
 	}
 	
+	public abstract HttpRequestWrapper getRequest();
+	
+	public abstract HttpResponseWrapper getResponse();
+	
 	/**
 	 * Returns an instance of the server database
 	 * 
@@ -623,6 +632,8 @@ public abstract class ScriptingBaseJava extends Script
 		
 		return engine;
 	}
+	
+	public abstract Session getSession();
 	
 	public abstract Site getSite();
 	
@@ -858,6 +869,16 @@ public abstract class ScriptingBaseJava extends Script
 	public String trim( String str )
 	{
 		return ( str == null ) ? null : str.trim();
+	}
+	
+	public String urlDecode( String url ) throws UnsupportedEncodingException
+	{
+		return URLDecoder.decode( url, Charsets.UTF_8.displayName() );
+	}
+	
+	public String urlEncode( String url ) throws UnsupportedEncodingException
+	{
+		return URLEncoder.encode( url, Charsets.UTF_8.displayName() );
 	}
 	
 	@SuppressWarnings( "unchecked" )

@@ -463,9 +463,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		if ( !fi.hasFile() && !fi.hasHTML() )
 			throw new HttpError( 500, null, "We found what appears to be a mapping for your request but it contained no content to display, deffinite bug." );
 		
-		// NetworkManager.getLogger().info( ConsoleColor.BLUE + "Http" + ( ( ssl ) ? "s" : "" ) + "Request{httpCode=" + response.getHttpCode() + ",httpMsg=" + response.getHttpMsg() + ",subdomain=" + subdomain + ",domain=" + domain + ",uri="
-		// + uri + ",remoteIp=" + request.getIpAddr() + ",sessionId=" + sess.getSessId() + ",acct=" + sess.isLoginPresent() + ( sess.isLoginPresent() ? "(" + sess.getAcctId() + ")" : "" ) + ",details=" + fi.toString() + "}" );
-		
 		if ( fi.hasFile() )
 			htaccess.appendWithDir( fi.getFile().getParentFile() );
 		

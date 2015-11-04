@@ -41,8 +41,9 @@ import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingEngine;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.factory.ScriptingRegistry;
-import com.chiorichan.lang.ReportingLevel;
+import com.chiorichan.http.MessageRepo;
 import com.chiorichan.lang.EvalException;
+import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.SandboxSecurityException;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.References;
@@ -64,9 +65,9 @@ public class GroovyRegistry implements ScriptingRegistry
 	 */
 	private static final GroovyImportCustomizer imports = new GroovyImportCustomizer();
 	
-	private static final Class<?>[] classImports = new Class<?>[] {References.class, ScriptApi.class, Loader.class, AccountManager.class, AccountType.class, Account.class, AccountAuthenticator.class, EventBus.class, PermissionManager.class, PluginManager.class, TaskManager.class, Timings.class, SessionManager.class, SiteManager.class, Site.class, ScriptingContext.class};
+	private static final Class<?>[] classImports = new Class<?>[] {MessageRepo.class, References.class, ScriptApi.class, Loader.class, AccountManager.class, AccountType.class, Account.class, AccountAuthenticator.class, EventBus.class, PermissionManager.class, PluginManager.class, TaskManager.class, Timings.class, SessionManager.class, SiteManager.class, Site.class, ScriptingContext.class};
 	private static final String[] starImports = new String[] {"com.chiorichan.lang", "com.chiorichan.factory.api", "com.chiorichan.util", "org.apache.commons.lang3.text", "org.ocpsoft.prettytime", "java.util", "java.net", "com.google.common.base"};
-	private static final String[] staticImports = new String[] {"com.chiorichan.util.Looper", "com.chiorichan.lang.ReportingLevel"};
+	// private static final String[] staticImports = new String[] {Looper.class.getCanonicalName(), ReportingLevel.class.getCanonicalName()};
 	private static final GroovySandbox secure = new GroovySandbox();
 	
 	/*
@@ -78,7 +79,7 @@ public class GroovyRegistry implements ScriptingRegistry
 	{
 		imports.addImports( classImports );
 		imports.addStarImports( starImports );
-		imports.addStaticStars( staticImports );
+		// imports.addStaticStars( staticImports );
 		
 		// Transforms scripts to limit their execution to 30 seconds.
 		long timeout = Loader.getConfig().getLong( "advanced.security.defaultScriptTimeout", 30L );
@@ -164,7 +165,6 @@ public class GroovyRegistry implements ScriptingRegistry
 		 */
 	}
 	
-	@SuppressWarnings( "deprecation" )
 	public GroovyShell getNewShell( ScriptingContext context, Binding binding )
 	{
 		CompilerConfiguration configuration = new CompilerConfiguration();

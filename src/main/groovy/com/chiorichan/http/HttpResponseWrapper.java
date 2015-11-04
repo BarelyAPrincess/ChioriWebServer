@@ -330,26 +330,26 @@ public class HttpResponseWrapper
 	}
 	
 	/**
-	 * Sends the client to the site login page found in configs and also sends a please login message along with it.
+	 * Sends the client to the site login page found in configuration and also sends a please login message along with it.
 	 */
 	public void sendLoginPage()
 	{
-		sendLoginPage( "You must be logged in to view this page!" );
+		sendLoginPage( "You must be logged in to view this page" );
 	}
 	
 	/**
-	 * Sends the client to the site login page found in configs.
+	 * Sends the client to the site login page
 	 * 
 	 * @param msg
-	 *            , a message to pass to the login page as a argumnet. ie. ?msg=Please login!
+	 *            The message to pass to the login page
 	 */
 	public void sendLoginPage( String msg )
 	{
-		/*
-		 * TODO: Come up with a better way to handle the URI used in the target, i.e., currently params are being lost in all redirects.
-		 */
+		msg = MessageRepo.store( msg, MessageRepo.DANGER );
 		String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
-		sendRedirect( loginForm + "?msg=&target=http://" + request.getDomain() + request.getUri() );
+		if ( !loginForm.toLowerCase().startsWith( "http" ) )
+			loginForm = ( request.isSecure() ? "https://" : "http://" ) + loginForm;
+		sendRedirect( String.format( "%s?msg=%s&target=%s", loginForm, msg, request.getFullUrl() ) );
 	}
 	
 	public void sendMultipart( byte[] bytesToWrite ) throws IOException
@@ -439,34 +439,18 @@ public class HttpResponseWrapper
 	 */
 	public void sendRedirect( String target )
 	{
-		sendRedirect( target, 307, true );
+		sendRedirect( target, request.getHttpVersion() == HttpVersion.HTTP_1_0 ? 302 : 307 );
 	}
 	
 	/**
-	 * Sends the client to a specified page with specified http code.
-	 * 
-	 * @param target
-	 *            , destination url. Can be relative or absolute.
-	 * @param httpStatus
-	 *            , http code to use.
-	 */
-	public void sendRedirect( String target, int httpStatus )
-	{
-		sendRedirect( target, httpStatus, true );
-	}
-	
-	/**
-	 * XXX: autoRedirect argument needs to be working before this method is made public
 	 * Sends the client to a specified page with specified http code but with the option to not automatically go.
 	 * 
 	 * @param target
 	 *            The destination url. Can be relative or absolute.
 	 * @param httpStatus
 	 *            What http code to use.
-	 * @param autoRedirect
-	 *            Use Header or Javascript Script
 	 */
-	private void sendRedirect( String target, int httpStatus, boolean insteadRedirect )
+	public void sendRedirect( String target, int httpStatus )
 	{
 		// NetworkManager.getLogger().info( ConsoleColor.DARK_GRAY + "Sending page redirect to `" + target + "` using httpCode `" + httpStatus + " - " + HttpCode.msg( httpStatus ) + "`" );
 		log.log( Level.INFO, "Redirect {uri=%s,httpCode=%s,status=%s}", target, httpStatus, HttpCode.msg( httpStatus ) );
@@ -474,19 +458,16 @@ public class HttpResponseWrapper
 		if ( stage == HttpResponseStage.CLOSED )
 			throw new IllegalStateException( "You can't access sendRedirect method within this HttpResponse because the connection has been closed." );
 		
-		if ( insteadRedirect && !isCommitted() )
+		if ( !isCommitted() )
 		{
 			setStatus( httpStatus );
 			setHeader( "Location", target );
 		}
 		else
-			// TODO: Send client a redirection page.
-			// "The Request URL has been relocated to: " . $StrURL .
-			// "<br />Please change any bookmarks to reference this new location."
-			
 			try
 			{
-				println( "<script type=\"text/javascript\">window.location = '" + target + "';</script>" );
+				sendError( 301, "The requested URL has been relocated to '" + target + "'" );
+				// println( "<script type=\"text/javascript\">window.location = '" + target + "';</script>" );
 			}
 			catch ( IOException e )
 			{

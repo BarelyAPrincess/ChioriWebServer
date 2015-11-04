@@ -46,7 +46,7 @@ public class ServerLogger implements APILogger
 	@Override
 	public void debug( Object... var1 )
 	{
-		if ( !Versioning.isDevelopment() || var1 == null )
+		if ( !Versioning.isDevelopment() || var1.length < 1 )
 			return;
 		
 		for ( Object var2 : var1 )

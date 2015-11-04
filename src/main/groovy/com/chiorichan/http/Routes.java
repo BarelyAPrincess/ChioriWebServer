@@ -105,22 +105,6 @@ public class Routes
 						{
 							SQLDatastore.getLogger().info( "We detected the non-existence of table 'pages' in the server database, we will attempt to create it now." );
 							
-							/*
-							 * String table = "CREATE TABLE `pages` (";
-							 * table += " `site` varchar(255) NOT NULL,";
-							 * table += " `domain` varchar(255) NOT NULL,";
-							 * table += " `page` varchar(255) NOT NULL,";
-							 * table += " `title` varchar(255) NOT NULL,";
-							 * table += " `reqlevel` varchar(255) NOT NULL DEFAULT '-1',";
-							 * table += " `theme` varchar(255) NOT NULL,";
-							 * table += " `view` varchar(255) NOT NULL,";
-							 * table += " `html` text NOT NULL,";
-							 * table += " `file` varchar(255) NOT NULL";
-							 * table += ");";
-							 * 
-							 * sql.queryUpdate( table );
-							 */
-							
 							SQLTable table = sql.table( "pages" );
 							table.addColumnVar( "site", 255 );
 							table.addColumnVar( "domain", 255 );
@@ -173,10 +157,10 @@ public class Routes
 				if ( matches.size() > 0 )
 					return ( Route ) matches.values().toArray()[0];
 				else
-					Loader.getLogger().fine( "Failed to find a page redirect for Rewrite... '" + subdomain + "." + domain + "' '" + uri + "'" );
+					Loader.getLogger().fine( "Failed to find a page redirect for... '" + subdomain + "." + domain + "' '" + uri + "'" );
 			}
 			else
-				Loader.getLogger().fine( "Failed to find a page redirect for Rewrite... '" + subdomain + "." + domain + "' '" + uri + "'" );
+				Loader.getLogger().fine( "Failed to find a page redirect for... '" + subdomain + "." + domain + "' '" + uri + "'" );
 			
 			return null;
 		}

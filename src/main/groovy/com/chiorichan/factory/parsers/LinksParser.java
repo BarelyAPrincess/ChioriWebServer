@@ -11,11 +11,13 @@ package com.chiorichan.factory.parsers;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 
 public class LinksParser extends HTMLCommentParser
 {
+	HttpRequestWrapper request;
 	Site site;
 	
 	public LinksParser()
@@ -31,7 +33,7 @@ public class LinksParser extends HTMLCommentParser
 	@Override
 	public String resolveMethod( String... args ) throws Exception
 	{
-		String url = "http://";
+		String url = request.isSecure() ? "https://" : "http://";
 		
 		if ( args.length >= 1 && !args[1].isEmpty() )
 			url += args[1] + ".";
@@ -44,8 +46,9 @@ public class LinksParser extends HTMLCommentParser
 		return url;
 	}
 	
-	public String runParser( String source, Site site ) throws Exception
+	public String runParser( String source, HttpRequestWrapper request, Site site ) throws Exception
 	{
+		this.request = request;
 		this.site = site;
 		Map<String, String> aliases = site.getAliases();
 		

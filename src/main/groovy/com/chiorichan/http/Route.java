@@ -118,6 +118,11 @@ public class Route
 		return params;
 	}
 	
+	public String getRedirect()
+	{
+		return params.get( "redirect" );
+	}
+	
 	public Map<String, String> getRewrites()
 	{
 		return rewrites;
@@ -126,6 +131,16 @@ public class Route
 	public RouteType getRouteType()
 	{
 		return type;
+	}
+	
+	public int httpCode()
+	{
+		return params.get( "status" ) == null || params.get( "status" ).isEmpty() ? 301 : Integer.parseInt( params.get( "status" ) );
+	}
+	
+	public boolean isRedirect()
+	{
+		return params.get( "redirect" ) != null;
 	}
 	
 	public String match( String domain, String subdomain, String uri )

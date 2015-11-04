@@ -21,6 +21,6 @@ public class PreLinksParserWrapper implements Listener
 	@EventHandler( priority = EventPriority.LOWEST )
 	public void onEvent( PreEvalEvent event ) throws Exception
 	{
-		event.context().resetAndWrite( new LinksParser().runParser( event.context().readString(), event.context().site() ) );
+		event.context().resetAndWrite( new LinksParser().runParser( event.context().readString(), event.context().request(), event.context().site() ) );
 	}
 }
