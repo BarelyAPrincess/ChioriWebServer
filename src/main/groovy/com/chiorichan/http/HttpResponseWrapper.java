@@ -439,7 +439,7 @@ public class HttpResponseWrapper
 	 */
 	public void sendRedirect( String target )
 	{
-		sendRedirect( target, request.getHttpVersion() == HttpVersion.HTTP_1_0 ? 302 : 307 );
+		sendRedirect( target, 302 );
 	}
 	
 	/**
@@ -482,6 +482,11 @@ public class HttpResponseWrapper
 		{
 			e.printStackTrace();
 		}
+	}
+	
+	public void sendRedirectRepost( String target )
+	{
+		sendRedirect( target, request.getHttpVersion() == HttpVersion.HTTP_1_0 ? 302 : 307 );
 	}
 	
 	/**
@@ -606,7 +611,7 @@ public class HttpResponseWrapper
 		if ( request.isSecure() )
 			return true;
 		
-		sendRedirect( request.getFullUrl( true ) );
+		sendRedirectRepost( request.getFullUrl( true ) );
 		return true;
 	}
 	
@@ -624,7 +629,7 @@ public class HttpResponseWrapper
 		if ( !request.isSecure() )
 			return true;
 		
-		sendRedirect( request.getFullUrl( false ) );
+		sendRedirectRepost( request.getFullUrl( false ) );
 		return true;
 	}
 	
