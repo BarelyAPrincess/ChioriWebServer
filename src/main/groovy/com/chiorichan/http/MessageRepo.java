@@ -9,7 +9,12 @@
 package com.chiorichan.http;
 
 import java.util.Map;
+import java.util.Map.Entry;
 
+import com.chiorichan.session.SessionManager;
+import com.chiorichan.tasks.TaskManager;
+import com.chiorichan.tasks.Ticks;
+import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.SecureFunc;
 import com.google.common.collect.Maps;
 
@@ -25,11 +30,13 @@ public class MessageRepo
 	{
 		private String val;
 		private int level;
+		private int timecode;
 		
 		public Message( String val, int level )
 		{
 			this.val = val;
 			this.level = level;
+			timecode = Timings.epoch();
 		}
 		
 		public int level()
@@ -58,10 +65,29 @@ public class MessageRepo
 			}
 		}
 		
+		public int timecode()
+		{
+			return timecode;
+		}
+		
 		public String value()
 		{
 			return val;
 		}
+	}
+	
+	static
+	{
+		TaskManager.INSTANCE.scheduleSyncRepeatingTask( SessionManager.INSTANCE, Ticks.HOUR_5, Ticks.HOUR_3, new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				for ( Entry<String, Message> msg : MessageRepo.messages.entrySet() )
+					if ( msg.getValue() != null && msg.getValue().timecode() < Timings.epoch() - Timings.HOUR_4 )
+						messages.remove( msg.getKey() );
+			}
+		} );
 	}
 	
 	public static final int DEFAULT = 0;

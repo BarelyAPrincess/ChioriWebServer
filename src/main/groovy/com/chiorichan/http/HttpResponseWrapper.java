@@ -621,7 +621,7 @@ public class HttpResponseWrapper
 		if ( request.isSecure() )
 			return true;
 		
-		sendRedirectRepost( request.getFullUrl( true ) );
+		sendRedirectRepost( request.getFullUrl( true ) + request.getQuery() );
 		return true;
 	}
 	
@@ -639,7 +639,7 @@ public class HttpResponseWrapper
 		if ( !request.isSecure() )
 			return true;
 		
-		sendRedirectRepost( request.getFullUrl( false ) );
+		sendRedirectRepost( request.getFullUrl( false ) + request.getQuery() );
 		return true;
 	}
 	

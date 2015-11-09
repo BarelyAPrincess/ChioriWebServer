@@ -58,6 +58,7 @@ import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -569,6 +570,13 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			return Collections.unmodifiableMap( postMap );
 		
 		return postMap;
+	}
+	
+	public String getQuery()
+	{
+		if ( getMap.isEmpty() )
+			return "";
+		return "?" + Joiner.on( "&" ).withKeyValueSeparator( "=" ).join( getMap );
 	}
 	
 	public String getRemoteHostname()
