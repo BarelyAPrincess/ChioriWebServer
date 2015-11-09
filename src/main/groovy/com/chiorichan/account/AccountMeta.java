@@ -25,7 +25,7 @@ import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.util.ObjectFunc;
-import com.chiorichan.util.RandomFunc;
+import com.chiorichan.util.SecureFunc;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 
@@ -290,7 +290,7 @@ public final class AccountMeta implements Account, Iterable<Entry<String, Object
 	
 	public void requireActivation()
 	{
-		metadata.put( "actnum", RandomFunc.randomize( "z154f98wfjascvc" ) );
+		metadata.put( "actnum", SecureFunc.randomize( "z154f98wfjascvc" ) );
 	}
 	
 	public void save() throws AccountException

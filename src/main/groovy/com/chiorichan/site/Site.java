@@ -44,7 +44,7 @@ import com.chiorichan.lang.SiteException;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.session.SessionManager;
 import com.chiorichan.util.FileFunc;
-import com.chiorichan.util.RandomFunc;
+import com.chiorichan.util.SecureFunc;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -370,7 +370,7 @@ public class Site
 	private void finishLoad() throws SiteException, StartupException
 	{
 		if ( encryptionKey == null )
-			encryptionKey = RandomFunc.randomize( "0x0000X" );
+			encryptionKey = SecureFunc.randomize( "0x0000X" );
 		
 		/*
 		 * Default site always uses the Builtin SQL Connector. Ignore YAML FileBase on this one.

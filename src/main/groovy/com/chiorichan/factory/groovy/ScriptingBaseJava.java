@@ -51,6 +51,7 @@ import com.chiorichan.session.Session;
 import com.chiorichan.site.Site;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.ObjectFunc;
+import com.chiorichan.util.SecureFunc;
 import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Charsets;
@@ -62,6 +63,7 @@ import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
 import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
+import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
 
 /*
  * XXX This deprecated class has already been ported to ScriptApiBase class
@@ -87,6 +89,26 @@ public abstract class ScriptingBaseJava extends Script
 	public <T> T[] array( T... vals )
 	{
 		return vals;
+	}
+	
+	public byte[] base64Decode( String str ) throws Base64DecodingException
+	{
+		return SecureFunc.base64Decode( str );
+	}
+	
+	public String base64DecodeString( String str ) throws Base64DecodingException
+	{
+		return SecureFunc.base64DecodeString( str );
+	}
+	
+	public String base64Encode( byte[] bytes )
+	{
+		return SecureFunc.base64Encode( bytes );
+	}
+	
+	public String base64Encode( String str )
+	{
+		return SecureFunc.base64Encode( str );
 	}
 	
 	public int count( Collection<Object> list )

@@ -24,7 +24,7 @@ import com.chiorichan.event.server.KickEvent;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.TaskCreator;
-import com.chiorichan.util.RandomFunc;
+import com.chiorichan.util.SecureFunc;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Sets;
@@ -103,14 +103,14 @@ public final class AccountManager extends AccountEvents implements ServerManager
 		String acctId = "";
 		
 		if ( seed == null || seed.isEmpty() )
-			acctId = RandomFunc.randomize( "ab123C" );
+			acctId = SecureFunc.randomize( "ab123C" );
 		else if ( seed.contains( " " ) || seed.contains( "|" ) )
 		{
 			String[] split = seed.split( " |\\|" );
-			acctId += ( split.length < 1 || split[0].isEmpty() ? "" + RandomFunc.randomize( 'a' ) : split[0].substring( 0, 1 ) ).toLowerCase();
-			acctId += ( split.length < 2 || split[1].isEmpty() ? "" + RandomFunc.randomize( 'b' ) : split[1].substring( 0, 1 ) ).toLowerCase();
+			acctId += ( split.length < 1 || split[0].isEmpty() ? "" + SecureFunc.randomize( 'a' ) : split[0].substring( 0, 1 ) ).toLowerCase();
+			acctId += ( split.length < 2 || split[1].isEmpty() ? "" + SecureFunc.randomize( 'b' ) : split[1].substring( 0, 1 ) ).toLowerCase();
 			acctId += "123";
-			acctId += ( split.length < 3 || split[2].isEmpty() ? "" + RandomFunc.randomize( 'C' ) : split[2].substring( 0, 1 ) ).toUpperCase();
+			acctId += ( split.length < 3 || split[2].isEmpty() ? "" + SecureFunc.randomize( 'C' ) : split[2].substring( 0, 1 ) ).toUpperCase();
 		}
 		
 		int tries = 1;
@@ -122,9 +122,9 @@ public final class AccountManager extends AccountEvents implements ServerManager
 			
 			// When our tries are divisible by 25 we attempt to randomize the last letter for more chances.
 			if ( tries % 25 == 0 )
-				acctId = acctId.substring( 0, 5 ) + RandomFunc.randomize( acctId.substring( 5 ) );
+				acctId = acctId.substring( 0, 5 ) + SecureFunc.randomize( acctId.substring( 5 ) );
 			
-			acctId = acctId.substring( 0, 2 ) + RandomFunc.randomize( "123" ) + acctId.substring( 4 );
+			acctId = acctId.substring( 0, 2 ) + SecureFunc.randomize( "123" ) + acctId.substring( 4 );
 			
 			tries++;
 		}

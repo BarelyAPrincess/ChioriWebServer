@@ -459,9 +459,10 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		if ( fi.getStatus() != HttpResponseStatus.OK )
 			throw new HttpError( fi.getStatus() );
 		
-		// TODO Improve the result of having no content to display, maybe empty page and log it to console.
 		if ( !fi.hasFile() && !fi.hasHTML() )
-			throw new HttpError( 500, null, "We found what appears to be a mapping for your request but it contained no content to display, deffinite bug." );
+			response.setStatus( HttpResponseStatus.NO_CONTENT );
+		
+		// throw new HttpError( 500, null, "We found what appears to be a mapping for your request but it contained no content to display, deffinite bug." );
 		
 		if ( fi.hasFile() )
 			htaccess.appendWithDir( fi.getFile().getParentFile() );
@@ -479,6 +480,27 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		request.setGlobal( "_GET", request.getGetMap() );
 		request.setGlobal( "_REWRITE", request.getRewriteMap() );
 		request.setGlobal( "_FILES", request.getUploadedFiles() );
+		
+		// Implement several optional security measures
+		String security = fi.get( "security" );
+		
+		if ( security != null )
+			if ( security.equalsIgnoreCase( "csrf" ) )
+			{
+				CSRFToken token = sess.getCSRFToken();
+				
+				if ( request.method() != HttpMethod.GET && request.method() != HttpMethod.HEAD )
+					// Verify CSRF Token
+					if ( request.getRequestMap().get( token.getKey() ) != null && request.getRequestMap().get( token.getKey() ).equals( token.getValue() ) )
+						log.log( Level.INFO, "CSRF Token Verified as Valid!" );
+					else
+					{
+						sess.regenCSRFToken();
+						response.sendError( HttpResponseStatus.FORBIDDEN, "Invalid CSRF Token was found, forbidden!" );
+					}
+				
+				request.setGlobal( "_CSRF_TOKEN", token );
+			}
 		
 		if ( !request.getUploadedFiles().isEmpty() )
 			log.log( Level.INFO, "Uploads {" + StringFunc.limitLength( Joiner.on( "," ).join( request.getUploadedFiles().values() ), 255 ) + "}" );
@@ -512,7 +534,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		// Enhancement: Allow HTML to be ran under different shells. Default is embedded.
 		if ( fi.hasHTML() )
 		{
-			ScriptingResult result = factory.eval( ScriptingContext.fromSource( fi.getHTML(), "<html>" ).request( request ).site( currentSite ) );
+			ScriptingResult result = factory.eval( ScriptingContext.fromSource( fi.getHTML(), "<embedded>" ).request( request ).site( currentSite ) );
 			
 			if ( result.hasExceptions() )
 				// TODO Print notices to output like PHP does
@@ -588,7 +610,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		if ( response.stage == HttpResponseStage.MULTIPART )
 		{
 			while ( response.stage == HttpResponseStage.MULTIPART )
-				// I wonder if there is a better way to handle on going multipart response.
+				// I wonder if there is a better way to handle multipart responses.
 				try
 				{
 					Thread.sleep( 100 );

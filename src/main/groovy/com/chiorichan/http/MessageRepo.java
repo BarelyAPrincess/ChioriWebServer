@@ -10,7 +10,7 @@ package com.chiorichan.http;
 
 import java.util.Map;
 
-import com.chiorichan.util.RandomFunc;
+import com.chiorichan.util.SecureFunc;
 import com.google.common.collect.Maps;
 
 /**
@@ -85,7 +85,7 @@ public class MessageRepo
 	
 	public static String store( String val, int level )
 	{
-		String key = RandomFunc.randomize( "dharma1n1t1at1ve" );
+		String key = SecureFunc.randomize( "dharma1n1t1at1ve" );
 		messages.put( key, new Message( val, level ) );
 		return key;
 	}

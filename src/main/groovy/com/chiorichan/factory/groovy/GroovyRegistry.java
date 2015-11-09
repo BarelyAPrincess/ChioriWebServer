@@ -53,6 +53,7 @@ import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Timings;
+import com.chiorichan.util.Looper;
 import com.google.common.collect.Maps;
 
 /**
@@ -67,7 +68,7 @@ public class GroovyRegistry implements ScriptingRegistry
 	
 	private static final Class<?>[] classImports = new Class<?>[] {MessageRepo.class, References.class, ScriptApi.class, Loader.class, AccountManager.class, AccountType.class, Account.class, AccountAuthenticator.class, EventBus.class, PermissionManager.class, PluginManager.class, TaskManager.class, Timings.class, SessionManager.class, SiteManager.class, Site.class, ScriptingContext.class};
 	private static final String[] starImports = new String[] {"com.chiorichan.lang", "com.chiorichan.factory.api", "com.chiorichan.util", "org.apache.commons.lang3.text", "org.ocpsoft.prettytime", "java.util", "java.net", "com.google.common.base"};
-	// private static final String[] staticImports = new String[] {Looper.class.getCanonicalName(), ReportingLevel.class.getCanonicalName()};
+	private static final Class<?>[] staticImports = new Class<?>[] {Looper.class, ReportingLevel.class};
 	private static final GroovySandbox secure = new GroovySandbox();
 	
 	/*
@@ -79,7 +80,7 @@ public class GroovyRegistry implements ScriptingRegistry
 	{
 		imports.addImports( classImports );
 		imports.addStarImports( starImports );
-		// imports.addStaticStars( staticImports );
+		imports.addStaticStars( staticImports );
 		
 		// Transforms scripts to limit their execution to 30 seconds.
 		long timeout = Loader.getConfig().getLong( "advanced.security.defaultScriptTimeout", 30L );

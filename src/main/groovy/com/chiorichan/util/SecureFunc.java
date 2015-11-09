@@ -8,17 +8,21 @@
  */
 package com.chiorichan.util;
 
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Chars;
+import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
+import com.sun.org.apache.xml.internal.security.utils.Base64;
 
 /**
  * Provides basic encryption and randomizing functions
  */
-public class RandomFunc
+public class SecureFunc
 {
 	private static final char[] randomCharMap;
 	private static final char[] allowedCharMap;
@@ -61,21 +65,24 @@ public class RandomFunc
 		newAllowedCharMap = null;
 	}
 	
-	/**
-	 * Selects a random character between 0-255 using specified start and end arguments
-	 * 
-	 * @param start
-	 *            The minimum character to select
-	 * @param end
-	 *            The maximum character to select
-	 * @return The randomly selected character
-	 */
-	public static char randomize( int start, int end )
+	public static byte[] base64Decode( String str ) throws Base64DecodingException
 	{
-		if ( start > end )
-			throw new RuntimeException( "Start can't be greater than end!" );
-		
-		return ( char ) ( start + new Random().nextInt( end - start ) );
+		return Base64.decode( str );
+	}
+	
+	public static String base64DecodeString( String str ) throws Base64DecodingException
+	{
+		return new String( Base64.decode( str ) );
+	}
+	
+	public static String base64Encode( byte[] bytes )
+	{
+		return Base64.encode( bytes );
+	}
+	
+	public static String base64Encode( String str )
+	{
+		return Base64.encode( str.getBytes() );
 	}
 	
 	/**
@@ -114,6 +121,23 @@ public class RandomFunc
 	}
 	
 	/**
+	 * Selects a random character between 0-255 using specified start and end arguments
+	 * 
+	 * @param start
+	 *            The minimum character to select
+	 * @param end
+	 *            The maximum character to select
+	 * @return The randomly selected character
+	 */
+	public static char randomize( int start, int end )
+	{
+		if ( start > end )
+			throw new RuntimeException( "Start can't be greater than end!" );
+		
+		return ( char ) ( start + new Random().nextInt( end - start ) );
+	}
+	
+	/**
 	 * Takes each character of the provided string and scrambles it<br>
 	 * Example: 0xx0000$X <i>could</i> result in 9at2015&Z
 	 * 
@@ -137,5 +161,18 @@ public class RandomFunc
 		}
 		
 		return output;
+	}
+	
+	public static byte[] seed( int length )
+	{
+		try
+		{
+			return SecureRandom.getInstanceStrong().generateSeed( length );
+		}
+		catch ( NoSuchAlgorithmException e )
+		{
+			e.printStackTrace();
+			return new byte[0];
+		}
 	}
 }

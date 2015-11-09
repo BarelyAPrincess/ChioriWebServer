@@ -814,6 +814,11 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		return "/fw/websocket".equals( getUri() );
 	}
 	
+	public HttpMethod method()
+	{
+		return http.method();
+	}
+	
 	private Map<String, Object> parseMapArrays( Map<String, String> origMap )
 	{
 		Map<String, Object> result = Maps.newLinkedHashMap();

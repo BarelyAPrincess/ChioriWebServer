@@ -25,7 +25,7 @@ import com.chiorichan.tasks.TaskCreator;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Ticks;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.util.RandomFunc;
+import com.chiorichan.util.SecureFunc;
 import com.chiorichan.util.StringFunc;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -326,7 +326,7 @@ public class SessionManager implements TaskCreator, ServerManager
 	public String sessionIdBaker()
 	{
 		// TODO Implement a solid session id generating method
-		return StringFunc.md5( RandomFunc.randomize( "$e$$i0n_R%ND0Mne$$" ) + System.currentTimeMillis() );
+		return StringFunc.md5( SecureFunc.randomize( "$e$$i0n_R%ND0Mne$$" ) + System.currentTimeMillis() );
 	}
 	
 	/**

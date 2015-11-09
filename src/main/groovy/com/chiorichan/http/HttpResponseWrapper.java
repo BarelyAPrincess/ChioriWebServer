@@ -189,6 +189,16 @@ public class HttpResponseWrapper
 			sendError( 500, e.getMessage() );
 	}
 	
+	public void sendError( HttpResponseStatus status ) throws IOException
+	{
+		sendError( status, null, null );
+	}
+	
+	public void sendError( HttpResponseStatus status, String httpMsg ) throws IOException
+	{
+		sendError( status, httpMsg, null );
+	}
+	
 	public void sendError( HttpResponseStatus status, String httpMsg, String msg ) throws IOException
 	{
 		if ( stage == HttpResponseStage.CLOSED )

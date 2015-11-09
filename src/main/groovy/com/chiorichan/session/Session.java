@@ -16,8 +16,8 @@ import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.LogColor;
 import com.chiorichan.Loader;
+import com.chiorichan.LogColor;
 import com.chiorichan.account.AccountInstance;
 import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
@@ -27,6 +27,7 @@ import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.server.MessageEvent;
+import com.chiorichan.http.CSRFToken;
 import com.chiorichan.http.HttpCookie;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.site.Site;
@@ -47,11 +48,13 @@ public final class Session extends AccountPermissible implements Kickable
 {
 	boolean newSession = false;
 	
+	boolean isDestroyed = false;
+	
 	/**
 	 * The underlying data for this session<br>
 	 * Preserves access to the datastore and it's methods {@link SessionData#save()}, {@link SessionData#reload()}, {@link SessionData#destroy()}
 	 */
-	SessionData data;
+	final SessionData data;
 	
 	/**
 	 * Global session variables<br>
@@ -111,8 +114,11 @@ public final class Session extends AccountPermissible implements Kickable
 	 */
 	private Site site = SiteManager.INSTANCE.getDefaultSite();
 	
+	private CSRFToken token = null;
+	
 	Session( SessionData data ) throws SessionException
 	{
+		Validate.notNull( data );
 		this.data = data;
 		
 		sessionId = data.sessionId;
@@ -170,7 +176,7 @@ public final class Session extends AccountPermissible implements Kickable
 	
 	public boolean changesMade()
 	{
-		return dataChangeHistory.size() > 0;
+		return !isDestroyed && dataChangeHistory.size() > 0;
 	}
 	
 	public void destroy() throws SessionException
@@ -194,7 +200,7 @@ public final class Session extends AccountPermissible implements Kickable
 			sessionCookie.setMaxAge( 0 );
 		
 		data.destroy();
-		data = null;
+		isDestroyed = true;
 	}
 	
 	@Override
@@ -230,6 +236,13 @@ public final class Session extends AccountPermissible implements Kickable
 		return Collections.unmodifiableMap( sessionCookies );
 	}
 	
+	public CSRFToken getCSRFToken()
+	{
+		if ( token == null )
+			regenCSRFToken();
+		return token;
+	}
+	
 	public Map<String, String> getDataMap()
 	{
 		return data.data;
@@ -260,9 +273,7 @@ public final class Session extends AccountPermissible implements Kickable
 	@Override
 	public String getId()
 	{
-		if ( account == null )
-			return null;
-		return account.getId();
+		return account == null ? null : account.getId();
 	}
 	
 	@Override
@@ -351,6 +362,11 @@ public final class Session extends AccountPermissible implements Kickable
 		return account;
 	}
 	
+	public boolean isDestroyed()
+	{
+		return isDestroyed;
+	}
+	
 	public boolean isNew()
 	{
 		return newSession;
@@ -364,6 +380,9 @@ public final class Session extends AccountPermissible implements Kickable
 	@Override
 	public AccountResult kick( String reason )
 	{
+		if ( isDestroyed )
+			throw new IllegalStateException( "This session has been destroyed" );
+		
 		return logout();
 	}
 	
@@ -378,6 +397,9 @@ public final class Session extends AccountPermissible implements Kickable
 	 */
 	public void noTimeout()
 	{
+		if ( isDestroyed )
+			throw new IllegalStateException( "This session has been destroyed" );
+		
 		timeout = 0;
 		data.timeout = 0;
 	}
@@ -390,6 +412,9 @@ public final class Session extends AccountPermissible implements Kickable
 	
 	public void processSessionCookie()
 	{
+		if ( isDestroyed )
+			throw new IllegalStateException( "This session has been destroyed" );
+		
 		// TODO Session Cookies and Session expire at the same time. - Basically, as long as a Session might become called, we keep the session in existence.
 		// TODO Unload a session once it has but been used for a while but might still be called upon at anytime.
 		
@@ -419,13 +444,23 @@ public final class Session extends AccountPermissible implements Kickable
 		}
 	}
 	
+	// TODO Sessions can outlive a login.
+	// TODO Sessions can have an expiration in 7 days and a login can have an expiration of 24 hours.
+	// TODO Remember should probably make it so logins last as long as the session does. Hmmmmmm
+	
 	void putSessionCookie( String key, HttpCookie cookie )
 	{
+		if ( isDestroyed )
+			throw new IllegalStateException( "This session has been destroyed" );
+		
 		sessionCookies.put( key, cookie );
 	}
 	
 	public void rearmTimeout()
 	{
+		if ( isDestroyed )
+			throw new IllegalStateException( "This session has been destroyed" );
+		
 		int defaultTimeout = SessionManager.getDefaultTimeout();
 		
 		// Grant the timeout an additional 10 minutes per request, capped at one hour or 6 requests.
@@ -451,9 +486,10 @@ public final class Session extends AccountPermissible implements Kickable
 			sessionCookie.setExpiration( timeout );
 	}
 	
-	// TODO Sessions can outlive a login.
-	// TODO Sessions can have an expiration in 7 days and a login can have an expiration of 24 hours.
-	// TODO Remember should probably make it so logins last as long as the session does. Hmmmmmm
+	public void regenCSRFToken()
+	{
+		token = new CSRFToken();
+	}
 	
 	/**
 	 * Registers a newly created wrapper with our session
@@ -463,6 +499,9 @@ public final class Session extends AccountPermissible implements Kickable
 	 */
 	public void registerWrapper( SessionWrapper wrapper )
 	{
+		if ( isDestroyed )
+			throw new IllegalStateException( "This session has been destroyed" );
+		
 		assert wrapper.getSession() == this : "SessionWrapper does not contain proper reference to this Session";
 		
 		registerAttachment( wrapper );
@@ -472,6 +511,9 @@ public final class Session extends AccountPermissible implements Kickable
 	
 	public void reload() throws SessionException
 	{
+		if ( isDestroyed )
+			throw new IllegalStateException( "This session has been destroyed" );
+		
 		data.reload();
 	}
 	
@@ -483,12 +525,18 @@ public final class Session extends AccountPermissible implements Kickable
 	 */
 	public void remember( boolean remember )
 	{
+		if ( isDestroyed )
+			throw new IllegalStateException( "This session has been destroyed" );
+		
 		setVariable( "remember", remember ? "true" : "false" );
 		rearmTimeout();
 	}
 	
 	public void removeWrapper( SessionWrapper wrapper )
 	{
+		if ( isDestroyed )
+			throw new IllegalStateException( "This session has been destroyed" );
+		
 		wrappers.remove( wrapper );
 		unregisterAttachment( wrapper );
 	}
@@ -500,6 +548,9 @@ public final class Session extends AccountPermissible implements Kickable
 	
 	public void save( boolean force ) throws SessionException
 	{
+		if ( isDestroyed )
+			throw new IllegalStateException( "This session has been destroyed" );
+		
 		if ( force || changesMade() )
 		{
 			data.sessionName = sessionKey;
@@ -526,11 +577,17 @@ public final class Session extends AccountPermissible implements Kickable
 	
 	public void setGlobal( String key, Object val )
 	{
+		if ( isDestroyed )
+			throw new IllegalStateException( "This session has been destroyed" );
+		
 		globals.put( key, val );
 	}
 	
 	public void setSite( Site site )
 	{
+		if ( isDestroyed )
+			throw new IllegalStateException( "This session has been destroyed" );
+		
 		Validate.notNull( site );
 		this.site = site;
 		data.site = site.getSiteId();
@@ -539,6 +596,9 @@ public final class Session extends AccountPermissible implements Kickable
 	@Override
 	public void setVariable( String key, String value )
 	{
+		if ( isDestroyed )
+			throw new IllegalStateException( "This session has been destroyed" );
+		
 		SessionManager.getLogger().info( String.format( "Setting session variable `%s` with value '%s'", key, value ) );
 		
 		if ( value == null )
@@ -551,6 +611,9 @@ public final class Session extends AccountPermissible implements Kickable
 	@Override
 	public void successfulLogin() throws AccountException
 	{
+		if ( isDestroyed )
+			throw new IllegalStateException( "This session has been destroyed" );
+		
 		for ( SessionWrapper wrapper : wrappers )
 			registerAttachment( wrapper );
 		
@@ -570,6 +633,6 @@ public final class Session extends AccountPermissible implements Kickable
 	@Override
 	public String toString()
 	{
-		return "Session{key=" + sessionKey + ",id=" + sessionId + ",ipAddr=" + getIpAddresses() + ",timeout=" + timeout + ",data=" + data + ",requestCount=" + requestCnt + ",site=" + site + "}";
+		return "Session{key=" + sessionKey + ",id=" + sessionId + ",ipAddr=" + getIpAddresses() + ",timeout=" + timeout + ",isDestroyed=" + isDestroyed + ",data=" + data + ",requestCount=" + requestCnt + ",site=" + site + "}";
 	}
 }

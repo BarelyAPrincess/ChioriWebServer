@@ -26,7 +26,7 @@ import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Ticks;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.util.RandomFunc;
+import com.chiorichan.util.SecureFunc;
 
 /**
  * Used to authenticate an account using an Account Id and Token combination
@@ -196,7 +196,7 @@ public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
 	{
 		Validate.notNull( acct );
 		
-		String token = RandomFunc.randomize( acct.getId() ) + Timings.epoch();
+		String token = SecureFunc.randomize( acct.getId() ) + Timings.epoch();
 		try
 		{
 			// if ( db.queryUpdate( "INSERT INTO `accounts_token` (`acctId`,`token`,`expires`) VALUES (?,?,?);", acct.getId(), token, ( Timings.epoch() + ( 60 * 60 * 24 * 7 ) ) ) < 1 )
