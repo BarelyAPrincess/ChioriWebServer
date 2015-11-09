@@ -15,6 +15,7 @@ package com.chiorichan.tasks;
  */
 public class Ticks
 {
+	// Milliseconds
 	public static final long MILLIS_50 = 1;
 	public static final long MILLIS_100 = 2;
 	public static final long MILLIS_150 = 3;
@@ -29,6 +30,7 @@ public class Ticks
 	public static final long MILLIS_800 = 16;
 	public static final long MILLIS_900 = 18;
 	
+	// Seconds
 	public static final long SECOND = 20;
 	public static final long SECOND_5 = SECOND * 5;
 	public static final long SECOND_10 = SECOND * 10;
@@ -36,6 +38,7 @@ public class Ticks
 	public static final long SECOND_30 = SECOND * 30;
 	public static final long SECOND_45 = SECOND * 45;
 	
+	// Minutes
 	public static final long MINUTE = SECOND * 60;
 	public static final long MINUTE_2 = MINUTE * 2;
 	public static final long MINUTE_3 = MINUTE * 3;
@@ -45,14 +48,17 @@ public class Ticks
 	public static final long MINUTE_30 = MINUTE * 30;
 	public static final long MINUTE_45 = MINUTE * 45;
 	
+	// Hours
 	public static final long HOUR = MINUTE * 60;
 	public static final long HOUR_2 = HOUR * 2;
 	public static final long HOUR_3 = HOUR * 3;
 	public static final long HOUR_4 = HOUR * 4;
+	public static final long HOUR_5 = HOUR * 5;
 	public static final long HOUR_6 = HOUR * 6;
 	public static final long HOUR_12 = HOUR * 12;
 	public static final long HOUR_18 = HOUR * 18;
 	
+	// Days
 	public static final long DAY = HOUR * 24;
 	public static final long DAYS_3 = DAY * 3;
 	public static final long DAYS_7 = DAY * 7;

@@ -666,6 +666,25 @@ public class TaskManager implements ServerManager
 	 * <b>Asynchronous tasks should never access any API in Main. Great care should be taken to assure the thread-safety
 	 * of asynchronous tasks.</b> <br>
 	 * <br>
+	 * Schedules a once off task to occur after a delay. This task will be executed by a thread managed by the scheduler.
+	 * 
+	 * @param creator
+	 *            TaskCreator that owns the task
+	 * @param task
+	 *            Task to be executed
+	 * @param delay
+	 *            Delay in server ticks before executing task
+	 * @return Task id number (-1 if scheduling failed)
+	 */
+	public int scheduleAsyncDelayedTask( final TaskCreator creator, final long delay, final Runnable task )
+	{
+		return scheduleAsyncRepeatingTask( creator, delay, -1L, task );
+	}
+	
+	/**
+	 * <b>Asynchronous tasks should never access any API in Main. Great care should be taken to assure the thread-safety
+	 * of asynchronous tasks.</b> <br>
+	 * <br>
 	 * Schedules a once off task to occur as soon as possible. This task will be executed by a thread managed by the
 	 * scheduler.
 	 * 
@@ -677,26 +696,7 @@ public class TaskManager implements ServerManager
 	 */
 	public int scheduleAsyncDelayedTask( final TaskCreator creator, final Runnable task )
 	{
-		return this.scheduleAsyncDelayedTask( creator, task, 0L );
-	}
-	
-	/**
-	 * <b>Asynchronous tasks should never access any API in Main. Great care should be taken to assure the thread-safety
-	 * of asynchronous tasks.</b> <br>
-	 * <br>
-	 * Schedules a once off task to occur after a delay. This task will be executed by a thread managed by the scheduler.
-	 * 
-	 * @param creator
-	 *            TaskCreator that owns the task
-	 * @param task
-	 *            Task to be executed
-	 * @param delay
-	 *            Delay in server ticks before executing task
-	 * @return Task id number (-1 if scheduling failed)
-	 */
-	public int scheduleAsyncDelayedTask( final TaskCreator creator, final Runnable task, final long delay )
-	{
-		return scheduleAsyncRepeatingTask( creator, delay, -1L, task );
+		return this.scheduleAsyncDelayedTask( creator, 0L, task );
 	}
 	
 	/**
@@ -721,20 +721,6 @@ public class TaskManager implements ServerManager
 	}
 	
 	/**
-	 * Schedules a once off task to occur as soon as possible. This task will be executed by the main server thread.
-	 * 
-	 * @param creator
-	 *            TaskCreator that owns the task
-	 * @param task
-	 *            Task to be executed
-	 * @return Task id number (-1 if scheduling failed)
-	 */
-	public int scheduleSyncDelayedTask( final TaskCreator creator, final Runnable task )
-	{
-		return this.scheduleSyncDelayedTask( creator, task, 0L );
-	}
-	
-	/**
 	 * Schedules a once off task to occur after a delay. This task will be executed by the main server thread.
 	 * 
 	 * @param creator
@@ -745,9 +731,23 @@ public class TaskManager implements ServerManager
 	 *            Delay in server ticks before executing task
 	 * @return Task id number (-1 if scheduling failed)
 	 */
-	public int scheduleSyncDelayedTask( final TaskCreator creator, final Runnable task, final long delay )
+	public int scheduleSyncDelayedTask( final TaskCreator creator, final long delay, final Runnable task )
 	{
-		return scheduleSyncRepeatingTask( creator, task, delay, -1L );
+		return scheduleSyncRepeatingTask( creator, delay, -1L, task );
+	}
+	
+	/**
+	 * Schedules a once off task to occur as soon as possible. This task will be executed by the main server thread.
+	 * 
+	 * @param creator
+	 *            TaskCreator that owns the task
+	 * @param task
+	 *            Task to be executed
+	 * @return Task id number (-1 if scheduling failed)
+	 */
+	public int scheduleSyncDelayedTask( final TaskCreator creator, final Runnable task )
+	{
+		return this.scheduleSyncDelayedTask( creator, 0L, task );
 	}
 	
 	/**
@@ -763,7 +763,7 @@ public class TaskManager implements ServerManager
 	 *            Period in server ticks of the task
 	 * @return Task id number (-1 if scheduling failed)
 	 */
-	public int scheduleSyncRepeatingTask( final TaskCreator creator, final Runnable runnable, long delay, long period )
+	public int scheduleSyncRepeatingTask( final TaskCreator creator, long delay, long period, final Runnable runnable )
 	{
 		return runTaskTimer( creator, delay, period, runnable ).getTaskId();
 	}
