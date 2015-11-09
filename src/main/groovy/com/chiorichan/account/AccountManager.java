@@ -17,14 +17,15 @@ import org.apache.commons.lang3.Validate;
 import com.chiorichan.APILogger;
 import com.chiorichan.Loader;
 import com.chiorichan.ServerManager;
-import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountDescriptiveReason;
+import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.server.KickEvent;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.TaskCreator;
 import com.chiorichan.util.SecureFunc;
+import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Sets;
@@ -103,28 +104,32 @@ public final class AccountManager extends AccountEvents implements ServerManager
 		String acctId = "";
 		
 		if ( seed == null || seed.isEmpty() )
-			acctId = SecureFunc.randomize( "ab123C" );
-		else if ( seed.contains( " " ) || seed.contains( "|" ) )
+			acctId = "ab123C";
+		else
 		{
-			String[] split = seed.split( " |\\|" );
-			acctId += ( split.length < 1 || split[0].isEmpty() ? "" + SecureFunc.randomize( 'a' ) : split[0].substring( 0, 1 ) ).toLowerCase();
-			acctId += ( split.length < 2 || split[1].isEmpty() ? "" + SecureFunc.randomize( 'b' ) : split[1].substring( 0, 1 ) ).toLowerCase();
-			acctId += "123";
-			acctId += ( split.length < 3 || split[2].isEmpty() ? "" + SecureFunc.randomize( 'C' ) : split[2].substring( 0, 1 ) ).toUpperCase();
+			seed = seed.replaceAll( "[\\W\\d]", "" );
+			
+			acctId = StringFunc.randomChars( seed, 2 ).toLowerCase();
+			String sum = StringFunc.removeLetters( SecureFunc.md5( seed ) );
+			acctId += sum.length() < 3 ? SecureFunc.randomize( "123" ) : sum.substring( 0, 3 );
+			acctId += StringFunc.randomChars( seed, 1 ).toUpperCase();
 		}
 		
-		int tries = 1;
+		if ( acctId == null || acctId.isEmpty() )
+			acctId = "ab123C";
 		
+		int tries = 1;
 		do
 		{
-			assert acctId.length() == 6;
-			assert acctId.matches( "[a-z]{2}[0-9]{3}[A-Z]" );
+			Validate.notEmpty( acctId );
+			Validate.validState( acctId.length() == 6 );
+			Validate.validState( acctId.matches( "[a-z]{2}[0-9]{3}[A-Z]" ) );
 			
 			// When our tries are divisible by 25 we attempt to randomize the last letter for more chances.
 			if ( tries % 25 == 0 )
-				acctId = acctId.substring( 0, 5 ) + SecureFunc.randomize( acctId.substring( 5 ) );
+				acctId = acctId.substring( 0, 4 ) + SecureFunc.randomize( acctId.substring( 5 ) );
 			
-			acctId = acctId.substring( 0, 2 ) + SecureFunc.randomize( "123" ) + acctId.substring( 4 );
+			acctId = acctId.substring( 0, 2 ) + SecureFunc.randomize( "123" ) + acctId.substring( 5 );
 			
 			tries++;
 		}
