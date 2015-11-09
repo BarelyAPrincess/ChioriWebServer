@@ -28,14 +28,14 @@ import javax.imageio.ImageIO;
 
 import org.apache.commons.io.FileUtils;
 
-import com.chiorichan.LogColor;
 import com.chiorichan.Loader;
+import com.chiorichan.LogColor;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.Listener;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.http.HttpRequestWrapper;
-import com.chiorichan.util.StringFunc;
+import com.chiorichan.util.SecureFunc;
 
 /**
  * Applies special builtin image filters post {@link ScriptingFactory} via {@link PostEvalEvent}
@@ -172,7 +172,7 @@ public class PostImageProcessor implements Listener
 				return;
 			
 			// Produce a unique encapsulated id based on this image processing request
-			String encapId = StringFunc.md5( context.filename() + w1 + h1 + request.getArgument( "argb" ) + grayscale );
+			String encapId = SecureFunc.md5( context.filename() + w1 + h1 + request.getArgument( "argb" ) + grayscale );
 			File tmp = context.site() == null ? Loader.getTempFileDirectory() : context.site().getTempFileDirectory();
 			File file = new File( tmp, encapId + "_" + new File( context.filename() ).getName() );
 			

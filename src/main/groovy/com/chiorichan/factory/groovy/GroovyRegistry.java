@@ -166,6 +166,7 @@ public class GroovyRegistry implements ScriptingRegistry
 		 */
 	}
 	
+	@SuppressWarnings( "deprecation" )
 	public GroovyShell getNewShell( ScriptingContext context, Binding binding )
 	{
 		CompilerConfiguration configuration = new CompilerConfiguration();

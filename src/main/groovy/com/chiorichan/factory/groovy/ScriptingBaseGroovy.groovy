@@ -26,6 +26,7 @@ import com.chiorichan.site.SiteManager
 /**
  * Used as the Groovy Scripting Base and provides scripts with custom builtin methods
  */
+@Deprecated
 public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 {
 	/**

@@ -17,12 +17,12 @@ import java.nio.charset.Charset;
 
 import com.chiorichan.ContentTypes;
 import com.chiorichan.http.HttpRequestWrapper;
-import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.EvalException;
 import com.chiorichan.lang.EvalMultipleException;
+import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
-import com.chiorichan.util.StringFunc;
+import com.chiorichan.util.SecureFunc;
 
 /**
  * Provides the context to a requested eval of the EvalFactory
@@ -171,7 +171,7 @@ public class ScriptingContext
 	
 	public String bufferHash()
 	{
-		return StringFunc.md5( readBytes() );
+		return SecureFunc.md5( readBytes() );
 	}
 	
 	Charset charset()

@@ -133,21 +133,25 @@ public class StringFunc
 		return collection;
 	}
 	
+	@Deprecated
 	public static byte[] decodeBase64( byte[] bytes )
 	{
 		return Base64.decodeBase64( bytes );
 	}
 	
+	@Deprecated
 	public static byte[] decodeBase64( String var )
 	{
 		return Base64.decodeBase64( var );
 	}
 	
+	@Deprecated
 	public static String encodeBase64( byte[] bytes )
 	{
 		return Base64.encodeBase64String( bytes );
 	}
 	
+	@Deprecated
 	public static String encodeBase64( String var )
 	{
 		return encodeBase64( var.getBytes() );
@@ -228,11 +232,13 @@ public class StringFunc
 		return text.substring( 0, max ) + "...";
 	}
 	
+	@Deprecated
 	public static String md5( byte[] bytes )
 	{
 		return DigestUtils.md5Hex( bytes );
 	}
 	
+	@Deprecated
 	public static String md5( String str )
 	{
 		if ( str == null )

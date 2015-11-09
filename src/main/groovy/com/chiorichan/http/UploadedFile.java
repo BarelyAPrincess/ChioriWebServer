@@ -17,7 +17,7 @@ import java.io.IOException;
 import org.apache.commons.io.FileUtils;
 
 import com.chiorichan.ContentTypes;
-import com.chiorichan.util.StringFunc;
+import com.chiorichan.util.SecureFunc;
 
 /**
  * Acts as the in between for uploaded files and web script
@@ -48,6 +48,12 @@ public class UploadedFile
 		
 		if ( !fileUpload.isInMemory() )
 			file = fileUpload.getFile();
+	}
+	
+	public String getExt()
+	{
+		String[] exts = origFileName.split( "\\." );
+		return exts[exts.length - 1];
 	}
 	
 	/**
@@ -101,6 +107,19 @@ public class UploadedFile
 		return size;
 	}
 	
+	public String getMD5() throws IOException
+	{
+		if ( isInMemory() || file == null )
+			return SecureFunc.md5( cachedFileUpload.content().array() );
+		else
+			return SecureFunc.md5( FileUtils.readFileToByteArray( file ) );
+	}
+	
+	public String getMessage()
+	{
+		return message;
+	}
+	
 	public String getMimeType()
 	{
 		if ( isInMemory() )
@@ -111,30 +130,19 @@ public class UploadedFile
 			return ContentTypes.getContentType( file );
 	}
 	
-	public String getOrigMineType()
-	{
-		return ( cachedFileUpload == null ) ? getMimeType() : cachedFileUpload.getContentType();
-	}
-	
-	public String getExt()
-	{
-		String[] exts = origFileName.split( "\\." );
-		return exts[exts.length - 1];
-	}
-	
-	public String getTmpFileName()
-	{
-		return ( isInMemory() || file == null ) ? null : file.getName();
-	}
-	
 	public String getOrigFileName()
 	{
 		return origFileName;
 	}
 	
-	public String getMessage()
+	public String getOrigMineType()
 	{
-		return message;
+		return ( cachedFileUpload == null ) ? getMimeType() : cachedFileUpload.getContentType();
+	}
+	
+	public String getTmpFileName()
+	{
+		return ( isInMemory() || file == null ) ? null : file.getName();
 	}
 	
 	public boolean isInMemory()
@@ -145,28 +153,20 @@ public class UploadedFile
 			return file == null;
 	}
 	
-	public String getMD5() throws IOException
-	{
-		if ( isInMemory() || file == null )
-			return StringFunc.md5( cachedFileUpload.content().array() );
-		else
-			return StringFunc.md5( FileUtils.readFileToByteArray( file ) );
-	}
-	
-	public String readToString() throws IOException
-	{
-		if ( isInMemory() || file == null )
-			return StringFunc.encodeBase64( cachedFileUpload.content().array() );
-		else
-			return StringFunc.encodeBase64( FileUtils.readFileToByteArray( file ) );
-	}
-	
 	public byte[] readToBytes() throws IOException
 	{
 		if ( isInMemory() || file == null )
 			return cachedFileUpload.content().array();
 		else
 			return FileUtils.readFileToByteArray( file );
+	}
+	
+	public String readToString() throws IOException
+	{
+		if ( isInMemory() || file == null )
+			return SecureFunc.base64Encode( cachedFileUpload.content().array() );
+		else
+			return SecureFunc.base64Encode( FileUtils.readFileToByteArray( file ) );
 	}
 	
 	@Override

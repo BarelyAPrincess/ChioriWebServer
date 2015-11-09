@@ -11,6 +11,7 @@ package com.chiorichan.permission;
 import java.util.Iterator;
 import java.util.Set;
 
+import com.chiorichan.util.SecureFunc;
 import com.chiorichan.util.StringFunc;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Sets;
@@ -63,7 +64,7 @@ public class References implements Iterable<String>
 	
 	public String hash()
 	{
-		return StringFunc.md5( join() );
+		return SecureFunc.md5( join() );
 	}
 	
 	public boolean isEmpty()

@@ -16,11 +16,11 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 
+import com.chiorichan.APILogger;
 import com.chiorichan.Loader;
 import com.chiorichan.LogColor;
 import com.chiorichan.ServerFileWatcher;
 import com.chiorichan.ServerFileWatcher.EventCallback;
-import com.chiorichan.APILogger;
 import com.chiorichan.account.AccountAttachment;
 import com.chiorichan.account.event.AccountSuccessfulLoginEvent;
 import com.chiorichan.event.EventBus;
@@ -32,7 +32,7 @@ import com.chiorichan.tasks.TaskCreator;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Ticks;
 import com.chiorichan.updater.BuildArtifact.ChangeSet.ChangeSetDetails;
-import com.chiorichan.util.StringFunc;
+import com.chiorichan.util.SecureFunc;
 import com.chiorichan.util.Versioning;
 
 public class AutoUpdater implements Listener, TaskCreator
@@ -71,7 +71,7 @@ public class AutoUpdater implements Listener, TaskCreator
 		
 		try
 		{
-			serverJarMD5 = StringFunc.md5( FileUtils.readFileToByteArray( Loader.getServerJar().exists() && Loader.getServerJar().isFile() ? Loader.getServerJar() : null ) );
+			serverJarMD5 = SecureFunc.md5( FileUtils.readFileToByteArray( Loader.getServerJar().exists() && Loader.getServerJar().isFile() ? Loader.getServerJar() : null ) );
 			
 			ServerFileWatcher.INSTANCE.register( Loader.getServerRoot(), new EventCallback()
 			{
@@ -87,7 +87,7 @@ public class AutoUpdater implements Listener, TaskCreator
 								String newServerJarMD5 = null;
 								try
 								{
-									newServerJarMD5 = StringFunc.md5( FileUtils.readFileToByteArray( Loader.getServerJar() ) );
+									newServerJarMD5 = SecureFunc.md5( FileUtils.readFileToByteArray( Loader.getServerJar() ) );
 								}
 								catch ( IOException e )
 								{

@@ -15,9 +15,9 @@ import java.util.Set;
 
 import org.apache.commons.lang3.text.WordUtils;
 
+import com.chiorichan.APILogger;
 import com.chiorichan.Loader;
 import com.chiorichan.LogColor;
-import com.chiorichan.APILogger;
 import com.chiorichan.ServerManager;
 import com.chiorichan.http.HttpCookie;
 import com.chiorichan.lang.StartupException;
@@ -26,7 +26,6 @@ import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Ticks;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.SecureFunc;
-import com.chiorichan.util.StringFunc;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -326,7 +325,7 @@ public class SessionManager implements TaskCreator, ServerManager
 	public String sessionIdBaker()
 	{
 		// TODO Implement a solid session id generating method
-		return StringFunc.md5( SecureFunc.randomize( "$e$$i0n_R%ND0Mne$$" ) + System.currentTimeMillis() );
+		return SecureFunc.md5( SecureFunc.randomize( "$e$$i0n_R%ND0Mne$$" ) + System.currentTimeMillis() );
 	}
 	
 	/**

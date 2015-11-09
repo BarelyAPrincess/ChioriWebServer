@@ -44,4 +44,9 @@ public class CSRFToken
 	{
 		return formInput();
 	}
+	
+	public boolean validate( String token )
+	{
+		return csrfValue.equals( token );
+	}
 }

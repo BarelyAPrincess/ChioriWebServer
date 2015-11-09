@@ -11,13 +11,14 @@ package com.chiorichan.util;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Random;
 import java.util.Set;
 
+import org.apache.commons.codec.digest.DigestUtils;
+
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Chars;
-import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
-import com.sun.org.apache.xml.internal.security.utils.Base64;
 
 /**
  * Provides basic encryption and randomizing functions
@@ -65,28 +66,41 @@ public class SecureFunc
 		newAllowedCharMap = null;
 	}
 	
-	public static byte[] base64Decode( String str ) throws Base64DecodingException
+	public static byte[] base64Decode( String str )
 	{
-		return Base64.decode( str );
+		return Base64.getDecoder().decode( str );
 	}
 	
-	public static String base64DecodeString( String str ) throws Base64DecodingException
+	public static String base64DecodeString( String str )
 	{
-		return new String( Base64.decode( str ) );
+		return new String( Base64.getDecoder().decode( str ) );
 	}
 	
 	public static String base64Encode( byte[] bytes )
 	{
-		return Base64.encode( bytes );
+		return Base64.getEncoder().encodeToString( bytes );
 	}
 	
 	public static String base64Encode( String str )
 	{
-		return Base64.encode( str.getBytes() );
+		return Base64.getEncoder().encodeToString( str.getBytes() );
+	}
+	
+	public static String md5( byte[] bytes )
+	{
+		return DigestUtils.md5Hex( bytes );
+	}
+	
+	public static String md5( String str )
+	{
+		if ( str == null )
+			return null;
+		
+		return DigestUtils.md5Hex( str );
 	}
 	
 	/**
-	 * Selects a random character between 33-126, 128, 131, 134, 135, 138, 140, 142, 156, 158, 159, 161, 162, 163, 165, 167, 176, 181, 191, and 192-255
+	 * Selects a random character within range 33-126, 128, 131, 134, 135, 138, 140, 142, 156, 158, 159, 161, 162, 163, 165, 167, 176, 181, 191, and 192-255
 	 * 
 	 * @return The randomly selected character
 	 */

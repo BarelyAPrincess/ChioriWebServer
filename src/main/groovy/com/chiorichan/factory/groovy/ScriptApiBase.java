@@ -39,6 +39,7 @@ import org.ocpsoft.prettytime.PrettyTime;
 
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.ObjectFunc;
+import com.chiorichan.util.SecureFunc;
 import com.chiorichan.util.StringFunc;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -557,7 +558,7 @@ public abstract class ScriptApiBase extends Script
 	
 	public String md5( String str )
 	{
-		return StringFunc.md5( str );
+		return SecureFunc.md5( str );
 	}
 	
 	public String money_format( Double amt )

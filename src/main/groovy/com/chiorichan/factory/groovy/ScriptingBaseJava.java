@@ -63,11 +63,11 @@ import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
 import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
-import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
 
 /*
  * XXX This deprecated class has already been ported to ScriptApiBase class
  */
+@Deprecated
 public abstract class ScriptingBaseJava extends Script
 {
 	public String apache_get_version()
@@ -91,12 +91,12 @@ public abstract class ScriptingBaseJava extends Script
 		return vals;
 	}
 	
-	public byte[] base64Decode( String str ) throws Base64DecodingException
+	public byte[] base64Decode( String str )
 	{
 		return SecureFunc.base64Decode( str );
 	}
 	
-	public String base64DecodeString( String str ) throws Base64DecodingException
+	public String base64DecodeString( String str )
 	{
 		return SecureFunc.base64DecodeString( str );
 	}
@@ -738,7 +738,7 @@ public abstract class ScriptingBaseJava extends Script
 	
 	public String md5( String str )
 	{
-		return StringFunc.md5( str );
+		return SecureFunc.md5( str );
 	}
 	
 	public String money_format( Double amt )
