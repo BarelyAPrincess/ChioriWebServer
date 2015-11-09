@@ -8,6 +8,7 @@
  */
 package com.chiorichan.util;
 
+import groovy.json.JsonSlurper;
 import io.netty.buffer.ByteBuf;
 import io.netty.util.internal.ConcurrentSet;
 
@@ -28,6 +29,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -278,9 +280,57 @@ public class StringFunc
 		return null;
 	}
 	
+	public static Object parseJson( String text )
+	{
+		JsonSlurper slurper = new JsonSlurper();
+		return slurper.parseText( text );
+	}
+	
+	public static String randomChars( String seed, int length )
+	{
+		Validate.notEmpty( seed );
+		
+		StringBuilder sb = new StringBuilder();
+		
+		for ( int i = 0; i < length; i++ )
+			sb.append( seed.toCharArray()[new Random().nextInt( seed.length() )] );
+		
+		return sb.toString();
+	}
+	
 	public static String removeInvalidChars( String ref )
 	{
 		return ref.replaceAll( "[^a-z0-9_]", "" );
+	}
+	
+	public static String removeLetters( String input )
+	{
+		return input.replaceAll( "[a-zA-Z]", "" );
+	}
+	
+	public static String removeLettersLower( String input )
+	{
+		return input.replaceAll( "[a-z]", "" );
+	}
+	
+	public static String removeLettersUpper( String input )
+	{
+		return input.replaceAll( "[A-Z]", "" );
+	}
+	
+	public static String removeNumbers( String input )
+	{
+		return input.replaceAll( "\\d", "" );
+	}
+	
+	public static String removeSpecial( String input )
+	{
+		return input.replaceAll( "\\W", "" );
+	}
+	
+	public static String removeWhitespace( String input )
+	{
+		return input.replaceAll( "\\s", "" );
 	}
 	
 	public static List<String> repeatToList( String chr, int length )

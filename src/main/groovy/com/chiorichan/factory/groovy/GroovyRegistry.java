@@ -14,6 +14,7 @@ import groovy.lang.GroovyShell;
 import groovy.lang.MissingMethodException;
 import groovy.lang.Script;
 import groovy.transform.TimedInterrupt;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -68,7 +69,7 @@ public class GroovyRegistry implements ScriptingRegistry
 	
 	private static final Class<?>[] classImports = new Class<?>[] {MessageRepo.class, References.class, ScriptApi.class, Loader.class, AccountManager.class, AccountType.class, Account.class, AccountAuthenticator.class, EventBus.class, PermissionManager.class, PluginManager.class, TaskManager.class, Timings.class, SessionManager.class, SiteManager.class, Site.class, ScriptingContext.class};
 	private static final String[] starImports = new String[] {"com.chiorichan.lang", "com.chiorichan.factory.api", "com.chiorichan.util", "org.apache.commons.lang3.text", "org.ocpsoft.prettytime", "java.util", "java.net", "com.google.common.base"};
-	private static final Class<?>[] staticImports = new Class<?>[] {Looper.class, ReportingLevel.class};
+	private static final Class<?>[] staticImports = new Class<?>[] {Looper.class, ReportingLevel.class, HttpResponseStatus.class};
 	private static final GroovySandbox secure = new GroovySandbox();
 	
 	/*

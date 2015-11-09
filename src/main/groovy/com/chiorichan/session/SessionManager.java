@@ -226,7 +226,7 @@ public class SessionManager implements TaskCreator, ServerManager
 		/*
 		 * This schedules the Session Manager with the Scheduler to run every 5 minutes (by default) to cleanup sessions.
 		 */
-		TaskManager.INSTANCE.scheduleAsyncRepeatingTask( this, 0L, Ticks.MINUTE * Loader.getConfig().getInt( "sessions.cleanupInterval", 5 ), new Runnable()
+		TaskManager.INSTANCE.scheduleSyncRepeatingTask( this, 0L, Ticks.MINUTE * Loader.getConfig().getInt( "sessions.cleanupInterval", 5 ), new Runnable()
 		{
 			@Override
 			public void run()

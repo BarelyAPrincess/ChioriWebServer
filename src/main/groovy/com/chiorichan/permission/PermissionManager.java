@@ -710,7 +710,7 @@ public class PermissionManager extends BuiltinEventCreator implements ServerMana
 	 */
 	protected void registerTask( TimerTask task, int delay )
 	{
-		TaskManager.INSTANCE.scheduleAsyncDelayedTask( this, task, delay * 50 );
+		TaskManager.INSTANCE.scheduleAsyncDelayedTask( this, delay * 50, task );
 	}
 	
 	public void reload() throws PermissionBackendException

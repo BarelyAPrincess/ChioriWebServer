@@ -20,6 +20,9 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Date;
+import java.util.Map;
+
+import javax.net.ssl.HttpsURLConnection;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
@@ -35,6 +38,7 @@ import org.apache.http.impl.client.HttpClients;
 
 import com.chiorichan.Loader;
 import com.chiorichan.plugin.PluginManager;
+import com.google.common.base.Joiner;
 
 /**
  * Provides Network Utilities
@@ -43,6 +47,77 @@ public class NetworkFunc
 {
 	public static final String REGEX_IPV4 = "^([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\.([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\.([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\.([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])$";
 	public static final String REGEX_IPV6 = "^((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4}))*::((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4}))*|((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4})){7}$";
+	
+	public static boolean downloadFile( String url, File dest ) throws ClientProtocolException, IOException
+	{
+		HttpClient httpclient = HttpClients.createDefault();
+		HttpGet httpget = new HttpGet( url );
+		
+		HttpResponse response = httpclient.execute( httpget );
+		HttpEntity entity = response.getEntity();
+		
+		if ( response.getStatusLine().getStatusCode() != 200 )
+		{
+			PluginManager.getLogger().severe( "Could not download the file `" + url + "`, webserver returned `" + response.getStatusLine().getStatusCode() + " - " + response.getStatusLine().getReasonPhrase() + "`" );
+			return false;
+		}
+		
+		InputStream instream = entity.getContent();
+		
+		FileUtils.copyInputStreamToFile( instream, dest );
+		
+		return true;
+	}
+	
+	public static Date getNTPDate()
+	{
+		String[] hosts = new String[] {"ntp02.oal.ul.pt", "ntp04.oal.ul.pt", "ntp.xs4all.nl"};
+		
+		NTPUDPClient client = new NTPUDPClient();
+		// We want to timeout if a response takes longer than 5 seconds
+		client.setDefaultTimeout( 5000 );
+		
+		for ( String host : hosts )
+			try
+			{
+				InetAddress hostAddr = InetAddress.getByName( host );
+				// System.out.println( "> " + hostAddr.getHostName() + "/" + hostAddr.getHostAddress() );
+				TimeInfo info = client.getTime( hostAddr );
+				Date date = new Date( info.getReturnTime() );
+				return date;
+				
+			}
+			catch ( IOException e )
+			{
+				e.printStackTrace();
+			}
+		
+		client.close();
+		
+		return null;
+		
+	}
+	
+	public static String getUserAgent()
+	{
+		return Versioning.getProductSimple() + "/" + Versioning.getVersion() + "/" + Versioning.getJavaVersion();
+	}
+	
+	public static boolean isValidIPv4( String ip )
+	{
+		if ( ip == null )
+			return false;
+		
+		return ip.matches( REGEX_IPV4 );
+	}
+	
+	public static boolean isValidIPv6( String ip )
+	{
+		if ( ip == null )
+			return false;
+		
+		return ip.matches( REGEX_IPV6 );
+	}
 	
 	/**
 	 * Establishes an HttpURLConnection from a URL, with the correct configuration to receive content from the given URL.
@@ -93,9 +168,7 @@ public class NetworkFunc
 				return true;
 			}
 			else
-			{
 				return false;
-			}
 		}
 		catch ( IOException e )
 		{
@@ -107,79 +180,56 @@ public class NetworkFunc
 		}
 	}
 	
-	/**
-	 * TODO The server was lagging with this! WHY???
-	 * Maybe we should change our metrics system
-	 */
-	public static boolean sendTracking( String category, String action, String label )
+	public static String postUrl( String url, Map<String, String> postArgs )
 	{
 		try
 		{
-			String url = "http://www.google-analytics.com/collect";
-			
-			URL urlObj = new URL( url );
-			HttpURLConnection con = ( HttpURLConnection ) urlObj.openConnection();
-			con.setRequestMethod( "POST" );
-			
-			String urlParameters = "v=1&tid=UA-60405654-1&cid=" + Loader.getClientId() + "&t=event&ec=" + category + "&ea=" + action + "&el=" + label;
-			
-			con.setDoOutput( true );
-			DataOutputStream wr = new DataOutputStream( con.getOutputStream() );
-			wr.writeBytes( urlParameters );
-			wr.flush();
-			wr.close();
-			
-			int responseCode = con.getResponseCode();
-			Loader.getLogger().fine( "Analytics Response [" + category + "]: " + responseCode );
-			
-			BufferedReader in = new BufferedReader( new InputStreamReader( con.getInputStream() ) );
-			String inputLine;
-			StringBuffer response = new StringBuffer();
-			
-			while ( ( inputLine = in.readLine() ) != null )
-			{
-				response.append( inputLine );
-			}
-			in.close();
-			
-			return true;
+			return postUrlWithException( url, postArgs );
 		}
 		catch ( IOException e )
 		{
-			return false;
+			return null;
 		}
 	}
 	
-	public static Date getNTPDate()
+	public static String postUrlWithException( String url, Map<String, String> postArgs ) throws IOException
 	{
-		String[] hosts = new String[] {"ntp02.oal.ul.pt", "ntp04.oal.ul.pt", "ntp.xs4all.nl"};
+		URL obj = new URL( url );
+		HttpsURLConnection con = ( HttpsURLConnection ) obj.openConnection();
 		
-		NTPUDPClient client = new NTPUDPClient();
-		// We want to timeout if a response takes longer than 5 seconds
-		client.setDefaultTimeout( 5000 );
+		con.setRequestMethod( "POST" );
+		con.setRequestProperty( "User-Agent", getUserAgent() );
+		con.setRequestProperty( "Accept-Language", "en-US,en;q=0.5" );
 		
-		for ( String host : hosts )
+		con.setDoOutput( true );
+		DataOutputStream wr = new DataOutputStream( con.getOutputStream() );
+		
+		try
 		{
-			
-			try
-			{
-				InetAddress hostAddr = InetAddress.getByName( host );
-				// System.out.println( "> " + hostAddr.getHostName() + "/" + hostAddr.getHostAddress() );
-				TimeInfo info = client.getTime( hostAddr );
-				Date date = new Date( info.getReturnTime() );
-				return date;
-				
-			}
-			catch ( IOException e )
-			{
-				e.printStackTrace();
-			}
+			wr.writeBytes( Joiner.on( "&" ).withKeyValueSeparator( "=" ).join( postArgs ) );
+			wr.flush();
+		}
+		finally
+		{
+			IOUtils.closeQuietly( wr );
 		}
 		
-		client.close();
+		BufferedReader in = new BufferedReader( new InputStreamReader( con.getInputStream() ) );
+		StringBuffer response = new StringBuffer();
 		
-		return null;
+		try
+		{
+			String inputLine;
+			while ( ( inputLine = in.readLine() ) != null )
+				response.append( inputLine );
+			in.close();
+		}
+		finally
+		{
+			IOUtils.closeQuietly( in );
+		}
 		
+		return response.toString();
 	}
 	
 	public static byte[] readUrl( String url )
@@ -231,54 +281,51 @@ public class NetworkFunc
 		int n;
 		
 		while ( ( n = is.read( byteChunk ) ) > 0 )
-		{
 			out.write( byteChunk, 0, n );
-		}
 		
 		is.close();
 		
 		return out.toByteArray();
 	}
 	
-	public static boolean downloadFile( String url, File dest ) throws ClientProtocolException, IOException
+	/**
+	 * TODO The server was lagging with this! WHY???
+	 * Maybe we should change our metrics system
+	 */
+	public static boolean sendTracking( String category, String action, String label )
 	{
-		HttpClient httpclient = HttpClients.createDefault();
-		HttpGet httpget = new HttpGet( url );
-		
-		HttpResponse response = httpclient.execute( httpget );
-		HttpEntity entity = response.getEntity();
-		
-		if ( response.getStatusLine().getStatusCode() != 200 )
+		try
 		{
-			PluginManager.getLogger().severe( "Could not download the file `" + url + "`, webserver returned `" + response.getStatusLine().getStatusCode() + " - " + response.getStatusLine().getReasonPhrase() + "`" );
+			String url = "http://www.google-analytics.com/collect";
+			
+			URL urlObj = new URL( url );
+			HttpURLConnection con = ( HttpURLConnection ) urlObj.openConnection();
+			con.setRequestMethod( "POST" );
+			
+			String urlParameters = "v=1&tid=UA-60405654-1&cid=" + Loader.getClientId() + "&t=event&ec=" + category + "&ea=" + action + "&el=" + label;
+			
+			con.setDoOutput( true );
+			DataOutputStream wr = new DataOutputStream( con.getOutputStream() );
+			wr.writeBytes( urlParameters );
+			wr.flush();
+			wr.close();
+			
+			int responseCode = con.getResponseCode();
+			Loader.getLogger().fine( "Analytics Response [" + category + "]: " + responseCode );
+			
+			BufferedReader in = new BufferedReader( new InputStreamReader( con.getInputStream() ) );
+			String inputLine;
+			StringBuffer response = new StringBuffer();
+			
+			while ( ( inputLine = in.readLine() ) != null )
+				response.append( inputLine );
+			in.close();
+			
+			return true;
+		}
+		catch ( IOException e )
+		{
 			return false;
 		}
-		
-		InputStream instream = entity.getContent();
-		
-		FileUtils.copyInputStreamToFile( instream, dest );
-		
-		return true;
-	}
-	
-	public static String getUserAgent()
-	{
-		return Versioning.getProductSimple() + "/" + Versioning.getVersion() + "/" + Versioning.getJavaVersion();
-	}
-	
-	public static boolean isValidIPv4( String ip )
-	{
-		if ( ip == null )
-			return false;
-		
-		return ip.matches( REGEX_IPV4 );
-	}
-	
-	public static boolean isValidIPv6( String ip )
-	{
-		if ( ip == null )
-			return false;
-		
-		return ip.matches( REGEX_IPV6 );
 	}
 }
