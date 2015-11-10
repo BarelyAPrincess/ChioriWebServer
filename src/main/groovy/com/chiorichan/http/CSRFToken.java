@@ -8,6 +8,10 @@
  */
 package com.chiorichan.http;
 
+import java.util.Random;
+
+import com.chiorichan.session.Session;
+import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.SecureFunc;
 
 /**
@@ -18,10 +22,12 @@ public class CSRFToken
 	String csrfKey;
 	String csrfValue;
 	
-	public CSRFToken()
+	public CSRFToken( Session sess )
 	{
-		csrfKey = SecureFunc.randomize( "Z1111Y2222" );
-		csrfValue = SecureFunc.base64Encode( SecureFunc.seed( 64 ) );
+		Random r = SecureFunc.random();
+		
+		csrfKey = SecureFunc.randomize( r, "Z1111Y2222" );
+		csrfValue = SecureFunc.base64Encode( sess.getSessId() + Timings.epoch() + SecureFunc.randomize( r, 16 ) );
 	}
 	
 	public String formInput()
@@ -45,8 +51,21 @@ public class CSRFToken
 		return formInput();
 	}
 	
-	public boolean validate( String token )
+	public boolean validate( String token, Session sess )
 	{
-		return csrfValue.equals( token );
+		if ( !csrfValue.equals( token ) )
+			return false;
+		
+		String decoded = SecureFunc.base64DecodeString( token );
+		String sessId = sess.getSessId();
+		
+		if ( !sessId.equals( decoded.substring( 0, sessId.length() ) ) )
+			return false; // This was generated for a different Session
+			
+		// int epoch = Integer.parseInt( decoded.substring( sessId.length(), decoded.length() - 16 ) );
+		
+		// TODO Handle checking for replay attacks
+		
+		return true;
 	}
 }

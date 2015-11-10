@@ -318,14 +318,13 @@ public class SessionManager implements TaskCreator, ServerManager
 	}
 	
 	/**
-	 * Generates a random Session Id based on total randomness.
+	 * Generates a random Session Id based on randomness.
 	 * 
 	 * @return Random Session Id as a string
 	 */
 	public String sessionIdBaker()
 	{
-		// TODO Implement a solid session id generating method
-		return SecureFunc.md5( SecureFunc.randomize( "$e$$i0n_R%ND0Mne$$" ) + System.currentTimeMillis() );
+		return SecureFunc.md5( SecureFunc.randomize( SecureFunc.random(), "$e$$i0n_R%ND0Mne$$" ) + System.currentTimeMillis() );
 	}
 	
 	/**

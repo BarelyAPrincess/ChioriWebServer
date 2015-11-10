@@ -338,15 +338,11 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			if ( !response.isCommitted() )
 				response.sendResponse();
 			
-			Session sess;
-			if ( ( sess = request.getSessionWithoutException() ) != null )
-				sess.save();
+			if ( request.hasSession() )
+				request.getSession().save();
 			
 			request.finish();
 			requestFinished = true;
-			
-			// Loader.getDatabase().queryUpdate( "INSERT INTO `testing` (`epoch`, `time`, `uri`, `result`, ip) VALUES ('" + Timings.epoch() + "', '" + Timings.mark( this ) + "', 'http://" + request.getDomain() + request.getUri() + "', '" +
-			// response.getHttpCode() + "', '" + request.getIpAddr() + "');" );
 		}
 		catch ( Throwable t )
 		{

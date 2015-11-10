@@ -100,13 +100,22 @@ public class SecureFunc
 	}
 	
 	/**
+	 * Creates a Random Instance using 4 bits from SecureRandom
+	 */
+	public static Random random()
+	{
+		String seed = SecureFunc.md5( SecureFunc.seed( 4 ) ).replaceAll( "\\D", "" );
+		return new Random( Long.parseLong( seed.length() > 12 ? seed.substring( 0, 12 ) : seed ) ^ System.nanoTime() );
+	}
+	
+	/**
 	 * Selects a random character within range 33-126, 128, 131, 134, 135, 138, 140, 142, 156, 158, 159, 161, 162, 163, 165, 167, 176, 181, 191, and 192-255
 	 * 
 	 * @return The randomly selected character
 	 */
 	public static char randomize()
 	{
-		return allowedCharMap[new Random().nextInt( allowedCharMap.length )];
+		return randomize( new Random() );
 	}
 	
 	/**
@@ -122,16 +131,7 @@ public class SecureFunc
 	 */
 	public static char randomize( char chr )
 	{
-		if ( chr > 64 && chr < 91 ) // Uppercase
-			return randomize( 65, 90 );
-		
-		if ( chr > 96 && chr < 123 ) // Lowercase
-			return randomize( 97, 122 );
-		
-		if ( chr > 47 && chr < 58 ) // Numeric
-			return randomize( 48, 57 );
-		
-		return randomCharMap[new Random().nextInt( randomCharMap.length )];
+		return randomize( new Random(), chr );
 	}
 	
 	/**
@@ -145,10 +145,54 @@ public class SecureFunc
 	 */
 	public static char randomize( int start, int end )
 	{
+		return randomize( new Random(), start, end );
+	}
+	
+	public static char randomize( Random rando )
+	{
+		return allowedCharMap[rando.nextInt( allowedCharMap.length )];
+	}
+	
+	public static char randomize( Random rando, char chr )
+	{
+		if ( chr > 64 && chr < 91 ) // Uppercase
+			return randomize( rando, 65, 90 );
+		
+		if ( chr > 96 && chr < 123 ) // Lowercase
+			return randomize( rando, 97, 122 );
+		
+		if ( chr > 47 && chr < 58 ) // Numeric
+			return randomize( rando, 48, 57 );
+		
+		return randomCharMap[rando.nextInt( randomCharMap.length )];
+	}
+	
+	public static String randomize( Random rando, int length )
+	{
+		StringBuilder sb = new StringBuilder();
+		
+		for ( int i = 0; i < length; i++ )
+			sb.append( randomize( rando ) );
+		
+		return sb.toString();
+	}
+	
+	public static char randomize( Random rando, int start, int end )
+	{
 		if ( start > end )
 			throw new RuntimeException( "Start can't be greater than end!" );
 		
-		return ( char ) ( start + new Random().nextInt( end - start ) );
+		return ( char ) ( start + rando.nextInt( end - start ) );
+	}
+	
+	public static String randomize( Random rando, String base )
+	{
+		StringBuilder sb = new StringBuilder( base );
+		
+		for ( int i = 0; i < base.length(); i++ )
+			sb.setCharAt( i, randomize( rando, sb.charAt( i ) ) );
+		
+		return sb.toString();
 	}
 	
 	/**
@@ -165,16 +209,7 @@ public class SecureFunc
 	 */
 	public static String randomize( String base )
 	{
-		String output = "";
-		
-		for ( int i = 0; i < base.length(); i++ )
-		{
-			char chr = base.charAt( i );
-			chr = randomize( chr );
-			output += chr;
-		}
-		
-		return output;
+		return randomize( new Random(), base );
 	}
 	
 	public static byte[] seed( int length )

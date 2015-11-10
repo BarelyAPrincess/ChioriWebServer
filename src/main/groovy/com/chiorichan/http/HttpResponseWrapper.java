@@ -513,9 +513,10 @@ public class HttpResponseWrapper
 		FullHttpResponse response = new DefaultFullHttpResponse( HttpVersion.HTTP_1_1, httpStatus, output );
 		HttpHeaders h = response.headers();
 		
-		Session session = request.getSessionWithoutException();
-		if ( session != null )
+		if ( request.hasSession() )
 		{
+			Session session = request.getSession();
+			
 			/**
 			 * Initiate the Session Persistence Method.
 			 * This is usually done with a cookie but we should make a param optional

@@ -281,7 +281,7 @@ public final class Session extends AccountPermissible implements Kickable
 	{
 		Set<String> ips = Sets.newHashSet();
 		for ( SessionWrapper sp : wrappers )
-			if ( sp.getSessionWithoutException() != null && sp.getSessionWithoutException() == this )
+			if ( sp.hasSession() && sp.getSession() == this )
 			{
 				String ipAddr = sp.getIpAddr();
 				if ( ipAddr != null && !ipAddr.isEmpty() && !ips.contains( ipAddr ) )
@@ -488,7 +488,7 @@ public final class Session extends AccountPermissible implements Kickable
 	
 	public void regenCSRFToken()
 	{
-		token = new CSRFToken();
+		token = new CSRFToken( this );
 	}
 	
 	/**

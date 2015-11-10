@@ -157,18 +157,6 @@ public abstract class SessionWrapper implements BindingProvider, AccountAttachme
 		return session;
 	}
 	
-	/**
-	 * Gets the Session but without throwing an exception on null
-	 * Be sure to check if the session is null
-	 * 
-	 * @return
-	 *         The session
-	 */
-	public final Session getSessionWithoutException()
-	{
-		return session;
-	}
-	
 	@Override
 	public abstract Site getSite();
 	
