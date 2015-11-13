@@ -199,7 +199,14 @@ public class SQLWrapper
 		return prepareStatement( query, false, resultSetType, resultSetConcurrency, resultSetHoldability );
 	}
 	
-	boolean reconnect()
+	public boolean reconnect()
+	{
+		if ( isConnected() )
+			return true;
+		return reconnect0();
+	}
+	
+	boolean reconnect0()
 	{
 		try
 		{

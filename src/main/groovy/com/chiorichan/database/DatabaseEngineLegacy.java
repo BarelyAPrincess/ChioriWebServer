@@ -28,6 +28,7 @@ import org.json.JSONException;
 
 import com.chiorichan.LogColor;
 import com.chiorichan.datastore.DatastoreManager;
+import com.chiorichan.datastore.sql.SQLWrapper;
 import com.chiorichan.util.DbFunc;
 import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.StringFunc;
@@ -78,10 +79,12 @@ public class DatabaseEngineLegacy
 	}
 	
 	private Connection sql;
+	private SQLWrapper wrapper;
 	
-	public DatabaseEngineLegacy( Connection sql )
+	public DatabaseEngineLegacy( SQLWrapper sql )
 	{
-		this.sql = sql;
+		this.sql = sql.direct();
+		wrapper = sql;
 	}
 	
 	public static LinkedHashMap<String, Object> convert( ResultSet rs ) throws SQLException, JSONException
@@ -537,6 +540,9 @@ public class DatabaseEngineLegacy
 			
 			stmt = sql.createStatement();
 			
+			if ( !stmt.isClosed() )
+				reconnect();
+			
 			result = stmt.executeQuery( query );
 			
 			log( "SQL Query `" + query + "` returned " + getRowCount( result ) + " rows!" );
@@ -708,27 +714,9 @@ public class DatabaseEngineLegacy
 	
 	public Boolean reconnect()
 	{
-		/*
-		 * try
-		 * {
-		 * if ( savedHost == null || savedPort == null || savedDb == null )
-		 * {
-		 * DatastoreManager.getLogger().severe( "There was an error reconnection to the DB, unknown cause other then connection string are NULL." );
-		 * return false;
-		 * }
-		 * 
-		 * sql = DriverManager.getConnection( "jdbc:mysql://" + savedHost + ":" + savedPort + "/" + savedDb, savedUser, savedPass );
-		 * DatastoreManager.getLogger().info( "We succesully connected to the sql database." );
-		 * }
-		 * catch ( Exception e )
-		 * {
-		 * DatastoreManager.getLogger().severe( "There was an error reconnection to the DB, " + "jdbc:mysql://" + savedHost + ":" + savedPort + "/" + savedDb + ", " + savedUser + " " + savedPass, e );
-		 * }
-		 * 
-		 * return true;
-		 */
-		
-		return false;
+		boolean state = wrapper.reconnect();
+		sql = wrapper.direct();
+		return wrapper.isConnected() ? state : false;
 	}
 	
 	public LinkedHashMap<String, Object> select( String table ) throws SQLException

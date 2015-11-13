@@ -48,7 +48,7 @@ public class SQLDatastore extends Datastore
 		if ( sql == null )
 			throw new IllegalStateException( "The SQL instance is not initalized!" );
 		
-		return new DatabaseEngineLegacy( sql.direct() );
+		return new DatabaseEngineLegacy( sql );
 	}
 	
 	public boolean initalized()
