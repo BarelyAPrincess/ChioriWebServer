@@ -48,7 +48,8 @@ public final class Session extends AccountPermissible implements Kickable
 {
 	boolean newSession = false;
 	
-	boolean isDestroyed = false;
+	// Indicates if the Session has been unloaded or destroyed!
+	boolean isInvalidated = false;
 	
 	/**
 	 * The underlying data for this session<br>
@@ -176,7 +177,7 @@ public final class Session extends AccountPermissible implements Kickable
 	
 	public boolean changesMade()
 	{
-		return !isDestroyed && dataChangeHistory.size() > 0;
+		return !isInvalidated && dataChangeHistory.size() > 0;
 	}
 	
 	public void destroy() throws SessionException
@@ -200,7 +201,7 @@ public final class Session extends AccountPermissible implements Kickable
 			sessionCookie.setMaxAge( 0 );
 		
 		data.destroy();
-		isDestroyed = true;
+		isInvalidated = true;
 	}
 	
 	@Override
@@ -362,9 +363,9 @@ public final class Session extends AccountPermissible implements Kickable
 		return account;
 	}
 	
-	public boolean isDestroyed()
+	public boolean isInvalidated()
 	{
-		return isDestroyed;
+		return isInvalidated;
 	}
 	
 	public boolean isNew()
@@ -380,8 +381,8 @@ public final class Session extends AccountPermissible implements Kickable
 	@Override
 	public AccountResult kick( String reason )
 	{
-		if ( isDestroyed )
-			throw new IllegalStateException( "This session has been destroyed" );
+		if ( isInvalidated )
+			throw new IllegalStateException( "This session has been invalidated" );
 		
 		return logout();
 	}
@@ -397,8 +398,8 @@ public final class Session extends AccountPermissible implements Kickable
 	 */
 	public void noTimeout()
 	{
-		if ( isDestroyed )
-			throw new IllegalStateException( "This session has been destroyed" );
+		if ( isInvalidated )
+			throw new IllegalStateException( "This session has been invalidated" );
 		
 		timeout = 0;
 		data.timeout = 0;
@@ -412,8 +413,8 @@ public final class Session extends AccountPermissible implements Kickable
 	
 	public void processSessionCookie()
 	{
-		if ( isDestroyed )
-			throw new IllegalStateException( "This session has been destroyed" );
+		if ( isInvalidated )
+			throw new IllegalStateException( "This session has been invalidated" );
 		
 		// TODO Session Cookies and Session expire at the same time. - Basically, as long as a Session might become called, we keep the session in existence.
 		// TODO Unload a session once it has but been used for a while but might still be called upon at anytime.
@@ -450,16 +451,16 @@ public final class Session extends AccountPermissible implements Kickable
 	
 	void putSessionCookie( String key, HttpCookie cookie )
 	{
-		if ( isDestroyed )
-			throw new IllegalStateException( "This session has been destroyed" );
+		if ( isInvalidated )
+			throw new IllegalStateException( "This session has been invalidated" );
 		
 		sessionCookies.put( key, cookie );
 	}
 	
 	public void rearmTimeout()
 	{
-		if ( isDestroyed )
-			throw new IllegalStateException( "This session has been destroyed" );
+		if ( isInvalidated )
+			throw new IllegalStateException( "This session has been invalidated" );
 		
 		int defaultTimeout = SessionManager.getDefaultTimeout();
 		
@@ -499,8 +500,8 @@ public final class Session extends AccountPermissible implements Kickable
 	 */
 	public void registerWrapper( SessionWrapper wrapper )
 	{
-		if ( isDestroyed )
-			throw new IllegalStateException( "This session has been destroyed" );
+		if ( isInvalidated )
+			throw new IllegalStateException( "This session has been invalidated" );
 		
 		assert wrapper.getSession() == this : "SessionWrapper does not contain proper reference to this Session";
 		
@@ -511,8 +512,8 @@ public final class Session extends AccountPermissible implements Kickable
 	
 	public void reload() throws SessionException
 	{
-		if ( isDestroyed )
-			throw new IllegalStateException( "This session has been destroyed" );
+		if ( isInvalidated )
+			throw new IllegalStateException( "This session has been invalidated" );
 		
 		data.reload();
 	}
@@ -525,8 +526,8 @@ public final class Session extends AccountPermissible implements Kickable
 	 */
 	public void remember( boolean remember )
 	{
-		if ( isDestroyed )
-			throw new IllegalStateException( "This session has been destroyed" );
+		if ( isInvalidated )
+			throw new IllegalStateException( "This session has been invalidated" );
 		
 		setVariable( "remember", remember ? "true" : "false" );
 		rearmTimeout();
@@ -534,8 +535,8 @@ public final class Session extends AccountPermissible implements Kickable
 	
 	public void removeWrapper( SessionWrapper wrapper )
 	{
-		if ( isDestroyed )
-			throw new IllegalStateException( "This session has been destroyed" );
+		if ( isInvalidated )
+			throw new IllegalStateException( "This session has been invalidated" );
 		
 		wrappers.remove( wrapper );
 		unregisterAttachment( wrapper );
@@ -548,8 +549,8 @@ public final class Session extends AccountPermissible implements Kickable
 	
 	public void save( boolean force ) throws SessionException
 	{
-		if ( isDestroyed )
-			throw new IllegalStateException( "This session has been destroyed" );
+		if ( isInvalidated )
+			throw new IllegalStateException( "This session has been invalidated" );
 		
 		if ( force || changesMade() )
 		{
@@ -577,16 +578,16 @@ public final class Session extends AccountPermissible implements Kickable
 	
 	public void setGlobal( String key, Object val )
 	{
-		if ( isDestroyed )
-			throw new IllegalStateException( "This session has been destroyed" );
+		if ( isInvalidated )
+			throw new IllegalStateException( "This session has been invalidated" );
 		
 		globals.put( key, val );
 	}
 	
 	public void setSite( Site site )
 	{
-		if ( isDestroyed )
-			throw new IllegalStateException( "This session has been destroyed" );
+		if ( isInvalidated )
+			throw new IllegalStateException( "This session has been invalidated" );
 		
 		Validate.notNull( site );
 		this.site = site;
@@ -596,8 +597,8 @@ public final class Session extends AccountPermissible implements Kickable
 	@Override
 	public void setVariable( String key, String value )
 	{
-		if ( isDestroyed )
-			throw new IllegalStateException( "This session has been destroyed" );
+		if ( isInvalidated )
+			throw new IllegalStateException( "This session has been invalidated" );
 		
 		SessionManager.getLogger().info( String.format( "Setting session variable `%s` with value '%s'", key, value ) );
 		
@@ -611,8 +612,8 @@ public final class Session extends AccountPermissible implements Kickable
 	@Override
 	public void successfulLogin() throws AccountException
 	{
-		if ( isDestroyed )
-			throw new IllegalStateException( "This session has been destroyed" );
+		if ( isInvalidated )
+			throw new IllegalStateException( "This session has been invalidated" );
 		
 		for ( SessionWrapper wrapper : wrappers )
 			registerAttachment( wrapper );
@@ -633,6 +634,23 @@ public final class Session extends AccountPermissible implements Kickable
 	@Override
 	public String toString()
 	{
-		return "Session{key=" + sessionKey + ",id=" + sessionId + ",ipAddr=" + getIpAddresses() + ",timeout=" + timeout + ",isDestroyed=" + isDestroyed + ",data=" + data + ",requestCount=" + requestCnt + ",site=" + site + "}";
+		return "Session{key=" + sessionKey + ",id=" + sessionId + ",ipAddr=" + getIpAddresses() + ",timeout=" + timeout + ",isInvalidated=" + isInvalidated + ",data=" + data + ",requestCount=" + requestCnt + ",site=" + site + "}";
+	}
+	
+	public void upload()
+	{
+		if ( SessionManager.isDebug() )
+			Loader.getLogger().info( LogColor.DARK_AQUA + "Session Unloaded `" + this + "`" );
+		
+		SessionManager.sessions.remove( this );
+		
+		for ( SessionWrapper wrap : wrappers )
+		{
+			wrap.finish();
+			unregisterAttachment( wrap );
+		}
+		wrappers.clear();
+		
+		isInvalidated = true;
 	}
 }

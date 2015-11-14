@@ -300,7 +300,7 @@ public class StringFunc
 	
 	public static String removeInvalidChars( String ref )
 	{
-		return ref.replaceAll( "[^a-z0-9@_]", "" );
+		return ref.replaceAll( "[^a-zA-Z0-9@_\\. ]", "" );
 	}
 	
 	public static String removeLetters( String input )

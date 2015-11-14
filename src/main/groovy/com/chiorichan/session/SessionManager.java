@@ -334,13 +334,11 @@ public class SessionManager implements TaskCreator, ServerManager
 	{
 		synchronized ( sessions )
 		{
-			// Run session cleanup before saving sessions
-			sessionCleanup();
-			
 			for ( Session sess : sessions )
 				try
 				{
 					sess.save();
+					sess.upload();
 				}
 				catch ( SessionException e )
 				{
