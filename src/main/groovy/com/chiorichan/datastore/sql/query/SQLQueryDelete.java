@@ -10,6 +10,8 @@ package com.chiorichan.datastore.sql.query;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import com.chiorichan.datastore.sql.SQLBase;
 import com.chiorichan.datastore.sql.SQLWrapper;
@@ -190,13 +192,42 @@ public final class SQLQueryDelete extends SQLBase<SQLQueryDelete> implements SQL
 	}
 	
 	@Override
-	public SQLWhereKeyValue<SQLQueryDelete> where( String key )
+	public SQLQueryDelete where( SQLWhereElement element )
 	{
-		SQLWhereKeyValue<SQLQueryDelete> keyValue = new SQLWhereKeyValue<SQLQueryDelete>( this, key, this );
-		keyValue.seperator( currentSeperator );
-		elements.add( keyValue );
+		element.seperator( currentSeperator );
+		elements.add( element );
 		needsUpdate = true;
 		and();
-		return keyValue;
+		
+		return this;
+	}
+	
+	@Override
+	public SQLWhereKeyValue<SQLQueryDelete> where( String key )
+	{
+		return new SQLWhereKeyValue<SQLQueryDelete>( this, key );
+	}
+	
+	@Override
+	public SQLQueryDelete whereMatches( Map<String, Object> values )
+	{
+		SQLWhereGroup<SQLQueryDelete, SQLQueryDelete> group = new SQLWhereGroup<SQLQueryDelete, SQLQueryDelete>( this, this );
+		
+		for ( Entry<String, Object> val : values.entrySet() )
+		{
+			SQLWhereKeyValue<SQLWhereGroup<SQLQueryDelete, SQLQueryDelete>> groupElement = group.where( val.getKey() );
+			groupElement.seperator( SQLWhereElementSep.AND );
+			groupElement.matches( val.getValue() );
+		}
+		
+		group.parent();
+		or();
+		return this;
+	}
+	
+	@Override
+	public SQLQueryDelete whereMatches( String key, Object value )
+	{
+		return new SQLWhereKeyValue<SQLQueryDelete>( this, key ).matches( value );
 	}
 }

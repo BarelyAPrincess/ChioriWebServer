@@ -237,13 +237,42 @@ public final class SQLQueryUpdate extends SQLBase<SQLQueryUpdate> implements SQL
 	}
 	
 	@Override
-	public SQLWhereKeyValue<SQLQueryUpdate> where( String key )
+	public SQLQueryUpdate where( SQLWhereElement element )
 	{
-		SQLWhereKeyValue<SQLQueryUpdate> keyValue = new SQLWhereKeyValue<SQLQueryUpdate>( this, key, this );
-		keyValue.seperator( currentSeperator );
-		elements.add( keyValue );
+		element.seperator( currentSeperator );
+		elements.add( element );
 		needsUpdate = true;
 		and();
-		return keyValue;
+		
+		return this;
+	}
+	
+	@Override
+	public SQLWhereKeyValue<SQLQueryUpdate> where( String key )
+	{
+		return new SQLWhereKeyValue<SQLQueryUpdate>( this, key );
+	}
+	
+	@Override
+	public SQLQueryUpdate whereMatches( Map<String, Object> values )
+	{
+		SQLWhereGroup<SQLQueryUpdate, SQLQueryUpdate> group = new SQLWhereGroup<SQLQueryUpdate, SQLQueryUpdate>( this, this );
+		
+		for ( Entry<String, Object> val : values.entrySet() )
+		{
+			SQLWhereKeyValue<SQLWhereGroup<SQLQueryUpdate, SQLQueryUpdate>> groupElement = group.where( val.getKey() );
+			groupElement.seperator( SQLWhereElementSep.AND );
+			groupElement.matches( val.getValue() );
+		}
+		
+		group.parent();
+		or();
+		return this;
+	}
+	
+	@Override
+	public SQLQueryUpdate whereMatches( String key, Object value )
+	{
+		return new SQLWhereKeyValue<SQLQueryUpdate>( this, key ).matches( value );
 	}
 }

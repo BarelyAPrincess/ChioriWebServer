@@ -13,6 +13,8 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import com.chiorichan.datastore.sql.SQLBase;
 import com.chiorichan.datastore.sql.SQLWrapper;
@@ -298,13 +300,44 @@ public final class SQLQuerySelect extends SQLBase<SQLQuerySelect> implements SQL
 	}
 	
 	@Override
-	public SQLWhereKeyValue<SQLQuerySelect> where( String key )
+	public SQLQuerySelect where( SQLWhereElement element )
 	{
-		SQLWhereKeyValue<SQLQuerySelect> keyValue = new SQLWhereKeyValue<SQLQuerySelect>( this, key );
-		keyValue.seperator( currentSeperator );
-		elements.add( keyValue );
+		element.seperator( currentSeperator );
+		elements.add( element );
 		needsUpdate = true;
 		and();
-		return keyValue;
+		
+		return this;
 	}
+	
+	@Override
+	public SQLWhereKeyValue<SQLQuerySelect> where( String key )
+	{
+		return new SQLWhereKeyValue<SQLQuerySelect>( this, key );
+	}
+	
+	@Override
+	public SQLQuerySelect whereMatches( Map<String, Object> values )
+	{
+		SQLWhereGroup<SQLQuerySelect, SQLQuerySelect> group = new SQLWhereGroup<SQLQuerySelect, SQLQuerySelect>( this, this );
+		
+		for ( Entry<String, Object> val : values.entrySet() )
+		{
+			SQLWhereKeyValue<SQLWhereGroup<SQLQuerySelect, SQLQuerySelect>> groupElement = group.where( val.getKey() );
+			groupElement.seperator( SQLWhereElementSep.AND );
+			groupElement.matches( val.getValue() );
+		}
+		
+		group.parent();
+		or();
+		return this;
+	}
+	
+	@Override
+	public SQLQuerySelect whereMatches( String key, Object value )
+	{
+		return new SQLWhereKeyValue<SQLQuerySelect>( this, key ).matches( value );
+	}
+	
+	// TODO Consider adding whereLessThan, whereMoreThan, whereLike, whereLikeWild, whereBetween, whereNotLike, whereNot, whereRegEx methods, unless this is lazy!
 }

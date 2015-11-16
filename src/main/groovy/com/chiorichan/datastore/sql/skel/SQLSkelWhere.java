@@ -8,11 +8,12 @@
  */
 package com.chiorichan.datastore.sql.skel;
 
+import java.util.Map;
 
 /**
  * Provides the Skeleton Interface for SQL Queries implementing the Where Methods
  */
-public interface SQLSkelWhere<B, P>
+public interface SQLSkelWhere<B extends SQLSkelWhere<?, ?>, P>
 {
 	B or();
 	
@@ -21,4 +22,10 @@ public interface SQLSkelWhere<B, P>
 	SQLWhereKeyValue<B> where( String key );
 	
 	SQLWhereGroup<B, P> group();
+	
+	B where( SQLWhereElement element );
+	
+	B whereMatches( Map<String, Object> values );
+	
+	B whereMatches( String key, Object value );
 }

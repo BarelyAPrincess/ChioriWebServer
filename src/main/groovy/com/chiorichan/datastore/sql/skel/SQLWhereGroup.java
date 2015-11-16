@@ -9,6 +9,8 @@
 package com.chiorichan.datastore.sql.skel;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
@@ -16,7 +18,7 @@ import com.google.common.collect.Lists;
 /**
  * 
  */
-public class SQLWhereGroup<B, P> extends SQLWhereElement implements SQLSkelWhere<SQLWhereGroup<B, P>, P>
+public class SQLWhereGroup<B extends SQLSkelWhere<?, ?>, P> extends SQLWhereElement implements SQLSkelWhere<SQLWhereGroup<B, P>, P>
 {
 	private List<SQLWhereElement> elements = Lists.newLinkedList();
 	private SQLWhereElementSep currentSeperator = SQLWhereElementSep.NONE;
@@ -55,6 +57,7 @@ public class SQLWhereGroup<B, P> extends SQLWhereElement implements SQLSkelWhere
 	
 	public B back()
 	{
+		back.where( this );
 		return back;
 	}
 	
@@ -80,6 +83,7 @@ public class SQLWhereGroup<B, P> extends SQLWhereElement implements SQLSkelWhere
 	
 	public P parent()
 	{
+		back.where( this );
 		return parent;
 	}
 	
@@ -107,12 +111,41 @@ public class SQLWhereGroup<B, P> extends SQLWhereElement implements SQLSkelWhere
 	}
 	
 	@Override
+	public SQLWhereGroup<B, P> where( SQLWhereElement element )
+	{
+		element.seperator( currentSeperator );
+		elements.add( element );
+		and();
+		
+		return this;
+	}
+	
+	@Override
 	public SQLWhereKeyValue<SQLWhereGroup<B, P>> where( String key )
 	{
-		SQLWhereKeyValue<SQLWhereGroup<B, P>> keyValue = new SQLWhereKeyValue<SQLWhereGroup<B, P>>( this, key, this );
-		keyValue.seperator( currentSeperator );
-		elements.add( keyValue );
-		and();
-		return keyValue;
+		return new SQLWhereKeyValue<SQLWhereGroup<B, P>>( this, key );
+	}
+	
+	@Override
+	public SQLWhereGroup<B, P> whereMatches( Map<String, Object> values )
+	{
+		SQLWhereGroup<SQLWhereGroup<B, P>, SQLWhereGroup<B, P>> group = new SQLWhereGroup<SQLWhereGroup<B, P>, SQLWhereGroup<B, P>>( this, this );
+		
+		for ( Entry<String, Object> val : values.entrySet() )
+		{
+			SQLWhereKeyValue<SQLWhereGroup<SQLWhereGroup<B, P>, SQLWhereGroup<B, P>>> groupElement = group.where( val.getKey() );
+			groupElement.seperator( SQLWhereElementSep.AND );
+			groupElement.matches( val.getValue() );
+		}
+		
+		group.parent();
+		or();
+		return this;
+	}
+	
+	@Override
+	public SQLWhereGroup<B, P> whereMatches( String key, Object value )
+	{
+		return new SQLWhereKeyValue<SQLWhereGroup<B, P>>( this, key ).matches( value );
 	}
 }

@@ -13,7 +13,7 @@ import org.apache.commons.lang3.Validate;
 /**
  * 
  */
-public final class SQLWhereKeyValue<T> extends SQLWhereElement
+public final class SQLWhereKeyValue<T extends SQLSkelWhere<?, ?>> extends SQLWhereElement
 {
 	enum Operands
 	{
@@ -44,13 +44,11 @@ public final class SQLWhereKeyValue<T> extends SQLWhereElement
 		this.parent = parent;
 	}
 	
-	public SQLWhereKeyValue( T parent, String key, Object value )
+	public T between( Number n )
 	{
-		Validate.notNull( parent );
-		this.key = key;
-		this.operator = Operands.EQUAL;
-		this.value = value;
-		this.parent = parent;
+		moreThan( n );
+		parent.and().where( key ).lessThan( n );
+		return parent;
 	}
 	
 	@Override
@@ -70,6 +68,7 @@ public final class SQLWhereKeyValue<T> extends SQLWhereElement
 	{
 		operator = Operands.LESSER;
 		value = n;
+		parent.where( this );
 		return parent;
 	}
 	
@@ -77,6 +76,7 @@ public final class SQLWhereKeyValue<T> extends SQLWhereElement
 	{
 		operator = Operands.LIKE;
 		this.value = value;
+		parent.where( this );
 		return parent;
 	}
 	
@@ -95,6 +95,7 @@ public final class SQLWhereKeyValue<T> extends SQLWhereElement
 	{
 		operator = Operands.EQUAL;
 		this.value = value;
+		parent.where( this );
 		return parent;
 	}
 	
@@ -102,6 +103,7 @@ public final class SQLWhereKeyValue<T> extends SQLWhereElement
 	{
 		operator = Operands.GREATER;
 		value = n;
+		parent.where( this );
 		return parent;
 	}
 	
@@ -109,6 +111,7 @@ public final class SQLWhereKeyValue<T> extends SQLWhereElement
 	{
 		operator = Operands.NOTEQUAL;
 		this.value = value;
+		parent.where( this );
 		return parent;
 	}
 	
@@ -116,6 +119,7 @@ public final class SQLWhereKeyValue<T> extends SQLWhereElement
 	{
 		operator = Operands.NOTLIKE;
 		this.value = value;
+		parent.where( this );
 		return parent;
 	}
 	
@@ -128,6 +132,7 @@ public final class SQLWhereKeyValue<T> extends SQLWhereElement
 	{
 		operator = Operands.REGEXP;
 		this.value = value;
+		parent.where( this );
 		return parent;
 	}
 	
