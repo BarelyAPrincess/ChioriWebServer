@@ -49,6 +49,7 @@ import com.chiorichan.plugin.lang.PluginNotFoundException;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.session.Session;
 import com.chiorichan.site.Site;
+import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.SecureFunc;
@@ -446,6 +447,18 @@ public abstract class ScriptingBaseJava extends Script
 	public String dirname( String path )
 	{
 		return new File( path ).getParent();
+	}
+	
+	public String domain( String subdomain )
+	{
+		String url = subdomain != null && !subdomain.isEmpty() ? subdomain + "." : "";
+		
+		if ( getSite() != null )
+			url += getSite().getDomain() + "/";
+		else
+			url += SiteManager.INSTANCE.getDefaultSite().getDomain() + "/";
+		
+		return url;
 	}
 	
 	public boolean empty( Collection<Object> list )
@@ -891,6 +904,78 @@ public abstract class ScriptingBaseJava extends Script
 	public String trim( String str )
 	{
 		return ( str == null ) ? null : str.trim();
+	}
+	
+	public String uri_to()
+	{
+		return getRequest().getFullUrl();
+	}
+	
+	public String uri_to( boolean secure )
+	{
+		return getRequest().getFullUrl( secure );
+	}
+	
+	public String uri_to( String subdomain )
+	{
+		return getRequest().getFullUrl( subdomain );
+	}
+	
+	public String uri_to( String subdomain, boolean secure )
+	{
+		return getRequest().getFullUrl( subdomain, secure );
+	}
+	
+	public String url_get_append( String key, Object val )
+	{
+		return url_get_append( null, key, val );
+	}
+	
+	public String url_get_append( String subdomain, String key, Object val )
+	{
+		String url = getRequest().getFullUrl( subdomain );
+		
+		Map<String, String> getMap = new HashMap<String, String>( getRequest().getGetMapRaw() );
+		
+		if ( getMap.containsKey( key ) )
+			getMap.remove( key );
+		
+		if ( getMap.isEmpty() )
+			url += "?" + key + "=" + ObjectFunc.castToString( val );
+		else
+		{
+			url += "?" + Joiner.on( "&" ).withKeyValueSeparator( "=" ).join( getMap );
+			url += "&" + key + "=" + ObjectFunc.castToString( val );
+		}
+		
+		return url;
+	}
+	
+	/**
+	 * Same as @link url_to( null )
+	 */
+	public String url_to()
+	{
+		return url_to( null );
+	}
+	
+	public String url_to( String subdomain )
+	{
+		return url_to( subdomain, false );
+	}
+	
+	/**
+	 * Returns a fresh built URL based on the current domain
+	 * Used to produce absolute uri's within scripts, e.g., url_to( "css" ) + "stylesheet.css"
+	 *
+	 * @param subdomain
+	 *            The subdomain
+	 * @return
+	 *         A valid formatted URI
+	 */
+	public String url_to( String subdomain, boolean secure )
+	{
+		return getRequest().getFullDomain( subdomain, secure );
 	}
 	
 	public String urlDecode( String url ) throws UnsupportedEncodingException

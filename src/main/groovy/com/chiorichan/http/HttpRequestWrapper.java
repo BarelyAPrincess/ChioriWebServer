@@ -389,22 +389,42 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	
 	public String getFullDomain()
 	{
-		return getFullDomain( ssl );
+		return getFullDomain( null, ssl );
 	}
 	
 	public String getFullDomain( boolean ssl )
 	{
-		return ( ssl ? "https://" : "http://" ) + getDomain();
+		return getFullDomain( null, ssl );
+	}
+	
+	public String getFullDomain( String subdomain )
+	{
+		return getFullDomain( subdomain, ssl );
+	}
+	
+	public String getFullDomain( String subdomain, boolean ssl )
+	{
+		return ( ssl ? "https://" : "http://" ) + ( subdomain == null || subdomain.isEmpty() ? "" : subdomain + "." ) + getDomain() + "/";
 	}
 	
 	public String getFullUrl()
 	{
-		return getFullUrl( ssl );
+		return getFullUrl( null, ssl );
 	}
 	
 	public String getFullUrl( boolean ssl )
 	{
-		return getFullDomain( ssl ) + getUri();
+		return getFullUrl( null, ssl );
+	}
+	
+	public String getFullUrl( String subdomain )
+	{
+		return getFullUrl( subdomain, ssl );
+	}
+	
+	public String getFullUrl( String subdomain, boolean ssl )
+	{
+		return getFullDomain( subdomain, ssl ) + getUri().substring( 1 );
 	}
 	
 	public Map<String, Object> getGetMap()

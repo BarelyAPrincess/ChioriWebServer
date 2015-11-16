@@ -64,47 +64,6 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 		return response
 	}
 
-	String domain( String subdomain )
-	{
-		String url = subdomain != null && !subdomain.isEmpty() ? subdomain + "." : ""
-
-		if ( getSite() != null )
-			url += getSite().getDomain() + "/"
-		else
-			url += SiteManager.INSTANCE.getDefaultSite().getDomain() + "/"
-
-		return url
-	}
-
-	/**
-	 * Same as @link url_to( null )
-	 */
-	String url_to()
-	{
-		return url_to( null )
-	}
-
-	String url_to( String subdomain )
-	{
-		return url_to( subdomain, false )
-	}
-
-	/**
-	 * Returns a fresh built URL based on the current domain
-	 * Used to produce absolute uri's within scripts, e.g., url_to( "css" ) + "stylesheet.css"
-	 *
-	 * @param subdomain
-	 *            The subdomain
-	 * @return
-	 *         A valid formatted URI
-	 */
-	String url_to( String subdomain, boolean secure )
-	{
-		String url = getRequest().isSecure() || secure ? "https://" : "http://"
-		url += domain( subdomain )
-		return url
-	}
-
 	/**
 	 * Return the current session for this request
 	 *
