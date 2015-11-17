@@ -71,42 +71,43 @@ public class AutoUpdater implements Listener, TaskCreator
 		
 		try
 		{
-			serverJarMD5 = SecureFunc.md5( FileUtils.readFileToByteArray( Loader.getServerJar().exists() && Loader.getServerJar().isFile() ? Loader.getServerJar() : null ) );
+			serverJarMD5 = Loader.getServerJar().exists() && Loader.getServerJar().isFile() ? SecureFunc.md5( FileUtils.readFileToByteArray( Loader.getServerJar() ) ) : null;
 			
-			ServerFileWatcher.INSTANCE.register( Loader.getServerRoot(), new EventCallback()
-			{
-				@Override
-				public void call( Kind<?> kind, File file, boolean isDirectory )
+			if ( serverJarMD5 != null )
+				ServerFileWatcher.INSTANCE.register( Loader.getServerRoot(), new EventCallback()
 				{
-					getLogger().debug( String.format( "%s: %s", kind.name(), file ) );
-					
-					if ( Loader.getServerJar().exists() && Loader.getServerJar().isFile() )
-						if ( file.getAbsolutePath().equals( Loader.getServerJar().getAbsolutePath() ) && Loader.getConfig().getBoolean( "auto-updater.auto-restart", true ) )
-							if ( Loader.isWatchdogRunning() )
-							{
-								String newServerJarMD5 = null;
-								try
-								{
-									newServerJarMD5 = SecureFunc.md5( FileUtils.readFileToByteArray( Loader.getServerJar() ) );
-								}
-								catch ( IOException e )
-								{
-									e.printStackTrace();
-								}
-								
-								if ( serverJarMD5 == null || !serverJarMD5.equals( newServerJarMD5 ) )
-									Loader.serverRestart( "We detected modification to the server jar, the server will now restart to apply changes." );
-							}
-							else
-								getLogger().warning( "We detected a change to the server jar, but the Watchdog process is not running." );
-					
-					if ( file.getAbsolutePath().equals( Loader.getConfigFile().getAbsolutePath() ) )
+					@Override
+					public void call( Kind<?> kind, File file, boolean isDirectory )
 					{
-						getLogger().info( "We detected a change in the server configuration file, reloading!" );
-						Loader.reloadConfig();
+						getLogger().debug( String.format( "%s: %s", kind.name(), file ) );
+						
+						if ( Loader.getServerJar().exists() && Loader.getServerJar().isFile() )
+							if ( file.getAbsolutePath().equals( Loader.getServerJar().getAbsolutePath() ) && Loader.getConfig().getBoolean( "auto-updater.auto-restart", true ) )
+								if ( Loader.isWatchdogRunning() )
+								{
+									String newServerJarMD5 = null;
+									try
+									{
+										newServerJarMD5 = SecureFunc.md5( FileUtils.readFileToByteArray( Loader.getServerJar() ) );
+									}
+									catch ( IOException e )
+									{
+										e.printStackTrace();
+									}
+									
+									if ( serverJarMD5 == null || !serverJarMD5.equals( newServerJarMD5 ) )
+										Loader.serverRestart( "We detected modification to the server jar, the server will now restart to apply changes." );
+								}
+								else
+									getLogger().warning( "We detected a change to the server jar, but the Watchdog process is not running." );
+						
+						if ( file.getAbsolutePath().equals( Loader.getConfigFile().getAbsolutePath() ) )
+						{
+							getLogger().info( "We detected a change in the server configuration file, reloading!" );
+							Loader.reloadConfig();
+						}
 					}
-				}
-			} );
+				} );
 		}
 		catch ( IOException e )
 		{

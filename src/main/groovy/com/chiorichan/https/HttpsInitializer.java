@@ -28,7 +28,7 @@ public class HttpsInitializer extends ChannelInitializer<SocketChannel>
 		
 		try
 		{
-			p.addLast( SslContextFactory.getContext().newHandler( ch.alloc() ) );
+			p.addLast( HttpsManager.INSTANCE.getSniHandler() );
 		}
 		catch ( Exception e )
 		{
@@ -37,7 +37,7 @@ public class HttpsInitializer extends ChannelInitializer<SocketChannel>
 		}
 		
 		p.addLast( "decoder", new HttpRequestDecoder() );
-		p.addLast( "aggregator", new HttpObjectAggregator( 104857600 ) );
+		p.addLast( "aggregator", new HttpObjectAggregator( Integer.MAX_VALUE ) );
 		p.addLast( "encoder", new HttpResponseEncoder() );
 		p.addLast( "deflater", new HttpContentCompressor() );
 		p.addLast( "handler", new HttpHandler( true ) );

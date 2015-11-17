@@ -38,6 +38,7 @@ public final class SQLQuerySelect extends SQLBase<SQLQuerySelect> implements SQL
 	private final List<SQLWhereElement> elements = Lists.newLinkedList();
 	private SQLWhereElementSep currentSeperator = SQLWhereElementSep.NONE;
 	private final List<String> orderBy = Lists.newLinkedList();
+	private boolean orderAscending = true;
 	private final List<String> groupBy = Lists.newLinkedList();
 	private final List<String> fields = Lists.newLinkedList();
 	private final List<Object> sqlValues = Lists.newLinkedList();
@@ -187,6 +188,13 @@ public final class SQLQuerySelect extends SQLBase<SQLQuerySelect> implements SQL
 	}
 	
 	@Override
+	public SQLQuerySelect orderAsc()
+	{
+		orderAscending = true;
+		return this;
+	}
+	
+	@Override
 	public SQLQuerySelect orderBy( Collection<String> columns )
 	{
 		orderBy.addAll( columns );
@@ -207,6 +215,13 @@ public final class SQLQuerySelect extends SQLBase<SQLQuerySelect> implements SQL
 	{
 		orderBy.add( column );
 		needsUpdate = true;
+		return this;
+	}
+	
+	@Override
+	public SQLQuerySelect orderDesc()
+	{
+		orderAscending = false;
 		return this;
 	}
 	
@@ -285,7 +300,7 @@ public final class SQLQuerySelect extends SQLBase<SQLQuerySelect> implements SQL
 				segments.add( "GROUP BY " + Joiner.on( ", " ).join( StringFunc.wrap( groupBy, '`' ) ) );
 			
 			if ( orderBy.size() > 0 )
-				segments.add( "ORDER BY " + Joiner.on( ", " ).join( StringFunc.wrap( orderBy, '`' ) ) );
+				segments.add( "ORDER BY " + Joiner.on( ", " ).join( StringFunc.wrap( orderBy, '`' ) ) + ( orderAscending ? " ASC" : " DESC" ) );
 			
 			if ( limit() > 0 )
 				segments.add( "LIMIT " + limit() );

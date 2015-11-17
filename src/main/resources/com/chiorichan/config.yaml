@@ -2,9 +2,9 @@ server:
   httpHost: ''
   httpPort: 8080
   httpsPort: 0
-  httpsSharedCert: server.crt
-  httpsSharedKey: server.key
-  httpsSharedSecret: ''
+  httpsSharedCert: null
+  httpsSharedKey: null
+  httpsSharedSecret: null
   tcpHost: ''
   tcpPort: 1024
   queryEnabled: false

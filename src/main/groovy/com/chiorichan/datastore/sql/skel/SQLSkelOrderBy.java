@@ -20,4 +20,8 @@ public interface SQLSkelOrderBy<T>
 	T orderBy( String... columns );
 	
 	T orderBy( String column );
+	
+	T orderAsc();
+	
+	T orderDesc();
 }

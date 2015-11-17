@@ -23,7 +23,7 @@ import com.chiorichan.Loader;
 import com.chiorichan.ServerBus;
 import com.chiorichan.http.HttpInitializer;
 import com.chiorichan.https.HttpsInitializer;
-import com.chiorichan.https.SslContextFactory;
+import com.chiorichan.https.HttpsManager;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.net.query.QueryServerInitializer;
 import com.chiorichan.tasks.TaskCreator;
@@ -151,7 +151,7 @@ public class NetworkManager implements TaskCreator
 				{
 					Loader.getLogger().warning( "It would seem that you are trying to start ChioriWebServer's Web Server on a privileged port without root access." );
 					Loader.getLogger().warning( "Most likely you will see an exception thrown below this. http://www.w3.org/Daemon/User/Installation/PrivilegedPorts.html" );
-					Loader.getLogger().warning( "It's recommended that you either run CWS on a port like 8080 then use the firewall to redirect or run as root if you must use port: " + httpPort );
+					Loader.getLogger().warning( "It's recommended that you either run CWS on a port like 8080 then use the firewall to redirect from 80 or run as root if you must use port: " + httpPort );
 				}
 				
 				if ( httpIp.isEmpty() )
@@ -222,9 +222,9 @@ public class NetworkManager implements TaskCreator
 			{
 				if ( Versioning.isPrivilegedPort( httpsPort ) )
 				{
-					Loader.getLogger().warning( "It would seem that you are trying to start ChioriWebServer's Web Server on a privileged port without root access." );
+					Loader.getLogger().warning( "It would seem that you are trying to start ChioriWebServer's Web Server (SSL) on a privileged port without root access." );
 					Loader.getLogger().warning( "Most likely you will see an exception thrown below this. http://www.w3.org/Daemon/User/Installation/PrivilegedPorts.html" );
-					Loader.getLogger().warning( "It's recommended that you either run CWS on a port like 8080 then use the firewall to redirect or run as root if you must use port: " + httpsPort );
+					Loader.getLogger().warning( "It's recommended that you either run CWS (SSL) on a port like 4443 then use the firewall to redirect from 443 or run as root if you must use port: " + httpsPort );
 				}
 				
 				if ( httpIp.isEmpty() )
@@ -232,9 +232,9 @@ public class NetworkManager implements TaskCreator
 				else
 					socket = new InetSocketAddress( httpIp, httpsPort );
 				
-				Loader.getLogger().info( "Starting Secure Web Server on " + ( httpIp.isEmpty() ? "*" : httpIp ) + ":" + httpsPort );
+				HttpsManager.init();
 				
-				SslContextFactory.init();
+				Loader.getLogger().info( "Starting Secure Web Server on " + ( httpIp.isEmpty() ? "*" : httpIp ) + ":" + httpsPort );
 				
 				try
 				{
