@@ -17,6 +17,7 @@ import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.http.HttpCookie;
 import com.chiorichan.http.Routes;
+import com.chiorichan.https.HttpsManager;
 import com.chiorichan.util.Versioning;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -152,6 +153,18 @@ public class DefaultSite implements Site
 	
 	@Override
 	public void unload()
+	{
+		// Do Nothing
+	}
+	
+	@Override
+	public List<String> subDomains()
+	{
+		return Lists.newArrayList();
+	}
+	
+	@Override
+	public void loadSsl( HttpsManager https )
 	{
 		// Do Nothing
 	}

@@ -17,6 +17,7 @@ import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.http.HttpCookie;
 import com.chiorichan.http.Routes;
+import com.chiorichan.https.HttpsManager;
 
 /**
  * Provides the API needed for each site storage method
@@ -64,4 +65,8 @@ public interface Site
 	
 	@Deprecated
 	Map<String, String> getAliases();
+
+	List<String> subDomains();
+
+	void loadSsl( HttpsManager https );
 }
