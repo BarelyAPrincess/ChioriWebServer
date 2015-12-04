@@ -12,13 +12,13 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.ConcurrentMap;
 
-import com.chiorichan.tasks.TaskCreator;
+import com.chiorichan.tasks.TaskRegistrar;
 import com.chiorichan.tasks.TaskManager;
 import com.google.common.collect.Maps;
 
 /**
  */
-public class LogManager implements TaskCreator
+public class LogManager implements TaskRegistrar
 {
 	private static final ReferenceQueue<Object> referenceQueue = new ReferenceQueue<Object>();
 	private static final ConcurrentMap<String, LogReference> activeLogs = Maps.newConcurrentMap();

@@ -117,7 +117,7 @@ public class TaskManager implements ServerManager
 	 * @param task
 	 *            The task to validate
 	 */
-	private static void validate( final TaskCreator creator, final Object task )
+	private static void validate( final TaskRegistrar creator, final Object task )
 	{
 		Validate.notNull( creator, "TaskCreator cannot be null" );
 		Validate.notNull( task, "Task cannot be null" );
@@ -158,7 +158,7 @@ public class TaskManager implements ServerManager
 	 *            Task to be executed
 	 * @return Future Future object related to the task
 	 */
-	public <T> Future<T> callSyncMethod( final TaskCreator creator, final Callable<T> task )
+	public <T> Future<T> callSyncMethod( final TaskRegistrar creator, final Callable<T> task )
 	{
 		validate( creator, task );
 		if ( !creator.isEnabled() )
@@ -258,7 +258,7 @@ public class TaskManager implements ServerManager
 	 * @param creator
 	 *            Owner of tasks to be removed
 	 */
-	public void cancelTasks( final TaskCreator creator )
+	public void cancelTasks( final TaskRegistrar creator )
 	{
 		Validate.notNull( creator, "Cannot cancel tasks of null creator" );
 		final Task task = new Task( new Runnable()
@@ -517,7 +517,7 @@ public class TaskManager implements ServerManager
 	 * @throws IllegalArgumentException
 	 *             if task is null
 	 */
-	public Task runTask( TaskCreator creator, Runnable runnable )
+	public Task runTask( TaskRegistrar creator, Runnable runnable )
 	{
 		return runTaskLater( creator, 0L, runnable );
 	}
@@ -538,7 +538,7 @@ public class TaskManager implements ServerManager
 	 * @throws IllegalArgumentException
 	 *             if task is null
 	 */
-	public Task runTaskAsynchronously( TaskCreator creator, Runnable runnable )
+	public Task runTaskAsynchronously( TaskRegistrar creator, Runnable runnable )
 	{
 		return runTaskLaterAsynchronously( creator, 0L, runnable );
 	}
@@ -558,7 +558,7 @@ public class TaskManager implements ServerManager
 	 * @throws IllegalArgumentException
 	 *             if task is null
 	 */
-	public Task runTaskLater( TaskCreator creator, long delay, Runnable runnable )
+	public Task runTaskLater( TaskRegistrar creator, long delay, Runnable runnable )
 	{
 		return runTaskTimer( creator, delay, -1L, runnable );
 	}
@@ -581,7 +581,7 @@ public class TaskManager implements ServerManager
 	 * @throws IllegalArgumentException
 	 *             if task is null
 	 */
-	public Task runTaskLaterAsynchronously( TaskCreator creator, long delay, Runnable runnable )
+	public Task runTaskLaterAsynchronously( TaskRegistrar creator, long delay, Runnable runnable )
 	{
 		return runTaskTimerAsynchronously( creator, delay, -1L, runnable );
 	}
@@ -603,7 +603,7 @@ public class TaskManager implements ServerManager
 	 * @throws IllegalArgumentException
 	 *             if task is null
 	 */
-	public Task runTaskTimer( TaskCreator creator, long delay, long period, Runnable runnable )
+	public Task runTaskTimer( TaskRegistrar creator, long delay, long period, Runnable runnable )
 	{
 		validate( creator, runnable );
 		
@@ -643,7 +643,7 @@ public class TaskManager implements ServerManager
 	 * @throws IllegalArgumentException
 	 *             if task is null
 	 */
-	public Task runTaskTimerAsynchronously( TaskCreator creator, long delay, long period, Runnable runnable )
+	public Task runTaskTimerAsynchronously( TaskRegistrar creator, long delay, long period, Runnable runnable )
 	{
 		validate( creator, runnable );
 		
@@ -662,6 +662,41 @@ public class TaskManager implements ServerManager
 			return backlog( task, delay );
 	}
 	
+	public void runTaskWithTimeout( final TaskRegistrar creator, final long timeout, final Runnable runnable )
+	{
+		final Task task = runTaskAsynchronously( creator, runnable );
+		runTaskLaterAsynchronously( creator, timeout, new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				task.cancel();
+			}
+		} );
+		
+		int cnt = 0;
+		
+		for ( ;; )
+		{
+			cnt++;
+			
+			if ( !isQueued( task.getTaskId() ) && !isCurrentlyRunning( task.getTaskId() ) )
+				return;
+			
+			if ( cnt > timeout + Ticks.SECOND_15 )
+				throw new IllegalStateException( "The task exceeded timeout of " + timeout + " and failed to terminate." );
+			
+			try
+			{
+				Thread.sleep( 50 );
+			}
+			catch ( InterruptedException e )
+			{
+				e.printStackTrace();
+			}
+		}
+	}
+	
 	/**
 	 * <b>Asynchronous tasks should never access any API in Main. Great care should be taken to assure the thread-safety
 	 * of asynchronous tasks.</b> <br>
@@ -676,7 +711,7 @@ public class TaskManager implements ServerManager
 	 *            Delay in server ticks before executing task
 	 * @return Task id number (-1 if scheduling failed)
 	 */
-	public int scheduleAsyncDelayedTask( final TaskCreator creator, final long delay, final Runnable task )
+	public int scheduleAsyncDelayedTask( final TaskRegistrar creator, final long delay, final Runnable task )
 	{
 		return scheduleAsyncRepeatingTask( creator, delay, -1L, task );
 	}
@@ -694,7 +729,7 @@ public class TaskManager implements ServerManager
 	 *            Task to be executed
 	 * @return Task id number (-1 if scheduling failed)
 	 */
-	public int scheduleAsyncDelayedTask( final TaskCreator creator, final Runnable task )
+	public int scheduleAsyncDelayedTask( final TaskRegistrar creator, final Runnable task )
 	{
 		return this.scheduleAsyncDelayedTask( creator, 0L, task );
 	}
@@ -715,7 +750,7 @@ public class TaskManager implements ServerManager
 	 *            Period in server ticks of the task
 	 * @return Task id number (-1 if scheduling failed), calling {@link #cancelTask(int)} will cancel it
 	 */
-	public int scheduleAsyncRepeatingTask( final TaskCreator creator, long delay, long period, final Runnable runnable )
+	public int scheduleAsyncRepeatingTask( final TaskRegistrar creator, long delay, long period, final Runnable runnable )
 	{
 		return runTaskTimerAsynchronously( creator, delay, period, runnable ).getTaskId();
 	}
@@ -731,7 +766,7 @@ public class TaskManager implements ServerManager
 	 *            Delay in server ticks before executing task
 	 * @return Task id number (-1 if scheduling failed)
 	 */
-	public int scheduleSyncDelayedTask( final TaskCreator creator, final long delay, final Runnable task )
+	public int scheduleSyncDelayedTask( final TaskRegistrar creator, final long delay, final Runnable task )
 	{
 		return scheduleSyncRepeatingTask( creator, delay, -1L, task );
 	}
@@ -745,7 +780,7 @@ public class TaskManager implements ServerManager
 	 *            Task to be executed
 	 * @return Task id number (-1 if scheduling failed)
 	 */
-	public int scheduleSyncDelayedTask( final TaskCreator creator, final Runnable task )
+	public int scheduleSyncDelayedTask( final TaskRegistrar creator, final Runnable task )
 	{
 		return this.scheduleSyncDelayedTask( creator, 0L, task );
 	}
@@ -763,7 +798,7 @@ public class TaskManager implements ServerManager
 	 *            Period in server ticks of the task
 	 * @return Task id number (-1 if scheduling failed)
 	 */
-	public int scheduleSyncRepeatingTask( final TaskCreator creator, long delay, long period, final Runnable runnable )
+	public int scheduleSyncRepeatingTask( final TaskRegistrar creator, long delay, long period, final Runnable runnable )
 	{
 		return runTaskTimer( creator, delay, period, runnable ).getTaskId();
 	}

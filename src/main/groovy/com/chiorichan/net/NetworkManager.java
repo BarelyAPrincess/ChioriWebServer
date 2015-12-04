@@ -26,7 +26,7 @@ import com.chiorichan.https.HttpsInitializer;
 import com.chiorichan.https.HttpsManager;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.net.query.QueryServerInitializer;
-import com.chiorichan.tasks.TaskCreator;
+import com.chiorichan.tasks.TaskRegistrar;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Ticks;
 import com.chiorichan.util.Versioning;
@@ -34,7 +34,7 @@ import com.chiorichan.util.Versioning;
 /**
  * Works as the main network managing class for netty implementations, e.g., Http, Https, and Query
  */
-public class NetworkManager implements TaskCreator
+public class NetworkManager implements TaskRegistrar
 {
 	@SuppressWarnings( "unused" )
 	private static final NetworkManager SELF = new NetworkManager();

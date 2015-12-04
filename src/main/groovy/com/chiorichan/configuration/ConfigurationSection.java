@@ -368,7 +368,7 @@ public interface ConfigurationSection
 	 *            Path of the List to get.
 	 * @return Requested List.
 	 */
-	List<?> getList( String path );
+	<T extends List<?>> T getList( String path );
 	
 	/**
 	 * Gets the requested List by path, returning a default value if not found.
@@ -381,7 +381,7 @@ public interface ConfigurationSection
 	 *            The default value to return if the path is not found or is not a List.
 	 * @return Requested List.
 	 */
-	List<?> getList( String path, List<?> def );
+	<T extends List<?>> T getList( String path, T def );
 	
 	/**
 	 * Checks if the specified path is a List.
@@ -612,4 +612,13 @@ public interface ConfigurationSection
 	 *             Thrown if path is null.
 	 */
 	void addDefault( String path, Object value );
+	
+	/**
+	 * Checks the requested Object by path.
+	 * 
+	 * @param path
+	 *            Path of the Object to get.
+	 * @return does the object exist.
+	 */
+	boolean has( String path );
 }

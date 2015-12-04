@@ -43,7 +43,7 @@ import com.chiorichan.datastore.sql.bases.H2SQLDatastore;
 import com.chiorichan.datastore.sql.bases.MySQLDatastore;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.datastore.sql.bases.SQLiteDatastore;
-import com.chiorichan.event.BuiltinEventCreator;
+import com.chiorichan.event.BuiltinRegistrar;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
@@ -59,8 +59,9 @@ import com.chiorichan.plugin.lang.PluginException;
 import com.chiorichan.session.SessionException;
 import com.chiorichan.session.SessionManager;
 import com.chiorichan.site.SiteManager;
-import com.chiorichan.tasks.TaskCreator;
+import com.chiorichan.tasks.TaskRegistrar;
 import com.chiorichan.tasks.TaskManager;
+import com.chiorichan.tasks.Ticks;
 import com.chiorichan.tasks.Worker;
 import com.chiorichan.updater.AutoUpdater;
 import com.chiorichan.updater.DownloadUpdaterService;
@@ -69,7 +70,7 @@ import com.chiorichan.util.FileFunc.DirectoryInfo;
 import com.chiorichan.util.NetworkFunc;
 import com.chiorichan.util.Versioning;
 
-public class Loader extends BuiltinEventCreator implements Listener
+public class Loader extends BuiltinRegistrar implements Listener
 {
 	public static final String BROADCAST_CHANNEL_ADMINISTRATIVE = "sys.admin";
 	public static final String BROADCAST_CHANNEL_USERS = "sys.user";
@@ -192,7 +193,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 				getLogger().info( LogColor.RED + "" + LogColor.NEGATIVE + "--------------------------------------------------------------------------------" );
 				getLogger().info( LogColor.RED + "" + LogColor.NEGATIVE + "| You've supplied the --install argument which instructs the server to factory |" );
 				getLogger().info( LogColor.RED + "" + LogColor.NEGATIVE + "| reset all files and configurations required to run Chiori-chan's Web Server, |" );
-				getLogger().info( LogColor.RED + "" + LogColor.NEGATIVE + "| This includes databases and plugin configurations. This can not be undone!   |" );
+				getLogger().info( LogColor.RED + "" + LogColor.NEGATIVE + "| This includes database and plugin configurations. This can not be undone!    |" );
 				getLogger().info( LogColor.RED + "" + LogColor.NEGATIVE + "--------------------------------------------------------------------------------" );
 				String key = getServerBus().prompt( LogColor.RED + "" + LogColor.NEGATIVE + "Are you sure you wish to continue? Press 'Y' for Yes, 'N' for No or 'C' to Continue.", "Y", "N", "C" );
 				
@@ -642,7 +643,18 @@ public class Loader extends BuiltinEventCreator implements Listener
 		if ( tmpFileDirectory == null )
 			throw new IllegalStateException( "Temp directory appears to be null, was getTempFileDirectory() called before the server finished inialization?" );
 		
+		FileFunc.patchDirectory( tmpFileDirectory );
+		
 		return tmpFileDirectory;
+	}
+	
+	public static File getTempFileDirectory( String subdir )
+	{
+		File file = new File( getTempFileDirectory(), subdir );
+		
+		FileFunc.patchDirectory( file );
+		
+		return file;
 	}
 	
 	public static String getUpdateFolder()
@@ -761,15 +773,22 @@ public class Loader extends BuiltinEventCreator implements Listener
 	{
 		// TODO Targeted key path saves, allow it so only a specified path can be saved to file.
 		
-		try
+		TaskManager.INSTANCE.runTaskWithTimeout( Loader.instance, Ticks.MINUTE, new Runnable()
 		{
-			if ( configuration != null )
-				configuration.save( getConfigFile() );
-		}
-		catch ( IOException ex )
-		{
-			getLogger().severe( "Could not save " + getConfigFile(), ex );
-		}
+			@Override
+			public void run()
+			{
+				try
+				{
+					if ( configuration != null )
+						configuration.save( getConfigFile() );
+				}
+				catch ( IOException ex )
+				{
+					getLogger().severe( "Could not save " + getConfigFile(), ex );
+				}
+			}
+		} );
 	}
 	
 	public static void serverRestart( String restartReason )
@@ -946,7 +965,7 @@ public class Loader extends BuiltinEventCreator implements Listener
 		List<Worker> overdueWorkers = TaskManager.INSTANCE.getActiveWorkers();
 		for ( Worker worker : overdueWorkers )
 		{
-			TaskCreator creator = worker.getOwner();
+			TaskRegistrar creator = worker.getOwner();
 			String author = "<AuthorUnknown>";
 			// if ( creator.getDescription().getAuthors().size() > 0 )
 			// author = plugin.getDescription().getAuthors().get( 0 );

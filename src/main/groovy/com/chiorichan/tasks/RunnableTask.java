@@ -37,9 +37,9 @@ public abstract class RunnableTask implements Runnable
 	 *             if plugin is null
 	 * @throws IllegalStateException
 	 *             if this was already scheduled
-	 * @see ITaskManager#runTask(TaskCreator, Runnable)
+	 * @see ITaskManager#runTask(TaskRegistrar, Runnable)
 	 */
-	public synchronized ITask runTask( TaskCreator creator ) throws IllegalArgumentException, IllegalStateException
+	public synchronized ITask runTask( TaskRegistrar creator ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
 		return setupId( TaskManager.INSTANCE.runTask( creator, this ) );
@@ -58,9 +58,9 @@ public abstract class RunnableTask implements Runnable
 	 *             if plugin is null
 	 * @throws IllegalStateException
 	 *             if this was already scheduled
-	 * @see ITaskManager#runTaskAsynchronously(TaskCreator, Runnable)
+	 * @see ITaskManager#runTaskAsynchronously(TaskRegistrar, Runnable)
 	 */
-	public synchronized ITask runTaskAsynchronously( TaskCreator creator ) throws IllegalArgumentException, IllegalStateException
+	public synchronized ITask runTaskAsynchronously( TaskRegistrar creator ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
 		return setupId( TaskManager.INSTANCE.runTaskAsynchronously( creator, this ) );
@@ -78,9 +78,9 @@ public abstract class RunnableTask implements Runnable
 	 *             if plugin is null
 	 * @throws IllegalStateException
 	 *             if this was already scheduled
-	 * @see ITaskManager#runTaskLater(TaskCreator, Runnable, long)
+	 * @see ITaskManager#runTaskLater(TaskRegistrar, Runnable, long)
 	 */
-	public synchronized ITask runTaskLater( TaskCreator creator, long delay ) throws IllegalArgumentException, IllegalStateException
+	public synchronized ITask runTaskLater( TaskRegistrar creator, long delay ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
 		return setupId( TaskManager.INSTANCE.runTaskLater( creator, delay, this ) );
@@ -101,9 +101,9 @@ public abstract class RunnableTask implements Runnable
 	 *             if plugin is null
 	 * @throws IllegalStateException
 	 *             if this was already scheduled
-	 * @see ITaskManager#runTaskLaterAsynchronously(TaskCreator, Runnable, long)
+	 * @see ITaskManager#runTaskLaterAsynchronously(TaskRegistrar, Runnable, long)
 	 */
-	public synchronized ITask runTaskLaterAsynchronously( TaskCreator creator, long delay ) throws IllegalArgumentException, IllegalStateException
+	public synchronized ITask runTaskLaterAsynchronously( TaskRegistrar creator, long delay ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
 		return setupId( TaskManager.INSTANCE.runTaskLaterAsynchronously( creator, delay, this ) );
@@ -123,9 +123,9 @@ public abstract class RunnableTask implements Runnable
 	 *             if plugin is null
 	 * @throws IllegalStateException
 	 *             if this was already scheduled
-	 * @see ITaskManager#runTaskTimer(TaskCreator, Runnable, long, long)
+	 * @see ITaskManager#runTaskTimer(TaskRegistrar, Runnable, long, long)
 	 */
-	public synchronized ITask runTaskTimer( TaskCreator creator, long delay, long period ) throws IllegalArgumentException, IllegalStateException
+	public synchronized ITask runTaskTimer( TaskRegistrar creator, long delay, long period ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
 		return setupId( TaskManager.INSTANCE.runTaskTimer( creator, delay, period, this ) );
@@ -149,9 +149,9 @@ public abstract class RunnableTask implements Runnable
 	 *             if plugin is null
 	 * @throws IllegalStateException
 	 *             if this was already scheduled
-	 * @see ITaskManager#runTaskTimerAsynchronously(TaskCreator, Runnable, long, long)
+	 * @see ITaskManager#runTaskTimerAsynchronously(TaskRegistrar, Runnable, long, long)
 	 */
-	public synchronized ITask runTaskTimerAsynchronously( TaskCreator creator, long delay, long period ) throws IllegalArgumentException, IllegalStateException
+	public synchronized ITask runTaskTimerAsynchronously( TaskRegistrar creator, long delay, long period ) throws IllegalArgumentException, IllegalStateException
 	{
 		checkState();
 		return setupId( TaskManager.INSTANCE.runTaskTimerAsynchronously( creator, delay, period, this ) );

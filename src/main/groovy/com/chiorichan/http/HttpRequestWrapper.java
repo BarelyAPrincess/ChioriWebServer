@@ -379,6 +379,12 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			String domain = http.headers().getAndConvert( "Host" );
 			domain = domain.split( "\\:" )[0];
 			
+			if ( NetworkFunc.isValidIPv4( domain ) )
+				return domain;
+			
+			if ( StringUtils.countMatches( ".", domain ) > 1 )
+				domain.substring( 0, domain.lastIndexOf( '.', domain.lastIndexOf( '.' - 1 ) ) );
+			
 			return domain;
 		}
 		catch ( NullPointerException e )
@@ -1022,7 +1028,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		getBinding().setVariable( "request", this );
 		getBinding().setVariable( "response", getResponse() );
 		
-		String loginForm = getSite().getYaml().getString( "scripts.login-form", "/login" );
+		String loginForm = getSite().getConfig().getString( "scripts.login-form", "/login" );
 		
 		Session session = getSession();
 		
@@ -1044,7 +1050,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		boolean remember = getArgumentBoolean( "remember" );
 		String target = getArgument( "target" );
 		
-		String loginPost = ( target == null || target.isEmpty() ) ? getSite().getYaml().getString( "scripts.login-post", "/" ) : target;
+		String loginPost = ( target == null || target.isEmpty() ) ? getSite().getConfig().getString( "scripts.login-post", "/" ) : target;
 		
 		if ( loginPost.isEmpty() )
 			loginPost = "/";

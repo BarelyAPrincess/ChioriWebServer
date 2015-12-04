@@ -100,7 +100,7 @@ public class WebInterpreter extends FileInterpreter
 		// Try to find the file on the local file system
 		if ( !wasSuccessful )
 		{
-			dest = new File( request.getSite().getAbsoluteRoot( subdomain ), uri );
+			dest = new File( request.getSite().subDomainDirectory( subdomain ), uri );
 			
 			if ( dest.isDirectory() )
 			{
@@ -126,7 +126,7 @@ public class WebInterpreter extends FileInterpreter
 				if ( selectedFile != null )
 				{
 					uri = uri + "/" + selectedFile.getName();
-					dest = new File( request.getSite().getAbsoluteRoot( subdomain ), uri );
+					dest = new File( request.getSite().subDomainDirectory( subdomain ), uri );
 				}
 				else if ( Loader.getConfig().getBoolean( "server.allowDirectoryListing" ) )
 					isDirectoryRequest = true;

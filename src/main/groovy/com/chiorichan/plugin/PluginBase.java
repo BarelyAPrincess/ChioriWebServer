@@ -12,14 +12,14 @@ import java.io.File;
 import java.io.InputStream;
 
 import com.chiorichan.configuration.file.FileConfiguration;
-import com.chiorichan.event.EventCreator;
+import com.chiorichan.event.EventRegistrar;
 import com.chiorichan.libraries.LibrarySource;
 import com.chiorichan.plugin.lang.PluginException;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.plugin.loader.PluginLoader;
-import com.chiorichan.tasks.TaskCreator;
+import com.chiorichan.tasks.TaskRegistrar;
 
-public abstract class PluginBase implements EventCreator, TaskCreator, LibrarySource
+public abstract class PluginBase implements EventRegistrar, TaskRegistrar, LibrarySource
 {
 	@Override
 	public final boolean equals( Object obj )

@@ -21,6 +21,7 @@ import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.Loader;
 import com.chiorichan.ServerManager;
+import com.chiorichan.SourceContext;
 import com.chiorichan.lang.DeprecatedDetail;
 import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.plugin.PluginBase;
@@ -114,9 +115,9 @@ public class EventBus implements ServerManager
 		return event;
 	}
 	
-	public Map<Class<? extends AbstractEvent>, Set<RegisteredListener>> createRegisteredListeners( Listener listener, final EventCreator creator )
+	public Map<Class<? extends AbstractEvent>, Set<RegisteredListener>> createRegisteredListeners( Listener listener, final SourceContext context )
 	{
-		Validate.notNull( creator, "Creator can not be null" );
+		Validate.notNull( context, "Context can not be null" );
 		Validate.notNull( listener, "Listener can not be null" );
 		
 		Map<Class<? extends AbstractEvent>, Set<RegisteredListener>> ret = new HashMap<Class<? extends AbstractEvent>, Set<RegisteredListener>>();
@@ -132,7 +133,7 @@ public class EventBus implements ServerManager
 		}
 		catch ( NoClassDefFoundError e )
 		{
-			Loader.getLogger().severe( String.format( "Plugin %s has failed to register events for %s because %s does not exist.", creator.getDescription().getFullName(), listener.getClass(), e.getMessage() ) );
+			Loader.getLogger().severe( String.format( "Plugin %s has failed to register events for %s because %s does not exist.", context.getFullName(), listener.getClass(), e.getMessage() ) );
 			return ret;
 		}
 		
@@ -144,7 +145,7 @@ public class EventBus implements ServerManager
 			final Class<?> checkClass;
 			if ( method.getParameterTypes().length != 1 || !AbstractEvent.class.isAssignableFrom( checkClass = method.getParameterTypes()[0] ) )
 			{
-				Loader.getLogger().severe( creator.getDescription().getFullName() + " attempted to register an invalid EventHandler method signature \"" + method.toGenericString() + "\" in " + listener.getClass() );
+				Loader.getLogger().severe( context.getFullName() + " attempted to register an invalid EventHandler method signature \"" + method.toGenericString() + "\" in " + listener.getClass() );
 				continue;
 			}
 			final Class<? extends AbstractEvent> eventClass = checkClass.asSubclass( AbstractEvent.class );
@@ -163,13 +164,13 @@ public class EventBus implements ServerManager
 					{
 						DeprecatedDetail deprecated = clazz.getAnnotation( DeprecatedDetail.class );
 						
-						PluginManager.getLogger().warning( String.format( "The creator '%s' has registered a listener for %s on method '%s', but the event is Deprecated for reason '%s'; please notify the authors %s.", creator.getDescription().getFullName(), clazz.getName(), method.toGenericString(), deprecated.reason(), Arrays.toString( creator.getDescription().getAuthors().toArray() ) ) );
+						PluginManager.getLogger().warning( String.format( "The creator '%s' has registered a listener for %s on method '%s', but the event is Deprecated for reason '%s'; please notify the authors %s.", context.getFullName(), clazz.getName(), method.toGenericString(), deprecated.reason(), Arrays.toString( context.getAuthors().toArray() ) ) );
 						break;
 					}
 					
 					if ( clazz.isAnnotationPresent( Deprecated.class ) )
 					{
-						PluginManager.getLogger().warning( String.format( "The creator '%s' has registered a listener for %s on method '%s', but the event is Deprecated! Please notify the authors %s.", creator.getDescription().getFullName(), clazz.getName(), method.toGenericString(), Arrays.toString( creator.getDescription().getAuthors().toArray() ) ) );
+						PluginManager.getLogger().warning( String.format( "The creator '%s' has registered a listener for %s on method '%s', but the event is Deprecated! Please notify the authors %s.", context.getFullName(), clazz.getName(), method.toGenericString(), Arrays.toString( context.getAuthors().toArray() ) ) );
 						break;
 					}
 				}
@@ -196,9 +197,9 @@ public class EventBus implements ServerManager
 				}
 			};
 			if ( useTimings )
-				eventSet.add( new TimedRegisteredListener( listener, executor, eh.priority(), creator, eh.ignoreCancelled() ) );
+				eventSet.add( new TimedRegisteredListener( listener, executor, eh.priority(), context, eh.ignoreCancelled() ) );
 			else
-				eventSet.add( new RegisteredListener( listener, executor, eh.priority(), creator, eh.ignoreCancelled() ) );
+				eventSet.add( new RegisteredListener( listener, executor, eh.priority(), context, eh.ignoreCancelled() ) );
 		}
 		return ret;
 	}
@@ -207,7 +208,7 @@ public class EventBus implements ServerManager
 	{
 		for ( RegisteredListener registration : getEventListeners( event.getClass() ) )
 		{
-			if ( !registration.getCreator().isEnabled() )
+			if ( !registration.getContext().isEnabled() )
 				continue;
 			
 			try
@@ -216,9 +217,9 @@ public class EventBus implements ServerManager
 			}
 			catch ( AuthorNagException ex )
 			{
-				if ( registration.getCreator() instanceof PluginBase )
+				if ( registration.getContext().getSource() instanceof PluginBase )
 				{
-					PluginBase creator = ( PluginBase ) registration.getCreator();
+					PluginBase creator = ( PluginBase ) registration.getContext().getSource();
 					
 					if ( creator.isNaggable() )
 					{
@@ -232,18 +233,18 @@ public class EventBus implements ServerManager
 				if ( ex.getCause() == null )
 				{
 					ex.printStackTrace();
-					Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getCreator().getName() + "\nEvent Exception Reason: " + ex.getMessage() );
+					Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getContext().getName() + "\nEvent Exception Reason: " + ex.getMessage() );
 				}
 				else
 				{
 					ex.getCause().printStackTrace();
-					Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getCreator().getName() + "\nEvent Exception Reason: " + ex.getCause().getMessage() );
+					Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getContext().getName() + "\nEvent Exception Reason: " + ex.getCause().getMessage() );
 				}
 				throw ex;
 			}
 			catch ( Throwable ex )
 			{
-				Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getCreator().getName(), ex );
+				Loader.getLogger().log( Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getContext().getName(), ex );
 			}
 		}
 		
@@ -269,7 +270,7 @@ public class EventBus implements ServerManager
 		this.useTimings = useTimings;
 	}
 	
-	public void registerEvent( Class<? extends AbstractEvent> event, Listener listener, EventPriority priority, EventExecutor executor, EventCreator creator )
+	public void registerEvent( Class<? extends AbstractEvent> event, Listener listener, EventPriority priority, EventExecutor executor, EventRegistrar creator )
 	{
 		registerEvent( event, listener, priority, executor, creator, false );
 	}
@@ -290,32 +291,30 @@ public class EventBus implements ServerManager
 	 * @param ignoreCancelled
 	 *            Do not call executor if event was already cancelled
 	 */
-	public void registerEvent( Class<? extends AbstractEvent> event, Listener listener, EventPriority priority, EventExecutor executor, EventCreator creator, boolean ignoreCancelled )
+	public void registerEvent( Class<? extends AbstractEvent> event, Listener listener, EventPriority priority, EventExecutor executor, Object source, boolean ignoreCancelled )
 	{
 		Validate.notNull( listener, "Listener cannot be null" );
 		Validate.notNull( priority, "Priority cannot be null" );
 		Validate.notNull( executor, "Executor cannot be null" );
-		Validate.notNull( creator, "Creator cannot be null" );
+		Validate.notNull( source, "Creator cannot be null" );
 		
-		if ( !creator.isEnabled() )
-			throw new IllegalCreatorAccessException( "Creator attempted to register " + event + " while not enabled" );
+		SourceContext context = SourceContext.produce( source );
 		
 		if ( useTimings )
-			getEventListeners( event ).register( new TimedRegisteredListener( listener, executor, priority, creator, ignoreCancelled ) );
+			getEventListeners( event ).register( new TimedRegisteredListener( listener, executor, priority, context, ignoreCancelled ) );
 		else
-			getEventListeners( event ).register( new RegisteredListener( listener, executor, priority, creator, ignoreCancelled ) );
+			getEventListeners( event ).register( new RegisteredListener( listener, executor, priority, context, ignoreCancelled ) );
 	}
 	
-	public void registerEvents( Listener listener, EventCreator creator )
+	public void registerEvents( Listener listener, Object source )
 	{
-		if ( !creator.isEnabled() )
-			throw new IllegalCreatorAccessException( "EventCreator attempted to register " + listener + " while not enabled" );
+		SourceContext context = SourceContext.produce( source );
 		
-		for ( Map.Entry<Class<? extends AbstractEvent>, Set<RegisteredListener>> entry : createRegisteredListeners( listener, creator ).entrySet() )
+		for ( Map.Entry<Class<? extends AbstractEvent>, Set<RegisteredListener>> entry : createRegisteredListeners( listener, context ).entrySet() )
 			getEventListeners( entry.getKey() ).registerAll( entry.getValue() );
 	}
 	
-	public void unregisterEvents( EventCreator creator )
+	public void unregisterEvents( EventRegistrar creator )
 	{
 		EventHandlers.unregisterAll( creator );
 	}

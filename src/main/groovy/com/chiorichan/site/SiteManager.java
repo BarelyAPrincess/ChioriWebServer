@@ -9,26 +9,25 @@
 package com.chiorichan.site;
 
 import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
-import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.io.filefilter.WildcardFileFilter;
+import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.APILogger;
 import com.chiorichan.Loader;
 import com.chiorichan.ServerManager;
-import com.chiorichan.datastore.sql.bases.SQLDatastore;
-import com.chiorichan.datastore.sql.query.SQLQuerySelect;
+import com.chiorichan.configuration.file.YamlConfiguration;
+import com.chiorichan.datastore.DatastoreManager;
+import com.chiorichan.datastore.file.FileDatastore;
 import com.chiorichan.lang.SiteException;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.util.FileFunc;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 /**
  * Manages and Loads Sites
@@ -38,11 +37,26 @@ public class SiteManager implements ServerManager
 	public static final SiteManager INSTANCE = new SiteManager();
 	private static boolean isInitialized = false;
 	
-	Map<String, Site> siteMap = new LinkedHashMap<String, Site>();
+	Map<String, Site> sites = Maps.newConcurrentMap();
 	
 	private SiteManager()
 	{
 		
+	}
+	
+	protected static File checkSiteRoot( String name )
+	{
+		File site = new File( Loader.getWebRoot(), name );
+		
+		FileFunc.patchDirectory( site );
+		
+		File publicDir = new File( site, "public/root" );
+		File resourceDir = new File( site, "resource" );
+		
+		FileFunc.patchDirectory( publicDir );
+		FileFunc.patchDirectory( resourceDir );
+		
+		return site;
 	}
 	
 	public static APILogger getLogger()
@@ -64,13 +78,37 @@ public class SiteManager implements ServerManager
 	
 	public String add( String siteId, String type )
 	{
-		if ( siteMap.containsKey( siteId ) )
+		if ( sites.containsKey( siteId ) )
 			return "There already exists a site by the id you provided.";
 		
 		if ( !type.equalsIgnoreCase( "sql" ) && !type.equalsIgnoreCase( "file" ) )
 			return "The only available site types are 'sql' and 'file'. '" + type + "' was not a valid option.";
 		
 		return "";
+	}
+	
+	public boolean delete( String siteId, boolean deleteFiles ) throws SiteException
+	{
+		Validate.notNull( siteId );
+		
+		if ( siteId.equals( "default" ) )
+			throw new SiteException( "You can not delete the default site." );
+		
+		if ( sites.containsKey( siteId ) )
+		{
+			Site site = getSiteById( siteId );
+			sites.remove( siteId );
+			
+			site.unload();
+			
+			if ( site instanceof FileSite )
+				( ( FileSite ) site ).getFile().delete();
+			if ( deleteFiles )
+				site.rootDirectory().delete();
+			return true;
+		}
+		
+		return false;
 	}
 	
 	public Site getDefaultSite()
@@ -81,9 +119,9 @@ public class SiteManager implements ServerManager
 	public Site getSiteByDomain( String domain )
 	{
 		if ( domain == null )
-			domain = "default";
+			domain = "";
 		
-		for ( Site site : siteMap.values() )
+		for ( Site site : sites.values() )
 			if ( site != null && site.getDomain() != null )
 				if ( site.getDomain().equalsIgnoreCase( domain.trim() ) )
 					return site;
@@ -93,94 +131,55 @@ public class SiteManager implements ServerManager
 	
 	public Site getSiteById( String siteId )
 	{
-		if ( siteId == null )
-			return null;
+		if ( siteId == null || siteId.length() == 0 || siteId.equalsIgnoreCase( "%" ) )
+			siteId = "default";
 		
-		return siteMap.get( siteId.toLowerCase().trim() );
+		return sites.get( siteId.toLowerCase().trim() );
 	}
 	
 	public Collection<Site> getSites()
 	{
-		return Collections.unmodifiableCollection( siteMap.values() );
+		return Collections.unmodifiableCollection( sites.values() );
 	}
 	
 	private void init0() throws StartupException
 	{
-		if ( siteMap.size() > 0 )
-			throw new StartupException( "Site manager already has sites loaded. Please unload the existing sites first." );
+		loadSites();
+	}
+	
+	public void loadSites()
+	{
+		if ( sites.size() > 0 )
+			throw new StartupException( "Site manager already has sites loaded. You must unload first." );
 		
-		SQLDatastore sql = Loader.getDatabase();
+		sites.put( "default", new DefaultSite() );
 		
-		// Load sites from YAML file base.
-		File siteFileBase = new File( "sites" );
+		FileDatastore ds = FileDatastore.loadDirectory( Loader.getWebRoot(), "(.*)/config.yaml" );
 		
-		FileFunc.directoryHealthCheck( siteFileBase );
-		
-		File defaultSite = new File( siteFileBase, "000-default.yaml" );
-		
-		// We make sure the default default YAML FileBase exists and if not we copy it from the Jar.
-		if ( !defaultSite.exists() )
-			try
+		for ( YamlConfiguration yaml : ds.asList() )
+		{
+			if ( !yaml.has( "site.id" ) )
+				if ( yaml.has( "site.siteId" ) )
+				{ // Temp until later version
+					yaml.set( "site.id", yaml.get( "site.siteId" ) );
+					yaml.set( "site.siteId", null );
+				}
+			
+			if ( yaml.has( "site.id" ) )
 			{
-				defaultSite.getParentFile().mkdirs();
-				FileFunc.putResource( "com/chiorichan/default-site.yaml", defaultSite );
-			}
-			catch ( IOException e )
-			{
-				e.printStackTrace();
-			}
-		
-		/**
-		 * Add the dummy all sites site
-		 * Used by the AccountManager to identify accounts that can belong to any site
-		 */
-		siteMap.put( "%", new Site( "%" ) );
-		
-		FileFilter fileFilter = new WildcardFileFilter( "*.yaml" );
-		File[] files = siteFileBase.listFiles( fileFilter );
-		
-		if ( files != null && files.length > 0 )
-			for ( File f : files )
+				String id = yaml.getString( "site.id" ).toLowerCase();
+				
 				try
 				{
-					Site site = new Site( f );
-					
-					if ( site != null )
-						siteMap.put( site.getSiteId(), site );
+					sites.put( id, new FileSite( yaml ) );
 				}
 				catch ( SiteException e )
 				{
-					getLogger().warning( "Exception encountered while loading a site from YAML FileBase, Reason: " + e.getMessage() );
-					if ( e.getCause() != null )
-						e.getCause().printStackTrace();
+					throw new StartupException( e );
 				}
-		
-		try
-		{
-			if ( !sql.table( "sites" ).exists() )
-				sql.table( "sites" ).addColumnVar( "siteId", 255 ).addColumnVar( "title", 255, "Unnamed Chiori-chan Web Server Site" ).addColumnVar( "domain", 255 ).addColumnVar( "source", 255, "pages" ).addColumnVar( "resource", 255, "resources" ).addColumnVar( "subdomains", 255 ).addColumnVar( "protected", 255 ).addColumnVar( "metatags", 255 ).addColumnVar( "aliases", 255 ).addColumnVar( "configYaml", 255 );
-			
-			SQLQuerySelect select = sql.table( "sites" ).select().execute();
-			
-			if ( select.rowCount() > 0 )
-				for ( Map<String, String> row : select.stringSet() )
-					try
-					{
-						Site site = new Site( row );
-						
-						if ( site != null )
-							siteMap.put( site.getSiteId(), site );
-					}
-					catch ( SiteException e )
-					{
-						getLogger().severe( "Exception encountered while loading a site from SQL Database, Reason: " + e.getMessage() );
-						if ( e.getCause() != null )
-							e.getCause().printStackTrace();
-					}
-		}
-		catch ( SQLException e )
-		{
-			getLogger().warning( "Exception encountered while loading a sites from Database", e );
+			}
+			else
+				DatastoreManager.getLogger().warning( String.format( "The site '%s' is missing the site id `site.id`, site will not be loaded.", yaml.loadedFrom() ) );
 		}
 	}
 	
@@ -206,51 +205,7 @@ public class SiteManager implements ServerManager
 	
 	public void reload()
 	{
-		siteMap = new LinkedHashMap<String, Site>();
+		sites = new LinkedHashMap<String, Site>();
 		init();
-	}
-	
-	public String remove( String siteId )
-	{
-		if ( siteId.equals( "default" ) )
-			return "You can not delete the default site.";
-		
-		if ( siteMap.containsKey( siteId ) )
-		{
-			Site site = siteMap.get( siteId );
-			
-			// TODO Either confirm that someone want to delete a site or make it so they can be restored.
-			
-			switch ( site.siteType() )
-			{
-				case SQL:
-					SQLDatastore sql = Loader.getDatabase();
-					
-					try
-					{
-						if ( sql.table( "sites" ).delete().where( "siteId" ).matches( siteId ).execute().rowCount() < 0 )
-							return "There was a unknown reason the site could not be deleted.";
-					}
-					catch ( SQLException e )
-					{
-						return "There was a unknown reason the site could not be deleted.";
-					}
-					
-					break;
-				case FILE:
-					File f = site.getFile();
-					f.delete();
-					
-					break;
-				default:
-					return "There was an unknown reason the site could be deleted.";
-			}
-			
-			siteMap.remove( siteId );
-			
-			return "The specified site was successfully removed.";
-		}
-		else
-			return "The specified site was not found.";
 	}
 }

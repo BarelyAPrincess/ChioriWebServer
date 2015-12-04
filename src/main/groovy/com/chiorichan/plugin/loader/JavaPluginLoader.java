@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.Validate;
 import org.yaml.snakeyaml.error.YAMLException;
 
+import com.chiorichan.SourceContext;
 import com.chiorichan.configuration.serialization.ConfigurationSerializable;
 import com.chiorichan.configuration.serialization.ConfigurationSerialization;
 import com.chiorichan.event.AbstractEvent;
@@ -143,10 +144,11 @@ public final class JavaPluginLoader implements PluginLoader
 					}
 				}
 			};
+			SourceContext context = SourceContext.produce( plugin );
 			if ( useTimings )
-				eventSet.add( new TimedRegisteredListener( listener, executor, eh.priority(), plugin, eh.ignoreCancelled() ) );
+				eventSet.add( new TimedRegisteredListener( listener, executor, eh.priority(), context, eh.ignoreCancelled() ) );
 			else
-				eventSet.add( new RegisteredListener( listener, executor, eh.priority(), plugin, eh.ignoreCancelled() ) );
+				eventSet.add( new RegisteredListener( listener, executor, eh.priority(), context, eh.ignoreCancelled() ) );
 		}
 		return ret;
 	}

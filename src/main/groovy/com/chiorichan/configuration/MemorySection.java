@@ -348,6 +348,7 @@ public class MemorySection implements ConfigurationSection
 		return getConfigurationSection( path, false );
 	}
 	
+	@Override
 	public ConfigurationSection getConfigurationSection( String path, boolean create )
 	{
 		Object val = get( path, null );
@@ -523,19 +524,35 @@ public class MemorySection implements ConfigurationSection
 		return result;
 	}
 	
-	// Java
+	@SuppressWarnings( "unchecked" )
 	@Override
-	public List<?> getList( String path )
+	public <T extends List<?>> T getList( String path )
 	{
-		Object def = getDefault( path );
-		return getList( path, ( def instanceof List ) ? ( List<?> ) def : null );
+		T def;
+		try
+		{
+			def = ( T ) getDefault( path );
+		}
+		catch ( ClassCastException e )
+		{
+			def = null;
+		}
+		return getList( path, def );
 	}
 	
+	@SuppressWarnings( "unchecked" )
 	@Override
-	public List<?> getList( String path, List<?> def )
+	public <T extends List<?>> T getList( String path, T def )
 	{
 		Object val = get( path, def );
-		return ( List<?> ) ( ( val instanceof List ) ? val : def );
+		try
+		{
+			return ( T ) val;
+		}
+		catch ( ClassCastException e )
+		{
+			return def;
+		}
 	}
 	
 	@Override
@@ -678,6 +695,7 @@ public class MemorySection implements ConfigurationSection
 		return result;
 	}
 	
+	@Override
 	public List<String> getStringList( String path, List<String> def )
 	{
 		List<?> list = getList( path );
@@ -711,6 +729,39 @@ public class MemorySection implements ConfigurationSection
 		mapChildrenValues( result, this, deep );
 		
 		return result;
+	}
+	
+	@Override
+	public boolean has( String path )
+	{
+		Validate.notNull( path, "Path cannot be null" );
+		
+		if ( path.length() == 0 )
+			return true;
+		
+		Configuration root = getRoot();
+		if ( root == null )
+			throw new IllegalStateException( "Cannot access section without a root" );
+		
+		final char separator = root.options().pathSeparator();
+		// i1 is the leading (higher) index
+		// i2 is the trailing (lower) index
+		int i1 = -1, i2;
+		ConfigurationSection section = this;
+		while ( ( i1 = path.indexOf( separator, i2 = i1 + 1 ) ) != -1 )
+		{
+			section = section.getConfigurationSection( path.substring( i2, i1 ) );
+			if ( section == null )
+				return false;
+		}
+		
+		String key = path.substring( i2 );
+		if ( section == this )
+		{
+			Object result = map.get( key );
+			return result != null;
+		}
+		return section.has( key );
 	}
 	
 	@Override

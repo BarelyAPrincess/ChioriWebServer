@@ -10,7 +10,7 @@ package com.chiorichan.event;
 
 import com.chiorichan.plugin.PluginInformation;
 
-public interface EventCreator
+public interface EventRegistrar
 {
 	/**
 	 * Returns the plugin.yaml file containing the details for this plugin

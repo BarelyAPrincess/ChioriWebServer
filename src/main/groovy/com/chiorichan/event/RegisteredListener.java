@@ -8,51 +8,23 @@
  */
 package com.chiorichan.event;
 
+import com.chiorichan.SourceContext;
+
 public class RegisteredListener
 {
 	private final Listener listener;
 	private final EventPriority priority;
-	private final EventCreator creator;
+	private final SourceContext context;
 	private final EventExecutor executor;
 	private final boolean ignoreCancelled;
 	
-	public RegisteredListener( final Listener listener, final EventExecutor executor, final EventPriority priority, final EventCreator creator, final boolean ignoreCancelled )
+	public RegisteredListener( final Listener listener, final EventExecutor executor, final EventPriority priority, final SourceContext context, final boolean ignoreCancelled )
 	{
 		this.listener = listener;
 		this.priority = priority;
-		this.creator = creator;
+		this.context = context;
 		this.executor = executor;
 		this.ignoreCancelled = ignoreCancelled;
-	}
-	
-	/**
-	 * Gets the listener for this registration
-	 * 
-	 * @return Registered Listener
-	 */
-	public Listener getListener()
-	{
-		return listener;
-	}
-	
-	/**
-	 * Gets the plugin for this registration
-	 * 
-	 * @return Registered Plugin
-	 */
-	public EventCreator getCreator()
-	{
-		return creator;
-	}
-	
-	/**
-	 * Gets the priority for this registration
-	 * 
-	 * @return Registered Priority
-	 */
-	public EventPriority getPriority()
-	{
-		return priority;
 	}
 	
 	/**
@@ -66,18 +38,44 @@ public class RegisteredListener
 	public void callEvent( final AbstractEvent event ) throws EventException
 	{
 		if ( event instanceof Cancellable )
-		{
 			if ( ( ( Cancellable ) event ).isCancelled() && isIgnoringCancelled() )
-			{
 				return;
-			}
-		}
 		
 		if ( event instanceof Conditional )
-			if ( priority != EventPriority.MONITOR && !( ( Conditional ) event ).conditional( this ) )
+			if ( priority != EventPriority.MONITOR && ! ( ( Conditional ) event ).conditional( this ) )
 				return;
 		
 		executor.execute( listener, event );
+	}
+	
+	/**
+	 * Gets the plugin for this registration
+	 * 
+	 * @return Registered Plugin
+	 */
+	public SourceContext getContext()
+	{
+		return context;
+	}
+	
+	/**
+	 * Gets the listener for this registration
+	 * 
+	 * @return Registered Listener
+	 */
+	public Listener getListener()
+	{
+		return listener;
+	}
+	
+	/**
+	 * Gets the priority for this registration
+	 * 
+	 * @return Registered Priority
+	 */
+	public EventPriority getPriority()
+	{
+		return priority;
 	}
 	
 	/**

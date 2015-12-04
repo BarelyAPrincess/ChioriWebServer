@@ -23,7 +23,7 @@ import com.chiorichan.event.EventBus;
 import com.chiorichan.event.server.KickEvent;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
-import com.chiorichan.tasks.TaskCreator;
+import com.chiorichan.tasks.TaskRegistrar;
 import com.chiorichan.util.SecureFunc;
 import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.Versioning;
@@ -33,7 +33,7 @@ import com.google.common.collect.Sets;
 /**
  * Provides Account Management to the Server
  */
-public final class AccountManager extends AccountEvents implements ServerManager, TaskCreator
+public final class AccountManager extends AccountEvents implements ServerManager, TaskRegistrar
 {
 	public static final AccountManager INSTANCE = new AccountManager();
 	private static boolean isInitialized = false;

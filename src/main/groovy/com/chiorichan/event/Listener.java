@@ -9,7 +9,7 @@
 package com.chiorichan.event;
 
 /**
- * Simple interface for tagging all EventListeners
+ * Simple interface for marking all EventListeners
  */
 public interface Listener
 {

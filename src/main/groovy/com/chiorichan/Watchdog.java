@@ -30,7 +30,7 @@ import joptsimple.OptionSpec;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
-import com.chiorichan.tasks.TaskCreator;
+import com.chiorichan.tasks.TaskRegistrar;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Ticks;
 import com.chiorichan.tasks.Timings;
@@ -40,7 +40,7 @@ import com.google.common.collect.Lists;
 /**
  * Monitors and oversees all Watchdog protection
  */
-public class Watchdog implements Runnable, TaskCreator
+public class Watchdog implements Runnable, TaskRegistrar
 {
 	public static final int UNKNOWN = -1;
 	public static final int TERMINATE = 0;

@@ -24,9 +24,11 @@ import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.Kickable;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
+import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.server.MessageEvent;
+import com.chiorichan.event.session.SessionDestroyEvent;
 import com.chiorichan.http.CSRFToken;
 import com.chiorichan.http.HttpCookie;
 import com.chiorichan.permission.PermissibleEntity;
@@ -182,8 +184,15 @@ public final class Session extends AccountPermissible implements Kickable
 	
 	public void destroy() throws SessionException
 	{
+		destroy( SessionManager.MANUAL );
+	}
+	
+	public void destroy( int reasonCode ) throws SessionException
+	{
 		if ( SessionManager.isDebug() )
 			Loader.getLogger().info( LogColor.DARK_AQUA + "Session Destroyed `" + this + "`" );
+		
+		EventBus.INSTANCE.callEvent( new SessionDestroyEvent( this, reasonCode ) );
 		
 		SessionManager.sessions.remove( this );
 		
@@ -637,7 +646,7 @@ public final class Session extends AccountPermissible implements Kickable
 		return "Session{key=" + sessionKey + ",id=" + sessionId + ",ipAddr=" + getIpAddresses() + ",timeout=" + timeout + ",isInvalidated=" + isInvalidated + ",data=" + data + ",requestCount=" + requestCnt + ",site=" + site + "}";
 	}
 	
-	public void upload()
+	public void unload()
 	{
 		if ( SessionManager.isDebug() )
 			Loader.getLogger().info( LogColor.DARK_AQUA + "Session Unloaded `" + this + "`" );

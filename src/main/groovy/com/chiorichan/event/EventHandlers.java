@@ -40,7 +40,7 @@ public class EventHandlers extends AbstractList<RegisteredListener>
 	 *            the creator to get the listeners of
 	 * @return the list of registered listeners
 	 */
-	public static ArrayList<RegisteredListener> getRegisteredListeners( EventCreator creator )
+	public static ArrayList<RegisteredListener> getRegisteredListeners( Object source )
 	{
 		ArrayList<RegisteredListener> listeners = new ArrayList<RegisteredListener>();
 		synchronized ( handlers )
@@ -50,7 +50,7 @@ public class EventHandlers extends AbstractList<RegisteredListener>
 				{
 					for ( List<RegisteredListener> list : handler.listeners.values() )
 						for ( RegisteredListener listener : list )
-							if ( listener.getCreator().equals( creator ) )
+							if ( listener.getContext().getSource().equals( source ) )
 								listeners.add( listener );
 				}
 		}
@@ -79,7 +79,7 @@ public class EventHandlers extends AbstractList<RegisteredListener>
 	 * @param creator
 	 *            creator to unregister
 	 */
-	public static void unregisterAll( EventCreator creator )
+	public static void unregisterAll( EventRegistrar creator )
 	{
 		synchronized ( handlers )
 		{
@@ -149,20 +149,6 @@ public class EventHandlers extends AbstractList<RegisteredListener>
 	}
 	
 	/**
-	 * Remove a specific creator's listeners from this handler
-	 * 
-	 * @param creator
-	 *            creator to remove
-	 */
-	public synchronized void unregister( EventCreator creator )
-	{
-		for ( List<RegisteredListener> list : listeners.values() )
-			for ( ListIterator<RegisteredListener> i = list.listIterator(); i.hasNext(); )
-				if ( i.next().getCreator().equals( creator ) )
-					i.remove();
-	}
-	
-	/**
 	 * Remove a specific listener from this handler
 	 * 
 	 * @param listener
@@ -173,6 +159,20 @@ public class EventHandlers extends AbstractList<RegisteredListener>
 		for ( List<RegisteredListener> list : listeners.values() )
 			for ( ListIterator<RegisteredListener> i = list.listIterator(); i.hasNext(); )
 				if ( i.next().getListener().equals( listener ) )
+					i.remove();
+	}
+	
+	/**
+	 * Remove a specific creator's listeners from this handler
+	 * 
+	 * @param creator
+	 *            creator to remove
+	 */
+	public synchronized void unregister( Object source )
+	{
+		for ( List<RegisteredListener> list : listeners.values() )
+			for ( ListIterator<RegisteredListener> i = list.listIterator(); i.hasNext(); )
+				if ( i.next().getContext().getSource().equals( source ) )
 					i.remove();
 	}
 	

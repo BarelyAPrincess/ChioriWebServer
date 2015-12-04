@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -461,11 +462,11 @@ public class FileFunc
 	{
 		if ( path.startsWith( "[" ) )
 		{
-			path = path.replace( "[pwd]", new File( "" ).getAbsolutePath() );
+			path = path.replace( "[pwd]", Loader.getServerRoot().getAbsolutePath() );
 			path = path.replace( "[web]", Loader.getWebRoot().getAbsolutePath() );
 			
 			if ( site != null )
-				path = path.replace( "[site]", site.getAbsoluteRoot().getAbsolutePath() );
+				path = path.replace( "[site]", site.rootDirectory().getAbsolutePath() );
 		}
 		
 		return new File( path );
@@ -888,6 +889,26 @@ public class FileFunc
 		return output.replaceAll( "\\.", PATH_SEPERATOR );
 	}
 	
+	public static void patchDirectory( File dir )
+	{
+		patchDirectory( dir, true, true );
+	}
+	
+	public static void patchDirectory( File dir, boolean writable, boolean readable )
+	{
+		if ( !dir.isDirectory() )
+			dir.delete();
+		
+		if ( !dir.exists() )
+			dir.mkdirs();
+		
+		if ( !dir.canWrite() )
+			dir.setWritable( writable );
+		
+		if ( !dir.canRead() )
+			dir.setWritable( readable );
+	}
+	
 	public static void putResource( Class<?> clz, String resource, File file ) throws IOException
 	{
 		try
@@ -909,6 +930,50 @@ public class FileFunc
 	public static void putResource( String resource, File file ) throws IOException
 	{
 		putResource( Loader.class, resource, file );
+	}
+	
+	public static List<File> recursiveFiles( final File dir )
+	{
+		return recursiveFiles( dir, 9999 );
+	}
+	
+	private static List<File> recursiveFiles( final File start, final File current, final int depth, final int maxDepth, final String regexPattern )
+	{
+		final List<File> files = Lists.newArrayList();
+		
+		current.list( new FilenameFilter()
+		{
+			@Override
+			public boolean accept( File dir, String name )
+			{
+				dir = new File( dir, name );
+				
+				if ( dir.isDirectory() && depth < maxDepth )
+					files.addAll( recursiveFiles( start, dir, depth + 1, maxDepth, regexPattern ) );
+				
+				if ( dir.isFile() )
+				{
+					String filename = dir.getAbsolutePath();
+					filename = filename.substring( start.getAbsolutePath().length() + 1 );
+					if ( regexPattern == null || filename.matches( regexPattern ) )
+						files.add( dir );
+				}
+				
+				return false;
+			}
+		} );
+		
+		return files;
+	}
+	
+	public static List<File> recursiveFiles( final File dir, final int maxDepth )
+	{
+		return recursiveFiles( dir, maxDepth, null );
+	}
+	
+	public static List<File> recursiveFiles( final File dir, final int maxDepth, final String regexPattern )
+	{
+		return recursiveFiles( dir, dir, 0, maxDepth, regexPattern );
 	}
 	
 	public static String resourceToString( String resource ) throws UnsupportedEncodingException, IOException

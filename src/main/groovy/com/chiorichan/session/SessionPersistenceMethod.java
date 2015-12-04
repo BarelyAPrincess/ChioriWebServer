@@ -6,17 +6,14 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.event.server;
-
-import com.chiorichan.event.EventRegistrar;
+package com.chiorichan.session;
 
 /**
- * Called when a plugin is disabled.
+ * Method used to keep a Session persistent from request to request.
+ * 
+ * XXX This is an outdated feature from like version 6, not sure if it's still working as of version 9.
  */
-public class PluginDisableEvent extends PluginEvent
+public enum SessionPersistenceMethod
 {
-	public PluginDisableEvent( final EventRegistrar plugin )
-	{
-		super( plugin );
-	}
+	COOKIE, PARAM
 }

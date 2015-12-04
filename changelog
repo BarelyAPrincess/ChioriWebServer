@@ -29,3 +29,30 @@
 	UPDATED: AutoUpdater monitors server jar for modification and restarts to apply changes. (configurable)
 	FEATURE: [WIP] Added new Server File Watcher
 	FEATURE: Implemented optional Watchdog process that monitors a separate spawned JVM instance for crashes and restarts. (use --watchdog to enable) Only tested on Linux
+9.3.2:
+	FEATURE: SSL annotation, options include REQUIRE, IGNORE. and DENY with respected meaning
+	BUGFIX: NullPointer in ServerLogger
+	BUGFIX: request.getBinding() could be null when creating ScriptingFactory
+	BUGFIX: SqlDatastore, NOTEQUAL method
+	BUGFIX: Query kicking issue
+	BUGFIX: SQLPermissions, Entry reload and loading
+	ADDED: sys.query permission node
+	ADDED: AutoUpdater auto reloads configuration of detected change
+	UPDATED: Catch for OutOfMemoryError
+9.3.3:
+	DEPRECATED: StringFunc.md5 and base64 methods, use SecureFunc instead
+	DEPRECATED: Session are no longer cleaned up at shutdown to spare a long agonizing shutdown delay
+	UPDATED: Rewrote SSL to be compatible with normal cerificates (PEM certs and PKCS8 keys) over ugly java keystores
+	UPDATED: Changed the minimum required version to Java 1.8, this gave us modern SSL protocols and improved API
+	UPDATED: Refactored Tasks Manager methods
+	FIXED: Login redirect bug with code 307
+	FIXED: generateAcctId() more reliable
+	FEATURE: Very basic CSRF security tokens, use annotation '@security: CSRF' to enable per page, form value is at _CRSG_TOKEN global or getSession().getCSRFToken()
+	ADDED: Post redirect method that preserve query strings.
+9.3.4:	
+	Restructured site directories, new conventions using public (root and subdomains) and resource (packages) roots
+	Removed sql site configurations
+	Moved file site configs to site webroot, /webroot/[siteId]/config.yaml
+
+TODO:
+	Implement a SecurityManager

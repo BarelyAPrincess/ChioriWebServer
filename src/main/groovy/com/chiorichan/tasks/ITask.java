@@ -28,7 +28,7 @@ public interface ITask
 	 * 
 	 * @return The TaskCreator that owns the task
 	 */
-	TaskCreator getOwner();
+	TaskRegistrar getOwner();
 	
 	/**
 	 * Returns true if the Task is a sync task.

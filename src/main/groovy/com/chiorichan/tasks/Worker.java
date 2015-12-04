@@ -29,7 +29,7 @@ public interface Worker
 	 * 
 	 * @return The TaskCreator that owns the task
 	 */
-	TaskCreator getOwner();
+	TaskRegistrar getOwner();
 	
 	/**
 	 * Returns the thread for the worker.

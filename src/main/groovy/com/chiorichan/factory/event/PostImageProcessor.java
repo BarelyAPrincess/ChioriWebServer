@@ -173,7 +173,7 @@ public class PostImageProcessor implements Listener
 			
 			// Produce a unique encapsulated id based on this image processing request
 			String encapId = SecureFunc.md5( context.filename() + w1 + h1 + request.getArgument( "argb" ) + grayscale );
-			File tmp = context.site() == null ? Loader.getTempFileDirectory() : context.site().getTempFileDirectory();
+			File tmp = context.site() == null ? Loader.getTempFileDirectory() : context.site().tempDirectory();
 			File file = new File( tmp, encapId + "_" + new File( context.filename() ).getName() );
 			
 			if ( cacheEnabled && file.exists() )

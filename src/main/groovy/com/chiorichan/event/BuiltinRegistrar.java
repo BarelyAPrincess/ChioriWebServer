@@ -11,8 +11,9 @@ package com.chiorichan.event;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.plugin.PluginInformation;
 import com.chiorichan.plugin.lang.PluginInformationException;
+import com.chiorichan.tasks.TaskRegistrar;
 
-public abstract class BuiltinEventCreator implements EventCreator
+public abstract class BuiltinRegistrar implements EventRegistrar, TaskRegistrar
 {
 	private YamlConfiguration yaml = new YamlConfiguration();
 	

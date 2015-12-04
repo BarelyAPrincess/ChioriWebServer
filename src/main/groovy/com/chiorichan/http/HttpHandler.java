@@ -55,6 +55,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 
+import org.apache.commons.lang3.Validate;
 import org.codehaus.groovy.runtime.NullObject;
 
 import com.chiorichan.ContentTypes;
@@ -420,10 +421,23 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		
 		// Throws IOException and HttpError
 		WebInterpreter fi = new WebInterpreter( request );
-		
 		Site currentSite = request.getSite();
 		sess.setSite( currentSite );
-		File docRoot = currentSite.getAbsoluteRoot( request.getSubDomain() );
+		
+		if ( !currentSite.subDomainExists( request.getSubDomain() ) )
+		{
+			log.log( Level.SEVERE, "The requested subdomain '%s' is non-existent %s", request.getSubDomain(), request.getFullDomain( "" ) );
+			
+			if ( Loader.getConfig().getBoolean( "sites.redirectMissingSubDomains" ) )
+				response.sendRedirect( request.getFullDomain() );
+			else
+				response.sendError( HttpResponseStatus.NOT_FOUND, "Subdomain is not found" );
+			return;
+		}
+		
+		File docRoot = currentSite.subDomainDirectory( request.getSubDomain() );
+		
+		Validate.notNull( docRoot );
 		
 		// Default SSL Option is IGNORE or empty.
 		// Options include IGNORE, REQUIRE, and DENY
@@ -458,7 +472,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		if ( !fi.hasFile() && !fi.hasHTML() )
 			response.setStatus( HttpResponseStatus.NO_CONTENT );
 		
-		// throw new HttpError( 500, null, "We found what appears to be a mapping for your request but it contained no content to display, deffinite bug." );
+		// throw new HttpError( 500, null, "We found what appears to be a mapping for your request but it contained no content to display, definite bug." );
 		
 		if ( fi.hasFile() )
 			htaccess.appendWithDir( fi.getFile().getParentFile() );
@@ -703,7 +717,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			
 			Site currentSite = request.getSite();
 			
-			File tmpFileDirectory = ( currentSite != null ) ? currentSite.getTempFileDirectory() : Loader.getTempFileDirectory();
+			File tmpFileDirectory = ( currentSite != null ) ? currentSite.tempDirectory() : Loader.getTempFileDirectory();
 			
 			setTempDirectory( tmpFileDirectory );
 			

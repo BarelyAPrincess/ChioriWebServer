@@ -8,6 +8,8 @@
  */
 package com.chiorichan.event;
 
+import com.chiorichan.SourceContext;
+
 public class TimedRegisteredListener extends RegisteredListener
 {
 	private int count;
@@ -15,9 +17,16 @@ public class TimedRegisteredListener extends RegisteredListener
 	private Class<? extends AbstractEvent> eventClass;
 	private boolean multiple = false;
 	
-	public TimedRegisteredListener( final Listener pluginListener, final EventExecutor eventExecutor, final EventPriority eventPriority, final EventCreator registeredPlugin, final boolean listenCancelled )
+	public TimedRegisteredListener( final Listener pluginListener, final EventExecutor eventExecutor, final EventPriority eventPriority, final SourceContext context, final boolean listenCancelled )
 	{
-		super( pluginListener, eventExecutor, eventPriority, registeredPlugin, listenCancelled );
+		super( pluginListener, eventExecutor, eventPriority, context, listenCancelled );
+	}
+	
+	private static Class<?> getCommonSuperclass( Class<?> class1, Class<?> class2 )
+	{
+		while ( !class1.isAssignableFrom( class2 ) )
+			class1 = class1.getSuperclass();
+		return class1;
 	}
 	
 	@Override
@@ -30,36 +39,16 @@ public class TimedRegisteredListener extends RegisteredListener
 		}
 		count++;
 		Class<? extends AbstractEvent> newEventClass = event.getClass();
-		if ( this.eventClass == null )
-		{
-			this.eventClass = newEventClass;
-		}
-		else if ( !this.eventClass.equals( newEventClass ) )
+		if ( eventClass == null )
+			eventClass = newEventClass;
+		else if ( !eventClass.equals( newEventClass ) )
 		{
 			multiple = true;
-			this.eventClass = getCommonSuperclass( newEventClass, this.eventClass ).asSubclass( AbstractEvent.class );
+			eventClass = getCommonSuperclass( newEventClass, eventClass ).asSubclass( AbstractEvent.class );
 		}
 		long start = System.nanoTime();
 		super.callEvent( event );
 		totalTime += System.nanoTime() - start;
-	}
-	
-	private static Class<?> getCommonSuperclass( Class<?> class1, Class<?> class2 )
-	{
-		while ( !class1.isAssignableFrom( class2 ) )
-		{
-			class1 = class1.getSuperclass();
-		}
-		return class1;
-	}
-	
-	/**
-	 * Resets the call count and total time for this listener
-	 */
-	public void reset()
-	{
-		count = 0;
-		totalTime = 0;
 	}
 	
 	/**
@@ -70,16 +59,6 @@ public class TimedRegisteredListener extends RegisteredListener
 	public int getCount()
 	{
 		return count;
-	}
-	
-	/**
-	 * Gets the total time calls to this listener have taken
-	 * 
-	 * @return Total time for all calls of this listener
-	 */
-	public long getTotalTime()
-	{
-		return totalTime;
 	}
 	
 	/**
@@ -96,6 +75,16 @@ public class TimedRegisteredListener extends RegisteredListener
 	}
 	
 	/**
+	 * Gets the total time calls to this listener have taken
+	 * 
+	 * @return Total time for all calls of this listener
+	 */
+	public long getTotalTime()
+	{
+		return totalTime;
+	}
+	
+	/**
 	 * Gets whether this listener has handled multiple events, such that for some two events, <code>eventA.getClass() != eventB.getClass()</code>.
 	 * 
 	 * @return true if this listener has handled multiple events
@@ -103,5 +92,14 @@ public class TimedRegisteredListener extends RegisteredListener
 	public boolean hasMultiple()
 	{
 		return multiple;
+	}
+	
+	/**
+	 * Resets the call count and total time for this listener
+	 */
+	public void reset()
+	{
+		count = 0;
+		totalTime = 0;
 	}
 }

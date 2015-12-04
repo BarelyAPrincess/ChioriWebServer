@@ -100,7 +100,7 @@ public class Route
 	public File getFile()
 	{
 		if ( params.get( "file" ) != null && !params.get( "file" ).isEmpty() )
-			return new File( site.getSourceDirectory(), params.get( "file" ) );
+			return new File( site.publicDirectory(), params.get( "file" ) );
 		
 		return null;
 	}

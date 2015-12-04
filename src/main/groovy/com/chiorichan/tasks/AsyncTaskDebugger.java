@@ -13,10 +13,10 @@ class AsyncTaskDebugger
 {
 	private AsyncTaskDebugger next = null;
 	private final int expiry;
-	private final TaskCreator creator;
+	private final TaskRegistrar creator;
 	private final Class<? extends Runnable> clazz;
 	
-	AsyncTaskDebugger( final int expiry, final TaskCreator creator, final Class<? extends Runnable> clazz )
+	AsyncTaskDebugger( final int expiry, final TaskRegistrar creator, final Class<? extends Runnable> clazz )
 	{
 		this.expiry = expiry;
 		this.creator = creator;

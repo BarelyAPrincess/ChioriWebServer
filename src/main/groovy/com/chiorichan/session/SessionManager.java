@@ -21,7 +21,7 @@ import com.chiorichan.LogColor;
 import com.chiorichan.ServerManager;
 import com.chiorichan.http.HttpCookie;
 import com.chiorichan.lang.StartupException;
-import com.chiorichan.tasks.TaskCreator;
+import com.chiorichan.tasks.TaskRegistrar;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Ticks;
 import com.chiorichan.tasks.Timings;
@@ -33,10 +33,14 @@ import com.google.common.collect.Sets;
 /**
  * Persistence manager handles sessions kept in memory. It also manages when to unload the session to free memory.
  */
-public class SessionManager implements TaskCreator, ServerManager
+public class SessionManager implements TaskRegistrar, ServerManager
 {
 	public static final SessionManager INSTANCE = new SessionManager();
 	private static boolean isInitialized = false;
+	
+	public static final int MANUAL = 0;
+	public static final int EXPIRED = 1;
+	public static final int MAXPERIP = 2;
 	
 	static List<Session> sessions = Lists.newCopyOnWriteArrayList();
 	static boolean isDebug = false;
@@ -272,7 +276,7 @@ public class SessionManager implements TaskCreator, ServerManager
 				try
 				{
 					cleanupCount++;
-					sess.destroy();
+					sess.destroy( SessionManager.EXPIRED );
 				}
 				catch ( SessionException e )
 				{
@@ -304,7 +308,7 @@ public class SessionManager implements TaskCreator, ServerManager
 					try
 					{
 						cleanupCount++;
-						sortedArray[i].destroy();
+						sortedArray[i].destroy( SessionManager.MAXPERIP );
 					}
 					catch ( SessionException e )
 					{
@@ -338,7 +342,7 @@ public class SessionManager implements TaskCreator, ServerManager
 				try
 				{
 					sess.save();
-					sess.upload();
+					sess.unload();
 				}
 				catch ( SessionException e )
 				{

@@ -30,7 +30,7 @@ import com.chiorichan.Loader;
 import com.chiorichan.RunLevel;
 import com.chiorichan.ServerManager;
 import com.chiorichan.ServerRunLevelEvent;
-import com.chiorichan.event.BuiltinEventCreator;
+import com.chiorichan.event.BuiltinRegistrar;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventHandlers;
@@ -51,7 +51,7 @@ import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.util.FileFunc;
 import com.google.common.collect.Maps;
 
-public class PluginManager extends BuiltinEventCreator implements Listener, ServerManager
+public class PluginManager extends BuiltinRegistrar implements Listener, ServerManager
 {
 	public static final PluginManager INSTANCE = new PluginManager();
 	private static boolean isInitialized = false;

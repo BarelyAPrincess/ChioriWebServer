@@ -21,7 +21,6 @@ import com.chiorichan.datastore.sql.SQLTable;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.datastore.sql.query.SQLQuerySelect;
 import com.chiorichan.site.Site;
-import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.MapCaster;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -67,7 +66,7 @@ public class Routes
 	{
 		synchronized ( this )
 		{
-			File routesFile = new File( Loader.getWebRoot() + FileFunc.PATH_SEPERATOR + site.getRoot() + FileFunc.PATH_SEPERATOR + "routes" );
+			File routesFile = new File( site.rootDirectory(), "routes" );
 			
 			if ( routes.size() < 1 || System.currentTimeMillis() - lastRequest > 2500 )
 			{

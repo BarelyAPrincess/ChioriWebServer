@@ -26,7 +26,7 @@ import com.chiorichan.account.AccountType;
 import com.chiorichan.account.event.AccountPreLoginEvent;
 import com.chiorichan.account.lang.AccountDescriptiveReason;
 import com.chiorichan.configuration.file.YamlConfiguration;
-import com.chiorichan.event.BuiltinEventCreator;
+import com.chiorichan.event.BuiltinRegistrar;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
@@ -38,14 +38,14 @@ import com.chiorichan.permission.event.PermissibleEntityEvent;
 import com.chiorichan.permission.event.PermissibleEvent;
 import com.chiorichan.permission.event.PermissibleSystemEvent;
 import com.chiorichan.permission.lang.PermissionBackendException;
-import com.chiorichan.tasks.TaskCreator;
+import com.chiorichan.tasks.TaskRegistrar;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.util.PermissionNamespace;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-public class PermissionManager extends BuiltinEventCreator implements ServerManager, TaskCreator, Listener
+public class PermissionManager extends BuiltinRegistrar implements ServerManager, TaskRegistrar, Listener
 {
 	/**
 	 * Holds the OFFICAL instance of Permission Manager.

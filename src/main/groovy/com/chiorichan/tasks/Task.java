@@ -24,7 +24,7 @@ class Task implements ITask, Runnable
 	private volatile long period;
 	private long nextRun;
 	private final Runnable task;
-	private final TaskCreator creator;
+	private final TaskRegistrar creator;
 	private final int id;
 	
 	Task()
@@ -37,7 +37,7 @@ class Task implements ITask, Runnable
 		this( null, task, -1, -1 );
 	}
 	
-	Task( final TaskCreator creator, final Runnable task, final int id, final long period )
+	Task( final TaskRegistrar creator, final Runnable task, final int id, final long period )
 	{
 		this.creator = creator;
 		this.task = task;
@@ -50,7 +50,7 @@ class Task implements ITask, Runnable
 		return id;
 	}
 	
-	public final TaskCreator getOwner()
+	public final TaskRegistrar getOwner()
 	{
 		return creator;
 	}

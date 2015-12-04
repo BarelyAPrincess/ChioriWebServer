@@ -12,6 +12,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
@@ -50,8 +51,9 @@ public class ScriptingContext
 	public static ScriptingContext fromAuto( final Site site, final String res )
 	{
 		// Might need a better attempt at auto determining file types
-		ScriptingContext context = fromFile( site, res );
-		if ( context.result().hasExceptions() )
+		ScriptingContext context = null;
+		context = fromFile( site, res );
+		if ( context == null || context.result().hasExceptions() )
 		{
 			if ( res.contains( "." ) )
 				return ScriptingContext.fromPackage( site, res );
@@ -89,10 +91,17 @@ public class ScriptingContext
 	{
 		// We block absolute file paths for both unix-like and windows
 		if ( file.startsWith( File.separator ) || file.matches( "[A-Za-z]:\\.*" ) )
-			throw new SecurityException( "To protect system resource, this page has been blocked from accessing an absolute file path." );
+			throw new SecurityException( "To protect system resources, this page has been blocked from accessing an absolute file path." );
 		if ( file.startsWith( ".." + File.separator ) )
-			throw new SecurityException( "To protect system resource, this page has been blocked from accessing a protected file path." );
-		return fromFile( new File( site.getAbsoluteRoot(), file ) );
+			throw new SecurityException( "To protect system resources, this page has been blocked from accessing a protected file path." );
+		try
+		{
+			return fromFile( site.resourceFile( file ) );
+		}
+		catch ( FileNotFoundException e )
+		{
+			return null;
+		}
 	}
 	
 	public static ScriptingContext fromPackage( final Site site, final String pack )
@@ -101,7 +110,7 @@ public class ScriptingContext
 		
 		try
 		{
-			File packFile = site.getResourceWithException( pack );
+			File packFile = site.resourcePackage( pack );
 			FileInterpreter fi = new FileInterpreter( packFile );
 			
 			context = ScriptingContext.fromFile( fi );

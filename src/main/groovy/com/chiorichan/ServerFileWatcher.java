@@ -25,7 +25,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Map;
 
 import com.chiorichan.lang.StartupException;
-import com.chiorichan.tasks.TaskCreator;
+import com.chiorichan.tasks.TaskRegistrar;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Timings;
 import com.google.common.collect.Maps;
@@ -34,7 +34,7 @@ import com.google.common.collect.Maps;
  * Provides a simple file watching service for the Server
  * Common detections will be the main jar and plugins
  */
-public class ServerFileWatcher implements Runnable, ServerManager, TaskCreator
+public class ServerFileWatcher implements Runnable, ServerManager, TaskRegistrar
 {
 	public interface EventCallback
 	{

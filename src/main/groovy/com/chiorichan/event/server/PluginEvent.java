@@ -8,16 +8,16 @@
  */
 package com.chiorichan.event.server;
 
-import com.chiorichan.event.EventCreator;
+import com.chiorichan.event.EventRegistrar;
 
 /**
  * Used for plugin enable and disable events
  */
 public abstract class PluginEvent extends ServerEvent
 {
-	private final EventCreator plugin;
+	private final EventRegistrar plugin;
 	
-	public PluginEvent( final EventCreator plugin )
+	public PluginEvent( final EventRegistrar plugin )
 	{
 		this.plugin = plugin;
 	}
@@ -27,7 +27,7 @@ public abstract class PluginEvent extends ServerEvent
 	 * 
 	 * @return Plugin for this event
 	 */
-	public EventCreator getPlugin()
+	public EventRegistrar getPlugin()
 	{
 		return plugin;
 	}

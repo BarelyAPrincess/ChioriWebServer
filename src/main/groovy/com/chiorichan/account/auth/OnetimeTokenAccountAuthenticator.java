@@ -22,7 +22,13 @@ import com.chiorichan.account.lang.AccountDescriptiveReason;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.datastore.sql.query.SQLQuerySelect;
+import com.chiorichan.event.EventBus;
+import com.chiorichan.event.EventHandler;
+import com.chiorichan.event.EventPriority;
+import com.chiorichan.event.Listener;
+import com.chiorichan.event.session.SessionDestroyEvent;
 import com.chiorichan.lang.ReportingLevel;
+import com.chiorichan.session.Session;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Ticks;
 import com.chiorichan.tasks.Timings;
@@ -31,7 +37,7 @@ import com.chiorichan.util.SecureFunc;
 /**
  * Used to authenticate an account using an Account Id and Token combination
  */
-public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
+public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator implements Listener
 {
 	class OnetimeTokenAccountCredentials extends AccountCredentials
 	{
@@ -82,6 +88,8 @@ public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
 				}
 			}
 		} );
+		
+		EventBus.INSTANCE.registerEvents( this, this );
 	}
 	
 	@Override
@@ -212,5 +220,19 @@ public class OnetimeTokenAccountAuthenticator extends AccountAuthenticator
 			return null;
 		}
 		return token;
+	}
+	
+	@EventHandler( priority = EventPriority.NORMAL )
+	public void onSessionDestroyEvent( SessionDestroyEvent event )
+	{
+		Session session = event.session();
+		
+		if ( "token".equals( session.getVariable( "auth" ) ) )
+		{
+			Validate.notNull( session.getVariable( "acctId" ) );
+			Validate.notNull( session.getVariable( "token" ) );
+			
+			deleteToken( session.getVariable( "acctId" ), session.getVariable( "token" ) );
+		}
 	}
 }

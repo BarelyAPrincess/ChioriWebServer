@@ -15,7 +15,7 @@ import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.LogColor;
 import com.chiorichan.Loader;
-import com.chiorichan.event.BuiltinEventCreator;
+import com.chiorichan.event.BuiltinRegistrar;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
@@ -33,7 +33,7 @@ import com.google.common.collect.Maps;
 /**
  * Maintains the network security for all protocols, e.g., TCP, HTTP and HTTPS.
  */
-public class NetworkSecurity extends BuiltinEventCreator implements Listener
+public class NetworkSecurity extends BuiltinRegistrar implements Listener
 {
 	public static enum IpStrikeType
 	{
@@ -207,9 +207,12 @@ public class NetworkSecurity extends BuiltinEventCreator implements Listener
 	{
 		// String[] allowed = htaccess.getAllowed();
 		
+		// TODO Reimplement protected site file check
 		
-		if ( fi.hasFile() && site.protectCheck( fi.getFilePath() ) )
-			throw new HttpError( 401, "Loading of this page (" + fi.getFilePath() + ") is not allowed since its hard protected in the configs." );
+		/*
+		 * if ( fi.hasFile() && site.protectCheck( fi.getFilePath() ) )
+		 * throw new HttpError( 401, "Loading of this page (" + fi.getFilePath() + ") is not allowed since its hard protected in the configs." );
+		 */
 	}
 	
 	public static boolean isIpBanned( String ipAddr )

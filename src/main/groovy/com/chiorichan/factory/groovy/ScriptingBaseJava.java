@@ -605,7 +605,7 @@ public abstract class ScriptingBaseJava extends Script
 	 */
 	public DatabaseEngineLegacy getDatabase()
 	{
-		SQLDatastore engine = getSite().getDatabase();
+		SQLDatastore engine = getSite().getDatastore();
 		
 		if ( engine == null )
 			throw new IllegalStateException( "The site database is unconfigured. It will need to be setup in order for you to use the getSql() method." );
@@ -683,7 +683,7 @@ public abstract class ScriptingBaseJava extends Script
 	
 	public SQLDatastore getSql()
 	{
-		SQLDatastore sql = getSite().getDatabase();
+		SQLDatastore sql = getSite().getDatastore();
 		
 		if ( sql == null )
 			throw new IllegalStateException( "The site database is unconfigured. It will need to be setup in order for you to use the getDatabase() method." );

@@ -22,7 +22,7 @@ class FutureTask<T> extends Task implements Future<T>
 	private T value;
 	private Exception exception = null;
 	
-	FutureTask( final Callable<T> callable, final TaskCreator creator, final int id )
+	FutureTask( final Callable<T> callable, final TaskRegistrar creator, final int id )
 	{
 		super( creator, null, id, -1L );
 		this.callable = callable;

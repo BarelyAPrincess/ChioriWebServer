@@ -120,12 +120,17 @@ accounts:
     - username
     - email
     - phone
-framework:
-  sites:
-    defaultTitle: Unnamed Site
-    autoCreateSubdomains: true
-    subdomainsDefaultToRoot: false
-    defaultSite: ''
+sites:
+  defaultTitle: Unnamed Site
+  redirectMissingSubDomains: false
+packages:
+  preferredExt:
+  - html
+  - htm
+  - groovy
+  - gsp
+  - jsp
+  - chi
 advanced:
   processors:
     imageProcessorEnabled: true

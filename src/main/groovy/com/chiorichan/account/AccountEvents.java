@@ -12,13 +12,13 @@ import com.chiorichan.account.event.AccountLoadEvent;
 import com.chiorichan.account.event.AccountLookupEvent;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountDescriptiveReason;
-import com.chiorichan.event.BuiltinEventCreator;
+import com.chiorichan.event.BuiltinRegistrar;
 import com.chiorichan.event.EventBus;
 
 /**
  * Handles the task and events between the {@link EventBus} and {@link AccountManager}
  */
-public abstract class AccountEvents extends BuiltinEventCreator
+public abstract class AccountEvents extends BuiltinRegistrar
 {
 	private final EventBus events = EventBus.INSTANCE;
 	

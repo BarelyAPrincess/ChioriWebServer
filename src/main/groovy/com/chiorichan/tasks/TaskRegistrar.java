@@ -8,7 +8,7 @@
  */
 package com.chiorichan.tasks;
 
-public interface TaskCreator
+public interface TaskRegistrar
 {
 	/**
 	 * Returns a value indicating whether or not this creator is currently enabled

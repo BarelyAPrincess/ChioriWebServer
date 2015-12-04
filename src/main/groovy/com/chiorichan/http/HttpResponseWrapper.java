@@ -356,7 +356,7 @@ public class HttpResponseWrapper
 	public void sendLoginPage( String msg )
 	{
 		msg = MessageRepo.store( msg, MessageRepo.DANGER );
-		String loginForm = request.getSite().getYaml().getString( "scripts.login-form", "/login" );
+		String loginForm = request.getSite().getConfig().getString( "scripts.login-form", "/login" );
 		if ( !loginForm.toLowerCase().startsWith( "http" ) )
 			loginForm = ( request.isSecure() ? "https://" : "http://" ) + loginForm;
 		sendRedirect( String.format( "%s?msg=%s&target=%s", loginForm, msg, request.getFullUrl() ) );
@@ -389,7 +389,7 @@ public class HttpResponseWrapper
 			if ( h.get( "Server" ) == null )
 				h.add( "Server", Versioning.getProduct() + " Version " + Versioning.getVersion() );
 			
-			h.add( "Access-Control-Allow-Origin", request.getSite().getYaml().getString( "web.allowed-origin", "*" ) );
+			h.add( "Access-Control-Allow-Origin", request.getSite().getConfig().getString( "web.allowed-origin", "*" ) );
 			h.add( "Connection", "close" );
 			h.add( "Cache-Control", "no-cache" );
 			h.add( "Cache-Control", "private" );
@@ -537,7 +537,7 @@ public class HttpResponseWrapper
 		// This might be a temporary measure - TODO Properly set the charset for each request.
 		h.set( "Content-Type", httpContentType + "; charset=" + encoding.name() );
 		
-		h.add( "Access-Control-Allow-Origin", request.getSite().getYaml().getString( "web.allowed-origin", "*" ) );
+		h.add( "Access-Control-Allow-Origin", request.getSite().getConfig().getString( "web.allowed-origin", "*" ) );
 		
 		for ( Entry<String, String> header : headers.entrySet() )
 			h.add( header.getKey(), header.getValue() );

@@ -18,13 +18,13 @@ import com.chiorichan.factory.ExceptionCallback;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.lang.EvalException;
 import com.chiorichan.lang.ReportingLevel;
-import com.chiorichan.tasks.TaskCreator;
+import com.chiorichan.tasks.TaskRegistrar;
 import com.google.common.collect.Lists;
 
 /**
  * 
  */
-public class DatastoreManager implements ServerManager, TaskCreator
+public class DatastoreManager implements ServerManager, TaskRegistrar
 {
 	public static final DatastoreManager INSTANCE = new DatastoreManager();
 	private static boolean isInitialized = false;

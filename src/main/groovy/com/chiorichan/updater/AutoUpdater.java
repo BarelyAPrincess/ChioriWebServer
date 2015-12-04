@@ -28,14 +28,14 @@ import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
 import com.chiorichan.messaging.MessageReceiver;
-import com.chiorichan.tasks.TaskCreator;
+import com.chiorichan.tasks.TaskRegistrar;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Ticks;
 import com.chiorichan.updater.BuildArtifact.ChangeSet.ChangeSetDetails;
 import com.chiorichan.util.SecureFunc;
 import com.chiorichan.util.Versioning;
 
-public class AutoUpdater implements Listener, TaskCreator
+public class AutoUpdater implements Listener, TaskRegistrar
 {
 	public static final String WARN_CONSOLE = "warn-console";
 	public static final String WARN_OPERATORS = "warn-ops";

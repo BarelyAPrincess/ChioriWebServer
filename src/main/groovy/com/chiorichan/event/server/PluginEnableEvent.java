@@ -8,14 +8,14 @@
  */
 package com.chiorichan.event.server;
 
-import com.chiorichan.event.EventCreator;
+import com.chiorichan.event.EventRegistrar;
 
 /**
  * Called when a plugin is enabled.
  */
 public class PluginEnableEvent extends PluginEvent
 {
-	public PluginEnableEvent( final EventCreator plugin )
+	public PluginEnableEvent( final EventRegistrar plugin )
 	{
 		super( plugin );
 	}

@@ -17,7 +17,7 @@ class AsyncTask extends Task
 	private final LinkedList<Worker> workers = new LinkedList<Worker>();
 	private final Map<Integer, Task> runners;
 	
-	AsyncTask( final Map<Integer, Task> runners, final TaskCreator creator, final Runnable task, final int id, final long delay )
+	AsyncTask( final Map<Integer, Task> runners, final TaskRegistrar creator, final Runnable task, final int id, final long delay )
 	{
 		super( creator, task, id, delay );
 		this.runners = runners;
@@ -53,7 +53,7 @@ class AsyncTask extends Task
 					return AsyncTask.this.getTaskId();
 				}
 				
-				public TaskCreator getOwner()
+				public TaskRegistrar getOwner()
 				{
 					return AsyncTask.this.getOwner();
 				}
