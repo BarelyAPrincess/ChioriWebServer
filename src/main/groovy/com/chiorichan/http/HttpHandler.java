@@ -104,9 +104,9 @@ import com.google.common.collect.Maps;
 public class HttpHandler extends SimpleChannelInboundHandler<Object>
 {
 	private static HttpDataFactory factory;
-	
+
 	protected static Map<ServerVars, Object> staticServerVars = Maps.newLinkedHashMap();
-	
+
 	static
 	{
 		/**
@@ -114,57 +114,58 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		 * See {@link DefaultHttpDataFactory#DefaultHttpDataFactory(boolean)} and {@link DefaultHttpDataFactory#DefaultHttpDataFactory(long)}
 		 */
 		long minsize = Loader.getConfig().getLong( "server.fileUploadMinInMemory", DefaultHttpDataFactory.MINSIZE );
-		
+
 		if ( minsize < 1 ) // Less then 1kb = always
 			factory = new DefaultHttpDataFactory( true );
 		if ( minsize > 102400 ) // Greater then 100mb = never
 			factory = new DefaultHttpDataFactory( false );
 		else
 			factory = new DefaultHttpDataFactory( minsize );
-		
+
 		setTempDirectory( Loader.getTempFileDirectory() );
-		
+
 		// Initialize static server variables
-		
+
 	}
-	
-	SimpleDateFormat dateFormat = new SimpleDateFormat( Loader.getConfig().getString( "console.dateFormat", "MM-dd" ) );
-	SimpleDateFormat timeFormat = new SimpleDateFormat( Loader.getConfig().getString( "console.timeFormat", "HH:mm:ss.SSS" ) );
-	
-	private HttpPostRequestDecoder decoder;
-	
-	private WebSocketServerHandshaker handshaker = null;
-	
-	private LogEvent log;
-	private HttpRequestWrapper request;
-	private boolean requestFinished = false;
-	private FullHttpRequest requestOrig;
-	private HttpResponseWrapper response;
-	
-	private boolean ssl;
-	
-	public HttpHandler( boolean ssl )
-	{
-		this.ssl = ssl;
-		log = LogManager.logEvent( "" + hashCode() );
-	}
-	
+
 	private static void send100Continue( ChannelHandlerContext ctx )
 	{
 		FullHttpResponse response = new DefaultFullHttpResponse( HTTP_1_1, CONTINUE );
 		ctx.write( response );
 	}
-	
+
 	public static void setTempDirectory( File tmpDir )
 	{
 		// TODO Config option to delete temporary files on exit?
 		// DiskFileUpload.deleteOnExitTemporaryFile = true;
 		// DiskAttribute.deleteOnExitTemporaryFile = true;
-		
+
 		DiskFileUpload.baseDirectory = tmpDir.getAbsolutePath();
 		DiskAttribute.baseDirectory = tmpDir.getAbsolutePath();
 	}
-	
+
+	SimpleDateFormat dateFormat = new SimpleDateFormat( Loader.getConfig().getString( "console.dateFormat", "MM-dd" ) );
+
+	SimpleDateFormat timeFormat = new SimpleDateFormat( Loader.getConfig().getString( "console.timeFormat", "HH:mm:ss.SSS" ) );
+
+	private HttpPostRequestDecoder decoder;
+	private WebSocketServerHandshaker handshaker = null;
+	private LogEvent log;
+	private HttpRequestWrapper request;
+	private boolean requestFinished = false;
+
+	private FullHttpRequest requestOrig;
+
+	private HttpResponseWrapper response;
+
+	private boolean ssl;
+
+	public HttpHandler( boolean ssl )
+	{
+		this.ssl = ssl;
+		log = LogManager.logEvent( "" + hashCode() );
+	}
+
 	@Override
 	public void channelInactive( ChannelHandlerContext ctx ) throws Exception
 	{
@@ -174,7 +175,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			decoder.destroy();
 			decoder = null;
 		}
-		
+
 		// Nullify references
 		handshaker = null;
 		response = null;
@@ -183,7 +184,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		log = null;
 		requestFinished = false;
 	}
-	
+
 	@Override
 	public void exceptionCaught( ChannelHandlerContext ctx, Throwable cause ) throws Exception
 	{
@@ -192,7 +193,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			if ( request == null || response == null )
 			{
 				NetworkManager.getLogger().severe( LogColor.NEGATIVE + "" + LogColor.RED + "We got an unexpected exception before the connection was processed:", cause );
-				
+
 				StringBuilder sb = new StringBuilder();
 				sb.append( "<h1>500 - Internal Server Error</h1>\n" );
 				sb.append( "<p>The server had encountered an unexpected exception before it could process your request, so no debug information is available.</p>\n" );
@@ -200,40 +201,40 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				sb.append( "<p><i>You have a good day now and we will see you again soon. :)</i></p>\n" );
 				sb.append( "<hr>\n" );
 				sb.append( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")<br />" + Versioning.getCopyright() + "</small>" );
-				
+
 				FullHttpResponse response = new DefaultFullHttpResponse( HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf( 500 ), Unpooled.wrappedBuffer( sb.toString().getBytes() ) );
 				ctx.write( response );
-				
+
 				return;
 			}
-			
+
 			String ip = request.getIpAddr();
-			
+
 			if ( requestFinished && cause instanceof HttpError )
 			{
 				int code = ( ( HttpError ) cause ).getHttpCode();
-				
+
 				if ( code >= 400 && code <= 499 )
 					NetworkSecurity.addStrikeToIp( ip, IpStrikeType.HTTP_ERROR_400 );
 				if ( code >= 500 && code <= 599 )
 					NetworkSecurity.addStrikeToIp( ip, IpStrikeType.HTTP_ERROR_500 );
-				
+
 				if ( response.getStage() != HttpResponseStage.CLOSED )
 					response.sendError( ( HttpError ) cause );
 				else
 					NetworkManager.getLogger().severe( LogColor.NEGATIVE + "" + LogColor.RED + " [" + ip + "] For reasons unknown, we caught the HttpError but the connection was already closed.", cause );
 				return;
 			}
-			
+
 			if ( requestFinished && "Connection reset by peer".equals( cause.getMessage() ) )
 			{
 				NetworkManager.getLogger().warning( LogColor.NEGATIVE + "" + LogColor.RED + " [" + ip + "] The connection was closed before we could finish the request, if the IP continues to abuse the system it WILL BE BANNED!" );
 				NetworkSecurity.addStrikeToIp( ip, IpStrikeType.CLOSED_EARLY );
 				return;
 			}
-			
+
 			EvalException evalOrig = null;
-			
+
 			/*
 			 * Unpackage the EvalFactoryException.
 			 * Not sure if exceptions from the EvalFactory should be handled differently or not.
@@ -244,26 +245,26 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				evalOrig = ( EvalException ) cause;
 				cause = cause.getCause();
 			}
-			
+
 			/*
 			 * Presently we can only send one exception to the client
 			 * So for now we only send the most severe one
-			 * 
+			 *
 			 * Enhancement: Make it so each exception is printed out.
 			 */
 			if ( cause instanceof EvalMultipleException )
 			{
 				EvalException most = null;
-				
+
 				// The lower the intValue() to more important it became
 				for ( EvalException e : ( ( EvalMultipleException ) cause ).getExceptions() )
 					if ( most == null || most.errorLevel().intValue() > e.errorLevel().intValue() )
 						most = e;
-				
+
 				evalOrig = most;
 				cause = most.getCause();
 			}
-			
+
 			/*
 			 * TODO Proper Exception Handling. Consider the ability to have these exceptions cached and/or delivered by e-mail to developer and/or server administrator.
 			 */
@@ -272,7 +273,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			else if ( cause instanceof PermissionDeniedException )
 			{
 				PermissionDeniedException pde = ( PermissionDeniedException ) cause;
-				
+
 				if ( pde.getReason() == PermissionDeniedReason.LOGIN_PAGE )
 					response.sendLoginPage( pde.getReason().getMessage() );
 				else
@@ -285,7 +286,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			{
 				log.log( Level.SEVERE, LogColor.NEGATIVE + "" + LogColor.RED + "OutOfMemoryError! This is serious!!!" );
 				response.sendError( 500, "We have encountered an internal server error" );
-				
+
 				if ( Versioning.isDevelopment() )
 					cause.printStackTrace();
 			}
@@ -294,7 +295,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				// Was not caught by EvalFactory
 				log.log( Level.SEVERE, LogColor.NEGATIVE + "" + LogColor.RED + "Exception %s thrown in file '%s' at line %s, message '%s'", cause.getClass().getName(), cause.getStackTrace()[0].getFileName(), cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
 				response.sendException( cause );
-				
+
 				if ( Versioning.isDevelopment() )
 					cause.printStackTrace();
 			}
@@ -308,19 +309,19 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				else if ( evalOrig.isScriptingException() )
 				{
 					ScriptTraceElement element = evalOrig.getScriptTrace()[0];
-					log.log( Level.SEVERE, "%s%sException %s thrown in file '%s' at line %s:%s, message '%s'", LogColor.NEGATIVE, LogColor.RED, cause.getClass().getName(), element.context().filename(), element.getLineNumber(), ( element.getColumnNumber() > 0 ) ? element.getColumnNumber() : 0, cause.getMessage() );
+					log.log( Level.SEVERE, "%s%sException %s thrown in file '%s' at line %s:%s, message '%s'", LogColor.NEGATIVE, LogColor.RED, cause.getClass().getName(), element.context().filename(), element.getLineNumber(), element.getColumnNumber() > 0 ? element.getColumnNumber() : 0, cause.getMessage() );
 				}
 				else
 					log.log( Level.SEVERE, "%s%sException %s thrown with message '%s'", LogColor.NEGATIVE, LogColor.RED, cause.getClass().getName(), cause.getMessage() );
 				// log.log( Level.SEVERE, "%s%sException %s thrown in file '%s' at line %s, message '%s'", LogColor.NEGATIVE, LogColor.RED, cause.getClass().getName(), cause.getStackTrace()[0].getFileName(),
 				// cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
-				
+
 				response.sendException( evalOrig );
-				
+
 				if ( Versioning.isDevelopment() )
 					cause.printStackTrace();
 			}
-			
+
 			finish();
 		}
 		catch ( Throwable t )
@@ -329,19 +330,19 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			// ctx.fireExceptionCaught( t );
 		}
 	}
-	
+
 	private void finish()
 	{
 		try
 		{
 			log.log( Level.INFO, "%s {code=%s}", response.getHttpMsg(), response.getHttpCode() );
-			
+
 			if ( !response.isCommitted() )
 				response.sendResponse();
-			
+
 			if ( request.hasSession() )
 				request.getSession().save();
-			
+
 			request.finish();
 			requestFinished = true;
 		}
@@ -350,45 +351,45 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			t.printStackTrace();
 		}
 	}
-	
+
 	@Override
 	public void flush( ChannelHandlerContext ctx ) throws Exception
 	{
 		log.flushAndClose();
 		ctx.flush();
 	}
-	
+
 	public HttpRequestWrapper getRequest()
 	{
 		return request;
 	}
-	
+
 	public HttpResponseWrapper getResponse()
 	{
 		return response;
 	}
-	
+
 	public Session getSession()
 	{
 		return request.getSession();
 	}
-	
+
 	public void handleHttp( HttpRequestWrapper request, HttpResponseWrapper response ) throws IOException, HttpError, SiteException, PermissionException, EvalMultipleException, EvalException, SessionException
 	{
 		log.log( Level.INFO, request.getMethodString() + " " + request.getFullUrl() );
-		
+
 		Session sess = request.startSession();
-		
+
 		log.log( Level.FINE, "Session {id=%s,timeout=%s,new=%s}", sess.getSessId(), sess.getTimeout(), sess.isNew() );
-		
+
 		if ( sess.isLoginPresent() )
 			log.log( Level.FINE, "Account {id=%s,displayName=%s}", sess.getId(), sess.getDisplayName() );
-		
+
 		if ( response.getStage() == HttpResponseStage.CLOSED )
 			throw new IOException( "Connection reset by peer" ); // This is not the only place 'Connection reset by peer' is thrown
-			
+
 		RequestEvent requestEvent = new RequestEvent( request );
-		
+
 		try
 		{
 			EventBus.INSTANCE.callEventWithException( requestEvent );
@@ -397,48 +398,52 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		{
 			throw new IOException( "Exception encountered during request event call, most likely the fault of a plugin.", ex );
 		}
-		
+
 		response.setStatus( requestEvent.getStatus() );
-		
+
 		if ( requestEvent.isCancelled() )
 		{
 			int status = requestEvent.getStatus();
 			String reason = requestEvent.getReason();
-			
+
 			if ( status == 200 )
 			{
 				status = 502;
 				reason = "Navigation Cancelled by Plugin Event";
 			}
-			
+
 			NetworkManager.getLogger().warning( "Navigation was cancelled by Plugin Event" );
-			
+
 			throw new HttpError( status, reason );
 		}
-		
+
 		if ( response.isCommitted() )
 			return;
-		
+
 		// Throws IOException and HttpError
 		WebInterpreter fi = new WebInterpreter( request );
 		Site currentSite = request.getSite();
 		sess.setSite( currentSite );
-		
+
 		if ( !currentSite.subDomainExists( request.getSubDomain() ) )
 		{
-			log.log( Level.SEVERE, "The requested subdomain '%s' is non-existent %s", request.getSubDomain(), request.getFullDomain( "" ) );
-			
-			if ( Loader.getConfig().getBoolean( "sites.redirectMissingSubDomains" ) )
-				response.sendRedirect( request.getFullDomain() );
+			if ( "www".equalsIgnoreCase( request.getSubDomain() ) || Loader.getConfig().getBoolean( "sites.redirectMissingSubDomains" ) )
+			{
+				log.log( Level.SEVERE, "Redirecting non-existent subdomain '%s' to root domain '%s'", request.getSubDomain(), request.getFullUrl( "" ) );
+				response.sendRedirect( request.getFullUrl( "" ) );
+			}
 			else
+			{
+				log.log( Level.SEVERE, "The requested subdomain '%s' is non-existent.", request.getSubDomain(), request.getFullDomain( "" ) );
 				response.sendError( HttpResponseStatus.NOT_FOUND, "Subdomain is not found" );
+			}
 			return;
 		}
-		
+
 		File docRoot = currentSite.subDomainDirectory( request.getSubDomain() );
-		
+
 		Validate.notNull( docRoot );
-		
+
 		// Default SSL Option is IGNORE or empty.
 		// Options include IGNORE, REQUIRE, and DENY
 		String sslOption = fi.get( "ssl" );
@@ -461,44 +466,44 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			}
 			else
 				log.log( Level.WARNING, "Invalid option set for annotation ssl, '" + sslOption + "'" );
-		
+
 		ApacheParser htaccess = new ApacheParser().appendWithDir( docRoot );
-		
+
 		response.setApacheParser( htaccess );
-		
+
 		if ( fi.getStatus() != HttpResponseStatus.OK )
 			throw new HttpError( fi.getStatus() );
-		
+
 		if ( !fi.hasFile() && !fi.hasHTML() )
 			response.setStatus( HttpResponseStatus.NO_CONTENT );
-		
+
 		// throw new HttpError( 500, null, "We found what appears to be a mapping for your request but it contained no content to display, definite bug." );
-		
+
 		if ( fi.hasFile() )
 			htaccess.appendWithDir( fi.getFile().getParentFile() );
-		
+
 		sess.setGlobal( "__FILE__", fi.getFile() );
-		
+
 		request.putRewriteParams( fi.getRewriteParams() );
 		response.setContentType( fi.getContentType() );
 		response.setEncoding( fi.getEncoding() );
-		
+
 		request.putServerVar( ServerVars.DOCUMENT_ROOT, docRoot );
-		
+
 		request.setGlobal( "_SERVER", request.getServerStrings() );
 		request.setGlobal( "_POST", request.getPostMap() );
 		request.setGlobal( "_GET", request.getGetMap() );
 		request.setGlobal( "_REWRITE", request.getRewriteMap() );
 		request.setGlobal( "_FILES", request.getUploadedFiles() );
-		
+
 		// Implement several optional security measures
 		String security = fi.get( "security" );
-		
+
 		if ( security != null )
 			if ( security.equalsIgnoreCase( "csrf" ) )
 			{
 				CSRFToken token = sess.getCSRFToken();
-				
+
 				if ( request.method() != HttpMethod.GET && request.method() != HttpMethod.HEAD )
 					// Verify CSRF Token
 					if ( request.getRequestMap().get( token.getKey() ) != null && request.getRequestMap().get( token.getKey() ).equals( token.getValue() ) )
@@ -508,55 +513,55 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 						sess.regenCSRFToken();
 						response.sendError( HttpResponseStatus.FORBIDDEN, "Invalid CSRF Token was found, forbidden!" );
 					}
-				
+
 				request.setGlobal( "_CSRF_TOKEN", token );
 			}
-		
+
 		if ( !request.getUploadedFiles().isEmpty() )
 			log.log( Level.INFO, "Uploads {" + StringFunc.limitLength( Joiner.on( "," ).join( request.getUploadedFiles().values() ), 255 ) + "}" );
-		
+
 		if ( !request.getGetMap().isEmpty() )
 			log.log( Level.INFO, "Params GET {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).join( request.getGetMap() ), 255 ) + "}" );
-		
+
 		if ( !request.getPostMap().isEmpty() )
 			log.log( Level.INFO, "Params POST {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).join( request.getPostMap() ), 255 ) + "}" );
-		
+
 		if ( !request.getRewriteMap().isEmpty() )
 			log.log( Level.INFO, "Params REWRITE {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).join( request.getRewriteMap() ), 255 ) + "}" );
-		
+
 		if ( Loader.getConfig().getBoolean( "advanced.security.requestMapEnabled", true ) )
 			request.setGlobal( "_REQUEST", request.getRequestMap() );
-		
+
 		ByteBuf rendered = Unpooled.buffer();
-		
+
 		ScriptingFactory factory = request.getEvalFactory();
 		factory.setEncoding( fi.getEncoding() );
-		
+
 		NetworkSecurity.isForbidden( htaccess, currentSite, fi );
-		
+
 		String req = fi.get( "reqperm" );
-		
+
 		if ( req == null )
 			req = "-1";
-		
+
 		sess.requirePermission( req, currentSite.getSiteId() );
-		
+
 		// Enhancement: Allow HTML to be ran under different shells. Default is embedded.
 		if ( fi.hasHTML() )
 		{
 			ScriptingResult result = factory.eval( ScriptingContext.fromSource( fi.getHTML(), "<embedded>" ).request( request ).site( currentSite ) );
-			
+
 			if ( result.hasExceptions() )
 				// TODO Print notices to output like PHP does
 				for ( EvalException e : result.getExceptions() )
 				{
 					ReportingLevel.throwExceptions( e );
-					
+
 					log.exceptions( e );
 					if ( e.errorLevel().isEnabledLevel() )
 						rendered.writeBytes( e.getMessage().getBytes() );
 				}
-			
+
 			if ( result.isSuccessful() )
 			{
 				rendered.writeBytes( result.content() );
@@ -572,10 +577,10 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 							log.log( Level.SEVERE, e.getStackTrace()[0].toString() );
 					}
 			}
-			
+
 			log.log( Level.INFO, "EvalHtml {file=%s,timing=%sms,success=%s}", fi.getFilePath(), Timings.mark( this ), result.isSuccessful() );
 		}
-		
+
 		if ( fi.hasFile() )
 		{
 			if ( fi.isDirectoryRequest() )
@@ -583,20 +588,20 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				processDirectoryListing( fi );
 				return;
 			}
-			
+
 			ScriptingResult result = factory.eval( ScriptingContext.fromFile( fi ).request( request ).site( currentSite ) );
-			
+
 			if ( result.hasExceptions() )
 				// TODO Print notices to output like PHP does
 				for ( EvalException e : result.getExceptions() )
 				{
 					ReportingLevel.throwExceptions( e );
-					
+
 					log.exceptions( e );
 					if ( e.errorLevel().isEnabledLevel() )
 						rendered.writeBytes( e.getMessage().getBytes() );
 				}
-			
+
 			if ( result.isSuccessful() )
 			{
 				rendered.writeBytes( result.content() );
@@ -612,10 +617,10 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 							log.log( Level.SEVERE, e.getStackTrace()[0].toString() );
 					}
 			}
-			
+
 			log.log( Level.INFO, "EvalFile {file=%s,timing=%sms,success=%s}", fi.getFilePath(), Timings.mark( this ), result.isSuccessful() );
 		}
-		
+
 		// if the connection was in a MultiPart mode, wait for the mode to change then return gracefully.
 		if ( response.stage == HttpResponseStage.MULTIPART )
 		{
@@ -629,19 +634,19 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				{
 					throw new HttpError( 500, "Internal Server Error encountered during multipart execution." );
 				}
-			
+
 			return;
 		}
 		// If the connection was closed from page redirect, return gracefully.
 		else if ( response.stage == HttpResponseStage.CLOSED || response.stage == HttpResponseStage.WRITTEN )
 			return;
-		
+
 		// Allows scripts to directly override interpreter values. For example: Themes, Views, Titles
 		for ( Entry<String, String> kv : response.pageDataOverrides.entrySet() )
 			fi.put( kv.getKey(), kv.getValue() );
-		
+
 		RenderEvent renderEvent = new RenderEvent( this, rendered, fi.getEncoding(), fi.getParams() );
-		
+
 		try
 		{
 			EventBus.INSTANCE.callEventWithException( renderEvent );
@@ -652,9 +657,9 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		{
 			throw new EvalException( ReportingLevel.E_ERROR, "Caught EventException while trying to fire the RenderEvent", ex.getCause() );
 		}
-		
+
 		log.log( Level.INFO, "Written {bytes=%s,total_timing=%sms}", rendered.readableBytes(), Timings.finish( this ) );
-		
+
 		try
 		{
 			response.write( rendered );
@@ -664,19 +669,19 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			log.log( Level.SEVERE, "Exception Excountered: %s", e.getMessage() );
 		}
 	}
-	
+
 	@Override
 	protected void messageReceived( ChannelHandlerContext ctx, Object msg ) throws Exception
 	{
 		Timings.start( this );
-		
+
 		if ( msg instanceof FullHttpRequest )
 		{
 			if ( Loader.getInstance().getRunLevel() != RunLevel.RUNNING )
 			{
 				// Outputs a very crude raw message if we are running in a low level mode a.k.a. Startup or Reload.
 				// While in the mode, much of the server API is potentially unavailable, that is why we do this.
-				
+
 				StringBuilder sb = new StringBuilder();
 				sb.append( "<h1>503 - Service Unavailable</h1>\n" );
 				sb.append( "<p>I'm sorry to have to be the one to tell you this but the server is currently unavailable.</p>\n" );
@@ -685,42 +690,42 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				sb.append( "<p><i>You have a good day now and we will see you again soon. :)</i></p>\n" );
 				sb.append( "<hr>\n" );
 				sb.append( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")<br />" + Versioning.getCopyright() + "</small>" );
-				
+
 				FullHttpResponse response = new DefaultFullHttpResponse( HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf( 503 ), Unpooled.wrappedBuffer( sb.toString().getBytes() ) );
 				ctx.write( response );
-				
+
 				return;
 			}
-			
+
 			requestFinished = false;
 			requestOrig = ( FullHttpRequest ) msg;
 			request = new HttpRequestWrapper( ctx.channel(), requestOrig, ssl, log );
 			response = request.getResponse();
-			
+
 			String threadName = Thread.currentThread().getName();
-			
+
 			if ( threadName.length() > 10 )
 				threadName = threadName.substring( 0, 2 ) + ".." + threadName.substring( threadName.length() - 6 );
 			else if ( threadName.length() < 10 )
 				threadName = threadName + Strings.repeat( " ", 10 - threadName.length() );
-			
+
 			log.header( "&7[&d%s&7] %s %s [&9%s:%s&7] -> [&a%s:%s&7]", threadName, dateFormat.format( Timings.millis() ), timeFormat.format( Timings.millis() ), request.getIpAddr(), request.getRemotePort(), request.getLocalIpAddr(), request.getLocalPort() );
-			
+
 			if ( HttpHeaderUtil.is100ContinueExpected( ( HttpRequest ) msg ) )
 				send100Continue( ctx );
-			
+
 			if ( NetworkSecurity.isIpBanned( request.getIpAddr() ) )
 			{
 				response.sendError( 403 );
 				return;
 			}
-			
+
 			Site currentSite = request.getSite();
-			
-			File tmpFileDirectory = ( currentSite != null ) ? currentSite.tempDirectory() : Loader.getTempFileDirectory();
-			
+
+			File tmpFileDirectory = currentSite != null ? currentSite.tempDirectory() : Loader.getTempFileDirectory();
+
 			setTempDirectory( tmpFileDirectory );
-			
+
 			if ( request.isWebsocketRequest() )
 			{
 				try
@@ -739,7 +744,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				}
 				return;
 			}
-			
+
 			if ( !request.getMethod().equals( HttpMethod.GET ) )
 				try
 				{
@@ -751,9 +756,9 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 					response.sendException( e );
 					return;
 				}
-			
+
 			request.contentSize += requestOrig.content().readableBytes();
-			
+
 			if ( decoder != null )
 			{
 				try
@@ -774,31 +779,31 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				}
 				readHttpDataChunkByChunk();
 			}
-			
+
 			handleHttp( request, response );
-			
+
 			finish();
 		}
 		else if ( msg instanceof WebSocketFrame )
 		{
 			WebSocketFrame frame = ( WebSocketFrame ) msg;
-			
+
 			// Check for closing frame
 			if ( frame instanceof CloseWebSocketFrame )
 			{
 				handshaker.close( ctx.channel(), ( CloseWebSocketFrame ) frame.retain() );
 				return;
 			}
-			
+
 			if ( frame instanceof PingWebSocketFrame )
 			{
 				ctx.channel().write( new PongWebSocketFrame( frame.content().retain() ) );
 				return;
 			}
-			
+
 			if ( ! ( frame instanceof TextWebSocketFrame ) )
 				throw new UnsupportedOperationException( String.format( "%s frame types are not supported", frame.getClass().getName() ) );
-			
+
 			String request = ( ( TextWebSocketFrame ) frame ).text();
 			NetworkManager.getLogger().fine( "Received '" + request + "' over WebSocket connection '" + ctx.channel() + "'" );
 			ctx.channel().write( new TextWebSocketFrame( request.toUpperCase() ) );
@@ -810,35 +815,35 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		else
 			NetworkManager.getLogger().warning( "Received Object '" + msg.getClass() + "' and had nothing to do with it, is this a bug?" );
 	}
-	
+
 	public void processDirectoryListing( WebInterpreter fi ) throws HttpError, IOException
 	{
 		File dir = fi.getFile();
-		
+
 		if ( !dir.exists() || !dir.isDirectory() )
 			throw new HttpError( 500 );
-		
+
 		response.setContentType( "text/html" );
 		response.setEncoding( Charsets.UTF_8 );
-		
+
 		File[] files = dir.listFiles();
 		List<Object> tbl = Lists.newArrayList();
 		StringBuilder sb = new StringBuilder();
 		SimpleDateFormat sdf = new SimpleDateFormat( "dd-MMM-yyyy HH:mm:ss" );
-		
+
 		sb.append( "<style>.altrowstable { border-spacing: 12px; }</style>" );
 		sb.append( "<h1>Index of " + request.getUri() + "</h1>" );
-		
+
 		for ( File f : files )
 		{
 			List<String> l = Lists.newArrayList();
 			String type = ContentTypes.getContentType( f );
-			String mainType = ( type.contains( "/" ) ) ? type.substring( 0, type.indexOf( "/" ) ) : type;
-			
+			String mainType = type.contains( "/" ) ? type.substring( 0, type.indexOf( "/" ) ) : type;
+
 			l.add( "<img src=\"/fw/icons/" + mainType + "\" />" );
 			l.add( "<a href=\"" + request.getUri() + "/" + f.getName() + "\">" + f.getName() + "</a>" );
 			l.add( sdf.format( f.lastModified() ) );
-			
+
 			if ( f.isDirectory() )
 				l.add( "-" );
 			else
@@ -856,22 +861,22 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 						stream.close();
 				}
 			}
-			
+
 			l.add( type );
-			
+
 			tbl.add( l );
 		}
-		
+
 		sb.append( WebFunc.createTable( tbl, Arrays.asList( new String[] {"", "Name", "Last Modified", "Size", "Type"} ) ) );
 		sb.append( "<hr>" );
 		sb.append( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + "<br />" + Versioning.getCopyright() + "</small>" );
-		
+
 		response.print( sb.toString() );
 		response.sendResponse();
-		
+
 		// throw new HttpErrorException( 403, "Sorry, Directory Listing has not been implemented on this Server!" );
 	}
-	
+
 	private void readHttpDataChunkByChunk() throws IOException
 	{
 		try
@@ -896,7 +901,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			// END OF CONTENT
 		}
 	}
-	
+
 	private void writeHttpData( InterfaceHttpData data ) throws IOException
 	{
 		if ( data.getHttpDataType() == HttpDataType.Attribute )
@@ -913,9 +918,9 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				response.sendException( e );
 				return;
 			}
-			
+
 			request.putPostMap( attribute.getName(), value );
-			
+
 			/*
 			 * Should resolve the problem described in Issue #9 on our GitHub
 			 */
