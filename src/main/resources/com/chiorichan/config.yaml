@@ -17,8 +17,7 @@ server:
   throwInternalServerErrorOnWarnings: false
   defaultBanReason: The Ban Hammer Has Spoken
   enableWebServer: true
-  enableTcpServer: true
-  allowQuery: false
+  enableTcpServer: false
   installationUID: null
   disableTracking: false
   defaultTextEncoding: UTF-8

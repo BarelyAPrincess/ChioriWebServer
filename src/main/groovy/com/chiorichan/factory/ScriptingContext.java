@@ -67,7 +67,7 @@ public class ScriptingContext
 	{
 		ScriptingContext context = fromSource( fi.consumeBytes(), fi.getFilePath() );
 		context.contentType = fi.getContentType();
-		context.shell = fi.getParams().get( "shell" );
+		context.shell = fi.getAnnotations().get( "shell" );
 		return context;
 	}
 

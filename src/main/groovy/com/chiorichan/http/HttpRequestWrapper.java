@@ -68,119 +68,131 @@ import com.google.common.collect.Sets;
 public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 {
 	private static final Map<Thread, WeakReference<HttpRequestWrapper>> references = Maps.newConcurrentMap();
-	
+
 	/**
 	 * Return maps as unmodifiable
 	 */
 	private static boolean unmodifiableMaps = Loader.getConfig().getBoolean( "advanced.security.unmodifiableMapsEnabled", true );
-	
+
+	public static HttpRequestWrapper getRequest()
+	{
+		if ( !references.containsKey( Thread.currentThread() ) || references.get( Thread.currentThread() ).get() == null )
+			throw new IllegalStateException( "Thread '" + Thread.currentThread().getName() + "' does not seem to currently link to any existing http requests, please try again or notify an administrator." );
+		return references.get( Thread.currentThread() ).get();
+	}
+
+	private static void putRequest( HttpRequestWrapper request )
+	{
+		references.put( Thread.currentThread(), new WeakReference<HttpRequestWrapper>( request ) );
+	}
+
 	/**
 	 * The original Netty Channel
 	 */
 	private final Channel channel;
-	
+
 	protected String childDomainName = null;
-	
+
 	/**
 	 * The size of the posted content
 	 */
 	int contentSize = 0;
-	
+
 	/**
 	 * Cookie Cache
 	 */
 	final Set<HttpCookie> cookies = Sets.newHashSet();
-	
+
 	/**
 	 * The Get Map
 	 */
 	final Map<String, String> getMap = Maps.newTreeMap();
-	
+
 	/**
 	 * The original Netty Http Request
 	 */
 	private final HttpRequest http;
-	
+
 	/**
 	 * Instance of LogEvent used by this request
 	 */
 	final LogEvent log;
-	
+
 	// Cached domain names.
 	protected String parentDomainName = null;
-	
+
 	/**
 	 * The Post Map
 	 */
 	final Map<String, String> postMap = Maps.newTreeMap();
-	
+
 	/**
 	 * The time of this request
 	 */
 	final int requestTime;
-	
+
 	/**
 	 * The paired HttpResponseWrapper
 	 */
 	final HttpResponseWrapper response;
-	
+
 	/**
 	 * The URI Rewrite Map
 	 */
 	final Map<String, String> rewriteMap = Maps.newTreeMap();
-	
+
 	/**
 	 * Server Cookie Cache
 	 */
 	final Set<HttpCookie> serverCookies = Sets.newHashSet();
-	
+
 	/**
 	 * Server Variables
 	 */
 	Map<ServerVars, Object> serverVars = Maps.newLinkedHashMap();
-	
+
 	/**
 	 * The Site associated with this request
 	 */
 	Site site;
-	
+
 	/**
 	 * Is this a SSL request
 	 */
 	final boolean ssl;
-	
+
 	/**
 	 * Files uploaded with this request
 	 */
 	final Map<String, UploadedFile> uploadedFiles = new HashMap<String, UploadedFile>();
-	
+
 	/**
 	 * The requested URI
 	 */
 	private String uri = null;
-	
+
 	HttpRequestWrapper( Channel channel, HttpRequest http, boolean ssl, LogEvent log ) throws IOException
 	{
 		this.channel = channel;
 		this.http = http;
 		this.ssl = ssl;
 		this.log = log;
-		
+
 		putRequest( this );
-		
+
 		// Set Time of this Request
 		requestTime = Timings.epoch();
-		
+
 		// Create a matching HttpResponseWrapper
 		response = new HttpResponseWrapper( this, log );
-		
+
 		// Get Site based on requested domain
 		String domain = getParentDomain();
 		site = SiteManager.INSTANCE.getSiteByDomain( domain );
-		
+
 		if ( site == null )
 			site = SiteManager.INSTANCE.getDefaultSite();
-		
+
 		// Decode Get Map
 		QueryStringDecoder queryStringDecoder = new QueryStringDecoder( http.uri() );
 		Map<String, List<String>> params = queryStringDecoder.parameters();
@@ -193,13 +205,13 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 				for ( String val : vals )
 					getMap.put( key, val );
 			}
-		
+
 		// Decode Cookies
 		// String var1 = URLDecoder.decode( http.headers().getAndConvert( "Cookie" ), Charsets.UTF_8.displayName() );
 		String var1 = http.headers().getAndConvert( "Cookie" );
-		
+
 		// TODO Find a way to fix missing invalid stuff
-		
+
 		if ( var1 != null )
 			try
 			{
@@ -213,28 +225,16 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			catch ( IllegalArgumentException | NullPointerException e )
 			{
 				Loader.getLogger().debug( var1 );
-				
+
 				NetworkManager.getLogger().severe( "Failed to parse cookie for reason: " + e.getMessage() );
 				// NetworkManager.getLogger().warning( "There was a problem decoding the request cookie.", e );
 				// NetworkManager.getLogger().debug( "Cookie: " + var1 );
 				// NetworkManager.getLogger().debug( "Headers: " + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( http.headers() ) );
 			}
-		
+
 		initServerVars();
 	}
-	
-	public static HttpRequestWrapper getRequest()
-	{
-		if ( !references.containsKey( Thread.currentThread() ) || references.get( Thread.currentThread() ).get() == null )
-			throw new IllegalStateException( "Thread '" + Thread.currentThread().getName() + "' does not seem to currently link to any existing http requests, please try again or notify an administrator." );
-		return references.get( Thread.currentThread() ).get();
-	}
-	
-	private static void putRequest( HttpRequestWrapper request )
-	{
-		references.put( Thread.currentThread(), new WeakReference<HttpRequestWrapper>( request ) );
-	}
-	
+
 	/**
 	 * Calculates both the SubDomain and ParentDomain from the Host Header and saves them in Strings
 	 */
@@ -242,32 +242,32 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	{
 		childDomainName = "";
 		parentDomainName = "";
-		
+
 		if ( http.headers().get( "Host" ) != null )
 		{
 			String domain = http.headers().getAndConvert( "Host" ).toLowerCase();
-			
-			assert ( domain != null );
-			
+
+			assert domain != null;
+
 			if ( domain.contains( ":" ) )
 				domain = domain.substring( 0, domain.indexOf( ":" ) ).trim(); // Remove port number.
-				
+
 			if ( domain.toLowerCase().endsWith( "localhost" ) || domain.equalsIgnoreCase( "127.0.0.1" ) || domain.equalsIgnoreCase( getLocalIpAddr() ) || domain.toLowerCase().endsWith( getLocalHostName() ) )
 				domain = "";
-			
+
 			if ( domain == null || domain.isEmpty() )
 				return;
-			
+
 			if ( domain.startsWith( "." ) )
 				domain = domain.substring( 1 );
-			
+
 			if ( NetworkFunc.isValidIPv4( domain ) || NetworkFunc.isValidIPv6( domain ) )
 				// We can't get subdomains from IPv4 or IPv6 addresses.
 				parentDomainName = domain;
 			else
 			{
 				int periodCount = StringUtils.countMatches( domain, "." );
-				
+
 				if ( periodCount < 2 )
 					parentDomainName = domain;
 				else
@@ -278,50 +278,50 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			}
 		}
 	}
-	
+
 	@Override
 	protected void finish0()
 	{
 		// Do Nothing
 	}
-	
+
 	public String getArgument( String key )
 	{
 		String val = getMap.get( key );
-		
+
 		if ( val == null && postMap != null )
 			val = postMap.get( key );
-		
+
 		if ( val == null && rewriteMap != null )
 			val = rewriteMap.get( key );
-		
+
 		return val;
 	}
-	
+
 	public String getArgument( String key, String def )
 	{
 		String val = getArgument( key );
-		return ( val == null ) ? def : val;
+		return val == null ? def : val;
 	}
-	
+
 	public boolean getArgumentBoolean( String key )
 	{
 		String rtn = getArgument( key, "0" ).toLowerCase();
 		return StringFunc.isTrue( rtn );
 	}
-	
+
 	public double getArgumentDouble( String key )
 	{
 		Object obj = getArgument( key, "-1.0" );
 		return ObjectFunc.castToDouble( obj );
 	}
-	
+
 	public int getArgumentInt( String key )
 	{
 		Object obj = getArgument( key, "-1" );
 		return ObjectFunc.castToInt( obj );
 	}
-	
+
 	public Set<String> getArgumentKeys()
 	{
 		Set<String> keys = Sets.newHashSet();
@@ -330,33 +330,33 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		keys.addAll( rewriteMap.keySet() );
 		return keys;
 	}
-	
+
 	public long getArgumentLong( String key )
 	{
 		Object obj = getArgument( key, "-1" );
 		return ObjectFunc.castToLong( obj );
 	}
-	
+
 	public String getBaseUrl()
 	{
 		String url = getDomain();
-		
+
 		if ( getSubDomain() != null && !getSubDomain().isEmpty() )
 			url = getSubDomain() + "." + url;
-		
-		return ( ( isSecure() ) ? "https://" : "http://" ) + url;
+
+		return ( isSecure() ? "https://" : "http://" ) + url;
 	}
-	
+
 	public Channel getChannel()
 	{
 		return channel;
 	}
-	
+
 	public int getContentLength()
 	{
 		return contentSize;
 	}
-	
+
 	@Override
 	public HttpCookie getCookie( String key )
 	{
@@ -365,26 +365,26 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 				return cookie;
 		return null;
 	}
-	
+
 	@Override
 	public Set<HttpCookie> getCookies()
 	{
 		return Collections.unmodifiableSet( cookies );
 	}
-	
+
 	public String getDomain()
 	{
 		try
 		{
 			String domain = http.headers().getAndConvert( "Host" );
 			domain = domain.split( "\\:" )[0];
-			
+
 			if ( NetworkFunc.isValidIPv4( domain ) )
 				return domain;
-			
+
 			if ( StringUtils.countMatches( ".", domain ) > 1 )
 				domain.substring( 0, domain.lastIndexOf( '.', domain.lastIndexOf( '.' - 1 ) ) );
-			
+
 			return domain;
 		}
 		catch ( NullPointerException e )
@@ -392,60 +392,60 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			return "";
 		}
 	}
-	
+
 	public String getFullDomain()
 	{
 		return getFullDomain( null, ssl );
 	}
-	
+
 	public String getFullDomain( boolean ssl )
 	{
 		return getFullDomain( null, ssl );
 	}
-	
+
 	public String getFullDomain( String subdomain )
 	{
 		return getFullDomain( subdomain, ssl );
 	}
-	
+
 	public String getFullDomain( String subdomain, boolean ssl )
 	{
 		return ( ssl ? "https://" : "http://" ) + ( subdomain == null || subdomain.isEmpty() ? "" : subdomain + "." ) + getDomain() + "/";
 	}
-	
+
 	public String getFullUrl()
 	{
 		return getFullUrl( null, ssl );
 	}
-	
+
 	public String getFullUrl( boolean ssl )
 	{
 		return getFullUrl( null, ssl );
 	}
-	
+
 	public String getFullUrl( String subdomain )
 	{
 		return getFullUrl( subdomain, ssl );
 	}
-	
+
 	public String getFullUrl( String subdomain, boolean ssl )
 	{
 		return getFullDomain( subdomain, ssl ) + getUri().substring( 1 );
 	}
-	
+
 	public Map<String, Object> getGetMap()
 	{
 		return parseMapArrays( getGetMapRaw() );
 	}
-	
+
 	public Map<String, String> getGetMapRaw()
 	{
 		if ( unmodifiableMaps )
 			return Collections.unmodifiableMap( getMap );
-		
+
 		return getMap;
 	}
-	
+
 	public String getHeader( String key )
 	{
 		try
@@ -457,25 +457,25 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			return "";
 		}
 	}
-	
+
 	public HttpHeaders getHeaders()
 	{
 		return http.headers();
 	}
-	
+
 	public String getHost()
 	{
 		return http.headers().getAndConvert( "Host" );
 	}
-	
+
 	public HttpVersion getHttpVersion()
 	{
 		return http.protocolVersion();
 	}
-	
+
 	/**
 	 * Similar to {@link #getRemoteAddr()}
-	 * 
+	 *
 	 * @return
 	 *         the remote connections IP address
 	 */
@@ -483,12 +483,12 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	{
 		return getInetAddr( true );
 	}
-	
+
 	/**
 	 * Similar to {@link #getRemoteAddr(boolean)}
-	 * 
+	 *
 	 * @param detectCDN
-	 *            Try to detect the use of CDNs, e.g., CloudFlare, IP headers when set to false.
+	 *             Try to detect the use of CDNs, e.g., CloudFlare, IP headers when set to false.
 	 * @return
 	 *         the remote connections IP address
 	 */
@@ -504,13 +504,13 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 				e.printStackTrace();
 				return null;
 			}
-		
+
 		return ( ( InetSocketAddress ) channel.remoteAddress() ).getAddress();
 	}
-	
+
 	/**
-	 * Similar to {@link #getRemoteAddr(boolean)} except defaults to true
-	 * 
+	 * Similar to {@link #getIpAddr(boolean)} except defaults to true
+	 *
 	 * @return
 	 *         the remote connections IP address as a string
 	 */
@@ -519,60 +519,61 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	{
 		return getIpAddr( true );
 	}
-	
+
 	/**
 	 * This method uses a checker that makes it possible for our server to get the correct remote IP even if using it with CloudFlare.
 	 * I believe there are other CDN services like CloudFlare. I'd love it if people could inform me, so I can implement similar methods.
 	 * https://support.cloudflare.com/hc/en-us/articles/200170786-Why-do-my-server-logs-show-CloudFlare-s-IPs-using-CloudFlare-
-	 * 
+	 *
 	 * @param detectCDN
-	 *            Try to detect the use of CDNs, e.g., CloudFlare, IP headers when set to false.
+	 *             Try to detect the use of CDNs, e.g., CloudFlare, IP headers when set to false.
 	 * @return
 	 *         the remote connections IP address as a string
 	 */
 	public String getIpAddr( boolean detectCDN )
 	{
+		// TODO Implement other CDNs
 		if ( detectCDN && http.headers().contains( "CF-Connecting-IP" ) )
 			return http.headers().getAndConvert( "CF-Connecting-IP" );
-		
+
 		return ( ( InetSocketAddress ) channel.remoteAddress() ).getAddress().getHostAddress();
 	}
-	
+
 	public String getLocalHostName()
 	{
 		return ( ( InetSocketAddress ) channel.localAddress() ).getHostName();
 	}
-	
+
 	public String getLocalIpAddr()
 	{
 		return ( ( InetSocketAddress ) channel.localAddress() ).getAddress().getHostAddress();
 	}
-	
+
 	public int getLocalPort()
 	{
 		return ( ( InetSocketAddress ) channel.localAddress() ).getPort();
 	}
-	
+
 	public HttpMethod getMethod()
 	{
 		return http.method();
 	}
-	
+
 	public String getMethodString()
 	{
 		return http.method().toString();
 	}
-	
+
 	public HttpRequest getOriginal()
 	{
 		return http;
 	}
-	
+
 	public String getParameter( String key )
 	{
 		return null;
 	}
-	
+
 	/**
 	 *
 	 * @return a string containing the main domain from the request. ie. test.example.com or example.com = "example.com"
@@ -581,101 +582,101 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	{
 		if ( parentDomainName == null || childDomainName == null )
 			calculateDomainName();
-		
-		return ( parentDomainName == null ) ? "" : parentDomainName;
+
+		return parentDomainName == null ? "" : parentDomainName;
 	}
-	
+
 	public Map<String, Object> getPostMap()
 	{
 		return parseMapArrays( getPostMapRaw() );
 	}
-	
+
 	public Map<String, String> getPostMapRaw()
 	{
 		if ( unmodifiableMaps )
 			return Collections.unmodifiableMap( postMap );
-		
+
 		return postMap;
 	}
-	
+
 	public String getQuery()
 	{
 		if ( getMap.isEmpty() )
 			return "";
 		return "?" + Joiner.on( "&" ).withKeyValueSeparator( "=" ).join( getMap );
 	}
-	
+
 	public String getRemoteHostname()
 	{
 		return ( ( InetSocketAddress ) channel.remoteAddress() ).getHostName();
 	}
-	
+
 	public int getRemotePort()
 	{
 		return ( ( InetSocketAddress ) channel.remoteAddress() ).getPort();
 	}
-	
+
 	public String getRequestHost()
 	{
 		return getHeader( "Host" );
 	}
-	
+
 	public Map<String, Object> getRequestMap()
 	{
 		return parseMapArrays( getRequestMapRaw() );
 	}
-	
+
 	public Map<String, String> getRequestMapRaw()
 	{
 		Map<String, String> requestMap = new HashMap<String, String>();
-		
+
 		if ( getMap != null )
 			requestMap.putAll( getMap );
-		
+
 		if ( postMap != null )
 			requestMap.putAll( postMap );
-		
+
 		if ( rewriteMap != null )
 			requestMap.putAll( rewriteMap );
-		
+
 		if ( unmodifiableMaps )
 			return Collections.unmodifiableMap( requestMap );
-		
+
 		return requestMap;
 	}
-	
+
 	public int getRequestTime()
 	{
 		return requestTime;
 	}
-	
+
 	public HttpResponseWrapper getResponse()
 	{
 		return response;
 	}
-	
+
 	public Map<String, String> getRewriteMap()
 	{
 		if ( unmodifiableMaps )
 			return Collections.unmodifiableMap( rewriteMap );
-		
+
 		return rewriteMap;
 	}
-	
+
 	@Override
 	protected HttpCookie getServerCookie( String key )
 	{
 		for ( HttpCookie cookie : serverCookies )
 			if ( cookie.getKey().equals( key ) )
 				return cookie;
-		
+
 		return null;
 	}
-	
+
 	public Map<String, Object> getServerStrings()
 	{
 		Map<String, Object> server = Maps.newLinkedHashMap();
-		
+
 		// Adds server variables to map in default, lower case, and upper case variations.
 		for ( Map.Entry<ServerVars, Object> en : serverVars.entrySet() )
 		{
@@ -683,20 +684,20 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			server.put( en.getKey().name().toUpperCase(), en.getValue() );
 			server.put( en.getKey().name(), en.getValue() );
 		}
-		
+
 		if ( unmodifiableMaps )
 			return Collections.unmodifiableMap( server );
-		
+
 		return server;
 	}
-	
+
 	public Map<ServerVars, Object> getServerVars()
 	{
 		if ( unmodifiableMaps )
 			return Collections.unmodifiableMap( serverVars );
 		return serverVars;
 	}
-	
+
 	@Override
 	public Site getSite()
 	{
@@ -704,7 +705,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			site = SiteManager.INSTANCE.getDefaultSite();
 		return site;
 	}
-	
+
 	/**
 	 *
 	 * @return A string containing the subdomain from the request. ie. test.example.com = "test"
@@ -713,26 +714,26 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	{
 		if ( parentDomainName == null || childDomainName == null )
 			calculateDomainName();
-		
-		return ( childDomainName == null ) ? "" : childDomainName;
+
+		return childDomainName == null ? "" : childDomainName;
 	}
-	
+
 	public Map<String, UploadedFile> getUploadedFiles()
 	{
 		return Collections.unmodifiableMap( uploadedFiles );
 	}
-	
+
 	Map<String, UploadedFile> getUploadedFilesRaw()
 	{
 		return uploadedFiles;
 	}
-	
+
 	public String getUri()
 	{
 		if ( uri == null )
 		{
 			uri = http.uri();
-			
+
 			try
 			{
 				uri = URLDecoder.decode( uri, Charsets.UTF_8.name() );
@@ -753,27 +754,27 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 				// [ni..up-3-1] 02-05 00:17:10.273 [WARNING] [HttpHdl] WARNING THIS IS AN UNCAUGHT EXCEPTION! CAN YOU KINDLY REPORT THIS STACKTRACE TO THE DEVELOPER?
 				// java.lang.IllegalArgumentException: URLDecoder: Illegal hex characters in escape (%) pattern - For input string: "im"
 			}
-			
+
 			// if ( uri.contains( File.separator + '.' ) || uri.contains( '.' + File.separator ) || uri.startsWith( "." ) || uri.endsWith( "." ) || INSECURE_URI.matcher( uri ).matches() )
 			// {
 			// return "/";
 			// }
-			
+
 			if ( uri.contains( "?" ) )
 				uri = uri.substring( 0, uri.indexOf( "?" ) );
-			
+
 			if ( !uri.startsWith( "/" ) )
 				uri = "/" + uri;
 		}
-		
+
 		return uri;
 	}
-	
+
 	public String getUserAgent()
 	{
 		return getHeader( "User-Agent" );
 	}
-	
+
 	public String getWebSocketLocation( HttpObject req )
 	{
 		String location = getHost() + "/fw/websocket";
@@ -782,12 +783,12 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		else
 			return "ws://" + location;
 	}
-	
+
 	public boolean hasArgument( String key )
 	{
 		return getMap.containsKey( key ) || postMap.containsKey( key ) || rewriteMap.containsKey( key );
 	}
-	
+
 	/**
 	 * Initializes the serverVars with initial information from this request
 	 */
@@ -816,57 +817,57 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		putServerVarSafe( ServerVars.SERVER_NAME, Versioning.getProductSimple() );
 		putServerVarSafe( ServerVars.SERVER_PORT, getLocalPort() );
 		putServerVarSafe( ServerVars.HTTPS, isSecure() );
-		
+
 		// TODO These need initializing once known
 		putServerVarSafe( ServerVars.DOCUMENT_ROOT, Loader.getWebRoot() );
 		putServerVarSafe( ServerVars.SESSION, null );
 	}
-	
+
 	/**
 	 * Tries to check the "X-requested-with" header.
 	 * Not a guaranteed method to determined if a request was made with AJAX since this header is not always set.
-	 * 
+	 *
 	 * @return Was the request made with AJAX
 	 */
 	public boolean isAjaxRequest()
 	{
 		return getHeader( "X-requested-with" ) == null ? false : getHeader( "X-requested-with" ).equals( "XMLHttpRequest" );
 	}
-	
+
 	public boolean isCDN()
 	{
 		return http.headers().contains( "CF-Connecting-IP" );
 	}
-	
+
 	public boolean isSecure()
 	{
-		return ( channel.pipeline().get( SslHandler.class ) != null );
+		return channel.pipeline().get( SslHandler.class ) != null;
 	}
-	
+
 	public boolean isWebsocketRequest()
 	{
 		return "/fw/websocket".equals( getUri() );
 	}
-	
+
 	public HttpMethod method()
 	{
 		return http.method();
 	}
-	
+
 	private Map<String, Object> parseMapArrays( Map<String, String> origMap )
 	{
 		Map<String, Object> result = Maps.newLinkedHashMap();
-		
+
 		for ( Entry<String, String> e : origMap.entrySet() )
 		{
 			String var = null;
 			String key = null;
 			String val = e.getValue();
-			
+
 			if ( e.getKey().contains( "[" ) && e.getKey().endsWith( "]" ) )
 			{
 				var = e.getKey().substring( 0, e.getKey().indexOf( "[" ) );
-				
+
 				if ( e.getKey().length() - e.getKey().indexOf( "[" ) > 1 )
 					key = e.getKey().substring( e.getKey().indexOf( "[" ) + 1, e.getKey().length() - 1 );
 				else
@@ -874,7 +875,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			}
 			else
 				var = e.getKey();
-			
+
 			if ( result.containsKey( var ) )
 			{
 				Object o = result.get( var );
@@ -882,7 +883,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 				{
 					if ( key == null || key.isEmpty() )
 						key = "1";
-					
+
 					Map<String, String> hash = Maps.newLinkedHashMap();
 					hash.put( "0", ( String ) o );
 					hash.put( key, val );
@@ -892,7 +893,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 				{
 					@SuppressWarnings( "unchecked" )
 					Map<String, String> map = ( Map<String, String> ) o;
-					
+
 					if ( key == null || key.isEmpty() )
 					{
 						int cnt = 0;
@@ -900,7 +901,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 							cnt++;
 						key = "" + cnt;
 					}
-					
+
 					map.put( key, val );
 				}
 				else if ( key == null )
@@ -909,12 +910,12 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 				{
 					if ( key.isEmpty() )
 						key = "0";
-					
+
 					Map<String, String> hash = Maps.newLinkedHashMap();
 					hash.put( key, val );
 					result.put( var, hash );
 				}
-				
+
 			}
 			else if ( key == null )
 				result.put( e.getKey(), e.getValue() );
@@ -922,54 +923,54 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			{
 				if ( key.isEmpty() )
 					key = "0";
-				
+
 				Map<String, String> hash = Maps.newLinkedHashMap();
 				hash.put( key, val );
 				result.put( var, hash );
 			}
 		}
-		
+
 		return result;
 	}
-	
+
 	protected void putAllGetMap( Map<String, String> map )
 	{
 		getMap.putAll( map );
 	}
-	
+
 	protected void putAllPostMap( Map<String, String> map )
 	{
 		postMap.putAll( map );
 	}
-	
+
 	protected void putGetMap( String key, String value )
 	{
 		getMap.put( key, value );
 	}
-	
+
 	protected void putPostMap( String key, String value )
 	{
 		postMap.put( key, value );
 	}
-	
+
 	protected void putRewriteParam( String key, String val )
 	{
 		rewriteMap.put( key, val );
 	}
-	
+
 	protected void putRewriteParams( Map<String, String> map )
 	{
 		rewriteMap.putAll( map );
 	}
-	
+
 	protected void putServerVar( ServerVars type, Object value )
 	{
 		Validate.notNull( type );
 		Validate.notNull( value );
-		
+
 		serverVars.put( type, value );
 	}
-	
+
 	void putServerVarSafe( ServerVars key, Object value )
 	{
 		try
@@ -978,25 +979,25 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		}
 		catch ( Exception e )
 		{
-			
+
 		}
 	}
-	
+
 	protected void putUpload( String name, UploadedFile uploadedFile )
 	{
 		uploadedFiles.put( name, uploadedFile );
 	}
-	
+
 	// XXX Better Implement
 	public void requireLogin() throws IOException
 	{
 		requireLogin( null );
 	}
-	
+
 	/**
 	 * First checks in an account is present, sends to login page if not.
 	 * Second checks if the present accounts has the specified permission.
-	 * 
+	 *
 	 * @param permission
 	 * @throws IOException
 	 */
@@ -1004,96 +1005,96 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	{
 		if ( !getSession().isLoginPresent() )
 			getResponse().sendLoginPage();
-		
+
 		if ( permission != null )
 			if ( !getSession().checkPermission( permission ).isTrue() )
 				getResponse().sendError( HttpCode.HTTP_FORBIDDEN, "You must have the permission `" + permission + "` in order to view this page!" );
 	}
-	
+
 	@Override
 	public void sendMessage( MessageSender sender, Object... objs )
 	{
 		// Do Nothing
 	}
-	
+
 	@Override
 	public void sendMessage( Object... objs )
 	{
 		// Do Nothing
 	}
-	
+
 	@Override
 	protected void sessionStarted()
 	{
 		getBinding().setVariable( "request", this );
 		getBinding().setVariable( "response", getResponse() );
-		
+
 		String loginForm = getSite().getConfig().getString( "scripts.login-form", "/login" );
-		
+
 		Session session = getSession();
-		
+
 		if ( getArgument( "logout" ) != null )
 		{
 			AccountResult result = getSession().logout();
-			
+
 			if ( result.isSuccess() )
 			{
 				getResponse().sendRedirect( loginForm + "?msg=" + result.getMessage() );
 				return;
 			}
 		}
-		
+
 		// TODO Implement One Time Tokens
-		
+
 		String username = getArgument( "user" );
 		String password = getArgument( "pass" );
 		boolean remember = getArgumentBoolean( "remember" );
 		String target = getArgument( "target" );
-		
-		String loginPost = ( target == null || target.isEmpty() ) ? getSite().getConfig().getString( "scripts.login-post", "/" ) : target;
-		
+
+		String loginPost = target == null || target.isEmpty() ? getSite().getConfig().getString( "scripts.login-post", "/" ) : target;
+
 		if ( loginPost.isEmpty() )
 			loginPost = "/";
-		
+
 		if ( username != null && password != null )
 			try
 			{
 				AccountResult result = getSession().loginWithException( AccountAuthenticator.PASSWORD, username, password );
-				
+
 				Account acct = result.getAccountWithException();
-				
+
 				session.remember( remember );
-				
+
 				SessionManager.getLogger().info( LogColor.GREEN + "Successful Login: [id='" + acct.getId() + "',siteId='" + acct.getSiteId() + "',authenticator='plaintext']" );
 				getResponse().sendRedirect( loginPost );
 			}
 			catch ( AccountException e )
 			{
 				AccountResult result = e.getResult();
-				
+
 				String msg = result.getFormattedMessage();
-				
+
 				if ( !result.isIgnorable() && result.hasCause() )
 				{
 					result.getCause().printStackTrace();
 					msg = result.getCause().getMessage();
 				}
-				
+
 				AccountManager.getLogger().warning( LogColor.RED + "Failed Login [id='" + username + "',hasPassword='" + ( password != null && !password.isEmpty() ) + "',authenticator='plaintext'`,reason='" + msg + "']" );
-				getResponse().sendRedirect( loginForm + "?msg=" + result.getMessage() + ( ( target == null || target.isEmpty() ) ? "" : "&target=" + target ) );
+				getResponse().sendRedirect( loginForm + "?msg=" + result.getMessage() + ( target == null || target.isEmpty() ? "" : "&target=" + target ) );
 			}
 			catch ( Throwable t )
 			{
 				AccountManager.getLogger().severe( "Login has thrown an internal server error", t );
-				getResponse().sendRedirect( loginForm + "?msg=" + AccountDescriptiveReason.INTERNAL_ERROR.getMessage() + ( ( target == null || target.isEmpty() ) ? "" : "&target=" + target ) );
+				getResponse().sendRedirect( loginForm + "?msg=" + AccountDescriptiveReason.INTERNAL_ERROR.getMessage() + ( target == null || target.isEmpty() ? "" : "&target=" + target ) );
 			}
 		else if ( session.isLoginPresent() )
 		{
 			// XXX Should we revalidate logins with each request? It could be something worth considering for extra security. Maybe a config option?
-			
+
 			/*
 			 * Maybe make this a server configuration option, e.g., sessions.revalidateLogins
-			 * 
+			 *
 			 * try
 			 * {
 			 * session.currentAccount.reloadAndValidate(); // <- Is this being overly redundant?
@@ -1107,23 +1108,23 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			 * }
 			 */
 		}
-		
+
 		// Will we ever be using a session on more than one domains?
 		if ( !getParentDomain().isEmpty() && session.getSessionCookie() != null && !session.getSessionCookie().getDomain().isEmpty() )
 			if ( !session.getSessionCookie().getDomain().endsWith( getParentDomain() ) )
 				NetworkManager.getLogger().warning( "The site `" + site.getSiteId() + "` specifies the session cookie domain as `" + session.getSessionCookie().getDomain() + "` but the request was made on parent domain `" + getParentDomain() + "`. The session will not remain persistent." );
 	}
-	
+
 	protected void setSite( Site site )
 	{
 		Validate.notNull( site );
 		this.site = site;
 	}
-	
+
 	void setUri( String uri )
 	{
 		this.uri = uri;
-		
+
 		if ( !uri.startsWith( "/" ) )
 			uri = "/" + uri;
 	}

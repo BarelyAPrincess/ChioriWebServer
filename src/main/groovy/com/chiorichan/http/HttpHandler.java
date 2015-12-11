@@ -422,6 +422,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 
 		// Throws IOException and HttpError
 		WebInterpreter fi = new WebInterpreter( request );
+		response.annotations.putAll( fi.getAnnotations() );
+
 		Site currentSite = request.getSite();
 		sess.setSite( currentSite );
 
@@ -517,17 +519,20 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				request.setGlobal( "_CSRF_TOKEN", token );
 			}
 
-		if ( !request.getUploadedFiles().isEmpty() )
+		if ( request.getUploadedFiles().size() > 0 )
 			log.log( Level.INFO, "Uploads {" + StringFunc.limitLength( Joiner.on( "," ).join( request.getUploadedFiles().values() ), 255 ) + "}" );
 
-		if ( !request.getGetMap().isEmpty() )
+		if ( request.getGetMap().size() > 0 )
 			log.log( Level.INFO, "Params GET {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).join( request.getGetMap() ), 255 ) + "}" );
 
-		if ( !request.getPostMap().isEmpty() )
+		if ( request.getPostMap().size() > 0 )
 			log.log( Level.INFO, "Params POST {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).join( request.getPostMap() ), 255 ) + "}" );
 
-		if ( !request.getRewriteMap().isEmpty() )
+		if ( request.getRewriteMap().size() > 0 )
 			log.log( Level.INFO, "Params REWRITE {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).join( request.getRewriteMap() ), 255 ) + "}" );
+
+		if ( fi.getAnnotations().size() > 0 )
+			log.log( Level.INFO, "Params ANNOTATIONS {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).join( fi.getAnnotations() ), 255 ) + "}" );
 
 		if ( Loader.getConfig().getBoolean( "advanced.security.requestMapEnabled", true ) )
 			request.setGlobal( "_REQUEST", request.getRequestMap() );
@@ -642,10 +647,10 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			return;
 
 		// Allows scripts to directly override interpreter values. For example: Themes, Views, Titles
-		for ( Entry<String, String> kv : response.pageDataOverrides.entrySet() )
+		for ( Entry<String, String> kv : response.annotations.entrySet() )
 			fi.put( kv.getKey(), kv.getValue() );
 
-		RenderEvent renderEvent = new RenderEvent( this, rendered, fi.getEncoding(), fi.getParams() );
+		RenderEvent renderEvent = new RenderEvent( this, rendered, fi.getEncoding(), fi.getAnnotations() );
 
 		try
 		{
