@@ -22,48 +22,48 @@ public abstract class BasicParser
 {
 	private Pattern p1;
 	private Pattern p2;
-	
+
 	public BasicParser( String patternOne, String patternTwo )
 	{
 		Validate.notEmpty( patternOne );
 		Validate.notEmpty( patternTwo );
-		
+
 		p1 = Pattern.compile( patternOne );
 		p2 = Pattern.compile( patternTwo );
 	}
-	
+
 	public String runParser( String source ) throws Exception
 	{
 		if ( source == null || source.isEmpty() )
 			return "";
-		
+
 		Matcher m1 = p1.matcher( source );
 		Matcher m2 = p2.matcher( source );
-		
+
 		while ( m1.find() && m2.find() )
 		{
 			String[] args = m1.group( 1 ).split( "[ ]?,[ ]?" );
 			String[] args2 = new String[args.length + 1];
-			
+
 			args2[0] = m1.group( 0 );
-			
+
 			for ( int i = 0; i < args.length; i++ )
 				args2[i + 1] = StringFunc.trimAll( args[i].trim(), '"' );
-			
+
 			String result = resolveMethod( args2 );
-			
+
 			if ( result == null )
 				result = "";
-			
+
 			source = new StringBuilder( source ).replace( m2.start( 1 ), m2.end( 1 ), result ).toString();
-			
+
 			// We have to reset the matcher since the source changes with each loop
 			m1 = p1.matcher( source );
 			m2 = p2.matcher( source );
 		}
-		
+
 		return source;
 	}
-	
+
 	public abstract String resolveMethod( String... args ) throws Exception;
 }

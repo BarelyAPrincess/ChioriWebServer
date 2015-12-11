@@ -1,0 +1,10 @@
+config:
+  email: null
+  accept-agreement: false
+  agreement: https://letsencrypt.org/documents/LE-SA-v1.0.1-July-27-2015.pdf
+  production: false
+  ca: letsencrypt
+enabled:
+  server: true
+  sites: [
+    ]

@@ -32,8 +32,8 @@ import com.chiorichan.factory.event.PreLessProcessor;
 import com.chiorichan.factory.groovy.GroovyRegistry;
 import com.chiorichan.factory.parsers.PreIncludesParserWrapper;
 import com.chiorichan.factory.parsers.PreLinksParserWrapper;
-import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.EvalException;
+import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.util.WebFunc;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -44,7 +44,7 @@ public class ScriptingFactory
 	static
 	{
 		new GroovyRegistry();
-		
+
 		/**
 		 * Register Pre-Processors
 		 */
@@ -55,7 +55,7 @@ public class ScriptingFactory
 		if ( Loader.getConfig().getBoolean( "advanced.processors.lessProcessorEnabled", true ) )
 			register( new PreLessProcessor() );
 		// register( new SassPreProcessor() );
-		
+
 		/**
 		 * Register Post-Processors
 		 */
@@ -64,69 +64,69 @@ public class ScriptingFactory
 		if ( Loader.getConfig().getBoolean( "advanced.processors.imageProcessorEnabled", true ) )
 			register( new PostImageProcessor() );
 	}
-	
-	private final Map<ScriptingEngine, List<String>> engines = Maps.newLinkedHashMap();
-	
-	private final ScriptBinding binding;
-	
-	private final List<ByteBuf> bufferStack = Lists.newLinkedList();
-	
-	private Charset charset = Charsets.toCharset( Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" ) );
-	
-	private final ByteBuf output = Unpooled.buffer();
-	
-	private final StackFactory stackFactory = new StackFactory();
-	
-	private ScriptingFactory( ScriptBinding binding )
-	{
-		Validate.notNull( binding, "The EvalBinding can't be null" );
-		this.binding = binding;
-	}
-	
+
 	// For Web Use
 	public static ScriptingFactory create( BindingProvider provider )
 	{
 		return new ScriptingFactory( provider.getBinding() );
 	}
-	
+
 	public static ScriptingFactory create( Map<String, Object> rawBinding )
 	{
 		return new ScriptingFactory( new ScriptBinding( rawBinding ) );
 	}
-	
+
 	// For General Use
 	public static ScriptingFactory create( ScriptBinding binding )
 	{
 		return new ScriptingFactory( binding );
 	}
-	
+
 	public static void register( Listener listener )
 	{
 		EventBus.INSTANCE.registerEvents( listener, Loader.getInstance() );
 	}
-	
+
 	/**
 	 * Registers the provided ScriptingProcessing with the EvalFactory
 	 *
 	 * @param registry
-	 *            The {@link ScriptingRegistry} instance to handle provided types
+	 *             The {@link ScriptingRegistry} instance to handle provided types
 	 */
 	public static void register( ScriptingRegistry registry )
 	{
 		if ( !scripting.contains( registry ) )
 			scripting.add( registry );
 	}
-	
+
+	private final Map<ScriptingEngine, List<String>> engines = Maps.newLinkedHashMap();
+
+	private final ScriptBinding binding;
+
+	private final List<ByteBuf> bufferStack = Lists.newLinkedList();
+
+	private Charset charset = Charsets.toCharset( Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" ) );
+
+	private final ByteBuf output = Unpooled.buffer();
+
+	private final StackFactory stackFactory = new StackFactory();
+
+	private ScriptingFactory( ScriptBinding binding )
+	{
+		Validate.notNull( binding, "The EvalBinding can't be null" );
+		this.binding = binding;
+	}
+
 	public ScriptBinding binding()
 	{
 		return binding;
 	}
-	
+
 	public Charset charset()
 	{
 		return charset;
 	}
-	
+
 	private void compileEngines( ScriptingContext context )
 	{
 		for ( ScriptingRegistry registry : scripting )
@@ -138,7 +138,7 @@ public class ScriptingFactory
 					engines.put( engine, engine.getTypes() );
 				}
 	}
-	
+
 	private boolean contains( ScriptingEngine engine2 )
 	{
 		for ( ScriptingEngine engine1 : engines.keySet() )
@@ -146,45 +146,45 @@ public class ScriptingFactory
 				return true;
 		return false;
 	}
-	
+
 	public ScriptingResult eval( ScriptingContext context )
 	{
 		ScriptingResult result = context.result();
-		
+
 		context.factory( this );
 		context.charset( charset );
 		context.baseSource( new String( context.readBytes(), charset ) );
 		binding.setVariable( "__FILE__", context.filename() == null ? "<no file>" : context.filename() );
-		
+
 		if ( result.hasNotIgnorableExceptions() )
 			return result;
-		
+
 		try
 		{
 			String name = "EvalScript" + WebFunc.randomNum( 8 ) + ".chi";
 			context.name( name );
 			stackFactory.stack( name, context );
-			
+
 			PreEvalEvent preEvent = new PreEvalEvent( context );
 			try
 			{
 				EventBus.INSTANCE.callEventWithException( preEvent );
 			}
-			catch ( EventException e )
+			catch ( Exception e )
 			{
 				if ( EvalException.exceptionHandler( e.getCause() == null ? e : e.getCause(), context ) )
 					return result;
 			}
-			
+
 			if ( preEvent.isCancelled() )
 			{
 				EvalException.exceptionHandler( new EvalException( ReportingLevel.E_ERROR, "Evaluation was cancelled by an internal event" ), context );
 				return result;
 			}
-			
+
 			if ( engines.isEmpty() )
 				compileEngines( context );
-			
+
 			if ( !engines.isEmpty() )
 				for ( Entry<ScriptingEngine, List<String>> entry : engines.entrySet() )
 					if ( entry.getValue() == null || entry.getValue().isEmpty() || entry.getValue().contains( context.shell().toLowerCase() ) )
@@ -207,7 +207,7 @@ public class ScriptingFactory
 							if ( EvalException.exceptionHandler( cause, context ) )
 								return result;
 						}
-			
+
 			PostEvalEvent postEvent = new PostEvalEvent( context );
 			try
 			{
@@ -223,87 +223,87 @@ public class ScriptingFactory
 		{
 			stackFactory.unstack();
 		}
-		
+
 		return result.success( true );
 	}
-	
+
 	public Charset getCharset()
 	{
 		return charset;
 	}
-	
+
 	public String getFileName()
 	{
 		List<ScriptTraceElement> scriptTrace = getScriptTrace();
-		
+
 		if ( scriptTrace.size() < 1 )
 			return "<unknown>";
-		
+
 		String fileName = scriptTrace.get( scriptTrace.size() - 1 ).context().filename();
-		
+
 		if ( fileName == null || fileName.isEmpty() )
 			return "<unknown>";
-		
+
 		return fileName;
 	}
-	
+
 	/**
 	 * Attempts to find the current line number for the current groovy script.
-	 * 
+	 *
 	 * @return The current line number. Returns -1 if no there was a problem getting the current line number.
 	 */
 	public int getLineNumber()
 	{
 		List<ScriptTraceElement> scriptTrace = getScriptTrace();
-		
+
 		if ( scriptTrace.size() < 1 )
 			return -1;
-		
+
 		return scriptTrace.get( scriptTrace.size() - 1 ).getLineNumber();
 	}
-	
+
 	public ByteBuf getOutputStream()
 	{
 		return output;
 	}
-	
+
 	public List<ScriptTraceElement> getScriptTrace()
 	{
 		return stackFactory.examineStackTrace( Thread.currentThread().getStackTrace() );
 	}
-	
+
 	/**
 	 * Gives externals subroutines access to the current output stream via print()
-	 * 
+	 *
 	 * @param text
-	 *            The text to output
+	 *             The text to output
 	 */
 	public void print( String text )
 	{
 		output.writeBytes( text.getBytes( charset ) );
 	}
-	
+
 	/**
 	 * Gives externals subroutines access to the current output stream via println()
-	 * 
+	 *
 	 * @param text
-	 *            The text to output
+	 *             The text to output
 	 */
 	public void println( String text )
 	{
 		output.writeBytes( ( text + "\n" ).getBytes( charset ) );
 	}
-	
+
 	public void setEncoding( Charset charset )
 	{
 		this.charset = charset;
 	}
-	
+
 	public void setVariable( String key, Object val )
 	{
 		binding.setVariable( key, val );
 	}
-	
+
 	public StackFactory stack()
 	{
 		return stackFactory;

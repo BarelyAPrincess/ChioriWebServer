@@ -1,10 +1,7 @@
 /**
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Right Reserved.
+ * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com> All Right Reserved.
  */
 package com.chiorichan.plugin.loader;
 
@@ -28,55 +25,24 @@ import com.chiorichan.plugin.lang.PluginException;
 
 public abstract class Plugin extends PluginBase
 {
-	private ClassLoader classLoader = null;
-	private File configFile = null;
-	private File dataFolder = null;
-	private PluginInformation description = null;
-	private File file = null;
-	private boolean isEnabled = false;
-	private PluginLoader loader = null;
-	private boolean naggable = true;
-	private FileConfiguration newConfig = null;
-	
-	public Plugin()
-	{
-		PluginClassLoader.initalize( this );
-	}
-	
-	/*
-	 * protected Plugin( final PluginLoader loader, final PluginDescriptionFile description, final File dataFolder, final File file )
-	 * {
-	 * final ClassLoader classLoader = this.getClass().getClassLoader();
-	 * if ( classLoader instanceof PluginClassLoader )
-	 * {
-	 * throw new IllegalStateException( "Cannot use initialization constructor at runtime" );
-	 * }
-	 * init( loader, description, dataFolder, file, classLoader );
-	 * }
-	 */
-	
 	/**
-	 * This method provides fast access to the plugin that has {@link #getProvidingPlugin(Class) provided} the given plugin class, which is
-	 * usually the plugin that implemented it.
+	 * This method provides fast access to the plugin that has {@link #getProvidingPlugin(Class) provided} the given plugin class, which is usually the plugin that implemented it.
 	 * <p>
 	 * An exception to this would be if plugin's jar that contained the class does not extend the class, where the intended plugin would have resided in a different jar / classloader.
-	 * 
+	 *
 	 * @param clazz
-	 *            the class desired
+	 *             the class desired
 	 * @return the plugin that provides and implements said class
 	 * @throws IllegalArgumentException
-	 *             if clazz is null
+	 *              if clazz is null
 	 * @throws IllegalArgumentException
-	 *             if clazz does not extend {@link Plugin}
+	 *              if clazz does not extend {@link Plugin}
 	 * @throws IllegalStateException
-	 *             if clazz was not provided by a plugin,
-	 *             for example, if called with <code>Plugin.getPlugin(Plugin.class)</code>
+	 *              if clazz was not provided by a plugin, for example, if called with <code>Plugin.getPlugin(Plugin.class)</code>
 	 * @throws IllegalStateException
-	 *             if called from the static initializer for
-	 *             given Plugin
+	 *              if called from the static initializer for given Plugin
 	 * @throws ClassCastException
-	 *             if plugin that provided the class does not
-	 *             extend the class
+	 *              if plugin that provided the class does not extend the class
 	 */
 	public static <T extends Plugin> T getPlugin( Class<T> clazz )
 	{
@@ -91,19 +57,16 @@ public abstract class Plugin extends PluginBase
 			throw new IllegalStateException( "Cannot get plugin for " + clazz + " from a static initializer" );
 		return clazz.cast( plugin );
 	}
-	
+
 	/**
-	 * This method provides fast access to the plugin that has provided the
-	 * given class.
-	 * 
+	 * This method provides fast access to the plugin that has provided the given class.
+	 *
 	 * @throws IllegalArgumentException
-	 *             if the class is not provided by a
-	 *             Plugin
+	 *              if the class is not provided by a Plugin
 	 * @throws IllegalArgumentException
-	 *             if class is null
+	 *              if class is null
 	 * @throws IllegalStateException
-	 *             if called from the static initializer for
-	 *             given Plugin
+	 *              if called from the static initializer for given Plugin
 	 */
 	public static Plugin getProvidingPlugin( Class<?> clazz )
 	{
@@ -116,17 +79,39 @@ public abstract class Plugin extends PluginBase
 			throw new IllegalStateException( "Cannot get plugin for " + clazz + " from a static initializer" );
 		return plugin;
 	}
-	
+
+	private ClassLoader classLoader = null;
+	private File configFile = null;
+	private File dataFolder = null;
+	private PluginInformation description = null;
+	private File file = null;
+	private boolean isEnabled = false;
+	private PluginLoader loader = null;
+
+	private boolean naggable = true;
+
+	/*
+	 * protected Plugin( final PluginLoader loader, final PluginDescriptionFile description, final File dataFolder, final File file ) { final ClassLoader classLoader = this.getClass().getClassLoader(); if ( classLoader instanceof PluginClassLoader ) {
+	 * throw new IllegalStateException( "Cannot use initialization constructor at runtime" ); } init( loader, description, dataFolder, file, classLoader ); }
+	 */
+
+	private FileConfiguration newConfig = null;
+
+	public Plugin()
+	{
+		PluginClassLoader.initalize( this );
+	}
+
 	/**
 	 * Returns the ClassLoader which holds this plugin
-	 * 
+	 *
 	 * @return ClassLoader holding this plugin
 	 */
 	protected final ClassLoader getClassLoader()
 	{
 		return classLoader;
 	}
-	
+
 	@Override
 	public final FileConfiguration getConfig()
 	{
@@ -134,11 +119,16 @@ public abstract class Plugin extends PluginBase
 			reloadConfig();
 		return newConfig;
 	}
-	
+
+	@Override
+	public final File getConfigFile()
+	{
+		return configFile;
+	}
+
 	/**
-	 * Returns the folder that the plugin data's files are located in. The
-	 * folder may not yet exist.
-	 * 
+	 * Returns the folder that the plugin data's files are located in. The folder may not yet exist.
+	 *
 	 * @return The folder.
 	 */
 	@Override
@@ -146,10 +136,10 @@ public abstract class Plugin extends PluginBase
 	{
 		return dataFolder;
 	}
-	
+
 	/**
 	 * Returns the plugin.yaml file containing the details for this plugin
-	 * 
+	 *
 	 * @return Contents of the plugin.yaml file
 	 */
 	@Override
@@ -157,25 +147,25 @@ public abstract class Plugin extends PluginBase
 	{
 		return description;
 	}
-	
+
 	/**
 	 * Returns the file which contains this plugin
-	 * 
+	 *
 	 * @return File containing this plugin
 	 */
 	protected final File getFile()
 	{
 		return file;
 	}
-	
+
 	public final APILogger getLogger()
 	{
 		return Loader.getLogger( getDescription().getName() );
 	}
-	
+
 	/**
 	 * Gets the associated PluginLoader responsible for this plugin
-	 * 
+	 *
 	 * @return PluginLoader that controls this plugin
 	 */
 	@Override
@@ -183,20 +173,20 @@ public abstract class Plugin extends PluginBase
 	{
 		return loader;
 	}
-	
+
 	@Override
 	public final InputStream getResource( String filename )
 	{
 		if ( filename == null )
 			throw new IllegalArgumentException( "Filename cannot be null" );
-		
+
 		try
 		{
 			URL url = getClassLoader().getResource( filename );
-			
+
 			if ( url == null )
 				return null;
-			
+
 			URLConnection connection = url.openConnection();
 			connection.setUseCaches( false );
 			return connection.getInputStream();
@@ -206,7 +196,7 @@ public abstract class Plugin extends PluginBase
 			return null;
 		}
 	}
-	
+
 	final void init( PluginLoader loader, PluginInformation description, File dataFolder, File file, ClassLoader classLoader )
 	{
 		this.loader = loader;
@@ -214,20 +204,19 @@ public abstract class Plugin extends PluginBase
 		this.description = description;
 		this.dataFolder = dataFolder;
 		this.classLoader = classLoader;
-		
+
 		File yamlFile = new File( dataFolder, "config.yaml" );
 		File ymlFile = new File( dataFolder, "config.yml" );
-		
+
 		if ( ymlFile.exists() )
 			ymlFile.renameTo( yamlFile );
-		
+
 		configFile = yamlFile;
 	}
-	
+
 	/**
-	 * Returns a value indicating whether or not this plugin is currently
-	 * enabled
-	 * 
+	 * Returns a value indicating whether or not this plugin is currently enabled
+	 *
 	 * @return true if this plugin is enabled, otherwise false
 	 */
 	@Override
@@ -235,31 +224,31 @@ public abstract class Plugin extends PluginBase
 	{
 		return isEnabled;
 	}
-	
+
 	@Override
 	public final boolean isNaggable()
 	{
 		return naggable;
 	}
-	
+
 	@Override
 	public void reloadConfig()
 	{
 		newConfig = YamlConfiguration.loadConfiguration( configFile );
-		
+
 		InputStream defConfigStream = getResource( "config.yaml" );
-		
+
 		if ( defConfigStream == null )
 			defConfigStream = getResource( "config.yml" );
-		
+
 		if ( defConfigStream != null )
 		{
 			YamlConfiguration defConfig = YamlConfiguration.loadConfiguration( defConfigStream );
-			
+
 			newConfig.setDefaults( defConfig );
 		}
 	}
-	
+
 	@Override
 	public void saveConfig()
 	{
@@ -272,7 +261,7 @@ public abstract class Plugin extends PluginBase
 			getLogger().severe( "Could not save config to " + configFile, ex );
 		}
 	}
-	
+
 	@Override
 	public void saveDefaultConfig()
 	{
@@ -286,25 +275,25 @@ public abstract class Plugin extends PluginBase
 				saveResource( "config.yml", false );
 			}
 	}
-	
+
 	@Override
 	public void saveResource( String resourcePath, boolean replace )
 	{
 		if ( resourcePath == null || resourcePath.equals( "" ) )
 			throw new IllegalArgumentException( "ResourcePath cannot be null or empty" );
-		
+
 		resourcePath = resourcePath.replace( '\\', '/' );
 		InputStream in = getResource( resourcePath );
 		if ( in == null )
 			throw new IllegalArgumentException( "The embedded resource '" + resourcePath + "' cannot be found in " + file );
-		
+
 		File outFile = new File( dataFolder, resourcePath );
 		int lastIndex = resourcePath.lastIndexOf( '/' );
 		File outDir = new File( dataFolder, resourcePath.substring( 0, lastIndex >= 0 ? lastIndex : 0 ) );
-		
+
 		if ( !outDir.exists() )
 			outDir.mkdirs();
-		
+
 		try
 		{
 			if ( !outFile.exists() || replace )
@@ -325,32 +314,32 @@ public abstract class Plugin extends PluginBase
 			getLogger().severe( "Could not save " + outFile.getName() + " to " + outFile, ex );
 		}
 	}
-	
+
 	/**
 	 * Sets the enabled state of this plugin
-	 * 
+	 *
 	 * @param enabled
-	 *            true if enabled, otherwise false
+	 *             true if enabled, otherwise false
 	 */
 	protected final void setEnabled( final boolean enabled ) throws PluginException
 	{
 		if ( isEnabled != enabled )
 		{
 			isEnabled = enabled;
-			
+
 			if ( isEnabled )
 				onEnable();
 			else
 				onDisable();
 		}
 	}
-	
+
 	@Override
 	public final void setNaggable( boolean canNag )
 	{
 		naggable = canNag;
 	}
-	
+
 	@Override
 	public String toString()
 	{

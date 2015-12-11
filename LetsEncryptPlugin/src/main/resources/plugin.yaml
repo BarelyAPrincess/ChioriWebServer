@@ -1,0 +1,13 @@
+name: Acme Plugin
+author: Chiori Greene
+main: com.chiorichan.plugin.acme.AcmePlugin
+version: '1.0'
+depends: []
+runlevel: RUNNING
+libraries:
+  - "org.bouncycastle:bcprov-jdk15on:1.53"
+  - "org.bouncycastle:bcpkix-jdk15on:1.53"
+  - "io.jsonwebtoken:jjwt:0.6.0"
+  - "com.fasterxml.jackson.core:jackson-databind:2.4.2"
+  - "com.fasterxml.jackson.core:jackson-annotations:2.4.0"
+  - "com.fasterxml.jackson.core:jackson-core:2.4.2"

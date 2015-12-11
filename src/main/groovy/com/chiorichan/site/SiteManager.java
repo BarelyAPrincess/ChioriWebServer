@@ -172,7 +172,7 @@ public class SiteManager implements ServerManager
 				}
 				catch ( SiteException e )
 				{
-					throw new StartupException( e );
+					throw new StartupException( String.format( "Exception encountered while loading site '%s'", id ), e );
 				}
 			}
 			else

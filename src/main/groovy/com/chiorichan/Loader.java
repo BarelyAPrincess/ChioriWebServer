@@ -24,6 +24,7 @@ import joptsimple.OptionSet;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.Validate;
 import org.joda.time.Duration;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
@@ -59,6 +60,7 @@ import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.TaskRegistrar;
 import com.chiorichan.tasks.Ticks;
+import com.chiorichan.tasks.Timings;
 import com.chiorichan.tasks.Worker;
 import com.chiorichan.updater.AutoUpdater;
 import com.chiorichan.updater.DownloadUpdaterService;
@@ -91,6 +93,22 @@ public class Loader extends BuiltinRegistrar implements Listener
 	static String stopReason = null;
 	static boolean willRestart = false;
 	static boolean isRunning = false;
+
+	static void clearCache( File path, long keepHistory )
+	{
+		Validate.notNull( path );
+		Validate.notNull( keepHistory );
+
+		if ( !path.exists() || !path.isDirectory() )
+			throw new IllegalArgumentException( "Path must exist and be a directory." );
+
+		File[] files = path.listFiles();
+		for ( File f : files )
+			if ( f.isFile() && f.lastModified() < System.currentTimeMillis() - keepHistory * 24 * 60 * 60 )
+				f.delete();
+			else if ( f.isDirectory() )
+				clearCache( f, keepHistory );
+	}
 
 	/**
 	 * Gets an instance of the AutoUpdater.
@@ -491,6 +509,9 @@ public class Loader extends BuiltinRegistrar implements Listener
 			if ( Loader.isRunning() )
 				Loader.isRunning = false;
 
+			Object timing = new Object();
+			Timings.start( timing );
+
 			Loader.getLogger().info( "Shutting Down Plugin Manager..." );
 			PluginManager.INSTANCE.shutdown();
 
@@ -512,7 +533,11 @@ public class Loader extends BuiltinRegistrar implements Listener
 			Loader.getLogger().info( "Saving Configuration..." );
 			Loader.saveConfig();
 
-			Loader.getLogger().info( "Finished!!!" );
+			Loader.getLogger().info( "Clearing Excess Cache..." );
+			long keepHistory = getConfig().getLong( "advanced.cache.keepHistory", 30L );
+			clearCache( getTempFileDirectory(), keepHistory );
+
+			Loader.getLogger().info( LogColor.GOLD + "" + LogColor.NEGATIVE + "Shutdown Completed! It took " + Timings.finish( timing ) + "ms!" );
 		}
 		catch ( Throwable t )
 		{

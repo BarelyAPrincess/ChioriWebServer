@@ -114,7 +114,7 @@ import com.google.common.collect.Maps;
  * </table>
  * <p>
  * A plugin.yaml example:<blockquote>
- * 
+ *
  * <pre>
  * name: SuperAwesomePlugin
  * version: 1.0.4
@@ -122,10 +122,10 @@ import com.google.common.collect.Maps;
  * author: SomeAuthor
  * authors: [SomeAuthor, God, Jesus]
  * website: http://www.superawesomeplugin.com
- * 
+ *
  * main: com.superawesomeplugin.plugin.Main
  * depend: [EmailPlugin]
- * 
+ *
  * commands:
  *   doit:
  *     description: Does that super awesome thing
@@ -133,28 +133,28 @@ import com.google.common.collect.Maps;
  *     permission: com.chiorichan.destruction
  *     usage: Type /&lt;doit&gt; to do that super awesome thing.
  * </pre>
- * 
+ *
  * </blockquote>
- * 
+ *
  * XXX Rewrite the description file read process to make it easier to implement
  */
 public class PluginInformation
 {
 	private YamlConfiguration yaml;
-	
+
 	public PluginInformation( final File file ) throws PluginInformationException, FileNotFoundException
 	{
 		yaml = YamlConfiguration.loadConfiguration( file );
 	}
-	
+
 	public PluginInformation( final InputStream stream ) throws PluginInformationException
 	{
 		yaml = YamlConfiguration.loadConfiguration( stream );
 	}
-	
+
 	/**
 	 * Creates a new PluginDescriptionFile with the given detailed
-	 * 
+	 *
 	 * @param pluginName
 	 *            Name of this plugin
 	 * @param pluginVersion
@@ -170,12 +170,12 @@ public class PluginInformation
 		setPluginVersion( pluginVersion );
 		setMainClass( mainClass );
 	}
-	
+
 	public PluginInformation( final YamlConfiguration yaml ) throws PluginInformationException
 	{
 		this.yaml = yaml;
 	}
-	
+
 	/**
 	 * Gives the list of authors for the plugin.
 	 * <ul>
@@ -189,33 +189,33 @@ public class PluginInformation
 	 * In the plugin.yaml, this has two entries, <code>author</code> and <code>authors</code>.
 	 * <p>
 	 * Single author example: <blockquote>
-	 * 
+	 *
 	 * <pre>
 	 * author: CaptainInflamo
 	 * </pre>
-	 * 
+	 *
 	 * </blockquote> Multiple author example: <blockquote>
-	 * 
+	 *
 	 * <pre>
 	 * authors: [Cogito, verrier, EvilSeph]
 	 * </pre>
-	 * 
+	 *
 	 * </blockquote> When both are specified, author will be the first entry in the list, so this example: <blockquote>
-	 * 
+	 *
 	 * <pre>
 	 * author: Grum
 	 * authors:
 	 * - feildmaster
 	 * - amaranth
 	 * </pre>
-	 * 
+	 *
 	 * </blockquote> Is equivilant to this example: <blockquote>
-	 * 
+	 *
 	 * <pre>authors: [Grum, feildmaster, aramanth]
-	 * 
+	 *
 	 * <pre>
 	 * </blockquote>
-	 * 
+	 *
 	 * @return an immutable list of the plugin's authors
 	 */
 	public List<String> getAuthors()
@@ -225,12 +225,12 @@ public class PluginInformation
 				return yaml.getStringList( "authors" );
 			else
 				return ImmutableList.of( yaml.getString( "authors" ) );
-		
+
 		if ( yaml.getString( "author" ) != null )
 			return ImmutableList.of( yaml.getString( "author" ) );
 		return ImmutableList.of();
 	}
-	
+
 	/**
 	 * Gives a list of other plugins that the plugin requires.
 	 * <ul>
@@ -244,22 +244,22 @@ public class PluginInformation
 	 * In the plugin.yaml, this entry is named <code>depend</code>.
 	 * <p>
 	 * Example: <blockquote>
-	 * 
+	 *
 	 * <pre>
 	 * depend:
 	 * - OnePlugin
 	 * - AnotherPlugin
 	 * </pre>
-	 * 
+	 *
 	 * </blockquote>
-	 * 
+	 *
 	 * @return immutable list of the plugin's dependencies
 	 */
 	public List<String> getDepend()
 	{
 		return yaml.getStringList( "depend" );
 	}
-	
+
 	/**
 	 * Gives a human-friendly description of the functionality the plugin provides.
 	 * <ul>
@@ -270,23 +270,23 @@ public class PluginInformation
 	 * In the plugin.yaml, this entry is named <code>description</code>.
 	 * <p>
 	 * Example: <blockquote>
-	 * 
+	 *
 	 * <pre>
 	 * description: This plugin is so 31337. You can set yourself on fire.
 	 * </pre>
-	 * 
+	 *
 	 * </blockquote>
-	 * 
+	 *
 	 * @return description of this plugin, or null if not specified
 	 */
 	public String getDescription()
 	{
 		return yaml.getString( "description" );
 	}
-	
+
 	/**
 	 * Returns the name of a plugin, including the version. This method is provided for convenience; it uses the {@link #getName()} and {@link #getVersion()} entries.
-	 * 
+	 *
 	 * @return a descriptive name of the plugin and respective version
 	 * @throws PluginInformationException
 	 */
@@ -294,12 +294,12 @@ public class PluginInformation
 	{
 		return getName() + " v" + getVersion();
 	}
-	
+
 	public String getGitHubBaseUrl()
 	{
 		return yaml.getString( "gitHubBaseUrl" );
 	}
-	
+
 	/**
 	 * Gives a list of java libraries required by this plugin.
 	 * <ul>
@@ -312,22 +312,22 @@ public class PluginInformation
 	 * In the plugin.yaml, this entry is named <code>libraries</code>.
 	 * <p>
 	 * Example: <blockquote>
-	 * 
+	 *
 	 * <pre>
 	 * libraries:
 	 * - com.dropbox.core:dropbox-core-sdk:1.7.7
 	 * - org.apache.commons:commons-lang3:3.3.2
 	 * </pre>
-	 * 
+	 *
 	 * </blockquote>
-	 * 
+	 *
 	 * @return immutable list of the plugin's dependencies
 	 * @throws PluginInformationException
 	 */
 	public List<MavenReference> getLibraries()
 	{
 		List<MavenReference> refs = Lists.newArrayList();
-		
+
 		for ( String mavenString : yaml.getStringList( "libraries" ) )
 			try
 			{
@@ -338,44 +338,44 @@ public class PluginInformation
 				Loader.getLogger().severe( "Could not parse the library '" + mavenString + "' for plugin '" + getName() + "', expected pattern 'group:name:version' unless fixed, it will be ignored." );
 				Loader.getLogger().severe( e.getMessage() );
 			}
-		
+
 		return refs;
 	}
-	
+
 	/**
 	 * Gives the phase of server startup that the plugin should be loaded.
 	 * <ul>
 	 * <li>Possible values are in {@link RunLevel}.
-	 * <li>Defaults to {@link RunLevel#POSTSERVER}.
+	 * <li>Defaults to {@link RunLevel#INITIALIZED}.
 	 * <li>Certain caveats apply to each phase.
 	 * <li>When different, {@link #getDepend()}, {@link #getSoftDepend()}, and {@link #getLoadBefore()} become relative in order loaded per-phase. If a plugin loads at <code>STARTUP</code>, but a dependency loads at <code>POSTWORLD</code>,
 	 * the dependency will not be loaded before the plugin is loaded.
 	 * </ul>
 	 * <p>
-	 * In the plugin.yaml, this entry is named <code>load</code>.
+	 * In the plugin.yaml, this entry is named <code>runlevel</code>.
 	 * <p>
 	 * Example:<blockquote>
-	 * 
+	 *
 	 * <pre>
 	 * load: STARTUP
 	 * </pre>
-	 * 
+	 *
 	 * </blockquote>
-	 * 
+	 *
 	 * @return the phase when the plugin should be loaded
 	 */
 	public RunLevel getLoad()
 	{
 		try
 		{
-			return RunLevel.valueOf( yaml.getString( "order" ) );
+			return RunLevel.valueOf( yaml.getString( "runlevel" ) );
 		}
 		catch ( IllegalArgumentException | NullPointerException e )
 		{
 			return RunLevel.INITIALIZED;
 		}
 	}
-	
+
 	/**
 	 * Gets the list of plugins that should consider this plugin a soft-dependency.
 	 * <ul>
@@ -388,27 +388,27 @@ public class PluginInformation
 	 * In the plugin.yaml, this entry is named <code>loadbefore</code>.
 	 * <p>
 	 * Example: <blockquote>
-	 * 
+	 *
 	 * <pre>
 	 * loadbefore:
 	 * - OnePlugin
 	 * - AnotherPlugin
 	 * </pre>
-	 * 
+	 *
 	 * </blockquote>
-	 * 
+	 *
 	 * @return immutable list of plugins that should consider this plugin a soft-dependency
 	 */
 	public List<String> getLoadBefore()
 	{
 		return yaml.getStringList( "loadbefore" );
 	}
-	
+
 	public String getMain()
 	{
 		return yaml.getString( "main" );
 	}
-	
+
 	/**
 	 * Gives the fully qualified name of the main class for a plugin. The format should follow the {@link ClassLoader#loadClass(String)} syntax to successfully be resolved at runtime. For most plugins, this is the
 	 * class that extends
@@ -421,34 +421,34 @@ public class PluginInformation
 	 * In the plugin.yaml, this entry is named <code>main</code>.
 	 * <p>
 	 * Example: <blockquote>
-	 * 
+	 *
 	 * <pre>
 	 * main: org.bukkit.plugin.MyPlugin
 	 * </pre>
-	 * 
+	 *
 	 * </blockquote>
-	 * 
+	 *
 	 * @return the fully qualified main class for the plugin
 	 * @throws PluginInformationException
 	 */
 	public String getMainWithException() throws PluginInformationException
 	{
 		String main = yaml.getString( "main" );
-		
+
 		if ( main == null )
 			throw new PluginInformationException( "Main is not defined." );
-		
+
 		if ( main.startsWith( "com.chiori" ) && !main.startsWith( "com.chiorichan.plugin" ) )
 			throw new PluginInformationException( "Plugin is forbidden from using the 'com.chiori' namespace due to a conflict of interest." );
-		
+
 		return main;
 	}
-	
+
 	public String getName()
 	{
 		return yaml.getString( "name" );
 	}
-	
+
 	/**
 	 * Gives the name of the plugin. This name is a unique identifier for plugins.
 	 * <ul>
@@ -462,32 +462,32 @@ public class PluginInformation
 	 * In the plugin.yaml, this entry is named <code>name</code>.
 	 * <p>
 	 * Example:<blockquote>
-	 * 
+	 *
 	 * <pre>
 	 * name: MyPlugin
 	 * </pre>
-	 * 
+	 *
 	 * </blockquote>
-	 * 
+	 *
 	 * @return the name of the plugin
 	 */
 	public String getNameWithException() throws PluginInformationException
 	{
 		String name = yaml.getString( "name" );
-		
+
 		if ( name == null )
 			throw new PluginInformationException( "Plugin name is not defined." );
-		
+
 		if ( !name.matches( "^[A-Za-z0-9 _.-]+$" ) )
 			throw new PluginInformationException( "name '" + name + "' contains invalid characters." );
-		
+
 		return name;
 	}
-	
+
 	public Map<String, List<String>> getNatives()
 	{
 		Map<String, List<String>> natives = Maps.newHashMap();
-		
+
 		ConfigurationSection section = yaml.getConfigurationSection( "natives" );
 		if ( section != null )
 			for ( String key : section.getKeys( false ) )
@@ -497,11 +497,11 @@ public class PluginInformation
 					natives.get( key ).add( section.getString( key ) );
 				else
 					natives.put( key, new ArrayList<String>( Arrays.asList( section.getString( key ) ) ) );
-		
+
 		return natives;
-		
+
 	}
-	
+
 	/**
 	 * Gives the token to prefix plugin-specific logging messages with.
 	 * <ul>
@@ -513,20 +513,20 @@ public class PluginInformation
 	 * In the plugin.yaml, this entry is named <code>prefix</code>.
 	 * <p>
 	 * Example:<blockquote>
-	 * 
+	 *
 	 * <pre>
 	 * prefix: ex-why-zee
 	 * </pre>
-	 * 
+	 *
 	 * </blockquote>
-	 * 
+	 *
 	 * @return the prefixed logging token, or null if not specified
 	 */
 	public String getPrefix()
 	{
 		return yaml.getString( "prefix" );
 	}
-	
+
 	/**
 	 * Gives a list of other plugins that the plugin requires for full functionality. The {@link PluginManager} will make
 	 * best effort to treat all entries here as if they were a {@link #getDepend() dependency}, but will never fail
@@ -541,25 +541,25 @@ public class PluginInformation
 	 * In the plugin.yaml, this entry is named <code>softdepend</code>.
 	 * <p>
 	 * Example: <blockquote>
-	 * 
+	 *
 	 * <pre>
 	 * softdepend: [OnePlugin, AnotherPlugin]
 	 * </pre>
-	 * 
+	 *
 	 * </blockquote>
-	 * 
+	 *
 	 * @return immutable list of the plugin's preferred dependencies
 	 */
 	public List<String> getSoftDepend()
 	{
 		return yaml.getStringList( "softdepend" );
 	}
-	
+
 	public String getVersion()
 	{
 		return yaml.getString( "version" );
 	}
-	
+
 	/**
 	 * Gives the version of the plugin.
 	 * <ul>
@@ -571,26 +571,26 @@ public class PluginInformation
 	 * In the plugin.yaml, this entry is named <code>version</code>.
 	 * <p>
 	 * Example:<blockquote>
-	 * 
+	 *
 	 * <pre>
 	 * version: 1.4.1
 	 * </pre>
-	 * 
+	 *
 	 * </blockquote>
-	 * 
+	 *
 	 * @return the version of the plugin
 	 * @throws PluginInformationException
 	 */
 	public String getVersionWithException() throws PluginInformationException
 	{
 		String version = yaml.getString( "version" );
-		
+
 		if ( version == null )
 			throw new PluginInformationException( "Plugin version is not defined." );
-		
+
 		return version;
 	}
-	
+
 	/**
 	 * Gives the plugin's or plugin's author's website.
 	 * <ul>
@@ -601,23 +601,23 @@ public class PluginInformation
 	 * In the plugin.yaml, this entry is named <code>website</code>.
 	 * <p>
 	 * Example: <blockquote>
-	 * 
+	 *
 	 * <pre>
 	 * website: http://www.curse.com/server-mods/minecraft/myplugin
 	 * </pre>
-	 * 
+	 *
 	 * </blockquote>
-	 * 
+	 *
 	 * @return description of this plugin, or null if not specified
 	 */
 	public String getWebsite()
 	{
 		return yaml.getString( "website" );
 	}
-	
+
 	/**
 	 * Saves this PluginInformation to the given file
-	 * 
+	 *
 	 * @param file
 	 *            File to output to
 	 * @throws IOException
@@ -626,28 +626,28 @@ public class PluginInformation
 	{
 		yaml.save( file );
 	}
-	
+
 	public String saveToString()
 	{
 		return yaml.saveToString();
 	}
-	
+
 	PluginInformation setMainClass( String main )
 	{
 		yaml.set( "main", main );
 		return this;
 	}
-	
+
 	PluginInformation setName( String name ) throws PluginInformationException
 	{
 		if ( !name.matches( "^[A-Za-z0-9 _.-]+$" ) )
 			throw new PluginInformationException( "name '" + name + "' contains invalid characters." );
-		
+
 		yaml.set( "name", name );
-		
+
 		return this;
 	}
-	
+
 	PluginInformation setPluginVersion( String version )
 	{
 		yaml.set( "version", version );

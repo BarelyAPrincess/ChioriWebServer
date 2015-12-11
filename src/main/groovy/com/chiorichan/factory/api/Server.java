@@ -8,11 +8,12 @@
  */
 package com.chiorichan.factory.api;
 
+import java.io.FileNotFoundException;
 import java.util.List;
 
 import com.chiorichan.Loader;
-import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptTraceElement;
+import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.http.HttpResponseWrapper;
 import com.chiorichan.plugin.PluginManager;
@@ -37,20 +38,21 @@ public class Server
 	 *            The file relative
 	 * @return
 	 *         The EvalContext ready for eval() or read()
+	 * @throws FileNotFoundException
 	 */
-	public static ScriptingContext fileContext( String file )
+	public static ScriptingContext fileContext( String file ) throws FileNotFoundException
 	{
 		HttpRequestWrapper request = HttpRequestWrapper.getRequest();
 		return ScriptingContext.fromFile( request.getSite(), file ).request( request );
 	}
-	
+
 	public static String formatPhone( String phone )
 	{
 		if ( phone == null || phone.isEmpty() )
 			return "";
-		
+
 		phone = phone.replaceAll( "[ -()\\.]", "" );
-		
+
 		PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
 		try
 		{
@@ -63,32 +65,32 @@ public class Server
 			return phone;
 		}
 	}
-	
+
 	public static Plugin getPluginbyClassname( String search ) throws PluginNotFoundException
 	{
 		return PluginManager.INSTANCE.getPluginByClassname( search );
 	}
-	
+
 	public static Plugin getPluginbyClassnameWithoutException( String search )
 	{
 		return PluginManager.INSTANCE.getPluginByClassnameWithoutException( search );
 	}
-	
+
 	public static Plugin getPluginByName( String search ) throws PluginNotFoundException
 	{
 		return PluginManager.INSTANCE.getPluginByName( search );
 	}
-	
+
 	public static Plugin getPluginByNameWithoutException( String search )
 	{
 		return PluginManager.INSTANCE.getPluginByNameWithoutException( search );
 	}
-	
+
 	public static List<ScriptTraceElement> getScriptTrace()
 	{
 		return request().getEvalFactory().getScriptTrace();
 	}
-	
+
 	/**
 	 * Used to execute package file within the script.
 	 *
@@ -102,17 +104,17 @@ public class Server
 		HttpRequestWrapper request = HttpRequestWrapper.getRequest();
 		return ScriptingContext.fromPackage( request.getSite(), pack ).request( request );
 	}
-	
+
 	public static HttpRequestWrapper request()
 	{
 		return HttpRequestWrapper.getRequest();
 	}
-	
+
 	public static HttpResponseWrapper response()
 	{
 		return request().getResponse();
 	}
-	
+
 	public static Session session()
 	{
 		return request().getSession();

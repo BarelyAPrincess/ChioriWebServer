@@ -15,10 +15,10 @@ import java.util.Map.Entry;
 
 import com.chiorichan.Loader;
 import com.chiorichan.factory.ExceptionCallback;
+import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.factory.ScriptingResult;
-import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.factory.StackFactory;
 import com.google.common.collect.Maps;
 
@@ -29,40 +29,10 @@ public class EvalException extends Exception
 {
 	private static final long serialVersionUID = -1611181613618341914L;
 	private static final Map<Class<? extends Throwable>, ExceptionCallback> registered = Maps.newConcurrentMap();
-	
-	private List<ScriptTraceElement> scriptTrace = null;
-	private final ReportingLevel level;
-	
-	public EvalException( ReportingLevel level )
-	{
-		this.level = level;
-	}
-	
-	public EvalException( ReportingLevel level, String message )
-	{
-		super( message );
-		this.level = level;
-	}
-	
-	public EvalException( ReportingLevel level, String message, Throwable cause )
-	{
-		super( message, cause );
-		if ( cause instanceof EvalException )
-			throw new IllegalArgumentException( "The cause argument for EvalException can't be of it's own type." );
-		this.level = level;
-	}
-	
-	public EvalException( ReportingLevel level, Throwable cause )
-	{
-		super( cause );
-		if ( cause instanceof EvalException )
-			throw new IllegalArgumentException( "The cause argument for EvalException can't be of it's own type." );
-		this.level = level;
-	}
-	
+
 	/**
-	 * Processes and appends the input exception thrown to the context provided.
-	 * 
+	 * Processes and appends the throwable to the context provided.
+	 *
 	 * @param cause
 	 *            The exception thrown
 	 * @param context
@@ -73,9 +43,9 @@ public class EvalException extends Exception
 	{
 		if ( cause == null )
 			return false;
-		
+
 		ScriptingResult result = context.result();
-		
+
 		/**
 		 * We just forward {@link EvalException}
 		 */
@@ -101,9 +71,9 @@ public class EvalException extends Exception
 		else
 		{
 			boolean handled = false;
-			
+
 			Map<Class<? extends Throwable>, ExceptionCallback> assignable = Maps.newHashMap();
-			
+
 			for ( Entry<Class<? extends Throwable>, ExceptionCallback> entry : registered.entrySet() )
 				if ( cause.getClass().equals( entry.getKey() ) )
 				{
@@ -118,7 +88,7 @@ public class EvalException extends Exception
 				}
 				else if ( entry.getKey().isAssignableFrom( cause.getClass() ) )
 					assignable.put( entry.getKey(), entry.getValue() );
-			
+
 			if ( !handled )
 				if ( assignable.size() == 0 )
 				{
@@ -151,13 +121,12 @@ public class EvalException extends Exception
 						}
 					}
 		}
-		
+
 		return false;
 	}
-	
 	/**
 	 * Registers an expected exception to be thrown by any subsystem of {@link ScriptingFactory}
-	 * 
+	 *
 	 * @param callback
 	 *            The Callback to call when such exception is thrown
 	 * @param clzs
@@ -169,32 +138,63 @@ public class EvalException extends Exception
 		for ( Class<? extends Throwable> clz : clzs )
 			registered.put( clz, callback );
 	}
-	
+
+	private List<ScriptTraceElement> scriptTrace = null;
+
+	private final ReportingLevel level;
+
+	public EvalException( ReportingLevel level )
+	{
+		this.level = level;
+	}
+
+	public EvalException( ReportingLevel level, String message )
+	{
+		super( message );
+		this.level = level;
+	}
+
+	public EvalException( ReportingLevel level, String message, Throwable cause )
+	{
+		super( message, cause );
+		if ( cause instanceof EvalException )
+			throw new IllegalArgumentException( "The cause argument for EvalException can't be of it's own type." );
+		this.level = level;
+	}
+
+	public EvalException( ReportingLevel level, Throwable cause )
+	{
+		super( cause );
+		if ( cause instanceof EvalException )
+			throw new IllegalArgumentException( "The cause argument for EvalException can't be of it's own type." );
+		this.level = level;
+	}
+
 	public ReportingLevel errorLevel()
 	{
 		return level;
 	}
-	
+
 	public ScriptTraceElement[] getScriptTrace()
 	{
 		return scriptTrace == null ? null : scriptTrace.toArray( new ScriptTraceElement[0] );
 	}
-	
+
 	public boolean hasScriptTrace()
 	{
 		return scriptTrace != null && scriptTrace.size() > 0;
 	}
-	
+
 	public boolean isIgnorable()
 	{
 		return level.isIgnorable();
 	}
-	
+
 	public boolean isScriptingException()
 	{
 		return getCause() != null && getCause().getStackTrace().length > 0 && getCause().getStackTrace()[0].getClassName().startsWith( "org.codehaus.groovy.runtime" );
 	}
-	
+
 	public EvalException populateScriptTrace( StackFactory factory )
 	{
 		scriptTrace = factory.examineStackTrace( getCause() == null ? getStackTrace() : getCause().getStackTrace() );

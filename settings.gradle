@@ -1,2 +1,2 @@
-include 'DropboxPlugin', 'EmailPlugin', 'InteractiveConsolePlugin', 'TemplatesPlugin', 'ZXingPlugin'
+include 'DropboxPlugin', 'EmailPlugin', 'InteractiveConsolePlugin', 'TemplatesPlugin', 'ZXingPlugin', 'AcmePlugin'
 rootProject.name = 'ChioriWebServer'

@@ -13,7 +13,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 public class HttpCode
 {
 	// Reference: http://en.wikipedia.org/wiki/List_of_HTTP_status_codes
-	
+
 	public static final int HTTP_CONTINUE = 100;
 	public static final int HTTP_SWITCHING_PROTOCOLS = 101;
 	public static final int HTTP_PROCESSING = 102;
@@ -73,7 +73,7 @@ public class HttpCode
 	public static final int HTTP_INSUFFICIENT_STORAGE = 507;
 	public static final int HTTP_LOOP_DETECTED = 508;
 	public static final int HTTP_NOT_EXTENDED = 510;
-	
+
 	public static String msg( int code )
 	{
 		switch ( code )

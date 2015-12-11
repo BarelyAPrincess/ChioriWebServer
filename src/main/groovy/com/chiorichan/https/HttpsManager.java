@@ -28,7 +28,6 @@ public class HttpsManager implements ServerManager
 {
 	public static final HttpsManager INSTANCE = new HttpsManager();
 	private static boolean isInitialized = false;
-
 	public static APILogger getLogger()
 	{
 		return Loader.getLogger( "SSL" );
@@ -46,6 +45,8 @@ public class HttpsManager implements ServerManager
 		isInitialized = true;
 	}
 
+	private boolean usingSelfSignedCert = false;
+
 	private DomainNameMapping<SslContext> mapping;
 
 	private HttpsManager()
@@ -60,6 +61,8 @@ public class HttpsManager implements ServerManager
 
 	public void addMapping( String hostname, File sslCert, File sslKey, String sslSecret ) throws SSLException, FileNotFoundException
 	{
+		// TODO Open SSL certificate and confirm that the CN contains the provided hostname
+
 		if ( !sslCert.exists() || !sslKey.exists() )
 			throw new FileNotFoundException();
 
@@ -115,6 +118,11 @@ public class HttpsManager implements ServerManager
 		}
 	}
 
+	public boolean isUsingSelfSignedCert()
+	{
+		return usingSelfSignedCert;
+	}
+
 	private void selfSignCertificate() throws SSLException
 	{
 		getLogger().warning( "No proper server-wide SSL certificate was provided, we will generate an extremely insecure temporary self signed one for now but please obtain an official one or self sign one of your own ASAP." );
@@ -123,6 +131,7 @@ public class HttpsManager implements ServerManager
 		{
 			SelfSignedCertificate ssc = new SelfSignedCertificate( "chiorichan.com" );
 			updateCertificate( ssc.certificate(), ssc.privateKey(), null );
+			usingSelfSignedCert = true;
 		}
 		catch ( FileNotFoundException | CertificateException e )
 		{
@@ -160,5 +169,7 @@ public class HttpsManager implements ServerManager
 
 		for ( Site site : SiteManager.INSTANCE.getSites() )
 			site.loadSsl( this );
+
+		usingSelfSignedCert = false;
 	}
 }

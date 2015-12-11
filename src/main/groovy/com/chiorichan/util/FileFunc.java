@@ -41,8 +41,8 @@ import java.util.zip.ZipFile;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.LogColor;
 import com.chiorichan.Loader;
+import com.chiorichan.LogColor;
 import com.chiorichan.libraries.Libraries;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.site.Site;
@@ -59,7 +59,7 @@ public class FileFunc
 	public enum DirectoryInfo
 	{
 		CREATE_FAILED, DELETE_FAILED, DIRECTORY_HEALTHY, PERMISSION_FAILED;
-		
+
 		public String getDescription( File file )
 		{
 			switch ( this )
@@ -76,16 +76,16 @@ public class FileFunc
 			return null;
 		}
 	}
-	
+
 	static class LibraryPath
 	{
 		private List<String> libPath;
-		
+
 		LibraryPath()
 		{
 			read();
 		}
-		
+
 		void add( String path )
 		{
 			if ( path.contains( " " ) )
@@ -94,18 +94,18 @@ public class FileFunc
 				return;
 			libPath.add( path );
 		}
-		
+
 		void read()
 		{
 			libPath = new ArrayList<String>( Splitter.on( ":" ).splitToList( System.getProperty( "java.library.path" ) ) );
 		}
-		
+
 		void set()
 		{
 			System.setProperty( "java.library.path", Joiner.on( ":" ).join( libPath ) );
 		}
 	}
-	
+
 	/**
 	 * Separate class for native platform ID which is only loaded when native libs are loaded.
 	 */
@@ -115,7 +115,7 @@ public class FileFunc
 		public static final String CPU_ID;
 		public static final String[] NATIVE_SEARCH_PATHS;
 		public static final String OS_ID;
-		
+
 		static
 		{
 			final Object[] strings = AccessController.doPrivileged( new PrivilegedAction<Object[]>()
@@ -185,7 +185,7 @@ public class FileFunc
 					// Next, our CPU ID and its compatible variants.
 					boolean knownCpu = true;
 					ArrayList<String> cpuNames = new ArrayList<>();
-					
+
 					String cpuName = System.getProperty( "jboss.modules.cpu-name" );
 					if ( cpuName == null )
 					{
@@ -295,13 +295,13 @@ public class FileFunc
 								knownCpu = false;
 								cpuName = "unknown";
 							}
-							
+
 							boolean be = false;
 							boolean hf = false;
-							
+
 							if ( knownCpu && hasEndian && "big".equals( System.getProperty( "sun.cpu.endian", "little" ) ) )
 								be = true;
-							
+
 							if ( knownCpu && hasHardFloatABI )
 							{
 								String archAbi = System.getProperty( "sun.arch.abi" );
@@ -319,7 +319,7 @@ public class FileFunc
 								if ( hf )
 									cpuName += "-hf";
 							}
-							
+
 							if ( knownCpu )
 							{
 								switch ( cpuName )
@@ -377,7 +377,7 @@ public class FileFunc
 							}
 						}
 					}
-					
+
 					// Finally, search paths.
 					final int cpuCount = cpuNames.size();
 					String[] searchPaths = new String[cpuCount];
@@ -389,7 +389,7 @@ public class FileFunc
 						}
 					else
 						searchPaths = new String[0];
-					
+
 					return new Object[] {osName, cpuName, osName + "-" + cpuName, searchPaths};
 				}
 			} );
@@ -399,18 +399,18 @@ public class FileFunc
 			NATIVE_SEARCH_PATHS = ( String[] ) strings[3];
 		}
 	}
-	
+
 	public static class SortableFile implements Comparable<SortableFile>
 	{
 		public long t;
 		public File f;
-		
+
 		public SortableFile( File file )
 		{
 			f = file;
 			t = file.lastModified();
 		}
-		
+
 		@Override
 		public int compareTo( SortableFile o )
 		{
@@ -418,44 +418,43 @@ public class FileFunc
 			return t < u ? -1 : t == u ? 0 : 1;
 		}
 	}
-	
+
 	public static final String PATH_SEPERATOR = File.separator;
-	
+
 	public static String buildPath( String... path )
 	{
 		StringBuilder builder = new StringBuilder();
-		
+
 		boolean first = true;
-		char separator = File.pathSeparatorChar;
-		
+
 		for ( String node : path )
 		{
 			if ( node.isEmpty() )
 				continue;
-			
+
 			if ( !first )
-				builder.append( separator );
-			
+				builder.append( PATH_SEPERATOR );
+
 			builder.append( node );
-			
+
 			first = false;
 		}
-		
+
 		return builder.toString();
 	}
-	
+
 	public static File calculateFileBase( String path )
 	{
 		return calculateFileBase( path, null );
 	}
-	
+
 	/**
 	 * Calculate a file location
-	 * 
+	 *
 	 * @param path
-	 *            Base file path
+	 *             Base file path
 	 * @param site
-	 *            Site that is used in relative
+	 *             Site that is used in relative
 	 * @return A File object calculated
 	 */
 	public static File calculateFileBase( String path, Site site )
@@ -464,21 +463,21 @@ public class FileFunc
 		{
 			path = path.replace( "[pwd]", Loader.getServerRoot().getAbsolutePath() );
 			path = path.replace( "[web]", Loader.getWebRoot().getAbsolutePath() );
-			
+
 			if ( site != null )
 				path = path.replace( "[site]", site.rootDirectory().getAbsolutePath() );
 		}
-		
+
 		return new File( path );
 	}
-	
+
 	/**
 	 * This method copies one file to another location
-	 * 
+	 *
 	 * @param inFile
-	 *            the source filename
+	 *             the source filename
 	 * @param outFile
-	 *            the target filename
+	 *             the target filename
 	 * @return true on success
 	 */
 	@SuppressWarnings( "resource" )
@@ -486,18 +485,18 @@ public class FileFunc
 	{
 		if ( !inFile.exists() )
 			return false;
-		
+
 		FileChannel in = null;
 		FileChannel out = null;
-		
+
 		try
 		{
 			in = new FileInputStream( inFile ).getChannel();
 			out = new FileOutputStream( outFile ).getChannel();
-			
+
 			long pos = 0;
 			long size = in.size();
-			
+
 			while ( pos < size )
 				pos += in.transferTo( pos, 10 * 1024 * 1024, out );
 		}
@@ -519,55 +518,55 @@ public class FileFunc
 				return false;
 			}
 		}
-		
+
 		return true;
 	}
-	
+
 	public static DirectoryInfo directoryHealthCheck( File file )
 	{
 		Validate.notNull( file );
-		
+
 		if ( file.isFile() )
 			if ( !file.delete() )
 				return DirectoryInfo.DELETE_FAILED;
-		
+
 		if ( file.getParentFile() != null && file.getParentFile().exists() && !file.getParentFile().canWrite() )
 			return DirectoryInfo.PERMISSION_FAILED;
-		
+
 		if ( !file.exists() )
 			if ( !file.mkdirs() )
 				return DirectoryInfo.CREATE_FAILED;
-		
+
 		if ( !file.canWrite() )
 			return DirectoryInfo.PERMISSION_FAILED;
-		
+
 		return DirectoryInfo.DIRECTORY_HEALTHY;
 	}
-	
+
 	public static void directoryHealthCheckWithException( File file ) throws IOException
 	{
 		DirectoryInfo info = directoryHealthCheck( file );
-		
+
 		if ( info != DirectoryInfo.DIRECTORY_HEALTHY )
 			throw new IOException( info.getDescription( file ) );
 	}
-	
+
 	public static void extractLibraries( File jarFile, File baseDir )
 	{
 		try
 		{
 			baseDir = new File( baseDir, "libraries" );
 			// FileFunc.directoryHealthCheck( baseDir );
-			
+
 			if ( jarFile == null || !jarFile.exists() || !jarFile.getName().endsWith( ".jar" ) )
 				PluginManager.getLogger().severe( "There was a problem with the provided jar file, it was either null, not existent or did not end with jar." );
-			
+
 			JarFile jar = new JarFile( jarFile );
-			
+
 			try
 			{
 				ZipEntry libDir = jar.getEntry( "libraries" );
-				
+
 				if ( libDir != null ) // && libDir.isDirectory() )
 				{
 					Enumeration<JarEntry> entries = jar.entries();
@@ -577,7 +576,7 @@ public class FileFunc
 						if ( entry.getName().startsWith( libDir.getName() ) && !entry.isDirectory() && entry.getName().endsWith( ".jar" ) )
 						{
 							File lib = new File( baseDir, entry.getName().substring( libDir.getName().length() + 1 ) );
-							
+
 							if ( !lib.exists() )
 							{
 								lib.getParentFile().mkdirs();
@@ -588,7 +587,7 @@ public class FileFunc
 								is.close();
 								out.close();
 							}
-							
+
 							Libraries.loadLibrary( lib );
 						}
 					}
@@ -604,50 +603,50 @@ public class FileFunc
 			PluginManager.getLogger().severe( "We had a problem extracting bundled libraries from jar file '" + jarFile.getAbsolutePath() + "'", t );
 		}
 	}
-	
+
 	public static boolean extractNatives( File libFile, File baseDir ) throws IOException
 	{
 		List<String> nativesExtracted = Lists.newArrayList();
 		boolean foundArchMatchingNative = false;
-		
+
 		baseDir = new File( baseDir, "natives" );
 		// FileFunc.directoryHealthCheck( baseDir );
-		
+
 		if ( libFile == null || !libFile.exists() || !libFile.getName().endsWith( ".jar" ) )
 			throw new IOException( "There was a problem with the provided jar file, it was either null, not existent or did not end with jar." );
-		
+
 		JarFile jar = new JarFile( libFile );
 		Enumeration<JarEntry> entries = jar.entries();
-		
+
 		while ( entries.hasMoreElements() )
 		{
 			JarEntry entry = entries.nextElement();
-			
+
 			if ( !entry.isDirectory() && ( entry.getName().endsWith( ".so" ) || entry.getName().endsWith( ".dll" ) || entry.getName().endsWith( ".jnilib" ) || entry.getName().endsWith( ".dylib" ) ) )
 				try
 				{
 					File internal = new File( entry.getName() );
 					String newName = internal.getName();
-					
+
 					String os = System.getProperty( "os.name" );
 					if ( os.contains( " " ) )
 						os = os.substring( 0, os.indexOf( " " ) );
 					os = os.replaceAll( "\\W", "" );
 					os = os.toLowerCase();
-					
+
 					String parent = internal.getParentFile().getName();
-					
+
 					if ( parent.startsWith( os ) || parent.startsWith( "windows" ) || parent.startsWith( "linux" ) || parent.startsWith( "darwin" ) || parent.startsWith( "osx" ) || parent.startsWith( "solaris" ) || parent.startsWith( "cygwin" ) || parent.startsWith( "mingw" ) || parent.startsWith( "msys" ) )
 						newName = parent + "/" + newName;
-					
+
 					if ( Arrays.asList( OSInfo.NATIVE_SEARCH_PATHS ).contains( parent ) )
 						foundArchMatchingNative = true;
-					
+
 					File lib = new File( baseDir, newName );
-					
+
 					if ( lib.exists() && nativesExtracted.contains( lib.getAbsolutePath() ) )
 						PluginManager.getLogger().warning( LogColor.GOLD + "We detected more than one file with the destination '" + lib.getAbsolutePath() + "', if these files from for different architectures, you might need to seperate them into their seperate folders, i.e., windows, linux-x86, linux-x86_64, etc." );
-					
+
 					if ( !lib.exists() )
 					{
 						lib.getParentFile().mkdirs();
@@ -658,7 +657,7 @@ public class FileFunc
 						is.close();
 						out.close();
 					}
-					
+
 					if ( !nativesExtracted.contains( lib.getAbsolutePath() ) )
 						nativesExtracted.add( lib.getAbsolutePath() );
 				}
@@ -668,17 +667,17 @@ public class FileFunc
 					throw new IOException( "We had a problem extracting native library '" + entry.getName() + "' from jar file '" + libFile.getAbsolutePath() + "'", e );
 				}
 		}
-		
+
 		jar.close();
-		
+
 		if ( nativesExtracted.size() > 0 )
 		{
 			if ( !foundArchMatchingNative )
 				PluginManager.getLogger().warning( LogColor.DARK_GRAY + "We found native libraries contained within jar '" + libFile.getAbsolutePath() + "' but according to conventions none of them had the required architecture, the dependency may fail to load the required native if our theory is correct." );
-			
-			String path = ( baseDir.getAbsolutePath().contains( " " ) ) ? "\"" + baseDir.getAbsolutePath() + "\"" : baseDir.getAbsolutePath();
+
+			String path = baseDir.getAbsolutePath().contains( " " ) ? "\"" + baseDir.getAbsolutePath() + "\"" : baseDir.getAbsolutePath();
 			System.setProperty( "java.library.path", System.getProperty( "java.library.path" ) + ":" + path );
-			
+
 			try
 			{
 				Field fieldSysPath = ClassLoader.class.getDeclaredField( "sys_paths" );
@@ -690,24 +689,24 @@ public class FileFunc
 				PluginManager.getLogger().severe( "We could not force the ClassLoader to reinitalize the LD_LIBRARY_PATH variable. You may need to set '-Djava.library.path=" + baseDir.getAbsolutePath() + "' on next load because one or more dependencies may fail to load their native libraries.", e );
 			}
 		}
-		
+
 		return nativesExtracted.size() > 0;
 	}
-	
+
 	public static boolean extractNatives( Map<String, List<String>> natives, File libFile, File baseDir ) throws IOException
 	{
 		if ( !MapCaster.containsKeys( natives, Arrays.asList( OSInfo.NATIVE_SEARCH_PATHS ) ) )
 			PluginManager.getLogger().warning( String.format( "%sWe were unable to locate any natives libraries that match architectures '%s' within plugin '%s'.", LogColor.DARK_GRAY, Joiner.on( ", '" ).join( OSInfo.NATIVE_SEARCH_PATHS ), libFile.getAbsolutePath() ) );
-		
+
 		List<String> nativesExtracted = Lists.newArrayList();
 		baseDir = new File( baseDir, "natives" );
 		// FileFunc.directoryHealthCheck( baseDir );
-		
+
 		if ( libFile == null || !libFile.exists() || !libFile.getName().endsWith( ".jar" ) )
 			throw new IOException( "There was a problem with the provided jar file, it was either null, not existent or did not end with jar." );
-		
+
 		JarFile jar = new JarFile( libFile );
-		
+
 		for ( String arch : OSInfo.NATIVE_SEARCH_PATHS )
 		{
 			List<String> libs = natives.get( arch.toLowerCase() );
@@ -716,22 +715,22 @@ public class FileFunc
 					try
 					{
 						ZipEntry entry = jar.getEntry( lib );
-						
+
 						if ( entry == null || entry.isDirectory() )
 						{
 							entry = jar.getEntry( "natives/" + lib );
-							
+
 							if ( entry == null || entry.isDirectory() )
 								PluginManager.getLogger().warning( String.format( "We were unable to load the native lib '%s' for arch '%s' for it was non-existent (or it's a directory) within plugin '%s'.", lib, arch, libFile ) );
 						}
-						
+
 						if ( entry != null && !entry.isDirectory() )
 						{
 							if ( !entry.getName().endsWith( ".so" ) && !entry.getName().endsWith( ".dll" ) && !entry.getName().endsWith( ".jnilib" ) && !entry.getName().endsWith( ".dylib" ) )
 								PluginManager.getLogger().warning( String.format( "We found native lib '%s' for arch '%s' within plugin '%s', but it did not end with a known native library ext. We will extract it anyways but you may have problems.", lib, arch, libFile ) );
-							
+
 							File newNative = new File( baseDir + "/" + arch + "/" + new File( entry.getName() ).getName() );
-							
+
 							if ( !newNative.exists() )
 							{
 								newNative.getParentFile().mkdirs();
@@ -742,7 +741,7 @@ public class FileFunc
 								is.close();
 								out.close();
 							}
-							
+
 							nativesExtracted.add( entry.getName() );
 							// PluginManager.getLogger().severe( String.format( "We were unable to load the native lib '%s' for arch '%s' within plugin '%s' for an unknown reason.", lib, arch, libFile ) );
 						}
@@ -753,10 +752,10 @@ public class FileFunc
 						throw new IOException( String.format( "We had a problem extracting native library '%s' from jar file '%s'", lib, libFile.getAbsolutePath() ), e );
 					}
 		}
-		
+
 		// Enumeration<JarEntry> entries = jar.entries();
 		jar.close();
-		
+
 		if ( nativesExtracted.size() > 0 )
 		{
 			LibraryPath path = new LibraryPath();
@@ -764,7 +763,7 @@ public class FileFunc
 			for ( String arch : OSInfo.NATIVE_SEARCH_PATHS )
 				path.add( baseDir.getAbsolutePath() + "/" + arch );
 			path.set();
-			
+
 			try
 			{
 				Field fieldSysPath = ClassLoader.class.getDeclaredField( "sys_paths" );
@@ -776,26 +775,26 @@ public class FileFunc
 				PluginManager.getLogger().severe( "We could not force the ClassLoader to reinitalize the LD_LIBRARY_PATH variable. You may need to set '-Djava.library.path=" + baseDir.getAbsolutePath() + "' on next load because one or more dependencies may fail to load their native libraries.", e );
 			}
 		}
-		
+
 		return nativesExtracted.size() > 0;
 	}
-	
+
 	public static boolean extractZipResource( String path, File dest ) throws IOException
 	{
 		return extractZipResource( path, dest, Loader.class );
 	}
-	
+
 	public static boolean extractZipResource( String path, File dest, Class<?> clz ) throws IOException
 	{
 		File temp = new File( Loader.getTempFileDirectory(), "temp.zip" );
 		putResource( clz, path, temp );
-		
+
 		ZipFile zip = new ZipFile( temp );
-		
+
 		try
 		{
 			Enumeration<? extends ZipEntry> entries = zip.entries();
-			
+
 			while ( entries.hasMoreElements() )
 			{
 				ZipEntry entry = entries.nextElement();
@@ -814,101 +813,101 @@ public class FileFunc
 			zip.close();
 			temp.delete();
 		}
-		
+
 		return true;
 	}
-	
+
 	public static File fileHealthCheck( File file ) throws IOException
 	{
 		Validate.notNull( file );
-		
+
 		if ( file.exists() && file.isDirectory() )
 			file = new File( file, "default" );
-		
+
 		if ( !file.exists() )
 			file.createNewFile();
-		
+
 		return file;
 	}
-	
+
 	public static void gzFile( File source ) throws IOException
 	{
 		gzFile( source, new File( source + ".gz" ) );
 	}
-	
+
 	public static void gzFile( File source, File dest ) throws IOException
 	{
 		byte[] buffer = new byte[1024];
-		
+
 		GZIPOutputStream gzos = new GZIPOutputStream( new FileOutputStream( dest ) );
-		
+
 		FileInputStream in = new FileInputStream( source );
-		
+
 		int len;
 		while ( ( len = in.read( buffer ) ) > 0 )
 			gzos.write( buffer, 0, len );
-		
+
 		in.close();
-		
+
 		gzos.finish();
 		gzos.close();
 	}
-	
+
 	public static ByteArrayOutputStream inputStream2ByteArray( InputStream is ) throws IOException
 	{
 		int nRead;
 		byte[] data = new byte[16384];
 		ByteArrayOutputStream bs = new ByteArrayOutputStream();
-		
+
 		while ( ( nRead = is.read( data, 0, data.length ) ) != -1 )
 			bs.write( data, 0, nRead );
-		
+
 		bs.flush();
-		
+
 		return bs;
 	}
-	
+
 	public static byte[] inputStream2Bytes( InputStream is ) throws IOException
 	{
 		return inputStream2ByteArray( is ).toByteArray();
 	}
-	
+
 	public static String nameSpaceToPath( String namespace )
 	{
 		return nameSpaceToPath( namespace, false );
 	}
-	
+
 	public static String nameSpaceToPath( String namespace, boolean flip )
 	{
 		String output = "";
-		
+
 		if ( flip )
 			for ( String s : namespace.split( "\\." ) )
 				output = s + "." + output;
-		
+
 		return output.replaceAll( "\\.", PATH_SEPERATOR );
 	}
-	
+
 	public static void patchDirectory( File dir )
 	{
 		patchDirectory( dir, true, true );
 	}
-	
+
 	public static void patchDirectory( File dir, boolean writable, boolean readable )
 	{
 		if ( !dir.isDirectory() )
 			dir.delete();
-		
+
 		if ( !dir.exists() )
 			dir.mkdirs();
-		
+
 		if ( !dir.canWrite() )
 			dir.setWritable( writable );
-		
+
 		if ( !dir.canRead() )
 			dir.setWritable( readable );
 	}
-	
+
 	public static void putResource( Class<?> clz, String resource, File file ) throws IOException
 	{
 		try
@@ -926,31 +925,31 @@ public class FileFunc
 			throw new IOException( e );
 		}
 	}
-	
+
 	public static void putResource( String resource, File file ) throws IOException
 	{
 		putResource( Loader.class, resource, file );
 	}
-	
+
 	public static List<File> recursiveFiles( final File dir )
 	{
 		return recursiveFiles( dir, 9999 );
 	}
-	
+
 	private static List<File> recursiveFiles( final File start, final File current, final int depth, final int maxDepth, final String regexPattern )
 	{
 		final List<File> files = Lists.newArrayList();
-		
+
 		current.list( new FilenameFilter()
 		{
 			@Override
 			public boolean accept( File dir, String name )
 			{
 				dir = new File( dir, name );
-				
+
 				if ( dir.isDirectory() && depth < maxDepth )
 					files.addAll( recursiveFiles( start, dir, depth + 1, maxDepth, regexPattern ) );
-				
+
 				if ( dir.isFile() )
 				{
 					String filename = dir.getAbsolutePath();
@@ -958,49 +957,49 @@ public class FileFunc
 					if ( regexPattern == null || filename.matches( regexPattern ) )
 						files.add( dir );
 				}
-				
+
 				return false;
 			}
 		} );
-		
+
 		return files;
 	}
-	
+
 	public static List<File> recursiveFiles( final File dir, final int maxDepth )
 	{
 		return recursiveFiles( dir, maxDepth, null );
 	}
-	
+
 	public static List<File> recursiveFiles( final File dir, final int maxDepth, final String regexPattern )
 	{
 		return recursiveFiles( dir, dir, 0, maxDepth, regexPattern );
 	}
-	
+
 	public static String resourceToString( String resource ) throws UnsupportedEncodingException, IOException
 	{
 		return resourceToString( resource, Loader.class );
 	}
-	
+
 	public static String resourceToString( String resource, Class<?> clz ) throws UnsupportedEncodingException, IOException
 	{
 		InputStream is = clz.getClassLoader().getResourceAsStream( resource );
-		
+
 		if ( is == null )
 			return null;
-		
+
 		return new String( inputStream2Bytes( is ), "UTF-8" );
 	}
-	
+
 	/**
 	 * List directory contents for a resource folder. Not recursive.
 	 * This is basically a brute-force implementation.
 	 * Works for regular files and also JARs.
-	 * 
+	 *
 	 * @author Greg Briggs
 	 * @param clazz
-	 *            Any java class that lives in the same place as the resources you want.
+	 *             Any java class that lives in the same place as the resources you want.
 	 * @param path
-	 *            Should end with "/", but not start with one.
+	 *             Should end with "/", but not start with one.
 	 * @return Just the name of each member item, not the full paths.
 	 * @throws URISyntaxException
 	 * @throws IOException
@@ -1008,7 +1007,7 @@ public class FileFunc
 	String[] getResourceListing( Class<?> clazz, String path ) throws URISyntaxException, IOException
 	{
 		URL dirURL = clazz.getClassLoader().getResource( path );
-		
+
 		if ( dirURL == null )
 		{
 			/*
@@ -1018,11 +1017,11 @@ public class FileFunc
 			String me = clazz.getName().replace( ".", "/" ) + ".class";
 			dirURL = clazz.getClassLoader().getResource( me );
 		}
-		
+
 		if ( dirURL.getProtocol().equals( "file" ) )
 			/* A file path: easy enough */
 			return new File( dirURL.toURI() ).list();
-		
+
 		if ( dirURL.getProtocol().equals( "jar" ) )
 		{
 			/* A JAR path */
@@ -1046,7 +1045,7 @@ public class FileFunc
 			jar.close();
 			return result.toArray( new String[result.size()] );
 		}
-		
+
 		if ( dirURL.getProtocol().equals( "zip" ) )
 		{
 			/* A ZIP path */
@@ -1070,7 +1069,7 @@ public class FileFunc
 			zip.close();
 			return result.toArray( new String[result.size()] );
 		}
-		
+
 		throw new UnsupportedOperationException( "Cannot list files for URL " + dirURL );
 	}
 }

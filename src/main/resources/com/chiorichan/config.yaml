@@ -132,6 +132,8 @@ packages:
   - jsp
   - chi
 advanced:
+  cache:
+    keepHistory: 30
   processors:
     imageProcessorEnabled: true
     imageProcessorCache: true

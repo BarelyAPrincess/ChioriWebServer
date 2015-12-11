@@ -23,33 +23,33 @@ public class RequiresParser extends HTMLCommentParser
 	ScriptingContext context;
 	ScriptingFactory factory;
 	Site site;
-	
+
 	public RequiresParser()
 	{
 		super( "require" );
 	}
-	
+
 	@Override
 	public String resolveMethod( String... args ) throws Exception
 	{
 		if ( args.length > 2 )
 			Loader.getLogger().warning( "EvalFactory: require() method only accepts one argument, ignored." );
-		
+
 		// TODO Prevent infinite loops!
-		ScriptingResult result = factory.eval( ScriptingContext.fromAuto( context.site(), args[1] ).request( context.request() ) );
-		
+		ScriptingResult result = factory.eval( ScriptingContext.fromPackage( context.site(), args[1] ).request( context.request() ).require() );
+
 		if ( result.hasExceptions() )
 			ReportingLevel.throwExceptions( result.getExceptions() );
-		
+
 		return result.getString();
 	}
-	
+
 	public String runParser( String source, Site site, ScriptingContext context, ScriptingFactory factory ) throws Exception
 	{
 		this.site = site;
 		this.factory = factory;
 		this.context = context;
-		
+
 		return runParser( source );
 	}
 }

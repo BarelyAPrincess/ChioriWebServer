@@ -239,15 +239,23 @@ public class FileSite implements Site
 		if ( onLoadScripts != null )
 			for ( String script : onLoadScripts )
 			{
-				ScriptingResult result = factory.eval( ScriptingContext.fromFile( this, script ).shell( "groovy" ).site( this ) );
-
-				if ( result.hasExceptions() )
+				ScriptingResult result;
+				try
 				{
-					SiteManager.getLogger().severe( String.format( "Exception caught while evaling onLoadScript '%s' for site '%s'", script, siteId ) );
-					SiteManager.getLogger().exceptions( result.getExceptions() );
+					result = factory.eval( ScriptingContext.fromFile( this, script ).shell( "groovy" ).site( this ) );
+
+					if ( result.hasExceptions() )
+					{
+						SiteManager.getLogger().severe( String.format( "Exception caught while evaling onLoadScript '%s' for site '%s'", script, siteId ) );
+						SiteManager.getLogger().exceptions( result.getExceptions() );
+					}
+					else
+						Loader.getLogger().info( String.format( "Finished evaling onLoadScript '%s' for site '%s' with result: %s", script, siteId, result.getString( true ) ) );
 				}
-				else
-					Loader.getLogger().info( "Finsihed evaling onLoadScript '" + script + "' for site '" + siteId + "' with result: " + result.getString( true ) );
+				catch ( FileNotFoundException e )
+				{
+					Loader.getLogger().severe( String.format( "Failed to eval onLoadScript '%s' for site '%s' because the file was not found.", script, siteId ) );
+				}
 			}
 
 		/**
@@ -544,7 +552,7 @@ public class FileSite implements Site
 			}
 		}
 
-		throw new FileNotFoundException( String.format( "Could not find the file '%s' file in site public directory '%s'.", file, getName() ) );
+		throw new FileNotFoundException( String.format( "Could not find the file '%s' file in site '%s' resource directory '%s'.", file, getName(), root.getAbsolutePath() ) );
 	}
 
 	@Override
