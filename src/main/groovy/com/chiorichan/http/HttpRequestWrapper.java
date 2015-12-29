@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.Loader;
@@ -52,13 +51,17 @@ import com.chiorichan.session.SessionManager;
 import com.chiorichan.session.SessionWrapper;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
+import com.chiorichan.site.SiteMapping;
 import com.chiorichan.tasks.Timings;
+import com.chiorichan.util.Namespace;
 import com.chiorichan.util.NetworkFunc;
 import com.chiorichan.util.ObjectFunc;
+import com.chiorichan.util.Pair;
 import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -91,8 +94,6 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	 */
 	private final Channel channel;
 
-	protected String childDomainName = null;
-
 	/**
 	 * The size of the posted content
 	 */
@@ -117,9 +118,6 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	 * Instance of LogEvent used by this request
 	 */
 	final LogEvent log;
-
-	// Cached domain names.
-	protected String parentDomainName = null;
 
 	/**
 	 * The Post Map
@@ -171,6 +169,16 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	 */
 	private String uri = null;
 
+	/**
+	 * The requested root domain
+	 */
+	private String parentDomain;
+
+	/**
+	 * The requested child domain
+	 */
+	private String childDomain = "";
+
 	HttpRequestWrapper( Channel channel, HttpRequest http, boolean ssl, LogEvent log ) throws IOException
 	{
 		this.channel = channel;
@@ -186,12 +194,61 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		// Create a matching HttpResponseWrapper
 		response = new HttpResponseWrapper( this, log );
 
-		// Get Site based on requested domain
-		String domain = getParentDomain();
-		site = SiteManager.INSTANCE.getSiteByDomain( domain );
+		String host = getHostDomain();
+
+		if ( host == null || host.length() == 0 )
+		{
+			parentDomain = "";
+			site = SiteManager.INSTANCE.getDefaultSite();
+		}
+		else if ( NetworkFunc.isValidIPv4( host ) || NetworkFunc.isValidIPv6( host ) )
+		{
+			parentDomain = host;
+			site = SiteManager.INSTANCE.getSiteByIp( host ).get( 0 );
+		}
+		else
+		{
+			Pair<String, SiteMapping> match = SiteMapping.get( host );
+
+			if ( match == null )
+			{
+				parentDomain = host;
+				site = SiteManager.INSTANCE.getDefaultSite();
+			}
+			else
+			{
+				parentDomain = match.getKey();
+				Namespace hostNamespace = new Namespace( host );
+				Namespace parentNamespace = new Namespace( parentDomain );
+				Namespace childNamespace = hostNamespace.subNamespace( 0, hostNamespace.getNodeCount() - parentNamespace.getNodeCount() );
+				assert hostNamespace.getNodeCount() - parentNamespace.getNodeCount() == childNamespace.getNodeCount();
+				childDomain = childNamespace.getNamespace();
+
+				site = match.getValue().getSite();
+			}
+		}
 
 		if ( site == null )
 			site = SiteManager.INSTANCE.getDefaultSite();
+
+		if ( site == SiteManager.INSTANCE.getDefaultSite() && getUri().startsWith( "/~" ) )
+		{
+			List<String> uris = Splitter.on( "/" ).omitEmptyStrings().splitToList( getUri() );
+			String siteId = uris.get( 0 ).substring( 1 );
+
+			Site siteTmp = SiteManager.INSTANCE.getSiteById( siteId );
+			if ( !siteId.equals( "wisp" ) && siteTmp != null )
+			{
+				site = siteTmp;
+				uri = "/" + Joiner.on( "/" ).join( uris.subList( 1, uris.size() ) );
+
+				// TODO Implement both a virtual and real URI for use in redirects and url_to()
+				String[] domains = site.getDomains().keySet().toArray( new String[0] );
+				parentDomain = domains.length == 0 ? host : domains[0];
+			}
+		}
+
+		// log.log( Level.INFO, "SiteId: " + site.getSiteId() + ", ParentDomain: " + parentDomain + ", ChildDomain: " + childDomain );
 
 		// Decode Get Map
 		QueryStringDecoder queryStringDecoder = new QueryStringDecoder( http.uri() );
@@ -233,50 +290,6 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			}
 
 		initServerVars();
-	}
-
-	/**
-	 * Calculates both the SubDomain and ParentDomain from the Host Header and saves them in Strings
-	 */
-	public void calculateDomainName()
-	{
-		childDomainName = "";
-		parentDomainName = "";
-
-		if ( http.headers().get( "Host" ) != null )
-		{
-			String domain = http.headers().getAndConvert( "Host" ).toLowerCase();
-
-			assert domain != null;
-
-			if ( domain.contains( ":" ) )
-				domain = domain.substring( 0, domain.indexOf( ":" ) ).trim(); // Remove port number.
-
-			if ( domain.toLowerCase().endsWith( "localhost" ) || domain.equalsIgnoreCase( "127.0.0.1" ) || domain.equalsIgnoreCase( getLocalIpAddr() ) || domain.toLowerCase().endsWith( getLocalHostName() ) )
-				domain = "";
-
-			if ( domain == null || domain.isEmpty() )
-				return;
-
-			if ( domain.startsWith( "." ) )
-				domain = domain.substring( 1 );
-
-			if ( NetworkFunc.isValidIPv4( domain ) || NetworkFunc.isValidIPv6( domain ) )
-				// We can't get subdomains from IPv4 or IPv6 addresses.
-				parentDomainName = domain;
-			else
-			{
-				int periodCount = StringUtils.countMatches( domain, "." );
-
-				if ( periodCount < 2 )
-					parentDomainName = domain;
-				else
-				{
-					childDomainName = domain.substring( 0, domain.lastIndexOf( ".", domain.lastIndexOf( "." ) - 1 ) );
-					parentDomainName = domain.substring( domain.lastIndexOf( ".", domain.lastIndexOf( "." ) - 1 ) + 1 );
-				}
-			}
-		}
 	}
 
 	@Override
@@ -341,8 +354,8 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	{
 		String url = getDomain();
 
-		if ( getSubDomain() != null && !getSubDomain().isEmpty() )
-			url = getSubDomain() + "." + url;
+		if ( getSubdomain() != null && !getSubdomain().isEmpty() )
+			url = getSubdomain() + "." + url;
 
 		return ( isSecure() ? "https://" : "http://" ) + url;
 	}
@@ -374,23 +387,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 	public String getDomain()
 	{
-		try
-		{
-			String domain = http.headers().getAndConvert( "Host" );
-			domain = domain.split( "\\:" )[0];
-
-			if ( NetworkFunc.isValidIPv4( domain ) )
-				return domain;
-
-			if ( StringUtils.countMatches( ".", domain ) > 1 )
-				domain.substring( 0, domain.lastIndexOf( '.', domain.lastIndexOf( '.' - 1 ) ) );
-
-			return domain;
-		}
-		catch ( NullPointerException e )
-		{
-			return "";
-		}
+		return parentDomain == null ? "" : parentDomain;
 	}
 
 	public String getFullDomain()
@@ -466,6 +463,13 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	public String getHost()
 	{
 		return http.headers().getAndConvert( "Host" );
+	}
+
+	private String getHostDomain()
+	{
+		if ( http.headers().contains( "Host" ) )
+			return http.headers().getAndConvert( "Host" ).split( "\\:" )[0];
+		return null;
 	}
 
 	public HttpVersion getHttpVersion()
@@ -572,18 +576,6 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	public String getParameter( String key )
 	{
 		return null;
-	}
-
-	/**
-	 *
-	 * @return a string containing the main domain from the request. ie. test.example.com or example.com = "example.com"
-	 */
-	public String getParentDomain()
-	{
-		if ( parentDomainName == null || childDomainName == null )
-			calculateDomainName();
-
-		return parentDomainName == null ? "" : parentDomainName;
 	}
 
 	public Map<String, Object> getPostMap()
@@ -706,16 +698,9 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		return site;
 	}
 
-	/**
-	 *
-	 * @return A string containing the subdomain from the request. ie. test.example.com = "test"
-	 */
-	public String getSubDomain()
+	public String getSubdomain()
 	{
-		if ( parentDomainName == null || childDomainName == null )
-			calculateDomainName();
-
-		return childDomainName == null ? "" : childDomainName;
+		return childDomain == null ? "" : childDomain;
 	}
 
 	public Map<String, UploadedFile> getUploadedFiles()
@@ -1110,9 +1095,9 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		}
 
 		// Will we ever be using a session on more than one domains?
-		if ( !getParentDomain().isEmpty() && session.getSessionCookie() != null && !session.getSessionCookie().getDomain().isEmpty() )
-			if ( !session.getSessionCookie().getDomain().endsWith( getParentDomain() ) )
-				NetworkManager.getLogger().warning( "The site `" + site.getSiteId() + "` specifies the session cookie domain as `" + session.getSessionCookie().getDomain() + "` but the request was made on parent domain `" + getParentDomain() + "`. The session will not remain persistent." );
+		if ( !getDomain().isEmpty() && session.getSessionCookie() != null && !session.getSessionCookie().getDomain().isEmpty() )
+			if ( !session.getSessionCookie().getDomain().endsWith( getDomain() ) )
+				NetworkManager.getLogger().warning( "The site `" + site.getSiteId() + "` specifies the session cookie domain as `" + session.getSessionCookie().getDomain() + "` but the request was made on parent domain `" + getDomain() + "`. The session will not remain persistent." );
 	}
 
 	protected void setSite( Site site )

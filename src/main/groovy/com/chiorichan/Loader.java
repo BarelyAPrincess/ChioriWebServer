@@ -530,6 +530,9 @@ public class Loader extends BuiltinRegistrar implements Listener
 			Loader.getLogger().info( "Shutting Down Task Manager..." );
 			TaskManager.INSTANCE.shutdown();
 
+			Loader.getLogger().info( "Shutting Down Site Manager..." );
+			SiteManager.INSTANCE.unloadSites();
+
 			Loader.getLogger().info( "Saving Configuration..." );
 			Loader.saveConfig();
 
@@ -1092,6 +1095,8 @@ public class Loader extends BuiltinRegistrar implements Listener
 
 			getLogger().info( "Initalizing the File Watcher Subsystem..." );
 			ServerFileWatcher.init();
+
+			// XXX There seems to be a problem registering sync'd tasks before this point
 		}
 		catch ( Throwable e )
 		{

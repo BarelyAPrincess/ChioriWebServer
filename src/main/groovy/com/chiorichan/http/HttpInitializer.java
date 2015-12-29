@@ -24,19 +24,18 @@ import com.google.common.collect.Lists;
 public class HttpInitializer extends ChannelInitializer<SocketChannel>
 {
 	public static final List<WeakReference<SocketChannel>> activeChannels = Lists.newCopyOnWriteArrayList();
-	
+
 	@Override
 	protected void initChannel( SocketChannel ch ) throws Exception
 	{
 		ChannelPipeline p = ch.pipeline();
-		
-		// p.addLast( new LoggingHandler( LogLevel.INFO ) );
+
 		p.addLast( "decoder", new HttpRequestDecoder() );
 		p.addLast( "aggregator", new HttpObjectAggregator( 104857600 ) ); // One Hundred Megabytes
 		p.addLast( "encoder", new HttpResponseEncoder() );
 		p.addLast( "deflater", new HttpContentCompressor() );
 		p.addLast( "handler", new HttpHandler( false ) );
-		
+
 		activeChannels.add( new WeakReference<SocketChannel>( ch ) );
 	}
 }

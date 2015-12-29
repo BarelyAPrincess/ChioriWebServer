@@ -6,7 +6,7 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.https;
+package com.chiorichan.http;
 
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -16,16 +16,21 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
 
-import com.chiorichan.http.HttpHandler;
+import java.lang.ref.WeakReference;
+import java.util.List;
+
 import com.chiorichan.net.NetworkManager;
+import com.google.common.collect.Lists;
 
 public class HttpsInitializer extends ChannelInitializer<SocketChannel>
 {
+	public static final List<WeakReference<SocketChannel>> activeChannels = Lists.newCopyOnWriteArrayList();
+
 	@Override
 	protected void initChannel( SocketChannel ch ) throws Exception
 	{
 		ChannelPipeline p = ch.pipeline();
-		
+
 		try
 		{
 			p.addLast( HttpsManager.INSTANCE.getSniHandler() );
@@ -35,11 +40,13 @@ public class HttpsInitializer extends ChannelInitializer<SocketChannel>
 			NetworkManager.shutdownHttpsServer();
 			throw new IllegalStateException( "The SSL engine failed to initalize", e );
 		}
-		
+
 		p.addLast( "decoder", new HttpRequestDecoder() );
 		p.addLast( "aggregator", new HttpObjectAggregator( Integer.MAX_VALUE ) );
 		p.addLast( "encoder", new HttpResponseEncoder() );
 		p.addLast( "deflater", new HttpContentCompressor() );
 		p.addLast( "handler", new HttpHandler( true ) );
+
+		activeChannels.add( new WeakReference<SocketChannel>( ch ) );
 	}
 }

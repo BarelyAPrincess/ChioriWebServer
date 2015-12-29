@@ -46,7 +46,6 @@ import com.chiorichan.plugin.lang.PluginNotFoundException;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.session.Session;
 import com.chiorichan.site.Site;
-import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.SecureFunc;
@@ -447,12 +446,7 @@ public abstract class ScriptingBaseJava extends Script
 	public String domain( String subdomain )
 	{
 		String url = subdomain != null && !subdomain.isEmpty() ? subdomain + "." : "";
-
-		if ( getSite() != null )
-			url += getSite().getDomain() + "/";
-		else
-			url += SiteManager.INSTANCE.getDefaultSite().getDomain() + "/";
-
+		url += getRequest().getDomain() + "/";
 		return url;
 	}
 

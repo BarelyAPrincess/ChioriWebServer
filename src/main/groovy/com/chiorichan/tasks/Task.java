@@ -26,17 +26,17 @@ class Task implements ITask, Runnable
 	private final Runnable task;
 	private final TaskRegistrar creator;
 	private final int id;
-	
+
 	Task()
 	{
 		this( null, null, -1, -1 );
 	}
-	
+
 	Task( final Runnable task )
 	{
 		this( null, task, -1, -1 );
 	}
-	
+
 	Task( final TaskRegistrar creator, final Runnable task, final int id, final long period )
 	{
 		this.creator = creator;
@@ -44,75 +44,93 @@ class Task implements ITask, Runnable
 		this.id = id;
 		this.period = period;
 	}
-	
-	public final int getTaskId()
-	{
-		return id;
-	}
-	
-	public final TaskRegistrar getOwner()
-	{
-		return creator;
-	}
-	
-	public boolean isSync()
-	{
-		return true;
-	}
-	
-	public void run()
-	{
-		task.run();
-	}
-	
-	long getPeriod()
-	{
-		return period;
-	}
-	
-	void setPeriod( long period )
-	{
-		this.period = period;
-	}
-	
-	long getNextRun()
-	{
-		return nextRun;
-	}
-	
-	void setNextRun( long nextRun )
-	{
-		this.nextRun = nextRun;
-	}
-	
-	Task getNext()
-	{
-		return next;
-	}
-	
-	void setNext( Task next )
-	{
-		this.next = next;
-	}
-	
-	Class<? extends Runnable> getTaskClass()
-	{
-		return task.getClass();
-	}
-	
+
+	@Override
 	public void cancel()
 	{
 		TaskManager.INSTANCE.cancelTask( id );
 	}
-	
+
 	/**
 	 * This method properly sets the status to cancelled, synchronizing when required.
-	 * 
-	 * @return false if it is a craft future task that has already begun execution, true otherwise
+	 *
+	 * @return false if it is a future task that has already begun execution, true otherwise
 	 */
 	boolean cancel0()
 	{
 		setPeriod( -2L );
 		return true;
+	}
+
+	/**
+	 * This method compares a runnable to the scheduled task to determine if it belongs to this Task
+	 *
+	 * @param r
+	 *             The runnable to compare
+	 * @return
+	 *         Does the runnable compare to the scheduled task
+	 */
+	boolean compare( Runnable r )
+	{
+		return r == task;
+	}
+
+	Task getNext()
+	{
+		return next;
+	}
+
+	long getNextRun()
+	{
+		return nextRun;
+	}
+
+	@Override
+	public final TaskRegistrar getOwner()
+	{
+		return creator;
+	}
+
+	long getPeriod()
+	{
+		return period;
+	}
+
+	Class<? extends Runnable> getTaskClass()
+	{
+		return task.getClass();
+	}
+
+	@Override
+	public final int getTaskId()
+	{
+		return id;
+	}
+
+	@Override
+	public boolean isSync()
+	{
+		return true;
+	}
+
+	@Override
+	public void run()
+	{
+		task.run();
+	}
+
+	void setNext( Task next )
+	{
+		this.next = next;
+	}
+
+	void setNextRun( long nextRun )
+	{
+		this.nextRun = nextRun;
+	}
+
+	void setPeriod( long period )
+	{
+		this.period = period;
 	}
 }

@@ -465,7 +465,7 @@ public class FileFunc
 			path = path.replace( "[web]", Loader.getWebRoot().getAbsolutePath() );
 
 			if ( site != null )
-				path = path.replace( "[site]", site.rootDirectory().getAbsolutePath() );
+				path = path.replace( "[site]", site.directory().getAbsolutePath() );
 		}
 
 		return new File( path );

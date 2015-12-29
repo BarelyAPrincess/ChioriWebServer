@@ -56,14 +56,14 @@ import com.google.common.collect.Sets;
 public class StringFunc
 {
 	// private static final String IPADDRESS_PATTERN = "^([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])$";
-	
+
 	// public static boolean validateIpAddress( final String ipAddress )
 	// {
 	// Pattern pattern = Pattern.compile( IPADDRESS_PATTERN );
 	// Matcher matcher = pattern.matcher( ipAddress );
 	// return matcher.matches();
 	// }
-	
+
 	public static byte[] byteBuf2Bytes( ByteBuf buf )
 	{
 		byte[] bytes = new byte[buf.readableBytes()];
@@ -71,21 +71,21 @@ public class StringFunc
 		buf.getBytes( readerIndex, bytes );
 		return bytes;
 	}
-	
+
 	public static String byteBuf2String( ByteBuf buf, Charset charset )
 	{
 		return new String( byteBuf2Bytes( buf ), charset );
 	}
-	
+
 	public static String bytesToStringUTFNIO( byte[] bytes )
 	{
 		if ( bytes == null )
 			return null;
-		
+
 		CharBuffer cBuffer = ByteBuffer.wrap( bytes ).asCharBuffer();
 		return cBuffer.toString();
 	}
-	
+
 	/**
 	 * Returns true if either array contains elements from the other
 	 */
@@ -98,119 +98,119 @@ public class StringFunc
 				return true;
 		return false;
 	}
-	
+
 	public static boolean containsValidChars( String ref )
 	{
 		return ref.matches( "[a-z0-9_]*" );
 	}
-	
+
 	/**
 	 * Copies all elements from the iterable collection of originals to the collection provided.
-	 * 
+	 *
 	 * @param token
-	 *            String to search for
+	 *             String to search for
 	 * @param originals
-	 *            An iterable collection of strings to filter.
+	 *             An iterable collection of strings to filter.
 	 * @param collection
-	 *            The collection to add matches to
+	 *             The collection to add matches to
 	 * @return the collection provided that would have the elements copied into
 	 * @throws UnsupportedOperationException
-	 *             if the collection is immutable and originals contains a string which starts with the specified search
-	 *             string.
+	 *              if the collection is immutable and originals contains a string which starts with the specified search
+	 *              string.
 	 * @throws IllegalArgumentException
-	 *             if any parameter is is null
+	 *              if any parameter is is null
 	 * @throws IllegalArgumentException
-	 *             if originals contains a null element. <b>Note: the collection may be modified before this is thrown</b>
+	 *              if originals contains a null element. <b>Note: the collection may be modified before this is thrown</b>
 	 */
 	public static <T extends Collection<String>> T copyPartialMatches( final String token, final Iterable<String> originals, final T collection ) throws UnsupportedOperationException, IllegalArgumentException
 	{
 		Validate.notNull( token, "Search token cannot be null" );
 		Validate.notNull( collection, "Collection cannot be null" );
 		Validate.notNull( originals, "Originals cannot be null" );
-		
+
 		for ( String string : originals )
 			if ( startsWithIgnoreCase( string, token ) )
 				collection.add( string );
-		
+
 		return collection;
 	}
-	
+
 	@Deprecated
 	public static byte[] decodeBase64( byte[] bytes )
 	{
 		return Base64.decodeBase64( bytes );
 	}
-	
+
 	@Deprecated
 	public static byte[] decodeBase64( String var )
 	{
 		return Base64.decodeBase64( var );
 	}
-	
+
 	@Deprecated
 	public static String encodeBase64( byte[] bytes )
 	{
 		return Base64.encodeBase64String( bytes );
 	}
-	
+
 	@Deprecated
 	public static String encodeBase64( String var )
 	{
 		return encodeBase64( var.getBytes() );
 	}
-	
+
 	public static String escapeFormat( String msg )
 	{
 		return msg.replaceAll( "%", "%%" );
 	}
-	
+
 	/**
 	 * Determines if a string is all lowercase using the toLowerCase() method.
-	 * 
+	 *
 	 * @param str
-	 *            The string to check
+	 *             The string to check
 	 * @return Is it all lowercase?
 	 */
 	public static boolean isLowercase( String str )
 	{
 		return str.toLowerCase().equals( str );
 	}
-	
+
 	public static boolean isNull( String var )
 	{
 		return var == null || var.toLowerCase().trim().equals( "null" );
 	}
-	
+
 	public static boolean isTrue( String arg )
 	{
 		if ( arg == null )
 			return false;
-		
-		return ( arg.equalsIgnoreCase( "true" ) || arg.equalsIgnoreCase( "1" ) );
+
+		return arg.equalsIgnoreCase( "true" ) || arg.equalsIgnoreCase( "1" );
 	}
-	
+
 	/**
 	 * Determines if a string is all uppercase using the toUpperCase() method.
-	 * 
+	 *
 	 * @param str
-	 *            The string to check
+	 *             The string to check
 	 * @return Is it all uppercase?
 	 */
 	public static boolean isUppercase( String str )
 	{
 		return str.toUpperCase().equals( str );
 	}
-	
+
 	public static boolean isValidMD5( String s )
 	{
 		return s.matches( "[a-fA-F0-9]{32}" );
 	}
-	
+
 	public static String join( String[] args )
 	{
 		return Joiner.on( " " ).join( args );
 	}
-	
+
 	/**
 	 * See {@link Arrays#copyOfRange(Object[], int, int)}
 	 */
@@ -218,7 +218,7 @@ public class StringFunc
 	{
 		return join( Arrays.copyOfRange( args, start, args.length ) );
 	}
-	
+
 	/**
 	 * See {@link Arrays#copyOfRange(Object[], int, int)}
 	 */
@@ -226,40 +226,40 @@ public class StringFunc
 	{
 		return join( Arrays.copyOfRange( args, start, end ) );
 	}
-	
+
 	public static String limitLength( String text, int max )
 	{
 		if ( text.length() <= max )
 			return text;
 		return text.substring( 0, max ) + "...";
 	}
-	
+
 	@Deprecated
 	public static String md5( byte[] bytes )
 	{
 		return DigestUtils.md5Hex( bytes );
 	}
-	
+
 	@Deprecated
 	public static String md5( String str )
 	{
 		if ( str == null )
 			return null;
-		
+
 		return DigestUtils.md5Hex( str );
 	}
-	
+
 	public static Color parseColor( String color )
 	{
 		Pattern c = Pattern.compile( "rgb *\\( *([0-9]+), *([0-9]+), *([0-9]+) *\\)" );
 		Matcher m = c.matcher( color );
-		
+
 		// First try to parse RGB(0,0,0);
 		if ( m.matches() )
 			return new Color( Integer.valueOf( m.group( 1 ) ), // r
 			Integer.valueOf( m.group( 2 ) ), // g
 			Integer.valueOf( m.group( 3 ) ) ); // b
-			
+
 		try
 		{
 			Field field = Class.forName( "java.awt.Color" ).getField( color.trim().toUpperCase() );
@@ -268,7 +268,7 @@ public class StringFunc
 		catch ( Exception e )
 		{
 		}
-		
+
 		try
 		{
 			return Color.decode( color );
@@ -276,63 +276,79 @@ public class StringFunc
 		catch ( Exception e )
 		{
 		}
-		
+
 		return null;
 	}
-	
+
 	public static Object parseJson( String text )
 	{
 		JsonSlurper slurper = new JsonSlurper();
 		return slurper.parseText( text );
 	}
-	
+
 	public static String randomChars( String seed, int length )
 	{
 		Validate.notEmpty( seed );
-		
+
 		StringBuilder sb = new StringBuilder();
-		
+
 		for ( int i = 0; i < length; i++ )
 			sb.append( seed.toCharArray()[new Random().nextInt( seed.length() )] );
-		
+
 		return sb.toString();
 	}
-	
+
+	public static String regexCapture( String var, String regex )
+	{
+		return regexCapture( var, regex, 1 );
+	}
+
+	public static String regexCapture( String var, String regex, int group )
+	{
+		Pattern p = Pattern.compile( regex );
+		Matcher m = p.matcher( var );
+
+		if ( !m.find() )
+			return null;
+
+		return m.group( group );
+	}
+
 	public static String removeInvalidChars( String ref )
 	{
 		return ref.replaceAll( "[^a-zA-Z0-9!#$%&'*+-/=?^_`{|}~@\\. ]", "" );
 	}
-	
+
 	public static String removeLetters( String input )
 	{
 		return input.replaceAll( "[a-zA-Z]", "" );
 	}
-	
+
 	public static String removeLettersLower( String input )
 	{
 		return input.replaceAll( "[a-z]", "" );
 	}
-	
+
 	public static String removeLettersUpper( String input )
 	{
 		return input.replaceAll( "[A-Z]", "" );
 	}
-	
+
 	public static String removeNumbers( String input )
 	{
 		return input.replaceAll( "\\d", "" );
 	}
-	
+
 	public static String removeSpecial( String input )
 	{
 		return input.replaceAll( "\\W", "" );
 	}
-	
+
 	public static String removeWhitespace( String input )
 	{
 		return input.replaceAll( "\\s", "" );
 	}
-	
+
 	public static List<String> repeatToList( String chr, int length )
 	{
 		List<String> list = Lists.newArrayList();
@@ -340,27 +356,27 @@ public class StringFunc
 			list.add( chr );
 		return list;
 	}
-	
+
 	public static String replaceAt( String par, int at, String rep )
 	{
 		StringBuilder sb = new StringBuilder( par );
 		sb.setCharAt( at, rep.toCharArray()[0] );
 		return sb.toString();
 	}
-	
+
 	/**
 	 * This method uses a substring to check case-insensitive equality. This means the internal array does not need to be
 	 * copied like a toLowerCase() call would.
-	 * 
+	 *
 	 * @param string
-	 *            String to check
+	 *             String to check
 	 * @param prefix
-	 *            Prefix of string to compare
+	 *             Prefix of string to compare
 	 * @return true if provided string starts with, ignoring case, the prefix provided
 	 * @throws NullPointerException
-	 *             if prefix is null
+	 *              if prefix is null
 	 * @throws IllegalArgumentException
-	 *             if string is null
+	 *              if string is null
 	 */
 	public static boolean startsWithIgnoreCase( final String string, final String prefix ) throws IllegalArgumentException, NullPointerException
 	{
@@ -369,7 +385,7 @@ public class StringFunc
 			return false;
 		return string.substring( 0, prefix.length() ).equalsIgnoreCase( prefix );
 	}
-	
+
 	public static byte[] stringToBytesASCII( String str )
 	{
 		byte[] b = new byte[str.length()];
@@ -377,7 +393,7 @@ public class StringFunc
 			b[i] = ( byte ) str.charAt( i );
 		return b;
 	}
-	
+
 	public static byte[] stringToBytesUTF( String str )
 	{
 		byte[] b = new byte[str.length() << 1];
@@ -390,12 +406,12 @@ public class StringFunc
 		}
 		return b;
 	}
-	
+
 	/**
 	 * Scans a string list for entries that are not lower case.
-	 * 
+	 *
 	 * @param strings
-	 *            The original list to check.
+	 *             The original list to check.
 	 * @return Lowercase string array.
 	 */
 	public static String[] toLowerCase( Collection<String> strings )
@@ -406,115 +422,115 @@ public class StringFunc
 				result.add( string.toLowerCase() );
 		return result.toArray( new String[0] );
 	}
-	
+
 	/**
 	 * Scans a string array for entries that are not lower case.
-	 * 
+	 *
 	 * @param stringList
-	 *            The original array to check.
+	 *             The original array to check.
 	 * @return The corrected string array.
 	 */
 	public static String[] toLowerCase( String... array )
 	{
 		return toLowerCase( Arrays.asList( array ) );
 	}
-	
+
 	public static Collection<String> toLowerCaseList( Collection<String> strings )
 	{
 		List<String> result = Lists.newArrayList();
-		
+
 		for ( String string : strings )
 			result.add( string.toLowerCase() );
-		
+
 		return result;
 	}
-	
+
 	/**
 	 * Scans a string array for entries that are not lower case.
-	 * 
+	 *
 	 * @param stringList
-	 *            The original array to check.
+	 *             The original array to check.
 	 * @return The corrected string array.
 	 */
 	public static Collection<String> toLowerCaseList( String... array )
 	{
 		return toLowerCaseList( Arrays.asList( array ) );
 	}
-	
+
 	/**
 	 * Trim specified character from both ends of a String
-	 * 
+	 *
 	 * @param text
-	 *            Text
+	 *             Text
 	 * @param character
-	 *            Character to remove
+	 *             Character to remove
 	 * @return Trimmed text
 	 */
 	public static String trimAll( String text, char character )
 	{
 		String normalizedText = trimFront( text, character );
-		
+
 		return trimEnd( normalizedText, character );
 	}
-	
+
 	/**
 	 * Trim specified character from end of string
-	 * 
+	 *
 	 * @param text
-	 *            Text
+	 *             Text
 	 * @param character
-	 *            Character to remove
+	 *             Character to remove
 	 * @return Trimmed text
 	 */
 	public static String trimEnd( String text, char character )
 	{
 		String normalizedText;
 		int index;
-		
+
 		if ( text == null || text.isEmpty() )
 			return text;
-		
+
 		normalizedText = text.trim();
 		index = normalizedText.length() - 1;
-		
+
 		while ( normalizedText.charAt( index ) == character )
 			if ( --index < 0 )
 				return "";
 		return normalizedText.substring( 0, index + 1 ).trim();
 	}
-	
+
 	/**
 	 * Trim specified character from front of string
-	 * 
+	 *
 	 * @param text
-	 *            Text
+	 *             Text
 	 * @param character
-	 *            Character to remove
+	 *             Character to remove
 	 * @return Trimmed text
 	 */
 	public static String trimFront( String text, char character )
 	{
 		String normalizedText;
 		int index;
-		
+
 		if ( text == null || text.isEmpty() )
 			return text;
-		
+
 		normalizedText = text.trim();
 		index = -1;
-		
+
 		do
 			index++;
 		while ( index < normalizedText.length() && normalizedText.charAt( index ) == character );
-		
+
 		return normalizedText.substring( index ).trim();
 	}
-	
+
 	public static Collection<String> wrap( Collection<String> col )
 	{
 		return wrap( col, '`' );
 	}
-	
+
 	public static Collection<String> wrap( final Collection<String> col, char wrap )
 	{
 		synchronized ( col )
@@ -524,15 +540,15 @@ public class StringFunc
 			for ( int i = 0; i < strs.length; i++ )
 				col.add( wrap( strs[i], wrap ) );
 		}
-		
+
 		return col;
 	}
-	
+
 	public static List<String> wrap( List<String> list )
 	{
 		return wrap( list, '`' );
 	}
-	
+
 	public static List<String> wrap( final List<String> list, char wrap )
 	{
 		List<String> newList;
@@ -547,18 +563,18 @@ public class StringFunc
 			Loader.getLogger().warning( "Could not find List type for class " + list.getClass() );
 			newList = Lists.newLinkedList();
 		}
-		
+
 		for ( String str : list )
 			newList.add( wrap( str, wrap ) );
-		
+
 		return newList;
 	}
-	
+
 	public static Map<String, String> wrap( Map<String, String> map )
 	{
 		return wrap( map, '`', '\'' );
 	}
-	
+
 	public static Map<String, String> wrap( final Map<String, String> map, char keyWrap, char valueWrap )
 	{
 		Map<String, String> newMap;
@@ -577,19 +593,19 @@ public class StringFunc
 			Loader.getLogger().warning( "Could not find Map type for class " + map.getClass() );
 			newMap = Maps.newLinkedHashMap();
 		}
-		
+
 		for ( Entry<String, String> e : map.entrySet() )
 			if ( e.getKey() != null && !e.getKey().isEmpty() )
 				newMap.put( keyWrap + e.getKey() + keyWrap, valueWrap + ( e.getValue() == null ? "" : e.getValue() ) + valueWrap );
-		
+
 		return newMap;
 	}
-	
+
 	public static Set<String> wrap( Set<String> set )
 	{
 		return wrap( set, '`' );
 	}
-	
+
 	public static Set<String> wrap( final Set<String> set, char wrap )
 	{
 		Set<String> newSet;
@@ -610,13 +626,13 @@ public class StringFunc
 			Loader.getLogger().warning( "Could not find Set type for class " + set.getClass() );
 			newSet = Sets.newLinkedHashSet();
 		}
-		
+
 		for ( String str : set )
 			newSet.add( wrap( str, wrap ) );
-		
+
 		return newSet;
 	}
-	
+
 	public static String wrap( String str, char wrap )
 	{
 		return String.format( "%s%s%s", wrap, str, wrap );

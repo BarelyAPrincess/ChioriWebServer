@@ -20,7 +20,7 @@ import org.apache.commons.codec.binary.Hex;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 
-public class ObjectFunc
+public class ObjectFunc<T>
 {
 	private static final char[] BYTE2CHAR = new char[256];
 	private static final String[] BYTE2HEX = new String[256];
@@ -28,16 +28,16 @@ public class ObjectFunc
 	private static final String[] HEXDUMP_ROWPREFIXES = new String[65536 >>> 4];
 	private static final String[] HEXPADDING = new String[16];
 	private static final String NEWLINE = StringUtil.NEWLINE;
-	
+
 	static
 	{
 		int i;
-		
+
 		// Generate the lookup table for byte-to-hex-dump conversion
 		for ( i = 0; i < BYTE2HEX.length; i++ )
 			// XXX Fix this! Might requite Netty Alpha 2
 			BYTE2HEX[i] = ' ' + "";// + StringUtil.byteToHexStringPadded( i );
-		
+
 		// Generate the lookup table for hex dump paddings
 		for ( i = 0; i < HEXPADDING.length; i++ )
 		{
@@ -47,7 +47,7 @@ public class ObjectFunc
 				buf.append( "   " );
 			HEXPADDING[i] = buf.toString();
 		}
-		
+
 		// Generate the lookup table for byte dump paddings
 		for ( i = 0; i < BYTEPADDING.length; i++ )
 		{
@@ -57,14 +57,14 @@ public class ObjectFunc
 				buf.append( ' ' );
 			BYTEPADDING[i] = buf.toString();
 		}
-		
+
 		// Generate the lookup table for byte-to-char conversion
 		for ( i = 0; i < BYTE2CHAR.length; i++ )
 			if ( i <= 0x1f || i >= 0x7f )
 				BYTE2CHAR[i] = '.';
 			else
 				BYTE2CHAR[i] = ( char ) i;
-		
+
 		// Generate the lookup table for the start-offset header in each row (up to 64KiB).
 		for ( i = 0; i < HEXDUMP_ROWPREFIXES.length; i++ )
 		{
@@ -76,7 +76,7 @@ public class ObjectFunc
 			HEXDUMP_ROWPREFIXES[i] = buf.toString();
 		}
 	}
-	
+
 	/**
 	 * Appends the prefix of each hex dump row. Uses the look-up table for the buffer <= 64 KiB.
 	 */
@@ -92,7 +92,7 @@ public class ObjectFunc
 			dump.append( '|' );
 		}
 	}
-	
+
 	@SuppressWarnings( "unchecked" )
 	public static <O> O castThis( Class<?> clz, Object o )
 	{
@@ -133,15 +133,15 @@ public class ObjectFunc
 					}
 					catch ( Exception e4 )
 					{
-						
+
 					}
 				}
 			}
 		}
-		
+
 		return null;
 	}
-	
+
 	public static Boolean castToBool( Object value )
 	{
 		try
@@ -153,20 +153,20 @@ public class ObjectFunc
 			return false;
 		}
 	}
-	
+
 	public static Boolean castToBoolWithException( Object value ) throws ClassCastException
 	{
 		if ( value == null )
 			throw new ClassCastException( "Can't cast `null` to Boolean" );
-		
+
 		if ( value.getClass() == boolean.class || value.getClass() == Boolean.class )
 			return ( boolean ) value;
-		
+
 		String val = castToStringWithException( value );
-		
+
 		if ( val == null )
 			throw new ClassCastException( "Uncaught Convertion to Boolean of Type: " + value.getClass().getName() );
-		
+
 		switch ( val.trim().toLowerCase() )
 		{
 			case "yes":
@@ -185,7 +185,7 @@ public class ObjectFunc
 				throw new ClassCastException( "Uncaught Convertion to Boolean of Type: " + value.getClass().getName() );
 		}
 	}
-	
+
 	public static Double castToDouble( Object value )
 	{
 		try
@@ -197,7 +197,7 @@ public class ObjectFunc
 			return 0D;
 		}
 	}
-	
+
 	public static Double castToDoubleWithException( Object value )
 	{
 		if ( value == null )
@@ -211,13 +211,13 @@ public class ObjectFunc
 		if ( value instanceof Double )
 			return ( Double ) value;
 		if ( value instanceof Boolean )
-			return ( ( boolean ) value ) ? 1D : 0D;
+			return ( boolean ) value ? 1D : 0D;
 		if ( value instanceof BigDecimal )
 			return ( ( BigDecimal ) value ).setScale( 0, BigDecimal.ROUND_HALF_UP ).doubleValue();
-		
+
 		throw new ClassCastException( "Uncaught Convertion to Integer of Type: " + value.getClass().getName() );
 	}
-	
+
 	public static Integer castToInt( Object value )
 	{
 		try
@@ -229,7 +229,7 @@ public class ObjectFunc
 			return -1;
 		}
 	}
-	
+
 	public static Integer castToIntWithException( Object value )
 	{
 		if ( value == null )
@@ -246,13 +246,13 @@ public class ObjectFunc
 		if ( value instanceof Double )
 			return ( Integer ) value;
 		if ( value instanceof Boolean )
-			return ( ( boolean ) value ) ? 1 : 0;
+			return ( boolean ) value ? 1 : 0;
 		if ( value instanceof BigDecimal )
 			return ( ( BigDecimal ) value ).setScale( 0, BigDecimal.ROUND_HALF_UP ).intValue();
-		
+
 		throw new ClassCastException( "Uncaught Convertion to Integer of Type: " + value.getClass().getName() );
 	}
-	
+
 	public static Long castToLong( Object value )
 	{
 		try
@@ -265,7 +265,7 @@ public class ObjectFunc
 			return 0L;
 		}
 	}
-	
+
 	public static Long castToLongWithException( Object value )
 	{
 		if ( value == null )
@@ -279,13 +279,13 @@ public class ObjectFunc
 		if ( value instanceof Double )
 			return Long.parseLong( "" + value );
 		if ( value instanceof Boolean )
-			return ( ( boolean ) value ) ? 1L : 0L;
+			return ( boolean ) value ? 1L : 0L;
 		if ( value instanceof BigDecimal )
 			return ( ( BigDecimal ) value ).setScale( 0, BigDecimal.ROUND_HALF_UP ).longValue();
-		
+
 		throw new ClassCastException( "Uncaught Convertion to Long of Type: " + value.getClass().getName() );
 	}
-	
+
 	public static String castToString( Object value )
 	{
 		try
@@ -297,7 +297,7 @@ public class ObjectFunc
 			return null;
 		}
 	}
-	
+
 	@SuppressWarnings( "rawtypes" )
 	public static String castToStringWithException( Object value ) throws ClassCastException
 	{
@@ -312,17 +312,17 @@ public class ObjectFunc
 		if ( value instanceof Double )
 			return Double.toString( ( double ) value );
 		if ( value instanceof Boolean )
-			return ( ( boolean ) value ) ? "true" : "false";
+			return ( boolean ) value ? "true" : "false";
 		if ( value instanceof BigDecimal )
 			return ( ( BigDecimal ) value ).toString();
 		if ( value instanceof Map )
 			return Joiner.on( "," ).withKeyValueSeparator( "=" ).join( ( Map ) value );
 		if ( value instanceof List )
 			return Joiner.on( "," ).join( ( List ) value );
-		
+
 		throw new ClassCastException( "Uncaught Convertion to String of Type: " + value.getClass().getName() );
 	}
-	
+
 	public static String hex2Readable( byte... elements )
 	{
 		// TODO Char Dump
@@ -330,13 +330,13 @@ public class ObjectFunc
 		char[] chars = Hex.encodeHex( elements, true );
 		for ( int i = 0; i < chars.length; i = i + 2 )
 			result += " " + chars[i] + chars[i + 1];
-		
+
 		if ( result.length() > 0 )
 			result = result.substring( 1 );
-		
+
 		return result;
 	}
-	
+
 	public static String hex2Readable( int... elements )
 	{
 		byte[] e2 = new byte[elements.length];
@@ -344,100 +344,100 @@ public class ObjectFunc
 			e2[i] = ( byte ) elements[i];
 		return hex2Readable( e2 );
 	}
-	
+
 	public static String hexDump( ByteBuf buf )
 	{
 		return hexDump( buf, buf.readerIndex() );
 	}
-	
+
 	public static String hexDump( ByteBuf buf, int highlightIndex )
 	{
 		if ( buf == null )
 			return "Buffer: null!";
-		
+
 		if ( buf.capacity() < 1 )
 			return "Buffer: 0B!";
-		
+
 		StringBuilder dump = new StringBuilder();
-		
+
 		final int startIndex = 0;
 		final int endIndex = buf.capacity();
 		final int length = endIndex - startIndex;
 		final int fullRows = length >>> 4;
 		final int remainder = length & 0xF;
-		
+
 		int highlightRow = -1;
-		
+
 		dump.append( NEWLINE + "         +-------------------------------------------------+" + NEWLINE + "         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |" + NEWLINE + "+--------+-------------------------------------------------+----------------+" );
-		
+
 		if ( highlightIndex > 0 )
 		{
 			highlightRow = highlightIndex >>> 4;
-			highlightIndex = highlightIndex - ( 16 * highlightRow ) - 1;
-			
+			highlightIndex = highlightIndex - 16 * highlightRow - 1;
+
 			dump.append( NEWLINE + "|        |" + Strings.repeat( "   ", highlightIndex ) + " $$" + Strings.repeat( "   ", 15 - highlightIndex ) );
 			dump.append( " |" + Strings.repeat( " ", highlightIndex ) + "$" + Strings.repeat( " ", 15 - highlightIndex ) + "|" );
 		}
-		
+
 		// Dump the rows which have 16 bytes.
 		for ( int row = 0; row < fullRows; row++ )
 		{
 			int rowStartIndex = row << 4;
-			
+
 			// Per-row prefix.
 			appendHexDumpRowPrefix( dump, row, rowStartIndex );
-			
+
 			// Hex dump
 			int rowEndIndex = rowStartIndex + 16;
 			for ( int j = rowStartIndex; j < rowEndIndex; j++ )
 				dump.append( BYTE2HEX[buf.getUnsignedByte( j )] );
 			dump.append( " |" );
-			
+
 			// ASCII dump
 			for ( int j = rowStartIndex; j < rowEndIndex; j++ )
 				dump.append( BYTE2CHAR[buf.getUnsignedByte( j )] );
 			dump.append( '|' );
-			
+
 			if ( highlightIndex > 0 && highlightRow == row + 1 )
 				dump.append( " <--" );
 		}
-		
+
 		// Dump the last row which has less than 16 bytes.
 		if ( remainder != 0 )
 		{
 			int rowStartIndex = fullRows << 4;
 			appendHexDumpRowPrefix( dump, fullRows, rowStartIndex );
-			
+
 			// Hex dump
 			int rowEndIndex = rowStartIndex + remainder;
 			for ( int j = rowStartIndex; j < rowEndIndex; j++ )
 				dump.append( BYTE2HEX[buf.getUnsignedByte( j )] );
 			dump.append( HEXPADDING[remainder] );
 			dump.append( " |" );
-			
+
 			// Ascii dump
 			for ( int j = rowStartIndex; j < rowEndIndex; j++ )
 				dump.append( BYTE2CHAR[buf.getUnsignedByte( j )] );
 			dump.append( BYTEPADDING[remainder] );
 			dump.append( '|' );
-			
+
 			if ( highlightIndex > 0 && highlightRow > fullRows + 1 )
 				dump.append( " <--" );
 		}
-		
+
 		dump.append( NEWLINE + "+--------+-------------------------------------------------+----------------+" );
-		
+
 		return dump.toString();
 	}
-	
+
 	public static Boolean isNull( Object o )
 	{
 		if ( o == null )
 			return true;
-		
+
 		return false;
 	}
-	
+
 	public static int safeLongToInt( long l )
 	{
 		if ( l < Integer.MIN_VALUE )
@@ -445,5 +445,19 @@ public class ObjectFunc
 		if ( l > Integer.MAX_VALUE )
 			return Integer.MAX_VALUE;
 		return ( int ) l;
+	}
+
+	@SuppressWarnings( {"unchecked", "unused"} )
+	public boolean instanceOf( Object obj )
+	{
+		try
+		{
+			T testCast = ( T ) obj;
+			return true;
+		}
+		catch ( ClassCastException e )
+		{
+			return false;
+		}
 	}
 }

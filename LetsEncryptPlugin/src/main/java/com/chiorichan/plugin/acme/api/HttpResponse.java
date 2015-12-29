@@ -9,12 +9,14 @@ import com.chiorichan.Loader;
 
 public class HttpResponse
 {
+	private final String target;
 	private final int status;
 	private final Map<String, List<String>> responseHeaders;
 	private final byte[] body;
 
-	public HttpResponse( int status, Map<String, List<String>> responseHeaders, byte[] body )
+	public HttpResponse( String target, int status, Map<String, List<String>> responseHeaders, byte[] body )
 	{
+		this.target = target;
 		this.status = status;
 		this.responseHeaders = responseHeaders;
 		this.body = body;
@@ -22,10 +24,15 @@ public class HttpResponse
 
 	public void debug()
 	{
-		Loader.getLogger().debug( "Debug Post Response: " + new String( getBody() ) );
+		Loader.getLogger().info( "Debug HttpResponse:" );
+
+		Loader.getLogger().info( "\tTaget: " + target );
+		Loader.getLogger().info( "\tStatus: " + status );
+		Loader.getLogger().info( "\tResponse: " + new String( body ) );
+		Loader.getLogger().info( "\tHeaders:" );
 
 		for ( String key : headerKeys() )
-			Loader.getLogger().debug( key + ": " + getHeaderString( key ) );
+			Loader.getLogger().info( "\t\t" + key + ": " + getHeaderString( key ) );
 	}
 
 	public byte[] getBody()
@@ -44,6 +51,11 @@ public class HttpResponse
 	public int getStatus()
 	{
 		return status;
+	}
+
+	public String getTarget()
+	{
+		return target;
 	}
 
 	public Set<String> headerKeys()
@@ -89,6 +101,6 @@ public class HttpResponse
 	@Override
 	public String toString()
 	{
-		return String.format( "status='%s',body='%s',headers='%s'", status, new String( body ), headersString() );
+		return String.format( "target='%s',status='%s',body='%s',headers='%s'", target, status, new String( body ), headersString() );
 	}
 }

@@ -42,20 +42,41 @@
 9.3.3:
 	DEPRECATED: StringFunc.md5 and base64 methods, use SecureFunc instead
 	DEPRECATED: Session are no longer cleaned up at shutdown to spare a long agonizing shutdown delay
-	UPDATED: Rewrote SSL to be compatible with normal certificates (PEM certs and PKCS8 keys) over ugly java keystores
-	UPDATED: Changed the minimum required version to Java 1.8, this gave us modern SSL protocols and improved API
+	UPDATED: Rewrote SSL to be compatible with normal certificates (PEM certificates and PKCS8 keys) over ugly java keystores
+	UPDATED: Changed the minimum required version to Java 1.8, this gave us modern SSL/TLS protocols and improved API
 	UPDATED: Refactored Tasks Manager methods
-	FIXED: Login redirect bug with code 307
-	FIXED: generateAcctId() more reliable
-	FEATURE: Very basic CSRF security tokens, use annotation '@security: CSRF' to enable per page, form value is at _CRSG_TOKEN global or getSession().getCSRFToken()
-	ADDED: Post redirect method that preserve query strings.
+	FIXED: Login redirect bug with http code 307
+	FIXED: generateAcctId() is now more reliable
+	FEATURE: [WIP] Very basic CSRF security tokens, use annotation '@security: CSRF' to enable per page, form value is at _CRSG_TOKEN global or getSession().getCSRFToken()
+	ADDED: Post redirect method that preserves query strings.
 9.3.4:	
 	DEPRECATED: SQL site configurations
 	UPDATED: Restructured site directories, new conventions using public (root and subdomains) and resource (packages) roots
 	UPDATED: Moved file site configuration to site webroot, /webroot/[siteId]/config.yaml
 	UPDATED: Subdomain 'www' redirects to root domain if non-existent
-	FEATURE: SSL per site and subdomain feature
-	FEATURE: [WIP] Implemented new ACME SSL certificate plugin, inital mockup
-
+	FEATURE: SSL per site and subdomain
+	FEATURE: [WIP] Implemented new ACME SSL certificate plugin, initial mockup. Say hello to Let's Encrypt and start securing the web for free
+9.3.5:
+	DEPRECATED: Site aliases and metatags, feature will be fully removed once alternatives can be conjured up
+	UPDATED: Site configuration files with mismatching siteId and directories will be auto corrected
+	UPDATED: Improved Site Domain and Subdomain configuration, sites can now have multiple domains and be nested within each other, e.g., siteB.siteA.com within siteA.com
+	UPDATED: Sites can now be accessed thru the default site using the tilde character, e.g., http://localhost/~siteId
+	UPDATED: Sites can not have dedicated IPv4 and IPv6 addresses assigned to them, e.g., http://123.123.123.123/ -> SiteA and http://234.234.234.234/ -> SiteB
+	UPDATED: [WIP] Some fleshing out of the new Acme Plugin for Let's Encrypt CA. Finished domain verification function
+	UPDATED: Sites are now properly saved back to their configuration files
+	UPDATED: Changes to YamlConfiguration, added getAsList(), copy(), move(), and improved getList() methods
+	UPDATED: Enabled about 22 additional cipher suites for SSL
+	UPDATED: Moved com.chiorichan.https.* to com.chiorichan.http
+	ADDED: SSL ciphers can be modified from the EnabledCipherSuites.txt file
+	ADDED: Ticks class added to Groovy Imports list
+	ADDED: Added methods prepend(), reverseOrder(), subNamespace(), and subNodes() to Namespace Class
+	ADDED:  regexCapture() method to StringFunc class
+	BUGFIX: Session Cleanup Task fixed by changing it to an async task, there is a major bug with sync'd tasks which was not fixed
+	BUGFIX: include() and require() methods were throwing FileNotFoundException when it should have been logging the exception for retrieval later instead
+	BUGFIX: Improved SSL exception catching, still will need some practical implementing 
 TODO:
-	Implement a SecurityManager
+	1. Implement a SecurityManager
+	2. Update YAML Configuration saving to not override changes made to a configuration file since last read
+	3. Bug fix SYNC'd task issue on load
+	4. Improve JavaDoc quality
+	5. Fix missing method or class exceptions thrown at shutdown

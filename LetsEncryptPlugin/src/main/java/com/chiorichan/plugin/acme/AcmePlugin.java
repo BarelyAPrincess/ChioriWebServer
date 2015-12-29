@@ -1,41 +1,23 @@
 package com.chiorichan.plugin.acme;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.security.InvalidKeyException;
 import java.security.KeyManagementException;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.Validate;
-import org.bouncycastle.openssl.PEMKeyPair;
-import org.bouncycastle.openssl.PEMParser;
-import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
-import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
-
-import com.chiorichan.Loader;
 import com.chiorichan.configuration.file.FileConfiguration;
 import com.chiorichan.net.NetworkManager;
-import com.chiorichan.plugin.acme.api.AcmeChallenge;
 import com.chiorichan.plugin.acme.api.AcmeProtocol;
-import com.chiorichan.plugin.acme.api.SingleAcmeChallenge;
+import com.chiorichan.plugin.acme.api.AcmeStorage;
 import com.chiorichan.plugin.acme.lang.AcmeException;
-import com.chiorichan.plugin.acme.lang.AcmeForbiddenError;
 import com.chiorichan.plugin.lang.PluginException;
 import com.chiorichan.plugin.loader.Plugin;
-import com.chiorichan.site.Site;
-import com.chiorichan.site.SiteManager;
+import com.chiorichan.tasks.TaskManager;
+import com.chiorichan.tasks.Ticks;
 import com.chiorichan.util.FileFunc;
 
 public class AcmePlugin extends Plugin
@@ -43,48 +25,25 @@ public class AcmePlugin extends Plugin
 	protected static final String URL_TESTING = "https://acme-staging.api.letsencrypt.org/directory";
 	protected static final String URL_PRODUCTION = "https://acme-v01.api.letsencrypt.org/directory";
 
+	private String registrationUrl = null;
+	private String[] contacts = null;
+
 	private AcmeProtocol client;
-	private File privateKey;
-	private KeyPair keyPair;
+	private int acmeTaskId;
 
-	private String CertAuthority;
-
-	protected KeyPair generatePrivateKey() throws NoSuchAlgorithmException, IOException
+	public AcmeProtocol getClient()
 	{
-		Validate.notNull( privateKey );
-
-		KeyPairGenerator keyGen = KeyPairGenerator.getInstance( "RSA" );
-		keyGen.initialize( 4096 );
-		KeyPair keyPair = keyGen.generateKeyPair();
-
-		OutputStream stream = new FileOutputStream( privateKey );
-
-		try ( JcaPEMWriter writer = new JcaPEMWriter( new PrintWriter( stream ) ) )
-		{
-			writer.writeObject( keyPair );
-			writer.close();
-		}
-		finally
-		{
-			stream.close();
-		}
-
-		return keyPair;
+		return client;
 	}
 
-	private KeyPair loadPrivateKey() throws IOException
+	protected String[] getContacts()
 	{
-		InputStream stream = new FileInputStream( privateKey );
+		return contacts;
+	}
 
-		try ( PEMParser pemParser = new PEMParser( new InputStreamReader( stream ) ) )
-		{
-			PEMKeyPair keyPair = ( PEMKeyPair ) pemParser.readObject();
-			return new JcaPEMKeyConverter().getKeyPair( keyPair );
-		}
-		finally
-		{
-			stream.close();
-		}
+	protected String getRegistrationUrl()
+	{
+		return registrationUrl;
 	}
 
 	@Override
@@ -119,75 +78,27 @@ public class AcmePlugin extends Plugin
 		File data = getDataFolder();
 		FileFunc.patchDirectory( data );
 
-		privateKey = new File( data, "private.key" );
-
 		try
 		{
-			if ( privateKey.exists() )
-				keyPair = loadPrivateKey();
-			else
-				keyPair = generatePrivateKey();
-		}
-		catch ( NoSuchAlgorithmException | IOException e )
-		{
-			throw new PluginException( "We failed to generate a new private key" );
-		}
+			client = new AcmeProtocol( yaml.getBoolean( "config.production", false ) ? URL_PRODUCTION : URL_TESTING, yaml.getString( "config.agreement" ), new AcmeStorage( data ) );
 
-		client = new AcmeProtocol( yaml.getBoolean( "config.production", false ) ? URL_PRODUCTION : URL_TESTING, yaml.getString( "config.agreement" ), keyPair );
-
-		if ( yaml.getBoolean( "enabled.server" ) )
-		{
-
-		}
-
-		String[] contacts = new String[] {"mailto:chiorigreene@gmail.com"};
-
-		Site site = SiteManager.INSTANCE.getSiteById( "penoaks" );
-
-		try
-		{
-			String registrationUrl = client.newRegistration();
-			AcmeChallenge challenge = client.newChallenge();
-
-			try
+			if ( yaml.getBoolean( "enabled.server" ) )
 			{
-				challenge.add( site.getDomain() );
-			}
-			catch ( AcmeForbiddenError e )
-			{
-				if ( client.signAgreement( registrationUrl, contacts ) )
-					challenge.add( site.getDomain() );
-				else
-					throw new AcmeException( "Failed New Challenge" );
-			}
+				contacts = new String[] {"mailto:" + yaml.getString( "config.email" )};
 
-			for ( SingleAcmeChallenge sac : challenge.getChallenges() )
-				if ( sac.getDomain().equals( site.getDomain() ) )
+				if ( yaml.get( "config.registrationUrl" ) == null )
 				{
-					// TODO Delete Acme Challenge URL
-
-					File acmeChallengeFile = new File( site.publicDirectory(), FileFunc.buildPath( ".well-known", "acme-challenge", sac.getChallengeToken() ) );
-
-					FileUtils.writeStringToFile( acmeChallengeFile, sac.getChallengeContent() );
-
-					sac.verify();
-
-					try
-					{
-						Thread.sleep( 1000L );
-					}
-					catch ( InterruptedException e )
-					{
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-
-					sac.verify();
-
-					getLogger().info( "Domain Challenge: " + sac.lastMessage() );
+					registrationUrl = client.newRegistration();
+					yaml.set( "config.registrationUrl", registrationUrl );
 				}
 				else
-					Loader.getLogger().debug( "Error with Domain" );
+					registrationUrl = yaml.getString( "config.registrationUrl" );
+				// TODO Verify registrationUrl
+
+				acmeTaskId = TaskManager.INSTANCE.scheduleSyncRepeatingTask( this, 0L, Ticks.DAY, new AcmeScheduledTask( this ) );
+			}
+			else
+				throw new PluginException( "HTTPS server is disabled, Acme Plugin can't manage certificates without it enabled" );
 		}
 		catch ( InvalidKeyException | KeyManagementException | UnrecoverableKeyException | SignatureException | NoSuchAlgorithmException | KeyStoreException | AcmeException | IOException e )
 		{
@@ -198,6 +109,7 @@ public class AcmePlugin extends Plugin
 	@Override
 	public void onLoad() throws PluginException
 	{
-
+		if ( acmeTaskId > 0 )
+			TaskManager.INSTANCE.cancelTask( acmeTaskId );
 	}
 }

@@ -1,5 +1,6 @@
 package com.chiorichan.plugin.acme.api;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -8,11 +9,13 @@ import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.KeyManagementException;
+import java.security.KeyPair;
 import java.security.KeyStoreException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.UnrecoverableKeyException;
+import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Base64;
 import java.util.Base64.Encoder;
@@ -24,6 +27,30 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 
+import org.bouncycastle.asn1.ASN1OctetString;
+import org.bouncycastle.asn1.ASN1Primitive;
+import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x500.X500NameBuilder;
+import org.bouncycastle.asn1.x500.style.BCStyle;
+import org.bouncycastle.asn1.x509.AccessDescription;
+import org.bouncycastle.asn1.x509.AuthorityInformationAccess;
+import org.bouncycastle.asn1.x509.Extension;
+import org.bouncycastle.asn1.x509.ExtensionsGenerator;
+import org.bouncycastle.asn1.x509.GeneralName;
+import org.bouncycastle.asn1.x509.GeneralNames;
+import org.bouncycastle.asn1.x509.X509ObjectIdentifiers;
+import org.bouncycastle.jce.provider.X509CertParser;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.bouncycastle.pkcs.PKCS10CertificationRequest;
+import org.bouncycastle.pkcs.PKCS10CertificationRequestBuilder;
+import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
+import org.bouncycastle.x509.util.StreamParsingException;
+
+import com.chiorichan.plugin.acme.lang.AcmeException;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -38,7 +65,42 @@ public class AcmeUtils
 		return BASE64_ENC.encodeToString( v ).replaceAll( "=*$", "" );
 	}
 
-	public static HttpResponse get( final String target, final String accept ) throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, IOException
+	public static PKCS10CertificationRequest createCertificationRequest( KeyPair domainKey, List<String> domains ) throws AcmeException, OperatorCreationException, IOException
+	{
+		final PKCS10CertificationRequest csr = AcmeUtils.generateCSR( domains, domainKey );
+		return csr;
+	}
+
+	public static X509Certificate extractCertificate( byte[] body ) throws AcmeException, StreamParsingException
+	{
+		X509CertParser certParser = new X509CertParser();
+		certParser.engineInit( new ByteArrayInputStream( body ) );
+		X509Certificate certificate = ( X509Certificate ) certParser.engineRead();
+		return certificate;
+	}
+
+	public static PKCS10CertificationRequest generateCSR( List<String> commonNames, KeyPair pair ) throws OperatorCreationException, IOException
+	{
+		X500NameBuilder namebuilder = new X500NameBuilder( X500Name.getDefaultStyle() );
+		namebuilder.addRDN( BCStyle.CN, commonNames.get( 0 ) );
+
+		List<GeneralName> subjectAltNames = Lists.newArrayList();
+		for ( String cn : commonNames )
+			subjectAltNames.add( new GeneralName( GeneralName.dNSName, cn ) );
+		GeneralNames subjectAltName = new GeneralNames( subjectAltNames.toArray( new GeneralName[0] ) );
+
+		ExtensionsGenerator extGen = new ExtensionsGenerator();
+		extGen.addExtension( Extension.subjectAlternativeName, false, subjectAltName.toASN1Primitive() );
+
+		PKCS10CertificationRequestBuilder p10Builder = new JcaPKCS10CertificationRequestBuilder( namebuilder.build(), pair.getPublic() );
+		p10Builder.addAttribute( PKCSObjectIdentifiers.pkcs_9_at_extensionRequest, extGen.generate() );
+		JcaContentSignerBuilder csBuilder = new JcaContentSignerBuilder( "SHA256withRSA" );
+		ContentSigner signer = csBuilder.build( pair.getPrivate() );
+		PKCS10CertificationRequest request = p10Builder.build( signer );
+		return request;
+	}
+
+	public static HttpResponse get( final String target, final String accept ) throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException
 	{
 		try
 		{
@@ -70,13 +132,23 @@ public class AcmeUtils
 				}
 			}
 
-			return new HttpResponse( status, responseHeader, resBody );
+			return new HttpResponse( target, status, responseHeader, resBody );
 		}
 		catch ( final Throwable t )
 		{
 			t.printStackTrace();
 			return null;
 		}
+	}
+
+	public static String getCACertificateURL( X509Certificate certificate ) throws IOException
+	{
+		byte[] bOctets = ( ( ASN1OctetString ) ASN1Primitive.fromByteArray( certificate.getExtensionValue( Extension.authorityInfoAccess.getId() ) ) ).getOctets();
+		AuthorityInformationAccess access = AuthorityInformationAccess.getInstance( ASN1Primitive.fromByteArray( bOctets ) );
+		for ( AccessDescription ad : access.getAccessDescriptions() )
+			if ( ad.getAccessMethod().equals( X509ObjectIdentifiers.id_ad_caIssuers ) )
+				return ad.getAccessLocation().getName().toString();
+		return null;
 	}
 
 	public static TreeMap<String, Object> getWebKey( PublicKey publicKey )
@@ -110,7 +182,7 @@ public class AcmeUtils
 		return gson;
 	}
 
-	public static HttpResponse post( final String method, final String target, final String accept, final String body, final String contentType ) throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, IOException
+	public static HttpResponse post( final String method, final String target, final String accept, final String body, final String contentType ) throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException
 	{
 		try
 		{
@@ -155,7 +227,7 @@ public class AcmeUtils
 				}
 			}
 
-			return new HttpResponse( status, responseHeader, resBody );
+			return new HttpResponse( target, status, responseHeader, resBody );
 		}
 		catch ( final Throwable t )
 		{

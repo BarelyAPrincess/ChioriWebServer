@@ -16,15 +16,20 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 
 import java.lang.ref.WeakReference;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.List;
 
 import com.chiorichan.APILogger;
 import com.chiorichan.Loader;
 import com.chiorichan.ServerBus;
 import com.chiorichan.http.HttpInitializer;
-import com.chiorichan.https.HttpsInitializer;
-import com.chiorichan.https.HttpsManager;
+import com.chiorichan.http.HttpsInitializer;
+import com.chiorichan.http.HttpsManager;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.net.query.QueryServerInitializer;
 import com.chiorichan.tasks.TaskManager;
@@ -65,9 +70,38 @@ public class NetworkManager implements TaskRegistrar
 	public static List<String> getListeningIps()
 	{
 		List<String> ips = Lists.newArrayList();
-		ips.add( ( ( InetSocketAddress ) httpChannel.localAddress() ).getAddress().getHostAddress() );
-		ips.add( ( ( InetSocketAddress ) httpsChannel.localAddress() ).getAddress().getHostAddress() );
-		return ips;
+		try
+		{
+			Enumeration<NetworkInterface> e = NetworkInterface.getNetworkInterfaces();
+			while ( e.hasMoreElements() )
+			{
+				NetworkInterface n = e.nextElement();
+				Enumeration<InetAddress> ee = n.getInetAddresses();
+				while ( ee.hasMoreElements() )
+				{
+					InetAddress i = ee.nextElement();
+					ips.add( i.getHostAddress() );
+				}
+			}
+		}
+		catch ( SocketException e1 )
+		{
+			getLogger().severe( "Failed to retrieve all active server ips.", e1 );
+		}
+
+		String ip = ( ( InetSocketAddress ) ( httpChannel == null ? httpsChannel : httpChannel ).localAddress() ).getAddress().getHostAddress();
+
+		// Assert that both unsecure and secure servers are listening on the same address
+		if ( httpsChannel != null && httpsChannel.isOpen() )
+			assert ip.equals( ( ( InetSocketAddress ) httpsChannel.localAddress() ).getAddress().getHostAddress() );
+
+		if ( ip.contains( "%" ) )
+			ip = ip.split( "\\%" )[0];
+
+		if ( "0.0.0.0".equals( ip ) || "0:0:0:0:0:0:0:0".equals( ip ) )
+			return ips;
+		else
+			return Arrays.asList( ip );
 	}
 
 	public static APILogger getLogger()
@@ -155,6 +189,8 @@ public class NetworkManager implements TaskRegistrar
 				else
 					socket = new InetSocketAddress( httpIp, httpPort );
 
+				// TODO Allow the server to bind to more than one IP but less than all
+
 				Loader.getLogger().info( "Starting Web Server on " + ( httpIp.isEmpty() ? "*" : httpIp ) + ":" + httpPort );
 
 				try
@@ -212,7 +248,7 @@ public class NetworkManager implements TaskRegistrar
 		{
 			InetSocketAddress socket;
 			String httpIp = Loader.getConfig().getString( "server.httpHost", "" );
-			int httpsPort = Loader.getConfig().getInt( "server.httpsPort", 4443 );
+			int httpsPort = Loader.getConfig().getInt( "server.httpsPort", 8443 );
 
 			if ( httpsPort >= 1 )
 			{
@@ -364,6 +400,9 @@ public class NetworkManager implements TaskRegistrar
 				for ( WeakReference<SocketChannel> ref : HttpInitializer.activeChannels )
 					if ( ref.get() == null )
 						HttpInitializer.activeChannels.remove( ref );
+				for ( WeakReference<SocketChannel> ref : HttpsInitializer.activeChannels )
+					if ( ref.get() == null )
+						HttpsInitializer.activeChannels.remove( ref );
 			}
 		} );
 	}

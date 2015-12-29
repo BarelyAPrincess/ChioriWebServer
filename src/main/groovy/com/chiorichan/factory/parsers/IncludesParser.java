@@ -14,8 +14,8 @@ import com.chiorichan.Loader;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.factory.ScriptingResult;
-import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.EvalException;
+import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.site.Site;
 
 /**
@@ -26,22 +26,22 @@ public class IncludesParser extends HTMLCommentParser
 	ScriptingContext context;
 	ScriptingFactory factory;
 	Site site;
-	
+
 	public IncludesParser()
 	{
 		super( "include" );
 	}
-	
+
 	@Override
 	public String resolveMethod( String... args ) throws Exception
 	{
 		if ( args.length > 2 )
 			Loader.getLogger().warning( "EvalFactory: include() method only accepts one argument, ignored." );
-		
+
 		// TODO Prevent infinite loops!
 		ScriptingResult result = factory.eval( ScriptingContext.fromAuto( context.site(), args[1] ).request( context.request() ) );
-		
-		if ( result.hasNotIgnorableExceptions() )
+
+		if ( result.hasNonIgnorableExceptions() )
 			ReportingLevel.throwExceptions( result.getExceptions() );
 		else if ( result.hasIgnorableExceptions() )
 		{
@@ -50,16 +50,16 @@ public class IncludesParser extends HTMLCommentParser
 				sb.append( ExceptionUtils.getStackTrace( e ) + "\n" );
 			return sb.toString();
 		}
-		
+
 		return result.getString();
 	}
-	
+
 	public String runParser( String source, Site site, ScriptingContext context, ScriptingFactory factory ) throws Exception
 	{
 		this.site = site;
 		this.factory = factory;
 		this.context = context;
-		
+
 		return runParser( source );
 	}
 }

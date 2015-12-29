@@ -13,8 +13,10 @@ import io.netty.buffer.ByteBuf;
 import java.nio.charset.Charset;
 import java.util.List;
 
-import com.chiorichan.lang.ReportingLevel;
+import org.apache.commons.lang3.Validate;
+
 import com.chiorichan.lang.EvalException;
+import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.util.ObjectFunc;
 import com.google.common.collect.Lists;
 
@@ -29,20 +31,13 @@ public class ScriptingResult
 	private ByteBuf content;
 	private Object obj = null;
 	private final ScriptingContext context;
-	
+
 	ScriptingResult( ScriptingContext context, ByteBuf content )
 	{
 		this.context = context;
 		this.content = content;
 	}
-	
-	public ScriptingResult addException( ReportingLevel level, Throwable throwable )
-	{
-		if ( throwable != null )
-			caughtExceptions.add( new EvalException( level, throwable ).populateScriptTrace( context.factory().stack() ) );
-		return this;
-	}
-	
+
 	public ScriptingResult addException( EvalException exception )
 	{
 		if ( exception != null )
@@ -57,22 +52,29 @@ public class ScriptingResult
 		}
 		return this;
 	}
-	
+
+	public ScriptingResult addException( ReportingLevel level, Throwable throwable )
+	{
+		if ( throwable != null )
+			caughtExceptions.add( new EvalException( level, throwable ).populateScriptTrace( context.factory().stack() ) );
+		return this;
+	}
+
 	public ByteBuf content()
 	{
 		return content;
 	}
-	
+
 	public ScriptingContext context()
 	{
 		return context;
 	}
-	
+
 	public EvalException[] getExceptions()
 	{
 		return caughtExceptions.toArray( new EvalException[0] );
 	}
-	
+
 	public EvalException[] getIgnorableExceptions()
 	{
 		List<EvalException> exs = Lists.newArrayList();
@@ -81,7 +83,7 @@ public class ScriptingResult
 				exs.add( e );
 		return exs.toArray( new EvalException[0] );
 	}
-	
+
 	public EvalException[] getNotIgnorableExceptions()
 	{
 		List<EvalException> exs = Lists.newArrayList();
@@ -90,35 +92,59 @@ public class ScriptingResult
 				exs.add( e );
 		return exs.toArray( new EvalException[0] );
 	}
-	
+
 	public Object getObject()
 	{
 		return obj;
 	}
-	
+
 	public String getReason()
 	{
 		if ( reason == null || reason.isEmpty() )
 			reason = "There was no available result reason at this time.";
-		
+
 		return reason;
 	}
-	
+
 	public String getString()
 	{
 		return getString( false );
 	}
-	
+
 	public String getString( boolean includeObj )
 	{
-		return ( ( content == null ) ? "" : content.toString( Charset.defaultCharset() ) ) + ( ( includeObj ) ? ObjectFunc.castToString( obj ) : "" );
+		return ( content == null ? "" : content.toString( Charset.defaultCharset() ) ) + ( includeObj ? ObjectFunc.castToString( obj ) : "" );
 	}
-	
+
+	/**
+	 * Checks if exception is present by class name
+	 *
+	 * @param clz
+	 *             The exception to check for
+	 * @return
+	 *         Is it present
+	 */
+	public boolean hasException( Class<? extends Throwable> clz )
+	{
+		Validate.notNull( clz );
+
+		for ( EvalException e : caughtExceptions )
+		{
+			if ( e.getCause() != null && clz.isAssignableFrom( e.getCause().getClass() ) )
+				return true;
+
+			if ( clz.isAssignableFrom( e.getClass() ) )
+				return true;
+		}
+
+		return false;
+	}
+
 	public boolean hasExceptions()
 	{
 		return !caughtExceptions.isEmpty();
 	}
-	
+
 	public boolean hasIgnorableExceptions()
 	{
 		for ( EvalException e : caughtExceptions )
@@ -126,37 +152,37 @@ public class ScriptingResult
 				return true;
 		return false;
 	}
-	
-	public boolean hasNotIgnorableExceptions()
+
+	public boolean hasNonIgnorableExceptions()
 	{
 		for ( EvalException e : caughtExceptions )
 			if ( !e.isIgnorable() )
 				return true;
 		return false;
 	}
-	
+
 	public boolean isSuccessful()
 	{
 		return success;
 	}
-	
+
 	public void object( Object obj )
 	{
 		this.obj = obj;
 	}
-	
+
 	public ScriptingResult setReason( String reason )
 	{
 		this.reason = reason;
 		return this;
 	}
-	
+
 	public ScriptingResult success( boolean success )
 	{
 		this.success = success;
 		return this;
 	}
-	
+
 	@Override
 	public String toString()
 	{

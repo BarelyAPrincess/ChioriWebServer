@@ -12,7 +12,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
@@ -30,7 +29,7 @@ import com.chiorichan.util.SecureFunc;
  */
 public class ScriptingContext
 {
-	public static ScriptingContext fromAuto( final Site site, final String res ) throws FileNotFoundException
+	public static ScriptingContext fromAuto( final Site site, final String res )
 	{
 		// Might need a better attempt at auto determining file types
 		// File types meaning located in public webroot verses resource
@@ -71,14 +70,24 @@ public class ScriptingContext
 		return context;
 	}
 
-	public static ScriptingContext fromFile( final Site site, final String file ) throws FileNotFoundException
+	public static ScriptingContext fromFile( final Site site, final String file )
 	{
 		// We block absolute file paths for both unix-like and windows
 		if ( file.startsWith( File.separator ) || file.matches( "[A-Za-z]:\\.*" ) )
 			throw new SecurityException( "To protect system resources, this page has been blocked from accessing an absolute file path." );
 		if ( file.startsWith( ".." + File.separator ) )
 			throw new SecurityException( "To protect system resources, this page has been blocked from accessing a protected file path." );
-		return fromFile( site.resourceFile( file ) );
+		try
+		{
+			return fromFile( site.resourceFile( file ) );
+		}
+		catch ( IOException e )
+		{
+			ScriptingContext context = ScriptingContext.fromSource( "", file );
+			context.result().addException( new EvalException( ReportingLevel.E_IGNORABLE, String.format( "Could not locate the file '%s' within site '%s'", file, site.getSiteId() ), e ) );
+			context.site( site );
+			return context;
+		}
 	}
 
 	public static ScriptingContext fromPackage( final Site site, final String pack )
@@ -95,7 +104,7 @@ public class ScriptingContext
 		catch ( IOException e )
 		{
 			context = ScriptingContext.fromSource( "", pack );
-			context.result().addException( new EvalException( ReportingLevel.E_IGNORABLE, String.format( "Could not locate the package '%s' within site '%s'", pack, site.getSiteId() ) ) );
+			context.result().addException( new EvalException( ReportingLevel.E_IGNORABLE, String.format( "Could not locate the package '%s' within site '%s'", pack, site.getSiteId() ), e ) );
 		}
 
 		context.site( site );
@@ -221,7 +230,7 @@ public class ScriptingContext
 
 		String str = result.getString( false );
 
-		if ( required && result.hasNotIgnorableExceptions() )
+		if ( required && result.hasNonIgnorableExceptions() )
 			ReportingLevel.throwExceptions( result.getExceptions() );
 		if ( result.hasIgnorableExceptions() )
 			str = ReportingLevel.printExceptions( result.getIgnorableExceptions() ) + "\n" + str;
@@ -283,7 +292,7 @@ public class ScriptingContext
 
 		String str = result.getString( includeObj );
 
-		if ( required && result.hasNotIgnorableExceptions() )
+		if ( required && result.hasNonIgnorableExceptions() )
 			ReportingLevel.throwExceptions( result.getExceptions() );
 		if ( printErrors && result.hasIgnorableExceptions() )
 			str = ReportingLevel.printExceptions( result.getIgnorableExceptions() ) + "\n" + str;

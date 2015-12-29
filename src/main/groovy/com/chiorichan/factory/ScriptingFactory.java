@@ -156,7 +156,7 @@ public class ScriptingFactory
 		context.baseSource( new String( context.readBytes(), charset ) );
 		binding.setVariable( "__FILE__", context.filename() == null ? "<no file>" : context.filename() );
 
-		if ( result.hasNotIgnorableExceptions() )
+		if ( result.hasNonIgnorableExceptions() )
 			return result;
 
 		try

@@ -8,23 +8,19 @@
  */
 package com.chiorichan.factory.parsers;
 
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.site.Site;
-import com.chiorichan.site.SiteManager;
 
 public class LinksParser extends HTMLCommentParser
 {
 	HttpRequestWrapper request;
 	Site site;
-	
+
 	public LinksParser()
 	{
 		super( "url_to" );
 	}
-	
+
 	/**
 	 * args: [] = http://example.com/
 	 * args: [subdomain] = http://subdomain.example.com/
@@ -34,34 +30,31 @@ public class LinksParser extends HTMLCommentParser
 	public String resolveMethod( String... args ) throws Exception
 	{
 		String url = request.isSecure() ? "https://" : "http://";
-		
+
 		if ( args.length >= 1 && !args[1].isEmpty() )
 			url += args[1] + ".";
-		
-		if ( site != null )
-			url += site.getDomain() + "/";
-		else
-			url += SiteManager.INSTANCE.getDefaultSite().getDomain() + "/";
-		
+
+		url += request.getDomain() + "/";
+
 		return url;
 	}
-	
+
 	public String runParser( String source, HttpRequestWrapper request, Site site ) throws Exception
 	{
+		if ( request == null || site == null )
+			return source;
+
 		this.request = request;
 		this.site = site;
-		Map<String, String> aliases = site.getAliases();
-		
+
 		if ( source.isEmpty() )
 			return "";
-		
-		if ( aliases == null || aliases.size() < 1 )
-			return source;
-		
-		for ( Entry<String, String> entry : aliases.entrySet() )
-			source = source.replace( "%" + entry.getKey() + "%", entry.getValue() );
-		
+
+		// Technically Deprecated!!!
+		for ( String subdomain : site.getSubdomains( request.getDomain() ) )
+			source = source.replace( "%" + subdomain + "%", "http://" + subdomain + "." + request.getDomain() + "/" );
+
 		return super.runParser( source );
 	}
-	
+
 }

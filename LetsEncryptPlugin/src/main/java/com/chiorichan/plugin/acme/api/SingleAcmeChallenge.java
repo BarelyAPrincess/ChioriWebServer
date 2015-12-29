@@ -7,10 +7,16 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.util.TreeMap;
 
+import com.chiorichan.Loader;
 import com.chiorichan.http.HttpCode;
 import com.chiorichan.net.NetworkManager;
+import com.chiorichan.plugin.PluginManager;
+import com.chiorichan.plugin.acme.AcmePlugin;
 import com.chiorichan.plugin.acme.lang.AcmeException;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.chiorichan.plugin.acme.lang.AcmeState;
+import com.chiorichan.plugin.lang.PluginNotFoundException;
+import com.chiorichan.tasks.TaskManager;
+import com.chiorichan.tasks.Ticks;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
@@ -18,33 +24,60 @@ import com.google.common.base.Joiner;
 @SuppressWarnings( "serial" )
 public class SingleAcmeChallenge
 {
-	private enum AcmeChallengeState
-	{
-		INVALID, FAILED, PENDING, SUCCESS, CREATED;
-	}
-
-	private AcmeChallengeState state = AcmeChallengeState.CREATED;
+	private AcmeState state = AcmeState.CREATED;
 
 	private final AcmeChallengeType challengeType;
 	private final String challengeToken;
 	private final String challengeUri;
-	private final String domain;
+	private final String rootDomain;
+	private final String subdomain;
 	private String lastMessage;
 
 	private final AcmeProtocol proto;
 
-	protected SingleAcmeChallenge( AcmeProtocol proto, AcmeChallengeType challengeType, String challengeToken, String challengeUri, String domain )
+	protected SingleAcmeChallenge( AcmeProtocol proto, AcmeChallengeType challengeType, String challengeToken, String challengeUri, String rootDomain, String subdomain )
 	{
 		this.challengeType = challengeType;
 		this.challengeToken = challengeToken;
 		this.challengeUri = challengeUri;
-		this.domain = domain;
+		this.rootDomain = rootDomain;
+		this.subdomain = subdomain;
 		this.proto = proto;
+	}
+
+	public void doCallback( Runnable runnable )
+	{
+		if ( state == AcmeState.CREATED )
+			verify();
+
+		try
+		{
+			AcmePlugin plugin = ( AcmePlugin ) PluginManager.INSTANCE.getPluginByClass( AcmePlugin.class );
+
+			TaskManager.INSTANCE.scheduleAsyncRepeatingTask( plugin, Ticks.SECOND_5, Ticks.SECOND, new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					verify();
+
+					if ( getState() != AcmeState.PENDING )
+					{
+						TaskManager.INSTANCE.cancelTask( this );
+						runnable.run();
+					}
+				}
+			} );
+		}
+		catch ( PluginNotFoundException e )
+		{
+			Loader.getLogger().severe( "There was a severe internal plugin error", e );
+		}
 	}
 
 	public String getChallengeContent()
 	{
-		return challengeToken + "." + AcmeUtils.getWebKeyThumbprintSHA256( proto.getKeyPair().getPublic() );
+		return challengeToken + "." + AcmeUtils.getWebKeyThumbprintSHA256( proto.getDefaultKeyPair().getPublic() );
 	}
 
 	public String getChallengeToken()
@@ -57,82 +90,100 @@ public class SingleAcmeChallenge
 		return challengeType;
 	}
 
-	public String getDomain()
+	public String getFullDomain()
 	{
-		return domain;
+		return subdomain + "." + rootDomain;
 	}
 
-	public AcmeChallengeState getState()
+	public String getRootDomain()
+	{
+		return rootDomain;
+	}
+
+	public AcmeState getState()
 	{
 		return state;
 	}
 
-	private boolean handleVerify( HttpResponse response ) throws AcmeException, JsonProcessingException, IOException
+	public String getSubDomain()
 	{
-		if ( response.getStatus() == HttpCode.HTTP_ACCEPTED )
+		return subdomain;
+	}
+
+	private boolean handleVerify( HttpResponse response ) throws AcmeException
+	{
+		try
 		{
-			JsonNode json = new ObjectMapper().readTree( response.getBody() );
-
-			if ( "invalid".equals( json.get( "status" ).asText() ) )
+			if ( response.getStatus() == HttpCode.HTTP_ACCEPTED )
 			{
-				/*
-				 * {
-				 * "error": {
-				 * "detail": "Error parsing key authorization file: Invalid key authorization: 8 parts",
-				 * "type": "urn:acme:error:unauthorized"
-				 * },
-				 * "keyAuthorization": "jg1pOr5gOM6elcxRctIxpEHzrYdOLgWTyyiZvxRJrGU.uY1fKhx5_30V4mwo1tw9C9hhUHLYb6pj3IUiCU9l304",
-				 * "status": "invalid",
-				 * "token": "jg1pOr5gOM6elcxRctIxpEHzrYdOLgWTyyiZvxRJrGU",
-				 * "type": "http-01",
-				 * "uri": "https://acme-staging.api.letsencrypt.org/acme/challenge/yndE7QefJALXVqnK9MYs7cT6O2-NSeSf7TsJzX3Hipw/851889",
-				 * "validationRecord": [
-				 * {
-				 * "addressUsed": "104.28.2.100",
-				 * "addressesResolved": [
-				 * "104.28.2.100",
-				 * "104.28.3.100"
-				 * ],
-				 * "hostname": "penoaks.com",
-				 * "port": "80",
-				 * "url": "http://penoaks.com/.well-known/acme-challenge/jg1pOr5gOM6elcxRctIxpEHzrYdOLgWTyyiZvxRJrGU"
-				 * }
-				 * ]
-				 * }
-				 */
+				JsonNode json = new ObjectMapper().readTree( response.getBody() );
 
-				lastMessage = json.get( "error" ).get( "detail" ).asText();
+				if ( "invalid".equals( json.get( "status" ).asText() ) )
+				{
+					/*
+					 * {
+					 * "error": {
+					 * "detail": "Error parsing key authorization file: Invalid key authorization: 8 parts",
+					 * "type": "urn:acme:error:unauthorized"
+					 * },
+					 * "keyAuthorization": "jg1pOr5gOM6elcxRctIxpEHzrYdOLgWTyyiZvxRJrGU.uY1fKhx5_30V4mwo1tw9C9hhUHLYb6pj3IUiCU9l304",
+					 * "status": "invalid",
+					 * "token": "jg1pOr5gOM6elcxRctIxpEHzrYdOLgWTyyiZvxRJrGU",
+					 * "type": "http-01",
+					 * "uri": "https://acme-staging.api.letsencrypt.org/acme/challenge/yndE7QefJALXVqnK9MYs7cT6O2-NSeSf7TsJzX3Hipw/851889",
+					 * "validationRecord": [
+					 * {
+					 * "addressUsed": "104.28.2.100",
+					 * "addressesResolved": [
+					 * "104.28.2.100",
+					 * "104.28.3.100"
+					 * ],
+					 * "hostname": "penoaks.com",
+					 * "port": "80",
+					 * "url": "http://penoaks.com/.well-known/acme-challenge/jg1pOr5gOM6elcxRctIxpEHzrYdOLgWTyyiZvxRJrGU"
+					 * }
+					 * ]
+					 * }
+					 */
 
-				String usedIpAddr = json.get( "validationRecord" ).get( "addressUsed" ).asText();
+					lastMessage = json.get( "error" ).get( "detail" ).asText();
 
-				lastMessage += String.format( " Additionally, the IP address tried does not match the IP address the server is listening on, '%s', '%s'", usedIpAddr, Joiner.on( "," ).join( NetworkManager.getListeningIps() ) );
+					String usedIpAddr = json.get( "validationRecord" ).get( "addressUsed" ).asText();
 
-				state = AcmeChallengeState.INVALID;
-				return true;
+					if ( !NetworkManager.getListeningIps().contains( usedIpAddr ) )
+						lastMessage += String.format( " Additionally, the IP address tried does not match the IP address the server is listening on, '%s', '%s'", usedIpAddr, Joiner.on( "," ).join( NetworkManager.getListeningIps() ) );
+
+					state = AcmeState.INVALID;
+					return true;
+				}
+				else if ( "valid".equals( json.get( "status" ).asText() ) )
+				{
+					lastMessage = "Domain verification has been marked as valid";
+					state = AcmeState.SUCCESS;
+					return true;
+				}
+				else if ( "pending".equals( json.get( "status" ).asText() ) )
+				{
+					lastMessage = "Domain verification is still pending, please try again shortly";
+					state = AcmeState.PENDING;
+					return true;
+				}
+				else
+					throw new AcmeException( "Unknown challenge status returned " + json.get( "status" ).asText() );
 			}
-			else if ( "valid".equals( json.get( "status" ).asText() ) )
-			{
-				lastMessage = "Domain verification has been marked as valid";
-				state = AcmeChallengeState.SUCCESS;
-				return true;
-			}
-			else if ( "pending".equals( json.get( "status" ).asText() ) )
-			{
-				lastMessage = "Domain verification is still pending, please try again shortly";
-				state = AcmeChallengeState.PENDING;
-				return true;
-			}
-			else
-				throw new AcmeException( "Unknown challenge status returned " + json.get( "status" ).asText() );
+		}
+		catch ( IOException e )
+		{
+			e.printStackTrace();
 		}
 
-		state = AcmeChallengeState.FAILED;
+		state = AcmeState.FAILED;
 		return false;
 	}
 
 	public boolean hasFailed()
 	{
-		return state == AcmeChallengeState.INVALID || state == AcmeChallengeState.FAILED;
+		return state == AcmeState.INVALID || state == AcmeState.FAILED;
 	}
 
 	public String lastMessage()
@@ -142,38 +193,55 @@ public class SingleAcmeChallenge
 		return lastMessage;
 	}
 
-	public boolean verify() throws AcmeException, KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, IOException
+	public boolean verify()
 	{
-		if ( state == AcmeChallengeState.SUCCESS )
+		try
 		{
-			return true;
+			return verifyWithException();
 		}
-		else if ( hasFailed() )
+		catch ( KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException | AcmeException e )
 		{
 			return false;
 		}
-		else if ( state == AcmeChallengeState.CREATED )
+	}
+
+	public boolean verifyWithException() throws AcmeException, KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException
+	{
+		try
 		{
-			String body = proto.newJwt( new TreeMap<String, Object>()
+			if ( state == AcmeState.SUCCESS )
+				return true;
+			else if ( hasFailed() )
+				return false;
+			else if ( state == AcmeState.CREATED )
 			{
+				String body = proto.newJwt( new TreeMap<String, Object>()
 				{
-					put( "resource", "challenge" );
-					put( "type", "http-01" );
-					put( "tls", true );
-					put( "keyAuthorization", getChallengeContent() );
-					put( "token", challengeToken );
-				}
-			} );
+					{
+						put( "resource", "challenge" );
+						put( "type", "http-01" );
+						put( "tls", true );
+						put( "keyAuthorization", getChallengeContent() );
+						put( "token", challengeToken );
+					}
+				} );
 
-			HttpResponse response = AcmeUtils.post( "POST", challengeUri, "application/json", body, "application/json" );
-			proto.nonce( response.getHeaderString( "Replay-Nonce" ) );
+				HttpResponse response = AcmeUtils.post( "POST", challengeUri, "application/json", body, "application/json" );
+				proto.nonce( response.getHeaderString( "Replay-Nonce" ) );
 
-			return handleVerify( response );
+				return handleVerify( response );
+			}
+			else if ( state == AcmeState.PENDING )
+			{
+				HttpResponse response = AcmeUtils.get( challengeUri, "application/json" );
+				return handleVerify( response );
+			}
 		}
-		else if ( state == AcmeChallengeState.PENDING )
+		catch ( AcmeException | KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e )
 		{
-			HttpResponse response = AcmeUtils.get( challengeUri, "application/json" );
-			return handleVerify( response );
+			lastMessage = e.getMessage();
+			state = AcmeState.FAILED;
+			throw e;
 		}
 
 		return false;

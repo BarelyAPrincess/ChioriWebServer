@@ -7,8 +7,10 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
 
@@ -17,61 +19,78 @@ import com.chiorichan.http.HttpCode;
 import com.chiorichan.plugin.acme.AcmePlugin;
 import com.chiorichan.plugin.acme.lang.AcmeException;
 import com.chiorichan.plugin.acme.lang.AcmeForbiddenError;
+import com.chiorichan.plugin.acme.lang.AcmeState;
 import com.chiorichan.plugin.loader.Plugin;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 public class AcmeChallenge
 {
-	private final List<SingleAcmeChallenge> challenges = Lists.newArrayList();
+	private final Map<String, SingleAcmeChallenge> challenges = Maps.newHashMap();
 	private AcmeProtocol proto;
 
-	protected AcmeChallenge( AcmeProtocol proto ) throws AcmeException, JsonProcessingException, IOException
+	protected AcmeChallenge( AcmeProtocol proto )
 	{
 		Validate.notNull( proto );
 		this.proto = proto;
 	}
 
-	public List<SingleAcmeChallenge> add( String... domains ) throws InvalidKeyException, KeyManagementException, UnrecoverableKeyException, SignatureException, NoSuchAlgorithmException, KeyStoreException, AcmeException, IOException
+	public List<SingleAcmeChallenge> add( String domain ) throws InvalidKeyException, KeyManagementException, UnrecoverableKeyException, SignatureException, NoSuchAlgorithmException, KeyStoreException, AcmeException
 	{
-		for ( String domain : domains )
+		return add( domain, null );
+	}
+
+	public List<SingleAcmeChallenge> add( String rootDomain, String subdomain ) throws InvalidKeyException, KeyManagementException, UnrecoverableKeyException, SignatureException, NoSuchAlgorithmException, KeyStoreException, AcmeException
+	{
+		try
 		{
-			HttpResponse response = proto.newChallenge0( domain );
+			Validate.notNull( rootDomain );
+			rootDomain = rootDomain.trim().toLowerCase();
 
-			if ( response.getStatus() == HttpCode.HTTP_FORBIDDEN )
-				throw new AcmeForbiddenError();
+			String fullDomain = subdomain == null ? rootDomain : subdomain.trim().toLowerCase() + "." + rootDomain;
 
-			if ( response.getStatus() != HttpCode.HTTP_CREATED )
-				throw new AcmeException( "Http code '" + response.getStatus() + "' '" + HttpCode.msg( response.getStatus() ) + "' was returned when we expected '201' 'CREATED'." );
-
-			JsonNode json = new ObjectMapper().readTree( response.getBody() );
-
-			for ( JsonNode challange : json.get( "challenges" ) )
+			if ( !challenges.containsKey( fullDomain ) )
 			{
-				String type = challange.get( "type" ).asText();
-				String challengeToken = challange.get( "token" ).asText();
-				String challengeUri = challange.get( "uri" ).asText();
+				HttpResponse response = proto.newChallenge0( fullDomain );
 
-				switch ( type )
+				if ( response.getStatus() == HttpCode.HTTP_FORBIDDEN )
+					throw new AcmeForbiddenError();
+
+				if ( response.getStatus() != HttpCode.HTTP_CREATED )
+					throw new AcmeException( String.format( "Http code '%s' '%s' was returned when we expected '201' 'CREATED'.", response.getStatus(), HttpCode.msg( response.getStatus() ) ) );
+
+				JsonNode json = new ObjectMapper().readTree( response.getBody() );
+
+				for ( JsonNode challange : json.get( "challenges" ) )
 				{
-					case "tls-sni-01":
-						// Challenge Not Implemented!
-						break;
-					case "http-01":
-						challenges.add( new SingleAcmeChallenge( proto, AcmeChallengeType.HTTP_01, challengeToken, challengeUri, domain ) );
-						break;
-					case "dns-01":
-						// Challenge Not Implemented!
-						break;
-					default:
-						getLogger().warning( "Unsupported challenge type received, '" + type + "'" );
-				}
-			}
+					String type = challange.get( "type" ).asText();
+					String challengeToken = challange.get( "token" ).asText();
+					String challengeUri = challange.get( "uri" ).asText();
 
-			if ( challenges.size() == 0 )
-				throw new AcmeException( "No supoorted challenges received" );
+					switch ( type )
+					{
+						case "tls-sni-01":
+							// Challenge Not Implemented!
+							break;
+						case "http-01":
+							challenges.put( fullDomain, new SingleAcmeChallenge( proto, AcmeChallengeType.HTTP_01, challengeToken, challengeUri, rootDomain, subdomain ) );
+							break;
+						case "dns-01":
+							// Challenge Not Implemented!
+							break;
+						default:
+							getLogger().warning( "Unsupported challenge type received, '" + type + "'" );
+					}
+				}
+
+				if ( challenges.size() == 0 )
+					throw new AcmeException( "No supoorted challenges received" );
+			}
+		}
+		catch ( IOException e )
+		{
+			e.printStackTrace();
 		}
 
 		/*
@@ -110,13 +129,31 @@ public class AcmeChallenge
 		return getChallenges();
 	}
 
+	public boolean challengesComplete()
+	{
+		for ( SingleAcmeChallenge sac : challenges.values() )
+			if ( sac.getState() != AcmeState.SUCCESS )
+				return false;
+		return true;
+	}
+
 	public List<SingleAcmeChallenge> getChallenges()
 	{
-		return Collections.unmodifiableList( challenges );
+		return new ArrayList<SingleAcmeChallenge>( challenges.values() );
+	}
+
+	public Set<String> getDomains()
+	{
+		return challenges.keySet();
 	}
 
 	private APILogger getLogger()
 	{
 		return Plugin.getPlugin( AcmePlugin.class ).getLogger();
+	}
+
+	public void remove( SingleAcmeChallenge sac )
+	{
+		challenges.remove( sac );
 	}
 }

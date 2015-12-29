@@ -3,18 +3,25 @@
  *
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com> All Right Reserved.
  */
-package com.chiorichan.https;
+package com.chiorichan.http;
 
-import io.netty.handler.ssl.SniHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
 import io.netty.util.DomainNameMapping;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.net.ssl.SSLException;
+
+import org.apache.commons.io.IOUtils;
 
 import com.chiorichan.APILogger;
 import com.chiorichan.Loader;
@@ -28,6 +35,55 @@ public class HttpsManager implements ServerManager
 {
 	public static final HttpsManager INSTANCE = new HttpsManager();
 	private static boolean isInitialized = false;
+
+	public static SslContext context( File sslCert, File sslKey ) throws SSLException, FileNotFoundException, CertificateException
+	{
+		return context( sslCert, sslKey, null );
+	}
+
+	public static SslContext context( File sslCert, File sslKey, String sslSecret ) throws SSLException, FileNotFoundException, CertificateException
+	{
+		if ( !sslCert.exists() || !sslKey.exists() )
+			throw new FileNotFoundException();
+
+		CertificateFactory cf;
+		try
+		{
+			cf = CertificateFactory.getInstance( "X.509" );
+		}
+		catch ( CertificateException e )
+		{
+			throw new IllegalStateException( "Failed to initalize X.509 certificate factory." );
+		}
+
+		X509Certificate cert;
+		InputStream in = null;
+		try
+		{
+			in = new FileInputStream( sslCert );
+			cert = ( X509Certificate ) cf.generateCertificate( in );
+		}
+		finally
+		{
+			if ( in != null )
+				IOUtils.closeQuietly( in );
+		}
+
+		cert.checkValidity();
+
+		// TODO Improve Certificate Checking
+
+		SslContext sslContext;
+		if ( sslSecret == null || sslSecret.isEmpty() )
+			sslContext = SslContext.newServerContext( sslCert, sslKey );
+		else
+			sslContext = SslContext.newServerContext( sslCert, sslKey, sslSecret );
+
+		NetworkManager.getLogger().info( String.format( "Initalized new SslContext %s using cert '%s', key '%s', and hasSecret? %s", sslContext.toString(), sslCert.getName(), sslKey.getName(), sslSecret != null && !sslSecret.isEmpty() ) );
+
+		return sslContext;
+	}
+
 	public static APILogger getLogger()
 	{
 		return Loader.getLogger( "SSL" );
@@ -45,50 +101,42 @@ public class HttpsManager implements ServerManager
 		isInitialized = true;
 	}
 
-	private boolean usingSelfSignedCert = false;
-
 	private DomainNameMapping<SslContext> mapping;
+	private boolean changesMade = true;
+	private SslContext serverContext;
+	private boolean usingSelfSignedCert = false;
 
 	private HttpsManager()
 	{
 
 	}
 
-	public void addMapping( String hostname, File sslCert, File sslKey ) throws SSLException, FileNotFoundException
+	public HttpsSniHandler getSniHandler()
 	{
-		addMapping( hostname, sslCert, sslKey, null );
-	}
+		if ( changesMade )
+		{
+			mapping = new DomainNameMapping<SslContext>( serverContext );
 
-	public void addMapping( String hostname, File sslCert, File sslKey, String sslSecret ) throws SSLException, FileNotFoundException
-	{
-		// TODO Open SSL certificate and confirm that the CN contains the provided hostname
+			for ( Site site : SiteManager.INSTANCE.getSites() )
+				if ( site.getDefaultSslContext() != null )
+					for ( Entry<String, Set<String>> e : site.getDomains().entrySet() )
+					{
+						mapping.add( "*." + e.getKey(), site.getDefaultSslContext() );
+						// Loader.getLogger().debug( "Mapping *." + e.getKey() + " to " + site.getDefaultSslContext() );
 
-		if ( !sslCert.exists() || !sslKey.exists() )
-			throw new FileNotFoundException();
+						for ( String subdomain : e.getValue() )
+						{
+							SslContext context = site.getSslContext( e.getKey(), subdomain );
+							if ( context != null )
+								mapping.add( subdomain + "." + e.getKey(), context );
+							// Loader.getLogger().debug( "Mapping " + subdomain + "." + e.getKey() + " to " + context );
+						}
+					}
 
-		NetworkManager.getLogger().info( String.format( "Initalizing a new SslContext using cert '%s', key '%s', and hasSecret? %s for hostname '%s'", sslCert.getName(), sslKey.getName(), sslSecret != null && !sslSecret.isEmpty(), hostname ) );
+			changesMade = false;
+		}
 
-		SslContext sslContext;
-		if ( sslSecret == null || sslSecret.isEmpty() )
-			sslContext = SslContext.newServerContext( sslCert, sslKey );
-		else
-			sslContext = SslContext.newServerContext( sslCert, sslKey, sslSecret );
-
-		addMapping( hostname, sslContext );
-	}
-
-	public void addMapping( String hostname, SslContext context )
-	{
-		// Using *.example.com will include all subdomains, including the root TLD
-		mapping.add( hostname, context );
-	}
-
-	public SniHandler getSniHandler()
-	{
-		if ( mapping == null )
-			throw new IllegalStateException( "The SSL Virtual Host Mapping is null, has the HttpsManager been properly initalized?" );
-
-		return new SniHandler( mapping );
+		return new HttpsSniHandler( mapping );
 	}
 
 	public void init0() throws StartupException
@@ -140,7 +188,7 @@ public class HttpsManager implements ServerManager
 	}
 
 	/**
-	 * Used to set/update the server-wide global SSL certificate Warning: if you are updating the certificate the previous virtual host mappings will be lost to the GC
+	 * Used to set/update the server wide global SSL certificate.
 	 *
 	 * @param sslCert
 	 *             The updated SSL Certificate
@@ -159,17 +207,12 @@ public class HttpsManager implements ServerManager
 
 		NetworkManager.getLogger().info( String.format( "Initalizing the SslContext using cert '%s', key '%s', and hasSecret? %s", sslCert.getName(), sslKey.getName(), sslSecret != null && !sslSecret.isEmpty() ) );
 
-		SslContext sslContext;
 		if ( sslSecret == null || sslSecret.isEmpty() )
-			sslContext = SslContext.newServerContext( sslCert, sslKey );
+			serverContext = SslContext.newServerContext( sslCert, sslKey );
 		else
-			sslContext = SslContext.newServerContext( sslCert, sslKey, sslSecret );
+			serverContext = SslContext.newServerContext( sslCert, sslKey, sslSecret );
 
-		mapping = new DomainNameMapping<SslContext>( sslContext );
-
-		for ( Site site : SiteManager.INSTANCE.getSites() )
-			site.loadSsl( this );
-
-		usingSelfSignedCert = false;
+		usingSelfSignedCert = false; // TODO Check for Self Signed
+		changesMade = true;
 	}
 }

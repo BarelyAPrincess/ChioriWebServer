@@ -62,6 +62,7 @@ public class HttpCode
 	public static final int HTTP_LOCKED = 423;
 	public static final int HTTP_FAILED_DEPENDENCY = 424;
 	public static final int HTTP_UPGRADE_REQUIRED = 426;
+	public static final int HTTP_TOO_MANY_REQUESTS = 429;
 	public static final int HTTP_UNAVAILABLE_FOR_LEGAL_REASONS = 451;
 	public static final int HTTP_INTERNAL_ERROR = 500;
 	public static final int HTTP_NOT_IMPLEMENTED = 501;
@@ -140,6 +141,8 @@ public class HttpCode
 				return "Request-URI Too Large";
 			case HTTP_UNSUPPORTED_TYPE:
 				return "Unsupported Media Type";
+			case HTTP_TOO_MANY_REQUESTS:
+				return "Too Many Requests";
 			case HTTP_UNAVAILABLE_FOR_LEGAL_REASONS:
 				return "Unavailable for Legal Reasons";
 			case HTTP_INTERNAL_ERROR:

@@ -53,6 +53,7 @@ import com.chiorichan.session.SessionManager;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.TaskManager;
+import com.chiorichan.tasks.Ticks;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.Looper;
 import com.google.common.collect.Maps;
@@ -66,23 +67,23 @@ public class GroovyRegistry implements ScriptingRegistry
 	 * Groovy Imports :P
 	 */
 	private static final GroovyImportCustomizer imports = new GroovyImportCustomizer();
-	
-	private static final Class<?>[] classImports = new Class<?>[] {MessageRepo.class, References.class, ScriptApi.class, Loader.class, AccountManager.class, AccountType.class, Account.class, AccountAuthenticator.class, EventBus.class, PermissionManager.class, PluginManager.class, TaskManager.class, Timings.class, SessionManager.class, SiteManager.class, Site.class, ScriptingContext.class};
+
+	private static final Class<?>[] classImports = new Class<?>[] {MessageRepo.class, References.class, ScriptApi.class, Loader.class, AccountManager.class, AccountType.class, Account.class, AccountAuthenticator.class, EventBus.class, PermissionManager.class, PluginManager.class, TaskManager.class, Ticks.class, Timings.class, SessionManager.class, SiteManager.class, Site.class, ScriptingContext.class};
 	private static final String[] starImports = new String[] {"com.chiorichan.lang", "com.chiorichan.factory.api", "com.chiorichan.util", "org.apache.commons.lang3.text", "org.ocpsoft.prettytime", "java.util", "java.net", "com.google.common.base"};
 	private static final Class<?>[] staticImports = new Class<?>[] {Looper.class, ReportingLevel.class, HttpResponseStatus.class};
 	private static final GroovySandbox secure = new GroovySandbox();
-	
+
 	/*
 	 * Groovy Sandbox Customization
 	 */
 	private static final ASTTransformationCustomizer timedInterrupt = new ASTTransformationCustomizer( TimedInterrupt.class );
-	
+
 	static
 	{
 		imports.addImports( classImports );
 		imports.addStarImports( starImports );
 		imports.addStaticStars( staticImports );
-		
+
 		// Transforms scripts to limit their execution to 30 seconds.
 		long timeout = Loader.getConfig().getLong( "advanced.security.defaultScriptTimeout", 30L );
 		if ( timeout > 0 )
@@ -92,16 +93,16 @@ public class GroovyRegistry implements ScriptingRegistry
 			timedInterrupt.setAnnotationParameters( timedInterruptParams );
 		}
 	}
-	
+
 	public GroovyRegistry()
 	{
 		// if ( Loader.getConfig().getBoolean( "advanced.scripting.gspEnabled", true ) )
 		// EvalFactory.register( new EmbeddedGroovyScriptProcessor() );
 		// if ( Loader.getConfig().getBoolean( "advanced.scripting.groovyEnabled", true ) )
 		// EvalFactory.register( new GroovyScriptProcessor() );
-		
+
 		ScriptingFactory.register( this );
-		
+
 		EvalException.registerException( new ExceptionCallback()
 		{
 			@Override
@@ -110,7 +111,7 @@ public class GroovyRegistry implements ScriptingRegistry
 				MultipleCompilationErrorsException exp = ( MultipleCompilationErrorsException ) cause;
 				ErrorCollector e = exp.getErrorCollector();
 				boolean abort = false;
-				
+
 				for ( Object err : e.getErrors() )
 					if ( err instanceof Throwable )
 					{
@@ -136,7 +137,7 @@ public class GroovyRegistry implements ScriptingRegistry
 				return abort ? ReportingLevel.E_ERROR : ReportingLevel.E_IGNORABLE;
 			}
 		}, MultipleCompilationErrorsException.class );
-		
+
 		EvalException.registerException( new ExceptionCallback()
 		{
 			@Override
@@ -146,7 +147,7 @@ public class GroovyRegistry implements ScriptingRegistry
 				return ReportingLevel.E_ERROR;
 			}
 		}, TimeoutException.class, MissingMethodException.class, CompilationFailedException.class, SandboxSecurityException.class, GroovyRuntimeException.class );
-		
+
 		EvalException.registerException( new ExceptionCallback()
 		{
 			@Override
@@ -156,7 +157,7 @@ public class GroovyRegistry implements ScriptingRegistry
 				return ReportingLevel.E_PARSE;
 			}
 		}, SyntaxException.class );
-		
+
 		/**
 		 * {@link TimeoutException} is thrown when a script does not exit within an alloted amount of time.<br>
 		 * {@link MissingMethodException} is thrown when a groovy script tries to call a non-existent method<br>
@@ -166,43 +167,43 @@ public class GroovyRegistry implements ScriptingRegistry
 		 * {@link GroovyRuntimeException} thrown for basically all remaining Groovy exceptions not caught above
 		 */
 	}
-	
+
 	@SuppressWarnings( "deprecation" )
 	public GroovyShell getNewShell( ScriptingContext context, Binding binding )
 	{
 		CompilerConfiguration configuration = new CompilerConfiguration();
-		
+
 		/*
 		 * Finalize Imports and implement Sandbox
 		 */
 		configuration.addCompilationCustomizers( imports, timedInterrupt, secure );
-		
+
 		/*
 		 * Set Groovy Base Script Class
 		 */
 		configuration.setScriptBaseClass( ScriptingBaseGroovy.class.getName() );
-		
+
 		/*
 		 * Set default encoding
 		 */
 		configuration.setSourceEncoding( context.factory().charset().name() );
-		
-		configuration.setTargetDirectory( context.site().tempDirectory() );
-		
+
+		configuration.setTargetDirectory( context.site().directoryTemp() );
+
 		return new GroovyShell( Loader.class.getClassLoader(), binding, configuration );
 	}
-	
+
 	@Override
 	public ScriptingEngine[] makeEngines( ScriptingContext context )
 	{
 		return new ScriptingEngine[] {new GroovyEngine( this ), new EmbeddedGroovyEngine( this )};
 	}
-	
+
 	public Script makeScript( GroovyShell shell, ScriptingContext context )
 	{
 		return makeScript( shell, context.readString(), context );
 	}
-	
+
 	public Script makeScript( GroovyShell shell, String source, ScriptingContext context )
 	{
 		return shell.parse( source, context.name() );

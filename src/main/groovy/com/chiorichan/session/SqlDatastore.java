@@ -31,45 +31,45 @@ public class SqlDatastore extends SessionDatastore
 			super( SqlDatastore.this, true );
 			readSession( rs );
 		}
-		
+
 		SqlSessionData( String sessionId, SessionWrapper wrapper ) throws SessionException
 		{
 			super( SqlDatastore.this, false );
 			this.sessionId = sessionId;
-			
+
 			ipAddr = wrapper.getIpAddr();
 			site = wrapper.getSite().getSiteId();
-			
+
 			save();
 		}
-		
+
 		@Override
 		void destroy() throws SessionException
 		{
 			try
 			{
 				if ( Loader.getDatabase().table( "sessions" ).delete().where( "sessionId" ).matches( sessionId ).execute().rowCount() < 1 )
-					Loader.getLogger().severe( "We could not remove the session '" + sessionId + "' from the database." );
+					Loader.getLogger().severe( "Failed to remove the session '" + sessionId + "' from the database, no results." );
 			}
 			catch ( SQLException e )
 			{
 				throw new SessionException( "There was an exception thrown while trying to destroy the session.", e );
 			}
 		}
-		
+
 		private void readSession( ResultSet rs ) throws SessionException
 		{
 			try
 			{
 				timeout = rs.getInt( "timeout" );
 				ipAddr = rs.getString( "ipAddr" );
-				
+
 				if ( rs.getString( "sessionName" ) != null && !rs.getString( "sessionName" ).isEmpty() )
 					sessionName = rs.getString( "sessionName" );
 				sessionId = rs.getString( "sessionId" );
-				
+
 				site = rs.getString( "sessionSite" );
-				
+
 				if ( !rs.getString( "data" ).isEmpty() )
 					data = new Gson().fromJson( rs.getString( "data" ), new TypeToken<Map<String, String>>()
 					{
@@ -81,7 +81,7 @@ public class SqlDatastore extends SessionDatastore
 				throw new SessionException( e );
 			}
 		}
-		
+
 		@Override
 		void reload() throws SessionException
 		{
@@ -98,7 +98,7 @@ public class SqlDatastore extends SessionDatastore
 				throw new SessionException( e );
 			}
 		}
-		
+
 		@Override
 		void save() throws SessionException
 		{
@@ -106,13 +106,13 @@ public class SqlDatastore extends SessionDatastore
 			{
 				String dataJson = new Gson().toJson( data );
 				SQLDatastore sql = Loader.getDatabase();
-				
+
 				if ( sql == null )
 					throw new SessionException( "Sessions can't be stored in a SQL Database without a properly configured server database." );
-				
+
 				SQLQuerySelect select = sql.table( "sessions" ).select().where( "sessionId" ).matches( sessionId ).execute();
 				// query( "SELECT * FROM `sessions` WHERE `sessionId` = '" + sessionId + "';" );
-				
+
 				if ( select.rowCount() < 1 )
 					sql.table( "sessions" ).insert().value( "sessionId", sessionId ).value( "timeout", timeout ).value( "ipAddr", ipAddr ).value( "sessionName", sessionName ).value( "sessionSite", site ).value( "data", dataJson ).execute();
 				// sql.queryUpdate( "INSERT INTO `sessions` (`sessionId`, `timeout`, `ipAddr`, `sessionName`, `sessionSite`, `data`) VALUES ('" + sessionId + "', '" + timeout + "', '" + ipAddr + "', '" + sessionName + "', '" + site + "', '"
@@ -128,29 +128,32 @@ public class SqlDatastore extends SessionDatastore
 			}
 		}
 	}
-	
+
 	@Override
 	public SessionData createSession( String sessionId, SessionWrapper wrapper ) throws SessionException
 	{
 		return new SqlSessionData( sessionId, wrapper );
 	}
-	
+
 	@Override
 	List<SessionData> getSessions() throws SessionException
 	{
 		List<SessionData> data = Lists.newArrayList();
 		SQLDatastore sql = Loader.getDatabase();
-		
+
 		if ( sql == null )
 			throw new SessionException( "Sessions can't be stored in a SQL Database without a properly configured server database." );
-		
+
 		Timings.start( this );
-		
+
 		try
 		{
+			// Attempt to delete all expired sessions before we try and load them.
+			int expired = sql.table( "sessions" ).delete().where( "timeout" ).moreThan( 0 ).where( "timeout" ).lessThan( Timings.epoch() ).execute().rowCount();
+			PermissionManager.getLogger().info( String.format( "SqlSession removed %s expired sessions from the datastore!", expired ) );
+
 			SQLQuerySelect select = sql.table( "sessions" ).select().execute();
-			// ResultSet rs = sql.query( "SELECT * FROM `sessions`;" );
-			
+
 			if ( select.rowCount() > 0 )
 			{
 				ResultSet result = select.result();
@@ -170,9 +173,9 @@ public class SqlDatastore extends SessionDatastore
 		{
 			Loader.getLogger().warning( "There was a problem reloading saved sessions.", e );
 		}
-		
+
 		PermissionManager.getLogger().info( "SqlSession loaded " + data.size() + " sessions from the datastore in " + Timings.finish( this ) + "ms!" );
-		
+
 		return data;
 	}
 }

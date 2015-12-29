@@ -44,8 +44,8 @@ public class WebInterpreter extends FileInterpreter
 		boolean wasSuccessful = false;
 
 		String uri = request.getUri();
-		String domain = request.getParentDomain();
-		String subdomain = request.getSubDomain();
+		String domain = request.getDomain();
+		String subdomain = request.getSubdomain();
 
 		fwRequest = uri.startsWith( "/wisp" );
 		if ( fwRequest )
@@ -100,7 +100,7 @@ public class WebInterpreter extends FileInterpreter
 		// Try to find the file on the local file system
 		if ( !wasSuccessful )
 		{
-			dest = new File( request.getSite().subDomainDirectory( subdomain ), uri );
+			dest = new File( request.getSite().getSubdomain( subdomain ).directory(), uri );
 
 			if ( dest.isDirectory() )
 			{
@@ -126,7 +126,7 @@ public class WebInterpreter extends FileInterpreter
 				if ( selectedFile != null )
 				{
 					uri = uri + "/" + selectedFile.getName();
-					dest = new File( request.getSite().subDomainDirectory( subdomain ), uri );
+					dest = new File( request.getSite().getSubdomain( subdomain ).directory(), uri );
 				}
 				else if ( Loader.getConfig().getBoolean( "server.allowDirectoryListing" ) )
 					isDirectoryRequest = true;

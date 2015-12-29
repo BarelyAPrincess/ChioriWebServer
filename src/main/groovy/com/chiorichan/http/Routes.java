@@ -17,6 +17,7 @@ import java.util.Set;
 import org.apache.commons.io.FileUtils;
 
 import com.chiorichan.Loader;
+import com.chiorichan.datastore.Datastore;
 import com.chiorichan.datastore.sql.SQLTable;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.datastore.sql.query.SQLQuerySelect;
@@ -33,7 +34,7 @@ public class Routes
 	public enum RouteType
 	{
 		NOTSET(), SQL(), FILE();
-		
+
 		@Override
 		public String toString()
 		{
@@ -48,30 +49,30 @@ public class Routes
 			}
 		}
 	}
-	
+
 	/**
 	 * Prevents file and sql lag from reloading the routes for every dozen requests made within a small span of time.
 	 */
 	private long lastRequest = 0;
 	private Set<Route> routes = Sets.newHashSet();
-	
+
 	private Site site;
-	
+
 	public Routes( Site site )
 	{
 		this.site = site;
 	}
-	
+
 	public Route searchRoutes( String uri, String domain, String subdomain ) throws IOException
 	{
 		synchronized ( this )
 		{
-			File routesFile = new File( site.rootDirectory(), "routes" );
-			
+			File routesFile = new File( site.directory(), "routes" );
+
 			if ( routes.size() < 1 || System.currentTimeMillis() - lastRequest > 2500 )
 			{
 				routes.clear();
-				
+
 				try
 				{
 					if ( routesFile.exists() )
@@ -85,7 +86,7 @@ public class Routes
 							}
 							catch ( IOException e1 )
 							{
-								
+
 							}
 					}
 				}
@@ -93,17 +94,17 @@ public class Routes
 				{
 					e.printStackTrace();
 				}
-				
+
 				try
 				{
 					SQLDatastore sql = Loader.getDatabase();
-					
+
 					if ( sql != null && sql.initalized() )
 					{
 						if ( !sql.table( "pages" ).exists() )
 						{
-							SQLDatastore.getLogger().info( "We detected the non-existence of table 'pages' in the server database, we will attempt to create it now." );
-							
+							Datastore.getLogger().info( "We detected the non-existence of table 'pages' in the server database, we will attempt to create it now." );
+
 							SQLTable table = sql.table( "pages" );
 							table.addColumnVar( "site", 255 );
 							table.addColumnVar( "domain", 255 );
@@ -115,15 +116,15 @@ public class Routes
 							table.addColumnText( "html" );
 							table.addColumnVar( "file", 255 );
 						}
-						
+
 						// ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE (subdomain = '" + subdomain + "' OR subdomain = '') AND domain = '" + domain + "' UNION SELECT * FROM `pages` WHERE (subdomain = '" + subdomain +
 						// "' OR subdomain = '') AND domain = '';" );
-						
+
 						SQLQuerySelect result = sql.table( "pages" ).select().where( "domain" ).matches( domain ).or().where( "domain" ).matches( "" ).execute();
-						
+
 						for ( Map<String, Object> row : result.set() )
 							routes.add( new Route( new MapCaster<String, String>( String.class, String.class ).castTypes( row ), site ) );
-						
+
 						// ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE domain = '" + domain + "' OR domain = '';" );
 						// if ( sql.getRowCount( rs ) > 0 )
 						// do
@@ -137,12 +138,12 @@ public class Routes
 				}
 			}
 			lastRequest = System.currentTimeMillis();
-			
+
 			if ( routes.size() > 0 )
 			{
 				Map<String, Route> matches = Maps.newTreeMap();
 				int keyInter = 0;
-				
+
 				for ( Route route : routes )
 				{
 					String weight = route.match( domain, subdomain, uri );
@@ -152,7 +153,7 @@ public class Routes
 						keyInter++;
 					}
 				}
-				
+
 				if ( matches.size() > 0 )
 					return ( Route ) matches.values().toArray()[0];
 				else
@@ -160,7 +161,7 @@ public class Routes
 			}
 			else
 				Loader.getLogger().fine( "Failed to find a page redirect for... '" + subdomain + "." + domain + "' '" + uri + "'" );
-			
+
 			return null;
 		}
 	}

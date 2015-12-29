@@ -6,11 +6,13 @@
 package com.chiorichan.site;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.lang3.Validate;
 
@@ -18,13 +20,16 @@ import com.chiorichan.APILogger;
 import com.chiorichan.Loader;
 import com.chiorichan.ServerManager;
 import com.chiorichan.configuration.file.YamlConfiguration;
-import com.chiorichan.datastore.DatastoreManager;
 import com.chiorichan.datastore.file.FileDatastore;
 import com.chiorichan.lang.SiteException;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.util.FileFunc;
+import com.chiorichan.util.NetworkFunc;
+import com.chiorichan.util.Pair;
+import com.chiorichan.util.StringFunc;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.io.Files;
 
 /**
  * Manages and Loads Sites
@@ -73,17 +78,6 @@ public class SiteManager implements ServerManager
 
 	}
 
-	public String add( String siteId, String type )
-	{
-		if ( sites.containsKey( siteId ) )
-			return "There already exists a site by the id you provided.";
-
-		if ( !type.equalsIgnoreCase( "sql" ) && !type.equalsIgnoreCase( "file" ) )
-			return "The only available site types are 'sql' and 'file'. '" + type + "' was not a valid option.";
-
-		return "";
-	}
-
 	public boolean delete( String siteId, boolean deleteFiles ) throws SiteException
 	{
 		Validate.notNull( siteId );
@@ -98,10 +92,10 @@ public class SiteManager implements ServerManager
 
 			site.unload();
 
-			if ( site instanceof FileSite )
-				( ( FileSite ) site ).getFile().delete();
+			if ( site instanceof Site )
+				site.getFile().delete();
 			if ( deleteFiles )
-				site.rootDirectory().delete();
+				site.directory().delete();
 			return true;
 		}
 
@@ -115,15 +109,12 @@ public class SiteManager implements ServerManager
 
 	public Site getSiteByDomain( String domain )
 	{
-		if ( domain == null )
-			domain = "";
+		if ( domain == null || domain.length() == 0 )
+			return getDefaultSite();
 
-		for ( Site site : sites.values() )
-			if ( site != null && site.getDomain() != null )
-				if ( site.getDomain().equalsIgnoreCase( domain.trim() ) )
-					return site;
+		Pair<String, SiteMapping> mapping = SiteMapping.get( domain );
 
-		return null;
+		return mapping == null ? null : mapping.getValue().getSite();
 	}
 
 	public Site getSiteById( String siteId )
@@ -132,6 +123,23 @@ public class SiteManager implements ServerManager
 			siteId = "default";
 
 		return sites.get( siteId.toLowerCase().trim() );
+	}
+
+	public List<Site> getSiteByIp( String ip )
+	{
+		List<Site> matches = Lists.newArrayList();
+
+		if ( !NetworkFunc.isValidIPv4( ip ) && !NetworkFunc.isValidIPv6( ip ) )
+			throw new IllegalArgumentException( "The provided ip addr does not match IPv4 or IPv6" );
+
+		for ( Site site : getSites() )
+			if ( site.getIps().contains( ip ) )
+				matches.add( site );
+
+		if ( matches.size() == 0 )
+			matches.add( getDefaultSite() );
+
+		return matches;
 	}
 
 	public Collection<Site> getSites()
@@ -153,8 +161,11 @@ public class SiteManager implements ServerManager
 
 		FileDatastore ds = FileDatastore.loadDirectory( Loader.getWebRoot(), "(.*)/config.yaml" );
 
-		for ( YamlConfiguration yaml : ds.asList() )
+		for ( Entry<File, YamlConfiguration> entry : ds.asEntrySet() )
 		{
+			File configFile = entry.getKey();
+			YamlConfiguration yaml = entry.getValue();
+
 			if ( !yaml.has( "site.id" ) )
 				if ( yaml.has( "site.siteId" ) )
 				{ // Temp until later version
@@ -165,18 +176,35 @@ public class SiteManager implements ServerManager
 			if ( yaml.has( "site.id" ) )
 			{
 				String id = yaml.getString( "site.id" ).toLowerCase();
+				String siteDir = StringFunc.regexCapture( configFile.getAbsolutePath(), "\\/([^\\/]*)\\/config.yaml" );
+
+				if ( !id.equals( siteDir ) )
+				{
+					getLogger().warning( String.format( "We found a site configuration file at '%s' but the containing directory did not match the siteId of '%s', we will now correct this by moving the config to the correct directory.", configFile.getAbsolutePath(), id ) );
+					File oldConfigFile = configFile;
+					configFile = new File( Loader.getWebRoot(), id + "/config.yaml" );
+					try
+					{
+						Files.move( oldConfigFile, configFile );
+					}
+					catch ( IOException e )
+					{
+						getLogger().severe( "We failed to move the configuration file, the site will not load until you manually correct the above issue.", e );
+						continue;
+					}
+				}
 
 				try
 				{
-					sites.put( id, new FileSite( yaml ) );
+					sites.put( id, new Site( configFile, yaml ) );
 				}
 				catch ( SiteException e )
 				{
-					throw new StartupException( String.format( "Exception encountered while loading site '%s'", id ), e );
+					getLogger().severe( String.format( "Exception encountered while loading site '%s'", id ), e );
 				}
 			}
 			else
-				DatastoreManager.getLogger().warning( String.format( "The site '%s' is missing the site id `site.id`, site will not be loaded.", yaml.loadedFrom() ) );
+				getLogger().warning( String.format( "The site '%s' is missing the site id `site.id`, site will not be loaded.", yaml.loadedFrom() ) );
 		}
 	}
 
@@ -204,5 +232,13 @@ public class SiteManager implements ServerManager
 	{
 		sites = new LinkedHashMap<String, Site>();
 		init();
+	}
+
+	public void unloadSites() throws IOException
+	{
+		for ( Site site : sites.values() )
+			site.save( true );
+
+		sites.clear();
 	}
 }

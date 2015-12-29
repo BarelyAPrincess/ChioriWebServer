@@ -427,22 +427,22 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		Site currentSite = request.getSite();
 		sess.setSite( currentSite );
 
-		if ( !currentSite.subDomainExists( request.getSubDomain() ) )
+		if ( request.getSubdomain().length() > 0 && !currentSite.getSubdomain( request.getSubdomain() ).isMaped( request.getDomain() ) )
 		{
-			if ( "www".equalsIgnoreCase( request.getSubDomain() ) || Loader.getConfig().getBoolean( "sites.redirectMissingSubDomains" ) )
+			if ( "www".equalsIgnoreCase( request.getSubdomain() ) || Loader.getConfig().getBoolean( "sites.redirectMissingSubDomains" ) )
 			{
-				log.log( Level.SEVERE, "Redirecting non-existent subdomain '%s' to root domain '%s'", request.getSubDomain(), request.getFullUrl( "" ) );
+				log.log( Level.SEVERE, "Redirecting non-existent subdomain '%s' to root domain '%s'", request.getSubdomain(), request.getFullUrl( "" ) );
 				response.sendRedirect( request.getFullUrl( "" ) );
 			}
 			else
 			{
-				log.log( Level.SEVERE, "The requested subdomain '%s' is non-existent.", request.getSubDomain(), request.getFullDomain( "" ) );
-				response.sendError( HttpResponseStatus.NOT_FOUND, "Subdomain is not found" );
+				log.log( Level.SEVERE, "The requested subdomain '%s' is non-existent.", request.getSubdomain(), request.getFullDomain( "" ) );
+				response.sendError( HttpResponseStatus.NOT_FOUND, "Subdomain not found" );
 			}
 			return;
 		}
 
-		File docRoot = currentSite.subDomainDirectory( request.getSubDomain() );
+		File docRoot = currentSite.getSubdomain( request.getSubdomain() ).directory();
 
 		Validate.notNull( docRoot );
 
@@ -519,20 +519,27 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				request.setGlobal( "_CSRF_TOKEN", token );
 			}
 
-		if ( request.getUploadedFiles().size() > 0 )
-			log.log( Level.INFO, "Uploads {" + StringFunc.limitLength( Joiner.on( "," ).join( request.getUploadedFiles().values() ), 255 ) + "}" );
+		try
+		{
+			if ( request.getUploadedFiles().size() > 0 )
+				log.log( Level.INFO, "Uploads {" + StringFunc.limitLength( Joiner.on( "," ).skipNulls().join( request.getUploadedFiles().values() ), 255 ) + "}" );
 
-		if ( request.getGetMap().size() > 0 )
-			log.log( Level.INFO, "Params GET {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).join( request.getGetMap() ), 255 ) + "}" );
+			if ( request.getGetMap().size() > 0 )
+				log.log( Level.INFO, "Params GET {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( request.getGetMap() ), 255 ) + "}" );
 
-		if ( request.getPostMap().size() > 0 )
-			log.log( Level.INFO, "Params POST {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).join( request.getPostMap() ), 255 ) + "}" );
+			if ( request.getPostMap().size() > 0 )
+				log.log( Level.INFO, "Params POST {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( request.getPostMap() ), 255 ) + "}" );
 
-		if ( request.getRewriteMap().size() > 0 )
-			log.log( Level.INFO, "Params REWRITE {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).join( request.getRewriteMap() ), 255 ) + "}" );
+			if ( request.getRewriteMap().size() > 0 )
+				log.log( Level.INFO, "Params REWRITE {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( request.getRewriteMap() ), 255 ) + "}" );
 
-		if ( fi.getAnnotations().size() > 0 )
-			log.log( Level.INFO, "Params ANNOTATIONS {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).join( fi.getAnnotations() ), 255 ) + "}" );
+			if ( fi.getAnnotations().size() > 0 )
+				log.log( Level.INFO, "Params ANNOTATIONS {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( fi.getAnnotations() ), 255 ) + "}" );
+		}
+		catch ( Throwable t )
+		{
+			t.printStackTrace();
+		}
 
 		if ( Loader.getConfig().getBoolean( "advanced.security.requestMapEnabled", true ) )
 			request.setGlobal( "_REQUEST", request.getRequestMap() );
@@ -727,7 +734,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 
 			Site currentSite = request.getSite();
 
-			File tmpFileDirectory = currentSite != null ? currentSite.tempDirectory() : Loader.getTempFileDirectory();
+			File tmpFileDirectory = currentSite != null ? currentSite.directoryTemp() : Loader.getTempFileDirectory();
 
 			setTempDirectory( tmpFileDirectory );
 
