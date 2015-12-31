@@ -29,8 +29,8 @@ import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.server.MessageEvent;
 import com.chiorichan.event.session.SessionDestroyEvent;
-import com.chiorichan.http.CSRFToken;
 import com.chiorichan.http.HttpCookie;
+import com.chiorichan.http.Nonce;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
@@ -117,7 +117,7 @@ public final class Session extends AccountPermissible implements Kickable
 	 */
 	private Site site = SiteManager.INSTANCE.getDefaultSite();
 
-	private CSRFToken token = null;
+	private Nonce nonce = null;
 
 	Session( SessionData data ) throws SessionException
 	{
@@ -208,6 +208,11 @@ public final class Session extends AccountPermissible implements Kickable
 		isInvalidated = true;
 	}
 
+	public void destroyNonce()
+	{
+		nonce = null;
+	}
+
 	@Override
 	protected void failedLogin( AccountResult result )
 	{
@@ -239,13 +244,6 @@ public final class Session extends AccountPermissible implements Kickable
 	public Map<String, HttpCookie> getCookies()
 	{
 		return Collections.unmodifiableMap( sessionCookies );
-	}
-
-	public CSRFToken getCSRFToken()
-	{
-		if ( token == null )
-			regenCSRFToken();
-		return token;
 	}
 
 	public Map<String, String> getDataMap()
@@ -397,6 +395,11 @@ public final class Session extends AccountPermissible implements Kickable
 		return account.meta();
 	}
 
+	public Nonce nonce()
+	{
+		return nonce;
+	}
+
 	/**
 	 * Removes the session expiration and prevents the Session Manager from unloading or destroying sessions
 	 */
@@ -414,6 +417,10 @@ public final class Session extends AccountPermissible implements Kickable
 	{
 
 	}
+
+	// TODO Sessions can outlive a login.
+	// TODO Sessions can have an expiration in 7 days and a login can have an expiration of 24 hours.
+	// TODO Remember should probably make it so logins last as long as the session does. Hmmmmmm
 
 	public void processSessionCookie( String domain )
 	{
@@ -448,10 +455,6 @@ public final class Session extends AccountPermissible implements Kickable
 			sessionCookies.put( oldKey, new HttpCookie( oldKey, "" ).setExpiration( 0 ) );
 		}
 	}
-
-	// TODO Sessions can outlive a login.
-	// TODO Sessions can have an expiration in 7 days and a login can have an expiration of 24 hours.
-	// TODO Remember should probably make it so logins last as long as the session does. Hmmmmmm
 
 	void putSessionCookie( String key, HttpCookie cookie )
 	{
@@ -491,9 +494,9 @@ public final class Session extends AccountPermissible implements Kickable
 			sessionCookie.setExpiration( timeout );
 	}
 
-	public void regenCSRFToken()
+	public void regenNonce()
 	{
-		token = new CSRFToken( this );
+		nonce = new Nonce( this );
 	}
 
 	/**

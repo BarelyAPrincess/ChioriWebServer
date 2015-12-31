@@ -67,6 +67,8 @@
 	UPDATED: Changes to YamlConfiguration, added getAsList(), copy(), move(), and improved getList() methods
 	UPDATED: Enabled about 22 additional cipher suites for SSL
 	UPDATED: Moved com.chiorichan.https.* to com.chiorichan.http
+	UPDATED: CSRF has been renamed to Nonce, annotation is @nonce [Disabled, Flexible, PostOnly, GetOnly, Required]
+	UPDATED: New SSL annotation options, POST and GET. Each will require SSL if request is being made over POST or GET.
 	ADDED: SSL ciphers can be modified from the EnabledCipherSuites.txt file
 	ADDED: Ticks class added to Groovy Imports list
 	ADDED: Added methods prepend(), reverseOrder(), subNamespace(), and subNodes() to Namespace Class

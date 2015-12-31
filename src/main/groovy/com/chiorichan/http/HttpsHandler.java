@@ -30,8 +30,10 @@ public class HttpsHandler extends SslHandler
 		 * Common SSL exception such as those below are thrown thru this exceptionCaught() method first
 		 *
 		 * javax.net.ssl.SSLHandshakeException: Client requested protocol SSLv3 not enabled or not supported
-		 * Caused by: javax.net.ssl.SSLHandshakeException: no cipher suites in common
+		 * javax.net.ssl.SSLHandshakeException: no cipher suites in common
 		 */
+
+		// io.netty.handler.ssl.NotSslRecordException;
 
 		if ( cause instanceof SSLException || ! ( cause instanceof IOException ) )
 		{

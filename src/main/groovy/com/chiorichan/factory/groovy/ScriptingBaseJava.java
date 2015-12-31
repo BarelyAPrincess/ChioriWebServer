@@ -41,6 +41,7 @@ import com.chiorichan.database.DatabaseEngineLegacy;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.http.HttpResponseWrapper;
+import com.chiorichan.http.Nonce;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.lang.PluginNotFoundException;
 import com.chiorichan.plugin.loader.Plugin;
@@ -760,6 +761,13 @@ public abstract class ScriptingBaseJava extends Script
 			return "$0.00";
 
 		return money_format( ObjectFunc.castToDouble( amt ) );
+	}
+
+	public Nonce nonce()
+	{
+		if ( getSession().nonce() == null )
+			getSession().regenNonce();
+		return getSession().nonce();
 	}
 
 	public boolean notNull( Object o )

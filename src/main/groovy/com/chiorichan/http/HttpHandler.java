@@ -70,10 +70,12 @@ import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.factory.ScriptingResult;
+import com.chiorichan.http.Nonce.NonceLevel;
 import com.chiorichan.lang.ApacheParser;
 import com.chiorichan.lang.EvalException;
 import com.chiorichan.lang.EvalMultipleException;
 import com.chiorichan.lang.HttpError;
+import com.chiorichan.lang.NonceException;
 import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.SiteException;
 import com.chiorichan.logger.LogEvent;
@@ -376,7 +378,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 
 	public void handleHttp( HttpRequestWrapper request, HttpResponseWrapper response ) throws IOException, HttpError, SiteException, PermissionException, EvalMultipleException, EvalException, SessionException
 	{
-		log.log( Level.INFO, request.getMethodString() + " " + request.getFullUrl() );
+		log.log( Level.INFO, request.methodString() + " " + request.getFullUrl() );
 
 		Session sess = request.startSession();
 
@@ -450,7 +452,15 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		// Options include IGNORE, REQUIRE, and DENY
 		String sslOption = fi.get( "ssl" );
 		if ( sslOption != null && !sslOption.isEmpty() )
-			if ( sslOption.equalsIgnoreCase( "require" ) || sslOption.equalsIgnoreCase( "required" ) )
+		{
+			boolean required = sslOption.equalsIgnoreCase( "require" ) || sslOption.equalsIgnoreCase( "required" );
+
+			if ( sslOption.equalsIgnoreCase( "post" ) && request.method() == HttpMethod.POST )
+				required = true;
+			if ( sslOption.equalsIgnoreCase( "get" ) && request.method() == HttpMethod.GET )
+				required = true;
+
+			if ( required )
 			{
 				if ( !ssl )
 					if ( !response.switchToSecure() )
@@ -468,6 +478,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			}
 			else
 				log.log( Level.WARNING, "Invalid option set for annotation ssl, '" + sslOption + "'" );
+		}
 
 		ApacheParser htaccess = new ApacheParser().appendWithDir( docRoot );
 
@@ -498,26 +509,65 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		request.setGlobal( "_REWRITE", request.getRewriteMap() );
 		request.setGlobal( "_FILES", request.getUploadedFiles() );
 
-		// Implement several optional security measures
-		String security = fi.get( "security" );
+		// TODO Implement NONCE requirement for login page
+		NonceLevel level = NonceLevel.parse( fi.get( "nonce" ) );
+		boolean nonceProvided = sess.nonce() == null ? false : request.getRequestMap().get( sess.nonce().key() ) != null;
+		boolean processNonce = false;
 
-		if ( security != null )
-			if ( security.equalsIgnoreCase( "csrf" ) )
+		switch ( level )
+		{
+			case Required:
+				processNonce = true;
+				break;
+			case GetOnly:
+				processNonce = request.method() == HttpMethod.GET;
+				break;
+			case PostOnly:
+				processNonce = request.method() == HttpMethod.POST;
+				break;
+			case Flexible:
+				processNonce = nonceProvided;
+				break;
+			case Disabled:
+			default:
+				// Do Nothing
+		}
+
+		Map<String, String> nonceMap = Maps.newHashMap();
+
+		if ( processNonce )
+		{
+			if ( !nonceProvided )
 			{
-				CSRFToken token = sess.getCSRFToken();
-
-				if ( request.method() != HttpMethod.GET && request.method() != HttpMethod.HEAD )
-					// Verify CSRF Token
-					if ( request.getRequestMap().get( token.getKey() ) != null && request.getRequestMap().get( token.getKey() ).equals( token.getValue() ) )
-						log.log( Level.INFO, "CSRF Token Verified as Valid!" );
-					else
-					{
-						sess.regenCSRFToken();
-						response.sendError( HttpResponseStatus.FORBIDDEN, "Invalid CSRF Token was found, forbidden!" );
-					}
-
-				request.setGlobal( "_CSRF_TOKEN", token );
+				log.log( Level.SEVERE, "The request has failed NONCE validation, because the nonce key was not present!" );
+				response.sendError( HttpResponseStatus.FORBIDDEN, "Your request has failed NONCE validation!" );
+				return;
 			}
+
+			Nonce nonce = sess.nonce();
+			sess.destroyNonce();
+
+			try
+			{
+				if ( ! ( request.getRequestMap().get( nonce.key() ) instanceof String ) )
+					throw new NonceException( "Nonce token is not a string" );
+				nonce.validateWithException( ( String ) request.getRequestMap().get( nonce.key() ) );
+			}
+			catch ( NonceException e )
+			{
+				log.log( Level.SEVERE, "The request has failed NONCE validation, because " + e.getMessage().toLowerCase() + "!" );
+				response.sendError( HttpResponseStatus.FORBIDDEN, "Your request has failed NONCE validation!" );
+				return;
+			}
+			finally
+			{
+				log.log( Level.INFO, "The request has passed the NONCE validation!" );
+				nonceMap = nonce.mapValues();
+			}
+		}
+
+		if ( level != NonceLevel.Disabled )
+			request.setGlobal( "_NONCE", nonceMap );
 
 		try
 		{
@@ -757,7 +807,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				return;
 			}
 
-			if ( !request.getMethod().equals( HttpMethod.GET ) )
+			if ( request.method() != HttpMethod.GET )
 				try
 				{
 					decoder = new HttpPostRequestDecoder( factory, requestOrig );

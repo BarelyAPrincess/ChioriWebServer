@@ -355,16 +355,18 @@ public class HttpResponseWrapper
 	 */
 	public void sendLoginPage( String msg )
 	{
-		msg = MessageRepo.store( msg, MessageRepo.DANGER );
+		Nonce nonce = request.getSession().nonce();
+		nonce.mapValues( "msg", msg );
+		nonce.mapValues( "level", "DANGER" );
 		String loginForm = request.getSite().getConfig().getString( "scripts.login-form", "/login" );
 		if ( !loginForm.toLowerCase().startsWith( "http" ) )
 			loginForm = ( request.isSecure() ? "https://" : "http://" ) + loginForm;
-		sendRedirect( String.format( "%s?msg=%s&target=%s", loginForm, msg, request.getFullUrl() ) );
+		sendRedirect( String.format( "%s?%s=%s&target=%s", loginForm, nonce.key(), nonce.value(), request.getFullUrl() ) );
 	}
 
 	public void sendMultipart( byte[] bytesToWrite ) throws IOException
 	{
-		if ( request.getMethod().equals( HttpMethod.HEAD ) )
+		if ( request.method() == HttpMethod.HEAD )
 			throw new IllegalStateException( "You can't start MULTIPART mode on a HEAD Request." );
 
 		if ( stage != HttpResponseStage.MULTIPART )

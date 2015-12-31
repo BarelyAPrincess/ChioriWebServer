@@ -558,16 +558,6 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		return ( ( InetSocketAddress ) channel.localAddress() ).getPort();
 	}
 
-	public HttpMethod getMethod()
-	{
-		return http.method();
-	}
-
-	public String getMethodString()
-	{
-		return http.method().toString();
-	}
-
 	public HttpRequest getOriginal()
 	{
 		return http;
@@ -837,6 +827,11 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	public HttpMethod method()
 	{
 		return http.method();
+	}
+
+	public String methodString()
+	{
+		return http.method().toString();
 	}
 
 	private Map<String, Object> parseMapArrays( Map<String, String> origMap )
