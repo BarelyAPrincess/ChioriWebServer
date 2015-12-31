@@ -49,6 +49,7 @@ import com.chiorichan.site.Site;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 
 /**
@@ -817,6 +818,16 @@ public class FileFunc
 		return true;
 	}
 
+	public static String fileExtension( File file )
+	{
+		return fileExtension( file.getName() );
+	}
+
+	private static String fileExtension( String fileName )
+	{
+		return StringFunc.regexCapture( fileName, ".*\\.(.*)$" );
+	}
+
 	public static File fileHealthCheck( File file ) throws IOException
 	{
 		Validate.notNull( file );
@@ -870,6 +881,22 @@ public class FileFunc
 	public static byte[] inputStream2Bytes( InputStream is ) throws IOException
 	{
 		return inputStream2ByteArray( is ).toByteArray();
+	}
+
+	public static Map<String, File> mapExtensions( File[] files )
+	{
+		Map<String, File> maps = Maps.newTreeMap();
+		for ( File f : files )
+			maps.put( FileFunc.fileExtension( f ).toLowerCase(), f );
+		return maps;
+	}
+
+	public static Map<Long, File> mapLastModified( File[] files )
+	{
+		Map<Long, File> maps = Maps.newTreeMap();
+		for ( File f : files )
+			maps.put( f.lastModified(), f );
+		return maps;
 	}
 
 	public static String nameSpaceToPath( String namespace )

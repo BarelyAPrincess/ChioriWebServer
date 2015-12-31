@@ -13,6 +13,8 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -20,11 +22,13 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 import com.chiorichan.Loader;
 import com.chiorichan.factory.FileInterpreter;
+import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.lang.HttpError;
 import com.chiorichan.lang.SiteException;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
+import com.chiorichan.util.FileFunc;
 import com.google.common.collect.Maps;
 
 public class WebInterpreter extends FileInterpreter
@@ -53,29 +57,7 @@ public class WebInterpreter extends FileInterpreter
 			Site fwSite = SiteManager.INSTANCE.getDefaultSite();
 			routes = fwSite.getRoutes();
 			request.setSite( fwSite );
-			// request.setUri( uri.substring( 3 ) );
-		}
-
-		if ( uri.startsWith( "/wisp/~" ) )
-		{
-			int indexOf = uri.indexOf( "/", 5 );
-
-			if ( indexOf < 0 )
-				indexOf = uri.length();
-
-			String siteId = uri.substring( 5, indexOf );
-
-			Site fwSite = SiteManager.INSTANCE.getSiteById( siteId );
-
-			if ( fwSite != null )
-			{
-				fwRequest = false;
-				routes = fwSite.getRoutes();
-				request.setSite( fwSite );
-				uri = indexOf == uri.length() ? "/" : uri.substring( indexOf );
-				request.setUri( uri );
-				Loader.getLogger().info( "Detected a virtual site request. New request on site '" + siteId + "' with URI '" + uri + "'. &4Caution: There could be site bugs when doing these kind of requests." );
-			}
+			request.setUri( uri.substring( 5 ) );
 		}
 
 		Route route = routes.searchRoutes( uri, domain, subdomain );
@@ -105,23 +87,23 @@ public class WebInterpreter extends FileInterpreter
 			if ( dest.isDirectory() )
 			{
 				FileFilter fileFilter = new WildcardFileFilter( "index.*" );
-				File[] files = dest.listFiles( fileFilter );
+				Map<String, File> maps = FileFunc.mapExtensions( dest.listFiles( fileFilter ) );
+
+				List<String> preferredExtensions = ScriptingContext.getPreferredExtensions();
 
 				File selectedFile = null;
 
-				if ( files != null && files.length > 0 )
-					for ( File f : files )
-						if ( f.exists() )
+				if ( maps.size() > 0 )
+				{
+					for ( String ext : preferredExtensions )
+						if ( maps.containsKey( ext.toLowerCase() ) )
 						{
-							String filename = f.getName().toLowerCase();
-							if ( filename.endsWith( ".chi" ) || filename.endsWith( ".gsp" ) || filename.endsWith( ".groovy" ) || filename.endsWith( ".jsp" ) || filename.endsWith( ".html" ) || filename.endsWith( ".htm" ) )
-							{
-								selectedFile = f;
-								break;
-							}
-							else
-								selectedFile = f;
+							selectedFile = maps.get( ext.toLowerCase() );
+							break;
 						}
+					if ( selectedFile == null )
+						selectedFile = new ArrayList<File>( maps.values() ).get( 0 );
+				}
 
 				if ( selectedFile != null )
 				{

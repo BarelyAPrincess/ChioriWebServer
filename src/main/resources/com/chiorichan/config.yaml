@@ -122,14 +122,6 @@ accounts:
 sites:
   defaultTitle: Unnamed Site
   redirectMissingSubDomains: false
-packages:
-  preferredExt:
-  - html
-  - htm
-  - groovy
-  - gsp
-  - jsp
-  - chi
 advanced:
   cache:
     keepHistory: 30
@@ -143,6 +135,13 @@ advanced:
   scripting:
     gspEnabled: true
     groovyEnabled: true
+    preferredExtensions:
+    - html
+    - htm
+    - groovy
+    - gsp
+    - jsp
+    - chi
   security:
     unmodifiableMapsEnabled: true
     requestMapEnabled: true

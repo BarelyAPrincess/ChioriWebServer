@@ -99,8 +99,8 @@ public class Route
 
 	public File getFile()
 	{
-		if ( params.get( "file" ) != null && !params.get( "file" ).isEmpty() )
-			return new File( site.directory(), params.get( "file" ) );
+		if ( params.get( "file" ) != null && params.get( "file" ).length() > 0 )
+			return new File( site.getSubdomain( params.get( "subdomain" ) ).directory(), params.get( "file" ) );
 
 		return null;
 	}

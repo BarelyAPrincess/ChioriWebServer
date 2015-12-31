@@ -14,8 +14,11 @@ import io.netty.buffer.Unpooled;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.List;
 
 import com.chiorichan.ContentTypes;
+import com.chiorichan.Loader;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.lang.EvalException;
 import com.chiorichan.lang.EvalMultipleException;
@@ -146,6 +149,11 @@ public class ScriptingContext
 		ScriptingContext context = fromSource( new byte[0], filename );
 		context.write( source.getBytes( context.charset ) );
 		return context;
+	}
+
+	public static List<String> getPreferredExtensions()
+	{
+		return Loader.getConfig().getStringList( "advanced.scripting.preferredExtensions", Arrays.asList( "html", "htm", "groovy", "gsp", "jsp", "chi" ) );
 	}
 
 	private Charset charset = Charset.defaultCharset();

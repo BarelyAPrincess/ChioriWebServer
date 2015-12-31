@@ -506,7 +506,7 @@ public class Site
 		{
 			File[] files = root.listFiles();
 			Map<String, File> found = Maps.newLinkedHashMap();
-			List<String> preferred = Loader.getConfig().getStringList( "packages.preferredExt" );
+			List<String> preferred = ScriptingContext.getPreferredExtensions();
 
 			for ( File child : files )
 				if ( child.getName().startsWith( packFile.getName() + "." ) )
@@ -548,7 +548,7 @@ public class Site
 		{
 			File[] files = root.listFiles();
 			Map<String, File> found = Maps.newLinkedHashMap();
-			List<String> preferred = Loader.getConfig().getStringList( "packages.preferredExt" );
+			List<String> preferred = ScriptingContext.getPreferredExtensions();
 
 			for ( File child : files )
 				if ( child.getName().startsWith( packFile.getName() + "." ) )

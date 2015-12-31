@@ -9,6 +9,7 @@
 package com.chiorichan;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.lang3.ClassUtils;
@@ -21,67 +22,72 @@ public class SourceContext
 {
 	public enum SourceFlags
 	{
-		
+
 	}
-	
-	private Object source;
-	private String name;
-	private List<SourceFlags> flags;
-	
-	private SourceContext( Object source, SourceFlags... flags )
-	{
-		this.source = source;
-		this.flags = Arrays.asList( flags );
-		
-		name = ClassUtils.getSimpleName( source.getClass() );
-		
-		/*
-		 * if ( source instanceof EventRegistrar )
-		 * if ( !creator.isEnabled() )
-		 * throw new IllegalCreatorAccessException( "EventCreator attempted to register " + listener + " while not enabled" );
-		 * 
-		 * if ( source instanceof TaskRegistrar )
-		 * {
-		 * 
-		 * }
-		 * 
-		 * if ( source instanceof Plugin )
-		 * {
-		 * 
-		 * }
-		 */
-	}
-	
+
 	public static SourceContext produce( Object source, SourceFlags... flags )
 	{
 		return new SourceContext( source, flags );
 	}
-	
+	private Object source;
+	private String name;
+
+	private List<SourceFlags> flags;
+
+	private SourceContext( Object source, SourceFlags... flags )
+	{
+		this.source = source;
+		this.flags = Arrays.asList( flags );
+
+		name = ClassUtils.getSimpleName( source.getClass() );
+
+		/*
+		 * if ( source instanceof EventRegistrar )
+		 * if ( !creator.isEnabled() )
+		 * throw new IllegalCreatorAccessException( "EventCreator attempted to register " + listener + " while not enabled" );
+		 *
+		 * if ( source instanceof TaskRegistrar )
+		 * {
+		 *
+		 * }
+		 *
+		 * if ( source instanceof Plugin )
+		 * {
+		 *
+		 * }
+		 */
+	}
+
 	public List<String> getAuthors()
 	{
 		// TODO Implement this
 		return Arrays.asList( new String[] {"Chiori-chan"} );
 	}
-	
+
+	public List<SourceFlags> getFlags()
+	{
+		return Collections.unmodifiableList( flags );
+	}
+
 	public String getFullName()
 	{
 		return getName();
 	}
-	
+
 	public String getName()
 	{
 		return name;
 	}
-	
+
 	public Object getSource()
 	{
 		return source;
 	}
-	
+
 	public boolean isEnabled()
 	{
 		// Implement this!
-		
+
 		return true;
 	}
 }

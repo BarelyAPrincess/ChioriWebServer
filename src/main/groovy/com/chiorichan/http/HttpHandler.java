@@ -852,7 +852,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			String type = ContentTypes.getContentType( f );
 			String mainType = type.contains( "/" ) ? type.substring( 0, type.indexOf( "/" ) ) : type;
 
-			l.add( "<img src=\"/fw/icons/" + mainType + "\" />" );
+			l.add( "<img src=\"/wisp/icons/" + mainType + "\" />" );
 			l.add( "<a href=\"" + request.getUri() + "/" + f.getName() + "\">" + f.getName() + "</a>" );
 			l.add( sdf.format( f.lastModified() ) );
 
