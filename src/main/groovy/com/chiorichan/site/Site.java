@@ -371,6 +371,16 @@ public class Site
 		return ips;
 	}
 
+	public String getLoginForm()
+	{
+		return getConfig().getString( "accounts.loginForm", "/wisp/login" );
+	}
+
+	public String getLoginPost()
+	{
+		return getConfig().getString( "accounts.loginPost", "/" );
+	}
+
 	@Deprecated
 	public List<String> getMetatags()
 	{

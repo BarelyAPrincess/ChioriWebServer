@@ -29,9 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
-import java.util.UUID;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.ocpsoft.prettytime.PrettyTime;
 
@@ -125,42 +123,6 @@ public abstract class ScriptingBaseJava extends Script
 	public int count( String var )
 	{
 		return var == null ? 0 : var.length();
-	}
-
-	public String createGUID() throws UnsupportedEncodingException
-	{
-		return createGUID( Timings.epoch() + "-guid" );
-	}
-
-	public String createGUID( String seed )
-	{
-		if ( seed == null )
-			seed = "";
-
-		byte[] bytes;
-		try
-		{
-			bytes = seed.getBytes( "ISO-8859-1" );
-		}
-		catch ( UnsupportedEncodingException e )
-		{
-			bytes = new byte[0];
-		}
-
-		byte[] bytesScrambled = new byte[0];
-
-		for ( byte b : bytes )
-		{
-			byte[] tbyte = new byte[2];
-			new Random().nextBytes( bytes );
-
-			tbyte[0] = ( byte ) ( b + tbyte[0] );
-			tbyte[1] = ( byte ) ( b + tbyte[1] );
-
-			bytesScrambled = ArrayUtils.addAll( bytesScrambled, tbyte );
-		}
-
-		return "{" + UUID.nameUUIDFromBytes( bytesScrambled ).toString() + "}";
 	}
 
 	public String createTable( Collection<Object> tableData )
@@ -298,16 +260,6 @@ public abstract class ScriptingBaseJava extends Script
 		sb.append( "</table>\n" );
 
 		return sb.toString();
-	}
-
-	public String createUUID() throws UnsupportedEncodingException
-	{
-		return createUUID( Timings.epoch() + "-uuid" );
-	}
-
-	public String createUUID( String seed ) throws UnsupportedEncodingException
-	{
-		return DigestUtils.md5Hex( createGUID( seed ) );
 	}
 
 	public String date()
@@ -765,9 +717,7 @@ public abstract class ScriptingBaseJava extends Script
 
 	public Nonce nonce()
 	{
-		if ( getSession().nonce() == null )
-			getSession().regenNonce();
-		return getSession().nonce();
+		return getSession().getNonce();
 	}
 
 	public boolean notNull( Object o )

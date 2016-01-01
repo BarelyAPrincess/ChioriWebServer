@@ -298,6 +298,13 @@ public final class Session extends AccountPermissible implements Kickable
 		return sessionKey;
 	}
 
+	public Nonce getNonce()
+	{
+		if ( nonce == null )
+			regenNonce();
+		return nonce;
+	}
+
 	public String getSessId()
 	{
 		return sessionId;
@@ -412,15 +419,15 @@ public final class Session extends AccountPermissible implements Kickable
 		data.timeout = 0;
 	}
 
+	// TODO Sessions can outlive a login.
+	// TODO Sessions can have an expiration in 7 days and a login can have an expiration of 24 hours.
+	// TODO Remember should probably make it so logins last as long as the session does. Hmmmmmm
+
 	@EventHandler( priority = EventPriority.NORMAL )
 	public void onAccountMessageEvent( MessageEvent event )
 	{
 
 	}
-
-	// TODO Sessions can outlive a login.
-	// TODO Sessions can have an expiration in 7 days and a login can have an expiration of 24 hours.
-	// TODO Remember should probably make it so logins last as long as the session does. Hmmmmmm
 
 	public void processSessionCookie( String domain )
 	{

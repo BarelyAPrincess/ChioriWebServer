@@ -384,9 +384,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 
 		log.log( Level.FINE, "Session {id=%s,timeout=%s,new=%s}", sess.getSessId(), sess.getTimeout(), sess.isNew() );
 
-		if ( sess.isLoginPresent() )
-			log.log( Level.FINE, "Account {id=%s,displayName=%s}", sess.getId(), sess.getDisplayName() );
-
 		if ( response.getStage() == HttpResponseStage.CLOSED )
 			throw new IOException( "Connection reset by peer" ); // This is not the only place 'Connection reset by peer' is thrown
 
@@ -448,6 +445,9 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 
 		Validate.notNull( docRoot );
 
+		if ( sess.isLoginPresent() )
+			log.log( Level.FINE, "Account {id=%s,displayName=%s}", sess.getId(), sess.getDisplayName() );
+
 		// Default SSL Option is IGNORE or empty.
 		// Options include IGNORE, REQUIRE, and DENY
 		String sslOption = fi.get( "ssl" );
@@ -463,14 +463,20 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			if ( required )
 			{
 				if ( !ssl )
+				{
 					if ( !response.switchToSecure() )
 						response.sendError( HttpCode.HTTP_FORBIDDEN, "This page requires a secure connection." );
+					return;
+				}
 			}
 			else if ( sslOption.equalsIgnoreCase( "deny" ) )
 			{
 				if ( ssl )
+				{
 					if ( !response.switchToUnsecure() )
 						response.sendError( HttpCode.HTTP_FORBIDDEN, "This page requires an unsecure connection." );
+					return;
+				}
 			}
 			else if ( sslOption.equalsIgnoreCase( "ignore" ) )
 			{
@@ -520,10 +526,10 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				processNonce = true;
 				break;
 			case GetOnly:
-				processNonce = request.method() == HttpMethod.GET;
+				processNonce = request.method() == HttpMethod.GET || nonceProvided;
 				break;
 			case PostOnly:
-				processNonce = request.method() == HttpMethod.POST;
+				processNonce = request.method() == HttpMethod.POST || nonceProvided;
 				break;
 			case Flexible:
 				processNonce = nonceProvided;
@@ -545,7 +551,10 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			}
 
 			Nonce nonce = sess.nonce();
-			sess.destroyNonce();
+
+			if ( level == NonceLevel.Required )
+				// Required NonceLevels are of the highest protected state
+				sess.destroyNonce();
 
 			try
 			{
@@ -557,14 +566,19 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			{
 				log.log( Level.SEVERE, "The request has failed NONCE validation, because " + e.getMessage().toLowerCase() + "!" );
 				response.sendError( HttpResponseStatus.FORBIDDEN, "Your request has failed NONCE validation!" );
+				sess.destroyNonce();
 				return;
 			}
 			finally
 			{
 				log.log( Level.INFO, "The request has passed the NONCE validation!" );
+				request.nonceProcessed( true );
 				nonceMap = nonce.mapValues();
 			}
 		}
+
+		if ( request.validateLogins() )
+			return;
 
 		if ( level != NonceLevel.Disabled )
 			request.setGlobal( "_NONCE", nonceMap );

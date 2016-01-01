@@ -11,7 +11,7 @@ server:
   queryHost: ''
   queryPort: 8992
   queryUseColor: true
-  admin: chiorigreene@gmail.com
+  admin: me@chiorichan.com
   allowDirectoryListing: false
   haltOnSevereError: false
   throwInternalServerErrorOnWarnings: false
@@ -99,6 +99,7 @@ sessions:
   datastore: file
   debug: false
 accounts:
+  requireLoginWithNonce: true
   allowLoginTokens: true
   singleLogin: false
   singleLoginMessage: You logged in from another location.

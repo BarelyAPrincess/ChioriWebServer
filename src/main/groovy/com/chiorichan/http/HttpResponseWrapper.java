@@ -355,13 +355,42 @@ public class HttpResponseWrapper
 	 */
 	public void sendLoginPage( String msg )
 	{
-		Nonce nonce = request.getSession().nonce();
+		sendLoginPage( msg, null );
+	}
+
+	/**
+	 * Sends the client to the site login page
+	 *
+	 * @param msg
+	 *             The message to pass to the login page
+	 * @param level
+	 *             The severity level of this login page redirect
+	 */
+	public void sendLoginPage( String msg, String level )
+	{
+		sendLoginPage( msg, level, null );
+	}
+
+	/**
+	 * Sends the client to the site login page
+	 *
+	 * @param msg
+	 *             The message to pass to the login page
+	 * @param level
+	 *             The severity level of this login page redirect
+	 * @param target
+	 *             The target to redirect to once we receive a successful login
+	 */
+	public void sendLoginPage( String msg, String level, String target )
+	{
+		Nonce nonce = request.getSession().getNonce();
 		nonce.mapValues( "msg", msg );
-		nonce.mapValues( "level", "DANGER" );
-		String loginForm = request.getSite().getConfig().getString( "scripts.login-form", "/login" );
+		nonce.mapValues( "level", level == null || level.length() == 0 ? "danger" : level );
+		nonce.mapValues( "target", target == null || target.length() == 0 ? request.getFullUrl() : target );
+		String loginForm = request.getSite().getLoginForm();
 		if ( !loginForm.toLowerCase().startsWith( "http" ) )
 			loginForm = ( request.isSecure() ? "https://" : "http://" ) + loginForm;
-		sendRedirect( String.format( "%s?%s=%s&target=%s", loginForm, nonce.key(), nonce.value(), request.getFullUrl() ) );
+		sendRedirect( String.format( "%s?%s=%s", loginForm, nonce.key(), nonce.value() ) );
 	}
 
 	public void sendMultipart( byte[] bytesToWrite ) throws IOException

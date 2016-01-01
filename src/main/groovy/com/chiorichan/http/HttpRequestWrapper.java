@@ -179,6 +179,8 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	 */
 	private String childDomain = "";
 
+	private boolean nonceProcessed = false;
+
 	HttpRequestWrapper( Channel channel, HttpRequest http, boolean ssl, LogEvent log ) throws IOException
 	{
 		this.channel = channel;
@@ -834,6 +836,16 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		return http.method().toString();
 	}
 
+	public boolean nonceProcessed()
+	{
+		return nonceProcessed;
+	}
+
+	void nonceProcessed( boolean processed )
+	{
+		nonceProcessed = processed;
+	}
+
 	private Map<String, Object> parseMapArrays( Map<String, String> origMap )
 	{
 		Map<String, Object> result = Maps.newLinkedHashMap();
@@ -1004,13 +1016,28 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	}
 
 	@Override
-	protected void sessionStarted()
+	public void sessionStarted()
 	{
 		getBinding().setVariable( "request", this );
 		getBinding().setVariable( "response", getResponse() );
+	}
 
-		String loginForm = getSite().getConfig().getString( "scripts.login-form", "/login" );
+	protected void setSite( Site site )
+	{
+		Validate.notNull( site );
+		this.site = site;
+	}
 
+	void setUri( String uri )
+	{
+		this.uri = uri;
+
+		if ( !uri.startsWith( "/" ) )
+			uri = "/" + uri;
+	}
+
+	protected boolean validateLogins()
+	{
 		Session session = getSession();
 
 		if ( getArgument( "logout" ) != null )
@@ -1019,8 +1046,8 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 			if ( result.isSuccess() )
 			{
-				getResponse().sendRedirect( loginForm + "?msg=" + result.getMessage() );
-				return;
+				getResponse().sendLoginPage( result.getMessage() );
+				return true;
 			}
 		}
 
@@ -1037,8 +1064,15 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			loginPost = "/";
 
 		if ( username != null && password != null )
+		{
 			try
 			{
+				if ( !ssl )
+					AccountManager.getLogger().warning( "It is highly recommended that account logins are submitted over SSL. Without SSL, passwords are at great risk." );
+
+				if ( !nonceProcessed() && Loader.getConfig().getBoolean( "accounts.requireLoginWithNonce" ) )
+					throw new AccountException( AccountDescriptiveReason.NONCE_REQUIRED, username );
+
 				AccountResult result = getSession().loginWithException( AccountAuthenticator.PASSWORD, username, password );
 
 				Account acct = result.getAccountWithException();
@@ -1046,7 +1080,11 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 				session.remember( remember );
 
 				SessionManager.getLogger().info( LogColor.GREEN + "Successful Login: [id='" + acct.getId() + "',siteId='" + acct.getSiteId() + "',authenticator='plaintext']" );
-				getResponse().sendRedirect( loginPost );
+
+				if ( site.getLoginPost() != null )
+					getResponse().sendRedirect( site.getLoginPost() );
+				else
+					getResponse().sendLoginPage( "Your have been successfully logged in!", "success" );
 			}
 			catch ( AccountException e )
 			{
@@ -1060,14 +1098,16 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 					msg = result.getCause().getMessage();
 				}
 
-				AccountManager.getLogger().warning( LogColor.RED + "Failed Login [id='" + username + "',hasPassword='" + ( password != null && !password.isEmpty() ) + "',authenticator='plaintext'`,reason='" + msg + "']" );
-				getResponse().sendRedirect( loginForm + "?msg=" + result.getMessage() + ( target == null || target.isEmpty() ? "" : "&target=" + target ) );
+				AccountManager.getLogger().warning( LogColor.RED + "Failed Login [id='" + username + "',hasPassword='" + ( password != null && password.length() > 0 ) + "',authenticator='plaintext'`,reason='" + msg + "']" );
+				getResponse().sendLoginPage( result.getMessage(), null, target );
 			}
 			catch ( Throwable t )
 			{
 				AccountManager.getLogger().severe( "Login has thrown an internal server error", t );
-				getResponse().sendRedirect( loginForm + "?msg=" + AccountDescriptiveReason.INTERNAL_ERROR.getMessage() + ( target == null || target.isEmpty() ? "" : "&target=" + target ) );
+				getResponse().sendLoginPage( AccountDescriptiveReason.INTERNAL_ERROR.getMessage(), null, target );
 			}
+			return true;
+		}
 		else if ( session.isLoginPresent() )
 		{
 			// XXX Should we revalidate logins with each request? It could be something worth considering for extra security. Maybe a config option?
@@ -1092,20 +1132,8 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		// Will we ever be using a session on more than one domains?
 		if ( !getDomain().isEmpty() && session.getSessionCookie() != null && !session.getSessionCookie().getDomain().isEmpty() )
 			if ( !session.getSessionCookie().getDomain().endsWith( getDomain() ) )
-				NetworkManager.getLogger().warning( "The site `" + site.getSiteId() + "` specifies the session cookie domain as `" + session.getSessionCookie().getDomain() + "` but the request was made on parent domain `" + getDomain() + "`. The session will not remain persistent." );
-	}
+				NetworkManager.getLogger().warning( "The site `" + site.getSiteId() + "` specifies the session cookie domain as `" + session.getSessionCookie().getDomain() + "` but the request was made on domain `" + getDomain() + "`. The session will not remain persistent." );
 
-	protected void setSite( Site site )
-	{
-		Validate.notNull( site );
-		this.site = site;
-	}
-
-	void setUri( String uri )
-	{
-		this.uri = uri;
-
-		if ( !uri.startsWith( "/" ) )
-			uri = "/" + uri;
+		return false;
 	}
 }
