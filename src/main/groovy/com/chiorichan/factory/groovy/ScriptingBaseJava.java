@@ -85,6 +85,31 @@ public abstract class ScriptingBaseJava extends Script
 		return vals;
 	}
 
+	public boolean asBool( Object obj )
+	{
+		return ObjectFunc.castToBool( obj );
+	}
+
+	public double asDouble( Object obj )
+	{
+		return ObjectFunc.castToDouble( obj );
+	}
+
+	public int asInt( Object obj )
+	{
+		return ObjectFunc.castToInt( obj );
+	}
+
+	public long asLong( Object obj )
+	{
+		return ObjectFunc.castToLong( obj );
+	}
+
+	public String asString( Object obj )
+	{
+		return ObjectFunc.castToString( obj );
+	}
+
 	public byte[] base64Decode( String str )
 	{
 		return SecureFunc.base64Decode( str );

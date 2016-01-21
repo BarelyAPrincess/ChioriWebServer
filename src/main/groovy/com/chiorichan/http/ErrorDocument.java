@@ -8,34 +8,41 @@
  */
 package com.chiorichan.http;
 
+import java.util.List;
+
 /**
  * Used to override default error pages
  */
 public class ErrorDocument
 {
-	int httpCode;
-	String resp;
-	
-	public ErrorDocument( int httpCode, String resp )
+	public static ErrorDocument parseArgs( List<String> args )
 	{
-		this.httpCode = httpCode;
-		this.resp = resp;
+		return parseArgs( args.toArray( new String[0] ) );
 	}
-	
-	public int getHttpCode()
-	{
-		return httpCode;
-	}
-	
-	public String getResponse()
-	{
-		return resp;
-	}
-	
 	public static ErrorDocument parseArgs( String... args )
 	{
 		if ( args.length > 1 )
 			return new ErrorDocument( Integer.parseInt( args[0] ), args[1] );
 		return null;
+	}
+
+	int httpCode;
+
+	String resp;
+
+	public ErrorDocument( int httpCode, String resp )
+	{
+		this.httpCode = httpCode;
+		this.resp = resp;
+	}
+
+	public int getHttpCode()
+	{
+		return httpCode;
+	}
+
+	public String getResponse()
+	{
+		return resp;
 	}
 }

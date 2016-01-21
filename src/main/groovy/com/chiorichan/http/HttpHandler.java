@@ -62,6 +62,8 @@ import com.chiorichan.ContentTypes;
 import com.chiorichan.Loader;
 import com.chiorichan.LogColor;
 import com.chiorichan.RunLevel;
+import com.chiorichan.configuration.apache.ApacheConfiguration;
+import com.chiorichan.configuration.apache.ApacheDirectiveException;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.server.RenderEvent;
@@ -71,7 +73,7 @@ import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.factory.ScriptingResult;
 import com.chiorichan.http.Nonce.NonceLevel;
-import com.chiorichan.lang.ApacheParser;
+import com.chiorichan.https.SslLevel;
 import com.chiorichan.lang.EvalException;
 import com.chiorichan.lang.EvalMultipleException;
 import com.chiorichan.lang.HttpError;
@@ -107,12 +109,10 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 {
 	private static HttpDataFactory factory;
 
-	protected static Map<ServerVars, Object> staticServerVars = Maps.newLinkedHashMap();
-
 	static
 	{
 		/**
-		 * Determines the minimum file size required to create a temporary file.
+		 * Determines the minimum file size required to create a physical temporary file.
 		 * See {@link DefaultHttpDataFactory#DefaultHttpDataFactory(boolean)} and {@link DefaultHttpDataFactory#DefaultHttpDataFactory(long)}
 		 */
 		long minsize = Loader.getConfig().getLong( "server.fileUploadMinInMemory", DefaultHttpDataFactory.MINSIZE );
@@ -125,17 +125,25 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			factory = new DefaultHttpDataFactory( minsize );
 
 		setTempDirectory( Loader.getTempFileDirectory() );
-
-		// Initialize static server variables
-
 	}
 
+	/**
+	 * Sends the 100 continue response
+	 *
+	 * @param ctx
+	 *             the Channel
+	 */
 	private static void send100Continue( ChannelHandlerContext ctx )
 	{
 		FullHttpResponse response = new DefaultFullHttpResponse( HTTP_1_1, CONTINUE );
 		ctx.write( response );
 	}
 
+	/**
+	 * Updates the default temporary file directory
+	 *
+	 * @param tmpDir
+	 */
 	public static void setTempDirectory( File tmpDir )
 	{
 		// TODO Config option to delete temporary files on exit?
@@ -146,22 +154,68 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		DiskAttribute.baseDirectory = tmpDir.getAbsolutePath();
 	}
 
-	SimpleDateFormat dateFormat = new SimpleDateFormat( Loader.getConfig().getString( "console.dateFormat", "MM-dd" ) );
+	/**
+	 * Simple Time and Date formats
+	 */
+	final SimpleDateFormat dateFormat = new SimpleDateFormat( Loader.getConfig().getString( "console.dateFormat", "MM-dd" ) );
+	final SimpleDateFormat timeFormat = new SimpleDateFormat( Loader.getConfig().getString( "console.timeFormat", "HH:mm:ss.SSS" ) );
 
-	SimpleDateFormat timeFormat = new SimpleDateFormat( Loader.getConfig().getString( "console.timeFormat", "HH:mm:ss.SSS" ) );
-
+	/**
+	 * The POST body decoder
+	 */
 	private HttpPostRequestDecoder decoder;
+
+	/**
+	 * The WebSocket handshaker
+	 */
 	private WebSocketServerHandshaker handshaker = null;
+
+	/**
+	 * The simplified event logger
+	 */
 	private LogEvent log;
+
+	/**
+	 * The originating HTTP request
+	 */
 	private HttpRequestWrapper request;
-	private boolean requestFinished = false;
 
-	private FullHttpRequest requestOrig;
-
+	/**
+	 * The destination HTTP response
+	 */
 	private HttpResponseWrapper response;
 
-	private boolean ssl;
+	/**
+	 * The selected site
+	 */
+	private Site currentSite;
 
+	/**
+	 * The {@link WebInterpreter} used to parse annotations, file encoding, and etc.
+	 */
+	private WebInterpreter fi;
+
+	/**
+	 * Has the request finished, used by {@link #exceptionCaught(ChannelHandlerContext, Throwable)}
+	 */
+	private boolean requestFinished = false;
+
+	/**
+	 * The raw originating Netty object
+	 */
+	private FullHttpRequest requestOrig;
+
+	/**
+	 * Is this handler used on secure connections
+	 */
+	private final boolean ssl;
+
+	/**
+	 * Constructs a new HttpHandler, used within the Netty HTTP stream
+	 *
+	 * @param ssl
+	 *             Will this handler be used on a secure connection
+	 */
 	public HttpHandler( boolean ssl )
 	{
 		this.ssl = ssl;
@@ -198,11 +252,11 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 
 				StringBuilder sb = new StringBuilder();
 				sb.append( "<h1>500 - Internal Server Error</h1>\n" );
-				sb.append( "<p>The server had encountered an unexpected exception before it could process your request, so no debug information is available.</p>\n" );
-				sb.append( "<p>The exception has been logged to the console, we can only hope the exception is noticed and resolved. We apoligize for any inconvenience.</p>\n" );
+				sb.append( "<p>The server had encountered an unexpected exception before it could fully process your request, so no extended debug information is or will be available.</p>\n" );
+				sb.append( "<p>The exception has been logged to the console, so we can only hope the exception is noticed and resolved. We apoligize for any inconvenience.</p>\n" );
 				sb.append( "<p><i>You have a good day now and we will see you again soon. :)</i></p>\n" );
 				sb.append( "<hr>\n" );
-				sb.append( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")<br />" + Versioning.getCopyright() + "</small>" );
+				sb.append( Versioning.getHTMLFooter() );
 
 				FullHttpResponse response = new DefaultFullHttpResponse( HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf( 500 ), Unpooled.wrappedBuffer( sb.toString().getBytes() ) );
 				ctx.write( response );
@@ -252,7 +306,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			 * Presently we can only send one exception to the client
 			 * So for now we only send the most severe one
 			 *
-			 * Enhancement: Make it so each exception is printed out.
+			 * TODO Enhancement: Make it so each exception is printed out.
 			 */
 			if ( cause instanceof EvalMultipleException )
 			{
@@ -268,7 +322,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			}
 
 			/*
-			 * TODO Proper Exception Handling. Consider the ability to have these exceptions cached and/or delivered by e-mail to developer and/or server administrator.
+			 * TODO Proper Exception Handling. Consider the ability to have these exceptions cached, then delivered by e-mail to chiori-chan and/or server administrator.
 			 */
 			if ( cause instanceof HttpError )
 				response.sendError( ( HttpError ) cause );
@@ -280,7 +334,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 					response.sendLoginPage( pde.getReason().getMessage() );
 				else
 					/*
-					 * TODO generate a special permission denied page for these!!!
+					 * TODO generate a special permission denied page
 					 */
 					response.sendError( ( ( PermissionDeniedException ) cause ).getHttpCode(), cause.getMessage() );
 			}
@@ -333,6 +387,9 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		}
 	}
 
+	/**
+	 * Sends the final response to the request
+	 */
 	private void finish()
 	{
 		try
@@ -361,22 +418,78 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		ctx.flush();
 	}
 
+	/**
+	 * Gets the {@link WebInterpreter} used to parse annotations, file encoding, and etc.
+	 *
+	 * @return
+	 *         The active interpreter
+	 */
+	public WebInterpreter getInterpreter()
+	{
+		return fi;
+	}
+
+	/**
+	 * Gets the origin HTTP request
+	 *
+	 * @return
+	 *         The HTTP request
+	 */
 	public HttpRequestWrapper getRequest()
 	{
 		return request;
 	}
 
+	/**
+	 * Gets the destination HTTP response
+	 *
+	 * @return
+	 *         The HTTP Response
+	 */
 	public HttpResponseWrapper getResponse()
 	{
 		return response;
 	}
 
+	/**
+	 * Gets the currently selected Session for this request
+	 *
+	 * @return
+	 *         selected Session
+	 */
 	public Session getSession()
 	{
 		return request.getSession();
 	}
 
-	public void handleHttp( HttpRequestWrapper request, HttpResponseWrapper response ) throws IOException, HttpError, SiteException, PermissionException, EvalMultipleException, EvalException, SessionException
+	/**
+	 * Gets the currently selected Site for this request
+	 *
+	 * @return
+	 *         selected Site
+	 */
+	public Site getSite()
+	{
+		return currentSite;
+	}
+
+	/**
+	 * Handles the HTTP request. Each HTTP subsystem will be explicitly activated until a resolve is determined.
+	 *
+	 * @throws IOException
+	 *              Universal exception for all Input/Output errors
+	 * @throws HttpError
+	 *              for HTTP Errors
+	 * @throws PermissionException
+	 *              for permission problems, like access denied
+	 * @throws EvalMultipleException
+	 *              for multiple Scripting Factory Evaluation Exceptions
+	 * @throws EvalException
+	 *              for Scripting Factory Evaluation Exception
+	 * @throws SessionException
+	 *              for problems initializing a new or used session
+	 */
+	private void handleHttp() throws IOException, HttpError, SiteException, PermissionException, EvalMultipleException, EvalException, SessionException
 	{
 		log.log( Level.INFO, request.methodString() + " " + request.getFullUrl() );
 
@@ -411,7 +524,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				reason = "Navigation Cancelled by Plugin Event";
 			}
 
-			NetworkManager.getLogger().warning( "Navigation was cancelled by Plugin Event" );
+			NetworkManager.getLogger().warning( "Navigation was cancelled by a Plugin Event" );
 
 			throw new HttpError( status, reason );
 		}
@@ -420,10 +533,10 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			return;
 
 		// Throws IOException and HttpError
-		WebInterpreter fi = new WebInterpreter( request );
+		fi = new WebInterpreter( request );
 		response.annotations.putAll( fi.getAnnotations() );
 
-		Site currentSite = request.getSite();
+		currentSite = request.getSite();
 		sess.setSite( currentSite );
 
 		if ( request.getSubdomain().length() > 0 && !currentSite.getSubdomain( request.getSubdomain() ).isMaped( request.getDomain() ) )
@@ -448,58 +561,107 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		if ( sess.isLoginPresent() )
 			log.log( Level.FINE, "Account {id=%s,displayName=%s}", sess.getId(), sess.getDisplayName() );
 
-		// Default SSL Option is IGNORE or empty.
-		// Options include IGNORE, REQUIRE, and DENY
-		String sslOption = fi.get( "ssl" );
-		if ( sslOption != null && !sslOption.isEmpty() )
+		/*
+		 * Start: SSL enforcer
+		 *
+		 * Acts on the value of annotation 'SSL'.
+		 * REQUIRED means a forbidden error will be thrown is it can not be accomplished
+		 *
+		 * Options include:
+		 * Preferred: If SSL is available, we preferred to be switched to it
+		 * PostOnly: SSL is REQUIRED is this is a POST request
+		 * GetOnly: SSL is REQUIRED if this is a GET request
+		 * Required: SSL is REQUIRED, no exceptions!
+		 * Deny: SSL is DENIED, no exceptions!
+		 * Ignore: We don't care one way or other, do nothing! DEFAULT
+		 */
+		SslLevel sslLevel = SslLevel.parse( fi.get( "ssl" ) );
+		boolean required = false;
+
+		switch ( sslLevel )
 		{
-			boolean required = sslOption.equalsIgnoreCase( "require" ) || sslOption.equalsIgnoreCase( "required" );
-
-			if ( sslOption.equalsIgnoreCase( "post" ) && request.method() == HttpMethod.POST )
+			case Preferred:
+				if ( NetworkManager.isHttpsRunning() )
+					required = true;
+				break;
+			case PostOnly:
+				if ( request.method() == HttpMethod.POST )
+					required = true;
+				break;
+			case GetOnly:
+				if ( request.method() == HttpMethod.GET )
+					required = true;
+				break;
+			case Required:
 				required = true;
-			if ( sslOption.equalsIgnoreCase( "get" ) && request.method() == HttpMethod.GET )
-				required = true;
-
-			if ( required )
-			{
-				if ( !ssl )
-				{
-					if ( !response.switchToSecure() )
-						response.sendError( HttpCode.HTTP_FORBIDDEN, "This page requires a secure connection." );
-					return;
-				}
-			}
-			else if ( sslOption.equalsIgnoreCase( "deny" ) )
-			{
+				break;
+			case Deny:
 				if ( ssl )
 				{
 					if ( !response.switchToUnsecure() )
 						response.sendError( HttpCode.HTTP_FORBIDDEN, "This page requires an unsecure connection." );
 					return;
 				}
-			}
-			else if ( sslOption.equalsIgnoreCase( "ignore" ) )
-			{
-				// Ignore
-			}
-			else
-				log.log( Level.WARNING, "Invalid option set for annotation ssl, '" + sslOption + "'" );
+				break;
+			case Ignore:
+				break;
 		}
 
-		ApacheParser htaccess = new ApacheParser().appendWithDir( docRoot );
-
-		response.setApacheParser( htaccess );
+		if ( required && !ssl )
+		{
+			if ( !response.switchToSecure() )
+				response.sendError( HttpCode.HTTP_FORBIDDEN, "This page requires a secure connection." );
+			return;
+		}
+		/*
+		 * End: SSL enforcer
+		 */
 
 		if ( fi.getStatus() != HttpResponseStatus.OK )
 			throw new HttpError( fi.getStatus() );
 
+		/*
+		 * Start: Apache Configuration Section
+		 *
+		 * Loads a Apache configuration and .htaccess files into a common handler, then parsed for directives like access restrictions and basic auth
+		 * TODO Load server-wide Apache Configuration then merge with Site Configuration
+		 */
+		ApacheHandler htaccess = new ApacheHandler();
+		response.setApacheParser( htaccess );
+
+		try
+		{
+			boolean result = htaccess.handleDirectives( currentSite.getApacheConfig(), this );
+
+			if ( htaccess.overrideNone() || htaccess.overrideListNone() ) // Ignore .htaccess files
+			{
+				if ( fi.hasFile() )
+					if ( !htaccess.handleDirectives( new ApacheConfiguration( fi.getFile().getParentFile() ), this ) )
+						result = false;
+
+				if ( !htaccess.handleDirectives( new ApacheConfiguration( docRoot ), this ) )
+					result = false;
+			}
+
+			if ( !result )
+			{
+				if ( !response.isCommitted() )
+					response.sendError( 500, "Your request was blocked by an internal configuration directive, exact details are unknown." );
+				return;
+			}
+		}
+		catch ( ApacheDirectiveException e )
+		{
+			log.log( Level.SEVERE, "Caught Apache directive exception: " + e.getMessage() );
+
+			// TODO Throw 500 unless told not to
+		}
+		/*
+		 * End: Apache Configuration Section
+		 */
+
 		if ( !fi.hasFile() && !fi.hasHTML() )
 			response.setStatus( HttpResponseStatus.NO_CONTENT );
-
-		// throw new HttpError( 500, null, "We found what appears to be a mapping for your request but it contained no content to display, definite bug." );
-
-		if ( fi.hasFile() )
-			htaccess.appendWithDir( fi.getFile().getParentFile() );
 
 		sess.setGlobal( "__FILE__", fi.getFile() );
 
@@ -661,7 +823,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		{
 			if ( fi.isDirectoryRequest() )
 			{
-				processDirectoryListing( fi );
+				processDirectoryListing();
 				return;
 			}
 
@@ -688,7 +850,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 					}
 					catch ( Exception e )
 					{
-						log.log( Level.SEVERE, "Exception Excountered: %s", e.getMessage() );
+						rendered.writeBytes( result.getObject().toString().getBytes() );
+						log.log( Level.SEVERE, "Exception encountered while writing returned object to output. %s", e.getMessage() );
 						if ( Versioning.isDevelopment() )
 							log.log( Level.SEVERE, e.getStackTrace()[0].toString() );
 					}
@@ -742,7 +905,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		}
 		catch ( IllegalReferenceCountException e )
 		{
-			log.log( Level.SEVERE, "Exception Excountered: %s", e.getMessage() );
+			log.log( Level.SEVERE, "Exception encountered while writting script object to output, %s", e.getMessage() );
 		}
 	}
 
@@ -856,7 +1019,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				readHttpDataChunkByChunk();
 			}
 
-			handleHttp( request, response );
+			handleHttp();
 
 			finish();
 		}
@@ -892,7 +1055,15 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			NetworkManager.getLogger().warning( "Received Object '" + msg.getClass() + "' and had nothing to do with it, is this a bug?" );
 	}
 
-	public void processDirectoryListing( WebInterpreter fi ) throws HttpError, IOException
+	/**
+	 * Write a directory listing to the HTTP destination
+	 *
+	 * @throws HttpError
+	 *              for HTTP errors
+	 * @throws IOException
+	 *              for universal Input/Output problems
+	 */
+	public void processDirectoryListing() throws HttpError, IOException
 	{
 		File dir = fi.getFile();
 

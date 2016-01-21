@@ -1,81 +1,85 @@
 9.2.8:
-	FIXED: Found a bug with not checking is WeakReference is unloaded
-	FIXED: Bug Fixes to database logging and prepared statements
-	FIXED: Huge bug with EventBus not creating new EventHandlers for each AbstractEvent
-	FIXED: Tasks not canceling on disable
-	FIXED: Token management was buggy
-	FIXED: TemplatesPlugin includes
-	UPDATED: EventBus.callEvent now returns the AbstractEvent for stacking
-	UPDATED: EventBus locks using an object instead of self
+	BUGFIX: Found a bug with not checking if WeakReference was unloaded
+	BUGFIX: Bug Fixes to database logging and prepared statements
+	BUGFIX: Severe bug with EventBus not creating new EventHandlers for each AbstractEvent
+	BUGFIX: Tasks not canceling on disable
+	BUGFIX: Token management was buggy
+	BUGFIX: TemplatesPlugin includes
+	UPDATED: EventBus.callEvent now returns the AbstractEvent for easy stacking
+	UPDATED: EventBus now synchronizes using an object instead of itself, no longer will block for less critical systems
 	UPDATED: EventHandlers are now tracked from inside EventBus instead of each Event
 	UPDATED: Tweaks and improvements to Permission Commands
-	UPDATED: Several tweaks and improvements to permissions subsystem
-	UPDATED: various improvements to EventBus
+	UPDATED: Several tweaks and improvements to the Permission subsystem
+	UPDATED: various other improvements to the EventBus
 	UPDATED: Made updates to Dropbox Plugin
 	UPDATED: Changed maven download URL to JCenter Bintray, Maven Central used as a backup location
 	FEATURE: Added H2 Database support, files only
 	FEATURE: [WIP] Added datastores, currently only intended to replace SQL databases but will also implement file backends.
 9.3.0
-	FIXED: HTTP log routine was reporting incorrect date and time
-	FIXED: Issues with Account SQL Save
+	BUGFIX: HTTP log routine was reporting incorrect date and timestamps
+	BUGFIX: Issues with SQL Account saving
 	UPDATED: Deprecated old unused log arguments and implemented the use of a logs directory
-	UPDATED: Changed how Account Subsystem returns results
+	UPDATED: Changed how Account subsystem returns results
 	UPDATED: Changed routing log level from FINE to FINER
 	UPDATED: SQLQueryInsert (SQL Datastore) now checks that all required columns have been provided before executing query
 9.3.1:
-	FIXED: Compatibility issues with SQL datastores and SQLite
+	BUGFIX: Compatibility issues with SQL datastores and SQLite
 	UPDATED: Moved task ticks from Timings to new Ticks class for easier understanding
-	UPDATED: Refactored much of the startup, shutdown, and restart subroutines, streamlined for efficiency
+	UPDATED: Refactored much of the startup, shutdown, and restart subroutines, streamlined for much improved efficiency
 	UPDATED: AutoUpdater monitors server jar for modification and restarts to apply changes. (configurable)
 	FEATURE: [WIP] Added new Server File Watcher
 	FEATURE: Implemented optional Watchdog process that monitors a separate spawned JVM instance for crashes and restarts. (use --watchdog to enable) Only tested on Linux
 9.3.2:
-	FEATURE: SSL annotation, options include REQUIRE, IGNORE. and DENY with respected meaning
 	BUGFIX: NullPointer in ServerLogger
 	BUGFIX: request.getBinding() could be null when creating ScriptingFactory
 	BUGFIX: SqlDatastore, NOTEQUAL method
 	BUGFIX: Query kicking issue
 	BUGFIX: SQLPermissions, Entry reload and loading
-	ADDED: sys.query permission node
-	ADDED: AutoUpdater auto reloads configuration of detected change
 	UPDATED: Catch for OutOfMemoryError
+	FEATURE: SSL annotation, options include REQUIRE, IGNORE. and DENY with respected meaning
+	FEATURE: AutoUpdater auto reloads configuration on detected changes
+	NEW: sys.query permission node
 9.3.3:
 	DEPRECATED: StringFunc.md5 and base64 methods, use SecureFunc instead
-	DEPRECATED: Session are no longer cleaned up at shutdown to spare a long agonizing shutdown delay
+	DEPRECATED: Sessions are no longer cleaned up at shutdown to spare a long agonizing shutdown delay
+	BUGFIX: Login redirect bug with http code 307
+	BUGFIX: generateAcctId() is now more reliable
 	UPDATED: Rewrote SSL to be compatible with normal certificates (PEM certificates and PKCS8 keys) over ugly java keystores
-	UPDATED: Changed the minimum required version to Java 1.8, this gave us modern SSL/TLS protocols and improved API
+	UPDATED: Changed the minimum required version to Java 1.8, this gave us modern SSL/TLS protocols and an improved API
 	UPDATED: Refactored Tasks Manager methods
-	FIXED: Login redirect bug with http code 307
-	FIXED: generateAcctId() is now more reliable
-	FEATURE: [WIP] Very basic CSRF security tokens, use annotation '@security: CSRF' to enable per page, form value is at _CRSG_TOKEN global or getSession().getCSRFToken()
-	ADDED: Post redirect method that preserves query strings.
+	FEATURE: [WIP] Very basic CSRF security tokens, use annotation '@security: CSRF' to enable per page, form value is at _CRSF_TOKEN global or getSession().getCSRFToken()
+	NEW: Post redirect method that preserves the query strings.
 9.3.4:	
 	DEPRECATED: SQL site configurations
 	UPDATED: Restructured site directories, new conventions using public (root and subdomains) and resource (packages) roots
-	UPDATED: Moved file site configuration to site webroot, /webroot/[siteId]/config.yaml
-	UPDATED: Subdomain 'www' redirects to root domain if non-existent
+	UPDATED: Moved file site configuration to webroot, i.e., /webroot/[siteId]/config.yaml
+	UPDATED: Subdomain 'www' auto redirects to root domain if non-existent
 	FEATURE: SSL per site and subdomain
 	FEATURE: [WIP] Implemented new ACME SSL certificate plugin, initial mockup. Say hello to Let's Encrypt and start securing the web for free
 9.3.5:
 	DEPRECATED: Site aliases and metatags, feature will be fully removed once alternatives can be conjured up
-	UPDATED: Site configuration files with mismatching siteId and directories will be auto corrected
-	UPDATED: Improved Site Domain and Subdomain configuration, sites can now have multiple domains and be nested within each other, e.g., siteB.siteA.com within siteA.com
+	BUGFIX: Session Cleanup Task fixed by changing it to an async task, there is a severe bug with sync'd tasks which still needs fixing
+	BUGFIX: include() and require() methods were throwing FileNotFoundException when it should have been logging the exception for retrieval later instead
+	BUGFIX: Improved SSL exception catching, still will need some practical implementation
+	UPDATED: Site configuration files with mismatching siteId and directories names will be auto corrected
+	UPDATED: Improved Site domain and subdomain configuration, sites can now have multiple domains and be nested within each other, e.g., siteB.siteA.com within siteA.com
 	UPDATED: Sites can now be accessed thru the default site using the tilde character, e.g., http://localhost/~siteId
 	UPDATED: Sites can not have dedicated IPv4 and IPv6 addresses assigned to them, e.g., http://123.123.123.123/ -> SiteA and http://234.234.234.234/ -> SiteB
-	UPDATED: [WIP] Some fleshing out of the new Acme Plugin for Let's Encrypt CA. Finished domain verification function
+	UPDATED: [WIP] Some fleshing out of the new Acme Plugin for Let's Encrypt CA. Finished the domain verification function
 	UPDATED: Sites are now properly saved back to their configuration files
 	UPDATED: Changes to YamlConfiguration, added getAsList(), copy(), move(), and improved getList() methods
 	UPDATED: Enabled about 22 additional cipher suites for SSL
 	UPDATED: Moved com.chiorichan.https.* to com.chiorichan.http
-	UPDATED: CSRF has been renamed to Nonce, annotation is @nonce [Disabled, Flexible, PostOnly, GetOnly, Required]
-	UPDATED: New SSL annotation options, POST and GET. Each will require SSL if request is being made over POST or GET.
+	UPDATED: CSRF has been renamed to Nonce, annotation is @nonce [Disabled, Flexible, PostOnly, GetOnly, Required]. Nonce can now also be used to carry short lived strings between requests
+	UPDATED: New SSL annotation options, PostOnly and GetOnly. Each will REQUIRE SSL if request is being made over POST or GET.
 	ADDED: SSL ciphers can be modified from the EnabledCipherSuites.txt file
 	ADDED: Ticks class added to Groovy Imports list
 	ADDED: Added methods prepend(), reverseOrder(), subNamespace(), and subNodes() to Namespace Class
-	ADDED:  regexCapture() method to StringFunc class
-	BUGFIX: Session Cleanup Task fixed by changing it to an async task, there is a major bug with sync'd tasks which was not fixed
-	BUGFIX: include() and require() methods were throwing FileNotFoundException when it should have been logging the exception for retrieval later instead
-	BUGFIX: Improved SSL exception catching, still will need some practical implementing 
+	ADDED: regexCapture() method to StringFunc class, can be used to very easily capture a section of a string
+9.3.6:
+	FEATURE: [WIP] Implement Apache Configuration and .htaccess function. When finished, it will be able to read about 90% of all Apache directives and use them for controlling server behavior
+	UPDATED: Cleaned up JAVADOC and code for HttpHandler class
+	ADDED: getDeveloperContact() and getHTMLFooter() methods to Versioning class
 TODO:
 	1. Implement a SecurityManager
 	2. Update YAML Configuration saving to not override changes made to a configuration file since last read

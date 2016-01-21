@@ -201,7 +201,8 @@ public class ObjectFunc<T>
 	public static Double castToDoubleWithException( Object value )
 	{
 		if ( value == null )
-			return null;
+			throw new ClassCastException( "Can't cast `null` to Double" );
+
 		if ( value instanceof Long )
 			return ( ( Long ) value ).doubleValue();
 		if ( value instanceof String )
@@ -233,7 +234,8 @@ public class ObjectFunc<T>
 	public static Integer castToIntWithException( Object value )
 	{
 		if ( value == null )
-			return null;
+			throw new ClassCastException( "Can't cast `null` to Integer" );
+
 		if ( value instanceof Long )
 			if ( ( long ) value < Integer.MIN_VALUE || ( long ) value > Integer.MAX_VALUE )
 				return ( Integer ) value;
@@ -269,7 +271,8 @@ public class ObjectFunc<T>
 	public static Long castToLongWithException( Object value )
 	{
 		if ( value == null )
-			return null;
+			throw new ClassCastException( "Can't cast `null` to Long" );
+
 		if ( value instanceof Long )
 			return ( Long ) value;
 		if ( value instanceof String )
@@ -319,7 +322,6 @@ public class ObjectFunc<T>
 			return Joiner.on( "," ).withKeyValueSeparator( "=" ).join( ( Map ) value );
 		if ( value instanceof List )
 			return Joiner.on( "," ).join( ( List ) value );
-
 		throw new ClassCastException( "Uncaught Convertion to String of Type: " + value.getClass().getName() );
 	}
 

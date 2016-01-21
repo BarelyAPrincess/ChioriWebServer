@@ -93,6 +93,7 @@ public class Loader extends BuiltinRegistrar implements Listener
 	static String stopReason = null;
 	static boolean willRestart = false;
 	static boolean isRunning = false;
+	private static String[] startupArguments;
 
 	static void clearCache( File path, long keepHistory )
 	{
@@ -319,6 +320,11 @@ public class Loader extends BuiltinRegistrar implements Listener
 		return configuration.getString( "settings.shutdown-message" );
 	}
 
+	public static String[] getStartupArguments()
+	{
+		return startupArguments;
+	}
+
 	public static File getTempFileDirectory()
 	{
 		if ( tmpFileDirectory == null )
@@ -372,6 +378,8 @@ public class Loader extends BuiltinRegistrar implements Listener
 
 	public static void main( String... args ) throws Exception
 	{
+		Loader.startupArguments = args;
+
 		System.setProperty( "file.encoding", "utf-8" );
 		OptionSet options = null;
 

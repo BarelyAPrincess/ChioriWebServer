@@ -24,7 +24,6 @@ import com.chiorichan.Loader;
 import com.chiorichan.factory.FileInterpreter;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.lang.HttpError;
-import com.chiorichan.lang.SiteException;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
@@ -39,7 +38,7 @@ public class WebInterpreter extends FileInterpreter
 	protected HttpResponseStatus status = HttpResponseStatus.OK;
 	protected String html = null;
 
-	public WebInterpreter( HttpRequestWrapper request ) throws IOException, HttpError, SiteException
+	public WebInterpreter( HttpRequestWrapper request ) throws IOException, HttpError
 	{
 		super();
 

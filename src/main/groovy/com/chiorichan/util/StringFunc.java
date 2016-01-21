@@ -99,6 +99,40 @@ public class StringFunc
 		return false;
 	}
 
+	public static boolean compareVersions( String var1, String var2, String operator )
+	{
+		/*
+		 * = or == httpd version is equal
+		 * > httpd version is greater than
+		 * >= httpd version is greater or equal
+		 * < httpd version is less than
+		 * <= httpd version is less or equal
+		 * = or == version has the form /regex/
+		 * ~ version has the form regex
+		 */
+
+		switch ( operator.toLowerCase().trim() )
+		{
+			case ">":
+				return new Version( var1 ).compareTo( new Version( var2 ) ) > 0;
+			case ">=":
+				return new Version( var1 ).compareTo( new Version( var2 ) ) >= 0;
+			case "<":
+				return new Version( var1 ).compareTo( new Version( var2 ) ) < 0;
+			case "<=":
+				return new Version( var1 ).compareTo( new Version( var2 ) ) <= 0;
+			case "=":
+			case "==":
+				if ( !var2.startsWith( "/" ) && !var2.endsWith( "/" ) )
+					return new Version( var1 ).equals( new Version( var2 ) );
+				var2 = var2.substring( 1, var2.length() - 1 ); // Update var2 so we can do a proper Regular Expression compare
+			case "~":
+				return var1.matches( var2 );
+		}
+
+		return false;
+	}
+
 	public static boolean containsValidChars( String ref )
 	{
 		return ref.matches( "[a-z0-9_]*" );

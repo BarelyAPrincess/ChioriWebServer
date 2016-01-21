@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.logging.Level;
 
 import org.apache.commons.lang3.Validate;
 
@@ -252,18 +253,24 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 		// log.log( Level.INFO, "SiteId: " + site.getSiteId() + ", ParentDomain: " + parentDomain + ", ChildDomain: " + childDomain );
 
-		// Decode Get Map
-		QueryStringDecoder queryStringDecoder = new QueryStringDecoder( http.uri() );
-		Map<String, List<String>> params = queryStringDecoder.parameters();
-		if ( !params.isEmpty() )
-			for ( Entry<String, List<String>> p : params.entrySet() )
-			{
-				// XXX This is overriding the key, why would their there be multiple values???
-				String key = p.getKey();
-				List<String> vals = p.getValue();
-				for ( String val : vals )
-					getMap.put( key, val );
-			}
+		try
+		{
+			QueryStringDecoder queryStringDecoder = new QueryStringDecoder( http.uri() );
+			Map<String, List<String>> params = queryStringDecoder.parameters();
+			if ( !params.isEmpty() )
+				for ( Entry<String, List<String>> p : params.entrySet() )
+				{
+					// XXX This is overriding the key, why would their there be multiple values???
+					String key = p.getKey();
+					List<String> vals = p.getValue();
+					for ( String val : vals )
+						getMap.put( key, val );
+				}
+		}
+		catch ( IllegalStateException e )
+		{
+			log.log( Level.SEVERE, "Failed to decode the GET map because " + e.getMessage() );
+		}
 
 		// Decode Cookies
 		// String var1 = URLDecoder.decode( http.headers().getAndConvert( "Cookie" ), Charsets.UTF_8.displayName() );

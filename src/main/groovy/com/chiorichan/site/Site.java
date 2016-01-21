@@ -25,6 +25,7 @@ import org.apache.commons.lang3.text.WordUtils;
 
 import com.chiorichan.Loader;
 import com.chiorichan.configuration.ConfigurationSection;
+import com.chiorichan.configuration.apache.ApacheConfiguration;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.datastore.Datastore;
 import com.chiorichan.datastore.DatastoreManager;
@@ -309,6 +310,11 @@ public class Site
 	public File directoryTemp()
 	{
 		return Loader.getTempFileDirectory( getSiteId() );
+	}
+
+	public ApacheConfiguration getApacheConfig()
+	{
+		return new ApacheConfiguration();
 	}
 
 	protected ScriptBinding getBinding()

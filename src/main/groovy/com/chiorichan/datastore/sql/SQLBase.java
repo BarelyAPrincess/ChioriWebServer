@@ -30,22 +30,22 @@ import com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException;
 public abstract class SQLBase<T extends SQLBase> implements SQLResultSkel
 {
 	protected SQLWrapper sql;
-	
+
 	private PreparedStatement stmt = null;
 	private boolean autoExecute;
 	private boolean debug = false;
 	private SQLException lastException = null;
-	
+
 	private boolean isFirstCall = true;
-	
+
 	protected SQLBase( SQLWrapper sql, boolean autoExecute )
 	{
 		this.autoExecute = autoExecute;
-		
+
 		Validate.notNull( sql );
 		this.sql = sql;
 	}
-	
+
 	/**
 	 * @return The current autoExecute value
 	 */
@@ -53,71 +53,87 @@ public abstract class SQLBase<T extends SQLBase> implements SQLResultSkel
 	{
 		return autoExecute;
 	}
-	
+
 	/**
 	 * Sets if this SQL class will auto execute any changes made to it's query
-	 * 
+	 *
 	 * @param autoExecute
-	 *            The new autoExecute value
+	 *             The new autoExecute value
 	 */
 	public T autoExecute( boolean autoExecute )
 	{
 		this.autoExecute = autoExecute;
 		return ( T ) this;
 	}
-	
+
 	public T close() throws SQLException
 	{
 		if ( stmt != null && !stmt.isClosed() )
 			stmt.close();
 		return ( T ) this;
 	}
-	
+
 	public T debug()
 	{
 		debug = !debug;
 		return ( T ) this;
 	}
-	
+
 	public T debug( boolean debug )
 	{
 		this.debug = debug;
 		return ( T ) this;
 	}
-	
+
 	public abstract T execute() throws SQLException;
-	
+
+	public final Map<String, Object> first() throws SQLException
+	{
+		Map<String, Map<String, Object>> map = map();
+		if ( map.size() == 0 )
+			return null;
+		return map.get( map.keySet().toArray( new String[0] )[0] );
+	}
+
 	public boolean isConnected()
 	{
 		return sql.isConnected();
 	}
-	
+
 	public boolean isDebug()
 	{
 		return debug;
 	}
-	
+
+	public final Map<String, Object> last() throws SQLException
+	{
+		Map<String, Map<String, Object>> map = map();
+		if ( map.size() == 0 )
+			return null;
+		return map.get( map.keySet().toArray( new String[0] )[map.keySet().size() - 1] );
+	}
+
 	public SQLException lastException()
 	{
 		return lastException;
 	}
-	
+
 	@Override
 	public final Map<String, Map<String, Object>> map() throws SQLException
 	{
 		return DbFunc.resultToMap( resultSet() );
 	}
-	
+
 	private PreparedStatement query( String sqlQuery, boolean isUpdate, boolean save, boolean retry, Object... args ) throws SQLException
 	{
 		try
 		{
 			if ( sql == null || !sql.isConnected() )
 				throw new SQLException( "The SQL connection is closed or was never opened." );
-			
+
 			// stmt = con.prepareStatement( query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
 			PreparedStatement stmt = sql.prepareStatement( sqlQuery );
-			
+
 			int x = 0;
 			for ( Object s : args )
 				if ( s != null )
@@ -130,7 +146,7 @@ public abstract class SQLBase<T extends SQLBase> implements SQLResultSkel
 					{
 						if ( e.getCause() instanceof NotSerializableException )
 							Datastore.getLogger().severe( "The object " + s.getClass() + " (" + s.toString() + ") is not serializable!" );
-						
+
 						if ( !e.getMessage().startsWith( "Parameter index out of range" ) )
 							throw e;
 					}
@@ -138,7 +154,7 @@ public abstract class SQLBase<T extends SQLBase> implements SQLResultSkel
 					{
 						Datastore.getLogger().warning( String.format( "SQL Query '%s' is missing enough replace points (?) to satify the argument '%s', index '%s'", sqlQuery, s, x ) );
 					}
-			
+
 			try
 			{
 				if ( isUpdate )
@@ -153,18 +169,18 @@ public abstract class SQLBase<T extends SQLBase> implements SQLResultSkel
 					e.printStackTrace();
 				throw e;
 			}
-			
+
 			if ( save )
 			{
 				this.stmt = stmt;
 				isFirstCall = true;
 			}
-			
+
 			if ( debug && save )
 				Datastore.getLogger().debug( "SQL query \"" + sqlQuery + "\" -> \"" + toString( stmt ) + "\" " + ( isUpdate ? "affected" : "returned" ) + " " + rowCount() + " results" );
 			else if ( debug )
 				Datastore.getLogger().debug( "SQL query \"" + sqlQuery + "\" -> \"" + toString( stmt ) + "\"" );
-			
+
 			setPass();
 			return stmt;
 		}
@@ -184,17 +200,17 @@ public abstract class SQLBase<T extends SQLBase> implements SQLResultSkel
 			throw e;
 		}
 	}
-	
+
 	protected PreparedStatement query( String sqlQuery, boolean isUpdate, boolean save, Object... args ) throws SQLException
 	{
 		return query( sqlQuery, isUpdate, save, false, args );
 	}
-	
+
 	protected PreparedStatement query( String sqlQuery, boolean isUpdate, Object... args ) throws SQLException
 	{
 		return query( sqlQuery, isUpdate, true, false, args );
 	}
-	
+
 	public SQLExecute<T> result() throws SQLException
 	{
 		ResultSet rs = resultSet();
@@ -202,14 +218,14 @@ public abstract class SQLBase<T extends SQLBase> implements SQLResultSkel
 			return null;
 		return new SQLExecute<T>( rs, ( T ) this );
 	}
-	
+
 	ResultSet resultSet() throws SQLException
 	{
 		ResultSet rs = statement().getResultSet();
-		
+
 		if ( rs == null )
 			return null;
-		
+
 		if ( isFirstCall )
 			// Not being before first, on your first call means no results
 			if ( !rs.isBeforeFirst() )
@@ -217,38 +233,38 @@ public abstract class SQLBase<T extends SQLBase> implements SQLResultSkel
 			// Next returning null also means no results
 			else if ( !rs.next() )
 				return null;
-		
+
 		isFirstCall = false;
 		return rs;
 	}
-	
+
 	@Override
 	public final Map<String, Object> row() throws SQLException
 	{
 		return DbFunc.rowToMap( resultSet() );
 	}
-	
+
 	@Override
 	public final Set<Map<String, Object>> set() throws SQLException
 	{
 		return DbFunc.resultToSet( resultSet() );
 	}
-	
+
 	protected void setFail( SQLException lastException )
 	{
 		this.lastException = lastException();
 	}
-	
+
 	protected void setPass()
 	{
 		lastException = null;
 	}
-	
+
 	public Object[] sqlValues()
 	{
 		return new Object[0];
 	}
-	
+
 	protected PreparedStatement statement() throws SQLException
 	{
 		if ( stmt == null || stmt.isClosed() )
@@ -263,53 +279,53 @@ public abstract class SQLBase<T extends SQLBase> implements SQLResultSkel
 				lastException = e;
 				stmt = null;
 			}
-			
+
 			if ( lastException != null )
 				throw lastException;
-			
+
 			if ( stmt == null && lastException == null )
 				throw new IllegalStateException( "There was an unknown problem encountered while trying to auto execute the SQL query. Both Statement and lastException was null." );
 		}
-		
+
 		return stmt;
 	}
-	
+
 	@Override
 	public final Map<String, Map<String, String>> stringMap() throws SQLException
 	{
 		return DbFunc.resultToStringMap( resultSet() );
 	}
-	
+
 	@Override
 	public Map<String, String> stringRow() throws SQLException
 	{
 		return DbFunc.rowToStringMap( resultSet() );
 	}
-	
+
 	@Override
 	public Set<Map<String, String>> stringSet() throws SQLException
 	{
 		return DbFunc.resultToStringSet( resultSet() );
 	}
-	
+
 	public String toSqlQuery()
 	{
 		return null;
 	}
-	
+
 	@Override
 	public String toString()
 	{
 		return toString( stmt );
 	}
-	
+
 	public String toString( PreparedStatement stmt )
 	{
 		if ( stmt == null )
 			return null;
 		return stmt.toString().substring( stmt.toString().indexOf( ": " ) + 2 ).trim();
 	}
-	
+
 	protected void updateExecution()
 	{
 		if ( autoExecute )

@@ -42,7 +42,6 @@ import com.chiorichan.event.EventBus;
 import com.chiorichan.event.http.ErrorEvent;
 import com.chiorichan.event.http.HttpExceptionEvent;
 import com.chiorichan.factory.ScriptingContext;
-import com.chiorichan.lang.ApacheParser;
 import com.chiorichan.lang.HttpError;
 import com.chiorichan.logger.LogEvent;
 import com.chiorichan.net.NetworkManager;
@@ -59,7 +58,7 @@ public class HttpResponseWrapper
 {
 	Charset encoding = Charsets.UTF_8;
 	final Map<String, String> headers = Maps.newHashMap();
-	ApacheParser htaccess = null;
+	ApacheHandler htaccess = null;
 	String httpContentType = "text/html";
 	HttpResponseStatus httpStatus = HttpResponseStatus.OK;
 	final LogEvent log;
@@ -493,11 +492,22 @@ public class HttpResponseWrapper
 	 */
 	public void sendRedirect( String target, int httpStatus )
 	{
+		sendRedirect( target, httpStatus, null );
+	}
+
+	public void sendRedirect( String target, int httpStatus, Map<String, String> nonceValues )
+	{
 		// NetworkManager.getLogger().info( ConsoleColor.DARK_GRAY + "Sending page redirect to `" + target + "` using httpCode `" + httpStatus + " - " + HttpCode.msg( httpStatus ) + "`" );
 		log.log( Level.INFO, "Redirect {uri=%s,httpCode=%s,status=%s}", target, httpStatus, HttpCode.msg( httpStatus ) );
 
 		if ( stage == HttpResponseStage.CLOSED )
 			throw new IllegalStateException( "You can't access sendRedirect method within this HttpResponse because the connection has been closed." );
+
+		if ( nonceValues != null && nonceValues.size() > 0 )
+		{
+			target += ( target.contains( "?" ) ? "&" : "?" ) + request.getSession().getNonce().query();
+			request.getSession().nonce().mapValues( nonceValues );
+		}
 
 		if ( !isCommitted() )
 		{
@@ -508,7 +518,6 @@ public class HttpResponseWrapper
 			try
 			{
 				sendError( 301, "The requested URL has been relocated to '" + target + "'" );
-				// println( "<script type=\"text/javascript\">window.location = '" + target + "';</script>" );
 			}
 			catch ( IOException e )
 			{
@@ -523,6 +532,11 @@ public class HttpResponseWrapper
 		{
 			e.printStackTrace();
 		}
+	}
+
+	public void sendRedirect( String target, Map<String, String> nonceValues )
+	{
+		sendRedirect( target, 302, nonceValues );
 	}
 
 	public void sendRedirectRepost( String target )
@@ -592,7 +606,7 @@ public class HttpResponseWrapper
 		annotations.put( key, val );
 	}
 
-	public void setApacheParser( ApacheParser htaccess )
+	public void setApacheParser( ApacheHandler htaccess )
 	{
 		this.htaccess = htaccess;
 	}

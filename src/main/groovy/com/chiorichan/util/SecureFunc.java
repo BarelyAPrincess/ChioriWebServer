@@ -90,6 +90,42 @@ public class SecureFunc
 		return Base64.getEncoder().encodeToString( str.getBytes() );
 	}
 
+	public static String guid() throws UnsupportedEncodingException
+	{
+		return guid( Timings.epoch() + "-guid" );
+	}
+
+	public static String guid( String seed )
+	{
+		if ( seed == null )
+			seed = "";
+
+		byte[] bytes;
+		try
+		{
+			bytes = seed.getBytes( "ISO-8859-1" );
+		}
+		catch ( UnsupportedEncodingException e )
+		{
+			bytes = new byte[0];
+		}
+
+		byte[] bytesScrambled = new byte[0];
+
+		for ( byte b : bytes )
+		{
+			byte[] tbyte = new byte[2];
+			new Random().nextBytes( bytes );
+
+			tbyte[0] = ( byte ) ( b + tbyte[0] );
+			tbyte[1] = ( byte ) ( b + tbyte[1] );
+
+			bytesScrambled = ArrayUtils.addAll( bytesScrambled, tbyte );
+		}
+
+		return "{" + UUID.nameUUIDFromBytes( bytesScrambled ).toString() + "}";
+	}
+
 	public static String md5( byte[] bytes )
 	{
 		return DigestUtils.md5Hex( bytes );
@@ -229,48 +265,12 @@ public class SecureFunc
 		}
 	}
 
-	public String guid() throws UnsupportedEncodingException
-	{
-		return guid( Timings.epoch() + "-guid" );
-	}
-
-	public String guid( String seed )
-	{
-		if ( seed == null )
-			seed = "";
-
-		byte[] bytes;
-		try
-		{
-			bytes = seed.getBytes( "ISO-8859-1" );
-		}
-		catch ( UnsupportedEncodingException e )
-		{
-			bytes = new byte[0];
-		}
-
-		byte[] bytesScrambled = new byte[0];
-
-		for ( byte b : bytes )
-		{
-			byte[] tbyte = new byte[2];
-			new Random().nextBytes( bytes );
-
-			tbyte[0] = ( byte ) ( b + tbyte[0] );
-			tbyte[1] = ( byte ) ( b + tbyte[1] );
-
-			bytesScrambled = ArrayUtils.addAll( bytesScrambled, tbyte );
-		}
-
-		return "{" + UUID.nameUUIDFromBytes( bytesScrambled ).toString() + "}";
-	}
-
-	public String uuid() throws UnsupportedEncodingException
+	public static String uuid() throws UnsupportedEncodingException
 	{
 		return uuid( Timings.epoch() + "-uuid" );
 	}
 
-	public String uuid( String seed ) throws UnsupportedEncodingException
+	public static String uuid( String seed ) throws UnsupportedEncodingException
 	{
 		return DigestUtils.md5Hex( guid( seed ) );
 	}

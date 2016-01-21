@@ -21,8 +21,8 @@ import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
 import com.chiorichan.event.http.ErrorEvent;
+import com.chiorichan.http.ApacheHandler;
 import com.chiorichan.http.WebInterpreter;
-import com.chiorichan.lang.ApacheParser;
 import com.chiorichan.lang.HttpError;
 import com.chiorichan.site.Site;
 import com.chiorichan.tasks.Timings;
@@ -203,7 +203,7 @@ public class NetworkSecurity extends BuiltinRegistrar implements Listener
 		return it;
 	}
 	
-	public static void isForbidden( ApacheParser htaccess, Site site, WebInterpreter fi ) throws HttpError
+	public static void isForbidden( ApacheHandler htaccess, Site site, WebInterpreter fi ) throws HttpError
 	{
 		// String[] allowed = htaccess.getAllowed();
 		
