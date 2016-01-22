@@ -12,7 +12,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,7 +35,7 @@ import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.datastore.sql.bases.SQLiteDatastore;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
-import com.chiorichan.event.server.SiteLoadEvent;
+import com.chiorichan.event.site.SiteLoadEvent;
 import com.chiorichan.factory.ScriptBinding;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingFactory;
@@ -158,19 +158,6 @@ public class Site
 				}
 		}
 
-		SiteLoadEvent event = new SiteLoadEvent( this );
-
-		try
-		{
-			EventBus.INSTANCE.callEventWithException( event );
-		}
-		catch ( EventException e )
-		{
-			throw new SiteException( e );
-		}
-
-		if ( event.isCancelled() )
-			throw new SiteException( String.format( "Loading of site '%s' was cancelled by an internal event.", siteId ) );
 
 		File ssl = directory( "ssl" );
 		FileFunc.patchDirectory( ssl );
@@ -193,6 +180,18 @@ public class Site
 		{
 			SiteManager.getLogger().severe( String.format( "Failed to load SslContext for site '%s' using cert '%s', key '%s', and hasSecret? %s", siteId, sslCertFile, sslKeyFile, sslSecret != null && !sslSecret.isEmpty() ), e );
 		}
+
+
+		try
+		{
+			if ( EventBus.INSTANCE.callEventWithException( new SiteLoadEvent( this ) ).isCancelled() )
+				throw new SiteException( String.format( "Loading of site '%s' was cancelled by an internal event.", siteId ) );
+		}
+		catch ( EventException e )
+		{
+			throw new SiteException( e );
+		}
+
 
 		if ( yaml.has( "database" ) && yaml.isConfigurationSection( "database" ) )
 			switch ( yaml.getString( "database.type", "sqlite" ).toLowerCase() )
@@ -347,6 +346,36 @@ public class Site
 		return Collections.unmodifiableMap( domains );
 	}
 
+	/**
+	 * Compiles a map of domains and subdomains with valid SslContext
+	 * Main domain is under the subdomain root
+	 *
+	 * @return Map of domains and subdomains with valid SslContext
+	 */
+	public Map<String, Map<String, SslContext>> getDomainsWithSslContext()
+	{
+		return new HashMap<String, Map<String, SslContext>>()
+		{
+			{
+				for ( Entry<String, Set<String>> e : domains.entrySet() )
+					put( e.getKey(), new HashMap<String, SslContext>()
+					{
+						{
+							SslContext sslRoot = getSslContext( e.getKey() );
+							if ( sslRoot != null )
+								put( "root", sslRoot );
+							for ( String s : e.getValue() )
+							{
+								SslContext ssl = getSslContext( e.getKey(), s );
+								if ( ssl != null )
+									put( s, ssl );
+							}
+						}
+					} );
+			}
+		};
+	}
+
 	public String getEncryptionKey()
 	{
 		return encryptionKey;
@@ -478,17 +507,6 @@ public class Site
 		return new SiteDomain( this, subdomain );
 	}
 
-	public Set<String> getSubdomains()
-	{
-		return new HashSet<String>()
-		{
-			{
-				for ( Set<String> subdomains : domains.values() )
-					addAll( subdomains );
-			}
-		};
-	}
-
 	public Set<String> getSubdomains( String domain )
 	{
 		if ( domains.containsKey( domain ) )
@@ -500,6 +518,11 @@ public class Site
 	public String getTitle()
 	{
 		return siteTitle;
+	}
+
+	public boolean hasDefaultSslContext()
+	{
+		return defaultSslContext != null;
 	}
 
 	public File resourceFile( String file ) throws FileNotFoundException

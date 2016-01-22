@@ -1,11 +1,16 @@
 package com.chiorichan.site;
 
 import java.io.File;
+import java.util.HashSet;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.configuration.ConfigurationSection;
+import com.chiorichan.event.EventBus;
+import com.chiorichan.event.site.SiteDomainChangeEvent;
+import com.chiorichan.event.site.SiteDomainChangeEvent.SiteDomainChangeEventType;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Sets;
 
@@ -50,6 +55,27 @@ public class SiteDomain
 			else
 				return site.yaml.createSection( "site.domains." + domain.replace( ".", "_" ) + "." + subdomain.replace( ".", "_" ) );
 		return null;
+	}
+
+	public Set<String> getMapped()
+	{
+		return new HashSet<String>()
+		{
+			{
+				for ( Entry<String, Set<String>> e : site.domains.entrySet() )
+					for ( String s : e.getValue() )
+						if ( s.equalsIgnoreCase( subdomain ) )
+						{
+							add( e.getKey() );
+							break;
+						}
+			}
+		};
+	}
+
+	public String getSubdomain()
+	{
+		return subdomain;
 	}
 
 	public boolean isMaped()
@@ -99,6 +125,8 @@ public class SiteDomain
 			site.yaml.createSection( "site.domains." + domain.replace( ".", "_" ) + "." + subdomain.replace( ".", "_" ) );
 			subdomains.add( subdomain );
 		}
+
+		EventBus.INSTANCE.callEvent( new SiteDomainChangeEvent( SiteDomainChangeEventType.ADD, site, domain, this ) );
 	}
 
 	public void unmapAll()
@@ -130,5 +158,7 @@ public class SiteDomain
 			if ( site.yaml.has( "site.domains." + domain.replace( ".", "_" ) ) )
 				site.yaml.set( "site.domains." + domain.replace( ".", "_" ) + "." + subdomain.replace( ".", "_" ), null );
 		}
+
+		EventBus.INSTANCE.callEvent( new SiteDomainChangeEvent( SiteDomainChangeEventType.REMOVE, site, domain, this ) );
 	}
 }

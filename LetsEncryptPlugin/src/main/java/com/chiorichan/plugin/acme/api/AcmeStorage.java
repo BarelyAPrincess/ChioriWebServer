@@ -53,6 +53,11 @@ public class AcmeStorage
 		return privateKey( "private", 4096 );
 	}
 
+	public KeyPair domainPrivateKey() throws AcmeException
+	{
+		return privateKey( "domain", 4096 );
+	}
+
 	public KeyPair domainPrivateKey( Collection<String> domains ) throws AcmeException
 	{
 		try
@@ -159,7 +164,7 @@ public class AcmeStorage
 					caIntermediateCertificate = ( X509CertificateObject ) certParser.engineRead();
 				}
 
-			try ( OutputStream outputStream = new FileOutputStream( new File( parentDir, "cert.pem" ) ) )
+			try ( OutputStream outputStream = new FileOutputStream( new File( parentDir, "cert.crt" ) ) )
 			{
 				savePEM( outputStream, certificate );
 			}
@@ -169,7 +174,7 @@ public class AcmeStorage
 			}
 
 			if ( caIntermediateCertificate != null )
-				try ( OutputStream outputStream = new FileOutputStream( new File( parentDir, "chain.pem" ) ) )
+				try ( OutputStream outputStream = new FileOutputStream( new File( parentDir, "chain.crt" ) ) )
 				{
 					savePEM( outputStream, caIntermediateCertificate );
 				}
@@ -200,7 +205,7 @@ public class AcmeStorage
 
 				if ( site != null )
 				{
-					try ( OutputStream outputStream = new FileOutputStream( new File( site.directory( "ssl" ), "cert.pem" ) ) )
+					try ( OutputStream outputStream = new FileOutputStream( new File( site.directory( "ssl" ), "cert.crt" ) ) )
 					{
 						savePEM( outputStream, certificate );
 					}
@@ -210,7 +215,7 @@ public class AcmeStorage
 					}
 
 					if ( caIntermediateCertificate != null )
-						try ( OutputStream outputStream = new FileOutputStream( new File( site.directory( "ssl" ), "chain.pem" ) ) )
+						try ( OutputStream outputStream = new FileOutputStream( new File( site.directory( "ssl" ), "chain.crt" ) ) )
 						{
 							savePEM( outputStream, caIntermediateCertificate );
 						}

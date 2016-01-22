@@ -27,6 +27,7 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 
+import org.apache.commons.io.IOUtils;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
@@ -65,27 +66,23 @@ public class AcmeUtils
 		return BASE64_ENC.encodeToString( v ).replaceAll( "=*$", "" );
 	}
 
-	public static PKCS10CertificationRequest createCertificationRequest( KeyPair domainKey, List<String> domains ) throws AcmeException, OperatorCreationException, IOException
-	{
-		final PKCS10CertificationRequest csr = AcmeUtils.generateCSR( domains, domainKey );
-		return csr;
-	}
-
-	public static X509Certificate extractCertificate( byte[] body ) throws AcmeException, StreamParsingException
-	{
-		X509CertParser certParser = new X509CertParser();
-		certParser.engineInit( new ByteArrayInputStream( body ) );
-		X509Certificate certificate = ( X509Certificate ) certParser.engineRead();
-		return certificate;
-	}
-
-	public static PKCS10CertificationRequest generateCSR( List<String> commonNames, KeyPair pair ) throws OperatorCreationException, IOException
+	public static PKCS10CertificationRequest createCertificationRequest( KeyPair pair, List<String> domains, String country, String state, String city, String organization ) throws OperatorCreationException, IOException
 	{
 		X500NameBuilder namebuilder = new X500NameBuilder( X500Name.getDefaultStyle() );
-		namebuilder.addRDN( BCStyle.CN, commonNames.get( 0 ) );
+
+		if ( country != null )
+			namebuilder.addRDN( BCStyle.C, country );
+		if ( state != null )
+			namebuilder.addRDN( BCStyle.ST, state );
+		if ( city != null )
+			namebuilder.addRDN( BCStyle.L, city );
+		if ( organization != null )
+			namebuilder.addRDN( BCStyle.O, organization );
+
+		namebuilder.addRDN( BCStyle.CN, domains.get( 0 ) );
 
 		List<GeneralName> subjectAltNames = Lists.newArrayList();
-		for ( String cn : commonNames )
+		for ( String cn : domains )
 			subjectAltNames.add( new GeneralName( GeneralName.dNSName, cn ) );
 		GeneralNames subjectAltName = new GeneralNames( subjectAltNames.toArray( new GeneralName[0] ) );
 
@@ -98,6 +95,14 @@ public class AcmeUtils
 		ContentSigner signer = csBuilder.build( pair.getPrivate() );
 		PKCS10CertificationRequest request = p10Builder.build( signer );
 		return request;
+	}
+
+	public static X509Certificate extractCertificate( byte[] body ) throws AcmeException, StreamParsingException
+	{
+		X509CertParser certParser = new X509CertParser();
+		certParser.engineInit( new ByteArrayInputStream( body ) );
+		X509Certificate certificate = ( X509Certificate ) certParser.engineRead();
+		return certificate;
 	}
 
 	public static HttpResponse get( final String target, final String accept ) throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException
@@ -182,58 +187,41 @@ public class AcmeUtils
 		return gson;
 	}
 
-	public static HttpResponse post( final String method, final String target, final String accept, final String body, final String contentType ) throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException
+	public static HttpResponse post( final String method, final String target, final String accept, final String body, final String contentType ) throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, IOException
 	{
-		try
+		final URL u = new URL( target );
+		final HttpURLConnection c = ( HttpURLConnection ) u.openConnection();
+
+		if ( c instanceof HttpsURLConnection )
 		{
-			final URL u = new URL( target );
-			final HttpURLConnection c = ( HttpURLConnection ) u.openConnection();
-
-			if ( c instanceof HttpsURLConnection )
-			{
-				SSLContext context = SSLContext.getInstance( "TLSv1.2" );
-				context.init( null, new TrustManager[] {AcmeTrustManager.INSTANCE}, null );
-				( ( HttpsURLConnection ) c ).setSSLSocketFactory( context.getSocketFactory() );
-			}
-
-			c.setRequestMethod( method );
-			c.setRequestProperty( "Accept", accept );
-			if ( "POST".equals( method ) )
-			{
-				final byte[] bytes = body.getBytes( "UTF8" );
-				c.setDoOutput( true );
-				c.setRequestProperty( "Content-Type", contentType );
-				c.setRequestProperty( "Content-Length", Integer.toString( bytes.length ) );
-				c.setFixedLengthStreamingMode( bytes.length );
-				try ( OutputStream s = c.getOutputStream() )
-				{
-					s.write( bytes, 0, bytes.length );
-					s.flush();
-				}
-			}
-
-			int status = c.getResponseCode();
-			Map<String, List<String>> responseHeader = c.getHeaderFields();
-
-			byte[] resBody;
-			try ( InputStream s = status < 400 ? c.getInputStream() : c.getErrorStream() )
-			{
-				if ( s == null )
-					resBody = new byte[0];
-				else
-				{
-					resBody = new byte[c.getContentLength()];
-					s.read( resBody );
-				}
-			}
-
-			return new HttpResponse( target, status, responseHeader, resBody );
+			SSLContext context = SSLContext.getInstance( "TLSv1.2" );
+			context.init( null, new TrustManager[] {AcmeTrustManager.INSTANCE}, null );
+			( ( HttpsURLConnection ) c ).setSSLSocketFactory( context.getSocketFactory() );
 		}
-		catch ( final Throwable t )
+
+		c.setRequestMethod( method );
+		c.setRequestProperty( "Accept", accept );
+		if ( "POST".equals( method ) )
 		{
-			t.printStackTrace();
-			return null;
+			final byte[] bytes = body.getBytes( "UTF8" );
+			c.setDoOutput( true );
+			c.setRequestProperty( "Content-Type", contentType );
+			c.setRequestProperty( "Content-Length", Integer.toString( bytes.length ) );
+			c.setFixedLengthStreamingMode( bytes.length );
+			try ( OutputStream s = c.getOutputStream() )
+			{
+				s.write( bytes, 0, bytes.length );
+				s.flush();
+			}
 		}
+
+		int status = c.getResponseCode();
+		Map<String, List<String>> responseHeader = c.getHeaderFields();
+
+		InputStream s = status < 400 ? c.getInputStream() : c.getErrorStream();
+		byte[] resBody = s == null ? new byte[0] : IOUtils.toByteArray( s );
+
+		return new HttpResponse( target, status, responseHeader, resBody );
 	}
 
 	public static byte[] SHA256( String text )

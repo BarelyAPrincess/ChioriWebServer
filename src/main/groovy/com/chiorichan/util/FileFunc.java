@@ -422,6 +422,11 @@ public class FileFunc
 
 	public static final String PATH_SEPERATOR = File.separator;
 
+	public static File buildFile( File file, String... args )
+	{
+		return new File( file, buildPath( args ) );
+	}
+
 	public static String buildPath( String... path )
 	{
 		StringBuilder builder = new StringBuilder();
@@ -1000,6 +1005,24 @@ public class FileFunc
 	public static List<File> recursiveFiles( final File dir, final int maxDepth, final String regexPattern )
 	{
 		return recursiveFiles( dir, dir, 0, maxDepth, regexPattern );
+	}
+
+	/**
+	 * Constructs a relative path from the server root
+	 *
+	 * @param file
+	 *             The file you wish to get relative to
+	 * @return The relative path to the file, will return absolute if file is not relative to server root
+	 */
+	public static String relPath( File file )
+	{
+		if ( file == null )
+			return null;
+		String serverRoot = Loader.getServerRoot().getAbsolutePath();
+		if ( file.getAbsolutePath().startsWith( serverRoot ) )
+			return file.getAbsolutePath().substring( serverRoot.length() + 1 );
+		else
+			return file.getAbsolutePath();
 	}
 
 	public static String resourceToString( String resource ) throws UnsupportedEncodingException, IOException

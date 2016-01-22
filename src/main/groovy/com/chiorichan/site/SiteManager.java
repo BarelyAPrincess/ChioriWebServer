@@ -9,10 +9,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
 
@@ -105,6 +107,21 @@ public class SiteManager implements ServerManager
 	public Site getDefaultSite()
 	{
 		return getSiteById( "default" );
+	}
+
+	public Map<String, Set<String>> getDomains()
+	{
+		return new HashMap<String, Set<String>>()
+		{
+			{
+				for ( Site s : sites.values() )
+					for ( Entry<String, Set<String>> es : s.getDomains().entrySet() )
+						if ( containsKey( es.getKey() ) )
+							get( es.getKey() ).addAll( es.getValue() );
+						else
+							put( es.getKey(), es.getValue() );
+			}
+		};
 	}
 
 	public Site getSiteByDomain( String domain )

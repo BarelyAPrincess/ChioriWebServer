@@ -5,7 +5,12 @@ config:
   registrationUrl: null
   production: false
   ca: letsencrypt
-enabled:
-  server: true
-  sites: [
-    ]
+  enableServerWide: true
+  serverCertificateMD5: null
+  additional:
+    country: null
+    state: null
+    city: null
+    organization: null
+domains: [
+  ]

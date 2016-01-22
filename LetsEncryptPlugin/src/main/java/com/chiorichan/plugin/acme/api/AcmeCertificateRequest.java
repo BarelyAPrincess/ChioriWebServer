@@ -18,6 +18,7 @@ import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.bouncycastle.x509.util.StreamParsingException;
 
 import com.chiorichan.Loader;
+import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.http.HttpCode;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.acme.AcmePlugin;
@@ -36,6 +37,7 @@ public class AcmeCertificateRequest
 	private final AcmeProtocol proto;
 	private final List<String> domains;
 
+	private int callBackTask = 0;
 	private String certificateUrl;
 
 	private final PKCS10CertificationRequest signingRequest;
@@ -46,8 +48,13 @@ public class AcmeCertificateRequest
 		this.proto = proto;
 		this.domains = domains;
 
-		KeyPair domainKey = proto.getAcmeStorage().domainPrivateKey( domains );
-		signingRequest = AcmeUtils.createCertificationRequest( domainKey, domains );
+		// KeyPair domainKey = proto.getAcmeStorage().domainPrivateKey( domains );
+		// TODO Use server private key if site does not have one of it's own
+		// TODO Config option to force the generation of missing site private keys
+
+		YamlConfiguration conf = proto.getConfig();
+		KeyPair domainKey = proto.getAcmeStorage().domainPrivateKey();
+		signingRequest = AcmeUtils.createCertificationRequest( domainKey, domains, conf.getString( "config.additional.country" ), conf.getString( "config.additional.state" ), conf.getString( "config.additional.city" ), conf.getString( "config.additional.organization" ) );
 	}
 
 	public X509Certificate certificate()
@@ -55,8 +62,14 @@ public class AcmeCertificateRequest
 		return certificate;
 	}
 
-	public void doCallback( Runnable runnable )
+	public void doCallback( boolean replace, Runnable runnable )
 	{
+		if ( hasCallBack() )
+			if ( replace )
+				TaskManager.INSTANCE.cancelTask( callBackTask );
+			else
+				throw new IllegalStateException( "Can't schedule a challenge callback because one is already active" );
+
 		if ( state == AcmeState.CREATED )
 			verify();
 
@@ -64,7 +77,7 @@ public class AcmeCertificateRequest
 		{
 			AcmePlugin plugin = ( AcmePlugin ) PluginManager.INSTANCE.getPluginByClass( AcmePlugin.class );
 
-			TaskManager.INSTANCE.scheduleAsyncRepeatingTask( plugin, Ticks.SECOND_5, Ticks.SECOND, new Runnable()
+			callBackTask = TaskManager.INSTANCE.scheduleAsyncRepeatingTask( plugin, Ticks.SECOND_5, Ticks.SECOND, new Runnable()
 			{
 				@Override
 				public void run()
@@ -73,11 +86,17 @@ public class AcmeCertificateRequest
 
 					if ( getState() != AcmeState.PENDING )
 					{
-						TaskManager.INSTANCE.cancelTask( this );
+						TaskManager.INSTANCE.cancelTask( callBackTask );
 						runnable.run();
 					}
 				}
 			} );
+
+			if ( callBackTask == -1 )
+			{
+				callBackTask = 0;
+				throw new IllegalStateException( "Failed to schedule the callback task" );
+			}
 		}
 		catch ( PluginNotFoundException e )
 		{
@@ -102,8 +121,6 @@ public class AcmeCertificateRequest
 
 	private boolean handleRequest( HttpResponse response ) throws AcmeException, StreamParsingException
 	{
-		response.debug();
-
 		proto.nonce( response.getHeaderString( "Replay-Nonce" ) );
 
 		if ( response.getStatus() == HttpCode.HTTP_CREATED )
@@ -113,28 +130,35 @@ public class AcmeCertificateRequest
 				certificate = AcmeUtils.extractCertificate( response.getBody() );
 
 				state = AcmeState.SUCCESS;
-				lastMessage = "Certificate was successfully received.";
+				lastMessage = "Certificate was successfully received and downloaded";
 
 				return true;
 			}
 			else
 			{
 				state = AcmeState.PENDING;
-				lastMessage = "There was an unknown cause.";
+				lastMessage = "The certificate is pending!";
 			}
 		}
 		else if ( response.getStatus() == HttpCode.HTTP_TOO_MANY_REQUESTS )
 		{
-			state = AcmeState.PENDING;
-			lastMessage = "You are rate limited.";
+			state = AcmeState.FAILED;
+			lastMessage = "Too many certificates already issued!";
 		}
 		else
 		{
+			response.debug();
+
 			state = AcmeState.FAILED;
-			lastMessage = "Failed to download certificate.";
+			lastMessage = "Failed to download certificate";
 		}
 
 		return false;
+	}
+
+	public boolean hasCallBack()
+	{
+		return callBackTask > 0;
 	}
 
 	public boolean hasFailed()
@@ -163,7 +187,14 @@ public class AcmeCertificateRequest
 		if ( state != AcmeState.SUCCESS )
 			throw new IllegalStateException( "Can't save until Certificate Request was successful!" );
 
+		parentDir.mkdirs();
 		proto.getAcmeStorage().saveCertificate( parentDir, certificate );
+		proto.getAcmeStorage().saveCertificationRequest( parentDir, signingRequest );
+	}
+
+	public void saveCSR( File parentDir ) throws AcmeException
+	{
+		parentDir.mkdirs();
 		proto.getAcmeStorage().saveCertificationRequest( parentDir, signingRequest );
 	}
 

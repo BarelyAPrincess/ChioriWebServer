@@ -99,7 +99,7 @@ public class HttpsSniHandler extends ByteToMessageDecoder
 			{
 				StringBuilder sb = new StringBuilder();
 				sb.append( "\n# Chiori-chan's Web Server Enabled SSL/TLS Cipher Suites" );
-				sb.append( "\n# Cipher Suites are in the order of priority" );
+				sb.append( "\n# Cipher Suites are in order of priority" );
 
 				for ( String line : enabledCipherSuites )
 					sb.append( "\n" + line );

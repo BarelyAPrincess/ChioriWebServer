@@ -30,6 +30,7 @@ import com.chiorichan.lang.StartupException;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
+import com.chiorichan.util.FileFunc;
 
 public class HttpsManager implements ServerManager
 {
@@ -111,6 +112,16 @@ public class HttpsManager implements ServerManager
 
 	}
 
+	public File getServerCertificateFile()
+	{
+		return new File( Loader.getConfig().getString( "server.httpsSharedCert", "server.crt" ) );
+	}
+
+	public File getServerKeyFile()
+	{
+		return new File( Loader.getConfig().getString( "server.httpsSharedKey", "server.key" ) );
+	}
+
 	public HttpsSniHandler getSniHandler()
 	{
 		if ( changesMade )
@@ -122,14 +133,16 @@ public class HttpsManager implements ServerManager
 					for ( Entry<String, Set<String>> e : site.getDomains().entrySet() )
 					{
 						mapping.add( "*." + e.getKey(), site.getDefaultSslContext() );
-						// Loader.getLogger().debug( "Mapping *." + e.getKey() + " to " + site.getDefaultSslContext() );
+						Loader.getLogger().debug( "Mapping *." + e.getKey() + " to " + site.getDefaultSslContext() );
 
 						for ( String subdomain : e.getValue() )
 						{
 							SslContext context = site.getSslContext( e.getKey(), subdomain );
 							if ( context != null )
+							{
 								mapping.add( subdomain + "." + e.getKey(), context );
-							// Loader.getLogger().debug( "Mapping " + subdomain + "." + e.getKey() + " to " + context );
+								Loader.getLogger().debug( "Mapping " + subdomain + "." + e.getKey() + " to " + context );
+							}
 						}
 					}
 
@@ -141,18 +154,18 @@ public class HttpsManager implements ServerManager
 
 	public void init0() throws StartupException
 	{
-		final File sslCert = new File( Loader.getConfig().getString( "server.httpsSharedCert", "server.crt" ) );
-		final File sslKey = new File( Loader.getConfig().getString( "server.httpsSharedKey", "server.key" ) );
+		final File sslCert = getServerCertificateFile();
+		final File sslKey = getServerKeyFile();
 		final String sslSecret = Loader.getConfig().getString( "server.httpsSharedSecret" );
 
 		try
 		{
-			if ( sslCert == null || sslKey == null )
+			if ( sslCert == null || sslKey == null || !sslCert.exists() || !sslKey.exists() )
 				selfSignCertificate();
 			else
 				try
 				{
-					HttpsManager.INSTANCE.updateCertificate( sslCert, sslKey, sslSecret );
+					HttpsManager.INSTANCE.updateCertificate( sslCert, sslKey, sslSecret, true );
 				}
 				catch ( FileNotFoundException e )
 				{
@@ -178,7 +191,7 @@ public class HttpsManager implements ServerManager
 		try
 		{
 			SelfSignedCertificate ssc = new SelfSignedCertificate( "chiorichan.com" );
-			updateCertificate( ssc.certificate(), ssc.privateKey(), null );
+			updateCertificate( ssc.certificate(), ssc.privateKey(), null, false );
 			usingSelfSignedCert = true;
 		}
 		catch ( FileNotFoundException | CertificateException e )
@@ -197,7 +210,7 @@ public class HttpsManager implements ServerManager
 	 * @param sslSecret
 	 *             The SSL Shared Secret
 	 */
-	public void updateCertificate( final File sslCert, final File sslKey, final String sslSecret ) throws FileNotFoundException, SSLException
+	public void updateCertificate( final File sslCert, final File sslKey, final String sslSecret, boolean updateConfig ) throws FileNotFoundException, SSLException
 	{
 		if ( !sslCert.exists() )
 			throw new FileNotFoundException( "We could not set the server SSL Certificate because the '" + sslCert.getName() + "' (aka. SSL Cert) file does not exist. Please check your file path, obtain a new certificate, or disable SSL in server configuration." );
@@ -205,7 +218,15 @@ public class HttpsManager implements ServerManager
 		if ( !sslKey.exists() )
 			throw new FileNotFoundException( "We could not set the server SSL Certificate because the '" + sslKey.getName() + "' (aka. SSL Key) file does not exist. Please check your file path, obtain a new certificate, or disable SSL in server configuration." );
 
-		NetworkManager.getLogger().info( String.format( "Initalizing the SslContext using cert '%s', key '%s', and hasSecret? %s", sslCert.getName(), sslKey.getName(), sslSecret != null && !sslSecret.isEmpty() ) );
+		if ( updateConfig )
+		{
+			Loader.getConfig().set( "server.httpsSharedCert", FileFunc.relPath( sslCert ) );
+			Loader.getConfig().set( "server.httpsSharedKey", FileFunc.relPath( sslKey ) );
+			Loader.getConfig().set( "server.httpsSharedSecret", sslSecret );
+			Loader.saveConfig();
+		}
+
+		NetworkManager.getLogger().info( String.format( "Initalizing the SslContext using cert '%s', key '%s', and hasSecret? %s", FileFunc.relPath( sslCert ), FileFunc.relPath( sslKey ), sslSecret != null && !sslSecret.isEmpty() ) );
 
 		if ( sslSecret == null || sslSecret.isEmpty() )
 			serverContext = SslContext.newServerContext( sslCert, sslKey );

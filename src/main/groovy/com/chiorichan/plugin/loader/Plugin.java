@@ -17,7 +17,6 @@ import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.APILogger;
 import com.chiorichan.Loader;
-import com.chiorichan.configuration.file.FileConfiguration;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.plugin.PluginBase;
 import com.chiorichan.plugin.PluginInformation;
@@ -95,7 +94,7 @@ public abstract class Plugin extends PluginBase
 	 * throw new IllegalStateException( "Cannot use initialization constructor at runtime" ); } init( loader, description, dataFolder, file, classLoader ); }
 	 */
 
-	private FileConfiguration newConfig = null;
+	private YamlConfiguration newConfig = null;
 
 	public Plugin()
 	{
@@ -113,7 +112,7 @@ public abstract class Plugin extends PluginBase
 	}
 
 	@Override
-	public final FileConfiguration getConfig()
+	public final YamlConfiguration getConfig()
 	{
 		if ( newConfig == null )
 			reloadConfig();

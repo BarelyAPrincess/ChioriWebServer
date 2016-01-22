@@ -8,6 +8,9 @@
  */
 package com.chiorichan.util;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -18,6 +21,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 
 import com.chiorichan.tasks.Timings;
@@ -131,6 +135,21 @@ public class SecureFunc
 		return DigestUtils.md5Hex( bytes );
 	}
 
+	public static String md5( File file )
+	{
+		if ( file == null || !file.exists() )
+			return null;
+		try
+		{
+			return md5( IOUtils.toByteArray( new FileInputStream( file ) ) );
+		}
+		catch ( IOException e )
+		{
+			e.printStackTrace();
+			return null;
+		}
+	}
+
 	public static String md5( String str )
 	{
 		if ( str == null )
@@ -237,7 +256,7 @@ public class SecureFunc
 
 	/**
 	 * Takes each character of the provided string and scrambles it<br>
-	 * Example: 0xx0000$X <i>could</i> result in 9at2015&Z
+	 * Example: 0xx0000$X <i>could</i> result in 9at6342&Z
 	 *
 	 * @param base
 	 *             The base pattern to follow<br>
