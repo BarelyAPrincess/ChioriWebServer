@@ -158,6 +158,44 @@ public class SecureFunc
 		return DigestUtils.md5Hex( str );
 	}
 
+	public static String rand()
+	{
+		return rand( 8, true, false, new String[0] );
+	}
+
+	public static String rand( int length )
+	{
+		return rand( length, true, false, new String[0] );
+	}
+
+	public static String rand( int length, boolean numbers )
+	{
+		return rand( length, numbers, false, new String[0] );
+	}
+
+	public static String rand( int length, boolean numbers, boolean letters )
+	{
+		return rand( length, numbers, letters, new String[0] );
+	}
+
+	public static String rand( int length, boolean numbers, boolean letters, String[] allowedChars )
+	{
+		if ( allowedChars == null )
+			allowedChars = new String[0];
+
+		if ( numbers )
+			allowedChars = ArrayUtils.addAll( allowedChars, new String[] {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0"} );
+
+		if ( letters )
+			allowedChars = ArrayUtils.addAll( allowedChars, new String[] {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"} );
+
+		String rtn = "";
+		for ( int i = 0; i < length; i++ )
+			rtn += allowedChars[new Random().nextInt( allowedChars.length )];
+
+		return rtn;
+	}
+
 	/**
 	 * Creates a Random Instance using 4 bits from SecureRandom
 	 */

@@ -28,8 +28,8 @@ import com.chiorichan.APILogger;
 import com.chiorichan.Loader;
 import com.chiorichan.ServerBus;
 import com.chiorichan.http.HttpInitializer;
-import com.chiorichan.http.HttpsInitializer;
-import com.chiorichan.http.HttpsManager;
+import com.chiorichan.http.ssl.SslInitializer;
+import com.chiorichan.http.ssl.SslManager;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.net.query.QueryServerInitializer;
 import com.chiorichan.tasks.TaskManager;
@@ -264,14 +264,14 @@ public class NetworkManager implements TaskRegistrar
 				else
 					socket = new InetSocketAddress( httpIp, httpsPort );
 
-				HttpsManager.init();
+				SslManager.init();
 
 				Loader.getLogger().info( "Starting Secure Web Server on " + ( httpIp.isEmpty() ? "*" : httpIp ) + ":" + httpsPort );
 
 				try
 				{
 					ServerBootstrap b = new ServerBootstrap();
-					b.group( bossGroup, workerGroup ).channel( NioServerSocketChannel.class ).childHandler( new HttpsInitializer() );
+					b.group( bossGroup, workerGroup ).channel( NioServerSocketChannel.class ).childHandler( new SslInitializer() );
 
 					httpsChannel = b.bind( socket ).sync().channel();
 
@@ -400,9 +400,9 @@ public class NetworkManager implements TaskRegistrar
 				for ( WeakReference<SocketChannel> ref : HttpInitializer.activeChannels )
 					if ( ref.get() == null )
 						HttpInitializer.activeChannels.remove( ref );
-				for ( WeakReference<SocketChannel> ref : HttpsInitializer.activeChannels )
+				for ( WeakReference<SocketChannel> ref : SslInitializer.activeChannels )
 					if ( ref.get() == null )
-						HttpsInitializer.activeChannels.remove( ref );
+						SslInitializer.activeChannels.remove( ref );
 			}
 		} );
 	}

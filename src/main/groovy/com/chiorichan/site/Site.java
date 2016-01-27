@@ -40,8 +40,8 @@ import com.chiorichan.factory.ScriptBinding;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.factory.ScriptingResult;
-import com.chiorichan.http.HttpsManager;
 import com.chiorichan.http.Routes;
+import com.chiorichan.http.ssl.CertificateWrapper;
 import com.chiorichan.lang.SiteException;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.session.SessionManager;
@@ -173,7 +173,7 @@ public class Site
 				File sslCert = new File( ssl, sslCertFile );
 				File sslKey = new File( ssl, sslKeyFile );
 
-				defaultSslContext = HttpsManager.context( sslCert, sslKey, sslSecret );
+				defaultSslContext = new CertificateWrapper( sslCert, sslKey, sslSecret ).context();
 			}
 		}
 		catch ( SSLException | FileNotFoundException | CertificateException e )
@@ -488,7 +488,7 @@ public class Site
 				File sslCert = new File( ssl, sslCertFile );
 				File sslKey = new File( ssl, sslKeyFile );
 
-				return HttpsManager.context( sslCert, sslKey, sslSecret );
+				return new CertificateWrapper( sslCert, sslKey, sslSecret ).context();
 			}
 		}
 		catch ( SSLException | FileNotFoundException | CertificateException e )

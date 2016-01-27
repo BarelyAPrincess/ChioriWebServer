@@ -6,7 +6,7 @@
  * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
-package com.chiorichan.http;
+package com.chiorichan.http.ssl;
 
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -19,10 +19,11 @@ import io.netty.handler.codec.http.HttpResponseEncoder;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
+import com.chiorichan.http.HttpHandler;
 import com.chiorichan.net.NetworkManager;
 import com.google.common.collect.Lists;
 
-public class HttpsInitializer extends ChannelInitializer<SocketChannel>
+public class SslInitializer extends ChannelInitializer<SocketChannel>
 {
 	public static final List<WeakReference<SocketChannel>> activeChannels = Lists.newCopyOnWriteArrayList();
 
@@ -33,7 +34,7 @@ public class HttpsInitializer extends ChannelInitializer<SocketChannel>
 
 		try
 		{
-			p.addLast( HttpsManager.INSTANCE.getSniHandler() );
+			p.addLast( new SniNegotiator() );
 		}
 		catch ( Exception e )
 		{

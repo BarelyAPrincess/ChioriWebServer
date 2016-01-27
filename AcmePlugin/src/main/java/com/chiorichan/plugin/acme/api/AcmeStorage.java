@@ -14,8 +14,9 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
-import java.util.List;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.Validate;
 import org.bouncycastle.jce.provider.X509CertParser;
 import org.bouncycastle.jce.provider.X509CertificateObject;
@@ -150,42 +151,7 @@ public class AcmeStorage
 		return privateKey( new File( data, keyName + ".key" ), keySize );
 	}
 
-	public void saveCertificate( File parentDir, X509Certificate certificate ) throws AcmeException
-	{
-		try
-		{
-			String caIntermediateCertificateURL = AcmeUtils.getCACertificateURL( certificate );
-			X509CertificateObject caIntermediateCertificate = null;
-			if ( caIntermediateCertificateURL != null )
-				try ( InputStream is = new URL( caIntermediateCertificateURL ).openStream() )
-				{
-					X509CertParser certParser = new X509CertParser();
-					certParser.engineInit( is );
-					caIntermediateCertificate = ( X509CertificateObject ) certParser.engineRead();
-				}
-
-			try ( OutputStream outputStream = new FileOutputStream( new File( parentDir, "cert.crt" ) ) )
-			{
-				savePEM( outputStream, certificate );
-			}
-			catch ( IOException e )
-			{
-				throw new AcmeException( e );
-			}
-
-			if ( caIntermediateCertificate != null )
-				try ( OutputStream outputStream = new FileOutputStream( new File( parentDir, "chain.crt" ) ) )
-				{
-					savePEM( outputStream, caIntermediateCertificate );
-				}
-		}
-		catch ( IOException | StreamParsingException e )
-		{
-			throw new AcmeException( e );
-		}
-	}
-
-	public void saveCertificate( List<String> domains, X509Certificate certificate ) throws AcmeException
+	public void saveCertificate( Collection<String> domains, X509Certificate certificate ) throws AcmeException
 	{
 		try
 		{
@@ -205,7 +171,7 @@ public class AcmeStorage
 
 				if ( site != null )
 				{
-					try ( OutputStream outputStream = new FileOutputStream( new File( site.directory( "ssl" ), "cert.crt" ) ) )
+					try ( OutputStream outputStream = new FileOutputStream( new File( site.directory( "ssl" ), "cert.pem" ) ) )
 					{
 						savePEM( outputStream, certificate );
 					}
@@ -215,7 +181,7 @@ public class AcmeStorage
 					}
 
 					if ( caIntermediateCertificate != null )
-						try ( OutputStream outputStream = new FileOutputStream( new File( site.directory( "ssl" ), "chain.crt" ) ) )
+						try ( OutputStream outputStream = new FileOutputStream( new File( site.directory( "ssl" ), "chain.pem" ) ) )
 						{
 							savePEM( outputStream, caIntermediateCertificate );
 						}
@@ -230,19 +196,57 @@ public class AcmeStorage
 		}
 	}
 
-	public void saveCertificationRequest( File parentDir, PKCS10CertificationRequest csr ) throws AcmeException
+	public void saveCertificate( File parentDir, X509Certificate certificate ) throws AcmeException
 	{
-		try ( OutputStream outputStream = new FileOutputStream( new File( parentDir, "cert.csr" ) ) )
+		try
 		{
-			savePEM( outputStream, csr );
+			parentDir.mkdirs();
+
+			String caIntermediateCertificateURL = AcmeUtils.getCACertificateURL( certificate );
+			X509CertificateObject caIntermediateCertificate = null;
+			if ( caIntermediateCertificateURL != null )
+				try ( InputStream is = new URL( caIntermediateCertificateURL ).openStream() )
+				{
+					X509CertParser certParser = new X509CertParser();
+					certParser.engineInit( is );
+					caIntermediateCertificate = ( X509CertificateObject ) certParser.engineRead();
+				}
+
+			File sslCertFile = new File( parentDir, "cert.pem" );
+
+			try ( OutputStream outputStream = new FileOutputStream( sslCertFile ) )
+			{
+				savePEM( outputStream, certificate );
+			}
+			catch ( IOException e )
+			{
+				throw new AcmeException( e );
+			}
+
+			if ( caIntermediateCertificate != null )
+			{
+				File sslChainFile = new File( parentDir, "chain.pem" );
+				File sslFullChainFile = new File( parentDir, "fullchain.pem" );
+
+				try ( OutputStream outputStream = new FileOutputStream( sslChainFile ) )
+				{
+					savePEM( outputStream, caIntermediateCertificate );
+				}
+
+				// Write both the certificate and chain file to a full chain file
+				byte[] sslCertBytes = IOUtils.toByteArray( new FileInputStream( sslCertFile ) );
+				byte[] sslChainBytes = IOUtils.toByteArray( new FileInputStream( sslChainFile ) );
+
+				IOUtils.write( ArrayUtils.addAll( sslCertBytes, sslChainBytes ), new FileOutputStream( sslFullChainFile ) );
+			}
 		}
-		catch ( IOException e )
+		catch ( IOException | StreamParsingException e )
 		{
 			throw new AcmeException( e );
 		}
 	}
 
-	public void saveCertificationRequest( List<String> domains, PKCS10CertificationRequest csr ) throws AcmeException
+	public void saveCertificationRequest( Collection<String> domains, PKCS10CertificationRequest csr ) throws AcmeException
 	{
 		for ( String domain : domains )
 		{
@@ -259,6 +263,18 @@ public class AcmeStorage
 				}
 			else
 				Loader.getLogger().severe( "Failed for find site for domain " + domain );
+		}
+	}
+
+	public void saveCertificationRequest( File parentDir, PKCS10CertificationRequest csr ) throws AcmeException
+	{
+		try ( OutputStream outputStream = new FileOutputStream( new File( parentDir, "cert.csr" ) ) )
+		{
+			savePEM( outputStream, csr );
+		}
+		catch ( IOException e )
+		{
+			throw new AcmeException( e );
 		}
 	}
 

@@ -10,7 +10,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.X509Certificate;
-import java.util.List;
+import java.util.Collection;
 import java.util.TreeMap;
 
 import org.bouncycastle.operator.OperatorCreationException;
@@ -35,7 +35,7 @@ public class AcmeCertificateRequest
 	private String lastMessage = null;
 
 	private final AcmeProtocol proto;
-	private final List<String> domains;
+	private final Collection<String> domains;
 
 	private int callBackTask = 0;
 	private String certificateUrl;
@@ -43,7 +43,7 @@ public class AcmeCertificateRequest
 	private final PKCS10CertificationRequest signingRequest;
 	private X509Certificate certificate;
 
-	protected AcmeCertificateRequest( AcmeProtocol proto, List<String> domains ) throws AcmeException, IOException, KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, OperatorCreationException, StreamParsingException
+	protected AcmeCertificateRequest( AcmeProtocol proto, Collection<String> domains ) throws AcmeException, IOException, KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, OperatorCreationException, StreamParsingException
 	{
 		this.proto = proto;
 		this.domains = domains;
@@ -52,7 +52,7 @@ public class AcmeCertificateRequest
 		// TODO Use server private key if site does not have one of it's own
 		// TODO Config option to force the generation of missing site private keys
 
-		YamlConfiguration conf = proto.getConfig();
+		YamlConfiguration conf = AcmePlugin.INSTANCE.getConfig();
 		KeyPair domainKey = proto.getAcmeStorage().domainPrivateKey();
 		signingRequest = AcmeUtils.createCertificationRequest( domainKey, domains, conf.getString( "config.additional.country" ), conf.getString( "config.additional.state" ), conf.getString( "config.additional.city" ), conf.getString( "config.additional.organization" ) );
 	}
@@ -109,7 +109,7 @@ public class AcmeCertificateRequest
 		return signingRequest;
 	}
 
-	public List<String> getDomains()
+	public Collection<String> getDomains()
 	{
 		return domains;
 	}
@@ -117,6 +117,11 @@ public class AcmeCertificateRequest
 	public AcmeState getState()
 	{
 		return state;
+	}
+
+	public String getUri()
+	{
+		return certificateUrl;
 	}
 
 	private boolean handleRequest( HttpResponse response ) throws AcmeException, StreamParsingException

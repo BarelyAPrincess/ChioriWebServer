@@ -44,8 +44,8 @@
 	DEPRECATED: Sessions are no longer cleaned up at shutdown to spare a long agonizing shutdown delay
 	BUGFIX: Login redirect bug with http code 307
 	BUGFIX: generateAcctId() is now more reliable
-	UPDATED: Rewrote SSL to be compatible with normal certificates (PEM certificates and PKCS8 keys) over ugly java keystores
-	UPDATED: Changed the minimum required version to Java 1.8, this gave us modern SSL/TLS protocols and an improved API
+	UPDATED: Rewrote SSL to be compatible with normal certificates (PEM certificates and PKCS8 keys) over ugly Java key stores
+	UPDATED: Changed the minimum required version to Java 1.8, this gave us a few more modern SSL/TLS protocols and an improved API
 	UPDATED: Refactored Tasks Manager methods
 	FEATURE: [WIP] Very basic CSRF security tokens, use annotation '@security: CSRF' to enable per page, form value is at _CRSF_TOKEN global or getSession().getCSRFToken()
 	NEW: Post redirect method that preserves the query strings.
@@ -79,7 +79,11 @@
 9.3.6:
 	FEATURE: [WIP] Implement Apache Configuration and .htaccess function. When finished, it will be able to read about 90% of all Apache directives and use them for controlling server behavior
 	UPDATED: Cleaned up JAVADOC and code for HttpHandler class
+	UPDATED: Slight changes to the Groovy Scripting Base, most builtin methods moved to Builtin class
+	UPDATED: Removed use of the Netty SNI Handler and replaced it with a builtin event driven SNI Handler, allows plugins to provide certificate mappings 
 	ADDED: getDeveloperContact() and getHTMLFooter() methods to Versioning class
+	ADDED: ObjectStacker helper class, a utility class for stacking child and parent object nodes
+	ADDED: Added new methods FileFunc#buildFile(parts...), FileFunc#relPath(File), Namespace#getFirst(), Namespace#getLast(), SecureFunc#rand(len, bool, bool, chars)
 TODO:
 	1. Implement a SecurityManager
 	2. Update YAML Configuration saving to not override changes made to a configuration file since last read

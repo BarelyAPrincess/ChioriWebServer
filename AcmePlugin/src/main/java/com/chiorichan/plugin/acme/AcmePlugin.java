@@ -9,8 +9,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 
-import com.chiorichan.Loader;
 import com.chiorichan.configuration.file.FileConfiguration;
+import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.plugin.acme.api.AcmeProtocol;
@@ -36,6 +36,7 @@ public class AcmePlugin extends Plugin
 	private int acmeTaskId;
 
 	AcmeScheduledTask task = null;
+	YamlConfiguration subYaml = null;
 
 	public AcmePlugin()
 	{
@@ -52,9 +53,20 @@ public class AcmePlugin extends Plugin
 		return contacts;
 	}
 
+	@Override
+	public File getDataFolder()
+	{
+		return new File( super.getDataFolder(), getConfig().getBoolean( "config.production" ) ? "production" : "testing" );
+	}
+
 	public String getRegistrationUrl()
 	{
 		return registrationUrl;
+	}
+
+	public YamlConfiguration getSubConfig()
+	{
+		return subYaml;
 	}
 
 	@Override
@@ -62,6 +74,7 @@ public class AcmePlugin extends Plugin
 	{
 		if ( acmeTaskId > 0 )
 			TaskManager.INSTANCE.cancelTask( acmeTaskId );
+		CertificateMaintainer.saveConfig();
 		saveConfig();
 	}
 
@@ -88,20 +101,22 @@ public class AcmePlugin extends Plugin
 		if ( !yaml.getBoolean( "config.production" ) )
 			getLogger().warning( getName() + " is running in testing-mode, the issued certificates will have no real-world value, see config value 'config.production'." );
 
+		subYaml = YamlConfiguration.loadConfiguration( new File( getDataFolder(), "subconfig.yaml" ) );
+
 		File data = getDataFolder();
 		FileFunc.patchDirectory( data );
 
 		try
 		{
 			production = yaml.getBoolean( "config.production", false );
-			client = new AcmeProtocol( ( production ? URL_PRODUCTION : URL_TESTING ) + "/directory", yaml.getString( "config.agreement" ), new AcmeStorage( data ), getConfig() );
+			client = new AcmeProtocol( ( production ? URL_PRODUCTION : URL_TESTING ) + "/directory", yaml.getString( "config.agreement" ), new AcmeStorage( data ) );
 			contacts = new String[] {"mailto:" + yaml.getString( "config.email" )};
-			registrationUrl = yaml.getString( "config.registrationUrl" );
+			registrationUrl = subYaml.getString( "config.registrationUrl" );
 
 			if ( !validateUrl( registrationUrl ) )
 			{
 				registrationUrl = client.newRegistration();
-				yaml.set( "config.registrationUrl", registrationUrl );
+				subYaml.set( "config.registrationUrl", registrationUrl );
 			}
 
 			EventBus.INSTANCE.registerEvents( new AcmeEventListener( this ), this );
@@ -126,13 +141,22 @@ public class AcmePlugin extends Plugin
 		TaskManager.INSTANCE.runTaskAsynchronously( this, task );
 	}
 
+	@Override
+	public void saveConfig()
+	{
+		try
+		{
+			subYaml.save( new File( getDataFolder(), "subconfig.yaml" ) );
+		}
+		catch ( IOException e )
+		{
+			getLogger().severe( "Failed to save subconfiguration", e );
+		}
+		super.saveConfig();
+	}
+
 	public boolean validateUrl( String url )
 	{
-		boolean r = ! ( registrationUrl == null || url.startsWith( URL_PRODUCTION ) && !production || url.startsWith( URL_TESTING ) && production || !url.startsWith( URL_PRODUCTION ) && !url.startsWith( URL_TESTING ) );
-
-		if ( !r )
-			Loader.getLogger().severe( "The URI " + url + " has failed validation!" );
-
-		return r;
+		return ! ( registrationUrl == null || url.startsWith( URL_PRODUCTION ) && !production || url.startsWith( URL_TESTING ) && production || !url.startsWith( URL_PRODUCTION ) && !url.startsWith( URL_TESTING ) );
 	}
 }

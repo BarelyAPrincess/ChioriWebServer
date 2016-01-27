@@ -95,6 +95,16 @@ public class Namespace
 		return new Namespace( result );
 	}
 
+	public String getFirst()
+	{
+		return getNode( 0 );
+	}
+
+	public String getLast()
+	{
+		return getNode( getNodeCount() - 1 );
+	}
+
 	public String getLocalName()
 	{
 		return nodes[nodes.length - 1];
@@ -254,6 +264,11 @@ public class Namespace
 		List<String> tmpNodes = Arrays.asList( nodes );
 		Collections.reverse( tmpNodes );
 		return new Namespace( tmpNodes );
+	}
+
+	public Namespace subNamespace( int start )
+	{
+		return subNamespace( start, getNodeCount() - 1 );
 	}
 
 	public Namespace subNamespace( int start, int end )

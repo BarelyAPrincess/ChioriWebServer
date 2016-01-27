@@ -112,7 +112,7 @@ public abstract class Plugin extends PluginBase
 	}
 
 	@Override
-	public final YamlConfiguration getConfig()
+	public YamlConfiguration getConfig()
 	{
 		if ( newConfig == null )
 			reloadConfig();
@@ -120,7 +120,7 @@ public abstract class Plugin extends PluginBase
 	}
 
 	@Override
-	public final File getConfigFile()
+	public File getConfigFile()
 	{
 		return configFile;
 	}
@@ -131,7 +131,7 @@ public abstract class Plugin extends PluginBase
 	 * @return The folder.
 	 */
 	@Override
-	public final File getDataFolder()
+	public File getDataFolder()
 	{
 		return dataFolder;
 	}

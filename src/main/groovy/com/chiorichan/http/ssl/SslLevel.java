@@ -1,4 +1,4 @@
-package com.chiorichan.http;
+package com.chiorichan.http.ssl;
 
 
 public enum SslLevel

@@ -19,6 +19,7 @@ import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Base64;
 import java.util.Base64.Encoder;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -66,8 +67,11 @@ public class AcmeUtils
 		return BASE64_ENC.encodeToString( v ).replaceAll( "=*$", "" );
 	}
 
-	public static PKCS10CertificationRequest createCertificationRequest( KeyPair pair, List<String> domains, String country, String state, String city, String organization ) throws OperatorCreationException, IOException
+	public static PKCS10CertificationRequest createCertificationRequest( KeyPair pair, Collection<String> domains, String country, String state, String city, String organization ) throws OperatorCreationException, IOException
 	{
+		if ( domains.size() == 0 )
+			throw new IllegalArgumentException( "You must provide at least one domain" );
+
 		X500NameBuilder namebuilder = new X500NameBuilder( X500Name.getDefaultStyle() );
 
 		if ( country != null )
@@ -79,7 +83,7 @@ public class AcmeUtils
 		if ( organization != null )
 			namebuilder.addRDN( BCStyle.O, organization );
 
-		namebuilder.addRDN( BCStyle.CN, domains.get( 0 ) );
+		namebuilder.addRDN( BCStyle.CN, domains.toArray( new String[0] )[0] );
 
 		List<GeneralName> subjectAltNames = Lists.newArrayList();
 		for ( String cn : domains )

@@ -14,15 +14,16 @@ import io.netty.buffer.ByteBufOutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 
+import com.chiorichan.factory.api.Builtin;
 import com.chiorichan.http.HttpRequestWrapper;
 
 /**
- * Implements the Groovy API by being extent by groovy nested classes
+ * Implements the builtin API by being extent by groovy nested classes
  */
-public class ScriptApi extends ScriptApiBase
+public class NestedScript extends Builtin
 {
 	@SuppressWarnings( "unchecked" )
-	public ScriptApi()
+	public NestedScript()
 	{
 		HttpRequestWrapper request = HttpRequestWrapper.getRequest();
 		Binding binding = new Binding( HttpRequestWrapper.getRequest().getBinding().getVariables() );
@@ -39,7 +40,7 @@ public class ScriptApi extends ScriptApiBase
 		// Setting the binding directly was causing an override of variable value from last class instance.
 		// Possibly a link to the groovy MetaClass, hmm, thoughts on how to make use of this...
 	}
-	
+
 	@Override
 	public Object run()
 	{

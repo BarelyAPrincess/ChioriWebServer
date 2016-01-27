@@ -15,7 +15,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -26,7 +26,6 @@ import org.bouncycastle.x509.util.StreamParsingException;
 
 import com.chiorichan.Loader;
 import com.chiorichan.LogColor;
-import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.http.HttpCode;
 import com.chiorichan.plugin.acme.AcmePlugin;
 import com.chiorichan.plugin.acme.lang.AcmeException;
@@ -47,7 +46,6 @@ public class AcmeProtocol
 	private final String agreementUrl;
 	private final AcmeStorage storage;
 	private final KeyPair keyPair;
-	private final YamlConfiguration config;
 	private AcmeChallenge challenge = newChallenge();
 
 	protected final String urlNewAuthz; // https://acme-staging.api.letsencrypt.org/acme/new-authz
@@ -57,7 +55,7 @@ public class AcmeProtocol
 
 	// certificate X.509 and key PKCS#8
 
-	public AcmeProtocol( String url, String agreementUrl, AcmeStorage storage, YamlConfiguration config ) throws AcmeException
+	public AcmeProtocol( String url, String agreementUrl, AcmeStorage storage ) throws AcmeException
 	{
 		Validate.notEmpty( url, "URL must be set!" );
 		Validate.notEmpty( agreementUrl, "AgreementURL must be set!" );
@@ -65,7 +63,6 @@ public class AcmeProtocol
 		this.agreementUrl = agreementUrl;
 		this.storage = storage;
 		this.keyPair = storage.defaultPrivateKey();
-		this.config = config;
 
 		Validate.notNull( keyPair );
 
@@ -120,14 +117,14 @@ public class AcmeProtocol
 						acmeChallengeFile.delete();
 
 						if ( !sac.isValid() )
-							plugin.getLogger().debug( sac.getFullDomain() + ": Domain Challenge Failed for reason " + sac.getState() + " " + sac.lastMessage() );
+							plugin.getLogger().info( LogColor.AQUA + sac.getFullDomain() + ": Domain Challenge Failed for reason " + sac.getState() + " " + sac.lastMessage() );
 						else
-							plugin.getLogger().debug( sac.getFullDomain() + ": Domain Challenge Success" );
+							plugin.getLogger().info( LogColor.AQUA + sac.getFullDomain() + ": Domain Challenge Success" );
 					}
 				} );
 			}
 
-			Loader.getLogger().debug( String.format( "%s: Verification Pending", subdomain == null ? domain : subdomain + "." + domain ) );
+			Loader.getLogger().info( LogColor.AQUA + String.format( "%s: Verification Pending", subdomain == null ? domain : subdomain + "." + domain ) );
 			return AcmeState.PENDING;
 		}
 		else
@@ -142,11 +139,6 @@ public class AcmeProtocol
 	public AcmeChallenge getChallenge()
 	{
 		return challenge;
-	}
-
-	public YamlConfiguration getConfig()
-	{
-		return config;
 	}
 
 	protected KeyPair getDefaultKeyPair()
@@ -206,7 +198,7 @@ public class AcmeProtocol
 		return response.getHeaderString( "Location" );
 	}
 
-	public AcmeCertificateRequest newSigningRequest( List<String> domains ) throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, OperatorCreationException, AcmeException, IOException, StreamParsingException
+	public AcmeCertificateRequest newSigningRequest( Collection<String> domains ) throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, OperatorCreationException, AcmeException, IOException, StreamParsingException
 	{
 		return new AcmeCertificateRequest( this, domains );
 	}

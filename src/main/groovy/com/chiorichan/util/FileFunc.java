@@ -422,9 +422,19 @@ public class FileFunc
 
 	public static final String PATH_SEPERATOR = File.separator;
 
+	public static File buildFile( boolean absolute, String... args )
+	{
+		return new File( ( absolute ? PATH_SEPERATOR : "" ) + buildPath( args ) );
+	}
+
 	public static File buildFile( File file, String... args )
 	{
 		return new File( file, buildPath( args ) );
+	}
+
+	public static File buildFile( String... args )
+	{
+		return buildFile( false, args );
 	}
 
 	public static String buildPath( String... path )

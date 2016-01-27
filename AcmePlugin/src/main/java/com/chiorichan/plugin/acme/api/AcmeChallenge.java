@@ -54,7 +54,7 @@ public class AcmeChallenge
 			if ( subdomain != null && ( subdomain.length() == 0 || "root".equalsIgnoreCase( subdomain ) ) )
 				subdomain = null;
 
-			YamlConfiguration config = proto.getConfig();
+			YamlConfiguration config = AcmePlugin.INSTANCE.getSubConfig();
 			String fullDomain = subdomain == null ? domain : subdomain + "." + domain;
 
 			if ( !challenges.containsKey( fullDomain ) || force )

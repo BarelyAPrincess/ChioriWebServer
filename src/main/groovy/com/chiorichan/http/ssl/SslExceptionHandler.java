@@ -1,4 +1,4 @@
-package com.chiorichan.http;
+package com.chiorichan.http.ssl;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.ssl.SslHandler;
@@ -11,14 +11,14 @@ import javax.net.ssl.SSLException;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.util.StringFunc;
 
-public class HttpsHandler extends SslHandler
+public class SslExceptionHandler extends SslHandler
 {
-	public HttpsHandler( SSLEngine engine )
+	public SslExceptionHandler( SSLEngine engine )
 	{
 		super( engine );
 	}
 
-	public HttpsHandler( SSLEngine engine, boolean startTls )
+	public SslExceptionHandler( SSLEngine engine, boolean startTls )
 	{
 		super( engine, startTls );
 	}

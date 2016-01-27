@@ -163,7 +163,7 @@ public abstract class SessionWrapper implements BindingProvider, AccountAttachme
 	@Override
 	public String getSiteId()
 	{
-		return null;// TODO New Empty Method
+		return session.getSiteId();
 	}
 
 	@Override

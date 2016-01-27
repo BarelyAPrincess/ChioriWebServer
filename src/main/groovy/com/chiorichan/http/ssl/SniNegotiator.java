@@ -1,4 +1,4 @@
-package com.chiorichan.http;
+package com.chiorichan.http.ssl;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
@@ -7,7 +7,6 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.ssl.SniHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.util.CharsetUtil;
-import io.netty.util.DomainNameMapping;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -36,7 +35,7 @@ import com.google.common.collect.Lists;
  * Original code from io.netty.handler.ssl.SniHandler, modified for Chiori-chan's Web Server use case.
  * </p>
  */
-public class HttpsSniHandler extends ByteToMessageDecoder
+public class SniNegotiator extends ByteToMessageDecoder
 {
 	/**
 	 * Constants for SSL packets.
@@ -123,29 +122,9 @@ public class HttpsSniHandler extends ByteToMessageDecoder
 		return enabledCipherSuites;
 	}
 
-	private final DomainNameMapping<SslContext> mapping;
-
-	private boolean handshaken;
-
+	private boolean handshaken = false;
 	private volatile String hostname;
-
 	private volatile SslContext selectedContext;
-
-	/**
-	 * Create a SNI detection handler with configured {@link SslContext} maintained by {@link DomainNameMapping}
-	 *
-	 * @param mapping
-	 *             the mapping of domain name to {@link SslContext}
-	 */
-	@SuppressWarnings( "unchecked" )
-	public HttpsSniHandler( DomainNameMapping<? extends SslContext> mapping )
-	{
-		if ( mapping == null )
-			throw new NullPointerException( "mapping" );
-
-		this.mapping = ( DomainNameMapping<SslContext> ) mapping;
-		handshaken = false;
-	}
 
 	@Override
 	protected void decode( ChannelHandlerContext ctx, ByteBuf in, List<Object> out ) throws Exception
@@ -157,7 +136,7 @@ public class HttpsSniHandler extends ByteToMessageDecoder
 				hostname = IDN.toASCII( hostname, IDN.ALLOW_UNASSIGNED ).toLowerCase( Locale.US );
 			this.hostname = hostname;
 
-			selectedContext = mapping.map( hostname );
+			selectedContext = SslManager.INSTANCE.map( hostname );
 
 			if ( handshaken )
 			{
@@ -176,7 +155,7 @@ public class HttpsSniHandler extends ByteToMessageDecoder
 				engine.setUseClientMode( false );
 				engine.setEnabledCipherSuites( enabledCipherSuites.toArray( new String[0] ) );
 
-				ctx.pipeline().replace( this, ctx.name(), new HttpsHandler( engine ) );
+				ctx.pipeline().replace( this, ctx.name(), new SslExceptionHandler( engine ) );
 			}
 		}
 	}

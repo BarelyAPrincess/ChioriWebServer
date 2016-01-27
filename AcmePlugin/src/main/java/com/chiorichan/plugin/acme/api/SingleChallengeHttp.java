@@ -125,7 +125,7 @@ public final class SingleChallengeHttp
 
 	public int getLastChecked()
 	{
-		return proto.getConfig().getInt( "domains." + getFullDomain().replace( '.', '_' ) + ".challengeLastChecked", Timings.epoch() );
+		return AcmePlugin.INSTANCE.getSubConfig().getInt( "domains." + getFullDomain().replace( '.', '_' ) + ".challengeLastChecked", Timings.epoch() );
 	}
 
 	public AcmeState getState()
@@ -301,8 +301,8 @@ public final class SingleChallengeHttp
 
 	void setState( AcmeState state )
 	{
-		proto.getConfig().set( "domains." + getFullDomain().replace( '.', '_' ) + ".challengeState", state.name().toLowerCase() );
-		proto.getConfig().set( "domains." + getFullDomain().replace( '.', '_' ) + ".challengeLastChecked", Timings.epoch() );
+		AcmePlugin.INSTANCE.getSubConfig().set( "domains." + getFullDomain().replace( '.', '_' ) + ".challengeState", state.name().toLowerCase() );
+		AcmePlugin.INSTANCE.getSubConfig().set( "domains." + getFullDomain().replace( '.', '_' ) + ".challengeLastChecked", Timings.epoch() );
 		this.state = state;
 	}
 
