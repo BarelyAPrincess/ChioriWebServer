@@ -27,6 +27,7 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.util.FileFunc;
+import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.SecureFunc;
 
 public class CertificateWrapper
@@ -197,8 +198,8 @@ public class CertificateWrapper
 					for ( List<?> l : cert.getSubjectAlternativeNames() )
 						try
 						{
-							int i = ( int ) l.get( 0 );
-							String dns = ( String ) l.get( 1 );
+							int i = ObjectFunc.castToIntWithException( l.get( 0 ) );
+							String dns = ObjectFunc.castToStringWithException( l.get( 1 ) );
 
 							if ( i == type )
 								add( dns );
