@@ -487,6 +487,15 @@ public class FileFunc
 		return new File( path );
 	}
 
+	public static boolean checkMd5( File file, String expectedMd5 )
+	{
+		if ( expectedMd5 == null || file == null || !file.exists() )
+			return false;
+
+		String md5 = md5( file );
+		return md5 != null && md5.equals( expectedMd5 );
+	}
+
 	/**
 	 * This method copies one file to another location
 	 *
@@ -914,6 +923,11 @@ public class FileFunc
 		return maps;
 	}
 
+	public static String md5( File file )
+	{
+		return SecureFunc.md5( file );
+	}
+
 	public static String nameSpaceToPath( String namespace )
 	{
 		return nameSpaceToPath( namespace, false );
@@ -941,7 +955,10 @@ public class FileFunc
 			dir.delete();
 
 		if ( !dir.exists() )
+		{
 			dir.mkdirs();
+			dir.mkdir();
+		}
 
 		if ( !dir.canWrite() )
 			dir.setWritable( writable );

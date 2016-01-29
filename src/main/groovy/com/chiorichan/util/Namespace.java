@@ -280,6 +280,8 @@ public class Namespace
 	{
 		if ( start < 0 )
 			throw new IllegalArgumentException( "Start can't be less than 0" );
+		if ( start > nodes.length )
+			throw new IllegalArgumentException( "Start can't be more than length " + nodes.length );
 		if ( end > nodes.length )
 			throw new IllegalArgumentException( "Start can't be more than node count" );
 		return Arrays.copyOfRange( nodes, start, end );

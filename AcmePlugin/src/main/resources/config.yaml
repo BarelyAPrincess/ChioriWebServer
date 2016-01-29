@@ -5,8 +5,9 @@ config:
   registrationUrl: null
   production: false
   ca: letsencrypt
-  enableServerWide: true
+  allowDefaultCertificate: true
   serverCertificateMD5: null
+  defaultKeySize: 4096
   additional:
     country: null
     state: null

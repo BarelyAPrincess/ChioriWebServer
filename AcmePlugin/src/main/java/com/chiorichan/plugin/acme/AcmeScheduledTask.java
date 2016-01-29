@@ -1,32 +1,35 @@
 package com.chiorichan.plugin.acme;
 
-import java.io.File;
-import java.io.IOException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
 import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.bouncycastle.operator.OperatorCreationException;
-import org.bouncycastle.x509.util.StreamParsingException;
-
-import com.chiorichan.Loader;
+import com.chiorichan.LogColor;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.acme.api.AcmeProtocol;
-import com.chiorichan.plugin.acme.lang.AcmeException;
+import com.chiorichan.plugin.acme.certificate.CertificateMaintainer;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Ticks;
-import com.chiorichan.util.FileFunc;
 
 public class AcmeScheduledTask implements Runnable
 {
+	private static boolean domainsPending = false;
+	private static final Set<String> verifedDomains = new HashSet<>();
+
+	public static boolean domainsPending()
+	{
+		return domainsPending;
+	}
+	public static Set<String> getVerifiedDomains()
+	{
+		return verifedDomains;
+	}
+
 	private AcmePlugin plugin;
-	AcmeProtocol client;
+
+	private AcmeProtocol client;
 
 	public AcmeScheduledTask( AcmePlugin plugin )
 	{
@@ -52,19 +55,18 @@ public class AcmeScheduledTask implements Runnable
 				throw new IllegalStateException( "The HTTPS server is disabled, Acme Plugin can't manage certificates without it enabled." );
 			}
 
-
-			Set<String> domains = new HashSet<>();
-			boolean domainsNeededChecking = false;
+			verifedDomains.clear();
+			domainsPending = false;
 
 			for ( Entry<String, Set<String>> e : SiteManager.INSTANCE.getDomains().entrySet() )
 			{
 				switch ( client.checkDomainVerification( e.getKey(), null, false ) )
 				{
 					case SUCCESS:
-						domains.add( e.getKey() );
+						verifedDomains.add( e.getKey() );
 						break;
 					case PENDING:
-						domainsNeededChecking = true;
+						domainsPending = true;
 						break;
 					case FAILED:
 					default:
@@ -77,10 +79,10 @@ public class AcmeScheduledTask implements Runnable
 						switch ( client.checkDomainVerification( e.getKey(), s, false ) )
 						{
 							case SUCCESS:
-								domains.add( s + "." + e.getKey() );
+								verifedDomains.add( s + "." + e.getKey() );
 								break;
 							case PENDING:
-								domainsNeededChecking = true;
+								domainsPending = true;
 								break;
 							case FAILED:
 							default:
@@ -89,32 +91,16 @@ public class AcmeScheduledTask implements Runnable
 						}
 			}
 
-			// Loader.getLogger().debug( "Domains awaiting signing: " + Joiner.on( "," ).join( domains ) );
-
-			if ( domainsNeededChecking )
+			// We won't check certificates for renewals until all domains have been verified
+			if ( domainsPending )
 			{
-				plugin.saveConfig();
-
-				Loader.getLogger().warning( "Cert signing was delayed by one minute" );
-				// Return in a minute to check if all domains are either verified or failed.
-				TaskManager.INSTANCE.scheduleAsyncDelayedTask( plugin, Ticks.MINUTE, this );
-				return;
+				plugin.getLogger().info( LogColor.YELLOW + "Domains are currently pending verification. Certificates can not be signed until the process finishes." );
+				TaskManager.INSTANCE.scheduleAsyncDelayedTask( plugin, Ticks.SECOND_30, this );
 			}
-
-			if ( plugin.getConfig().getBoolean( "config.enableServerWide" ) )
-			{
-				File sslCertFile = FileFunc.buildFile( plugin.getDataFolder(), "default", "fullchain.pem" );
-				File sslKeyFile = CertificateMaintainer.getPrivateKey( "domain" );
-
-				if ( CertificateMaintainer.getDefaultCertificate() == null || !sslCertFile.exists() || !sslKeyFile.exists() )
-					CertificateMaintainer.signNewDefaultCertificate( domains );
-			}
+			else
+				CertificateMaintainer.checkAndSignCertificates();
 
 			plugin.saveConfig();
-		}
-		catch ( KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException | OperatorCreationException | StreamParsingException | AcmeException | IOException e )
-		{
-			e.printStackTrace();
 		}
 		catch ( Throwable t )
 		{

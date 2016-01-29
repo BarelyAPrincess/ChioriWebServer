@@ -12,6 +12,7 @@ import io.netty.util.Mapping;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.IDN;
+import java.security.Security;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
@@ -21,6 +22,8 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import javax.net.ssl.SSLException;
+
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import com.chiorichan.APILogger;
 import com.chiorichan.Loader;
@@ -131,6 +134,8 @@ public class SslManager implements ServerManager, Mapping<String, SslContext>
 		final File sslCert = getServerCertificateFile();
 		final File sslKey = getServerKeyFile();
 		final String sslSecret = Loader.getConfig().getString( "server.httpsSharedSecret" );
+
+		Security.addProvider( new BouncyCastleProvider() );
 
 		try
 		{

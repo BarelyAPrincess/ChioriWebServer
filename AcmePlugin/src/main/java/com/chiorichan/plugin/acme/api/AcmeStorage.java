@@ -91,7 +91,7 @@ public class AcmeStorage
 		}
 	}
 
-	protected KeyPair generatePrivateKey( File privateKey, int keySize ) throws NoSuchAlgorithmException, IOException
+	public KeyPair generatePrivateKey( File privateKey, int keySize ) throws NoSuchAlgorithmException, IOException
 	{
 		Validate.notNull( privateKey );
 
@@ -114,7 +114,7 @@ public class AcmeStorage
 		return keyPair;
 	}
 
-	protected KeyPair loadPrivateKey( File privateKey ) throws IOException
+	public KeyPair loadPrivateKey( File privateKey ) throws IOException
 	{
 		Validate.notNull( privateKey );
 
@@ -131,7 +131,7 @@ public class AcmeStorage
 		}
 	}
 
-	protected KeyPair privateKey( File privateKey, int keySize ) throws AcmeException
+	public KeyPair privateKey( File privateKey, int keySize ) throws AcmeException
 	{
 		try
 		{
@@ -146,7 +146,7 @@ public class AcmeStorage
 		}
 	}
 
-	protected KeyPair privateKey( String keyName, int keySize ) throws AcmeException
+	public KeyPair privateKey( String keyName, int keySize ) throws AcmeException
 	{
 		return privateKey( new File( data, keyName + ".key" ), keySize );
 	}
@@ -198,6 +198,9 @@ public class AcmeStorage
 
 	public void saveCertificate( File parentDir, X509Certificate certificate ) throws AcmeException
 	{
+		Validate.notNull( parentDir, "parentDir can not be null" );
+		Validate.notNull( certificate, "certificate can not be null" );
+
 		try
 		{
 			parentDir.mkdirs();

@@ -80,7 +80,8 @@
 	FEATURE: [WIP] Implement Apache Configuration and .htaccess function. When finished, it will be able to read about 90% of all Apache directives and use them for controlling server behavior
 	UPDATED: Cleaned up JAVADOC and code for HttpHandler class
 	UPDATED: Slight changes to the Groovy Scripting Base, most builtin methods moved to Builtin class
-	UPDATED: Removed use of the Netty SNI Handler and replaced it with a builtin event driven SNI Handler, allows plugins to provide certificate mappings 
+	UPDATED: Removed use of the Netty SNI Handler and replaced it with a builtin event driven SNI Handler, allows plugins to provide certificate mappings
+	UPDATED: Majority of the work finished on Let's Encrypt (Acme) Plugin. It's about 95% work and only needs some bugfixes to proper certificate handling
 	ADDED: getDeveloperContact() and getHTMLFooter() methods to Versioning class
 	ADDED: ObjectStacker helper class, a utility class for stacking child and parent object nodes
 	ADDED: Added new methods FileFunc#buildFile(parts...), FileFunc#relPath(File), Namespace#getFirst(), Namespace#getLast(), SecureFunc#rand(len, bool, bool, chars)

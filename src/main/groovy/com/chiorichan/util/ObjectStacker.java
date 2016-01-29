@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.lang3.Validate;
+
 public class ObjectStacker<T>
 {
 	private final String key;
@@ -23,6 +25,8 @@ public class ObjectStacker<T>
 
 	public ObjectStacker( String key, T value )
 	{
+		Validate.notNull( key );
+
 		this.key = key;
 		this.value = value;
 	}
@@ -54,9 +58,17 @@ public class ObjectStacker<T>
 	private ObjectStacker<T> child( String key, boolean create )
 	{
 		for ( ObjectStacker<T> child : children )
-			if ( child.key().equals( key ) )
+			if ( child.key() == null )
+				children.remove( child );
+			else if ( child.key().equals( key ) )
 				return child;
 		return create ? createChild( key ) : null;
+	}
+
+	public void clear()
+	{
+		children.clear();
+		value = null;
 	}
 
 	public ObjectStacker<T> createChild( String key )
@@ -66,9 +78,12 @@ public class ObjectStacker<T>
 
 	public ObjectStacker<T> getChild( Namespace nodes, boolean create )
 	{
+		Validate.notNull( nodes, "nodes can not be null" );
+		if ( nodes.getNodeCount() == 0 )
+			return this;
 		String key = nodes.getFirst();
 		ObjectStacker<T> child = child( key, create );
-		return child != null ? child.getChild( nodes.subNamespace( 1 ), create ) : null;
+		return child == null ? null : nodes.getNodeCount() <= 1 ? child : child.getChild( nodes.subNamespace( 1 ), create );
 	}
 
 	public ObjectStacker<T> getChild( String nodes )

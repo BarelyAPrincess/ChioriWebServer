@@ -19,7 +19,6 @@ import org.bouncycastle.x509.util.StreamParsingException;
 
 import com.chiorichan.Loader;
 import com.chiorichan.configuration.file.YamlConfiguration;
-import com.chiorichan.http.HttpCode;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.acme.AcmePlugin;
 import com.chiorichan.plugin.acme.lang.AcmeException;
@@ -41,9 +40,9 @@ public class AcmeCertificateRequest
 	private String certificateUrl;
 
 	private final PKCS10CertificationRequest signingRequest;
-	private X509Certificate certificate;
+	private CertificateDownloader downloader = null;
 
-	protected AcmeCertificateRequest( AcmeProtocol proto, Collection<String> domains ) throws AcmeException, IOException, KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, OperatorCreationException, StreamParsingException
+	protected AcmeCertificateRequest( AcmeProtocol proto, Collection<String> domains, File keyFile ) throws AcmeException, IOException, KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, OperatorCreationException, StreamParsingException
 	{
 		this.proto = proto;
 		this.domains = domains;
@@ -53,13 +52,13 @@ public class AcmeCertificateRequest
 		// TODO Config option to force the generation of missing site private keys
 
 		YamlConfiguration conf = AcmePlugin.INSTANCE.getConfig();
-		KeyPair domainKey = proto.getAcmeStorage().domainPrivateKey();
-		signingRequest = AcmeUtils.createCertificationRequest( domainKey, domains, conf.getString( "config.additional.country" ), conf.getString( "config.additional.state" ), conf.getString( "config.additional.city" ), conf.getString( "config.additional.organization" ) );
+		KeyPair key = keyFile == null ? proto.getAcmeStorage().domainPrivateKey() : proto.getAcmeStorage().privateKey( keyFile, 4096 );
+		signingRequest = AcmeUtils.createCertificationRequest( key, domains, conf.getString( "config.additional.country" ), conf.getString( "config.additional.state" ), conf.getString( "config.additional.city" ), conf.getString( "config.additional.organization" ) );
 	}
 
 	public X509Certificate certificate()
 	{
-		return certificate;
+		return downloader == null ? null : downloader.getCertificate();
 	}
 
 	public void doCallback( boolean replace, Runnable runnable )
@@ -114,6 +113,11 @@ public class AcmeCertificateRequest
 		return domains;
 	}
 
+	public CertificateDownloader getDownloader()
+	{
+		return downloader;
+	}
+
 	public AcmeState getState()
 	{
 		return state;
@@ -122,43 +126,6 @@ public class AcmeCertificateRequest
 	public String getUri()
 	{
 		return certificateUrl;
-	}
-
-	private boolean handleRequest( HttpResponse response ) throws AcmeException, StreamParsingException
-	{
-		proto.nonce( response.getHeaderString( "Replay-Nonce" ) );
-
-		if ( response.getStatus() == HttpCode.HTTP_CREATED )
-		{
-			if ( response.getBody().length > 0 )
-			{
-				certificate = AcmeUtils.extractCertificate( response.getBody() );
-
-				state = AcmeState.SUCCESS;
-				lastMessage = "Certificate was successfully received and downloaded";
-
-				return true;
-			}
-			else
-			{
-				state = AcmeState.PENDING;
-				lastMessage = "The certificate is pending!";
-			}
-		}
-		else if ( response.getStatus() == HttpCode.HTTP_TOO_MANY_REQUESTS )
-		{
-			state = AcmeState.FAILED;
-			lastMessage = "Too many certificates already issued!";
-		}
-		else
-		{
-			response.debug();
-
-			state = AcmeState.FAILED;
-			lastMessage = "Failed to download certificate";
-		}
-
-		return false;
 	}
 
 	public boolean hasCallBack()
@@ -178,29 +145,15 @@ public class AcmeCertificateRequest
 		return lastMessage;
 	}
 
-	public void save() throws AcmeException
-	{
-		if ( state != AcmeState.SUCCESS )
-			throw new IllegalStateException( "Can't save until Certificate Request was successful!" );
-
-		proto.getAcmeStorage().saveCertificate( domains, certificate );
-		proto.getAcmeStorage().saveCertificationRequest( domains, signingRequest );
-	}
-
-	public void save( File parentDir ) throws AcmeException
-	{
-		if ( state != AcmeState.SUCCESS )
-			throw new IllegalStateException( "Can't save until Certificate Request was successful!" );
-
-		parentDir.mkdirs();
-		proto.getAcmeStorage().saveCertificate( parentDir, certificate );
-		proto.getAcmeStorage().saveCertificationRequest( parentDir, signingRequest );
-	}
-
 	public void saveCSR( File parentDir ) throws AcmeException
 	{
 		parentDir.mkdirs();
-		proto.getAcmeStorage().saveCertificationRequest( parentDir, signingRequest );
+		AcmePlugin.INSTANCE.getClient().getAcmeStorage().saveCertificationRequest( parentDir, signingRequest );
+	}
+
+	public void setState( AcmeState state )
+	{
+		this.state = state;
 	}
 
 	public boolean verify()
@@ -233,15 +186,16 @@ public class AcmeCertificateRequest
 					}
 				} );
 
-				HttpResponse response = AcmeUtils.post( "POST", proto.urlNewCert, "application/json", body, "application/json" );
-				certificateUrl = response.getHeaderString( "Location" );
+				HttpResponse response = AcmeUtils.post( "POST", proto.getUrlNewCert(), "application/json", body, "application/json" );
+				proto.nonce( response.getHeaderString( "Replay-Nonce" ) );
 
-				return handleRequest( response );
+				downloader = new CertificateDownloader( this, response );
+				return downloader.isDownloaded();
 			}
 			else if ( state == AcmeState.PENDING )
 			{
-				HttpResponse response = AcmeUtils.get( certificateUrl, "application/json" );
-				return handleRequest( response );
+				downloader = new CertificateDownloader( this, certificateUrl );
+				return downloader.isDownloaded();
 			}
 		}
 		catch ( AcmeException | KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e )

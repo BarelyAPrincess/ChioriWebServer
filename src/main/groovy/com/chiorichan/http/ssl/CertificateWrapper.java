@@ -14,6 +14,7 @@ import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.net.ssl.SSLException;
@@ -24,6 +25,8 @@ import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
+import org.joda.time.Days;
+import org.joda.time.LocalDate;
 
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.util.FileFunc;
@@ -111,6 +114,17 @@ public class CertificateWrapper
 		return context;
 	}
 
+	/**
+	 * Returns the number of days left on this certificate
+	 * Will return -1 if already expired
+	 */
+	public int daysRemaining()
+	{
+		if ( isExpired() )
+			return -1;
+		return Days.daysBetween( LocalDate.fromDateFields( new Date() ), LocalDate.fromDateFields( cert.getNotAfter() ) ).getDays();
+	}
+
 	public File getCertFile()
 	{
 		return sslCertFile;
@@ -139,6 +153,11 @@ public class CertificateWrapper
 		RDN cn = x500name.getRDNs( BCStyle.CN )[0];
 
 		return IETFUtils.valueToString( cn.getFirst().getValue() );
+	}
+
+	public byte[] getEncoded() throws CertificateEncodingException
+	{
+		return getCertificate().getEncoded();
 	}
 
 	public File getKeyFile()
@@ -210,6 +229,11 @@ public class CertificateWrapper
 						}
 			}
 		};
+	}
+
+	public boolean isExpired()
+	{
+		return checkValidity() == CertificateValidityState.Expired;
 	}
 
 	public String md5()

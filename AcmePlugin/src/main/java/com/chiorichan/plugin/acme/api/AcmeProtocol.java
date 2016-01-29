@@ -48,10 +48,10 @@ public class AcmeProtocol
 	private final KeyPair keyPair;
 	private AcmeChallenge challenge = newChallenge();
 
-	protected final String urlNewAuthz; // https://acme-staging.api.letsencrypt.org/acme/new-authz
-	protected final String urlNewCert; // https://acme-staging.api.letsencrypt.org/acme/new-cert
-	protected final String urlNewReg; // https://acme-staging.api.letsencrypt.org/acme/new-reg
-	protected final String urlRevokeCert; // https://acme-staging.api.letsencrypt.org/acme/revoke-cert
+	private final String urlNewAuthz; // https://acme-staging.api.letsencrypt.org/acme/new-authz
+	private final String urlNewCert; // https://acme-staging.api.letsencrypt.org/acme/new-cert
+	private final String urlNewReg; // https://acme-staging.api.letsencrypt.org/acme/new-reg
+	private final String urlRevokeCert; // https://acme-staging.api.letsencrypt.org/acme/revoke-cert
 
 	// certificate X.509 and key PKCS#8
 
@@ -117,7 +117,7 @@ public class AcmeProtocol
 						acmeChallengeFile.delete();
 
 						if ( !sac.isValid() )
-							plugin.getLogger().info( LogColor.AQUA + sac.getFullDomain() + ": Domain Challenge Failed for reason " + sac.getState() + " " + sac.lastMessage() );
+							plugin.getLogger().info( LogColor.RED + sac.getFullDomain() + ": Domain Challenge Failed for reason " + sac.getState() + " " + sac.lastMessage() );
 						else
 							plugin.getLogger().info( LogColor.AQUA + sac.getFullDomain() + ": Domain Challenge Success" );
 					}
@@ -144,6 +144,26 @@ public class AcmeProtocol
 	protected KeyPair getDefaultKeyPair()
 	{
 		return keyPair;
+	}
+
+	public String getUrlNewAuthz()
+	{
+		return urlNewAuthz;
+	}
+
+	public String getUrlNewCert()
+	{
+		return urlNewCert;
+	}
+
+	public String getUrlNewRef()
+	{
+		return urlNewReg;
+	}
+
+	public String getUrlNewRevoke()
+	{
+		return urlRevokeCert;
 	}
 
 	public AcmeChallenge newChallenge()
@@ -174,7 +194,7 @@ public class AcmeProtocol
 		return response;
 	}
 
-	protected String newJwt( Map<String, Object> claims ) throws AcmeException
+	public String newJwt( Map<String, Object> claims ) throws AcmeException
 	{
 		return Jwts.builder().setHeaderParam( "nonce", nonce() ).setHeaderParam( JwsHeader.JSON_WEB_KEY, AcmeUtils.getWebKey( keyPair.getPublic() ) ).setClaims( claims ).signWith( SignatureAlgorithm.RS256, keyPair.getPrivate() ).compact();
 	}
@@ -200,7 +220,12 @@ public class AcmeProtocol
 
 	public AcmeCertificateRequest newSigningRequest( Collection<String> domains ) throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, OperatorCreationException, AcmeException, IOException, StreamParsingException
 	{
-		return new AcmeCertificateRequest( this, domains );
+		return new AcmeCertificateRequest( this, domains, null );
+	}
+
+	public AcmeCertificateRequest newSigningRequest( Collection<String> domains, File keyFile ) throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, OperatorCreationException, AcmeException, IOException, StreamParsingException
+	{
+		return new AcmeCertificateRequest( this, domains, keyFile );
 	}
 
 	protected String nonce() throws AcmeException
@@ -225,7 +250,7 @@ public class AcmeProtocol
 		return nextNonce;
 	}
 
-	protected void nonce( String nonce )
+	public void nonce( String nonce )
 	{
 		nextNonce = nonce;
 	}

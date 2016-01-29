@@ -15,6 +15,7 @@ import com.chiorichan.event.EventBus;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.plugin.acme.api.AcmeProtocol;
 import com.chiorichan.plugin.acme.api.AcmeStorage;
+import com.chiorichan.plugin.acme.certificate.CertificateMaintainer;
 import com.chiorichan.plugin.acme.lang.AcmeException;
 import com.chiorichan.plugin.lang.PluginException;
 import com.chiorichan.plugin.loader.Plugin;
@@ -69,12 +70,16 @@ public class AcmePlugin extends Plugin
 		return subYaml;
 	}
 
+	public boolean isDefaultCertificateAllowed()
+	{
+		return AcmePlugin.INSTANCE.getConfig().getBoolean( "config.allowDefaultCertificate" );
+	}
+
 	@Override
 	public void onDisable() throws PluginException
 	{
 		if ( acmeTaskId > 0 )
 			TaskManager.INSTANCE.cancelTask( acmeTaskId );
-		CertificateMaintainer.saveConfig();
 		saveConfig();
 	}
 
@@ -144,6 +149,8 @@ public class AcmePlugin extends Plugin
 	@Override
 	public void saveConfig()
 	{
+		CertificateMaintainer.saveConfig();
+
 		try
 		{
 			subYaml.save( new File( getDataFolder(), "subconfig.yaml" ) );

@@ -5,7 +5,6 @@ import io.netty.handler.ssl.SslContext;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.chiorichan.Loader;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
@@ -15,6 +14,7 @@ import com.chiorichan.event.site.SiteDomainChangeEvent;
 import com.chiorichan.event.site.SiteDomainChangeEvent.SiteDomainChangeEventType;
 import com.chiorichan.event.site.SiteLoadEvent;
 import com.chiorichan.plugin.acme.api.AcmeProtocol;
+import com.chiorichan.plugin.acme.certificate.CertificateMaintainer;
 import com.chiorichan.plugin.acme.lang.AcmeException;
 
 public class AcmeEventListener implements Listener
@@ -29,10 +29,8 @@ public class AcmeEventListener implements Listener
 	@EventHandler( priority = EventPriority.NORMAL )
 	public void onCertificateDefaultEvent( SslCertificateDefaultEvent event )
 	{
-		if ( CertificateMaintainer.getDefaultCertificate() != null )
+		if ( AcmePlugin.INSTANCE.isDefaultCertificateAllowed() && CertificateMaintainer.getDefaultCertificate() != null )
 			event.setContext( CertificateMaintainer.getDefaultCertificateContext() );
-
-		Loader.getLogger().debug( "Default result " + CertificateMaintainer.getDefaultCertificate() );
 	}
 
 	@EventHandler( priority = EventPriority.NORMAL )
@@ -41,8 +39,6 @@ public class AcmeEventListener implements Listener
 		SslContext context = CertificateMaintainer.map( event.getHostname() );
 		if ( context != null )
 			event.setContext( context );
-
-		Loader.getLogger().debug( "Map result " + context + " for " + event.getHostname() );
 	}
 
 	@EventHandler( priority = EventPriority.NORMAL )
