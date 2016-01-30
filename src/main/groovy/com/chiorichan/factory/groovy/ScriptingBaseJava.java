@@ -7,6 +7,9 @@ package com.chiorichan.factory.groovy;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+
+import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.APILogger;
 import com.chiorichan.Loader;
@@ -122,6 +125,28 @@ public abstract class ScriptingBaseJava extends Builtin
 		return getRequest().getFullUrl( subdomain, secure );
 	}
 
+	public String url_get_append( Map<String, Object> map )
+	{
+		return url_get_append( null, map );
+	}
+
+	public String url_get_append( String subdomain, Map<String, Object> map )
+	{
+		Validate.notNull( map, "Map can not be null" );
+
+		String url = getRequest().getFullUrl( subdomain );
+
+		Map<String, String> getMap = new HashMap<String, String>( getRequest().getGetMapRaw() );
+
+		for ( Entry<String, Object> e : map.entrySet() )
+			getMap.put( e.getKey(), ObjectFunc.castToString( e.getValue() ) );
+
+		if ( getMap.size() > 0 )
+			url += "?" + Joiner.on( "&" ).withKeyValueSeparator( "=" ).join( getMap );
+
+		return url;
+	}
+
 	public String url_get_append( String key, Object val )
 	{
 		return url_get_append( null, key, val );
@@ -129,22 +154,15 @@ public abstract class ScriptingBaseJava extends Builtin
 
 	public String url_get_append( String subdomain, String key, Object val )
 	{
-		String url = getRequest().getFullUrl( subdomain );
+		Validate.notNull( key );
+		Validate.notNull( val );
 
-		Map<String, String> getMap = new HashMap<String, String>( getRequest().getGetMapRaw() );
-
-		if ( getMap.containsKey( key ) )
-			getMap.remove( key );
-
-		if ( getMap.isEmpty() )
-			url += "?" + key + "=" + ObjectFunc.castToString( val );
-		else
+		return url_get_append( subdomain, new HashMap<String, Object>()
 		{
-			url += "?" + Joiner.on( "&" ).withKeyValueSeparator( "=" ).join( getMap );
-			url += "&" + key + "=" + ObjectFunc.castToString( val );
-		}
-
-		return url;
+			{
+				put( key, val );
+			}
+		} );
 	}
 
 	/**
