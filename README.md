@@ -14,31 +14,20 @@ Hello, my name is Chiori-chan and I'm the sole developer of Chiori-chan's Web Se
 -   <https://www.youtube.com/playlist?list=PL5W-gdSkWP6TOBoL-YDEPZaadwBGXGOyO>
 
 # Official Plugins
--   Dropbox Plugin
-
+### Dropbox Plugin
 	Implements the DropBox API into CWS API, allowing scripts to access dropbox files.
 	Also serves as a great example on how to use the Maven Dependency Download Feature, see config.yaml.
-
--   Email Plugin
-
+### Email Plugin
 	Implements the Java Mail libraries into the CWS API, allowing scripts to send e-mail like a pro.
-
--   Interactive Console Plugin \[WIP\]
-
+### Interactive Console Plugin \[WIP\]
 	Reimplements the interactive console feature found in previous versions of CWS.
 	Also serves as a great example on how to load Native Libraries without changing the class-path, see config.yaml.
-
--   Lua Plugin
-
+### Lua Plugin
 	<https://github.com/ChioriGreene/ChioriWebServer-LuaPlugin>
 	Implements Lua as a Scripting Language for Chiori-chan's Web Server
-
--   Templates Plugin
-
+### Templates Plugin
 	Implements an easy to use template formatter, also makes exception pages pretty.
-
--   ZXing Plugin
-
+### ZXing Plugin
 	Implements the barcode XZing libraries into the API, allowing scripts to dynamicly generate barcodes.
 
 # To Do
