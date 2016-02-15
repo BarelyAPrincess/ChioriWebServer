@@ -49,6 +49,6 @@ Determines whether an object is an instance of Integer
 Encodes the specified argument into a String using the Base64 encoding scheme.
 
 * `print base64Encode( "This is a test string!" )` -> `VGhpcyBpcyBhIHRlc3Qgc3RyaW5nIQ==`
-* `print base64Encode( "Any type of byte array".getBytes() )` -> `QW55IHR5cGUgb2YgYnl0ZSBhcnJheQ==`
+* `print base64Encode( "Any type of byte array".getBytes() )` -> `Ynl0ZSBhcnJheQ==`
 
 
