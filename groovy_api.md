@@ -8,7 +8,7 @@ While Groovy is the default and preferred scripting language, Chiori-chan's Web 
 
 # API References
 ## Variable and Type Related Methods
-### `int count( map,collection,array,string var )`
+### `int count( map,collection,array,string )`
 Counts all elements in a map, collection, array, or string
 
     print count( [object] )
@@ -17,7 +17,7 @@ Output
 * `["obj1", "obj2", "obj3"]` -> `3`
 * `"This is a test string!"` -> `22`
     
-### `boolean is_array( object var )`
+### `boolean is_array( object )`
 Determines whether an object is an instance of array or collection
 
     def var = ["obj1", "obj2", "obj3"]
@@ -28,7 +28,7 @@ Output `True`
     print is_array( var )
 Output `False`
 
-### `boolean is_float( object var )`
+### `boolean is_float( object )`
 Determines whether an object is an instance of Float
 
 * `print is_float( "abc" )` -> `False`
@@ -36,7 +36,7 @@ Determines whether an object is an instance of Float
 * `print is_float( 23.5 )` -> `True`
 * `print is_float( True )` -> `False`
 
-### `boolean is_int( object var )`
+### `boolean is_int( object )`
 Determines whether an object is an instance of Integer
 
 * `print is_int( 23 )` -> `True`
@@ -44,3 +44,11 @@ Determines whether an object is an instance of Integer
 * `print is_int( 23.5 )` -> `False`
 * `print is_int( True )` -> `False`
 * `print is_int( False )` -> `False`
+
+### `String base64Encode( bytes,String )`
+Encodes the specified argument into a String using the Base64 encoding scheme.
+
+* `print base64Encode( "This is a test string!" )` -> `VGhpcyBpcyBhIHRlc3Qgc3RyaW5nIQ==`
+* `print base64Encode( "Any type of byte array".getBytes() )` -> `QW55IHR5cGUgb2YgYnl0ZSBhcnJheQ==`
+
+
