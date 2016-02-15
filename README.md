@@ -1,4 +1,4 @@
-﻿# About
+# Introduction
 **Chiori-chan's Web Server** is a HTTP/TCP Web (Application) Server allowing for both dynamic and static content delivered to both browsers and TCP clients like Android. To provide flexibility, the server includes a powerful Groovy Scripting Engine, along with a full set of tools for exception and bug tracing. Is Groovy not your thing?, well try our extensive Plugin API loosly based on the ever popular CraftBukkit Minecraft Server API, this Plugin API can also extend the Scripting Engine with additional languages such as Lua (WIP). Chiori-chan's Web Server could be considered an Application Server as it gives you the power to create amazing web applications while taking less time and resources, while at the same time utilizing the power of the Java Virtual Machine.
 
 # Jenkins Build Server
