@@ -4,4 +4,4 @@ As of version 9.3 (Milky Polkadot) plugins can only be implemented using Java an
 
 Until the Plugin Development Guide is finished you can loosely follow the [CraftBukkit Plugin Guide](https://forums.bukkit.org/threads/basic-bukkit-plugin-tutorial.1339/)
 
-See [Plugins](../../README.md) on how to install them.
+See [Plugins](../README.md) on how to install them.
