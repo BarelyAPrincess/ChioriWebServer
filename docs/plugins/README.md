@@ -1,6 +1,6 @@
 # Plugins
 
-The Chiori-chan's Web Server features a rich plugin system inspired by the plugin system found in the beloved Minecraft Server, Craftbukkit.
+The Chiori-chan's Web Server features a rich plugin system inspired by the plugin system found in the beloved CraftBukkit Plugin API, a Minecraft Server.
 
 Plugins are located within the `plugins` directory by default and end with file extension `.jar`.
 
