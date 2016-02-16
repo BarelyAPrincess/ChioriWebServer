@@ -59,34 +59,6 @@
 # Seeking Help
 Hello, my name is Chiori-chan and I'm currently the sole developer of Chiori-chan's Web Server since it's incarnation over three years now. Recently my project has just reached a little over 62,000 lines of code and 700 commits, which has been a real accomplishment. Sadly, this means the project has also become a bit too much for me to handle alone and which means I need help. I find myself dedicating a part-time jobs worth of time trying to keep this project's development moving forward and this is not something I can keep up very much longer. This means not only do I have a limit of time to deicate to my other projects but also a limit of time to finding project contributors and beta testers. So I ask, if anyone reading this is interested in contributing, please contact me.
 
-## Sites
-Sites are the equivalent of VirtualHosts on Apache Web Server. To create a new site, create the directory path webroot/[siteId]/config.yaml and place the following content within, of course modifying the contents to your needs:
-```yaml
-site:
-  id: SiteId
-  title: Site Title
-  domain: example.com
-subdomains: []
-web:
-  allowed-origin: '*'
-sessions:
-  cookie-name: SessionId
-  default-life: 604800
-  remember-life: 157680000
-scripts:
-  login-form: 'signin.html'
-  login-post: '/'
-database:
-  type: none
-  host: null
-  port: 3306
-  database: null
-  username: null
-  password: null
-  prefix: ''
-  connectionString: ''
-```
-
 ## Plugins
 Because this web server has a Plugin System loosly based on CraftBukkit you can develop Plugins almost the same way, with the only differences being the API. You can find a nice beginners tutorial for CraftBukkit at <https://forums.bukkit.org/threads/basic-bukkit-plugin-tutorial.1339/>. To install a plugin just place it within the 'plugins' directory located within the server root.
 
