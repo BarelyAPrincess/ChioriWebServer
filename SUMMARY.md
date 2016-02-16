@@ -1,5 +1,5 @@
 # Summary
 
 * [Server API](docs/api/README.md)
-* Plugins
+* [Plugins](docs/plugins/README.md)
 
