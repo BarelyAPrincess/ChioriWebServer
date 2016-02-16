@@ -6,6 +6,8 @@ Output `You are running Chiori-chan's Web Server 9.3.6 (Milky Polkadot)`
 
 While Groovy is the default and preferred scripting language, Chiori-chan's Web Server supports the addition of scripting languages by way of plugins. Implementing this API will depend of how each language is implemented, i.e., scripts need to extend the `com.chiorichan.factory.api.Builtin` class. See LuaPlugin for an example.
 
+Please note, that while it was attempted to replicate the PHP API, the PHP syntax was not.
+
 # API References
 ## Variable and Type Related Methods
 ### `int count( map,collection,array,string )`
