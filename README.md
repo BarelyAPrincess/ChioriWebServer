@@ -34,13 +34,13 @@ As of version 9.3 (Milky Polkadot), the following features are provided:
     * Make exception pages pretty and easy to debug
     * And much more!
   * Dropbox Plugin
-    * Implements the Dropbox API into the Server API
+    * Implements the Dropbox API
   * Let's Encrypt
     * Issues and Renews SSL Certificates from the Let's Encrypt CA
   * Email Plugin
     * Allows easy emailing using the JavaSE Email API
   * ZXing Plugin
-    * Implements the barcode rendering libraries by ZXing into the Server API
+    * Implements the barcode rendering libraries by ZXing
 * Released under the Mozilla Public License, version 2.0.
 * And much much more, all to be covered in this documentation.
 
