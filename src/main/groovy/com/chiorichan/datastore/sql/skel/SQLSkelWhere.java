@@ -8,6 +8,7 @@
  */
 package com.chiorichan.datastore.sql.skel;
 
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -16,16 +17,20 @@ import java.util.Map;
 public interface SQLSkelWhere<B extends SQLSkelWhere<?, ?>, P>
 {
 	B or();
-	
+
 	B and();
-	
+
 	SQLWhereKeyValue<B> where( String key );
-	
-	SQLWhereGroup<B, P> group();
-	
+
 	B where( SQLWhereElement element );
-	
+
+	B where( Map<String, Object> map );
+
+	SQLWhereGroup<B, P> group();
+
 	B whereMatches( Map<String, Object> values );
-	
+
 	B whereMatches( String key, Object value );
+
+	B whereMatches( Collection<String> valueKeys, Collection<Object> valueValues );
 }

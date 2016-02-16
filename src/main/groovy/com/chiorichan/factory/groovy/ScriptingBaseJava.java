@@ -5,9 +5,12 @@
  */
 package com.chiorichan.factory.groovy;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.Validate;
 
@@ -33,6 +36,17 @@ import com.google.common.base.Joiner;
 @Deprecated
 public abstract class ScriptingBaseJava extends Builtin
 {
+	public void define( String key, Object val )
+	{
+		getSession().setGlobal( key, val );
+	}
+
+	public File dirname()
+	{
+		File file = getRequest().getInterpreter().getFile();
+		return file == null ? null : file.getParentFile();
+	}
+
 	public String domain( String subdomain )
 	{
 		String url = subdomain != null && !subdomain.isEmpty() ? subdomain + "." : "";
@@ -95,9 +109,30 @@ public abstract class ScriptingBaseJava extends Builtin
 		SQLDatastore sql = getSite().getDatastore();
 
 		if ( sql == null )
-			throw new IllegalStateException( "The site database is unconfigured. It will need to be setup in order for you to use the getDatabase() method." );
+			throw new IllegalStateException( "The site database is unconfigured. It will need to be setup in order for you to use the getSql() method." );
 
 		return sql;
+	}
+
+	public void header( String header )
+	{
+		if ( header.startsWith( "HTTP" ) )
+		{
+			Matcher m = Pattern.compile( "HTTP[^ ]* (\\d*) (.*)" ).matcher( header );
+			if ( m.find() )
+				getResponse().setStatus( Integer.parseInt( m.group( 1 ) ) );
+		}
+		else if ( header.startsWith( "Location:" ) )
+			getResponse().sendRedirect( header.substring( header.indexOf( ':' ) + 1 ).trim() );
+		else if ( header.contains( ":" ) )
+			header( header.substring( 0, header.indexOf( ':' ) ), header.substring( header.indexOf( ':' ) + 1 ).trim() );
+		else
+			throw new IllegalArgumentException( "The header argument is malformed!" );
+	}
+
+	public void header( String key, String val )
+	{
+		getResponse().setHeader( key, val );
 	}
 
 	public Nonce nonce()

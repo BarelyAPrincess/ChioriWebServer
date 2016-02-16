@@ -669,9 +669,9 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		response.setContentType( fi.getContentType() );
 		response.setEncoding( fi.getEncoding() );
 
-		request.putServerVar( ServerVars.DOCUMENT_ROOT, docRoot );
+		request.getServer().put( ServerVars.DOCUMENT_ROOT, docRoot );
 
-		request.setGlobal( "_SERVER", request.getServerStrings() );
+		request.setGlobal( "_SERVER", request.getServer() );
 		request.setGlobal( "_POST", request.getPostMap() );
 		request.setGlobal( "_GET", request.getGetMap() );
 		request.setGlobal( "_REWRITE", request.getRewriteMap() );
@@ -816,7 +816,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 					}
 			}
 
-			log.log( Level.INFO, "EvalHtml {file=%s,timing=%sms,success=%s}", fi.getFilePath(), Timings.mark( this ), result.isSuccessful() );
+			log.log( Level.INFO, "EvalHtml {timing=%sms,success=%s}", Timings.mark( this ), result.isSuccessful() );
 		}
 
 		if ( fi.hasFile() )
@@ -836,7 +836,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 					ReportingLevel.throwExceptions( e );
 
 					log.exceptions( e );
-					if ( e.errorLevel().isEnabledLevel() )
+					if ( e.errorLevel().isEnabledLevel() && e.getMessage() != null )
 						rendered.writeBytes( e.getMessage().getBytes() );
 				}
 
@@ -938,7 +938,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 
 			requestFinished = false;
 			requestOrig = ( FullHttpRequest ) msg;
-			request = new HttpRequestWrapper( ctx.channel(), requestOrig, ssl, log );
+			request = new HttpRequestWrapper( ctx.channel(), requestOrig, this, ssl, log );
 			response = request.getResponse();
 
 			String threadName = Thread.currentThread().getName();

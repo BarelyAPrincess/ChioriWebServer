@@ -10,6 +10,7 @@ package com.chiorichan.http;
 
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.Cookie;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpObject;
@@ -111,6 +112,11 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	final Map<String, String> getMap = Maps.newTreeMap();
 
 	/**
+	 * The {@link HttpHandler} for this request
+	 */
+	final HttpHandler handler;
+
+	/**
 	 * The original Netty Http Request
 	 */
 	private final HttpRequest http;
@@ -148,7 +154,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	/**
 	 * Server Variables
 	 */
-	Map<ServerVars, Object> serverVars = Maps.newLinkedHashMap();
+	HttpVariableMapper vars = new HttpVariableMapper();
 
 	/**
 	 * The Site associated with this request
@@ -182,10 +188,13 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 	private boolean nonceProcessed = false;
 
-	HttpRequestWrapper( Channel channel, HttpRequest http, boolean ssl, LogEvent log ) throws IOException
+	private HttpAuthenticator auth = null;
+
+	HttpRequestWrapper( Channel channel, HttpRequest http, HttpHandler handler, boolean ssl, LogEvent log ) throws IOException
 	{
 		this.channel = channel;
 		this.http = http;
+		this.handler = handler;
 		this.ssl = ssl;
 		this.log = log;
 
@@ -359,6 +368,13 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		return ObjectFunc.castToLong( obj );
 	}
 
+	public HttpAuthenticator getAuth()
+	{
+		if ( auth == null )
+			initAuthorization();
+		return auth;
+	}
+
 	public String getBaseUrl()
 	{
 		String url = getDomain();
@@ -452,7 +468,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		return getMap;
 	}
 
-	public String getHeader( String key )
+	public String getHeader( CharSequence key )
 	{
 		try
 		{
@@ -460,7 +476,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		}
 		catch ( NullPointerException | IndexOutOfBoundsException e )
 		{
-			return "";
+			return null;
 		}
 	}
 
@@ -519,6 +535,11 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			}
 
 		return ( ( InetSocketAddress ) channel.remoteAddress() ).getAddress();
+	}
+
+	public WebInterpreter getInterpreter()
+	{
+		return handler.getInterpreter();
 	}
 
 	/**
@@ -654,6 +675,11 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		return rewriteMap;
 	}
 
+	public HttpVariableMapper getServer()
+	{
+		return vars;
+	}
+
 	@Override
 	protected HttpCookie getServerCookie( String key )
 	{
@@ -662,31 +688,6 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 				return cookie;
 
 		return null;
-	}
-
-	public Map<String, Object> getServerStrings()
-	{
-		Map<String, Object> server = Maps.newLinkedHashMap();
-
-		// Adds server variables to map in default, lower case, and upper case variations.
-		for ( Map.Entry<ServerVars, Object> en : serverVars.entrySet() )
-		{
-			server.put( en.getKey().name().toLowerCase(), en.getValue() );
-			server.put( en.getKey().name().toUpperCase(), en.getValue() );
-			server.put( en.getKey().name(), en.getValue() );
-		}
-
-		if ( unmodifiableMaps )
-			return Collections.unmodifiableMap( server );
-
-		return server;
-	}
-
-	public Map<ServerVars, Object> getServerVars()
-	{
-		if ( unmodifiableMaps )
-			return Collections.unmodifiableMap( serverVars );
-		return serverVars;
 	}
 
 	@Override
@@ -773,38 +774,50 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		return getMap.containsKey( key ) || postMap.containsKey( key ) || rewriteMap.containsKey( key );
 	}
 
+	private void initAuthorization()
+	{
+		if ( auth == null && getHeader( HttpHeaderNames.AUTHORIZATION ) != null )
+			auth = new HttpAuthenticator( this );
+	}
+
 	/**
 	 * Initializes the serverVars with initial information from this request
 	 */
 	private void initServerVars()
 	{
-		putServerVarSafe( ServerVars.SERVER_SOFTWARE, Versioning.getProduct() );
-		putServerVarSafe( ServerVars.SERVER_VERSION, Versioning.getVersion() );
-		putServerVarSafe( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "me@chiorichan.com" ) );
-		putServerVarSafe( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Versioning.getVersion() );
-		putServerVarSafe( ServerVars.HTTP_VERSION, http.protocolVersion() );
-		putServerVarSafe( ServerVars.HTTP_ACCEPT, getHeader( "Accept" ) );
-		putServerVarSafe( ServerVars.HTTP_USER_AGENT, getUserAgent() );
-		putServerVarSafe( ServerVars.HTTP_CONNECTION, getHeader( "Connection" ) );
-		putServerVarSafe( ServerVars.HTTP_HOST, getLocalHostName() );
-		putServerVarSafe( ServerVars.HTTP_ACCEPT_ENCODING, getHeader( "Accept-Encoding" ) );
-		putServerVarSafe( ServerVars.HTTP_ACCEPT_LANGUAGE, getHeader( "Accept-Language" ) );
-		putServerVarSafe( ServerVars.HTTP_X_REQUESTED_WITH, getHeader( "X-requested-with" ) );
-		putServerVarSafe( ServerVars.REMOTE_HOST, getRemoteHostname() );
-		putServerVarSafe( ServerVars.REMOTE_ADDR, getIpAddr() );
-		putServerVarSafe( ServerVars.REMOTE_PORT, getRemotePort() );
-		putServerVarSafe( ServerVars.REQUEST_TIME, getRequestTime() );
-		putServerVarSafe( ServerVars.REQUEST_URI, getUri() );
-		putServerVarSafe( ServerVars.CONTENT_LENGTH, getContentLength() );
-		// putServerVarSafe( ServerVars.AUTH_TYPE, getAuthType() ); -- Implement Authentication
-		putServerVarSafe( ServerVars.SERVER_IP, getLocalIpAddr() );
-		putServerVarSafe( ServerVars.SERVER_NAME, Versioning.getProductSimple() );
-		putServerVarSafe( ServerVars.SERVER_PORT, getLocalPort() );
-		putServerVarSafe( ServerVars.HTTPS, isSecure() );
+		vars.put( ServerVars.SERVER_SOFTWARE, Versioning.getProduct() );
+		vars.put( ServerVars.SERVER_VERSION, Versioning.getVersion() );
+		vars.put( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "me@chiorichan.com" ) );
+		vars.put( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Versioning.getVersion() );
+		vars.put( ServerVars.HTTP_VERSION, http.protocolVersion() );
+		vars.put( ServerVars.HTTP_ACCEPT, getHeader( "Accept" ) );
+		vars.put( ServerVars.HTTP_USER_AGENT, getUserAgent() );
+		vars.put( ServerVars.HTTP_CONNECTION, getHeader( "Connection" ) );
+		vars.put( ServerVars.HTTP_HOST, getLocalHostName() );
+		vars.put( ServerVars.HTTP_ACCEPT_ENCODING, getHeader( "Accept-Encoding" ) );
+		vars.put( ServerVars.HTTP_ACCEPT_LANGUAGE, getHeader( "Accept-Language" ) );
+		vars.put( ServerVars.HTTP_X_REQUESTED_WITH, getHeader( "X-requested-with" ) );
+		vars.put( ServerVars.REMOTE_HOST, getRemoteHostname() );
+		vars.put( ServerVars.REMOTE_ADDR, getIpAddr() );
+		vars.put( ServerVars.REMOTE_PORT, getRemotePort() );
+		vars.put( ServerVars.REQUEST_TIME, getRequestTime() );
+		vars.put( ServerVars.REQUEST_URI, getUri() );
+		vars.put( ServerVars.CONTENT_LENGTH, getContentLength() );
+		vars.put( ServerVars.SERVER_IP, getLocalIpAddr() );
+		vars.put( ServerVars.SERVER_NAME, Versioning.getProductSimple() );
+		vars.put( ServerVars.SERVER_PORT, getLocalPort() );
+		vars.put( ServerVars.HTTPS, isSecure() );
+		vars.put( ServerVars.DOCUMENT_ROOT, Loader.getWebRoot() );
+		vars.put( ServerVars.SESSION, this );
 
-		// TODO These need initializing once known
-		putServerVarSafe( ServerVars.DOCUMENT_ROOT, Loader.getWebRoot() );
-		putServerVarSafe( ServerVars.SESSION, null );
+		if ( getAuth() != null )
+		{
+			// Implement authorization as an optional builtin manageable feature, e.g., .htdigest.
+			vars.put( ServerVars.AUTH_DIGEST, getAuth().getDigest() );
+			vars.put( ServerVars.AUTH_USER, getAuth().getUsername() );
+			vars.put( ServerVars.AUTH_PW, getAuth().getPassword() );
+			vars.put( ServerVars.AUTH_TYPE, getAuth().getType() );
+		}
 	}
 
 	/**
@@ -820,6 +833,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 	public boolean isCDN()
 	{
+		// TODO Implement additional CDN detection methods
 		return http.headers().contains( "CF-Connecting-IP" );
 	}
 
@@ -960,26 +974,6 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	protected void putRewriteParams( Map<String, String> map )
 	{
 		rewriteMap.putAll( map );
-	}
-
-	protected void putServerVar( ServerVars type, Object value )
-	{
-		Validate.notNull( type );
-		Validate.notNull( value );
-
-		serverVars.put( type, value );
-	}
-
-	void putServerVarSafe( ServerVars key, Object value )
-	{
-		try
-		{
-			serverVars.put( key, value );
-		}
-		catch ( Exception e )
-		{
-
-		}
 	}
 
 	protected void putUpload( String name, UploadedFile uploadedFile )

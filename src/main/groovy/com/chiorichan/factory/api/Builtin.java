@@ -28,6 +28,7 @@ import org.ocpsoft.prettytime.PrettyTime;
 
 import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngineLegacy;
+import com.chiorichan.lang.DiedException;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.SecureFunc;
@@ -395,14 +396,31 @@ public abstract class Builtin extends Script
 		}
 	}
 
-	public static String dirname( File path )
+	public static void die() throws DiedException
 	{
-		return path.getParent();
+		die( null );
 	}
 
-	public static String dirname( String path )
+	/**
+	 * Forcibly kills script exception by throwing a DiedException
+	 *
+	 * @param msg
+	 *             The message to return
+	 * @throws DiedException
+	 */
+	public static void die( String msg ) throws DiedException
 	{
-		return new File( path ).getParent();
+		throw new DiedException( msg );
+	}
+
+	public static File dirname( File path )
+	{
+		return path.getParentFile();
+	}
+
+	public static File dirname( String path )
+	{
+		return new File( path ).getParentFile();
 	}
 
 	public static boolean empty( Collection<Object> list )
@@ -595,9 +613,34 @@ public abstract class Builtin extends Script
 		return Joiner.on( joiner ).join( data );
 	}
 
+	public static boolean is_array( Object obj )
+	{
+		return obj instanceof Collection || obj instanceof boolean[] || obj instanceof byte[] || obj instanceof short[] || obj instanceof char[] || obj instanceof int[] || obj instanceof long[] || obj instanceof float[] || obj instanceof double[] || obj instanceof Object[];
+	}
+
+	public static boolean is_bool( Object obj )
+	{
+		return obj.getClass() == boolean.class || obj.getClass() == Boolean.class;
+	}
+
+	public static boolean is_float( Object obj )
+	{
+		return obj.getClass() == Float.class || obj.getClass() == float.class;
+	}
+
+	public static boolean is_int( Object obj )
+	{
+		return obj.getClass() == Integer.class || obj.getClass() == int.class;
+	}
+
 	public static boolean is_null( Object obj )
 	{
 		return obj == null;
+	}
+
+	public static boolean is_string( Object obj )
+	{
+		return obj instanceof String;
 	}
 
 	/**
@@ -618,6 +661,11 @@ public abstract class Builtin extends Script
 		ParsePosition pos = new ParsePosition( 0 );
 		formatter.parse( str, pos );
 		return str.length() == pos.getIndex();
+	}
+
+	public static boolean isset( Object obj )
+	{
+		return obj != null;
 	}
 
 	public static String md5( String str )
@@ -807,5 +855,18 @@ public abstract class Builtin extends Script
 			return "";
 
 		return sb.substring( 1 ).toString();
+	}
+
+	/**
+	 * Alias for {@link #print(Object)}
+	 */
+	public void echo( Object obj )
+	{
+		print( obj );
+	}
+
+	public void exit() throws DiedException
+	{
+		die( null );
 	}
 }

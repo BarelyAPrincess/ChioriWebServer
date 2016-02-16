@@ -31,12 +31,12 @@ public class GroovyEngine implements ScriptingEngine
 {
 	private Binding binding = new Binding();
 	private GroovyRegistry registry;
-	
+
 	public GroovyEngine( GroovyRegistry registry )
 	{
 		this.registry = registry;
 	}
-	
+
 	@Override
 	public boolean eval( ScriptingContext context ) throws Exception
 	{
@@ -44,7 +44,7 @@ public class GroovyEngine implements ScriptingEngine
 		{
 			GroovyShell shell = registry.getNewShell( context, binding );
 			Script script = registry.makeScript( shell, context );
-			
+
 			context.result().object( script.run() );
 		}
 		catch ( Throwable t )
@@ -54,23 +54,23 @@ public class GroovyEngine implements ScriptingEngine
 			context.reset();
 			throw t;
 		}
-		
+
 		return true;
 	}
-	
+
 	@Override
 	public List<String> getTypes()
 	{
 		return Arrays.asList( "groovy" );
 	}
-	
+
 	@Override
 	public void setBinding( ScriptBinding binding )
 	{
 		// Groovy Binding will keep the original EvalBinding map updated automatically. YAY!
 		this.binding = new Binding( binding.getVariables() );
 	}
-	
+
 	@Override
 	public void setOutput( ByteBuf buffer, Charset charset )
 	{

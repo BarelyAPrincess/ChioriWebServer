@@ -36,6 +36,8 @@ public abstract class SQLBase<T extends SQLBase> implements SQLResultSkel
 	private boolean debug = false;
 	private SQLException lastException = null;
 
+	private ResultSet resultSetCache = null;
+
 	private boolean isFirstCall = true;
 
 	protected SQLBase( SQLWrapper sql, boolean autoExecute )
@@ -85,7 +87,13 @@ public abstract class SQLBase<T extends SQLBase> implements SQLResultSkel
 		return ( T ) this;
 	}
 
-	public abstract T execute() throws SQLException;
+	public final T execute() throws SQLException
+	{
+		resultSetCache = null;
+		return execute0();
+	}
+
+	protected abstract T execute0() throws SQLException;
 
 	public final Map<String, Object> first() throws SQLException
 	{
@@ -171,15 +179,12 @@ public abstract class SQLBase<T extends SQLBase> implements SQLResultSkel
 			}
 
 			if ( save )
-			{
-				this.stmt = stmt;
-				isFirstCall = true;
-			}
+				setStatement( stmt );
 
 			if ( debug && save )
-				Datastore.getLogger().debug( "SQL query \"" + sqlQuery + "\" -> \"" + toString( stmt ) + "\" " + ( isUpdate ? "affected" : "returned" ) + " " + rowCount() + " results" );
+				Datastore.getLogger().debug( "SQL query \"" + sqlQuery + "\" -> \"" + DbFunc.toString( stmt ) + "\" " + ( isUpdate ? "affected" : "returned" ) + " " + rowCount() + " results" );
 			else if ( debug )
-				Datastore.getLogger().debug( "SQL query \"" + sqlQuery + "\" -> \"" + toString( stmt ) + "\"" );
+				Datastore.getLogger().debug( "SQL query \"" + sqlQuery + "\" -> \"" + DbFunc.toString( stmt ) + "\"" );
 
 			setPass();
 			return stmt;
@@ -219,23 +224,34 @@ public abstract class SQLBase<T extends SQLBase> implements SQLResultSkel
 		return new SQLExecute<T>( rs, ( T ) this );
 	}
 
+	/**
+	 * Gets the ResultSet for the last execution
+	 *
+	 * @return
+	 *         The resulting {@link ResultSet} from the last execution, will return null is query was update or there were no results
+	 * @throws SQLException
+	 *              if a database access error occurs or this method is called on a closed
+	 *              Statement
+	 */
 	ResultSet resultSet() throws SQLException
 	{
-		ResultSet rs = statement().getResultSet();
+		if ( resultSetCache == null )
+		{
+			resultSetCache = statement().getResultSet();
 
-		if ( rs == null )
-			return null;
-
-		if ( isFirstCall )
-			// Not being before first, on your first call means no results
-			if ( !rs.isBeforeFirst() )
-				return null;
-			// Next returning null also means no results
-			else if ( !rs.next() )
+			if ( resultSetCache == null )
 				return null;
 
-		isFirstCall = false;
-		return rs;
+			if ( isFirstCall )
+				// Not being before first, on your first call means no results
+				// Next returning null also means no results
+				if ( !resultSetCache.isBeforeFirst() || !resultSetCache.next() )
+					return null;
+
+			isFirstCall = false;
+		}
+
+		return resultSetCache;
 	}
 
 	@Override
@@ -260,10 +276,13 @@ public abstract class SQLBase<T extends SQLBase> implements SQLResultSkel
 		lastException = null;
 	}
 
-	public Object[] sqlValues()
+	protected void setStatement( PreparedStatement stat )
 	{
-		return new Object[0];
+		this.stmt = stat;
+		isFirstCall = true;
 	}
+
+	public abstract Object[] sqlValues();
 
 	protected PreparedStatement statement() throws SQLException
 	{
@@ -308,22 +327,10 @@ public abstract class SQLBase<T extends SQLBase> implements SQLResultSkel
 		return DbFunc.resultToStringSet( resultSet() );
 	}
 
-	public String toSqlQuery()
-	{
-		return null;
-	}
-
 	@Override
 	public String toString()
 	{
-		return toString( stmt );
-	}
-
-	public String toString( PreparedStatement stmt )
-	{
-		if ( stmt == null )
-			return null;
-		return stmt.toString().substring( stmt.toString().indexOf( ": " ) + 2 ).trim();
+		return DbFunc.toString( stmt );
 	}
 
 	protected void updateExecution()

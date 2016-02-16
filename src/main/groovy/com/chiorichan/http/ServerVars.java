@@ -50,13 +50,13 @@ public enum ServerVars
 	PHP_SELF,
 	HTTP_X_REQUESTED_WITH,
 	SERVER_VERSION;
-	
+
 	public static ServerVars parse( String key )
 	{
 		for ( ServerVars sv : ServerVars.values() )
-			if ( sv.name().equalsIgnoreCase( key ) )
+			if ( sv.name().equalsIgnoreCase( key ) || ( "PHP_" + sv.name() ).equalsIgnoreCase( key ) )
 				return sv;
-		
+
 		return null;
 	}
 }

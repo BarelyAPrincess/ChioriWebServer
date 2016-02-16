@@ -31,127 +31,127 @@ public class SQLTable extends SQLBase<SQLTable>
 {
 	private final String table;
 	private final DatabaseMetaData meta;
-	
+
 	public SQLTable( SQLWrapper sql, String table ) throws SQLException
 	{
 		super( sql, false );
 		this.table = table;
 		meta = sql.getMetaData();
 	}
-	
+
 	public SQLTable addColumn( String colType, String colName ) throws SQLException
 	{
 		return addColumn( colType, colName, null );
 	}
-	
+
 	public SQLTable addColumn( String colType, String colName, Object def ) throws SQLException
 	{
 		SQLTableColumns columns = columns();
-		
+
 		if ( columns.contains( colName ) )
 			throw new SQLException( "There already exists a column by the name of '" + colName + "'" );
-		
+
 		String defString = def == null ? "NULL" : "NOT NULL DEFAULT '" + ObjectFunc.castToString( def ) + "'";
-		
+
 		if ( exists() )
 			query( String.format( "ALTER TABLE `%s` ADD `%s` %s %s;", table, colName, colType, defString ), true );
 		else
 			query( String.format( "CREATE TABLE `%s` ( `%s` %s %s );", table, colName, colType, defString ), true );
-		
+
 		return this;
 	}
-	
+
 	public SQLTable addColumnInt( String colName, int i ) throws SQLException
 	{
 		return addColumn( "INTEGER(" + i + ")", colName );
 	}
-	
+
 	public SQLTable addColumnInt( String colName, int i, int def ) throws SQLException
 	{
 		return addColumn( "INTEGER(" + i + ")", colName, def );
 	}
-	
+
 	public SQLTable addColumnText( String colName ) throws SQLException
 	{
 		return addColumn( "TEXT", colName );
 	}
-	
+
 	public SQLTable addColumnText( String colName, String def ) throws SQLException
 	{
 		return addColumnText( colName, def );
 	}
-	
+
 	public SQLTable addColumnVar( String colName, int i ) throws SQLException
 	{
 		return addColumnVar( colName, i, null );
 	}
-	
+
 	public SQLTable addColumnVar( String colName, int i, String def ) throws SQLException
 	{
 		if ( i > 256 )
 			throw new SQLException( "VARCHAR does not support more than 256 bytes" );
 		if ( def != null && def.length() > i )
 			throw new SQLException( "Default is more than max size" );
-		
+
 		if ( sql.datastore() instanceof SQLiteDatastore )
 			return addColumn( "TEXT", colName, def );
 		else
 			return addColumn( "VARCHAR(" + i + ")", colName, def );
 	}
-	
+
 	public Collection<String> columnNames() throws SQLException
 	{
 		Set<String> rtn = Sets.newLinkedHashSet();
-		
+
 		query( "SELECT * FROM `" + table + "` LIMIT 1;", false );
-		
+
 		ResultSetMetaData rsmd = resultSet().getMetaData();
-		
+
 		for ( int i = 1; i < rsmd.getColumnCount() + 1; i++ )
 			rtn.add( rsmd.getColumnName( i ) );
-		
+
 		return rtn;
 	}
-	
+
 	public SQLTableColumns columns() throws SQLException
 	{
 		return new SQLTableColumns( sql, table );
 	}
-	
+
 	public SQLQueryDelete delete()
 	{
 		return new SQLQueryDelete( sql, table );
 	}
-	
+
 	public SQLTable drop() throws SQLException
 	{
 		query( String.format( "DROP TABLE `%s` IF EXISTS;", table ), true );
 		return this;
 	}
-	
+
 	public SQLTable dropColumn( String colName ) throws SQLException
 	{
 		query( String.format( "ALTER TABLE `%s` DROP `%s`;", table, colName ), true );
 		return this;
 	}
-	
+
 	@Override
-	public SQLTable execute() throws SQLException
+	protected SQLTable execute0() throws SQLException
 	{
 		return this;
 	}
-	
+
 	public boolean exists()
 	{
 		return exists( false );
 	}
-	
+
 	private boolean exists( boolean retry )
 	{
 		try
 		{
 			ResultSet rs = meta.getTables( null, null, null, null );
-			
+
 			while ( rs.next() )
 				if ( rs.getString( 3 ).equalsIgnoreCase( table ) )
 				{
@@ -171,28 +171,46 @@ public class SQLTable extends SQLBase<SQLTable>
 		}
 		return false;
 	}
-	
+
 	public SQLQueryInsert insert()
 	{
 		return new SQLQueryInsert( sql, table );
 	}
-	
+
+	public ResultSetMetaData metaData( String table ) throws SQLException
+	{
+		ResultSet rs = new SQLRawQuery( sql, "SELECT * FROM " + table ).resultSet();
+		return rs.getMetaData();
+	}
+
 	@Override
 	public int rowCount() throws SQLException
 	{
-		return -1;
+		return new SQLQuerySelect( sql, table ).rowCount();
 	}
-	
+
 	public SQLQuerySelect select()
 	{
 		return new SQLQuerySelect( sql, table );
 	}
-	
+
 	public SQLQuerySelect select( Collection<String> fields )
 	{
 		return select().fields( fields );
 	}
-	
+
+	@Override
+	public Object[] sqlValues()
+	{
+		return new Object[0];
+	}
+
+	@Override
+	public String toSqlQuery()
+	{
+		return null;
+	}
+
 	public SQLQueryUpdate update()
 	{
 		return new SQLQueryUpdate( sql, table );

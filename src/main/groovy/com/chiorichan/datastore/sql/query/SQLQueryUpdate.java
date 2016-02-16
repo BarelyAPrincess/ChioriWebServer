@@ -9,6 +9,8 @@
 package com.chiorichan.datastore.sql.query;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -16,6 +18,7 @@ import java.util.Map.Entry;
 import org.apache.commons.lang3.ArrayUtils;
 
 import com.chiorichan.datastore.Datastore;
+import com.chiorichan.datastore.DatastoreManager;
 import com.chiorichan.datastore.sql.SQLBase;
 import com.chiorichan.datastore.sql.SQLWrapper;
 import com.chiorichan.datastore.sql.skel.SQLSkelLimit;
@@ -43,19 +46,19 @@ public final class SQLQueryUpdate extends SQLBase<SQLQueryUpdate> implements SQL
 	private String table;
 	private int limit = -1;
 	private int offset = -1;
-	
+
 	public SQLQueryUpdate( SQLWrapper sql, String table )
 	{
 		super( sql, false );
 		this.table = table;
 	}
-	
+
 	public SQLQueryUpdate( SQLWrapper sql, String table, boolean autoExecute )
 	{
 		super( sql, autoExecute );
 		this.table = table;
 	}
-	
+
 	@Override
 	public SQLQueryUpdate and()
 	{
@@ -65,14 +68,14 @@ public final class SQLQueryUpdate extends SQLBase<SQLQueryUpdate> implements SQL
 			currentSeperator = SQLWhereElementSep.AND;
 		return this;
 	}
-	
+
 	@Override
-	public SQLQueryUpdate execute() throws SQLException
+	protected SQLQueryUpdate execute0() throws SQLException
 	{
 		query( toSqlQuery(), true, sqlValues() );
 		return this;
 	}
-	
+
 	@Override
 	public SQLWhereGroup<SQLQueryUpdate, SQLQueryUpdate> group()
 	{
@@ -83,13 +86,13 @@ public final class SQLQueryUpdate extends SQLBase<SQLQueryUpdate> implements SQL
 		or();
 		return group;
 	}
-	
+
 	@Override
 	public int limit()
 	{
 		return limit;
 	}
-	
+
 	@Override
 	public SQLQueryUpdate limit( int limit )
 	{
@@ -97,7 +100,7 @@ public final class SQLQueryUpdate extends SQLBase<SQLQueryUpdate> implements SQL
 		needsUpdate = true;
 		return this;
 	}
-	
+
 	@Override
 	public SQLQueryUpdate limit( int limit, int offset )
 	{
@@ -106,13 +109,13 @@ public final class SQLQueryUpdate extends SQLBase<SQLQueryUpdate> implements SQL
 		needsUpdate = true;
 		return this;
 	}
-	
+
 	@Override
 	public int offset()
 	{
 		return offset;
 	}
-	
+
 	@Override
 	public SQLQueryUpdate offset( int offset )
 	{
@@ -120,7 +123,7 @@ public final class SQLQueryUpdate extends SQLBase<SQLQueryUpdate> implements SQL
 		needsUpdate = true;
 		return this;
 	}
-	
+
 	@Override
 	public SQLQueryUpdate or()
 	{
@@ -130,7 +133,7 @@ public final class SQLQueryUpdate extends SQLBase<SQLQueryUpdate> implements SQL
 			currentSeperator = SQLWhereElementSep.OR;
 		return this;
 	}
-	
+
 	@Override
 	public int rowCount()
 	{
@@ -143,7 +146,7 @@ public final class SQLQueryUpdate extends SQLBase<SQLQueryUpdate> implements SQL
 			return -1;
 		}
 	}
-	
+
 	@Override
 	public Object[] sqlValues()
 	{
@@ -151,12 +154,12 @@ public final class SQLQueryUpdate extends SQLBase<SQLQueryUpdate> implements SQL
 			toSqlQuery();
 		return ArrayUtils.addAll( values.values().toArray( new Object[0] ), sqlValues.toArray() );
 	}
-	
+
 	public String table()
 	{
 		return table;
 	}
-	
+
 	@Override
 	public String toSqlQuery()
 	{
@@ -164,28 +167,28 @@ public final class SQLQueryUpdate extends SQLBase<SQLQueryUpdate> implements SQL
 		{
 			if ( values.size() == 0 )
 				throw new IllegalStateException( "Invalid Query State: There are no values to be updated" );
-			
+
 			List<String> segments = Lists.newLinkedList();
-			
+
 			segments.add( "UPDATE" );
-			
+
 			segments.add( StringFunc.wrap( table(), '`' ) );
-			
+
 			segments.add( "SET" );
-			
+
 			List<String> sets = Lists.newLinkedList();
-			
+
 			for ( String key : values.keySet() )
 				sets.add( String.format( "`%s` = ?", key ) );
-			
+
 			segments.add( Joiner.on( ", " ).join( sets ) );
-			
+
 			sqlValues.clear();
-			
+
 			if ( elements.size() > 0 )
 			{
 				segments.add( "WHERE" );
-				
+
 				for ( SQLWhereElement e : elements )
 				{
 					if ( e.seperator() != SQLWhereElementSep.NONE && e != elements.get( 0 ) )
@@ -195,16 +198,16 @@ public final class SQLQueryUpdate extends SQLBase<SQLQueryUpdate> implements SQL
 						sqlValues.add( e.value() );
 				}
 			}
-			
+
 			if ( limit() > 0 )
 				segments.add( "LIMIT " + limit() );
-			
+
 			needsUpdate = false;
-			
+
 			return Joiner.on( " " ).join( segments ) + ";";
 		}
 	}
-	
+
 	@Override
 	public SQLQueryUpdate value( String key, Object val )
 	{
@@ -212,7 +215,7 @@ public final class SQLQueryUpdate extends SQLBase<SQLQueryUpdate> implements SQL
 		needsUpdate = true;
 		return this;
 	}
-	
+
 	@Override
 	public SQLQueryUpdate values( Map<String, Object> map )
 	{
@@ -221,21 +224,77 @@ public final class SQLQueryUpdate extends SQLBase<SQLQueryUpdate> implements SQL
 		needsUpdate = true;
 		return this;
 	}
-	
+
 	@Override
 	public SQLQueryUpdate values( String[] keys, Object[] valuesArray )
 	{
 		for ( int i = 0; i < Math.min( keys.length, valuesArray.length ); i++ )
 			values.put( keys[i], valuesArray[i] );
-		
+
 		if ( keys.length != valuesArray.length )
 			Datastore.getLogger().warning( "SQLQueryUpdate omited values/keys because the two lengths did not match, so we used the minimum of the two. Keys: (" + Joiner.on( ", " ).join( keys ) + ") Values: (" + Joiner.on( ", " ).join( valuesArray ) + ")" );
-		
+
 		needsUpdate = true;
-		
+
 		return this;
 	}
-	
+
+	@Override
+	public SQLQueryUpdate where( Map<String, Object> map )
+	{
+		for ( Entry<String, Object> e : map.entrySet() )
+		{
+			String key = e.getKey();
+			Object val = e.getValue();
+
+			if ( key.startsWith( "|" ) )
+			{
+				key = key.substring( 1 );
+				or();
+			}
+			else if ( key.startsWith( "&" ) )
+			{
+				key = key.substring( 1 );
+				and();
+			}
+
+			if ( val instanceof Map )
+				try
+				{
+					SQLWhereGroup<?, ?> group = group();
+
+					@SuppressWarnings( "unchecked" )
+					Map<String, Object> submap = ( Map<String, Object> ) val;
+					for ( Entry<String, Object> e2 : submap.entrySet() )
+					{
+						String key2 = e2.getKey();
+						Object val2 = e2.getValue();
+
+						if ( key2.startsWith( "|" ) )
+						{
+							key2 = key2.substring( 1 );
+							group.or();
+						}
+						else if ( key2.startsWith( "&" ) )
+						{
+							key2 = key2.substring( 1 );
+							group.and();
+						}
+
+						where( key2 ).matches( val2 );
+					}
+				}
+				catch ( ClassCastException ee )
+				{
+					DatastoreManager.getLogger().severe( ee );
+				}
+			else
+				where( key ).matches( val );
+		}
+
+		return this;
+	}
+
 	@Override
 	public SQLQueryUpdate where( SQLWhereElement element )
 	{
@@ -243,33 +302,53 @@ public final class SQLQueryUpdate extends SQLBase<SQLQueryUpdate> implements SQL
 		elements.add( element );
 		needsUpdate = true;
 		and();
-		
+
 		return this;
 	}
-	
+
 	@Override
 	public SQLWhereKeyValue<SQLQueryUpdate> where( String key )
 	{
 		return new SQLWhereKeyValue<SQLQueryUpdate>( this, key );
 	}
-	
+
+	@Override
+	public SQLQueryUpdate whereMatches( Collection<String> valueKeys, Collection<Object> valueValues )
+	{
+		SQLWhereGroup<SQLQueryUpdate, SQLQueryUpdate> group = new SQLWhereGroup<SQLQueryUpdate, SQLQueryUpdate>( this, this );
+
+		List<String> listKeys = new ArrayList<>( valueKeys );
+		List<Object> listValues = new ArrayList<>( valueValues );
+
+		for ( int i = 0; i < Math.min( listKeys.size(), listValues.size() ); i++ )
+		{
+			SQLWhereKeyValue<SQLWhereGroup<SQLQueryUpdate, SQLQueryUpdate>> groupElement = group.where( listKeys.get( i ) );
+			groupElement.seperator( SQLWhereElementSep.AND );
+			groupElement.matches( listValues.get( i ) );
+		}
+
+		group.parent();
+		or();
+		return this;
+	}
+
 	@Override
 	public SQLQueryUpdate whereMatches( Map<String, Object> values )
 	{
 		SQLWhereGroup<SQLQueryUpdate, SQLQueryUpdate> group = new SQLWhereGroup<SQLQueryUpdate, SQLQueryUpdate>( this, this );
-		
+
 		for ( Entry<String, Object> val : values.entrySet() )
 		{
 			SQLWhereKeyValue<SQLWhereGroup<SQLQueryUpdate, SQLQueryUpdate>> groupElement = group.where( val.getKey() );
 			groupElement.seperator( SQLWhereElementSep.AND );
 			groupElement.matches( val.getValue() );
 		}
-		
+
 		group.parent();
 		or();
 		return this;
 	}
-	
+
 	@Override
 	public SQLQueryUpdate whereMatches( String key, Object value )
 	{

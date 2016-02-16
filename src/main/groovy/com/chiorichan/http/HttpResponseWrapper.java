@@ -475,7 +475,7 @@ public class HttpResponseWrapper
 	 * Send the client to a specified page with http code 302 automatically.
 	 *
 	 * @param target
-	 *             , destination url. Can be relative or absolute.
+	 *             The destination URL. Can either be relative or absolute.
 	 */
 	public void sendRedirect( String target )
 	{

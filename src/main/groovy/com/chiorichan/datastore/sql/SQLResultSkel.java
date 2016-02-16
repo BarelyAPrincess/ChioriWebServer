@@ -18,16 +18,18 @@ import java.util.Set;
 public interface SQLResultSkel
 {
 	Map<String, Map<String, Object>> map() throws SQLException;
-	
+
 	Set<Map<String, Object>> set() throws SQLException;
-	
+
 	Map<String, Map<String, String>> stringMap() throws SQLException;
-	
+
 	Map<String, Object> row() throws SQLException;
-	
+
 	Map<String, String> stringRow() throws SQLException;
-	
+
 	Set<Map<String, String>> stringSet() throws SQLException;
-	
+
 	int rowCount() throws SQLException;
+
+	String toSqlQuery() throws SQLException;
 }
