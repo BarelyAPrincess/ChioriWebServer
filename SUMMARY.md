@@ -1,8 +1,10 @@
-# Table of Contents
+# Summary
 
+* [Developer Information](docs/developer_information.md)
+* [Plugins](docs/plugins/README.md)
+   * API
+* [Developer Information](docs/developer_information.md)
+* [Plugin API](docs/plugins/api.md)
+* [Developer Information](docs/developer_information.md)
 * [Web Server](docs/README.md)
-   * [Developer Information](docs/developer_information.md)
-   * [Plugins](docs/plugins/README.md)
-   * [Server API](docs/api/README.md)
-   * [Plugin API](docs/plugins/api.md)
-   * [Developer Information](docs/developer_information.md)
+
