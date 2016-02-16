@@ -1,14 +1,14 @@
-# Server Configuration
+# Configuration
+**Chiori-chan's Web Server** stores configuration within the `server.yaml` file, located within the server root directory containing the server `jar` file. Default configuration values are save upon first run.
 
-## Configuration
-The server configuration will be located in the file "server.yaml" found within the root folder of the running jar (Will generate with default values on first run) and is in the standard format of YAML.
+**Note** Regarding binding to ports below 1024 on Linux (e.g. 80) will require access to privileged ports. Typically you can workaround this issue by running as root or allowing privileged ports using the command `setcap 'cap_net_bind_service=+ep' /path/to/server.jar`. Our recommended solution is to listen on ports 8080 (http) and 8443 (https) and redirect the traffic using the IPTables firewall.
 
-It is important to note the binding to ports below 1024 on linux (for example port 80, like most web servers run on) will require access to privileged ports. There are many workarounds to this issue but the preferred way is to listen on ports 8080 (http) and 8443 (https) and redirect the traffic using the IPTables firewall.
+## About YAML
+YAML(tm) is an international collaboration to make a data serialization language which is both human readable and computationally powerful. The founding members of YAML are Ingy döt Net (author of the Perl module `<Data::Denter>`), Clark Evans, and Oren Ben-Kiki. YAML emerged from the union of two efforts. The first was Ingy döt Net's need for a serialization format for Inline, this resulted in his `<Data::Denter` module. The second, was the joint work of Oren Ben-Kiki Clark Evans on simplifying XML within the sml-dev group. YAML was first publicized with a article on 12 May 2001. Oren and Clark's vision for YAML was very similar to Ingy's `<Data::Denter>`, and vice versa, thus a few days later they teamed up and YAML was born.
 
-### About YAML
-YAML(tm) is an international collaboration to make a data serialization language which is both human readable and computationally powerful. The founding members of YAML are Ingy döt Net (author of the Perl module <Data::Denter>), Clark Evans, and Oren Ben-Kiki. YAML emerged from the union of two efforts. The first was Ingy döt Net's need for a serialization format for Inline, this resulted in his <Data::Denter> module. The second, was the joint work of Oren Ben-Kiki Clark Evans on simplifying XML within the sml-dev group. YAML was first publicized with a article on 12 May 2001. Oren and Clark's vision for YAML was very similar to Ingy's <Data::Denter>, and vice versa, thus a few days later they teamed up and YAML was born. For more information: [http://www.yaml.org/start.html]
+[Lean More](http://www.yaml.org/start.html)
 
-### server.yaml
+## server.yaml
 *Some of these config keys are buggy, deprecated or don't have full implementation yet. I try my best to update this document when I can but some might get overlooked.*
 
 * server.httpHost: null
