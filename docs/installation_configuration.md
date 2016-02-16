@@ -3,13 +3,7 @@
 
 **Note** Regarding binding to ports below 1024 on Linux (e.g. 80) will require access to privileged ports. Typically you can workaround this issue by running as root or allowing privileged ports using the command `setcap 'cap_net_bind_service=+ep' /path/to/server.jar`. Our recommended solution is to listen on ports 8080 (http) and 8443 (https) and redirect the traffic using the IPTables firewall.
 
-## About YAML
-YAML(tm) is an international collaboration to make a data serialization language which is both human readable and computationally powerful. The founding members of YAML are Ingy döt Net (author of the Perl module `<Data::Denter>`), Clark Evans, and Oren Ben-Kiki. YAML emerged from the union of two efforts. The first was Ingy döt Net's need for a serialization format for Inline, this resulted in his `<Data::Denter` module. The second, was the joint work of Oren Ben-Kiki Clark Evans on simplifying XML within the sml-dev group. YAML was first publicized with a article on 12 May 2001. Oren and Clark's vision for YAML was very similar to Ingy's `<Data::Denter>`, and vice versa, thus a few days later they teamed up and YAML was born.
-
-[Lean More](http://www.yaml.org/start.html)
-
-## server.yaml
-*Some of these config keys are buggy, deprecated or don't have full implementation yet. I try my best to update this document when I can but some might get overlooked.*
+*Some of the below configuration options have bugs, have been deprecated or don't have full implementation as of yet. We will try our best to update this document when possible but some details might get overlooked.*
 
 * server.httpHost: null
 
@@ -202,3 +196,8 @@ YAML(tm) is an international collaboration to make a data serialization language
 * accounts.fileType.fields: [username, email, phone]
 
 	Which fields can be used to login with.
+	
+## About YAML
+YAML(tm) is an international collaboration to make a data serialization language which is both human readable and computationally powerful. The founding members of YAML are Ingy döt Net (author of the Perl module `<Data::Denter>`), Clark Evans, and Oren Ben-Kiki. YAML emerged from the union of two efforts. The first was Ingy döt Net's need for a serialization format for Inline, this resulted in his `<Data::Denter` module. The second, was the joint work of Oren Ben-Kiki Clark Evans on simplifying XML within the sml-dev group. YAML was first publicized with a article on 12 May 2001. Oren and Clark's vision for YAML was very similar to Ingy's `<Data::Denter>`, and vice versa, thus a few days later they teamed up and YAML was born.
+
+[Lean More](http://www.yaml.org/start.html)
