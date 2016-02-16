@@ -59,11 +59,6 @@
 # Seeking Help
 Hello, my name is Chiori-chan and I'm currently the sole developer of Chiori-chan's Web Server since it's incarnation over three years now. Recently my project has just reached a little over 62,000 lines of code and 700 commits, which has been a real accomplishment. Sadly, this means the project has also become a bit too much for me to handle alone and which means I need help. I find myself dedicating a part-time jobs worth of time trying to keep this project's development moving forward and this is not something I can keep up very much longer. This means not only do I have a limit of time to deicate to my other projects but also a limit of time to finding project contributors and beta testers. So I ask, if anyone reading this is interested in contributing, please contact me.
 
-
-
-## Database
-Most features of the server can utilize either file or database based configuration. On first run, the server will create a SQLite database within the server root as a placeholder. You can easily switch to a MySql or H2 database thru configuration. You can use sql file 'frameworkdb.sql' to create a new database.
-
 ## Sites
 Sites are the equivalent of VirtualHosts on Apache Web Server. To create a new site, create the directory path webroot/[siteId]/config.yaml and place the following content within, of course modifying the contents to your needs:
 ```yaml
