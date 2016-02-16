@@ -3,7 +3,8 @@
         "ace",
         "anchor-navigation",
         "asciitree",
-        "autocover"
+        "autocover",
+        "github"
     ],
     "pluginsConfig": {}
 }
