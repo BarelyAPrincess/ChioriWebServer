@@ -12,32 +12,28 @@ As of version 9.3 (Milky Polkadot), the following features are provided:
 * Easy to use request rewrite and routing tables, similar to Apache's `mod_rewrite`.
 * File Annotations, based on CSS annotations and controls request handling.
 * Builtin User Authorization System, never code your own auth system ever again.
-* Builtin Session Management.
+* Builtin Session and Cookie Management.
+* Supports GET, POST, HEAD requests.
+* Scripting Language, currently builtin and preferred Groovy Shell.
+* Groovy Server Pages (GSP), which act much like PHP.
 * Namespace based Permission System, e.g., `com.example.user.allowed` or `io.github.repository.canEdit`
 * A rich plugin API inspired by the widely popular CraftBukkit Plugin API, a Minecraft Server
-* Built-in database engine with seperate connections for the server and sites.  With built-in * support for sql and sqlite 3.
-* Built-in session and cookie management utilizing both file and db storage.
-* Fully customizable configuration files ranging from behavior to encoding.
-* Includes by default a plug-in for auto theming pages but is removable, includes:
-* Uses annotation configs to define themes, e.g., @theme com.chiorichan.theme.a
-* Uses a common and relatable head file, e.g., theme A → com.chiorichan.include.a
-* Pre and Post processors, which includes build-in:
-* JS Minimizer (POST)
-* CSS Minimizer (POST)
-* Google Closure (POST)
-* Image Resizer (POST)
-* Coffee Script (PRE)
-* Less (PRE) (WIP)
-* Crude cache system, badly needs help! (WIP)
-* Supports multi-part posts, so you can upload files.
-* Event API that is available to plug-ins, e.g., Login, Exceptions, and Page Request.
-* Groovy dynamic pages, with features such as:
-* _GET map for GET requests.
-* _POST map for POST requests.
-* _REWRITE map for rewrites/routes, see above.
-* _REQUEST map which contains the _GET, _POST, and _REWRITE maps.
-* _FILES map which contains any file uploads.
-* Embedded groovy similar to PHP and GSP.
+* Builtin Stacking Database Engine, e.g., `db.table("repositories").select().where("id").matches(repoId).map()`. Supports SQLite, mySQL, and H2.
+* Event API for an array of events. *Script based event listeners are planned*
+* Pre and Post Processors, which include:
+  * JS Minimizer
+  * CSS Minimizer
+  * ~~Less Processor~~ *WIP*
+  * ~~Coffee Script~~ *WIP*
+  * Image Manipulator
+* Official Plugins with the following additional features:
+  * Templates Plugin
+    * Reads file annotations to apply templates. `@theme com.chiorichan.theme.a`
+    * Common and relative head file. `imclude.common` or `theme.a` -> `include.a`
+    * Set page title. `@title Repositories`
+    * Make exception pages pretty and easy to debug
+  * ZXing Plugin
+    * Implements the barcode rendering libraries by ZXing into the Server API
 * Released under the Mozilla Public License, version 2.0.
 * And much much more, all to be covered in this documentation.
 
