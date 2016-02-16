@@ -7,7 +7,7 @@
    * [SSL Configuration](docs/installation/ssl.md)
    * [Database](docs/installation/database.md)
    * [Site](docs/installation/site.md)
-* [Developer](docs/developer.md)
+* [Project Development](docs/developer.md)
 * [Plugins](docs/plugins/README.md)
    * Developer Guide
 * [Scripting Languages](docs/scripting/README.md)
