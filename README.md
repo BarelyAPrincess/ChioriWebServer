@@ -1,7 +1,7 @@
 # Introduction
 **Chiori-chan's Web Server** is a HTTP/TCP Web Server allowing for both dynamic and static content delivered to both browsers and TCP clients. To provide flexibility, the server also includes a powerful Groovy Scripting Language. The Scripting Engine is also extendable using a provided API. Is the Groovy language not your thing, try our extensive Plugin API loosly based on the ever popular CraftBukkit Minecraft Server API. Chiori-chan's Web Server could be considered an Application Server as it gives you the power to create amazing web applications while taking less time and resources, while at the same time utilizing the power of the Java Virtual Machine.
 
-As of version 9.3 (Milky Polkadot), the following features are provided:
+**As of version 9.3 (Milky Polkadot), the following features are provided:**
 * An extensive core API.
 * Written in Java, (DUH!) making it crossplatform compatible.
 * Apache like Virtual Host with excellent subdomain support.
@@ -45,20 +45,20 @@ As of version 9.3 (Milky Polkadot), the following features are provided:
 * Released under the Mozilla Public License, version 2.0.
 * And so much more! Hopefully to be coved in this documentation.
 
+**Planned Future Features, include but not limited to:**
+* Add Server Clustering Abilities.
+* Sandbox Mode, starting with the Java SecurityManager
+* Plugin Repository
+* Groovy Script Caching, so no more recompiling by the Groovy Shell with each request.
+* SASS Preprocessor
+* Administration Web Interface.
+* Add better error handling and syntax debugging.
+* Improved Changelog and Javadocs.
+* [WIP] apache .htaccess implementation
+
 # Seeking Help
 Hello, my name is Chiori-chan and I'm currently the sole developer of Chiori-chan's Web Server since it's incarnation over three years now. Recently my project has just reached a little over 62,000 lines of code and 700 commits, which has been a real accomplishment. Sadly, this means the project has also become a bit too much for me to handle alone and which means I need help. I find myself dedicating a part-time jobs worth of time trying to keep this project's development moving forward and this is not something I can keep up very much longer. This means not only do I have a limit of time to deicate to my other projects but also a limit of time to finding project contributors and beta testers. So I ask, if anyone reading this is interested in contributing, please contact me.
 
-# To Do
--   Implement a Server Administration Web Interface.
--   Add better error handling and syntax debugging.
--   Create a Sandbox Mode, i.e., SecurityManager
--   Start a Plugin repository
--   Write Plugin API Documentation. (You can use Bukkit Plugin API JavaDocs for the time being)
--   Better the ChangeLogs and Javadocs.
--   Allow certain events to be thrown on site Groovy files not just Plugins, i.e., webroot/resource/com/chiorichan/events/UserLoginEvent.groovy or NotFoundEvent.groovy
--   Improve built-in file cache system
--   Implement SASS Preprocessor
--   Finish htaccess implementation
 
 ## SSL
 
