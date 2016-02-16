@@ -8,6 +8,8 @@ While Groovy is the default and preferred scripting language, Chiori-chan's Web 
 
 Please note, that while it was attempted to replicate the PHP API, the PHP syntax was not. You will have to follow the Groovy syntax, e.g., foreach and array is PHP specific.
 
+[Groovy Language Syntax](http://groovy-lang.org/syntax.html)
+
     PHP: foreach( $vars as $var ) {}
     Groovy: vars.each { var -> }
     
@@ -16,8 +18,6 @@ Please note, that while it was attempted to replicate the PHP API, the PHP synta
     
     PHP: $var = array("key1" => val1", "key2" => "val2", "key3" => "val3")
     Groovy: def var = [key1: val1", key2: "val2", key3: "val3"]
-
-[Groovy Language Syntax](http://groovy-lang.org/syntax.html)
 
 # API References
 ## Variable and Type Related Methods
