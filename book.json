@@ -1,0 +1,15 @@
+{
+    "plugins": [
+        "ace",
+        "anchor-navigation",
+        "asciitree",
+        "autocover",
+        "github",
+        "fancybox",
+        "emphasize",
+        "facebook",
+        "hide-published-with",
+        "highlight"
+    ],
+    "pluginsConfig": {}
+}
