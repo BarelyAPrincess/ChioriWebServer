@@ -3,7 +3,7 @@
 * [Introduction](README.md)
 * [Installation](docs/installation.md)
    * [Configuration](docs/installation_configuration.md)
-   * File Annotations
+   * [File Annotations](docs/installation/annotations.md)
    * [SSL Configuration](docs/installation/ssl.md)
 * [Developer](docs/developer.md)
 * [Plugins](docs/plugins/README.md)
