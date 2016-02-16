@@ -33,6 +33,10 @@ As of version 9.3 (Milky Polkadot), the following features are provided:
     * Set page title. `@title Repositories`
     * Make exception pages pretty and easy to debug
     * And much more!
+  * Dropbox Plugin
+    * Implements the Dropbox API into the Server API
+  * Let's Encrypt
+    * Issues and Renews SSL Certificates from the Let's Encrypt CA
   * ZXing Plugin
     * Implements the barcode rendering libraries by ZXing into the Server API
 * Released under the Mozilla Public License, version 2.0.
