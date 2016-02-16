@@ -9,6 +9,7 @@
    * [Site](docs/installation/site.md)
 * [Developer](docs/developer.md)
 * [Plugins](docs/plugins/README.md)
+   * Developer Guide
 * [Scripting Languages](docs/scripting/README.md)
    * [API Reference](docs/scripting/api.md)
    * [Packages](docs/scripting/packages.md)
