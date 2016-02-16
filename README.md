@@ -1,7 +1,45 @@
 # Introduction
 **Chiori-chan's Web Server** is a HTTP/TCP Web Server allowing for both dynamic and static content delivered to both browsers and TCP clients. To provide flexibility, the server also includes a powerful Groovy Scripting Language. The Scripting Engine is also extendable using a provided API. Is the Groovy language not your thing, try our extensive Plugin API loosly based on the ever popular CraftBukkit Minecraft Server API. Chiori-chan's Web Server could be considered an Application Server as it gives you the power to create amazing web applications while taking less time and resources, while at the same time utilizing the power of the Java Virtual Machine.
 
-As of version 9.3 (Milky Polkadot), the following features are provided
+As of version 9.3 (Milky Polkadot), the following features are provided:
+* An extensive core API.
+* Written in Java, (DUH!) making it crossplatform compatible.
+* Apache like Virtual Host with excellent subdomain support.
+* The use of Convention over Configuration.
+* ~~Terminal Prompt~~ *Temp Removed*
+* ~~Administration Web Console~~ *Temp Removed*
+* Automatic Updater
+* Easy to use request rewrite and routing tables, similar to Apache's `mod_rewrite`.
+* File Annotations, based on CSS annotations and controls request handling.
+* Builtin User Authorization System, never code your own auth system ever again.
+* Builtin Session Management.
+* Namespace based Permission System, e.g., `com.example.user.allowed` or `io.github.repository.canEdit`
+* A plug-in system based on the widely popular Minecraft server, Bukkit.
+* Built-in database engine with seperate connections for the server and sites.  With built-in * support for sql and sqlite 3.
+* Built-in session and cookie management utilizing both file and db storage.
+* Fully customizable configuration files ranging from behavior to encoding.
+* Includes by default a plug-in for auto theming pages but is removable, includes:
+* Uses annotation configs to define themes, e.g., @theme com.chiorichan.theme.a
+* Uses a common and relatable head file, e.g., theme A → com.chiorichan.include.a
+* Pre and Post processors, which includes build-in:
+* JS Minimizer (POST)
+* CSS Minimizer (POST)
+* Google Closure (POST)
+* Image Resizer (POST)
+* Coffee Script (PRE)
+* Less (PRE) (WIP)
+* Crude cache system, badly needs help! (WIP)
+* Supports multi-part posts, so you can upload files.
+* Event API that is available to plug-ins, e.g., Login, Exceptions, and Page Request.
+* Groovy dynamic pages, with features such as:
+* _GET map for GET requests.
+* _POST map for POST requests.
+* _REWRITE map for rewrites/routes, see above.
+* _REQUEST map which contains the _GET, _POST, and _REWRITE maps.
+* _FILES map which contains any file uploads.
+* Embedded groovy similar to PHP and GSP.
+* Released under the Mozilla Public License, version 2.0.
+* And much much more, all to be covered in this documentation.
 
 # Seeking Help
 Hello, my name is Chiori-chan and I'm currently the sole developer of Chiori-chan's Web Server since it's incarnation over three years now. Recently my project has just reached a little over 62,000 lines of code and 700 commits, which has been a real accomplishment. Sadly, this means the project has also become a bit too much for me to handle alone and which means I need help. I find myself dedicating a part-time jobs worth of time trying to keep this project's development moving forward and this is not something I can keep up very much longer. This means not only do I have a limit of time to deicate to my other projects but also a limit of time to finding project contributors and beta testers. So I ask, if anyone reading this is interested in contributing, please contact me.
