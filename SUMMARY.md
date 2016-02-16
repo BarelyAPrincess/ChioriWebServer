@@ -6,6 +6,6 @@
 * [Developer](docs/developer.md)
 * [Plugins](docs/plugins/README.md)
 * [Scripting Languages](docs/api/README.md)
-   * API Reference
+   * [API Reference](docs/api/scripting_api.md)
 * [Plugin API](docs/plugins/api.md)
 
