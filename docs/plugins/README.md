@@ -45,7 +45,7 @@ Implements the barcode rendering libraries by ZXing into the Server API.
 
 
 ### [WIP] Interactive Console Plugin
-Implements the Interactive Console found in older versions of Chiori-chan's Web Server. Originally intended to serve as an example how to load Native Libraries using the built-in plugin feature that can be enabled within the `config.yaml` file.
+Implements the Interactive Console found in older versions of Chiori-chan's Web Server. Originally intended to serve as an example how to load Native Libraries using the built-in plugin feature that can be enabled within the plugin's `config.yaml` file.
 
 ### [WIP] Lua Plugin
 Implements the Lua Programming Language as a Server Scripting Language. Also associates the `.lua` file extension with the new Scripting Engine.
