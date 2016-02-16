@@ -5,4 +5,5 @@
 * [Plugins](docs/plugins/README.md)
    * API
 * [Plugin API](docs/plugins/api.md)
+* Web Server
 
