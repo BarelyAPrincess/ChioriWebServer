@@ -14,7 +14,7 @@ As of version 9.3 (Milky Polkadot), the following features are provided:
 * Builtin User Authorization System, never code your own auth system ever again.
 * Builtin Session Management.
 * Namespace based Permission System, e.g., `com.example.user.allowed` or `io.github.repository.canEdit`
-* A plug-in system based on the widely popular Minecraft server, Bukkit.
+* A rich plugin API inspired by the widely popular CraftBukkit Plugin API, a Minecraft Server
 * Built-in database engine with seperate connections for the server and sites.  With built-in * support for sql and sqlite 3.
 * Built-in session and cookie management utilizing both file and db storage.
 * Fully customizable configuration files ranging from behavior to encoding.
