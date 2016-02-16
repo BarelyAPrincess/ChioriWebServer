@@ -1,5 +1,5 @@
 # Server API
-Chiori-chan's Web Server utilizes a proprietary API heavily based on the PHP API for ease of use. Under-the-hood, we utilize the Groovy Shell interpreter, with added support for Groovy Server Pages (GSP). Much like PHP, GSP files allow for groovy code to be placed within code blocks starting  with `<%` and ending with `%>`.
+Chiori-chan's Web Server utilizes a proprietary API heavily based on the PHP API for ease of use. Under-the-hood, we utilize the Groovy Shell interpreter, with added support for Groovy Server Pages (GSP). Much like PHP, GSP allows groovy code to be placed within code blocks starting  with `<%` and ending with `%>`.
 
     You are running <% getProduct() %> <% getVersion() %>
 Output `You are running Chiori-chan's Web Server 9.3.6 (Milky Polkadot)`
