@@ -5,43 +5,97 @@
 
 *Some of the below configuration options have bugs, have been deprecated or don't have full implementation as of yet. We will try our best to update this document when possible but some details might get overlooked.*
 
-    server:
-      httpHost:
-        Type: String
-        Default: `empty`
- httpPort
-Type: Integer
-    Default: `8080`
-
-httpsPort: 0
-httpsSharedCert: null
-httpsSharedKey: null
-httpsSharedSecret: null
-tcpHost: ''
-tcpPort: 1024
-queryEnabled: false
-queryHost: ''
-queryPort: 8992
-queryUseColor: true
-admin: me@chiorichan.com
-allowDirectoryListing: false
-haltOnSevereError: false
-throwInternalServerErrorOnWarnings: false
-defaultBanReason: The Ban Hammer Has Spoken
-enableWebServer: true
-enableTcpServer: false
-installationUID: null
-disableTracking: false
-defaultTextEncoding: UTF-8
-defaultBinaryEncoding: ISO-8859-1
-developmentMode: false
-maxFileUploadKb: 5120
-webFileDirectory: webroot
-tmpFileDirectory: tmp
-fileUploadMinInMemory: 0
-errorReporting: E_ALL ~E_NOTICE ~E_STRICT ~E_DEPRECATED
-database:
-database: chiorifw
+* `server:`
+  * `httpHost:` *Specify which IP address(s) to bind the H listen on*
+   - Type: `String`
+   - Default: `empty`
+  * `httpPort:` *Specify which port to bind the HTTP server*
+   - Type: `Integer`
+   - Default: `8080`
+  * `httpsPort:` *Specify which port to bind the HTTPS server*
+   - Type: `Integer`
+   - Default: `0`
+  * `httpsSharedCert:` *Relative or absolute file path to the default SSL shared certificate*
+   - Type: `String`
+   - Default: `null`
+  * `httpsSharedKey:` *Relative or absolute file path to the default SSL shared key*
+   - Type: `String`
+   - Default: `null`
+  * `httpsSharedSecret:` *The shared secret required for the above SSL certificate, `null` for none.*
+   - Type: `String`
+   - Default: `null`
+  * `tcpHost:` *Specify which IP address(s) to bind the TCP server to*
+   - Type: `String`
+   - Default: `''`
+  * `tcpPort:`
+   - Type: 
+   - Default: `1024`
+  * `queryEnabled:`
+   - Type: 
+   - Default: `false`
+  * `queryHost:`
+   - Type: 
+   - Default: `''`
+  * `queryPort:`
+   - Type: 
+   - Default: `8992`
+  * `queryUseColor:`
+   - Type: 
+   - Default: `true`
+  * `admin:`
+   - Type: 
+   - Default: `me@chiorichan.com`
+  * `allowDirectoryListing:`
+   - Type: 
+   - Default: `false`
+  * `haltOnSevereError:`
+   - Type: 
+   - Default: `false`
+  * `throwInternalServerErrorOnWarnings:`
+   - Type: 
+   - Default: `false`
+  * `defaultBanReason:`
+   - Type: 
+   - Default: `The Ban Hammer Has Spoken`
+  * `enableWebServer:`
+   - Type: 
+   - Default: `true`
+  * `enableTcpServer:`
+   - Type: 
+   - Default: `false`
+  * `installationUID:`
+   - Type: 
+   - Default: `null`
+  * `disableTracking:`
+   - Type: 
+   - Default: `false`
+  * `defaultTextEncoding:`
+   - Type: 
+   - Default: `UTF-8`
+  * `defaultBinaryEncoding:`
+   - Type: 
+   - Default: `ISO-8859-1`
+  * `developmentMode:`
+   - Type: 
+   - Default: `false`
+  * `maxFileUploadKb:`
+   - Type: 
+   - Default: `5120`
+  * `webFileDirectory:`
+   - Type: 
+   - Default: `webroot`
+  * `tmpFileDirectory:`
+   - Type: 
+   - Default: `tmp`
+  * `fileUploadMinInMemory:`
+   - Type: 
+   - Default: `0`
+  * `errorReporting:`
+   - Type: 
+   - Default: `E_ALL ~E_NOTICE ~E_STRICT ~E_DEPRECATED`
+    * `database:`
+      * `database: 
+       - Default: `chiorifw`
         type: sqlite
         host: localhost
         port: 3306
