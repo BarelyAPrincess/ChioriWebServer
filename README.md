@@ -32,6 +32,7 @@ As of version 9.3 (Milky Polkadot), the following features are provided:
     * Common and relative head file. `imclude.common` or `theme.a` -> `include.a`
     * Set page title. `@title Repositories`
     * Make exception pages pretty and easy to debug
+    * And much more!
   * ZXing Plugin
     * Implements the barcode rendering libraries by ZXing into the Server API
 * Released under the Mozilla Public License, version 2.0.
