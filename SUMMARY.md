@@ -1,9 +1,9 @@
 # Summary
 
 * [Introduction](README.md)
+* Web Server
 * [Plugins](docs/plugins/README.md)
    * API
-* Web Server
 * [Developer Information](docs/developer_information.md)
 * [Plugin API](docs/plugins/api.md)
 
