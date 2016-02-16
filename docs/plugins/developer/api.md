@@ -110,3 +110,18 @@ public class MainClassFile extends Plugin
 	}
 }
 ```
+
+To compile your now completed Example Plugin:
+  * Goto `File -> Export...`
+  * Select `Java -> JAR file`
+  * Click `Next`
+  * Click the `+` to the left of your plugin project, in the top left pane
+  * Check the `src/main/java` and `src/main/resource` directories found under that
+  * Under JAR file, specify a jar archive name and parent path, e.g., `/home/john/Desktop/ExamplePlugin.jar`
+  * Click `Finish`
+  * Window closing means the build was successful without warnings
+  * Copy your new `JAR` binary to your server installation's plugin directory
+  * Load your server and enjoy your new plugin:
+![Loaded Plugins](loadedplugin.png)
+
+
