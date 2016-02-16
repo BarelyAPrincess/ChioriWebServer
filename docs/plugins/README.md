@@ -14,7 +14,7 @@ Allows the Web Server to auto manage SSL certificates issued by the Let's Encryp
 ### ZXing Plugin
 Implements the barcode rendering libraries by ZXing into the Server API.
 
-    if ( getPluginByName( "ZXing Plugin" ) == null )
+    if ( getPluginByNameWithoutException( "ZXing Plugin" ) == null )
     {
     	throw new HttpError( 500, "It would appear the ZXing Plugin is not loaded." );
     }
