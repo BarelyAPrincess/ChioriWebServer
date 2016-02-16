@@ -18,39 +18,6 @@ Hello, my name is Chiori-chan and I'm currently the sole developer of Chiori-cha
 -   Implement SASS Preprocessor
 -   Finish htaccess implementation
 
-# Installation
-
-
-## Packages
-Packages are files stored specially for use within many pages \(including the Templates Plugin\). Packages are located under the 'resource' directory, found within the site webroot. Directory structure follows a standard namespace order of 'com.example.' or 'io.john.', think of each period as a file seperator, so 'com.example.' would be under 'com/example'. The last part of each package would be the file name without the file extension, the server does the work of selecting the best file based on a list of preferred extensions found in configuration. So 'com.example.widgets.menu' could be translated to file 'com/example/widgets/menu.groovy'. Unforchantly there is currently no way of specifying the extension you are expecting.
-
-Thru the Scripting API, you can include and/or require a package path, e.g., require("com.example.widgets.menu");. Using include\(\) will ignore exceptions thrown, while require\(\) will stop execution in the same event, including FileNotFoundException. Please keep in mind that require and include methods will return the packages as objects, html files to return as a String, while scripts will return the last object used or returned. Output directly to buffer using the standard print\(\) and println\(\) methods.
-
-### Using a Package as an API
-Each package script is executed as it's own Java Class, utilizing the ability to return an object, place 'return this' at the end of your script and implement each method you will need.
-
-Package Script Example:
-```groovy
-def sendEmail( addr )
-{
-	// Code Here
-}
-
-def sayHello()
-{
-	return "Hello World";
-}
-
-return this;
-```
-
-Use Case:
-```groovy
-def api = require( "com.example.api.messaging" );
-api.sendEmail( "norm@example.com" );
-println api.sayHello();
-```
-
 ## SSL
 
 Secure Https is disabled by default. To enable either generate a self-signed certificate or obtain an offical one online. Using the ACME Plugin, you can obtain free valid certificates from the Let's Encrypt CA for each of your sites and it's subdomains, additional configuration will be needed.
