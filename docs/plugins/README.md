@@ -53,3 +53,5 @@ Implements the Interactive Console found in older versions of Chiori-chan's Web 
 Implements the Lua Programming Language as a Server Scripting Language. Also associates the `.lua` file extension with the new Scripting Engine.
 
 [Lua Plugin Tutorial by Chiori-chan](https://www.youtube.com/watch?v=_VJoMV77GHU)
+
+[Lua Plugin GitHub Repository](https://github.com/ChioriGreene/ChioriWebServer-LuaPlugin)
