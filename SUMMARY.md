@@ -4,7 +4,7 @@
 * [Installation](docs/installation.md)
    * [Configuration](docs/installation_configuration.md)
    * File Annotations
-   * [SSL](docs/installation/ssl.md)
+   * [SSL Configuration](docs/installation/ssl.md)
 * [Developer](docs/developer.md)
 * [Plugins](docs/plugins/README.md)
 * [Scripting Languages](docs/scripting/README.md)
