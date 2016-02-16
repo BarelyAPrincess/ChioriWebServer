@@ -5,6 +5,165 @@
 
 *Some of the below configuration options have bugs, have been deprecated or don't have full implementation as of yet. We will try our best to update this document when possible but some details might get overlooked.*
 
+    server:
+      httpHost:
+        Type: String
+        Default: `empty`
+ httpPort
+Type: Integer
+    Default: `8080`
+
+httpsPort: 0
+httpsSharedCert: null
+httpsSharedKey: null
+httpsSharedSecret: null
+tcpHost: ''
+tcpPort: 1024
+queryEnabled: false
+queryHost: ''
+queryPort: 8992
+queryUseColor: true
+admin: me@chiorichan.com
+allowDirectoryListing: false
+haltOnSevereError: false
+throwInternalServerErrorOnWarnings: false
+defaultBanReason: The Ban Hammer Has Spoken
+enableWebServer: true
+enableTcpServer: false
+installationUID: null
+disableTracking: false
+defaultTextEncoding: UTF-8
+defaultBinaryEncoding: ISO-8859-1
+developmentMode: false
+maxFileUploadKb: 5120
+webFileDirectory: webroot
+tmpFileDirectory: tmp
+fileUploadMinInMemory: 0
+errorReporting: E_ALL ~E_NOTICE ~E_STRICT ~E_DEPRECATED
+database:
+database: chiorifw
+        type: sqlite
+        host: localhost
+        port: 3306
+        username: fwuser
+        password: fwpass
+        dbfile: server.db
+plugins:
+  useTimings: true
+permissions:
+  backend: file
+  file: permissions.yaml
+  debug: false
+  allowOps: true
+  informEntities:
+    changes: false
+settings:
+  update-folder: update
+  shutdown-message: Server Shutdown
+  whitelist: false
+console:
+  color: true
+  style: '&r&7[&d%ct&7] %dt %tm [%lv&7]&f'
+  dateFormat: MM-dd
+  timeFormat: HH:mm:ss.SSS
+  hideLoggerName: false
+  developerMode: true
+logs:
+  directory: logs
+  loggers:
+    latest:
+      type: file
+      enabled: true
+      color: false
+      level: ALL
+      archiveLimit: 6
+    colored:
+      type: file
+      enabled: true
+      color: true
+      level: FINE
+      archiveLimit: 0
+auto-updater:
+  enabled: true
+  on-broken:
+  - warn-console
+  - warn-ops
+  on-update:
+  - warn-console
+  - warn-ops
+  preferred-channel: rb
+  host: jenkins.chiorichan.com
+  suggest-channels: true
+  check-interval: 30
+  console-only: true
+  auto-restart: true;
+sessions:
+  defaultCookieName: SessionId
+  defaultTimeout: 3600
+  defaultTimeoutWithLogin: 86400
+  defaultTimeoutRememberMe: 604800
+  allowNoTimeoutPermission: false
+  rearmTimeoutWithEachRequest: true
+  reuseVacantSessions: true
+  maxSessionsPerIP: 6
+  allowIPChange: false
+  cleanupInterval: 5
+  datastore: file
+  debug: false
+accounts:
+  requireLoginWithNonce: true
+  allowLoginTokens: true
+  singleLogin: false
+  singleLoginMessage: You logged in from another location.
+  debug: false
+  sqlType:
+    enabled: false
+    default: false
+    table: accounts
+    fields:
+    - username
+    - email
+    - phone
+  fileType:
+    enabled: true
+    default: true
+    filebase: accounts
+    fields:
+    - username
+    - email
+    - phone
+sites:
+  defaultTitle: Unnamed Site
+  redirectMissingSubDomains: false
+advanced:
+  cache:
+    keepHistory: 30
+  processors:
+    imageProcessorEnabled: true
+    imageProcessorCache: true
+    useFastGraphics: false
+    minifierJSProcessorEnabled: true
+    lessProcessorEnabled: true
+    coffeeProcessorEnabled: true
+  scripting:
+    gspEnabled: true
+    groovyEnabled: true
+    preferredExtensions:
+    - html
+    - htm
+    - groovy
+    - gsp
+    - jsp
+    - chi
+  security:
+    unmodifiableMapsEnabled: true
+    requestMapEnabled: true
+    defaultScriptTimeout: 30
+  libraries:
+    libPath: libraries
+
+
+
 * server.httpHost: null
 
 	The ip address to bind the web server to, null will bind to all.
