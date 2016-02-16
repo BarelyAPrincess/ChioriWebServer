@@ -4,10 +4,10 @@
 Using the Scripting API, packages are included using the `Object include( String package )` and `Object require( String package )` methods. See [API Reference](api.md) for exact API.
 Do note that `require` will halt script execution if a problem was encountered including the package, while `include` will ignore such problems. `require` and `include` will return the requested package as an object, e.g., `HTML` files will return as a String and Scripts will return the last object referenced or explicitly returned. If you desire to output to object directly to the buffer use `print`, `println`, `echo`, or `getResponse().write()` (preferred for writing byte arrays)
 
-### Using a Package as an API
-Each package script is executed as it's own Java Class, utilizing the ability to return an object, place 'return this' at the end of your script and implement each method you will need.
+## Using a Package as an API
+Due to the way packages are evaluated by the Groovy Scripting Language, a package instance can be referenced as an easy API. Each executed script and package is it's own Java Class, so just returning `this` on the last line will provide your script with a script instance.
 
-Package Script Example:
+API Package Example (resource/com/example/api/messaging.groovy)
 ```groovy
 def sendEmail( addr )
 {
@@ -19,7 +19,7 @@ def sayHello()
 	return "Hello World";
 }
 
-return this;
+return this; <-- Important or this won't work!
 ```
 
 Use Case:
