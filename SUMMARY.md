@@ -5,7 +5,7 @@
    * [Configuration](docs/installation_configuration.md)
    * [File Annotations](docs/installation/annotations.md)
    * [SSL Configuration](docs/installation/ssl.md)
-   * Database
+   * [Database](docs/installation/database.md)
    * Site
 * [Developer](docs/developer.md)
 * [Plugins](docs/plugins/README.md)
