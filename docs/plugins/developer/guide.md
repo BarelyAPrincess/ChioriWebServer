@@ -6,7 +6,7 @@ Until the Plugin Development Guide is finished you can loosely follow the [Craft
 
 See [Plugins](../README.md) on how to install them.
 
-## Java Server Plugin Getting Started
+## Java Server Plugins - Getting Started
 
 **Note** Never use the namespace `com.chiorichan.*` within your plugins, it is exclusively reserved and will kick an error when loading your Plugin(s).
 
