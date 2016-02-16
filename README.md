@@ -6,6 +6,7 @@ As of version 9.3 (Milky Polkadot), the following features are provided:
 * Written in Java, (DUH!) making it crossplatform compatible.
 * Apache like Virtual Host with excellent subdomain support.
 * The use of Convention over Configuration.
+* YAML Configuration where needed.
 * ~~Terminal Prompt~~ *Temp Removed*
 * ~~Administration Web Console~~ *Temp Removed*
 * Automatic Updater
