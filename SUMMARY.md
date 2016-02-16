@@ -2,6 +2,7 @@
 
 * [Introduction](README.md)
 * Web Server
+   * Plugins
 * [Plugins](docs/plugins/README.md)
    * API
 * [Developer Information](docs/developer_information.md)
