@@ -8,7 +8,8 @@
         "fancybox",
         "emphasize",
         "facebook",
-        "hide-published-with"
+        "hide-published-with",
+        "highlight"
     ],
     "pluginsConfig": {}
 }
