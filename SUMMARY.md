@@ -1,4 +1,4 @@
 # Summary
 
-* [Groovy API](groovy_api.md)
+* [Groovy API](docs/api/README.md)
 
