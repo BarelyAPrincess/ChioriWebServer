@@ -24,6 +24,7 @@ Being one of the most well developed Plugins of Chiori-chan's Web Server. Implem
 
 
 ### Email Plugin
+Implements the Java Mail libraries into the CWS API, allowing scripts to send e-mail like a pro.
 
 ### ZXing Plugin
 Implements the barcode rendering libraries by ZXing into the Server API.
