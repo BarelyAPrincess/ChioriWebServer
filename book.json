@@ -5,7 +5,8 @@
         "asciitree",
         "autocover",
         "github",
-        "fancybox"
+        "fancybox",
+        "emphasize"
     ],
     "pluginsConfig": {}
 }
