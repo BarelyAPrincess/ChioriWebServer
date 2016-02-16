@@ -6,7 +6,7 @@
    * [File Annotations](docs/installation/annotations.md)
    * [SSL Configuration](docs/installation/ssl.md)
    * [Database](docs/installation/database.md)
-   * Site
+   * [Site](docs/installation/site.md)
 * [Developer](docs/developer.md)
 * [Plugins](docs/plugins/README.md)
 * [Scripting Languages](docs/scripting/README.md)
