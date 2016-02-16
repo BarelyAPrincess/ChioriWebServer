@@ -7,5 +7,6 @@
 * [Plugins](docs/plugins/README.md)
 * [Scripting Languages](docs/api/README.md)
    * [API Reference](docs/api/scripting_api.md)
+   * Packages
 * [Plugin API](docs/plugins/api.md)
 
