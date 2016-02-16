@@ -17,6 +17,8 @@ Please note, that while it was attempted to replicate the PHP API, the PHP synta
     PHP: $var = array("key1" => val1", "key2" => "val2", "key3" => "val3")
     Groovy: def var = [key1: val1", key2: "val2", key3: "val3"]
 
+[Groovy Language Syntax](http://groovy-lang.org/syntax.html)
+
 # API References
 ## Variable and Type Related Methods
 ### `int count( map,collection,array,string )`
