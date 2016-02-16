@@ -9,7 +9,7 @@ Due to the way packages are evaluated by the Groovy Scripting Language, a packag
 
 API Package Example (resource/com/example/api/messaging.groovy)
 ```groovy
-def sendEmail( addr )
+def sendEmail( addr, subj )
 {
 	// Code Here
 }
@@ -25,6 +25,6 @@ return this; <-- Important or this won't work!
 Use Case:
 ```groovy
 def api = require( "com.example.api.messaging" );
-api.sendEmail( "norm@example.com" );
+api.sendEmail( "norm@example.com", "E-mail Subject" );
 println api.sayHello();
 ```
