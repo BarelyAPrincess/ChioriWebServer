@@ -21,7 +21,8 @@ Being one of the most well developed Plugins of Chiori-chan's Web Server. Implem
 * [Templates Plugin Tutorial - Part 3 of 3](https://www.youtube.com/watch?v=ZkUK2QNAlQw&index=10&list=PL5W-gdSkWP6TOBoL-YDEPZaadwBGXGOyO)
 
 ### Dropbox Plugin
-
+Implements the DropBox API into CWS API, allowing scripts to access dropbox files.
+Also serves as a great example on how to use the Maven Dependency Download Feature, see config.yaml.
 
 ### Email Plugin
 Implements the Java Mail libraries into the CWS API, allowing scripts to send e-mail like a pro.
