@@ -10,7 +10,7 @@
 * [Project Development](docs/developer.md)
 * [Plugins](docs/plugins/README.md)
    * [Developer Guide](docs/plugins/developer/guide.md)
-       * API Reference
+       * [API Reference](docs/plugins/developer/api.md)
 * [Scripting Languages](docs/scripting/README.md)
    * [API Reference](docs/scripting/api.md)
    * [Packages](docs/scripting/packages.md)
