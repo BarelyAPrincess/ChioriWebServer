@@ -6,7 +6,8 @@
         "autocover",
         "github",
         "fancybox",
-        "emphasize"
+        "emphasize",
+        "facebook"
     ],
     "pluginsConfig": {}
 }
