@@ -1,7 +1,8 @@
 {
     "plugins": [
         "ace",
-        "anchor-navigation"
+        "anchor-navigation",
+        "asciitree"
     ],
     "pluginsConfig": {}
 }
