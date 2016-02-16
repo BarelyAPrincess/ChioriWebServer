@@ -1,7 +1,7 @@
 # Summary
 
 * [Introduction](README.md)
-* Web Server
+* [Web Server](docs/README.md)
    * [Plugins](docs/plugins/README.md)
    * [API](docs/api/README.md)
 * [Developer Information](docs/developer_information.md)
