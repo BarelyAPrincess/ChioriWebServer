@@ -4,25 +4,6 @@
 # Seeking Help
 Hello, my name is Chiori-chan and I'm currently the sole developer of Chiori-chan's Web Server since it's incarnation over three years now. Recently my project has just reached a little over 62,000 lines of code and 700 commits, which has been a real accomplishment. Sadly, this means the project has also become a bit too much for me to handle alone and which means I need help. I find myself dedicating a part-time jobs worth of time trying to keep this project's development moving forward and this is not something I can keep up very much longer. This means not only do I have a limit of time to deicate to my other projects but also a limit of time to finding project contributors and beta testers. So I ask, if anyone reading this is interested in contributing, please contact me.
 
-# Tutorial Videos
--   <https://www.youtube.com/playlist?list=PL5W-gdSkWP6TOBoL-YDEPZaadwBGXGOyO>
-
-# Official Plugins
-### Dropbox Plugin
-
-### Email Plugin
-
-### Interactive Console Plugin \[WIP\]
-Reimplements the interactive console feature found in previous versions of CWS.
-Also serves as a great example on how to load Native Libraries without changing the class-path, see config.yaml.
-### Lua Plugin
-<https://github.com/ChioriGreene/ChioriWebServer-LuaPlugin>
-Implements Lua as a Scripting Language for Chiori-chan's Web Server
-### Templates Plugin
-Implements an easy to use template formatter, also makes exception pages pretty.
-### ZXing Plugin
-Implements the barcode XZing libraries into the API, allowing scripts to dynamicly generate barcodes.
-
 # To Do
 -   Implement a Server Administration Web Interface.
 -   Add better error handling and syntax debugging.
