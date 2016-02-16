@@ -1,13 +1,21 @@
 # Plugins
+
+The Chiori-chan's Web Server features a rich plugin system inspired by the plugin system found in the beloved Minecraft Server, Craftbukkit.
+
+Plugins are located within the `plugins` directory by default and end with file extension `.jar`.
+
+[How to Install Plugins Tutorial by Chiori-chan](https://www.youtube.com/watch?v=HQj2vu0BfI0)
+
 ## Official Plugins
 
 ### Let's Encrypt (Acme) Plugin
 Allows the Web Server to auto manage SSL certificates issued by the Let's Encrypt Certificate Authority. [Let's Encrypt](https://letsencrypt.org/)
 
+### Templates Plugin
+Being one of the most well developed Plugins of Chiori-chan's Web Server. Implements an easy to use template formatter subsystem. Using the Server Event Bus, the plugin listens to the page rendering event and wrappers the output with a template and container file.
+
 ### Dropbox Plugin
 
-
-### Templates Plugin
 
 ### Email Plugin
 
@@ -31,7 +39,9 @@ Implements the barcode rendering libraries by ZXing into the Server API.
 
 
 ### [WIP] Interactive Console Plugin
-Implements the Interactive Console found in older versions of Chiori-chan's Web Server. Originally intended to serve as an example how to load Native Libraries using the built-in plugin feature found in `config.yaml`.
+Implements the Interactive Console found in older versions of Chiori-chan's Web Server. Originally intended to serve as an example how to load Native Libraries using the built-in plugin feature that can be enabled within the `config.yaml` file.
 
 ### [WIP] Lua Plugin
 Implements the Lua Programming Language as a Server Scripting Language. Also associates the `.lua` file extension with the new Scripting Engine.
+
+[Lua Plugin Tutorial by Chiori-chan](https://www.youtube.com/watch?v=_VJoMV77GHU)
