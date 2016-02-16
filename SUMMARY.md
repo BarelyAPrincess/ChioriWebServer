@@ -6,4 +6,3 @@
    * [Server API](docs/api/README.md)
    * [Plugin API](docs/plugins/api.md)
    * [Developer Information](docs/developer_information.md)
-
