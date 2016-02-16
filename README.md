@@ -12,7 +12,7 @@ Hello, my name is Chiori-chan and I'm currently the sole developer of Chiori-cha
 Implements the DropBox API into CWS API, allowing scripts to access dropbox files.
 Also serves as a great example on how to use the Maven Dependency Download Feature, see config.yaml.
 ### Email Plugin
-Implements the Java Mail libraries into the CWS API, allowing scripts to send e-mail like a pro.
+
 ### Interactive Console Plugin \[WIP\]
 Reimplements the interactive console feature found in previous versions of CWS.
 Also serves as a great example on how to load Native Libraries without changing the class-path, see config.yaml.
