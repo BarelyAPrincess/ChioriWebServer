@@ -14,6 +14,10 @@ Allows the Web Server to auto manage SSL certificates issued by the Let's Encryp
 ### Templates Plugin
 Being one of the most well developed Plugins of Chiori-chan's Web Server. Implements an easy to use template formatter subsystem. Using the Server Event Bus, the plugin listens to the page rendering event and wrappers the output with a template and container file.
 
+[Templates Plugin - Part 1 of 3](https://www.youtube.com/watch?v=WDX7gnSVQkg&index=8&list=PL5W-gdSkWP6TOBoL-YDEPZaadwBGXGOyO)
+[Templates Plugin - Part 2 of 3](https://www.youtube.com/watch?v=Bbfzw28Vgvk&index=9&list=PL5W-gdSkWP6TOBoL-YDEPZaadwBGXGOyO)
+[Templates Plugin - Part 3 of 3](https://www.youtube.com/watch?v=ZkUK2QNAlQw&index=10&list=PL5W-gdSkWP6TOBoL-YDEPZaadwBGXGOyO)
+
 ### Dropbox Plugin
 
 
