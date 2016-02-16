@@ -93,7 +93,7 @@ public class MainClassFile extends Plugin
 	{
 		// Called when your plugin is disabled by the server.
 		// It is recommended you deconstruct your plugin here.
-		// Note that onEnable() will get called if the server is only reloading.
+		// Note that onEnable() will get called if the server is reloading.
 	}
 	
 	@Override
