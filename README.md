@@ -1,7 +1,7 @@
 # Introduction
 **Chiori-chan's Web Server** is a HTTP/TCP Web Server allowing for both dynamic and static content delivered to both browsers and TCP clients. To provide flexibility, the server also includes a powerful Groovy Scripting Language. The Scripting Engine is also extendable using a provided API. Is the Groovy language not your thing, try our extensive Plugin API loosly based on the ever popular CraftBukkit Minecraft Server API. Chiori-chan's Web Server could be considered an Application Server as it gives you the power to create amazing web applications while taking less time and resources, while at the same time utilizing the power of the Java Virtual Machine.
 
-Please read our official documentation located at http://docs.chiorichan.com/
+Please read our official documentation located at http://docs.chiorichan.com/. It contains great advanced information and tutorials on how to use Chiori-chan's Web Server.
 
 # How To Build
 You can either build Chiori-chan's Web Server using the Eclipse IDE or preferably by using the Gradle Build System. It should be as simple as executing "./gradlew build" for linux users. Gradle will output the built files to the `build/dest` directory.
