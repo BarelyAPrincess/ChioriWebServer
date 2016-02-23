@@ -20,10 +20,10 @@ Likewise, if you need to query for an `AccountLocation` instance, you would do t
 ```Java
 public AccountLocation getLocation()
 {
-	LocationService mgr = AppController.getService( AccountLocation.class ); // Query for Service Provider
-	if ( mgr == null ) // No Service Provider is registered!
+	LocationService service = AppController.getService( AccountLocation.class ); // Query for Service Provider
+	if ( service == null ) // No Service Provider is registered!
 		return null;
-	return mgr.getLocation( locId ); // Make query for AccountLocation from the LocationService API
+	return service.getLocation( locId ); // Make query for AccountLocation from the LocationService API
 }
 ```
 
