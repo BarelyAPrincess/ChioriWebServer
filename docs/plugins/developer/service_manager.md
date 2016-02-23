@@ -1,4 +1,4 @@
-# Service Manager
+# Services Manager and it's API
 
 Chiori-chan's Web Server features a service API that accessible through the AppController via `AppController.getService( PluginAPI.class )`. It allows for multiple plugins (including the core API) to register their support for cross-plugin services, intended to greatly reduce the amount APIs plugin developers have to write support for. The concept is based on the original Service Manager from Bukkit by sk89q.
 
