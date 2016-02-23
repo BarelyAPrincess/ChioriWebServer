@@ -16,7 +16,7 @@ AppController.registerService( AccountLocation.class, (SiteManager) this, new Ob
 
 In the above example the `SiteManager` is informing the server that it can provide `AccountLocation` instances. If you as a plugin developer wish to override `SiteManager`'s ability to provide `AccountLocation` instances, you must set your `ServicePriorty` to either `High` or `Highest`.
 
-Likewise, if you need to find an `AccountLocation` instance, you would do the following:
+Likewise, if you need to query for an `AccountLocation` instance, you would do the following:
 ```Java
 
 ```
