@@ -27,7 +27,7 @@ public AccountLocation getLocation()
 }
 ```
 
-***Sidenote*** `AppController.getService( Service )` will throw the `ClassCastException` if the registered service is not an instance of the `LocationService` class for obvious reasons. Also remember that the `AppController.getService( Class )` will return the highest registered Service, you must call `AppController.getServiceList( Class )` or `AppController.getService( Class, ServicePriority )` if you wish to see other registered services.
+***Sidenote*** `AppController.getService( Service )` will throw the `ClassCastException` if the registered service is not an instance of the `LocationService` class for obvious reasons. Also remember that the `AppController.getService( Class )` will return the highest registered Service, you must call `AppController.getServiceList( Class )` or `AppController.getService( Class, ServicePriority )` if you wish to see other registered priorities.
 
 
 
