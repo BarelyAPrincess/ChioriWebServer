@@ -18,5 +18,16 @@ In the above example the `SiteManager` is informing the server that it can provi
 
 Likewise, if you need to query for an `AccountLocation` instance, you would do the following:
 ```Java
-
+public AccountLocation getLocation()
+{
+	LocationService mgr = AppController.getService( AccountLocation.class ); // Query for Service Provider
+	if ( mgr == null ) // No Service Provider is registered!
+		return null;
+	return mgr.getLocation( locId ); // Make query for AccountLocation from the LocationService API
+}
 ```
+
+***Sidenote*** `AppController.getService()` will throw the `ClassCastException` if the registered service is not an instance of the `LocationService` class for obvious reasons. Also remember that the `AppController.getService()` will return the highest registered Service, you must call `AppController.getServiceList( Class )` or `AppController.getService( Class, ServicePriority )` if you wish to see other registered services.
+
+
+
