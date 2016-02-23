@@ -11,4 +11,5 @@ AppController.registerService( Site.class, (SiteManager) this, new ObjectContext
 
 * `com.chiorichan.site.Site` extends `com.chiorichan.account.AccountLocation`
 * `com.chiorichan.site.SiteManager`, is the provider of `com.chiorichan.account.AccountLocation` instances
-* As covered in another tutorial, `com.chiorichan.services.ObjectContext` provides context to an action. Most commonly used by `EventRegistrars` and `TaskRegistrars`.
+* As covered in another tutorial, `com.chiorichan.services.ObjectContext` provides context to an action, such as plugin, name, author, etc. In this case, it's reporting that `SiteManager` is the creating force behind this service registration. If a problem was to incur, the server would report that `Chiori-chan` was the code author.
+* `com.chiorichan.services.ServicePriority` would be the level of priority to this registration. `ServicePriotity.Normal` is recommended unless you intentionally need to override another registration.
