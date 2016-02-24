@@ -21,11 +21,16 @@ public void onLoad() throws PluginException
 }
 ```
 
-**Sidenote** The Application Manager is a feature built into the Chiori API, so if implementing the Chiori API, you will need to add the above code snippet to an event listener method, typically within your Loader class:
+**Sidenote** The Application Manager is a feature built into the Chiori API, so if implementing the Chiori API, you will need to add the above code snippet to an event listener method instead, typically within your Loader class:
 
 ```java
 public class MyLoader extends AppLoader
 {
+    public static void main( String... args ) throws Exception
+	{
+		init( MyLoader.class, args );
+	}
+
     @Override
     @EventHandler( priority = EventPriority.NORMAL )
     public void onRunlevelChange( RunlevelEvent event ) throws ApplicationException
