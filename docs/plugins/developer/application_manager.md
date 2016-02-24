@@ -21,26 +21,6 @@ public void onLoad() throws PluginException
 }
 ```
 
-**Sidenote** The Application Manager is a feature built into the Chiori API, so if implementing the Chiori API, you will need to add the above code snippet to an event listener method instead, typically within your Loader class:
-
-```java
-public class MyLoader extends AppLoader
-{
-    public static void main( String... args ) throws Exception
-	{
-		init( MyLoader.class, args );
-	}
-
-    @Override
-    @EventHandler( priority = EventPriority.NORMAL )
-    public void onRunlevelChange( RunlevelEvent event ) throws ApplicationException
-    {
-        if ( event.getRunLevel() == RunLevel.POSTSTARTUP )
-            AppManager.manager( YourManager.class ).init();
-    }
-}
-```
-
 Then within your manager class implement the `ServiceManager` interface.
 
 ```java
@@ -60,5 +40,25 @@ To help make implementation easier, we suggest adding the following method to yo
 public static YourManager instance()
 {
 	return AppManager.manager( YourManager.class ).instance();
+}
+```
+
+**Sidenote** The Application Manager is a feature built into the Chiori API, so if implementing the Chiori API, you will need to add the above code snippet to an event listener method instead, typically within your Loader class:
+
+```java
+public class MyLoader extends AppLoader
+{
+    public static void main( String... args ) throws Exception
+	{
+		init( MyLoader.class, args );
+	}
+
+    @Override
+    @EventHandler( priority = EventPriority.NORMAL )
+    public void onRunlevelChange( RunlevelEvent event ) throws ApplicationException
+    {
+        if ( event.getRunLevel() == RunLevel.POSTSTARTUP )
+            AppManager.manager( YourManager.class ).init();
+    }
 }
 ```
