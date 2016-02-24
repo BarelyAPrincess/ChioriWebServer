@@ -13,4 +13,4 @@ public void onLoad() throws PluginException
 }
 ```
 
-Then within your manager class implement the `Manager` interface. 
+Then within your manager class implement the `ServiceManager` interface. 
