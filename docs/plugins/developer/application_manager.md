@@ -1,2 +1,2 @@
-# Application Manager
+# Application Manager and it's API
 
