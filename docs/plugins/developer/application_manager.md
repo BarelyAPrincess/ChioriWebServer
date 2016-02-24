@@ -57,7 +57,7 @@ public class YourLoader extends AppLoader
     @EventHandler( priority = EventPriority.NORMAL )
     public void onRunlevelChange( RunlevelEvent event ) throws ApplicationException
     {
-        if ( event.getRunLevel() == RunLevel.POSTSTARTUP )
+        if ( event.getRunLevel() == Runlevel.POSTSTARTUP )
             AppManager.manager( YourManager.class ).init();
     }
 }
