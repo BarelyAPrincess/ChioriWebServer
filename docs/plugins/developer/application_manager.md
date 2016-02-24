@@ -10,7 +10,7 @@ Getting an instance is as easy as calling the `instance()` method of AppManager.
 AppManager.manager( YourManager.class ).instance();
 ```
 
-## Plugin Inplementation
+## Inplementation
 
 To register your Manager with this API add the following to your Plugin `onEnable()` method:
 ```java
@@ -21,7 +21,23 @@ public void onLoad() throws PluginException
 }
 ```
 
+**Sidenote** The Application Manager is a feature built into the Chiori API, so if implementing the Chiori API, you will need to add the above code snippet to an event listener method, typically within your Loader class:
+
+```java
+public class MyLoader extends AppLoader
+{
+    @Override
+    @EventHandler( priority = EventPriority.NORMAL )
+    public void onRunlevelChange( RunlevelEvent event ) throws ApplicationException
+    {
+        if ( event.getRunLevel() == RunLevel.POSTSTARTUP )
+            AppManager.manager( YourManager.class ).init();
+    }
+}
+```
+
 Then within your manager class implement the `ServiceManager` interface.
+
 ```java
 public class YourManager implements ServiceManager
 {
