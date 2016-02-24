@@ -1,6 +1,14 @@
 # Application Manager and it's API
 
-Chiori-chan's Web Server features a manager API that accessible through the `AppManager` via `AppManager mgr = AppManager.manager( Manager.class )`. This allows application managers such as `SiteManager`, `PermissionManager`, `AccountManager`, etc. to maintain an instance of the manager with the service.
+Chiori-chan's Web Server features a manager API that accessible through the `AppManager` via `AppManager.manager( Manager.class )`. This allows application managers such as `SiteManager`, `PermissionManager`, `AccountManager`, etc. to maintain an instance of the manager with the service.
+
+## Getting an Instance of a Registered Manager
+
+Getting an instance is as easy as calling the `instance()` method of AppManager.
+
+```java
+AppManager.manager( YourManager.class ).instance();
+```
 
 ## Plugin Inplementation
 
@@ -25,11 +33,11 @@ public class YourManager implements ServiceManager
 }
 ```
 
-To help make implementation easier
+To help make implementation easier, we suggest adding the following method to your manager.
 
 ```java
-public static PermissionManager instance()
+public static YourManager instance()
 {
-	return AppManager.manager( PermissionManager.class ).instance();
+	return AppManager.manager( YourManager.class ).instance();
 }
 ```
