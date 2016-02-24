@@ -34,7 +34,7 @@ public class YourManager implements ServiceManager
 }
 ```
 
-To help make implementation easier, we suggest adding the following method to your manager.
+To help make implementation easier, we suggest adding the following method to your manager, but relying directly on the `AppManager` or having other ways of caching an instance are both also acceptable.
 
 ```java
 public static YourManager instance()
