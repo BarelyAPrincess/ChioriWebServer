@@ -10,7 +10,7 @@ Getting an instance is as easy as calling the `instance()` method of AppManager.
 AppManager.manager( YourManager.class ).instance();
 ```
 
-The `instance()` method will throw a `IllegalStateException` if the manager has yet to be initialized. It is important that you don't call the `init()` method in these cases yourself, this would be considered bad programming practice. Instead investigate why the `init()` method was never called, as it should be called by the AppLoader or if it's a custom manager, by the Plugin `onLoad()` method. See the following implementation section for more information.
+The `instance()` method will throw a `IllegalStateException` if the manager has yet to be initialized. It is important that you don't call the `init()` method in these cases yourself, this would be considered bad programming practice. Instead investigate why the `init()` method was never called, as it should be called by the `AppLoader` or if it's a custom manager, by the Plugin `onLoad()` method. See the following implementation section for more information.
 
 ***Sidenote*** Built-in managers have a quick `instance()` method available so there is no need to call the `AppManager` directly, e.g., `PermissionManager.instance()`.
 
