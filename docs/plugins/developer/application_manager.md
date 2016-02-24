@@ -43,14 +43,14 @@ public static YourManager instance()
 }
 ```
 
-**Sidenote** The Application Manager is a feature built into the Chiori API, so if implementing the Chiori API, you will need to add the above code snippet to an event listener method instead, typically within your Loader class:
+**Sidenote** The Application Manager is a feature built into the Chiori API, so if implementing the Chiori API, you will need to add the manager initialization code snippet to an event listener method instead, typically within your Loader class:
 
 ```java
-public class MyLoader extends AppLoader
+public class YourLoader extends AppLoader
 {
     public static void main( String... args ) throws Exception
 	{
-		init( MyLoader.class, args );
+		init( YourLoader.class, args );
 	}
 
     @Override
