@@ -18,7 +18,7 @@ In the above example the `SiteManager` is informing the server that it can provi
 
 Likewise, if you need to query for an `AccountLocation` instance, you would do the following:
 ```Java
-public AccountLocation getLocation()
+public AccountLocation getLocation( String locId )
 {
 	LocationService service = AppController.getService( AccountLocation.class ); // Query for Service Provider
 	if ( service == null ) // No Service Provider is registered!
