@@ -5,6 +5,9 @@
 
 *Some of the below configuration options have bugs, have been deprecated or don't have full implementation as of yet. We will try our best to update this document when possible but some details might get overlooked.*
 
+settings.directoryUpdate(): update
+directoryPlugins
+
 * `server:`
   * `httpHost:` *Specify which IP address(s) to bind the H listen on*
    - Type: `String`
@@ -102,8 +105,12 @@
         username: fwuser
         password: fwpass
         dbfile: server.db
+directories:
+  plugins: plugins
+  update: plugins/update
 plugins:
   useTimings: true
+  allowQuery: false
 permissions:
   backend: file
   file: permissions.yaml
