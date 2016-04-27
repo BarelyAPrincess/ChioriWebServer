@@ -150,7 +150,7 @@ public class HttpResponseWrapper
 	/**
 	 * Prints a single string of text to the buffered output
 	 *
-	 * @param var1
+	 * @param var
 	 *             string of text.
 	 * @throws IOException
 	 *              if there was a problem with the output buffer.
@@ -164,7 +164,7 @@ public class HttpResponseWrapper
 	/**
 	 * Prints a single string of text with a line return to the buffered output
 	 *
-	 * @param var1
+	 * @param var
 	 *             string of text.
 	 * @throws IOException
 	 *              if there was a problem with the output buffer.
@@ -692,7 +692,7 @@ public class HttpResponseWrapper
 	/**
 	 * Writes a byte array to the buffered output.
 	 *
-	 * @param var
+	 * @param bytes
 	 *             byte array to print
 	 * @throws IOException
 	 *              if there was a problem with the output buffer.
@@ -708,7 +708,7 @@ public class HttpResponseWrapper
 	/**
 	 * Writes a ByteBuf to the buffered output
 	 *
-	 * @param var
+	 * @param buf
 	 *             byte buffer to print
 	 * @throws IOException
 	 *              if there was a problem with the output buffer.

@@ -34,7 +34,7 @@ public class Server
 	 * Used to execute site file within the script.
 	 * FYI, Absolute and .. paths are disallowed for security reasons
 	 *
-	 * @param pack
+	 * @param file
 	 *             The file relative
 	 * @return
 	 *         The EvalContext ready for eval() or read()

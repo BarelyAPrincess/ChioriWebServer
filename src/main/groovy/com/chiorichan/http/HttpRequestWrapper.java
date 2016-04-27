@@ -504,7 +504,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	}
 
 	/**
-	 * Similar to {@link #getRemoteAddr()}
+	 * Similar to {@link #getInetAddr()}
 	 *
 	 * @return
 	 *         the remote connections IP address
@@ -515,7 +515,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	}
 
 	/**
-	 * Similar to {@link #getRemoteAddr(boolean)}
+	 * Similar to {@link #getInetAddr(boolean)}
 	 *
 	 * @param detectCDN
 	 *             Try to detect the use of CDNs, e.g., CloudFlare, IP headers when set to false.

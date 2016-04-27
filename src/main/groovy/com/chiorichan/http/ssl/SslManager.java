@@ -290,9 +290,9 @@ public class SslManager implements ServiceManager, Mapping<String, SslContext>
 	/**
 	 * Used to set/update the server wide global SSL certificate.
 	 *
-	 * @param sslCert
+	 * @param sslCertFile
 	 *             The updated SSL Certificate
-	 * @param sslKey
+	 * @param sslKeyFile
 	 *             The updated SSL Key
 	 * @param sslSecret
 	 *             The SSL Shared Secret

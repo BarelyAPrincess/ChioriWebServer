@@ -85,7 +85,7 @@ public class SessionManager implements TaskRegistrar, ServiceManager, LogSource
 	}
 
 	/**
-	 * Get the {@link com.chiorichan.LogAPI} instance for this SessionManager
+	 * Get the {@link com.chiorichan.logger.LogAPI} instance for this SessionManager
 	 *
 	 * @return ConsoleLogger instance
 	 */

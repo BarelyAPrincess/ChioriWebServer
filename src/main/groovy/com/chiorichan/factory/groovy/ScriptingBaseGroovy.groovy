@@ -20,23 +20,20 @@ import com.chiorichan.permission.Permission
 import com.chiorichan.permission.PermissionResult
 import com.chiorichan.session.Session
 import com.chiorichan.site.Site
-import com.chiorichan.site.SiteManager
 
 
 /**
  * Used as the Groovy Scripting Base and provides scripts with custom builtin methods
  */
 @Deprecated
-public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
-{
+public abstract class ScriptingBaseGroovy extends ScriptingBaseJava {
 	/**
 	 * Same as {@link ScriptingBaseJava#var_export(obj)} but instead prints the result to the buffer
 	 * Based on method of same name in PHP
 	 * @param obj
 	 *       The object you wish to dump
 	 */
-	void var_dump ( Object... obj )
-	{
+	void var_dump ( Object... obj ) {
 		println var_export( obj )
 	}
 
@@ -47,8 +44,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 * @return
 	 *      current instance
 	 */
-	HttpRequestWrapper getRequest()
-	{
+	HttpRequestWrapper getRequest() {
 		return request
 	}
 
@@ -59,8 +55,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 * @return
 	 *      current instance
 	 */
-	HttpResponseWrapper getResponse()
-	{
+	HttpResponseWrapper getResponse() {
 		return response
 	}
 
@@ -70,8 +65,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 * @return
 	 *      current session
 	 */
-	Session getSession()
-	{
+	Session getSession() {
 		return request.getSession()
 	}
 
@@ -81,25 +75,20 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 * @param var
 	 *       The string you wish to print
 	 */
-	void echo( String var )
-	{
+	void echo( String var ) {
 		println var
 	}
 
-	Object getPropertySafe( String name )
-	{
-		try
-		{
+	Object getPropertySafe( String name ) {
+		try {
 			return getProperty( name )
 		}
-		catch ( MissingPropertyException e )
-		{
+		catch ( MissingPropertyException e ) {
 			return null
 		}
 	}
 
-	PermissibleEntity getEntity()
-	{
+	PermissibleEntity getEntity() {
 		getAccount().getEntity()
 	}
 
@@ -110,24 +99,21 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 * @return
 	 *       The found account, will return null if none found
 	 */
-	Account getAccount( String uid )
-	{
-		Account result = AccountManager.INSTANCE.getAccount( uid )
+	Account getAccount( String uid ) {
+		Account result = AccountManager.instance().getAccount( uid )
 
 		if ( result == null )
-			result = AccountManager.INSTANCE.getAccountPartial( uid )
+			result = AccountManager.instance().getAccountPartial( uid )
 
 		return result
 	}
 
-	Account[] getAccounts( String query )
-	{
-		return AccountManager.INSTANCE.getAccounts( query )
+	Account[] getAccounts( String query ) {
+		return AccountManager.instance().getAccounts( query )
 	}
 
-	Account[] getAccounts( String query, int limit )
-	{
-		return AccountManager.INSTANCE.getAccounts( query, limit )
+	Account[] getAccounts( String query, int limit ) {
+		return AccountManager.instance().getAccounts( query, limit )
 	}
 
 	/**
@@ -135,30 +121,25 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 * @return
 	 *      The current account, will return null if no one is logged in
 	 */
-	Account getAccount()
-	{
+	Account getAccount() {
 		return request.getSession().account()
 	}
 
-	String getAcctId()
-	{
+	String getAcctId() {
 		return isLoginPresent() ?: getAccount().getAcctId()
 	}
 
-	boolean isLoginPresent()
-	{
+	boolean isLoginPresent() {
 		return request.getSession().isLoginPresent()
 	}
 
 	@Deprecated
-	boolean getAcctState()
-	{
+	boolean getAcctState() {
 		return request.getSession().isLoginPresent()
 	}
 
 	@Deprecated
-	boolean getAccountState()
-	{
+	boolean getAccountState() {
 		return request.getSession().isLoginPresent()
 	}
 
@@ -167,8 +148,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 * @return
 	 *       The current site
 	 */
-	Site getSite()
-	{
+	Site getSite() {
 		return getRequest().getSite()
 	}
 
@@ -177,8 +157,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 *
 	 * @return The current site Id
 	 */
-	String getSiteId()
-	{
+	String getSiteId() {
 		return getSite().getSiteId()
 	}
 
@@ -189,8 +168,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 * @return
 	 *       The http status message
 	 */
-	String getStatusDescription( int errNo )
-	{
+	String getStatusDescription( int errNo ) {
 		return HttpCode.msg( errNo )
 	}
 
@@ -199,8 +177,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 * @return
 	 *       The login uri
 	 */
-	String url_to_login()
-	{
+	String url_to_login() {
 		if ( request.getSite() == null )
 			return "/login"
 
@@ -212,53 +189,43 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 * @return
 	 *       The logout uri
 	 */
-	String url_to_logout()
-	{
+	String url_to_logout() {
 		return url_to_login + "?logout"
 	}
 
-	Object include( String pack )
-	{
+	Object include( String pack ) {
 		return Server.packageContext( pack ).eval()
 	}
 
-	Object require( String pack )
-	{
+	Object require( String pack ) {
 		return Server.packageContext( pack ).require().eval()
 	}
 
-	boolean isAdmin()
-	{
+	boolean isAdmin() {
 		getSession().isAdmin()
 	}
 
-	boolean isOp()
-	{
+	boolean isOp() {
 		getSession().isOp()
 	}
 
-	PermissionResult checkPermission( String perm )
-	{
+	PermissionResult checkPermission( String perm ) {
 		getSession().checkPermission( perm )
 	}
 
-	PermissionResult checkPermission( Permission perm )
-	{
+	PermissionResult checkPermission( Permission perm ) {
 		getSession().checkPermission( perm )
 	}
 
-	PermissionResult requirePermission( String perm )
-	{
+	PermissionResult requirePermission( String perm ) {
 		getSession().requirePermission( perm )
 	}
 
-	PermissionResult requirePermission( Permission perm )
-	{
+	PermissionResult requirePermission( Permission perm ) {
 		getSession().requirePermission( perm )
 	}
 
-	ScriptingFactory getEvalFactory()
-	{
+	ScriptingFactory getEvalFactory() {
 		return getRequest().getEvalFactory()
 	}
 }

@@ -379,7 +379,7 @@ public abstract class Builtin extends Script
 	/**
 	 * Default format is M/d/yyyy
 	 *
-	 * @param Date
+	 * @param date
 	 *             you wish to convert
 	 * @return Long containing the epoch of provided date
 	 */
