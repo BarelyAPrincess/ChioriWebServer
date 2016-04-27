@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.factory;
@@ -17,12 +17,14 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 
+import com.chiorichan.AppController;
 import com.chiorichan.ContentTypes;
-import com.chiorichan.Loader;
 import com.chiorichan.http.HttpRequestWrapper;
-import com.chiorichan.lang.EvalException;
-import com.chiorichan.lang.EvalMultipleException;
+import com.chiorichan.lang.ExceptionContext;
+import com.chiorichan.lang.ExceptionReport;
+import com.chiorichan.lang.MultipleException;
 import com.chiorichan.lang.ReportingLevel;
+import com.chiorichan.lang.ScriptingException;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.util.SecureFunc;
@@ -30,7 +32,7 @@ import com.chiorichan.util.SecureFunc;
 /**
  * Provides the context to a requested eval of the EvalFactory
  */
-public class ScriptingContext
+public class ScriptingContext implements ExceptionContext
 {
 	public static ScriptingContext fromAuto( final Site site, final String res )
 	{
@@ -45,7 +47,7 @@ public class ScriptingContext
 				return ScriptingContext.fromPackage( site, res );
 
 			context = new ScriptingContext();
-			context.result().addException( new EvalException( ReportingLevel.E_ERROR, String.format( "We chould not auto determine the resource type for '%s'", res ) ) );
+			context.result().addException( new ScriptingException( ReportingLevel.E_ERROR, String.format( "We chould not auto determine the resource type for '%s'", res ) ) );
 			return context;
 		}
 		return context;
@@ -60,7 +62,7 @@ public class ScriptingContext
 		catch ( IOException e )
 		{
 			ScriptingContext context = new ScriptingContext();
-			EvalException.exceptionHandler( e, context );
+			context.result.handleException( e, context );
 			return context;
 		}
 	}
@@ -87,7 +89,7 @@ public class ScriptingContext
 		catch ( IOException e )
 		{
 			ScriptingContext context = ScriptingContext.fromSource( "", file );
-			context.result().addException( new EvalException( ReportingLevel.E_IGNORABLE, String.format( "Could not locate the file '%s' within site '%s'", file, site.getSiteId() ), e ) );
+			context.result().addException( new ScriptingException( ReportingLevel.E_IGNORABLE, String.format( "Could not locate the file '%s' within site '%s'", file, site.getId() ), e ) );
 			context.site( site );
 			return context;
 		}
@@ -107,7 +109,7 @@ public class ScriptingContext
 		catch ( IOException e )
 		{
 			context = ScriptingContext.fromSource( "", pack );
-			context.result().addException( new EvalException( ReportingLevel.E_IGNORABLE, String.format( "Could not locate the package '%s' within site '%s'", pack, site.getSiteId() ), e ) );
+			context.result().addException( new ScriptingException( ReportingLevel.E_IGNORABLE, String.format( "Could not locate the package '%s' within site '%s'", pack, site.getId() ), e ) );
 		}
 
 		context.site( site );
@@ -153,7 +155,7 @@ public class ScriptingContext
 
 	public static List<String> getPreferredExtensions()
 	{
-		return Loader.getConfig().getStringList( "advanced.scripting.preferredExtensions", Arrays.asList( "html", "htm", "groovy", "gsp", "jsp", "chi" ) );
+		return AppController.config().getStringList( "advanced.scripting.preferredExtensions", Arrays.asList( "html", "htm", "groovy", "gsp", "jsp", "chi" ) );
 	}
 
 	private Charset charset = Charset.defaultCharset();
@@ -227,7 +229,7 @@ public class ScriptingContext
 		return this;
 	}
 
-	public Object eval() throws EvalException, EvalMultipleException
+	public Object eval() throws ScriptingException, MultipleException
 	{
 		if ( request == null && factory == null )
 			throw new IllegalArgumentException( "We can't eval() this EvalContext until you provide either the request or the factory." );
@@ -239,9 +241,22 @@ public class ScriptingContext
 		String str = result.getString( false );
 
 		if ( required && result.hasNonIgnorableExceptions() )
-			ReportingLevel.throwExceptions( result.getExceptions() );
+			try
+			{
+				ExceptionReport.throwExceptions( result.getExceptions() );
+			}
+			catch ( Throwable e )
+			{
+				if ( e instanceof ScriptingException )
+					throw ( ScriptingException ) e;
+				if ( e instanceof MultipleException )
+					throw ( MultipleException ) e;
+				else
+					throw new IllegalStateException( "Well this was unexpected, we should only be throwing ScriptingExceptions here!", e );
+			}
+
 		if ( result.hasIgnorableExceptions() )
-			str = ReportingLevel.printExceptions( result.getIgnorableExceptions() ) + "\n" + str;
+			str = ExceptionReport.printExceptions( result.getIgnorableExceptions() ) + "\n" + str;
 
 		factory.print( str );
 		return result.getObject();
@@ -278,17 +293,17 @@ public class ScriptingContext
 		return this;
 	}
 
-	public String read() throws EvalException, EvalMultipleException
+	public String read() throws ScriptingException, MultipleException
 	{
 		return read( false, true );
 	}
 
-	public String read( boolean printErrors ) throws EvalException, EvalMultipleException
+	public String read( boolean printErrors ) throws ScriptingException, MultipleException
 	{
 		return read( false, printErrors );
 	}
 
-	public String read( boolean includeObj, boolean printErrors ) throws EvalException, EvalMultipleException
+	public String read( boolean includeObj, boolean printErrors ) throws ScriptingException, MultipleException
 	{
 		ScriptingResult result = null;
 		if ( request != null )
@@ -301,9 +316,21 @@ public class ScriptingContext
 		String str = result.getString( includeObj );
 
 		if ( required && result.hasNonIgnorableExceptions() )
-			ReportingLevel.throwExceptions( result.getExceptions() );
+			try
+			{
+				ExceptionReport.throwExceptions( result.getExceptions() );
+			}
+			catch ( Throwable e )
+			{
+				if ( e instanceof ScriptingException )
+					throw ( ScriptingException ) e;
+				if ( e instanceof MultipleException )
+					throw ( MultipleException ) e;
+				else
+					throw new IllegalStateException( "Well this was unexpected, we should only be throwing ScriptingExceptions here!", e );
+			}
 		if ( printErrors && result.hasIgnorableExceptions() )
-			str = ReportingLevel.printExceptions( result.getIgnorableExceptions() ) + "\n" + str;
+			str = ExceptionReport.printExceptions( result.getIgnorableExceptions() ) + "\n" + str;
 
 		return str;
 	}
@@ -415,7 +442,7 @@ public class ScriptingContext
 
 	public Site site()
 	{
-		return site == null ? SiteManager.INSTANCE.getDefaultSite() : site;
+		return site == null ? SiteManager.instance().getDefaultSite() : site;
 	}
 
 	public ScriptingContext site( Site site )

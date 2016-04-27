@@ -9,16 +9,16 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.APILogger;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.http.HttpCode;
+import com.chiorichan.lang.PluginNotFoundException;
+import com.chiorichan.logger.LogAPI;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.acme.AcmePlugin;
 import com.chiorichan.plugin.acme.lang.AcmeException;
 import com.chiorichan.plugin.acme.lang.AcmeForbiddenError;
 import com.chiorichan.plugin.acme.lang.AcmeState;
-import com.chiorichan.plugin.lang.PluginNotFoundException;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Ticks;
@@ -54,7 +54,7 @@ public class AcmeChallenge
 			if ( subdomain != null && ( subdomain.length() == 0 || "root".equalsIgnoreCase( subdomain ) ) )
 				subdomain = null;
 
-			YamlConfiguration config = AcmePlugin.INSTANCE.getSubConfig();
+			YamlConfiguration config = AcmePlugin.instance().getSubConfig();
 			String fullDomain = subdomain == null ? domain : subdomain + "." + domain;
 
 			if ( !challenges.containsKey( fullDomain ) || force )
@@ -68,7 +68,7 @@ public class AcmeChallenge
 						{
 							int lastChecked = section.getInt( "challengeLastChecked", 0 );
 
-							if ( AcmePlugin.INSTANCE.validateUrl( section.getString( "challengeUri" ) ) )
+							if ( AcmePlugin.instance().validateUrl( section.getString( "challengeUri" ) ) )
 							{
 								SingleChallengeHttp sac = new SingleChallengeHttp( proto, AcmeChallengeType.get( section.getString( "challengeType" ) ), null, section.getString( "challengeUri" ), domain, subdomain );
 
@@ -216,15 +216,15 @@ public class AcmeChallenge
 	{
 		if ( hasCallBack() )
 			if ( replace )
-				TaskManager.INSTANCE.cancelTask( callBackTask );
+				TaskManager.instance().cancelTask( callBackTask );
 			else
 				throw new IllegalStateException( "Can't schedule a challenge callback because one is already active" );
 
 		try
 		{
-			AcmePlugin plugin = ( AcmePlugin ) PluginManager.INSTANCE.getPluginByClass( AcmePlugin.class );
+			AcmePlugin plugin = ( AcmePlugin ) PluginManager.instance().getPluginByClass( AcmePlugin.class );
 
-			callBackTask = TaskManager.INSTANCE.scheduleAsyncRepeatingTask( plugin, Ticks.SECOND_5, Ticks.SECOND, new Runnable()
+			callBackTask = TaskManager.instance().scheduleAsyncRepeatingTask( plugin, Ticks.SECOND_5, Ticks.SECOND, new Runnable()
 			{
 				@Override
 				public void run()
@@ -239,7 +239,7 @@ public class AcmeChallenge
 								return;
 							}
 
-						TaskManager.INSTANCE.cancelTask( callBackTask );
+						TaskManager.instance().cancelTask( callBackTask );
 						callBackTask = 0;
 						runnable.run();
 					}
@@ -278,7 +278,7 @@ public class AcmeChallenge
 		return challenges.keySet();
 	}
 
-	private APILogger getLogger()
+	private LogAPI getLogger()
 	{
 		return Plugin.getPlugin( AcmePlugin.class ).getLogger();
 	}

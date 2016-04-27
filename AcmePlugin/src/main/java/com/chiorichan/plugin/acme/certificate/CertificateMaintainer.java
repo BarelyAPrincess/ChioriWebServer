@@ -19,11 +19,11 @@ import javax.net.ssl.SSLException;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.LogColor;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.http.ssl.CertificateWrapper;
 import com.chiorichan.http.ssl.SslManager;
+import com.chiorichan.lang.EnumColor;
 import com.chiorichan.plugin.acme.AcmePlugin;
 import com.chiorichan.site.Site;
 import com.chiorichan.util.FileFunc;
@@ -41,7 +41,7 @@ public class CertificateMaintainer
 
 	private static final Map<String, File> privateKeys = new HashMap<>();
 
-	private static final AcmePlugin plugin = AcmePlugin.INSTANCE;
+	private static final AcmePlugin plugin = AcmePlugin.instance();
 
 	static
 	{
@@ -119,22 +119,22 @@ public class CertificateMaintainer
 		for ( Certificate cert : certificates )
 			cert.validateCertificate();
 
-		if ( defaultCertificate == null && AcmePlugin.INSTANCE.isDefaultCertificateAllowed() )
+		if ( defaultCertificate == null && AcmePlugin.instance().isDefaultCertificateAllowed() )
 			generateDefaultCertificate();
 		else
 			defaultCertificate.validateCertificate();
 
-		plugin.getLogger().info( LogColor.AQUA + "Certificate check and sign process has finished without error." );
+		plugin.getLogger().info( EnumColor.AQUA + "Certificate check and sign process has finished without error." );
 	}
 
 	public static Certificate generateCertificate( Site site, String privateKeyId ) throws CertificateException, NoSuchAlgorithmException, IOException
 	{
 		Validate.notNull( site );
 
-		if ( "default".equals( site.getSiteId() ) )
+		if ( "default".equals( site.getId() ) )
 			throw new IllegalArgumentException( "You can't sign a certificate for the default site" );
 
-		String key = site.getSiteId() + "Acme";
+		String key = site.getId() + "Acme";
 
 		if ( privateKeyId == null )
 			privateKeyId = "domain";
@@ -143,9 +143,9 @@ public class CertificateMaintainer
 
 		ConfigurationSection section = plugin.getSubConfig().getConfigurationSection( "certificates." + key, true );
 		section.set( "privateKey", privateKeyId );
-		section.set( "mapping", Arrays.asList( site.getSiteId() ) );
+		section.set( "mapping", Arrays.asList( site.getId() ) );
 
-		AcmePlugin.INSTANCE.saveConfig();
+		AcmePlugin.instance().saveConfig();
 
 		Certificate cert = new Certificate( section );
 
@@ -165,7 +165,7 @@ public class CertificateMaintainer
 
 		ConfigurationSection section = plugin.getSubConfig().getConfigurationSection( "certificates." + key, true );
 		section.set( "privateKey", "domain" );
-		AcmePlugin.INSTANCE.saveConfig();
+		AcmePlugin.instance().saveConfig();
 
 		Certificate cert = new Certificate( section );
 
@@ -201,7 +201,7 @@ public class CertificateMaintainer
 			sslKeyFile = new File( plugin.getDataFolder(), privateKeyIden + ".key" );
 
 		if ( !sslKeyFile.exists() )
-			AcmePlugin.INSTANCE.getClient().getAcmeStorage().generatePrivateKey( sslKeyFile, plugin.getConfig().getInt( "config.defaultKeySize", 4096 ) );
+			AcmePlugin.instance().getClient().getAcmeStorage().generatePrivateKey( sslKeyFile, plugin.getConfig().getInt( "config.defaultKeySize", 4096 ) );
 
 		return sslKeyFile;
 	}
@@ -270,7 +270,7 @@ public class CertificateMaintainer
 
 	static void setDefaultCertificate( Certificate cert )
 	{
-		if ( !AcmePlugin.INSTANCE.isDefaultCertificateAllowed() )
+		if ( !AcmePlugin.instance().isDefaultCertificateAllowed() )
 			return;
 
 		if ( !"default".equals( cert.key() ) )
@@ -281,7 +281,7 @@ public class CertificateMaintainer
 
 		try
 		{
-			SslManager.INSTANCE.updateDefaultCertificateWithException( cert.getCertificate(), false );
+			SslManager.instance().updateDefaultCertificateWithException( cert.getCertificate(), false );
 			defaultCertificate = cert;
 		}
 		catch ( FileNotFoundException | SSLException | CertificateException e )

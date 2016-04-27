@@ -3,8 +3,14 @@
 
 Please read our official documentation located at http://docs.chiorichan.com/. It contains great advanced information and tutorials on how to use Chiori-chan's Web Server.
 
+[![Build Status](http://jenkins.chiorichan.com/buildStatus/icon?job=ChioriWebServer)](http://jenkins.chiorichan.com/job/ChioriWebServer/)
+[![Build Status](https://travis-ci.org/ChioriGreene/ChioriWebServer.svg?branch=master)](https://travis-ci.org/ChioriGreene/ChioriWebServer)
+
 # How To Build
-You can either build Chiori-chan's Web Server using the Eclipse IDE or preferably by using the Gradle Build System. It should be as simple as executing "./gradlew build" for linux users. Gradle will output the built files to the `build/dest` directory.
+You can either build Chiori-chan's Web Server using the Eclipse IDE or preferably by using the include Gradle. Doing so is as simple as executing "./gradlew build" for linux users. Gradle will output the built files to the `build/dest` directory. Also be sure to clone the repository with the --recursive argument, as to make sure our [ChioriAPI](https://github.com/ChioriGreene/ChioriAPI) repository is also included.
+
+## API Notice
+Since version 9.4.0 (Milky Cross), Chiori-chan's Web Server uses the Chiori API. In the interest of sharing application loader code with other project by Chiori-chan. The API was developed from at least 50% of the web server code. After cloning this repository, make sure to execute `git submodule init` within the root to initialize the ChioriAPI submodule.
 
 # Coding
 Our Gradle Build environment uses the CodeStyle plugin to check coding standards incase you make mistakes.

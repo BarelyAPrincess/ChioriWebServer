@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.factory.groovy;
@@ -26,7 +26,7 @@ import com.chiorichan.factory.ScriptBinding;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingEngine;
 import com.chiorichan.lang.ReportingLevel;
-import com.chiorichan.lang.EvalException;
+import com.chiorichan.lang.ScriptingException;
 
 /**
  * SeaShell for handling GSP files.
@@ -87,7 +87,7 @@ public class EmbeddedGroovyEngine implements ScriptingEngine
 				int endIndex = source.indexOf( MARKER_END, Math.max( startIndex, fullFileIndex ) );
 				
 				if ( endIndex == -1 )
-					throw new EvalException( ReportingLevel.E_PARSE, "Marker `<%` was not closed after line " + ( StringUtils.countMatches( output.toString(), "\n" ) + 1 ) + ", please check your source file and try again." );
+					throw new ScriptingException( ReportingLevel.E_PARSE, "Marker `<%` was not closed after line " + ( StringUtils.countMatches( output.toString(), "\n" ) + 1 ) + ", please check your source file and try again." );
 				
 				// Re gets the fragment?
 				fragment = source.substring( startIndex + MARKER_START.length(), endIndex );

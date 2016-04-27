@@ -1,7 +1,10 @@
 /**
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com> All Right Reserved.
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * All Right Reserved.
  */
 package com.chiorichan.site;
 
@@ -23,11 +26,11 @@ import javax.net.ssl.SSLException;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.text.WordUtils;
 
-import com.chiorichan.Loader;
+import com.chiorichan.AppController;
+import com.chiorichan.account.AccountLocation;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.configuration.apache.ApacheConfiguration;
 import com.chiorichan.configuration.file.YamlConfiguration;
-import com.chiorichan.datastore.Datastore;
 import com.chiorichan.datastore.DatastoreManager;
 import com.chiorichan.datastore.sql.bases.H2SQLDatastore;
 import com.chiorichan.datastore.sql.bases.MySQLDatastore;
@@ -42,6 +45,8 @@ import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.factory.ScriptingResult;
 import com.chiorichan.http.Routes;
 import com.chiorichan.http.ssl.CertificateWrapper;
+import com.chiorichan.lang.ApplicationException;
+import com.chiorichan.lang.ExceptionReport;
 import com.chiorichan.lang.SiteException;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.session.SessionManager;
@@ -58,7 +63,7 @@ import com.google.common.collect.Sets;
 /**
  * Implements loading sites from file
  */
-public class Site
+public class Site implements AccountLocation
 {
 	private final File file;
 	final YamlConfiguration yaml;
@@ -88,7 +93,7 @@ public class Site
 	private final ScriptBinding binding = new ScriptBinding();
 	private final ScriptingFactory factory = ScriptingFactory.create( binding );
 
-	Site( File file, YamlConfiguration yaml ) throws SiteException
+	Site( File file, YamlConfiguration yaml ) throws ApplicationException
 	{
 		Validate.notNull( file );
 		Validate.notNull( yaml );
@@ -100,7 +105,7 @@ public class Site
 			throw new SiteException( "Site id is missing!" );
 
 		siteId = yaml.getString( "site.id" ).toLowerCase();
-		siteTitle = yaml.getString( "site.title", Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Site" ) );
+		siteTitle = yaml.getString( "site.title", AppController.config().getString( "framework.sites.defaultTitle", "Unnamed Site" ) );
 
 		ips = yaml.getAsList( "site.listen", Lists.newArrayList() );
 
@@ -124,10 +129,10 @@ public class Site
 			yaml.set( "site.encryptionKey", encryptionKey );
 		}
 
-		if ( SiteManager.INSTANCE.getSiteById( siteId ) != null )
+		if ( SiteManager.instance().getSiteById( siteId ) != null )
 			throw new SiteException( String.format( "There already exists a site by the provided site id '%s'", siteId ) );
 
-		Datastore.getLogger().info( String.format( "Loading site '%s' with title '%s' from YAML file.", siteId, siteTitle ) );
+		DatastoreManager.getLogger().info( String.format( "Loading site '%s' with title '%s' from YAML file.", siteId, siteTitle ) );
 
 		directory = SiteManager.checkSiteRoot( siteId );
 
@@ -153,14 +158,14 @@ public class Site
 				if ( !"root".equalsIgnoreCase( subdomain ) )
 				{
 					SiteManager.getLogger().info( String.format( "Initalized subdomain '%s' for site '%s'", subdomain, siteId ) );
-					FileFunc.patchDirectory( getSubdomain( subdomain ).directory() );
+					FileFunc.setDirectoryAccessWithException( getSubdomain( subdomain ).directory() );
 					domains.get( domain ).add( subdomain );
 				}
 		}
 
 
 		File ssl = directory( "ssl" );
-		FileFunc.patchDirectory( ssl );
+		FileFunc.setDirectoryAccessWithException( ssl );
 
 		String sslCertFile = yaml.getString( "site.sslCert" );
 		String sslKeyFile = yaml.getString( "site.sslKey" );
@@ -184,7 +189,7 @@ public class Site
 
 		try
 		{
-			if ( EventBus.INSTANCE.callEventWithException( new SiteLoadEvent( this ) ).isCancelled() )
+			if ( EventBus.instance().callEventWithException( new SiteLoadEvent( this ) ).isCancelled() )
 				throw new SiteException( String.format( "Loading of site '%s' was cancelled by an internal event.", siteId ) );
 		}
 		catch ( EventException e )
@@ -240,15 +245,15 @@ public class Site
 				if ( result.hasExceptions() )
 				{
 					if ( result.hasException( FileNotFoundException.class ) )
-						Loader.getLogger().severe( String.format( "Failed to eval onLoadScript '%s' for site '%s' because the file was not found.", script, siteId ) );
+						SiteManager.getLogger().severe( String.format( "Failed to eval onLoadScript '%s' for site '%s' because the file was not found.", script, siteId ) );
 					else
 					{
 						SiteManager.getLogger().severe( String.format( "Exception caught while evaling onLoadScript '%s' for site '%s'", script, siteId ) );
-						SiteManager.getLogger().exceptions( result.getExceptions() );
+						ExceptionReport.printExceptions( result.getExceptions() );
 					}
 				}
 				else
-					Loader.getLogger().info( String.format( "Finished evaling onLoadScript '%s' for site '%s' with result: %s", script, siteId, result.getString( true ) ) );
+					SiteManager.getLogger().info( String.format( "Finished evaling onLoadScript '%s' for site '%s' with result: %s", script, siteId, result.getString( true ) ) );
 			}
 
 		/**
@@ -267,7 +272,7 @@ public class Site
 		encryptionKey = SecureFunc.randomize( "0x0000X" );
 		ips = Lists.newArrayList();
 		siteTitle = Versioning.getProduct();
-		datastore = Loader.getDatabase();
+		datastore = AppController.config().getDatabase();
 
 		directory = SiteManager.checkSiteRoot( siteId );
 	}
@@ -308,7 +313,7 @@ public class Site
 
 	public File directoryTemp()
 	{
-		return Loader.getTempFileDirectory( getSiteId() );
+		return AppController.config().getDirectoryCache( getId() );
 	}
 
 	public ApacheConfiguration getApacheConfig()
@@ -401,6 +406,12 @@ public class Site
 		return binding.getVariables();
 	}
 
+	@Override
+	public String getId()
+	{
+		return siteId;
+	}
+
 	public List<String> getIps()
 	{
 		return ips;
@@ -423,11 +434,6 @@ public class Site
 			return new CopyOnWriteArrayList<String>();
 
 		return metatags;
-	}
-
-	public String getName()
-	{
-		return siteId;
 	}
 
 	public SiteDomain getRootdomain() throws SiteException
@@ -458,11 +464,6 @@ public class Site
 		return sessionPersistence;
 	}
 
-	public String getSiteId()
-	{
-		return siteId;
-	}
-
 	public SslContext getSslContext( String domain )
 	{
 		return getSslContext( domain, "root" );
@@ -474,7 +475,7 @@ public class Site
 		Validate.notEmpty( subdomain );
 
 		File ssl = directory( "ssl" );
-		FileFunc.patchDirectory( ssl );
+		FileFunc.setDirectoryAccessWithException( ssl );
 
 		ConfigurationSection section = yaml.getConfigurationSection( "site.domains." + domain.replace( ".", "_" ) + "." + subdomain.replace( ".", "_" ), true );
 		String sslCertFile = section.getString( "sslCert" );
@@ -562,7 +563,7 @@ public class Site
 			}
 		}
 
-		throw new FileNotFoundException( String.format( "Could not find the file '%s' file in site '%s' resource directory '%s'.", file, getName(), root.getAbsolutePath() ) );
+		throw new FileNotFoundException( String.format( "Could not find the file '%s' file in site '%s' resource directory '%s'.", file, getId(), root.getAbsolutePath() ) );
 	}
 
 	public File resourcePackage( String pack ) throws FileNotFoundException
@@ -604,7 +605,7 @@ public class Site
 			}
 		}
 
-		throw new FileNotFoundException( String.format( "Could not find the package '%s' file in site public directory '%s'.", pack, getName() ) );
+		throw new FileNotFoundException( String.format( "Could not find the package '%s' file in site '%s'.", pack, getId() ) );
 	}
 
 	public void save() throws IOException
@@ -633,7 +634,7 @@ public class Site
 	@Override
 	public String toString()
 	{
-		return "Site{id=" + getSiteId() + "name=" + getName() + ",title=" + getTitle() + ",domains=" + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( domains ) + "ips=" + Joiner.on( "," ).join( ips ) + ",siteDir=" + directory.getAbsolutePath() + "}";
+		return "Site{id=" + getId() + ",title=" + getTitle() + ",domains=" + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( domains ) + "ips=" + Joiner.on( "," ).join( ips ) + ",siteDir=" + directory.getAbsolutePath() + "}";
 	}
 
 	public void unload()

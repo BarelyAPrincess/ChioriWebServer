@@ -21,10 +21,11 @@ import java.util.TreeMap;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.x509.util.StreamParsingException;
 
-import com.chiorichan.Loader;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.http.HttpCode;
 import com.chiorichan.http.ssl.CertificateWrapper;
+import com.chiorichan.lang.EnumColor;
+import com.chiorichan.logger.Log;
 import com.chiorichan.plugin.acme.AcmePlugin;
 import com.chiorichan.plugin.acme.AcmeScheduledTask;
 import com.chiorichan.plugin.acme.api.AcmeCertificateRequest;
@@ -42,46 +43,10 @@ import com.google.common.base.Joiner;
 
 public class Certificate
 {
-	/*
-	 * public static void signNewCertificate( String key, String privateKey, Set<String> domains ) throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, OperatorCreationException, AcmeException,
-	 * IOException, StreamParsingException
-	 * {
-	 * Loader.getLogger().debug( "Signing a new certificate for " + key + " and domains " + Joiner.on( ", " ).join( domains ) );
-	 *
-	 * AcmeCertificateRequest signingRequest = AcmePlugin.INSTANCE.getClient().newSigningRequest( domains );
-	 * signingRequest.doCallback( true, new Runnable()
-	 * {
-	 *
-	 * @Override
-	 * public void run()
-	 * {
-	 * if ( signingRequest.getState() == AcmeState.SUCCESS )
-	 * try
-	 * {
-	 * signingRequest.save( FileFunc.buildFile( plugin.getDataFolder(), key ) );
-	 * File sslCertFile = FileFunc.buildFile( plugin.getDataFolder(), key, "fullchain.pem" );
-	 *
-	 * CertificateMaintainer.addCertificate( key, sslCertFile, privateKey, signingRequest.getUri() );
-	 * }
-	 * catch ( AcmeException | FileNotFoundException | SSLException | CertificateException e )
-	 * {
-	 * plugin.getLogger().severe( "Unexpected Exception Thrown", e );
-	 * }
-	 * else
-	 * plugin.getLogger().severe( "Failed certificate signing for reason " + signingRequest.lastMessage() );
-	 * }
-	 * } );
-	 * }
-	 *
-	 * public static void signNewDefaultCertificate( Set<String> domains ) throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, OperatorCreationException, AcmeException, IOException, StreamParsingException
-	 * {
-	 * signNewCertificate( "default", "domain", domains );
-	 * }
-	 */
-
 	private File sslCertFile;
 	private File sslKeyFile;
 	private final String key;
+	private boolean pendingUpdate = false;
 	private String uri;
 	private ConfigurationSection configSection;
 
@@ -105,7 +70,7 @@ public class Certificate
 			// TODO Allow mapping to contain domains and/or siteIds
 			for ( String map : configSection.getAsList( "mapping", new ArrayList<String>() ) )
 			{
-				Site site = SiteManager.INSTANCE.getSiteById( map );
+				Site site = SiteManager.instance().getSiteById( map );
 				if ( site != null )
 					for ( Entry<String, Set<String>> e : site.getDomains().entrySet() )
 					{
@@ -160,30 +125,52 @@ public class Certificate
 		return configSection.getString( "md5" );
 	}
 
-	private void renewCertificate() throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, AcmeException, StreamParsingException
+	private void renewCertificate() throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, AcmeException, StreamParsingException, OperatorCreationException, IOException
 	{
-		// TODO According to Acme Protocol, it is possible for Let's Encrypt to not response with a renewed certificate. So it's important detected this and sign a new one instead.
+		if ( pendingUpdate )
+			throw new AcmeException( "Certificate " + key() + " is pending an update!" );
+
+		Log.get().info( EnumColor.AQUA + "Attempting to renew certificate: " + key() );
 
 		CertificateDownloader downloader = new CertificateDownloader( null, certUri() );
 
-		File parentDir = new File( AcmePlugin.INSTANCE.getDataFolder(), key );
+		File parentDir = new File( AcmePlugin.instance().getDataFolder(), key );
 
 		do
 			downloader.save( parentDir );
 		while ( downloader.isPending() && !downloader.isDownloaded() );
 
-		sslCertFile = new File( parentDir, "fullchain.pem" );
+		File sslCertFileTemp = new File( parentDir, "fullchain.pem" );
+
+		Log.get().debug( "Old MD5 " + md5() + " and New MD5 " + SecureFunc.md5( sslCertFileTemp ) );
+
+		// According to the Acme Protocol, it is plausible for the CA to not response with a renewed certificate. For now, we compare the old and new certificate MD5 then revoke and reissue to force a renewal.
+		if ( md5().equals( SecureFunc.md5( sslCertFileTemp ) ) )
+		{
+			Log.get().warning( "The CA did not provide a renewed certifcate, we will request the certificate is revoked and reissued now." );
+			revokeCertificate();
+			signNewCertificate();
+		}
+
+		sslCertFile = sslCertFileTemp;
+		certificateCache = null;
+
 		save();
 	}
 
 	public boolean revokeCertificate()
 	{
+		if ( pendingUpdate )
+			return false;
+
 		try
 		{
 			if ( getCertificate() == null )
 				return false;
 
-			AcmeProtocol proto = AcmePlugin.INSTANCE.getClient();
+			pendingUpdate = true;
+
+			AcmeProtocol proto = AcmePlugin.instance().getClient();
 
 			String body = proto.newJwt( new TreeMap<String, Object>()
 			{
@@ -195,6 +182,8 @@ public class Certificate
 
 			HttpResponse response = AcmeUtils.post( "POST", proto.getUrlNewRevoke(), "application/json", body, "application/json" );
 			proto.nonce( response.getHeaderString( "Replay-Nonce" ) );
+
+			pendingUpdate = false;
 
 			if ( response.getStatus() == HttpCode.HTTP_OK )
 			{
@@ -212,21 +201,25 @@ public class Certificate
 
 	private void save()
 	{
-		ConfigurationSection section = AcmePlugin.INSTANCE.getSubConfig().getConfigurationSection( "certificates." + key, true );
+		ConfigurationSection section = AcmePlugin.instance().getSubConfig().getConfigurationSection( "certificates." + key, true );
 
 		section.set( "certFile", FileFunc.relPath( sslCertFile ) );
 		section.set( "privateKey", CertificateMaintainer.getPrivateKeyIden( sslKeyFile ) );
 		section.set( "uri", certUri() );
 		section.set( "md5", SecureFunc.md5( sslCertFile ) );
 
-		AcmePlugin.INSTANCE.saveConfig();
+		AcmePlugin.instance().saveConfig();
 	}
 
 	private void signNewCertificate() throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, OperatorCreationException, AcmeException, IOException, StreamParsingException
 	{
-		final Certificate cert = this;
+		if ( pendingUpdate )
+			throw new AcmeException( "Certificate " + key() + " is pending an update!" );
 
-		AcmeCertificateRequest signingRequest = AcmePlugin.INSTANCE.getClient().newSigningRequest( domains, sslKeyFile );
+		final Certificate cert = this;
+		pendingUpdate = true;
+
+		AcmeCertificateRequest signingRequest = AcmePlugin.instance().getClient().newSigningRequest( domains, sslKeyFile );
 		signingRequest.doCallback( true, new Runnable()
 		{
 			@Override
@@ -235,7 +228,7 @@ public class Certificate
 				if ( signingRequest.getState() == AcmeState.SUCCESS )
 					try
 					{
-						File parentDir = FileFunc.buildFile( AcmePlugin.INSTANCE.getDataFolder(), key );
+						File parentDir = FileFunc.buildFile( AcmePlugin.instance().getDataFolder(), key );
 
 						signingRequest.getDownloader().save( parentDir );
 						sslCertFile = new File( parentDir, "fullchain.pem" );
@@ -250,10 +243,12 @@ public class Certificate
 					}
 					catch ( AcmeException e )
 					{
-						AcmePlugin.INSTANCE.getLogger().severe( "Unexpected Exception Thrown", e );
+						AcmePlugin.instance().getLogger().severe( "Unexpected Exception Thrown", e );
 					}
 				else
-					AcmePlugin.INSTANCE.getLogger().severe( "Failed certificate signing for reason " + signingRequest.lastMessage() );
+					AcmePlugin.instance().getLogger().severe( "Failed certificate signing for reason " + signingRequest.lastMessage() );
+
+				pendingUpdate = false;
 			}
 		} );
 	}
@@ -262,6 +257,9 @@ public class Certificate
 	{
 		try
 		{
+			if ( pendingUpdate )
+				return false;
+
 			if ( sslKeyFile == null )
 				sslKeyFile = CertificateMaintainer.getPrivateKey( "domain" );
 
@@ -270,10 +268,8 @@ public class Certificate
 
 			if ( !FileFunc.checkMd5( sslCertFile, md5() ) )
 			{
-				// Loader.getLogger().debug( sslCertFile + " // " + sslKeyFile + " // " + SecureFunc.md5( sslCertFile ) + " == " + md5() + " // " + certUri() );
-
 				if ( sslCertFile == null )
-					sslCertFile = FileFunc.buildFile( AcmePlugin.INSTANCE.getDataFolder(), key, "fullchain.pem" );
+					sslCertFile = FileFunc.buildFile( AcmePlugin.instance().getDataFolder(), key, "fullchain.pem" );
 
 				if ( certUri() == null )
 				{
@@ -284,6 +280,7 @@ public class Certificate
 					renewCertificate();
 			}
 
+			// If the certificate will expire in less than 15 days, we will attempt to renew it.
 			if ( getCertificate() == null || getCertificate().daysRemaining() < 15 )
 				renewCertificate();
 
@@ -292,7 +289,7 @@ public class Certificate
 				List<String> dnsNames = getCertificate().getSubjectAltDNSNames();
 				if ( !dnsNames.containsAll( domains ) )
 				{
-					Loader.getLogger().debug( "Default certificate is missing domains --> " + Joiner.on( ", " ).join( domains ) + " // " + Joiner.on( ", " ).join( dnsNames ) );
+					Log.get().debug( "Default certificate is missing domains --> " + Joiner.on( ", " ).join( domains ) + " // " + Joiner.on( ", " ).join( dnsNames ) );
 
 					revokeCertificate();
 					signNewCertificate();

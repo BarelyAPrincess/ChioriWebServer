@@ -1,7 +1,10 @@
 /**
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com> All Right Reserved.
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * All Right Reserved.
  */
 package com.chiorichan.factory.groovy;
 
@@ -14,16 +17,15 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.APILogger;
-import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngineLegacy;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.factory.api.Builtin;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.http.HttpResponseWrapper;
 import com.chiorichan.http.Nonce;
+import com.chiorichan.lang.PluginNotFoundException;
+import com.chiorichan.logger.Log;
 import com.chiorichan.plugin.PluginManager;
-import com.chiorichan.plugin.lang.PluginNotFoundException;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.session.Session;
 import com.chiorichan.site.Site;
@@ -71,29 +73,29 @@ public abstract class ScriptingBaseJava extends Builtin
 		return engine.getLegacy();
 	}
 
-	public APILogger getLogger()
+	public Log getLogger()
 	{
-		return Loader.getLogger( getClass().getSimpleName() );
+		return Log.get( getClass().getSimpleName() );
 	}
 
 	public Plugin getPluginbyClassname( String search ) throws PluginNotFoundException
 	{
-		return PluginManager.INSTANCE.getPluginByClassname( search );
+		return PluginManager.instance().getPluginByClassname( search );
 	}
 
 	public Plugin getPluginbyClassnameWithoutException( String search )
 	{
-		return PluginManager.INSTANCE.getPluginByClassnameWithoutException( search );
+		return PluginManager.instance().getPluginByClassnameWithoutException( search );
 	}
 
 	public Plugin getPluginByName( String search ) throws PluginNotFoundException
 	{
-		return PluginManager.INSTANCE.getPluginByName( search );
+		return PluginManager.instance().getPluginByName( search );
 	}
 
 	public Plugin getPluginByNameWithoutException( String search )
 	{
-		return PluginManager.INSTANCE.getPluginByNameWithoutException( search );
+		return PluginManager.instance().getPluginByNameWithoutException( search );
 	}
 
 	public abstract HttpRequestWrapper getRequest();

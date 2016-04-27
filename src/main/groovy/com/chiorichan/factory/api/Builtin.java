@@ -1,3 +1,11 @@
+/**
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * All Right Reserved.
+ */
 package com.chiorichan.factory.api;
 
 import groovy.lang.Script;
@@ -26,9 +34,10 @@ import java.util.Map.Entry;
 
 import org.ocpsoft.prettytime.PrettyTime;
 
-import com.chiorichan.Loader;
+import com.chiorichan.AppController;
 import com.chiorichan.database.DatabaseEngineLegacy;
 import com.chiorichan.lang.DiedException;
+import com.chiorichan.logger.Log;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.SecureFunc;
@@ -533,7 +542,7 @@ public abstract class Builtin extends Script
 		}
 		catch ( NumberParseException e )
 		{
-			Loader.getLogger().warning( "NumberParseException was thrown: " + e.toString() );
+			Log.get().warning( "NumberParseException was thrown: " + e.toString() );
 			return phone;
 		}
 	}
@@ -572,7 +581,7 @@ public abstract class Builtin extends Script
 	 */
 	public static DatabaseEngineLegacy getServerDatabase()
 	{
-		DatabaseEngineLegacy engine = Loader.getDatabase().getLegacy();
+		DatabaseEngineLegacy engine = AppController.config().getDatabase().getLegacy();
 
 		if ( engine == null )
 			throw new IllegalStateException( "The server database is unconfigured. It will need to be setup in order for you to use the getServerDatabase() method." );

@@ -9,40 +9,32 @@ apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'checkstyle'
 apply from: 'etc/publish.gradle'
 
-repositories
-{
+repositories {
 	jcenter()
-	maven
-	{ url "http://jenkins.chiorichan.com:8081/artifactory/" }
+	maven { url "http://jenkins.chiorichan.com:8081/artifactory/" }
 	mavenCentral()
 }
 
-buildscript
-{
-	repositories
-	{
+buildscript {
+	repositories {
 		jcenter()
-		maven
-		{ url "http://jenkins.chiorichan.com:8081/artifactory/" }
+		maven { url "http://jenkins.chiorichan.com:8081/artifactory/" }
 		mavenCentral()
 	}
-	
-	dependencies
-	{
-		classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.1'
+
+	dependencies {
+		classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
 		classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.11.0'
 	}
 }
 
-def gitDescribe()
-{
-	try
-	{
+def gitDescribe() {
+	try {
 		// determine git-describe output
 		def stdout = new ByteArrayOutputStream()
 		exec
 		{
-			commandLine 'git', 'describe', '--always'
+			commandLine 'git', 'rev-parse', '--short', 'HEAD'
 			standardOutput = stdout
 		}
 		return stdout.toString().trim()
@@ -58,9 +50,9 @@ def getVersionNumber()
 	try
 	{
 		Properties props = new Properties()
-		props.load( new FileInputStream( new File( "./src/main/resources/com/chiorichan/build.properties" ) ) )
-		
-		return props.getProperty( "project.version" )
+		props.load( new FileInputStream( new File( "./src/main/resources/build.properties" ) ) )
+
+		return props.getProperty( "project.versionMajor" ) + "." + props.getProperty( "project.versionMinor" ) + "." + props.getProperty( "project.versionRevision" )
 	}
 	catch ( e )
 	{
@@ -130,7 +122,14 @@ license
 	strictCheck true
 	mapping 'yaml', 'SCRIPT_STYLE'
 	mapping 'yml', 'SCRIPT_STYLE'
-	excludes (['**/*.archive', '**/*.md5', '**/less-rhino-1.7.4.js', '**/coffee-script.js', '**/banner.txt', '**/config.yaml'])
+	excludes ([
+		'**/*.archive',
+		'**/*.md5',
+		'**/less-rhino-1.7.4.js',
+		'**/coffee-script.js',
+		'**/banner.txt',
+		'**/config.yaml'
+	])
 	ext.year = Calendar.getInstance().get(Calendar.YEAR)
 	ext.name = 'Chiori Greene a.k.a. Chiori-chan'
 	ext.email = 'me@chiorichan.com'
@@ -141,78 +140,82 @@ subprojects
 	apply plugin: 'java'
 	apply plugin: 'groovy'
 	apply plugin: 'eclipse'
-	
+
 	repositories
 	{ mavenCentral() }
-	
+
 	libsDirName = '../../build/dist'
-	
+
 	artifacts
 	{ archives jar }
 }
 
 dependencies
 {
+	// Chiori's API
+	compile project(':ChioriAPI')
+	// compile group: 'com.github.ChioriGreene', name: 'ChioriAPI', version: '0.1' -- For use with JitPack repository
+
+	// TODO These dependencies need cleaning up, there is just far too many of them!
+
 	// SSL Dependencies
 	compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.53'
 	compile group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.53'
 	compile group: 'io.jsonwebtoken', name: 'jjwt', version: '0.5.1'
-	
+
 	// Used for Console ANSI Color Codes
 	compile group: 'org.fusesource.jansi', name: 'jansi', version: '1.11'
-	
+
 	// Used to Parse Console Input
 	compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version: '4.7'
-	
+
 	// Used to evalute GroovyScripts server-side
 	compile group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.4.3'
-	
+
 	// Used for easy reflections, e.g., find all classes within package for imports
 	compile group: 'org.reflections', name: 'reflections', version: '0.9.9'
-	
+
 	// Used for Networking HTTP and TCP
 	compile group: 'io.netty', name: 'netty-all', version: '5.0.0.Alpha2'
-	
+
 	// Used to Make Database Connections
 	compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.35'
 	compile group: 'org.xerial', name: 'sqlite-jdbc', version: '3.8.11.2'
 	compile group: 'com.h2database', name: 'h2', version: '1.4.187'
-	
+
 	// Used for Programming Convinience
 	compile group: 'com.google.guava', name: 'guava', version: '18.0'
 	compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.3.2'
 	compile group: 'commons-io', name: 'commons-io', version: '2.4'
 	compile group: 'commons-net', name: 'commons-net', version: '3.3'
 	compile group: 'commons-codec', name: 'commons-codec', version: '1.9'
-	
+
 	// Used to load configs
 	compile group: 'org.yaml', name: 'snakeyaml', version: '1.13'
-	
+
 	// Used by JS Minimizer
 	compile group: 'com.google.javascript', name: 'closure-compiler', version: 'r2388'
 	compile group: 'org.mozilla', name: 'rhino', version: '1.7R4'
-	
+
 	// Used by Less Preprocessor
 	compile group: 'com.asual.lesscss', name: 'lesscss-engine', version: '1.3.0'
-	
+
 	// Used to format Time and Dates
 	compile group: 'joda-time', name: 'joda-time', version: '2.7'
 	compile group: 'org.ocpsoft.prettytime', name: 'prettytime', version: '3.2.5.Final'
-	
+
 	// Used to format Phone Numbers
 	compile group: 'com.googlecode.libphonenumber', name: 'libphonenumber', version: '7.0.4'
-	
+
 	// Used for serilization within Sites and Autoupdater
 	compile group: 'com.google.code.gson', name: 'gson', version: '2.3'
-	
+
 	// Used by MavenUtils and some scripts
 	compile group: 'org.apache.httpcomponents', name: 'fluent-hc', version: '4.3.5'
 }
 
 shadowJar
-{
-	include("**/*");
-}
+{ include("**/*"); }
 
 jar
 {
@@ -239,27 +242,25 @@ task javadocArchive(type: Zip, dependsOn: 'javadoc'){
 task writePropertiesFile {
 	doFirst {
 		SimpleDateFormat sdf = new SimpleDateFormat( "EEE, d MMM yyyy HH:mm:ss Z" )
-		
+
 		Properties props = new Properties()
-		props.load( new FileInputStream( file( "src/main/resources/com/chiorichan/build.properties" ) ) )
+		props.load( new FileInputStream( file( "src/main/resources/build.properties" ) ) )
 		props.setProperty("project.builtOn", sdf.format( new Date() ))
 		props.setProperty("project.build", buildNumber)
 		props.setProperty("project.version", version)
-		
+
 		File f2 = file("build/dist/build.properties")
-		File f3 = file("build/resources/main/com/chiorichan/build.properties")
+		File f3 = file("build/resources/main/build.properties")
 		f2.parentFile.mkdirs()
 		f3.parentFile.mkdirs()
 		OutputStream out2 = new FileOutputStream( f2 )
 		OutputStream out3 = new FileOutputStream( f3 )
-		props.store(out2, "Chiori-chan's Web Server Build Properties File - Used by our auto updater and Jenkins build server.")
-		props.store(out3, "Chiori-chan's Web Server Build Properties File - Used by our auto updater and Jenkins build server.")
+		props.store(out2, "Build Properties File")
+		props.store(out3, "Build Properties File")
 	}
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.8'
-}
+task wrapper(type: Wrapper) { gradleVersion = '2.8' }
 
 jar.dependsOn writePropertiesFile
 

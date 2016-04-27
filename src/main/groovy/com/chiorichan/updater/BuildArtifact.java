@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.updater;
@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import com.chiorichan.LogColor;
+import com.chiorichan.lang.EnumColor;
 import com.chiorichan.updater.BuildArtifact.ChangeSet.ChangeSetDetails;
 
 public class BuildArtifact
@@ -114,7 +114,7 @@ public class BuildArtifact
 				
 				for ( Paths p : paths )
 				{
-					sb.append( "\n\t" + LogColor.GREEN + "[" + p.editType + "] " + p.file );
+					sb.append( "\n\t" + EnumColor.GREEN + "[" + p.editType + "] " + p.file );
 				}
 				
 				return msg + " (Commit: " + id + ")" + sb.toString();

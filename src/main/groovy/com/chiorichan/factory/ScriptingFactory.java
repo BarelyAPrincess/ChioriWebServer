@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.factory;
@@ -19,7 +19,8 @@ import java.util.Map.Entry;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.Loader;
+import com.chiorichan.AppController;
+import com.chiorichan.AppLoader;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.Listener;
@@ -32,13 +33,15 @@ import com.chiorichan.factory.event.PreLessProcessor;
 import com.chiorichan.factory.groovy.GroovyRegistry;
 import com.chiorichan.factory.parsers.PreIncludesParserWrapper;
 import com.chiorichan.factory.parsers.PreLinksParserWrapper;
-import com.chiorichan.lang.EvalException;
 import com.chiorichan.lang.ReportingLevel;
+import com.chiorichan.lang.ScriptingException;
+import com.chiorichan.logger.LogSource;
+import com.chiorichan.services.ObjectContext;
 import com.chiorichan.util.WebFunc;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-public class ScriptingFactory
+public class ScriptingFactory implements LogSource
 {
 	private static final List<ScriptingRegistry> scripting = Lists.newCopyOnWriteArrayList();
 	static
@@ -50,18 +53,18 @@ public class ScriptingFactory
 		 */
 		register( new PreLinksParserWrapper() );
 		register( new PreIncludesParserWrapper() );
-		if ( Loader.getConfig().getBoolean( "advanced.processors.coffeeProcessorEnabled", true ) )
+		if ( AppController.config().getBoolean( "advanced.processors.coffeeProcessorEnabled", true ) )
 			register( new PreCoffeeProcessor() );
-		if ( Loader.getConfig().getBoolean( "advanced.processors.lessProcessorEnabled", true ) )
+		if ( AppController.config().getBoolean( "advanced.processors.lessProcessorEnabled", true ) )
 			register( new PreLessProcessor() );
 		// register( new SassPreProcessor() );
 
 		/**
 		 * Register Post-Processors
 		 */
-		if ( Loader.getConfig().getBoolean( "advanced.processors.minifierJSProcessorEnabled", true ) )
+		if ( AppController.config().getBoolean( "advanced.processors.minifierJSProcessorEnabled", true ) )
 			register( new PostJSMinProcessor() );
-		if ( Loader.getConfig().getBoolean( "advanced.processors.imageProcessorEnabled", true ) )
+		if ( AppController.config().getBoolean( "advanced.processors.imageProcessorEnabled", true ) )
 			register( new PostImageProcessor() );
 	}
 
@@ -71,6 +74,7 @@ public class ScriptingFactory
 		return new ScriptingFactory( provider.getBinding() );
 	}
 
+	// For General Use
 	public static ScriptingFactory create( Map<String, Object> rawBinding )
 	{
 		return new ScriptingFactory( new ScriptBinding( rawBinding ) );
@@ -84,7 +88,7 @@ public class ScriptingFactory
 
 	public static void register( Listener listener )
 	{
-		EventBus.INSTANCE.registerEvents( listener, Loader.getInstance() );
+		EventBus.instance().registerEvents( listener, new ObjectContext( AppLoader.instances().get( 0 ) ) );
 	}
 
 	/**
@@ -105,7 +109,7 @@ public class ScriptingFactory
 
 	private final List<ByteBuf> bufferStack = Lists.newLinkedList();
 
-	private Charset charset = Charsets.toCharset( Loader.getConfig().getString( "server.defaultEncoding", "UTF-8" ) );
+	private Charset charset = Charsets.toCharset( AppController.config().getString( "server.defaultEncoding", "UTF-8" ) );
 
 	private final ByteBuf output = Unpooled.buffer();
 
@@ -168,19 +172,17 @@ public class ScriptingFactory
 			PreEvalEvent preEvent = new PreEvalEvent( context );
 			try
 			{
-				EventBus.INSTANCE.callEventWithException( preEvent );
+				EventBus.instance().callEventWithException( preEvent );
 			}
 			catch ( Exception e )
 			{
-				if ( EvalException.exceptionHandler( e.getCause() == null ? e : e.getCause(), context ) )
+				if ( context.result().handleException( e.getCause() == null ? e : e.getCause(), context ) )
 					return result;
 			}
 
 			if ( preEvent.isCancelled() )
-			{
-				EvalException.exceptionHandler( new EvalException( ReportingLevel.E_ERROR, "Evaluation was cancelled by an internal event" ), context );
-				return result;
-			}
+				if ( context.result().handleException( new ScriptingException( ReportingLevel.E_ERROR, "Evaluation was cancelled by an internal event" ), context ) )
+					return result;
 
 			if ( engines.isEmpty() )
 				compileEngines( context );
@@ -204,18 +206,18 @@ public class ScriptingFactory
 						}
 						catch ( Throwable cause )
 						{
-							if ( EvalException.exceptionHandler( cause, context ) )
+							if ( context.result().handleException( cause, context ) )
 								return result;
 						}
 
 			PostEvalEvent postEvent = new PostEvalEvent( context );
 			try
 			{
-				EventBus.INSTANCE.callEventWithException( postEvent );
+				EventBus.instance().callEventWithException( postEvent );
 			}
 			catch ( EventException e )
 			{
-				if ( EvalException.exceptionHandler( e.getCause() == null ? e : e.getCause(), context ) )
+				if ( context.result().handleException( e.getCause() == null ? e : e.getCause(), context ) )
 					return result;
 			}
 		}
@@ -260,6 +262,12 @@ public class ScriptingFactory
 			return -1;
 
 		return scriptTrace.get( scriptTrace.size() - 1 ).getLineNumber();
+	}
+
+	@Override
+	public String getLoggerId()
+	{
+		return "ScriptFactory";
 	}
 
 	public ByteBuf getOutputStream()

@@ -11,6 +11,8 @@ import org.apache.commons.lang3.Validate;
 import org.bouncycastle.x509.util.StreamParsingException;
 
 import com.chiorichan.http.HttpCode;
+import com.chiorichan.lang.ReportingLevel;
+import com.chiorichan.lang.UncaughtException;
 import com.chiorichan.plugin.acme.AcmePlugin;
 import com.chiorichan.plugin.acme.lang.AcmeException;
 import com.chiorichan.plugin.acme.lang.AcmeState;
@@ -46,7 +48,7 @@ public class CertificateDownloader
 	public boolean check() throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, AcmeException, StreamParsingException
 	{
 		HttpResponse response = AcmeUtils.get( certificateUrl, "application/json" );
-		AcmePlugin.INSTANCE.getClient().nonce( response.getHeaderString( "Replay-Nonce" ) );
+		AcmePlugin.instance().getClient().nonce( response.getHeaderString( "Replay-Nonce" ) );
 
 		return handleRequest( response );
 	}
@@ -76,10 +78,18 @@ public class CertificateDownloader
 		{
 			if ( response.getBody().length > 0 )
 			{
-				certificate = AcmeUtils.extractCertificate( response.getBody() );
+				try
+				{
+					certificate = AcmeUtils.extractCertificate( response.getBody() );
+				}
+				catch ( Throwable t )
+				{
+					setState( AcmeState.FAILED, "Failed to download certificate" );
+					// response.debug();
+					return false;
+				}
 
 				setState( AcmeState.SUCCESS, "Certificate was successfully received and downloaded" );
-
 				return true;
 			}
 			else
@@ -89,9 +99,8 @@ public class CertificateDownloader
 			setState( AcmeState.FAILED, "Too many certificates already issued!" );
 		else
 		{
-			response.debug();
-
 			setState( AcmeState.FAILED, "Failed to download certificate" );
+			response.debug();
 		}
 
 		return false;
@@ -128,8 +137,10 @@ public class CertificateDownloader
 		if ( !isDownloaded() )
 			return false;
 
-		FileFunc.patchDirectory( parentDir );
-		AcmePlugin.INSTANCE.getClient().getAcmeStorage().saveCertificate( parentDir, getCertificate() );
+		if ( !FileFunc.setDirectoryAccess( parentDir ) )
+			throw new UncaughtException( ReportingLevel.E_ERROR, "Acme Plugin experienced a problem setting read and write access to directory \"" + FileFunc.relPath( parentDir ) + "\"!" );
+
+		AcmePlugin.instance().getClient().getAcmeStorage().saveCertificate( parentDir, getCertificate() );
 
 		if ( request != null )
 			request.saveCSR( parentDir );

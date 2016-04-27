@@ -22,7 +22,9 @@
 /build/
 /*/build/
 /manifest.mf
-/server.yaml
+/config.yaml
+/start.sh
+/debug.sh
 /*.key
 /*.crt
 /logs
@@ -34,3 +36,4 @@
 /accounts
 /libraries
 /tmp
+/ChioriAPI

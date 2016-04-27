@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.net;
@@ -24,14 +24,15 @@ import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 
-import com.chiorichan.APILogger;
-import com.chiorichan.Loader;
-import com.chiorichan.ServerBus;
+import com.chiorichan.AppController;
 import com.chiorichan.http.HttpInitializer;
 import com.chiorichan.http.ssl.SslInitializer;
 import com.chiorichan.http.ssl.SslManager;
 import com.chiorichan.lang.StartupException;
+import com.chiorichan.logger.Log;
+import com.chiorichan.logger.LogSource;
 import com.chiorichan.net.query.QueryServerInitializer;
+import com.chiorichan.services.AppManager;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.TaskRegistrar;
 import com.chiorichan.tasks.Ticks;
@@ -41,9 +42,8 @@ import com.google.common.collect.Lists;
 /**
  * Works as the main network managing class for netty implementations, e.g., Http, Https, and Query
  */
-public class NetworkManager implements TaskRegistrar
+public class NetworkManager implements TaskRegistrar, LogSource
 {
-	@SuppressWarnings( "unused" )
 	private static final NetworkManager SELF = new NetworkManager();
 
 	private static EventLoopGroup bossGroup = new NioEventLoopGroup( 1 );
@@ -104,9 +104,9 @@ public class NetworkManager implements TaskRegistrar
 			return Arrays.asList( ip );
 	}
 
-	public static APILogger getLogger()
+	public static Log getLogger()
 	{
-		return Loader.getLogger( "NetMgr" );
+		return Log.get( SELF );
 	}
 
 	public static boolean isHttpRunning()
@@ -172,16 +172,16 @@ public class NetworkManager implements TaskRegistrar
 		try
 		{
 			InetSocketAddress socket;
-			String httpIp = Loader.getConfig().getString( "server.httpHost", "" );
-			int httpPort = Loader.getConfig().getInt( "server.httpPort", 8080 );
+			String httpIp = AppController.config().getString( "server.httpHost", "" );
+			int httpPort = AppController.config().getInt( "server.httpPort", 8080 );
 
 			if ( httpPort > 0 )
 			{
 				if ( Versioning.isPrivilegedPort( httpPort ) )
 				{
-					Loader.getLogger().warning( "It would seem that you are trying to start ChioriWebServer's Web Server on a privileged port without root access." );
-					Loader.getLogger().warning( "Most likely you will see an exception thrown below this. http://www.w3.org/Daemon/User/Installation/PrivilegedPorts.html" );
-					Loader.getLogger().warning( "It's recommended that you either run CWS on a port like 8080 then use the firewall to redirect from 80 or run as root if you must use port: " + httpPort );
+					getLogger().warning( "It would seem that you are trying to start ChioriWebServer's Web Server on a privileged port without root access." );
+					getLogger().warning( "Most likely you will see an exception thrown below this. http://www.w3.org/Daemon/User/Installation/PrivilegedPorts.html" );
+					getLogger().warning( "It's recommended that you either run CWS on a port like 8080 then use the firewall to redirect from 80 or run as root if you must use port: " + httpPort );
 				}
 
 				if ( httpIp.isEmpty() )
@@ -191,7 +191,7 @@ public class NetworkManager implements TaskRegistrar
 
 				// TODO Allow the server to bind to more than one IP but less than all
 
-				Loader.getLogger().info( "Starting Web Server on " + ( httpIp.isEmpty() ? "*" : httpIp ) + ":" + httpPort );
+				getLogger().info( "Starting Web Server on " + ( httpIp.isEmpty() ? "*" : httpIp ) + ":" + httpPort );
 
 				try
 				{
@@ -201,7 +201,7 @@ public class NetworkManager implements TaskRegistrar
 					httpChannel = b.bind( socket ).sync().channel();
 
 					// HTTP Server Thread
-					ServerBus.registerRunnable( new Runnable()
+					AppController.registerRunnable( new Runnable()
 					{
 						@Override
 						public void run()
@@ -215,7 +215,7 @@ public class NetworkManager implements TaskRegistrar
 								e.printStackTrace();
 							}
 
-							Loader.getLogger().info( "The HTTP Server has been shutdown!" );
+							getLogger().info( "The HTTP Server has been shutdown!" );
 						}
 					} );
 				}
@@ -225,9 +225,9 @@ public class NetworkManager implements TaskRegistrar
 				}
 				catch ( Throwable e )
 				{
-					Loader.getLogger().warning( "**** FAILED TO BIND HTTP SERVER TO PORT!" );
-					// Loader.getLogger().warning( "The exception was: {0}", new Object[] {e.toString()} );
-					Loader.getLogger().warning( "Perhaps a server is already running on that port?" );
+					getLogger().warning( "**** FAILED TO BIND HTTP SERVER TO PORT!" );
+					// getLogger().warning( "The exception was: {0}", new Object[] {e.toString()} );
+					getLogger().warning( "Perhaps a server is already running on that port?" );
 
 					throw new StartupException( e );
 				}
@@ -247,16 +247,16 @@ public class NetworkManager implements TaskRegistrar
 		try
 		{
 			InetSocketAddress socket;
-			String httpIp = Loader.getConfig().getString( "server.httpHost", "" );
-			int httpsPort = Loader.getConfig().getInt( "server.httpsPort", 8443 );
+			String httpIp = AppController.config().getString( "server.httpHost", "" );
+			int httpsPort = AppController.config().getInt( "server.httpsPort", 8443 );
 
 			if ( httpsPort >= 1 )
 			{
 				if ( Versioning.isPrivilegedPort( httpsPort ) )
 				{
-					Loader.getLogger().warning( "It would seem that you are trying to start ChioriWebServer's Web Server (SSL) on a privileged port without root access." );
-					Loader.getLogger().warning( "Most likely you will see an exception thrown below this. http://www.w3.org/Daemon/User/Installation/PrivilegedPorts.html" );
-					Loader.getLogger().warning( "It's recommended that you either run CWS (SSL) on a port like 4443 then use the firewall to redirect from 443 or run as root if you must use port: " + httpsPort );
+					getLogger().warning( "It would seem that you are trying to start ChioriWebServer's Web Server (SSL) on a privileged port without root access." );
+					getLogger().warning( "Most likely you will see an exception thrown below this. http://www.w3.org/Daemon/User/Installation/PrivilegedPorts.html" );
+					getLogger().warning( "It's recommended that you either run CWS (SSL) on a port like 4443 then use the firewall to redirect from 443 or run as root if you must use port: " + httpsPort );
 				}
 
 				if ( httpIp.isEmpty() )
@@ -264,9 +264,9 @@ public class NetworkManager implements TaskRegistrar
 				else
 					socket = new InetSocketAddress( httpIp, httpsPort );
 
-				SslManager.init();
+				AppManager.manager( SslManager.class ).init();
 
-				Loader.getLogger().info( "Starting Secure Web Server on " + ( httpIp.isEmpty() ? "*" : httpIp ) + ":" + httpsPort );
+				getLogger().info( "Starting Secure Web Server on " + ( httpIp.isEmpty() ? "*" : httpIp ) + ":" + httpsPort );
 
 				try
 				{
@@ -276,7 +276,7 @@ public class NetworkManager implements TaskRegistrar
 					httpsChannel = b.bind( socket ).sync().channel();
 
 					// HTTPS Server Thread
-					ServerBus.registerRunnable( new Runnable()
+					AppController.registerRunnable( new Runnable()
 					{
 						@Override
 						public void run()
@@ -290,7 +290,7 @@ public class NetworkManager implements TaskRegistrar
 								e.printStackTrace();
 							}
 
-							Loader.getLogger().info( "The HTTPS Server has been shutdown!" );
+							getLogger().info( "The HTTPS Server has been shutdown!" );
 						}
 					} );
 				}
@@ -300,8 +300,8 @@ public class NetworkManager implements TaskRegistrar
 				}
 				catch ( Throwable e )
 				{
-					Loader.getLogger().warning( "**** FAILED TO BIND HTTPS SERVER TO PORT!" );
-					Loader.getLogger().warning( "Perhaps a server is already running on that port?" );
+					getLogger().warning( "**** FAILED TO BIND HTTPS SERVER TO PORT!" );
+					getLogger().warning( "Perhaps a server is already running on that port?" );
 
 					throw new StartupException( e );
 				}
@@ -321,16 +321,16 @@ public class NetworkManager implements TaskRegistrar
 		try
 		{
 			InetSocketAddress socket;
-			String queryHost = Loader.getConfig().getString( "server.queryHost", "" );
-			int queryPort = Loader.getConfig().getInt( "server.queryPort", 8992 );
+			String queryHost = AppController.config().getString( "server.queryHost", "" );
+			int queryPort = AppController.config().getInt( "server.queryPort", 8992 );
 
-			if ( queryPort >= 1 && Loader.getConfig().getBoolean( "server.queryEnabled" ) )
+			if ( queryPort >= 1 && AppController.config().getBoolean( "server.queryEnabled" ) )
 			{
 				if ( Versioning.isPrivilegedPort( queryPort ) )
 				{
-					Loader.getLogger().warning( "It would seem that you are trying to start the Query Server on a privileged port without root access." );
-					Loader.getLogger().warning( "Most likely you will see an exception thrown below this. http://www.w3.org/Daemon/User/Installation/PrivilegedPorts.html" );
-					Loader.getLogger().warning( "It's recommended that you either run CWS on a port like 8080 then use the firewall to redirect or run as root if you must use port: " + queryPort );
+					getLogger().warning( "It would seem that you are trying to start the Query Server on a privileged port without root access." );
+					getLogger().warning( "Most likely you will see an exception thrown below this. http://www.w3.org/Daemon/User/Installation/PrivilegedPorts.html" );
+					getLogger().warning( "It's recommended that you either run CWS on a port like 8080 then use the firewall to redirect or run as root if you must use port: " + queryPort );
 				}
 
 				if ( queryHost.isEmpty() )
@@ -338,7 +338,7 @@ public class NetworkManager implements TaskRegistrar
 				else
 					socket = new InetSocketAddress( queryHost, queryPort );
 
-				Loader.getLogger().info( "Starting Query Server on " + ( queryHost.isEmpty() ? "*" : queryHost ) + ":" + queryPort );
+				getLogger().info( "Starting Query Server on " + ( queryHost.isEmpty() ? "*" : queryHost ) + ":" + queryPort );
 
 				try
 				{
@@ -348,7 +348,7 @@ public class NetworkManager implements TaskRegistrar
 					queryChannel = b.bind( socket ).sync().channel();
 
 					// Query Server Thread
-					ServerBus.registerRunnable( new Runnable()
+					AppController.registerRunnable( new Runnable()
 					{
 						@Override
 						public void run()
@@ -362,7 +362,7 @@ public class NetworkManager implements TaskRegistrar
 								e.printStackTrace();
 							}
 
-							Loader.getLogger().info( "The Query Server has been shutdown!" );
+							getLogger().info( "The Query Server has been shutdown!" );
 						}
 					} );
 				}
@@ -372,8 +372,8 @@ public class NetworkManager implements TaskRegistrar
 				}
 				catch ( Throwable e )
 				{
-					Loader.getLogger().warning( "**** FAILED TO BIND QUERY SERVER TO PORT!" );
-					Loader.getLogger().warning( "Perhaps a server is already running on that port?" );
+					getLogger().warning( "**** FAILED TO BIND QUERY SERVER TO PORT!" );
+					getLogger().warning( "Perhaps a server is already running on that port?" );
 
 					throw new StartupException( e );
 				}
@@ -392,7 +392,7 @@ public class NetworkManager implements TaskRegistrar
 
 	private NetworkManager()
 	{
-		TaskManager.INSTANCE.scheduleAsyncRepeatingTask( this, Ticks.SECOND_15, Ticks.SECOND_15, new Runnable()
+		TaskManager.instance().scheduleAsyncRepeatingTask( this, Ticks.SECOND_15, Ticks.SECOND_15, new Runnable()
 		{
 			@Override
 			public void run()
@@ -405,6 +405,12 @@ public class NetworkManager implements TaskRegistrar
 						SslInitializer.activeChannels.remove( ref );
 			}
 		} );
+	}
+
+	@Override
+	public String getLoggerId()
+	{
+		return "NetMgr";
 	}
 
 	@Override

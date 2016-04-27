@@ -14,7 +14,7 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 
-import com.chiorichan.plugin.lang.PluginException;
+import com.chiorichan.lang.PluginException;
 import com.chiorichan.plugin.loader.Plugin;
 
 public class EmailPlugin extends Plugin

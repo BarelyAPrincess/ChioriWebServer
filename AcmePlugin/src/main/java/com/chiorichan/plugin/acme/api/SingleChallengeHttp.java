@@ -8,11 +8,11 @@ import java.security.UnrecoverableKeyException;
 import java.util.TreeMap;
 
 import com.chiorichan.http.HttpCode;
+import com.chiorichan.lang.PluginNotFoundException;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.acme.AcmePlugin;
 import com.chiorichan.plugin.acme.lang.AcmeException;
 import com.chiorichan.plugin.acme.lang.AcmeState;
-import com.chiorichan.plugin.lang.PluginNotFoundException;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Ticks;
 import com.chiorichan.tasks.Timings;
@@ -52,7 +52,7 @@ public final class SingleChallengeHttp
 	{
 		if ( hasCallBack() )
 			if ( replace )
-				TaskManager.INSTANCE.cancelTask( callBackTask );
+				TaskManager.instance().cancelTask( callBackTask );
 			else
 				throw new IllegalStateException( "Can't schedule a challenge callback because one is already active" );
 
@@ -61,9 +61,9 @@ public final class SingleChallengeHttp
 
 		try
 		{
-			AcmePlugin plugin = ( AcmePlugin ) PluginManager.INSTANCE.getPluginByClass( AcmePlugin.class );
+			AcmePlugin plugin = ( AcmePlugin ) PluginManager.instance().getPluginByClass( AcmePlugin.class );
 
-			callBackTask = TaskManager.INSTANCE.scheduleAsyncRepeatingTask( plugin, Ticks.SECOND_5, Ticks.SECOND, new Runnable()
+			callBackTask = TaskManager.instance().scheduleAsyncRepeatingTask( plugin, Ticks.SECOND_5, Ticks.SECOND, new Runnable()
 			{
 				@Override
 				public void run()
@@ -74,7 +74,7 @@ public final class SingleChallengeHttp
 
 						if ( getState() != AcmeState.PENDING && getState() != AcmeState.CREATED )
 						{
-							TaskManager.INSTANCE.cancelTask( callBackTask );
+							TaskManager.instance().cancelTask( callBackTask );
 							callBackTask = 0;
 							runnable.run();
 						}
@@ -125,7 +125,7 @@ public final class SingleChallengeHttp
 
 	public int getLastChecked()
 	{
-		return AcmePlugin.INSTANCE.getSubConfig().getInt( "domains." + getFullDomain().replace( '.', '_' ) + ".challengeLastChecked", Timings.epoch() );
+		return AcmePlugin.instance().getSubConfig().getInt( "domains." + getFullDomain().replace( '.', '_' ) + ".challengeLastChecked", Timings.epoch() );
 	}
 
 	public AcmeState getState()
@@ -301,8 +301,8 @@ public final class SingleChallengeHttp
 
 	void setState( AcmeState state )
 	{
-		AcmePlugin.INSTANCE.getSubConfig().set( "domains." + getFullDomain().replace( '.', '_' ) + ".challengeState", state.name().toLowerCase() );
-		AcmePlugin.INSTANCE.getSubConfig().set( "domains." + getFullDomain().replace( '.', '_' ) + ".challengeLastChecked", Timings.epoch() );
+		AcmePlugin.instance().getSubConfig().set( "domains." + getFullDomain().replace( '.', '_' ) + ".challengeState", state.name().toLowerCase() );
+		AcmePlugin.instance().getSubConfig().set( "domains." + getFullDomain().replace( '.', '_' ) + ".challengeLastChecked", Timings.epoch() );
 		this.state = state;
 	}
 

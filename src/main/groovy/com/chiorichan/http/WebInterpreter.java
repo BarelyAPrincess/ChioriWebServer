@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.http;
@@ -20,7 +20,7 @@ import java.util.Map.Entry;
 
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 
-import com.chiorichan.Loader;
+import com.chiorichan.AppController;
 import com.chiorichan.factory.FileInterpreter;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.lang.HttpError;
@@ -43,7 +43,7 @@ public class WebInterpreter extends FileInterpreter
 		super();
 
 		File dest = null;
-		Routes routes = request.getSite().getRoutes();
+		Routes routes = request.getLocation().getRoutes();
 		boolean wasSuccessful = false;
 
 		String uri = request.getUri();
@@ -53,7 +53,7 @@ public class WebInterpreter extends FileInterpreter
 		fwRequest = uri.startsWith( "/wisp" );
 		if ( fwRequest )
 		{
-			Site fwSite = SiteManager.INSTANCE.getDefaultSite();
+			Site fwSite = SiteManager.instance().getDefaultSite();
 			routes = fwSite.getRoutes();
 			request.setSite( fwSite );
 			request.setUri( uri.substring( 5 ) );
@@ -81,7 +81,7 @@ public class WebInterpreter extends FileInterpreter
 		// Try to find the file on the local file system
 		if ( !wasSuccessful )
 		{
-			dest = new File( request.getSite().getSubdomain( subdomain ).directory(), uri );
+			dest = new File( request.getLocation().getSubdomain( subdomain ).directory(), uri );
 
 			if ( dest.isDirectory() )
 			{
@@ -107,9 +107,9 @@ public class WebInterpreter extends FileInterpreter
 				if ( selectedFile != null )
 				{
 					uri = uri + "/" + selectedFile.getName();
-					dest = new File( request.getSite().getSubdomain( subdomain ).directory(), uri );
+					dest = new File( request.getLocation().getSubdomain( subdomain ).directory(), uri );
 				}
-				else if ( Loader.getConfig().getBoolean( "server.allowDirectoryListing" ) )
+				else if ( AppController.config().getBoolean( "server.allowDirectoryListing" ) )
 					isDirectoryRequest = true;
 				else
 					throw new HttpError( 403, "Directory Listing is Disallowed on this Server!" );

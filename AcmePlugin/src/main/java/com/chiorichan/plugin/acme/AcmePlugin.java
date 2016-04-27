@@ -12,12 +12,14 @@ import java.security.UnrecoverableKeyException;
 import com.chiorichan.configuration.file.FileConfiguration;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.event.EventBus;
+import com.chiorichan.lang.PluginException;
+import com.chiorichan.lang.ReportingLevel;
+import com.chiorichan.lang.UncaughtException;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.plugin.acme.api.AcmeProtocol;
 import com.chiorichan.plugin.acme.api.AcmeStorage;
 import com.chiorichan.plugin.acme.certificate.CertificateMaintainer;
 import com.chiorichan.plugin.acme.lang.AcmeException;
-import com.chiorichan.plugin.lang.PluginException;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Ticks;
@@ -27,22 +29,22 @@ public class AcmePlugin extends Plugin
 {
 	protected static final String URL_TESTING = "https://acme-staging.api.letsencrypt.org";
 	protected static final String URL_PRODUCTION = "https://acme-v01.api.letsencrypt.org";
-	public static AcmePlugin INSTANCE = null;
+
+	public static AcmePlugin instance()
+	{
+		return Plugin.getPlugin( AcmePlugin.class );
+	}
 
 	private boolean production;
 	private String registrationUrl = null;
+
 	private String[] contacts = null;
-
 	private AcmeProtocol client;
+
 	private int acmeTaskId;
-
 	AcmeScheduledTask task = null;
-	YamlConfiguration subYaml = null;
 
-	public AcmePlugin()
-	{
-		INSTANCE = this;
-	}
+	YamlConfiguration subYaml = null;
 
 	public AcmeProtocol getClient()
 	{
@@ -72,14 +74,14 @@ public class AcmePlugin extends Plugin
 
 	public boolean isDefaultCertificateAllowed()
 	{
-		return AcmePlugin.INSTANCE.getConfig().getBoolean( "config.allowDefaultCertificate" );
+		return getConfig().getBoolean( "config.allowDefaultCertificate" );
 	}
 
 	@Override
 	public void onDisable() throws PluginException
 	{
 		if ( acmeTaskId > 0 )
-			TaskManager.INSTANCE.cancelTask( acmeTaskId );
+			TaskManager.instance().cancelTask( acmeTaskId );
 		saveConfig();
 	}
 
@@ -109,7 +111,8 @@ public class AcmePlugin extends Plugin
 		subYaml = YamlConfiguration.loadConfiguration( new File( getDataFolder(), "subconfig.yaml" ) );
 
 		File data = getDataFolder();
-		FileFunc.patchDirectory( data );
+		if ( !FileFunc.setDirectoryAccess( data ) )
+			throw new UncaughtException( ReportingLevel.E_ERROR, "Acme Plugin experienced a problem setting read and write access to directory \"" + FileFunc.relPath( data ) + "\"!" );
 
 		try
 		{
@@ -124,14 +127,14 @@ public class AcmePlugin extends Plugin
 				subYaml.set( "config.registrationUrl", registrationUrl );
 			}
 
-			EventBus.INSTANCE.registerEvents( new AcmeEventListener( this ), this );
+			EventBus.instance().registerEvents( new AcmeEventListener( this ), this );
 
 			task = new AcmeScheduledTask( this );
-			acmeTaskId = TaskManager.INSTANCE.scheduleAsyncRepeatingTask( this, 0L, Ticks.DAY, task );
+			acmeTaskId = TaskManager.instance().scheduleAsyncRepeatingTask( this, 0L, Ticks.DAY, task );
 		}
 		catch ( InvalidKeyException | KeyManagementException | UnrecoverableKeyException | SignatureException | NoSuchAlgorithmException | KeyStoreException | AcmeException | IOException e )
 		{
-			e.printStackTrace();
+			throw new PluginException( e );
 		}
 	}
 
@@ -143,7 +146,7 @@ public class AcmePlugin extends Plugin
 
 	public void runTask()
 	{
-		TaskManager.INSTANCE.runTaskAsynchronously( this, task );
+		TaskManager.instance().runTaskAsynchronously( this, task );
 	}
 
 	@Override

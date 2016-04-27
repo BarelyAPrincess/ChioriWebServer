@@ -103,6 +103,8 @@ public class AcmeUtils
 
 	public static X509Certificate extractCertificate( byte[] body ) throws AcmeException, StreamParsingException
 	{
+		if ( body.length == 0 )
+			throw new AcmeException( "Certificate body length is zero!" );
 		X509CertParser certParser = new X509CertParser();
 		certParser.engineInit( new ByteArrayInputStream( body ) );
 		X509Certificate certificate = ( X509Certificate ) certParser.engineRead();

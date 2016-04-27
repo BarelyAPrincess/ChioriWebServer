@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.factory.groovy;
@@ -31,20 +31,23 @@ import org.codehaus.groovy.control.messages.Message;
 import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
 import org.codehaus.groovy.syntax.SyntaxException;
 
+import com.chiorichan.AppController;
 import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountType;
 import com.chiorichan.account.auth.AccountAuthenticator;
 import com.chiorichan.event.EventBus;
-import com.chiorichan.factory.ExceptionCallback;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingEngine;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.factory.ScriptingRegistry;
-import com.chiorichan.lang.EvalException;
+import com.chiorichan.lang.ExceptionCallback;
+import com.chiorichan.lang.ExceptionContext;
+import com.chiorichan.lang.ExceptionReport;
 import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.SandboxSecurityException;
+import com.chiorichan.lang.ScriptingException;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.permission.References;
 import com.chiorichan.plugin.PluginManager;
@@ -84,7 +87,7 @@ public class GroovyRegistry implements ScriptingRegistry
 		imports.addStaticStars( staticImports );
 
 		// Transforms scripts to limit their execution to 30 seconds.
-		long timeout = Loader.getConfig().getLong( "advanced.security.defaultScriptTimeout", 30L );
+		long timeout = AppController.config().getLong( "advanced.security.defaultScriptTimeout", 30L );
 		if ( timeout > 0 )
 		{
 			Map<String, Object> timedInterruptParams = Maps.newHashMap();
@@ -102,10 +105,10 @@ public class GroovyRegistry implements ScriptingRegistry
 
 		ScriptingFactory.register( this );
 
-		EvalException.registerException( new ExceptionCallback()
+		ExceptionReport.registerException( new ExceptionCallback()
 		{
 			@Override
-			public ReportingLevel callback( Throwable cause, ScriptingContext context )
+			public ReportingLevel callback( Throwable cause, ExceptionReport report, ExceptionContext context )
 			{
 				MultipleCompilationErrorsException exp = ( MultipleCompilationErrorsException ) cause;
 				ErrorCollector e = exp.getErrorCollector();
@@ -114,45 +117,45 @@ public class GroovyRegistry implements ScriptingRegistry
 				for ( Object err : e.getErrors() )
 					if ( err instanceof Throwable )
 					{
-						if ( EvalException.exceptionHandler( ( Throwable ) err, context ) )
+						if ( report.handleException( ( Throwable ) err, context ) )
 							abort = true;
 					}
 					else if ( err instanceof ExceptionMessage )
 					{
-						if ( EvalException.exceptionHandler( ( ( ExceptionMessage ) err ).getCause(), context ) )
+						if ( report.handleException( ( ( ExceptionMessage ) err ).getCause(), context ) )
 							abort = true;
 					}
 					else if ( err instanceof SyntaxErrorMessage )
 					{
-						EvalException.exceptionHandler( ( ( SyntaxErrorMessage ) err ).getCause(), context );
+						report.handleException( ( ( SyntaxErrorMessage ) err ).getCause(), context );
 						abort = true;
 					}
 					else if ( err instanceof Message )
 					{
 						StringWriter writer = new StringWriter();
 						( ( Message ) err ).write( new PrintWriter( writer, true ) );
-						EvalException.exceptionHandler( new EvalException( ReportingLevel.E_NOTICE, writer.toString() ), context );
+						report.handleException( new ScriptingException( ReportingLevel.E_NOTICE, writer.toString() ), context );
 					}
 				return abort ? ReportingLevel.E_ERROR : ReportingLevel.E_IGNORABLE;
 			}
 		}, MultipleCompilationErrorsException.class );
 
-		EvalException.registerException( new ExceptionCallback()
+		ExceptionReport.registerException( new ExceptionCallback()
 		{
 			@Override
-			public ReportingLevel callback( Throwable cause, ScriptingContext context )
+			public ReportingLevel callback( Throwable cause, ExceptionReport report, ExceptionContext context )
 			{
-				context.result().addException( new EvalException( ReportingLevel.E_ERROR, cause ) );
+				report.addException( ReportingLevel.E_ERROR, cause );
 				return ReportingLevel.E_ERROR;
 			}
 		}, TimeoutException.class, MissingMethodException.class, CompilationFailedException.class, SandboxSecurityException.class, GroovyRuntimeException.class );
 
-		EvalException.registerException( new ExceptionCallback()
+		ExceptionReport.registerException( new ExceptionCallback()
 		{
 			@Override
-			public ReportingLevel callback( Throwable cause, ScriptingContext context )
+			public ReportingLevel callback( Throwable cause, ExceptionReport report, ExceptionContext context )
 			{
-				context.result().addException( new EvalException( ReportingLevel.E_PARSE, cause ) );
+				report.addException( ReportingLevel.E_PARSE, cause );
 				return ReportingLevel.E_PARSE;
 			}
 		}, SyntaxException.class );

@@ -27,7 +27,7 @@ import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.bouncycastle.x509.util.StreamParsingException;
 
-import com.chiorichan.Loader;
+import com.chiorichan.logger.Log;
 import com.chiorichan.plugin.acme.lang.AcmeException;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
@@ -67,7 +67,7 @@ public class AcmeStorage
 
 			for ( String domain : domains )
 			{
-				Site site = SiteManager.INSTANCE.getSiteByDomain( domain );
+				Site site = SiteManager.instance().getSiteByDomain( domain );
 
 				if ( site != null )
 				{
@@ -80,7 +80,7 @@ public class AcmeStorage
 					saveKeyPair( privateKey, first );
 				}
 				else
-					Loader.getLogger().warning( "Failed to find site for domain " + domain );
+					Log.get().warning( "Failed to find site for domain " + domain );
 			}
 
 			return first;
@@ -167,7 +167,7 @@ public class AcmeStorage
 
 			for ( String domain : domains )
 			{
-				Site site = SiteManager.INSTANCE.getSiteByDomain( domain );
+				Site site = SiteManager.instance().getSiteByDomain( domain );
 
 				if ( site != null )
 				{
@@ -187,7 +187,7 @@ public class AcmeStorage
 						}
 				}
 				else
-					Loader.getLogger().severe( "Failed for find site for domain " + domain );
+					Log.get().severe( "Failed for find site for domain " + domain );
 			}
 		}
 		catch ( IOException | StreamParsingException e )
@@ -253,7 +253,7 @@ public class AcmeStorage
 	{
 		for ( String domain : domains )
 		{
-			Site site = SiteManager.INSTANCE.getSiteByDomain( domain );
+			Site site = SiteManager.instance().getSiteByDomain( domain );
 
 			if ( site != null )
 				try ( OutputStream outputStream = new FileOutputStream( new File( site.directory( "ssl" ), "cert.csr" ) ) )
@@ -265,7 +265,7 @@ public class AcmeStorage
 					throw new AcmeException( e );
 				}
 			else
-				Loader.getLogger().severe( "Failed for find site for domain " + domain );
+				Log.get().severe( "Failed for find site for domain " + domain );
 		}
 	}
 

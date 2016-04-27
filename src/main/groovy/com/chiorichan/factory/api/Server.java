@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.factory.api;
@@ -11,13 +11,13 @@ package com.chiorichan.factory.api;
 import java.io.FileNotFoundException;
 import java.util.List;
 
-import com.chiorichan.Loader;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.http.HttpResponseWrapper;
+import com.chiorichan.lang.PluginNotFoundException;
+import com.chiorichan.logger.Log;
 import com.chiorichan.plugin.PluginManager;
-import com.chiorichan.plugin.lang.PluginNotFoundException;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.session.Session;
 import com.google.i18n.phonenumbers.NumberParseException;
@@ -35,7 +35,7 @@ public class Server
 	 * FYI, Absolute and .. paths are disallowed for security reasons
 	 *
 	 * @param pack
-	 *            The file relative
+	 *             The file relative
 	 * @return
 	 *         The EvalContext ready for eval() or read()
 	 * @throws FileNotFoundException
@@ -43,7 +43,7 @@ public class Server
 	public static ScriptingContext fileContext( String file ) throws FileNotFoundException
 	{
 		HttpRequestWrapper request = HttpRequestWrapper.getRequest();
-		return ScriptingContext.fromFile( request.getSite(), file ).request( request );
+		return ScriptingContext.fromFile( request.getLocation(), file ).request( request );
 	}
 
 	public static String formatPhone( String phone )
@@ -61,29 +61,29 @@ public class Server
 		}
 		catch ( NumberParseException e )
 		{
-			Loader.getLogger().warning( "NumberParseException was thrown: " + e.toString() );
+			Log.get().warning( "NumberParseException was thrown: " + e.toString() );
 			return phone;
 		}
 	}
 
 	public static Plugin getPluginbyClassname( String search ) throws PluginNotFoundException
 	{
-		return PluginManager.INSTANCE.getPluginByClassname( search );
+		return PluginManager.instance().getPluginByClassname( search );
 	}
 
 	public static Plugin getPluginbyClassnameWithoutException( String search )
 	{
-		return PluginManager.INSTANCE.getPluginByClassnameWithoutException( search );
+		return PluginManager.instance().getPluginByClassnameWithoutException( search );
 	}
 
 	public static Plugin getPluginByName( String search ) throws PluginNotFoundException
 	{
-		return PluginManager.INSTANCE.getPluginByName( search );
+		return PluginManager.instance().getPluginByName( search );
 	}
 
 	public static Plugin getPluginByNameWithoutException( String search )
 	{
-		return PluginManager.INSTANCE.getPluginByNameWithoutException( search );
+		return PluginManager.instance().getPluginByNameWithoutException( search );
 	}
 
 	public static List<ScriptTraceElement> getScriptTrace()
@@ -95,14 +95,14 @@ public class Server
 	 * Used to execute package file within the script.
 	 *
 	 * @param pack
-	 *            The package, e.g, com.chiorichan.widgets.sidemenu
+	 *             The package, e.g, com.chiorichan.widgets.sidemenu
 	 * @return
 	 *         The EvalContext ready for eval() or read()
 	 */
 	public static ScriptingContext packageContext( String pack )
 	{
 		HttpRequestWrapper request = HttpRequestWrapper.getRequest();
-		return ScriptingContext.fromPackage( request.getSite(), pack ).request( request );
+		return ScriptingContext.fromPackage( request.getLocation(), pack ).request( request );
 	}
 
 	public static HttpRequestWrapper request()

@@ -6,7 +6,7 @@
  */
 package com.chiorichan.plugin.console;
 
-import com.chiorichan.plugin.lang.PluginException;
+import com.chiorichan.lang.PluginException;
 import com.chiorichan.plugin.loader.Plugin;
 
 /**

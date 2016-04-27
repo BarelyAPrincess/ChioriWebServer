@@ -1,7 +1,10 @@
 /**
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com> All Right Reserved.
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * All Right Reserved.
  */
 package com.chiorichan.site;
 
@@ -18,13 +21,19 @@ import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.APILogger;
 import com.chiorichan.Loader;
-import com.chiorichan.ServerManager;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.datastore.file.FileDatastore;
+import com.chiorichan.lang.ApplicationException;
 import com.chiorichan.lang.SiteException;
 import com.chiorichan.lang.StartupException;
+import com.chiorichan.logger.Log;
+import com.chiorichan.logger.LogSource;
+import com.chiorichan.services.AppManager;
+import com.chiorichan.services.ObjectContext;
+import com.chiorichan.services.ServiceManager;
+import com.chiorichan.services.ServicePriority;
+import com.chiorichan.services.ServiceProvider;
 import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.NetworkFunc;
 import com.chiorichan.util.Pair;
@@ -36,41 +45,31 @@ import com.google.common.io.Files;
 /**
  * Manages and Loads Sites
  */
-public class SiteManager implements ServerManager
+public class SiteManager implements ServiceProvider, LogSource, ServiceManager
 {
-	public static final SiteManager INSTANCE = new SiteManager();
-	private static boolean isInitialized = false;
-
 	protected static File checkSiteRoot( String name )
 	{
 		File site = new File( Loader.getWebRoot(), name );
 
-		FileFunc.patchDirectory( site );
+		FileFunc.setDirectoryAccessWithException( site );
 
 		File publicDir = new File( site, "public/root" );
 		File resourceDir = new File( site, "resource" );
 
-		FileFunc.patchDirectory( publicDir );
-		FileFunc.patchDirectory( resourceDir );
+		FileFunc.setDirectoryAccessWithException( publicDir );
+		FileFunc.setDirectoryAccessWithException( resourceDir );
 
 		return site;
 	}
 
-	public static APILogger getLogger()
+	public static Log getLogger()
 	{
-		return Loader.getLogger( "SiteMgr" );
+		return AppManager.manager( SiteManager.class ).getLogger();
 	}
 
-	public static void init()
+	public static SiteManager instance()
 	{
-		if ( isInitialized )
-			throw new IllegalStateException( "The Site Manager has already been initialized." );
-
-		assert INSTANCE != null;
-
-		INSTANCE.init0();
-
-		isInitialized = true;
+		return AppManager.manager( SiteManager.class ).instance();
 	}
 
 	Map<String, Site> sites = Maps.newConcurrentMap();
@@ -124,6 +123,12 @@ public class SiteManager implements ServerManager
 		};
 	}
 
+	@Override
+	public String getLoggerId()
+	{
+		return "SiteMgr";
+	}
+
 	public Site getSiteByDomain( String domain )
 	{
 		if ( domain == null || domain.length() == 0 )
@@ -164,12 +169,14 @@ public class SiteManager implements ServerManager
 		return Collections.unmodifiableCollection( sites.values() );
 	}
 
-	private void init0() throws StartupException
+	@Override
+	public void init() throws ApplicationException
 	{
+		AppManager.registerService( Site.class, this, new ObjectContext( this ), ServicePriority.Normal );
 		loadSites();
 	}
 
-	public void loadSites()
+	public void loadSites() throws ApplicationException
 	{
 		if ( sites.size() > 0 )
 			throw new StartupException( "Site manager already has sites loaded. You must unload first." );
@@ -245,16 +252,23 @@ public class SiteManager implements ServerManager
 		return siteList;
 	}
 
-	public void reload()
+	public void reload() throws ApplicationException
 	{
 		sites = new LinkedHashMap<String, Site>();
 		init();
 	}
 
-	public void unloadSites() throws IOException
+	public void unloadSites()
 	{
 		for ( Site site : sites.values() )
-			site.save( true );
+			try
+			{
+				site.save( true );
+			}
+			catch ( IOException e )
+			{
+				Log.get().severe( e );
+			}
 
 		sites.clear();
 	}

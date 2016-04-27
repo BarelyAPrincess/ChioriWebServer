@@ -3,17 +3,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.http;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
-import com.chiorichan.Loader;
+import com.chiorichan.AppLoader;
 import com.chiorichan.configuration.apache.ApacheDirective;
 import com.chiorichan.configuration.apache.ApacheDirectiveException;
 import com.chiorichan.configuration.apache.ApacheSection;
@@ -171,6 +170,7 @@ public class ApacheHandler
 	private final Map<Integer, ErrorDocument> errorDocuments = new HashMap<>();
 	private final OptionsSet options = new OptionsSet();
 	private final OverridesSet overrides = new OverridesSet();
+
 	// private final Set<OverrideDirective> directives = new HashSet<OverrideDirective>();
 
 	public ErrorDocument getErrorDocument( int httpCode )
@@ -208,14 +208,14 @@ public class ApacheHandler
 				case "IfDefine":
 					kv.isSection();
 					kv.hasArguments( 1, "<Startup Argument>" );
-					if ( Arrays.asList( Loader.getStartupArguments() ).contains( args[0] ) )
+					if ( AppLoader.options().has( args[0] ) || AppLoader.options().hasArgument( args[0] ) )
 						if ( !handleDirectives( ( ApacheSection ) kv, handler ) )
 							def = false;
 					break;
 				case "IfModule": // TODO Implement detection of common Apache modules the server can currently imitate, e.g., Rewrite
 					kv.isSection();
 					kv.hasArguments( 1, "<plugin>" );
-					if ( PluginManager.INSTANCE.getPluginByNameWithoutException( args[0] ) != null || PluginManager.INSTANCE.getPluginByClassnameWithoutException( args[0] ) != null )
+					if ( PluginManager.instance().getPluginByNameWithoutException( args[0] ) != null || PluginManager.instance().getPluginByClassnameWithoutException( args[0] ) != null )
 						if ( !handleDirectives( ( ApacheSection ) kv, handler ) )
 							def = false;
 					break;

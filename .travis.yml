@@ -21,3 +21,7 @@ cache:
   - $HOME/.gradle/daemon
   - $HOME/.gradle/caches/jars-1
   - $HOME/.gradle/caches/2.8
+branches:
+  only:
+    - master
+

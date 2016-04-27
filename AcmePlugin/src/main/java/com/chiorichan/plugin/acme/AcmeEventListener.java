@@ -29,7 +29,7 @@ public class AcmeEventListener implements Listener
 	@EventHandler( priority = EventPriority.NORMAL )
 	public void onCertificateDefaultEvent( SslCertificateDefaultEvent event )
 	{
-		if ( AcmePlugin.INSTANCE.isDefaultCertificateAllowed() && CertificateMaintainer.getDefaultCertificate() != null )
+		if ( AcmePlugin.instance().isDefaultCertificateAllowed() && CertificateMaintainer.getDefaultCertificate() != null )
 			event.setContext( CertificateMaintainer.getDefaultCertificateContext() );
 	}
 

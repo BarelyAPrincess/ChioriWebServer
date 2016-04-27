@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan;
@@ -24,7 +24,11 @@ import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Map;
 
+import com.chiorichan.lang.ApplicationException;
 import com.chiorichan.lang.StartupException;
+import com.chiorichan.logger.Log;
+import com.chiorichan.services.AppManager;
+import com.chiorichan.services.ServiceManager;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.TaskRegistrar;
 import com.chiorichan.tasks.Ticks;
@@ -35,7 +39,7 @@ import com.google.common.collect.Maps;
  * Provides a simple file watching service for the Server
  * Common detections will be the main jar and plugins
  */
-public class ServerFileWatcher implements Runnable, ServerManager, TaskRegistrar
+public class ServerFileWatcher implements Runnable, ServiceManager, TaskRegistrar
 {
 	public interface EventCallback
 	{
@@ -112,26 +116,22 @@ public class ServerFileWatcher implements Runnable, ServerManager, TaskRegistrar
 		}
 	}
 
-	public static final ServerFileWatcher INSTANCE = new ServerFileWatcher();
-
-	private static boolean isInitialized = false;
-
 	@SuppressWarnings( "unchecked" )
 	static <T> WatchEvent<T> cast( WatchEvent<?> event )
 	{
 		return ( WatchEvent<T> ) event;
 	}
-	public static void init() throws StartupException
+
+	public static Log getLogger()
 	{
-		if ( isInitialized )
-			throw new IllegalStateException( "The Server File Watcher has already been initialized." );
-
-		assert INSTANCE != null;
-
-		INSTANCE.init0();
-
-		isInitialized = true;
+		return AppManager.manager( ServerFileWatcher.class ).getLogger();
 	}
+
+	public static ServerFileWatcher instance()
+	{
+		return AppManager.manager( ServerFileWatcher.class ).instance();
+	}
+
 	private final Map<String, TriggerRef> triggerReferences = Maps.newLinkedHashMap();
 
 	private final Thread watcherThread;
@@ -157,20 +157,21 @@ public class ServerFileWatcher implements Runnable, ServerManager, TaskRegistrar
 	}
 
 	@Override
+	public String getLoggerId()
+	{
+		return "FileWatcher";
+	}
+
+	@Override
 	public String getName()
 	{
 		return "ServerFileWatcher";
 	}
 
-	/**
-	 * Initializes the Server File Watcher
-	 *
-	 * @throws StartupException
-	 *              If there was any problems
-	 */
-	private void init0() throws StartupException
+	@Override
+	public void init() throws ApplicationException
 	{
-		TaskManager.INSTANCE.scheduleAsyncRepeatingTask( this, Ticks.SECOND_5, Ticks.SECOND_5, new Runnable()
+		TaskManager.instance().scheduleAsyncRepeatingTask( this, Ticks.SECOND_5, Ticks.SECOND_5, new Runnable()
 		{
 			@Override
 			public void run()
@@ -213,9 +214,9 @@ public class ServerFileWatcher implements Runnable, ServerManager, TaskRegistrar
 
 		WatchRef prev = keys.get( key );
 		if ( prev == null )
-			Loader.getLogger().fine( String.format( "Now watching directory '%s' for changes", dir ) );
+			getLogger().fine( String.format( "Now watching directory '%s' for changes", dir ) );
 		else if ( !dir.equals( prev.path ) )
-			Loader.getLogger().fine( String.format( "Updated directory watch from '%s' to '%s'", prev.path, dir ) );
+			getLogger().fine( String.format( "Updated directory watch from '%s' to '%s'", prev.path, dir ) );
 
 		keys.put( key, ref );
 	}

@@ -8,8 +8,8 @@ package com.chiorichan.plugin.dropbox;
 
 import java.util.Locale;
 
-import com.chiorichan.plugin.lang.PluginException;
-import com.chiorichan.plugin.lang.PluginUnconfiguredException;
+import com.chiorichan.lang.PluginException;
+import com.chiorichan.lang.PluginUnconfiguredException;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.util.Versioning;
 import com.dropbox.core.DbxAppInfo;

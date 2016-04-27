@@ -2,7 +2,6 @@ package com.chiorichan.plugin.template;
 
 import io.netty.buffer.Unpooled;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,25 +9,26 @@ import java.util.Map;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
-import com.chiorichan.Loader;
+import com.chiorichan.AppController;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
 import com.chiorichan.event.http.HttpExceptionEvent;
-import com.chiorichan.event.server.RenderEvent;
+import com.chiorichan.event.http.RenderEvent;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.factory.ScriptingResult;
-import com.chiorichan.lang.EvalException;
-import com.chiorichan.lang.EvalMultipleException;
-import com.chiorichan.lang.ReportingLevel;
-import com.chiorichan.plugin.lang.PluginException;
+import com.chiorichan.lang.ExceptionReport;
+import com.chiorichan.lang.MultipleException;
+import com.chiorichan.lang.PluginException;
+import com.chiorichan.lang.ScriptingException;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.util.Namespace;
+import com.chiorichan.util.ServerFunc;
 import com.chiorichan.util.StringFunc;
 import com.chiorichan.util.Versioning;
 import com.google.common.collect.Lists;
@@ -57,7 +57,7 @@ public class Template extends Plugin implements Listener
 	 * }
 	 */
 
-	private String generateExceptionPage( Throwable t, ScriptingFactory factory ) throws EvalException, EvalMultipleException, IOException
+	private String generateExceptionPage( Throwable t, ScriptingFactory factory ) throws Exception
 	{
 		Validate.notNull( t );
 		Validate.notNull( factory );
@@ -72,9 +72,9 @@ public class Template extends Plugin implements Listener
 		String codeSample = "";
 		ScriptTraceElement[] scriptTrace = null;
 
-		if ( t instanceof EvalException )
+		if ( t instanceof ScriptingException )
 		{
-			scriptTrace = ( ( EvalException ) t ).getScriptTrace();
+			scriptTrace = ( ( ScriptingException ) t ).getScriptTrace();
 
 			if ( t.getCause() != null )
 				t = t.getCause();
@@ -161,7 +161,7 @@ public class Template extends Plugin implements Listener
 		ScriptingResult result = TemplateUtils.wrapAndEval( factory, ob.toString() );
 
 		if ( result.hasExceptions() )
-			ReportingLevel.throwExceptions( result.getExceptions() );
+			ExceptionReport.throwExceptions( result.getExceptions() );
 
 		return result.getString();
 	}
@@ -188,7 +188,7 @@ public class Template extends Plugin implements Listener
 	public void onEnable() throws PluginException
 	{
 		saveDefaultConfig();
-		EventBus.INSTANCE.registerEvents( this, this );
+		EventBus.instance().registerEvents( this, this );
 	}
 
 	@EventHandler( priority = EventPriority.NORMAL )
@@ -227,7 +227,7 @@ public class Template extends Plugin implements Listener
 	}
 
 	@EventHandler( priority = EventPriority.NORMAL )
-	public void onRenderEvent( RenderEvent event ) throws IOException
+	public void onRenderEvent( RenderEvent event ) throws Exception
 	{
 		try
 		{
@@ -235,7 +235,7 @@ public class Template extends Plugin implements Listener
 			Map<String, String> fwVals = event.getParams();
 
 			if ( site == null )
-				site = SiteManager.INSTANCE.getDefaultSite();
+				site = SiteManager.instance().getDefaultSite();
 
 			if ( fwVals.get( "themeless" ) != null && StringFunc.isTrue( fwVals.get( "themeless" ) ) )
 				return;
@@ -272,7 +272,7 @@ public class Template extends Plugin implements Listener
 
 			String siteTitle;
 			if ( site.getTitle() == null || site.getTitle().isEmpty() )
-				siteTitle = Loader.getConfig().getString( "framework.sites.defaultTitle", "Unnamed Site" );
+				siteTitle = AppController.config().getString( "framework.sites.defaultTitle", "Unnamed Site" );
 			else
 				siteTitle = site.getTitle();
 
@@ -283,8 +283,8 @@ public class Template extends Plugin implements Listener
 			else
 				ob.append( "<title>" + title + " - " + siteTitle + "</title>\n" );
 
-			for ( String tag : site.getMetatags() )
-				ob.append( tag + "\n" );
+			// for ( String tag : site.getMetatags() )
+			// ob.append( tag + "\n" );
 
 			boolean showCommons = !getConfig().getBoolean( "config.noCommons" );
 
@@ -342,9 +342,9 @@ public class Template extends Plugin implements Listener
 					pageData = pageData.replace( pageMark, viewData );
 
 			if ( pageData.indexOf( pageMark ) < 0 )
-				pageData = pageData + StringFunc.byteBuf2String( event.getSource(), event.getEncoding() );
+				pageData = pageData + ServerFunc.byteBuf2String( event.getSource(), event.getEncoding() );
 			else
-				pageData = pageData.replace( pageMark, StringFunc.byteBuf2String( event.getSource(), event.getEncoding() ) );
+				pageData = pageData.replace( pageMark, ServerFunc.byteBuf2String( event.getSource(), event.getEncoding() ) );
 
 			ob.append( pageData + "\n" );
 
@@ -356,24 +356,24 @@ public class Template extends Plugin implements Listener
 
 			event.setSource( Unpooled.buffer().writeBytes( ob.toString().getBytes() ) );
 		}
-		catch ( EvalException | EvalMultipleException e )
+		catch ( ScriptingException | MultipleException e )
 		{
 			event.getResponse().sendException( e );
 		}
 	}
 
-	private ScriptingResult packageEval( String pack, RenderEvent event ) throws EvalException, EvalMultipleException
+	private ScriptingResult packageEval( String pack, RenderEvent event ) throws Exception
 	{
 		ScriptingContext context = ScriptingContext.fromPackage( event.getSite(), pack ).request( event.getRequest() ).require();
 		ScriptingResult result = event.getRequest().getEvalFactory().eval( context );
 
 		if ( result.hasNonIgnorableExceptions() )
-			ReportingLevel.throwExceptions( result.getExceptions() );
+			ExceptionReport.throwExceptions( result.getExceptions() );
 
 		return result;
 	}
 
-	private String packageRead( String pack, RenderEvent event ) throws EvalException, EvalMultipleException
+	private String packageRead( String pack, RenderEvent event ) throws ScriptingException, MultipleException
 	{
 		ScriptingContext context = ScriptingContext.fromPackage( event.getSite(), pack ).request( event.getRequest() );
 		context.require( !getConfig().getBoolean( "config.ignoreFileNotFound" ) );

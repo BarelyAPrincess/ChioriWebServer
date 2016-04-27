@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.factory;
@@ -13,7 +13,7 @@ import io.netty.buffer.ByteBuf;
 import java.nio.charset.Charset;
 import java.util.List;
 
-import com.chiorichan.lang.EvalException;
+import com.chiorichan.lang.ScriptingException;
 
 /**
  * Interpreters are commonly used to process commands and create dynamic content, most notably the groovy scripts.
@@ -31,7 +31,7 @@ public interface ScriptingEngine
 	 *         Context finished execution
 	 * @throws Exception
 	 *             Provided simply for convenience, keep in mind that if any unique exceptions need special handling
-	 *             when thrown, you will need to register them with {@link EvalException#registerException(EvalCallback, Class...)}.
+	 *             when thrown, you will need to register them with {@link ScriptingException#registerException(EvalCallback, Class...)}.
 	 */
 	boolean eval( ScriptingContext context ) throws Exception;
 	

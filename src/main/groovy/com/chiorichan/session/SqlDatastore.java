@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.session;
@@ -13,7 +13,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
-import com.chiorichan.Loader;
+import com.chiorichan.AppController;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.datastore.sql.query.SQLQuerySelect;
 import com.chiorichan.permission.PermissionManager;
@@ -38,7 +38,7 @@ public class SqlDatastore extends SessionDatastore
 			this.sessionId = sessionId;
 
 			ipAddr = wrapper.getIpAddr();
-			site = wrapper.getSite().getSiteId();
+			site = wrapper.getLocation().getId();
 
 			save();
 		}
@@ -48,8 +48,8 @@ public class SqlDatastore extends SessionDatastore
 		{
 			try
 			{
-				if ( Loader.getDatabase().table( "sessions" ).delete().where( "sessionId" ).matches( sessionId ).execute().rowCount() < 1 )
-					Loader.getLogger().severe( "Failed to remove the session '" + sessionId + "' from the database, no results." );
+				if ( AppController.config().getDatabase().table( "sessions" ).delete().where( "sessionId" ).matches( sessionId ).execute().rowCount() < 1 )
+					SessionManager.getLogger().severe( "Failed to remove the session '" + sessionId + "' from the database, no results." );
 			}
 			catch ( SQLException e )
 			{
@@ -87,7 +87,7 @@ public class SqlDatastore extends SessionDatastore
 		{
 			try
 			{
-				SQLQuerySelect select = Loader.getDatabase().table( "sessions" ).select().where( "sessionId" ).matches( sessionId ).execute();
+				SQLQuerySelect select = AppController.config().getDatabase().table( "sessions" ).select().where( "sessionId" ).matches( sessionId ).execute();
 				// rs = Loader.getDatabase().query( "SELECT * FROM `sessions` WHERE `sessionId` = '" + sessionId + "'" );
 				if ( select.rowCount() < 1 )
 					return;
@@ -105,7 +105,7 @@ public class SqlDatastore extends SessionDatastore
 			try
 			{
 				String dataJson = new Gson().toJson( data );
-				SQLDatastore sql = Loader.getDatabase();
+				SQLDatastore sql = AppController.config().getDatabase();
 
 				if ( sql == null )
 					throw new SessionException( "Sessions can't be stored in a SQL Database without a properly configured server database." );
@@ -139,7 +139,7 @@ public class SqlDatastore extends SessionDatastore
 	List<SessionData> getSessions() throws SessionException
 	{
 		List<SessionData> data = Lists.newArrayList();
-		SQLDatastore sql = Loader.getDatabase();
+		SQLDatastore sql = AppController.config().getDatabase();
 
 		if ( sql == null )
 			throw new SessionException( "Sessions can't be stored in a SQL Database without a properly configured server database." );
@@ -171,7 +171,7 @@ public class SqlDatastore extends SessionDatastore
 		}
 		catch ( SQLException e )
 		{
-			Loader.getLogger().warning( "There was a problem reloading saved sessions.", e );
+			SessionManager.getLogger().warning( "There was a problem reloading saved sessions.", e );
 		}
 
 		PermissionManager.getLogger().info( "SqlSession loaded " + data.size() + " sessions from the datastore in " + Timings.finish( this ) + "ms!" );

@@ -3,16 +3,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.event.site;
 
 import com.chiorichan.event.Cancellable;
-import com.chiorichan.event.server.ServerEvent;
+import com.chiorichan.event.application.ApplicationEvent;
 import com.chiorichan.site.Site;
 
-public class SiteLoadEvent extends ServerEvent implements Cancellable
+public class SiteLoadEvent extends ApplicationEvent implements Cancellable
 {
 	Site site;
 	boolean cancelled;

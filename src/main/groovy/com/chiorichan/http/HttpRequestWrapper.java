@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.http;
@@ -36,15 +36,16 @@ import java.util.logging.Level;
 
 import org.apache.commons.lang3.Validate;
 
+import com.chiorichan.AppController;
 import com.chiorichan.Loader;
-import com.chiorichan.LogColor;
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.auth.AccountAuthenticator;
 import com.chiorichan.account.lang.AccountDescriptiveReason;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
-import com.chiorichan.logger.LogEvent;
+import com.chiorichan.lang.EnumColor;
+import com.chiorichan.logger.experimental.LogEvent;
 import com.chiorichan.messaging.MessageSender;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.session.Session;
@@ -77,7 +78,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	/**
 	 * Return maps as unmodifiable
 	 */
-	private static boolean unmodifiableMaps = Loader.getConfig().getBoolean( "advanced.security.unmodifiableMapsEnabled", true );
+	private static boolean unmodifiableMaps = AppController.config().getBoolean( "advanced.security.unmodifiableMapsEnabled", true );
 
 	public static HttpRequestWrapper getRequest()
 	{
@@ -211,12 +212,12 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		if ( host == null || host.length() == 0 )
 		{
 			parentDomain = "";
-			site = SiteManager.INSTANCE.getDefaultSite();
+			site = SiteManager.instance().getDefaultSite();
 		}
 		else if ( NetworkFunc.isValidIPv4( host ) || NetworkFunc.isValidIPv6( host ) )
 		{
 			parentDomain = host;
-			site = SiteManager.INSTANCE.getSiteByIp( host ).get( 0 );
+			site = SiteManager.instance().getSiteByIp( host ).get( 0 );
 		}
 		else
 		{
@@ -225,7 +226,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			if ( match == null )
 			{
 				parentDomain = host;
-				site = SiteManager.INSTANCE.getDefaultSite();
+				site = SiteManager.instance().getDefaultSite();
 			}
 			else
 			{
@@ -241,14 +242,14 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		}
 
 		if ( site == null )
-			site = SiteManager.INSTANCE.getDefaultSite();
+			site = SiteManager.instance().getDefaultSite();
 
-		if ( site == SiteManager.INSTANCE.getDefaultSite() && getUri().startsWith( "/~" ) )
+		if ( site == SiteManager.instance().getDefaultSite() && getUri().startsWith( "/~" ) )
 		{
 			List<String> uris = Splitter.on( "/" ).omitEmptyStrings().splitToList( getUri() );
 			String siteId = uris.get( 0 ).substring( 1 );
 
-			Site siteTmp = SiteManager.INSTANCE.getSiteById( siteId );
+			Site siteTmp = SiteManager.instance().getSiteById( siteId );
 			if ( !siteId.equals( "wisp" ) && siteTmp != null )
 			{
 				site = siteTmp;
@@ -299,7 +300,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			}
 			catch ( IllegalArgumentException | NullPointerException e )
 			{
-				Loader.getLogger().debug( var1 );
+				//NetworkManager.getLogger().debug( var1 );
 
 				NetworkManager.getLogger().severe( "Failed to parse cookie for reason: " + e.getMessage() );
 				// NetworkManager.getLogger().warning( "There was a problem decoding the request cookie.", e );
@@ -588,6 +589,14 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		return ( ( InetSocketAddress ) channel.localAddress() ).getPort();
 	}
 
+	@Override
+	public Site getLocation()
+	{
+		if ( site == null )
+			site = SiteManager.instance().getDefaultSite();
+		return site;
+	}
+
 	public HttpRequest getOriginal()
 	{
 		return http;
@@ -690,12 +699,9 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		return null;
 	}
 
-	@Override
 	public Site getSite()
 	{
-		if ( site == null )
-			site = SiteManager.INSTANCE.getDefaultSite();
-		return site;
+		return getLocation();
 	}
 
 	public String getSubdomain()
@@ -787,7 +793,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	{
 		vars.put( ServerVars.SERVER_SOFTWARE, Versioning.getProduct() );
 		vars.put( ServerVars.SERVER_VERSION, Versioning.getVersion() );
-		vars.put( ServerVars.SERVER_ADMIN, Loader.getConfig().getString( "server.admin", "me@chiorichan.com" ) );
+		vars.put( ServerVars.SERVER_ADMIN, AppController.config().getString( "server.admin", "me@chiorichan.com" ) );
 		vars.put( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Versioning.getVersion() );
 		vars.put( ServerVars.HTTP_VERSION, http.protocolVersion() );
 		vars.put( ServerVars.HTTP_ACCEPT, getHeader( "Accept" ) );
@@ -1059,7 +1065,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		boolean remember = getArgumentBoolean( "remember" );
 		String target = getArgument( "target" );
 
-		String loginPost = target == null || target.isEmpty() ? getSite().getConfig().getString( "scripts.login-post", "/" ) : target;
+		String loginPost = target == null || target.isEmpty() ? getLocation().getConfig().getString( "scripts.login-post", "/" ) : target;
 
 		if ( loginPost.isEmpty() )
 			loginPost = "/";
@@ -1071,7 +1077,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 				if ( !ssl )
 					AccountManager.getLogger().warning( "It is highly recommended that account logins are submitted over SSL. Without SSL, passwords are at great risk." );
 
-				if ( !nonceProcessed() && Loader.getConfig().getBoolean( "accounts.requireLoginWithNonce" ) )
+				if ( !nonceProcessed() && AppController.config().getBoolean( "accounts.requireLoginWithNonce" ) )
 					throw new AccountException( AccountDescriptiveReason.NONCE_REQUIRED, username );
 
 				AccountResult result = getSession().loginWithException( AccountAuthenticator.PASSWORD, username, password );
@@ -1080,7 +1086,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 				session.remember( remember );
 
-				SessionManager.getLogger().info( LogColor.GREEN + "Successful Login: [id='" + acct.getId() + "',siteId='" + acct.getSiteId() + "',authenticator='plaintext']" );
+				SessionManager.getLogger().info( EnumColor.GREEN + "Successful Login: [id='" + acct.getId() + "',siteId='" + ( acct.getLocation() == null ? null : acct.getLocation().getId() ) + "',authenticator='plaintext']" );
 
 				if ( site.getLoginPost() != null )
 					getResponse().sendRedirect( site.getLoginPost() );
@@ -1099,7 +1105,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 					msg = result.getCause().getMessage();
 				}
 
-				AccountManager.getLogger().warning( LogColor.RED + "Failed Login [id='" + username + "',hasPassword='" + ( password != null && password.length() > 0 ) + "',authenticator='plaintext'`,reason='" + msg + "']" );
+				AccountManager.getLogger().warning( EnumColor.RED + "Failed Login [id='" + username + "',hasPassword='" + ( password != null && password.length() > 0 ) + "',authenticator='plaintext'`,reason='" + msg + "']" );
 				getResponse().sendLoginPage( result.getMessage(), null, target );
 			}
 			catch ( Throwable t )
@@ -1133,7 +1139,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		// Will we ever be using a session on more than one domains?
 		if ( !getDomain().isEmpty() && session.getSessionCookie() != null && !session.getSessionCookie().getDomain().isEmpty() )
 			if ( !session.getSessionCookie().getDomain().endsWith( getDomain() ) )
-				NetworkManager.getLogger().warning( "The site `" + site.getSiteId() + "` specifies the session cookie domain as `" + session.getSessionCookie().getDomain() + "` but the request was made on domain `" + getDomain() + "`. The session will not remain persistent." );
+				NetworkManager.getLogger().warning( "The site `" + site.getId() + "` specifies the session cookie domain as `" + session.getSessionCookie().getDomain() + "` but the request was made on domain `" + getDomain() + "`. The session will not remain persistent." );
 
 		return false;
 	}

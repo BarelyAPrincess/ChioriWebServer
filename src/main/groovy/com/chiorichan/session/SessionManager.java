@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.session;
@@ -15,12 +15,14 @@ import java.util.Set;
 
 import org.apache.commons.lang3.text.WordUtils;
 
-import com.chiorichan.APILogger;
-import com.chiorichan.Loader;
-import com.chiorichan.LogColor;
-import com.chiorichan.ServerManager;
+import com.chiorichan.AppController;
 import com.chiorichan.http.HttpCookie;
+import com.chiorichan.lang.EnumColor;
 import com.chiorichan.lang.StartupException;
+import com.chiorichan.logger.Log;
+import com.chiorichan.logger.LogSource;
+import com.chiorichan.services.AppManager;
+import com.chiorichan.services.ServiceManager;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.TaskRegistrar;
 import com.chiorichan.tasks.Ticks;
@@ -33,17 +35,15 @@ import com.google.common.collect.Sets;
 /**
  * Persistence manager handles sessions kept in memory. It also manages when to unload the session to free memory.
  */
-public class SessionManager implements TaskRegistrar, ServerManager
+public class SessionManager implements TaskRegistrar, ServiceManager, LogSource
 {
-	public static final SessionManager INSTANCE = new SessionManager();
-	private static boolean isInitialized = false;
-
 	public static final int MANUAL = 0;
 	public static final int EXPIRED = 1;
 	public static final int MAXPERIP = 2;
 
 	static List<Session> sessions = Lists.newCopyOnWriteArrayList();
 	static boolean isDebug = false;
+
 	/**
 	 * Gets the Default Session Name
 	 *
@@ -51,7 +51,7 @@ public class SessionManager implements TaskRegistrar, ServerManager
 	 */
 	public static String getDefaultSessionName()
 	{
-		return "_ws" + WordUtils.capitalize( Loader.getConfig().getString( "sessions.defaultCookieName", "sessionId" ) );
+		return "_ws" + WordUtils.capitalize( AppController.config().getString( "sessions.defaultCookieName", "sessionId" ) );
 	}
 
 	/**
@@ -61,7 +61,7 @@ public class SessionManager implements TaskRegistrar, ServerManager
 	 */
 	public static int getDefaultTimeout()
 	{
-		return Loader.getConfig().getInt( "sessions.defaultTimeout", 3600 );
+		return AppController.config().getInt( "sessions.defaultTimeout", 3600 );
 	}
 
 	/**
@@ -71,7 +71,7 @@ public class SessionManager implements TaskRegistrar, ServerManager
 	 */
 	public static int getDefaultTimeoutWithLogin()
 	{
-		return Loader.getConfig().getInt( "sessions.defaultTimeoutWithLogin", 86400 );
+		return AppController.config().getInt( "sessions.defaultTimeoutWithLogin", 86400 );
 	}
 
 	/**
@@ -81,30 +81,22 @@ public class SessionManager implements TaskRegistrar, ServerManager
 	 */
 	public static int getDefaultTimeoutWithRememberMe()
 	{
-		return Loader.getConfig().getInt( "sessions.defaultTimeoutRememberMe", 604800 );
+		return AppController.config().getInt( "sessions.defaultTimeoutRememberMe", 604800 );
 	}
 
 	/**
-	 * Get the {@link com.chiorichan.APILogger} instance for this SessionManager
+	 * Get the {@link com.chiorichan.LogAPI} instance for this SessionManager
 	 *
 	 * @return ConsoleLogger instance
 	 */
-	public static APILogger getLogger()
+	public static Log getLogger()
 	{
-		return Loader.getLogger( "SessMgr" );
+		return AppManager.manager( SessionManager.class ).getLogger();
 	}
 
-	public static void init() throws StartupException
+	public static SessionManager instance()
 	{
-		if ( isInitialized )
-			throw new IllegalStateException( "The Session Manager has already been initialized." );
-
-		assert INSTANCE != null;
-
-		INSTANCE.init0();
-
-		isInitialized = true;
-
+		return AppManager.manager( SessionManager.class ).instance();
 	}
 
 	/**
@@ -131,10 +123,10 @@ public class SessionManager implements TaskRegistrar, ServerManager
 	 * Creates a fresh {@link Session} and saves it's reference.
 	 *
 	 * @param wrapper
-	 *            The {@link SessionWrapper} to reference
+	 *             The {@link SessionWrapper} to reference
 	 * @return The hot out of the oven Session
 	 * @throws SessionException
-	 *             If there was a problem - seriously!
+	 *              If there was a problem - seriously!
 	 */
 	public Session createSession( SessionWrapper wrapper ) throws SessionException
 	{
@@ -142,6 +134,12 @@ public class SessionManager implements TaskRegistrar, ServerManager
 		session.newSession = true;
 		sessions.add( session );
 		return session;
+	}
+
+	@Override
+	public String getLoggerId()
+	{
+		return "SessMgr";
 	}
 
 	@Override
@@ -164,7 +162,7 @@ public class SessionManager implements TaskRegistrar, ServerManager
 	 * Retrieves a list of {@link Session}s based on the Ip Address provided.
 	 *
 	 * @param ipAddr
-	 *            The Ip Address to check for
+	 *             The Ip Address to check for
 	 * @return A List of Sessions that matched
 	 */
 	public List<Session> getSessionsByIp( String ipAddr )
@@ -182,18 +180,19 @@ public class SessionManager implements TaskRegistrar, ServerManager
 	 * Initializes the Session Manager
 	 *
 	 * @throws StartupException
-	 *             If there was any problems
+	 *              If there was any problems
 	 */
-	private void init0() throws StartupException
+	@Override
+	public void init() throws StartupException
 	{
 		try
 		{
-			isDebug = Loader.getConfig().getBoolean( "sessions.debug" );
+			isDebug = AppController.config().getBoolean( "sessions.debug" );
 
-			String datastoreType = Loader.getConfig().getString( "sessions.datastore", "file" );
+			String datastoreType = AppController.config().getString( "sessions.datastore", "file" );
 
 			if ( "db".equalsIgnoreCase( datastoreType ) || "database".equalsIgnoreCase( datastoreType ) || "sql".equalsIgnoreCase( datastoreType ) )
-				if ( Loader.getDatabase() == null )
+				if ( AppController.config().getDatabase() == null )
 					getLogger().severe( "Session Manager's datastore is configured to use database but the server's database is unconfigured. Falling back to the file datastore." );
 				else
 					datastore = new SqlDatastore();
@@ -232,7 +231,7 @@ public class SessionManager implements TaskRegistrar, ServerManager
 		/*
 		 * This schedules the Session Manager with the Scheduler to run every 5 minutes (by default) to cleanup sessions.
 		 */
-		TaskManager.INSTANCE.scheduleAsyncRepeatingTask( this, 0L, Ticks.MINUTE * Loader.getConfig().getInt( "sessions.cleanupInterval", 5 ), new Runnable()
+		TaskManager.instance().scheduleAsyncRepeatingTask( this, 0L, Ticks.MINUTE * AppController.config().getInt( "sessions.cleanupInterval", 5 ), new Runnable()
 		{
 			@Override
 			public void run()
@@ -252,7 +251,7 @@ public class SessionManager implements TaskRegistrar, ServerManager
 	 * Reloads the currently loaded sessions from their Datastore
 	 *
 	 * @throws SessionException
-	 *             If there was problems
+	 *              If there was problems
 	 */
 	public void reload() throws SessionException
 	{
@@ -291,7 +290,7 @@ public class SessionManager implements TaskRegistrar, ServerManager
 			else
 				knownIps.addAll( sess.getIpAddresses() );
 
-		int maxPerIp = Loader.getConfig() == null ? 6 : Loader.getConfig().getInt( "sessions.maxSessionsPerIP", 6 );
+		int maxPerIp = AppController.config().getInt( "sessions.maxSessionsPerIP", 6 );
 
 		for ( String ip : knownIps )
 		{
@@ -324,7 +323,7 @@ public class SessionManager implements TaskRegistrar, ServerManager
 		}
 
 		if ( cleanupCount > 0 )
-			getLogger().info( LogColor.DARK_AQUA + "The cleanup task recycled " + cleanupCount + " session(s)." );
+			getLogger().info( EnumColor.DARK_AQUA + "The cleanup task recycled " + cleanupCount + " session(s)." );
 
 		isCleanupRunning = false;
 	}
@@ -363,7 +362,7 @@ public class SessionManager implements TaskRegistrar, ServerManager
 
 	public Session startSession( SessionWrapper wrapper ) throws SessionException
 	{
-		String sessionKey = wrapper.getSite().getSessionKey();
+		String sessionKey = wrapper.getLocation().getSessionKey();
 		Session session = null;
 
 		HttpCookie cookie = wrapper.getServerCookie( sessionKey );
@@ -381,7 +380,7 @@ public class SessionManager implements TaskRegistrar, ServerManager
 
 		/*
 		 * XXX We need to evaluate the security risk behind doing this? Might just need removal.
-		 * if ( Loader.getConfig().getBoolean( "sessions.reuseVacantSessions", true ) )
+		 * if ( AppController.config().getBoolean( "sessions.reuseVacantSessions", true ) )
 		 * for ( Session s : sessions )
 		 * if ( s.getIpAddr() != null && s.getIpAddr().equals( wrapper.getIpAddr() ) && !s.getUserState() )
 		 * return s;
@@ -398,5 +397,5 @@ public class SessionManager implements TaskRegistrar, ServerManager
 	}
 
 	// int defaultLife = ( getSite().getYaml() != null ) ? getSite().getYaml().getInt( "sessions.lifetimeDefault", 604800 ) : 604800;
-	// timeout = CommonFunc.getEpoch() + Loader.getConfig().getInt( "sessions.defaultTimeout", 3600 );
+	// timeout = CommonFunc.getEpoch() + AppController.config().getInt( "sessions.defaultTimeout", 3600 );
 }

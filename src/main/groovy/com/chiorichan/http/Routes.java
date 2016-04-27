@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.http;
@@ -16,11 +16,11 @@ import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 
-import com.chiorichan.Loader;
-import com.chiorichan.datastore.Datastore;
+import com.chiorichan.AppController;
 import com.chiorichan.datastore.sql.SQLTable;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.datastore.sql.query.SQLQuerySelect;
+import com.chiorichan.logger.Log;
 import com.chiorichan.site.Site;
 import com.chiorichan.util.MapCaster;
 import com.google.common.collect.Maps;
@@ -97,13 +97,13 @@ public class Routes
 
 				try
 				{
-					SQLDatastore sql = Loader.getDatabase();
+					SQLDatastore sql = AppController.config().getDatabase();
 
 					if ( sql != null && sql.initalized() )
 					{
 						if ( !sql.table( "pages" ).exists() )
 						{
-							Datastore.getLogger().info( "We detected the non-existence of table 'pages' in the server database, we will attempt to create it now." );
+							Log.get().info( "We detected the non-existence of table 'pages' in the server database, we will attempt to create it now." );
 
 							SQLTable table = sql.table( "pages" );
 							table.addColumnVar( "site", 255 );
@@ -157,10 +157,10 @@ public class Routes
 				if ( matches.size() > 0 )
 					return ( Route ) matches.values().toArray()[0];
 				else
-					Loader.getLogger().fine( "Failed to find a page redirect for... '" + subdomain + "." + domain + "' '" + uri + "'" );
+					Log.get().fine( "Failed to find a page redirect for... '" + subdomain + "." + domain + "' '" + uri + "'" );
 			}
 			else
-				Loader.getLogger().fine( "Failed to find a page redirect for... '" + subdomain + "." + domain + "' '" + uri + "'" );
+				Log.get().fine( "Failed to find a page redirect for... '" + subdomain + "." + domain + "' '" + uri + "'" );
 
 			return null;
 		}

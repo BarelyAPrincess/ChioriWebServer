@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan;
@@ -15,6 +15,7 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.Properties;
 
+import com.chiorichan.logger.Log;
 import com.google.common.collect.Maps;
 
 /**
@@ -24,16 +25,16 @@ import com.google.common.collect.Maps;
 public class InterpreterOverrides
 {
 	static Map<String, String> interpreters = Maps.newLinkedHashMap();
-	
+
 	static
 	{
 		try
 		{
 			File contentTypes = new File( "InterpreterOverrides.properties" );
-			
+
 			if ( !contentTypes.exists() )
 				contentTypes.createNewFile();
-			
+
 			InputStream isDefault = Loader.class.getClassLoader().getResourceAsStream( "com/chiorichan/InterpreterOverrides.properties" );
 			InputStream is = new FileInputStream( contentTypes );
 			try
@@ -43,7 +44,7 @@ public class InterpreterOverrides
 				prop.load( is );
 				for ( Object o : prop.keySet() )
 					if ( o instanceof String )
-						interpreters.put( ( String ) o, ( String ) prop.get( ( String ) o ) );
+						interpreters.put( ( String ) o, ( String ) prop.get( o ) );
 			}
 			finally
 			{
@@ -53,15 +54,15 @@ public class InterpreterOverrides
 		}
 		catch ( IOException e )
 		{
-			Loader.getLogger().severe( "Could not load the InterpreterOverride properties file, exact error was: " + e.getMessage() );
+			Log.get().severe( "Could not load the InterpreterOverride properties file, exact error was: " + e.getMessage() );
 		}
 	}
-	
+
 	public static String getFileExtension( File file )
 	{
 		return getFileExtension( file.getName() );
 	}
-	
+
 	public static String getFileExtension( String file )
 	{
 		try
@@ -74,36 +75,28 @@ public class InterpreterOverrides
 			return "";
 		}
 	}
-	
+
 	public static String getShellForExt( String ext )
 	{
 		if ( ext.isEmpty() )
 			return null;
-		
+
 		if ( interpreters != null && interpreters.containsKey( ext.toLowerCase() ) )
-		{
 			return interpreters.get( ext.toLowerCase() );
-		}
 		else
-		{
 			return null;
-		}
 	}
-	
+
 	public static String getShellForFile( File file )
 	{
 		String ext = getFileExtension( file ).toLowerCase();
-		
+
 		if ( ext.isEmpty() )
 			return null;
-		
+
 		if ( interpreters != null && interpreters.containsKey( ext ) )
-		{
 			return interpreters.get( ext );
-		}
 		else
-		{
 			return null;
-		}
 	}
 }

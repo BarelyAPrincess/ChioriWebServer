@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.factory.event;
@@ -28,13 +28,14 @@ import javax.imageio.ImageIO;
 
 import org.apache.commons.io.FileUtils;
 
-import com.chiorichan.Loader;
-import com.chiorichan.LogColor;
+import com.chiorichan.AppController;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.Listener;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.http.HttpRequestWrapper;
+import com.chiorichan.lang.EnumColor;
+import com.chiorichan.logger.Log;
 import com.chiorichan.util.SecureFunc;
 
 /**
@@ -72,7 +73,7 @@ public class PostImageProcessor implements Listener
 			float x = -1;
 			float y = -1;
 
-			boolean cacheEnabled = Loader.getConfig().getBoolean( "advanced.processors.imageProcessorCache", true );
+			boolean cacheEnabled = AppController.config().getBoolean( "advanced.processors.imageProcessorCache", true );
 			boolean grayscale = false;
 
 			ScriptingContext context = event.context();
@@ -173,7 +174,7 @@ public class PostImageProcessor implements Listener
 
 			// Produce a unique encapsulated id based on this image processing request
 			String encapId = SecureFunc.md5( context.filename() + w1 + h1 + request.getArgument( "argb" ) + grayscale );
-			File tmp = context.site() == null ? Loader.getTempFileDirectory() : context.site().directoryTemp();
+			File tmp = context.site() == null ? AppController.config().getDirectoryCache() : context.site().directoryTemp();
 			File file = new File( tmp, encapId + "_" + new File( context.filename() ).getName() );
 
 			if ( cacheEnabled && file.exists() )
@@ -182,7 +183,7 @@ public class PostImageProcessor implements Listener
 				return;
 			}
 
-			Image image = resize ? img.getScaledInstance( Math.round( w1 ), Math.round( h1 ), Loader.getConfig().getBoolean( "advanced.processors.useFastGraphics", true ) ? Image.SCALE_FAST : Image.SCALE_SMOOTH ) : img;
+			Image image = resize ? img.getScaledInstance( Math.round( w1 ), Math.round( h1 ), AppController.config().getBoolean( "advanced.processors.useFastGraphics", true ) ? Image.SCALE_FAST : Image.SCALE_SMOOTH ) : img;
 
 			// TODO Report malformed parameters to user
 
@@ -204,7 +205,7 @@ public class PostImageProcessor implements Listener
 			}
 
 			if ( resize )
-				Loader.getLogger().info( LogColor.GRAY + "Resized image from " + Math.round( w ) + "px by " + Math.round( h ) + "px to " + Math.round( w1 ) + "px by " + Math.round( h1 ) + "px" );
+				Log.get().info( EnumColor.GRAY + "Resized image from " + Math.round( w ) + "px by " + Math.round( h ) + "px to " + Math.round( w1 ) + "px by " + Math.round( h1 ) + "px" );
 
 			if ( rtn != null )
 			{

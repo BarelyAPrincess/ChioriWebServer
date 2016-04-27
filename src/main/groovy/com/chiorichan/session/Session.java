@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.session;
@@ -16,21 +16,22 @@ import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.Loader;
-import com.chiorichan.LogColor;
+import com.chiorichan.AppController;
 import com.chiorichan.account.AccountInstance;
 import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.Kickable;
+import com.chiorichan.account.auth.AccountAuthenticator;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
-import com.chiorichan.event.server.MessageEvent;
+import com.chiorichan.event.account.MessageEvent;
 import com.chiorichan.event.session.SessionDestroyEvent;
 import com.chiorichan.http.HttpCookie;
 import com.chiorichan.http.Nonce;
+import com.chiorichan.lang.EnumColor;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
@@ -115,7 +116,7 @@ public final class Session extends AccountPermissible implements Kickable
 	/**
 	 * The site this session is bound to
 	 */
-	private Site site = SiteManager.INSTANCE.getDefaultSite();
+	private Site site = SiteManager.instance().getDefaultSite();
 
 	private Nonce nonce = null;
 
@@ -129,12 +130,12 @@ public final class Session extends AccountPermissible implements Kickable
 		sessionKey = data.sessionName;
 		timeout = data.timeout;
 		knownIps.addAll( Splitter.on( "|" ).splitToList( data.ipAddr ) );
-		site = SiteManager.INSTANCE.getSiteById( data.site );
+		site = SiteManager.instance().getSiteById( data.site );
 
 		if ( site == null )
 		{
-			site = SiteManager.INSTANCE.getDefaultSite();
-			data.site = site.getSiteId();
+			site = SiteManager.instance().getDefaultSite();
+			data.site = site.getId();
 		}
 
 		timeout = data.timeout;
@@ -162,7 +163,7 @@ public final class Session extends AccountPermissible implements Kickable
 		// XXX New Session, Requested Session, Loaded Session
 
 		if ( SessionManager.isDebug() )
-			SessionManager.getLogger().info( LogColor.DARK_AQUA + "Session " + ( data.stale ? "Loaded" : "Created" ) + " `" + this + "`" );
+			SessionManager.getLogger().info( EnumColor.DARK_AQUA + "Session " + ( data.stale ? "Loaded" : "Created" ) + " `" + this + "`" );
 
 		initialized();
 	}
@@ -185,9 +186,18 @@ public final class Session extends AccountPermissible implements Kickable
 	public void destroy( int reasonCode ) throws SessionException
 	{
 		if ( SessionManager.isDebug() )
-			Loader.getLogger().info( LogColor.DARK_AQUA + "Session Destroyed `" + this + "`" );
+			SessionManager.getLogger().info( EnumColor.DARK_AQUA + "Session Destroyed `" + this + "`" );
 
-		EventBus.INSTANCE.callEvent( new SessionDestroyEvent( this, reasonCode ) );
+		EventBus.instance().callEvent( new SessionDestroyEvent( this, reasonCode ) );
+
+		// Account Auth Section
+		if ( "token".equals( getVariable( "auth" ) ) )
+		{
+			Validate.notNull( getVariable( "acctId" ) );
+			Validate.notNull( getVariable( "token" ) );
+
+			AccountAuthenticator.TOKEN.deleteToken( getVariable( "acctId" ), getVariable( "token" ) );
+		}
 
 		SessionManager.sessions.remove( this );
 
@@ -293,6 +303,15 @@ public final class Session extends AccountPermissible implements Kickable
 		return ips;
 	}
 
+	@Override
+	public Site getLocation()
+	{
+		if ( site == null )
+			return SiteManager.instance().getDefaultSite();
+		else
+			return site;
+	}
+
 	public String getName()
 	{
 		return sessionKey;
@@ -323,21 +342,6 @@ public final class Session extends AccountPermissible implements Kickable
 		return wrappers.toSet();
 	}
 
-	@Override
-	public Site getSite()
-	{
-		if ( site == null )
-			return SiteManager.INSTANCE.getDefaultSite();
-		else
-			return site;
-	}
-
-	@Override
-	public String getSiteId()
-	{
-		return getSite().getName();
-	}
-
 	public long getTimeout()
 	{
 		return timeout;
@@ -355,13 +359,13 @@ public final class Session extends AccountPermissible implements Kickable
 		if ( !data.data.containsKey( key ) || data.data.get( key ) == null )
 		{
 			if ( SessionManager.isDebug )
-				SessionManager.getLogger().info( String.format( "%sGetting variable key `%s` which resulted in default value '%s'", LogColor.GRAY, key, def ) );
+				SessionManager.getLogger().info( String.format( "%sGetting variable key `%s` which resulted in default value '%s'", EnumColor.GRAY, key, def ) );
 
 			return def;
 		}
 
 		if ( SessionManager.isDebug )
-			SessionManager.getLogger().info( String.format( "%sGetting variable key `%s` with value '%s' and default value '%s'", LogColor.GRAY, key, data.data.get( key ), def ) );
+			SessionManager.getLogger().info( String.format( "%sGetting variable key `%s` with value '%s' and default value '%s'", EnumColor.GRAY, key, data.data.get( key ), def ) );
 
 		return data.data.get( key );
 	}
@@ -445,8 +449,8 @@ public final class Session extends AccountPermissible implements Kickable
 		{
 			assert sessionId != null && !sessionId.isEmpty();
 
-			sessionKey = getSite().getSessionKey();
-			sessionCookie = new HttpCookie( getSite().getSessionKey(), sessionId ).setDomain( "." + domain ).setPath( "/" ).setHttpOnly( true );
+			sessionKey = getLocation().getSessionKey();
+			sessionCookie = new HttpCookie( getLocation().getSessionKey(), sessionId ).setDomain( "." + domain ).setPath( "/" ).setHttpOnly( true );
 			rearmTimeout();
 		}
 
@@ -455,10 +459,10 @@ public final class Session extends AccountPermissible implements Kickable
 		 * If so, we move the old session to the general cookie array and set it as expired.
 		 * This usually forces the browser to delete the old session cookie.
 		 */
-		if ( !sessionCookie.getKey().equals( getSite().getSessionKey() ) )
+		if ( !sessionCookie.getKey().equals( getLocation().getSessionKey() ) )
 		{
 			String oldKey = sessionCookie.getKey();
-			sessionCookie.setKey( getSite().getSessionKey() );
+			sessionCookie.setKey( getLocation().getSessionKey() );
 			sessionCookies.put( oldKey, new HttpCookie( oldKey, "" ).setExpiration( 0 ) );
 		}
 	}
@@ -489,7 +493,7 @@ public final class Session extends AccountPermissible implements Kickable
 			if ( StringFunc.isTrue( getVariable( "remember", "false" ) ) )
 				defaultTimeout = SessionManager.getDefaultTimeoutWithRememberMe();
 
-			if ( Loader.getConfig().getBoolean( "allowNoTimeoutPermission" ) && checkPermission( "com.chiorichan.noTimeout" ).isTrue() )
+			if ( AppController.config().getBoolean( "allowNoTimeoutPermission" ) && checkPermission( "com.chiorichan.noTimeout" ).isTrue() )
 				defaultTimeout = Integer.MAX_VALUE;
 		}
 
@@ -605,7 +609,7 @@ public final class Session extends AccountPermissible implements Kickable
 
 		Validate.notNull( site );
 		this.site = site;
-		data.site = site.getSiteId();
+		data.site = site.getId();
 	}
 
 	@Override
@@ -654,7 +658,7 @@ public final class Session extends AccountPermissible implements Kickable
 	public void unload()
 	{
 		if ( SessionManager.isDebug() )
-			Loader.getLogger().info( LogColor.DARK_AQUA + "Session Unloaded `" + this + "`" );
+			SessionManager.getLogger().info( EnumColor.DARK_AQUA + "Session Unloaded `" + this + "`" );
 
 		SessionManager.sessions.remove( this );
 

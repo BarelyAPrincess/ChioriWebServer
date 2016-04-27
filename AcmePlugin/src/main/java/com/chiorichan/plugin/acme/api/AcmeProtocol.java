@@ -19,14 +19,17 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.Validate;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.x509.util.StreamParsingException;
 
-import com.chiorichan.Loader;
-import com.chiorichan.LogColor;
 import com.chiorichan.http.HttpCode;
+import com.chiorichan.lang.EnumColor;
+import com.chiorichan.logger.Log;
 import com.chiorichan.plugin.acme.AcmePlugin;
 import com.chiorichan.plugin.acme.lang.AcmeException;
 import com.chiorichan.plugin.acme.lang.AcmeForbiddenError;
@@ -35,6 +38,7 @@ import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.util.NetworkFunc;
 import com.chiorichan.util.StringFunc;
+import com.chiorichan.util.TrustManagerFactory;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -66,7 +70,10 @@ public class AcmeProtocol
 
 		Validate.notNull( keyPair );
 
-		byte[] result = NetworkFunc.readUrl( url );
+		byte[] result = NetworkFunc.readUrl( url, true );
+
+		if ( result == null || result.length == 0 )
+			throw new AcmeException( "AcmePlugin failed to get CA directory from url \"" + url + "\", result was null!" );
 
 		JsonElement element = new JsonParser().parse( new String( result ) );
 		JsonObject obj = element.getAsJsonObject();
@@ -79,7 +86,7 @@ public class AcmeProtocol
 
 	public AcmeState checkDomainVerification( String domain, String subdomain, boolean force ) throws AcmeException
 	{
-		AcmePlugin plugin = AcmePlugin.INSTANCE;
+		AcmePlugin plugin = AcmePlugin.instance();
 
 		SingleChallengeHttp sac = validateDomain( challenge, domain, subdomain, force );
 
@@ -88,12 +95,12 @@ public class AcmeProtocol
 
 		if ( sac.isValid() )
 		{
-			Loader.getLogger().fine( LogColor.DARK_AQUA + String.format( "%s: Domain verified as valid!", subdomain == null ? domain : subdomain + "." + domain ) );
+			Log.get().fine( EnumColor.DARK_AQUA + String.format( "%s: Domain verified as valid!", subdomain == null ? domain : subdomain + "." + domain ) );
 			return AcmeState.SUCCESS;
 		}
 		else if ( sac.isPending() )
 		{
-			Site site = SiteManager.INSTANCE.getSiteByDomain( sac.getDomain() );
+			Site site = SiteManager.instance().getSiteByDomain( sac.getDomain() );
 			if ( site == null )
 				challenge.remove( sac );
 			else if ( !sac.hasCallBack() && sac.getChallengeToken() != null )
@@ -117,14 +124,14 @@ public class AcmeProtocol
 						acmeChallengeFile.delete();
 
 						if ( !sac.isValid() )
-							plugin.getLogger().info( LogColor.RED + sac.getFullDomain() + ": Domain Challenge Failed for reason " + sac.getState() + " " + sac.lastMessage() );
+							plugin.getLogger().info( EnumColor.RED + sac.getFullDomain() + ": Domain Challenge Failed for reason " + sac.getState() + " " + sac.lastMessage() );
 						else
-							plugin.getLogger().info( LogColor.AQUA + sac.getFullDomain() + ": Domain Challenge Success" );
+							plugin.getLogger().info( EnumColor.AQUA + sac.getFullDomain() + ": Domain Challenge Success" );
 					}
 				} );
 			}
 
-			Loader.getLogger().info( LogColor.AQUA + String.format( "%s: Verification Pending", subdomain == null ? domain : subdomain + "." + domain ) );
+			Log.get().info( EnumColor.AQUA + String.format( "%s: Verification Pending", subdomain == null ? domain : subdomain + "." + domain ) );
 			return AcmeState.PENDING;
 		}
 		else
@@ -236,7 +243,19 @@ public class AcmeProtocol
 				URL url = new URL( urlNewReg );
 
 				HttpURLConnection.setFollowRedirects( false );
-				HttpURLConnection connection = ( HttpURLConnection ) url.openConnection();
+				HttpsURLConnection connection = ( HttpsURLConnection ) url.openConnection();
+
+				try
+				{
+					SSLContext ctx = SSLContext.getInstance( "SSL" );
+					ctx.init( null, TrustManagerFactory.getTrustManagers(), null );
+					connection.setSSLSocketFactory( ctx.getSocketFactory() );
+				}
+				catch ( KeyManagementException | NoSuchAlgorithmException e )
+				{
+					Log.get().severe( "Failed to set the SSL Factory, so all certificates are accepted.", e );
+				}
+
 				connection.setRequestMethod( "HEAD" );
 				connection.connect();
 
@@ -278,7 +297,7 @@ public class AcmeProtocol
 
 	private SingleChallengeHttp validateDomain( AcmeChallenge challenge, String domain, String subdomain, boolean force ) throws AcmeException
 	{
-		AcmePlugin plugin = AcmePlugin.INSTANCE;
+		AcmePlugin plugin = AcmePlugin.instance();
 
 		try
 		{

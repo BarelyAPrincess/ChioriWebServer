@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.factory;
@@ -24,9 +24,10 @@ import joptsimple.internal.Strings;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.net.util.Charsets;
 
+import com.chiorichan.AppController;
 import com.chiorichan.ContentTypes;
 import com.chiorichan.InterpreterOverrides;
-import com.chiorichan.Loader;
+import com.chiorichan.logger.Log;
 import com.google.common.collect.Maps;
 
 public class FileInterpreter
@@ -66,7 +67,7 @@ public class FileInterpreter
 
 	public FileInterpreter()
 	{
-		encoding = Charsets.toCharset( Loader.getConfig().getString( "server.defaultBinaryEncoding", "ISO-8859-1" ) );
+		encoding = Charsets.toCharset( AppController.config().getString( "server.defaultBinaryEncoding", "ISO-8859-1" ) );
 
 		// All param keys are lower case. No such thing as a non-lowercase param keys because keys are forced to lowercase.
 		annotations.put( "title", null );
@@ -126,9 +127,9 @@ public class FileInterpreter
 			type = ContentTypes.getContentType( cachedFile.getAbsoluteFile() );
 
 		if ( type.startsWith( "text" ) )
-			setEncoding( Charsets.toCharset( Loader.getConfig().getString( "server.defaultTextEncoding", "UTF-8" ) ) );
+			setEncoding( Charsets.toCharset( AppController.config().getString( "server.defaultTextEncoding", "UTF-8" ) ) );
 		else
-			setEncoding( Charsets.toCharset( Loader.getConfig().getString( "server.defaultBinaryEncoding", "ISO-8859-1" ) ) );
+			setEncoding( Charsets.toCharset( AppController.config().getString( "server.defaultBinaryEncoding", "ISO-8859-1" ) ) );
 
 		return type;
 	}
@@ -228,13 +229,13 @@ public class FileInterpreter
 								val = val.substring( 1, val.length() - 1 );
 
 							annotations.put( key.toLowerCase(), val );
-							Loader.getLogger().finer( "Setting param '" + key + "' to '" + val + "'" );
+							Log.get().finer( "Setting param '" + key + "' to '" + val + "'" );
 
 							if ( key.equals( "encoding" ) )
 								if ( Charset.isSupported( val ) )
 									setEncoding( Charsets.toCharset( val ) );
 								else
-									Loader.getLogger().severe( "The file '" + file.getAbsolutePath() + "' requested encoding '" + val + "' but it's not supported by the JVM!" );
+									Log.get().severe( "The file '" + file.getAbsolutePath() + "' requested encoding '" + val + "' but it's not supported by the JVM!" );
 						}
 						catch ( NullPointerException | ArrayIndexOutOfBoundsException e )
 						{

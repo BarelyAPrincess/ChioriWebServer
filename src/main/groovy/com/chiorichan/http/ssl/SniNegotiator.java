@@ -1,3 +1,11 @@
+/**
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * All Right Reserved.
+ */
 package com.chiorichan.http.ssl;
 
 import io.netty.buffer.ByteBuf;
@@ -21,7 +29,6 @@ import javax.net.ssl.SSLEngine;
 
 import org.apache.commons.io.FileUtils;
 
-import com.chiorichan.Loader;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.util.FileFunc;
@@ -110,7 +117,7 @@ public class SniNegotiator extends ByteToMessageDecoder
 		}
 		catch ( IOException e )
 		{
-			Loader.getLogger().severe( "Could not load the EnabledCipherSuites file", e );
+			SslManager.getLogger().severe( "Could not load the EnabledCipherSuites file", e );
 		}
 
 		if ( enabledCipherSuites.size() == 0 )
@@ -136,7 +143,7 @@ public class SniNegotiator extends ByteToMessageDecoder
 				hostname = IDN.toASCII( hostname, IDN.ALLOW_UNASSIGNED ).toLowerCase( Locale.US );
 			this.hostname = hostname;
 
-			selectedContext = SslManager.INSTANCE.map( hostname );
+			selectedContext = SslManager.instance().map( hostname );
 
 			if ( handshaken )
 			{

@@ -1,7 +1,10 @@
 /**
- * This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com> All Right Reserved.
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * All Right Reserved.
  */
 package com.chiorichan.http.ssl;
 
@@ -25,43 +28,34 @@ import javax.net.ssl.SSLException;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
-import com.chiorichan.APILogger;
-import com.chiorichan.Loader;
-import com.chiorichan.LogColor;
-import com.chiorichan.ServerManager;
+import com.chiorichan.AppController;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.http.SslCertificateDefaultEvent;
 import com.chiorichan.event.http.SslCertificateMapEvent;
 import com.chiorichan.factory.api.Builtin;
+import com.chiorichan.lang.EnumColor;
 import com.chiorichan.lang.StartupException;
+import com.chiorichan.logger.Log;
 import com.chiorichan.net.NetworkManager;
+import com.chiorichan.services.AppManager;
+import com.chiorichan.services.ServiceManager;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.util.FileFunc;
 import com.google.common.base.Joiner;
 
-public class SslManager implements ServerManager, Mapping<String, SslContext>
+public class SslManager implements ServiceManager, Mapping<String, SslContext>
 {
-	public static final SslManager INSTANCE = new SslManager();
-	private static boolean isInitialized = false;
-
 	private static final Pattern DNS_WILDCARD_PATTERN = Pattern.compile( "^\\*\\..*" );
 
-	public static APILogger getLogger()
+	public static Log getLogger()
 	{
-		return Loader.getLogger( "SSL" );
+		return AppManager.manager( SslManager.class ).getLogger();
 	}
 
-	public static void init() throws StartupException
+	public static SslManager instance()
 	{
-		if ( isInitialized )
-			throw new IllegalStateException( "The SSL Manager has already been initialized." );
-
-		assert INSTANCE != null;
-
-		INSTANCE.init0();
-
-		isInitialized = true;
+		return AppManager.manager( SslManager.class ).instance();
 	}
 
 	public static boolean matches( String hostNameTemplate, String hostName )
@@ -93,6 +87,7 @@ public class SslManager implements ServerManager, Mapping<String, SslContext>
 
 	private File lastSslCert;
 	private File lastSslKey;
+
 	private String lastSslSecret;
 
 	private SslContext serverContext;
@@ -114,26 +109,33 @@ public class SslManager implements ServerManager, Mapping<String, SslContext>
 		return lastSslKey;
 	}
 
+	@Override
+	public String getLoggerId()
+	{
+		return "SSL";
+	}
+
 	public File getServerCertificateFile()
 	{
-		return new File( Loader.getConfig().getString( "server.httpsSharedCert", "server.crt" ) );
+		return new File( AppController.config().getString( "server.httpsSharedCert", "server.crt" ) );
 	}
 
 	public String getServerCertificateSecret()
 	{
-		return Loader.getConfig().getString( "server.httpsSharedSecret" );
+		return AppController.config().getString( "server.httpsSharedSecret" );
 	}
 
 	public File getServerKeyFile()
 	{
-		return new File( Loader.getConfig().getString( "server.httpsSharedKey", "server.key" ) );
+		return new File( AppController.config().getString( "server.httpsSharedKey", "server.key" ) );
 	}
 
-	public void init0() throws StartupException
+	@Override
+	public void init() throws StartupException
 	{
 		final File sslCert = getServerCertificateFile();
 		final File sslKey = getServerKeyFile();
-		final String sslSecret = Loader.getConfig().getString( "server.httpsSharedSecret" );
+		final String sslSecret = AppController.config().getString( "server.httpsSharedSecret" );
 
 		Security.addProvider( new BouncyCastleProvider() );
 
@@ -174,12 +176,12 @@ public class SslManager implements ServerManager, Mapping<String, SslContext>
 		{
 			hostname = normalizeHostname( hostname );
 
-			SslCertificateMapEvent event = EventBus.INSTANCE.callEvent( new SslCertificateMapEvent( hostname ) );
+			SslCertificateMapEvent event = EventBus.instance().callEvent( new SslCertificateMapEvent( hostname ) );
 
 			if ( event.getSslContext() != null )
 				return event.getSslContext();
 
-			for ( Site site : SiteManager.INSTANCE.getSites() )
+			for ( Site site : SiteManager.instance().getSites() )
 				if ( site.getDefaultSslContext() != null )
 					for ( Entry<String, Set<String>> e : site.getDomains().entrySet() )
 					{
@@ -196,7 +198,7 @@ public class SslManager implements ServerManager, Mapping<String, SslContext>
 					}
 		}
 
-		SslCertificateDefaultEvent event = EventBus.INSTANCE.callEvent( new SslCertificateDefaultEvent( hostname ) );
+		SslCertificateDefaultEvent event = EventBus.instance().callEvent( new SslCertificateDefaultEvent( hostname ) );
 
 		if ( event.getSslContext() != null )
 			return event.getSslContext();
@@ -261,10 +263,10 @@ public class SslManager implements ServerManager, Mapping<String, SslContext>
 
 		if ( updateConfig )
 		{
-			Loader.getConfig().set( "server.httpsSharedCert", FileFunc.relPath( sslCert ) );
-			Loader.getConfig().set( "server.httpsSharedKey", FileFunc.relPath( sslKey ) );
-			Loader.getConfig().set( "server.httpsSharedSecret", lastSslSecret );
-			Loader.saveConfig();
+			AppController.config().set( "server.httpsSharedCert", FileFunc.relPath( sslCert ) );
+			AppController.config().set( "server.httpsSharedKey", FileFunc.relPath( sslKey ) );
+			AppController.config().set( "server.httpsSharedSecret", lastSslSecret );
+			AppController.config().save();
 		}
 
 		X509Certificate cert = wrapper.getCertificate();
@@ -275,8 +277,8 @@ public class SslManager implements ServerManager, Mapping<String, SslContext>
 		names.add( wrapper.getCommonNameWithException() );
 
 		NetworkManager.getLogger().info( String.format( "Updating default SSL cert with '%s', key '%s', and hasSecret? %s", FileFunc.relPath( sslCert ), FileFunc.relPath( sslKey ), sslSecret != null && !sslSecret.isEmpty() ) );
-		NetworkManager.getLogger().info( LogColor.AQUA + "The SSL Certificate has the following DNS names: " + LogColor.GOLD + Joiner.on( LogColor.AQUA + ", " + LogColor.GOLD ).join( names ) );
-		NetworkManager.getLogger().info( LogColor.AQUA + "The SSL Certificate will expire after: " + LogColor.GOLD + Builtin.date( cert.getNotAfter() ) );
+		NetworkManager.getLogger().info( EnumColor.AQUA + "The SSL Certificate has the following DNS names: " + EnumColor.GOLD + Joiner.on( EnumColor.AQUA + ", " + EnumColor.GOLD ).join( names ) );
+		NetworkManager.getLogger().info( EnumColor.AQUA + "The SSL Certificate will expire after: " + EnumColor.GOLD + Builtin.date( cert.getNotAfter() ) );
 
 		serverContext = wrapper.context();
 		lastSslCert = sslCert;

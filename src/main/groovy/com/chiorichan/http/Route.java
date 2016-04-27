@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.http;
@@ -17,9 +17,9 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.chiorichan.Loader;
 import com.chiorichan.database.DatabaseEngineLegacy;
 import com.chiorichan.http.Routes.RouteType;
+import com.chiorichan.logger.Log;
 import com.chiorichan.site.Site;
 import com.chiorichan.util.StringFunc;
 import com.google.common.collect.Lists;
@@ -152,7 +152,7 @@ public class Route
 
 		if ( prop == null )
 		{
-			Loader.getLogger().warning( "The `pattern` attribute was null for route '" + this + "'. Unusable!" );
+			Log.get().warning( "The `pattern` attribute was null for route '" + this + "'. Unusable!" );
 			return null;
 		}
 
@@ -167,7 +167,7 @@ public class Route
 
 		if ( !StringUtils.trimToEmpty( params.get( "subdomain" ) ).equals( "*" ) && !subdomain.equals( params.get( "subdomain" ) ) )
 		{
-			Loader.getLogger().finer( "The subdomain does not match for " + uri + " on route " + this );
+			Log.get().finer( "The subdomain does not match for " + uri + " on route " + this );
 			return null;
 		}
 
@@ -193,13 +193,13 @@ public class Route
 
 		if ( props.size() > uris.size() )
 		{
-			Loader.getLogger().finer( "The length of elements in route " + this + " is LONGER then the length of elements on the uri; " + uris );
+			Log.get().finer( "The length of elements in route " + this + " is LONGER then the length of elements on the uri; " + uris );
 			return null;
 		}
 
 		if ( props.size() < uris.size() )
 		{
-			Loader.getLogger().finer( "The length of elements in route " + this + " is SHORTER then the length of elements on the uri; " + uris );
+			Log.get().finer( "The length of elements in route " + this + " is SHORTER then the length of elements on the uri; " + uris );
 			return null;
 		}
 
@@ -209,7 +209,7 @@ public class Route
 		for ( int i = 0; i < Math.max( props.size(), uris.size() ); i++ )
 			try
 			{
-				Loader.getLogger().finest( prop + " --> " + props.get( i ) + " == " + uris.get( i ) );
+				Log.get().finest( prop + " --> " + props.get( i ) + " == " + uris.get( i ) );
 
 				if ( props.get( i ).matches( "\\[([a-zA-Z0-9]+)=\\]" ) )
 				{
@@ -221,19 +221,19 @@ public class Route
 					rewrites.put( key, value );
 
 					// PREG MATCH
-					Loader.getLogger().finer( "Found a PREG match for " + prop + " on route " + this );
+					Log.get().finer( "Found a PREG match for " + prop + " on route " + this );
 				}
 				else if ( props.get( i ).equals( uris.get( i ) ) )
 				{
 					weight = StringFunc.replaceAt( weight, i, "A" );
 
-					Loader.getLogger().finer( "Found a match for " + prop + " on route " + this );
+					Log.get().finer( "Found a match for " + prop + " on route " + this );
 					// MATCH
 				}
 				else
 				{
 					match = false;
-					Loader.getLogger().finer( "Found no match for " + prop + " on route " + this );
+					Log.get().finer( "Found no match for " + prop + " on route " + this );
 					break;
 					// NO MATCH
 				}

@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.chiorichan.Loader;
+import com.chiorichan.logger.Log;
 
 public class HttpResponse
 {
@@ -24,15 +24,15 @@ public class HttpResponse
 
 	public void debug()
 	{
-		Loader.getLogger().info( "Debug HttpResponse:" );
+		Log.get().info( "Debug HttpResponse:" );
 
-		Loader.getLogger().info( "\tTaget: " + target );
-		Loader.getLogger().info( "\tStatus: " + status );
-		Loader.getLogger().info( "\tResponse: " + new String( body ) );
-		Loader.getLogger().info( "\tHeaders:" );
+		Log.get().info( "\tTaget: " + target );
+		Log.get().info( "\tStatus: " + status );
+		Log.get().info( "\tResponse: " + new String( body ) );
+		Log.get().info( "\tHeaders:" );
 
 		for ( String key : headerKeys() )
-			Loader.getLogger().info( "\t\t" + key + ": " + getHeaderString( key ) );
+			Log.get().info( "\t\t" + key + ": " + getHeaderString( key ) );
 	}
 
 	public byte[] getBody()

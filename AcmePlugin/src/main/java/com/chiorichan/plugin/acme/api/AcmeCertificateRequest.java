@@ -17,13 +17,13 @@ import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.bouncycastle.x509.util.StreamParsingException;
 
-import com.chiorichan.Loader;
 import com.chiorichan.configuration.file.YamlConfiguration;
+import com.chiorichan.lang.PluginNotFoundException;
+import com.chiorichan.logger.Log;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.acme.AcmePlugin;
 import com.chiorichan.plugin.acme.lang.AcmeException;
 import com.chiorichan.plugin.acme.lang.AcmeState;
-import com.chiorichan.plugin.lang.PluginNotFoundException;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Ticks;
 
@@ -51,7 +51,7 @@ public class AcmeCertificateRequest
 		// TODO Use server private key if site does not have one of it's own
 		// TODO Config option to force the generation of missing site private keys
 
-		YamlConfiguration conf = AcmePlugin.INSTANCE.getConfig();
+		YamlConfiguration conf = AcmePlugin.instance().getConfig();
 		KeyPair key = keyFile == null ? proto.getAcmeStorage().domainPrivateKey() : proto.getAcmeStorage().privateKey( keyFile, 4096 );
 		signingRequest = AcmeUtils.createCertificationRequest( key, domains, conf.getString( "config.additional.country" ), conf.getString( "config.additional.state" ), conf.getString( "config.additional.city" ), conf.getString( "config.additional.organization" ) );
 	}
@@ -65,7 +65,7 @@ public class AcmeCertificateRequest
 	{
 		if ( hasCallBack() )
 			if ( replace )
-				TaskManager.INSTANCE.cancelTask( callBackTask );
+				TaskManager.instance().cancelTask( callBackTask );
 			else
 				throw new IllegalStateException( "Can't schedule a challenge callback because one is already active" );
 
@@ -74,9 +74,9 @@ public class AcmeCertificateRequest
 
 		try
 		{
-			AcmePlugin plugin = ( AcmePlugin ) PluginManager.INSTANCE.getPluginByClass( AcmePlugin.class );
+			AcmePlugin plugin = ( AcmePlugin ) PluginManager.instance().getPluginByClass( AcmePlugin.class );
 
-			callBackTask = TaskManager.INSTANCE.scheduleAsyncRepeatingTask( plugin, Ticks.SECOND_5, Ticks.SECOND, new Runnable()
+			callBackTask = TaskManager.instance().scheduleAsyncRepeatingTask( plugin, Ticks.SECOND_5, Ticks.SECOND, new Runnable()
 			{
 				@Override
 				public void run()
@@ -85,7 +85,7 @@ public class AcmeCertificateRequest
 
 					if ( getState() != AcmeState.PENDING )
 					{
-						TaskManager.INSTANCE.cancelTask( callBackTask );
+						TaskManager.instance().cancelTask( callBackTask );
 						runnable.run();
 					}
 				}
@@ -99,7 +99,7 @@ public class AcmeCertificateRequest
 		}
 		catch ( PluginNotFoundException e )
 		{
-			Loader.getLogger().severe( "There was a severe internal plugin error", e );
+			Log.get().severe( "There was a severe internal plugin error", e );
 		}
 	}
 
@@ -148,7 +148,7 @@ public class AcmeCertificateRequest
 	public void saveCSR( File parentDir ) throws AcmeException
 	{
 		parentDir.mkdirs();
-		AcmePlugin.INSTANCE.getClient().getAcmeStorage().saveCertificationRequest( parentDir, signingRequest );
+		AcmePlugin.instance().getClient().getAcmeStorage().saveCertificationRequest( parentDir, signingRequest );
 	}
 
 	public void setState( AcmeState state )

@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.event.query;
@@ -11,10 +11,10 @@ package com.chiorichan.event.query;
 import io.netty.channel.ChannelHandlerContext;
 
 import com.chiorichan.event.Cancellable;
-import com.chiorichan.event.server.ServerEvent;
+import com.chiorichan.event.application.ApplicationEvent;
 import com.chiorichan.net.query.QueryServerTerminal;
 
-public class QueryEvent extends ServerEvent implements Cancellable
+public class QueryEvent extends ApplicationEvent implements Cancellable
 {
 	public enum QueryType
 	{

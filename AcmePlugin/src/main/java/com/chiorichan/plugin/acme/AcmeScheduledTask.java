@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.chiorichan.LogColor;
+import com.chiorichan.lang.EnumColor;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.acme.api.AcmeProtocol;
@@ -22,6 +22,7 @@ public class AcmeScheduledTask implements Runnable
 	{
 		return domainsPending;
 	}
+
 	public static Set<String> getVerifiedDomains()
 	{
 		return verifedDomains;
@@ -44,21 +45,21 @@ public class AcmeScheduledTask implements Runnable
 		{
 			if ( !plugin.isEnabled() )
 			{
-				TaskManager.INSTANCE.cancelTask( this );
+				TaskManager.instance().cancelTask( this );
 				throw new IllegalStateException( "The Acme Plugin is disabled, can't manage certificates without it. Most likely a programming bug." );
 			}
 
 			if ( !NetworkManager.isHttpsRunning() )
 			{
-				PluginManager.INSTANCE.disablePlugin( plugin );
-				TaskManager.INSTANCE.cancelTask( this );
+				PluginManager.instance().disablePlugin( plugin );
+				TaskManager.instance().cancelTask( this );
 				throw new IllegalStateException( "The HTTPS server is disabled, Acme Plugin can't manage certificates without it enabled." );
 			}
 
 			verifedDomains.clear();
 			domainsPending = false;
 
-			for ( Entry<String, Set<String>> e : SiteManager.INSTANCE.getDomains().entrySet() )
+			for ( Entry<String, Set<String>> e : SiteManager.instance().getDomains().entrySet() )
 			{
 				switch ( client.checkDomainVerification( e.getKey(), null, false ) )
 				{
@@ -91,11 +92,10 @@ public class AcmeScheduledTask implements Runnable
 						}
 			}
 
-			// We won't check certificates for renewals until all domains have been verified
 			if ( domainsPending )
 			{
-				plugin.getLogger().info( LogColor.YELLOW + "Domains are currently pending verification. Certificates can not be signed until the process finishes." );
-				TaskManager.INSTANCE.scheduleAsyncDelayedTask( plugin, Ticks.SECOND_30, this );
+				plugin.getLogger().info( EnumColor.YELLOW + "Domains are currently pending verification. Certificates can not be signed or renewed until the vertification finishes." );
+				TaskManager.instance().scheduleAsyncDelayedTask( plugin, Ticks.SECOND_30, this );
 			}
 			else
 				CertificateMaintainer.checkAndSignCertificates();

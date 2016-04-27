@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.factory;
@@ -11,21 +11,18 @@ package com.chiorichan.factory;
 import io.netty.buffer.ByteBuf;
 
 import java.nio.charset.Charset;
-import java.util.List;
 
-import org.apache.commons.lang3.Validate;
-
-import com.chiorichan.lang.EvalException;
+import com.chiorichan.lang.ExceptionReport;
+import com.chiorichan.lang.IException;
 import com.chiorichan.lang.ReportingLevel;
+import com.chiorichan.lang.ScriptingException;
 import com.chiorichan.util.ObjectFunc;
-import com.google.common.collect.Lists;
 
 /**
  * Contains the end result of {@link ScriptingFactory#eval(ScriptingContext)}
  */
-public class ScriptingResult
+public class ScriptingResult extends ExceptionReport
 {
-	private final List<EvalException> caughtExceptions = Lists.newArrayList();
 	private boolean success = false;
 	private String reason = null;
 	private ByteBuf content;
@@ -38,25 +35,42 @@ public class ScriptingResult
 		this.content = content;
 	}
 
-	public ScriptingResult addException( EvalException exception )
+	@Override
+	public ScriptingResult addException( IException exception )
 	{
+		IException.check( exception );
 		if ( exception != null )
-		{
-			// If this EvalException never had it's script trace populated, we handle it here
-			if ( !exception.hasScriptTrace() )
-				if ( context.factory() != null )
-					exception.populateScriptTrace( context.factory().stack() );
-				else if ( context.request() != null )
-					exception.populateScriptTrace( context.request().getEvalFactory().stack() );
-			caughtExceptions.add( exception );
-		}
+			if ( exception instanceof ScriptingException )
+			{
+				// If this EvalException never had it's script trace populated, we handle it here
+				if ( ! ( ( ScriptingException ) exception ).hasScriptTrace() )
+					if ( context.factory() != null )
+						( ( ScriptingException ) exception ).populateScriptTrace( context.factory().stack() );
+					else if ( context.request() != null )
+						( ( ScriptingException ) exception ).populateScriptTrace( context.request().getEvalFactory().stack() );
+				caughtExceptions.add( exception );
+			}
+			else
+				super.addException( exception );
 		return this;
 	}
 
+	@Override
 	public ScriptingResult addException( ReportingLevel level, Throwable throwable )
 	{
 		if ( throwable != null )
-			caughtExceptions.add( new EvalException( level, throwable ).populateScriptTrace( context.factory().stack() ) );
+			if ( throwable instanceof ScriptingException )
+			{
+				// If this EvalException never had it's script trace populated, we handle it here
+				if ( ! ( ( ScriptingException ) throwable ).hasScriptTrace() )
+					if ( context.factory() != null )
+						( ( ScriptingException ) throwable ).populateScriptTrace( context.factory().stack() );
+					else if ( context.request() != null )
+						( ( ScriptingException ) throwable ).populateScriptTrace( context.request().getEvalFactory().stack() );
+				caughtExceptions.add( ( ScriptingException ) throwable );
+			}
+			else
+				caughtExceptions.add( new ScriptingException( level, throwable ).populateScriptTrace( context.factory().stack() ) );
 		return this;
 	}
 
@@ -70,27 +84,9 @@ public class ScriptingResult
 		return context;
 	}
 
-	public EvalException[] getExceptions()
+	public ScriptingException[] getExceptions()
 	{
-		return caughtExceptions.toArray( new EvalException[0] );
-	}
-
-	public EvalException[] getIgnorableExceptions()
-	{
-		List<EvalException> exs = Lists.newArrayList();
-		for ( EvalException e : caughtExceptions )
-			if ( e.isIgnorable() )
-				exs.add( e );
-		return exs.toArray( new EvalException[0] );
-	}
-
-	public EvalException[] getNotIgnorableExceptions()
-	{
-		List<EvalException> exs = Lists.newArrayList();
-		for ( EvalException e : caughtExceptions )
-			if ( !e.isIgnorable() )
-				exs.add( e );
-		return exs.toArray( new EvalException[0] );
+		return caughtExceptions.toArray( new ScriptingException[0] );
 	}
 
 	public Object getObject()
@@ -114,51 +110,6 @@ public class ScriptingResult
 	public String getString( boolean includeObj )
 	{
 		return ( content == null ? "" : content.toString( Charset.defaultCharset() ) ) + ( includeObj ? ObjectFunc.castToString( obj ) : "" );
-	}
-
-	/**
-	 * Checks if exception is present by class name
-	 *
-	 * @param clz
-	 *             The exception to check for
-	 * @return
-	 *         Is it present
-	 */
-	public boolean hasException( Class<? extends Throwable> clz )
-	{
-		Validate.notNull( clz );
-
-		for ( EvalException e : caughtExceptions )
-		{
-			if ( e.getCause() != null && clz.isAssignableFrom( e.getCause().getClass() ) )
-				return true;
-
-			if ( clz.isAssignableFrom( e.getClass() ) )
-				return true;
-		}
-
-		return false;
-	}
-
-	public boolean hasExceptions()
-	{
-		return !caughtExceptions.isEmpty();
-	}
-
-	public boolean hasIgnorableExceptions()
-	{
-		for ( EvalException e : caughtExceptions )
-			if ( e.isIgnorable() )
-				return true;
-		return false;
-	}
-
-	public boolean hasNonIgnorableExceptions()
-	{
-		for ( EvalException e : caughtExceptions )
-			if ( !e.isIgnorable() )
-				return true;
-		return false;
 	}
 
 	public boolean isSuccessful()

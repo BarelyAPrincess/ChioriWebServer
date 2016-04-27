@@ -1,0 +1,3 @@
+[submodule "ChioriAPI"]
+	path = ChioriAPI
+	url = https://github.com/ChioriGreene/ChioriAPI

@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.http;
@@ -37,13 +37,13 @@ import java.util.logging.Level;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
-import com.chiorichan.Loader;
+import com.chiorichan.AppController;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.http.ErrorEvent;
 import com.chiorichan.event.http.HttpExceptionEvent;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.lang.HttpError;
-import com.chiorichan.logger.LogEvent;
+import com.chiorichan.logger.experimental.LogEvent;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.session.Session;
 import com.chiorichan.session.SessionException;
@@ -218,7 +218,7 @@ public class HttpResponseWrapper
 
 		// Trigger an internal Error Event to notify plugins of a possible problem.
 		ErrorEvent event = new ErrorEvent( request, status.code(), httpMsg );
-		EventBus.INSTANCE.callEvent( event );
+		EventBus.instance().callEvent( event );
 
 		// TODO Make these error pages a bit more creative and/or informational to developers.
 
@@ -295,8 +295,8 @@ public class HttpResponseWrapper
 			return;
 		}
 
-		HttpExceptionEvent event = new HttpExceptionEvent( request, cause, Loader.getConfig().getBoolean( "server.developmentMode" ) );
-		EventBus.INSTANCE.callEvent( event );
+		HttpExceptionEvent event = new HttpExceptionEvent( request, cause, AppController.config().getBoolean( "server.developmentMode" ) );
+		EventBus.instance().callEvent( event );
 
 		int httpCode = event.getHttpCode();
 
@@ -386,7 +386,7 @@ public class HttpResponseWrapper
 		nonce.mapValues( "msg", msg );
 		nonce.mapValues( "level", level == null || level.length() == 0 ? "danger" : level );
 		nonce.mapValues( "target", target == null || target.length() == 0 ? request.getFullUrl() : target );
-		String loginForm = request.getSite().getLoginForm();
+		String loginForm = request.getLocation().getLoginForm();
 		if ( !loginForm.toLowerCase().startsWith( "http" ) )
 			loginForm = ( request.isSecure() ? "https://" : "http://" ) + loginForm;
 		sendRedirect( String.format( "%s?%s=%s", loginForm, nonce.key(), nonce.value() ) );
@@ -419,7 +419,7 @@ public class HttpResponseWrapper
 			if ( h.get( "Server" ) == null )
 				h.add( "Server", Versioning.getProduct() + " Version " + Versioning.getVersion() );
 
-			h.add( "Access-Control-Allow-Origin", request.getSite().getConfig().getString( "site.web-allowed-origin", "*" ) );
+			h.add( "Access-Control-Allow-Origin", request.getLocation().getConfig().getString( "site.web-allowed-origin", "*" ) );
 			h.add( "Connection", "close" );
 			h.add( "Cache-Control", "no-cache" );
 			h.add( "Cache-Control", "private" );
@@ -582,7 +582,7 @@ public class HttpResponseWrapper
 		// This might be a temporary measure - TODO Properly set the charset for each request.
 		h.set( "Content-Type", httpContentType + "; charset=" + encoding.name() );
 
-		h.add( "Access-Control-Allow-Origin", request.getSite().getConfig().getString( "site.web-allowed-origin", "*" ) );
+		h.add( "Access-Control-Allow-Origin", request.getLocation().getConfig().getString( "site.web-allowed-origin", "*" ) );
 
 		for ( Entry<String, String> header : headers.entrySet() )
 			h.add( header.getKey(), header.getValue() );

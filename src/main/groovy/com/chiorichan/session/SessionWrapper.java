@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2015 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.session;
@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.chiorichan.Loader;
+import com.chiorichan.AppController;
 import com.chiorichan.account.AccountAttachment;
 import com.chiorichan.account.AccountInstance;
 import com.chiorichan.account.AccountMeta;
@@ -136,6 +136,9 @@ public abstract class SessionWrapper implements BindingProvider, AccountAttachme
 	}
 
 	@Override
+	public abstract Site getLocation();
+
+	@Override
 	public final AccountPermissible getPermissible()
 	{
 		return session;
@@ -153,17 +156,7 @@ public abstract class SessionWrapper implements BindingProvider, AccountAttachme
 	{
 		if ( session == null )
 			throw new IllegalStateException( "Detected an attempt to get session before startSession() was called" );
-
 		return session;
-	}
-
-	@Override
-	public abstract Site getSite();
-
-	@Override
-	public String getSiteId()
-	{
-		return session.getSiteId();
 	}
 
 	@Override
@@ -233,7 +226,7 @@ public abstract class SessionWrapper implements BindingProvider, AccountAttachme
 	 */
 	public Session startSession() throws SessionException
 	{
-		session = SessionManager.INSTANCE.startSession( this );
+		session = SessionManager.instance().startSession( this );
 		/*
 		 * Create our Binding
 		 */
@@ -249,10 +242,10 @@ public abstract class SessionWrapper implements BindingProvider, AccountAttachme
 		 */
 		binding.setVariable( "_SESSION", session.data.data );
 
-		Site site = getSite();
+		Site site = getLocation();
 
 		if ( site == null )
-			site = SiteManager.INSTANCE.getDefaultSite();
+			site = SiteManager.instance().getDefaultSite();
 
 		session.setSite( site );
 
@@ -265,7 +258,7 @@ public abstract class SessionWrapper implements BindingProvider, AccountAttachme
 		// Reset __FILE__ Variable
 		binding.setVariable( "__FILE__", new File( "" ) );
 
-		if ( Loader.getConfig().getBoolean( "sessions.rearmTimeoutWithEachRequest" ) )
+		if ( AppController.config().getBoolean( "sessions.rearmTimeoutWithEachRequest" ) )
 			session.rearmTimeout();
 
 		sessionStarted();
