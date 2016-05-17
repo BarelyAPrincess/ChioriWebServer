@@ -8,7 +8,6 @@
  */
 package com.chiorichan.session;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -16,7 +15,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.chiorichan.AppController;
+import com.chiorichan.AppConfig;
 import com.chiorichan.account.AccountAttachment;
 import com.chiorichan.account.AccountInstance;
 import com.chiorichan.account.AccountMeta;
@@ -256,9 +255,9 @@ public abstract class SessionWrapper implements BindingProvider, AccountAttachme
 		binding.setVariable( "context", this );
 
 		// Reset __FILE__ Variable
-		binding.setVariable( "__FILE__", new File( "" ) );
+		binding.setVariable( "__FILE__", site.directoryPublic() );
 
-		if ( AppController.config().getBoolean( "sessions.rearmTimeoutWithEachRequest" ) )
+		if ( AppConfig.get().getBoolean( "sessions.rearmTimeoutWithEachRequest" ) )
 			session.rearmTimeout();
 
 		sessionStarted();

@@ -39,8 +39,8 @@ import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.TaskRegistrar;
 import com.chiorichan.tasks.Ticks;
 import com.chiorichan.updater.BuildArtifact.ChangeSet.ChangeSetDetails;
+import com.chiorichan.util.Application;
 import com.chiorichan.util.SecureFunc;
-import com.chiorichan.util.Versioning;
 
 public class AutoUpdater implements ServiceManager, Listener, TaskRegistrar, LogSource
 {
@@ -79,6 +79,8 @@ public class AutoUpdater implements ServiceManager, Listener, TaskRegistrar, Log
 
 	public AutoUpdater( DownloadUpdaterService service, String channel )
 	{
+		// TODO Make it so the updater can update jars and class files
+
 		instance = this;
 		this.service = service;
 		this.channel = channel;
@@ -86,7 +88,7 @@ public class AutoUpdater implements ServiceManager, Listener, TaskRegistrar, Log
 		/*
 		 * This schedules the Auto Updater with the Scheduler to run every 30 minutes (by default).
 		 */
-		TaskManager.instance().scheduleAsyncRepeatingTask( this, 0L, AppController.config().getInt( "auto-updater.check-interval", 30 ) * Ticks.MINUTE, new Runnable()
+		TaskManager.instance().scheduleAsyncRepeatingTask( this, 0L, AppConfig.get().getInt( "auto-updater.check-interval", 30 ) * Ticks.MINUTE, new Runnable()
 		{
 			@Override
 			public void run()
@@ -97,22 +99,21 @@ public class AutoUpdater implements ServiceManager, Listener, TaskRegistrar, Log
 
 		try
 		{
-			AppController.config();
-			AppController.config();
+			AppConfig.get();
 			serverJarMD5 = AppConfig.getApplicationJar().exists() && AppConfig.getApplicationJar().isFile() ? SecureFunc.md5( FileUtils.readFileToByteArray( AppConfig.getApplicationJar() ) ) : null;
 
 			if ( serverJarMD5 != null )
-				ServerFileWatcher.instance().register( AppController.config().getDirectory(), new EventCallback()
+				ServerFileWatcher.instance().register( AppConfig.get().getDirectory(), new EventCallback()
 				{
 					@Override
 					public void call( Kind<?> kind, File file, boolean isDirectory )
 					{
 						getLogger().debug( String.format( "%s: %s", kind.name(), file ) );
 
-						AppController.config();
-						AppController.config();
+						AppConfig.get();
+						AppConfig.get();
 						if ( AppConfig.getApplicationJar().exists() && AppConfig.getApplicationJar().isFile() )
-							if ( file.getAbsolutePath().equals( AppConfig.getApplicationJar().getAbsolutePath() ) && AppController.config().getBoolean( "auto-updater.auto-restart", true ) )
+							if ( file.getAbsolutePath().equals( AppConfig.getApplicationJar().getAbsolutePath() ) && AppConfig.get().getBoolean( "auto-updater.auto-restart", true ) )
 								if ( AppLoader.isWatchdogRunning() )
 								{
 									String newServerJarMD5 = null;
@@ -131,10 +132,10 @@ public class AutoUpdater implements ServiceManager, Listener, TaskRegistrar, Log
 								else
 									getLogger().warning( "We detected a change to the server jar, but the Watchdog process is not running." );
 
-						if ( file.getAbsolutePath().equals( AppController.config().file() ) )
+						if ( file.getAbsolutePath().equals( AppConfig.get().file() ) )
 						{
 							getLogger().info( "We detected a change in the server configuration file, reloading!" );
-							AppController.config().reload();
+							AppConfig.get().reload();
 						}
 					}
 				} );
@@ -152,7 +153,7 @@ public class AutoUpdater implements ServiceManager, Listener, TaskRegistrar, Log
 
 	public void check( final AccountAttachment sender, final boolean automatic )
 	{
-		final String currentSlug = Versioning.getBuildNumber();
+		final String currentSlug = Application.getBuildNumber();
 
 		if ( !isEnabled() || "0".equals( currentSlug ) )
 			return;
@@ -175,7 +176,7 @@ public class AutoUpdater implements ServiceManager, Listener, TaskRegistrar, Log
 						if ( current.isBroken() && onBroken.contains( WARN_CONSOLE ) )
 						{
 							sender.sendMessage( EnumColor.RED + "----- Chiori Auto Updater -----" );
-							sender.sendMessage( EnumColor.RED + "Your version of " + Versioning.getProduct() + " is known to be broken. It is strongly advised that you update to a more recent version ASAP." );
+							sender.sendMessage( EnumColor.RED + "Your version of " + Application.getProduct() + " is known to be broken. It is strongly advised that you update to a more recent version ASAP." );
 							sender.sendMessage( EnumColor.RED + "Known issues with your version:" );
 
 							for ( String line : current.getBrokenReason().split( "\n" ) )
@@ -189,7 +190,7 @@ public class AutoUpdater implements ServiceManager, Listener, TaskRegistrar, Log
 						else if ( onUpdate.contains( WARN_CONSOLE ) )
 						{
 							sender.sendMessage( EnumColor.YELLOW + "----- Chiori Auto Updater -----" );
-							sender.sendMessage( EnumColor.YELLOW + "Your version of " + Versioning.getProduct() + " is out of date. Version " + latest.getVersion() + " (build #" + latest.getBuildNumber() + ") was released on " + latest.getCreated() + "." );
+							sender.sendMessage( EnumColor.YELLOW + "Your version of " + Application.getProduct() + " is out of date. Version " + latest.getVersion() + " (build #" + latest.getBuildNumber() + ") was released on " + latest.getCreated() + "." );
 							sender.sendMessage( EnumColor.YELLOW + "Details: " + latest.getHtmlUrl() );
 							sender.sendMessage( EnumColor.YELLOW + "Download: " + latest.getJar() );
 							sender.sendMessage( EnumColor.YELLOW + "----- ------------------- -----" );
@@ -198,7 +199,7 @@ public class AutoUpdater implements ServiceManager, Listener, TaskRegistrar, Log
 					else if ( current != null && current.isBroken() && onBroken.contains( WARN_CONSOLE ) )
 					{
 						sender.sendMessage( EnumColor.RED + "----- Chiori Auto Updater -----" );
-						sender.sendMessage( EnumColor.RED + "Your version of " + Versioning.getProduct() + " is known to be broken. It is strongly advised that you update to a more recent (or older) version ASAP." );
+						sender.sendMessage( EnumColor.RED + "Your version of " + Application.getProduct() + " is known to be broken. It is strongly advised that you update to a more recent (or older) version ASAP." );
 						sender.sendMessage( EnumColor.RED + "Known issues with your version:" );
 
 						for ( String line : current.getBrokenReason().split( "\n" ) )
@@ -226,7 +227,7 @@ public class AutoUpdater implements ServiceManager, Listener, TaskRegistrar, Log
 						if ( current == null && latest == null )
 							sender.sendMessage( EnumColor.YELLOW + "There seems to have been a problem checking for updates!" );
 						else
-							sender.sendMessage( EnumColor.YELLOW + "You are already running the latest version of " + Versioning.getProduct() + "!" );
+							sender.sendMessage( EnumColor.YELLOW + "You are already running the latest version of " + Application.getProduct() + "!" );
 
 						sender.sendMessage( EnumColor.YELLOW + "----- ------------------- -----" );
 					}
@@ -246,7 +247,7 @@ public class AutoUpdater implements ServiceManager, Listener, TaskRegistrar, Log
 			@Override
 			public void run()
 			{
-				current = Versioning.getBuildNumber().equals( "0" ) ? null : service.getArtifact( Versioning.getBuildNumber(), "information about this " + Versioning.getProduct() + " version; perhaps you are running a custom one?" );
+				current = Application.getBuildNumber().equals( "0" ) ? null : service.getArtifact( Application.getBuildNumber(), "information about this " + Application.getProduct() + " version; perhaps you are running a custom one?" );
 				latest = service.getArtifact( "lastStableBuild", "latest artifact information" );
 
 				if ( latest == null )
@@ -272,7 +273,7 @@ public class AutoUpdater implements ServiceManager, Listener, TaskRegistrar, Log
 							sender.sendMessage( EnumColor.AQUA + "[CHANGES] " + EnumColor.WHITE + ll );
 
 					sender.sendMessage( "" );
-					sender.sendMessage( EnumColor.YELLOW + "If you would like " + Versioning.getProduct() + " to update to the latest version run \"update latest force\"" );
+					sender.sendMessage( EnumColor.YELLOW + "If you would like " + Application.getProduct() + " to update to the latest version run \"update latest force\"" );
 					sender.sendMessage( EnumColor.RED + "WARNING: Chiori Auto Updater currently can't auto update any installed plugins." );
 					sender.sendMessage( EnumColor.RED + "You can obtain updated offical plugins from the Details URL above or you will need to contact the original developer." );
 					sender.sendMessage( EnumColor.RED + "Quite frankly, If there has been no changes to the Plugin API (See Change Log) then even outdated plugins should still work." );
@@ -346,9 +347,9 @@ public class AutoUpdater implements ServiceManager, Listener, TaskRegistrar, Log
 			MessageReceiver receiver = ( MessageReceiver ) event.getAccountPermissible();
 			if ( isEnabled() && getCurrent() != null && event.getAccount().getEntity().checkPermission( AppController.BROADCAST_CHANNEL_ADMINISTRATIVE ).isTrue() )
 				if ( getCurrent().isBroken() && getOnBroken().contains( AutoUpdater.WARN_OPERATORS ) )
-					receiver.sendMessage( EnumColor.DARK_RED + "The version of " + Versioning.getProduct() + " that this server is running is known to be broken. Please consider updating to the latest version available from http://jenkins.chiorichan.com/." );
+					receiver.sendMessage( EnumColor.DARK_RED + "The version of " + Application.getProduct() + " that this server is running is known to be broken. Please consider updating to the latest version available from http://jenkins.chiorichan.com/." );
 				else if ( isUpdateAvailable() && getOnUpdate().contains( AutoUpdater.WARN_OPERATORS ) )
-					receiver.sendMessage( EnumColor.DARK_PURPLE + "The version of " + Versioning.getProduct() + " that this server is running is out of date. Please consider updating to the latest version available from http://jenkins.chiorichan.com/." );
+					receiver.sendMessage( EnumColor.DARK_PURPLE + "The version of " + Application.getProduct() + " that this server is running is out of date. Please consider updating to the latest version available from http://jenkins.chiorichan.com/." );
 		}
 	}
 

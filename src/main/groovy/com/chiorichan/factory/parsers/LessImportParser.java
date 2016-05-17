@@ -14,6 +14,7 @@ import java.io.IOException;
 import org.apache.commons.io.FileUtils;
 
 import com.chiorichan.logger.Log;
+import com.chiorichan.util.FileFunc;
 
 public class LessImportParser extends BasicParser
 {
@@ -27,7 +28,7 @@ public class LessImportParser extends BasicParser
 	@Override
 	public String resolveMethod( String... args ) throws Exception
 	{
-		File imp = args[0].startsWith( "/" ) || args[0].startsWith( "\\" ) || rootDir == null ? new File( args[0] ) : new File( rootDir, args[0] );
+		File imp = FileFunc.isAbsolute( args[0] ) || args[0].startsWith( "\\" ) || rootDir == null ? new File( args[0] ) : new File( rootDir, args[0] );
 
 		try
 		{

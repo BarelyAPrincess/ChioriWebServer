@@ -21,6 +21,7 @@ import java.util.TreeMap;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.x509.util.StreamParsingException;
 
+import com.chiorichan.AppConfig;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.http.HttpCode;
 import com.chiorichan.http.ssl.CertificateWrapper;
@@ -57,7 +58,7 @@ public class Certificate
 	{
 		String privateKey = configSection.getString( "privateKey", "domain" );
 
-		sslCertFile = configSection.has( "certFile" ) ? new File( configSection.getString( "certFile" ) ) : null;
+		sslCertFile = configSection.has( "certFile" ) ? FileFunc.isAbsolute( configSection.getString( "certFile" ) ) ? new File( configSection.getString( "certFile" ) ) : new File( AppConfig.get().getDirectory().getAbsolutePath(), configSection.getString( "certFile" ) ) : null;
 		sslKeyFile = CertificateMaintainer.getPrivateKey( privateKey );
 
 		this.key = configSection.getName();

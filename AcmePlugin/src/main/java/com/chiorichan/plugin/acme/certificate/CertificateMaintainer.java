@@ -121,6 +121,8 @@ public class CertificateMaintainer
 
 		if ( defaultCertificate == null && AcmePlugin.instance().isDefaultCertificateAllowed() )
 			generateDefaultCertificate();
+		else if ( defaultCertificate == null )
+			plugin.getLogger().warning( "Default SSL certificate is not maintained by Acme Plugin, change 'config.allowDefaultCertificate' to true to aloow." );
 		else
 			defaultCertificate.validateCertificate();
 

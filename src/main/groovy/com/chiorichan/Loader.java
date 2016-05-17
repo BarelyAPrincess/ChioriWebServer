@@ -11,7 +11,6 @@ package com.chiorichan;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.UUID;
 
@@ -36,9 +35,9 @@ import com.chiorichan.session.SessionManager;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.updater.AutoUpdater;
 import com.chiorichan.updater.DownloadUpdaterService;
+import com.chiorichan.util.Application;
 import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.NetworkFunc;
-import com.chiorichan.util.Versioning;
 
 public class Loader extends AppLoader
 {
@@ -46,7 +45,7 @@ public class Loader extends AppLoader
 
 	public static String getShutdownMessage()
 	{
-		return AppController.config().getString( "settings.shutdown-message" );
+		return AppConfig.get().getString( "settings.shutdown-message" );
 	}
 
 	public static File getWebRoot()
@@ -56,10 +55,11 @@ public class Loader extends AppLoader
 
 	public static void main( String... args )
 	{
-		init( Loader.class, args );
+		parseArguments( args );
+		init( Loader.class );
 	}
 
-	protected static void populateOptionParser( OptionParser parser )
+	public static void populateOptionParser( OptionParser parser )
 	{
 		parser.acceptsAll( Arrays.asList( "nobanner" ), "Disables the banner" );
 		parser.acceptsAll( Arrays.asList( "web-ip" ), "Host for Web to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
@@ -81,15 +81,15 @@ public class Loader extends AppLoader
 		if ( !options().has( "nobanner" ) )
 			ApplicationTerminal.terminal().showBanner();
 
-		if ( Versioning.isAdminUser() )
-			Log.get().warning( "We have detected that you are running " + Versioning.getProduct() + " with the system administrator/root, this is highly discouraged as it my compromise security and/or mess with file permissions." );
+		if ( Application.isAdminUser() )
+			Log.get().warning( "We have detected that you are running " + Application.getProduct() + " with the system administrator/root, this is highly discouraged as it my compromise security and/or mess with file permissions." );
 
 		if ( Runtime.getRuntime().maxMemory() / 1024L / 1024L < 512L )
 			Log.get().warning( "It is recommended you dedicate more ram to this application, launch it with \"java -Xmx1024M -Xms1024M -jar " + AppConfig.getApplicationJar().getName() + "\"" );
 
 		try
 		{
-			File contentTypes = new File( "ContentTypes.properties" );
+			File contentTypes = new File( AppConfig.get().getDirectory().getAbsolutePath(), "ContentTypes.properties" );
 
 			if ( !contentTypes.exists() )
 				FileUtils.writeStringToFile( contentTypes, "# Chiori-chan's Web Server Content-Types File which overrides the default internal ones.\n# Syntax: 'ext: mime/type'" );
@@ -101,7 +101,7 @@ public class Loader extends AppLoader
 
 		try
 		{
-			File shellOverrides = new File( "InterpreterOverrides.properties" );
+			File shellOverrides = new File( AppConfig.get().getDirectory().getAbsolutePath(), "InterpreterOverrides.properties" );
 
 			if ( !shellOverrides.exists() )
 				FileUtils.writeStringToFile( shellOverrides, "# Chiori-chan's Web Server Interpreter Overrides File which overrides the default internal ones.\n# You don't have to add a string if the key and value are the same, hence Convension!\n# Syntax: 'fileExt: shellHandler'" );
@@ -112,12 +112,13 @@ public class Loader extends AppLoader
 		}
 
 		boolean install = false;
+		AppConfig config = AppConfig.get();
 
 		if ( options().has( "install" ) )
 		{
 			install = true;
 
-			if ( config().file().exists() )
+			if ( config.file().exists() )
 			{
 				// Warn the user that they may be overriding an existing installation
 				Log.get().info( "                     " + EnumColor.RED + "" + EnumColor.NEGATIVE + "WARNING!!! WARNING!!! WARNING!!!" );
@@ -139,42 +140,42 @@ public class Loader extends AppLoader
 			}
 		}
 
-		if ( !config().file().exists() )
+		if ( !config.file().exists() )
 			firstRun = true;
 
 		if ( firstRun || install )
 			try
 			{
 				// Delete Existing Configuration
-				if ( config().file().exists() )
-					config().file().delete();
+				if ( config.file().exists() )
+					config.file().delete();
 
 				// Save Factory Configuration
-				FileFunc.putResource( "com/chiorichan/config.yaml", config().file() );
+				FileFunc.putResource( "com/chiorichan/config.yaml", config.file() );
 			}
 			catch ( IOException e )
 			{
-				Log.get().severe( "It would appear we had problem installing " + Versioning.getProduct() + " " + Versioning.getVersion() + " for the first time, see exception for details.", e );
+				Log.get().severe( "It would appear we had problem installing " + Application.getProduct() + " " + Application.getVersion() + " for the first time, see exception for details.", e );
 			}
 
-		clientId = config().getString( "server.installationUID", clientId );
+		clientId = config.getString( "server.installationUID", clientId );
 
 		if ( clientId == null || clientId.isEmpty() || clientId.equalsIgnoreCase( "null" ) )
 		{
 			clientId = UUID.randomUUID().toString();
-			config().set( "server.installationUID", clientId );
+			config.set( "server.installationUID", clientId );
 		}
 
-		webroot = AppController.config().getDirectory( "webroot", "webroot", true );
+		webroot = AppConfig.get().getDirectory( "webroot", "webroot", true );
 
 		if ( install )
 		{
 			// TODO Add more files to be deleted on factory reset
 			FileUtils.deleteQuietly( webroot );
-			FileUtils.deleteQuietly( config().getDirectoryCache() );
-			FileUtils.deleteQuietly( config().getDirectoryLogs() );
-			FileUtils.deleteQuietly( config().getDirectoryUpdates() );
-			FileUtils.deleteQuietly( config().getDirectoryPlugins() );
+			FileUtils.deleteQuietly( config.getDirectoryCache() );
+			FileUtils.deleteQuietly( config.getDirectoryLogs() );
+			FileUtils.deleteQuietly( config.getDirectoryUpdates() );
+			FileUtils.deleteQuietly( config.getDirectoryPlugins() );
 		}
 
 		if ( firstRun || install )
@@ -205,42 +206,47 @@ public class Loader extends AppLoader
 					Log.get().info( "Finished with no errors!!" );
 				}
 
-				// Create 'start.sh' Script for Unix-like Systems
-				File startSh = new File( "start.sh" );
-				if ( Versioning.isUnixLikeOS() && !startSh.exists() )
-				{
-					String startString = "#!/bin/bash\necho \"Starting " + Versioning.getProduct() + " " + Versioning.getVersion() + " [ hit CTRL-C to stop ]\"\njava -Xmx2G -Xms2G -jar " + new File( Loader.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath() ).getAbsolutePath();
-					FileUtils.writeStringToFile( startSh, startString );
-					startSh.setExecutable( true, true );
-				}
-
-				// Create 'debugstart.sh' Script for Unix-like Systems and if we are in development mode
-				startSh = new File( "debug.sh" );
-				if ( Versioning.isDevelopment() && Versioning.isUnixLikeOS() && !startSh.exists() )
-				{
-					String startString = "#!/bin/bash\necho \"Starting " + Versioning.getProduct() + " " + Versioning.getVersion() + " in debug mode [ hit CTRL-C to stop ]\"\njava -Xmx2G -Xms2G -server -XX:+DisableExplicitGC -Xdebug -Xrunjdwp:transport=dt_socket,address=8686,server=y,suspend=n -jar " + new File( Loader.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath() ).getAbsolutePath();
-					FileUtils.writeStringToFile( startSh, startString );
-					startSh.setExecutable( true, true );
-				}
+				/*
+				 * // Create 'start.sh' Script for Unix-like Systems
+				 * File startSh = new File( "start.sh" );
+				 * if ( Versioning.isUnixLikeOS() && !startSh.exists() )
+				 * {
+				 * String startString = "#!/bin/bash\necho \"Starting " + Versioning.getProduct() + " " + Versioning.getVersion() + " [ hit CTRL-C to stop ]\"\njava -Xmx2G -Xms2G -jar " + new File(
+				 * Loader.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath() ).getAbsolutePath();
+				 * FileUtils.writeStringToFile( startSh, startString );
+				 * startSh.setExecutable( true, true );
+				 * }
+				 *
+				 * // Create 'debugstart.sh' Script for Unix-like Systems and if we are in development mode
+				 * startSh = new File( "debug.sh" );
+				 * if ( Versioning.isDevelopment() && Versioning.isUnixLikeOS() && !startSh.exists() )
+				 * {
+				 * String startString = "#!/bin/bash\necho \"Starting " + Versioning.getProduct() + " " + Versioning.getVersion() +
+				 * " in debug mode [ hit CTRL-C to stop ]\"\njava -Xmx2G -Xms2G -server -XX:+DisableExplicitGC -Xdebug -Xrunjdwp:transport=dt_socket,address=8686,server=y,suspend=n -jar " + new File(
+				 * Loader.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath() ).getAbsolutePath();
+				 * FileUtils.writeStringToFile( startSh, startString );
+				 * startSh.setExecutable( true, true );
+				 * }
+				 */
 			}
-			catch ( IOException | URISyntaxException e )
+			catch ( IOException e )
 			{
-				Log.get().severe( "It would appear we had problem installing " + Versioning.getProduct() + " for the first time, see exception for details.", e );
+				Log.get().severe( "It would appear we had problem installing " + Application.getProduct() + " for the first time, see exception for details.", e );
 			}
 
 		if ( install )
 		{
 			// Miscellaneous files and folders that need deletion to comply with a factory reset
-			FileUtils.deleteQuietly( new File( "server.db" ) );
-			FileUtils.deleteQuietly( new File( "permissions.yaml" ) );
-			FileUtils.deleteQuietly( new File( "sites" ) );
-			FileUtils.deleteQuietly( new File( "sessions" ) );
-			FileUtils.deleteQuietly( new File( "accounts" ) );
-			FileUtils.deleteQuietly( new File( "ContentTypes.properties" ) );
-			FileUtils.deleteQuietly( new File( "InterpreterOverrides.properties" ) );
+			FileUtils.deleteQuietly( new File( AppConfig.get().getDirectory().getAbsolutePath(), "server.db" ) );
+			FileUtils.deleteQuietly( new File( AppConfig.get().getDirectory().getAbsolutePath(), "permissions.yaml" ) );
+			FileUtils.deleteQuietly( new File( AppConfig.get().getDirectory().getAbsolutePath(), "sites" ) );
+			FileUtils.deleteQuietly( new File( AppConfig.get().getDirectory().getAbsolutePath(), "sessions" ) );
+			FileUtils.deleteQuietly( new File( AppConfig.get().getDirectory().getAbsolutePath(), "accounts" ) );
+			FileUtils.deleteQuietly( new File( AppConfig.get().getDirectory().getAbsolutePath(), "ContentTypes.properties" ) );
+			FileUtils.deleteQuietly( new File( AppConfig.get().getDirectory().getAbsolutePath(), "InterpreterOverrides.properties" ) );
 
 			// Delete Plugin Configuration
-			for ( File f : new File( "plugins" ).listFiles() )
+			for ( File f : new File( AppConfig.get().getDirectory().getAbsolutePath(), "plugins" ).listFiles() )
 				if ( !f.getName().toLowerCase().endsWith( "jar" ) )
 					FileUtils.deleteQuietly( f );
 
@@ -254,11 +260,11 @@ public class Loader extends AppLoader
 			Log.get().highlight( "--------------------------------------------------------------------------------------" );
 			Log.get().highlight( "| It appears that this is your first time running Chiori-chan's Web Server.          |" );
 			Log.get().highlight( "| All the needed files have been created and extracted from the server jar file.     |" );
-			Log.get().highlight( "| We highly recommended that you stop the server, review config(), and restart.      |" );
+			Log.get().highlight( "| We highly recommended that you stop the server, review config, and restart.      |" );
 			Log.get().highlight( "| You can find documentation and guides on our Github at:                            |" );
 			Log.get().highlight( "|                   https://github.com/ChioriGreene/ChioriWebServer                  |" );
 			Log.get().highlight( "--------------------------------------------------------------------------------------" );
-			String key = ApplicationTerminal.terminal().prompt( "Would you like to stop and review config()? Press 'Y' for Yes or 'N' for No.", "Y", "N" );
+			String key = ApplicationTerminal.terminal().prompt( "Would you like to stop and review config? Press 'Y' for Yes or 'N' for No.", "Y", "N" );
 
 			if ( key.equals( "Y" ) )
 			{
@@ -267,7 +273,7 @@ public class Loader extends AppLoader
 			}
 		}
 
-		if ( Versioning.isUnixLikeOS() )
+		if ( Application.isUnixLikeOS() )
 		{
 			SignalHandler handler = new SignalHandler()
 			{
@@ -282,18 +288,13 @@ public class Loader extends AppLoader
 			Signal.handle( new Signal( "INT" ), handler );
 		}
 
-		if ( !config().getBoolean( "server.disableTracking" ) && !Versioning.isDevelopment() )
-			NetworkFunc.sendTracking( "startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
-	}
-
-	public AppConfig config()
-	{
-		return AppController.config();
+		if ( !AppConfig.get().getBoolean( "server.disableTracking" ) && !Application.isDevelopment() )
+			NetworkFunc.sendTracking( "startServer", "start", Application.getVersion() + " (Build #" + Application.getBuildNumber() + ")" );
 	}
 
 	public boolean hasWhitelist()
 	{
-		return config().getBoolean( "white-list", false );
+		return AppConfig.get().getBoolean( "white-list", false );
 	}
 
 	@Override
@@ -329,7 +330,7 @@ public class Loader extends AppLoader
 				AppManager.manager( DatastoreManager.class ).init();
 
 				Log.get().info( "Initalizing the Database Subsystem..." );
-				AppController.config().initDatabase();
+				AppConfig.get().initDatabase();
 
 				Log.get().info( "Initalizing the Site Subsystem..." );
 				AppManager.manager( SiteManager.class ).init();
@@ -355,25 +356,28 @@ public class Loader extends AppLoader
 			}
 			case RUNNING:
 			{
-				AppManager.manager( AutoUpdater.class ).init( new DownloadUpdaterService( AppController.config().getString( "auto-updater.host" ) ), AppController.config().getString( "auto-updater.preferred-channel" ) );
-				AutoUpdater updater = AutoUpdater.instance();
+				if ( AppConfig.getApplicationJar() != null )
+				{
+					AppManager.manager( AutoUpdater.class ).init( new DownloadUpdaterService( AppConfig.get().getString( "auto-updater.host" ) ), AppConfig.get().getString( "auto-updater.preferred-channel" ) );
+					AutoUpdater updater = AutoUpdater.instance();
 
-				updater.setEnabled( AppController.config().getBoolean( "auto-updater.enabled" ) );
-				updater.setSuggestChannels( AppController.config().getBoolean( "auto-updater.suggest-channels" ) );
-				updater.getOnBroken().addAll( AppController.config().getStringList( "auto-updater.on-broken" ) );
-				updater.getOnUpdate().addAll( AppController.config().getStringList( "auto-updater.on-update" ) );
+					updater.setEnabled( AppConfig.get().getBoolean( "auto-updater.enabled" ) );
+					updater.setSuggestChannels( AppConfig.get().getBoolean( "auto-updater.suggest-channels" ) );
+					updater.getOnBroken().addAll( AppConfig.get().getStringList( "auto-updater.on-broken" ) );
+					updater.getOnUpdate().addAll( AppConfig.get().getStringList( "auto-updater.on-update" ) );
 
-				updater.check();
+					updater.check();
+				}
 				break;
 			}
 			case STARTUP:
 			{
-				if ( !options().has( "tcp-disable" ) && AppController.config().getBoolean( "server.enableTcpServer", true ) )
+				if ( !options().has( "tcp-disable" ) && AppConfig.get().getBoolean( "server.enableTcpServer", true ) )
 					NetworkManager.startTcpServer();
 				else
 					Log.get().warning( "The integrated tcp server has been disabled per the configuration. Change server.enableTcpServer to true to reenable it." );
 
-				if ( !options().has( "web-disable" ) && AppController.config().getBoolean( "server.enableWebServer", true ) )
+				if ( !options().has( "web-disable" ) && AppConfig.get().getBoolean( "server.enableWebServer", true ) )
 				{
 					NetworkManager.startHttpServer();
 					NetworkManager.startHttpsServer();
@@ -381,7 +385,7 @@ public class Loader extends AppLoader
 				else
 					Log.get().warning( "The integrated web server has been disabled per the configuration. Change server.enableWebServer to true to reenable it." );
 
-				if ( !options().has( "query-disable" ) && AppController.config().getBoolean( "server.queryEnabled", true ) )
+				if ( !options().has( "query-disable" ) && AppConfig.get().getBoolean( "server.queryEnabled", true ) )
 					NetworkManager.startQueryServer();
 
 				break;
@@ -398,6 +402,6 @@ public class Loader extends AppLoader
 	@Override
 	public String toString()
 	{
-		return Versioning.getProduct() + " " + Versioning.getVersion();
+		return Application.getProduct() + " " + Application.getVersion();
 	}
 }

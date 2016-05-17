@@ -19,7 +19,7 @@ import java.util.Map.Entry;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.AppController;
+import com.chiorichan.AppConfig;
 import com.chiorichan.AppLoader;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
@@ -53,18 +53,18 @@ public class ScriptingFactory implements LogSource
 		 */
 		register( new PreLinksParserWrapper() );
 		register( new PreIncludesParserWrapper() );
-		if ( AppController.config().getBoolean( "advanced.processors.coffeeProcessorEnabled", true ) )
+		if ( AppConfig.get().getBoolean( "advanced.processors.coffeeProcessorEnabled", true ) )
 			register( new PreCoffeeProcessor() );
-		if ( AppController.config().getBoolean( "advanced.processors.lessProcessorEnabled", true ) )
+		if ( AppConfig.get().getBoolean( "advanced.processors.lessProcessorEnabled", true ) )
 			register( new PreLessProcessor() );
 		// register( new SassPreProcessor() );
 
 		/**
 		 * Register Post-Processors
 		 */
-		if ( AppController.config().getBoolean( "advanced.processors.minifierJSProcessorEnabled", true ) )
+		if ( AppConfig.get().getBoolean( "advanced.processors.minifierJSProcessorEnabled", true ) )
 			register( new PostJSMinProcessor() );
-		if ( AppController.config().getBoolean( "advanced.processors.imageProcessorEnabled", true ) )
+		if ( AppConfig.get().getBoolean( "advanced.processors.imageProcessorEnabled", true ) )
 			register( new PostImageProcessor() );
 	}
 
@@ -109,7 +109,7 @@ public class ScriptingFactory implements LogSource
 
 	private final List<ByteBuf> bufferStack = Lists.newLinkedList();
 
-	private Charset charset = Charsets.toCharset( AppController.config().getString( "server.defaultEncoding", "UTF-8" ) );
+	private Charset charset = Charsets.toCharset( AppConfig.get().getString( "server.defaultEncoding", "UTF-8" ) );
 
 	private final ByteBuf output = Unpooled.buffer();
 

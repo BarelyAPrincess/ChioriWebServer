@@ -26,7 +26,7 @@ import javax.net.ssl.SSLException;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.text.WordUtils;
 
-import com.chiorichan.AppController;
+import com.chiorichan.AppConfig;
 import com.chiorichan.account.AccountLocation;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.configuration.apache.ApacheConfiguration;
@@ -51,10 +51,10 @@ import com.chiorichan.lang.SiteException;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.session.SessionManager;
 import com.chiorichan.session.SessionPersistenceMethod;
+import com.chiorichan.util.Application;
 import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.NetworkFunc;
 import com.chiorichan.util.SecureFunc;
-import com.chiorichan.util.Versioning;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -105,7 +105,7 @@ public class Site implements AccountLocation
 			throw new SiteException( "Site id is missing!" );
 
 		siteId = yaml.getString( "site.id" ).toLowerCase();
-		siteTitle = yaml.getString( "site.title", AppController.config().getString( "framework.sites.defaultTitle", "Unnamed Site" ) );
+		siteTitle = yaml.getString( "site.title", AppConfig.get().getString( "framework.sites.defaultTitle", "Unnamed Site" ) );
 
 		ips = yaml.getAsList( "site.listen", Lists.newArrayList() );
 
@@ -171,19 +171,19 @@ public class Site implements AccountLocation
 		String sslKeyFile = yaml.getString( "site.sslKey" );
 		String sslSecret = yaml.getString( "site.sslSecret" );
 
-		try
+		if ( sslCertFile != null && sslKeyFile != null )
 		{
-			if ( sslCertFile != null && sslKeyFile != null )
-			{
-				File sslCert = new File( ssl, sslCertFile );
-				File sslKey = new File( ssl, sslKeyFile );
+			File sslCert = new File( ssl.getAbsolutePath(), sslCertFile );
+			File sslKey = new File( ssl.getAbsolutePath(), sslKeyFile );
 
+			try
+			{
 				defaultSslContext = new CertificateWrapper( sslCert, sslKey, sslSecret ).context();
 			}
-		}
-		catch ( SSLException | FileNotFoundException | CertificateException e )
-		{
-			SiteManager.getLogger().severe( String.format( "Failed to load SslContext for site '%s' using cert '%s', key '%s', and hasSecret? %s", siteId, sslCertFile, sslKeyFile, sslSecret != null && !sslSecret.isEmpty() ), e );
+			catch ( SSLException | FileNotFoundException | CertificateException e )
+			{
+				SiteManager.getLogger().severe( String.format( "Failed to load SslContext for site '%s' using cert '%s', key '%s', and hasSecret? %s", siteId, FileFunc.relPath( sslCert ), FileFunc.relPath( sslKey ), sslSecret != null && !sslSecret.isEmpty() ), e );
+			}
 		}
 
 
@@ -271,8 +271,8 @@ public class Site implements AccountLocation
 		yaml = new YamlConfiguration();
 		encryptionKey = SecureFunc.randomize( "0x0000X" );
 		ips = Lists.newArrayList();
-		siteTitle = Versioning.getProduct();
-		datastore = AppController.config().getDatabase();
+		siteTitle = Application.getProduct();
+		datastore = AppConfig.get().getDatabase();
 
 		directory = SiteManager.checkSiteRoot( siteId );
 	}
@@ -313,7 +313,7 @@ public class Site implements AccountLocation
 
 	public File directoryTemp()
 	{
-		return AppController.config().getDirectoryCache( getId() );
+		return AppConfig.get().getDirectoryCache( getId() );
 	}
 
 	public ApacheConfiguration getApacheConfig()

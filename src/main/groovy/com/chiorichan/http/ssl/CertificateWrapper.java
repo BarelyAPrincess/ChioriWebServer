@@ -112,9 +112,9 @@ public class CertificateWrapper
 		if ( context == null )
 		{
 			if ( sslSecret == null || sslSecret.isEmpty() )
-				context = SslContext.newServerContext( sslCertFile, sslKeyFile );
+				context = SslContext.newServerContext( sslCertFile.getAbsoluteFile(), sslKeyFile.getAbsoluteFile() );
 			else
-				context = SslContext.newServerContext( sslCertFile, sslKeyFile, sslSecret );
+				context = SslContext.newServerContext( sslCertFile.getAbsoluteFile(), sslKeyFile.getAbsoluteFile(), sslSecret );
 
 			NetworkManager.getLogger().info( String.format( "Initalized SslContext %s using cert '%s', key '%s', and hasSecret? %s", context.getClass(), FileFunc.relPath( sslCertFile ), FileFunc.relPath( sslKeyFile ), sslSecret != null && !sslSecret.isEmpty() ) );
 		}

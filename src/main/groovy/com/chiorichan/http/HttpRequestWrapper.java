@@ -36,7 +36,7 @@ import java.util.logging.Level;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.AppController;
+import com.chiorichan.AppConfig;
 import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountManager;
@@ -56,12 +56,12 @@ import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.site.SiteMapping;
 import com.chiorichan.tasks.Timings;
+import com.chiorichan.util.Application;
 import com.chiorichan.util.Namespace;
 import com.chiorichan.util.NetworkFunc;
 import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.Pair;
 import com.chiorichan.util.StringFunc;
-import com.chiorichan.util.Versioning;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -78,7 +78,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	/**
 	 * Return maps as unmodifiable
 	 */
-	private static boolean unmodifiableMaps = AppController.config().getBoolean( "advanced.security.unmodifiableMapsEnabled", true );
+	private static boolean unmodifiableMaps = AppConfig.get().getBoolean( "advanced.security.unmodifiableMapsEnabled", true );
 
 	public static HttpRequestWrapper getRequest()
 	{
@@ -791,10 +791,10 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	 */
 	private void initServerVars()
 	{
-		vars.put( ServerVars.SERVER_SOFTWARE, Versioning.getProduct() );
-		vars.put( ServerVars.SERVER_VERSION, Versioning.getVersion() );
-		vars.put( ServerVars.SERVER_ADMIN, AppController.config().getString( "server.admin", "me@chiorichan.com" ) );
-		vars.put( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Versioning.getVersion() );
+		vars.put( ServerVars.SERVER_SOFTWARE, Application.getProduct() );
+		vars.put( ServerVars.SERVER_VERSION, Application.getVersion() );
+		vars.put( ServerVars.SERVER_ADMIN, AppConfig.get().getString( "server.admin", "me@chiorichan.com" ) );
+		vars.put( ServerVars.SERVER_SIGNATURE, Application.getProduct() + " Version " + Application.getVersion() );
 		vars.put( ServerVars.HTTP_VERSION, http.protocolVersion() );
 		vars.put( ServerVars.HTTP_ACCEPT, getHeader( "Accept" ) );
 		vars.put( ServerVars.HTTP_USER_AGENT, getUserAgent() );
@@ -810,7 +810,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		vars.put( ServerVars.REQUEST_URI, getUri() );
 		vars.put( ServerVars.CONTENT_LENGTH, getContentLength() );
 		vars.put( ServerVars.SERVER_IP, getLocalIpAddr() );
-		vars.put( ServerVars.SERVER_NAME, Versioning.getProductSimple() );
+		vars.put( ServerVars.SERVER_NAME, Application.getProductSimple() );
 		vars.put( ServerVars.SERVER_PORT, getLocalPort() );
 		vars.put( ServerVars.HTTPS, isSecure() );
 		vars.put( ServerVars.DOCUMENT_ROOT, Loader.getWebRoot() );
@@ -1077,7 +1077,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 				if ( !ssl )
 					AccountManager.getLogger().warning( "It is highly recommended that account logins are submitted over SSL. Without SSL, passwords are at great risk." );
 
-				if ( !nonceProcessed() && AppController.config().getBoolean( "accounts.requireLoginWithNonce" ) )
+				if ( !nonceProcessed() && AppConfig.get().getBoolean( "accounts.requireLoginWithNonce" ) )
 					throw new AccountException( AccountDescriptiveReason.NONCE_REQUIRED, username );
 
 				AccountResult result = getSession().loginWithException( AccountAuthenticator.PASSWORD, username, password );

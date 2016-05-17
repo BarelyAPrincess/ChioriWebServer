@@ -13,7 +13,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
-import com.chiorichan.AppController;
+import com.chiorichan.AppConfig;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.datastore.sql.query.SQLQuerySelect;
 import com.chiorichan.permission.PermissionManager;
@@ -48,7 +48,7 @@ public class SqlDatastore extends SessionDatastore
 		{
 			try
 			{
-				if ( AppController.config().getDatabase().table( "sessions" ).delete().where( "sessionId" ).matches( sessionId ).execute().rowCount() < 1 )
+				if ( AppConfig.get().getDatabase().table( "sessions" ).delete().where( "sessionId" ).matches( sessionId ).execute().rowCount() < 1 )
 					SessionManager.getLogger().severe( "Failed to remove the session '" + sessionId + "' from the database, no results." );
 			}
 			catch ( SQLException e )
@@ -87,7 +87,7 @@ public class SqlDatastore extends SessionDatastore
 		{
 			try
 			{
-				SQLQuerySelect select = AppController.config().getDatabase().table( "sessions" ).select().where( "sessionId" ).matches( sessionId ).execute();
+				SQLQuerySelect select = AppConfig.get().getDatabase().table( "sessions" ).select().where( "sessionId" ).matches( sessionId ).execute();
 				// rs = Loader.getDatabase().query( "SELECT * FROM `sessions` WHERE `sessionId` = '" + sessionId + "'" );
 				if ( select.rowCount() < 1 )
 					return;
@@ -105,7 +105,7 @@ public class SqlDatastore extends SessionDatastore
 			try
 			{
 				String dataJson = new Gson().toJson( data );
-				SQLDatastore sql = AppController.config().getDatabase();
+				SQLDatastore sql = AppConfig.get().getDatabase();
 
 				if ( sql == null )
 					throw new SessionException( "Sessions can't be stored in a SQL Database without a properly configured server database." );
@@ -139,7 +139,7 @@ public class SqlDatastore extends SessionDatastore
 	List<SessionData> getSessions() throws SessionException
 	{
 		List<SessionData> data = Lists.newArrayList();
-		SQLDatastore sql = AppController.config().getDatabase();
+		SQLDatastore sql = AppConfig.get().getDatabase();
 
 		if ( sql == null )
 			throw new SessionException( "Sessions can't be stored in a SQL Database without a properly configured server database." );

@@ -19,7 +19,7 @@ import com.chiorichan.configuration.apache.ApacheSection;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.site.Site;
 import com.chiorichan.util.StringFunc;
-import com.chiorichan.util.Versioning;
+import com.chiorichan.util.Application;
 
 /**
  * Used to parse Apache configuration files, e.g., .htaccess
@@ -222,7 +222,7 @@ public class ApacheHandler
 				case "IfVersion":
 					kv.isSection();
 					kv.hasArguments( 2, "<operator> <version>" );
-					if ( StringFunc.compareVersions( Versioning.getVersionNumber(), args[1], args[0] ) )
+					if ( StringFunc.compareVersions( Application.getVersionNumber(), args[1], args[0] ) )
 						if ( !handleDirectives( ( ApacheSection ) kv, handler ) )
 							def = false;
 					break;

@@ -15,7 +15,6 @@ import io.netty.util.Mapping;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.IDN;
-import java.security.Security;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
@@ -26,9 +25,7 @@ import java.util.regex.Pattern;
 
 import javax.net.ssl.SSLException;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-
-import com.chiorichan.AppController;
+import com.chiorichan.AppConfig;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.http.SslCertificateDefaultEvent;
 import com.chiorichan.event.http.SslCertificateMapEvent;
@@ -117,17 +114,19 @@ public class SslManager implements ServiceManager, Mapping<String, SslContext>
 
 	public File getServerCertificateFile()
 	{
-		return new File( AppController.config().getString( "server.httpsSharedCert", "server.crt" ) );
+		String file = AppConfig.get().getString( "server.httpsSharedCert", "server.crt" );
+		return FileFunc.isAbsolute( file ) ? new File( file ) : new File( AppConfig.get().getDirectory().getAbsolutePath(), file );
 	}
 
 	public String getServerCertificateSecret()
 	{
-		return AppController.config().getString( "server.httpsSharedSecret" );
+		return AppConfig.get().getString( "server.httpsSharedSecret" );
 	}
 
 	public File getServerKeyFile()
 	{
-		return new File( AppController.config().getString( "server.httpsSharedKey", "server.key" ) );
+		String file = AppConfig.get().getString( "server.httpsSharedKey", "server.key" );
+		return FileFunc.isAbsolute( file ) ? new File( file ) : new File( AppConfig.get().getDirectory().getAbsolutePath(), file );
 	}
 
 	@Override
@@ -135,9 +134,7 @@ public class SslManager implements ServiceManager, Mapping<String, SslContext>
 	{
 		final File sslCert = getServerCertificateFile();
 		final File sslKey = getServerKeyFile();
-		final String sslSecret = AppController.config().getString( "server.httpsSharedSecret" );
-
-		Security.addProvider( new BouncyCastleProvider() );
+		final String sslSecret = AppConfig.get().getString( "server.httpsSharedSecret" );
 
 		try
 		{
@@ -263,10 +260,10 @@ public class SslManager implements ServiceManager, Mapping<String, SslContext>
 
 		if ( updateConfig )
 		{
-			AppController.config().set( "server.httpsSharedCert", FileFunc.relPath( sslCert ) );
-			AppController.config().set( "server.httpsSharedKey", FileFunc.relPath( sslKey ) );
-			AppController.config().set( "server.httpsSharedSecret", lastSslSecret );
-			AppController.config().save();
+			AppConfig.get().set( "server.httpsSharedCert", FileFunc.relPath( sslCert ) );
+			AppConfig.get().set( "server.httpsSharedKey", FileFunc.relPath( sslKey ) );
+			AppConfig.get().set( "server.httpsSharedSecret", lastSslSecret );
+			AppConfig.get().save();
 		}
 
 		X509Certificate cert = wrapper.getCertificate();

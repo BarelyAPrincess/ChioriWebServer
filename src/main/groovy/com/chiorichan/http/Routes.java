@@ -16,7 +16,7 @@ import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 
-import com.chiorichan.AppController;
+import com.chiorichan.AppConfig;
 import com.chiorichan.datastore.sql.SQLTable;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.datastore.sql.query.SQLQuerySelect;
@@ -97,7 +97,7 @@ public class Routes
 
 				try
 				{
-					SQLDatastore sql = AppController.config().getDatabase();
+					SQLDatastore sql = AppConfig.get().getDatabase();
 
 					if ( sql != null && sql.initalized() )
 					{

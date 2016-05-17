@@ -13,7 +13,3 @@ config:
     state: null
     city: null
     organization: null
-domains: [
-  ]
-certificates: [
-  ]

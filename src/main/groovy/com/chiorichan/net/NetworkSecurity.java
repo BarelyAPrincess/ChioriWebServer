@@ -13,7 +13,7 @@ import java.util.Map;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.AppController;
+import com.chiorichan.AppConfig;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
@@ -95,7 +95,7 @@ public class NetworkSecurity implements EventRegistrar, TaskRegistrar, Listener
 				case CLOSED_EARLY:
 					return "Banned for closing the connection early repeatedly";
 				default:
-					return AppController.config().getString( "server.defaultBanReason", "The Ban Hammer Has Spoken" );
+					return AppConfig.get().getString( "server.defaultBanReason", "The Ban Hammer Has Spoken" );
 			}
 		}
 	}

@@ -8,10 +8,10 @@
  */
 package com.chiorichan.terminal;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
+import com.chiorichan.AppConfig;
 import com.chiorichan.Loader;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.factory.BindingProvider;
@@ -19,7 +19,7 @@ import com.chiorichan.factory.ScriptBinding;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.lang.EnumColor;
 import com.chiorichan.util.FileFunc;
-import com.chiorichan.util.Versioning;
+import com.chiorichan.util.Application;
 
 public class QueryTerminalEntity extends TerminalEntity implements BindingProvider
 {
@@ -34,7 +34,7 @@ public class QueryTerminalEntity extends TerminalEntity implements BindingProvid
 		binding = new ScriptBinding();
 		factory = ScriptingFactory.create( this );
 		binding.setVariable( "context", this );
-		binding.setVariable( "__FILE__", new File( "" ) );
+		binding.setVariable( "__FILE__", AppConfig.get().getDirectory() );
 	}
 
 	@Override
@@ -52,8 +52,8 @@ public class QueryTerminalEntity extends TerminalEntity implements BindingProvid
 				for ( String l : banner )
 					handler.println( EnumColor.GOLD + l );
 
-				handler.println( String.format( "%s%sWelcome to %s Version %s!", EnumColor.NEGATIVE, EnumColor.GOLD, Versioning.getProduct(), Versioning.getVersion() ) );
-				handler.println( String.format( "%s%s%s", EnumColor.NEGATIVE, EnumColor.GOLD, Versioning.getCopyright() ) );
+				handler.println( String.format( "%s%sWelcome to %s Version %s!", EnumColor.NEGATIVE, EnumColor.GOLD, Application.getProduct(), Application.getVersion() ) );
+				handler.println( String.format( "%s%s%s", EnumColor.NEGATIVE, EnumColor.GOLD, Application.getCopyright() ) );
 			}
 			finally
 			{

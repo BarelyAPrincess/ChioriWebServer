@@ -24,7 +24,7 @@ import joptsimple.internal.Strings;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.net.util.Charsets;
 
-import com.chiorichan.AppController;
+import com.chiorichan.AppConfig;
 import com.chiorichan.ContentTypes;
 import com.chiorichan.InterpreterOverrides;
 import com.chiorichan.logger.Log;
@@ -67,7 +67,7 @@ public class FileInterpreter
 
 	public FileInterpreter()
 	{
-		encoding = Charsets.toCharset( AppController.config().getString( "server.defaultBinaryEncoding", "ISO-8859-1" ) );
+		encoding = Charsets.toCharset( AppConfig.get().getString( "server.defaultBinaryEncoding", "ISO-8859-1" ) );
 
 		// All param keys are lower case. No such thing as a non-lowercase param keys because keys are forced to lowercase.
 		annotations.put( "title", null );
@@ -127,9 +127,9 @@ public class FileInterpreter
 			type = ContentTypes.getContentType( cachedFile.getAbsoluteFile() );
 
 		if ( type.startsWith( "text" ) )
-			setEncoding( Charsets.toCharset( AppController.config().getString( "server.defaultTextEncoding", "UTF-8" ) ) );
+			setEncoding( Charsets.toCharset( AppConfig.get().getString( "server.defaultTextEncoding", "UTF-8" ) ) );
 		else
-			setEncoding( Charsets.toCharset( AppController.config().getString( "server.defaultBinaryEncoding", "ISO-8859-1" ) ) );
+			setEncoding( Charsets.toCharset( AppConfig.get().getString( "server.defaultBinaryEncoding", "ISO-8859-1" ) ) );
 
 		return type;
 	}

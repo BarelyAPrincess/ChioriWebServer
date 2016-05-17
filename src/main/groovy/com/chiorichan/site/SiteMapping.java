@@ -66,6 +66,7 @@ public class SiteMapping
 		DomainNode currentNode = root;
 		String lastDomain = null;
 		SiteMapping lastSite = null;
+
 		for ( int i = 0; i < ns.getNodeCount(); i++ )
 		{
 			currentNode = currentNode.getNode( ns.getNode( i ) );

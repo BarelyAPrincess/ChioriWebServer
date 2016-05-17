@@ -16,7 +16,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
 
-import com.chiorichan.AppController;
+import com.chiorichan.AppConfig;
 import com.chiorichan.account.AccountInstance;
 import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
@@ -493,7 +493,7 @@ public final class Session extends AccountPermissible implements Kickable
 			if ( StringFunc.isTrue( getVariable( "remember", "false" ) ) )
 				defaultTimeout = SessionManager.getDefaultTimeoutWithRememberMe();
 
-			if ( AppController.config().getBoolean( "allowNoTimeoutPermission" ) && checkPermission( "com.chiorichan.noTimeout" ).isTrue() )
+			if ( AppConfig.get().getBoolean( "allowNoTimeoutPermission" ) && checkPermission( "com.chiorichan.noTimeout" ).isTrue() )
 				defaultTimeout = Integer.MAX_VALUE;
 		}
 

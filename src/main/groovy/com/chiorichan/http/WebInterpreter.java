@@ -20,7 +20,7 @@ import java.util.Map.Entry;
 
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 
-import com.chiorichan.AppController;
+import com.chiorichan.AppConfig;
 import com.chiorichan.factory.FileInterpreter;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.lang.HttpError;
@@ -109,7 +109,7 @@ public class WebInterpreter extends FileInterpreter
 					uri = uri + "/" + selectedFile.getName();
 					dest = new File( request.getLocation().getSubdomain( subdomain ).directory(), uri );
 				}
-				else if ( AppController.config().getBoolean( "server.allowDirectoryListing" ) )
+				else if ( AppConfig.get().getBoolean( "server.allowDirectoryListing" ) )
 					isDirectoryRequest = true;
 				else
 					throw new HttpError( 403, "Directory Listing is Disallowed on this Server!" );

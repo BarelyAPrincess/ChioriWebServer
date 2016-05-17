@@ -17,8 +17,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
-import com.chiorichan.AppController;
-import com.chiorichan.AppLoader;
+import com.chiorichan.AppConfig;
 import com.chiorichan.account.Kickable;
 import com.chiorichan.account.lang.AccountDescriptiveReason;
 import com.chiorichan.account.lang.AccountResult;
@@ -30,6 +29,7 @@ import com.chiorichan.terminal.QueryTerminalEntity;
 import com.chiorichan.terminal.TerminalEntity;
 import com.chiorichan.terminal.TerminalHandler;
 import com.chiorichan.util.StringFunc;
+import com.chiorichan.util.Utils;
 
 /**
  * Handles the Query Server traffic
@@ -52,7 +52,7 @@ public class QueryServerTerminal extends SimpleChannelInboundHandler<String> imp
 
 		if ( NetworkEventFactory.buildQueryConnected( this, ctx ) )
 		{
-			println( "Server Uptime: " + AppLoader.uptime() );
+			println( "Server Uptime: " + Utils.uptime() );
 			println( "The last visit from IP " + terminal.getIpAddr() + " is unknown." );
 			// TODO Add more information here
 
@@ -125,7 +125,7 @@ public class QueryServerTerminal extends SimpleChannelInboundHandler<String> imp
 		if ( text == null || text.isEmpty() )
 			return "";
 
-		if ( !AppController.config().getBoolean( "server.queryUseColor" ) || terminal != null && !StringFunc.isTrue( terminal.getVariable( "color", "true" ) ) )
+		if ( !AppConfig.get().getBoolean( "server.queryUseColor" ) || terminal != null && !StringFunc.isTrue( terminal.getVariable( "color", "true" ) ) )
 			return EnumColor.removeAltColors( text );
 		else
 			return EnumColor.transAltColors( text );

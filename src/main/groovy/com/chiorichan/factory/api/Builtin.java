@@ -34,15 +34,16 @@ import java.util.Map.Entry;
 
 import org.ocpsoft.prettytime.PrettyTime;
 
-import com.chiorichan.AppController;
+import com.chiorichan.AppConfig;
 import com.chiorichan.database.DatabaseEngineLegacy;
 import com.chiorichan.lang.DiedException;
 import com.chiorichan.logger.Log;
 import com.chiorichan.tasks.Timings;
+import com.chiorichan.util.Application;
+import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.SecureFunc;
 import com.chiorichan.util.StringFunc;
-import com.chiorichan.util.Versioning;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -424,12 +425,26 @@ public abstract class Builtin extends Script
 
 	public static File dirname( File path )
 	{
-		return path.getParentFile();
+		return dirname( path, 1 );
+	}
+
+	public static File dirname( File path, int levels )
+	{
+		if ( levels < 1 )
+			levels = 1;
+		for ( int x = 0; x < levels; x++ )
+			path = path.getParentFile();
+		return path;
 	}
 
 	public static File dirname( String path )
 	{
-		return new File( path ).getParentFile();
+		return dirname( path, 1 );
+	}
+
+	public static File dirname( String path, int levels )
+	{
+		return dirname( FileFunc.isAbsolute( path ) ? new File( path ) : new File( AppConfig.get().getDirectory().getAbsolutePath(), path ), levels );
 	}
 
 	public static boolean empty( Collection<Object> list )
@@ -494,7 +509,7 @@ public abstract class Builtin extends Script
 
 	public static boolean file_exists( String file )
 	{
-		return new File( file ).exists();
+		return ( FileFunc.isAbsolute( file ) ? new File( file ) : new File( AppConfig.get().getDirectory().getAbsolutePath(), file ) ).exists();
 	}
 
 	public static Map<String, Object> filter( Map<String, Object> data, Collection<String> allowedKeys )
@@ -561,7 +576,7 @@ public abstract class Builtin extends Script
 	 */
 	public static String getCopyright()
 	{
-		return Versioning.getCopyright();
+		return Application.getCopyright();
 	}
 
 	/**
@@ -569,7 +584,7 @@ public abstract class Builtin extends Script
 	 */
 	public static String getProduct()
 	{
-		return Versioning.getProduct();
+		return Application.getProduct();
 	}
 
 	/**
@@ -581,7 +596,7 @@ public abstract class Builtin extends Script
 	 */
 	public static DatabaseEngineLegacy getServerDatabase()
 	{
-		DatabaseEngineLegacy engine = AppController.config().getDatabase().getLegacy();
+		DatabaseEngineLegacy engine = AppConfig.get().getDatabase().getLegacy();
 
 		if ( engine == null )
 			throw new IllegalStateException( "The server database is unconfigured. It will need to be setup in order for you to use the getServerDatabase() method." );
@@ -594,7 +609,7 @@ public abstract class Builtin extends Script
 	 */
 	public static String getVersion()
 	{
-		return Versioning.getVersion();
+		return Application.getVersion();
 	}
 
 	public static String implode( String joiner, Iterable<String> data )

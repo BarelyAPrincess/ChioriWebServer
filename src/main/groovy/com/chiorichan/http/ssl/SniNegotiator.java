@@ -29,6 +29,7 @@ import javax.net.ssl.SSLEngine;
 
 import org.apache.commons.io.FileUtils;
 
+import com.chiorichan.AppConfig;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.util.FileFunc;
@@ -82,7 +83,7 @@ public class SniNegotiator extends ByteToMessageDecoder
 	{
 		try
 		{
-			File cipherSuitesFile = new File( "EnabledCipherSuites.txt" );
+			File cipherSuitesFile = new File( AppConfig.get().getDirectory().getAbsolutePath(), "EnabledCipherSuites.txt" );
 
 			if ( !cipherSuitesFile.exists() )
 				FileFunc.putResource( "com/chiorichan/EnabledCipherSuites.txt", cipherSuitesFile );

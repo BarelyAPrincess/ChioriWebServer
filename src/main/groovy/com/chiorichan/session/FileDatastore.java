@@ -15,6 +15,7 @@ import java.util.Map;
 
 import org.apache.commons.io.filefilter.FileFilterUtils;
 
+import com.chiorichan.AppConfig;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.tasks.Timings;
@@ -118,7 +119,7 @@ public class FileDatastore extends SessionDatastore
 	public static File getSessionsDirectory()
 	{
 		if ( sessionsDirectory == null )
-			sessionsDirectory = new File( "sessions" );
+			sessionsDirectory = new File( AppConfig.get().getDirectory().getAbsolutePath(), "sessions" );
 
 		FileFunc.setDirectoryAccessWithException( sessionsDirectory );
 

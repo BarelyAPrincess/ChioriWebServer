@@ -28,7 +28,7 @@ import javax.imageio.ImageIO;
 
 import org.apache.commons.io.FileUtils;
 
-import com.chiorichan.AppController;
+import com.chiorichan.AppConfig;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.Listener;
 import com.chiorichan.factory.ScriptingContext;
@@ -73,7 +73,7 @@ public class PostImageProcessor implements Listener
 			float x = -1;
 			float y = -1;
 
-			boolean cacheEnabled = AppController.config().getBoolean( "advanced.processors.imageProcessorCache", true );
+			boolean cacheEnabled = AppConfig.get().getBoolean( "advanced.processors.imageProcessorCache", true );
 			boolean grayscale = false;
 
 			ScriptingContext context = event.context();
@@ -174,7 +174,7 @@ public class PostImageProcessor implements Listener
 
 			// Produce a unique encapsulated id based on this image processing request
 			String encapId = SecureFunc.md5( context.filename() + w1 + h1 + request.getArgument( "argb" ) + grayscale );
-			File tmp = context.site() == null ? AppController.config().getDirectoryCache() : context.site().directoryTemp();
+			File tmp = context.site() == null ? AppConfig.get().getDirectoryCache() : context.site().directoryTemp();
 			File file = new File( tmp, encapId + "_" + new File( context.filename() ).getName() );
 
 			if ( cacheEnabled && file.exists() )
@@ -183,7 +183,7 @@ public class PostImageProcessor implements Listener
 				return;
 			}
 
-			Image image = resize ? img.getScaledInstance( Math.round( w1 ), Math.round( h1 ), AppController.config().getBoolean( "advanced.processors.useFastGraphics", true ) ? Image.SCALE_FAST : Image.SCALE_SMOOTH ) : img;
+			Image image = resize ? img.getScaledInstance( Math.round( w1 ), Math.round( h1 ), AppConfig.get().getBoolean( "advanced.processors.useFastGraphics", true ) ? Image.SCALE_FAST : Image.SCALE_SMOOTH ) : img;
 
 			// TODO Report malformed parameters to user
 

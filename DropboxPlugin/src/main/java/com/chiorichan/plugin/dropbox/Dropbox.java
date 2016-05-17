@@ -11,7 +11,7 @@ import java.util.Locale;
 import com.chiorichan.lang.PluginException;
 import com.chiorichan.lang.PluginUnconfiguredException;
 import com.chiorichan.plugin.loader.Plugin;
-import com.chiorichan.util.Versioning;
+import com.chiorichan.util.Application;
 import com.dropbox.core.DbxAppInfo;
 import com.dropbox.core.DbxClient;
 import com.dropbox.core.DbxRequestConfig;
@@ -68,7 +68,7 @@ public class Dropbox extends Plugin
 			throw new PluginUnconfiguredException( "Config did not contain a Api Key nor Api Secret. You will need to edit the config.yml file located in folder `" + getDataFolder().getAbsolutePath() + "`." );
 		
 		dbxAppInfo = new DbxAppInfo( dbxApiKey, dbxApiSecret );
-		dbxAppConfig = new DbxRequestConfig( Versioning.getProduct() + "/" + Versioning.getVersion(), Locale.getDefault().toString() );
+		dbxAppConfig = new DbxRequestConfig( Application.getProduct() + "/" + Application.getVersion(), Locale.getDefault().toString() );
 	}
 	
 	@Override

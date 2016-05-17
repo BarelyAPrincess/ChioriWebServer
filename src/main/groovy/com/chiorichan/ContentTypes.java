@@ -33,7 +33,7 @@ public class ContentTypes
 	{
 		try
 		{
-			File contentTypes = new File( "ContentTypes.properties" );
+			File contentTypes = new File( AppConfig.get().getDirectory().getAbsolutePath(), "ContentTypes.properties" );
 
 			if ( !contentTypes.exists() )
 				contentTypes.createNewFile();

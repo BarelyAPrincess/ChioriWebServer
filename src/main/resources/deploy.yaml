@@ -1,0 +1,9 @@
+# Application Deployment Properties File
+deploy:
+  main-class: com.chiorichan.Loader
+  libraries:
+    - org.codehaus.groovy:groovy-all:2.3.6
+    - io.netty:netty-all:5.0.0.Alpha2
+    - com.google.javascript:closure-compiler:r2388
+    - org.mozilla:rhino:1.7R4
+    - com.asual.lesscss:lesscss-engine:1.3.0

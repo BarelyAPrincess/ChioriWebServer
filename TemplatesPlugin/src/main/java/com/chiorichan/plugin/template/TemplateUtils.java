@@ -22,7 +22,7 @@ import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.NetworkFunc;
-import com.chiorichan.util.Versioning;
+import com.chiorichan.util.Application;
 import com.chiorichan.util.WebFunc;
 
 /**
@@ -30,7 +30,7 @@ import com.chiorichan.util.WebFunc;
  */
 public class TemplateUtils
 {
-	private static final String GITHUB_BRANCH = Versioning.getGitHubBranch();
+	private static final String GITHUB_BRANCH = Application.getGitHubBranch();
 	private static final String GITHUB_SERVER_URL = "https://raw.githubusercontent.com/ChioriGreene/ChioriWebServer/";
 	private static final String SERVER_PLUGIN_NAMESPACE = "com.chiorichan.plugin.";
 
@@ -168,28 +168,37 @@ public class TemplateUtils
 			if ( plugin != null && plugin.getDescription() != null && plugin.getDescription().getGitHubBaseUrl() != null )
 				url = plugin.getDescription().getGitHubBaseUrl();
 		}
-		catch ( PluginNotFoundException | ClassNotFoundException e )
+		catch ( PluginNotFoundException | ClassNotFoundException | NoClassDefFoundError e )
 		{
 			// Do Nothing
 		}
+
+		// TODO Get ChioriAPI source path as well
 
 		String gitHubGroovyUrl = url + "src/main/groovy/";
 		String gitHubJavaUrl = url + "src/main/java/";
 		String fileUrl = className.replace( '.', '/' ).replace( "$1", "" ) + "." + InterpreterOverrides.getFileExtension( ste.getFileName() );
 		String finalUrl = gitHubGroovyUrl + fileUrl;
 
-		byte[] result = NetworkFunc.readUrl( finalUrl );
-
-		if ( result == null )
+		byte[] result;
+		try
 		{
-			finalUrl = gitHubJavaUrl + fileUrl;
-			result = NetworkFunc.readUrl( finalUrl );
+			result = NetworkFunc.readUrlWithException( finalUrl );
+		}
+		catch ( IOException e )
+		{
+			try
+			{
+				finalUrl = gitHubJavaUrl + fileUrl;
+				result = NetworkFunc.readUrlWithException( finalUrl );
+			}
+			catch ( IOException ee )
+			{
+				return String.format( "Could not read file '%s' from the GitHub repository.\nYou could be running a mismatching version to the repository or this file belongs to another repository.", fileUrl );
+			}
 		}
 
-		if ( result == null )
-			return String.format( "Could not read file '%s' from the GitHub repository.\nYou could be running a mismatching version to the repository or this file belongs to another repository.", fileUrl );
-		else
-			return String.format( "%s<br /><a target=\"_blank\" href=\"%s\">View this file on our GitHub!</a>", generateCodePreview( new String( result ), lineNum ), finalUrl );
+		return String.format( "%s<br /><a target=\"_blank\" href=\"%s\">View this file on our GitHub!</a>", generateCodePreview( new String( result ), lineNum ), finalUrl );
 	}
 
 	static String generateCodePreview( String source, int lineNum )

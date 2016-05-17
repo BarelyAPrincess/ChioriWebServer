@@ -58,7 +58,7 @@ import java.util.logging.Level;
 import org.apache.commons.lang3.Validate;
 import org.codehaus.groovy.runtime.NullObject;
 
-import com.chiorichan.AppController;
+import com.chiorichan.AppConfig;
 import com.chiorichan.AppLoader;
 import com.chiorichan.ContentTypes;
 import com.chiorichan.configuration.apache.ApacheConfiguration;
@@ -94,9 +94,9 @@ import com.chiorichan.session.Session;
 import com.chiorichan.session.SessionException;
 import com.chiorichan.site.Site;
 import com.chiorichan.tasks.Timings;
+import com.chiorichan.util.Application;
 import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.StringFunc;
-import com.chiorichan.util.Versioning;
 import com.chiorichan.util.WebFunc;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
@@ -117,7 +117,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		 * Determines the minimum file size required to create a physical temporary file.
 		 * See {@link DefaultHttpDataFactory#DefaultHttpDataFactory(boolean)} and {@link DefaultHttpDataFactory#DefaultHttpDataFactory(long)}
 		 */
-		long minsize = AppController.config().getLong( "server.fileUploadMinInMemory", DefaultHttpDataFactory.MINSIZE );
+		long minsize = AppConfig.get().getLong( "server.fileUploadMinInMemory", DefaultHttpDataFactory.MINSIZE );
 
 		if ( minsize < 1 ) // Less then 1kb = always
 			factory = new DefaultHttpDataFactory( true );
@@ -126,7 +126,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		else
 			factory = new DefaultHttpDataFactory( minsize );
 
-		setTempDirectory( AppController.config().getDirectoryCache() );
+		setTempDirectory( AppConfig.get().getDirectoryCache() );
 	}
 
 	/**
@@ -159,8 +159,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	/**
 	 * Simple Time and Date formats
 	 */
-	final SimpleDateFormat dateFormat = new SimpleDateFormat( AppController.config().getString( "console.dateFormat", "MM-dd" ) );
-	final SimpleDateFormat timeFormat = new SimpleDateFormat( AppController.config().getString( "console.timeFormat", "HH:mm:ss.SSS" ) );
+	final SimpleDateFormat dateFormat = new SimpleDateFormat( AppConfig.get().getString( "console.dateFormat", "MM-dd" ) );
+	final SimpleDateFormat timeFormat = new SimpleDateFormat( AppConfig.get().getString( "console.timeFormat", "HH:mm:ss.SSS" ) );
 
 	/**
 	 * The POST body decoder
@@ -258,7 +258,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				sb.append( "<p>The exception has been logged to the console, so we can only hope the exception is noticed and resolved. We apoligize for any inconvenience.</p>\n" );
 				sb.append( "<p><i>You have a good day now and we will see you again soon. :)</i></p>\n" );
 				sb.append( "<hr>\n" );
-				sb.append( Versioning.getHTMLFooter() );
+				sb.append( Application.getHTMLFooter() );
 
 				FullHttpResponse response = new DefaultFullHttpResponse( HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf( 500 ), Unpooled.wrappedBuffer( sb.toString().getBytes() ) );
 				ctx.write( response );
@@ -350,7 +350,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				log.log( Level.SEVERE, EnumColor.NEGATIVE + "" + EnumColor.RED + "OutOfMemoryError! This is serious!!!" );
 				response.sendError( 500, "We have encountered an internal server error" );
 
-				if ( Versioning.isDevelopment() )
+				if ( Application.isDevelopment() )
 					cause.printStackTrace();
 			}
 			else if ( evalOrig == null )
@@ -359,7 +359,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				log.log( Level.SEVERE, EnumColor.NEGATIVE + "" + EnumColor.RED + "Exception %s thrown in file '%s' at line %s, message '%s'", cause.getClass().getName(), cause.getStackTrace()[0].getFileName(), cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
 				response.sendException( cause );
 
-				if ( Versioning.isDevelopment() )
+				if ( Application.isDevelopment() )
 					cause.printStackTrace();
 			}
 			else
@@ -381,7 +381,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 
 				response.sendException( evalOrig );
 
-				if ( Versioning.isDevelopment() )
+				if ( Application.isDevelopment() )
 					cause.printStackTrace();
 			}
 
@@ -548,7 +548,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 
 		if ( request.getSubdomain().length() > 0 && !currentSite.getSubdomain( request.getSubdomain() ).isMaped( request.getDomain() ) )
 		{
-			if ( "www".equalsIgnoreCase( request.getSubdomain() ) || AppController.config().getBoolean( "sites.redirectMissingSubDomains" ) )
+			if ( "www".equalsIgnoreCase( request.getSubdomain() ) || AppConfig.get().getBoolean( "sites.redirectMissingSubDomains" ) )
 			{
 				log.log( Level.SEVERE, "Redirecting non-existent subdomain '%s' to root domain '%s'", request.getSubdomain(), request.getFullUrl( "" ) );
 				response.sendRedirect( request.getFullUrl( "" ) );
@@ -774,7 +774,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			t.printStackTrace();
 		}
 
-		if ( AppController.config().getBoolean( "advanced.security.requestMapEnabled", true ) )
+		if ( AppConfig.get().getBoolean( "advanced.security.requestMapEnabled", true ) )
 			request.setGlobal( "_REQUEST", request.getRequestMap() );
 
 		ByteBuf rendered = Unpooled.buffer();
@@ -817,7 +817,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 					catch ( Exception e )
 					{
 						log.log( Level.SEVERE, "Exception Excountered: %s", e.getMessage() );
-						if ( Versioning.isDevelopment() )
+						if ( Application.isDevelopment() )
 							log.log( Level.SEVERE, e.getStackTrace()[0].toString() );
 					}
 			}
@@ -857,7 +857,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 					{
 						rendered.writeBytes( result.getObject().toString().getBytes() );
 						log.log( Level.SEVERE, "Exception encountered while writing returned object to output. %s", e.getMessage() );
-						if ( Versioning.isDevelopment() )
+						if ( Application.isDevelopment() )
 							log.log( Level.SEVERE, e.getStackTrace()[0].toString() );
 					}
 			}
@@ -933,7 +933,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				sb.append( "<p>But it is also possible that the server is actually running in a low level mode or could be offline for some other reason. If you feel this is a mistake, might I suggest you talk with the server admin.</p>\n" );
 				sb.append( "<p><i>You have a good day now and we will see you again soon. :)</i></p>\n" );
 				sb.append( "<hr>\n" );
-				sb.append( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")<br />" + Versioning.getCopyright() + "</small>" );
+				sb.append( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Application.getProduct() + "</a> Version " + Application.getVersion() + " (Build #" + Application.getBuildNumber() + ")<br />" + Application.getCopyright() + "</small>" );
 
 				FullHttpResponse response = new DefaultFullHttpResponse( HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf( 503 ), Unpooled.wrappedBuffer( sb.toString().getBytes() ) );
 				ctx.write( response );
@@ -966,7 +966,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 
 			Site currentSite = request.getLocation();
 
-			File tmpFileDirectory = currentSite != null ? currentSite.directoryTemp() : AppController.config().getDirectoryCache();
+			File tmpFileDirectory = currentSite != null ? currentSite.directoryTemp() : AppConfig.get().getDirectoryCache();
 
 			setTempDirectory( tmpFileDirectory );
 
@@ -1121,7 +1121,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 
 		sb.append( WebFunc.createTable( tbl, Arrays.asList( new String[] {"", "Name", "Last Modified", "Size", "Type"} ) ) );
 		sb.append( "<hr>" );
-		sb.append( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + "<br />" + Versioning.getCopyright() + "</small>" );
+		sb.append( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Application.getProduct() + "</a> Version " + Application.getVersion() + "<br />" + Application.getCopyright() + "</small>" );
 
 		response.print( sb.toString() );
 		response.sendResponse();

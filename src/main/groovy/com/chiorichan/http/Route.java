@@ -101,7 +101,6 @@ public class Route
 	{
 		if ( params.get( "file" ) != null && params.get( "file" ).length() > 0 )
 			return new File( site.getSubdomain( params.get( "subdomain" ) ).directory(), params.get( "file" ) );
-
 		return null;
 	}
 

@@ -17,7 +17,7 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 
-import com.chiorichan.AppController;
+import com.chiorichan.AppConfig;
 import com.chiorichan.ContentTypes;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.lang.ExceptionContext;
@@ -155,7 +155,7 @@ public class ScriptingContext implements ExceptionContext
 
 	public static List<String> getPreferredExtensions()
 	{
-		return AppController.config().getStringList( "advanced.scripting.preferredExtensions", Arrays.asList( "html", "htm", "groovy", "gsp", "jsp", "chi" ) );
+		return AppConfig.get().getStringList( "advanced.scripting.preferredExtensions", Arrays.asList( "html", "htm", "groovy", "gsp", "jsp", "chi" ) );
 	}
 
 	private Charset charset = Charset.defaultCharset();

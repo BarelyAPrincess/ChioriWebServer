@@ -20,10 +20,14 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.security.Security;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
+import com.chiorichan.AppConfig;
 import com.chiorichan.AppController;
 import com.chiorichan.http.HttpInitializer;
 import com.chiorichan.http.ssl.SslInitializer;
@@ -36,7 +40,7 @@ import com.chiorichan.services.AppManager;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.TaskRegistrar;
 import com.chiorichan.tasks.Ticks;
-import com.chiorichan.util.Versioning;
+import com.chiorichan.util.Application;
 import com.google.common.collect.Lists;
 
 /**
@@ -172,12 +176,12 @@ public class NetworkManager implements TaskRegistrar, LogSource
 		try
 		{
 			InetSocketAddress socket;
-			String httpIp = AppController.config().getString( "server.httpHost", "" );
-			int httpPort = AppController.config().getInt( "server.httpPort", 8080 );
+			String httpIp = AppConfig.get().getString( "server.httpHost", "" );
+			int httpPort = AppConfig.get().getInt( "server.httpPort", 8080 );
 
 			if ( httpPort > 0 )
 			{
-				if ( Versioning.isPrivilegedPort( httpPort ) )
+				if ( Application.isPrivilegedPort( httpPort ) )
 				{
 					getLogger().warning( "It would seem that you are trying to start ChioriWebServer's Web Server on a privileged port without root access." );
 					getLogger().warning( "Most likely you will see an exception thrown below this. http://www.w3.org/Daemon/User/Installation/PrivilegedPorts.html" );
@@ -189,7 +193,7 @@ public class NetworkManager implements TaskRegistrar, LogSource
 				else
 					socket = new InetSocketAddress( httpIp, httpPort );
 
-				// TODO Allow the server to bind to more than one IP but less than all
+				// TODO Allow the server to bind to more than one IP
 
 				getLogger().info( "Starting Web Server on " + ( httpIp.isEmpty() ? "*" : httpIp ) + ":" + httpPort );
 
@@ -232,10 +236,15 @@ public class NetworkManager implements TaskRegistrar, LogSource
 					throw new StartupException( e );
 				}
 			}
+			else
+				getLogger().warning( "The HTTP server is disabled per configs." );
 		}
 		catch ( Throwable e )
 		{
-			throw new StartupException( e );
+			if ( e instanceof StartupException )
+				throw e;
+			else
+				throw new StartupException( e );
 		}
 	}
 
@@ -247,12 +256,14 @@ public class NetworkManager implements TaskRegistrar, LogSource
 		try
 		{
 			InetSocketAddress socket;
-			String httpIp = AppController.config().getString( "server.httpHost", "" );
-			int httpsPort = AppController.config().getInt( "server.httpsPort", 8443 );
+			String httpIp = AppConfig.get().getString( "server.httpHost", "" );
+			int httpsPort = AppConfig.get().getInt( "server.httpsPort", 8443 );
+
+			Security.addProvider( new BouncyCastleProvider() );
 
 			if ( httpsPort >= 1 )
 			{
-				if ( Versioning.isPrivilegedPort( httpsPort ) )
+				if ( Application.isPrivilegedPort( httpsPort ) )
 				{
 					getLogger().warning( "It would seem that you are trying to start ChioriWebServer's Web Server (SSL) on a privileged port without root access." );
 					getLogger().warning( "Most likely you will see an exception thrown below this. http://www.w3.org/Daemon/User/Installation/PrivilegedPorts.html" );
@@ -306,6 +317,8 @@ public class NetworkManager implements TaskRegistrar, LogSource
 					throw new StartupException( e );
 				}
 			}
+			else
+				getLogger().warning( "The HTTPS server is disabled per configs." );
 		}
 		catch ( Throwable e )
 		{
@@ -321,12 +334,12 @@ public class NetworkManager implements TaskRegistrar, LogSource
 		try
 		{
 			InetSocketAddress socket;
-			String queryHost = AppController.config().getString( "server.queryHost", "" );
-			int queryPort = AppController.config().getInt( "server.queryPort", 8992 );
+			String queryHost = AppConfig.get().getString( "server.queryHost", "" );
+			int queryPort = AppConfig.get().getInt( "server.queryPort", 8992 );
 
-			if ( queryPort >= 1 && AppController.config().getBoolean( "server.queryEnabled" ) )
+			if ( queryPort >= 1 && AppConfig.get().getBoolean( "server.queryEnabled" ) )
 			{
-				if ( Versioning.isPrivilegedPort( queryPort ) )
+				if ( Application.isPrivilegedPort( queryPort ) )
 				{
 					getLogger().warning( "It would seem that you are trying to start the Query Server on a privileged port without root access." );
 					getLogger().warning( "Most likely you will see an exception thrown below this. http://www.w3.org/Daemon/User/Installation/PrivilegedPorts.html" );

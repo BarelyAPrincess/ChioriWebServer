@@ -30,7 +30,7 @@ import com.chiorichan.site.SiteManager;
 import com.chiorichan.util.Namespace;
 import com.chiorichan.util.ServerFunc;
 import com.chiorichan.util.StringFunc;
-import com.chiorichan.util.Versioning;
+import com.chiorichan.util.Application;
 import com.google.common.collect.Lists;
 
 /**
@@ -156,7 +156,7 @@ public class Template extends Plugin implements Listener
 		ob.append( "</table>\n" );
 		ob.append( "</div>\n" );
 		ob.append( "\n" );
-		ob.append( "<div class=\"version\">Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + "<br />" + Versioning.getCopyright() + "</div>\n" );
+		ob.append( "<div class=\"version\">Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Application.getProduct() + "</a> Version " + Application.getVersion() + "<br />" + Application.getCopyright() + "</div>\n" );
 
 		ScriptingResult result = TemplateUtils.wrapAndEval( factory, ob.toString() );
 

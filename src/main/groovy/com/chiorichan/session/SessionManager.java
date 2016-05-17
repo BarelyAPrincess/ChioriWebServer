@@ -15,7 +15,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.text.WordUtils;
 
-import com.chiorichan.AppController;
+import com.chiorichan.AppConfig;
 import com.chiorichan.http.HttpCookie;
 import com.chiorichan.lang.EnumColor;
 import com.chiorichan.lang.StartupException;
@@ -51,7 +51,7 @@ public class SessionManager implements TaskRegistrar, ServiceManager, LogSource
 	 */
 	public static String getDefaultSessionName()
 	{
-		return "_ws" + WordUtils.capitalize( AppController.config().getString( "sessions.defaultCookieName", "sessionId" ) );
+		return "_ws" + WordUtils.capitalize( AppConfig.get().getString( "sessions.defaultCookieName", "sessionId" ) );
 	}
 
 	/**
@@ -61,7 +61,7 @@ public class SessionManager implements TaskRegistrar, ServiceManager, LogSource
 	 */
 	public static int getDefaultTimeout()
 	{
-		return AppController.config().getInt( "sessions.defaultTimeout", 3600 );
+		return AppConfig.get().getInt( "sessions.defaultTimeout", 3600 );
 	}
 
 	/**
@@ -71,7 +71,7 @@ public class SessionManager implements TaskRegistrar, ServiceManager, LogSource
 	 */
 	public static int getDefaultTimeoutWithLogin()
 	{
-		return AppController.config().getInt( "sessions.defaultTimeoutWithLogin", 86400 );
+		return AppConfig.get().getInt( "sessions.defaultTimeoutWithLogin", 86400 );
 	}
 
 	/**
@@ -81,7 +81,7 @@ public class SessionManager implements TaskRegistrar, ServiceManager, LogSource
 	 */
 	public static int getDefaultTimeoutWithRememberMe()
 	{
-		return AppController.config().getInt( "sessions.defaultTimeoutRememberMe", 604800 );
+		return AppConfig.get().getInt( "sessions.defaultTimeoutRememberMe", 604800 );
 	}
 
 	/**
@@ -187,12 +187,12 @@ public class SessionManager implements TaskRegistrar, ServiceManager, LogSource
 	{
 		try
 		{
-			isDebug = AppController.config().getBoolean( "sessions.debug" );
+			isDebug = AppConfig.get().getBoolean( "sessions.debug" );
 
-			String datastoreType = AppController.config().getString( "sessions.datastore", "file" );
+			String datastoreType = AppConfig.get().getString( "sessions.datastore", "file" );
 
 			if ( "db".equalsIgnoreCase( datastoreType ) || "database".equalsIgnoreCase( datastoreType ) || "sql".equalsIgnoreCase( datastoreType ) )
-				if ( AppController.config().getDatabase() == null )
+				if ( AppConfig.get().getDatabase() == null )
 					getLogger().severe( "Session Manager's datastore is configured to use database but the server's database is unconfigured. Falling back to the file datastore." );
 				else
 					datastore = new SqlDatastore();
@@ -231,7 +231,7 @@ public class SessionManager implements TaskRegistrar, ServiceManager, LogSource
 		/*
 		 * This schedules the Session Manager with the Scheduler to run every 5 minutes (by default) to cleanup sessions.
 		 */
-		TaskManager.instance().scheduleAsyncRepeatingTask( this, 0L, Ticks.MINUTE * AppController.config().getInt( "sessions.cleanupInterval", 5 ), new Runnable()
+		TaskManager.instance().scheduleAsyncRepeatingTask( this, 0L, Ticks.MINUTE * AppConfig.get().getInt( "sessions.cleanupInterval", 5 ), new Runnable()
 		{
 			@Override
 			public void run()
@@ -290,7 +290,7 @@ public class SessionManager implements TaskRegistrar, ServiceManager, LogSource
 			else
 				knownIps.addAll( sess.getIpAddresses() );
 
-		int maxPerIp = AppController.config().getInt( "sessions.maxSessionsPerIP", 6 );
+		int maxPerIp = AppConfig.get().getInt( "sessions.maxSessionsPerIP", 6 );
 
 		for ( String ip : knownIps )
 		{
@@ -380,7 +380,7 @@ public class SessionManager implements TaskRegistrar, ServiceManager, LogSource
 
 		/*
 		 * XXX We need to evaluate the security risk behind doing this? Might just need removal.
-		 * if ( AppController.config().getBoolean( "sessions.reuseVacantSessions", true ) )
+		 * if ( AppConfig.get().getBoolean( "sessions.reuseVacantSessions", true ) )
 		 * for ( Session s : sessions )
 		 * if ( s.getIpAddr() != null && s.getIpAddr().equals( wrapper.getIpAddr() ) && !s.getUserState() )
 		 * return s;
@@ -397,5 +397,5 @@ public class SessionManager implements TaskRegistrar, ServiceManager, LogSource
 	}
 
 	// int defaultLife = ( getSite().getYaml() != null ) ? getSite().getYaml().getInt( "sessions.lifetimeDefault", 604800 ) : 604800;
-	// timeout = CommonFunc.getEpoch() + AppController.config().getInt( "sessions.defaultTimeout", 3600 );
+	// timeout = CommonFunc.getEpoch() + AppConfig.get().getInt( "sessions.defaultTimeout", 3600 );
 }

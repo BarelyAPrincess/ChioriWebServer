@@ -31,7 +31,7 @@ import org.codehaus.groovy.control.messages.Message;
 import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
 import org.codehaus.groovy.syntax.SyntaxException;
 
-import com.chiorichan.AppController;
+import com.chiorichan.AppConfig;
 import com.chiorichan.Loader;
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountManager;
@@ -87,7 +87,7 @@ public class GroovyRegistry implements ScriptingRegistry
 		imports.addStaticStars( staticImports );
 
 		// Transforms scripts to limit their execution to 30 seconds.
-		long timeout = AppController.config().getLong( "advanced.security.defaultScriptTimeout", 30L );
+		long timeout = AppConfig.get().getLong( "advanced.security.defaultScriptTimeout", 30L );
 		if ( timeout > 0 )
 		{
 			Map<String, Object> timedInterruptParams = Maps.newHashMap();

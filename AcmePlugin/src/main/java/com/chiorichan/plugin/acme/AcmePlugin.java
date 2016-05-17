@@ -74,7 +74,7 @@ public class AcmePlugin extends Plugin
 
 	public boolean isDefaultCertificateAllowed()
 	{
-		return getConfig().getBoolean( "config.allowDefaultCertificate" );
+		return getConfig().getBoolean( "config.allowDefaultCertificate", true );
 	}
 
 	@Override
@@ -96,7 +96,7 @@ public class AcmePlugin extends Plugin
 		if ( !NetworkManager.isHttpsRunning() )
 			throw new PluginException( getName() + " requires HTTPS to be enabled and running, see documentation to enable" );
 
-		if ( !"letsencrypt".equals( yaml.getString( "config.ca" ) ) )
+		if ( !"letsencrypt".equals( yaml.getString( "config.ca", "letsencrypt" ) ) )
 			throw new PluginException( getName() + " currently only supports the Let's Encrypt Certificate Authory but config option is set to '" + yaml.getString( "config.ca" ) + "'" );
 
 		if ( !yaml.getBoolean( "config.accept-agreement" ) )

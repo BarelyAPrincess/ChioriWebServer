@@ -13,7 +13,7 @@ import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.Vector;
 
-import com.chiorichan.AppController;
+import com.chiorichan.AppConfig;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.lang.HttpError;
 
@@ -25,7 +25,7 @@ public class MultiPartRequestParser
 	 *
 	 * @return content type, or null if line was empty.
 	 * @exception IOException
-	 *                if the line is malformatted.
+	 *                 if the line is malformatted.
 	 */
 	private static String extractContentType( String line ) throws IOException
 	{
@@ -42,11 +42,13 @@ public class MultiPartRequestParser
 
 		return line.substring( 13, end ).trim(); // "content-type:" is 13
 	}
+
 	public static boolean isMultipart( HttpRequestWrapper request )
 	{
 		String requestType = request.getOriginal().headers().getAndConvert( "Content-Type" );
 		return requestType.toLowerCase().startsWith( "multipart/form-data" );
 	}
+
 	private String boundary;
 
 	// private static String DEFAULT_ENCODING = "ISO-8859-1";
@@ -59,7 +61,7 @@ public class MultiPartRequestParser
 	public MultiPartRequestParser( HttpRequestWrapper request ) throws IOException, HttpError
 	{
 		String requestType = request.getOriginal().headers().getAndConvert( "Content-Type" );
-		int maxUpload = AppController.config().getInt( "server.maxFileUploadKb", 5120 );
+		int maxUpload = AppConfig.get().getInt( "server.maxFileUploadKb", 5120 );
 
 		if ( request.getContentLength() > maxUpload )
 			throw new HttpError( 413, "The uploaded file exceeds the `server.maxFileUploadKb` directive that was specified in the server config." );
@@ -116,7 +118,7 @@ public class MultiPartRequestParser
 	 *
 	 * @return String[] of elements: disposition, name, filename.
 	 * @exception IOException
-	 *                if the line is malformatted.
+	 *                 if the line is malformatted.
 	 */
 	private String[] extractDispositionInfo( String line ) throws IOException
 	{
@@ -185,7 +187,7 @@ public class MultiPartRequestParser
 	 *
 	 * @return either a <code>FilePart</code>, a <code>ParamPart</code> or <code>null</code> if there are no more parts to read.
 	 * @exception IOException
-	 *                if an input or output exception has occurred.
+	 *                 if an input or output exception has occurred.
 	 *
 	 * @see FilePart
 	 * @see ParamPart

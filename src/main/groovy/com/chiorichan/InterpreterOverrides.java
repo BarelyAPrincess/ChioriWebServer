@@ -30,7 +30,7 @@ public class InterpreterOverrides
 	{
 		try
 		{
-			File contentTypes = new File( "InterpreterOverrides.properties" );
+			File contentTypes = new File( AppConfig.get().getDirectory().getAbsolutePath(), "InterpreterOverrides.properties" );
 
 			if ( !contentTypes.exists() )
 				contentTypes.createNewFile();
