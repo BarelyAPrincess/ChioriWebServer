@@ -11,6 +11,7 @@ package com.chiorichan.factory;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
+import java.io.File;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +38,8 @@ import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.ScriptingException;
 import com.chiorichan.logger.LogSource;
 import com.chiorichan.services.ObjectContext;
-import com.chiorichan.util.WebFunc;
+import com.chiorichan.util.FileFunc;
+import com.chiorichan.util.SecureFunc;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -165,8 +167,17 @@ public class ScriptingFactory implements LogSource
 
 		try
 		{
-			String name = "EvalScript" + WebFunc.randomNum( 8 ) + ".chi";
-			context.name( name );
+
+			String name = "EvalScript" + SecureFunc.rand( 8 ) + ".chi";
+			if ( !context.isVirtual() )
+			{
+				String rel = FileFunc.relPath( context.file().getParentFile(), context.site().directory() ).replace( '\\', '.' ).replace( '/', '.' );
+				context.cache( new File( context.cache(), rel.contains( "." ) ? rel.substring( 0, rel.indexOf( "." ) ) : rel ) );
+				context.scriptPackage( rel.contains( "." ) ? rel.substring( rel.indexOf( "." ) + 1 ) : "" );
+				name = context.file().getName();
+			}
+
+			context.scriptName( name );
 			stackFactory.stack( name, context );
 
 			PreEvalEvent preEvent = new PreEvalEvent( context );
@@ -184,10 +195,10 @@ public class ScriptingFactory implements LogSource
 				if ( context.result().handleException( new ScriptingException( ReportingLevel.E_ERROR, "Evaluation was cancelled by an internal event" ), context ) )
 					return result;
 
-			if ( engines.isEmpty() )
+			if ( engines.size() == 0 )
 				compileEngines( context );
 
-			if ( !engines.isEmpty() )
+			if ( engines.size() > 0 )
 				for ( Entry<ScriptingEngine, List<String>> entry : engines.entrySet() )
 					if ( entry.getValue() == null || entry.getValue().isEmpty() || entry.getValue().contains( context.shell().toLowerCase() ) )
 						try

@@ -25,8 +25,11 @@ import com.chiorichan.lang.ExceptionReport;
 import com.chiorichan.lang.MultipleException;
 import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.ScriptingException;
+import com.chiorichan.libraries.LibraryClassLoader;
+import com.chiorichan.logger.Log;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
+import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.SecureFunc;
 
 /**
@@ -159,27 +162,18 @@ public class ScriptingContext implements ExceptionContext
 	}
 
 	private Charset charset = Charset.defaultCharset();
-
 	private ByteBuf content = Unpooled.buffer();
-
 	private String contentType;
-
 	private ScriptingFactory factory;
-
 	private String filename;
-
 	private HttpRequestWrapper request = null;
-
 	private ScriptingResult result = null;
-
-	private String name;
-
+	private String scriptName;
+	private String scriptPackage;
+	private File cache;
 	private String shell = "embedded";
-
 	private Site site;
-
 	private String source = null;
-
 	private boolean required = false;
 
 	private ScriptingContext()
@@ -206,6 +200,29 @@ public class ScriptingContext implements ExceptionContext
 	public String bufferHash()
 	{
 		return SecureFunc.md5( readBytes() );
+	}
+
+	public File cache()
+	{
+		if ( cache == null )
+			cache = site().directoryTemp();
+		if ( cache != null )
+			try
+			{
+				if ( !LibraryClassLoader.pathLoaded( cache ) )
+					LibraryClassLoader.addPath( cache );
+			}
+			catch ( IOException e )
+			{
+				Log.get().warning( "Failed to add " + FileFunc.relPath( cache ) + " to classpath." );
+			}
+		return cache;
+	}
+
+	public ScriptingContext cache( File cache )
+	{
+		this.cache = cache;
+		return this;
 	}
 
 	Charset charset()
@@ -277,20 +294,25 @@ public class ScriptingContext implements ExceptionContext
 		return this;
 	}
 
+	public File file()
+	{
+		return new File( filename() );
+	}
+
 	public String filename()
 	{
 		return filename;
 	}
 
-	public String name()
+	public boolean isVirtual()
 	{
-		return name;
+		File scriptFile = new File( filename() );
+		return !FileFunc.isAbsolute( filename() ) || !scriptFile.exists();
 	}
 
-	public ScriptingContext name( String name )
+	public String md5()
 	{
-		this.name = name;
-		return this;
+		return SecureFunc.md5( readBytes() );
 	}
 
 	public String read() throws ScriptingException, MultipleException
@@ -429,6 +451,38 @@ public class ScriptingContext implements ExceptionContext
 		return result;
 	}
 
+	public String scriptClassName()
+	{
+		return scriptPackage() == null ? scriptSimpleName() : scriptPackage() + "." + scriptSimpleName();
+	}
+
+	public String scriptName()
+	{
+		return scriptName;
+	}
+
+	public ScriptingContext scriptName( String scriptName )
+	{
+		this.scriptName = scriptName;
+		return this;
+	}
+
+	public String scriptPackage()
+	{
+		return scriptPackage;
+	}
+
+	public ScriptingContext scriptPackage( String scriptPackage )
+	{
+		this.scriptPackage = scriptPackage;
+		return this;
+	}
+
+	public String scriptSimpleName()
+	{
+		return scriptName.contains( "." ) ? scriptName.substring( 0, scriptName.lastIndexOf( "." ) ) : scriptName;
+	}
+
 	public String shell()
 	{
 		return shell;
@@ -454,7 +508,7 @@ public class ScriptingContext implements ExceptionContext
 	@Override
 	public String toString()
 	{
-		return String.format( "EvalExecutionContext {name=%s,filename=%s,shell=%s,sourceSize=%s,contentType=%s}", name, filename, shell, content.readableBytes(), contentType );
+		return String.format( "EvalExecutionContext {package=%s,name=%s,filename=%s,shell=%s,sourceSize=%s,contentType=%s}", scriptPackage, scriptName, filename, shell, content.readableBytes(), contentType );
 	}
 
 	public void write( byte... bytes )

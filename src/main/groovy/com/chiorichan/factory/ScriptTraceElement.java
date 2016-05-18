@@ -25,30 +25,27 @@ public class ScriptTraceElement
 	private int lineNum = -1;
 	private int colNum = -1;
 	private final ScriptingContext context;
-	
+
 	public ScriptTraceElement( ScriptingContext context, int lineNum, int colNum )
 	{
 		this( context, lineNum, colNum, "", "" );
 	}
-	
+
 	public ScriptTraceElement( ScriptingContext context, int lineNum, int colNum, String methodName, String className )
 	{
 		this.context = context;
-		fileName = context.name();
-		
+		fileName = context.scriptName();
+
 		this.lineNum = lineNum;
 		this.colNum = colNum;
-		
-		if ( ( className == null || className.isEmpty() ) && context.name() != null )
-			if ( context.name().contains( "." ) )
-				className = context.name().substring( 0, context.name().indexOf( "." ) );
-			else
-				className = context.name();
-		
+
+		if ( ( className == null || className.isEmpty() ) && context.scriptName() != null )
+			className = context.scriptSimpleName();
+
 		this.methodName = methodName;
 		this.className = className;
 	}
-	
+
 	public ScriptTraceElement( ScriptingContext context, StackTraceElement ste )
 	{
 		this.context = context;
@@ -58,65 +55,65 @@ public class ScriptTraceElement
 		lineNum = ste.getLineNumber();
 		colNum = -1;
 	}
-	
+
 	public ScriptTraceElement( ScriptingContext context, String msg )
 	{
 		this.context = context;
-		fileName = context.name();
+		fileName = context.scriptName();
 		methodName = "run";
-		className = ( context.name() == null || context.name().isEmpty() ) ? "<Unknown Class>" : context.name().substring( 0, context.name().lastIndexOf( "." ) );
-		
+		className = context.scriptName() == null || context.scriptName().length() == 0 ? "<Unknown Class>" : context.scriptSimpleName();
+
 		if ( msg != null && !msg.isEmpty() )
 			examineMessage( msg );
 	}
-	
+
 	public ScriptingContext context()
 	{
 		return context;
 	}
-	
+
 	public ScriptTraceElement examineMessage( String msg )
 	{
 		Validate.notNull( msg );
-		
+
 		msg = msg.replaceAll( "\n", "" );
 		Pattern p1 = Pattern.compile( "line[: ]?([0-9]*), column[: ]?([0-9]*)" );
 		Matcher m1 = p1.matcher( msg );
-		
+
 		if ( m1.find() )
 		{
 			lineNum = Integer.parseInt( m1.group( 1 ) );
 			colNum = Integer.parseInt( m1.group( 2 ) );
 		}
-		
+
 		return this;
 	}
-	
+
 	public String getClassName()
 	{
 		return className;
 	}
-	
+
 	public int getColumnNumber()
 	{
 		return colNum;
 	}
-	
+
 	public String getFileName()
 	{
 		return fileName;
 	}
-	
+
 	public int getLineNumber()
 	{
 		return lineNum;
 	}
-	
+
 	public String getMethodName()
 	{
 		return methodName;
 	}
-	
+
 	@Override
 	public String toString()
 	{

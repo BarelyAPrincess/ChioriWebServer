@@ -18,6 +18,8 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Constructor;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
@@ -94,6 +96,33 @@ public class GroovyRegistry implements ScriptingRegistry
 			timedInterruptParams.put( "value", timeout );
 			timedInterrupt.setAnnotationParameters( timedInterruptParams );
 		}
+	}
+
+	private static Map<String, String> scriptCacheMd5 = new HashMap<>();
+
+	public static Script getCachedScript( ScriptingContext context, Binding binding )
+	{
+		try
+		{
+			// File classFile = FileFunc.buildFile( context.cache(), context.scriptPackage().replace( '.', File.separatorChar ), context.scriptSimpleName() + ".class" );
+			if ( scriptCacheMd5.containsKey( context.scriptClassName() ) )
+			{
+				if ( scriptCacheMd5.get( context.site().getId() + "//" + context.scriptClassName() ).equals( context.md5() ) )
+				{
+					Class<?> scriptClass = Class.forName( context.scriptClassName() );
+					Constructor<?> con = scriptClass.getConstructor( Binding.class );
+					Script script = ( Script ) con.newInstance( binding );
+					return script;
+				}
+			}
+			else
+				scriptCacheMd5.put( context.site().getId() + "//" + context.scriptClassName(), context.md5() );
+		}
+		catch ( Throwable t )
+		{
+
+		}
+		return null;
 	}
 
 	public GroovyRegistry()
@@ -182,6 +211,7 @@ public class GroovyRegistry implements ScriptingRegistry
 
 		/*
 		 * Set Groovy Base Script Class
+		 * TODO Implement new groovy API base
 		 */
 		configuration.setScriptBaseClass( ScriptingBaseGroovy.class.getName() );
 
@@ -190,7 +220,7 @@ public class GroovyRegistry implements ScriptingRegistry
 		 */
 		configuration.setSourceEncoding( context.factory().charset().name() );
 
-		configuration.setTargetDirectory( context.site().directoryTemp() );
+		configuration.setTargetDirectory( context.cache() );
 
 		return new GroovyShell( Loader.class.getClassLoader(), binding, configuration );
 	}
@@ -201,13 +231,22 @@ public class GroovyRegistry implements ScriptingRegistry
 		return new ScriptingEngine[] {new GroovyEngine( this ), new EmbeddedGroovyEngine( this )};
 	}
 
-	public Script makeScript( GroovyShell shell, ScriptingContext context )
+	public Script makeScript( GroovyShell shell, ScriptingContext context ) throws ScriptingException
 	{
 		return makeScript( shell, context.readString(), context );
 	}
 
-	public Script makeScript( GroovyShell shell, String source, ScriptingContext context )
+	public Script makeScript( GroovyShell shell, String source, ScriptingContext context ) throws ScriptingException
 	{
-		return shell.parse( source, context.name() );
+		if ( source.contains( "package " ) )
+			throw new ScriptingException( ReportingLevel.E_ERROR, "Package path is predefined by Groovy Engine, remove `package` from source." );
+
+		if ( context.scriptPackage() != null )
+		{
+			source = "package " + context.scriptPackage() + "\n\n" + source;
+			context.baseSource( source );
+		}
+
+		return shell.parse( source, context.scriptName() );
 	}
 }

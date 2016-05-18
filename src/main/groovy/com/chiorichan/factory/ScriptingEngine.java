@@ -14,7 +14,7 @@ import java.nio.charset.Charset;
 import java.util.List;
 
 /**
- * Interpreters are commonly used to process commands and create dynamic content, most notably the groovy scripts.
+ * ScriptingEngines are commonly used to process commands and create dynamic content, most notably the groovy scripts.
  * ScriptingEngines are kept persistent for exactly one full request.
  */
 public interface ScriptingEngine

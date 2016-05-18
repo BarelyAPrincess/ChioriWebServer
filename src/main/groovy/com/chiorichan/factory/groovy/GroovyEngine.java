@@ -42,9 +42,12 @@ public class GroovyEngine implements ScriptingEngine
 	{
 		try
 		{
-			GroovyShell shell = registry.getNewShell( context, binding );
-			Script script = registry.makeScript( shell, context );
-
+			Script script = GroovyRegistry.getCachedScript( context, binding );
+			if ( script == null )
+			{
+				GroovyShell shell = registry.getNewShell( context, binding );
+				script = registry.makeScript( shell, context );
+			}
 			context.result().object( script.run() );
 		}
 		catch ( Throwable t )

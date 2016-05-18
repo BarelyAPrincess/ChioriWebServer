@@ -316,6 +316,11 @@ public class Site implements AccountLocation
 		return AppConfig.get().getDirectoryCache( getId() );
 	}
 
+	public File directoryTemp( String append )
+	{
+		return AppConfig.get().getDirectoryCache( getId() + File.pathSeparator + append );
+	}
+
 	public ApacheConfiguration getApacheConfig()
 	{
 		return new ApacheConfiguration();
