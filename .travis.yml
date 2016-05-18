@@ -16,11 +16,7 @@ env:
   - secure: GTjC4bwJqA6vRBSbXrD3GdekfZl/wqo6Oy+fsVI4hGvLywtriGLv8MtX14kGwme/OHtWxkVj7MBxnw+L6uWKvZgjkdNtrPXXSslZlYfwXMQcJOeB7ZgUvp307C+EkfYfBweLiSCU6lXuPOLfRmX1LPJ60kN6jSMk69GlzGvXxnk=
 cache:
   directories:
-  - $HOME/.gradle/wrapper
-  - $HOME/.gradle/native
-  - $HOME/.gradle/daemon
-  - $HOME/.gradle/caches/jars-1
-  - $HOME/.gradle/caches/2.8
+  - $HOME/.gradle
 branches:
   only:
     - master
