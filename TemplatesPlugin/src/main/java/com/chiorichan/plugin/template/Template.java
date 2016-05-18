@@ -9,7 +9,7 @@ import java.util.Map;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
-import com.chiorichan.AppController;
+import com.chiorichan.AppConfig;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
@@ -30,7 +30,7 @@ import com.chiorichan.site.SiteManager;
 import com.chiorichan.util.Namespace;
 import com.chiorichan.util.ServerFunc;
 import com.chiorichan.util.StringFunc;
-import com.chiorichan.util.Application;
+import com.chiorichan.util.Versioning;
 import com.google.common.collect.Lists;
 
 /**
@@ -156,7 +156,7 @@ public class Template extends Plugin implements Listener
 		ob.append( "</table>\n" );
 		ob.append( "</div>\n" );
 		ob.append( "\n" );
-		ob.append( "<div class=\"version\">Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Application.getProduct() + "</a> Version " + Application.getVersion() + "<br />" + Application.getCopyright() + "</div>\n" );
+		ob.append( "<div class=\"version\">Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + "<br />" + Versioning.getCopyright() + "</div>\n" );
 
 		ScriptingResult result = TemplateUtils.wrapAndEval( factory, ob.toString() );
 
@@ -272,7 +272,7 @@ public class Template extends Plugin implements Listener
 
 			String siteTitle;
 			if ( site.getTitle() == null || site.getTitle().isEmpty() )
-				siteTitle = AppController.config().getString( "framework.sites.defaultTitle", "Unnamed Site" );
+				siteTitle = AppConfig.get().getString( "framework.sites.defaultTitle", "Unnamed Site" );
 			else
 				siteTitle = site.getTitle();
 

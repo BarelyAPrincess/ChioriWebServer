@@ -94,9 +94,9 @@ import com.chiorichan.session.Session;
 import com.chiorichan.session.SessionException;
 import com.chiorichan.site.Site;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.util.Application;
 import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.StringFunc;
+import com.chiorichan.util.Versioning;
 import com.chiorichan.util.WebFunc;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
@@ -258,7 +258,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				sb.append( "<p>The exception has been logged to the console, so we can only hope the exception is noticed and resolved. We apoligize for any inconvenience.</p>\n" );
 				sb.append( "<p><i>You have a good day now and we will see you again soon. :)</i></p>\n" );
 				sb.append( "<hr>\n" );
-				sb.append( Application.getHTMLFooter() );
+				sb.append( Versioning.getHTMLFooter() );
 
 				FullHttpResponse response = new DefaultFullHttpResponse( HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf( 500 ), Unpooled.wrappedBuffer( sb.toString().getBytes() ) );
 				ctx.write( response );
@@ -350,7 +350,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				log.log( Level.SEVERE, EnumColor.NEGATIVE + "" + EnumColor.RED + "OutOfMemoryError! This is serious!!!" );
 				response.sendError( 500, "We have encountered an internal server error" );
 
-				if ( Application.isDevelopment() )
+				if ( Versioning.isDevelopment() )
 					cause.printStackTrace();
 			}
 			else if ( evalOrig == null )
@@ -359,7 +359,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				log.log( Level.SEVERE, EnumColor.NEGATIVE + "" + EnumColor.RED + "Exception %s thrown in file '%s' at line %s, message '%s'", cause.getClass().getName(), cause.getStackTrace()[0].getFileName(), cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
 				response.sendException( cause );
 
-				if ( Application.isDevelopment() )
+				if ( Versioning.isDevelopment() )
 					cause.printStackTrace();
 			}
 			else
@@ -381,7 +381,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 
 				response.sendException( evalOrig );
 
-				if ( Application.isDevelopment() )
+				if ( Versioning.isDevelopment() )
 					cause.printStackTrace();
 			}
 
@@ -817,7 +817,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 					catch ( Exception e )
 					{
 						log.log( Level.SEVERE, "Exception Excountered: %s", e.getMessage() );
-						if ( Application.isDevelopment() )
+						if ( Versioning.isDevelopment() )
 							log.log( Level.SEVERE, e.getStackTrace()[0].toString() );
 					}
 			}
@@ -857,7 +857,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 					{
 						rendered.writeBytes( result.getObject().toString().getBytes() );
 						log.log( Level.SEVERE, "Exception encountered while writing returned object to output. %s", e.getMessage() );
-						if ( Application.isDevelopment() )
+						if ( Versioning.isDevelopment() )
 							log.log( Level.SEVERE, e.getStackTrace()[0].toString() );
 					}
 			}
@@ -933,7 +933,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				sb.append( "<p>But it is also possible that the server is actually running in a low level mode or could be offline for some other reason. If you feel this is a mistake, might I suggest you talk with the server admin.</p>\n" );
 				sb.append( "<p><i>You have a good day now and we will see you again soon. :)</i></p>\n" );
 				sb.append( "<hr>\n" );
-				sb.append( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Application.getProduct() + "</a> Version " + Application.getVersion() + " (Build #" + Application.getBuildNumber() + ")<br />" + Application.getCopyright() + "</small>" );
+				sb.append( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")<br />" + Versioning.getCopyright() + "</small>" );
 
 				FullHttpResponse response = new DefaultFullHttpResponse( HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf( 503 ), Unpooled.wrappedBuffer( sb.toString().getBytes() ) );
 				ctx.write( response );
@@ -1121,7 +1121,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 
 		sb.append( WebFunc.createTable( tbl, Arrays.asList( new String[] {"", "Name", "Last Modified", "Size", "Type"} ) ) );
 		sb.append( "<hr>" );
-		sb.append( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Application.getProduct() + "</a> Version " + Application.getVersion() + "<br />" + Application.getCopyright() + "</small>" );
+		sb.append( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + "<br />" + Versioning.getCopyright() + "</small>" );
 
 		response.print( sb.toString() );
 		response.sendResponse();

@@ -219,7 +219,7 @@ public class CertificateMaintainer
 	static void loadCertificate( Certificate cert )
 	{
 		if ( "default".equals( cert.key() ) )
-			throw new IllegalArgumentException( "One does not simply load default certificate!" );
+			throw new IllegalArgumentException( "One does not simply load the default certificate! :P" );
 
 		for ( Certificate c : certificates )
 			if ( c.key().equals( cert.key() ) )

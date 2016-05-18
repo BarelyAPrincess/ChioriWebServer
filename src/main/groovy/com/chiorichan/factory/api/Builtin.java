@@ -39,11 +39,11 @@ import com.chiorichan.database.DatabaseEngineLegacy;
 import com.chiorichan.lang.DiedException;
 import com.chiorichan.logger.Log;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.util.Application;
 import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.SecureFunc;
 import com.chiorichan.util.StringFunc;
+import com.chiorichan.util.Versioning;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -576,7 +576,7 @@ public abstract class Builtin extends Script
 	 */
 	public static String getCopyright()
 	{
-		return Application.getCopyright();
+		return Versioning.getCopyright();
 	}
 
 	/**
@@ -584,7 +584,7 @@ public abstract class Builtin extends Script
 	 */
 	public static String getProduct()
 	{
-		return Application.getProduct();
+		return Versioning.getProduct();
 	}
 
 	/**
@@ -609,7 +609,7 @@ public abstract class Builtin extends Script
 	 */
 	public static String getVersion()
 	{
-		return Application.getVersion();
+		return Versioning.getVersion();
 	}
 
 	public static String implode( String joiner, Iterable<String> data )

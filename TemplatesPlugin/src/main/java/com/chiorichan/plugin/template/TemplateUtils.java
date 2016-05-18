@@ -22,7 +22,7 @@ import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.NetworkFunc;
-import com.chiorichan.util.Application;
+import com.chiorichan.util.Versioning;
 import com.chiorichan.util.WebFunc;
 
 /**
@@ -30,7 +30,7 @@ import com.chiorichan.util.WebFunc;
  */
 public class TemplateUtils
 {
-	private static final String GITHUB_BRANCH = Application.getGitHubBranch();
+	private static final String GITHUB_BRANCH = Versioning.getGitHubBranch();
 	private static final String GITHUB_SERVER_URL = "https://raw.githubusercontent.com/ChioriGreene/ChioriWebServer/";
 	private static final String SERVER_PLUGIN_NAMESPACE = "com.chiorichan.plugin.";
 

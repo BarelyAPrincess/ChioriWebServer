@@ -19,7 +19,7 @@ import com.chiorichan.factory.ScriptBinding;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.lang.EnumColor;
 import com.chiorichan.util.FileFunc;
-import com.chiorichan.util.Application;
+import com.chiorichan.util.Versioning;
 
 public class QueryTerminalEntity extends TerminalEntity implements BindingProvider
 {
@@ -52,8 +52,8 @@ public class QueryTerminalEntity extends TerminalEntity implements BindingProvid
 				for ( String l : banner )
 					handler.println( EnumColor.GOLD + l );
 
-				handler.println( String.format( "%s%sWelcome to %s Version %s!", EnumColor.NEGATIVE, EnumColor.GOLD, Application.getProduct(), Application.getVersion() ) );
-				handler.println( String.format( "%s%s%s", EnumColor.NEGATIVE, EnumColor.GOLD, Application.getCopyright() ) );
+				handler.println( String.format( "%s%sWelcome to %s Version %s!", EnumColor.NEGATIVE, EnumColor.GOLD, Versioning.getProduct(), Versioning.getVersion() ) );
+				handler.println( String.format( "%s%s%s", EnumColor.NEGATIVE, EnumColor.GOLD, Versioning.getCopyright() ) );
 			}
 			finally
 			{

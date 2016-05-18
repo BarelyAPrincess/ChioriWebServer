@@ -38,6 +38,7 @@ import com.chiorichan.updater.DownloadUpdaterService;
 import com.chiorichan.util.Application;
 import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.NetworkFunc;
+import com.chiorichan.util.Versioning;
 
 public class Loader extends AppLoader
 {
@@ -82,7 +83,7 @@ public class Loader extends AppLoader
 			ApplicationTerminal.terminal().showBanner();
 
 		if ( Application.isAdminUser() )
-			Log.get().warning( "We have detected that you are running " + Application.getProduct() + " with the system administrator/root, this is highly discouraged as it my compromise security and/or mess with file permissions." );
+			Log.get().warning( "We have detected that you are running " + Versioning.getProduct() + " with the system administrator/root, this is highly discouraged as it my compromise security and/or mess with file permissions." );
 
 		if ( Runtime.getRuntime().maxMemory() / 1024L / 1024L < 512L )
 			Log.get().warning( "It is recommended you dedicate more ram to this application, launch it with \"java -Xmx1024M -Xms1024M -jar " + AppConfig.getApplicationJar().getName() + "\"" );
@@ -155,7 +156,7 @@ public class Loader extends AppLoader
 			}
 			catch ( IOException e )
 			{
-				Log.get().severe( "It would appear we had problem installing " + Application.getProduct() + " " + Application.getVersion() + " for the first time, see exception for details.", e );
+				Log.get().severe( "It would appear we had problem installing " + Versioning.getProduct() + " " + Versioning.getVersion() + " for the first time, see exception for details.", e );
 			}
 
 		clientId = config.getString( "server.installationUID", clientId );
@@ -231,7 +232,7 @@ public class Loader extends AppLoader
 			}
 			catch ( IOException e )
 			{
-				Log.get().severe( "It would appear we had problem installing " + Application.getProduct() + " for the first time, see exception for details.", e );
+				Log.get().severe( "It would appear we had problem installing " + Versioning.getProduct() + " for the first time, see exception for details.", e );
 			}
 
 		if ( install )
@@ -288,8 +289,8 @@ public class Loader extends AppLoader
 			Signal.handle( new Signal( "INT" ), handler );
 		}
 
-		if ( !AppConfig.get().getBoolean( "server.disableTracking" ) && !Application.isDevelopment() )
-			NetworkFunc.sendTracking( "startServer", "start", Application.getVersion() + " (Build #" + Application.getBuildNumber() + ")" );
+		if ( !AppConfig.get().getBoolean( "server.disableTracking" ) && !Versioning.isDevelopment() )
+			NetworkFunc.sendTracking( "startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
 	}
 
 	public boolean hasWhitelist()
@@ -402,6 +403,6 @@ public class Loader extends AppLoader
 	@Override
 	public String toString()
 	{
-		return Application.getProduct() + " " + Application.getVersion();
+		return Versioning.getProduct() + " " + Versioning.getVersion();
 	}
 }

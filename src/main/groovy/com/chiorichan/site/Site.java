@@ -51,10 +51,10 @@ import com.chiorichan.lang.SiteException;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.session.SessionManager;
 import com.chiorichan.session.SessionPersistenceMethod;
-import com.chiorichan.util.Application;
 import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.NetworkFunc;
 import com.chiorichan.util.SecureFunc;
+import com.chiorichan.util.Versioning;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -271,7 +271,7 @@ public class Site implements AccountLocation
 		yaml = new YamlConfiguration();
 		encryptionKey = SecureFunc.randomize( "0x0000X" );
 		ips = Lists.newArrayList();
-		siteTitle = Application.getProduct();
+		siteTitle = Versioning.getProduct();
 		datastore = AppConfig.get().getDatabase();
 
 		directory = SiteManager.checkSiteRoot( siteId );

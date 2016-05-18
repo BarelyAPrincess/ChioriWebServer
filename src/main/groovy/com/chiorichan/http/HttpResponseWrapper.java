@@ -47,7 +47,7 @@ import com.chiorichan.logger.experimental.LogEvent;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.session.Session;
 import com.chiorichan.session.SessionException;
-import com.chiorichan.util.Application;
+import com.chiorichan.util.Versioning;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 
@@ -258,7 +258,7 @@ public class HttpResponseWrapper
 					println( "<p>" + msg + "</p>" );
 
 				println( "<hr>" );
-				println( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Application.getProduct() + "</a> Version " + Application.getVersion() + " (Build #" + Application.getBuildNumber() + ")<br />" + Application.getCopyright() + "</small>" );
+				println( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")<br />" + Versioning.getCopyright() + "</small>" );
 				println( "</body></html>" );
 
 				sendResponse();
@@ -308,7 +308,7 @@ public class HttpResponseWrapper
 		// NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + httpCode + ",httpMsg=" + HttpCode.msg( httpCode ) + ",domain=" + request.getSubDomain() + "." + request.getDomain() + ",uri=" + request.getUri() +
 		// ",remoteIp=" + request.getIpAddr() + "}" );
 
-		if ( Application.isDevelopment() )
+		if ( Versioning.isDevelopment() )
 		{
 			if ( event.getErrorHtml() != null )
 			{
@@ -417,7 +417,7 @@ public class HttpResponseWrapper
 					h.add( "Set-Cookie", c.toHeaderValue() );
 
 			if ( h.get( "Server" ) == null )
-				h.add( "Server", Application.getProduct() + " Version " + Application.getVersion() );
+				h.add( "Server", Versioning.getProduct() + " Version " + Versioning.getVersion() );
 
 			h.add( "Access-Control-Allow-Origin", request.getLocation().getConfig().getString( "site.web-allowed-origin", "*" ) );
 			h.add( "Connection", "close" );
@@ -577,7 +577,7 @@ public class HttpResponseWrapper
 		}
 
 		if ( h.get( "Server" ) == null )
-			h.add( "Server", Application.getProduct() + " Version " + Application.getVersion() );
+			h.add( "Server", Versioning.getProduct() + " Version " + Versioning.getVersion() );
 
 		// This might be a temporary measure - TODO Properly set the charset for each request.
 		h.set( "Content-Type", httpContentType + "; charset=" + encoding.name() );

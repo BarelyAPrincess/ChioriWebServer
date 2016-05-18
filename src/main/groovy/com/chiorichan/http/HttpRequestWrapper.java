@@ -56,12 +56,12 @@ import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.site.SiteMapping;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.util.Application;
 import com.chiorichan.util.Namespace;
 import com.chiorichan.util.NetworkFunc;
 import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.Pair;
 import com.chiorichan.util.StringFunc;
+import com.chiorichan.util.Versioning;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -791,10 +791,10 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	 */
 	private void initServerVars()
 	{
-		vars.put( ServerVars.SERVER_SOFTWARE, Application.getProduct() );
-		vars.put( ServerVars.SERVER_VERSION, Application.getVersion() );
+		vars.put( ServerVars.SERVER_SOFTWARE, Versioning.getProduct() );
+		vars.put( ServerVars.SERVER_VERSION, Versioning.getVersion() );
 		vars.put( ServerVars.SERVER_ADMIN, AppConfig.get().getString( "server.admin", "me@chiorichan.com" ) );
-		vars.put( ServerVars.SERVER_SIGNATURE, Application.getProduct() + " Version " + Application.getVersion() );
+		vars.put( ServerVars.SERVER_SIGNATURE, Versioning.getProduct() + " Version " + Versioning.getVersion() );
 		vars.put( ServerVars.HTTP_VERSION, http.protocolVersion() );
 		vars.put( ServerVars.HTTP_ACCEPT, getHeader( "Accept" ) );
 		vars.put( ServerVars.HTTP_USER_AGENT, getUserAgent() );
@@ -810,7 +810,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		vars.put( ServerVars.REQUEST_URI, getUri() );
 		vars.put( ServerVars.CONTENT_LENGTH, getContentLength() );
 		vars.put( ServerVars.SERVER_IP, getLocalIpAddr() );
-		vars.put( ServerVars.SERVER_NAME, Application.getProductSimple() );
+		vars.put( ServerVars.SERVER_NAME, Versioning.getProductSimple() );
 		vars.put( ServerVars.SERVER_PORT, getLocalPort() );
 		vars.put( ServerVars.HTTPS, isSecure() );
 		vars.put( ServerVars.DOCUMENT_ROOT, Loader.getWebRoot() );

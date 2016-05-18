@@ -31,8 +31,8 @@ import com.chiorichan.updater.AutoUpdater;
 import com.chiorichan.updater.BuildArtifact;
 import com.chiorichan.updater.Download;
 import com.chiorichan.updater.DownloadListener;
-import com.chiorichan.util.Application;
 import com.chiorichan.util.NetworkFunc;
+import com.chiorichan.util.Versioning;
 
 public class UpdateCommand extends Command
 {
@@ -151,7 +151,7 @@ public class UpdateCommand extends Command
 							{
 								sender.sendMessage( EnumColor.AQUA + "----- Chiori Auto Updater -----" );
 								sender.sendMessage( EnumColor.AQUA + "SUCCESS: The downloaded jar was successfully installed in the place of your old one." );
-								sender.sendMessage( EnumColor.AQUA + "You will need to restart " + Application.getProduct() + " for the changes to take effect." );
+								sender.sendMessage( EnumColor.AQUA + "You will need to restart " + Versioning.getProduct() + " for the changes to take effect." );
 								sender.sendMessage( EnumColor.AQUA + "Please type 'stop' and press enter to make this happen, otherwise you may encounter unexpected problems!" );
 								sender.sendMessage( EnumColor.AQUA + "----- ------------------- -----" );
 							}
