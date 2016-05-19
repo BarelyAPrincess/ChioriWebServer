@@ -69,7 +69,7 @@ def travis_build = System.getenv("TRAVIS_BUILD_NUMBER")
 def buildNumber = '0'
 
 group = 'com.chiorichan'
-description = 'Chiori-chan\'s Web Server is a Java Based HTTP/TCP Server featuring Groovy Shell and a feature rich Plugin System'
+description = 'Chiori-chan\'s Web Server is a Java Based HTTP/TCP Server featuring Groovy shell and plugin system'
 
 if ( System.getenv("releaseBuild") != null )
 {
@@ -260,7 +260,7 @@ task writePropertiesFile {
 	}
 }
 
-task wrapper(type: Wrapper) { gradleVersion = '2.8' }
+task wrapper(type: Wrapper) { gradleVersion = '2.11' }
 
 jar.dependsOn writePropertiesFile
 

@@ -6,7 +6,7 @@ install:
 script:
 - gradle build
 after_success:
-- ! '[[ $TRAVIS_PULL_REQUEST == false ]] && [[ $TRAVIS_REPO_SLUG == ChioriGreene/ChioriWebServer
+- '[[ $TRAVIS_PULL_REQUEST == false ]] && [[ $TRAVIS_REPO_SLUG == ChioriGreene/ChioriWebServer
   ]] && ( [[ $TRAVIS_BRANCH == master ]]
   ) && gradle publish'
 env:

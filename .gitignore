@@ -11,6 +11,7 @@
 .settings
 /ContentTypes.properties
 /InterpreterOverrides.properties
+/travis.log
 /server.log
 /server.log.lck
 /help.yml
