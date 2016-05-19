@@ -19,9 +19,6 @@ import joptsimple.OptionParser;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
-
 import com.chiorichan.datastore.DatastoreManager;
 import com.chiorichan.lang.ApplicationException;
 import com.chiorichan.lang.EnumColor;
@@ -274,6 +271,7 @@ public class Loader extends AppLoader
 			}
 		}
 
+		/*
 		if ( Application.isUnixLikeOS() )
 		{
 			SignalHandler handler = new SignalHandler()
@@ -288,6 +286,7 @@ public class Loader extends AppLoader
 			Signal.handle( new Signal( "TERM" ), handler );
 			Signal.handle( new Signal( "INT" ), handler );
 		}
+		*/
 
 		if ( !AppConfig.get().getBoolean( "server.disableTracking" ) && !Versioning.isDevelopment() )
 			NetworkFunc.sendTracking( "startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
