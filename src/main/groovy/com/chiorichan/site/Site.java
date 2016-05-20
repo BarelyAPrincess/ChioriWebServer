@@ -295,16 +295,16 @@ public class Site implements AccountLocation
 					switch ( interval.substring( interval.length() - 1 ) )
 					{
 						case "d":
-							multiply = 86400000;
+							multiply = 1728000;
 							break;
 						case "h":
-							multiply = 3600000;
+							multiply = 72000;
 							break;
 						case "m":
-							multiply = 60000;
+							multiply = 1200;
 							break;
 						case "s":
-							multiply = 1000;
+							multiply = 20;
 							break;
 					}
 					interval = interval.substring( 0, interval.length() - 1 );
@@ -312,7 +312,7 @@ public class Site implements AccountLocation
 
 				long timer = Long.parseLong( interval ) * multiply;
 				long lastRun = Timings.epoch() - archive.getLong( "lastRun" );
-				long nextRun = archive.getLong( "lastRun" ) < 1L ? 30000L : lastRun > timer ? 30000L : timer - lastRun;
+				long nextRun = archive.getLong( "lastRun" ) < 1L ? 600L : lastRun > timer ? 600L : timer - lastRun;
 				final Site site = this;
 
 				SiteManager.getLogger().info( String.format( "%s%sScheduled site archive for %s {nextRun: %s, interval: %s}", EnumColor.AQUA, EnumColor.NEGATIVE, siteId, nextRun, timer ) );
