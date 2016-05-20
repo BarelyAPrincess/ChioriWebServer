@@ -71,7 +71,7 @@
       <property name="allowEmptyMethods" value="true"/>
       <message key="ws.notPreceded" value="WhitespaceAround: ''{0}'' is not preceded with whitespace."/>
       <message key="ws.notFollowed" value="WhitespaceAround: ''{0}'' is not followed by whitespace."/>
-      <metadata name="net.sf.eclipsecs.core.lastEnabledSeverity" value="inherit"/>
+      <metadata name="net.sf.eclipsecs.core.lastEnabledSeverity" value="ignore"/>
     </module>
     <module name="ClassTypeParameterName">
       <message key="name.invalidPattern" value="Class type name ''{0}'' must match pattern ''{1}''."/>

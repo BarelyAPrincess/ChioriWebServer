@@ -9,7 +9,9 @@
 package com.chiorichan.site;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -21,6 +23,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
 
+import com.chiorichan.AppConfig;
 import com.chiorichan.Loader;
 import com.chiorichan.configuration.file.YamlConfiguration;
 import com.chiorichan.datastore.file.FileDatastore;
@@ -34,6 +37,7 @@ import com.chiorichan.services.ObjectContext;
 import com.chiorichan.services.ServiceManager;
 import com.chiorichan.services.ServicePriority;
 import com.chiorichan.services.ServiceProvider;
+import com.chiorichan.tasks.TaskRegistrar;
 import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.NetworkFunc;
 import com.chiorichan.util.Pair;
@@ -45,7 +49,7 @@ import com.google.common.io.Files;
 /**
  * Manages and Loads Sites
  */
-public class SiteManager implements ServiceProvider, LogSource, ServiceManager
+public class SiteManager implements ServiceProvider, LogSource, ServiceManager, TaskRegistrar
 {
 	protected static File checkSiteRoot( String name )
 	{
@@ -60,6 +64,43 @@ public class SiteManager implements ServiceProvider, LogSource, ServiceManager
 		FileFunc.setDirectoryAccessWithException( resourceDir );
 
 		return site;
+	}
+
+	public static void cleanupBackups( final String siteId, final String suffix, int limit )
+	{
+		File dir = new File( AppConfig.get().getDirectory( "archive", "archive" ), siteId );
+		if ( !dir.exists() )
+			return;
+		File[] files = dir.listFiles( new FilenameFilter()
+		{
+			@Override
+			public boolean accept( File dir, String name )
+			{
+				return name.toLowerCase().endsWith( suffix );
+			}
+		} );
+
+		if ( files == null || files.length < 1 )
+			return;
+
+		// Delete all logs, no archiving!
+		if ( limit < 1 )
+		{
+			for ( File f : files )
+				f.delete();
+			return;
+		}
+
+		FileFunc.SortableFile[] sfiles = new FileFunc.SortableFile[files.length];
+
+		for ( int i = 0; i < files.length; i++ )
+			sfiles[i] = new FileFunc.SortableFile( files[i] );
+
+		Arrays.sort( sfiles );
+
+		if ( sfiles.length > limit )
+			for ( int i = 0; i < sfiles.length - limit; i++ )
+				sfiles[i].f.delete();
 	}
 
 	public static Log getLogger()
@@ -129,6 +170,12 @@ public class SiteManager implements ServiceProvider, LogSource, ServiceManager
 		return "SiteMgr";
 	}
 
+	@Override
+	public String getName()
+	{
+		return "SiteMgr";
+	}
+
 	public Site getSiteByDomain( String domain )
 	{
 		if ( domain == null || domain.length() == 0 )
@@ -174,6 +221,12 @@ public class SiteManager implements ServiceProvider, LogSource, ServiceManager
 	{
 		AppManager.registerService( Site.class, this, new ObjectContext( this ), ServicePriority.Normal );
 		loadSites();
+	}
+
+	@Override
+	public boolean isEnabled()
+	{
+		return true;
 	}
 
 	public void loadSites() throws ApplicationException

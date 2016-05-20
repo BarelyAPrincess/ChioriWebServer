@@ -14,7 +14,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.cert.CertificateException;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,11 +48,15 @@ import com.chiorichan.factory.ScriptingResult;
 import com.chiorichan.http.Routes;
 import com.chiorichan.http.ssl.CertificateWrapper;
 import com.chiorichan.lang.ApplicationException;
+import com.chiorichan.lang.EnumColor;
 import com.chiorichan.lang.ExceptionReport;
 import com.chiorichan.lang.SiteException;
+import com.chiorichan.logger.Log;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.session.SessionManager;
 import com.chiorichan.session.SessionPersistenceMethod;
+import com.chiorichan.tasks.TaskManager;
+import com.chiorichan.tasks.Timings;
 import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.NetworkFunc;
 import com.chiorichan.util.SecureFunc;
@@ -261,6 +267,90 @@ public class Site implements AccountLocation
 		 */
 		if ( getRootdomain().directory( "~wisp" ).exists() )
 			SiteManager.getLogger().warning( String.format( "It would appear that site '%s' contains a subfolder by the name of '~wisp', since we use the uri '/~wisp' for internal access, you will be unable to serve files from this directory!", siteId ) );
+
+		ConfigurationSection archive = yaml.getConfigurationSection( "archive", true );
+
+		if ( !archive.has( "enable" ) )
+			archive.set( "enable", false );
+
+		if ( !archive.has( "interval" ) )
+			archive.set( "interval", "24h" );
+
+		if ( !archive.has( "keep" ) )
+			archive.set( "keep", "3" );
+
+		if ( !archive.has( "lastRun" ) )
+			archive.set( "lastRun", "0" );
+
+		if ( archive.getBoolean( "enable" ) )
+		{
+			String interval = archive.getString( "interval", "24h" ).trim();
+			if ( interval.matches( "[0-9]+[dhmsDHMS]?" ) )
+			{
+				interval = interval.toLowerCase();
+				int multiply = 1;
+
+				if ( interval.endsWith( "d" ) || interval.endsWith( "h" ) || interval.endsWith( "m" ) || interval.endsWith( "s" ) )
+				{
+					switch ( interval.substring( interval.length() - 1 ) )
+					{
+						case "d":
+							multiply = 86400000;
+							break;
+						case "h":
+							multiply = 3600000;
+							break;
+						case "m":
+							multiply = 60000;
+							break;
+						case "s":
+							multiply = 1000;
+							break;
+					}
+					interval = interval.substring( 0, interval.length() - 1 );
+				}
+
+				long timer = Long.parseLong( interval ) * multiply;
+				long lastRun = Timings.epoch() - archive.getLong( "lastRun" );
+				long nextRun = archive.getLong( "lastRun" ) < 1L ? 30000L : lastRun > timer ? 30000L : timer - lastRun;
+				final Site site = this;
+
+				SiteManager.getLogger().info( String.format( "%s%sScheduled site archive for %s {nextRun: %s, interval: %s}", EnumColor.AQUA, EnumColor.NEGATIVE, siteId, nextRun, timer ) );
+
+				TaskManager.instance().scheduleSyncRepeatingTask( SiteManager.instance(), nextRun, timer, new Runnable()
+				{
+					@Override
+					public void run()
+					{
+						Log l = SiteManager.getLogger();
+						l.info( String.format( "%s%sRunning archive for site %s...", EnumColor.AQUA, EnumColor.NEGATIVE, siteId ) );
+
+						SiteManager.cleanupBackups( siteId, ".zip", archive.getInt( "keep", 3 ) );
+						archive.set( "lastRun", Timings.epoch() );
+
+						File dir = AppConfig.get().getDirectory( "archive", "archive" );
+						dir = new File( dir, siteId );
+						dir.mkdirs();
+
+						File zip = new File( dir, new SimpleDateFormat( "yyyy-MM-dd_HH-mm-ss" ).format( new Date() ) + "-" + siteId + ".zip" );
+
+						try
+						{
+							FileFunc.zipDir( site.directory(), zip );
+						}
+						catch ( IOException e )
+						{
+							l.severe( String.format( "%s%sFailed archiving site %s to %s", EnumColor.RED, EnumColor.NEGATIVE, siteId, zip.getAbsolutePath() ), e );
+							return;
+						}
+
+						l.info( String.format( "%s%sFinished archiving site %s to %s", EnumColor.AQUA, EnumColor.NEGATIVE, siteId, zip.getAbsolutePath() ) );
+					}
+				} );
+			}
+			else
+				SiteManager.getLogger().warning( String.format( "Failed to initalize site backup for site %s, interval did not match regex '[0-9]+[dhmsDHMS]?'.", siteId ) );
+		}
 	}
 
 	Site( String siteId )
