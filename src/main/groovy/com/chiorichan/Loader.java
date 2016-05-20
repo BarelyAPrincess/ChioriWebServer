@@ -19,7 +19,6 @@ import joptsimple.OptionParser;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 
-import com.chiorichan.datastore.DatastoreManager;
 import com.chiorichan.lang.ApplicationException;
 import com.chiorichan.lang.EnumColor;
 import com.chiorichan.lang.RunLevel;
@@ -272,21 +271,22 @@ public class Loader extends AppLoader
 		}
 
 		/*
-		if ( Application.isUnixLikeOS() )
-		{
-			SignalHandler handler = new SignalHandler()
-			{
-				@Override
-				public void handle( Signal arg0 )
-				{
-					AppController.stopApplication( "Received SIGTERM - Terminate" );
-				}
-			};
-
-			Signal.handle( new Signal( "TERM" ), handler );
-			Signal.handle( new Signal( "INT" ), handler );
-		}
-		*/
+		 * if ( Application.isUnixLikeOS() )
+		 * {
+		 * SignalHandler handler = new SignalHandler()
+		 * {
+		 *
+		 * @Override
+		 * public void handle( Signal arg0 )
+		 * {
+		 * AppController.stopApplication( "Received SIGTERM - Terminate" );
+		 * }
+		 * };
+		 *
+		 * Signal.handle( new Signal( "TERM" ), handler );
+		 * Signal.handle( new Signal( "INT" ), handler );
+		 * }
+		 */
 
 		if ( !AppConfig.get().getBoolean( "server.disableTracking" ) && !Versioning.isDevelopment() )
 			NetworkFunc.sendTracking( "startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
@@ -304,20 +304,17 @@ public class Loader extends AppLoader
 		{
 			case SHUTDOWN:
 			{
+				Log.get().info( "Shutting Down Session Manager..." );
 				if ( AppManager.manager( SessionManager.class ).isInitalized() )
-				{
-					Log.get().info( "Shutting Down Session Manager..." );
 					SessionManager.instance().shutdown();
-				}
 
 				Log.get().info( "Shutting Down Network Manager..." );
 				NetworkManager.shutdown();
 
+				Log.get().info( "Shutting Down Site Manager..." );
 				if ( AppManager.manager( SiteManager.class ).isInitalized() )
-				{
-					Log.get().info( "Shutting Down Site Manager..." );
 					SiteManager.instance().unloadSites();
-				}
+
 				break;
 			}
 			case INITIALIZATION:
@@ -326,12 +323,6 @@ public class Loader extends AppLoader
 				break;
 			case POSTSTARTUP:
 			{
-				Log.get().info( "Initalizing the Datastore Subsystem..." );
-				AppManager.manager( DatastoreManager.class ).init();
-
-				Log.get().info( "Initalizing the Database Subsystem..." );
-				AppConfig.get().initDatabase();
-
 				Log.get().info( "Initalizing the Site Subsystem..." );
 				AppManager.manager( SiteManager.class ).init();
 
