@@ -9,7 +9,6 @@
 package com.chiorichan;
 
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import io.netty.util.internal.logging.Log4JLoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,6 +26,7 @@ import com.chiorichan.lang.EnumColor;
 import com.chiorichan.lang.RunLevel;
 import com.chiorichan.lang.StartupAbortException;
 import com.chiorichan.lang.StartupException;
+import com.chiorichan.logger.DefaultLogFactory;
 import com.chiorichan.logger.Log;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.services.AppManager;
@@ -322,7 +322,7 @@ public class Loader extends AppLoader
 			}
 			case INITIALIZATION:
 			{
-				InternalLoggerFactory.setDefaultFactory( new Log4JLoggerFactory() );
+				InternalLoggerFactory.setDefaultFactory( new DefaultLogFactory() );
 				break;
 			}
 			case INITIALIZED:

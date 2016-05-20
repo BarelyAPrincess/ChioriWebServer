@@ -9,6 +9,7 @@
 package com.chiorichan.http.ssl;
 
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.ssl.NotSslRecordException;
 import io.netty.handler.ssl.SslHandler;
 
 import java.io.IOException;
@@ -39,10 +40,15 @@ public class SslExceptionHandler extends SslHandler
 		 *
 		 * javax.net.ssl.SSLHandshakeException: Client requested protocol SSLv3 not enabled or not supported
 		 * javax.net.ssl.SSLHandshakeException: no cipher suites in common
+		 *
+		 * Issues catching:
+		 * io.netty.handler.ssl.NotSslRecordException: not an SSL/TLS record: 474554202f20485454502f312e310d0a486f73743...
 		 */
 
 		// io.netty.handler.ssl.NotSslRecordException;
 
+		if ( cause instanceof NotSslRecordException )
+			NetworkManager.getLogger().severe( "Not an SSL/TLS record" );
 		if ( cause instanceof SSLException || ! ( cause instanceof IOException ) )
 		{
 			String protocol = StringFunc.regexCapture( cause.getMessage(), "Client requested protocol (.*) not enabled or not supported" );
