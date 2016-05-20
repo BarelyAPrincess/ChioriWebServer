@@ -8,6 +8,9 @@
  */
 package com.chiorichan;
 
+import io.netty.util.internal.logging.InternalLoggerFactory;
+import io.netty.util.internal.logging.Log4JLoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -253,14 +256,14 @@ public class Loader extends AppLoader
 
 		if ( firstRun )
 		{
-			Log.get().highlight( "                          ATTENTION! ATTENTION! ATTENTION!" );
-			Log.get().highlight( "--------------------------------------------------------------------------------------" );
-			Log.get().highlight( "| It appears that this is your first time running Chiori-chan's Web Server.          |" );
-			Log.get().highlight( "| All the needed files have been created and extracted from the server jar file.     |" );
-			Log.get().highlight( "| We highly recommended that you stop the server, review config, and restart.      |" );
-			Log.get().highlight( "| You can find documentation and guides on our Github at:                            |" );
-			Log.get().highlight( "|                   https://github.com/ChioriGreene/ChioriWebServer                  |" );
-			Log.get().highlight( "--------------------------------------------------------------------------------------" );
+			Log.get().notice( "                          ATTENTION! ATTENTION! ATTENTION!" );
+			Log.get().notice( "--------------------------------------------------------------------------------------" );
+			Log.get().notice( "| It appears that this is your first time running Chiori-chan's Web Server.          |" );
+			Log.get().notice( "| All the needed files have been created and extracted from the server jar file.     |" );
+			Log.get().notice( "| We highly recommended that you stop the server, review config, and restart.      |" );
+			Log.get().notice( "| You can find documentation and guides on our Github at:                            |" );
+			Log.get().notice( "|                   https://github.com/ChioriGreene/ChioriWebServer                  |" );
+			Log.get().notice( "--------------------------------------------------------------------------------------" );
 			String key = ApplicationTerminal.terminal().prompt( "Would you like to stop and review config? Press 'Y' for Yes or 'N' for No.", "Y", "N" );
 
 			if ( key.equals( "Y" ) )
@@ -318,7 +321,10 @@ public class Loader extends AppLoader
 				break;
 			}
 			case INITIALIZATION:
+			{
+				InternalLoggerFactory.setDefaultFactory( new Log4JLoggerFactory() );
 				break;
+			}
 			case INITIALIZED:
 				break;
 			case POSTSTARTUP:
