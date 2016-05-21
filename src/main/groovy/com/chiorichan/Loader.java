@@ -21,6 +21,9 @@ import joptsimple.OptionParser;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
+
 import com.chiorichan.lang.ApplicationException;
 import com.chiorichan.lang.EnumColor;
 import com.chiorichan.lang.RunLevel;
@@ -39,6 +42,7 @@ import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.NetworkFunc;
 import com.chiorichan.util.Versioning;
 
+@SuppressWarnings( "restriction" )
 public class Loader extends AppLoader
 {
 	private static File webroot = new File( "" );
@@ -273,23 +277,21 @@ public class Loader extends AppLoader
 			}
 		}
 
-		/*
-		 * if ( Application.isUnixLikeOS() )
-		 * {
-		 * SignalHandler handler = new SignalHandler()
-		 * {
-		 *
-		 * @Override
-		 * public void handle( Signal arg0 )
-		 * {
-		 * AppController.stopApplication( "Received SIGTERM - Terminate" );
-		 * }
-		 * };
-		 *
-		 * Signal.handle( new Signal( "TERM" ), handler );
-		 * Signal.handle( new Signal( "INT" ), handler );
-		 * }
-		 */
+		if ( Application.isUnixLikeOS() )
+		{
+			SignalHandler handler = new SignalHandler()
+			{
+
+				@Override
+				public void handle( Signal arg0 )
+				{
+					AppController.stopApplication( "Received SIGTERM - Terminate" );
+				}
+			};
+
+			Signal.handle( new Signal( "TERM" ), handler );
+			Signal.handle( new Signal( "INT" ), handler );
+		}
 
 		if ( !AppConfig.get().getBoolean( "server.disableTracking" ) && !Versioning.isDevelopment() )
 			NetworkFunc.sendTracking( "startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
