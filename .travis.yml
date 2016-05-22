@@ -18,6 +18,6 @@ cache:
   directories:
   - $HOME/.gradle
 branches:
-  only:
-    - master
+  except:
+    - documentation
 
