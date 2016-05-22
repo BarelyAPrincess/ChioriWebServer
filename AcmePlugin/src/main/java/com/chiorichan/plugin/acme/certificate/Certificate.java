@@ -68,7 +68,7 @@ public class Certificate
 		if ( key.equals( "default" ) )
 			domains.addAll( AcmeScheduledTask.getVerifiedDomains() );
 		else
-			// TODO Allow mapping to contain domains and/or siteIds
+			// XXX Allow mapping to contain domains and/or siteIds
 			for ( String map : configSection.getAsList( "mapping", new ArrayList<String>() ) )
 			{
 				Site site = SiteManager.instance().getSiteById( map );

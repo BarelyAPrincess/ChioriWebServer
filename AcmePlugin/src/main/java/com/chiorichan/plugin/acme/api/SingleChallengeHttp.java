@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @SuppressWarnings( "serial" )
 public final class SingleChallengeHttp
 {
-	// TODO For future new challenges, this class will extend a common parent
+	// For future new challenges, this class will extend a common parent
 
 	private AcmeState state = AcmeState.CREATED;
 

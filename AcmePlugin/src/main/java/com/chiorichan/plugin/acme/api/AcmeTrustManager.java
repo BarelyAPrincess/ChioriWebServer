@@ -22,7 +22,7 @@ public class AcmeTrustManager implements X509TrustManager
 
 		final KeyManagerFactory kmf = KeyManagerFactory.getInstance( "SunX509" );
 
-		// TODO kmf.init( keyStore, Acme.KS_PASS );
+		// kmf.init( keyStore, Acme.KS_PASS );
 
 		final SSLContext sc = SSLContext.getInstance( "SSL" );
 
