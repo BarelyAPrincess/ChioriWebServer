@@ -11,3 +11,4 @@ libraries:
   - "com.fasterxml.jackson.core:jackson-databind:2.4.2"
   - "com.fasterxml.jackson.core:jackson-annotations:2.4.0"
   - "com.fasterxml.jackson.core:jackson-core:2.4.2"
+gitHubBaseUrl: https://raw.githubusercontent.com/ChioriGreene/ChioriWebServer/master/AcmePlugin/src/main/java/

@@ -6,3 +6,4 @@ depends: []
 libraries:
   - "com.google.zxing:core:3.1.0"
   - "com.google.zxing:javase:3.1.0"
+gitHubBaseUrl: https://raw.githubusercontent.com/ChioriGreene/ChioriWebServer/master/ZXingPlugin/src/main/java/

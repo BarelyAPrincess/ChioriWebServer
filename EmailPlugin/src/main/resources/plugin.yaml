@@ -5,3 +5,4 @@ version: '1.0'
 depends: []
 libraries:
   - "javax:javaee-api:7.0"
+gitHubBaseUrl: https://raw.githubusercontent.com/ChioriGreene/ChioriWebServer/master/EmailPlugin/src/main/java/

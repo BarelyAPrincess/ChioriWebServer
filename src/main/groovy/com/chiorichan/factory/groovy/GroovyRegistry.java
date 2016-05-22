@@ -238,12 +238,14 @@ public class GroovyRegistry implements ScriptingRegistry
 
 	public Script makeScript( GroovyShell shell, String source, ScriptingContext context ) throws ScriptingException
 	{
+		// TODO Determine if a package node is prohibited and replace with an alternative, e.g., public, private, etc.
+
 		if ( source.contains( "package " ) )
 			throw new ScriptingException( ReportingLevel.E_ERROR, "Package path is predefined by Groovy Engine, remove `package` from source." );
 
 		if ( context.scriptPackage() != null )
 		{
-			source = "package " + context.scriptPackage() + "\n\n" + source;
+			source = "package " + context.scriptPackage() + "; " + source;
 			context.baseSource( source );
 		}
 

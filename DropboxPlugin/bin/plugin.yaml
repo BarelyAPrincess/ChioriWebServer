@@ -6,3 +6,4 @@ depends: []
 libraries:
   - "com.dropbox.core:dropbox-core-sdk:1.7.7"
   - "com.fasterxml.jackson.core:jackson-core:2.4.0"
+gitHubBaseUrl: https://raw.githubusercontent.com/ChioriGreene/ChioriWebServer/master/DropboxPlugin/src/main/java/

@@ -356,7 +356,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			else if ( evalOrig == null )
 			{
 				// Was not caught by EvalFactory
-				log.log( Level.SEVERE, EnumColor.NEGATIVE + "" + EnumColor.RED + "Exception %s thrown in file '%s' at line %s, message '%s'", cause.getClass().getName(), cause.getStackTrace()[0].getFileName(), cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
+				log.log( Level.SEVERE, "%s%sException %s thrown in file '%s' at line %s, message '%s'", EnumColor.NEGATIVE, EnumColor.RED, cause.getClass().getName(), cause.getStackTrace()[0].getFileName(), cause.getStackTrace()[0].getLineNumber(), cause.getMessage() );
 				response.sendException( cause );
 
 				if ( Versioning.isDevelopment() )

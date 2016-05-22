@@ -15,7 +15,6 @@ import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.factory.ScriptingResult;
-import com.chiorichan.lang.PluginNotFoundException;
 import com.chiorichan.lang.ScriptingException;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.loader.Plugin;
@@ -30,7 +29,9 @@ import com.chiorichan.util.WebFunc;
  */
 public class TemplateUtils
 {
-	private static final String GITHUB_BRANCH = Versioning.getGitHubBranch();
+	private static final String GITHUB_API_BRANCH = "master-dev";
+	private static final String GITHUB_API_URL = "https://raw.githubusercontent.com/ChioriGreene/ChioriAPI/";
+	private static final String GITHUB_SERVER_BRANCH = Versioning.getGitHubBranch();
 	private static final String GITHUB_SERVER_URL = "https://raw.githubusercontent.com/ChioriGreene/ChioriWebServer/";
 	private static final String SERVER_PLUGIN_NAMESPACE = "com.chiorichan.plugin.";
 
@@ -47,39 +48,31 @@ public class TemplateUtils
 		for ( StackTraceElement ste : stackTrace )
 		{
 			String fileName = ste.getFileName() == null ? "<Unknown Source>" : ste.getFileName() + ( ste.getLineNumber() > -1 ? String.format( "(%s)", ste.getLineNumber() ) : "" );
-
-			String previewType = "core";
-
-			if ( ste.getClassName().startsWith( "com.chiori" ) )
-				previewType = "app";
-
-			if ( ste.getFileName() != null && ste.getFileName().matches( "GroovyScript\\d*\\.chi" ) )
-				previewType = "groovy";
-
-			String codePreview = "There is no source file available for this preview";
+			String codePreview = "There is no source code available for this preview";
+			String codePreviewType = "core";
 			boolean expanded = false;
 
-			if ( !previewType.equals( "core" ) )
+			if ( ste.getClassName().startsWith( "com.chiorichan." ) )
 			{
 				codePreview = generateCodePreview( ste );
-
-				if ( scriptTrace != null )
-					for ( ScriptTraceElement st : scriptTrace )
-						if ( st.getFileName() != null && ste.getFileName() != null && st.getFileName().equals( ste.getFileName() ) && st.getLineNumber() == ste.getLineNumber() )
-						{
-							codePreview = generateCodePreview( st );
-							if ( st.context() != null )
-								fileName = st.context().filename() + ( ste.getLineNumber() > -1 ? String.format( "(%s)", ste.getLineNumber() ) : "" );
-							break;
-						}
-
-				if ( codePreview == null )
-					codePreview = "There was a problem getting this code preview, either the file is non-existent or could not be read.";
-				else
-					expanded = true;
+				codePreviewType = "app";
+				expanded = true;
 			}
 
-			sb.append( "<tr class=\"trace " + previewType + ( expanded ? " expanded" : " collapsed" ) + "\">\n" );
+			if ( scriptTrace != null )
+				for ( ScriptTraceElement st : scriptTrace )
+					if ( st.getFileName() != null && ste.getFileName() != null && st.getFileName().equals( ste.getFileName() ) && st.getLineNumber() == ste.getLineNumber() )
+					{
+						codePreviewType = "groovy";
+						expanded = true;
+
+						codePreview = generateCodePreview( st );
+						if ( st.context() != null )
+							fileName = st.context().filename() + ( ste.getLineNumber() > -1 ? String.format( "(%s)", ste.getLineNumber() ) : "" );
+						break;
+					}
+
+			sb.append( "<tr class=\"trace " + codePreviewType + ( expanded ? " expanded" : " collapsed" ) + "\">\n" );
 			sb.append( "	<td class=\"number\">#" + l + "</td>\n" );
 			sb.append( "	<td class=\"content\">\n" );
 			sb.append( "		<div class=\"trace-file\">\n" );
@@ -134,7 +127,7 @@ public class TemplateUtils
 		catch ( IOException e )
 		{
 			e.printStackTrace();
-			return String.format( "<We had a problem: %s>", e.getMessage() );
+			return String.format( "Failed to generate code preview: %s", e.getMessage() );
 		}
 	}
 
@@ -152,53 +145,62 @@ public class TemplateUtils
 	{
 		// TODO Match the server version to the correct commit on the github. The closer the better.
 
-		String className = ste.getClassName();
-		String url = GITHUB_SERVER_URL + GITHUB_BRANCH + "/";
-		int lineNum = ste.getLineNumber();
-
-		if ( className.startsWith( SERVER_PLUGIN_NAMESPACE + "email" ) )
-			url += "EmailPlugin/";
-		if ( className.startsWith( SERVER_PLUGIN_NAMESPACE + "template" ) )
-			url += "TemplatesPlugin/";
-
 		try
 		{
-			Plugin plugin = PluginManager.instance().getPluginByClass( Class.forName( ste.getClassName() ) );
+			String className = ste.getClassName();
+			int lineNum = ste.getLineNumber();
+			byte[] result = null;
 
-			if ( plugin != null && plugin.getDescription() != null && plugin.getDescription().getGitHubBaseUrl() != null )
-				url = plugin.getDescription().getGitHubBaseUrl();
-		}
-		catch ( PluginNotFoundException | ClassNotFoundException | NoClassDefFoundError e )
-		{
-			// Do Nothing
-		}
+			String urlAppend = className.replace( '.', '/' ).replace( "$1", "" ) + "." + InterpreterOverrides.getFileExtension( ste.getFileName() );
+			String url = null;
 
-		// TODO Get ChioriAPI source path as well
+			Plugin plugin;
 
-		String gitHubGroovyUrl = url + "src/main/groovy/";
-		String gitHubJavaUrl = url + "src/main/java/";
-		String fileUrl = className.replace( '.', '/' ).replace( "$1", "" ) + "." + InterpreterOverrides.getFileExtension( ste.getFileName() );
-		String finalUrl = gitHubGroovyUrl + fileUrl;
+			plugin = PluginManager.instance().getPluginByClassWithoutException( Class.forName( ste.getClassName() ) );
 
-		byte[] result;
-		try
-		{
-			result = NetworkFunc.readUrlWithException( finalUrl );
-		}
-		catch ( IOException e )
-		{
-			try
+			if ( plugin != null )
 			{
-				finalUrl = gitHubJavaUrl + fileUrl;
-				result = NetworkFunc.readUrlWithException( finalUrl );
+				if ( plugin.getDescription() != null && plugin.getDescription().getGitHubBaseUrl() != null )
+				{
+					url = plugin.getDescription().getGitHubBaseUrl();
+					if ( !url.endsWith( "/" ) )
+						url += "/";
+					result = NetworkFunc.readUrl( url + urlAppend );
+				}
+				else
+					return String.format( "Plugin %s does not have a github base url.", plugin.getName() );
 			}
-			catch ( IOException ee )
+			else if ( className.startsWith( "com.chiorichan." ) )
 			{
-				return String.format( "Could not read file '%s' from the GitHub repository.\nYou could be running a mismatching version to the repository or this file belongs to another repository.", fileUrl );
-			}
-		}
+				// Try API URI first!
+				url = GITHUB_API_URL + GITHUB_API_BRANCH + "/src/main/java/" + urlAppend;
 
-		return String.format( "%s<br /><a target=\"_blank\" href=\"%s\">View this file on our GitHub!</a>", generateCodePreview( new String( result ), lineNum ), finalUrl );
+				result = NetworkFunc.readUrl( url );
+
+				if ( result == null )
+				{
+					// Try CWS URI second!
+					url = GITHUB_SERVER_URL + GITHUB_SERVER_BRANCH + "/src/main/groovy/" + urlAppend;
+
+					result = NetworkFunc.readUrl( url );
+				}
+
+				if ( result == null )
+					return String.format( "Could not read file '%s' from the GitHub repository.\nYou could be running an outdated version or this file belongs to another repository.", urlAppend );
+			}
+			else
+				return "There is no source code available for this preview";
+
+			if ( result == null || url == null )
+				return "Failed to get source code from GitHub repository";
+			else
+				return String.format( "%s<br /><a target=\"_blank\" href=\"%s\">View this file on our GitHub!</a>", generateCodePreview( new String( result ), lineNum ), url );
+		}
+		catch ( Throwable t )
+		{
+			PluginManager.instance().getPluginByClassWithoutException( Template.class ).getLogger().severe( "Failed to get %s from GitHub repository", ste.getFileName(), t );
+			return "Failed to get source code from GitHub repository";
+		}
 	}
 
 	static String generateCodePreview( String source, int lineNum )

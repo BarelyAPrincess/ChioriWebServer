@@ -167,7 +167,6 @@ public class ScriptingFactory implements LogSource
 
 		try
 		{
-
 			String name = "EvalScript" + SecureFunc.rand( 8 ) + ".chi";
 			if ( !context.isVirtual() )
 			{

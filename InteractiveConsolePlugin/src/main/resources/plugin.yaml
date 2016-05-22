@@ -8,3 +8,4 @@ natives:
   linux-x86: natives/linux-x86/libjcurses.so
 libraries:
   - "com.baulsupp.kolja:jcurses:0.9.5.3"
+gitHubBaseUrl: https://raw.githubusercontent.com/ChioriGreene/ChioriWebServer/master/InteractiveConsolePlugin/src/main/java/

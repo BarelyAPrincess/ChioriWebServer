@@ -76,6 +76,8 @@ public class ScriptTraceElement
 	{
 		Validate.notNull( msg );
 
+		// Improve parsing for line and column numbers
+
 		msg = msg.replaceAll( "\n", "" );
 		Pattern p1 = Pattern.compile( "line[: ]?([0-9]*), column[: ]?([0-9]*)" );
 		Matcher m1 = p1.matcher( msg );

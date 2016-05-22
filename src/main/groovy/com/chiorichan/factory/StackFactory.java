@@ -32,7 +32,7 @@ public class StackFactory
 		List<ScriptTraceElement> scriptTrace = Lists.newLinkedList();
 
 		for ( StackTraceElement ste : stackTrace )
-			if ( ste.getFileName() != null && ste.getFileName().matches( "EvalScript\\d*\\.chi" ) )
+			if ( ste.getFileName() != null && scriptStackHistory.containsKey( ste.getFileName() ) )
 				scriptTrace.add( new ScriptTraceElement( scriptStackHistory.get( ste.getFileName() ), ste ) );
 
 		ScriptingContext context = scriptStack.values().toArray( new ScriptingContext[0] )[scriptStack.size() - 1];

@@ -3,3 +3,4 @@ author: Chiori Greene
 main: com.chiorichan.plugin.template.Template
 version: '1.2'
 depends: []
+gitHubBaseUrl: https://raw.githubusercontent.com/ChioriGreene/ChioriWebServer/master/TemplatesPlugin/src/main/java/

@@ -38,25 +38,6 @@ import com.google.common.collect.Lists;
  */
 public class Template extends Plugin implements Listener
 {
-	/*
-	 * private String domainToPackage( String domain )
-	 * {
-	 * if ( domain == null || domain.isEmpty() )
-	 * return "";
-	 *
-	 * String[] packs = domain.split( "\\." );
-	 *
-	 * List<String> lst = Arrays.asList( packs );
-	 * Collections.reverse( lst );
-	 *
-	 * String pack = "";
-	 * for ( String s : lst )
-	 * pack += "." + s;
-	 *
-	 * return pack.substring( 1 );
-	 * }
-	 */
-
 	private String generateExceptionPage( Throwable t, ScriptingFactory factory ) throws Exception
 	{
 		Validate.notNull( t );
@@ -113,10 +94,10 @@ public class Template extends Plugin implements Listener
 				if ( lineNum > -1 )
 				{
 					String preview = TemplateUtils.generateCodePreview( ste );
-					codeSample += "<p>Original Source Code:</p><pre>" + preview + "</pre>";
+					codeSample += "<p>Source Code:</p><pre>" + preview + "</pre>";
 
 					if ( context.baseSource() != null && !context.baseSource().isEmpty() && !context.baseSource().equals( preview ) )
-						codeSample += "<p>Evaluated Code:</p><pre>" + TemplateUtils.generateCodePreview( context.baseSource(), lineNum, colNum ) + "</pre>";
+						codeSample += "<p>Parsed Source Code:</p><pre>" + TemplateUtils.generateCodePreview( context.baseSource(), lineNum, colNum ) + "</pre>";
 				}
 			}
 		}
