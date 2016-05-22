@@ -211,7 +211,7 @@ public class GroovyRegistry implements ScriptingRegistry
 
 		/*
 		 * Set Groovy Base Script Class
-		 * TODO Implement new groovy API base
+		 * TODO #15 Implement new groovy API base
 		 */
 		configuration.setScriptBaseClass( ScriptingBaseGroovy.class.getName() );
 
