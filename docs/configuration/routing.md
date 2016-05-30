@@ -22,7 +22,7 @@ The routing feature can also capture arguments from the URL. To define just repl
 
 `pattern "/projects/[projId=]/users/[userId=]/add", file "scripts/projects/adduser.groovy", subdomain ""`.
 
-As you can see from the above example, the arguments `projId` and `userId` will pass into the `adduser.groovy` script as a list. To retrieve these values using the Groovy API, add the following: `_REWRITE.projId` or `_REWRITE["userId"]`.
+As you can see from the above example, the arguments `projId` and `userId` will pass into the `adduser.groovy` script as a list. To retrieve these values using the Groovy API, use the following: `_REWRITE.projId` or `_REWRITE["userId"]`.
 
 ### vargs
 
