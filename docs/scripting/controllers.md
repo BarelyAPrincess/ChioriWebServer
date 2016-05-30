@@ -47,10 +47,10 @@ While the non-ambiguous methods are non-case sensitive, actions will pass to the
 
 ### Using Route File
 
-Controllers are also compatible using the Route File, you will only need to capture the action argument using the Route formula or by explicitly defining it.
+Controllers are also compatible with the server route file. You need to manually capture the action argument. You can also define the action use the `vargs` Route parameter.
 
 **Explicit**
-`pattern "/admin/projects/[id=]/edit", file "/scripts/projects.controller.groovy", vargs [action:edit]`
+`pattern "/admin/projects/[projId=]/edit", file "/scripts/projects.controller.groovy", vargs [action:edit]`
 **Normal**
 `pattern "/admin/projects/[projId=]/user/[action=]", file "/scripts/.controller.groovy"`
 
