@@ -12,7 +12,7 @@ When following a redirect action, you can define the status code used by also ad
 
 The normal pattern argument can only parse the url that follows the domain TLD. To better match, use the directive `subdomain` to explicitly state which subdomain this pattern is for.
 
-`pattern "/accounts/my", file "/users/my.gsp", subdomain "users"`.
+`pattern "/my", file "/files/myacct.gsp", subdomain "accounts"`.
 
 Leaving the subdomain directive empty will result in only matching the root domain.
 
