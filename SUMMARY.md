@@ -18,5 +18,5 @@
    * [Packages](docs/scripting/packages.md)
    * [Controllers](docs/scripting/controllers.md)
 * [Configuration](docs/configuration/README.md)
-   * [Routing Table](docs/configuration/routing.md)
+   * [Routing](docs/configuration/routing.md)
 
