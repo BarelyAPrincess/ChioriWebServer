@@ -18,7 +18,7 @@ Leaving the subdomain directive empty will result in only matching the root doma
 
 ### Capturing Arguments
 
-The routing feature can also capture dynamic argument from within the url. To define just replace any section of the url with `[arg=]`. The wording between the brackets and equal symbol is your argument name.
+The routing feature can also capture arguments from the URL. To define just replace any section of the url with `[arg=]`. The wording between the brackets and equal symbol is your argument name.
 
 `pattern "/projects/[projId=]/users/[userId=]/add", file "scripts/projects/adduser.groovy", subdomain ""`.
 
