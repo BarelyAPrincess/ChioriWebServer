@@ -16,4 +16,5 @@
 * [Scripting Languages](docs/scripting/README.md)
    * [API Reference](docs/scripting/api.md)
    * [Packages](docs/scripting/packages.md)
+   * Controllers
 
