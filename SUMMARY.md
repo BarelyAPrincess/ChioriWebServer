@@ -14,7 +14,6 @@
        * [Service Manager](docs/plugins/developer/service_manager.md)
        * [Application Manager](docs/plugins/developer/application_manager.md)
 * [Scripting Languages](docs/scripting/README.md)
-   * [Routing](docs/routing.md)
    * [API Reference](docs/scripting/api.md)
    * [Packages](docs/scripting/packages.md)
    * [Controllers](docs/scripting/controllers.md)
