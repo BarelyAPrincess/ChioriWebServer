@@ -26,7 +26,7 @@ When a request fails to find an exact matching file, it will attempt to parse th
       // In some cases, actions could contain a subaction, it's your disgression to support them.
       throw new HttpError( 404 );
 
-    // Action will be pass as typed
+    // Action will pass as provided
     switch ( action.toLowerCase() )
     {
       case "deleteall":
@@ -43,11 +43,11 @@ When a request fails to find an exact matching file, it will attempt to parse th
   }
 ```
 
-While the non-ambiguous methods are non-case sensitive, actions will pass to the catch all method as-is. When the action fails, i.e., no hard coded action method nor `catchAll` method returning true, the server will throw a 404 (Not Found) error. If you're in development mode, the error will also include a short description.
+While the non-ambiguous methods are non-case sensitive, actions will pass to the catch all method as-is. When the action fails, i.e., no hard coded action method nor did the `catchAll` method return true, the server will throw a 404 (Not Found) error. If you're in development mode, the error will also include a short description.
 
 ### Using Route File
 
-Controllers are also compatible with the server route file. You need to manually capture the action argument. You can also define the action use the `vargs` Route parameter.
+Controllers are also compatible with the server route file. You need to manually capture the action argument or you can define the action use the `vargs` Route parameter.
 
 **Explicit**
 `pattern "/admin/projects/[projId=]/edit", file "/scripts/projects.controller.groovy", vargs [action:edit]`
