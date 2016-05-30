@@ -1,11 +1,11 @@
 # Controllers
 
-Based on the popular, Model-View-Controllers. Controllers allow you to handle different actions from one a single Script, e.g., `http://example.com/site/[controllerNameWithoutExtension]/[action]`.
+Based on the popular, Model-View-Controllers. Controllers allow you to handle different actions from a single Script, e.g., `http://example.com/site/[controllerNameWithoutExtension]/[action]`.
 
 When a request fails to find an exact matching file, it will attempt to parse the last part as an action and the prior part as a controller. -- Considering the prior resolves to an actual controller.
 
 1. To start, create a new groovy script under the desired directory with the extension `.controller.groovy`. 
-2. To catch specific actions, just add a method like follows:
+2. To catch specific actions, just add a method as follows:
 ```groovy
   def actionEdit()
   {
@@ -26,7 +26,7 @@ When a request fails to find an exact matching file, it will attempt to parse th
       // In some cases, actions could contain a subaction, it's your disgression to support them.
       throw new HttpError( 404 );
 
-    // Action will pass as provided
+    // Action will pass as-is
     switch ( action.toLowerCase() )
     {
       case "deleteall":
@@ -43,15 +43,15 @@ When a request fails to find an exact matching file, it will attempt to parse th
   }
 ```
 
-While the non-ambiguous methods are non-case sensitive, actions will pass to the catch all method as-is. When the action fails, i.e., no hard coded action method nor did the `catchAll` method return true, the server will throw a 404 (Not Found) error. If you're in development mode, the error will also include a short description.
+While the non-ambiguous methods are non-case sensitive, actions will pass to the catch all method as-is. When the action fails, i.e., no hard coded action method was found nor did the `catchAll()` method return true, the server will throw a 404 (Not Found) error. If you're in development mode, the error will also include a short description that the action was unhandled.
 
 ### Using Route File
 
-Controllers are also compatible with the server route file. You need to manually capture the action argument or you can define the action use the `vargs` Route parameter.
+Controllers are also compatible with the server routing. You need to manually capture the action argument or you can define the action use the `vargs` Route parameter.
 
 **Explicit**
 `pattern "/admin/projects/[projId=]/edit", file "/scripts/projects.controller.groovy", vargs [action:edit]`
 **Normal**
 `pattern "/admin/projects/[projId=]/user/[action=]", file "/scripts/.controller.groovy"`
 
-See [Routes](Routes) for more help with the Route File.
+See [Routing](/docs/configuration/routing/md) for more help with the Route File.
