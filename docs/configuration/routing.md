@@ -2,8 +2,9 @@
 
 Also known as the route file. It is stored in the site webroot and is referenced by the server for determining URL rewrites. When a pattern directive matches the server will follow either a redirect or rewrite action.
 
-Rewrite action: `pattern "/some/basic/url", file "/some/other/path/file.html"`.
-Redirect action: `pattern "/old/site/url", redirect "/the/new/path"`.
+**Rewrite action:** `pattern "/some/basic/url", file "/some/other/path/file.html"`.
+
+**Redirect action:** `pattern "/old/site/url", redirect "/the/new/path"`.
 
 When following a redirect action, you can define the status code used by also adding directive `status`. Like so: `pattern "/old/site/url", redirect "/the/new/path", status 301`.
 
