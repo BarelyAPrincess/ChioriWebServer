@@ -22,6 +22,11 @@ When a request fails to find an exact matching file, it will attempt to parse th
 ```groovy
   def catchAll( action )
   {
+    if ( action.contains("/") )
+      // In some cases, actions could contain a subaction, it's your disgression to support them.
+      throw new HttpError( 404 );
+
+    // Action will be pass as typed
     switch ( action.toLowerCase() )
     {
       case "deleteall":
@@ -38,12 +43,15 @@ When a request fails to find an exact matching file, it will attempt to parse th
   }
 ```
 
-While the non-ambiguous methods are non-case sensitive, actions will pass to the catch all method as-is.
-
+While the non-ambiguous methods are non-case sensitive, actions will pass to the catch all method as-is. When the action fails, i.e., no hard coded action method nor `catchAll` method returning true, the server will throw a 404 (Not Found) error. If you're in development mode, the error will also include a short description.
 
 ### Using Route File
 
-One positive benefit of using controllers is the ability to route requests using the built-in Route File. Much like routing to a normal file, controllers work the same way.
+Controllers are also compatible using the Route File, you will only need to capture the action argument using the Route formula or by explicitly defining it.
 
-Add the following line to your Routes file in the site root.
-`pattern "/admin/projects/[action=]", file "/scripts/projects.controller.groovy", subdomain ""`
+**Explicit**
+`pattern "/admin/projects/[id=]/edit", file "/scripts/projects.controller.groovy", vargs [action:edit]`
+**Normal**
+`pattern "/admin/projects/[projId=]/user/[action=]", file "/scripts/.controller.groovy"`
+
+See [Routes](Routes) for more help with the Route File.
