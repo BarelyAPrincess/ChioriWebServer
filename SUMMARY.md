@@ -17,6 +17,6 @@
    * [API Reference](docs/scripting/api.md)
    * [Packages](docs/scripting/packages.md)
    * [Controllers](docs/scripting/controllers.md)
-* [Configuration](configuration/index.md)
+* [Configuration](docs/configuration/README.md)
    * [Routing Table](docs/configuration/routing.md)
 
