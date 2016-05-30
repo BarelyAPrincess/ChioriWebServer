@@ -8,7 +8,7 @@
    * [Database](docs/installation/database.md)
    * [Site](docs/installation/site.md)
 * [Project Development](docs/developer.md)
-   * Controllers
+   * [Controllers](docs/controllers.md)
 * [Plugins](docs/plugins/README.md)
    * [Developer Guide](docs/plugins/developer/guide.md)
        * [API Reference](docs/plugins/developer/api.md)
