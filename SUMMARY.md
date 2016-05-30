@@ -18,4 +18,5 @@
    * [API Reference](docs/scripting/api.md)
    * [Packages](docs/scripting/packages.md)
    * [Controllers](docs/scripting/controllers.md)
+* Configuration
 
