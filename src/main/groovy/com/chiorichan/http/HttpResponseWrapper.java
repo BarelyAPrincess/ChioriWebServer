@@ -47,6 +47,7 @@ import com.chiorichan.logger.experimental.LogEvent;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.session.Session;
 import com.chiorichan.session.SessionException;
+import com.chiorichan.util.ObjectFunc;
 import com.chiorichan.util.Versioning;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
@@ -570,31 +571,35 @@ public class HttpResponseWrapper
 
 			for ( HttpCookie c : session.getCookies().values() )
 				if ( c.needsUpdating() )
-					h.add( "Set-Cookie", c.toHeaderValue() );
+					h.add( HttpHeaderNames.SET_COOKIE, c.toHeaderValue() );
 
 			if ( session.getSessionCookie().needsUpdating() )
-				h.add( "Set-Cookie", session.getSessionCookie().toHeaderValue() );
+				h.add( HttpHeaderNames.SET_COOKIE, session.getSessionCookie().toHeaderValue() );
 		}
 
-		if ( h.get( "Server" ) == null )
-			h.add( "Server", Versioning.getProduct() + " Version " + Versioning.getVersion() );
+		/*
+		 * We define all header keys as lowercase to support HTTP/2 requirements while also not
+		 * violating HTTP/1.x requirements.  New header names should always be lowercase.
+		 * We apologize that there is currently no way to disable this behavior.
+		 */
+
+		h.set( HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE );
+		h.add( HttpHeaderNames.SERVER, Versioning.getProduct() + " Version " + Versioning.getVersion() );
+		h.setInt( HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes() );
 
 		// This might be a temporary measure - TODO Properly set the charset for each request.
-		h.set( "Content-Type", httpContentType + "; charset=" + encoding.name() );
+		h.set( HttpHeaderNames.CONTENT_TYPE, httpContentType + "; charset=" + encoding.name() );
 
-		h.add( "Access-Control-Allow-Origin", request.getLocation().getConfig().getString( "site.web-allowed-origin", "*" ) );
+		h.add( HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN, request.getLocation().getConfig().getString( "site.web-allowed-origin", "*" ) );
 
 		for ( Entry<String, String> header : headers.entrySet() )
-			h.add( header.getKey(), header.getValue() );
+			h.add( header.getKey().toLowerCase(), header.getValue() );
 
 		// Expires: Wed, 08 Apr 2015 02:32:24 GMT
 		// DateTimeFormatter formatter = DateTimeFormat.forPattern( "EE, dd-MMM-yyyy HH:mm:ss zz" );
 
-		// h.set( HttpHeaders.Names.EXPIRES, formatter.print( DateTime.now( DateTimeZone.UTC ).plusDays( 1 ) ) );
-		// h.set( HttpHeaders.Names.CACHE_CONTROL, "public, max-age=86400" );
-
-		h.setInt( HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes() );
-		h.set( HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE );
+		// h.set( HttpHeaderNames.EXPIRES, formatter.print( DateTime.now( DateTimeZone.UTC ).plusDays( 1 ) ) );
+		// h.set( HttpHeaderNames.CACHE_CONTROL, "public, max-age=86400" );
 
 		stage = HttpResponseStage.WRITTEN;
 
@@ -611,11 +616,15 @@ public class HttpResponseWrapper
 		this.htaccess = htaccess;
 	}
 
+	public void setContentLength( long length )
+	{
+		setHeader( "Content-Length", length );
+	}
+
 	/**
 	 * Sets the ContentType header.
 	 *
-	 * @param type
-	 *             e.g., text/html or application/xml
+	 * @param type text/html or application/xml
 	 */
 	public void setContentType( String type )
 	{
@@ -635,15 +644,15 @@ public class HttpResponseWrapper
 		this.encoding = Charset.forName( encoding );
 	}
 
-	public void setHeader( String key, String val )
+	public void setHeader( String key, Object val )
 	{
-		headers.put( key, val );
+		headers.put( key, ObjectFunc.castToStringWithException( val ) );
 	}
 
 	public void setStatus( HttpResponseStatus httpStatus )
 	{
 		if ( stage == HttpResponseStage.CLOSED )
-			throw new IllegalStateException( "You can't access setStatus method within this HttpResponse because the connection has been closed." );
+			throw new IllegalStateException( "You can't access setStatus( status ) method within this HttpResponse because the connection has been closed." );
 
 		this.httpStatus = httpStatus;
 	}

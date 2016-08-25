@@ -20,4 +20,5 @@ cache:
 branches:
   except:
     - documentation
+    - /^v[0-9]/
 
