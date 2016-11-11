@@ -1,8 +1,5 @@
 *.class
 
-# Package Files #
-*.war
-*.ear
 /bin/
 /*/bin/
 /bin.lck
@@ -37,3 +34,5 @@
 /accounts
 /libraries
 /tmp
+**/.idea/workspace.xml
+**/.idea/tasks.xml
