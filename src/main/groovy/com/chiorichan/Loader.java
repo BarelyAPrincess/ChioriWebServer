@@ -310,14 +310,14 @@ public class Loader extends AppLoader
 			case SHUTDOWN:
 			{
 				Log.get().info( "Shutting Down Session Manager..." );
-				if ( AppManager.manager( SessionManager.class ).isInitalized() )
+				if ( AppManager.manager( SessionManager.class ).isInitialized() )
 					SessionManager.instance().shutdown();
 
 				Log.get().info( "Shutting Down Network Manager..." );
 				NetworkManager.shutdown();
 
 				Log.get().info( "Shutting Down Site Manager..." );
-				if ( AppManager.manager( SiteManager.class ).isInitalized() )
+				if ( AppManager.manager( SiteManager.class ).isInitialized() )
 					SiteManager.instance().unloadSites();
 
 				break;
