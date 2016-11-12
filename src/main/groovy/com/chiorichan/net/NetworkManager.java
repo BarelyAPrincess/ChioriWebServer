@@ -8,6 +8,7 @@
  */
 package com.chiorichan.net;
 
+import com.chiorichan.Loader;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
@@ -25,6 +26,7 @@ import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 
+import joptsimple.OptionSet;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import com.chiorichan.AppConfig;
@@ -176,8 +178,15 @@ public class NetworkManager implements TaskRegistrar, LogSource
 		try
 		{
 			InetSocketAddress socket;
-			String httpIp = AppConfig.get().getString( "server.httpHost", "" );
+			String httpHost = AppConfig.get().getString( "server.httpHost", "" );
 			int httpPort = AppConfig.get().getInt( "server.httpPort", 8080 );
+
+			OptionSet options = Loader.options();
+
+			if ( options.has( "httpHost" ) )
+				httpHost = (String) options.valueOf( "httpHost" );
+			if ( options.has( "httpPort" ) )
+				httpPort = (Integer) options.valueOf( "httpPort" );
 
 			if ( httpPort > 0 )
 			{
@@ -188,14 +197,14 @@ public class NetworkManager implements TaskRegistrar, LogSource
 					getLogger().warning( "It's recommended that you either run CWS on a port like 8080 then use the firewall to redirect from 80 or run as root if you must use port: " + httpPort );
 				}
 
-				if ( httpIp.isEmpty() )
+				if ( httpHost.isEmpty() )
 					socket = new InetSocketAddress( httpPort );
 				else
-					socket = new InetSocketAddress( httpIp, httpPort );
+					socket = new InetSocketAddress( httpHost, httpPort );
 
 				// TODO Allow the server to bind to more than one IP
 
-				getLogger().info( "Starting Web Server on " + ( httpIp.isEmpty() ? "*" : httpIp ) + ":" + httpPort );
+				getLogger().info( "Starting HTTP Server on " + ( httpHost.isEmpty() ? "*" : httpHost ) + ":" + httpPort );
 
 				try
 				{
@@ -256,8 +265,15 @@ public class NetworkManager implements TaskRegistrar, LogSource
 		try
 		{
 			InetSocketAddress socket;
-			String httpIp = AppConfig.get().getString( "server.httpHost", "" );
+			String httpHost = AppConfig.get().getString( "server.httpHost", "" );
 			int httpsPort = AppConfig.get().getInt( "server.httpsPort", 8443 );
+
+			OptionSet options = Loader.options();
+
+			if ( options.has( "httpHost" ) )
+				httpHost = (String) options.valueOf( "httpHost" );
+			if ( options.has( "httpPort" ) )
+				httpsPort = (Integer) options.valueOf( "httpsPort" );
 
 			Security.addProvider( new BouncyCastleProvider() );
 
@@ -270,14 +286,14 @@ public class NetworkManager implements TaskRegistrar, LogSource
 					getLogger().warning( "It's recommended that you either run CWS (SSL) on a port like 4443 then use the firewall to redirect from 443 or run as root if you must use port: " + httpsPort );
 				}
 
-				if ( httpIp.isEmpty() )
+				if ( httpHost.isEmpty() )
 					socket = new InetSocketAddress( httpsPort );
 				else
-					socket = new InetSocketAddress( httpIp, httpsPort );
+					socket = new InetSocketAddress( httpHost, httpsPort );
 
 				AppManager.manager( SslManager.class ).init();
 
-				getLogger().info( "Starting Secure Web Server on " + ( httpIp.isEmpty() ? "*" : httpIp ) + ":" + httpsPort );
+				getLogger().info( "Starting Secure Web Server on " + ( httpHost.isEmpty() ? "*" : httpHost ) + ":" + httpsPort );
 
 				try
 				{
@@ -336,6 +352,13 @@ public class NetworkManager implements TaskRegistrar, LogSource
 			InetSocketAddress socket;
 			String queryHost = AppConfig.get().getString( "server.queryHost", "" );
 			int queryPort = AppConfig.get().getInt( "server.queryPort", 8992 );
+
+			OptionSet options = Loader.options();
+
+			if ( options.has( "queryHost" ) )
+				queryHost = (String) options.valueOf( "queryHost" );
+			if ( options.has( "queryPort" ) )
+				queryPort = (Integer) options.valueOf( "queryPort" );
 
 			if ( queryPort >= 1 && AppConfig.get().getBoolean( "server.queryEnabled" ) )
 			{

@@ -66,14 +66,18 @@ public class Loader extends AppLoader
 	public static void populateOptionParser( OptionParser parser )
 	{
 		parser.acceptsAll( Arrays.asList( "nobanner" ), "Disables the banner" );
-		parser.acceptsAll( Arrays.asList( "web-ip" ), "Host for Web to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
-		parser.acceptsAll( Arrays.asList( "web-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
-		parser.acceptsAll( Arrays.asList( "tcp-ip" ), "Host for Web to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
-		parser.acceptsAll( Arrays.asList( "tcp-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
+		parser.acceptsAll( Arrays.asList( "httpHost" ), "Listening hostname or IP for the HTTP server" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
+		parser.acceptsAll( Arrays.asList( "httpPort" ), "Listening port for the HTTP server" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
+		parser.acceptsAll( Arrays.asList( "httpsPort" ), "Listening port for the HTTPS server" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
+		parser.acceptsAll( Arrays.asList( "tcpHost" ), "Listening hostname or IP for the TCP server" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
+		parser.acceptsAll( Arrays.asList( "tcpPort" ), "Listening port for the TCP server" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
+	 	parser.acceptsAll( Arrays.asList( "queryHost" ), "Listening hostname or IP for the QUERY server" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
+		parser.acceptsAll( Arrays.asList( "queryPort" ), "Listening port for the QUERY server" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
 		parser.acceptsAll( Arrays.asList( "install" ), "Creates the required configuration files and directories, then terminates the application." );
-		parser.acceptsAll( Arrays.asList( "web-disable" ), "Disable the internal Web Server" );
-		parser.acceptsAll( Arrays.asList( "tcp-disable" ), "Disable the internal TCP Server" );
-		parser.acceptsAll( Arrays.asList( "webroot-dir" ), "Specify webroot directory" ).withRequiredArg().ofType( String.class );
+		parser.acceptsAll( Arrays.asList( "httpDisable" ), "Disable the HTTP Server" );
+		parser.acceptsAll( Arrays.asList( "tcpDisable" ), "Disable the TCP Server" );
+		parser.acceptsAll( Arrays.asList( "queryDisable" ), "Disable the QUERY Server" );
+		parser.acceptsAll( Arrays.asList( "webroot" ), "Specify webroot directory" ).withRequiredArg().ofType( String.class );
 	}
 
 	private String clientId = "0";
@@ -371,20 +375,20 @@ public class Loader extends AppLoader
 			}
 			case STARTUP:
 			{
-				if ( !options().has( "tcp-disable" ) && AppConfig.get().getBoolean( "server.enableTcpServer", true ) )
+				if ( !options().has( "tcpDisable" ) && AppConfig.get().getBoolean( "server.enableTcpServer", true ) )
 					NetworkManager.startTcpServer();
 				else
-					Log.get().warning( "The integrated tcp server has been disabled per the configuration. Change server.enableTcpServer to true to reenable it." );
+					Log.get().warning( "The TCP server has been disabled per configuration. Change server.enableTcpServer to true to reenable it." );
 
-				if ( !options().has( "web-disable" ) && AppConfig.get().getBoolean( "server.enableWebServer", true ) )
+				if ( !options().has( "httpDisable" ) && AppConfig.get().getBoolean( "server.enableWebServer", true ) )
 				{
 					NetworkManager.startHttpServer();
 					NetworkManager.startHttpsServer();
 				}
 				else
-					Log.get().warning( "The integrated web server has been disabled per the configuration. Change server.enableWebServer to true to reenable it." );
+					Log.get().warning( "The HTTP server has been disabled per configuration. Change server.enableWebServer to true to reenable it." );
 
-				if ( !options().has( "query-disable" ) && AppConfig.get().getBoolean( "server.queryEnabled", true ) )
+				if ( !options().has( "queryDisable" ) && AppConfig.get().getBoolean( "server.queryEnabled", false ) )
 					NetworkManager.startQueryServer();
 
 				break;
