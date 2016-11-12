@@ -143,7 +143,7 @@ public class Certificate
 
 		File sslCertFileTemp = new File( parentDir, "fullchain.pem" );
 
-		Log.get().debug( "Old MD5 " + md5() + " and New MD5 " + SecureFunc.md5( sslCertFileTemp ) );
+		// Log.get().debug( "Old MD5 " + md5() + " and New MD5 " + SecureFunc.md5( sslCertFileTemp ) );
 
 		// According to the Acme Protocol, it is plausible for the CA to not response with a renewed certificate. For now, we compare the old and new certificate MD5 then revoke and reissue to force a renewal.
 		if ( md5().equals( SecureFunc.md5( sslCertFileTemp ) ) )

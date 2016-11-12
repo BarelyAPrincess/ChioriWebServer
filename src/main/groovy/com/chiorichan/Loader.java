@@ -70,7 +70,7 @@ public class Loader extends AppLoader
 		parser.acceptsAll( Arrays.asList( "web-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
 		parser.acceptsAll( Arrays.asList( "tcp-ip" ), "Host for Web to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
 		parser.acceptsAll( Arrays.asList( "tcp-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
-		parser.acceptsAll( Arrays.asList( "install" ), "Runs the server just long enough to create the required configuration files, then terminates." );
+		parser.acceptsAll( Arrays.asList( "install" ), "Creates the required configuration files and directories, then terminates the application." );
 		parser.acceptsAll( Arrays.asList( "web-disable" ), "Disable the internal Web Server" );
 		parser.acceptsAll( Arrays.asList( "tcp-disable" ), "Disable the internal TCP Server" );
 		parser.acceptsAll( Arrays.asList( "webroot-dir" ), "Specify webroot directory" ).withRequiredArg().ofType( String.class );
