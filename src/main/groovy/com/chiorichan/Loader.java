@@ -59,7 +59,7 @@ public class Loader extends AppLoader
 
 	public static void main( String... args )
 	{
-		parseArguments( args );
+		parseArguments( Loader.class, args );
 		init( Loader.class );
 	}
 
