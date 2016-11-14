@@ -2,7 +2,7 @@
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- *
+ * <p>
  * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
@@ -65,8 +65,7 @@ public abstract class Builtin extends Script
 	 * Provides an easy array collections method. Not sure if this is counterintuitive since technically Groovy provides an easier array of [], so what, i.e., def val = array( "obj1", "ovj2", "obj3" ); Comparable to PHP's array function,
 	 * http://www.w3schools.com/php/func_array.asp
 	 *
-	 * @param vals
-	 *             Elements of the array separated as an argument
+	 * @param vals Elements of the array separated as an argument
 	 * @return The array of elements
 	 */
 	@SuppressWarnings( "unchecked" )
@@ -380,8 +379,7 @@ public abstract class Builtin extends Script
 	/**
 	 * Default format is M/d/yyyy
 	 *
-	 * @param date
-	 *             you wish to convert
+	 * @param date you wish to convert
 	 * @return Long containing the epoch of provided date
 	 */
 	public static Long dateToEpoch( String date )
@@ -414,8 +412,7 @@ public abstract class Builtin extends Script
 	/**
 	 * Forcibly kills script exception by throwing a DiedException
 	 *
-	 * @param msg
-	 *             The message to return
+	 * @param msg The message to return
 	 * @throws DiedException
 	 */
 	public static void die( String msg ) throws DiedException
@@ -520,12 +517,9 @@ public abstract class Builtin extends Script
 	/**
 	 * Filters a map for the specified list of keys, removing keys that are not contained in the list. Groovy example: def filteredMap = getHttpUtils().filter( unfilteredMap, ["keyA", "keyB", "someKey"], false );
 	 *
-	 * @param data
-	 *             The map that needs checking
-	 * @param allowedKeys
-	 *             A list of keys allowed
-	 * @param caseSensitive
-	 *             Will the key match be case sensitive or not
+	 * @param data          The map that needs checking
+	 * @param allowedKeys   A list of keys allowed
+	 * @param caseSensitive Will the key match be case sensitive or not
 	 * @return The resulting map of filtered data
 	 */
 	public static Map<String, Object> filter( Map<String, Object> data, Collection<String> allowedKeys, boolean caseSensitive )
@@ -591,8 +585,7 @@ public abstract class Builtin extends Script
 	 * Returns an instance of the server database
 	 *
 	 * @return The server database engine
-	 * @throws IllegalStateException
-	 *              thrown if the requested database is unconfigured
+	 * @throws IllegalStateException thrown if the requested database is unconfigured
 	 */
 	public static DatabaseEngineLegacy getServerDatabase()
 	{
@@ -670,8 +663,7 @@ public abstract class Builtin extends Script
 	/**
 	 * Determines if the color hex is darker then 50%
 	 *
-	 * @param hexdec
-	 *             A hexdec color, e.g., #fff, #f3f3f3
+	 * @param hexdec A hexdec color, e.g., #fff, #f3f3f3
 	 * @return True if color is darker then 50%
 	 */
 	public static boolean isDarkColor( String hexdec )
@@ -822,6 +814,9 @@ public abstract class Builtin extends Script
 	public static String var_export( Object... objs )
 	{
 		StringBuilder sb = new StringBuilder();
+
+		if ( objs == null )
+			return "null";
 
 		for ( Object obj : objs )
 			if ( obj != null )

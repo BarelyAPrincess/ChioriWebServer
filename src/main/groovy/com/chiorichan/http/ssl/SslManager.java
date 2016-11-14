@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.IDN;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateExpiredException;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Locale;
@@ -144,6 +145,11 @@ public class SslManager implements ServiceManager, Mapping<String, SslContext>
 				try
 				{
 					updateDefaultCertificateWithException( sslCert, sslKey, sslSecret, true );
+				}
+				catch ( CertificateExpiredException e )
+				{
+					getLogger().severe( "The SSL Certificate specified in server configuration was expired. (" + e.getMessage() + ") Loading a self signed certificate." );
+					selfSignCertificate();
 				}
 				catch ( FileNotFoundException e )
 				{
