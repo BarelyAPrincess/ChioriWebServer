@@ -130,12 +130,15 @@ public class EmbeddedGroovyEngine implements ScriptingEngine
 		try
 		{
 			Script script = GroovyRegistry.getCachedScript( context, binding );
+
 			if ( script == null )
 			{
 				GroovyShell shell = registry.getNewShell( context, binding );
 				script = registry.makeScript( shell, output.toString(), context );
 			}
-			context.result().object( script.run() );
+
+			context.result().setScript( script );
+			context.result().setObject( script.run() );
 		}
 		catch ( Throwable t )
 		{

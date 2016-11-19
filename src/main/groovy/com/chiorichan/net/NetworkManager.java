@@ -2,7 +2,7 @@
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- *
+ * <p>
  * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
@@ -184,9 +184,9 @@ public class NetworkManager implements TaskRegistrar, LogSource
 			OptionSet options = Loader.options();
 
 			if ( options.has( "httpHost" ) )
-				httpHost = (String) options.valueOf( "httpHost" );
+				httpHost = ( String ) options.valueOf( "httpHost" );
 			if ( options.has( "httpPort" ) )
-				httpPort = (Integer) options.valueOf( "httpPort" );
+				httpPort = ( Integer ) options.valueOf( "httpPort" );
 
 			if ( httpPort > 0 )
 			{
@@ -271,9 +271,9 @@ public class NetworkManager implements TaskRegistrar, LogSource
 			OptionSet options = Loader.options();
 
 			if ( options.has( "httpHost" ) )
-				httpHost = (String) options.valueOf( "httpHost" );
+				httpHost = ( String ) options.valueOf( "httpHost" );
 			if ( options.has( "httpPort" ) )
-				httpsPort = (Integer) options.valueOf( "httpsPort" );
+				httpsPort = ( Integer ) options.valueOf( "httpsPort" );
 
 			Security.addProvider( new BouncyCastleProvider() );
 
@@ -356,9 +356,9 @@ public class NetworkManager implements TaskRegistrar, LogSource
 			OptionSet options = Loader.options();
 
 			if ( options.has( "queryHost" ) )
-				queryHost = (String) options.valueOf( "queryHost" );
+				queryHost = ( String ) options.valueOf( "queryHost" );
 			if ( options.has( "queryPort" ) )
-				queryPort = (Integer) options.valueOf( "queryPort" );
+				queryPort = ( Integer ) options.valueOf( "queryPort" );
 
 			if ( queryPort >= 1 && AppConfig.get().getBoolean( "server.queryEnabled" ) )
 			{

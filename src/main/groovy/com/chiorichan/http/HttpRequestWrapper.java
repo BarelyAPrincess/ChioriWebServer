@@ -1122,7 +1122,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 					msg = result.getCause().getMessage();
 				}
 
-				AccountManager.getLogger().warning( EnumColor.RED + "Failed Login [id='" + username + "',hasPassword='" + ( password != null && password.length() > 0 ) + "',authenticator='plaintext'`,reason='" + msg + "']" );
+				AccountManager.getLogger().warning( EnumColor.RED + "Failed Login [id='" + username + "',hasPassword='" + ( password != null && password.length() > 0 ) + "',authenticator='plaintext',reason='" + msg + "']" );
 				getResponse().sendLoginPage( result.getMessage(), null, target );
 			}
 			catch ( Throwable t )
