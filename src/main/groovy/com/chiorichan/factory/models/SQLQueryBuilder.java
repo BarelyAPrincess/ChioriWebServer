@@ -18,7 +18,7 @@ import java.util.Set;
 /**
  * Provides a SQL model builder
  */
-public abstract class SQLQueryBuilder extends ScriptingBaseGroovy
+public class SQLQueryBuilder extends ScriptingBaseGroovy
 {
 	private SQLBase sql;
 	private SQLQueryBuilder builder = null;
@@ -46,7 +46,7 @@ public abstract class SQLQueryBuilder extends ScriptingBaseGroovy
 		 */
 		try
 		{
-			sql = getSql().table( getTable() );
+			sql = getSql().select( getTable() );
 		}
 		catch ( SQLException e )
 		{
@@ -64,6 +64,16 @@ public abstract class SQLQueryBuilder extends ScriptingBaseGroovy
 		return simpleName;
 	}
 
+	public List<String> getPrintedTableColumns()
+	{
+		return null;
+	}
+
+	public String getColumnFriendlyName( String rawColumnName )
+	{
+		return rawColumnName;
+	}
+
 	public String getPrimaryKey() throws SQLException
 	{
 		return getSql().table( getTable() ).primaryKey();
@@ -76,11 +86,7 @@ public abstract class SQLQueryBuilder extends ScriptingBaseGroovy
 
 	public List<SQLModel> all() throws SQLException
 	{
-		return new ArrayList<SQLModel>()
-		{{
-			for ( Map<String, Object> row : ( Set<Map<String, Object>> ) getSql().table( getTable() ).set() )
-				add( new SQLModel( SQLQueryBuilder.this, row ) );
-		}};
+		return new SQLModelResults( this, getSql().select( getTable() ) );
 	}
 
 	public SQLQueryBuilder where( String column, String value ) throws SQLException
@@ -232,5 +238,20 @@ public abstract class SQLQueryBuilder extends ScriptingBaseGroovy
 
 			// TODO Implement additional overridable methods that pull from the parent
 		};
+	}
+
+	/**
+	 * This is normally overridden.
+	 * We just have it here so we don't have to declare abstract.
+	 */
+	@Override
+	public Object run()
+	{
+		return null;
+	}
+
+	public List<String> getColumns() throws SQLException
+	{
+		return getSql().table( getTable() ).columnNames();
 	}
 }
