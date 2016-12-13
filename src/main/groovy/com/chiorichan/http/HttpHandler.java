@@ -11,6 +11,7 @@ package com.chiorichan.http;
 import static io.netty.handler.codec.http.HttpResponseStatus.CONTINUE;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
+import com.chiorichan.logger.Log;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -563,8 +564,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		 * REQUIRED means a forbidden error will be thrown is it can not be accomplished
 		 *
 		 * Options include:
-		 * Preferred: If SSL is available, we preferred to be switched to it
-		 * PostOnly: SSL is REQUIRED is this is a POST request
+		 * Preferred: If SSL is available, we prefer to use it
+		 * PostOnly: SSL is REQUIRED if this is a POST request
 		 * GetOnly: SSL is REQUIRED if this is a GET request
 		 * Required: SSL is REQUIRED, no exceptions!
 		 * Deny: SSL is DENIED, no exceptions!
@@ -672,9 +673,13 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		request.setGlobal( "_REWRITE", request.getRewriteMap() );
 		request.setGlobal( "_FILES", request.getUploadedFiles() );
 
-		// TODO Implement NONCE requirement for login page
+		/**
+		 * Nonce is separately verified by the login form.
+		 * So regardless what the nonce level is, nonce will have to be initialized by the login form.
+		 */
+
 		NonceLevel level = NonceLevel.parse( fi.get( "nonce" ) );
-		boolean nonceProvided = sess.nonce() == null ? false : request.getRequestMap().get( sess.nonce().key() ) != null;
+		boolean nonceProvided = sess.nonce() == null ? false : request.getRequestMap().containsKey( sess.nonce().key() );
 		boolean processNonce = false;
 
 		switch ( level )
@@ -700,14 +705,14 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 
 		if ( processNonce )
 		{
+			Nonce nonce = sess.nonce();
+
 			if ( !nonceProvided )
 			{
-				log.log( Level.SEVERE, "The request has failed NONCE validation, because the nonce key was not present!" );
-				response.sendError( HttpResponseStatus.FORBIDDEN, "Your request has failed NONCE validation!" );
+				log.log( Level.SEVERE, String.format( "Request failed NONCE validation, key is missing and/or nonce was not initialized. Key [%s]", nonce == null ? "null" : nonce.key() ) );
+				response.sendError( HttpResponseStatus.FORBIDDEN, "Request Failed NONCE Validation", "Key is missing and/or nonce was not initialized." );
 				return;
 			}
-
-			Nonce nonce = sess.nonce();
 
 			if ( level == NonceLevel.Required )
 				// Required nonce levels are of the highest protected state
@@ -721,14 +726,14 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			}
 			catch ( NonceException e )
 			{
-				log.log( Level.SEVERE, "The request has failed NONCE validation, because " + e.getMessage().toLowerCase() + "!" );
-				response.sendError( HttpResponseStatus.FORBIDDEN, "Your request has failed NONCE validation!" );
+				log.log( Level.SEVERE, "Request failed NONCE validation. \"" + e.getMessage() + "\"" );
+				response.sendError( HttpResponseStatus.FORBIDDEN, "Request Failed NONCE Validation", e.getMessage() );
 				sess.destroyNonce();
 				return;
 			}
 			finally
 			{
-				log.log( Level.INFO, "The request has passed the NONCE validation!" );
+				log.log( Level.INFO, "Request PASSED NONCE validation." );
 				request.nonceProcessed( true );
 				nonceMap = nonce.mapValues();
 			}
@@ -943,7 +948,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			else if ( threadName.length() < 10 )
 				threadName = threadName + Strings.repeat( " ", 10 - threadName.length() );
 
-			log.header( "&7[&d%s&7] %s %s [&9%s:%s&7] -> [&a%s:%s&7]", threadName, dateFormat.format( Timings.millis() ), timeFormat.format( Timings.millis() ), request.getIpAddr(), request.getRemotePort(), request.getLocalIpAddr(), request.getLocalPort() );
+			log.header( "&7[&d%s&7] %s %s &9[%s]:%s&7 -> &a[%s]:%s&7", threadName, dateFormat.format( Timings.millis() ), timeFormat.format( Timings.millis() ), request.getIpAddr(), request.getRemotePort(), request.getLocalIpAddr(), request.getLocalPort() );
 
 			if ( HttpHeaderUtil.is100ContinueExpected( ( HttpRequest ) msg ) )
 				send100Continue( ctx );

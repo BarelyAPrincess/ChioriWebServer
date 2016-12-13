@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.chiorichan.plugin.acme.lang.AcmeDisabledDomainException;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.configuration.ConfigurationSection;
@@ -56,6 +57,10 @@ public class AcmeChallenge
 
 			YamlConfiguration config = AcmePlugin.instance().getSubConfig();
 			String fullDomain = subdomain == null ? domain : subdomain + "." + domain;
+
+			for ( String regex : AcmePlugin.instance().getDisabledDomains() )
+				if ( fullDomain.matches( regex ) )
+					throw new AcmeDisabledDomainException( String.format( "Domain [%s] is disabled per configuration regex [%s]", fullDomain, regex ) );
 
 			if ( !challenges.containsKey( fullDomain ) || force )
 			{

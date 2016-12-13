@@ -1,5 +1,7 @@
 package com.chiorichan.plugin.acme;
 
+import com.chiorichan.logger.Log;
+import com.chiorichan.plugin.acme.lang.AcmeDisabledDomainException;
 import io.netty.handler.ssl.SslContext;
 
 import java.util.Map.Entry;
@@ -51,10 +53,18 @@ public class AcmeEventListener implements Listener
 			{
 				client.checkDomainVerification( event.getDomain(), event.getSiteDomain().getSubdomain(), true );
 			}
+			catch ( AcmeDisabledDomainException e )
+			{
+				getLogger().warning( e.getMessage() );
+			}
 			catch ( AcmeException e )
 			{
 				e.printStackTrace();
 			}
+		if ( event.getType() == SiteDomainChangeEventType.REMOVE )
+		{
+			AcmePlugin.instance().getSubConfig().set( "domains." + ( event.getSiteDomain().getSubdomain() + "_" + event.getDomain() ).replace( '.', '_' ), null );
+		}
 	}
 
 	@EventHandler( priority = EventPriority.NORMAL )
@@ -66,9 +76,18 @@ public class AcmeEventListener implements Listener
 				for ( String s : e.getValue() )
 					client.checkDomainVerification( e.getKey(), s, true );
 			}
+			catch ( AcmeDisabledDomainException e1 )
+			{
+				getLogger().warning( e1.getMessage() );
+			}
 			catch ( AcmeException e1 )
 			{
 				e1.printStackTrace();
 			}
+	}
+
+	public Log getLogger()
+	{
+		return AcmePlugin.instance().getLogger();
 	}
 }

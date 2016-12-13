@@ -112,7 +112,7 @@ public class WebInterpreter extends FileInterpreter
 				else if ( AppConfig.get().getBoolean( "server.allowDirectoryListing" ) )
 					isDirectoryRequest = true;
 				else
-					throw new HttpError( 403, "Directory Listing is Disallowed on this Server!" );
+					throw new HttpError( 403, "Directory Listing is Disallowed" );
 			}
 
 			if ( !dest.exists() )

@@ -2,12 +2,14 @@
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- *
+ * <p>
  * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.http;
 
+import com.chiorichan.factory.api.Builtin;
+import com.chiorichan.factory.api.Server;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
@@ -31,7 +33,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 
@@ -128,7 +130,6 @@ public class HttpResponseWrapper
 	}
 
 	/**
-	 *
 	 * @return HttpResponseStage
 	 */
 	public HttpResponseStage getStage()
@@ -150,10 +151,8 @@ public class HttpResponseWrapper
 	/**
 	 * Prints a single string of text to the buffered output
 	 *
-	 * @param var
-	 *             string of text.
-	 * @throws IOException
-	 *              if there was a problem with the output buffer.
+	 * @param var string of text.
+	 * @throws IOException if there was a problem with the output buffer.
 	 */
 	public void print( String var ) throws IOException
 	{
@@ -164,10 +163,8 @@ public class HttpResponseWrapper
 	/**
 	 * Prints a single string of text with a line return to the buffered output
 	 *
-	 * @param var
-	 *             string of text.
-	 * @throws IOException
-	 *              if there was a problem with the output buffer.
+	 * @param var string of text.
+	 * @throws IOException if there was a problem with the output buffer.
 	 */
 	public void println( String var ) throws IOException
 	{
@@ -209,7 +206,7 @@ public class HttpResponseWrapper
 		// NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + status.code() + ",httpMsg=" + httpMsg + ",subdomain=" + request.getSubDomain() + ",domain=" + request.getDomain() + ",uri=" + request.getUri() +
 		// ",remoteIp=" + request.getIpAddr() + "}" );
 
-		if ( msg == null || msg.length() > 100 )
+		if ( msg == null || msg.length() > 255 )
 			log.log( Level.SEVERE, "%s {code=%s}", httpMsg, status.code() );
 		else
 			log.log( Level.SEVERE, "%s {code=%s,reason=%s}", httpMsg, status.code(), msg );
@@ -220,14 +217,7 @@ public class HttpResponseWrapper
 		ErrorEvent event = new ErrorEvent( request, status.code(), httpMsg );
 		EventBus.instance().callEvent( event );
 
-		// TODO Make these error pages a bit more creative and/or informational to developers.
-
-		if ( event.getErrorHtml() != null && !event.getErrorHtml().isEmpty() )
-		{
-			print( event.getErrorHtml() );
-			sendResponse();
-		}
-		else
+		if ( event.getErrorHtml() == null || event.getErrorHtml().length() == 0 )
 		{
 			boolean printHtml = true;
 
@@ -251,19 +241,105 @@ public class HttpResponseWrapper
 
 			if ( printHtml )
 			{
-				println( "<html><head><title>" + status.code() + " - " + httpMsg + "</title></head><body>" );
+				println( "<html><head>" );
+				println( "<title>" + status.code() + " - " + httpMsg + "</title>" );
+				println( "<style>body { margin: 0; padding: 0; } h1, h2, h3, h4, h5, h6 { margin: 0; } .container { padding: 8px; } .debug-header { display: block; margin: 15px 0 0; font-size: 18px; color: #303030; font-weight: bold; } #debug-table { border: 1px solid; width: 100%; } #debug-table thead { background-color: #eee; } #debug-table #col_0 { width: 20%; min-width: 130px; overflow: hidden; font-weight: bold; color: #463C54; padding-right: 5px; } #debug-table #tblStringRow { color: rgba(0, 0, 0, .3); font-weight: 300; }</style>" );
+				println( "</head><body>" );
+
+				println( "<div class=\"container\" style=\" background-color: #eee; \">" );
 				println( "<h1>" + status.code() + " - " + httpMsg + "</h1>" );
+				println( "</div>" );
+				println( "<div class=\"container\">" );
 
 				if ( msg != null && !msg.isEmpty() )
 					println( "<p>" + msg + "</p>" );
 
+				if ( Versioning.isDevelopment() )
+				{
+					println( "<h3>Debug &amp; Environment Details:</h3>" );
+
+					println( "<span class=\"debug-header\">GET Data</span>" );
+					printMap( request.getGetMap() );
+
+					println( "<span class=\"debug-header\">POST Data</span>" );
+					printMap( request.getPostMap() );
+
+					println( "<span class=\"debug-header\">Files</span>" );
+					Collection<UploadedFile> files = request.getUploadedFiles().values();
+					ArrayList<Object> tbl = new ArrayList<Object>()
+					{{
+						if ( files == null || files.size() == 0 )
+							add( "empty" );
+						else
+							for ( UploadedFile file : files )
+								add( new ArrayList<Object>()
+								{{
+									add( file.getOrigFileName() );
+									add( file.getFileSize() );
+									add( file.getMimeType() );
+									add( file.getMD5() );
+								}} );
+					}};
+					List<String> cols = new ArrayList<String>()
+					{{
+						add( "Filename" );
+						add( "Mime Type" );
+						add( "File Size" );
+						add( "MD5 Hash" );
+					}};
+					println( Builtin.createTable( tbl, cols, "debug-table" ) );
+
+					println( "<span class=\"debug-header\">Cookies</span>" );
+					printMap( new HashMap<String, Object>()
+					{{
+						for ( HttpCookie cookie : request.getCookies() )
+							put( cookie.getKey(), cookie.getValue() );
+						for ( HttpCookie cookie : request.getServerCookies() )
+							put( cookie.getKey() + " <span style=\"color: #eee; font-weight: 300;\">(protected)</span>", cookie.getValue() );
+					}} );
+
+					if ( request.hasSession() )
+					{
+						println( "<span class=\"debug-header\">Session</span>" );
+						printMap( request.getSession().getDataMap() );
+					}
+
+					println( "<span class=\"debug-header\">Server/Header Data</span>" );
+					printMap( request.getServer().asMap() );
+
+					// TODO Environment Variables
+				}
+
 				println( "<hr>" );
 				println( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")<br />" + Versioning.getCopyright() + "</small>" );
+				println( "</div>" );
 				println( "</body></html>" );
 
 				sendResponse();
 			}
 		}
+		else
+		{
+			print( event.getErrorHtml() );
+			sendResponse();
+		}
+	}
+
+	private void printMap( Map<String, ?> map ) throws IOException
+	{
+		ArrayList<Object> tbl = new ArrayList<Object>()
+		{{
+			if ( map == null || map.size() == 0 )
+				add( "empty" );
+			else
+				for ( Entry<String, ?> e : map.entrySet() )
+					add( new ArrayList<Object>()
+					{{
+						add( "<b>" + e.getKey() + "</b>" );
+						add( e.getValue() );
+					}} );
+		}};
+		println( Builtin.createTable( tbl, "debug-table" ) );
 	}
 
 	public void sendError( int httpCode ) throws IOException
@@ -349,8 +425,7 @@ public class HttpResponseWrapper
 	/**
 	 * Sends the client to the site login page
 	 *
-	 * @param msg
-	 *             The message to pass to the login page
+	 * @param msg The message to pass to the login page
 	 */
 	public void sendLoginPage( String msg )
 	{
@@ -360,10 +435,8 @@ public class HttpResponseWrapper
 	/**
 	 * Sends the client to the site login page
 	 *
-	 * @param msg
-	 *             The message to pass to the login page
-	 * @param level
-	 *             The severity level of this login page redirect
+	 * @param msg   The message to pass to the login page
+	 * @param level The severity level of this login page redirect
 	 */
 	public void sendLoginPage( String msg, String level )
 	{
@@ -373,12 +446,9 @@ public class HttpResponseWrapper
 	/**
 	 * Sends the client to the site login page
 	 *
-	 * @param msg
-	 *             The message to pass to the login page
-	 * @param level
-	 *             The severity level of this login page redirect
-	 * @param target
-	 *             The target to redirect to once we receive a successful login
+	 * @param msg    The message to pass to the login page
+	 * @param level  The severity level of this login page redirect
+	 * @param target The target to redirect to once we receive a successful login
 	 */
 	public void sendLoginPage( String msg, String level, String target )
 	{
@@ -474,8 +544,7 @@ public class HttpResponseWrapper
 	/**
 	 * Send the client to a specified page with http code 302 automatically.
 	 *
-	 * @param target
-	 *             The destination URL. Can either be relative or absolute.
+	 * @param target The destination URL. Can either be relative or absolute.
 	 */
 	public void sendRedirect( String target )
 	{
@@ -485,10 +554,8 @@ public class HttpResponseWrapper
 	/**
 	 * Sends the client to a specified page with specified http code but with the option to not automatically go.
 	 *
-	 * @param target
-	 *             The destination url. Can be relative or absolute.
-	 * @param httpStatus
-	 *             What http code to use.
+	 * @param target     The destination url. Can be relative or absolute.
+	 * @param httpStatus What http code to use.
 	 */
 	public void sendRedirect( String target, int httpStatus )
 	{
@@ -547,8 +614,7 @@ public class HttpResponseWrapper
 	/**
 	 * Sends the data to the client. Internal Use.
 	 *
-	 * @throws IOException
-	 *              if there was a problem sending the data, like the connection was unexpectedly closed.
+	 * @throws IOException if there was a problem sending the data, like the connection was unexpectedly closed.
 	 */
 	public void sendResponse() throws IOException
 	{
@@ -614,8 +680,7 @@ public class HttpResponseWrapper
 	/**
 	 * Sets the ContentType header.
 	 *
-	 * @param type
-	 *             e.g., text/html or application/xml
+	 * @param type e.g., text/html or application/xml
 	 */
 	public void setContentType( String type )
 	{
@@ -692,10 +757,8 @@ public class HttpResponseWrapper
 	/**
 	 * Writes a byte array to the buffered output.
 	 *
-	 * @param bytes
-	 *             byte array to print
-	 * @throws IOException
-	 *              if there was a problem with the output buffer.
+	 * @param bytes byte array to print
+	 * @throws IOException if there was a problem with the output buffer.
 	 */
 	public void write( byte[] bytes ) throws IOException
 	{
@@ -708,10 +771,8 @@ public class HttpResponseWrapper
 	/**
 	 * Writes a ByteBuf to the buffered output
 	 *
-	 * @param buf
-	 *             byte buffer to print
-	 * @throws IOException
-	 *              if there was a problem with the output buffer.
+	 * @param buf byte buffer to print
+	 * @throws IOException if there was a problem with the output buffer.
 	 */
 	public void write( ByteBuf buf ) throws IOException
 	{

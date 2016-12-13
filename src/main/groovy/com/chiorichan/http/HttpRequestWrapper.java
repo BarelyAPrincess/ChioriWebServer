@@ -68,11 +68,6 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 {
 	private static final Map<Thread, WeakReference<HttpRequestWrapper>> references = Maps.newConcurrentMap();
 
-	/**
-	 * Return maps as unmodifiable
-	 */
-	private static boolean unmodifiableMaps = AppConfig.get().getBoolean( "advanced.security.unmodifiableMapsEnabled", true );
-
 	public static HttpRequestWrapper getRequest()
 	{
 		if ( !references.containsKey( Thread.currentThread() ) || references.get( Thread.currentThread() ).get() == null )
@@ -404,6 +399,11 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		return Collections.unmodifiableSet( cookies );
 	}
 
+	public Set<HttpCookie> getServerCookies()
+	{
+		return Collections.unmodifiableSet( serverCookies );
+	}
+
 	public String getDomain()
 	{
 		return parentDomain == null ? "" : parentDomain;
@@ -456,9 +456,6 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 	public Map<String, String> getGetMapRaw()
 	{
-		if ( unmodifiableMaps )
-			return Collections.unmodifiableMap( getMap );
-
 		return getMap;
 	}
 
@@ -601,9 +598,6 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 	public Map<String, String> getPostMapRaw()
 	{
-		if ( unmodifiableMaps )
-			return Collections.unmodifiableMap( postMap );
-
 		return postMap;
 	}
 
@@ -636,7 +630,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 	public Map<String, String> getRequestMapRaw() throws Exception
 	{
-		Map<String, String> requestMap = new HashMap<String, String>();
+		Map<String, String> requestMap = new TreeMap<>();
 
 		if ( getMap != null )
 			mergeMaps( requestMap, getMap );
@@ -647,26 +641,21 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		if ( rewriteMap != null )
 			mergeMaps( requestMap, rewriteMap );
 
-		if ( unmodifiableMaps )
-			return Collections.unmodifiableMap( requestMap );
-
 		return requestMap;
 	}
 
-	public <T extends Map<String, ?>> TreeMap<String, Object> mergeMaps( T... maps ) throws Exception
+	public <T extends Object> void mergeMaps( Map<String, T> desc, Map<String, T>... maps ) throws Exception
 	{
 		if ( maps == null || maps.length == 0 )
-			return null;
-
-		TreeMap<String, Object> desc = new TreeMap<String, Object>();
+			return;
 
 		// It's important to note that each of these maps will overwrite the current map. If it's rewriteMap contains a key that exists in getMap, the ladder will be overwritten.
 
-		for ( T map : maps )
+		for ( Map<String, T> map : maps )
 		{
 			boolean hadConflicts = false;
 
-			for ( Entry<String, ?> entry : map.entrySet() )
+			for ( Entry<String, T> entry : map.entrySet() )
 			{
 				if ( desc.containsKey( entry.getKey() ) )
 					hadConflicts = true;
@@ -680,8 +669,6 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 				log.exceptions( e );
 			}
 		}
-
-		return desc;
 	}
 
 	public int getRequestTime()
@@ -696,9 +683,6 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 	public Map<String, String> getRewriteMap()
 	{
-		if ( unmodifiableMaps )
-			return Collections.unmodifiableMap( rewriteMap );
-
 		return rewriteMap;
 	}
 
@@ -837,16 +821,23 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		if ( getAuth() != null )
 		{
 			// Implement authorization as an optional builtin manageable feature, e.g., .htdigest.
-			vars.put( ServerVars.AUTH_DIGEST, getAuth().getDigest() );
-			vars.put( ServerVars.AUTH_USER, getAuth().getUsername() );
-			vars.put( ServerVars.AUTH_PW, getAuth().getPassword() );
+
+			if ( auth.isDigest() )
+				vars.put( ServerVars.AUTH_DIGEST, getAuth().getDigest() );
+
+			if ( auth.isBasic() )
+			{
+				vars.put( ServerVars.AUTH_USER, getAuth().getUsername() );
+				vars.put( ServerVars.AUTH_PW, getAuth().getPassword() );
+			}
+
 			vars.put( ServerVars.AUTH_TYPE, getAuth().getType() );
 		}
 	}
 
 	/**
 	 * Tries to check the "X-requested-with" header.
-	 * Not a guaranteed method to determined if a request was made with AJAX since this header is not always set.
+	 * Not a guaranteed method to determine if a request was made with AJAX since this header is not always set.
 	 *
 	 * @return Was the request made with AJAX
 	 */
@@ -928,7 +919,8 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 				}
 				else if ( o instanceof Map )
 				{
-					@SuppressWarnings( "unchecked" ) Map<String, String> map = ( Map<String, String> ) o;
+					@SuppressWarnings( "unchecked" )
+					Map<String, String> map = ( Map<String, String> ) o;
 
 					if ( key == null || key.isEmpty() )
 					{

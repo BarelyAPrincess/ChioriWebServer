@@ -22,14 +22,7 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 import org.ocpsoft.prettytime.PrettyTime;
@@ -139,24 +132,34 @@ public abstract class Builtin extends Script
 		return var == null ? 0 : var.length();
 	}
 
-	public static String createTable( Collection<Object> tableData )
+	public static String createTable( Collection<?> tableData )
 	{
-		return createTable( tableData, null, null );
+		return createTable( tableData, null, null, null );
 	}
 
-	public static String createTable( Collection<Object> tableData, Collection<String> headerArray )
+	public static String createTable( Collection<?> tableData, String tableId )
 	{
-		return createTable( tableData, headerArray, null, null );
+		return createTable( tableData, null, tableId, null );
 	}
 
-	public static String createTable( Collection<Object> tableData, Collection<String> headerArray, String tableId )
+	public static String createTable( Collection<?> tableData, String tableId, String altTableClass )
 	{
-		return createTable( tableData, headerArray, tableId, null );
+		return createTable( tableData, null, tableId, altTableClass );
 	}
 
-	public static String createTable( Collection<Object> tableData, Collection<String> headerArray, String tableId, String altTableClass )
+	public static String createTable( Collection<?> tableData, Collection<String> tableHeader )
 	{
-		Map<Object, Object> newData = Maps.newLinkedHashMap();
+		return createTable( tableData, tableHeader, null, null );
+	}
+
+	public static String createTable( Collection<?> tableData, Collection<String> tableHeader, String tableId )
+	{
+		return createTable( tableData, tableHeader, tableId, null );
+	}
+
+	public static String createTable( Collection<?> tableData, Collection<String> tableHeader, String tableId, String altTableClass )
+	{
+		Map<String, Object> newData = new TreeMap<>();
 
 		Integer x = 0;
 		for ( Object o : tableData )
@@ -165,49 +168,60 @@ public abstract class Builtin extends Script
 			x++;
 		}
 
-		return createTable( newData, headerArray, tableId, altTableClass );
+		return createTable( newData, tableHeader, tableId, altTableClass );
 	}
 
-	public static String createTable( Map<Object, Object> tableData )
+	public static String createTable( Map<?, ?> tableData )
 	{
-		return createTable( tableData, null, "" );
+		return createTable( tableData, null, null, null );
 	}
 
-	public static String createTable( Map<Object, Object> tableData, Collection<String> headerArray )
+	public static String createTable( Map<?, ?> tableData, String tableId )
 	{
-		return createTable( tableData, headerArray, "" );
+		return createTable( tableData, null, tableId, null );
 	}
 
-	public static String createTable( Map<Object, Object> tableData, Collection<String> headerArray, String tableId )
+	public static String createTable( Map<?, ?> tableData, String tableId, String altTableClass )
 	{
-		return createTable( tableData, headerArray, tableId, null );
+		return createTable( tableData, null, tableId, altTableClass );
+	}
+
+	public static String createTable( Map<?, ?> tableData, Collection<String> tableHeader )
+	{
+		return createTable( tableData, tableHeader, "" );
+	}
+
+	public static String createTable( Map<?, ?> tableData, Collection<String> tableHeader, String tableId )
+	{
+		return createTable( tableData, tableHeader, tableId, null );
 	}
 
 	@SuppressWarnings( "unchecked" )
-	public static String createTable( Map<Object, Object> tableData, Collection<String> headerArray, String tableId, String altTableClass )
+	public static String createTable( Map<?, ?> tableData, Collection<String> tableHeader, String tableId, String altTableClass )
 	{
-		if ( tableId == null )
-			tableId = "";
-
 		if ( tableData == null )
 			return "";
 
-		if ( altTableClass == null || altTableClass.isEmpty() )
+		if ( altTableClass == null || altTableClass.length() == 0 )
 			altTableClass = "altrowstable";
 
 		StringBuilder sb = new StringBuilder();
 		int x = 0;
-		sb.append( "<table id=\"" + tableId + "\" class=\"" + altTableClass + "\">\n" );
+		sb.append( "<table " + ( tableId == null ? "" : " id=\"" + tableId + "\"" ) + " class=\"" + altTableClass + "\">\n" );
 
-		if ( headerArray != null )
+		if ( tableHeader != null )
 		{
+			sb.append( "<thead>\n" );
 			sb.append( "<tr>\n" );
-			for ( String col : headerArray )
+			for ( String col : tableHeader )
 				sb.append( "<th>" + col + "</th>\n" );
 			sb.append( "</tr>\n" );
+			sb.append( "</thead>\n" );
 		}
 
-		int colLength = headerArray != null ? headerArray.size() : tableData.size();
+		sb.append( "<tbody>\n" );
+
+		int colLength = tableHeader != null ? tableHeader.size() : tableData.size();
 		for ( Object row : tableData.values() )
 			if ( row instanceof Map )
 				colLength = Math.max( ( ( Map<String, Object> ) row ).size(), colLength );
@@ -259,7 +273,7 @@ public abstract class Builtin extends Script
 					for ( Object col : map.values() )
 						if ( col != null )
 						{
-							String subclass = col instanceof String && ( ( String ) col ).isEmpty() ? " emptyCol" : "";
+							String subclass = col instanceof String && ( ( String ) col ).length() == 0 ? "tblEmptyCol" : "";
 							sb.append( "<td id=\"col_" + cc + "\" class=\"" + subclass + "\">" + col + "</td>\n" );
 							cc++;
 						}
@@ -267,10 +281,12 @@ public abstract class Builtin extends Script
 				sb.append( "</tr>\n" );
 			}
 			else if ( row instanceof String )
-				sb.append( "<tr><td class=\"" + clss + "\" colspan=\"" + colLength + "\"><b><center>" + ( String ) row + "</b></center></td></tr>\n" );
+				sb.append( "<tr class=\"" + clss + "\"><td id=\"tblStringRow\" colspan=\"" + colLength + "\"><b><center>" + ( String ) row + "</center></b></td></tr>\n" );
 			else
-				sb.append( "<tr><td class=\"" + clss + "\" colspan=\"" + colLength + "\"><b><center>" + row.toString() + "</b></center></td></tr>\n" );
+				sb.append( "<tr class=\"" + clss + "\"><td id=\"tblStringRow\" colspan=\"" + colLength + "\"><b><center>" + row.toString() + "</center></b></td></tr>\n" );
 		}
+
+		sb.append( "</tbody>\n" );
 		sb.append( "</table>\n" );
 
 		return sb.toString();

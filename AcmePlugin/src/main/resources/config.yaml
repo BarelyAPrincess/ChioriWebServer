@@ -8,6 +8,8 @@ config:
   allowDefaultCertificate: true
   serverCertificateMD5: null
   defaultKeySize: 4096
+  disabledDomains:
+    - .*example.com
   additional:
     country: null
     state: null
