@@ -7,6 +7,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.util.TreeMap;
 
+import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.http.HttpCode;
 import com.chiorichan.lang.PluginNotFoundException;
 import com.chiorichan.plugin.PluginManager;
@@ -299,10 +300,15 @@ public final class SingleChallengeHttp
 		return lastMessage;
 	}
 
+	ConfigurationSection getDomainConfig()
+	{
+		return AcmePlugin.instance().getSubConfig().getConfigurationSection( "domains." + getFullDomain().replace( '.', '_' ), true );
+	}
+
 	void setState( AcmeState state )
 	{
-		AcmePlugin.instance().getSubConfig().set( "domains." + getFullDomain().replace( '.', '_' ) + ".challengeState", state.name().toLowerCase() );
-		AcmePlugin.instance().getSubConfig().set( "domains." + getFullDomain().replace( '.', '_' ) + ".challengeLastChecked", Timings.epoch() );
+		getDomainConfig().set( "challengeState", state.name().toLowerCase() );
+		getDomainConfig().set( "challengeLastChecked", Timings.epoch() );
 		this.state = state;
 	}
 

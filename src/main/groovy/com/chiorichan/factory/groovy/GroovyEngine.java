@@ -2,12 +2,14 @@
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- *
+ * <p>
  * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.factory.groovy;
 
+import com.chiorichan.logger.Log;
+import com.google.common.base.Joiner;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
@@ -25,7 +27,7 @@ import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingEngine;
 
 /**
- * Groovy Script Processor
+ * Groovy Script Engine
  */
 public class GroovyEngine implements ScriptingEngine
 {
@@ -43,12 +45,15 @@ public class GroovyEngine implements ScriptingEngine
 		try
 		{
 			Script script = GroovyRegistry.getCachedScript( context, binding );
+
 			if ( script == null )
 			{
 				GroovyShell shell = registry.getNewShell( context, binding );
 				script = registry.makeScript( shell, context );
 			}
-			context.result().object( script.run() );
+
+			context.result().setScript( script );
+			context.result().setObject( script.run() );
 		}
 		catch ( Throwable t )
 		{

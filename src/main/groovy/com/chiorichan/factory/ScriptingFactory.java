@@ -2,12 +2,13 @@
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- *
+ * <p>
  * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.factory;
 
+import com.chiorichan.logger.Log;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
@@ -46,6 +47,7 @@ import com.google.common.collect.Maps;
 public class ScriptingFactory implements LogSource
 {
 	private static final List<ScriptingRegistry> scripting = Lists.newCopyOnWriteArrayList();
+
 	static
 	{
 		new GroovyRegistry();
@@ -96,8 +98,7 @@ public class ScriptingFactory implements LogSource
 	/**
 	 * Registers the provided ScriptingProcessing with the EvalFactory
 	 *
-	 * @param registry
-	 *             The {@link ScriptingRegistry} instance to handle provided types
+	 * @param registry The {@link ScriptingRegistry} instance to handle provided types
 	 */
 	public static void register( ScriptingRegistry registry )
 	{
@@ -155,7 +156,7 @@ public class ScriptingFactory implements LogSource
 
 	public ScriptingResult eval( ScriptingContext context )
 	{
-		ScriptingResult result = context.result();
+		final ScriptingResult result = context.result();
 
 		context.factory( this );
 		context.charset( charset );
@@ -186,12 +187,12 @@ public class ScriptingFactory implements LogSource
 			}
 			catch ( Exception e )
 			{
-				if ( context.result().handleException( e.getCause() == null ? e : e.getCause(), context ) )
+				if ( result.handleException( e.getCause() == null ? e : e.getCause(), context ) )
 					return result;
 			}
 
 			if ( preEvent.isCancelled() )
-				if ( context.result().handleException( new ScriptingException( ReportingLevel.E_ERROR, "Evaluation was cancelled by an internal event" ), context ) )
+				if ( result.handleException( new ScriptingException( ReportingLevel.E_ERROR, "Evaluation was cancelled by an internal event" ), context ) )
 					return result;
 
 			if ( engines.size() == 0 )
@@ -216,7 +217,7 @@ public class ScriptingFactory implements LogSource
 						}
 						catch ( Throwable cause )
 						{
-							if ( context.result().handleException( cause, context ) )
+							if ( result.handleException( cause, context ) )
 								return result;
 						}
 
@@ -227,7 +228,7 @@ public class ScriptingFactory implements LogSource
 			}
 			catch ( EventException e )
 			{
-				if ( context.result().handleException( e.getCause() == null ? e : e.getCause(), context ) )
+				if ( result.handleException( e.getCause() == null ? e : e.getCause(), context ) )
 					return result;
 			}
 		}
@@ -293,8 +294,7 @@ public class ScriptingFactory implements LogSource
 	/**
 	 * Gives externals subroutines access to the current output stream via print()
 	 *
-	 * @param text
-	 *             The text to output
+	 * @param text The text to output
 	 */
 	public void print( String text )
 	{
@@ -304,8 +304,7 @@ public class ScriptingFactory implements LogSource
 	/**
 	 * Gives externals subroutines access to the current output stream via println()
 	 *
-	 * @param text
-	 *             The text to output
+	 * @param text The text to output
 	 */
 	public void println( String text )
 	{

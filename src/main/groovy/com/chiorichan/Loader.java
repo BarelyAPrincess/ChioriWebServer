@@ -2,7 +2,7 @@
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- *
+ * <p>
  * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
@@ -42,8 +42,7 @@ import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.NetworkFunc;
 import com.chiorichan.util.Versioning;
 
-@SuppressWarnings( "restriction" )
-public class Loader extends AppLoader
+@SuppressWarnings( "restriction" ) public class Loader extends AppLoader
 {
 	private static File webroot = new File( "" );
 
@@ -59,21 +58,25 @@ public class Loader extends AppLoader
 
 	public static void main( String... args )
 	{
-		parseArguments( args );
+		parseArguments( Loader.class, args );
 		init( Loader.class );
 	}
 
 	public static void populateOptionParser( OptionParser parser )
 	{
-		parser.acceptsAll( Arrays.asList( "nobanner" ), "Disables the banner" );
-		parser.acceptsAll( Arrays.asList( "web-ip" ), "Host for Web to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
-		parser.acceptsAll( Arrays.asList( "web-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
-		parser.acceptsAll( Arrays.asList( "tcp-ip" ), "Host for Web to listen on" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
-		parser.acceptsAll( Arrays.asList( "tcp-port" ), "Port for Web to listen on" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
-		parser.acceptsAll( Arrays.asList( "install" ), "Runs the server just long enough to create the required configuration files, then terminates." );
-		parser.acceptsAll( Arrays.asList( "web-disable" ), "Disable the internal Web Server" );
-		parser.acceptsAll( Arrays.asList( "tcp-disable" ), "Disable the internal TCP Server" );
-		parser.acceptsAll( Arrays.asList( "webroot-dir" ), "Specify webroot directory" ).withRequiredArg().ofType( String.class );
+		parser.accepts( "nobanner", "Disables the banner" );
+		parser.accepts( "httpHost", "Listening hostname or IP for the HTTP server" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
+		parser.accepts( "httpPort", "Listening port for the HTTP server" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
+		parser.accepts( "httpsPort", "Listening port for the HTTPS server" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
+		parser.accepts( "tcpHost", "Listening hostname or IP for the TCP server" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
+		parser.accepts( "tcpPort", "Listening port for the TCP server" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
+		parser.accepts( "queryHost", "Listening hostname or IP for the QUERY server" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
+		parser.accepts( "queryPort", "Listening port for the QUERY server" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
+		parser.accepts( "install", "Creates the required configuration files and directories, then terminates the application." );
+		parser.accepts( "httpDisable", "Disable the HTTP Server" );
+		parser.accepts( "tcpDisable", "Disable the TCP Server" );
+		parser.accepts( "queryDisable", "Disable the QUERY Server" );
+		parser.accepts( "webroot", "Specify webroot directory" ).withRequiredArg().ofType( String.class );
 	}
 
 	private String clientId = "0";
@@ -89,7 +92,7 @@ public class Loader extends AppLoader
 			Log.get().warning( "We have detected that you are running " + Versioning.getProduct() + " with the system administrator/root, this is highly discouraged as it my compromise security and/or mess with file permissions." );
 
 		if ( Runtime.getRuntime().maxMemory() / 1024L / 1024L < 512L )
-			Log.get().warning( "It is recommended you dedicate more ram to this application, launch it with \"java -Xmx1024M -Xms1024M -jar " + AppConfig.getApplicationJar().getName() + "\"" );
+			Log.get().warning( "We detected less than the recommended 512Mb of JVM ram, we recommended you dedicate more ram to guarantee a smoother experience. You can use the JVM options \"-Xmx1024M -Xms1024M\" to set the ram at 1GB." );
 
 		try
 		{
@@ -159,7 +162,7 @@ public class Loader extends AppLoader
 			}
 			catch ( IOException e )
 			{
-				Log.get().severe( "It would appear we had problem installing " + Versioning.getProduct() + " " + Versioning.getVersion() + " for the first time, see exception for details.", e );
+				Log.get().severe( "It would appear we had problem installing " + Versioning.getProduct() + " " + Versioning.getVersion() + " for the first time.", e );
 			}
 
 		clientId = config.getString( "server.installationUID", clientId );
@@ -281,9 +284,7 @@ public class Loader extends AppLoader
 		{
 			SignalHandler handler = new SignalHandler()
 			{
-
-				@Override
-				public void handle( Signal arg0 )
+				@Override public void handle( Signal arg0 )
 				{
 					AppController.stopApplication( "Received SIGTERM - Terminate" );
 				}
@@ -297,13 +298,17 @@ public class Loader extends AppLoader
 			NetworkFunc.sendTracking( "startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
 	}
 
+	public String getClientId()
+	{
+		return clientId;
+	}
+
 	public boolean hasWhitelist()
 	{
 		return AppConfig.get().getBoolean( "white-list", false );
 	}
 
-	@Override
-	public void onRunlevelChange( RunLevel level ) throws ApplicationException
+	@Override public void onRunlevelChange( RunLevel level ) throws ApplicationException
 	{
 		switch ( level )
 		{
@@ -331,13 +336,13 @@ public class Loader extends AppLoader
 				break;
 			case POSTSTARTUP:
 			{
-				Log.get().info( "Initalizing the Site Subsystem..." );
+				Log.get().info( "Initializing the Site Subsystem..." );
 				AppManager.manager( SiteManager.class ).init();
 
-				Log.get().info( "Initalizing the Session Subsystem..." );
+				Log.get().info( "Initializing the Session Subsystem..." );
 				AppManager.manager( SessionManager.class ).init();
 
-				Log.get().info( "Initalizing the File Watcher Subsystem..." );
+				Log.get().info( "Initializing the File Watcher Subsystem..." );
 				AppManager.manager( ServerFileWatcher.class ).init();
 
 				break;
@@ -346,10 +351,10 @@ public class Loader extends AppLoader
 			{
 				// TODO: Reload seems to be broken. This needs some serious reworking.
 
-				Log.get().info( "Reinitalizing the Session Manager..." );
+				Log.get().info( "Reinitializing the Session Manager..." );
 				SessionManager.instance().reload();
 
-				Log.get().info( "Reinitalizing the Site Manager..." );
+				Log.get().info( "Reinitializing the Site Manager..." );
 				SiteManager.instance().reload();
 				break;
 			}
@@ -371,20 +376,20 @@ public class Loader extends AppLoader
 			}
 			case STARTUP:
 			{
-				if ( !options().has( "tcp-disable" ) && AppConfig.get().getBoolean( "server.enableTcpServer", true ) )
+				if ( !options().has( "tcpDisable" ) && AppConfig.get().getBoolean( "server.enableTcpServer", true ) )
 					NetworkManager.startTcpServer();
 				else
-					Log.get().warning( "The integrated tcp server has been disabled per the configuration. Change server.enableTcpServer to true to reenable it." );
+					Log.get().warning( "The TCP server has been disabled per configuration. Change `server.enableTcpServer` to true to reenable it." );
 
-				if ( !options().has( "web-disable" ) && AppConfig.get().getBoolean( "server.enableWebServer", true ) )
+				if ( !options().has( "httpDisable" ) && AppConfig.get().getBoolean( "server.enableWebServer", true ) )
 				{
 					NetworkManager.startHttpServer();
 					NetworkManager.startHttpsServer();
 				}
 				else
-					Log.get().warning( "The integrated web server has been disabled per the configuration. Change server.enableWebServer to true to reenable it." );
+					Log.get().warning( "The HTTP server has been disabled per configuration. Change `server.enableWebServer` to true to reenable it." );
 
-				if ( !options().has( "query-disable" ) && AppConfig.get().getBoolean( "server.queryEnabled", true ) )
+				if ( !options().has( "queryDisable" ) && AppConfig.get().getBoolean( "server.queryEnabled", false ) )
 					NetworkManager.startQueryServer();
 
 				break;
@@ -398,8 +403,7 @@ public class Loader extends AppLoader
 		}
 	}
 
-	@Override
-	public String toString()
+	@Override public String toString()
 	{
 		return Versioning.getProduct() + " " + Versioning.getVersion();
 	}

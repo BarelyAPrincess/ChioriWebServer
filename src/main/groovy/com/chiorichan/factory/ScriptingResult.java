@@ -2,12 +2,14 @@
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- *
+ * <p>
  * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.factory;
 
+import com.chiorichan.logger.Log;
+import groovy.lang.Script;
 import io.netty.buffer.ByteBuf;
 
 import java.nio.charset.Charset;
@@ -27,6 +29,7 @@ public class ScriptingResult extends ExceptionReport
 	private String reason = null;
 	private ByteBuf content;
 	private Object obj = null;
+	private Script script = null;
 	private final ScriptingContext context;
 
 	ScriptingResult( ScriptingContext context, ByteBuf content )
@@ -43,7 +46,7 @@ public class ScriptingResult extends ExceptionReport
 			if ( exception instanceof ScriptingException )
 			{
 				// If this EvalException never had it's script trace populated, we handle it here
-				if ( ! ( ( ScriptingException ) exception ).hasScriptTrace() )
+				if ( !( ( ScriptingException ) exception ).hasScriptTrace() )
 					if ( context.factory() != null )
 						( ( ScriptingException ) exception ).populateScriptTrace( context.factory().stack() );
 					else if ( context.request() != null )
@@ -62,7 +65,7 @@ public class ScriptingResult extends ExceptionReport
 			if ( throwable instanceof ScriptingException )
 			{
 				// If this EvalException never had it's script trace populated, we handle it here
-				if ( ! ( ( ScriptingException ) throwable ).hasScriptTrace() )
+				if ( !( ( ScriptingException ) throwable ).hasScriptTrace() )
 					if ( context.factory() != null )
 						( ( ScriptingException ) throwable ).populateScriptTrace( context.factory().stack() );
 					else if ( context.request() != null )
@@ -84,9 +87,9 @@ public class ScriptingResult extends ExceptionReport
 		return context;
 	}
 
-	public ScriptingException[] getExceptions()
+	public IException[] getExceptions()
 	{
-		return caughtExceptions.toArray( new ScriptingException[0] );
+		return caughtExceptions.toArray( new IException[0] );
 	}
 
 	public Object getObject()
@@ -94,11 +97,20 @@ public class ScriptingResult extends ExceptionReport
 		return obj;
 	}
 
+	public Script getScript()
+	{
+		return script;
+	}
+
+	public void setScript( Script script )
+	{
+		this.script = script;
+	}
+
 	public String getReason()
 	{
 		if ( reason == null || reason.isEmpty() )
 			reason = "There was no available result reason at this time.";
-
 		return reason;
 	}
 
@@ -117,7 +129,7 @@ public class ScriptingResult extends ExceptionReport
 		return success;
 	}
 
-	public void object( Object obj )
+	public void setObject( Object obj )
 	{
 		this.obj = obj;
 	}
@@ -137,6 +149,6 @@ public class ScriptingResult extends ExceptionReport
 	@Override
 	public String toString()
 	{
-		return String.format( "EvalFactoryResult{success=%s,reason=%s,size=%s,obj=%s,context=%s}", success, reason, content.writerIndex(), obj, context );
+		return String.format( "EvalFactoryResult{success=%s,reason=%s,size=%s,obj=%s,script=%s,context=%s}", success, reason, content.writerIndex(), obj, script, context );
 	}
 }

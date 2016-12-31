@@ -20,37 +20,43 @@ public class DefaultLogFactory extends InternalLoggerFactory
 		@Override
 		public void debug( String msg )
 		{
-			l.debug( msg );
+			l.fine( msg );
+			// l.debug( msg );
 		}
 
 		@Override
 		public void debug( String format, Object arg )
 		{
-			l.debug( format, arg );
+			l.fine(format, arg);
+			// l.debug( format, arg );
 		}
 
 		@Override
-		public void debug( String format, Object... arguments )
+		public void debug( String format, Object... args )
 		{
-			l.debug( format, arguments );
+			l.fine(format, args);
+			// l.debug( format, args );
 		}
 
 		@Override
 		public void debug( String format, Object argA, Object argB )
 		{
-			l.debug( format, argA, argB );
+			l.fine( format, argA, argB );
+			// l.debug( format, argA, argB );
 		}
 
 		@Override
 		public void debug( String msg, Throwable t )
 		{
-			l.debug( msg, t );
+			l.log( Level.FINE, msg, t );
+			// l.debug( msg, t );
 		}
 
 		@Override
 		public void debug( Throwable t )
 		{
-			l.debug( "", t );
+			l.log( Level.FINE, "Debugged Exception", t );
+			// l.debug( "", t );
 		}
 
 		@Override

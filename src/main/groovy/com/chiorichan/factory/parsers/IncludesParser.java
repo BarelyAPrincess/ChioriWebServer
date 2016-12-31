@@ -2,12 +2,13 @@
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- *
+ * <p>
  * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.factory.parsers;
 
+import com.chiorichan.lang.IException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import com.chiorichan.factory.ScriptingContext;
@@ -46,8 +47,9 @@ public class IncludesParser extends HTMLCommentParser
 		else if ( result.hasIgnorableExceptions() )
 		{
 			StringBuilder sb = new StringBuilder();
-			for ( ScriptingException e : result.getExceptions() )
-				sb.append( ExceptionUtils.getStackTrace( e ) + "\n" );
+			for ( IException e : result.getExceptions() )
+				if ( e instanceof Throwable )
+					sb.append( ExceptionUtils.getStackTrace( ( Throwable ) e ) + "\n" );
 			return sb.toString();
 		}
 

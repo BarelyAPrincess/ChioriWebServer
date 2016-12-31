@@ -1,5 +1,6 @@
 package com.chiorichan.plugin.template;
 
+import com.chiorichan.logger.Log;
 import io.netty.buffer.Unpooled;
 
 import java.util.HashMap;
@@ -67,7 +68,7 @@ public class Template extends Plugin implements Listener
 				lineNum = ste.getLineNumber();
 				colNum = ste.getColumnNumber();
 
-				if ( lineNum < 0 )
+				if ( lineNum < 0 && t.getMessage() != null )
 				{
 					/*
 					 * Sometimes the last ScriptTrace never gets properly formatted usually due to the exception being a parse problem

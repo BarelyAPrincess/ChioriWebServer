@@ -2,12 +2,13 @@
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- *
+ * <p>
  * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.factory.groovy;
 
+import com.chiorichan.logger.Log;
 import groovy.lang.Binding;
 import groovy.lang.GroovyRuntimeException;
 import groovy.lang.GroovyShell;
@@ -73,7 +74,7 @@ public class GroovyRegistry implements ScriptingRegistry
 	private static final GroovyImportCustomizer imports = new GroovyImportCustomizer();
 
 	private static final Class<?>[] classImports = new Class<?>[] {References.class, NestedScript.class, Loader.class, AccountManager.class, AccountType.class, Account.class, AccountAuthenticator.class, EventBus.class, PermissionManager.class, PluginManager.class, TaskManager.class, Ticks.class, Timings.class, SessionManager.class, SiteManager.class, Site.class, ScriptingContext.class};
-	private static final String[] starImports = new String[] {"com.chiorichan.lang", "com.chiorichan.factory.api", "com.chiorichan.util", "org.apache.commons.lang3.text", "org.ocpsoft.prettytime", "java.util", "java.net", "com.google.common.base"};
+	private static final String[] starImports = new String[] {"com.chiorichan.lang", "com.chiorichan.factory.api", "com.chiorichan.util", "com.chiorichan.logger", "org.apache.commons.lang3.text", "org.ocpsoft.prettytime", "java.util", "java.net", "com.google.common.base"};
 	private static final Class<?>[] staticImports = new Class<?>[] {Looper.class, ReportingLevel.class, HttpResponseStatus.class};
 	private static final GroovySandbox secure = new GroovySandbox();
 
@@ -209,11 +210,10 @@ public class GroovyRegistry implements ScriptingRegistry
 		 */
 		configuration.addCompilationCustomizers( imports, timedInterrupt, secure );
 
-		/*
-		 * Set Groovy Base Script Class
-		 * TODO Implement new groovy API base
-		 */
-		configuration.setScriptBaseClass( ScriptingBaseGroovy.class.getName() );
+		if ( context.getScriptBaseClass() == null || context.getScriptBaseClass().length() == 0 )
+			configuration.setScriptBaseClass( ScriptingBaseGroovy.class.getName() );
+		else
+			configuration.setScriptBaseClass( context.getScriptBaseClass() );
 
 		/*
 		 * Set default encoding

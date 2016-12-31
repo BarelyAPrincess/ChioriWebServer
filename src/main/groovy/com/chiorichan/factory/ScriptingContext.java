@@ -2,12 +2,16 @@
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- *
+ * <p>
  * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.factory;
 
+import com.chiorichan.datastore.sql.bases.SQLDatastore;
+import com.chiorichan.factory.models.SQLQueryBuilder;
+import com.chiorichan.lang.*;
+import com.chiorichan.util.Versioning;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
@@ -20,11 +24,6 @@ import java.util.List;
 import com.chiorichan.AppConfig;
 import com.chiorichan.ContentTypes;
 import com.chiorichan.http.HttpRequestWrapper;
-import com.chiorichan.lang.ExceptionContext;
-import com.chiorichan.lang.ExceptionReport;
-import com.chiorichan.lang.MultipleException;
-import com.chiorichan.lang.ReportingLevel;
-import com.chiorichan.lang.ScriptingException;
 import com.chiorichan.libraries.LibraryClassLoader;
 import com.chiorichan.logger.Log;
 import com.chiorichan.site.Site;
@@ -37,6 +36,8 @@ import com.chiorichan.util.SecureFunc;
  */
 public class ScriptingContext implements ExceptionContext
 {
+	private String scriptBaseClass;
+
 	public static ScriptingContext fromAuto( final Site site, final String res )
 	{
 		// Might need a better attempt at auto determining file types
@@ -271,12 +272,55 @@ public class ScriptingContext implements ExceptionContext
 				else
 					throw new IllegalStateException( "Well this was unexpected, we should only be throwing ScriptingExceptions here!", e );
 			}
+		else if ( result.hasNonIgnorableExceptions() )
+		{
+			Log.get().severe( String.format( "The script [%s] threw non-ignorable exceptions but the script was not required.", result.context().scriptName() ) );
+			if ( Versioning.isDevelopment() )
+				for ( IException e : result.getExceptions() )
+					if ( e instanceof Throwable )
+						Log.get().severe( ( Throwable ) e );
+		}
 
 		if ( result.hasIgnorableExceptions() )
 			str = ExceptionReport.printExceptions( result.getIgnorableExceptions() ) + "\n" + str;
 
 		factory.print( str );
 		return result.getObject();
+	}
+
+	public SQLQueryBuilder model() throws ScriptingException, MultipleException
+	{
+		if ( request == null && factory == null )
+			throw new IllegalArgumentException( "We can't eval() this EvalContext until you provide either the request or the factory." );
+		if ( request != null && factory == null )
+			factory = request.getEvalFactory();
+
+		setScriptBaseClass( SQLQueryBuilder.class.getName() );
+
+		result = factory.eval( this );
+
+		String str = result.getString( false );
+
+		if ( result.hasNonIgnorableExceptions() )
+			try
+			{
+				ExceptionReport.throwExceptions( result.getExceptions() );
+			}
+			catch ( Throwable e )
+			{
+				if ( e instanceof ScriptingException )
+					throw ( ScriptingException ) e;
+				if ( e instanceof MultipleException )
+					throw ( MultipleException ) e;
+				else
+					throw new ScriptingException( ReportingLevel.E_ERROR, "Unrecognized exception was thrown, only ScriptingExceptions should be thrown before this point", e );
+			}
+
+		if ( result.hasIgnorableExceptions() )
+			str = ExceptionReport.printExceptions( result.getIgnorableExceptions() ) + "\n" + str;
+
+		factory.print( str );
+		return ( SQLQueryBuilder ) result.getScript();
 	}
 
 	public ScriptingFactory factory()
@@ -519,5 +563,15 @@ public class ScriptingContext implements ExceptionContext
 	public void write( ByteBuf source )
 	{
 		content.writeBytes( source );
+	}
+
+	public void setScriptBaseClass( String scriptBaseClass )
+	{
+		this.scriptBaseClass = scriptBaseClass;
+	}
+
+	public String getScriptBaseClass()
+	{
+		return scriptBaseClass;
 	}
 }

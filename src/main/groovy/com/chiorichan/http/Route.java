@@ -79,7 +79,7 @@ public class Route
 				val = o.substring( o.indexOf( " " ) + 1 );
 			}
 
-			if ( key != null && val != null )
+			if ( key != null )
 			{
 				key = StringUtils.trimToEmpty( key.toLowerCase() );
 				val = StringUtils.trimToEmpty( val );

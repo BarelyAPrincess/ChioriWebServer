@@ -8,6 +8,8 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.chiorichan.configuration.file.FileConfiguration;
 import com.chiorichan.configuration.file.YamlConfiguration;
@@ -167,6 +169,16 @@ public class AcmePlugin extends Plugin
 
 	public boolean validateUrl( String url )
 	{
-		return ! ( registrationUrl == null || url.startsWith( URL_PRODUCTION ) && !production || url.startsWith( URL_TESTING ) && production || !url.startsWith( URL_PRODUCTION ) && !url.startsWith( URL_TESTING ) );
+		return !( registrationUrl == null || url.startsWith( URL_PRODUCTION ) && !production || url.startsWith( URL_TESTING ) && production || !url.startsWith( URL_PRODUCTION ) && !url.startsWith( URL_TESTING ) );
+	}
+
+	/**
+	 * Retrieves a list of disabled domains from the plugin configuration
+	 *
+	 * @return List of disabled domains per configuration
+	 */
+	public List<String> getDisabledDomains()
+	{
+		return getConfig().getAsList( "config.disabledDomains", new ArrayList<>() );
 	}
 }

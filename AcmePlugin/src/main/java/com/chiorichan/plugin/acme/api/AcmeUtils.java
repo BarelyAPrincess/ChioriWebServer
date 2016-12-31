@@ -28,6 +28,7 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 
+import com.chiorichan.plugin.acme.AcmePlugin;
 import org.apache.commons.io.IOUtils;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.ASN1Primitive;
@@ -195,6 +196,10 @@ public class AcmeUtils
 
 	public static HttpResponse post( final String method, final String target, final String accept, final String body, final String contentType ) throws KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, IOException
 	{
+		String m = method == null ? "POST" : method.trim().toUpperCase();
+
+		AcmePlugin.instance().getLogger().fine( m + " request made to URL [" + target + "], contentType [" + contentType + "]" );
+
 		final URL u = new URL( target );
 		final HttpURLConnection c = ( HttpURLConnection ) u.openConnection();
 
@@ -205,9 +210,9 @@ public class AcmeUtils
 			( ( HttpsURLConnection ) c ).setSSLSocketFactory( context.getSocketFactory() );
 		}
 
-		c.setRequestMethod( method );
+		c.setRequestMethod( m );
 		c.setRequestProperty( "Accept", accept );
-		if ( "POST".equals( method ) )
+		if ( "POST".equals( m ) )
 		{
 			final byte[] bytes = body.getBytes( "UTF8" );
 			c.setDoOutput( true );

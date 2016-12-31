@@ -2,7 +2,7 @@
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- *
+ * <p>
  * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
@@ -22,14 +22,7 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 import org.ocpsoft.prettytime.PrettyTime;
@@ -65,8 +58,7 @@ public abstract class Builtin extends Script
 	 * Provides an easy array collections method. Not sure if this is counterintuitive since technically Groovy provides an easier array of [], so what, i.e., def val = array( "obj1", "ovj2", "obj3" ); Comparable to PHP's array function,
 	 * http://www.w3schools.com/php/func_array.asp
 	 *
-	 * @param vals
-	 *             Elements of the array separated as an argument
+	 * @param vals Elements of the array separated as an argument
 	 * @return The array of elements
 	 */
 	@SuppressWarnings( "unchecked" )
@@ -140,24 +132,34 @@ public abstract class Builtin extends Script
 		return var == null ? 0 : var.length();
 	}
 
-	public static String createTable( Collection<Object> tableData )
+	public static String createTable( Collection<?> tableData )
 	{
-		return createTable( tableData, null, null );
+		return createTable( tableData, null, null, null );
 	}
 
-	public static String createTable( Collection<Object> tableData, Collection<String> headerArray )
+	public static String createTable( Collection<?> tableData, String tableId )
 	{
-		return createTable( tableData, headerArray, null, null );
+		return createTable( tableData, null, tableId, null );
 	}
 
-	public static String createTable( Collection<Object> tableData, Collection<String> headerArray, String tableId )
+	public static String createTable( Collection<?> tableData, String tableId, String altTableClass )
 	{
-		return createTable( tableData, headerArray, tableId, null );
+		return createTable( tableData, null, tableId, altTableClass );
 	}
 
-	public static String createTable( Collection<Object> tableData, Collection<String> headerArray, String tableId, String altTableClass )
+	public static String createTable( Collection<?> tableData, Collection<String> tableHeader )
 	{
-		Map<Object, Object> newData = Maps.newLinkedHashMap();
+		return createTable( tableData, tableHeader, null, null );
+	}
+
+	public static String createTable( Collection<?> tableData, Collection<String> tableHeader, String tableId )
+	{
+		return createTable( tableData, tableHeader, tableId, null );
+	}
+
+	public static String createTable( Collection<?> tableData, Collection<String> tableHeader, String tableId, String altTableClass )
+	{
+		Map<String, Object> newData = new TreeMap<>();
 
 		Integer x = 0;
 		for ( Object o : tableData )
@@ -166,49 +168,60 @@ public abstract class Builtin extends Script
 			x++;
 		}
 
-		return createTable( newData, headerArray, tableId, altTableClass );
+		return createTable( newData, tableHeader, tableId, altTableClass );
 	}
 
-	public static String createTable( Map<Object, Object> tableData )
+	public static String createTable( Map<?, ?> tableData )
 	{
-		return createTable( tableData, null, "" );
+		return createTable( tableData, null, null, null );
 	}
 
-	public static String createTable( Map<Object, Object> tableData, Collection<String> headerArray )
+	public static String createTable( Map<?, ?> tableData, String tableId )
 	{
-		return createTable( tableData, headerArray, "" );
+		return createTable( tableData, null, tableId, null );
 	}
 
-	public static String createTable( Map<Object, Object> tableData, Collection<String> headerArray, String tableId )
+	public static String createTable( Map<?, ?> tableData, String tableId, String altTableClass )
 	{
-		return createTable( tableData, headerArray, tableId, null );
+		return createTable( tableData, null, tableId, altTableClass );
+	}
+
+	public static String createTable( Map<?, ?> tableData, Collection<String> tableHeader )
+	{
+		return createTable( tableData, tableHeader, "" );
+	}
+
+	public static String createTable( Map<?, ?> tableData, Collection<String> tableHeader, String tableId )
+	{
+		return createTable( tableData, tableHeader, tableId, null );
 	}
 
 	@SuppressWarnings( "unchecked" )
-	public static String createTable( Map<Object, Object> tableData, Collection<String> headerArray, String tableId, String altTableClass )
+	public static String createTable( Map<?, ?> tableData, Collection<String> tableHeader, String tableId, String altTableClass )
 	{
-		if ( tableId == null )
-			tableId = "";
-
 		if ( tableData == null )
 			return "";
 
-		if ( altTableClass == null || altTableClass.isEmpty() )
+		if ( altTableClass == null || altTableClass.length() == 0 )
 			altTableClass = "altrowstable";
 
 		StringBuilder sb = new StringBuilder();
 		int x = 0;
-		sb.append( "<table id=\"" + tableId + "\" class=\"" + altTableClass + "\">\n" );
+		sb.append( "<table " + ( tableId == null ? "" : " id=\"" + tableId + "\"" ) + " class=\"" + altTableClass + "\">\n" );
 
-		if ( headerArray != null )
+		if ( tableHeader != null )
 		{
+			sb.append( "<thead>\n" );
 			sb.append( "<tr>\n" );
-			for ( String col : headerArray )
+			for ( String col : tableHeader )
 				sb.append( "<th>" + col + "</th>\n" );
 			sb.append( "</tr>\n" );
+			sb.append( "</thead>\n" );
 		}
 
-		int colLength = headerArray != null ? headerArray.size() : tableData.size();
+		sb.append( "<tbody>\n" );
+
+		int colLength = tableHeader != null ? tableHeader.size() : tableData.size();
 		for ( Object row : tableData.values() )
 			if ( row instanceof Map )
 				colLength = Math.max( ( ( Map<String, Object> ) row ).size(), colLength );
@@ -260,7 +273,7 @@ public abstract class Builtin extends Script
 					for ( Object col : map.values() )
 						if ( col != null )
 						{
-							String subclass = col instanceof String && ( ( String ) col ).isEmpty() ? " emptyCol" : "";
+							String subclass = col instanceof String && ( ( String ) col ).length() == 0 ? "tblEmptyCol" : "";
 							sb.append( "<td id=\"col_" + cc + "\" class=\"" + subclass + "\">" + col + "</td>\n" );
 							cc++;
 						}
@@ -268,10 +281,12 @@ public abstract class Builtin extends Script
 				sb.append( "</tr>\n" );
 			}
 			else if ( row instanceof String )
-				sb.append( "<tr><td class=\"" + clss + "\" colspan=\"" + colLength + "\"><b><center>" + ( String ) row + "</b></center></td></tr>\n" );
+				sb.append( "<tr class=\"" + clss + "\"><td id=\"tblStringRow\" colspan=\"" + colLength + "\"><b><center>" + ( String ) row + "</center></b></td></tr>\n" );
 			else
-				sb.append( "<tr><td class=\"" + clss + "\" colspan=\"" + colLength + "\"><b><center>" + row.toString() + "</b></center></td></tr>\n" );
+				sb.append( "<tr class=\"" + clss + "\"><td id=\"tblStringRow\" colspan=\"" + colLength + "\"><b><center>" + row.toString() + "</center></b></td></tr>\n" );
 		}
+
+		sb.append( "</tbody>\n" );
 		sb.append( "</table>\n" );
 
 		return sb.toString();
@@ -380,8 +395,7 @@ public abstract class Builtin extends Script
 	/**
 	 * Default format is M/d/yyyy
 	 *
-	 * @param date
-	 *             you wish to convert
+	 * @param date you wish to convert
 	 * @return Long containing the epoch of provided date
 	 */
 	public static Long dateToEpoch( String date )
@@ -414,8 +428,7 @@ public abstract class Builtin extends Script
 	/**
 	 * Forcibly kills script exception by throwing a DiedException
 	 *
-	 * @param msg
-	 *             The message to return
+	 * @param msg The message to return
 	 * @throws DiedException
 	 */
 	public static void die( String msg ) throws DiedException
@@ -520,12 +533,9 @@ public abstract class Builtin extends Script
 	/**
 	 * Filters a map for the specified list of keys, removing keys that are not contained in the list. Groovy example: def filteredMap = getHttpUtils().filter( unfilteredMap, ["keyA", "keyB", "someKey"], false );
 	 *
-	 * @param data
-	 *             The map that needs checking
-	 * @param allowedKeys
-	 *             A list of keys allowed
-	 * @param caseSensitive
-	 *             Will the key match be case sensitive or not
+	 * @param data          The map that needs checking
+	 * @param allowedKeys   A list of keys allowed
+	 * @param caseSensitive Will the key match be case sensitive or not
 	 * @return The resulting map of filtered data
 	 */
 	public static Map<String, Object> filter( Map<String, Object> data, Collection<String> allowedKeys, boolean caseSensitive )
@@ -591,8 +601,7 @@ public abstract class Builtin extends Script
 	 * Returns an instance of the server database
 	 *
 	 * @return The server database engine
-	 * @throws IllegalStateException
-	 *              thrown if the requested database is unconfigured
+	 * @throws IllegalStateException thrown if the requested database is unconfigured
 	 */
 	public static DatabaseEngineLegacy getServerDatabase()
 	{
@@ -670,8 +679,7 @@ public abstract class Builtin extends Script
 	/**
 	 * Determines if the color hex is darker then 50%
 	 *
-	 * @param hexdec
-	 *             A hexdec color, e.g., #fff, #f3f3f3
+	 * @param hexdec A hexdec color, e.g., #fff, #f3f3f3
 	 * @return True if color is darker then 50%
 	 */
 	public static boolean isDarkColor( String hexdec )
@@ -822,6 +830,9 @@ public abstract class Builtin extends Script
 	public static String var_export( Object... objs )
 	{
 		StringBuilder sb = new StringBuilder();
+
+		if ( objs == null )
+			return "null";
 
 		for ( Object obj : objs )
 			if ( obj != null )

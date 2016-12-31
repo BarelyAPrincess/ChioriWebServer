@@ -12,6 +12,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
+import io.netty.handler.ssl.NotSslRecordException;
 import io.netty.handler.ssl.SniHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.util.CharsetUtil;
@@ -163,7 +164,7 @@ public class SniNegotiator extends ByteToMessageDecoder
 				engine.setUseClientMode( false );
 				engine.setEnabledCipherSuites( enabledCipherSuites.toArray( new String[0] ) );
 
-				ctx.pipeline().replace( this, ctx.name(), new SslExceptionHandler( engine ) );
+				ctx.pipeline().replace(this, ctx.name(), new SslExceptionHandler(engine));
 			}
 		}
 	}

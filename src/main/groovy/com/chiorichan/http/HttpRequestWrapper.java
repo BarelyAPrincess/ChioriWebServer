@@ -2,12 +2,15 @@
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- *
+ * <p>
  * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
 package com.chiorichan.http;
 
+import com.chiorichan.lang.ExceptionReport;
+import com.chiorichan.lang.MapCollisionException;
+import com.chiorichan.util.*;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.Cookie;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -26,12 +29,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.net.UnknownHostException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.logging.Level;
 
 import org.apache.commons.lang3.Validate;
@@ -56,12 +55,6 @@ import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.site.SiteMapping;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.util.Namespace;
-import com.chiorichan.util.NetworkFunc;
-import com.chiorichan.util.ObjectFunc;
-import com.chiorichan.util.Pair;
-import com.chiorichan.util.StringFunc;
-import com.chiorichan.util.Versioning;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -74,11 +67,6 @@ import com.google.common.collect.Sets;
 public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 {
 	private static final Map<Thread, WeakReference<HttpRequestWrapper>> references = Maps.newConcurrentMap();
-
-	/**
-	 * Return maps as unmodifiable
-	 */
-	private static boolean unmodifiableMaps = AppConfig.get().getBoolean( "advanced.security.unmodifiableMapsEnabled", true );
 
 	public static HttpRequestWrapper getRequest()
 	{
@@ -105,12 +93,12 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	/**
 	 * Cookie Cache
 	 */
-	final Set<HttpCookie> cookies = Sets.newHashSet();
+	final Set<HttpCookie> cookies = new HashSet<>();
 
 	/**
 	 * The Get Map
 	 */
-	final Map<String, String> getMap = Maps.newTreeMap();
+	final Map<String, String> getMap = new TreeMap<>();
 
 	/**
 	 * The {@link HttpHandler} for this request
@@ -130,7 +118,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	/**
 	 * The Post Map
 	 */
-	final Map<String, String> postMap = Maps.newTreeMap();
+	final Map<String, String> postMap = new TreeMap<>();
 
 	/**
 	 * The time of this request
@@ -145,12 +133,12 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	/**
 	 * The URI Rewrite Map
 	 */
-	final Map<String, String> rewriteMap = Maps.newTreeMap();
+	final Map<String, String> rewriteMap = new TreeMap<>();
 
 	/**
 	 * Server Cookie Cache
 	 */
-	final Set<HttpCookie> serverCookies = Sets.newHashSet();
+	final Set<HttpCookie> serverCookies = new HashSet<>();
 
 	/**
 	 * Server Variables
@@ -411,6 +399,11 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		return Collections.unmodifiableSet( cookies );
 	}
 
+	public Set<HttpCookie> getServerCookies()
+	{
+		return Collections.unmodifiableSet( serverCookies );
+	}
+
 	public String getDomain()
 	{
 		return parentDomain == null ? "" : parentDomain;
@@ -463,9 +456,6 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 	public Map<String, String> getGetMapRaw()
 	{
-		if ( unmodifiableMaps )
-			return Collections.unmodifiableMap( getMap );
-
 		return getMap;
 	}
 
@@ -506,8 +496,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	/**
 	 * Similar to {@link #getInetAddr()}
 	 *
-	 * @return
-	 *         the remote connections IP address
+	 * @return the remote connections IP address
 	 */
 	public InetAddress getInetAddr()
 	{
@@ -517,10 +506,8 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	/**
 	 * Similar to {@link #getInetAddr(boolean)}
 	 *
-	 * @param detectCDN
-	 *             Try to detect the use of CDNs, e.g., CloudFlare, IP headers when set to false.
-	 * @return
-	 *         the remote connections IP address
+	 * @param detectCDN Try to detect the use of CDNs, e.g., CloudFlare, IP headers when set to false.
+	 * @return the remote connections IP address
 	 */
 	public InetAddress getInetAddr( boolean detectCDN )
 	{
@@ -546,8 +533,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	/**
 	 * Similar to {@link #getIpAddr(boolean)} except defaults to true
 	 *
-	 * @return
-	 *         the remote connections IP address as a string
+	 * @return the remote connections IP address as a string
 	 */
 	@Override
 	public String getIpAddr()
@@ -560,10 +546,8 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	 * I believe there are other CDN services like CloudFlare. I'd love it if people could inform me, so I can implement similar methods.
 	 * https://support.cloudflare.com/hc/en-us/articles/200170786-Why-do-my-server-logs-show-CloudFlare-s-IPs-using-CloudFlare-
 	 *
-	 * @param detectCDN
-	 *             Try to detect the use of CDNs, e.g., CloudFlare, IP headers when set to false.
-	 * @return
-	 *         the remote connections IP address as a string
+	 * @param detectCDN Try to detect the use of CDNs, e.g., CloudFlare, IP headers when set to false.
+	 * @return the remote connections IP address as a string
 	 */
 	public String getIpAddr( boolean detectCDN )
 	{
@@ -614,9 +598,6 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 	public Map<String, String> getPostMapRaw()
 	{
-		if ( unmodifiableMaps )
-			return Collections.unmodifiableMap( postMap );
-
 		return postMap;
 	}
 
@@ -642,28 +623,52 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		return getHeader( "Host" );
 	}
 
-	public Map<String, Object> getRequestMap()
+	public Map<String, Object> getRequestMap() throws Exception
 	{
 		return parseMapArrays( getRequestMapRaw() );
 	}
 
-	public Map<String, String> getRequestMapRaw()
+	public Map<String, String> getRequestMapRaw() throws Exception
 	{
-		Map<String, String> requestMap = new HashMap<String, String>();
+		Map<String, String> requestMap = new TreeMap<>();
 
 		if ( getMap != null )
-			requestMap.putAll( getMap );
+			mergeMaps( requestMap, getMap );
 
 		if ( postMap != null )
-			requestMap.putAll( postMap );
+			mergeMaps( requestMap, postMap );
 
 		if ( rewriteMap != null )
-			requestMap.putAll( rewriteMap );
-
-		if ( unmodifiableMaps )
-			return Collections.unmodifiableMap( requestMap );
+			mergeMaps( requestMap, rewriteMap );
 
 		return requestMap;
+	}
+
+	public <T extends Object> void mergeMaps( Map<String, T> desc, Map<String, T>... maps ) throws Exception
+	{
+		if ( maps == null || maps.length == 0 )
+			return;
+
+		// It's important to note that each of these maps will overwrite the current map. If it's rewriteMap contains a key that exists in getMap, the ladder will be overwritten.
+
+		for ( Map<String, T> map : maps )
+		{
+			boolean hadConflicts = false;
+
+			for ( Entry<String, T> entry : map.entrySet() )
+			{
+				if ( desc.containsKey( entry.getKey() ) )
+					hadConflicts = true;
+				desc.put( entry.getKey(), entry.getValue() );
+			}
+
+			if ( hadConflicts )
+			{
+				MapCollisionException e = new MapCollisionException();
+				ExceptionReport.throwExceptions( e );
+				log.exceptions( e );
+			}
+		}
 	}
 
 	public int getRequestTime()
@@ -678,9 +683,6 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 	public Map<String, String> getRewriteMap()
 	{
-		if ( unmodifiableMaps )
-			return Collections.unmodifiableMap( rewriteMap );
-
 		return rewriteMap;
 	}
 
@@ -819,16 +821,23 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		if ( getAuth() != null )
 		{
 			// Implement authorization as an optional builtin manageable feature, e.g., .htdigest.
-			vars.put( ServerVars.AUTH_DIGEST, getAuth().getDigest() );
-			vars.put( ServerVars.AUTH_USER, getAuth().getUsername() );
-			vars.put( ServerVars.AUTH_PW, getAuth().getPassword() );
+
+			if ( auth.isDigest() )
+				vars.put( ServerVars.AUTH_DIGEST, getAuth().getDigest() );
+
+			if ( auth.isBasic() )
+			{
+				vars.put( ServerVars.AUTH_USER, getAuth().getUsername() );
+				vars.put( ServerVars.AUTH_PW, getAuth().getPassword() );
+			}
+
 			vars.put( ServerVars.AUTH_TYPE, getAuth().getType() );
 		}
 	}
 
 	/**
 	 * Tries to check the "X-requested-with" header.
-	 * Not a guaranteed method to determined if a request was made with AJAX since this header is not always set.
+	 * Not a guaranteed method to determine if a request was made with AJAX since this header is not always set.
 	 *
 	 * @return Was the request made with AJAX
 	 */
@@ -1105,7 +1114,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 					msg = result.getCause().getMessage();
 				}
 
-				AccountManager.getLogger().warning( EnumColor.RED + "Failed Login [id='" + username + "',hasPassword='" + ( password != null && password.length() > 0 ) + "',authenticator='plaintext'`,reason='" + msg + "']" );
+				AccountManager.getLogger().warning( EnumColor.RED + "Failed Login [id='" + username + "',hasPassword='" + ( password != null && password.length() > 0 ) + "',authenticator='plaintext',reason='" + msg + "']" );
 				getResponse().sendLoginPage( result.getMessage(), null, target );
 			}
 			catch ( Throwable t )

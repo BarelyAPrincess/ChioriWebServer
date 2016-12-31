@@ -2,7 +2,7 @@
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- *
+ * <p>
  * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * All Right Reserved.
  */
@@ -10,6 +10,8 @@ package com.chiorichan.http;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.CONTINUE;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+
+import com.chiorichan.logger.Log;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -132,8 +134,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	/**
 	 * Sends the 100 continue response
 	 *
-	 * @param ctx
-	 *             the Channel
+	 * @param ctx the Channel
 	 */
 	private static void send100Continue( ChannelHandlerContext ctx )
 	{
@@ -215,8 +216,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	/**
 	 * Constructs a new HttpHandler, used within the Netty HTTP stream
 	 *
-	 * @param ssl
-	 *             Will this handler be used on a secure connection
+	 * @param ssl Will this handler be used on a secure connection
 	 */
 	public HttpHandler( boolean ssl )
 	{
@@ -428,8 +428,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	/**
 	 * Gets the {@link WebInterpreter} used to parse annotations, file encoding, and etc.
 	 *
-	 * @return
-	 *         The active interpreter
+	 * @return The active interpreter
 	 */
 	public WebInterpreter getInterpreter()
 	{
@@ -439,8 +438,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	/**
 	 * Gets the origin HTTP request
 	 *
-	 * @return
-	 *         The HTTP request
+	 * @return The HTTP request
 	 */
 	public HttpRequestWrapper getRequest()
 	{
@@ -450,8 +448,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	/**
 	 * Gets the destination HTTP response
 	 *
-	 * @return
-	 *         The HTTP Response
+	 * @return The HTTP Response
 	 */
 	public HttpResponseWrapper getResponse()
 	{
@@ -461,8 +458,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	/**
 	 * Gets the currently selected Session for this request
 	 *
-	 * @return
-	 *         selected Session
+	 * @return selected Session
 	 */
 	public Session getSession()
 	{
@@ -472,8 +468,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	/**
 	 * Gets the currently selected Site for this request
 	 *
-	 * @return
-	 *         selected Site
+	 * @return selected Site
 	 */
 	public Site getSite()
 	{
@@ -483,18 +478,12 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	/**
 	 * Handles the HTTP request. Each HTTP subsystem will be explicitly activated until a resolve is determined.
 	 *
-	 * @throws IOException
-	 *              Universal exception for all Input/Output errors
-	 * @throws HttpError
-	 *              for HTTP Errors
-	 * @throws PermissionException
-	 *              for permission problems, like access denied
-	 * @throws MultipleException
-	 *              for multiple Scripting Factory Evaluation Exceptions
-	 * @throws ScriptingException
-	 *              for Scripting Factory Evaluation Exception
-	 * @throws SessionException
-	 *              for problems initializing a new or used session
+	 * @throws IOException         Universal exception for all Input/Output errors
+	 * @throws HttpError           for HTTP Errors
+	 * @throws PermissionException for permission problems, like access denied
+	 * @throws MultipleException   for multiple Scripting Factory Evaluation Exceptions
+	 * @throws ScriptingException  for Scripting Factory Evaluation Exception
+	 * @throws SessionException    for problems initializing a new or used session
 	 */
 	private void handleHttp() throws Exception // IOException, HttpError, SiteException, PermissionException, MultipleException, ScriptingException, SessionException
 	{
@@ -575,8 +564,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		 * REQUIRED means a forbidden error will be thrown is it can not be accomplished
 		 *
 		 * Options include:
-		 * Preferred: If SSL is available, we preferred to be switched to it
-		 * PostOnly: SSL is REQUIRED is this is a POST request
+		 * Preferred: If SSL is available, we prefer to use it
+		 * PostOnly: SSL is REQUIRED if this is a POST request
 		 * GetOnly: SSL is REQUIRED if this is a GET request
 		 * Required: SSL is REQUIRED, no exceptions!
 		 * Deny: SSL is DENIED, no exceptions!
@@ -684,9 +673,13 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		request.setGlobal( "_REWRITE", request.getRewriteMap() );
 		request.setGlobal( "_FILES", request.getUploadedFiles() );
 
-		// TODO Implement NONCE requirement for login page
+		/**
+		 * Nonce is separately verified by the login form.
+		 * So regardless what the nonce level is, nonce will have to be initialized by the login form.
+		 */
+
 		NonceLevel level = NonceLevel.parse( fi.get( "nonce" ) );
-		boolean nonceProvided = sess.nonce() == null ? false : request.getRequestMap().get( sess.nonce().key() ) != null;
+		boolean nonceProvided = sess.nonce() == null ? false : request.getRequestMap().containsKey( sess.nonce().key() );
 		boolean processNonce = false;
 
 		switch ( level )
@@ -712,35 +705,35 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 
 		if ( processNonce )
 		{
+			Nonce nonce = sess.nonce();
+
 			if ( !nonceProvided )
 			{
-				log.log( Level.SEVERE, "The request has failed NONCE validation, because the nonce key was not present!" );
-				response.sendError( HttpResponseStatus.FORBIDDEN, "Your request has failed NONCE validation!" );
+				log.log( Level.SEVERE, String.format( "Request failed NONCE validation, key is missing and/or nonce was not initialized. Key [%s]", nonce == null ? "null" : nonce.key() ) );
+				response.sendError( HttpResponseStatus.FORBIDDEN, "Request Failed NONCE Validation", "Key is missing and/or nonce was not initialized." );
 				return;
 			}
 
-			Nonce nonce = sess.nonce();
-
 			if ( level == NonceLevel.Required )
-				// Required NonceLevels are of the highest protected state
+				// Required nonce levels are of the highest protected state
 				sess.destroyNonce();
 
 			try
 			{
-				if ( ! ( request.getRequestMap().get( nonce.key() ) instanceof String ) )
+				if ( !( request.getRequestMap().get( nonce.key() ) instanceof String ) )
 					throw new NonceException( "Nonce token is not a string" );
 				nonce.validateWithException( ( String ) request.getRequestMap().get( nonce.key() ) );
 			}
 			catch ( NonceException e )
 			{
-				log.log( Level.SEVERE, "The request has failed NONCE validation, because " + e.getMessage().toLowerCase() + "!" );
-				response.sendError( HttpResponseStatus.FORBIDDEN, "Your request has failed NONCE validation!" );
+				log.log( Level.SEVERE, "Request failed NONCE validation. \"" + e.getMessage() + "\"" );
+				response.sendError( HttpResponseStatus.FORBIDDEN, "Request Failed NONCE Validation", e.getMessage() );
 				sess.destroyNonce();
 				return;
 			}
 			finally
 			{
-				log.log( Level.INFO, "The request has passed the NONCE validation!" );
+				log.log( Level.INFO, "Request PASSED NONCE validation." );
 				request.nonceProcessed( true );
 				nonceMap = nonce.mapValues();
 			}
@@ -798,10 +791,11 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 
 			if ( result.hasExceptions() )
 				// TODO Print notices to output like PHP does
-				for ( ScriptingException e : result.getExceptions() )
+				for ( IException e : result.getExceptions() )
 				{
 					ExceptionReport.throwExceptions( e );
-					log.exceptions( e );
+					if ( e instanceof Throwable )
+						log.exceptions( ( Throwable ) e );
 					if ( e.reportingLevel().isEnabled() )
 						rendered.writeBytes( e.getMessage().getBytes() );
 				}
@@ -809,7 +803,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			if ( result.isSuccessful() )
 			{
 				rendered.writeBytes( result.content() );
-				if ( result.getObject() != null && ! ( result.getObject() instanceof NullObject ) )
+				if ( result.getObject() != null && !( result.getObject() instanceof NullObject ) )
 					try
 					{
 						rendered.writeBytes( ObjectFunc.castToStringWithException( result.getObject() ).getBytes() );
@@ -837,10 +831,11 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 
 			if ( result.hasExceptions() )
 				// TODO Print notices to output like PHP does
-				for ( ScriptingException e : result.getExceptions() )
+				for ( IException e : result.getExceptions() )
 				{
 					ExceptionReport.throwExceptions( e );
-					log.exceptions( e );
+					if ( e instanceof Throwable )
+						log.exceptions( ( Throwable ) e );
 					if ( e.reportingLevel().isEnabled() && e.getMessage() != null )
 						rendered.writeBytes( e.getMessage().getBytes() );
 				}
@@ -848,7 +843,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			if ( result.isSuccessful() )
 			{
 				rendered.writeBytes( result.content() );
-				if ( result.getObject() != null && ! ( result.getObject() instanceof NullObject ) )
+				if ( result.getObject() != null && !( result.getObject() instanceof NullObject ) )
 					try
 					{
 						rendered.writeBytes( ObjectFunc.castToStringWithException( result.getObject() ).getBytes() );
@@ -953,7 +948,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			else if ( threadName.length() < 10 )
 				threadName = threadName + Strings.repeat( " ", 10 - threadName.length() );
 
-			log.header( "&7[&d%s&7] %s %s [&9%s:%s&7] -> [&a%s:%s&7]", threadName, dateFormat.format( Timings.millis() ), timeFormat.format( Timings.millis() ), request.getIpAddr(), request.getRemotePort(), request.getLocalIpAddr(), request.getLocalPort() );
+			log.header( "&7[&d%s&7] %s %s &9[%s]:%s&7 -> &a[%s]:%s&7", threadName, dateFormat.format( Timings.millis() ), timeFormat.format( Timings.millis() ), request.getIpAddr(), request.getRemotePort(), request.getLocalIpAddr(), request.getLocalPort() );
 
 			if ( HttpHeaderUtil.is100ContinueExpected( ( HttpRequest ) msg ) )
 				send100Continue( ctx );
@@ -1045,7 +1040,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				return;
 			}
 
-			if ( ! ( frame instanceof TextWebSocketFrame ) )
+			if ( !( frame instanceof TextWebSocketFrame ) )
 				throw new UnsupportedOperationException( String.format( "%s frame types are not supported", frame.getClass().getName() ) );
 
 			String request = ( ( TextWebSocketFrame ) frame ).text();
@@ -1063,10 +1058,8 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	/**
 	 * Write a directory listing to the HTTP destination
 	 *
-	 * @throws HttpError
-	 *              for HTTP errors
-	 * @throws IOException
-	 *              for universal Input/Output problems
+	 * @throws HttpError   for HTTP errors
+	 * @throws IOException for universal Input/Output problems
 	 */
 	public void processDirectoryListing() throws HttpError, IOException
 	{
