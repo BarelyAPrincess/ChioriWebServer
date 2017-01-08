@@ -32,7 +32,7 @@ import com.chiorichan.site.Site
 public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 {
 	/**
-	 * Same as {@link Builtin#var_export(obj)} but instead prints the result to the buffer
+	 * Same as {@link com.chiorichan.factory.api.Builtin#var_export(obj)} but instead prints the result to the buffer
 	 * Based on method of same name in PHP
 	 * @param obj
 	 *       The object you wish to dump
@@ -44,7 +44,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 
 	/**
 	 * Returns the current HttpRequestWrapper instance
-	 * XXX This is set inside the {@link HttpRequestWrapper#sessionStarted} and {@link SessionWrapper#startSession}, this needs looking over for other types
+	 * XXX This is set inside the {@link HttpRequestWrapper#sessionStarted} and {@link com.chiorichan.session.SessionWrapper#startSession}, this needs looking over for other types
 	 *
 	 * @return current instance
 	 */
@@ -55,7 +55,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 
 	/**
 	 * Returns the current HttpResponseWrapper instance
-	 * XXX This is set inside the {@link HttpRequestWrapper#sessionStarted} and {@link SessionWrapper#startSession}, this needs looking over for other types
+	 * XXX This is set inside the {@link HttpRequestWrapper#sessionStarted} and {@link com.chiorichan.session.SessionWrapper#startSession}, this needs looking over for other types
 	 *
 	 * @return current instance
 	 */
@@ -83,6 +83,48 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	void echo( String var )
 	{
 		println var
+	}
+
+	/**
+	 * Determine if a variable is set and is not NULL.
+	 * <p>
+	 * If a variable has been unset with unset(), it will no longer be set. isset() will return FALSE if testing a variable that has been set to NULL. Also note that a null character ("\0") is not equivalent to the PHP NULL constant.
+	 * <p>
+	 * If multiple parameters are supplied then isset() will return TRUE only if all of the parameters are set. Evaluation goes from left to right and stops as soon as an unset variable is encountered.
+	 *
+	 * @param names The varibles to be checked
+	 * @return Returns TRUE if var exists and has value other than NULL. FALSE otherwise.
+	 */
+	boolean isset( String... names )
+	{
+		for ( String name : names )
+		{
+			if ( getPropertySafe( name ) == null )
+			{
+				return false
+			}
+		}
+		return true;
+	}
+
+	void unset( String name )
+	{
+		setProperty( name, null );
+	}
+
+	def last( Collection<?> collection )
+	{
+		return collection.last();
+	}
+
+	def first( Collection<?> collection )
+	{
+		return collection.first();
+	}
+
+	boolean hasProperty( String name )
+	{
+		return getPropertySafe( name ) != null;
 	}
 
 	Object getPropertySafe( String name )

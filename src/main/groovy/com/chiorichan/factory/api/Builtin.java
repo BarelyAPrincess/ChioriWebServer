@@ -8,6 +8,7 @@
  */
 package com.chiorichan.factory.api;
 
+import com.chiorichan.util.*;
 import groovy.lang.Script;
 
 import java.io.File;
@@ -32,11 +33,6 @@ import com.chiorichan.database.DatabaseEngineLegacy;
 import com.chiorichan.lang.DiedException;
 import com.chiorichan.logger.Log;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.util.FileFunc;
-import com.chiorichan.util.ObjectFunc;
-import com.chiorichan.util.SecureFunc;
-import com.chiorichan.util.StringFunc;
-import com.chiorichan.util.Versioning;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -695,11 +691,6 @@ public abstract class Builtin extends Script
 		return str.length() == pos.getIndex();
 	}
 
-	public static boolean isset( Object obj )
-	{
-		return obj != null;
-	}
-
 	public static String md5( String str )
 	{
 		return SecureFunc.md5( str );
@@ -897,7 +888,14 @@ public abstract class Builtin extends Script
 	 */
 	public void echo( Object obj )
 	{
-		print( obj );
+		try
+		{
+			print( WebFunc.escapeHTML( ( String ) obj ) );
+		}
+		catch ( ClassCastException e )
+		{
+			print( obj );
+		}
 	}
 
 	public void exit() throws DiedException
