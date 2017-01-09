@@ -1,12 +1,25 @@
+/**
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE file for details.
+ * <p>
+ * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * All Rights Reserved
+ */
 package com.chiorichan.factory.models;
 
 import com.chiorichan.datastore.sql.SQLBase;
 import com.chiorichan.factory.api.Builtin;
 import com.chiorichan.util.ObjectFunc;
-import com.chiorichan.util.StringFunc;
 
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Set;
 
 public class SQLModelResults implements List<SQLModel>
 {

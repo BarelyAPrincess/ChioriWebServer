@@ -1,28 +1,11 @@
 /**
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE file for details.
  * <p>
- * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Right Reserved.
+ * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * All Rights Reserved
  */
 package com.chiorichan;
-
-import io.netty.util.internal.logging.InternalLoggerFactory;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.UUID;
-
-import joptsimple.OptionParser;
-
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.io.FileUtils;
-
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
 
 import com.chiorichan.lang.ApplicationException;
 import com.chiorichan.lang.EnumColor;
@@ -41,8 +24,20 @@ import com.chiorichan.util.Application;
 import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.NetworkFunc;
 import com.chiorichan.util.Versioning;
+import io.netty.util.internal.logging.InternalLoggerFactory;
+import joptsimple.OptionParser;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.FileUtils;
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
 
-@SuppressWarnings( "restriction" ) public class Loader extends AppLoader
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.UUID;
+
+@SuppressWarnings( "restriction" )
+public class Loader extends AppLoader
 {
 	private static File webroot = new File( "" );
 
@@ -284,7 +279,8 @@ import com.chiorichan.util.Versioning;
 		{
 			SignalHandler handler = new SignalHandler()
 			{
-				@Override public void handle( Signal arg0 )
+				@Override
+				public void handle( Signal arg0 )
 				{
 					AppController.stopApplication( "Received SIGTERM - Terminate" );
 				}
@@ -308,7 +304,8 @@ import com.chiorichan.util.Versioning;
 		return AppConfig.get().getBoolean( "white-list", false );
 	}
 
-	@Override public void onRunlevelChange( RunLevel level ) throws ApplicationException
+	@Override
+	public void onRunlevelChange( RunLevel level ) throws ApplicationException
 	{
 		switch ( level )
 		{
@@ -403,7 +400,8 @@ import com.chiorichan.util.Versioning;
 		}
 	}
 
-	@Override public String toString()
+	@Override
+	public String toString()
 	{
 		return Versioning.getProduct() + " " + Versioning.getVersion();
 	}

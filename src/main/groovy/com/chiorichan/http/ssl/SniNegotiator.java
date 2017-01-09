@@ -1,40 +1,35 @@
 /**
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- *
- * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Right Reserved.
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE file for details.
+ * <p>
+ * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * All Rights Reserved
  */
 package com.chiorichan.http.ssl;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.ByteToMessageDecoder;
-import io.netty.handler.ssl.NotSslRecordException;
-import io.netty.handler.ssl.SniHandler;
-import io.netty.handler.ssl.SslContext;
-import io.netty.util.CharsetUtil;
-import io.netty.util.internal.logging.InternalLogger;
-import io.netty.util.internal.logging.InternalLoggerFactory;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.IDN;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-
-import javax.net.ssl.SSLEngine;
-
-import org.apache.commons.io.FileUtils;
 
 import com.chiorichan.AppConfig;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.util.FileFunc;
 import com.google.common.collect.Lists;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.ByteToMessageDecoder;
+import io.netty.handler.ssl.SniHandler;
+import io.netty.handler.ssl.SslContext;
+import io.netty.util.CharsetUtil;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
+import org.apache.commons.io.FileUtils;
+
+import javax.net.ssl.SSLEngine;
+import java.io.File;
+import java.io.IOException;
+import java.net.IDN;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * <p>
@@ -164,7 +159,7 @@ public class SniNegotiator extends ByteToMessageDecoder
 				engine.setUseClientMode( false );
 				engine.setEnabledCipherSuites( enabledCipherSuites.toArray( new String[0] ) );
 
-				ctx.pipeline().replace(this, ctx.name(), new SslExceptionHandler(engine));
+				ctx.pipeline().replace( this, ctx.name(), new SslExceptionHandler( engine ) );
 			}
 		}
 	}

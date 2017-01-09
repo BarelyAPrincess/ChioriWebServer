@@ -1,23 +1,20 @@
 /**
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE file for details.
  * <p>
- * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Right Reserved.
+ * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * All Rights Reserved
  */
 package com.chiorichan.factory.parsers;
-
-import com.chiorichan.lang.IException;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.factory.ScriptingResult;
 import com.chiorichan.lang.ExceptionReport;
-import com.chiorichan.lang.ScriptingException;
+import com.chiorichan.lang.IException;
 import com.chiorichan.logger.Log;
 import com.chiorichan.site.Site;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 /**
  * Using the {@link HTMLCommentParser} we attempt to parse the source for include methods, i.e., {@literal <!-- include(com.chiorichan.widget.menu) -->}

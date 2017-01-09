@@ -109,6 +109,9 @@ checkstyle
 	configProperties = ["basedir":project.projectDir]
 }
 
+// checkstyleMain.source = "src/main/groovy"
+// checkstyleMain.exclude '**//**'
+
 eclipse
 {
 	project
@@ -170,7 +173,7 @@ dependencies
 	compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version: '4.7'
 
 	// Used to evalute GroovyScripts server-side
-	compile group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.4.3'
+	compile group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.4.7'
 
 	// Used for easy reflections, e.g., find all classes within package for imports
 	compile group: 'org.reflections', name: 'reflections', version: '0.9.9'
@@ -260,7 +263,7 @@ task writePropertiesFile {
 	}
 }
 
-task wrapper(type: Wrapper) { gradleVersion = '2.11' }
+task wrapper(type: Wrapper) { gradleVersion = '3.3' }
 
 jar.dependsOn writePropertiesFile
 

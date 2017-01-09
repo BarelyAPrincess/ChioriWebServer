@@ -1,15 +1,34 @@
 /**
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE file for details.
  * <p>
- * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Right Reserved.
+ * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * All Rights Reserved
  */
 package com.chiorichan.factory.api;
 
-import com.chiorichan.util.*;
+import com.chiorichan.AppConfig;
+import com.chiorichan.database.DatabaseEngineLegacy;
+import com.chiorichan.lang.DiedException;
+import com.chiorichan.logger.Log;
+import com.chiorichan.tasks.Timings;
+import com.chiorichan.util.FileFunc;
+import com.chiorichan.util.ObjectFunc;
+import com.chiorichan.util.SecureFunc;
+import com.chiorichan.util.StringFunc;
+import com.chiorichan.util.Versioning;
+import com.chiorichan.util.WebFunc;
+import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.i18n.phonenumbers.NumberParseException;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
+import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 import groovy.lang.Script;
+import org.ocpsoft.prettytime.PrettyTime;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
@@ -23,25 +42,16 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Map.Entry;
-
-import org.ocpsoft.prettytime.PrettyTime;
-
-import com.chiorichan.AppConfig;
-import com.chiorichan.database.DatabaseEngineLegacy;
-import com.chiorichan.lang.DiedException;
-import com.chiorichan.logger.Log;
-import com.chiorichan.tasks.Timings;
-import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.i18n.phonenumbers.NumberParseException;
-import com.google.i18n.phonenumbers.PhoneNumberUtil;
-import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
-import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
+import java.util.TreeMap;
 
 public abstract class Builtin extends Script
 {

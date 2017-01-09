@@ -1,21 +1,12 @@
 package com.chiorichan.plugin.template;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.Validate;
-
 import com.chiorichan.InterpreterOverrides;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.factory.ScriptingResult;
 import com.chiorichan.lang.ScriptingException;
+import com.chiorichan.logger.Log;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.site.SiteManager;
@@ -23,6 +14,10 @@ import com.chiorichan.util.FileFunc;
 import com.chiorichan.util.NetworkFunc;
 import com.chiorichan.util.Versioning;
 import com.chiorichan.util.WebFunc;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.Validate;
+
+import java.io.*;
 
 /**
  * Chiori-chan's Web Server Template Plugin
@@ -47,6 +42,9 @@ public class TemplateUtils
 
 		for ( StackTraceElement ste : stackTrace )
 		{
+			if ( ste.getFileName() == null && ste.getLineNumber() == -1 )
+				continue;
+
 			String fileName = ste.getFileName() == null ? "<Unknown Source>" : ste.getFileName() + ( ste.getLineNumber() > -1 ? String.format( "(%s)", ste.getLineNumber() ) : "" );
 			String codePreview = "There is no source code available for this preview";
 			String codePreviewType = "core";
@@ -143,20 +141,22 @@ public class TemplateUtils
 
 	static String generateCodePreview( StackTraceElement ste )
 	{
-		// TODO Match the server version to the correct commit on the github. The closer the better.
+		// TODO Match the server version to the correct commit on the GitHub. The closer the better.
 
 		try
 		{
 			String className = ste.getClassName();
+			if ( className.contains( "$" ) )
+				className = className.substring( 0, className.indexOf( "$" ) );
 			int lineNum = ste.getLineNumber();
 			byte[] result = null;
 
-			String urlAppend = className.replace( '.', '/' ).replace( "$1", "" ) + "." + InterpreterOverrides.getFileExtension( ste.getFileName() );
+			String urlAppend = className.replace( '.', '/' ) + "." + InterpreterOverrides.getFileExtension( ste.getFileName() );
 			String url = null;
 
 			Plugin plugin;
 
-			plugin = PluginManager.instance().getPluginByClassWithoutException( Class.forName( ste.getClassName() ) );
+			plugin = PluginManager.instance().getPluginByClassWithoutException( Class.forName( className ) );
 
 			if ( plugin != null )
 			{
@@ -168,7 +168,7 @@ public class TemplateUtils
 					result = NetworkFunc.readUrl( url + urlAppend );
 				}
 				else
-					return String.format( "Plugin %s does not have a github base url.", plugin.getName() );
+					return String.format( "Plugin %s does not have a GitHub base url.", plugin.getName() );
 			}
 			else if ( className.startsWith( "com.chiorichan." ) )
 			{
@@ -186,7 +186,7 @@ public class TemplateUtils
 				}
 
 				if ( result == null )
-					return String.format( "Could not read file '%s' from the GitHub repository.\nYou could be running an outdated version or this file belongs to another repository.", urlAppend );
+					return String.format( "Could not read file '%s' from GitHub.\nYou could be running an outdated version or this file belongs to another repository.", urlAppend );
 			}
 			else
 				return "There is no source code available for this preview";
@@ -194,11 +194,11 @@ public class TemplateUtils
 			if ( result == null || url == null )
 				return "Failed to get source code from GitHub repository";
 			else
-				return String.format( "%s<br /><a target=\"_blank\" href=\"%s\">View this file on our GitHub!</a>", generateCodePreview( new String( result ), lineNum ), url );
+				return String.format( "%s<br /><a target=\"_blank\" href=\"%s\">View this file on GitHub!</a>", generateCodePreview( new String( result ), lineNum ), url );
 		}
 		catch ( Throwable t )
 		{
-			PluginManager.instance().getPluginByClassWithoutException( Template.class ).getLogger().severe( "Failed to get %s from GitHub repository", ste.getFileName(), t );
+			PluginManager.instance().getPluginByClassWithoutException( Template.class ).getLogger().severe( String.format( "Failed to get %s from GitHub repository.", ste.getFileName() ), t );
 			return "Failed to get source code from GitHub repository";
 		}
 	}

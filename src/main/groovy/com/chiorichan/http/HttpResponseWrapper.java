@@ -1,16 +1,28 @@
 /**
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE file for details.
  * <p>
- * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Right Reserved.
+ * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * All Rights Reserved
  */
 package com.chiorichan.http;
 
+import com.chiorichan.AppConfig;
+import com.chiorichan.event.EventBus;
+import com.chiorichan.event.http.ErrorEvent;
+import com.chiorichan.event.http.HttpExceptionEvent;
+import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.api.Builtin;
-import com.chiorichan.factory.api.Server;
+import com.chiorichan.lang.HttpError;
+import com.chiorichan.logger.experimental.LogEvent;
+import com.chiorichan.net.NetworkManager;
+import com.chiorichan.session.Session;
+import com.chiorichan.session.SessionException;
+import com.chiorichan.util.ObjectFunc;
+import com.chiorichan.util.Versioning;
 import com.chiorichan.util.WebFunc;
+import com.google.common.base.Charsets;
+import com.google.common.collect.Maps;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
@@ -29,31 +41,19 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.stream.ChunkedStream;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
-
-import org.apache.commons.lang3.exception.ExceptionUtils;
-
-import com.chiorichan.AppConfig;
-import com.chiorichan.event.EventBus;
-import com.chiorichan.event.http.ErrorEvent;
-import com.chiorichan.event.http.HttpExceptionEvent;
-import com.chiorichan.factory.ScriptingContext;
-import com.chiorichan.lang.HttpError;
-import com.chiorichan.logger.experimental.LogEvent;
-import com.chiorichan.net.NetworkManager;
-import com.chiorichan.session.Session;
-import com.chiorichan.session.SessionException;
-import com.chiorichan.util.ObjectFunc;
-import com.chiorichan.util.Versioning;
-import com.google.common.base.Charsets;
-import com.google.common.collect.Maps;
 
 /**
  * Wraps the Netty HttpResponse to provide easy methods for manipulating the result of each request
@@ -340,7 +340,10 @@ public class HttpResponseWrapper
 						add( "<b>" + WebFunc.escapeHTML( e.getKey() ) + "</b>" );
 						try
 						{
-							add( WebFunc.escapeHTML( ( String ) e.getValue() ) );
+							if ( e.getKey().toLowerCase().contains( "password" ) )
+								add( "(hidden)" );
+							else
+								add( WebFunc.escapeHTML( ( String ) e.getValue() ) );
 						}
 						catch ( ClassCastException e )
 						{

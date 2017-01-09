@@ -1,17 +1,55 @@
 /**
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE file for details.
  * <p>
- * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Right Reserved.
+ * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * All Rights Reserved
  */
 package com.chiorichan.http;
 
-import static io.netty.handler.codec.http.HttpResponseStatus.CONTINUE;
-import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
-
-import com.chiorichan.logger.Log;
+import com.chiorichan.AppConfig;
+import com.chiorichan.AppLoader;
+import com.chiorichan.ContentTypes;
+import com.chiorichan.configuration.apache.ApacheConfiguration;
+import com.chiorichan.configuration.apache.ApacheDirectiveException;
+import com.chiorichan.event.EventBus;
+import com.chiorichan.event.EventException;
+import com.chiorichan.event.http.RenderEvent;
+import com.chiorichan.event.http.RequestEvent;
+import com.chiorichan.factory.ScriptTraceElement;
+import com.chiorichan.factory.ScriptingContext;
+import com.chiorichan.factory.ScriptingFactory;
+import com.chiorichan.factory.ScriptingResult;
+import com.chiorichan.http.Nonce.NonceLevel;
+import com.chiorichan.http.ssl.SslLevel;
+import com.chiorichan.lang.EnumColor;
+import com.chiorichan.lang.ExceptionReport;
+import com.chiorichan.lang.HttpError;
+import com.chiorichan.lang.IException;
+import com.chiorichan.lang.MultipleException;
+import com.chiorichan.lang.NonceException;
+import com.chiorichan.lang.ReportingLevel;
+import com.chiorichan.lang.RunLevel;
+import com.chiorichan.lang.ScriptingException;
+import com.chiorichan.logger.experimental.LogEvent;
+import com.chiorichan.logger.experimental.LogManager;
+import com.chiorichan.net.NetworkManager;
+import com.chiorichan.net.NetworkSecurity;
+import com.chiorichan.net.NetworkSecurity.IpStrikeType;
+import com.chiorichan.permission.lang.PermissionDeniedException;
+import com.chiorichan.permission.lang.PermissionDeniedException.PermissionDeniedReason;
+import com.chiorichan.session.Session;
+import com.chiorichan.site.Site;
+import com.chiorichan.tasks.Timings;
+import com.chiorichan.util.ObjectFunc;
+import com.chiorichan.util.StringFunc;
+import com.chiorichan.util.Versioning;
+import com.chiorichan.util.WebFunc;
+import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -45,6 +83,8 @@ import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
 import io.netty.util.IllegalReferenceCountException;
+import org.apache.commons.lang3.Validate;
+import org.codehaus.groovy.runtime.NullObject;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,54 +97,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 
-import org.apache.commons.lang3.Validate;
-import org.codehaus.groovy.runtime.NullObject;
-
-import com.chiorichan.AppConfig;
-import com.chiorichan.AppLoader;
-import com.chiorichan.ContentTypes;
-import com.chiorichan.configuration.apache.ApacheConfiguration;
-import com.chiorichan.configuration.apache.ApacheDirectiveException;
-import com.chiorichan.event.EventBus;
-import com.chiorichan.event.EventException;
-import com.chiorichan.event.http.RenderEvent;
-import com.chiorichan.event.http.RequestEvent;
-import com.chiorichan.factory.ScriptTraceElement;
-import com.chiorichan.factory.ScriptingContext;
-import com.chiorichan.factory.ScriptingFactory;
-import com.chiorichan.factory.ScriptingResult;
-import com.chiorichan.http.Nonce.NonceLevel;
-import com.chiorichan.http.ssl.SslLevel;
-import com.chiorichan.lang.EnumColor;
-import com.chiorichan.lang.ExceptionReport;
-import com.chiorichan.lang.HttpError;
-import com.chiorichan.lang.IException;
-import com.chiorichan.lang.MultipleException;
-import com.chiorichan.lang.NonceException;
-import com.chiorichan.lang.ReportingLevel;
-import com.chiorichan.lang.RunLevel;
-import com.chiorichan.lang.ScriptingException;
-import com.chiorichan.logger.experimental.LogEvent;
-import com.chiorichan.logger.experimental.LogManager;
-import com.chiorichan.net.NetworkManager;
-import com.chiorichan.net.NetworkSecurity;
-import com.chiorichan.net.NetworkSecurity.IpStrikeType;
-import com.chiorichan.permission.lang.PermissionDeniedException;
-import com.chiorichan.permission.lang.PermissionDeniedException.PermissionDeniedReason;
-import com.chiorichan.permission.lang.PermissionException;
-import com.chiorichan.session.Session;
-import com.chiorichan.session.SessionException;
-import com.chiorichan.site.Site;
-import com.chiorichan.tasks.Timings;
-import com.chiorichan.util.ObjectFunc;
-import com.chiorichan.util.StringFunc;
-import com.chiorichan.util.Versioning;
-import com.chiorichan.util.WebFunc;
-import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
-import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import static io.netty.handler.codec.http.HttpResponseStatus.CONTINUE;
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 /**
  * Handles both HTTP and HTTPS connections for Netty.
@@ -478,12 +472,12 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	/**
 	 * Handles the HTTP request. Each HTTP subsystem will be explicitly activated until a resolve is determined.
 	 *
-	 * @throws IOException         Universal exception for all Input/Output errors
-	 * @throws HttpError           for HTTP Errors
-	 * @throws PermissionException for permission problems, like access denied
-	 * @throws MultipleException   for multiple Scripting Factory Evaluation Exceptions
-	 * @throws ScriptingException  for Scripting Factory Evaluation Exception
-	 * @throws SessionException    for problems initializing a new or used session
+	 * @throws IOException                                        Universal exception for all Input/Output errors
+	 * @throws com.chiorichan.lang.HttpError                      for HTTP Errors
+	 * @throws com.chiorichan.permission.lang.PermissionException for permission problems, like access denied
+	 * @throws com.chiorichan.lang.MultipleException              for multiple Scripting Factory Evaluation Exceptions
+	 * @throws com.chiorichan.lang.ScriptingException             for Scripting Factory Evaluation Exception
+	 * @throws com.chiorichan.session.SessionException            for problems initializing a new or used session
 	 */
 	private void handleHttp() throws Exception // IOException, HttpError, SiteException, PermissionException, MultipleException, ScriptingException, SessionException
 	{
@@ -673,7 +667,29 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		request.setGlobal( "_REWRITE", request.getRewriteMap() );
 		request.setGlobal( "_FILES", request.getUploadedFiles() );
 
-		/**
+		try
+		{
+			if ( request.getUploadedFiles().size() > 0 )
+				log.log( Level.INFO, "Uploads {" + StringFunc.limitLength( Joiner.on( "," ).skipNulls().join( request.getUploadedFiles().values() ), 255 ) + "}" );
+
+			if ( request.getGetMap().size() > 0 )
+				log.log( Level.INFO, "GetMap {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( request.getGetMap() ), 255 ) + "}" );
+
+			if ( request.getPostMap().size() > 0 )
+				log.log( Level.INFO, "PostMap {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( request.getPostMap() ), 255 ) + "}" );
+
+			if ( request.getRewriteMap().size() > 0 )
+				log.log( Level.INFO, "RewriteMap {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( request.getRewriteMap() ), 255 ) + "}" );
+
+			if ( fi.getAnnotations().size() > 0 )
+				log.log( Level.INFO, "Annotations {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( fi.getAnnotations() ), 255 ) + "}" );
+		}
+		catch ( Throwable t )
+		{
+			t.printStackTrace();
+		}
+
+		/*
 		 * Nonce is separately verified by the login form.
 		 * So regardless what the nonce level is, nonce will have to be initialized by the login form.
 		 */
@@ -744,28 +760,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 
 		if ( level != NonceLevel.Disabled )
 			request.setGlobal( "_NONCE", nonceMap );
-
-		try
-		{
-			if ( request.getUploadedFiles().size() > 0 )
-				log.log( Level.INFO, "Uploads {" + StringFunc.limitLength( Joiner.on( "," ).skipNulls().join( request.getUploadedFiles().values() ), 255 ) + "}" );
-
-			if ( request.getGetMap().size() > 0 )
-				log.log( Level.INFO, "Params GET {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( request.getGetMap() ), 255 ) + "}" );
-
-			if ( request.getPostMap().size() > 0 )
-				log.log( Level.INFO, "Params POST {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( request.getPostMap() ), 255 ) + "}" );
-
-			if ( request.getRewriteMap().size() > 0 )
-				log.log( Level.INFO, "Params REWRITE {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( request.getRewriteMap() ), 255 ) + "}" );
-
-			if ( fi.getAnnotations().size() > 0 )
-				log.log( Level.INFO, "Params ANNOTATIONS {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( fi.getAnnotations() ), 255 ) + "}" );
-		}
-		catch ( Throwable t )
-		{
-			t.printStackTrace();
-		}
 
 		if ( AppConfig.get().getBoolean( "advanced.security.requestMapEnabled", true ) )
 			request.setGlobal( "_REQUEST", request.getRequestMap() );

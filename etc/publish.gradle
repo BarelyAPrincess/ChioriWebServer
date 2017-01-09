@@ -39,8 +39,8 @@ publishing {
 					licenses {
 						license
 						{
-							name 'Mozilla Public License, Version 2.0'
-							url 'http://mozilla.org/MPL/2.0/'
+							name 'MIT License'
+							url 'https://opensource.org/licenses/MIT'
 							distribution 'repo'
 						}
 					}

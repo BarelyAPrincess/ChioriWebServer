@@ -1,3 +1,10 @@
+/**
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE file for details.
+ * <p>
+ * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * All Rights Reserved
+ */
 package com.chiorichan.logger;
 
 import io.netty.util.internal.logging.InternalLogLevel;
@@ -27,14 +34,14 @@ public class DefaultLogFactory extends InternalLoggerFactory
 		@Override
 		public void debug( String format, Object arg )
 		{
-			l.fine(format, arg);
+			l.fine( format, arg );
 			// l.debug( format, arg );
 		}
 
 		@Override
 		public void debug( String format, Object... args )
 		{
-			l.fine(format, args);
+			l.fine( format, args );
 			// l.debug( format, args );
 		}
 

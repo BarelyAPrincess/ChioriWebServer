@@ -1,10 +1,9 @@
 /**
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * <p>
- * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Right Reserved.
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE file for details.
+ *
+ * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * All Rights Reserved
  */
 package com.chiorichan.factory.groovy;
 
@@ -109,16 +108,6 @@ public class EmbeddedGroovyEngine implements ScriptingEngine
 				}
 			}
 
-			if ( activeMarker != null && activeMarker.getStart().equals( "<%" ) )
-				try
-				{
-					Log.get().warning( EnumColor.RED + "" + EnumColor.NEGATIVE + "DEPRECATED: Start Marker '<%' present on line " + ( StringUtils.countMatches( source.substring( 0, startIndex ), "\n" ) + 1 ) + ":" + ( startIndex - source.substring( 0, startIndex ).lastIndexOf( "\n" ) - 1 ) + " in file '" + context.filename() + "'" );
-				}
-				catch ( Exception e )
-				{
-					// Ignore
-				}
-
 			if ( startIndex > -1 )
 			{
 				// Append all the text until the marker
@@ -139,6 +128,16 @@ public class EmbeddedGroovyEngine implements ScriptingEngine
 				for ( String s : DO_NOT_PREPEND )
 					if ( fragment.startsWith( s ) )
 						prependMiddle = false;
+
+				if ( activeMarker.getStart().equals( "<%" ) && prependMiddle )
+					try
+					{
+						Log.get().warning( EnumColor.RED + "" + EnumColor.NEGATIVE + "DEPRECATED: Start Marker '<%' present on line " + ( StringUtils.countMatches( source.substring( 0, startIndex ), "\n" ) + 1 ) + ":" + ( startIndex - source.substring( 0, startIndex ).lastIndexOf( "\n" ) - 1 ) + " in file '" + context.filename() + "'" );
+					}
+					catch ( Exception e )
+					{
+						// Ignore
+					}
 
 				if ( prependMiddle )
 				{

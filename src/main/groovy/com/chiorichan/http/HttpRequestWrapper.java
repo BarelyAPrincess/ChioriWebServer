@@ -1,39 +1,11 @@
 /**
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE file for details.
  * <p>
- * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Right Reserved.
+ * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * All Rights Reserved
  */
 package com.chiorichan.http;
-
-import com.chiorichan.lang.ExceptionReport;
-import com.chiorichan.lang.MapCollisionException;
-import com.chiorichan.util.*;
-import io.netty.channel.Channel;
-import io.netty.handler.codec.http.Cookie;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpObject;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpVersion;
-import io.netty.handler.codec.http.QueryStringDecoder;
-import io.netty.handler.ssl.SslHandler;
-
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.lang.ref.WeakReference;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.URLDecoder;
-import java.net.UnknownHostException;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.logging.Level;
-
-import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.AppConfig;
 import com.chiorichan.Loader;
@@ -44,6 +16,8 @@ import com.chiorichan.account.lang.AccountDescriptiveReason;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.lang.EnumColor;
+import com.chiorichan.lang.ExceptionReport;
+import com.chiorichan.lang.MapCollisionException;
 import com.chiorichan.logger.experimental.LogEvent;
 import com.chiorichan.messaging.MessageSender;
 import com.chiorichan.net.NetworkManager;
@@ -55,11 +29,45 @@ import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.site.SiteMapping;
 import com.chiorichan.tasks.Timings;
+import com.chiorichan.util.Namespace;
+import com.chiorichan.util.NetworkFunc;
+import com.chiorichan.util.ObjectFunc;
+import com.chiorichan.util.Pair;
+import com.chiorichan.util.StringFunc;
+import com.chiorichan.util.Versioning;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import io.netty.channel.Channel;
+import io.netty.handler.codec.http.Cookie;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpObject;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.QueryStringDecoder;
+import io.netty.handler.ssl.SslHandler;
+import org.apache.commons.lang3.Validate;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.lang.ref.WeakReference;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.URLDecoder;
+import java.net.UnknownHostException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.logging.Level;
 
 /**
  * Wraps the Netty HttpRequest and provides shortcut methods

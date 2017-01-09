@@ -1,10 +1,9 @@
 /**
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE file for details.
  * <p>
- * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Right Reserved.
+ * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * All Rights Reserved
  */
 package com.chiorichan.factory;
 
@@ -13,13 +12,17 @@ import com.chiorichan.AppLoader;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.Listener;
-import com.chiorichan.factory.event.*;
+import com.chiorichan.factory.event.PostEvalEvent;
+import com.chiorichan.factory.event.PostImageProcessor;
+import com.chiorichan.factory.event.PostJSMinProcessor;
+import com.chiorichan.factory.event.PreCoffeeProcessor;
+import com.chiorichan.factory.event.PreEvalEvent;
+import com.chiorichan.factory.event.PreLessProcessor;
 import com.chiorichan.factory.groovy.GroovyRegistry;
 import com.chiorichan.factory.parsers.PreIncludesParserWrapper;
 import com.chiorichan.factory.parsers.PreLinksParserWrapper;
 import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.ScriptingException;
-import com.chiorichan.logger.Log;
 import com.chiorichan.logger.LogSource;
 import com.chiorichan.services.ObjectContext;
 import com.chiorichan.util.FileFunc;

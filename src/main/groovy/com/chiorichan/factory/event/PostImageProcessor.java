@@ -1,15 +1,24 @@
 /**
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- *
- * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Right Reserved.
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE file for details.
+ * <p>
+ * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * All Rights Reserved
  */
 package com.chiorichan.factory.event;
 
+import com.chiorichan.AppConfig;
+import com.chiorichan.event.EventHandler;
+import com.chiorichan.event.Listener;
+import com.chiorichan.factory.ScriptingContext;
+import com.chiorichan.http.HttpRequestWrapper;
+import com.chiorichan.lang.EnumColor;
+import com.chiorichan.logger.Log;
+import com.chiorichan.util.SecureFunc;
 import io.netty.buffer.ByteBufInputStream;
+import org.apache.commons.io.FileUtils;
 
+import javax.imageio.ImageIO;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -24,22 +33,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import javax.imageio.ImageIO;
-
-import org.apache.commons.io.FileUtils;
-
-import com.chiorichan.AppConfig;
-import com.chiorichan.event.EventHandler;
-import com.chiorichan.event.Listener;
-import com.chiorichan.factory.ScriptingContext;
-import com.chiorichan.factory.ScriptingFactory;
-import com.chiorichan.http.HttpRequestWrapper;
-import com.chiorichan.lang.EnumColor;
-import com.chiorichan.logger.Log;
-import com.chiorichan.util.SecureFunc;
-
 /**
- * Applies special builtin image filters post {@link ScriptingFactory} via {@link PostEvalEvent}
+ * Applies special builtin image filters post {@link com.chiorichan.factory.ScriptingFactory} via {@link PostEvalEvent}
  *
  * @author Chiori Greene, a.k.a. Chiori-chan {@literal <me@chiorichan.com>}
  */
@@ -62,7 +57,7 @@ public class PostImageProcessor implements Listener
 		}
 	}
 
-	@EventHandler( )
+	@EventHandler()
 	public void onEvent( PostEvalEvent event )
 	{
 		try

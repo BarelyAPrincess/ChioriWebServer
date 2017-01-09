@@ -1,15 +1,15 @@
 /**
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE file for details.
  * <p>
- * Copyright 2016 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Right Reserved.
+ * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * All Rights Reserved
  */
 package com.chiorichan.factory.groovy;
 
-import com.chiorichan.logger.Log;
-import com.google.common.base.Joiner;
+import com.chiorichan.factory.ScriptBinding;
+import com.chiorichan.factory.ScriptingContext;
+import com.chiorichan.factory.ScriptingEngine;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
@@ -21,10 +21,6 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
-
-import com.chiorichan.factory.ScriptBinding;
-import com.chiorichan.factory.ScriptingContext;
-import com.chiorichan.factory.ScriptingEngine;
 
 /**
  * Groovy Script Engine
