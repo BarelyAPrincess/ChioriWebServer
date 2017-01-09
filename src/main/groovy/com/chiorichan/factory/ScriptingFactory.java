@@ -19,6 +19,7 @@ import com.chiorichan.factory.parsers.PreIncludesParserWrapper;
 import com.chiorichan.factory.parsers.PreLinksParserWrapper;
 import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.ScriptingException;
+import com.chiorichan.logger.Log;
 import com.chiorichan.logger.LogSource;
 import com.chiorichan.services.ObjectContext;
 import com.chiorichan.util.FileFunc;
@@ -259,12 +260,12 @@ public class ScriptingFactory implements LogSource
 		if ( bufferStack.size() == 0 )
 			throw new IllegalStateException( "Buffer stack is empty." );
 
-		// Check for possible forgotten obEnd()'s. Could loop as each detection will move up one next level.
-		if ( bufferStack.size() >= level && bufferStack.get( level + 1 ).getValue() == StackType.OB )
-			obFlush( level + 1 );
-
 		if ( bufferStack.size() - 1 < level )
 			throw new IllegalStateException( "Buffer stack size was too low." );
+
+		// Check for possible forgotten obEnd()'s. Could loop as each detection will move up one next level.
+		if ( bufferStack.size() > level + 1 && bufferStack.get( level + 1 ).getValue() == StackType.OB )
+			obFlush( level + 1 );
 
 		// Determines if the buffer was not push'd or pop'd in the correct order, likely indicating outside manipulation of the bufferStack.
 		if ( bufferStack.size() - 1 > level )
