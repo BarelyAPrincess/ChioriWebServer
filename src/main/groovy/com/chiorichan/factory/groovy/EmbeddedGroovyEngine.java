@@ -34,10 +34,7 @@ import java.util.List;
 /**
  * ScriptingEngine for handling GSP files, i.e., Embedded Groovy File a.k.a. Groovy Server Pages.
  * <p>
- * sample:
- * <br>
- * This is plain html<%= print ", with a twist of groovy. Today's date is: " + date("") %>.
- * </p>
+ * <code>This is plain html<%= print ", with a twist of groovy. Today's date is: " + date("") %>.</code>
  */
 public class EmbeddedGroovyEngine implements ScriptingEngine
 {
@@ -122,7 +119,7 @@ public class EmbeddedGroovyEngine implements ScriptingEngine
 					// Ignore
 				}
 
-			if ( startIndex > -1 && activeMarker != null )
+			if ( startIndex > -1 )
 			{
 				// Append all the text until the marker
 				String fragment = escapeFragment( source.substring( fullFileIndex, startIndex ) );

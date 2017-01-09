@@ -23,6 +23,7 @@
     <orderEntry type="library" name="Gradle: org.reflections:reflections:0.9.9" level="project" />
     <orderEntry type="library" name="Gradle: io.netty:netty-all:5.0.0.Alpha2" level="project" />
     <orderEntry type="library" name="Gradle: mysql:mysql-connector-java:5.1.35" level="project" />
+    <orderEntry type="library" name="Gradle: mysql:mysql-connector-java:5.1.35" level="project" />
     <orderEntry type="library" name="Gradle: org.xerial:sqlite-jdbc:3.8.11.2" level="project" />
     <orderEntry type="library" name="Gradle: com.h2database:h2:1.4.187" level="project" />
     <orderEntry type="library" name="Gradle: commons-io:commons-io:2.4" level="project" />

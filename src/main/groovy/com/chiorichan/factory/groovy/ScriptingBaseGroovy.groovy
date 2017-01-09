@@ -11,19 +11,16 @@ package com.chiorichan.factory.groovy
 import com.chiorichan.account.Account
 import com.chiorichan.account.AccountManager
 import com.chiorichan.factory.ScriptingFactory
-
 import com.chiorichan.factory.api.Server
 import com.chiorichan.factory.models.SQLQueryBuilder
 import com.chiorichan.http.HttpCode
 import com.chiorichan.http.HttpRequestWrapper
 import com.chiorichan.http.HttpResponseWrapper
-import com.chiorichan.logger.Log
 import com.chiorichan.permission.PermissibleEntity
 import com.chiorichan.permission.Permission
 import com.chiorichan.permission.PermissionResult
 import com.chiorichan.session.Session
 import com.chiorichan.site.Site
-
 
 /**
  * Used as the Groovy Scripting Base and provides scripts with custom builtin methods
@@ -282,6 +279,46 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	Object require( String pack )
 	{
 		return Server.packageContext( pack ).require().eval()
+	}
+
+	private int stackLevel = -1;
+
+	void obStart()
+	{
+		stackLevel = getRequest().getEvalFactory().obStart();
+	}
+
+	void obFlush()
+	{
+		if ( stackLevel == -1 )
+		{
+			throw new IllegalStateException( "obStart() must be called first." );
+		};
+		getRequest().getEvalFactory().obFlush( stackLevel );
+	}
+
+	String obEnd()
+	{
+		if ( stackLevel == -1 )
+		{
+			throw new IllegalStateException( "obStart() must be called first." );
+		};
+		return getRequest().getEvalFactory().obEnd( stackLevel );
+	}
+
+	void section( String key )
+	{
+		getRequest().getEvalFactory().getYieldBuffer().set( key, obEnd() );
+	}
+
+	void section( String key, String value )
+	{
+		getRequest().getEvalFactory().getYieldBuffer().set( key, value );
+	}
+
+	String yield( String key )
+	{
+		return getRequest().getEvalFactory().getYieldBuffer().get( key );
 	}
 
 	SQLQueryBuilder model( String pack )

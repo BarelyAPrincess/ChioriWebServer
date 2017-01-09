@@ -20,7 +20,7 @@ import com.chiorichan.logger.Log;
 import com.chiorichan.site.Site;
 
 /**
- * Using the {@link HTMLCommentParser} we attempt to parse the source for include comments, i.e., {@literal <!-- include(com.chiorichan.widget.menu) -->}
+ * Using the {@link HTMLCommentParser} we attempt to parse the source for include methods, i.e., {@literal <!-- include(com.chiorichan.widget.menu) -->}
  */
 public class IncludesParser extends HTMLCommentParser
 {

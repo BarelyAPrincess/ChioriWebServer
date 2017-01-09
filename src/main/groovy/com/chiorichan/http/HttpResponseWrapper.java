@@ -10,6 +10,7 @@ package com.chiorichan.http;
 
 import com.chiorichan.factory.api.Builtin;
 import com.chiorichan.factory.api.Server;
+import com.chiorichan.util.WebFunc;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
@@ -336,10 +337,18 @@ public class HttpResponseWrapper
 				for ( Entry<String, ?> e : map.entrySet() )
 					add( new ArrayList<Object>()
 					{{
-						add( "<b>" + e.getKey() + "</b>" );
-						add( e.getValue() );
+						add( "<b>" + WebFunc.escapeHTML( e.getKey() ) + "</b>" );
+						try
+						{
+							add( WebFunc.escapeHTML( ( String ) e.getValue() ) );
+						}
+						catch ( ClassCastException e )
+						{
+							add( "(non-string)" );
+						}
 					}} );
 		}};
+
 		println( Builtin.createTable( tbl, "debug-table" ) );
 	}
 

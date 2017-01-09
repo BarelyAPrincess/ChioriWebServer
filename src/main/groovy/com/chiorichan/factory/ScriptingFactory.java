@@ -8,30 +8,12 @@
  */
 package com.chiorichan.factory;
 
-import com.chiorichan.logger.Log;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-
-import java.io.File;
-import java.nio.charset.Charset;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import org.apache.commons.io.Charsets;
-import org.apache.commons.lang3.Validate;
-
 import com.chiorichan.AppConfig;
 import com.chiorichan.AppLoader;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.Listener;
-import com.chiorichan.factory.event.PostEvalEvent;
-import com.chiorichan.factory.event.PostImageProcessor;
-import com.chiorichan.factory.event.PostJSMinProcessor;
-import com.chiorichan.factory.event.PreCoffeeProcessor;
-import com.chiorichan.factory.event.PreEvalEvent;
-import com.chiorichan.factory.event.PreLessProcessor;
+import com.chiorichan.factory.event.*;
 import com.chiorichan.factory.groovy.GroovyRegistry;
 import com.chiorichan.factory.parsers.PreIncludesParserWrapper;
 import com.chiorichan.factory.parsers.PreLinksParserWrapper;
@@ -40,9 +22,21 @@ import com.chiorichan.lang.ScriptingException;
 import com.chiorichan.logger.LogSource;
 import com.chiorichan.services.ObjectContext;
 import com.chiorichan.util.FileFunc;
+import com.chiorichan.util.Pair;
 import com.chiorichan.util.SecureFunc;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import org.apache.commons.io.Charsets;
+import org.apache.commons.lang3.Validate;
+
+import java.io.File;
+import java.nio.charset.Charset;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class ScriptingFactory implements LogSource
 {
@@ -110,13 +104,15 @@ public class ScriptingFactory implements LogSource
 
 	private final ScriptBinding binding;
 
-	private final List<ByteBuf> bufferStack = Lists.newLinkedList();
+	private final List<Pair<ByteBuf, StackType>> bufferStack = new LinkedList<>();
 
 	private Charset charset = Charsets.toCharset( AppConfig.get().getString( "server.defaultEncoding", "UTF-8" ) );
 
 	private final ByteBuf output = Unpooled.buffer();
 
 	private final StackFactory stackFactory = new StackFactory();
+
+	private YieldBuffer yieldBuffer = null;
 
 	private ScriptingFactory( ScriptBinding binding )
 	{
@@ -200,19 +196,18 @@ public class ScriptingFactory implements LogSource
 
 			if ( engines.size() > 0 )
 				for ( Entry<ScriptingEngine, List<String>> entry : engines.entrySet() )
-					if ( entry.getValue() == null || entry.getValue().isEmpty() || entry.getValue().contains( context.shell().toLowerCase() ) )
+					if ( entry.getValue() == null || entry.getValue().size() == 0 || entry.getValue().contains( context.shell().toLowerCase() ) )
 						try
 						{
-							bufferStack.add( output.copy() );
-							output.clear();
+							int level = bufferPush( StackType.SCRIPT );
+							// Determine if data was written to the context during the eval(). Indicating data was either written directly or a sub-eval was called.
 							String hash = context.bufferHash();
 							entry.getKey().eval( context );
 							if ( context.bufferHash().equals( hash ) )
 								context.resetAndWrite( output );
 							else
 								context.write( output );
-							output.clear();
-							output.writeBytes( bufferStack.remove( bufferStack.size() - 1 ) );
+							bufferPop( level );
 							break;
 						}
 						catch ( Throwable cause )
@@ -238,6 +233,69 @@ public class ScriptingFactory implements LogSource
 		}
 
 		return result.success( true );
+	}
+
+	private enum StackType
+	{
+		SCRIPT, // Indicates script output stack
+		OB // Indicates output buffer stack
+	}
+
+	/**
+	 * Stores the current output buffer for the stacked capture
+	 */
+	private int bufferPush( StackType type )
+	{
+		bufferStack.add( new Pair<ByteBuf, StackType>( output.copy(), type ) );
+		output.clear();
+		return bufferStack.size() - 1;
+	}
+
+	/**
+	 * Returns the output buffer to it's last state
+	 */
+	private void bufferPop( int level )
+	{
+		if ( bufferStack.size() == 0 )
+			throw new IllegalStateException( "Buffer stack is empty." );
+
+		// Check for possible forgotten obEnd()'s. Could loop as each detection will move up one next level.
+		if ( bufferStack.size() >= level && bufferStack.get( level + 1 ).getValue() == StackType.OB )
+			obFlush( level + 1 );
+
+		if ( bufferStack.size() - 1 < level )
+			throw new IllegalStateException( "Buffer stack size was too low." );
+
+		// Determines if the buffer was not push'd or pop'd in the correct order, likely indicating outside manipulation of the bufferStack.
+		if ( bufferStack.size() - 1 > level )
+			throw new IllegalStateException( "Buffer stack size was too high." );
+
+		output.clear();
+		output.writeBytes( bufferStack.remove( level ).getKey() );
+	}
+
+	public int obStart()
+	{
+		return bufferPush( StackType.OB );
+	}
+
+	public void obFlush( int stackLevel )
+	{
+		// Forward the output buffer content into the last buffer
+		String content = obEnd( stackLevel );
+		print( content );
+	}
+
+	public String obEnd( int stackLevel )
+	{
+		if ( bufferStack.get( stackLevel ).getValue() != StackType.OB )
+			throw new IllegalStateException( "The stack level was not an Output Buffer." );
+
+		String content = output.toString( charset );
+
+		bufferPop( stackLevel );
+
+		return content;
 	}
 
 	public Charset getCharset()
@@ -324,5 +382,12 @@ public class ScriptingFactory implements LogSource
 	public StackFactory stack()
 	{
 		return stackFactory;
+	}
+
+	public YieldBuffer getYieldBuffer()
+	{
+		if ( yieldBuffer == null )
+			yieldBuffer = new YieldBuffer();
+		return yieldBuffer;
 	}
 }

@@ -146,7 +146,7 @@ packages:
   - chi
 advanced:
   cache:
-    keepHistory: 30
+    keepHistory: 14
   processors:
     imageProcessorEnabled: true
     imageProcessorCache: true
@@ -156,6 +156,7 @@ advanced:
     coffeeProcessorEnabled: true
   scripting:
     gspEnabled: true
+    gspAllowPhpTags: false
     groovyEnabled: true
   security:
     requestMapEnabled: true
