@@ -3,7 +3,7 @@
 
 **As of version 9.3 (Milky Polkadot), the following features are provided:**
 * An extensive core API.
-* Written in Java, (DUH!) making it crossplatform compatible.
+* Written in Java, (DUH!) making it cross-platform compatible.
 * Apache like Virtual Host with excellent subdomain support.
 * The use of Convention over Configuration.
 * YAML Configuration where needed.
