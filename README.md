@@ -4,26 +4,30 @@
 **As of version 9.3 (Milky Polkadot), the following features are provided:**
 * An extensive core API.
 * Written in Java, (DUH!) making it cross-platform compatible.
-* Apache like Virtual Host with excellent subdomain support.
+* Apache like Virtual Hosts.
 * The use of Convention over Configuration.
-* YAML Configuration where needed.
+* YAML Configuration.
 * ~~Terminal Prompt~~ *Temp Removed*
 * ~~Administration Web Console~~ *Temp Removed*
-* Automatic Updater
-* Easy to use request rewrite and routing tables, similar to Apache's `mod_rewrite`.
-* File Annotations, based on CSS annotations and controls request handling.
+* ~~Automatic Updater~~ *Broken*
+* Easy to use request rewrite and routing config, similar to Apache's `mod_rewrite`.
+* File Annotations, similar to CSS annotations.
 * Builtin User Authorization System, never code your own auth system ever again.
 * Builtin Session and Cookie Management.
 * Supports GET, POST, HEAD requests.
-* Scripting Language, currently builtin and preferred Groovy Shell.
+* ~~.htaccess support.~~ *WIP*
+* Scripting Language, Groovy (99% done) and Lua (10% done).
 * Groovy Server Pages (GSP), which act much like PHP.
+* Fast HTTP response times, benchmarks look great.
+* Scripting Cache, *cached scripts keep the memory and cpu happy*
 * Namespace based Permission System, e.g., `com.example.user.allowed` or `io.github.repository.canEdit`
-* A rich plugin API inspired by the widely popular CraftBukkit Plugin API, a Minecraft Server
-* Builtin Stacking Database Engine, e.g., `db.table("repositories").select().where("id").matches(repoId).map()`. Supports SQLite, mySQL, and H2.
-* Event API for an array of events. *Script based event listeners are planned*
+* A rich plugin API inspired by the widely popular CraftBukkit Plugin API.
+* Built-in Stacking Database Engine, e.g., `db.table("repositories").select().where("id").matches(repoId).map()`. Supports SQLite, MySql, and H2.
+* Event API for an array of events. (75% done)
 * Pre and Post Processors, which include:
   * JS Minimizer
   * CSS Minimizer
+  * ~~SASS Processor~~ *WIP*
   * ~~Less Processor~~ *WIP*
   * ~~Coffee Script~~ *WIP*
   * Image Manipulator
@@ -36,79 +40,65 @@
     * And much more!
   * Dropbox Plugin
     * Implements the Dropbox API
-  * Let's Encrypt
+  * ACME Plugin, i.e., Let's Encrypt
     * Issues and Renews SSL Certificates from the Let's Encrypt CA
   * Email Plugin
     * Allows easy emailing using the JavaSE Email API
   * ZXing Plugin
     * Implements the barcode rendering libraries by ZXing
 * Released under the Mozilla Public License, version 2.0.
-* And so much more! Hopefully to be coved in this documentation.
+* And so much more!
 
-**Planned Future Features, include but not limited to:**
-* Add Server Clustering Abilities.
-* Sandbox Mode, starting with the Java SecurityManager
-* Plugin Repository
-* Groovy Script Caching, so no more recompiling by the Groovy Shell with each request.
-* SASS Preprocessor
+**Planned Future Features, including but not limited to:**
+* Server Clustering Abilities.
+* Docker Deployable Image.
+* Sandbox Mode, implement the Java SecurityManager.
+* Remote Plugin Repository.
 * Administration Web Interface.
-* Add better error handling and syntax debugging.
-* Improved Changelog and Javadocs.
-* [WIP] apache .htaccess implementation
 
 # Seeking Help
-Hello, my name is Chiori-chan and I'm currently the sole developer of Chiori-chan's Web Server since it's incarnation over three years now. Recently my project has just reached a little over 62,000 lines of code and 700 commits, which has been a real accomplishment. Sadly, this means the project has also become a bit too much for me to handle alone and which means I need help. I find myself dedicating a part-time jobs worth of time trying to keep this project's development moving forward and this is not something I can keep up very much longer. This means not only do I have a limit of time to deicate to my other projects but also a limit of time to finding project contributors and beta testers. So I ask, if anyone reading this is interested in contributing, please contact me.
-
-## Plugins
-
+Hello, my name is Chiori-chan and I'm currently the sole developer of **Chiori-chan's Web Server**. Recently my project has turned four years old, has just reached a little over 62,000 lines of code, and 700 commits, which has been a real personal accomplishment. Sadly, this means the project has also become a bit too much for me to handle, as many basic features have suffered and I find myself bug fixing and improving features that I only use personally. I find myself dedicating a part-time jobs worth of time trying to keep this project's development moving forward. This means development of **Chiori-chan's Web Server** is slow and very tedious. This also lack a whole lot of time to dedicate to my other projects, like the full-time business I run with my wife. The truth is, I need project contributors and beta testers. So I ask, if anyone reading this is interested in contributing, please contact me.
 
 # Version History
-For the reasons of preservation, I will keep the version history for the
-PHP Framework here but any version 5.2 and up will be the Java Port
+
+**For the reasons of historical preservation, I will keep the version history for the PHP Framework here but any version 5.2 and up will be for the Java Port**
 
 Version 1.0
 -----------
-Original Framework concept first using object oriented programming. Each
-page would call framework in the beginning and end of each file which
-was later determined to be resource intensive and more work then
-desired.
+Original Framework concept using object oriented programming. Each
+page would call the framework in the beginning and end of each file which was later determined to be resource intensive and more work then desired.
 
 Version 2.0
 -----------
 First version introducing a loader that would be started using
-mod\_rewrite. This version also introduced built-in WebDav support,
-Feature later removed due to the issue of maintaining the buggy code.
+Apache's mod\_rewrite. This version also introduced built-in WebDav support. The feature was later removed due to the issue of maintaining buggy code. A feature much like this might return one day.
 
 Version 3
 ---------
-### Subversion 1
-First introduction of experimental administration panel. Panel removed
-in later versions but there are plans to introduce it.
-
-### Subversion 2
-Limited Version, Used as an experimental version to Version 4.0.
+Introduction of experimental administration panel. Removed in later versions. Limited version as an experimental jump between version 2 and version 4.
 
 Version 4
 ---------
 ### Subversion 1 (Betarain)
+
 #### Build 0101
-Fourth time completely rewriting source code from scratch. Version 3 or
-prior modules not supported in this version.
+
+Complete rewrite from version 3. Prior modules not supported in this version.
+
 #### Build 0309
-Nothing more then bug fixes.
+
+Bug fixes.
+
 ### Subversion 2 (Betadroid)
+
 #### Build 0319
-First introduction release of component based system. Changed some
-function names to be more compliment with personal coding standards.
-Rewrote the Database Component to use the new PDO instead of the
-previous mysql commands. This change allows multiple db connections,
-file based db using SQLite and other db types like oracle. Also added a
-second level of containers called "Views" which allow for even less
-theme code.
+
+First release of component based system. Changed some function names to be more compliment with personal coding standards.
+Rewrote the Database Component to use PDO instead of the previous mysql commands. Added a second level of containers called "Views" which allow for even less theme code.
+
 #### Build 0326
 
-Many more bug fixes. Finished porting 98% of the user module code to a
-component.
+Many more bug fixes. Finished porting 98% of the user module code to a component.
 
 #### Build 0606
 
