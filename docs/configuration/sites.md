@@ -19,6 +19,27 @@ accounts:
 * `accounts.loginForm`: The location of the login form. Visitors are redirected to this location when they encounter a page that requires a login, normally via the page annotation `@reqlogin`. An error message is also pasted via the `_NONCE` global; `_NONCE.level`, `_NONCE.msg`, and `_NONCE.target`. **Note:** `/~wisp/` is a special URL for internal server resources. It's experimental and should not be relied upon for future use.
 * `accounts.loginPost`: The location to redirect after a successful login.
 
+## Additional Site Configuration
+
+* **site.title: [site-title]**: The site title. Typically used by the Templates Plugin. Default is pulled from `sites.defaultTitle` in the main server config file, `[server_root]/config.yaml`.
+* **site.web-allowed-origin: '*'**: Sets the HTTP Header by the same name.
+* **site.encryptionKey: [string]**: Specifies the encryption key used in encrypted values. [WIP]
+* **site.envFile: [.env]**: Specify the location of the site environment file. Defaults to `.env` within the site webroot.
+
+## Site SSL Configuration
+
+The site's SSL certificate and key are expected to be located in the `[webroot]/[siteId]/ssl` directory and enabled with the following directives. When unconfigured, the site will use the default server certificate, configured via the main configuration.
+
+* **site.sslCert: [ssl-certificate.crt]**: The SSL certificate file.
+* **site.sslKey: [ssl-certificate.key]**: The SSL certificate key.
+* **site.sslSecret: [ssl-secret]**: The SSL certificate secret. Leave blank for no secret.
+
+**Security Note: ** Be sure not to keep your SSL private-key in the ssl directory. As it could be compromised via a rogue script and strategic server hack.
+
+## Configure Site Domains
+
+**Chiori-chan's Web Server** can share a multitude of domains and subdomains between sites and works very much like Apache's VirtualHost feature.
+
 ## Configure Site Sessions
 
 Session are configured with the following configuration directives
@@ -40,12 +61,33 @@ sessions:
 
 **Chiori-chan's Web Server** uses the internal Datastore feature to access MySQL, H2, and SQLite databases. The server has a global one that is configured via the main `[server_root]/config.yaml` file, additional databases can be configured via the following directives.
 
-For more information about Datastores visit the  [Datastore](/Datastore "Datastore") page.
+For more information about Datastores visit the [Datastore](/docs/configuration/datastore.md) page.
+
+**First you must specify the database type:**
 
 ```yaml
 database:
-
+  type: [mysql, h2, sqlite]
+  prefix: [table-prefix]
 ```
+
+* **MySQL & H2 Directives**
+```yaml
+  database:
+    host: localhost
+    port: 3306
+    database: [db-name]
+    username: [db-username]
+    password: [db-password]
+```
+
+* ** SQLite Directives **
+```yaml
+  database:
+    file: db.sqlite
+```
+
+**Developer Note:** Environment variables are currently a work in progress and will be finalized very soon. You will be able to specify DB credentials using the `.env` properties file located in the site webroot.
 
 ## Enabling Automated Site Archiving
 
