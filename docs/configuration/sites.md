@@ -71,7 +71,7 @@ By default each domain assigned to the site, is given it's own directory in the 
 
 ### Domain Configuration
 
-Each section can be individually configured like so.
+**Each section can be individually configured like so:**
 ```yaml
 site:
   domains:
@@ -88,10 +88,10 @@ site:
 
 Each configuration directive is appended with a double underscore `__` as to not confuse it with a subdomain. Unused directives are ignored but can be accessed using the Site Scripting API, e.g., `getSite().getDomains().get(0).getConfig("customDirective")` or `getSite().getDomain("sitea.mydomain.local").getConfig("directiveTwo")`.
 
-See the `Site SSL Configuration` section for help configuring SSL on each subdomain using the `sslCert`, `sslKey`, and `sslSecret` directives.
+See the `Site SSL Configuration` section for help configuring SSL on each subdomain using the `sslCert`, `sslKey`, and `sslSecret` directives. Unconfigured SSL will default to SSL on parent domains, the site, and then lastly the server.
 
 * **redirect: [url]** Redirect visitors to the specified URL.
-* **redirectCode: [code]** Use any of the 300 HTTP codes for the redirect.
+* **redirectCode: [code]** Use any of the available 3xx HTTP codes for the redirect.
 
 **Developer Note: ** By default public directories are not allowed outside the webroot directory unless you change the `sites.allowPublicOutsideWebroot` directive to `true` in the main configuration `[server_root]/config.yaml`.
 
