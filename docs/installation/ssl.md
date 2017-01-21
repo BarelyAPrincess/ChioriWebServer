@@ -6,4 +6,4 @@ On next load, the server will generate a self-signed certificate, if one does no
 
 See [Sites](/docs/configuration/sites.md "Sites") for help configuring SSL on each site.
 
-**Developers Note: ** On Unix-like systems, using a port below 1024 requires privileged port access. A privilege normally given to the root user. So we recommend setting the port to something like `8443` and redirecting traffic using a firewall like IPTables. Running the server as the root user is highly not-recommended. See the main configuration page for more information.
+**Developers Note: ** On Unix-like systems, using a port below `1024` requires privileged port access. A privilege normally given to the root user. So we recommend setting the port to something like `8443` and redirecting traffic using a firewall like IPTables. Running the server as the root user is highly not-recommended. See the main configuration page for more information.
