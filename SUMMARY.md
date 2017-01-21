@@ -19,5 +19,6 @@
     * [Controllers](docs/scripting/controllers.md)
 * [Configuration](docs/configuration/README.md)
     * [Routing](docs/configuration/routing.md)
+    * Datastore
     * [Sites](docs/configuration/sites.md)
 
