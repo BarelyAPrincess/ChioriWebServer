@@ -34,7 +34,7 @@ The site's SSL certificate and key are expected to be located in the `[webroot]/
 * **site.sslKey: [ssl-certificate.key]**: The SSL certificate key.
 * **site.sslSecret: [ssl-secret]**: The SSL certificate secret. Leave blank for no secret.
 
-**Security Note: ** Be sure not to keep your SSL private-key in the ssl directory. As it could be compromised via a rogue script and strategic server hack.
+**Security Note: ** Be sure not to keep your SSL private-key in the ssl directory. As it could be compromised via a rogue script or strategic server hack.
 
 ## Configure Site Domains
 
