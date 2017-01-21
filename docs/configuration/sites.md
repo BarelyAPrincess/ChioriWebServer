@@ -122,7 +122,7 @@ For more information about Datastores visit the [Datastore](/docs/configuration/
 
 ```yaml
 database:
-  type: [mysql, h2, sqlite]
+  type: [none, mysql, h2, sqlite]
   prefix: [table-prefix]
 ```
 
