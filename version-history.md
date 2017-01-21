@@ -1,0 +1,531 @@
+# Version History
+
+**For the reasons of historical preservation, I will keep the version history for the PHP Framework here but any version 5.2 and up will be for the Java Port**
+
+## Version 1.0
+
+Original Framework concept using object oriented programming. Each
+page would call the framework in the beginning and end of each file which was later determined to be resource intensive and more work then desired.
+
+## Version 2.0
+
+First version introducing a loader that would be started using
+Apache's mod\_rewrite. This version also introduced built-in WebDav support. The feature was later removed due to the issue of maintaining buggy code. A feature much like this might return one day.
+
+## Version 3
+
+Introduction of experimental administration panel. Removed in later versions. Limited version as an experimental jump between version 2 and version 4.
+
+## Version 4
+
+### Subversion 1 (Betarain)
+
+#### Build 0101
+
+Complete rewrite from version 3. Prior modules not supported in this version.
+
+#### Build 0309
+
+Bug fixes.
+
+### Subversion 2 (Betadroid)
+
+#### Build 0319
+
+First release of component based system. Changed some function names to be more compliment with personal coding standards.
+Rewrote the Database Component to use PDO instead of the previous mysql commands. Added a second level of containers called "Views" which allow for even less theme code.
+
+#### Build 0326
+
+Many more bug fixes. Finished porting 98% of the user module code to a component.
+
+#### Build 0606
+
+Finished porting 99% of all outdated modules and code. Fixed many more
+bugs.
+
+### Subversion 3 (Sentry)
+
+#### Build 0712
+
+First build safe for lite production use. Also improved local file
+loader, Framework will load the index file of a requested folder if it
+exists. Some core framework panel code was added to possibly introduce
+the framework panel again but later decided to scrap the idea and wait
+till later release.
+
+### Subversion 4 (Rainbow Dash)
+
+#### Build 0901
+
+First version to appear on the GitHub. Made some bug fixes.
+
+Version 5
+---------
+
+### Subversion 0 (Fluttershy)
+
+#### Build 1106
+
+Again more code rewrites to make the framework more streamlined and
+easier to debug.
+
+#### Build 1111
+
+Inported some old code which broke the framework. Fixed in next push.
+
+#### Build 1115/1116
+
+Bug Fixes.
+
+### Subversion 1 (Scootaloo)
+
+#### Build 0106/0107
+
+Introduced Hooks which are like event listeners. Bug Fixes.
+
+### Subversion 2 (Lunar Dream)
+
+#### Build 0825
+
+First attempts to port framework to the Chiori Web Server.
+
+#### Build 0829
+
+Major issues resolved. About 60%-70% of framework ported, 20% discarded
+(to be replaced).
+
+Version 6
+---------
+
+### Subversion 0 (Sonic Dash)
+
+#### Build 1004
+
+Switched from Resin to Jetty. Removed Quercus and replaced it with our
+own Java/PHP hybrid language using the BeanShell libraries
+
+### Subversion 1 (Sonic Dash)
+
+#### Build 1012
+
+Switched from BeanShell to GroovyShell. Now you can write your web
+script in uncompiled Java with the joys of Groovy.
+
+### Subversion 2 (Sonic Doom)
+
+#### Build 1212
+
+Some framework instance/memory handling rewrites. Possiblely broken
+build.
+
+#### Build 1222
+
+Fixes to the log and console systems. Switched from Jetty to HttpServer
+(A builtin class of the JRE). Also implemented the TCP server side of
+the Chiori Web Server for use with Android and Standalone Apps.
+
+#### Build 1227
+
+Made structure layout changes to implement a TCP API and better support
+future changes.
+
+### Subversion 3 (Flutter Bat)
+
+#### Build 0104
+
+Heavy code rewrites to move much code from the actual Framework into the
+new Request, Response and Session classes. All in preperation of a
+cleaner and much improved API. Expect this version to be broken until
+testing is performed.
+
+#### Build 0105
+
+Rebuilt the way page rendering is handled and implemented Override
+Annotations. This wacky creation lets you override or set any varible
+like theme, view, title from within any file no matter if it was
+redirected by the framework or interpeted directly from file.
+
+#### Build 0106
+
+As of this version, The framework was offical absorbed into the server
+as a whole. Scripts made for prior versions will most likely no longer
+work.
+
+### Subversion 4 (Rarity Falls)
+
+#### Build 0204
+
+A whole new system for both users and permissions was implemented. If
+you want to start using the new permissions system you will need to use
+the PermissionsEx plugin.
+
+#### Build 0207
+
+Major improvements to the way sessions are handled. Many session
+configurations added.
+
+#### Build 0313
+
+Added a build.xml file so the project can not be built with Apache Ant
+1.8. Switch from YAML to Properties for project details/metadata file
+(server/src/com/chiorichan/metadata.properties) so Ant/build.xml could
+now make versioned binary files.
+
+#### Release 6
+
+-   Changed from using build numbers to release numbers since Jenkins
+    implements this.
+-   Optimize WebHandler code for improved performance.
+-   Added new InputStream consume file util method.
+-   Added privilaged port check to NetworkManager.
+-   Changed log formating layout. Log messages now show the current
+    thread and milliseconds.
+-   Changed the shutdown proceedure. System.exit was prematurly
+    terminating plugins.
+-   Added support for Multipart HTTP Sessions.
+-   Added support for applications to embed the Web Server as a library.
+    (WIP)
+-   Moved Networking Code from Loader to it's own Class.
+-   Made the base changes needed to run to application as a Client.
+    (WIP)
+-   Changed the way GSON loads Maps for Sessions.
+-   Added auto updater that works with the Jenkins Build Server at
+    <http://jenkins.chiorichan.com>. (WIP)
+-   Added ant build.xml for use with the Jenkins Build Server.
+-   Added Cartridge Return char support to the ConsoleLogFormatter. (You
+    can now make Progress Bars in console. WOOT!)
+-   Added InstallationId. Great for installation tracking.
+-   Session cleanups and Update Checks are now on a Time Based Rotation.
+-   Fixed bug with doubled output in log file.
+-   Added option to disable chat colors.
+-   Switch metadata file from YAML to Properties.
+
+Version 7 (Pony Feathers)
+--------------------------------------
+
+### Subversion 0
+
+#### Release 0
+
+-   Implemented the FileUserAdapter
+-   Added a mech to prevent repetitive retrys in
+    the SqlConnector.query().
+-   Fixed the includes matcher loop bug. We had to reset the matcher
+    since the source changes on each loop.
+-   Commons can be indefinitely turned off from the config
+    option config.noCommons.
+-   You can now optionally force the Template Plugin to always render
+    page requests. You can disable this with the override @themeless.
+-   Made both defaultDocType and defaultTag a configurable option for
+    the Template Plugin. See plugins/Template/config.yml
+-   Implemented the ability to include packages inside html using " "
+-   Bug fix with the way file extension is parsed.
+-   Bug fixes to Database Virtual Request Interpreter
+-   Bug fixes to doInclude and added non-evaled htm/html.
+-   Bug fixes to subdomain load inside Site
+-   Added 'framework.sites.autoCreateSubdomains' and
+    'framework.sites.subdomainsDefaultToRoot' options in server configs.
+-   Moved event system to it's own class, plan to make events usable
+    outside of plugins
+-   Enhanced FileInterpreter, simplified the PluginManager and
+    ServicesManager, Added Groovy Plugin Loader (Still needs reworking
+    to actually function.)
+
+### Subversion 1
+
+#### Release 0
+
+-   Fixes to charset of both loading files and output to browser.
+    getResponse().setEncoding( "UTF-8" ) implemented.
+-   Implemented Embedded Groovy Server Pages. See EmbeddedShell.java
+-   SQLAccountAdapter now confirms if additional user field exists in
+    table
+-   Major code restructuring to hopefully fix many lingering problems.
+-   Undid a few of really silly implementations I did.
+
+Version 8 (Pony Toaster)
+------------------------
+
+### Subversion 0
+
+#### Release 0
+
+-   Ant build script now creates simple filename jar files.
+-   Evaling is now CodeEvalFactory.
+-   Simplifying and improvments to EvalPackage and EvalFile methods
+    inside WebUtils class.
+-   Null and empty check for print method inside of HttpResponse.
+-   Added GetLookupAdapter to Accounts and fixes to ScriptingBaseGroovy.
+-   Templates plugin now listens for Http Exceptions and responds.
+-   Updates to PluginManager, getPluginByName method.
+-   Updates to SeaShells and how they handle exceptions.
+-   Added Exception and Error events for http requests.
+-   Offical release of Version 8.0.0
+
+### Subversion 1
+
+#### Release 0
+
+-   BUG FIX! Rewrites to CodeEvalFactory over a major design flaw
+-   BIG FIX! Auto Updater was broken
+-   BUG FIX! to Exceptions
+-   BUG FIX! Timezone is now forced to UTC when sent to browser
+-   BUG FIX! Proper exception is thrown if you forget to close a GSP
+    Marker
+-   BIG FIX! to common annotations
+-   BUG FIX! to Templates Plugin with BaseTemplate.html
+-   EXPANSION! to noCommons in the Templates plugin
+-   EXPANSION! to date() method
+-   EXPANSION! Added additional conditions to the GSP Interpreter
+-   NEW FEATURE! CoffeeScripts can now be server side compiled with a
+    PreProcessor
+-   NEW FEATURE! Implemented File Uploaded a.k.a. Multipart Form
+    Requests
+-   NEW FEATURE! HTMLCommentParsers
+-   NEW FEATURE! PreProcessors, Interpreters and PostProcessors which
+    can manipulate requests server-side
+-   NEW FEATURE! \[WIP\] Less PreProcessor, currently buggy
+-   NEW FEATURE! Image PostProcessor, can resize images using params
+-   NEW FEATURE! Implemented the site command which can create, delete
+    and view sites
+-   NEW METHOD! dateToEpoch(date), allows you to convert M/d/YYYY to
+    epoch
+-   NEW METHOD! castToLong() method in ObjectUtil
+-   NEW METHOD! trim() to StringUtil
+-   NEW METHOD! getAllTypes() to ContentTypes class
+-   ADDED! url\_to(\[subdomain\]) to HTMLCommentParsers
+-   ADDED! include(<package>) to HTMLCommentParsers
+-   ADDED! url\_to\_\[login|logout\]() to HTMLCommentParsers
+-   ADDED! optional param (altTableClass) to createTable method under
+    WebUtils class
+-   ADDED! crude cache system with command. Needs much more work
+-   ADDED! Mozilla Rhino Library for non-OpenJDK compiles
+-   ADDED! LICENSE file
+-   ADDED! HEADER file
+-   UPDATED! Guava library from v14.0.1 to v17.0.0
+-   SWITCHED! to the Gradle Build System from Apache Ant
+
+### Subversion 3
+
+#### Release 0
+
+-   SWITCHED to Netty for HTTP, HTTPS and TCP servers.
+
+Version 9!
+----------
+
+### Subversion 0 (a.k.a. Milky Planet)
+
+#### Build 0
+
+-   ADDED! Directory listing feature \[WIP\]
+-   ADDED! Ability to load sites from backend, using /fw/\~siteid
+-   ADDED! Added CheckStyle plugin to Gradle
+-   REWROTE! EventBus
+-   REWROTE! PluginManager
+-   REWROTE! Permissions System
+-   REMOVED! Removed the Console. Will be reimplementing it later as a
+    Plugin
+-   REMOVED! Old org.json source code
+-   UPDATED! Various log improvements
+-   EXPANDED! PermissionsEx plugin is no longer needed as it funality is
+    built in
+
+#### Build 1
+
+-   UPDATED! Changed default MIME type
+-   UPDATED! Encoding UTF-8 used for text MIME, ISO-8859-1 used for all
+    others
+
+#### Build 2
+
+-   ADDED! Gradle publish to our Maven Repository
+-   ADDED! Several tables are now generated at load
+-   FIXED! Finally finished SQLite support
+-   UPDATED! Improved FileUploads
+-   UPDATED! Major updates to the EvalFactory and associated classes
+-   UPDATED! Switch from using byte\[\] to ByteBuf
+
+#### Build 3
+
+-   ADDED! Implemented a basic Query Server and Command System \[WIP\]
+-   READDED! Websocket Support \[WIP\]
+-   REWROTE! Rewriting of the Template Plugin
+-   REWROTE! NetworkManager
+-   UPDATED! EvalFactory now returns EvalFactoryResult
+
+### Subversion 1 (a.k.a. Milky Way)
+
+#### Build 0
+
+-   ADDED: Dropbox Plugin
+-   ADDED: Server delivers HttpCode 503 to client if server is not fully
+    loaded up
+-   NEW FEATURE: Added a Plugin Maven Library Downloader. See Dropbox
+    plugin config for an example.
+
+#### Build 1
+
+-   ADDED: Route file can now contain comment lines, starting \#
+-   CHANGE: Default source directory changed from pages to root of the
+    site
+-   ADDED: Groovy Script Timeout
+-   TWEAK: Missing Rewrite File result
+-   TWEAK: ObjectFunc class
+-   TWEAK: SessionManager and AutoUpdater
+
+### Subversion 2 (a.k.a. Milky Berry)
+
+#### Build 0
+
+-   REWROTE: Complete overhaul of Accounts and Sessions systems
+-   CHANGE: Session Cookie params are not unchangable
+
+#### Build 1
+
+-   REWRITE: Huge overhaul of ErrorReporting, Exceptions and Logging
+    subsystems \[WIP\]
+-   ADDED: New --install argument
+-   CHANGE: Reenabled the Web UI extraction on install and tweaked the
+    boot orders
+-   REMOVED: ConfigurationManager and HttpUtils finally removed per
+    deprecation
+-   ADDED: Timing Constraints and Moved methods from CommonFunc to
+    Timings class
+-   CHANGE: Task Argument Orders
+-   CHANGE: Removed "Chiori" from task class names
+-   ADDED: Plugins and Dependencies can now load Native Libraries.
+    WOOHOO! No more ClassPath crap. \[WIP\]
+-   ADDED: Steps taken to further implement automatic ban system \[WIP\]
+-   CHANGE: Improvement to HttpError exception
+-   CHANGE: Renamed ScheduleManager to TaskManager
+-   ADDED: Plaintext passwords now stored in seperate table
+-   REWRITE: Plugin initalize subroutine
+-   TWEAK: TemplatesPlugin per changes to server base
+
+#### Build 2
+
+-   DEPENDS: Offically updated Netty to 5.0.0.Alpha2 and Groovy to 2.4.3
+-   TWEAK: Performance and Coding Standard Improvments per suggested by
+    JARchitect
+
+#### Build 3
+
+-   REWROTE: EvalFactory Handling and Processing, Noticable Speed
+    Improvment!!!
+-   ADDED: Cache, BWFilter, ARGBFilter to PostImageProcessor
+
+#### Build 4
+
+-   ADDED: start.sh created on first runs for unix-like systems,
+    debug\_start.sh also created when in development mode
+-   FIXED: bug with build.properties not updating when gradle is ran
+-   FIXED: FileFunc.directoryHealthCheck() writable bug
+-   FIXED: Bug with Web UI not extracting into proper directory
+-   FIXED: Bug with Web UI archive not being included in shadowJar,
+    technically still not fixed.
+-   CHANGE: Improved how permissions hold custom values
+-   CHANGE: Improved Plugin Exceptions
+-   CHANGE: sendException() now prints html and head tags to output
+-   CHANGE: Exception catching improvements for plugins
+
+#### Build 5
+
+-   ADDED: Default permission type, similar to boolean type
+-   ADDED/FIXED: PermissionFile backend
+-   REMOVED: sendError() method
+-   REMOVED: help.yml file
+-   CHANGE: to how Permissions save and load
+-   CHANGE: Source file license headers
+-   CHANGE: PermissionResult.setValue() and setDescription() no longer
+    auto-commit changes
+-   CHANGE: Moved static methods from Permission to PermissionManager
+-   TWEAK: Speed improvements to permission loading, saving, checking
+    and logic in general
+
+#### Build 6
+
+-   REWROTE: Massive rewrites to how Permissions and Accounts relate
+    with each other
+-   REWROTE: Templates Plugin eval subroutines
+-   CHANGE: Better implementations of Query Terminal
+-   ADDED: Imeplemented AdvancedCommand class
+-   ADDED: Virtual entity checks, prevents root and none from being
+    saved to backend
+-   ADDED: successInit() method to AccountCreator class, used to
+    regulate root and none accounts
+-   ADDED: New methods within utility classes
+-   ADDED: New messaging subsystem system \[WIP\]
+-   ADDED: Permission and Group references \[WIP\]
+-   CHANGE: Command permission checks
+-   CHANGE: Entity maps are now ConcurrentHashMaps
+-   CHANGE: sys permission nodes, excluding sys.op, are now true for
+    operators
+-   CHANGE: Plugin Descriptions now use Yaml over a Map to load
+-   CHANGE: Started to seperate Groovy Evaluation code from EvalFactory.
+    \[WIP\]
+-   CHANGE: Eval is done directly thru EvalContext, removed WebFunc
+    eval methods. Excludes include() and require() groovy api
+-   FIXED: SyntaxException not properly being caught
+
+#### Build 7
+
+-   CHANGE: Stacktraces now show their true filename verses their script
+    name
+-   CHANGE: Templates Plugin finds headers relative to theme package,
+    i.e., ../../includes/common and ../../includes/<themename>
+-   CHANGE: PermissionNamespace moved to utils for uses outside of
+    Permissions
+-   ADDED: Plugins can bundle libraries within the subdirectory
+    "libraries"
+
+#### Build 8
+
+-   FIXED: Found a bug with not checking is WeakReference is unloaded
+-   FIXED: Bug Fixes to database logging and prepared statements
+-   FIXED: Huge bug with EventBus not creating new EventHandlers for
+    each AbstractEvent
+-   FIXED: Tasks not canceling on disable
+-   FIXED: Token management was buggy
+-   FIXED: TemplatesPlugin includes
+-   UPDATED: EventBus.callEvent now returns the AbstractEvent for
+    stacking
+-   UPDATED: EventBus locks using an object instead of self
+-   UPDATED: EventHandlers are now tracked from inside EventBus instead
+    of each Event
+-   UPDATED: Tweaks and improvements to Permission Commands
+-   UPDATED: Several tweaks and improvements to permissions subsystem
+-   UPDATED: various improvements to EventBus
+-   UPDATED: Made updates to Dropbox Plugin
+-   UPDATED: Changed maven download URL to JCenter Bintray, Maven
+    Central used as a backup location
+-   FEATURE: Added H2 Database support, files only
+-   FEATURE: \[WIP\] Added datastores, currently only intended to
+    replace SQL databases but will also implement file backends.
+
+### Subversion 3 (a.k.a. Milky Polkadot)
+
+#### Build 0
+-   FIXED: HTTP log routine was reporting incorrect date and time
+-   FIXED: Issues with Account SQL Save
+-   UPDATED: Deprecated old unused log arguments and implmented the use
+    of a logs directory
+-   UPDATED: Changed how Account Subsystem returns results
+-   UPDATED: Changed routing log level from FINE to FINER
+-   UPDATED: SQLQueryInsert (SQL Datastore) now checks that all required
+    columns have been provided before executing query
+
+#### Build 1
+-   FIXED: Compatibility issues with SQL Datastores and SQLite
+-   UPDATED: Moved task ticks from Timings to new Ticks class for easier
+    understanding
+-   UPDATED: Refactored much of the startup, shutdown, and restart
+    subroutines, streamlined for efficiency
+-   UPDATED: AutoUpdater monitors server jar for modification and
+    restarts to apply changes. (configurable)
+-   FEATURE: \[WIP\] Added new Server File Watcher
+-   FEATURE: Implemented optional Watchdog process that monitors a
+    seperate spawned JVM instance for crashes and restarts. (use
+    --watchdog to enable) Only tested on Linux
+

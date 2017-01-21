@@ -3,11 +3,11 @@
 * [Introduction](README.md)
 * [Installation](docs/installation.md)
     * [File Annotations](docs/installation/annotations.md)
-* [Configuration](docs/configuration/README.md)
-    * [Datastore](docs/configuration/datastore.md)
-    * [Routing](docs/configuration/routing.md)
-    * [SSL](docs/installation/ssl.md)
-    * [Sites](docs/configuration/sites.md)
+    * [Configuration](docs/configuration/README.md)
+        * [Datastore](docs/configuration/datastore.md)
+        * [Routing](docs/configuration/routing.md)
+        * [SSL](docs/installation/ssl.md)
+        * [Sites](docs/configuration/sites.md)
 * [Project Development](docs/developer.md)
 * [Plugins](docs/plugins/README.md)
     * [Developer Guide](docs/plugins/developer/guide.md)
@@ -18,5 +18,5 @@
     * [API Reference](docs/scripting/api.md)
     * [Packages](docs/scripting/packages.md)
     * [Controllers](docs/scripting/controllers.md)
-* Version History
+* [Version History](version-history.md)
 
