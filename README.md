@@ -59,6 +59,11 @@
 ## Seeking Help
 Hello, my name is Chiori-chan and I'm currently the sole developer of **Chiori-chan's Web Server**. Recently my project has turned four years old, has just reached a little over 62,000 lines of code, and 700 commits, which has been a real personal accomplishment. Sadly, this means the project has also become a bit too much for me to handle, as many basic features have suffered and I find myself bug fixing and improving features that I only use personally. I find myself dedicating a part-time jobs worth of time trying to keep this project's development moving forward. This means development of **Chiori-chan's Web Server** is slow and very tedious. This also lack a whole lot of time to dedicate to my other projects, like the full-time business I run with my wife. The truth is, I need project contributors and beta testers. So I ask, if anyone reading this is interested in contributing, please contact me.
 
+## Minimum System Requirements
+
+* Oracle Java JRE 1.8 (OpenJDK might cause unexpected SSL issues)
+* Memory: 512MB for cluster/testing machines. 2GB for full dedicated production.
+
 ## Additional Resources
 
 [Version History](/version-history.md)
