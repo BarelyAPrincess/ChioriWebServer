@@ -92,7 +92,7 @@ Our Gradle enviroment uses the CodeStyle plugin to check coding standards.
 
 **Chiori-chan's Web Server** is licensed under the MIT License (MIT). While you're not obligated, if you decide to use our server or any part of our code (in part or whole), we would love to hear about it. We love to hear what people do with our works.
 
-* Copyright \(c\) 2017 Penoaks Publishing LLC <development@chiorichan.com>
+* Copyright \(c\) 2017 Penoaks Publishing LLC <development@penoaks.com>
 * Copyright \(c\) 2017 Chiori-chan, a.k.a., Joel Greene <me@chiorichan.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
