@@ -16,23 +16,23 @@ accounts:
   loginPost: /
 ```
 
-* `accounts.loginForm`: The location of the login form. Visitors are redirected to this location when they encounter a page that requires a login, normally via the page annotation `@reqlogin`. An error message is also pasted via the `_NONCE` global; `_NONCE.level`, `_NONCE.msg`, and `_NONCE.target`. **Note:** `/~wisp/` is a special URL for internal server resources. It's experimental and should not be relied upon for future use.
+* `accounts.loginForm`: The location of the login form. Visitors are redirected to this location when they encounter a page that requires a login, normally via the annotation `@reqlogin` and/or `@reqperm`. An error message is also pasted via the `_NONCE` global; `_NONCE.level`, `_NONCE.msg`, and `_NONCE.target`. **Note:** `/~wisp/` is a special URL for internal server resources. It's experimental and should not be relied upon for future use.
 * `accounts.loginPost`: The location to redirect after a successful login.
 
 ## Additional Site Configuration
 
-* **site.title: [site-title]**: The site title. Typically used by the Templates Plugin. Default is pulled from `sites.defaultTitle` in the main server config file, `[server_root]/config.yaml`.
-* **site.web-allowed-origin: '*'**: Sets the HTTP Header by the same name.
-* **site.encryptionKey: [string]**: Specifies the encryption key used in encrypted values. [WIP]
-* **site.envFile: [.env]**: Specify the location of the site environment file. Defaults to `.env` within the site webroot.
+* **site.title: \[site-title\]**: The site title. Typically used by the Templates Plugin. Default is pulled from `sites.defaultTitle` in the main server config file, `[server_root]/config.yaml`.
+* **site.web-allowed-origin: '\*'**: Sets the HTTP Header by the same name.
+* **site.encryptionKey: \[string\]**: Specifies the encryption key used in encrypted values. \[WIP\]
+* **site.envFile: \[.env\]**: Specify the location of the site environment file. Defaults to `.env` within the site webroot.
 
 ## Site SSL Configuration
 
 The site's SSL certificate and key are expected to be located in the `[webroot]/[siteId]/ssl` directory and enabled with the following directives. When unconfigured, the site will use the default server certificate, configured via the main configuration.
 
-* **site.sslCert: [ssl-certificate.crt]**: The SSL certificate file.
-* **site.sslKey: [ssl-certificate.key]**: The SSL certificate key.
-* **site.sslSecret: [ssl-secret]**: The SSL certificate secret. Leave blank for no secret.
+* **site.sslCert: \[ssl-certificate.crt\]**: The SSL certificate file.
+* **site.sslKey: \[ssl-certificate.key\]**: The SSL certificate key.
+* **site.sslSecret: \[ssl-secret\]**: The SSL certificate secret. Leave blank for no secret.
 
 **Security Note: ** Be sure not to keep your SSL private-key in the ssl directory. As it could be compromised via a rogue script or strategic server hack.
 
@@ -41,6 +41,7 @@ The site's SSL certificate and key are expected to be located in the `[webroot]/
 **Chiori-chan's Web Server** can share a multitude of domains and subdomains between sites and works very much like Apache's VirtualHost feature.
 
 **Basic Domain Assignment:**
+
 ```yaml
 site:
   domains:
@@ -48,6 +49,7 @@ site:
 ```
 
 **Advanced Domain Assignment:**
+
 ```yaml
 site:
   domains:
@@ -72,6 +74,7 @@ By default each domain assigned to the site, is given it's own directory in the 
 ### Domain Configuration
 
 **Each section can be individually configured like so:**
+
 ```yaml
 site:
   domains:
@@ -90,8 +93,8 @@ Each configuration directive is appended with a double underscore `__` as to not
 
 See the `Site SSL Configuration` section for help configuring SSL on each subdomain using the `sslCert`, `sslKey`, and `sslSecret` directives. Unconfigured SSL will default to SSL on parent domains, the site, and then lastly the server.
 
-* **redirect: [url]** Redirect visitors to the specified URL.
-* **redirectCode: [code]** Use any of the available 3xx HTTP codes for the redirect.
+* **redirect: \[url\]** Redirect visitors to the specified URL.
+* **redirectCode: \[code\]** Use any of the available 3xx HTTP codes for the redirect.
 
 **Developer Note: ** By default public directories are not allowed outside the webroot directory unless you change the `sites.allowPublicOutsideWebroot` directive to `true` in the main configuration `[server_root]/config.yaml`.
 
@@ -127,20 +130,22 @@ database:
 ```
 
 * **MySQL & H2 Directives**
-```yaml
+
+  ```yaml
   database:
     host: localhost
     port: 3306
     database: [db-name]
     username: [db-username]
     password: [db-password]
-```
+  ```
 
 * ** SQLite Directives **
-```yaml
+
+  ```yaml
   database:
     file: db.sqlite
-```
+  ```
 
 **Developer Note:** Environment variables are currently a work in progress and will be finalized very soon. You will be able to specify DB credentials using the `.env` properties file located in the site webroot.
 
@@ -157,10 +162,6 @@ archive:
   interval: 24h  
   keep: 3
 ```
-
-
-
-
 
 
 
