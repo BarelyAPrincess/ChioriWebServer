@@ -38,7 +38,7 @@ The site's SSL certificate and key are expected to be located in the `[webroot]/
 
 ## Configure Site Domains
 
-**Chiori-chan's Web Server** can share a multitude of domains and subdomains between sites and works very much like Apache's VirtualHost feature.
+**Chiori-chan's Web Server** can share a multitude of domains and subdomains between sites and functions much like Apache's VirtualHost feature.
 
 **Basic Domain Assignment:**
 
@@ -61,15 +61,26 @@ site:
     subdomain4_example_com: {}
 ```
 
-In the above example, only the domains with other subdomains or empty sections `{}` are assigned to the site, i.e., `mydomain.local` will not be assigned to this site but `example.com` will. Doing this you have the ability to assign subdomains to any number of sites, each either unique configuration and security. siteA can has `sitea.mydomain.local` and siteB could have `siteb.mydomain.local`, while `mydomain.local` can be assigned to siteZ.
+In the above example, only the domains with subdomains or empty sections `{}` are assigned to the site, i.e., `mydomain.local` will not be assigned to this site but `example.com` will. Doing this you have the ability to assign subdomains to any number of sites, which means each domain/subdomain can also have it's own unique configuration and security. `elsa.mydomain.local` can be assigned to site `elsa`, `anna.mydomain.local` can be assigned to site anna, and `mydomain.local` can be assigned to site `iduna`. It's that easy!
 
-**Developer Note: ** When using a full domain as a key, it's parative that all periods are replaced by underscores, by default YAML interprets periods as key separators. If your domain must contain an underscore, escape it with a backslash like so `some\_domain`.
+**Developer Note: ** When using a full domain as a key, it's parative that all periods are replaced by underscores, by default YAML interprets periods as key separators. If your domain/subdomain must contain an underscore, escape it with a backslash like so `burgers_bob\_belcher_example_com`.
 
-**Developer Note: ** It's also important to note that sites can be accessed using the tilde `~` from only the default site, e.g., `http://127.0.0.1/~siteA`. This will only access to first specified domain, i.e., root domain.
+**Developer Note: ** It's also important to note that sites can be accessed using the tilde `~` from only the default site, e.g., `http://127.0.0.1/~siteA`. This will only access the first specified domain, unless `_default` is specified:
+
+```yaml
+site:
+  domains:
+    example_com: # Would have been the default
+      subdomain1: {}
+      subdomain2: {}
+    mydomain_local:
+      __default: true # Only one __default can be specified
+    other_local: {}
+```
 
 ### Public Webroot
 
-By default each domain assigned to the site, is given it's own directory in the public directory, `[webroot]/[siteId]/public`. Each domain will follow the assignment of the assigned domain with underscores in place of periods and in reverse order, e.g., `[webroot]/[siteId]/public/com_example_subdomain1` or `[webroot]/[siteId]/public/local_mydomain_sitea`
+By default each domain assigned, is given it's own directory in the site's public directory, `[webroot]/[siteId]/public`. Each domain will follow the assignment of the assigned domain with underscores in place of periods and in reverse order, e.g., `[webroot]/[siteId]/public/com_example_subdomain1` or `[webroot]/[siteId]/public/local_mydomain_sitea`
 
 ### Domain Configuration
 
@@ -82,21 +93,23 @@ site:
       __sslCert: bob.crt
       __sslKey: bob.key
       __sslSecret: 'secret'
+      __customDirective: 'Hello World'
       subdomain1:
         __directory: [relative to the public directory or absolute]
       subdomain2:
         __redirect: http://newsubdomain.example.com/
         __redirectCode: 301
+        __directiveTwo: 'John Luke Picard'
 ```
 
 Each configuration directive is appended with a double underscore `__` as to not confuse it with a subdomain. Unused directives are ignored but can be accessed using the Site Scripting API, e.g., `getSite().getDomains().get(0).getConfig("customDirective")` or `getSite().getDomain("sitea.mydomain.local").getConfig("directiveTwo")`.
 
-See the `Site SSL Configuration` section for help configuring SSL on each subdomain using the `sslCert`, `sslKey`, and `sslSecret` directives. Unconfigured SSL will default to SSL on parent domains, the site, and then lastly the server.
+See the `Site SSL Configuration` section for help configuring SSL on each domain/subdomain using the `sslCert`, `sslKey`, and `sslSecret` directives. Unconfigured SSL will default to SSL on parent domain, the site, and then lastly the server.
 
-* **redirect: \[url\]** Redirect visitors to the specified URL.
-* **redirectCode: \[code\]** Use any of the available 3xx HTTP codes for the redirect.
+* **__redirect: \[url\]** Redirect visitors to the specified URL.
+* **__redirectCode: \[code\]** Use any of the available 3xx HTTP codes for the redirect.
 
-**Developer Note: ** By default public directories are not allowed outside the webroot directory unless you change the `sites.allowPublicOutsideWebroot` directive to `true` in the main configuration `[server_root]/config.yaml`.
+**Developer Note: ** By default public directories are not allowed outside the webroot directory unless you change the directive `sites.allowPublicOutsideWebroot` to `true` in the main configuration `[server_root]/config.yaml`.
 
 ## Configure Site Sessions
 
