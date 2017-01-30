@@ -109,7 +109,7 @@ See the `Site SSL Configuration` section for help configuring SSL on each domain
 * **__redirect: \[url\]** Redirect visitors to the specified URL.
 * **__redirectCode: \[code\]** Use any of the available 3xx HTTP codes for the redirect. Defaults to 301.
 
-**Developer Note: ** By default public directories are not allowed outside the webroot directory unless you change the directive `sites.allowPublicOutsideWebroot` to `true` in the main configuration `[server_root]/config.yaml`.
+**Developer Note: ** By default, public directories are not allowed outside the webroot directory unless you change the directive `sites.allowPublicOutsideWebroot` to `true` in the main configuration `[server_root]/config.yaml`.
 
 ## Configure Site Sessions
 
