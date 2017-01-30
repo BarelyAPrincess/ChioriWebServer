@@ -107,7 +107,7 @@ Each configuration directive is appended with a double underscore `__` as to not
 See the `Site SSL Configuration` section for help configuring SSL on each domain/subdomain using the `sslCert`, `sslKey`, and `sslSecret` directives. Unconfigured SSL will default to SSL on parent domain, the site, and then lastly the server.
 
 * **__redirect: \[url\]** Redirect visitors to the specified URL.
-* **__redirectCode: \[code\]** Use any of the available 3xx HTTP codes for the redirect.
+* **__redirectCode: \[code\]** Use any of the available 3xx HTTP codes for the redirect. Defaults to 301.
 
 **Developer Note: ** By default public directories are not allowed outside the webroot directory unless you change the directive `sites.allowPublicOutsideWebroot` to `true` in the main configuration `[server_root]/config.yaml`.
 
