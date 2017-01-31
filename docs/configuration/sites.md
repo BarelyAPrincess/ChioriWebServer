@@ -102,7 +102,7 @@ site:
         __directiveTwo: 'John Luke Picard'
 ```
 
-Each configuration directive is appended with a double underscore `__` as to not confuse it with a subdomain. Unused directives are ignored but can be accessed using the Site Scripting API, e.g., `getSite().getDomains().get(0).getConfig("customDirective")` or `getSite().getDomain("sitea.mydomain.local").getConfig("directiveTwo")`.
+Each configuration directive is prepended with a double underscore `__` as to not confuse it with a child domain. Unused directives are ignored but can be accessed using the Site Scripting API, e.g., `getSite().getDomains().get(0).getConfig("customDirective")` or `getSite().getDomain("sitea.mydomain.local").getConfig("directiveTwo")`.
 
 See the `Site SSL Configuration` section for help configuring SSL on each domain/subdomain using the `sslCert`, `sslKey`, and `sslSecret` directives. Unconfigured SSL will default to SSL on parent domain, the site, and then lastly the server.
 
