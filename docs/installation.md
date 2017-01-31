@@ -4,7 +4,6 @@ To install Chiori-chan's Web Server you need to grab the latest release from our
 
 ## Automated Build Server
 
-[![Build Status](http://jenkins.chiorichan.com/buildStatus/icon?job=ChioriWebServer)](http://jenkins.chiorichan.com/job/ChioriWebServer/)
 [![Build Status](https://travis-ci.org/ChioriGreene/ChioriWebServer.svg?branch=master)](https://travis-ci.org/ChioriGreene/ChioriWebServer)
 
 Do you like running the latest bleeding edge builds? Give our automated build servers a try. We utilize both a [Jenkin's Build Server](http://jenkins.chiorichan.com/job/ChioriWebServer/) and [Travis](https://travis-ci.org/ChioriGreene/ChioriWebServer) which pushes each build to our [Artifactory Maven Server](http://jenkins.chiorichan.com:8081/artifactory/snapshots/com/chiorichan/ChioriWebServer/). Each build is triggered by way of a git push.
