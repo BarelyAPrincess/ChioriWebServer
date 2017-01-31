@@ -521,7 +521,7 @@ Added a build.xml file so the project can be built with Apache Ant 1.8. Switch f
 
 - FIXED: `var_dump()` NullPointer bug
 - FIXED: `_REQUEST` map collisions
-- FEATURE: New GSP tags (`<? ?>` -- PHP Style (Optional, off by default), `{{ }}` -- Print Escaped String, `{{! !}}` -- Print Unescaped String) and (`<%` `<?`) tags will not print without equal(=) in GSP files
+- FEATURE: New GSP tags (`<? ?>` -- PHP Style (Optional, off by default), `{ { } }` -- Print Escaped String, `{ {! !} }` (Double bracket, with no space. Dumb errors.) -- Print Unescaped String) and (`<%` `<?`) tags will not print without equal(=) in GSP files
 - FEATURE: New `obStart()`, `obEnd()`, `obFlush()`, `section( key, [value] )`, and `yield( key )` to Groovy Scripting API
 - ADDED: *[WIP]* DB table to model class
 - CHANGE: Forced headers to always be lowercase
