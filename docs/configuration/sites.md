@@ -61,7 +61,7 @@ site:
     subdomain4_example_com: {}
 ```
 
-In the above example, only the domains with subdomains or empty sections `{}` are assigned to the site, i.e., `mydomain.local` will not be assigned to this site but `example.com` will. Doing this you have the ability to assign subdomains to any number of sites, which means each domain/subdomain can also have it's own unique configuration and security. `elsa.mydomain.local` can be assigned to site `elsa`, `anna.mydomain.local` can be assigned to site anna, and `mydomain.local` can be assigned to site `iduna`. It's that easy!
+In the above example, only the domains with subdomains or empty sections `{}` are assigned to the site, i.e., `mydomain.local` will not be assigned to this site but `example.com` will. Doing this you have the ability to assign any number of domains to any site, which means each domain can also have it's own unique configuration and security. `elsa.mydomain.local` can be assigned to site `elsa`, `anna.mydomain.local` can be assigned to site anna, and `mydomain.local` can be assigned to site `iduna`. It's that easy!
 
 **Developer Note: ** When using a full domain as a key, it's parative that all periods are replaced by underscores, by default YAML interprets periods as key separators. If your domain/subdomain must contain an underscore, escape it with a backslash like so `burgers_bob\_belcher_example_com`.
 
@@ -106,8 +106,8 @@ Each configuration directive is appended with a double underscore `__` as to not
 
 See the `Site SSL Configuration` section for help configuring SSL on each domain/subdomain using the `sslCert`, `sslKey`, and `sslSecret` directives. Unconfigured SSL will default to SSL on parent domain, the site, and then lastly the server.
 
-* **__redirect: \[url\]** Redirect visitors to the specified URL.
-* **__redirectCode: \[code\]** Use any of the available 3xx HTTP codes for the redirect. Defaults to 301.
+* **\_\_redirect: \[url\]** Redirect visitors to the specified URL.
+* **\_\_redirectCode: \[code\]** Use any of the available 3xx HTTP codes for the redirect. Defaults to 301.
 
 **Developer Note: ** By default, public directories are not allowed outside the webroot directory unless you change the directive `sites.allowPublicOutsideWebroot` to `true` in the main configuration `[server_root]/config.yaml`.
 
