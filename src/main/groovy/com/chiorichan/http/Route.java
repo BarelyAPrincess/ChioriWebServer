@@ -1,28 +1,30 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- *
+ * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ * <p>
+ * All Rights Reserved.
  */
 package com.chiorichan.http;
-
-import java.io.File;
-import java.io.IOException;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Map;
-
-import org.apache.commons.lang3.StringUtils;
 
 import com.chiorichan.database.DatabaseEngineLegacy;
 import com.chiorichan.http.Routes.RouteType;
 import com.chiorichan.logger.Log;
 import com.chiorichan.site.Site;
-import com.chiorichan.util.StringFunc;
+import com.chiorichan.zutils.ZObjects;
+import com.chiorichan.zutils.ZStrings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.apache.commons.lang3.StringUtils;
+
+import java.io.IOException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Route
 {
@@ -46,11 +48,8 @@ public class Route
 	}
 
 	/**
-	 *
-	 * @param args
-	 *             Line input in the format of "pattern '/dir/[cat=]/[id=]', to '/dir/view_item.gsp'"
-	 * @throws IOException
-	 *              Thrown if input string is not valid
+	 * @param args Line input in the format of "pattern '/dir/[cat=]/[id=]', to '/dir/view_item.gsp'"
+	 * @throws IOException Thrown if input string is not valid
 	 */
 	public Route( String args, Site site ) throws IOException
 	{
@@ -93,21 +92,18 @@ public class Route
 			}
 		}
 
-		// params.put( "domain", site.getDomain() );
+		// params.put( "domain", site.getTLD() );
 	}
 
-	public File getFile()
+	public String getFile()
 	{
-		if ( params.get( "file" ) != null && params.get( "file" ).length() > 0 )
-			return new File( site.getSubdomain( params.get( "subdomain" ) ).directory(), params.get( "file" ) );
-		return null;
+		return params.get( "file" );
 	}
 
 	public String getHTML()
 	{
 		if ( params.get( "html" ) != null && !params.get( "html" ).isEmpty() )
 			return params.get( "html" );
-
 		return null;
 	}
 
@@ -141,7 +137,7 @@ public class Route
 		return params.get( "redirect" ) != null;
 	}
 
-	public String match( String domain, String subdomain, String uri )
+	public String match( String uri, String host )
 	{
 		String prop = params.get( "pattern" );
 
@@ -163,11 +159,14 @@ public class Route
 			params.put( "pattern", prop );
 		}
 
-		if ( !StringUtils.trimToEmpty( params.get( "subdomain" ) ).equals( "*" ) && !subdomain.equals( params.get( "subdomain" ) ) )
+		if ( !ZObjects.isEmpty( params.get( "host" ) ) && !host.matches( params.get( "host" ) ) )
 		{
-			Log.get().finer( "The subdomain does not match for " + uri + " on route " + this );
+			Log.get().finer( "The host failed validation for route " + this );
 			return null;
 		}
+
+		if ( ZObjects.isEmpty( params.get( "host" ) ) )
+			Log.get().warning( "The Route [" + params.entrySet().stream().map( e -> e.getKey() + "=\"" + e.getValue() + "\"" ).collect( Collectors.joining( "," ) ) + "] has no host (Uses RegEx, e.g., ^example.com$) defined, it's recommended that one is set so that the rule is not used unintentionally." );
 
 		String[] propsRaw = prop.split( "[.//]" );
 		String[] urisRaw = uri.split( "[.//]" );
@@ -211,7 +210,7 @@ public class Route
 
 				if ( props.get( i ).matches( "\\[([a-zA-Z0-9]+)=\\]" ) )
 				{
-					weight = StringFunc.replaceAt( weight, i, "Z" );
+					weight = ZStrings.replaceAt( weight, i, "Z" );
 
 					String key = props.get( i ).replaceAll( "[\\[\\]=]", "" );
 					String value = uris.get( i );
@@ -223,7 +222,7 @@ public class Route
 				}
 				else if ( props.get( i ).equals( uris.get( i ) ) )
 				{
-					weight = StringFunc.replaceAt( weight, i, "A" );
+					weight = ZStrings.replaceAt( weight, i, "A" );
 
 					Log.get().finer( "Found a match for " + prop + " on route " + this );
 					// MATCH
@@ -248,6 +247,6 @@ public class Route
 	@Override
 	public String toString()
 	{
-		return "Type: " + type + ", Params: " + params;
+		return "Route{Type=\"" + type + "\",Params=[" + params.entrySet().stream().map( e -> e.getKey() + "=\"" + e.getValue() + "\"" ).collect( Collectors.joining( "," ) ) + "]}";
 	}
 }

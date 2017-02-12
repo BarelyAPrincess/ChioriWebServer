@@ -23,7 +23,7 @@ DROP TABLE IF EXISTS `sessions`;
 CREATE TABLE `sessions` (
   `sessionId` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `sessionName` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
-  `ipAddr` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `ipAddress` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   `sessionSite` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   `timeout` int(255) NOT NULL,
   `data` text COLLATE utf8_unicode_ci NOT NULL

@@ -14,7 +14,7 @@
 	UPDATED: Made updates to Dropbox Plugin
 	UPDATED: Changed maven download URL to JCenter Bintray, Maven Central used as a backup location
 	FEATURE: Added H2 Database support, files only
-	FEATURE: [WIP] Added datastores, currently only intended to replace SQL databases but will also implement file backends.
+	FEATURE: [WIP] Added datastores, currently only intended to replace SQL databases but will also implement file backend.
 9.3.0
 	BUGFIX: HTTP log routine was reporting incorrect date and timestamps
 	BUGFIX: Issues with SQL Account saving
@@ -42,7 +42,7 @@
 9.3.3:
 	DEPRECATED: StringFunc.md5 and base64 methods, use SecureFunc instead
 	DEPRECATED: Sessions are no longer cleaned up at shutdown to spare a long agonizing shutdown delay
-	BUGFIX: Login redirect bug with http code 307
+	BUGFIX: Login redirect bug with com.chiorichan.http code 307
 	BUGFIX: generateAcctId() is now more reliable
 	UPDATED: Rewrote SSL to be compatible with normal certificates (PEM certificates and PKCS8 keys) over ugly Java key stores
 	UPDATED: Changed the minimum required version to Java 1.8, this gave us a few more modern SSL/TLS protocols and an improved API
@@ -69,7 +69,7 @@
 	UPDATED: Sites are now properly saved back to their configuration files
 	UPDATED: Changes to YamlConfiguration, added getAsList(), copy(), move(), and improved getList() methods
 	UPDATED: Enabled about 22 additional cipher suites for SSL
-	UPDATED: Moved com.chiorichan.https.* to com.chiorichan.http
+	UPDATED: Moved com.chiorichan.https.* to com.chiorichan.com.chiorichan.http
 	UPDATED: CSRF has been renamed to Nonce, annotation is @nonce [Disabled, Flexible, PostOnly, GetOnly, Required]. Nonce can now also be used to carry short lived strings between requests
 	UPDATED: New SSL annotation options, PostOnly and GetOnly. Each will REQUIRE SSL if request is being made over POST or GET.
 	ADDED: SSL ciphers can be modified from the EnabledCipherSuites.txt file
@@ -77,14 +77,14 @@
 	ADDED: Added methods prepend(), reverseOrder(), subNamespace(), and subNodes() to Namespace Class
 	ADDED: regexCapture() method to StringFunc class, can be used to very easily capture a section of a string
 9.3.6:
-	FEATURE: [WIP] Implement Apache Configuration and .htaccess function. When finished, it will be able to read about 90% of all Apache directives and use them for controlling server behavior
-	UPDATED: Cleaned up JAVADOC and code for HttpHandler class
-	UPDATED: Slight changes to the Groovy Scripting Base, most builtin methods moved to Builtin class
-	UPDATED: Removed use of the Netty SNI Handler and replaced it with a builtin event driven SNI Handler, allows plugins to provide certificate mappings
-	UPDATED: Majority of the work finished on Let's Encrypt (Acme) Plugin. It's about 95% work and only needs some bugfixes to proper certificate handling
-	ADDED: getDeveloperContact() and getHTMLFooter() methods to Versioning class
-	ADDED: ObjectStacker helper class, a utility class for stacking child and parent object nodes
-	ADDED: Added new methods FileFunc#buildFile(parts...), FileFunc#relPath(File), Namespace#getFirst(), Namespace#getLast(), SecureFunc#rand(len, bool, bool, chars)
+    FEATURE: [WIP] Implement Apache Configuration and .htaccess function. When finished, it will be able to read about 90% of all Apache directives and use them for controlling server behavior
+    UPDATED: Cleaned up JAVADOC and code for HttpHandler class
+    UPDATED: Slight changes to the Groovy Scripting Base, most builtin methods moved to Builtin class
+    UPDATED: Removed use of the Netty SNI Handler and replaced it with a builtin event driven SNI Handler, allows plugins to provide certificate mappings
+    UPDATED: Majority of the work finished on Let's Encrypt (Acme) Plugin. It's about 95% work and only needs some bugfixes to proper certificate handling
+    ADDED: getDeveloperContact() and getHTMLFooter() methods to Versioning class
+    ADDED: ObjectStacker helper class, a utility class for stacking child and parent object nodes
+    ADDED: Added new methods FileFunc#buildFile(parts...), FileFunc#relPath(File), Namespace#getFirst(), Namespace#getLast(), SecureFunc#rand(len, bool, bool, chars)
 TODO:
 	1. Implement a SecurityManager
 	2. Update YAML Configuration saving to not override changes made to a configuration file since last read

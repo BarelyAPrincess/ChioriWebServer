@@ -3,40 +3,24 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.site;
 
-import io.netty.handler.ssl.SslContext;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.security.cert.CertificateException;
-import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
-
-import javax.net.ssl.SSLException;
-
-import org.apache.commons.lang3.Validate;
-import org.apache.commons.lang3.text.WordUtils;
-
 import com.chiorichan.AppConfig;
+import com.chiorichan.Versioning;
 import com.chiorichan.account.AccountLocation;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.configuration.apache.ApacheConfiguration;
-import com.chiorichan.configuration.file.YamlConfiguration;
+import com.chiorichan.configuration.types.yaml.YamlConfiguration;
 import com.chiorichan.datastore.DatastoreManager;
 import com.chiorichan.datastore.sql.bases.H2SQLDatastore;
 import com.chiorichan.datastore.sql.bases.MySQLDatastore;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.datastore.sql.bases.SQLiteDatastore;
+import com.chiorichan.env.Env;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.site.SiteLoadEvent;
@@ -49,6 +33,7 @@ import com.chiorichan.http.ssl.CertificateWrapper;
 import com.chiorichan.lang.ApplicationException;
 import com.chiorichan.lang.EnumColor;
 import com.chiorichan.lang.ExceptionReport;
+import com.chiorichan.lang.SiteConfigurationException;
 import com.chiorichan.lang.SiteException;
 import com.chiorichan.logger.Log;
 import com.chiorichan.net.NetworkManager;
@@ -56,55 +41,82 @@ import com.chiorichan.session.SessionManager;
 import com.chiorichan.session.SessionPersistenceMethod;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.util.FileFunc;
-import com.chiorichan.util.NetworkFunc;
-import com.chiorichan.util.SecureFunc;
-import com.chiorichan.util.Versioning;
+import com.chiorichan.zutils.ZEncryption;
+import com.chiorichan.zutils.ZHttp;
+import com.chiorichan.zutils.ZIO;
+import com.chiorichan.zutils.ZObjects;
 import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import io.netty.handler.ssl.SslContext;
+import org.apache.commons.lang3.text.WordUtils;
+
+import javax.net.ssl.SSLException;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.security.cert.CertificateException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Implements loading sites from file
  */
 public class Site implements AccountLocation
 {
-	private final File file;
-	final YamlConfiguration yaml;
+	/* Site Database */
 	private SQLDatastore datastore;
-
-	private final String siteId;
-	private String siteTitle;
-	private final List<String> ips;
-
-	/**
-	 * Holds the enabled domains and subdomains
-	 */
-	final Map<String, Set<String>> domains = Maps.newHashMap();
-
-	private SslContext defaultSslContext = null;
-
-	private final List<String> cachePatterns = Lists.newArrayList();
-	private SessionPersistenceMethod sessionPersistence = SessionPersistenceMethod.COOKIE;
-	private final String encryptionKey;
-	private final Routes routes = new Routes( this );
-
+	/* SiteManager instance */
+	private final SiteManager mgr;
+	/* Configuration file */
+	private final File file;
+	/* Root directory */
 	private File directory;
+	/* Loaded site configuration */
+	final YamlConfiguration yaml;
+	/* Security encryption key -- WIP */
+	private final String encryptionKey;
+	/* URL routes */
+	private final Routes routes = new Routes( this );
+	/* Environment variables */
+	final Env env;
+	/* Id */
+	private final String siteId;
+	/* Title */
+	private String siteTitle;
+	/* Listening IP addresses */
+	private final List<String> ips;
+	/* Default site SSL context */
+	private SslContext defaultSslContext = null;
+	/* Session persistence methods */
+	private SessionPersistenceMethod sessionPersistence = SessionPersistenceMethod.COOKIE;
+	private final List<String> cachePatterns = new ArrayList<>();
 
-	// Deprecated
-	private final List<String> metatags = Lists.newCopyOnWriteArrayList();
-
+	/* Scripting variables binding */
 	private final ScriptBinding binding = new ScriptBinding();
+	/* ScriptingFactory instance, for interpreting script files */
 	private final ScriptingFactory factory = ScriptingFactory.create( binding );
+	/* Domain Mappings */
+	protected final List<DomainMapping> mappings = new ArrayList<>();
 
-	Site( File file, YamlConfiguration yaml ) throws ApplicationException
+	Site( SiteManager mgr, File file, YamlConfiguration yaml, Env env ) throws ApplicationException
 	{
-		Validate.notNull( file );
-		Validate.notNull( yaml );
+		ZObjects.notNull( mgr );
+		ZObjects.notNull( file );
+		ZObjects.notNull( yaml );
+		ZObjects.notNull( env );
 
+		// yaml.setEnvironmentVariables( env.getProperties() );
+
+		this.mgr = mgr;
 		this.file = file;
 		this.yaml = yaml;
+		this.env = env;
 
 		if ( !yaml.has( "site.id" ) )
 			throw new SiteException( "Site id is missing!" );
@@ -112,10 +124,10 @@ public class Site implements AccountLocation
 		siteId = yaml.getString( "site.id" ).toLowerCase();
 		siteTitle = yaml.getString( "site.title", AppConfig.get().getString( "framework.sites.defaultTitle", "Unnamed Site" ) );
 
-		ips = yaml.getAsList( "site.listen", Lists.newArrayList() );
+		ips = yaml.getAsList( "site.listen", new ArrayList<>() );
 
 		for ( String ip : ips )
-			if ( !NetworkFunc.isValidIPv4( ip ) && !NetworkFunc.isValidIPv6( ip ) )
+			if ( !ZHttp.isValidIPv4( ip ) && !ZHttp.isValidIPv6( ip ) )
 				SiteManager.getLogger().warning( String.format( "The site '%s' is set to listen on ip '%s', but the ip does not match the valid IPv4 or IPv6 regex formula.", siteId, ip ) );
 
 		List<String> listeningIps = NetworkManager.getListeningIps();
@@ -130,7 +142,7 @@ public class Site implements AccountLocation
 			encryptionKey = yaml.getString( "site.encryptionKey" );
 		else
 		{
-			encryptionKey = SecureFunc.randomize( "0x0000X" );
+			encryptionKey = ZEncryption.randomize( "0x0000X" );
 			yaml.set( "site.encryptionKey", encryptionKey );
 		}
 
@@ -144,33 +156,10 @@ public class Site implements AccountLocation
 		if ( !yaml.has( "site.web-allowed-origin" ) )
 			yaml.set( "site.web-allowed-origin", "*" );
 
-		// Load enabled domains and subdomains
-		ConfigurationSection ds = yaml.getConfigurationSection( "site.domains", true );
-
-		// TODO Make it so 'root' can be used as a subdomain and not just a mapping to the root of the domain
-
-		for ( String key : ds.getKeys() )
-		{
-			ConfigurationSection subds = ds.getConfigurationSection( key );
-
-			String domain = key.replace( "_", "." );
-
-			SiteMapping.put( domain, this );
-
-			domains.put( domain, Sets.newHashSet() );
-
-			for ( String subdomain : subds.getKeys() )
-				if ( !"root".equalsIgnoreCase( subdomain ) )
-				{
-					SiteManager.getLogger().info( String.format( "Initalized subdomain '%s' for site '%s'", subdomain, siteId ) );
-					FileFunc.setDirectoryAccessWithException( getSubdomain( subdomain ).directory() );
-					domains.get( domain ).add( subdomain );
-				}
-		}
-
+		mapDomain( yaml.getConfigurationSection( "site.domains", true ) );
 
 		File ssl = directory( "ssl" );
-		FileFunc.setDirectoryAccessWithException( ssl );
+		ZIO.setDirectoryAccessWithException( ssl );
 
 		String sslCertFile = yaml.getString( "site.sslCert" );
 		String sslKeyFile = yaml.getString( "site.sslKey" );
@@ -187,10 +176,9 @@ public class Site implements AccountLocation
 			}
 			catch ( SSLException | FileNotFoundException | CertificateException e )
 			{
-				SiteManager.getLogger().severe( String.format( "Failed to load SslContext for site '%s' using cert '%s', key '%s', and hasSecret? %s", siteId, FileFunc.relPath( sslCert ), FileFunc.relPath( sslKey ), sslSecret != null && !sslSecret.isEmpty() ), e );
+				SiteManager.getLogger().severe( String.format( "Failed to load SslContext for site '%s' using cert '%s', key '%s', and hasSecret? %s", siteId, ZIO.relPath( sslCert ), ZIO.relPath( sslKey ), sslSecret != null && !sslSecret.isEmpty() ), e );
 			}
 		}
-
 
 		try
 		{
@@ -201,7 +189,6 @@ public class Site implements AccountLocation
 		{
 			throw new SiteException( e );
 		}
-
 
 		if ( yaml.has( "database" ) && yaml.isConfigurationSection( "database" ) )
 			switch ( yaml.getString( "database.type", "sqlite" ).toLowerCase() )
@@ -253,19 +240,13 @@ public class Site implements AccountLocation
 						SiteManager.getLogger().severe( String.format( "Failed to eval onLoadScript '%s' for site '%s' because the file was not found.", script, siteId ) );
 					else
 					{
-						SiteManager.getLogger().severe( String.format( "Exception caught while evaling onLoadScript '%s' for site '%s'", script, siteId ) );
+						SiteManager.getLogger().severe( String.format( "Exception caught while evaluate onLoadScript '%s' for site '%s'", script, siteId ) );
 						ExceptionReport.printExceptions( result.getExceptions() );
 					}
 				}
 				else
-					SiteManager.getLogger().info( String.format( "Finished evaling onLoadScript '%s' for site '%s' with result: %s", script, siteId, result.getString( true ) ) );
+					SiteManager.getLogger().info( String.format( "Finished evaluate onLoadScript '%s' for site '%s' with result: %s", script, siteId, result.getString( true ) ) );
 			}
-
-		/**
-		 * Warn the user that files can not be served from the `wisp`, a.k.a. Web Interface and Server Point, folder since the server uses it for internal requests.
-		 */
-		if ( getRootdomain().directory( "~wisp" ).exists() )
-			SiteManager.getLogger().warning( String.format( "It would appear that site '%s' contains a subfolder by the name of '~wisp', since we use the uri '/~wisp' for internal access, you will be unable to serve files from this directory!", siteId ) );
 
 		ConfigurationSection archive = yaml.getConfigurationSection( "archive", true );
 
@@ -335,7 +316,7 @@ public class Site implements AccountLocation
 
 						try
 						{
-							FileFunc.zipDir( site.directory(), zip );
+							ZIO.zipDir( site.directory(), zip );
 						}
 						catch ( IOException e )
 						{
@@ -348,18 +329,86 @@ public class Site implements AccountLocation
 				} );
 			}
 			else
-				SiteManager.getLogger().warning( String.format( "Failed to initalize site backup for site %s, interval did not match regex '[0-9]+[dhmsDHMS]?'.", siteId ) );
+				SiteManager.getLogger().warning( String.format( "Failed to initialize site backup for site %s, interval did not match regex '[0-9]+[dhmsDHMS]?'.", siteId ) );
 		}
 	}
 
-	Site( String siteId )
+	private void mapDomain( ConfigurationSection domains ) throws SiteConfigurationException
 	{
+		mapDomain( domains, null, 0 );
+	}
+
+	private String defDomain = null;
+
+	private void mapDomain( final ConfigurationSection domains, DomainMapping mapping, int depth ) throws SiteConfigurationException
+	{
+		ZObjects.notNull( domains );
+		ZObjects.isTrue( depth >= 0 );
+
+		for ( String key : domains.getKeys() )
+		{
+			/* Replace underscore with dot, ignore escaped underscore. */
+			String domainKey = key.replaceAll( "(?<!\\\\)_", "." ).replace( "\\_", "_" );
+
+			if ( key.startsWith( "__" ) ) // Configuration Directive
+			{
+				if ( depth == 0 || mapping == null )
+					throw new SiteConfigurationException( String.format( "Domain configuration directive [%s.%s] is not allowed here.", domains.getCurrentPath(), key ) );
+				mapping.putConfig( key.substring( 2 ), domains.getString( key ) );
+
+				if ( "__default".equals( key ) && domains.getBoolean( key ) )
+				{
+					if ( defDomain != null )
+						throw new SiteConfigurationException( String.format( "Domain configuration at [%s] is invalid, the DEFAULT domain was previously set to [%s]", domains.getCurrentPath(), defDomain ) );
+					defDomain = mapping.getFullDomain();
+				}
+			}
+			else if ( domains.isConfigurationSection( key ) ) // Child Domain
+				try
+				{
+					DomainMapping mappingNew = mapping == null ? getMappings( domainKey ).findFirst().get() : mapping.getChildMapping( domainKey );
+					mappingNew.map();
+					mapDomain( domains.getConfigurationSection( key ), mappingNew, depth++ );
+				}
+				catch ( IllegalStateException e )
+				{
+					/* Convert the IllegalStateException to a proper SiteConfigurationException */
+					throw new SiteConfigurationException( e );
+				}
+			else /* Invalid Directive */
+				SiteManager.getLogger().warning( String.format( "Site configuration path [%s.%s] is invalid, domain directives MUST start with a double underscore (e.g., __key) and child domains must be a (empty) YAML section (e.g., {}).", domains.getCurrentPath(), key ) );
+		}
+	}
+
+	public Stream<DomainMapping> getMappings()
+	{
+		return mappings.stream();
+	}
+
+	public DomainMapping getDefaultMapping()
+	{
+		// Prevent error if no mappings are mapped.
+		Stream<DomainMapping> stream = mappings.stream().filter( DomainMapping::isDefault );
+		return ( stream.count() == 0 ? getMappings() : stream ).findFirst().get();
+	}
+
+	public Stream<DomainMapping> getMappings( String fullDomain )
+	{
+		ZObjects.notEmpty( fullDomain );
+		Supplier<Stream<DomainMapping>> stream = () -> mappings.stream().filter( d -> d.matches( fullDomain ) );
+		return stream.get().count() == 0 ? Stream.of( new DomainMapping( this, fullDomain ) ) : stream.get();
+	}
+
+	Site( SiteManager mgr, String siteId )
+	{
+		this.mgr = mgr;
 		this.siteId = siteId;
 
 		file = null;
 		yaml = new YamlConfiguration();
-		encryptionKey = SecureFunc.randomize( "0x0000X" );
-		ips = Lists.newArrayList();
+		env = new Env();
+		encryptionKey = ZEncryption.randomize( "0x0000X" );
+		ips = new ArrayList<>();
 		siteTitle = Versioning.getProduct();
 		datastore = AppConfig.get().getDatabase();
 
@@ -381,13 +430,12 @@ public class Site implements AccountLocation
 	}
 
 	/**
-	 * @param subdir
-	 *             The subdirectory name
+	 * @param sub The subdirectory name
 	 * @return The subdirectory of the site main directory
 	 */
-	public File directory( String subdir )
+	public File directory( String sub )
 	{
-		return new File( directory, subdir );
+		return new File( directory, sub );
 	}
 
 	public File directoryPublic()
@@ -440,41 +488,6 @@ public class Site implements AccountLocation
 		return defaultSslContext;
 	}
 
-	public Map<String, Set<String>> getDomains()
-	{
-		return Collections.unmodifiableMap( domains );
-	}
-
-	/**
-	 * Compiles a map of domains and subdomains with valid SslContext
-	 * Main domain is under the subdomain root
-	 *
-	 * @return Map of domains and subdomains with valid SslContext
-	 */
-	public Map<String, Map<String, SslContext>> getDomainsWithSslContext()
-	{
-		return new HashMap<String, Map<String, SslContext>>()
-		{
-			{
-				for ( Entry<String, Set<String>> e : domains.entrySet() )
-					put( e.getKey(), new HashMap<String, SslContext>()
-					{
-						{
-							SslContext sslRoot = getSslContext( e.getKey() );
-							if ( sslRoot != null )
-								put( "root", sslRoot );
-							for ( String s : e.getValue() )
-							{
-								SslContext ssl = getSslContext( e.getKey(), s );
-								if ( ssl != null )
-									put( s, ssl );
-							}
-						}
-					} );
-			}
-		};
-	}
-
 	public String getEncryptionKey()
 	{
 		return encryptionKey;
@@ -513,7 +526,7 @@ public class Site implements AccountLocation
 
 	public String getLoginForm()
 	{
-		return getConfig().getString( "accounts.loginForm", "/wisp/login" );
+		return getConfig().getString( "accounts.loginForm", "/~wisp/login" );
 	}
 
 	public String getLoginPost()
@@ -521,18 +534,9 @@ public class Site implements AccountLocation
 		return getConfig().getString( "accounts.loginPost", "/" );
 	}
 
-	@Deprecated
-	public List<String> getMetatags()
+	public Stream<DomainNode> getDomains()
 	{
-		if ( metatags == null )
-			return new CopyOnWriteArrayList<String>();
-
-		return metatags;
-	}
-
-	public SiteDomain getRootdomain() throws SiteException
-	{
-		return getSubdomain( "root" );
+		return mgr.getDomainsBySite( this );
 	}
 
 	public Routes getRoutes()
@@ -558,56 +562,14 @@ public class Site implements AccountLocation
 		return sessionPersistence;
 	}
 
-	public SslContext getSslContext( String domain )
+	public String getDefaultDomain()
 	{
-		return getSslContext( domain, "root" );
-	}
-
-	public SslContext getSslContext( String domain, String subdomain )
-	{
-		Validate.notEmpty( domain );
-		Validate.notEmpty( subdomain );
-
-		File ssl = directory( "ssl" );
-		FileFunc.setDirectoryAccessWithException( ssl );
-
-		ConfigurationSection section = yaml.getConfigurationSection( "site.domains." + domain.replace( ".", "_" ) + "." + subdomain.replace( ".", "_" ), true );
-		String sslCertFile = section.getString( "sslCert" );
-		String sslKeyFile = section.getString( "sslKey" );
-		String sslSecret = section.getString( "sslSecret" );
-
-		try
-		{
-			if ( sslCertFile != null && sslKeyFile != null )
-			{
-				File sslCert = new File( ssl, sslCertFile );
-				File sslKey = new File( ssl, sslKeyFile );
-
-				return new CertificateWrapper( sslCert, sslKey, sslSecret ).context();
-			}
-		}
-		catch ( SSLException | FileNotFoundException | CertificateException e )
-		{
-			SiteManager.getLogger().severe( String.format( "Failed to load SslContext for site '%s' and subdomain '%s' using cert '%s', key '%s', and hasSecret? %s", siteId, subdomain, sslCertFile, sslKeyFile, sslSecret != null && !sslSecret.isEmpty() ), e );
-		}
-
+		if ( defDomain != null )
+			return defDomain;
+		Stream<DomainNode> domains = getDomains();
+		if ( domains.count() > 0 )
+			return domains.findFirst().get().getFullDomain();
 		return null;
-	}
-
-	public SiteDomain getSubdomain( String subdomain )
-	{
-		if ( subdomain == null || subdomain.length() == 0 )
-			subdomain = "root";
-		subdomain = subdomain.toLowerCase();
-		return new SiteDomain( this, subdomain );
-	}
-
-	public Set<String> getSubdomains( String domain )
-	{
-		if ( domains.containsKey( domain ) )
-			return Collections.unmodifiableSet( domains.get( domain ) );
-		else
-			return Sets.newHashSet();
 	}
 
 	public String getTitle()
@@ -620,9 +582,19 @@ public class Site implements AccountLocation
 		return defaultSslContext != null;
 	}
 
+	public File resourcePackage( String pack ) throws FileNotFoundException
+	{
+		ZObjects.notNull( pack, "Package can't be null" );
+
+		if ( pack.length() == 0 )
+			throw new FileNotFoundException( "Package can't be empty!" );
+
+		return resourceFile( pack.replace( ".", ZIO.PATH_SEPERATOR ) );
+	}
+
 	public File resourceFile( String file ) throws FileNotFoundException
 	{
-		Validate.notNull( file, "File can't be null" );
+		ZObjects.notNull( file, "File can't be null" );
 
 		if ( file.length() == 0 )
 			throw new FileNotFoundException( "File can't be empty!" );
@@ -660,48 +632,6 @@ public class Site implements AccountLocation
 		throw new FileNotFoundException( String.format( "Could not find the file '%s' file in site '%s' resource directory '%s'.", file, getId(), root.getAbsolutePath() ) );
 	}
 
-	public File resourcePackage( String pack ) throws FileNotFoundException
-	{
-		Validate.notNull( pack, "Package can't be null" );
-
-		if ( pack.length() == 0 )
-			throw new FileNotFoundException( "Package can't be empty!" );
-
-		pack = pack.replace( ".", System.getProperty( "file.separator" ) );
-
-		File root = directoryResource();
-
-		File packFile = new File( root, pack );
-
-		if ( packFile.exists() )
-			return packFile;
-
-		root = packFile.getParentFile();
-
-		if ( root.exists() && root.isDirectory() )
-		{
-			File[] files = root.listFiles();
-			Map<String, File> found = Maps.newLinkedHashMap();
-			List<String> preferred = ScriptingContext.getPreferredExtensions();
-
-			for ( File child : files )
-				if ( child.getName().startsWith( packFile.getName() + "." ) )
-					found.put( child.getName().substring( packFile.getName().length() + 1 ).toLowerCase(), child );
-
-			if ( found.size() > 0 )
-			{
-				if ( preferred.size() > 0 )
-					for ( String ext : preferred )
-						if ( found.containsKey( ext.toLowerCase() ) )
-							return found.get( ext.toLowerCase() );
-
-				return found.values().toArray( new File[0] )[0];
-			}
-		}
-
-		throw new FileNotFoundException( String.format( "Could not find the package '%s' file in site '%s'.", pack, getId() ) );
-	}
-
 	public void save() throws IOException
 	{
 		save( false );
@@ -728,7 +658,7 @@ public class Site implements AccountLocation
 	@Override
 	public String toString()
 	{
-		return "Site{id=" + getId() + ",title=" + getTitle() + ",domains=" + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( domains ) + "ips=" + Joiner.on( "," ).join( ips ) + ",siteDir=" + directory.getAbsolutePath() + "}";
+		return "Site{id=" + getId() + ",title=" + getTitle() + ",domains=" + getDomains().map( n -> n.getFullDomain() ).collect( Collectors.joining( "," ) ) + ",ips=" + ips.stream().collect( Collectors.joining( "," ) ) + ",siteDir=" + directory.getAbsolutePath() + "}";
 	}
 
 	public void unload()

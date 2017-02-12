@@ -1,5 +1,6 @@
 package com.chiorichan.plugin.acme.certificate;
 
+import com.chiorichan.zutils.ZIO;
 import io.netty.handler.ssl.SslContext;
 
 import java.io.File;
@@ -20,16 +21,15 @@ import javax.net.ssl.SSLException;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.configuration.ConfigurationSection;
-import com.chiorichan.configuration.file.YamlConfiguration;
+import com.chiorichan.configuration.types.yaml.YamlConfiguration;
 import com.chiorichan.http.ssl.CertificateWrapper;
 import com.chiorichan.http.ssl.SslManager;
 import com.chiorichan.lang.EnumColor;
 import com.chiorichan.plugin.acme.AcmePlugin;
 import com.chiorichan.site.Site;
-import com.chiorichan.util.FileFunc;
-import com.chiorichan.util.Namespace;
-import com.chiorichan.util.ObjectStacker;
-import com.chiorichan.util.SecureFunc;
+import com.chiorichan.helpers.Namespace;
+import com.chiorichan.helpers.ObjectStacker;
+import com.chiorichan.zutils.ZEncryption;
 
 public class CertificateMaintainer
 {
@@ -52,7 +52,7 @@ public class CertificateMaintainer
 			{
 				ConfigurationSection section = keys.getConfigurationSection( key );
 				File sslKeyFile = new File( section.getString( "file" ) );
-				if ( FileFunc.checkMd5( sslKeyFile, section.getString( "md5" ) ) )
+				if ( ZIO.checkMd5( sslKeyFile, section.getString( "md5" ) ) )
 					privateKeys.put( key, sslKeyFile );
 			}
 
@@ -96,7 +96,7 @@ public class CertificateMaintainer
 							domains.add( wrapper.getCommonName() );
 						for ( String d : domains )
 							if ( d != null && d.length() > 0 )
-								certificateStack.value( new Namespace( d ).reverseOrder(), cert );
+								certificateStack.value( Namespace.parseString( d ).reverseOrder(), cert );
 					}
 				}
 
@@ -109,9 +109,7 @@ public class CertificateMaintainer
 		for ( Certificate cert : certificates )
 			if ( cert.key().equals( key ) )
 				return true;
-		if ( key.equals( "default" ) && getDefaultCertificate() != null )
-			return true;
-		return false;
+		return key.equals( "default" ) && getDefaultCertificate() != null;
 	}
 
 	public static void checkAndSignCertificates() throws NoSuchAlgorithmException, IOException
@@ -122,7 +120,7 @@ public class CertificateMaintainer
 		if ( defaultCertificate == null && AcmePlugin.instance().isDefaultCertificateAllowed() )
 			generateDefaultCertificate();
 		else if ( defaultCertificate == null )
-			plugin.getLogger().warning( "Default SSL certificate is not maintained by Acme Plugin, change 'config.allowDefaultCertificate' to true to aloow." );
+			plugin.getLogger().warning( "Default SSL certificate is not maintained by Acme Plugin, change 'config.allowDefaultCertificate' to true to allow." );
 		else
 			defaultCertificate.validateCertificate();
 
@@ -195,12 +193,12 @@ public class CertificateMaintainer
 		}
 	}
 
-	public static File getPrivateKey( String privateKeyIden ) throws NoSuchAlgorithmException, IOException
+	public static File getPrivateKey( String privateKey ) throws NoSuchAlgorithmException, IOException
 	{
-		File sslKeyFile = privateKeys.get( privateKeyIden );
+		File sslKeyFile = privateKeys.get( privateKey );
 
 		if ( sslKeyFile == null )
-			sslKeyFile = new File( plugin.getDataFolder(), privateKeyIden + ".key" );
+			sslKeyFile = new File( plugin.getDataFolder(), privateKey + ".key" );
 
 		if ( !sslKeyFile.exists() )
 			AcmePlugin.instance().getClient().getAcmeStorage().generatePrivateKey( sslKeyFile, plugin.getConfig().getInt( "config.defaultKeySize", 4096 ) );
@@ -233,7 +231,7 @@ public class CertificateMaintainer
 	{
 		bakeCertificates( false );
 
-		Namespace ns = new Namespace( hostname ).reverseOrder();
+		Namespace ns = Namespace.parseString( hostname ).reverseOrder();
 		ObjectStacker<Certificate> stack = certificateStack.getChild( ns, false );
 
 		if ( stack != null && stack.value() != null && stack.value().getCertificate() != null )
@@ -255,15 +253,15 @@ public class CertificateMaintainer
 		for ( Entry<String, File> key : privateKeys.entrySet() )
 		{
 			File sslKey = key.getValue();
-			config.set( "keys." + key.getKey() + ".file", FileFunc.relPath( sslKey ) );
+			config.set( "keys." + key.getKey() + ".file", ZIO.relPath( sslKey ) );
 			if ( sslKey.exists() )
-				config.set( "keys." + key.getKey() + ".md5", SecureFunc.md5( sslKey ) );
+				config.set( "keys." + key.getKey() + ".md5", ZEncryption.md5( sslKey ) );
 		}
 
 		for ( Certificate cert : certificateStack.allValues() )
 			if ( cert != null )
 			{
-				config.set( "certificates." + cert.key() + ".certFile", FileFunc.relPath( cert.getCertFile() ) );
+				config.set( "certificates." + cert.key() + ".certFile", ZIO.relPath( cert.getCertFile() ) );
 				config.set( "certificates." + cert.key() + ".privateKey", getPrivateKeyIden( cert.getKeyFile() ) );
 				config.set( "certificates." + cert.key() + ".uri", cert.certUri() );
 				config.set( "certificates." + cert.key() + ".md5", cert.md5() );

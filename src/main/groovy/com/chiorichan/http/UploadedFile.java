@@ -3,7 +3,9 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.http;
 
@@ -16,7 +18,7 @@ import java.io.IOException;
 import org.apache.commons.io.FileUtils;
 
 import com.chiorichan.ContentTypes;
-import com.chiorichan.util.SecureFunc;
+import com.chiorichan.zutils.ZEncryption;
 
 /**
  * Acts as the in between for uploaded files and web script
@@ -51,8 +53,8 @@ public class UploadedFile
 	
 	public String getExt()
 	{
-		String[] exts = origFileName.split( "\\." );
-		return exts[exts.length - 1];
+		String[] extensions = origFileName.split( "\\." );
+		return extensions[extensions.length - 1];
 	}
 	
 	/**
@@ -109,9 +111,9 @@ public class UploadedFile
 	public String getMD5() throws IOException
 	{
 		if ( isInMemory() || file == null )
-			return SecureFunc.md5( cachedFileUpload.content().array() );
+			return ZEncryption.md5( cachedFileUpload.content().array() );
 		else
-			return SecureFunc.md5( FileUtils.readFileToByteArray( file ) );
+			return ZEncryption.md5( FileUtils.readFileToByteArray( file ) );
 	}
 	
 	public String getMessage()
@@ -163,9 +165,9 @@ public class UploadedFile
 	public String readToString() throws IOException
 	{
 		if ( isInMemory() || file == null )
-			return SecureFunc.base64Encode( cachedFileUpload.content().array() );
+			return ZEncryption.base64Encode( cachedFileUpload.content().array() );
 		else
-			return SecureFunc.base64Encode( FileUtils.readFileToByteArray( file ) );
+			return ZEncryption.base64Encode( FileUtils.readFileToByteArray( file ) );
 	}
 	
 	@Override

@@ -1,23 +1,25 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- * <p>
+ *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.factory.api;
 
 import com.chiorichan.AppConfig;
 import com.chiorichan.database.DatabaseEngineLegacy;
+import com.chiorichan.zutils.ZIO;
+import com.chiorichan.zutils.ZObjects;
 import com.chiorichan.lang.DiedException;
 import com.chiorichan.logger.Log;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.util.FileFunc;
-import com.chiorichan.util.ObjectFunc;
-import com.chiorichan.util.SecureFunc;
-import com.chiorichan.util.StringFunc;
-import com.chiorichan.util.Versioning;
-import com.chiorichan.util.WebFunc;
+import com.chiorichan.zutils.ZEncryption;
+import com.chiorichan.Versioning;
+import com.chiorichan.zutils.WebFunc;
+import com.chiorichan.zutils.ZStrings;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -75,47 +77,47 @@ public abstract class Builtin extends Script
 
 	public static boolean asBool( Object obj )
 	{
-		return ObjectFunc.castToBool( obj );
+		return ZObjects.castToBool( obj );
 	}
 
 	public static double asDouble( Object obj )
 	{
-		return ObjectFunc.castToDouble( obj );
+		return ZObjects.castToDouble( obj );
 	}
 
 	public static int asInt( Object obj )
 	{
-		return ObjectFunc.castToInt( obj );
+		return ZObjects.castToInt( obj );
 	}
 
 	public static long asLong( Object obj )
 	{
-		return ObjectFunc.castToLong( obj );
+		return ZObjects.castToLong( obj );
 	}
 
 	public static String asString( Object obj )
 	{
-		return ObjectFunc.castToString( obj );
+		return ZObjects.castToString( obj );
 	}
 
 	public static byte[] base64Decode( String str )
 	{
-		return SecureFunc.base64Decode( str );
+		return ZEncryption.base64Decode( str );
 	}
 
 	public static String base64DecodeString( String str )
 	{
-		return SecureFunc.base64DecodeString( str );
+		return ZEncryption.base64DecodeString( str );
 	}
 
 	public static String base64Encode( byte[] bytes )
 	{
-		return SecureFunc.base64Encode( bytes );
+		return ZEncryption.base64Encode( bytes );
 	}
 
 	public static String base64Encode( String str )
 	{
-		return SecureFunc.base64Encode( str );
+		return ZEncryption.base64Encode( str );
 	}
 
 	public static int count( Collection<Object> list )
@@ -239,35 +241,19 @@ public abstract class Builtin extends Script
 
 			if ( row instanceof Map || row instanceof Collection )
 			{
-				Map<Object, Object> map = Maps.newLinkedHashMap();
-
-				if ( row instanceof Map )
-					map = ( Map<Object, Object> ) row;
-				else
-				{
-					int y = 0;
-					for ( Object o : ( Collection<Object> ) row )
-					{
-						map.put( Integer.toString( y ), o );
-						y++;
-					}
-				}
+				Map<String, String> map = ZObjects.castToMap( row, String.class, String.class );
 
 				sb.append( "<tr" );
 
-				for ( Entry<Object, Object> e : map.entrySet() )
-					try
+				map.entrySet().stream().forEach( e ->
+				{
+					String s = ZObjects.castToString( e.getKey() );
+					if ( s.startsWith( ":" ) )
 					{
-						if ( ObjectFunc.castToStringWithException( e.getKey() ).startsWith( ":" ) )
-						{
-							map.remove( e.getKey() );
-							sb.append( " " + ObjectFunc.castToStringWithException( e.getKey() ).substring( 1 ) + "=\"" + ObjectFunc.castToStringWithException( e.getValue() ) + "\"" );
-						}
+						map.remove( s );
+						sb.append( " " + s.substring( 1 ) + "=\"" + e.getValue() + "\"" );
 					}
-					catch ( ClassCastException ex )
-					{
-						ex.printStackTrace();
-					}
+				} );
 
 				sb.append( " class=\"" + clss + "\">\n" );
 
@@ -286,10 +272,8 @@ public abstract class Builtin extends Script
 				}
 				sb.append( "</tr>\n" );
 			}
-			else if ( row instanceof String )
-				sb.append( "<tr class=\"" + clss + "\"><td id=\"tblStringRow\" colspan=\"" + colLength + "\"><b><center>" + ( String ) row + "</center></b></td></tr>\n" );
 			else
-				sb.append( "<tr class=\"" + clss + "\"><td id=\"tblStringRow\" colspan=\"" + colLength + "\"><b><center>" + row.toString() + "</center></b></td></tr>\n" );
+				sb.append( "<tr class=\"" + clss + "\"><td id=\"tblStringRow\" colspan=\"" + colLength + "\"><b><center>" + ZObjects.castToString( row ) + "</center></b></td></tr>\n" );
 		}
 
 		sb.append( "</tbody>\n" );
@@ -320,7 +304,7 @@ public abstract class Builtin extends Script
 
 	public static String date( String format, Date date, String def )
 	{
-		return date( format, ObjectFunc.castToString( date.getTime() / 1000 ), def );
+		return date( format, ZObjects.castToString( date.getTime() / 1000 ), def );
 	}
 
 	public static String date( String format, Object data )
@@ -330,7 +314,7 @@ public abstract class Builtin extends Script
 
 	public static String date( String format, Object data, String def )
 	{
-		return date( format, ObjectFunc.castToString( data ), def );
+		return date( format, ZObjects.castToString( data ), def );
 	}
 
 	public static String date( String format, String data )
@@ -435,7 +419,7 @@ public abstract class Builtin extends Script
 	 * Forcibly kills script exception by throwing a DiedException
 	 *
 	 * @param msg The message to return
-	 * @throws DiedException
+	 * @throws DiedException Thrown to kill the script
 	 */
 	public static void die( String msg ) throws DiedException
 	{
@@ -463,7 +447,7 @@ public abstract class Builtin extends Script
 
 	public static File dirname( String path, int levels )
 	{
-		return dirname( FileFunc.isAbsolute( path ) ? new File( path ) : new File( AppConfig.get().getDirectory().getAbsolutePath(), path ), levels );
+		return dirname( ZIO.isAbsolute( path ) ? new File( path ) : new File( AppConfig.get().getDirectory().getAbsolutePath(), path ), levels );
 	}
 
 	public static boolean empty( Collection<Object> list )
@@ -484,9 +468,7 @@ public abstract class Builtin extends Script
 
 	public static boolean empty( Object o )
 	{
-		if ( o == null )
-			return true;
-		return false;
+		return o == null;
 	}
 
 	public static boolean empty( String var )
@@ -494,10 +476,8 @@ public abstract class Builtin extends Script
 		if ( var == null )
 			return true;
 
-		if ( var.isEmpty() )
-			return true;
+		return var.isEmpty();
 
-		return false;
 	}
 
 	public static int epoch()
@@ -528,7 +508,7 @@ public abstract class Builtin extends Script
 
 	public static boolean file_exists( String file )
 	{
-		return ( FileFunc.isAbsolute( file ) ? new File( file ) : new File( AppConfig.get().getDirectory().getAbsolutePath(), file ) ).exists();
+		return ( ZIO.isAbsolute( file ) ? new File( file ) : new File( AppConfig.get().getDirectory().getAbsolutePath(), file ) ).exists();
 	}
 
 	public static Map<String, Object> filter( Map<String, Object> data, Collection<String> allowedKeys )
@@ -549,7 +529,7 @@ public abstract class Builtin extends Script
 		Map<String, Object> newArray = new LinkedHashMap<String, Object>();
 
 		if ( !caseSensitive )
-			allowedKeys = StringFunc.toLowerCaseList( allowedKeys );
+			allowedKeys = ZStrings.toLowerCaseList( allowedKeys );
 
 		for ( Entry<String, Object> e : data.entrySet() )
 			if ( !caseSensitive && allowedKeys.contains( e.getKey().toLowerCase() ) || allowedKeys.contains( e.getKey() ) )
@@ -703,7 +683,7 @@ public abstract class Builtin extends Script
 
 	public static String md5( String str )
 	{
-		return SecureFunc.md5( str );
+		return ZEncryption.md5( str );
 	}
 
 	public static String money_format( Double amt )
@@ -726,7 +706,7 @@ public abstract class Builtin extends Script
 		if ( amt == null || amt.isEmpty() )
 			return "$0.00";
 
-		return money_format( ObjectFunc.castToDouble( amt ) );
+		return money_format( ZObjects.castToDouble( amt ) );
 	}
 
 	public static boolean notNull( Object o )
@@ -843,7 +823,7 @@ public abstract class Builtin extends Script
 				if ( obj instanceof Map )
 					for ( Entry<Object, Object> e : ( ( Map<Object, Object> ) obj ).entrySet() )
 					{
-						String key = ObjectFunc.castToString( e.getKey() );
+						String key = ZObjects.castToString( e.getKey() );
 						if ( key == null )
 							key = e.getKey().toString();
 						children.put( key, e.getValue() );
@@ -863,7 +843,7 @@ public abstract class Builtin extends Script
 
 				// boolean[], byte[], short[], char[], int[], long[], float[], double[], Object[]
 
-				Object value = ObjectFunc.castToString( obj );
+				Object value = ZObjects.castToString( obj );
 				if ( value == null )
 					value = obj.toString();
 

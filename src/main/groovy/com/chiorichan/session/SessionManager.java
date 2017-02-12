@@ -3,16 +3,11 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.session;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.apache.commons.lang3.text.WordUtils;
 
 import com.chiorichan.AppConfig;
 import com.chiorichan.http.HttpCookie;
@@ -26,10 +21,17 @@ import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.TaskRegistrar;
 import com.chiorichan.tasks.Ticks;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.util.SecureFunc;
+import com.chiorichan.zutils.ZEncryption;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.apache.commons.lang3.text.WordUtils;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Persistence manager handles sessions kept in memory. It also manages when to unload the session to free memory.
@@ -101,8 +103,7 @@ public class SessionManager implements TaskRegistrar, ServiceManager, LogSource
 	/**
 	 * Is the Session Manager is debug mode, i.e., mean more debug will output to the console
 	 *
-	 * @return
-	 *         True if we are
+	 * @return True if we are
 	 */
 	public static boolean isDebug()
 	{
@@ -121,11 +122,9 @@ public class SessionManager implements TaskRegistrar, ServiceManager, LogSource
 	/**
 	 * Creates a fresh {@link Session} and saves it's reference.
 	 *
-	 * @param wrapper
-	 *             The {@link SessionWrapper} to reference
+	 * @param wrapper The {@link SessionWrapper} to reference
 	 * @return The hot out of the oven Session
-	 * @throws SessionException
-	 *              If there was a problem - seriously!
+	 * @throws SessionException If there was a problem - seriously!
 	 */
 	public Session createSession( SessionWrapper wrapper ) throws SessionException
 	{
@@ -138,7 +137,7 @@ public class SessionManager implements TaskRegistrar, ServiceManager, LogSource
 	@Override
 	public String getLoggerId()
 	{
-		return "SessMgr";
+		return "SessionManager";
 	}
 
 	@Override
@@ -160,26 +159,18 @@ public class SessionManager implements TaskRegistrar, ServiceManager, LogSource
 	/**
 	 * Retrieves a list of {@link Session}s based on the Ip Address provided.
 	 *
-	 * @param ipAddr
-	 *             The Ip Address to check for
+	 * @param ipAddress The Ip Address to check for
 	 * @return A List of Sessions that matched
 	 */
-	public List<Session> getSessionsByIp( String ipAddr )
+	public List<Session> getSessionsByIp( String ipAddress )
 	{
-		List<Session> lst = Lists.newArrayList();
-
-		for ( Session sess : sessions )
-			if ( sess != null && sess.getIpAddresses() != null && sess.getIpAddresses().contains( ipAddr ) )
-				lst.add( sess );
-
-		return lst;
+		return sessions.stream().filter( s -> s.getIpAddresses() != null && s.getIpAddresses().contains( ipAddress ) ).collect( Collectors.toList() );
 	}
 
 	/**
 	 * Initializes the Session Manager
 	 *
-	 * @throws StartupException
-	 *              If there was any problems
+	 * @throws StartupException If there was any problems
 	 */
 	@Override
 	public void init() throws StartupException
@@ -224,7 +215,7 @@ public class SessionManager implements TaskRegistrar, ServiceManager, LogSource
 		}
 		catch ( Throwable t )
 		{
-			throw new StartupException( "There was a problem initalizing the Session Manager", t );
+			throw new StartupException( "There was a problem initializing the Session Manager", t );
 		}
 
 		/*
@@ -249,8 +240,7 @@ public class SessionManager implements TaskRegistrar, ServiceManager, LogSource
 	/**
 	 * Reloads the currently loaded sessions from their Datastore
 	 *
-	 * @throws SessionException
-	 *              If there was problems
+	 * @throws SessionException If there was problems
 	 */
 	public void reload() throws SessionException
 	{
@@ -275,19 +265,19 @@ public class SessionManager implements TaskRegistrar, ServiceManager, LogSource
 
 		Set<String> knownIps = Sets.newHashSet();
 
-		for ( Session sess : sessions )
-			if ( sess.getTimeout() > 0 && sess.getTimeout() < Timings.epoch() )
+		for ( Session session : sessions )
+			if ( session.getTimeout() > 0 && session.getTimeout() < Timings.epoch() )
 				try
 				{
 					cleanupCount++;
-					sess.destroy( SessionManager.EXPIRED );
+					session.destroy( SessionManager.EXPIRED );
 				}
 				catch ( SessionException e )
 				{
 					getLogger().severe( "SessionException: " + e.getMessage() );
 				}
 			else
-				knownIps.addAll( sess.getIpAddresses() );
+				knownIps.addAll( session.getIpAddresses() );
 
 		int maxPerIp = AppConfig.get().getInt( "sessions.maxSessionsPerIP", 6 );
 
@@ -334,7 +324,7 @@ public class SessionManager implements TaskRegistrar, ServiceManager, LogSource
 	 */
 	public String sessionIdBaker()
 	{
-		return SecureFunc.md5( SecureFunc.randomize( SecureFunc.random(), "$e$$i0n_R%ND0Mne$$" ) + System.currentTimeMillis() );
+		return ZEncryption.md5( ZEncryption.randomize( ZEncryption.random(), "$e$$i0n_R%ND0Mne$$" ) + System.currentTimeMillis() );
 	}
 
 	/**
@@ -344,15 +334,15 @@ public class SessionManager implements TaskRegistrar, ServiceManager, LogSource
 	{
 		synchronized ( sessions )
 		{
-			for ( Session sess : sessions )
+			for ( Session session : sessions )
 				try
 				{
-					sess.save();
-					sess.unload();
+					session.save();
+					session.unload();
 				}
 				catch ( SessionException e )
 				{
-
+					// Ignore
 				}
 
 			sessions.clear();
@@ -361,38 +351,12 @@ public class SessionManager implements TaskRegistrar, ServiceManager, LogSource
 
 	public Session startSession( SessionWrapper wrapper ) throws SessionException
 	{
-		String sessionKey = wrapper.getLocation().getSessionKey();
-		Session session = null;
-
-		HttpCookie cookie = wrapper.getServerCookie( sessionKey );
-
-		if ( cookie == null )
-			cookie = wrapper.getServerCookie( getDefaultSessionName() );
-
-		if ( cookie != null )
-			for ( Session sess : sessions )
-				if ( sess != null && cookie.getValue().equals( sess.getSessId() ) )
-				{
-					session = sess;
-					break;
-				}
-
-		/*
-		 * XXX We need to evaluate the security risk behind doing this? Might just need removal.
-		 * if ( AppConfig.get().getBoolean( "sessions.reuseVacantSessions", true ) )
-		 * for ( Session s : sessions )
-		 * if ( s.getIpAddr() != null && s.getIpAddr().equals( wrapper.getIpAddr() ) && !s.getUserState() )
-		 * return s;
-		 */
-
-		if ( session == null )
-			session = createSession( wrapper );
-
+		HttpCookie cookie = wrapper.getServerCookie( wrapper.getLocation().getSessionKey(), getDefaultSessionName() );
+		Session session = cookie == null ? createSession( wrapper ) : sessions.stream().filter( s -> s != null && cookie.getValue().equals( s.getSessionId() ) ).findFirst().orElse( null );
 		session.registerWrapper( wrapper );
-
-		// getLogger().debug( "Debug: IpAddr " + wrapper.getIpAddr() + " | Loaded? " + session.data.stale + " | Expires " + ( session.getTimeout() - CommonFunc.getEpoch() ) );
-
 		return session;
+
+		// getLogger().debug( "Debug: IpAddress " + wrapper.getIpAddress() + " | Loaded? " + session.data.stale + " | Expires " + ( session.getTimeout() - CommonFunc.getEpoch() ) );
 	}
 
 	// int defaultLife = ( getSite().getYaml() != null ) ? getSite().getYaml().getInt( "sessions.lifetimeDefault", 604800 ) : 604800;

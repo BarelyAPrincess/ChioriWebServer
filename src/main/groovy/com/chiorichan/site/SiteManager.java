@@ -3,29 +3,17 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.site;
 
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
-import org.apache.commons.lang3.Validate;
-
 import com.chiorichan.AppConfig;
 import com.chiorichan.Loader;
-import com.chiorichan.configuration.file.YamlConfiguration;
+import com.chiorichan.configuration.types.yaml.YamlConfiguration;
 import com.chiorichan.datastore.file.FileDatastore;
+import com.chiorichan.env.Env;
 import com.chiorichan.lang.ApplicationException;
 import com.chiorichan.lang.SiteException;
 import com.chiorichan.lang.StartupException;
@@ -37,30 +25,104 @@ import com.chiorichan.services.ServiceManager;
 import com.chiorichan.services.ServicePriority;
 import com.chiorichan.services.ServiceProvider;
 import com.chiorichan.tasks.TaskRegistrar;
-import com.chiorichan.util.FileFunc;
-import com.chiorichan.util.NetworkFunc;
-import com.chiorichan.util.Pair;
-import com.chiorichan.util.StringFunc;
+import com.chiorichan.zutils.ZHttp;
+import com.chiorichan.zutils.ZIO;
+import com.chiorichan.zutils.ZObjects;
+import com.chiorichan.zutils.ZStrings;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.io.Files;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 /**
  * Manages and Loads Sites
  */
 public class SiteManager implements ServiceProvider, LogSource, ServiceManager, TaskRegistrar
 {
+	public Stream<DomainNode> getDomainsBySite( Site site )
+	{
+		return DomainTree.getChildren().filter( n -> n.getSite() == site );
+	}
+
+	public Stream<DomainRoot> getDomainsByTLD( String tld )
+	{
+		return DomainTree.getDomains( tld );
+	}
+
+	public Stream<DomainNode> getDomainsByPrefix( String prefix )
+	{
+		final String domain = ZHttp.normalize( prefix );
+		return DomainTree.getChildren().filter( n -> n.getFullDomain().startsWith( domain ) );
+	}
+
+	public Stream<DomainMapping> getDomainMappingsByIp( String ip )
+	{
+		return DomainTree.getChildren().map( DomainNode::getDomainMapping ).filter( m -> m != null && m.getConfig( "ip" ) != null && ( m.getConfig( "ip" ).equals( ip ) || m.getConfig( "ip" ).matches( ip ) ) );
+	}
+
+	public Stream<DomainMapping> getDomainMappings()
+	{
+		return DomainTree.getChildren().map( DomainNode::getDomainMapping );
+	}
+
+	public DomainMapping getDomainMapping( String fullDomain )
+	{
+		return getDomain( fullDomain ).getDomainMapping();
+	}
+
+	public DomainNode getDomain( String fullDomain )
+	{
+		return DomainTree.parseDomain( fullDomain );
+	}
+
+	/**
+	 * Returns a Stream of DomainNodes that match the provided IP address.
+	 * Uses both literal and regex comparison.
+	 *
+	 * @param ip The IP address to match, regex is permitted.
+	 * @return The Stream of DomainNodes
+	 */
+	public Stream<DomainNode> getDomainsByIp( String ip )
+	{
+		return DomainTree.getChildren().filter( n ->
+		{
+			DomainMapping mapping = n.getDomainMapping();
+			return mapping != null && ( mapping.getConfig( "ip" ) != null && ( mapping.getConfig( "ip" ).equals( ip ) || mapping.getConfig( "ip" ).matches( ip ) ) );
+		} );
+	}
+
+	public Stream<DomainNode> getDomains()
+	{
+		return DomainTree.getChildren();
+	}
+
+	public Stream<String> getTLDsInuse()
+	{
+		return DomainTree.getTLDsInuse();
+	}
+
 	protected static File checkSiteRoot( String name )
 	{
 		File site = new File( Loader.getWebRoot(), name );
 
-		FileFunc.setDirectoryAccessWithException( site );
+		ZIO.setDirectoryAccessWithException( site );
 
-		File publicDir = new File( site, "public/root" );
+		File publicDir = new File( site, "public" );
 		File resourceDir = new File( site, "resource" );
 
-		FileFunc.setDirectoryAccessWithException( publicDir );
-		FileFunc.setDirectoryAccessWithException( resourceDir );
+		ZIO.setDirectoryAccessWithException( publicDir );
+		ZIO.setDirectoryAccessWithException( resourceDir );
 
 		return site;
 	}
@@ -90,10 +152,10 @@ public class SiteManager implements ServiceProvider, LogSource, ServiceManager, 
 			return;
 		}
 
-		FileFunc.SortableFile[] sfiles = new FileFunc.SortableFile[files.length];
+		ZIO.SortableFile[] sfiles = new ZIO.SortableFile[files.length];
 
 		for ( int i = 0; i < files.length; i++ )
-			sfiles[i] = new FileFunc.SortableFile( files[i] );
+			sfiles[i] = new ZIO.SortableFile( files[i] );
 
 		Arrays.sort( sfiles );
 
@@ -112,7 +174,7 @@ public class SiteManager implements ServiceProvider, LogSource, ServiceManager, 
 		return AppManager.manager( SiteManager.class ).instance();
 	}
 
-	Map<String, Site> sites = Maps.newConcurrentMap();
+	Map<String, Site> sites = new ConcurrentHashMap<>();
 
 	private SiteManager()
 	{
@@ -121,10 +183,10 @@ public class SiteManager implements ServiceProvider, LogSource, ServiceManager, 
 
 	public boolean delete( String siteId, boolean deleteFiles ) throws SiteException
 	{
-		Validate.notNull( siteId );
+		ZObjects.notNull( siteId );
 
-		if ( siteId.equals( "default" ) )
-			throw new SiteException( "You can not delete the default site." );
+		if ( "default".equalsIgnoreCase( siteId ) )
+			throw new SiteException( "You can not delete the default site" );
 
 		if ( sites.containsKey( siteId ) )
 		{
@@ -133,10 +195,20 @@ public class SiteManager implements ServiceProvider, LogSource, ServiceManager, 
 
 			site.unload();
 
-			if ( site instanceof Site )
-				site.getFile().delete();
 			if ( deleteFiles )
-				site.directory().delete();
+			{
+				File deleted = new File( Loader.getWebRoot().getAbsolutePath() + "_deleted" );
+				if ( !deleted.exists() )
+					deleted.mkdir();
+				File newDirectory = new File( deleted, site.directory().getName() );
+
+				if ( newDirectory.exists() )
+					newDirectory.delete();
+
+				if ( !site.directory().renameTo( newDirectory ) )
+					throw new SiteException( String.format( "Failed to trash the site directory [%s]", ZIO.relPath( site.directory() ) ) );
+			}
+
 			return true;
 		}
 
@@ -146,21 +218,6 @@ public class SiteManager implements ServiceProvider, LogSource, ServiceManager, 
 	public Site getDefaultSite()
 	{
 		return getSiteById( "default" );
-	}
-
-	public Map<String, Set<String>> getDomains()
-	{
-		return new HashMap<String, Set<String>>()
-		{
-			{
-				for ( Site s : sites.values() )
-					for ( Entry<String, Set<String>> es : s.getDomains().entrySet() )
-						if ( containsKey( es.getKey() ) )
-							get( es.getKey() ).addAll( es.getValue() );
-						else
-							put( es.getKey(), es.getValue() );
-			}
-		};
 	}
 
 	@Override
@@ -175,16 +232,6 @@ public class SiteManager implements ServiceProvider, LogSource, ServiceManager, 
 		return "SiteMgr";
 	}
 
-	public Site getSiteByDomain( String domain )
-	{
-		if ( domain == null || domain.length() == 0 )
-			return getDefaultSite();
-
-		Pair<String, SiteMapping> mapping = SiteMapping.get( domain );
-
-		return mapping == null ? null : mapping.getValue().getSite();
-	}
-
 	public Site getSiteById( String siteId )
 	{
 		if ( siteId == null || siteId.length() == 0 || siteId.equalsIgnoreCase( "%" ) )
@@ -193,26 +240,18 @@ public class SiteManager implements ServiceProvider, LogSource, ServiceManager, 
 		return sites.get( siteId.toLowerCase().trim() );
 	}
 
-	public List<Site> getSiteByIp( String ip )
+	public Stream<Site> getSiteByIp( String ip )
 	{
-		List<Site> matches = Lists.newArrayList();
+		if ( !ZHttp.isValidIPv4( ip ) && !ZHttp.isValidIPv6( ip ) )
+			throw new IllegalArgumentException( "The provided IP address does not match IPv4 nor IPv6" );
 
-		if ( !NetworkFunc.isValidIPv4( ip ) && !NetworkFunc.isValidIPv6( ip ) )
-			throw new IllegalArgumentException( "The provided ip addr does not match IPv4 or IPv6" );
-
-		for ( Site site : getSites() )
-			if ( site.getIps().contains( ip ) )
-				matches.add( site );
-
-		if ( matches.size() == 0 )
-			matches.add( getDefaultSite() );
-
-		return matches;
+		Stream<Site> sites = getSites().filter( s -> s.getIps().contains( ip ) );
+		return sites.count() == 0 ? Stream.of( getDefaultSite() ) : sites;
 	}
 
-	public Collection<Site> getSites()
+	public Stream<Site> getSites()
 	{
-		return Collections.unmodifiableCollection( sites.values() );
+		return sites.values().stream();
 	}
 
 	@Override
@@ -233,46 +272,74 @@ public class SiteManager implements ServiceProvider, LogSource, ServiceManager, 
 		if ( sites.size() > 0 )
 			throw new StartupException( "Site manager already has sites loaded. You must unload first." );
 
-		sites.put( "default", new DefaultSite() );
+		sites.put( "default", new DefaultSite( this ) );
 
-		FileDatastore ds = FileDatastore.loadDirectory( Loader.getWebRoot(), "(.*)/config.yaml" );
+		FileDatastore ds = FileDatastore.loadDirectory( Loader.getWebRoot(), "(.*)(?:\\\\|\\/)config.yaml" );
 
 		for ( Entry<File, YamlConfiguration> entry : ds.asEntrySet() )
 		{
 			File configFile = entry.getKey();
 			YamlConfiguration yaml = entry.getValue();
 
-			if ( !yaml.has( "site.id" ) )
-				if ( yaml.has( "site.siteId" ) )
-				{ // Temp until later version
-					yaml.set( "site.id", yaml.get( "site.siteId" ) );
-					yaml.set( "site.siteId", null );
-				}
-
 			if ( yaml.has( "site.id" ) )
 			{
 				String id = yaml.getString( "site.id" ).toLowerCase();
-				String siteDir = StringFunc.regexCapture( configFile.getAbsolutePath(), "\\/([^\\/]*)\\/config.yaml" );
+				String siteDir = ZStrings.regexCapture( configFile.getAbsolutePath(), "\\/([^\\/]*)\\/config.yaml" );
+
+				if ( !ZStrings.isCamelCase( id ) )
+					getLogger().warning( String.format( "The site id %s does not match our camelCase convention. It must start with a lowercase letter or number and each following word should start with an uppercase letter.", id ) );
 
 				if ( !id.equals( siteDir ) )
 				{
-					getLogger().warning( String.format( "We found a site configuration file at '%s' but the containing directory did not match the siteId of '%s', we will now correct this by moving the config to the correct directory.", configFile.getAbsolutePath(), id ) );
-					File oldConfigFile = configFile;
-					configFile = new File( Loader.getWebRoot(), id + "/config.yaml" );
+					getLogger().warning( String.format( "We found a site configuration file at '%s' but the containing directory did not match the site id of '%s', we will now correct this by moving the config to the correct directory.", configFile.getAbsolutePath(), id ) );
+
+					File oldSiteDir = configFile.getParentFile();
+					File newSiteDir = new File( Loader.getWebRoot(), id );
+
+					if ( newSiteDir.exists() && ( newSiteDir.isFile() || !ZIO.isDirectoryEmpty( newSiteDir ) ) )
+					{
+						getLogger().severe( String.format( "Could not correct the site directory, the destination [%s] is a file and/or is not empty. Please manually correct the site id and directory mismatch to ensure proper operation.", ZIO.relPath( newSiteDir ) ) );
+						continue;
+					}
+
+					newSiteDir.mkdirs();
+
+					for ( File child : oldSiteDir.listFiles() )
+					{
+						try
+						{
+							Files.move( child, new File( newSiteDir, child.getName() ) );
+						}
+						catch ( IOException e )
+						{
+							getLogger().severe( String.format( "Could not correct the site directory, failed to rename the directory %s to %s name. Site will now be ignored.", ZIO.relPath( configFile.getParentFile() ), ZIO.relPath( newSiteDir ) ), e );
+							continue;
+						}
+					}
+
+					oldSiteDir.delete();
+					configFile = new File( newSiteDir, "config.yaml" );
+
+					if ( !configFile.exists() )
+						throw new SiteException( String.format( "Oops! I think we just broke site [%s]. We tried to move the site to [%s] but the configuration file was not found after the move.", id, ZIO.relPath( newSiteDir ) ) );
+				}
+
+				Properties envProperties = new Properties();
+
+				File envFile = new File( configFile.getParentFile(), ".env" );
+				if ( envFile.exists() )
 					try
 					{
-						Files.move( oldConfigFile, configFile );
+						envProperties.load( new FileInputStream( envFile ) );
 					}
 					catch ( IOException e )
 					{
-						getLogger().severe( "We failed to move the configuration file, the site will not load until you manually correct the above issue.", e );
-						continue;
+						getLogger().severe( String.format( "Detected an environment file [%s] but an exception was thrown.", ZIO.relPath( envFile ) ), e );
 					}
-				}
 
 				try
 				{
-					sites.put( id, new Site( configFile, yaml ) );
+					sites.put( id, new Site( this, configFile, yaml, new Env( envProperties ) ) );
 				}
 				catch ( SiteException e )
 				{

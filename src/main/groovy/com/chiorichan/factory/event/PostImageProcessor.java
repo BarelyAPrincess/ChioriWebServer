@@ -1,9 +1,11 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- * <p>
+ *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.factory.event;
 
@@ -14,7 +16,7 @@ import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.lang.EnumColor;
 import com.chiorichan.logger.Log;
-import com.chiorichan.util.SecureFunc;
+import com.chiorichan.zutils.ZEncryption;
 import io.netty.buffer.ByteBufInputStream;
 import org.apache.commons.io.FileUtils;
 
@@ -168,7 +170,7 @@ public class PostImageProcessor implements Listener
 				return;
 
 			// Produce a unique encapsulated id based on this image processing request
-			String encapId = SecureFunc.md5( context.filename() + w1 + h1 + request.getArgument( "argb" ) + grayscale );
+			String encapId = ZEncryption.md5( context.filename() + w1 + h1 + request.getArgument( "argb" ) + grayscale );
 			File tmp = context.site() == null ? AppConfig.get().getDirectoryCache() : context.site().directoryTemp();
 			File file = new File( tmp, encapId + "_" + new File( context.filename() ).getName() );
 

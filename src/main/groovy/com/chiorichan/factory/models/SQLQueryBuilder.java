@@ -3,7 +3,9 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.factory.models;
 
@@ -49,7 +51,7 @@ public class SQLQueryBuilder extends ScriptingBaseGroovy
 
 		/**
 		 * When you need access to the binding variable but it's not made available in the constructor, the next best option is to listen here at the setBinding() method.
-		 * This really should have a second look by someone who knows more abour Groovy. What are our alternatives?
+		 * This really should have a second look by someone who knows more about Groovy. What are our alternatives?
 		 */
 		try
 		{

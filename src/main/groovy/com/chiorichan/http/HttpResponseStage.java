@@ -3,13 +3,15 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.http;
 
 public enum HttpResponseStage
 {
-	READING( 0 ), WRITTING( 1 ), WRITTEN( 2 ), CLOSED( 3 ), MULTIPART( 4 );
+	READING( 0 ), WRITING( 1 ), WRITTEN( 2 ), CLOSED( 3 ), MULTIPART( 4 );
 	
 	private final int stageId;
 	

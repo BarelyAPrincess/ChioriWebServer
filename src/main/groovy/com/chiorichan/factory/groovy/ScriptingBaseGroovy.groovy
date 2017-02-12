@@ -3,7 +3,9 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.factory.groovy
 
@@ -46,7 +48,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 */
 	HttpRequestWrapper getRequest()
 	{
-		return getBindingProperty( "request" )
+		return getBindingProperty( "request" ) as HttpRequestWrapper
 	}
 
 	/**
@@ -57,7 +59,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 */
 	HttpResponseWrapper getResponse()
 	{
-		return getBindingProperty( "response" )
+		return getBindingProperty( "response" ) as HttpResponseWrapper
 	}
 
 	/**
@@ -88,7 +90,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	 * <p>
 	 * If multiple parameters are supplied then isset() will return TRUE only if all of the parameters are set. Evaluation goes from left to right and stops as soon as an unset variable is encountered.
 	 *
-	 * @param names The varibles to be checked
+	 * @param names The variables to be checked
 	 * @return Returns TRUE if var exists and has value other than NULL. FALSE otherwise.
 	 */
 	boolean isset( String... names )
@@ -178,7 +180,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 
 	Account[] getAccounts( String query, int limit )
 	{
-		return AccountManager.instance().getAccounts( query, limit )
+		return AccountManager.instance().getAccounts( query ).stream().limit( limit ).toArray();
 	}
 
 	/**
@@ -234,11 +236,11 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	}
 
 	/**
-	 * Converts the specified http status code to a message
+	 * Converts the specified com.chiorichan.http status code to a message
 	 * @param errNo
-	 *       The http status code
+	 *       The com.chiorichan.http status code
 	 * @return
-	 * The http status message
+	 * The com.chiorichan.http status message
 	 */
 	String getStatusDescription( int errNo )
 	{

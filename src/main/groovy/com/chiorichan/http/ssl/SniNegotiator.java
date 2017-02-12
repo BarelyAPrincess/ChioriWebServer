@@ -3,14 +3,17 @@
  * of the MIT license.  See the LICENSE file for details.
  * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ * <p>
+ * All Rights Reserved.
  */
 package com.chiorichan.http.ssl;
 
 import com.chiorichan.AppConfig;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.net.NetworkManager;
-import com.chiorichan.util.FileFunc;
+import com.chiorichan.zutils.ZIO;
+import com.chiorichan.zutils.ZObjects;
 import com.google.common.collect.Lists;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
@@ -79,13 +82,13 @@ public class SniNegotiator extends ByteToMessageDecoder
 	{
 		try
 		{
-			File cipherSuitesFile = new File( AppConfig.get().getDirectory().getAbsolutePath(), "EnabledCipherSuites.txt" );
+			File cipherSuitesFile = new File( AppConfig.get().getDirectory(), "enabled-cipher-suites.txt" );
 
 			if ( !cipherSuitesFile.exists() )
-				FileFunc.putResource( "com/chiorichan/EnabledCipherSuites.txt", cipherSuitesFile );
+				ZIO.putResource( "com/chiorichan/enabled-cipher-suites.txt", cipherSuitesFile );
 
 			List<String> contents = FileUtils.readLines( cipherSuitesFile );
-			boolean resave = false;
+			boolean saveAgain = false;
 
 			for ( String line : contents )
 			{
@@ -95,10 +98,10 @@ public class SniNegotiator extends ByteToMessageDecoder
 				if ( !enabledCipherSuites.contains( line ) )
 					enabledCipherSuites.add( line );
 				else
-					resave = true;
+					saveAgain = true;
 			}
 
-			if ( resave )
+			if ( saveAgain )
 			{
 				StringBuilder sb = new StringBuilder();
 				sb.append( "\n# Chiori-chan's Web Server Enabled SSL/TLS Cipher Suites" );
@@ -114,7 +117,7 @@ public class SniNegotiator extends ByteToMessageDecoder
 		}
 		catch ( IOException e )
 		{
-			SslManager.getLogger().severe( "Could not load the EnabledCipherSuites file", e );
+			SslManager.getLogger().severe( "Could not load \"enabled-cipher-suites.txt\"", e );
 		}
 
 		if ( enabledCipherSuites.size() == 0 )
@@ -126,14 +129,14 @@ public class SniNegotiator extends ByteToMessageDecoder
 		return enabledCipherSuites;
 	}
 
-	private boolean handshaken = false;
+	private boolean handshaker = false;
 	private volatile String hostname;
 	private volatile SslContext selectedContext;
 
 	@Override
 	protected void decode( ChannelHandlerContext ctx, ByteBuf in, List<Object> out ) throws Exception
 	{
-		if ( !handshaken && in.readableBytes() >= 5 )
+		if ( !handshaker && in.readableBytes() >= 5 )
 		{
 			String hostname = sniHostNameFromHandshakeInfo( in );
 			if ( hostname != null )
@@ -142,7 +145,7 @@ public class SniNegotiator extends ByteToMessageDecoder
 
 			selectedContext = SslManager.instance().map( hostname );
 
-			if ( handshaken )
+			if ( handshaker )
 			{
 				SSLEngine engine = selectedContext.newEngine( ctx.alloc() );
 
@@ -190,7 +193,7 @@ public class SniNegotiator extends ByteToMessageDecoder
 					break;
 				default:
 					//not tls or sslv3, do not try sni
-					handshaken = true;
+					handshaker = true;
 					return null;
 			}
 
@@ -231,7 +234,7 @@ public class SniNegotiator extends ByteToMessageDecoder
 						// SNI
 						if ( extensionType == 0 )
 						{
-							handshaken = true;
+							handshaker = true;
 							int serverNameType = in.getUnsignedByte( offset + 2 );
 							if ( serverNameType == 0 )
 							{
@@ -246,7 +249,7 @@ public class SniNegotiator extends ByteToMessageDecoder
 						offset += extensionLength;
 					}
 
-					handshaken = true;
+					handshaker = true;
 					return null;
 				}
 				else
@@ -255,7 +258,7 @@ public class SniNegotiator extends ByteToMessageDecoder
 			}
 			else
 			{
-				handshaken = true;
+				handshaker = true;
 				return null;
 			}
 		}
@@ -264,13 +267,13 @@ public class SniNegotiator extends ByteToMessageDecoder
 			// unexpected encoding, ignore sni and use default
 			if ( logger.isDebugEnabled() )
 				logger.debug( "Unexpected client hello packet: " + ByteBufUtil.hexDump( in ), e );
-			handshaken = true;
+			handshaker = true;
 			return null;
 		}
 	}
 
 	/**
-	 * @return the selected sslcontext
+	 * @return the selected sslContext
 	 */
 	public SslContext sslContext()
 	{

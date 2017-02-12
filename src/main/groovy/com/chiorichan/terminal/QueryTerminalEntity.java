@@ -3,7 +3,9 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.terminal;
 
@@ -17,8 +19,8 @@ import com.chiorichan.factory.BindingProvider;
 import com.chiorichan.factory.ScriptBinding;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.lang.EnumColor;
-import com.chiorichan.util.FileFunc;
-import com.chiorichan.util.Versioning;
+import com.chiorichan.Versioning;
+import com.chiorichan.zutils.ZIO;
 
 public class QueryTerminalEntity extends TerminalEntity implements BindingProvider
 {
@@ -46,7 +48,7 @@ public class QueryTerminalEntity extends TerminalEntity implements BindingProvid
 			{
 				is = Loader.class.getClassLoader().getResourceAsStream( "com/chiorichan/banner.txt" );
 
-				String[] banner = new String( FileFunc.inputStream2Bytes( is ) ).split( "\\n" );
+				String[] banner = new String( ZIO.inputStream2Bytes( is ) ).split( "\\n" );
 
 				for ( String l : banner )
 					handler.println( EnumColor.GOLD + l );
@@ -62,7 +64,7 @@ public class QueryTerminalEntity extends TerminalEntity implements BindingProvid
 		}
 		catch ( IOException e )
 		{
-
+			// Ignore
 		}
 	}
 

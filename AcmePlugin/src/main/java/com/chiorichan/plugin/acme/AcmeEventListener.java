@@ -1,12 +1,5 @@
 package com.chiorichan.plugin.acme;
 
-import com.chiorichan.logger.Log;
-import com.chiorichan.plugin.acme.lang.AcmeDisabledDomainException;
-import io.netty.handler.ssl.SslContext;
-
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.Listener;
@@ -15,9 +8,12 @@ import com.chiorichan.event.http.SslCertificateMapEvent;
 import com.chiorichan.event.site.SiteDomainChangeEvent;
 import com.chiorichan.event.site.SiteDomainChangeEvent.SiteDomainChangeEventType;
 import com.chiorichan.event.site.SiteLoadEvent;
+import com.chiorichan.logger.Log;
 import com.chiorichan.plugin.acme.api.AcmeProtocol;
 import com.chiorichan.plugin.acme.certificate.CertificateMaintainer;
+import com.chiorichan.plugin.acme.lang.AcmeDisabledDomainException;
 import com.chiorichan.plugin.acme.lang.AcmeException;
+import io.netty.handler.ssl.SslContext;
 
 public class AcmeEventListener implements Listener
 {
@@ -51,7 +47,7 @@ public class AcmeEventListener implements Listener
 		if ( event.getType() == SiteDomainChangeEventType.ADD )
 			try
 			{
-				client.checkDomainVerification( event.getDomain(), event.getSiteDomain().getSubdomain(), true );
+				client.checkDomainVerification( event.getSiteMapping().getRootDomain(), event.getSiteMapping().getChildDomain(), true );
 			}
 			catch ( AcmeDisabledDomainException e )
 			{
@@ -63,18 +59,18 @@ public class AcmeEventListener implements Listener
 			}
 		if ( event.getType() == SiteDomainChangeEventType.REMOVE )
 		{
-			AcmePlugin.instance().getSubConfig().set( "domains." + ( event.getSiteDomain().getSubdomain() + "_" + event.getDomain() ).replace( '.', '_' ), null );
+			AcmePlugin.instance().getSubConfig().set( "domains." + event.getSiteMapping().getNamespace().getString( "_", true ), null );
 		}
 	}
 
 	@EventHandler( priority = EventPriority.NORMAL )
 	public void onSiteLoadEvent( SiteLoadEvent event )
 	{
-		for ( Entry<String, Set<String>> e : event.getSite().getDomains().entrySet() )
+		event.getSite().getDomains().forEach( n ->
+		{
 			try
 			{
-				for ( String s : e.getValue() )
-					client.checkDomainVerification( e.getKey(), s, true );
+				client.checkDomainVerification( n.getRootDomain(), n.getChildDomain(), true );
 			}
 			catch ( AcmeDisabledDomainException e1 )
 			{
@@ -84,6 +80,7 @@ public class AcmeEventListener implements Listener
 			{
 				e1.printStackTrace();
 			}
+		} );
 	}
 
 	public Log getLogger()

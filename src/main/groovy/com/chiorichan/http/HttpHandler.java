@@ -3,13 +3,16 @@
  * of the MIT license.  See the LICENSE file for details.
  * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ * <p>
+ * All Rights Reserved.
  */
 package com.chiorichan.http;
 
 import com.chiorichan.AppConfig;
 import com.chiorichan.AppLoader;
 import com.chiorichan.ContentTypes;
+import com.chiorichan.Versioning;
 import com.chiorichan.configuration.apache.ApacheConfiguration;
 import com.chiorichan.configuration.apache.ApacheDirectiveException;
 import com.chiorichan.event.EventBus;
@@ -39,17 +42,18 @@ import com.chiorichan.net.NetworkSecurity.IpStrikeType;
 import com.chiorichan.permission.lang.PermissionDeniedException;
 import com.chiorichan.permission.lang.PermissionDeniedException.PermissionDeniedReason;
 import com.chiorichan.session.Session;
+import com.chiorichan.site.DomainMapping;
 import com.chiorichan.site.Site;
+import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.util.ObjectFunc;
-import com.chiorichan.util.StringFunc;
-import com.chiorichan.util.Versioning;
-import com.chiorichan.util.WebFunc;
+import com.chiorichan.zutils.WebFunc;
+import com.chiorichan.zutils.ZIO;
+import com.chiorichan.zutils.ZObjects;
+import com.chiorichan.zutils.ZStrings;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -83,7 +87,6 @@ import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
 import io.netty.util.IllegalReferenceCountException;
-import org.apache.commons.lang3.Validate;
 import org.codehaus.groovy.runtime.NullObject;
 
 import java.io.File;
@@ -92,6 +95,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -139,7 +143,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	/**
 	 * Updates the default temporary file directory
 	 *
-	 * @param tmpDir
+	 * @param tmpDir The temp directory
 	 */
 	public static void setTempDirectory( File tmpDir )
 	{
@@ -249,7 +253,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				StringBuilder sb = new StringBuilder();
 				sb.append( "<h1>500 - Internal Server Error</h1>\n" );
 				sb.append( "<p>The server had encountered an unexpected exception before it could fully process your request, so no extended debug information is or will be available.</p>\n" );
-				sb.append( "<p>The exception has been logged to the console, so we can only hope the exception is noticed and resolved. We apoligize for any inconvenience.</p>\n" );
+				sb.append( "<p>The exception has been logged to the console, so we can only hope the exception is noticed and resolved. We apologize for any inconvenience.</p>\n" );
 				sb.append( "<p><i>You have a good day now and we will see you again soon. :)</i></p>\n" );
 				sb.append( "<hr>\n" );
 				sb.append( Versioning.getHTMLFooter() );
@@ -260,7 +264,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				return;
 			}
 
-			String ip = request.getIpAddr();
+			String ip = request.getIpAddress();
 
 			if ( requestFinished && cause instanceof HttpError )
 			{
@@ -483,9 +487,9 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 	{
 		log.log( Level.INFO, request.methodString() + " " + request.getFullUrl() );
 
-		Session sess = request.startSession();
+		Session session = request.startSession();
 
-		log.log( Level.FINE, "Session {id=%s,timeout=%s,new=%s}", sess.getSessId(), sess.getTimeout(), sess.isNew() );
+		log.log( Level.FINE, "Session {id=%s,timeout=%s,new=%s}", session.getSessionId(), session.getTimeout(), session.isNew() );
 
 		if ( response.getStage() == HttpResponseStage.CLOSED )
 			throw new IOException( "Connection reset by peer" ); // This is not the only place 'Connection reset by peer' is thrown
@@ -527,29 +531,39 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		response.annotations.putAll( fi.getAnnotations() );
 
 		currentSite = request.getLocation();
-		sess.setSite( currentSite );
+		session.setSite( currentSite );
 
-		if ( request.getSubdomain().length() > 0 && !currentSite.getSubdomain( request.getSubdomain() ).isMaped( request.getDomain() ) )
+		DomainMapping mapping = request.getDomainMapping();
+
+		if ( mapping == null )
 		{
-			if ( "www".equalsIgnoreCase( request.getSubdomain() ) || AppConfig.get().getBoolean( "sites.redirectMissingSubDomains" ) )
+			if ( "www".equalsIgnoreCase( request.getChildDomain() ) || AppConfig.get().getBoolean( "sites.redirectMissingSubDomains" ) )
 			{
-				log.log( Level.SEVERE, "Redirecting non-existent subdomain '%s' to root domain '%s'", request.getSubdomain(), request.getFullUrl( "" ) );
+				log.log( Level.SEVERE, "Redirecting non-existent subdomain '%s' to root domain '%s'", request.getChildDomain(), request.getFullUrl( "" ) );
 				response.sendRedirect( request.getFullUrl( "" ) );
 			}
 			else
 			{
-				log.log( Level.SEVERE, "The requested subdomain '%s' is non-existent.", request.getSubdomain(), request.getFullDomain( "" ) );
+				log.log( Level.SEVERE, "The requested subdomain '%s' is non-existent.", request.getChildDomain(), request.getFullDomain( "" ) );
 				response.sendError( HttpResponseStatus.NOT_FOUND, "Subdomain not found" );
 			}
 			return;
 		}
 
-		File docRoot = currentSite.getSubdomain( request.getSubdomain() ).directory();
+		File docRoot = mapping.directory();
+		ZObjects.notNull( docRoot );
 
-		Validate.notNull( docRoot );
+		if ( !docRoot.exists() )
+			SiteManager.getLogger().warning( String.format( "The webroot directory [%s] was missing, it will be created.", ZIO.relPath( docRoot ) ) );
 
-		if ( sess.isLoginPresent() )
-			log.log( Level.FINE, "Account {id=%s,displayName=%s}", sess.getId(), sess.getDisplayName() );
+		if ( docRoot.exists() && docRoot.isFile() )
+			docRoot.delete();
+
+		if ( !docRoot.exists() )
+			docRoot.mkdirs();
+
+		if ( session.isLoginPresent() )
+			log.log( Level.FINE, "Account {id=%s,displayName=%s}", session.getId(), session.getDisplayName() );
 
 		/*
 		 * Start: SSL enforcer
@@ -636,7 +650,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			if ( !result )
 			{
 				if ( !response.isCommitted() )
-					response.sendError( 500, "Your request was blocked by an internal configuration directive, exact details are unknown." );
+					response.sendError( 500, "Your request was blocked by a .htaccess directive, exact details are unknown." );
 				return;
 			}
 		}
@@ -653,7 +667,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		if ( !fi.hasFile() && !fi.hasHTML() )
 			response.setStatus( HttpResponseStatus.NO_CONTENT );
 
-		sess.setGlobal( "__FILE__", fi.getFile() );
+		session.setGlobal( "__FILE__", fi.getFile() );
 
 		request.putRewriteParams( fi.getRewriteParams() );
 		response.setContentType( fi.getContentType() );
@@ -670,19 +684,19 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		try
 		{
 			if ( request.getUploadedFiles().size() > 0 )
-				log.log( Level.INFO, "Uploads {" + StringFunc.limitLength( Joiner.on( "," ).skipNulls().join( request.getUploadedFiles().values() ), 255 ) + "}" );
+				log.log( Level.INFO, "Uploads {" + ZStrings.limitLength( Joiner.on( "," ).skipNulls().join( request.getUploadedFiles().values() ), 255 ) + "}" );
 
 			if ( request.getGetMap().size() > 0 )
-				log.log( Level.INFO, "GetMap {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( request.getGetMap() ), 255 ) + "}" );
+				log.log( Level.INFO, "GetMap {" + ZStrings.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( request.getGetMap() ), 255 ) + "}" );
 
 			if ( request.getPostMap().size() > 0 )
-				log.log( Level.INFO, "PostMap {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( request.getPostMap() ), 255 ) + "}" );
+				log.log( Level.INFO, "PostMap {" + ZStrings.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( request.getPostMap() ), 255 ) + "}" );
 
 			if ( request.getRewriteMap().size() > 0 )
-				log.log( Level.INFO, "RewriteMap {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( request.getRewriteMap() ), 255 ) + "}" );
+				log.log( Level.INFO, "RewriteMap {" + ZStrings.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( request.getRewriteMap() ), 255 ) + "}" );
 
 			if ( fi.getAnnotations().size() > 0 )
-				log.log( Level.INFO, "Annotations {" + StringFunc.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( fi.getAnnotations() ), 255 ) + "}" );
+				log.log( Level.INFO, "Annotations {" + ZStrings.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( fi.getAnnotations() ), 255 ) + "}" );
 		}
 		catch ( Throwable t )
 		{
@@ -690,12 +704,14 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		}
 
 		/*
-		 * Nonce is separately verified by the login form.
+		 * Nonce is separately verified by the login subroutine.
 		 * So regardless what the nonce level is, nonce will have to be initialized by the login form.
 		 */
 
 		NonceLevel level = NonceLevel.parse( fi.get( "nonce" ) );
-		boolean nonceProvided = sess.nonce() == null ? false : request.getRequestMap().containsKey( sess.nonce().key() );
+		Nonce nonce = session.nonce();
+
+		boolean nonceProvided = nonce != null && request.getRequestMap().containsKey( nonce.key() );
 		boolean processNonce = false;
 
 		switch ( level )
@@ -717,22 +733,21 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				// Do Nothing
 		}
 
-		Map<String, String> nonceMap = Maps.newHashMap();
+		Map<String, String> nonceMap = new HashMap<>();
 
 		if ( processNonce )
 		{
-			Nonce nonce = sess.nonce();
-
 			if ( !nonceProvided )
 			{
-				log.log( Level.SEVERE, String.format( "Request failed NONCE validation, key is missing and/or nonce was not initialized. Key [%s]", nonce == null ? "null" : nonce.key() ) );
-				response.sendError( HttpResponseStatus.FORBIDDEN, "Request Failed NONCE Validation", "Key is missing and/or nonce was not initialized." );
+				if ( !ZObjects.isNull( nonce ) )
+					log.log( Level.SEVERE, String.format( "The expect nonce key was %s", nonce.key() ) );
+				response.sendError( HttpResponseStatus.FORBIDDEN, "Request Failed NONCE Validation", "Nonce key is missing or the nonce was not initialized." );
 				return;
 			}
 
 			if ( level == NonceLevel.Required )
 				// Required nonce levels are of the highest protected state
-				sess.destroyNonce();
+				session.destroyNonce();
 
 			try
 			{
@@ -744,7 +759,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			{
 				log.log( Level.SEVERE, "Request failed NONCE validation. \"" + e.getMessage() + "\"" );
 				response.sendError( HttpResponseStatus.FORBIDDEN, "Request Failed NONCE Validation", e.getMessage() );
-				sess.destroyNonce();
+				session.destroyNonce();
 				return;
 			}
 			finally
@@ -771,12 +786,19 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 
 		NetworkSecurity.isForbidden( htaccess, currentSite, fi );
 
-		String req = fi.get( "reqperm" );
+		/* This annotation simply requests that the page requester must have a logged in account, the exact permission is not important. */
+		boolean reqLogin = ZObjects.castToBool( fi.get( "reqLogin" ) );
 
-		if ( req == null )
-			req = "-1";
+		if ( reqLogin && !session.hasLogin() )
+			throw new PermissionDeniedException( PermissionDeniedReason.LOGIN_PAGE );
 
-		sess.requirePermission( req, currentSite.getId() );
+		/* This annotation check the required permission to make the request and will also require a logged in account. */
+		String reqPerm = fi.get( "reqPerm" );
+
+		if ( reqPerm == null )
+			reqPerm = "-1";
+
+		session.requirePermission( reqPerm, currentSite.getId() );
 
 		// Enhancement: Allow HTML to be ran under different shells. Default is embedded.
 		if ( fi.hasHTML() )
@@ -800,11 +822,11 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				if ( result.getObject() != null && !( result.getObject() instanceof NullObject ) )
 					try
 					{
-						rendered.writeBytes( ObjectFunc.castToStringWithException( result.getObject() ).getBytes() );
+						rendered.writeBytes( ZObjects.castToStringWithException( result.getObject() ).getBytes() );
 					}
 					catch ( Exception e )
 					{
-						log.log( Level.SEVERE, "Exception Excountered: %s", e.getMessage() );
+						log.log( Level.SEVERE, "Exception Encountered: %s", e.getMessage() );
 						if ( Versioning.isDevelopment() )
 							log.log( Level.SEVERE, e.getStackTrace()[0].toString() );
 					}
@@ -840,7 +862,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				if ( result.getObject() != null && !( result.getObject() instanceof NullObject ) )
 					try
 					{
-						rendered.writeBytes( ObjectFunc.castToStringWithException( result.getObject() ).getBytes() );
+						rendered.writeBytes( ZObjects.castToStringWithException( result.getObject() ).getBytes() );
 					}
 					catch ( Exception e )
 					{
@@ -899,7 +921,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		}
 		catch ( IllegalReferenceCountException e )
 		{
-			log.log( Level.SEVERE, "Exception encountered while writting script object to output, %s", e.getMessage() );
+			log.log( Level.SEVERE, "Exception encountered while witting script object to output, %s", e.getMessage() );
 		}
 	}
 
@@ -942,12 +964,12 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			else if ( threadName.length() < 10 )
 				threadName = threadName + Strings.repeat( " ", 10 - threadName.length() );
 
-			log.header( "&7[&d%s&7] %s %s &9[%s]:%s&7 -> &a[%s]:%s&7", threadName, dateFormat.format( Timings.millis() ), timeFormat.format( Timings.millis() ), request.getIpAddr(), request.getRemotePort(), request.getLocalIpAddr(), request.getLocalPort() );
+			log.header( "&7[&d%s&7] %s %s &9[%s]:%s&7 -> &a[%s]:%s&7", threadName, dateFormat.format( Timings.millis() ), timeFormat.format( Timings.millis() ), request.getIpAddress(), request.getRemotePort(), request.getLocalIpAddress(), request.getLocalPort() );
 
 			if ( HttpHeaderUtil.is100ContinueExpected( ( HttpRequest ) msg ) )
 				send100Continue( ctx );
 
-			if ( NetworkSecurity.isIpBanned( request.getIpAddr() ) )
+			if ( NetworkSecurity.isIpBanned( request.getIpAddress() ) )
 			{
 				response.sendError( 403 );
 				return;
@@ -1106,7 +1128,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			tbl.add( l );
 		}
 
-		sb.append( WebFunc.createTable( tbl, Arrays.asList( new String[] {"", "Name", "Last Modified", "Size", "Type"} ) ) );
+		sb.append( WebFunc.createTable( tbl, Arrays.asList( "", "Name", "Last Modified", "Size", "Type" ) ) );
 		sb.append( "<hr>" );
 		sb.append( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + "<br />" + Versioning.getCopyright() + "</small>" );
 
@@ -1124,15 +1146,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			{
 				InterfaceHttpData data = decoder.next();
 				if ( data != null )
-					try
-					{
-						writeHttpData( data );
-					}
-					finally
-					{
-						// This method deletes the temp file from disk!
-						// data.release();
-					}
+					writeHttpData( data );
 			}
 		}
 		catch ( EndOfDataDecoderException e )

@@ -3,7 +3,9 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.http;
 
@@ -85,7 +87,7 @@ public class HttpCookie
 	/**
 	 * Sets an explicit expiration time using an epoch.
 	 * 
-	 * @param epoch
+	 * @param epoch The Epoch since 1970
 	 */
 	public HttpCookie setExpiration( long epoch )
 	{
@@ -97,12 +99,12 @@ public class HttpCookie
 	/**
 	 * Sets an explicit expiration time using the current epoch + seconds specified
 	 * 
-	 * @param defaultLife
+	 * @param maxLife The about of time in seconds
 	 */
-	public HttpCookie setMaxAge( long defaultLife )
+	public HttpCookie setMaxAge( long maxLife )
 	{
 		needsUpdating = true;
-		epoch = Timings.epoch() + defaultLife;
+		epoch = Timings.epoch() + maxLife;
 		return this;
 	}
 	

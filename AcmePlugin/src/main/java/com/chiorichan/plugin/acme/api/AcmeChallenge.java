@@ -11,7 +11,7 @@ import com.chiorichan.plugin.acme.lang.AcmeDisabledDomainException;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.configuration.ConfigurationSection;
-import com.chiorichan.configuration.file.YamlConfiguration;
+import com.chiorichan.configuration.types.yaml.YamlConfiguration;
 import com.chiorichan.http.HttpCode;
 import com.chiorichan.lang.PluginNotFoundException;
 import com.chiorichan.logger.LogAPI;
@@ -110,11 +110,11 @@ public class AcmeChallenge
 
 				JsonNode json = new ObjectMapper().readTree( response.getBody() );
 
-				for ( JsonNode challange : json.get( "challenges" ) )
+				for ( JsonNode challenge : json.get( "challenges" ) )
 				{
-					String type = challange.get( "type" ).asText();
-					String challengeToken = challange.get( "token" ).asText();
-					String challengeUri = challange.get( "uri" ).asText();
+					String type = challenge.get( "type" ).asText();
+					String challengeToken = challenge.get( "token" ).asText();
+					String challengeUri = challenge.get( "uri" ).asText();
 
 					switch ( type )
 					{
@@ -184,7 +184,7 @@ public class AcmeChallenge
 		 *     "expires":"2015-12-18T03:25:53.827339252Z",
 		 *     "challenges":[
 		 *         {
-		 *             "type":"http-01",
+		 *             "type":"com.chiorichan.http-01",
 		 *             "status":"pending",
 		 *             "uri":"https://acme-staging.api.letsencrypt.org/acme/challenge/Em0...udY/851773",
 		 *             "token":"IR8...upo"

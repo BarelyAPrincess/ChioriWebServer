@@ -3,7 +3,9 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.http.ssl;
 
@@ -38,7 +40,7 @@ public class SslInitializer extends ChannelInitializer<SocketChannel>
 		catch ( Exception e )
 		{
 			NetworkManager.shutdownHttpsServer();
-			throw new IllegalStateException( "The SSL engine failed to initalize", e );
+			throw new IllegalStateException( "The SSL engine failed to initialize", e );
 		}
 
 		p.addLast( "decoder", new HttpRequestDecoder() );

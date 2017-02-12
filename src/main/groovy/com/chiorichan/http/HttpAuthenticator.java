@@ -3,14 +3,16 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.http;
 
+import com.chiorichan.zutils.ZStrings;
 import io.netty.handler.codec.http.HttpHeaderNames;
 
-import com.chiorichan.util.SecureFunc;
-import com.chiorichan.util.StringFunc;
+import com.chiorichan.zutils.ZEncryption;
 
 public class HttpAuthenticator
 {
@@ -42,7 +44,7 @@ public class HttpAuthenticator
 		if ( !isBasic() )
 			throw new IllegalStateException( "Authorization is invalid!" );
 
-		String auth = SecureFunc.base64DecodeString( StringFunc.regexCapture( getAuthorization(), "Basic (.*)" ) );
+		String auth = ZEncryption.base64DecodeString( ZStrings.regexCapture( getAuthorization(), "Basic (.*)" ) );
 		return auth.substring( auth.indexOf( ":" ) + 1 );
 	}
 
@@ -56,19 +58,19 @@ public class HttpAuthenticator
 		if ( !isBasic() )
 			throw new IllegalStateException( "Authorization is invalid!" );
 
-		String auth = SecureFunc.base64DecodeString( StringFunc.regexCapture( getAuthorization(), "Basic (.*)" ) );
+		String auth = ZEncryption.base64DecodeString( ZStrings.regexCapture( getAuthorization(), "Basic (.*)" ) );
 		return auth.substring( 0, auth.indexOf( ":" ) );
 	}
 
 	public boolean isBasic()
 	{
 		String var = getAuthorization();
-		return var == null ? false : var.startsWith( "Basic" );
+		return var != null && var.startsWith( "Basic" );
 	}
 
 	public boolean isDigest()
 	{
 		String var = getAuthorization();
-		return var == null ? false : var.startsWith( "Digest" );
+		return var != null && var.startsWith( "Digest" );
 	}
 }

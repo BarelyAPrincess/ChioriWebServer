@@ -3,12 +3,26 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.http.ssl;
 
+import com.chiorichan.zutils.ZIO;
+import com.chiorichan.zutils.ZObjects;
+import com.chiorichan.net.NetworkManager;
+import com.chiorichan.zutils.ZEncryption;
 import io.netty.handler.ssl.SslContext;
+import org.bouncycastle.asn1.x500.RDN;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x500.style.BCStyle;
+import org.bouncycastle.asn1.x500.style.IETFUtils;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
+import org.joda.time.Days;
+import org.joda.time.LocalDate;
 
+import javax.net.ssl.SSLException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -24,27 +38,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import javax.net.ssl.SSLException;
-
-import org.apache.commons.io.IOUtils;
-import org.bouncycastle.asn1.x500.RDN;
-import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.asn1.x500.style.BCStyle;
-import org.bouncycastle.asn1.x500.style.IETFUtils;
-import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
-import org.joda.time.Days;
-import org.joda.time.LocalDate;
-
-import com.chiorichan.net.NetworkManager;
-import com.chiorichan.util.FileFunc;
-import com.chiorichan.util.ObjectFunc;
-import com.chiorichan.util.SecureFunc;
-
 public class CertificateWrapper
 {
 	public enum CertificateValidityState
 	{
-		Valid, NotYetValid, Expired;
+		Valid, NotYetValid, Expired
 	}
 
 	private final File sslCertFile;
@@ -57,10 +55,10 @@ public class CertificateWrapper
 	public CertificateWrapper( File sslCertFile, File sslKeyFile, String sslSecret ) throws FileNotFoundException, CertificateException
 	{
 		if ( !sslCertFile.exists() )
-			throw new FileNotFoundException( "The SSL Certificate '" + FileFunc.relPath( sslCertFile ) + "' (aka. SSL Cert) file does not exist" );
+			throw new FileNotFoundException( "The SSL Certificate '" + ZIO.relPath( sslCertFile ) + "' (aka. SSL Cert) file does not exist" );
 
 		if ( !sslKeyFile.exists() )
-			throw new FileNotFoundException( "The SSL Key '" + FileFunc.relPath( sslKeyFile ) + "' (aka. SSL Key) file does not exist" );
+			throw new FileNotFoundException( "The SSL Key '" + ZIO.relPath( sslKeyFile ) + "' (aka. SSL Key) file does not exist" );
 
 		this.sslCertFile = sslCertFile;
 		this.sslKeyFile = sslKeyFile;
@@ -73,7 +71,7 @@ public class CertificateWrapper
 		}
 		catch ( CertificateException e )
 		{
-			throw new IllegalStateException( "Failed to initalize X.509 certificate factory." );
+			throw new IllegalStateException( "Failed to initialize X.509 certificate factory." );
 		}
 
 		InputStream in = null;
@@ -85,7 +83,7 @@ public class CertificateWrapper
 		finally
 		{
 			if ( in != null )
-				IOUtils.closeQuietly( in );
+				ZIO.closeQuietly( in );
 		}
 	}
 
@@ -115,7 +113,7 @@ public class CertificateWrapper
 			else
 				context = SslContext.newServerContext( sslCertFile.getAbsoluteFile(), sslKeyFile.getAbsoluteFile(), sslSecret );
 
-			NetworkManager.getLogger().info( String.format( "Initalized SslContext %s using cert '%s', key '%s', and hasSecret? %s", context.getClass(), FileFunc.relPath( sslCertFile ), FileFunc.relPath( sslKeyFile ), sslSecret != null && !sslSecret.isEmpty() ) );
+			NetworkManager.getLogger().info( String.format( "Initialized SslContext %s using cert '%s', key '%s', and hasSecret? %s", context.getClass(), ZIO.relPath( sslCertFile ), ZIO.relPath( sslKeyFile ), sslSecret != null && !sslSecret.isEmpty() ) );
 		}
 
 		return context;
@@ -223,8 +221,8 @@ public class CertificateWrapper
 					for ( List<?> l : cert.getSubjectAlternativeNames() )
 						try
 						{
-							int i = ObjectFunc.castToIntWithException( l.get( 0 ) );
-							String dns = ObjectFunc.castToStringWithException( l.get( 1 ) );
+							int i = ZObjects.castToIntWithException( l.get( 0 ) );
+							String dns = ZObjects.castToStringWithException( l.get( 1 ) );
 
 							if ( i == type )
 								add( dns );
@@ -244,6 +242,6 @@ public class CertificateWrapper
 
 	public String md5()
 	{
-		return SecureFunc.md5( sslCertFile );
+		return ZEncryption.md5( sslCertFile );
 	}
 }

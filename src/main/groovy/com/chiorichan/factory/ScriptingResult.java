@@ -1,17 +1,19 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- * <p>
+ *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.factory;
 
+import com.chiorichan.zutils.ZObjects;
 import com.chiorichan.lang.ExceptionReport;
 import com.chiorichan.lang.IException;
 import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.ScriptingException;
-import com.chiorichan.util.ObjectFunc;
 import groovy.lang.Script;
 import io.netty.buffer.ByteBuf;
 
@@ -118,7 +120,7 @@ public class ScriptingResult extends ExceptionReport
 
 	public String getString( boolean includeObj )
 	{
-		return ( content == null ? "" : content.toString( Charset.defaultCharset() ) ) + ( includeObj ? ObjectFunc.castToString( obj ) : "" );
+		return ( content == null ? "" : content.toString( Charset.defaultCharset() ) ) + ( includeObj ? ZObjects.castToString( obj ) : "" );
 	}
 
 	public boolean isSuccessful()

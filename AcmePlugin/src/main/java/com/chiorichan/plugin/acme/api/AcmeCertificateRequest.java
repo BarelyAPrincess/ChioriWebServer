@@ -17,7 +17,7 @@ import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.bouncycastle.x509.util.StreamParsingException;
 
-import com.chiorichan.configuration.file.YamlConfiguration;
+import com.chiorichan.configuration.types.yaml.YamlConfiguration;
 import com.chiorichan.lang.PluginNotFoundException;
 import com.chiorichan.logger.Log;
 import com.chiorichan.plugin.PluginManager;

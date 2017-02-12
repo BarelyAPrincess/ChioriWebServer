@@ -1,9 +1,11 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- * <p>
+ *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.factory;
 
@@ -25,9 +27,9 @@ import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.ScriptingException;
 import com.chiorichan.logger.LogSource;
 import com.chiorichan.services.ObjectContext;
-import com.chiorichan.util.FileFunc;
-import com.chiorichan.util.Pair;
-import com.chiorichan.util.SecureFunc;
+import com.chiorichan.helpers.Pair;
+import com.chiorichan.zutils.ZEncryption;
+import com.chiorichan.zutils.ZIO;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.netty.buffer.ByteBuf;
@@ -168,10 +170,10 @@ public class ScriptingFactory implements LogSource
 
 		try
 		{
-			String name = "EvalScript" + SecureFunc.rand( 8 ) + ".chi";
+			String name = "EvalScript" + ZEncryption.rand( 8 ) + ".chi";
 			if ( !context.isVirtual() )
 			{
-				String rel = FileFunc.relPath( context.file().getParentFile(), context.site().directory() ).replace( '\\', '.' ).replace( '/', '.' );
+				String rel = ZIO.relPath( context.file().getParentFile(), context.site().directory() ).replace( '\\', '.' ).replace( '/', '.' );
 				context.cache( new File( context.cache(), rel.contains( "." ) ? rel.substring( 0, rel.indexOf( "." ) ) : rel ) );
 				context.scriptPackage( rel.contains( "." ) ? rel.substring( rel.indexOf( "." ) + 1 ) : "" );
 				name = context.file().getName();

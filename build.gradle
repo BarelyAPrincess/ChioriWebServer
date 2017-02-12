@@ -2,6 +2,7 @@ import java.text.SimpleDateFormat
 
 defaultTasks 'clean', 'build'
 
+apply plugin: 'application'
 apply plugin: 'eclipse'
 apply plugin: 'groovy'
 apply plugin: 'license'
@@ -11,14 +12,14 @@ apply from: 'etc/publish.gradle'
 
 repositories {
 	jcenter()
-	maven { url "http://jenkins.chiorichan.com:8081/artifactory/" }
+	maven {url "http://jenkins.chiorichan.com:8081/artifactory/"}
 	mavenCentral()
 }
 
 buildscript {
 	repositories {
 		jcenter()
-		maven { url "http://jenkins.chiorichan.com:8081/artifactory/" }
+		maven {url "http://jenkins.chiorichan.com:8081/artifactory/"}
 		mavenCentral()
 	}
 
@@ -28,18 +29,19 @@ buildscript {
 	}
 }
 
-def gitDescribe() {
-	try {
+def gitDescribe()
+{
+	try
+	{
 		// determine git-describe output
 		def stdout = new ByteArrayOutputStream()
-		exec
-		{
+		exec {
 			commandLine 'git', 'rev-parse', '--short', 'HEAD'
 			standardOutput = stdout
 		}
 		return stdout.toString().trim()
 	}
-	catch (e)
+	catch ( Throwable e )
 	{
 		return "unknown"
 	}
@@ -54,7 +56,7 @@ def getVersionNumber()
 
 		return props.getProperty( "project.versionMajor" ) + "." + props.getProperty( "project.versionMinor" ) + "." + props.getProperty( "project.versionRevision" )
 	}
-	catch ( e )
+	catch ( Throwable e )
 	{
 		return 0
 	}
@@ -63,15 +65,16 @@ def getVersionNumber()
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
 
+mainClassName = "com.chiorichan.Loader"
 def rawVersion = getVersionNumber() + '-' + gitDescribe()
-def jenkins_build = System.getenv("BUILD_NUMBER")
-def travis_build = System.getenv("TRAVIS_BUILD_NUMBER")
+def jenkins_build = System.getenv( "BUILD_NUMBER" )
+def travis_build = System.getenv( "TRAVIS_BUILD_NUMBER" )
 def buildNumber = '0'
 
 group = 'com.chiorichan'
 description = 'Chiori-chan\'s Web Server is a Java Based HTTP/TCP Server featuring Groovy shell and plugin system'
 
-if ( System.getenv("releaseBuild") != null )
+if ( System.getenv( "releaseBuild" ) != null )
 {
 	version = getVersionNumber()
 }
@@ -88,75 +91,96 @@ else
 		buildNumber = travis_build
 	}
 	else
+	{
 		version = rawVersion + '-dev'
+	}
 }
 
 distsDirName = 'dist'
 libsDirName = 'dist'
 
-compileJava
-{ options.encoding = 'UTF-8' }
+compileJava {options.encoding = 'UTF-8'}
 
-compileGroovy
-{ options.encoding = "UTF-8" }
+compileGroovy {options.encoding = "UTF-8"}
 
-javadoc
-{ options.encoding = "UTF-8" }
+javadoc {options.encoding = "UTF-8"}
 
-checkstyle
-{
-	configFile = file('etc/checkstyle.xml')
-	configProperties = ["basedir":project.projectDir]
+checkstyle {
+	configFile = file( 'etc/checkstyle.xml' )
+	configProperties = ["basedir": project.projectDir]
 }
 
 // checkstyleMain.source = "src/main/groovy"
 // checkstyleMain.exclude '**//**'
 
-eclipse
-{
-	project
-	{ name = 'ChioriWebServer' }
+eclipse {
+	project {name = 'ChioriWebServer'}
 }
 
-license
-{
-	header rootProject.file('etc/HEADER')
+license {
+	header rootProject.file( 'etc/HEADER' )
 	ignoreFailures true
 	strictCheck true
 	mapping 'yaml', 'SCRIPT_STYLE'
 	mapping 'yml', 'SCRIPT_STYLE'
-	excludes ([
-		'**/*.archive',
-		'**/*.md5',
-		'**/less-rhino-1.7.4.js',
-		'**/coffee-script.js',
-		'**/banner.txt',
-		'**/config.yaml'
-	])
-	ext.year = Calendar.getInstance().get(Calendar.YEAR)
+	excludes( ['**/*.archive',
+			'**/*.md5',
+			'**/*.txt',
+			'**/*.bmp',
+			'**/*.png',
+			'**/*.jpg',
+			'**/*.yaml',
+			'**/*.yml',
+			'**/*.properties',
+			'**/less-rhino-1.7.4.js',
+			'**/coffee-script.js',
+			'**/banner.txt',
+			'**/config.yaml'] )
+	ext.year = Calendar.getInstance().get( Calendar.YEAR )
 	ext.name = 'Chiori Greene a.k.a. Chiori-chan'
 	ext.email = 'me@chiorichan.com'
 }
 
-subprojects
-{
+subprojects {
 	apply plugin: 'java'
 	apply plugin: 'groovy'
 	apply plugin: 'eclipse'
 
-	repositories
-	{ mavenCentral() }
+	repositories {mavenCentral()}
 
 	libsDirName = '../../build/dist'
 
-	artifacts
-	{ archives jar }
+	artifacts {archives jar}
+
+	license {
+		header rootProject.file( 'etc/HEADER' )
+		ignoreFailures true
+		strictCheck true
+		mapping 'yaml', 'SCRIPT_STYLE'
+		mapping 'yml', 'SCRIPT_STYLE'
+		excludes( ['**/*.md5',
+				'**/*.txt',
+				'**/*.bmp',
+				'**/*.png',
+				'**/*.jpg',
+				'**/*.yaml',
+				'**/*.yml',
+				'**/*.properties',
+				'**/config.yaml'] )
+		ext.year = Calendar.getInstance().get( Calendar.YEAR )
+		ext.name = 'Chiori Greene a.k.a. Chiori-chan'
+		ext.email = 'me@chiorichan.com'
+	}
 }
 
-dependencies
-{
+dependencies {
+	testCompile( group: 'junit', name: 'junit', version: '4.12' ) {
+		exclude group: 'org.hamcrest'
+	}
+	testCompile 'org.hamcrest:hamcrest-library:1.3'
+
 	// Chiori's API
-	compile project(':ChioriAPI')
+	compile project( ':ChioriAPI' )
 	// compile group: 'com.github.ChioriGreene', name: 'ChioriAPI', version: '0.1' -- For use with JitPack repository
 
 	// TODO These dependencies need cleaning up, there is just far too many of them!
@@ -172,7 +196,7 @@ dependencies
 	// Used to Parse Console Input
 	compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version: '4.7'
 
-	// Used to evalute GroovyScripts server-side
+	// Used to evaluate GroovyScripts server-side
 	compile group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.4.7'
 
 	// Used for easy reflections, e.g., find all classes within package for imports
@@ -186,7 +210,7 @@ dependencies
 	compile group: 'org.xerial', name: 'sqlite-jdbc', version: '3.8.11.2'
 	compile group: 'com.h2database', name: 'h2', version: '1.4.187'
 
-	// Used for Programming Convinience
+	// Used for Programming Convenience
 	compile group: 'com.google.guava', name: 'guava', version: '18.0'
 	compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.3.2'
 	compile group: 'commons-io', name: 'commons-io', version: '2.4'
@@ -210,20 +234,17 @@ dependencies
 	// Used to format Phone Numbers
 	compile group: 'com.googlecode.libphonenumber', name: 'libphonenumber', version: '7.0.4'
 
-	// Used for serilization within Sites and Autoupdater
+	// Used for serialization within Sites and Autoupdater
 	compile group: 'com.google.code.gson', name: 'gson', version: '2.3'
 
 	// Used by MavenUtils and some scripts
 	compile group: 'org.apache.httpcomponents', name: 'fluent-hc', version: '4.3.5'
 }
 
-shadowJar
-{ include("**/*"); }
+shadowJar {include( "**/*" );}
 
-jar
-{
-	manifest
-	{
+jar {
+	manifest {
 		attributes 'Implementation-Title': 'Chiori-chan\'s Web Server'
 		attributes 'Implementation-Version': version
 		attributes 'Implementation-Vendor': 'Chiori Greene a.k.a. Chiori-chan'
@@ -232,12 +253,12 @@ jar
 	}
 }
 
-task sourcesArchive(type: Zip){
+task sourcesArchive( type: Zip ) {
 	classifier = 'sources'
 	from sourceSets.main.allSource
 }
 
-task javadocArchive(type: Zip, dependsOn: 'javadoc'){
+task javadocArchive( type: Zip, dependsOn: 'javadoc' ) {
 	classifier = 'javadoc'
 	from javadoc.destinationDir
 }
@@ -248,24 +269,23 @@ task writePropertiesFile {
 
 		Properties props = new Properties()
 		props.load( new FileInputStream( file( "src/main/resources/build.properties" ) ) )
-		props.setProperty("project.builtOn", sdf.format( new Date() ))
-		props.setProperty("project.build", buildNumber)
-		props.setProperty("project.version", version)
+		props.setProperty( "project.builtOn", sdf.format( new Date() ) )
+		props.setProperty( "project.build", buildNumber )
+		props.setProperty( "project.version", version )
 
-		File f2 = file("build/dist/build.properties")
-		File f3 = file("build/resources/main/build.properties")
+		File f2 = file( "build/dist/build.properties" )
+		File f3 = file( "build/resources/main/build.properties" )
 		f2.parentFile.mkdirs()
 		f3.parentFile.mkdirs()
 		OutputStream out2 = new FileOutputStream( f2 )
 		OutputStream out3 = new FileOutputStream( f3 )
-		props.store(out2, "Build Properties File")
-		props.store(out3, "Build Properties File")
+		props.store( out2, "Build Properties File" )
+		props.store( out3, "Build Properties File" )
 	}
 }
 
-task wrapper(type: Wrapper) { gradleVersion = '3.3' }
+task wrapper( type: Wrapper ) {gradleVersion = '3.3'}
 
 jar.dependsOn writePropertiesFile
 
-artifacts
-{ archives shadowJar, sourcesArchive, javadocArchive }
+artifacts {archives shadowJar, sourcesArchive, javadocArchive}

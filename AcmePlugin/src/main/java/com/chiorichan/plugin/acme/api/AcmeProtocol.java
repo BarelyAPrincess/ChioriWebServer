@@ -1,9 +1,30 @@
 package com.chiorichan.plugin.acme.api;
 
+import com.chiorichan.zutils.ZHttp;
+import com.chiorichan.http.HttpCode;
+import com.chiorichan.lang.EnumColor;
+import com.chiorichan.logger.Log;
+import com.chiorichan.plugin.acme.AcmePlugin;
+import com.chiorichan.plugin.acme.lang.AcmeException;
+import com.chiorichan.plugin.acme.lang.AcmeForbiddenError;
+import com.chiorichan.plugin.acme.lang.AcmeState;
+import com.chiorichan.site.DomainMapping;
+import com.chiorichan.site.SiteManager;
+import com.chiorichan.helpers.TrustManagerFactory;
+import com.chiorichan.zutils.ZStrings;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import io.jsonwebtoken.JwsHeader;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.Validate;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.x509.util.StreamParsingException;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
 import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -18,30 +39,6 @@ import java.security.UnrecoverableKeyException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
-
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.Validate;
-import org.bouncycastle.operator.OperatorCreationException;
-import org.bouncycastle.x509.util.StreamParsingException;
-
-import com.chiorichan.http.HttpCode;
-import com.chiorichan.lang.EnumColor;
-import com.chiorichan.logger.Log;
-import com.chiorichan.plugin.acme.AcmePlugin;
-import com.chiorichan.plugin.acme.lang.AcmeException;
-import com.chiorichan.plugin.acme.lang.AcmeForbiddenError;
-import com.chiorichan.plugin.acme.lang.AcmeState;
-import com.chiorichan.site.Site;
-import com.chiorichan.site.SiteManager;
-import com.chiorichan.util.NetworkFunc;
-import com.chiorichan.util.StringFunc;
-import com.chiorichan.util.TrustManagerFactory;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 @SuppressWarnings( "serial" )
 public class AcmeProtocol
@@ -70,7 +67,7 @@ public class AcmeProtocol
 
 		Validate.notNull( keyPair );
 
-		byte[] result = NetworkFunc.readUrl( url, true );
+		byte[] result = ZHttp.readUrl( url, true );
 
 		if ( result == null || result.length == 0 )
 			throw new AcmeException( "AcmePlugin failed to get CA directory from url \"" + url + "\", result was null!" );
@@ -78,10 +75,10 @@ public class AcmeProtocol
 		JsonElement element = new JsonParser().parse( new String( result ) );
 		JsonObject obj = element.getAsJsonObject();
 
-		urlNewAuthz = StringFunc.trimAll( obj.get( "new-authz" ).toString().trim(), '"' );
-		urlNewCert = StringFunc.trimAll( obj.get( "new-cert" ).toString().trim(), '"' );
-		urlNewReg = StringFunc.trimAll( obj.get( "new-reg" ).toString().trim(), '"' );
-		urlRevokeCert = StringFunc.trimAll( obj.get( "revoke-cert" ).toString().trim(), '"' );
+		urlNewAuthz = ZStrings.trimAll( obj.get( "new-authz" ).toString().trim(), '"' );
+		urlNewCert = ZStrings.trimAll( obj.get( "new-cert" ).toString().trim(), '"' );
+		urlNewReg = ZStrings.trimAll( obj.get( "new-reg" ).toString().trim(), '"' );
+		urlRevokeCert = ZStrings.trimAll( obj.get( "revoke-cert" ).toString().trim(), '"' );
 	}
 
 	public AcmeState checkDomainVerification( String domain, String subdomain, boolean force ) throws AcmeException
@@ -100,12 +97,12 @@ public class AcmeProtocol
 		}
 		else if ( sac.isPending() )
 		{
-			Site site = SiteManager.instance().getSiteByDomain( sac.getDomain() );
-			if ( site == null )
+			DomainMapping mapping = SiteManager.instance().getDomainMapping( sac.getFullDomain() );
+			if ( mapping == null )
 				challenge.remove( sac );
 			else if ( !sac.hasCallBack() && sac.getChallengeToken() != null )
 			{
-				File acmeChallengeFile = new File( site.getSubdomain( sac.getSubDomain() ).directory(), sac.getTokenPath() );
+				File acmeChallengeFile = new File( mapping.directory(), sac.getTokenPath() );
 
 				try
 				{

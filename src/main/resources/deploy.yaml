@@ -1,16 +1,8 @@
-#
-# This software may be modified and distributed under the terms
-# of the MIT license.  See the LICENSE file for details.
-#
-# Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
-# All Rights Reserved
-#
-
 # Application Deployment Properties File
 deploy:
   main-class: com.chiorichan.Loader
   libraries:
-    - org.codehaus.groovy:groovy-all:2.3.6
+    - org.codehaus.groovy:groovy-all:2.4.7
     - io.netty:netty-all:5.0.0.Alpha2
     - com.google.javascript:closure-compiler:r2388
     - org.mozilla:rhino:1.7R4

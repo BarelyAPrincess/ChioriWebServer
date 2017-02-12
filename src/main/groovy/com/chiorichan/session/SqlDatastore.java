@@ -3,7 +3,9 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.session;
 
@@ -36,7 +38,7 @@ public class SqlDatastore extends SessionDatastore
 			super( SqlDatastore.this, false );
 			this.sessionId = sessionId;
 
-			ipAddr = wrapper.getIpAddr();
+			ipAddress = wrapper.getIpAddress();
 			site = wrapper.getLocation().getId();
 
 			save();
@@ -61,7 +63,7 @@ public class SqlDatastore extends SessionDatastore
 			try
 			{
 				timeout = rs.getInt( "timeout" );
-				ipAddr = rs.getString( "ipAddr" );
+				ipAddress = rs.getString( "ipAddress" );
 
 				if ( rs.getString( "sessionName" ) != null && !rs.getString( "sessionName" ).isEmpty() )
 					sessionName = rs.getString( "sessionName" );
@@ -113,12 +115,12 @@ public class SqlDatastore extends SessionDatastore
 				// query( "SELECT * FROM `sessions` WHERE `sessionId` = '" + sessionId + "';" );
 
 				if ( select.rowCount() < 1 )
-					sql.table( "sessions" ).insert().value( "sessionId", sessionId ).value( "timeout", timeout ).value( "ipAddr", ipAddr ).value( "sessionName", sessionName ).value( "sessionSite", site ).value( "data", dataJson ).execute();
-				// sql.queryUpdate( "INSERT INTO `sessions` (`sessionId`, `timeout`, `ipAddr`, `sessionName`, `sessionSite`, `data`) VALUES ('" + sessionId + "', '" + timeout + "', '" + ipAddr + "', '" + sessionName + "', '" + site + "', '"
+					sql.table( "sessions" ).insert().value( "sessionId", sessionId ).value( "timeout", timeout ).value( "ipAddress", ipAddress ).value( "sessionName", sessionName ).value( "sessionSite", site ).value( "data", dataJson ).execute();
+				// sql.queryUpdate( "INSERT INTO `sessions` (`sessionId`, `timeout`, `ipAddress`, `sessionName`, `sessionSite`, `data`) VALUES ('" + sessionId + "', '" + timeout + "', '" + ipAddress + "', '" + sessionName + "', '" + site + "', '"
 				// + dataJson + "');" );
 				else
-					sql.table( "sessions" ).update().value( "timeout", timeout ).value( "ipAddr", ipAddr ).value( "sessionName", sessionName ).value( "sessionSite", site ).value( "data", dataJson ).where( "sessionId" ).matches( sessionId ).execute();
-				// sql.queryUpdate( "UPDATE `sessions` SET `data` = '" + dataJson + "', `timeout` = '" + timeout + "', `sessionName` = '" + sessionName + "', `ipAddr` = '" + ipAddr + "', `sessionSite` = '" + site + "' WHERE `sessionId` = '"
+					sql.table( "sessions" ).update().value( "timeout", timeout ).value( "ipAddress", ipAddress ).value( "sessionName", sessionName ).value( "sessionSite", site ).value( "data", dataJson ).where( "sessionId" ).matches( sessionId ).execute();
+				// sql.queryUpdate( "UPDATE `sessions` SET `data` = '" + dataJson + "', `timeout` = '" + timeout + "', `sessionName` = '" + sessionName + "', `ipAddress` = '" + ipAddress + "', `sessionSite` = '" + site + "' WHERE `sessionId` = '"
 				// + sessionId + "';" );
 			}
 			catch ( SQLException e )

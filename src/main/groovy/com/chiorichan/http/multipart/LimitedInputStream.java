@@ -3,7 +3,9 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.http.multipart;
 
@@ -63,7 +65,7 @@ public class LimitedInputStream extends InputStream
 		}
 		else
 		{
-			result = ( ( InputStream ) in ).read( b, off, Math.min( left, len ) );
+			result = in.read( b, off, Math.min( left, len ) );
 		}
 		if ( result > 0 )
 		{
@@ -81,6 +83,7 @@ public class LimitedInputStream extends InputStream
 	 * @exception IOException
 	 *                if an I/O error occurs.
 	 */
+	@Override
 	public int read() throws IOException
 	{
 		if ( totalRead >= totalExpected )
@@ -111,6 +114,7 @@ public class LimitedInputStream extends InputStream
 	 * @exception IOException
 	 *                if an I/O error occurs.
 	 */
+	@Override
 	public int read( byte[] b, int off, int len ) throws IOException
 	{
 		int result, left = totalExpected - totalRead;

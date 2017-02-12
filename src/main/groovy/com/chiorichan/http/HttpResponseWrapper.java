@@ -3,25 +3,29 @@
  * of the MIT license.  See the LICENSE file for details.
  * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ * <p>
+ * All Rights Reserved.
  */
 package com.chiorichan.http;
 
 import com.chiorichan.AppConfig;
+import com.chiorichan.Versioning;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.http.ErrorEvent;
 import com.chiorichan.event.http.HttpExceptionEvent;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.api.Builtin;
 import com.chiorichan.lang.HttpError;
+import com.chiorichan.logger.Log;
 import com.chiorichan.logger.experimental.LogEvent;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.session.Session;
 import com.chiorichan.session.SessionException;
-import com.chiorichan.util.ObjectFunc;
-import com.chiorichan.util.Versioning;
-import com.chiorichan.util.WebFunc;
+import com.chiorichan.zutils.WebFunc;
+import com.chiorichan.zutils.ZObjects;
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -182,7 +186,7 @@ public class HttpResponseWrapper
 	public void sendError( Exception e ) throws IOException
 	{
 		if ( e instanceof HttpError )
-			sendError( ( ( HttpError ) e ).getHttpCode(), ( ( HttpError ) e ).getReason(), ( ( HttpError ) e ).getMessage() );
+			sendError( ( ( HttpError ) e ).getHttpCode(), ( ( HttpError ) e ).getReason(), e.getMessage() );
 		else
 			sendError( 500, e.getMessage() );
 	}
@@ -205,8 +209,8 @@ public class HttpResponseWrapper
 		if ( httpMsg == null )
 			httpMsg = status.reasonPhrase().toString();
 
-		// NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + status.code() + ",httpMsg=" + httpMsg + ",subdomain=" + request.getSubDomain() + ",domain=" + request.getDomain() + ",uri=" + request.getUri() +
-		// ",remoteIp=" + request.getIpAddr() + "}" );
+		// NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + status.code() + ",httpMsg=" + httpMsg + ",subdomain=" + request.getSubDomain() + ",domain=" + request.getRootDomain() + ",uri=" + request.getUri() +
+		// ",remoteIp=" + request.getIpAddress() + "}" );
 
 		if ( msg == null || msg.length() > 255 )
 			log.log( Level.SEVERE, "%s {code=%s}", httpMsg, status.code() );
@@ -297,7 +301,9 @@ public class HttpResponseWrapper
 						for ( HttpCookie cookie : request.getCookies() )
 							put( cookie.getKey(), cookie.getValue() );
 						for ( HttpCookie cookie : request.getServerCookies() )
-							put( cookie.getKey() + " <span style=\"color: #eee; font-weight: 300;\">(protected)</span>", cookie.getValue() );
+							put( cookie.getKey() + " (Server Cookie)", cookie.getValue() );
+						// TODO Implement a HTML color code parser, like a built-in BBCode or Markdown parser
+						// put( cookie.getKey() + " <span style=\"color: #eee; font-weight: 300;\">(internal)</span>", cookie.getValue() );
 					}} );
 
 					if ( request.hasSession() )
@@ -331,25 +337,28 @@ public class HttpResponseWrapper
 	{
 		ArrayList<Object> tbl = new ArrayList<Object>()
 		{{
-			if ( map == null || map.size() == 0 )
-				add( "empty" );
+			if ( ZObjects.isEmpty( map ) )
+				add( "(empty)" );
 			else
 				for ( Entry<String, ?> e : map.entrySet() )
-					add( new ArrayList<Object>()
-					{{
-						add( "<b>" + WebFunc.escapeHTML( e.getKey() ) + "</b>" );
-						try
-						{
-							if ( e.getKey().toLowerCase().contains( "password" ) )
-								add( "(hidden)" );
-							else
-								add( WebFunc.escapeHTML( ( String ) e.getValue() ) );
-						}
-						catch ( ClassCastException e )
-						{
-							add( "(non-string)" );
-						}
-					}} );
+					if ( !ZObjects.isNull( e.getKey() ) )
+						add( new ArrayList<Object>()
+						{{
+							add( "<b>" + WebFunc.escapeHTML( e.getKey() ) + "</b>" );
+							try
+							{
+								if ( ZObjects.isNull( e.getValue() ) )
+									add( "(null)" );
+								else if ( e.getKey().toLowerCase().contains( "password" ) )
+									add( "(hidden)" );
+								else
+									add( WebFunc.escapeHTML( ZObjects.castToString( e.getValue() ) ) );
+							}
+							catch ( ClassCastException e )
+							{
+								add( "(non-string)" );
+							}
+						}} );
 		}};
 
 		println( Builtin.createTable( tbl, "debug-table" ) );
@@ -389,13 +398,10 @@ public class HttpResponseWrapper
 
 		int httpCode = event.getHttpCode();
 
-		if ( httpCode < 1 )
-			httpCode = 500;
-
 		httpStatus = HttpResponseStatus.valueOf( httpCode );
 
-		// NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + httpCode + ",httpMsg=" + HttpCode.msg( httpCode ) + ",domain=" + request.getSubDomain() + "." + request.getDomain() + ",uri=" + request.getUri() +
-		// ",remoteIp=" + request.getIpAddr() + "}" );
+		// NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + httpCode + ",httpMsg=" + HttpCode.msg( httpCode ) + ",domain=" + request.getSubDomain() + "." + request.getRootDomain() + ",uri=" + request.getUri() +
+		// ",remoteIp=" + request.getIpAddress() + "}" );
 
 		if ( Versioning.isDevelopment() )
 		{
@@ -421,8 +427,8 @@ public class HttpResponseWrapper
 		else
 		{
 			StringBuilder sb = new StringBuilder();
-			sb.append( "<p>The server encountered an exception and unforchantly the server is not in development mode, so no debug information is available.</p>\n" );
-			sb.append( "<p>If you are the server owner or developer, you can turn development on by changing 'server.developmentMode' to true in the config file.</p>\n" );
+			sb.append( "<p>The server encountered an exception and unfortunately the server is not in development mode, so no debug information will be made available.</p>\n" );
+			sb.append( "<p>If you are the server owner or developer, you can turn development on by setting 'server.developmentMode' to true in the config file.</p>\n" );
 			sendError( 500, null, sb.toString() );
 		}
 	}
@@ -470,7 +476,7 @@ public class HttpResponseWrapper
 		nonce.mapValues( "level", level == null || level.length() == 0 ? "danger" : level );
 		nonce.mapValues( "target", target == null || target.length() == 0 ? request.getFullUrl() : target );
 		String loginForm = request.getLocation().getLoginForm();
-		if ( !loginForm.toLowerCase().startsWith( "http" ) )
+		if ( !loginForm.toLowerCase().startsWith( "com/chiorichan/http" ) )
 			loginForm = ( request.isSecure() ? "https://" : "http://" ) + loginForm;
 		sendRedirect( String.format( "%s?%s=%s", loginForm, nonce.key(), nonce.value() ) );
 	}
@@ -555,7 +561,7 @@ public class HttpResponseWrapper
 	}
 
 	/**
-	 * Send the client to a specified page with http code 302 automatically.
+	 * Send the client to a specified page with com.chiorichan.http code 302 automatically.
 	 *
 	 * @param target The destination URL. Can either be relative or absolute.
 	 */
@@ -565,10 +571,10 @@ public class HttpResponseWrapper
 	}
 
 	/**
-	 * Sends the client to a specified page with specified http code but with the option to not automatically go.
+	 * Sends the client to a specified page with specified com.chiorichan.http code but with the option to not automatically go.
 	 *
 	 * @param target     The destination url. Can be relative or absolute.
-	 * @param httpStatus What http code to use.
+	 * @param httpStatus What com.chiorichan.http code to use.
 	 */
 	public void sendRedirect( String target, int httpStatus )
 	{
@@ -645,7 +651,7 @@ public class HttpResponseWrapper
 			 * Initiate the Session Persistence Method.
 			 * This is usually done with a cookie but we should make a param optional
 			 */
-			session.processSessionCookie( request.getDomain() );
+			session.processSessionCookie( request.getRootDomain() );
 
 			for ( HttpCookie c : session.getCookies().values() )
 				if ( c.needsUpdating() )
@@ -724,7 +730,7 @@ public class HttpResponseWrapper
 
 	public void setHeader( String key, Object val )
 	{
-		headers.put( key, ObjectFunc.castToStringWithException( val ) );
+		headers.put( key, ZObjects.castToStringWithException( val ) );
 	}
 
 	public void setStatus( HttpResponseStatus httpStatus )
@@ -785,7 +791,7 @@ public class HttpResponseWrapper
 	public void write( byte[] bytes ) throws IOException
 	{
 		if ( stage != HttpResponseStage.MULTIPART )
-			stage = HttpResponseStage.WRITTING;
+			stage = HttpResponseStage.WRITING;
 
 		output.writeBytes( bytes );
 	}
@@ -799,7 +805,7 @@ public class HttpResponseWrapper
 	public void write( ByteBuf buf ) throws IOException
 	{
 		if ( stage != HttpResponseStage.MULTIPART )
-			stage = HttpResponseStage.WRITTING;
+			stage = HttpResponseStage.WRITING;
 
 		output.writeBytes( buf.retain() );
 	}

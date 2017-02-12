@@ -26,7 +26,7 @@ public class HttpResponse
 	{
 		Log.get().info( "Debug HttpResponse:" );
 
-		Log.get().info( "\tTaget: " + target );
+		Log.get().info( "\tTarget: " + target );
 		Log.get().info( "\tStatus: " + status );
 		Log.get().info( "\tResponse: " + new String( body ) );
 		Log.get().info( "\tHeaders:" );

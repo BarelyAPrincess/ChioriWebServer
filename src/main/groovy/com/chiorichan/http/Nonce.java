@@ -3,7 +3,9 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.http;
 
@@ -14,7 +16,7 @@ import java.util.Random;
 import com.chiorichan.lang.NonceException;
 import com.chiorichan.session.Session;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.util.SecureFunc;
+import com.chiorichan.zutils.ZEncryption;
 import com.google.common.collect.Maps;
 
 /**
@@ -44,18 +46,18 @@ public class Nonce
 
 	private String key;
 	private String value;
-	private String sessId;
+	private String sessionId;
 	private int created = Timings.epoch();
 
 	private Map<String, String> mapValues = Maps.newHashMap();
 
 	public Nonce( Session sess )
 	{
-		Random r = SecureFunc.random();
+		Random r = ZEncryption.random();
 
-		key = SecureFunc.randomize( r, "Z1111Y2222" );
-		value = SecureFunc.base64Encode( sess.getSessId() + created + SecureFunc.randomize( r, 16 ) );
-		sessId = sess.getSessId();
+		key = ZEncryption.randomize( r, "Z1111Y2222" );
+		value = ZEncryption.base64Encode( sess.getSessionId() + created + ZEncryption.randomize( r, 16 ) );
+		sessionId = sess.getSessionId();
 	}
 
 	public String key()
@@ -107,13 +109,13 @@ public class Nonce
 		if ( !value.equals( token ) )
 			throw new NonceException( "The NONCE token does not match" );
 
-		String decoded = SecureFunc.base64DecodeString( token );
+		String decoded = ZEncryption.base64DecodeString( token );
 
-		if ( !sessId.equals( decoded.substring( 0, sessId.length() ) ) )
+		if ( !sessionId.equals( decoded.substring( 0, sessionId.length() ) ) )
 			// This was generated for a different Session
 			throw new NonceException( "The NONCE did not match the current session" );
 
-		int epoch = Integer.parseInt( decoded.substring( sessId.length(), decoded.length() - 16 ) );
+		int epoch = Integer.parseInt( decoded.substring( sessionId.length(), decoded.length() - 16 ) );
 
 		if ( epoch != created )
 			throw new NonceException( "The NONCE has an invalid timestamp" );

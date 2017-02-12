@@ -3,7 +3,9 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.http.multipart;
 
@@ -25,6 +27,7 @@ public class MacBinaryDecoderOutputStream extends FilterOutputStream
 		super( out );
 	}
 	
+	@Override
 	public void write( int b ) throws IOException
 	{
 		// Bytes 83 through 86 are a long representing the data fork length
@@ -44,11 +47,13 @@ public class MacBinaryDecoderOutputStream extends FilterOutputStream
 		bytesFiltered++;
 	}
 	
+	@Override
 	public void write( byte[] b ) throws IOException
 	{
 		write( b, 0, b.length );
 	}
 	
+	@Override
 	public void write( byte[] b, int off, int len ) throws IOException
 	{
 		// If the write is for content past the end of the data fork, ignore

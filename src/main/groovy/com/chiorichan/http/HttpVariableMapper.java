@@ -3,9 +3,14 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.http;
+
+import com.chiorichan.zutils.ZObjects;
+import org.apache.commons.lang3.Validate;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
@@ -15,10 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import org.apache.commons.lang3.Validate;
-
-import com.chiorichan.util.ObjectFunc;
+import java.util.stream.Collectors;
 
 public class HttpVariableMapper implements Map<String, Object>
 {
@@ -31,7 +33,7 @@ public class HttpVariableMapper implements Map<String, Object>
 
 		public String getValueAsString()
 		{
-			return getValue() == null ? null : ObjectFunc.castToString( getValue() );
+			return getValue() == null ? null : ZObjects.castToString( getValue() );
 		}
 	}
 
@@ -112,13 +114,7 @@ public class HttpVariableMapper implements Map<String, Object>
 	@Override
 	public Set<String> keySet()
 	{
-		return new HashSet<String>()
-		{
-			{
-				for ( HeaderEntry entry : entries )
-					add( entry.getKey() );
-			}
-		};
+		return entries.stream().map( Map.Entry::getKey ).collect( Collectors.toSet() );
 	}
 
 	public Object put( ServerVars key, Object value )

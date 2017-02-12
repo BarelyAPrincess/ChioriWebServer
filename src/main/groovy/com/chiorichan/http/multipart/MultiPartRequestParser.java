@@ -3,7 +3,9 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.http.multipart;
 
@@ -24,7 +26,7 @@ public class MultiPartRequestParser
 	 *
 	 * @return content type, or null if line was empty.
 	 * @exception IOException
-	 *                 if the line is malformatted.
+	 *                 if the line is malformed.
 	 */
 	private static String extractContentType( String line ) throws IOException
 	{
@@ -105,7 +107,7 @@ public class MultiPartRequestParser
 			boundary = boundary.substring( 1, index );
 		}
 
-		// The real boundary is always preceeded by an extra "--"
+		// The real boundary is always preceded by an extra "--"
 		boundary = "--" + boundary;
 
 		return boundary;
@@ -117,7 +119,7 @@ public class MultiPartRequestParser
 	 *
 	 * @return String[] of elements: disposition, name, filename.
 	 * @exception IOException
-	 *                 if the line is malformatted.
+	 *                 if the line is malformed.
 	 */
 	private String[] extractDispositionInfo( String line ) throws IOException
 	{

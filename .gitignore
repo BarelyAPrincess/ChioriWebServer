@@ -7,8 +7,9 @@
 .classpath
 .project
 .settings
-/ContentTypes.properties
-/InterpreterOverrides.properties
+/content-types.properties
+/shells.properties
+/tld.txt
 /travis.log
 /server.log
 /server.log.lck
@@ -17,7 +18,6 @@
 /webroot
 /sites
 /lib/META-INF
-/nbproject/private/
 /build/
 /*/build/
 /manifest.mf
@@ -35,5 +35,8 @@
 /accounts
 /libraries
 /tmp
+/pid
 **/.idea/workspace.xml
 **/.idea/tasks.xml
+**/*.iml
+**/*.log

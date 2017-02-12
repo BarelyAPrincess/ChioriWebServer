@@ -3,7 +3,9 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.factory.parsers;
 
@@ -33,7 +35,7 @@ public class LinksParser extends HTMLCommentParser
 		if ( args.length >= 1 && !args[1].isEmpty() )
 			url += args[1] + ".";
 
-		url += request.getDomain() + "/";
+		url += request.getRootDomain() + "/";
 
 		return url;
 	}
@@ -48,10 +50,6 @@ public class LinksParser extends HTMLCommentParser
 
 		if ( source.isEmpty() )
 			return "";
-
-		// Technically Deprecated!!!
-		for ( String subdomain : site.getSubdomains( request.getDomain() ) )
-			source = source.replace( "%" + subdomain + "%", "http://" + subdomain + "." + request.getDomain() + "/" );
 
 		return super.runParser( source );
 	}

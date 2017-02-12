@@ -3,16 +3,11 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.session;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 import com.chiorichan.AppConfig;
 import com.chiorichan.account.AccountAttachment;
@@ -27,7 +22,14 @@ import com.chiorichan.messaging.MessageSender;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
-import com.chiorichan.util.StringFunc;
+import com.chiorichan.zutils.ZStrings;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Acts as a bridge between a Session and the User
@@ -53,7 +55,7 @@ public abstract class SessionWrapper implements BindingProvider, AccountAttachme
 	/**
 	 * Used to nullify a SessionWrapper and prepare it for collection by the GC
 	 * something that should happen naturally but the simpler the better.
-	 *
+	 * <p>
 	 * Sidenote: This is only for cleaning up a Session Wrapper, cleaning up an actual parent session is a whole different story.
 	 */
 	public void finish()
@@ -62,7 +64,7 @@ public abstract class SessionWrapper implements BindingProvider, AccountAttachme
 		{
 			Map<String, Object> bindings = session.globals;
 			Map<String, Object> variables = binding.getVariables();
-			List<String> disallow = Arrays.asList( new String[] {"out", "request", "response", "context"} );
+			List<String> disallow = Arrays.asList( "out", "request", "response", "context" );
 
 			/**
 			 * We transfer any global variables back into our parent session like so.
@@ -70,7 +72,7 @@ public abstract class SessionWrapper implements BindingProvider, AccountAttachme
 			 */
 			if ( bindings != null && variables != null )
 				for ( Entry<String, Object> e : variables.entrySet() )
-					if ( !disallow.contains( e.getKey() ) && ! ( e.getKey().startsWith( "_" ) && StringFunc.isUppercase( e.getKey() ) ) )
+					if ( !disallow.contains( e.getKey() ) && !( e.getKey().startsWith( "_" ) && ZStrings.isUppercase( e.getKey() ) ) )
 						bindings.put( e.getKey(), e.getValue() );
 
 			/**
@@ -142,13 +144,18 @@ public abstract class SessionWrapper implements BindingProvider, AccountAttachme
 		return session;
 	}
 
+	public final HttpCookie getServerCookie( String key, String altDefault )
+	{
+		HttpCookie cookie = getServerCookie( key );
+		return cookie == null ? getServerCookie( altDefault ) : cookie;
+	}
+
 	protected abstract HttpCookie getServerCookie( String key );
 
 	/**
 	 * Gets the Session
 	 *
-	 * @return
-	 *         The session
+	 * @return The session
 	 */
 	public final Session getSession()
 	{
@@ -264,5 +271,5 @@ public abstract class SessionWrapper implements BindingProvider, AccountAttachme
 		return session;
 	}
 
-	// TODO: Future add of setDomain, setCookieName, setSecure (http verses https)
+	// TODO: Future add of setDomain, setCookieName, setSecure (com.chiorichan.http verses https)
 }

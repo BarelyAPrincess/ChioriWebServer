@@ -1,15 +1,17 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- * <p>
+ *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.factory.models;
 
 import com.chiorichan.datastore.sql.SQLBase;
 import com.chiorichan.factory.api.Builtin;
-import com.chiorichan.util.ObjectFunc;
+import com.chiorichan.zutils.ZObjects;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -190,7 +192,7 @@ public class SQLModelResults implements List<SQLModel>
 			int i = 0;
 			for ( String column : columnNames )
 			{
-				row.put( i, ObjectFunc.castToString( model.propertyMissing( column ) ) );
+				row.put( i, ZObjects.castToString( model.propertyMissing( column ) ) );
 				i++;
 			}
 

@@ -3,7 +3,9 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.updater;
 
@@ -17,7 +19,7 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.chiorichan.util.NetworkFunc;
+import com.chiorichan.zutils.ZHttp;
 import com.google.gson.Gson;
 
 public class DownloadUpdaterService
@@ -54,20 +56,20 @@ public class DownloadUpdaterService
 		return null;
 	}
 	
-	public BuildArtifact fetchArtifact( String slug ) throws IOException, UnknownHostException
+	public BuildArtifact fetchArtifact( String slug ) throws IOException
 	{
-		URL url = new URL( "http", host, API_PREFIX_ARTIFACT + slug + "/api/json" );
+		URL url = new URL( "com/chiorichan/http", host, API_PREFIX_ARTIFACT + slug + "/api/json" );
 		return fetchArtifact( url );
 	}
 	
-	public BuildArtifact fetchArtifact( URL url ) throws IOException, UnknownHostException
+	public BuildArtifact fetchArtifact( URL url ) throws IOException
 	{
 		InputStreamReader reader = null;
 		
 		try
 		{
 			URLConnection connection = url.openConnection();
-			connection.setRequestProperty( "User-Agent", NetworkFunc.getUserAgent() );
+			connection.setRequestProperty( "User-Agent", ZHttp.getUserAgent() );
 			reader = new InputStreamReader( connection.getInputStream() );
 			// Gson gson = new GsonBuilder().registerTypeAdapter( Date.class, dateDeserializer ).setFieldNamingPolicy( FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES ).create();
 			Gson gson = new Gson();
@@ -84,13 +86,13 @@ public class DownloadUpdaterService
 	
 	public ProjectArtifact getProjectArtifact() throws IOException
 	{
-		URL url = new URL( "http", host, API_PREFIX_ARTIFACT + "api/json" );
+		URL url = new URL( "com/chiorichan/http", host, API_PREFIX_ARTIFACT + "api/json" );
 		InputStreamReader reader = null;
 		
 		try
 		{
 			URLConnection connection = url.openConnection();
-			connection.setRequestProperty( "User-Agent", NetworkFunc.getUserAgent() );
+			connection.setRequestProperty( "User-Agent", ZHttp.getUserAgent() );
 			reader = new InputStreamReader( connection.getInputStream() );
 			// Gson gson = new GsonBuilder().registerTypeAdapter( Date.class, dateDeserializer ).setFieldNamingPolicy( FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES ).create();
 			Gson gson = new Gson();
@@ -129,17 +131,16 @@ public class DownloadUpdaterService
 	
 	public Properties fetchBuildProperties( String slug ) throws IOException
 	{
-		URL url = new URL( "http", host, API_PREFIX_ARTIFACT + slug + "/artifact/build/dist/build.properties" );
+		URL url = new URL( "com/chiorichan/http", host, API_PREFIX_ARTIFACT + slug + "/artifact/build/dist/build.properties" );
 		InputStreamReader reader = null;
 		Properties prop = new Properties();
 		
 		try
 		{
 			URLConnection connection = url.openConnection();
-			connection.setRequestProperty( "User-Agent", NetworkFunc.getUserAgent() );
+			connection.setRequestProperty( "User-Agent", ZHttp.getUserAgent() );
 			reader = new InputStreamReader( connection.getInputStream() );
 			prop.load( reader );
-			;
 		}
 		finally
 		{

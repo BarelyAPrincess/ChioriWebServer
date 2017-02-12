@@ -3,7 +3,9 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.lang;
 
@@ -14,7 +16,7 @@ import java.util.regex.Pattern;
 
 import org.codehaus.groovy.control.CompilationFailedException;
 
-import com.chiorichan.util.WebFunc;
+import com.chiorichan.zutils.WebFunc;
 
 public class CodeParsingException extends Exception
 {
@@ -68,6 +70,7 @@ public class CodeParsingException extends Exception
 		message = msg;
 	}
 	
+	@Override
 	public String getMessage()
 	{
 		return message;

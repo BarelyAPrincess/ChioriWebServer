@@ -38,7 +38,7 @@
     <suppress checks="MethodCount" files="[\\/]IndentationCheckTest.java$"/>
     <suppress checks="EqualsAvoidNull" files="[\\/]Int.*FilterTest.java$"/>
 
-    <!-- suppressions to remove over time -->
+    <!-- suppression to remove over time -->
     <suppress checks="FinalLocalVariable" files=".*[\\/]src[\\/]test[\\/]"/>
     <suppress checks="LineLength" files=".*[\\/]src[\\/]test[\\/]"/>
     <suppress checks="Name" files=".*[\\/]src[\\/]test[\\/]"/>    

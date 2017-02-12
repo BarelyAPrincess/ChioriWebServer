@@ -1,14 +1,23 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- *
+ * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ * <p>
+ * All Rights Reserved.
  */
 package com.chiorichan.factory;
 
+import com.chiorichan.AppConfig;
+import com.chiorichan.ContentTypes;
+import com.chiorichan.ShellOverrides;
+import com.chiorichan.logger.Log;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import joptsimple.internal.Strings;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.net.util.Charsets;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -17,17 +26,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import joptsimple.internal.Strings;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.net.util.Charsets;
-
-import com.chiorichan.AppConfig;
-import com.chiorichan.ContentTypes;
-import com.chiorichan.InterpreterOverrides;
-import com.chiorichan.logger.Log;
-import com.google.common.collect.Maps;
+import java.util.TreeMap;
 
 public class FileInterpreter
 {
@@ -35,10 +34,10 @@ public class FileInterpreter
 	{
 		fileName = fileName.toLowerCase();
 
-		String shell = InterpreterOverrides.getShellForExt( InterpreterOverrides.getFileExtension( fileName ) );
+		String shell = ShellOverrides.getShellForExt( ShellOverrides.getFileExtension( fileName ) );
 
 		if ( shell == null || shell.isEmpty() )
-			return InterpreterOverrides.getFileExtension( fileName );
+			return ShellOverrides.getFileExtension( fileName );
 
 		return shell;
 	}
@@ -60,7 +59,7 @@ public class FileInterpreter
 	}
 
 	protected Charset encoding = null;
-	protected final Map<String, String> annotations = Maps.newTreeMap();
+	protected final Map<String, String> annotations = new TreeMap<>();
 	protected ByteBuf data = Unpooled.buffer();
 	protected File cachedFile = null;
 
@@ -70,6 +69,7 @@ public class FileInterpreter
 
 		// All param keys are lower case. No such thing as a non-lowercase param keys because keys are forced to lowercase.
 		annotations.put( "title", null );
+		annotations.put( "reqlogin", null );
 		annotations.put( "reqperm", "-1" );
 		annotations.put( "theme", null );
 		annotations.put( "view", null );
@@ -206,12 +206,11 @@ public class FileInterpreter
 							lineCnt++;
 
 							/* Only solution I could think of for CSS files since they use @annotations too, so we share them. */
-							if ( ContentTypes.getContentType( file ).equalsIgnoreCase( "text/css" ) )
+							if ( "text/css".equalsIgnoreCase( ContentTypes.getContentType( file ) ) )
 								data.writeBytes( ( l + "\n" ).getBytes() );
-							/* Only solution I could think of for CSS files since they use @annotations too, so we share them. */
 
 							String key;
-							String val = "";
+							String val = Strings.EMPTY;
 
 							if ( l.contains( " " ) )
 							{
@@ -238,11 +237,11 @@ public class FileInterpreter
 						}
 						catch ( NullPointerException | ArrayIndexOutOfBoundsException e )
 						{
-
+							// Ignore
 						}
 					else if ( l.trim().isEmpty() )
 						lineCnt++;
-					// Continue reading, this line is empty.
+						// Continue reading, this line is empty.
 					else
 					{
 						// We encountered the beginning of the file content.

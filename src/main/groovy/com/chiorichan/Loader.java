@@ -1,9 +1,11 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- * <p>
+ *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan;
 
@@ -20,10 +22,9 @@ import com.chiorichan.session.SessionManager;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.updater.AutoUpdater;
 import com.chiorichan.updater.DownloadUpdaterService;
-import com.chiorichan.util.Application;
-import com.chiorichan.util.FileFunc;
-import com.chiorichan.util.NetworkFunc;
-import com.chiorichan.util.Versioning;
+import com.chiorichan.zutils.ZIO;
+import com.chiorichan.zutils.ZSystem;
+import com.chiorichan.zutils.ZHttp;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import joptsimple.OptionParser;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -34,12 +35,13 @@ import sun.misc.SignalHandler;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @SuppressWarnings( "restriction" )
 public class Loader extends AppLoader
 {
-	private static File webroot = new File( "" );
+	private static File webroot = new File( "" ).getAbsoluteFile();
 
 	public static String getShutdownMessage()
 	{
@@ -59,7 +61,7 @@ public class Loader extends AppLoader
 
 	public static void populateOptionParser( OptionParser parser )
 	{
-		parser.accepts( "nobanner", "Disables the banner" );
+		parser.accepts( "noBanner", "Disables the banner" );
 		parser.accepts( "httpHost", "Listening hostname or IP for the HTTP server" ).withRequiredArg().ofType( String.class ).describedAs( "Hostname or IP" );
 		parser.accepts( "httpPort", "Listening port for the HTTP server" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
 		parser.accepts( "httpsPort", "Listening port for the HTTPS server" ).withRequiredArg().ofType( Integer.class ).describedAs( "Port" );
@@ -80,38 +82,40 @@ public class Loader extends AppLoader
 	{
 		boolean firstRun = false;
 
-		if ( !options().has( "nobanner" ) )
+		if ( !options().has( "noBanner" ) )
 			ApplicationTerminal.terminal().showBanner();
 
-		if ( Application.isAdminUser() )
+		if ( ZSystem.isAdminUser() )
 			Log.get().warning( "We have detected that you are running " + Versioning.getProduct() + " with the system administrator/root, this is highly discouraged as it my compromise security and/or mess with file permissions." );
 
 		if ( Runtime.getRuntime().maxMemory() / 1024L / 1024L < 512L )
 			Log.get().warning( "We detected less than the recommended 512Mb of JVM ram, we recommended you dedicate more ram to guarantee a smoother experience. You can use the JVM options \"-Xmx1024M -Xms1024M\" to set the ram at 1GB." );
 
+		/*
 		try
 		{
-			File contentTypes = new File( AppConfig.get().getDirectory().getAbsolutePath(), "ContentTypes.properties" );
+			File contentTypes = new File( AppConfig.get().getDirectory().getAbsolutePath(), "content-types.properties" );
 
 			if ( !contentTypes.exists() )
 				FileUtils.writeStringToFile( contentTypes, "# Chiori-chan's Web Server Content-Types File which overrides the default internal ones.\n# Syntax: 'ext: mime/type'" );
 		}
 		catch ( IOException e )
 		{
-			Log.get().warning( "There was an exception thrown trying to create the 'ContentTypes.properties' file.", e );
+			Log.get().warning( "There was an exception thrown trying to create the 'content-types.properties' file.", e );
 		}
 
 		try
 		{
-			File shellOverrides = new File( AppConfig.get().getDirectory().getAbsolutePath(), "InterpreterOverrides.properties" );
+			File shellOverrides = new File( AppConfig.get().getDirectory().getAbsolutePath(), "shells.properties" );
 
 			if ( !shellOverrides.exists() )
-				FileUtils.writeStringToFile( shellOverrides, "# Chiori-chan's Web Server Interpreter Overrides File which overrides the default internal ones.\n# You don't have to add a string if the key and value are the same, hence Convension!\n# Syntax: 'fileExt: shellHandler'" );
+				FileUtils.writeStringToFile( shellOverrides, "# Chiori-chan's Web Server Shell Overrides File which overrides the default internal ones.\n# You don't have to add a string if the key and value are the same, hence convention over configuration.\n# Syntax: 'fileExt: shellHandler'" );
 		}
 		catch ( IOException e )
 		{
-			Log.get().warning( "There was an exception thrown trying to create the 'InterpreterOverrides.properties' file.", e );
+			Log.get().warning( "There was an exception thrown trying to create the 'shells.properties' file.", e );
 		}
+		*/
 
 		boolean install = false;
 		AppConfig config = AppConfig.get();
@@ -153,7 +157,7 @@ public class Loader extends AppLoader
 					config.file().delete();
 
 				// Save Factory Configuration
-				FileFunc.putResource( "com/chiorichan/config.yaml", config.file() );
+				ZIO.putResource( "com/chiorichan/config.yaml", config.file() );
 			}
 			catch ( IOException e )
 			{
@@ -186,7 +190,7 @@ public class Loader extends AppLoader
 				// Check and Extract WebUI Interface
 
 				String fwZip = "com/chiorichan/framework.archive";
-				String zipMD5 = FileFunc.resourceToString( fwZip + ".md5" );
+				String zipMD5 = ZIO.resourceToString( fwZip + ".md5" );
 
 				if ( zipMD5 == null )
 				{
@@ -203,7 +207,7 @@ public class Loader extends AppLoader
 				{
 					Log.get().info( "Extracting the Web UI to the Framework Webroot... Please wait..." );
 					FileUtils.deleteDirectory( fwRoot );
-					FileFunc.extractZipResource( fwZip, fwRoot );
+					ZIO.extractZipResource( fwZip, fwRoot );
 					FileUtils.write( new File( fwRoot, "version.md5" ), zipMD5 );
 					Log.get().info( "Finished with no errors!!" );
 				}
@@ -244,8 +248,8 @@ public class Loader extends AppLoader
 			FileUtils.deleteQuietly( new File( AppConfig.get().getDirectory().getAbsolutePath(), "sites" ) );
 			FileUtils.deleteQuietly( new File( AppConfig.get().getDirectory().getAbsolutePath(), "sessions" ) );
 			FileUtils.deleteQuietly( new File( AppConfig.get().getDirectory().getAbsolutePath(), "accounts" ) );
-			FileUtils.deleteQuietly( new File( AppConfig.get().getDirectory().getAbsolutePath(), "ContentTypes.properties" ) );
-			FileUtils.deleteQuietly( new File( AppConfig.get().getDirectory().getAbsolutePath(), "InterpreterOverrides.properties" ) );
+			FileUtils.deleteQuietly( new File( AppConfig.get().getDirectory().getAbsolutePath(), "content-types.properties" ) );
+			FileUtils.deleteQuietly( new File( AppConfig.get().getDirectory().getAbsolutePath(), "shells.properties" ) );
 
 			// Delete Plugin Configuration
 			for ( File f : new File( AppConfig.get().getDirectory().getAbsolutePath(), "plugins" ).listFiles() )
@@ -258,24 +262,31 @@ public class Loader extends AppLoader
 
 		if ( firstRun )
 		{
-			Log.get().notice( "                          ATTENTION! ATTENTION! ATTENTION!" );
-			Log.get().notice( "--------------------------------------------------------------------------------------" );
-			Log.get().notice( "| It appears that this is your first time running Chiori-chan's Web Server.          |" );
-			Log.get().notice( "| All the needed files have been created and extracted from the server jar file.     |" );
-			Log.get().notice( "| We highly recommended that you stop the server, review config, and restart.      |" );
-			Log.get().notice( "| You can find documentation and guides on our Github at:                            |" );
-			Log.get().notice( "|                   https://github.com/ChioriGreene/ChioriWebServer                  |" );
-			Log.get().notice( "--------------------------------------------------------------------------------------" );
-			String key = ApplicationTerminal.terminal().prompt( "Would you like to stop and review config? Press 'Y' for Yes or 'N' for No.", "Y", "N" );
-
-			if ( key.equals( "Y" ) )
+			try
 			{
-				Log.get().info( "The server will now stop, please wait..." );
-				throw new StartupAbortException();
+				Log.get().notice( "                          ATTENTION! ATTENTION! ATTENTION!" );
+				Log.get().notice( "--------------------------------------------------------------------------------------" );
+				Log.get().notice( "| It appears that this is your first time running Chiori-chan's Web Server.          |" );
+				Log.get().notice( "| All the needed files have been created and extracted from the server jar file.     |" );
+				Log.get().notice( "| We highly recommended that you stop the server, review config, and restart.      |" );
+				Log.get().notice( "| You can find documentation and guides on our Github at:                            |" );
+				Log.get().notice( "|                   https://github.com/ChioriGreene/ChioriWebServer                  |" );
+				Log.get().notice( "--------------------------------------------------------------------------------------" );
+				String key = ApplicationTerminal.terminal().prompt( "Would you like to stop and review config? Press 'Y' for Yes or 'N' for No.", "Y", "N" );
+
+				if ( key.equals( "Y" ) )
+				{
+					Log.get().info( "The server will now stop, please wait..." );
+					throw new StartupAbortException();
+				}
+			}
+			catch ( NoSuchElementException e )
+			{
+				Log.get().warning( "There seems to be a problem prompting the user for an answer. Continuing..." );
 			}
 		}
 
-		if ( Application.isUnixLikeOS() )
+		if ( ZSystem.isUnixLikeOS() )
 		{
 			SignalHandler handler = new SignalHandler()
 			{
@@ -291,7 +302,7 @@ public class Loader extends AppLoader
 		}
 
 		if ( !AppConfig.get().getBoolean( "server.disableTracking" ) && !Versioning.isDevelopment() )
-			NetworkFunc.sendTracking( "startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
+			ZHttp.sendTracking( "startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
 	}
 
 	public String getClientId()

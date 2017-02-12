@@ -1,19 +1,13 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- *
+ * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ * <p>
+ * All Rights Reserved.
  */
 package com.chiorichan.http;
-
-import java.io.File;
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.Map;
-import java.util.Set;
-
-import org.apache.commons.io.FileUtils;
 
 import com.chiorichan.AppConfig;
 import com.chiorichan.datastore.sql.SQLTable;
@@ -21,9 +15,16 @@ import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.datastore.sql.query.SQLQuerySelect;
 import com.chiorichan.logger.Log;
 import com.chiorichan.site.Site;
-import com.chiorichan.util.MapCaster;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import com.chiorichan.zutils.ZIO;
+import com.chiorichan.zutils.ZObjects;
+
+import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * Keeps track of routes
@@ -49,11 +50,11 @@ public class Routes
 		}
 	}
 
-	/**
+	/*
 	 * Prevents file and sql lag from reloading the routes for every dozen requests made within a small span of time.
 	 */
 	private long lastRequest = 0;
-	private Set<Route> routes = Sets.newHashSet();
+	private Set<Route> routes = new HashSet<>();
 
 	private Site site;
 
@@ -62,7 +63,7 @@ public class Routes
 		this.site = site;
 	}
 
-	public Route searchRoutes( String uri, String domain, String subdomain ) throws IOException
+	public Route searchRoutes( String uri, String host ) throws IOException
 	{
 		synchronized ( this )
 		{
@@ -75,9 +76,7 @@ public class Routes
 				try
 				{
 					if ( routesFile.exists() )
-					{
-						String contents = FileUtils.readFileToString( routesFile );
-						for ( String l : contents.split( "\n" ) )
+						for ( String l : ZIO.readFileToLines( routesFile ) )
 							try
 							{
 								if ( !l.startsWith( "#" ) )
@@ -85,9 +84,8 @@ public class Routes
 							}
 							catch ( IOException e1 )
 							{
-
+								// Ignore
 							}
-					}
 				}
 				catch ( IOException e )
 				{
@@ -98,7 +96,7 @@ public class Routes
 				{
 					SQLDatastore sql = AppConfig.get().getDatabase();
 
-					if ( sql != null && sql.initalized() )
+					if ( sql != null && sql.initialized() )
 					{
 						if ( !sql.table( "pages" ).exists() )
 						{
@@ -119,10 +117,10 @@ public class Routes
 						// ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE (subdomain = '" + subdomain + "' OR subdomain = '') AND domain = '" + domain + "' UNION SELECT * FROM `pages` WHERE (subdomain = '" + subdomain +
 						// "' OR subdomain = '') AND domain = '';" );
 
-						SQLQuerySelect result = sql.table( "pages" ).select().where( "domain" ).matches( domain ).or().where( "domain" ).matches( "" ).execute();
+						SQLQuerySelect result = sql.table( "pages" ).select().where( "domain" ).matches( host ).or().where( "domain" ).matches( "" ).execute();
 
 						for ( Map<String, Object> row : result.set() )
-							routes.add( new Route( new MapCaster<String, String>( String.class, String.class ).castTypes( row ), site ) );
+							routes.add( new Route( ZObjects.castMap( row, String.class, String.class ), site ) );
 
 						// ResultSet rs = sql.query( "SELECT * FROM `pages` WHERE domain = '" + domain + "' OR domain = '';" );
 						// if ( sql.getRowCount( rs ) > 0 )
@@ -140,12 +138,12 @@ public class Routes
 
 			if ( routes.size() > 0 )
 			{
-				Map<String, Route> matches = Maps.newTreeMap();
+				Map<String, Route> matches = new TreeMap<>();
 				int keyInter = 0;
 
 				for ( Route route : routes )
 				{
-					String weight = route.match( domain, subdomain, uri );
+					String weight = route.match( uri, host );
 					if ( weight != null )
 					{
 						matches.put( weight + keyInter, route );
@@ -156,10 +154,10 @@ public class Routes
 				if ( matches.size() > 0 )
 					return ( Route ) matches.values().toArray()[0];
 				else
-					Log.get().fine( "Failed to find a page redirect for... '" + subdomain + "." + domain + "' '" + uri + "'" );
+					Log.get().fine( String.format( "Failed to find a page redirect... {Host=%s,Uri=%s}", host, uri ) );
 			}
 			else
-				Log.get().fine( "Failed to find a page redirect for... '" + subdomain + "." + domain + "' '" + uri + "'" );
+				Log.get().fine( String.format( "Failed to find a page redirect... {Host=%s,Uri=%s}", host, uri ) );
 
 			return null;
 		}

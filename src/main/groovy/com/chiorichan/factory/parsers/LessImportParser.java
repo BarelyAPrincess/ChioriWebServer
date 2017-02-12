@@ -3,17 +3,19 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.factory.parsers;
 
 import java.io.File;
 import java.io.IOException;
 
+import com.chiorichan.zutils.ZIO;
 import org.apache.commons.io.FileUtils;
 
 import com.chiorichan.logger.Log;
-import com.chiorichan.util.FileFunc;
 
 public class LessImportParser extends BasicParser
 {
@@ -27,7 +29,7 @@ public class LessImportParser extends BasicParser
 	@Override
 	public String resolveMethod( String... args ) throws Exception
 	{
-		File imp = FileFunc.isAbsolute( args[0] ) || args[0].startsWith( "\\" ) || rootDir == null ? new File( args[0] ) : new File( rootDir, args[0] );
+		File imp = ZIO.isAbsolute( args[0] ) || args[0].startsWith( "\\" ) || rootDir == null ? new File( args[0] ) : new File( rootDir, args[0] );
 
 		try
 		{

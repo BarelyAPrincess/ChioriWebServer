@@ -52,7 +52,7 @@ public class TestWindow extends Window implements ItemListener, ActionListener, 
 		
 		button.setShortCut( 'q' );
 		button.addListener( this );
-		window.addListener( ( WindowListener ) this );
+		window.addListener( this );
 		window.show();
 	}
 	

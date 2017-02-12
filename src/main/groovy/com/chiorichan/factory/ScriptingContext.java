@@ -1,9 +1,11 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- * <p>
+ *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.factory;
 
@@ -21,9 +23,9 @@ import com.chiorichan.libraries.LibraryClassLoader;
 import com.chiorichan.logger.Log;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
-import com.chiorichan.util.FileFunc;
-import com.chiorichan.util.SecureFunc;
-import com.chiorichan.util.Versioning;
+import com.chiorichan.zutils.ZEncryption;
+import com.chiorichan.Versioning;
+import com.chiorichan.zutils.ZIO;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
@@ -53,7 +55,7 @@ public class ScriptingContext implements ExceptionContext
 				return ScriptingContext.fromPackage( site, res );
 
 			context = new ScriptingContext();
-			context.result().addException( new ScriptingException( ReportingLevel.E_ERROR, String.format( "We chould not auto determine the resource type for '%s'", res ) ) );
+			context.result().addException( new ScriptingException( ReportingLevel.E_ERROR, String.format( "We could not auto determine the resource type for '%s'", res ) ) );
 			return context;
 		}
 		return context;
@@ -202,7 +204,7 @@ public class ScriptingContext implements ExceptionContext
 
 	public String bufferHash()
 	{
-		return SecureFunc.md5( readBytes() );
+		return ZEncryption.md5( readBytes() );
 	}
 
 	public File cache()
@@ -217,7 +219,7 @@ public class ScriptingContext implements ExceptionContext
 			}
 			catch ( IOException e )
 			{
-				Log.get().warning( "Failed to add " + FileFunc.relPath( cache ) + " to classpath." );
+				Log.get().warning( "Failed to add " + ZIO.relPath( cache ) + " to classpath." );
 			}
 		return cache;
 	}
@@ -353,12 +355,12 @@ public class ScriptingContext implements ExceptionContext
 	public boolean isVirtual()
 	{
 		File scriptFile = new File( filename() );
-		return !FileFunc.isAbsolute( filename() ) || !scriptFile.exists();
+		return !ZIO.isAbsolute( filename() ) || !scriptFile.exists();
 	}
 
 	public String md5()
 	{
-		return SecureFunc.md5( readBytes() );
+		return ZEncryption.md5( readBytes() );
 	}
 
 	public String read() throws ScriptingException, MultipleException

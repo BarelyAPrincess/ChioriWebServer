@@ -3,7 +3,9 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan;
 
@@ -21,7 +23,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 /**
- * Loader Content-Types from ContentTypes.properties file.
+ * Loader Content-Types from content-types.properties file.
  * FileInterpreter uses this class to find the correct Content-Type based on file extension.
  */
 public class ContentTypes
@@ -32,12 +34,12 @@ public class ContentTypes
 	{
 		try
 		{
-			File contentTypes = new File( AppConfig.get().getDirectory().getAbsolutePath(), "ContentTypes.properties" );
+			File contentTypes = new File( AppConfig.get().getDirectory().getAbsolutePath(), "content-types.properties" );
 
 			if ( !contentTypes.exists() )
 				contentTypes.createNewFile();
 
-			InputStream isDefault = Loader.class.getClassLoader().getResourceAsStream( "com/chiorichan/ContentTypes.properties" );
+			InputStream isDefault = Loader.class.getClassLoader().getResourceAsStream( "com/chiorichan/content-types.properties" );
 			InputStream is = new FileInputStream( contentTypes );
 			try
 			{

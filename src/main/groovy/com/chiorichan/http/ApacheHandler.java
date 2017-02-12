@@ -3,13 +3,11 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.http;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 
 import com.chiorichan.AppLoader;
 import com.chiorichan.configuration.apache.ApacheDirective;
@@ -17,8 +15,12 @@ import com.chiorichan.configuration.apache.ApacheDirectiveException;
 import com.chiorichan.configuration.apache.ApacheSection;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.site.Site;
-import com.chiorichan.util.StringFunc;
-import com.chiorichan.util.Versioning;
+import com.chiorichan.Versioning;
+import com.chiorichan.zutils.ZStrings;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 
 /**
  * Used to parse Apache configuration files, e.g., .htaccess
@@ -126,7 +128,7 @@ public class ApacheHandler
 					throw new IllegalArgumentException( "The 'Options' override only accepts the values All, ExecCGI, FollowSymLinks, Includes, IncludesNOEXEC, Indexes, MultiViews, and SymLinksIfOwnerMatch. The param must be comma-separated and have absolutely no spaces." );
 			}
 			else
-				throw new IllegalArgumentException( "The '" + name() + "' does not support value arguements, only Nonfatal and Options do." );
+				throw new IllegalArgumentException( "The '" + name() + "' does not support value arguments, only Nonfatal and Options do." );
 
 			this.params = params;
 		}
@@ -201,9 +203,7 @@ public class ApacheHandler
 
 			switch ( key )
 			{
-			/**
-			 * Section Types
-			 */
+				/* Section Types */
 				case "IfDefine":
 					kv.isSection();
 					kv.hasArguments( 1, "<Startup Argument>" );
@@ -221,7 +221,7 @@ public class ApacheHandler
 				case "IfVersion":
 					kv.isSection();
 					kv.hasArguments( 2, "<operator> <version>" );
-					if ( StringFunc.compareVersions( Versioning.getVersionNumber(), args[1], args[0] ) )
+					if ( ZStrings.compareVersions( Versioning.getVersionNumber(), args[1], args[0] ) )
 						if ( !handleDirectives( ( ApacheSection ) kv, handler ) )
 							def = false;
 					break;
@@ -230,7 +230,7 @@ public class ApacheHandler
 					kv.hasArguments( 1, "<directory>" );
 					if ( fi.hasFile() )
 					{
-						String rel = fi.getFilePath().substring( site.getSubdomain( request.getSubdomain() ).directory().getAbsolutePath().length() );
+						String rel = fi.getFilePath().substring( request.getDomainMapping().directory().getAbsolutePath().length() );
 						if ( rel.startsWith( "/" ) )
 							rel = rel.substring( 1 );
 
@@ -239,9 +239,7 @@ public class ApacheHandler
 								def = false;
 					}
 					break;
-				/**
-				 * Individual Key/Values
-				 */
+				/* Individual Key/Values */
 				case "ErrorDocument":
 					ErrorDocument doc = ErrorDocument.parseArgs( args );
 					errorDocuments.put( doc.getHttpCode(), doc );
@@ -258,7 +256,7 @@ public class ApacheHandler
 						{
 							Override o = override( a.contains( "=" ) ? a.substring( 0, a.indexOf( "=" ) ) : a );
 							if ( o == null )
-								throw new ApacheDirectiveException( "The 'AllowOverride' directive does not reconize the option '" + a + "'", kv );
+								throw new ApacheDirectiveException( "The 'AllowOverride' directive does not recognize the option '" + a + "'", kv );
 							if ( ( o == overrides.overrideNonfatal || o == overrides.overrideOptions ) && a.contains( "=" ) )
 								o.setParams( a.substring( a.indexOf( "=" ) + 1 ) );
 							o.allow();
@@ -295,7 +293,7 @@ public class ApacheHandler
 							{
 								Option o = option( a.startsWith( "+" ) || a.startsWith( "-" ) ? a.substring( 1 ) : a );
 								if ( o == null )
-									throw new ApacheDirectiveException( "The 'Options' directive does not reconize the option '" + a + "'", kv );
+									throw new ApacheDirectiveException( "The 'Options' directive does not recognize the option '" + a + "'", kv );
 								if ( a.startsWith( "-" ) )
 									o.disable();
 								else

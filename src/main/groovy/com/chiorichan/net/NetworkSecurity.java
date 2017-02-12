@@ -3,13 +3,16 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.net;
 
 import java.util.List;
 import java.util.Map;
 
+import com.chiorichan.zutils.ZHttp;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.AppConfig;
@@ -26,7 +29,6 @@ import com.chiorichan.lang.HttpError;
 import com.chiorichan.site.Site;
 import com.chiorichan.tasks.TaskRegistrar;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.util.NetworkFunc;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -73,9 +75,9 @@ public class NetworkSecurity implements EventRegistrar, TaskRegistrar, Listener
 			switch ( this )
 			{
 				case HTTP_ERROR_400:
-					return "There was a http error, continued abuse will lead to banishment!";
+					return "There was a com.chiorichan.http error, continued abuse will lead to banishment!";
 				case HTTP_ERROR_500:
-					return "There was a http error, continued abuse will lead to banishment!";
+					return "There was a com.chiorichan.http error, continued abuse will lead to banishment!";
 				case CLOSED_EARLY:
 					return "The connection was closed before we could finish the request, continued abuse will lead to banishment!";
 				default:
@@ -112,15 +114,15 @@ public class NetworkSecurity implements EventRegistrar, TaskRegistrar, Listener
 		private String banReason = null;
 		private int banTill = -1;
 		private int banWhen = -1;
-		private final String ipAddr;
+		private final String ipAddress;
 		private final Map<IpStrikeType, Record> strikes = Maps.newConcurrentMap();
 
-		IpTracker( String ipAddr )
+		IpTracker( String ipAddress )
 		{
-			if ( !NetworkFunc.isValidIPv4( ipAddr ) && !NetworkFunc.isValidIPv6( ipAddr ) )
-				throw new IllegalArgumentException( "The provided IP '" + ipAddr + "' is not a valid IPv4 or IPv6 address." );
+			if ( !ZHttp.isValidIPv4( ipAddress ) && !ZHttp.isValidIPv6( ipAddress ) )
+				throw new IllegalArgumentException( "The provided IP '" + ipAddress + "' is not a valid IPv4 or IPv6 address." );
 
-			this.ipAddr = ipAddr;
+			this.ipAddress = ipAddress;
 		}
 
 		void addStrike( IpStrikeType type, String... args )
@@ -141,7 +143,7 @@ public class NetworkSecurity implements EventRegistrar, TaskRegistrar, Listener
 
 			if ( r.count >= type.countToBan )
 			{
-				NetworkManager.getLogger().info( EnumColor.RED + "" + EnumColor.NEGATIVE + "The IP '" + ipAddr + "' has been banned for reason '" + type.getReason() + "'" );
+				NetworkManager.getLogger().info( EnumColor.RED + "" + EnumColor.NEGATIVE + "The IP '" + ipAddress + "' has been banned for reason '" + type.getReason() + "'" );
 				banned = true;
 				banReason = type.getReason();
 				banWhen = Timings.epoch();
@@ -190,7 +192,7 @@ public class NetworkSecurity implements EventRegistrar, TaskRegistrar, Listener
 	private static IpTracker get( String ip )
 	{
 		for ( IpTracker t : ips )
-			if ( t.ipAddr.equals( ip ) )
+			if ( t.ipAddress.equals( ip ) )
 				return t;
 
 		IpTracker it = new IpTracker( ip );
@@ -224,7 +226,7 @@ public class NetworkSecurity implements EventRegistrar, TaskRegistrar, Listener
 
 	public static boolean isIpBannedWithException( String ip )
 	{
-		if ( !NetworkFunc.isValidIPv4( ip ) || !NetworkFunc.isValidIPv6( ip ) )
+		if ( !ZHttp.isValidIPv4( ip ) || !ZHttp.isValidIPv6( ip ) )
 			throw new IllegalArgumentException( "The provided IP '" + ip + "' is not a valid IPv4 or IPv6 address." );
 
 		return get( ip ).banned;

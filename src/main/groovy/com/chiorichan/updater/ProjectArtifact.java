@@ -3,11 +3,14 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.updater;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ProjectArtifact
 {
@@ -31,54 +34,35 @@ public class ProjectArtifact
 	public BuildArtifact lastUnstableBuild;
 	public BuildArtifact lastUnsuccessfulBuild;
 	public int nextBuildNumber;
-	
+
 	public class BuildArtifact
 	{
 		public int number;
 		public String url;
-		
+
 		public String toString()
 		{
 			return "{#" + number + ",url:" + url + "}";
 		}
 	}
-	
+
 	public class HealthReport
 	{
 		public String description;
 		public String iconUrl;
 		public int score;
-		
+
 		public String toString()
 		{
 			return "{description:" + description + ",iconUrl:" + iconUrl + ",score:" + score + "}";
 		}
 	}
-	
+
 	public String toString()
 	{
-		StringBuilder healthf = new StringBuilder();
-		
-		if ( healthReport != null )
-		{
-			for ( HealthReport ba : healthReport )
-			{
-				healthf.append( "," + ba.toString() + "\n" );
-			}
-			healthf.deleteCharAt( 1 );
-		}
-		
-		StringBuilder buildsf = new StringBuilder();
-		
-		if ( builds != null )
-		{
-			for ( BuildArtifact ba : builds )
-			{
-				buildsf.append( "," + ba.toString() + "\n" );
-			}
-			buildsf.deleteCharAt( 1 );
-		}
-		
-		return name + "(Description:" + description + ",URL:" + url + ",Builds:[" + buildsf.toString() + "],color:" + color + ",firstBuild:" + firstBuild + ",healthReport:[" + healthf.toString() + "],lastSuccessfulBuild:" + lastSuccessfulBuild + ",lastStableBuild:" + lastStableBuild + ",lastUnsuccessfulBuild:" + lastUnsuccessfulBuild + ",lastUnstableBuild:" + lastUnstableBuild + ")";
+		String healthStr = healthReport.stream().map( HealthReport::toString ).collect( Collectors.joining( "," ) );
+		String buildsStr = builds.stream().map( BuildArtifact::toString ).collect( Collectors.joining( "," ) );
+
+		return name + "{Description:" + description + ",URL:" + url + ",Builds:{" + buildsStr + "},color:" + color + ",firstBuild:" + firstBuild + ",healthReport:{" + healthStr + "},lastSuccessfulBuild:" + lastSuccessfulBuild + ",lastStableBuild:" + lastStableBuild + ",lastUnsuccessfulBuild:" + lastUnsuccessfulBuild + ",lastUnstableBuild:" + lastUnstableBuild + "}";
 	}
 }

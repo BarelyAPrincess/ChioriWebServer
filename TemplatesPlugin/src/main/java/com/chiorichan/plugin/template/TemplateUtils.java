@@ -1,19 +1,18 @@
 package com.chiorichan.plugin.template;
 
-import com.chiorichan.InterpreterOverrides;
+import com.chiorichan.ShellOverrides;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.factory.ScriptingResult;
+import com.chiorichan.zutils.ZHttp;
 import com.chiorichan.lang.ScriptingException;
-import com.chiorichan.logger.Log;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.site.SiteManager;
-import com.chiorichan.util.FileFunc;
-import com.chiorichan.util.NetworkFunc;
-import com.chiorichan.util.Versioning;
-import com.chiorichan.util.WebFunc;
+import com.chiorichan.Versioning;
+import com.chiorichan.zutils.WebFunc;
+import com.chiorichan.zutils.ZIO;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.Validate;
 
@@ -151,7 +150,7 @@ public class TemplateUtils
 			int lineNum = ste.getLineNumber();
 			byte[] result = null;
 
-			String urlAppend = className.replace( '.', '/' ) + "." + InterpreterOverrides.getFileExtension( ste.getFileName() );
+			String urlAppend = className.replace( '.', '/' ) + "." + ShellOverrides.getFileExtension( ste.getFileName() );
 			String url = null;
 
 			Plugin plugin;
@@ -165,7 +164,7 @@ public class TemplateUtils
 					url = plugin.getDescription().getGitHubBaseUrl();
 					if ( !url.endsWith( "/" ) )
 						url += "/";
-					result = NetworkFunc.readUrl( url + urlAppend );
+					result = ZHttp.readUrl( url + urlAppend );
 				}
 				else
 					return String.format( "Plugin %s does not have a GitHub base url.", plugin.getName() );
@@ -175,14 +174,14 @@ public class TemplateUtils
 				// Try API URI first!
 				url = GITHUB_API_URL + GITHUB_API_BRANCH + "/src/main/java/" + urlAppend;
 
-				result = NetworkFunc.readUrl( url );
+				result = ZHttp.readUrl( url );
 
 				if ( result == null )
 				{
 					// Try CWS URI second!
 					url = GITHUB_SERVER_URL + GITHUB_SERVER_BRANCH + "/src/main/groovy/" + urlAppend;
 
-					result = NetworkFunc.readUrl( url );
+					result = ZHttp.readUrl( url );
 				}
 
 				if ( result == null )
@@ -250,7 +249,7 @@ public class TemplateUtils
 		return generateCodePreview( t.getStackTrace()[0] );
 	}
 
-	static ScriptingResult wrapAndEval( ScriptingFactory factory, String html ) throws UnsupportedEncodingException, IOException
+	static ScriptingResult wrapAndEval( ScriptingFactory factory, String html ) throws IOException
 	{
 		Validate.notNull( factory );
 
@@ -259,7 +258,7 @@ public class TemplateUtils
 		if ( baseTemplate == null )
 		{
 			InputStream is = TemplateUtils.class.getClassLoader().getResourceAsStream( "BaseTemplate.html" );
-			baseTemplate = is == null ? "" : new String( FileFunc.inputStream2Bytes( is ), "UTF-8" );
+			baseTemplate = is == null ? "" : new String( ZIO.inputStream2Bytes( is ), "UTF-8" );
 		}
 
 		return factory.eval( ScriptingContext.fromSource( baseTemplate.replace( pageMark, html ) ).shell( "html" ).site( SiteManager.instance().getDefaultSite() ) );

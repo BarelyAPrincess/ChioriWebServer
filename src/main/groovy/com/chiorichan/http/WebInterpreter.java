@@ -1,13 +1,25 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- *
+ * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ * <p>
+ * All Rights Reserved.
  */
 package com.chiorichan.http;
 
+import com.chiorichan.AppConfig;
+import com.chiorichan.factory.FileInterpreter;
+import com.chiorichan.factory.ScriptingContext;
+import com.chiorichan.lang.HttpError;
+import com.chiorichan.net.NetworkManager;
+import com.chiorichan.site.DomainMapping;
+import com.chiorichan.site.SiteManager;
+import com.chiorichan.zutils.ZIO;
+import com.google.common.collect.Maps;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -16,18 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import org.apache.commons.io.filefilter.WildcardFileFilter;
-
-import com.chiorichan.AppConfig;
-import com.chiorichan.factory.FileInterpreter;
-import com.chiorichan.factory.ScriptingContext;
-import com.chiorichan.lang.HttpError;
-import com.chiorichan.net.NetworkManager;
-import com.chiorichan.site.Site;
-import com.chiorichan.site.SiteManager;
-import com.chiorichan.util.FileFunc;
-import com.google.common.collect.Maps;
 
 public class WebInterpreter extends FileInterpreter
 {
@@ -46,30 +46,28 @@ public class WebInterpreter extends FileInterpreter
 		boolean wasSuccessful = false;
 
 		String uri = request.getUri();
-		String domain = request.getDomain();
-		String subdomain = request.getSubdomain();
 
 		fwRequest = uri.startsWith( "/wisp" );
 		if ( fwRequest )
 		{
-			Site fwSite = SiteManager.instance().getDefaultSite();
-			routes = fwSite.getRoutes();
-			request.setSite( fwSite );
+			DomainMapping defaultMapping = SiteManager.instance().getDefaultSite().getDefaultMapping();
+			request.setDomainMapping( defaultMapping );
 			request.setUri( uri.substring( 5 ) );
+			routes = defaultMapping.getSite().getRoutes();
 		}
 
-		Route route = routes.searchRoutes( uri, domain, subdomain );
+		Route route = routes.searchRoutes( uri, request.getHostDomain() );
 
 		if ( route != null )
 		{
 			rewriteParams.putAll( route.getRewrites() );
 			annotations.putAll( route.getParams() );
-			dest = route.getFile();
+			dest = new File( request.getDomainMapping().directory(), route.getFile() );
 
 			if ( route.isRedirect() )
 			{
 				status = HttpResponseStatus.valueOf( route.httpCode() );
-				request.getResponse().sendRedirect( route.getRedirect().toLowerCase().startsWith( "http" ) ? route.getRedirect() : ( request.isSecure() ? "https://" : "http://" ) + request.getDomain() + route.getRedirect(), status.code() );
+				request.getResponse().sendRedirect( route.getRedirect().toLowerCase().startsWith( "com/chiorichan/http" ) ? route.getRedirect() : ( request.isSecure() ? "https://" : "http://" ) + request.getRootDomain() + route.getRedirect(), status.code() );
 				return;
 			}
 
@@ -77,15 +75,15 @@ public class WebInterpreter extends FileInterpreter
 			wasSuccessful = true;
 		}
 
-		// Try to find the file on the local file system
+		/* Try to find the file on the local file system */
 		if ( !wasSuccessful )
 		{
-			dest = new File( request.getLocation().getSubdomain( subdomain ).directory(), uri );
+			dest = new File( request.getDomainMapping().directory(), uri );
 
 			if ( dest.isDirectory() )
 			{
 				FileFilter fileFilter = new WildcardFileFilter( "index.*" );
-				Map<String, File> maps = FileFunc.mapExtensions( dest.listFiles( fileFilter ) );
+				Map<String, File> maps = ZIO.mapExtensions( dest.listFiles( fileFilter ) );
 
 				List<String> preferredExtensions = ScriptingContext.getPreferredExtensions();
 
@@ -106,7 +104,7 @@ public class WebInterpreter extends FileInterpreter
 				if ( selectedFile != null )
 				{
 					uri = uri + "/" + selectedFile.getName();
-					dest = new File( request.getLocation().getSubdomain( subdomain ).directory(), uri );
+					dest = new File( request.getDomainMapping().directory(), uri );
 				}
 				else if ( AppConfig.get().getBoolean( "server.allowDirectoryListing" ) )
 					isDirectoryRequest = true;
@@ -115,8 +113,6 @@ public class WebInterpreter extends FileInterpreter
 			}
 
 			if ( !dest.exists() )
-				// Attempt to determine if it's possible that the uri is a name without an extension.
-				// For Example: uri(http://example.com/pages/aboutus) = file([root]/pages/aboutus.html)
 				if ( dest.getParentFile().exists() && dest.getParentFile().isDirectory() )
 				{
 					FileFilter fileFilter = new WildcardFileFilter( dest.getName() + ".*" );

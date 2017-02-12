@@ -3,10 +3,13 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.http.ssl;
 
+import com.chiorichan.zutils.ZStrings;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.ssl.NotSslRecordException;
 import io.netty.handler.ssl.SslHandler;
@@ -17,7 +20,6 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLException;
 
 import com.chiorichan.net.NetworkManager;
-import com.chiorichan.util.StringFunc;
 
 public class SslExceptionHandler extends SslHandler
 {
@@ -50,7 +52,7 @@ public class SslExceptionHandler extends SslHandler
 			NetworkManager.getLogger().severe( "Not an SSL/TLS record" );
 		if ( cause instanceof SSLException || ! ( cause instanceof IOException ) )
 		{
-			String protocol = StringFunc.regexCapture( cause.getMessage(), "Client requested protocol (.*) not enabled or not supported" );
+			String protocol = ZStrings.regexCapture( cause.getMessage(), "Client requested protocol (.*) not enabled or not supported" );
 
 			if ( protocol != null )
 				NetworkManager.getLogger().severe( String.format( "Client tried to negotiate a SSL connection using protocol version %s, which is currently disabled or not supported", protocol ) );

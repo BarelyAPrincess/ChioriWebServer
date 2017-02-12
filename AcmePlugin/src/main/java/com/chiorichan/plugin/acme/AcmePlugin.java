@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.chiorichan.configuration.file.FileConfiguration;
-import com.chiorichan.configuration.file.YamlConfiguration;
+import com.chiorichan.configuration.types.yaml.YamlConfiguration;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.lang.PluginException;
 import com.chiorichan.lang.ReportingLevel;
@@ -25,7 +25,7 @@ import com.chiorichan.plugin.acme.lang.AcmeException;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Ticks;
-import com.chiorichan.util.FileFunc;
+import com.chiorichan.zutils.ZIO;
 
 public class AcmePlugin extends Plugin
 {
@@ -99,7 +99,7 @@ public class AcmePlugin extends Plugin
 			throw new PluginException( getName() + " requires HTTPS to be enabled and running, see documentation to enable" );
 
 		if ( !"letsencrypt".equals( yaml.getString( "config.ca", "letsencrypt" ) ) )
-			throw new PluginException( getName() + " currently only supports the Let's Encrypt Certificate Authory but config option is set to '" + yaml.getString( "config.ca" ) + "'" );
+			throw new PluginException( getName() + " currently only supports the Let's Encrypt Certificate Authority but config option is set to '" + yaml.getString( "config.ca" ) + "'" );
 
 		if ( !yaml.getBoolean( "config.accept-agreement" ) )
 			throw new PluginException( "Let's Encrypt requires you to accept their agreement before they will issue certificates. Please read 'https://letsencrypt.org/documents/LE-SA-v1.0.1-July-27-2015.pdf', then change config value 'config.accept-agreement' to true" );
@@ -113,8 +113,8 @@ public class AcmePlugin extends Plugin
 		subYaml = YamlConfiguration.loadConfiguration( new File( getDataFolder(), "subconfig.yaml" ) );
 
 		File data = getDataFolder();
-		if ( !FileFunc.setDirectoryAccess( data ) )
-			throw new UncaughtException( ReportingLevel.E_ERROR, "Acme Plugin experienced a problem setting read and write access to directory \"" + FileFunc.relPath( data ) + "\"!" );
+		if ( !ZIO.setDirectoryAccess( data ) )
+			throw new UncaughtException( ReportingLevel.E_ERROR, "Acme Plugin experienced a problem setting read and write access to directory \"" + ZIO.relPath( data ) + "\"!" );
 
 		try
 		{
@@ -162,7 +162,7 @@ public class AcmePlugin extends Plugin
 		}
 		catch ( IOException e )
 		{
-			getLogger().severe( "Failed to save subconfiguration", e );
+			getLogger().severe( "Failed to save sub-config", e );
 		}
 		super.saveConfig();
 	}

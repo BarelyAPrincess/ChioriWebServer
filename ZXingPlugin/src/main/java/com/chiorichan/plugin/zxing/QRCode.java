@@ -21,14 +21,10 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 
 /**
- * QRCode generator. This is a simple class that is built on top of <a href="http://code.google.com/p/zxing/">ZXING</a><br/>
- * <br/>
- * 
- * Please take a look at their framework, as it has a lot of features. <br/>
- * This small project is just a wrapper that gives a convenient interface to work with. <br/>
- * <br/>
- * 
- * Start here: {@link QRCode#from(String)} (e.g QRCode.from("hello"))
+ * QRCode generator. This is a simple class that is built on top of the <a href="http://code.google.com/p/zxing/">Zxing</a> QR library.
+ * <br>
+ * Please take a look at their framework, as it has a lot of features.
+ * This small project is just a wrapper that gives a convenient interface to work with.
  */
 public class QRCode
 {
@@ -75,7 +71,7 @@ public class QRCode
 	}
 	
 	/**
-	 * Overrides the default cahrset by supplying a {@link com.google.zxing.EncodeHintType#CHARACTER_SET} hint to {@link com.google.zxing.qrcode.QRCodeWriter#encode}
+	 * Overrides the default charset by supplying a {@link com.google.zxing.EncodeHintType#CHARACTER_SET} hint to {@link com.google.zxing.qrcode.QRCodeWriter#encode}
 	 * 
 	 * @return the current QRCode object
 	 */
@@ -95,7 +91,7 @@ public class QRCode
 	 * returns a {@link File} representation of the QR code. The file is set to be deleted on exit (i.e. {@link java.io.File#deleteOnExit()}). If you want the file to live beyond the life of the jvm process, you should
 	 * make a copy.
 	 * 
-	 * @return qrcode as file
+	 * @return The QRCode file
 	 */
 	@SuppressWarnings( "deprecation" )
 	public File file()
@@ -122,7 +118,7 @@ public class QRCode
 	 * @see #file()
 	 * @param name
 	 *            name of the created file
-	 * @return qrcode as file
+	 * @return The QRCode file
 	 */
 	@SuppressWarnings( "deprecation" )
 	public File file( String name )
@@ -144,7 +140,7 @@ public class QRCode
 	/**
 	 * returns a {@link ByteArrayOutputStream} representation of the QR code
 	 * 
-	 * @return qrcode as stream
+	 * @return The QRCode file
 	 */
 	public ByteArrayOutputStream stream()
 	{

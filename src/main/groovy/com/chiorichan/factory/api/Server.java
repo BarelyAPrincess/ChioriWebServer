@@ -3,7 +3,9 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.factory.api;
 
@@ -65,12 +67,12 @@ public class Server
 		}
 	}
 
-	public static Plugin getPluginbyClassname( String search ) throws PluginNotFoundException
+	public static Plugin getPluginByClassname( String search ) throws PluginNotFoundException
 	{
 		return PluginManager.instance().getPluginByClassname( search );
 	}
 
-	public static Plugin getPluginbyClassnameWithoutException( String search )
+	public static Plugin getPluginByClassnameWithoutException( String search )
 	{
 		return PluginManager.instance().getPluginByClassnameWithoutException( search );
 	}

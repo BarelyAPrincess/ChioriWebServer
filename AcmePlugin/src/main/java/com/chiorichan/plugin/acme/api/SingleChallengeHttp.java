@@ -17,7 +17,7 @@ import com.chiorichan.plugin.acme.lang.AcmeState;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Ticks;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.util.FileFunc;
+import com.chiorichan.zutils.ZIO;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -143,7 +143,7 @@ public final class SingleChallengeHttp
 	{
 		if ( getChallengeToken() == null )
 			return null;
-		return FileFunc.buildPath( ".well-known", "acme-challenge", getChallengeToken() );
+		return ZIO.buildPath( ".well-known", "acme-challenge", getChallengeToken() );
 	}
 
 	private boolean handleVerify( HttpResponse response ) throws AcmeException
@@ -156,7 +156,7 @@ public final class SingleChallengeHttp
 
 				if ( "invalid".equals( json.get( "status" ).asText() ) )
 				{
-					/**
+					/*
 					 * <pre>
 					 * {
 					 *     "error":{
@@ -166,7 +166,7 @@ public final class SingleChallengeHttp
 					 *     "keyAuthorization":"jg1...304",
 					 *     "status":"invalid",
 					 *     "token":"jg1...rGU",
-					 *     "type":"http-01",
+					 *     "type":"com.chiorichan.http-01",
 					 *     "uri":"https://acme-staging.api.letsencrypt.org/acme/challenge/ynd...889",
 					 *     "validationRecord":[
 					 *         {
@@ -190,19 +190,19 @@ public final class SingleChallengeHttp
 					 * if ( json.get( "validationRecord" ).isArray() )
 					 * for ( JsonNode jn : json.get( "validationRecord" ) )
 					 * {
-					 * String usedIpAddr = jn.get( "addressUsed" ).asText();
+					 * String usedIpAddress = jn.get( "addressUsed" ).asText();
 					 *
-					 * if ( !NetworkManager.getListeningIps().contains( usedIpAddr ) )
-					 * lastMessage += String.format( " Additionally, the IP address tried does not match the IP address the server is listening on, '%s', '%s'", usedIpAddr, Joiner.on( "," ).join( NetworkManager.getListeningIps() ) );
+					 * if ( !NetworkManager.getListeningIps().contains( usedIpAddress ) )
+					 * lastMessage += String.format( " Additionally, the IP address tried does not match the IP address the server is listening on, '%s', '%s'", usedIpAddress, Joiner.on( "," ).join( NetworkManager.getListeningIps() ) );
 					 * }
 					 */
 				}
 				else if ( "valid".equals( json.get( "status" ).asText() ) )
 				{
-					/**
+					/*
 					 * <pre>
 					 * {
-					 *     "type":"http-01",
+					 *     "type":"com.chiorichan.http-01",
 					 *     "status":"valid",
 					 *     "uri":"https://acme-staging.api.letsencrypt.org/acme/challenge/nwe...099",
 					 *     "token":"xZK...TNU",
@@ -228,10 +228,10 @@ public final class SingleChallengeHttp
 				}
 				else if ( "pending".equals( json.get( "status" ).asText() ) )
 				{
-					/**
+					/*
 					 * <pre>
 					 * {
-					 *     "type":"http-01",
+					 *     "type":"com.chiorichan.http-01",
 					 *     "status":"pending",
 					 *     "uri":"https://acme-staging.api.letsencrypt.org/acme/challenge/nwe...099",
 					 *     "token":"xZK...TNU",
@@ -245,7 +245,7 @@ public final class SingleChallengeHttp
 				}
 				else if ( json.has( "detail" ) )
 				{
-					/**
+					/*
 					 * <pre>
 					 * {
 					 *     "type":"urn:acme:error:malformed",
@@ -259,7 +259,7 @@ public final class SingleChallengeHttp
 					setState( AcmeState.INVALID );
 				}
 				else
-					throw new AcmeException( "Unknown varification response returned " + json.toString() );
+					throw new AcmeException( "Unknown verification response returned " + json.toString() );
 
 				return true;
 			}
@@ -338,7 +338,7 @@ public final class SingleChallengeHttp
 				{
 					{
 						put( "resource", "challenge" );
-						put( "type", "http-01" );
+						put( "type", "com.chiorichan.http-01" );
 						put( "tls", true );
 						put( "keyAuthorization", getChallengeContent() );
 						put( "token", challengeToken );

@@ -7,6 +7,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.X509Certificate;
 
+import com.chiorichan.zutils.ZIO;
 import org.apache.commons.lang3.Validate;
 import org.bouncycastle.x509.util.StreamParsingException;
 
@@ -16,7 +17,6 @@ import com.chiorichan.lang.UncaughtException;
 import com.chiorichan.plugin.acme.AcmePlugin;
 import com.chiorichan.plugin.acme.lang.AcmeException;
 import com.chiorichan.plugin.acme.lang.AcmeState;
-import com.chiorichan.util.FileFunc;
 
 public class CertificateDownloader
 {
@@ -137,8 +137,8 @@ public class CertificateDownloader
 		if ( !isDownloaded() )
 			return false;
 
-		if ( !FileFunc.setDirectoryAccess( parentDir ) )
-			throw new UncaughtException( ReportingLevel.E_ERROR, "Acme Plugin experienced a problem setting read and write access to directory \"" + FileFunc.relPath( parentDir ) + "\"!" );
+		if ( !ZIO.setDirectoryAccess( parentDir ) )
+			throw new UncaughtException( ReportingLevel.E_ERROR, "Acme Plugin experienced a problem setting read and write access to directory \"" + ZIO.relPath( parentDir ) + "\"!" );
 
 		AcmePlugin.instance().getClient().getAcmeStorage().saveCertificate( parentDir, getCertificate() );
 

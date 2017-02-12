@@ -3,7 +3,9 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.updater;
 
@@ -38,8 +40,8 @@ import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.TaskRegistrar;
 import com.chiorichan.tasks.Ticks;
 import com.chiorichan.updater.BuildArtifact.ChangeSet.ChangeSetDetails;
-import com.chiorichan.util.SecureFunc;
-import com.chiorichan.util.Versioning;
+import com.chiorichan.zutils.ZEncryption;
+import com.chiorichan.Versioning;
 
 public class AutoUpdater implements ServiceManager, Listener, TaskRegistrar, LogSource
 {
@@ -99,7 +101,7 @@ public class AutoUpdater implements ServiceManager, Listener, TaskRegistrar, Log
 		try
 		{
 			AppConfig.get();
-			serverJarMD5 = AppConfig.getApplicationJar().exists() && AppConfig.getApplicationJar().isFile() ? SecureFunc.md5( FileUtils.readFileToByteArray( AppConfig.getApplicationJar() ) ) : null;
+			serverJarMD5 = AppConfig.getApplicationJar().exists() && AppConfig.getApplicationJar().isFile() ? ZEncryption.md5( FileUtils.readFileToByteArray( AppConfig.getApplicationJar() ) ) : null;
 
 			if ( serverJarMD5 != null )
 				ServerFileWatcher.instance().register( AppConfig.get().getDirectory(), new EventCallback()
@@ -118,7 +120,7 @@ public class AutoUpdater implements ServiceManager, Listener, TaskRegistrar, Log
 									String newServerJarMD5 = null;
 									try
 									{
-										newServerJarMD5 = SecureFunc.md5( FileUtils.readFileToByteArray( AppConfig.getApplicationJar() ) );
+										newServerJarMD5 = ZEncryption.md5( FileUtils.readFileToByteArray( AppConfig.getApplicationJar() ) );
 									}
 									catch ( IOException e )
 									{
@@ -274,7 +276,7 @@ public class AutoUpdater implements ServiceManager, Listener, TaskRegistrar, Log
 					sender.sendMessage( "" );
 					sender.sendMessage( EnumColor.YELLOW + "If you would like " + Versioning.getProduct() + " to update to the latest version run \"update latest force\"" );
 					sender.sendMessage( EnumColor.RED + "WARNING: Chiori Auto Updater currently can't auto update any installed plugins." );
-					sender.sendMessage( EnumColor.RED + "You can obtain updated offical plugins from the Details URL above or you will need to contact the original developer." );
+					sender.sendMessage( EnumColor.RED + "You can obtain updated official plugins from the Details URL above or you will need to contact the original developer." );
 					sender.sendMessage( EnumColor.RED + "Quite frankly, If there has been no changes to the Plugin API (See Change Log) then even outdated plugins should still work." );
 				}
 			}

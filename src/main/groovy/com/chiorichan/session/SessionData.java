@@ -3,7 +3,9 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.session;
 
@@ -25,7 +27,7 @@ public abstract class SessionData
 	Map<String, String> data = Maps.newHashMap();
 	
 	int timeout;
-	String ipAddr;
+	String ipAddress;
 	String sessionName;
 	String sessionId;
 	String site;
@@ -48,7 +50,7 @@ public abstract class SessionData
 	void defaults()
 	{
 		timeout = Timings.epoch() + SessionManager.getDefaultTimeout();
-		ipAddr = null;
+		ipAddress = null;
 		sessionName = SessionManager.getDefaultSessionName();
 		sessionId = null;
 		site = "default";
@@ -57,7 +59,7 @@ public abstract class SessionData
 	@Override
 	public String toString()
 	{
-		return "SessionData{name=" + sessionName + ",id=" + sessionId + ",ip=" + ipAddr + ",timeout=" + timeout + ",site=" + site + "," + Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "<null>" ).join( data ) + "}";
+		return "SessionData{name=" + sessionName + ",id=" + sessionId + ",ip=" + ipAddress + ",timeout=" + timeout + ",site=" + site + "," + Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "<null>" ).join( data ) + "}";
 	}
 	
 	abstract void reload() throws SessionException;

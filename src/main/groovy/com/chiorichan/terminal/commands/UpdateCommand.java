@@ -3,9 +3,28 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.terminal.commands;
+
+import com.chiorichan.AppConfig;
+import com.chiorichan.AppController;
+import com.chiorichan.Loader;
+import com.chiorichan.account.AccountAttachment;
+import com.chiorichan.zutils.ZIO;
+import com.chiorichan.zutils.ZHttp;
+import com.chiorichan.lang.EnumColor;
+import com.chiorichan.terminal.Command;
+import com.chiorichan.updater.AutoUpdater;
+import com.chiorichan.updater.BuildArtifact;
+import com.chiorichan.updater.Download;
+import com.chiorichan.updater.DownloadListener;
+import com.chiorichan.Versioning;
+import joptsimple.internal.Strings;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -13,25 +32,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLDecoder;
-
-import joptsimple.internal.Strings;
-
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-
-import com.chiorichan.AppConfig;
-import com.chiorichan.AppController;
-import com.chiorichan.Loader;
-import com.chiorichan.account.AccountAttachment;
-import com.chiorichan.lang.EnumColor;
-import com.chiorichan.terminal.Command;
-import com.chiorichan.updater.AutoUpdater;
-import com.chiorichan.updater.BuildArtifact;
-import com.chiorichan.updater.Download;
-import com.chiorichan.updater.DownloadListener;
-import com.chiorichan.util.NetworkFunc;
-import com.chiorichan.util.Versioning;
 
 public class UpdateCommand extends Command
 {
@@ -75,7 +75,7 @@ public class UpdateCommand extends Command
 			return true;
 		}
 
-		if ( AppConfig.get().getBoolean( "auto-updater.console-only" ) && ! ( sender instanceof AccountAttachment ) )
+		if ( AppConfig.get().getBoolean( "auto-updater.console-only" ) && !( sender instanceof AccountAttachment ) )
 		{
 			sender.sendMessage( EnumColor.RED + "I'm sorry but updates can only be performed from the console!" );
 			return true;
@@ -107,7 +107,7 @@ public class UpdateCommand extends Command
 							download.setListener( new DownloadProgressDisplay( sender ) );
 							download.run();
 
-							String origMD5 = new String( NetworkFunc.readUrl( latest.getMD5File() ) ).trim();
+							String origMD5 = new String( ZHttp.readUrl( latest.getMD5File() ) ).trim();
 
 							if ( origMD5 != null && !origMD5.isEmpty() )
 							{
@@ -130,7 +130,7 @@ public class UpdateCommand extends Command
 							{
 								fis = new FileInputStream( updatedJar );
 								fos = new FileOutputStream( currentJar );
-								IOUtils.copy( fis, fos );
+								ZIO.copy( fis, fos );
 							}
 							catch ( IOException e )
 							{
@@ -138,8 +138,8 @@ public class UpdateCommand extends Command
 							}
 							finally
 							{
-								IOUtils.closeQuietly( fis );
-								IOUtils.closeQuietly( fos );
+								ZIO.closeQuietly( fis );
+								ZIO.closeQuietly( fos );
 							}
 
 							updatedJar.setExecutable( true, true );
@@ -158,8 +158,8 @@ public class UpdateCommand extends Command
 							{
 								sender.sendMessage( EnumColor.YELLOW + "----- Chiori Auto Updater -----" );
 								sender.sendMessage( EnumColor.RED + "SEVERE: There was a problem installing the downloaded jar in the place of your old one." );
-								sender.sendMessage( EnumColor.RED + "Sorry about that because most likely your current jar is now currupt" );
-								sender.sendMessage( EnumColor.RED + "Try redownloading this version yourself from: " + latest.getJar() );
+								sender.sendMessage( EnumColor.RED + "Sorry about that because most likely your current jar is now corrupt" );
+								sender.sendMessage( EnumColor.RED + "Try downloading this version yourself from: " + latest.getJar() );
 								sender.sendMessage( EnumColor.RED + "Details: " + latest.getHtmlUrl() );
 								sender.sendMessage( EnumColor.YELLOW + "----- ------------------- -----" );
 							}

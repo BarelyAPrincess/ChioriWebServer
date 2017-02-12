@@ -3,7 +3,9 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.event.query;
 
@@ -17,7 +19,7 @@ public class QueryEvent extends ApplicationEvent implements Cancellable
 {
 	public enum QueryType
 	{
-		CONNECTED, RECEIVED_MESSAGE;
+		CONNECTED, RECEIVED_MESSAGE
 	}
 	
 	private String reason;

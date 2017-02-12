@@ -3,9 +3,16 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.updater;
+
+import com.chiorichan.zutils.ZIO;
+import com.chiorichan.zutils.ZHttp;
+import com.chiorichan.lang.DownloadDeniedException;
+import com.chiorichan.lang.DownloadException;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -21,12 +28,6 @@ import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-
-import org.apache.commons.io.IOUtils;
-
-import com.chiorichan.lang.DownloadDeniedException;
-import com.chiorichan.lang.DownloadException;
-import com.chiorichan.util.NetworkFunc;
 
 public class Download implements Runnable
 {
@@ -208,7 +209,7 @@ public class Download implements Runnable
 		FileOutputStream fos = null;
 		try
 		{
-			HttpURLConnection conn = NetworkFunc.openHttpConnection( url );
+			HttpURLConnection conn = ZHttp.openHttpConnection( url );
 			int response = conn.getResponseCode();
 			int responseFamily = response / 100;
 
@@ -262,8 +263,8 @@ public class Download implements Runnable
 		}
 		finally
 		{
-			IOUtils.closeQuietly( fos );
-			IOUtils.closeQuietly( rbc );
+			ZIO.closeQuietly( fos );
+			ZIO.closeQuietly( rbc );
 		}
 
 		if ( exception != null )

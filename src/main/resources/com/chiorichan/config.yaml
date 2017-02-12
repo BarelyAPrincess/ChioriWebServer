@@ -92,7 +92,6 @@ sessions:
   defaultTimeoutRememberMe: 604800
   allowNoTimeoutPermission: false
   rearmTimeoutWithEachRequest: true
-  reuseVacantSessions: true
   maxSessionsPerIP: 6
   allowIPChange: false
   cleanupInterval: 5
@@ -123,6 +122,7 @@ accounts:
 sites:
   defaultTitle: Unnamed Site
   redirectMissingSubDomains: false
+  allowPublicOutsideWebroot: false
 advanced:
   cache:
     keepHistory: 30
@@ -142,7 +142,6 @@ advanced:
     - groovy
     - gsp
     - jsp
-    - chi
   security:
     unmodifiableMapsEnabled: true
     requestMapEnabled: true

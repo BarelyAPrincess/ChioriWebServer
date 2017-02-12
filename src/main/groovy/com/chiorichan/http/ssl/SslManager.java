@@ -1,29 +1,13 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- *
+ * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ * <p>
+ * All Rights Reserved.
  */
 package com.chiorichan.http.ssl;
-
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.util.SelfSignedCertificate;
-import io.netty.util.Mapping;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.net.IDN;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateExpiredException;
-import java.security.cert.X509Certificate;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.regex.Pattern;
-
-import javax.net.ssl.SSLException;
 
 import com.chiorichan.AppConfig;
 import com.chiorichan.event.EventBus;
@@ -36,15 +20,24 @@ import com.chiorichan.logger.Log;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.services.AppManager;
 import com.chiorichan.services.ServiceManager;
-import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
-import com.chiorichan.util.FileFunc;
+import com.chiorichan.zutils.ZHttp;
+import com.chiorichan.zutils.ZIO;
 import com.google.common.base.Joiner;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.util.SelfSignedCertificate;
+import io.netty.util.Mapping;
+
+import javax.net.ssl.SSLException;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateExpiredException;
+import java.security.cert.X509Certificate;
+import java.util.List;
 
 public class SslManager implements ServiceManager, Mapping<String, SslContext>
 {
-	private static final Pattern DNS_WILDCARD_PATTERN = Pattern.compile( "^\\*\\..*" );
-
 	public static Log getLogger()
 	{
 		return AppManager.manager( SslManager.class ).getLogger();
@@ -53,33 +46,6 @@ public class SslManager implements ServiceManager, Mapping<String, SslContext>
 	public static SslManager instance()
 	{
 		return AppManager.manager( SslManager.class ).instance();
-	}
-
-	public static boolean matches( String hostNameTemplate, String hostName )
-	{
-		if ( DNS_WILDCARD_PATTERN.matcher( hostNameTemplate ).matches() )
-			return hostNameTemplate.substring( 2 ).equals( hostName ) || hostName.endsWith( hostNameTemplate.substring( 1 ) );
-		else
-			return hostNameTemplate.equals( hostName );
-	}
-
-	private static boolean needsNormalization( String hostname )
-	{
-		final int length = hostname.length();
-		for ( int i = 0; i < length; i++ )
-		{
-			int c = hostname.charAt( i );
-			if ( c > 0x7F )
-				return true;
-		}
-		return false;
-	}
-
-	private static String normalizeHostname( String hostname )
-	{
-		if ( needsNormalization( hostname ) )
-			hostname = IDN.toASCII( hostname, IDN.ALLOW_UNASSIGNED );
-		return hostname.toLowerCase( Locale.US );
 	}
 
 	private File lastSslCert;
@@ -115,7 +81,7 @@ public class SslManager implements ServiceManager, Mapping<String, SslContext>
 	public File getServerCertificateFile()
 	{
 		String file = AppConfig.get().getString( "server.httpsSharedCert", "server.crt" );
-		return FileFunc.isAbsolute( file ) ? new File( file ) : new File( AppConfig.get().getDirectory().getAbsolutePath(), file );
+		return ZIO.isAbsolute( file ) ? new File( file ) : new File( AppConfig.get().getDirectory().getAbsolutePath(), file );
 	}
 
 	public String getServerCertificateSecret()
@@ -126,7 +92,7 @@ public class SslManager implements ServiceManager, Mapping<String, SslContext>
 	public File getServerKeyFile()
 	{
 		String file = AppConfig.get().getString( "server.httpsSharedKey", "server.key" );
-		return FileFunc.isAbsolute( file ) ? new File( file ) : new File( AppConfig.get().getDirectory().getAbsolutePath(), file );
+		return ZIO.isAbsolute( file ) ? new File( file ) : new File( AppConfig.get().getDirectory().getAbsolutePath(), file );
 	}
 
 	@Override
@@ -172,32 +138,20 @@ public class SslManager implements ServiceManager, Mapping<String, SslContext>
 	}
 
 	@Override
-	public SslContext map( String hostname )
+	public SslContext map( String host )
 	{
+		final String hostname = ZHttp.normalize( host );
+
 		if ( hostname != null )
 		{
-			hostname = normalizeHostname( hostname );
-
 			SslCertificateMapEvent event = EventBus.instance().callEvent( new SslCertificateMapEvent( hostname ) );
 
 			if ( event.getSslContext() != null )
 				return event.getSslContext();
 
-			for ( Site site : SiteManager.instance().getSites() )
-				if ( site.getDefaultSslContext() != null )
-					for ( Entry<String, Set<String>> e : site.getDomains().entrySet() )
-					{
-						if ( matches( normalizeHostname( "*." + e.getKey() ), hostname ) )
-							return site.getDefaultSslContext();
-
-						for ( String subdomain : e.getValue() )
-						{
-							SslContext context = site.getSslContext( e.getKey(), subdomain );
-							if ( context != null )
-								if ( matches( normalizeHostname( subdomain + "." + e.getKey() ), hostname ) )
-									return context;
-						}
-					}
+			SslContext context = SiteManager.instance().getDomainMapping( hostname ).getSslContext( true );
+			if ( context != null )
+				return context;
 		}
 
 		SslCertificateDefaultEvent event = EventBus.instance().callEvent( new SslCertificateDefaultEvent( hostname ) );
@@ -265,20 +219,27 @@ public class SslManager implements ServiceManager, Mapping<String, SslContext>
 
 		if ( updateConfig )
 		{
-			AppConfig.get().set( "server.httpsSharedCert", FileFunc.relPath( sslCert ) );
-			AppConfig.get().set( "server.httpsSharedKey", FileFunc.relPath( sslKey ) );
+			AppConfig.get().set( "server.httpsSharedCert", ZIO.relPath( sslCert ) );
+			AppConfig.get().set( "server.httpsSharedKey", ZIO.relPath( sslKey ) );
 			AppConfig.get().set( "server.httpsSharedSecret", lastSslSecret );
 			AppConfig.get().save();
 		}
 
 		X509Certificate cert = wrapper.getCertificate();
 
-		cert.checkValidity();
+		try
+		{
+			cert.checkValidity();
+		}
+		catch ( CertificateExpiredException e )
+		{
+			getLogger().severe( "The server SSL certificate is expired, please obtain a renewed certificate ASAP." );
+		}
 
 		List<String> names = wrapper.getSubjectAltDNSNamesWithException();
 		names.add( wrapper.getCommonNameWithException() );
 
-		NetworkManager.getLogger().info( String.format( "Updating default SSL cert with '%s', key '%s', and hasSecret? %s", FileFunc.relPath( sslCert ), FileFunc.relPath( sslKey ), sslSecret != null && !sslSecret.isEmpty() ) );
+		NetworkManager.getLogger().info( String.format( "Updating default SSL cert with '%s', key '%s', and hasSecret? %s", ZIO.relPath( sslCert ), ZIO.relPath( sslKey ), sslSecret != null && !sslSecret.isEmpty() ) );
 		NetworkManager.getLogger().info( EnumColor.AQUA + "The SSL Certificate has the following DNS names: " + EnumColor.GOLD + Joiner.on( EnumColor.AQUA + ", " + EnumColor.GOLD ).join( names ) );
 		NetworkManager.getLogger().info( EnumColor.AQUA + "The SSL Certificate will expire after: " + EnumColor.GOLD + Builtin.date( cert.getNotAfter() ) );
 
@@ -292,20 +253,17 @@ public class SslManager implements ServiceManager, Mapping<String, SslContext>
 	/**
 	 * Used to set/update the server wide global SSL certificate.
 	 *
-	 * @param sslCertFile
-	 *             The updated SSL Certificate
-	 * @param sslKeyFile
-	 *             The updated SSL Key
-	 * @param sslSecret
-	 *             The SSL Shared Secret
+	 * @param sslCertFile The updated SSL Certificate
+	 * @param sslKeyFile  The updated SSL Key
+	 * @param sslSecret   The SSL Shared Secret
 	 */
 	public void updateDefaultCertificateWithException( final File sslCertFile, final File sslKeyFile, final String sslSecret, boolean updateConfig ) throws FileNotFoundException, SSLException, CertificateException
 	{
 		if ( !sslCertFile.exists() )
-			throw new FileNotFoundException( "We could not set the server SSL Certificate because the '" + FileFunc.relPath( sslCertFile ) + "' (aka. SSL Cert) file does not exist" );
+			throw new FileNotFoundException( "We could not set the server SSL Certificate because the '" + ZIO.relPath( sslCertFile ) + "' (aka. SSL Cert) file does not exist" );
 
 		if ( !sslKeyFile.exists() )
-			throw new FileNotFoundException( "We could not set the server SSL Certificate because the '" + FileFunc.relPath( sslKeyFile ) + "' (aka. SSL Key) file does not exist" );
+			throw new FileNotFoundException( "We could not set the server SSL Certificate because the '" + ZIO.relPath( sslKeyFile ) + "' (aka. SSL Key) file does not exist" );
 
 		CertificateWrapper wrapper = new CertificateWrapper( sslCertFile, sslKeyFile, sslSecret );
 

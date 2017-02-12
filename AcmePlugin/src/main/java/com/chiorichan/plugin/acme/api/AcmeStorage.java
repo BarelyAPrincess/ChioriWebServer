@@ -67,7 +67,7 @@ public class AcmeStorage
 
 			for ( String domain : domains )
 			{
-				Site site = SiteManager.instance().getSiteByDomain( domain );
+				Site site = SiteManager.instance().getDomainMapping( domain ).getSite();
 
 				if ( site != null )
 				{
@@ -167,7 +167,7 @@ public class AcmeStorage
 
 			for ( String domain : domains )
 			{
-				Site site = SiteManager.instance().getSiteByDomain( domain );
+				Site site = SiteManager.instance().getDomainMapping( domain ).getSite();
 
 				if ( site != null )
 				{
@@ -253,7 +253,7 @@ public class AcmeStorage
 	{
 		for ( String domain : domains )
 		{
-			Site site = SiteManager.instance().getSiteByDomain( domain );
+			Site site = SiteManager.instance().getDomainMapping( domain ).getSite();
 
 			if ( site != null )
 				try ( OutputStream outputStream = new FileOutputStream( new File( site.directory( "ssl" ), "cert.csr" ) ) )

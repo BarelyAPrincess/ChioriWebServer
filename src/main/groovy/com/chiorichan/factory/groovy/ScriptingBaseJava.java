@@ -3,7 +3,9 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.factory.groovy;
 
@@ -14,6 +16,7 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.chiorichan.zutils.ZObjects;
 import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.database.DatabaseEngineLegacy;
@@ -28,7 +31,6 @@ import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.session.Session;
 import com.chiorichan.site.Site;
-import com.chiorichan.util.ObjectFunc;
 import com.google.common.base.Joiner;
 
 /*
@@ -48,19 +50,28 @@ public abstract class ScriptingBaseJava extends Builtin
 		return file == null ? null : file.getParentFile();
 	}
 
+	public String domain()
+	{
+		return domain( null );
+	}
+
 	public String domain( String subdomain )
 	{
-		String url = subdomain != null && !subdomain.isEmpty() ? subdomain + "." : "";
-		url += getRequest().getDomain() + "/";
-		return url;
+		StringBuilder domain = new StringBuilder();
+
+		if ( subdomain != null && subdomain.trim().length() > 0 )
+			domain.append( subdomain.trim() ).append( "." );
+
+		domain.append( getRequest().getRootDomain() ).append( "/" );
+
+		return domain.toString();
 	}
 
 	/**
 	 * Returns an instance of the current site database
 	 *
 	 * @return The site database engine
-	 * @throws IllegalStateException
-	 *              thrown if the requested database is unconfigured
+	 * @throws IllegalStateException thrown if the requested database is unconfigured
 	 */
 	public DatabaseEngineLegacy getDatabase()
 	{
@@ -77,12 +88,12 @@ public abstract class ScriptingBaseJava extends Builtin
 		return Log.get( getClass().getSimpleName() );
 	}
 
-	public Plugin getPluginbyClassname( String search ) throws PluginNotFoundException
+	public Plugin getPluginByClassname( String search ) throws PluginNotFoundException
 	{
 		return PluginManager.instance().getPluginByClassname( search );
 	}
 
-	public Plugin getPluginbyClassnameWithoutException( String search )
+	public Plugin getPluginByClassnameWithoutException( String search )
 	{
 		return PluginManager.instance().getPluginByClassnameWithoutException( search );
 	}
@@ -175,7 +186,7 @@ public abstract class ScriptingBaseJava extends Builtin
 		Map<String, String> getMap = new HashMap<String, String>( getRequest().getGetMapRaw() );
 
 		for ( Entry<String, Object> e : map.entrySet() )
-			getMap.put( e.getKey(), ObjectFunc.castToString( e.getValue() ) );
+			getMap.put( e.getKey(), ZObjects.castToString( e.getValue() ) );
 
 		if ( getMap.size() > 0 )
 			url += "?" + Joiner.on( "&" ).withKeyValueSeparator( "=" ).join( getMap );
@@ -217,8 +228,7 @@ public abstract class ScriptingBaseJava extends Builtin
 	/**
 	 * Returns a fresh built URL based on the current domain Used to produce absolute uri's within scripts, e.g., url_to( "css" ) + "stylesheet.css"
 	 *
-	 * @param subdomain
-	 *             The subdomain
+	 * @param subdomain The subdomain
 	 * @return A valid formatted URI
 	 */
 	public String url_to( String subdomain, boolean secure )

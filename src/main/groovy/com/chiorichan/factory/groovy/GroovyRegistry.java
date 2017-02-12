@@ -3,12 +3,15 @@
  * of the MIT license.  See the LICENSE file for details.
  * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ * <p>
+ * All Rights Reserved.
  */
 package com.chiorichan.factory.groovy;
 
 import com.chiorichan.AppConfig;
 import com.chiorichan.Loader;
+import com.chiorichan.Versioning;
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.AccountType;
@@ -33,7 +36,8 @@ import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Ticks;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.util.Looper;
+import com.chiorichan.zutils.Looper;
+import com.chiorichan.zutils.ZObjects;
 import com.google.common.collect.Maps;
 import groovy.lang.Binding;
 import groovy.lang.GroovyRuntimeException;
@@ -69,8 +73,8 @@ public class GroovyRegistry implements ScriptingRegistry
 	 */
 	private static final GroovyImportCustomizer imports = new GroovyImportCustomizer();
 
-	private static final Class<?>[] classImports = new Class<?>[] {References.class, NestedScript.class, Loader.class, AccountManager.class, AccountType.class, Account.class, AccountAuthenticator.class, EventBus.class, PermissionManager.class, PluginManager.class, TaskManager.class, Ticks.class, Timings.class, SessionManager.class, SiteManager.class, Site.class, ScriptingContext.class};
-	private static final String[] starImports = new String[] {"com.chiorichan.lang", "com.chiorichan.factory.api", "com.chiorichan.util", "com.chiorichan.logger", "org.apache.commons.lang3.text", "org.ocpsoft.prettytime", "java.util", "java.net", "com.google.common.base"};
+	private static final Class<?>[] classImports = new Class<?>[] {References.class, NestedScript.class, Loader.class, AccountManager.class, AccountType.class, Account.class, AccountAuthenticator.class, EventBus.class, PermissionManager.class, PluginManager.class, TaskManager.class, Ticks.class, Timings.class, SessionManager.class, SiteManager.class, Site.class, ScriptingContext.class, Versioning.class};
+	private static final String[] starImports = new String[] {"com.chiorichan.lang", "com.chiorichan.helpers", "com.chiorichan.factory.api", "com.chiorichan.zutils", "com.chiorichan.logger", "org.apache.commons.lang3.text", "org.ocpsoft.prettytime", "java.utils", "java.net", "com.google.common.base"};
 	private static final Class<?>[] staticImports = new Class<?>[] {Looper.class, ReportingLevel.class, HttpResponseStatus.class};
 	private static final GroovySandbox secure = new GroovySandbox();
 
@@ -117,7 +121,7 @@ public class GroovyRegistry implements ScriptingRegistry
 		}
 		catch ( Throwable t )
 		{
-
+			// Ignore
 		}
 		return null;
 	}
@@ -239,7 +243,7 @@ public class GroovyRegistry implements ScriptingRegistry
 		if ( source.contains( "package " ) )
 			throw new ScriptingException( ReportingLevel.E_ERROR, "Package path is predefined by Groovy Engine, remove `package` from source." );
 
-		if ( context.scriptPackage() != null )
+		if ( !ZObjects.isEmpty( context.scriptPackage() ) )
 		{
 			source = "package " + context.scriptPackage() + "; " + source;
 			context.baseSource( source );

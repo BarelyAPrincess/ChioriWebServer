@@ -3,7 +3,9 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.lang;
 
@@ -70,7 +72,7 @@ public class ScriptingException extends ApplicationException
 		if ( context instanceof ScriptingContext )
 			populateScriptTrace( ( ( ScriptingContext ) context ).factory().stack() );
 		report.addException( level, this );
-		return isIgnorable() ? false : true;
+		return !isIgnorable();
 	}
 
 	public boolean hasScriptTrace()

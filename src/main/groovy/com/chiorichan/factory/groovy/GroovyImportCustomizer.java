@@ -3,7 +3,9 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.factory.groovy;
 
@@ -20,7 +22,7 @@ import org.codehaus.groovy.control.SourceUnit;
 import org.codehaus.groovy.control.customizers.CompilationCustomizer;
 
 /**
- * This compilation customizer allows addiing various types of imports to the compilation unit. Supports adding :
+ * This compilation customizer allows adding various types of imports to the compilation unit. Supports adding :
  * <ul>
  * <li>standard imports thanks to {@link #addImport(String)}, {@link #addImport(String, String)} or {@link #addImports(String...)}</li>
  * <li>star imports thanks to {@link #addStarImport(String)} or {@link #addStarImports(String...)}</li>
@@ -115,9 +117,9 @@ public class GroovyImportCustomizer extends CompilationCustomizer
 		return this;
 	}
 	
-	private void addStarImport( final String packagename )
+	private void addStarImport( final String packageName )
 	{
-		final String packageNameEndingWithDot = packagename.endsWith( "." ) ? packagename : packagename + '.';
+		final String packageNameEndingWithDot = packageName.endsWith( "." ) ? packageName : packageName + '.';
 		imports.add( new Import( ImportType.star, packageNameEndingWithDot ) );
 	}
 	

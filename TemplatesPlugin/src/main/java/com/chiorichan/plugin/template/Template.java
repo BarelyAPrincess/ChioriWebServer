@@ -1,16 +1,7 @@
 package com.chiorichan.plugin.template;
 
-import com.chiorichan.logger.Log;
-import io.netty.buffer.Unpooled;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.commons.lang3.Validate;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-
 import com.chiorichan.AppConfig;
+import com.chiorichan.Versioning;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
@@ -21,18 +12,25 @@ import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.factory.ScriptingResult;
+import com.chiorichan.helpers.Namespace;
 import com.chiorichan.lang.ExceptionReport;
 import com.chiorichan.lang.MultipleException;
 import com.chiorichan.lang.PluginException;
 import com.chiorichan.lang.ScriptingException;
+import com.chiorichan.logger.Log;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
-import com.chiorichan.util.Namespace;
-import com.chiorichan.util.ServerFunc;
-import com.chiorichan.util.StringFunc;
-import com.chiorichan.util.Versioning;
+import com.chiorichan.zutils.ServerFunc;
+import com.chiorichan.zutils.ZObjects;
 import com.google.common.collect.Lists;
+import io.netty.buffer.Unpooled;
+import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Chiori-chan's Web Server Template Plugin
@@ -214,38 +212,38 @@ public class Template extends Plugin implements Listener
 		try
 		{
 			Site site = event.getSite();
-			Map<String, String> fwVals = event.getParams();
+			Map<String, String> fwParams = event.getParams();
 
 			if ( site == null )
 				site = SiteManager.instance().getDefaultSite();
 
-			if ( fwVals.get( "themeless" ) != null && StringFunc.isTrue( fwVals.get( "themeless" ) ) )
+			if ( fwParams.get( "themeless" ) != null && ZObjects.isTrue( fwParams.get( "themeless" ) ) )
 				return;
 
-			String theme = fwVals.get( "theme" );
-			String view = fwVals.get( "view" );
-			String title = fwVals.get( "title" );
+			String theme = fwParams.get( "theme" );
+			String view = fwParams.get( "view" );
+			String title = fwParams.get( "title" );
 
-			if ( theme == null )
+			if ( ZObjects.isNull( theme ) )
 				theme = "";
 
-			if ( view == null )
+			if ( ZObjects.isNull( view ) )
 				view = "";
 
-			if ( theme.isEmpty() && view.isEmpty() && !getConfig().getBoolean( "config.alwaysRender" ) )
+			if ( !getConfig().getBoolean( "config.alwaysRender" ) && ZObjects.isEmpty( theme ) && ZObjects.isEmpty( view ) )
 				return;
 
 			// TODO return if the request is for a none text contentType
 
-			if ( theme.isEmpty() )
+			if ( ZObjects.isEmpty( theme ) )
 				theme = "com.chiorichan.themes.default";
 
 			StringBuilder ob = new StringBuilder();
 
 			String docType = getConfig().getString( "config.defaultDocType", "html" );
 
-			if ( fwVals.get( "docType" ) != null && !fwVals.get( "docType" ).isEmpty() )
-				docType = fwVals.get( "docType" );
+			if ( fwParams.get( "docType" ) != null && !fwParams.get( "docType" ).isEmpty() )
+				docType = fwParams.get( "docType" );
 
 			ob.append( "<!DOCTYPE " + docType + ">\n" );
 			ob.append( "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n" );
@@ -270,19 +268,19 @@ public class Template extends Plugin implements Listener
 
 			boolean showCommons = !getConfig().getBoolean( "config.noCommons" );
 
-			if ( fwVals.get( "noCommons" ) != null )
-				showCommons = !StringFunc.isTrue( fwVals.get( "noCommons" ) );
+			if ( fwParams.get( "noCommons" ) != null )
+				showCommons = !ZObjects.isTrue( fwParams.get( "noCommons" ) );
 
 			List<String> headers = Lists.newArrayList();
 
-			if ( fwVals.get( "header" ) != null && !fwVals.get( "header" ).isEmpty() )
-				headers.add( fwVals.get( "header" ) );
+			if ( fwParams.get( "header" ) != null && !fwParams.get( "header" ).isEmpty() )
+				headers.add( fwParams.get( "header" ) );
 
-			Namespace ns = new Namespace( theme );
+			Namespace ns = Namespace.parseString( theme ).getParentNamespace( 2 );
 
 			if ( showCommons )
-				headers.add( ns.getParentNamespace().getParentNamespace().append( "includes.common" ).getNamespace() );
-			headers.add( ns.getParentNamespace().getParentNamespace().append( "includes." + ns.getLocalName() ).getNamespace() );
+				headers.add( ns.append( "includes.common" ).getString() );
+			headers.add( ns.append( "includes." + ns.getLocalName() ).getString() );
 
 			for ( String pack : headers )
 				try
@@ -299,7 +297,7 @@ public class Template extends Plugin implements Listener
 			String pageMark = "<!-- " + getConfig().getString( "config.defaultTag", "PAGE DATA" ) + " -->";
 			String pageData = "";
 			String viewData = "";
-			Map<String, String> params = new HashMap<String, String>( fwVals );
+			Map<String, String> params = new HashMap<>( fwParams );
 
 			if ( !theme.isEmpty() )
 			{
@@ -330,8 +328,8 @@ public class Template extends Plugin implements Listener
 
 			ob.append( pageData + "\n" );
 
-			if ( fwVals.get( "footer" ) != null && !fwVals.get( "footer" ).isEmpty() )
-				ob.append( packageRead( fwVals.get( "footer" ), event ) + "\n" );
+			if ( fwParams.get( "footer" ) != null && !fwParams.get( "footer" ).isEmpty() )
+				ob.append( packageRead( fwParams.get( "footer" ), event ) + "\n" );
 
 			ob.append( "</body>\n" );
 			ob.append( "</html>\n" );

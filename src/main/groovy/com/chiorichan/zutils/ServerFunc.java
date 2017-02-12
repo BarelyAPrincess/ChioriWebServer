@@ -3,9 +3,11 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
-package com.chiorichan.util;
+package com.chiorichan.zutils;
 
 import groovy.json.JsonSlurper;
 import io.netty.buffer.ByteBuf;
@@ -38,7 +40,7 @@ public class ServerFunc
 			// XXX Fix this! Might requite Netty Alpha 2
 			BYTE2HEX[i] = ' ' + "";// + StringUtil.byteToHexStringPadded( i );
 
-		// Generate the lookup table for hex dump paddings
+		// Generate the lookup table for hex dump padding
 		for ( i = 0; i < HEXPADDING.length; i++ )
 		{
 			int padding = HEXPADDING.length - i;
@@ -48,7 +50,7 @@ public class ServerFunc
 			HEXPADDING[i] = buf.toString();
 		}
 
-		// Generate the lookup table for byte dump paddings
+		// Generate the lookup table for byte dump padding
 		for ( i = 0; i < BYTEPADDING.length; i++ )
 		{
 			int padding = BYTEPADDING.length - i;

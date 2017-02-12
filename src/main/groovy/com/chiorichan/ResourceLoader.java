@@ -1,12 +1,18 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- *
+ * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ * <p>
+ * All Rights Reserved.
  */
 package com.chiorichan;
 
+import com.chiorichan.zutils.ZIO;
+import com.google.common.io.CharStreams;
+
+import javax.imageio.ImageIO;
 import java.awt.Image;
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -16,13 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
-
-import javax.imageio.ImageIO;
-
-import com.chiorichan.util.FileFunc;
-import com.google.common.io.CharStreams;
 
 public class ResourceLoader
 {
@@ -31,7 +31,7 @@ public class ResourceLoader
 	 */
 	public static ResourceLoader buildLoader( String resource )
 	{
-		File workingWith = FileFunc.isAbsolute( resource ) ? new File( resource ) : new File( AppConfig.get().getDirectory().getAbsolutePath(), resource );
+		File workingWith = ZIO.isAbsolute( resource ) ? new File( resource ) : new File( AppConfig.get().getDirectory().getAbsolutePath(), resource );
 
 		if ( !workingWith.exists() )
 			return null;
@@ -79,7 +79,7 @@ public class ResourceLoader
 		}
 	}
 
-	public InputStream getInputStream( String relPath ) throws ZipException, IOException
+	public InputStream getInputStream( String relPath ) throws IOException
 	{
 		if ( isZipFile )
 		{

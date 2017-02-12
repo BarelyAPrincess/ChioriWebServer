@@ -14,14 +14,14 @@ You can either build Chiori-chan's Web Server using the Eclipse IDE or preferabl
 Since version 9.4.0 (Milky Cross), Chiori-chan's Web Server uses the Chiori API. In the interest of sharing application loader code with other project by Chiori-chan. The API was developed from at least 50% of the web server code. After cloning this repository, make sure to execute `git submodule init` within the root to initialize the ChioriAPI submodule.
 
 # Coding
-Our Gradle Build environment uses the CodeStyle plugin to check coding standards incase you make mistakes.
+Our Gradle Build environment uses the CodeStyle plugin to check coding standards, as follows:
 
 * Please attempt at making your code as easily understandable as possible.
 * Leave comments whenever possible. Adding Javadoc is even more appreciated when possible.
 * No spaces; use tabs. We like our tabs, sorry.
 * No trailing whitespace.
 * Brackets should always be on a new line.
-* No 80 column limit or 'weird' midstatement newlines, try to keep your entire statement on one line.
+* No 80 column limit or 'weird' mid-statement newlines, try to keep your entire statement on one line.
 
 # Pull Request Conventions
 * The number of commits in a pull request should be kept to a minimum (squish them into one most of the time - use common sense!).
@@ -31,6 +31,9 @@ Our Gradle Build environment uses the CodeStyle plugin to check coding standards
 * Most pull requests should be accompanied by a corresponding GitHub ticket so we can associate commits with GitHub issues (this is primarily for changelog generation).
 
 # License
-Chiori Web Server is licensed under the [Mozila Public License Version 2.0](https://www.mozilla.org/en-US/MPL/2.0/). If you decide to use our server or use any of our code (In part or whole), PLEASE, we would love to hear about it. We don't require this but it's generally cool to hear what others do with our stuff.
+Chiori Web Server is licensed under the MIT License. If you decide to use our server or use any of our code (In part or whole), PLEASE, we would love to hear about it. We don't require this but it's generally cool to hear what others do with our stuff.
 
-\(C) 2015 Greenetree LLC, Chiori-chan's Web Server.
+Copyright (c) 2017 Chiori-chan <me@chiorichan.com>
+Copyright (c) 2017 Penoaks Publishing LLC. <development@penoaks.com>
+
+All Rights Reserved.

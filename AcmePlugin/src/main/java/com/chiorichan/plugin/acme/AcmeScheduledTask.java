@@ -1,22 +1,22 @@
 package com.chiorichan.plugin.acme;
 
-import java.util.HashSet;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.chiorichan.lang.EnumColor;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.acme.api.AcmeProtocol;
 import com.chiorichan.plugin.acme.certificate.CertificateMaintainer;
+import com.chiorichan.plugin.acme.lang.AcmeException;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Ticks;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class AcmeScheduledTask implements Runnable
 {
 	private static boolean domainsPending = false;
-	private static final Set<String> verifedDomains = new HashSet<>();
+	private static final Set<String> verifiedDomains = new HashSet<>();
 
 	public static boolean domainsPending()
 	{
@@ -25,7 +25,7 @@ public class AcmeScheduledTask implements Runnable
 
 	public static Set<String> getVerifiedDomains()
 	{
-		return verifedDomains;
+		return verifiedDomains;
 	}
 
 	private AcmePlugin plugin;
@@ -56,45 +56,37 @@ public class AcmeScheduledTask implements Runnable
 				throw new IllegalStateException( "The HTTPS server is disabled, Acme Plugin can't manage certificates without it enabled." );
 			}
 
-			verifedDomains.clear();
+			verifiedDomains.clear();
 			domainsPending = false;
 
-			for ( Entry<String, Set<String>> e : SiteManager.instance().getDomains().entrySet() )
+			SiteManager.instance().getDomains().filter( n -> n.getSite() != null ).forEach( node ->
 			{
-				switch ( client.checkDomainVerification( e.getKey(), null, false ) )
+				try
 				{
-					case SUCCESS:
-						verifedDomains.add( e.getKey() );
-						break;
-					case PENDING:
-						domainsPending = true;
-						break;
-					case FAILED:
-					default:
-						// Ignore, it won't get included in the new signed server certificate
-						break;
+					switch ( client.checkDomainVerification( node.getFullDomain(), null, false ) )
+					{
+						case SUCCESS:
+							verifiedDomains.add( node.getFullDomain() );
+							break;
+						case PENDING:
+							domainsPending = true;
+							break;
+						case FAILED:
+						default:
+							// Ignore, it won't get included in the new signed server certificate
+							break;
+					}
 				}
-
-				for ( String s : e.getValue() )
-					if ( s != null && !s.equals( "root" ) && s.length() > 0 )
-						switch ( client.checkDomainVerification( e.getKey(), s, false ) )
-						{
-							case SUCCESS:
-								verifedDomains.add( s + "." + e.getKey() );
-								break;
-							case PENDING:
-								domainsPending = true;
-								break;
-							case FAILED:
-							default:
-								// Ignore, it won't get included in the new signed server certificate
-								break;
-						}
-			}
+				catch ( AcmeException e )
+				{
+					// TODO Gather thrown exceptions
+					e.printStackTrace();
+				}
+			} );
 
 			if ( domainsPending )
 			{
-				plugin.getLogger().info( EnumColor.YELLOW + "Domains are currently pending verification. Certificates can not be signed or renewed until the vertification finishes." );
+				plugin.getLogger().info( EnumColor.YELLOW + "Domains are currently pending verification. Certificates can not be signed or renewed until the verification finishes." );
 				TaskManager.instance().scheduleAsyncDelayedTask( plugin, Ticks.SECOND_30, this );
 			}
 			else

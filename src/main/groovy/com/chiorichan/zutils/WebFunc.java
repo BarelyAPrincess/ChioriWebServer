@@ -3,9 +3,23 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
-package com.chiorichan.util;
+package com.chiorichan.zutils;
+
+import com.chiorichan.logger.Log;
+import com.chiorichan.tasks.Timings;
+import com.google.common.collect.Maps;
+import com.google.i18n.phonenumbers.NumberParseException;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
+import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
+import org.ocpsoft.prettytime.PrettyTime;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -17,19 +31,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.UUID;
-
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringEscapeUtils;
-import org.ocpsoft.prettytime.PrettyTime;
-
-import com.chiorichan.logger.Log;
-import com.chiorichan.tasks.Timings;
-import com.google.common.collect.Maps;
-import com.google.i18n.phonenumbers.NumberParseException;
-import com.google.i18n.phonenumbers.PhoneNumberUtil;
-import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
-import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 
 public class WebFunc
 {
@@ -174,10 +175,10 @@ public class WebFunc
 				for ( Entry<Object, Object> e : map.entrySet() )
 					try
 					{
-						if ( ObjectFunc.castToStringWithException( e.getKey() ).startsWith( ":" ) )
+						if ( ZObjects.castToStringWithException( e.getKey() ).startsWith( ":" ) )
 						{
 							map.remove( e.getKey() );
-							sb.append( " " + ObjectFunc.castToStringWithException( e.getKey() ).substring( 1 ) + "=\"" + ObjectFunc.castToStringWithException( e.getValue() ) + "\"" );
+							sb.append( " " + ZObjects.castToStringWithException( e.getKey() ).substring( 1 ) + "=\"" + ZObjects.castToStringWithException( e.getValue() ) + "\"" );
 						}
 					}
 					catch ( ClassCastException ex )
@@ -202,10 +203,8 @@ public class WebFunc
 				}
 				sb.append( "</tr>\n" );
 			}
-			else if ( row instanceof String )
-				sb.append( "<tr><td class=\"" + clss + "\" colspan=\"" + colLength + "\"><b><center>" + ( String ) row + "</b></center></td></tr>\n" );
 			else
-				sb.append( "<tr><td class=\"" + clss + "\" colspan=\"" + colLength + "\"><b><center>" + row.toString() + "</b></center></td></tr>\n" );
+				sb.append( "<tr><td class=\"" + clss + "\" colspan=\"" + colLength + "\"><b><center>" + ZObjects.castToString( row ) + "</b></center></td></tr>\n" );
 		}
 		sb.append( "</table>\n" );
 
@@ -249,7 +248,7 @@ public class WebFunc
 		Map<String, Object> newArray = new LinkedHashMap<String, Object>();
 
 		if ( !caseSensitive )
-			allowedKeys = StringFunc.toLowerCaseList( allowedKeys );
+			allowedKeys = ZStrings.toLowerCaseList( allowedKeys );
 
 		for ( Entry<String, Object> e : data.entrySet() )
 			if ( !caseSensitive && allowedKeys.contains( e.getKey().toLowerCase() ) || allowedKeys.contains( e.getKey() ) )
@@ -298,9 +297,9 @@ public class WebFunc
 			try
 			{
 				if ( pair.length > 1 )
-					result.put( URLDecoder.decode( StringFunc.trimEnd( pair[0], '%' ), "ISO-8859-1" ), URLDecoder.decode( StringFunc.trimEnd( pair[1], '%' ), "ISO-8859-1" ) );
+					result.put( URLDecoder.decode( ZStrings.trimEnd( pair[0], '%' ), "ISO-8859-1" ), URLDecoder.decode( ZStrings.trimEnd( pair[1], '%' ), "ISO-8859-1" ) );
 				else if ( pair.length == 1 )
-					result.put( URLDecoder.decode( StringFunc.trimEnd( pair[0], '%' ), "ISO-8859-1" ), "" );
+					result.put( URLDecoder.decode( ZStrings.trimEnd( pair[0], '%' ), "ISO-8859-1" ), "" );
 			}
 			catch ( IllegalArgumentException e )
 			{
@@ -336,10 +335,10 @@ public class WebFunc
 			allowedChars = new String[0];
 
 		if ( numbers )
-			allowedChars = ArrayUtils.addAll( allowedChars, new String[] {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0"} );
+			allowedChars = ArrayUtils.addAll( allowedChars, "1", "2", "3", "4", "5", "6", "7", "8", "9", "0" );
 
 		if ( letters )
-			allowedChars = ArrayUtils.addAll( allowedChars, new String[] {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"} );
+			allowedChars = ArrayUtils.addAll( allowedChars, "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z" );
 
 		String rtn = "";
 		for ( int i = 0; i < length; i++ )

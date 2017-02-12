@@ -3,17 +3,45 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.site;
+
+import com.chiorichan.zutils.ZObjects;
+
+import java.util.stream.Stream;
 
 /**
  * Implements the builtin server site with site id 'default'
  */
 public final class DefaultSite extends Site
 {
-	public DefaultSite()
+	private DomainMapping defaultMapping;
+
+	public DefaultSite( SiteManager mgr )
 	{
-		super( "default" );
+		super( mgr, "default" );
+
+		defaultMapping = new DefaultDomainMapping( this );
+	}
+
+	public DomainMapping getDefaultMapping()
+	{
+		return defaultMapping;
+	}
+
+	public Stream<DomainMapping> getMappings()
+	{
+		return Stream.concat( Stream.of( defaultMapping ), super.getMappings() );
+	}
+
+	@Override
+	public Stream<DomainMapping> getMappings( String fullDomain )
+	{
+		if ( ZObjects.isEmpty( fullDomain ) )
+			return Stream.of( defaultMapping );
+		return super.getMappings( fullDomain );
 	}
 }

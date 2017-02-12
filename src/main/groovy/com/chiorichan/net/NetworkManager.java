@@ -3,11 +3,14 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.net;
 
 import com.chiorichan.Loader;
+import com.chiorichan.zutils.ZSystem;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
@@ -41,7 +44,6 @@ import com.chiorichan.services.AppManager;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.TaskRegistrar;
 import com.chiorichan.tasks.Ticks;
-import com.chiorichan.util.Application;
 import com.google.common.collect.Lists;
 
 /**
@@ -189,7 +191,7 @@ public class NetworkManager implements TaskRegistrar, LogSource
 
 			if ( httpPort > 0 )
 			{
-				if ( Application.isPrivilegedPort( httpPort ) )
+				if ( ZSystem.isPrivilegedPort( httpPort ) )
 				{
 					getLogger().warning( "It would seem that you are trying to start ChioriWebServer's Web Server on a privileged port without root access." );
 					getLogger().warning( "Most likely you will see an exception thrown below this. http://www.w3.org/Daemon/User/Installation/PrivilegedPorts.html" );
@@ -278,7 +280,7 @@ public class NetworkManager implements TaskRegistrar, LogSource
 
 			if ( httpsPort >= 1 )
 			{
-				if ( Application.isPrivilegedPort( httpsPort ) )
+				if ( ZSystem.isPrivilegedPort( httpsPort ) )
 				{
 					getLogger().warning( "It would seem that you are trying to start ChioriWebServer's Web Server (SSL) on a privileged port without root access." );
 					getLogger().warning( "Most likely you will see an exception thrown below this. http://www.w3.org/Daemon/User/Installation/PrivilegedPorts.html" );
@@ -361,7 +363,7 @@ public class NetworkManager implements TaskRegistrar, LogSource
 
 			if ( queryPort >= 1 && AppConfig.get().getBoolean( "server.queryEnabled" ) )
 			{
-				if ( Application.isPrivilegedPort( queryPort ) )
+				if ( ZSystem.isPrivilegedPort( queryPort ) )
 				{
 					getLogger().warning( "It would seem that you are trying to start the Query Server on a privileged port without root access." );
 					getLogger().warning( "Most likely you will see an exception thrown below this. http://www.w3.org/Daemon/User/Installation/PrivilegedPorts.html" );

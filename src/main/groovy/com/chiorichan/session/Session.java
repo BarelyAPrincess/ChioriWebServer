@@ -3,17 +3,11 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.session;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.AppConfig;
 import com.chiorichan.account.AccountInstance;
@@ -28,6 +22,7 @@ import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.account.MessageEvent;
 import com.chiorichan.event.session.SessionDestroyEvent;
+import com.chiorichan.helpers.WeakReferenceList;
 import com.chiorichan.http.HttpCookie;
 import com.chiorichan.http.Nonce;
 import com.chiorichan.lang.EnumColor;
@@ -35,12 +30,18 @@ import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.util.StringFunc;
-import com.chiorichan.util.WeakReferenceList;
+import com.chiorichan.zutils.ZObjects;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.apache.commons.lang3.Validate;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * This class is used to carry data that is to be persistent from request to request.
@@ -128,7 +129,7 @@ public final class Session extends AccountPermissible implements Kickable
 
 		sessionKey = data.sessionName;
 		timeout = data.timeout;
-		knownIps.addAll( Splitter.on( "|" ).splitToList( data.ipAddr ) );
+		knownIps.addAll( Splitter.on( "|" ).splitToList( data.ipAddress ) );
 		site = SiteManager.instance().getSiteById( data.site );
 
 		if ( site == null )
@@ -149,13 +150,13 @@ public final class Session extends AccountPermissible implements Kickable
 		 * TCP IP: ?
 		 * HTTP IP: ?
 		 *
-		 * String origIpAddr = lastIpAddr;
+		 * String origIpAddress = lastIpAddress;
 		 *
 		 * // Possible Session Hijacking! nullify!!!
-		 * if ( lastIpAddr != null && !lastIpAddr.equals( origIpAddr ) && !Loader.getConfig().getBoolean( "sessions.allowIPChange" ) )
+		 * if ( lastIpAddress != null && !lastIpAddress.equals( origIpAddress ) && !Loader.getConfig().getBoolean( "sessions.allowIPChange" ) )
 		 * {
 		 * sessionCookie = null;
-		 * lastIpAddr = origIpAddr;
+		 * lastIpAddress = origIpAddress;
 		 * }
 		 */
 
@@ -295,9 +296,9 @@ public final class Session extends AccountPermissible implements Kickable
 		for ( SessionWrapper sp : wrappers )
 			if ( sp.hasSession() && sp.getSession() == this )
 			{
-				String ipAddr = sp.getIpAddr();
-				if ( ipAddr != null && !ipAddr.isEmpty() && !ips.contains( ipAddr ) )
-					ips.add( ipAddr );
+				String ipAddress = sp.getIpAddress();
+				if ( ipAddress != null && !ipAddress.isEmpty() && !ips.contains( ipAddress ) )
+					ips.add( ipAddress );
 			}
 		return ips;
 	}
@@ -323,7 +324,7 @@ public final class Session extends AccountPermissible implements Kickable
 		return nonce;
 	}
 
-	public String getSessId()
+	public String getSessionId()
 	{
 		return sessionId;
 	}
@@ -424,7 +425,7 @@ public final class Session extends AccountPermissible implements Kickable
 
 	// TODO Sessions can outlive a login.
 	// TODO Sessions can have an expiration in 7 days and a login can have an expiration of 24 hours.
-	// TODO Remember should probably make it so logins last as long as the session does. Hmmmmmm
+	// TODO Remember should probably make it so logins last as long as the session does.
 
 	@EventHandler( priority = EventPriority.NORMAL )
 	public void onAccountMessageEvent( MessageEvent event )
@@ -489,7 +490,7 @@ public final class Session extends AccountPermissible implements Kickable
 		{
 			defaultTimeout = SessionManager.getDefaultTimeoutWithLogin();
 
-			if ( StringFunc.isTrue( getVariable( "remember", "false" ) ) )
+			if ( ZObjects.isTrue( getVariable( "remember", "false" ) ) )
 				defaultTimeout = SessionManager.getDefaultTimeoutWithRememberMe();
 
 			if ( AppConfig.get().getBoolean( "allowNoTimeoutPermission" ) && checkPermission( "com.chiorichan.noTimeout" ).isTrue() )
@@ -524,7 +525,7 @@ public final class Session extends AccountPermissible implements Kickable
 
 		registerAttachment( wrapper );
 		wrappers.add( wrapper );
-		knownIps.add( wrapper.getIpAddr() );
+		knownIps.add( wrapper.getIpAddress() );
 	}
 
 	public void reload() throws SessionException
@@ -574,7 +575,7 @@ public final class Session extends AccountPermissible implements Kickable
 			data.sessionName = sessionKey;
 			data.sessionId = sessionId;
 
-			data.ipAddr = Joiner.on( "|" ).join( knownIps );
+			data.ipAddress = Joiner.on( "|" ).join( knownIps );
 
 			data.save();
 			dataChangeHistory.clear();
@@ -651,7 +652,7 @@ public final class Session extends AccountPermissible implements Kickable
 	@Override
 	public String toString()
 	{
-		return "Session{key=" + sessionKey + ",id=" + sessionId + ",ipAddr=" + getIpAddresses() + ",timeout=" + timeout + ",isInvalidated=" + isInvalidated + ",data=" + data + ",requestCount=" + requestCnt + ",site=" + site + "}";
+		return "Session{key=" + sessionKey + ",id=" + sessionId + ",ipAddress=" + getIpAddresses() + ",timeout=" + timeout + ",isInvalidated=" + isInvalidated + ",data=" + data + ",requestCount=" + requestCnt + ",site=" + site + "}";
 	}
 
 	public void unload()

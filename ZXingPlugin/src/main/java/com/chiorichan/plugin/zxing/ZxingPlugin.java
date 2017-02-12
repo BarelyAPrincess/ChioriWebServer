@@ -14,7 +14,7 @@ import com.chiorichan.lang.PluginException;
 import com.chiorichan.plugin.loader.Plugin;
 
 /**
- * TODO Implement more features from ZXing Library
+ * TODO Implement more features from Zxing Library
  * 
  * @author Chiori Greene
  * @email chiorigreene@gmail.com

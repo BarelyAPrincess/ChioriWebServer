@@ -3,12 +3,15 @@
  * of the MIT license.  See the LICENSE file for details.
  * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ * <p>
+ * All Rights Reserved.
  */
 package com.chiorichan.http;
 
 import com.chiorichan.AppConfig;
 import com.chiorichan.Loader;
+import com.chiorichan.Versioning;
 import com.chiorichan.account.Account;
 import com.chiorichan.account.AccountManager;
 import com.chiorichan.account.auth.AccountAuthenticator;
@@ -25,19 +28,14 @@ import com.chiorichan.session.Session;
 import com.chiorichan.session.SessionContext;
 import com.chiorichan.session.SessionManager;
 import com.chiorichan.session.SessionWrapper;
+import com.chiorichan.site.DomainMapping;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
-import com.chiorichan.site.SiteMapping;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.util.Namespace;
-import com.chiorichan.util.NetworkFunc;
-import com.chiorichan.util.ObjectFunc;
-import com.chiorichan.util.Pair;
-import com.chiorichan.util.StringFunc;
-import com.chiorichan.util.Versioning;
+import com.chiorichan.zutils.ZHttp;
+import com.chiorichan.zutils.ZObjects;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import io.netty.channel.Channel;
@@ -50,7 +48,6 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.ssl.SslHandler;
-import org.apache.commons.lang3.Validate;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -68,6 +65,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 
 /**
  * Wraps the Netty HttpRequest and provides shortcut methods
@@ -79,7 +77,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	public static HttpRequestWrapper getRequest()
 	{
 		if ( !references.containsKey( Thread.currentThread() ) || references.get( Thread.currentThread() ).get() == null )
-			throw new IllegalStateException( "Thread '" + Thread.currentThread().getName() + "' does not seem to currently link to any existing http requests, please try again or notify an administrator." );
+			throw new IllegalStateException( "Thread '" + Thread.currentThread().getName() + "' does not seem to currently link to any existing HTTP requests, please try again or notify an administrator." );
 		return references.get( Thread.currentThread() ).get();
 	}
 
@@ -154,11 +152,6 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	HttpVariableMapper vars = new HttpVariableMapper();
 
 	/**
-	 * The Site associated with this request
-	 */
-	Site site;
-
-	/**
 	 * Is this a SSL request
 	 */
 	final boolean ssl;
@@ -166,26 +159,18 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	/**
 	 * Files uploaded with this request
 	 */
-	final Map<String, UploadedFile> uploadedFiles = new HashMap<String, UploadedFile>();
+	final Map<String, UploadedFile> uploadedFiles = new HashMap<>();
 
 	/**
 	 * The requested URI
 	 */
 	private String uri = null;
 
-	/**
-	 * The requested root domain
-	 */
-	private String parentDomain;
-
-	/**
-	 * The requested child domain
-	 */
-	private String childDomain = "";
-
 	private boolean nonceProcessed = false;
 
 	private HttpAuthenticator auth = null;
+
+	private DomainMapping domainMapping;
 
 	HttpRequestWrapper( Channel channel, HttpRequest http, HttpHandler handler, boolean ssl, LogEvent log ) throws IOException
 	{
@@ -203,61 +188,41 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		// Create a matching HttpResponseWrapper
 		response = new HttpResponseWrapper( this, log );
 
-		String host = getHostDomain();
+		String host = ZHttp.normalize( getHostDomain() );
 
-		if ( host == null || host.length() == 0 )
+		/* We retrieve the active domain node, all further interaction with the site and routes should be done through that node. */
+
+		if ( ZObjects.isEmpty( host ) )
+			host = "localhost";
+
+		if ( ZHttp.isValidIPv4( host ) || ZHttp.isValidIPv6( host ) )
 		{
-			parentDomain = "";
-			site = SiteManager.instance().getDefaultSite();
-		}
-		else if ( NetworkFunc.isValidIPv4( host ) || NetworkFunc.isValidIPv6( host ) )
-		{
-			parentDomain = host;
-			site = SiteManager.instance().getSiteByIp( host ).get( 0 );
+			Stream<DomainMapping> domains = SiteManager.instance().getDomainMappingsByIp( host );
+			domainMapping = domains.count() == 0 ? null : domains.findFirst().orElse( null );
 		}
 		else
+			this.domainMapping = SiteManager.instance().getDomainMapping( host );
+
+		if ( domainMapping == null )
+			domainMapping = SiteManager.instance().getDefaultSite().getMappings( "" ).findFirst().orElse( null );
+
+		if ( getUri().startsWith( "/~" ) && domainMapping.getSite() == SiteManager.instance().getDefaultSite() )
 		{
-			Pair<String, SiteMapping> match = SiteMapping.get( host );
-
-			if ( match == null )
-			{
-				parentDomain = host;
-				site = SiteManager.instance().getDefaultSite();
-			}
-			else
-			{
-				parentDomain = match.getKey();
-				Namespace hostNamespace = new Namespace( host );
-				Namespace parentNamespace = new Namespace( parentDomain );
-				Namespace childNamespace = hostNamespace.subNamespace( 0, hostNamespace.getNodeCount() - parentNamespace.getNodeCount() );
-				assert hostNamespace.getNodeCount() - parentNamespace.getNodeCount() == childNamespace.getNodeCount();
-				childDomain = childNamespace.getNamespace();
-
-				site = match.getValue().getSite();
-			}
-		}
-
-		if ( site == null )
-			site = SiteManager.instance().getDefaultSite();
-
-		if ( site == SiteManager.instance().getDefaultSite() && getUri().startsWith( "/~" ) )
-		{
-			List<String> uris = Splitter.on( "/" ).omitEmptyStrings().splitToList( getUri() );
-			String siteId = uris.get( 0 ).substring( 1 );
+			String uri = getUri();
+			int inx = uri.indexOf( "/", 2 );
+			String siteId = uri.substring( 2, inx == -1 ? uri.length() - 2 : inx );
+			String newUri = inx == -1 ? "/" : uri.substring( inx );
 
 			Site siteTmp = SiteManager.instance().getSiteById( siteId );
 			if ( !siteId.equals( "wisp" ) && siteTmp != null )
 			{
-				site = siteTmp;
-				uri = "/" + Joiner.on( "/" ).join( uris.subList( 1, uris.size() ) );
-
-				// TODO Implement both a virtual and real URI for use in redirects and url_to()
-				String[] domains = site.getDomains().keySet().toArray( new String[0] );
-				parentDomain = domains.length == 0 ? host : domains[0];
+				/* Get the declared default domain mapping, the first if otherwise */
+				domainMapping = siteTmp.getDefaultMapping();
+				setUri( newUri );
 			}
 		}
 
-		// log.log( Level.INFO, "SiteId: " + site.getSiteId() + ", ParentDomain: " + parentDomain + ", ChildDomain: " + childDomain );
+		// log.log( Level.INFO, "SiteId: " + site.getSiteId() + ", ParentDomain: " + rootDomain + ", ChildDomain: " + childDomain );
 
 		try
 		{
@@ -268,8 +233,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 				{
 					// XXX This is overriding the key, why would their there be multiple values???
 					String key = p.getKey();
-					List<String> vals = p.getValue();
-					for ( String val : vals )
+					for ( String val : p.getValue() )
 						getMap.put( key, val );
 				}
 		}
@@ -279,7 +243,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		}
 
 		// Decode Cookies
-		// String var1 = URLDecoder.decode( http.headers().getAndConvert( "Cookie" ), Charsets.UTF_8.displayName() );
+		// String var1 = URLDecoder.decode( com.chiorichan.http.headers().getAndConvert( "Cookie" ), Charsets.UTF_8.displayName() );
 		String var1 = http.headers().getAndConvert( "Cookie" );
 
 		// TODO Find a way to fix missing invalid stuff
@@ -301,7 +265,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 				NetworkManager.getLogger().severe( "Failed to parse cookie for reason: " + e.getMessage() );
 				// NetworkManager.getLogger().warning( "There was a problem decoding the request cookie.", e );
 				// NetworkManager.getLogger().debug( "Cookie: " + var1 );
-				// NetworkManager.getLogger().debug( "Headers: " + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( http.headers() ) );
+				// NetworkManager.getLogger().debug( "Headers: " + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( com.chiorichan.http.headers() ) );
 			}
 
 		initServerVars();
@@ -335,19 +299,19 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	public boolean getArgumentBoolean( String key )
 	{
 		String rtn = getArgument( key, "0" ).toLowerCase();
-		return StringFunc.isTrue( rtn );
+		return ZObjects.isTrue( rtn );
 	}
 
 	public double getArgumentDouble( String key )
 	{
 		Object obj = getArgument( key, "-1.0" );
-		return ObjectFunc.castToDouble( obj );
+		return ZObjects.castToDouble( obj );
 	}
 
 	public int getArgumentInt( String key )
 	{
 		Object obj = getArgument( key, "-1" );
-		return ObjectFunc.castToInt( obj );
+		return ZObjects.castToInt( obj );
 	}
 
 	public Set<String> getArgumentKeys()
@@ -362,7 +326,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	public long getArgumentLong( String key )
 	{
 		Object obj = getArgument( key, "-1" );
-		return ObjectFunc.castToLong( obj );
+		return ZObjects.castToLong( obj );
 	}
 
 	public HttpAuthenticator getAuth()
@@ -374,10 +338,10 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 	public String getBaseUrl()
 	{
-		String url = getDomain();
+		String url = getRootDomain();
 
-		if ( getSubdomain() != null && !getSubdomain().isEmpty() )
-			url = getSubdomain() + "." + url;
+		if ( getChildDomain() != null && !getChildDomain().isEmpty() )
+			url = getChildDomain() + "." + url;
 
 		return ( isSecure() ? "https://" : "http://" ) + url;
 	}
@@ -412,9 +376,14 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		return Collections.unmodifiableSet( serverCookies );
 	}
 
-	public String getDomain()
+	public DomainMapping getDomainMapping()
 	{
-		return parentDomain == null ? "" : parentDomain;
+		return domainMapping;
+	}
+
+	public String getRootDomain()
+	{
+		return domainMapping.getRootDomain();
 	}
 
 	public String getFullDomain()
@@ -434,7 +403,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 	public String getFullDomain( String subdomain, boolean ssl )
 	{
-		return ( ssl ? "https://" : "http://" ) + ( subdomain == null || subdomain.isEmpty() ? "" : subdomain + "." ) + getDomain() + "/";
+		return ( ssl ? "https://" : "http://" ) + ( subdomain == null || subdomain.isEmpty() ? "" : subdomain + "." ) + getRootDomain() + "/";
 	}
 
 	public String getFullUrl()
@@ -486,10 +455,10 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 	public String getHost()
 	{
-		return http.headers().getAndConvert( "Host" );
+		return ZHttp.normalize( http.headers().getAndConvert( "Host" ) );
 	}
 
-	private String getHostDomain()
+	public String getHostDomain()
 	{
 		if ( http.headers().contains( "Host" ) )
 			return http.headers().getAndConvert( "Host" ).split( "\\:" )[0];
@@ -539,14 +508,14 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	}
 
 	/**
-	 * Similar to {@link #getIpAddr(boolean)} except defaults to true
+	 * Similar to {@link #getIpAddress(boolean)} except defaults to true
 	 *
 	 * @return the remote connections IP address as a string
 	 */
 	@Override
-	public String getIpAddr()
+	public String getIpAddress()
 	{
-		return getIpAddr( true );
+		return getIpAddress( true );
 	}
 
 	/**
@@ -557,7 +526,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	 * @param detectCDN Try to detect the use of CDNs, e.g., CloudFlare, IP headers when set to false.
 	 * @return the remote connections IP address as a string
 	 */
-	public String getIpAddr( boolean detectCDN )
+	public String getIpAddress( boolean detectCDN )
 	{
 		// TODO Implement other CDNs
 		if ( detectCDN && http.headers().contains( "CF-Connecting-IP" ) )
@@ -571,7 +540,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		return ( ( InetSocketAddress ) channel.localAddress() ).getHostName();
 	}
 
-	public String getLocalIpAddr()
+	public String getLocalIpAddress()
 	{
 		return ( ( InetSocketAddress ) channel.localAddress() ).getAddress().getHostAddress();
 	}
@@ -584,9 +553,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	@Override
 	public Site getLocation()
 	{
-		if ( site == null )
-			site = SiteManager.instance().getDefaultSite();
-		return site;
+		return domainMapping.getSite();
 	}
 
 	public HttpRequest getOriginal()
@@ -702,11 +669,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	@Override
 	protected HttpCookie getServerCookie( String key )
 	{
-		for ( HttpCookie cookie : serverCookies )
-			if ( cookie.getKey().equals( key ) )
-				return cookie;
-
-		return null;
+		return serverCookies.stream().filter( c -> c.getKey().equals( key ) ).findFirst().orElse( null );
 	}
 
 	public Site getSite()
@@ -714,9 +677,9 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		return getLocation();
 	}
 
-	public String getSubdomain()
+	public String getChildDomain()
 	{
-		return childDomain == null ? "" : childDomain;
+		return domainMapping.getChildDomain();
 	}
 
 	public Map<String, UploadedFile> getUploadedFiles()
@@ -778,7 +741,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 	public String getWebSocketLocation( HttpObject req )
 	{
-		String location = getHost() + "/fw/websocket";
+		String location = getHost() + "/wisp/websocket";
 		if ( ssl )
 			return "wss://" + location;
 		else
@@ -814,12 +777,12 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		vars.put( ServerVars.HTTP_ACCEPT_LANGUAGE, getHeader( "Accept-Language" ) );
 		vars.put( ServerVars.HTTP_X_REQUESTED_WITH, getHeader( "X-requested-with" ) );
 		vars.put( ServerVars.REMOTE_HOST, getRemoteHostname() );
-		vars.put( ServerVars.REMOTE_ADDR, getIpAddr() );
+		vars.put( ServerVars.REMOTE_ADDR, getIpAddress() );
 		vars.put( ServerVars.REMOTE_PORT, getRemotePort() );
 		vars.put( ServerVars.REQUEST_TIME, getRequestTime() );
 		vars.put( ServerVars.REQUEST_URI, getUri() );
 		vars.put( ServerVars.CONTENT_LENGTH, getContentLength() );
-		vars.put( ServerVars.SERVER_IP, getLocalIpAddr() );
+		vars.put( ServerVars.SERVER_IP, getLocalIpAddress() );
 		vars.put( ServerVars.SERVER_NAME, Versioning.getProductSimple() );
 		vars.put( ServerVars.SERVER_PORT, getLocalPort() );
 		vars.put( ServerVars.HTTPS, isSecure() );
@@ -851,7 +814,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	 */
 	public boolean isAjaxRequest()
 	{
-		return getHeader( "X-requested-with" ) == null ? false : getHeader( "X-requested-with" ).equals( "XMLHttpRequest" );
+		return getHeader( "X-requested-with" ) != null && getHeader( "X-requested-with" ).equals( "XMLHttpRequest" );
 	}
 
 	public boolean isCDN()
@@ -1046,18 +1009,15 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		getBinding().setVariable( "response", getResponse() );
 	}
 
-	protected void setSite( Site site )
+	void setDomainMapping( DomainMapping domainMapping )
 	{
-		Validate.notNull( site );
-		this.site = site;
+		ZObjects.notNull( domainMapping );
+		this.domainMapping = domainMapping;
 	}
 
 	void setUri( String uri )
 	{
-		this.uri = uri;
-
-		if ( !uri.startsWith( "/" ) )
-			uri = "/" + uri;
+		this.uri = uri.startsWith( "/" ) ? uri : "/" + uri;
 	}
 
 	protected boolean validateLogins()
@@ -1105,8 +1065,8 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 				SessionManager.getLogger().info( EnumColor.GREEN + "Successful Login: [id='" + acct.getId() + "',siteId='" + ( acct.getLocation() == null ? null : acct.getLocation().getId() ) + "',authenticator='plaintext']" );
 
-				if ( site.getLoginPost() != null )
-					getResponse().sendRedirect( site.getLoginPost() );
+				if ( getSite().getLoginPost() != null )
+					getResponse().sendRedirect( getSite().getLoginPost() );
 				else
 					getResponse().sendLoginPage( "Your have been successfully logged in!", "success" );
 			}
@@ -1154,9 +1114,9 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		}
 
 		// Will we ever be using a session on more than one domains?
-		if ( !getDomain().isEmpty() && session.getSessionCookie() != null && !session.getSessionCookie().getDomain().isEmpty() )
-			if ( !session.getSessionCookie().getDomain().endsWith( getDomain() ) )
-				NetworkManager.getLogger().warning( "The site `" + site.getId() + "` specifies the session cookie domain as `" + session.getSessionCookie().getDomain() + "` but the request was made on domain `" + getDomain() + "`. The session will not remain persistent." );
+		if ( !getRootDomain().isEmpty() && session.getSessionCookie() != null && !session.getSessionCookie().getDomain().isEmpty() )
+			if ( !session.getSessionCookie().getDomain().endsWith( getRootDomain() ) )
+				NetworkManager.getLogger().warning( "The site `" + getSite().getId() + "` specifies the session cookie domain as `" + session.getSessionCookie().getDomain() + "` but the request was made on domain `" + getRootDomain() + "`. The session will not remain persistent." );
 
 		return false;
 	}

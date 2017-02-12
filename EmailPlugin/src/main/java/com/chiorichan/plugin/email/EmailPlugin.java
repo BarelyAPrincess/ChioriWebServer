@@ -36,7 +36,7 @@ public class EmailPlugin extends Plugin
 		String host = getConfig().getString( "mail.host" );
 		
 		if ( host == null || "mail.example.com".equals( host ) )
-			throw new MessagingException( "It would appear that e-mail plugin is configed to use the default host, configuration must be updated before you can use this plugin." );
+			throw new MessagingException( "It would appear that e-mail plugin is configured to use the default host, configuration must be updated before you can use this plugin." );
 		
 		int port = getConfig().getInt( "mail.smtpport", 25 );
 		String user = getConfig().getString( "mail.login" );

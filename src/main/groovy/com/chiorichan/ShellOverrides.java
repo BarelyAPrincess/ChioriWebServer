@@ -3,7 +3,9 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan;
 
@@ -18,10 +20,10 @@ import com.chiorichan.logger.Log;
 import com.google.common.collect.Maps;
 
 /**
- * Loads InterpreterOverrides from InterpreterOverrides.properties file.
+ * Loads ShellOverrides from shells.properties file.
  * This file is used to override what Interpreter will handle a particular file extension.
  */
-public class InterpreterOverrides
+public class ShellOverrides
 {
 	static Map<String, String> interpreters = Maps.newLinkedHashMap();
 
@@ -29,12 +31,12 @@ public class InterpreterOverrides
 	{
 		try
 		{
-			File contentTypes = new File( AppConfig.get().getDirectory().getAbsolutePath(), "InterpreterOverrides.properties" );
+			File contentTypes = new File( AppConfig.get().getDirectory().getAbsolutePath(), "shells.properties" );
 
 			if ( !contentTypes.exists() )
 				contentTypes.createNewFile();
 
-			InputStream isDefault = Loader.class.getClassLoader().getResourceAsStream( "com/chiorichan/InterpreterOverrides.properties" );
+			InputStream isDefault = Loader.class.getClassLoader().getResourceAsStream( "com/chiorichan/shells.properties" );
 			InputStream is = new FileInputStream( contentTypes );
 			try
 			{
@@ -66,8 +68,8 @@ public class InterpreterOverrides
 	{
 		try
 		{
-			String[] exts = file.split( "\\." );
-			return exts[exts.length - 1];
+			String[] extension = file.split( "\\." );
+			return extension[extension.length - 1];
 		}
 		catch ( Throwable t )
 		{

@@ -3,18 +3,11 @@
  * of the MIT license.  See the LICENSE file for details.
  *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
- * All Rights Reserved
+ * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ *
+ * All Rights Reserved.
  */
 package com.chiorichan.net.query;
-
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandler.Sharable;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
-
-import java.io.IOException;
-import java.net.InetSocketAddress;
 
 import com.chiorichan.AppConfig;
 import com.chiorichan.account.Kickable;
@@ -27,8 +20,16 @@ import com.chiorichan.terminal.CommandDispatch;
 import com.chiorichan.terminal.QueryTerminalEntity;
 import com.chiorichan.terminal.TerminalEntity;
 import com.chiorichan.terminal.TerminalHandler;
-import com.chiorichan.util.StringFunc;
-import com.chiorichan.util.Utils;
+import com.chiorichan.zutils.ZObjects;
+import com.chiorichan.zutils.ZSystem;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandler.Sharable;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
 
 /**
  * Handles the Query Server traffic
@@ -51,8 +52,8 @@ public class QueryServerTerminal extends SimpleChannelInboundHandler<String> imp
 
 		if ( NetworkEventFactory.buildQueryConnected( this, ctx ) )
 		{
-			println( "Server Uptime: " + Utils.uptime() );
-			println( "The last visit from IP " + terminal.getIpAddr() + " is unknown." );
+			println( "Server Uptime: " + ZSystem.uptime() );
+			println( "The last visit from IP " + terminal.getIpAddress() + " is unknown." );
 			// TODO Add more information here
 
 			terminal.resetPrompt();
@@ -80,7 +81,7 @@ public class QueryServerTerminal extends SimpleChannelInboundHandler<String> imp
 
 	public boolean disconnect( String msg )
 	{
-		NetworkManager.getLogger().info( EnumColor.YELLOW + "The connection to Query Client `" + getIpAddr() + "` is being disconnected with message `" + msg + "`." );
+		NetworkManager.getLogger().info( EnumColor.YELLOW + "The connection to Query Client `" + getIpAddress() + "` is being disconnected with message `" + msg + "`." );
 		ChannelFuture future = context.writeAndFlush( "\r" + parseColor( msg ) + "\r\n" );
 		future.addListener( ChannelFutureListener.CLOSE );
 		return true;
@@ -100,7 +101,7 @@ public class QueryServerTerminal extends SimpleChannelInboundHandler<String> imp
 	}
 
 	@Override
-	public String getIpAddr()
+	public String getIpAddress()
 	{
 		return ( ( InetSocketAddress ) context.channel().remoteAddress() ).getAddress().getHostAddress();
 	}
@@ -124,24 +125,24 @@ public class QueryServerTerminal extends SimpleChannelInboundHandler<String> imp
 		if ( text == null || text.isEmpty() )
 			return "";
 
-		if ( !AppConfig.get().getBoolean( "server.queryUseColor" ) || terminal != null && !StringFunc.isTrue( terminal.getVariable( "color", "true" ) ) )
+		if ( !AppConfig.get().getBoolean( "server.queryUseColor" ) || terminal != null && !ZObjects.isTrue( terminal.getVariable( "color", "true" ) ) )
 			return EnumColor.removeAltColors( text );
 		else
 			return EnumColor.transAltColors( text );
 	}
 
 	@Override
-	public void print( String... msgs )
+	public void print( String... messages )
 	{
-		for ( String msg : msgs )
+		for ( String msg : messages )
 			context.write( parseColor( msg ) );
 		context.flush();
 	}
 
 	@Override
-	public void println( String... msgs )
+	public void println( String... messages )
 	{
-		for ( String msg : msgs )
+		for ( String msg : messages )
 			context.write( "\r" + parseColor( msg ) + "                   " + "\r\n" );
 		context.flush();
 		if ( terminal != null )
