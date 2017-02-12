@@ -1,4 +1,4 @@
 [submodule "ChioriAPI"]
 	path = ChioriAPI
-	url = github.com/ChioriGreene/ChioriAPI.git
+	url = https://github.com/ChioriGreene/ChioriAPI.git
 	branch = master
