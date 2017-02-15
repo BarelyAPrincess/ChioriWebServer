@@ -403,6 +403,26 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 	public String getFullDomain( String subdomain, boolean ssl )
 	{
+		return ( ssl ? "https://" : "http://" ) + ( subdomain == null || subdomain.isEmpty() ? getHostDomain() : subdomain + "." + getRootDomain() ) + "/";
+	}
+
+	public String getTopDomain()
+	{
+		return getFullDomain( null, ssl );
+	}
+
+	public String getTopDomain( boolean ssl )
+	{
+		return getFullDomain( null, ssl );
+	}
+
+	public String getTopDomain( String subdomain )
+	{
+		return getFullDomain( subdomain, ssl );
+	}
+
+	public String getTopDomain( String subdomain, boolean ssl )
+	{
 		return ( ssl ? "https://" : "http://" ) + ( subdomain == null || subdomain.isEmpty() ? "" : subdomain + "." ) + getRootDomain() + "/";
 	}
 

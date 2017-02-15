@@ -154,10 +154,10 @@ public class Routes
 				if ( matches.size() > 0 )
 					return ( Route ) matches.values().toArray()[0];
 				else
-					Log.get().fine( String.format( "Failed to find a page redirect... {Host=%s,Uri=%s}", host, uri ) );
+					Log.get().fine( String.format( "Failed to find a page redirect... {host=%s,uri=%s}", host, uri ) );
 			}
 			else
-				Log.get().fine( String.format( "Failed to find a page redirect... {Host=%s,Uri=%s}", host, uri ) );
+				Log.get().fine( String.format( "Failed to find a page redirect... {host=%s,uri=%s}", host, uri ) );
 
 			return null;
 		}

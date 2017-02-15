@@ -9,33 +9,31 @@
  */
 package com.chiorichan.zutils
 
-
 /**
  * Provides do... until/while ability to groovy scripts
- * Which as of Jan 2014 was not implemented into groovy
- */
+ * Which as of Jan 2014 was not implemented into groovy*/
 public class Looper
 {
 	private Closure code
-	
+
 	public static Looper go( Closure code )
 	{
-		new Looper(code:code)
+		new Looper( code: code )
 	}
-	
+
 	public void until( Closure test )
 	{
 		code()
-		while (!test())
+		while ( !test() )
 		{
 			code()
 		}
 	}
-	
+
 	public void while0( Closure test )
 	{
 		code()
-		while (test())
+		while ( test() )
 		{
 			code()
 		}

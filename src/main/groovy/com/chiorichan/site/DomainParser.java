@@ -105,7 +105,7 @@ public class DomainParser
 
 	public Namespace getRootDomain()
 	{
-		return Namespace.parseString( sub.getFirst() + "." + tld.getString() );
+		return Namespace.parseString( sub.getLast() + "." + tld.getString() );
 	}
 
 	public Namespace getChildDomain()
