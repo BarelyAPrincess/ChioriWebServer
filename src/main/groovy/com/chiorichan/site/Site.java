@@ -368,7 +368,7 @@ public class Site implements AccountLocation
 				{
 					DomainMapping mappingNew = mapping == null ? getMappings( domainKey ).findFirst().get() : mapping.getChildMapping( domainKey );
 					mappingNew.map();
-					mapDomain( domains.getConfigurationSection( key ), mappingNew, depth++ );
+					mapDomain( domains.getConfigurationSection( key ), mappingNew, depth + 1 );
 				}
 				catch ( IllegalStateException e )
 				{

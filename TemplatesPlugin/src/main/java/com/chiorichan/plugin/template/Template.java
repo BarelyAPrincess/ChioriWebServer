@@ -28,6 +28,7 @@ import io.netty.buffer.Unpooled;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -263,24 +264,22 @@ public class Template extends Plugin implements Listener
 			else
 				ob.append( "<title>" + title + " - " + siteTitle + "</title>\n" );
 
-			// for ( String tag : site.getMetatags() )
-			// ob.append( tag + "\n" );
-
 			boolean showCommons = !getConfig().getBoolean( "config.noCommons" );
 
 			if ( fwParams.get( "noCommons" ) != null )
 				showCommons = !ZObjects.isTrue( fwParams.get( "noCommons" ) );
 
-			List<String> headers = Lists.newArrayList();
+			List<String> headers = new ArrayList<>();
 
 			if ( fwParams.get( "header" ) != null && !fwParams.get( "header" ).isEmpty() )
 				headers.add( fwParams.get( "header" ) );
 
-			Namespace ns = Namespace.parseString( theme ).getParentNamespace( 2 );
+			Namespace ns = Namespace.parseString( theme );
+			Namespace pns = ns.getParentNamespace( 2 );
 
 			if ( showCommons )
-				headers.add( ns.append( "includes.common" ).getString() );
-			headers.add( ns.append( "includes." + ns.getLocalName() ).getString() );
+				headers.add( pns.appendNew( "includes.common" ).getString() );
+			headers.add( pns.appendNew( "includes." + ns.getLocalName() ).getString() );
 
 			for ( String pack : headers )
 				try

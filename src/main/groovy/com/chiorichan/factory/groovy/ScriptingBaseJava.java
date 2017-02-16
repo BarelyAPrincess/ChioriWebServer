@@ -196,6 +196,16 @@ public abstract class ScriptingBaseJava extends Builtin
 			if ( !url.endsWith( "/" ) )
 				url = url + "/";
 
+			if ( route.hasParam( "domain" ) )
+			{
+				String domain = ZHttp.normalize( route.getParam( "domain" ) );
+				if ( ZObjects.isEmpty( domain ) )
+					return getRequest().getFullDomain() + url;
+				if ( domain.startsWith( "http" ) )
+					return domain + url;
+				return ( getRequest().isSecure() ? "https://" : "http://" ) + domain + "/" + url;
+			}
+
 			/* Validates if the host string could be used as the domain, meaning it's a simple (or not) regex string */
 			if ( route.hasParam( "host" ) && !ZObjects.isEmpty( route.getParam( "host" ) ) )
 			{
@@ -210,8 +220,7 @@ public abstract class ScriptingBaseJava extends Builtin
 				{
 					if ( host.startsWith( "http" ) )
 						return host + url;
-					else
-						return ( getRequest().isSecure() ? "https://" : "http://" ) + host + "/" + url;
+					return ( getRequest().isSecure() ? "https://" : "http://" ) + host + "/" + url;
 				}
 			}
 
