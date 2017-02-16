@@ -71,6 +71,11 @@ public class SiteManager implements ServiceProvider, LogSource, ServiceManager, 
 		return DomainTree.getChildren().map( DomainNode::getDomainMapping ).filter( m -> m != null && m.getConfig( "ip" ) != null && ( m.getConfig( "ip" ).equals( ip ) || m.getConfig( "ip" ).matches( ip ) ) );
 	}
 
+	public Stream<DomainMapping> getDomainMappingsById( String id )
+	{
+		return DomainTree.getChildren().map( DomainNode::getDomainMapping ).filter( m -> m != null && m.getConfig( "id" ) != null && ( m.getConfig( "id" ).equals( id ) || m.getConfig( "id" ).matches( id ) ) );
+	}
+
 	public Stream<DomainMapping> getDomainMappings()
 	{
 		return DomainTree.getChildren().map( DomainNode::getDomainMapping );

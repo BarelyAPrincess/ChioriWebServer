@@ -17,6 +17,7 @@ import com.chiorichan.net.NetworkManager;
 import com.chiorichan.site.DomainMapping;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.zutils.ZIO;
+import com.chiorichan.zutils.ZObjects;
 import com.google.common.collect.Maps;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
@@ -55,6 +56,17 @@ public class WebInterpreter extends FileInterpreter
 			request.setUri( uri.substring( 5 ) );
 			routes = defaultMapping.getSite().getRoutes();
 		}
+		else
+		{
+			DomainMapping mapping = request.getDomainMapping();
+			if ( mapping.hasConfig( "redirect" ) && !ZObjects.isEmpty( mapping.getConfig( "redirect" ) ) )
+			{
+				String url = mapping.getConfig( "redirect" );
+				status = HttpResponseStatus.valueOf( ZObjects.castToInt( mapping.getConfig( "redirectCode" ), 301 ) );
+				request.getResponse().sendRedirect( url.toLowerCase().startsWith( "http" ) ? url : request.getFullDomain() + url, status.code() );
+				return;
+			}
+		}
 
 		Route route = routes.searchRoutes( uri, request.getHostDomain() );
 
@@ -67,7 +79,7 @@ public class WebInterpreter extends FileInterpreter
 			if ( route.isRedirect() )
 			{
 				status = HttpResponseStatus.valueOf( route.httpCode() );
-				request.getResponse().sendRedirect( route.getRedirect().toLowerCase().startsWith( "com/chiorichan/http" ) ? route.getRedirect() : ( request.isSecure() ? "https://" : "http://" ) + request.getRootDomain() + route.getRedirect(), status.code() );
+				request.getResponse().sendRedirect( route.getRedirect().toLowerCase().startsWith( "http" ) ? route.getRedirect() : request.getFullDomain() + route.getRedirect(), status.code() );
 				return;
 			}
 

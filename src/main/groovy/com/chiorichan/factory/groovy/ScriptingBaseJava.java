@@ -1,23 +1,13 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- *
+ * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
- *
+ * <p>
  * All Rights Reserved.
  */
 package com.chiorichan.factory.groovy;
-
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import com.chiorichan.zutils.ZObjects;
-import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.database.DatabaseEngineLegacy;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
@@ -30,8 +20,20 @@ import com.chiorichan.logger.Log;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.session.Session;
+import com.chiorichan.site.DomainMapping;
 import com.chiorichan.site.Site;
-import com.google.common.base.Joiner;
+import com.chiorichan.site.SiteManager;
+import com.chiorichan.zutils.ZMaps;
+import com.chiorichan.zutils.ZObjects;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /*
  * XXX This deprecated class has already been ported to ScriptApiBase class
@@ -152,6 +154,17 @@ public abstract class ScriptingBaseJava extends Builtin
 		return getSession().getNonce();
 	}
 
+	public String url_id( String id )
+	{
+		return url_id( id, getRequest().isSecure() );
+	}
+
+	public String url_id( String id, boolean ssl )
+	{
+		Optional<DomainMapping> result = SiteManager.instance().getDomainMappingsById( id ).findFirst();
+		return result.isPresent() ? ( ssl ? "https://" : "http://" ) + result.get().getFullDomain() + "/" : null;
+	}
+
 	public String uri_to()
 	{
 		return getRequest().getFullUrl();
@@ -179,17 +192,17 @@ public abstract class ScriptingBaseJava extends Builtin
 
 	public String url_get_append( String subdomain, Map<String, Object> map )
 	{
-		Validate.notNull( map, "Map can not be null" );
+		ZObjects.notNull( map, "Map can not be null" );
 
 		String url = getRequest().getFullUrl( subdomain );
 
-		Map<String, String> getMap = new HashMap<String, String>( getRequest().getGetMapRaw() );
+		Map<String, String> getMap = new HashMap<>( getRequest().getGetMapRaw() );
 
 		for ( Entry<String, Object> e : map.entrySet() )
 			getMap.put( e.getKey(), ZObjects.castToString( e.getValue() ) );
 
 		if ( getMap.size() > 0 )
-			url += "?" + Joiner.on( "&" ).withKeyValueSeparator( "=" ).join( getMap );
+			url += "?" + getMap.entrySet().stream().map( e -> e.getKey() + "=" + e.getValue() ).collect( Collectors.joining( "&" ) );
 
 		return url;
 	}
@@ -201,15 +214,10 @@ public abstract class ScriptingBaseJava extends Builtin
 
 	public String url_get_append( String subdomain, String key, Object val )
 	{
-		Validate.notNull( key );
-		Validate.notNull( val );
+		ZObjects.notNull( key );
+		ZObjects.notNull( val );
 
-		return url_get_append( subdomain, new HashMap<String, Object>()
-		{
-			{
-				put( key, val );
-			}
-		} );
+		return url_get_append( subdomain, ZMaps.newHashMap( key, val ) );
 	}
 
 	/**

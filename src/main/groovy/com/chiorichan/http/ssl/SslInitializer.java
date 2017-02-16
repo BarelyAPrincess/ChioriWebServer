@@ -49,6 +49,6 @@ public class SslInitializer extends ChannelInitializer<SocketChannel>
 		p.addLast( "deflater", new HttpContentCompressor() );
 		p.addLast( "handler", new HttpHandler( true ) );
 
-		activeChannels.add( new WeakReference<SocketChannel>( ch ) );
+		activeChannels.add( new WeakReference<>( ch ) );
 	}
 }

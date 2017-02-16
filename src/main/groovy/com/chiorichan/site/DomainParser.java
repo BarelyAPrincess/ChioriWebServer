@@ -1,10 +1,10 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- *
+ * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
- *
+ * <p>
  * All Rights Reserved.
  */
 package com.chiorichan.site;
@@ -54,8 +54,8 @@ public class DomainParser
 
 		if ( ZObjects.isEmpty( fullDomain ) )
 		{
-			tld = Namespace.create();
-			sub = Namespace.create();
+			tld = new Namespace();
+			sub = new Namespace();
 			return;
 		}
 
@@ -79,11 +79,11 @@ public class DomainParser
 				parentNodePos--; */
 
 			tld = ns.subNamespace( parentNodePos );
-			sub = parentNodePos > 0 ? ns.subNamespace( 0, parentNodePos ) : Namespace.create();
+			sub = parentNodePos > 0 ? ns.subNamespace( 0, parentNodePos ) : new Namespace();
 		}
 		else
 		{
-			tld = Namespace.create();
+			tld = new Namespace();
 			sub = ns;
 		}
 	}
@@ -110,6 +110,6 @@ public class DomainParser
 
 	public Namespace getChildDomain()
 	{
-		return sub.getNodeCount() <= 1 ? Namespace.create() : sub.subNamespace( 1 );
+		return sub.getNodeCount() <= 1 ? new Namespace() : sub.subNamespace( 1 );
 	}
 }

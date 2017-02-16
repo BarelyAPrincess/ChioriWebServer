@@ -20,6 +20,7 @@ import com.chiorichan.logger.Log;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.services.AppManager;
 import com.chiorichan.services.ServiceManager;
+import com.chiorichan.site.DomainMapping;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.zutils.ZHttp;
 import com.chiorichan.zutils.ZIO;
@@ -149,9 +150,13 @@ public class SslManager implements ServiceManager, Mapping<String, SslContext>
 			if ( event.getSslContext() != null )
 				return event.getSslContext();
 
-			SslContext context = SiteManager.instance().getDomainMapping( hostname ).getSslContext( true );
-			if ( context != null )
-				return context;
+			DomainMapping mapping = SiteManager.instance().getDomainMapping( hostname );
+			if ( mapping != null )
+			{
+				SslContext context = mapping.getSslContext( true );
+				if ( context != null )
+					return context;
+			}
 		}
 
 		SslCertificateDefaultEvent event = EventBus.instance().callEvent( new SslCertificateDefaultEvent( hostname ) );

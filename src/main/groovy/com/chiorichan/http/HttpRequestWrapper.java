@@ -64,6 +64,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
@@ -72,7 +73,7 @@ import java.util.stream.Stream;
  */
 public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 {
-	private static final Map<Thread, WeakReference<HttpRequestWrapper>> references = Maps.newConcurrentMap();
+	private static final Map<Thread, WeakReference<HttpRequestWrapper>> references = new ConcurrentHashMap<>();
 
 	public static HttpRequestWrapper getRequest()
 	{
@@ -83,7 +84,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 	private static void putRequest( HttpRequestWrapper request )
 	{
-		references.put( Thread.currentThread(), new WeakReference<HttpRequestWrapper>( request ) );
+		references.put( Thread.currentThread(), new WeakReference<>( request ) );
 	}
 
 	/**
@@ -845,6 +846,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 	public boolean isSecure()
 	{
+		// TODO Is this reliable or should we respond based on the ssl param?
 		return channel.pipeline().get( SslHandler.class ) != null;
 	}
 

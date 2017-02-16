@@ -129,7 +129,7 @@ public class Route
 
 	public int httpCode()
 	{
-		return params.get( "status" ) == null || params.get( "status" ).isEmpty() ? 301 : Integer.parseInt( params.get( "status" ) );
+		return ZObjects.isEmpty( params.get( "status" ) ) ? 301 : Integer.parseInt( params.get( "status" ) );
 	}
 
 	public boolean isRedirect()

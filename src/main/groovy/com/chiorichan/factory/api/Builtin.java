@@ -1,29 +1,28 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- *
+ * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
- *
+ * <p>
  * All Rights Reserved.
  */
 package com.chiorichan.factory.api;
 
 import com.chiorichan.AppConfig;
+import com.chiorichan.Versioning;
 import com.chiorichan.database.DatabaseEngineLegacy;
-import com.chiorichan.zutils.ZIO;
-import com.chiorichan.zutils.ZObjects;
 import com.chiorichan.lang.DiedException;
 import com.chiorichan.logger.Log;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.zutils.ZEncryption;
-import com.chiorichan.Versioning;
 import com.chiorichan.zutils.WebFunc;
+import com.chiorichan.zutils.ZEncryption;
+import com.chiorichan.zutils.ZIO;
+import com.chiorichan.zutils.ZObjects;
 import com.chiorichan.zutils.ZStrings;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
@@ -51,9 +50,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public abstract class Builtin extends Script
 {
@@ -98,6 +100,31 @@ public abstract class Builtin extends Script
 	public static String asString( Object obj )
 	{
 		return ZObjects.castToString( obj );
+	}
+
+	public Boolean asBool( Object obj, Boolean def )
+	{
+		return ZObjects.castToBool( obj, def );
+	}
+
+	public Double asDouble( Object obj, Double def )
+	{
+		return ZObjects.castToDouble( obj, def );
+	}
+
+	public Integer asInt( Object obj, Integer def )
+	{
+		return ZObjects.castToInt( obj, def );
+	}
+
+	public Long asLong( Object obj, Long def )
+	{
+		return ZObjects.castToLong( obj, def );
+	}
+
+	public String asString( Object obj, String def )
+	{
+		return ZObjects.castToString( obj, def );
 	}
 
 	public static byte[] base64Decode( String str )
@@ -450,34 +477,19 @@ public abstract class Builtin extends Script
 		return dirname( ZIO.isAbsolute( path ) ? new File( path ) : new File( AppConfig.get().getDirectory().getAbsolutePath(), path ), levels );
 	}
 
-	public static boolean empty( Collection<Object> list )
+	public static boolean empty( Object obj )
 	{
-		return list == null || list.size() < 1;
+		return ZObjects.isEmpty( obj );
 	}
 
-	@SuppressWarnings( "rawtypes" )
-	public static boolean empty( Iterator list )
+	public static boolean isNull( Object obj )
 	{
-		return list == null || list.hasNext();
+		return ZObjects.isNull( obj );
 	}
 
-	public static boolean empty( Map<Object, Object> maps )
+	public static boolean isTrue( Object obj )
 	{
-		return maps == null || maps.size() < 1;
-	}
-
-	public static boolean empty( Object o )
-	{
-		return o == null;
-	}
-
-	public static boolean empty( String var )
-	{
-		if ( var == null )
-			return true;
-
-		return var.isEmpty();
-
+		return ZObjects.isTrue( obj );
 	}
 
 	public static int epoch()
@@ -485,20 +497,33 @@ public abstract class Builtin extends Script
 		return Timings.epoch();
 	}
 
+	public static <T> List<T> asList( T obj )
+	{
+		return new ArrayList<T>()
+		{{
+			add( obj );
+		}};
+	}
+
+	public static <T> List<T> asList( Stream<T> stream )
+	{
+		return stream.collect( Collectors.toList() );
+	}
+
 	public static Collection<String> explode( String limiter, String data )
 	{
-		if ( data == null || data.isEmpty() )
-			return Lists.newArrayList();
+		if ( ZObjects.isEmpty( data ) )
+			return new ArrayList<>();
 
-		return new ArrayList<String>( Splitter.on( limiter ).splitToList( data ) );
+		return new ArrayList<>( Splitter.on( limiter ).splitToList( data ) );
 	}
 
 	public static Map<String, String> explode( String limiter, String separator, String data )
 	{
-		if ( data == null || data.isEmpty() )
-			return Maps.newHashMap();
+		if ( ZObjects.isEmpty( data ) )
+			return new HashMap<>();
 
-		return new HashMap<String, String>( Splitter.on( limiter ).withKeyValueSeparator( separator ).split( data ) );
+		return new HashMap<>( Splitter.on( limiter ).withKeyValueSeparator( separator ).split( data ) );
 	}
 
 	public static boolean file_exists( File file )
@@ -526,7 +551,7 @@ public abstract class Builtin extends Script
 	 */
 	public static Map<String, Object> filter( Map<String, Object> data, Collection<String> allowedKeys, boolean caseSensitive )
 	{
-		Map<String, Object> newArray = new LinkedHashMap<String, Object>();
+		Map<String, Object> newArray = new LinkedHashMap<>();
 
 		if ( !caseSensitive )
 			allowedKeys = ZStrings.toLowerCaseList( allowedKeys );
