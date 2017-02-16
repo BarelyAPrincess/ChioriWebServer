@@ -51,8 +51,18 @@ As you can see from the above example, the arguments `projId` and `userId` will 
 
 Let's say you have a groovy script that can handle actions and obviously you would be unable to capture the action argument from the pattern. This is where the `vargs` key comes in handy.
 
+#### JSON
 ```json
 {pattern: "/projects/[projId=]/users/[userId=]/add", file: "scripts/projects.controller.groovy", vargs: {"action": "addUser"}}
+```
+
+#### YAML
+```yaml
+rule1:
+  pattern: "/projects/[projId=]/users/[userId=]/add"
+  file: "scripts/projects.controller.groovy"
+  vargs:
+    action: "addUser"
 ```
 
 You will notice the example above, the groovy script ends in `.controller.groovy`; While vargs can passed to any script, in this example the controller feature is optimal for this sort of thing.
