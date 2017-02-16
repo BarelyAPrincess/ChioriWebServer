@@ -154,6 +154,11 @@ public abstract class ScriptingBaseJava extends Builtin
 		return getSession().getNonce();
 	}
 
+	public String base_url()
+	{
+		return getRequest().getBaseUrl();
+	}
+
 	public String url_id( String id )
 	{
 		return url_id( id, getRequest().isSecure() );
@@ -161,63 +166,13 @@ public abstract class ScriptingBaseJava extends Builtin
 
 	public String url_id( String id, boolean ssl )
 	{
+		return url_id( id, ssl ? "https://" : "http://" );
+	}
+
+	public String url_id( String id, String prefix )
+	{
 		Optional<DomainMapping> result = SiteManager.instance().getDomainMappingsById( id ).findFirst();
-		return result.isPresent() ? ( ssl ? "https://" : "http://" ) + result.get().getFullDomain() + "/" : null;
-	}
-
-	public String uri_to()
-	{
-		return getRequest().getFullUrl();
-	}
-
-	public String uri_to( boolean secure )
-	{
-		return getRequest().getFullUrl( secure );
-	}
-
-	public String uri_to( String subdomain )
-	{
-		return getRequest().getFullUrl( subdomain );
-	}
-
-	public String uri_to( String subdomain, boolean secure )
-	{
-		return getRequest().getFullUrl( subdomain, secure );
-	}
-
-	public String url_get_append( Map<String, Object> map )
-	{
-		return url_get_append( null, map );
-	}
-
-	public String url_get_append( String subdomain, Map<String, Object> map )
-	{
-		ZObjects.notNull( map, "Map can not be null" );
-
-		String url = getRequest().getFullUrl( subdomain );
-
-		Map<String, String> getMap = new HashMap<>( getRequest().getGetMapRaw() );
-
-		for ( Entry<String, Object> e : map.entrySet() )
-			getMap.put( e.getKey(), ZObjects.castToString( e.getValue() ) );
-
-		if ( getMap.size() > 0 )
-			url += "?" + getMap.entrySet().stream().map( e -> e.getKey() + "=" + e.getValue() ).collect( Collectors.joining( "&" ) );
-
-		return url;
-	}
-
-	public String url_get_append( String key, Object val )
-	{
-		return url_get_append( null, key, val );
-	}
-
-	public String url_get_append( String subdomain, String key, Object val )
-	{
-		ZObjects.notNull( key );
-		ZObjects.notNull( val );
-
-		return url_get_append( subdomain, ZMaps.newHashMap( key, val ) );
+		return result.isPresent() ? prefix + result.get().getFullDomain() + "/" : null;
 	}
 
 	/**
@@ -242,5 +197,67 @@ public abstract class ScriptingBaseJava extends Builtin
 	public String url_to( String subdomain, boolean secure )
 	{
 		return getRequest().getFullDomain( subdomain, secure );
+	}
+
+	/**
+	 * Returns GET params as a String to appended after the full uri, e.g., {@code uri_to() + get_map()}
+	 *
+	 * @return
+	 */
+	public String get_map()
+	{
+		Map<String, String> getMap = getRequest().getGetMapRaw();
+		return getMap.size() == 0 ? "" : "?" + getMap.entrySet().stream().map( e -> e.getKey() + "=" + e.getValue() ).collect( Collectors.joining( "&" ) );
+	}
+
+	/**
+	 * Returns GET params as a String to be appended after the full uri, e.g., {@code uri_to() + get_append( "key", "value" )}
+	 *
+	 * @param map The additional get values
+	 * @return The GET params as a string
+	 */
+	public String get_append( Map<String, Object> map )
+	{
+		ZObjects.notNull( map, "Map can not be null" );
+
+		Map<String, String> getMap = new HashMap<>( getRequest().getGetMapRaw() );
+
+		for ( Entry<String, Object> e : map.entrySet() )
+			getMap.put( e.getKey(), ZObjects.castToString( e.getValue() ) );
+
+		return getMap.size() == 0 ? "" : "?" + getMap.entrySet().stream().map( e -> e.getKey() + "=" + e.getValue() ).collect( Collectors.joining( "&" ) );
+	}
+
+	public String get_append( String key, Object val )
+	{
+		ZObjects.notNull( key );
+		ZObjects.notNull( val );
+
+		return get_append( ZMaps.newHashMap( key, val ) );
+	}
+
+	public String uri_to()
+	{
+		return getRequest().getFullUrl();
+	}
+
+	public String uri_to( boolean secure )
+	{
+		return getRequest().getFullUrl( secure );
+	}
+
+	public String uri_to( String subdomain )
+	{
+		return getRequest().getFullUrl( subdomain );
+	}
+
+	public String uri_to( String subdomain, boolean ssl )
+	{
+		return getRequest().getFullUrl( subdomain, ssl );
+	}
+
+	public String uri_to( String subdomain, String prefix )
+	{
+		return getRequest().getFullUrl( subdomain, prefix );
 	}
 }

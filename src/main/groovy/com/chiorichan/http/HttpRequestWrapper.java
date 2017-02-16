@@ -404,7 +404,12 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 	public String getFullDomain( String subdomain, boolean ssl )
 	{
-		return ( ssl ? "https://" : "http://" ) + ( subdomain == null || subdomain.isEmpty() ? getHostDomain() : subdomain + "." + getRootDomain() ) + "/";
+		return getFullDomain( subdomain, ssl ? "https://" : "http://" );
+	}
+
+	public String getFullDomain( String subdomain, String prefix )
+	{
+		return prefix + ( ZObjects.isEmpty( subdomain ) ? getHostDomain() : subdomain + "." + getRootDomain() ) + "/";
 	}
 
 	public String getTopDomain()
@@ -424,7 +429,12 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 	public String getTopDomain( String subdomain, boolean ssl )
 	{
-		return ( ssl ? "https://" : "http://" ) + ( subdomain == null || subdomain.isEmpty() ? "" : subdomain + "." ) + getRootDomain() + "/";
+		return getTopDomain( subdomain, ssl ? "https://" : "http://" );
+	}
+
+	public String getTopDomain( String subdomain, String prefix )
+	{
+		return prefix + ( ZObjects.isEmpty( subdomain ) ? "" : subdomain + "." ) + getRootDomain() + "/";
 	}
 
 	public String getFullUrl()
@@ -445,6 +455,11 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	public String getFullUrl( String subdomain, boolean ssl )
 	{
 		return getFullDomain( subdomain, ssl ) + getUri().substring( 1 );
+	}
+
+	public String getFullUrl( String subdomain, String prefix )
+	{
+		return getFullDomain( subdomain, prefix ) + getUri().substring( 1 );
 	}
 
 	public Map<String, Object> getGetMap()
@@ -762,11 +777,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 	public String getWebSocketLocation( HttpObject req )
 	{
-		String location = getHost() + "/wisp/websocket";
-		if ( ssl )
-			return "wss://" + location;
-		else
-			return "ws://" + location;
+		return ( isSecure() ? "wss://" : "ws://" ) + getHost() + "/wisp/websocket";
 	}
 
 	public boolean hasArgument( String key )
