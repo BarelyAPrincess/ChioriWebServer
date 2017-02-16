@@ -102,12 +102,14 @@ site:
         __directiveTwo: 'John Luke Picard'
 ```
 
-Each configuration directive is prepended with a double underscore `__` as to not confuse it with a child domain. Unused directives are ignored but can be accessed using the Site Scripting API, e.g., `getSite().getDomains().get(0).getConfig("customDirective")` or `getSite().getDomain("sitea.mydomain.local").getConfig("directiveTwo")`.
+Each configuration directive is prepended with a double underscore `__` as to not confuse it with a child domain. Unused directives are ignored but can be accessed using the Site Scripting API, e.g., `asList( getSite().getDomains() ).get(0).getConfig("customDirective")` or `getSite().getDomain("sitea.mydomain.local").getConfig("directiveTwo")`.
+
+**Developer Node**: `List<T> asList( Stream<T> stream )` is a builtin method used to easily convert a Java 8 Stream into a List, the equivalent in Java is `stream.collect( Collectors.toList() )`.
 
 See the `Site SSL Configuration` section for help configuring SSL on each domain/subdomain using the `sslCert`, `sslKey`, and `sslSecret` directives. Unconfigured SSL will default to SSL on parent domain, the site, and then lastly the server.
 
 * **\_\_redirect: \[url\]** Redirect visitors to the specified URL.
-* **\_\_redirectCode: \[code\]** Use any of the available 3xx HTTP codes for the redirect. Defaults to 301.
+* **\_\_redirectCode: \[code\]** Use any of the available 3xx HTTP codes for the redirect. Defaults to 301. *Note*: This directive will have no effect without the `redirect` directive also present.
 
 **Developer Note: ** By default, public directories are not allowed outside the webroot directory unless you change the directive `sites.allowPublicOutsideWebroot` to `true` in the main configuration `[server_root]/config.yaml`.
 
