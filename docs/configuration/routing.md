@@ -1,33 +1,88 @@
-# Routing
+# Routing File
 
-Also known as the route file. It is stored in the site webroot and is referenced by the server for determining URL rewrites. When a pattern directive matches the server will follow either a redirect or rewrite action.
+Each Site has an independent routing file located in the site webroot named route and will either end with `.json` or `.yaml`.
 
-**Rewrite:** `pattern "/some/basic/url", file "/some/other/path/file.html"`.
+**Developer Note**: As you can tell from the extension, the routing file can be in either YAML or JSON format. Also, the server has no preference over which format to use, both files will be combined when read with YAML coming second. This means rules in the JSON will get checked first when the server looks for a route.
 
-**Redirect:** `pattern "/old/site/url", redirect "/the/new/path"`.
+## JSON Example
 
-When following a redirect action, you can define the status code used by also adding directive `status`. Like so: `pattern "/old/site/url", redirect "/the/new/path", status 301`.
+Each line contained within the JSON routing file, will be read as an individual rule, as such each line is it's own JSON Object, no need to wrap all the lines in a  JSON Array.
 
-### Subdomains
+```json
+{pattern: "/some/basic/url", file: "/the/file/to/read/location.html"}
+{pattern: "/some/other/url", redirect: "http://google.com"}
+```
 
-The normal pattern argument can only parse the url that follows the domain TLD. To better match, use the directive `subdomain` to explicitly state which subdomain this pattern is for.
+## YAML Example
 
-`pattern "/my", file "/files/myacct.gsp", subdomain "accounts"`.
+Rules contained within the YAML routing file are branched out like typical YAML format, also using the two space indent.
 
-Leaving the subdomain directive empty will result in only matching the root domain.
+```yaml
+rule1:
+  pattern: "/some/basic/url"
+  file: "/the/file/to/read/location.html"
+rule2:
+  pattern: "/some/other/url"
+  redirect: "http://google.com"
+```
 
-### Capturing Arguments
+Also note that the key names `rule1` or `rule2`, are what's considered rule ids and will be cover in depth here further down. The JSON routing file will need these specified with the key `id`, if you so choose to utilize this feature.
 
-The routing feature can also capture arguments from the URL. To define just replace any section of the url with `[arg=]`. The wording between the brackets and equal symbol is your argument name.
+**Note**: For simplicity, examples will be given in the JSON format from here on.
 
-`pattern "/projects/[projId=]/users/[userId=]/add", file "scripts/projects/adduser.groovy", subdomain ""`.
+## Routing Actions
 
-As you can see from the above example, the arguments `projId` and `userId` will pass into the `adduser.groovy` script as a list. To retrieve these values using the Groovy API, use the following: `_REWRITE.projId` or `_REWRITE["userId"]`.
+As demonstrated in the examples above, a routing rule can have multiple outcomes and are as follows:
 
-### vargs
+* `file` (a.k.a. rewrite) - Will produce a response using the specified file location.
+* `redirect` - Will redirect the page request to the specified url using HTTP code 301. Urls not starting with `http` will become relative to the current full domain. If you wish to define the HTTP code used, also specify the key `status`, e.g., `{pattern: "/some/other/url", redirect: "http://google.com", status: 302}`.
 
-But say you have a script that can handle different actions but you are unable to capture this from the URL. Then this is what the `vargs` directive is intended for, defined as follows:
+## Pattern Arguments
 
-`pattern "/projects/[projId=]/users/[userId=]/add", file "scripts/projects.groovy", subdomain "", vargs [action: addUser]`.
+As an added advanced feature, the pattern key can also be used to capture arguments from the url. Just replace any section of the specified url pattern with `[arg=]` and the server will do the rest. Whatever string between the brackets and equal symbol is your argument name.
 
-For some more information on vargs, see [Controllers](/docs/scripting/controllers.md).
+```json
+{pattern: "/projects/[projId=]/users/[userId=]/add", file: "scripts/projects/adduser.groovy"}
+```
+
+As you can see from the above example, the arguments `projId` and `userId` will be passed into the `adduser.groovy` script. Unlike GET and POST arguments, these argument will be made available through the `_REWRITE` and `_REQUEST` (if enabled) maps. Retrieving in Groovy script is as easy as `_REWRITE.projId` or `_REWRITE["userId"]`.
+
+## Specify Rewrite Arguments
+
+Let's say you have a groovy script that can handle actions and obviously you would be unable to capture the action argument from the pattern. This is where the `vargs` key comes in handy.
+
+```json
+{pattern: "/projects/[projId=]/users/[userId=]/add", file: "scripts/projects.controller.groovy", vargs: {"action": "addUser"}}
+```
+
+You will notice the example above, the groovy script ends in `.controller.groovy`; While vargs can passed to any script, in this example the controller feature is optimal for this sort of thing.
+
+For some more information on controllers, see [Controllers](/docs/scripting/controllers.md).
+
+## Host Matches
+
+For more refined rule matching, you can also match the host using regular expressions.
+
+```json
+{pattern: "/some/basic/url", host: "^site[0-9].example.com$", file: "/the/file/to/read/location.html"}
+```
+
+## Route URL
+
+So far all this might look great but you might think, "What if I wish to retrieve the route and print it as a hyperlink in HTML". Well, we got you covered. This is where the rule id mentioned earlier comes in.
+
+```json
+{id: "rule1", ...}
+```
+
+From your groovy or gsp script, call the built-in method `route_id( "rule1" )` and the server will compute a URL from the route pattern.
+
+**Developer Note**: Keep in mind that if your pattern contains rewrite arguments, the `route_id` method will throw a `SiteConfigurationException`, with the message `Route param [projId] went unspecified for id [project_rule1], pattern [{id: "project_rule1", ...}]`
+
+
+
+
+
+
+
+
