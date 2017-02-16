@@ -69,20 +69,24 @@ For more refined rule matching, you can also match the host using regular expres
 
 ## Route URL
 
-So far all this might look great but you might think, "What if I wish to retrieve the route and print it as a hyperlink in HTML". Well, we got you covered. This is where the rule id mentioned earlier comes in.
+So far all this might look great but you could by thinking, "What if I want to retrieve the route and print it as a hyperlink". Well, we got you covered. This is where the rule id mentioned earlier comes in.
 
 ```json
-{id: "rule1", ...}
+{id: "project_rule1", ...}
 ```
 
-From your groovy or gsp script, call the built-in method `route_id( "rule1" )` and the server will compute a URL from the route pattern.
+From your groovy or gsp script, call the built-in method `route_id( "project_rule1" )` and the server will compute a URL from the route pattern.
 
-**Developer Note**: Keep in mind that if your pattern contains rewrite arguments, the `route_id` method will throw a `SiteConfigurationException`, with the message `Route param [projId] went unspecified for id [project_rule1], pattern [{id: "project_rule1", ...}]`
+**Developer Note**: Keep in mind that if your pattern contains rewrite arguments, the `route_id` method will throw a `SiteConfigurationException`, with the message `Route param [projId] went unspecified for id [project_rule1], pattern [{id: "project_rule1", ...}]`. You can specify the pattern arguments using the optional second parameter to `route_id` like so:
 
+```groovy
+route_id( "project_rule1", [projId: "bobsyouruncle", userId: "joe15"] )
+```
 
+By default, the server will attempt to use the `host` key as the domain name as long as it matches the regex `\^{0,1}[a-zA-Z0-9.]+\${0,1}`. If you find the host is considered invalid or is causing undesired outcome, you can specify the key `domain` to override, `{..., domain: "http://mysite1.example.com", host: "^mysite[0-9].example.com$", ...}`, leaving the domain value empty will force `route_id` to use the current full domain instead.
 
+Lastly, let's say you'd like to print a route by id but have no need for the routing feature. To do so you can simply specify a blank route with the keys `id` and `url`, like so:
 
-
-
-
-
+```json
+{id: "route_rule1", url: "http://example.com/"}
+```
