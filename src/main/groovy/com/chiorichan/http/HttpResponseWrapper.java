@@ -17,7 +17,6 @@ import com.chiorichan.event.http.HttpExceptionEvent;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.api.Builtin;
 import com.chiorichan.lang.HttpError;
-import com.chiorichan.logger.Log;
 import com.chiorichan.logger.experimental.LogEvent;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.session.Session;
@@ -25,7 +24,6 @@ import com.chiorichan.session.SessionException;
 import com.chiorichan.zutils.WebFunc;
 import com.chiorichan.zutils.ZObjects;
 import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -726,6 +724,11 @@ public class HttpResponseWrapper
 	public void setEncoding( String encoding )
 	{
 		this.encoding = Charset.forName( encoding );
+	}
+
+	public Charset getEncoding()
+	{
+		return encoding;
 	}
 
 	public void setHeader( String key, Object val )

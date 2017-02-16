@@ -74,16 +74,17 @@ public class WebInterpreter extends FileInterpreter
 		{
 			rewriteParams.putAll( route.getRewrites() );
 			annotations.putAll( route.getParams() );
-			dest = new File( request.getDomainMapping().directory(), route.getFile() );
+			dest = new File( request.getDomainMapping().directory(), route.getParam( "file" ) );
 
 			if ( route.isRedirect() )
 			{
+				String url = route.getParam( "redirect" );
 				status = HttpResponseStatus.valueOf( route.httpCode() );
-				request.getResponse().sendRedirect( route.getRedirect().toLowerCase().startsWith( "http" ) ? route.getRedirect() : request.getFullDomain() + route.getRedirect(), status.code() );
+				request.getResponse().sendRedirect( url.toLowerCase().startsWith( "http" ) ? url : request.getFullDomain() + url, status.code() );
 				return;
 			}
 
-			html = route.getHTML();
+			html = route.getParam( "html" );
 			wasSuccessful = true;
 		}
 

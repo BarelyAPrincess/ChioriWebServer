@@ -9,8 +9,6 @@
  */
 package com.chiorichan.http;
 
-import com.chiorichan.database.DatabaseEngineLegacy;
-import com.chiorichan.http.Routes.RouteType;
 import com.chiorichan.logger.Log;
 import com.chiorichan.site.Site;
 import com.chiorichan.zutils.ZObjects;
@@ -19,8 +17,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.IOException;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Map;
@@ -28,83 +24,24 @@ import java.util.stream.Collectors;
 
 public class Route
 {
-	protected RouteType type = RouteType.NOTSET;
 	protected Map<String, String> params = Maps.newLinkedHashMap();
 	protected Map<String, String> rewrites = Maps.newHashMap();
 	protected Site site;
 
-	protected Route( Map<String, String> params, Site site ) throws SQLException
+	protected Route( Map<String, String> params, Site site )
 	{
 		this.site = site;
-		type = RouteType.SQL;
 		this.params = params;
 	}
 
-	protected Route( ResultSet rs, Site site ) throws SQLException
+	public String getParam( String id )
 	{
-		this.site = site;
-		type = RouteType.SQL;
-		params = DatabaseEngineLegacy.toStringsMap( rs );
+		return params.get( id );
 	}
 
-	/**
-	 * @param args Line input in the format of "pattern '/dir/[cat=]/[id=]', to '/dir/view_item.gsp'"
-	 * @throws IOException Thrown if input string is not valid
-	 */
-	public Route( String args, Site site ) throws IOException
+	public boolean hasParam( String id )
 	{
-		if ( args == null || args.isEmpty() )
-			throw new IOException( "args can't be null or empty" );
-
-		this.site = site;
-		type = RouteType.FILE;
-
-		for ( String o : args.split( "," ) )
-		{
-			String key = null;
-			String val = null;
-
-			o = o.trim();
-
-			if ( o.contains( ":" ) )
-			{
-				key = o.substring( 0, o.indexOf( ":" ) );
-				val = o.substring( o.indexOf( ":" ) + 1 );
-			}
-			else if ( !o.contains( "\"" ) && !o.contains( "'" ) || o.contains( "\"" ) && o.indexOf( " " ) < o.indexOf( "\"" ) || o.contains( "'" ) && o.indexOf( " " ) < o.indexOf( "'" ) )
-			{
-				key = o.substring( 0, o.indexOf( " " ) );
-				val = o.substring( o.indexOf( " " ) + 1 );
-			}
-
-			if ( key != null )
-			{
-				key = StringUtils.trimToEmpty( key.toLowerCase() );
-				val = StringUtils.trimToEmpty( val );
-
-				val = StringUtils.removeStart( val, "\"" );
-				val = StringUtils.removeStart( val, "'" );
-
-				val = StringUtils.removeEnd( val, "\"" );
-				val = StringUtils.removeEnd( val, "'" );
-
-				params.put( key, val );
-			}
-		}
-
-		// params.put( "domain", site.getTLD() );
-	}
-
-	public String getFile()
-	{
-		return params.get( "file" );
-	}
-
-	public String getHTML()
-	{
-		if ( params.get( "html" ) != null && !params.get( "html" ).isEmpty() )
-			return params.get( "html" );
-		return null;
+		return params.containsKey( id );
 	}
 
 	public Map<String, String> getParams()
@@ -112,19 +49,9 @@ public class Route
 		return params;
 	}
 
-	public String getRedirect()
-	{
-		return params.get( "redirect" );
-	}
-
 	public Map<String, String> getRewrites()
 	{
 		return rewrites;
-	}
-
-	public RouteType getRouteType()
-	{
-		return type;
 	}
 
 	public int httpCode()
@@ -142,13 +69,7 @@ public class Route
 		String prop = params.get( "pattern" );
 
 		if ( prop == null )
-			prop = params.get( "page" );
-
-		if ( prop == null )
-		{
-			Log.get().warning( "The `pattern` attribute was null for route '" + this + "'. Unusable!" );
-			return null;
-		}
+			return null; // Ignore, is likely a route url entry
 
 		prop = StringUtils.trimToEmpty( prop );
 		uri = StringUtils.trimToEmpty( uri );
@@ -247,6 +168,6 @@ public class Route
 	@Override
 	public String toString()
 	{
-		return "Route{Type=\"" + type + "\",Params=[" + params.entrySet().stream().map( e -> e.getKey() + "=\"" + e.getValue() + "\"" ).collect( Collectors.joining( "," ) ) + "]}";
+		return "Route {params=[" + params.entrySet().stream().map( e -> e.getKey() + "=\"" + e.getValue() + "\"" ).collect( Collectors.joining( "," ) ) + "]}";
 	}
 }

@@ -15,7 +15,9 @@ import com.chiorichan.factory.api.Builtin;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.http.HttpResponseWrapper;
 import com.chiorichan.http.Nonce;
+import com.chiorichan.http.Route;
 import com.chiorichan.lang.PluginNotFoundException;
+import com.chiorichan.lang.SiteConfigurationException;
 import com.chiorichan.logger.Log;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.loader.Plugin;
@@ -23,8 +25,10 @@ import com.chiorichan.session.Session;
 import com.chiorichan.site.DomainMapping;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
+import com.chiorichan.zutils.ZHttp;
 import com.chiorichan.zutils.ZMaps;
 import com.chiorichan.zutils.ZObjects;
+import com.google.common.base.Joiner;
 
 import java.io.File;
 import java.util.HashMap;
@@ -35,9 +39,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-/*
- * XXX This deprecated class has already been ported to ScriptApiBase class
- */
 @Deprecated
 public abstract class ScriptingBaseJava extends Builtin
 {
@@ -159,20 +160,92 @@ public abstract class ScriptingBaseJava extends Builtin
 		return getRequest().getBaseUrl();
 	}
 
-	public String url_id( String id )
+	public String route_id( String id ) throws SiteConfigurationException
+	{
+		return route_id( id, new HashMap<>() );
+	}
+
+	public String route_id( String id, Map<String, String> params ) throws SiteConfigurationException
+	{
+		Route route = getSite().getRoutes().routeUrl( id );
+
+		if ( ZObjects.isNull( route ) )
+			throw new SiteConfigurationException( "Failed to find a route for id [" + id + "]" );
+
+		if ( route.hasParam( "pattern" ) )
+		{
+			String url = route.getParam( "pattern" );
+			Pattern p = Pattern.compile( "\\[([a-zA-Z0-9]*)\\=\\]" );
+			Matcher m = p.matcher( url );
+
+			if ( m.find() )
+				do
+				{
+					String key = m.group( 1 );
+
+					if ( !params.containsKey( key ) )
+						throw new SiteConfigurationException( "Route param [" + key + "] went unspecified for id [" + id + "], pattern [" + route.getParam( "pattern" ) + "]" );
+
+					url = url.replaceAll( m.group( 0 ), params.get( key ) );
+					m = p.matcher( url );
+				}
+				while ( m.find() );
+
+			if ( url.startsWith( "/" ) )
+				url = url.substring( 1 );
+			if ( !url.endsWith( "/" ) )
+				url = url + "/";
+
+			/* Validates if the host string could be used as the domain, meaning it's a simple (or not) regex string */
+			if ( route.hasParam( "host" ) && !ZObjects.isEmpty( route.getParam( "host" ) ) )
+			{
+				String host = ZHttp.normalize( route.getParam( "host" ) );
+
+				if ( host.startsWith( "^" ) )
+					host = host.substring( 1 );
+				if ( host.endsWith( "$" ) )
+					host = host.substring( 0, host.length() - 1 );
+
+				if ( host.matches( "[a-z0-9.]+" ) )
+				{
+					if ( host.startsWith( "http" ) )
+						return host + url;
+					else
+						return ( getRequest().isSecure() ? "https://" : "http://" ) + host + "/" + url;
+				}
+			}
+
+			return getRequest().getFullDomain() + url;
+		}
+		else if ( route.hasParam( "url" ) )
+		{
+			String url = route.getParam( "url" );
+			if ( url.startsWith( "/" ) )
+				url = url.substring( 1 );
+			if ( !url.endsWith( "/" ) )
+				url = url + "/";
+			return url.toLowerCase().startsWith( "http" ) ? url : getRequest().getFullDomain() + url;
+		}
+		else
+			throw new SiteConfigurationException( "The route with id [" + id + "] has no 'pattern' nor 'url' directive, we can not produce a route url without either one." );
+	}
+
+	public String url_id( String id ) throws SiteConfigurationException
 	{
 		return url_id( id, getRequest().isSecure() );
 	}
 
-	public String url_id( String id, boolean ssl )
+	public String url_id( String id, boolean ssl ) throws SiteConfigurationException
 	{
 		return url_id( id, ssl ? "https://" : "http://" );
 	}
 
-	public String url_id( String id, String prefix )
+	public String url_id( String id, String prefix ) throws SiteConfigurationException
 	{
 		Optional<DomainMapping> result = SiteManager.instance().getDomainMappingsById( id ).findFirst();
-		return result.isPresent() ? prefix + result.get().getFullDomain() + "/" : null;
+		if ( !result.isPresent() )
+			throw new SiteConfigurationException( "Can't find a domain mapping with id [" + id + "] in site [" + getSite().getId() + "]" );
+		return prefix + result.get().getFullDomain() + "/";
 	}
 
 	/**
