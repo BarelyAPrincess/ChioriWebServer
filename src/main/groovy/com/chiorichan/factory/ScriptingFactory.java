@@ -1,10 +1,10 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- *
+ * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
- *
+ * <p>
  * All Rights Reserved.
  */
 package com.chiorichan.factory;
@@ -170,8 +170,10 @@ public class ScriptingFactory implements LogSource
 
 		try
 		{
-			String name = "EvalScript" + ZEncryption.rand( 8 ) + ".chi";
-			if ( !context.isVirtual() )
+			String name;
+			if ( context.isVirtual() )
+				name = "EvalScript" + ZEncryption.rand( 8 ) + ".chi";
+			else
 			{
 				String rel = ZIO.relPath( context.file().getParentFile(), context.site().directory() ).replace( '\\', '.' ).replace( '/', '.' );
 				context.cache( new File( context.cache(), rel.contains( "." ) ? rel.substring( 0, rel.indexOf( "." ) ) : rel ) );

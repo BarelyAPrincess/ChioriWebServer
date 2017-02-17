@@ -664,7 +664,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		 * End: Apache Configuration Section
 		 */
 
-		if ( !fi.hasFile() && !fi.hasHTML() )
+		if ( !fi.hasFile() ) // && !fi.hasHTML() )
 			response.setStatus( HttpResponseStatus.NO_CONTENT );
 
 		session.setGlobal( "__FILE__", fi.getFile() );
@@ -800,7 +800,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 
 		session.requirePermission( reqPerm, currentSite.getId() );
 
-		// Enhancement: Allow HTML to be ran under different shells. Default is embedded.
+		/* TODO Deprecated but removed for historical reasons
 		if ( fi.hasHTML() )
 		{
 			ScriptingResult result = factory.eval( ScriptingContext.fromSource( fi.getHTML(), "<embedded>" ).request( request ).site( currentSite ) );
@@ -834,6 +834,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 
 			log.log( Level.INFO, "EvalHtml {timing=%sms,success=%s}", Timings.mark( this ), result.isSuccessful() );
 		}
+		*/
 
 		if ( fi.hasFile() )
 		{

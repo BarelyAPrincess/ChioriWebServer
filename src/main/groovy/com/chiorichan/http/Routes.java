@@ -15,6 +15,8 @@ import com.chiorichan.logger.Log;
 import com.chiorichan.site.Site;
 import com.chiorichan.zutils.ZIO;
 import com.chiorichan.zutils.ZObjects;
+import com.google.common.base.Joiner;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -52,31 +54,31 @@ public class Routes
 		{
 			checkRoutes();
 
-			return routes.stream().filter( r -> r.hasParam( "id" ) && ( r.getParam( "id" ).equalsIgnoreCase( id ) || r.getParam( "id" ).matches( id ) ) ).findFirst().orElse( null );
+			return routes.stream().filter( r -> id.equalsIgnoreCase( r.getId() ) || id.matches( r.getId() ) ).findFirst().orElse( null );
 		}
 	}
 
-	public Route searchRoutes( String uri, String host ) throws IOException
+	public RouteResult searchRoutes( String uri, String host ) throws IOException
 	{
 		synchronized ( this )
 		{
 			checkRoutes();
 
-			Map<String, Route> matches = new TreeMap<>();
+			Map<String, RouteResult> matches = new TreeMap<>();
 			int keyInter = 0;
 
 			for ( Route route : routes )
 			{
-				String weight = route.match( uri, host );
-				if ( weight != null )
+				RouteResult result = route.match( uri, host );
+				if ( result != null )
 				{
-					matches.put( weight + keyInter, route );
+					matches.put( result.getWeight() + keyInter, result );
 					keyInter++;
 				}
 			}
 
 			if ( matches.size() > 0 )
-				return ( Route ) matches.values().toArray()[0];
+				return ( RouteResult ) matches.values().toArray()[0];
 			else
 				Log.get().fine( String.format( "Failed to find route for... {host=%s,uri=%s}", host, uri ) );
 
@@ -94,6 +96,7 @@ public class Routes
 			routes.clear();
 
 			int line = 0;
+			int inc = 0;
 
 			try
 			{
@@ -104,23 +107,52 @@ public class Routes
 						line++;
 						if ( !l.startsWith( "#" ) && !ZObjects.isEmpty( l ) )
 						{
-							Map<String, String> values = new HashMap<String, String>()
-							{
-								{
-									JSONObject obj = new JSONObject( l );
-									for ( String key : obj.keySet() )
-										try
-										{
-											put( key, ZObjects.castToStringWithException( obj.get( key ) ) );
-										}
-										catch ( Exception e )
-										{
-											// Ignore
-										}
-								}
-							};
+							Map<String, String> values = new HashMap<>();
+							Map<String, String> rewrites = new HashMap<>();
 
-							routes.add( new Route( values, site ) );
+							JSONObject obj = new JSONObject( l );
+
+							String id = obj.optString( "id" );
+							if ( ZObjects.isEmpty( id ) )
+							{
+								id = "route_rule_" + String.format( "%04d", inc );
+								inc++;
+							}
+
+							for ( String sectionKey : obj.keySet() )
+							{
+								Object sectionObject = obj.get( sectionKey );
+
+								if ( sectionObject instanceof JSONObject && "vargs".equals( sectionKey ) )
+								{
+									for ( String argsKey : ( ( JSONObject ) sectionObject ).keySet() )
+									{
+										Object argsObject = ( ( JSONObject ) sectionObject ).get( argsKey );
+										if ( !( argsObject instanceof JSONObject ) && !( argsObject instanceof JSONArray ) )
+											try
+											{
+												rewrites.put( argsKey, ZObjects.castToStringWithException( argsObject ) );
+											}
+											catch ( Exception e )
+											{
+												// Ignore
+											}
+									}
+								}
+								else if ( !( sectionObject instanceof JSONObject ) && !( sectionObject instanceof JSONArray ) )
+								{
+									try
+									{
+										values.put( sectionKey, ZObjects.castToStringWithException( sectionObject ) );
+									}
+									catch ( Exception e )
+									{
+										// Ignore
+									}
+								}
+							}
+
+							routes.add( new Route( id, site, values, rewrites ) );
 						}
 					}
 				}
@@ -141,24 +173,48 @@ public class Routes
 				for ( String key : yaml.getKeys() )
 					if ( yaml.isConfigurationSection( key ) )
 					{
-						Map<String, String> values = new HashMap<String, String>()
-						{{
-							put( "id", key );
-							ConfigurationSection section = yaml.getConfigurationSection( key );
-							for ( String subkey : section.getKeys() )
+						String id = key;
+						ConfigurationSection section = yaml.getConfigurationSection( key );
+						if ( section.contains( "id" ) )
+						{
+							id = section.getString( "id" );
+							section.set( "id", null );
+						}
+
+						Map<String, String> values = new HashMap<>();
+						Map<String, String> rewrites = new HashMap<>();
+
+						for ( String sectionKey : section.getKeys() )
+						{
+							if ( section.isConfigurationSection( sectionKey ) && "vargs".equals( sectionKey ) )
 							{
-								if ( !section.isConfigurationSection( subkey ) )
-									try
-									{
-										put( subkey, ZObjects.castToStringWithException( section.get( subkey ) ) );
-									}
-									catch ( Exception e )
-									{
-										// Ignore
-									}
+								ConfigurationSection args = section.getConfigurationSection( sectionKey );
+								for ( String argsKey : args.getKeys() )
+									if ( !args.isConfigurationSection( argsKey ) )
+										try
+										{
+											rewrites.put( argsKey, ZObjects.castToStringWithException( args.get( argsKey ) ) );
+										}
+										catch ( Exception e )
+										{
+											// Ignore
+										}
 							}
-						}};
-						routes.add( new Route( values, site ) );
+							else if ( !section.isConfigurationSection( sectionKey ) )
+							{
+								try
+								{
+									values.put( sectionKey, ZObjects.castToStringWithException( section.get( sectionKey ) ) );
+								}
+								catch ( Exception e )
+								{
+									// Ignore
+								}
+							}
+						}
+
+						routes.add( new Route( id, site, values, rewrites ) );
+						inc++;
 					}
 			}
 		}

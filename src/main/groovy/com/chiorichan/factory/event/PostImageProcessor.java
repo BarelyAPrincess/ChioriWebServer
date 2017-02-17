@@ -1,10 +1,10 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- *
+ * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
- *
+ * <p>
  * All Rights Reserved.
  */
 package com.chiorichan.factory.event;
@@ -17,6 +17,7 @@ import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.lang.EnumColor;
 import com.chiorichan.logger.Log;
 import com.chiorichan.zutils.ZEncryption;
+import com.chiorichan.zutils.ZObjects;
 import io.netty.buffer.ByteBufInputStream;
 import org.apache.commons.io.FileUtils;
 
@@ -75,54 +76,33 @@ public class PostImageProcessor implements Listener
 
 			ScriptingContext context = event.context();
 			HttpRequestWrapper request = context.request();
-			Map<String, String> rewrite = request.getRewriteMap();
 
-			if ( rewrite != null )
+			if ( !ZObjects.isNull( request.getArgument( "width" ) ) )
+				x = request.getArgumentInt( "width" );
+
+			if ( !ZObjects.isNull( request.getArgument( "height" ) ) )
+				y = request.getArgumentInt( "height" );
+
+			if ( !ZObjects.isNull( request.getArgument( "x" ) ) )
+				x = request.getArgumentInt( "x" );
+
+			if ( !ZObjects.isNull( request.getArgument( "y" ) ) )
+				y = request.getArgumentInt( "y" );
+
+			if ( !ZObjects.isNull( request.getArgument( "w" ) ) )
+				x = request.getArgumentInt( "w" );
+
+			if ( !ZObjects.isNull( request.getArgument( "h" ) ) )
+				y = request.getArgumentInt( "h" );
+
+			if ( request.hasArgument( "thumb" ) )
 			{
-				if ( rewrite.get( "serverSideOptions" ) != null )
-				{
-					String[] params = rewrite.get( "serverSideOptions" ).trim().split( "_" );
-
-					for ( String p : params )
-						if ( p.toLowerCase().startsWith( "width" ) && x < 0 )
-							x = Integer.parseInt( p.substring( 5 ) );
-						else if ( ( p.toLowerCase().startsWith( "x" ) || p.toLowerCase().startsWith( "w" ) ) && p.length() > 1 && x < 0 )
-							x = Integer.parseInt( p.substring( 1 ) );
-						else if ( p.toLowerCase().startsWith( "height" ) && y < 0 )
-							y = Integer.parseInt( p.substring( 6 ) );
-						else if ( ( p.toLowerCase().startsWith( "y" ) || p.toLowerCase().startsWith( "h" ) ) && p.length() > 1 && y < 0 )
-							y = Integer.parseInt( p.substring( 1 ) );
-						else if ( p.toLowerCase().equals( "thumb" ) )
-						{
-							x = 150;
-							y = 0;
-							break;
-						}
-						else if ( p.toLowerCase().equals( "bw" ) || p.toLowerCase().equals( "grayscale" ) )
-							grayscale = true;
-				}
-
-				if ( request.getArgument( "width" ) != null && request.getArgument( "width" ).length() > 0 )
-					x = request.getArgumentInt( "width" );
-
-				if ( request.getArgument( "height" ) != null && request.getArgument( "height" ).length() > 0 )
-					y = request.getArgumentInt( "height" );
-
-				if ( request.getArgument( "w" ) != null && request.getArgument( "w" ).length() > 0 )
-					x = request.getArgumentInt( "w" );
-
-				if ( request.getArgument( "h" ) != null && request.getArgument( "h" ).length() > 0 )
-					y = request.getArgumentInt( "h" );
-
-				if ( request.getArgument( "thumb" ) != null )
-				{
-					x = 150;
-					y = 0;
-				}
-
-				if ( request.hasArgument( "bw" ) || request.hasArgument( "grayscale" ) )
-					grayscale = true;
+				x = 150;
+				y = 0;
 			}
+
+			if ( request.hasArgument( "bw" ) || request.hasArgument( "grayscale" ) )
+				grayscale = true;
 
 			// Tests if our Post Processor can process the current image.
 			List<String> readerFormats = Arrays.asList( ImageIO.getReaderFormatNames() );

@@ -20,6 +20,7 @@ import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.lang.EnumColor;
 import com.chiorichan.lang.ExceptionReport;
+import com.chiorichan.lang.HttpError;
 import com.chiorichan.lang.MapCollisionException;
 import com.chiorichan.logger.experimental.LogEvent;
 import com.chiorichan.messaging.MessageSender;
@@ -45,6 +46,7 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.ssl.SslHandler;
@@ -173,7 +175,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 	private DomainMapping domainMapping;
 
-	HttpRequestWrapper( Channel channel, HttpRequest http, HttpHandler handler, boolean ssl, LogEvent log ) throws IOException
+	HttpRequestWrapper( Channel channel, HttpRequest http, HttpHandler handler, boolean ssl, LogEvent log ) throws IOException, HttpError
 	{
 		this.channel = channel;
 		this.http = http;
@@ -191,18 +193,20 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 		String host = ZHttp.normalize( getHostDomain() );
 
-		/* We retrieve the active domain node, all further interaction with the site and routes should be done through that node. */
-
 		if ( ZObjects.isEmpty( host ) )
-			host = "localhost";
-
-		if ( ZHttp.isValidIPv4( host ) || ZHttp.isValidIPv6( host ) )
+			this.domainMapping = SiteManager.instance().getDefaultSite().getDefaultMapping();
+		else if ( ZHttp.isValidIPv4( host ) || ZHttp.isValidIPv6( host ) )
 		{
 			Stream<DomainMapping> domains = SiteManager.instance().getDomainMappingsByIp( host );
 			domainMapping = domains.count() == 0 ? null : domains.findFirst().orElse( null );
 		}
 		else
+		{
+			if ( "localhost".equals( host ) && !getIpAddress().startsWith( "127" ) && !getIpAddress().equals( getLocalIpAddress() ) )
+				throw new HttpError( 418 );
+
 			this.domainMapping = SiteManager.instance().getDomainMapping( host );
+		}
 
 		if ( domainMapping == null )
 			domainMapping = SiteManager.instance().getDefaultSite().getMappings( "" ).findFirst().orElse( null );

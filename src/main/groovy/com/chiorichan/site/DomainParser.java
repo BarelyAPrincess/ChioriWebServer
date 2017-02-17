@@ -72,14 +72,10 @@ public class DomainParser
 			}
 		}
 
-		if ( parentNodePos >= 0 )
+		if ( parentNodePos > 0 )
 		{
-			/* Adds the next level node to the match for tld matching, e.g., co.uk -> example.co.uk
-			if ( parentNodePos > 0 )
-				parentNodePos--; */
-
 			tld = ns.subNamespace( parentNodePos );
-			sub = parentNodePos > 0 ? ns.subNamespace( 0, parentNodePos ) : new Namespace();
+			sub = ns.subNamespace( 0, parentNodePos );
 		}
 		else
 		{

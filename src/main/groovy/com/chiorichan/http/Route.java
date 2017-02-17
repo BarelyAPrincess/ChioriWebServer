@@ -14,29 +14,42 @@ import com.chiorichan.site.Site;
 import com.chiorichan.zutils.ZObjects;
 import com.chiorichan.zutils.ZStrings;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public class Route
 {
-	protected Map<String, String> params = Maps.newLinkedHashMap();
-	protected Map<String, String> rewrites = Maps.newHashMap();
-	protected Site site;
+	private final String id;
+	private final Map<String, String> params = new HashMap<>();
+	private final Map<String, String> rewrites = new HashMap<>();
+	private final Site site;
 
-	protected Route( Map<String, String> params, Site site )
+	protected Route( String id, Site site, Map<String, String> params, Map<String, String> rewrites )
 	{
+		this.id = id;
 		this.site = site;
-		this.params = params;
+		this.params.putAll( params );
+		this.rewrites.putAll( rewrites );
+	}
+
+	public String getId()
+	{
+		return id;
 	}
 
 	public String getParam( String id )
 	{
 		return params.get( id );
+	}
+
+	public void putParam( String id, String value )
+	{
+		params.put( id, value );
 	}
 
 	public boolean hasParam( String id )
@@ -46,12 +59,12 @@ public class Route
 
 	public Map<String, String> getParams()
 	{
-		return params;
+		return Collections.unmodifiableMap( params );
 	}
 
 	public Map<String, String> getRewrites()
 	{
-		return rewrites;
+		return Collections.unmodifiableMap( rewrites );
 	}
 
 	public int httpCode()
@@ -61,11 +74,12 @@ public class Route
 
 	public boolean isRedirect()
 	{
-		return params.get( "redirect" ) != null;
+		return params.get( "redirect" ) != null || params.get( "url" ) != null;
 	}
 
-	public String match( String uri, String host )
+	public RouteResult match( String uri, String host )
 	{
+		Map<String, String> localRewrites = new HashMap<>( rewrites );
 		String prop = params.get( "pattern" );
 
 		if ( prop == null )
@@ -136,7 +150,7 @@ public class Route
 					String key = props.get( i ).replaceAll( "[\\[\\]=]", "" );
 					String value = uris.get( i );
 
-					rewrites.put( key, value );
+					localRewrites.put( key, value );
 
 					// PREG MATCH
 					Log.get().finer( "Found a PREG match for " + prop + " on route " + this );
@@ -162,7 +176,7 @@ public class Route
 				break;
 			}
 
-		return match ? weight : null;
+		return match ? new RouteResult( this, weight, localRewrites ) : null;
 	}
 
 	@Override
