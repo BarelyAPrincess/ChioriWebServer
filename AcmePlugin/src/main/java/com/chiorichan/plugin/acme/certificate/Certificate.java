@@ -216,36 +216,32 @@ public class Certificate
 		pendingUpdate = true;
 
 		AcmeCertificateRequest signingRequest = AcmePlugin.instance().getClient().newSigningRequest( domains, sslKeyFile );
-		signingRequest.doCallback( true, new Runnable()
+		signingRequest.doCallback( true, () ->
 		{
-			@Override
-			public void run()
-			{
-				if ( signingRequest.getState() == AcmeState.SUCCESS )
-					try
-					{
-						File parentDir = ZIO.buildFile( AcmePlugin.instance().getDataFolder(), key );
+			if ( signingRequest.getState() == AcmeState.SUCCESS )
+				try
+				{
+					File parentDir = ZIO.buildFile( AcmePlugin.instance().getDataFolder(), key );
 
-						signingRequest.getDownloader().save( parentDir );
-						sslCertFile = new File( parentDir, "fullchain.pem" );
-						uri = signingRequest.getDownloader().getCertificateUri();
+					signingRequest.getDownloader().save( parentDir );
+					sslCertFile = new File( parentDir, "fullchain.pem" );
+					uri = signingRequest.getDownloader().getCertificateUri();
 
-						save();
+					save();
 
-						if ( key.equals( "default" ) )
-							CertificateMaintainer.setDefaultCertificate( cert );
-						else if ( !CertificateMaintainer.certificateLoaded( key ) )
-							CertificateMaintainer.loadCertificate( cert );
-					}
-					catch ( AcmeException e )
-					{
-						AcmePlugin.instance().getLogger().severe( "Unexpected Exception Thrown", e );
-					}
-				else
-					AcmePlugin.instance().getLogger().severe( "Failed certificate signing for reason " + signingRequest.lastMessage() );
+					if ( key.equals( "default" ) )
+						CertificateMaintainer.setDefaultCertificate( cert );
+					else if ( !CertificateMaintainer.certificateLoaded( key ) )
+						CertificateMaintainer.loadCertificate( cert );
+				}
+				catch ( AcmeException e )
+				{
+					AcmePlugin.instance().getLogger().severe( "Unexpected Exception Thrown", e );
+				}
+			else
+				AcmePlugin.instance().getLogger().severe( "Failed certificate signing for reason " + signingRequest.lastMessage() );
 
-				pendingUpdate = false;
-			}
+			pendingUpdate = false;
 		} );
 	}
 
@@ -285,7 +281,7 @@ public class Certificate
 				List<String> dnsNames = getCertificate().getSubjectAltDNSNames();
 				if ( !dnsNames.containsAll( domains ) )
 				{
-					Log.get().debug( "Default certificate is missing domains --> " + Joiner.on( ", " ).join( domains ) + " // " + Joiner.on( ", " ).join( dnsNames ) );
+					// Log.get().debug( "Default certificate is missing domains --> " + Joiner.on( ", " ).join( domains ) + " // " + Joiner.on( ", " ).join( dnsNames ) );
 
 					revokeCertificate();
 					signNewCertificate();

@@ -1,6 +1,6 @@
 package com.chiorichan.plugin.acme.api;
 
-import com.chiorichan.zutils.ZHttp;
+import com.chiorichan.helpers.TrustManagerFactory;
 import com.chiorichan.http.HttpCode;
 import com.chiorichan.lang.EnumColor;
 import com.chiorichan.logger.Log;
@@ -10,7 +10,8 @@ import com.chiorichan.plugin.acme.lang.AcmeForbiddenError;
 import com.chiorichan.plugin.acme.lang.AcmeState;
 import com.chiorichan.site.DomainMapping;
 import com.chiorichan.site.SiteManager;
-import com.chiorichan.helpers.TrustManagerFactory;
+import com.chiorichan.zutils.ZHttp;
+import com.chiorichan.zutils.ZIO;
 import com.chiorichan.zutils.ZStrings;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -18,7 +19,6 @@ import com.google.gson.JsonParser;
 import io.jsonwebtoken.JwsHeader;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.Validate;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.x509.util.StreamParsingException;
@@ -106,25 +106,24 @@ public class AcmeProtocol
 
 				try
 				{
-					FileUtils.writeStringToFile( acmeChallengeFile, sac.getChallengeContent() );
+					ZIO.writeStringToFile( acmeChallengeFile, sac.getChallengeContent() );
 				}
 				catch ( IOException e )
 				{
 					e.printStackTrace();
 				}
 
-				sac.doCallback( false, new Runnable()
+				sac.doCallback( false, () ->
 				{
-					@Override
-					public void run()
-					{
-						acmeChallengeFile.delete();
+					// // acmeChallengeFile.delete();
+					File wellKnown = new File( mapping.directory(), ".well-known" );
+					if ( wellKnown.exists() )
+						wellKnown.delete();
 
-						if ( !sac.isValid() )
-							plugin.getLogger().info( EnumColor.RED + sac.getFullDomain() + ": Domain Challenge Failed for reason " + sac.getState() + " " + sac.lastMessage() );
-						else
-							plugin.getLogger().info( EnumColor.AQUA + sac.getFullDomain() + ": Domain Challenge Success" );
-					}
+					if ( !sac.isValid() )
+						plugin.getLogger().info( EnumColor.RED + sac.getFullDomain() + ": Domain Challenge Failed for reason " + sac.getState() + " " + sac.lastMessage() );
+					else
+						plugin.getLogger().info( EnumColor.AQUA + sac.getFullDomain() + ": Domain Challenge Success" );
 				} );
 			}
 

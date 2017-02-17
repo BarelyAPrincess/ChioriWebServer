@@ -64,26 +64,22 @@ public final class SingleChallengeHttp
 		{
 			AcmePlugin plugin = ( AcmePlugin ) PluginManager.instance().getPluginByClass( AcmePlugin.class );
 
-			callBackTask = TaskManager.instance().scheduleAsyncRepeatingTask( plugin, Ticks.SECOND_5, Ticks.SECOND, new Runnable()
+			callBackTask = TaskManager.instance().scheduleAsyncRepeatingTask( plugin, Ticks.SECOND_5, Ticks.SECOND, () ->
 			{
-				@Override
-				public void run()
+				try
 				{
-					try
-					{
-						verify();
+					verify();
 
-						if ( getState() != AcmeState.PENDING && getState() != AcmeState.CREATED )
-						{
-							TaskManager.instance().cancelTask( callBackTask );
-							callBackTask = 0;
-							runnable.run();
-						}
-					}
-					catch ( Throwable t )
+					if ( getState() != AcmeState.PENDING && getState() != AcmeState.CREATED )
 					{
-						t.printStackTrace();
+						TaskManager.instance().cancelTask( callBackTask );
+						callBackTask = 0;
+						runnable.run();
 					}
+				}
+				catch ( Throwable t )
+				{
+					t.printStackTrace();
 				}
 			} );
 
@@ -338,7 +334,7 @@ public final class SingleChallengeHttp
 				{
 					{
 						put( "resource", "challenge" );
-						put( "type", "com.chiorichan.http-01" );
+						put( "type", "http-01" );
 						put( "tls", true );
 						put( "keyAuthorization", getChallengeContent() );
 						put( "token", challengeToken );
