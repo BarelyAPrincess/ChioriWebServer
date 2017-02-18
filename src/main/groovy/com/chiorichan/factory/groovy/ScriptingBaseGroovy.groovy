@@ -30,10 +30,9 @@ import com.chiorichan.site.Site
 public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 {
 	/**
-	 * Same as {@link com.chiorichan.factory.api.Builtin#var_export(obj)} but instead prints the result to the buffer
+	 * Same as {@link com.chiorichan.factory.api.Builtin#var_export()} but instead prints the result to the buffer
 	 * Based on method of same name in PHP
-	 * @param obj
-	 *       The object you wish to dump
+	 * @param obj The object you wish to dump
 	 */
 	void var_dump( Object... obj )
 	{
@@ -75,8 +74,8 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	/**
 	 * Alias for println
 	 * Based on method of same name in PHP
-	 * @param var
-	 *       The string you wish to print
+	 *
+	 * @param var The string you wish to print
 	 */
 	void echo( String var )
 	{
@@ -156,8 +155,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 
 	/**
 	 * Get the account matching specified uid
-	 * @param uid
-	 *       The uid you wish to use
+	 * @param uid The uid you wish to use
 	 * @return
 	 * The found account, will return null if none found
 	 */
@@ -217,8 +215,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 
 	/**
 	 * Returns an instance of the current site
-	 * @return
-	 * The current site
+	 * @return The current site
 	 */
 	Site getSite()
 	{
@@ -227,7 +224,6 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 
 	/**
 	 * Return the unique Id for the current site
-	 *
 	 * @return The current site Id
 	 */
 	String getSiteId()
@@ -236,11 +232,9 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	}
 
 	/**
-	 * Converts the specified com.chiorichan.http status code to a message
-	 * @param errNo
-	 *       The com.chiorichan.http status code
-	 * @return
-	 * The com.chiorichan.http status message
+	 * Converts the specified http status code to a message
+	 * @param errNo The http status code
+	 * @return The http status message
 	 */
 	String getStatusDescription( int errNo )
 	{
@@ -249,8 +243,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 
 	/**
 	 * Returns the uri to the login page
-	 * @return
-	 * The login uri
+	 * @return The login uri
 	 */
 	String url_to_login()
 	{
@@ -264,8 +257,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 
 	/**
 	 * Returns the to log current account out
-	 * @return
-	 * The logout uri
+	 * @return The logout uri
 	 */
 	String url_to_logout()
 	{
@@ -279,7 +271,7 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 
 	Object require( String pack )
 	{
-		return Server.packageContext( pack ).require().eval()
+		return Server.packageContextWithException( pack ).eval()
 	}
 
 	private int stackLevel = -1;

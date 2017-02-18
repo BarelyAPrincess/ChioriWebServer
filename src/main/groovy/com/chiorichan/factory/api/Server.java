@@ -10,6 +10,7 @@
 package com.chiorichan.factory.api;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.List;
 
 import com.chiorichan.factory.ScriptTraceElement;
@@ -104,6 +105,12 @@ public class Server
 	{
 		HttpRequestWrapper request = HttpRequestWrapper.getRequest();
 		return ScriptingContext.fromPackage( request.getLocation(), pack ).request( request );
+	}
+
+	public static ScriptingContext packageContextWithException( String pack ) throws IOException
+	{
+		HttpRequestWrapper request = HttpRequestWrapper.getRequest();
+		return ScriptingContext.fromPackageWithException( request.getLocation(), pack ).request( request );
 	}
 
 	public static HttpRequestWrapper request()

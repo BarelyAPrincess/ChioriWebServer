@@ -248,7 +248,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		}
 
 		// Decode Cookies
-		// String var1 = URLDecoder.decode( com.chiorichan.http.headers().getAndConvert( "Cookie" ), Charsets.UTF_8.displayName() );
+		// String var1 = URLDecoder.decode( http.headers().getAndConvert( "Cookie" ), Charsets.UTF_8.displayName() );
 		String var1 = http.headers().getAndConvert( "Cookie" );
 
 		// TODO Find a way to fix missing invalid stuff
@@ -270,7 +270,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 				NetworkManager.getLogger().severe( "Failed to parse cookie for reason: " + e.getMessage() );
 				// NetworkManager.getLogger().warning( "There was a problem decoding the request cookie.", e );
 				// NetworkManager.getLogger().debug( "Cookie: " + var1 );
-				// NetworkManager.getLogger().debug( "Headers: " + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( com.chiorichan.http.headers() ) );
+				// NetworkManager.getLogger().debug( "Headers: " + Joiner.on( "," ).withKeyValueSeparator( "=" ).join( http.headers() ) );
 			}
 
 		initServerVars();

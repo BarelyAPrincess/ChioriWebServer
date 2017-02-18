@@ -12,16 +12,17 @@ package com.chiorichan.http;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.configuration.types.yaml.YamlConfiguration;
 import com.chiorichan.logger.Log;
+import com.chiorichan.net.NetworkManager;
 import com.chiorichan.site.Site;
 import com.chiorichan.zutils.ZIO;
 import com.chiorichan.zutils.ZObjects;
-import com.google.common.base.Joiner;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -56,6 +57,11 @@ public class Routes
 
 			return routes.stream().filter( r -> id.equalsIgnoreCase( r.getId() ) || id.matches( r.getId() ) ).findFirst().orElse( null );
 		}
+	}
+
+	public boolean hasRoute( String id )
+	{
+		return routes.stream().filter( r -> id.equalsIgnoreCase( r.getId() ) || id.matches( r.getId() ) ).findAny().isPresent();
 	}
 
 	public RouteResult searchRoutes( String uri, String host ) throws IOException
@@ -115,8 +121,20 @@ public class Routes
 							String id = obj.optString( "id" );
 							if ( ZObjects.isEmpty( id ) )
 							{
-								id = "route_rule_" + String.format( "%04d", inc );
-								inc++;
+								do
+								{
+									id = "route_rule_" + String.format( "%04d", inc );
+									inc++;
+								}
+								while ( !hasRoute( id ) );
+							}
+							else
+							{
+								if ( hasRoute( id ) )
+								{
+									NetworkManager.getLogger().severe( String.format( "Found duplicate route id '%s' in route file '%s', route will be ignored.", id, ZIO.relPath( routesJson ) ) );
+									continue;
+								}
 							}
 
 							for ( String sectionKey : obj.keySet() )
@@ -181,6 +199,12 @@ public class Routes
 							section.set( "id", null );
 						}
 
+						if ( hasRoute( id ) )
+						{
+							NetworkManager.getLogger().severe( String.format( "Found duplicate route id '%s' in route file '%s', route will be ignored.", id, ZIO.relPath( routesJson ) ) );
+							continue;
+						}
+
 						Map<String, String> values = new HashMap<>();
 						Map<String, String> rewrites = new HashMap<>();
 
@@ -214,7 +238,6 @@ public class Routes
 						}
 
 						routes.add( new Route( id, site, values, rewrites ) );
-						inc++;
 					}
 			}
 		}

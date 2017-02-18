@@ -1,16 +1,17 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- *
+ * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
- *
+ * <p>
  * All Rights Reserved.
  */
 package com.chiorichan.factory;
 
 import com.chiorichan.AppConfig;
 import com.chiorichan.ContentTypes;
+import com.chiorichan.Versioning;
 import com.chiorichan.factory.models.SQLQueryBuilder;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.lang.ExceptionContext;
@@ -24,7 +25,6 @@ import com.chiorichan.logger.Log;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.zutils.ZEncryption;
-import com.chiorichan.Versioning;
 import com.chiorichan.zutils.ZIO;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -105,13 +105,12 @@ public class ScriptingContext implements ExceptionContext
 
 	public static ScriptingContext fromPackage( final Site site, final String pack )
 	{
-		ScriptingContext context = null;
+		ScriptingContext context;
 
 		try
 		{
 			File packFile = site.resourcePackage( pack );
 			FileInterpreter fi = new FileInterpreter( packFile );
-
 			context = ScriptingContext.fromFile( fi );
 		}
 		catch ( IOException e )
@@ -120,6 +119,16 @@ public class ScriptingContext implements ExceptionContext
 			context.result().addException( new ScriptingException( ReportingLevel.E_IGNORABLE, String.format( "Could not locate the package '%s' within site '%s'", pack, site.getId() ), e ) );
 		}
 
+		context.site( site );
+
+		return context;
+	}
+
+	public static ScriptingContext fromPackageWithException( final Site site, final String pack ) throws IOException
+	{
+		File packFile = site.resourcePackage( pack );
+		FileInterpreter fi = new FileInterpreter( packFile );
+		ScriptingContext context = ScriptingContext.fromFile( fi );
 		context.site( site );
 
 		return context;
@@ -179,7 +188,6 @@ public class ScriptingContext implements ExceptionContext
 	private String shell = "embedded";
 	private Site site;
 	private String source = null;
-	private boolean required = false;
 
 	private ScriptingContext()
 	{
@@ -262,7 +270,7 @@ public class ScriptingContext implements ExceptionContext
 
 		String str = result.getString( false );
 
-		if ( required && result.hasNonIgnorableExceptions() )
+		if ( result.hasNonIgnorableExceptions() )
 			try
 			{
 				ExceptionReport.throwExceptions( result.getExceptions() );
@@ -381,11 +389,12 @@ public class ScriptingContext implements ExceptionContext
 		else if ( factory != null )
 			result = factory.eval( this );
 		else
-			throw new IllegalArgumentException( "We can't read() this EvalContext until you provide either the request or the factory." );
+			throw new IllegalArgumentException( "We can't read() this EvalContext unless you provide either the HttpRequestWrapper or ScriptingFactory." );
 
 		String str = result.getString( includeObj );
 
-		if ( required && result.hasNonIgnorableExceptions() )
+		// TODO required should not effect scripting exceptions
+		if ( result.hasNonIgnorableExceptions() )
 			try
 			{
 				ExceptionReport.throwExceptions( result.getExceptions() );
@@ -432,28 +441,6 @@ public class ScriptingContext implements ExceptionContext
 	public ScriptingContext request( HttpRequestWrapper request )
 	{
 		this.request = request;
-		return this;
-	}
-
-	/**
-	 * Ups the priority of this context from failing to REQUIRED
-	 *
-	 * @return this object
-	 */
-	public ScriptingContext require()
-	{
-		required = true;
-		return this;
-	}
-
-	/**
-	 * Toggles the priority of this context to/from REQUIRED
-	 *
-	 * @return this object
-	 */
-	public ScriptingContext require( boolean required )
-	{
-		this.required = required;
 		return this;
 	}
 

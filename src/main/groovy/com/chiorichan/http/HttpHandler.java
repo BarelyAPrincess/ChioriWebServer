@@ -911,7 +911,10 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		}
 		catch ( EventException ex )
 		{
-			throw new ScriptingException( ReportingLevel.E_ERROR, "Caught EventException while trying to fire the RenderEvent", ex.getCause() );
+			if ( ex.getCause() != null && ex.getCause() instanceof ScriptingException )
+				throw ( ScriptingException ) ex.getCause();
+			else
+				throw new ScriptingException( ReportingLevel.E_ERROR, "Caught EventException while trying to fire the RenderEvent", ex.getCause() );
 		}
 
 		log.log( Level.INFO, "Written {bytes=%s,total_timing=%sms}", rendered.readableBytes(), Timings.finish( this ) );
@@ -922,7 +925,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		}
 		catch ( IllegalReferenceCountException e )
 		{
-			log.log( Level.SEVERE, "Exception encountered while witting script object to output, %s", e.getMessage() );
+			log.log( Level.SEVERE, "Exception encountered while writing script object to output, %s", e.getMessage() );
 		}
 	}
 

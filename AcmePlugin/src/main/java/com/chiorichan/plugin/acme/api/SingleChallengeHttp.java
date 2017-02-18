@@ -10,6 +10,7 @@ import java.util.TreeMap;
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.http.HttpCode;
 import com.chiorichan.lang.PluginNotFoundException;
+import com.chiorichan.logger.Log;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.acme.AcmePlugin;
 import com.chiorichan.plugin.acme.lang.AcmeException;
@@ -18,6 +19,7 @@ import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Ticks;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.zutils.ZIO;
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -162,7 +164,7 @@ public final class SingleChallengeHttp
 					 *     "keyAuthorization":"jg1...304",
 					 *     "status":"invalid",
 					 *     "token":"jg1...rGU",
-					 *     "type":"com.chiorichan.http-01",
+					 *     "type":"http-01",
 					 *     "uri":"https://acme-staging.api.letsencrypt.org/acme/challenge/ynd...889",
 					 *     "validationRecord":[
 					 *         {
@@ -198,7 +200,7 @@ public final class SingleChallengeHttp
 					/*
 					 * <pre>
 					 * {
-					 *     "type":"com.chiorichan.http-01",
+					 *     "type":"http-01",
 					 *     "status":"valid",
 					 *     "uri":"https://acme-staging.api.letsencrypt.org/acme/challenge/nwe...099",
 					 *     "token":"xZK...TNU",
@@ -227,7 +229,7 @@ public final class SingleChallengeHttp
 					/*
 					 * <pre>
 					 * {
-					 *     "type":"com.chiorichan.http-01",
+					 *     "type":"http-01",
 					 *     "status":"pending",
 					 *     "uri":"https://acme-staging.api.letsencrypt.org/acme/challenge/nwe...099",
 					 *     "token":"xZK...TNU",
@@ -262,6 +264,7 @@ public final class SingleChallengeHttp
 		}
 		catch ( IOException e )
 		{
+			Log.get().debug( "Challenge response debug:\n" + response.getBody() );
 			e.printStackTrace();
 		}
 

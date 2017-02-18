@@ -271,5 +271,5 @@ public abstract class SessionWrapper implements BindingProvider, AccountAttachme
 		return session;
 	}
 
-	// TODO: Future add of setDomain, setCookieName, setSecure (com.chiorichan.http verses https)
+	// TODO: Future add of setDomain, setCookieName, setSecure (http verses https)
 }

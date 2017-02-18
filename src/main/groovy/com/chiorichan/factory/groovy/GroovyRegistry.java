@@ -105,16 +105,12 @@ public class GroovyRegistry implements ScriptingRegistry
 	{
 		try
 		{
-			// File classFile = FileFunc.buildFile( context.cache(), context.scriptPackage().replace( '.', File.separatorChar ), context.scriptSimpleName() + ".class" );
-			if ( scriptCacheMd5.containsKey( context.scriptClassName() ) )
+			if ( scriptCacheMd5.containsKey( context.site().getId() + "//" + context.scriptClassName() ) && scriptCacheMd5.get( context.site().getId() + "//" + context.scriptClassName() ).equals( context.md5() ) )
 			{
-				if ( scriptCacheMd5.get( context.site().getId() + "//" + context.scriptClassName() ).equals( context.md5() ) )
-				{
-					Class<?> scriptClass = Class.forName( context.scriptClassName() );
-					Constructor<?> con = scriptClass.getConstructor( Binding.class );
-					Script script = ( Script ) con.newInstance( binding );
-					return script;
-				}
+				Class<?> scriptClass = Class.forName( context.scriptClassName() );
+				Constructor<?> con = scriptClass.getConstructor( Binding.class );
+				Script script = ( Script ) con.newInstance( binding );
+				return script;
 			}
 			else
 				scriptCacheMd5.put( context.site().getId() + "//" + context.scriptClassName(), context.md5() );
@@ -210,7 +206,7 @@ public class GroovyRegistry implements ScriptingRegistry
 		 */
 		configuration.addCompilationCustomizers( imports, timedInterrupt, secure );
 
-		if ( context.getScriptBaseClass() == null || context.getScriptBaseClass().length() == 0 )
+		if ( ZObjects.isEmpty( context.getScriptBaseClass() ) )
 			configuration.setScriptBaseClass( ScriptingBaseGroovy.class.getName() );
 		else
 			configuration.setScriptBaseClass( context.getScriptBaseClass() );

@@ -474,7 +474,7 @@ public class HttpResponseWrapper
 		nonce.mapValues( "level", level == null || level.length() == 0 ? "danger" : level );
 		nonce.mapValues( "target", target == null || target.length() == 0 ? request.getFullUrl() : target );
 		String loginForm = request.getLocation().getLoginForm();
-		if ( !loginForm.toLowerCase().startsWith( "com/chiorichan/http" ) )
+		if ( !loginForm.toLowerCase().startsWith( "http" ) )
 			loginForm = ( request.isSecure() ? "https://" : "http://" ) + loginForm;
 		sendRedirect( String.format( "%s?%s=%s", loginForm, nonce.key(), nonce.value() ) );
 	}
@@ -559,7 +559,7 @@ public class HttpResponseWrapper
 	}
 
 	/**
-	 * Send the client to a specified page with com.chiorichan.http code 302 automatically.
+	 * Send the client to a specified page with http code 302 automatically.
 	 *
 	 * @param target The destination URL. Can either be relative or absolute.
 	 */
@@ -569,10 +569,10 @@ public class HttpResponseWrapper
 	}
 
 	/**
-	 * Sends the client to a specified page with specified com.chiorichan.http code but with the option to not automatically go.
+	 * Sends the client to a specified page with specified http code but with the option to not automatically go.
 	 *
 	 * @param target     The destination url. Can be relative or absolute.
-	 * @param httpStatus What com.chiorichan.http code to use.
+	 * @param httpStatus What http code to use.
 	 */
 	public void sendRedirect( String target, int httpStatus )
 	{

@@ -75,9 +75,9 @@ public class NetworkSecurity implements EventRegistrar, TaskRegistrar, Listener
 			switch ( this )
 			{
 				case HTTP_ERROR_400:
-					return "There was a com.chiorichan.http error, continued abuse will lead to banishment!";
+					return "There was a http error, continued abuse will lead to banishment!";
 				case HTTP_ERROR_500:
-					return "There was a com.chiorichan.http error, continued abuse will lead to banishment!";
+					return "There was a http error, continued abuse will lead to banishment!";
 				case CLOSED_EARLY:
 					return "The connection was closed before we could finish the request, continued abuse will lead to banishment!";
 				default:

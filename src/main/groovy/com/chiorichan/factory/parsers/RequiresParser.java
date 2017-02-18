@@ -1,10 +1,10 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- *
+ * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
- *
+ * <p>
  * All Rights Reserved.
  */
 package com.chiorichan.factory.parsers;
@@ -37,7 +37,7 @@ public class RequiresParser extends HTMLCommentParser
 			Log.get( factory ).warning( "EvalFactory: require() method only accepts one argument, ignored." );
 
 		// TODO Prevent infinite loops!
-		ScriptingResult result = factory.eval( ScriptingContext.fromPackage( context.site(), args[1] ).request( context.request() ).require() );
+		ScriptingResult result = factory.eval( ScriptingContext.fromPackage( context.site(), args[1] ).request( context.request() ) );
 
 		if ( result.hasExceptions() )
 			ExceptionReport.throwExceptions( result.getExceptions() );

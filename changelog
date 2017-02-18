@@ -42,7 +42,7 @@
 9.3.3:
 	DEPRECATED: StringFunc.md5 and base64 methods, use SecureFunc instead
 	DEPRECATED: Sessions are no longer cleaned up at shutdown to spare a long agonizing shutdown delay
-	BUGFIX: Login redirect bug with com.chiorichan.http code 307
+	BUGFIX: Login redirect bug with http code 307
 	BUGFIX: generateAcctId() is now more reliable
 	UPDATED: Rewrote SSL to be compatible with normal certificates (PEM certificates and PKCS8 keys) over ugly Java key stores
 	UPDATED: Changed the minimum required version to Java 1.8, this gave us a few more modern SSL/TLS protocols and an improved API
@@ -69,7 +69,7 @@
 	UPDATED: Sites are now properly saved back to their configuration files
 	UPDATED: Changes to YamlConfiguration, added getAsList(), copy(), move(), and improved getList() methods
 	UPDATED: Enabled about 22 additional cipher suites for SSL
-	UPDATED: Moved com.chiorichan.https.* to com.chiorichan.com.chiorichan.http
+	UPDATED: Moved https.* to http
 	UPDATED: CSRF has been renamed to Nonce, annotation is @nonce [Disabled, Flexible, PostOnly, GetOnly, Required]. Nonce can now also be used to carry short lived strings between requests
 	UPDATED: New SSL annotation options, PostOnly and GetOnly. Each will REQUIRE SSL if request is being made over POST or GET.
 	ADDED: SSL ciphers can be modified from the EnabledCipherSuites.txt file

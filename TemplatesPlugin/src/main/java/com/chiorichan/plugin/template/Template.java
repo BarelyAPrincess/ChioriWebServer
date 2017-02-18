@@ -16,18 +16,18 @@ import com.chiorichan.helpers.Namespace;
 import com.chiorichan.lang.ExceptionReport;
 import com.chiorichan.lang.MultipleException;
 import com.chiorichan.lang.PluginException;
+import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.ScriptingException;
-import com.chiorichan.logger.Log;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.zutils.ServerFunc;
 import com.chiorichan.zutils.ZObjects;
-import com.google.common.collect.Lists;
 import io.netty.buffer.Unpooled;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -284,11 +284,24 @@ public class Template extends Plugin implements Listener
 			for ( String pack : headers )
 				try
 				{
+					if ( Versioning.isDevelopment() )
+					{
+						getLogger().fine( String.format( "Attempting to include package '%s' in head", pack ) );
+						ob.append( "<!-- includes package \"" + pack + "\" -->\n" );
+					}
+
 					ob.append( packageRead( pack, event ) + "\n" );
 				}
-				catch ( Throwable t )
+				catch ( ScriptingException t )
 				{
-					getLogger().warning( String.format( "There was a problem reading the header package '%s'", pack ) );
+					if ( t.isIgnorable() )
+					{
+						if ( Versioning.isDevelopment() )
+							ob.append( "<!-- FAILED TO READ HEADER PACKAGE -->\n" );
+						getLogger().warning( String.format( "There was a problem reading the header package '%s'", pack ), t );
+					}
+					else
+						throw t;
 				}
 
 			ob.append( "</head>\n" );
@@ -343,7 +356,7 @@ public class Template extends Plugin implements Listener
 
 	private ScriptingResult packageEval( String pack, RenderEvent event ) throws Exception
 	{
-		ScriptingContext context = ScriptingContext.fromPackage( event.getSite(), pack ).request( event.getRequest() ).require();
+		ScriptingContext context = ScriptingContext.fromPackage( event.getSite(), pack ).request( event.getRequest() );
 		ScriptingResult result = event.getRequest().getEvalFactory().eval( context );
 
 		if ( result.hasNonIgnorableExceptions() )
@@ -354,8 +367,14 @@ public class Template extends Plugin implements Listener
 
 	private String packageRead( String pack, RenderEvent event ) throws ScriptingException, MultipleException
 	{
-		ScriptingContext context = ScriptingContext.fromPackage( event.getSite(), pack ).request( event.getRequest() );
-		context.require( !getConfig().getBoolean( "config.ignoreFileNotFound" ) );
-		return context.read( false );
+		try
+		{
+			ScriptingContext context = ScriptingContext.fromPackageWithException( event.getSite(), pack ).request( event.getRequest() );
+			return context.read( false );
+		}
+		catch ( IOException e )
+		{
+			throw new ScriptingException( getConfig().getBoolean( "config.ignoreFileNotFound" ) ? ReportingLevel.E_IGNORABLE : ReportingLevel.E_ERROR, "We had a problem reading the package file '" + pack + "'", e );
+		}
 	}
 }

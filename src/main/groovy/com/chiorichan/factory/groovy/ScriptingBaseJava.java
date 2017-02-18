@@ -28,7 +28,7 @@ import com.chiorichan.site.SiteManager;
 import com.chiorichan.zutils.ZHttp;
 import com.chiorichan.zutils.ZMaps;
 import com.chiorichan.zutils.ZObjects;
-import com.google.common.base.Joiner;
+import com.chiorichan.zutils.ZStrings;
 
 import java.io.File;
 import java.util.HashMap;
@@ -201,7 +201,7 @@ public abstract class ScriptingBaseJava extends Builtin
 				String domain = ZHttp.normalize( route.getParam( "domain" ) );
 				if ( ZObjects.isEmpty( domain ) )
 					return getRequest().getFullDomain() + url;
-				if ( domain.startsWith( "http" ) )
+				if ( domain.startsWith( "http" ) || domain.startsWith( "//" ) )
 					return domain + url;
 				return ( getRequest().isSecure() ? "https://" : "http://" ) + domain + "/" + url;
 			}
@@ -218,7 +218,7 @@ public abstract class ScriptingBaseJava extends Builtin
 
 				if ( host.matches( "[a-z0-9.]+" ) )
 				{
-					if ( host.startsWith( "http" ) )
+					if ( host.startsWith( "http" ) || host.startsWith( "//" ) )
 						return host + url;
 					return ( getRequest().isSecure() ? "https://" : "http://" ) + host + "/" + url;
 				}
@@ -229,11 +229,7 @@ public abstract class ScriptingBaseJava extends Builtin
 		else if ( route.hasParam( "url" ) )
 		{
 			String url = route.getParam( "url" );
-			if ( url.startsWith( "/" ) )
-				url = url.substring( 1 );
-			if ( !url.endsWith( "/" ) )
-				url = url + "/";
-			return url.toLowerCase().startsWith( "http" ) ? url : getRequest().getFullDomain() + url;
+			return url.toLowerCase().startsWith( "http" ) || url.toLowerCase().startsWith( "//" ) ? url : getRequest().getFullDomain() + ZStrings.trimAll( url, '/' );
 		}
 		else
 			throw new SiteConfigurationException( "The route with id [" + id + "] has no 'pattern' nor 'url' directive, we can not produce a route url without either one." );
