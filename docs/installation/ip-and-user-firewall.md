@@ -36,9 +36,9 @@ Depending on your situation, you might prefer to be able to whitelist a user for
     getAccount( "acctId" ).setWhitelisted( true );
 ```
 
-**Note** The permission node `sys.whitelisted` is assigned to users who have been whitelisted on the server. Also, if the user has been banned, it will supersed the `isWhitelisted()` method.
+**Note** The permission node `sys.whitelisted` is assigned to users who have been whitelisted on the server. Also, if the user has been banned, it will supersed the `isWhitelisted()` result.
 
-**TODO** Allow whitelist to be enabled per individual site, instead of the entire server.
+**TODO** Allow whitelist to be enabled per site, instead of the entire server.
 
 ## Automatic IP Bans
 
