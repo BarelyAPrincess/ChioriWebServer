@@ -281,24 +281,31 @@ public class Template extends Plugin implements Listener
 				headers.add( pns.appendNew( "includes.common" ).getString() );
 			headers.add( pns.appendNew( "includes." + ns.getLocalName() ).getString() );
 
+			boolean isDev = Versioning.isDevelopment();
+
 			for ( String pack : headers )
 				try
 				{
-					if ( Versioning.isDevelopment() )
-					{
-						getLogger().fine( String.format( "Attempting to include package '%s' in head", pack ) );
-						ob.append( "<!-- includes package \"" + pack + "\" -->\n" );
-					}
-
+					if ( isDev )
+						ob.append( "<!-- package \"" + pack + "\" start -->\n" );
 					ob.append( packageRead( pack, event ) + "\n" );
+					if ( isDev )
+					{
+						ob.append( "<!-- package \"" + pack + "\" end -->\n" );
+						getLogger().fine( String.format( "Included package '%s' in head", pack ) );
+					}
 				}
 				catch ( ScriptingException t )
 				{
 					if ( t.isIgnorable() )
 					{
-						if ( Versioning.isDevelopment() )
-							ob.append( "<!-- FAILED TO READ HEADER PACKAGE -->\n" );
-						getLogger().warning( String.format( "There was a problem reading the header package '%s'", pack ), t );
+						getLogger().warning( String.format( "There was an ignorable exception thrown including the package '%s'", pack ) );
+
+						if ( isDev )
+						{
+							getLogger().fine( t.getMessage() );
+							ob.append( "<!-- package \"" + pack + "\" failed -->\n" );
+						}
 					}
 					else
 						throw t;
