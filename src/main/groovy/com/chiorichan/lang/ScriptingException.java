@@ -1,10 +1,10 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- *
+ * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
- *
+ * <p>
  * All Rights Reserved.
  */
 package com.chiorichan.lang;
@@ -64,15 +64,13 @@ public class ScriptingException extends ApplicationException
 	}
 
 	@Override
-	public boolean handle( ExceptionReport report, ExceptionContext context )
+	public ReportingLevel handle( ExceptionReport report, ExceptionContext context )
 	{
-		/**
-		 * Forward this type of exception to the report
-		 */
+		/* Forward this type of exception to the report */
 		if ( context instanceof ScriptingContext )
 			populateScriptTrace( ( ( ScriptingContext ) context ).factory().stack() );
 		report.addException( level, this );
-		return !isIgnorable();
+		return level;
 	}
 
 	public boolean hasScriptTrace()
