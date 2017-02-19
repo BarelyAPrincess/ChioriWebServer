@@ -1,6 +1,8 @@
-name: Templates Plugin
+name: SSH Console Plugin
 author: Chiori Greene
-main: com.chiorichan.plugin.template.Template
-version: '1.2'
+main: com.chiorichan.plugin.sshd.SSHPlugin
+version: '1.0'
 depends: []
-gitHubBaseUrl: https://raw.githubusercontent.com/ChioriGreene/ChioriWebServer/master/TemplatesPlugin/src/main/java/
+libraries:
+  - "org.apache.sshd:sshd:1.3.0"
+gitHubBaseUrl: https://raw.githubusercontent.com/ChioriGreene/ChioriWebServer/master/SSHConsolePlugin/src/main/java/

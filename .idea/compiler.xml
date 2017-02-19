@@ -14,6 +14,10 @@
       <module name="EmailPlugin_test" target="1.8" />
       <module name="InteractiveConsolePlugin_main" target="1.8" />
       <module name="InteractiveConsolePlugin_test" target="1.8" />
+      <module name="SSHConsolePlugin_main" target="1.8" />
+      <module name="SSHConsolePlugin_test" target="1.8" />
+      <module name="sshd_main" target="1.8" />
+      <module name="sshd_test" target="1.8" />
       <module name="TemplatesPlugin_main" target="1.8" />
       <module name="TemplatesPlugin_test" target="1.8" />
       <module name="ZXingPlugin_main" target="1.8" />

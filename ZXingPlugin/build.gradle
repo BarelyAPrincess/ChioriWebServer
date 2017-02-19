@@ -1,13 +1,11 @@
 apply plugin: 'java'
 apply plugin: 'eclipse'
 
-repositories
-{ mavenCentral() }
+repositories {mavenCentral()}
 
-dependencies
-{
+dependencies {
 	compile rootProject
-	
+
 	// Used to Generate QR Codes
 	compile group: 'com.google.zxing', name: 'core', version: '3.1.0'
 	compile group: 'com.google.zxing', name: 'javase', version: '3.1.0'
@@ -15,5 +13,4 @@ dependencies
 
 libsDirName = '../../build/dist/plugins'
 
-artifacts
-{ archives jar }
+artifacts {archives jar}

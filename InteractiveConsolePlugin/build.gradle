@@ -1,11 +1,8 @@
 apply plugin: 'java'
-apply plugin: 'eclipse'
 
-repositories
-{ mavenCentral() }
+repositories {mavenCentral()}
 
-dependencies
-{
+dependencies {
 	compile rootProject
 	compile group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.3.6'
 	compile group: 'com.google.guava', name: 'guava', version: '17.0'
@@ -15,5 +12,4 @@ dependencies
 
 libsDirName = '../../build/dist/plugins'
 
-artifacts
-{ archives jar }
+artifacts {archives jar}

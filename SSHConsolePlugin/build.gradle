@@ -1,0 +1,18 @@
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	compile rootProject
+
+	// Handles SSH connections
+	compile group: 'org.apache.sshd', name: 'sshd-core', version: '1.3.0'
+}
+
+libsDirName = '../../build/dist/plugins'
+
+artifacts {archives jar}
