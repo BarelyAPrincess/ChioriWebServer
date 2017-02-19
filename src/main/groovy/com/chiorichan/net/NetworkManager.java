@@ -1,38 +1,17 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- *
+ * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
- *
+ * <p>
  * All Rights Reserved.
  */
 package com.chiorichan.net;
 
-import com.chiorichan.Loader;
-import com.chiorichan.zutils.ZSystem;
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
-
-import java.lang.ref.WeakReference;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.security.Security;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.List;
-
-import joptsimple.OptionSet;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-
 import com.chiorichan.AppConfig;
 import com.chiorichan.AppController;
+import com.chiorichan.Loader;
 import com.chiorichan.http.HttpInitializer;
 import com.chiorichan.http.ssl.SslInitializer;
 import com.chiorichan.http.ssl.SslManager;
@@ -44,7 +23,26 @@ import com.chiorichan.services.AppManager;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.TaskRegistrar;
 import com.chiorichan.tasks.Ticks;
+import com.chiorichan.zutils.ZSystem;
 import com.google.common.collect.Lists;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import joptsimple.OptionSet;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
+import java.lang.ref.WeakReference;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.security.Security;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.List;
 
 /**
  * Works as the main network managing class for netty implementations, e.g., Http, Https, and Query
@@ -145,6 +143,8 @@ public class NetworkManager implements TaskRegistrar, LogSource
 		close( httpsChannel );
 		close( tcpChannel );
 		close( queryChannel );
+
+		NetworkSecurity.shutdown();
 	}
 
 	public static void shutdownHttpServer()

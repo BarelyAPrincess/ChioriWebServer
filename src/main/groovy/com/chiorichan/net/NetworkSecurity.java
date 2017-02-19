@@ -1,19 +1,13 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- *
+ * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
- *
+ * <p>
  * All Rights Reserved.
  */
 package com.chiorichan.net;
-
-import java.util.List;
-import java.util.Map;
-
-import com.chiorichan.zutils.ZHttp;
-import org.apache.commons.lang3.Validate;
 
 import com.chiorichan.AppConfig;
 import com.chiorichan.event.EventBus;
@@ -29,8 +23,19 @@ import com.chiorichan.lang.HttpError;
 import com.chiorichan.site.Site;
 import com.chiorichan.tasks.TaskRegistrar;
 import com.chiorichan.tasks.Timings;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import com.chiorichan.zutils.ZHttp;
+import com.chiorichan.zutils.ZIO;
+import com.chiorichan.zutils.ZLists;
+import org.apache.commons.lang3.Validate;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 /**
  * Maintains the network security for all protocols, e.g., TCP, HTTP and HTTPS.
@@ -56,12 +61,9 @@ public class NetworkSecurity implements EventRegistrar, TaskRegistrar, Listener
 		/**
 		 * Constructor for a new IP Strike Type
 		 *
-		 * @param countToBan
-		 *             The number of times required until the IP is temp banned for abuse
-		 * @param dropOffTime
-		 *             The maximum amount of time between strips to make it count towards the ban
-		 * @param banFor
-		 *             The maximum amount of time the IP will be banned for
+		 * @param countToBan  The number of times required until the IP is temp banned for abuse
+		 * @param dropOffTime The maximum amount of time between strips to make it count towards the ban
+		 * @param banFor      The maximum amount of time the IP will be banned for
 		 */
 		IpStrikeType( int countToBan, int dropOffTime, int banFor )
 		{
@@ -115,7 +117,7 @@ public class NetworkSecurity implements EventRegistrar, TaskRegistrar, Listener
 		private int banTill = -1;
 		private int banWhen = -1;
 		private final String ipAddress;
-		private final Map<IpStrikeType, Record> strikes = Maps.newConcurrentMap();
+		private final Map<IpStrikeType, Record> strikes = new ConcurrentHashMap<>();
 
 		IpTracker( String ipAddress )
 		{
@@ -169,7 +171,7 @@ public class NetworkSecurity implements EventRegistrar, TaskRegistrar, Listener
 		}
 	}
 
-	private static List<IpTracker> ips = Lists.newCopyOnWriteArrayList();
+	private static List<IpTracker> ips = new CopyOnWriteArrayList<>();
 
 	static
 	{
@@ -177,6 +179,76 @@ public class NetworkSecurity implements EventRegistrar, TaskRegistrar, Listener
 		ips.add( new IpTracker( "204.15.135.116" ).setBanned() );
 		ips.add( new IpTracker( "222.91.96.117" ).setBanned() );
 		ips.add( new IpTracker( "190.213.166.12" ).setBanned() );
+
+		List<String> linesCombined = new ArrayList<>();
+
+		try
+		{
+			File bannedIpFile = new File( AppConfig.get().getDirectory(), "banned-ipv4.txt" );
+			if ( !bannedIpFile.exists() )
+				bannedIpFile.createNewFile();
+			linesCombined.addAll( ZIO.readFileToLines( bannedIpFile ) );
+		}
+		catch ( IOException e )
+		{
+			NetworkManager.getLogger().severe( "Failed to load banned IPv4 file", e );
+		}
+
+		try
+		{
+			File bannedIpFile = new File( AppConfig.get().getDirectory(), "banned-ipv6.txt" );
+			if ( !bannedIpFile.exists() )
+				bannedIpFile.createNewFile();
+			linesCombined.addAll( ZIO.readFileToLines( bannedIpFile ) );
+		}
+		catch ( IOException e )
+		{
+			NetworkManager.getLogger().severe( "Failed to load banned IPv6 file", e );
+		}
+
+		for ( String line : linesCombined )
+			ips.add( new IpTracker( line ).setBanned() );
+	}
+
+	public static void shutdown()
+	{
+		// TODO Add and remove lines from banned file once an ip is either banned and unbanned.
+		// TODO Save the ban timer so ips will be unbanned once they reach their thresholds.
+
+		File bannedIp4File = new File( AppConfig.get().getDirectory(), "banned-ipv4.txt" );
+		File bannedIp6File = new File( AppConfig.get().getDirectory(), "banned-ipv6.txt" );
+
+		List<String> bannedIPv4 = new ArrayList<>();
+		List<String> bannedIPv6 = new ArrayList<>();
+
+		for ( IpTracker ip : ips )
+		{
+			if ( ip.banned )
+				if ( ZHttp.isValidIPv4( ip.ipAddress ) )
+					bannedIPv4.add( ip.ipAddress );
+				else if ( ZHttp.isValidIPv6( ip.ipAddress ) )
+					bannedIPv6.add( ip.ipAddress );
+				else
+					NetworkManager.getLogger().info( "The string did not match any IPv4 or IPv6 pattern, it will not be saved. Is this a bug?" );
+		}
+
+		try
+		{
+			ZIO.writeStringToFile( bannedIp4File, bannedIPv4.stream().collect( Collectors.joining( "\n" ) ) );
+		}
+		catch ( IOException e )
+		{
+			NetworkManager.getLogger().severe( "Failed to save banned IPv4 file", e );
+		}
+
+		try
+		{
+			ZIO.writeStringToFile( bannedIp6File, bannedIPv6.stream().collect( Collectors.joining( "\n" ) ) );
+		}
+		catch ( IOException e )
+		{
+			NetworkManager.getLogger().severe( "Failed to save banned IPv6 file", e );
+		}
 	}
 
 	public static void addStrikeToIp( String ip, IpStrikeType type, String... args )
@@ -191,13 +263,7 @@ public class NetworkSecurity implements EventRegistrar, TaskRegistrar, Listener
 
 	private static IpTracker get( String ip )
 	{
-		for ( IpTracker t : ips )
-			if ( t.ipAddress.equals( ip ) )
-				return t;
-
-		IpTracker it = new IpTracker( ip );
-		ips.add( it );
-		return it;
+		return ZLists.findOrNew( ips, t -> t.ipAddress.equals( ip ), new IpTracker( ip ) );
 	}
 
 	public static void isForbidden( ApacheHandler htaccess, Site site, WebInterpreter fi ) throws HttpError
