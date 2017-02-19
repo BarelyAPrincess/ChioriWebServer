@@ -34,6 +34,7 @@ import com.chiorichan.lang.NonceException;
 import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.RunLevel;
 import com.chiorichan.lang.ScriptingException;
+import com.chiorichan.logger.Log;
 import com.chiorichan.logger.experimental.LogEvent;
 import com.chiorichan.logger.experimental.LogManager;
 import com.chiorichan.net.NetworkManager;
@@ -528,6 +529,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 
 		// Throws IOException and HttpError
 		fi = new WebInterpreter( request );
+
 		response.annotations.putAll( fi.getAnnotations() );
 
 		currentSite = request.getLocation();

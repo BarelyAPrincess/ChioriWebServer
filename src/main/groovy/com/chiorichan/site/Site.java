@@ -76,13 +76,13 @@ public class Site implements AccountLocation
 	/* Configuration file */
 	private final File file;
 	/* Root directory */
-	private File directory;
+	private final File directory;
 	/* Loaded site configuration */
 	final YamlConfiguration yaml;
 	/* Security encryption key -- WIP */
 	private final String encryptionKey;
 	/* URL routes */
-	private final Routes routes = new Routes( this );
+	private final Routes routes;
 	/* Environment variables */
 	final Env env;
 	/* Id */
@@ -222,6 +222,8 @@ public class Site implements AccountLocation
 					DatastoreManager.getLogger().severe( String.format( "We are sorry, the datastore subsystem currently only supports mysql, sqlite, and h2 databases but we found '%s', please change 'database.type' to 'mysql', 'sqlite', or 'h2' in the site config and set the connection params", yaml.getString( "server.database.type", "sqlite" ).toLowerCase() ) );
 			}
 
+		routes = new Routes( this );
+
 		if ( yaml.has( "sessions.persistenceMethod" ) )
 			for ( SessionPersistenceMethod method : SessionPersistenceMethod.values() )
 				if ( method.name().equalsIgnoreCase( yaml.getString( "sessions.persistenceMethod" ) ) )
@@ -297,40 +299,53 @@ public class Site implements AccountLocation
 
 				SiteManager.getLogger().info( String.format( "%s%sScheduled site archive for %s {nextRun: %s, interval: %s}", EnumColor.AQUA, EnumColor.NEGATIVE, siteId, nextRun, timer ) );
 
-				TaskManager.instance().scheduleSyncRepeatingTask( SiteManager.instance(), nextRun, timer, new Runnable()
+				TaskManager.instance().scheduleSyncRepeatingTask( SiteManager.instance(), nextRun, timer, () ->
 				{
-					@Override
-					public void run()
+					Log l = SiteManager.getLogger();
+					l.info( String.format( "%s%sRunning archive for site %s...", EnumColor.AQUA, EnumColor.NEGATIVE, siteId ) );
+
+					SiteManager.cleanupBackups( siteId, ".zip", archive.getInt( "keep", 3 ) );
+					archive.set( "lastRun", Timings.epoch() );
+
+					File dir = AppConfig.get().getDirectory( "archive", "archive" );
+					dir = new File( dir, siteId );
+					dir.mkdirs();
+
+					File zip = new File( dir, new SimpleDateFormat( "yyyy-MM-dd_HH-mm-ss" ).format( new Date() ) + "-" + siteId + ".zip" );
+
+					try
 					{
-						Log l = SiteManager.getLogger();
-						l.info( String.format( "%s%sRunning archive for site %s...", EnumColor.AQUA, EnumColor.NEGATIVE, siteId ) );
-
-						SiteManager.cleanupBackups( siteId, ".zip", archive.getInt( "keep", 3 ) );
-						archive.set( "lastRun", Timings.epoch() );
-
-						File dir = AppConfig.get().getDirectory( "archive", "archive" );
-						dir = new File( dir, siteId );
-						dir.mkdirs();
-
-						File zip = new File( dir, new SimpleDateFormat( "yyyy-MM-dd_HH-mm-ss" ).format( new Date() ) + "-" + siteId + ".zip" );
-
-						try
-						{
-							ZIO.zipDir( site.directory(), zip );
-						}
-						catch ( IOException e )
-						{
-							l.severe( String.format( "%s%sFailed archiving site %s to %s", EnumColor.RED, EnumColor.NEGATIVE, siteId, zip.getAbsolutePath() ), e );
-							return;
-						}
-
-						l.info( String.format( "%s%sFinished archiving site %s to %s", EnumColor.AQUA, EnumColor.NEGATIVE, siteId, zip.getAbsolutePath() ) );
+						ZIO.zipDir( site.directory(), zip );
 					}
+					catch ( IOException e )
+					{
+						l.severe( String.format( "%s%sFailed archiving site %s to %s", EnumColor.RED, EnumColor.NEGATIVE, siteId, zip.getAbsolutePath() ), e );
+						return;
+					}
+
+					l.info( String.format( "%s%sFinished archiving site %s to %s", EnumColor.AQUA, EnumColor.NEGATIVE, siteId, zip.getAbsolutePath() ) );
 				} );
 			}
 			else
 				SiteManager.getLogger().warning( String.format( "Failed to initialize site backup for site %s, interval did not match regex '[0-9]+[dhmsDHMS]?'.", siteId ) );
 		}
+	}
+
+	Site( SiteManager mgr, String siteId )
+	{
+		this.mgr = mgr;
+		this.siteId = siteId;
+
+		file = null;
+		yaml = new YamlConfiguration();
+		env = new Env();
+		encryptionKey = ZEncryption.randomize( "0x0000X" );
+		ips = new ArrayList<>();
+		siteTitle = Versioning.getProduct();
+		datastore = AppConfig.get().getDatabase();
+
+		directory = SiteManager.checkSiteRoot( siteId );
+		routes = new Routes( this );
 	}
 
 	private void mapDomain( ConfigurationSection domains ) throws SiteConfigurationException
@@ -399,22 +414,6 @@ public class Site implements AccountLocation
 		return stream.get().count() == 0 ? Stream.of( new DomainMapping( this, fullDomain ) ) : stream.get();
 	}
 
-	Site( SiteManager mgr, String siteId )
-	{
-		this.mgr = mgr;
-		this.siteId = siteId;
-
-		file = null;
-		yaml = new YamlConfiguration();
-		env = new Env();
-		encryptionKey = ZEncryption.randomize( "0x0000X" );
-		ips = new ArrayList<>();
-		siteTitle = Versioning.getProduct();
-		datastore = AppConfig.get().getDatabase();
-
-		directory = SiteManager.checkSiteRoot( siteId );
-	}
-
 	public void addToCachePatterns( String pattern )
 	{
 		if ( !cachePatterns.contains( pattern.toLowerCase() ) )
@@ -426,6 +425,7 @@ public class Site implements AccountLocation
 	 */
 	public File directory()
 	{
+		ZObjects.notNull( directory );
 		return directory;
 	}
 
