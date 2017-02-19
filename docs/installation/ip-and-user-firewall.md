@@ -52,4 +52,4 @@ When the following rules are violated, the server will place the specified ban o
 
 * **HTTP 500 Error** If the remote connection cause more than 24x HTTP 500 Internal Server Errors within a 1 second period, it will be banned for a total of one day.
 
-***Note***: This feature is currently work in progress and the server currently has no built-in ip blocking ability. Banned IPs are output to a text file located in the server root named `banned-ips.txt`.
+***Note***: This feature is currently work in progress and the server currently has no built-in ip blocking ability. Banned IPs are output to a text file located in the server root named `banned-ipv4.txt` and `banned-ipv6.txt`.
