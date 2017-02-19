@@ -26,7 +26,6 @@ import com.chiorichan.factory.parsers.PreLinksParserWrapper;
 import com.chiorichan.helpers.Pair;
 import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.ScriptingException;
-import com.chiorichan.logger.Log;
 import com.chiorichan.logger.LogSource;
 import com.chiorichan.services.ObjectContext;
 import com.chiorichan.zutils.ZEncryption;
@@ -206,9 +205,10 @@ public class ScriptingFactory implements LogSource
 			if ( engines.size() > 0 )
 				for ( Entry<ScriptingEngine, List<String>> entry : engines.entrySet() )
 					if ( entry.getValue() == null || entry.getValue().size() == 0 || entry.getValue().contains( context.shell().toLowerCase() ) )
+					{
+						int level = bufferPush( StackType.SCRIPT );
 						try
 						{
-							int level = bufferPush( StackType.SCRIPT );
 							// Determine if data was written to the context during the eval(). Indicating data was either written directly or a sub-eval was called.
 							String hash = context.bufferHash();
 							entry.getKey().eval( context );
@@ -216,14 +216,19 @@ public class ScriptingFactory implements LogSource
 								context.resetAndWrite( output );
 							else
 								context.write( output );
-							bufferPop( level );
 							break;
 						}
 						catch ( Throwable cause )
 						{
+							// On return true, it was a severe problem and the execution should be stopped.
 							if ( result.handleException( cause, context ) )
 								return result;
 						}
+						finally
+						{
+							bufferPop( level );
+						}
+					}
 
 			PostEvalEvent postEvent = new PostEvalEvent( context );
 			try
@@ -255,7 +260,7 @@ public class ScriptingFactory implements LogSource
 	 */
 	private int bufferPush( StackType type )
 	{
-		bufferStack.add( new Pair<ByteBuf, StackType>( output.copy(), type ) );
+		bufferStack.add( new Pair<>( output.copy(), type ) );
 		output.clear();
 		return bufferStack.size() - 1;
 	}
@@ -275,7 +280,7 @@ public class ScriptingFactory implements LogSource
 		if ( bufferStack.size() > level + 1 && bufferStack.get( level + 1 ).getValue() == StackType.OB )
 			obFlush( level + 1 );
 
-		// Determines if the buffer was not push'd or pop'd in the correct order, likely indicating outside manipulation of the bufferStack.
+		// Determines if the buffer was not push'd or pop'd in the correct order, often indicating outside manipulation of the bufferStack.
 		if ( bufferStack.size() - 1 > level )
 			throw new IllegalStateException( "Buffer stack size was too high." );
 
