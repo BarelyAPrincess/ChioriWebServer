@@ -1,10 +1,10 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- *
+ * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
- *
+ * <p>
  * All Rights Reserved.
  */
 package com.chiorichan.session;
@@ -352,11 +352,19 @@ public class SessionManager implements TaskRegistrar, ServiceManager, LogSource
 	public Session startSession( SessionWrapper wrapper ) throws SessionException
 	{
 		HttpCookie cookie = wrapper.getServerCookie( wrapper.getLocation().getSessionKey(), getDefaultSessionName() );
-		Session session = cookie == null ? createSession( wrapper ) : sessions.stream().filter( s -> s != null && cookie.getValue().equals( s.getSessionId() ) ).findFirst().orElse( null );
+		Session session = null;
+
+		if ( cookie != null )
+			session = sessions.stream().filter( s -> s != null && cookie.getValue().equals( s.getSessionId() ) ).findFirst().orElse( null );
+
+		if ( session == null )
+			session = createSession( wrapper );
+
 		session.registerWrapper( wrapper );
-		return session;
 
 		// getLogger().debug( "Debug: IpAddress " + wrapper.getIpAddress() + " | Loaded? " + session.data.stale + " | Expires " + ( session.getTimeout() - CommonFunc.getEpoch() ) );
+
+		return session;
 	}
 
 	// int defaultLife = ( getSite().getYaml() != null ) ? getSite().getYaml().getInt( "sessions.lifetimeDefault", 604800 ) : 604800;
