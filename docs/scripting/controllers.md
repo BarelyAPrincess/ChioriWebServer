@@ -1,32 +1,42 @@
 # Controllers
 
-Based on the popular, Model-View-Controllers. Controllers allow you to handle different actions from a single Script, e.g., `http://example.com/site/[controllerNameWithoutExtension]/[action]`.
+Similar to controllers found in Model-View-Controller frameworks. Unlike most other frameworks, ***Chiori-chan's Web Server*** controllers can be anyplace in the url structure. Controllers are parsed lastly in the request handler chain, meaning the file `/directory/controller/ARealFile` will be parsed before `/directory/controller/action` is. Controllers are also compatible with Routes.
 
-When a request fails to find an exact matching file, it will attempt to parse the last part as an action and the prior part as a controller. -- Considering the prior resolves to an actual controller.
+**Developer Note**: Controllers are initialized by the request handler chain but it's the job of the `ScriptingEngine` to make the proper action method calls. As such the only known scripting engine implementing controllers is the `GroovyEngine`, as such groovy controllers must end in `.groovy`.
 
-1. To start, create a new groovy script under the desired directory with the extension `.controller.groovy`. 
-2. To catch specific actions, just add a method as follows:
+## How to Create a Controller
+
+1. First create a new file ending with the extension `.controller.groovy`. This is your controller file and can also be named `index.controller.groovy` to act as a directory based controller.
+
+2. Actions can be several directories deep, as such to define an explicit method action, you must first convert the action to CamelCase (Uppercase character following each url separator.) and then append the word action.
+
 ```groovy
-  def actionEdit()
-  {
+  def actionUserAdd() {
     // Handle Here
   }
   
-  def actionDelete()
-  {
+  def actionUserRemove() {
+    // Handle Here
+  }
+
+  def actionEdit() {
+    // Handle Here
+  }
+  
+  def actionDelete() {
     // Handle Here
   }
 ```
 
-3. If you prefer to leave the actions ambiguous, just create a catch all method and return `true` on a valid action, otherwise `false`.
+3. In cases where explicit actions you also have the option define a catch all method. Just remember to return `true` if the provided action was handled, so the server knows to not a HTTP 404.
+
 ```groovy
-  def catchAll( action )
-  {
+  def catchAll( action ) {
+    /* As previously specified, controllers don't just handle single layer deep actions. So to avoid this, throw HttpError 404 or return `false` when the action contains a forward-slash (/) */
     if ( action.contains("/") )
-      // In some cases, actions could contain a subaction, it's your disgression to support them.
       throw new HttpError( 404 );
 
-    // Action will pass as-is
+    /* Actions are passed exactly as typed in the url and are case-sensitive */
     switch ( action.toLowerCase() )
     {
       case "deleteall":
@@ -43,16 +53,22 @@ When a request fails to find an exact matching file, it will attempt to parse th
   }
 ```
 
-While the non-ambiguous methods are non-case sensitive, actions will pass to the catch all method as-is. When the action fails, i.e., no hard coded action method was found nor did the `catchAll()` method return true, the server will throw a 404 (Not Found) error. If you're in development mode, the error will also include a short description that the action was unhandled.
+If your controller contains no action methods, (including no catch all) the server will always throw a `SiteConfigurationException`. If a catch all does exist and doesn't return `true`, a HTTP 404 will be thrown instead, that is unless your in development mode, which will report the action went unhandled.
 
 ### Using Route File
 
-Controllers are also compatible with the server routing. You need to manually capture the action argument or you can define the action using the `vargs` directive.
+Controllers are also compatible with the Routes feature. You only need to manually capture the action argument or you can define the action using the `vargs` directive.
 
-**Using vargs**
-`pattern "/admin/projects/[projId=]/edit", file "/scripts/projects.controller.groovy", vargs [action:edit]`
+### Using vargs
 
-**Using Capture**
-`pattern "/admin/projects/[projId=]/user/[action=]", file "/scripts/.controller.groovy"`
+```json
+{pattern: "/admin/projects/[projId=]/edit", file "/scripts/projects.controller.groovy", vargs: [action:edit]}
+```
+
+### Using Capture
+
+```json
+{pattern: "/admin/projects/[projId=]/user/[action=]", file: "/scripts/projects.controller.groovy"}
+```
 
 See [Routing](/docs/configuration/routing.html) for more help with the Route File.

@@ -10,13 +10,27 @@ While Groovy is the default and preferred scripting language, additional scripti
 
 [Groovy Language Syntax](http://groovy-lang.org/syntax.html)
 
+PHP Examples
+
 ```php
-PHP: foreach( $vars as $var ) {}
-Groovy: vars.each { var -> }
 
-PHP: $var = array("val1", "val2", "val3")
-Groovy: def var = ["val1", "val2", "val3"]
+    $vars = array( "val1", "val2", "val3" )
 
-PHP: $var = array("key1" => val1", "key2" => "val2", "key3" => "val3")
-Groovy: def var = [key1: val1", key2: "val2", key3: "val3"]
+    foreach( $vars as $var ) { echo $var }
+
+    $var = array("key1" => val1", "key2" => "val2", "key3" => "val3")
+    
+    foreach( $vars as $key => $var ) {}
+```
+
+Those same examples written in Groovy
+
+```groovy
+    def vars = ["val1", "val2", "val3"]
+    
+    vars.each { var -> println var }
+
+    def vars = [key1: "val1", key2: "val2", key3: "val3"]
+    
+    vars.each { key, var -> println key + ": " + var }
 ```
