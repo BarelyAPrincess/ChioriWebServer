@@ -1,12 +1,10 @@
-# Plugins
+# Official Plugins
 
-The Chiori-chan's Web Server features a rich plugin system inspired by the plugin system found in the widely popular CraftBukkit Plugin API, a Minecraft Server.
+The Chiori-chan's Web Server features a rich plugin api based on the  CraftBukkit Plugin API, a Minecraft Server. If you're interested in developing your own plugin for **Chiori-chan's Web Server** see the [Plugin Developer Guide](/docs/plugins/developer/guide.md "Plugin Developer Guide") for more information.
 
 Plugins are located within the `plugins` directory by default and end with file extension `.jar`.
 
 [How to Install Plugins Tutorial by Chiori-chan](https://www.youtube.com/watch?v=HQj2vu0BfI0)
-
-## Official Plugins
 
 ### Let's Encrypt (Acme) Plugin
 Allows the Web Server to auto manage SSL certificates issued by the Let's Encrypt Certificate Authority.

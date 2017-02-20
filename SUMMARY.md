@@ -2,11 +2,7 @@
 
 * [Introduction](README.md)
 * [Getting Started](docs/installation.md)
-  * [Plugins](docs/plugins/README.md)
-    * [Developer Guide](docs/plugins/developer/guide.md)
-      * [API Reference](docs/plugins/developer/api.md)
-      * [Service Manager](docs/plugins/developer/service_manager.md)
-      * [Application Manager](docs/plugins/developer/application_manager.md)
+  * [Official Plugins](docs/plugins/README.md)
   * [Configuration](docs/configuration/README.md)
     * [Datastore](docs/configuration/datastore.md)
     * [Routing](docs/configuration/routing.md)
@@ -18,6 +14,10 @@
 * [Scripting Languages](docs/scripting/README.md)
   * [API Reference](docs/scripting/api.md)
   * [Packages](docs/scripting/packages.md)
+* [Plugin Developer Guide](docs/plugins/developer/guide.md)
+  * [API Reference](docs/plugins/developer/api.md)
+  * [Service Manager](docs/plugins/developer/service_manager.md)
+  * [Application Manager](docs/plugins/developer/application_manager.md)
 * [Controllers](docs/scripting/controllers.md)
 * [Version History](version-history.md)
 
