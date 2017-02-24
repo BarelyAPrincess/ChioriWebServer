@@ -15,7 +15,6 @@ import com.chiorichan.factory.FileInterpreter;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.helpers.Pair;
 import com.chiorichan.lang.HttpError;
-import com.chiorichan.logger.Log;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.site.DomainMapping;
 import com.chiorichan.site.SiteManager;
@@ -53,7 +52,7 @@ public class WebInterpreter extends FileInterpreter
 		String uri = request.getUri();
 		File dest = null;
 
-		fwRequest = uri.startsWith( "/wisp" );
+		fwRequest = uri.startsWith( "wisp" );
 		if ( fwRequest )
 		{
 			DomainMapping defaultMapping = SiteManager.instance().getDefaultSite().getDefaultMapping();
@@ -114,7 +113,15 @@ public class WebInterpreter extends FileInterpreter
 				returnErrorOrThrowException( HttpResponseStatus.INTERNAL_SERVER_ERROR, "The route [%s] has no action available, this is either a bug or one was not specified.", route.getId() );
 		}
 		else
+		{
 			dest = new File( request.getDomainMapping().directory(), uri );
+
+			if ( dest.exists() && dest.getName().startsWith( "index." ) && AppConfig.get().getBoolean( "advanced.security.disallowDirectIndexFiles", true ) )
+				HttpError.throwDeveloperError( HttpResponseStatus.FORBIDDEN, "Accessing index files by name is disallowed!" );
+
+			if ( dest.exists() && dest.getName().contains( ".controller." ) )
+				HttpError.throwDeveloperError( HttpResponseStatus.FORBIDDEN, "Accessing controller files by name is disallowed!" );
+		}
 
 		/* If our destination does not exist, try to determine if the uri simply contains server side options or is a filename with extension */
 		if ( !dest.exists() )
@@ -129,7 +136,8 @@ public class WebInterpreter extends FileInterpreter
 					for ( File f : files )
 						if ( f.exists() )
 						{
-							String ext = f.getName().substring( dest.getName().length() + 1 ).toLowerCase();
+							String name = f.getName();
+							String ext = name.substring( name.indexOf( ".", dest.getName().length() ) + 1 ).toLowerCase();
 							if ( preferredExtensions.contains( ext ) )
 							{
 								dest = f;
@@ -233,11 +241,13 @@ public class WebInterpreter extends FileInterpreter
 
 			if ( selectedFile != null )
 			{
+				request.forceTrailingSlash();
 				uri = uri + "/" + selectedFile.getName();
 				dest = new File( request.getDomainMapping().directory(), uri );
 			}
 			else if ( AppConfig.get().getBoolean( "server.allowDirectoryListing" ) )
 			{
+				request.forceTrailingSlash();
 				isDirectoryRequest = true;
 				return;
 			}
@@ -313,7 +323,11 @@ public class WebInterpreter extends FileInterpreter
 		}
 
 		if ( dest.exists() && !dest.isDirectory() )
+		{
+			if ( ZObjects.isEmpty( action ) && dest.getName().contains( ".controller." ) )
+				request.forceTrailingSlash();
 			interpretParamsFromFile( dest );
+		}
 		else
 			status = HttpResponseStatus.NOT_FOUND;
 	}

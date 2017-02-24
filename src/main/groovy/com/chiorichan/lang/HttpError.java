@@ -9,13 +9,32 @@
  */
 package com.chiorichan.lang;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
-
+import com.chiorichan.Versioning;
 import com.chiorichan.http.HttpCode;
+import com.chiorichan.net.NetworkManager;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 public class HttpError extends Exception
 {
 	private static final long serialVersionUID = 8116947267974772489L;
+
+	/**
+	 * Determines if the server is in developer mode and full text exceptions should be displayed to requester.
+	 * Otherwise, the message to output to log and the generic HTTP error message is returned.
+	 *
+	 * @param code The http error code
+	 * @param msg  The full text developer message
+	 * @throws HttpError Always
+	 */
+	public static void throwDeveloperError( HttpResponseStatus code, String msg ) throws HttpError
+	{
+		if ( Versioning.isDevelopment() )
+			throw new HttpError( code, msg );
+
+		NetworkManager.getLogger().fine( msg );
+		throw new HttpError( code );
+	}
+
 	HttpResponseStatus status = HttpResponseStatus.OK;
 	String reason = null;
 

@@ -143,8 +143,8 @@ advanced:
     - gsp
     - jsp
   security:
-    unmodifiableMapsEnabled: true
     requestMapEnabled: true
+    disallowDirectIndexFiles: true
     defaultScriptTimeout: 30
   libraries:
     libPath: libraries

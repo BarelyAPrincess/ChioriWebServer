@@ -1,10 +1,10 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- *
+ * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
- *
+ * <p>
  * All Rights Reserved.
  */
 package com.chiorichan.logger;
@@ -30,42 +30,36 @@ public class DefaultLogFactory extends InternalLoggerFactory
 		public void debug( String msg )
 		{
 			l.fine( msg );
-			// l.debug( msg );
 		}
 
 		@Override
 		public void debug( String format, Object arg )
 		{
 			l.fine( format, arg );
-			// l.debug( format, arg );
 		}
 
 		@Override
 		public void debug( String format, Object... args )
 		{
 			l.fine( format, args );
-			// l.debug( format, args );
 		}
 
 		@Override
 		public void debug( String format, Object argA, Object argB )
 		{
 			l.fine( format, argA, argB );
-			// l.debug( format, argA, argB );
 		}
 
 		@Override
 		public void debug( String msg, Throwable t )
 		{
 			l.log( Level.FINE, msg, t );
-			// l.debug( msg, t );
 		}
 
 		@Override
 		public void debug( Throwable t )
 		{
 			l.log( Level.FINE, "Debugged Exception", t );
-			// l.debug( "", t );
 		}
 
 		@Override
@@ -167,7 +161,8 @@ public class DefaultLogFactory extends InternalLoggerFactory
 		@Override
 		public boolean isTraceEnabled()
 		{
-			return l.isEnabled( Level.CONFIG );
+			return false;
+			// return l.isEnabled( Level.CONFIG );
 		}
 
 		@Override

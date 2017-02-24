@@ -35,6 +35,7 @@ import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.zutils.ZHttp;
 import com.chiorichan.zutils.ZObjects;
+import com.chiorichan.zutils.ZStrings;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
@@ -46,7 +47,6 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.ssl.SslHandler;
@@ -458,7 +458,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 	public String getFullUrl( String subdomain, boolean ssl )
 	{
-		return getFullDomain( subdomain, ssl ) + getUri().substring( 1 );
+		return getFullDomain( subdomain, ssl ) + getUri();
 	}
 
 	public String getFullUrl( String subdomain, String prefix )
@@ -767,8 +767,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			if ( uri.contains( "?" ) )
 				uri = uri.substring( 0, uri.indexOf( "?" ) );
 
-			if ( !uri.startsWith( "/" ) )
-				uri = "/" + uri;
+			uri = ZStrings.trimFront( uri, '/' );
 		}
 
 		return uri;
@@ -793,6 +792,28 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	{
 		if ( auth == null && getHeader( HttpHeaderNames.AUTHORIZATION ) != null )
 			auth = new HttpAuthenticator( this );
+	}
+
+	public boolean forceNoTrailingSlash()
+	{
+		if ( uri.endsWith( "/" ) )
+		{
+			NetworkManager.getLogger().fine( "Forcing URL redirect to have NO trailing slash." );
+			getResponse().sendRedirect( getFullDomain() + uri.substring( uri.length() - 1 ), HttpCode.HTTP_MOVED_PERM );
+			return true;
+		}
+		return false;
+	}
+
+	public boolean forceTrailingSlash()
+	{
+		if ( !ZObjects.isEmpty( uri ) && !uri.endsWith( "/" ) )
+		{
+			NetworkManager.getLogger().fine( "Forcing URL redirect to have trailing slash." );
+			getResponse().sendRedirect( getFullDomain() + uri + "/", HttpCode.HTTP_MOVED_PERM );
+			return true;
+		}
+		return false;
 	}
 
 	/**

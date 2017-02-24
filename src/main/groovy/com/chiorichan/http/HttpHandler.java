@@ -23,6 +23,7 @@ import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.factory.ScriptingResult;
+import com.chiorichan.helpers.ANIState;
 import com.chiorichan.http.Nonce.NonceLevel;
 import com.chiorichan.http.ssl.SslLevel;
 import com.chiorichan.lang.EnumColor;
@@ -34,7 +35,6 @@ import com.chiorichan.lang.NonceException;
 import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.RunLevel;
 import com.chiorichan.lang.ScriptingException;
-import com.chiorichan.logger.Log;
 import com.chiorichan.logger.experimental.LogEvent;
 import com.chiorichan.logger.experimental.LogManager;
 import com.chiorichan.net.NetworkManager;
@@ -567,6 +567,33 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		if ( session.isLoginPresent() )
 			log.log( Level.FINE, "Account {id=%s,displayName=%s}", session.getId(), session.getDisplayName() );
 
+		/* Check direct file access annotation: @disallowDirectAccess true */
+		if ( ZObjects.castToBool( fi.get( "disallowDirectAccess" ) ) && new File( request.getDomainMapping().directory(), ZStrings.trimAll( request.getUri(), '/' ) ).getAbsolutePath().equals( fi.getFile() ) )
+			HttpError.throwDeveloperError( HttpResponseStatus.NOT_FOUND, "Accessing this file by exact file name is disallowed per annotation." );
+
+		/*
+		 * Start: Trailing slash enforcer
+		 *
+		 * Acts on the value of annotation 'trailingSlash.
+		 *
+		 * Options include:
+		 *   Always: If the uri does NOT end with a trailing slash, a redirect will be made to force one.
+		 *   Never: If the uri does end with a trailing slash, a redirect will be made to remove it.
+		 *   Ignore: We don't care one way or other, do nothing! DEFAULT
+		 */
+		switch ( ANIState.parse( fi.get( "trailingSlash" ), ANIState.Ignore ) )
+		{
+			case Always:
+				request.forceTrailingSlash();
+				break;
+			case Never:
+				request.forceNoTrailingSlash();
+				break;
+		}
+		/*
+		 * End: Trailing slash enforcer
+		 */
+
 		/*
 		 * Start: SSL enforcer
 		 *
@@ -574,12 +601,12 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		 * REQUIRED means a forbidden error will be thrown is it can not be accomplished
 		 *
 		 * Options include:
-		 * Preferred: If SSL is available, we prefer to use it
-		 * PostOnly: SSL is REQUIRED if this is a POST request
-		 * GetOnly: SSL is REQUIRED if this is a GET request
-		 * Required: SSL is REQUIRED, no exceptions!
-		 * Deny: SSL is DENIED, no exceptions!
-		 * Ignore: We don't care one way or other, do nothing! DEFAULT
+		 *   Preferred: If SSL is available, we prefer to use it
+		 *   PostOnly: SSL is REQUIRED if this is a POST request
+		 *   GetOnly: SSL is REQUIRED if this is a GET request
+		 *   Required: SSL is REQUIRED, no exceptions!
+		 *   Deny: SSL is DENIED, no exceptions!
+		 *   Ignore: We don't care one way or other, do nothing! DEFAULT
 		 */
 		SslLevel sslLevel = SslLevel.parse( fi.get( "ssl" ) );
 		boolean required = false;
