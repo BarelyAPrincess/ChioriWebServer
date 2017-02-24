@@ -93,7 +93,7 @@ public class SQLQueryBuilder extends ScriptingBaseGroovy
 		this.dateColumns = dateColumns;
 	}
 
-	public List<SQLModel> all() throws SQLException
+	public SQLModelResults all() throws SQLException
 	{
 		return new SQLModelResults( this, getSql().select( getTable() ) );
 	}

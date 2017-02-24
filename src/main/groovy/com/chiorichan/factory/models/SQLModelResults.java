@@ -1,10 +1,10 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- *
+ * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
- *
+ * <p>
  * All Rights Reserved.
  */
 package com.chiorichan.factory.models;
@@ -26,7 +26,7 @@ import java.util.Set;
 public class SQLModelResults implements List<SQLModel>
 {
 	private SQLQueryBuilder builder;
-	private List<SQLModel> results;
+	private List<SQLModel> results = new ArrayList<>();
 
 	public SQLModelResults( SQLQueryBuilder builder, SQLBase sql ) throws SQLException
 	{
@@ -171,6 +171,16 @@ public class SQLModelResults implements List<SQLModel>
 	public List<SQLModel> subList( int fromIndex, int toIndex )
 	{
 		return results.subList( fromIndex, toIndex );
+	}
+
+	public String createHTMLTable() throws SQLException
+	{
+		return createHTMLTable( null, null );
+	}
+
+	public String createHTMLTable( String tableId ) throws SQLException
+	{
+		return createHTMLTable( tableId, null );
 	}
 
 	public String createHTMLTable( String tableId, String altTableClass ) throws SQLException

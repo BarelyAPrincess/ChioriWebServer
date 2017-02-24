@@ -294,7 +294,7 @@ public class ScriptingContext implements ExceptionContext
 		}
 
 		if ( result.hasIgnorableExceptions() )
-			str = ExceptionReport.printExceptions( result.getIgnorableExceptions() ) + "\n" + str;
+			str = ExceptionReport.printExceptions( result.getIgnorableExceptions() ) + str;
 
 		factory.print( str );
 		return result.getObject();
@@ -324,8 +324,7 @@ public class ScriptingContext implements ExceptionContext
 					throw ( ScriptingException ) e;
 				if ( e instanceof MultipleException )
 					throw ( MultipleException ) e;
-				else
-					throw new ScriptingException( ReportingLevel.E_ERROR, "Unrecognized exception was thrown, only ScriptingExceptions should be thrown before this point", e );
+				throw new ScriptingException( ReportingLevel.E_ERROR, "Unrecognized exception was thrown, only ScriptingExceptions should be thrown before this point", e );
 			}
 
 		if ( result.hasIgnorableExceptions() )
