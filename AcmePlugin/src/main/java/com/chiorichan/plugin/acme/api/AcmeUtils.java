@@ -1,35 +1,14 @@
 package com.chiorichan.plugin.acme.api;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.security.KeyManagementException;
-import java.security.KeyPair;
-import java.security.KeyStoreException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.X509Certificate;
-import java.security.interfaces.RSAPublicKey;
-import java.util.Base64;
-import java.util.Base64.Encoder;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-
 import com.chiorichan.plugin.acme.AcmePlugin;
-import org.apache.commons.io.IOUtils;
+import com.chiorichan.plugin.acme.lang.AcmeException;
+import com.chiorichan.zutils.ZIO;
+import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.buffer.Unpooled;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
@@ -52,10 +31,31 @@ import org.bouncycastle.pkcs.PKCS10CertificationRequestBuilder;
 import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
 import org.bouncycastle.x509.util.StreamParsingException;
 
-import com.chiorichan.plugin.acme.lang.AcmeException;
-import com.google.common.collect.Lists;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.security.KeyManagementException;
+import java.security.KeyPair;
+import java.security.KeyStoreException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAPublicKey;
+import java.util.Base64;
+import java.util.Base64.Encoder;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class AcmeUtils
 {
@@ -102,12 +102,12 @@ public class AcmeUtils
 		return request;
 	}
 
-	public static X509Certificate extractCertificate( byte[] body ) throws AcmeException, StreamParsingException
+	public static X509Certificate extractCertificate( ByteBuf body ) throws AcmeException, StreamParsingException
 	{
-		if ( body.length == 0 )
+		if ( body.readableBytes() == 0 )
 			throw new AcmeException( "Certificate body length is zero!" );
 		X509CertParser certParser = new X509CertParser();
-		certParser.engineInit( new ByteArrayInputStream( body ) );
+		certParser.engineInit( new ByteBufInputStream( body ) );
 		X509Certificate certificate = ( X509Certificate ) certParser.engineRead();
 		return certificate;
 	}
@@ -132,19 +132,8 @@ public class AcmeUtils
 			int status = c.getResponseCode();
 			Map<String, List<String>> responseHeader = c.getHeaderFields();
 
-			byte[] resBody;
-			try ( InputStream s = status < 400 ? c.getInputStream() : c.getErrorStream() )
-			{
-				if ( s == null )
-					resBody = new byte[0];
-				else
-				{
-					resBody = new byte[c.getContentLength()];
-					s.read( resBody );
-				}
-			}
-
-			return new HttpResponse( target, status, responseHeader, resBody );
+			InputStream is = status < 400 ? c.getInputStream() : c.getErrorStream();
+			return new HttpResponse( target, status, responseHeader, Unpooled.wrappedBuffer( ZIO.inputStream2Bytes( is ) ) );
 		}
 		catch ( final Throwable t )
 		{
@@ -229,10 +218,8 @@ public class AcmeUtils
 		int status = c.getResponseCode();
 		Map<String, List<String>> responseHeader = c.getHeaderFields();
 
-		InputStream s = status < 400 ? c.getInputStream() : c.getErrorStream();
-		byte[] resBody = s == null ? new byte[0] : IOUtils.toByteArray( s );
-
-		return new HttpResponse( target, status, responseHeader, resBody );
+		InputStream is = status < 400 ? c.getInputStream() : c.getErrorStream();
+		return new HttpResponse( target, status, responseHeader, Unpooled.wrappedBuffer( ZIO.inputStream2Bytes( is ) ) );
 	}
 
 	public static byte[] SHA256( String text )

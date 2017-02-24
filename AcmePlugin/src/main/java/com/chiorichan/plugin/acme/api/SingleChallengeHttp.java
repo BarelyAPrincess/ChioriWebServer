@@ -1,12 +1,5 @@
 package com.chiorichan.plugin.acme.api;
 
-import java.io.IOException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.util.TreeMap;
-
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.http.HttpCode;
 import com.chiorichan.lang.PluginNotFoundException;
@@ -19,9 +12,16 @@ import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Ticks;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.zutils.ZIO;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.util.TreeMap;
 
 @SuppressWarnings( "serial" )
 public final class SingleChallengeHttp
@@ -150,7 +150,7 @@ public final class SingleChallengeHttp
 		{
 			if ( response.getStatus() == HttpCode.HTTP_ACCEPTED )
 			{
-				JsonNode json = new ObjectMapper().readTree( response.getBody() );
+				JsonNode json = new ObjectMapper().readTree( response.getBody().toString( Charset.defaultCharset() ) );
 
 				if ( "invalid".equals( json.get( "status" ).asText() ) )
 				{
@@ -264,7 +264,7 @@ public final class SingleChallengeHttp
 		}
 		catch ( IOException e )
 		{
-			Log.get().debug( "Challenge response debug:\n" + response.getBody() );
+			Log.get().debug( "Challenge response debug:\n" + response.getBody().toString( Charset.defaultCharset() ) );
 			e.printStackTrace();
 		}
 

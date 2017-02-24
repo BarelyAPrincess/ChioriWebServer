@@ -1,16 +1,5 @@
 package com.chiorichan.plugin.acme;
 
-import java.io.File;
-import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SignatureException;
-import java.security.UnrecoverableKeyException;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.chiorichan.configuration.file.FileConfiguration;
 import com.chiorichan.configuration.types.yaml.YamlConfiguration;
 import com.chiorichan.event.EventBus;
@@ -23,9 +12,21 @@ import com.chiorichan.plugin.acme.api.AcmeStorage;
 import com.chiorichan.plugin.acme.certificate.CertificateMaintainer;
 import com.chiorichan.plugin.acme.lang.AcmeException;
 import com.chiorichan.plugin.loader.Plugin;
+import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Ticks;
 import com.chiorichan.zutils.ZIO;
+
+import java.io.File;
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SignatureException;
+import java.security.UnrecoverableKeyException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AcmePlugin extends Plugin
 {
@@ -84,6 +85,18 @@ public class AcmePlugin extends Plugin
 	{
 		if ( acmeTaskId > 0 )
 			TaskManager.instance().cancelTask( acmeTaskId );
+
+		getLogger().info( "Cleaning up '.well-known' files." );
+		SiteManager.instance().getSites().forEach( s ->
+		{
+			s.getMappings().forEach( m ->
+			{
+				File wellKnown = new File( m.directory(), ".well-known" );
+				if ( wellKnown.exists() )
+					wellKnown.delete();
+			} );
+		} );
+
 		saveConfig();
 	}
 

@@ -1,15 +1,5 @@
 package com.chiorichan.plugin.acme.api;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
-import com.chiorichan.plugin.acme.lang.AcmeDisabledDomainException;
-import org.apache.commons.lang3.Validate;
-
 import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.configuration.types.yaml.YamlConfiguration;
 import com.chiorichan.http.HttpCode;
@@ -17,6 +7,7 @@ import com.chiorichan.lang.PluginNotFoundException;
 import com.chiorichan.logger.LogAPI;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.acme.AcmePlugin;
+import com.chiorichan.plugin.acme.lang.AcmeDisabledDomainException;
 import com.chiorichan.plugin.acme.lang.AcmeException;
 import com.chiorichan.plugin.acme.lang.AcmeForbiddenError;
 import com.chiorichan.plugin.acme.lang.AcmeState;
@@ -26,6 +17,14 @@ import com.chiorichan.tasks.Ticks;
 import com.chiorichan.tasks.Timings;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.Validate;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class AcmeChallenge
 {
@@ -108,7 +107,7 @@ public class AcmeChallenge
 				if ( response.getStatus() != HttpCode.HTTP_CREATED )
 					throw new AcmeException( String.format( "Http code '%s' '%s' was returned, we expected '201' 'CREATED'.", response.getStatus(), HttpCode.msg( response.getStatus() ) ) );
 
-				JsonNode json = new ObjectMapper().readTree( response.getBody() );
+				JsonNode json = new ObjectMapper().readTree( response.getBodyString() );
 
 				for ( JsonNode challenge : json.get( "challenges" ) )
 				{
@@ -229,29 +228,25 @@ public class AcmeChallenge
 		{
 			AcmePlugin plugin = ( AcmePlugin ) PluginManager.instance().getPluginByClass( AcmePlugin.class );
 
-			callBackTask = TaskManager.instance().scheduleAsyncRepeatingTask( plugin, Ticks.SECOND_5, Ticks.SECOND, new Runnable()
+			callBackTask = TaskManager.instance().scheduleAsyncRepeatingTask( plugin, Ticks.SECOND_5, Ticks.SECOND, () ->
 			{
-				@Override
-				public void run()
+				try
 				{
-					try
-					{
-						for ( SingleChallengeHttp sac : challenges.values() )
-							if ( sac.getState() == AcmeState.CREATED || sac.getState() == AcmeState.PENDING )
-							{
-								if ( force )
-									sac.verify();
-								return;
-							}
+					for ( SingleChallengeHttp sac : challenges.values() )
+						if ( sac.getState() == AcmeState.CREATED || sac.getState() == AcmeState.PENDING )
+						{
+							if ( force )
+								sac.verify();
+							return;
+						}
 
-						TaskManager.instance().cancelTask( callBackTask );
-						callBackTask = 0;
-						runnable.run();
-					}
-					catch ( Throwable t )
-					{
-						t.printStackTrace();
-					}
+					TaskManager.instance().cancelTask( callBackTask );
+					callBackTask = 0;
+					runnable.run();
+				}
+				catch ( Throwable t )
+				{
+					t.printStackTrace();
 				}
 			} );
 

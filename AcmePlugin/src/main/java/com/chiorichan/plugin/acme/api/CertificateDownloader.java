@@ -1,22 +1,21 @@
 package com.chiorichan.plugin.acme.api;
 
-import java.io.File;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.X509Certificate;
-
-import com.chiorichan.zutils.ZIO;
-import org.apache.commons.lang3.Validate;
-import org.bouncycastle.x509.util.StreamParsingException;
-
 import com.chiorichan.http.HttpCode;
 import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.UncaughtException;
 import com.chiorichan.plugin.acme.AcmePlugin;
 import com.chiorichan.plugin.acme.lang.AcmeException;
 import com.chiorichan.plugin.acme.lang.AcmeState;
+import com.chiorichan.zutils.ZIO;
+import org.apache.commons.lang3.Validate;
+import org.bouncycastle.x509.util.StreamParsingException;
+
+import java.io.File;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.X509Certificate;
 
 public class CertificateDownloader
 {
@@ -76,7 +75,7 @@ public class CertificateDownloader
 	{
 		if ( response.getStatus() == HttpCode.HTTP_CREATED || response.getStatus() == HttpCode.HTTP_OK )
 		{
-			if ( response.getBody().length > 0 )
+			if ( response.getBody().readableBytes() > 0 )
 			{
 				try
 				{

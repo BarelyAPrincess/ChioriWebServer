@@ -106,7 +106,10 @@ public class AcmeProtocol
 
 				try
 				{
-					ZIO.writeStringToFile( acmeChallengeFile, sac.getChallengeContent() );
+					if ( acmeChallengeFile.getParentFile().exists() || acmeChallengeFile.getParentFile().mkdirs() )
+						ZIO.writeStringToFile( acmeChallengeFile, sac.getChallengeContent() );
+					else
+						throw new IOException( "There was problem creating the '.well-known' directory: " + acmeChallengeFile.getAbsolutePath() );
 				}
 				catch ( IOException e )
 				{

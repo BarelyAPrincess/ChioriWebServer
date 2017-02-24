@@ -1,20 +1,22 @@
 package com.chiorichan.plugin.acme.api;
 
+import com.chiorichan.logger.Log;
+import io.netty.buffer.ByteBuf;
+
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
-import com.chiorichan.logger.Log;
 
 public class HttpResponse
 {
 	private final String target;
 	private final int status;
 	private final Map<String, List<String>> responseHeaders;
-	private final byte[] body;
+	private final ByteBuf body;
 
-	public HttpResponse( String target, int status, Map<String, List<String>> responseHeaders, byte[] body )
+	public HttpResponse( String target, int status, Map<String, List<String>> responseHeaders, ByteBuf body )
 	{
 		this.target = target;
 		this.status = status;
@@ -28,14 +30,19 @@ public class HttpResponse
 
 		Log.get().info( "\tTarget: " + target );
 		Log.get().info( "\tStatus: " + status );
-		Log.get().info( "\tResponse: " + new String( body ) );
+		Log.get().info( "\tResponse: " + body.toString( Charset.defaultCharset() ) );
 		Log.get().info( "\tHeaders:" );
 
 		for ( String key : headerKeys() )
 			Log.get().info( "\t\t" + key + ": " + getHeaderString( key ) );
 	}
 
-	public byte[] getBody()
+	public String getBodyString()
+	{
+		return body.toString( Charset.defaultCharset() );
+	}
+
+	public ByteBuf getBody()
 	{
 		return body;
 	}
@@ -101,6 +108,6 @@ public class HttpResponse
 	@Override
 	public String toString()
 	{
-		return String.format( "target='%s',status='%s',body='%s',headers='%s'", target, status, new String( body ), headersString() );
+		return String.format( "target='%s',status='%s',body='%s',headers='%s'", target, status, body.toString( Charset.defaultCharset() ), headersString() );
 	}
 }
