@@ -27,10 +27,8 @@ import java.util.stream.Collectors;
 public class Routes
 {
 	protected final Set<Route> routes = new ConcurrentSet<>();
-	private boolean routeReloadRunning = false;
 	private RouteWatcher jsonWatcher;
 	private RouteWatcher yamlWatcher;
-	private long lastRequest = 0;
 	protected final Site site;
 
 	public Routes( Site site )

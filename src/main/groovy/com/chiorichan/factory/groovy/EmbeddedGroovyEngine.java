@@ -16,6 +16,7 @@ import com.chiorichan.factory.ScriptingEngine;
 import com.chiorichan.helpers.Triplet;
 import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.ScriptingException;
+import com.chiorichan.logger.Log;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
@@ -83,8 +84,11 @@ public class EmbeddedGroovyEngine implements ScriptingEngine
 
 		String brackets = "\"\"\"";
 
-		fragment = fragment.replace( "\\$", "$" );
-		fragment = fragment.replace( "$", "\\$" );
+		fragment = fragment.replace( "\\u005Cu0024", "$" );
+		fragment = fragment.replace( "\\u005Cu005C", "\\" );
+
+		fragment = fragment.replace( "\\", "\\u005Cu005C" ); // Prevent Escaping
+		fragment = fragment.replace( "$", "\\u005Cu0024" ); // Prevent GString
 
 		if ( fragment.endsWith( "\"" ) )
 			brackets = "'''";

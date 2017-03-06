@@ -20,7 +20,6 @@ import com.chiorichan.datastore.sql.bases.H2SQLDatastore;
 import com.chiorichan.datastore.sql.bases.MySQLDatastore;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.datastore.sql.bases.SQLiteDatastore;
-import com.chiorichan.env.Env;
 import com.chiorichan.event.EventBus;
 import com.chiorichan.event.EventException;
 import com.chiorichan.event.site.SiteLoadEvent;
@@ -28,6 +27,8 @@ import com.chiorichan.factory.ScriptBinding;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.factory.ScriptingResult;
+import com.chiorichan.factory.env.Env;
+import com.chiorichan.factory.localization.Localization;
 import com.chiorichan.http.Routes;
 import com.chiorichan.http.ssl.CertificateWrapper;
 import com.chiorichan.lang.ApplicationException;
@@ -85,6 +86,8 @@ public class Site implements AccountLocation
 	private final Routes routes;
 	/* Environment variables */
 	final Env env;
+	/* Language strings */
+	final Localization localization;
 	/* Id */
 	private final String siteId;
 	/* Title */
@@ -152,6 +155,8 @@ public class Site implements AccountLocation
 		DatastoreManager.getLogger().info( String.format( "Loading site '%s' with title '%s' from YAML file.", siteId, siteTitle ) );
 
 		directory = SiteManager.checkSiteRoot( siteId );
+
+		this.localization = new Localization( directoryLang() );
 
 		if ( !yaml.has( "site.web-allowed-origin" ) )
 			yaml.set( "site.web-allowed-origin", "*" );
@@ -338,14 +343,15 @@ public class Site implements AccountLocation
 
 		file = null;
 		yaml = new YamlConfiguration();
-		env = new Env();
 		encryptionKey = ZEncryption.randomize( "0x0000X" );
 		ips = new ArrayList<>();
 		siteTitle = Versioning.getProduct();
 		datastore = AppConfig.get().getDatabase();
 
 		directory = SiteManager.checkSiteRoot( siteId );
+		localization = new Localization( directoryLang() );
 		routes = new Routes( this );
+		env = new Env();
 	}
 
 	private void mapDomain( ConfigurationSection domains ) throws SiteConfigurationException
@@ -446,6 +452,11 @@ public class Site implements AccountLocation
 	public File directoryResource()
 	{
 		return directory( "resource" );
+	}
+
+	public File directoryLang()
+	{
+		return directory( "lang" );
 	}
 
 	public File directoryTemp()
@@ -676,5 +687,10 @@ public class Site implements AccountLocation
 	public void unload()
 	{
 		// Do Nothing
+	}
+
+	public Localization getLocalization()
+	{
+		return localization;
 	}
 }

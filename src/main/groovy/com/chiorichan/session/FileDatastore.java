@@ -63,7 +63,7 @@ public class FileDatastore extends SessionDatastore
 			YamlConfiguration yaml = YamlConfiguration.loadConfiguration( file );
 
 			if ( yaml.getInt( "timeout", 0 ) > timeout )
-				timeout = yaml.getInt( "timeout", timeout );
+				timeout = yaml.getLong( "timeout", timeout );
 
 			ipAddress = yaml.getString( "ipAddress" );
 

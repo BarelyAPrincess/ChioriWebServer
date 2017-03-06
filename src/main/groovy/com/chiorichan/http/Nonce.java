@@ -47,7 +47,7 @@ public class Nonce
 	private String key;
 	private String value;
 	private String sessionId;
-	private int created = Timings.epoch();
+	private long created = Timings.epoch();
 
 	private Map<String, String> mapValues = Maps.newHashMap();
 

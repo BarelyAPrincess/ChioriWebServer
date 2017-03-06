@@ -12,6 +12,7 @@ package com.chiorichan.factory.groovy;
 import com.chiorichan.database.DatabaseEngineLegacy;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.factory.api.Builtin;
+import com.chiorichan.factory.localization.LocalizationException;
 import com.chiorichan.helpers.Pair;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.http.HttpResponseWrapper;
@@ -348,5 +349,51 @@ public abstract class ScriptingBaseJava extends Builtin
 	public String uri_to( String subdomain, String prefix )
 	{
 		return getRequest().getFullUrl( subdomain, prefix );
+	}
+
+	public void setLocale( String locale )
+	{
+		getSite().getLocalization().setLocale( locale );
+	}
+
+	public String getLocale()
+	{
+		return getSite().getLocalization().getLocale();
+	}
+
+	public String localeTrans( String key )
+	{
+		try
+		{
+			return getSite().getLocalization().localeTrans( key );
+		}
+		catch ( LocalizationException e )
+		{
+			return key;
+		}
+	}
+
+	public String localeTrans( String key, Map<String, String> params )
+	{
+		try
+		{
+			return getSite().getLocalization().localeTrans( key, params );
+		}
+		catch ( LocalizationException e )
+		{
+			return key;
+		}
+	}
+
+	public String localePlural( String key, int cnt )
+	{
+		try
+		{
+			return getSite().getLocalization().localePlural( key, cnt );
+		}
+		catch ( LocalizationException e )
+		{
+			return key;
+		}
 	}
 }

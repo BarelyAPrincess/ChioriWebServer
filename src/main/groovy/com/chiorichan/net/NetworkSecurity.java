@@ -109,13 +109,13 @@ public class NetworkSecurity implements EventRegistrar, TaskRegistrar, Listener
 		static class Record
 		{
 			int count = 0;
-			int time = 0;
+			long time = 0;
 		}
 
 		private boolean banned = false;
 		private String banReason = null;
-		private int banTill = -1;
-		private int banWhen = -1;
+		private long banTill = -1L;
+		private long banWhen = -1L;
 		private final String ipAddress;
 		private final Map<IpStrikeType, Record> strikes = new ConcurrentHashMap<>();
 

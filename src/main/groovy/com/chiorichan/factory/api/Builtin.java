@@ -492,7 +492,7 @@ public abstract class Builtin extends Script
 		return ZObjects.isTrue( obj );
 	}
 
-	public static int epoch()
+	public static long epoch()
 	{
 		return Timings.epoch();
 	}
@@ -793,7 +793,7 @@ public abstract class Builtin extends Script
 		return str == null ? null : str.toUpperCase();
 	}
 
-	public static int time()
+	public static long time()
 	{
 		return Timings.epoch();
 	}

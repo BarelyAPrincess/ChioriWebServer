@@ -1,10 +1,10 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- *
+ * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
- *
+ * <p>
  * All Rights Reserved.
  */
 package com.chiorichan;
@@ -54,7 +54,7 @@ public class ServerFileWatcher implements Runnable, ServiceManager, TaskRegistra
 		boolean isDirectory;
 		EventCallback callback;
 
-		int epoch = Timings.epoch();
+		long epoch = Timings.epoch();
 		boolean called = false;
 
 		TriggerRef( Kind<?> kind, Path path, boolean isDirectory, EventCallback callback )
@@ -172,19 +172,15 @@ public class ServerFileWatcher implements Runnable, ServiceManager, TaskRegistra
 	@Override
 	public void init() throws ApplicationException
 	{
-		TaskManager.instance().scheduleAsyncRepeatingTask( this, Ticks.SECOND_5, Ticks.SECOND_5, new Runnable()
+		TaskManager.instance().scheduleAsyncRepeatingTask( this, Ticks.SECOND_5, Ticks.SECOND_5, () ->
 		{
-			@Override
-			public void run()
-			{
-				int epoch = Timings.epoch();
-				for ( TriggerRef tr : triggerReferences.values().toArray( new TriggerRef[0] ) )
-					if ( epoch - tr.epoch > 1 && !tr.called )
-					{
-						tr.callback.call( tr.kind, tr.path.toFile(), tr.isDirectory );
-						tr.called = true;
-					}
-			}
+			long epoch = Timings.epoch();
+			for ( TriggerRef tr : triggerReferences.values().toArray( new TriggerRef[0] ) )
+				if ( epoch - tr.epoch > 1 && !tr.called )
+				{
+					tr.callback.call( tr.kind, tr.path.toFile(), tr.isDirectory );
+					tr.called = true;
+				}
 		} );
 	}
 
@@ -254,7 +250,7 @@ public class ServerFileWatcher implements Runnable, ServiceManager, TaskRegistra
 	@Override
 	public void run()
 	{
-		for ( ;; )
+		for ( ; ; )
 		{
 			WatchKey key;
 			try

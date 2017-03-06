@@ -85,7 +85,7 @@ public final class Session extends AccountPermissible implements Kickable
 	/**
 	 * The epoch for when this session is to be destroyed
 	 */
-	private int timeout = 0;
+	private long timeout = 0;
 
 	/**
 	 * Number of times this session has been requested<br>

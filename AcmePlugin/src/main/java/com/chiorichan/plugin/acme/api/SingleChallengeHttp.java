@@ -122,9 +122,9 @@ public final class SingleChallengeHttp
 		return subdomain == null || subdomain.length() == 0 || subdomain.equals( "root" ) ? domain : subdomain + "." + domain;
 	}
 
-	public int getLastChecked()
+	public long getLastChecked()
 	{
-		return AcmePlugin.instance().getSubConfig().getInt( "domains." + getFullDomain().replace( '.', '_' ) + ".challengeLastChecked", Timings.epoch() );
+		return AcmePlugin.instance().getSubConfig().getLong( "domains." + getFullDomain().replace( '.', '_' ) + ".challengeLastChecked", Timings.epoch() );
 	}
 
 	public AcmeState getState()

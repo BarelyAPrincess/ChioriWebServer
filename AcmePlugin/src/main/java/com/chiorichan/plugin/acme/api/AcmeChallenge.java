@@ -141,7 +141,7 @@ public class AcmeChallenge
 			else
 			{
 				SingleChallengeHttp sac = challenges.get( fullDomain );
-				int lastChecked = sac.getLastChecked();
+				long lastChecked = sac.getLastChecked();
 
 				if ( sac.getState() == AcmeState.SUCCESS )
 				{

@@ -132,7 +132,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	/**
 	 * The time of this request
 	 */
-	final int requestTime;
+	final long requestTime;
 
 	/**
 	 * The paired HttpResponseWrapper
@@ -686,7 +686,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		}
 	}
 
-	public int getRequestTime()
+	public long getRequestTime()
 	{
 		return requestTime;
 	}

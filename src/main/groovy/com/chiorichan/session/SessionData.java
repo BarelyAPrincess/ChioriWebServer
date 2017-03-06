@@ -26,7 +26,7 @@ public abstract class SessionData
 	 */
 	Map<String, String> data = Maps.newHashMap();
 	
-	int timeout;
+	long timeout;
 	String ipAddress;
 	String sessionName;
 	String sessionId;

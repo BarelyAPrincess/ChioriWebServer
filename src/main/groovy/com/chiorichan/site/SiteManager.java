@@ -13,7 +13,7 @@ import com.chiorichan.AppConfig;
 import com.chiorichan.Loader;
 import com.chiorichan.configuration.types.yaml.YamlConfiguration;
 import com.chiorichan.datastore.file.FileDatastore;
-import com.chiorichan.env.Env;
+import com.chiorichan.factory.env.Env;
 import com.chiorichan.lang.ApplicationException;
 import com.chiorichan.lang.SiteException;
 import com.chiorichan.lang.StartupException;
