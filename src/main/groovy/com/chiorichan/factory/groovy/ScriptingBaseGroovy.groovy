@@ -9,6 +9,7 @@
  */
 package com.chiorichan.factory.groovy
 
+import com.chiorichan.Versioning
 import com.chiorichan.account.Account
 import com.chiorichan.account.AccountManager
 import com.chiorichan.factory.ScriptingFactory
@@ -69,6 +70,18 @@ public abstract class ScriptingBaseGroovy extends ScriptingBaseJava
 	Session getSession()
 	{
 		return getRequest().getSession()
+	}
+
+	/**
+	 * Converts the specified param to an HTML comment if the server is in development mode
+	 *
+	 * @param var The HTML comment connect
+	 * @return The formatted string
+	 */
+	void comment( String var )
+	{
+		if ( Versioning.isDevelopment() )
+			print "<!-- " + var + " -->";
 	}
 
 	/**

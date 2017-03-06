@@ -22,6 +22,7 @@ import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.zutils.ServerFunc;
+import com.chiorichan.zutils.ZIO;
 import com.chiorichan.zutils.ZObjects;
 import io.netty.buffer.Unpooled;
 import org.apache.commons.lang3.Validate;
@@ -46,6 +47,7 @@ public class Template extends Plugin implements Listener
 		StringBuilder ob = new StringBuilder();
 
 		String fileName = "";
+		String cacheFileName = "";
 		int lineNum = -1;
 		int colNum = -1;
 		String className = null;
@@ -89,7 +91,8 @@ public class Template extends Plugin implements Listener
 				ScriptingContext context = ste.context();
 				Validate.notNull( context );
 
-				fileName = context.filename();
+				fileName = ZIO.relPath( context.file() );
+				cacheFileName = ZIO.relPath( context.cacheFile() );
 
 				if ( lineNum > -1 )
 				{
@@ -115,29 +118,35 @@ public class Template extends Plugin implements Listener
 		}
 
 		ob.append( "<h1>Exception Thrown</h1>\n" );
-		ob.append( "<p class=\"message\">\n" );
-		ob.append( t.getClass().getName() + ": " + t.getMessage() + "\n" );
+		ob.append( "<p class=\"message\">" );
+		ob.append( t.getClass().getName() ).append( ": " ).append( t.getMessage() );
 		ob.append( "</p>\n" );
 		ob.append( "\n" );
 		ob.append( "<div class=\"source\">\n" );
 
-		ob.append( "<p class=\"file\">" + fileName + ( lineNum > -1 ? "(" + lineNum + ( colNum > -1 ? ":" + colNum : "" ) + ")" : "" ) + ( className != null ? ": <strong>" + className + "</strong>" : "" ) + "</p>\n" );
+		ob.append( "<p class=\"file\">" );
+		if ( !ZObjects.isEmpty( cacheFileName ) )
+			ob.append( "<i>[" + cacheFileName ).append( "]</i> " );
+		ob.append( fileName );
+		if ( lineNum > -1 )
+			ob.append( "(" + lineNum + ( colNum > -1 ? ":" + colNum : "" ) + ")" );
+		ob.append( className != null ? ": <strong>" + className + "</strong>" : "" ).append( "</p>\n" );
 
 		ob.append( "\n" );
 		ob.append( "<div class=\"code\">\n" );
-		if ( codeSample != null && !codeSample.isEmpty() )
-			ob.append( codeSample + "\n" );
+		if ( !ZObjects.isEmpty( codeSample ) )
+			ob.append( codeSample ).append( "\n" );
 		ob.append( "</div>\n" );
 		ob.append( "</div>\n" );
 		ob.append( "\n" );
 		ob.append( "<div class=\"traces\">\n" );
 		ob.append( "<h2>Stack Trace</h2>\n" );
 		ob.append( "<table style=\"width:100%;\">\n" );
-		ob.append( TemplateUtils.formatStackTrace( t.getStackTrace(), scriptTrace ) + "\n" );
+		ob.append( TemplateUtils.formatStackTrace( t.getStackTrace(), scriptTrace ) ).append( "\n" );
 		ob.append( "</table>\n" );
 		ob.append( "</div>\n" );
 		ob.append( "\n" );
-		ob.append( "<div class=\"version\">Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + "<br />" + Versioning.getCopyright() + "</div>\n" );
+		ob.append( "<div class=\"version\">Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" ).append( Versioning.getProduct() ).append( "</a> Version " ).append( Versioning.getVersion() ).append( "<br />" ).append( Versioning.getCopyright() ).append( "</div>\n" );
 
 		ScriptingResult result = TemplateUtils.wrapAndEval( factory, ob.toString() );
 

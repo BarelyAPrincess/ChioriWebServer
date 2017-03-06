@@ -12,6 +12,7 @@ package com.chiorichan.factory.groovy;
 import com.chiorichan.database.DatabaseEngineLegacy;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.factory.api.Builtin;
+import com.chiorichan.helpers.Pair;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.http.HttpResponseWrapper;
 import com.chiorichan.http.Nonce;
@@ -32,9 +33,11 @@ import com.chiorichan.zutils.ZStrings;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -165,8 +168,15 @@ public abstract class ScriptingBaseJava extends Builtin
 		return route_id( id, new HashMap<>() );
 	}
 
+	public String route_id( String id, List<String> params ) throws SiteConfigurationException
+	{
+		AtomicInteger inx = new AtomicInteger();
+		return route_id( id, params.stream().map( l -> new Pair<>( Integer.toString( inx.getAndIncrement() ), l ) ).collect( Collectors.toMap( p -> p.getKey(), p -> p.getValue() ) ) );
+	}
+
 	public String route_id( String id, Map<String, String> params ) throws SiteConfigurationException
 	{
+		params = ZObjects.castMap( params, String.class, String.class );
 		Route route = getSite().getRoutes().routeUrl( id );
 
 		if ( ZObjects.isNull( route ) )
@@ -177,6 +187,7 @@ public abstract class ScriptingBaseJava extends Builtin
 			String url = route.getParam( "pattern" );
 			Pattern p = Pattern.compile( "\\[([a-zA-Z0-9]*)\\=\\]" );
 			Matcher m = p.matcher( url );
+			AtomicInteger iteration = new AtomicInteger();
 
 			if ( m.find() )
 				do
@@ -184,17 +195,17 @@ public abstract class ScriptingBaseJava extends Builtin
 					String key = m.group( 1 );
 
 					if ( !params.containsKey( key ) )
-						throw new SiteConfigurationException( "Route param [" + key + "] went unspecified for id [" + id + "], pattern [" + route.getParam( "pattern" ) + "]" );
+						if ( params.containsKey( Integer.toString( iteration.get() ) ) )
+							key = Integer.toString( iteration.getAndIncrement() );
+						else
+							throw new SiteConfigurationException( "Route param [" + key + "] went unspecified for id [" + id + "], pattern [" + route.getParam( "pattern" ) + "]" );
 
-					url = url.replaceAll( m.group( 0 ), params.get( key ) );
+					url = m.replaceFirst( params.get( key ) );
 					m = p.matcher( url );
 				}
 				while ( m.find() );
 
-			if ( url.startsWith( "/" ) )
-				url = url.substring( 1 );
-			if ( !url.endsWith( "/" ) )
-				url = url + "/";
+			url = ZStrings.trimFront( url, '/' );
 
 			if ( route.hasParam( "domain" ) )
 			{

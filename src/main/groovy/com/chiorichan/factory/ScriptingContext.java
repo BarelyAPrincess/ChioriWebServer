@@ -26,6 +26,7 @@ import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.zutils.ZEncryption;
 import com.chiorichan.zutils.ZIO;
+import com.chiorichan.zutils.ZObjects;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
@@ -184,7 +185,7 @@ public class ScriptingContext implements ExceptionContext
 	private ScriptingResult result = null;
 	private String scriptName;
 	private String scriptPackage;
-	private File cache;
+	private File cacheDirectory;
 	private String shell = "embedded";
 	private Site site;
 	private String source = null;
@@ -201,6 +202,16 @@ public class ScriptingContext implements ExceptionContext
 
 	public ScriptingContext baseSource( String source )
 	{
+		if ( Versioning.isDevelopment() && !ZObjects.isNull( cacheFile() ) )
+			try
+			{
+				ZIO.writeStringToFile( new File( cacheFile().getAbsolutePath() + ".baseSource" ), source );
+			}
+			catch ( IOException e )
+			{
+				// Ignore
+			}
+
 		this.source = source;
 		return this;
 	}
@@ -215,26 +226,38 @@ public class ScriptingContext implements ExceptionContext
 		return ZEncryption.md5( readBytes() );
 	}
 
-	public File cache()
+	/**
+	 * Returns an exact location of the last compiled script, returns an estimate if script is null, and lastly null if all else.
+	 *
+	 * @return The final script class location
+	 */
+	public File cacheFile()
 	{
-		if ( cache == null )
-			cache = site().directoryTemp();
-		if ( cache != null )
+		if ( scriptClassName() == null )
+			return null;
+		return new File( cacheDirectory(), scriptClassName().replace( '.', File.separatorChar ) + ".class" );
+	}
+
+	public File cacheDirectory()
+	{
+		if ( cacheDirectory == null )
+			cacheDirectory = site().directoryTemp();
+		if ( cacheDirectory != null )
 			try
 			{
-				if ( !LibraryClassLoader.pathLoaded( cache ) )
-					LibraryClassLoader.addPath( cache );
+				if ( !LibraryClassLoader.pathLoaded( cacheDirectory ) )
+					LibraryClassLoader.addPath( cacheDirectory );
 			}
 			catch ( IOException e )
 			{
-				Log.get().warning( "Failed to add " + ZIO.relPath( cache ) + " to classpath." );
+				Log.get().warning( "Failed to add " + ZIO.relPath( cacheDirectory ) + " to classpath." );
 			}
-		return cache;
+		return cacheDirectory;
 	}
 
-	public ScriptingContext cache( File cache )
+	public ScriptingContext cacheDirectory( File cache )
 	{
-		this.cache = cache;
+		this.cacheDirectory = cache;
 		return this;
 	}
 
@@ -487,7 +510,11 @@ public class ScriptingContext implements ExceptionContext
 
 	public String scriptClassName()
 	{
-		return scriptPackage() == null ? scriptSimpleName() : scriptPackage() + "." + scriptSimpleName();
+		if ( scriptPackage() == null )
+			return scriptSimpleName();
+		if ( scriptSimpleName() == null )
+			return null;
+		return scriptPackage() + "." + scriptSimpleName();
 	}
 
 	public String scriptName()
@@ -514,7 +541,7 @@ public class ScriptingContext implements ExceptionContext
 
 	public String scriptSimpleName()
 	{
-		return scriptName.contains( "." ) ? scriptName.substring( 0, scriptName.lastIndexOf( "." ) ) : scriptName;
+		return scriptName == null ? null : scriptName.contains( "." ) ? scriptName.substring( 0, scriptName.lastIndexOf( "." ) ) : scriptName;
 	}
 
 	public String shell()

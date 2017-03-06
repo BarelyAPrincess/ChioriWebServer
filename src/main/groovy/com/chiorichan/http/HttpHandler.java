@@ -769,7 +769,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			if ( !nonceProvided )
 			{
 				if ( !ZObjects.isNull( nonce ) )
-					log.log( Level.SEVERE, String.format( "The expect nonce key was %s", nonce.key() ) );
+					log.log( Level.SEVERE, String.format( "The expected nonce key was %s", nonce.key() ) );
 				response.sendError( HttpResponseStatus.FORBIDDEN, "Request Failed NONCE Validation", "Nonce key is missing or the nonce was not initialized." );
 				return;
 			}

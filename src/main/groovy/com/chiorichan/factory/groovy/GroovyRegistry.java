@@ -216,7 +216,7 @@ public class GroovyRegistry implements ScriptingRegistry
 		 */
 		configuration.setSourceEncoding( context.factory().charset().name() );
 
-		configuration.setTargetDirectory( context.cache() );
+		configuration.setTargetDirectory( context.cacheDirectory() );
 
 		return new GroovyShell( Loader.class.getClassLoader(), binding, configuration );
 	}
@@ -237,7 +237,7 @@ public class GroovyRegistry implements ScriptingRegistry
 		// TODO Determine if a package node is prohibited and replace with an alternative, e.g., public, private, etc.
 
 		if ( source.contains( "package " ) )
-			throw new ScriptingException( ReportingLevel.E_ERROR, "Package path is predefined by Groovy Engine, remove `package` from source." );
+			throw new ScriptingException( ReportingLevel.E_ERROR, "Package path is predefined by Groovy Engine, remove `package ` directive from source." );
 
 		if ( !ZObjects.isEmpty( context.scriptPackage() ) )
 		{

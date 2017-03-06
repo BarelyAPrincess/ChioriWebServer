@@ -71,11 +71,6 @@ public class FileInterpreter
 		annotations.put( "title", null );
 		annotations.put( "reqlogin", null );
 		annotations.put( "reqperm", "-1" );
-		annotations.put( "theme", null );
-		annotations.put( "view", null );
-
-		annotations.put( "html", null );
-		annotations.put( "file", null );
 
 		// Shell Options (groovy,text,html)
 		annotations.put( "shell", null );

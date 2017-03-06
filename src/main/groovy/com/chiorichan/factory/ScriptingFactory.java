@@ -176,7 +176,7 @@ public class ScriptingFactory implements LogSource
 			else
 			{
 				String rel = ZIO.relPath( context.file().getParentFile(), context.site().directory() ).replace( '\\', '.' ).replace( '/', '.' );
-				context.cache( new File( context.cache(), rel.contains( "." ) ? rel.substring( 0, rel.indexOf( "." ) ) : rel ) );
+				context.cacheDirectory( new File( context.cacheDirectory(), rel.contains( "." ) ? rel.substring( 0, rel.indexOf( "." ) ) : rel ) );
 				context.scriptPackage( rel.contains( "." ) ? rel.substring( rel.indexOf( "." ) + 1 ) : "" );
 				name = context.file().getName();
 			}
