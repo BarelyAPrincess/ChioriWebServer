@@ -321,6 +321,8 @@ public class HttpResponseWrapper
 				println( "</div>" );
 				println( "</body></html>" );
 
+				setContentType( "text/html" );
+				setEncoding( Charsets.UTF_8 );
 				sendResponse();
 			}
 		}
@@ -409,6 +411,9 @@ public class HttpResponseWrapper
 
 				resetBuffer();
 				print( event.getErrorHtml() );
+
+				setContentType( "text/html" );
+				setEncoding( Charsets.UTF_8 );
 				sendResponse();
 			}
 			else
