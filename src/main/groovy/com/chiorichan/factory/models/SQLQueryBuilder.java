@@ -1,18 +1,23 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- *
+ * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
- *
+ * <p>
  * All Rights Reserved.
  */
 package com.chiorichan.factory.models;
 
 import com.chiorichan.datastore.sql.SQLBase;
+import com.chiorichan.datastore.sql.skel.SQLSkelGroupBy;
 import com.chiorichan.datastore.sql.skel.SQLSkelLimit;
 import com.chiorichan.datastore.sql.skel.SQLSkelOrderBy;
 import com.chiorichan.datastore.sql.skel.SQLSkelWhere;
+import com.chiorichan.datastore.sql.skel.SQLWhereElement;
+import com.chiorichan.datastore.sql.skel.SQLWhereElementSep;
+import com.chiorichan.datastore.sql.skel.SQLWhereGroup;
+import com.chiorichan.datastore.sql.skel.SQLWhereKeyValue;
 import com.chiorichan.factory.groovy.ScriptingBaseGroovy;
 import com.chiorichan.logger.Log;
 import groovy.lang.Binding;
@@ -20,6 +25,7 @@ import groovy.lang.Closure;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,7 +33,7 @@ import java.util.Set;
 /**
  * Provides a SQL model builder
  */
-public class SQLQueryBuilder extends ScriptingBaseGroovy
+public class SQLQueryBuilder extends ScriptingBaseGroovy implements SQLSkelOrderBy<SQLQueryBuilder>, SQLSkelLimit<SQLQueryBuilder>, SQLSkelGroupBy<SQLQueryBuilder>, SQLSkelWhere<SQLQueryBuilder, SQLQueryBuilder>
 {
 	private SQLBase sql;
 	private SQLQueryBuilder builder = null;
@@ -40,8 +46,8 @@ public class SQLQueryBuilder extends ScriptingBaseGroovy
 
 	protected SQLQueryBuilder( SQLQueryBuilder builder, SQLBase lastState )
 	{
-		builder = builder;
-		sql = lastState;
+		this.builder = builder;
+		this.sql = lastState;
 	}
 
 	@Override
@@ -49,7 +55,7 @@ public class SQLQueryBuilder extends ScriptingBaseGroovy
 	{
 		super.setBinding( binding );
 
-		/**
+		/*
 		 * When you need access to the binding variable but it's not made available in the constructor, the next best option is to listen here at the setBinding() method.
 		 * This really should have a second look by someone who knows more about Groovy. What are our alternatives?
 		 */
@@ -98,74 +104,215 @@ public class SQLQueryBuilder extends ScriptingBaseGroovy
 		return new SQLModelResults( this, getSql().select( getTable() ) );
 	}
 
-	public SQLQueryBuilder where( String column, String value ) throws SQLException
+	@Override
+	public SQLQueryBuilder or()
 	{
-		SQLQueryBuilder builder = duplicate();
-
-		SQLBase sql = builder.sql;
-
-		if ( !( sql instanceof SQLSkelWhere ) )
-			throw new IllegalStateException( "Current SQL state does not implement the SQL where functionality." );
-
-		( ( SQLSkelWhere ) sql ).whereMatches( column, value );
-
+		SQLQueryBuilder builder = duplicate( SQLSkelWhere.class );
+		( ( SQLSkelWhere ) builder.sql ).or();
 		return builder;
 	}
 
-	public SQLQueryBuilder orderBy( List<String> columns, String dir ) throws SQLException
+	@Override
+	public SQLQueryBuilder and()
 	{
-		SQLQueryBuilder builder = duplicate();
-
-		SQLBase sql = builder.sql;
-
-		if ( !( sql instanceof SQLSkelOrderBy ) )
-			throw new IllegalStateException( "Current SQL state does not implement the SQL orderBy functionality." );
-
-		( ( SQLSkelOrderBy ) sql ).orderBy( columns );
-
-		if ( dir.trim().equalsIgnoreCase( "asc" ) )
-			( ( SQLSkelOrderBy ) sql ).orderAsc();
-		else if ( dir.trim().equalsIgnoreCase( "desc" ) )
-			( ( SQLSkelOrderBy ) sql ).orderDesc();
-
+		SQLQueryBuilder builder = duplicate( SQLSkelWhere.class );
+		( ( SQLSkelWhere ) builder.sql ).and();
 		return builder;
 	}
 
-	public SQLQueryBuilder skip( int i ) throws SQLException
+	@Override
+	public SQLWhereKeyValue<SQLQueryBuilder> where( String key )
+	{
+		return new SQLWhereKeyValue<>( this, key );
+	}
+
+	@Override
+	public SQLWhereElementSep separator()
+	{
+		return duplicate( SQLSkelWhere.class ).separator();
+	}
+
+	@Override
+	public SQLQueryBuilder where( SQLWhereElement element )
+	{
+		SQLQueryBuilder builder = duplicate( SQLSkelWhere.class );
+		( ( SQLSkelWhere ) builder.sql ).where( element );
+		return builder;
+	}
+
+	@Override
+	public SQLWhereGroup group()
+	{
+		SQLWhereGroup<SQLQueryBuilder, SQLQueryBuilder> group = new SQLWhereGroup<>( this, this );
+		SQLQueryBuilder builder = where( group );
+		group.seperator( builder.separator() );
+		or();
+		return group;
+	}
+
+	@Override
+	public SQLQueryBuilder whereMatches( String key, Object value )
+	{
+		SQLQueryBuilder builder = duplicate( SQLSkelWhere.class );
+		( ( SQLSkelWhere ) builder.sql ).whereMatches( key, value );
+		return builder;
+	}
+
+	@Override
+	public SQLQueryBuilder whereMatches( Collection<String> valueKeys, Collection<Object> valueValues )
+	{
+		SQLQueryBuilder builder = duplicate( SQLSkelWhere.class );
+		( ( SQLSkelWhere ) builder.sql ).whereMatches( valueKeys, valueValues );
+		return builder;
+	}
+
+	@Override
+	public SQLQueryBuilder whereMatches( Map<String, Object> values )
+	{
+		SQLQueryBuilder builder = duplicate( SQLSkelWhere.class );
+		( ( SQLSkelWhere ) builder.sql ).where( values );
+		return builder;
+	}
+
+	@Override
+	public SQLQueryBuilder where( Map<String, Object> map )
+	{
+		SQLQueryBuilder builder = duplicate( SQLSkelWhere.class );
+		( ( SQLSkelWhere ) builder.sql ).where( map );
+		return builder;
+	}
+
+	@Override
+	public SQLQueryBuilder orderBy( Collection columns )
+	{
+		SQLQueryBuilder builder = duplicate( SQLSkelOrderBy.class );
+		( ( SQLSkelOrderBy ) builder.sql ).orderBy( columns );
+		return builder;
+	}
+
+	@Override
+	public SQLQueryBuilder orderBy( String... columns )
+	{
+		SQLQueryBuilder builder = duplicate( SQLSkelOrderBy.class );
+		( ( SQLSkelOrderBy ) builder.sql ).orderBy( columns );
+		return builder;
+	}
+
+	@Override
+	public SQLQueryBuilder orderBy( String column )
+	{
+		SQLQueryBuilder builder = duplicate( SQLSkelOrderBy.class );
+		( ( SQLSkelOrderBy ) builder.sql ).orderBy( column );
+		return builder;
+	}
+
+	@Override
+	public SQLQueryBuilder orderAsc()
+	{
+		SQLQueryBuilder builder = duplicate( SQLSkelOrderBy.class );
+		( ( SQLSkelOrderBy ) builder.sql ).orderAsc();
+		return builder;
+	}
+
+	@Override
+	public SQLQueryBuilder orderDesc()
+	{
+		SQLQueryBuilder builder = duplicate( SQLSkelOrderBy.class );
+		( ( SQLSkelOrderBy ) builder.sql ).orderDesc();
+		return builder;
+	}
+
+	@Override
+	public SQLQueryBuilder rand()
+	{
+		SQLQueryBuilder builder = duplicate( SQLSkelOrderBy.class );
+		( ( SQLSkelOrderBy ) builder.sql ).rand();
+		return builder;
+	}
+
+	@Override
+	public SQLQueryBuilder rand( boolean rand )
+	{
+		SQLQueryBuilder builder = duplicate( SQLSkelOrderBy.class );
+		( ( SQLSkelOrderBy ) builder.sql ).rand( rand );
+		return builder;
+	}
+
+	@Override
+	public SQLQueryBuilder orderBy( Collection<String> columns, String dir )
+	{
+		SQLQueryBuilder builder = duplicate( SQLSkelOrderBy.class );
+		( ( SQLSkelOrderBy ) builder.sql ).orderBy( columns, dir );
+		return builder;
+	}
+
+	public SQLQueryBuilder skip( int i )
 	{
 		return offset( i );
 	}
 
-	public SQLQueryBuilder offset( int i ) throws SQLException
+	@Override
+	public SQLQueryBuilder offset( int i )
 	{
-		SQLQueryBuilder builder = duplicate();
-
-		SQLBase sql = builder.sql;
-
-		if ( !( sql instanceof SQLSkelLimit ) )
-			throw new IllegalStateException( "Current SQL state does not implement the SQL limit functionality." );
-
-		( ( SQLSkelLimit ) sql ).offset( i );
-
+		SQLQueryBuilder builder = duplicate( SQLSkelLimit.class );
+		( ( SQLSkelLimit ) builder.sql ).offset( i );
 		return builder;
 	}
 
-	public SQLQueryBuilder take( int i ) throws SQLException
+	public SQLQueryBuilder take( int i )
 	{
 		return limit( i );
 	}
 
-	public SQLQueryBuilder limit( int i ) throws SQLException
+	@Override
+	public int offset()
 	{
-		SQLQueryBuilder builder = duplicate();
+		return ( ( SQLSkelLimit ) duplicate( SQLSkelLimit.class ).sql ).offset();
+	}
 
-		SQLBase sql = builder.sql;
+	@Override
+	public int limit()
+	{
+		return ( ( SQLSkelLimit ) duplicate( SQLSkelLimit.class ).sql ).limit();
+	}
 
-		if ( !( sql instanceof SQLSkelLimit ) )
-			throw new IllegalStateException( "Current SQL state does not implement the SQL limit functionality." );
+	@Override
+	public SQLQueryBuilder limit( int limit, int offset )
+	{
+		SQLQueryBuilder builder = duplicate( SQLSkelLimit.class );
+		( ( SQLSkelLimit ) builder.sql ).limit( limit, offset );
+		return builder;
+	}
 
-		( ( SQLSkelLimit ) sql ).limit( i );
+	@Override
+	public SQLQueryBuilder limit( int limit )
+	{
+		SQLQueryBuilder builder = duplicate( SQLSkelLimit.class );
+		( ( SQLSkelLimit ) builder.sql ).limit( limit );
+		return builder;
+	}
 
+	@Override
+	public SQLQueryBuilder groupBy( Collection<String> columns )
+	{
+		SQLQueryBuilder builder = duplicate( SQLSkelGroupBy.class );
+		( ( SQLSkelGroupBy ) builder.sql ).groupBy( columns );
+		return builder;
+	}
+
+	@Override
+	public SQLQueryBuilder groupBy( String... columns )
+	{
+		SQLQueryBuilder builder = duplicate( SQLSkelGroupBy.class );
+		( ( SQLSkelGroupBy ) builder.sql ).groupBy( columns );
+		return builder;
+	}
+
+	@Override
+	public SQLQueryBuilder groupBy( String column )
+	{
+		SQLQueryBuilder builder = duplicate( SQLSkelGroupBy.class );
+		( ( SQLSkelGroupBy ) builder.sql ).groupBy( column );
 		return builder;
 	}
 
@@ -226,11 +373,17 @@ public class SQLQueryBuilder extends ScriptingBaseGroovy
 		return this;
 	}
 
-	protected SQLQueryBuilder duplicate() throws SQLException
+	protected SQLQueryBuilder duplicate( Class<?> clz )
 	{
-		SQLBase lastState = SQLQueryBuilder.this.sql;
-		if ( lastState instanceof Cloneable )
-			lastState = lastState.clone();
+		SQLQueryBuilder builder = duplicate();
+		if ( !( clz.isInstance( builder.sql ) ) )
+			throw new IllegalStateException( "Current SQL state does not implement " + clz.getSimpleName() + " class." );
+		return builder;
+	}
+
+	protected SQLQueryBuilder duplicate()
+	{
+		SQLBase lastState = SQLQueryBuilder.this.sql.clone();
 		return new SQLQueryBuilder( SQLQueryBuilder.this, lastState )
 		{
 			@Override
@@ -251,7 +404,7 @@ public class SQLQueryBuilder extends ScriptingBaseGroovy
 
 	/**
 	 * This is normally overridden.
-	 * We just have it here so we don't have to declare abstract.
+	 * We just have it here so we don't have to declare this class as abstract.
 	 */
 	@Override
 	public Object run()
