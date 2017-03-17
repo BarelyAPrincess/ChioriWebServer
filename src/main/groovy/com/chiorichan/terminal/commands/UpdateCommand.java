@@ -13,8 +13,8 @@ import com.chiorichan.AppConfig;
 import com.chiorichan.AppController;
 import com.chiorichan.Loader;
 import com.chiorichan.account.AccountAttachment;
-import com.chiorichan.zutils.ZIO;
-import com.chiorichan.zutils.ZHttp;
+import com.chiorichan.utils.UtilIO;
+import com.chiorichan.utils.UtilHttp;
 import com.chiorichan.lang.EnumColor;
 import com.chiorichan.terminal.Command;
 import com.chiorichan.updater.AutoUpdater;
@@ -107,7 +107,7 @@ public class UpdateCommand extends Command
 							download.setListener( new DownloadProgressDisplay( sender ) );
 							download.run();
 
-							String origMD5 = new String( ZHttp.readUrl( latest.getMD5File() ) ).trim();
+							String origMD5 = new String( UtilHttp.readUrl( latest.getMD5File() ) ).trim();
 
 							if ( origMD5 != null && !origMD5.isEmpty() )
 							{
@@ -130,7 +130,7 @@ public class UpdateCommand extends Command
 							{
 								fis = new FileInputStream( updatedJar );
 								fos = new FileOutputStream( currentJar );
-								ZIO.copy( fis, fos );
+								UtilIO.copy( fis, fos );
 							}
 							catch ( IOException e )
 							{
@@ -138,8 +138,8 @@ public class UpdateCommand extends Command
 							}
 							finally
 							{
-								ZIO.closeQuietly( fis );
-								ZIO.closeQuietly( fos );
+								UtilIO.closeQuietly( fis );
+								UtilIO.closeQuietly( fos );
 							}
 
 							updatedJar.setExecutable( true, true );

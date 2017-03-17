@@ -11,7 +11,7 @@ package com.chiorichan.http;
 
 import com.chiorichan.logger.Log;
 import com.chiorichan.site.Site;
-import com.chiorichan.zutils.ZObjects;
+import com.chiorichan.utils.UtilObjects;
 import io.netty.util.internal.ConcurrentSet;
 
 import java.io.File;
@@ -44,7 +44,7 @@ public class Routes
 
 	public Route routeUrl( String id )
 	{
-		ZObjects.notEmpty( id );
+		UtilObjects.notEmpty( id );
 
 		jsonWatcher.reviveTask();
 		yamlWatcher.reviveTask();

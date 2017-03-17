@@ -47,10 +47,10 @@ import com.chiorichan.site.DomainMapping;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.zutils.WebFunc;
-import com.chiorichan.zutils.ZIO;
-import com.chiorichan.zutils.ZObjects;
-import com.chiorichan.zutils.ZStrings;
+import com.chiorichan.utils.WebFunc;
+import com.chiorichan.utils.UtilIO;
+import com.chiorichan.utils.UtilObjects;
+import com.chiorichan.utils.UtilStrings;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
@@ -553,10 +553,10 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		}
 
 		File docRoot = mapping.directory();
-		ZObjects.notNull( docRoot );
+		UtilObjects.notNull( docRoot );
 
 		if ( !docRoot.exists() )
-			SiteManager.getLogger().warning( String.format( "The webroot directory [%s] was missing, it will be created.", ZIO.relPath( docRoot ) ) );
+			SiteManager.getLogger().warning( String.format( "The webroot directory [%s] was missing, it will be created.", UtilIO.relPath( docRoot ) ) );
 
 		if ( docRoot.exists() && docRoot.isFile() )
 			docRoot.delete();
@@ -568,7 +568,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			log.log( Level.FINE, "Account {id=%s,displayName=%s}", session.getId(), session.getDisplayName() );
 
 		/* Check direct file access annotation: @disallowDirectAccess true */
-		if ( ZObjects.castToBool( fi.get( "disallowDirectAccess" ) ) && new File( request.getDomainMapping().directory(), ZStrings.trimAll( request.getUri(), '/' ) ).getAbsolutePath().equals( fi.getFile() ) )
+		if ( UtilObjects.castToBool( fi.get( "disallowDirectAccess" ) ) && new File( request.getDomainMapping().directory(), UtilStrings.trimAll( request.getUri(), '/' ) ).getAbsolutePath().equals( fi.getFile() ) )
 			HttpError.throwDeveloperError( HttpResponseStatus.NOT_FOUND, "Accessing this file by exact file name is disallowed per annotation." );
 
 		/*
@@ -713,19 +713,19 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		try
 		{
 			if ( request.getUploadedFiles().size() > 0 )
-				log.log( Level.INFO, "Uploads {" + ZStrings.limitLength( Joiner.on( "," ).skipNulls().join( request.getUploadedFiles().values() ), 255 ) + "}" );
+				log.log( Level.INFO, "Uploads {" + UtilStrings.limitLength( Joiner.on( "," ).skipNulls().join( request.getUploadedFiles().values() ), 255 ) + "}" );
 
 			if ( request.getGetMap().size() > 0 )
-				log.log( Level.INFO, "GetMap {" + ZStrings.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( request.getGetMap() ), 255 ) + "}" );
+				log.log( Level.INFO, "GetMap {" + UtilStrings.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( request.getGetMap() ), 255 ) + "}" );
 
 			if ( request.getPostMap().size() > 0 )
-				log.log( Level.INFO, "PostMap {" + ZStrings.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( request.getPostMap() ), 255 ) + "}" );
+				log.log( Level.INFO, "PostMap {" + UtilStrings.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( request.getPostMap() ), 255 ) + "}" );
 
 			if ( request.getRewriteMap().size() > 0 )
-				log.log( Level.INFO, "RewriteMap {" + ZStrings.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( request.getRewriteMap() ), 255 ) + "}" );
+				log.log( Level.INFO, "RewriteMap {" + UtilStrings.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( request.getRewriteMap() ), 255 ) + "}" );
 
 			if ( fi.getAnnotations().size() > 0 )
-				log.log( Level.INFO, "Annotations {" + ZStrings.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( fi.getAnnotations() ), 255 ) + "}" );
+				log.log( Level.INFO, "Annotations {" + UtilStrings.limitLength( Joiner.on( "," ).withKeyValueSeparator( "=" ).useForNull( "null" ).join( fi.getAnnotations() ), 255 ) + "}" );
 		}
 		catch ( Throwable t )
 		{
@@ -768,7 +768,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		{
 			if ( !nonceProvided )
 			{
-				if ( !ZObjects.isNull( nonce ) )
+				if ( !UtilObjects.isNull( nonce ) )
 					log.log( Level.SEVERE, String.format( "The expected nonce key was %s", nonce.key() ) );
 				response.sendError( HttpResponseStatus.FORBIDDEN, "Request Failed NONCE Validation", "Nonce key is missing or the nonce was not initialized." );
 				return;
@@ -816,7 +816,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		NetworkSecurity.isForbidden( htaccess, currentSite, fi );
 
 		/* This annotation simply requests that the page requester must have a logged in account, the exact permission is not important. */
-		boolean reqLogin = ZObjects.castToBool( fi.get( "reqLogin" ) );
+		boolean reqLogin = UtilObjects.castToBool( fi.get( "reqLogin" ) );
 
 		if ( reqLogin && !session.hasLogin() )
 			throw new PermissionDeniedException( PermissionDeniedReason.LOGIN_PAGE );
@@ -892,7 +892,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				if ( result.getObject() != null && !( result.getObject() instanceof NullObject ) )
 					try
 					{
-						rendered.writeBytes( ZObjects.castToStringWithException( result.getObject() ).getBytes() );
+						rendered.writeBytes( UtilObjects.castToStringWithException( result.getObject() ).getBytes() );
 					}
 					catch ( Exception e )
 					{

@@ -12,14 +12,26 @@ package com.chiorichan.factory.api;
 import com.chiorichan.AppConfig;
 import com.chiorichan.Versioning;
 import com.chiorichan.database.DatabaseEngineLegacy;
+import com.chiorichan.datastore.sql.bases.SQLDatastore;
+import com.chiorichan.factory.ScriptingContext;
+import com.chiorichan.factory.ScriptingFactory;
+import com.chiorichan.factory.localization.LocalizationException;
+import com.chiorichan.factory.models.SQLQueryBuilder;
 import com.chiorichan.lang.DiedException;
+import com.chiorichan.lang.MultipleException;
+import com.chiorichan.lang.PluginNotFoundException;
+import com.chiorichan.lang.ScriptingException;
 import com.chiorichan.logger.Log;
+import com.chiorichan.plugin.PluginManager;
+import com.chiorichan.plugin.loader.Plugin;
+import com.chiorichan.site.Site;
+import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.zutils.WebFunc;
-import com.chiorichan.zutils.ZEncryption;
-import com.chiorichan.zutils.ZIO;
-import com.chiorichan.zutils.ZObjects;
-import com.chiorichan.zutils.ZStrings;
+import com.chiorichan.utils.WebFunc;
+import com.chiorichan.utils.UtilEncryption;
+import com.chiorichan.utils.UtilIO;
+import com.chiorichan.utils.UtilObjects;
+import com.chiorichan.utils.UtilStrings;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -28,10 +40,14 @@ import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
 import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
+import groovy.json.JsonSlurper;
+import groovy.lang.MissingPropertyException;
 import groovy.lang.Script;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.ocpsoft.prettytime.PrettyTime;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -57,13 +73,11 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Provides the base API for all Groovy Scripting
+ */
 public abstract class Builtin extends Script
 {
-	public static String apache_get_version()
-	{
-		return "THIS IS NOT APACHE YOU DUMMY!!!";
-	}
-
 	/**
 	 * Provides an easy array collections method. Not sure if this is counterintuitive since technically Groovy provides an easier array of [], so what, i.e., def val = array( "obj1", "ovj2", "obj3" ); Comparable to PHP's array function,
 	 * http://www.w3schools.com/php/func_array.asp
@@ -79,72 +93,72 @@ public abstract class Builtin extends Script
 
 	public static boolean asBool( Object obj )
 	{
-		return ZObjects.castToBool( obj );
+		return UtilObjects.castToBool( obj );
 	}
 
 	public static double asDouble( Object obj )
 	{
-		return ZObjects.castToDouble( obj );
+		return UtilObjects.castToDouble( obj );
 	}
 
 	public static int asInt( Object obj )
 	{
-		return ZObjects.castToInt( obj );
+		return UtilObjects.castToInt( obj );
 	}
 
 	public static long asLong( Object obj )
 	{
-		return ZObjects.castToLong( obj );
+		return UtilObjects.castToLong( obj );
 	}
 
 	public static String asString( Object obj )
 	{
-		return ZObjects.castToString( obj );
+		return UtilObjects.castToString( obj );
 	}
 
 	public Boolean asBool( Object obj, Boolean def )
 	{
-		return ZObjects.castToBool( obj, def );
+		return UtilObjects.castToBool( obj, def );
 	}
 
 	public Double asDouble( Object obj, Double def )
 	{
-		return ZObjects.castToDouble( obj, def );
+		return UtilObjects.castToDouble( obj, def );
 	}
 
 	public Integer asInt( Object obj, Integer def )
 	{
-		return ZObjects.castToInt( obj, def );
+		return UtilObjects.castToInt( obj, def );
 	}
 
 	public Long asLong( Object obj, Long def )
 	{
-		return ZObjects.castToLong( obj, def );
+		return UtilObjects.castToLong( obj, def );
 	}
 
 	public String asString( Object obj, String def )
 	{
-		return ZObjects.castToString( obj, def );
+		return UtilObjects.castToString( obj, def );
 	}
 
 	public static byte[] base64Decode( String str )
 	{
-		return ZEncryption.base64Decode( str );
+		return UtilEncryption.base64Decode( str );
 	}
 
 	public static String base64DecodeString( String str )
 	{
-		return ZEncryption.base64DecodeString( str );
+		return UtilEncryption.base64DecodeString( str );
 	}
 
 	public static String base64Encode( byte[] bytes )
 	{
-		return ZEncryption.base64Encode( bytes );
+		return UtilEncryption.base64Encode( bytes );
 	}
 
 	public static String base64Encode( String str )
 	{
-		return ZEncryption.base64Encode( str );
+		return UtilEncryption.base64Encode( str );
 	}
 
 	public static int count( Collection<Object> list )
@@ -268,13 +282,13 @@ public abstract class Builtin extends Script
 
 			if ( row instanceof Map || row instanceof Collection )
 			{
-				Map<String, String> map = ZObjects.castToMap( row, String.class, String.class );
+				Map<String, String> map = UtilObjects.castToMap( row, String.class, String.class );
 
 				sb.append( "<tr" );
 
 				map.entrySet().stream().forEach( e ->
 				{
-					String s = ZObjects.castToString( e.getKey() );
+					String s = UtilObjects.castToString( e.getKey() );
 					if ( s.startsWith( ":" ) )
 					{
 						map.remove( s );
@@ -300,7 +314,7 @@ public abstract class Builtin extends Script
 				sb.append( "</tr>\n" );
 			}
 			else
-				sb.append( "<tr class=\"" + clss + "\"><td id=\"tblStringRow\" colspan=\"" + colLength + "\"><b><center>" + ZObjects.castToString( row ) + "</center></b></td></tr>\n" );
+				sb.append( "<tr class=\"" + clss + "\"><td id=\"tblStringRow\" colspan=\"" + colLength + "\"><b><center>" + UtilObjects.castToString( row ) + "</center></b></td></tr>\n" );
 		}
 
 		sb.append( "</tbody>\n" );
@@ -331,7 +345,7 @@ public abstract class Builtin extends Script
 
 	public static String date( String format, Date date, String def )
 	{
-		return date( format, ZObjects.castToString( date.getTime() / 1000 ), def );
+		return date( format, UtilObjects.castToString( date.getTime() / 1000 ), def );
 	}
 
 	public static String date( String format, Object data )
@@ -341,7 +355,7 @@ public abstract class Builtin extends Script
 
 	public static String date( String format, Object data, String def )
 	{
-		return date( format, ZObjects.castToString( data ), def );
+		return date( format, UtilObjects.castToString( data ), def );
 	}
 
 	public static String date( String format, String data )
@@ -474,22 +488,22 @@ public abstract class Builtin extends Script
 
 	public static File dirname( String path, int levels )
 	{
-		return dirname( ZIO.isAbsolute( path ) ? new File( path ) : new File( AppConfig.get().getDirectory().getAbsolutePath(), path ), levels );
+		return dirname( UtilIO.isAbsolute( path ) ? new File( path ) : new File( AppConfig.get().getDirectory().getAbsolutePath(), path ), levels );
 	}
 
 	public static boolean empty( Object obj )
 	{
-		return ZObjects.isEmpty( obj );
+		return UtilObjects.isEmpty( obj );
 	}
 
 	public static boolean isNull( Object obj )
 	{
-		return ZObjects.isNull( obj );
+		return UtilObjects.isNull( obj );
 	}
 
 	public static boolean isTrue( Object obj )
 	{
-		return ZObjects.isTrue( obj );
+		return UtilObjects.isTrue( obj );
 	}
 
 	public static long epoch()
@@ -512,7 +526,7 @@ public abstract class Builtin extends Script
 
 	public static Collection<String> explode( String limiter, String data )
 	{
-		if ( ZObjects.isEmpty( data ) )
+		if ( UtilObjects.isEmpty( data ) )
 			return new ArrayList<>();
 
 		return new ArrayList<>( Splitter.on( limiter ).splitToList( data ) );
@@ -520,7 +534,7 @@ public abstract class Builtin extends Script
 
 	public static Map<String, String> explode( String limiter, String separator, String data )
 	{
-		if ( ZObjects.isEmpty( data ) )
+		if ( UtilObjects.isEmpty( data ) )
 			return new HashMap<>();
 
 		return new HashMap<>( Splitter.on( limiter ).withKeyValueSeparator( separator ).split( data ) );
@@ -533,7 +547,7 @@ public abstract class Builtin extends Script
 
 	public static boolean file_exists( String file )
 	{
-		return ( ZIO.isAbsolute( file ) ? new File( file ) : new File( AppConfig.get().getDirectory().getAbsolutePath(), file ) ).exists();
+		return ( UtilIO.isAbsolute( file ) ? new File( file ) : new File( AppConfig.get().getDirectory().getAbsolutePath(), file ) ).exists();
 	}
 
 	public static Map<String, Object> filter( Map<String, Object> data, Collection<String> allowedKeys )
@@ -554,7 +568,7 @@ public abstract class Builtin extends Script
 		Map<String, Object> newArray = new LinkedHashMap<>();
 
 		if ( !caseSensitive )
-			allowedKeys = ZStrings.toLowerCaseList( allowedKeys );
+			allowedKeys = UtilStrings.toLowerCaseList( allowedKeys );
 
 		for ( Entry<String, Object> e : data.entrySet() )
 			if ( !caseSensitive && allowedKeys.contains( e.getKey().toLowerCase() ) || allowedKeys.contains( e.getKey() ) )
@@ -708,7 +722,7 @@ public abstract class Builtin extends Script
 
 	public static String md5( String str )
 	{
-		return ZEncryption.md5( str );
+		return UtilEncryption.md5( str );
 	}
 
 	public static String money_format( Double amt )
@@ -731,7 +745,7 @@ public abstract class Builtin extends Script
 		if ( amt == null || amt.isEmpty() )
 			return "$0.00";
 
-		return money_format( ZObjects.castToDouble( amt ) );
+		return money_format( UtilObjects.castToDouble( amt ) );
 	}
 
 	public static boolean notNull( Object o )
@@ -756,7 +770,7 @@ public abstract class Builtin extends Script
 	@Deprecated
 	public static int strlen( String var )
 	{
-		return var == null ? 0 : var.length();
+		return count( var );
 	}
 
 	public static Integer strpos( String haystack, String needle )
@@ -832,6 +846,64 @@ public abstract class Builtin extends Script
 		return URLEncoder.encode( url, Charsets.UTF_8.displayName() );
 	}
 
+	private JsonSlurper jsonSlurper = null;
+
+	public JsonSlurper jsonSlurper()
+	{
+		if ( jsonSlurper == null )
+			jsonSlurper = new JsonSlurper();
+		return jsonSlurper;
+	}
+
+	public abstract ScriptingFactory getScriptingFactory();
+
+	private int stackLevel = -1;
+
+	void obStart()
+	{
+		stackLevel = getScriptingFactory().obStart();
+	}
+
+	void obFlush()
+	{
+		if ( stackLevel == -1 )
+			throw new IllegalStateException( "obStart() must be called first." );
+		getScriptingFactory().obFlush( stackLevel );
+	}
+
+	String obEnd()
+	{
+		if ( stackLevel == -1 )
+			throw new IllegalStateException( "obStart() must be called first." );
+		return getScriptingFactory().obEnd( stackLevel );
+	}
+
+	void section( String key )
+	{
+		getScriptingFactory().getYieldBuffer().set( key, obEnd() );
+	}
+
+	void section( String key, String value )
+	{
+		getScriptingFactory().getYieldBuffer().set( key, value );
+	}
+
+	String yield( String key )
+	{
+		return getScriptingFactory().getYieldBuffer().get( key );
+	}
+
+	/**
+	 * Same as {@link #var_export(Object...)} but instead prints the result to the buffer
+	 * Based on method of same name in PHP
+	 *
+	 * @param obj The object you wish to dump
+	 */
+	void var_dump( Object... obj )
+	{
+		println( var_export( obj ) );
+	}
+
 	@SuppressWarnings( "unchecked" )
 	public static String var_export( Object... objs )
 	{
@@ -848,7 +920,7 @@ public abstract class Builtin extends Script
 				if ( obj instanceof Map )
 					for ( Entry<Object, Object> e : ( ( Map<Object, Object> ) obj ).entrySet() )
 					{
-						String key = ZObjects.castToString( e.getKey() );
+						String key = UtilObjects.castToString( e.getKey() );
 						if ( key == null )
 							key = e.getKey().toString();
 						children.put( key, e.getValue() );
@@ -868,7 +940,7 @@ public abstract class Builtin extends Script
 
 				// boolean[], byte[], short[], char[], int[], long[], float[], double[], Object[]
 
-				Object value = ZObjects.castToString( obj );
+				Object value = UtilObjects.castToString( obj );
 				if ( value == null )
 					value = obj.toString();
 
@@ -899,13 +971,67 @@ public abstract class Builtin extends Script
 	}
 
 	/**
-	 * Alias for {@link #print(Object)}
+	 * Determine if a variable is set and is not NULL.
+	 * <p>
+	 * If a variable has been unset with unset(), it will no longer be set. isset() will return FALSE if testing a variable that has been set to NULL. Also note that a null character ("\0") is not equivalent to the PHP NULL constant.
+	 * <p>
+	 * If multiple parameters are supplied then isset() will return TRUE only if all of the parameters are set. Evaluation goes from left to right and stops as soon as an unset variable is encountered.
+	 *
+	 * @param names The variables to be checked
+	 * @return Returns TRUE if var exists and has value other than NULL. FALSE otherwise.
 	 */
+	boolean isset( String... names )
+	{
+		for ( String name : names )
+			if ( getPropertySafe( name ) == null )
+				return false;
+
+		return true;
+	}
+
+	/**
+	 * Converts the specified param to an HTML comment if the server is in development mode
+	 *
+	 * @param var The HTML comment connect
+	 * @return The formatted string
+	 */
+	void comment( String var )
+	{
+		if ( Versioning.isDevelopment() )
+			print( "<!-- " + var + " -->" );
+	}
+
+	/**
+	 * Alias for println
+	 * Based on method of same name in PHP
+	 *
+	 * @param var The string you wish to print
+	 */
+	void echo( String var )
+	{
+		println( var );
+	}
+
+	void unset( String name )
+	{
+		setProperty( name, null );
+	}
+
+	Object last( Collection<?> collection )
+	{
+		return ( collection == null ) ? null : collection.toArray()[collection.size() - 1];
+	}
+
+	Object first( Collection<?> collection )
+	{
+		return collection == null ? null : collection.toArray()[0];
+	}
+
 	public void echo( Object obj )
 	{
 		try
 		{
-			print( WebFunc.escapeHTML( ( String ) obj ) );
+			print( StringEscapeUtils.escapeHtml4( ( String ) obj ) );
 		}
 		catch ( ClassCastException e )
 		{
@@ -916,5 +1042,128 @@ public abstract class Builtin extends Script
 	public void exit() throws DiedException
 	{
 		die( null );
+	}
+
+	boolean hasProperty( String name )
+	{
+		return getPropertySafe( name ) != null;
+	}
+
+	Object getPropertySafe( String name )
+	{
+		try
+		{
+			return getProperty( name );
+		}
+		catch ( MissingPropertyException e )
+		{
+			return null;
+		}
+	}
+
+	Object getBindingProperty( String name )
+	{
+		try
+		{
+			return getBinding().getProperty( name );
+		}
+		catch ( MissingPropertyException e )
+		{
+			return null;
+		}
+	}
+
+	Site getSite()
+	{
+		return SiteManager.instance().getDefaultSite();
+	}
+
+	SQLQueryBuilder model( String pack ) throws MultipleException, ScriptingException
+	{
+		return ScriptingContext.fromPackage( getSite(), pack ).model();
+	}
+
+	Object include( String pack ) throws MultipleException, ScriptingException
+	{
+		return ScriptingContext.fromPackage( getSite(), pack ).eval();
+	}
+
+	Object require( String pack ) throws IOException, MultipleException, ScriptingException
+	{
+		return ScriptingContext.fromPackageWithException( getSite(), pack ).eval();
+	}
+
+	public void setLocale( String locale )
+	{
+		getSite().getLocalization().setLocale( locale );
+	}
+
+	public String getLocale()
+	{
+		return getSite().getLocalization().getLocale();
+	}
+
+	public String localeTrans( String key )
+	{
+		try
+		{
+			return getSite().getLocalization().localeTrans( key );
+		}
+		catch ( LocalizationException e )
+		{
+			return key;
+		}
+	}
+
+	public String localeTrans( String key, Map<String, String> params )
+	{
+		try
+		{
+			return getSite().getLocalization().localeTrans( key, params );
+		}
+		catch ( LocalizationException e )
+		{
+			return key;
+		}
+	}
+
+	public String localePlural( String key, int cnt )
+	{
+		try
+		{
+			return getSite().getLocalization().localePlural( key, cnt );
+		}
+		catch ( LocalizationException e )
+		{
+			return key;
+		}
+	}
+
+	public Plugin getPluginByClassname( String search ) throws PluginNotFoundException
+	{
+		return PluginManager.instance().getPluginByClassname( search );
+	}
+
+	public Plugin getPluginByClassnameWithoutException( String search )
+	{
+		return PluginManager.instance().getPluginByClassnameWithoutException( search );
+	}
+
+	public Plugin getPluginByName( String search ) throws PluginNotFoundException
+	{
+		return PluginManager.instance().getPluginByName( search );
+	}
+
+	public Plugin getPluginByNameWithoutException( String search )
+	{
+		return PluginManager.instance().getPluginByNameWithoutException( search );
+	}
+
+	public SQLDatastore getSql()
+	{
+		SQLDatastore sql = getSite().getDatastore();
+		if ( sql == null )
+			throw new IllegalStateException( "The site database is unconfigured. It will need to be setup in order for you to use the getSql() method." );
+		return sql;
 	}
 }

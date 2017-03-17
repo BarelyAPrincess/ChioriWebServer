@@ -15,7 +15,7 @@ import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Ticks;
-import com.chiorichan.zutils.ZIO;
+import com.chiorichan.utils.UtilIO;
 
 import java.io.File;
 import java.io.IOException;
@@ -126,8 +126,8 @@ public class AcmePlugin extends Plugin
 		subYaml = YamlConfiguration.loadConfiguration( new File( getDataFolder(), "subconfig.yaml" ) );
 
 		File data = getDataFolder();
-		if ( !ZIO.setDirectoryAccess( data ) )
-			throw new UncaughtException( ReportingLevel.E_ERROR, "Acme Plugin experienced a problem setting read and write access to directory \"" + ZIO.relPath( data ) + "\"!" );
+		if ( !UtilIO.setDirectoryAccess( data ) )
+			throw new UncaughtException( ReportingLevel.E_ERROR, "Acme Plugin experienced a problem setting read and write access to directory \"" + UtilIO.relPath( data ) + "\"!" );
 
 		try
 		{

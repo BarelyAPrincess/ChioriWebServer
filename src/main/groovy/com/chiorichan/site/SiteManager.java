@@ -25,10 +25,10 @@ import com.chiorichan.services.ServiceManager;
 import com.chiorichan.services.ServicePriority;
 import com.chiorichan.services.ServiceProvider;
 import com.chiorichan.tasks.TaskRegistrar;
-import com.chiorichan.zutils.ZHttp;
-import com.chiorichan.zutils.ZIO;
-import com.chiorichan.zutils.ZObjects;
-import com.chiorichan.zutils.ZStrings;
+import com.chiorichan.utils.UtilHttp;
+import com.chiorichan.utils.UtilIO;
+import com.chiorichan.utils.UtilObjects;
+import com.chiorichan.utils.UtilStrings;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 
@@ -62,7 +62,7 @@ public class SiteManager implements ServiceProvider, LogSource, ServiceManager, 
 
 	public Stream<DomainNode> getDomainsByPrefix( String prefix )
 	{
-		final String domain = ZHttp.normalize( prefix );
+		final String domain = UtilHttp.normalize( prefix );
 		return DomainTree.getChildren().filter( n -> n.getFullDomain().startsWith( domain ) );
 	}
 
@@ -121,13 +121,13 @@ public class SiteManager implements ServiceProvider, LogSource, ServiceManager, 
 	{
 		File site = new File( Loader.getWebRoot(), name );
 
-		ZIO.setDirectoryAccessWithException( site );
+		UtilIO.setDirectoryAccessWithException( site );
 
 		File publicDir = new File( site, "public" );
 		File resourceDir = new File( site, "resource" );
 
-		ZIO.setDirectoryAccessWithException( publicDir );
-		ZIO.setDirectoryAccessWithException( resourceDir );
+		UtilIO.setDirectoryAccessWithException( publicDir );
+		UtilIO.setDirectoryAccessWithException( resourceDir );
 
 		return site;
 	}
@@ -157,10 +157,10 @@ public class SiteManager implements ServiceProvider, LogSource, ServiceManager, 
 			return;
 		}
 
-		ZIO.SortableFile[] sfiles = new ZIO.SortableFile[files.length];
+		UtilIO.SortableFile[] sfiles = new UtilIO.SortableFile[files.length];
 
 		for ( int i = 0; i < files.length; i++ )
-			sfiles[i] = new ZIO.SortableFile( files[i] );
+			sfiles[i] = new UtilIO.SortableFile( files[i] );
 
 		Arrays.sort( sfiles );
 
@@ -188,7 +188,7 @@ public class SiteManager implements ServiceProvider, LogSource, ServiceManager, 
 
 	public boolean delete( String siteId, boolean deleteFiles ) throws SiteException
 	{
-		ZObjects.notNull( siteId );
+		UtilObjects.notNull( siteId );
 
 		if ( "default".equalsIgnoreCase( siteId ) )
 			throw new SiteException( "You can not delete the default site" );
@@ -211,7 +211,7 @@ public class SiteManager implements ServiceProvider, LogSource, ServiceManager, 
 					newDirectory.delete();
 
 				if ( !site.directory().renameTo( newDirectory ) )
-					throw new SiteException( String.format( "Failed to trash the site directory [%s]", ZIO.relPath( site.directory() ) ) );
+					throw new SiteException( String.format( "Failed to trash the site directory [%s]", UtilIO.relPath( site.directory() ) ) );
 			}
 
 			return true;
@@ -247,7 +247,7 @@ public class SiteManager implements ServiceProvider, LogSource, ServiceManager, 
 
 	public Stream<Site> getSiteByIp( String ip )
 	{
-		if ( !ZHttp.isValidIPv4( ip ) && !ZHttp.isValidIPv6( ip ) )
+		if ( !UtilHttp.isValidIPv4( ip ) && !UtilHttp.isValidIPv6( ip ) )
 			throw new IllegalArgumentException( "The provided IP address does not match IPv4 nor IPv6" );
 
 		Stream<Site> sites = getSites().filter( s -> s.getIps().contains( ip ) );
@@ -289,9 +289,9 @@ public class SiteManager implements ServiceProvider, LogSource, ServiceManager, 
 			if ( yaml.has( "site.id" ) )
 			{
 				String id = yaml.getString( "site.id" ).toLowerCase();
-				String siteDir = ZStrings.regexCapture( configFile.getAbsolutePath(), "\\/([^\\/]*)\\/config.yaml" );
+				String siteDir = UtilStrings.regexCapture( configFile.getAbsolutePath(), "\\/([^\\/]*)\\/config.yaml" );
 
-				if ( !ZStrings.isCamelCase( id ) )
+				if ( !UtilStrings.isCamelCase( id ) )
 					getLogger().warning( String.format( "The site id %s does not match our camelCase convention. It must start with a lowercase letter or number and each following word should start with an uppercase letter.", id ) );
 
 				if ( !id.equals( siteDir ) )
@@ -301,9 +301,9 @@ public class SiteManager implements ServiceProvider, LogSource, ServiceManager, 
 					File oldSiteDir = configFile.getParentFile();
 					File newSiteDir = new File( Loader.getWebRoot(), id );
 
-					if ( newSiteDir.exists() && ( newSiteDir.isFile() || !ZIO.isDirectoryEmpty( newSiteDir ) ) )
+					if ( newSiteDir.exists() && ( newSiteDir.isFile() || !UtilIO.isDirectoryEmpty( newSiteDir ) ) )
 					{
-						getLogger().severe( String.format( "Could not correct the site directory, the destination [%s] is a file and/or is not empty. Please manually correct the site id and directory mismatch to ensure proper operation.", ZIO.relPath( newSiteDir ) ) );
+						getLogger().severe( String.format( "Could not correct the site directory, the destination [%s] is a file and/or is not empty. Please manually correct the site id and directory mismatch to ensure proper operation.", UtilIO.relPath( newSiteDir ) ) );
 						continue;
 					}
 
@@ -317,7 +317,7 @@ public class SiteManager implements ServiceProvider, LogSource, ServiceManager, 
 						}
 						catch ( IOException e )
 						{
-							getLogger().severe( String.format( "Could not correct the site directory, failed to rename the directory %s to %s name. Site will now be ignored.", ZIO.relPath( configFile.getParentFile() ), ZIO.relPath( newSiteDir ) ), e );
+							getLogger().severe( String.format( "Could not correct the site directory, failed to rename the directory %s to %s name. Site will now be ignored.", UtilIO.relPath( configFile.getParentFile() ), UtilIO.relPath( newSiteDir ) ), e );
 							continue;
 						}
 					}
@@ -326,7 +326,7 @@ public class SiteManager implements ServiceProvider, LogSource, ServiceManager, 
 					configFile = new File( newSiteDir, "config.yaml" );
 
 					if ( !configFile.exists() )
-						throw new SiteException( String.format( "Oops! I think we just broke site [%s]. We tried to move the site to [%s] but the configuration file was not found after the move.", id, ZIO.relPath( newSiteDir ) ) );
+						throw new SiteException( String.format( "Oops! I think we just broke site [%s]. We tried to move the site to [%s] but the configuration file was not found after the move.", id, UtilIO.relPath( newSiteDir ) ) );
 				}
 
 				Properties envProperties = new Properties();
@@ -339,7 +339,7 @@ public class SiteManager implements ServiceProvider, LogSource, ServiceManager, 
 					}
 					catch ( IOException e )
 					{
-						getLogger().severe( String.format( "Detected an environment file [%s] but an exception was thrown.", ZIO.relPath( envFile ) ), e );
+						getLogger().severe( String.format( "Detected an environment file [%s] but an exception was thrown.", UtilIO.relPath( envFile ) ), e );
 					}
 
 				try

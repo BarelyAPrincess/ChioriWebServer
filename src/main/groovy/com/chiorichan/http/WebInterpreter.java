@@ -18,9 +18,9 @@ import com.chiorichan.lang.HttpError;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.site.DomainMapping;
 import com.chiorichan.site.SiteManager;
-import com.chiorichan.zutils.ZIO;
-import com.chiorichan.zutils.ZObjects;
-import com.chiorichan.zutils.ZStrings;
+import com.chiorichan.utils.UtilIO;
+import com.chiorichan.utils.UtilObjects;
+import com.chiorichan.utils.UtilStrings;
 import com.google.common.collect.Maps;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
@@ -63,10 +63,10 @@ public class WebInterpreter extends FileInterpreter
 		else
 		{
 			DomainMapping mapping = request.getDomainMapping();
-			if ( mapping.hasConfig( "redirect" ) && !ZObjects.isEmpty( mapping.getConfig( "redirect" ) ) )
+			if ( mapping.hasConfig( "redirect" ) && !UtilObjects.isEmpty( mapping.getConfig( "redirect" ) ) )
 			{
 				String url = mapping.getConfig( "redirect" );
-				status = HttpResponseStatus.valueOf( ZObjects.castToInt( mapping.getConfig( "redirectCode" ), 301 ) );
+				status = HttpResponseStatus.valueOf( UtilObjects.castToInt( mapping.getConfig( "redirectCode" ), 301 ) );
 				request.getResponse().sendRedirect( url.toLowerCase().startsWith( "http" ) ? url : request.getFullDomain() + url, status.code() );
 				return;
 			}
@@ -87,7 +87,7 @@ public class WebInterpreter extends FileInterpreter
 				request.getResponse().sendRedirect( url.toLowerCase().startsWith( "http" ) ? url : request.getFullDomain() + url, status.code() );
 				return;
 			}
-			else if ( route.hasParam( "file" ) && !ZObjects.isEmpty( route.getParam( "file" ) ) )
+			else if ( route.hasParam( "file" ) && !UtilObjects.isEmpty( route.getParam( "file" ) ) )
 			{
 				/* Assume file action */
 				Map<String, String> rewrites = routeResult.getRewrites();
@@ -208,11 +208,11 @@ public class WebInterpreter extends FileInterpreter
 								return new Pair<>( o.substring( 0, o.indexOf( "~" ) ), o.substring( o.indexOf( "~" ) + 1 ) );
 							if ( o.substring( 0, 1 ).matches( "[a-z]" ) )
 							{
-								String key = ZStrings.regexCapture( o, "([a-z]+).*" );
+								String key = UtilStrings.regexCapture( o, "([a-z]+).*" );
 								return new Pair<>( key, o.substring( key.length() ) );
 							}
 							return null;
-						} ).filter( o -> !ZObjects.isNull( o ) ).collect( Collectors.toMap( Pair::getKey, Pair::getValue ) ) );
+						} ).filter( o -> !UtilObjects.isNull( o ) ).collect( Collectors.toMap( Pair::getKey, Pair::getValue ) ) );
 					}
 				}
 			}
@@ -223,7 +223,7 @@ public class WebInterpreter extends FileInterpreter
 		if ( dest.exists() && dest.isDirectory() )
 		{
 			FileFilter fileFilter = new WildcardFileFilter( "index.*" );
-			Map<String, File> maps = ZIO.mapExtensions( dest.listFiles( fileFilter ) );
+			Map<String, File> maps = UtilIO.mapExtensions( dest.listFiles( fileFilter ) );
 
 			File selectedFile = null;
 
@@ -258,14 +258,14 @@ public class WebInterpreter extends FileInterpreter
 		/* Search for Controllers */
 		if ( !dest.exists() )
 		{
-			String newUri = ZStrings.trimAll( uri, '/' );
+			String newUri = UtilStrings.trimAll( uri, '/' );
 			File newFile;
 
 			if ( newUri.contains( "/" ) )
 			{
 				do
 				{
-					action = Arrays.stream( new String[] {newUri.substring( newUri.lastIndexOf( "/" ) + 1 ), action} ).filter( s -> !ZObjects.isEmpty( s ) ).collect( Collectors.joining( "/" ) );
+					action = Arrays.stream( new String[] {newUri.substring( newUri.lastIndexOf( "/" ) + 1 ), action} ).filter( s -> !UtilObjects.isEmpty( s ) ).collect( Collectors.joining( "/" ) );
 					newUri = newUri.substring( 0, newUri.lastIndexOf( "/" ) );
 
 					newFile = new File( request.getDomainMapping().directory(), newUri );
@@ -324,7 +324,7 @@ public class WebInterpreter extends FileInterpreter
 
 		if ( dest.exists() && !dest.isDirectory() )
 		{
-			if ( ZObjects.isEmpty( action ) && dest.getName().contains( ".controller." ) )
+			if ( UtilObjects.isEmpty( action ) && dest.getName().contains( ".controller." ) )
 				request.forceTrailingSlash();
 			interpretParamsFromFile( dest );
 		}

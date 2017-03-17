@@ -23,7 +23,7 @@ import com.chiorichan.services.AppManager;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.TaskRegistrar;
 import com.chiorichan.tasks.Ticks;
-import com.chiorichan.zutils.ZSystem;
+import com.chiorichan.utils.UtilSystem;
 import com.google.common.collect.Lists;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -191,7 +191,7 @@ public class NetworkManager implements TaskRegistrar, LogSource
 
 			if ( httpPort > 0 )
 			{
-				if ( ZSystem.isPrivilegedPort( httpPort ) )
+				if ( UtilSystem.isPrivilegedPort( httpPort ) )
 				{
 					getLogger().warning( "It would seem that you are trying to start ChioriWebServer's Web Server on a privileged port without root access." );
 					getLogger().warning( "Most likely you will see an exception thrown below this. http://www.w3.org/Daemon/User/Installation/PrivilegedPorts.html" );
@@ -280,7 +280,7 @@ public class NetworkManager implements TaskRegistrar, LogSource
 
 			if ( httpsPort >= 1 )
 			{
-				if ( ZSystem.isPrivilegedPort( httpsPort ) )
+				if ( UtilSystem.isPrivilegedPort( httpsPort ) )
 				{
 					getLogger().warning( "It would seem that you are trying to start ChioriWebServer's Web Server (SSL) on a privileged port without root access." );
 					getLogger().warning( "Most likely you will see an exception thrown below this. http://www.w3.org/Daemon/User/Installation/PrivilegedPorts.html" );
@@ -363,7 +363,7 @@ public class NetworkManager implements TaskRegistrar, LogSource
 
 			if ( queryPort >= 1 && AppConfig.get().getBoolean( "server.queryEnabled" ) )
 			{
-				if ( ZSystem.isPrivilegedPort( queryPort ) )
+				if ( UtilSystem.isPrivilegedPort( queryPort ) )
 				{
 					getLogger().warning( "It would seem that you are trying to start the Query Server on a privileged port without root access." );
 					getLogger().warning( "Most likely you will see an exception thrown below this. http://www.w3.org/Daemon/User/Installation/PrivilegedPorts.html" );

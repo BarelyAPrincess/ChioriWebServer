@@ -5,8 +5,8 @@ import com.chiorichan.configuration.types.yaml.YamlConfiguration;
 import com.chiorichan.io.FileWatcher;
 import com.chiorichan.logger.Log;
 import com.chiorichan.net.NetworkManager;
-import com.chiorichan.zutils.ZIO;
-import com.chiorichan.zutils.ZObjects;
+import com.chiorichan.utils.UtilIO;
+import com.chiorichan.utils.UtilObjects;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -44,16 +44,16 @@ public class RouteWatcher extends FileWatcher
 			int line = 0;
 			AtomicInteger inx = new AtomicInteger();
 
-			Log.get().fine( "Loading Routes from JSON file '" + ZIO.relPath( fileToWatch ) + "'" );
+			Log.get().fine( "Loading Routes from JSON file '" + UtilIO.relPath( fileToWatch ) + "'" );
 
 			try
 			{
-				for ( String l : ZIO.readFileToLines( fileToWatch ) )
+				for ( String l : UtilIO.readFileToLines( fileToWatch ) )
 				{
 					try
 					{
 						line++;
-						if ( !l.startsWith( "#" ) && !ZObjects.isEmpty( l.trim() ) )
+						if ( !l.startsWith( "#" ) && !UtilObjects.isEmpty( l.trim() ) )
 						{
 							Map<String, String> values = new HashMap<>();
 							Map<String, String> rewrites = new HashMap<>();
@@ -61,7 +61,7 @@ public class RouteWatcher extends FileWatcher
 							JSONObject obj = new JSONObject( l );
 
 							String id = obj.optString( "id" );
-							if ( ZObjects.isEmpty( id ) )
+							if ( UtilObjects.isEmpty( id ) )
 							{
 								do
 								{
@@ -71,7 +71,7 @@ public class RouteWatcher extends FileWatcher
 							}
 							else if ( parent.hasRoute( id ) )
 							{
-								NetworkManager.getLogger().severe( String.format( "Found duplicate route id '%s' in route file '%s', route will be ignored.", id, ZIO.relPath( fileToWatch ) ) );
+								NetworkManager.getLogger().severe( String.format( "Found duplicate route id '%s' in route file '%s', route will be ignored.", id, UtilIO.relPath( fileToWatch ) ) );
 								continue;
 							}
 
@@ -87,7 +87,7 @@ public class RouteWatcher extends FileWatcher
 										if ( !( argsObject instanceof JSONObject ) && !( argsObject instanceof JSONArray ) )
 											try
 											{
-												rewrites.put( argsKey, ZObjects.castToStringWithException( argsObject ) );
+												rewrites.put( argsKey, UtilObjects.castToStringWithException( argsObject ) );
 											}
 											catch ( Exception e )
 											{
@@ -99,7 +99,7 @@ public class RouteWatcher extends FileWatcher
 								{
 									try
 									{
-										values.put( sectionKey, ZObjects.castToStringWithException( sectionObject ) );
+										values.put( sectionKey, UtilObjects.castToStringWithException( sectionObject ) );
 									}
 									catch ( Exception e )
 									{
@@ -113,20 +113,20 @@ public class RouteWatcher extends FileWatcher
 					}
 					catch ( JSONException e )
 					{
-						Log.get().severe( "Failed to parse '" + ZIO.relPath( fileToWatch ) + "' file, line " + line + ".", e );
+						Log.get().severe( "Failed to parse '" + UtilIO.relPath( fileToWatch ) + "' file, line " + line + ".", e );
 					}
 				}
 			}
 			catch ( IOException e )
 			{
-				Log.get().severe( "Failed to load '" + ZIO.relPath( fileToWatch ) + "' file.", e );
+				Log.get().severe( "Failed to load '" + UtilIO.relPath( fileToWatch ) + "' file.", e );
 			}
 
-			Log.get().fine( "Finished Loading Routes from JSON file '" + ZIO.relPath( fileToWatch ) + "'" );
+			Log.get().fine( "Finished Loading Routes from JSON file '" + UtilIO.relPath( fileToWatch ) + "'" );
 		}
 		else if ( fileToWatch.getName().endsWith( ".yaml" ) )
 		{
-			Log.get().fine( "Loading Routes from YAML file '" + ZIO.relPath( fileToWatch ) + "'" );
+			Log.get().fine( "Loading Routes from YAML file '" + UtilIO.relPath( fileToWatch ) + "'" );
 
 			YamlConfiguration yaml = YamlConfiguration.loadConfiguration( fileToWatch );
 
@@ -143,7 +143,7 @@ public class RouteWatcher extends FileWatcher
 
 					if ( parent.hasRoute( id ) )
 					{
-						NetworkManager.getLogger().severe( String.format( "Found duplicate route id '%s' in route file '%s', route will be ignored.", id, ZIO.relPath( fileToWatch ) ) );
+						NetworkManager.getLogger().severe( String.format( "Found duplicate route id '%s' in route file '%s', route will be ignored.", id, UtilIO.relPath( fileToWatch ) ) );
 						continue;
 					}
 
@@ -159,7 +159,7 @@ public class RouteWatcher extends FileWatcher
 								if ( !args.isConfigurationSection( argsKey ) )
 									try
 									{
-										rewrites.put( argsKey, ZObjects.castToStringWithException( args.get( argsKey ) ) );
+										rewrites.put( argsKey, UtilObjects.castToStringWithException( args.get( argsKey ) ) );
 									}
 									catch ( Exception e )
 									{
@@ -170,7 +170,7 @@ public class RouteWatcher extends FileWatcher
 						{
 							try
 							{
-								values.put( sectionKey, ZObjects.castToStringWithException( section.get( sectionKey ) ) );
+								values.put( sectionKey, UtilObjects.castToStringWithException( section.get( sectionKey ) ) );
 							}
 							catch ( Exception e )
 							{
@@ -182,7 +182,7 @@ public class RouteWatcher extends FileWatcher
 					routes.add( new Route( id, parent.site, values, rewrites ) );
 				}
 
-			Log.get().fine( "Finished Loading Routes from YAML file '" + ZIO.relPath( fileToWatch ) + "'" );
+			Log.get().fine( "Finished Loading Routes from YAML file '" + UtilIO.relPath( fileToWatch ) + "'" );
 		}
 	}
 }

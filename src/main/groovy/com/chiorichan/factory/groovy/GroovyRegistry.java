@@ -36,8 +36,8 @@ import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Ticks;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.zutils.Looper;
-import com.chiorichan.zutils.ZObjects;
+import com.chiorichan.helpers.Looper;
+import com.chiorichan.utils.UtilObjects;
 import com.google.common.collect.Maps;
 import groovy.lang.Binding;
 import groovy.lang.GroovyRuntimeException;
@@ -206,8 +206,8 @@ public class GroovyRegistry implements ScriptingRegistry
 		 */
 		configuration.addCompilationCustomizers( imports, timedInterrupt, secure );
 
-		if ( ZObjects.isEmpty( context.getScriptBaseClass() ) )
-			configuration.setScriptBaseClass( ScriptingBaseGroovy.class.getName() );
+		if ( UtilObjects.isEmpty( context.getScriptBaseClass() ) )
+			configuration.setScriptBaseClass( ScriptingBaseHttp.class.getName() );
 		else
 			configuration.setScriptBaseClass( context.getScriptBaseClass() );
 
@@ -239,7 +239,7 @@ public class GroovyRegistry implements ScriptingRegistry
 		if ( source.contains( "package " ) )
 			throw new ScriptingException( ReportingLevel.E_ERROR, "Package path is predefined by Groovy Engine, remove `package ` directive from source." );
 
-		if ( !ZObjects.isEmpty( context.scriptPackage() ) )
+		if ( !UtilObjects.isEmpty( context.scriptPackage() ) )
 		{
 			source = "package " + context.scriptPackage() + "; " + source;
 			context.baseSource( source );

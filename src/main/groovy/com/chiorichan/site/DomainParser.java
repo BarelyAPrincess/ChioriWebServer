@@ -12,8 +12,8 @@ package com.chiorichan.site;
 import com.chiorichan.AppConfig;
 import com.chiorichan.helpers.Namespace;
 import com.chiorichan.logger.Log;
-import com.chiorichan.zutils.ZHttp;
-import com.chiorichan.zutils.ZObjects;
+import com.chiorichan.utils.UtilHttp;
+import com.chiorichan.utils.UtilObjects;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,7 +38,7 @@ public class DomainParser
 
 	public static boolean isTld( String domain )
 	{
-		domain = ZHttp.normalize( domain );
+		domain = UtilHttp.normalize( domain );
 		for ( String tld : tldMaps )
 			if ( domain.matches( tld ) )
 				return true;
@@ -50,9 +50,9 @@ public class DomainParser
 
 	public DomainParser( String fullDomain )
 	{
-		fullDomain = ZHttp.normalize( fullDomain );
+		fullDomain = UtilHttp.normalize( fullDomain );
 
-		if ( ZObjects.isEmpty( fullDomain ) )
+		if ( UtilObjects.isEmpty( fullDomain ) )
 		{
 			tld = new Namespace();
 			sub = new Namespace();

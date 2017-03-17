@@ -9,7 +9,7 @@
  */
 package com.chiorichan.updater;
 
-import com.chiorichan.zutils.ZHttp;
+import com.chiorichan.utils.UtilHttp;
 import com.google.gson.Gson;
 
 import java.io.IOException;
@@ -69,7 +69,7 @@ public class DownloadUpdaterService
 		try
 		{
 			URLConnection connection = url.openConnection();
-			connection.setRequestProperty( "User-Agent", ZHttp.getUserAgent() );
+			connection.setRequestProperty( "User-Agent", UtilHttp.getUserAgent() );
 			reader = new InputStreamReader( connection.getInputStream() );
 			// Gson gson = new GsonBuilder().registerTypeAdapter( Date.class, dateDeserializer ).setFieldNamingPolicy( FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES ).create();
 			Gson gson = new Gson();
@@ -92,7 +92,7 @@ public class DownloadUpdaterService
 		try
 		{
 			URLConnection connection = url.openConnection();
-			connection.setRequestProperty( "User-Agent", ZHttp.getUserAgent() );
+			connection.setRequestProperty( "User-Agent", UtilHttp.getUserAgent() );
 			reader = new InputStreamReader( connection.getInputStream() );
 			// Gson gson = new GsonBuilder().registerTypeAdapter( Date.class, dateDeserializer ).setFieldNamingPolicy( FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES ).create();
 			Gson gson = new Gson();
@@ -138,7 +138,7 @@ public class DownloadUpdaterService
 		try
 		{
 			URLConnection connection = url.openConnection();
-			connection.setRequestProperty( "User-Agent", ZHttp.getUserAgent() );
+			connection.setRequestProperty( "User-Agent", UtilHttp.getUserAgent() );
 			reader = new InputStreamReader( connection.getInputStream() );
 			prop.load( reader );
 		}

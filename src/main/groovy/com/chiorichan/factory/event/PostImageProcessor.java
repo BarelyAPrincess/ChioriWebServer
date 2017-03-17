@@ -16,8 +16,8 @@ import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.lang.EnumColor;
 import com.chiorichan.logger.Log;
-import com.chiorichan.zutils.ZEncryption;
-import com.chiorichan.zutils.ZObjects;
+import com.chiorichan.utils.UtilEncryption;
+import com.chiorichan.utils.UtilObjects;
 import io.netty.buffer.ByteBufInputStream;
 import org.apache.commons.io.FileUtils;
 
@@ -34,7 +34,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Applies special builtin image filters post {@link com.chiorichan.factory.ScriptingFactory} via {@link PostEvalEvent}
@@ -77,22 +76,22 @@ public class PostImageProcessor implements Listener
 			ScriptingContext context = event.context();
 			HttpRequestWrapper request = context.request();
 
-			if ( !ZObjects.isNull( request.getArgument( "width" ) ) )
+			if ( !UtilObjects.isNull( request.getArgument( "width" ) ) )
 				x = request.getArgumentInt( "width" );
 
-			if ( !ZObjects.isNull( request.getArgument( "height" ) ) )
+			if ( !UtilObjects.isNull( request.getArgument( "height" ) ) )
 				y = request.getArgumentInt( "height" );
 
-			if ( !ZObjects.isNull( request.getArgument( "x" ) ) )
+			if ( !UtilObjects.isNull( request.getArgument( "x" ) ) )
 				x = request.getArgumentInt( "x" );
 
-			if ( !ZObjects.isNull( request.getArgument( "y" ) ) )
+			if ( !UtilObjects.isNull( request.getArgument( "y" ) ) )
 				y = request.getArgumentInt( "y" );
 
-			if ( !ZObjects.isNull( request.getArgument( "w" ) ) )
+			if ( !UtilObjects.isNull( request.getArgument( "w" ) ) )
 				x = request.getArgumentInt( "w" );
 
-			if ( !ZObjects.isNull( request.getArgument( "h" ) ) )
+			if ( !UtilObjects.isNull( request.getArgument( "h" ) ) )
 				y = request.getArgumentInt( "h" );
 
 			if ( request.hasArgument( "thumb" ) )
@@ -150,7 +149,7 @@ public class PostImageProcessor implements Listener
 				return;
 
 			// Produce a unique encapsulated id based on this image processing request
-			String encapId = ZEncryption.md5( context.filename() + w1 + h1 + request.getArgument( "argb" ) + grayscale );
+			String encapId = UtilEncryption.md5( context.filename() + w1 + h1 + request.getArgument( "argb" ) + grayscale );
 			File tmp = context.site() == null ? AppConfig.get().getDirectoryCache() : context.site().directoryTemp();
 			File file = new File( tmp, encapId + "_" + new File( context.filename() ).getName() );
 

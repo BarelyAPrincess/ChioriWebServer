@@ -30,7 +30,7 @@ import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.zutils.ZObjects;
+import com.chiorichan.utils.UtilObjects;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Maps;
@@ -490,7 +490,7 @@ public final class Session extends AccountPermissible implements Kickable
 		{
 			defaultTimeout = SessionManager.getDefaultTimeoutWithLogin();
 
-			if ( ZObjects.isTrue( getVariable( "remember", "false" ) ) )
+			if ( UtilObjects.isTrue( getVariable( "remember", "false" ) ) )
 				defaultTimeout = SessionManager.getDefaultTimeoutWithRememberMe();
 
 			if ( AppConfig.get().getBoolean( "allowNoTimeoutPermission" ) && checkPermission( "com.chiorichan.noTimeout" ).isTrue() )

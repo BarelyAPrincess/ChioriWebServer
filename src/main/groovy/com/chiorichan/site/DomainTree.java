@@ -10,7 +10,7 @@
 package com.chiorichan.site;
 
 import com.chiorichan.helpers.Namespace;
-import com.chiorichan.zutils.ZLists;
+import com.chiorichan.utils.UtilLists;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +42,7 @@ public final class DomainTree
 		List<DomainRoot> list = domains.compute( root.getString( "_", true ), ( k, v ) -> v == null ? new ArrayList<>() : v );
 
 		String first = child.getFirst();
-		DomainNode node = ZLists.findOrNew( list, v -> first.equals( v.getNodeName() ), new DomainRoot( root.getString(), first ) );
+		DomainNode node = UtilLists.findOrNew( list, v -> first.equals( v.getNodeName() ), new DomainRoot( root.getString(), first ) );
 
 		if ( child.getNodeCount() > 1 )
 			for ( String s : child.subNodes( 1 ) )

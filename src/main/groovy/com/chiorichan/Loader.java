@@ -22,9 +22,9 @@ import com.chiorichan.session.SessionManager;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.updater.AutoUpdater;
 import com.chiorichan.updater.DownloadUpdaterService;
-import com.chiorichan.zutils.ZIO;
-import com.chiorichan.zutils.ZSystem;
-import com.chiorichan.zutils.ZHttp;
+import com.chiorichan.utils.UtilIO;
+import com.chiorichan.utils.UtilSystem;
+import com.chiorichan.utils.UtilHttp;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import joptsimple.OptionParser;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -85,7 +85,7 @@ public class Loader extends AppLoader
 		if ( !options().has( "noBanner" ) )
 			ApplicationTerminal.terminal().showBanner();
 
-		if ( ZSystem.isAdminUser() )
+		if ( UtilSystem.isAdminUser() )
 			Log.get().warning( "We have detected that you are running " + Versioning.getProduct() + " with the system administrator/root, this is highly discouraged as it my compromise security and/or mess with file permissions." );
 
 		if ( Runtime.getRuntime().maxMemory() / 1024L / 1024L < 512L )
@@ -157,7 +157,7 @@ public class Loader extends AppLoader
 					config.file().delete();
 
 				// Save Factory Configuration
-				ZIO.putResource( "com/chiorichan/config.yaml", config.file() );
+				UtilIO.putResource( "com/chiorichan/config.yaml", config.file() );
 			}
 			catch ( IOException e )
 			{
@@ -190,7 +190,7 @@ public class Loader extends AppLoader
 				// Check and Extract WebUI Interface
 
 				String fwZip = "com/chiorichan/framework.archive";
-				String zipMD5 = ZIO.resourceToString( fwZip + ".md5" );
+				String zipMD5 = UtilIO.resourceToString( fwZip + ".md5" );
 
 				if ( zipMD5 == null )
 				{
@@ -207,7 +207,7 @@ public class Loader extends AppLoader
 				{
 					Log.get().info( "Extracting the Web UI to the Framework Webroot... Please wait..." );
 					FileUtils.deleteDirectory( fwRoot );
-					ZIO.extractZipResource( fwZip, fwRoot );
+					UtilIO.extractZipResource( fwZip, fwRoot );
 					FileUtils.write( new File( fwRoot, "version.md5" ), zipMD5 );
 					Log.get().info( "Finished with no errors!!" );
 				}
@@ -286,7 +286,7 @@ public class Loader extends AppLoader
 			}
 		}
 
-		if ( ZSystem.isUnixLikeOS() )
+		if ( UtilSystem.isUnixLikeOS() )
 		{
 			SignalHandler handler = new SignalHandler()
 			{
@@ -302,7 +302,7 @@ public class Loader extends AppLoader
 		}
 
 		if ( !AppConfig.get().getBoolean( "server.disableTracking" ) && !Versioning.isDevelopment() )
-			ZHttp.sendTracking( "startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
+			UtilHttp.sendTracking( "startServer", "start", Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")" );
 	}
 
 	public String getClientId()

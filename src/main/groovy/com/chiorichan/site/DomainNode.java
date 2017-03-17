@@ -10,9 +10,9 @@
 package com.chiorichan.site;
 
 import com.chiorichan.helpers.Namespace;
-import com.chiorichan.zutils.ZHttp;
-import com.chiorichan.zutils.ZLists;
-import com.chiorichan.zutils.ZObjects;
+import com.chiorichan.utils.UtilHttp;
+import com.chiorichan.utils.UtilLists;
+import com.chiorichan.utils.UtilObjects;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -117,11 +117,11 @@ public class DomainNode
 	 */
 	public DomainNode getChild( String domain, boolean create )
 	{
-		ZObjects.notEmpty( domain );
+		UtilObjects.notEmpty( domain );
 
-		if ( ZHttp.isValidIPv4( domain ) )
+		if ( UtilHttp.isValidIPv4( domain ) )
 			throw new IllegalArgumentException( "Can't match child by IPv4 address" );
-		if ( ZHttp.isValidIPv6( domain ) )
+		if ( UtilHttp.isValidIPv6( domain ) )
 			throw new IllegalArgumentException( "Can't match child by IPv6 address" );
 
 		// XXX Can this inner method be replaced by the Java 8 Stream feature?
@@ -137,7 +137,7 @@ public class DomainNode
 			else
 			{
 				if ( create )
-					domainNode = ZLists.add( domainNode.children, new DomainNode( this, node ) );
+					domainNode = UtilLists.add( domainNode.children, new DomainNode( this, node ) );
 				else
 					return null;
 			}
@@ -153,7 +153,7 @@ public class DomainNode
 
 	protected DomainNode setSite( Site site, boolean override )
 	{
-		ZObjects.notNull( site );
+		UtilObjects.notNull( site );
 
 		if ( this.site != null && this.site != site && !override )
 			throw new IllegalStateException( String.format( "You can not override the site set on domain node [%s], it was already assigned to site [%s]", site.getId(), this.site.getId() ) );

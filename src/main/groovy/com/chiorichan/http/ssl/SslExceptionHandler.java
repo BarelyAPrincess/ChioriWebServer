@@ -9,7 +9,7 @@
  */
 package com.chiorichan.http.ssl;
 
-import com.chiorichan.zutils.ZStrings;
+import com.chiorichan.utils.UtilStrings;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.ssl.NotSslRecordException;
 import io.netty.handler.ssl.SslHandler;
@@ -52,7 +52,7 @@ public class SslExceptionHandler extends SslHandler
 			NetworkManager.getLogger().severe( "Not an SSL/TLS record" );
 		if ( cause instanceof SSLException || ! ( cause instanceof IOException ) )
 		{
-			String protocol = ZStrings.regexCapture( cause.getMessage(), "Client requested protocol (.*) not enabled or not supported" );
+			String protocol = UtilStrings.regexCapture( cause.getMessage(), "Client requested protocol (.*) not enabled or not supported" );
 
 			if ( protocol != null )
 				NetworkManager.getLogger().severe( String.format( "Client tried to negotiate a SSL connection using protocol version %s, which is currently disabled or not supported", protocol ) );

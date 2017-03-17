@@ -9,7 +9,7 @@
  */
 package com.chiorichan.site;
 
-import com.chiorichan.zutils.ZObjects;
+import com.chiorichan.utils.UtilObjects;
 
 import java.util.stream.Stream;
 
@@ -40,7 +40,7 @@ public final class DefaultSite extends Site
 	@Override
 	public Stream<DomainMapping> getMappings( String fullDomain )
 	{
-		if ( ZObjects.isEmpty( fullDomain ) )
+		if ( UtilObjects.isEmpty( fullDomain ) )
 			return Stream.of( defaultMapping );
 		return super.getMappings( fullDomain );
 	}

@@ -11,7 +11,7 @@ package com.chiorichan.factory.models;
 
 import com.chiorichan.datastore.sql.SQLBase;
 import com.chiorichan.factory.api.Builtin;
-import com.chiorichan.zutils.ZObjects;
+import com.chiorichan.utils.UtilObjects;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -202,7 +202,7 @@ public class SQLModelResults implements List<SQLModel>
 			int i = 0;
 			for ( String column : columnNames )
 			{
-				row.put( i, ZObjects.castToString( model.propertyMissing( column ) ) );
+				row.put( i, UtilObjects.castToString( model.propertyMissing( column ) ) );
 				i++;
 			}
 

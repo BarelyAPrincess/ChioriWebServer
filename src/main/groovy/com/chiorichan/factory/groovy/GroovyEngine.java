@@ -17,8 +17,8 @@ import com.chiorichan.lang.HttpError;
 import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.ScriptingException;
 import com.chiorichan.net.NetworkManager;
-import com.chiorichan.zutils.ZObjects;
-import com.chiorichan.zutils.ZStrings;
+import com.chiorichan.utils.UtilObjects;
+import com.chiorichan.utils.UtilStrings;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import groovy.lang.MetaMethod;
@@ -64,7 +64,7 @@ public class GroovyEngine implements ScriptingEngine
 			if ( context.filename() != null && context.filename().contains( ".controller." ) )
 			{
 				String action = context.request().getInterpreter().getAction();
-				String actionMethodName = ZObjects.isEmpty( action ) ? "actionDefault" : "action" + ZStrings.capitalizeWordsFully( action, '/' ).replace( "/", "" );
+				String actionMethodName = UtilObjects.isEmpty( action ) ? "actionDefault" : "action" + UtilStrings.capitalizeWordsFully( action, '/' ).replace( "/", "" );
 
 				MetaMethod actionMethod = script.getMetaClass().getMetaMethod( actionMethodName, new Object[0] );
 				boolean foundMethod = actionMethod != null;
@@ -82,7 +82,7 @@ public class GroovyEngine implements ScriptingEngine
 					{
 						NetworkManager.getLogger().fine( "Invoking catchAll() method on controller " + context.filename() );
 						Object result = catchAllMethod.invoke( script, new Object[] {action} );
-						if ( !ZObjects.isTrue( result ) )
+						if ( !UtilObjects.isTrue( result ) )
 						{
 							if ( Versioning.isDevelopment() )
 								throw new ScriptingException( ReportingLevel.E_PARSE, String.format( "Detected groovy script as being a controller, located the catchAll() method but the action went unhandled. {expectedMethod: %s, action: %s}", actionMethodName, action ) );

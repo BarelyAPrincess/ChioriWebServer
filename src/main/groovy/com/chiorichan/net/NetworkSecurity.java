@@ -23,9 +23,9 @@ import com.chiorichan.lang.HttpError;
 import com.chiorichan.site.Site;
 import com.chiorichan.tasks.TaskRegistrar;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.zutils.ZHttp;
-import com.chiorichan.zutils.ZIO;
-import com.chiorichan.zutils.ZLists;
+import com.chiorichan.utils.UtilHttp;
+import com.chiorichan.utils.UtilIO;
+import com.chiorichan.utils.UtilLists;
 import org.apache.commons.lang3.Validate;
 
 import java.io.File;
@@ -121,7 +121,7 @@ public class NetworkSecurity implements EventRegistrar, TaskRegistrar, Listener
 
 		IpTracker( String ipAddress )
 		{
-			if ( !ZHttp.isValidIPv4( ipAddress ) && !ZHttp.isValidIPv6( ipAddress ) )
+			if ( !UtilHttp.isValidIPv4( ipAddress ) && !UtilHttp.isValidIPv6( ipAddress ) )
 				throw new IllegalArgumentException( "The provided IP '" + ipAddress + "' is not a valid IPv4 or IPv6 address." );
 
 			this.ipAddress = ipAddress;
@@ -187,7 +187,7 @@ public class NetworkSecurity implements EventRegistrar, TaskRegistrar, Listener
 			File bannedIpFile = new File( AppConfig.get().getDirectory(), "banned-ipv4.txt" );
 			if ( !bannedIpFile.exists() )
 				bannedIpFile.createNewFile();
-			linesCombined.addAll( ZIO.readFileToLines( bannedIpFile ) );
+			linesCombined.addAll( UtilIO.readFileToLines( bannedIpFile ) );
 		}
 		catch ( IOException e )
 		{
@@ -199,7 +199,7 @@ public class NetworkSecurity implements EventRegistrar, TaskRegistrar, Listener
 			File bannedIpFile = new File( AppConfig.get().getDirectory(), "banned-ipv6.txt" );
 			if ( !bannedIpFile.exists() )
 				bannedIpFile.createNewFile();
-			linesCombined.addAll( ZIO.readFileToLines( bannedIpFile ) );
+			linesCombined.addAll( UtilIO.readFileToLines( bannedIpFile ) );
 		}
 		catch ( IOException e )
 		{
@@ -224,9 +224,9 @@ public class NetworkSecurity implements EventRegistrar, TaskRegistrar, Listener
 		for ( IpTracker ip : ips )
 		{
 			if ( ip.banned )
-				if ( ZHttp.isValidIPv4( ip.ipAddress ) )
+				if ( UtilHttp.isValidIPv4( ip.ipAddress ) )
 					bannedIPv4.add( ip.ipAddress );
-				else if ( ZHttp.isValidIPv6( ip.ipAddress ) )
+				else if ( UtilHttp.isValidIPv6( ip.ipAddress ) )
 					bannedIPv6.add( ip.ipAddress );
 				else
 					NetworkManager.getLogger().info( "The string did not match any IPv4 or IPv6 pattern, it will not be saved. Is this a bug?" );
@@ -234,7 +234,7 @@ public class NetworkSecurity implements EventRegistrar, TaskRegistrar, Listener
 
 		try
 		{
-			ZIO.writeStringToFile( bannedIp4File, bannedIPv4.stream().collect( Collectors.joining( "\n" ) ) );
+			UtilIO.writeStringToFile( bannedIp4File, bannedIPv4.stream().collect( Collectors.joining( "\n" ) ) );
 		}
 		catch ( IOException e )
 		{
@@ -243,7 +243,7 @@ public class NetworkSecurity implements EventRegistrar, TaskRegistrar, Listener
 
 		try
 		{
-			ZIO.writeStringToFile( bannedIp6File, bannedIPv6.stream().collect( Collectors.joining( "\n" ) ) );
+			UtilIO.writeStringToFile( bannedIp6File, bannedIPv6.stream().collect( Collectors.joining( "\n" ) ) );
 		}
 		catch ( IOException e )
 		{
@@ -263,7 +263,7 @@ public class NetworkSecurity implements EventRegistrar, TaskRegistrar, Listener
 
 	private static IpTracker get( String ip )
 	{
-		return ZLists.findOrNew( ips, t -> t.ipAddress.equals( ip ), new IpTracker( ip ) );
+		return UtilLists.findOrNew( ips, t -> t.ipAddress.equals( ip ), new IpTracker( ip ) );
 	}
 
 	public static void isForbidden( ApacheHandler htaccess, Site site, WebInterpreter fi ) throws HttpError
@@ -292,7 +292,7 @@ public class NetworkSecurity implements EventRegistrar, TaskRegistrar, Listener
 
 	public static boolean isIpBannedWithException( String ip )
 	{
-		if ( !ZHttp.isValidIPv4( ip ) || !ZHttp.isValidIPv6( ip ) )
+		if ( !UtilHttp.isValidIPv4( ip ) || !UtilHttp.isValidIPv6( ip ) )
 			throw new IllegalArgumentException( "The provided IP '" + ip + "' is not a valid IPv4 or IPv6 address." );
 
 		return get( ip ).banned;

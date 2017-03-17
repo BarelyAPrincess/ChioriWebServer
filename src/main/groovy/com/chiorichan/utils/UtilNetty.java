@@ -1,23 +1,21 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- *
+ * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
- *
+ * <p>
  * All Rights Reserved.
  */
-package com.chiorichan.zutils;
+package com.chiorichan.utils;
 
-import groovy.json.JsonSlurper;
+import com.google.common.base.Strings;
 import io.netty.buffer.ByteBuf;
 import io.netty.util.internal.StringUtil;
 
 import java.nio.charset.Charset;
 
-import com.google.common.base.Strings;
-
-public class ServerFunc
+public class UtilNetty
 {
 	private static final char[] BYTE2CHAR = new char[256];
 
@@ -191,11 +189,5 @@ public class ServerFunc
 		dump.append( NEWLINE + "+--------+-------------------------------------------------+----------------+" );
 
 		return dump.toString();
-	}
-
-	public static Object parseJson( String text )
-	{
-		JsonSlurper slurper = new JsonSlurper();
-		return slurper.parseText( text );
 	}
 }

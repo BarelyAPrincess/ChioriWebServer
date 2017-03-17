@@ -11,7 +11,7 @@ import com.chiorichan.plugin.acme.lang.AcmeState;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Ticks;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.zutils.ZIO;
+import com.chiorichan.utils.UtilIO;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -141,7 +141,7 @@ public final class SingleChallengeHttp
 	{
 		if ( getChallengeToken() == null )
 			return null;
-		return ZIO.buildPath( ".well-known", "acme-challenge", getChallengeToken() );
+		return UtilIO.buildPath( ".well-known", "acme-challenge", getChallengeToken() );
 	}
 
 	private boolean handleVerify( HttpResponse response ) throws AcmeException

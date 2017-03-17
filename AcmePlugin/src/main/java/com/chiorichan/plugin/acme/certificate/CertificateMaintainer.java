@@ -1,6 +1,6 @@
 package com.chiorichan.plugin.acme.certificate;
 
-import com.chiorichan.zutils.ZIO;
+import com.chiorichan.utils.UtilIO;
 import io.netty.handler.ssl.SslContext;
 
 import java.io.File;
@@ -29,7 +29,7 @@ import com.chiorichan.plugin.acme.AcmePlugin;
 import com.chiorichan.site.Site;
 import com.chiorichan.helpers.Namespace;
 import com.chiorichan.helpers.ObjectStacker;
-import com.chiorichan.zutils.ZEncryption;
+import com.chiorichan.utils.UtilEncryption;
 
 public class CertificateMaintainer
 {
@@ -52,7 +52,7 @@ public class CertificateMaintainer
 			{
 				ConfigurationSection section = keys.getConfigurationSection( key );
 				File sslKeyFile = new File( section.getString( "file" ) );
-				if ( ZIO.checkMd5( sslKeyFile, section.getString( "md5" ) ) )
+				if ( UtilIO.checkMd5( sslKeyFile, section.getString( "md5" ) ) )
 					privateKeys.put( key, sslKeyFile );
 			}
 
@@ -253,15 +253,15 @@ public class CertificateMaintainer
 		for ( Entry<String, File> key : privateKeys.entrySet() )
 		{
 			File sslKey = key.getValue();
-			config.set( "keys." + key.getKey() + ".file", ZIO.relPath( sslKey ) );
+			config.set( "keys." + key.getKey() + ".file", UtilIO.relPath( sslKey ) );
 			if ( sslKey.exists() )
-				config.set( "keys." + key.getKey() + ".md5", ZEncryption.md5( sslKey ) );
+				config.set( "keys." + key.getKey() + ".md5", UtilEncryption.md5( sslKey ) );
 		}
 
 		for ( Certificate cert : certificateStack.allValues() )
 			if ( cert != null )
 			{
-				config.set( "certificates." + cert.key() + ".certFile", ZIO.relPath( cert.getCertFile() ) );
+				config.set( "certificates." + cert.key() + ".certFile", UtilIO.relPath( cert.getCertFile() ) );
 				config.set( "certificates." + cert.key() + ".privateKey", getPrivateKeyIden( cert.getKeyFile() ) );
 				config.set( "certificates." + cert.key() + ".uri", cert.certUri() );
 				config.set( "certificates." + cert.key() + ".md5", cert.md5() );

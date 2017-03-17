@@ -42,10 +42,10 @@ import com.chiorichan.session.SessionManager;
 import com.chiorichan.session.SessionPersistenceMethod;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.zutils.ZEncryption;
-import com.chiorichan.zutils.ZHttp;
-import com.chiorichan.zutils.ZIO;
-import com.chiorichan.zutils.ZObjects;
+import com.chiorichan.utils.UtilEncryption;
+import com.chiorichan.utils.UtilHttp;
+import com.chiorichan.utils.UtilIO;
+import com.chiorichan.utils.UtilObjects;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import io.netty.handler.ssl.SslContext;
@@ -109,10 +109,10 @@ public class Site implements AccountLocation
 
 	Site( SiteManager mgr, File file, YamlConfiguration yaml, Env env ) throws ApplicationException
 	{
-		ZObjects.notNull( mgr );
-		ZObjects.notNull( file );
-		ZObjects.notNull( yaml );
-		ZObjects.notNull( env );
+		UtilObjects.notNull( mgr );
+		UtilObjects.notNull( file );
+		UtilObjects.notNull( yaml );
+		UtilObjects.notNull( env );
 
 		// yaml.setEnvironmentVariables( env.getProperties() );
 
@@ -130,7 +130,7 @@ public class Site implements AccountLocation
 		ips = yaml.getAsList( "site.listen", new ArrayList<>() );
 
 		for ( String ip : ips )
-			if ( !ZHttp.isValidIPv4( ip ) && !ZHttp.isValidIPv6( ip ) )
+			if ( !UtilHttp.isValidIPv4( ip ) && !UtilHttp.isValidIPv6( ip ) )
 				SiteManager.getLogger().warning( String.format( "The site '%s' is set to listen on ip '%s', but the ip does not match the valid IPv4 or IPv6 regex formula.", siteId, ip ) );
 
 		List<String> listeningIps = NetworkManager.getListeningIps();
@@ -145,7 +145,7 @@ public class Site implements AccountLocation
 			encryptionKey = yaml.getString( "site.encryptionKey" );
 		else
 		{
-			encryptionKey = ZEncryption.randomize( "0x0000X" );
+			encryptionKey = UtilEncryption.randomize( "0x0000X" );
 			yaml.set( "site.encryptionKey", encryptionKey );
 		}
 
@@ -164,7 +164,7 @@ public class Site implements AccountLocation
 		mapDomain( yaml.getConfigurationSection( "site.domains", true ) );
 
 		File ssl = directory( "ssl" );
-		ZIO.setDirectoryAccessWithException( ssl );
+		UtilIO.setDirectoryAccessWithException( ssl );
 
 		String sslCertFile = yaml.getString( "site.sslCert" );
 		String sslKeyFile = yaml.getString( "site.sslKey" );
@@ -181,7 +181,7 @@ public class Site implements AccountLocation
 			}
 			catch ( SSLException | FileNotFoundException | CertificateException e )
 			{
-				SiteManager.getLogger().severe( String.format( "Failed to load SslContext for site '%s' using cert '%s', key '%s', and hasSecret? %s", siteId, ZIO.relPath( sslCert ), ZIO.relPath( sslKey ), sslSecret != null && !sslSecret.isEmpty() ), e );
+				SiteManager.getLogger().severe( String.format( "Failed to load SslContext for site '%s' using cert '%s', key '%s', and hasSecret? %s", siteId, UtilIO.relPath( sslCert ), UtilIO.relPath( sslKey ), sslSecret != null && !sslSecret.isEmpty() ), e );
 			}
 		}
 
@@ -320,7 +320,7 @@ public class Site implements AccountLocation
 
 					try
 					{
-						ZIO.zipDir( site.directory(), zip );
+						UtilIO.zipDir( site.directory(), zip );
 					}
 					catch ( IOException e )
 					{
@@ -343,7 +343,7 @@ public class Site implements AccountLocation
 
 		file = null;
 		yaml = new YamlConfiguration();
-		encryptionKey = ZEncryption.randomize( "0x0000X" );
+		encryptionKey = UtilEncryption.randomize( "0x0000X" );
 		ips = new ArrayList<>();
 		siteTitle = Versioning.getProduct();
 		datastore = AppConfig.get().getDatabase();
@@ -363,8 +363,8 @@ public class Site implements AccountLocation
 
 	private void mapDomain( final ConfigurationSection domains, DomainMapping mapping, int depth ) throws SiteConfigurationException
 	{
-		ZObjects.notNull( domains );
-		ZObjects.isTrue( depth >= 0 );
+		UtilObjects.notNull( domains );
+		UtilObjects.isTrue( depth >= 0 );
 
 		for ( String key : domains.getKeys() )
 		{
@@ -415,7 +415,7 @@ public class Site implements AccountLocation
 
 	public Stream<DomainMapping> getMappings( String fullDomain )
 	{
-		ZObjects.notEmpty( fullDomain );
+		UtilObjects.notEmpty( fullDomain );
 		Supplier<Stream<DomainMapping>> stream = () -> mappings.stream().filter( d -> d.matches( fullDomain ) );
 		return stream.get().count() == 0 ? Stream.of( new DomainMapping( this, fullDomain ) ) : stream.get();
 	}
@@ -431,7 +431,7 @@ public class Site implements AccountLocation
 	 */
 	public File directory()
 	{
-		ZObjects.notNull( directory );
+		UtilObjects.notNull( directory );
 		return directory;
 	}
 
@@ -607,17 +607,17 @@ public class Site implements AccountLocation
 
 	public File resourcePackage( String pack ) throws FileNotFoundException
 	{
-		ZObjects.notNull( pack, "Package can't be null" );
+		UtilObjects.notNull( pack, "Package can't be null" );
 
 		if ( pack.length() == 0 )
 			throw new FileNotFoundException( "Package can't be empty!" );
 
-		return resourceFile( pack.replace( ".", ZIO.PATH_SEPERATOR ) );
+		return resourceFile( pack.replace( ".", UtilIO.PATH_SEPERATOR ) );
 	}
 
 	public File resourceFile( String file ) throws FileNotFoundException
 	{
-		ZObjects.notNull( file, "File can't be null" );
+		UtilObjects.notNull( file, "File can't be null" );
 
 		if ( file.length() == 0 )
 			throw new FileNotFoundException( "File can't be empty!" );

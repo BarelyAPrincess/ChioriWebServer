@@ -5,9 +5,9 @@ import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.configuration.types.yaml.YamlConfiguration;
 import com.chiorichan.helpers.Pair;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.zutils.ZIO;
-import com.chiorichan.zutils.ZObjects;
-import com.chiorichan.zutils.ZStrings;
+import com.chiorichan.utils.UtilIO;
+import com.chiorichan.utils.UtilObjects;
+import com.chiorichan.utils.UtilStrings;
 
 import java.io.File;
 import java.util.Map;
@@ -22,7 +22,7 @@ public class Localization
 
 	public Localization( File baseFile )
 	{
-		ZObjects.notNull( baseFile );
+		UtilObjects.notNull( baseFile );
 		this.baseFile = new File( baseFile, locale );
 		if ( !baseFile.exists() )
 			baseFile.mkdirs();
@@ -49,7 +49,7 @@ public class Localization
 		File file = new File( baseFile, key.replace( ".", "/" ) + ".yaml" );
 
 		if ( !file.exists() )
-			throw new LocalizationException( "Language file does not exist. [" + ZIO.relPath( file ) + "]" );
+			throw new LocalizationException( "Language file does not exist. [" + UtilIO.relPath( file ) + "]" );
 
 		ConfigurationSection yaml = YamlConfiguration.loadConfiguration( file );
 
@@ -62,8 +62,8 @@ public class Localization
 
 	public String localeTrans( String key ) throws LocalizationException
 	{
-		ZObjects.notEmpty( key );
-		key = ZStrings.trimAll( key, '.' );
+		UtilObjects.notEmpty( key );
+		key = UtilStrings.trimAll( key, '.' );
 		if ( !key.contains( "." ) )
 			throw new LocalizationException( "Language key must contain a prefix file, e.g., general.yaml -> general.welcomeText. [" + key + "]" );
 		if ( !key.matches( "^[a-zA-Z0-9._-]*$" ) )
@@ -71,12 +71,12 @@ public class Localization
 
 		String prefix = key.substring( 0, key.lastIndexOf( "." ) );
 
-		if ( ZObjects.isEmpty( prefix ) )
+		if ( UtilObjects.isEmpty( prefix ) )
 			throw new LocalizationException( "Language prefix is empty." );
 
 		key = key.substring( key.lastIndexOf( "." ) + 1 );
 
-		if ( ZObjects.isEmpty( key ) )
+		if ( UtilObjects.isEmpty( key ) )
 			throw new LocalizationException( "Language key is empty." );
 
 		ConfigurationSection lang;
@@ -103,10 +103,10 @@ public class Localization
 			String tester = str.substring( inx, param.getKey().length() );
 			String val = param.getValue();
 
-			if ( ZStrings.isUppercase( tester ) )
+			if ( UtilStrings.isUppercase( tester ) )
 				val = val.toUpperCase();
-			if ( ZStrings.isCapitalizedWords( tester ) )
-				val = ZStrings.capitalizeWords( val );
+			if ( UtilStrings.isCapitalizedWords( tester ) )
+				val = UtilStrings.capitalizeWords( val );
 
 			str = str.substring( 0, inx ) + val + str.substring( inx + param.getKey().length() );
 		}

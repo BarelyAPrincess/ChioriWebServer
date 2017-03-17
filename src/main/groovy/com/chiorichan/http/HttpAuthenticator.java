@@ -9,10 +9,10 @@
  */
 package com.chiorichan.http;
 
-import com.chiorichan.zutils.ZStrings;
+import com.chiorichan.utils.UtilStrings;
 import io.netty.handler.codec.http.HttpHeaderNames;
 
-import com.chiorichan.zutils.ZEncryption;
+import com.chiorichan.utils.UtilEncryption;
 
 public class HttpAuthenticator
 {
@@ -44,7 +44,7 @@ public class HttpAuthenticator
 		if ( !isBasic() )
 			throw new IllegalStateException( "Authorization is invalid!" );
 
-		String auth = ZEncryption.base64DecodeString( ZStrings.regexCapture( getAuthorization(), "Basic (.*)" ) );
+		String auth = UtilEncryption.base64DecodeString( UtilStrings.regexCapture( getAuthorization(), "Basic (.*)" ) );
 		return auth.substring( auth.indexOf( ":" ) + 1 );
 	}
 
@@ -58,7 +58,7 @@ public class HttpAuthenticator
 		if ( !isBasic() )
 			throw new IllegalStateException( "Authorization is invalid!" );
 
-		String auth = ZEncryption.base64DecodeString( ZStrings.regexCapture( getAuthorization(), "Basic (.*)" ) );
+		String auth = UtilEncryption.base64DecodeString( UtilStrings.regexCapture( getAuthorization(), "Basic (.*)" ) );
 		return auth.substring( 0, auth.indexOf( ":" ) );
 	}
 

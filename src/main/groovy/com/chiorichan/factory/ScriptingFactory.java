@@ -28,8 +28,8 @@ import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.ScriptingException;
 import com.chiorichan.logger.LogSource;
 import com.chiorichan.services.ObjectContext;
-import com.chiorichan.zutils.ZEncryption;
-import com.chiorichan.zutils.ZIO;
+import com.chiorichan.utils.UtilEncryption;
+import com.chiorichan.utils.UtilIO;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.netty.buffer.ByteBuf;
@@ -172,10 +172,10 @@ public class ScriptingFactory implements LogSource
 		{
 			String name;
 			if ( context.isVirtual() )
-				name = "EvalScript" + ZEncryption.rand( 8 ) + ".chi";
+				name = "EvalScript" + UtilEncryption.rand( 8 ) + ".chi";
 			else
 			{
-				String rel = ZIO.relPath( context.file().getParentFile(), context.site().directory() ).replace( '\\', '.' ).replace( '/', '.' );
+				String rel = UtilIO.relPath( context.file().getParentFile(), context.site().directory() ).replace( '\\', '.' ).replace( '/', '.' );
 				context.cacheDirectory( new File( context.cacheDirectory(), rel.contains( "." ) ? rel.substring( 0, rel.indexOf( "." ) ) : rel ) );
 				context.scriptPackage( rel.contains( "." ) ? rel.substring( rel.indexOf( "." ) + 1 ) : "" );
 				name = context.file().getName();

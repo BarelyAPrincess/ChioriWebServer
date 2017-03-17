@@ -10,7 +10,7 @@
 package com.chiorichan.factory.env;
 
 import com.chiorichan.logger.Log;
-import com.chiorichan.zutils.ZIO;
+import com.chiorichan.utils.UtilIO;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -40,7 +40,7 @@ public class Env
 		File gitIgnore = new File( file.getAbsoluteFile().getParentFile(), ".gitignore" );
 		if ( gitIgnore.exists() )
 		{
-			List<String> gitIgnoreContents = ZIO.readFileToLines( gitIgnore );
+			List<String> gitIgnoreContents = UtilIO.readFileToLines( gitIgnore );
 			boolean gitIgnored = false;
 
 			// TODO Tweak for better detection of .gitignore contents
@@ -49,7 +49,7 @@ public class Env
 					gitIgnored = true;
 
 			if ( !gitIgnored )
-				Log.get().warning( String.format( "The environment file [%s] is not present in the [.gitignore] file, it's recommended you do so for security reasons.", ZIO.relPath( file ) ) );
+				Log.get().warning( String.format( "The environment file [%s] is not present in the [.gitignore] file, it's recommended you do so for security reasons.", UtilIO.relPath( file ) ) );
 		}
 	}
 

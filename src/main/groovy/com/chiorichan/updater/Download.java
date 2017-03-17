@@ -9,8 +9,8 @@
  */
 package com.chiorichan.updater;
 
-import com.chiorichan.zutils.ZIO;
-import com.chiorichan.zutils.ZHttp;
+import com.chiorichan.utils.UtilIO;
+import com.chiorichan.utils.UtilHttp;
 import com.chiorichan.lang.DownloadDeniedException;
 import com.chiorichan.lang.DownloadException;
 
@@ -209,7 +209,7 @@ public class Download implements Runnable
 		FileOutputStream fos = null;
 		try
 		{
-			HttpURLConnection conn = ZHttp.openHttpConnection( url );
+			HttpURLConnection conn = UtilHttp.openHttpConnection( url );
 			int response = conn.getResponseCode();
 			int responseFamily = response / 100;
 
@@ -263,8 +263,8 @@ public class Download implements Runnable
 		}
 		finally
 		{
-			ZIO.closeQuietly( fos );
-			ZIO.closeQuietly( rbc );
+			UtilIO.closeQuietly( fos );
+			UtilIO.closeQuietly( rbc );
 		}
 
 		if ( exception != null )

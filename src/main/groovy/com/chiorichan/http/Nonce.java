@@ -16,7 +16,7 @@ import java.util.Random;
 import com.chiorichan.lang.NonceException;
 import com.chiorichan.session.Session;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.zutils.ZEncryption;
+import com.chiorichan.utils.UtilEncryption;
 import com.google.common.collect.Maps;
 
 /**
@@ -53,10 +53,10 @@ public class Nonce
 
 	public Nonce( Session sess )
 	{
-		Random r = ZEncryption.random();
+		Random r = UtilEncryption.random();
 
-		key = ZEncryption.randomize( r, "Z1111Y2222" );
-		value = ZEncryption.base64Encode( sess.getSessionId() + created + ZEncryption.randomize( r, 16 ) );
+		key = UtilEncryption.randomize( r, "Z1111Y2222" );
+		value = UtilEncryption.base64Encode( sess.getSessionId() + created + UtilEncryption.randomize( r, 16 ) );
 		sessionId = sess.getSessionId();
 	}
 
@@ -109,7 +109,7 @@ public class Nonce
 		if ( !value.equals( token ) )
 			throw new NonceException( "The NONCE token does not match" );
 
-		String decoded = ZEncryption.base64DecodeString( token );
+		String decoded = UtilEncryption.base64DecodeString( token );
 
 		if ( !sessionId.equals( decoded.substring( 0, sessionId.length() ) ) )
 			// This was generated for a different Session

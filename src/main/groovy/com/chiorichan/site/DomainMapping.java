@@ -13,9 +13,9 @@ import com.chiorichan.AppConfig;
 import com.chiorichan.helpers.Namespace;
 import com.chiorichan.http.ssl.CertificateWrapper;
 import com.chiorichan.lang.SiteConfigurationException;
-import com.chiorichan.zutils.ZHttp;
-import com.chiorichan.zutils.ZIO;
-import com.chiorichan.zutils.ZObjects;
+import com.chiorichan.utils.UtilHttp;
+import com.chiorichan.utils.UtilIO;
+import com.chiorichan.utils.UtilObjects;
 import io.netty.handler.ssl.SslContext;
 
 import javax.net.ssl.SSLException;
@@ -42,9 +42,9 @@ public class DomainMapping
 
 	public Boolean matches( String domain )
 	{
-		if ( ZHttp.needsNormalization( domain ) )
-			domain = ZHttp.normalize( domain );
-		return ZHttp.matches( domain, this.domain.getFullDomain().getString() );
+		if ( UtilHttp.needsNormalization( domain ) )
+			domain = UtilHttp.normalize( domain );
+		return UtilHttp.matches( domain, this.domain.getFullDomain().getString() );
 	}
 
 	public File directory()
@@ -92,10 +92,10 @@ public class DomainMapping
 			if ( hasConfig( "directory" ) )
 			{
 				String directory = getConfig( "directory" );
-				if ( ZIO.isAbsolute( directory ) )
+				if ( UtilIO.isAbsolute( directory ) )
 				{
 					if ( !AppConfig.get().getBoolean( "sites.allowPublicOutsideWebroot" ) && !directory.startsWith( site.directoryPublic().getAbsolutePath() ) )
-						throw new SiteConfigurationException( String.format( "The public directory [%s] is not allowed outside the webroot.", ZIO.relPath( new File( directory ) ) ) );
+						throw new SiteConfigurationException( String.format( "The public directory [%s] is not allowed outside the webroot.", UtilIO.relPath( new File( directory ) ) ) );
 
 					return new File( directory );
 				}
@@ -120,7 +120,7 @@ public class DomainMapping
 
 	public void putConfig( String key, String value )
 	{
-		ZObjects.notEmpty( key );
+		UtilObjects.notEmpty( key );
 		key = key.trim().toLowerCase();
 		if ( key.startsWith( "__" ) )
 			key = key.substring( 2 );
@@ -167,7 +167,7 @@ public class DomainMapping
 		for ( Map.Entry<String, DomainMapping> entry : nodes.entrySet() )
 		{
 			CertificateWrapper wrapper = entry.getValue().initSsl();
-			if ( wrapper != null && ( entry.getValue() == this || ZHttp.normalize( wrapper.getCommonName() ).equals( getFullDomain() ) || wrapper.getSubjectAltDNSNames().contains( getFullDomain() ) ) )
+			if ( wrapper != null && ( entry.getValue() == this || UtilHttp.normalize( wrapper.getCommonName() ).equals( getFullDomain() ) || wrapper.getSubjectAltDNSNames().contains( getFullDomain() ) ) )
 				try
 				{
 					return wrapper.context();
@@ -190,7 +190,7 @@ public class DomainMapping
 	private CertificateWrapper initSsl()
 	{
 		File ssl = site.directory( "ssl" );
-		ZIO.setDirectoryAccessWithException( ssl );
+		UtilIO.setDirectoryAccessWithException( ssl );
 
 		try
 		{
@@ -199,8 +199,8 @@ public class DomainMapping
 				String sslCertPath = getConfig( "sslCert" );
 				String sslKeyPath = getConfig( "sslKey" );
 
-				File sslCert = ZIO.isAbsolute( sslCertPath ) ? new File( sslCertPath ) : new File( ssl, sslCertPath );
-				File sslKey = ZIO.isAbsolute( sslKeyPath ) ? new File( sslKeyPath ) : new File( ssl, sslKeyPath );
+				File sslCert = UtilIO.isAbsolute( sslCertPath ) ? new File( sslCertPath ) : new File( ssl, sslCertPath );
+				File sslKey = UtilIO.isAbsolute( sslKeyPath ) ? new File( sslKeyPath ) : new File( ssl, sslKeyPath );
 
 				return new CertificateWrapper( sslCert, sslKey, getConfig( "sslSecret" ) );
 			}
@@ -274,7 +274,7 @@ public class DomainMapping
 
 	public boolean isDefault()
 	{
-		return hasConfig( "default" ) && ZObjects.castToBool( getConfig( "default" ) );
+		return hasConfig( "default" ) && UtilObjects.castToBool( getConfig( "default" ) );
 	}
 
 	public String getRootDomain()

@@ -20,8 +20,8 @@ import com.chiorichan.terminal.CommandDispatch;
 import com.chiorichan.terminal.QueryTerminalEntity;
 import com.chiorichan.terminal.TerminalEntity;
 import com.chiorichan.terminal.TerminalHandler;
-import com.chiorichan.zutils.ZObjects;
-import com.chiorichan.zutils.ZSystem;
+import com.chiorichan.utils.UtilObjects;
+import com.chiorichan.utils.UtilSystem;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler.Sharable;
@@ -52,7 +52,7 @@ public class QueryServerTerminal extends SimpleChannelInboundHandler<String> imp
 
 		if ( NetworkEventFactory.buildQueryConnected( this, ctx ) )
 		{
-			println( "Server Uptime: " + ZSystem.uptime() );
+			println( "Server Uptime: " + UtilSystem.uptime() );
 			println( "The last visit from IP " + terminal.getIpAddress() + " is unknown." );
 			// TODO Add more information here
 
@@ -125,7 +125,7 @@ public class QueryServerTerminal extends SimpleChannelInboundHandler<String> imp
 		if ( text == null || text.isEmpty() )
 			return "";
 
-		if ( !AppConfig.get().getBoolean( "server.queryUseColor" ) || terminal != null && !ZObjects.isTrue( terminal.getVariable( "color", "true" ) ) )
+		if ( !AppConfig.get().getBoolean( "server.queryUseColor" ) || terminal != null && !UtilObjects.isTrue( terminal.getVariable( "color", "true" ) ) )
 			return EnumColor.removeAltColors( text );
 		else
 			return EnumColor.transAltColors( text );

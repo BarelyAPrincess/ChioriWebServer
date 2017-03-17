@@ -9,7 +9,7 @@
  */
 package com.chiorichan;
 
-import com.chiorichan.zutils.ZIO;
+import com.chiorichan.utils.UtilIO;
 import com.google.common.io.CharStreams;
 
 import javax.imageio.ImageIO;
@@ -31,7 +31,7 @@ public class ResourceLoader
 	 */
 	public static ResourceLoader buildLoader( String resource )
 	{
-		File workingWith = ZIO.isAbsolute( resource ) ? new File( resource ) : new File( AppConfig.get().getDirectory().getAbsolutePath(), resource );
+		File workingWith = UtilIO.isAbsolute( resource ) ? new File( resource ) : new File( AppConfig.get().getDirectory().getAbsolutePath(), resource );
 
 		if ( !workingWith.exists() )
 			return null;

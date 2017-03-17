@@ -12,8 +12,7 @@ package com.chiorichan.http.ssl;
 import com.chiorichan.AppConfig;
 import com.chiorichan.lang.StartupException;
 import com.chiorichan.net.NetworkManager;
-import com.chiorichan.zutils.ZIO;
-import com.chiorichan.zutils.ZObjects;
+import com.chiorichan.utils.UtilIO;
 import com.google.common.collect.Lists;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
@@ -85,7 +84,7 @@ public class SniNegotiator extends ByteToMessageDecoder
 			File cipherSuitesFile = new File( AppConfig.get().getDirectory(), "enabled-cipher-suites.txt" );
 
 			if ( !cipherSuitesFile.exists() )
-				ZIO.putResource( "com/chiorichan/enabled-cipher-suites.txt", cipherSuitesFile );
+				UtilIO.putResource( "com/chiorichan/enabled-cipher-suites.txt", cipherSuitesFile );
 
 			List<String> contents = FileUtils.readLines( cipherSuitesFile );
 			boolean saveAgain = false;

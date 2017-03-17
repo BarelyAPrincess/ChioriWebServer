@@ -6,7 +6,7 @@ import com.chiorichan.lang.UncaughtException;
 import com.chiorichan.plugin.acme.AcmePlugin;
 import com.chiorichan.plugin.acme.lang.AcmeException;
 import com.chiorichan.plugin.acme.lang.AcmeState;
-import com.chiorichan.zutils.ZIO;
+import com.chiorichan.utils.UtilIO;
 import org.apache.commons.lang3.Validate;
 import org.bouncycastle.x509.util.StreamParsingException;
 
@@ -136,8 +136,8 @@ public class CertificateDownloader
 		if ( !isDownloaded() )
 			return false;
 
-		if ( !ZIO.setDirectoryAccess( parentDir ) )
-			throw new UncaughtException( ReportingLevel.E_ERROR, "Acme Plugin experienced a problem setting read and write access to directory \"" + ZIO.relPath( parentDir ) + "\"!" );
+		if ( !UtilIO.setDirectoryAccess( parentDir ) )
+			throw new UncaughtException( ReportingLevel.E_ERROR, "Acme Plugin experienced a problem setting read and write access to directory \"" + UtilIO.relPath( parentDir ) + "\"!" );
 
 		AcmePlugin.instance().getClient().getAcmeStorage().saveCertificate( parentDir, getCertificate() );
 

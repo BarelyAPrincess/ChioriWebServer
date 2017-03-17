@@ -17,9 +17,8 @@ import com.chiorichan.plugin.acme.lang.AcmeException;
 import com.chiorichan.plugin.acme.lang.AcmeState;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
-import com.chiorichan.zutils.ZEncryption;
-import com.chiorichan.zutils.ZIO;
-import com.google.common.base.Joiner;
+import com.chiorichan.utils.UtilEncryption;
+import com.chiorichan.utils.UtilIO;
 import io.jsonwebtoken.impl.TextCodec;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.x509.util.StreamParsingException;
@@ -55,7 +54,7 @@ public class Certificate
 	{
 		String privateKey = configSection.getString( "privateKey", "domain" );
 
-		sslCertFile = configSection.has( "certFile" ) ? ZIO.isAbsolute( configSection.getString( "certFile" ) ) ? new File( configSection.getString( "certFile" ) ) : new File( AppConfig.get().getDirectory().getAbsolutePath(), configSection.getString( "certFile" ) ) : null;
+		sslCertFile = configSection.has( "certFile" ) ? UtilIO.isAbsolute( configSection.getString( "certFile" ) ) ? new File( configSection.getString( "certFile" ) ) : new File( AppConfig.get().getDirectory().getAbsolutePath(), configSection.getString( "certFile" ) ) : null;
 		sslKeyFile = CertificateMaintainer.getPrivateKey( privateKey );
 
 		this.key = configSection.getName();
@@ -117,7 +116,7 @@ public class Certificate
 	public String md5()
 	{
 		if ( configSection.getString( "md5" ) == null && sslCertFile != null )
-			configSection.set( "md5", ZEncryption.md5( sslCertFile ) );
+			configSection.set( "md5", UtilEncryption.md5( sslCertFile ) );
 		return configSection.getString( "md5" );
 	}
 
@@ -141,7 +140,7 @@ public class Certificate
 		// Log.get().debug( "Old MD5 %s and New MD5 %s", md5(), SecureFunc.md5( sslCertFileTemp ) );
 
 		// According to the Acme Protocol, it is plausible for the CA to not response with a renewed certificate. For now, we will compare the old and new certificate MD5, if they match, we request a revoke and renew to force renewal.
-		if ( md5().equals( ZEncryption.md5( sslCertFileTemp ) ) )
+		if ( md5().equals( UtilEncryption.md5( sslCertFileTemp ) ) )
 		{
 			Log.get().warning( "The CA did not respond with a renewed certificate, we will now force a renewal by first revoking the old certificate." );
 			revokeCertificate();
@@ -199,10 +198,10 @@ public class Certificate
 	{
 		ConfigurationSection section = AcmePlugin.instance().getSubConfig().getConfigurationSection( "certificates." + key, true );
 
-		section.set( "certFile", ZIO.relPath( sslCertFile ) );
+		section.set( "certFile", UtilIO.relPath( sslCertFile ) );
 		section.set( "privateKey", CertificateMaintainer.getPrivateKeyIden( sslKeyFile ) );
 		section.set( "uri", certUri() );
-		section.set( "md5", ZEncryption.md5( sslCertFile ) );
+		section.set( "md5", UtilEncryption.md5( sslCertFile ) );
 
 		AcmePlugin.instance().saveConfig();
 	}
@@ -221,7 +220,7 @@ public class Certificate
 			if ( signingRequest.getState() == AcmeState.SUCCESS )
 				try
 				{
-					File parentDir = ZIO.buildFile( AcmePlugin.instance().getDataFolder(), key );
+					File parentDir = UtilIO.buildFile( AcmePlugin.instance().getDataFolder(), key );
 
 					signingRequest.getDownloader().save( parentDir );
 					sslCertFile = new File( parentDir, "fullchain.pem" );
@@ -258,10 +257,10 @@ public class Certificate
 			if ( key.equals( "default" ) )
 				domains.addAll( AcmeScheduledTask.getVerifiedDomains() );
 
-			if ( !ZIO.checkMd5( sslCertFile, md5() ) )
+			if ( !UtilIO.checkMd5( sslCertFile, md5() ) )
 			{
 				if ( sslCertFile == null )
-					sslCertFile = ZIO.buildFile( AcmePlugin.instance().getDataFolder(), key, "fullchain.pem" );
+					sslCertFile = UtilIO.buildFile( AcmePlugin.instance().getDataFolder(), key, "fullchain.pem" );
 
 				if ( certUri() == null )
 				{

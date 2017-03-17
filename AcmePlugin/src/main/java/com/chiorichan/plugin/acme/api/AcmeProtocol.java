@@ -10,9 +10,9 @@ import com.chiorichan.plugin.acme.lang.AcmeForbiddenError;
 import com.chiorichan.plugin.acme.lang.AcmeState;
 import com.chiorichan.site.DomainMapping;
 import com.chiorichan.site.SiteManager;
-import com.chiorichan.zutils.ZHttp;
-import com.chiorichan.zutils.ZIO;
-import com.chiorichan.zutils.ZStrings;
+import com.chiorichan.utils.UtilHttp;
+import com.chiorichan.utils.UtilIO;
+import com.chiorichan.utils.UtilStrings;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -67,7 +67,7 @@ public class AcmeProtocol
 
 		Validate.notNull( keyPair );
 
-		byte[] result = ZHttp.readUrl( url, true );
+		byte[] result = UtilHttp.readUrl( url, true );
 
 		if ( result == null || result.length == 0 )
 			throw new AcmeException( "AcmePlugin failed to get CA directory from url \"" + url + "\", result was null!" );
@@ -75,10 +75,10 @@ public class AcmeProtocol
 		JsonElement element = new JsonParser().parse( new String( result ) );
 		JsonObject obj = element.getAsJsonObject();
 
-		urlNewAuthz = ZStrings.trimAll( obj.get( "new-authz" ).toString().trim(), '"' );
-		urlNewCert = ZStrings.trimAll( obj.get( "new-cert" ).toString().trim(), '"' );
-		urlNewReg = ZStrings.trimAll( obj.get( "new-reg" ).toString().trim(), '"' );
-		urlRevokeCert = ZStrings.trimAll( obj.get( "revoke-cert" ).toString().trim(), '"' );
+		urlNewAuthz = UtilStrings.trimAll( obj.get( "new-authz" ).toString().trim(), '"' );
+		urlNewCert = UtilStrings.trimAll( obj.get( "new-cert" ).toString().trim(), '"' );
+		urlNewReg = UtilStrings.trimAll( obj.get( "new-reg" ).toString().trim(), '"' );
+		urlRevokeCert = UtilStrings.trimAll( obj.get( "revoke-cert" ).toString().trim(), '"' );
 	}
 
 	public AcmeState checkDomainVerification( String domain, String subdomain, boolean force ) throws AcmeException
@@ -107,7 +107,7 @@ public class AcmeProtocol
 				try
 				{
 					if ( acmeChallengeFile.getParentFile().exists() || acmeChallengeFile.getParentFile().mkdirs() )
-						ZIO.writeStringToFile( acmeChallengeFile, sac.getChallengeContent() );
+						UtilIO.writeStringToFile( acmeChallengeFile, sac.getChallengeContent() );
 					else
 						throw new IOException( "There was problem creating the '.well-known' directory: " + acmeChallengeFile.getAbsolutePath() );
 				}

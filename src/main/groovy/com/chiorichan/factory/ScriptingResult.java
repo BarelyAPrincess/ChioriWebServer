@@ -9,7 +9,7 @@
  */
 package com.chiorichan.factory;
 
-import com.chiorichan.zutils.ZObjects;
+import com.chiorichan.utils.UtilObjects;
 import com.chiorichan.lang.ExceptionReport;
 import com.chiorichan.lang.IException;
 import com.chiorichan.lang.ReportingLevel;
@@ -120,7 +120,7 @@ public class ScriptingResult extends ExceptionReport
 
 	public String getString( boolean includeObj )
 	{
-		return ( content == null ? "" : content.toString( Charset.defaultCharset() ) ) + ( includeObj ? ZObjects.castToString( obj ) : "" );
+		return ( content == null ? "" : content.toString( Charset.defaultCharset() ) ) + ( includeObj ? UtilObjects.castToString( obj ) : "" );
 	}
 
 	public boolean isSuccessful()

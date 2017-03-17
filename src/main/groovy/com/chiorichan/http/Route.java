@@ -11,8 +11,8 @@ package com.chiorichan.http;
 
 import com.chiorichan.logger.Log;
 import com.chiorichan.site.Site;
-import com.chiorichan.zutils.ZObjects;
-import com.chiorichan.zutils.ZStrings;
+import com.chiorichan.utils.UtilObjects;
+import com.chiorichan.utils.UtilStrings;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 
@@ -69,7 +69,7 @@ public class Route
 
 	public int httpCode()
 	{
-		return ZObjects.isEmpty( params.get( "status" ) ) ? 301 : Integer.parseInt( params.get( "status" ) );
+		return UtilObjects.isEmpty( params.get( "status" ) ) ? 301 : Integer.parseInt( params.get( "status" ) );
 	}
 
 	public boolean isRedirect()
@@ -94,13 +94,13 @@ public class Route
 			params.put( "pattern", prop );
 		}
 
-		if ( !ZObjects.isEmpty( params.get( "host" ) ) && !host.matches( params.get( "host" ) ) )
+		if ( !UtilObjects.isEmpty( params.get( "host" ) ) && !host.matches( params.get( "host" ) ) )
 		{
 			Log.get().finer( "The host failed validation for route " + this );
 			return null;
 		}
 
-		if ( ZObjects.isEmpty( params.get( "host" ) ) )
+		if ( UtilObjects.isEmpty( params.get( "host" ) ) )
 			Log.get().warning( "The Route [" + params.entrySet().stream().map( e -> e.getKey() + "=\"" + e.getValue() + "\"" ).collect( Collectors.joining( "," ) ) + "] has no host (Uses RegEx, e.g., ^example.com$) defined, it's recommended that one is set so that the rule is not used unintentionally." );
 
 		String[] propsRaw = prop.split( "[.//]" );
@@ -145,7 +145,7 @@ public class Route
 
 				if ( props.get( i ).matches( "\\[([a-zA-Z0-9]+)=\\]" ) )
 				{
-					weight = ZStrings.replaceAt( weight, i, "Z" );
+					weight = UtilStrings.replaceAt( weight, i, "Z" );
 
 					String key = props.get( i ).replaceAll( "[\\[\\]=]", "" );
 					String value = uris.get( i );
@@ -157,7 +157,7 @@ public class Route
 				}
 				else if ( props.get( i ).equals( uris.get( i ) ) )
 				{
-					weight = ZStrings.replaceAt( weight, i, "A" );
+					weight = UtilStrings.replaceAt( weight, i, "A" );
 
 					Log.get().finer( "Found a match for " + prop + " on route " + this );
 					// MATCH

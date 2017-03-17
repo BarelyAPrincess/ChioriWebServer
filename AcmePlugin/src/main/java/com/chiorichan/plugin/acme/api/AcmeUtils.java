@@ -2,7 +2,7 @@ package com.chiorichan.plugin.acme.api;
 
 import com.chiorichan.plugin.acme.AcmePlugin;
 import com.chiorichan.plugin.acme.lang.AcmeException;
-import com.chiorichan.zutils.ZIO;
+import com.chiorichan.utils.UtilIO;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -133,7 +133,7 @@ public class AcmeUtils
 			Map<String, List<String>> responseHeader = c.getHeaderFields();
 
 			InputStream is = status < 400 ? c.getInputStream() : c.getErrorStream();
-			return new HttpResponse( target, status, responseHeader, Unpooled.wrappedBuffer( ZIO.inputStream2Bytes( is ) ) );
+			return new HttpResponse( target, status, responseHeader, Unpooled.wrappedBuffer( UtilIO.inputStream2Bytes( is ) ) );
 		}
 		catch ( final Throwable t )
 		{
@@ -219,7 +219,7 @@ public class AcmeUtils
 		Map<String, List<String>> responseHeader = c.getHeaderFields();
 
 		InputStream is = status < 400 ? c.getInputStream() : c.getErrorStream();
-		return new HttpResponse( target, status, responseHeader, Unpooled.wrappedBuffer( ZIO.inputStream2Bytes( is ) ) );
+		return new HttpResponse( target, status, responseHeader, Unpooled.wrappedBuffer( UtilIO.inputStream2Bytes( is ) ) );
 	}
 
 	public static byte[] SHA256( String text )

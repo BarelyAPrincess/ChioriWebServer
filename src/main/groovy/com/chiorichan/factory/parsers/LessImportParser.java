@@ -12,7 +12,7 @@ package com.chiorichan.factory.parsers;
 import java.io.File;
 import java.io.IOException;
 
-import com.chiorichan.zutils.ZIO;
+import com.chiorichan.utils.UtilIO;
 import org.apache.commons.io.FileUtils;
 
 import com.chiorichan.logger.Log;
@@ -29,7 +29,7 @@ public class LessImportParser extends BasicParser
 	@Override
 	public String resolveMethod( String... args ) throws Exception
 	{
-		File imp = ZIO.isAbsolute( args[0] ) || args[0].startsWith( "\\" ) || rootDir == null ? new File( args[0] ) : new File( rootDir, args[0] );
+		File imp = UtilIO.isAbsolute( args[0] ) || args[0].startsWith( "\\" ) || rootDir == null ? new File( args[0] ) : new File( rootDir, args[0] );
 
 		try
 		{

@@ -16,7 +16,7 @@ import com.chiorichan.configuration.apache.ApacheSection;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.site.Site;
 import com.chiorichan.Versioning;
-import com.chiorichan.zutils.ZStrings;
+import com.chiorichan.utils.UtilStrings;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -221,7 +221,7 @@ public class ApacheHandler
 				case "IfVersion":
 					kv.isSection();
 					kv.hasArguments( 2, "<operator> <version>" );
-					if ( ZStrings.compareVersions( Versioning.getVersionNumber(), args[1], args[0] ) )
+					if ( UtilStrings.compareVersions( Versioning.getVersionNumber(), args[1], args[0] ) )
 						if ( !handleDirectives( ( ApacheSection ) kv, handler ) )
 							def = false;
 					break;

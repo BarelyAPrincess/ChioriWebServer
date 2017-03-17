@@ -18,7 +18,7 @@ import com.chiorichan.datastore.sql.skel.SQLWhereElement;
 import com.chiorichan.datastore.sql.skel.SQLWhereElementSep;
 import com.chiorichan.datastore.sql.skel.SQLWhereGroup;
 import com.chiorichan.datastore.sql.skel.SQLWhereKeyValue;
-import com.chiorichan.factory.groovy.ScriptingBaseGroovy;
+import com.chiorichan.factory.groovy.ScriptingBaseHttp;
 import com.chiorichan.logger.Log;
 import groovy.lang.Binding;
 import groovy.lang.Closure;
@@ -33,7 +33,7 @@ import java.util.Set;
 /**
  * Provides a SQL model builder
  */
-public class SQLQueryBuilder extends ScriptingBaseGroovy implements SQLSkelOrderBy<SQLQueryBuilder>, SQLSkelLimit<SQLQueryBuilder>, SQLSkelGroupBy<SQLQueryBuilder>, SQLSkelWhere<SQLQueryBuilder, SQLQueryBuilder>
+public class SQLQueryBuilder extends ScriptingBaseHttp implements SQLSkelOrderBy<SQLQueryBuilder>, SQLSkelLimit<SQLQueryBuilder>, SQLSkelGroupBy<SQLQueryBuilder>, SQLSkelWhere<SQLQueryBuilder, SQLQueryBuilder>
 {
 	private SQLBase sql;
 	private SQLQueryBuilder builder = null;
@@ -183,7 +183,7 @@ public class SQLQueryBuilder extends ScriptingBaseGroovy implements SQLSkelOrder
 	}
 
 	@Override
-	public SQLQueryBuilder orderBy( Collection columns )
+	public SQLQueryBuilder orderBy( Collection<String> columns )
 	{
 		SQLQueryBuilder builder = duplicate( SQLSkelOrderBy.class );
 		( ( SQLSkelOrderBy ) builder.sql ).orderBy( columns );

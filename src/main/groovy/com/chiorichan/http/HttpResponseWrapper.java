@@ -21,8 +21,8 @@ import com.chiorichan.logger.experimental.LogEvent;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.session.Session;
 import com.chiorichan.session.SessionException;
-import com.chiorichan.zutils.WebFunc;
-import com.chiorichan.zutils.ZObjects;
+import com.chiorichan.utils.WebFunc;
+import com.chiorichan.utils.UtilObjects;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import io.netty.buffer.ByteBuf;
@@ -337,22 +337,22 @@ public class HttpResponseWrapper
 	{
 		ArrayList<Object> tbl = new ArrayList<Object>()
 		{{
-			if ( ZObjects.isEmpty( map ) )
+			if ( UtilObjects.isEmpty( map ) )
 				add( "(empty)" );
 			else
 				for ( Entry<String, ?> e : map.entrySet() )
-					if ( !ZObjects.isNull( e.getKey() ) )
+					if ( !UtilObjects.isNull( e.getKey() ) )
 						add( new ArrayList<Object>()
 						{{
 							add( "<b>" + WebFunc.escapeHTML( e.getKey() ) + "</b>" );
 							try
 							{
-								if ( ZObjects.isNull( e.getValue() ) )
+								if ( UtilObjects.isNull( e.getValue() ) )
 									add( "(null)" );
 								else if ( e.getKey().toLowerCase().contains( "password" ) )
 									add( "(hidden)" );
 								else
-									add( WebFunc.escapeHTML( ZObjects.castToString( e.getValue() ) ) );
+									add( WebFunc.escapeHTML( UtilObjects.castToString( e.getValue() ) ) );
 							}
 							catch ( ClassCastException e )
 							{
@@ -738,7 +738,7 @@ public class HttpResponseWrapper
 
 	public void setHeader( String key, Object val )
 	{
-		headers.put( key, ZObjects.castToStringWithException( val ) );
+		headers.put( key, UtilObjects.castToStringWithException( val ) );
 	}
 
 	public void setStatus( HttpResponseStatus httpStatus )

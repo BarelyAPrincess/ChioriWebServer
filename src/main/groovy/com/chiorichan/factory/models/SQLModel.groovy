@@ -9,8 +9,6 @@
  */
 package com.chiorichan.factory.models
 
-import com.chiorichan.datastore.sql.skel.SQLSkelOrderBy
-
 /**
  * Provides DB model
  **/

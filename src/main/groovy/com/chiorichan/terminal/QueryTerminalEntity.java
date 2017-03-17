@@ -20,7 +20,7 @@ import com.chiorichan.factory.ScriptBinding;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.lang.EnumColor;
 import com.chiorichan.Versioning;
-import com.chiorichan.zutils.ZIO;
+import com.chiorichan.utils.UtilIO;
 
 public class QueryTerminalEntity extends TerminalEntity implements BindingProvider
 {
@@ -48,7 +48,7 @@ public class QueryTerminalEntity extends TerminalEntity implements BindingProvid
 			{
 				is = Loader.class.getClassLoader().getResourceAsStream( "com/chiorichan/banner.txt" );
 
-				String[] banner = new String( ZIO.inputStream2Bytes( is ) ).split( "\\n" );
+				String[] banner = new String( UtilIO.inputStream2Bytes( is ) ).split( "\\n" );
 
 				for ( String l : banner )
 					handler.println( EnumColor.GOLD + l );

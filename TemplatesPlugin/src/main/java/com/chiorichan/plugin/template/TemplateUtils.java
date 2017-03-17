@@ -5,14 +5,14 @@ import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.factory.ScriptingResult;
-import com.chiorichan.zutils.ZHttp;
+import com.chiorichan.utils.UtilHttp;
 import com.chiorichan.lang.ScriptingException;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.Versioning;
-import com.chiorichan.zutils.WebFunc;
-import com.chiorichan.zutils.ZIO;
+import com.chiorichan.utils.WebFunc;
+import com.chiorichan.utils.UtilIO;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.Validate;
 
@@ -164,7 +164,7 @@ public class TemplateUtils
 					url = plugin.getDescription().getGitHubBaseUrl();
 					if ( !url.endsWith( "/" ) )
 						url += "/";
-					result = ZHttp.readUrl( url + urlAppend );
+					result = UtilHttp.readUrl( url + urlAppend );
 				}
 				else
 					return String.format( "Plugin %s does not have a GitHub base url.", plugin.getName() );
@@ -174,14 +174,14 @@ public class TemplateUtils
 				// Try API URI first!
 				url = GITHUB_API_URL + GITHUB_API_BRANCH + "/src/main/java/" + urlAppend;
 
-				result = ZHttp.readUrl( url );
+				result = UtilHttp.readUrl( url );
 
 				if ( result == null )
 				{
 					// Try CWS URI second!
 					url = GITHUB_SERVER_URL + GITHUB_SERVER_BRANCH + "/src/main/groovy/" + urlAppend;
 
-					result = ZHttp.readUrl( url );
+					result = UtilHttp.readUrl( url );
 				}
 
 				if ( result == null )
@@ -258,7 +258,7 @@ public class TemplateUtils
 		if ( baseTemplate == null )
 		{
 			InputStream is = TemplateUtils.class.getClassLoader().getResourceAsStream( "BaseTemplate.html" );
-			baseTemplate = is == null ? "" : new String( ZIO.inputStream2Bytes( is ), "UTF-8" );
+			baseTemplate = is == null ? "" : new String( UtilIO.inputStream2Bytes( is ), "UTF-8" );
 		}
 
 		return factory.eval( ScriptingContext.fromSource( baseTemplate.replace( pageMark, html ) ).shell( "html" ).site( SiteManager.instance().getDefaultSite() ) );

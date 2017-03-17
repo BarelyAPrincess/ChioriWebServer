@@ -13,7 +13,7 @@ import com.chiorichan.AppConfig;
 import com.chiorichan.configuration.types.yaml.YamlConfiguration;
 import com.chiorichan.permission.PermissionManager;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.zutils.ZIO;
+import com.chiorichan.utils.UtilIO;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -121,7 +121,7 @@ public class FileDatastore extends SessionDatastore
 		if ( sessionsDirectory == null )
 			sessionsDirectory = new File( AppConfig.get().getDirectory().getAbsolutePath(), "sessions" );
 
-		ZIO.setDirectoryAccessWithException( sessionsDirectory );
+		UtilIO.setDirectoryAccessWithException( sessionsDirectory );
 
 		return sessionsDirectory;
 	}

@@ -12,7 +12,7 @@ package com.chiorichan.factory.parsers;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.chiorichan.zutils.ZStrings;
+import com.chiorichan.utils.UtilStrings;
 import org.apache.commons.lang3.Validate;
 
 /**
@@ -48,7 +48,7 @@ public abstract class BasicParser
 			args2[0] = m1.group( 0 );
 
 			for ( int i = 0; i < args.length; i++ )
-				args2[i + 1] = ZStrings.trimAll( args[i].trim(), '"' );
+				args2[i + 1] = UtilStrings.trimAll( args[i].trim(), '"' );
 
 			String result = resolveMethod( args2 );
 

@@ -9,7 +9,7 @@
  */
 package com.chiorichan.http;
 
-import com.chiorichan.zutils.ZObjects;
+import com.chiorichan.utils.UtilObjects;
 import org.apache.commons.lang3.Validate;
 
 import java.util.AbstractMap.SimpleEntry;
@@ -33,7 +33,7 @@ public class HttpVariableMapper implements Map<String, Object>
 
 		public String getValueAsString()
 		{
-			return getValue() == null ? null : ZObjects.castToString( getValue() );
+			return getValue() == null ? null : UtilObjects.castToString( getValue() );
 		}
 	}
 

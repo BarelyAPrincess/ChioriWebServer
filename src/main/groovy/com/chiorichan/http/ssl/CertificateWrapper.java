@@ -9,10 +9,10 @@
  */
 package com.chiorichan.http.ssl;
 
-import com.chiorichan.zutils.ZIO;
-import com.chiorichan.zutils.ZObjects;
+import com.chiorichan.utils.UtilIO;
+import com.chiorichan.utils.UtilObjects;
 import com.chiorichan.net.NetworkManager;
-import com.chiorichan.zutils.ZEncryption;
+import com.chiorichan.utils.UtilEncryption;
 import io.netty.handler.ssl.SslContext;
 import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -55,10 +55,10 @@ public class CertificateWrapper
 	public CertificateWrapper( File sslCertFile, File sslKeyFile, String sslSecret ) throws FileNotFoundException, CertificateException
 	{
 		if ( !sslCertFile.exists() )
-			throw new FileNotFoundException( "The SSL Certificate '" + ZIO.relPath( sslCertFile ) + "' (aka. SSL Cert) file does not exist" );
+			throw new FileNotFoundException( "The SSL Certificate '" + UtilIO.relPath( sslCertFile ) + "' (aka. SSL Cert) file does not exist" );
 
 		if ( !sslKeyFile.exists() )
-			throw new FileNotFoundException( "The SSL Key '" + ZIO.relPath( sslKeyFile ) + "' (aka. SSL Key) file does not exist" );
+			throw new FileNotFoundException( "The SSL Key '" + UtilIO.relPath( sslKeyFile ) + "' (aka. SSL Key) file does not exist" );
 
 		this.sslCertFile = sslCertFile;
 		this.sslKeyFile = sslKeyFile;
@@ -83,7 +83,7 @@ public class CertificateWrapper
 		finally
 		{
 			if ( in != null )
-				ZIO.closeQuietly( in );
+				UtilIO.closeQuietly( in );
 		}
 	}
 
@@ -113,7 +113,7 @@ public class CertificateWrapper
 			else
 				context = SslContext.newServerContext( sslCertFile.getAbsoluteFile(), sslKeyFile.getAbsoluteFile(), sslSecret );
 
-			NetworkManager.getLogger().info( String.format( "Initialized SslContext %s using cert '%s', key '%s', and hasSecret? %s", context.getClass(), ZIO.relPath( sslCertFile ), ZIO.relPath( sslKeyFile ), sslSecret != null && !sslSecret.isEmpty() ) );
+			NetworkManager.getLogger().info( String.format( "Initialized SslContext %s using cert '%s', key '%s', and hasSecret? %s", context.getClass(), UtilIO.relPath( sslCertFile ), UtilIO.relPath( sslKeyFile ), sslSecret != null && !sslSecret.isEmpty() ) );
 		}
 
 		return context;
@@ -221,8 +221,8 @@ public class CertificateWrapper
 					for ( List<?> l : cert.getSubjectAlternativeNames() )
 						try
 						{
-							int i = ZObjects.castToIntWithException( l.get( 0 ) );
-							String dns = ZObjects.castToStringWithException( l.get( 1 ) );
+							int i = UtilObjects.castToIntWithException( l.get( 0 ) );
+							String dns = UtilObjects.castToStringWithException( l.get( 1 ) );
 
 							if ( i == type )
 								add( dns );
@@ -242,6 +242,6 @@ public class CertificateWrapper
 
 	public String md5()
 	{
-		return ZEncryption.md5( sslCertFile );
+		return UtilEncryption.md5( sslCertFile );
 	}
 }

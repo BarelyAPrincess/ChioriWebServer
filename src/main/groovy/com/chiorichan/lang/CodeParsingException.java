@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 
 import org.codehaus.groovy.control.CompilationFailedException;
 
-import com.chiorichan.zutils.WebFunc;
+import com.chiorichan.utils.WebFunc;
 
 public class CodeParsingException extends Exception
 {

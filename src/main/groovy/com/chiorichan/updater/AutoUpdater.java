@@ -40,7 +40,7 @@ import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.TaskRegistrar;
 import com.chiorichan.tasks.Ticks;
 import com.chiorichan.updater.BuildArtifact.ChangeSet.ChangeSetDetails;
-import com.chiorichan.zutils.ZEncryption;
+import com.chiorichan.utils.UtilEncryption;
 import com.chiorichan.Versioning;
 
 public class AutoUpdater implements ServiceManager, Listener, TaskRegistrar, LogSource
@@ -101,7 +101,7 @@ public class AutoUpdater implements ServiceManager, Listener, TaskRegistrar, Log
 		try
 		{
 			AppConfig.get();
-			serverJarMD5 = AppConfig.getApplicationJar().exists() && AppConfig.getApplicationJar().isFile() ? ZEncryption.md5( FileUtils.readFileToByteArray( AppConfig.getApplicationJar() ) ) : null;
+			serverJarMD5 = AppConfig.getApplicationJar().exists() && AppConfig.getApplicationJar().isFile() ? UtilEncryption.md5( FileUtils.readFileToByteArray( AppConfig.getApplicationJar() ) ) : null;
 
 			if ( serverJarMD5 != null )
 				ServerFileWatcher.instance().register( AppConfig.get().getDirectory(), new EventCallback()
@@ -120,7 +120,7 @@ public class AutoUpdater implements ServiceManager, Listener, TaskRegistrar, Log
 									String newServerJarMD5 = null;
 									try
 									{
-										newServerJarMD5 = ZEncryption.md5( FileUtils.readFileToByteArray( AppConfig.getApplicationJar() ) );
+										newServerJarMD5 = UtilEncryption.md5( FileUtils.readFileToByteArray( AppConfig.getApplicationJar() ) );
 									}
 									catch ( IOException e )
 									{

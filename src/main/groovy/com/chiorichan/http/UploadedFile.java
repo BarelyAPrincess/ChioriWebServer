@@ -18,7 +18,7 @@ import java.io.IOException;
 import org.apache.commons.io.FileUtils;
 
 import com.chiorichan.ContentTypes;
-import com.chiorichan.zutils.ZEncryption;
+import com.chiorichan.utils.UtilEncryption;
 
 /**
  * Acts as the in between for uploaded files and web script
@@ -111,9 +111,9 @@ public class UploadedFile
 	public String getMD5() throws IOException
 	{
 		if ( isInMemory() || file == null )
-			return ZEncryption.md5( cachedFileUpload.content().array() );
+			return UtilEncryption.md5( cachedFileUpload.content().array() );
 		else
-			return ZEncryption.md5( FileUtils.readFileToByteArray( file ) );
+			return UtilEncryption.md5( FileUtils.readFileToByteArray( file ) );
 	}
 	
 	public String getMessage()
@@ -165,9 +165,9 @@ public class UploadedFile
 	public String readToString() throws IOException
 	{
 		if ( isInMemory() || file == null )
-			return ZEncryption.base64Encode( cachedFileUpload.content().array() );
+			return UtilEncryption.base64Encode( cachedFileUpload.content().array() );
 		else
-			return ZEncryption.base64Encode( FileUtils.readFileToByteArray( file ) );
+			return UtilEncryption.base64Encode( FileUtils.readFileToByteArray( file ) );
 	}
 	
 	@Override

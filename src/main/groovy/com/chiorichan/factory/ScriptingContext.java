@@ -24,9 +24,9 @@ import com.chiorichan.libraries.LibraryClassLoader;
 import com.chiorichan.logger.Log;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
-import com.chiorichan.zutils.ZEncryption;
-import com.chiorichan.zutils.ZIO;
-import com.chiorichan.zutils.ZObjects;
+import com.chiorichan.utils.UtilEncryption;
+import com.chiorichan.utils.UtilIO;
+import com.chiorichan.utils.UtilObjects;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
@@ -202,10 +202,10 @@ public class ScriptingContext implements ExceptionContext
 
 	public ScriptingContext baseSource( String source )
 	{
-		if ( Versioning.isDevelopment() && !ZObjects.isNull( cacheFile() ) )
+		if ( Versioning.isDevelopment() && !UtilObjects.isNull( cacheFile() ) )
 			try
 			{
-				ZIO.writeStringToFile( new File( cacheFile().getAbsolutePath() + ".baseSource" ), source );
+				UtilIO.writeStringToFile( new File( cacheFile().getAbsolutePath() + ".baseSource" ), source );
 			}
 			catch ( IOException e )
 			{
@@ -223,7 +223,7 @@ public class ScriptingContext implements ExceptionContext
 
 	public String bufferHash()
 	{
-		return ZEncryption.md5( readBytes() );
+		return UtilEncryption.md5( readBytes() );
 	}
 
 	/**
@@ -250,7 +250,7 @@ public class ScriptingContext implements ExceptionContext
 			}
 			catch ( IOException e )
 			{
-				Log.get().warning( "Failed to add " + ZIO.relPath( cacheDirectory ) + " to classpath." );
+				Log.get().warning( "Failed to add " + UtilIO.relPath( cacheDirectory ) + " to classpath." );
 			}
 		return cacheDirectory;
 	}
@@ -385,12 +385,12 @@ public class ScriptingContext implements ExceptionContext
 	public boolean isVirtual()
 	{
 		File scriptFile = new File( filename() );
-		return !ZIO.isAbsolute( filename() ) || !scriptFile.exists();
+		return !UtilIO.isAbsolute( filename() ) || !scriptFile.exists();
 	}
 
 	public String md5()
 	{
-		return ZEncryption.md5( readBytes() );
+		return UtilEncryption.md5( readBytes() );
 	}
 
 	public String read() throws ScriptingException, MultipleException

@@ -22,7 +22,7 @@ import com.chiorichan.messaging.MessageSender;
 import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
-import com.chiorichan.zutils.ZStrings;
+import com.chiorichan.utils.UtilStrings;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -72,7 +72,7 @@ public abstract class SessionWrapper implements BindingProvider, AccountAttachme
 			 */
 			if ( bindings != null && variables != null )
 				for ( Entry<String, Object> e : variables.entrySet() )
-					if ( !disallow.contains( e.getKey() ) && !( e.getKey().startsWith( "_" ) && ZStrings.isUppercase( e.getKey() ) ) )
+					if ( !disallow.contains( e.getKey() ) && !( e.getKey().startsWith( "_" ) && UtilStrings.isUppercase( e.getKey() ) ) )
 						bindings.put( e.getKey(), e.getValue() );
 
 			/**

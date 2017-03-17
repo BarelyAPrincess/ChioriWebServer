@@ -21,7 +21,7 @@ import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.TaskRegistrar;
 import com.chiorichan.tasks.Ticks;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.zutils.ZEncryption;
+import com.chiorichan.utils.UtilEncryption;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -324,7 +324,7 @@ public class SessionManager implements TaskRegistrar, ServiceManager, LogSource
 	 */
 	public String sessionIdBaker()
 	{
-		return ZEncryption.md5( ZEncryption.randomize( ZEncryption.random(), "$e$$i0n_R%ND0Mne$$" ) + System.currentTimeMillis() );
+		return UtilEncryption.md5( UtilEncryption.randomize( UtilEncryption.random(), "$e$$i0n_R%ND0Mne$$" ) + System.currentTimeMillis() );
 	}
 
 	/**

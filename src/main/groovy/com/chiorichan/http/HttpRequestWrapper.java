@@ -33,9 +33,9 @@ import com.chiorichan.site.DomainMapping;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.zutils.ZHttp;
-import com.chiorichan.zutils.ZObjects;
-import com.chiorichan.zutils.ZStrings;
+import com.chiorichan.utils.UtilHttp;
+import com.chiorichan.utils.UtilObjects;
+import com.chiorichan.utils.UtilStrings;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
@@ -191,11 +191,11 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		// Create a matching HttpResponseWrapper
 		response = new HttpResponseWrapper( this, log );
 
-		String host = ZHttp.normalize( getHostDomain() );
+		String host = UtilHttp.normalize( getHostDomain() );
 
-		if ( ZObjects.isEmpty( host ) )
+		if ( UtilObjects.isEmpty( host ) )
 			this.domainMapping = SiteManager.instance().getDefaultSite().getDefaultMapping();
-		else if ( ZHttp.isValidIPv4( host ) || ZHttp.isValidIPv6( host ) )
+		else if ( UtilHttp.isValidIPv4( host ) || UtilHttp.isValidIPv6( host ) )
 		{
 			Stream<DomainMapping> domains = SiteManager.instance().getDomainMappingsByIp( host );
 			domainMapping = domains.count() == 0 ? null : domains.findFirst().orElse( null );
@@ -304,19 +304,19 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	public boolean getArgumentBoolean( String key )
 	{
 		String rtn = getArgument( key, "0" ).toLowerCase();
-		return ZObjects.isTrue( rtn );
+		return UtilObjects.isTrue( rtn );
 	}
 
 	public double getArgumentDouble( String key )
 	{
 		Object obj = getArgument( key, "-1.0" );
-		return ZObjects.castToDouble( obj );
+		return UtilObjects.castToDouble( obj );
 	}
 
 	public int getArgumentInt( String key )
 	{
 		Object obj = getArgument( key, "-1" );
-		return ZObjects.castToInt( obj );
+		return UtilObjects.castToInt( obj );
 	}
 
 	public Set<String> getArgumentKeys()
@@ -331,7 +331,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	public long getArgumentLong( String key )
 	{
 		Object obj = getArgument( key, "-1" );
-		return ZObjects.castToLong( obj );
+		return UtilObjects.castToLong( obj );
 	}
 
 	public HttpAuthenticator getAuth()
@@ -413,7 +413,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 	public String getFullDomain( String subdomain, String prefix )
 	{
-		return prefix + ( ZObjects.isEmpty( subdomain ) ? getHostDomain() : subdomain + "." + getRootDomain() ) + "/";
+		return prefix + ( UtilObjects.isEmpty( subdomain ) ? getHostDomain() : subdomain + "." + getRootDomain() ) + "/";
 	}
 
 	public String getTopDomain()
@@ -438,7 +438,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 	public String getTopDomain( String subdomain, String prefix )
 	{
-		return prefix + ( ZObjects.isEmpty( subdomain ) ? "" : subdomain + "." ) + getRootDomain() + "/";
+		return prefix + ( UtilObjects.isEmpty( subdomain ) ? "" : subdomain + "." ) + getRootDomain() + "/";
 	}
 
 	public String getFullUrl()
@@ -495,7 +495,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 	public String getHost()
 	{
-		return ZHttp.normalize( http.headers().getAndConvert( "Host" ) );
+		return UtilHttp.normalize( http.headers().getAndConvert( "Host" ) );
 	}
 
 	public String getHostDomain()
@@ -767,7 +767,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			if ( uri.contains( "?" ) )
 				uri = uri.substring( 0, uri.indexOf( "?" ) );
 
-			uri = ZStrings.trimFront( uri, '/' );
+			uri = UtilStrings.trimFront( uri, '/' );
 		}
 
 		return uri;
@@ -807,7 +807,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 	public boolean forceTrailingSlash()
 	{
-		if ( !ZObjects.isEmpty( uri ) && !uri.endsWith( "/" ) )
+		if ( !UtilObjects.isEmpty( uri ) && !uri.endsWith( "/" ) )
 		{
 			NetworkManager.getLogger().fine( "Forcing URL redirect to have trailing slash." );
 			getResponse().sendRedirect( getFullDomain() + uri + "/", HttpCode.HTTP_MOVED_PERM );
@@ -1069,7 +1069,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 	void setDomainMapping( DomainMapping domainMapping )
 	{
-		ZObjects.notNull( domainMapping );
+		UtilObjects.notNull( domainMapping );
 		this.domainMapping = domainMapping;
 	}
 

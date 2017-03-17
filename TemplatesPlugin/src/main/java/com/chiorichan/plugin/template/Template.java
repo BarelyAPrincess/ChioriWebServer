@@ -21,9 +21,9 @@ import com.chiorichan.lang.ScriptingException;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
-import com.chiorichan.zutils.ServerFunc;
-import com.chiorichan.zutils.ZIO;
-import com.chiorichan.zutils.ZObjects;
+import com.chiorichan.utils.UtilNetty;
+import com.chiorichan.utils.UtilIO;
+import com.chiorichan.utils.UtilObjects;
 import io.netty.buffer.Unpooled;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -91,8 +91,8 @@ public class Template extends Plugin implements Listener
 				ScriptingContext context = ste.context();
 				Validate.notNull( context );
 
-				fileName = ZIO.relPath( context.file() );
-				cacheFileName = ZIO.relPath( context.cacheFile() );
+				fileName = UtilIO.relPath( context.file() );
+				cacheFileName = UtilIO.relPath( context.cacheFile() );
 
 				if ( lineNum > -1 )
 				{
@@ -125,7 +125,7 @@ public class Template extends Plugin implements Listener
 		ob.append( "<div class=\"source\">\n" );
 
 		ob.append( "<p class=\"file\">" );
-		if ( !ZObjects.isEmpty( cacheFileName ) )
+		if ( !UtilObjects.isEmpty( cacheFileName ) )
 			ob.append( "<i>[" + cacheFileName ).append( "]</i> " );
 		ob.append( fileName );
 		if ( lineNum > -1 )
@@ -134,7 +134,7 @@ public class Template extends Plugin implements Listener
 
 		ob.append( "\n" );
 		ob.append( "<div class=\"code\">\n" );
-		if ( !ZObjects.isEmpty( codeSample ) )
+		if ( !UtilObjects.isEmpty( codeSample ) )
 			ob.append( codeSample ).append( "\n" );
 		ob.append( "</div>\n" );
 		ob.append( "</div>\n" );
@@ -227,25 +227,25 @@ public class Template extends Plugin implements Listener
 			if ( site == null )
 				site = SiteManager.instance().getDefaultSite();
 
-			if ( fwParams.get( "themeless" ) != null && ZObjects.isTrue( fwParams.get( "themeless" ) ) )
+			if ( fwParams.get( "themeless" ) != null && UtilObjects.isTrue( fwParams.get( "themeless" ) ) )
 				return;
 
 			String theme = fwParams.get( "theme" );
 			String view = fwParams.get( "view" );
 			String title = fwParams.get( "title" );
 
-			if ( ZObjects.isNull( theme ) )
+			if ( UtilObjects.isNull( theme ) )
 				theme = "";
 
-			if ( ZObjects.isNull( view ) )
+			if ( UtilObjects.isNull( view ) )
 				view = "";
 
-			if ( !getConfig().getBoolean( "config.alwaysRender" ) && ZObjects.isEmpty( theme ) && ZObjects.isEmpty( view ) )
+			if ( !getConfig().getBoolean( "config.alwaysRender" ) && UtilObjects.isEmpty( theme ) && UtilObjects.isEmpty( view ) )
 				return;
 
 			// TODO return if the request is for a none text contentType
 
-			if ( ZObjects.isEmpty( theme ) )
+			if ( UtilObjects.isEmpty( theme ) )
 				theme = "com.chiorichan.themes.default";
 
 			StringBuilder ob = new StringBuilder();
@@ -276,7 +276,7 @@ public class Template extends Plugin implements Listener
 			boolean showCommons = !getConfig().getBoolean( "config.noCommons" );
 
 			if ( fwParams.get( "noCommons" ) != null )
-				showCommons = !ZObjects.isTrue( fwParams.get( "noCommons" ) );
+				showCommons = !UtilObjects.isTrue( fwParams.get( "noCommons" ) );
 
 			List<String> headers = new ArrayList<>();
 
@@ -350,9 +350,9 @@ public class Template extends Plugin implements Listener
 					pageData = pageData.replace( pageMark, viewData );
 
 			if ( pageData.indexOf( pageMark ) < 0 )
-				pageData = pageData + ServerFunc.byteBuf2String( event.getSource(), event.getEncoding() );
+				pageData = pageData + UtilNetty.byteBuf2String( event.getSource(), event.getEncoding() );
 			else
-				pageData = pageData.replace( pageMark, ServerFunc.byteBuf2String( event.getSource(), event.getEncoding() ) );
+				pageData = pageData.replace( pageMark, UtilNetty.byteBuf2String( event.getSource(), event.getEncoding() ) );
 
 			ob.append( pageData + "\n" );
 

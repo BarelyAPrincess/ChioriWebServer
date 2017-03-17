@@ -9,7 +9,7 @@
  */
 package com.chiorichan.http;
 
-import com.chiorichan.zutils.ZHttp;
+import com.chiorichan.utils.UtilHttp;
 import io.netty.handler.codec.http.Cookie;
 
 import java.text.SimpleDateFormat;
@@ -117,7 +117,7 @@ public class HttpCookie
 	public HttpCookie setDomain( String domain )
 	{
 		needsUpdating = true;
-		this.domain = domain == null ? "" : ZHttp.normalize( domain );
+		this.domain = domain == null ? "" : UtilHttp.normalize( domain );
 		return this;
 	}
 
