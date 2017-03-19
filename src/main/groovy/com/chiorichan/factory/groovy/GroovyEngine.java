@@ -13,9 +13,11 @@ import com.chiorichan.Versioning;
 import com.chiorichan.factory.ScriptBinding;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingEngine;
+import com.chiorichan.factory.ScriptingEvents;
 import com.chiorichan.lang.HttpError;
 import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.ScriptingException;
+import com.chiorichan.logger.Log;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.utils.UtilObjects;
 import com.chiorichan.utils.UtilStrings;
@@ -49,9 +51,10 @@ public class GroovyEngine implements ScriptingEngine
 	@Override
 	public boolean eval( ScriptingContext context ) throws Exception
 	{
+		Script script = null;
 		try
 		{
-			Script script = GroovyRegistry.getCachedScript( context, binding );
+			script = GroovyRegistry.getCachedScript( context, binding );
 
 			if ( script == null )
 			{
@@ -60,6 +63,9 @@ public class GroovyEngine implements ScriptingEngine
 			}
 
 			context.result().setScript( script );
+
+			if ( script instanceof ScriptingEvents )
+				( ( ScriptingEvents ) script ).onBeforeExecute( context );
 
 			if ( context.filename() != null && context.filename().contains( ".controller." ) )
 			{
@@ -102,9 +108,22 @@ public class GroovyEngine implements ScriptingEngine
 			}
 			else
 				context.result().setObject( script.run() );
+
+			if ( script instanceof ScriptingEvents )
+				( ( ScriptingEvents ) script ).onAfterExecute( context );
 		}
 		catch ( Throwable t )
 		{
+			if ( script != null && script instanceof ScriptingEvents )
+				try
+				{
+					( ( ScriptingEvents ) script ).onException( context, t );
+				}
+				catch ( Throwable tt )
+				{
+					Log.get( context.factory().getLoggerId() ).severe( "We had a problem passing an scripting exception to the causing Script, which implements the ScriptingEvents interface.", tt );
+				}
+
 			// Clear the input source code and replace it with the exception stack trace
 			// context.resetAndWrite( ExceptionUtils.getStackTrace( t ) );
 			context.reset();

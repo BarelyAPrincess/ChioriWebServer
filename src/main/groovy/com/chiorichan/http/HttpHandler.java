@@ -23,6 +23,7 @@ import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.factory.ScriptingResult;
+import com.chiorichan.factory.api.Builtin;
 import com.chiorichan.helpers.ANIState;
 import com.chiorichan.http.Nonce.NonceLevel;
 import com.chiorichan.http.ssl.SslLevel;
@@ -47,7 +48,6 @@ import com.chiorichan.site.DomainMapping;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.utils.WebFunc;
 import com.chiorichan.utils.UtilIO;
 import com.chiorichan.utils.UtilObjects;
 import com.chiorichan.utils.UtilStrings;
@@ -810,7 +810,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 
 		ByteBuf rendered = Unpooled.buffer();
 
-		ScriptingFactory factory = request.getEvalFactory();
+		ScriptingFactory factory = request.getScriptingFactory();
 		factory.setEncoding( fi.getEncoding() );
 
 		NetworkSecurity.isForbidden( htaccess, currentSite, fi );
@@ -1161,7 +1161,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			tbl.add( l );
 		}
 
-		sb.append( WebFunc.createTable( tbl, Arrays.asList( "", "Name", "Last Modified", "Size", "Type" ) ) );
+		sb.append( Builtin.createTable( tbl, Arrays.asList( "", "Name", "Last Modified", "Size", "Type" ) ) );
 		sb.append( "<hr>" );
 		sb.append( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + "<br />" + Versioning.getCopyright() + "</small>" );
 

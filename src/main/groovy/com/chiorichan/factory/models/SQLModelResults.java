@@ -10,8 +10,10 @@
 package com.chiorichan.factory.models;
 
 import com.chiorichan.datastore.sql.SQLBase;
+import com.chiorichan.factory.Jsonable;
 import com.chiorichan.factory.api.Builtin;
 import com.chiorichan.utils.UtilObjects;
+import groovy.json.JsonBuilder;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -22,17 +24,25 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-public class SQLModelResults implements List<SQLModel>
+public class SQLModelResults implements List<SQLModel>, Jsonable
 {
-	private SQLQueryBuilder builder;
-	private List<SQLModel> results = new ArrayList<>();
+	private SQLModelBuilder parent;
+	private List<SQLModel> results;
 
-	public SQLModelResults( SQLQueryBuilder builder, SQLBase sql ) throws SQLException
+	public SQLModelResults( SQLModelBuilder parent, SQLBase sql ) throws SQLException
 	{
-		this.builder = builder;
-		for ( Map<String, Object> row : ( Set<Map<String, Object>> ) sql.set() )
-			add( new SQLModel( builder, row ) );
+		this.parent = parent;
+
+		Set<Map<String, Object>> rows = sql.set();
+		this.results = rows.stream().map( m -> new SQLModel( parent, m ) ).collect( Collectors.toList() );
+	}
+
+	public SQLModelResults( SQLModelBuilder parent, List<SQLModel> results )
+	{
+		this.parent = parent;
+		this.results = results;
 	}
 
 	@Override
@@ -186,14 +196,14 @@ public class SQLModelResults implements List<SQLModel>
 	public String createHTMLTable( String tableId, String altTableClass ) throws SQLException
 	{
 		List<Object> tbl = new ArrayList<>();
-		List<String> columnNames = builder.getPrintedTableColumns();
+		List<String> columnNames = parent.getPrintedTableColumns();
 		List<String> columnTitles = new ArrayList<>();
 
 		if ( columnNames == null )
-			columnNames = builder.getColumns();
+			columnNames = parent.getColumns();
 
 		for ( String column : columnNames )
-			columnTitles.add( builder.getColumnFriendlyName( column ) );
+			columnTitles.add( parent.getColumnFriendlyName( column ) );
 
 		for ( SQLModel model : results )
 		{
@@ -213,5 +223,16 @@ public class SQLModelResults implements List<SQLModel>
 			tbl.add( "We have nothing to display." );
 
 		return Builtin.createTable( tbl, columnTitles, tableId, altTableClass );
+	}
+
+	public SQLModelBuilder back()
+	{
+		return parent;
+	}
+
+	@Override
+	public String toJson()
+	{
+		return new JsonBuilder( results ).toString();
 	}
 }

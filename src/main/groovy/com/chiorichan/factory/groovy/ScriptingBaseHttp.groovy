@@ -11,13 +11,13 @@ package com.chiorichan.factory.groovy
 
 import com.chiorichan.account.Account
 import com.chiorichan.account.AccountManager
+import com.chiorichan.account.AccountMeta
 import com.chiorichan.database.DatabaseEngineLegacy
 import com.chiorichan.datastore.sql.bases.SQLDatastore
 import com.chiorichan.factory.ScriptingContext
 import com.chiorichan.factory.ScriptingFactory
 import com.chiorichan.factory.api.Builtin
-import com.chiorichan.factory.models.SQLQueryBuilder
-import com.chiorichan.helpers.Pair
+import com.chiorichan.factory.models.SQLModelBuilder
 import com.chiorichan.http.HttpRequestWrapper
 import com.chiorichan.http.HttpResponseWrapper
 import com.chiorichan.http.Nonce
@@ -33,10 +33,8 @@ import com.chiorichan.session.Session
 import com.chiorichan.site.DomainMapping
 import com.chiorichan.site.Site
 import com.chiorichan.site.SiteManager
-import com.chiorichan.utils.UtilHttp
-import com.chiorichan.utils.UtilMaps
-import com.chiorichan.utils.UtilObjects
-import com.chiorichan.utils.UtilStrings
+import com.chiorichan.utils.*
+import groovy.transform.CompileStatic
 
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Matcher
@@ -46,7 +44,8 @@ import java.util.stream.Collectors
 /**
  * Used as the Groovy Scripting Base and provides scripts with custom builtin methods
  * */
-public abstract class ScriptingBaseHttp extends Builtin
+@CompileStatic
+abstract class ScriptingBaseHttp extends Builtin
 {
 	/**
 	 * Returns the current HttpRequestWrapper instance
@@ -76,9 +75,7 @@ public abstract class ScriptingBaseHttp extends Builtin
 		{
 			Matcher m = Pattern.compile( "HTTP[^ ]* (\\d*) (.*)" ).matcher( header );
 			if ( m.find() )
-			{
 				getResponse().setStatus( Integer.parseInt( m.group( 1 ) ) )
-			};
 		}
 		else if ( header.startsWith( "Location:" ) )
 		{
@@ -86,17 +83,17 @@ public abstract class ScriptingBaseHttp extends Builtin
 		}
 		else if ( header.contains( ":" ) )
 		{
-			header( header.substring( 0, header.indexOf( ':' ) ), header.substring( header.indexOf( ':' ) + 1 ).trim() )
+			getResponse().setHeader( header.substring( 0, header.indexOf( ':' ) ), header.substring( header.indexOf( ':' ) + 1 ).trim() )
 		}
 		else
 		{
 			throw new IllegalArgumentException( "The header argument is malformed!" )
-		};
+		}
 	}
 
 	void header( String key, String val )
 	{
-		getResponse().setHeader( key, val );
+		getResponse().setHeader( key, val )
 	}
 
 	/**
@@ -125,21 +122,19 @@ public abstract class ScriptingBaseHttp extends Builtin
 		Account result = AccountManager.instance().getAccount( uid )
 
 		if ( result == null )
-		{
 			result = AccountManager.instance().getAccountPartial( uid )
-		}
 
 		return result
 	}
 
-	Account[] getAccounts( String query )
+	List<AccountMeta> getAccounts( String query )
 	{
 		return AccountManager.instance().getAccounts( query )
 	}
 
-	Account[] getAccounts( String query, int limit )
+	List<AccountMeta> getAccounts( String query, int limit )
 	{
-		return AccountManager.instance().getAccounts( query ).stream().limit( limit ).toArray();
+		return AccountManager.instance().getAccounts( query ).stream().limit( limit ).collect( Collectors.toList() )
 	}
 
 	/**
@@ -168,27 +163,14 @@ public abstract class ScriptingBaseHttp extends Builtin
 	}
 
 	/**
-	 * Converts the specified http status code to a message
-	 * @param errNo The http status code
-	 * @return The http status message
-	 */
-	String getStatusDescription( int errNo )
-	{
-		return HttpCode.msg( errNo )
-	}
-
-	/**
 	 * Returns the uri to the login page
 	 * @return The login uri
 	 */
 	String url_to_login()
 	{
 		if ( getRequest().getSite() == null )
-		{
 			return "/login"
-		}
-
-		return getRequest().getSite().getYaml().getString( "scripts.login-form", "/login" )
+		return getRequest().getSite().getConfig().getString( "scripts.login-form", "/login" )
 	}
 
 	/**
@@ -197,7 +179,7 @@ public abstract class ScriptingBaseHttp extends Builtin
 	 */
 	String url_to_logout()
 	{
-		return url_to_login + "?logout"
+		return url_to_login() + "?logout"
 	}
 
 	void define( String key, Object val )
@@ -270,8 +252,7 @@ public abstract class ScriptingBaseHttp extends Builtin
 
 	String route_id( String id, List<String> params ) throws SiteConfigurationException
 	{
-		AtomicInteger inx = new AtomicInteger();
-		return route_id( id, params.stream().map( {l -> new Pair<>( Integer.toString( inx.getAndIncrement() ), l )} ).collect( Collectors.toMap( {p -> p.getKey()}, {p -> p.getValue()} ) ) );
+		return route_id( id, UtilMaps.indexMap( params ) )
 	}
 
 	String route_id( String id, Map<String, String> params ) throws SiteConfigurationException
@@ -315,7 +296,7 @@ public abstract class ScriptingBaseHttp extends Builtin
 						break
 				}
 
-			url = UtilStrings.trimFront( url, '/' );
+			url = UtilStrings.trimFront( url, "/".charAt( 0 ) );
 
 			if ( route.hasParam( "domain" ) )
 			{
@@ -350,7 +331,7 @@ public abstract class ScriptingBaseHttp extends Builtin
 		else if ( route.hasParam( "url" ) )
 		{
 			String url = route.getParam( "url" );
-			return url.toLowerCase().startsWith( "http" ) || url.toLowerCase().startsWith( "//" ) ? url : getRequest().getFullDomain() + UtilStrings.trimAll( url, '/' );
+			return url.toLowerCase().startsWith( "http" ) || url.toLowerCase().startsWith( "//" ) ? url : getRequest().getFullDomain() + UtilStrings.trimAll( url, "/".charAt( 0 ) );
 		}
 		else
 		{
@@ -409,7 +390,7 @@ public abstract class ScriptingBaseHttp extends Builtin
 	String get_map()
 	{
 		Map<String, String> getMap = getRequest().getGetMapRaw();
-		return getMap.size() == 0 ? "" : "?" + getMap.entrySet().stream().map( {e -> e.getKey() + "=" + e.getValue()} ).collect( Collectors.joining( "&" ) );
+		return getMap.size() == 0 ? "" : "?" + UtilLists.joinQuery( getMap )
 	}
 
 	/**
@@ -420,14 +401,14 @@ public abstract class ScriptingBaseHttp extends Builtin
 	 */
 	String get_append( Map<String, Object> map )
 	{
-		UtilObjects.notNull( map, "Map can not be null" );
+		UtilObjects.notNull( map, "Map can not be null" )
 
-		Map<String, String> getMap = new HashMap<>( getRequest().getGetMapRaw() );
+		Map<String, String> getMap = new HashMap<>( getRequest().getGetMapRaw() )
 
 		for ( Map.Entry<String, Object> e : map.entrySet() )
-			getMap.put( e.getKey(), UtilObjects.castToString( e.getValue() ) );
+			getMap.put( e.getKey(), UtilObjects.castToString( e.getValue() ) )
 
-		return getMap.size() == 0 ? "" : "?" + getMap.entrySet().stream().map( {e -> e.getKey() + "=" + e.getValue()} ).collect( Collectors.joining( "&" ) );
+		return getMap.size() == 0 ? "" : "?" + UtilLists.joinQuery( getMap )
 	}
 
 	String get_append( String key, Object val )
@@ -465,7 +446,7 @@ public abstract class ScriptingBaseHttp extends Builtin
 
 	ScriptingFactory getScriptingFactory()
 	{
-		return getRequest().getEvalFactory();
+		return getRequest().getScriptingFactory();
 	}
 
 	boolean isAdmin()
@@ -500,24 +481,21 @@ public abstract class ScriptingBaseHttp extends Builtin
 
 	ScriptingFactory getEvalFactory()
 	{
-		return getRequest().getEvalFactory()
+		return getRequest().getScriptingFactory()
 	}
 
-	@Override
-	SQLQueryBuilder model( String pack ) throws MultipleException, ScriptingException
-	{
-		return ScriptingContext.fromPackage( getSite(), pack ).request( getRequest() ).model()
-	}
-
-	@Override
 	Object include( String pack ) throws MultipleException, ScriptingException
 	{
 		return ScriptingContext.fromPackage( getSite(), pack ).request( getRequest() ).eval()
 	}
 
-	@Override
 	Object require( String pack ) throws IOException, MultipleException, ScriptingException
 	{
 		return ScriptingContext.fromPackageWithException( getSite(), pack ).request( getRequest() ).eval()
+	}
+
+	SQLModelBuilder model( String pack ) throws IOException, MultipleException, ScriptingException
+	{
+		return ScriptingContext.fromPackageWithException( getSite(), pack ).request( getRequest() ).model()
 	}
 }

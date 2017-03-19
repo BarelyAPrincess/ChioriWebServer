@@ -49,7 +49,7 @@ public class ScriptingResult extends ExceptionReport
 					if ( context.factory() != null )
 						( ( ScriptingException ) exception ).populateScriptTrace( context.factory().stack() );
 					else if ( context.request() != null )
-						( ( ScriptingException ) exception ).populateScriptTrace( context.request().getEvalFactory().stack() );
+						( ( ScriptingException ) exception ).populateScriptTrace( context.request().getScriptingFactory().stack() );
 				caughtExceptions.add( exception );
 			}
 			else
@@ -68,7 +68,7 @@ public class ScriptingResult extends ExceptionReport
 					if ( context.factory() != null )
 						( ( ScriptingException ) throwable ).populateScriptTrace( context.factory().stack() );
 					else if ( context.request() != null )
-						( ( ScriptingException ) throwable ).populateScriptTrace( context.request().getEvalFactory().stack() );
+						( ( ScriptingException ) throwable ).populateScriptTrace( context.request().getScriptingFactory().stack() );
 				caughtExceptions.add( ( ScriptingException ) throwable );
 			}
 			else

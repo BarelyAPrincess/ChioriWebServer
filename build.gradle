@@ -4,6 +4,7 @@ defaultTasks 'clean', 'build'
 
 apply plugin: 'application'
 apply plugin: 'eclipse'
+apply plugin: 'idea'
 apply plugin: 'groovy'
 apply plugin: 'license'
 apply plugin: 'com.github.johnrengelman.shadow'
@@ -12,14 +13,14 @@ apply from: 'etc/publish.gradle'
 
 repositories {
 	jcenter()
-	maven {url "http://jenkins.chiorichan.com:8081/artifactory/"}
+	// maven {url "http://jenkins.chiorichan.com:8081/artifactory/"}
 	mavenCentral()
 }
 
 buildscript {
 	repositories {
 		jcenter()
-		maven {url "http://jenkins.chiorichan.com:8081/artifactory/"}
+		// maven {url "http://jenkins.chiorichan.com:8081/artifactory/"}
 		mavenCentral()
 	}
 
@@ -124,18 +125,18 @@ license {
 	mapping 'yaml', 'SCRIPT_STYLE'
 	mapping 'yml', 'SCRIPT_STYLE'
 	excludes( ['**/*.archive',
-			'**/*.md5',
-			'**/*.txt',
-			'**/*.bmp',
-			'**/*.png',
-			'**/*.jpg',
-			'**/*.yaml',
-			'**/*.yml',
-			'**/*.properties',
-			'**/less-rhino-1.7.4.js',
-			'**/coffee-script.js',
-			'**/banner.txt',
-			'**/config.yaml'] )
+	           '**/*.md5',
+	           '**/*.txt',
+	           '**/*.bmp',
+	           '**/*.png',
+	           '**/*.jpg',
+	           '**/*.yaml',
+	           '**/*.yml',
+	           '**/*.properties',
+	           '**/less-rhino-1.7.4.js',
+	           '**/coffee-script.js',
+	           '**/banner.txt',
+	           '**/config.yaml'] )
 	ext.year = Calendar.getInstance().get( Calendar.YEAR )
 	ext.name = 'Chiori Greene a.k.a. Chiori-chan'
 	ext.email = 'me@chiorichan.com'
@@ -159,14 +160,14 @@ subprojects {
 		mapping 'yaml', 'SCRIPT_STYLE'
 		mapping 'yml', 'SCRIPT_STYLE'
 		excludes( ['**/*.md5',
-				'**/*.txt',
-				'**/*.bmp',
-				'**/*.png',
-				'**/*.jpg',
-				'**/*.yaml',
-				'**/*.yml',
-				'**/*.properties',
-				'**/config.yaml'] )
+		           '**/*.txt',
+		           '**/*.bmp',
+		           '**/*.png',
+		           '**/*.jpg',
+		           '**/*.yaml',
+		           '**/*.yml',
+		           '**/*.properties',
+		           '**/config.yaml'] )
 		ext.year = Calendar.getInstance().get( Calendar.YEAR )
 		ext.name = 'Chiori Greene a.k.a. Chiori-chan'
 		ext.email = 'me@chiorichan.com'
@@ -197,7 +198,7 @@ dependencies {
 	compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version: '4.7'
 
 	// Used to evaluate GroovyScripts server-side
-	compile group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.4.7'
+	compile group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.4.9'
 
 	// Used for easy reflections, e.g., find all classes within package for imports
 	compile group: 'org.reflections', name: 'reflections', version: '0.9.9'
@@ -241,7 +242,9 @@ dependencies {
 	compile group: 'org.apache.httpcomponents', name: 'fluent-hc', version: '4.3.5'
 }
 
-shadowJar {include( "**/*" );}
+shadowJar {
+	include( "**/*" )
+}
 
 jar {
 	manifest {
@@ -288,4 +291,5 @@ task wrapper( type: Wrapper ) {gradleVersion = '3.3'}
 
 jar.dependsOn writePropertiesFile
 
-artifacts {archives shadowJar, sourcesArchive, javadocArchive}
+artifacts {archives shadowJar}
+// artifacts {archives shadowJar, sourcesArchive, javadocArchive}

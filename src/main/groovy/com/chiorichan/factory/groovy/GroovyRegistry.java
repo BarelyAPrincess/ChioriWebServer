@@ -21,6 +21,7 @@ import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingEngine;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.factory.ScriptingRegistry;
+import com.chiorichan.helpers.Looper;
 import com.chiorichan.lang.ExceptionCallback;
 import com.chiorichan.lang.ExceptionContext;
 import com.chiorichan.lang.ExceptionReport;
@@ -36,7 +37,6 @@ import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.Ticks;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.helpers.Looper;
 import com.chiorichan.utils.UtilObjects;
 import com.google.common.collect.Maps;
 import groovy.lang.Binding;
@@ -74,7 +74,7 @@ public class GroovyRegistry implements ScriptingRegistry
 	private static final GroovyImportCustomizer imports = new GroovyImportCustomizer();
 
 	private static final Class<?>[] classImports = new Class<?>[] {References.class, NestedScript.class, Loader.class, AccountManager.class, AccountType.class, Account.class, AccountAuthenticator.class, EventBus.class, PermissionManager.class, PluginManager.class, TaskManager.class, Ticks.class, Timings.class, SessionManager.class, SiteManager.class, Site.class, ScriptingContext.class, Versioning.class};
-	private static final String[] starImports = new String[] {"com.chiorichan.lang", "com.chiorichan.helpers", "com.chiorichan.factory.api", "com.chiorichan.zutils", "com.chiorichan.logger", "org.apache.commons.lang3.text", "org.ocpsoft.prettytime", "java.utils", "java.net", "com.google.common.base"};
+	private static final String[] starImports = new String[] {"com.chiorichan.lang", "com.chiorichan.helpers", "com.chiorichan.factory.api", "com.chiorichan.utils", "com.chiorichan.logger", "org.apache.commons.lang3.text", "org.ocpsoft.prettytime", "java.utils", "java.net", "com.google.common.base"};
 	private static final Class<?>[] staticImports = new Class<?>[] {Looper.class, ReportingLevel.class, HttpResponseStatus.class};
 	private static final GroovySandbox secure = new GroovySandbox();
 
@@ -196,28 +196,27 @@ public class GroovyRegistry implements ScriptingRegistry
 		 */
 	}
 
-	@SuppressWarnings( "deprecation" )
 	public GroovyShell getNewShell( ScriptingContext context, Binding binding )
 	{
+		/* Create a compiler configuration */
 		CompilerConfiguration configuration = new CompilerConfiguration();
 
-		/*
-		 * Finalize Imports and implement Sandbox
-		 */
+		/* Set imports, timed executor, and implement sandbox */
 		configuration.addCompilationCustomizers( imports, timedInterrupt, secure );
 
+		/* Set scripting base class */
 		if ( UtilObjects.isEmpty( context.getScriptBaseClass() ) )
 			configuration.setScriptBaseClass( ScriptingBaseHttp.class.getName() );
 		else
 			configuration.setScriptBaseClass( context.getScriptBaseClass() );
 
-		/*
-		 * Set default encoding
-		 */
+		/* Set default encoding */
 		configuration.setSourceEncoding( context.factory().charset().name() );
 
+		/* Set compiled script cache directory */
 		configuration.setTargetDirectory( context.cacheDirectory() );
 
+		/* Create and return new GroovyShell instance */
 		return new GroovyShell( Loader.class.getClassLoader(), binding, configuration );
 	}
 

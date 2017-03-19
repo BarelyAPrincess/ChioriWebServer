@@ -1,22 +1,26 @@
 package com.chiorichan.plugin.template;
 
 import com.chiorichan.ShellOverrides;
+import com.chiorichan.Versioning;
 import com.chiorichan.factory.ScriptTraceElement;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.factory.ScriptingResult;
-import com.chiorichan.utils.UtilHttp;
 import com.chiorichan.lang.ScriptingException;
 import com.chiorichan.plugin.PluginManager;
 import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.site.SiteManager;
-import com.chiorichan.Versioning;
-import com.chiorichan.utils.WebFunc;
+import com.chiorichan.utils.UtilHttp;
 import com.chiorichan.utils.UtilIO;
+import com.chiorichan.utils.UtilStrings;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.Validate;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Chiori-chan's Web Server Template Plugin
@@ -222,15 +226,15 @@ public class TemplateUtils
 					if ( colNum > -1 && colNum <= l.length() )
 					{
 						colNum--;
-						l = WebFunc.escapeHTML( l.substring( 0, colNum ) ) + "<span style=\"background-color: red; font-weight: bolder;\">" + WebFunc.escapeHTML( l.substring( colNum, colNum + 1 ) ) + "</span>" + WebFunc.escapeHTML( l.substring( colNum + 1 ) );
+						l = UtilStrings.escapeHtml( l.substring( 0, colNum ) ) + "<span style=\"background-color: red; font-weight: bolder;\">" + UtilStrings.escapeHtml( l.substring( colNum, colNum + 1 ) ) + "</span>" + UtilStrings.escapeHtml( l.substring( colNum + 1 ) );
 					}
 					else
-						l = WebFunc.escapeHTML( l );
+						l = UtilStrings.escapeHtml( l );
 
 					sb.append( String.format( "<span class=\"error\"><span class=\"ln error-ln\">%4s</span> %s</span>", cLine, l ) );
 				}
 				else
-					sb.append( String.format( "<span class=\"ln\">%4s</span> %s\n", cLine, WebFunc.escapeHTML( l ) ) );
+					sb.append( String.format( "<span class=\"ln\">%4s</span> %s\n", cLine, UtilStrings.escapeHtml( l ) ) );
 		}
 
 		return sb.toString();

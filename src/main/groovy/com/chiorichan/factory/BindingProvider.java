@@ -11,7 +11,7 @@ package com.chiorichan.factory;
 
 public interface BindingProvider
 {
-	ScriptingFactory getEvalFactory();
+	ScriptingFactory getScriptingFactory();
 	
 	ScriptBinding getBinding();
 }

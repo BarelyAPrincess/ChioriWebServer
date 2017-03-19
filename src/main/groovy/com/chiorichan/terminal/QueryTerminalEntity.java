@@ -87,7 +87,7 @@ public class QueryTerminalEntity extends TerminalEntity implements BindingProvid
 	}
 
 	@Override
-	public ScriptingFactory getEvalFactory()
+	public ScriptingFactory getScriptingFactory()
 	{
 		return factory;
 	}

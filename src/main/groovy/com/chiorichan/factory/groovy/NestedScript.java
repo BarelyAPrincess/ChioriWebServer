@@ -1,36 +1,38 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- *
+ * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
- *
+ * <p>
  * All Rights Reserved.
  */
 package com.chiorichan.factory.groovy;
 
+import com.chiorichan.factory.ScriptingFactory;
+import com.chiorichan.factory.api.Builtin;
+import com.chiorichan.http.HttpRequestWrapper;
 import groovy.lang.Binding;
 import io.netty.buffer.ByteBufOutputStream;
 
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 
-import com.chiorichan.factory.api.Builtin;
-import com.chiorichan.http.HttpRequestWrapper;
-
 /**
  * Implements the builtin API by being extent by groovy nested classes
  */
 public class NestedScript extends Builtin
 {
+	HttpRequestWrapper request;
+
 	@SuppressWarnings( "unchecked" )
 	public NestedScript()
 	{
-		HttpRequestWrapper request = HttpRequestWrapper.getRequest();
-		Binding binding = new Binding( HttpRequestWrapper.getRequest().getBinding().getVariables() );
+		request = HttpRequestWrapper.getRequest();
+		Binding binding = new Binding( request.getBinding().getVariables() );
 		try
 		{
-			binding.setProperty( "out", new PrintStream( new ByteBufOutputStream( request.getEvalFactory().getOutputStream() ), true, request.getEvalFactory().getCharset().name() ) );
+			binding.setProperty( "out", new PrintStream( new ByteBufOutputStream( request.getScriptingFactory().getOutputStream() ), true, request.getScriptingFactory().getCharset().name() ) );
 		}
 		catch ( UnsupportedEncodingException e )
 		{
@@ -46,5 +48,11 @@ public class NestedScript extends Builtin
 	public Object run()
 	{
 		return null;
+	}
+
+	@Override
+	public ScriptingFactory getScriptingFactory()
+	{
+		return request.getScriptingFactory();
 	}
 }

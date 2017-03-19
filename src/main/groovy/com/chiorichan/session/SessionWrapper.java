@@ -119,7 +119,7 @@ public abstract class SessionWrapper implements BindingProvider, AccountAttachme
 	}
 
 	@Override
-	public ScriptingFactory getEvalFactory()
+	public ScriptingFactory getScriptingFactory()
 	{
 		return factory;
 	}

@@ -16,7 +16,7 @@ import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingFactory;
 import com.chiorichan.factory.localization.LocalizationException;
-import com.chiorichan.factory.models.SQLQueryBuilder;
+import com.chiorichan.factory.models.SQLModelBuilder;
 import com.chiorichan.lang.DiedException;
 import com.chiorichan.lang.MultipleException;
 import com.chiorichan.lang.PluginNotFoundException;
@@ -27,7 +27,6 @@ import com.chiorichan.plugin.loader.Plugin;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.Timings;
-import com.chiorichan.utils.WebFunc;
 import com.chiorichan.utils.UtilEncryption;
 import com.chiorichan.utils.UtilIO;
 import com.chiorichan.utils.UtilObjects;
@@ -43,6 +42,7 @@ import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 import groovy.json.JsonSlurper;
 import groovy.lang.MissingPropertyException;
 import groovy.lang.Script;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.ocpsoft.prettytime.PrettyTime;
 
@@ -321,6 +321,17 @@ public abstract class Builtin extends Script
 		sb.append( "</table>\n" );
 
 		return sb.toString();
+	}
+
+	/**
+	 * Converts the specified http status code to a message
+	 *
+	 * @param errNo The http status code
+	 * @return The http status message
+	 */
+	static String getStatusDescription( int errNo )
+	{
+		return HttpResponseStatus.valueOf( errNo ).reasonPhrase().toString();
 	}
 
 	public static String date()
@@ -859,36 +870,36 @@ public abstract class Builtin extends Script
 
 	private int stackLevel = -1;
 
-	void obStart()
+	public void obStart()
 	{
 		stackLevel = getScriptingFactory().obStart();
 	}
 
-	void obFlush()
+	public void obFlush()
 	{
 		if ( stackLevel == -1 )
 			throw new IllegalStateException( "obStart() must be called first." );
 		getScriptingFactory().obFlush( stackLevel );
 	}
 
-	String obEnd()
+	public String obEnd()
 	{
 		if ( stackLevel == -1 )
 			throw new IllegalStateException( "obStart() must be called first." );
 		return getScriptingFactory().obEnd( stackLevel );
 	}
 
-	void section( String key )
+	public void section( String key )
 	{
 		getScriptingFactory().getYieldBuffer().set( key, obEnd() );
 	}
 
-	void section( String key, String value )
+	public void section( String key, String value )
 	{
 		getScriptingFactory().getYieldBuffer().set( key, value );
 	}
 
-	String yield( String key )
+	public String yield( String key )
 	{
 		return getScriptingFactory().getYieldBuffer().get( key );
 	}
@@ -899,7 +910,7 @@ public abstract class Builtin extends Script
 	 *
 	 * @param obj The object you wish to dump
 	 */
-	void var_dump( Object... obj )
+	public void var_dump( Object... obj )
 	{
 		println( var_export( obj ) );
 	}
@@ -980,7 +991,7 @@ public abstract class Builtin extends Script
 	 * @param names The variables to be checked
 	 * @return Returns TRUE if var exists and has value other than NULL. FALSE otherwise.
 	 */
-	boolean isset( String... names )
+	public boolean isset( String... names )
 	{
 		for ( String name : names )
 			if ( getPropertySafe( name ) == null )
@@ -995,7 +1006,7 @@ public abstract class Builtin extends Script
 	 * @param var The HTML comment connect
 	 * @return The formatted string
 	 */
-	void comment( String var )
+	public void comment( String var )
 	{
 		if ( Versioning.isDevelopment() )
 			print( "<!-- " + var + " -->" );
@@ -1007,22 +1018,22 @@ public abstract class Builtin extends Script
 	 *
 	 * @param var The string you wish to print
 	 */
-	void echo( String var )
+	public void echo( String var )
 	{
 		println( var );
 	}
 
-	void unset( String name )
+	public void unset( String name )
 	{
 		setProperty( name, null );
 	}
 
-	Object last( Collection<?> collection )
+	public Object last( Collection<?> collection )
 	{
 		return ( collection == null ) ? null : collection.toArray()[collection.size() - 1];
 	}
 
-	Object first( Collection<?> collection )
+	public Object first( Collection<?> collection )
 	{
 		return collection == null ? null : collection.toArray()[0];
 	}
@@ -1044,12 +1055,12 @@ public abstract class Builtin extends Script
 		die( null );
 	}
 
-	boolean hasProperty( String name )
+	public boolean hasProperty( String name )
 	{
 		return getPropertySafe( name ) != null;
 	}
 
-	Object getPropertySafe( String name )
+	public Object getPropertySafe( String name )
 	{
 		try
 		{
@@ -1061,7 +1072,7 @@ public abstract class Builtin extends Script
 		}
 	}
 
-	Object getBindingProperty( String name )
+	public Object getBindingProperty( String name )
 	{
 		try
 		{
@@ -1073,24 +1084,24 @@ public abstract class Builtin extends Script
 		}
 	}
 
-	Site getSite()
+	public Site getSite()
 	{
 		return SiteManager.instance().getDefaultSite();
 	}
 
-	SQLQueryBuilder model( String pack ) throws MultipleException, ScriptingException
-	{
-		return ScriptingContext.fromPackage( getSite(), pack ).model();
-	}
-
-	Object include( String pack ) throws MultipleException, ScriptingException
+	public Object include( String pack ) throws MultipleException, ScriptingException
 	{
 		return ScriptingContext.fromPackage( getSite(), pack ).eval();
 	}
 
-	Object require( String pack ) throws IOException, MultipleException, ScriptingException
+	public Object require( String pack ) throws IOException, MultipleException, ScriptingException
 	{
 		return ScriptingContext.fromPackageWithException( getSite(), pack ).eval();
+	}
+
+	public SQLModelBuilder model( String pack ) throws IOException, MultipleException, ScriptingException
+	{
+		return ScriptingContext.fromPackageWithException( getSite(), pack ).model();
 	}
 
 	public void setLocale( String locale )

@@ -12,7 +12,7 @@ package com.chiorichan.factory;
 import com.chiorichan.AppConfig;
 import com.chiorichan.ContentTypes;
 import com.chiorichan.Versioning;
-import com.chiorichan.factory.models.SQLQueryBuilder;
+import com.chiorichan.factory.models.SQLModelBuilder;
 import com.chiorichan.http.HttpRequestWrapper;
 import com.chiorichan.lang.ExceptionContext;
 import com.chiorichan.lang.ExceptionReport;
@@ -48,8 +48,7 @@ public class ScriptingContext implements ExceptionContext
 		// Might need a better attempt at auto determining file types
 		// File types meaning located in public webroot verses resource
 
-		ScriptingContext context = null;
-		context = fromFile( site, res );
+		ScriptingContext context = fromFile( site, res );
 		if ( context == null || context.result().hasExceptions() )
 		{
 			if ( res.contains( "." ) )
@@ -287,7 +286,7 @@ public class ScriptingContext implements ExceptionContext
 		if ( request == null && factory == null )
 			throw new IllegalArgumentException( "We can't eval() this EvalContext until you provide either the request or the factory." );
 		if ( request != null && factory == null )
-			factory = request.getEvalFactory();
+			factory = request.getScriptingFactory();
 
 		result = factory.eval( this );
 
@@ -323,14 +322,14 @@ public class ScriptingContext implements ExceptionContext
 		return result.getObject();
 	}
 
-	public SQLQueryBuilder model() throws ScriptingException, MultipleException
+	public SQLModelBuilder model() throws ScriptingException, MultipleException
 	{
 		if ( request == null && factory == null )
 			throw new IllegalArgumentException( "We can't eval() this EvalContext until you provide either the request or the factory." );
 		if ( request != null && factory == null )
-			factory = request.getEvalFactory();
+			factory = request.getScriptingFactory();
 
-		setScriptBaseClass( SQLQueryBuilder.class.getName() );
+		setScriptBaseClass( SQLModelBuilder.class.getName() );
 
 		result = factory.eval( this );
 
@@ -354,7 +353,7 @@ public class ScriptingContext implements ExceptionContext
 			str = ExceptionReport.printExceptions( result.getIgnorableExceptions() ) + "\n" + str;
 
 		factory.print( str );
-		return ( SQLQueryBuilder ) result.getScript();
+		return ( SQLModelBuilder ) result.getScript();
 	}
 
 	public ScriptingFactory factory()
@@ -407,7 +406,7 @@ public class ScriptingContext implements ExceptionContext
 	{
 		ScriptingResult result = null;
 		if ( request != null )
-			result = request.getEvalFactory().eval( this );
+			result = request.getScriptingFactory().eval( this );
 		else if ( factory != null )
 			result = factory.eval( this );
 		else

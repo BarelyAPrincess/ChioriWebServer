@@ -9,29 +9,32 @@
  */
 package com.chiorichan.factory.models
 
+import groovy.transform.CompileStatic
+
 /**
  * Provides DB model
  **/
-public class SQLModel
+@CompileStatic
+class SQLModel
 {
-	private SQLQueryBuilder builder;
-	private columnData = [:];
-	private columns = [];
+	private SQLModelBuilder builder
+	private Map columnData = [:]
+	private List columns = []
 
-	public SQLModel( SQLQueryBuilder builder, Map<String, Object> row )
+	SQLModel( SQLModelBuilder builder, Map row )
 	{
-		this.builder = builder;
+		this.builder = builder
 
-		columnData.putAll( row );
-		columns.addAll( columnData.keySet() );
+		columnData.putAll( row )
+		columns.addAll( columnData.keySet() )
 	}
 
-	public void save()
+	void save()
 	{
 
 	}
 
-	public void delete()
+	void delete()
 	{
 
 	}
@@ -51,5 +54,27 @@ public class SQLModel
 	def propertyMissing( String key )
 	{
 		columnData[key]
+	}
+
+	def methodMissing( String key, args )
+	{
+		SQLModelBuilder rootBuilder = builder.root()
+		MetaMethod method = rootBuilder.getMetaClass().getMetaMethod( key, [this].toArray() )
+		if ( method == null )
+			throw new MissingMethodException( key, rootBuilder.getClass(), [this].toArray() )
+		return method.invoke( rootBuilder, [this].toArray() )
+	}
+
+	boolean matches( String column, Object value )
+	{
+		if ( !columnData.containsKey( column ) )
+			return false
+		return columnData.get( column ) == value
+	}
+
+	SQLModelBuilder belongsTo( String belongingModelPackage, String columnLeft, String columnRight )
+	{
+		SQLModelBuilder belongingModel = builder.model( belongingModelPackage )
+		return belongingModel.whereMatches( columnRight, columnData[columnLeft] )
 	}
 }

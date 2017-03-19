@@ -21,8 +21,8 @@ import com.chiorichan.logger.experimental.LogEvent;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.session.Session;
 import com.chiorichan.session.SessionException;
-import com.chiorichan.utils.WebFunc;
 import com.chiorichan.utils.UtilObjects;
+import com.chiorichan.utils.UtilStrings;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import io.netty.buffer.ByteBuf;
@@ -344,7 +344,7 @@ public class HttpResponseWrapper
 					if ( !UtilObjects.isNull( e.getKey() ) )
 						add( new ArrayList<Object>()
 						{{
-							add( "<b>" + WebFunc.escapeHTML( e.getKey() ) + "</b>" );
+							add( "<b>" + UtilStrings.escapeHtml( e.getKey() ) + "</b>" );
 							try
 							{
 								if ( UtilObjects.isNull( e.getValue() ) )
@@ -352,7 +352,7 @@ public class HttpResponseWrapper
 								else if ( e.getKey().toLowerCase().contains( "password" ) )
 									add( "(hidden)" );
 								else
-									add( WebFunc.escapeHTML( UtilObjects.castToString( e.getValue() ) ) );
+									add( UtilStrings.escapeHtml( UtilObjects.castToString( e.getValue() ) ) );
 							}
 							catch ( ClassCastException e )
 							{
@@ -420,8 +420,8 @@ public class HttpResponseWrapper
 			{
 				String stackTrace = ExceptionUtils.getStackTrace( cause );
 
-				if ( request.getEvalFactory() != null )
-					for ( Entry<String, ScriptingContext> e : request.getEvalFactory().stack().getScriptTraceHistory().entrySet() )
+				if ( request.getScriptingFactory() != null )
+					for ( Entry<String, ScriptingContext> e : request.getScriptingFactory().stack().getScriptTraceHistory().entrySet() )
 						stackTrace = stackTrace.replace( e.getKey(), e.getValue().filename() );
 
 				sendError( httpStatus, null, "<pre>" + stackTrace + "</pre>" );

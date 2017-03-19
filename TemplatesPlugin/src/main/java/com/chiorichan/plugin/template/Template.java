@@ -193,7 +193,7 @@ public class Template extends Plugin implements Listener
 			if ( ExceptionUtils.indexOfThrowable( event.getThrowable(), Template.class ) > -1 )
 				return;
 
-			ScriptingFactory factory = event.getRequest().getEvalFactory();
+			ScriptingFactory factory = event.getRequest().getScriptingFactory();
 
 			// We initialize a temporary EvalFactory if the request did not contain one
 			if ( factory == null )
@@ -373,7 +373,7 @@ public class Template extends Plugin implements Listener
 	private ScriptingResult packageEval( String pack, RenderEvent event ) throws Exception
 	{
 		ScriptingContext context = ScriptingContext.fromPackage( event.getSite(), pack ).request( event.getRequest() );
-		ScriptingResult result = event.getRequest().getEvalFactory().eval( context );
+		ScriptingResult result = event.getRequest().getScriptingFactory().eval( context );
 
 		if ( result.hasNonIgnorableExceptions() )
 			ExceptionReport.throwExceptions( result.getExceptions() );
