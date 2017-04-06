@@ -29,6 +29,7 @@ import com.chiorichan.logger.Log
 import com.chiorichan.permission.PermissibleEntity
 import com.chiorichan.permission.Permission
 import com.chiorichan.permission.PermissionResult
+import com.chiorichan.permission.lang.PermissionDeniedException
 import com.chiorichan.session.Session
 import com.chiorichan.site.DomainMapping
 import com.chiorichan.site.Site
@@ -144,12 +145,18 @@ abstract class ScriptingBaseHttp extends Builtin
 	 */
 	Account getAccount()
 	{
-		return getRequest().getSession().account()
+		return getSession().account()
+	}
+
+	Account getAccountOrFail()
+	{
+		requireLogin()
+		return getAccount()
 	}
 
 	boolean isLoginPresent()
 	{
-		return getRequest().getSession().isLoginPresent()
+		return getSession().isLoginPresent()
 	}
 
 	/**
@@ -160,6 +167,12 @@ abstract class ScriptingBaseHttp extends Builtin
 	Site getSite()
 	{
 		return getRequest().getSite()
+	}
+
+	void requireLogin()
+	{
+		if ( !getSession().hasLogin() )
+			throw new PermissionDeniedException( PermissionDeniedException.PermissionDeniedReason.LOGIN_PAGE );
 	}
 
 	/**

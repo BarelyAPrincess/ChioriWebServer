@@ -15,7 +15,7 @@ import com.chiorichan.event.EventHandler;
 import com.chiorichan.event.EventPriority;
 import com.chiorichan.event.EventRegistrar;
 import com.chiorichan.event.Listener;
-import com.chiorichan.event.http.ErrorEvent;
+import com.chiorichan.event.http.HttpErrorEvent;
 import com.chiorichan.http.ApacheHandler;
 import com.chiorichan.http.WebInterpreter;
 import com.chiorichan.lang.EnumColor;
@@ -321,9 +321,9 @@ public class NetworkSecurity implements EventRegistrar, TaskRegistrar, Listener
 	}
 
 	@EventHandler( priority = EventPriority.MONITOR )
-	public void onErrorEvent( ErrorEvent event )
+	public void onErrorEvent( HttpErrorEvent event )
 	{
-		if ( event.getStatus() == 404 )
+		if ( event.getHttpCode() == 404 )
 		{
 			// Nothing
 		}

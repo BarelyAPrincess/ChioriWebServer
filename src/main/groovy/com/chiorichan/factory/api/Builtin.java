@@ -15,6 +15,7 @@ import com.chiorichan.database.DatabaseEngineLegacy;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.ScriptingFactory;
+import com.chiorichan.factory.TableBuilder;
 import com.chiorichan.factory.localization.LocalizationException;
 import com.chiorichan.factory.models.SQLModelBuilder;
 import com.chiorichan.lang.DiedException;
@@ -70,6 +71,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -181,32 +183,37 @@ public abstract class Builtin extends Script
 		return var == null ? 0 : var.length();
 	}
 
-	public static String createTable( Collection<?> tableData )
+	public static TableBuilder table()
+	{
+		return new TableBuilder();
+	}
+
+	public static String createTable( Collection<Object> tableData )
 	{
 		return createTable( tableData, null, null, null );
 	}
 
-	public static String createTable( Collection<?> tableData, String tableId )
+	public static String createTable( Collection<Object> tableData, String tableId )
 	{
 		return createTable( tableData, null, tableId, null );
 	}
 
-	public static String createTable( Collection<?> tableData, String tableId, String altTableClass )
+	public static String createTable( Collection<Object> tableData, String tableId, String altTableClass )
 	{
 		return createTable( tableData, null, tableId, altTableClass );
 	}
 
-	public static String createTable( Collection<?> tableData, Collection<String> tableHeader )
+	public static String createTable( Collection<Object> tableData, Collection<String> tableHeader )
 	{
 		return createTable( tableData, tableHeader, null, null );
 	}
 
-	public static String createTable( Collection<?> tableData, Collection<String> tableHeader, String tableId )
+	public static String createTable( Collection<Object> tableData, Collection<String> tableHeader, String tableId )
 	{
 		return createTable( tableData, tableHeader, tableId, null );
 	}
 
-	public static String createTable( Collection<?> tableData, Collection<String> tableHeader, String tableId, String altTableClass )
+	public static String createTable( Collection<Object> tableData, Collection<String> tableHeader, String tableId, String altTableClass )
 	{
 		Map<String, Object> newData = new TreeMap<>();
 
@@ -237,7 +244,7 @@ public abstract class Builtin extends Script
 
 	public static String createTable( Map<?, ?> tableData, Collection<String> tableHeader )
 	{
-		return createTable( tableData, tableHeader, "" );
+		return createTable( tableData, tableHeader, null );
 	}
 
 	public static String createTable( Map<?, ?> tableData, Collection<String> tableHeader, String tableId )
@@ -255,15 +262,15 @@ public abstract class Builtin extends Script
 			altTableClass = "altrowstable";
 
 		StringBuilder sb = new StringBuilder();
-		int x = 0;
-		sb.append( "<table " + ( tableId == null ? "" : " id=\"" + tableId + "\"" ) + " class=\"" + altTableClass + "\">\n" );
+		AtomicInteger rowInx = new AtomicInteger();
+		sb.append( "<table " ).append( tableId == null ? "" : " id=\"" + tableId + "\"" ).append( " class=\"" ).append( altTableClass ).append( "\">\n" );
 
 		if ( tableHeader != null )
 		{
 			sb.append( "<thead>\n" );
 			sb.append( "<tr>\n" );
 			for ( String col : tableHeader )
-				sb.append( "<th>" + col + "</th>\n" );
+				sb.append( "<th>" ).append( col ).append( "</th>\n" );
 			sb.append( "</tr>\n" );
 			sb.append( "</thead>\n" );
 		}
@@ -277,8 +284,7 @@ public abstract class Builtin extends Script
 
 		for ( Object row : tableData.values() )
 		{
-			String clss = x % 2 == 0 ? "evenrowcolor" : "oddrowcolor";
-			x++;
+			String clss = rowInx.getAndIncrement() % 2 == 0 ? "evenrowcolor" : "oddrowcolor";
 
 			if ( row instanceof Map || row instanceof Collection )
 			{
@@ -286,35 +292,28 @@ public abstract class Builtin extends Script
 
 				sb.append( "<tr" );
 
-				map.entrySet().stream().forEach( e ->
-				{
-					String s = UtilObjects.castToString( e.getKey() );
-					if ( s.startsWith( ":" ) )
-					{
-						map.remove( s );
-						sb.append( " " + s.substring( 1 ) + "=\"" + e.getValue() + "\"" );
-					}
-				} );
+				map.entrySet().stream().filter( e -> e.getKey().startsWith( ":" ) ).forEach( e -> sb.append( " " ).append( e.getKey().substring( 1 ) ).append( "=\"" ).append( e.getValue() ).append( "\"" ) );
 
-				sb.append( " class=\"" + clss + "\">\n" );
+				sb.append( " class=\"" ).append( clss ).append( "\">\n" );
 
-				if ( map.size() == 1 )
-					sb.append( "<td style=\"text-align: center; font-weight: bold;\" class=\"\" colspan=\"" + colLength + "\">" + map.get( 0 ) + "</td>\n" );
+				List<String> values = map.entrySet().stream().filter( e -> !e.getKey().startsWith( ":" ) ).map( Entry::getValue ).collect( Collectors.toList() );
+				if ( values.size() == 1 )
+					sb.append( "<td style=\"text-align: center; font-weight: bold;\" class=\"\" colspan=\"" ).append( colLength ).append( "\">" ).append( values.get( 0 ) ).append( "</td>\n" );
 				else
 				{
-					int cc = 0;
-					for ( Object col : map.values() )
-						if ( col != null )
-						{
-							String subclass = col instanceof String && ( ( String ) col ).length() == 0 ? "tblEmptyCol" : "";
-							sb.append( "<td id=\"col_" + cc + "\" class=\"" + subclass + "\">" + col + "</td>\n" );
-							cc++;
-						}
+					AtomicInteger colInx = new AtomicInteger();
+					for ( String col : values )
+					{
+						sb.append( "<td id=\"col_" ).append( colInx.getAndIncrement() ).append( "\"" );
+						if ( col.length() == 0 )
+							sb.append( " class=\"tblEmptyCol\"" );
+						sb.append( ">" ).append( col ).append( "</td>\n" );
+					}
 				}
 				sb.append( "</tr>\n" );
 			}
 			else
-				sb.append( "<tr class=\"" + clss + "\"><td id=\"tblStringRow\" colspan=\"" + colLength + "\"><b><center>" + UtilObjects.castToString( row ) + "</center></b></td></tr>\n" );
+				sb.append( "<tr class=\"" ).append( clss ).append( "\"><td id=\"tblStringRow\" colspan=\"" ).append( colLength ).append( "\"><b><center>" ).append( UtilObjects.castToString( row ) ).append( "</center></b></td></tr>\n" );
 		}
 
 		sb.append( "</tbody>\n" );
@@ -958,14 +957,14 @@ public abstract class Builtin extends Script
 				if ( !children.isEmpty() )
 					value = children.size();
 
-				sb.append( "\n" + obj.getClass().getName() + "(" + value + ")" );
+				sb.append( "\n" ).append( obj.getClass().getName() ).append( "(" ).append( value ).append( ")" );
 
 				if ( !children.isEmpty() )
 				{
 					sb.append( " {" );
 					for ( Entry<String, Object> c : children.entrySet() )
 					{
-						sb.append( "\n\t[" + c.getKey() + "]=>" );
+						sb.append( "\n\t[" ).append( c.getKey() ).append( "]=>" );
 						for ( String s : var_export( c.getValue() ).split( "\n" ) )
 							sb.append( "\n\t" + s );
 					}
@@ -975,10 +974,7 @@ public abstract class Builtin extends Script
 			else
 				sb.append( "\nnull" );
 
-		if ( sb.length() < 1 )
-			return "";
-
-		return sb.substring( 1 ).toString();
+		return sb.length() < 1 ? "" : sb.substring( 1 );
 	}
 
 	/**

@@ -12,11 +12,13 @@ package com.chiorichan.http;
 import com.chiorichan.AppConfig;
 import com.chiorichan.Versioning;
 import com.chiorichan.event.EventBus;
-import com.chiorichan.event.http.ErrorEvent;
+import com.chiorichan.event.http.HttpErrorEvent;
 import com.chiorichan.event.http.HttpExceptionEvent;
 import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.api.Builtin;
+import com.chiorichan.lang.EnumColor;
 import com.chiorichan.lang.HttpError;
+import com.chiorichan.logger.Log;
 import com.chiorichan.logger.experimental.LogEvent;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.session.Session;
@@ -186,48 +188,63 @@ public class HttpResponseWrapper
 		if ( e instanceof HttpError )
 			sendError( ( ( HttpError ) e ).getHttpCode(), ( ( HttpError ) e ).getReason(), e.getMessage() );
 		else
-			sendError( 500, e.getMessage() );
+			sendException( e );
 	}
 
 	public void sendError( HttpResponseStatus status ) throws IOException
 	{
-		sendError( status, null, null );
+		sendError( status.code(), status.reasonPhrase().toString(), null );
 	}
 
-	public void sendError( HttpResponseStatus status, String httpMsg ) throws IOException
+	public void sendError( HttpResponseStatus status, String statusReason, String developerMessage ) throws IOException
 	{
-		sendError( status, httpMsg, null );
+		sendError( status.code(), statusReason, developerMessage );
 	}
 
-	public void sendError( HttpResponseStatus status, String httpMsg, String msg ) throws IOException
+	public void sendError( HttpResponseStatus status, String developerMessage ) throws IOException
+	{
+		sendError( status.code(), status.reasonPhrase().toString(), developerMessage );
+	}
+
+	public void sendError( int statusCode ) throws IOException
+	{
+		sendError( statusCode, null );
+	}
+
+	public void sendError( int statusCode, String statusReason ) throws IOException
+	{
+		sendError( statusCode, statusReason, null );
+	}
+
+	public void sendError( int statusCode, String statusReason, String developerMessage ) throws IOException
 	{
 		if ( stage == HttpResponseStage.CLOSED )
 			throw new IllegalStateException( "You can't access sendError method within this HttpResponse because the connection has been closed." );
 
-		if ( httpMsg == null )
-			httpMsg = status.reasonPhrase().toString();
-
-		// NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + status.code() + ",httpMsg=" + httpMsg + ",subdomain=" + request.getSubDomain() + ",domain=" + request.getRootDomain() + ",uri=" + request.getUri() +
-		// ",remoteIp=" + request.getIpAddress() + "}" );
-
-		if ( msg == null || msg.length() > 255 )
-			log.log( Level.SEVERE, "%s {code=%s}", httpMsg, status.code() );
-		else
-			log.log( Level.SEVERE, "%s {code=%s,reason=%s}", httpMsg, status.code(), msg );
+		if ( statusCode < 1 || statusCode > 600 )
+			statusCode = 500;
 
 		resetBuffer();
 
 		// Trigger an internal Error Event to notify plugins of a possible problem.
-		ErrorEvent event = new ErrorEvent( request, status.code(), httpMsg );
+		HttpErrorEvent event = new HttpErrorEvent( request, statusCode, statusReason, AppConfig.get().getBoolean( "server.developmentMode" ) );
 		EventBus.instance().callEvent( event );
+
+		statusCode = event.getHttpCode();
+		statusReason = event.getHttpReason();
+
+		if ( statusReason == null || statusReason.length() > 255 )
+			log.log( Level.SEVERE, "%s {code=%s}", statusReason, statusCode );
+		else
+			log.log( Level.SEVERE, "%s {code=%s,reason=%s}", statusReason, statusCode, statusReason );
 
 		if ( event.getErrorHtml() == null || event.getErrorHtml().length() == 0 )
 		{
 			boolean printHtml = true;
 
-			if ( htaccess != null && htaccess.getErrorDocument( status.code() ) != null )
+			if ( htaccess != null && htaccess.getErrorDocument( statusCode ) != null )
 			{
-				String resp = htaccess.getErrorDocument( status.code() ).getResponse();
+				String resp = htaccess.getErrorDocument( statusCode ).getResponse();
 
 				if ( resp.startsWith( "/" ) )
 				{
@@ -240,26 +257,25 @@ public class HttpResponseWrapper
 					printHtml = false;
 				}
 				else
-					httpMsg = resp;
+					statusReason = resp;
 			}
 
 			if ( printHtml )
 			{
 				println( "<html><head>" );
-				println( "<title>" + status.code() + " - " + httpMsg + "</title>" );
+				println( "<title>" + statusCode + " - " + statusReason + "</title>" );
 				println( "<style>body { margin: 0; padding: 0; } h1, h2, h3, h4, h5, h6 { margin: 0; } .container { padding: 8px; } .debug-header { display: block; margin: 15px 0 0; font-size: 18px; color: #303030; font-weight: bold; } #debug-table { border: 1px solid; width: 100%; } #debug-table thead { background-color: #eee; } #debug-table #col_0 { width: 20%; min-width: 130px; overflow: hidden; font-weight: bold; color: #463C54; padding-right: 5px; } #debug-table #tblStringRow { color: rgba(0, 0, 0, .3); font-weight: 300; }</style>" );
 				println( "</head><body>" );
 
 				println( "<div class=\"container\" style=\" background-color: #eee; \">" );
-				println( "<h1>" + status.code() + " - " + httpMsg + "</h1>" );
+				println( "<h1>" + statusCode + " - " + statusReason + "</h1>" );
 				println( "</div>" );
 				println( "<div class=\"container\">" );
 
-				if ( msg != null && !msg.isEmpty() )
-					println( "<p>" + msg + "</p>" );
-
 				if ( Versioning.isDevelopment() )
 				{
+					println( "<p>" + developerMessage + "</p>" );
+
 					println( "<h3>Debug &amp; Environment Details:</h3>" );
 
 					println( "<span class=\"debug-header\">GET Data</span>" );
@@ -272,7 +288,7 @@ public class HttpResponseWrapper
 					Collection<UploadedFile> files = request.getUploadedFiles().values();
 					ArrayList<Object> tbl = new ArrayList<Object>()
 					{{
-						if ( files == null || files.size() == 0 )
+						if ( files.size() == 0 )
 							add( "empty" );
 						else
 							for ( UploadedFile file : files )
@@ -315,6 +331,8 @@ public class HttpResponseWrapper
 
 					// TODO Environment Variables
 				}
+				else
+					NetworkManager.getLogger().severe( String.format( "%s%sHttpError Developer Message: %s", EnumColor.GOLD, EnumColor.NEGATIVE, developerMessage ) );
 
 				println( "<hr>" );
 				println( "<small>Running <a href=\"https://github.com/ChioriGreene/ChioriWebServer\">" + Versioning.getProduct() + "</a> Version " + Versioning.getVersion() + " (Build #" + Versioning.getBuildNumber() + ")<br />" + Versioning.getCopyright() + "</small>" );
@@ -323,12 +341,16 @@ public class HttpResponseWrapper
 
 				setContentType( "text/html" );
 				setEncoding( Charsets.UTF_8 );
+				httpStatus = HttpResponseStatus.valueOf( statusCode );
 				sendResponse();
 			}
 		}
 		else
 		{
 			print( event.getErrorHtml() );
+			setContentType( "text/html" );
+			setEncoding( Charsets.UTF_8 );
+			httpStatus = HttpResponseStatus.valueOf( statusCode );
 			sendResponse();
 		}
 	}
@@ -364,24 +386,6 @@ public class HttpResponseWrapper
 		println( Builtin.createTable( tbl, "debug-table" ) );
 	}
 
-	public void sendError( int httpCode ) throws IOException
-	{
-		sendError( httpCode, null );
-	}
-
-	public void sendError( int httpCode, String httpMsg ) throws IOException
-	{
-		sendError( httpCode, httpMsg, null );
-	}
-
-	public void sendError( int status, String httpMsg, String msg ) throws IOException
-	{
-		if ( status < 1 )
-			status = 500;
-
-		sendError( HttpResponseStatus.valueOf( status ), httpMsg, msg );
-	}
-
 	public void sendException( Throwable cause ) throws IOException
 	{
 		if ( stage == HttpResponseStage.CLOSED )
@@ -397,11 +401,6 @@ public class HttpResponseWrapper
 		EventBus.instance().callEvent( event );
 
 		int httpCode = event.getHttpCode();
-
-		httpStatus = HttpResponseStatus.valueOf( httpCode );
-
-		// NetworkManager.getLogger().info( ConsoleColor.RED + "HttpError{httpCode=" + httpCode + ",httpMsg=" + HttpCode.msg( httpCode ) + ",domain=" + request.getSubDomain() + "." + request.getRootDomain() + ",uri=" + request.getUri() +
-		// ",remoteIp=" + request.getIpAddress() + "}" );
 
 		if ( Versioning.isDevelopment() )
 		{
@@ -424,7 +423,7 @@ public class HttpResponseWrapper
 					for ( Entry<String, ScriptingContext> e : request.getScriptingFactory().stack().getScriptTraceHistory().entrySet() )
 						stackTrace = stackTrace.replace( e.getKey(), e.getValue().filename() );
 
-				sendError( httpStatus, null, "<pre>" + stackTrace + "</pre>" );
+				sendError( httpCode, null, "<pre>" + stackTrace + "</pre>" );
 			}
 		}
 		else

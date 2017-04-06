@@ -219,155 +219,148 @@ public class Template extends Plugin implements Listener
 	@EventHandler( priority = EventPriority.NORMAL )
 	public void onRenderEvent( RenderEvent event ) throws Exception
 	{
-		try
-		{
-			Site site = event.getSite();
-			Map<String, String> fwParams = event.getParams();
+		Site site = event.getSite();
+		Map<String, String> fwParams = event.getParams();
 
-			if ( site == null )
-				site = SiteManager.instance().getDefaultSite();
+		if ( site == null )
+			site = SiteManager.instance().getDefaultSite();
 
-			if ( fwParams.get( "themeless" ) != null && UtilObjects.isTrue( fwParams.get( "themeless" ) ) )
-				return;
+		if ( fwParams.get( "themeless" ) != null && UtilObjects.isTrue( fwParams.get( "themeless" ) ) )
+			return;
 
-			String theme = fwParams.get( "theme" );
-			String view = fwParams.get( "view" );
-			String title = fwParams.get( "title" );
+		String theme = fwParams.get( "theme" );
+		String view = fwParams.get( "view" );
+		String title = fwParams.get( "title" );
 
-			if ( UtilObjects.isNull( theme ) )
-				theme = "";
+		if ( UtilObjects.isNull( theme ) )
+			theme = "";
 
-			if ( UtilObjects.isNull( view ) )
-				view = "";
+		if ( UtilObjects.isNull( view ) )
+			view = "";
 
-			if ( !getConfig().getBoolean( "config.alwaysRender" ) && UtilObjects.isEmpty( theme ) && UtilObjects.isEmpty( view ) )
-				return;
+		if ( !getConfig().getBoolean( "config.alwaysRender" ) && UtilObjects.isEmpty( theme ) && UtilObjects.isEmpty( view ) )
+			return;
 
-			// TODO return if the request is for a none text contentType
+		// TODO return if the request is for a none text contentType
 
-			if ( UtilObjects.isEmpty( theme ) )
-				theme = "com.chiorichan.themes.default";
+		if ( UtilObjects.isEmpty( theme ) )
+			theme = "com.chiorichan.themes.default";
 
-			StringBuilder ob = new StringBuilder();
+		StringBuilder ob = new StringBuilder();
 
-			String docType = getConfig().getString( "config.defaultDocType", "html" );
+		String docType = getConfig().getString( "config.defaultDocType", "html" );
 
-			if ( fwParams.get( "docType" ) != null && !fwParams.get( "docType" ).isEmpty() )
-				docType = fwParams.get( "docType" );
+		if ( fwParams.get( "docType" ) != null && !fwParams.get( "docType" ).isEmpty() )
+			docType = fwParams.get( "docType" );
 
-			ob.append( "<!DOCTYPE " + docType + ">\n" );
-			ob.append( "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n" );
-			ob.append( "<head>\n" );
-			ob.append( "<meta charset=\"utf-8\">\n" );
+		ob.append( "<!DOCTYPE " + docType + ">\n" );
+		ob.append( "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n" );
+		ob.append( "<head>\n" );
+		ob.append( "<meta charset=\"utf-8\">\n" );
 
-			String siteTitle;
-			if ( site.getTitle() == null || site.getTitle().isEmpty() )
-				siteTitle = AppConfig.get().getString( "framework.sites.defaultTitle", "Unnamed Site" );
-			else
-				siteTitle = site.getTitle();
+		String siteTitle;
+		if ( site.getTitle() == null || site.getTitle().isEmpty() )
+			siteTitle = AppConfig.get().getString( "framework.sites.defaultTitle", "Unnamed Site" );
+		else
+			siteTitle = site.getTitle();
 
-			if ( title == null || title.isEmpty() )
-				ob.append( "<title>" + siteTitle + "</title>\n" );
-			else if ( title.startsWith( "!" ) )
-				ob.append( "<title>" + title.substring( 1 ) + "</title>\n" );
-			else
-				ob.append( "<title>" + title + " - " + siteTitle + "</title>\n" );
+		if ( title == null || title.isEmpty() )
+			ob.append( "<title>" + siteTitle + "</title>\n" );
+		else if ( title.startsWith( "!" ) )
+			ob.append( "<title>" + title.substring( 1 ) + "</title>\n" );
+		else
+			ob.append( "<title>" + title + " - " + siteTitle + "</title>\n" );
 
-			boolean showCommons = !getConfig().getBoolean( "config.noCommons" );
+		boolean showCommons = !getConfig().getBoolean( "config.noCommons" );
 
-			if ( fwParams.get( "noCommons" ) != null )
-				showCommons = !UtilObjects.isTrue( fwParams.get( "noCommons" ) );
+		if ( fwParams.get( "noCommons" ) != null )
+			showCommons = !UtilObjects.isTrue( fwParams.get( "noCommons" ) );
 
-			List<String> headers = new ArrayList<>();
+		List<String> headers = new ArrayList<>();
 
-			if ( fwParams.get( "header" ) != null && !fwParams.get( "header" ).isEmpty() )
-				headers.add( fwParams.get( "header" ) );
+		if ( fwParams.get( "header" ) != null && !fwParams.get( "header" ).isEmpty() )
+			headers.add( fwParams.get( "header" ) );
 
-			Namespace ns = Namespace.parseString( theme );
-			Namespace pns = ns.getParentNamespace( 2 );
+		Namespace ns = Namespace.parseString( theme );
+		Namespace pns = ns.getParentNamespace( 2 );
 
-			if ( showCommons )
-				headers.add( pns.appendNew( "includes.common" ).getString() );
-			headers.add( pns.appendNew( "includes." + ns.getLocalName() ).getString() );
+		if ( showCommons )
+			headers.add( pns.appendNew( "includes.common" ).getString() );
+		headers.add( pns.appendNew( "includes." + ns.getLocalName() ).getString() );
 
-			boolean isDev = Versioning.isDevelopment();
+		boolean isDev = Versioning.isDevelopment();
 
-			for ( String pack : headers )
-				try
+		for ( String pack : headers )
+			try
+			{
+				if ( isDev )
+					ob.append( "<!-- package \"" + pack + "\" start -->\n" );
+				ob.append( packageRead( pack, event ) + "\n" );
+				if ( isDev )
 				{
-					if ( isDev )
-						ob.append( "<!-- package \"" + pack + "\" start -->\n" );
-					ob.append( packageRead( pack, event ) + "\n" );
+					ob.append( "<!-- package \"" + pack + "\" end -->\n" );
+					getLogger().fine( String.format( "Included package '%s' in head", pack ) );
+				}
+			}
+			catch ( ScriptingException t )
+			{
+				if ( t.isIgnorable() )
+				{
+					getLogger().warning( String.format( "There was an ignorable exception thrown including the package '%s'", pack ) );
+
 					if ( isDev )
 					{
-						ob.append( "<!-- package \"" + pack + "\" end -->\n" );
-						getLogger().fine( String.format( "Included package '%s' in head", pack ) );
+						getLogger().fine( t.getMessage() );
+						ob.append( "<!-- package \"" + pack + "\" failed -->\n" );
 					}
 				}
-				catch ( ScriptingException t )
-				{
-					if ( t.isIgnorable() )
-					{
-						getLogger().warning( String.format( "There was an ignorable exception thrown including the package '%s'", pack ) );
-
-						if ( isDev )
-						{
-							getLogger().fine( t.getMessage() );
-							ob.append( "<!-- package \"" + pack + "\" failed -->\n" );
-						}
-					}
-					else
-						throw t;
-				}
-
-			ob.append( "</head>\n" );
-
-			String pageMark = "<!-- " + getConfig().getString( "config.defaultTag", "PAGE DATA" ) + " -->";
-			String pageData = "";
-			String viewData = "";
-			Map<String, String> params = new HashMap<>( fwParams );
-
-			if ( !theme.isEmpty() )
-			{
-				ScriptingResult result = packageEval( theme, event );
-				pageData = result.getString();
-				params.putAll( result.context().request().getRequestMapRaw() );
-			}
-
-			if ( !view.isEmpty() )
-			{
-				ScriptingResult result = packageEval( view, event );
-				viewData = result.getString();
-				params.putAll( result.context().request().getRequestMapRaw() );
-			}
-
-			ob.append( "<body" + ( params == null ? " " + params.get( "bodyArgs" ) : "" ) + ">\n" );
-
-			if ( viewData != null && !viewData.isEmpty() )
-				if ( pageData.indexOf( pageMark ) < 0 )
-					pageData = pageData + viewData;
 				else
-					pageData = pageData.replace( pageMark, viewData );
+					throw t;
+			}
 
-			if ( pageData.indexOf( pageMark ) < 0 )
-				pageData = pageData + UtilNetty.byteBuf2String( event.getSource(), event.getEncoding() );
-			else
-				pageData = pageData.replace( pageMark, UtilNetty.byteBuf2String( event.getSource(), event.getEncoding() ) );
+		ob.append( "</head>\n" );
 
-			ob.append( pageData + "\n" );
+		String pageMark = "<!-- " + getConfig().getString( "config.defaultTag", "PAGE DATA" ) + " -->";
+		String pageData = "";
+		String viewData = "";
+		Map<String, String> params = new HashMap<>( fwParams );
 
-			if ( fwParams.get( "footer" ) != null && !fwParams.get( "footer" ).isEmpty() )
-				ob.append( packageRead( fwParams.get( "footer" ), event ) + "\n" );
-
-			ob.append( "</body>\n" );
-			ob.append( "</html>\n" );
-
-			event.setSource( Unpooled.buffer().writeBytes( ob.toString().getBytes() ) );
-		}
-		catch ( ScriptingException | MultipleException e )
+		if ( !theme.isEmpty() )
 		{
-			event.getResponse().sendException( e );
+			ScriptingResult result = packageEval( theme, event );
+			pageData = result.getString();
+			params.putAll( result.context().request().getRequestMapRaw() );
 		}
+
+		if ( !view.isEmpty() )
+		{
+			ScriptingResult result = packageEval( view, event );
+			viewData = result.getString();
+			params.putAll( result.context().request().getRequestMapRaw() );
+		}
+
+		ob.append( "<body" + ( params == null ? " " + params.get( "bodyArgs" ) : "" ) + ">\n" );
+
+		if ( viewData != null && !viewData.isEmpty() )
+			if ( pageData.indexOf( pageMark ) < 0 )
+				pageData = pageData + viewData;
+			else
+				pageData = pageData.replace( pageMark, viewData );
+
+		if ( pageData.indexOf( pageMark ) < 0 )
+			pageData = pageData + UtilNetty.byteBuf2String( event.getSource(), event.getEncoding() );
+		else
+			pageData = pageData.replace( pageMark, UtilNetty.byteBuf2String( event.getSource(), event.getEncoding() ) );
+
+		ob.append( pageData + "\n" );
+
+		if ( fwParams.get( "footer" ) != null && !fwParams.get( "footer" ).isEmpty() )
+			ob.append( packageRead( fwParams.get( "footer" ), event ) + "\n" );
+
+		ob.append( "</body>\n" );
+		ob.append( "</html>\n" );
+
+		event.setSource( Unpooled.buffer().writeBytes( ob.toString().getBytes() ) );
 	}
 
 	private ScriptingResult packageEval( String pack, RenderEvent event ) throws Exception

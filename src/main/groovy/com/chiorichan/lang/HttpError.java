@@ -9,99 +9,84 @@
  */
 package com.chiorichan.lang;
 
-import com.chiorichan.Versioning;
-import com.chiorichan.http.HttpCode;
-import com.chiorichan.net.NetworkManager;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
-public class HttpError extends Exception
+public class HttpError extends Exception implements IException
 {
 	private static final long serialVersionUID = 8116947267974772489L;
 
-	/**
-	 * Determines if the server is in developer mode and full text exceptions should be displayed to requester.
-	 * Otherwise, the message to output to log and the generic HTTP error message is returned.
-	 *
-	 * @param code The http error code
-	 * @param msg  The full text developer message
-	 * @throws HttpError Always
-	 */
-	public static void throwDeveloperError( HttpResponseStatus code, String msg ) throws HttpError
-	{
-		if ( Versioning.isDevelopment() )
-			throw new HttpError( code, msg );
-
-		NetworkManager.getLogger().fine( msg );
-		throw new HttpError( code );
-	}
-
-	HttpResponseStatus status = HttpResponseStatus.OK;
-	String reason = null;
-
-	public HttpError( int i )
-	{
-		this( i, HttpCode.msg( i ), null );
-	}
+	int statusCode;
+	String statusReason;
 
 	public HttpError( HttpResponseStatus status )
 	{
 		this( status, null );
 	}
 
-	public HttpError( HttpResponseStatus status, String msg )
+	public HttpError( HttpResponseStatus status, String developerMessage )
 	{
-		super( msg );
-
-		this.reason = status.reasonPhrase().toString();
-		this.status = status;
+		super( developerMessage == null ? status.reasonPhrase().toString() : developerMessage );
+		statusCode = status.code();
+		statusReason = status.reasonPhrase().toString();
 	}
 
-	public HttpError( int i, String reason )
+	public HttpError( int statusCode )
 	{
-		this( i, reason, null );
+		this( statusCode, null );
 	}
 
-	public HttpError( int i, String reason, String msg )
+	public HttpError( int statusCode, String statusReason )
 	{
-		super( msg );
-
-		status = HttpResponseStatus.valueOf( i );
-		this.reason = reason;
+		this( statusCode, statusReason, null );
 	}
 
-	public HttpError( HttpResponseStatus code, String msg, Throwable cause )
+	public HttpError( int statusCode, String statusReason, String developerMessage )
 	{
-		super( msg, cause );
+		super( developerMessage == null ? statusReason : developerMessage );
 
-		status = code;
-		reason = code.reasonPhrase().toString();
+		this.statusCode = statusCode;
+		this.statusReason = statusReason;
 	}
 
-	public HttpError( String msg, Throwable cause )
+	public HttpError( Throwable cause, String developerMessage )
 	{
-		super( msg, cause );
+		super( developerMessage == null ? HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase().toString() : developerMessage, cause );
 
-		status = HttpResponseStatus.valueOf( 500 );
-		reason = status.reasonPhrase().toString();
+		statusCode = 500;
+		statusReason = HttpResponseStatus.INTERNAL_SERVER_ERROR.reasonPhrase().toString();
 	}
 
 	public String getReason()
 	{
-		return reason;
+		return statusReason == null ? HttpResponseStatus.valueOf( statusCode ).reasonPhrase().toString() : statusReason;
 	}
 
 	public int getHttpCode()
 	{
-		return status.code();
-	}
-
-	public String getHttpReason()
-	{
-		return status.reasonPhrase().toString();
+		return statusCode < 100 ? 500 : statusCode;
 	}
 
 	public HttpResponseStatus getHttpResponseStatus()
 	{
-		return status;
+		return HttpResponseStatus.valueOf( statusCode );
+	}
+
+	@Override
+	public ReportingLevel reportingLevel()
+	{
+		return ReportingLevel.E_ERROR;
+	}
+
+	@Override
+	public ReportingLevel handle( ExceptionReport report, ExceptionContext context )
+	{
+		report.addException( this );
+		return ReportingLevel.E_ERROR;
+	}
+
+	@Override
+	public boolean isIgnorable()
+	{
+		return false;
 	}
 }

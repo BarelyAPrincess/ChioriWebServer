@@ -36,6 +36,7 @@ import com.chiorichan.lang.NonceException;
 import com.chiorichan.lang.ReportingLevel;
 import com.chiorichan.lang.RunLevel;
 import com.chiorichan.lang.ScriptingException;
+import com.chiorichan.logger.Log;
 import com.chiorichan.logger.experimental.LogEvent;
 import com.chiorichan.logger.experimental.LogManager;
 import com.chiorichan.net.NetworkManager;
@@ -279,7 +280,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 				if ( response.getStage() != HttpResponseStage.CLOSED )
 					response.sendError( ( HttpError ) cause );
 				else
-					NetworkManager.getLogger().severe( EnumColor.NEGATIVE + "" + EnumColor.RED + " [" + ip + "] For reasons unknown, we caught the HttpError but the connection was already closed.", cause );
+					NetworkManager.getLogger().severe( EnumColor.NEGATIVE + "" + EnumColor.RED + " [" + ip + "] For reasons unknown, we caught a HttpError but the connection was already closed.", cause );
 				return;
 			}
 
@@ -328,7 +329,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 			}
 
 			/*
-			 * TODO Proper Exception Handling. Consider the ability to have these exceptions cached, then delivered by e-mail to chiori-chan and/or server administrator.
+			 * TODO Proper Exception Handling. Consider the ability to have these exceptions cached, then delivered by e-mail to chiori-chan and server administrator.
 			 */
 			if ( cause instanceof HttpError )
 				response.sendError( ( HttpError ) cause );
@@ -569,7 +570,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 
 		/* Check direct file access annotation: @disallowDirectAccess true */
 		if ( UtilObjects.castToBool( fi.get( "disallowDirectAccess" ) ) && new File( request.getDomainMapping().directory(), UtilStrings.trimAll( request.getUri(), '/' ) ).getAbsolutePath().equals( fi.getFile() ) )
-			HttpError.throwDeveloperError( HttpResponseStatus.NOT_FOUND, "Accessing this file by exact file name is disallowed per annotation." );
+			throw new HttpError( HttpResponseStatus.NOT_FOUND, "Accessing this file by exact file name is disallowed per annotation." );
 
 		/*
 		 * Start: Trailing slash enforcer
@@ -1115,7 +1116,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 		File dir = fi.getFile();
 
 		if ( !dir.exists() || !dir.isDirectory() )
-			throw new HttpError( 500 );
+			throw new HttpError( HttpResponseStatus.INTERNAL_SERVER_ERROR, "Directory does not exist!" );
 
 		response.setContentType( "text/html" );
 		response.setEncoding( Charsets.UTF_8 );

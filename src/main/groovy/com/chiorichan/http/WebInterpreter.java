@@ -117,10 +117,10 @@ public class WebInterpreter extends FileInterpreter
 			dest = new File( request.getDomainMapping().directory(), uri );
 
 			if ( dest.exists() && dest.getName().startsWith( "index." ) && AppConfig.get().getBoolean( "advanced.security.disallowDirectIndexFiles", true ) )
-				HttpError.throwDeveloperError( HttpResponseStatus.FORBIDDEN, "Accessing index files by name is disallowed!" );
+				throw new HttpError( HttpResponseStatus.FORBIDDEN, "Accessing index files by name is disallowed!" );
 
 			if ( dest.exists() && dest.getName().contains( ".controller." ) )
-				HttpError.throwDeveloperError( HttpResponseStatus.FORBIDDEN, "Accessing controller files by name is disallowed!" );
+				throw new HttpError( HttpResponseStatus.FORBIDDEN, "Accessing controller files by name is disallowed!" );
 		}
 
 		/* If our destination does not exist, try to determine if the uri simply contains server side options or is a filename with extension */
@@ -347,7 +347,7 @@ public class WebInterpreter extends FileInterpreter
 			if ( t == null )
 				throw new HttpError( HttpResponseStatus.INTERNAL_SERVER_ERROR, message );
 			else
-				throw new HttpError( HttpResponseStatus.INTERNAL_SERVER_ERROR, message, t );
+				throw new HttpError( t, message );
 		}
 		else
 		{
