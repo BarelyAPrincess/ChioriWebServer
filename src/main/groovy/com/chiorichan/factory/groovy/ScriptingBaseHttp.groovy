@@ -107,56 +107,54 @@ abstract class ScriptingBaseHttp extends Builtin
 		return getRequest().getSession()
 	}
 
-	PermissibleEntity getEntity()
+	PermissibleEntity getPermissibleEntity()
 	{
-		getAccount().getEntity()
+		getAccount().getPermissibleEntity()
 	}
 
 	/**
 	 * Get the account matching specified uid
 	 * @param uid The uid you wish to use
-	 * @return
-	 * The found account, will return null if none found
+	 * @return The found account, will return null if none found
 	 */
 	Account getAccount( String uid )
 	{
-		Account result = AccountManager.instance().getAccount( uid )
+		Account result = AccountManager.instance().resolveAccount( hasLogin() ? getAccount().getLocation().getId() : getSite().getId(), uid )
 
-		if ( result == null )
-			result = AccountManager.instance().getAccountPartial( uid )
+		// if ( result == null )
+			// result = AccountManager.instance().getAccountPartial( hasLogin() ? getAccount().getLocation().getId() : getSite().getId(), uid )
 
 		return result
 	}
 
 	List<AccountMeta> getAccounts( String query )
 	{
-		return AccountManager.instance().getAccounts( query )
+		return AccountManager.instance().getAccounts( hasLogin() ? getAccount().getLocation().getId() : getSite().getId(), query )
 	}
 
 	List<AccountMeta> getAccounts( String query, int limit )
 	{
-		return AccountManager.instance().getAccounts( query ).stream().limit( limit ).collect( Collectors.toList() )
+		return AccountManager.instance().getAccounts( hasLogin() ? getAccount().getLocation().getId() : getSite().getId(), query ).stream().limit( limit ).collect( Collectors.toList() )
 	}
 
 	/**
 	 * Returns the current logged in account
-	 * @return
-	 * The current account, will return null if no one is logged in
+	 * @return The current account, will return null if no one is logged in
 	 */
 	Account getAccount()
 	{
-		return getSession().account()
+		return getSession().getAccount()
 	}
 
 	Account getAccountOrFail()
 	{
 		requireLogin()
-		return getAccount()
+		return getSession().getAccount()
 	}
 
-	boolean isLoginPresent()
+	boolean hasLogin()
 	{
-		return getSession().isLoginPresent()
+		return getSession().hasLogin()
 	}
 
 	/**

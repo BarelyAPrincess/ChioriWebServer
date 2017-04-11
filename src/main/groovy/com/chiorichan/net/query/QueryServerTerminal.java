@@ -94,6 +94,11 @@ public class QueryServerTerminal extends SimpleChannelInboundHandler<String> imp
 		ctx.close();
 	}
 
+	public String getLocId()
+	{
+		return terminal.getLocId();
+	}
+
 	@Override
 	public String getId()
 	{
@@ -110,7 +115,7 @@ public class QueryServerTerminal extends SimpleChannelInboundHandler<String> imp
 	public AccountResult kick( String reason )
 	{
 		disconnect( reason );
-		return new AccountResult( getId(), AccountDescriptiveReason.LOGOUT_SUCCESS );
+		return new AccountResult( getLocId(), getId(), AccountDescriptiveReason.LOGOUT_SUCCESS );
 	}
 
 	@Override

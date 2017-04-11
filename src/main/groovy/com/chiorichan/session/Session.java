@@ -10,8 +10,6 @@
 package com.chiorichan.session;
 
 import com.chiorichan.AppConfig;
-import com.chiorichan.account.AccountInstance;
-import com.chiorichan.account.AccountMeta;
 import com.chiorichan.account.AccountPermissible;
 import com.chiorichan.account.Kickable;
 import com.chiorichan.account.auth.AccountAuthenticator;
@@ -26,20 +24,19 @@ import com.chiorichan.helpers.WeakReferenceList;
 import com.chiorichan.http.HttpCookie;
 import com.chiorichan.http.Nonce;
 import com.chiorichan.lang.EnumColor;
-import com.chiorichan.permission.PermissibleEntity;
 import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.utils.UtilObjects;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.apache.commons.lang3.Validate;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -64,23 +61,23 @@ public final class Session extends AccountPermissible implements Kickable
 	 * Global session variables<br>
 	 * Globals will not live outside of the session's life
 	 */
-	final Map<String, Object> globals = Maps.newLinkedHashMap();
+	final Map<String, Object> globals = new LinkedHashMap<>();
 
 	/**
 	 * History of changes made to the variables since last {@link #save()}
 	 */
-	private final Set<String> dataChangeHistory = Sets.newHashSet();
+	private final Set<String> dataChangeHistory = new HashSet<>();
 
 	/**
 	 * Holds a set of known IP Addresses
 	 */
-	private final Set<String> knownIps = Sets.newHashSet();
+	private final Set<String> knownIps = new HashSet<>();
 
 	/**
 	 * Reference to each wrapper that is utilizing this session<br>
 	 * We use a WeakReference so they can still be reclaimed by the GC
 	 */
-	private final WeakReferenceList<SessionWrapper> wrappers = new WeakReferenceList<SessionWrapper>();
+	private final WeakReferenceList<SessionWrapper> wrappers = new WeakReferenceList<>();
 
 	/**
 	 * The epoch for when this session is to be destroyed
@@ -111,7 +108,7 @@ public final class Session extends AccountPermissible implements Kickable
 	/**
 	 * Tracks session sessionCookies
 	 */
-	private Map<String, HttpCookie> sessionCookies = Maps.newLinkedHashMap();
+	private Map<String, HttpCookie> sessionCookies = new LinkedHashMap<>();
 
 	/**
 	 * The site this session is bound to
@@ -166,11 +163,6 @@ public final class Session extends AccountPermissible implements Kickable
 			SessionManager.getLogger().info( EnumColor.DARK_AQUA + "Session " + ( data.stale ? "Loaded" : "Created" ) + " `" + this + "`" );
 
 		initialized();
-	}
-
-	public AccountInstance account()
-	{
-		return account;
 	}
 
 	public boolean changesMade()
@@ -232,8 +224,7 @@ public final class Session extends AccountPermissible implements Kickable
 	/**
 	 * Get the present data change history
 	 *
-	 * @return
-	 *         A unmodifiable copy of dataChangeHistory.
+	 * @return A unmodifiable copy of dataChangeHistory.
 	 */
 	Set<String> getChangeHistory()
 	{
@@ -261,18 +252,6 @@ public final class Session extends AccountPermissible implements Kickable
 		return data.data;
 	}
 
-	@Override
-	public String getDisplayName()
-	{
-		return account.getDisplayName();
-	}
-
-	@Override
-	public PermissibleEntity getEntity()
-	{
-		return account.getEntity();
-	}
-
 	public Object getGlobal( String key )
 	{
 		return globals.get( key );
@@ -284,15 +263,9 @@ public final class Session extends AccountPermissible implements Kickable
 	}
 
 	@Override
-	public String getId()
+	public List<String> getIpAddresses()
 	{
-		return account == null ? null : account.getId();
-	}
-
-	@Override
-	public Collection<String> getIpAddresses()
-	{
-		Set<String> ips = Sets.newHashSet();
+		List<String> ips = new ArrayList<>();
 		for ( SessionWrapper sp : wrappers )
 			if ( sp.hasSession() && sp.getSession() == this )
 			{
@@ -370,12 +343,6 @@ public final class Session extends AccountPermissible implements Kickable
 		return data.data.get( key );
 	}
 
-	@Override
-	public AccountInstance instance()
-	{
-		return account;
-	}
-
 	public boolean isInvalidated()
 	{
 		return isInvalidated;
@@ -398,12 +365,6 @@ public final class Session extends AccountPermissible implements Kickable
 			throw new IllegalStateException( "This session has been invalidated" );
 
 		return logout();
-	}
-
-	@Override
-	public AccountMeta meta()
-	{
-		return account.meta();
 	}
 
 	public Nonce nonce()
@@ -486,7 +447,7 @@ public final class Session extends AccountPermissible implements Kickable
 		requestCnt++;
 
 		// Grant the timeout an additional 2 hours for having a user logged in.
-		if ( isLoginPresent() )
+		if ( hasLogin() )
 		{
 			defaultTimeout = SessionManager.getDefaultTimeoutWithLogin();
 
@@ -513,8 +474,7 @@ public final class Session extends AccountPermissible implements Kickable
 	/**
 	 * Registers a newly created wrapper with our session
 	 *
-	 * @param wrapper
-	 *             The newly created wrapper
+	 * @param wrapper The newly created wrapper
 	 */
 	public void registerWrapper( SessionWrapper wrapper )
 	{
@@ -539,8 +499,7 @@ public final class Session extends AccountPermissible implements Kickable
 	/**
 	 * Sets if the user login should be remembered for a longer amount of time
 	 *
-	 * @param remember
-	 *             Should we?
+	 * @param remember Should we?
 	 */
 	public void remember( boolean remember )
 	{
@@ -638,7 +597,7 @@ public final class Session extends AccountPermissible implements Kickable
 
 		try
 		{
-			account().meta().context().credentials().makeResumable( this );
+			getAccount().meta().getContext().credentials().makeResumable( this );
 		}
 		catch ( AccountException e )
 		{

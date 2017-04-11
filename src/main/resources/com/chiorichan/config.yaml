@@ -103,22 +103,13 @@ accounts:
   singleLogin: false
   singleLoginMessage: You logged in from another location.
   debug: false
-  sqlType:
-    enabled: false
-    default: false
-    table: accounts
-    fields:
-    - username
-    - email
-    - phone
-  fileType:
-    enabled: true
-    default: true
-    filebase: accounts
-    fields:
-    - username
-    - email
-    - phone
+  fields:
+  - username
+  - email
+  - phone
+  defaultType: file
+  sqlTable: accounts
+  directory: accounts
 sites:
   defaultTitle: Unnamed Site
   redirectMissingSubDomains: false

@@ -1,10 +1,10 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- * <p>
+ *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
- * <p>
+ *
  * All Rights Reserved.
  */
 package com.chiorichan.http;
@@ -1040,7 +1040,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	 */
 	public void requireLogin( String permission ) throws IOException
 	{
-		if ( !getSession().isLoginPresent() )
+		if ( !getSession().hasLogin() )
 			getResponse().sendLoginPage();
 
 		if ( permission != null )
@@ -1095,6 +1095,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 
 		// TODO Implement One Time Tokens
 
+		String locId = session.getLocation().getId();
 		String username = getArgument( "user" );
 		String password = getArgument( "pass" );
 		boolean remember = getArgumentBoolean( "remember" );
@@ -1113,9 +1114,9 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 					AccountManager.getLogger().warning( "It is highly recommended that account logins are submitted over SSL. Without SSL, passwords are at great risk." );
 
 				if ( !nonceProcessed() && AppConfig.get().getBoolean( "accounts.requireLoginWithNonce" ) )
-					throw new AccountException( AccountDescriptiveReason.NONCE_REQUIRED, username );
+					throw new AccountException( AccountDescriptiveReason.NONCE_REQUIRED, locId, username );
 
-				AccountResult result = getSession().loginWithException( AccountAuthenticator.PASSWORD, username, password );
+				AccountResult result = getSession().loginWithException( AccountAuthenticator.PASSWORD, locId, username, password );
 
 				Account acct = result.getAccountWithException();
 
@@ -1150,7 +1151,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			}
 			return true;
 		}
-		else if ( session.isLoginPresent() )
+		else if ( session.hasLogin() )
 		{
 			// XXX Should we revalidate logins with each request? It could be something worth considering for extra security. Maybe a config option?
 

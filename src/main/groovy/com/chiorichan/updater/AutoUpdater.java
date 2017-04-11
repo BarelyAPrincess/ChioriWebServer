@@ -159,7 +159,7 @@ public class AutoUpdater implements ServiceManager, Listener, TaskRegistrar, Log
 		if ( !isEnabled() || "0".equals( currentSlug ) )
 			return;
 
-		if ( !sender.getEntity().checkPermission( "sys.update" ).isTrue() && !sender.getEntity().isOp() )
+		if ( !sender.getPermissibleEntity().checkPermission( "sys.update" ).isTrue() && !sender.getPermissibleEntity().isOp() )
 			return;
 
 		new Thread()
@@ -346,7 +346,7 @@ public class AutoUpdater implements ServiceManager, Listener, TaskRegistrar, Log
 		if ( event.getAccountPermissible() instanceof MessageReceiver )
 		{
 			MessageReceiver receiver = ( MessageReceiver ) event.getAccountPermissible();
-			if ( isEnabled() && getCurrent() != null && event.getAccount().getEntity().checkPermission( AppController.BROADCAST_CHANNEL_ADMINISTRATIVE ).isTrue() )
+			if ( isEnabled() && getCurrent() != null && event.getAccount().getPermissibleEntity().checkPermission( AppController.BROADCAST_CHANNEL_ADMINISTRATIVE ).isTrue() )
 				if ( getCurrent().isBroken() && getOnBroken().contains( AutoUpdater.WARN_OPERATORS ) )
 					receiver.sendMessage( EnumColor.DARK_RED + "The version of " + Versioning.getProduct() + " that this server is running is known to be broken. Please consider updating to the latest version available from http://jenkins.chiorichan.com/." );
 				else if ( isUpdateAvailable() && getOnUpdate().contains( AutoUpdater.WARN_OPERATORS ) )

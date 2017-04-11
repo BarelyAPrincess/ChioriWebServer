@@ -113,9 +113,9 @@ public abstract class SessionWrapper implements BindingProvider, AccountAttachme
 	}
 
 	@Override
-	public PermissibleEntity getEntity()
+	public PermissibleEntity getPermissibleEntity()
 	{
-		return getSession().getEntity();
+		return getSession().getPermissibleEntity();
 	}
 
 	@Override

@@ -11,6 +11,8 @@ package com.chiorichan.site;
 
 import com.chiorichan.AppConfig;
 import com.chiorichan.Loader;
+import com.chiorichan.account.AccountLocation;
+import com.chiorichan.account.LocationService;
 import com.chiorichan.configuration.types.yaml.YamlConfiguration;
 import com.chiorichan.datastore.file.FileDatastore;
 import com.chiorichan.factory.env.Env;
@@ -48,7 +50,7 @@ import java.util.stream.Stream;
 /**
  * Manages and Loads Sites
  */
-public class SiteManager implements ServiceProvider, LogSource, ServiceManager, TaskRegistrar
+public class SiteManager implements ServiceProvider, LogSource, ServiceManager, TaskRegistrar, LocationService
 {
 	public Stream<DomainNode> getDomainsBySite( Site site )
 	{
@@ -262,6 +264,7 @@ public class SiteManager implements ServiceProvider, LogSource, ServiceManager, 
 	@Override
 	public void init() throws ApplicationException
 	{
+		AppManager.registerService( SiteManager.class, this, new ObjectContext( this ), ServicePriority.Normal );
 		AppManager.registerService( Site.class, this, new ObjectContext( this ), ServicePriority.Normal );
 		loadSites();
 	}
@@ -395,5 +398,23 @@ public class SiteManager implements ServiceProvider, LogSource, ServiceManager, 
 			}
 
 		sites.clear();
+	}
+
+	@Override
+	public AccountLocation getLocation( String locId )
+	{
+		return getSiteById( locId );
+	}
+
+	@Override
+	public AccountLocation getDefaultLocation()
+	{
+		return getDefaultSite();
+	}
+
+	@Override
+	public Stream<AccountLocation> getLocations()
+	{
+		return getSites().map( s -> ( AccountLocation ) s );
 	}
 }

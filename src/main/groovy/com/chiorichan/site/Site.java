@@ -1,10 +1,10 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- * <p>
+ *
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
- * <p>
+ *
  * All Rights Reserved.
  */
 package com.chiorichan.site;
@@ -16,6 +16,7 @@ import com.chiorichan.configuration.ConfigurationSection;
 import com.chiorichan.configuration.apache.ApacheConfiguration;
 import com.chiorichan.configuration.types.yaml.YamlConfiguration;
 import com.chiorichan.datastore.DatastoreManager;
+import com.chiorichan.datastore.sql.SQLTable;
 import com.chiorichan.datastore.sql.bases.H2SQLDatastore;
 import com.chiorichan.datastore.sql.bases.MySQLDatastore;
 import com.chiorichan.datastore.sql.bases.SQLDatastore;
@@ -59,8 +60,10 @@ import java.security.cert.CertificateException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -528,6 +531,24 @@ public class Site implements AccountLocation
 	public String getId()
 	{
 		return siteId;
+	}
+
+	@Override
+	public SQLTable getAccountTable()
+	{
+		return null;
+	}
+
+	@Override
+	public File getAccountDirectory()
+	{
+		return null;
+	}
+
+	@Override
+	public Set<String> getAccountFields()
+	{
+		return new HashSet<>( getConfig().getAsList( "accounts.fields", new ArrayList<>() ) );
 	}
 
 	public List<String> getIps()
