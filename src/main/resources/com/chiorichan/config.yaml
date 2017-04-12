@@ -36,6 +36,12 @@ server:
     username: fwuser
     password: fwpass
     dbfile: server.db
+cluster:
+  enabled: false
+  clusterPort: 9001
+  servers:
+  - 127.0.0.1:9002
+  - 127.0.0.1:9003
 plugins:
   useTimings: true
 permissions:

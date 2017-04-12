@@ -1,10 +1,10 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- *
+ * <p>
  * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
  * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
- *
+ * <p>
  * All Rights Reserved.
  */
 package com.chiorichan.net;
@@ -23,6 +23,7 @@ import com.chiorichan.services.AppManager;
 import com.chiorichan.tasks.TaskManager;
 import com.chiorichan.tasks.TaskRegistrar;
 import com.chiorichan.tasks.Ticks;
+import com.chiorichan.utils.UtilObjects;
 import com.chiorichan.utils.UtilSystem;
 import com.google.common.collect.Lists;
 import io.netty.bootstrap.ServerBootstrap;
@@ -195,10 +196,10 @@ public class NetworkManager implements TaskRegistrar, LogSource
 				{
 					getLogger().warning( "It would seem that you are trying to start ChioriWebServer's Web Server on a privileged port without root access." );
 					getLogger().warning( "Most likely you will see an exception thrown below this. http://www.w3.org/Daemon/User/Installation/PrivilegedPorts.html" );
-					getLogger().warning( "It's recommended that you either run CWS on a port like 8080 then use the firewall to redirect from 80 or run as root if you must use port: " + httpPort );
+					getLogger().warning( "It's recommended that you either run the server on a port like 8080 and use the firewall to redirect from " + httpPort + " or run as root if you must use port: " + httpPort );
 				}
 
-				if ( httpHost.isEmpty() )
+				if ( UtilObjects.isEmpty( httpHost ) )
 					socket = new InetSocketAddress( httpPort );
 				else
 					socket = new InetSocketAddress( httpHost, httpPort );
@@ -215,22 +216,18 @@ public class NetworkManager implements TaskRegistrar, LogSource
 					httpChannel = b.bind( socket ).sync().channel();
 
 					// HTTP Server Thread
-					AppController.registerRunnable( new Runnable()
+					AppController.registerRunnable( () ->
 					{
-						@Override
-						public void run()
+						try
 						{
-							try
-							{
-								httpChannel.closeFuture().sync();
-							}
-							catch ( InterruptedException e )
-							{
-								e.printStackTrace();
-							}
-
-							getLogger().info( "The HTTP Server has been shutdown!" );
+							httpChannel.closeFuture().sync();
 						}
+						catch ( InterruptedException e )
+						{
+							e.printStackTrace();
+						}
+
+						getLogger().info( "The HTTP Server has been shutdown!" );
 					} );
 				}
 				catch ( NullPointerException e )
@@ -240,7 +237,6 @@ public class NetworkManager implements TaskRegistrar, LogSource
 				catch ( Throwable e )
 				{
 					getLogger().warning( "**** FAILED TO BIND HTTP SERVER TO PORT!" );
-					// getLogger().warning( "The exception was: {0}", new Object[] {e.toString()} );
 					getLogger().warning( "Perhaps a server is already running on that port?" );
 
 					throw new StartupException( e );
@@ -304,22 +300,18 @@ public class NetworkManager implements TaskRegistrar, LogSource
 					httpsChannel = b.bind( socket ).sync().channel();
 
 					// HTTPS Server Thread
-					AppController.registerRunnable( new Runnable()
+					AppController.registerRunnable( () ->
 					{
-						@Override
-						public void run()
+						try
 						{
-							try
-							{
-								httpsChannel.closeFuture().sync();
-							}
-							catch ( InterruptedException e )
-							{
-								e.printStackTrace();
-							}
-
-							getLogger().info( "The HTTPS Server has been shutdown!" );
+							httpsChannel.closeFuture().sync();
 						}
+						catch ( InterruptedException e )
+						{
+							e.printStackTrace();
+						}
+
+						getLogger().info( "The HTTPS Server has been shutdown!" );
 					} );
 				}
 				catch ( NullPointerException e )
@@ -385,22 +377,18 @@ public class NetworkManager implements TaskRegistrar, LogSource
 					queryChannel = b.bind( socket ).sync().channel();
 
 					// Query Server Thread
-					AppController.registerRunnable( new Runnable()
+					AppController.registerRunnable( () ->
 					{
-						@Override
-						public void run()
+						try
 						{
-							try
-							{
-								queryChannel.closeFuture().sync();
-							}
-							catch ( InterruptedException e )
-							{
-								e.printStackTrace();
-							}
-
-							getLogger().info( "The Query Server has been shutdown!" );
+							queryChannel.closeFuture().sync();
 						}
+						catch ( InterruptedException e )
+						{
+							e.printStackTrace();
+						}
+
+						getLogger().info( "The Query Server has been shutdown!" );
 					} );
 				}
 				catch ( NullPointerException e )
@@ -429,18 +417,14 @@ public class NetworkManager implements TaskRegistrar, LogSource
 
 	private NetworkManager()
 	{
-		TaskManager.instance().scheduleAsyncRepeatingTask( this, Ticks.SECOND_15, Ticks.SECOND_15, new Runnable()
+		TaskManager.instance().scheduleAsyncRepeatingTask( this, Ticks.SECOND_15, Ticks.SECOND_15, () ->
 		{
-			@Override
-			public void run()
-			{
-				for ( WeakReference<SocketChannel> ref : HttpInitializer.activeChannels )
-					if ( ref.get() == null )
-						HttpInitializer.activeChannels.remove( ref );
-				for ( WeakReference<SocketChannel> ref : SslInitializer.activeChannels )
-					if ( ref.get() == null )
-						SslInitializer.activeChannels.remove( ref );
-			}
+			for ( WeakReference<SocketChannel> ref : HttpInitializer.activeChannels )
+				if ( ref.get() == null )
+					HttpInitializer.activeChannels.remove( ref );
+			for ( WeakReference<SocketChannel> ref : SslInitializer.activeChannels )
+				if ( ref.get() == null )
+					SslInitializer.activeChannels.remove( ref );
 		} );
 	}
 
