@@ -1,10 +1,10 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- *
- * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * <p>
+ * Copyright (c) 2017 Joel Greene <joel.greene@penoaks.com>
  * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
- *
+ * <p>
  * All Rights Reserved.
  */
 package com.chiorichan.http;
@@ -19,9 +19,7 @@ import com.chiorichan.account.lang.AccountDescriptiveReason;
 import com.chiorichan.account.lang.AccountException;
 import com.chiorichan.account.lang.AccountResult;
 import com.chiorichan.lang.EnumColor;
-import com.chiorichan.lang.ExceptionReport;
 import com.chiorichan.lang.HttpError;
-import com.chiorichan.lang.MapCollisionException;
 import com.chiorichan.logger.experimental.LogEvent;
 import com.chiorichan.messaging.MessageSender;
 import com.chiorichan.net.NetworkManager;
@@ -34,6 +32,7 @@ import com.chiorichan.site.Site;
 import com.chiorichan.site.SiteManager;
 import com.chiorichan.tasks.Timings;
 import com.chiorichan.utils.UtilHttp;
+import com.chiorichan.utils.UtilMaps;
 import com.chiorichan.utils.UtilObjects;
 import com.chiorichan.utils.UtilStrings;
 import com.google.common.base.Charsets;
@@ -648,42 +647,15 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		Map<String, String> requestMap = new TreeMap<>();
 
 		if ( getMap != null )
-			mergeMaps( requestMap, getMap );
+			UtilMaps.mergeMaps( requestMap, getMap );
 
 		if ( postMap != null )
-			mergeMaps( requestMap, postMap );
+			UtilMaps.mergeMaps( requestMap, postMap );
 
 		if ( rewriteMap != null )
-			mergeMaps( requestMap, rewriteMap );
+			UtilMaps.mergeMaps( requestMap, rewriteMap );
 
 		return requestMap;
-	}
-
-	public <T extends Object> void mergeMaps( Map<String, T> desc, Map<String, T>... maps ) throws Exception
-	{
-		if ( maps == null || maps.length == 0 )
-			return;
-
-		// It's important to note that each of these maps will overwrite the current map. If it's rewriteMap contains a key that exists in getMap, the ladder will be overwritten.
-
-		for ( Map<String, T> map : maps )
-		{
-			boolean hadConflicts = false;
-
-			for ( Entry<String, T> entry : map.entrySet() )
-			{
-				if ( desc.containsKey( entry.getKey() ) )
-					hadConflicts = true;
-				desc.put( entry.getKey(), entry.getValue() );
-			}
-
-			if ( hadConflicts )
-			{
-				MapCollisionException e = new MapCollisionException();
-				ExceptionReport.throwExceptions( e );
-				log.exceptions( e );
-			}
-		}
 	}
 
 	public long getRequestTime()
@@ -993,21 +965,23 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 	protected void putAllGetMap( Map<String, String> map )
 	{
 		getMap.putAll( map );
+		getMap.replaceAll( ( k, v ) -> v.trim() );
 	}
 
 	protected void putAllPostMap( Map<String, String> map )
 	{
 		postMap.putAll( map );
+		postMap.replaceAll( ( k, v ) -> v.trim() );
 	}
 
 	protected void putGetMap( String key, String value )
 	{
-		getMap.put( key, value );
+		getMap.put( key, value.trim() );
 	}
 
 	protected void putPostMap( String key, String value )
 	{
-		postMap.put( key, value );
+		postMap.put( key, value.trim() );
 	}
 
 	protected void putRewriteParam( String key, String val )
@@ -1078,7 +1052,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 		this.uri = uri.startsWith( "/" ) ? uri : "/" + uri;
 	}
 
-	protected boolean validateLogins()
+	protected boolean validateLogins() throws HttpError
 	{
 		Session session = getSession();
 
@@ -1093,7 +1067,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 			}
 		}
 
-		// TODO Implement One Time Tokens
+		// TODO Implement One Time Login Tokens
 
 		String locId = session.getLocation().getId();
 		String username = getArgument( "user" );
@@ -1117,8 +1091,7 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 					throw new AccountException( AccountDescriptiveReason.NONCE_REQUIRED, locId, username );
 
 				AccountResult result = getSession().loginWithException( AccountAuthenticator.PASSWORD, locId, username, password );
-
-				Account acct = result.getAccountWithException();
+				Account acct = result.getAccount();
 
 				session.remember( remember );
 
@@ -1136,16 +1109,19 @@ public class HttpRequestWrapper extends SessionWrapper implements SessionContext
 				String msg = result.getFormattedMessage();
 
 				if ( !result.isIgnorable() && result.hasCause() )
-				{
-					result.getCause().printStackTrace();
 					msg = result.getCause().getMessage();
-				}
 
-				AccountManager.getLogger().warning( EnumColor.RED + "Failed Login [id='" + username + "',hasPassword='" + ( password != null && password.length() > 0 ) + "',authenticator='plaintext',reason='" + msg + "']" );
+				if ( Versioning.isDevelopment() && result.getDescriptiveReason() == AccountDescriptiveReason.INTERNAL_ERROR )
+					throw new HttpError( e, msg );
+
+				AccountManager.getLogger().warning( EnumColor.RED + "Failed Login [id='" + username + "',hasPassword='" + !UtilObjects.isEmpty( password ) + "',authenticator='plaintext',reason='" + msg + "']" );
 				getResponse().sendLoginPage( result.getMessage(), null, target );
 			}
 			catch ( Throwable t )
 			{
+				if ( Versioning.isDevelopment() )
+					throw new HttpError( t, AccountDescriptiveReason.INTERNAL_ERROR.getMessage() );
+
 				AccountManager.getLogger().severe( "Login has thrown an internal server error", t );
 				getResponse().sendLoginPage( AccountDescriptiveReason.INTERNAL_ERROR.getMessage(), null, target );
 			}

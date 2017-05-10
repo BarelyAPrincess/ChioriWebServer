@@ -2,7 +2,7 @@
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
  *
- * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * Copyright (c) 2017 Joel Greene <joel.greene@penoaks.com>
  * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
  *
  * All Rights Reserved.
@@ -900,7 +900,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object>
 						rendered.writeBytes( result.getObject().toString().getBytes() );
 						log.log( Level.SEVERE, "Exception encountered while writing returned object to output. %s", e.getMessage() );
 						if ( Versioning.isDevelopment() )
-							log.log( Level.SEVERE, e.getStackTrace()[0].toString() );
+							log.log( Level.SEVERE, e.getClass().getSimpleName() + ": " + e.getStackTrace()[0].toString() );
 					}
 			}
 

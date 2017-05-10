@@ -41,8 +41,8 @@ public class Template extends Plugin implements Listener
 {
 	private String generateExceptionPage( Throwable t, ScriptingFactory factory ) throws Exception
 	{
-		Validate.notNull( t );
-		Validate.notNull( factory );
+		UtilObjects.notNull( t );
+		UtilObjects.notNull( factory );
 
 		StringBuilder ob = new StringBuilder();
 

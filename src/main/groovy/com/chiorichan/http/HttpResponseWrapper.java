@@ -1,10 +1,10 @@
 /**
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
- *
- * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * <p>
+ * Copyright (c) 2017 Joel Greene <joel.greene@penoaks.com>
  * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
- *
+ * <p>
  * All Rights Reserved.
  */
 package com.chiorichan.http;
@@ -18,7 +18,6 @@ import com.chiorichan.factory.ScriptingContext;
 import com.chiorichan.factory.api.Builtin;
 import com.chiorichan.lang.EnumColor;
 import com.chiorichan.lang.HttpError;
-import com.chiorichan.logger.Log;
 import com.chiorichan.logger.experimental.LogEvent;
 import com.chiorichan.net.NetworkManager;
 import com.chiorichan.session.Session;
@@ -185,8 +184,12 @@ public class HttpResponseWrapper
 
 	public void sendError( Exception e ) throws IOException
 	{
-		if ( e instanceof HttpError )
+		UtilObjects.notNull( e );
+
+		if ( e instanceof HttpError && e.getCause() == null )
 			sendError( ( ( HttpError ) e ).getHttpCode(), ( ( HttpError ) e ).getReason(), e.getMessage() );
+		else if ( e instanceof HttpError )
+			sendException( e.getCause() );
 		else
 			sendException( e );
 	}
@@ -388,23 +391,38 @@ public class HttpResponseWrapper
 
 	public void sendException( Throwable cause ) throws IOException
 	{
+		UtilObjects.notNull( cause );
+
 		if ( stage == HttpResponseStage.CLOSED )
 			throw new IllegalStateException( "You can't access sendException method within this HttpResponse because the connection has been closed." );
 
-		if ( cause instanceof HttpError )
+		if ( cause instanceof HttpError && cause.getCause() == null )
 		{
 			sendError( ( HttpError ) cause );
 			return;
 		}
 
-		HttpExceptionEvent event = new HttpExceptionEvent( request, cause, AppConfig.get().getBoolean( "server.developmentMode" ) );
+		HttpExceptionEvent event = new HttpExceptionEvent( request, cause, Versioning.isDevelopment() );
 		EventBus.instance().callEvent( event );
 
 		int httpCode = event.getHttpCode();
 
 		if ( Versioning.isDevelopment() )
 		{
-			if ( event.getErrorHtml() != null )
+			if ( UtilObjects.isEmpty( event.getErrorHtml() ) )
+			{
+				if ( cause == null )
+					sendError( httpCode, null, "No Stacktrace Available!" );
+
+				String stackTrace = ExceptionUtils.getStackTrace( cause );
+
+				if ( request.getScriptingFactory() != null )
+					for ( Entry<String, ScriptingContext> e : request.getScriptingFactory().stack().getScriptTraceHistory().entrySet() )
+						stackTrace = stackTrace.replace( e.getKey(), e.getValue().filename() );
+
+				sendError( httpCode, null, "<pre>" + stackTrace + "</pre>" );
+			}
+			else
 			{
 				log.log( Level.SEVERE, "%s {code=500}", HttpCode.msg( 500 ) );
 
@@ -414,16 +432,6 @@ public class HttpResponseWrapper
 				setContentType( "text/html" );
 				setEncoding( Charsets.UTF_8 );
 				sendResponse();
-			}
-			else
-			{
-				String stackTrace = ExceptionUtils.getStackTrace( cause );
-
-				if ( request.getScriptingFactory() != null )
-					for ( Entry<String, ScriptingContext> e : request.getScriptingFactory().stack().getScriptTraceHistory().entrySet() )
-						stackTrace = stackTrace.replace( e.getKey(), e.getValue().filename() );
-
-				sendError( httpCode, null, "<pre>" + stackTrace + "</pre>" );
 			}
 		}
 		else

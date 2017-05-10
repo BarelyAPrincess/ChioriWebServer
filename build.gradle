@@ -3,6 +3,7 @@ import java.text.SimpleDateFormat
 defaultTasks 'clean', 'build'
 
 apply plugin: 'application'
+apply plugin: 'docker'
 apply plugin: 'eclipse'
 apply plugin: 'idea'
 apply plugin: 'groovy'
@@ -27,6 +28,7 @@ buildscript {
 	dependencies {
 		classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
 		classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.11.0'
+		classpath 'se.transmode.gradle:gradle-docker:1.2'
 	}
 }
 
@@ -113,6 +115,17 @@ checkstyle {
 
 // checkstyleMain.source = "src/main/groovy"
 // checkstyleMain.exclude '**//**'
+
+docker {
+	baseImage "debian"
+	maintainer 'Joel Greene "joel.greene@penoaks.com"'
+}
+
+task serverDocker(type: Docker) {
+	tag = "com.chiorichan/amelia-server"
+	applicationName = "ameliaServer"
+	runCommand "apt-get update"
+}
 
 eclipse {
 	project {name = 'ChioriWebServer'}

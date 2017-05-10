@@ -2,7 +2,7 @@
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
  *
- * Copyright (c) 2017 Chiori Greene a.k.a. Chiori-chan <me@chiorichan.com>
+ * Copyright (c) 2017 Joel Greene <joel.greene@penoaks.com>
  * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
  *
  * All Rights Reserved.
@@ -119,7 +119,7 @@ abstract class ScriptingBaseHttp extends Builtin
 	 */
 	Account getAccount( String uid )
 	{
-		Account result = AccountManager.instance().resolveAccount( hasLogin() ? getAccount().getLocation().getId() : getSite().getId(), uid )
+		Account result = AccountManager.instance().getAccount( hasLogin() ? getAccount().getLocation().getId() : getSite().getId(), uid )
 
 		// if ( result == null )
 			// result = AccountManager.instance().getAccountPartial( hasLogin() ? getAccount().getLocation().getId() : getSite().getId(), uid )
@@ -144,6 +144,11 @@ abstract class ScriptingBaseHttp extends Builtin
 	Account getAccount()
 	{
 		return getSession().getAccount()
+	}
+
+	Account getAccountOrNull()
+	{
+		return hasLogin() ? getSession().getAccount() : null
 	}
 
 	Account getAccountOrFail()
